@@ -1,0 +1,13 @@
+/* Убираем все отступы и задаем box-sizing для всех элементов */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Задаем шрифт Roboto и его вес для body */
+body {
+    font-family: 'Roboto', sans-serif;
+    font-weight: 400;
+    background-color: #101010;
+}
