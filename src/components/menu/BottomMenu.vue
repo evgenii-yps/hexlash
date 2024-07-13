@@ -39,7 +39,7 @@ const menuItems = ref([
   display: flex;
   flex-direction: column;
   align-items: center;
-  background-color: #090909;
+  background-color: var(--dark);
   text-decoration: none;
   transition: color 0.3s ease;
   min-width: 10vw; /* Минимальная ширина карточки */
@@ -51,19 +51,19 @@ const menuItems = ref([
 }
 
 .menu-item:hover, .menu-item.active {
-  background-color: #ff1493; /* Розовый цвет при наведении и активном элементе */
+  background-color: var(--pink); /* Розовый цвет при наведении и активном элементе */
 }
 
 .menu-item .menu-text {
   margin-top: 0.5rem;
-  color: #A0A0A0; /* Цвет текста для неактивных карточек */
+  color: var(--gray3); /* Цвет текста для неактивных карточек */
   white-space: nowrap; /* Запрещаем перенос текста */
   overflow: hidden; /* Обрезаем текст, который не помещается */
   text-overflow: ellipsis; /* Добавляем многоточие для обрезанного текста */
 }
 
 .menu-item:hover .menu-text, .menu-item.active .menu-text {
-  color: #fff; /* Белый цвет текста для активных карточек */
+  color: var(--white); /* Белый цвет текста для активных карточек */
 }
 
 .menu-icon {

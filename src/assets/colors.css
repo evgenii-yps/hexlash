@@ -1,0 +1,12 @@
+:root {
+    --main-bg-color: #090909;
+    --dark: #090909;
+    --gray1: #3F3F3F;
+    --gray2: #808080;
+    --gray3: #A0A0A0;
+    --white: #FFFFFF;
+    --pink: #FF066F;
+    --pinkDark: #a50344;
+    --overlay_20: 'rgba(86, 86, 86, 0.2)';
+    --overlay_80: 'rgba(9, 9, 9, 0.8)';
+}

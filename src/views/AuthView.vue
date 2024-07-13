@@ -3,13 +3,9 @@
     <div id="sketch"></div>
 
     <div class="foreground">
-      <ButtonRect
-          @click.native="showMe"
-          class="white arrow-right-btn">
-        <template>
-          More..
-        </template>
-      </ButtonRect>
+      <transition name="explode" mode="out-in">
+        <component :is="currentComponent" :key="currentComponentKey" />
+      </transition>
     </div>
 
 
@@ -17,11 +13,28 @@
 
 <script setup>
 
-import ButtonRect from "@/components/ui/ButtonRect.vue";
 
-function showMe() {
-  console.log('Show More clicked');
-}
+import {useRoute} from "vue-router";
+import Login from "@/components/fragments/Login.vue";
+import Invite from "@/components/fragments/Invite.vue";
+
+const route = useRoute();
+const currentComponent = ref(null);
+const currentComponentKey = ref(route.path);
+
+const setCurrentComponent = () => {
+  if (route.path === '/auth/login') {
+    currentComponent.value = Login;
+  } else if (route.path === '/auth/invite') {
+    currentComponent.value = Invite;
+  }
+  currentComponentKey.value = route.path;
+};
+
+
+watchEffect(() => {
+  setCurrentComponent();
+});
 
 import * as THREE from 'three'
 import * as kokomi from 'kokomi.js'
@@ -30,7 +43,7 @@ import {BloomEffect, EffectComposer, EffectPass, RenderPass, FXAAEffect} from 'p
 import {RectAreaLightUniformsLib} from 'three/addons/lights/RectAreaLightUniformsLib.js'
 import {Howl, Howler} from 'howler'
 import gsap from 'gsap'
-import {onBeforeUnmount, onMounted, onUnmounted} from "vue";
+import {onMounted, onUnmounted, ref, watchEffect} from "vue";
 
 import brickNormal from '@/assets/textures/brick-normal2.jpg';
 import floorNormal from '@/assets/textures/asphalt-pbr01/normal.png';
@@ -600,7 +613,7 @@ class Sketch extends kokomi.Base {
 
     // config
     const config = {
-      rainCount: 1000,
+      rainCount: 700,
       slowMoFactor: 1,
       rainSpeed: 1.5,
       debug: false,
@@ -675,7 +688,7 @@ class Sketch extends kokomi.Base {
       })
 
       // lights
-      const pointLight1 = new THREE.PointLight("#81C8F2", 0.2, 17, 0.8)
+      const pointLight1 = new THREE.PointLight("#81C8F2", 0.5, 17, 0.8)
       pointLight1.position.set(0, 2.3, 0)
       this.scene.add(pointLight1)
 
@@ -683,7 +696,7 @@ class Sketch extends kokomi.Base {
       pointLight2.position.set(0, 30, 0)
       this.scene.add(pointLight2)
 
-      const rectLight1 = new THREE.RectAreaLight("#81C8F2", 36, 19.1, 0.2)
+      const rectLight1 = new THREE.RectAreaLight("#81C8F2", 20, 19.1, 0.2)
       rectLight1.position.set(0, 8.066, -9.8)
       rectLight1.rotation.set(
           THREE.MathUtils.degToRad(90),
@@ -692,19 +705,19 @@ class Sketch extends kokomi.Base {
       )
       this.scene.add(rectLight1)
 
-      const rectLight2 = new THREE.RectAreaLight("#81C8F2", 1, 19.1, 0.2); // Можете изменить параметры, такие как цвет и интенсивность
-      rectLight2.position.set(0, 7.9, -9); // Смещаем позицию по оси X на 2 единицы
-      rectLight2.rotation.set(
-          THREE.MathUtils.degToRad(90),
-          THREE.MathUtils.degToRad(180),
-          0
-      );
-      this.scene.add(rectLight2);
+      // const rectLight2 = new THREE.RectAreaLight("#81C8F2", 1, 19.1, 0.2); // Можете изменить параметры, такие как цвет и интенсивность
+      // rectLight2.position.set(0, 7.9, -9); // Смещаем позицию по оси X на 2 единицы
+      // rectLight2.rotation.set(
+      //     THREE.MathUtils.degToRad(90),
+      //     THREE.MathUtils.degToRad(180),
+      //     0
+      // );
+      // this.scene.add(rectLight2);
 
       RectAreaLightUniformsLib.init()
 
 
-      const rectLight1Helper = new kokomi.RectAreaLightHelper(rectLight2)
+      const rectLight1Helper = new kokomi.RectAreaLightHelper(rectLight1)
 
       this.scene.add(rectLight1Helper)
 
@@ -777,18 +790,6 @@ class Sketch extends kokomi.Base {
         const floor = root.getObjectByName("floor");
         root.remove(floor);
 
-        const uNeon = root.getObjectByName("u-neon");
-        root.remove(uNeon);
-
-        const cable = root.getObjectByName("cable");
-        root.remove(cable);
-
-        const power = root.getObjectByName("power");
-        root.remove(power);
-
-        const stand = root.getObjectByName("stand");
-        root.remove(stand);
-
         this.scene.add(root);
       })
 
@@ -811,12 +812,12 @@ class Sketch extends kokomi.Base {
       // flicker
       const turnOffLight = () => {
         rectLight1.color.copy(new THREE.Color("#000"))
-        rectLight2.color.copy(new THREE.Color("#000"))
+      //  rectLight2.color.copy(new THREE.Color("#000"))
       }
 
       const turnOnLight = () => {
         rectLight1.color.copy(new THREE.Color("#81C8F2"))
-        rectLight2.color.copy(new THREE.Color("#81C8F2"))
+     //   rectLight2.color.copy(new THREE.Color("#81C8F2"))
       }
 
       let flickerTimer = null;
@@ -1007,8 +1008,6 @@ onUnmounted(() => {
 
 <style>
 
-
-
 #sketch {
   width: 100vw;
   height: 100vh;
@@ -1024,4 +1023,17 @@ onUnmounted(() => {
   height: 100%;
 }
 
+.explode-enter-active, .explode-leave-active {
+  transition: transform 0.1s, opacity 0.3s; /* Уменьшено время перехода */
+}
+
+.explode-enter-from {
+  opacity: 0;
+  transform: scale(0);
+}
+
+.explode-leave-to {
+  opacity: 0;
+  transform: scale(1.5) rotate(720deg);
+}
 </style>

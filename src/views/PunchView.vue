@@ -5,6 +5,9 @@ import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 
 
+import grid from '@/assets/textures/grid.png';
+import colors from '@/assets/textures/colors.png';
+
 const AmmoLib = inject('AmmoLib');
 let Ammo;
 const target = ref();
@@ -113,7 +116,7 @@ function createObjects() {
    const ground = createParalellepiped(40, 1, 40, 0, pos, quat, new THREE.MeshPhongMaterial({color: 0xFFFFFF}));
   ground.castShadow = true;
   ground.receiveShadow = true;
-  textureLoader.load('textures/grid.png', function (texture) {
+  textureLoader.load(grid, function (texture) {
 
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.wrapS = THREE.RepeatWrapping;
@@ -193,9 +196,9 @@ function createObjects() {
   ropeSoftBody.setActivationState( 4 );
 
   //
-  // const boxGeometry = new THREE.BoxGeometry(1, 1, 5, 4, 4, 20);
-  // boxGeometry.translate(-5, 5, 0);
-  // createSoftVolume(boxGeometry, volumeMass, 120);
+  const boxGeometry = new THREE.BoxGeometry(1, 1, 5, 4, 4, 20);
+  boxGeometry.translate(-5, 5, 0);
+  createSoftVolume(boxGeometry, volumeMass, 120);
 
   // Создание невидимого якоря
   const anchorPos = new THREE.Vector3(ropePos.x, ropePos.y, ropePos.z);
@@ -343,7 +346,7 @@ function createSoftVolume(bufferGeom, mass, pressure) {
   volume.frustumCulled = false;
   scene.add(volume);
 
-  textureLoader.load('textures/colors.png', function (texture) {
+  textureLoader.load(colors, function (texture) {
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
     texture.repeat.set(2, 2);
