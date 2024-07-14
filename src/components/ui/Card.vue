@@ -1,12 +1,16 @@
 <template>
   <div class="card-overlay">
-    <div class="card" :style="cardStyles">
-      <div class="card-header">
-        <h2 class="card-title">{{ title }}</h2>
-        <button v-if="showCloseButton" class="close-btn" @click="$emit('close')">✖</button>
-      </div>
-      <div class="card-content">
-        <slot></slot>
+    <div class="card-container">
+      <button v-if="showCloseButton" class="close-btn" @click="$emit('close')">
+        <img src="@/assets/images/icon_close.svg" alt="Close" class="close-icon"/>
+      </button>
+      <div class="card" :style="cardStyles">
+        <div class="card-header">
+          <h2 class="card-title">{{ title }}</h2>
+        </div>
+        <div class="card-content">
+          <slot></slot>
+        </div>
       </div>
     </div>
   </div>
@@ -50,7 +54,7 @@ const props = defineProps({
   },
   height: {
     type: String,
-    default: '80vh'
+    default: '75vh'
   }
 });
 
@@ -63,10 +67,9 @@ const cardStyles = computed(() => ({
   margin: props.margin,
   height: props.height,
   overflowY: 'auto',
-  '--scrollbar-bg': props.bgColor, // добавляем CSS переменную для фона скролла
-  '--scrollbar-thin': props.borderColor // добавляем CSS переменную для фона скролла
+  '--scrollbar-bg': props.bgColor,
+  '--scrollbar-thin': props.borderColor
 }));
-
 </script>
 
 <style scoped>
@@ -87,20 +90,25 @@ const cardStyles = computed(() => ({
   justify-content: center;
   align-items: center;
   z-index: 1000;
-  overflow: hidden; /* убираем скролл для overlay */
+  overflow: hidden;
+}
+
+.card-container {
+  position: relative;
+  width: 90%;
+  max-width: 1024px;
+  margin: 0 auto;
+  transform: translateY(-2vw);
 }
 
 .card {
   display: flex;
   flex-direction: column;
-  width: 90%;
-  max-width: 1024px;
-  margin: 0 auto;
   border: 1px solid var(--gray1);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
   background: var(--white);
   box-sizing: border-box;
-  overflow-y: auto;
+  overflow: auto;
   --scrollbar-bg: var(--white);
   --scrollbar-thin: var(--gray2);
 }
@@ -122,13 +130,26 @@ const cardStyles = computed(() => ({
 }
 
 .close-btn {
-  color: white;
-  position: absolute;
-  right: 1rem;
-  background: none;
+  background: var(--pink);
   border: none;
-  font-size: 1.5rem;
   cursor: pointer;
+  position: absolute;
+
+  right: 0; /* Позиционируем правее границы */
+  z-index: 1100; /* Устанавливаем z-index выше, чем у родительских элементов */
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+}
+
+.close-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  object-fit: cover;
 }
 
 .card-content {
@@ -136,25 +157,23 @@ const cardStyles = computed(() => ({
   padding: 1rem;
 }
 
-
 /* Custom scrollbar styles */
 .card::-webkit-scrollbar {
   width: 12px;
 }
 
 .card::-webkit-scrollbar-track {
-  background: var(--scrollbar-thin); /* Используем CSS переменную */
+  background: var(--scrollbar-thin);
 }
 
 .card::-webkit-scrollbar-thumb {
   background-color: black;
   border-radius: 6px;
-  border: 1px solid var(--scrollbar-thin); /* Используем CSS переменную */
+  border: 1px solid var(--scrollbar-thin);
 }
 
 .card {
   scrollbar-width: thin;
-  scrollbar-color: var(--scrollbar-bg) var(--scrollbar-thin); /* Используем CSS переменную */
+  scrollbar-color: var(--scrollbar-bg) var(--scrollbar-thin);
 }
-
 </style>

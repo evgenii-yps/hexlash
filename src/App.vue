@@ -1,21 +1,21 @@
 <template>
 
-    <RouterView/>
+  <RouterView/>
 
-    <header class="header">
-      <div class="header-content">
-        <Logo/>
-        <div class="balance">
-          99.550$
-        </div>
+  <header class="header">
+    <div class="header-content">
+      <Logo/>
+      <div class="balance">
+        113$
       </div>
-    </header>
+    </div>
+  </header>
 
-    <footer>
-      <transition name="slide-up-down">
-        <BottomMenu v-if="showBottomMenu"/>
-      </transition>
-    </footer>
+  <footer>
+    <transition name="slide-up-down">
+      <BottomMenu v-if="showBottomMenu"/>
+    </transition>
+  </footer>
 
 </template>
 
@@ -46,8 +46,6 @@ const showBottomMenu = computed(() => {
   font-style: normal;
 }
 
-.wrapper {
-}
 
 .header {
   width: 100%;
@@ -57,16 +55,20 @@ const showBottomMenu = computed(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 20px; /* Отступы для внутреннего выравнивания */
 }
 
 .balance {
-  margin-left: auto; /* Отодвигаем блок с балансом вправо */
-  margin-top: 1vh;
-  font-size: 3em;
-color: white;
-  position: relative;
+  display: flex;
+  justify-content: space-between;
+
+  font-size: 2.5em;
+  color: white;
   font-family: 'AnonymousBalance', sans-serif;
+  position: absolute;
+  top: 0;
+  right: 20px;
+  margin-top: 20px;
+
 
 }
 

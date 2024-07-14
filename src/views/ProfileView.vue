@@ -17,6 +17,8 @@
       </div>
 
     </div>
+
+
   </div>
 </template>
 
@@ -25,6 +27,7 @@ import {ref} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
 import Achievement from '@/components//fragments/Achievement.vue';
 import defaultAvatarImg from '@/assets/images/default_avatar.svg';
+import Card from "@/components/ui/Card.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -72,7 +75,7 @@ const manageAccount = () => {
   position: fixed;
   width: 100%;
   height: 100%;
-  background-size: cover;
+  background-size: cover !important;
   overflow: hidden;
 }
 
