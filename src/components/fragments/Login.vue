@@ -6,9 +6,9 @@
           v-model="login"
           labelColor="var(--white)"
           labelSize="10px"
-          inputBgColor="var(--white)"
+          inputBgColor="var(--blackOpacity)"
           inputBorderColor="var(--gray1)"
-          inputTextColor="var(--dark)"
+          inputTextColor="var(--white)"
           padding="0.8rem"
           marginBottom="0.5rem"
       />
@@ -18,9 +18,9 @@
           v-model="password"
           labelColor="var(--white)"
           labelSize="10px"
-          inputBgColor="var(--white)"
+          inputBgColor="var(--blackOpacity)"
           inputBorderColor="var(--gray1)"
-          inputTextColor="var(--dark)"
+          inputTextColor="var(--white)"
           padding="0.8rem"
           marginBottom="1.3rem"
       />
@@ -140,11 +140,4 @@ form {
 }
 
 
-.fade-enter-active, .fade-leave-active {
-  transition: opacity 0.5s;
-}
-
-.fade-enter, .fade-leave-to {
-  opacity: 0;
-}
 </style>

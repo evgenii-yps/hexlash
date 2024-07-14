@@ -19,7 +19,7 @@ import { ref } from 'vue'
 
 const menuItems = ref([
   { icon: 'icon-arena', text: 'Арена', route: '/arena' },
-  { icon: 'icon-trainings', text: 'Тренеровки', route: '/trainings' },
+  { icon: 'icon-trainings', text: 'Тренировки', route: '/training' },
   { icon: 'icon-ratings', text: 'Рейтинги', route: '/ratings' },
   { icon: 'icon-profile', text: 'Профиль', route: '/profile' },
 ])
@@ -39,7 +39,7 @@ const menuItems = ref([
   display: flex;
   flex-direction: column;
   align-items: center;
-  background-color: var(--dark);
+  background-color: var(--blackOpacity80);
   text-decoration: none;
   transition: color 0.3s ease;
   min-width: 10vw; /* Минимальная ширина карточки */
@@ -52,6 +52,7 @@ const menuItems = ref([
 
 .menu-item:hover, .menu-item.active {
   background-color: var(--pink); /* Розовый цвет при наведении и активном элементе */
+  opacity: 1;
 }
 
 .menu-item .menu-text {

@@ -1,10 +1,15 @@
 <template>
-  <div class="wrapper">
-    <header>
-      <Logo/>
-    </header>
 
     <RouterView/>
+
+    <header class="header">
+      <div class="header-content">
+        <Logo/>
+        <div class="balance">
+          99.550$
+        </div>
+      </div>
+    </header>
 
     <footer>
       <transition name="slide-up-down">
@@ -12,12 +17,10 @@
       </transition>
     </footer>
 
-  </div>
-
 </template>
 
 <script setup>
-import {RouterLink, RouterView, useRoute} from 'vue-router'
+import {RouterView, useRoute} from 'vue-router'
 import {computed} from "vue";
 import BottomMenu from "@/components/menu/BottomMenu.vue";
 import Logo from "@/components/Logo.vue";
@@ -28,7 +31,7 @@ const route = useRoute()
 // Определяем, нужно ли показывать BottomMenu
 const showBottomMenu = computed(() => {
   // Список маршрутов, на которых BottomMenu должен отображаться
-  const includedRoutes = ['/arena', '/trainings', '/ratings', '/profile']
+  const includedRoutes = ['/arena', '/training', '/ratings', '/profile']
   return includedRoutes.includes(route.path)
 })
 
@@ -36,8 +39,35 @@ const showBottomMenu = computed(() => {
 
 <style scoped>
 
+@font-face {
+  font-family: 'AnonymousBalance';
+  src: url('@/assets/fonts/AnonymousBalance.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
 .wrapper {
+}
+
+.header {
+  width: 100%;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px; /* Отступы для внутреннего выравнивания */
+}
+
+.balance {
+  margin-left: auto; /* Отодвигаем блок с балансом вправо */
+  margin-top: 1vh;
+  font-size: 3em;
+color: white;
   position: relative;
+  font-family: 'AnonymousBalance', sans-serif;
+
 }
 
 /* Анимация выезжания вверх и вниз */
@@ -60,4 +90,5 @@ const showBottomMenu = computed(() => {
 .slide-up-down-leave-to {
   transform: translateY(100%);
 }
+
 </style>

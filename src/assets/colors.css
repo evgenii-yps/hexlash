@@ -9,4 +9,7 @@
     --pinkDark: #a50344;
     --overlay_20: 'rgba(86, 86, 86, 0.2)';
     --overlay_80: 'rgba(9, 9, 9, 0.8)';
+    --overlay_90: 'rgba(255, 255, 255, 0.9)';
+    --blackOpacity: #0000005c;
+    --blackOpacity80: #000000dd;
 }

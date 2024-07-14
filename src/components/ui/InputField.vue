@@ -8,6 +8,7 @@
         @input="$emit('update:modelValue', $event.target.value)"
         class="input-element"
         :style="inputStyles"
+        autocapitalize="none"
     />
   </div>
 </template>
@@ -92,9 +93,28 @@ const inputStyles = computed(() => ({
   width: 100%;
   box-sizing: border-box;
   outline: none; /* Убираем синюю рамку */
+  caret-color: white;
 }
 
 .input-element:focus {
   border-color: var(--pink);
 }
+
+
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+  border: 1px solid var(--gray1);
+  -webkit-text-fill-color: white;
+  -webkit-box-shadow: 0 0 0px 1000px var(--blackOpacity) inset;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
 </style>

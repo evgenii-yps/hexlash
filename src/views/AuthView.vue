@@ -6,6 +6,8 @@
       <transition name="explode" mode="out-in">
         <component :is="currentComponent" :key="currentComponentKey" />
       </transition>
+
+      <p class="beta-text">{{ version }}</p>
     </div>
 
 
@@ -19,8 +21,8 @@ import Login from "@/components/fragments/Login.vue";
 import Invite from "@/components/fragments/Invite.vue";
 
 const route = useRoute();
-const currentComponent = ref(null);
-const currentComponentKey = ref(route.path);
+const currentComponent = shallowRef(null);
+const currentComponentKey = shallowRef(route.path);
 
 const setCurrentComponent = () => {
   if (route.path === '/auth/login') {
@@ -36,6 +38,9 @@ watchEffect(() => {
   setCurrentComponent();
 });
 
+const version = __APP_VERSION__;
+
+
 import * as THREE from 'three'
 import * as kokomi from 'kokomi.js'
 import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader'
@@ -43,7 +48,7 @@ import {BloomEffect, EffectComposer, EffectPass, RenderPass, FXAAEffect} from 'p
 import {RectAreaLightUniformsLib} from 'three/addons/lights/RectAreaLightUniformsLib.js'
 import {Howl, Howler} from 'howler'
 import gsap from 'gsap'
-import {onMounted, onUnmounted, ref, watchEffect} from "vue";
+import {onMounted, onUnmounted, ref, shallowRef, watchEffect} from "vue";
 
 import brickNormal from '@/assets/textures/brick-normal2.jpg';
 import floorNormal from '@/assets/textures/asphalt-pbr01/normal.png';
@@ -1035,5 +1040,13 @@ onUnmounted(() => {
 .explode-leave-to {
   opacity: 0;
   transform: scale(1.5) rotate(720deg);
+}
+
+.beta-text {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
 }
 </style>

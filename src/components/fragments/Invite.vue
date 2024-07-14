@@ -6,13 +6,25 @@
           v-model="inviteCode"
           labelColor="var(--white)"
           labelSize="10px"
-          inputBgColor="var(--white)"
+          inputBgColor="var(--blackOpacity)"
           inputBorderColor="var(--gray1)"
-          inputTextColor="var(--dark)"
+          inputTextColor="var(--white)"
           padding="0.8rem"
           marginBottom="1.3rem"
       />
+
+      <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
+
+      <CircularLoader style="scale: 0.3"
+                      v-if="loading"
+                      :size="5"
+                      :speed="2"
+                      :opacity="80"
+
+      />
+
       <ButtonRect
+          v-if="!loading"
           type="submit"
           bgColor="--pink"
           textColor="--white"
@@ -26,11 +38,13 @@
         Join Club
       </ButtonRect>
 
-      <div class="login">
-        Already have an account? <ButtonText @click="handleLogin"
-                                             textColor="var(--pink)"
-                                             text-size="1.5em"
-      >Login</ButtonText>
+      <div class="login" v-if="!loading">
+        Already have an account?
+        <ButtonText @click="handleLogin"
+                    textColor="var(--pink)"
+                    text-size="1.5em"
+        >Login
+        </ButtonText>
       </div>
 
     </form>
@@ -38,18 +52,39 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import {ref} from 'vue';
 import ButtonRect from "@/components/ui/ButtonRect.vue";
 import InputField from "@/components/ui/InputField.vue";
 import ButtonText from "@/components/ui/ButtonText.vue";
-import { useRouter } from 'vue-router';
+import {useRouter} from 'vue-router';
+import CircularLoader from "@/components/ui/CircularLoader.vue";
 
 const inviteCode = ref('');
+const loading = ref(false);
+const errorMessage = ref('');
+
 const router = useRouter();
 
-const handleInviteSubmit = () => {
-  console.log('Invite Code:', inviteCode.value);
+
+const handleInviteSubmit = async () => {
+  loading.value = true;
+  errorMessage.value = '';
+  try {
+    // Imitate API call
+    await new Promise((resolve, reject) => setTimeout(resolve, 2000));
+    if (inviteCode.value === 'admin') {
+      console.log('Login successful');
+      // Redirect to another page or perform any action after successful login
+    } else {
+      throw new Error('Invalid invite');
+    }
+  } catch (error) {
+    errorMessage.value = error.message;
+  } finally {
+    loading.value = false;
+  }
 };
+
 
 const handleLogin = () => {
   router.push('/auth/login');
@@ -61,11 +96,12 @@ const handleLogin = () => {
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%,70%);
+  transform: translate(-50%, 70%);
   display: flex;
   flex-direction: column;
   align-items: center;
 }
+
 form {
   display: flex;
   flex-direction: column;
@@ -80,4 +116,13 @@ form {
   align-self: flex-end;
   display: block;
 }
+
+
+.error-message {
+  color: var(--pinkDark);
+  font-size: 0.8rem;
+  margin-bottom: 0.5rem;
+}
+
+
 </style>
