@@ -8,12 +8,15 @@ import {version} from "./package.json";
 export default defineConfig({
     plugins: [vue()],
     define: {
-        __APP_VERSION__: JSON.stringify(version)
+        __APP_VERSION__: JSON.stringify(version),
     },
     assetsInclude: ['**/*.glb'],
     resolve: {
         alias: {
             '@': fileURLToPath(new URL('./src', import.meta.url))
         }
+    },
+    build: {
+        sourcemap: true
     }
 })

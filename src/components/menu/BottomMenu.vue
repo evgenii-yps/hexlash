@@ -6,6 +6,7 @@
         :to="item.route"
         class="menu-item"
         active-class="active"
+        @click="playSound"
     >
       <div :class="['menu-icon', item.icon]"></div>
       <div class="menu-text">{{ item.text }}</div>
@@ -16,6 +17,17 @@
 <script setup>
 
 import { ref } from 'vue'
+import { Howl } from 'howler'
+
+import clickSound from '@/assets/sound/punch_air.mp3'
+
+const sound = new Howl({
+  src: [clickSound]
+})
+
+const playSound = () => {
+  sound.play();
+}
 
 const menuItems = ref([
   { icon: 'icon-arena', text: 'Арена', route: '/arena' },

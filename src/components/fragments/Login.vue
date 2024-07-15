@@ -25,7 +25,7 @@
           marginBottom="1.3rem"
       />
 
-      <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
+      <div v-if="authError" class="error-message">Wrong login or password<!--{{ authError }}--></div>
 
       <CircularLoader style="scale: 0.3"
                       v-if="loading"
@@ -50,56 +50,58 @@
         Login
       </ButtonRect>
 
-
-      <div class="invite" v-if="!loading">
-        Do you have
-        <ButtonText @click="handleInvite"
-                    textColor="var(--pink)"
-                    text-size="1.5em"
-        >invite
-        </ButtonText>
-        ?
-      </div>
-
     </form>
+
+    <div class="invite" v-if="!loading">
+      Do you have
+      <ButtonText @click="handleInvite"
+                  textColor="var(--pink)"
+                  text-size="1.5em"
+      >invite
+      </ButtonText>
+      ?
+    </div>
+
+
   </div>
 </template>
 
 <script setup>
-import {ref} from 'vue';
+import {computed, ref} from 'vue';
 import ButtonRect from "@/components/ui/ButtonRect.vue";
 import InputField from "@/components/ui/InputField.vue";
 import ButtonText from "@/components/ui/ButtonText.vue";
 import {useRouter} from 'vue-router';
 import CircularLoader from "@/components/ui/CircularLoader.vue";
+import store from "@/core/state/store.js";
+
 
 const router = useRouter();
 
 const login = ref('');
 const password = ref('');
 const loading = ref(false);
-const errorMessage = ref('');
+const authError = computed(() => store.getters['auth/getAuthError']); // Получаем ошибку из нового модуля auth
+
 
 const handleSubmit = async () => {
-  loading.value = true;
-  errorMessage.value = '';
-  try {
-    // Imitate API call
-    await new Promise((resolve, reject) => setTimeout(resolve, 2000));
 
-    // Replace the below line with actual login logic
-    if (login.value === 'admin' && password.value === 'admin') {
-      console.log('Login successful');
-      // Redirect to another page or perform any action after successful login
-    } else {
-      throw new Error('Invalid login or password');
+  loading.value = true;
+
+  store.commit('auth/setAuthError', null);
+
+  try {
+    const credentials = {login: login.value, password: password.value};
+    await store.dispatch('auth/login', credentials); // Используем action для логина
+    if (!store.getters['auth/getAuthError']) {
+      await router.push('/profile');
     }
-  } catch (error) {
-    errorMessage.value = error.message;
   } finally {
     loading.value = false;
   }
+
 };
+
 
 const handleInvite = () => {
   router.push('/auth/invite');

@@ -10,12 +10,15 @@
   },
   "dependencies": {
     "ammo.js": "github:kripken/ammo.js",
+    "axios": "^1.7.2",
     "howler": "^2.2.4",
+    "idb": "^8.0.0",
     "kokomi.js": "^1.10.0",
     "postprocessing": "^6.35.6",
     "three": "^0.166.1",
     "vue": "^3.4.29",
-    "vue-router": "^4.3.3"
+    "vue-router": "^4.3.3",
+    "vuex": "^4.0.2"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.5",
