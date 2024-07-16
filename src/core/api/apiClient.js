@@ -12,17 +12,9 @@ const apiClient = axios.create({
 // Добавление interceptor для обработки запросов
 apiClient.interceptors.request.use(
     (config) => {
-        // Проверка свойства authRequired в конфигурации запроса
-        if (config.authRequired) {
-            const token = localStorage.getItem('token');
-            if (token) {
-                config.headers.Authorization = `Bearer ${token}`;
-            }
-        }
         return config;
     },
     (error) => {
-        // Обработка ошибки запроса
         return Promise.reject(error);
     }
 );

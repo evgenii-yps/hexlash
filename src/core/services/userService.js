@@ -1,6 +1,8 @@
 import apiClient from '@/core/api/apiClient.js';
-import { getFromDB, saveToDB } from '@/core/database/idb.js';
+import {clearDatabase, getFromDB, saveToDB} from '@/core/database/idb.js';
 import UserModel from "@/core/models/user.js";
+import {jwtDecode} from "jwt-decode";
+import CurrentUserModel from "@/core/models/currentUser.js";
 
 
 export const getCurrentUserDataFromLocalDB = async () => {
@@ -8,8 +10,7 @@ export const getCurrentUserDataFromLocalDB = async () => {
     return data ? new UserModel(data) : null;
 };
 
-export const saveCurrentUserDataToLocalDB = async (userData) => {
-    const userModel = new UserModel(userData);
+export const saveCurrentUserDataToLocalDB = async (userModel) => {
     await saveToDB('currentUser', { ...userModel, id: 'currentUser' });
 };
 
@@ -35,14 +36,25 @@ export const login = async (credentials) => {
     try {
         const response = await apiClient.post('/auth/login', credentials);
 
-        if (!response.data.success) {
-            throw new Error(response.data.message || 'Failed to login');
+        const { jwtToken } = response.data;
+
+        // Распарсить токен и извлечь ID пользователя
+        const decodedToken = jwtDecode(jwtToken);
+        const userId = decodedToken.sub;
+
+        // Получите данные текущего пользователя
+        const userData = await fetchMeData(jwtToken);
+
+        // Преобразуем данные пользователя в модель и добавляем токен
+        const userModel = new CurrentUserModel({ ...userData, jwtToken });
+
+        // Проверяем пользователя в базе данных
+        const existingUser = await getFromDB('currentUser', userId);
+
+        if (existingUser && existingUser.id !== userModel.id) {
+            // Удаляем данные старого пользователя, если он отличается от текущего
+            await clearDatabase();
         }
-
-        const { token, user } = response.data;
-
-        // Преобразуем данные пользователя в модель
-        const userModel = new UserModel(user);
 
         // Сохраняем данные пользователя в локальную базу данных
         await saveCurrentUserDataToLocalDB(userModel);
@@ -54,15 +66,20 @@ export const login = async (credentials) => {
     }
 };
 
-// Взять мои данные
-export const fetchMeData = async () => {
+// Функция для получения данных текущего пользователя
+export const fetchMeData = async (token) => {
     try {
-        const response = await apiClient.get('/users/me', { authRequired: true });
+        const response = await apiClient.get('/users/me', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
         return response.data;
     } catch (error) {
         throw new Error('Failed to fetch user data from server');
     }
 };
+
 
 // Взять пользователя по ID
 export const fetchUserById = async (id) => {

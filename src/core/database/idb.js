@@ -48,3 +48,17 @@ export const deleteFromDB = async (storeName, id) => {
     const db = await initDB();
     await db.delete(storeName, id);
 };
+
+// Функция для очистки базы данных
+export const clearDatabase = async () => {
+    const db = await initDB();
+    const tx = db.transaction(['currentUser', 'users', 'wallets', 'params', 'clubs'], 'readwrite');
+    await Promise.all([
+        tx.objectStore('currentUser').clear(),
+        tx.objectStore('users').clear(),
+        tx.objectStore('wallets').clear(),
+        tx.objectStore('params').clear(),
+        tx.objectStore('clubs').clear()
+    ]);
+    await tx.done;
+};

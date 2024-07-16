@@ -71,7 +71,7 @@ router.beforeEach((to, from, next) => {
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth !== false);
 
   // const isAuthenticated = store.getters['user/getToken'];
-  const isAuthenticated = false
+  const isAuthenticated = true
 
   if (to.name === 'Home') {
     if (isAuthenticated) {

@@ -2,7 +2,7 @@ import WalletModel from './wallet.js';
 import ParamsModel from './params.js';
 import ClubModel from './club.js';
 
-export default class MasterModel {
+export default class CurrentUserModel {
     constructor({
                     id,
                     inviteId,
