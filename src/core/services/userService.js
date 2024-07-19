@@ -2,7 +2,7 @@ import apiClient from '@/core/api/apiClient.js';
 import {clearDatabase, getFromDB, saveToDB} from '@/core/database/idb.js';
 import UserModel from "@/core/models/user.js";
 import {jwtDecode} from "jwt-decode";
-import CurrentUserModel from "@/core/models/currentUser.js";
+import {CurrentUserModel} from "@/core/models/currentUser.js";
 
 
 export const getCurrentUserDataFromLocalDB = async () => {

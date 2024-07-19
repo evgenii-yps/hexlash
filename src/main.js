@@ -2,13 +2,45 @@ import './assets/main.css'
 import './assets/colors.css'
 
 import { createApp } from 'vue'
-import App from './App.vue'
 import router from './router'
 
 
-const app = createApp(App)
+// Components
+import App from './App.vue'
 
-app.provide('AmmoLib', Ammo());
-app.use(router)
-app.mount('#app')
 
+// Vuetify
+import { createVuetify } from 'vuetify'
+import {
+    VTooltip,
+    VBtn,
+    VDialog,
+    VCard,
+    VCardTitle,
+    VCardText,
+    VCardActions,
+    VSpacer,
+    VIcon,
+    VImg
+} from 'vuetify/components';
+
+const vuetify = createVuetify({
+    components: {
+        VTooltip,
+        VBtn,
+        VDialog,
+        VCard,
+        VCardTitle,
+        VCardText,
+        VCardActions,
+        VSpacer,
+        VIcon,
+        VImg
+    },
+});
+
+createApp(App)
+    .provide('AmmoLib', Ammo())
+    .use(vuetify)
+    .use(router)
+    .mount('#app')

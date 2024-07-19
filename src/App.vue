@@ -1,29 +1,34 @@
 <template>
-
-  <RouterView/>
-
-  <header class="header">
-    <div class="header-content">
-      <Logo/>
-      <div class="balance">
-        113$
+  <div class="app-container">
+    <header class="header">
+      <div class="header-content">
+        <Logo/>
+        <div class="balance">
+          113$
+        </div>
       </div>
-    </div>
-  </header>
+    </header>
 
-  <footer>
-    <transition name="slide-up-down">
-      <BottomMenu v-if="showBottomMenu"/>
-    </transition>
-  </footer>
+    <main class="content">
+      <RouterView/>
+    </main>
 
+    <footer>
+      <transition name="slide-up-down">
+        <BottomMenu v-if="showBottomMenu"/>
+      </transition>
+    </footer>
+  </div>
 </template>
 
 <script setup>
 import {RouterView, useRoute} from 'vue-router'
-import {computed} from "vue";
+import {computed, onMounted} from "vue";
 import BottomMenu from "@/components/menu/BottomMenu.vue";
 import Logo from "@/components/Logo.vue";
+import store from "@/core/state/store.js";
+import {CurrentUserModel} from "@/core/models/currentUser.js";
+import {initializeAchievements} from "@/core/services/achievementsService.js";
 
 // Получаем текущий маршрут
 const route = useRoute()
@@ -31,9 +36,18 @@ const route = useRoute()
 // Определяем, нужно ли показывать BottomMenu
 const showBottomMenu = computed(() => {
   // Список маршрутов, на которых BottomMenu должен отображаться
-  const includedRoutes = ['/arena', '/training', '/ratings', '/profile']
+  const includedRoutes = ['/arena', '/training', '/ratings',
+    '/profile', '/profile/wallet', '/profile/balance', '/profile/account']
   return includedRoutes.includes(route.path)
 })
+
+
+onMounted(() => {
+  // TODO TEMP
+  const userModel = new CurrentUserModel();
+  userModel.achievements = initializeAchievements();
+  store.commit('user/setUser', userModel);
+});
 
 </script>
 
@@ -46,9 +60,16 @@ const showBottomMenu = computed(() => {
   font-style: normal;
 }
 
+.content {
+  position: relative;
+  overflow-y: auto;
+  height: 100vh;
+}
 
 .header {
-  width: 100%;
+  width: 100vw;
+  position: relative;
+  z-index: 2;
 }
 
 .header-content {
@@ -58,9 +79,6 @@ const showBottomMenu = computed(() => {
 }
 
 .balance {
-  display: flex;
-  justify-content: space-between;
-
   font-size: 2.5em;
   color: white;
   font-family: 'AnonymousBalance', sans-serif;
@@ -68,8 +86,6 @@ const showBottomMenu = computed(() => {
   top: 0;
   right: 20px;
   margin-top: 20px;
-
-
 }
 
 /* Анимация выезжания вверх и вниз */

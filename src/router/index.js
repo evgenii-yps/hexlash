@@ -26,7 +26,6 @@ const router = createRouter({
       component: () => import("/src/views/PageView.vue"),
       meta: {requiresAuth: false} // не требует авторизации
     },
-
     {
       path: '/arena',
       name: 'Arena',
@@ -35,6 +34,21 @@ const router = createRouter({
     {
       path: '/profile',
       name: 'Profile',
+      component: () => import("/src/views/ProfileView.vue")
+    },
+    {
+      path: '/profile/balance',
+      name: 'Balance',
+      component: () => import("/src/views/ProfileView.vue")
+    },
+    {
+      path: '/profile/wallet',
+      name: 'Wallet',
+      component: () => import("/src/views/ProfileView.vue")
+    },
+    {
+      path: '/profile/account',
+      name: 'Account',
       component: () => import("/src/views/ProfileView.vue")
     },
     {
