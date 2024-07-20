@@ -3,6 +3,8 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-bg) var(--scrollbar-thin);
 }
 
 /* Задаем шрифт Roboto и его вес для body */
@@ -10,4 +12,19 @@ body {
     font-family: 'Roboto', sans-serif;
     font-weight: 400;
     background-color: #101010;
+}
+
+/* Стили для Webkit-браузеров (Chrome, Safari) */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--scrollbar-thin);
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: black;
+    border-radius: 2px;
+    border: 1px solid var(--scrollbar-thin);
 }

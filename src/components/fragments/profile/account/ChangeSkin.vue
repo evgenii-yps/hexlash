@@ -1,7 +1,6 @@
 <template>
-  <div class="skin-selector-container horizontal-scroll">
-    <v-row class="horizontal-scroll">
-      <v-col
+  <div class="horizontal-scroll">
+      <div
           v-for="(skin, index) in skins"
           :key="index"
           @click="selectSkin(skin)"
@@ -9,8 +8,7 @@
           class="skin-item"
       >
         <v-img :src="skin.image" aspect-ratio="1"></v-img>
-      </v-col>
-    </v-row>
+      </div>
 
     <v-dialog v-model="dialog" max-width="500">
       <v-card>
@@ -61,16 +59,28 @@ const confirmSelection = () => {
 
 
 .horizontal-scroll {
-  max-height: 400px;
-  overflow-x: auto;
+  overflow-x: scroll;
+  overflow-y: hidden;
   white-space: nowrap;
   padding: 1rem;
+
+  height: auto;
+  margin-bottom: 20px;
+  width: 100%;
+  -webkit-overflow-scrolling: touch;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
+
 
 .skin-item {
   cursor: pointer;
   margin-right: 1rem;
   transition: transform 0.2s;
+  display: inline-block;
+  width: 150px;
+  border: 1px solid white;
 }
 
 .skin-item:hover {

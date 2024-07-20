@@ -66,9 +66,7 @@ const cardStyles = computed(() => ({
   padding: props.padding,
   margin: props.margin,
   height: props.height,
-  overflowY: 'auto',
-  '--scrollbar-bg': props.bgColor,
-  '--scrollbar-thin': props.borderColor
+  overflowY: 'auto'
 }));
 </script>
 
@@ -157,23 +155,5 @@ const cardStyles = computed(() => ({
   padding: 1rem;
 }
 
-/* Custom scrollbar styles */
-.card::-webkit-scrollbar {
-  width: 12px;
-}
 
-.card::-webkit-scrollbar-track {
-  background: var(--scrollbar-thin);
-}
-
-.card::-webkit-scrollbar-thumb {
-  background-color: black;
-  border-radius: 6px;
-  border: 1px solid var(--scrollbar-thin);
-}
-
-.card {
-  scrollbar-width: thin;
-  scrollbar-color: var(--scrollbar-bg) var(--scrollbar-thin);
-}
 </style>
