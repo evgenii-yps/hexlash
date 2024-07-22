@@ -55,7 +55,7 @@ import ProfileStats from "@/components/fragments/profile/ProfileStats.vue";
 import ProfileAchievements from "@/components/fragments/profile/ProfileAchievements.vue";
 import ProfileButtons from "@/components/fragments/profile/ProfileButtons.vue";
 import ClubView from "@/views/ClubView.vue";
-import ProfileWallet from "@/components/fragments/profile/ProfileWallet.vue";
+import ProfileWallet from "@/components/fragments/profile/wallet/ProfileWallet.vue";
 import ProfileSettings from "@/components/fragments/profile/account/ProfileAccount.vue";
 import ProfileBalance from "@/components/fragments/profile/ProfileBalance.vue";
 
@@ -84,13 +84,7 @@ const saveName = () => {
 </script>
 
 <style scoped>
-.background {
-  position: fixed;
-  width: 100vw;
-  height: 100vh;
-  background-size: cover;
-  overflow: hidden;
-}
+
 
 .background-profile {
   background: url('@/assets/images/background_profile.webp') no-repeat center center;

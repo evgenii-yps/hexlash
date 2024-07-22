@@ -11,14 +11,7 @@ const route = useRoute();
 </script>
 
 <style scoped>
-.background {
-  position: fixed;
-  width: 100%;
-  height: 100%;
-  background-size: cover !important;
-  overflow: hidden;
 
-}
 
 .background_training {
   background: url('@/assets/images/background_trainings.webp') no-repeat center center;

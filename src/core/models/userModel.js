@@ -1,6 +1,6 @@
-import WalletModel from './wallet.js';
+import WalletModel from './walletModel.js';
 import ParamsModel from './params.js';
-import ClubModel from './club.js';
+import ClubModel from './clubModel.js';
 
 export default class UserModel {
     constructor({

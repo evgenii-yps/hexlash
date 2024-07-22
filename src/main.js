@@ -1,7 +1,7 @@
 import './assets/colors.css'
 import './assets/main.css'
 
-import { createApp } from 'vue'
+import {createApp} from 'vue'
 import router from './router'
 
 
@@ -10,7 +10,7 @@ import App from './App.vue'
 
 
 // Vuetify
-import { createVuetify } from 'vuetify'
+import {createVuetify} from 'vuetify'
 import {
     VTooltip,
     VBtn,
@@ -37,6 +37,35 @@ const vuetify = createVuetify({
         VIcon,
         VImg
     },
+    // theme: {
+    //     defaultTheme: 'light',
+    //     themes: {
+    //         light: {
+    //             dark: false,
+    //             colors: {
+    //                 primary: '#1976D2',
+    //                 secondary: '#424242',
+    //                 accent: '#82B1FF',
+    //                 error: '#FF5252',
+    //                 info: '#2196F3',
+    //                 success: '#4CAF50',
+    //                 warning: '#FFC107',
+    //             },
+    //         },
+    //         dark: {
+    //             dark: true,
+    //             colors: {
+    //                 primary: '#BB86FC',
+    //                 secondary: '#03DAC6',
+    //                 accent: '#3700B3',
+    //                 error: '#CF6679',
+    //                 info: '#2196F3',
+    //                 success: '#4CAF50',
+    //                 warning: '#FB8C00',
+    //             },
+    //         },
+    //     },
+    // }
 });
 
 createApp(App)

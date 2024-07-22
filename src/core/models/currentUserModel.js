@@ -1,11 +1,10 @@
-import WalletModel from './wallet.js';
+import WalletModel from './walletModel.js';
 import ParamsModel from './params.js';
-import ClubModel from './club.js';
-import {initializeAchievements} from "@/core/services/achievementsService.js";
+
 
 export class CurrentUserModel {
     constructor({
-                    id = null,
+                    id = "user123",
                     inviteId = null,
                     login = '',
                     name = 'Anonymous',
@@ -18,7 +17,7 @@ export class CurrentUserModel {
                     updatedAt = null,
                     wallet = {},
                     params = {},
-                    club = {},
+                    clubId = 1,
                     jwtToken = '',
                     stats = {},
                     achievements = []
@@ -38,8 +37,7 @@ export class CurrentUserModel {
         this.jwtToken = jwtToken;
         this.wallet = wallet ? new WalletModel(wallet) : null;
         this.params = params ? new ParamsModel(params) : null;
-        this.club = club ? new ClubModel(club) : null;
-
+        this.clubId = clubId;
         this.stats = stats ? new StatsModel(stats) : null;
         this.achievements = achievements.map(achievement => new AchievementModel(achievement));
 

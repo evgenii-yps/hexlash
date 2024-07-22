@@ -1,4 +1,4 @@
-import {CurrentUserModel, AchievementModel} from "@/core/models/currentUser.js";
+import {CurrentUserModel, AchievementModel} from "@/core/models/currentUserModel.js";
 
 export function initializeAchievements() {
     return [

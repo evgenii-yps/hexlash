@@ -27,7 +27,7 @@ import {computed, onMounted} from "vue";
 import BottomMenu from "@/components/menu/BottomMenu.vue";
 import Logo from "@/components/Logo.vue";
 import store from "@/core/state/store.js";
-import {CurrentUserModel} from "@/core/models/currentUser.js";
+import {CurrentUserModel} from "@/core/models/currentUserModel.js";
 import {initializeAchievements} from "@/core/services/achievementsService.js";
 
 // Получаем текущий маршрут

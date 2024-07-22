@@ -1,5 +1,5 @@
 import { login as loginService } from '@/core/services/userService';
-import UserModel from '@/core/models/user.js';
+import UserModel from '@/core/models/userModel.js';
 
 const state = {
     currentUser: null,

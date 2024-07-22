@@ -1,6 +1,6 @@
 import { getCurrentUserFromLocalAndAPI } from '@/core/services/userService';
-import UserModel from '@/core/models/user.js';
-import {CurrentUserModel} from "@/core/models/currentUser.js";
+import UserModel from '@/core/models/userModel.js';
+import {CurrentUserModel} from "@/core/models/currentUserModel.js";
 
 const state = {
     currentUser: null,

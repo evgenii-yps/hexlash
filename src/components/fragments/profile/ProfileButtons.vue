@@ -15,12 +15,12 @@
         variant="elevated"
         class="profile-btn"
         base-color="white"
-        @click="navigateTo('Club')"
+        @click="navigateToClub"
     >
       <template #prepend>
         <img src="@/assets/images/icon_pencil.svg" alt="Custom Icon" class="custom-icon"/>
       </template>
-      Управление клубом
+      {{ isOwner ? 'Управление клубом' : 'Мой клуб' }}
     </v-btn>
     <v-btn
         variant="elevated"
@@ -50,11 +50,35 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import {computed, onMounted, ref} from 'vue';
 import router from "@/router/index.js";
+import store from "@/core/state/store.js";
+
+const currentUser = computed(() => store.getters['user/getCurrentUser']);
+const clubId = computed(() => currentUser.value ? currentUser.value.clubId : null);
+
+const isOwner = ref(false);
+
+const checkIsOwner = async () => {
+  if (clubId.value) {
+    await store.dispatch('club/fetchClubById', clubId.value);
+    const club = store.getters['club/getSelectedClub'];
+    isOwner.value = club && String(club.owner) === String(currentUser.value.id);
+  }
+};
+
+onMounted(() => {
+  checkIsOwner();
+});
 
 const navigateTo = (route) => {
   router.push({ name: route });
+};
+
+const navigateToClub = () => {
+  if (clubId.value) {
+    router.push({ path: `/club/${clubId.value}` });
+  }
 };
 </script>
 

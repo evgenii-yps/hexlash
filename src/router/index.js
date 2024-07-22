@@ -67,6 +67,11 @@ const router = createRouter({
       component: () => import("/src/views/FightView.vue")
     },
     {
+      path: '/club/:id',
+      name: 'Club',
+      component: () => import("/src/views/ClubView.vue")
+    },
+    {
       path: '/training/punch',
       name: 'Punch',
       component: () => import("/src/views/PunchView.vue")

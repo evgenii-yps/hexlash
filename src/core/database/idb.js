@@ -3,30 +3,23 @@ import { openDB } from 'idb';
 const DB_NAME = 'fightClubDB';
 const DB_VERSION = 1;
 
-const initDB = async () => {
+let dbPromise;
 
-    const db = await openDB(DB_NAME, DB_VERSION, {
-        upgrade(db, oldVersion, newVersion, transaction) {
-            // Миграция с версии 0 до 1
-            if (oldVersion < 1) {
-                db.createObjectStore('currentUser', { keyPath: 'id' });
-                db.createObjectStore('users', { keyPath: 'id' });
-                db.createObjectStore('wallets', { keyPath: 'id' });
-                db.createObjectStore('params', { keyPath: 'id' });
-                db.createObjectStore('clubs', { keyPath: 'id' });
-            }
-            // Миграция с версии 1 до 2
-            // if (oldVersion < 2) {
-            //     const fightsStore = transaction.objectStore('fights');
-            //     fightsStore.createIndex('date', 'date');
-            //     // Другие изменения схемы данных
-            // }
-            // Добавляйте последующие миграции здесь
-        },
-
-    });
-
-    return db;
+const initDB = () => {
+    if (!dbPromise) {
+        dbPromise = openDB(DB_NAME, DB_VERSION, {
+            upgrade(db, oldVersion, newVersion, transaction) {
+                if (oldVersion < 1) {
+                    db.createObjectStore('currentUser', { keyPath: 'id' });
+                    db.createObjectStore('users', { keyPath: 'id' });
+                    db.createObjectStore('wallets', { keyPath: 'id' });
+                    db.createObjectStore('params', { keyPath: 'id' });
+                    db.createObjectStore('clubs', { keyPath: 'id' });
+                }
+            },
+        });
+    }
+    return dbPromise;
 };
 
 export const getFromDB = async (storeName, id) => {
@@ -49,7 +42,6 @@ export const deleteFromDB = async (storeName, id) => {
     await db.delete(storeName, id);
 };
 
-// Функция для очистки базы данных
 export const clearDatabase = async () => {
     const db = await initDB();
     const tx = db.transaction(['currentUser', 'users', 'wallets', 'params', 'clubs'], 'readwrite');
