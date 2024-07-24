@@ -81,21 +81,18 @@ const router = useRouter();
 const login = ref('');
 const password = ref('');
 const loading = ref(false);
-const authError = computed(() => store.getters['auth/getAuthError']); // Получаем ошибку из нового модуля auth
+const authError = computed(() => store.getters['master/getAuthError']); // Получаем ошибку из нового модуля auth
 
 
 const handleSubmit = async () => {
 
   loading.value = true;
 
-  store.commit('auth/setAuthError', null);
+  store.commit('master/setAuthError', null);
 
   try {
     const credentials = {login: login.value, password: password.value};
-    await store.dispatch('auth/login', credentials); // Используем action для логина
-    if (!store.getters['auth/getAuthError']) {
-      await router.push('/profile');
-    }
+    await store.dispatch('master/login', credentials); // Используем action для логина
   } finally {
     loading.value = false;
   }

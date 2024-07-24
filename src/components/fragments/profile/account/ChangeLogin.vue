@@ -40,8 +40,8 @@
         <v-card-text>Are you sure you want to change your login to "{{ login }}"?</v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="blue darken-1" text @click="dialog = false">Cancel</v-btn>
-          <v-btn color="blue darken-1" text @click="handleLoginSubmit">Confirm</v-btn>
+          <v-btn color="blue darken-1" @click="dialog = false">Cancel</v-btn>
+          <v-btn color="blue darken-1" @click="handleLoginSubmit">Confirm</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -58,8 +58,8 @@ import store from "@/core/state/store.js";
 // Сервис для проверки наличия логина
 // import { checkLoginAvailability } from '@/core/services/userService';
 
-const currentUser = computed(() => store.getters['user/getCurrentUser']);
-const originalLogin = ref(currentUser.value.login);
+const master = computed(() => store.getters['master/getMaster']);
+const originalLogin = ref(master.value.userData.login);
 
 const login = ref(originalLogin.value);
 const loginChanged = ref(false);
@@ -92,7 +92,7 @@ const handleLoginSubmit = () => {
   }
 
   // Обновляем login через мутацию
-  store.commit("user/updateUser", { login: login.value });
+  store.dispatch("master/updateMaster", { login: login.value });
 
   // Дополнительная логика для подтверждения логина
   // TODO Send
@@ -132,7 +132,7 @@ const checkLoginExistence = async () => {
   }
 };
 
-watch(() => currentUser.value.login, (newLogin) => {
+watch(() => master.value.userData.login, (newLogin) => {
   originalLogin.value = newLogin;
   login.value = newLogin;
   loginChanged.value = false;

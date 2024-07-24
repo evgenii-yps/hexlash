@@ -54,8 +54,8 @@ import {computed, onMounted, ref} from 'vue';
 import router from "@/router/index.js";
 import store from "@/core/state/store.js";
 
-const currentUser = computed(() => store.getters['user/getCurrentUser']);
-const clubId = computed(() => currentUser.value ? currentUser.value.clubId : null);
+const master = computed(() => store.getters['master/getMaster']);
+const clubId = computed(() => master.value ? master.value.userData.clubId : null);
 
 const isOwner = ref(false);
 
@@ -63,7 +63,7 @@ const checkIsOwner = async () => {
   if (clubId.value) {
     await store.dispatch('club/fetchClubById', clubId.value);
     const club = store.getters['club/getSelectedClub'];
-    isOwner.value = club && String(club.owner) === String(currentUser.value.id);
+    isOwner.value = club && String(club.owner) === String(master.value.id);
   }
 };
 

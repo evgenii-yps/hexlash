@@ -23,6 +23,7 @@ import {
     VIcon,
     VImg
 } from 'vuetify/components';
+import store from "@/core/state/store.js";
 
 const vuetify = createVuetify({
     components: {
@@ -68,8 +69,17 @@ const vuetify = createVuetify({
     // }
 });
 
-createApp(App)
-    .provide('AmmoLib', Ammo())
-    .use(vuetify)
-    .use(router)
-    .mount('#app')
+async function initializeApp() {
+    // Дождитесь загрузки данных
+    await store.dispatch('master/fetchMaster');
+}
+
+initializeApp().then(() => {
+    createApp(App)
+        .provide('AmmoLib', Ammo())
+        .use(vuetify)
+        .use(router)
+        .mount('#app')
+}).catch((error) => {
+    console.error("Failed to initialize the app:", error);
+});

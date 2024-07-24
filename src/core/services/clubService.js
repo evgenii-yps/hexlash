@@ -1,16 +1,18 @@
 import apiClient from '@/core/api/apiClient.js';
-import { clearDatabase, getFromDB, saveToDB } from '@/core/database/idb.js';
+import {clearDatabase, CLUBS_TABLE, getFromDB, initDB} from '@/core/database/idb.js';
 import ClubModel from "@/core/models/clubModel.js";
+import {MASTER_TAG} from "@/core/services/masterService.js";
 
 // Получить данные клуба из локальной базы данных
 export const getClubDataFromLocalDB = async (clubId) => {
-    const data = await getFromDB('clubs', clubId);
+    const data = await getFromDB(CLUBS_TABLE, clubId);
     return data ? new ClubModel(data) : null;
 };
 
 // Сохранить данные клуба в локальную базу данных
 export const saveClubDataToLocalDB = async (clubModel) => {
-    await saveToDB('clubs', clubModel);
+    const db = await initDB();
+    await db.put(CLUBS_TABLE, {...clubModel, id: clubModel.id});
 };
 
 // Получить данные клуба из API
@@ -18,7 +20,7 @@ export const getClubDataFromAPI = async (clubId) => {
     // Заглушка для API вызова
     // Пример: const response = await apiClient.get(`/clubs/${clubId}`);
     // const data = response.data;
-    const data = { id: clubId, name: 'Example Club', avatarUrl: '', owner: 'user123' }; // Заглушка
+    const data = {id: clubId, name: 'Example Club', avatarUrl: '', owner: 'user123'}; // Заглушка
     return new ClubModel(data);
 };
 
@@ -37,7 +39,9 @@ export const getClubByIdFromLocalAndAPI = async (clubId) => {
     if (!clubData) {
         clubData = await getClubDataFromAPI(clubId);
         // Сохраняем данные в локальную базу данных
-        await saveClubDataToLocalDB(clubData);
+        saveClubDataToLocalDB(clubData).catch((error) => {
+            console.error('Ошибка при сохранении данных в локальную базу:', error);
+        });
     }
 
     return clubData;
@@ -45,5 +49,5 @@ export const getClubByIdFromLocalAndAPI = async (clubId) => {
 
 // Очистить данные клуба из локальной базы данных
 export const clearClubDataFromLocalDB = async (clubId) => {
-    await clearDatabase('clubs', clubId);
+    await clearDatabase(CLUBS_TABLE, clubId);
 };

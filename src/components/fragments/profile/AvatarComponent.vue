@@ -24,14 +24,12 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import {computed, onMounted, ref, watch} from 'vue';
 import store from "@/core/state/store.js";
 
 import defaultAvatarImg from '@/assets/images/default_avatar.svg';
 
-const currentUser = store.getters['user/getCurrentUser'];
-
-const avatarUrl = ref(currentUser.avatar || defaultAvatarImg);
+const avatarUrl = ref(defaultAvatarImg);
 const isLoading = ref(false);
 const isUploading = ref(false);
 const progress = ref(0);
@@ -60,7 +58,7 @@ const uploadAvatar = (event) => {
         progress.value = Math.round((event.loaded * 100) / event.total);
       };
 
-      store.dispatch('user/uploadAvatar', { avatarDataUrl, onUploadProgress })
+      store.dispatch('master/uploadMasterAvatar', { avatarDataUrl, onUploadProgress })
           .then(() => {
             isLoading.value = false;
             isUploading.value = false;
@@ -75,6 +73,15 @@ const uploadAvatar = (event) => {
     reader.readAsDataURL(file);
   }
 };
+
+const master = computed(() => store.getters['master/getMaster']);
+
+watch(() => master.value, (newMaster) => {
+  if (newMaster && newMaster.userData) {
+    avatarUrl.value = newMaster.userData.avatarUrl || defaultAvatarImg;
+  }
+}, { immediate: true });
+
 </script>
 
 <style scoped>

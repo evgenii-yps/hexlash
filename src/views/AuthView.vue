@@ -681,16 +681,19 @@ class Sketch extends kokomi.Base {
 
     this.am = am
 
+    let sound;
+
 
     am.on("ready", async () => {
       // document.querySelector(".loader-screen").classList.add("hollow");
 
-      let sound = new Howl({
+      sound = new Howl({
         src: [rainSound],
         loop: true,
         autoplay: true,
         rate: config.soundRate
       })
+      this.sound = sound;
 
       // lights
       const pointLight1 = new THREE.PointLight("#81C8F2", 0.5, 17, 0.8)
@@ -947,13 +950,15 @@ class Sketch extends kokomi.Base {
       }
     });
 
-    if (this.sound) {
-      this.sound.unload();
-      this.sound = null;
-    }
   }
 
   destroy() {
+    if (this.sound) {
+      this.sound.stop();
+      this.sound.unload();
+      this.sound = null;
+    }
+
     this.disposeResources();
 
     // Удаление всех объектов из сцены
@@ -998,13 +1003,9 @@ onUnmounted(() => {
   if (sketch) {
 
     sketch.destroy();
+
     sketch = null;
 
-    // Удаление всех детей из DOM-элемента
-    const container = document.getElementById('sketch');
-    while (container.firstChild) {
-      container.removeChild(container.firstChild);
-    }
 
   }
 });

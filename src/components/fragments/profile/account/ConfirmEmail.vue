@@ -39,8 +39,8 @@ import InputField from '@/components/ui/InputField.vue';
 import ButtonRect from '@/components/ui/ButtonRect.vue';
 import store from "@/core/state/store.js";
 
-const currentUser = computed(() => store.getters['user/getCurrentUser']);
-const originalEmail = ref(currentUser.value.email);
+const master = computed(() => store.getters['master/getMaster']);
+const originalEmail = ref(master.value.email);
 
 const email = ref(originalEmail.value);
 const emailChanged = ref(false);
@@ -65,7 +65,7 @@ const handleEmailSubmit = () => {
   }
 
   // Обновляем email через мутацию
-  store.commit("user/updateUser", { email: email.value });
+  store.dispatch("master/updateMaster", { email: email.value });
 
   // TODO Send
 };
@@ -74,7 +74,7 @@ const checkEmailChange = () => {
   emailChanged.value = email.value !== originalEmail.value;
 };
 
-watch(() => currentUser.value.email, (newEmail) => {
+watch(() => master.value.email, (newEmail) => {
   originalEmail.value = newEmail;
   email.value = newEmail;
   emailChanged.value = false;

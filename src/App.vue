@@ -3,8 +3,8 @@
     <header class="header">
       <div class="header-content">
         <Logo/>
-        <div class="balance">
-          113$
+        <div v-if="balance !== null" class="balance">
+          {{ balance }}$
         </div>
       </div>
     </header>
@@ -23,12 +23,12 @@
 
 <script setup>
 import {RouterView, useRoute} from 'vue-router'
-import {computed, onMounted} from "vue";
+import {computed, onMounted, ref, watch} from "vue";
 import BottomMenu from "@/components/menu/BottomMenu.vue";
 import Logo from "@/components/Logo.vue";
 import store from "@/core/state/store.js";
-import {CurrentUserModel} from "@/core/models/currentUserModel.js";
-import {initializeAchievements} from "@/core/services/achievementsService.js";
+
+const balance = ref(null);
 
 // Получаем текущий маршрут
 const route = useRoute()
@@ -42,12 +42,13 @@ const showBottomMenu = computed(() => {
 })
 
 
-onMounted(() => {
-  // TODO TEMP
-  const userModel = new CurrentUserModel();
-  userModel.achievements = initializeAchievements();
-  store.commit('user/setUser', userModel);
-});
+const master = computed(() => store.getters['master/getMaster']);
+
+watch(() => master.value, (newMaster) => {
+  if (newMaster && newMaster.userData) {
+    balance.value = newMaster.userData.balance;
+  }
+}, { immediate: true });
 
 </script>
 

@@ -46,7 +46,7 @@
 </template>
 
 <script setup>
-import {ref, nextTick, computed, onMounted} from 'vue';
+import {ref, nextTick, computed, onMounted, onBeforeMount, watch} from 'vue';
 import {useRoute} from 'vue-router';
 import store from "@/core/state/store.js";
 
@@ -61,11 +61,9 @@ import ProfileBalance from "@/components/fragments/profile/ProfileBalance.vue";
 
 
 const route = useRoute();
-const currentUser = computed(() => store.getters['user/getCurrentUser']);
 
-const userName = ref(currentUser.value.name);
+const userName = ref(null);
 const isEditingName = ref(false);
-
 const nameInput = ref(null);
 
 
@@ -78,8 +76,16 @@ const editName = () => {
 
 const saveName = () => {
   isEditingName.value = false;
-  store.dispatch('user/updateCurrentUser', {name: userName.value});
+  store.dispatch('master/updateMaster', {name: userName.value});
 };
+
+const master = computed(() => store.getters['master/getMaster']);
+
+watch(() => master.value, (newMaster) => {
+  if (newMaster && newMaster.userData) {
+    userName.value = newMaster.userData.name;
+  }
+}, { immediate: true });
 
 </script>
 
@@ -181,7 +187,6 @@ const saveName = () => {
   max-width: 70vw;
   outline: none;
 }
-
 
 
 </style>
