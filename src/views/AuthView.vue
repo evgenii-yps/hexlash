@@ -755,9 +755,9 @@ class Sketch extends kokomi.Base {
       sideCoverTex.flipY = !1
 
       // model
-      const gtlfLoader = new GLTFLoader();
+      const gltfLoader = new GLTFLoader();
       const url = sceneModel;
-      gtlfLoader.load(url, (gltf) => {
+      gltfLoader.load(url, (gltf) => {
         const root = gltf.scene
 
         const walls = root.getObjectByName("walls");

@@ -12,16 +12,9 @@ import App from './App.vue'
 // Vuetify
 import {createVuetify} from 'vuetify'
 import {
-    VTooltip,
-    VBtn,
-    VDialog,
-    VCard,
-    VCardTitle,
-    VCardText,
-    VCardActions,
-    VSpacer,
-    VIcon,
-    VImg
+    VTooltip, VBtn, VDialog, VCard,
+    VCardTitle, VCardText, VCardActions, VSpacer,
+    VIcon, VImg, VInput, VRow, VCol, VInfiniteScroll
 } from 'vuetify/components';
 import store from "@/core/state/store.js";
 
@@ -36,7 +29,11 @@ const vuetify = createVuetify({
         VCardActions,
         VSpacer,
         VIcon,
-        VImg
+        VImg,
+        VInput,
+        VRow,
+        VCol,
+        VInfiniteScroll
     },
     // theme: {
     //     defaultTheme: 'light',
