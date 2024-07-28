@@ -37,3 +37,10 @@ body {
     background-size: cover !important;
     overflow: hidden;
 }
+
+@font-face {
+    font-family: 'Anonymous';
+    src: url('@/assets/fonts/Anonymous.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}

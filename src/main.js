@@ -14,7 +14,7 @@ import {createVuetify} from 'vuetify'
 import {
     VTooltip, VBtn, VDialog, VCard,
     VCardTitle, VCardText, VCardActions, VSpacer,
-    VIcon, VImg, VInput, VRow, VCol, VInfiniteScroll
+    VIcon, VImg, VInput, VRow, VCol, VInfiniteScroll, VCarousel, VCarouselItem
 } from 'vuetify/components';
 import store from "@/core/state/store.js";
 
@@ -33,7 +33,9 @@ const vuetify = createVuetify({
         VInput,
         VRow,
         VCol,
-        VInfiniteScroll
+        VInfiniteScroll,
+        VCarousel,
+        VCarouselItem,
     },
     // theme: {
     //     defaultTheme: 'light',

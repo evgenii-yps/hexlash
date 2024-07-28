@@ -89,7 +89,6 @@ watch(() => master.value, (newMaster) => {
 .avatar-container {
   position: relative;
   cursor: pointer;
-  margin-left: auto;
   width: 100px;
   height: 100px;
   flex-shrink: 0;
