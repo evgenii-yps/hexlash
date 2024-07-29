@@ -88,7 +88,7 @@ export const testLogin = async (credentials) => {
               "inviteId": "invite123",
               "email": "johndoe@example.com",
               "emailVerified": true,
-              "achievements": [1, 3, 4],
+              "achievements": [1, 3, 4, 5],
               "balance":199
         }`;
 

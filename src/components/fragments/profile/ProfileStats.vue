@@ -4,6 +4,7 @@
       <v-tooltip
           v-model="stat.show"
           location="top"
+          content-class="v-tooltip__content"
       >
         <template #activator="{ props }">
           <div :id="stat.id" v-bind="props" @click="stat.show = !stat.show" :class="['stat-content', { 'stat-content-vertical': index >= 2 }]">

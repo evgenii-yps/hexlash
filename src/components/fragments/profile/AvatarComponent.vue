@@ -1,7 +1,11 @@
 <template>
   <div class="avatar-container" @click="changeAvatar">
     <img :src="avatarUrl" alt="User Avatar" class="avatar"
-         :class="{ 'loading-avatar': isUploading, 'non-default-avatar': avatarUrl !== defaultAvatarImg && !isLoading }"/>
+         :class="{
+       'loading-avatar': isUploading,
+       'non-default-avatar': avatarUrl !== defaultAvatarImg && !isLoading,
+       'default-avatar': avatarUrl === defaultAvatarImg
+     }"/>
     <div v-if="isLoading" class="loader-container">
       <svg class="loader-circle" viewBox="0 0 36 36">
         <path class="circle-bg"
@@ -92,6 +96,8 @@ watch(() => master.value, (newMaster) => {
   width: 100px;
   height: 100px;
   flex-shrink: 0;
+  padding: 6px;
+  border-radius: 50%;
 }
 
 .avatar, .loader-container {
@@ -99,15 +105,20 @@ watch(() => master.value, (newMaster) => {
   height: 100%;
   border-radius: 50%;
   position: absolute;
-  top: 0; /* Совмещаем их */
+  top: 0;
   left: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  object-fit: cover;
+}
+
+.default-avatar {
+  padding: 5px;
+  object-fit: fill;
 }
 
 .non-default-avatar{
+  object-fit: cover;
   border: 2px solid white;
 }
 
@@ -122,8 +133,8 @@ watch(() => master.value, (newMaster) => {
 
 .camera-icon-container {
   position: absolute;
-  bottom: 5px;
-  right: 5px;
+  bottom: 0;
+  right: 0;
   width: 30px;
   height: 30px;
   background-color: var(--pink);
@@ -167,4 +178,6 @@ watch(() => master.value, (newMaster) => {
 .file-input {
   display: none;
 }
+
+
 </style>

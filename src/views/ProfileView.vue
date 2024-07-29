@@ -23,6 +23,8 @@
 
           <ProfileAchievements/>
 
+          <ProfileInvite />
+
           <ProfileButtons/>
 
         </div>
@@ -41,6 +43,7 @@ import ProfileWallet from "@/components/fragments/profile/wallet/ProfileWallet.v
 import ProfileSettings from "@/components/fragments/profile/account/ProfileAccount.vue";
 import ProfileBalance from "@/components/fragments/profile/ProfileBalance.vue";
 import ProfileName from "@/components/fragments/profile/ProfileMasterName.vue";
+import ProfileInvite from "@/components/fragments/profile/ProfileInvite.vue";
 
 const route = useRoute();
 </script>
