@@ -23,7 +23,7 @@ const protectedRoutes = [
     {path: '/training/fight', name: 'Training fight', component: () => import("/src/views/FightView.vue")},
     {path: '/club/:id', name: 'Club', component: () => import("/src/views/ClubView.vue")},
     {path: '/training/punch', name: 'Punch', component: () => import("/src/components/fragments/training/Punch.vue")},
-    // { path: '/:pathMatch(.*)*', name: 'NotFound', component: () => import("/src/views/NotFoundView.vue") }
+    {path: '/404', name: 'NotFound', component: () => import("/src/views/NotFoundView.vue")},
 ];
 
 const routes = [

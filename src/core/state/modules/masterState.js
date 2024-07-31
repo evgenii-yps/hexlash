@@ -1,7 +1,6 @@
 import {
     getMasterFromLocalAndAPI,
     login as loginService,
-    saveMasterToLocalDB,
     testLogin, updateMasterToLocalDB
 } from '@/core/services/masterService.js';
 import {MasterModel} from "@/core/models/masterModel.js";

@@ -15,8 +15,10 @@ export const initDB = () => {
         dbPromise = openDB(DB_NAME, DB_VERSION, {
             upgrade(db, oldVersion, newVersion, transaction) {
                 if (oldVersion < 1) {
-                    db.createObjectStore(MASTER_TABLE, { keyPath: 'id' });
-                    db.createObjectStore(USERS_TABLE, { keyPath: 'id' });
+                    const masterStore = db.createObjectStore(MASTER_TABLE, { keyPath: 'id' });
+                    const usersStore = db.createObjectStore(USERS_TABLE, { keyPath: 'id' });
+                    usersStore.createIndex('login', 'login', { unique: true });
+
                     db.createObjectStore(CLUBS_TABLE, { keyPath: 'id' });
                 }
             },

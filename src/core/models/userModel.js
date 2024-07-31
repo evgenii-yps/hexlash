@@ -112,9 +112,9 @@ export default class UserModel {
         this.achievements = achievements;
 
         // Только для текущего пользователя
-        this.inviteId = inviteId;
-        this.email = email;
-        this.emailVerified = emailVerified;
+        // this.inviteId = inviteId;
+        // this.email = email;
+        // this.emailVerified = emailVerified;
     }
 }
 

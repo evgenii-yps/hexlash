@@ -10,7 +10,7 @@
         <div class="code-container">
           <h2 v-bind="props" @click="toggleTooltip" class="invite-code">{{ inviteCode }}</h2>
           <div class="copy-icon-container" @click="copyToClipboard">
-            <img src="@/assets/images/icon_copy.png" alt="Copy Icon" class="copy-icon">
+            <img src="@/assets/images/icon_copy.svg" alt="Copy Icon" class="copy-icon">
           </div>
         </div>
       </template>

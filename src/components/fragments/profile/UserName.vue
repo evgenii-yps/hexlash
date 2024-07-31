@@ -2,7 +2,7 @@
   <div class="name-container">
     <div class="name-edit-container">
       <h2 class="label-name">
-        {{ userName }}
+        {{ userName || 'Anonymous' }}
       </h2>
     </div>
   </div>
@@ -42,6 +42,5 @@ defineProps({
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  cursor: pointer;
 }
 </style>

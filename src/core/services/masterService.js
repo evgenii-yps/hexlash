@@ -148,7 +148,7 @@ export const login = async (credentials) => {
 };
 
 // Функция для получения данных текущего пользователя
-export const fetchMasterData = async (token) => {
+const fetchMasterData = async (token) => {
     try {
         const response = await apiClient.get('/users/me', {
             headers: {

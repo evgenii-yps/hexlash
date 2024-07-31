@@ -25,12 +25,12 @@
             </div>
 
             <div v-else class="profile-header">
-              <UserAvatar :avatarUrl="user.value.userData.avatarUrl"/>
-              <UserName :userName="user.value.userData.name"/>
+              <UserAvatar :avatarUrl="userData.avatarUrl"/>
+              <UserName :userName="userData.name"/>
             </div>
 
-            <ProfileStats :user="user"/>
-            <ProfileAchievements :user="user"/>
+            <ProfileStats :userData="userData"/>
+            <ProfileAchievements :userData="userData"/>
 
             <div v-if="isOwner">
               <ProfileInvite/>
@@ -66,7 +66,7 @@ import UserAvatar from "@/components/fragments/profile/UserAvatar.vue";
 const route = useRoute();
 
 const master = computed(() => store.getters['master/getMaster']);
-const user = ref(null);
+const userData = ref(null);
 const isOwner = ref(false);
 const loading = ref(true);  // Флаг загрузки
 
@@ -78,12 +78,12 @@ const loadUser = async () => {
     isOwner.value = master.value && master.value.userData.login === params.userLogin;
 
     if (isOwner.value) {
-      user.value = master.value;
+      userData.value = master.value.userData;
     } else {
-      user.value = (await store.dispatch('user/getUserByLogin'))(params.userLogin);
+      userData.value = await store.dispatch('user/getUserByLogin', params.userLogin);
     }
   } else if (route.name === 'Profile') {
-    user.value = master.value;
+    userData.value = master.value.userData;
     isOwner.value = true;
   }
 
@@ -91,7 +91,18 @@ const loadUser = async () => {
 };
 
 onBeforeMount(loadUser);
+
 watch(route, loadUser);
+
+// Следим за изменением данных пользователя в хранилище и обновляем userData
+watch(
+    () => store.getters['user/getUserByLogin'](route.params.userLogin),
+    (newValue) => {
+      if (!isOwner.value) {
+        userData.value = newValue;
+      }
+    }
+);
 
 </script>
 
