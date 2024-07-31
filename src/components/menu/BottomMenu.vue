@@ -51,7 +51,7 @@ const menuItems = ref([
   display: flex;
   flex-direction: column;
   align-items: center;
-  background-color: var(--blackOpacity80);
+  background-color: var(--black-opacity-80);
   text-decoration: none;
   transition: color 0.3s ease;
   min-width: 10vw; /* Минимальная ширина карточки */

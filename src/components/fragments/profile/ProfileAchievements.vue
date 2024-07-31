@@ -242,12 +242,18 @@ const allAchievements = [
 
 const achievements = ref([]);
 
-const master = computed(() => store.getters['master/getMaster']);
+const props = defineProps({
+  user: {
+    type: Object,
+    required: true,
+    default: () => ({})
+  },
+});
 
 
-watch(() => master.value, (newMaster) => {
-  if (newMaster && newMaster.userData) {
-    const completedAchievements = newMaster.userData.achievements;
+watch(() => props.user, (user) => {
+  if (user && user.userData) {
+    const completedAchievements = user.userData.achievements;
     achievements.value = allAchievements.map(achievement => {
       const completed = completedAchievements.includes(achievement.id);
       return {
@@ -309,12 +315,16 @@ const carouselItems = computed(() => {
   border-radius: 5px;
   text-align: center;
   cursor: pointer;
-  background-color: var(--blackOpacity80);
+  background-color: var(--black-opacity-80);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   height: 160px; /* фиксированная высота для всех карточек */
+  box-shadow:
+      0 3px 1px -2px var(--v-shadow-key-umbra-opacity,
+      rgba(0, 0, 0, 0.2)), 0 2px 2px 0 var(--v-shadow-key-penumbra-opacity,
+      rgba(0, 0, 0, 0.14)), 0 1px 5px 0 var(--v-shadow-key-ambient-opacity, rgba(0, 0, 0, 0.12))
 }
 
 .achievement-item.locked {
@@ -348,7 +358,7 @@ const carouselItems = computed(() => {
 }
 
 .carousel-control {
-  background: var(--blackOpacity80);
+  background: var(--black-opacity-80);
   border: 2px solid grey;
   border-radius: 50%; /* Круглая форма */
   cursor: pointer;

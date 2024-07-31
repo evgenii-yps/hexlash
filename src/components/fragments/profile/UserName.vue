@@ -9,12 +9,14 @@
 </template>
 
 <script setup>
-import { ref, nextTick, computed, watch } from 'vue';
-import store from "@/core/state/store.js";
-import { useRoute } from 'vue-router';
 
-const userName = ref(null);
-
+// Определяем пропс userName
+defineProps({
+  userName: {
+    type: String,
+    required: true,
+  },
+});
 </script>
 
 <style scoped>
@@ -42,5 +44,4 @@ const userName = ref(null);
   text-overflow: ellipsis;
   cursor: pointer;
 }
-
 </style>

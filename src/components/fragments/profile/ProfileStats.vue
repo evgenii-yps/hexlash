@@ -24,7 +24,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue';
+import {  ref, watch } from 'vue';
 
 import iconAllFights from '@/assets/images/icon_fights.svg';
 import iconWins from '@/assets/images/icon_wins.svg';
@@ -36,24 +36,29 @@ import iconFreeTokens from '@/assets/images/icon_tokens.svg';
 import iconInvites from '@/assets/images/icon_invites.svg';
 import iconDaysInClub from '@/assets/images/icon_calendar.svg';
 
-import store from "@/core/state/store.js";
 
 const stats = ref([]);
 
-const master = computed(() => store.getters['master/getMaster']);
+const props = defineProps({
+  user: {
+    type: Object,
+    required: true,
+    default: () => ({})
+  },
+});
 
-watch(() => master.value, (newMaster) => {
-  if (newMaster && newMaster.userData) {
+watch(() => props.user, (user) => {
+  if (user && user.userData) {
     stats.value = [
-      { id: 'stats-totalFights', title: 'Общее количество боев', value: newMaster.userData.totalFights, icon: iconAllFights, show: false },
-      { id: 'stats-wins', title: 'Победы', value: newMaster.userData.wins, icon: iconWins, show: false },
-      { id: 'stats-losses', title: 'Поражения', value: newMaster.userData.losses, icon: iconLosses, show: false },
-      { id: 'stats-draws', title: 'Ничьи', value: newMaster.userData.draws, icon: iconDraws, show: false },
-      { id: 'stats-luckPercentage', title: 'Общий процент удачи', value: newMaster.userData.luckPercentage + '%', icon: iconLuck, show: false },
-      { id: 'stats-wonTokens', title: 'Токены, выигранные в боях', value: newMaster.userData.wonTokens, icon: iconWonTokens, show: false },
-      { id: 'stats-freeTokens', title: 'Токены, полученные бесплатно', value: newMaster.userData.freeTokens, icon: iconFreeTokens, show: false },
-      { id: 'stats-invitedUsers', title: 'Приглашенные пользователи', value: newMaster.userData.invitedUsers, icon: iconInvites, show: false },
-      { id: 'stats-daysInClubAndNoSkipDays', title: 'Дней в клубе', value: newMaster.userData.daysInClub, valueInBrackets: `(${newMaster.userData.noSkipDays})`, icon: iconDaysInClub, show: false },
+      { id: 'stats-totalFights', title: 'Общее количество боев', value: user.userData.totalFights, icon: iconAllFights, show: false },
+      { id: 'stats-wins', title: 'Победы', value: user.userData.wins, icon: iconWins, show: false },
+      { id: 'stats-losses', title: 'Поражения', value: user.userData.losses, icon: iconLosses, show: false },
+      { id: 'stats-draws', title: 'Ничьи', value: user.userData.draws, icon: iconDraws, show: false },
+      { id: 'stats-luckPercentage', title: 'Общий процент удачи', value: user.userData.luckPercentage + '%', icon: iconLuck, show: false },
+      { id: 'stats-wonTokens', title: 'Токены, выигранные в боях', value: user.userData.wonTokens, icon: iconWonTokens, show: false },
+      { id: 'stats-freeTokens', title: 'Токены, полученные бесплатно', value: user.userData.freeTokens, icon: iconFreeTokens, show: false },
+      { id: 'stats-invitedUsers', title: 'Приглашенные пользователи', value: user.userData.invitedUsers, icon: iconInvites, show: false },
+      { id: 'stats-daysInClubAndNoSkipDays', title: 'Дней в клубе', value: user.userData.daysInClub, valueInBrackets: `(${user.userData.noSkipDays})`, icon: iconDaysInClub, show: false },
     ];
   }
 }, { immediate: true });

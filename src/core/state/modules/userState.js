@@ -1,23 +1,29 @@
-
 import UserModel from '@/core/models/userModel.js';
-import {MasterModel} from "@/core/models/masterModel.js";
+import * as userService from "@/core/services/userService.js";
 
 const state = {
-    selectedUser: null,
+
 };
 
 const getters = {
-    getSelectedUser: (state) => state.selectedUser,
+
 };
 
 const mutations = {
-    setUser: (state, userModel) => {
-        state.selectedUser = userModel;
-    },
+
 };
 
 const actions = {
+    async getUserByLogin({ commit, getters }, userLogin) {
+        try {
+            const userData = await userService.fetchUserByLogin(userLogin);
+            return new UserModel(userData);
 
+        } catch (error) {
+            console.error('Error fetching user:', error);
+            throw error;
+        }
+    },
 
 };
 

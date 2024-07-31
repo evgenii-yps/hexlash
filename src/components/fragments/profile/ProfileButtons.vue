@@ -1,51 +1,34 @@
 <template>
   <div class="buttons-container">
-    <v-btn
-        variant="elevated"
+    <VBtnDark
         class="profile-btn"
-        base-color="white"
         @click="navigateTo('Wallet')"
     >
       <template #prepend>
-        <img src="@/assets/images/icon_pencil.svg" alt="Custom Icon" class="custom-icon"/>
+        <img src="@/assets/images/icon_arrow.svg" alt="Arrow Icon" class="custom-icon"/>
       </template>
       Управление кошельком
-    </v-btn>
-    <v-btn
-        variant="elevated"
+    </VBtnDark>
+    <VBtnDark
         class="profile-btn"
-        base-color="white"
         @click="navigateToClub"
     >
       <template #prepend>
-        <img src="@/assets/images/icon_pencil.svg" alt="Custom Icon" class="custom-icon"/>
+        <img src="@/assets/images/icon_arrow.svg" alt="Arrow Icon" class="custom-icon"/>
       </template>
       {{ isOwner ? 'Управление клубом' : 'Мой клуб' }}
-    </v-btn>
-    <v-btn
-        variant="elevated"
+    </VBtnDark>
+    <VBtnDark
         class="profile-btn"
-        base-color="white"
         @click="navigateTo('Account')"
     >
       <template #prepend>
-        <img src="@/assets/images/icon_pencil.svg" alt="Custom Icon" class="custom-icon"/>
+        <img src="@/assets/images/icon_arrow.svg" alt="Arrow Icon" class="custom-icon"/>
       </template>
       Управление аккаунтом
-    </v-btn>
+    </VBtnDark>
 
-    <!-- Центрирование кнопки "Пополнить баланс" -->
-    <div class="centered-button-container">
-      <v-btn
-          color="success"
-          @click="navigateTo('Balance')"
-      >
-        <template #prepend>
-          <img src="@/assets/images/icon_pencil.svg" alt="Custom Icon" class="custom-icon"/>
-        </template>
-        Пополнить баланс
-      </v-btn>
-    </div>
+
   </div>
 </template>
 
@@ -72,12 +55,12 @@ onMounted(() => {
 });
 
 const navigateTo = (route) => {
-  router.push({ name: route });
+  router.push({name: route});
 };
 
 const navigateToClub = () => {
   if (clubId.value) {
-    router.push({ path: `/club/${clubId.value}` });
+    router.push({path: `/club/${clubId.value}`});
   }
 };
 </script>
@@ -87,48 +70,24 @@ const navigateToClub = () => {
   display: flex;
   flex-direction: column;
   align-items: center;
+  margin: 15px 20px 0 20px;
 }
 
 .profile-btn {
   width: 100%;
   height: 50px;
-  margin: 10px 0;
+  margin: 5px 0;
   max-width: 500px;
   justify-content: flex-start;
   text-align: left;
-  background-color: var(--blackOpacity80);
   color: white;
   cursor: pointer;
 }
 
-.profile-btn:hover {
-  background-color: var(--pink) !important;
-  color: white;
+.custom-icon {
+  width: 15px; /* Увеличиваем ширину изображения */
+  height: 15px; /* Увеличиваем высоту изображения */
+  margin-right: 10px; /* Добавляем отступ справа для расстояния между иконкой и текстом */
 }
 
-:deep(.profile-btn:hover > .v-btn__overlay) {
-  opacity: 0.04
-}
-
-:deep(.v-btn__overlay) {
-  background-color: var(--pink) !important;
-}
-
-:deep(.profile-btn .v-ripple__container) {
-  background-color: var(--pink) !important;
-  opacity: 0.3 !important;
-}
-
-:deep(.profile-btn .v-ripple__animation) {
-  background-color: var(--pinkDark) !important;
-}
-
-/* Стили для центрирования кнопки "Пополнить баланс" */
-.centered-button-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  margin-top: 20px;
-}
 </style>

@@ -150,9 +150,6 @@ watch(() => master.value, (newMaster) => {
   height: 20px;
 }
 
-
-
-
 .circle-bg {
   fill: none;
   stroke: rgba(255, 255, 255, 0.3);
@@ -172,8 +169,6 @@ watch(() => master.value, (newMaster) => {
   font-size: 0.4em;
   text-anchor: middle;
 }
-
-
 
 .file-input {
   display: none;

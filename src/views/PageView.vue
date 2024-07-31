@@ -2,7 +2,7 @@
   <div class="background">
     <Card
         title="Privacy"
-        bgColor="var(--blackOpacity80)"
+        bgColor="var(--black-opacity-80)"
         borderColor="var(--gray1)"
         textColor="var(--white)"
         :showCloseButton="false"

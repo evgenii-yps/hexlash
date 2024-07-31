@@ -37,35 +37,22 @@ const vuetify = createVuetify({
         VCarousel,
         VCarouselItem,
     },
-    // theme: {
-    //     defaultTheme: 'light',
-    //     themes: {
-    //         light: {
-    //             dark: false,
-    //             colors: {
-    //                 primary: '#1976D2',
-    //                 secondary: '#424242',
-    //                 accent: '#82B1FF',
-    //                 error: '#FF5252',
-    //                 info: '#2196F3',
-    //                 success: '#4CAF50',
-    //                 warning: '#FFC107',
-    //             },
-    //         },
-    //         dark: {
-    //             dark: true,
-    //             colors: {
-    //                 primary: '#BB86FC',
-    //                 secondary: '#03DAC6',
-    //                 accent: '#3700B3',
-    //                 error: '#CF6679',
-    //                 info: '#2196F3',
-    //                 success: '#4CAF50',
-    //                 warning: '#FB8C00',
-    //             },
-    //         },
-    //     },
-    // }
+    aliases: {
+        VBtnDark: VBtn,
+    },
+    defaults: {
+        VBtn: {
+            color: 'var(--primary-color)',
+            variant: 'elevated',
+            class: 'v-btn'
+
+        },
+        VBtnDark: {
+            color: 'var(--black-opacity-80)',
+            variant: 'elevated',
+            class: 'v-btn-dark'
+        },
+    }
 });
 
 async function initializeApp() {

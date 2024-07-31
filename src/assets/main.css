@@ -47,10 +47,17 @@ body {
 
 /* Настройка фона и рамки для тултипа */
 .v-tooltip__content {
-    background-color: var(--blackOpacity80) !important;  /* Цвет фона тултипа */
+    background-color: var(--black-opacity-80) !important;  /* Цвет фона тултипа */
     border: 2px solid var(--pink); /* Цвет рамки тултипа */
     border-radius: 5px; /* Радиус углов рамки */
     color: #fff; /* Цвет текста тултипа */
     padding: 10px; /* Отступы внутри тултипа */
     text-align: center;
+}
+
+
+
+:root {
+    --v-theme-overlay-multiplier: 0.9;
+    --v-hover-opacity: 0.08;
 }

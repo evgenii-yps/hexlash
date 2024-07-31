@@ -113,7 +113,7 @@ select:-webkit-autofill:hover,
 select:-webkit-autofill:focus {
   border: 1px solid var(--gray1);
   -webkit-text-fill-color: white;
-  -webkit-box-shadow: 0 0 0px 1000px var(--blackOpacity) inset;
+  -webkit-box-shadow: 0 0 0px 1000px var(--black-opacity) inset;
   transition: background-color 5000s ease-in-out 0s;
 }
 

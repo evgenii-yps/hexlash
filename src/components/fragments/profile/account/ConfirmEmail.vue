@@ -7,7 +7,7 @@
           v-model="email"
           labelColor="var(--white)"
           labelSize="10px"
-          inputBgColor="var(--blackOpacity)"
+          inputBgColor="var(--black-opacity)"
           inputBorderColor="var(--gray1)"
           inputTextColor="var(--white)"
           padding="0.8rem"
