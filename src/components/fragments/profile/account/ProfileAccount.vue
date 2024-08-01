@@ -1,16 +1,15 @@
 <template>
-  <div>
+  <div class="profile-account">
     <BackButton/>
 
-    <ConfirmEmail/>
-
-    <ChangeLogin/>
-
-    <ChangePassword/>
 
     <ChangeSkin/>
-
+    <ConfirmEmail/>
+    <ChangeLogin/>
+    <ChangePassword/>
     <DeleteAccount/>
+
+
 
   </div>
 </template>
@@ -25,4 +24,7 @@ import ChangeSkin from "@/components/fragments/profile/account/ChangeSkin.vue";
 </script>
 
 <style scoped>
+.profile-account {
+  margin-top: 20px;
+}
 </style>

@@ -12,6 +12,7 @@
     "@vueuse/core": "^10.11.0",
     "ammo.js": "github:kripken/ammo.js",
     "axios": "^1.7.2",
+    "debounce": "^2.1.0",
     "howler": "^2.2.4",
     "idb": "^8.0.0",
     "jwt-decode": "^4.0.0",

@@ -55,9 +55,18 @@ body {
     text-align: center;
 }
 
+/* Стиль модальных окон */
 
+.v-modal {
+    background-color: var(--black-opacity-80) !important;
+    border-radius: 8px;
+    padding: 20px;
+    border: 2px solid var(--pink) !important; /* Цвет рамки тултипа */
+    color:white !important;
+}
 
 :root {
     --v-theme-overlay-multiplier: 0.9;
     --v-hover-opacity: 0.08;
+    --v-border-color:2px solid var(--primary-color);
 }

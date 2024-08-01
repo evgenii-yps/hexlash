@@ -7,27 +7,22 @@
           v-model="email"
           labelColor="var(--white)"
           labelSize="10px"
-          inputBgColor="var(--black-opacity)"
+          inputBgColor="var(--black-opacity-60)"
           inputBorderColor="var(--gray1)"
           inputTextColor="var(--white)"
           padding="0.8rem"
           marginBottom="0.5rem"
           @input="checkEmailChange"
-      />
-      <ButtonRect
-          v-if="emailChanged"
-          type="submit"
-          bgColor="--pink"
-          textColor="--white"
-          borderColor="--pink"
-          hoverBgColor="--pinkDark"
-          customClass="confirm-button"
-          borderRadius="0px"
-          padding="0.4rem"
-          marginBottom="0"
+          :showButton="emailChanged"
       >
-        Confirm Email
-      </ButtonRect>
+        <!-- Можно вставить любую кнопку, лоадер или любой другой элемент -->
+        <template v-slot>
+          <VBtnDark size="small" @click="handleEmailSubmit" class="input-button">
+            Send Confirm
+          </VBtnDark>
+        </template>
+
+      </InputField>
     </form>
     <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
   </div>
@@ -36,7 +31,6 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
 import InputField from '@/components/ui/InputField.vue';
-import ButtonRect from '@/components/ui/ButtonRect.vue';
 import store from "@/core/state/store.js";
 
 const master = computed(() => store.getters['master/getMaster']);
@@ -83,8 +77,8 @@ watch(() => master.value.email, (newEmail) => {
 
 <style scoped>
 .email-confirmation-container {
-  display: flex;
   align-items: center;
+  margin: 20px 20px 10px 20px;
 }
 
 form {
@@ -97,5 +91,20 @@ form {
   color: var(--pinkDark);
   font-size: 0.8rem;
   margin-top: 0.5rem;
+}
+
+.input-button {
+  background-color: var(--black-opacity-60);
+  color: var(--white);
+  border: 0.5px solid var(--gray2);
+  cursor: pointer;
+  outline: none;
+  padding: 0.5em 1em;
+  border-radius: 4px;
+  margin: 0 0.5rem;
+}
+
+.input-button:hover {
+  background-color: var(--gray2);
 }
 </style>

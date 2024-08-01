@@ -1,7 +1,16 @@
 <template>
-  <button @click="goBack" class="back-button">
-    Назад
-  </button>
+  <VBtnDark
+      size="small"
+      class="back-btn"
+      @click="goBack"
+  >
+    Back
+    <template #prepend>
+      <img src="@/assets/images/icon_right_arrow.svg" alt="Arrow Icon" class="custom-icon"/>
+    </template>
+
+  </VBtnDark>
+
 </template>
 
 <script setup>
@@ -15,17 +24,20 @@ const goBack = () => {
 </script>
 
 <style scoped>
-.back-button {
-  background-color: #f0f0f0;
-  border: none;
-  padding: 10px 20px;
-  font-size: 16px;
+.back-btn {
+  margin-left: 20px;
+  text-align: left;
+  color: white;
   cursor: pointer;
-  border-radius: 5px;
-  margin: 10px;
+  border: 0.5px solid var(--gray2);
+  font-size: 0.7em;
+  text-transform: none;
+  font-weight: lighter;
 }
 
-.back-button:hover {
-  background-color: #e0e0e0;
+.custom-icon {
+  width: 15px; /* Увеличиваем ширину изображения */
+  height: 10px; /* Увеличиваем высоту изображения */
 }
+
 </style>

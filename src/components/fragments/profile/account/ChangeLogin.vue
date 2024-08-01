@@ -7,53 +7,50 @@
           v-model="login"
           labelColor="var(--white)"
           labelSize="10px"
-          inputBgColor="var(--black-opacity-80)"
+          inputBgColor="var(--black-opacity-60)"
           inputBorderColor="var(--gray1)"
           inputTextColor="var(--white)"
           padding="0.8rem"
           marginBottom="0.5rem"
-          @input="checkLoginChange"
-          @blur="checkLoginExistence"
-      />
-      <ButtonRect
-          v-if="!loading && loginChanged"
-          @click="confirmChange"
-          bgColor="--pink"
-          textColor="--white"
-          borderColor="--pink"
-          hoverBgColor="--pinkDark"
-          customClass="confirm-button"
-          borderRadius="0px"
-          padding="0.4rem"
-          marginBottom="0"
+          @input="handleLoginInput"
+          :showButton="loginChanged"
       >
-        Change Login
-      </ButtonRect>
+        <template v-slot>
+          <div class="btn-container">
+            <div class="status-container">
+              <div v-if="loginAvailable && loginChanged && !errorMessage" class="success-message">available</div>
+              <v-progress-circular v-if="loading" color="var(--primary-color)" indeterminate :size="20"/>
+              <img v-if="!loading && loginAvailable && loginChanged" src="@/assets/images/icon_pencil.svg"
+                   @click="confirmChange"
+                   alt="change login" class="btn-change-login"/>
+            </div>
+          </div>
+        </template>
+      </InputField>
     </form>
-    <CircularLoader v-if="loading" :size="24" />
-    <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
-    <div v-if="loginAvailable && loginChanged" class="success-message">Login is available</div>
 
-    <v-dialog v-model="dialog" max-width="500">
+    <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
+
+
+    <VModal v-model="dialog">
       <v-card>
         <v-card-title class="headline">Confirm Change</v-card-title>
         <v-card-text>Are you sure you want to change your login to "{{ login }}"?</v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="blue darken-1" @click="dialog = false">Cancel</v-btn>
-          <v-btn color="blue darken-1" @click="handleLoginSubmit">Confirm</v-btn>
+          <v-btn  @click="dialog = false">Cancel</v-btn>
+          <v-btn  @click="handleLoginSubmit">Confirm</v-btn>
         </v-card-actions>
       </v-card>
-    </v-dialog>
+    </VModal>
   </div>
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue';
+import {computed, ref, watch} from 'vue';
 import InputField from '@/components/ui/InputField.vue';
-import ButtonRect from '@/components/ui/ButtonRect.vue';
-import CircularLoader from '@/components/ui/CircularLoader.vue';
 import store from "@/core/state/store.js";
+import debounce from "debounce";
 
 // Сервис для проверки наличия логина
 // import { checkLoginAvailability } from '@/core/services/userService';
@@ -92,10 +89,8 @@ const handleLoginSubmit = () => {
   }
 
   // Обновляем login через мутацию
-  store.dispatch("master/updateMaster", { login: login.value });
+  store.dispatch("master/updateMaster", {login: login.value});
 
-  // Дополнительная логика для подтверждения логина
-  // TODO Send
   dialog.value = false;
 };
 
@@ -103,21 +98,27 @@ const confirmChange = () => {
   dialog.value = true;
 };
 
-const checkLoginChange = () => {
+const handleLoginInput = () => {
   loginChanged.value = login.value !== originalLogin.value;
   if (loginChanged.value) {
-    checkLoginExistence();
+    errorMessage.value = '';
+    loginAvailable.value = false;
+
+    debouncedCheckLoginExistence();
   }
 };
 
-const checkLoginExistence = async () => {
+const debouncedCheckLoginExistence = debounce(async () => {
   if (!loginChanged.value) return;
 
-  errorMessage.value = '';
-  loginAvailable.value = false;
+
   loading.value = true;
 
   try {
+
+    // Добавляем задержку в 1 секунду, чтобы показать лоадер
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
     const available = true;
     // const available = await checkLoginAvailability(login.value);
     loginAvailable.value = available;
@@ -130,7 +131,7 @@ const checkLoginExistence = async () => {
   } finally {
     loading.value = false;
   }
-};
+}, 500);
 
 watch(() => master.value.userData.login, (newLogin) => {
   originalLogin.value = newLogin;
@@ -142,9 +143,8 @@ watch(() => master.value.userData.login, (newLogin) => {
 
 <style scoped>
 .login-change-container {
-  display: flex;
-  flex-direction: column;
   align-items: center;
+  margin: 10px 20px;
 }
 
 form {
@@ -153,16 +153,28 @@ form {
   align-items: center;
 }
 
+.btn-container{
+  margin: 0 20px;
+}
 
-.error-message {
-  color: var(--pinkDark);
-  font-size: 0.8rem;
-  margin-top: 0.5rem;
+.status-container {
+  display: flex;
+  align-items: center;
 }
 
 .success-message {
   color: #004e00;
   font-size: 0.8rem;
-  margin-top: 0.5rem;
+  margin-right: 10px;
+}
+
+.btn-change-login {
+  cursor: pointer;
+}
+
+.error-message {
+  color: var(--pinkDark);
+  font-size: 0.8rem;
+  text-align: center;
 }
 </style>

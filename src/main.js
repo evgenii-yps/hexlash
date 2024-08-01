@@ -14,7 +14,8 @@ import {createVuetify} from 'vuetify'
 import {
     VTooltip, VBtn, VDialog, VCard,
     VCardTitle, VCardText, VCardActions, VSpacer,
-    VIcon, VImg, VInput, VRow, VCol, VInfiniteScroll, VCarousel, VCarouselItem
+    VIcon, VImg, VInput, VRow, VCol, VInfiniteScroll, VCarousel, VCarouselItem,
+    VProgressCircular
 } from 'vuetify/components';
 import store from "@/core/state/store.js";
 
@@ -36,22 +37,26 @@ const vuetify = createVuetify({
         VInfiniteScroll,
         VCarousel,
         VCarouselItem,
+        VProgressCircular
     },
     aliases: {
         VBtnDark: VBtn,
+        VModal: VDialog
     },
     defaults: {
         VBtn: {
             color: 'var(--primary-color)',
             variant: 'elevated',
-            class: 'v-btn'
 
         },
         VBtnDark: {
             color: 'var(--black-opacity-80)',
             variant: 'elevated',
-            class: 'v-btn-dark'
         },
+        VCard: {
+            class: 'v-modal',
+            color: 'var(--black-opacity-80)'
+        }
     }
 });
 

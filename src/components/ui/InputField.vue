@@ -1,20 +1,25 @@
 <template>
   <div class="input-field" :style="{ marginBottom: marginBottom }">
     <label :for="label" class="input-label" :style="labelStyles">{{ label }}</label>
-    <input
-        :type="type"
-        :id="label"
-        :value="modelValue"
-        @input="$emit('update:modelValue', $event.target.value)"
-        class="input-element"
-        :style="inputStyles"
-        autocapitalize="none"
-    />
+    <div class="input-wrapper" :style="wrapperStyles">
+      <input
+          :type="type"
+          :id="label"
+          :value="modelValue"
+          @input="$emit('update:modelValue', $event.target.value)"
+          class="input-element"
+          :style="inputStyles"
+          autocapitalize="none"
+      />
+      <div v-if="showButton" class="slot-container">
+        <slot></slot>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { defineProps, computed } from 'vue';
+import { defineProps, computed, defineEmits } from 'vue';
 
 const props = defineProps({
   label: String,
@@ -58,8 +63,14 @@ const props = defineProps({
   marginBottom: {
     type: String,
     default: '1rem' // Значение по умолчанию
+  },
+  showButton: {
+    type: Boolean,
+    default: false
   }
 });
+
+const emit = defineEmits(['update:modelValue']);
 
 const labelStyles = computed(() => ({
   color: props.labelColor,
@@ -70,10 +81,18 @@ const inputStyles = computed(() => ({
   backgroundColor: props.inputBgColor,
   borderColor: props.inputBorderColor,
   color: props.inputTextColor,
-  width: '100%',
-  height: '100%',
+  flexGrow: 1,
+  borderRadius: props.showButton ? '4px 0 0 4px' : props.borderRadius,
+  padding: props.padding,
+  borderRight: props.showButton ? 'none' : `1px solid ${props.inputBorderColor}`
+}));
+
+const wrapperStyles = computed(() => ({
+  display: 'flex',
+  alignItems: 'center',
+  border: `1px solid ${props.inputBorderColor}`,
   borderRadius: props.borderRadius,
-  padding: props.padding
+  backgroundColor: props.inputBgColor
 }));
 </script>
 
@@ -83,23 +102,37 @@ const inputStyles = computed(() => ({
   flex-direction: column;
   width: 100%;
 }
+
 .input-label {
   margin-bottom: 5px;
   text-align: center;
   font-weight: 800;
 }
-.input-element {
-  border: 1px solid var(--gray1);
+
+.input-wrapper {
+  display: flex;
+  align-items: center;
   width: 100%;
-  box-sizing: border-box;
+}
+
+.input-element {
+  border: none;
   outline: none; /* Убираем синюю рамку */
   caret-color: white;
+  padding: 0 0.8rem;
+  border-radius: 0;
+  box-sizing: border-box;
 }
 
 .input-element:focus {
   border-color: var(--pink);
 }
 
+.slot-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
 
 input:-webkit-autofill,
@@ -111,10 +144,8 @@ textarea:-webkit-autofill:focus,
 select:-webkit-autofill,
 select:-webkit-autofill:hover,
 select:-webkit-autofill:focus {
-  border: 1px solid var(--gray1);
   -webkit-text-fill-color: white;
-  -webkit-box-shadow: 0 0 0px 1000px var(--black-opacity) inset;
+  -webkit-box-shadow: 0 0 0 1000px var(--black-opacity) inset;
   transition: background-color 5000s ease-in-out 0s;
 }
-
 </style>

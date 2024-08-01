@@ -1,10 +1,13 @@
 <template>
   <div class="delete-account-container">
-    <v-btn
-        color="red-darken-4"
+    <VBtnDark
+        class="delete-btn"
         @click="confirmDelete">
       Delete Account
-    </v-btn>
+      <template #append>
+        <img src="@/assets/images/icon_close.svg" alt="Close" class="custom-icon"/>
+      </template>
+    </VBtnDark>
 
     <v-dialog v-model="dialog" max-width="500">
       <v-card>
@@ -50,7 +53,26 @@ const handleDelete = async () => {
 <style scoped>
 .delete-account-container {
   display: flex;
-  justify-content: center;
-  margin-top: 2rem;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 20px;
 }
+
+
+.delete-btn {
+  width: 100%;
+  height: 50px;
+  max-width: 500px;
+  text-align: center;
+  color: white;
+  cursor: pointer;
+  opacity: 0.5;
+}
+
+.custom-icon {
+  width: 15px; /* Увеличиваем ширину изображения */
+  height: 15px; /* Увеличиваем высоту изображения */
+  margin-left: 10px; /* Добавляем отступ справа для расстояния между иконкой и текстом */
+}
+
 </style>
