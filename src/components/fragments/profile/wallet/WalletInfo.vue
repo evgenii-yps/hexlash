@@ -33,12 +33,12 @@
 </template>
 
 <script setup>
-import {ref} from 'vue';
+import {computed, ref, watch} from 'vue';
 import InputField from "@/components/ui/InputField.vue";
 import PrivateKeyButton from "@/components/fragments/profile/wallet/PrivateKeyButton.vue";
+import store from "@/core/state/store.js";
 
-const walletAddress = ref('0x434a1253bAf9EE7552fd6b0Af973B7E312cb5fCf');
-const walletBalance = ref('100');
+const walletAddress = ref(null);
 
 const copyToClipboard = () => {
   navigator.clipboard.writeText(walletAddress.value).then(() => {
@@ -48,13 +48,13 @@ const copyToClipboard = () => {
   });
 };
 
-const depositToGame = () => {
-  // Логика для заведения средств в игру
-};
 
-const withdrawToWallet = () => {
-  // Логика для вывода средств на кошелек
-};
+const master = computed(() => store.getters['master/getMaster']);
+
+watch(() => master.value.userData.walletAddress, (address) => {
+  walletAddress.value = address;
+}, {immediate: true});
+
 </script>
 
 <style scoped>

@@ -1,21 +1,25 @@
 <template>
   <div class="private-key-container">
     <VBtn class="private-key-btn" @mousedown="startHold" @mouseup="endHold" @mouseleave="endHold">
-       Приватный ключ
+      Приватный ключ
       <template #append>
         <span class="countdown" v-if="countdown > 0">{{ countdown }}</span>
       </template>
     </VBtn>
 
-    <VModal v-model="dialog" max-width="500">
+    <VModal v-model="dialog" max-width="500" @click:outside="hidePrivateKey">
       <v-card>
         <v-card-title class="headline">{{ showKey ? 'Private Key' : 'Confirm Action' }}</v-card-title>
-        <v-card-text>
+        <v-card-text class="text-center">
           <div v-if="showKey">
-            <p>Ваш приватный ключ: {{ privateKey }}</p>
-            <v-btn @click="copyToClipboard">
-              <v-icon>mdi-content-copy</v-icon>
-            </v-btn>
+            {{ privateKey }}
+
+            <VBtn @click="copyToClipboard" class="copy-btn" size="x-small">
+              <img src="@/assets/images/icon_copy.svg"
+                   @click="copyToClipboard"
+               alt=""/>
+            </VBtn>
+
           </div>
           <div v-else>
             Показать приватный ключ?
@@ -23,9 +27,9 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn v-if="!showKey" color="blue darken-1" @click="dialog = false">Отмена</v-btn>
-          <v-btn v-if="!showKey" color="red darken-1" @click="showPrivateKey">Показать</v-btn>
-          <v-btn v-if="showKey" color="green darken-1" @click="hidePrivateKey">OK</v-btn>
+          <VBtnDark v-if="!showKey" @click="dialog = false" class="cancel-btn">Отмена</VBtnDark>
+          <VBtn v-if="!showKey" @click="showPrivateKey" class="confirm-btn">Показать</VBtn>
+          <VBtn v-if="showKey" @click="hidePrivateKey" class="confirm-btn">OK</VBtn>
         </v-card-actions>
       </v-card>
     </VModal>
@@ -33,13 +37,14 @@
 </template>
 
 <script setup>
-import {ref, watch} from 'vue';
+import {computed, ref, watch} from 'vue';
 import {useClipboard} from '@vueuse/core';
+import store from "@/core/state/store.js";
 
 const isGeneratedWallet = ref(true); // Измените это значение в зависимости от типа кошелька
 const dialog = ref(false);
 const showKey = ref(false);
-const privateKey = ref('0xabcdef1234567890'); // Пример приватного ключа
+const privateKey = ref(''); // Пример приватного ключа
 const countdown = ref(0);
 const holdDuration = 3; // Длительность удержания в секундах
 
@@ -66,6 +71,7 @@ const endHold = () => {
 };
 
 const showPrivateKey = () => {
+  // TODO Метод к апи для запроса приватного ключа
   showKey.value = true;
 };
 
@@ -82,6 +88,11 @@ const copyToClipboard = async () => {
     console.error('Failed to copy private key:', error);
   }
 };
+
+
+
+
+
 </script>
 
 <style scoped>
@@ -108,4 +119,33 @@ const copyToClipboard = async () => {
   position: absolute;
   right: 15px; /* Позиционирование отсчета внутри кнопки */
 }
+
+.copy-btn {
+  border-radius: 50%;
+  width: 35px;
+  height: 35px;
+  padding: 0;
+  cursor: pointer;
+}
+
+.text-center {
+  padding: 24px 24px 4px;
+}
+
+.cancel-btn {
+  text-align: center;
+  color: var(--gray2);
+  cursor: pointer;
+}
+
+
+.confirm-btn{
+  cursor: pointer;
+  /* text-transform: none;*/
+  background-color: var(--primary-color);
+  color: white !important;
+  margin: 10px;
+}
+
+
 </style>
