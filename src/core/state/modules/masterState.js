@@ -97,13 +97,26 @@ const actions = {
             }
 
             // После успешной симуляции загрузки обновляем аватар в стейте
-            commit('updateMaster', { avatarUrl: avatarDataUrl });
+            this.dispatch('master/updateMaster', { avatarUrl: avatarDataUrl });
 
             // await updateUserOnAPI(state.currentUser);
         } catch (error) {
             console.error('Failed to upload avatar:', error);
         }
     },
+    async changeSkin({ commit, state }, skinId) {
+        try {
+            // Обновление скина
+            this.dispatch('master/updateMaster', { skin: skinId });
+
+            // Отправка обновленных данных на сервер
+            // await updateSkinOnAPI(state.currentUser);
+
+        } catch (error) {
+            console.error('Failed to update user data:', error);
+        }
+    },
+
 };
 
 export default {

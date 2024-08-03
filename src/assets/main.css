@@ -4,7 +4,7 @@
     padding: 0;
     box-sizing: border-box;
     scrollbar-width: thin;
-    scrollbar-color: var(--scrollbar-bg) var(--scrollbar-thin);
+    scrollbar-color: var(--scrollbar-bg) transparent;
 }
 
 /* Задаем шрифт Roboto и его вес для body */
@@ -16,11 +16,11 @@ body {
 
 /* Стили для Webkit-браузеров (Chrome, Safari) */
 ::-webkit-scrollbar {
-    width: 6px;
+    width: 2px !important;
 }
 
 ::-webkit-scrollbar-track {
-    background: var(--scrollbar-thin);
+    background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {

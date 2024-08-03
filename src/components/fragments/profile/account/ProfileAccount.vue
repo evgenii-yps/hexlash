@@ -21,10 +21,12 @@ import ConfirmEmail from "@/components/fragments/profile/account/ConfirmEmail.vu
 import ChangeLogin from "@/components/fragments/profile/account/ChangeLogin.vue";
 import DeleteAccount from "@/components/fragments/profile/account/DeleteAccount.vue";
 import ChangeSkin from "@/components/fragments/profile/account/ChangeSkin.vue";
+
+
 </script>
 
 <style scoped>
 .profile-account {
-  margin-top: 20px;
+  margin-top: 2rem;
 }
 </style>

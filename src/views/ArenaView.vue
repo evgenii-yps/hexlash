@@ -49,7 +49,7 @@ const startBotFight = () => {
 
 <style scoped>
 .background-arena {
-  background: url('@/assets/images/background_profile.webp') no-repeat center center;
+  background: url('@/assets/images/background_arena.webp') no-repeat center center;
 }
 
 .background-arena::before {

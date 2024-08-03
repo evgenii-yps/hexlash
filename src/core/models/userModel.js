@@ -29,7 +29,7 @@ export default class UserModel {
      * @param {number} [param0.daysInClub=0] - Количество дней в клубе.
      * @param {number} [param0.noSkipDays=0] - Количество дней без пропусков.
      * @param {Array<number>} [param0.achievements=[]] - Список ID достижений пользователя.
-     *
+     * @param {number} [param0.skin=1] - Выбранный скин пользователя
 
      * @param {string} [param0.inviteId] - Идентификатор приглашения. Только для текущего пользователя.
      * @param {string} [param0.email] - Электронная почта пользователя. Только для текущего пользователя.
@@ -45,7 +45,7 @@ export default class UserModel {
                     isBlocked,
                     createdAt,
                     updatedAt,
-                    balance,
+                    balance, // игровой баланс
 
                     // Клуб
                     clubId,
@@ -70,6 +70,9 @@ export default class UserModel {
 
                     // Достижения
                     achievements = [],
+
+                    // Выбранный скин
+                    skin = 1,
 
                     // Только для текущего пользователя
                     inviteId,
@@ -110,6 +113,8 @@ export default class UserModel {
         this.noSkipDays = noSkipDays;
 
         this.achievements = achievements;
+
+        this.skin = skin;
 
         // Только для текущего пользователя
         // this.inviteId = inviteId;

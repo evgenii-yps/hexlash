@@ -152,7 +152,7 @@ form {
 
 .confirm-btn{
   cursor: pointer;
-  text-transform: none;
+ /* text-transform: none;*/
   background-color: var(--pink);
   color: white;
   margin: 10px;
@@ -162,6 +162,6 @@ form {
   text-align: center;
   color: var(--gray2);
   cursor: pointer;
-  text-transform: none;
+ /* text-transform: none;*/
 }
 </style>

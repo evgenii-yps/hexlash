@@ -9,6 +9,7 @@
           @input="$emit('update:modelValue', $event.target.value)"
           class="input-element"
           :style="inputStyles"
+          :readonly="readonly"
           autocapitalize="none"
       />
       <div v-if="showButton" class="slot-container">
@@ -19,7 +20,7 @@
 </template>
 
 <script setup>
-import { defineProps, computed, defineEmits } from 'vue';
+import {defineProps, computed, defineEmits} from 'vue';
 
 const props = defineProps({
   label: String,
@@ -65,6 +66,10 @@ const props = defineProps({
     default: '1rem' // Значение по умолчанию
   },
   showButton: {
+    type: Boolean,
+    default: false
+  },
+  readonly: {
     type: Boolean,
     default: false
   }

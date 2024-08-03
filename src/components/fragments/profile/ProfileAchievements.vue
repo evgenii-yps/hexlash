@@ -43,8 +43,8 @@
                           <span class="achievement-title">{{
                               achievement.completed || achievement.transparent ? achievement.title : 'Скрыто'
                             }}</span>
-                          <img v-if="!achievement.completed && achievement.transparent" src="@/assets/images/icon_lock.svg" alt="Locked Overlay" class="achievement-icon lock-overlay"/>
-                        </div>
+                         <img v-if="!achievement.completed && achievement.transparent" src="@/assets/images/icon_lock.svg" alt="Locked Overlay" class="achievement-icon lock-overlay"/>
+                         </div>
                       </template>
                       <span>{{ achievement.description }}</span>
                     </v-tooltip>

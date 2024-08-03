@@ -1,12 +1,13 @@
 <template>
-  <div>
-    <v-btn color="blue darken-1" @mousedown="startHold" @mouseup="endHold" @mouseleave="endHold">
-      Посмотреть приватный ключ
-    </v-btn>
-    <div v-if="countdown > 0" class="countdown">
-      Держите еще {{ countdown }} секунд...
-    </div>
-    <v-dialog v-model="dialog" max-width="500">
+  <div class="private-key-container">
+    <VBtn class="private-key-btn" @mousedown="startHold" @mouseup="endHold" @mouseleave="endHold">
+       Приватный ключ
+      <template #append>
+        <span class="countdown" v-if="countdown > 0">{{ countdown }}</span>
+      </template>
+    </VBtn>
+
+    <VModal v-model="dialog" max-width="500">
       <v-card>
         <v-card-title class="headline">{{ showKey ? 'Private Key' : 'Confirm Action' }}</v-card-title>
         <v-card-text>
@@ -27,7 +28,7 @@
           <v-btn v-if="showKey" color="green darken-1" @click="hidePrivateKey">OK</v-btn>
         </v-card-actions>
       </v-card>
-    </v-dialog>
+    </VModal>
   </div>
 </template>
 
@@ -84,13 +85,27 @@ const copyToClipboard = async () => {
 </script>
 
 <style scoped>
-button {
-  margin: 5px;
+.private-key-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Center content horizontally */
+  justify-content: center; /* Center content vertically */
+  text-align: center;
+  margin-top: 15px;
+}
+
+.private-key-btn {
+  color: white;
+  cursor: pointer;
+  position: relative;
+  padding: 0 30px;
 }
 
 .countdown {
-  color: red;
-  font-weight: bold;
-  margin-top: 10px;
+  display: inline-block;
+  font-size: 1.2rem;
+  color: white;
+  position: absolute;
+  right: 15px; /* Позиционирование отсчета внутри кнопки */
 }
 </style>

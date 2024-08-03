@@ -2,7 +2,7 @@
   <div class="login-change-container">
     <form @submit.prevent="handleLoginSubmit" novalidate>
       <InputField
-          label="LOGIN"
+          label="CHANGE LOGIN"
           type="text"
           v-model="login"
           labelColor="var(--white)"
@@ -138,7 +138,7 @@ watch(() => master.value.userData.login, (newLogin) => {
   login.value = newLogin;
   loginChanged.value = false;
   loginAvailable.value = false;
-});
+}, {immediate: true});
 </script>
 
 <style scoped>
@@ -151,6 +151,8 @@ form {
   display: flex;
   flex-direction: column;
   align-items: center;
+  max-width: 500px;
+  margin: 0 auto;
 }
 
 .btn-container{

@@ -2,7 +2,7 @@
   <div class="email-confirmation-container">
     <form @submit.prevent="handleEmailSubmit" novalidate>
       <InputField
-          label="EMAIL"
+          label="CHANGE EMAIL"
           type="text"
           v-model="email"
           labelColor="var(--white)"
@@ -72,7 +72,7 @@ watch(() => master.value.email, (newEmail) => {
   originalEmail.value = newEmail;
   email.value = newEmail;
   emailChanged.value = false;
-});
+}, {immediate: true});
 </script>
 
 <style scoped>
@@ -84,6 +84,8 @@ watch(() => master.value.email, (newEmail) => {
 form {
   display: flex;
   align-items: center;
+  max-width: 500px;
+  margin: 0 auto;
 }
 
 

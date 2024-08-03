@@ -12,7 +12,7 @@
             <ProfileWallet/>
           </div>
           <div v-else-if="route.path.includes('/profile/account')">
-            <ProfileSettings/>
+            <ProfileSettings :userData="userData"/>
           </div>
           <div v-else-if="route.path.includes('/profile/balance')">
             <ProfileBalance/>

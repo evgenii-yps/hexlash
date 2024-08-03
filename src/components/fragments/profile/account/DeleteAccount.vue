@@ -9,17 +9,17 @@
       </template>
     </VBtnDark>
 
-    <v-dialog v-model="dialog" max-width="500">
-      <v-card>
+    <VModal v-model="dialog" max-width="500">
+      <VCard>
         <v-card-title class="headline">Confirm Deletion</v-card-title>
         <v-card-text>Are you sure you want to delete your account? This action cannot be undone.</v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="blue darken-1" @click="dialog = false">Cancel</v-btn>
-          <v-btn color="red darken-1" @click="handleDelete">Delete</v-btn>
+          <VBtnDark  @click="dialog = false" class="cancel-btn">Cancel</VBtnDark>
+          <VBtn  @click="handleDelete" class="confirm-delete-btn">Delete</VBtn>
         </v-card-actions>
-      </v-card>
-    </v-dialog>
+      </VCard>
+    </VModal>
   </div>
 </template>
 
@@ -55,7 +55,7 @@ const handleDelete = async () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin: 0 20px;
+  margin: 20px 20px;
 }
 
 
@@ -66,13 +66,28 @@ const handleDelete = async () => {
   text-align: center;
   color: white;
   cursor: pointer;
-  opacity: 0.5;
+  opacity: 0.7;
+  background-color: var(--gray2) !important;
 }
 
 .custom-icon {
   width: 15px; /* Увеличиваем ширину изображения */
   height: 15px; /* Увеличиваем высоту изображения */
-  margin-left: 10px; /* Добавляем отступ справа для расстояния между иконкой и текстом */
+  margin-left: 15px; /* Добавляем отступ справа для расстояния между иконкой и текстом */
+}
+
+.confirm-delete-btn{
+  cursor: pointer;
+  background-color: var(--pinkDark);
+  color: white !important;
+  margin: 10px;
+  opacity: 0.9;
+}
+
+.cancel-btn {
+  text-align: center;
+  color: var(--gray2);
+  cursor: pointer;
 }
 
 </style>

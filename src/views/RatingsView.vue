@@ -192,7 +192,7 @@ onMounted(() => {
 
 <style scoped>
 .background-rating {
-  background: url('@/assets/images/background_rating.webp') no-repeat 75% center;
+  background: url('@/assets/images/background_rating.webp') no-repeat 35% center;
 }
 
 .background-rating::before {
@@ -202,7 +202,7 @@ onMounted(() => {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: linear-gradient(to right bottom, black 35%, transparent 75%);
+  background: linear-gradient(to left bottom, black 25%, transparent 75%);
   z-index: 1;
 }
 
