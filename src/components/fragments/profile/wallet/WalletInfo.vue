@@ -7,7 +7,7 @@
         v-model="walletAddress"
         labelColor="var(--white)"
         labelSize="10px"
-        inputBgColor="var(--black-opacity-60)"
+        inputBgColor="var(--black-opacity-80)"
         inputBorderColor="var(--gray1)"
         inputTextColor="var(--gray3)"
         padding="0.8rem"
@@ -26,19 +26,21 @@
     </InputField>
 
 
-    <PrivateKeyButton/>
+    <PrivateKeyButton v-if="notImportWallet"/>
 
 
   </div>
 </template>
 
 <script setup>
-import {computed, ref, watch} from 'vue';
+import {ref, watch} from 'vue';
 import InputField from "@/components/ui/InputField.vue";
 import PrivateKeyButton from "@/components/fragments/profile/wallet/PrivateKeyButton.vue";
 import store from "@/core/state/store.js";
+import {WalletTypes} from "@/core/models/userModel.js";
 
 const walletAddress = ref(null);
+const notImportWallet = ref(false);
 
 const copyToClipboard = () => {
   navigator.clipboard.writeText(walletAddress.value).then(() => {
@@ -49,10 +51,11 @@ const copyToClipboard = () => {
 };
 
 
-const master = computed(() => store.getters['master/getMaster']);
-
-watch(() => master.value.userData.walletAddress, (address) => {
-  walletAddress.value = address;
+watch(store.getters['master/getMaster'], (master) => {
+  if (master && master.userData) {
+    walletAddress.value = master.userData.walletAddress;
+    notImportWallet.value = master.userData.walletType === WalletTypes.GENERATED;
+  }
 }, {immediate: true});
 
 </script>

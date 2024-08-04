@@ -23,12 +23,11 @@
 import { computed, ref, watch } from 'vue';
 import store from "@/core/state/store.js";
 
-const master = computed(() => store.getters['master/getMaster']);
 
 const inviteCode = ref(null);
 const showTooltip = ref(false);
 
-watch(() => master.value, (newMaster) => {
+watch(store.getters['master/getMaster'], (newMaster) => {
   if (newMaster && newMaster.userData) {
     inviteCode.value = newMaster.inviteId;
   }

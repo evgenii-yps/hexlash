@@ -55,7 +55,6 @@ import {computed, nextTick, onBeforeMount, ref, watch} from 'vue';
 import { VImg, VBtn, VDialog, VCard, VCardTitle, VCardText, VCardActions, VSpacer } from 'vuetify/components';
 import store from "@/core/state/store.js";
 
-const master = computed(() => store.getters['master/getMaster']);
 
 const skins = ref([
   { id: 1, image: 'skin1.png', price: 0, locked: false },
@@ -121,13 +120,12 @@ const loadData = async (userData) => {
   scrollToSelectedSkin();
 };
 
-watch(() => master.value, (newMaster) => {
+watch(store.getters['master/getMaster'], (newMaster) => {
   if (newMaster && newMaster.userData) {
     loadData(newMaster.userData);
   }
 }, {immediate: true});
 
-//onBeforeMount(() => loadData(master.value.userData));
 
 </script>
 
@@ -164,7 +162,7 @@ watch(() => master.value, (newMaster) => {
   height: 250px;
   border-radius: 4px;
   border: 1px solid white;
-  background-color: var(--black-opacity-60);
+  background-color: var(--black-opacity-80);
 }
 
 .skin-item:hover {

@@ -7,7 +7,7 @@
           v-model="login"
           labelColor="var(--white)"
           labelSize="10px"
-          inputBgColor="var(--black-opacity-60)"
+          inputBgColor="var(--black-opacity-80)"
           inputBorderColor="var(--gray1)"
           inputTextColor="var(--white)"
           padding="0.8rem"

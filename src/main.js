@@ -55,7 +55,6 @@ const vuetify = createVuetify({
         },
         VCard: {
             class: 'v-modal',
-            color: 'var(--black-opacity-80)'
         }
     }
 });

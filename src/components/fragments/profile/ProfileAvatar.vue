@@ -78,9 +78,7 @@ const uploadAvatar = (event) => {
   }
 };
 
-const master = computed(() => store.getters['master/getMaster']);
-
-watch(() => master.value, (newMaster) => {
+watch(store.getters['master/getMaster'], (newMaster) => {
   if (newMaster && newMaster.userData) {
     avatarUrl.value = newMaster.userData.avatarUrl || defaultAvatarImg;
   }

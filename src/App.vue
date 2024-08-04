@@ -43,9 +43,7 @@ const showBottomMenu = computed(() => {
 })
 
 
-const master = computed(() => store.getters['master/getMaster']);
-
-watch(() => master.value, (newMaster) => {
+watch(store.getters['master/getMaster'], (newMaster) => {
   if (newMaster && newMaster.userData) {
     balance.value = newMaster.userData.balance;
   }

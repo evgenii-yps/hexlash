@@ -1,11 +1,11 @@
 <template>
   <div class="private-key-container">
-    <VBtn class="private-key-btn" @mousedown="startHold" @mouseup="endHold" @mouseleave="endHold">
-      Приватный ключ
+    <VBtnDark class="private-key-btn"  @mousedown="startHold" @mouseup="endHold" @mouseleave="endHold">
+      Show private Key
       <template #append>
         <span class="countdown" v-if="countdown > 0">{{ countdown }}</span>
       </template>
-    </VBtn>
+    </VBtnDark>
 
     <VModal v-model="dialog" max-width="500" @click:outside="hidePrivateKey">
       <v-card>
@@ -102,14 +102,16 @@ const copyToClipboard = async () => {
   align-items: center; /* Center content horizontally */
   justify-content: center; /* Center content vertically */
   text-align: center;
-  margin-top: 15px;
+  margin-top: 20px;
 }
 
 .private-key-btn {
-  color: white;
   cursor: pointer;
   position: relative;
+  font-size: 0.8rem;
   padding: 0 30px;
+  border: 1px solid var(--gray1);
+  color: var(--gray2);
 }
 
 .countdown {

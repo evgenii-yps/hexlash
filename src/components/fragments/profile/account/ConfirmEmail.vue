@@ -7,7 +7,7 @@
           v-model="email"
           labelColor="var(--white)"
           labelSize="10px"
-          inputBgColor="var(--black-opacity-60)"
+          inputBgColor="var(--black-opacity-80)"
           inputBorderColor="var(--gray1)"
           inputTextColor="var(--white)"
           padding="0.8rem"
@@ -96,7 +96,7 @@ form {
 }
 
 .input-button {
-  background-color: var(--black-opacity-60);
+  background-color: var(--black-opacity-80);
   color: var(--white);
   border: 0.5px solid var(--gray2);
   cursor: pointer;
