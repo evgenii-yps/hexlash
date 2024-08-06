@@ -25,10 +25,10 @@
               </div>
             </template>
             <template v-slot:loading>
-              <CircularLoader style="scale: 0.3"
-                              :size="5"
-                              :speed="2"
-                              :opacity="80"
+              <v-progress-circular
+                  class="loader"
+                  size="40"
+                  indeterminate
               />
             </template>
             <template v-slot:error="{ props }">
@@ -88,7 +88,6 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue';
 import CreateClubModal from "@/components/fragments/ratings/CreateClubModal.vue";
-import CircularLoader from "@/components/ui/CircularLoader.vue";
 
 const isClubRating = ref(true);
 const searchClub = ref('');

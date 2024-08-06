@@ -39,7 +39,7 @@
                         <div v-bind="props" @click="achievement.show = !achievement.show" class="achievement-content">
                           <img v-if="achievement.completed" :src="achievement.icon" :alt="achievement.title" class="achievement-icon"/>
                           <img v-else-if="achievement.transparent" :src="achievement.icon" :alt="achievement.title" class="achievement-icon"/>
-                          <img v-else src="@/assets/images/icon_lock.svg" alt="Locked" class="achievement-icon"/>
+                          <img v-else src="@/assets/images/icon_lock.png" alt="Locked" class="achievement-icon"/>
                           <span class="achievement-title">{{
                               achievement.completed || achievement.transparent ? achievement.title : 'Скрыто'
                             }}</span>
@@ -57,7 +57,7 @@
                       >
                         <template #activator="{ props }">
                           <div v-bind="props"  @click="achievement.show = !achievement.show" class="achievement-content">
-                            <img src="@/assets/images/icon_lock.svg" alt="Locked" class="achievement-icon"/>
+                            <img src="@/assets/images/icon_lock.png" alt="Locked" class="achievement-icon"/>
                             <span class="achievement-title">Скрыто</span>
                           </div>
                         </template>
@@ -390,10 +390,8 @@ const carouselItems = computed(() => {
 
 .achievement-icon.lock-overlay {
   position: absolute;
-  width: 75px; /* меньший размер замка */
-  height: 75px;
-  top: 50%; /* Центрирование по вертикали */
-  left: 50%; /* Центрирование по горизонтали */
-  transform: translate(-50%, -50%); /* Смещение для абсолютного центрирования */
+  width: 65px; /* меньший размер замка */
+  height: 65px;
+  margin-top:-20px
 }
 </style>

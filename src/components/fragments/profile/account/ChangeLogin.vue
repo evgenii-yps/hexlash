@@ -33,15 +33,15 @@
 
 
     <VModal v-model="dialog">
-      <v-card>
+      <VCard>
         <v-card-title class="headline">Confirm Change</v-card-title>
         <v-card-text>Are you sure you want to change your login to "{{ login }}"?</v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn  @click="dialog = false">Cancel</v-btn>
-          <v-btn  @click="handleLoginSubmit">Confirm</v-btn>
+          <v-btn @click="dialog = false" class="cancel-btn">Cancel</v-btn>
+          <v-btn @click="handleLoginSubmit" class="confirm-btn">Confirm</v-btn>
         </v-card-actions>
-      </v-card>
+      </VCard>
     </VModal>
   </div>
 </template>
@@ -155,7 +155,7 @@ form {
   margin: 0 auto;
 }
 
-.btn-container{
+.btn-container {
   margin: 0 20px;
 }
 

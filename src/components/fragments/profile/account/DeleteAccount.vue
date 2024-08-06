@@ -84,10 +84,4 @@ const handleDelete = async () => {
   opacity: 0.9;
 }
 
-.cancel-btn {
-  text-align: center;
-  color: var(--gray2);
-  cursor: pointer;
-}
-
 </style>

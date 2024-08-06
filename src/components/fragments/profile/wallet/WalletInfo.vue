@@ -2,7 +2,7 @@
   <div class="wallet-info">
 
     <InputField
-        label="WALLET ADDRESS"
+        label="CONNECTED WALLET ADDRESS"
         type="text"
         v-model="walletAddress"
         labelColor="var(--white)"
@@ -26,7 +26,7 @@
     </InputField>
 
 
-    <PrivateKeyButton v-if="notImportWallet"/>
+    <BuyButton />
 
 
   </div>
@@ -35,9 +35,9 @@
 <script setup>
 import {ref, watch} from 'vue';
 import InputField from "@/components/ui/InputField.vue";
-import PrivateKeyButton from "@/components/fragments/profile/wallet/PrivateKeyButton.vue";
 import store from "@/core/state/store.js";
 import {WalletTypes} from "@/core/models/userModel.js";
+import BuyButton from "@/components/fragments/profile/wallet/BuyButton.vue";
 
 const walletAddress = ref(null);
 const notImportWallet = ref(false);

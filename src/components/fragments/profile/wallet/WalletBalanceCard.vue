@@ -13,7 +13,6 @@
 
 <script setup>
 import {defineProps} from 'vue';
-import CircularLoader from "@/components/ui/CircularLoader.vue";
 
 const props = defineProps({
   balance: {

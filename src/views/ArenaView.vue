@@ -15,11 +15,13 @@
           <button @click="startFight" class="fight-button">Бой</button>
         </div>
 
-        <CircularLoader style="scale: 0.3"
-                        v-if="isLoading"
-                        :size="5"
-                        :speed="2"
-                        :opacity="80"/>
+        <v-progress-circular
+            v-if="isLoading"
+            class="loader"
+            size="40"
+            indeterminate
+        />
+
       </div>
     </div>
   </div>
@@ -27,7 +29,6 @@
 
 <script setup>
 import {ref} from 'vue';
-import CircularLoader from "@/components/ui/CircularLoader.vue";
 import BetSlider from "@/components/fragments/arena/BetSlider.vue";
 import ActionSlider from "@/components/fragments/arena/ActionSlider.vue";
 

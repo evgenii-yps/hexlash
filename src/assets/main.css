@@ -47,7 +47,7 @@ body {
 
 /* Настройка фона и рамки для тултипа */
 .v-tooltip__content {
-    background-color: var(--black-opacity-80) !important;  /* Цвет фона тултипа */
+    background-color: var(--black-opacity-80) !important; /* Цвет фона тултипа */
     border: 2px solid var(--pink); /* Цвет рамки тултипа */
     border-radius: 5px; /* Радиус углов рамки */
     color: #fff; /* Цвет текста тултипа */
@@ -61,12 +61,48 @@ body {
     background-color: var(--black-opacity-80) !important;
     border-radius: 8px;
     padding: 20px;
-    border: 2px solid var(--pink) !important; /* Цвет рамки тултипа */
-    color:white !important;
+    border: 2px solid var(--primary-color) !important; /* Цвет рамки тултипа */
+    color: white !important;
 }
+
+.v-modal .cancel-btn{
+    text-align: center;
+    color: var(--gray2) !important;
+    cursor: pointer;
+}
+
+.v-modal .confirm-btn{
+    cursor: pointer;
+    /* text-transform: none;*/
+    background-color: var(--primary-color);
+    color: white !important;
+    margin: 10px;
+}
+
+.loader {
+    display: flex;
+    color: var(--primary-color);
+    justify-content: center;
+}
+
 
 :root {
     --v-theme-overlay-multiplier: 0.9;
     --v-hover-opacity: 0.08;
-    --v-border-color:2px solid var(--primary-color);
+    --v-border-color: 2px solid var(--primary-color);
 }
+
+:root .v-list {
+    background:var(--black-opacity-80) !important;
+    overflow: hidden !important;
+    color: white;
+    border: 2px solid var(--gray1);
+    border-top-left-radius: 0 !important;
+    border-top-right-radius: 0 !important;
+}
+
+:root .v-text-field .v-field--active input{
+    background-color: transparent;
+    border: none;
+}
+

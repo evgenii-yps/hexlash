@@ -8,7 +8,7 @@
     </VBtnDark>
 
     <VModal v-model="dialog" max-width="500" @click:outside="hidePrivateKey">
-      <v-card>
+      <VCard>
         <v-card-title class="headline">{{ showKey ? 'Private Key' : 'Confirm Action' }}</v-card-title>
         <v-card-text class="text-center">
           <div v-if="showKey">
@@ -31,7 +31,7 @@
           <VBtn v-if="!showKey" @click="showPrivateKey" class="confirm-btn">Показать</VBtn>
           <VBtn v-if="showKey" @click="hidePrivateKey" class="confirm-btn">OK</VBtn>
         </v-card-actions>
-      </v-card>
+      </VCard>
     </VModal>
   </div>
 </template>
@@ -41,10 +41,10 @@ import {computed, ref, watch} from 'vue';
 import {useClipboard} from '@vueuse/core';
 import store from "@/core/state/store.js";
 
-const isGeneratedWallet = ref(true); // Измените это значение в зависимости от типа кошелька
+const isGeneratedWallet = ref(true);
 const dialog = ref(false);
 const showKey = ref(false);
-const privateKey = ref(''); // Пример приватного ключа
+const privateKey = ref('');
 const countdown = ref(0);
 const holdDuration = 3; // Длительность удержания в секундах
 
@@ -134,20 +134,7 @@ const copyToClipboard = async () => {
   padding: 24px 24px 4px;
 }
 
-.cancel-btn {
-  text-align: center;
-  color: var(--gray2);
-  cursor: pointer;
-}
 
-
-.confirm-btn{
-  cursor: pointer;
-  /* text-transform: none;*/
-  background-color: var(--primary-color);
-  color: white !important;
-  margin: 10px;
-}
 
 
 </style>

@@ -27,12 +27,11 @@
 
       <div v-if="authError" class="error-message">Wrong login or password<!--{{ authError }}--></div>
 
-      <CircularLoader style="scale: 0.3"
-                      v-if="loading"
-                      :size="5"
-                      :speed="2"
-                      :opacity="80"
-
+      <v-progress-circular
+          v-if="loading"
+          class="loader"
+          size="40"
+          indeterminate
       />
 
       <ButtonRect
@@ -72,7 +71,6 @@ import ButtonRect from "@/components/ui/ButtonRect.vue";
 import InputField from "@/components/ui/InputField.vue";
 import ButtonText from "@/components/ui/ButtonText.vue";
 import {useRouter} from 'vue-router';
-import CircularLoader from "@/components/ui/CircularLoader.vue";
 
 import store from "@/core/state/store.js";
 

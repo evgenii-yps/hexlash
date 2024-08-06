@@ -15,7 +15,7 @@ import {
     VTooltip, VBtn, VDialog, VCard,
     VCardTitle, VCardText, VCardActions, VSpacer,
     VIcon, VImg, VInput, VRow, VCol, VInfiniteScroll, VCarousel, VCarouselItem,
-    VProgressCircular
+    VProgressCircular, VSelect, VList, VTextField
 } from 'vuetify/components';
 import store from "@/core/state/store.js";
 
@@ -37,7 +37,10 @@ const vuetify = createVuetify({
         VInfiniteScroll,
         VCarousel,
         VCarouselItem,
-        VProgressCircular
+        VProgressCircular,
+        VSelect,
+        VList,
+        VTextField
     },
     aliases: {
         VBtnDark: VBtn,

@@ -18,7 +18,7 @@
         <v-img :src="skin.image" aspect-ratio="1"/>
 
         <div v-if="skin.locked" class="lock-overlay">
-          <img src="@/assets/images/icon_lock.svg" alt="Locked Overlay" class="lock-icon"/>
+          <img src="@/assets/images/icon_lock.png" alt="Locked Overlay" class="lock-icon"/>
           <p class="locked-text">Недостаточно средств</p>
         </div>
 
@@ -35,37 +35,37 @@
       </svg>
     </button>
 
-    <v-dialog v-model="dialog" max-width="500">
-      <v-card>
+    <VModal v-model="dialog" max-width="500">
+      <VCard>
         <v-card-title class="headline">Подтверждение выбора</v-card-title>
         <v-card-text v-if="!skinToSelect.locked">Вы уверены, что хотите выбрать этот скин?</v-card-text>
         <v-card-text v-else>У вас недостаточно средств для покупки этого скина. Хотите пополнить баланс?</v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="blue darken-1" @click="dialog = false">Отмена</v-btn>
-          <v-btn color="blue darken-1" v-if="!skinToSelect.locked" @click="confirmSelection">Подтвердить</v-btn>
+          <v-btn @click="dialog = false" class="cancel-btn">Отмена</v-btn>
+          <v-btn v-if="!skinToSelect.locked" @click="confirmSelection" class="confirm-btn">Подтвердить</v-btn>
         </v-card-actions>
-      </v-card>
-    </v-dialog>
+      </VCard>
+    </VModal>
   </div>
 </template>
 
 <script setup>
 import {computed, nextTick, onBeforeMount, ref, watch} from 'vue';
-import { VImg, VBtn, VDialog, VCard, VCardTitle, VCardText, VCardActions, VSpacer } from 'vuetify/components';
+import {VImg, VBtn, VDialog, VCard, VCardTitle, VCardText, VCardActions, VSpacer} from 'vuetify/components';
 import store from "@/core/state/store.js";
 
 
 const skins = ref([
-  { id: 1, image: 'skin1.png', price: 0, locked: false },
-  { id: 2, image: 'skin2.png', price: 10, locked: false },
-  { id: 3, image: 'skin3.png', price: 15, locked: false },
-  { id: 4, image: 'skin4.png', price: 20, locked: false },
-  { id: 5, image: 'skin5.png', price: 25, locked: false },
-  { id: 6, image: 'skin6.png', price: 30, locked: false },
-  { id: 7, image: 'skin7.png', price: 35, locked: false },
-  { id: 8, image: 'skin8.png', price: 40, locked: false },
-  { id: 8, image: 'skin8.png', price: 990, locked: false },
+  {id: 1, image: 'skin1.png', price: 0, locked: false},
+  {id: 2, image: 'skin2.png', price: 10, locked: false},
+  {id: 3, image: 'skin3.png', price: 15, locked: false},
+  {id: 4, image: 'skin4.png', price: 20, locked: false},
+  {id: 5, image: 'skin5.png', price: 25, locked: false},
+  {id: 6, image: 'skin6.png', price: 30, locked: false},
+  {id: 7, image: 'skin7.png', price: 35, locked: false},
+  {id: 8, image: 'skin8.png', price: 40, locked: false},
+  {id: 8, image: 'skin8.png', price: 990, locked: false},
 ]);
 
 const selectedSkin = ref(skins.value[0].id);
@@ -105,7 +105,7 @@ const scrollToSelectedSkin = () => {
   if (scrollContainer.value) {
     const selectedSkinElement = scrollContainer.value.querySelector('.selected-skin');
     if (selectedSkinElement) {
-      selectedSkinElement.scrollIntoView({ behavior: 'instant', block: 'nearest', inline: 'center' });
+      selectedSkinElement.scrollIntoView({behavior: 'instant', block: 'nearest', inline: 'center'});
     }
   }
 };
@@ -218,8 +218,8 @@ watch(store.getters['master/getMaster'], (newMaster) => {
 }
 
 .lock-icon {
-  width: 50px;
-  height: 50px;
+  width: 75px;
+  height: 75px;
   margin-bottom: 10px;
 }
 

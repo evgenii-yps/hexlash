@@ -54,17 +54,18 @@
 
             <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
 
-            <CircularLoader style="scale: 0.3"
-                            v-if="loading"
-                            :size="5"
-                            :speed="2"
-                            :opacity="80"
+            <v-progress-circular
+                v-if="loading"
+                class="loader"
+                size="40"
+                indeterminate
             />
+
           </form>
         </v-card-text>
         <v-card-actions style="padding-top: 0">
           <VBtnDark class="cancel-btn" @click="cancel">Cancel</VBtnDark>
-          <VBtn color="white" @click="handleSubmit" class="confirm-btn">Confirm</VBtn>
+          <VBtn class="confirm-btn" @click="handleSubmit" >Confirm</VBtn>
         </v-card-actions>
       </VCard>
     </VModal>
@@ -74,7 +75,6 @@
 <script setup>
 import { computed, ref } from 'vue';
 import InputField from '@/components/ui/InputField.vue';
-import CircularLoader from '@/components/ui/CircularLoader.vue';
 import store from "@/core/state/store.js";
 
 const currentUser = computed(() => store.getters['user/getCurrentUser']);
@@ -150,18 +150,6 @@ form {
   margin-left: 10px;
 }
 
-.confirm-btn{
-  cursor: pointer;
- /* text-transform: none;*/
-  background-color: var(--pink);
-  color: white;
-  margin: 10px;
-}
 
-.cancel-btn {
-  text-align: center;
-  color: var(--gray2);
-  cursor: pointer;
- /* text-transform: none;*/
-}
+
 </style>

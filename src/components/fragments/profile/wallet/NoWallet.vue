@@ -1,5 +1,5 @@
 <template>
-  <div class="no-wallet">
+  <div class="connect-wallet">
     <p>{{ titleText }}</p>
 
     <div class="button-container">
@@ -59,7 +59,7 @@ const connectWallet = () => {
 </script>
 
 <style scoped>
-.no-wallet {
+.connect-wallet {
   color: white;
   display: block;
   max-width: 500px;

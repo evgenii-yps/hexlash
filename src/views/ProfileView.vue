@@ -4,7 +4,11 @@
       <div class="profile-content-wrapper">
 
         <div v-if="loading" class="loader-container">
-          <CircularLoader style="scale: 0.5" :size="5" :speed="2" :opacity="80"/>
+          <v-progress-circular
+              class="loader"
+              size="40"
+              indeterminate
+          />
         </div>
 
         <div v-else>
@@ -57,7 +61,6 @@ import ProfileSettings from "@/components/fragments/profile/account/ProfileAccou
 import ProfileBalance from "@/components/fragments/profile/ProfileBalance.vue";
 import ProfileName from "@/components/fragments/profile/ProfileName.vue";
 import ProfileInvite from "@/components/fragments/profile/ProfileInvite.vue";
-import CircularLoader from "@/components/ui/CircularLoader.vue";
 import ProfileAvatar from "@/components/fragments/profile/ProfileAvatar.vue";
 import UserName from "@/components/fragments/profile/UserName.vue";
 import UserAvatar from "@/components/fragments/profile/UserAvatar.vue";

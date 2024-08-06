@@ -1,33 +1,29 @@
 <template>
   <div class="wallet-container">
     <BackButton/>
+
+    <div class="wallet-content">
+      <ConnectWallet v-if="!hasWallet"/>
       <WalletInfo v-if="hasWallet"/>
 
-      <div class="balance-cards-container" :class="{'single-card': !hasWallet}">
-        <GameBalanceCard :balance=String(gameBalance) @click="income"/>
-
-        <WalletBalanceCard v-if="hasWallet"
-                           :isConnected="isConnected"
-                           :balance=String(walletBalance)
-                           @click="withdraw"/>
+      <div class="balance-cards-container">
+        <GameBalanceCard :balance=String(gameBalance) @click="withdraw"/>
       </div>
 
-      <NoWallet :titleText="titleText"/>
-
     </div>
+  </div>
 
 </template>
 
 <script setup>
 import BackButton from "@/components/ui/BackButton.vue";
 import WalletInfo from "@/components/fragments/profile/wallet/WalletInfo.vue";
-import WalletBalanceCard from "@/components/fragments/profile/wallet/WalletBalanceCard.vue";
 import GameBalanceCard from "@/components/fragments/profile/wallet/GameBalanceCard.vue";
-import NoWallet from "@/components/fragments/profile/wallet/NoWallet.vue";
 import {ref, watch} from "vue";
 import store from "@/core/state/store.js";
 import {useMetaMaskWallet} from "vue-connect-wallet";
 import {WalletTypes} from "@/core/models/userModel.js";
+import ConnectWallet from "@/components/fragments/profile/wallet/ConnectWallet.vue";
 
 const wallet = useMetaMaskWallet();
 
@@ -88,9 +84,8 @@ wallet.onAccountsChanged((accounts) => {
   console.log('account changed to: ', accounts[0]);
 
   const account = accounts[0] ? accounts[0] : '';
-  const balance = 0;
 
-  store.dispatch('master/updateMaster', {walletAddress: account, walletBalance: balance});
+  store.dispatch('master/updateMaster', {walletAddress: account});
 
 });
 
@@ -103,21 +98,21 @@ wallet.onChainChanged(async (chainId) => {
 
 <style scoped>
 .wallet-container {
-  margin-top: 2rem;
+  margin: 2rem 0 0 0;
+}
+.wallet-content {
+  margin: 0 20px;
 }
 
 .balance-cards-container {
   display: flex;
   gap: 16px;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   max-width: 500px;
   margin: 2rem auto;
 
 }
 
-.single-card {
-  justify-content: center;
-}
 
 </style>
