@@ -11,6 +11,8 @@
           :style="inputStyles"
           :readonly="readonly"
           autocapitalize="none"
+          :placeholder="placeholder"
+          style="font-size: 1em"
       />
       <div v-if="showButton" class="slot-container">
         <slot></slot>
@@ -72,6 +74,10 @@ const props = defineProps({
   readonly: {
     type: Boolean,
     default: false
+  },
+  placeholder: {
+    type: String,
+    default: '' // Значение по умолчанию для placeholder
   }
 });
 
@@ -97,9 +103,10 @@ const wrapperStyles = computed(() => ({
   alignItems: 'center',
   border: `1px solid ${props.inputBorderColor}`,
   borderRadius: props.borderRadius,
-  backgroundColor: props.inputBgColor
+
 }));
 </script>
+
 
 <style scoped>
 .input-field {

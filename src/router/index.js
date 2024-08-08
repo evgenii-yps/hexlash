@@ -18,7 +18,17 @@ const protectedRoutes = [
     {path: '/profile/balance', name: 'Balance', component: () => import("/src/views/ProfileView.vue")},
     {path: '/profile/wallet', name: 'Wallet', component: () => import("/src/views/ProfileView.vue")},
     {path: '/profile/account', name: 'Account', component: () => import("/src/views/ProfileView.vue")},
-    {path: '/ratings', name: 'Ratings', component: () => import("/src/views/RatingsView.vue")},
+    {
+        path: '/ratings/:type',
+        name: 'Ratings',
+        component: () => import("/src/views/RatingsView.vue"),
+        props: true
+    },
+    {
+        path: '/ratings',
+        redirect: '/ratings/clubs'
+    },
+
     {path: '/training', name: 'Training', component: () => import("/src/views/TrainingView.vue")},
     {path: '/training/fight', name: 'Training fight', component: () => import("/src/views/FightView.vue")},
     {path: '/club/:id', name: 'Club', component: () => import("/src/views/ClubView.vue")},

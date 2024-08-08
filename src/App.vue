@@ -36,7 +36,7 @@ const route = useRoute()
 // Определяем, нужно ли показывать BottomMenu
 const showBottomMenu = computed(() => {
   // Список маршрутов, на которых BottomMenu должен отображаться
-  const includedRoutes = ['/arena', '/training', '/ratings',
+  const includedRoutes = ['/arena', '/training', '/ratings/clubs', '/ratings/fighters',
     '/profile', '/profile/wallet', '/profile/balance', '/profile/account', '/404', '/user/*']
   // Проверка, если маршрут совпадает с включенными маршрутами или начинается с /user/
   return includedRoutes.includes(route.path) || route.path.startsWith('/user/');

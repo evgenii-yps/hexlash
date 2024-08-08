@@ -3,164 +3,315 @@
     <div class="rating-container">
       <div class="rating-content-wrapper">
         <div class="rating-tabs">
-          <button :class="{'active-tab': isClubRating}" @click="showClubRating">Рейтинг клубов</button>
-          <button :class="{'active-tab': !isClubRating}" @click="showParticipantRating">Рейтинг участников</button>
-          <button class="create-club-button" @click="openCreateClubModal">Создать клуб</button>
+          <VBtnDark :class="{'active-tab': activeTab === Tabs.CLUBS} " @click="setActiveTab(Tabs.CLUBS)">Рейтинг
+            клубов
+          </VBtnDark>
+          <VBtnDark :class="{'active-tab': activeTab === Tabs.FIGHTERS}" @click="setActiveTab(Tabs.FIGHTERS)">Рейтинг
+            участников
+          </VBtnDark>
+          <VBtnDark @click="openCreateClubModal">Создать клуб</VBtnDark>
         </div>
 
-        <div v-if="isClubRating" class="rating-table-wrapper">
-          <div class="rating-header">
-            <input type="text" v-model="searchClub" placeholder="Поиск клуба" class="search-input"/>
-            <select v-model="sortClubBy">
-              <option value="points">Очки побед</option>
-              <option value="members">Количество участников</option>
-            </select>
+        <div v-if="activeTab === Tabs.CLUBS" class="table-wrapper">
+          <div class="table-header">
+            <InputField
+                v-model="searchClub"
+                labelColor="var(--white)"
+                inputBgColor="var(--black-opacity)"
+                inputBorderColor="var(--gray1)"
+                inputTextColor="var(--white)"
+                padding="0.8rem"
+                placeholder="Поиск клуба"
+                style="max-width: 300px; margin-bottom:0; display: block;"
+                @input="handleClubSearchInput"
+            />
+
+            <v-select
+                v-model="sortClubBy"
+                :items="clubSortItems"
+                item-title="name"
+                variant="outlined"
+                :menu-icon="null"
+                density="compact"
+                bg-color="var(--black-opacity)"
+                class="custom-select"
+                style="max-width: 250px;"
+                :hideNoData="true"
+            >
+              <template v-slot:item="{ props, item }">
+                <v-list-item v-bind="props"></v-list-item>
+              </template>
+              <template v-slot:append-inner>
+                <img src="@/assets/images/icon_arrow_down.svg" alt="custom arrow" class="custom-arrow"/>
+              </template>
+            </v-select>
           </div>
-          <VInfiniteScroll :items="clubs" :onLoad="loadClubs" class="infinity-scroll">
-            <template v-for="(club, index) in clubs" :key="club.id">
-              <div :class="['rating-row', index % 2 === 0 ? 'bg-grey-lighten-2' : '']" @click="viewClub(club.id)">
-                <span>{{ club.name }}</span>
-                <span>{{ club.points }}</span>
-                <span>{{ club.members }}</span>
-              </div>
-            </template>
-            <template v-slot:loading>
-              <v-progress-circular
-                  class="loader"
-                  size="40"
-                  indeterminate
-              />
-            </template>
-            <template v-slot:error="{ props }">
-              <v-alert type="error">
-                <div class="d-flex justify-space-between align-center">
-                  Something went wrong...
-                  <v-btn
-                      color="white"
-                      size="small"
-                      variant="outlined"
-                      v-bind="props"
-                  >
-                    Retry
-                  </v-btn>
+
+          <div class="table-body">
+            <div class="table-header-row">
+              <span class="column-name">Название клуба</span>
+              <span class="column">
+    <img :class="{'active-sort-icon': sortClubBy === 'members'}" src="@/assets/images/icon_members.svg"
+         alt="sort icon"/>
+  </span>
+              <span class="column">
+    <img :class="{'active-sort-icon': sortClubBy === 'points'}" src="@/assets/images/icon_wins.svg" alt="sort icon"/>
+  </span>
+
+            </div>
+
+
+            <VInfiniteScroll :items="clubs" :onLoad="loadClubs" class="infinite-scroll">
+              <template v-if="clubs.length" v-for="(club, index) in clubs" :key="club.id">
+                <div :class="['table-row', index % 2 === 0 ? '' : '']" @click="viewClub(club.id)">
+                  <span class="column-name">{{ club.name }}</span>
+                  <span class="column">{{ club.members }}</span>
+                  <span class="column">{{ club.points }}</span>
                 </div>
-              </v-alert>
-            </template>
-          </VInfiniteScroll>
+              </template>
+              <template v-else>
+                <div class="no-results" v-if="clubsLimitReached">Ничего не найдено</div>
+              </template>
+              <template v-slot:loading>
+                <v-progress-circular v-if="!clubsLimitReached" class="loader" size="40" indeterminate/>
+              </template>
+              <template v-slot:error="{ props }">
+                <v-alert type="error">
+                  <div class="d-flex justify-space-between align-center">
+                    Something went wrong...
+                    <v-btn color="white" size="small" variant="outlined" v-bind="props">Retry</v-btn>
+                  </div>
+                </v-alert>
+              </template>
+            </VInfiniteScroll>
+          </div>
         </div>
 
-        <div v-else class="rating-table-wrapper">
-          <div class="rating-header">
-            <select v-model="filterByClub">
-              <option value="">Все клубы</option>
-              <option v-for="club in allClubs" :key="club.id" :value="club.id">{{ club.name }}</option>
-            </select>
-            <select v-model="sortParticipantBy">
-              <option value="wins">Выигранные бои</option>
-              <option value="fc">Количество FC</option>
-              <option value="losses">Проигранные бои</option>
-              <option value="total">Общее количество боев</option>
-              <option value="luck">Процент удачи</option>
-            </select>
+        <div v-if="activeTab === Tabs.FIGHTERS" class="table-wrapper">
+          <div class="table-header">
+            <InputField
+                v-model="searchMember"
+                labelColor="var(--white)"
+                inputBgColor="var(--black-opacity)"
+                inputBorderColor="var(--gray1)"
+                inputTextColor="var(--white)"
+                padding="0.8rem"
+                placeholder="Поиск"
+                style="max-width: 300px; margin-bottom:0; display: block;"
+                @input="handleMemberSearchInput"
+            />
+
+            <v-select
+                v-model="sortParticipantBy"
+                :items="membersSortedItem"
+                item-title="name"
+                variant="outlined"
+                :menu-icon="null"
+                density="compact"
+                bg-color="var(--black-opacity)"
+                class="custom-select"
+                style="max-width: 250px;"
+                :hideNoData="true"
+            >
+              <template v-slot:item="{ props, item }">
+                <v-list-item v-bind="props"></v-list-item>
+              </template>
+              <template v-slot:append-inner>
+                <img src="@/assets/images/icon_arrow_down.svg" alt="custom arrow" class="custom-arrow"/>
+              </template>
+            </v-select>
           </div>
-          <VInfiniteScroll :items="participants" :onLoad="loadParticipants" class="infinity-scroll">
-            <template v-for="(participant, index) in participants" :key="participant.id">
-              <div :class="['rating-row', index % 2 === 0 ? 'bg-grey-lighten-2' : '']" @click="viewParticipant(participant.id)">
-                <span>{{ participant.name }}</span>
-                <span>{{ participant.club }}</span>
-                <span>{{ participant.wins }}</span>
-                <span>{{ participant.fc }}</span>
-                <span>{{ participant.losses }}</span>
-                <span>{{ participant.total }}</span>
-                <span>{{ participant.luck }}</span>
-              </div>
-            </template>
-          </VInfiniteScroll>
+
+          <div class="table-body">
+            <div class="table-header-row">
+              <span class="column-name">Имя</span>
+              <span class="column-name">Клуб</span>
+              <span class="column">
+                <img :class="{'active-sort-icon': sortParticipantBy === 'wins'}" src="@/assets/images/icon_wins.svg"
+                     alt="sort icon"/>
+              </span>
+              <span class="column">
+                <img :class="{'active-sort-icon': sortParticipantBy === 'fc'}" src="@/assets/images/icon_tokens.svg"
+                     alt="sort icon"/>
+              </span>
+              <span class="column">
+                <img :class="{'active-sort-icon': sortParticipantBy === 'losses'}" src="@/assets/images/icon_lose.svg"
+                     alt="sort icon"/>
+              </span>
+              <span class="column">
+                <img :class="{'active-sort-icon': sortParticipantBy === 'total'}" src="@/assets/images/icon_fights.svg"
+                     alt="sort icon"/>
+              </span>
+              <span class="column">
+                <img :class="{'active-sort-icon': sortParticipantBy === 'luck'}" src="@/assets/images/icon_lucky.svg"
+                     alt="sort icon"/>
+              </span>
+            </div>
+
+            <VInfiniteScroll :items="participants" :onLoad="loadParticipants" class="infinite-scroll">
+              <template v-if="participants.length" v-for="(participant, index) in participants" :key="participant.id">
+                <div :class="['table-row', index % 2 === 0 ? '' : '']" @click="viewParticipant(participant.id)">
+                  <span class="column-name">{{ participant.name }}</span>
+                  <span class="column-name">{{ participant.club }}</span>
+                  <span class="column">{{ participant.wins }}</span>
+                  <span class="column">{{ participant.fc }}</span>
+                  <span class="column">{{ participant.losses }}</span>
+                  <span class="column">{{ participant.total }}</span>
+                  <span class="column">{{ participant.luck }}</span>
+                </div>
+              </template>
+              <template v-else>
+                <div class="no-results" v-if="participantsLimitReached">Ничего не найдено</div>
+              </template>
+              <template v-slot:loading>
+                <v-progress-circular v-if="!participantsLimitReached" class="loader" size="40" indeterminate/>
+              </template>
+              <template v-slot:error="{ props }">
+                <v-alert type="error">
+                  <div class="d-flex justify-space-between align-center">
+                    Something went wrong...
+                    <v-btn color="white" size="small" variant="outlined" v-bind="props">Retry</v-btn>
+                  </div>
+                </v-alert>
+              </template>
+            </VInfiniteScroll>
+          </div>
         </div>
+
       </div>
     </div>
 
-    <CreateClubModal v-model="isCreateClubModalOpen" @close="isCreateClubModalOpen = false" />
+    <CreateClubModal v-model="isCreateClubModalOpen" @close="isCreateClubModalOpen = false"/>
   </div>
 </template>
-
-
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import {ref, onMounted, watch} from 'vue';
+import {useRouter, useRoute} from 'vue-router';
 import CreateClubModal from "@/components/fragments/ratings/CreateClubModal.vue";
+import InputField from "@/components/ui/InputField.vue";
+import debounce from "debounce";
 
-const isClubRating = ref(true);
-const searchClub = ref('');
-const sortClubBy = ref('points');
-const filterByClub = ref('');
-const sortParticipantBy = ref('wins');
+// Enum для вкладок
+const Tabs = {
+  CLUBS: 'clubs',
+  FIGHTERS: 'fighters'
+};
+
+const router = useRouter();
+const route = useRoute();
+
+const activeTab = ref(route.params.type === Tabs.CLUBS ? Tabs.CLUBS : Tabs.FIGHTERS);
+
+const searchClub = ref(activeTab.value === Tabs.CLUBS ? route.query.searchClub || '' : '');
+const searchMember = ref(activeTab.value === Tabs.FIGHTERS ? route.query.searchMember || '' : '');
+
+const sortClubBy = ref(activeTab.value === Tabs.CLUBS ? route.query.sortClubBy || 'points' : 'points');
+const sortParticipantBy = ref(activeTab.value === Tabs.FIGHTERS ? route.query.sortParticipantBy || 'wins' : 'wins');
+
 const isCreateClubModalOpen = ref(false);
+
+const participantsLimitReached = ref(false);
+const clubsLimitReached = ref(false);
+
+const clubSortItems = [
+  {name: 'Очки побед', value: 'points'},
+  {name: 'Количество участников', value: 'members'}
+];
+
+const membersSortedItem = [
+  {name: 'Выигранные бои', value: 'wins'},
+  {name: 'Количество FC', value: 'fc'},
+  {name: 'Проигранные бои', value: 'losses'},
+  {name: 'Общее количество боев', value: 'total'},
+  {name: 'Процент удачи', value: 'luck'}
+];
 
 const clubs = ref([]);
 const participants = ref([]);
 
-const loadClubs = async ({ done }) => {
+const clubPage = ref(1);
+const participantPage = ref(1);
+const pageSize = 10;
+
+const loadClubs = async ({done}) => {
   const newClubs = await fetchClubsFromAPI({
     search: searchClub.value,
-    sortBy: sortClubBy.value
+    sortBy: sortClubBy.value,
+    page: clubPage.value,
+    limit: pageSize
   });
-  done('ok');
+  if (newClubs.length === 0) {
+    clubsLimitReached.value = true;
+  }
   clubs.value.push(...newClubs);
+  clubPage.value++;
+  done('ok');
 };
 
-const loadParticipants = async ({ done }) => {
+const loadParticipants = async ({done}) => {
   const newParticipants = await fetchParticipantsFromAPI({
-    filterByClub: filterByClub.value,
-    sortBy: sortParticipantBy.value
+    searchMember: searchMember.value,
+    sortBy: sortParticipantBy.value,
+    page: participantPage.value,
+    limit: pageSize
   });
+  if (newParticipants.length === 0) {
+    participantsLimitReached.value = true;
+  }
   participants.value.push(...newParticipants);
+  participantPage.value++;
   done('ok');
 };
 
 const fetchClubsFromAPI = async (params) => {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     setTimeout(() => {
-      const newClubs = Array.from({ length: 10 }, (_, i) => ({
-        id: clubs.value.length + i + 1,
-        name: `Новый клуб ${clubs.value.length + i + 1}`,
+      const totalClubs = 50; // Всего клубов
+      const start = (params.page - 1) * params.limit;
+      const end = params.page * params.limit;
+      const filteredClubs = Array.from({length: totalClubs}, (_, i) => ({
+        id: i + 1,
+        name: `Клуб ${i + 1}`,
         points: Math.floor(Math.random() * 2000),
-        members: Math.floor(Math.random() * 50),
-      }));
-      resolve(newClubs);
+        members: Math.floor(Math.random() * 50)
+      })).slice(start, end);
+
+      resolve(filteredClubs);
     }, 1000);
   });
 };
 
 const fetchParticipantsFromAPI = async (params) => {
-  // Здесь должен быть ваш API вызов для получения данных участников
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     setTimeout(() => {
-      const newParticipants = Array.from({ length: 10 }, (_, i) => ({
-        id: participants.value.length + i + 1,
-        name: `Новый участник ${participants.value.length + i + 1}`,
-        club: 'Клуб 1',
+      const totalParticipants = 100; // Всего участников
+      const start = (params.page - 1) * params.limit;
+      const end = params.page * params.limit;
+      const filteredParticipants = Array.from({length: totalParticipants}, (_, i) => ({
+        id: i + 1,
+        name: `Участник ${i + 1}`,
+        club: `Клуб ${Math.floor(Math.random() * 10) + 1}`,
         wins: Math.floor(Math.random() * 100),
         fc: Math.floor(Math.random() * 150),
         losses: Math.floor(Math.random() * 50),
         total: Math.floor(Math.random() * 200),
-        luck: Math.floor(Math.random() * 100),
-      }));
-      resolve(newParticipants);
+        luck: Math.floor(Math.random() * 100)
+      })).slice(start, end);
+
+      resolve(filteredParticipants);
     }, 1000);
   });
 };
 
-const showClubRating = () => {
-  isClubRating.value = true;
+
+const setActiveTab = (tab) => {
+  activeTab.value = tab;
+  router.replace({path: `/ratings/${tab}`, query: updateQueryParams()});
 };
 
-const showParticipantRating = () => {
-  isClubRating.value = false;
-};
-
-function openCreateClubModal() {
+const openCreateClubModal = () => {
   isCreateClubModalOpen.value = true;
-}
+};
 
 const viewClub = (clubId) => {
   console.log(`Просмотр клуба с ID: ${clubId}`);
@@ -170,23 +321,72 @@ const viewParticipant = (participantId) => {
   console.log(`Просмотр участника с ID: ${participantId}`);
 };
 
-// Watchers to reload data when filters change
-watch([searchClub, sortClubBy], () => {
+const debouncedLoadClubs = debounce(() => {
   clubs.value = [];
-  loadClubs({ done: () => {} });
+  clubsLimitReached.value = false;
+  clubPage.value = 1;
+  loadClubs({
+    done: () => {
+    }
+  });
+  router.replace({query: updateQueryParams()});
+}, 500);
+
+const debouncedLoadParticipants = debounce(() => {
+  participants.value = [];
+  participantsLimitReached.value = false;
+  participantPage.value = 1;
+  loadParticipants({
+    done: () => {
+    }
+  });
+  router.replace({query: updateQueryParams()});
+}, 500);
+
+const handleClubSearchInput = () => {
+  debouncedLoadClubs();
+};
+
+const handleMemberSearchInput = () => {
+  debouncedLoadParticipants();
+};
+
+watch([searchClub, sortClubBy], () => {
+  if (activeTab.value === Tabs.CLUBS) {
+    debouncedLoadClubs();
+  }
 });
 
-watch([filterByClub, sortParticipantBy], () => {
-  participants.value = [];
-  loadParticipants({ done: () => {} });
+watch([searchMember, sortParticipantBy], () => {
+  if (activeTab.value === Tabs.FIGHTERS) {
+    debouncedLoadParticipants();
+  }
 });
+
+const updateQueryParams = () => {
+  const queryParams = {};
+  if (activeTab.value === Tabs.CLUBS) {
+    queryParams.searchClub = searchClub.value;
+    queryParams.sortClubBy = sortClubBy.value || 'points';
+  } else {
+    queryParams.searchMember = searchMember.value;
+    queryParams.sortParticipantBy = sortParticipantBy.value || 'wins';
+  }
+
+  return queryParams;
+};
 
 onMounted(() => {
-  loadClubs({ done: () => {} });
-  loadParticipants({ done: () => {} });
+  loadClubs({
+    done: () => {
+    }
+  });
+  loadParticipants({
+    done: () => {
+    }
+  });
 });
 </script>
-
 
 
 <style scoped>
@@ -201,7 +401,7 @@ onMounted(() => {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: linear-gradient(to left bottom, black 25%, transparent 75%);
+  background: linear-gradient(to left top, black 25%, transparent 75%);
   z-index: 1;
 }
 
@@ -236,84 +436,110 @@ onMounted(() => {
 .rating-content-wrapper {
   width: 100%;
   padding: 10vh 0;
-  box-sizing: border-box;
+  max-width: 700px;
+  justify-content: center;
+  margin: 0 auto;
 }
 
 .rating-tabs {
   display: flex;
-  justify-content: center;
-  margin-bottom: 20px;
-}
-
-.rating-tabs button {
-  padding: 10px 20px;
-  margin: 0 10px;
-  cursor: pointer;
-  background-color: #444;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  outline: none;
+  justify-content: space-between;
+  margin-bottom: 10px;
 }
 
 .rating-tabs .active-tab {
-  background-color: #888;
+  background-color: var(--primary-color) !important;
 }
 
-.create-club-button {
+.rating-tabs button {
+  flex: 1;
   padding: 10px 20px;
-  margin-left: 10px;
+  margin: 0 10px;
   cursor: pointer;
-  background-color: #444;
   color: white;
-  border: none;
-  border-radius: 5px;
-  outline: none;
+  height: 50px;
 }
 
-.rating-header {
+.custom-select {
+  color: var(--gray3) !important;
+}
+
+.table-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
 }
 
-.search-input, select {
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-}
-
-.rating-table-wrapper {
+.table-wrapper {
   flex-grow: 1;
   overflow-y: auto;
+  margin: 30px 10px 0 10px;
 }
 
-.rating-table {
-  display: flex;
-  flex-direction: column;
+.table-body {
+  margin-top: 20px;
+  background-color: var(--black-opacity) !important;
+  border: 1px solid var(--gray1) !important;
 }
 
-.rating-row {
+.table-header-row {
+  color: white;
+  margin-top: 10px;
+  font-size: 1.1em;
+  padding: 10px 10px 0 10px;
+
   display: flex;
   justify-content: space-between;
-  padding: 10px;
-  background-color: #222;
+  align-items: center;
+
+  box-sizing: border-box;
+}
+
+.column-name {
+  flex: 3;
+  text-align: left;
+}
+
+.column {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: end;
+  color: var(--gray3) !important;
+}
+
+.table-row {
+  padding: 10px 10px;
   color: white;
-  margin-bottom: 5px;
   cursor: pointer;
+  font-size: 0.9em;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  box-sizing: border-box;
 }
 
-.rating-header-row {
-  background-color: #444;
-  font-weight: bold;
+.table-row:hover {
+  background-color: var(--black-opacity) !important;
 }
 
-.rating-row:hover {
-  background-color: #333;
-}
-
-.infinity-scroll {
+.infinite-scroll {
   overflow: hidden !important;
+}
+
+.no-results {
+  text-align: center;
+  padding: 20px;
+  color: var(--gray3);
+}
+
+.active-sort-icon {
+ background-color: var(--primary-color) !important;
+  border-radius: 50%;
+  padding: 6px;
+  object-fit: contain;
+  width: 35px;
+  height: 35px;
 }
 </style>

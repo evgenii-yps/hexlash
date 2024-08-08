@@ -5,7 +5,7 @@
         :key="index"
         :to="item.route"
         class="menu-item"
-        active-class="active"
+        :class="{ active: isActive(item) }"
         @click="playSound"
     >
       <div :class="['menu-icon', item.icon]"></div>
@@ -15,8 +15,8 @@
 </template>
 
 <script setup>
-
 import { ref } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { Howl } from 'howler'
 
 import clickSound from '@/assets/sound/punch_air.mp3'
@@ -30,11 +30,20 @@ const playSound = () => {
 }
 
 const menuItems = ref([
-  { icon: 'icon-arena', text: 'Арена', route: '/arena' },
-  { icon: 'icon-trainings', text: 'Тренировки', route: '/training' },
-  { icon: 'icon-ratings', text: 'Рейтинги', route: '/ratings' },
-  { icon: 'icon-profile', text: 'Профиль', route: '/profile' },
+  {icon: 'icon-arena', text: 'Арена', route: '/arena'},
+  {icon: 'icon-trainings', text: 'Тренировки', route: '/training'},
+  {icon: 'icon-ratings', text: 'Рейтинги', route: '/ratings/clubs'},
+  {icon: 'icon-profile', text: 'Профиль', route: '/profile'},
 ])
+
+const route = useRoute()
+
+const isActive = (item) => {
+  if (item.icon === 'icon-ratings') {
+    return route.path.includes('ratings');
+  }
+  return route.path === item.route;
+}
 </script>
 
 <style scoped>
@@ -54,36 +63,36 @@ const menuItems = ref([
   background-color: var(--black-opacity-80);
   text-decoration: none;
   transition: color 0.3s ease;
-  min-width: 10vw; /* Минимальная ширина карточки */
-  min-height: 5vh; /* Минимальная высота карточки */
-  border-radius: 0.2rem; /* Скругление краев */
-  padding: 0.9rem 1rem; /* Добавляем отступ внутри карточки */
-  flex: 1; /* Равномерное растягивание карточек */
-  margin: 0 0.5rem; /* Отступы между карточками */
+  min-width: 10vw;
+  min-height: 5vh;
+  border-radius: 0.2rem;
+  padding: 0.9rem 1rem;
+  flex: 1;
+  margin: 0 0.5rem;
 }
 
 .menu-item:hover, .menu-item.active {
-  background-color: var(--pink); /* Розовый цвет при наведении и активном элементе */
+  background-color: var(--primary-color);
   opacity: 1;
 }
 
 .menu-item .menu-text {
   margin-top: 0.5rem;
-  color: var(--gray3); /* Цвет текста для неактивных карточек */
-  white-space: nowrap; /* Запрещаем перенос текста */
-  overflow: hidden; /* Обрезаем текст, который не помещается */
-  text-overflow: ellipsis; /* Добавляем многоточие для обрезанного текста */
+  color: var(--gray3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .menu-item:hover .menu-text, .menu-item.active .menu-text {
-  color: var(--white); /* Белый цвет текста для активных карточек */
+  color: var(--white);
 }
 
 .menu-icon {
   width: 2rem;
   height: 2rem;
   background-size: cover;
-  filter: brightness(0) invert(1); /* Белый цвет */
+  filter: brightness(0) invert(1);
   transition: filter 0.3s ease;
 }
 
@@ -102,5 +111,4 @@ const menuItems = ref([
 .icon-profile {
   background: url('@/assets/images/icon_profile.svg') no-repeat center;
 }
-
 </style>

@@ -32,7 +32,7 @@
     <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
 
 
-    <VModal v-model="dialog">
+    <VModal v-model="dialog" max-width="500">
       <VCard>
         <v-card-title class="headline">Confirm Change</v-card-title>
         <v-card-text>Are you sure you want to change your login to "{{ login }}"?</v-card-text>

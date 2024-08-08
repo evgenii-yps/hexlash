@@ -1,13 +1,13 @@
 <template>
-  <div class="slider-container">
+  <div :style="{ opacity: isBlocked ? 0.5 : 1 }" class="slider-container">
     <div class="ticks"></div>
     <div class="slider-background">
       <v-slider class="slider"
                 v-model="sliderValue"
-                @input="updateBet"
+                @input="updateAction"
                 direction="vertical"
                 :ticks="tickLabels"
-                :max="betOptions.length - 1"
+                :max="timeOptions.length - 1"
                 :step="1"
                 :thumb-size="30"
                 :thumb-label="false"
@@ -19,7 +19,7 @@
                 :track-color="isBlocked ? 'var(--gray3)' : 'var(--gray1)'"
                 style="margin-bottom: 0"
       />
-      <img src="@/assets/images/icon_dollar.svg" alt="">
+      <img src="@/assets/images/icon_time.svg" alt="">
     </div>
 
   </div>
@@ -39,28 +39,25 @@ const props = defineProps({
   }
 });
 
-
 const tickLabels = ref({
-  0: '5',
-  1: '10',
-  2: '100',
-  3: '500',
-  4: '1000'
+  0: '3',
+  1: '5',
+  2: '10'
 });
 
 const emits = defineEmits(['update:modelValue']);
 
-const betOptions = [5, 10, 100, 500, 1000];
+const timeOptions = [3, 5, 10];
 
-const sliderValue = ref(betOptions.indexOf(props.modelValue));
+const sliderValue = ref(timeOptions.indexOf(props.modelValue));
 
 watch(sliderValue, (newValue) => {
-  emits('update:modelValue', betOptions[newValue]);
+  emits('update:modelValue', timeOptions[newValue]);
 });
 
-const updateBet = (value) => {
+const updateAction = (value) => {
   sliderValue.value = value;
-  emits('update:modelValue', betOptions[value]);
+  emits('update:modelValue', timeOptions[value]);
 };
 </script>
 
@@ -68,7 +65,9 @@ const updateBet = (value) => {
 .slider-container {
   display: flex;
   position: relative;
+  transition: opacity 0.3s;
 }
+
 
 .ticks {
   width: 6px;

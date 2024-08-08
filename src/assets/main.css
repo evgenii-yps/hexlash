@@ -65,13 +65,13 @@ body {
     color: white !important;
 }
 
-.v-modal .cancel-btn{
+.v-modal .cancel-btn {
     text-align: center;
     color: var(--gray2) !important;
     cursor: pointer;
 }
 
-.v-modal .confirm-btn{
+.v-modal .confirm-btn {
     cursor: pointer;
     /* text-transform: none;*/
     background-color: var(--primary-color);
@@ -93,16 +93,65 @@ body {
 }
 
 :root .v-list {
-    background:var(--black-opacity-80) !important;
+    background: var(--black-opacity) !important;
     overflow: hidden !important;
     color: white;
     border: 2px solid var(--gray1);
     border-top-left-radius: 0 !important;
     border-top-right-radius: 0 !important;
+    padding: 0;
 }
 
-:root .v-text-field .v-field--active input{
+:root .v-text-field .v-field--active input {
     background-color: transparent;
     border: none;
+}
+
+/* Слайдер */
+:root .v-slider-track__tick {
+    border-radius: 50%;
+}
+:root .v-slider-track__tick--first {
+    bottom: calc(0% + 15px + -10px) !important;
+}
+:root .v-slider-track__tick--last {
+    bottom: calc(100% - 15px - -10px) !important;
+}
+:root .v-slider-track__tick--filled{
+    background-color: var(--primary-color) !important;
+    width: 0;
+}
+:root .v-slider-thumb {
+    box-shadow: 0 3px 1px -2px var(--v-shadow-key-umbra-opacity, rgba(0, 0, 0, 0.2)),
+    0 2px 2px 0 var(--v-shadow-key-penumbra-opacity, rgba(0, 0, 0, 0.14)),
+    0 1px 5px 0 var(--v-shadow-key-ambient-opacity, rgba(0, 0, 0, 0.12)) !important;
+    border-radius: 50%; /* Сделать тень круглой */
+}
+:root .v-slider-track__tick-label{
+    font-size: 0.5em;
+    margin-top: 8px;
+    margin-left: 28px !important;
+    color: var(--gray2);
+}
+:root .v-slider-track__fill{
+    width: 5px !important;
+}
+
+/* Селектор */
+:root .v-input__details {
+    display: none;
+}
+
+:root .v-input--density-compact{
+    --v-input-control-height:45px !important;
+}
+
+.v-list-item{
+    background-color: var(--black-opacity-80) !important;
+}
+
+.v-list-item--active{
+    background-color: var(--pink) !important;
+    --v-theme-overlay-multiplier:0 !important;
 }
 
