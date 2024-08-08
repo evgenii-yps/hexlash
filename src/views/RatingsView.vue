@@ -22,7 +22,7 @@
                 inputTextColor="var(--white)"
                 padding="0.8rem"
                 placeholder="Поиск клуба"
-                style="max-width: 300px; margin-bottom:0; display: block;"
+                class="search-input"
                 @input="handleClubSearchInput"
             />
 
@@ -35,7 +35,7 @@
                 density="compact"
                 bg-color="var(--black-opacity)"
                 class="custom-select"
-                style="max-width: 250px;"
+                style="max-width: 250px; width: 70%"
                 :hideNoData="true"
             >
               <template v-slot:item="{ props, item }">
@@ -97,7 +97,7 @@
                 inputTextColor="var(--white)"
                 padding="0.8rem"
                 placeholder="Поиск"
-                style="max-width: 300px; margin-bottom:0; display: block;"
+                class="search-input"
                 @input="handleMemberSearchInput"
             />
 
@@ -110,7 +110,7 @@
                 density="compact"
                 bg-color="var(--black-opacity)"
                 class="custom-select"
-                style="max-width: 250px;"
+                style="max-width: 250px; width: 70%"
                 :hideNoData="true"
             >
               <template v-slot:item="{ props, item }">
@@ -126,10 +126,7 @@
             <div class="table-header-row">
               <span class="column-name">Имя</span>
               <span class="column-name">Клуб</span>
-              <span class="column">
-                <img :class="{'active-sort-icon': sortParticipantBy === 'wins'}" src="@/assets/images/icon_wins.svg"
-                     alt="sort icon"/>
-              </span>
+
               <span class="column">
                 <img :class="{'active-sort-icon': sortParticipantBy === 'fc'}" src="@/assets/images/icon_tokens.svg"
                      alt="sort icon"/>
@@ -139,11 +136,16 @@
                      alt="sort icon"/>
               </span>
               <span class="column">
-                <img :class="{'active-sort-icon': sortParticipantBy === 'total'}" src="@/assets/images/icon_fights.svg"
+                <img :class="{'active-sort-icon': sortParticipantBy === 'luck'}" src="@/assets/images/icon_lucky.svg"
                      alt="sort icon"/>
               </span>
               <span class="column">
-                <img :class="{'active-sort-icon': sortParticipantBy === 'luck'}" src="@/assets/images/icon_lucky.svg"
+                <img :class="{'active-sort-icon': sortParticipantBy === 'total'}" src="@/assets/images/icon_fights.svg"
+                     alt="sort icon"/>
+              </span>
+
+              <span class="column">
+                <img :class="{'active-sort-icon': sortParticipantBy === 'wins'}" src="@/assets/images/icon_wins.svg"
                      alt="sort icon"/>
               </span>
             </div>
@@ -153,11 +155,11 @@
                 <div :class="['table-row', index % 2 === 0 ? '' : '']" @click="viewParticipant(participant.id)">
                   <span class="column-name">{{ participant.name }}</span>
                   <span class="column-name">{{ participant.club }}</span>
-                  <span class="column">{{ participant.wins }}</span>
                   <span class="column">{{ participant.fc }}</span>
                   <span class="column">{{ participant.losses }}</span>
-                  <span class="column">{{ participant.total }}</span>
                   <span class="column">{{ participant.luck }}</span>
+                  <span class="column">{{ participant.total }}</span>
+                  <span class="column">{{ participant.wins }}</span>
                 </div>
               </template>
               <template v-else>
@@ -449,6 +451,7 @@ onMounted(() => {
 
 .rating-tabs .active-tab {
   background-color: var(--primary-color) !important;
+  color: white;
 }
 
 .rating-tabs button {
@@ -456,8 +459,14 @@ onMounted(() => {
   padding: 10px 20px;
   margin: 0 10px;
   cursor: pointer;
-  color: white;
+  color: var(--gray2);
   height: 50px;
+  white-space: normal;
+
+}
+
+.rating-tabs :deep(button .v-btn__content) {
+  white-space: pre-wrap !important;
 }
 
 .custom-select {
@@ -504,7 +513,7 @@ onMounted(() => {
   flex: 1;
   display: flex;
   align-items: center;
-  justify-content: end;
+  justify-content: center;
   color: var(--gray3) !important;
 }
 
@@ -535,11 +544,19 @@ onMounted(() => {
 }
 
 .active-sort-icon {
- background-color: var(--primary-color) !important;
+  background-color: var(--primary-color) !important;
   border-radius: 50%;
   padding: 6px;
   object-fit: contain;
   width: 35px;
   height: 35px;
+}
+
+.search-input {
+  max-width: 300px;
+  margin-bottom: 0 !important;
+  display: block;
+  margin-right: 10px;
+  width: 100%;
 }
 </style>
