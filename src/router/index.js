@@ -7,33 +7,31 @@ const authRoutes = [
 ];
 
 const publicRoutes = [
-    {path: '/privacy', name: 'Privacy', component: () => import("/src/views/PageView.vue")}
+    {path: '/privacy', name: 'Privacy', component: () => import("/src/views/PageView.vue")},
+    {path: '/rules', name: 'Rules', component: () => import("/src/views/PageView.vue")},
+    {path: '/404', name: 'NotFound', component: () => import("/src/views/NotFoundView.vue")},
 ];
 
 const protectedRoutes = [
     {path: '/', name: 'Home'},
     {path: '/arena', name: 'Arena', component: () => import("/src/views/ArenaView.vue")},
-    {path: '/profile', name: 'Profile', component: () => import("/src/views/ProfileView.vue")},
+
     {path: '/user/:userLogin', name: 'UserProfile', component: () => import("/src/views/ProfileView.vue")},
+    {path: '/profile', name: 'Profile', component: () => import("/src/views/ProfileView.vue")},
     {path: '/profile/balance', name: 'Balance', component: () => import("/src/views/ProfileView.vue")},
     {path: '/profile/wallet', name: 'Wallet', component: () => import("/src/views/ProfileView.vue")},
     {path: '/profile/account', name: 'Account', component: () => import("/src/views/ProfileView.vue")},
-    {
-        path: '/ratings/:type',
-        name: 'Ratings',
-        component: () => import("/src/views/RatingsView.vue"),
-        props: true
-    },
-    {
-        path: '/ratings',
-        redirect: '/ratings/clubs'
-    },
+
+    {path: '/club/:id', name: 'Club', component: () => import("/src/views/ClubView.vue")},
+    {path: '/club/create', name: 'CreateClub', component: () => import("/src/views/CreateClubView.vue")},
+
+    {path: '/ratings/:type', name: 'Ratings', component: () => import("/src/views/RatingsView.vue"), props: true},
+    {path: '/ratings', redirect: '/ratings/clubs'},
 
     {path: '/training', name: 'Training', component: () => import("/src/views/TrainingView.vue")},
     {path: '/training/fight', name: 'Training fight', component: () => import("/src/views/FightView.vue")},
-    {path: '/club/:id', name: 'Club', component: () => import("/src/views/ClubView.vue")},
     {path: '/training/punch', name: 'Punch', component: () => import("/src/components/fragments/training/Punch.vue")},
-    {path: '/404', name: 'NotFound', component: () => import("/src/views/NotFoundView.vue")},
+
 ];
 
 const routes = [

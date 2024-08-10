@@ -89,7 +89,7 @@ const labelStyles = computed(() => ({
 }));
 
 const inputStyles = computed(() => ({
-  backgroundColor: props.inputBgColor,
+  backgroundColor: 'transparent',
   borderColor: props.inputBorderColor,
   color: props.inputTextColor,
   flexGrow: 1,
@@ -103,6 +103,7 @@ const wrapperStyles = computed(() => ({
   alignItems: 'center',
   border: `1px solid ${props.inputBorderColor}`,
   borderRadius: props.borderRadius,
+  backgroundColor: props.inputBgColor,
 
 }));
 </script>

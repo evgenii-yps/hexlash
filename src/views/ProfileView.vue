@@ -74,6 +74,7 @@ const isOwner = ref(false);
 const loading = ref(true);  // Флаг загрузки
 
 const loadUser = async () => {
+
   loading.value = true;  // Устанавливаем флаг загрузки
   const params = route.params;
 
@@ -86,7 +87,7 @@ const loadUser = async () => {
       userData.value = await store.dispatch('user/getUserByLogin', params.userLogin);
     }
   } else if (route.name === 'Profile') {
-    userData.value = master.value.userData;
+    userData.value = store.getters['master/getMaster'].userData;
     isOwner.value = true;
   }
 
@@ -101,6 +102,7 @@ watch(route, loadUser);
 watch(
     () => store.getters['user/getUserByLogin'](route.params.userLogin),
     (newValue) => {
+      console.log("watch");
       if (!isOwner.value) {
         userData.value = newValue;
       }
@@ -178,5 +180,8 @@ watch(
 
 .loader-container {
   height: 75vh;
+  align-items: center;
+  display: flex;
+  justify-content: center;
 }
 </style>

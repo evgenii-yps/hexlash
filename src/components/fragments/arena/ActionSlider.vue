@@ -17,7 +17,7 @@
                 :color="isBlocked ? 'var(--gray3)' : 'var(--primary-color)'"
                 :thumb-color="isBlocked ? 'var(--gray3)' : 'var(--primary-color)'"
                 :track-color="isBlocked ? 'var(--gray3)' : 'var(--gray1)'"
-                style="margin-bottom: 0"
+                style="margin-bottom: 15px"
       />
       <img src="@/assets/images/icon_hit.svg" alt="">
     </div>

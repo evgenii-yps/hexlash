@@ -2,147 +2,168 @@
   <div class="background background_club">
     <div class="club-container">
       <div class="club-content-wrapper">
-        <div class="club-header">
-          <img :src="clubAvatar" alt="Club Avatar" class="club-avatar" @click="isOwner && editAvatar" />
-          <input v-if="isEditingAvatar" type="file" @change="uploadAvatar" ref="avatarInput" class="edit-avatar-input" />
 
-          <div class="club-info">
-            <h2 class="club-name" v-if="!isEditingName" @click="isOwner && editName">
-              {{ clubName }}
-              <img v-if="isOwner" src="@/assets/images/icon_pencil.svg" alt="Change Name" class="change-name-icon" />
-            </h2>
-            <input v-else
-                   type="text"
-                   v-model="clubName"
-                   @blur="saveName"
-                   ref="nameInput"
-                   class="edit-name-input"
-            />
+        <div v-if="loading" class="loader-container">
+          <v-progress-circular
+              class="loader"
+              size="40"
+              indeterminate
+          />
+        </div>
+
+        <div v-else>
+
+          <div class="club-header">
+            <div class="club-avatar-container">
+              <ClubAvatar :avatarUrl="clubData.avatarUrl"/>
+            </div>
+            <h2>{{ clubData.name }}</h2>
+            <p>Клуб 6й улицы Нью Йорка, если ты не снами, ты против нас</p>
+
           </div>
+
+          <ClubStats :clubData="clubData"/>
+
+          <div class="club-buttons">
+
+            <VBtnDark
+                class="club-btn"
+                @click="btnToMembers">
+              <template #prepend>
+                <img src="@/assets/images/icon_members.svg" alt="" class="custom-icon" style="width:30px;"/>
+              </template>
+              <span> {{ clubData.members }}</span> участников
+            </VBtnDark>
+
+            <div class="controls">
+              <h2>Control</h2>
+              <VBtnDark
+                  class="club-btn"
+                  @click="btnToBalance">
+                <template #prepend>
+                  <img src="@/assets/images/icon_tokens.svg" alt="" class="custom-icon"/>
+                </template>
+                Токены клуба
+                <template #append>
+                  <span class="custom-icon"/>
+                  <span style="right: 0; position: absolute;"> {{ clubData.balance }}$</span>
+                </template>
+              </VBtnDark>
+
+              <VBtnDark
+                  class="club-btn"
+                  @click="btnIsPublic">
+                <template #prepend>
+                  <img src="@/assets/images/icon_lock_white.svg" alt="" class="custom-icon"/>
+                </template>
+                Открытый клуб
+                <template #append>
+                  <span class="custom-icon"/>
+                  <v-switch
+                      style="position: absolute; right:10px;"
+                      v-model="isPublic"
+                      :class="{ checked: isPublic }"
+                      class="club-switcher-public"
+                      :value="clubData.isPublic"
+                      hide-details
+                  ></v-switch>
+                </template>
+              </VBtnDark>
+
+              <VBtnDark
+                  class="club-btn"
+                  @click="btnToEdit">
+                <template #prepend>
+                  <img src="@/assets/images/icon_pencil.svg" alt="" class="custom-icon"/>
+                </template>
+                Редактировать
+                <template #append>
+                  <span class="custom-icon"/>
+                </template>
+              </VBtnDark>
+
+            </div>
+
+          </div>
+
+          <!--        <div class="club-buttons" v-if="!isMember">-->
+          <!--          <button @click="joinClub">Перейти в клуб</button>-->
+          <!--        </div>-->
+
+          <!--        <div class="club-buttons">-->
+          <!--          <button @click="viewMembers">Участники</button>-->
+          <!--        </div>-->
+
+          <!--        <div v-if="isOwner">-->
+          <!--          <Withdraw />-->
+          <!--        </div>-->
+
         </div>
 
-        <div class="club-description-wrapper">
-          <p class="club-description" v-if="!isEditingDescription" @click="isOwner && editDescription">
-            {{ clubDescription }}
-            <img v-if="isOwner" src="@/assets/images/icon_pencil.svg" alt="Change Description" class="change-description-icon" />
-          </p>
-          <textarea v-else
-                    v-model="clubDescription"
-                    @blur="saveDescription"
-                    ref="descriptionInput"
-                    class="edit-description-input"
-          ></textarea>
-        </div>
-
-        <ClubStats v-if="clubData" :club="clubData" />
-
-        <div class="club-buttons" v-if="!isMember">
-          <button @click="joinClub">Перейти в клуб</button>
-        </div>
-
-        <div class="club-buttons">
-          <button @click="viewMembers">Участники</button>
-        </div>
-
-        <div v-if="isOwner">
-          <Withdraw />
-        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, nextTick, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
-import Withdraw from "@/components/fragments/club/Withdraw.vue";
-import ClubStats from "@/components/fragments/club/ClubStats.vue";
+import {ref, computed, nextTick, onMounted, onBeforeMount, watch} from 'vue';
+import {useRoute} from 'vue-router';
 import store from "@/core/state/store.js";
+import ClubAvatar from "@/components/fragments/club/ClubAvatar.vue";
+import ClubStats from "@/components/fragments/club/ClubStats.vue";
 
 const route = useRoute();
 const clubId = route.params.id;
+const master = computed(() => store.getters['master/getMaster']);
 
 const clubData = ref(null);
-let isOwner = ref(false);
-const isMember = computed(() => store.getters['club/isMyClub']);
+const loading = ref(true);  // Флаг загрузки
 
-const clubAvatar = computed(() => clubData.value ? clubData.value.avatarUrl : '');
-const clubName = ref('');
-const clubDescription = ref('');
-const isEditingName = ref(false);
-const isEditingDescription = ref(false);
-const isEditingAvatar = ref(false);
+const isPublic = ref(true);
 
-const nameInput = ref(null);
-const descriptionInput = ref(null);
-const avatarInput = ref(null);
+const loadClub = async () => {
+  console.log("loadClub");
+  loading.value = true;  // Устанавливаем флаг загрузки
+  //isOwner.value = master.value && master.value.userData.clubId === clubId;
+  clubData.value = await store.dispatch('club/getClubById', clubId);
 
-onMounted(async () => {
-  await store.dispatch('club/fetchClubById', clubId);
-  clubData.value = store.getters['club/getSelectedClub'];
-  if (clubData.value) {
-    clubName.value = clubData.value.name;
-    clubDescription.value = clubData.value.description;
-    isOwner.value = await store.dispatch('club/isOwner', clubId);
-  }
-});
-
-const editName = () => {
-  isEditingName.value = true;
-  nextTick(() => {
-    nameInput.value.focus();
-  });
+  loading.value = false;  // Сбрасываем флаг загрузки после загрузки данных
 };
 
-const saveName = () => {
-  isEditingName.value = false;
-  store.dispatch('club/updateSelectedClub', { name: clubName.value });
-};
+onBeforeMount(loadClub);
 
-const editDescription = () => {
-  isEditingDescription.value = true;
-  nextTick(() => {
-    descriptionInput.value.focus();
-  });
-};
+watch(route, loadClub);
 
-const saveDescription = () => {
-  isEditingDescription.value = false;
-  store.dispatch('club/updateSelectedClub', { description: clubDescription.value });
-};
+// Следим за изменением данных пользователя в хранилище и обновляем userData
+watch(
+    () => store.getters['club/getClubById'](clubId),
+    (newValue) => {
+      clubData.value = newValue;
+    }
+);
 
-const editAvatar = () => {
-  isEditingAvatar.value = true;
-  nextTick(() => {
-    avatarInput.value.click();
-  });
-};
+const btnToMembers = () => {
+  console.log("navigateToMembers");
+}
 
-const uploadAvatar = (event) => {
-  const file = event.target.files[0];
-  if (file) {
-    // Логика для загрузки аватара
-    isEditingAvatar.value = false;
-    const reader = new FileReader();
-    reader.onload = () => {
-      store.dispatch('club/uploadAvatarForSelectedClub', { avatarDataUrl: reader.result });
-    };
-    reader.readAsDataURL(file);
-  }
-};
+const btnToBalance = () => {
+  console.log("navigateToBalance");
+}
 
-const joinClub = () => {
-  // Логика для вступления в клуб
-};
+const btnIsPublic = () => {
+  isPublic.value = !isPublic.value;
+}
 
-const viewMembers = () => {
-  // Логика для просмотра участников клуба
-};
+const btnToEdit = () => {
+  console.log("btnToEdit");
+}
+
+
 </script>
 
 <style scoped>
 .background_club {
-  background: url('@/assets/images/background_club.webp') no-repeat center center;
+  background: url('@/assets/images/background_club.webp') no-repeat 35% center;
 }
 
 .background_club::before {
@@ -150,9 +171,9 @@ const viewMembers = () => {
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(to left top, black 40%, transparent 75%);
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(to left top, black 15%, transparent 130%);
   z-index: 1;
 }
 
@@ -161,8 +182,8 @@ const viewMembers = () => {
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
   background: black;
   z-index: 2;
   opacity: 1;
@@ -184,83 +205,115 @@ const viewMembers = () => {
   flex-direction: column;
 }
 
+
 .club-content-wrapper {
   width: 100%;
   padding: 10vh 0;
   box-sizing: border-box;
+  max-width: 1024px;
+  margin: 0 auto;
+}
+
+.loader-container {
+  height: 75vh;
+  align-items: center;
+  display: flex;
+  justify-content: center;
 }
 
 .club-header {
   display: flex;
   align-items: center;
+  flex-direction: column;
+  color: white;
 }
 
-.club-avatar {
-  width: 100px;
-  height: 100px;
+.club-header h2 {
+  font-size: 3em;
+  margin-top: 10px;
+  font-family: 'Anonymous', sans-serif;
+}
+
+.club-header p {
+  font-size: 1em;
+  margin: 10px 10px;
+  text-align: center;
+  color: var(--gray3);
+}
+
+.club-avatar-container {
+  width: 175px;
+  height: 175px;
   border-radius: 50%;
-  margin-right: 20px;
+  margin: 0 auto;
   cursor: pointer;
-  background-color:white;
-}
-
-.edit-avatar-input {
-  display: none;
-}
-
-.club-name {
-  font-size: 2.5em;
-  color: white;
-}
-
-.club-info {
-  display: flex;
+  background-color: var(--black-opacity-80);
   align-items: center;
-}
-
-.change-name-icon, .change-description-icon {
-  width: 24px;
-  height: 24px;
-  margin-left: 10px;
-  cursor: pointer;
-}
-
-.edit-name-input, .edit-description-input {
-  font-size: 2.5em;
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid white;
-  color: white;
-  max-width: 70vw;
-  outline: none;
-}
-
-.club-description-wrapper {
-  margin: 20px 0;
-}
-
-.club-description {
-  color: white;
-  cursor: pointer;
-}
-
-.edit-description-input {
-  width: 100%;
-  height: 100px;
-  background: transparent;
-  border: 1px solid white;
-  color: white;
-  outline: none;
-  resize: none;
+  display: flex;
+  justify-content: center;
 }
 
 .club-buttons {
-  display: flex;
-  gap: 10px;
+  margin-top: 20px;
+  margin-bottom: 40px;
 }
 
-.club-buttons button {
-  padding: 10px 20px;
-  cursor: pointer;
+.controls h2 {
+  font-size: 2em;
+  justify-content: center;
+  color: white;
+  margin: 30px auto 0 auto;
+  font-family: 'Anonymous', sans-serif;
+  display: flex;
 }
+
+.club-btn {
+  height: 50px;
+  margin: 15px auto;
+  width: 80%;
+  max-width: 500px;
+  justify-content: space-between;
+  text-align: center;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  background-color: var(--gray1) !important;
+}
+
+.club-btn span {
+  font-size: 1.5em;
+  margin-right: 5px
+}
+
+.custom-icon {
+  width: 25px; /* Увеличиваем ширину изображения */
+  height: 25px; /* Увеличиваем высоту изображения */
+  margin-right: 10px; /* Добавляем отступ справа для расстояния между иконкой и текстом */
+}
+
+.switcher {
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 80%;
+  margin: 10px auto 10px auto;
+  background-color: var(--gray1);
+  padding: 0 10px;
+  border-radius: 4px;
+  max-width: 500px;
+  text-transform: uppercase;
+}
+
+.switcher p {
+  display: flex;
+  align-items: center;
+  font-size: 1em;
+  flex-grow: 1;
+}
+
+.club-switcher-public.checked :deep(.v-switch__thumb) {
+  background-color: var(--primary-color) !important;
+}
+
 </style>

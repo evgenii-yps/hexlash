@@ -7,22 +7,22 @@ export default class ClubModel {
      * @param {string} param0.description - Описание клуба.
      * @param {string} param0.avatarUrl - URL аватара клуба.
      * @param {string} param0.owner - Идентификатор владельца клуба.
-     * @param {number} [param0.income=0] - Сумма дохода клуба.
+     * @param {number} [param0.balance=0] - Сумма на балансе клуба.
      * @param {number} [param0.battles=0] - Количество боев клуба.
      * @param {number} [param0.wins=0] - Количество выигранных боев клуба.
-     * @param {number} [param0.successRate=0] - Процент удачи клуба.
+     * @param {number} [param0.isPublic=true] - .
      * @param {number} [param0.members=0] - Количество участников клуба.
      */
-    constructor({ id, name, description, avatarUrl, owner, income = 0, battles = 0, wins = 0, successRate = 0, members = 0 }) {
+    constructor({ id, name, description, avatarUrl, owner, balance = 0, battles = 0, wins = 0, isPublic = true, members = 0 }) {
         this.id = id;
         this.name = name;
         this.description = description;
         this.avatarUrl = avatarUrl;
         this.owner = owner;
-        this.income = income;
+        this.balance = balance;
         this.battles = battles;
         this.wins = wins;
-        this.successRate = successRate;
+        this.isPublic = isPublic;
         this.members = members;
     }
 

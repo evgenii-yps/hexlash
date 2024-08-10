@@ -130,11 +130,15 @@ watch(amount, calculateFC);
   opacity: 0 !important;
 }
 
+.custom-select{
+  margin-bottom: 20px;
+}
+
 .amount-field :deep(.v-text-field__prefix) {
   color: white !important;
 }
 
-.amount-field .v-input__control .v-field__input {
+.amount-field :deep(.v-input__control .v-field__input) {
   font-size: 1.4rem !important; /* Adjust the size as needed */
 }
 
@@ -142,6 +146,7 @@ watch(amount, calculateFC);
   display: flex;
   justify-content: center; /* Центрирование по горизонтали */
   align-items: center; /* Центрирование по вертикали */
+  margin-top: 20px;
 }
 
 

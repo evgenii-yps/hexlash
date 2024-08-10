@@ -1,60 +1,136 @@
 <template>
-  <div class="club-stats" v-if="club">
-    <div class="stat-item">
-      <span class="stat-label">Сумма дохода FC:</span>
-      <span class="stat-value">{{ club.income }}</span>
-    </div>
-    <div class="stat-item">
-      <span class="stat-label">Количество боев:</span>
-      <span class="stat-value">{{ club.battles }}</span>
-    </div>
-    <div class="stat-item">
-      <span class="stat-label">Количество выигранных боев:</span>
-      <span class="stat-value">{{ club.wins }}</span>
-    </div>
-    <div class="stat-item">
-      <span class="stat-label">Процент удачи клуба:</span>
-      <span class="stat-value">{{ club.successRate }}%</span>
-    </div>
-    <div class="stat-item">
-      <span class="stat-label">Количество участников:</span>
-      <span class="stat-value">{{ club.members }}</span>
+  <div class="stats-container" v-if="stats.length > 0">
+    <div class="stat-item stat-header" v-for="(stat, index) in stats" :key="stat.id">
+      <v-tooltip
+          v-model="stat.show"
+          location="top"
+          content-class="v-tooltip__content"
+      >
+        <template #activator="{ props }">
+          <div :id="stat.id" v-bind="props" @click="stat.show = !stat.show"
+               :class="['stat-content', { 'stat-content-vertical': index >= 2 }]">
+            <img :src="stat.icon" :alt="stat.title" :class="['stat-icon', { 'stat-icon-large': index < 2 }]"/>
+            <span :class="['stat-value', { 'stat-value-large': index < 2 }]">
+              {{ stat.value }}
+            </span>
+          </div>
+        </template>
+        <span>{{ stat.title }}</span>
+      </v-tooltip>
     </div>
   </div>
   <div v-else>
-    Загрузка данных клуба...
+    Loading...
   </div>
 </template>
 
 <script setup>
-import { defineProps } from 'vue';
+import {ref, watch} from 'vue';
+
+import iconAllFights from '@/assets/images/icon_fights.svg';
+import iconWins from '@/assets/images/icon_wins.svg';
+
+
+const stats = ref([]);
 
 const props = defineProps({
-  club: {
+  clubData: {
     type: Object,
     required: true,
-  }
+    default: () => ({})
+  },
 });
+
+watch(() => props.clubData, (clubData) => {
+  if (clubData) {
+    stats.value = [
+      {
+        id: 'stats-totalFights',
+        title: 'Общее количество боев',
+        value: clubData.battles,
+        icon: iconAllFights,
+        show: false
+      },
+      {id: 'stats-wins', title: 'Победы', value: clubData.wins, icon: iconWins, show: false},
+
+    ];
+  }
+}, {immediate: true});
+
 </script>
 
 <style scoped>
-.club-stats {
+.stats-container {
+  color: white;
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  max-width: 500px;
+  margin: 20px auto;
+}
+
+.stat-header {
+  flex: 1 1 45%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.stat-grid-item {
+  flex: 1 1 10%;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  align-items: center;
 }
 
 .stat-item {
   display: flex;
-  justify-content: space-between;
-  color: white;
+  align-items: center;
 }
 
-.stat-label {
-  font-weight: bold;
+.stat-icon {
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  fill: white;
+  margin-bottom: 10px;
+}
+
+.stat-icon-large {
+  width: 40px;
+  height: 40px;
+  margin-bottom: 0;
+}
+
+.stat-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.stat-content-vertical {
+  flex-direction: column;
 }
 
 .stat-value {
-  font-size: 1.2em;
+  font-size: 0.8em;
+  display: flex;
+  align-items: center;
+}
+
+.stat-value-large {
+  font-size: 1.5em;
+  margin-left: 10px;
+}
+
+.stat-value-gray {
+  color: var(--gray3);
+  font-size: 1em;
 }
 </style>

@@ -134,7 +134,7 @@ watch(store.getters['master/getMaster'], (newMaster) => {
   display: flex;
   align-items: center;
   position: relative;
-  margin: 30px 10px 0;
+  margin: 30px 0 0;
 }
 
 .horizontal-scroll {
@@ -185,9 +185,16 @@ watch(store.getters['master/getMaster'], (newMaster) => {
   transition: opacity 0.3s;
   width: 40px; /* Ширина для круговой формы */
   height: 40px; /* Высота для круговой формы */
-  display: flex;
-  align-items: center;
-  justify-content: center;
+
+  position: absolute;
+}
+
+.scroll-button.next{
+  right: 10px;
+}
+
+.scroll-button.prev{
+  left: 10px;
 }
 
 .scroll-button:hover {

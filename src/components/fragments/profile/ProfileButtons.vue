@@ -1,5 +1,17 @@
 <template>
   <div class="buttons-container">
+
+    <VBtnDark
+        class="profile-btn"
+        @click="navigateToClub"
+    >
+      <template #prepend>
+        <img src="@/assets/images/icon_arrow.svg" alt="Arrow Icon" class="custom-icon"/>
+      </template>
+      Мой клуб
+    </VBtnDark>
+
+
     <VBtnDark
         class="profile-btn"
         @click="navigateTo('Wallet')"
@@ -9,15 +21,7 @@
       </template>
       Управление кошельком
     </VBtnDark>
-    <VBtnDark
-        class="profile-btn"
-        @click="navigateToClub"
-    >
-      <template #prepend>
-        <img src="@/assets/images/icon_arrow.svg" alt="Arrow Icon" class="custom-icon"/>
-      </template>
-      {{ isOwner ? 'Управление клубом' : 'Мой клуб' }}
-    </VBtnDark>
+
     <VBtnDark
         class="profile-btn"
         @click="navigateTo('Account')"
@@ -33,25 +37,14 @@
 </template>
 
 <script setup>
-import {computed, onMounted, ref} from 'vue';
+import {computed, onMounted} from 'vue';
 import router from "@/router/index.js";
 import store from "@/core/state/store.js";
 
 const master = computed(() => store.getters['master/getMaster']);
 const clubId = computed(() => master.value ? master.value.userData.clubId : null);
 
-const isOwner = ref(false);
-
-const checkIsOwner = async () => {
-  if (clubId.value) {
-    await store.dispatch('club/fetchClubById', clubId.value);
-    const club = store.getters['club/getSelectedClub'];
-    isOwner.value = club && String(club.owner) === String(master.value.id);
-  }
-};
-
 onMounted(() => {
-  checkIsOwner();
 });
 
 const navigateTo = (route) => {
@@ -63,6 +56,8 @@ const navigateToClub = () => {
     router.push({path: `/club/${clubId.value}`});
   }
 };
+
+
 </script>
 
 <style scoped>

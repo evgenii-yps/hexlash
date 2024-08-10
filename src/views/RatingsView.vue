@@ -9,7 +9,7 @@
           <VBtnDark :class="{'active-tab': activeTab === Tabs.FIGHTERS}" @click="setActiveTab(Tabs.FIGHTERS)">Рейтинг
             участников
           </VBtnDark>
-          <VBtnDark @click="openCreateClubModal">Создать клуб</VBtnDark>
+<!--          <VBtnDark @click="openCreateClubModal">Создать клуб</VBtnDark>-->
         </div>
 
         <div v-if="activeTab === Tabs.CLUBS" class="table-wrapper">
@@ -17,7 +17,7 @@
             <InputField
                 v-model="searchClub"
                 labelColor="var(--white)"
-                inputBgColor="var(--black-opacity)"
+                inputBgColor="var(--black-opacity-80)"
                 inputBorderColor="var(--gray1)"
                 inputTextColor="var(--white)"
                 padding="0.8rem"
@@ -33,7 +33,7 @@
                 variant="outlined"
                 :menu-icon="null"
                 density="compact"
-                bg-color="var(--black-opacity)"
+                bg-color="var(--black-opacity-80)"
                 class="custom-select"
                 style="max-width: 250px; width: 70%"
                 :hideNoData="true"
@@ -92,7 +92,7 @@
             <InputField
                 v-model="searchMember"
                 labelColor="var(--white)"
-                inputBgColor="var(--black-opacity)"
+                inputBgColor="var(--black-opacity-80)"
                 inputBorderColor="var(--gray1)"
                 inputTextColor="var(--white)"
                 padding="0.8rem"
@@ -108,7 +108,7 @@
                 variant="outlined"
                 :menu-icon="null"
                 density="compact"
-                bg-color="var(--black-opacity)"
+                bg-color="var(--black-opacity-80)"
                 class="custom-select"
                 style="max-width: 250px; width: 70%"
                 :hideNoData="true"
@@ -487,7 +487,7 @@ onMounted(() => {
 
 .table-body {
   margin-top: 20px;
-  background-color: var(--black-opacity) !important;
+  background-color: var(--black-opacity-80) !important;
   border: 1px solid var(--gray1) !important;
 }
 
