@@ -2,7 +2,7 @@
   <div class="app-container">
     <header class="header">
       <div class="header-content">
-        <Logo/>
+        <Logo @click="goToHome" />
         <div v-if="balance !== null" class="balance">
           {{ balance }}$
         </div>
@@ -27,11 +27,19 @@ import {computed, onMounted, ref, watch} from "vue";
 import BottomMenu from "@/components/menu/BottomMenu.vue";
 import Logo from "@/components/Logo.vue";
 import store from "@/core/state/store.js";
+import router from "@/router/index.js";
 
-const balance = ref(null);
+const balance = computed(() => {
+  const master = store.getters['master/getMaster'];
+  return master && master.userData ? master.userData.balance : null;
+});
 
 // Получаем текущий маршрут
 const route = useRoute()
+
+const goToHome = () => {
+  router.push('/');
+};
 
 // Определяем, нужно ли показывать BottomMenu
 const showBottomMenu = computed(() => {
@@ -39,15 +47,11 @@ const showBottomMenu = computed(() => {
   const includedRoutes = ['/arena', '/training', '/ratings/clubs', '/ratings/fighters',
     '/profile', '/profile/wallet', '/profile/balance', '/profile/account', '/404']
   // Проверка, если маршрут совпадает с включенными маршрутами или начинается с /user/
-  return includedRoutes.includes(route.path) || route.path.startsWith('/user/') || route.path.startsWith('/club/');
+  return includedRoutes.includes(route.path) ||
+      route.path.startsWith('/user/') ||
+      route.path.startsWith('/club/') ||
+      route.path.startsWith('/fight/');
 })
-
-
-watch(store.getters['master/getMaster'], (newMaster) => {
-  if (newMaster && newMaster.userData) {
-    balance.value = newMaster.userData.balance;
-  }
-}, { immediate: true });
 
 </script>
 

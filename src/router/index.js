@@ -32,12 +32,16 @@ const protectedRoutes = [
     {path: '/training/fight', name: 'Training fight', component: () => import("/src/views/FightView.vue")},
     {path: '/training/punch', name: 'Punch', component: () => import("/src/components/fragments/training/Punch.vue")},
 
+    {path: '/fight/:id', name: 'Fight', component: () => import("/src/views/FightView.vue")},
+
+
 ];
 
 const routes = [
     ...authRoutes,
     ...publicRoutes,
-    ...protectedRoutes
+    ...protectedRoutes,
+    {path: '/:pathMatch(.*)*', name: 'NotFound', component: () => import("/src/views/NotFoundView.vue")},
 ];
 
 const router = createRouter({

@@ -155,3 +155,8 @@ body {
     --v-theme-overlay-multiplier:0 !important;
 }
 
+/* Textarea */
+:root .v-textarea textarea{
+    background-color: transparent !important;
+    border: none !important;
+}

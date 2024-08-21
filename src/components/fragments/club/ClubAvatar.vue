@@ -1,6 +1,8 @@
 <template>
-  <div class="avatar-container">
-    <img :src="computedAvatarUrl" alt="Club Avatar" class="avatar"
+  <div class="avatar-container"
+       :style="{ backgroundColor: computedAvatarUrl !== defaultAvatarImg ? 'transparent' : 'var(--black-opacity-80)' }">
+
+    <img :src="computedAvatarUrl" alt="Club Avatar"
          :class="{
            'non-default-avatar': computedAvatarUrl !== defaultAvatarImg,
            'default-avatar': computedAvatarUrl === defaultAvatarImg
@@ -9,7 +11,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import {computed} from 'vue';
 import defaultAvatarImg from '@/assets/images/default_club_avatar.svg';
 
 // Определяем проп avatarUrl
@@ -27,13 +29,15 @@ const computedAvatarUrl = computed(() => props.avatarUrl || defaultAvatarImg);
 <style scoped>
 .avatar-container {
   position: relative;
-  width: 150px;
-  height: 150px;
   padding: 6px;
   border-radius: 50%;
   align-items: center;
   display: flex;
   justify-content: center;
+  width: 175px;
+  height: 175px;
+  margin: 0 auto;
+  cursor: pointer;
 }
 
 .default-avatar {
@@ -46,5 +50,7 @@ const computedAvatarUrl = computed(() => props.avatarUrl || defaultAvatarImg);
   object-fit: cover;
   border: 2px solid white;
   border-radius: 50%;
+  width: 100%;
+  height: 100%;
 }
 </style>

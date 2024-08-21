@@ -37,7 +37,7 @@ import {ref, watch} from 'vue';
 import InputField from "@/components/ui/InputField.vue";
 import store from "@/core/state/store.js";
 import {WalletTypes} from "@/core/models/userModel.js";
-import BuyButton from "@/components/fragments/profile/wallet/BuyButton.vue";
+import BuyButton from "@/components/fragments/profile/wallet/BuyTokens.vue";
 
 const walletAddress = ref(null);
 const notImportWallet = ref(false);

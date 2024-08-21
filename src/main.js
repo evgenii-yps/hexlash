@@ -15,7 +15,7 @@ import {
     VTooltip, VBtn, VDialog, VCard,
     VCardTitle, VCardText, VCardActions, VSpacer,
     VIcon, VImg, VInput, VRow, VCol, VInfiniteScroll, VCarousel, VCarouselItem,
-    VProgressCircular, VSelect, VList, VSlider, VListItem, VAlert, VSwitch, VTextField
+    VProgressCircular, VSelect, VList, VSlider, VListItem, VAlert, VSwitch, VTextField, VTextarea, VProgressLinear
 } from 'vuetify/components';
 import store from "@/core/state/store.js";
 
@@ -45,6 +45,8 @@ const vuetify = createVuetify({
         VAlert,
         VSwitch,
         VTextField,
+        VTextarea,
+        VProgressLinear
     },
     aliases: {
         VBtnDark: VBtn,
@@ -70,7 +72,7 @@ const vuetify = createVuetify({
 });
 
 async function initializeApp() {
-    // Дождитесь загрузки данных
+    // загрузки данных
     await store.dispatch('master/fetchMaster');
 }
 

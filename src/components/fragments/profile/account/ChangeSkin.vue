@@ -15,7 +15,7 @@
           class="skin-item"
           ref="skinItems"
       >
-        <v-img :src="skin.image" aspect-ratio="1"/>
+        <v-img :src="`/images/skins/${skin.image}`" aspect-ratio="1" class="skin-img"/>
 
         <div v-if="skin.locked" class="lock-overlay">
           <img src="@/assets/images/icon_lock.png" alt="Locked Overlay" class="lock-icon"/>
@@ -57,15 +57,149 @@ import store from "@/core/state/store.js";
 
 
 const skins = ref([
-  {id: 1, image: 'skin1.png', price: 0, locked: false},
-  {id: 2, image: 'skin2.png', price: 10, locked: false},
-  {id: 3, image: 'skin3.png', price: 15, locked: false},
-  {id: 4, image: 'skin4.png', price: 20, locked: false},
-  {id: 5, image: 'skin5.png', price: 25, locked: false},
-  {id: 6, image: 'skin6.png', price: 30, locked: false},
-  {id: 7, image: 'skin7.png', price: 35, locked: false},
-  {id: 8, image: 'skin8.png', price: 40, locked: false},
-  {id: 8, image: 'skin8.png', price: 990, locked: false},
+  {id: 'skin_m_1.png', image: 'skin_m_1.png', price: 0, locked: false},
+  {id: 'skin_m_2.png', image: 'skin_m_2.png', price: 0, locked: false},
+  {id: 'skin_m_3.png', image: 'skin_m_3.png', price: 0, locked: false},
+  {id: 'skin_m_4.png', image: 'skin_m_4.png', price: 0, locked: false},
+  {id: 'skin_m_5.png', image: 'skin_m_5.png', price: 0, locked: false},
+  {id: 'skin_m_6.png', image: 'skin_m_6.png', price: 0, locked: false},
+  {id: 'skin_m_7.png', image: 'skin_m_7.png', price: 0, locked: false},
+  {id: 'skin_m_8.png', image: 'skin_m_8.png', price: 0, locked: false},
+  {id: 'skin_m_9.png', image: 'skin_m_9.png', price: 0, locked: false},
+  {id: 'skin_m_10.png', image: 'skin_m_10.png', price: 0, locked: false},
+  {id: 'skin_m_11.png', image: 'skin_m_11.png', price: 0, locked: false},
+  {id: 'skin_m_12.png', image: 'skin_m_12.png', price: 0, locked: false},
+  {id: 'skin_m_13.png', image: 'skin_m_13.png', price: 0, locked: false},
+  {id: 'skin_m_14.png', image: 'skin_m_14.png', price: 0, locked: false},
+  {id: 'skin_m_15.png', image: 'skin_m_15.png', price: 0, locked: false},
+  {id: 'skin_m_16.png', image: 'skin_m_16.png', price: 0, locked: false},
+  {id: 'skin_m_17.png', image: 'skin_m_17.png', price: 0, locked: false},
+  {id: 'skin_m_18.png', image: 'skin_m_18.png', price: 0, locked: false},
+  {id: 'skin_m_19.png', image: 'skin_m_19.png', price: 0, locked: false},
+  {id: 'skin_m_20.png', image: 'skin_m_20.png', price: 0, locked: false},
+  {id: 'skin_w_1.png', image: 'skin_w_1.png', price: 0, locked: false},
+  {id: 'skin_w_2.png', image: 'skin_w_2.png', price: 0, locked: false},
+  {id: 'skin_w_3.png', image: 'skin_w_3.png', price: 0, locked: false},
+  {id: 'skin_w_4.png', image: 'skin_w_4.png', price: 0, locked: false},
+  {id: 'skin_w_5.png', image: 'skin_w_5.png', price: 0, locked: false},
+  {id: 'skin_m_21.png', image: 'skin_m_21.png', price: 100, locked: false},
+  {id: 'skin_m_22.png', image: 'skin_m_22.png', price: 150, locked: false},
+  {id: 'skin_m_23_notstandart.png', image: 'skin_m_23_notstandart.png', price: 200, locked: false},
+  {id: 'skin_m_24.png', image: 'skin_m_24.png', price: 250, locked: false},
+  {id: 'skin_m_25.png', image: 'skin_m_25.png', price: 300, locked: false},
+  {id: 'skin_m_26.png', image: 'skin_m_26.png', price: 350, locked: false},
+  {id: 'skin_m_27.png', image: 'skin_m_27.png', price: 400, locked: false},
+  {id: 'skin_m_28.png', image: 'skin_m_28.png', price: 450, locked: false},
+  {id: 'skin_m_29.png', image: 'skin_m_29.png', price: 500, locked: false},
+  {id: 'skin_m_30.png', image: 'skin_m_30.png', price: 550, locked: false},
+  {id: 'skin_m_31.png', image: 'skin_m_31.png', price: 600, locked: false},
+  {id: 'skin_m_32.png', image: 'skin_m_32.png', price: 650, locked: false},
+  {id: 'skin_m_33.png', image: 'skin_m_33.png', price: 700, locked: false},
+  {id: 'skin_m_34.png', image: 'skin_m_34.png', price: 750, locked: false},
+  {id: 'skin_m_35.png', image: 'skin_m_35.png', price: 800, locked: false},
+  {id: 'skin_m_36.png', image: 'skin_m_36.png', price: 850, locked: false},
+  {id: 'skin_m_37.png', image: 'skin_m_37.png', price: 900, locked: false},
+  {id: 'skin_m_38.png', image: 'skin_m_38.png', price: 950, locked: false},
+  {id: 'skin_m_39.png', image: 'skin_m_39.png', price: 1000, locked: false},
+  {id: 'skin_m_40.png', image: 'skin_m_40.png', price: 150, locked: false},
+  {id: 'skin_m_41.png', image: 'skin_m_41.png', price: 200, locked: false},
+  {id: 'skin_m_42.png', image: 'skin_m_42.png', price: 250, locked: false},
+  {id: 'skin_m_43.png', image: 'skin_m_43.png', price: 300, locked: false},
+  {id: 'skin_m_44.png', image: 'skin_m_44.png', price: 350, locked: false},
+  {id: 'skin_m_45.png', image: 'skin_m_45.png', price: 400, locked: false},
+  {id: 'skin_m_46.png', image: 'skin_m_46.png', price: 450, locked: false},
+  {id: 'skin_m_47.png', image: 'skin_m_47.png', price: 500, locked: false},
+  {id: 'skin_m_48.png', image: 'skin_m_48.png', price: 550, locked: false},
+  {id: 'skin_m_49.png', image: 'skin_m_49.png', price: 600, locked: false},
+  {id: 'skin_m_50.png', image: 'skin_m_50.png', price: 650, locked: false},
+  {id: 'skin_m_51.png', image: 'skin_m_51.png', price: 700, locked: false},
+  {id: 'skin_m_52.png', image: 'skin_m_52.png', price: 750, locked: false},
+  {id: 'skin_m_53.png', image: 'skin_m_53.png', price: 800, locked: false},
+  {id: 'skin_m_54.png', image: 'skin_m_54.png', price: 850, locked: false},
+  {id: 'skin_m_55.png', image: 'skin_m_55.png', price: 900, locked: false},
+  {id: 'skin_m_56.png', image: 'skin_m_56.png', price: 950, locked: false},
+  {id: 'skin_m_57.png', image: 'skin_m_57.png', price: 1000, locked: false},
+  {id: 'skin_m_58.png', image: 'skin_m_58.png', price: 150, locked: false},
+  {id: 'skin_m_59.png', image: 'skin_m_59.png', price: 200, locked: false},
+  {id: 'skin_m_60.png', image: 'skin_m_60.png', price: 250, locked: false},
+  {id: 'skin_m_61.png', image: 'skin_m_61.png', price: 300, locked: false},
+  {id: 'skin_m_62.png', image: 'skin_m_62.png', price: 350, locked: false},
+  {id: 'skin_m_63.png', image: 'skin_m_63.png', price: 400, locked: false},
+  {id: 'skin_m_64.png', image: 'skin_m_64.png', price: 450, locked: false},
+  {id: 'skin_m_65.png', image: 'skin_m_65.png', price: 500, locked: false},
+  {id: 'skin_m_66.png', image: 'skin_m_66.png', price: 550, locked: false},
+  {id: 'skin_m_67.png', image: 'skin_m_67.png', price: 600, locked: false},
+  {id: 'skin_m_68.png', image: 'skin_m_68.png', price: 650, locked: false},
+  {id: 'skin_m_69.png', image: 'skin_m_69.png', price: 700, locked: false},
+  {id: 'skin_m_70.png', image: 'skin_m_70.png', price: 750, locked: false},
+  {id: 'skin_m_71.png', image: 'skin_m_71.png', price: 800, locked: false},
+  {id: 'skin_m_72.png', image: 'skin_m_72.png', price: 850, locked: false},
+  {id: 'skin_m_73.png', image: 'skin_m_73.png', price: 900, locked: false},
+  {id: 'skin_m_74.png', image: 'skin_m_74.png', price: 950, locked: false},
+  {id: 'skin_m_75.png', image: 'skin_m_75.png', price: 1000, locked: false},
+  {id: 'skin_m_76.png', image: 'skin_m_76.png', price: 150, locked: false},
+  {id: 'skin_m_77.png', image: 'skin_m_77.png', price: 200, locked: false},
+  {id: 'skin_m_78.png', image: 'skin_m_78.png', price: 250, locked: false},
+  {id: 'skin_m_79.png', image: 'skin_m_79.png', price: 300, locked: false},
+  {id: 'skin_m_80.png', image: 'skin_m_80.png', price: 350, locked: false},
+  {id: 'skin_m_81.png', image: 'skin_m_81.png', price: 400, locked: false},
+  {id: 'skin_m_82.png', image: 'skin_m_82.png', price: 450, locked: false},
+  {id: 'skin_m_83.png', image: 'skin_m_83.png', price: 500, locked: false},
+  {id: 'skin_m_84.png', image: 'skin_m_84.png', price: 550, locked: false},
+  {id: 'skin_m_85.png', image: 'skin_m_85.png', price: 600, locked: false},
+  {id: 'skin_m_86.png', image: 'skin_m_86.png', price: 650, locked: false},
+  {id: 'skin_m_87.png', image: 'skin_m_87.png', price: 700, locked: false},
+  {id: 'skin_m_88.png', image: 'skin_m_88.png', price: 750, locked: false},
+  {id: 'skin_m_89.png', image: 'skin_m_89.png', price: 800, locked: false},
+  {id: 'skin_m_90.png', image: 'skin_m_90.png', price: 850, locked: false},
+  {id: 'skin_m_91.png', image: 'skin_m_91.png', price: 900, locked: false},
+  {id: 'skin_m_92.png', image: 'skin_m_92.png', price: 950, locked: false},
+  {id: 'skin_m_93.png', image: 'skin_m_93.png', price: 1000, locked: false},
+  {id: 'skin_m_94.png', image: 'skin_m_94.png', price: 150, locked: false},
+  {id: 'skin_m_95.png', image: 'skin_m_95.png', price: 200, locked: false},
+  {id: 'skin_m_96.png', image: 'skin_m_96.png', price: 250, locked: false},
+  {id: 'skin_m_97.png', image: 'skin_m_97.png', price: 300, locked: false},
+  {id: 'skin_m_98.png', image: 'skin_m_98.png', price: 350, locked: false},
+  {id: 'skin_m_99.png', image: 'skin_m_99.png', price: 400, locked: false},
+  {id: 'skin_m_100.png', image: 'skin_m_100.png', price: 450, locked: false},
+  {id: 'skin_m_101.png', image: 'skin_m_101.png', price: 500, locked: false},
+  {id: 'skin_m_102.png', image: 'skin_m_102.png', price: 550, locked: false},
+  {id: 'skin_m_103.png', image: 'skin_m_103.png', price: 600, locked: false},
+  {id: 'skin_m_104.png', image: 'skin_m_104.png', price: 650, locked: false},
+  {id: 'skin_m_105.png', image: 'skin_m_105.png', price: 700, locked: false},
+  {id: 'skin_m_106.png', image: 'skin_m_106.png', price: 750, locked: false},
+  {id: 'skin_m_107.png', image: 'skin_m_107.png', price: 800, locked: false},
+  {id: 'skin_m_108.png', image: 'skin_m_108.png', price: 850, locked: false},
+  {id: 'skin_m_109.png', image: 'skin_m_109.png', price: 900, locked: false},
+  {id: 'skin_m_110.png', image: 'skin_m_110.png', price: 950, locked: false},
+  {id: 'skin_m_111.png', image: 'skin_m_111.png', price: 1000, locked: false},
+  {id: 'skin_m_112.png', image: 'skin_m_112.png', price: 150, locked: false},
+  {id: 'skin_m_113.png', image: 'skin_m_113.png', price: 200, locked: false},
+  {id: 'skin_m_114.png', image: 'skin_m_114.png', price: 250, locked: false},
+  {id: 'skin_m_115.png', image: 'skin_m_115.png', price: 300, locked: false},
+  {id: 'skin_m_116.png', image: 'skin_m_116.png', price: 350, locked: false},
+  {id: 'skin_m_117.png', image: 'skin_m_117.png', price: 400, locked: false},
+  {id: 'skin_w_6.png', image: 'skin_w_6.png', price: 200, locked: false},
+  {id: 'skin_w_7.png', image: 'skin_w_7.png', price: 250, locked: false},
+  {id: 'skin_w_8.png', image: 'skin_w_8.png', price: 300, locked: false},
+  {id: 'skin_w_9.png', image: 'skin_w_9.png', price: 350, locked: false},
+  {id: 'skin_w_10.png', image: 'skin_w_10.png', price: 400, locked: false},
+  {id: 'skin_w_11.png', image: 'skin_w_11.png', price: 450, locked: false},
+  {id: 'skin_w_12.png', image: 'skin_w_12.png', price: 500, locked: false},
+  {id: 'skin_w_13.png', image: 'skin_w_13.png', price: 550, locked: false},
+  {id: 'skin_w_14.png', image: 'skin_w_14.png', price: 600, locked: false},
+  {id: 'skin_w_15.png', image: 'skin_w_15.png', price: 650, locked: false},
+  {id: 'skin_w_16.png', image: 'skin_w_16.png', price: 700, locked: false},
+  {id: 'skin_w_17.png', image: 'skin_w_17.png', price: 750, locked: false},
+  {id: 'skin_w_18.png', image: 'skin_w_18.png', price: 800, locked: false},
+  {id: 'skin_w_19.png', image: 'skin_w_19.png', price: 850, locked: false},
+  {id: 'skin_w_20.png', image: 'skin_w_20.png', price: 900, locked: false},
+  {id: 'skin_w_21.png', image: 'skin_w_21.png', price: 950, locked: false},
+  {id: 'skin_w_22.png', image: 'skin_w_22.png', price: 1000, locked: false},
+  {id: 'skin_w_23.png', image: 'skin_w_23.png', price: 150, locked: false},
+  {id: 'skin_w_24.png', image: 'skin_w_24.png', price: 200, locked: false},
+  {id: 'skin_w_25.png', image: 'skin_w_25.png', price: 250, locked: false},
+  {id: 'skin_w_26.png', image: 'skin_w_26.png', price: 300, locked: false}
 ]);
 
 const selectedSkin = ref(skins.value[0].id);
@@ -169,6 +303,19 @@ watch(store.getters['master/getMaster'], (newMaster) => {
   transform: scale(1.05);
 }
 
+.skin-img{
+  padding: 5px;
+  position: absolute;
+  height: 100%;
+  width: 100%;
+}
+
+.skin-item :deep(.v-img__img){
+  position: relative;
+  z-index: 1;
+
+}
+
 .selected-skin {
   border: 2px solid var(--pink);
   border-radius: 8px;
@@ -189,11 +336,11 @@ watch(store.getters['master/getMaster'], (newMaster) => {
   position: absolute;
 }
 
-.scroll-button.next{
+.scroll-button.next {
   right: 10px;
 }
 
-.scroll-button.prev{
+.scroll-button.prev {
   left: 10px;
 }
 

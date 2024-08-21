@@ -48,6 +48,7 @@ import {ref} from 'vue';
 import BetSlider from "@/components/fragments/arena/BetSlider.vue";
 import ActionSlider from "@/components/fragments/arena/ActionSlider.vue";
 import TimeSlider from "@/components/fragments/arena/TimeSlider.vue";
+import router from "@/router/index.js";
 
 const selectedBet = ref(10);
 const selectedActions = ref(3);
@@ -58,7 +59,12 @@ const txtStatus = ref("It's time to test your resolve");
 const startFight = () => {
   isLoading.value = true;
   txtStatus.value = "The search for a worthy opponent...";
-  // запуск поиска противника
+
+  setTimeout(() => {
+    //TODO id боя получить
+    //router.push({path: `/fight/${club.id}`});
+    router.push({path: `/fight/1`});
+  }, 1000);
 };
 
 

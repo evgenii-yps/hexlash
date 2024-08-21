@@ -32,7 +32,7 @@ import iconLosses from '@/assets/images/icon_lose.svg';
 import iconDraws from '@/assets/images/icon_draw.svg';
 import iconLuck from '@/assets/images/icon_lucky.svg';
 import iconWonTokens from '@/assets/images/icon_tokens.svg';
-import iconFreeTokens from '@/assets/images/icon_tokens.svg';
+import iconFreeTokens from '@/assets/images/icon_token_less.svg';
 import iconInvites from '@/assets/images/icon_invites.svg';
 import iconDaysInClub from '@/assets/images/icon_calendar.svg';
 

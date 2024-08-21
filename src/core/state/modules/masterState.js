@@ -1,9 +1,11 @@
 import {
+    getMasterFromAPI,
     getMasterFromLocalAndAPI,
     login as loginService,
-    testLogin, updateMasterToLocalDB
+    testLogin,
+    updateMasterToLocalDB,
+    logout as logoutService,
 } from '@/core/services/masterService.js';
-import {MasterModel} from "@/core/models/masterModel.js";
 import router from "@/router/index.js";
 
 const state = {
@@ -47,7 +49,7 @@ const mutations = {
 };
 
 const actions = {
-    async login({ commit }, credentials) {
+    async login({commit}, credentials) {
         try {
             const master = await testLogin(credentials);
 
@@ -59,22 +61,33 @@ const actions = {
             commit('setAuthError', error);
         }
     },
-    logout({ commit }) {
-        // TODO Logout
+    async logout({commit}) {
+
+        await logoutService();
+
         commit('clearAuthData');
+
+        await router.push('/');
     },
-    async fetchMaster({ commit }) {
+    async fetchMaster({commit}) {
         try {
             const localData = await getMasterFromLocalAndAPI();
             if (localData) {
-                commit('setMaster', new MasterModel(localData));
+                commit('setMaster', localData);
                 commit('setAuthenticated', true);
             }
         } catch (error) {
             console.error('Failed to fetch user data:', error);
         }
     },
-    async updateMaster({ commit, state }, updatedData) {
+    syncMaster({commit}) {
+        try {
+           getMasterFromAPI();
+        } catch (error) {
+            console.error('Failed to sync master data:', error);
+        }
+    },
+    async updateMaster({commit, state}, updatedData) {
         try {
             // Обновление состояния
             commit('updateMaster', updatedData);
@@ -88,26 +101,26 @@ const actions = {
             console.error('Failed to update user data:', error);
         }
     },
-    async uploadMasterAvatar({ commit }, { avatarDataUrl, onUploadProgress }) {
+    async uploadMasterAvatar({commit}, {avatarDataUrl, onUploadProgress}) {
         try {
             // Симуляция загрузки на сервер
             for (let i = 0; i <= 100; i++) {
                 await new Promise(resolve => setTimeout(resolve, 100));
-                onUploadProgress({ loaded: i, total: 100 });
+                onUploadProgress({loaded: i, total: 100});
             }
 
             // После успешной симуляции загрузки обновляем аватар в стейте
-            this.dispatch('master/updateMaster', { avatarUrl: avatarDataUrl });
+            this.dispatch('master/updateMaster', {avatarUrl: avatarDataUrl});
 
             // await updateUserOnAPI(state.currentUser);
         } catch (error) {
             console.error('Failed to upload avatar:', error);
         }
     },
-    async changeSkin({ commit, state }, skinId) {
+    async changeSkin({commit, state}, skinId) {
         try {
             // Обновление скина
-            this.dispatch('master/updateMaster', { skin: skinId });
+            this.dispatch('master/updateMaster', {skin: skinId});
 
             // Отправка обновленных данных на сервер
             // await updateSkinOnAPI(state.currentUser);

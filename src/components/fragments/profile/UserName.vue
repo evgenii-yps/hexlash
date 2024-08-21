@@ -24,8 +24,6 @@ defineProps({
   display: flex;
   align-items: center;
   width: 100%;
-  margin-left: 10px;
-  margin-top: 10px;
 }
 
 .name-edit-container {

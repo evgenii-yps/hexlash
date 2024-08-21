@@ -12,14 +12,12 @@
         </div>
 
         <div v-else>
+
           <div v-if="route.path.includes('/profile/wallet')">
             <ProfileWallet/>
           </div>
           <div v-else-if="route.path.includes('/profile/account')">
             <ProfileSettings :userData="userData"/>
-          </div>
-          <div v-else-if="route.path.includes('/profile/balance')">
-            <ProfileBalance/>
           </div>
           <div v-else>
 
@@ -30,7 +28,7 @@
 
             <div v-else class="profile-header">
               <UserAvatar :avatarUrl="userData.avatarUrl"/>
-              <UserName :userName="userData.name"/>
+              <UserName :userName="userData.name" style="margin: 10px 0 0 10px"/>
             </div>
 
             <ProfileStats :userData="userData"/>
@@ -58,7 +56,6 @@ import ProfileAchievements from "@/components/fragments/profile/ProfileAchieveme
 import ProfileButtons from "@/components/fragments/profile/ProfileButtons.vue";
 import ProfileWallet from "@/components/fragments/profile/wallet/ProfileWallet.vue";
 import ProfileSettings from "@/components/fragments/profile/account/ProfileAccount.vue";
-import ProfileBalance from "@/components/fragments/profile/ProfileBalance.vue";
 import ProfileName from "@/components/fragments/profile/ProfileName.vue";
 import ProfileInvite from "@/components/fragments/profile/ProfileInvite.vue";
 import ProfileAvatar from "@/components/fragments/profile/ProfileAvatar.vue";
@@ -87,7 +84,7 @@ const loadUser = async () => {
       userData.value = await store.dispatch('user/getUserByLogin', params.userLogin);
     }
   } else if (route.name === 'Profile') {
-    userData.value = store.getters['master/getMaster'].userData;
+    userData.value = master.value.userData;
     isOwner.value = true;
   }
 
@@ -102,7 +99,7 @@ watch(route, loadUser);
 watch(
     () => store.getters['user/getUserByLogin'](route.params.userLogin),
     (newValue) => {
-      console.log("watch");
+      console.log("getUserByLogin", newValue)
       if (!isOwner.value) {
         userData.value = newValue;
       }

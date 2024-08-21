@@ -14,18 +14,18 @@
         <div v-else>
 
           <div class="club-header">
-            <div class="club-avatar-container">
-              <ClubAvatar :avatarUrl="clubData.avatarUrl"/>
-            </div>
+
+            <ClubOwnerAvatar v-if="isOwner" :clubData="clubData"/>
+            <ClubAvatar v-else :avatarUrl="clubData.avatarUrl"/>
+
             <h2>{{ clubData.name }}</h2>
-            <p>Клуб 6й улицы Нью Йорка, если ты не снами, ты против нас</p>
+            <p>{{ clubData.description }}</p>
 
           </div>
 
           <ClubStats :clubData="clubData"/>
 
           <div class="club-buttons">
-
             <VBtnDark
                 class="club-btn"
                 @click="btnToMembers">
@@ -35,26 +35,25 @@
               <span> {{ clubData.members }}</span> участников
             </VBtnDark>
 
-            <div class="controls">
+            <div v-if="isOwner" class="controls">
               <h2>Control</h2>
-              <VBtnDark
-                  class="club-btn"
-                  @click="btnToBalance">
-                <template #prepend>
-                  <img src="@/assets/images/icon_tokens.svg" alt="" class="custom-icon"/>
-                </template>
-                Токены клуба
-                <template #append>
-                  <span class="custom-icon"/>
-                  <span style="right: 0; position: absolute;"> {{ clubData.balance }}$</span>
-                </template>
-              </VBtnDark>
+
+              <ClubWithdraw :balance="String(clubData.balance)" :wallet="master.userData.walletAddress"/>
 
               <VBtnDark
                   class="club-btn"
                   @click="btnIsPublic">
                 <template #prepend>
-                  <img src="@/assets/images/icon_lock_white.svg" alt="" class="custom-icon"/>
+                  <v-tooltip
+                      v-model="showToolTip"
+                      location="top"
+                      max-width="250px"
+                      contentClass="v-tooltip__content">
+                    <template #activator="{ props }">
+                      <img v-bind="props" @click.stop="toggleToolTip" src="@/assets/images/icon_lock_white.svg" alt="" class="custom-icon"/>
+                    </template>
+                    <span>Сделать клуб закрытым, коды приглашений участников клуба не будут работать, приглашать сможет только создать клуба</span>
+                  </v-tooltip>
                 </template>
                 Открытый клуб
                 <template #append>
@@ -64,42 +63,52 @@
                       v-model="isPublic"
                       :class="{ checked: isPublic }"
                       class="club-switcher-public"
-                      :value="clubData.isPublic"
                       hide-details
                   ></v-switch>
                 </template>
               </VBtnDark>
 
+              <ClubEdit :clubData="clubData "/>
+
+            </div>
+
+            <div v-else-if="isMyClub">
+
+            </div>
+
+            <div v-else>
               <VBtnDark
+                  v-if="isPublic && !isMyClub"
                   class="club-btn"
-                  @click="btnToEdit">
+                  style="margin-top: 20px;"
+                  @click="btnToJoin">
                 <template #prepend>
-                  <img src="@/assets/images/icon_pencil.svg" alt="" class="custom-icon"/>
+                  <img src="@/assets/images/icon_arrow.svg" alt="" class="custom-icon"/>
                 </template>
-                Редактировать
+                Перейти в этот клуб
                 <template #append>
                   <span class="custom-icon"/>
                 </template>
               </VBtnDark>
 
+              <VModal v-model="dialogChangeClub" max-width="500">
+                <VCard>
+                  <v-card-title class="headline">Поменять клуб</v-card-title>
+                  <v-card-text>
+                    Ты собираешься покинуть свой текущий клуб и перейти в новый. Твой код приглашения будет действовать
+                    в новом клубе, но если старый клуб закрыт, ты не сможешь вернуться обратно. Ты действительно хочешь
+                    сделать этот шаг?
+                  </v-card-text>
+                  <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn @click="dialogChangeClub = false" class="cancel-btn">Отмена</v-btn>
+                    <v-btn @click="confirmExit" class="confirm-btn">Я готов</v-btn>
+                  </v-card-actions>
+                </VCard>
+              </VModal>
             </div>
-
           </div>
-
-          <!--        <div class="club-buttons" v-if="!isMember">-->
-          <!--          <button @click="joinClub">Перейти в клуб</button>-->
-          <!--        </div>-->
-
-          <!--        <div class="club-buttons">-->
-          <!--          <button @click="viewMembers">Участники</button>-->
-          <!--        </div>-->
-
-          <!--        <div v-if="isOwner">-->
-          <!--          <Withdraw />-->
-          <!--        </div>-->
-
         </div>
-
       </div>
     </div>
   </div>
@@ -111,6 +120,10 @@ import {useRoute} from 'vue-router';
 import store from "@/core/state/store.js";
 import ClubAvatar from "@/components/fragments/club/ClubAvatar.vue";
 import ClubStats from "@/components/fragments/club/ClubStats.vue";
+import router from "@/router/index.js";
+import ClubWithdraw from "@/components/fragments/club/ClubWithdraw.vue";
+import ClubEdit from "@/components/fragments/club/ClubEdit.vue";
+import ClubOwnerAvatar from "@/components/fragments/club/ClubOwnerAvatar.vue";
 
 const route = useRoute();
 const clubId = route.params.id;
@@ -120,12 +133,24 @@ const clubData = ref(null);
 const loading = ref(true);  // Флаг загрузки
 
 const isPublic = ref(true);
+const isOwner = ref(false);
+const isMyClub = ref(false);
+const showToolTip = ref(false);
+
+const dialogChangeClub = ref(false);  // Флаг для отображения модального окна
+
+const toggleToolTip = () => {
+  showToolTip.value = !showToolTip.value;
+};
 
 const loadClub = async () => {
-  console.log("loadClub");
   loading.value = true;  // Устанавливаем флаг загрузки
-  //isOwner.value = master.value && master.value.userData.clubId === clubId;
+
+  isMyClub.value = master.value && master.value.userData.clubId === clubId;
   clubData.value = await store.dispatch('club/getClubById', clubId);
+  isOwner.value = master.value && master.value.userData.id === clubData.value.owner;
+
+  isPublic.value = clubData.value.isPublic;
 
   loading.value = false;  // Сбрасываем флаг загрузки после загрузки данных
 };
@@ -134,7 +159,7 @@ onBeforeMount(loadClub);
 
 watch(route, loadClub);
 
-// Следим за изменением данных пользователя в хранилище и обновляем userData
+// Следим за изменением данных пользователя в хранилище и обновляем clubData
 watch(
     () => store.getters['club/getClubById'](clubId),
     (newValue) => {
@@ -142,20 +167,34 @@ watch(
     }
 );
 
+
 const btnToMembers = () => {
-  console.log("navigateToMembers");
+  router.push({
+    path: `/ratings/fighters`,
+    query: {
+      sortParticipantBy: 'wins',
+      clubId: clubId
+    }
+  });
 }
 
-const btnToBalance = () => {
-  console.log("navigateToBalance");
-}
 
 const btnIsPublic = () => {
   isPublic.value = !isPublic.value;
+
+  clubData.value.isPublic = isPublic.value
+
+  store.dispatch('club/updateClubData', clubData.value);
 }
 
-const btnToEdit = () => {
-  console.log("btnToEdit");
+
+const btnToJoin = () => {
+  dialogChangeClub.value = true;
+}
+
+const confirmExit = () => {
+  dialogChangeClub.value = false;
+  console.log("Выход из клуба подтвержден и переход в новый клуб...");
 }
 
 
@@ -232,6 +271,7 @@ const btnToEdit = () => {
   font-size: 3em;
   margin-top: 10px;
   font-family: 'Anonymous', sans-serif;
+  text-align: center;
 }
 
 .club-header p {

@@ -1,16 +1,47 @@
 <template>
   <div class="buttons-container">
+    <div v-if="isOwner" class="split-button-container">
+      <VBtnDark
+          class="profile-btn"
+          @click="navigateToClub"
+      >
+        <template #prepend>
+          <img src="@/assets/images/icon_arrow.svg" alt="Arrow Icon" class="custom-icon"/>
+        </template>
+        {{ clubText }}
+      </VBtnDark>
+    </div>
+    <div v-else class="split-button-container">
+      <VBtnDark
+          class="profile-btn"
+          @click="navigateToClub"
+      >
+        <template #prepend>
+          <img src="@/assets/images/icon_arrow.svg" alt="Arrow Icon" class="custom-icon"/>
+        </template>
 
-    <VBtnDark
-        class="profile-btn"
-        @click="navigateToClub"
-    >
-      <template #prepend>
-        <img src="@/assets/images/icon_arrow.svg" alt="Arrow Icon" class="custom-icon"/>
-      </template>
-      Мой клуб
-    </VBtnDark>
+        <span class="club-text">{{ clubText }}</span>
 
+        <VTooltip
+            v-model="showToolTip"
+            location="top"
+            max-width="250px"
+            contentClass="v-tooltip__content">
+          <template #activator="{ props }">
+            <VBtn
+                v-bind="props"
+                class="create-club-btn"
+                :class="{ 'sufficient-balance': isBalanceSufficient }"
+                @click.stop="btnCreateNewClub">
+              Создать клуб
+            </VBtn>
+
+            <CreateClub :dialogCreate="dialogCreate" @close="dialogCreate = false" />
+          </template>
+          <span>Недостаточно средств на балансе для создания клуба</span>
+        </VTooltip>
+      </VBtnDark>
+    </div>
 
     <VBtnDark
         class="profile-btn"
@@ -32,20 +63,50 @@
       Управление аккаунтом
     </VBtnDark>
 
+    <VBtnDark
+        class="profile-btn"
+        @click="dialogExit = true"
+    >
+      <template #prepend>
+        <img src="@/assets/images/icon_arrow.svg" alt="Arrow Icon" class="custom-icon"/>
+      </template>
+      Выход
+    </VBtnDark>
+
+    <VModal v-model="dialogExit" max-width="500">
+      <VCard>
+        <v-card-title class="headline">Confirm logout</v-card-title>
+        <v-card-text>Are you sure you want logout on this device?</v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn @click="dialogExit = false" class="cancel-btn">Cancel</v-btn>
+          <v-btn @click="logout" class="confirm-btn">Logout</v-btn>
+        </v-card-actions>
+      </VCard>
+    </VModal>
 
   </div>
 </template>
 
 <script setup>
-import {computed, onMounted} from 'vue';
+import {computed, onMounted, ref} from 'vue';
 import router from "@/router/index.js";
 import store from "@/core/state/store.js";
+import CreateClub from "@/components/fragments/club/CreateClub.vue";
+import {COST_CREATE_CLUB} from "@/core/constants.js";
+
+
 
 const master = computed(() => store.getters['master/getMaster']);
-const clubId = computed(() => master.value ? master.value.userData.clubId : null);
+const clubId = computed(() => master.value?.userData.clubId);
+const isBalanceSufficient = computed(() => master.value?.userData.balance >= COST_CREATE_CLUB);
 
-onMounted(() => {
-});
+const isOwner = ref(false);
+const clubData = ref(null);
+const clubText = ref('Загрузка...');
+const showToolTip = ref(false);
+const dialogCreate = ref(false);
+const dialogExit = ref(false);
 
 const navigateTo = (route) => {
   router.push({name: route});
@@ -57,6 +118,33 @@ const navigateToClub = () => {
   }
 };
 
+const btnCreateNewClub = () => {
+  if (!isBalanceSufficient.value) {
+    showToolTip.value = true;
+    setTimeout(() => {
+      showToolTip.value = false;
+    }, 4000); // Тултип будет отображаться 4 секунды
+  } else {
+    dialogCreate.value = true;
+  }
+};
+
+const logout = () => {
+  store.dispatch('master/logout');
+}
+
+onMounted(async () => {
+  if (clubId.value) {
+    const data = await store.dispatch('club/getClubById', clubId.value);
+    if (data) {
+      clubData.value = data;
+      clubText.value = `Клуб ${clubData.value.name}`;
+      isOwner.value = master.value && master.value.userData.id === clubData.value.owner;
+    } else {
+      clubText.value = 'Ошибка загрузки данных клуба';
+    }
+  }
+});
 
 </script>
 
@@ -79,10 +167,58 @@ const navigateToClub = () => {
   cursor: pointer;
 }
 
-.custom-icon {
-  width: 15px; /* Увеличиваем ширину изображения */
-  height: 15px; /* Увеличиваем высоту изображения */
-  margin-right: 10px; /* Добавляем отступ справа для расстояния между иконкой и текстом */
+.profile-btn :deep(.v-btn__content) {
+  justify-content: flex-start !important;
 }
 
+.custom-icon {
+  width: 15px;
+  height: 15px;
+  margin-right: 10px;
+}
+
+.create-club-btn {
+  color: white;
+  position: absolute;
+  right: 0;
+  height: 50px;
+  font-size: 0.7em;
+  padding-left: 20px;
+  clip-path: polygon(15% 0%, 100% 0%, 100% 100%, 0% 100%);
+  background-color: var(--gray2) !important;
+  border-radius: 0 4px 4px 0 !important;
+  opacity: 0.5;
+}
+
+
+.sufficient-balance {
+  background-color: var(--primary-color) !important;
+  opacity: 1;
+}
+
+
+.split-button-container {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+  height: 50px;
+  margin: 5px 0 10px 0;
+  display: flex;
+  flex-direction: row;
+  box-sizing: border-box;
+}
+
+.club-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+  max-width: 100%;
+}
+
+@media (max-width: 600px) {
+  .club-text {
+    width: 200px;
+  }
+}
 </style>

@@ -21,7 +21,7 @@
 </template>
 
 <script setup>
-import {ref, nextTick, computed, watch} from 'vue';
+import {ref, nextTick, watch} from 'vue';
 import store from "@/core/state/store.js";
 
 const userName = ref(null);
@@ -45,6 +45,7 @@ watch(store.getters['master/getMaster'], (newMaster) => {
     userName.value = newMaster.userData.name || "Anonymous";
   }
 }, {immediate: true});
+
 </script>
 
 <style scoped>

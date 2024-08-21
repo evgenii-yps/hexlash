@@ -1,0 +1,1 @@
+export const COST_CREATE_CLUB = 100;

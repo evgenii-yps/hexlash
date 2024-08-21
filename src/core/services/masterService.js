@@ -46,16 +46,21 @@ export const getMasterFromLocalAndAPI = async () => {
 
     if (localData != null) {
         // Асинхронно обновляем данные из API
-        fetchMasterData().then(async (apiData) => {
-            const apiUserModel = MasterModel.fromJSON(apiData);
-            await updateMasterToLocalDB(apiUserModel);
-            return apiUserModel;
-        }).catch((error) => {
-            console.error('Failed to fetch user data from API:', error);
-        });
+        getMasterFromAPI();
     }
 
     return localData;
+};
+
+export const getMasterFromAPI = () => {
+    // Асинхронно обновляем данные из API
+    fetchMasterData().then(async (apiData) => {
+        const apiUserModel = MasterModel.fromJSON(apiData);
+        await updateMasterToLocalDB(apiUserModel);
+        return apiUserModel;
+    }).catch((error) => {
+        console.error('Failed to fetch user data from API:', error);
+    });
 };
 
 
@@ -90,7 +95,7 @@ export const testLogin = async (credentials) => {
               "emailVerified": true,
               "achievements": [1, 3, 4, 5],
               "balance":199,
-              "skin":4
+              "skin":"skin_w_20.png"
         }`;
 
 
@@ -186,9 +191,12 @@ export const changePassword = async (passwordData) => {
 // Выйти из системы
 export const logout = async () => {
     try {
-        const response = await apiClient.post('/users/logout', {}, {authRequired: true});
+       // const response = await apiClient.post('/users/logout', {}, {authRequired: true});
 
-        return response.data;
+        await clearDatabase();
+
+        return true;
+       // return response.data;
     } catch (error) {
         throw new Error('Failed to logout');
     }

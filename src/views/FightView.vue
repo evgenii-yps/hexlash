@@ -3,24 +3,108 @@
     <div class="fight-container">
       <div class="fight-content-wrapper">
 
-        <div class="fighter fighter-left">
-          <Fighter :actions="fighterActions" @actionSelected="onActionSelected('left', $event)"/>
+        <div class="fight-again" v-if="isFightFinished">
+          <VBtn
+              size="small"
+              class="btn-again"
+              @click="btnAgain">
+            <img src="@/assets/images/icon_arrow.svg" alt="" class="custom-icon"/>
+          </VBtn>
+          next fight
         </div>
 
-        <div class="fighter fighter-right">
-          <Fighter :actions="fighterActions" @actionSelected="onActionSelected('right', $event)"/>
+        <!-- Обратный отсчет -->
+        <transition-group name="fade-scale" tag="div" class="countdown" v-if="!isFightFinished">
+          <div v-if="countdown !== 0" :key="countdown" class="countdown-item">
+            <p>{{ countdown }}</p>
+          </div>
+        </transition-group>
+
+        <div class="progress-container">
+          <p>{{ strProgress }}</p>
+          <div class="progress">
+            <v-progress-linear
+                class="progress-linear"
+                :model-value="progressInPercent"
+            ></v-progress-linear>
+          </div>
         </div>
 
-        <div class="timer">
-          <Timer :time="10" @timeout="submitActions"/>
+
+        <div class="fighters-container">
+          <div class="fighter fighter-left">
+            <Fighter :action="meAction"
+                     :userData="master.userData"
+                     :isMaster="true"
+                     :isVisibleCircles="isFight"
+                     :statusFighter="leftFighter"/>
+          </div>
+
+          <div class="fighter fighter-right">
+            <Fighter :action="rivalAction"
+                     :userData="master.userData"
+                     :isMove="isMove"
+                     :isVisibleCircles="isFight"
+                     :statusFighter="rightFighter"/>
+          </div>
+        </div>
+
+        <div class="fighters-result">
+          <div class="result-left">
+            <div v-for="(square, index) in countActionArray" :key="index" class="result-square">
+              {{ leftResults[index] || '' }}
+            </div>
+          </div>
+
+          <VBtnDark
+              size="small"
+              class="btn-help"
+              @click="dialogHelp = true">
+            ?
+          </VBtnDark>
+
+          <!-- Модальное окно помощи -->
+          <VModal v-model="dialogHelp" max-width="500" @click:outside="hideHelp">
+            <VCard>
+              <v-card-title class="headline">Пошаговый бой</v-card-title>
+              <v-card-text class="text-center">
+                <p>В течение отведенного времени выберите действия для атаки и защиты.</p>
+                <br/>
+                <p style="margin-bottom: 10px"><strong>Доступные действия:</strong></p>
+                <ul style="color:var(--white); margin-left: 20px">
+                  <li><strong>HD (Head Defence):</strong> защита головы</li>
+                  <li><strong>BD (Body Defence):</strong> защита тела</li>
+                  <li><strong>HH (Head Hit):</strong> удар в голову</li>
+                  <li><strong>HB (Head Body):</strong> удар в тело</li>
+                </ul>
+                <br/>
+                <p>После выбора действий происходит сравнение с действиями противника. Побеждает тот, кто нанесёт
+                  больше ударов и пропустит меньше ударов.</p>
+                <br/>
+                <p style="margin-bottom: 10px; color:var(--white);"><strong>Пример:</strong></p>
+                <p>Вы: HD, HH, BD</p>
+                <p>Противник: HH, BD, HB</p>
+                <p>Итог: вы нанесли 1 удар, блокировали 2 удара противника. <strong>Победитель:</strong> Вы </p>
+                <br/>
+                <p><strong style="color:var(--white)">Важно:</strong> нельзя выбрать все действия как атаки или все
+                  как защиты. Одно из действий должно быть противоположным.</p>
+              </v-card-text>
+              <v-card-actions>
+                <v-spacer></v-spacer>
+                <VBtn @click="hideHelp" class="confirm-btn">ОК</VBtn>
+              </v-card-actions>
+            </VCard>
+          </VModal>
+
+          <div class="result-right">
+            <div v-for="(square, index) in countActionArray" :key="index" class="result-square">
+              {{ rightResults[index] || '' }}
+            </div>
+          </div>
         </div>
 
 
-        <div class="round-button-wrapper">
-          <button @click="submitActions" class="round-button">Раунд</button>
-        </div>
-
-        <Loader v-if="isLoading" :time="5" message="Матчинг..." @timeout="showResult"/>
+        <!--        <div class="fight-id">Fight id: {{ fightId }}</div>-->
 
       </div>
     </div>
@@ -28,32 +112,197 @@
 </template>
 
 <script setup>
-import {ref} from 'vue';
+import {computed, onMounted, ref} from 'vue';
 import Fighter from "@/components/fragments/fight/Fighter.vue";
+import store from "@/core/state/store.js";
+import {useRoute} from "vue-router";
 
-const fighterActions = ["Атака головы", "Атака тела", "Защита головы", "Защита тела"];
-const actionOptions = [3, 5, 10];
-const selectedActions = ref(actionOptions[0]);
-const isLoading = ref(false);
+const master = computed(() => store.getters['master/getMaster']);
+const countdown = ref(3);
+const isMove = ref(false);
+const isFight = ref(false);
+const isFightFinished = ref(false);
+const dialogHelp = ref(false);
 
-const onActionSelected = (side, action) => {
-  // обработка выбора действия
+// Результаты боя в виде массивов
+const leftResults = ref([]);
+const rightResults = ref([]);
+
+const leftFighter = ref('');
+const rightFighter = ref('');
+
+
+const route = useRoute();
+const fightId = computed(() => route.params.id);
+
+// Массив для отображения countAction квадратиков
+const countActionArray = computed(() => Array.from({length: 5}));
+const strProgress = ref('До конца боя осталось:');
+
+// TODO приходить будет из сокета в стейт
+const progressValue = ref(1000);  // Начальное значение прогресса 100%
+const progressTime = ref(10);  // Время, за которое прогресс должен завершиться, например 10 секунд
+const progressInPercent = computed(() => progressValue.value / 10);
+
+const hideHelp = () => {
+  dialogHelp.value = false;
+}
+
+const btnAgain = () => {
+  console.log("new fight");
+}
+
+const meAction = (action) => {
+  if (!isFight.value || leftResults.value.length >= countActionArray.value.length) return;
+
+  let val = '';
+  if (action === 'head') {
+    val = 'HD';
+  } else if (action === 'body') {
+    val = 'BD';
+  }
+
+  // Проверка на допустимость действия
+  if (!isValidAction(val)) {
+    return;
+  }
+
+  leftResults.value.push(val);
+
+  // TODO отправить в сокет
+
+  if (leftResults.value.length >= countActionArray.value.length) {
+    isFight.value = false;
+    strProgress.value = 'Ожидание соперника...';
+  }
+}
+
+const rivalAction = (action) => {
+  if (!isFight.value || leftResults.value.length >= countActionArray.value.length) return;
+
+  let val = '';
+  if (action === 'head') {
+    val = 'HH';
+  } else if (action === 'body') {
+    val = 'BH';
+  }
+
+  // Проверка на допустимость действия
+  if (!isValidAction(val)) {
+    return;
+  }
+
+  leftResults.value.push(val);
+  // TODO отправить в сокет
+
+  if (leftResults.value.length >= countActionArray.value.length) {
+    isFight.value = false;
+    strProgress.value = 'Ожидание соперника...';
+  }
+}
+
+const isValidAction = (newAction) => {
+  const attackActions = ['HH', 'BH']; // Список всех атакующих действий
+  const defenseActions = ['HD', 'BD']; // Список всех защитных действий
+
+  // Подсчитываем количество атак и защит в текущем массиве
+  const attackCount = leftResults.value.filter(action => attackActions.includes(action)).length;
+  const defenseCount = leftResults.value.filter(action => defenseActions.includes(action)).length;
+
+  const maxActions = countActionArray.value.length;
+
+  // Правило: если в массиве уже maxActions - 1 атаки и новая тоже атака - запрещаем её
+  if (attackActions.includes(newAction) && attackCount >= maxActions - 1 && defenseCount === 0) {
+    return false;
+  }
+
+  // Правило: если в массиве уже maxActions - 1 защиты и новая тоже защита - запрещаем её
+  if (defenseActions.includes(newAction) && defenseCount >= maxActions - 1 && attackCount === 0) {
+    return false;
+  }
+
+  return true;
 };
 
-const submitActions = () => {
-  isLoading.value = true;
-  // отправка выбранных действий
+
+// Функция для управления обратным отсчетом
+const startCountdown = () => {
+  const interval = setInterval(() => {
+    if (countdown.value > 1) {
+      countdown.value -= 1;
+    } else {
+      countdown.value = 'Fight!';
+      clearInterval(interval);
+
+      // Запуск движений кружков после окончания отсчета
+      setTimeout(() => {
+        countdown.value = 0;
+        isMove.value = true;
+        isFight.value = true;
+        startProgressLinear();
+      }, 100);
+    }
+  }, 1000);
 };
 
-const showResult = () => {
-  // показ результата боя
+// Функция для управления обратным отсчетом прогресса
+const startProgressLinear = () => {
+  const intervalTime = 10; // Интервал обновления в миллисекундах
+  const step = progressValue.value / (progressTime.value * 100); // Один шаг каждые 10ms
+
+  const interval = setInterval(() => {
+    if (progressValue.value > 0) {
+      progressValue.value -= step;
+    } else {
+      progressValue.value = 0;
+      clearInterval(interval);
+      onFightEnd();  // Вызываем функцию, когда бой завершен
+    }
+  }, intervalTime);
 };
+
+const onFightEnd = () => {
+  isFight.value = false;
+  isFightFinished.value = true;
+  progressValue.value = 0;
+  countdown.value = 0;
+  strProgress.value = 'Бой завершён!';
+
+  // TEMP
+  leftFighter.value = 'WIN';
+  rightFighter.value = 'LOSE';
+  //TODO
+
+
+};
+
+
+onMounted(() => {
+
+  // TODO загрузить бой по id из базы данных и с апи сервера, если не новый бой
+
+  if (!isFightFinished.value) {
+    if (countdown.value !== 0) {
+      startCountdown();
+    } else {
+      isMove.value = true;
+      isFight.value = true;
+      startProgressLinear()
+    }
+  } else {
+    // Бой уже завершен давно, заходим чисто посмотреть результаты
+    onFightEnd();
+  }
+});
+
+
 </script>
 
 <style scoped>
-
 .background-fight {
-  background: url('@/assets/images/background_profile.webp') no-repeat center center;
+  background: url('@/assets/images/background_page.webp') no-repeat center center;
+  background-size: cover;
+  animation: moveBackground 2s ease-in-out forwards;
 }
 
 .background-fight::before {
@@ -63,7 +312,7 @@ const showResult = () => {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: linear-gradient(to right bottom, black 35%, transparent 75%);
+  background: linear-gradient(to right top, black 25%, transparent 125%);
   z-index: 1;
 }
 
@@ -86,50 +335,217 @@ const showResult = () => {
   }
 }
 
+@keyframes moveBackground {
+  0% {
+    background-position: right center;
+  }
+  100% {
+    background-position: center center;
+  }
+}
+
 .fight-container {
   position: relative;
   z-index: 10;
-  overflow-y: auto;
-  max-height: 100vh;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  color: white;
+  height: 100vh;
+  overflow-y: auto;
+  max-height: 100vh;
 }
 
 .fight-content-wrapper {
   width: 100%;
-  padding: 10vh 0; /* Отступы для верхней, нижней и боковых сторон */
+  padding: 10vh 0;
   box-sizing: border-box;
+  max-width: 1024px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
 }
 
-.fighter {
-  display: inline-block;
-  margin: 20px;
+.fight-again{
+  position: absolute;
+  left: 50%;
+  bottom: 30%;
+  width: 100px;
+  transform: translate(-50%,-50%);
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  color: var(--gray2);
+  animation: againAnimation 0.5s ease-in-out forwards;
 }
 
-.timer {
-  margin-top: 20px;
-  margin-bottom: 20px;
+.btn-again img{
+  width: 30px;
+  height: 30px;
+  text-align: center;
 }
 
-.action-selection {
-  margin-bottom: 20px;
-}
-
-.round-button-wrapper {
-  margin-top: 20px;
-}
-
-.round-button {
-  background-color: #ff4d4d;
-  color: white;
-  border: none;
-  padding: 15px 30px;
-  font-size: 1.2em;
+.btn-again{
+  position: relative;
+  width: 60px;
+  height: 60px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  border-radius: 50%;
+  margin-bottom: 5px;
 }
 
-.round-button:hover {
-  background-color: #ff1a1a;
+.btn-help {
+  display: flex;
+  font-family: Anonymous, sans-serif;
+  color: white;
+  font-size: 2.5em;
+  border-radius: 4px;
+  width: 50px;
+  height: 50px;
+  cursor: pointer;
+  border: 1px solid var(--gray2);
 }
+
+
+.progress-container {
+  width: 100%;
+  max-width: 500px;
+  padding: 0 20px;
+  margin-bottom: 5px;
+}
+
+.progress-container p {
+  text-align: center;
+  margin-bottom: 5px;
+}
+
+.progress {
+  border-radius: 10px;
+  padding: 15px;
+  background-color: var(--black-opacity-80);
+}
+
+.progress-linear {
+  height: 6px !important;
+  transition: width 0.1s linear;
+}
+
+
+.fighters-container {
+  flex-direction: row;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 500px;
+}
+
+.countdown {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 4em;
+  color: white;
+  z-index: 100;
+  /*background-color: var(--black-opacity);*/
+  padding: 10px 20px 10px 20px;
+  border-radius: 4px;
+}
+
+/* Анимация появления и масштабирования */
+.fade-scale-enter-active, .fade-scale-leave-active {
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.fade-scale-leave-to {
+  opacity: 0;
+  transform: scale(3.5);
+}
+
+.fade-scale-enter-to {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.countdown-item {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.fighters-result {
+  flex-direction: row;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 500px;
+  margin-top: 10px;
+}
+
+.result-left, .result-right {
+  display: flex;
+  width: 200px;
+  text-align: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  row-gap: 10px; /* Отступ между строками */
+  column-gap: 5px;
+}
+
+.result-square {
+  background-color: var(--black-opacity-80);
+  border-radius: 4px;
+  border: 1px solid var(--gray2);
+  width: 30px;
+  height: 30px;
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  color: var(--gray2);
+}
+
+.text-center {
+  color: var(--gray2);
+}
+
+.fight-id {
+  display: flex;
+  justify-content: center;
+  flex-grow: 1;
+  align-items: center;
+  font-size: .8em;
+  text-transform: uppercase;
+  color: var(--gray2);
+  margin-top: 20px;
+  margin-bottom: 5vh;
+  width: 100%;
+  text-align: center;
+  max-width: 500px;
+}
+
+
+/* Определение анимации */
+@keyframes againAnimation {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-50%) scale(3);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-50%) scale(1);
+  }
+}
+
+
 </style>
