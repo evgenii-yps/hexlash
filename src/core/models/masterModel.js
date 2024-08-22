@@ -1,21 +1,23 @@
-import {MASTER_TAG} from "@/core/services/masterService.js";
-import UserModel from "@/core/models/userModel.js";
+import {MASTER_TAG} from "@/core/database/masterRepository.js";
+
 
 export class MasterModel {
     constructor({
                     id = MASTER_TAG,
                     inviteId = null,
                     email = '',
-                    emailVerified = false,
+                    socialTasks = [],
                     jwtToken = '',
                     userData = {}
                 } = {}) {
         this.id = id;
         this.inviteId = inviteId;
         this.email = email;
-        this.emailVerified = emailVerified;
+
         this.jwtToken = jwtToken;
         this.userData = userData;
+
+        this.socialTasks = socialTasks;
 
     }
 
@@ -34,30 +36,30 @@ export class MasterModel {
     static fromJSON(jsonString) {
         try {
             const userData = JSON.parse(jsonString);
-            const { inviteId, email, emailVerified } = userData;
-            return new MasterModel({ userData: userData, inviteId, email, emailVerified });
+            const { inviteId, email, socialTasks } = userData;
+
+            // Удаляем поля из userData, чтобы не передавать их в MasterModel
+            delete userData.inviteId;
+            delete userData.email;
+            delete userData.socialTasks;
+
+            // Создаем объект MasterModel
+            const masterModel = new MasterModel({
+                userData: userData,
+                inviteId,
+                email,
+            });
+
+            // Возвращаем объект MasterModel и массив socialTasks
+            return {
+                masterModel,
+                socialTasks
+            };
         } catch (error) {
             console.error('Error parsing JSON string:', error);
             return null;
         }
     }
+
 }
 
-
-export class AchievementModel {
-    constructor({
-                    id = 0,
-                    title = '',
-                    icon = '',
-                    completed = false,
-                    description = '',
-                    show = false
-                } = {}) {
-        this.id = id;
-        this.title = title;
-        this.icon = icon;
-        this.completed = completed;
-        this.description = description;
-        this.show = show;
-    }
-}

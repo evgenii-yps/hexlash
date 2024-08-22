@@ -33,7 +33,7 @@ export default class UserModel {
 
      * @param {string} [param0.inviteId] - Идентификатор приглашения. Только для текущего пользователя.
      * @param {string} [param0.email] - Электронная почта пользователя. Только для текущего пользователя.
-     * @param {boolean} [param0.emailVerified] - Статус подтверждения электронной почты. Только для текущего пользователя.
+     * @param {Array<object>} [param0.socialTasks = []] - Задачи для привязки соц сетей
 
      */
     constructor({
@@ -77,7 +77,7 @@ export default class UserModel {
                     // Только для текущего пользователя
                     inviteId,
                     email,
-                    emailVerified
+                    socialTasks
                 }) {
         // Базовые
         this.id = id;
@@ -119,7 +119,7 @@ export default class UserModel {
         // Только для текущего пользователя
         // this.inviteId = inviteId;
         // this.email = email;
-        // this.emailVerified = emailVerified;
+        // this.socialTasks = socialTasks;
     }
 }
 

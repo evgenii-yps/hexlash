@@ -1,44 +1,8 @@
 import apiClient from '@/core/api/apiClient.js';
-import {initDB, clearDatabase, getFromDB, MASTER_TABLE} from '@/core/database/idb.js';
+import {clearDatabase} from '@/core/database/idb.js';
+import {getMasterFromLocalDB, saveMasterToLocalDB, updateMasterToLocalDB} from "@/core/database/masterRepository.js";
 import {MasterModel} from "@/core/models/masterModel.js";
-
-export const MASTER_TAG = "MASTER_TAG";
-
-export const getMasterFromLocalDB = async () => {
-    const data = await getFromDB(MASTER_TABLE, MASTER_TAG);
-    return data ? new MasterModel(data) : null;
-};
-
-export const saveMasterToLocalDB = async (masterModel) => {
-    const db = await initDB();
-    await db.put(MASTER_TABLE, {...masterModel, id: MASTER_TAG});
-};
-
-export const updateMasterToLocalDB = async (updatedData) => {
-    const db = await initDB();
-    const transaction = db.transaction(MASTER_TABLE, 'readwrite');
-    const store = transaction.objectStore(MASTER_TABLE);
-
-    // Получаем текущий объект из базы данных
-    const currentData = await store.get(MASTER_TAG);
-
-    if (currentData) {
-        // Обновляем необходимые поля в объекте
-        for (const [key, value] of Object.entries(updatedData)) {
-            if (key in currentData) {
-                currentData[key] = value;
-            } else if (key in currentData.userData) {
-                currentData.userData[key] = value;
-            }
-        }
-
-        // Сохраняем обновленный объект обратно в базу данных
-        await store.put(currentData);
-    }
-
-    await transaction.complete;
-};
-
+import {saveTasksToLocalDB} from "@/core/database/socialTasksRepository.js";
 
 export const getMasterFromLocalAndAPI = async () => {
     // Сначала берем данные из локальной базы данных
@@ -62,7 +26,6 @@ export const getMasterFromAPI = () => {
         console.error('Failed to fetch user data from API:', error);
     });
 };
-
 
 // Метод логина
 export const testLogin = async (credentials) => {
@@ -92,19 +55,26 @@ export const testLogin = async (credentials) => {
               "noSkipDays": 365,
               "inviteId": "invite123",
               "email": "johndoe@example.com",
-              "emailVerified": true,
               "achievements": [1, 3, 4, 5],
               "balance":199,
-              "skin":"skin_w_20.png"
+              "skin":"skin_w_20.png",
+              "socialTasks": [
+                    {"id": 1, "title": "Confirm Email", "description": "Confirm", "link":"/profile/account", "tokens": 10, "isCompleted": false, "category": "email"},
+                    {"id": 2, "title": "Subscribe", "description": "Subscribe",  "link":"https://telegram.org",  "tokens": 10, "isCompleted": false, "category": "telegram"},
+                    {"id": 3, "title": "Subscribe","description": "Subscribe",   "link":"https://x.com",  "tokens": 20, "isCompleted": false, "category": "x"},
+                    {"id": 4, "title": "Subscribe", "description": "Subscribe",  "link":"https://youtube.com",  "tokens": 10, "isCompleted": true, "category": "youtube"},
+                    {"id": 5, "title": "Subscribe", "description": "Subscribe",  "link":"https://discord.com",  "tokens": 10, "isCompleted": false, "category": "discord"},
+                    {"id": 6, "title": "Subscribe", "description": "Subscribe",  "link":"https://instagram.com",  "tokens": 20, "isCompleted": false, "category": "instagram"}
+                ]
         }`;
 
 
         // Преобразуем данные пользователя в модель и добавляем токен
-        const masterModel = MasterModel.fromJSON(mockUser);
+        const { masterModel, socialTasks } = MasterModel.fromJSON(mockUser);
         masterModel.jwtToken = "JWT";
 
         // Проверяем пользователя в базе данных
-        const existingUser = await getFromDB(MASTER_TABLE, MASTER_TAG);
+        const existingUser = await getMasterFromLocalDB();
 
         if (existingUser && new MasterModel(existingUser).getUuid() !== masterModel.getUuid()) {
             // Удаляем данные старого пользователя, если он отличается от текущего
@@ -114,13 +84,16 @@ export const testLogin = async (credentials) => {
         // Сохраняем данные пользователя в локальную базу данных
         await saveMasterToLocalDB(masterModel);
 
+        if(socialTasks && socialTasks.length > 0) {
+            await saveTasksToLocalDB(socialTasks);
+        }
+
         return masterModel;
 
     } catch (error) {
         throw error.response?.data?.message || error.message || 'Failed to login';
     }
 };
-
 
 // Метод логина
 export const login = async (credentials) => {
@@ -136,7 +109,7 @@ export const login = async (credentials) => {
         const currentUserModel = new MasterModel({...userData, jwtToken});
 
         // Проверяем пользователя в базе данных
-        const existingUser = await getFromDB(MASTER_TABLE, MASTER_TAG);
+        const existingUser = await getMasterFromLocalDB();
 
         if (existingUser && existingUser.getUuid() !== currentUserModel.getUuid()) {
             // Удаляем данные старого пользователя, если он отличается от текущего
@@ -167,7 +140,6 @@ const fetchMasterData = async (token) => {
     }
 };
 
-
 // Изменить профиль
 export const changeProfile = async (profileData) => {
     try {
@@ -191,12 +163,12 @@ export const changePassword = async (passwordData) => {
 // Выйти из системы
 export const logout = async () => {
     try {
-       // const response = await apiClient.post('/users/logout', {}, {authRequired: true});
+        // const response = await apiClient.post('/users/logout', {}, {authRequired: true});
 
         await clearDatabase();
 
         return true;
-       // return response.data;
+        // return response.data;
     } catch (error) {
         throw new Error('Failed to logout');
     }

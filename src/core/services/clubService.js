@@ -1,42 +1,6 @@
-import apiClient from '@/core/api/apiClient.js';
-import {clearDatabase, CLUBS_TABLE, getFromDB, initDB, MASTER_TABLE} from '@/core/database/idb.js';
 import ClubModel from "@/core/models/clubModel.js";
-import {MASTER_TAG} from "@/core/services/masterService.js";
+import {getClubDataFromLocalDB, saveClubDataToLocalDB} from "@/core/database/clubRepository.js";
 
-// Получить данные клуба из локальной базы данных
-export const getClubDataFromLocalDB = async (clubId) => {
-    const data = await getFromDB(CLUBS_TABLE, clubId);
-    return data ? new ClubModel(data) : null;
-};
-
-// Сохранить данные клуба в локальную базу данных
-export const saveClubDataToLocalDB = async (clubModel) => {
-    const db = await initDB();
-    await db.put(CLUBS_TABLE, {...clubModel, id: clubModel.id});
-};
-
-export const updateClubToLocalDB = async (updatedData) => {
-    const db = await initDB();
-    const transaction = db.transaction(CLUBS_TABLE, 'readwrite');
-    const store = transaction.objectStore(CLUBS_TABLE);
-
-    // Получаем текущий объект из базы данных
-    const currentData = await store.get(updatedData.id);
-
-    if (currentData) {
-        // Обновляем необходимые поля в объекте
-        for (const [key, value] of Object.entries(updatedData)) {
-            if (key in currentData) {
-                currentData[key] = value;
-            }
-        }
-
-        // Сохраняем обновленный объект обратно в базу данных
-        await store.put(currentData);
-    }
-
-    await transaction.complete;
-};
 
 // Получить данные клуба из API
 export const getClubDataFromAPI = async (clubId) => {
@@ -131,7 +95,3 @@ export const getClubByIdFromLocalAndAPI = async (clubId) => {
     return clubData;
 };
 
-// Очистить данные клуба из локальной базы данных
-export const clearClubDataFromLocalDB = async (clubId) => {
-    await clearDatabase(CLUBS_TABLE, clubId);
-};

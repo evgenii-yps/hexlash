@@ -3,15 +3,18 @@ import {
     getMasterFromLocalAndAPI,
     login as loginService,
     testLogin,
-    updateMasterToLocalDB,
     logout as logoutService,
 } from '@/core/services/masterService.js';
 import router from "@/router/index.js";
+import {updateMasterToLocalDB} from "@/core/database/masterRepository.js";
 
 const state = {
     master: null,
+
+    //TODO переделать в один объект авторизации
     authError: null,
     isAuthenticated: false
+    // ---
 };
 
 const getters = {
@@ -80,13 +83,13 @@ const actions = {
             console.error('Failed to fetch user data:', error);
         }
     },
-    syncMaster({commit}) {
+    /*syncMaster({commit}) {
         try {
            getMasterFromAPI();
         } catch (error) {
             console.error('Failed to sync master data:', error);
         }
-    },
+    },*/
     async updateMaster({commit, state}, updatedData) {
         try {
             // Обновление состояния
@@ -128,8 +131,7 @@ const actions = {
         } catch (error) {
             console.error('Failed to update user data:', error);
         }
-    },
-
+    }
 };
 
 export default {

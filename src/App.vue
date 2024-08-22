@@ -4,7 +4,7 @@
       <div class="header-content">
         <Logo @click="goToHome" />
         <div v-if="balance !== null" class="balance">
-          {{ balance }}$
+          {{ balance }}.01$
         </div>
       </div>
     </header>

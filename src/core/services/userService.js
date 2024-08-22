@@ -1,25 +1,8 @@
-import apiClient from '@/core/api/apiClient.js';
-import {initDB, USERS_TABLE} from '@/core/database/idb.js';
 import UserModel from "@/core/models/userModel.js";
 import store from "@/core/state/store.js";
 import router from "@/router/index.js";
+import {getUserByLoginFromDB, saveUserDataToLocalDB} from "@/core/database/UserRepository.js";
 
-
-export const getUserByLoginFromDB = async (login) => {
-    const db = await initDB();
-    const tx = db.transaction(USERS_TABLE, 'readonly');
-    const store = tx.objectStore(USERS_TABLE);
-    const index = store.index('login');
-    return await index.get(login);
-};
-
-export const saveUserDataToLocalDB = async (userModel) => {
-    const db = await initDB();
-    await db.put(USERS_TABLE, {...userModel, id: userModel.id});
-
-    await store.dispatch('user/updateUser', userModel); // Обновляем данные в store
-
-};
 
 const testUsers = [
     {
@@ -134,7 +117,11 @@ export const getUserFromLocalAndAPI = async (userLogin) => {
         // Асинхронно обновляем данные из API
         fetchUserByLogin(userLogin).then(async (apiData) => {
             const apiUserModel = new UserModel(apiData);
+
             await saveUserDataToLocalDB(apiUserModel);
+
+            await store.dispatch('user/updateUser', apiUserModel); // Обновляем данные в store
+
         }).catch((error) => {
             console.error('Failed to fetch user data from API:', error);
         });
@@ -146,6 +133,7 @@ export const getUserFromLocalAndAPI = async (userLogin) => {
             if (apiData) {
                 const apiUserModel = new UserModel(apiData);
                 await saveUserDataToLocalDB(apiUserModel);
+                await store.dispatch('user/updateUser', apiUserModel); // Обновляем данные в store
                 return apiUserModel;
             }
         } catch (error) {

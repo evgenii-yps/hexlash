@@ -30,10 +30,10 @@ const playSound = () => {
 }
 
 const menuItems = ref([
-  {icon: 'icon-arena', text: 'Арена', route: '/arena'},
-  {icon: 'icon-trainings', text: 'Тренировки', route: '/training'},
-  {icon: 'icon-ratings', text: 'Рейтинги', route: '/ratings/clubs'},
-  {icon: 'icon-profile', text: 'Профиль', route: '/profile'},
+  {icon: 'icon-arena', text: 'Arena', route: '/arena'},
+  {icon: 'icon-trainings', text: 'Training', route: '/training'},
+  {icon: 'icon-ratings', text: 'Ratings', route: '/ratings/clubs'},
+  {icon: 'icon-profile', text: 'Profile', route: '/profile'},
 ])
 
 const route = useRoute()

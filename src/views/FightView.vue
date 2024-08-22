@@ -75,7 +75,7 @@
                   <li><strong>HD (Head Defence):</strong> защита головы</li>
                   <li><strong>BD (Body Defence):</strong> защита тела</li>
                   <li><strong>HH (Head Hit):</strong> удар в голову</li>
-                  <li><strong>HB (Head Body):</strong> удар в тело</li>
+                  <li><strong>BH (Body Hit):</strong> удар в тело</li>
                 </ul>
                 <br/>
                 <p>После выбора действий происходит сравнение с действиями противника. Побеждает тот, кто нанесёт
@@ -83,7 +83,7 @@
                 <br/>
                 <p style="margin-bottom: 10px; color:var(--white);"><strong>Пример:</strong></p>
                 <p>Вы: HD, HH, BD</p>
-                <p>Противник: HH, BD, HB</p>
+                <p>Противник: HH, BD, BH</p>
                 <p>Итог: вы нанесли 1 удар, блокировали 2 удара противника. <strong>Победитель:</strong> Вы </p>
                 <br/>
                 <p><strong style="color:var(--white)">Важно:</strong> нельзя выбрать все действия как атаки или все

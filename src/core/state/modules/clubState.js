@@ -1,13 +1,12 @@
 import {
     getClubByIdFromLocalAndAPI,
-    saveClubDataToLocalDB,
     updateClubDataOnAPI,
-    updateClubToLocalDB
 } from '@/core/services/clubService';
 
 import ClubModel from "@/core/models/clubModel.js";
 import store from "@/core/state/store.js";
 import {COST_CREATE_CLUB} from "@/core/constants.js";
+import {saveClubDataToLocalDB, updateClubToLocalDB} from "@/core/database/clubRepository.js";
 
 // Состояние модуля
 const state = {

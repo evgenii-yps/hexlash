@@ -7,6 +7,8 @@ const DB_VERSION = 1;
 export const MASTER_TABLE = 'master';
 export const USERS_TABLE = 'users';
 export const CLUBS_TABLE = 'clubs';
+export const SOCIAL_TASKS_TABLE = 'social_tasks';
+export const DAILY_TASKS_TABLE = 'daily_tasks';
 
 let dbPromise;
 
@@ -20,6 +22,8 @@ export const initDB = () => {
                     usersStore.createIndex('login', 'login', { unique: true });
 
                     db.createObjectStore(CLUBS_TABLE, { keyPath: 'id' });
+                    db.createObjectStore(SOCIAL_TASKS_TABLE, { keyPath: 'id' });
+                    db.createObjectStore(DAILY_TASKS_TABLE, { keyPath: 'id' });
                 }
             },
         });
@@ -27,16 +31,14 @@ export const initDB = () => {
     return dbPromise;
 };
 
-export const getFromDB = async (storeName, id) => {
-    const db = await initDB();
-    return await db.get(storeName, id);
-};
 
 export const clearDatabase = async () => {
     const db = await initDB();
-    const tx = db.transaction(['master'], 'readwrite');
+    const tx = db.transaction([MASTER_TABLE], 'readwrite');
+    const tx2 = db.transaction([SOCIAL_TASKS_TABLE], 'readwrite');
     await Promise.all([
-        tx.objectStore('master').clear(),
+        tx.objectStore(MASTER_TABLE).clear(),
+        tx2.objectStore(SOCIAL_TASKS_TABLE).clear(),
     ]);
     await tx.done;
 };

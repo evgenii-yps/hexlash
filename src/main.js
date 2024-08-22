@@ -11,6 +11,7 @@ import App from './App.vue'
 
 // Vuetify
 import {createVuetify} from 'vuetify'
+
 import {
     VTooltip, VBtn, VDialog, VCard,
     VCardTitle, VCardText, VCardActions, VSpacer,
@@ -18,6 +19,8 @@ import {
     VProgressCircular, VSelect, VList, VSlider, VListItem, VAlert, VSwitch, VTextField, VTextarea, VProgressLinear
 } from 'vuetify/components';
 import store from "@/core/state/store.js";
+
+import * as directives from 'vuetify/directives'
 
 const vuetify = createVuetify({
     components: {
@@ -46,7 +49,10 @@ const vuetify = createVuetify({
         VSwitch,
         VTextField,
         VTextarea,
-        VProgressLinear
+        VProgressLinear,
+    },
+    directives: {
+        ...directives,
     },
     aliases: {
         VBtnDark: VBtn,
@@ -65,10 +71,10 @@ const vuetify = createVuetify({
         VCard: {
             class: 'v-modal',
         },
-        VListItem:{
+        VListItem: {
             class: 'v-list-item',
         }
-    }
+    },
 });
 
 async function initializeApp() {
