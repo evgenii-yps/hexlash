@@ -6,7 +6,6 @@ export class MasterModel {
                     id = MASTER_TAG,
                     inviteId = null,
                     email = '',
-                    socialTasks = [],
                     jwtToken = '',
                     userData = {}
                 } = {}) {

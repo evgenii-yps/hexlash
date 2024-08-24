@@ -1,5 +1,6 @@
 import {BATCH_SEND_INTERVAL_MS} from "@/core/constants.js";
 import * as punchService from "@/core/services/punchService.js";
+import store from "@/core/state/store.js";
 
 
 const state = {
@@ -68,6 +69,9 @@ const actions = {
         }
         state.batchHitPunchAmount.push(value);
         state.punchInfo.punchCounter++;
+
+        // Увеличиваем баланс
+        store.commit('master/increaseBalance', {add: value})
     },
     async synchronizePunchResetTime({commit}) {
         try {

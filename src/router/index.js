@@ -51,9 +51,9 @@ const router = createRouter({
 
 
 // Навигационный гвард
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
 
-    const isAuthenticated = store.getters["master/isAuthenticated"];
+    const isAuthenticated = store.getters["master/getAuthState"]?.isAuthenticated;
 
     if (protectedRoutes.some(route => route.name === to.name || route.path === to.path)) {
         if (!isAuthenticated) {

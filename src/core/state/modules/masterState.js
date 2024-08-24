@@ -1,26 +1,21 @@
 import {
     getMasterFromAPI,
     getMasterFromLocalAndAPI,
-    login as loginService,
-    testLogin,
+    login as loginAPI,
     logout as logoutService,
 } from '@/core/services/masterService.js';
 import router from "@/router/index.js";
 import {updateMasterToLocalDB} from "@/core/database/masterRepository.js";
+import {AuthStateModel} from "@/core/models/AuthStateModel.js";
 
 const state = {
     master: null,
-
-    //TODO переделать в один объект авторизации
-    authError: null,
-    isAuthenticated: false
-    // ---
+    authState: new AuthStateModel(),
 };
 
 const getters = {
     getMaster: (state) => state.master,
-    getAuthError: (state) => state.authError,
-    isAuthenticated: state => state.isAuthenticated,
+    getAuthState: (state) => state.authState,
 };
 
 const mutations = {
@@ -38,31 +33,24 @@ const mutations = {
             }
         }
     },
-    setAuthError: (state, error) => {
-        state.authError = error;
+    increaseBalance(state, {add}) {
+        if (state.master && state.master.userData.balance !== undefined) {
+            state.master.userData.balance += add;
+        }
     },
-    setAuthenticated: (state, isAuthenticated) => {
-        state.isAuthenticated = isAuthenticated;
+    setAuthState: (state, authState) => {
+        state.authState = authState;
     },
     clearAuthData: (state) => {
         state.master = null;
-        state.authError = null;
-        state.isAuthenticated = false;
+        state.authState = new AuthStateModel();
     },
 };
 
 const actions = {
     async login({commit}, credentials) {
-        try {
-            const master = await testLogin(credentials);
-
-            commit('setMaster', master);
-            commit('setAuthenticated', true);
-
-            await router.push('/profile');
-        } catch (error) {
-            commit('setAuthError', error);
-        }
+        await loginAPI(credentials);
+        await router.push('/profile');
     },
     async logout({commit}) {
 
@@ -74,11 +62,7 @@ const actions = {
     },
     async fetchMaster({commit}) {
         try {
-            const localData = await getMasterFromLocalAndAPI();
-            if (localData) {
-                commit('setMaster', localData);
-                commit('setAuthenticated', true);
-            }
+            await getMasterFromLocalAndAPI();
         } catch (error) {
             console.error('Failed to fetch user data:', error);
         }

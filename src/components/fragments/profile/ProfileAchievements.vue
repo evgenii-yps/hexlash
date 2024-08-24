@@ -82,21 +82,23 @@
 import {computed, ref, watch} from 'vue';
 import store from "@/core/state/store.js";
 
-import achievementEmailIcon from '@/assets/images/achievement_win.png';
-import achievementSocialIcon from '@/assets/images/achievement_win.png';
-import achievementNewbieIcon from '@/assets/images/achievement_win.png';
+import achievementEmailIcon from '@/assets/images/achievement_email.png';
+import achievementSocialIcon from '@/assets/images/achievement_social.png';
+import achievementNewbieIcon from '@/assets/images/achievement_newbie.png';
+import achievement100DaysIcon from '@/assets/images/achievement_100days.png';
+import achievementWinIcon from '@/assets/images/achievement_win.png';
+import achievementSocialLeaderIcon from '@/assets/images/achievement_social_leader.png';
+import achievement100WinsIcon from '@/assets/images/achievement_bob.png';
+
+
 import achievementDailyLoginIcon from '@/assets/images/achievement_win.png';
 import achievement30DaysIcon from '@/assets/images/achievement_win.png';
-import achievementWinIcon from '@/assets/images/achievement_win.png';
 import achievementCoachIcon from '@/assets/images/achievement_win.png';
 import achievementInviteIcon from '@/assets/images/achievement_win.png';
-import achievementSocialLeaderIcon from '@/assets/images/achievement_win.png';
 import achievementInvestIcon from '@/assets/images/achievement_win.png';
 import achievementPromoIcon from '@/assets/images/achievement_win.png';
 import achievementExpertIcon from '@/assets/images/achievement_win.png';
-import achievement100DaysIcon from '@/assets/images/achievement_100days.png';
 import achievementLuckIcon from '@/assets/images/achievement_win.png';
-import achievement100WinsIcon from '@/assets/images/achievement_win.png';
 import achievementWalletIcon from '@/assets/images/achievement_win.png';
 import achievement1000FightsIcon from '@/assets/images/achievement_win.png';
 
@@ -226,7 +228,7 @@ const allAchievements = [
     title: 'Бумажная улица',
     icon: achievementWalletIcon,
     completed: false,
-    description: 'Пополните кошелек на более чем 1000 токенов.',
+    description: 'Пополните единовременно кошелек на более чем 1000 токенов.',
     show: false
   },
   {

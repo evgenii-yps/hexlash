@@ -25,7 +25,7 @@
           marginBottom="1.3rem"
       />
 
-      <div v-if="authError" class="error-message">Wrong login or password<!--{{ authError }}--></div>
+      <div v-if="authState.authError" class="error-message">Wrong login or password<!--{{ authState.authError }}--></div>
 
       <v-progress-circular
           v-if="loading"
@@ -73,20 +73,21 @@ import ButtonText from "@/components/ui/ButtonText.vue";
 import {useRouter} from 'vue-router';
 
 import store from "@/core/state/store.js";
+import {AuthStateModel} from "@/core/models/AuthStateModel.js";
 
 const router = useRouter();
 
 const login = ref('');
 const password = ref('');
 const loading = ref(false);
-const authError = computed(() => store.getters['master/getAuthError']); // Получаем ошибку из нового модуля auth
+const authState = computed(() => store.getters['master/getAuthState']); // Получаем стейт
 
 
 const handleSubmit = async () => {
 
   loading.value = true;
 
-  store.commit('master/setAuthError', null);
+  store.commit('master/setAuthState', new AuthStateModel());
 
   try {
     const credentials = {login: login.value, password: password.value};

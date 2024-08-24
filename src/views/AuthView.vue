@@ -986,7 +986,6 @@ class Sketch extends kokomi.Base {
     window.removeEventListener("touchstart", touchStartHandler);
     window.removeEventListener("touchend", touchEndHandler);
 
-    console.log("all deleted 2")
   }
 
 }

@@ -4,7 +4,7 @@
       <div class="header-content">
         <Logo @click="goToHome" />
         <div v-if="balance !== null" class="balance">
-          {{ balance }}.01$
+          {{ balance }}$
         </div>
       </div>
     </header>
@@ -31,7 +31,11 @@ import router from "@/router/index.js";
 
 const balance = computed(() => {
   const master = store.getters['master/getMaster'];
-  return master && master.userData ? master.userData.balance : null;
+  if (master && master.userData) {
+    const rawBalance = master.userData.balance;
+    return (rawBalance / 100).toFixed(2);
+  }
+  return 0;
 });
 
 // Получаем текущий маршрут
