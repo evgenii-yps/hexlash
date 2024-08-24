@@ -3,7 +3,19 @@
   <div class="checklist-section">
     <h3>CheckList ({{ notCompletedCheckListCount }})</h3>
 
-    <div class="checklist-scroll-container">
+    <div v-if="props.loadingSocialTasks" class="loader-container">
+      <v-progress-circular
+          class="loader"
+          size="40"
+          indeterminate
+      />
+    </div>
+
+    <div v-else-if="!props.hasIncompleteSocialTasks" class="no-tasks-container">
+      Great work, checklist completed!
+    </div>
+
+    <div v-else class="checklist-scroll-container">
 
       <div class="horizontal-scroll">
         <div
@@ -49,6 +61,16 @@ const props = defineProps({
     type: Array,
     required: true
   },
+  loadingSocialTasks: {
+    type: Boolean,
+    required: true,
+    default: false
+  },
+  hasIncompleteSocialTasks: {
+    type: Boolean,
+    required: true,
+    default: false
+  }
 });
 
 const categoryIcons = [
@@ -79,18 +101,12 @@ const sortedTasks = computed(() => {
 
 const completeTask = (id) => {
   // Находим задачу по ID и отмечаем её как завершённую
-  const updatedTasks = props.socialTasks.map(task => {
-    if (task.id === id) {
-      return {
-        ...task,
-        isCompleted: true
-      };
-    }
-    return task;
-  });
+  let updatedTask = props.socialTasks.findLast(task => task.id === id);
+
+  updatedTask.isCompleted = true;
 
   // Обновляем состояние в store
-  store.dispatch("master/updateMaster", {socialTasks: updatedTasks.value});
+  store.dispatch("task/updateSocialTask", updatedTask);
 
   selectedTask.value = null;
 
@@ -176,5 +192,20 @@ const openSubscribeDialog = (task) => {
   font-family: Anonymous, sans-serif;
   font-size: 2rem;
   margin-left: 20px;
+}
+
+.loader-container {
+  display: flex;
+  justify-content: center; /* Центрирование по горизонтали */
+  align-items: center; /* Центрирование по вертикали */
+  margin-top: 20px;
+}
+
+.no-tasks-container{
+  display: flex;
+  justify-content: center; /* Центрирование по горизонтали */
+  align-items: center; /* Центрирование по вертикали */
+  margin-top: 20px;
+  color: var(--gray2);
 }
 </style>

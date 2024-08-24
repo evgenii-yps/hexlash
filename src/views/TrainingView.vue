@@ -3,11 +3,11 @@
     <div class="training-container">
       <div class="training-content-wrapper">
 
-        <div class="training-punch-container">
+        <div v-if="!loadingPunchInfo && !isTrainingBlocked" class="training-punch-container">
           <v-img :src="PunchImage" aspect-ratio="1"
                  class="punch-img"/>
 
-          <div class="circle-container" @click="handleClickPunch($event, false, incomeForHit)">
+          <div class="circle-container" @click="handleClickPunch($event, false, COST_PER_CLICK)">
 
             <div class="movement-container" ref="hitCircleRef">
               <!-- Кружок -->
@@ -17,7 +17,7 @@
             </div>
 
             <!-- Элементы для отображения чисел -->
-            <div v-for="(num, index) in numbers" :key="index" class="number-animation" :style="num.style">+{{
+            <div v-for="(num, index) in numbersAnimations" :key="index" class="number-animation" :style="num.style">+{{
                 num.value
               }} &cent;
             </div>
@@ -28,16 +28,32 @@
 
         <div class="training-title">Training room</div>
 
+        <div v-if="loadingPunchInfo" class="loader-container">
+          <v-progress-circular
+              class="loader"
+              size="50"
+              indeterminate
+          />
+        </div>
+
+        <div v-if="isTrainingBlocked && countdownText.length > 0" class="timer-punch-container">
+          <div class="timer-overlay">
+            {{ countdownText }}
+          </div>
+          <div class="timer-text">Punch bag is down, fighter. Hold on, we’ll replace it for you soon.</div>
+        </div>
+
         <!-- Компонент DailyTasks -->
         <DailyTasks
-            :dailyTasks="dailyTasks"
-        />
+            :loadingDailyTasks="loadingDailyTasks"
+            :hasIncompleteDailyTasks="hasIncompleteDailyTasks"
+            :dailyTasks="dailyTasks"/>
 
-        <!-- Компонент Checklist -->
-        <Checklist
-            v-if="isCompleteChecklist"
-            :socialTasks="master?.socialTasks"
-        />
+        <!-- Компонент SocialTasks -->
+        <SocialTasks
+            :loadingSocialTasks="loadingSocialTasks"
+            :hasIncompleteSocialTasks="hasIncompleteSocialTasks"
+            :socialTasks="socialTasks"/>
 
         <div class="scroll-gap"/>
       </div>
@@ -48,39 +64,39 @@
 
 <script setup>
 
-import {computed, onMounted, ref} from 'vue';
+import {computed, onMounted, onUnmounted, ref, watch, watchEffect} from 'vue';
 import clickSound from '@/assets/sound/punch_hit.mp3'
 import PunchImage from "@/assets/images/punch.png"
 import DailyTasks from "@/components/fragments/training/DailyTasks.vue"
-import Checklist from "@/components/fragments/training/Checklist.vue";
+import SocialTasks from "@/components/fragments/training/SocialTasks.vue";
 import store from "@/core/state/store.js";
+import {COST_PER_CLICK, MULTIPLAYER_EXACT_CLICK, SPEED_MOVE_PUNCH_MS} from "@/core/constants.js";
 
-const master = computed(() => store.getters['master/getMaster']);
-
-const numbers = ref([]);
-const incomeForHit = ref(2);
+const numbersAnimations = ref([]);
 const hitCircleRef = ref(null);
-const isCompleteChecklist = computed(() => {
-      return master?.value.socialTasks?.some(task => !task.isCompleted)
-    }
-);
 
-const dailyTasks = ref([
-  {id: 1, description: 'Репост сообщения', tokens: 5, isCompleted: false, category: 'social_media_comment'},
-  {id: 2, description: 'Комментарий в социальной сети', tokens: 3, isCompleted: true, category: 'social_media_comment'},
-  {id: 3, description: 'Побить грушу 10 минут', tokens: 7, isCompleted: false, category: 'punch_bag_x_minutes'},
-  {id: 4, description: 'Провести 5 боев', tokens: 10, isCompleted: false, category: 'fight_x_battles'},
-]);
+const intervalId = ref(null);  // Для сохранения идентификатора интервала
+const countdownText = ref('');
+
+const socialTasks = computed(() => store.getters['task/getAllSocialTasks']);
+const dailyTasks = computed(() => store.getters['task/getAllDailyTasks']);
+const punchInfo = computed(() => store.getters['punch/getPunchInfo']);
+
+const loadingSocialTasks = computed(() => store.state.task.isLoadingSocialTasks);
+const loadingDailyTasks = computed(() => store.state.task.isLoadingDailyTasks);
+const loadingPunchInfo = computed(() => store.state.punch.isLoadingPunchInfo);
+const isTrainingBlocked = computed(() => store.state.punch.isTrainingBlocked);
+
+const hasIncompleteSocialTasks = computed(() => store.getters['task/hasIncompleteSocialTasks']);
+const hasIncompleteDailyTasks = computed(() => store.getters['task/hasIncompleteDailyTasks']);
 
 
 const soundHit1 = new Howl({
   src: [clickSound]
 })
-
 const playSound1 = () => {
   soundHit1.play();
 }
-
 
 const moveCircle = (circle) => {
   const container = circle.parentElement;
@@ -89,7 +105,6 @@ const moveCircle = (circle) => {
 
   const randomX = Math.floor(Math.random() * maxX);
   const randomY = Math.floor(Math.random() * maxY);
-
 
   circle.style.transform = `translate(${randomX}px, ${randomY}px) scale(0.1)`;
   circle.style.transition = 'transform 0s'; // Без анимации для движения
@@ -101,9 +116,8 @@ const moveCircle = (circle) => {
   }, 100);
 
   // Постоянное движение с сохранением масштаба
-  setTimeout(() => moveCircle(circle), 3000);
+  setTimeout(() => moveCircle(circle), SPEED_MOVE_PUNCH_MS);
 };
-
 const handleClickPunch = (event, isFromCircleClick = false, value) => {
   const target = event.target;
   let left, top;
@@ -135,10 +149,11 @@ const handleClickPunch = (event, isFromCircleClick = false, value) => {
     },
   };
 
-  numbers.value.push(newNumber);
+  numbersAnimations.value.push(newNumber);
+
+  store.dispatch('punch/handlePunch', value);
 
 };
-
 const handleCircleClick = (event, circle) => {
   const pulsingCircle = circle.querySelector('.pulsing-circle');
   const waveCircle = pulsingCircle.querySelector('.wave-circle');
@@ -160,30 +175,72 @@ const handleCircleClick = (event, circle) => {
   }, 300);
 
   // Добавление нового числа в массив
-  handleClickPunch(event, true, incomeForHit.value * 3);
+  handleClickPunch(event, true, COST_PER_CLICK * MULTIPLAYER_EXACT_CLICK);
+};
+
+// Функция запуска обратного отсчета
+const startCountdown = () => {
+  intervalId.value = setInterval(() => {
+    const currentTime = Math.floor(Date.now() / 1000);
+    const remainingTime = punchInfo.value.unixTimeStart - currentTime;
+
+    if (remainingTime <= 0) {
+      stopCountdown();
+      countdownText.value = ''; // Время прошло, можем тренироваться
+    } else {
+      // Обновляем текст обратного отсчета
+      const hours = Math.floor(remainingTime / 3600);
+      const minutes = Math.floor((remainingTime % 3600) / 60);
+      const seconds = remainingTime % 60;
+      countdownText.value = `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+  }, 1000);
 };
 
 
+const stopCountdown = () => {
+  if (intervalId.value) {
+    clearInterval(intervalId.value);
+    intervalId.value = null;
+  }
+}
+
+const startPunch = () => {
+  // Запускаем таймер
+  store.dispatch('punch/startPunchTimer');
+}
+
+const stopPunch = () => {
+  store.dispatch('punch/stopPunchTimer');
+}
+
+watch(isTrainingBlocked, (newValue) => {
+  if (newValue) {
+    startCountdown();
+    stopPunch();
+  } else {
+    startPunch();
+    stopCountdown();
+  }
+}, {immediate: true});
+
+watchEffect(() => {
+  if (hitCircleRef.value) {
+    moveCircle(hitCircleRef.value);
+  }
+});
+
 onMounted(() => {
-
-  console.log(master.value)
-
-  moveCircle(hitCircleRef.value);
-
-  // TODO отправка с сокет
-  //  удаление промежуточного буфера
-  setInterval(() => {
-    // Считаем общее число
-    const totalValue = numbers.value.reduce((sum, num) => sum + num.value, 0);
-
-    // Выводим общее число в консоль
-    console.log('Total value:', totalValue);
-
-    // Очищаем массив
-    numbers.value = [];
-
-  }, 10000);
+  store.dispatch('punch/synchronizePunchResetTime');
+  store.dispatch('task/fetchAllSocialTasks');
+  store.dispatch('task/fetchAllDailyTasks');
 })
+
+onUnmounted(() => {
+  stopPunch();
+  stopCountdown();
+});
+
 </script>
 
 <style scoped>
@@ -266,6 +323,7 @@ onMounted(() => {
   font-family: Anonymous, sans-serif;
   font-size: 2.5rem;
   z-index: 100;
+  margin-bottom: 260px;
 }
 
 .scroll-gap {
@@ -365,5 +423,37 @@ onMounted(() => {
   }
 }
 
+.loader-container {
+  position: absolute;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.timer-punch-container {
+  position: absolute;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.timer-overlay {
+  font-size: 4rem;
+  background-color: var(--black-opacity-80);
+  padding: 10px;
+  border-radius: 10px;
+  display: flex;
+}
+
+.timer-text {
+  margin-top: 20px;
+  display: flex;
+  font-size: 1.1em;
+  color: var(--dark);
+  text-align: center;
+}
 
 </style>

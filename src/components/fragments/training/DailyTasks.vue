@@ -4,15 +4,27 @@
       <h3>Daily tasks ({{ notCompletedTasksCount }})</h3>
 
       <VBtnDark
+          v-if="completedTasksCount > 0"
           size="x-small"
           class="btn-show-hide"
           @click="toggleCompletedTasks">
         <img :src="showCompletedTasks ? IconHide : IconShow" alt="Show/Hide" class="custom-icon"/>
       </VBtnDark>
-
     </div>
 
-    <div class="daily-tasks">
+    <div v-if="props.loadingDailyTasks" class="loader-container">
+      <v-progress-circular
+          class="loader"
+          size="40"
+          indeterminate
+      />
+    </div>
+
+    <div v-else-if="!props.hasIncompleteDailyTasks && !showCompletedTasks" class="no-tasks-container">
+      No daily tasks available today!
+    </div>
+
+    <div v-else class="daily-tasks">
       <div
           v-for="task in sortedTasks"
           :key="task.id"
@@ -29,7 +41,10 @@
     </div>
   </div>
 
-  <TaskModal v-model="isTaskModalOpen" :task="selectedTask" @close="isTaskModalOpen = false" @complete="completeTask"/>
+  <TaskModal v-model="isTaskModalOpen"
+             :task="selectedTask"
+             @close="isTaskModalOpen = false"
+             @complete="completeTask"/>
 
 </template>
 
@@ -46,6 +61,7 @@ import iInvite from "@/assets/images/icon_members.svg"
 import iEarn from "@/assets/images/icon_token_less.svg"
 import iCalendar from "@/assets/images/icon_calendar.svg"
 import TaskModal from "@/components/fragments/training/TaskModal.vue";
+import store from "@/core/state/store.js";
 
 
 const showCompletedTasks = ref(false);
@@ -57,12 +73,22 @@ const props = defineProps({
     type: Array,
     required: true,
   },
+  loadingDailyTasks: {
+    type: Boolean,
+    required: true,
+    default: false
+  },
+  hasIncompleteDailyTasks: {
+    type: Boolean,
+    required: true,
+    default: false
+  }
 });
 
 const categoryIcons = [
   {category: 'fight_x_battles', icon: iFights},
   {category: 'punch_bag_x_minutes', icon: iTrainings},
-  {category: 'social_media_comment', icon: iComment},
+  {category: 'social_media', icon: iComment},
   {category: 'watch_video', icon: iArrow},
   {category: 'win_x_matches', icon: iWin},
   {category: 'invite_x_friends', icon: iInvite},
@@ -75,10 +101,13 @@ function getIconByCategory(category) {
   return categoryIcon.icon;
 }
 
-
 // Вычисляемое свойство для подсчета количества выполненных заданий
 const notCompletedTasksCount = computed(() => {
   return props.dailyTasks.filter(task => !task.isCompleted).length;
+});
+
+const completedTasksCount = computed(() => {
+  return props.dailyTasks.filter(task => task.isCompleted).length;
 });
 
 // Функция для переключения видимости выполненных заданий
@@ -94,13 +123,20 @@ const sortedTasks = computed(() => {
 });
 
 const completeTask = (id) => {
-  // Логика завершения задания
-  console.log(id)
+  // Находим задачу по ID и отмечаем её как завершённую
+  let updatedTask = props.dailyTasks.findLast(task => task.id === id);
+  updatedTask.isCompleted = true;
+
+  // Обновляем состояние в store
+  store.dispatch("task/updateDailyTask", updatedTask);
+
+  selectedTask.value = null;
 };
 
 const openTaskDialog = (task) => {
   if (!task.isCompleted) {
     isTaskModalOpen.value = true;
+    selectedTask.value = task;
   }
 };
 </script>
@@ -108,7 +144,6 @@ const openTaskDialog = (task) => {
 <style scoped>
 
 .daily-tasks-section {
-  margin-top: 280px;
   width: 100%; /* Растягиваем контейнер на всю доступную ширину */
   box-sizing: border-box; /* Учитываем padding и border в ширине */
   max-width: 500px;
@@ -190,5 +225,19 @@ const openTaskDialog = (task) => {
   opacity: 0.5;
 }
 
+.loader-container {
+  display: flex;
+  justify-content: center; /* Центрирование по горизонтали */
+  align-items: center; /* Центрирование по вертикали */
+  margin-top: 20px;
+}
+
+.no-tasks-container{
+  display: flex;
+  justify-content: center; /* Центрирование по горизонтали */
+  align-items: center; /* Центрирование по вертикали */
+  margin-top: 20px;
+  color: var(--white);
+}
 
 </style>

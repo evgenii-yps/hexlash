@@ -2,7 +2,6 @@ import apiClient from '@/core/api/apiClient.js';
 import {clearDatabase} from '@/core/database/idb.js';
 import {getMasterFromLocalDB, saveMasterToLocalDB, updateMasterToLocalDB} from "@/core/database/masterRepository.js";
 import {MasterModel} from "@/core/models/masterModel.js";
-import {saveTasksToLocalDB} from "@/core/database/socialTasksRepository.js";
 
 export const getMasterFromLocalAndAPI = async () => {
     // Сначала берем данные из локальной базы данных
@@ -57,20 +56,12 @@ export const testLogin = async (credentials) => {
               "email": "johndoe@example.com",
               "achievements": [1, 3, 4, 5],
               "balance":199,
-              "skin":"skin_w_20.png",
-              "socialTasks": [
-                    {"id": 1, "title": "Confirm Email", "description": "Confirm", "link":"/profile/account", "tokens": 10, "isCompleted": false, "category": "email"},
-                    {"id": 2, "title": "Subscribe", "description": "Subscribe",  "link":"https://telegram.org",  "tokens": 10, "isCompleted": false, "category": "telegram"},
-                    {"id": 3, "title": "Subscribe","description": "Subscribe",   "link":"https://x.com",  "tokens": 20, "isCompleted": false, "category": "x"},
-                    {"id": 4, "title": "Subscribe", "description": "Subscribe",  "link":"https://youtube.com",  "tokens": 10, "isCompleted": true, "category": "youtube"},
-                    {"id": 5, "title": "Subscribe", "description": "Subscribe",  "link":"https://discord.com",  "tokens": 10, "isCompleted": false, "category": "discord"},
-                    {"id": 6, "title": "Subscribe", "description": "Subscribe",  "link":"https://instagram.com",  "tokens": 20, "isCompleted": false, "category": "instagram"}
-                ]
+              "skin":"skin_w_20.png"
         }`;
 
 
         // Преобразуем данные пользователя в модель и добавляем токен
-        const { masterModel, socialTasks } = MasterModel.fromJSON(mockUser);
+        const masterModel = MasterModel.fromJSON(mockUser);
         masterModel.jwtToken = "JWT";
 
         // Проверяем пользователя в базе данных
@@ -83,10 +74,6 @@ export const testLogin = async (credentials) => {
 
         // Сохраняем данные пользователя в локальную базу данных
         await saveMasterToLocalDB(masterModel);
-
-        if(socialTasks && socialTasks.length > 0) {
-            await saveTasksToLocalDB(socialTasks);
-        }
 
         return masterModel;
 

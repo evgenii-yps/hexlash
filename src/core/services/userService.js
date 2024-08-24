@@ -1,7 +1,7 @@
 import UserModel from "@/core/models/userModel.js";
 import store from "@/core/state/store.js";
 import router from "@/router/index.js";
-import {getUserByLoginFromDB, saveUserDataToLocalDB} from "@/core/database/UserRepository.js";
+import {getUserByLoginFromDB, saveUserDataToLocalDB} from "@/core/database/userRepository.js";
 
 
 const testUsers = [

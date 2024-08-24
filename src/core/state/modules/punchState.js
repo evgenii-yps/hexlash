@@ -1,0 +1,89 @@
+import {BATCH_SEND_INTERVAL_MS} from "@/core/constants.js";
+import * as punchService from "@/core/services/punchService.js";
+
+
+const state = {
+    punchInfo: null,
+    isLoadingPunchInfo: false,  // Состояние загрузки информации о груше
+    isTrainingBlocked: false,
+    punchTimerId: null, // идентификатор таймера
+    batchHitPunchAmount: [],
+};
+
+const getters = {
+    getPunchInfo: (state) => {
+        return state.punchInfo;
+    },
+};
+
+const mutations = {
+    setIsLoadingPunchInfo(state, isLoading) {
+        state.isLoadingPunchInfo = isLoading;
+    },
+    setIsTrainingBlock(state, isTrainingBlocked) {
+        state.isTrainingBlocked = isTrainingBlocked;
+    },
+    setPunchInfo(state, info) {
+        state.punchInfo = info;
+    },
+    setPunchTimer(state, timerId) {
+        state.punchTimerId = timerId;
+    },
+    clearPunchTimer(state) {
+        if (state.punchTimerId) {
+            clearInterval(state.punchTimerId);
+            state.punchTimerId = null;
+        }
+    },
+};
+
+const actions = {
+    startPunchTimer({commit, state}) {
+        // Если таймер уже существует, не запускаем его снова
+        if (state.punchTimerId) return;
+
+        const timerId = setInterval(async() => {
+            // Считаем общее число
+            const totalValue = state.batchHitPunchAmount.reduce((sum, num) => sum + num, 0);
+
+            // Сохраняем и отправляем
+            if(totalValue > 0) {
+                await punchService.sendPunchBatch(state.punchInfo, totalValue);
+            }
+
+            // Очищаем массив
+            state.batchHitPunchAmount = [];
+
+        }, BATCH_SEND_INTERVAL_MS);
+
+        commit('setPunchTimer', timerId);
+    },
+    stopPunchTimer({commit}) {
+        commit('clearPunchTimer');
+    },
+    async handlePunch({commit, dispatch}, value) {
+        if (state.punchInfo.isLimitReach) {
+            await punchService.stopPunchBatch(state.punchInfo);
+            return;
+        }
+        state.batchHitPunchAmount.push(value);
+        state.punchInfo.punchCounter++;
+    },
+    async synchronizePunchResetTime({commit}) {
+        try {
+            commit('setIsLoadingPunchInfo', true);
+            await punchService.getPunchLimitsFromLocalAndAPI();
+        } catch (error) {
+            console.error('Error synchronizing punch reset time:', error);
+        }
+        commit('setIsLoadingPunchInfo', false);
+    },
+};
+
+export default {
+    namespaced: true,
+    state,
+    getters,
+    mutations,
+    actions,
+};
