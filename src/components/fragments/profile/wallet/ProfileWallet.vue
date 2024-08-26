@@ -24,6 +24,9 @@ import store from "@/core/state/store.js";
 import {useMetaMaskWallet} from "vue-connect-wallet";
 import {WalletTypes} from "@/core/models/userModel.js";
 import ConnectWallet from "@/components/fragments/profile/wallet/ConnectWallet.vue";
+import {useI18n} from "vue-i18n";
+
+const { t } = useI18n({ useScope: 'global' })
 
 const wallet = useMetaMaskWallet();
 
@@ -63,9 +66,9 @@ watch(store.getters['master/getMaster'], async (master) => {
         // TODO взять баланс со смарт контракта
       }
 
-      titleText.value = $t('profile.wallet.lblConnectAnotherWallet')
+      titleText.value = t('profile.wallet.lblConnectAnotherWallet')
     } else {
-      titleText.value = $t('profile.wallet.lblAlreadyHaveWallet')
+      titleText.value = t('profile.wallet.lblAlreadyHaveWallet')
     }
   }
 }, {immediate: true});

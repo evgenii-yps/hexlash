@@ -19,12 +19,14 @@
     </div>
   </div>
   <div v-else>
-    Loading...
+    {{ t('loading') }}
   </div>
 </template>
 
 <script setup>
 import {  ref, watch } from 'vue';
+import {useI18n} from "vue-i18n";
+const { t } = useI18n({ useScope: 'global' })
 
 import iconAllFights from '@/assets/images/icon_fights.svg';
 import iconWins from '@/assets/images/icon_wins.svg';
@@ -35,6 +37,7 @@ import iconWonTokens from '@/assets/images/icon_tokens.svg';
 import iconFreeTokens from '@/assets/images/icon_token_less.svg';
 import iconInvites from '@/assets/images/icon_invites.svg';
 import iconDaysInClub from '@/assets/images/icon_calendar.svg';
+
 
 
 const stats = ref([]);
@@ -50,15 +53,15 @@ const props = defineProps({
 watch(() => props.userData, (userData) => {
   if (userData) {
     stats.value = [
-      { id: 'stats-totalFights', title: 'Общее количество боев', value: userData.totalFights, icon: iconAllFights, show: false },
-      { id: 'stats-wins', title: 'Победы', value: userData.wins, icon: iconWins, show: false },
-      { id: 'stats-losses', title: 'Поражения', value: userData.losses, icon: iconLosses, show: false },
-      { id: 'stats-draws', title: 'Ничьи', value: userData.draws, icon: iconDraws, show: false },
-      { id: 'stats-luckPercentage', title: 'Общий процент удачи', value: userData.luckPercentage + '%', icon: iconLuck, show: false },
-      { id: 'stats-wonTokens', title: 'Токены, выигранные в боях', value: userData.wonTokens, icon: iconWonTokens, show: false },
-      { id: 'stats-freeTokens', title: 'Токены, полученные бесплатно', value: userData.freeTokens, icon: iconFreeTokens, show: false },
-      { id: 'stats-invitedUsers', title: 'Приглашенные пользователи', value: userData.invitedUsers, icon: iconInvites, show: false },
-      { id: 'stats-daysInClubAndNoSkipDays', title: 'Дней в клубе', value: userData.daysInClub, valueInBrackets: `(${userData.noSkipDays})`, icon: iconDaysInClub, show: false },
+      { id: 'stats-totalFights', title: t('profile.stats.lblTotalFights'), value: userData.totalFights, icon: iconAllFights, show: false },
+      { id: 'stats-wins', title: t('profile.stats.lblWins'), value: userData.wins, icon: iconWins, show: false },
+      { id: 'stats-losses', title: t('profile.stats.lblLosses'), value: userData.losses, icon: iconLosses, show: false },
+      { id: 'stats-draws', title: t('profile.stats.lblDraws'), value: userData.draws, icon: iconDraws, show: false },
+      { id: 'stats-luckPercentage', title: t('profile.stats.lblLuckPercentage'), value: userData.luckPercentage + '%', icon: iconLuck, show: false },
+      { id: 'stats-wonTokens', title: t('profile.stats.lblWonTokens'), value: userData.wonTokens, icon: iconWonTokens, show: false },
+      { id: 'stats-freeTokens', title: t('profile.stats.lblFreeTokens'), value: userData.freeTokens, icon: iconFreeTokens, show: false },
+      { id: 'stats-invitedUsers', title: t('profile.stats.lblInvitedUsers'), value: userData.invitedUsers, icon: iconInvites, show: false },
+      { id: 'stats-daysInClubAndNoSkipDays', title: t('profile.stats.lblDaysInClub'), value: userData.daysInClub, valueInBrackets: `(${userData.noSkipDays})`, icon: iconDaysInClub, show: false },
     ];
   }
 }, { immediate: true });

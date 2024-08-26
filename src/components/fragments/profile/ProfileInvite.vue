@@ -14,7 +14,7 @@
           </div>
         </div>
       </template>
-      <span>Первое правило клуба: расскажи всем о бойцовском клубе. Помни, это твой билет к свободе. Делись этой свободой с другими.</span>
+      <span>{{ t('profile.invite.lblTooltipText') }}</span>
     </v-tooltip>
   </div>
 </template>
@@ -22,6 +22,9 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
 import store from "@/core/state/store.js";
+import {useI18n} from "vue-i18n";
+const { t } = useI18n({ useScope: 'global' })
+
 
 
 const inviteCode = ref(null);
@@ -35,9 +38,9 @@ watch(store.getters['master/getMaster'], (newMaster) => {
 
 const copyToClipboard = () => {
   navigator.clipboard.writeText(inviteCode.value).then(() => {
-    alert('Код приглашения скопирован в буфер обмена');
+    alert(t('profile.invite.lblCopySuccess'));
   }).catch(err => {
-    console.error('Ошибка при копировании текста: ', err);
+    console.error( t('profile.invite.lblCopyError', { error: err }));
   });
 };
 

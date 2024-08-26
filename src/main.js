@@ -96,7 +96,7 @@ const vuetify = createVuetify({
 });
 
 export const i18n = createI18n({
-    legacy: true,
+    legacy: false,
     locale: 'en',
     fallbackLocale: 'en',
     messages: Object.assign({en, ru}),
@@ -106,7 +106,7 @@ async function initializeApp() {
     // загрузки данных
     await store.dispatch('master/fetchMaster');
 
-    i18n.global.locale = store.getters['master/getLanguage'];
+    i18n.global.locale.value = store.getters['master/getLanguage'];
 }
 
 initializeApp().then(() => {

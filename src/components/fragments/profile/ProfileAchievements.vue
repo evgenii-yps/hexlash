@@ -37,18 +37,22 @@
                     >
                       <template #activator="{ props }">
                         <div v-bind="props" @click="achievement.show = !achievement.show" class="achievement-content">
-                          <img v-if="achievement.completed" :src="achievement.icon" :alt="achievement.title" class="achievement-icon"/>
-                          <img v-else-if="achievement.transparent" :src="achievement.icon" :alt="achievement.title" class="achievement-icon"/>
+                          <img v-if="achievement.completed" :src="achievement.icon" :alt="achievement.title"
+                               class="achievement-icon"/>
+                          <img v-else-if="achievement.transparent" :src="achievement.icon" :alt="achievement.title"
+                               class="achievement-icon"/>
                           <img v-else src="@/assets/images/icon_lock.png" alt="Locked" class="achievement-icon"/>
                           <span class="achievement-title">{{
-                              achievement.completed || achievement.transparent ? achievement.title : 'Скрыто'
+                              achievement.completed || achievement.transparent ? achievement.title : t('profile.achievements.lblHidden')
                             }}</span>
-                         <img v-if="!achievement.completed && achievement.transparent" src="@/assets/images/icon_lock.svg" alt="Locked Overlay" class="achievement-icon lock-overlay"/>
-                         </div>
+                          <img v-if="!achievement.completed && achievement.transparent"
+                               src="@/assets/images/icon_lock.svg" alt="Locked Overlay"
+                               class="achievement-icon lock-overlay"/>
+                        </div>
                       </template>
                       <span>{{ achievement.description }}</span>
                     </v-tooltip>
-                    <div v-else >
+                    <div v-else>
                       <v-tooltip
                           location="center"
                           max-width="200px"
@@ -56,12 +60,12 @@
                           contentClass="v-tooltip__content"
                       >
                         <template #activator="{ props }">
-                          <div v-bind="props"  @click="achievement.show = !achievement.show" class="achievement-content">
+                          <div v-bind="props" @click="achievement.show = !achievement.show" class="achievement-content">
                             <img src="@/assets/images/icon_lock.png" alt="Locked" class="achievement-icon"/>
-                            <span class="achievement-title">Скрыто</span>
+                            <span class="achievement-title">{{ t('profile.achievements.lblHidden') }}</span>
                           </div>
                         </template>
-                        <span>Ты не продвинешься, пока не завершишь доступные достижения. Это правило клуба.</span>
+                        <span>{{ t('profile.achievements.lblCompleteToUnlock') }}</span>
                       </v-tooltip>
                     </div>
                   </div>
@@ -74,14 +78,13 @@
     </div>
   </div>
   <div v-else>
-    Loading...
+    {{ t('loading') }}
   </div>
 </template>
 
 <script setup>
-import {computed, ref, watch} from 'vue';
+import {computed, getCurrentInstance, ref, watch} from 'vue';
 
-// import achievementEmailIcon from '@/assets/images/achievement_email.png';
 import achievementSocialIcon from '@/assets/images/achievement_social.png';
 import achievementNewbieIcon from '@/assets/images/achievement_newbie.png';
 
@@ -103,142 +106,138 @@ import achievementExpertIcon from '@/assets/images/achievement_expert.png';
 
 import achievementWalletIcon from '@/assets/images/achievement_wallet.png';
 import achievement1000FightsIcon from '@/assets/images/achievement_hero.png';
+import {useI18n} from "vue-i18n";
+
+const {t} = useI18n({useScope: 'global'})
+
 
 const allAchievements = [
-  // {
-  //   id: 1,
-  //   title: 'Первая кровь',
-  //   icon: achievementEmailIcon,
-  //   completed: false,
-  //   description: 'Подтвердите вашу электронную почту, чтобы разблокировать эту ачивку.',
-  //   show: false
-  // },
   {
     id: 2,
-    title: 'Связанный боец',
+    title: t('profile.achievements.titleConnectedFighter'),
     icon: achievementSocialIcon,
     completed: false,
-    description: 'Привяжите не менее чем 3 социальных сетей.',
+    description: t('profile.achievements.descConnectedFighter'),
     show: false
   },
   {
     id: 3,
-    title: 'Новобранец',
+    title: t('profile.achievements.titleNewbie'),
     icon: achievementNewbieIcon,
     completed: false,
-    description: 'Завершите первые 10 боев.',
+    description: t('profile.achievements.descNewbie'),
     show: false
   },
   {
     id: 4,
-    title: 'Участник собраний',
+    title: t('profile.achievements.titleMeetingParticipant'),
     icon: achievementDailyLoginIcon,
     completed: false,
-    description: 'Заходите в игру каждый день в течение 7 дней.',
+    description: t('profile.achievements.descMeetingParticipant'),
     show: false
   },
   {
     id: 5,
-    title: 'Золотое правило',
+    title: t('profile.achievements.titleGoldenRule'),
     icon: achievement30DaysIcon,
     completed: false,
-    description: 'Заходите каждый день в течение 30 дней без пропусков.',
+    description: t('profile.achievements.descGoldenRule'),
     show: false
   },
   {
     id: 6,
-    title: 'Ветеран боя',
+    title: t('profile.achievements.titleBattleVeteran'),
     icon: achievementWinIcon,
     completed: false,
-    description: 'Выиграйте 10 боев, чтобы получить эту ачивку.',
+    description: t('profile.achievements.descBattleVeteran'),
     show: false
   },
   {
     id: 7,
-    title: 'Тренер',
+    title: t('profile.achievements.titleCoach'),
     icon: achievementCoachIcon,
     completed: false,
-    description: 'Приглашенный вами пользователь должен одержать первую победу.',
+    description: t('profile.achievements.descCoach'),
     show: false
   },
   {
     id: 8,
-    title: 'Призывник',
+    title: t('profile.achievements.titleRecruiter'),
     icon: achievementInviteIcon,
     completed: false,
-    description: 'Пригласите не менее 10 человек, которые вступят и зарегистрируются.',
+    description: t('profile.achievements.descRecruiter'),
     show: false
   },
   {
     id: 9,
-    title: 'Проект Разгром',
+    title: t('profile.achievements.titleProjectMayhem'),
     icon: achievementSocialLeaderIcon,
     completed: false,
-    description: 'Привяжите более 5 социальных сетей.',
+    description: t('profile.achievements.descProjectMayhem'),
     show: false
   },
   {
     id: 10,
-    title: 'Мясной рулет',
+    title: t('profile.achievements.titleMeatloaf'),
     icon: achievementInvestIcon,
     completed: false,
-    description: 'Инвестируйте в игру 500 токенов.',
+    description: t('profile.achievements.descMeatloaf'),
     show: false
   },
   {
     id: 11,
-    title: 'Тайлер',
+    title: t('profile.achievements.titleTyler'),
     icon: achievementPromoIcon,
     completed: false,
-    description: 'Пригласите 25 человек, которые подтвердят email.',
+    description: t('profile.achievements.descTyler'),
     show: false
   },
   {
     id: 12,
-    title: 'Знаток',
+    title: t('profile.achievements.titleExpert'),
     icon: achievementExpertIcon,
     completed: false,
-    description: 'Выполните 20 заданий.',
+    description: t('profile.achievements.descExpert'),
     show: false
   },
   {
     id: 13,
-    title: 'Постоянный боец',
+    title: t('profile.achievements.titleRegularFighter'),
     icon: achievement100DaysIcon,
     completed: false,
-    description: 'Будьте в клубе 100 дней.',
+    description: t('profile.achievements.descRegularFighter'),
     show: false
   },
   {
     id: 14,
-    title: 'Счастливчик',
+    title: t('profile.achievements.titleLuckyOne'),
     icon: achievementLuckIcon,
     completed: false,
-    description: 'Достигните процента удачи более 75%.',
+    description: t('profile.achievements.descLuckyOne'),
     show: false
   },
   {
     id: 15,
-    title: 'Боб',
+    title: t('profile.achievements.titleBob'),
     icon: achievement100WinsIcon,
     completed: false,
-    description: 'Одержите 100 побед.',
+    description: t('profile.achievements.descBob'),
     show: false
   },
   {
     id: 16,
-    title: 'Бумажная улица',
+    title: t('profile.achievements.titlePaperStreet'),
     icon: achievementWalletIcon,
     completed: false,
-    description: 'Пополните единовременно кошелек на более чем 1000 токенов.',
+    description: t('profile.achievements.descPaperStreet'),
     show: false
   },
   {
     id: 17,
-    title: 'Мастер боя',
+    title: t('profile.achievements.titleFightMaster'),
     icon: achievement1000FightsIcon,
     completed: false,
-    description: 'Участвуйте в более чем 1000 боях.',
+    description: t('profile.achievements.descFightMaster'),
     show: false
   }
 ];
@@ -396,6 +395,6 @@ const carouselItems = computed(() => {
   position: absolute;
   width: 65px; /* меньший размер замка */
   height: 65px;
-  margin-top:-20px
+  margin-top: -20px
 }
 </style>

@@ -2,7 +2,7 @@
   <div class="email-confirmation-container">
     <form @submit.prevent="handleEmailSubmit" novalidate>
       <InputField
-          :label="$t('profile.account.lblChangeEmail')"
+          :label="t('profile.account.lblChangeEmail')"
           type="text"
           v-model="email"
           labelColor="var(--white)"
@@ -18,7 +18,7 @@
         <!-- Можно вставить любую кнопку, лоадер или любой другой элемент -->
         <template v-slot>
           <VBtnDark size="small" @click="handleEmailSubmit" class="input-button">
-            {{ $t('profile.account.btnSendConfirm') }}
+            {{ t('profile.account.btnSendConfirm') }}
           </VBtnDark>
         </template>
 
@@ -32,6 +32,9 @@
 import { computed, ref, watch } from 'vue';
 import InputField from '@/components/ui/InputField.vue';
 import store from "@/core/state/store.js";
+import {useI18n} from "vue-i18n";
+
+const { t } = useI18n({ useScope: 'global' })
 
 const master = computed(() => store.getters['master/getMaster']);
 const originalEmail = ref(master.value.email);
@@ -49,12 +52,12 @@ const handleEmailSubmit = () => {
   errorMessage.value = '';
 
   if (!email.value) {
-    errorMessage.value = $t('profile.account.lblEmailRequired');
+    errorMessage.value = t('profile.account.lblEmailRequired');
     return;
   }
 
   if (!validateEmail(email.value)) {
-    errorMessage.value = $t('profile.account.lblInvalidEmailFormat');
+    errorMessage.value = t('profile.account.lblInvalidEmailFormat');
     return;
   }
 

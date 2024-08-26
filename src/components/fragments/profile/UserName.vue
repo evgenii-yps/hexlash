@@ -2,13 +2,15 @@
   <div class="name-container">
     <div class="name-edit-container">
       <h2 class="label-name">
-        {{ userName || 'Anonymous' }}
+        {{ userName || t('profile.anonymous') }}
       </h2>
     </div>
   </div>
 </template>
 
 <script setup>
+import {useI18n} from "vue-i18n";
+const { t } = useI18n({ useScope: 'global' })
 
 // Определяем пропс userName
 defineProps({

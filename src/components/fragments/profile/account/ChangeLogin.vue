@@ -2,7 +2,7 @@
   <div class="login-change-container">
     <form @submit.prevent="handleLoginSubmit" novalidate>
       <InputField
-          :label="$t('profile.account.lblChangeLogin')"
+          :label="t('profile.account.lblChangeLogin')"
           type="text"
           v-model="login"
           labelColor="var(--white)"
@@ -19,7 +19,7 @@
           <div class="btn-container">
             <div class="status-container">
               <div v-if="loginAvailable && loginChanged && !errorMessage" class="success-message">
-                {{ $t('profile.account.lblAvailableLogin') }}
+                {{ t('profile.account.lblAvailableLogin') }}
 
               </div>
               <v-progress-circular v-if="loading" color="var(--primary-color)" indeterminate :size="20"/>
@@ -36,14 +36,14 @@
 
     <VModal v-model="dialog" max-width="500">
       <VCard>
-        <v-card-title class="headline"> {{ $t('profile.account.lblConfirmChange') }}</v-card-title>
+        <v-card-title class="headline"> {{ t('profile.account.lblConfirmChange') }}</v-card-title>
         <v-card-text>
-          {{ $t('profile.account.msgConfirmChange', {newLogin: login}) }}
+          {{ t('profile.account.msgConfirmChange', {newLogin: login}) }}
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn @click="dialog = false" class="cancel-btn"> {{ $t('modal.btnCancel') }}</v-btn>
-          <v-btn @click="handleLoginSubmit" class="confirm-btn"> {{ $t('modal.btnConfirm') }}</v-btn>
+          <v-btn @click="dialog = false" class="cancel-btn"> {{ t('modal.btnCancel') }}</v-btn>
+          <v-btn @click="handleLoginSubmit" class="confirm-btn"> {{ t('modal.btnConfirm') }}</v-btn>
         </v-card-actions>
       </VCard>
     </VModal>
@@ -55,9 +55,12 @@ import {computed, ref, watch} from 'vue';
 import InputField from '@/components/ui/InputField.vue';
 import store from "@/core/state/store.js";
 import debounce from "debounce";
+import {useI18n} from "vue-i18n";
 
 // Сервис для проверки наличия логина
 // import { checkLoginAvailability } from '@/core/services/userService';
+
+const { t } = useI18n({ useScope: 'global' })
 
 const master = computed(() => store.getters['master/getMaster']);
 const originalLogin = ref(master.value.userData.login);
@@ -78,17 +81,17 @@ const handleLoginSubmit = () => {
   errorMessage.value = '';
 
   if (!login.value) {
-    errorMessage.value = $t('profile.account.lblLoginRequired');
+    errorMessage.value = t('profile.account.lblLoginRequired');
     return;
   }
 
   if (!validateLogin(login.value)) {
-    errorMessage.value = $t('profile.account.lblInvalidLoginFormat');
+    errorMessage.value = t('profile.account.lblInvalidLoginFormat');
     return;
   }
 
   if (!loginAvailable.value) {
-    errorMessage.value = $t('profile.account.lblLoginNotAvailable');
+    errorMessage.value = t('profile.account.lblLoginNotAvailable');
     return;
   }
 

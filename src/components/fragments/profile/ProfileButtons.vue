@@ -14,8 +14,7 @@
     <div v-else class="split-button-container">
       <VBtnDark
           class="profile-btn"
-          @click="navigateToClub"
-      >
+          @click="navigateToClub">
         <template #prepend>
           <img src="@/assets/images/icon_arrow.svg" alt="Arrow Icon" class="custom-icon"/>
         </template>
@@ -33,24 +32,23 @@
                 class="create-club-btn"
                 :class="{ 'sufficient-balance': isBalanceSufficient }"
                 @click.stop="btnCreateNewClub">
-              Создать клуб
+              {{ t('profile.buttons.lblCreateClub') }}
             </VBtn>
 
             <CreateClub :dialogCreate="dialogCreate" @close="dialogCreate = false" />
           </template>
-          <span>Недостаточно средств на балансе для создания клуба</span>
+          <span> {{ t('profile.buttons.tooltipInsufficientFunds') }}</span>
         </VTooltip>
       </VBtnDark>
     </div>
 
     <VBtnDark
         class="profile-btn"
-        @click="navigateTo('Wallet')"
-    >
+        @click="navigateTo('Wallet')">
       <template #prepend>
         <img src="@/assets/images/icon_arrow.svg" alt="Arrow Icon" class="custom-icon"/>
       </template>
-      Управление кошельком
+      {{ t('profile.buttons.lblWalletManagement') }}
     </VBtnDark>
 
     <VBtnDark
@@ -60,7 +58,7 @@
       <template #prepend>
         <img src="@/assets/images/icon_arrow.svg" alt="Arrow Icon" class="custom-icon"/>
       </template>
-      Управление аккаунтом
+      {{ t('profile.buttons.lblSettings') }}
     </VBtnDark>
 
     <VBtnDark
@@ -70,17 +68,17 @@
       <template #prepend>
         <img src="@/assets/images/icon_arrow.svg" alt="Arrow Icon" class="custom-icon"/>
       </template>
-      Выход
+      {{ t('profile.buttons.lblLogout') }}
     </VBtnDark>
 
     <VModal v-model="dialogExit" max-width="500">
       <VCard>
-        <v-card-title class="headline">Confirm logout</v-card-title>
-        <v-card-text>Are you sure you want logout on this device?</v-card-text>
+        <v-card-title class="headline">{{ t('profile.buttons.lblConfirmLogout') }}</v-card-title>
+        <v-card-text>{{ t('profile.buttons.msgConfirmLogout') }}</v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn @click="dialogExit = false" class="cancel-btn">Cancel</v-btn>
-          <v-btn @click="logout" class="confirm-btn">Logout</v-btn>
+          <v-btn @click="dialogExit = false" class="cancel-btn">{{ t('modal.btnCancel') }}</v-btn>
+          <v-btn @click="logout" class="confirm-btn">{{ t('profile.buttons.lblLogout') }}</v-btn>
         </v-card-actions>
       </VCard>
     </VModal>
@@ -94,8 +92,8 @@ import router from "@/router/index.js";
 import store from "@/core/state/store.js";
 import CreateClub from "@/components/fragments/club/CreateClub.vue";
 import {COST_CREATE_CLUB} from "@/core/constants.js";
-
-
+import {useI18n} from "vue-i18n";
+const { t } = useI18n({ useScope: 'global' })
 
 const master = computed(() => store.getters['master/getMaster']);
 const clubId = computed(() => master.value?.userData.clubId);
@@ -103,7 +101,7 @@ const isBalanceSufficient = computed(() => master.value?.userData.balance >= COS
 
 const isOwner = ref(false);
 const clubData = ref(null);
-const clubText = ref('Загрузка...');
+const clubText = ref(t('profile.buttons.lblClubLoading'));
 const showToolTip = ref(false);
 const dialogCreate = ref(false);
 const dialogExit = ref(false);
@@ -138,10 +136,10 @@ onMounted(async () => {
     const data = await store.dispatch('club/getClubById', clubId.value);
     if (data) {
       clubData.value = data;
-      clubText.value = `Клуб ${clubData.value.name}`;
+      clubText.value = `${t('profile.buttons.lblClub')} ${clubData.value.name}`;
       isOwner.value = master.value && master.value.userData.id === clubData.value.owner;
     } else {
-      clubText.value = 'Ошибка загрузки данных клуба';
+      clubText.value = t('profile.buttons.lblClubError') ;
     }
   }
 });

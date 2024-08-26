@@ -1,4 +1,5 @@
 {
+  "loading": "Loading...",
   "modal": {
     "btnCancel": "Cancel",
     "btnConfirm": "Confirm",
@@ -22,14 +23,13 @@
   },
   "profile": {
     "back": "Back",
+    "anonymous": "Anonymous",
     "account": {
       "lblChangeLanguage": "Language",
-
       "lblChangeEmail": "CHANGE EMAIL",
       "lblEmailRequired": "Email is required",
       "lblInvalidEmailFormat": "Invalid email format",
       "btnSendConfirm": "Send Confirm",
-
       "lblChangeLogin": "CHANGE LOGIN",
       "lblAvailableLogin": "available",
       "lblLoginRequired": "Login is required",
@@ -39,7 +39,6 @@
       "lblFailedToCheckLoginAvailability": "Failed to check login availability",
       "lblConfirmChange": "Confirm Change",
       "msgConfirmChange": "Are you sure you want to change your login to {newLogin}?",
-
       "lblChangePassword": "Change Password",
       "lblCurrentPassword": "CURRENT PASSWORD",
       "lblNewPassword": "NEW PASSWORD",
@@ -47,42 +46,33 @@
       "lblAllFieldsRequired": "All fields are required",
       "lblPasswordsDoNotMatch": "Passwords do not match",
       "lblPasswordRequirements": "Password must be at least 8 characters long and include numbers and uppercase letters",
-
       "lblConfirmation": "Skin Selection Confirmation",
       "msgSelectSkin": "Are you sure you want to select this skin?",
       "msgInsufficientFunds": "You don't have enough funds to purchase this skin. Would you like to add more funds?",
       "lblLockedOverlay": "Insufficient funds",
-
       "lblDeleteAccount": "Delete Account",
       "lblConfirmDeletion": "Confirm Deletion",
       "msgConfirmDelete": "Are you sure you want to delete your account? This action cannot be undone."
     },
-    "wallet":{
+    "wallet": {
       "lblTopUpBalance": "Top Up Balance",
       "lblBuyFCTokens": "Buy FC tokens",
       "lblSelectToken": "Select token",
       "lblAmount": "Amount",
       "lblYouWillGet": "You will get",
       "lblFCTokens": "FC tokens",
-
       "lblConnectWallet": "Connect Wallet",
       "msgConnectWalletTooltip": "Connect your wallet to buy or withdraw Fight Club tokens",
-
       "lblGameBalance": "GAME BALANCE",
       "lblWithdrawToWallet": "Withdraw to wallet",
-
       "lblConnectAnotherWallet": "Connect another wallet?",
       "lblAlreadyHaveWallet": "Do you already have a wallet?",
-
       "lblWalletBalance": "WALLET BALANCE",
       "lblConnecting": "Connecting...",
       "lblDepositToGame": "Deposit to game",
-
       "lblConnectedWalletAddress": "CONNECTED WALLET ADDRESS",
       "msgWalletAddressCopied": "Wallet address copied to clipboard",
       "msgCopyError": "Error copying to clipboard {error}",
-
-
       "lblCreateNewWallet": "Create new wallet",
       "msgCreateNewWalletTooltip": "Create a new wallet, the private key will be stored on the server in an encrypted form, and you will be able to recover the private key",
       "lblConnectYourWallet": "Connect your wallet",
@@ -92,6 +82,70 @@
       "msgShowPrivateKeyPrompt": "Show private key?",
       "lblPrivateKey": "Private Key",
       "btnShow": "Show"
+    },
+    "achievements": {
+      "lblAchievements": "Achievements",
+      "lblHidden": "Hidden",
+      "lblCompleteToUnlock": "Complete to Unlock",
+      "titleConnectedFighter": "Connected Fighter",
+      "descConnectedFighter": "Link at least 3 social networks.",
+      "titleNewbie": "Newbie",
+      "descNewbie": "Complete the first 10 fights.",
+      "titleMeetingParticipant": "Meeting Participant",
+      "descMeetingParticipant": "Log in to the game every day for 7 days.",
+      "titleGoldenRule": "Golden Rule",
+      "descGoldenRule": "Log in every day for 30 consecutive days.",
+      "titleBattleVeteran": "Battle Veteran",
+      "descBattleVeteran": "Win 10 fights to earn this achievement.",
+      "titleCoach": "Coach",
+      "descCoach": "The user you invited must win their first fight.",
+      "titleRecruiter": "Recruiter",
+      "descRecruiter": "Invite at least 10 people who will join and register.",
+      "titleProjectMayhem": "Project Mayhem",
+      "descProjectMayhem": "Link more than 5 social networks.",
+      "titleMeatloaf": "Meatloaf",
+      "descMeatloaf": "Invest 500 tokens in the game.",
+      "titleTyler": "Tyler",
+      "descTyler": "Invite 25 people who confirm their email.",
+      "titleExpert": "Expert",
+      "descExpert": "Complete 20 tasks.",
+      "titleRegularFighter": "Regular Fighter",
+      "descRegularFighter": "Be in the club for 100 days.",
+      "titleLuckyOne": "Lucky One",
+      "descLuckyOne": "Achieve a luck rate of over 75%.",
+      "titleBob": "Bob",
+      "descBob": "Win 100 fights.",
+      "titlePaperStreet": "Paper Street",
+      "descPaperStreet": "Top up your wallet with more than 1000 tokens at once.",
+      "titleFightMaster": "Fight Master",
+      "descFightMaster": "Participate in more than 1000 fights."
+    },
+    "buttons": {
+      "lblClubError": "Error loading club data",
+      "lblCreateClub": "Create Club",
+      "lblWalletManagement": "Wallet Management",
+      "lblSettings": "Settings / Skin / More",
+      "lblLogout": "Logout",
+      "tooltipInsufficientFunds": "Not enough funds to create a club",
+      "lblConfirmLogout": "Confirm logout",
+      "msgConfirmLogout": "Are you sure you want to logout on this device?",
+      "lblClub": "Club"
+    },
+    "invite": {
+      "lblCopySuccess": "Invitation code copied to clipboard",
+      "lblCopyError": "Error copying text {error}",
+      "lblTooltipText": "The first rule of Fight Club: tell everyone about Fight Club. Remember, this is your ticket to freedom. Share this freedom with others."
+    },
+    "stats": {
+      "lblTotalFights": "Total Fights",
+      "lblWins": "Wins",
+      "lblLosses": "Losses",
+      "lblDraws": "Draws",
+      "lblLuckPercentage": "Luck Percentage",
+      "lblWonTokens": "Tokens Won in Fights",
+      "lblFreeTokens": "Free Tokens",
+      "lblInvitedUsers": "Invited Users",
+      "lblDaysInClub": "Days in Club (without skips)"
     }
   }
 }

@@ -8,10 +8,10 @@
                  contentClass="v-tooltip__content">
         <template #activator="{ props }">
           <VBtnDark v-bind="props" @click="createNewWallet" class="input-button">
-            {{ $t('profile.wallet.lblCreateNewWallet') }}
+            {{ t('profile.wallet.lblCreateNewWallet') }}
           </VBtnDark>
         </template>
-        <span>{{ $t('profile.wallet.msgCreateNewWalletTooltip') }}</span>
+        <span>{{ t('profile.wallet.msgCreateNewWalletTooltip') }}</span>
       </v-tooltip>
 
       <v-tooltip location="top"
@@ -19,10 +19,10 @@
                  contentClass="v-tooltip__content">
         <template #activator="{ props }">
           <VBtnDark v-bind="props" @click="connectWallet" class="input-button">
-            {{ $t('profile.wallet.lblConnectYourWallet') }}
+            {{ t('profile.wallet.lblConnectYourWallet') }}
           </VBtnDark>
         </template>
-        <span>{{ $t('profile.wallet.msgConnectYourWalletTooltip') }}</span>
+        <span>{{ t('profile.wallet.msgConnectYourWalletTooltip') }}</span>
       </v-tooltip>
     </div>
   </div>
@@ -30,6 +30,8 @@
 
 <script setup>
 import { useMetaMaskWallet } from "vue-connect-wallet";
+import {useI18n} from "vue-i18n";
+const { t } = useI18n({ useScope: 'global' })
 
 const wallet = useMetaMaskWallet();
 const switchAccount = async () => {

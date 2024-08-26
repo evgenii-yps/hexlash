@@ -6,20 +6,20 @@
                  contentClass="v-tooltip__content">
         <template #activator="{ props }">
           <VBtnDark v-bind="props" size="x-large" @click="switchAccount" class="input-button">
-            {{ $t('profile.wallet.lblConnectWallet') }}
+            {{ t('profile.wallet.lblConnectWallet') }}
           </VBtnDark>
         </template>
-        <span>{{ $t('profile.wallet.msgConnectWalletTooltip') }}</span>
+        <span>{{ t('profile.wallet.msgConnectWalletTooltip') }}</span>
       </v-tooltip>
     </div>
   </div>
 </template>
 
 <script setup>
-
-
+import {useI18n} from "vue-i18n";
 import { useMetaMaskWallet } from "vue-connect-wallet";
 
+const { t } = useI18n({ useScope: 'global' })
 const wallet = useMetaMaskWallet();
 
 const switchAccount = async () => {

@@ -1,14 +1,16 @@
 <template>
   <VCard class="game-card">
-    <h3>  {{ $t('profile.wallet.lblGameBalance') }}</h3>
+    <h3>  {{ t('profile.wallet.lblGameBalance') }}</h3>
     <p>{{ balance }}</p>
     <img src="@/assets/images/icon_money_out.svg" alt="withdraw"/>
-    <div class="desc">{{ $t('profile.wallet.lblWithdrawToWallet') }}</div>
+    <div class="desc">{{ t('profile.wallet.lblWithdrawToWallet') }}</div>
   </VCard>
 </template>
 
 <script setup>
 import { defineProps } from 'vue';
+import {useI18n} from "vue-i18n";
+const { t } = useI18n({ useScope: 'global' })
 
 const props = defineProps({
   balance: {

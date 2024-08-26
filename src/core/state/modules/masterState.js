@@ -125,7 +125,10 @@ const actions = {
     async setLanguage({commit, dispatch, state}, language) {
         dispatch('updateMaster', {language: language});
 
-        i18n.global.locale = language;
+        i18n.global.locale.value = language
+        //i18n.global.locale = language;
+
+        console.log(i18n.global.locale.value)
     },
 };
 

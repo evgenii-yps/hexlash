@@ -1,12 +1,12 @@
 <template>
   <div class="buy-button-container">
     <VBtn class="buy-btn" @click="btnBuy">
-      {{ $t('profile.wallet.lblTopUpBalance') }}
+      {{ t('profile.wallet.lblTopUpBalance') }}
     </VBtn>
 
     <VModal v-model="dialog" max-width="500" @click:outside="hide">
       <VCard>
-        <v-card-title class="headline">  {{ $t('profile.wallet.lblBuyFCTokens') }}</v-card-title>
+        <v-card-title class="headline">  {{ t('profile.wallet.lblBuyFCTokens') }}</v-card-title>
         <v-card-text class="text-center">
 
           <v-select
@@ -20,7 +20,7 @@
           />
 
           <v-text-field
-              :label="$t('profile.wallet.lblAmount')"
+              :label="t('profile.wallet.lblAmount')"
               v-model="amount"
               class="amount-field"
               @input="updateAmount"
@@ -36,15 +36,15 @@
             />
 
             <div v-else class="calculation-result">
-              <span>{{ $t('profile.wallet.lblYouWillGet') }}</span> {{ calculatedFC }} <span>{{ $t('profile.wallet.lblFCTokens') }}</span>
+              <span>{{ t('profile.wallet.lblYouWillGet') }}</span> {{ calculatedFC }} <span>{{ t('profile.wallet.lblFCTokens') }}</span>
             </div>
           </div>
 
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <VBtnDark @click="dialog = false" class="cancel-btn">{{ $t('modal.btnCancel') }}</VBtnDark>
-          <VBtn @click="hide" class="confirm-btn">{{ $t('modal.btnConfirm') }}</VBtn>
+          <VBtnDark @click="dialog = false" class="cancel-btn">{{ t('modal.btnCancel') }}</VBtnDark>
+          <VBtn @click="hide" class="confirm-btn">{{ t('modal.btnConfirm') }}</VBtn>
         </v-card-actions>
       </VCard>
     </VModal>
@@ -53,6 +53,10 @@
 
 <script setup>
 import {ref, watch} from 'vue';
+import {useI18n} from "vue-i18n";
+
+const { t } = useI18n({ useScope: 'global' })
+
 import debounce from "debounce";
 
 const dialog = ref(false);

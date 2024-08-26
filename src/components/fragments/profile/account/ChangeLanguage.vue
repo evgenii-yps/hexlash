@@ -1,7 +1,7 @@
 <template>
   <div class="change-language-container">
     <div class="change-language">
-      <label class="select-label">{{ $t('profile.account.lblChangeLanguage')}}</label>
+      <label class="select-label">{{ t('profile.account.lblChangeLanguage')}}</label>
       <v-select
           v-model="selectedLanguage"
           :items="languages"
@@ -28,7 +28,8 @@
 <script setup>
 import {ref, watch} from 'vue';
 import store from "@/core/state/store.js";
-
+import {useI18n} from "vue-i18n";
+const { t } = useI18n({ useScope: 'global' })
 
 const selectedLanguage = ref(store.getters['master/getLanguage']);
 
