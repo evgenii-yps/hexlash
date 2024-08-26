@@ -1,0 +1,23 @@
+{
+  "auth": {
+    "login": {
+      "lblLogin": "LOGIN",
+      "lblPassword": "PASSWORD",
+      "btnLogin": "Login",
+      "question": "Do you have",
+      "btnInvite": "invite",
+      "authError": "Wrong login or password"
+    },
+    "invite": {
+      "lblInvite": "INVITE CODE",
+      "btnInvite": "Join Club",
+      "question": "Already have an account?",
+      "btnLogin": "Login"
+    }
+  },
+  "profile": {
+    "account": {
+      "lblChangeLanguage": "Язык"
+    }
+  }
+}

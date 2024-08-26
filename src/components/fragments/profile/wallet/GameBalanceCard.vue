@@ -1,9 +1,9 @@
 <template>
   <VCard class="game-card">
-    <h3>GAME BALANCE</h3>
+    <h3>  {{ $t('profile.wallet.lblGameBalance') }}</h3>
     <p>{{ balance }}</p>
-    <img src="@/assets/images/icon_money_out.svg" alt=""/>
-    <div class="desc">Вывести на кошелек</div>
+    <img src="@/assets/images/icon_money_out.svg" alt="withdraw"/>
+    <div class="desc">{{ $t('profile.wallet.lblWithdrawToWallet') }}</div>
   </VCard>
 </template>
 

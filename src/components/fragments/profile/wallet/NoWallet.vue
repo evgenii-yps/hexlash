@@ -8,10 +8,10 @@
                  contentClass="v-tooltip__content">
         <template #activator="{ props }">
           <VBtnDark v-bind="props" @click="createNewWallet" class="input-button">
-            Create new wallet
+            {{ $t('profile.wallet.lblCreateNewWallet') }}
           </VBtnDark>
         </template>
-        <span>Создать новый кошелек, приватный ключ будет храниться на сервере в зашифрованном виде, ты сможешь восстановить приватный ключ</span>
+        <span>{{ $t('profile.wallet.msgCreateNewWalletTooltip') }}</span>
       </v-tooltip>
 
       <v-tooltip location="top"
@@ -19,27 +19,22 @@
                  contentClass="v-tooltip__content">
         <template #activator="{ props }">
           <VBtnDark v-bind="props" @click="connectWallet" class="input-button">
-            Connect your wallet
+            {{ $t('profile.wallet.lblConnectYourWallet') }}
           </VBtnDark>
         </template>
-        <span>Подключить ваш кошелек, мы не будем знать ваш приватный ключ и не сможем восстановить доступ к вашим средствам</span>
+        <span>{{ $t('profile.wallet.msgConnectYourWalletTooltip') }}</span>
       </v-tooltip>
     </div>
   </div>
 </template>
 
 <script setup>
-
-
 import { useMetaMaskWallet } from "vue-connect-wallet";
 
 const wallet = useMetaMaskWallet();
-
 const switchAccount = async () => {
   await wallet.switchAccounts();
 };
-
-
 
 const props = defineProps({
   titleText: {

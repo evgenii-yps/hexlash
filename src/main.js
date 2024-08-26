@@ -2,25 +2,43 @@ import './assets/colors.css'
 import './assets/main.css'
 
 import {createApp} from 'vue'
-import router from './router'
-
-
-// Components
-import App from './App.vue'
-
-
-// Vuetify
 import {createVuetify} from 'vuetify'
-
-import {
-    VTooltip, VBtn, VDialog, VCard,
-    VCardTitle, VCardText, VCardActions, VSpacer,
-    VIcon, VImg, VInput, VRow, VCol, VInfiniteScroll, VCarousel, VCarouselItem,
-    VProgressCircular, VSelect, VList, VSlider, VListItem, VAlert, VSwitch, VTextField, VTextarea, VProgressLinear
-} from 'vuetify/components';
-import store from "@/core/state/store.js";
-
 import * as directives from 'vuetify/directives'
+import router from '@/router/index.js'
+import store from "@/core/state/store.js";
+import {
+    VAlert,
+    VBtn,
+    VCard,
+    VCardActions,
+    VCardText,
+    VCardTitle,
+    VCarousel,
+    VCarouselItem,
+    VCol,
+    VDialog,
+    VIcon,
+    VImg,
+    VInfiniteScroll,
+    VInput,
+    VList,
+    VListItem,
+    VProgressCircular,
+    VProgressLinear,
+    VRow,
+    VSelect,
+    VSlider,
+    VSpacer,
+    VSwitch,
+    VTextarea,
+    VTextField,
+    VTooltip
+} from 'vuetify/components';
+import {createI18n} from "vue-i18n";
+import App from "@/App.vue";
+
+import en from '@/locales/en.json'
+import ru from '@/locales/ru.json'
 
 const vuetify = createVuetify({
     components: {
@@ -77,9 +95,18 @@ const vuetify = createVuetify({
     },
 });
 
+export const i18n = createI18n({
+    legacy: true,
+    locale: 'en',
+    fallbackLocale: 'en',
+    messages: Object.assign({en, ru}),
+})
+
 async function initializeApp() {
     // загрузки данных
     await store.dispatch('master/fetchMaster');
+
+    i18n.global.locale = store.getters['master/getLanguage'];
 }
 
 initializeApp().then(() => {
@@ -87,6 +114,7 @@ initializeApp().then(() => {
         .provide('AmmoLib', Ammo())
         .use(vuetify)
         .use(router)
+        .use(i18n)
         .mount('#app')
 }).catch((error) => {
     console.error("Failed to initialize the app:", error);

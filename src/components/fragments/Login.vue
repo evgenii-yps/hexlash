@@ -2,7 +2,7 @@
   <div class="login-container">
     <form @submit.prevent="handleSubmit">
       <InputField
-          label="LOGIN"
+          :label="$t('auth.login.lblLogin')"
           v-model="login"
           labelColor="var(--white)"
           labelSize="10px"
@@ -13,7 +13,7 @@
           marginBottom="0.5rem"
       />
       <InputField
-          label="PASSWORD"
+          :label="$t('auth.login.lblPassword')"
           type="password"
           v-model="password"
           labelColor="var(--white)"
@@ -25,7 +25,7 @@
           marginBottom="1.3rem"
       />
 
-      <div v-if="authState.authError" class="error-message">Wrong login or password<!--{{ authState.authError }}--></div>
+      <div v-if="authState.authError" class="error-message">{{ $t('auth.login.authError') }}<!--{{ authState.authError }}--></div>
 
       <v-progress-circular
           v-if="loading"
@@ -46,17 +46,17 @@
           padding="0.8rem"
           marginBottom="0.5rem"
       >
-        Login
+        {{ $t('auth.login.btnLogin') }}
       </ButtonRect>
 
     </form>
 
     <div class="invite" v-if="!loading">
-      Do you have
+      {{ $t('auth.login.question') }}
       <ButtonText @click="handleInvite"
                   textColor="var(--pink)"
-                  text-size="1.5em"
-      >invite
+                  text-size="1.5em">
+        {{ $t('auth.login.btnInvite') }}
       </ButtonText>
       ?
     </div>

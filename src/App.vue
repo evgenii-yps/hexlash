@@ -35,7 +35,7 @@ const balance = computed(() => {
     const rawBalance = master.userData.balance;
     return (rawBalance / 100).toFixed(2);
   }
-  return 0;
+  return null;
 });
 
 // Получаем текущий маршрут

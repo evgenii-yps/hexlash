@@ -2,7 +2,7 @@
   <div class="invite-container">
     <form @submit.prevent="handleInviteSubmit">
       <InputField
-          label="INVITE CODE"
+          :label="$t('auth.invite.lblInvite')"
           v-model="inviteCode"
           labelColor="var(--white)"
           labelSize="10px"
@@ -34,15 +34,15 @@
           padding="0.8rem"
           marginBottom="0.5rem"
       >
-        Join Club
+        {{$t('auth.invite.btnInvite')}}
       </ButtonRect>
 
       <div class="login" v-if="!loading">
-        Already have an account?
+        {{$t('auth.invite.question')}}
         <ButtonText @click="handleLogin"
                     textColor="var(--pink)"
-                    text-size="1.5em"
-        >Login
+                    text-size="1.5em">
+          {{$t('auth.invite.btnLogin')}}
         </ButtonText>
       </div>
 
@@ -63,7 +63,6 @@ const errorMessage = ref('');
 
 const router = useRouter();
 
-
 const handleInviteSubmit = async () => {
   loading.value = true;
   errorMessage.value = '';
@@ -72,7 +71,6 @@ const handleInviteSubmit = async () => {
     await new Promise((resolve, reject) => setTimeout(resolve, 2000));
     if (inviteCode.value === 'admin') {
       console.log('Login successful');
-      // Redirect to another page or perform any action after successful login
     } else {
       throw new Error('Invalid invite');
     }

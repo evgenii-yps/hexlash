@@ -1,0 +1,97 @@
+{
+  "modal": {
+    "btnCancel": "Cancel",
+    "btnConfirm": "Confirm",
+    "btnOk": "OK"
+  },
+  "auth": {
+    "login": {
+      "lblLogin": "LOGIN",
+      "lblPassword": "PASSWORD",
+      "btnLogin": "Login",
+      "question": "Do you have",
+      "btnInvite": "invite",
+      "authError": "Wrong login or password"
+    },
+    "invite": {
+      "lblInvite": "INVITE CODE",
+      "btnInvite": "Join Club",
+      "question": "Already have an account?",
+      "btnLogin": "Login"
+    }
+  },
+  "profile": {
+    "back": "Back",
+    "account": {
+      "lblChangeLanguage": "Language",
+
+      "lblChangeEmail": "CHANGE EMAIL",
+      "lblEmailRequired": "Email is required",
+      "lblInvalidEmailFormat": "Invalid email format",
+      "btnSendConfirm": "Send Confirm",
+
+      "lblChangeLogin": "CHANGE LOGIN",
+      "lblAvailableLogin": "available",
+      "lblLoginRequired": "Login is required",
+      "lblInvalidLoginFormat": "Invalid login format",
+      "lblLoginNotAvailable": "Login is not available",
+      "lblLoginAlreadyTaken": "Login is already taken",
+      "lblFailedToCheckLoginAvailability": "Failed to check login availability",
+      "lblConfirmChange": "Confirm Change",
+      "msgConfirmChange": "Are you sure you want to change your login to {newLogin}?",
+
+      "lblChangePassword": "Change Password",
+      "lblCurrentPassword": "CURRENT PASSWORD",
+      "lblNewPassword": "NEW PASSWORD",
+      "lblConfirmNewPassword": "CONFIRM NEW PASSWORD",
+      "lblAllFieldsRequired": "All fields are required",
+      "lblPasswordsDoNotMatch": "Passwords do not match",
+      "lblPasswordRequirements": "Password must be at least 8 characters long and include numbers and uppercase letters",
+
+      "lblConfirmation": "Skin Selection Confirmation",
+      "msgSelectSkin": "Are you sure you want to select this skin?",
+      "msgInsufficientFunds": "You don't have enough funds to purchase this skin. Would you like to add more funds?",
+      "lblLockedOverlay": "Insufficient funds",
+
+      "lblDeleteAccount": "Delete Account",
+      "lblConfirmDeletion": "Confirm Deletion",
+      "msgConfirmDelete": "Are you sure you want to delete your account? This action cannot be undone."
+    },
+    "wallet":{
+      "lblTopUpBalance": "Top Up Balance",
+      "lblBuyFCTokens": "Buy FC tokens",
+      "lblSelectToken": "Select token",
+      "lblAmount": "Amount",
+      "lblYouWillGet": "You will get",
+      "lblFCTokens": "FC tokens",
+
+      "lblConnectWallet": "Connect Wallet",
+      "msgConnectWalletTooltip": "Connect your wallet to buy or withdraw Fight Club tokens",
+
+      "lblGameBalance": "GAME BALANCE",
+      "lblWithdrawToWallet": "Withdraw to wallet",
+
+      "lblConnectAnotherWallet": "Connect another wallet?",
+      "lblAlreadyHaveWallet": "Do you already have a wallet?",
+
+      "lblWalletBalance": "WALLET BALANCE",
+      "lblConnecting": "Connecting...",
+      "lblDepositToGame": "Deposit to game",
+
+      "lblConnectedWalletAddress": "CONNECTED WALLET ADDRESS",
+      "msgWalletAddressCopied": "Wallet address copied to clipboard",
+      "msgCopyError": "Error copying to clipboard {error}",
+
+
+      "lblCreateNewWallet": "Create new wallet",
+      "msgCreateNewWalletTooltip": "Create a new wallet, the private key will be stored on the server in an encrypted form, and you will be able to recover the private key",
+      "lblConnectYourWallet": "Connect your wallet",
+      "msgConnectYourWalletTooltip": "Connect your wallet, we will not know your private key and will not be able to recover access to your funds",
+      "lblShowPrivateKey": "Show Private Key",
+      "lblConfirmAction": "Confirm Action",
+      "msgShowPrivateKeyPrompt": "Show private key?",
+      "lblPrivateKey": "Private Key",
+      "btnShow": "Show"
+    }
+  }
+}

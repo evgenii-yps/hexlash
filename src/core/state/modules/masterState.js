@@ -7,15 +7,21 @@ import {
 import router from "@/router/index.js";
 import {updateMasterToLocalDB} from "@/core/database/masterRepository.js";
 import {AuthStateModel} from "@/core/models/AuthStateModel.js";
+import {i18n} from '@/main.js';
+
 
 const state = {
     master: null,
     authState: new AuthStateModel(),
+
 };
 
 const getters = {
     getMaster: (state) => state.master,
     getAuthState: (state) => state.authState,
+    getLanguage: (state) => {
+        return state.master && state.master.language ? state.master.language : 'en';
+    },
 };
 
 const mutations = {
@@ -115,7 +121,12 @@ const actions = {
         } catch (error) {
             console.error('Failed to update user data:', error);
         }
-    }
+    },
+    async setLanguage({commit, dispatch, state}, language) {
+        dispatch('updateMaster', {language: language});
+
+        i18n.global.locale = language;
+    },
 };
 
 export default {

@@ -94,7 +94,7 @@ body {
 
 :root .v-list {
     background: var(--black-opacity) !important;
-    overflow: hidden !important;
+    /*overflow: hidden !important;*/
     color: white;
     border: 2px solid var(--gray1);
     border-top-left-radius: 0 !important;

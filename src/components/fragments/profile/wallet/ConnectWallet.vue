@@ -1,16 +1,15 @@
 <template>
   <div class="connect-wallet">
-
     <div class="button-container">
       <v-tooltip location="top"
                  max-width="250px"
                  contentClass="v-tooltip__content">
         <template #activator="{ props }">
           <VBtnDark v-bind="props" size="x-large" @click="switchAccount" class="input-button">
-            Connect  wallet
+            {{ $t('profile.wallet.lblConnectWallet') }}
           </VBtnDark>
         </template>
-        <span>Подключите ваш кошелек, для покупки или вывода Fight Club токенов</span>
+        <span>{{ $t('profile.wallet.msgConnectWalletTooltip') }}</span>
       </v-tooltip>
     </div>
   </div>

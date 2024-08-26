@@ -7,16 +7,16 @@
       <template #append>
         <img src="@/assets/images/icon_pencil.svg" alt="" class="custom-icon"/>
       </template>
-      Change Password
+      {{$t('profile.account.lblChangePassword')}}
     </VBtnDark>
 
     <VModal v-model="dialog" max-width="500">
       <VCard>
-        <v-card-title class="headline">Change Password</v-card-title>
+        <v-card-title class="headline">{{$t('profile.account.lblChangePassword')}}</v-card-title>
         <v-card-text style="margin-bottom: 0">
           <form @submit.prevent="handleSubmit">
             <InputField
-                label="CURRENT PASSWORD"
+                :label="$t('profile.account.lblCurrentPassword')"
                 type="password"
                 v-model="currentPassword"
                 labelColor="var(--white)"
@@ -28,7 +28,7 @@
                 marginBottom="1rem"
             />
             <InputField
-                label="NEW PASSWORD"
+                :label="$t('profile.account.lblNewPassword')"
                 type="password"
                 v-model="newPassword"
                 labelColor="var(--white)"
@@ -40,7 +40,7 @@
                 marginBottom="1rem"
             />
             <InputField
-                label="CONFIRM NEW PASSWORD"
+                :label="$t('profile.account.lblConfirmNewPassword')"
                 type="password"
                 v-model="confirmNewPassword"
                 labelColor="var(--white)"
@@ -64,8 +64,8 @@
           </form>
         </v-card-text>
         <v-card-actions style="padding-top: 0">
-          <VBtnDark class="cancel-btn" @click="cancel">Cancel</VBtnDark>
-          <VBtn class="confirm-btn" @click="handleSubmit" >Confirm</VBtn>
+          <VBtnDark class="cancel-btn" @click="cancel">{{ $t('modal.btnCancel') }}</VBtnDark>
+          <VBtn class="confirm-btn" @click="handleSubmit" >{{ $t('modal.btnConfirm') }}</VBtn>
         </v-card-actions>
       </VCard>
     </VModal>
@@ -77,7 +77,7 @@ import { computed, ref } from 'vue';
 import InputField from '@/components/ui/InputField.vue';
 import store from "@/core/state/store.js";
 
-const currentUser = computed(() => store.getters['user/getCurrentUser']);
+const master = computed(() => store.getters['master/getMaster']);
 
 const currentPassword = ref('');
 const newPassword = ref('');
@@ -95,23 +95,24 @@ const handleSubmit = () => {
   errorMessage.value = '';
 
   if (!currentPassword.value || !newPassword.value || !confirmNewPassword.value) {
-    errorMessage.value = 'All fields are required';
+    errorMessage.value =  $t('profile.account.lblAllFieldsRequired');
     return;
   }
 
   if (newPassword.value !== confirmNewPassword.value) {
-    errorMessage.value = 'Passwords do not match';
+    errorMessage.value = $t('profile.account.lblPasswordsDoNotMatch');
     return;
   }
 
   if (newPassword.value.length < 8 || !/\d/.test(newPassword.value) || !/[A-Z]/.test(newPassword.value)) {
-    errorMessage.value = 'Password must be at least 8 characters long and include numbers and uppercase letters';
+    errorMessage.value = $t('profile.account.lblPasswordRequirements');
     return;
   }
 
   loading.value = true;
+
   // Дополнительная логика обработки смены пароля
-  // Например, вызов API для смены пароля и обработка результата
+  // вызов API для смены пароля и обработка результата
 };
 </script>
 

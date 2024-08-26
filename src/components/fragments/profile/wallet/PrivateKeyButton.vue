@@ -1,7 +1,7 @@
 <template>
   <div class="private-key-container">
     <VBtnDark class="private-key-btn"  @mousedown="startHold" @mouseup="endHold" @mouseleave="endHold">
-      Show private Key
+      {{ $t('profile.wallet.lblShowPrivateKey') }}
       <template #append>
         <span class="countdown" v-if="countdown > 0">{{ countdown }}</span>
       </template>
@@ -9,7 +9,7 @@
 
     <VModal v-model="dialog" max-width="500" @click:outside="hidePrivateKey">
       <VCard>
-        <v-card-title class="headline">{{ showKey ? 'Private Key' : 'Confirm Action' }}</v-card-title>
+        <v-card-title class="headline">{{ showKey ?  $t('profile.wallet.lblPrivateKey') :  $t('profile.wallet.lblConfirmAction') }}</v-card-title>
         <v-card-text class="text-center">
           <div v-if="showKey">
             {{ privateKey }}
@@ -22,14 +22,14 @@
 
           </div>
           <div v-else>
-            Показать приватный ключ?
+            {{ $t('profile.wallet.msgShowPrivateKeyPrompt') }}
           </div>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <VBtnDark v-if="!showKey" @click="dialog = false" class="cancel-btn">Отмена</VBtnDark>
-          <VBtn v-if="!showKey" @click="showPrivateKey" class="confirm-btn">Показать</VBtn>
-          <VBtn v-if="showKey" @click="hidePrivateKey" class="confirm-btn">OK</VBtn>
+          <VBtnDark v-if="!showKey" @click="dialog = false" class="cancel-btn">{{ $t('modal.btnCancel') }}</VBtnDark>
+          <VBtn v-if="!showKey" @click="showPrivateKey" class="confirm-btn">{{ $t('profile.wallet.btnShow') }}</VBtn>
+          <VBtn v-if="showKey" @click="hidePrivateKey" class="confirm-btn">{{ $t('modal.btnOk') }}</VBtn>
         </v-card-actions>
       </VCard>
     </VModal>
@@ -39,7 +39,6 @@
 <script setup>
 import {computed, ref, watch} from 'vue';
 import {useClipboard} from '@vueuse/core';
-import store from "@/core/state/store.js";
 
 const isGeneratedWallet = ref(true);
 const dialog = ref(false);
@@ -83,7 +82,6 @@ const hidePrivateKey = () => {
 const copyToClipboard = async () => {
   try {
     await copy(privateKey.value);
-    console.log('Private key copied to clipboard');
   } catch (error) {
     console.error('Failed to copy private key:', error);
   }

@@ -3,7 +3,7 @@
     <VBtnDark
         class="delete-btn"
         @click="confirmDelete">
-      Delete Account
+      {{ $t('profile.account.lblDeleteAccount') }}
       <template #append>
         <img src="@/assets/images/icon_close.svg" alt="Close" class="custom-icon"/>
       </template>
@@ -11,12 +11,12 @@
 
     <VModal v-model="dialog" max-width="500">
       <VCard>
-        <v-card-title class="headline">Confirm Deletion</v-card-title>
-        <v-card-text>Are you sure you want to delete your account? This action cannot be undone.</v-card-text>
+        <v-card-title class="headline"> {{ $t('profile.account.lblConfirmDeletion') }}</v-card-title>
+        <v-card-text>{{ $t('profile.account.msgConfirmDelete') }}</v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <VBtnDark  @click="dialog = false" class="cancel-btn">Cancel</VBtnDark>
-          <VBtn  @click="handleDelete" class="confirm-delete-btn">Delete</VBtn>
+          <VBtnDark  @click="dialog = false" class="cancel-btn">{{ $t('modal.btnCancel') }}</VBtnDark>
+          <VBtn  @click="handleDelete" class="confirm-delete-btn">{{ $t('modal.btnConfirm') }}</VBtn>
         </v-card-actions>
       </VCard>
     </VModal>
@@ -26,6 +26,7 @@
 <script setup>
 import { ref } from 'vue';
 import store from "@/core/state/store.js";
+import router from "@/router/index.js";
 
 // Сервис для удаления аккаунта
 // import { deleteUserAccount } from '@/core/services/userService';
@@ -40,12 +41,12 @@ const handleDelete = async () => {
   try {
     // const response = await deleteUserAccount();
     // Обработка успешного удаления аккаунта
-    console.log('Account deleted');
     dialog.value = false;
-    // Дополнительная логика, например, выход из системы или перенаправление на главную страницу
+
+    await router.push("/");
+
   } catch (error) {
     console.error('Failed to delete account:', error);
-    // Обработка ошибки при удалении аккаунта
   }
 };
 </script>

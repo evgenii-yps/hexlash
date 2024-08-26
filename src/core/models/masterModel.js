@@ -6,13 +6,14 @@ export class MasterModel {
                     id = MASTER_TAG,
                     inviteId = null,
                     email = '',
+                    language = 'en',
                     jwtToken = '',
                     userData = {}
                 } = {}) {
         this.id = id;
         this.inviteId = inviteId;
         this.email = email;
-
+        this.language = language;
         this.jwtToken = jwtToken;
         this.userData = userData;
 

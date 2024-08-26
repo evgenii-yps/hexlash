@@ -154,7 +154,7 @@ export const getAllSocialTasksFromLocalAndAPI = async () => {
         // Сначала берем данные из локальной базы данных
         localData = await getAllSocialTasksFromLocalDB();
     } catch (error) {
-        console.error('Failed to fetch local social tasks:', error);
+        console.error('Failed to fetch locales social tasks:', error);
     }
 
     // Возвращаем локальные данные, если они есть
@@ -232,7 +232,7 @@ export const getAllDailyTasksFromLocalAndAPI = async () => {
         // Сначала берем данные из локальной базы данных
         localData = await getAllDailyTasksFromLocalDB();
     } catch (error) {
-        console.error('Failed to fetch local daily tasks:', error);
+        console.error('Failed to fetch locales daily tasks:', error);
     }
 
     // Возвращаем локальные данные, если они есть

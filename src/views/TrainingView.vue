@@ -9,8 +9,8 @@
 
           <div class="circle-container" @click="handleClickPunch($event, false, COST_PER_CLICK)">
 
+            <!-- Кружок -->
             <div class="movement-container" ref="hitCircleRef">
-              <!-- Кружок -->
               <div class="pulsing-circle" @click.stop="handleCircleClick($event, hitCircleRef)">
                 <div class="wave-circle"></div>
               </div>
@@ -90,7 +90,6 @@ const isTrainingBlocked = computed(() => store.state.punch.isTrainingBlocked);
 const hasIncompleteSocialTasks = computed(() => store.getters['task/hasIncompleteSocialTasks']);
 const hasIncompleteDailyTasks = computed(() => store.getters['task/hasIncompleteDailyTasks']);
 
-
 const soundHit1 = new Howl({
   src: [clickSound]
 })
@@ -153,6 +152,11 @@ const handleClickPunch = (event, isFromCircleClick = false, value) => {
 
   store.dispatch('punch/handlePunch', value);
 
+  // Вибрация при клике
+  if (navigator.vibrate) {
+    navigator.vibrate(50);
+  }
+
 };
 const handleCircleClick = (event, circle) => {
   const pulsingCircle = circle.querySelector('.pulsing-circle');
@@ -168,7 +172,7 @@ const handleCircleClick = (event, circle) => {
   waveCircle.style.transform = "scale(2.5)";
   waveCircle.style.opacity = "0.3";
 
-  // Убираем анимацию волны через 500ms
+  // Убираем анимацию волны через 300ms
   setTimeout(() => {
     waveCircle.style.opacity = "0";
     waveCircle.style.transform = "scale(0)";

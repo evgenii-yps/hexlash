@@ -63,9 +63,9 @@ watch(store.getters['master/getMaster'], async (master) => {
         // TODO взять баланс со смарт контракта
       }
 
-      titleText.value = "Подключить другой кошелек?";
+      titleText.value = $t('profile.wallet.lblConnectAnotherWallet')
     } else {
-      titleText.value = "У вас уже есть кошелек?";
+      titleText.value = $t('profile.wallet.lblAlreadyHaveWallet')
     }
   }
 }, {immediate: true});

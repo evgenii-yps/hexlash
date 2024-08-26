@@ -2,9 +2,8 @@
   <VBtnDark
       size="small"
       class="back-btn"
-      @click="goBack"
-  >
-    Back
+      @click="goBack">
+    {{ $t('profile.back') }}
     <template #prepend>
       <img src="@/assets/images/icon_right_arrow.svg" alt="Arrow Icon" class="custom-icon"/>
     </template>

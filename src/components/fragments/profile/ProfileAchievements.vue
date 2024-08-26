@@ -80,37 +80,39 @@
 
 <script setup>
 import {computed, ref, watch} from 'vue';
-import store from "@/core/state/store.js";
 
-import achievementEmailIcon from '@/assets/images/achievement_email.png';
+// import achievementEmailIcon from '@/assets/images/achievement_email.png';
 import achievementSocialIcon from '@/assets/images/achievement_social.png';
 import achievementNewbieIcon from '@/assets/images/achievement_newbie.png';
+
 import achievement100DaysIcon from '@/assets/images/achievement_100days.png';
 import achievementWinIcon from '@/assets/images/achievement_win.png';
+
 import achievementSocialLeaderIcon from '@/assets/images/achievement_social_leader.png';
 import achievement100WinsIcon from '@/assets/images/achievement_bob.png';
 
 
-import achievementDailyLoginIcon from '@/assets/images/achievement_win.png';
-import achievement30DaysIcon from '@/assets/images/achievement_win.png';
-import achievementCoachIcon from '@/assets/images/achievement_win.png';
-import achievementInviteIcon from '@/assets/images/achievement_win.png';
-import achievementInvestIcon from '@/assets/images/achievement_win.png';
-import achievementPromoIcon from '@/assets/images/achievement_win.png';
-import achievementExpertIcon from '@/assets/images/achievement_win.png';
-import achievementLuckIcon from '@/assets/images/achievement_win.png';
-import achievementWalletIcon from '@/assets/images/achievement_win.png';
-import achievement1000FightsIcon from '@/assets/images/achievement_win.png';
+import achievementLuckIcon from '@/assets/images/achievement_luck.png';
+import achievementDailyLoginIcon from '@/assets/images/achievement_daily_login.png';
+import achievement30DaysIcon from '@/assets/images/achievement_30days.png';
+import achievementCoachIcon from '@/assets/images/achievement_coach.png';
+import achievementInviteIcon from '@/assets/images/achievement_invite.png';
+import achievementInvestIcon from '@/assets/images/achievement_invest.png';
+import achievementPromoIcon from '@/assets/images/achievement_promo.png';
+import achievementExpertIcon from '@/assets/images/achievement_expert.png';
+
+import achievementWalletIcon from '@/assets/images/achievement_wallet.png';
+import achievement1000FightsIcon from '@/assets/images/achievement_hero.png';
 
 const allAchievements = [
-  {
-    id: 1,
-    title: 'Первая кровь',
-    icon: achievementEmailIcon,
-    completed: false,
-    description: 'Подтвердите вашу электронную почту, чтобы разблокировать эту ачивку.',
-    show: false
-  },
+  // {
+  //   id: 1,
+  //   title: 'Первая кровь',
+  //   icon: achievementEmailIcon,
+  //   completed: false,
+  //   description: 'Подтвердите вашу электронную почту, чтобы разблокировать эту ачивку.',
+  //   show: false
+  // },
   {
     id: 2,
     title: 'Связанный боец',
@@ -185,7 +187,7 @@ const allAchievements = [
   },
   {
     id: 11,
-    title: 'Тайлер Дёрден',
+    title: 'Тайлер',
     icon: achievementPromoIcon,
     completed: false,
     description: 'Пригласите 25 человек, которые подтвердят email.',

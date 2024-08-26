@@ -11,7 +11,7 @@ export const getPunchLimitsFromLocalAndAPI = async () => {
         // Сначала берем данные из локальной базы данных
         localData = await getPunchLimitsFromLocalDB();
     } catch (error) {
-        console.error('Failed to fetch local limit time:', error);
+        console.error('Failed to fetch locales limit time:', error);
     }
 
     // Возвращаем локальные данные, если они есть
@@ -81,7 +81,7 @@ export const sendPunchBatch = async (punchInfo, totalValue) => {
         */
 
         const punchInfo = new PunchInfoModel({
-            unixTimeStart: 1724560255,
+            unixTimeStart: 1794560255,
             waitRateIntervalTime: 28800,
             punchCounter: 10,
             punchCounterMaxPerRate: 10

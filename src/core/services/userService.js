@@ -109,7 +109,7 @@ export const getUserFromLocalAndAPI = async (userLogin) => {
         // Сначала берем данные из локальной базы данных
         localData = await getUserByLoginFromDB(userLogin);
     } catch (error) {
-        console.error('Failed to fetch local user data:', error);
+        console.error('Failed to fetch locales user data:', error);
     }
 
     // Возвращаем локальные данные, если они есть

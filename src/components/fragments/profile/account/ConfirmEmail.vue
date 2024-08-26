@@ -2,7 +2,7 @@
   <div class="email-confirmation-container">
     <form @submit.prevent="handleEmailSubmit" novalidate>
       <InputField
-          label="CHANGE EMAIL"
+          :label="$t('profile.account.lblChangeEmail')"
           type="text"
           v-model="email"
           labelColor="var(--white)"
@@ -18,7 +18,7 @@
         <!-- Можно вставить любую кнопку, лоадер или любой другой элемент -->
         <template v-slot>
           <VBtnDark size="small" @click="handleEmailSubmit" class="input-button">
-            Send Confirm
+            {{ $t('profile.account.btnSendConfirm') }}
           </VBtnDark>
         </template>
 
@@ -49,12 +49,12 @@ const handleEmailSubmit = () => {
   errorMessage.value = '';
 
   if (!email.value) {
-    errorMessage.value = 'Email is required';
+    errorMessage.value = $t('profile.account.lblEmailRequired');
     return;
   }
 
   if (!validateEmail(email.value)) {
-    errorMessage.value = 'Invalid email format';
+    errorMessage.value = $t('profile.account.lblInvalidEmailFormat');
     return;
   }
 

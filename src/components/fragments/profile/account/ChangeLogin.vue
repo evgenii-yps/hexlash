@@ -2,7 +2,7 @@
   <div class="login-change-container">
     <form @submit.prevent="handleLoginSubmit" novalidate>
       <InputField
-          label="CHANGE LOGIN"
+          :label="$t('profile.account.lblChangeLogin')"
           type="text"
           v-model="login"
           labelColor="var(--white)"
@@ -18,7 +18,10 @@
         <template v-slot>
           <div class="btn-container">
             <div class="status-container">
-              <div v-if="loginAvailable && loginChanged && !errorMessage" class="success-message">available</div>
+              <div v-if="loginAvailable && loginChanged && !errorMessage" class="success-message">
+                {{ $t('profile.account.lblAvailableLogin') }}
+
+              </div>
               <v-progress-circular v-if="loading" color="var(--primary-color)" indeterminate :size="20"/>
               <img v-if="!loading && loginAvailable && loginChanged" src="@/assets/images/icon_pencil.svg"
                    @click="confirmChange"
@@ -31,15 +34,16 @@
 
     <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
 
-
     <VModal v-model="dialog" max-width="500">
       <VCard>
-        <v-card-title class="headline">Confirm Change</v-card-title>
-        <v-card-text>Are you sure you want to change your login to "{{ login }}"?</v-card-text>
+        <v-card-title class="headline"> {{ $t('profile.account.lblConfirmChange') }}</v-card-title>
+        <v-card-text>
+          {{ $t('profile.account.msgConfirmChange', {newLogin: login}) }}
+        </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn @click="dialog = false" class="cancel-btn">Cancel</v-btn>
-          <v-btn @click="handleLoginSubmit" class="confirm-btn">Confirm</v-btn>
+          <v-btn @click="dialog = false" class="cancel-btn"> {{ $t('modal.btnCancel') }}</v-btn>
+          <v-btn @click="handleLoginSubmit" class="confirm-btn"> {{ $t('modal.btnConfirm') }}</v-btn>
         </v-card-actions>
       </VCard>
     </VModal>
@@ -74,17 +78,17 @@ const handleLoginSubmit = () => {
   errorMessage.value = '';
 
   if (!login.value) {
-    errorMessage.value = 'Login is required';
+    errorMessage.value = $t('profile.account.lblLoginRequired');
     return;
   }
 
   if (!validateLogin(login.value)) {
-    errorMessage.value = 'Invalid login format';
+    errorMessage.value = $t('profile.account.lblInvalidLoginFormat');
     return;
   }
 
   if (!loginAvailable.value) {
-    errorMessage.value = 'Login is not available';
+    errorMessage.value = $t('profile.account.lblLoginNotAvailable');
     return;
   }
 
@@ -124,10 +128,10 @@ const debouncedCheckLoginExistence = debounce(async () => {
     loginAvailable.value = available;
 
     if (!available) {
-      errorMessage.value = 'Login is already taken';
+      errorMessage.value = $t('profile.account.lblLoginAlreadyTaken');
     }
   } catch (error) {
-    errorMessage.value = 'Failed to check login availability';
+    errorMessage.value = $t('profile.account.lblFailedToCheckLoginAvailability');
   } finally {
     loading.value = false;
   }
@@ -139,6 +143,7 @@ watch(() => master.value.userData.login, (newLogin) => {
   loginChanged.value = false;
   loginAvailable.value = false;
 }, {immediate: true});
+
 </script>
 
 <style scoped>

@@ -2,7 +2,7 @@
   <div class="wallet-info">
 
     <InputField
-        label="CONNECTED WALLET ADDRESS"
+        :label="$t('profile.wallet.lblConnectedWalletAddress')"
         type="text"
         v-model="walletAddress"
         labelColor="var(--white)"
@@ -44,9 +44,9 @@ const notImportWallet = ref(false);
 
 const copyToClipboard = () => {
   navigator.clipboard.writeText(walletAddress.value).then(() => {
-    alert('Адрес кошелька скопирован в буфер обмена');
+    alert($t('profile.wallet.msgWalletAddressCopied'));
   }).catch(err => {
-    console.error('Ошибка при копировании в буфер обмена: ', err);
+    console.error($t('profile.wallet.msgCopyError', { error: err }));
   });
 };
 

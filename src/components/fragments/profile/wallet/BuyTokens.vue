@@ -1,26 +1,26 @@
 <template>
   <div class="buy-button-container">
     <VBtn class="buy-btn" @click="btnBuy">
-      Top Up Balance
+      {{ $t('profile.wallet.lblTopUpBalance') }}
     </VBtn>
 
     <VModal v-model="dialog" max-width="500" @click:outside="hide">
       <VCard>
-        <v-card-title class="headline">Buy FC tokens</v-card-title>
+        <v-card-title class="headline">  {{ $t('profile.wallet.lblBuyFCTokens') }}</v-card-title>
         <v-card-text class="text-center">
 
           <v-select
               class="custom-select"
               color="white"
               bg-color="var(--black-opacity)"
-              label="Select token"
+              :label="$t('profile.wallet.lblSelectToken')"
               :items="['Ethereum', 'USDT (ERC20)', 'USDC (ERC20)', 'DAI (ERC20)']"
               v-model="selectedToken"
               @change="updateToken"
           />
 
           <v-text-field
-              label="Amount"
+              :label="$t('profile.wallet.lblAmount')"
               v-model="amount"
               class="amount-field"
               @input="updateAmount"
@@ -36,15 +36,15 @@
             />
 
             <div v-else class="calculation-result">
-              <span>You will get </span> {{ calculatedFC }} <span>FC tokens</span>
+              <span>{{ $t('profile.wallet.lblYouWillGet') }}</span> {{ calculatedFC }} <span>{{ $t('profile.wallet.lblFCTokens') }}</span>
             </div>
           </div>
 
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <VBtnDark @click="dialog = false" class="cancel-btn">Отмена</VBtnDark>
-          <VBtn @click="hide" class="confirm-btn">Buy</VBtn>
+          <VBtnDark @click="dialog = false" class="cancel-btn">{{ $t('modal.btnCancel') }}</VBtnDark>
+          <VBtn @click="hide" class="confirm-btn">{{ $t('modal.btnConfirm') }}</VBtn>
         </v-card-actions>
       </VCard>
     </VModal>

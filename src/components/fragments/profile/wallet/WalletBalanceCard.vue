@@ -1,13 +1,13 @@
 <template>
   <VCard class="wallet-card">
-    <h3>WALLET BALANCE</h3>
+    <h3>{{ $t('profile.wallet.lblWalletBalance') }}</h3>
     <p v-if="isConnected">{{ balance }}</p>
     <div
         v-else
         class="loader"
-    >Connecting...</div>
+    >{{ $t('profile.wallet.lblConnecting') }}</div>
     <img src="@/assets/images/icon_money_in.svg" alt=""/>
-    <div class="desc">Завести деньги в игру</div>
+    <div class="desc">{{ $t('profile.wallet.lblDepositToGame') }}</div>
   </VCard>
 </template>
 
