@@ -1,13 +1,13 @@
 <template>
   <div class="background">
     <Card
-        title="Privacy"
+        :title="pageName"
         bgColor="var(--black-opacity-80)"
         borderColor="var(--gray1)"
         textColor="var(--white)"
-        :showCloseButton="false"
-    >
-      <p>Контент внутри карточки</p>
+        :showCloseButton="false">
+
+      <div v-html="content"></div>
 
     </Card>
   </div>
@@ -15,12 +15,21 @@
 
 <script setup>
 import Card from "@/components/ui/Card.vue";
-import {ref} from "vue";
+import {ref, watch} from "vue";
 import {useRoute} from "vue-router";
+import {useI18n} from "vue-i18n";
+const { t } = useI18n({ useScope: 'global' })
+
 
 const route = useRoute();
-const pageContent = ref({ title: '', content: '' });
+const content = ref('' );
 const pageName = route.name.toLowerCase();
+
+watch(route, () => {
+  const pageName = route.name.toLowerCase();
+  content.value = t(`pages.${pageName}`);
+}, { immediate: true });
+
 </script>
 
 <style scoped>

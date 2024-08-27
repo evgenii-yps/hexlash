@@ -20,13 +20,15 @@
     </div>
   </div>
   <div v-else>
-    Loading...
+    {{ t('loading') }}
   </div>
 </template>
 
 <script setup>
 import {ref, watch} from 'vue';
+import {useI18n} from "vue-i18n";
 
+const {t} = useI18n({useScope: 'global'})
 import iconAllFights from '@/assets/images/icon_fights.svg';
 import iconWins from '@/assets/images/icon_wins.svg';
 
@@ -46,12 +48,12 @@ watch(() => props.clubData, (clubData) => {
     stats.value = [
       {
         id: 'stats-totalFights',
-        title: 'Общее количество боев',
+        title: t('club.lblTotalFights'),
         value: clubData.battles,
         icon: iconAllFights,
         show: false
       },
-      {id: 'stats-wins', title: 'Победы', value: clubData.wins, icon: iconWins, show: false},
+      {id: 'stats-wins', title: t('club.lblWins'), value: clubData.wins, icon: iconWins, show: false},
 
     ];
   }

@@ -2,11 +2,11 @@
 
   <VModal v-model="props.dialogCreate" max-width="500" @click:outside="hide">
     <VCard>
-      <v-card-title class="headline">Создать новый клуб</v-card-title>
+      <v-card-title class="headline">{{ t('club.modalTitle') }}</v-card-title>
       <v-card-text class="text-center">
 
         <v-text-field
-            label="Название"
+            :label="t('club.inputName')"
             v-model="title"
             class="title-field"
             :error-messages="titleError"
@@ -14,14 +14,13 @@
         </v-text-field>
 
         <v-textarea
-            label="Описание"
+            :label="t('club.inputDescription')"
             v-model="description"
             class="description-field"
         >
         </v-textarea>
 
-        <div class="notice">Создать клуб можно только один раз, после создания ваш код приглашения
-        будет действовать на ваш собственный клуб, после создания, с вашего счета будут списаны деньги</div>
+        <div class="notice">{{ t('club.notice') }}</div>
 
         <div class="cost">{{ COST_CREATE_CLUB }}$</div>
 
@@ -39,8 +38,8 @@
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <VBtnDark @click="hide" class="cancel-btn">Отмена</VBtnDark>
-        <VBtn @click="saveChanges" class="confirm-btn">Создать</VBtn>
+        <VBtnDark @click="hide" class="cancel-btn">{{ t('modal.btnCancel') }}</VBtnDark>
+        <VBtn @click="saveChanges" class="confirm-btn">{{ t('modal.btnCreate') }}</VBtn>
       </v-card-actions>
     </VCard>
   </VModal>
@@ -51,6 +50,10 @@ import {ref} from 'vue';
 import store from "@/core/state/store.js";
 import {COST_CREATE_CLUB} from "@/core/constants.js";
 import router from "@/router/index.js";
+import {useI18n} from "vue-i18n";
+
+const {t} = useI18n({useScope: 'global'})
+
 
 const title = ref("");
 const description = ref("");
@@ -71,15 +74,15 @@ const emit = defineEmits(['close']);
 const validateTitle = () => {
   const regex = /^[a-zA-Z0-9\s]*$/; // Разрешены латинские буквы, цифры и пробелы
   if (!regex.test(title.value)) {
-    titleError.value  = 'Название может содержать только латинские буквы и цифры';
+    titleError.value  = t('club.errorInvalidCharacters');
     return false;
   }
   if (title.value.length > 32) {
-    titleError.value = 'Название не должно превышать 32 символа';
+    titleError.value = t('club.errorTooLong');
     return false;
   }
   if(title.value.length === 0) {
-    titleError.value = 'Название не должно быть пустым';
+    titleError.value = t('club.errorEmpty');
     return false;
   }
   titleError.value = '';
@@ -104,7 +107,7 @@ const saveChanges = async () => {
       await router.push({path: `/club/${club.id}`});
     }
   } catch (error) {
-    resultMessage.value = 'Ошибка при создании клуба';
+    resultMessage.value = t('club.errorCreate');
   } finally {
     loading.value = false;
   }

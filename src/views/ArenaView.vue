@@ -6,19 +6,19 @@
         <div class="sliders-wrapper">
           <VCard class="slider-container">
             <div class="selected-value">{{ selectedBet }}<span>$</span></div>
-            <div class="slider-label">Ваша ставка</div>
+            <div class="slider-label">{{ t('arena.lblYourBet') }}</div>
             <BetSlider v-model="selectedBet"/>
           </VCard>
 
           <VCard class="slider-container">
             <div class="selected-value">{{ selectedActions }}</div>
-            <div class="slider-label">Кол-во ударов</div>
+            <div class="slider-label">{{ t('arena.lblNumberOfHits') }}</div>
             <ActionSlider v-model="selectedActions"/>
           </VCard>
 
           <VCard class="slider-container">
-            <div class="selected-value">{{ selectedTime }}<span>сек</span></div>
-            <div class="slider-label">Время боя</div>
+            <div class="selected-value">{{ selectedTime }}<span>{{ t('arena.lblSeconds') }}</span></div>
+            <div class="slider-label">{{ t('arena.lblFightTime') }}</div>
             <TimeSlider v-model="selectedTime" :isBlocked="true"/>
 
             <div class="blocked"><img src="@/assets/images/icon_lock.png" alt=""></div>
@@ -27,8 +27,18 @@
         </div>
 
         <div class="fight-button-wrapper">
+          <!--          <div class="btn-help-container">
+                      <VBtnDark
+                          size="small"
+                          class="btn-help"
+                          @click="dialogHelp = true">
+                        ?
+                      </VBtnDark>
+                    </div>-->
           <div class="text">{{ txtStatus }}</div>
-          <VBtn v-if="!isLoading" @click="startFight" size="x-large" class="fight-btn">Start fight</VBtn>
+          <VBtn v-if="!isLoading" width="200" @click="startFight" size="x-large" class="fight-btn">
+            {{ t('arena.lblStartFight') }}
+          </VBtn>
           <v-progress-circular
               v-if="isLoading"
               class="loader"
@@ -37,6 +47,7 @@
           />
         </div>
 
+        <div class="scroll-gap"/>
 
       </div>
     </div>
@@ -45,6 +56,10 @@
 
 <script setup>
 import {ref} from 'vue';
+import {useI18n} from "vue-i18n";
+
+const {t} = useI18n({useScope: 'global'})
+
 import BetSlider from "@/components/fragments/arena/BetSlider.vue";
 import ActionSlider from "@/components/fragments/arena/ActionSlider.vue";
 import TimeSlider from "@/components/fragments/arena/TimeSlider.vue";
@@ -54,11 +69,11 @@ const selectedBet = ref(10);
 const selectedActions = ref(3);
 const selectedTime = ref(10);
 const isLoading = ref(false);
-const txtStatus = ref("It's time to test your resolve");
+const txtStatus = ref(t('arena.lblTestResolve'));
 
 const startFight = () => {
   isLoading.value = true;
-  txtStatus.value = "The search for a worthy opponent...";
+  txtStatus.value = t('arena.lblSearchOpponent');
 
   setTimeout(() => {
     //TODO id боя получить
@@ -82,7 +97,7 @@ const startFight = () => {
   left: 0;
   width: 100vw;
   height: 100vh;
-   background: linear-gradient(to right bottom, black 25%, transparent 75%);
+  background: linear-gradient(to right bottom, black 25%, transparent 75%);
   z-index: 1;
 }
 
@@ -108,28 +123,31 @@ const startFight = () => {
 .arena-container {
   position: relative;
   z-index: 10;
+  overflow-y: auto;
+  max-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   color: white;
-  height: 100vh;
 
 }
 
 .arena-content-wrapper {
   width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  padding: 10vh 0;
+  box-sizing: border-box;
+  max-width: 1024px;
+  margin: 0 auto;
 }
+
 
 .sliders-wrapper {
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: center;
+  margin-top: calc((100vh - 100%) / 10);
 }
 
 .slider-container {
@@ -174,14 +192,26 @@ const startFight = () => {
 }
 
 .fight-button-wrapper {
+  position: relative;
   margin-top: 30px;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  align-items: center;
 }
 
-.fight-button-wrapper .text{
+.btn-help-container {
+  position: absolute;
+  top: 71%;
+  right: 20px;
+  transform: translateY(-69%);
+}
+
+.fight-button-wrapper .text {
   text-align: center;
 }
 
-.loader{
+.loader {
   margin: 10px auto;
   display: block;
 }
@@ -192,4 +222,23 @@ const startFight = () => {
   color: white !important;
   margin: 10px;
 }
+
+.btn-help {
+  display: flex;
+  font-family: Anonymous, sans-serif;
+  color: white;
+  font-size: 2.5em;
+  border-radius: 4px;
+  width: 50px;
+  height: 50px;
+  cursor: pointer;
+  border: 1px solid var(--gray2);
+}
+
+.scroll-gap {
+  display: block;
+  position: relative;
+  height: 50px;
+}
+
 </style>

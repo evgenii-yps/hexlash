@@ -63,6 +63,7 @@
 </template>
 
 <script setup>
+//TODO ADD HELP ICON
 
 import {computed, onMounted, onUnmounted, ref, watch, watchEffect} from 'vue';
 import clickSound from '@/assets/sound/punch_hit.mp3'

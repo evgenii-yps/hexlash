@@ -93,7 +93,7 @@ const cardStyles = computed(() => ({
 
 .card-container {
   position: relative;
-  width: 90%;
+  width: 100%;
   max-width: 1024px;
   margin: 0 auto;
   transform: translateY(-2vw);
@@ -103,7 +103,7 @@ const cardStyles = computed(() => ({
   display: flex;
   flex-direction: column;
   border: 1px solid var(--gray1);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
   background: var(--white);
   box-sizing: border-box;
   overflow: auto;

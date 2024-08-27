@@ -32,7 +32,8 @@
               <template #prepend>
                 <img src="@/assets/images/icon_members.svg" alt="" class="custom-icon" style="width:30px;"/>
               </template>
-              <span> {{ clubData.members }}</span> участников
+
+              <div v-html="formattedMembers"/>
             </VBtnDark>
 
             <div v-if="isOwner" class="controls">
@@ -52,10 +53,10 @@
                     <template #activator="{ props }">
                       <img v-bind="props" @click.stop="toggleToolTip" src="@/assets/images/icon_lock_white.svg" alt="" class="custom-icon"/>
                     </template>
-                    <span>Сделать клуб закрытым, коды приглашений участников клуба не будут работать, приглашать сможет только создать клуба</span>
+                    <span>{{t('club.lblCloseClubTooltip')}}</span>
                   </v-tooltip>
                 </template>
-                Открытый клуб
+                {{t('club.lblOpenClub')}}
                 <template #append>
                   <span class="custom-icon"/>
                   <v-switch
@@ -85,7 +86,7 @@
                 <template #prepend>
                   <img src="@/assets/images/icon_arrow.svg" alt="" class="custom-icon"/>
                 </template>
-                Перейти в этот клуб
+                {{t('club.lblChangeClub')}}
                 <template #append>
                   <span class="custom-icon"/>
                 </template>
@@ -93,16 +94,14 @@
 
               <VModal v-model="dialogChangeClub" max-width="500">
                 <VCard>
-                  <v-card-title class="headline">Поменять клуб</v-card-title>
+                  <v-card-title class="headline">{{t('club.lblChangeClub')}}</v-card-title>
                   <v-card-text>
-                    Ты собираешься покинуть свой текущий клуб и перейти в новый. Твой код приглашения будет действовать
-                    в новом клубе, но если старый клуб закрыт, ты не сможешь вернуться обратно. Ты действительно хочешь
-                    сделать этот шаг?
+                    {{t('club.lblChangeClubDescription')}}
                   </v-card-text>
                   <v-card-actions>
                     <v-spacer></v-spacer>
-                    <v-btn @click="dialogChangeClub = false" class="cancel-btn">Отмена</v-btn>
-                    <v-btn @click="confirmExit" class="confirm-btn">Я готов</v-btn>
+                    <v-btn @click="dialogChangeClub = false" class="cancel-btn">{{t('modal.btnCancel')}}</v-btn>
+                    <v-btn @click="confirmExit" class="confirm-btn">{{t('club.lblConfirm')}}</v-btn>
                   </v-card-actions>
                 </VCard>
               </VModal>
@@ -118,6 +117,8 @@
 import {ref, computed, nextTick, onMounted, onBeforeMount, watch} from 'vue';
 import {useRoute} from 'vue-router';
 import store from "@/core/state/store.js";
+import {useI18n} from "vue-i18n";
+
 import ClubAvatar from "@/components/fragments/club/ClubAvatar.vue";
 import ClubStats from "@/components/fragments/club/ClubStats.vue";
 import router from "@/router/index.js";
@@ -125,6 +126,8 @@ import ClubWithdraw from "@/components/fragments/club/ClubWithdraw.vue";
 import ClubEdit from "@/components/fragments/club/ClubEdit.vue";
 import ClubOwnerAvatar from "@/components/fragments/club/ClubOwnerAvatar.vue";
 
+
+const {t} = useI18n({useScope: 'global'})
 const route = useRoute();
 const clubId = route.params.id;
 const master = computed(() => store.getters['master/getMaster']);
@@ -194,9 +197,17 @@ const btnToJoin = () => {
 
 const confirmExit = () => {
   dialogChangeClub.value = false;
-  console.log("Выход из клуба подтвержден и переход в новый клуб...");
+
+  // TODO Exit
 }
 
+
+// Формирование строки и замена числа на пустую строку
+const formattedMembers = computed( () => {
+  const translation = t('club.lblClubMembers', clubData.value.members);
+  const textWithoutNumber = translation.replace(clubData.value.members, '').trim();
+  return `<span style="font-size: 1.5em; margin-right: 5px">${clubData.value.members}</span>${textWithoutNumber}`;
+});
 
 </script>
 
@@ -318,11 +329,6 @@ const confirmExit = () => {
   cursor: pointer;
   display: flex;
   background-color: var(--gray1) !important;
-}
-
-.club-btn span {
-  font-size: 1.5em;
-  margin-right: 5px
 }
 
 .custom-icon {

@@ -1,9 +1,17 @@
 {
   "loading": "Loading...",
+  "menu": {
+    "arena": "Arena",
+    "trainings": "Training",
+    "ratings": "Ratings",
+    "profile": "Profile"
+  },
   "modal": {
     "btnCancel": "Cancel",
     "btnConfirm": "Confirm",
-    "btnOk": "OK"
+    "btnOk": "OK",
+    "btnSave": "Save",
+    "btnCreate": "Create"
   },
   "auth": {
     "login": {
@@ -125,6 +133,7 @@
       "lblCreateClub": "Create Club",
       "lblWalletManagement": "Wallet Management",
       "lblSettings": "Settings / Skin / More",
+      "lblHelp": "Help / Rules",
       "lblLogout": "Logout",
       "tooltipInsufficientFunds": "Not enough funds to create a club",
       "lblConfirmLogout": "Confirm logout",
@@ -147,5 +156,51 @@
       "lblInvitedUsers": "Invited Users",
       "lblDaysInClub": "Days in Club (without skips)"
     }
+  },
+  "arena": {
+    "lblYourBet": "Your Bet",
+    "lblNumberOfHits": "Number of Hits",
+    "lblFightTime": "Fight Time",
+    "lblSeconds": "sec",
+    "lblStartFight": "Start Fight",
+    "lblTestResolve": "It's time to test your resolve",
+    "lblSearchOpponent": "The search for a worthy opponent..."
+  },
+  "club": {
+    "lblClubMembers": "{n} members",
+    "lblOpenClub": "Open Club",
+    "lblCloseClubTooltip": "Make the club private, club members' invitation codes will not work, only the club creator will be able to invite new members",
+    "lblChangeClub": "Change Club",
+    "lblChangeClubDescription": "You are about to leave your current club and join a new one. Your invitation code will be valid in the new club, but if the old club is private, you will not be able to return. Are you sure you want to make this move?",
+    "lblConfirm": "I'm ready",
+    "lblEditClub": "Edit Club",
+    "lblClubName": "Name",
+    "lblClubDescription": "Description",
+    "lblEditTooltip": "Change the name and description of the club",
+    "invalidCharacters": "The name can only contain Latin letters and numbers",
+    "tooLong": "The name must not exceed 32 characters",
+    "empty": "The name must not be empty",
+    "lblErrorSaving": "Error saving",
+    "lblTotalFights": "Total Fights",
+    "lblWins": "Wins",
+    "lblTokensWithdraw": "Withdraw tokens",
+    "lblClubTokens": "Club Tokens",
+    "lblWithdrawTooltip": "Withdraw tokens earned by the club",
+    "lblWallet": "Wallet",
+    "lblAmount": "Amount",
+    "lblCalculationResult": "You will get",
+    "lblFCTokens": "FC tokens",
+    "lblNotice": "Tokens will be credited to the specified wallet within 24 hours. The transaction fee is 3%.",
+    "lblCancel": "Cancel",
+    "lblWithdraw": "Withdraw",
+    "modalTitle": "Create New Club",
+    "inputName": "Name",
+    "inputDescription": "Description",
+    "notice": "You can only create a club once. After creation, your invitation code will be valid for your own club. After creation, funds will be deducted from your account.",
+    "cost": "Cost",
+    "errorInvalidCharacters": "The name can only contain Latin letters and numbers.",
+    "errorTooLong": "The name must not exceed 32 characters.",
+    "errorEmpty": "The name must not be empty.",
+    "errorCreate": "Error creating club"
   }
 }

@@ -18,6 +18,9 @@
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Howl } from 'howler'
+import {useI18n} from "vue-i18n";
+
+const {t} = useI18n({useScope: 'global'})
 
 import clickSound from '@/assets/sound/punch_air.mp3'
 
@@ -30,10 +33,10 @@ const playSound = () => {
 }
 
 const menuItems = ref([
-  {icon: 'icon-arena', text: 'Arena', route: '/arena'},
-  {icon: 'icon-trainings', text: 'Training', route: '/training'},
-  {icon: 'icon-ratings', text: 'Ratings', route: '/ratings/clubs'},
-  {icon: 'icon-profile', text: 'Profile', route: '/profile'},
+  {icon: 'icon-arena', text: t('menu.arena'), route: '/arena'},
+  {icon: 'icon-trainings', text: t('menu.trainings'), route: '/training'},
+  {icon: 'icon-ratings', text: t('menu.ratings'), route: '/ratings/clubs'},
+  {icon: 'icon-profile', text: t('menu.profile'), route: '/profile'},
 ])
 
 const route = useRoute()
@@ -49,11 +52,13 @@ const isActive = (item) => {
 <style scoped>
 .bottom-menu {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   padding: 1rem;
   position: fixed;
   bottom: 0;
   width: 100%;
+  max-width: 1024px;
+
 }
 
 .menu-item {
@@ -63,8 +68,6 @@ const isActive = (item) => {
   background-color: var(--black-opacity-80);
   text-decoration: none;
   transition: color 0.3s ease;
-  min-width: 10vw;
-  min-height: 5vh;
   border-radius: 0.2rem;
   padding: 0.9rem 1rem;
   flex: 1;

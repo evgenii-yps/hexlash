@@ -9,7 +9,6 @@
           <VBtnDark :class="{'active-tab': activeTab === Tabs.FIGHTERS}" @click="setActiveTab(Tabs.FIGHTERS)">Рейтинг
             участников
           </VBtnDark>
-<!--          <VBtnDark @click="openCreateClubModal">Создать клуб</VBtnDark>-->
         </div>
 
         <div v-if="activeTab === Tabs.CLUBS" class="table-wrapper">
@@ -183,13 +182,11 @@
       </div>
     </div>
 
-    <CreateClubModal v-model="isCreateClubModalOpen" @close="isCreateClubModalOpen = false"/>
   </div>
 </template>
 <script setup>
 import {ref, onMounted, watch} from 'vue';
 import {useRouter, useRoute} from 'vue-router';
-import CreateClubModal from "@/components/fragments/ratings/CreateClubModal.vue";
 import InputField from "@/components/ui/InputField.vue";
 import debounce from "debounce";
 

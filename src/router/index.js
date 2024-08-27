@@ -9,6 +9,7 @@ const authRoutes = [
 const publicRoutes = [
     {path: '/privacy', name: 'Privacy', component: () => import("/src/views/PageView.vue")},
     {path: '/rules', name: 'Rules', component: () => import("/src/views/PageView.vue")},
+    {path: '/help', name: 'Help', component: () => import("/src/views/PageView.vue")},
     {path: '/404', name: 'NotFound', component: () => import("/src/views/NotFoundView.vue")},
 ];
 
@@ -33,7 +34,6 @@ const protectedRoutes = [
     {path: '/training/punch', name: 'Punch', component: () => import("/src/components/fragments/training/Punch.vue")},
 
     {path: '/fight/:id', name: 'Fight', component: () => import("/src/views/FightView.vue")},
-
 
 ];
 

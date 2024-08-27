@@ -36,9 +36,8 @@ import {
 } from 'vuetify/components';
 import {createI18n} from "vue-i18n";
 import App from "@/App.vue";
+import {messages, ruCountRule} from "@/locales/index.js";
 
-import en from '@/locales/en.json'
-import ru from '@/locales/ru.json'
 
 const vuetify = createVuetify({
     components: {
@@ -99,7 +98,10 @@ export const i18n = createI18n({
     legacy: false,
     locale: 'en',
     fallbackLocale: 'en',
-    messages: Object.assign({en, ru}),
+    pluralRules: {
+        ru: ruCountRule
+    },
+    messages: Object.assign(messages),
 })
 
 async function initializeApp() {

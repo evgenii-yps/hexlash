@@ -11,10 +11,10 @@
         <template #activator="{ props }">
           <img v-bind="props" @click.stop="toggleToolTip" src="@/assets/images/icon_tokens.svg" alt="" class="custom-icon"/>
         </template>
-        <span>Вывод заработанных клубом токенов</span>
+        <span>{{ t('club.lblWithdrawTooltip') }}</span>
       </v-tooltip>
     </template>
-    Токены клуба
+    {{ t('club.lblClubTokens') }}
     <template #append>
       <span class="custom-icon"/>
       <span style="right: 0; position: absolute;">{{ balance }}$</span>
@@ -23,18 +23,18 @@
 
   <VModal v-model="dialogWithdraw" max-width="500" @click:outside="hide">
     <VCard>
-      <v-card-title class="headline">Вывести токены</v-card-title>
+      <v-card-title class="headline">{{ t('club.lblTokensWithdraw') }}</v-card-title>
       <v-card-text class="text-center">
 
         <v-text-field
-            label="Wallet"
+            :label="t('club.lblWallet')"
             v-model="wallet"
             class="wallet-field"
         >
         </v-text-field>
 
         <v-text-field
-            label="Amount"
+            :label="t('club.lblAmount')"
             v-model="amount"
             class="amount-field"
             @input="updateAmount"
@@ -50,16 +50,16 @@
           />
 
           <div v-else class="calculation-result">
-            <span>You will get </span> {{ calculatedFC }} <span>FC tokens</span>
-            <p class="notice">Деньги будут зачислены на указанный кошелек в течении 24х часов, комиссия за операцию составляет 3%</p>
+            <span>{{ t('club.lblCalculationResult') }} </span> {{ calculatedFC }} <span>{{ t('club.lblFCTokens') }}</span>
+            <p class="notice">{{ t('club.lblNotice') }}</p>
           </div>
         </div>
 
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <VBtnDark @click="hide" class="cancel-btn">Отмена</VBtnDark>
-        <VBtn @click="btnWithdraw" class="confirm-btn">Withdraw</VBtn>
+        <VBtnDark @click="hide" class="cancel-btn">{{ t('modal.btnCancel') }}</VBtnDark>
+        <VBtn @click="btnWithdraw" class="confirm-btn">{{ t('club.lblWithdraw') }}</VBtn>
       </v-card-actions>
     </VCard>
   </VModal>
@@ -68,7 +68,9 @@
 <script setup>
 import {onMounted, ref, watch} from 'vue';
 import debounce from "debounce";
-import store from "@/core/state/store.js";
+import {useI18n} from "vue-i18n";
+
+const {t} = useI18n({useScope: 'global'})
 
 const props = defineProps({
   balance: {

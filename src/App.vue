@@ -2,7 +2,7 @@
   <div class="app-container">
     <header class="header">
       <div class="header-content">
-        <Logo @click="goToHome" />
+        <Logo @click="goToHome"/>
         <div v-if="balance !== null" class="balance">
           {{ balance }}$
         </div>
@@ -13,7 +13,7 @@
       <RouterView/>
     </main>
 
-    <footer>
+    <footer class="footer">
       <transition name="slide-up-down">
         <BottomMenu v-if="showBottomMenu"/>
       </transition>
@@ -38,24 +38,18 @@ const balance = computed(() => {
   return null;
 });
 
-// Получаем текущий маршрут
-const route = useRoute()
-
 const goToHome = () => {
   router.push('/');
 };
 
 // Определяем, нужно ли показывать BottomMenu
-const showBottomMenu = computed(() => {
-  // Список маршрутов, на которых BottomMenu должен отображаться
-  const includedRoutes = ['/arena', '/training', '/ratings/clubs', '/ratings/fighters',
-    '/profile', '/profile/wallet', '/profile/balance', '/profile/account', '/404']
-  // Проверка, если маршрут совпадает с включенными маршрутами или начинается с /user/
-  return includedRoutes.includes(route.path) ||
-      route.path.startsWith('/user/') ||
-      route.path.startsWith('/club/') ||
-      route.path.startsWith('/fight/');
-})
+const showBottomMenu = ref(false);
+
+const authState = computed(() => store.getters['master/getAuthState']);
+
+watch(authState, (newAuthState) => {
+  showBottomMenu.value = newAuthState.isAuthenticated;
+}, {immediate: true});
 
 </script>
 
@@ -115,6 +109,12 @@ const showBottomMenu = computed(() => {
 
 .slide-up-down-leave-to {
   transform: translateY(100%);
+}
+
+.footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 

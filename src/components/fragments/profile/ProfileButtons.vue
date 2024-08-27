@@ -63,8 +63,16 @@
 
     <VBtnDark
         class="profile-btn"
-        @click="dialogExit = true"
-    >
+        @click="navigateTo('Help')">
+      <template #prepend>
+        <img src="@/assets/images/icon_arrow.svg" alt="Arrow Icon" class="custom-icon"/>
+      </template>
+      {{ t('profile.buttons.lblHelp') }}
+    </VBtnDark>
+
+    <VBtnDark
+        class="profile-btn"
+        @click="dialogExit = true">
       <template #prepend>
         <img src="@/assets/images/icon_arrow.svg" alt="Arrow Icon" class="custom-icon"/>
       </template>

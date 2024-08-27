@@ -73,7 +73,6 @@ import ButtonText from "@/components/ui/ButtonText.vue";
 import {useRouter} from 'vue-router';
 
 import store from "@/core/state/store.js";
-import {AuthStateModel} from "@/core/models/AuthStateModel.js";
 
 const router = useRouter();
 
@@ -87,8 +86,6 @@ const handleSubmit = async () => {
 
   loading.value = true;
 
-  store.commit('master/setAuthState', new AuthStateModel());
-
   try {
     const credentials = {login: login.value, password: password.value};
     await store.dispatch('master/login', credentials); // Используем action для логина
@@ -98,10 +95,10 @@ const handleSubmit = async () => {
 
 };
 
-
 const handleInvite = () => {
   router.push('/auth/invite');
 };
+
 </script>
 
 <style scoped>

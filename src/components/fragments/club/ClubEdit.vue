@@ -10,12 +10,13 @@
           max-width="250px"
           contentClass="v-tooltip__content">
         <template #activator="{ props }">
-          <img v-bind="props" @click.stop="toggleToolTip" src="@/assets/images/icon_pencil.svg" alt="" class="custom-icon"/>
+          <img v-bind="props" @click.stop="toggleToolTip" src="@/assets/images/icon_pencil.svg" alt=""
+               class="custom-icon"/>
         </template>
-        <span>Поменять название и описание клуба</span>
+        <span>{{ t('club.lblEditTooltip') }}</span>
       </v-tooltip>
     </template>
-    Редактировать
+    {{ t('club.lblEditClub') }}
     <template #append>
       <span class="custom-icon"/>
     </template>
@@ -23,11 +24,11 @@
 
   <VModal v-model="dialogEdit" max-width="500" @click:outside="hide">
     <VCard>
-      <v-card-title class="headline">Редактировать</v-card-title>
+      <v-card-title class="headline">{{ t('club.lblEditClub') }}</v-card-title>
       <v-card-text class="text-center">
 
         <v-text-field
-            label="Название"
+            :label="t('club.lblClubName')"
             v-model="title"
             class="title-field"
             :error-messages="titleError"
@@ -35,7 +36,7 @@
         </v-text-field>
 
         <v-textarea
-            label="Описание"
+            :label="t('club.lblClubDescription')"
             v-model="description"
             class="description-field"
         >
@@ -56,8 +57,8 @@
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <VBtnDark @click="hide" class="cancel-btn">Отмена</VBtnDark>
-        <VBtn @click="saveChanges" class="confirm-btn">Сохранить</VBtn>
+        <VBtnDark @click="hide" class="cancel-btn">{{ t('modal.btnCancel') }}</VBtnDark>
+        <VBtn @click="saveChanges" class="confirm-btn">{{ t('modal.btnSave') }}</VBtn>
       </v-card-actions>
     </VCard>
   </VModal>
@@ -66,6 +67,9 @@
 <script setup>
 import {computed, onMounted, ref} from 'vue';
 import store from "@/core/state/store.js";
+import {useI18n} from "vue-i18n";
+
+const {t} = useI18n({useScope: 'global'})
 
 const props = defineProps({
   clubData: {
@@ -99,15 +103,15 @@ const showToolTip = ref(false);
 const validateTitle = () => {
   const regex = /^[a-zA-Z0-9\s]*$/; // Разрешены латинские буквы, цифры и пробелы
   if (!regex.test(title.value)) {
-    titleError.value  = 'Название может содержать только латинские буквы и цифры';
+    titleError.value = t('club.invalidCharacters');
     return false;
   }
   if (title.value.length > 32) {
-    titleError.value = 'Название не должно превышать 32 символа';
+    titleError.value = t('club.tooLong');
     return false;
   }
-  if(title.value.length === 0) {
-    titleError.value = 'Название не должно быть пустым';
+  if (title.value.length === 0) {
+    titleError.value = t('club.empty');
     return false;
   }
   titleError.value = '';
@@ -136,7 +140,7 @@ const saveChanges = async () => {
     hide();
 
   } catch (error) {
-    resultMessage.value = 'Ошибка при сохранении';
+    resultMessage.value = t('club.lblErrorSaving');
   } finally {
     loading.value = false;
   }
@@ -159,7 +163,7 @@ const saveChanges = async () => {
   background-color: var(--gray1) !important;
 }
 
-.title-field :deep(.v-input__details){
+.title-field :deep(.v-input__details) {
   display: block !important;
 }
 
