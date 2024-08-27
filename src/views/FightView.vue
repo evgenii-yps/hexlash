@@ -10,7 +10,7 @@
               @click="btnAgain">
             <img src="@/assets/images/icon_arrow.svg" alt="" class="custom-icon"/>
           </VBtn>
-          next fight
+          {{t('fight.btnNextFight')}}
         </div>
 
         <!-- Обратный отсчет -->
@@ -66,32 +66,13 @@
           <!-- Модальное окно помощи -->
           <VModal v-model="dialogHelp" max-width="500" @click:outside="hideHelp">
             <VCard>
-              <v-card-title class="headline">Пошаговый бой</v-card-title>
-              <v-card-text class="text-center">
-                <p>В течение отведенного времени выберите действия для атаки и защиты.</p>
-                <br/>
-                <p style="margin-bottom: 10px"><strong>Доступные действия:</strong></p>
-                <ul style="color:var(--white); margin-left: 20px">
-                  <li><strong>HD (Head Defence):</strong> защита головы</li>
-                  <li><strong>BD (Body Defence):</strong> защита тела</li>
-                  <li><strong>HH (Head Hit):</strong> удар в голову</li>
-                  <li><strong>BH (Body Hit):</strong> удар в тело</li>
-                </ul>
-                <br/>
-                <p>После выбора действий происходит сравнение с действиями противника. Побеждает тот, кто нанесёт
-                  больше ударов и пропустит меньше ударов.</p>
-                <br/>
-                <p style="margin-bottom: 10px; color:var(--white);"><strong>Пример:</strong></p>
-                <p>Вы: HD, HH, BD</p>
-                <p>Противник: HH, BD, BH</p>
-                <p>Итог: вы нанесли 1 удар, блокировали 2 удара противника. <strong>Победитель:</strong> Вы </p>
-                <br/>
-                <p><strong style="color:var(--white)">Важно:</strong> нельзя выбрать все действия как атаки или все
-                  как защиты. Одно из действий должно быть противоположным.</p>
+              <v-card-title class="headline">{{t('fight.modalHelpTitle')}}</v-card-title>
+              <v-card-text v-html="t('fight.modalHelpTextHtml')" class="text-center">
+
               </v-card-text>
               <v-card-actions>
                 <v-spacer></v-spacer>
-                <VBtn @click="hideHelp" class="confirm-btn">ОК</VBtn>
+                <VBtn @click="hideHelp" class="confirm-btn">{{t('modal.btnOk')}}</VBtn>
               </v-card-actions>
             </VCard>
           </VModal>
@@ -116,6 +97,9 @@ import {computed, onMounted, ref} from 'vue';
 import Fighter from "@/components/fragments/fight/Fighter.vue";
 import store from "@/core/state/store.js";
 import {useRoute} from "vue-router";
+import {useI18n} from "vue-i18n";
+
+const {t} = useI18n({useScope: 'global'})
 
 const master = computed(() => store.getters['master/getMaster']);
 const countdown = ref(3);
@@ -137,7 +121,7 @@ const fightId = computed(() => route.params.id);
 
 // Массив для отображения countAction квадратиков
 const countActionArray = computed(() => Array.from({length: 5}));
-const strProgress = ref('До конца боя осталось:');
+const strProgress = ref(`${t('fight.progress')}`);
 
 // TODO приходить будет из сокета в стейт
 const progressValue = ref(1000);  // Начальное значение прогресса 100%
@@ -173,7 +157,7 @@ const meAction = (action) => {
 
   if (leftResults.value.length >= countActionArray.value.length) {
     isFight.value = false;
-    strProgress.value = 'Ожидание соперника...';
+    strProgress.value = t('fight.waitingForOpponent');
   }
 }
 
@@ -197,7 +181,7 @@ const rivalAction = (action) => {
 
   if (leftResults.value.length >= countActionArray.value.length) {
     isFight.value = false;
-    strProgress.value = 'Ожидание соперника...';
+    strProgress.value = t('fight.waitingForOpponent');
   }
 }
 
@@ -266,7 +250,7 @@ const onFightEnd = () => {
   isFightFinished.value = true;
   progressValue.value = 0;
   countdown.value = 0;
-  strProgress.value = 'Бой завершён!';
+  strProgress.value = t('fight.fightFinished');
 
   // TEMP
   leftFighter.value = 'WIN';

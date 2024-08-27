@@ -15,12 +15,12 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import {computed, ref, watch} from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Howl } from 'howler'
 import {useI18n} from "vue-i18n";
 
-const {t} = useI18n({useScope: 'global'})
+const {t, locale} = useI18n({useScope: 'global'})
 
 import clickSound from '@/assets/sound/punch_air.mp3'
 
@@ -32,7 +32,7 @@ const playSound = () => {
   sound.play();
 }
 
-const menuItems = ref([
+const menuItems = computed(() => [
   {icon: 'icon-arena', text: t('menu.arena'), route: '/arena'},
   {icon: 'icon-trainings', text: t('menu.trainings'), route: '/training'},
   {icon: 'icon-ratings', text: t('menu.ratings'), route: '/ratings/clubs'},
@@ -52,7 +52,7 @@ const isActive = (item) => {
 <style scoped>
 .bottom-menu {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   padding: 1rem;
   position: fixed;
   bottom: 0;
@@ -70,8 +70,11 @@ const isActive = (item) => {
   transition: color 0.3s ease;
   border-radius: 0.2rem;
   padding: 0.9rem 1rem;
-  flex: 1;
-  margin: 0 0.5rem;
+  flex-grow: 1; /* Позволяет элементу растягиваться */
+  flex-basis: 0;
+  margin: 0 0.3rem;
+  box-sizing: border-box;
+  width: 80px;
 }
 
 .menu-item:hover, .menu-item.active {
@@ -85,6 +88,7 @@ const isActive = (item) => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-size: clamp(0.8rem, 2vw, 1rem);
 }
 
 .menu-item:hover .menu-text, .menu-item.active .menu-text {

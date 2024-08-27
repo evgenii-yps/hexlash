@@ -1,5 +1,6 @@
 {
   "loading": "Loading...",
+  "you": "(You)",
   "menu": {
     "arena": "Arena",
     "trainings": "Training",
@@ -146,23 +147,23 @@
       "lblTooltipText": "The first rule of Fight Club: tell everyone about Fight Club. Remember, this is your ticket to freedom. Share this freedom with others."
     },
     "stats": {
-      "lblTotalFights": "Total Fights",
+      "lblTotalFights": "Total fights",
       "lblWins": "Wins",
       "lblLosses": "Losses",
       "lblDraws": "Draws",
-      "lblLuckPercentage": "Luck Percentage",
-      "lblWonTokens": "Tokens Won in Fights",
-      "lblFreeTokens": "Free Tokens",
-      "lblInvitedUsers": "Invited Users",
-      "lblDaysInClub": "Days in Club (without skips)"
+      "lblLuckPercentage": "Luck percentage",
+      "lblWonTokens": "Tokens won in fights",
+      "lblFreeTokens": "Workout tokens",
+      "lblInvitedUsers": "Invited users",
+      "lblDaysInClub": "Days in club (without skips)"
     }
   },
   "arena": {
-    "lblYourBet": "Your Bet",
-    "lblNumberOfHits": "Number of Hits",
-    "lblFightTime": "Fight Time",
+    "lblYourBet": "Your bet",
+    "lblNumberOfHits": "Number of hits",
+    "lblFightTime": "Fight time",
     "lblSeconds": "sec",
-    "lblStartFight": "Start Fight",
+    "lblStartFight": "Start fight",
     "lblTestResolve": "It's time to test your resolve",
     "lblSearchOpponent": "The search for a worthy opponent..."
   },
@@ -173,7 +174,7 @@
     "lblChangeClub": "Change Club",
     "lblChangeClubDescription": "You are about to leave your current club and join a new one. Your invitation code will be valid in the new club, but if the old club is private, you will not be able to return. Are you sure you want to make this move?",
     "lblConfirm": "I'm ready",
-    "lblEditClub": "Edit Club",
+    "lblEditClub": "Edit club",
     "lblClubName": "Name",
     "lblClubDescription": "Description",
     "lblEditTooltip": "Change the name and description of the club",
@@ -181,10 +182,10 @@
     "tooLong": "The name must not exceed 32 characters",
     "empty": "The name must not be empty",
     "lblErrorSaving": "Error saving",
-    "lblTotalFights": "Total Fights",
+    "lblTotalFights": "Total fights",
     "lblWins": "Wins",
     "lblTokensWithdraw": "Withdraw tokens",
-    "lblClubTokens": "Club Tokens",
+    "lblClubTokens": "Club tokens",
     "lblWithdrawTooltip": "Withdraw tokens earned by the club",
     "lblWallet": "Wallet",
     "lblAmount": "Amount",
@@ -202,5 +203,35 @@
     "errorTooLong": "The name must not exceed 32 characters.",
     "errorEmpty": "The name must not be empty.",
     "errorCreate": "Error creating club"
+  },
+  "fight": {
+    "btnNextFight": "next fight",
+    "progress": "Time left in fight:",
+    "waitingForOpponent": "Waiting for opponent...",
+    "fightFinished": "Fight finished!",
+    "modalHelpTitle": "Step-by-step fight",
+    "modalHelpTextHtml": "<p>Within the allocated time, choose actions for attack and defense.</p><br/><p style=\"margin-bottom: 10px\"><strong>Available actions:</strong></p><ul style=\"color:var(--white); margin-left: 20px\"><li><strong>HD (Head Defence):</strong> head defense</li><li><strong>BD (Body Defence):</strong> body defense</li><li><strong>HH (Head Hit):</strong> head hit</li><li><strong>BH (Body Hit):</strong> body hit</li></ul><br/><p>After selecting actions, a comparison with the opponent's actions occurs. The winner is the one who lands more hits and receives fewer.</p><br/><p style=\"margin-bottom: 10px; color:var(--white);\"><strong>Example:</strong></p><p>You: HD, HH, BD</p><p>Opponent: HH, BD, BH</p><p>Result: you landed 1 hit, blocked 2 of the opponent's hits. <strong>Winner:</strong> You </p><br/><p><strong style=\"color:var(--white)\">Important:</strong> You cannot select all actions as attacks or all as defenses. One of the actions must be the opposite.</p>"
+  },
+  "training": {
+    "timerText": "Punch bag is down, fighter. Hold on, we’ll replace it for you soon."
+  },
+  "rating": {
+    "clubs": "Club rating",
+    "fighters": "Fighter rating",
+    "clubPlaceholder": "Search club",
+    "participantPlaceholder": "Search",
+    "clubName": "Club Name",
+    "points": "Total points",
+    "members": "Members",
+    "participantName": "Name",
+    "club": "Club",
+    "fc": "FC amount",
+    "losses": "Losses",
+    "luck": "Luck percentage",
+    "total": "Total fights",
+    "wins": "Wins",
+    "noResults": "No results found",
+    "error": "Something went wrong...",
+    "btnRetry": "Retry"
   }
 }

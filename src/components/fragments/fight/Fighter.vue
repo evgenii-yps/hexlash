@@ -45,7 +45,9 @@ import UserAvatar from "@/components/fragments/profile/UserAvatar.vue";
 import UserName from "@/components/fragments/profile/UserName.vue";
 import {computed, onMounted, ref, watch} from "vue";
 import {VImg} from "vuetify/components";
+import {useI18n} from "vue-i18n";
 
+const {t} = useI18n({useScope: 'global'})
 
 const props = defineProps({
   userData: {
@@ -78,7 +80,7 @@ const props = defineProps({
 });
 
 const fighterImage = computed(() => props.userData.skin);
-const strYou = computed(() => props.isMaster ? " (You)" : "");
+const strYou = computed(() => props.isMaster ? ` ${t('you')}` : "");
 const isMoveCircles = computed(() => props.isMove);
 const isVisibleCircles = computed(() => props.isVisibleCircles);
 const statusFighter = computed(() => props.statusFighter);

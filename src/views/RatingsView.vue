@@ -3,11 +3,13 @@
     <div class="rating-container">
       <div class="rating-content-wrapper">
         <div class="rating-tabs">
-          <VBtnDark :class="{'active-tab': activeTab === Tabs.CLUBS} " @click="setActiveTab(Tabs.CLUBS)">Рейтинг
-            клубов
+          <VBtnDark :class="{'active-tab': activeTab === Tabs.CLUBS} "
+                    @click="setActiveTab(Tabs.CLUBS)">
+            {{t('rating.clubs')}}
           </VBtnDark>
-          <VBtnDark :class="{'active-tab': activeTab === Tabs.FIGHTERS}" @click="setActiveTab(Tabs.FIGHTERS)">Рейтинг
-            участников
+          <VBtnDark :class="{'active-tab': activeTab === Tabs.FIGHTERS}"
+                    @click="setActiveTab(Tabs.FIGHTERS)">
+            {{t('rating.fighters')}}
           </VBtnDark>
         </div>
 
@@ -20,7 +22,7 @@
                 inputBorderColor="var(--gray1)"
                 inputTextColor="var(--white)"
                 padding="0.8rem"
-                placeholder="Поиск клуба"
+                :placeholder="t('rating.clubPlaceholder')"
                 class="search-input"
                 @input="handleClubSearchInput"
             />
@@ -35,8 +37,7 @@
                 bg-color="var(--black-opacity-80)"
                 class="custom-select"
                 style="max-width: 250px; width: 70%"
-                :hideNoData="true"
-            >
+                :hideNoData="true">
               <template v-slot:item="{ props, item }">
                 <v-list-item v-bind="props"></v-list-item>
               </template>
@@ -48,7 +49,7 @@
 
           <div class="table-body">
             <div class="table-header-row">
-              <span class="column-name">Название клуба</span>
+              <span class="column-name">{{t('rating.clubName')}}</span>
               <span class="column">
     <img :class="{'active-sort-icon': sortClubBy === 'members'}" src="@/assets/images/icon_members.svg"
          alt="sort icon"/>
@@ -69,7 +70,7 @@
                 </div>
               </template>
               <template v-else>
-                <div class="no-results" v-if="clubsLimitReached">Ничего не найдено</div>
+                <div class="no-results" v-if="clubsLimitReached">{{t('rating.noResults')}}</div>
               </template>
               <template v-slot:loading>
                 <v-progress-circular v-if="!clubsLimitReached" class="loader" size="40" indeterminate/>
@@ -77,8 +78,8 @@
               <template v-slot:error="{ props }">
                 <v-alert type="error">
                   <div class="d-flex justify-space-between align-center">
-                    Something went wrong...
-                    <v-btn color="white" size="small" variant="outlined" v-bind="props">Retry</v-btn>
+                    {{t('rating.error')}}
+                    <v-btn color="white" size="small" variant="outlined" v-bind="props">{{t('rating.btnRetry')}}</v-btn>
                   </div>
                 </v-alert>
               </template>
@@ -95,7 +96,7 @@
                 inputBorderColor="var(--gray1)"
                 inputTextColor="var(--white)"
                 padding="0.8rem"
-                placeholder="Поиск"
+                :placeholder="t('rating.participantPlaceholder')"
                 class="search-input"
                 @input="handleMemberSearchInput"
             />
@@ -123,8 +124,8 @@
 
           <div class="table-body">
             <div class="table-header-row">
-              <span class="column-name">Имя</span>
-              <span class="column-name">Клуб</span>
+              <span class="column-name">{{t('rating.participantName')}}</span>
+              <span class="column-name">{{t('rating.club')}}</span>
 
               <span class="column">
                 <img :class="{'active-sort-icon': sortParticipantBy === 'fc'}" src="@/assets/images/icon_tokens.svg"
@@ -162,7 +163,7 @@
                 </div>
               </template>
               <template v-else>
-                <div class="no-results" v-if="participantsLimitReached">Ничего не найдено</div>
+                <div class="no-results" v-if="participantsLimitReached">{{t('rating.noResults')}}</div>
               </template>
               <template v-slot:loading>
                 <v-progress-circular v-if="!participantsLimitReached" class="loader" size="40" indeterminate/>
@@ -170,8 +171,8 @@
               <template v-slot:error="{ props }">
                 <v-alert type="error">
                   <div class="d-flex justify-space-between align-center">
-                    Something went wrong...
-                    <v-btn color="white" size="small" variant="outlined" v-bind="props">Retry</v-btn>
+                    {{t('rating.error')}}
+                    <v-btn color="white" size="small" variant="outlined" v-bind="props"> {{t('rating.btnRetry')}}</v-btn>
                   </div>
                 </v-alert>
               </template>
@@ -189,6 +190,9 @@ import {ref, onMounted, watch} from 'vue';
 import {useRouter, useRoute} from 'vue-router';
 import InputField from "@/components/ui/InputField.vue";
 import debounce from "debounce";
+import {useI18n} from "vue-i18n";
+
+const {t} = useI18n({useScope: 'global'})
 
 // Enum для вкладок
 const Tabs = {
@@ -207,22 +211,20 @@ const searchMember = ref(activeTab.value === Tabs.FIGHTERS ? route.query.searchM
 const sortClubBy = ref(activeTab.value === Tabs.CLUBS ? route.query.sortClubBy || 'points' : 'points');
 const sortParticipantBy = ref(activeTab.value === Tabs.FIGHTERS ? route.query.sortParticipantBy || 'wins' : 'wins');
 
-const isCreateClubModalOpen = ref(false);
-
 const participantsLimitReached = ref(false);
 const clubsLimitReached = ref(false);
 
 const clubSortItems = [
-  {name: 'Очки побед', value: 'points'},
-  {name: 'Количество участников', value: 'members'}
+  {name: t('rating.points'), value: 'points'},
+  {name: t('rating.members'), value: 'members'}
 ];
 
 const membersSortedItem = [
-  {name: 'Выигранные бои', value: 'wins'},
-  {name: 'Количество FC', value: 'fc'},
-  {name: 'Проигранные бои', value: 'losses'},
-  {name: 'Общее количество боев', value: 'total'},
-  {name: 'Процент удачи', value: 'luck'}
+  {name: t('rating.wins'), value: 'wins'},
+  {name: t('rating.fc'), value: 'fc'},
+  {name: t('rating.losses'), value: 'losses'},
+  {name: t('rating.total'), value: 'total'},
+  {name: t('rating.luck'), value: 'luck'}
 ];
 
 const clubs = ref([]);
@@ -308,9 +310,6 @@ const setActiveTab = (tab) => {
   router.replace({path: `/ratings/${tab}`, query: updateQueryParams()});
 };
 
-const openCreateClubModal = () => {
-  isCreateClubModalOpen.value = true;
-};
 
 const viewClub = (clubId) => {
   console.log(`Просмотр клуба с ID: ${clubId}`);

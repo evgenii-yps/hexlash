@@ -40,7 +40,7 @@
           <div class="timer-overlay">
             {{ countdownText }}
           </div>
-          <div class="timer-text">Punch bag is down, fighter. Hold on, we’ll replace it for you soon.</div>
+          <div class="timer-text">{{t('training.timerText')}}</div>
         </div>
 
         <!-- Компонент DailyTasks -->
@@ -63,8 +63,6 @@
 </template>
 
 <script setup>
-//TODO ADD HELP ICON
-
 import {computed, onMounted, onUnmounted, ref, watch, watchEffect} from 'vue';
 import clickSound from '@/assets/sound/punch_hit.mp3'
 import PunchImage from "@/assets/images/punch.png"
@@ -72,6 +70,10 @@ import DailyTasks from "@/components/fragments/training/DailyTasks.vue"
 import SocialTasks from "@/components/fragments/training/SocialTasks.vue";
 import store from "@/core/state/store.js";
 import {COST_PER_CLICK, MULTIPLAYER_EXACT_CLICK, SPEED_MOVE_PUNCH_MS} from "@/core/constants.js";
+
+import {useI18n} from "vue-i18n";
+
+const {t} = useI18n({useScope: 'global'})
 
 const numbersAnimations = ref([]);
 const hitCircleRef = ref(null);
@@ -239,6 +241,7 @@ onMounted(() => {
   store.dispatch('punch/synchronizePunchResetTime');
   store.dispatch('task/fetchAllSocialTasks');
   store.dispatch('task/fetchAllDailyTasks');
+
 })
 
 onUnmounted(() => {

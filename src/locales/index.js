@@ -3,6 +3,8 @@ import enHelp from '@/locales/pages/help/en.json'
 import enRules from '@/locales/pages/rules/en.json'
 import enPrivacy from '@/locales/pages/privacy/en.json'
 
+import es from '@/locales/es.json'
+
 import ru from '@/locales/ru.json'
 import ruHelp from '@/locales/pages/help/ru.json'
 import ruRules from '@/locales/pages/rules/ru.json'
@@ -24,7 +26,15 @@ export const messages = {
             rules: ruRules.pages.rules,
             privacy: ruPrivacy.pages.privacy,
         }
-    }
+    },
+    es: {
+        ...es,
+        pages: {
+            help: enHelp.pages.help,
+            rules: enRules.pages.rules,
+            privacy: enPrivacy.pages.privacy,
+        }
+    },
 };
 
 export function ruCountRule(choice, choicesLength) {
