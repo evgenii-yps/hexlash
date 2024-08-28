@@ -160,3 +160,11 @@ body {
     background-color: transparent !important;
     border: none !important;
 }
+
+:root .v-snackbar{
+    margin: 0 10px !important;
+}
+
+:root .v-btn--disabled{
+    background-color: var(--gray1) !important;
+}

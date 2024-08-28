@@ -1,6 +1,7 @@
 {
   "loading": "Loading...",
   "you": "(You)",
+  "close": "Close",
   "menu": {
     "arena": "Arena",
     "trainings": "Training",
@@ -165,7 +166,8 @@
     "lblSeconds": "sec",
     "lblStartFight": "Start fight",
     "lblTestResolve": "It's time to test your resolve",
-    "lblSearchOpponent": "The search for a worthy opponent..."
+    "lblSearchOpponent": "The search for a worthy opponent...",
+    "insufficientFunds": "No money, no honey."
   },
   "club": {
     "lblClubMembers": "{n} members",
@@ -233,5 +235,8 @@
     "noResults": "No results found",
     "error": "Something went wrong...",
     "btnRetry": "Retry"
+  },
+  "info": {
+    "firstFight": "Before your first fight, we strongly recommend that you familiarize yourself with the <a href=\"/rules\">rules</a> of the game."
   }
 }

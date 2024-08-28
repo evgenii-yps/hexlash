@@ -120,7 +120,7 @@ export const getUserFromLocalAndAPI = async (userLogin) => {
 
             await saveUserDataToLocalDB(apiUserModel);
 
-            await store.dispatch('user/updateUser', apiUserModel); // Обновляем данные в store
+            await store.dispatch('user/updateUser', apiUserModel);
 
         }).catch((error) => {
             console.error('Failed to fetch user data from API:', error);
@@ -133,7 +133,7 @@ export const getUserFromLocalAndAPI = async (userLogin) => {
             if (apiData) {
                 const apiUserModel = new UserModel(apiData);
                 await saveUserDataToLocalDB(apiUserModel);
-                await store.dispatch('user/updateUser', apiUserModel); // Обновляем данные в store
+                await store.dispatch('user/updateUser', apiUserModel);
                 return apiUserModel;
             }
         } catch (error) {

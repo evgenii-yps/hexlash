@@ -4,6 +4,7 @@ import master from "@/core/state/modules/masterState.js";
 import club from "@/core/state/modules/clubState.js";
 import task from "@/core/state/modules/taskState.js";
 import punch from "@/core/state/modules/punchState.js";
+import fight from "@/core/state/modules/fightState.js";
 
 export default createStore({
     modules: {
@@ -11,6 +12,7 @@ export default createStore({
         user,
         club,
         task,
-        punch
+        punch,
+        fight
     },
 });

@@ -382,7 +382,7 @@ const carouselItems = computed(() => {
   fill: white;
 }
 
-:deep .v-window__controls {
+:deep(.v-window__controls) {
   padding: 0 !important;
 }
 

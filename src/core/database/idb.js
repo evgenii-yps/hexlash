@@ -10,6 +10,7 @@ export const CLUBS_TABLE = 'clubs';
 export const SOCIAL_TASKS_TABLE = 'social_tasks';
 export const DAILY_TASKS_TABLE = 'daily_tasks';
 export const PUNCH_LIMIT_TABLE = 'punch_limits';
+export const FIGHTS_TABLE = 'fights';
 
 let dbPromise;
 
@@ -26,6 +27,7 @@ export const initDB = () => {
                     db.createObjectStore(SOCIAL_TASKS_TABLE, { keyPath: 'id' });
                     db.createObjectStore(DAILY_TASKS_TABLE, { keyPath: 'id' });
                     db.createObjectStore(PUNCH_LIMIT_TABLE, { keyPath: 'id' });
+                    db.createObjectStore(FIGHTS_TABLE, { keyPath: 'id' });
                 }
             },
         });
@@ -40,11 +42,13 @@ export const clearDatabase = async () => {
     const tx2 = db.transaction([SOCIAL_TASKS_TABLE], 'readwrite');
     const tx3 = db.transaction([DAILY_TASKS_TABLE], 'readwrite');
     const tx4 = db.transaction([PUNCH_LIMIT_TABLE], 'readwrite');
+    const tx5 = db.transaction([FIGHTS_TABLE], 'readwrite');
     await Promise.all([
         tx.objectStore(MASTER_TABLE).clear(),
         tx2.objectStore(SOCIAL_TASKS_TABLE).clear(),
         tx3.objectStore(DAILY_TASKS_TABLE).clear(),
         tx4.objectStore(PUNCH_LIMIT_TABLE).clear(),
+        tx5.objectStore(FIGHTS_TABLE).clear(),
     ]);
     await tx.done;
 };

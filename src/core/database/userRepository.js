@@ -1,5 +1,4 @@
 import {initDB, USERS_TABLE} from "@/core/database/idb.js";
-import store from "@/core/state/store.js";
 
 export const getUserByLoginFromDB = async (login) => {
     const db = await initDB();

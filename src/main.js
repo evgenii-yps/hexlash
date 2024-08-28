@@ -32,7 +32,8 @@ import {
     VSwitch,
     VTextarea,
     VTextField,
-    VTooltip
+    VTooltip,
+    VSnackbar
 } from 'vuetify/components';
 import {createI18n} from "vue-i18n";
 import App from "@/App.vue";
@@ -67,6 +68,7 @@ const vuetify = createVuetify({
         VTextField,
         VTextarea,
         VProgressLinear,
+        VSnackbar
     },
     directives: {
         ...directives,
@@ -95,6 +97,7 @@ const vuetify = createVuetify({
 });
 
 export const i18n = createI18n({
+    warnHtmlMessage: false,
     legacy: false,
     locale: 'en',
     fallbackLocale: 'en',

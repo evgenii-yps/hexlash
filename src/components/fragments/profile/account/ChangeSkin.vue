@@ -51,8 +51,8 @@
 </template>
 
 <script setup>
-import {computed, nextTick, onBeforeMount, ref, watch} from 'vue';
-import {VImg, VBtn, VDialog, VCard, VCardTitle, VCardText, VCardActions, VSpacer} from 'vuetify/components';
+import { nextTick, ref, watch} from 'vue';
+import {VImg, VBtn, VCard, VCardTitle, VCardText, VCardActions, VSpacer} from 'vuetify/components';
 import store from "@/core/state/store.js";
 import {useI18n} from "vue-i18n";
 const { t } = useI18n({ useScope: 'global' })
@@ -248,7 +248,7 @@ const scrollToSelectedSkin = () => {
 
 const loadData = async (userData) => {
   skins.value.forEach(skin => {
-    skin.locked = skin.price > userData.balance;
+    skin.locked = (skin.price * 100) > userData.balance;
   });
   selectedSkin.value = userData.skin;
 

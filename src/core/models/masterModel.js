@@ -31,6 +31,10 @@ export class MasterModel {
         return this.userData.login;
     }
 
+    getBalance(){
+        return (this.userData.balance / 100).toFixed(2);
+    }
+
     static fromJSON(jsonString) {
         try {
             const userData = JSON.parse(jsonString);

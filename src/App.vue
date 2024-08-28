@@ -13,6 +13,11 @@
       <RouterView/>
     </main>
 
+    <Info :text="infoMessage.text"
+          :timeout="infoMessage.timeout"
+          :showButton="infoMessage.showButton"
+    />
+
     <footer class="footer">
       <transition name="slide-up-down">
         <BottomMenu v-if="showBottomMenu"/>
@@ -22,12 +27,13 @@
 </template>
 
 <script setup>
-import {RouterView, useRoute} from 'vue-router'
-import {computed, onMounted, ref, watch} from "vue";
+import {RouterView} from 'vue-router'
+import {computed, ref} from "vue";
 import BottomMenu from "@/components/menu/BottomMenu.vue";
 import Logo from "@/components/Logo.vue";
 import store from "@/core/state/store.js";
 import router from "@/router/index.js";
+import Info from "@/components/Info.vue";
 
 const balance = computed(() => {
   const master = store.getters['master/getMaster'];
@@ -38,18 +44,22 @@ const balance = computed(() => {
   return null;
 });
 
+// Определяем, нужно ли показывать InfoMessage
+const showInfoMessage = ref(false);
+
+const infoMessage = computed(() => {
+  const newInfoMessage = store.getters['master/getInfoMessage'];
+  showInfoMessage.value = newInfoMessage.text !== "";
+  return newInfoMessage;
+});
+
+const showBottomMenu = computed(() => {
+  return store.getters['master/getAuthState'].isAuthenticated
+});
+
 const goToHome = () => {
   router.push('/');
 };
-
-// Определяем, нужно ли показывать BottomMenu
-const showBottomMenu = ref(false);
-
-const authState = computed(() => store.getters['master/getAuthState']);
-
-watch(authState, (newAuthState) => {
-  showBottomMenu.value = newAuthState.isAuthenticated;
-}, {immediate: true});
 
 </script>
 

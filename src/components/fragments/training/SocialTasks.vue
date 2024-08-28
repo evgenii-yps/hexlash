@@ -105,7 +105,6 @@ const completeTask = (id) => {
 
   updatedTask.isCompleted = true;
 
-  // Обновляем состояние в store
   store.dispatch("task/updateSocialTask", updatedTask);
 
   selectedTask.value = null;
@@ -139,12 +138,12 @@ const openSubscribeDialog = (task) => {
 }
 
 .horizontal-scroll::-webkit-scrollbar {
-  display: none; /* Скрывает ползунок в WebKit-браузерах, таких как Chrome и Safari */
+  display: none;
 }
 
 .horizontal-scroll {
-  -ms-overflow-style: none; /* Скрывает ползунок в Internet Explorer и Edge */
-  scrollbar-width: none; /* Скрывает ползунок в Firefox */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
   padding-left: 10px;
   display: flex;
   flex-direction: row;

@@ -6,14 +6,15 @@ import {
 } from '@/core/services/masterService.js';
 import router from "@/router/index.js";
 import {updateMasterToLocalDB} from "@/core/database/masterRepository.js";
-import {AuthStateModel} from "@/core/models/AuthStateModel.js";
+import {AuthStateModel} from "@/core/models/internal/authStateModel.js";
+import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
 import {i18n} from '@/main.js';
 
 
 const state = {
     master: null,
     authState: new AuthStateModel(),
-
+    infoMessage: new InfoMessageModel(),
 };
 
 const getters = {
@@ -21,6 +22,9 @@ const getters = {
     getAuthState: (state) => state.authState,
     getLanguage: (state) => {
         return state.master && state.master.language ? state.master.language : 'en';
+    },
+    getInfoMessage(state) {
+        return state.infoMessage;
     },
 };
 
@@ -50,6 +54,12 @@ const mutations = {
     clearAuthData: (state) => {
         state.master = null;
         state.authState = new AuthStateModel();
+    },
+    setInfoMessage(state, message) {
+        state.infoMessage = message;
+    },
+    clearInfoMessage(state) {
+        state.infoMessage = new InfoMessageModel();
     },
 };
 

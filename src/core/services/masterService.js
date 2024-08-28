@@ -3,8 +3,9 @@ import {clearDatabase} from '@/core/database/idb.js';
 import {getMasterFromLocalDB, saveMasterToLocalDB, updateMasterToLocalDB} from "@/core/database/masterRepository.js";
 import {MasterModel} from "@/core/models/masterModel.js";
 import store from "@/core/state/store.js";
-import {AuthStateModel} from "@/core/models/AuthStateModel.js";
+import {AuthStateModel} from "@/core/models/internal/authStateModel.js";
 import {jwtDecode} from "jwt-decode";
+import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
 
 export const getMasterFromLocalAndAPI = async () => {
     // Сначала берем данные из локальной базы данных
@@ -84,7 +85,7 @@ export const login = async (credentials) => {
               "inviteId": "invite123",
               "email": "johndoe@example.com",
               "achievements": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17],
-              "balance":199,
+              "balance":30099,
               "skin":"skin_w_20.png"
         }`;
 
@@ -178,5 +179,20 @@ export const sendVerifyEmail = async () => {
         return response.data;
     } catch (error) {
         throw new Error('Failed to send verify email');
+    }
+};
+
+
+export const showFightRulesReminder = (text) => {
+    const MESSAGE_KEY = 'firstFightToolTip';
+    const MAX_SHOW_COUNT = 2;
+
+    let showCount = localStorage.getItem(MESSAGE_KEY) || 0;
+
+    if (showCount < MAX_SHOW_COUNT) {
+        showCount++;
+        localStorage.setItem(MESSAGE_KEY, showCount);
+        const customMessage = InfoMessageModel.withTimeout(text, 15000);
+        store.commit('master/setInfoMessage', customMessage);
     }
 };

@@ -145,7 +145,7 @@ const openTaskDialog = (task) => {
 
 .daily-tasks-section {
   width: 100%; /* Растягиваем контейнер на всю доступную ширину */
-  box-sizing: border-box; /* Учитываем padding и border в ширине */
+  box-sizing: border-box;
   max-width: 500px;
   padding: 0 20px;
 }

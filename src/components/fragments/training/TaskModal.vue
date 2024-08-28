@@ -29,7 +29,7 @@
 </template>
 
 <script setup>
-import {ref, defineEmits, computed} from 'vue';
+import {ref, computed} from 'vue';
 
 const dialog = ref(false);
 const emit = defineEmits(['close', 'complete']);

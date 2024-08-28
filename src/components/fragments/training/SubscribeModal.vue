@@ -22,7 +22,7 @@
 </template>
 
 <script setup>
-import {ref, defineEmits, computed} from 'vue';
+import {ref, computed} from 'vue';
 import router from "@/router/index.js";
 
 const dialog = ref(false);

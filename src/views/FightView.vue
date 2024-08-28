@@ -67,9 +67,7 @@
           <VModal v-model="dialogHelp" max-width="500" @click:outside="hideHelp">
             <VCard>
               <v-card-title class="headline">{{t('fight.modalHelpTitle')}}</v-card-title>
-              <v-card-text v-html="t('fight.modalHelpTextHtml')" class="text-center">
-
-              </v-card-text>
+              <v-card-text v-html="t('fight.modalHelpTextHtml')" class="text-center"/>
               <v-card-actions>
                 <v-spacer></v-spacer>
                 <VBtn @click="hideHelp" class="confirm-btn">{{t('modal.btnOk')}}</VBtn>
@@ -123,7 +121,7 @@ const fightId = computed(() => route.params.id);
 const countActionArray = computed(() => Array.from({length: 5}));
 const strProgress = ref(`${t('fight.progress')}`);
 
-// TODO приходить будет из сокета в стейт
+// TODO приходить будет из сокета стейт
 const progressValue = ref(1000);  // Начальное значение прогресса 100%
 const progressTime = ref(10);  // Время, за которое прогресс должен завершиться, например 10 секунд
 const progressInPercent = computed(() => progressValue.value / 10);
@@ -245,6 +243,8 @@ const startProgressLinear = () => {
   }, intervalTime);
 };
 
+
+
 const onFightEnd = () => {
   isFight.value = false;
   isFightFinished.value = true;
@@ -274,7 +274,7 @@ onMounted(() => {
       startProgressLinear()
     }
   } else {
-    // Бой уже завершен давно, заходим чисто посмотреть результаты
+    // Бой уже завершен давно, заходим посмотреть результаты
     onFightEnd();
   }
 });

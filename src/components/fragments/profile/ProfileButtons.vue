@@ -109,7 +109,7 @@ const isBalanceSufficient = computed(() => master.value?.userData.balance >= COS
 
 const isOwner = ref(false);
 const clubData = ref(null);
-const clubText = ref(t('profile.buttons.lblClubLoading'));
+const clubText = ref(t('loading'));
 const showToolTip = ref(false);
 const dialogCreate = ref(false);
 const dialogExit = ref(false);

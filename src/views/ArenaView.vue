@@ -7,7 +7,7 @@
           <VCard class="slider-container">
             <div class="selected-value">{{ selectedBet }}<span>$</span></div>
             <div class="slider-label">{{ t('arena.lblYourBet') }}</div>
-            <BetSlider v-model="selectedBet"/>
+            <BetSlider v-model="selectedBet" balance=""/>
           </VCard>
 
           <VCard class="slider-container">
@@ -36,11 +36,12 @@
                       </VBtnDark>
                     </div>-->
           <div class="text">{{ txtStatus }}</div>
-          <VBtn v-if="!isLoading" width="200" @click="startFight" size="x-large" class="fight-btn">
+          <VBtn :disabled="isDisableFight" v-if="!isWaitingFight" width="200" @click="startFight" size="x-large"
+                class="fight-btn">
             {{ t('arena.lblStartFight') }}
           </VBtn>
           <v-progress-circular
-              v-if="isLoading"
+              v-if="isWaitingFight"
               class="loader"
               size="40"
               indeterminate
@@ -55,7 +56,7 @@
 </template>
 
 <script setup>
-import {ref} from 'vue';
+import {computed, onMounted} from 'vue';
 import {useI18n} from "vue-i18n";
 
 const {t} = useI18n({useScope: 'global'})
@@ -63,25 +64,45 @@ const {t} = useI18n({useScope: 'global'})
 import BetSlider from "@/components/fragments/arena/BetSlider.vue";
 import ActionSlider from "@/components/fragments/arena/ActionSlider.vue";
 import TimeSlider from "@/components/fragments/arena/TimeSlider.vue";
-import router from "@/router/index.js";
+import {showFightRulesReminder} from "@/core/services/masterService.js";
+import store from "@/core/state/store.js";
 
-const selectedBet = ref(10);
-const selectedActions = ref(3);
-const selectedTime = ref(10);
-const isLoading = ref(false);
-const txtStatus = ref(t('arena.lblTestResolve'));
+const params = computed(() => {
+  return store.getters['fight/getArenaSettings']();
+});
 
-const startFight = () => {
-  isLoading.value = true;
-  txtStatus.value = t('arena.lblSearchOpponent');
+// Тут отправляем в экшен, потому что нужно еще проверять баланс через рутовый геттер
+const selectedBet = computed({
+  get: () => params.value.bet,
+  set: (value) => store.dispatch('fight/setArenaSettings', {...params.value, bet: value})
+});
 
-  setTimeout(() => {
-    //TODO id боя получить
-    //router.push({path: `/fight/${club.id}`});
-    router.push({path: `/fight/1`});
-  }, 1000);
+const selectedActions = computed({
+  get: () => params.value.actions,
+  set: (value) => store.commit('fight/setArenaSettings', {...params.value, actions: value})
+});
+
+const selectedTime = computed({
+  get: () => params.value.time,
+  set: (value) => store.commit('fight/setArenaSettings', {...params.value, time: value})
+});
+
+const isDisableFight = computed(() =>
+    params.value.isDisableFight
+);
+const isWaitingFight = computed(store.getters['fight/isWaitingFight']);
+const txtStatus = computed(store.getters['fight/getMsgStatus']);
+
+const startFight = async () => {
+  await store.dispatch("fight/startFight")
 };
 
+// Показать напоминание если это первый бой
+showFightRulesReminder(t("info.firstFight"));
+
+onMounted(() => {
+  store.commit('fight/setMsgStatus', t('arena.lblTestResolve'))
+})
 
 </script>
 
@@ -200,12 +221,6 @@ const startFight = () => {
   align-items: center;
 }
 
-.btn-help-container {
-  position: absolute;
-  top: 71%;
-  right: 20px;
-  transform: translateY(-69%);
-}
 
 .fight-button-wrapper .text {
   text-align: center;
@@ -223,6 +238,13 @@ const startFight = () => {
   margin: 10px;
 }
 
+/*.btn-help-container {
+  position: absolute;
+  top: 71%;
+  right: 20px;
+  transform: translateY(-69%);
+}
+
 .btn-help {
   display: flex;
   font-family: Anonymous, sans-serif;
@@ -233,7 +255,7 @@ const startFight = () => {
   height: 50px;
   cursor: pointer;
   border: 1px solid var(--gray2);
-}
+}*/
 
 .scroll-gap {
   display: block;

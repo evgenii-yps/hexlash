@@ -49,7 +49,7 @@ const checkConnection = async () => {
 
 watch(store.getters['master/getMaster'], async (master) => {
   if (master && master.userData) {
-    gameBalance.value = master.userData.balance;
+    gameBalance.value = (master.userData.balance / 100).toFixed(2);
 
     hasWallet.value = master.userData.walletAddress != null && master.userData.walletAddress !== '';
 
@@ -116,6 +116,5 @@ wallet.onChainChanged(async (chainId) => {
   margin: 2rem auto;
 
 }
-
 
 </style>

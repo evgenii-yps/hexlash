@@ -8,7 +8,6 @@
 </template>
 
 <script setup>
-import { defineProps } from 'vue';
 import {useI18n} from "vue-i18n";
 const { t } = useI18n({ useScope: 'global' })
 
@@ -37,8 +36,9 @@ const props = defineProps({
 
 .game-card p {
   margin: 0;
-  font-size: 2.5em;
   color: var(--primary-color);
+  font-size: 2.4rem;
+
 }
 
 .game-card img{

@@ -99,10 +99,8 @@ const actions = {
 
             await saveClubDataToLocalDB(newClubModel);
 
-            // Если успешно, обновляем данные в состоянии
             commit('setClub', newClubModel);
 
-            // Обновить в модели мастера текущий клуб
             await store.dispatch('master/updateMaster', {clubId: newClubModel.id, balance: masterData.balance - COST_CREATE_CLUB});
 
             // TODO перезагрузка данных, взятие нового баланса и группы текущей

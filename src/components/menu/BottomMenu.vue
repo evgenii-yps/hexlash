@@ -24,11 +24,10 @@ const {t, locale} = useI18n({useScope: 'global'})
 
 import clickSound from '@/assets/sound/punch_air.mp3'
 
-const sound = new Howl({
-  src: [clickSound]
-})
-
 const playSound = () => {
+  const sound = new Howl({
+    src: [clickSound]
+  });
   sound.play();
 }
 

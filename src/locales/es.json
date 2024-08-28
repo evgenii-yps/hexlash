@@ -1,6 +1,7 @@
 {
   "loading": "Cargando...",
   "you": "(Tú)",
+  "close": "Cerrar",
   "menu": {
     "arena": "Arena",
     "trainings": "Entreno",
@@ -165,7 +166,8 @@
     "lblSeconds": "seg",
     "lblStartFight": "Iniciar pelea",
     "lblTestResolve": "Es hora de poner a prueba tu resolución",
-    "lblSearchOpponent": "Buscando un oponente digno..."
+    "lblSearchOpponent": "Buscando un oponente digno...",
+    "insufficientFunds": "Sin dinero, no hay amor."
   },
   "club": {
     "lblClubMembers": "sin miembros | un miembro | {n} miembros",
@@ -233,5 +235,8 @@
     "noResults": "No se encontraron resultados",
     "error": "Algo salió mal...",
     "btnRetry": "Reintentar"
+  },
+  "info": {
+    "firstFight": "Antes de tu primera pelea, te recomendamos encarecidamente que te familiarices con las <a href=\"/rules\">reglas</a> del juego."
   }
 }
