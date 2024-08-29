@@ -14,7 +14,7 @@
 
       <div v-if="statusFighter !== ''" class="status-fighter">{{ statusFighter }}</div>
 
-      <v-img :src="`/images/skins/${fighterImage}`" aspect-ratio="1" :class="{'flipped': !props.isMaster}"
+      <v-img :src="`/images/skins/${fighterImage}`" aspect-ratio="1" :class="{'flipped': props.flipped}"
              class="skin-img"/>
 
       <div class="circle-container" >
@@ -50,6 +50,10 @@ import {useI18n} from "vue-i18n";
 const {t} = useI18n({useScope: 'global'})
 
 const props = defineProps({
+  flipped:{
+    type: Boolean,
+    required: true,
+  },
   userData: {
     type: Object,
     required: true,
@@ -63,7 +67,7 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
-  isMove:{
+  isMoveCircles:{
     type: Boolean,
     default: false
   },
@@ -81,7 +85,7 @@ const props = defineProps({
 
 const fighterImage = computed(() => props.userData.skin);
 const strYou = computed(() => props.isMaster ? ` ${t('you')}` : "");
-const isMoveCircles = computed(() => props.isMove);
+const isMoveCircles = computed(() => props.isMoveCircles);
 const isVisibleCircles = computed(() => props.isVisibleCircles);
 const statusFighter = computed(() => props.statusFighter);
 

@@ -19,8 +19,8 @@ export const getFightByIdFromDB = async (id) => {
     const db = await initDB();
     const tx = db.transaction(FIGHTS_TABLE, 'readonly');
     const store = tx.objectStore(FIGHTS_TABLE);
-    const index = store.index('login');
-    return await index.get(id);
+
+    return await store.get(id);
 };
 
 export const saveFightDataToLocalDB = async (fightModel) => {

@@ -9,6 +9,7 @@ export class FightModel {
                     fightDate = new Date(),
                     bet = 0,
                     duration = 0,
+                    actions = 0,
                     isCompleted = false,
                 } = {}) {
         this.id = id;
@@ -20,6 +21,7 @@ export class FightModel {
         this.fightDate = fightDate;
         this.bet = bet;
         this.duration = duration;
+        this.actions = actions;
         this.isCompleted = isCompleted;
     }
 
@@ -37,6 +39,7 @@ export class FightModel {
                 fightDate,
                 bet,
                 duration,
+                actions,
                 isCompleted,
             } = data;
 
@@ -50,6 +53,7 @@ export class FightModel {
                 fightDate: new Date(fightDate),
                 bet,
                 duration,
+                actions,
                 isCompleted
             });
 

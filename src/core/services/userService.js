@@ -28,7 +28,8 @@ const testUsers = [
         daysInClub: 180,
         noSkipDays: 180,
         achievements: [1, 2],
-        balance: 150
+        balance: 150,
+        skin:"skin_m_20.png"
     },
     {
         id: "user2",
@@ -94,7 +95,7 @@ const fetchUserByLogin = async (login) => {
         if (user) {
             return user;
         } else {
-            await router.push('/404'); // Перенаправляем на страницу 404
+            return null;
         }
     } catch (error) {
         throw new Error('Failed to fetch user data by login');

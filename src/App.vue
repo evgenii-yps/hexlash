@@ -38,8 +38,7 @@ import Info from "@/components/Info.vue";
 const balance = computed(() => {
   const master = store.getters['master/getMaster'];
   if (master && master.userData) {
-    const rawBalance = master.userData.balance;
-    return (rawBalance / 100).toFixed(2);
+    return master.getBalance();
   }
   return null;
 });

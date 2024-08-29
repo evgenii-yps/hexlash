@@ -2,6 +2,9 @@ import router from "@/router/index.js";
 import {FightModel} from "@/core/models/fightModel.js";
 import store from "@/core/state/store.js";
 import {getFightByIdFromDB, saveFightDataToLocalDB} from "@/core/database/fightRepository.js";
+import {i18n} from '@/main.js';
+import {DECIMALS} from "@/core/constants.js";
+import * as userService from "@/core/services/userService.js";
 
 const testFights = [];
 
@@ -29,6 +32,7 @@ const fetchFightById = async (id) => {
 export const getFightFromLocalAndAPI = async (id) => {
     let localData;
     try {
+        console.log(id);
         // Сначала берем данные из локальной базы данных
         localData = await getFightByIdFromDB(id);
     } catch (error) {
@@ -43,7 +47,7 @@ export const getFightFromLocalAndAPI = async (id) => {
 
             await saveFightDataToLocalDB(apiUserModel);
 
-            await store.dispatch('fight/updateFight', apiUserModel);
+            await store.dispatch('fight/setCurrentFight', apiUserModel);
 
         }).catch((error) => {
             console.error('Failed to fetch fight data from API:', error);
@@ -56,13 +60,64 @@ export const getFightFromLocalAndAPI = async (id) => {
             if (apiData) {
                 const apiUserModel = new FightModel(apiData);
                 await saveFightDataToLocalDB(apiUserModel);
-                await store.dispatch('fight/updateFight', apiUserModel);
+                await store.dispatch('fight/setCurrentFight', apiUserModel);
                 return apiUserModel;
             }
         } catch (error) {
             console.error('Failed to fetch user data:', error);
         }
     }
+};
+
+export const createFight = async (arenaSettings) => {
+
+    const fightModel = await mockServerRequest(arenaSettings);
+
+    // Проверяем чтобы я был участником боя
+    const master = store.getters['master/getMaster'];
+    if (![fightModel.fighterOne, fightModel.fighterTwo].includes(master.userData.id)) {
+        throw new Error('You are not a participant in this fight');
+    }
+
+    // Проверяем достаточно ли баланса у пользователя
+    const balance = master.userData.balance;
+    if (balance < fightModel.bet) {
+        throw new Error(i18n.global.t("arena.insufficientFunds"));
+    }
+
+    const newBalance = balance - (fightModel.bet * (10 ** DECIMALS));
+    // Отнимаем ставку от баланса и сохраняем изменения через dispatch
+    await store.dispatch('master/updateMaster', {balance: newBalance});
+
+    // Сохраним временный бой в локальную базу данных
+    await saveFightDataToLocalDB(fightModel);
+
+    return fightModel;
+}
+
+// Тестовая функция эмуляции запроса на сервер
+export const mockServerRequest = async (arenaSettings) => {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            const randomId = `fight-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+
+            // Здесь мы эмулируем получение данных с сервера
+            const testFightModel = new FightModel({
+                id: randomId,
+                fighterOne: 'user123',
+                fighterTwo: 'login1',
+                fighterOneActions: [],
+                fighterTwoActions: [],
+                winnerId: null,
+                fightDate: new Date(),
+                bet: arenaSettings.bet,
+                duration: arenaSettings.time,
+                actions: arenaSettings.actions,
+                isCompleted: false
+            });
+            resolve(testFightModel);
+        }, 1000); // Задержка в 1 секунду
+    });
 };
 
 

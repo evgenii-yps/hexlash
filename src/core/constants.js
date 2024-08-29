@@ -5,3 +5,9 @@ export const COST_PER_CLICK = 2;
 export const MULTIPLAYER_EXACT_CLICK = 3;
 export const SPEED_MOVE_PUNCH_MS = 3000;
 export const BATCH_SEND_INTERVAL_MS = 10000;
+
+// FC TOKEN
+export const DECIMALS = 2;
+
+// FIGHT
+export const COUNTDOWN = 3; // Количество секунд перед началом боя

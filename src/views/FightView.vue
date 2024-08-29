@@ -1,27 +1,10 @@
 <template>
   <div class="background background-fight">
     <div class="fight-container">
-      <div class="fight-content-wrapper">
-
-        <div class="fight-again" v-if="isFightFinished">
-          <VBtn
-              size="small"
-              class="btn-again"
-              @click="btnAgain">
-            <img src="@/assets/images/icon_arrow.svg" alt="" class="custom-icon"/>
-          </VBtn>
-          {{t('fight.btnNextFight')}}
-        </div>
-
-        <!-- Обратный отсчет -->
-        <transition-group name="fade-scale" tag="div" class="countdown" v-if="!isFightFinished">
-          <div v-if="countdown !== 0" :key="countdown" class="countdown-item">
-            <p>{{ countdown }}</p>
-          </div>
-        </transition-group>
+      <div class="fight-content-wrapper" v-if="fight">
 
         <div class="progress-container">
-          <p>{{ strProgress }}</p>
+          <p>{{ txtProgress }}</p>
           <div class="progress">
             <v-progress-linear
                 class="progress-linear"
@@ -30,22 +13,45 @@
           </div>
         </div>
 
+        <div class="fight-again" v-if="fight.isCompleted">
+          <VBtn
+              size="small"
+              class="btn-again"
+              @click="btnAgain">
+            <img src="@/assets/images/icon_arrow.svg" alt="" class="custom-icon"/>
+          </VBtn>
+          {{ t('fight.btnNextFight') }}
+        </div>
+
+        <!-- Обратный отсчет -->
+        <transition-group name="fade-scale" tag="div" class="countdown" v-if="!fight.isCompleted">
+          <div v-if="countdown !== 0" :key="countdown" class="countdown-item">
+            <p>{{ countdown }}</p>
+          </div>
+        </transition-group>
+
 
         <div class="fighters-container">
           <div class="fighter fighter-left">
-            <Fighter :action="meAction"
-                     :userData="master.userData"
-                     :isMaster="true"
-                     :isVisibleCircles="isFight"
-                     :statusFighter="leftFighter"/>
+            <Fighter
+                :flipped="false"
+                :action="master.userData.id === fighterOne.id ? meAction : rivalAction"
+                :userData="fighterOne"
+                :isMaster="master.userData.id === fighterOne.id"
+                :isMoveCircles="isMoveCircles && master.userData.id !== fighterOne.id"
+                :isVisibleCircles="isVisibleCircles"
+                :statusFighter="leftFighterStatus"/>
           </div>
 
           <div class="fighter fighter-right">
-            <Fighter :action="rivalAction"
-                     :userData="master.userData"
-                     :isMove="isMove"
-                     :isVisibleCircles="isFight"
-                     :statusFighter="rightFighter"/>
+            <Fighter
+                :flipped="true"
+                :action="master.userData.id === fighterTwo.id ? meAction : rivalAction"
+                :userData="fighterTwo"
+                :isMaster="master.userData.id === fighterTwo.id"
+                :isMoveCircles="isMoveCircles && master.userData.id !== fighterTwo.id"
+                :isVisibleCircles="isVisibleCircles"
+                :statusFighter="rightFighterStatus"/>
           </div>
         </div>
 
@@ -66,11 +72,11 @@
           <!-- Модальное окно помощи -->
           <VModal v-model="dialogHelp" max-width="500" @click:outside="hideHelp">
             <VCard>
-              <v-card-title class="headline">{{t('fight.modalHelpTitle')}}</v-card-title>
+              <v-card-title class="headline">{{ t('fight.modalHelpTitle') }}</v-card-title>
               <v-card-text v-html="t('fight.modalHelpTextHtml')" class="text-center"/>
               <v-card-actions>
                 <v-spacer></v-spacer>
-                <VBtn @click="hideHelp" class="confirm-btn">{{t('modal.btnOk')}}</VBtn>
+                <VBtn @click="hideHelp" class="confirm-btn">{{ t('modal.btnOk') }}</VBtn>
               </v-card-actions>
             </VCard>
           </VModal>
@@ -83,8 +89,18 @@
         </div>
 
 
-        <!--        <div class="fight-id">Fight id: {{ fightId }}</div>-->
+        <!--<div class="fight-id">Fight id: {{ fightId }}</div>-->
 
+      </div>
+
+      <div v-else>
+        <div class="loader-container">
+          <v-progress-circular
+              class="loader"
+              size="40"
+              indeterminate
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -92,6 +108,7 @@
 
 <script setup>
 import {computed, onMounted, ref} from 'vue';
+import {COUNTDOWN} from "@/core/constants.js";
 import Fighter from "@/components/fragments/fight/Fighter.vue";
 import store from "@/core/state/store.js";
 import {useRoute} from "vue-router";
@@ -99,32 +116,36 @@ import {useI18n} from "vue-i18n";
 
 const {t} = useI18n({useScope: 'global'})
 
-const master = computed(() => store.getters['master/getMaster']);
-const countdown = ref(3);
-const isMove = ref(false);
-const isFight = ref(false);
-const isFightFinished = ref(false);
+const countdown = ref(COUNTDOWN); // Обратный отсчет перед началом боя
+
+// Массив для отображения countAction квадратиков
+const countActionArray = ref(null);
+
+const txtProgress = ref(`${t('fight.progress')}`);
+
+// Создаем ref для хранения текущего боя
+const fight = ref(null);
+const progressTime = ref(null);  // Время, за которое прогресс должен завершиться
+
+const isMoveCircles = ref(false);
+const isVisibleCircles = ref(false);
 const dialogHelp = ref(false);
 
 // Результаты боя в виде массивов
 const leftResults = ref([]);
 const rightResults = ref([]);
 
-const leftFighter = ref('');
-const rightFighter = ref('');
-
+const leftFighterStatus = ref('');
+const rightFighterStatus = ref('');
 
 const route = useRoute();
-const fightId = computed(() => route.params.id);
 
-// Массив для отображения countAction квадратиков
-const countActionArray = computed(() => Array.from({length: 5}));
-const strProgress = ref(`${t('fight.progress')}`);
-
-// TODO приходить будет из сокета стейт
 const progressValue = ref(1000);  // Начальное значение прогресса 100%
-const progressTime = ref(10);  // Время, за которое прогресс должен завершиться, например 10 секунд
 const progressInPercent = computed(() => progressValue.value / 10);
+
+const master = computed(() => store.getters['master/getMaster']);
+const fighterOne = computed(() => store.getters['fight/getFighterOne']);
+const fighterTwo = computed(() => store.getters['fight/getFighterTwo']);
 
 const hideHelp = () => {
   dialogHelp.value = false;
@@ -135,7 +156,11 @@ const btnAgain = () => {
 }
 
 const meAction = (action) => {
-  if (!isFight.value || leftResults.value.length >= countActionArray.value.length) return;
+  if (!isVisibleCircles.value) return;
+
+  let targetResults = master.value.userData.id === fighterOne.value.id ? leftResults : rightResults;
+
+  if (targetResults.value.length >= countActionArray.value.length) return;
 
   let val = '';
   if (action === 'head') {
@@ -149,18 +174,22 @@ const meAction = (action) => {
     return;
   }
 
-  leftResults.value.push(val);
+  targetResults.value.push(val);
 
   // TODO отправить в сокет
 
-  if (leftResults.value.length >= countActionArray.value.length) {
-    isFight.value = false;
-    strProgress.value = t('fight.waitingForOpponent');
+  if (targetResults.value.length >= countActionArray.value.length) {
+    isVisibleCircles.value = false;
+    txtProgress.value = t('fight.waitingForOpponent');
   }
 }
 
 const rivalAction = (action) => {
-  if (!isFight.value || leftResults.value.length >= countActionArray.value.length) return;
+  if (!isVisibleCircles.value) return;
+
+  let targetResults = master.value.userData.id === fighterOne.value.id ? leftResults : rightResults;
+
+  if (targetResults.value.length >= countActionArray.value.length) return;
 
   let val = '';
   if (action === 'head') {
@@ -174,12 +203,13 @@ const rivalAction = (action) => {
     return;
   }
 
-  leftResults.value.push(val);
+  targetResults.value.push(val);
+
   // TODO отправить в сокет
 
-  if (leftResults.value.length >= countActionArray.value.length) {
-    isFight.value = false;
-    strProgress.value = t('fight.waitingForOpponent');
+  if (targetResults.value.length >= countActionArray.value.length) {
+    isVisibleCircles.value = false;
+    txtProgress.value = t('fight.waitingForOpponent');
   }
 }
 
@@ -187,9 +217,12 @@ const isValidAction = (newAction) => {
   const attackActions = ['HH', 'BH']; // Список всех атакующих действий
   const defenseActions = ['HD', 'BD']; // Список всех защитных действий
 
+  // Определяем, какой массив нужно проверять в зависимости от позиции мастера
+  const targetResults = master.value.userData.id === fighterOne.value.id ? leftResults : rightResults;
+
   // Подсчитываем количество атак и защит в текущем массиве
-  const attackCount = leftResults.value.filter(action => attackActions.includes(action)).length;
-  const defenseCount = leftResults.value.filter(action => defenseActions.includes(action)).length;
+  const attackCount = targetResults.value.filter(action => attackActions.includes(action)).length;
+  const defenseCount = targetResults.value.filter(action => defenseActions.includes(action)).length;
 
   const maxActions = countActionArray.value.length;
 
@@ -206,7 +239,6 @@ const isValidAction = (newAction) => {
   return true;
 };
 
-
 // Функция для управления обратным отсчетом
 const startCountdown = () => {
   const interval = setInterval(() => {
@@ -216,11 +248,12 @@ const startCountdown = () => {
       countdown.value = 'Fight!';
       clearInterval(interval);
 
-      // Запуск движений кружков после окончания отсчета
+      // Запуск движений кружков после отсчета
       setTimeout(() => {
+        console.log(countdown.value);
         countdown.value = 0;
-        isMove.value = true;
-        isFight.value = true;
+        isMoveCircles.value = true;
+        isVisibleCircles.value = true;
         startProgressLinear();
       }, 100);
     }
@@ -229,6 +262,7 @@ const startCountdown = () => {
 
 // Функция для управления обратным отсчетом прогресса
 const startProgressLinear = () => {
+  console.log('startProgressLinear');
   const intervalTime = 10; // Интервал обновления в миллисекундах
   const step = progressValue.value / (progressTime.value * 100); // Один шаг каждые 10ms
 
@@ -236,6 +270,7 @@ const startProgressLinear = () => {
     if (progressValue.value > 0) {
       progressValue.value -= step;
     } else {
+      console.log("interval", progressValue.value)
       progressValue.value = 0;
       clearInterval(interval);
       onFightEnd();  // Вызываем функцию, когда бой завершен
@@ -243,39 +278,39 @@ const startProgressLinear = () => {
   }, intervalTime);
 };
 
-
-
 const onFightEnd = () => {
-  isFight.value = false;
-  isFightFinished.value = true;
+  isVisibleCircles.value = false;
   progressValue.value = 0;
   countdown.value = 0;
-  strProgress.value = t('fight.fightFinished');
+  txtProgress.value = t('fight.fightFinished');
+
+
+  store.dispatch('fight/endFight');
 
   // TEMP
-  leftFighter.value = 'WIN';
-  rightFighter.value = 'LOSE';
+  leftFighterStatus.value = 'WIN';
+  rightFighterStatus.value = 'LOSE';
   //TODO
-
 
 };
 
-
-onMounted(() => {
-
+onMounted(async () => {
   // TODO загрузить бой по id из базы данных и с апи сервера, если не новый бой
 
-  if (!isFightFinished.value) {
-    if (countdown.value !== 0) {
-      startCountdown();
-    } else {
-      isMove.value = true;
-      isFight.value = true;
-      startProgressLinear()
-    }
+  fight.value = await store.dispatch('fight/getFightById', route.params.id);
+
+  countActionArray.value = Array.from({length: fight.value.actions});
+
+
+  if (!fight.value.isCompleted) {
+    // Инициируем текущий бой
+    progressTime.value = fight.value.duration;
+
+    startCountdown();
+
   } else {
     // Бой уже завершен давно, заходим посмотреть результаты
-    onFightEnd();
+    //onFightEnd();
   }
 });
 
@@ -354,12 +389,12 @@ onMounted(() => {
 
 }
 
-.fight-again{
+.fight-again {
   position: absolute;
   left: 50%;
   bottom: 30%;
   width: 100px;
-  transform: translate(-50%,-50%);
+  transform: translate(-50%, -50%);
   display: flex;
   justify-content: center;
   flex-direction: column;
@@ -368,13 +403,13 @@ onMounted(() => {
   animation: againAnimation 0.5s ease-in-out forwards;
 }
 
-.btn-again img{
+.btn-again img {
   width: 30px;
   height: 30px;
   text-align: center;
 }
 
-.btn-again{
+.btn-again {
   position: relative;
   width: 60px;
   height: 60px;
@@ -529,6 +564,16 @@ onMounted(() => {
     opacity: 1;
     transform: translateX(-50%) translateY(-50%) scale(1);
   }
+}
+
+.loader-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, 50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 

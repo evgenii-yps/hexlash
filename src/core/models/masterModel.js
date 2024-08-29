@@ -1,4 +1,5 @@
 import {MASTER_TAG} from "@/core/database/masterRepository.js";
+import {DECIMALS} from "@/core/constants.js";
 
 
 export class MasterModel {
@@ -31,8 +32,8 @@ export class MasterModel {
         return this.userData.login;
     }
 
-    getBalance(){
-        return (this.userData.balance / 100).toFixed(2);
+    getBalance() {
+        return (this.userData.balance / (10 ** DECIMALS)).toFixed(DECIMALS);
     }
 
     static fromJSON(jsonString) {
