@@ -109,7 +109,7 @@ export const mockServerRequest = async (arenaSettings) => {
                 fighterOneActions: [],
                 fighterTwoActions: [],
                 winnerId: null,
-                fightDate: new Date(),
+                fightDate: new Date(Date.now() + 3000),
                 bet: arenaSettings.bet,
                 duration: arenaSettings.time,
                 actions: arenaSettings.actions,

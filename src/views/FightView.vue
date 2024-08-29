@@ -241,6 +241,26 @@ const isValidAction = (newAction) => {
 
 // Функция для управления обратным отсчетом
 const startCountdown = () => {
+  // Время начала боя на сервере (с учетом добавленных X секунд)
+  const serverStartTime = fight.value.fightDate.getTime();
+
+  // Время на клиенте
+  const clientStartTime = Date.now();
+
+  // Разница между серверным и клиентским временем
+  const timeForStart = serverStartTime - clientStartTime;
+  if (timeForStart <= 0) {
+    // Если бой уже должен был начаться, сразу запускаем бой
+    countdown.value = 0;
+    isMoveCircles.value = true;
+    isVisibleCircles.value = true;
+    startProgressLinear();
+    return;
+  }
+
+  // Расчет интервала для отсчета
+  const adjustedInterval = timeForStart / COUNTDOWN;
+
   const interval = setInterval(() => {
     if (countdown.value > 1) {
       countdown.value -= 1;
@@ -250,19 +270,18 @@ const startCountdown = () => {
 
       // Запуск движений кружков после отсчета
       setTimeout(() => {
-        console.log(countdown.value);
         countdown.value = 0;
         isMoveCircles.value = true;
         isVisibleCircles.value = true;
         startProgressLinear();
       }, 100);
     }
-  }, 1000);
+  }, adjustedInterval);
 };
 
 // Функция для управления обратным отсчетом прогресса
 const startProgressLinear = () => {
-  console.log('startProgressLinear');
+
   const intervalTime = 10; // Интервал обновления в миллисекундах
   const step = progressValue.value / (progressTime.value * 100); // Один шаг каждые 10ms
 
@@ -270,7 +289,6 @@ const startProgressLinear = () => {
     if (progressValue.value > 0) {
       progressValue.value -= step;
     } else {
-      console.log("interval", progressValue.value)
       progressValue.value = 0;
       clearInterval(interval);
       onFightEnd();  // Вызываем функцию, когда бой завершен
@@ -305,6 +323,9 @@ onMounted(async () => {
   if (!fight.value.isCompleted) {
     // Инициируем текущий бой
     progressTime.value = fight.value.duration;
+
+    // Инициировать состояние, на котором был прерван процесс
+    // TODO
 
     startCountdown();
 

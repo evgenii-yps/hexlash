@@ -101,7 +101,7 @@ const startFight = async () => {
 showFightRulesReminder(t("info.firstFight"));
 
 onMounted(() => {
-  store.commit('fight/setMsgStatus', t('arena.lblTestResolve'))
+  store.dispatch("fight/setArenaSettings", params.value) // Запускаем со стартовыми параметрами
 })
 
 </script>
