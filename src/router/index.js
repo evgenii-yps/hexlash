@@ -30,9 +30,11 @@ const protectedRoutes = [
 
     {path: '/training', name: 'Training', component: () => import("/src/views/TrainingView.vue")},
     {path: '/training/fight', name: 'Training fight', component: () => import("/src/views/FightView.vue")},
-    {path: '/training/punch', name: 'Punch', component: () => import("/src/components/fragments/training/Punch.vue")},
 
     {path: '/fight/:id', name: 'Fight', component: () => import("/src/views/FightView.vue")},
+
+    //TODO TEMP
+    {path: '/training/punch', name: 'Punch', component: () => import("/src/components/fragments/training/Punch3D.vue")},
 
 ];
 

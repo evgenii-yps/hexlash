@@ -17,7 +17,7 @@
       <v-img :src="`/images/skins/${fighterImage}`" aspect-ratio="1" :class="{'flipped': props.flipped}"
              class="skin-img"/>
 
-      <div class="circle-container" >
+      <div class="circle-container">
         <div class="movement-container" ref="headCircleRef">
           <!-- Кружок для головы -->
           <div class="pulsing-circle" @click="handleHeadClick" v-if="isVisibleCircles">
@@ -26,7 +26,7 @@
         </div>
       </div>
 
-      <div class="circle-container-body" >
+      <div class="circle-container-body">
         <div class="movement-container" ref="bodyCircleRef">
           <!-- Кружок для тела -->
           <div class="pulsing-circle" @click="handleBodyClick" v-if="isVisibleCircles">
@@ -50,7 +50,7 @@ import {useI18n} from "vue-i18n";
 const {t} = useI18n({useScope: 'global'})
 
 const props = defineProps({
-  flipped:{
+  flipped: {
     type: Boolean,
     required: true,
   },
@@ -67,16 +67,16 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
-  isMoveCircles:{
+  isMoveCircles: {
     type: Boolean,
     default: false
   },
-  isVisibleCircles:{
+  isVisibleCircles: {
     type: Boolean,
     required: true,
     default: false
   },
-  statusFighter:{
+  statusFighter: {
     type: String,
     required: true,
     default: ''
@@ -88,7 +88,6 @@ const strYou = computed(() => props.isMaster ? ` ${t('you')}` : "");
 const isMoveCircles = computed(() => props.isMoveCircles);
 const isVisibleCircles = computed(() => props.isVisibleCircles);
 const statusFighter = computed(() => props.statusFighter);
-
 
 
 const headCircleRef = ref(null);
@@ -166,7 +165,6 @@ watch(isMoveCircles, (newVal) => {
 });
 
 
-
 </script>
 
 <style scoped>
@@ -236,7 +234,7 @@ watch(isMoveCircles, (newVal) => {
   align-items: center;
 }
 
-.circle-container-body{
+.circle-container-body {
   position: relative;
   display: flex;
   height: 120px;

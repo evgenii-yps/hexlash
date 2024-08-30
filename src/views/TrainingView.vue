@@ -4,8 +4,11 @@
       <div class="training-content-wrapper">
 
         <div v-if="!loadingPunchInfo && !isTrainingBlocked" class="training-punch-container">
-          <v-img :src="PunchImage" aspect-ratio="1"
-                 class="punch-img"/>
+
+
+<!--          <v-img :src="PunchImage" aspect-ratio="1"
+                 class="punch-img"/>-->
+          <Punch3D class="punch-img"/>
 
           <div class="circle-container" @click="handleClickPunch($event, false, COST_PER_CLICK)">
 
@@ -63,7 +66,7 @@
 </template>
 
 <script setup>
-import {computed, onMounted, onUnmounted, ref, watch, watchEffect} from 'vue';
+import {computed, nextTick, onBeforeMount, onMounted, onUnmounted, ref, watch, watchEffect} from 'vue';
 import clickSound from '@/assets/sound/punch_hit.mp3'
 import PunchImage from "@/assets/images/punch.png"
 import DailyTasks from "@/components/fragments/training/DailyTasks.vue"
@@ -72,6 +75,8 @@ import store from "@/core/state/store.js";
 import {COST_PER_CLICK, MULTIPLAYER_EXACT_CLICK, SPEED_MOVE_PUNCH_MS} from "@/core/constants.js";
 
 import {useI18n} from "vue-i18n";
+import Punch3D from "@/components/fragments/training/Punch3D.vue";
+import {Howl} from "howler";
 
 const {t} = useI18n({useScope: 'global'})
 
@@ -93,11 +98,12 @@ const isTrainingBlocked = computed(() => store.state.punch.isTrainingBlocked);
 const hasIncompleteSocialTasks = computed(() => store.getters['task/hasIncompleteSocialTasks']);
 const hasIncompleteDailyTasks = computed(() => store.getters['task/hasIncompleteDailyTasks']);
 
-const soundHit1 = new Howl({
-  src: [clickSound]
-})
+
 const playSound1 = () => {
-  soundHit1.play();
+  const sound = new Howl({
+    src: [clickSound]
+  });
+  sound.play();
 }
 
 const moveCircle = (circle) => {
@@ -237,7 +243,7 @@ watchEffect(() => {
   }
 });
 
-onMounted(() => {
+onBeforeMount( () => {
   store.dispatch('punch/synchronizePunchResetTime');
   store.dispatch('task/fetchAllSocialTasks');
   store.dispatch('task/fetchAllDailyTasks');

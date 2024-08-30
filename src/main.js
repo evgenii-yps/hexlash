@@ -107,6 +107,7 @@ export const i18n = createI18n({
     messages: Object.assign(messages),
 })
 
+
 async function initializeApp() {
     // загрузки данных
     await store.dispatch('master/fetchMaster');

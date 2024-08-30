@@ -59,7 +59,7 @@ export const fetchPunchLimits = async () => {
             unixTimeStart: limitTime,
             waitRateIntervalTime: 28800,
             punchCounter: 0,
-            punchCounterMaxPerRate: 10
+            punchCounterMaxPerRate: 10000
         });
     } catch (error) {
         throw new Error('Failed to fetch server limit time');
@@ -81,10 +81,10 @@ export const sendPunchBatch = async (punchInfo, totalValue) => {
         */
 
         const punchInfo = new PunchInfoModel({
-            unixTimeStart: 1794560255,
+            unixTimeStart: 1624560255,//1794560255,
             waitRateIntervalTime: 28800,
-            punchCounter: 10,
-            punchCounterMaxPerRate: 10
+            punchCounter: 1,
+            punchCounterMaxPerRate: 10000
         });
 
         // Обновляем локальную базу данных

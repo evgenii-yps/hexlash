@@ -91,6 +91,7 @@ const actions = {
     async endFight({commit, dispatch}) {
         console.log('endFight');
         // Подсчет результатов,
+        // TODO
     },
     async getFightById({ commit, dispatch, getters }, fightId) {
         try {

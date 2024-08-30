@@ -2,7 +2,7 @@
   <div class="app-container">
     <header class="header">
       <div class="header-content">
-        <Logo @click="goToHome"/>
+        <Logo/>
         <div v-if="balance !== null" class="balance">
           {{ balance }}$
         </div>
@@ -55,10 +55,6 @@ const infoMessage = computed(() => {
 const showBottomMenu = computed(() => {
   return store.getters['master/getAuthState'].isAuthenticated
 });
-
-const goToHome = () => {
-  router.push('/');
-};
 
 </script>
 

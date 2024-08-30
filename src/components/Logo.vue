@@ -1,11 +1,15 @@
 <template>
   <div class="logo-container">
-    <img src="@/assets/images/logo.svg" alt="logo">
+    <img src="@/assets/images/logo.svg" alt="logo"  @click="goToHome">
   </div>
 </template>
 
 <script setup>
+import router from "@/router/index.js";
 
+const goToHome = () => {
+  router.push('/');
+};
 </script>
 
 <style>
