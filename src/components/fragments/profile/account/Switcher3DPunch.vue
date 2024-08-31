@@ -2,7 +2,7 @@
   <div class="switcher-3d-punch-container">
     <VBtnDark
         class="punch-btn"
-        @click="btnIs2D">
+        @click="toggle3DPunch">
       {{t('profile.account.is3dPunch')}}
       <template #append>
         <span class="custom-icon"/>
@@ -20,21 +20,21 @@
 
 <script setup>
 
-import {computed} from "vue";
+import {computed, onMounted, ref} from "vue";
 import {useI18n} from "vue-i18n";
 import store from "@/core/state/store.js";
 const {t} = useI18n({useScope: 'global'})
 
+const is3DPunch = ref(!store.getters['punch/is2DPunchEnabled']); // Инвертируем начальное значение из store
 
-
-const is3DPunch = computed({
-  get: () => !store.getters['punch/is2DPunchEnabled'],  // Инвертируем значение
-  set: (value) => store.commit('punch/set2DPunch', !value)  // Инвертируем при установке
-});
-
-const btnIs2D = () => {
+const toggle3DPunch = () => {
   is3DPunch.value = !is3DPunch.value;
+  store.commit('punch/set2DPunch', !is3DPunch.value); // Инвертируем при установке
 };
+
+onMounted(() => {
+  is3DPunch.value = !store.getters['punch/is2DPunchEnabled']; // Устанавливаем текущее значение из store при монтировании
+});
 
 </script>
 

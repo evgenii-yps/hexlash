@@ -9,7 +9,7 @@ const state = {
     isTrainingBlocked: false,
     punchTimerId: null, // идентификатор таймера
     batchHitPunchAmount: [],
-    is2DPunch: false, // Если у нас 2д режим
+    is2DPunch: localStorage.getItem('is2DPunch') === 'true', // Если у нас 2д режим
 };
 
 const getters = {
@@ -40,7 +40,7 @@ const mutations = {
     },
     set2DPunch(state, isEnabled) {  // Мутация для изменения флага
         state.is2DPunch = isEnabled;
-        localStorage.setItem('is2DPunch', isEnabled ? 'true' : 'false'); // Обновляем localStorage
+        localStorage.setItem('is2DPunch', isEnabled); // Обновляем localStorage
     },
 };
 
