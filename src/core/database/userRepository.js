@@ -8,6 +8,13 @@ export const getUserByLoginFromDB = async (login) => {
     return await index.get(login);
 };
 
+export const getUserByIdFromDB = async (id) => {
+    const db = await initDB();
+    const tx = db.transaction(USERS_TABLE, 'readonly');
+    const store = tx.objectStore(USERS_TABLE);
+    return await store.get(id);
+};
+
 export const saveUserDataToLocalDB = async (userModel) => {
     const db = await initDB();
     await db.put(USERS_TABLE, {...userModel, id: userModel.id});

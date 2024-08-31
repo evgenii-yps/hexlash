@@ -1,7 +1,7 @@
 import UserModel from "@/core/models/userModel.js";
 import store from "@/core/state/store.js";
 import router from "@/router/index.js";
-import {getUserByLoginFromDB, saveUserDataToLocalDB} from "@/core/database/userRepository.js";
+import {getUserByIdFromDB, getUserByLoginFromDB, saveUserDataToLocalDB} from "@/core/database/userRepository.js";
 
 
 const testUsers = [
@@ -54,7 +54,8 @@ const testUsers = [
         daysInClub: 200,
         noSkipDays: 200,
         achievements: [3, 4],
-        balance: 250
+        balance: 250,
+        skin:"skin_m_21.png"
     },
     {
         id: "user3",
@@ -79,7 +80,8 @@ const testUsers = [
         daysInClub: 365,
         noSkipDays: 365,
         achievements: [5, 6],
-        balance: 350
+        balance: 350,
+        skin:"skin_m_23.png"
     }
 ];
 
@@ -99,6 +101,25 @@ const fetchUserByLogin = async (login) => {
         }
     } catch (error) {
         throw new Error('Failed to fetch user data by login');
+    }
+};
+
+// Взять пользователя по ID
+const fetchUserById = async (id) => {
+    try {
+        //  const response = await apiClient.get(`/users/${id}`);
+        //  return response.data;
+
+        // Добавляем задержку в 1 секунду
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        const user = testUsers.find(u => u.id === id);
+        if (user) {
+            return user;
+        } else {
+            return null;
+        }
+    } catch (error) {
+        throw new Error('Failed to fetch user data by ID');
     }
 };
 
@@ -128,6 +149,7 @@ export const getUserFromLocalAndAPI = async (userLogin) => {
         });
         return localData;
     } else {
+
         // Если данных нет в локальной базе, ждем данных от API
         try {
             const apiData = await fetchUserByLogin(userLogin);
@@ -139,6 +161,49 @@ export const getUserFromLocalAndAPI = async (userLogin) => {
             }
         } catch (error) {
             console.error('Failed to fetch user data:', error);
+        }
+    }
+};
+
+
+export const getUserFromLocalAndAPIById = async (userId) => {
+    let localData;
+    try {
+        // Сначала берем данные из локальной базы данных по ID
+        localData = await getUserByIdFromDB(userId);
+
+    } catch (error) {
+        console.error('Failed to fetch local user data by ID:', error);
+    }
+
+    // Возвращаем локальные данные, если они есть
+    if (localData) {
+        // Асинхронно обновляем данные из API
+        fetchUserById(userId).then(async (apiData) => {
+            const apiUserModel = new UserModel(apiData);
+
+            await saveUserDataToLocalDB(apiUserModel);
+
+            await store.dispatch('user/updateUser', apiUserModel);
+
+        }).catch((error) => {
+            console.error('Failed to fetch user data from API by ID:', error);
+        });
+        return localData;
+    } else {
+        // Если данных нет в локальной базе, ждем данных от API
+        try {
+            const apiData = await fetchUserById(userId);
+
+            if (apiData) {
+                const apiUserModel = new UserModel(apiData);
+
+                await saveUserDataToLocalDB(apiUserModel);
+                await store.dispatch('user/updateUser', apiUserModel);
+                return apiUserModel;
+            }
+        } catch (error) {
+            console.error('Failed to fetch user data by ID:', error);
         }
     }
 };

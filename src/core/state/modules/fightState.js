@@ -2,6 +2,7 @@ import * as fightService from "@/core/services/fightService.js";
 import {i18n} from "@/main.js";
 import router from "@/router/index.js";
 import * as userService from "@/core/services/userService.js";
+import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
 
 const state = {
     arenaSettings: {bet: 10, actions: 5, time: 10, isDisableFight: false},
@@ -58,11 +59,31 @@ const actions = {
 
         commit('setArenaSettings', {...initParams, isDisableFight, bet});
     },
-    async startFight({commit, dispatch}) {
+    async startFight({commit, rootGetters, dispatch}) {
 
         // Запускаем ожидания боя
         commit('setWaitingFight', true);
         commit("setMsgStatus", i18n.global.t('arena.lblSearchOpponent'));
+
+        commit('setCurrentFight', null);
+        commit('setFighterOne', null);
+        commit('setFighterTwo', null);
+
+        // Проверяем достаточно ли баланса у пользователя
+        const master = rootGetters['master/getMaster'];
+        const balance = master.getBalance();
+
+        if (balance < state.arenaSettings.bet) {
+            commit('master/setInfoMessage',
+                InfoMessageModel.withTimeout(i18n.global.t("arena.insufficientFunds"), 1500),
+                {root: true});
+
+            commit('setWaitingFight', false);
+
+            await router.push("/arena");
+
+            return;
+        }
 
         try {
             const newFight = await fightService.createFight(state.arenaSettings)
@@ -129,7 +150,7 @@ const actions = {
         if (fighterId === master.userData.id) {
             fighter = master.userData;
         } else {
-            fighter = await userService.getUserFromLocalAndAPI(fighterId);
+            fighter = await userService.getUserFromLocalAndAPIById(fighterId);
         }
 
         return fighter;

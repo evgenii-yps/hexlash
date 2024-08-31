@@ -28,7 +28,9 @@ export class FightModel {
     // Статический метод для создания модели из JSON строки
     static FromJSON(jsonString) {
         try {
-            const data = JSON.parse(jsonString);
+           // const data = JSON.parse(jsonString);
+            const data = jsonString;
+
             const {
                 id,
                 fighterOne,

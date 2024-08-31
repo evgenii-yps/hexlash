@@ -6,7 +6,45 @@ import {i18n} from '@/main.js';
 import {DECIMALS} from "@/core/constants.js";
 import * as userService from "@/core/services/userService.js";
 
-const testFights = [];
+const testFights = [
+    {
+        "id": "fight1",
+        "fighterOne": "user123",
+        "fighterTwo": "user2",
+        "fighterOneActions": ["HH", "BD", "BH", "HD", "HH"],
+        "fighterTwoActions": ["HD", "HH", "BD", "BH", "BD"],
+        "winnerId": "user123",
+        "fightDate": "2024-08-31T10:23:09.123Z",
+        "bet": 1000,
+        "actions": 5,
+        "isCompleted": true
+    },
+    {
+        "id": "fight2",
+        "fighterOne": "user2",
+        "fighterTwo": "user3",
+        "fighterOneActions": ["BD", "HH", "BH", "HD", "BD"],
+        "fighterTwoActions": ["HH", "BD", "HD", "HH", "BH"],
+        "winnerId": "user2",
+        "fightDate": "2024-08-30T15:47:36.543Z",
+        "bet": 2000,
+        "actions": 5,
+        "isCompleted": true
+    },
+    {
+        "id": "fight3",
+        "fighterOne": "user1",
+        "fighterTwo": "user3",
+        "fighterOneActions": ["HH", "BH", "BD", "HH", "HD"],
+        "fighterTwoActions": ["BD", "HD", "HH", "BD", "BH"],
+        "winnerId": "",
+        "fightDate": "2024-08-29T12:34:56.789Z",
+        "bet": 1500,
+        "actions": 5,
+        "isCompleted": true
+    }
+];
+
 
 // Взять пользователя по Login
 const fetchFightById = async (id) => {
@@ -32,7 +70,6 @@ const fetchFightById = async (id) => {
 export const getFightFromLocalAndAPI = async (id) => {
     let localData;
     try {
-        console.log(id);
         // Сначала берем данные из локальной базы данных
         localData = await getFightByIdFromDB(id);
     } catch (error) {
@@ -43,11 +80,11 @@ export const getFightFromLocalAndAPI = async (id) => {
     if (localData) {
         // Асинхронно обновляем данные из API
         fetchFightById(id).then(async (apiData) => {
-            const apiUserModel = new FightModel.FromJSON(apiData);
+            const apiUserModel = FightModel.FromJSON(apiData);
 
             await saveFightDataToLocalDB(apiUserModel);
 
-            await store.dispatch('fight/setCurrentFight', apiUserModel);
+            await store.commit('fight/setCurrentFight', apiUserModel);
 
         }).catch((error) => {
             console.error('Failed to fetch fight data from API:', error);
@@ -60,7 +97,7 @@ export const getFightFromLocalAndAPI = async (id) => {
             if (apiData) {
                 const apiUserModel = new FightModel(apiData);
                 await saveFightDataToLocalDB(apiUserModel);
-                await store.dispatch('fight/setCurrentFight', apiUserModel);
+                await store.commit('fight/setCurrentFight', apiUserModel);
                 return apiUserModel;
             }
         } catch (error) {
@@ -103,9 +140,9 @@ export const mockServerRequest = async (arenaSettings) => {
 
             // Здесь мы эмулируем получение данных с сервера
             const testFightModel = new FightModel({
-                id: randomId,
+                id: `fight-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
                 fighterOne: 'user123',
-                fighterTwo: 'login1',
+                fighterTwo: 'user1',
                 fighterOneActions: [],
                 fighterTwoActions: [],
                 winnerId: null,

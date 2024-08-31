@@ -3,7 +3,7 @@
     <div class="fight-container">
       <div class="fight-content-wrapper" v-if="fight">
 
-        <div class="progress-container">
+        <div class="progress-container" v-if="isVisibleProgress">
           <p>{{ txtProgress }}</p>
           <div class="progress">
             <v-progress-linear
@@ -13,7 +13,7 @@
           </div>
         </div>
 
-        <div class="fight-again" v-if="fight.isCompleted">
+        <div class="fight-again" v-if="isVisibleBtnAgain">
           <VBtn
               size="small"
               class="btn-again"
@@ -35,9 +35,9 @@
           <div class="fighter fighter-left">
             <Fighter
                 :flipped="false"
-                :action="master.userData.id === fighterOne.id ? meAction : rivalAction"
+                :action="master.userData.id === fighterOne?.id ? meAction : rivalAction"
                 :userData="fighterOne"
-                :isMaster="master.userData.id === fighterOne.id"
+                :isMaster="master.userData.id === fighterOne?.id"
                 :isMoveCircles="isMoveCircles && master.userData.id !== fighterOne.id"
                 :isVisibleCircles="isVisibleCircles"
                 :statusFighter="leftFighterStatus"/>
@@ -46,10 +46,10 @@
           <div class="fighter fighter-right">
             <Fighter
                 :flipped="true"
-                :action="master.userData.id === fighterTwo.id ? meAction : rivalAction"
+                :action="master.userData.id === fighterTwo?.id ? meAction : rivalAction"
                 :userData="fighterTwo"
-                :isMaster="master.userData.id === fighterTwo.id"
-                :isMoveCircles="isMoveCircles && master.userData.id !== fighterTwo.id"
+                :isMaster="master.userData.id === fighterTwo?.id"
+                :isMoveCircles="isMoveCircles && master.userData.id !== fighterTwo?.id"
                 :isVisibleCircles="isVisibleCircles"
                 :statusFighter="rightFighterStatus"/>
           </div>
@@ -57,7 +57,8 @@
 
         <div class="fighters-result">
           <div class="result-left">
-            <div v-for="(square, index) in countActionArray" :key="index" class="result-square">
+            <div v-for="(square, index) in countActionArray" :key="index" class="result-square"
+                 :class="getSquareClass(leftResults[index], rightResults[index], true)">
               {{ leftResults[index] || '' }}
             </div>
           </div>
@@ -82,7 +83,8 @@
           </VModal>
 
           <div class="result-right">
-            <div v-for="(square, index) in countActionArray" :key="index" class="result-square">
+            <div v-for="(square, index) in countActionArray" :key="index" class="result-square"
+                 :class="getSquareClass(leftResults[index],rightResults[index], false)">
               {{ rightResults[index] || '' }}
             </div>
           </div>
@@ -107,7 +109,7 @@
 </template>
 
 <script setup>
-import {computed, onMounted, ref} from 'vue';
+import {computed, nextTick, onMounted, ref, watch} from 'vue';
 import {COUNTDOWN} from "@/core/constants.js";
 import Fighter from "@/components/fragments/fight/Fighter.vue";
 import store from "@/core/state/store.js";
@@ -129,6 +131,8 @@ const progressTime = ref(null);  // Время, за которое прогре
 
 const isMoveCircles = ref(false);
 const isVisibleCircles = ref(false);
+const isVisibleBtnAgain = ref(false);
+const isVisibleProgress = ref(false);
 const dialogHelp = ref(false);
 
 // Результаты боя в виде массивов
@@ -151,9 +155,38 @@ const hideHelp = () => {
   dialogHelp.value = false;
 }
 
+
 const btnAgain = () => {
-  console.log("new fight");
+  fight.value = null;
+  store.dispatch("fight/startFight")
 }
+
+const getSquareClass = (leftAction, rightAction, isLeft) => {
+  const attackToDefenseMap = {
+    'HH': 'HD', // HD блокирует HH
+    'BH': 'BD'  // BD блокирует BH
+  };
+
+  if (isLeft) {
+    // Проверяем левую сторону, если левое действие - это атака
+    if (leftAction === 'HH' || leftAction === 'BH') {
+      // Подсвечиваем атаку, если соответствующей защиты в правом массиве нет
+      if (attackToDefenseMap[leftAction] !== rightAction && rightAction) {
+        return 'attack-hit'; // Подсвечиваем успешный удар
+      }
+    }
+  } else {
+    // Проверяем правую сторону, если правое действие - это атака
+    if (rightAction === 'HH' || rightAction === 'BH') {
+      // Подсвечиваем атаку, если соответствующей защиты в левом массиве нет
+      if (attackToDefenseMap[rightAction] !== leftAction && leftAction) {
+        return 'attack-hit'; // Подсвечиваем успешный удар
+      }
+    }
+  }
+
+  return ''; // Ничего не подсвечиваем, если действие было защитное или заблокированное
+};
 
 const meAction = (action) => {
   if (!isVisibleCircles.value) return;
@@ -240,7 +273,11 @@ const isValidAction = (newAction) => {
 };
 
 // Функция для управления обратным отсчетом
-const startCountdown = () => {
+const startFight = () => {
+
+  isVisibleBtnAgain.value = false;
+  isVisibleProgress.value = true;
+
   // Время начала боя на сервере (с учетом добавленных X секунд)
   const serverStartTime = fight.value.fightDate.getTime();
 
@@ -301,39 +338,79 @@ const onFightEnd = () => {
   progressValue.value = 0;
   countdown.value = 0;
   txtProgress.value = t('fight.fightFinished');
-
+  isVisibleBtnAgain.value = true;
 
   store.dispatch('fight/endFight');
 
-  // TEMP
-  leftFighterStatus.value = 'WIN';
-  rightFighterStatus.value = 'LOSE';
-  //TODO
-
+  setFighterStatuses(fight.value.winnerId);
 };
 
-onMounted(async () => {
-  // TODO загрузить бой по id из базы данных и с апи сервера, если не новый бой
+onMounted(() => {
+  loadFightData();
+});
+
+// Watch для отслеживания изменений ID боя
+watch(() => route.params.id, async (newId, oldId) => {
+  if (newId !== oldId) {
+    await loadFightData();
+  }
+});
+
+const loadFightData = async () => {
+
+  clearState();
 
   fight.value = await store.dispatch('fight/getFightById', route.params.id);
 
   countActionArray.value = Array.from({length: fight.value.actions});
 
-
   if (!fight.value.isCompleted) {
-    // Инициируем текущий бой
     progressTime.value = fight.value.duration;
-
-    // Инициировать состояние, на котором был прерван процесс
-    // TODO
-
-    startCountdown();
-
+    // TODO инициировать состояние на котором было прервано
+    startFight();
   } else {
-    // Бой уже завершен давно, заходим посмотреть результаты
-    //TODO это кстати может быть даже не мой бой, я просто захожу по ссылки
+    isVisibleBtnAgain.value = false;
+    isVisibleProgress.value = false;
+    leftResults.value = fight.value.fighterOneActions;
+    rightResults.value = fight.value.fighterTwoActions;
+    setTimeout(() => {
+      setFighterStatuses(fight.value.winnerId);
+    }, 200);
   }
-});
+};
+
+
+const clearState = () => {
+  countdown.value = COUNTDOWN;
+  countActionArray.value = null;
+  txtProgress.value = `${t('fight.progress')}`;
+  fight.value = null;
+  progressTime.value = null;
+  isMoveCircles.value = false;
+  isVisibleCircles.value = false;
+  isVisibleBtnAgain.value = false;
+  isVisibleProgress.value = false;
+  dialogHelp.value = false;
+  leftResults.value = [];
+  rightResults.value = [];
+  leftFighterStatus.value = '';
+  rightFighterStatus.value = '';
+  progressValue.value = 1000;  // Сброс прогресса на 100%
+};
+
+const setFighterStatuses = (winnerId) => {
+  if (winnerId === fighterOne.value.id) {
+    leftFighterStatus.value = 'WIN';
+    rightFighterStatus.value = 'LOSE';
+  } else if (winnerId === fighterTwo.value.id) {
+    leftFighterStatus.value = 'LOSE';
+    rightFighterStatus.value = 'WIN';
+  } else {
+    leftFighterStatus.value = 'DRAW';
+    rightFighterStatus.value = 'DRAW';
+  }
+};
+
 
 
 </script>
@@ -597,5 +674,11 @@ onMounted(async () => {
   align-items: center;
 }
 
+.attack-hit {
+  border-color: var(--primary-color);
+  background-color: var(--primary-color);
+
+  color: white;
+}
 
 </style>
