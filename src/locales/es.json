@@ -62,7 +62,8 @@
       "lblLockedOverlay": "Fondos insuficientes",
       "lblDeleteAccount": "Eliminar Cuenta",
       "lblConfirmDeletion": "Confirmar Eliminación",
-      "msgConfirmDelete": "¿Estás seguro de que quieres eliminar tu cuenta? Esta acción no se puede deshacer."
+      "msgConfirmDelete": "¿Estás seguro de que quieres eliminar tu cuenta? Esta acción no se puede deshacer.",
+      "is3dPunch": "Saco de Boxeo 3D"
     },
     "wallet": {
       "lblTopUpBalance": "Recargar Saldo",

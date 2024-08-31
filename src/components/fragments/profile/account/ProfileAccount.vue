@@ -7,6 +7,7 @@
     <ConfirmEmail/>
     <ChangeLogin/>
     <ChangeLanguage/>
+    <Switcher3DPunch/>
     <ChangePassword/>
     <DeleteAccount/>
 
@@ -23,6 +24,7 @@ import ChangeLogin from "@/components/fragments/profile/account/ChangeLogin.vue"
 import DeleteAccount from "@/components/fragments/profile/account/DeleteAccount.vue";
 import ChangeSkin from "@/components/fragments/profile/account/ChangeSkin.vue";
 import ChangeLanguage from "@/components/fragments/profile/account/ChangeLanguage.vue";
+import Switcher3DPunch from "@/components/fragments/profile/account/Switcher3DPunch.vue";
 
 
 </script>
@@ -31,4 +33,5 @@ import ChangeLanguage from "@/components/fragments/profile/account/ChangeLanguag
 .profile-account {
   margin-top: 2rem;
 }
+
 </style>

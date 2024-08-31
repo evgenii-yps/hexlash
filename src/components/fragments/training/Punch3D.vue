@@ -1,5 +1,5 @@
 <script setup>
-import {inject, nextTick, onBeforeUnmount, onMounted, onUnmounted, ref} from 'vue';
+import {inject, onBeforeUnmount, onMounted, ref} from 'vue';
 import * as THREE from 'three';
 import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 
@@ -7,6 +7,7 @@ import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js'
 import punchTexture from '@/assets/textures/punch_texture2.png';
 import {DRACOLoader} from "three/addons";
 import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader'
+
 
 
 const props = defineProps({
@@ -23,7 +24,7 @@ const props = defineProps({
 const AmmoLib = inject('AmmoLib');
 let Ammo = null;
 const target = ref();
-
+let collisionConfiguration, dispatcher, broadphase, solver, softBodySolver;
 
 // Graphics variables
 let camera, scene, renderer;
@@ -82,11 +83,11 @@ function initGraphics() {
 function initPhysics() {
 
   // Physics configuration
-  const collisionConfiguration = new Ammo.btSoftBodyRigidBodyCollisionConfiguration();
-  const dispatcher = new Ammo.btCollisionDispatcher(collisionConfiguration);
-  const broadphase = new Ammo.btDbvtBroadphase();
-  const solver = new Ammo.btSequentialImpulseConstraintSolver();
-  const softBodySolver = new Ammo.btDefaultSoftBodySolver();
+  collisionConfiguration = new Ammo.btSoftBodyRigidBodyCollisionConfiguration();
+  dispatcher = new Ammo.btCollisionDispatcher(collisionConfiguration);
+  broadphase = new Ammo.btDbvtBroadphase();
+  solver = new Ammo.btSequentialImpulseConstraintSolver();
+  softBodySolver = new Ammo.btDefaultSoftBodySolver();
   physicsWorld = new Ammo.btSoftRigidDynamicsWorld(dispatcher, broadphase, solver, collisionConfiguration, softBodySolver);
   physicsWorld.setGravity(new Ammo.btVector3(0, gravityConstant, 0));
   physicsWorld.getWorldInfo().set_m_gravity(new Ammo.btVector3(0, gravityConstant, 0));
@@ -352,20 +353,20 @@ function createSoftVolume(bufferGeom, material) {
   return volume;
 }
 
-let handlePointerDown;
+function handlePointerDown(event) {
+  if (!clickRequest) {
+    const rect = renderer.domElement.getBoundingClientRect();
+    mouseCoords.set(
+        ((event.clientX - rect.left) / rect.width) * 2 - 1,
+        -((event.clientY - rect.top) / rect.height) * 2 + 1
+    );
+
+    clickRequest = true;
+  }
+}
 
 function initInput() {
-  handlePointerDown = function (event) {
-    if (!clickRequest) {
-      const rect = renderer.domElement.getBoundingClientRect();
-      mouseCoords.set(
-          ((event.clientX - rect.left) / rect.width) * 2 - 1,
-          -((event.clientY - rect.top) / rect.height) * 2 + 1
-      );
 
-      clickRequest = true;
-    }
-  };
   window.addEventListener('pointerdown', handlePointerDown);
 }
 
@@ -471,16 +472,11 @@ function render() {
 }
 
 onMounted(async () => {
-  if (Ammo) {
-    console.log("ammo was loaded " + Ammo)
+  AmmoLib.then(function (AmmoLib) {
+    Ammo = AmmoLib
+    console.log("ammo loaded " + Ammo)
     init();
-  } else {
-    AmmoLib.then(function (AmmoLib) {
-      Ammo = AmmoLib
-      console.log("ammo loaded " + Ammo)
-      init();
-    });
-  }
+  });
 });
 
 onBeforeUnmount(() => {
@@ -494,6 +490,13 @@ onBeforeUnmount(() => {
 
   softBodies.length = 0;
 
+  if (sphereMesh) {
+    sphereMesh.geometry.dispose();
+    sphereMesh.material.dispose();
+    scene.remove(sphereMesh);
+    sphereMesh = null;
+  }
+
   // Удаляем физический мир
   if (physicsWorld) {
     Ammo.destroy(physicsWorld);
@@ -506,11 +509,35 @@ onBeforeUnmount(() => {
     softBodyHelpers = null;
   }
 
+  // Удаление всех созданных объектов Ammo.js
+  if (collisionConfiguration) {
+    Ammo.destroy(collisionConfiguration);
+    collisionConfiguration = null;
+  }
+  if (dispatcher) {
+    Ammo.destroy(dispatcher);
+    dispatcher = null;
+  }
+  if (broadphase) {
+    Ammo.destroy(broadphase);
+    broadphase = null;
+  }
+  if (solver) {
+    Ammo.destroy(solver);
+    solver = null;
+  }
+  if (softBodySolver) {
+    Ammo.destroy(softBodySolver);
+    softBodySolver = null;
+  }
+
   if (raycaster) {
     raycaster = null;
   }
 
   if (renderer) {
+    renderer.forceContextLoss();
+    renderer.setAnimationLoop(null);
     renderer.dispose();
     renderer = null;
   }
@@ -524,6 +551,9 @@ onBeforeUnmount(() => {
     camera = null;
   }
 
+  if (textureLoader) {
+    textureLoader = null;
+  }
 
   window.removeEventListener('pointerdown', handlePointerDown);
 
@@ -531,6 +561,8 @@ onBeforeUnmount(() => {
   window.removeEventListener('resize', onWindowResize);
 
   Ammo = null;
+
+
 });
 
 </script>

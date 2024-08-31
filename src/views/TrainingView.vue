@@ -5,10 +5,12 @@
 
         <div v-if="!loadingPunchInfo && !isTrainingBlocked" class="training-punch-container">
 
-
-<!--          <v-img :src="PunchImage" aspect-ratio="1"
-                 class="punch-img"/>-->
-          <Punch3D class="punch-img"/>
+          <div v-if="is2DPunch">
+            <v-img :src="PunchImage" aspect-ratio="1" class="punch-img"/>
+          </div>
+          <div v-else>
+            <Punch3D class="punch-img"/>
+          </div>
 
           <div class="circle-container" @click="handleClickPunch($event, false, COST_PER_CLICK)">
 
@@ -97,6 +99,9 @@ const isTrainingBlocked = computed(() => store.state.punch.isTrainingBlocked);
 
 const hasIncompleteSocialTasks = computed(() => store.getters['task/hasIncompleteSocialTasks']);
 const hasIncompleteDailyTasks = computed(() => store.getters['task/hasIncompleteDailyTasks']);
+
+// Подключаем флаг 2D/3D
+const is2DPunch = computed(() => store.getters['punch/is2DPunchEnabled']);
 
 
 const playSound1 = () => {

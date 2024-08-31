@@ -62,7 +62,8 @@
       "lblLockedOverlay": "Insufficient funds",
       "lblDeleteAccount": "Delete Account",
       "lblConfirmDeletion": "Confirm Deletion",
-      "msgConfirmDelete": "Are you sure you want to delete your account? This action cannot be undone."
+      "msgConfirmDelete": "Are you sure you want to delete your account? This action cannot be undone.",
+      "is3dPunch": "3D Punch"
     },
     "wallet": {
       "lblTopUpBalance": "Top Up Balance",
