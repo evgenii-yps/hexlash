@@ -22,13 +22,24 @@
       "btnLogin": "Login",
       "question": "Do you have",
       "btnInvite": "invite",
-      "authError": "Wrong login or password"
+      "authError": "Wrong login or password",
+      "lblOrPass": " or password",
+      "btnReset": "reset"
     },
     "invite": {
       "lblInvite": "INVITE CODE",
       "btnInvite": "Join Club",
       "question": "Already have an account?",
-      "btnLogin": "Login"
+      "btnLogin": "Login",
+      "errorInvalidInvite": "Invalid invite code."
+    },
+    "reset": {
+      "lblEmail": "Email",
+      "btnReset": "Reset Password",
+      "success": "A reset link has been sent to your email.",
+      "error": "Invalid email address.",
+      "errorEmpty": "Email cannot be empty.",
+      "errorInvalidFormat": "Invalid email format."
     }
   },
   "profile": {
@@ -136,7 +147,7 @@
       "lblCreateClub": "Create Club",
       "lblWalletManagement": "Wallet Management",
       "lblSettings": "Settings / Skin / More",
-      "lblHelp": "Help / Rules",
+      "lblHelp": "Help / Rules / Privacy",
       "lblLogout": "Logout",
       "tooltipInsufficientFunds": "Not enough funds to create a club",
       "lblConfirmLogout": "Confirm logout",
@@ -216,7 +227,12 @@
     "modalHelpTextHtml": "<p>Within the allocated time, choose actions for attack and defense.</p><br/><p style=\"margin-bottom: 10px\"><strong>Available actions:</strong></p><ul style=\"color:var(--white); margin-left: 20px\"><li><strong>HD (Head Defence):</strong> head defense</li><li><strong>BD (Body Defence):</strong> body defense</li><li><strong>HH (Head Hit):</strong> head hit</li><li><strong>BH (Body Hit):</strong> body hit</li></ul><br/><p>After selecting actions, a comparison with the opponent's actions occurs. The winner is the one who lands more hits and receives fewer.</p><br/><p style=\"margin-bottom: 10px; color:var(--white);\"><strong>Example:</strong></p><p>You: HD, HH, BD</p><p>Opponent: HH, BD, BH</p><p>Result: you landed 1 hit, blocked 2 of the opponent's hits. <strong>Winner:</strong> You </p><br/><p><strong style=\"color:var(--white)\">Important:</strong> You cannot select all actions as attacks or all as defenses. One of the actions must be the opposite.</p>"
   },
   "training": {
-    "timerText": "Punch bag is down, fighter. Hold on, we’ll replace it for you soon."
+    "timerText": "Punch bag is down, fighter. Hold on, we’ll replace it for you soon.",
+    "goToTaskButton": "Go to Task",
+    "titleNotice": "NOTICE",
+    "taskNotice": "- By clicking \"Confirm,\" you commit yourself. There's no room for empty promises in this club. For example, if you subscribe to a channel, there's no turning back. Unsubscribing after confirmation is a direct path to a ban. Here, it's serious: break your word, face an eternal ban.",
+    "checklistCompleted": "Great work, checklist completed!",
+    "noDailyTasks": "No daily tasks available today!"
   },
   "rating": {
     "clubs": "Club rating",
@@ -238,6 +254,8 @@
     "btnRetry": "Retry"
   },
   "info": {
-    "firstFight": "Before your first fight, we strongly recommend that you familiarize yourself with the <a href=\"/rules\">rules</a> of the game."
+    "firstFight": "Before your first fight, we strongly recommend that you familiarize yourself with the <a href=\"/rules\">rules</a> of the game.",
+    "firstTraining": "Training gets you tokens, but the clock is ticking. Your tasks won't last forever. Make sure you understand the <a href=\"/rules\">rules</a> before you start.",
+    "withdrawAfterListing": "Token withdrawal to your wallet will be available after the listing. Keep an eye on the countdown timer."
   }
 }

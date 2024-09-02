@@ -11,3 +11,6 @@ export const DECIMALS = 2;
 
 // FIGHT
 export const COUNTDOWN = 3; // Количество секунд перед началом боя
+
+// LISTING
+export const LISTING = 1751760000;

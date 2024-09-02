@@ -79,6 +79,7 @@ import {COST_PER_CLICK, MULTIPLAYER_EXACT_CLICK, SPEED_MOVE_PUNCH_MS} from "@/co
 import {useI18n} from "vue-i18n";
 import Punch3D from "@/components/fragments/training/Punch3D.vue";
 import {Howl} from "howler";
+import {showTrainingRulesReminder} from "@/core/services/masterService.js";
 
 const {t} = useI18n({useScope: 'global'})
 
@@ -253,6 +254,11 @@ onBeforeMount( () => {
   store.dispatch('task/fetchAllSocialTasks');
   store.dispatch('task/fetchAllDailyTasks');
 
+})
+
+onMounted(() => {
+  // Показать пояснение что это за раздел
+  showTrainingRulesReminder(t("info.firstTraining"));
 })
 
 onUnmounted(() => {

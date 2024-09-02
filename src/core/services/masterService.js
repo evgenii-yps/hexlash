@@ -6,6 +6,7 @@ import store from "@/core/state/store.js";
 import {AuthStateModel} from "@/core/models/internal/authStateModel.js";
 import {jwtDecode} from "jwt-decode";
 import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
+import {i18n} from "@/main.js";
 
 export const getMasterFromLocalAndAPI = async () => {
     // Сначала берем данные из локальной базы данных
@@ -114,6 +115,38 @@ export const login = async (credentials) => {
     }
 };
 
+export const resetPassword = async (email) => {
+    // Проверка на пустой email
+    if (!email) {
+        throw new Error(i18n.global.t('auth.reset.errorEmpty'));
+    }
+
+    // Проверка на правильный формат email
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(email)) {
+        throw new Error(i18n.global.t('auth.reset.errorInvalidFormat'));
+    }
+
+    // Имитируем API вызов
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    if (email === 'test@example.com') {
+        return { success: true, message: i18n.global.t('auth.reset.success') };
+    } else {
+        throw new Error(i18n.global.t('auth.reset.error'));
+    }
+};
+
+export const sendInvite = async (inviteCode) => {
+    // Имитируем API вызов
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    if (inviteCode === 'admin') {
+        return { success: true};
+    } else {
+        throw new Error(i18n.global.t('auth.invite.errorInvalidInvite'));
+    }
+};
+
 // Функция для получения данных текущего пользователя
 const fetchMasterData = async (token) => {
     try {
@@ -196,3 +229,18 @@ export const showFightRulesReminder = (text) => {
         store.commit('master/setInfoMessage', customMessage);
     }
 };
+
+export const showTrainingRulesReminder = (text) => {
+    const MESSAGE_KEY = 'firstTrainingToolTip';
+    const MAX_SHOW_COUNT = 1;
+
+    let showCount = localStorage.getItem(MESSAGE_KEY) || 0;
+
+    if (showCount < MAX_SHOW_COUNT) {
+        showCount++;
+        localStorage.setItem(MESSAGE_KEY, showCount);
+        const customMessage = InfoMessageModel.withTimeout(text, 15000);
+        store.commit('master/setInfoMessage', customMessage);
+    }
+};
+

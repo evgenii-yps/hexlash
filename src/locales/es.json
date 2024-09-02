@@ -28,7 +28,16 @@
       "lblInvite": "CÓDIGO DE INVITACIÓN",
       "btnInvite": "Unirse al Club",
       "question": "¿Ya tienes una cuenta?",
-      "btnLogin": "Iniciar sesión"
+      "btnLogin": "Iniciar sesión",
+      "errorInvalidInvite": "Código de invitación no válido."
+    },
+    "reset": {
+      "lblEmail": "Correo electrónico",
+      "btnReset": "Restablecer contraseña",
+      "success": "Se ha enviado un enlace de restablecimiento a tu correo electrónico.",
+      "error": "Dirección de correo electrónico no válida.",
+      "errorEmpty": "El correo no puede estar vacío.",
+      "errorInvalidFormat": "Formato de correo no válido."
     }
   },
   "profile": {
@@ -216,7 +225,12 @@
     "modalHelpTextHtml": "<p>Dentro del tiempo asignado, elige acciones para atacar y defender.</p><br/><p style=\"margin-bottom: 10px\"><strong>Acciones disponibles:</strong></p><ul style=\"color:var(--white); margin-left: 20px\"><li><strong>HD (Defensa de Cabeza):</strong> defensa de cabeza</li><li><strong>BD (Defensa de Cuerpo):</strong> defensa de cuerpo</li><li><strong>HH (Golpe a la Cabeza):</strong> golpe a la cabeza</li><li><strong>BH (Golpe al Cuerpo):</strong> golpe al cuerpo</li></ul><br/><p>Después de seleccionar las acciones, se comparan con las acciones del oponente. El ganador es el que asesta más golpes y recibe menos.</p><br/><p style=\"margin-bottom: 10px; color:var(--white);\"><strong>Ejemplo:</strong></p><p>Tú: HD, HH, BD</p><p>Oponente: HH, BD, BH</p><p>Resultado: asestaste 1 golpe, bloqueaste 2 golpes del oponente. <strong>Ganador:</strong> Tú</p><br/><p><strong style=\"color:var(--white)\">Importante:</strong> No puedes seleccionar todas las acciones como ataques o todas como defensas. Una de las acciones debe ser lo opuesto.</p>"
   },
   "training": {
-    "timerText": "El saco de boxeo está caído, luchador. Aguanta, lo reemplazaremos pronto."
+    "timerText": "El saco de boxeo está caído, luchador. Aguanta, lo reemplazaremos pronto.",
+    "goToTaskButton": "Ir a la tarea",
+    "titleNotice": "AVISO",
+    "taskNotice": " - Al hacer clic en \"Confirmar,\" te comprometes. No hay lugar para promesas vacías en este club. Por ejemplo, si te suscribes a un canal, no hay vuelta atrás. Darse de baja después de la confirmación es un camino directo al baneo. Aquí es serio: rompes tu palabra, enfrentas un baneo eterno.",
+    "checklistCompleted": "¡Buen trabajo, lista de verificación completada!",
+    "noDailyTasks": "¡No hay tareas diarias disponibles hoy!"
   },
   "rating": {
     "clubs": "Clasificación de clubes",
@@ -238,6 +252,8 @@
     "btnRetry": "Reintentar"
   },
   "info": {
-    "firstFight": "Antes de tu primera pelea, te recomendamos encarecidamente que te familiarices con las <a href=\"/rules\">reglas</a> del juego."
+    "firstFight": "Antes de tu primera pelea, te recomendamos encarecidamente que te familiarices con las <a href=\"/rules\">reglas</a> del juego.",
+    "firstTraining": "El entrenamiento te da tokens, pero el tiempo corre. Tus tareas tienen un límite de tiempo. Asegúrate de entender las <a href=\"/rules\">reglas</a> antes de empezar.",
+    "withdrawAfterListing": "La retirada de tokens a tu cartera estará disponible después de la cotización. Mantén un ojo en el temporizador de cuenta regresiva."
   }
 }

@@ -1,14 +1,25 @@
 <template>
 
-    <div id="sketch"></div>
+  <div id="sketch"></div>
 
-    <div class="foreground">
-      <transition name="explode" mode="out-in">
-        <component :is="currentComponent" :key="currentComponentKey" />
-      </transition>
+  <div class="foreground">
+    <transition name="explode" mode="out-in">
+      <component v-if="!isAuthenticated" :is="currentComponent" :key="currentComponentKey"/>
+    </transition>
 
-      <p class="beta-text">{{ version }}</p>
+    <div v-if="countdownText.length > 0 && isAuthenticated" class="timer-listing-container">
+      <div class="timer-overlay">
+        {{ countdownText }}
+      </div>
+      <div class="timer-text"></div>
     </div>
+
+    <p v-if="!isAuthenticated" class="beta-text">{{ version }}</p>
+
+
+    <Getstarted v-if="isAuthenticated" />
+
+  </div>
 
 
 </template>
@@ -17,8 +28,11 @@
 
 
 import {useRoute} from "vue-router";
-import Login from "@/components/fragments/Login.vue";
-import Invite from "@/components/fragments/Invite.vue";
+import Login from "@/components/fragments/auth/Login.vue";
+import Invite from "@/components/fragments/auth/Invite.vue";
+import Reset from "@/components/fragments/auth/Reset.vue";
+
+const isAuthenticated = computed(() => store.getters["master/getAuthState"]?.isAuthenticated);
 
 const route = useRoute();
 const currentComponent = shallowRef(null);
@@ -29,6 +43,8 @@ const setCurrentComponent = () => {
     currentComponent.value = Login;
   } else if (route.path === '/auth/invite') {
     currentComponent.value = Invite;
+  } else if (route.path === '/auth/reset') {
+    currentComponent.value = Reset;
   }
   currentComponentKey.value = route.path;
 };
@@ -40,15 +56,14 @@ watchEffect(() => {
 
 const version = __APP_VERSION__;
 
-
 import * as THREE from 'three'
 import * as kokomi from 'kokomi.js'
 import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader'
 import {BloomEffect, EffectComposer, EffectPass, RenderPass, FXAAEffect} from 'postprocessing'
 import {RectAreaLightUniformsLib} from 'three/addons/lights/RectAreaLightUniformsLib.js'
-import {Howl, Howler} from 'howler'
+import {Howl} from 'howler'
 import gsap from 'gsap'
-import {onMounted, onUnmounted, ref, shallowRef, watchEffect} from "vue";
+import {computed, onMounted, onUnmounted, ref, shallowRef, watchEffect} from "vue";
 
 import brickNormal from '@/assets/textures/brick-normal2.jpg';
 import floorNormal from '@/assets/textures/asphalt-pbr01/normal.png';
@@ -62,6 +77,9 @@ import topCoverDiffuse from '@/assets/textures/door/top-cover-Diffuse.png';
 import sideCoverDiffuse from '@/assets/textures/door/side-cover-Diffuse.png';
 import rainSound from '@/assets/sound/rain.mp3';
 import sceneModel from '@/assets/models/scene.glb';
+import store from "@/core/state/store.js";
+import {LISTING} from "@/core/constants.js";
+import Getstarted from "@/components/fragments/auth/Getstarted.vue";
 
 const vertexShader = `
 uniform mat4 textureMatrix;
@@ -713,17 +731,7 @@ class Sketch extends kokomi.Base {
       )
       this.scene.add(rectLight1)
 
-      // const rectLight2 = new THREE.RectAreaLight("#81C8F2", 1, 19.1, 0.2); // Можете изменить параметры, такие как цвет и интенсивность
-      // rectLight2.position.set(0, 7.9, -9); // Смещаем позицию по оси X на 2 единицы
-      // rectLight2.rotation.set(
-      //     THREE.MathUtils.degToRad(90),
-      //     THREE.MathUtils.degToRad(180),
-      //     0
-      // );
-      // this.scene.add(rectLight2);
-
       RectAreaLightUniformsLib.init()
-
 
       const rectLight1Helper = new kokomi.RectAreaLightHelper(rectLight1)
 
@@ -759,6 +767,8 @@ class Sketch extends kokomi.Base {
       const url = sceneModel;
       gltfLoader.load(url, (gltf) => {
         const root = gltf.scene
+
+        //   root.position.x -= 2;
 
         const walls = root.getObjectByName("walls");
         walls.material = new THREE.MeshPhongMaterial({
@@ -820,12 +830,12 @@ class Sketch extends kokomi.Base {
       // flicker
       const turnOffLight = () => {
         rectLight1.color.copy(new THREE.Color("#000"))
-      //  rectLight2.color.copy(new THREE.Color("#000"))
+        //  rectLight2.color.copy(new THREE.Color("#000"))
       }
 
       const turnOnLight = () => {
         rectLight1.color.copy(new THREE.Color("#81C8F2"))
-     //   rectLight2.color.copy(new THREE.Color("#81C8F2"))
+        //   rectLight2.color.copy(new THREE.Color("#81C8F2"))
       }
 
       let flickerTimer = null;
@@ -990,22 +1000,60 @@ class Sketch extends kokomi.Base {
 
 }
 
+const intervalId = ref(null);  // Для сохранения идентификатора интервала
+const countdownText = ref('');
+
+// Функция запуска обратного отсчета
+const startCountdownListing = () => {
+  intervalId.value = setInterval(() => {
+    const currentTime = Math.floor(Date.now() / 1000);
+    const remainingTime = LISTING - currentTime;
+
+    if (remainingTime <= 0) {
+      stopCountdownListing();
+      countdownText.value = ''; // Время прошло
+    } else {
+      // Рассчитываем оставшееся время
+      const months = Math.floor(remainingTime / (30 * 24 * 3600));
+      const days = Math.floor((remainingTime % (30 * 24 * 3600)) / (24 * 3600));
+      const hours = Math.floor((remainingTime % (24 * 3600)) / 3600);
+      const minutes = Math.floor((remainingTime % 3600) / 60);
+      const seconds = remainingTime % 60;
+
+      // Формируем текст обратного отсчета
+      let countdown = '';
+      if (months > 0) countdown += `${months}M `;
+      if (days > 0 || months > 0) countdown += `${days}d `;
+      countdown += `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+      countdownText.value = countdown.trim(); // Обновляем текст обратного отсчета
+    }
+  }, 1000);
+};
+
+
+const stopCountdownListing = () => {
+  if (intervalId.value) {
+    clearInterval(intervalId.value);
+    intervalId.value = null;
+  }
+}
 
 let sketch;
 
 onMounted(() => {
   sketch = new Sketch();
   sketch.create();
+
+  if (isAuthenticated) {
+    startCountdownListing();
+  }
 });
 
 onUnmounted(() => {
   if (sketch) {
-
     sketch.destroy();
-
     sketch = null;
-
-
   }
 });
 
@@ -1048,5 +1096,25 @@ onUnmounted(() => {
   left: 10px;
   font-size: 12px;
   color: rgba(255, 255, 255, 0.7);
+}
+
+.timer-listing-container {
+  position: absolute;
+  bottom: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.timer-overlay {
+  font-family: AnonymousBalance, sans-serif;
+  color: white;
+  text-align: center;
+  font-size: 4rem;
+  padding: 10px;
+  border-radius: 10px;
+  display: flex;
 }
 </style>

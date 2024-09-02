@@ -33,7 +33,7 @@ import {
     VTextarea,
     VTextField,
     VTooltip,
-    VSnackbar
+    VSnackbar, VCheckbox
 } from 'vuetify/components';
 import {createI18n} from "vue-i18n";
 import App from "@/App.vue";
@@ -68,7 +68,8 @@ const vuetify = createVuetify({
         VTextField,
         VTextarea,
         VProgressLinear,
-        VSnackbar
+        VSnackbar,
+        VCheckbox
     },
     directives: {
         ...directives,

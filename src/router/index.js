@@ -2,8 +2,9 @@ import {createRouter, createWebHistory} from "vue-router";
 import store from "@/core/state/store.js";
 
 const authRoutes = [
-    {path: '/auth/login', name: 'Login', component: () => import("/src/views/AuthView.vue")},
-    {path: '/auth/invite', name: 'Invite', component: () => import("/src/views/AuthView.vue")}
+    {path: '/auth/login', name: 'Login', component: () => import("/src/views/RainView.vue")},
+    {path: '/auth/invite', name: 'Invite', component: () => import("/src/views/RainView.vue")},
+    {path: '/auth/reset', name: 'Reset', component: () => import("/src/views/RainView.vue")}
 ];
 
 const publicRoutes = [
@@ -14,7 +15,7 @@ const publicRoutes = [
 ];
 
 const protectedRoutes = [
-    {path: '/', name: 'Home'},
+    {path: '/', name: 'Home', component: () => import("/src/views/RainView.vue")},
     {path: '/arena', name: 'Arena', component: () => import("/src/views/ArenaView.vue")},
 
     {path: '/user/:userLogin', name: 'UserProfile', component: () => import("/src/views/ProfileView.vue")},
@@ -33,8 +34,6 @@ const protectedRoutes = [
 
     {path: '/fight/:id', name: 'Fight', component: () => import("/src/views/FightView.vue")},
 
-    //TODO TEMP
-    {path: '/training/punch', name: 'Punch', component: () => import("/src/components/fragments/training/Punch3D.vue")},
 
 ];
 
@@ -60,9 +59,7 @@ router.beforeEach(async (to, from, next) => {
         if (!isAuthenticated) {
             console.log('Redirecting to Invite page');
             next({name: 'Invite'});
-        } else if (to.name === 'Home') {
-            next({name: 'Profile'});
-        } else {
+        } else{
             next();
         }
     } else {

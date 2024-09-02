@@ -25,6 +25,7 @@ import {useMetaMaskWallet} from "vue-connect-wallet";
 import {WalletTypes} from "@/core/models/userModel.js";
 import ConnectWallet from "@/components/fragments/profile/wallet/ConnectWallet.vue";
 import {useI18n} from "vue-i18n";
+import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
 
 const { t } = useI18n({ useScope: 'global' })
 
@@ -79,7 +80,8 @@ const income = () => {
 }
 
 const withdraw = () => {
-  console.log("withdraw")
+  const withdraw = InfoMessageModel.withTimeout(t('info.withdrawAfterListing'), 3000);
+  store.commit('master/setInfoMessage', withdraw);
 }
 
 

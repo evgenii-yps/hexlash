@@ -1,25 +1,31 @@
 import {
     getMasterFromAPI,
     getMasterFromLocalAndAPI,
-    login as loginAPI,
-    logout as logoutService,
+    login as loginService,
+    logout as logoutService, resetPassword, sendInvite,
 } from '@/core/services/masterService.js';
 import router from "@/router/index.js";
 import {updateMasterToLocalDB} from "@/core/database/masterRepository.js";
 import {AuthStateModel} from "@/core/models/internal/authStateModel.js";
 import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
+import {PasswordResetStateModel} from "@/core/models/internal/passwordResetStateModel.js";
+import {InviteStateModel} from "@/core/models/internal/inviteStateModel.js";
 import {i18n} from '@/main.js';
 
 
 const state = {
     master: null,
     authState: new AuthStateModel(),
+    inviteState: new InviteStateModel(),
+    resetState: new PasswordResetStateModel(),
     infoMessage: new InfoMessageModel(),
 };
 
 const getters = {
     getMaster: (state) => state.master,
     getAuthState: (state) => state.authState,
+    getInviteState: (state) => state.inviteState,
+    getResetState: (state) => state.resetState,
     getLanguage: (state) => {
         return state.master && state.master.language ? state.master.language : 'en';
     },
@@ -55,17 +61,29 @@ const mutations = {
         state.master = null;
         state.authState = new AuthStateModel();
     },
+    setInviteState: (state, inviteState) => {
+        state.inviteState = inviteState;
+    },
+    clearInviteState: (state) => {
+        state.inviteState = InviteStateModel.Reset();
+    },
     setInfoMessage(state, message) {
         state.infoMessage = message;
     },
     clearInfoMessage(state) {
         state.infoMessage = new InfoMessageModel();
     },
+    setResetState: (state, resetState) => {
+        state.resetState = resetState;
+    },
+    clearResetState: (state) => {
+        state.resetState = PasswordResetStateModel.Reset();
+    }
 };
 
 const actions = {
     async login({commit}, credentials) {
-        await loginAPI(credentials);
+        await loginService(credentials);
         await router.push('/profile');
     },
     async logout({commit}) {
@@ -139,6 +157,30 @@ const actions = {
         //i18n.global.locale = language;
 
         console.log(i18n.global.locale.value)
+    },
+    async sendInvite({ commit }, inviteCode) {
+        commit('setInviteState', InviteStateModel.Loading(true));
+        try {
+            const response = await sendInvite(inviteCode);
+            // Сначала полностью очистить всю базу с компьютера
+            await loginService(response);
+
+            await router.push('/');
+
+            // TODO Показать GetStarted
+
+        } catch (error) {
+            commit('setInviteState', InviteStateModel.Error(error.message));
+        }
+    },
+    async resetPassword({ commit }, email) {
+        commit('setResetState', PasswordResetStateModel.Loading(true));
+        try {
+            const response = await resetPassword(email);
+            commit('setResetState', PasswordResetStateModel.Success(response.message));
+        } catch (error) {
+            commit('setResetState', PasswordResetStateModel.Error(error.message));
+        }
     },
 };
 
