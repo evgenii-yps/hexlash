@@ -1,9 +1,3 @@
-import {
-    getMasterFromAPI,
-    getMasterFromLocalAndAPI,
-    login as loginService,
-    logout as logoutService, resetPassword, sendInvite,
-} from '@/core/services/masterService.js';
 import router from "@/router/index.js";
 import {updateMasterToLocalDB} from "@/core/database/masterRepository.js";
 import {AuthStateModel} from "@/core/models/internal/authStateModel.js";
@@ -11,6 +5,7 @@ import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
 import {PasswordResetStateModel} from "@/core/models/internal/passwordResetStateModel.js";
 import {InviteStateModel} from "@/core/models/internal/inviteStateModel.js";
 import {i18n} from '@/main.js';
+import * as masterService from "@/core/services/masterService.js";
 
 
 const state = {
@@ -83,12 +78,12 @@ const mutations = {
 
 const actions = {
     async login({commit}, credentials) {
-        await loginService(credentials);
+        await masterService.login(credentials);
         await router.push('/profile');
     },
     async logout({commit}) {
 
-        await logoutService();
+        await masterService.logout();
 
         commit('clearAuthData');
 
@@ -96,7 +91,7 @@ const actions = {
     },
     async fetchMaster({commit}) {
         try {
-            await getMasterFromLocalAndAPI();
+            await masterService.getMasterFromLocalAndAPI();
         } catch (error) {
             console.error('Failed to fetch user data:', error);
         }
@@ -161,22 +156,38 @@ const actions = {
     async sendInvite({ commit }, inviteCode) {
         commit('setInviteState', InviteStateModel.Loading(true));
         try {
-            const response = await sendInvite(inviteCode);
+            const response = await masterService.sendInvite(inviteCode);
+
             // Сначала полностью очистить всю базу с компьютера
-            await loginService(response);
+            await masterService.fullReset();
 
+            commit('setInviteState', InviteStateModel.Success(
+                "jwt",
+                "generatedLogin",
+                "generatedPass")
+            );
+
+            await masterService.login(response);
             await router.push('/');
-
-            // TODO Показать GetStarted
 
         } catch (error) {
             commit('setInviteState', InviteStateModel.Error(error.message));
         }
     },
+    async sendInitialize({ commit }, payload) {
+        try {
+            // await someApiCall(payload);
+
+            // Обновляем мастера
+
+        } catch (error) {
+            throw error; // Исключение будет поймано в компоненте
+        }
+    },
     async resetPassword({ commit }, email) {
         commit('setResetState', PasswordResetStateModel.Loading(true));
         try {
-            const response = await resetPassword(email);
+            const response = await masterService.resetPassword(email);
             commit('setResetState', PasswordResetStateModel.Success(response.message));
         } catch (error) {
             commit('setResetState', PasswordResetStateModel.Error(error.message));

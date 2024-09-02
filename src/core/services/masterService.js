@@ -1,5 +1,5 @@
 import apiClient from '@/core/api/apiClient.js';
-import {clearDatabase} from '@/core/database/idb.js';
+import {clearDatabase, deleteDB} from '@/core/database/idb.js';
 import {getMasterFromLocalDB, saveMasterToLocalDB, updateMasterToLocalDB} from "@/core/database/masterRepository.js";
 import {MasterModel} from "@/core/models/masterModel.js";
 import store from "@/core/state/store.js";
@@ -243,4 +243,9 @@ export const showTrainingRulesReminder = (text) => {
         store.commit('master/setInfoMessage', customMessage);
     }
 };
+
+export const fullReset = async (text) => {
+    await deleteDB();
+    localStorage.clear();
+}
 

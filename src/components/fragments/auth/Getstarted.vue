@@ -1,26 +1,30 @@
 <template>
-  <VModal v-model="dialogGetStarted" max-width="500" @click:outside="hide">
+  <VModal v-model="dialogGetStarted" max-width="500" persistent>
     <VCard>
       <v-card-title class="headline">{{ t('getStarted.title') }}</v-card-title>
       <v-card-text class="text-center">
 
-        <p class="notice-intro">Добро пожаловать в FightClub перед началом мы настоятельно рекомендуем вам ознакомиться с правилами, крайне важно следовать им</p>
+        <p class="notice" v-html="t('getStarted.noticeWelcome')"/>
 
         <!-- Поле для ввода имени -->
         <v-text-field
+            class="text-field"
             :label="t('getStarted.lblName')"
             v-model="name"
+            :placeholder="t('getStarted.lblHintName')"
             :error-messages="nameError"
             :rules="[rules.required]"
         >
         </v-text-field>
 
-        <p class="notice-login">Мы автоматически сгенерировали для вас логин, хотите его заменить?</p>
+        <p class="notice" v-html="t('getStarted.noticeLogin')"/>
         <!-- Поле для ввода логина с проверкой доступности -->
         <v-text-field
+            class="text-field"
             :label="t('getStarted.lblLogin')"
             v-model="login"
             :error-messages="loginError"
+            :rules="[rules.required, rules.latinAndNumbers]"
             @input="handleLoginInput">
 
           <template v-slot:append-inner>
@@ -28,13 +32,30 @@
           </template>
         </v-text-field>
 
-        <p class="notice-password">Мы автоматически сгенерировали для вас пароль, в целях безопасности мы рекомендуем вам поменять его</p>
+        <p class="notice" v-html="t('getStarted.noticePassword')"/>
         <!-- Поле для ввода пароля -->
         <v-text-field
-            :label="t('club.inputPassword')"
+            class="text-field"
+            :label="t('getStarted.lblPassword')"
             v-model="password"
             :type="showPassword ? 'text' : 'password'"
             :rules="[rules.required, rules.min]"
+            @input="checkPasswordChange"
+        >
+          <template v-slot:append-inner>
+            <img @click.prevent="showPassword = !showPassword" :src="showPassword ? iconHide : iconShow" alt="password visibility" />
+          </template>
+        </v-text-field>
+
+        <v-text-field
+            v-if="passwordChanged"
+            class="text-field"
+            :label="t('getStarted.lblConfirmPassword')"
+            v-model="confirmPassword"
+            :type="showPassword ? 'text' : 'password'"
+            :error-messages="confirmPasswordError"
+            :rules="[rules.required, rules.match]"
+            @input="validateConfirmPassword"
         >
           <template v-slot:append-inner>
             <img @click.prevent="showPassword = !showPassword" :src="showPassword ? iconHide : iconShow" alt="password visibility" />
@@ -45,7 +66,7 @@
         <div class="agree-checkbox">
           <div class="checkbox-custom" @click="toggleAgree" :class="{ checked: agree }"></div>
           <div>
-            I agree with
+            {{ t('getStarted.agreementText') }}
             <v-tooltip location="bottom">
               <template v-slot:activator="{ props }">
                 <a
@@ -55,17 +76,15 @@
                     @click.stop
                     class="btn-privacy"
                 >
-                  privacy
+                  {{ t('getStarted.rulesLinkText') }}
                 </a>
               </template>
-              Opens in new window
+              {{ t('getStarted.tooltipText') }}
             </v-tooltip>
-            is awesome
+            {{ t('getStarted.joinText') }}
           </div>
         </div>
 
-
-        <div class="notice">{{ t('club.notice') }}</div>
 
         <div v-if="loading" class="loader-container">
           <v-progress-circular
@@ -81,54 +100,77 @@
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <VBtn @click="saveChanges" class="confirm-btn">{{ t('getStarted.btnGo') }}</VBtn>
+        <VBtn @click="saveChanges"
+              :class="{ disabled: !isFormValid }"
+              :disabled="!isFormValid"
+              class="confirm-btn">{{ t('getStarted.btnGo') }}</VBtn>
       </v-card-actions>
     </VCard>
   </VModal>
 </template>
 
 <script setup>
-import {ref} from 'vue';
+import {computed, ref} from 'vue';
 import debounce from "debounce";
-import store from "@/core/state/store.js";
-import router from "@/router/index.js";
 import {useI18n} from "vue-i18n";
 
 import iconShow from "@/assets/images/icon_show.svg";
 import iconHide from "@/assets/images/icon_hide.svg";
-import iconFalse from "@/assets/images/icon_hide.svg";
-import iconTrue from "@/assets/images/icon_hide.svg";
+import store from "@/core/state/store.js";
 
 const {t} = useI18n({useScope: 'global'});
+
+const inviteState = computed(() => store.getters['master/getInviteState']);
 
 const dialogGetStarted = ref(true);
 
 const name = ref("");
-const login = ref("");
-const password = ref("");
-const showPassword = ref(false);
-
-const loading = ref(false);
-const loadingLogin = ref(false);
-const resultMessage = ref('');
 const nameError = ref('');
+
+const password = ref(inviteState.value.generatedPassword);
+const confirmPassword = ref("");
+const passwordChanged = ref(false);
+const confirmPasswordError = ref('');
+const initialPassword = inviteState.value.generatedPassword;
+const showPassword = ref(true);
+
+const login = ref(inviteState.value.generatedLogin);
 const loginError = ref('');
 const loginChanged = ref(false);
 const loginAvailable = ref(false);
-const errorMessage = ref('');
+const loadingLogin = ref(false);
 
 const agree = ref(false);
+const loading = ref(false);
+const resultMessage = ref('');
+
 
 const rules = {
-  required: value => !!value || t('club.errorRequired'),
-  min: v => v.length >= 8 || t('club.errorMinCharacters'),
+  required: value => !!value || t('getStarted.errorRequired'),
+  min: v => v.length >= 8 || t('getStarted.errorMinCharacters'),
+  match: v => v === password.value || t('getStarted.errorPasswordsDoNotMatch'),
+  latinAndNumbers: v => /^[a-zA-Z0-9]*$/.test(v) || t('getStarted.errorOnlyLatinAndNumbers')
 };
 
 // Валидация логина
 const validateLogin = (login) => {
-  const loginPattern = /^[a-zA-Z0-9_]{3,}$/;
+  const loginPattern = /^[a-zA-Z0-9_]{3,32}$/;
   return loginPattern.test(login) || t('profile.account.lblInvalidLoginFormat');
 };
+
+const checkPasswordChange = () => {
+  passwordChanged.value = password.value !== initialPassword;
+  validateConfirmPassword();
+};
+
+const validateConfirmPassword = () => {
+  if (passwordChanged.value && confirmPassword.value !== password.value) {
+    confirmPasswordError.value = t('getStarted.errorPasswordsDoNotMatch');
+  } else {
+    confirmPasswordError.value = '';
+  }
+};
+
 
 const handleLoginInput = () => {
   loginChanged.value = login.value.length > 0;
@@ -153,10 +195,10 @@ const debouncedCheckLoginExistence = debounce(async () => {
     loginAvailable.value = available;
 
     if (!available) {
-      errorMessage.value = t('profile.account.lblLoginAlreadyTaken');
+      loginError.value = t('profile.account.lblLoginAlreadyTaken');
     }
   } catch (error) {
-    errorMessage.value = t('profile.account.lblFailedToCheckLoginAvailability');
+    loginError.value = t('profile.account.lblFailedToCheckLoginAvailability');
   } finally {
     loadingLogin.value = false;
   }
@@ -170,21 +212,27 @@ const toggleAgree = () => {
   agree.value = !agree.value;
 };
 
+const isFormValid = computed(() => {
+  return name.value && login.value && password.value && agree.value;
+});
+
+
 const saveChanges = async () => {
-  if (!validateLogin(login.value) || !rules.required(name.value) || !rules.min(password.value)) {
+  if (!validateLogin(login.value)) {
     return;
   }
 
   loading.value = true;
 
   try {
-    //const club = await store.dispatch('club/createClub', {name: name.value, login: login.value, password: password.value});
+    await store.dispatch('master/sendInitialize', {
+      name: name.value,
+      login: login.value,
+      password: password.value
+    });
     hide();
-    // if (club) {
-    //   await router.push({path: `/club/${club.id}`});
-    // }
   } catch (error) {
-    // resultMessage.value = t('club.errorCreate');
+     resultMessage.value = error;
   } finally {
     loading.value = false;
   }
@@ -195,10 +243,8 @@ const saveChanges = async () => {
 
 <style scoped>
 
-
-.club-btn span {
-  font-size: 1.5em;
-  margin-right: 5px
+.disabled{
+  background-color: var(--gray2) !important;
 }
 
 .text-center {
@@ -227,6 +273,14 @@ const saveChanges = async () => {
   text-align: center;
 }
 
+.notice :deep(a){
+  color: var(--pink);
+  text-decoration: none;
+  cursor: pointer;
+  font-size: 1.5em;
+  font-weight: bold;
+}
+
 .error-message {
   color: var(--pinkDark);
   font-size: 0.8rem;
@@ -245,21 +299,28 @@ const saveChanges = async () => {
   font-weight: bold;
 }
 
+.text-field{
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
 
 .agree-checkbox {
   display: flex;
   align-items: center;
-  cursor: pointer;
+
 }
 
 .checkbox-custom {
+  cursor: pointer;
   width: 24px;
   height: 24px;
   border: 2px solid var(--primary-color);
   border-radius: 4px;
   position: relative;
   transition: background-color 0.2s ease;
-  margin-right: 8px;
+  margin-right: 15px;
+  flex-shrink: 0;
 }
 
 .checkbox-custom.checked {
@@ -277,4 +338,5 @@ const saveChanges = async () => {
   border-width: 0 3px 2px 0;
   transform: translate(-50%, -50%) rotate(45deg);
 }
+
 </style>

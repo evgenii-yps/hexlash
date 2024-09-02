@@ -9,6 +9,7 @@ export class MasterModel {
                     email = '',
                     language = 'en',
                     jwtToken = '',
+                    isInitialize = false,
                     userData = {}
                 } = {}) {
         this.id = id;
@@ -16,6 +17,7 @@ export class MasterModel {
         this.email = email;
         this.language = language;
         this.jwtToken = jwtToken;
+        this.isInitialize = isInitialize;
         this.userData = userData;
 
     }
@@ -39,7 +41,7 @@ export class MasterModel {
     static fromJSON(jsonString) {
         try {
             const userData = JSON.parse(jsonString);
-            const { inviteId, email } = userData;
+            const {inviteId, email, isInitialize} = userData;
 
             // Удаляем поля из userData, чтобы не передавать их в MasterModel
             delete userData.inviteId;
@@ -50,6 +52,7 @@ export class MasterModel {
                 userData: userData,
                 inviteId,
                 email,
+                isInitialize,
             });
 
         } catch (error) {

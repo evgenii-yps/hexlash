@@ -32,7 +32,6 @@ import {computed, ref} from "vue";
 import BottomMenu from "@/components/menu/BottomMenu.vue";
 import Logo from "@/components/Logo.vue";
 import store from "@/core/state/store.js";
-import router from "@/router/index.js";
 import Info from "@/components/Info.vue";
 
 const balance = computed(() => {

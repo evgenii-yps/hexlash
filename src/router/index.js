@@ -54,12 +54,17 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
 
     const isAuthenticated = store.getters["master/getAuthState"]?.isAuthenticated;
+    const isInitialize = store.getters["master/getMaster"]?.isInitialize;
 
     if (protectedRoutes.some(route => route.name === to.name || route.path === to.path)) {
         if (!isAuthenticated) {
             console.log('Redirecting to Invite page');
             next({name: 'Invite'});
-        } else{
+        }
+        else if(!isInitialize && to.name !== 'Home') {
+            next({name: 'Home'});
+        }
+        else{
             next();
         }
     } else {

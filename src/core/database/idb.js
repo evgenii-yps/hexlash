@@ -52,3 +52,13 @@ export const clearDatabase = async () => {
     ]);
     await tx.done;
 };
+
+
+export const deleteDB = async () => {
+    if (dbPromise) {
+        const dbName = (await dbPromise).name;
+        await dbPromise.then(db => db.close()); // Закрываем соединение с базой данных
+        await indexedDB.deleteDatabase(dbName); // Удаляем базу данных
+        dbPromise = null; // Сбрасываем промис, чтобы можно было снова инициализировать базу при необходимости
+    }
+};

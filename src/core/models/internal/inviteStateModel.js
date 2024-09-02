@@ -1,12 +1,16 @@
 export class InviteStateModel {
     constructor({
                     loading = false,
-                    successMessage = '',
-                    errorMessage = null
+                    errorMessage = null,
+                    jwtToken = '',
+                    generatedLogin = '',
+                    generatedPassword = ''
                 } = {}) {
         this.loading = loading;
-        this.successMessage = successMessage;
         this.errorMessage = errorMessage;
+        this.jwtToken = jwtToken;
+        this.generatedLogin = generatedLogin;
+        this.generatedPassword = generatedPassword;
     }
 
     // Метод для создания объекта в состоянии загрузки
@@ -15,8 +19,12 @@ export class InviteStateModel {
     }
 
     // Метод для создания объекта с успешным сообщением
-    static Success(successMessage) {
-        return new InviteStateModel({ successMessage });
+    static Success(jwtToken, generatedLogin, generatedPassword) {
+        return new InviteStateModel({
+            jwtToken,
+            generatedLogin,
+            generatedPassword
+        });
     }
 
     // Метод для создания объекта с сообщением об ошибке

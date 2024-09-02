@@ -257,5 +257,26 @@
     "firstFight": "Before your first fight, we strongly recommend that you familiarize yourself with the <a href=\"/rules\">rules</a> of the game.",
     "firstTraining": "Training gets you tokens, but the clock is ticking. Your tasks won't last forever. Make sure you understand the <a href=\"/rules\">rules</a> before you start.",
     "withdrawAfterListing": "Token withdrawal to your wallet will be available after the listing. Keep an eye on the countdown timer."
+  },
+  "getStarted": {
+    "title": "Fight Club",
+    "noticeWelcome": "Welcome to FightClub! Before you start, we strongly recommend that you review the <a href=\"/rules\" target=\"_blank\">rules</a>, as it is crucial to follow them.",
+    "lblName": "Name",
+    "lblHintName": "Enter your name...",
+    "lblLogin": "Login",
+    "noticeLogin": "We've created a login for you. If you want, you can change it right now, or leave it as it is—the choice is yours.",
+    "lblPassword": "Password",
+    "noticePassword": "We've created a password for you. But security is serious business, so it's better to change it now or remember this one.",
+    "agreementText": "I agree with",
+    "rulesLinkText": "the rules",
+    "tooltipText": "Opens in a new window",
+    "joinText": "and I'm ready to join Fight Club.",
+    "btnGo": "Let's Fight",
+    "errorMinCharacters": "Minimum 8 characters",
+    "errorRequired": "Cannot be empty",
+    "lblConfirmPassword": "Confirm Password",
+    "errorPasswordsDoNotMatch": "Passwords do not match",
+    "errorOnlyLatinAndNumbers": "Login can only contain Latin letters and numbers."
+
   }
 }

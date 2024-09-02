@@ -17,7 +17,7 @@
     <p v-if="!isAuthenticated" class="beta-text">{{ version }}</p>
 
 
-    <Getstarted v-if="isAuthenticated" />
+    <Getstarted v-if="isAuthenticated && !isInitialize" />
 
   </div>
 
@@ -33,6 +33,13 @@ import Invite from "@/components/fragments/auth/Invite.vue";
 import Reset from "@/components/fragments/auth/Reset.vue";
 
 const isAuthenticated = computed(() => store.getters["master/getAuthState"]?.isAuthenticated);
+const isInitialize = computed(() => {
+  const master = store.getters['master/getMaster'];
+  if (master && master.isInitialize) {
+    return master.isInitialize;
+  }
+  return false;
+});
 
 const route = useRoute();
 const currentComponent = shallowRef(null);
