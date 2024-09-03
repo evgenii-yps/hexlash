@@ -255,5 +255,26 @@
     "firstFight": "Antes de tu primera pelea, te recomendamos encarecidamente que te familiarices con las <a href=\"/rules\">reglas</a> del juego.",
     "firstTraining": "El entrenamiento te da tokens, pero el tiempo corre. Tus tareas tienen un límite de tiempo. Asegúrate de entender las <a href=\"/rules\">reglas</a> antes de empezar.",
     "withdrawAfterListing": "La retirada de tokens a tu cartera estará disponible después de la cotización. Mantén un ojo en el temporizador de cuenta regresiva."
+  },
+  "getStarted": {
+    "title": "El Club de la Lucha",
+    "noticeWelcome": "¡Bienvenido al Club de la Lucha! Antes de comenzar, te recomendamos encarecidamente que revises las <a href=\"/rules\" target=\"_blank\">reglas</a>, ya que es crucial seguirlas.",
+    "lblName": "Nombre",
+    "lblHintName": "Introduce tu nombre...",
+    "lblLogin": "Usuario",
+    "noticeLogin": "Hemos creado un usuario para ti. Si quieres, puedes cambiarlo ahora mismo, o dejarlo como está, la elección es tuya.",
+    "lblPassword": "Contraseña",
+    "noticePassword": "Hemos creado una contraseña para ti. Pero la seguridad es algo serio, así que es mejor cambiarla ahora o recordar esta.",
+    "agreementText": "Estoy de acuerdo con",
+    "rulesLinkText": "las reglas",
+    "tooltipText": "Se abre en una nueva ventana",
+    "joinText": "y estoy listo para unirme al Club de la Lucha.",
+    "btnGo": "¡A Luchar!",
+    "errorMinCharacters": "Mínimo 8 caracteres",
+    "errorRequired": "No puede estar vacío",
+    "lblConfirmPassword": "Confirmar Contraseña",
+    "errorPasswordsDoNotMatch": "Las contraseñas no coinciden",
+    "errorOnlyLatinAndNumbers": "El usuario solo puede contener letras latinas y números."
   }
+
 }

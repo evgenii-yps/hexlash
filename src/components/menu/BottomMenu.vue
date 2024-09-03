@@ -1,5 +1,5 @@
 <template>
-  <div class="bottom-menu">
+  <div class="bottom-menu" v-ripple>
     <router-link
         v-for="(item, index) in menuItems"
         :key="index"

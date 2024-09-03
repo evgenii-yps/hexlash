@@ -28,6 +28,9 @@
             @input="handleLoginInput">
 
           <template v-slot:append-inner>
+            <div v-if="loginAvailable && loginChanged && !loginError" class="success-message">
+              {{ t('profile.account.lblAvailableLogin') }}
+            </div>
             <v-progress-circular v-if="loadingLogin" color="var(--primary-color)" indeterminate :size="20"/>
           </template>
         </v-text-field>
@@ -164,7 +167,13 @@ const checkPasswordChange = () => {
 };
 
 const validateConfirmPassword = () => {
-  if (passwordChanged.value && confirmPassword.value !== password.value) {
+  if (!passwordChanged.value || !confirmPassword.value) {
+    // Не показывать ошибку, если поле подтверждения пароля пустое
+    confirmPasswordError.value = '';
+    return;
+  }
+
+  if (confirmPassword.value !== password.value) {
     confirmPasswordError.value = t('getStarted.errorPasswordsDoNotMatch');
   } else {
     confirmPasswordError.value = '';
@@ -173,12 +182,22 @@ const validateConfirmPassword = () => {
 
 
 const handleLoginInput = () => {
+
   loginChanged.value = login.value.length > 0;
-  if (loginChanged.value) {
+
+  login.value = login.value.replace(/\s/g, '');
+
+  const hasErrors = rules.required(login.value) !== true ||
+      rules.latinAndNumbers(login.value) !== true;
+
+  if (!hasErrors) {
     loginError.value = '';
     loginAvailable.value = false;
 
     debouncedCheckLoginExistence();
+  } else {
+    // Если есть ошибки, установим соответствующее сообщение
+    loginError.value = t('getStarted.errorOnlyLatinAndNumbers');
   }
 };
 

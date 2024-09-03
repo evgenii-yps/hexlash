@@ -87,7 +87,8 @@ export const login = async (credentials) => {
               "email": "johndoe@example.com",
               "achievements": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17],
               "balance":30099,
-              "skin":"skin_w_20.png"
+              "skin":"skin_w_20.png",
+              "isInitialize":true
         }`;
 
 

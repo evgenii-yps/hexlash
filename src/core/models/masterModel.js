@@ -1,5 +1,6 @@
 import {MASTER_TAG} from "@/core/database/masterRepository.js";
 import {DECIMALS} from "@/core/constants.js";
+import {locale} from "@/main.js";
 
 
 export class MasterModel {
@@ -7,7 +8,7 @@ export class MasterModel {
                     id = MASTER_TAG,
                     inviteId = null,
                     email = '',
-                    language = 'en',
+                    language = locale,
                     jwtToken = '',
                     isInitialize = false,
                     userData = {}

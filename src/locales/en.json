@@ -277,6 +277,5 @@
     "lblConfirmPassword": "Confirm Password",
     "errorPasswordsDoNotMatch": "Passwords do not match",
     "errorOnlyLatinAndNumbers": "Login can only contain Latin letters and numbers."
-
   }
 }

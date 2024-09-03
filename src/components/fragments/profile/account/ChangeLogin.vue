@@ -20,7 +20,6 @@
             <div class="status-container">
               <div v-if="loginAvailable && loginChanged && !errorMessage" class="success-message">
                 {{ t('profile.account.lblAvailableLogin') }}
-
               </div>
               <v-progress-circular v-if="loading" color="var(--primary-color)" indeterminate :size="20"/>
               <img v-if="!loading && loginAvailable && loginChanged" src="@/assets/images/icon_pencil.svg"
@@ -72,9 +71,15 @@ const loading = ref(false);
 const errorMessage = ref('');
 const dialog = ref(false);
 
+const rules = {
+  required: value => !!value || t('getStarted.errorRequired'),
+  latinAndNumbers: v => /^[a-zA-Z0-9]*$/.test(v) || t('getStarted.errorOnlyLatinAndNumbers')
+};
+
 const validateLogin = (login) => {
-  const loginPattern = /^[a-zA-Z0-9_]{3,}$/;
-  return loginPattern.test(login);
+  // Логин должен содержать только буквы, цифры или нижнее подчеркивание, длиной от 3 до 32 символов
+  const loginPattern = /^[a-zA-Z0-9_]{3,32}$/;
+  return loginPattern.test(login) && !/\s/.test(login);
 };
 
 const handleLoginSubmit = () => {
@@ -106,12 +111,22 @@ const confirmChange = () => {
 };
 
 const handleLoginInput = () => {
-  loginChanged.value = login.value !== originalLogin.value;
-  if (loginChanged.value) {
+
+  loginChanged.value = login.value.length > 0;
+
+  login.value = login.value.replace(/\s/g, '');
+
+  const hasErrors = rules.required(login.value) !== true ||
+      rules.latinAndNumbers(login.value) !== true;
+
+  if (!hasErrors) {
     errorMessage.value = '';
     loginAvailable.value = false;
 
     debouncedCheckLoginExistence();
+  } else {
+    // Если есть ошибки, установим соответствующее сообщение
+    errorMessage.value = t('getStarted.errorOnlyLatinAndNumbers');
   }
 };
 
@@ -173,7 +188,7 @@ form {
 }
 
 .success-message {
-  color: #004e00;
+  color: var(--white);
   font-size: 0.8rem;
   margin-right: 10px;
 }

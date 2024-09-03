@@ -66,7 +66,6 @@
 
 <script setup>
 import {computed, ref} from 'vue';
-import ButtonRect from "@/components/ui/ButtonRect.vue";
 import InputField from "@/components/ui/InputField.vue";
 import ButtonText from "@/components/ui/ButtonText.vue";
 import {useRouter} from 'vue-router';

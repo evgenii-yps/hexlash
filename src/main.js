@@ -97,10 +97,18 @@ const vuetify = createVuetify({
     },
 });
 
+const availableLocales = Object.keys(messages);
+
+// Получаем язык пользователя из настроек браузера
+const userLocale = navigator.language.split('-')[0];
+
+// Проверяем, доступна ли локаль пользователя
+export const locale = availableLocales.includes(userLocale) ? userLocale : 'en';
+
 export const i18n = createI18n({
     warnHtmlMessage: false,
     legacy: false,
-    locale: 'en',
+    locale: locale,
     fallbackLocale: 'en',
     pluralRules: {
         ru: ruCountRule
@@ -108,12 +116,12 @@ export const i18n = createI18n({
     messages: Object.assign(messages),
 })
 
-
 async function initializeApp() {
     // загрузки данных
     await store.dispatch('master/fetchMaster');
 
-    i18n.global.locale.value = store.getters['master/getLanguage'];
+    i18n.global.locale.value = store.getters['master/getLanguage'] || locale;
+
 }
 
 initializeApp().then(() => {

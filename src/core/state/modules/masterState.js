@@ -6,6 +6,7 @@ import {PasswordResetStateModel} from "@/core/models/internal/passwordResetState
 import {InviteStateModel} from "@/core/models/internal/inviteStateModel.js";
 import {i18n} from '@/main.js';
 import * as masterService from "@/core/services/masterService.js";
+import {messages} from "@/locales/index.js";
 
 
 const state = {
@@ -21,9 +22,7 @@ const getters = {
     getAuthState: (state) => state.authState,
     getInviteState: (state) => state.inviteState,
     getResetState: (state) => state.resetState,
-    getLanguage: (state) => {
-        return state.master && state.master.language ? state.master.language : 'en';
-    },
+    getLanguage: (state) => state.master?.language,
     getInfoMessage(state) {
         return state.infoMessage;
     },
@@ -149,11 +148,10 @@ const actions = {
         dispatch('updateMaster', {language: language});
 
         i18n.global.locale.value = language
-        //i18n.global.locale = language;
 
         console.log(i18n.global.locale.value)
     },
-    async sendInvite({ commit }, inviteCode) {
+    async sendInvite({commit}, inviteCode) {
         commit('setInviteState', InviteStateModel.Loading(true));
         try {
             const response = await masterService.sendInvite(inviteCode);
@@ -174,17 +172,20 @@ const actions = {
             commit('setInviteState', InviteStateModel.Error(error.message));
         }
     },
-    async sendInitialize({ commit }, payload) {
+    async sendInitialize({commit, dispatch}, payload) {
         try {
+            // TODO Еще отправляем язык пользователя, чтобы хранить его
+
             // await someApiCall(payload);
 
             // Обновляем мастера
+
 
         } catch (error) {
             throw error; // Исключение будет поймано в компоненте
         }
     },
-    async resetPassword({ commit }, email) {
+    async resetPassword({commit}, email) {
         commit('setResetState', PasswordResetStateModel.Loading(true));
         try {
             const response = await masterService.resetPassword(email);
