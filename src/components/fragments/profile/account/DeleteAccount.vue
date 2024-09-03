@@ -65,7 +65,7 @@ const handleDelete = async () => {
 
 .delete-btn {
   width: 100%;
-  height: 50px;
+  height: 50px !important;
   max-width: 500px;
   text-align: center;
   color: white;

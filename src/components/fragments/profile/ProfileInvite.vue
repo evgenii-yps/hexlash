@@ -69,7 +69,7 @@ const toggleTooltip = () => {
 
 .invite-code {
   font-size: 3.5rem;
-  font-family: 'Anonymous', 'Roboto', sans-serif;
+  font-family: 'Anonymous', 'Arial', sans-serif;
   color: white;
   margin: 0;
   cursor: pointer;

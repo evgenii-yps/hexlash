@@ -1,5 +1,5 @@
 <template>
-  <div class="bottom-menu" v-ripple>
+  <div class="bottom-menu">
     <router-link
         v-for="(item, index) in menuItems"
         :key="index"
@@ -7,6 +7,7 @@
         class="menu-item"
         :class="{ active: isActive(item) }"
         @click="playSound"
+        v-ripple
     >
       <div :class="['menu-icon', item.icon]"></div>
       <div class="menu-text">{{ item.text }}</div>
@@ -116,5 +117,9 @@ const isActive = (item) => {
 
 .icon-profile {
   background: url('@/assets/images/icon_profile.svg') no-repeat center;
+}
+
+:deep(.v-ripple__container) {
+  color: grey !important;
 }
 </style>

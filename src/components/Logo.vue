@@ -1,6 +1,6 @@
 <template>
   <div class="logo-container">
-    <img src="@/assets/images/logo.svg" alt="logo"  @click="goToHome">
+    <img width="68" height="50" src="@/assets/images/logo.svg" alt="logo" @click="goToHome"/>
   </div>
 </template>
 

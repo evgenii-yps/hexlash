@@ -164,7 +164,7 @@ onMounted(async () => {
 
 .profile-btn {
   width: 100%;
-  height: 50px;
+  height: 50px !important;
   margin: 5px 0;
   max-width: 500px;
   justify-content: flex-start;
@@ -187,7 +187,7 @@ onMounted(async () => {
   color: white;
   position: absolute;
   right: 0;
-  height: 50px;
+  height: 50px !important;
   font-size: 0.7em;
   padding-left: 20px;
   clip-path: polygon(15% 0%, 100% 0%, 100% 100%, 0% 100%);

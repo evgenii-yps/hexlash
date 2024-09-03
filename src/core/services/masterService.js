@@ -156,7 +156,7 @@ const fetchMasterData = async (token) => {
                 'Authorization': `Bearer ${token}`
             }
         });
-        return MasterModel.fromJSON(response.data);
+        //return MasterModel.fromJSON(response.data);
     } catch (error) {
         throw new Error('Failed to fetch user data from server');
     }

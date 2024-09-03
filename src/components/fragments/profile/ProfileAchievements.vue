@@ -301,7 +301,7 @@ const carouselItems = computed(() => {
 .achievements-container h2 {
   font-size: 2.3rem;
   text-align: center;
-  font-family: 'Anonymous', 'Roboto', sans-serif;
+  font-family: 'Anonymous', 'Arial', sans-serif;
   color: white;
 }
 

@@ -124,7 +124,7 @@ watch(amount, calculateFC);
 
 <style scoped>
 .club-btn {
-  height: 50px;
+  height: 50px !important;
   margin: 15px auto;
   width: 80%;
   max-width: 500px;

@@ -99,7 +99,7 @@ form {
 .auth-btn {
   color: white;
   width: 100%;
-  height: 44px;
+  height: 44px !important;
   cursor: pointer;
 }
 

@@ -55,6 +55,7 @@ const showBottomMenu = computed(() => {
   return store.getters['master/getAuthState'].isAuthenticated
 });
 
+
 </script>
 
 <style scoped>

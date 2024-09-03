@@ -96,17 +96,18 @@ function initPhysics() {
 
 }
 
+import punchModel from '@/assets/models/punching-bags.gltf';
+
 function createGLTF() {
   const loader = new GLTFLoader();
 
   const dracoLoader = new DRACOLoader();
-  dracoLoader.setDecoderPath('/jsm/draco/');
+  //dracoLoader.setDecoderPath('/jsm/draco/');
   loader.setDRACOLoader(dracoLoader);
 
-  const punchObjUrl = new URL('@/assets/models/punching-bags.gltf', import.meta.url).href;
+  loader.load(punchModel, function (gltf) {
 
-  loader.load(punchObjUrl, function (gltf) {
-
+    console.log(gltf);
     const geometry = gltf.scene.children[0].children[0].geometry;
 
     // Загрузка текстуры
@@ -116,8 +117,6 @@ function createGLTF() {
     });
 
     textureLoader.load(punchTexture, function (texture) {
-
-
       texture.wrapS = THREE.RepeatWrapping;
       texture.wrapT = THREE.RepeatWrapping;
       texture.repeat.set(2, 2); // Устанавливаем масштаб повторения

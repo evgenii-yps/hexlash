@@ -82,7 +82,6 @@ const vuetify = createVuetify({
         VBtn: {
             color: 'var(--primary-color)',
             variant: 'elevated',
-
         },
         VBtnDark: {
             color: 'var(--black-opacity-80)',

@@ -6,15 +6,116 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fight Club</title>
 
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            scrollbar-width: thin;
+            scrollbar-color: var(--scrollbar-bg) transparent;
+        }
+        #app-loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: black;
+            z-index: 9999;
+            transition: opacity 0.5s ease-out;
+            opacity: 1;
+        }
 
+        #loading-container {
+            max-width: 800px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            margin: 0 20px;
+            text-align: center;
+        }
+
+        #app-loading p {
+            font-family: Arial, sans-serif;
+            font-size: 1.5rem;
+            color: #eee;
+            margin-bottom: 10px;
+            //background: linear-gradient(90deg, #FF066F, #cc33ff);
+            background: #eeeeee;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: fadeInText 1s ease-in-out;
+        }
+
+        #app-loading .author {
+            font-family: oto, sans-serif;
+            font-size: 1rem;
+            color: #aaa;
+            margin-bottom: 20px;
+            animation: fadeInText 2s ease-in-out;
+            display: flex;
+            justify-content: end;
+        }
+
+        .loader-app {
+            border: 6px solid rgba(255, 255, 255, 0.2);
+            border-top: 6px solid #FF066F;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        #app-loading .additional-message {
+            font-family: Arial, sans-serif;
+            font-size: 1.5rem;
+            color: #eee;
+            margin-top: 20px;
+            animation: fadeInText 5s ease-in-out;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeInText {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        #app-loading.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+    </style>
 </head>
 <body>
-
+<div id="app-loading">
+    <div id="loading-container">
+        <p>This Is Your Life, and It's Ending One Minute at a Time.</p>
+        <div class="author">Chuck Palahniuk</div>
+        <div class="loader-app"></div>
+        <div class="additional-message" id="additional-message">...but now, you have the power to make a change.</div>
+    </div>
+</div>
 <div id="app"></div>
-
+<script>
+    window.onload = () => {
+        console.log("App loaded");
+        const loadingScreen = document.getElementById('app-loading');
+        loadingScreen.classList.add('hidden');
+        loadingScreen.addEventListener('transitionend', () => {
+            loadingScreen.style.display = 'none';
+        });
+    };
+</script>
 <script src="/ammo.wasm.js"></script>
 <script type="module" src="/src/main.js"></script>
-
 
 </body>
 </html>

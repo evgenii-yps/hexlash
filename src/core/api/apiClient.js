@@ -1,9 +1,9 @@
 import axios from 'axios';
 
-console.log(import.meta.env.VITE_API_SERVER + "/api/v1")
+
 // Создание экземпляра axios с базовой конфигурацией
 const apiClient = axios.create({
-    baseURL: import.meta.env.VITE_API_SERVER + "/api/v1",
+    baseURL: /*import.meta.env.VITE_API_SERVER +*/ "/api/v1",
     timeout: 10000, // настройка таймаута для запросов (в миллисекундах)
     headers: {
         'Content-Type': 'application/json', // тип контента

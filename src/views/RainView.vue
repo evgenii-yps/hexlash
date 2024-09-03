@@ -3,9 +3,11 @@
   <div id="sketch"></div>
 
   <div class="foreground">
+    <keep-alive>
     <transition name="explode" mode="out-in">
       <component v-if="!isAuthenticated" :is="currentComponent" :key="currentComponentKey"/>
     </transition>
+    </keep-alive>
 
     <div v-if="countdownText.length > 0 && isAuthenticated" class="timer-listing-container">
       <div class="timer-overlay">

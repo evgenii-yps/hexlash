@@ -219,10 +219,10 @@
 		{
 			"bufferView":8,
 			"componentType":5126,
-			"count":32413,
+			"count":1170,
 			"max":[
 				0.23750698566436768,
-				3.493616819381714,
+				2.7883541584014893,
 				0.18764397501945496
 			],
 			"min":[
@@ -235,19 +235,19 @@
 		{
 			"bufferView":9,
 			"componentType":5126,
-			"count":32413,
+			"count":1170,
 			"type":"VEC3"
 		},
 		{
 			"bufferView":10,
 			"componentType":5126,
-			"count":32413,
+			"count":1170,
 			"type":"VEC2"
 		},
 		{
 			"bufferView":11,
 			"componentType":5123,
-			"count":170442,
+			"count":3348,
 			"type":"SCALAR"
 		}
 	],
@@ -302,32 +302,32 @@
 		},
 		{
 			"buffer":0,
-			"byteLength":388956,
+			"byteLength":14040,
 			"byteOffset":719816,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":388956,
-			"byteOffset":1108772,
+			"byteLength":14040,
+			"byteOffset":733856,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":259304,
-			"byteOffset":1497728,
+			"byteLength":9360,
+			"byteOffset":747896,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":340884,
-			"byteOffset":1757032,
+			"byteLength":6696,
+			"byteOffset":757256,
 			"target":34963
 		}
 	],
 	"buffers":[
 		{
-			"byteLength":2097916,
+			"byteLength":763952,
 			"uri":"punching-bags.bin"
 		}
 	]
