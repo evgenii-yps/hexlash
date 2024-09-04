@@ -4,6 +4,9 @@ import RainView from "@/views/RainView.vue";
 import TrainingView from "@/views/TrainingView.vue";
 import ProfileView from "@/views/ProfileView.vue";
 
+const routeHistory = [];
+
+
 const authRoutes = [
     {path: '/auth/login', name: 'Login', component: () => import("/src/views/RainView.vue")},
     {path: '/auth/invite', name: 'Invite', component: () => import("/src/views/RainView.vue")},
@@ -52,9 +55,24 @@ const router = createRouter({
     routes
 });
 
+export function getPreviousRoute() {
+    // Проверяем, есть ли хотя бы два маршрута в истории
+    if (routeHistory.length >= 1) {
+        return routeHistory[routeHistory.length - 1].name; // Возвращаем предпоследний маршрут
+    } else {
+        return 'Home'; // Если нет достаточной истории, возвращаем на главную
+    }
+}
 
 // Навигационный гвард
 router.beforeEach(async (to, from, next) => {
+
+    routeHistory.push(from);
+
+    // Ограничиваем историю, например, до последних 10 маршрутов
+    if (routeHistory.length > 10) {
+        routeHistory.shift();
+    }
 
     const isAuthenticated = store.getters["master/getAuthState"]?.isAuthenticated;
     const isInitialize = store.getters["master/getMaster"]?.isInitialize;

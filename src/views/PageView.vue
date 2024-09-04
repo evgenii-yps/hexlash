@@ -7,6 +7,11 @@
         textColor="var(--white)"
         :showCloseButton="false">
 
+      <template #back>
+        <!-- Кнопка "Назад" -->
+        <BackButton :defaultRoute="backRef()" />
+      </template>
+
       <div v-html="content"></div>
 
     </Card>
@@ -18,6 +23,8 @@ import Card from "@/components/ui/Card.vue";
 import {ref, watch} from "vue";
 import {useRoute} from "vue-router";
 import {useI18n} from "vue-i18n";
+import BackButton from "@/components/ui/BackButton.vue";
+import {getPreviousRoute} from "@/router/index.js";
 const { t } = useI18n({ useScope: 'global' })
 
 
@@ -28,7 +35,21 @@ const pageName = route.name.toLowerCase();
 watch(route, () => {
   const pageName = route.name.toLowerCase();
   content.value = t(`pages.${pageName}`);
+
 }, { immediate: true });
+
+function backRef(){
+  const back = route.query.back;
+
+  if (back) {
+    // Если параметр 'ref' есть, возвращаем его
+    return back.charAt(0).toUpperCase() + back.slice(1);
+  } else {
+    // Если параметра 'ref' нет, возвращаем предпоследний маршрут
+    return getPreviousRoute();
+  }
+}
+
 
 </script>
 
@@ -56,5 +77,6 @@ watch(route, () => {
 Card {
   position: relative;
   z-index: 2;
+  font-size: 0.9em;
 }
 </style>

@@ -4,22 +4,28 @@
 
   <div class="foreground">
     <keep-alive>
-    <transition name="explode" mode="out-in">
-      <component v-if="!isAuthenticated" :is="currentComponent" :key="currentComponentKey"/>
-    </transition>
+      <transition name="explode" mode="out-in">
+        <component v-if="!isAuthenticated" :is="currentComponent" :key="currentComponentKey"/>
+      </transition>
     </keep-alive>
 
+
     <div v-if="countdownText.length > 0 && isAuthenticated" class="timer-listing-container">
+
       <div class="timer-overlay">
         {{ countdownText }}
       </div>
       <div class="timer-text"></div>
+      <div class="text-pages-link">
+        <a v-ripple class="btn-text-page" @click="goTo('rules')">Rules</a>
+        <a v-ripple class="btn-text-page" @click="goTo('help')">Help</a>
+      </div>
     </div>
 
     <p v-if="!isAuthenticated" class="beta-text">{{ version }}</p>
 
 
-    <Getstarted v-if="isAuthenticated && !isInitialize" />
+    <Getstarted v-if="isAuthenticated && !isInitialize"/>
 
   </div>
 
@@ -89,6 +95,7 @@ import sceneModel from '@/assets/models/scene.glb';
 import store from "@/core/state/store.js";
 import {LISTING} from "@/core/constants.js";
 import Getstarted from "@/components/fragments/auth/Getstarted.vue";
+import router from "@/router/index.js";
 
 const vertexShader = `
 uniform mat4 textureMatrix;
@@ -1050,6 +1057,10 @@ const stopCountdownListing = () => {
 
 let sketch;
 
+const goTo = (page) => {
+  router.push(page)
+};
+
 onMounted(() => {
   sketch = new Sketch();
   sketch.create();
@@ -1125,5 +1136,35 @@ onUnmounted(() => {
   padding: 10px;
   border-radius: 10px;
   display: flex;
+}
+
+.text-pages-link {
+ /* position: absolute;
+  top: 10%;
+  left: 50%;
+  transform: translateX(-50%);*/
+  display: flex;
+  justify-content: center;
+  flex-direction: row;
+  flex-grow: 1;
+}
+
+.btn-text-page {
+  text-decoration: none;
+  margin: 10px 10px;
+  font-family: 'Anonymous', sans-serif;
+  color: white;
+  font-size: 2em;
+/*  background: rgba(51, 51, 51, 0.8);*/
+  background: var(--black-opacity-80);
+  padding: 10px 20px;
+  text-align: center;
+  width: 100px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid var(--gray1);
+  border-radius: 4px;
+  cursor: pointer;
 }
 </style>

@@ -6,6 +6,9 @@
       </button>
       <div class="card" :style="cardStyles">
         <div class="card-header">
+          <div class="btn-back">
+            <slot name="back"/>
+          </div>
           <h2 class="card-title">{{ title }}</h2>
         </div>
         <div class="card-content">
@@ -132,7 +135,6 @@ const cardStyles = computed(() => ({
   border: none;
   cursor: pointer;
   position: absolute;
-
   right: 0; /* Позиционируем правее границы */
   z-index: 1100; /* Устанавливаем z-index выше, чем у родительских элементов */
   width: 2rem;
@@ -152,8 +154,13 @@ const cardStyles = computed(() => ({
 
 .card-content {
   flex-grow: 1;
-  padding: 1rem;
+  font-size: 0.9em;
+  line-height: 1.3em;
 }
 
+.btn-back{
+  position: absolute;
+  left: 0;
+}
 
 </style>
