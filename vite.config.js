@@ -31,7 +31,7 @@ export default defineConfig({
             deadCodeInjectionThreshold: 0.4,
             stringArray: false,
             stringArrayThreshold: 0.75,
-            debugProtection:true,
+            debugProtection:false,
             exclude: ['src/router/**', 'node_modules/**'],
         }),
     ],
@@ -50,7 +50,7 @@ export default defineConfig({
         minify: 'terser',
         // Настройки для оптимизации
         optimizeDeps: {
-            include: ['axios', 'vue-router'], // Включите сюда часто используемые библиотеки
+            include: ['axios', 'vue-router'],
         },
         rollupOptions: {
             output: {
@@ -61,7 +61,6 @@ export default defineConfig({
                     }
                 }
             },
-            // Опции минимизации кода
             treeshake: true,
         },
         // Удаление комментариев и консольных логов в продакшене

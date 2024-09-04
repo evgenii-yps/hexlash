@@ -1,6 +1,6 @@
 <template>
   <div class="wallet-container">
-    <BackButton/>
+    <BackButton defaultRoute="Profile" />
 
     <div class="wallet-content">
       <ConnectWallet v-if="!hasWallet"/>

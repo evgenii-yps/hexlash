@@ -1,6 +1,6 @@
 <template>
   <div class="background background-profile">
-    <div class="profile-container">
+    <div  class="profile-container">
       <div class="profile-content-wrapper">
 
         <div v-if="loading" class="loader-container">
@@ -61,7 +61,6 @@ import ProfileInvite from "@/components/fragments/profile/ProfileInvite.vue";
 import ProfileAvatar from "@/components/fragments/profile/ProfileAvatar.vue";
 import UserName from "@/components/fragments/profile/UserName.vue";
 import UserAvatar from "@/components/fragments/profile/UserAvatar.vue";
-
 
 const route = useRoute();
 

@@ -241,7 +241,11 @@ const scrollToSelectedSkin = () => {
   if (scrollContainer.value) {
     const selectedSkinElement = scrollContainer.value.querySelector('.selected-skin');
     if (selectedSkinElement) {
-      selectedSkinElement.scrollIntoView({behavior: 'instant', block: 'nearest', inline: 'center'});
+      selectedSkinElement.scrollIntoView({
+        behavior: 'instant',
+        block: 'nearest',
+        inline: 'center'}
+      );
     }
   }
 };

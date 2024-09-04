@@ -7,20 +7,28 @@
     <template #prepend>
       <img src="@/assets/images/icon_right_arrow.svg" alt="Arrow Icon" class="custom-icon"/>
     </template>
-
   </VBtnDark>
-
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router';
+
 import {useI18n} from "vue-i18n";
-const { t } = useI18n({ useScope: 'global' })
+import router from "@/router/index.js";
+import { defineProps } from 'vue';
 
-const router = useRouter();
+const { t } = useI18n({ useScope: 'global' });
 
+// Определение пропсов
+const props = defineProps({
+  defaultRoute: {
+    type: String,
+    required: true
+  }
+});
+
+// Функция для обработки кнопки "Назад"
 const goBack = () => {
-  router.back();
+  router.push({ name: props.defaultRoute });
 };
 </script>
 
