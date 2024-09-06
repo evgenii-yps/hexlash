@@ -1,7 +1,7 @@
 <template>
   <div class="background">
     <Card
-        :title="pageName"
+        :title="title"
         bgColor="var(--black-opacity-80)"
         borderColor="var(--gray1)"
         textColor="var(--white)"
@@ -9,10 +9,10 @@
 
       <template #back>
         <!-- Кнопка "Назад" -->
-        <BackButton :defaultRoute="backRef()" />
+        <BackButton :defaultRoute="backRef(route)"/>
       </template>
 
-      <div v-html="content"></div>
+      <div class="help-content" v-html="content"></div>
 
     </Card>
   </div>
@@ -24,31 +24,20 @@ import {ref, watch} from "vue";
 import {useRoute} from "vue-router";
 import {useI18n} from "vue-i18n";
 import BackButton from "@/components/ui/BackButton.vue";
-import {getPreviousRoute} from "@/router/index.js";
-const { t } = useI18n({ useScope: 'global' })
+import {backRef} from "@/router/index.js";
+
+const {t} = useI18n({useScope: 'global'})
 
 
 const route = useRoute();
-const content = ref('' );
-const pageName = route.name.toLowerCase();
+const title = ref('');
+const content = ref('');
 
 watch(route, () => {
-  const pageName = route.name.toLowerCase();
-  content.value = t(`pages.${pageName}`);
+  title.value = route.name.toLowerCase();
+  content.value = t(`pages.${title.value}`);
 
-}, { immediate: true });
-
-function backRef(){
-  const back = route.query.back;
-
-  if (back) {
-    // Если параметр 'ref' есть, возвращаем его
-    return back.charAt(0).toUpperCase() + back.slice(1);
-  } else {
-    // Если параметра 'ref' нет, возвращаем предпоследний маршрут
-    return getPreviousRoute();
-  }
-}
+}, {immediate: true});
 
 
 </script>
@@ -70,7 +59,7 @@ function backRef(){
   left: 0;
   width: 100%;
   height: 100%;
-/*  background: linear-gradient(to left top, black 35%, transparent 75%);*/
+  /*  background: linear-gradient(to left top, black 35%, transparent 75%);*/
   z-index: 1;
 }
 
@@ -78,5 +67,38 @@ Card {
   position: relative;
   z-index: 2;
   font-size: 0.9em;
+}
+
+.help-content :deep(ul) {
+  list-style-type: none;
+  padding: 0 10px;
+}
+
+.help-content :deep(li) {
+  margin-top: 20px;
+  margin-bottom: 20px; /* Увеличивает отступы между пунктами списка */
+}
+
+.help-content :deep(a) {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-size: 1.4em;
+}
+
+.help-content :deep(h2) {
+  margin: 10px 0;
+}
+
+.help-content :deep(p) {
+  line-height: 1.4;
+  font-size: 1.2em;
+}
+
+.help-content :deep(span) {
+  color: var(--primary-color);
+}
+
+.help-content :deep(.margin-l-20) {
+  margin-left: 20px;
 }
 </style>

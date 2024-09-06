@@ -14,14 +14,14 @@ const authRoutes = [
 ];
 
 const publicRoutes = [
-    {path: '/privacy', name: 'Privacy', component: () => import("/src/views/PageView.vue")},
-    {path: '/rules', name: 'Rules', component: () => import("/src/views/PageView.vue")},
-    {path: '/help', name: 'Help', component: () => import("/src/views/PageView.vue")},
+    {path: '/privacy', name: 'Privacy', component: () => import("/src/views/PrivacyView.vue")},
     {path: '/404', name: 'NotFound', component: () => import("/src/views/NotFoundView.vue")},
 ];
 
 const protectedRoutes = [
     {path: '/', name: 'Home', component: RainView },
+    {path: '/rules', name: 'Rules', component: () => import("/src/views/PageView.vue")},
+    {path: '/help', name: 'Help', component: () => import("/src/views/PageView.vue")},
     {path: '/arena', name: 'Arena', component: () => import("/src/views/ArenaView.vue")},
 
     {path: '/user/:userLogin', name: 'UserProfile', component: ProfileView},
@@ -61,6 +61,18 @@ export function getPreviousRoute() {
         return routeHistory[routeHistory.length - 1].name; // Возвращаем предпоследний маршрут
     } else {
         return 'Home'; // Если нет достаточной истории, возвращаем на главную
+    }
+}
+
+export function backRef(route) {
+    const back = route.query.back;
+
+    if (back) {
+        // Если параметр 'ref' есть, возвращаем его
+        return back.charAt(0).toUpperCase() + back.slice(1);
+    } else {
+        // Если параметра 'ref' нет, возвращаем предпоследний маршрут
+        return getPreviousRoute();
     }
 }
 

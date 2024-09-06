@@ -1,6 +1,6 @@
 <template>
   <div class="profile-account">
-    <BackButton defaultRoute="Profile" />
+    <BackButton :defaultRoute="backRef(route)" />
 
 
     <ChangeSkin/>
@@ -26,6 +26,10 @@ import ChangeSkin from "@/components/fragments/profile/account/ChangeSkin.vue";
 import ChangeLanguage from "@/components/fragments/profile/account/ChangeLanguage.vue";
 import Switcher3DPunch from "@/components/fragments/profile/account/Switcher3DPunch.vue";
 import {onMounted} from "vue";
+import {backRef} from "@/router/index.js";
+import {useRoute} from "vue-router";
+const route = useRoute();
+
 
 onMounted(()=>{
   const contentContainer = document.querySelector('.profile-container');
@@ -33,6 +37,8 @@ onMounted(()=>{
     contentContainer.scrollTo(0, 0); // Прокрутить в начало
   }
 })
+
+
 </script>
 
 <style scoped>

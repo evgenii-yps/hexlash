@@ -163,4 +163,5 @@ const cardStyles = computed(() => ({
   left: 0;
 }
 
+
 </style>

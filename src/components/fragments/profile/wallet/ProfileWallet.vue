@@ -1,6 +1,6 @@
 <template>
   <div class="wallet-container">
-    <BackButton defaultRoute="Profile" />
+    <BackButton :defaultRoute="backRef(route)" />
 
     <div class="wallet-content">
       <ConnectWallet v-if="!hasWallet"/>
@@ -26,6 +26,10 @@ import {WalletTypes} from "@/core/models/userModel.js";
 import ConnectWallet from "@/components/fragments/profile/wallet/ConnectWallet.vue";
 import {useI18n} from "vue-i18n";
 import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
+import {useRoute} from "vue-router";
+import {backRef} from "@/router/index.js";
+
+const route = useRoute();
 
 const { t } = useI18n({ useScope: 'global' })
 
