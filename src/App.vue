@@ -28,11 +28,12 @@
 
 <script setup>
 import {RouterView} from 'vue-router'
-import {computed, ref} from "vue";
+import {computed, onMounted, ref} from "vue";
 import BottomMenu from "@/components/menu/BottomMenu.vue";
 import Logo from "@/components/Logo.vue";
 import store from "@/core/state/store.js";
 import Info from "@/components/Info.vue";
+import {createWeb3Modal, defaultConfig} from "@web3modal/ethers/vue";
 
 const balance = computed(() => {
   const master = store.getters['master/getMaster'];
@@ -55,6 +56,55 @@ const showBottomMenu = computed(() => {
   return store.getters['master/getAuthState'].isAuthenticated
 });
 
+
+const projectId = '96482c2638a251eef7399e040f66bcb5';
+
+const mainnet = {
+  chainId: 1,
+  name: 'Ethereum',
+  currency: 'ETH',
+  explorerUrl: 'https://etherscan.io',
+  rpcUrl: 'https://cloudflare-eth.com'
+}
+
+const metadata = {
+  name: 'FightClub',
+  description: 'The club is your right to life, a real life.\n' +
+      'Join us. Your liberation awaits.',
+  url: 'https://bitfightclub.com',
+  icons: ['/images/logo500x500.png'],
+}
+
+const ethersConfig = defaultConfig({
+  /*Required*/
+  metadata,
+
+  auth: {
+    email: false,
+    socials: [],
+    showWallets: true,
+    walletFeatures: true
+  },
+
+  /*Optional*/
+  enableEIP6963: true, // true by default
+  enableInjected: true, // true by default
+  enableCoinbase: true, // true by default
+  rpcUrl: '...', // used for the Coinbase SDK
+  defaultChainId: 1, // used for the Coinbase SDK
+})
+
+
+const modal = createWeb3Modal({
+  ethersConfig,
+  chains: [mainnet],
+  projectId,
+  enableAnalytics: true, // Optional - defaults to your Cloud configuration
+})
+
+onMounted(() => {
+  store.commit('contract/setWeb3Modal', modal)
+})
 
 </script>
 

@@ -22,7 +22,9 @@
       "btnLogin": "Iniciar sesión",
       "question": "¿Tienes",
       "btnInvite": "una invitación",
-      "authError": "Usuario o contraseña incorrectos"
+      "authError": "Usuario o contraseña incorrectos",
+      "lblOrPass": " o contraseña",
+      "btnReset": "restablecer"
     },
     "invite": {
       "lblInvite": "CÓDIGO DE INVITACIÓN",
@@ -76,12 +78,13 @@
     },
     "wallet": {
       "lblTopUpBalance": "Recargar Saldo",
-      "lblBuyFCTokens": "Comprar tokens FC",
+      "lblBuyFCTokens": "Comprar tokens BFC",
       "lblSelectToken": "Seleccionar token",
       "lblAmount": "Cantidad",
       "lblYouWillGet": "Recibirás",
       "lblFCTokens": "tokens FC",
       "lblConnectWallet": "Conectar Billetera",
+      "lblReconnectWallet": "Reconectar",
       "msgConnectWalletTooltip": "Conecta tu billetera para comprar o retirar tokens de Fight Club",
       "lblGameBalance": "SALDO DEL JUEGO",
       "lblWithdrawToWallet": "Retirar a la billetera",
@@ -101,7 +104,10 @@
       "lblConfirmAction": "Confirmar Acción",
       "msgShowPrivateKeyPrompt": "¿Mostrar clave privada?",
       "lblPrivateKey": "Clave Privada",
-      "btnShow": "Mostrar"
+      "btnShow": "Mostrar",
+      "lblInsufficientBalance": "Tu saldo actual no es suficiente para comprar la cantidad seleccionada de tokens.",
+      "approveExplainTitle": "Aprobando la transacción de gasto...",
+      "approveExplainDesc": "Actualmente estamos solicitando aprobación. Esto nos permite usar tus tokens para comprar BFC."
     },
     "achievements": {
       "lblAchievements": "Logros",
@@ -254,7 +260,8 @@
   "info": {
     "firstFight": "Antes de tu primera pelea, te recomendamos encarecidamente que te familiarices con las <a href=\"/rules?back=arena\">reglas</a> del juego.",
     "firstTraining": "El entrenamiento te da tokens, pero el tiempo corre. Tus tareas tienen un límite de tiempo. Asegúrate de entender las <a href=\"/rules?back=training\">reglas</a> antes de empezar.",
-    "withdrawAfterListing": "La retirada de tokens a tu cartera estará disponible después de la cotización. Mantén un ojo en el temporizador de cuenta regresiva."
+    "withdrawAfterListing": "La retirada de tokens a tu cartera estará disponible después de la cotización. Mantén un ojo en el temporizador de cuenta regresiva.",
+    "showPrivacyInfo": "Al continuar usando este sitio, aceptas las <a href=\"/rules\" target=\"_blank\">Reglas</a> y la <a href=\"/privacy\" target=\"_blank\">Política de privacidad</a>."
   },
   "getStarted": {
     "title": "El Club de la Lucha",
@@ -276,5 +283,4 @@
     "errorPasswordsDoNotMatch": "Las contraseñas no coinciden",
     "errorOnlyLatinAndNumbers": "El usuario solo puede contener letras latinas y números."
   }
-
 }

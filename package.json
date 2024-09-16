@@ -10,8 +10,10 @@
   },
   "dependencies": {
     "@vueuse/core": "^11.0.3",
+    "@web3modal/ethers": "^5.1.6",
     "axios": "^1.7.7",
     "debounce": "^2.1.0",
+    "ethers": "^6.13.2",
     "howler": "^2.2.4",
     "idb": "^8.0.0",
     "jwt-decode": "^4.0.0",
@@ -21,7 +23,6 @@
     "three": "^0.167.1",
     "vite-plugin-static-copy": "^1.0.6",
     "vue": "^3.4.38",
-    "vue-connect-wallet": "^0.1.7",
     "vue-i18n": "^9.14.0",
     "vue-router": "^4.4.3",
     "vuetify": "^3.7.1",

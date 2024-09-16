@@ -5,6 +5,7 @@ import club from "@/core/state/modules/clubState.js";
 import task from "@/core/state/modules/taskState.js";
 import punch from "@/core/state/modules/punchState.js";
 import fight from "@/core/state/modules/fightState.js";
+import contract from "@/core/state/modules/contractState.js";
 
 export default createStore({
     modules: {
@@ -13,6 +14,7 @@ export default createStore({
         club,
         task,
         punch,
-        fight
+        fight,
+        contract
     },
 });

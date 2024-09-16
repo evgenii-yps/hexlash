@@ -1,14 +1,19 @@
 <template>
   <div class="wallet-container">
-    <BackButton :defaultRoute="backRef(route)" />
+    <BackButton :defaultRoute="backRef(route)"/>
 
     <div class="wallet-content">
-      <ConnectWallet v-if="!hasWallet"/>
-      <WalletInfo v-if="hasWallet"/>
+
+      <WalletInfo v-if="isConnectedWallet"/>
+
+      <ConnectWallet/>
 
       <div class="balance-cards-container">
         <GameBalanceCard :balance=String(gameBalance) @click="withdraw"/>
       </div>
+      <BuyButton v-if="isConnectedWallet"/>
+
+
 
     </div>
   </div>
@@ -16,65 +21,63 @@
 </template>
 
 <script setup>
+import {createWeb3Modal, defaultConfig, useWeb3ModalAccount} from '@web3modal/ethers/vue'
 import BackButton from "@/components/ui/BackButton.vue";
 import WalletInfo from "@/components/fragments/profile/wallet/WalletInfo.vue";
 import GameBalanceCard from "@/components/fragments/profile/wallet/GameBalanceCard.vue";
-import {ref, watch} from "vue";
+import {computed, onMounted, ref, watch} from "vue";
 import store from "@/core/state/store.js";
-import {useMetaMaskWallet} from "vue-connect-wallet";
-import {WalletTypes} from "@/core/models/userModel.js";
 import ConnectWallet from "@/components/fragments/profile/wallet/ConnectWallet.vue";
 import {useI18n} from "vue-i18n";
 import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
 import {useRoute} from "vue-router";
 import {backRef} from "@/router/index.js";
+import BuyButton from "@/components/fragments/profile/wallet/BuyTokens.vue";
+
 
 const route = useRoute();
 
-const { t } = useI18n({ useScope: 'global' })
+const {t} = useI18n({useScope: 'global'})
 
-const wallet = useMetaMaskWallet();
-
+const {address, isConnected} = useWeb3ModalAccount();
 
 const gameBalance = ref(null);
-const walletBalance = ref(null);
 
-const hasWallet = ref(false);
-const titleText = ref(null);
-
-const isConnected = ref(false);
+const isConnectedWallet = computed(() => isConnected.value);
+const walletAddress = computed(() => address.value);
 
 
-const checkConnection = async () => {
-  const accounts = await wallet.getAccounts();
-  if (typeof accounts === "string") return false;
-  return accounts.length > 0;
-};
 
+
+watch(walletAddress, (newAddress) => {
+      console.log("Address changed:", newAddress);
+
+      if (newAddress) {
+        // Выполнить действия при подключении кошелька
+        store.dispatch('master/updateMaster', {walletAddress: newAddress});
+      } else {
+        // Выполнить действия при отключении кошелька
+        store.dispatch('master/updateMaster', {walletAddress: ''});
+      }
+    }
+);
 
 watch(store.getters['master/getMaster'], async (master) => {
   if (master && master.userData) {
     gameBalance.value = master.getBalance();
 
-    hasWallet.value = master.userData.walletAddress != null && master.userData.walletAddress !== '';
 
-    if (hasWallet.value) {
-      // Проверяем какой кошелек, импорт или сгенерированный
-      if (master.userData.walletType === WalletTypes.GENERATED) {
-        // Все вызовы на запрос баланса и перевод на игровой баланс, будут идти через API
-        walletBalance.value = master.userData.walletBalance;
-        isConnected.value = true;
-      } else {
-        // Подключение metamask или другого кошелька
-        isConnected.value = await checkConnection();
-        walletBalance.value = 0;
-        // TODO взять баланс со смарт контракта
-      }
+   /* if (hasWallet.value) {
+
+      // Подключение metamask или другого кошелька
+      //  isConnected.value = await checkConnection();
+      walletBalance.value = 0;
+      // TODO взять баланс со смарт контракта
 
       titleText.value = t('profile.wallet.lblConnectAnotherWallet')
     } else {
       titleText.value = t('profile.wallet.lblAlreadyHaveWallet')
-    }
+    }*/
   }
 }, {immediate: true});
 
@@ -88,19 +91,10 @@ const withdraw = () => {
   store.commit('master/setInfoMessage', withdraw);
 }
 
+onMounted(() => {
 
-wallet.onAccountsChanged((accounts) => {
-  console.log('account changed to: ', accounts[0]);
 
-  const account = accounts[0] ? accounts[0] : '';
-
-  store.dispatch('master/updateMaster', {walletAddress: account});
-
-});
-
-wallet.onChainChanged(async (chainId) => {
-  console.log('chain changed to:', chainId);
-});
+})
 
 
 </script>
@@ -109,6 +103,7 @@ wallet.onChainChanged(async (chainId) => {
 .wallet-container {
   margin: 2rem 0 0 0;
 }
+
 .wallet-content {
   margin: 0 20px;
 }

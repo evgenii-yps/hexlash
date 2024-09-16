@@ -33,12 +33,12 @@
 </template>
 
 <script setup>
-
-
 import {useRoute} from "vue-router";
 import Login from "@/components/fragments/auth/Login.vue";
 import Invite from "@/components/fragments/auth/Invite.vue";
 import Reset from "@/components/fragments/auth/Reset.vue";
+
+const {t} = useI18n({useScope: 'global'})
 
 const isAuthenticated = computed(() => store.getters["master/getAuthState"]?.isAuthenticated);
 const isInitialize = computed(() => {
@@ -96,6 +96,8 @@ import store from "@/core/state/store.js";
 import {LISTING} from "@/core/constants.js";
 import Getstarted from "@/components/fragments/auth/Getstarted.vue";
 import router from "@/router/index.js";
+import * as masterService from "@/core/services/masterService.js";
+import {useI18n} from "vue-i18n";
 
 const vertexShader = `
 uniform mat4 textureMatrix;
@@ -1065,8 +1067,9 @@ onMounted(() => {
   sketch = new Sketch();
   sketch.create();
 
-  if (isAuthenticated) {
+  if (isAuthenticated.value) {
     startCountdownListing();
+    masterService.isShowPrivacyInfo(t('info.showPrivacyInfo'))
   }
 });
 

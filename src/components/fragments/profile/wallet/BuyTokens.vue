@@ -1,12 +1,12 @@
 <template>
   <div class="buy-button-container">
-    <VBtn class="buy-btn" @click="btnBuy">
+    <VBtn size="x-large" class="buy-btn" @click="btnModalBuy">
       {{ t('profile.wallet.lblTopUpBalance') }}
     </VBtn>
 
     <VModal v-model="dialog" max-width="500" @click:outside="hide">
       <VCard>
-        <v-card-title class="headline">  {{ t('profile.wallet.lblBuyFCTokens') }}</v-card-title>
+        <v-card-title class="headline"> {{ t('profile.wallet.lblBuyFCTokens') }}</v-card-title>
         <v-card-text class="text-center">
 
           <v-select
@@ -14,18 +14,23 @@
               color="white"
               bg-color="var(--black-opacity)"
               :label="$t('profile.wallet.lblSelectToken')"
-              :items="['Ethereum', 'USDT (ERC20)', 'USDC (ERC20)', 'DAI (ERC20)']"
+              :items="tokensAccepted"
+              item-value="address"
+              item-title="name"
               v-model="selectedToken"
               @change="updateToken"
           />
-
+          <div class="userBalance">
+            <span>{{ selectedTokenBalance }}</span>
+          </div>
           <v-text-field
               :label="t('profile.wallet.lblAmount')"
-              v-model="amount"
+              v-model="localAmount"
               class="amount-field"
               @input="updateAmount"
           >
           </v-text-field>
+
 
           <div class="loader-container">
             <v-progress-circular
@@ -36,68 +41,135 @@
             />
 
             <div v-else class="calculation-result">
-              <span>{{ t('profile.wallet.lblYouWillGet') }}</span> {{ calculatedFC }} <span>{{ t('profile.wallet.lblFCTokens') }}</span>
+              <span>{{ t('profile.wallet.lblYouWillGet') }}</span> {{ calculatedAmount }}
+              <span>{{ t('profile.wallet.lblFCTokens') }}</span>
             </div>
           </div>
 
         </v-card-text>
+        <div v-if="!hasSufficientBalance" class="balance-warning">
+          {{ t('profile.wallet.lblInsufficientBalance') }}
+        </div>
+
+        <div class="progressing-info">
+
+
+          <div v-if="loaderApproveTransaction" class="progressing-text-container">
+            <div class="progressing-step">
+              <v-progress-circular
+                  v-if="loaderApproveTransaction"
+                  class="loader"
+                  size="20"
+                  indeterminate/>
+              {{ t('profile.wallet.approveExplainTitle') }}
+            </div>
+            <div class="progressing-desc"> {{ t('profile.wallet.approveExplainDesc') }}</div>
+          </div>
+        </div>
+
+
         <v-card-actions>
           <v-spacer></v-spacer>
           <VBtnDark @click="dialog = false" class="cancel-btn">{{ t('modal.btnCancel') }}</VBtnDark>
-          <VBtn @click="hide" class="confirm-btn">{{ t('modal.btnConfirm') }}</VBtn>
+          <VBtn :disabled="!hasSufficientBalance" @click="btnNext" class="confirm-btn">
+            {{ t('modal.btnNext') }}
+          </VBtn>
         </v-card-actions>
+
+
       </VCard>
     </VModal>
   </div>
 </template>
 
 <script setup>
-import {ref, watch} from 'vue';
+import store from "@/core/state/store.js";
+import {computed, onMounted, ref, watch} from 'vue';
 import {useI18n} from "vue-i18n";
 
-const { t } = useI18n({ useScope: 'global' })
+const {t} = useI18n({useScope: 'global'})
 
 import debounce from "debounce";
 
 const dialog = ref(false);
-const amount = ref(50.00);
-const selectedToken = ref('USDT (ERC20)');
-const calculatedFC = ref(0);
 const loading = ref(false);
 
 const hide = () => {
   dialog.value = false;
 };
 
-const btnBuy = () => {
+const btnModalBuy = () => {
   dialog.value = true;
+  store.dispatch("contract/fetchSelectedTokenBalance");
   calculateFC();
 };
 
-const updateToken = async () => {
-  if (selectedToken.value === 'Ethereum') {
-    amount.value = 0.10;
+const btnNext = () => {
+  if (!isApproved.value) {
+    console.log("approve transaction")
+    store.dispatch("contract/fetchSendApproveTransaction");
   } else {
-    amount.value = 50.00;
+    console.log("Buy transaction")
   }
 };
 
-const updateAmount = debounce(async () => {
-  calculateFC();
+const updateToken = async (tokenAddress) => {
+  const token = tokensAccepted.value.find(t => t.address === tokenAddress);
+  await store.dispatch("contract/updateToken", token);
+
+  await store.dispatch("contract/fetchSelectedTokenBalance");
+
+  // Меняем значение на рекомендованное для токена
+  localAmount.value = token.initialAmount;
+  await store.dispatch("contract/updateAmount", token.initialAmount);
+
+  await calculateFC();
+};
+
+const updateAmount = debounce(async (amountContainer) => {
+  const parsedAmount = parseFloat(amountContainer.target.value);
+  if (!isNaN(parsedAmount)) {
+    localAmount.value = parsedAmount;
+    await store.dispatch("contract/updateAmount", parsedAmount);
+
+    await calculateFC();
+  }
 }, 500);
 
 
-const calculateFC = () => {
-  loading.value = true;
-  setTimeout(() => {
-    const rate = selectedToken.value === 'Ethereum' ? 1000 : 1; // Пример курса
-    calculatedFC.value = (amount.value * rate).toFixed(2);
+const calculateFC = async () => {
+  if (localAmount.value > 0) {
+    loading.value = true;
+    await store.dispatch("contract/calculateFC");
+
+    // Check balance
+    recalculateBalance();
+
     loading.value = false;
-  }, 1000);
+  }
 };
 
-watch(selectedToken, updateAmount);
-watch(amount, calculateFC);
+const recalculateBalance = () => {
+  hasSufficientBalance.value = selectedTokenBalance.value >= localAmount.value;
+};
+
+
+const tokensAccepted = computed(() => store.getters['contract/getTokensAccepted']);
+const calculatedAmount = computed(() => store.getters['contract/getCalculatedFC']);
+const selectedToken = computed({
+  get: () => store.getters['contract/getSelectedToken'],
+  set: (value) => updateToken(value)
+});
+const isApproved = computed(() => store.getters['contract/isApproved']);
+const selectedTokenBalance = computed(() => store.getters['contract/getSelectedTokenBalance']);
+
+const loaderApproveTransaction = computed(() => store.getters['contract/getLoaderApproveTransaction']);
+const resultApproveTransaction = computed(() => store.getters['contract/getResultApproveTransaction']);
+
+const localAmount = ref(store.getters['contract/getAmount']);
+const hasSufficientBalance = ref(false);
+
+
 
 </script>
 
@@ -115,8 +187,10 @@ watch(amount, calculateFC);
 .buy-btn {
   cursor: pointer;
   position: relative;
-  font-size: 0.8rem;
-  padding: 0 30px;
+  font-size: 1rem;
+  width: 210px;
+  height: 48px !important;
+  padding: 0 25px;
   color: var(--white);
 }
 
@@ -126,16 +200,13 @@ watch(amount, calculateFC);
 }
 
 
-
-
-
 /* Apply opacity to input elements inside v-select */
 .custom-select :deep(.v-field .v-field__input > input) {
   opacity: 0 !important;
 }
 
-.custom-select{
-  margin-bottom: 20px;
+.custom-select {
+  margin-bottom: 0;
 }
 
 .amount-field :deep(.v-text-field__prefix) {
@@ -165,5 +236,51 @@ watch(amount, calculateFC);
   color: var(--gray2);
   font-size: 1.2rem;
 }
+
+.userBalance {
+  color: var(--gray2);
+  font-size: 0.8rem;
+  margin-bottom: 10px;
+  margin-top: 5px;
+  text-align: right;
+}
+
+.userBalance span {
+  color: var(--gray2);
+  font-size: 0.9rem;
+}
+
+.balance-warning {
+  color: var(--gray2);
+  font-size: 0.8rem;
+  text-align: center;
+  margin: 0 20px;
+}
+
+
+.progressing-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px;
+}
+
+.progressing-text-container {
+  display: flex;
+  flex-direction: column;
+  margin: 0 20px;
+}
+
+.progressing-step {
+  margin-bottom: 5px;
+  font-size: 1.2rem;
+  color: var(--gray2);
+}
+
+.progressing-desc {
+  font-size: 0.8rem;
+  color: var(--gray2);
+}
+
 
 </style>

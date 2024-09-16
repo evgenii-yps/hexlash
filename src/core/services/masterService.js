@@ -245,6 +245,20 @@ export const showTrainingRulesReminder = (text) => {
     }
 };
 
+export const isShowPrivacyInfo = (text) => {
+    const MESSAGE_KEY = 'isShowPrivacyInfo';
+    const MAX_SHOW_COUNT = 1;
+
+    let showCount = localStorage.getItem(MESSAGE_KEY) || 0;
+
+    if (showCount < MAX_SHOW_COUNT) {
+        showCount++;
+        localStorage.setItem(MESSAGE_KEY, showCount);
+        const customMessage = InfoMessageModel.withTimeout(text, 15000);
+        store.commit('master/setInfoMessage', customMessage);
+    }
+};
+
 export const fullReset = async (text) => {
     await deleteDB();
     localStorage.clear();

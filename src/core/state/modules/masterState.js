@@ -6,7 +6,6 @@ import {PasswordResetStateModel} from "@/core/models/internal/passwordResetState
 import {InviteStateModel} from "@/core/models/internal/inviteStateModel.js";
 import {i18n} from '@/main.js';
 import * as masterService from "@/core/services/masterService.js";
-import {messages} from "@/locales/index.js";
 
 
 const state = {

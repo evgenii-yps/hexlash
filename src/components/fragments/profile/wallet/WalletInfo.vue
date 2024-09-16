@@ -26,24 +26,23 @@
     </InputField>
 
 
-    <BuyButton />
-
-
   </div>
 </template>
 
 <script setup>
-import {ref, watch} from 'vue';
+import {computed} from 'vue';
 import InputField from "@/components/ui/InputField.vue";
-import store from "@/core/state/store.js";
-import {WalletTypes} from "@/core/models/userModel.js";
+
 import BuyButton from "@/components/fragments/profile/wallet/BuyTokens.vue";
 import {useI18n} from "vue-i18n";
+import {useWeb3ModalAccount} from "@web3modal/ethers/vue";
 
 const { t } = useI18n({ useScope: 'global' })
 
-const walletAddress = ref(null);
-const notImportWallet = ref(false);
+const { address } = useWeb3ModalAccount();
+
+// Создаем computed-свойство для отслеживания address
+const walletAddress = computed(() => address.value);
 
 const copyToClipboard = () => {
   navigator.clipboard.writeText(walletAddress.value).then(() => {
@@ -52,14 +51,6 @@ const copyToClipboard = () => {
     console.error(t('profile.wallet.msgCopyError', { error: err }));
   });
 };
-
-
-watch(store.getters['master/getMaster'], (master) => {
-  if (master && master.userData) {
-    walletAddress.value = master.userData.walletAddress;
-    notImportWallet.value = master.userData.walletType === WalletTypes.GENERATED;
-  }
-}, {immediate: true});
 
 </script>
 

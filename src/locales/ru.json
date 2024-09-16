@@ -22,7 +22,9 @@
       "btnLogin": "Войти",
       "question": "У вас есть",
       "btnInvite": "приглашение",
-      "authError": "Неправильный логин или пароль"
+      "authError": "Неправильный логин или пароль",
+      "lblOrPass": " или пароль",
+      "btnReset": "сброс"
     },
     "invite": {
       "lblInvite": "КОД ПРИГЛАШЕНИЯ",
@@ -76,12 +78,13 @@
     },
     "wallet": {
       "lblTopUpBalance": "Пополнить баланс",
-      "lblBuyFCTokens": "Купить FC токены",
+      "lblBuyFCTokens": "Купить BFC токены",
       "lblSelectToken": "Выбрать токен",
       "lblAmount": "Сумма",
       "lblYouWillGet": "Вы получите",
       "lblFCTokens": "FC токены",
       "lblConnectWallet": "Подключить кошелек",
+      "lblReconnectWallet": "Переподключить",
       "msgConnectWalletTooltip": "Подключите свой кошелек, чтобы купить или вывести Fight Club токены",
       "lblGameBalance": "БАЛАНС ИГРЫ",
       "lblWithdrawToWallet": "Вывести на кошелек",
@@ -101,7 +104,10 @@
       "lblConfirmAction": "Подтвердить действие",
       "msgShowPrivateKeyPrompt": "Показать приватный ключ?",
       "lblPrivateKey": "Приватный ключ",
-      "btnShow": "Показать"
+      "btnShow": "Показать",
+      "lblInsufficientBalance": "На вашем текущем балансе недостаточно средств для покупки данного количества токенов.",
+      "approveExplainTitle": "Одобрение транзакции на использование средств...",
+      "approveExplainDesc": "Сейчас выполняется запрос на одобрение. Мы запрашиваем разрешение на использование ваших токенов для оплаты BFC."
     },
     "achievements": {
       "lblAchievements": "Достижения",
@@ -254,7 +260,8 @@
   "info": {
     "firstFight": "Перед первым боем мы настоятельно рекомендуем вам ознакомиться с <a href=\"/rules?back=arena\">правилами</a> игры.",
     "firstTraining": "Тренировки приносят токены, но время не ждет. Ваши задания имеют ограниченное время. Обязательно изучите <a href=\"/rules?back=training\">правила</a> перед началом.",
-    "withdrawAfterListing": "Вывод токенов на кошелек будет доступен после листинга, следи за таймером обратного отсчета."
+    "withdrawAfterListing": "Вывод токенов на кошелек будет доступен после листинга, следи за таймером обратного отсчета.",
+    "showPrivacyInfo": "Продолжая использовать этот сайт, вы соглашаетесь с <a href=\"/rules\" target=\"_blank\">Правилами</a> и <a href=\"/privacy\" target=\"_blank\">Политикой конфиденциальности</a>."
   },
   "getStarted": {
     "title": "Бойцовский клуб",
@@ -276,5 +283,4 @@
     "errorPasswordsDoNotMatch": "Пароли не совпадают",
     "errorOnlyLatinAndNumbers": "Логин может содержать только латинские буквы и цифры."
   }
-
 }

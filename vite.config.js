@@ -31,7 +31,7 @@ export default defineConfig({
             deadCodeInjectionThreshold: 0.4,
             stringArray: false,
             stringArrayThreshold: 0.75,
-            debugProtection:false,
+            debugProtection: false,
             exclude: ['src/router/**', 'node_modules/**'],
         }),
     ],
@@ -41,7 +41,9 @@ export default defineConfig({
     assetsInclude: ['**/*.glb', '**/*.gltf', '**/*.bin', '**/*.wasm'],
     resolve: {
         alias: {
-            '@': fileURLToPath(new URL('./src', import.meta.url))
+            '@': fileURLToPath(new URL('./src', import.meta.url)),
+            util: "util/",
+            buffer: "buffer/"
         }
     },
     build: {
@@ -70,5 +72,10 @@ export default defineConfig({
                 drop_debugger: true,
             },
         },
+    },
+    server: {
+        /* host: 'bitfightclub.com',*/
+        /* port: 3000,
+         https: false,*/
     }
 })

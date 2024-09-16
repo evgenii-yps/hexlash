@@ -40,12 +40,13 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import {ref, computed, onMounted} from 'vue';
 import InputField from "@/components/ui/InputField.vue";
 import ButtonText from "@/components/ui/ButtonText.vue";
 import { useRouter } from 'vue-router';
 import { useI18n } from "vue-i18n";
 import store from "@/core/state/store.js";
+import * as masterService from "@/core/services/masterService.js";
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -61,6 +62,7 @@ const handleInviteSubmit = () => {
 const handleLogin = () => {
   router.push('/auth/login');
 };
+
 </script>
 
 <style scoped>

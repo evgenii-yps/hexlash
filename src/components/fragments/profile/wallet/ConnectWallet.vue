@@ -6,7 +6,7 @@
                  contentClass="v-tooltip__content">
         <template #activator="{ props }">
           <VBtnDark v-bind="props" size="x-large" @click="switchAccount" class="input-button">
-            {{ t('profile.wallet.lblConnectWallet') }}
+            {{ buttonText }}
           </VBtnDark>
         </template>
         <span>{{ t('profile.wallet.msgConnectWalletTooltip') }}</span>
@@ -17,13 +17,32 @@
 
 <script setup>
 import {useI18n} from "vue-i18n";
-import { useMetaMaskWallet } from "vue-connect-wallet";
+import {computed} from "vue";
 
 const { t } = useI18n({ useScope: 'global' })
-const wallet = useMetaMaskWallet();
+
+import {useDisconnect, useWeb3Modal, useWeb3ModalAccount} from '@web3modal/ethers/vue'
+
+const { address } = useWeb3ModalAccount();
+const { disconnect } = useDisconnect()
+const { open, close } = useWeb3Modal()
+
+// Создаем computed-свойство для отслеживания address
+const walletAddress = computed(() => address.value);
+
+const buttonText = computed(() => {
+  return address.value
+      ? t('profile.wallet.lblReconnectWallet') // Текст для кнопки "Реконнект"
+      : t('profile.wallet.lblConnectWallet'); // Текст для кнопки "Подключить кошелек"
+});
 
 const switchAccount = async () => {
-  await wallet.switchAccounts();
+  // Отключаем текущий аккаунт, если он подключен
+  if (address.value) {
+    await disconnect();
+  }
+  // После отключения открываем окно для подключения кошелька
+  await open();
 };
 
 </script>

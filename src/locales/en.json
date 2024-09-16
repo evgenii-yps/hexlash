@@ -13,7 +13,8 @@
     "btnConfirm": "Confirm",
     "btnOk": "OK",
     "btnSave": "Save",
-    "btnCreate": "Create"
+    "btnCreate": "Create",
+    "btnNext": "Next"
   },
   "auth": {
     "login": {
@@ -78,12 +79,13 @@
     },
     "wallet": {
       "lblTopUpBalance": "Top Up Balance",
-      "lblBuyFCTokens": "Buy FC tokens",
+      "lblBuyFCTokens": "Buy BFC tokens",
       "lblSelectToken": "Select token",
       "lblAmount": "Amount",
       "lblYouWillGet": "You will get",
       "lblFCTokens": "FC tokens",
       "lblConnectWallet": "Connect Wallet",
+      "lblReconnectWallet": "Reconnect",
       "msgConnectWalletTooltip": "Connect your wallet to buy or withdraw Fight Club tokens",
       "lblGameBalance": "GAME BALANCE",
       "lblWithdrawToWallet": "Withdraw to wallet",
@@ -103,7 +105,10 @@
       "lblConfirmAction": "Confirm Action",
       "msgShowPrivateKeyPrompt": "Show private key?",
       "lblPrivateKey": "Private Key",
-      "btnShow": "Show"
+      "btnShow": "Show",
+      "lblInsufficientBalance": "Your current balance is not enough to buy the selected amount of tokens.",
+      "approveExplainTitle": "Approving the spending transaction...",
+      "approveExplainDesc": "We are currently requesting approval. This allows us to use your tokens for purchasing BFC."
     },
     "achievements": {
       "lblAchievements": "Achievements",
@@ -256,11 +261,12 @@
   "info": {
     "firstFight": "Before your first fight, we strongly recommend that you familiarize yourself with the <a href=\"/rules?back=arena\">rules</a> of the game.",
     "firstTraining": "Training gets you tokens, but the clock is ticking. Your tasks won't last forever. Make sure you understand the <a href=\"/rules?back=training\">rules</a> before you start.",
-    "withdrawAfterListing": "Token withdrawal to your wallet will be available after the listing. Keep an eye on the countdown timer."
+    "withdrawAfterListing": "Token withdrawal to your wallet will be available after the listing. Keep an eye on the countdown timer.",
+    "showPrivacyInfo": "By continuing to use this site, you agree to the <a href=\"/rules\" target=\"_blank\">Rules</a> and <a href=\"/privacy\" target=\"_blank\">Privacy Policy</a>."
   },
   "getStarted": {
     "title": "Fight Club",
-    "noticeWelcome": "Welcome to FightClub! Before you start, we strongly recommend that you review the <a href=\"/rules\" target=\"_blank\">rules</a>, as it is crucial to follow them.",
+    "noticeWelcome": "Welcome to FightClub! Before you start, we strongly recommend that you review the <a href=\"/rules?back=home\">rules</a>, as it is crucial to follow them.",
     "lblName": "Name",
     "lblHintName": "Enter your name...",
     "lblLogin": "Login",
