@@ -17,13 +17,21 @@ COPY . .
 RUN npm run build
 
 # Используем минимальный сервер для статических файлов на базе Nginx
-FROM nginx:alpine
+FROM nginx:1.26.2-alpine
 
 # Копируем файлы сборки в Nginx
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Копируем Nginx конфигурацию (опционально)
-# COPY nginx.conf /etc/nginx/nginx.conf
+# Копируем Nginx конфигурацию
+COPY nginx.test.conf /etc/nginx/nginx.test.conf
+COPY nginx.prod.conf /etc/nginx/nginx.prod.conf
+
+ARG TARGET_ENV=test
+RUN if [ "$TARGET_ENV" = "prod" ]; then \
+cp /etc/nginx/nginx.prod.conf /etc/nginx/nginx.conf; \
+else \
+cp /etc/nginx/nginx.test.conf /etc/nginx/nginx.conf; \
+fi
 
 # Открываем порт 8443
 EXPOSE 8443
