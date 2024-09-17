@@ -1,0 +1,79 @@
+name: Build and Deploy Frontend
+
+on:
+  push:
+    branches:
+      - test  # Ветка, на которую нужно реагировать
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3  # Проверяем репозиторий
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci  # Быстрая установка зависимостей
+
+      - name: Build frontend
+        run: npm run build  # Сборка проекта
+
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Build and push Docker image for frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile  # Указываем путь к Dockerfile
+          push: true
+          tags: |
+            invariant0x/fightclub-frontend:${{ github.sha }}
+            invariant0x/fightclub-frontend:latest
+
+      - name: Checkout deployment repository
+        uses: actions/checkout@v4
+        with:
+          repository: Invariant0x/FightClubApp-DevOps  # Репозиторий для деплоя
+          token: ${{ secrets.FC_ACTION_PRIVATE_TOKEN }}
+
+      - name: Update deployment.yaml with new Docker image
+        run: |
+          cd fc-dev/applications/frontend
+          echo "Current directory: $(pwd)"
+          ls -la
+          sed -i 's|image: invariant0x/fightclub-frontend:.*|image: invariant0x/fightclub-frontend:${{ github.sha }}|g' frontend-deployment.yaml
+          git config --global user.name "Invariant get action"
+          git config --global user.email "invariant0x@icloud.com"
+          git add frontend-deployment.yaml
+          git commit -m "Update frontend-deployment.yaml with new Docker image"
+          git push origin HEAD:main
+
+      - name: Remove old Docker images
+        run: |
+          # Получаем JWT токен
+          token=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'"${{ secrets.DOCKER_USERNAME }}"'", "password": "'"${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}"'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
+
+          # Получаем список тегов
+          response=$(curl -s -H "Authorization: JWT $token" "https://hub.docker.com/v2/repositories/${{ secrets.DOCKER_USERNAME }}/fightclub-frontend/tags?page_size=100")
+          echo "Response: $response"
+
+          # Проверяем, что ответ не пустой и содержит результаты
+          tags=$(echo $response | jq -r '.results | sort_by(.last_updated)')
+          if [ "$tags" == "null" ]; then
+            echo "No tags found or failed to fetch tags."
+            exit 1
+          fi
+
+          # Удаляем все теги, кроме последних 10
+          images=$(echo $tags | jq -r '.[0:-10] | .[].name')
+          for image in $images; do
+            echo "Deleting image: $image"
+            curl -s -X DELETE -H "Authorization: JWT $token" "https://hub.docker.com/v2/repositories/${{ secrets.DOCKER_USERNAME }}/fightclub-frontend/tags/$image/"
+          done
