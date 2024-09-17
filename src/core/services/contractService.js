@@ -1,6 +1,5 @@
 import contractABI from '@/assets/abi/abi.json'
 import {ethers} from "ethers";
-import {useWeb3ModalProvider} from "@web3modal/ethers/vue";
 
 let provider;
 let contract;
@@ -48,19 +47,19 @@ const getBalance = async (token, userAddress) => {
 
     } catch (error) {
         console.error("Error fetching balance:", error);
-        throw error;
+        //throw error;
     }
 };
 
-const checkIsApproved = async (token, userAddress, requiredAmount) => {
+const getApprovedAmount = async (token, userAddress) => {
     try {
         if (!provider) {
             await initializeContract();
         }
 
-        // Если это Ethereum (нативный токен), возвращаем true
+        // Если это Ethereum (нативный токен)
         if (token.address === ZERO_ADDRESS) {
-            return true; // Для Ethereum всегда true, так как нет необходимости в approval
+            return BigInt(999999999999991); // Для Ethereum
         }
 
         // Создаем контракт токена ERC-20
@@ -72,34 +71,28 @@ const checkIsApproved = async (token, userAddress, requiredAmount) => {
         const approvedAmount = await tokenContract.allowance(userAddress, contractAddress);
 
         // Преобразуем requiredAmount в нужный формат с учетом десятичных знаков
-        const adjustedRequiredAmount = ethers.parseUnits(requiredAmount.toString(), token.decimals);
+        return approvedAmount / BigInt(10 ** token.decimals);
 
-        // Проверяем, одобрено ли достаточно токенов
-        return approvedAmount >= adjustedRequiredAmount;
     } catch (error) {
         console.error("Error checking approval:", error);
-        throw error;
+        //throw error;
     }
 };
 
 const sendApprove = async (token, amount, walletProvider) => {
     try {
-
-        // Проверяем, если ли у walletProvider нужные данные
+        // Проверяем, если walletProvider доступен
         if (!walletProvider) {
-            throw new Error("Wallet provider is not available");
+            return { success: false, error: "Wallet provider is not available" };
         }
-
-        console.log('Wallet provider initialized');
 
         // Используем BrowserProvider для работы с кошельком
         const provider = new ethers.BrowserProvider(walletProvider);
         const signer = await provider.getSigner();
 
-        console.log('Provider and signer initialized');
-
+        // Если это Ethereum, approve не требуется
         if (token.address === ZERO_ADDRESS) {
-            return new Error("Ethereum не требует approve.");
+            return { success: false, error: "Its Ethereum!!!" };
         }
 
         const tokenContract = new ethers.Contract(token.address, [
@@ -113,10 +106,56 @@ const sendApprove = async (token, amount, walletProvider) => {
         await tx.wait();
 
         console.log('Approval successful:', tx);
-        return tx;
+        return { success: true, transaction: tx };
     } catch (error) {
-        console.error("Error sending approve transaction:", error);
-        throw error;
+        //console.error("Error sending approve transaction:", error);
+        const trimError = error.message.split('(')[0].trim();
+        return { success: false, error: trimError };
+    }
+};
+
+
+const sendMint = async (token, amount, payload, walletProvider) => {
+    try {
+        if (!walletProvider) {
+            return { success: false, error: "Wallet provider is not available" };
+        }
+
+        // Инициализируем провайдера и подпись транзакции
+        const provider = new ethers.BrowserProvider(walletProvider);
+        const signer = await provider.getSigner();
+
+        if (token.address === ZERO_ADDRESS) {
+            const tx = await contract.connect(signer).mintFromEth(payload, {
+                value: ethers.parseUnits(amount.toString(), token.decimals),
+            });
+
+            // Ожидаем завершения транзакции
+            await tx.wait();
+
+            console.log('Mint successful for ETH:', tx);
+            return { success: true, transaction: tx };
+        }
+
+        // Для ERC-20 токенов
+        const adjustedAmount = ethers.parseUnits(amount.toString(), token.decimals);
+
+        const isAccepted = await contract.isTokenAccepted(token.address);
+        if (!isAccepted) {
+            return { success: false, error: `${token.name} is not accepted by the contract` };
+        }
+
+        const tx = await contract.connect(signer).mintFromERC20(token.address, adjustedAmount, payload);
+
+        await tx.wait();
+
+        console.log('Mint successful for ERC-20 token:', tx);
+        return { success: true, transaction: tx };
+
+    } catch (error) {
+        //console.error("Error during mint:", error);
+        const trimError = error.message.split('(')[0].trim();
+        return { success: false, error: trimError };
     }
 };
 
@@ -140,7 +179,7 @@ const calculateBFCAmount = async (token, amount) => {
 
     } catch (error) {
         console.error("Error while calculating BFC amount:", error);
-        throw error;
+        //throw error;
     }
 };
 
@@ -153,4 +192,5 @@ const convertAmountToDecimals = (amount, decimals) => {
 };
 
 
-export {initializeContract, calculateBFCAmount, getTokensAccepted, getBalance, checkIsApproved, sendApprove};
+export {initializeContract, calculateBFCAmount,
+    getTokensAccepted, getBalance, getApprovedAmount, sendApprove, sendMint};

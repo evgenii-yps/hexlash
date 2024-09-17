@@ -16,7 +16,7 @@
         <v-card-text style="margin-bottom: 0">
           <form @submit.prevent="handleSubmit">
             <InputField
-                :label="$t('profile.account.lblCurrentPassword')"
+                :label="t('profile.account.lblCurrentPassword')"
                 type="password"
                 v-model="currentPassword"
                 labelColor="var(--white)"

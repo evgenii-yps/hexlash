@@ -62,7 +62,7 @@ export const login = async (credentials) => {
         // const userData = await fetchMasterData(jwtToken);
 
         const userData = `{
-              "id": "user123",
+              "id": "5b11893d932e353c154e0148615f077be70832eb5c712730f557b8eeb59b0f94",
               "login": "userLogin",
               "name": "John Doe",
               "avatarUrl": "",

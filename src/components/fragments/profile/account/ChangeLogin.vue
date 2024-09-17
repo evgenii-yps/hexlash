@@ -146,10 +146,10 @@ const debouncedCheckLoginExistence = debounce(async () => {
     loginAvailable.value = available;
 
     if (!available) {
-      errorMessage.value = $t('profile.account.lblLoginAlreadyTaken');
+      errorMessage.value = t('profile.account.lblLoginAlreadyTaken');
     }
   } catch (error) {
-    errorMessage.value = $t('profile.account.lblFailedToCheckLoginAvailability');
+    errorMessage.value = t('profile.account.lblFailedToCheckLoginAvailability');
   } finally {
     loading.value = false;
   }

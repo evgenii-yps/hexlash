@@ -1,9 +1,11 @@
 import {
     calculateBFCAmount,
-    checkIsApproved,
+    getApprovedAmount,
     getBalance,
-    getTokensAccepted, sendApprove
+    getTokensAccepted, sendApprove, sendMint
 } from "@/core/services/contractService.js";
+import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
+
 
 
 const state = {
@@ -13,9 +15,11 @@ const state = {
     selectedTokenBalance: 0,
     amount: 50.00,
     calculatedFC: 0,
-    isApproved: false,
+    approvedAmount: 0,
     loaderApproveTransaction: false,
-    resultApproveTransaction: null,
+    loaderPurchaseTransaction: false,
+    transactionError: null,
+    transactionSuccess: false,
 };
 
 const getters = {
@@ -24,9 +28,11 @@ const getters = {
     getSelectedTokenBalance: state => state.selectedTokenBalance,
     getAmount: state => state.amount,
     getCalculatedFC: state => state.calculatedFC,
-    isApproved: state => state.isApproved,
+    getApprovedAmount: state => state.approvedAmount,
     getLoaderApproveTransaction: state => state.loaderApproveTransaction,
-    getResultApproveTransaction: state => state.resultApproveTransaction,
+    getLoaderPurchaseTransaction: state => state.loaderPurchaseTransaction,
+    getTransactionError: state => state.transactionError,
+    getTransactionSuccess: state => state.transactionSuccess,
 };
 
 const mutations = {
@@ -42,8 +48,8 @@ const mutations = {
     setAmount: (state, amount) => {
         state.amount = amount;
     },
-    setIsApproved: (state, approve) => {
-        state.approve = approve;
+    setApprovedAmount: (state, approve) => {
+        state.approvedAmount = approve;
     },
     setCalculatedFC: (state, calculatedFC) => {
         state.calculatedFC = calculatedFC;
@@ -51,9 +57,15 @@ const mutations = {
     setLoaderApproveTransaction: (state, loaderApproveTransaction) => {
         state.loaderApproveTransaction = loaderApproveTransaction;
     },
-    setResultApproveTransaction: (state, resultApproveTransaction) => {
-        state.resultApproveTransaction = resultApproveTransaction;
-    }
+    setLoaderPurchaseTransaction: (state, loaderPurchaseTransaction) => {
+        state.loaderPurchaseTransaction = loaderPurchaseTransaction;
+    },
+    setTransactionError: (state, error) => {
+        state.transactionError = error;
+    },
+    setTransactionSuccess: (state, success) => {
+        state.transactionSuccess = success;
+    },
 };
 
 const actions = {
@@ -65,14 +77,17 @@ const actions = {
     },
     async calculateFC({commit, rootGetters, state}) {
         if (!state.selectedToken) return;
+
+        commit('setTransactionError', null);
+
         const calculatedFC = await calculateBFCAmount(state.selectedToken, state.amount);
         commit('setCalculatedFC', calculatedFC);
 
         const walletAddress = rootGetters['master/getMaster'].userData.walletAddress;
         // Проверяем одобрено ли такое количество контракту, от этого будет зависить след шаг
-        const isApproved = await checkIsApproved(state.selectedToken, walletAddress, state.amount)
+        const approvedAmount = await getApprovedAmount(state.selectedToken, walletAddress, state.amount)
 
-        commit('setIsApproved', isApproved);
+        commit('setApprovedAmount', approvedAmount);
     },
     async fetchSelectedTokenBalance({commit, rootGetters}) {
         try {
@@ -83,19 +98,68 @@ const actions = {
             console.error('Error fetching balance:', error);
         }
     },
-    async fetchSendApproveTransaction({commit}) {
+    async fetchSendApproveTransaction({commit, dispatch}) {
         try {
+            commit('setTransactionError', null);
             commit('setLoaderApproveTransaction', true);
 
             const result = await sendApprove(state.selectedToken, state.amount, state.web3Modal.getWalletProvider());
-            console.log(result);
 
-            console.log("get result");
+            // Проверяем успешность транзакции
+            if (!result.success) {
+                // Записываем ошибку в state, если транзакция неуспешна
+                commit('setTransactionError', result.error);
+                commit('setLoaderApproveTransaction', false);
+                return;
+            }
+
+            console.log('Approval succeeded:', result.transaction);
+
+            // Выключаем индикатор загрузки для approve
+            commit('setLoaderApproveTransaction', false);
+
+            // После успешного approve, вызываем транзакцию покупки
+            await dispatch('fetchSendPurchaseTransaction');
+
         } catch (error) {
-            console.error('Error fetching balance:', error);
+            console.error('Error during approval transaction:', error);
+            commit('setTransactionError', error.message);
             commit('setLoaderApproveTransaction', false);
         }
+    },
+    async fetchSendPurchaseTransaction({commit, rootGetters}) {
+        try {
+            commit('setTransactionError', null);
+            commit('setLoaderPurchaseTransaction', true);
 
+            const id = rootGetters['master/getMaster'].userData.id;
+
+            // Отправляем транзакцию mint
+            const result = await sendMint(state.selectedToken, state.amount, id.toString(), state.web3Modal.getWalletProvider());
+
+            // Проверяем успешность транзакции
+            if (!result.success) {
+                // Записываем ошибку в state, если транзакция неуспешна
+                commit('setTransactionError', result.error);
+                commit('setLoaderPurchaseTransaction', false);
+                return;
+            }
+
+            console.log('Purchase succeeded:', result.transaction);
+
+            // Выключаем индикатор загрузки для покупки
+            commit('setLoaderPurchaseTransaction', false);
+
+            // TODO update balance send to server for check
+
+            commit('setTransactionSuccess', true);
+
+        } catch (error) {
+            // Ловим ошибки и записываем их в state
+            console.error('Error during purchase transaction:', error);
+            commit('setTransactionError', error.message + '\n' + t('profile.wallet.checkLimits'));
+            commit('setLoaderPurchaseTransaction', false);
+        }
     }
 };
 

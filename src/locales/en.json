@@ -108,7 +108,12 @@
       "btnShow": "Show",
       "lblInsufficientBalance": "Your current balance is not enough to buy the selected amount of tokens.",
       "approveExplainTitle": "Approving the spending transaction...",
-      "approveExplainDesc": "We are currently requesting approval. This allows us to use your tokens for purchasing BFC."
+      "approveExplainDesc": "We are currently requesting approval. This allows us to use your tokens for purchasing BFC.",
+      "approvedAmount": "Already approved for use:",
+      "purchaseExplainTitle": "Confirm the transaction in your wallet...",
+      "purchaseExplainDesc": "Please confirm the purchase of BFC tokens in your wallet. The transaction will be completed once you approve it.",
+      "successPurchase": "Your purchase was successful. The tokens will appear in your balance within 15 minutes.",
+      "checkLimits": "You cannot buy less than 100 BFC or more than 100,000 BFC"
     },
     "achievements": {
       "lblAchievements": "Achievements",

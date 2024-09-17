@@ -107,7 +107,12 @@
       "btnShow": "Mostrar",
       "lblInsufficientBalance": "Tu saldo actual no es suficiente para comprar la cantidad seleccionada de tokens.",
       "approveExplainTitle": "Aprobando la transacción de gasto...",
-      "approveExplainDesc": "Actualmente estamos solicitando aprobación. Esto nos permite usar tus tokens para comprar BFC."
+      "approveExplainDesc": "Actualmente estamos solicitando aprobación. Esto nos permite usar tus tokens para comprar BFC.",
+      "approvedAmount": "Ya aprobado para su uso:",
+      "purchaseExplainTitle": "Confirma la transacción en tu cartera...",
+      "purchaseExplainDesc": "Por favor, confirma la compra de tokens BFC en tu cartera. La transacción se completará una vez que la apruebes.",
+      "successPurchase": "La compra se ha completado con éxito. Los tokens aparecerán en tu balance en los próximos 15 minutos.",
+      "checkLimits": "No puedes comprar menos de 100 BFC o más de 100,000 BFC"
     },
     "achievements": {
       "lblAchievements": "Logros",

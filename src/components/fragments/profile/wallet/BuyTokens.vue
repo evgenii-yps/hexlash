@@ -13,7 +13,7 @@
               class="custom-select"
               color="white"
               bg-color="var(--black-opacity)"
-              :label="$t('profile.wallet.lblSelectToken')"
+              :label="t('profile.wallet.lblSelectToken')"
               :items="tokensAccepted"
               item-value="address"
               item-title="name"
@@ -47,12 +47,19 @@
           </div>
 
         </v-card-text>
+
         <div v-if="!hasSufficientBalance" class="balance-warning">
           {{ t('profile.wallet.lblInsufficientBalance') }}
         </div>
+        <div v-else-if="limitError" class="balance-warning">
+          {{ limitError }}
+        </div>
 
-        <div class="progressing-info">
+        <div v-if="errorTransaction" class="error-transaction">
+          {{ errorTransaction }}
+        </div>
 
+        <div v-else class="progressing-info">
 
           <div v-if="loaderApproveTransaction" class="progressing-text-container">
             <div class="progressing-step">
@@ -65,13 +72,29 @@
             </div>
             <div class="progressing-desc"> {{ t('profile.wallet.approveExplainDesc') }}</div>
           </div>
+          <div v-else-if="loaderPurchaseTransaction" class="progressing-text-container">
+            <div class="progressing-step">
+              <v-progress-circular
+                  v-if="loaderPurchaseTransaction"
+                  class="loader"
+                  size="20"
+                  indeterminate/>
+              {{ t('profile.wallet.purchaseExplainTitle') }}
+            </div>
+            <div class="progressing-desc"> {{ t('profile.wallet.purchaseExplainDesc') }}</div>
+          </div>
+
+
         </div>
 
 
         <v-card-actions>
+          <div v-if="!loading && approvedAmount > 0 && approvedAmount !== BigInt(999999999999991)" class="balance-warning">
+            {{ t('profile.wallet.approvedAmount') }} {{ approvedAmount }}
+          </div>
           <v-spacer></v-spacer>
-          <VBtnDark @click="dialog = false" class="cancel-btn">{{ t('modal.btnCancel') }}</VBtnDark>
-          <VBtn :disabled="!hasSufficientBalance" @click="btnNext" class="confirm-btn">
+          <VBtnDark v-if="!loaderApproveTransaction && !loaderPurchaseTransaction" @click="dialog = false" class="cancel-btn">{{ t('modal.btnCancel') }}</VBtnDark>
+          <VBtn :disabled="!hasSufficientBalance || limitError !== '' || loaderApproveTransaction || loaderPurchaseTransaction" @click="btnNext" class="confirm-btn">
             {{ t('modal.btnNext') }}
           </VBtn>
         </v-card-actions>
@@ -84,12 +107,13 @@
 
 <script setup>
 import store from "@/core/state/store.js";
-import {computed, onMounted, ref, watch} from 'vue';
+import {computed, ref, watch} from 'vue';
 import {useI18n} from "vue-i18n";
 
 const {t} = useI18n({useScope: 'global'})
 
 import debounce from "debounce";
+import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
 
 const dialog = ref(false);
 const loading = ref(false);
@@ -105,11 +129,12 @@ const btnModalBuy = () => {
 };
 
 const btnNext = () => {
-  if (!isApproved.value) {
-    console.log("approve transaction")
+  if (localAmount.value > approvedAmount.value) {
+    console.log("Approve transaction")
     store.dispatch("contract/fetchSendApproveTransaction");
   } else {
     console.log("Buy transaction")
+    store.dispatch("contract/fetchSendPurchaseTransaction");
   }
 };
 
@@ -160,17 +185,40 @@ const selectedToken = computed({
   get: () => store.getters['contract/getSelectedToken'],
   set: (value) => updateToken(value)
 });
-const isApproved = computed(() => store.getters['contract/isApproved']);
+
+
+const approvedAmount = computed(() => store.getters['contract/getApprovedAmount']);
 const selectedTokenBalance = computed(() => store.getters['contract/getSelectedTokenBalance']);
 
 const loaderApproveTransaction = computed(() => store.getters['contract/getLoaderApproveTransaction']);
-const resultApproveTransaction = computed(() => store.getters['contract/getResultApproveTransaction']);
+const loaderPurchaseTransaction = computed(() => store.getters['contract/getLoaderPurchaseTransaction']);
+const errorTransaction = computed(() => store.getters['contract/getTransactionError']);
+const transactionSuccess = computed(() => store.getters['contract/getTransactionSuccess']);
 
 const localAmount = ref(store.getters['contract/getAmount']);
 const hasSufficientBalance = ref(false);
+const limitError = ref('');
 
 
+watch(transactionSuccess, (newValue) => {
+  if (newValue) {
+    // Закрываем модальное окно
+    dialog.value = false;
+    const successMessage = InfoMessageModel.withText(t('profile.wallet.successPurchase'));
+    store.commit('master/setInfoMessage', successMessage);
 
+    // Сбрасываем флаг успешной транзакции
+    store.commit('contract/setTransactionSuccess', false);
+  }
+});
+
+watch(calculatedAmount, (newValue) => {
+  if (newValue < 100 || newValue > 100000) {
+    limitError.value = t('profile.wallet.checkLimits');
+  } else {
+    limitError.value = '';
+  }
+});
 </script>
 
 <style scoped>
@@ -257,6 +305,12 @@ const hasSufficientBalance = ref(false);
   margin: 0 20px;
 }
 
+.error-transaction{
+  color: var(--pinkDark);
+  font-size: 0.8rem;
+  text-align: center;
+  margin: 0 20px;
+}
 
 .progressing-info {
   display: flex;
