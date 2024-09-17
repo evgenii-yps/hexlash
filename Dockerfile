@@ -25,8 +25,8 @@ COPY --from=build /app/dist /usr/share/nginx/html
 # Копируем Nginx конфигурацию (опционально)
 # COPY nginx.conf /etc/nginx/nginx.conf
 
-# Открываем порт 443
-EXPOSE 443
+# Открываем порт 8443
+EXPOSE 8443
 
 # Запускаем Nginx
 CMD ["nginx", "-g", "daemon off;"]

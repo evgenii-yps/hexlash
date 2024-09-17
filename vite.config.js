@@ -72,10 +72,5 @@ export default defineConfig({
                 drop_debugger: true,
             },
         },
-    },
-    server: {
-        /* host: 'bitfightclub.com',*/
-        /* port: 3000,
-         https: false,*/
     }
 })
