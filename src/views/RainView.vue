@@ -75,6 +75,14 @@ const handleVisibilityChange = () => {
   }
 };
 
+function setViewportHeight() {
+  // Рассчитываем 1vh как 1% от высоты видимой области
+  let vh = window.innerHeight * 0.01;
+  // Устанавливаем его в качестве CSS-переменной
+  document.documentElement.style.setProperty('--vh', `${vh}px`);
+
+}
+
 
 watchEffect(() => {
   setCurrentComponent();
@@ -448,6 +456,7 @@ window.addEventListener("mousedown", mouseDownHandler);
 window.addEventListener("mouseup", mouseUpHandler);
 window.addEventListener("touchstart", touchStartHandler);
 window.addEventListener("touchend", touchEndHandler);
+window.addEventListener('resize', setViewportHeight);
 document.addEventListener('visibilitychange', handleVisibilityChange);
 
 
@@ -1024,10 +1033,13 @@ class Sketch extends kokomi.Base {
     window.removeEventListener("touchstart", touchStartHandler);
     window.removeEventListener("touchend", touchEndHandler);
     document.removeEventListener('visibilitychange', handleVisibilityChange);
+    window.removeEventListener('resize', setViewportHeight);
 
   }
 
 }
+
+setViewportHeight();
 
 const intervalId = ref(null);  // Для сохранения идентификатора интервала
 const countdownText = ref('');
@@ -1099,7 +1111,7 @@ onUnmounted(() => {
 
 #sketch {
   width: 100vw;
-  height: 100vh;
+  height: calc(var(--vh, 1vh) * 100);
   background: black;
   overflow: hidden;
 }
@@ -1109,7 +1121,7 @@ onUnmounted(() => {
   top: 0;
   left: 0;
   width: 100vw;
-  height: 100vh;
+  height: calc(var(--vh, 1vh) * 100);
 }
 
 .explode-enter-active, .explode-leave-active {
