@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - test  # Ветка, на которую нужно реагировать
+      - main
 
 jobs:
   build:
@@ -33,6 +34,8 @@ jobs:
           context: .
           file: ./Dockerfile  # Указываем путь к Dockerfile
           push: true
+          build-args: |
+            TARGET_ENV=${{ env.BRANCH_NAME }}
           tags: |
             invariant0x/fightclub-frontend:${{ github.sha }}
             invariant0x/fightclub-frontend:latest
