@@ -53,9 +53,9 @@ const isActive = (item) => {
 .bottom-menu {
   display: flex;
   justify-content: space-between;
-  padding: 1rem;
+  padding: 0 0.5rem;
   position: fixed;
-  bottom: 0;
+  bottom: 0.4rem;
   width: 100%;
   max-width: 1024px;
 
@@ -69,7 +69,7 @@ const isActive = (item) => {
   text-decoration: none;
   transition: color 0.3s ease;
   border-radius: 0.2rem;
-  padding: 0.9rem 1rem;
+  padding: 0.4rem 0.5rem;
   flex-grow: 1; /* Позволяет элементу растягиваться */
   flex-basis: 0;
   margin: 0 0.3rem;

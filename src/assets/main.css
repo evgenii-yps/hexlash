@@ -5,6 +5,9 @@
     box-sizing: border-box;
     scrollbar-width: thin;
     scrollbar-color: var(--scrollbar-bg) transparent;
+    user-select: none;
+    -webkit-user-select: none; /* Для поддержки Safari */
+    -ms-user-select: none; /* Для поддержки старых версий IE */
 }
 
 /*@font-face {
