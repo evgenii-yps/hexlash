@@ -27,14 +27,14 @@ COPY nginx.test.conf /etc/nginx/nginx.test.conf
 COPY nginx.prod.conf /etc/nginx/nginx.prod.conf
 
 ARG TARGET_ENV=test
-RUN if [ "$TARGET_ENV" = "prod" ]; then \
+RUN if [ "$TARGET_ENV" = "main" ]; then \
 cp /etc/nginx/nginx.prod.conf /etc/nginx/nginx.conf; \
 else \
 cp /etc/nginx/nginx.test.conf /etc/nginx/nginx.conf; \
 fi
 
-# Открываем порт 8443
-EXPOSE 8443
+# Открываем порт 443
+EXPOSE 443
 
 # Запускаем Nginx
 CMD ["nginx", "-g", "daemon off;"]
