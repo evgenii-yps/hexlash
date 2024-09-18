@@ -64,6 +64,17 @@ const setCurrentComponent = () => {
   currentComponentKey.value = route.path;
 };
 
+// Функция для обработки изменения видимости страницы
+const handleVisibilityChange = () => {
+  if (document.hidden) {
+    // Останавливаем звук, если вкладка не активна
+    soundRain.pause();
+  } else {
+    // Включаем звук, если вкладка снова активна
+    soundRain.play();
+  }
+};
+
 
 watchEffect(() => {
   setCurrentComponent();
@@ -437,6 +448,8 @@ window.addEventListener("mousedown", mouseDownHandler);
 window.addEventListener("mouseup", mouseUpHandler);
 window.addEventListener("touchstart", touchStartHandler);
 window.addEventListener("touchend", touchEndHandler);
+document.addEventListener('visibilitychange', handleVisibilityChange);
+
 
 class RainFloor extends kokomi.Component {
   constructor(base, config = {}) {
@@ -639,6 +652,8 @@ class Rain extends kokomi.Component {
   }
 }
 
+let soundRain;
+
 class Sketch extends kokomi.Base {
 
   create() {
@@ -717,19 +732,15 @@ class Sketch extends kokomi.Base {
 
     this.am = am
 
-    let sound;
-
-
     am.on("ready", async () => {
       // document.querySelector(".loader-screen").classList.add("hollow");
 
-      sound = new Howl({
+      soundRain = new Howl({
         src: [rainSound],
         loop: true,
         autoplay: true,
         rate: config.soundRate
       })
-      this.sound = sound;
 
       // lights
       const pointLight1 = new THREE.PointLight("#81C8F2", 0.5, 17, 0.8)
@@ -941,7 +952,7 @@ class Sketch extends kokomi.Base {
             cameraZOffset: 5,
             soundRate: 0.1,
             onUpdate: () => {
-              sound.rate(config.soundRate)
+              soundRain.rate(config.soundRate)
             }
           })
 
@@ -959,7 +970,7 @@ class Sketch extends kokomi.Base {
             cameraZOffset: 10,
             soundRate: 1,
             onUpdate: () => {
-              sound.rate(config.soundRate)
+              soundRain.rate(config.soundRate)
             }
           })
 
@@ -967,7 +978,6 @@ class Sketch extends kokomi.Base {
         }
       })
     })
-
 
   }
 
@@ -981,10 +991,10 @@ class Sketch extends kokomi.Base {
   }
 
   destroy() {
-    if (this.sound) {
-      this.sound.stop();
-      this.sound.unload();
-      this.sound = null;
+    if (soundRain) {
+      soundRain.stop();
+      soundRain.unload();
+      soundRain = null;
     }
 
     this.disposeResources();
@@ -1013,6 +1023,7 @@ class Sketch extends kokomi.Base {
     window.removeEventListener("mouseup", mouseUpHandler);
     window.removeEventListener("touchstart", touchStartHandler);
     window.removeEventListener("touchend", touchEndHandler);
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
 
   }
 
@@ -1062,6 +1073,8 @@ let sketch;
 const goTo = (page) => {
   router.push(page)
 };
+
+
 
 onMounted(() => {
   sketch = new Sketch();
@@ -1115,7 +1128,7 @@ onUnmounted(() => {
 
 .beta-text {
   position: absolute;
-  bottom: 10px;
+  bottom: 1vh;
   left: 10px;
   font-size: 12px;
   color: rgba(255, 255, 255, 0.7);
