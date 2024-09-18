@@ -52,6 +52,7 @@ jobs:
           echo "Current directory: $(pwd)"
           ls -la
           sed -i 's|image: invariant0x/fightclub-frontend:.*|image: invariant0x/fightclub-frontend:${{ github.sha }}|g' WEB-deployment.yaml
+          cat WEB-deployment.yaml
           git config --global user.name "Invariant get action"
           git config --global user.email "invariant0x@icloud.com"
           git add WEB-deployment.yaml
