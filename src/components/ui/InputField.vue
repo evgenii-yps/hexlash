@@ -95,7 +95,6 @@ const inputStyles = computed(() => ({
   flexGrow: 1,
   borderRadius: props.showButton ? '4px 0 0 4px' : props.borderRadius,
   padding: props.padding,
-  borderRight: props.showButton ? 'none' : `1px solid ${props.inputBorderColor}`
 }));
 
 const wrapperStyles = computed(() => ({
