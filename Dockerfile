@@ -33,8 +33,8 @@ else \
 cp /etc/nginx/nginx.test.conf /etc/nginx/nginx.conf; \
 fi
 
-# Открываем порт 443
-EXPOSE 443
+# Открываем порт 8443
+EXPOSE 8443
 
 # Запускаем Nginx
 CMD ["nginx", "-g", "daemon off;"]
