@@ -1,6 +1,6 @@
 <template>
   <div class="background background-profile">
-    <div  class="profile-container">
+    <div  class="profile-container" @scroll="handleScroll">
       <div class="profile-content-wrapper">
 
         <div v-if="loading" class="loader-container">
@@ -104,6 +104,12 @@ watch(
       }
     }
 );
+
+const emit = defineEmits(['scroll']);
+
+const handleScroll = (event) => {
+  emit('scroll', event.target.scrollTop);
+};
 
 </script>
 

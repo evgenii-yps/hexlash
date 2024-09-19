@@ -1,6 +1,6 @@
 <template>
   <div class="app-container">
-    <header class="header">
+    <header :style="headerStyle" class="header">
       <div class="header-content">
         <Logo/>
         <div v-if="balance !== null" class="balance">
@@ -10,7 +10,7 @@
     </header>
 
     <main class="content">
-      <RouterView/>
+      <RouterView @scroll="handleChildScroll"/>
     </main>
 
     <Info :text="infoMessage.text"
@@ -28,7 +28,7 @@
 
 <script setup>
 import {RouterView} from 'vue-router'
-import {computed, onMounted, ref} from "vue";
+import {computed, onBeforeUnmount, onMounted, ref} from "vue";
 import BottomMenu from "@/components/menu/BottomMenu.vue";
 import Logo from "@/components/Logo.vue";
 import store from "@/core/state/store.js";
@@ -102,9 +102,36 @@ const modal = createWeb3Modal({
   enableAnalytics: true, // Optional - defaults to your Cloud configuration
 })
 
+const scrollTop = ref(0);
+
+const handleChildScroll = (newScrollTop) => {
+  scrollTop.value = newScrollTop;
+};
+
+// Высчитываем стиль заголовка
+const headerStyle = computed(() => {
+  // Если скролл меньше 50px, плавно изменяем положение черного в градиенте
+  if (scrollTop.value <= 50) {
+    const blackStop = scrollTop.value; // Плавно изменяем точку остановки черного цвета от 0 до 50%
+    return {
+      background: `linear-gradient(to bottom, black ${blackStop}%, transparent ${blackStop * 2}%)`,
+      transition: 'background 0.3s ease', // Плавный переход для фона
+    };
+  }
+  // Если скролл больше 50px, фиксируем черный цвет на 50%
+  return {
+    background: 'linear-gradient(to bottom, black 50%, transparent 100%)',
+    transition: 'background 0.3s ease', // Плавный переход для фона
+  };
+});
+
 onMounted(() => {
   store.commit('contract/setWeb3Modal', modal)
+
 })
+
+
+
 
 </script>
 
@@ -125,9 +152,11 @@ onMounted(() => {
 
 .header {
   width: 100vw;
-  position: relative;
+  height: 70px;
+  position: absolute;
   z-index: 2;
 }
+
 
 .header-content {
   display: flex;

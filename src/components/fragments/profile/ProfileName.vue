@@ -68,7 +68,7 @@ watch(store.getters['master/getMaster'], (newMaster) => {
 .label-name {
   flex-grow: 1;
   font-weight: normal;
-  font-size: 2.3em;
+  font-size: 1.8em;
   max-width: 70vw;
   white-space: nowrap;
   overflow: hidden;
@@ -77,14 +77,14 @@ watch(store.getters['master/getMaster'], (newMaster) => {
 }
 
 .change-name-icon {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   margin-left: auto;
   cursor: pointer;
 }
 
 .edit-name-input {
-  font-size: 2.3em;
+  font-size: 1.8em;
   background: transparent;
   border: none;
   border-bottom: 1px solid white;

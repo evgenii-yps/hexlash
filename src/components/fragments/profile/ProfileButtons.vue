@@ -160,27 +160,29 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin: 15px 20px 0 20px;
+  margin: 0 20px 0 20px;
 }
 
 .profile-btn {
   width: 100%;
-  height: 50px !important;
+  height: 40px !important;
   margin: 5px 0;
   max-width: 500px;
   justify-content: flex-start;
   text-align: left;
   color: white;
   cursor: pointer;
+
 }
 
 .profile-btn :deep(.v-btn__content) {
   justify-content: flex-start !important;
+  font-size: 0.8em;
 }
 
 .custom-icon {
-  width: 15px;
-  height: 15px;
+  width: 10px;
+  height: 10px;
   margin-right: 10px;
 }
 
@@ -188,8 +190,8 @@ onMounted(async () => {
   color: white;
   position: absolute;
   right: 0;
-  height: 50px !important;
-  font-size: 0.7em;
+  height: 40px !important;
+  font-size: 0.8em;
   padding-left: 20px;
   clip-path: polygon(15% 0%, 100% 0%, 100% 100%, 0% 100%);
   background-color: var(--gray2) !important;
@@ -208,7 +210,7 @@ onMounted(async () => {
   position: relative;
   width: 100%;
   max-width: 500px;
-  height: 50px;
+  height: 40px;
   margin: 5px 0 10px 0;
   display: flex;
   flex-direction: row;
@@ -221,6 +223,7 @@ onMounted(async () => {
   text-overflow: ellipsis;
   display: inline-block;
   max-width: 100%;
+
 }
 
 @media (max-width: 600px) {

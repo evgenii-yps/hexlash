@@ -70,7 +70,7 @@ watch(() => props.userData, (userData) => {
 
 <style scoped>
 .stats-container {
-  margin-top: 20px;
+  margin-top: 15px;
   color: white;
   position: relative;
   z-index: 3;
@@ -89,7 +89,7 @@ watch(() => props.userData, (userData) => {
   align-items: center;
   justify-content: center;
   text-align: center;
-  margin-bottom: 10px;
+  margin-bottom: 5px;
 }
 
 .stat-grid-item {
@@ -105,16 +105,16 @@ watch(() => props.userData, (userData) => {
 }
 
 .stat-icon {
-  width: 20px;
-  height: 20px;
+  width: 15px;
+  height: 15px;
   cursor: pointer;
   fill: white;
-  margin-bottom: 10px;
+  margin-bottom: 5px;
 }
 
 .stat-icon-large {
-  width: 40px;
-  height: 40px;
+  width: 30px;
+  height: 30px;
   margin-bottom: 0;
 }
 
@@ -130,18 +130,18 @@ watch(() => props.userData, (userData) => {
 }
 
 .stat-value {
-  font-size: 0.8em;
+  font-size: 0.7em;
   display: flex;
   align-items: center;
 }
 
 .stat-value-large {
-  font-size: 1.5em;
+  font-size: 1.3em;
   margin-left: 10px;
 }
 
 .stat-value-gray {
   color: var(--gray3);
-  font-size: 1em;
+  font-size: 0.9em;
 }
 </style>
