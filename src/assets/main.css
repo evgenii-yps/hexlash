@@ -64,6 +64,12 @@ body {
     overflow: hidden;
 }
 
+@supports (height: 100dvh) {
+    .background {
+        height: 100dvh;
+    }
+}
+
 @font-face {
     font-family: 'Anonymous';
     src: url('@/assets/fonts/Anonymous.ttf') format('truetype');
