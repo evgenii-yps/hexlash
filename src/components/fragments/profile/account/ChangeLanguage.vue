@@ -78,8 +78,12 @@ watch(selectedLanguage, (newLanguage) => {
   margin-bottom: 5px;
   text-align: center;
   font-weight: 800;
-  font-size: 10px;
+  font-size: 0.5rem;
   display: flex;
   justify-content: center;
+}
+
+:deep(.v-select__selection-text){
+  font-size: 0.8rem;
 }
 </style>

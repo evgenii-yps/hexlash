@@ -101,7 +101,7 @@ onMounted(() => {
 
 <style scoped>
 .wallet-container {
-  margin: 2rem 0 0 0;
+  margin: 1.2rem 0 0 0;
 }
 
 .wallet-content {
@@ -114,7 +114,7 @@ onMounted(() => {
   justify-content: center;
   align-items: center;
   max-width: 500px;
-  margin: 2rem auto;
+  margin: 1rem auto;
 
 }
 

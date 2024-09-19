@@ -6,11 +6,11 @@
         type="text"
         v-model="walletAddress"
         labelColor="var(--white)"
-        labelSize="10px"
+        labelSize="0.5rem"
         inputBgColor="var(--black-opacity-80)"
         inputBorderColor="var(--gray1)"
         inputTextColor="var(--gray3)"
-        padding="0.8rem"
+        height="40px"
         marginBottom="0.5rem"
         :showButton="true"
         :readonly="true"
@@ -59,13 +59,15 @@ const copyToClipboard = () => {
   color: white;
   display: block;
   max-width: 500px;
-  margin: 2rem auto 0 auto;
+  margin: 1.5rem auto 0 auto;
 }
 
 
 .btn-container {
-  margin: 0 20px;
+  margin: 0 12px 0 0;
   cursor: pointer;
+  align-items: center;
+  display: flex;
 }
 
 </style>

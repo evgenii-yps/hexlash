@@ -23,13 +23,13 @@ const props = defineProps({
 .game-card {
   border: none !important;
   padding: 16px;
-  width: 220px;
+  width: 180px;
   text-align: center;
 }
 
 .game-card h3 {
   margin: 0 0 8px;
-  font-size: 0.8em;
+  font-size: 0.7em;
   text-align: center;
   text-transform: capitalize;
 }
@@ -37,19 +37,19 @@ const props = defineProps({
 .game-card p {
   margin: 0;
   color: var(--primary-color);
-  font-size: 2.4rem;
+  font-size: 2rem;
 
 }
 
 .game-card img{
-  margin-top: 1.5em;
-  width: 40px;
+  margin-top: 1em;
+  width: 30px;
 }
 
 .desc {
-  font-size: 1em;
+  font-size: 0.8em;
   color: white;
-  padding: 10px 0 20px;
+  padding: 10px 0 0;
   text-align: center;
   width: 150px;
   margin: 0 auto;

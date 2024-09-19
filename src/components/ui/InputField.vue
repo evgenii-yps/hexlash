@@ -12,7 +12,7 @@
           :readonly="readonly"
           autocapitalize="none"
           :placeholder="placeholder"
-          style="font-size: 1em"
+          style="font-size: 0.7em"
       />
       <div v-if="showButton" class="slot-container">
         <slot></slot>
@@ -37,7 +37,7 @@ const props = defineProps({
   },
   labelSize: {
     type: String,
-    default: '12px'
+    default: '0.5rem'
   },
   inputBgColor: {
     type: String,

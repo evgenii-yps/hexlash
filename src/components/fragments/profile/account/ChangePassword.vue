@@ -20,11 +20,10 @@
                 type="password"
                 v-model="currentPassword"
                 labelColor="var(--white)"
-                labelSize="10px"
                 inputBgColor="var(--black-opacity)"
                 inputBorderColor="var(--gray1)"
                 inputTextColor="var(--white)"
-                padding="0.8rem"
+                height="40px"
                 marginBottom="1rem"
             />
             <InputField
@@ -32,11 +31,10 @@
                 type="password"
                 v-model="newPassword"
                 labelColor="var(--white)"
-                labelSize="10px"
                 inputBgColor="var(--black-opacity)"
                 inputBorderColor="var(--gray1)"
                 inputTextColor="var(--white)"
-                padding="0.8rem"
+                height="40px"
                 marginBottom="1rem"
             />
             <InputField
@@ -44,11 +42,10 @@
                 type="password"
                 v-model="confirmNewPassword"
                 labelColor="var(--white)"
-                labelSize="10px"
                 inputBgColor="var(--black-opacity)"
                 inputBorderColor="var(--gray1)"
                 inputTextColor="var(--white)"
-                padding="0.8rem"
+                height="40px"
                 marginBottom="1rem"
             />
 
@@ -141,11 +138,12 @@ form {
 
 .change-password-btn {
   width: 100%;
-  height: 50px !important;
+  height: 40px !important;
   max-width: 500px;
   text-align: center;
   color: white;
   cursor: pointer;
+  font-size: 0.7rem !important;
 }
 
 .custom-icon {

@@ -5,7 +5,7 @@
                  max-width="250px"
                  contentClass="v-tooltip__content">
         <template #activator="{ props }">
-          <VBtnDark v-bind="props" size="x-large" @click="switchAccount" class="input-button">
+          <VBtnDark v-bind="props" size="large" @click="switchAccount" class="input-button">
             {{ buttonText }}
           </VBtnDark>
         </template>
@@ -52,7 +52,6 @@ const switchAccount = async () => {
   color: white;
   display: block;
   max-width: 500px;
-  margin: 2rem auto 0 auto;
   text-align: center; /* Выровнять текст по центру */
 }
 
@@ -60,13 +59,13 @@ const switchAccount = async () => {
   display: flex;
   justify-content: center;
   gap: 1rem; /* Расстояние между кнопками */
-  margin-top: 1rem;
+  margin-top: 2rem;
 }
 
 .input-button {
   border: 1px solid var(--gray1);
   color: var(--gray2);
-  font-size: 1rem;
+  font-size: 0.8rem;
   cursor: pointer;
 }
 </style>

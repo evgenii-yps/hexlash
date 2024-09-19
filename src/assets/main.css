@@ -89,10 +89,15 @@ body {
     color: white !important;
 }
 
+:root .v-card-title{
+    font-size: 1.1rem;
+}
+
 .v-modal .cancel-btn {
     text-align: center;
     color: var(--gray2) !important;
     cursor: pointer;
+    font-size: 0.7rem !important;
 }
 
 .v-modal .confirm-btn {
@@ -101,6 +106,7 @@ body {
     background-color: var(--primary-color);
     color: white !important;
     margin: 10px;
+    font-size: 0.7rem !important;
 }
 
 .loader {
@@ -167,7 +173,7 @@ body {
 }
 
 :root .v-input--density-compact{
-    --v-input-control-height:45px !important;
+    --v-input-control-height:40px !important;
 }
 
 .v-list-item{

@@ -961,7 +961,9 @@ class Sketch extends kokomi.Base {
             cameraZOffset: 5,
             soundRate: 0.1,
             onUpdate: () => {
-              soundRain.rate(config.soundRate)
+              if (soundRain) {
+                soundRain.rate(config.soundRate);
+              }
             }
           })
 

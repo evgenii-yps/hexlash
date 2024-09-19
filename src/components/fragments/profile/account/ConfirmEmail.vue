@@ -6,11 +6,10 @@
           type="text"
           v-model="email"
           labelColor="var(--white)"
-          labelSize="10px"
           inputBgColor="var(--black-opacity-80)"
           inputBorderColor="var(--gray1)"
           inputTextColor="var(--white)"
-          padding="0.8rem"
+          height="40px"
           marginBottom="0.5rem"
           @input="checkEmailChange"
           :showButton="emailChanged"
@@ -81,7 +80,7 @@ watch(() => master.value.email, (newEmail) => {
 <style scoped>
 .email-confirmation-container {
   align-items: center;
-  margin: 20px 20px 10px 20px;
+  margin: 0 20px 10px 20px;
 }
 
 form {
@@ -107,6 +106,7 @@ form {
   padding: 0.5em 1em;
   border-radius: 4px;
   margin: 0 0.5rem;
+  font-size: 0.6rem !important;
 }
 
 .input-button:hover {

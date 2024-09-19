@@ -177,7 +177,7 @@ const handleScroll = (event) => {
 .scroll-gap {
   display: block;
   position: relative;
-  height: 50px;
+  height: 0;
 }
 
 .loader-container {

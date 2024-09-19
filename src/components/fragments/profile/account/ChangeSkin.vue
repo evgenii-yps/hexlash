@@ -274,14 +274,14 @@ watch(store.getters['master/getMaster'], (newMaster) => {
   display: flex;
   align-items: center;
   position: relative;
-  margin: 30px 0 0;
+  margin: 10px 0 0;
 }
 
 .horizontal-scroll {
   overflow-x: auto;
   overflow-y: hidden;
   white-space: nowrap;
-  padding: 1rem;
+  padding: 0.3rem 1rem;
   height: auto;
   margin-bottom: 20px;
   width: 100%;
@@ -298,8 +298,8 @@ watch(store.getters['master/getMaster'], (newMaster) => {
   margin-right: 1.5rem;
   transition: transform 0.2s;
   display: inline-block;
-  width: 150px;
-  height: 250px;
+  width: 100px;
+  height: 180px;
   border-radius: 4px;
   border: 1px solid white;
   background-color: var(--black-opacity-80);
@@ -384,6 +384,7 @@ watch(store.getters['master/getMaster'], (newMaster) => {
 }
 
 .locked-text {
+  font-size: 0.7rem;
   color: white;
   word-wrap: break-word; /* Перенос текста */
   text-align: center;
@@ -403,7 +404,7 @@ watch(store.getters['master/getMaster'], (newMaster) => {
 
 .price-text {
   margin: 0;
-  font-size: 2em;
+  font-size: 1.5em;
   font-family: Anonymous, sans-serif;
 }
 </style>

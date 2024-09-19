@@ -2,7 +2,6 @@
   <div class="profile-account">
     <BackButton :defaultRoute="backRef(route)" />
 
-
     <ChangeSkin/>
     <ConfirmEmail/>
     <ChangeLogin/>
@@ -43,7 +42,7 @@ onMounted(()=>{
 
 <style scoped>
 .profile-account {
-  margin-top: 2rem;
+  margin: 1.2rem 0 0 0;
 }
 
 </style>

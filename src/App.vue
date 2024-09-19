@@ -10,7 +10,8 @@
     </header>
 
     <main class="content">
-      <RouterView @scroll="handleChildScroll"/>
+      <RouterView v-if="isScrollableComponent" @scroll="handleChildScroll"/>
+      <RouterView v-else/>
     </main>
 
     <Info :text="infoMessage.text"
@@ -20,14 +21,14 @@
 
     <footer class="footer">
       <transition name="slide-up-down">
-        <BottomMenu v-if="showBottomMenu"/>
+        <BottomMenu v-if="showBottomMenu && scrollDirection !== 'down'"/>
       </transition>
     </footer>
   </div>
 </template>
 
 <script setup>
-import {RouterView} from 'vue-router'
+import {RouterView, useRoute} from 'vue-router'
 import {computed, onBeforeUnmount, onMounted, ref} from "vue";
 import BottomMenu from "@/components/menu/BottomMenu.vue";
 import Logo from "@/components/Logo.vue";
@@ -54,6 +55,16 @@ const infoMessage = computed(() => {
 
 const showBottomMenu = computed(() => {
   return store.getters['master/getAuthState'].isAuthenticated
+});
+
+const route = useRoute();
+const isScrollableComponent = computed(() => {
+  const scrollablePrefixes = ['/profile']; // Префиксы маршрутов с дочерними маршрутами
+  const scrollableRoutes = ['/trainings']; // Точные маршруты
+
+  // Проверка на точный маршрут или маршрут, начинающийся с одного из префиксов
+  return scrollableRoutes.includes(route.path) ||
+      scrollablePrefixes.some(prefix => route.path.startsWith(prefix));
 });
 
 
@@ -103,9 +114,25 @@ const modal = createWeb3Modal({
 })
 
 const scrollTop = ref(0);
+const scrollDirection = ref('up');
+const lastScrollTop = ref(1);
+const scrollTimeout = ref(null);
 
 const handleChildScroll = (newScrollTop) => {
-  scrollTop.value = newScrollTop;
+  if (newScrollTop !== undefined) {
+    scrollTop.value = newScrollTop;
+
+    clearTimeout(scrollTimeout.value);
+
+    scrollTimeout.value = setTimeout(() => {
+      if (newScrollTop > lastScrollTop.value) {
+        scrollDirection.value = 'down';
+      } else {
+        scrollDirection.value = 'up';
+      }
+      lastScrollTop.value = newScrollTop;
+    }, 10); // Задержка в 10 мс
+  }
 };
 
 // Высчитываем стиль заголовка
@@ -125,12 +152,11 @@ const headerStyle = computed(() => {
   };
 });
 
+
 onMounted(() => {
   store.commit('contract/setWeb3Modal', modal)
 
 })
-
-
 
 
 </script>
