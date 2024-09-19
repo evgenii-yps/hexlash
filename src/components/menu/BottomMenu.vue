@@ -61,16 +61,16 @@ const isActive = (item) => {
   z-index: 1; /* Устанавливаем z-index, чтобы контент был поверх градиента */
 }
 
-/*.bottom-menu::before {
+.bottom-menu::before {
   content: '';
   position: absolute;
   top: -15px;
   left: -50px;
   right: -50px;
   bottom: 0;
-  background: linear-gradient(to top, black 77%, transparent 100%);
+  background: linear-gradient(to top, black 40%, transparent 100%);
   z-index: -1;
-}*/
+}
 
 .menu-item {
   display: flex;
