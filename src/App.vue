@@ -156,6 +156,9 @@ const headerStyle = computed(() => {
 onMounted(() => {
   store.commit('contract/setWeb3Modal', modal)
 
+  setTimeout(() => {
+    document.body.scrollTop = 1
+  }, 100)
 })
 
 
