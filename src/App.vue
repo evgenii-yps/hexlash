@@ -156,11 +156,6 @@ const headerStyle = computed(() => {
 onMounted(() => {
   store.commit('contract/setWeb3Modal', modal)
 
-  if (typeof window !== 'undefined') {
-    setTimeout(() => {
-      window.scrollTo(0, 1); // Прокручиваем страницу
-    }, 0);
-  }
 })
 
 
