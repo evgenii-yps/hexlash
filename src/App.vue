@@ -170,7 +170,7 @@ onMounted(() => {
 }
 
 .content {
-  position: fixed;
+  position: relative;
   overflow-y: auto;
   height: 100vh;
 }
