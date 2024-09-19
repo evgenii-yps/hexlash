@@ -176,6 +176,12 @@ onMounted(() => {
   height: 100vh;
 }
 
+@supports (height: 100dvh) {
+  .content {
+    height: 100dvh;
+  }
+}
+
 .header {
   width: 100vw;
   height: 70px;

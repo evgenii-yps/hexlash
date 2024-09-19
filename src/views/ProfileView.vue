@@ -160,6 +160,12 @@ const handleScroll = (event) => {
   overscroll-behavior-y: none;
 }
 
+@supports (height: 100dvh) {
+  .profile-container {
+    height: 100dvh;
+  }
+}
+
 .profile-content-wrapper {
   width: 100%;
   padding: 10vh 0;
