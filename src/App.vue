@@ -171,15 +171,15 @@ onMounted(() => {
 }
 
 .content {
-  position: relative;
-  overflow-y: auto;
+  position: fixed;
+  /*overflow-y: auto;*/
   height: 100vh;
 }
 
 .header {
   width: 100vw;
   height: 70px;
-  position: absolute;
+  position: fixed;
   z-index: 2;
 }
 
