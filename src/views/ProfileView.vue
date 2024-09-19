@@ -160,9 +160,9 @@ const handleScroll = (event) => {
   overscroll-behavior-y: none;
 }
 
-@supports (height: 100dvh) {
+@supports (max-height: 100dvh) {
   .profile-container {
-    height: 100dvh;
+    max-height: 100dvh;
   }
 }
 
