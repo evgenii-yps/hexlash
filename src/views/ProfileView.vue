@@ -156,6 +156,7 @@ const handleScroll = (event) => {
   max-height: 100vh;
   display: flex;
   flex-direction: column;
+  -webkit-overflow-scrolling: auto; /* Отключить резиновый скролл*/
 }
 
 .profile-content-wrapper {
@@ -177,7 +178,7 @@ const handleScroll = (event) => {
 .scroll-gap {
   display: block;
   position: relative;
-  height: 0;
+  height: 40px;
 }
 
 .loader-container {
