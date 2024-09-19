@@ -156,6 +156,11 @@ const headerStyle = computed(() => {
 onMounted(() => {
   store.commit('contract/setWeb3Modal', modal)
 
+  if (typeof window !== 'undefined') {
+    setTimeout(() => {
+      window.scrollTo(0, 1); // Прокручиваем страницу
+    }, 0);
+  }
 })
 
 
@@ -172,7 +177,7 @@ onMounted(() => {
 
 .content {
   position: fixed;
-  /*overflow-y: auto;*/
+  overflow-y: auto;
   height: 100vh;
 }
 
