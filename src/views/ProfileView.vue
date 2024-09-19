@@ -157,6 +157,7 @@ const handleScroll = (event) => {
   display: flex;
   flex-direction: column;
   -webkit-overflow-scrolling: auto; /* Отключить резиновый скролл*/
+  overscroll-behavior-y: none;
 }
 
 .profile-content-wrapper {
