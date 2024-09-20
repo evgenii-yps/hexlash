@@ -128,24 +128,24 @@
               <span class="column-name">{{t('rating.club')}}</span>
 
               <span class="column">
-                <img :class="{'active-sort-icon': sortParticipantBy === 'fc'}" src="@/assets/images/icon_tokens.svg"
+                <img class="icon" :class="{'active-sort-icon': sortParticipantBy === 'fc'}" src="@/assets/images/icon_tokens.svg"
                      alt="sort icon"/>
               </span>
               <span class="column">
-                <img :class="{'active-sort-icon': sortParticipantBy === 'losses'}" src="@/assets/images/icon_lose.svg"
+                <img class="icon" :class="{'active-sort-icon': sortParticipantBy === 'losses'}" src="@/assets/images/icon_lose.svg"
                      alt="sort icon"/>
               </span>
               <span class="column">
-                <img :class="{'active-sort-icon': sortParticipantBy === 'luck'}" src="@/assets/images/icon_lucky.svg"
+                <img class="icon" :class="{'active-sort-icon': sortParticipantBy === 'luck'}" src="@/assets/images/icon_lucky.svg"
                      alt="sort icon"/>
               </span>
               <span class="column">
-                <img :class="{'active-sort-icon': sortParticipantBy === 'total'}" src="@/assets/images/icon_fights.svg"
+                <img class="icon" :class="{'active-sort-icon': sortParticipantBy === 'total'}" src="@/assets/images/icon_fights.svg"
                      alt="sort icon"/>
               </span>
 
               <span class="column">
-                <img :class="{'active-sort-icon': sortParticipantBy === 'wins'}" src="@/assets/images/icon_wins.svg"
+                <img class="icon" :class="{'active-sort-icon': sortParticipantBy === 'wins'}" src="@/assets/images/icon_wins.svg"
                      alt="sort icon"/>
               </span>
             </div>
@@ -546,14 +546,21 @@ onMounted(() => {
   color: var(--gray3);
 }
 
+.icon{
+  width: 25px;
+  height: 25px;
+  padding: 5px;
+  object-fit: contain;
+}
 .active-sort-icon {
   background-color: var(--primary-color) !important;
   border-radius: 50%;
-  padding: 6px;
+  padding: 4px;
   object-fit: contain;
-  width: 30px;
-  height: 30px;
+  width: 25px;
+  height: 25px;
 }
+
 
 .search-input {
   max-width: 300px;

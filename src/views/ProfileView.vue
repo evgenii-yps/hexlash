@@ -158,7 +158,6 @@ const handleScroll = (event) => {
   flex-direction: column;
   -webkit-overflow-scrolling: auto; /* Отключить резиновый скролл*/
   overscroll-behavior-y: none;
-  padding-bottom: 1px;
 }
 
 @supports (height: 100dvh) {

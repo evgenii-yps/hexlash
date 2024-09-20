@@ -184,8 +184,8 @@ onMounted(() => {
 .header {
   width: 100vw;
   height: 70px;
-  position: absolute;
-  z-index: 2;
+  position: fixed;
+  z-index: 100;
 }
 
 

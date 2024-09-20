@@ -54,7 +54,7 @@ const isActive = (item) => {
   display: flex;
   justify-content: space-between;
   padding: 0 0.5rem 0.4rem;
-  position: absolute;
+  position: fixed;
   bottom: 0;
   width: 100%;
   max-width: 1024px;
