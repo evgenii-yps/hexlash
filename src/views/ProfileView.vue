@@ -159,12 +159,12 @@ const handleScroll = (event) => {
   position: relative;
   z-index: 10;
   overflow-y: auto;
-  max-height: 100vh;
+/*  max-height: 100vh;*/
   height: 100vh;
   display: flex;
   flex-direction: column;
-  /*-webkit-overflow-scrolling: auto;*/ /* Отключить резиновый скролл*/
-  /*overscroll-behavior-y: none;*/
+  -webkit-overflow-scrolling: auto; /* Отключить резиновый скролл*/
+  overscroll-behavior-y: none;
 }
 
 @supports (height: 100dvh) {
