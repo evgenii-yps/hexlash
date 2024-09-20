@@ -1,6 +1,6 @@
 <template>
   <div class="background background-rating">
-    <div class="rating-container">
+    <div class="rating-container" @scroll="handleScroll">
       <div class="rating-content-wrapper">
         <div class="rating-tabs">
           <VBtnDark :class="{'active-tab': activeTab === Tabs.CLUBS} "
@@ -372,6 +372,12 @@ const updateQueryParams = () => {
   }
 
   return queryParams;
+};
+
+const emit = defineEmits(['scroll']);
+
+const handleScroll = (event) => {
+  emit('scroll', event.target.scrollTop);
 };
 
 onMounted(() => {

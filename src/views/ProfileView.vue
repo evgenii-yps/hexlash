@@ -125,15 +125,9 @@ const handleScroll = (event) => {
   top: 0;
   left: 0;
   width: 100vw;
-  height: 100vh;
+  height: 100%;
   background: linear-gradient(to right bottom, black 35%, transparent 75%);
-  z-index: 1;
-}
-
-@supports (height: 100dvh) {
-  .background-profile {
-    height: 100dvh;
-  }
+  z-index: -1;
 }
 
 .background-profile::after {
@@ -142,9 +136,9 @@ const handleScroll = (event) => {
   top: 0;
   left: 0;
   width: 100vw;
-  height: 100vh;
+  height: 100%;
   background: black;
-  z-index: 2;
+  z-index: -2;
   opacity: 1;
   animation: fadeOut 1s forwards;
 }
