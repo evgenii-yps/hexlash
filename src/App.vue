@@ -169,7 +169,7 @@ onMounted(() => {
   font-style: normal;
 }
 
-.content {
+/*.content {
   position: relative;
   overflow-y: auto;
   height: 100vh;
@@ -179,7 +179,7 @@ onMounted(() => {
   .content {
     height: 100dvh;
   }
-}
+}*/
 
 .header {
   width: 100vw;
