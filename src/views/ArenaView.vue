@@ -190,6 +190,7 @@ onMounted(() => {
   border: none !important;
   width: 75px;
   text-align: center;
+  padding: 0;
 }
 
 .blocked {

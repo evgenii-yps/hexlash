@@ -80,7 +80,6 @@ const updateAction = (value) => {
 .ticks::after {
   content: '';
   display: block;
-
   background: transparent;
 }
 
