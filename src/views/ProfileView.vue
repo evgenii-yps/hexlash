@@ -130,6 +130,12 @@ const handleScroll = (event) => {
   z-index: 1;
 }
 
+@supports (height: 100dvh) {
+  .background-profile {
+    height: 100dvh;
+  }
+}
+
 .background-profile::after {
   content: "";
   position: absolute;
@@ -163,7 +169,7 @@ const handleScroll = (event) => {
 
 @supports (height: 100dvh) {
   .profile-container {
-    max-height: 100dvh;
+    height: 100dvh;
   }
 }
 
