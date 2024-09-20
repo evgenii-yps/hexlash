@@ -188,9 +188,9 @@ onMounted(() => {
 .slider-container {
   border: none !important;
   width: auto;
-  min-width: 60px;
+  min-width: 53px;
   text-align: center;
-  margin: 0 10px;
+  margin: 0 8px;
 }
 
 .blocked {
@@ -218,6 +218,7 @@ onMounted(() => {
 .slider-label {
   font-size: 0.6em;
   color: var(--gray2);
+  overflow: hidden;
 }
 
 .selected-value span {

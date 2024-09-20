@@ -74,14 +74,14 @@ const updateAction = (value) => {
   background-image: linear-gradient(to bottom, var(--gray1) 1px, transparent 1px);
   background-size: 5px 7px;
   margin-top: 20px; /* Добавляем отступ сверху */
-  margin-bottom: 50px; /* Добавляем отступ снизу */
+  position: absolute;
+  height: 77%;
 }
 
 .ticks::before,
 .ticks::after {
   content: '';
   display: block;
-  height: 25px; /* Adjust the height to match the thumb size or desired offset */
   background: transparent;
 }
 
