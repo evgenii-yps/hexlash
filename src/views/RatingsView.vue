@@ -400,7 +400,7 @@ onMounted(() => {
 
 .background-rating::before {
   content: "";
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
@@ -411,7 +411,7 @@ onMounted(() => {
 
 .background-rating::after {
   content: "";
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
@@ -432,9 +432,17 @@ onMounted(() => {
   position: relative;
   z-index: 10;
   overflow-y: auto;
-  max-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
+  -webkit-overflow-scrolling: auto; /* Отключить резиновый скролл*/
+  overscroll-behavior-y: none;
+}
+
+@supports (height: 100dvh) {
+  .rating-container {
+    height: 100dvh;
+  }
 }
 
 .rating-content-wrapper {
@@ -443,6 +451,7 @@ onMounted(() => {
   max-width: 700px;
   justify-content: center;
   margin-top: 13vh;
+  height: 100dvh;
 }
 
 .rating-tabs {
@@ -492,6 +501,7 @@ onMounted(() => {
   margin-top: 10px;
   background-color: var(--black-opacity-80) !important;
   border: 1px solid var(--gray1) !important;
+  margin-bottom: 20px;
 }
 
 .table-header-row {
