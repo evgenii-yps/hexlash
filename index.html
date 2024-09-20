@@ -108,6 +108,10 @@
             pointer-events: none;
         }
 
+        .push-footer {
+            height: 1px; /* Толкающий элемент для создания возможности скролла */
+            visibility: hidden;
+        }
     </style>
 </head>
 <body>
@@ -121,6 +125,7 @@
     </div>
 </div>
 <div id="app"></div>
+<div class="push-footer"></div>
 <script>
     window.onload = () => {
         console.log("App loaded");

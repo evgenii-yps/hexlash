@@ -159,19 +159,19 @@ const handleScroll = (event) => {
   position: relative;
   z-index: 10;
   overflow-y: auto;
-/*  max-height: 100vh;*/
-  height: 100%;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   -webkit-overflow-scrolling: auto; /* Отключить резиновый скролл*/
   overscroll-behavior-y: none;
+  padding-bottom: 1px;
 }
 
-/*@supports (height: 100dvh) {
+@supports (height: 100dvh) {
   .profile-container {
     height: 100dvh;
   }
-}*/
+}
 
 .profile-content-wrapper {
   width: 100%;
