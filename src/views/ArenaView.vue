@@ -181,16 +181,15 @@ onMounted(() => {
   flex-direction: row;
   align-items: center;
   justify-content: center;
+  gap: 10px;
   padding-top: calc((100vh - 100%) / 3)
 
 }
 
 .slider-container {
   border: none !important;
-  width: auto;
-  min-width: 53px;
+  width: 75px;
   text-align: center;
-  margin: 0 8px;
 }
 
 .blocked {
@@ -211,7 +210,7 @@ onMounted(() => {
 }
 
 .selected-value {
-  padding: 10px 10px 5px 10px;
+  padding: 10px 0 5px 0;
   font-size: 1.1em;
 }
 
@@ -225,6 +224,7 @@ onMounted(() => {
   font-size: 0.7em;
   padding-left: 1px;
   color: var(--gray2);
+
 }
 
 .fight-button-wrapper {
