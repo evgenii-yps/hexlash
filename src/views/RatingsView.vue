@@ -95,7 +95,7 @@
                 inputBgColor="var(--black-opacity-80)"
                 inputBorderColor="var(--gray1)"
                 inputTextColor="var(--white)"
-                padding="0.8rem"
+                height="40px"
                 :placeholder="t('rating.participantPlaceholder')"
                 class="search-input"
                 @input="handleMemberSearchInput"
@@ -497,8 +497,8 @@ onMounted(() => {
 
 .table-header-row {
   color: white;
-  margin-top: 10px;
-  font-size: 1em;
+  margin-top: 5px;
+  font-size: 0.9em;
   padding: 5px 10px 0 10px;
 
   display: flex;
@@ -552,8 +552,8 @@ onMounted(() => {
   border-radius: 50%;
   padding: 6px;
   object-fit: contain;
-  width: 35px;
-  height: 35px;
+  width: 30px;
+  height: 30px;
 }
 
 .search-input {
@@ -562,5 +562,9 @@ onMounted(() => {
   display: block;
   margin-right: 10px;
   width: 100%;
+}
+
+:deep(.v-select__selection-text){
+  font-size: 0.8rem;
 }
 </style>

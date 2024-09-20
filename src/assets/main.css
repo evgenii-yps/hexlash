@@ -37,7 +37,7 @@ body {
     font-family: 'Arial', sans-serif;
     font-weight: 400;
     background-color: #101010;
-    overflow: hidden;
+    /*overflow: hidden;*/
     height: 100%;
 }
 
