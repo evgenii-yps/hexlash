@@ -1,6 +1,6 @@
 <template>
   <div class="background background-profile">
-    <div  class="profile-container" @scroll="handleScroll">
+    <div class="profile-container" @scroll="handleScroll">
       <div class="profile-content-wrapper">
 
         <div v-if="loading" class="loader-container">
@@ -154,13 +154,14 @@ const handleScroll = (event) => {
   z-index: 10;
   overflow-y: auto;
   max-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
-  -webkit-overflow-scrolling: auto; /* Отключить резиновый скролл*/
-  overscroll-behavior-y: none;
+  /*-webkit-overflow-scrolling: auto;*/ /* Отключить резиновый скролл*/
+  /*overscroll-behavior-y: none;*/
 }
 
-@supports (max-height: 100dvh) {
+@supports (height: 100dvh) {
   .profile-container {
     max-height: 100dvh;
   }
