@@ -282,7 +282,7 @@ onUnmounted(() => {
 
 .background-training::before {
   content: "";
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   background: linear-gradient(to top, black 0%, transparent 100%);
@@ -294,7 +294,7 @@ onUnmounted(() => {
 
 .background-training::after {
   content: "";
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   background: black;
@@ -321,15 +321,21 @@ onUnmounted(() => {
   align-items: center;
   justify-content: flex-start;
   color: white;
+  -webkit-overflow-scrolling: auto; /* Отключить резиновый скролл*/
+  overscroll-behavior-y: none;
+}
 
+@supports (height: 100dvh) {
+  .training-container {
+    height: 100dvh;
+  }
 }
 
 .training-content-wrapper {
   width: 100%;
-  padding: 5vh 0;
   box-sizing: border-box;
   max-width: 1024px;
-  margin: 0 auto;
+  margin-top: 70px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -363,6 +369,7 @@ onUnmounted(() => {
   display: block;
   position: relative;
   height: 50px;
+  padding-bottom: 100px;
 }
 
 .circle-container {
@@ -378,14 +385,14 @@ onUnmounted(() => {
 
 .movement-container {
   position: relative;
-  width: 50px;
-  height: 50px;
+  width: 40px;
+  height: 40px;
 }
 
 .pulsing-circle {
   position: absolute;
-  width: 50px;
-  height: 50px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background-color: var(--black-opacity);
   animation: pulse 2s infinite;
