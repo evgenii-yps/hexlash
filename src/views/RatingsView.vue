@@ -439,10 +439,11 @@ onMounted(() => {
 
 .rating-content-wrapper {
   width: 100%;
-  padding: 10vh 0;
+  padding: 0;
+
   max-width: 700px;
   justify-content: center;
-  margin: 0 auto;
+  margin-top: 13vh;
 }
 
 .rating-tabs {
@@ -462,13 +463,14 @@ onMounted(() => {
   margin: 0 10px;
   cursor: pointer;
   color: var(--gray2);
-  height: 50px;
+  height: 40px;
   white-space: normal;
 
 }
 
 .rating-tabs :deep(button .v-btn__content) {
   white-space: pre-wrap !important;
+  font-size: 0.7rem;
 }
 
 .custom-select {
@@ -484,11 +486,11 @@ onMounted(() => {
 .table-wrapper {
   flex-grow: 1;
   overflow-y: auto;
-  margin: 30px 10px 0 10px;
+  margin: 20px 10px 0 10px;
 }
 
 .table-body {
-  margin-top: 20px;
+  margin-top: 10px;
   background-color: var(--black-opacity-80) !important;
   border: 1px solid var(--gray1) !important;
 }
@@ -496,8 +498,8 @@ onMounted(() => {
 .table-header-row {
   color: white;
   margin-top: 10px;
-  font-size: 1.1em;
-  padding: 10px 10px 0 10px;
+  font-size: 1em;
+  padding: 5px 10px 0 10px;
 
   display: flex;
   justify-content: space-between;
@@ -520,10 +522,10 @@ onMounted(() => {
 }
 
 .table-row {
-  padding: 10px 10px;
+  padding: 7px 10px;
   color: white;
   cursor: pointer;
-  font-size: 0.9em;
+  font-size: 0.8em;
   display: flex;
   justify-content: space-between;
   align-items: center;

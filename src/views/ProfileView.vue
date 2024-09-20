@@ -125,7 +125,7 @@ const handleScroll = (event) => {
   top: 0;
   left: 0;
   width: 100vw;
-  height: 100%;
+  height: 100vh;
   background: linear-gradient(to right bottom, black 35%, transparent 75%);
   z-index: -1;
 }
@@ -136,7 +136,7 @@ const handleScroll = (event) => {
   top: 0;
   left: 0;
   width: 100vw;
-  height: 100%;
+  height: 100vh;
   background: black;
   z-index: -2;
   opacity: 1;
@@ -173,6 +173,7 @@ const handleScroll = (event) => {
   box-sizing: border-box;
   max-width: 1024px;
   margin: 0 auto;
+  height: 100dvh;
 }
 
 .profile-header {
