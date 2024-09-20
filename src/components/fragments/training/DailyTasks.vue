@@ -159,13 +159,18 @@ const openTaskDialog = (task) => {
 
 .daily-tasks-section h3 {
   font-family: Anonymous, sans-serif;
-  font-size: 2rem;
+  font-size: 1.5rem;
 }
 
 .btn-show-hide {
-  height: 40px;
-  width: 40px;
+  height: 30px;
+  width: 30px;
   cursor: pointer;
+}
+
+.btn-show-hide img{
+  height: 15px;
+  width: 15px;
 }
 
 .daily-tasks {
@@ -180,7 +185,7 @@ const openTaskDialog = (task) => {
 
 .task-item {
   cursor: pointer;
-  padding: 15px 10px;
+  padding: 10px 10px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -190,9 +195,9 @@ const openTaskDialog = (task) => {
 }
 
 .task-icon {
-  width: 20px;
-  height: 20px;
-  margin-right: 15px;
+  width: 15px;
+  height: 15px;
+  margin-right: 10px;
 }
 
 .task-description {
@@ -200,11 +205,13 @@ const openTaskDialog = (task) => {
   white-space: wrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-size: 0.8rem;
 }
 
 .task-tokens {
   flex-shrink: 0; /* Не сжиматься */
   padding-left: 10px;
+  font-size: 0.8rem;
 }
 
 .task-item.completed {
@@ -216,7 +223,7 @@ const openTaskDialog = (task) => {
 .task-item.completed {
   cursor: default;
   text-decoration: line-through; /* Зачёркивание текста */
-  text-decoration-thickness: 2px; /* Толщина линии зачёркивания */
+  text-decoration-thickness: 1.5px; /* Толщина линии зачёркивания */
   text-decoration-color: currentColor; /* Цвет линии совпадает с цветом текста */
 }
 

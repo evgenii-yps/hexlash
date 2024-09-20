@@ -13,11 +13,11 @@ import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader'
 const props = defineProps({
   width: {
     type: Number,
-    default: 300
+    default: 250
   },
   height: {
     type: Number,
-    default: 400
+    default: 330
   }
 });
 

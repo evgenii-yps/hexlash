@@ -154,8 +154,8 @@ const openSubscribeDialog = (task) => {
   box-sizing: border-box;
   border: 1px solid var(--gray1);
   cursor: pointer;
-  width: 75px;
-  height: 90px;
+  width: 70px;
+  height: 80px;
   border-radius: 4px;
   background-color: var(--black-opacity-80);
   display: flex;
@@ -167,30 +167,31 @@ const openSubscribeDialog = (task) => {
 }
 
 .task-item {
-  margin: 0 5px;
+  margin: 0 4px;
   padding-top: 5px;
   padding-bottom: 5px;
 }
 
 .cost {
   text-align: center;
+  font-size: 0.8rem;
 }
 
 .task-img {
-  width: 30px;
-  height: 30px;
+  width: 20px;
+  height: 20px;
   margin: 0;
 }
 
 .desc{
   color:white;
-  font-size: 0.7rem;
+  font-size: 0.6rem;
 }
 
 .checklist-section h3 {
   font-family: Anonymous, sans-serif;
-  font-size: 2rem;
-  margin-left: 20px;
+  font-size: 1.5rem;
+  margin-left: 25px;
 }
 
 .loader-container {

@@ -1,6 +1,6 @@
 <template>
   <div class="background background-training">
-    <div class="training-container">
+    <div class="training-container" @scroll="handleScroll">
       <div class="training-content-wrapper">
 
         <div v-if="!loadingPunchInfo && !isTrainingBlocked" class="training-punch-container">
@@ -249,6 +249,13 @@ watchEffect(() => {
   }
 });
 
+
+const emit = defineEmits(['scroll']);
+
+const handleScroll = (event) => {
+  emit('scroll', event.target.scrollTop);
+};
+
 onBeforeMount( () => {
   store.dispatch('punch/synchronizePunchResetTime');
   store.dispatch('task/fetchAllSocialTasks');
@@ -308,17 +315,18 @@ onUnmounted(() => {
   position: relative;
   z-index: 10;
   overflow-y: auto;
-  max-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
   color: white;
+
 }
 
 .training-content-wrapper {
   width: 100%;
-  padding: 10vh 0;
+  padding: 5vh 0;
   box-sizing: border-box;
   max-width: 1024px;
   margin: 0 auto;
@@ -335,8 +343,8 @@ onUnmounted(() => {
 }
 
 .punch-img {
-  height: 400px;
-  width: 300px;
+  height: 350px;
+  width: 225px;
   position: absolute;
   top: -20px;
   left: 50%;
@@ -346,9 +354,9 @@ onUnmounted(() => {
 
 .training-title {
   font-family: Anonymous, sans-serif;
-  font-size: 2.5rem;
+  font-size: 2rem;
   z-index: 100;
-  margin-bottom: 260px;
+  margin-bottom: 210px;
 }
 
 .scroll-gap {
@@ -358,12 +366,13 @@ onUnmounted(() => {
 }
 
 .circle-container {
-  height: 240px;
-  width: 215px;
+  height: 200px;
+  width: 200px;
   position: absolute;
-  top: 120px;
+  top: 90px;
   left: 50%;
   transform: translateX(-50%);
+  border-radius: 20%;
 }
 
 
@@ -466,7 +475,7 @@ onUnmounted(() => {
 }
 
 .timer-overlay {
-  font-size: 4rem;
+  font-size: 3rem;
   background-color: var(--black-opacity-80);
   padding: 10px;
   border-radius: 10px;

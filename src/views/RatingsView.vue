@@ -451,7 +451,6 @@ onMounted(() => {
   max-width: 700px;
   justify-content: center;
   margin-top: 13vh;
-  height: 100dvh;
 }
 
 .rating-tabs {

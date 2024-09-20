@@ -172,7 +172,6 @@ const handleScroll = (event) => {
   box-sizing: border-box;
   max-width: 1024px;
   margin: 0 auto;
-  height: 100dvh;
 }
 
 .profile-header {
