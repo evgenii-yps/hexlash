@@ -1,6 +1,6 @@
 <template>
   <div class="background background-arena">
-    <div class="arena-container">
+    <div class="arena-container" @scroll="handleScroll">
       <div class="arena-content-wrapper">
 
         <div class="sliders-wrapper">
@@ -36,7 +36,7 @@
                       </VBtnDark>
                     </div>-->
           <div class="text">{{ txtStatus }}</div>
-          <VBtn :disabled="isDisableFight" v-if="!isWaitingFight" width="200" @click="startFight" size="x-large"
+          <VBtn :disabled="isDisableFight" v-if="!isWaitingFight" width="180" @click="startFight" size="large"
                 class="fight-btn">
             {{ t('arena.lblStartFight') }}
           </VBtn>
@@ -100,6 +100,12 @@ const startFight = async () => {
 // Показать напоминание если это первый бой
 showFightRulesReminder(t("info.firstFight"));
 
+const emit = defineEmits(['scroll']);
+
+const handleScroll = (event) => {
+  emit('scroll', event.target.scrollTop);
+};
+
 onMounted(() => {
   store.dispatch("fight/setArenaSettings", params.value) // Запускаем со стартовыми параметрами
 })
@@ -113,7 +119,7 @@ onMounted(() => {
 
 .background-arena::before {
   content: "";
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
@@ -124,7 +130,7 @@ onMounted(() => {
 
 .background-arena::after {
   content: "";
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
@@ -145,18 +151,25 @@ onMounted(() => {
   position: relative;
   z-index: 10;
   overflow-y: auto;
-  max-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   color: white;
-
+  -webkit-overflow-scrolling: auto; /* Отключить резиновый скролл*/
+  overscroll-behavior-y: none;
 }
+
+@supports (height: 100dvh) {
+  .arena-container {
+    height: 100dvh;
+  }
+}
+
 
 .arena-content-wrapper {
   width: 100%;
-  padding: 10vh 0;
   box-sizing: border-box;
   max-width: 1024px;
   margin: 0 auto;
@@ -168,13 +181,14 @@ onMounted(() => {
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  margin-top: calc((100vh - 100%) / 10);
+  padding-top: calc((100vh - 100%) / 3)
+
 }
 
 .slider-container {
   border: none !important;
   width: auto;
-  min-width: 80px;
+  min-width: 60px;
   text-align: center;
   margin: 0 10px;
 }
@@ -198,23 +212,23 @@ onMounted(() => {
 
 .selected-value {
   padding: 10px 10px 5px 10px;
-  font-size: 1.3em;
+  font-size: 1.1em;
 }
 
 .slider-label {
-  font-size: 0.7em;
+  font-size: 0.6em;
   color: var(--gray2);
 }
 
 .selected-value span {
-  font-size: 0.8em;
+  font-size: 0.7em;
   padding-left: 1px;
   color: var(--gray2);
 }
 
 .fight-button-wrapper {
   position: relative;
-  margin-top: 30px;
+  margin-top: 15px;
   display: flex;
   justify-content: center;
   flex-direction: column;
@@ -236,6 +250,7 @@ onMounted(() => {
   background-color: var(--primary-color);
   color: white !important;
   margin: 10px;
+  font-size: 1rem;
 }
 
 /*.btn-help-container {
@@ -260,7 +275,8 @@ onMounted(() => {
 .scroll-gap {
   display: block;
   position: relative;
-  height: 50px;
+  height: 100px;
+
 }
 
 </style>

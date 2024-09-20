@@ -168,8 +168,8 @@ body {
 }
 :root .v-slider-track__tick-label{
     font-size: 0.5em;
-    margin-top: 8px;
-    margin-left: 28px !important;
+    margin-top: 6px;
+    margin-left: 20px !important;
     color: var(--gray2);
 }
 :root .v-slider-track__fill{
@@ -206,4 +206,10 @@ body {
 
 :root .v-btn--disabled{
     background-color: var(--gray1) !important;
+}
+
+
+/*Высота слайдеров*/
+:root .v-slider.v-input--vertical > .v-input__control{
+    min-height: 220px;
 }
