@@ -133,6 +133,11 @@ const moveCircle = (circle) => {
   setTimeout(() => moveCircle(circle), SPEED_MOVE_PUNCH_MS);
 };
 const handleClickPunch = (event, isFromCircleClick = false, value) => {
+
+  if (numbersAnimations.value.length > 20) {
+    numbersAnimations.value.shift();
+  }
+
   const target = event.target;
   let left, top;
 
