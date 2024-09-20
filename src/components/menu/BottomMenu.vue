@@ -54,11 +54,11 @@ const isActive = (item) => {
   display: flex;
   justify-content: space-between;
   padding: 0 0.5rem 0.4rem;
-  position: fixed;
+  position: absolute;
   bottom: 0;
   width: 100%;
   max-width: 1024px;
-  z-index: 1; /* Устанавливаем z-index, чтобы контент был поверх градиента */
+  z-index: 100; /* Устанавливаем z-index, чтобы контент был поверх градиента */
 }
 
 .bottom-menu::before {

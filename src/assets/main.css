@@ -8,7 +8,7 @@
     user-select: none;
     -webkit-user-select: none; /* Для поддержки Safari */
     -ms-user-select: none; /* Для поддержки старых версий IE */
-  /*  -webkit-overflow-scrolling: auto;*/
+    -webkit-overflow-scrolling: auto;
 }
 
 /*@font-face {
@@ -62,7 +62,7 @@ body {
     width: 100vw;
     height: 100vh;
     background-size: cover !important;
-    overflow: hidden;
+/*    overflow: hidden;*/
 }
 
 @supports (height: 100dvh) {

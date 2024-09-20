@@ -440,7 +440,6 @@ onMounted(() => {
 .rating-content-wrapper {
   width: 100%;
   padding: 0;
-
   max-width: 700px;
   justify-content: center;
   margin-top: 13vh;
