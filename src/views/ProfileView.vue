@@ -160,18 +160,18 @@ const handleScroll = (event) => {
   z-index: 10;
   overflow-y: auto;
 /*  max-height: 100vh;*/
-  height: 100vh;
+  height: 100%;
   display: flex;
   flex-direction: column;
   -webkit-overflow-scrolling: auto; /* Отключить резиновый скролл*/
   overscroll-behavior-y: none;
 }
 
-@supports (height: 100dvh) {
+/*@supports (height: 100dvh) {
   .profile-container {
     height: 100dvh;
   }
-}
+}*/
 
 .profile-content-wrapper {
   width: 100%;
