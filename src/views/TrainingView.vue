@@ -22,9 +22,8 @@
             </div>
 
             <!-- Элементы для отображения чисел -->
-            <div v-for="(num, index) in numbersAnimations" :key="index" class="number-animation" :style="num.style">+{{
-                num.value
-              }} &cent;
+            <div v-for="(num, index) in numbersAnimations" :key="num.id" class="number-animation" :style="num.style">
+              +{{ num.value }} &cent;
             </div>
 
           </div>
@@ -134,10 +133,6 @@ const moveCircle = (circle) => {
 };
 const handleClickPunch = (event, isFromCircleClick = false, value) => {
 
-  if (numbersAnimations.value.length > 20) {
-    numbersAnimations.value.shift();
-  }
-
   const target = event.target;
   let left, top;
 
@@ -168,6 +163,13 @@ const handleClickPunch = (event, isFromCircleClick = false, value) => {
     },
   };
 
+  if (numbersAnimations.value.length >= 20) {
+
+    numbersAnimations.value.shift();
+  }
+
+
+  // Добавляем новое число в массив
   numbersAnimations.value.push(newNumber);
 
   store.dispatch('punch/handlePunch', value);
