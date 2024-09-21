@@ -17,9 +17,11 @@ jobs:
 
       - name: "Step test"
         if: ${{ env.BRANCH_NAME == 'test' }}
+        run: echo "Test step echo"
 
       - name: "Step main"
         if: ${{ env.BRANCH_NAME == 'main' }}
+        run: echo "Main step echo"
 
     # steps:
     #   - name: Checkout repository
