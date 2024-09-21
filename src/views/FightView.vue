@@ -1,6 +1,6 @@
 <template>
   <div class="background background-fight">
-    <div class="fight-container">
+    <div class="fight-container" @scroll="handleScroll">
       <div class="fight-content-wrapper" v-if="fight">
 
         <div class="progress-container" v-if="isVisibleProgress">
@@ -15,7 +15,7 @@
 
         <div class="fight-again" v-if="isVisibleBtnAgain">
           <VBtn
-              size="small"
+              size="x-small"
               class="btn-again"
               @click="btnAgain">
             <img src="@/assets/images/icon_arrow.svg" alt="" class="custom-icon"/>
@@ -64,7 +64,7 @@
           </div>
 
           <VBtnDark
-              size="small"
+              size="x-small"
               class="btn-help"
               @click="dialogHelp = true">
             ?
@@ -412,6 +412,12 @@ const setFighterStatuses = (winnerId) => {
 };
 
 
+const emit = defineEmits(['scroll']);
+
+const handleScroll = (event) => {
+  emit('scroll', event.target.scrollTop);
+};
+
 
 </script>
 
@@ -424,7 +430,7 @@ const setFighterStatuses = (winnerId) => {
 
 .background-fight::before {
   content: "";
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
@@ -435,7 +441,7 @@ const setFighterStatuses = (winnerId) => {
 
 .background-fight::after {
   content: "";
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
@@ -472,6 +478,14 @@ const setFighterStatuses = (winnerId) => {
   height: 100vh;
   overflow-y: auto;
   max-height: 100vh;
+  -webkit-overflow-scrolling: auto; /* Отключить резиновый скролл*/
+  overscroll-behavior-y: none;
+}
+
+@supports (height: 100dvh) {
+  .fight-container {
+    height: 100dvh;
+  }
 }
 
 .fight-content-wrapper {
@@ -499,18 +513,19 @@ const setFighterStatuses = (winnerId) => {
   align-items: center;
   color: var(--gray2);
   animation: againAnimation 0.5s ease-in-out forwards;
+  font-size: 0.8rem;
 }
 
 .btn-again img {
-  width: 30px;
-  height: 30px;
+  width: 20px;
+  height: 20px;
   text-align: center;
 }
 
 .btn-again {
   position: relative;
-  width: 60px;
-  height: 60px;
+  width: 40px;
+  height: 40px;
   cursor: pointer;
   border-radius: 50%;
   margin-bottom: 5px;
@@ -520,10 +535,10 @@ const setFighterStatuses = (winnerId) => {
   display: flex;
   font-family: Anonymous, sans-serif;
   color: white;
-  font-size: 2.5em;
+  font-size: 2em;
   border-radius: 4px;
-  width: 50px;
-  height: 50px;
+  width: 35px;
+  height: 35px;
   cursor: pointer;
   border: 1px solid var(--gray2);
 }
@@ -534,21 +549,23 @@ const setFighterStatuses = (winnerId) => {
   max-width: 500px;
   padding: 0 20px;
   margin-bottom: 5px;
+
 }
 
 .progress-container p {
   text-align: center;
   margin-bottom: 5px;
+  font-size: 0.9rem;
 }
 
 .progress {
   border-radius: 10px;
-  padding: 15px;
+  padding: 12px;
   background-color: var(--black-opacity-80);
 }
 
 .progress-linear {
-  height: 6px !important;
+  height: 5px !important;
   transition: width 0.1s linear;
 }
 
@@ -566,7 +583,7 @@ const setFighterStatuses = (winnerId) => {
   top: 40%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-size: 4em;
+  font-size: 3em;
   color: white;
   z-index: 100;
   /*background-color: var(--black-opacity);*/
@@ -612,11 +629,11 @@ const setFighterStatuses = (winnerId) => {
 
 .result-left, .result-right {
   display: flex;
-  width: 200px;
+  width: 180px;
   text-align: center;
   justify-content: center;
   flex-wrap: wrap;
-  row-gap: 10px; /* Отступ между строками */
+  row-gap: 8px; /* Отступ между строками */
   column-gap: 5px;
 }
 
@@ -624,12 +641,13 @@ const setFighterStatuses = (winnerId) => {
   background-color: var(--black-opacity-80);
   border-radius: 4px;
   border: 1px solid var(--gray2);
-  width: 30px;
-  height: 30px;
+  width: 25px;
+  height: 25px;
   align-items: center;
   display: flex;
   justify-content: center;
   color: var(--gray2);
+  font-size: 0.8rem;
 }
 
 .text-center {

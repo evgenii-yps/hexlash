@@ -59,7 +59,7 @@ const showBottomMenu = computed(() => {
 
 const route = useRoute();
 const isScrollableComponent = computed(() => {
-  const scrollablePrefixes = ['/profile', '/ratings']; // Префиксы маршрутов с дочерними маршрутами
+  const scrollablePrefixes = ['/profile', '/ratings', '/fight']; // Префиксы маршрутов с дочерними маршрутами
   const scrollableRoutes = ['/training', '/arena']; // Точные маршруты
 
   // Проверка на точный маршрут или маршрут, начинающийся с одного из префиксов

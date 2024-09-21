@@ -53,6 +53,7 @@ const switchAccount = async () => {
   display: block;
   max-width: 500px;
   text-align: center; /* Выровнять текст по центру */
+  margin: 0 auto;
 }
 
 .button-container {

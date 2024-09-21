@@ -70,6 +70,13 @@ const isActive = (item) => {
   bottom: 0;
   background: linear-gradient(to top, black 40%, transparent 100%);
   z-index: -1;
+
+}
+
+@media (min-width: 1024px) {
+  .bottom-menu::before {
+    background: none;
+  }
 }
 
 .menu-item {

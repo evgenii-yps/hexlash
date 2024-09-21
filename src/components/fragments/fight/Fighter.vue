@@ -3,7 +3,7 @@
 
     <div class="fighter-info">
       <div class="fighter-avatar">
-        <UserAvatar :avatarUrl="props.userData.avatarUrl" width="60px" height="60px"/>
+        <UserAvatar :avatarUrl="props.userData.avatarUrl" width="50px" height="50px"/>
       </div>
       <p>
         <UserName :userName="props.userData.name"/>
@@ -183,16 +183,15 @@ watch(isMoveCircles, (newVal) => {
   flex-direction: row;
   text-align: center;
   align-items: center;
-  margin-top: 10px;
+  margin-top: 3px;
   margin-bottom: 10px;
-  font-size: 0.5em;
+  font-size: 0.4em;
 }
 
 .fighter-info p span {
   display: flex;
-  font-size: 2.3em;
+  font-size: 2em;
   color: var(--gray3);
-  margin-left: 5px;
 }
 
 .fighter-avatar {
@@ -202,8 +201,8 @@ watch(isMoveCircles, (newVal) => {
 
 .skin {
   position: relative;
-  width: 200px;
-  height: 400px;
+  width: 160px;
+  height: 280px;
 }
 
 .skin-img {
@@ -246,14 +245,14 @@ watch(isMoveCircles, (newVal) => {
 
 .movement-container {
   position: relative;
-  width: 40px;
-  height: 40px;
+  width: 30px;
+  height: 30px;
 }
 
 .pulsing-circle {
   position: absolute;
-  width: 40px;
-  height: 40px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   background-color: var(--black-opacity-80);
   animation: pulse 2s infinite;
@@ -281,8 +280,8 @@ watch(isMoveCircles, (newVal) => {
 
 .wave-circle {
   position: absolute;
-  width: 40px;
-  height: 40px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   background-color: var(--primary-color);
   opacity: 0;
@@ -301,7 +300,7 @@ watch(isMoveCircles, (newVal) => {
   left: 50%;
   z-index: 1;
   font-family: Anonymous, sans-serif;
-  font-size: 4em;
+  font-size: 3em;
   opacity: 0;
   background-color: var(--black-opacity-80);
   padding: 0 20px;

@@ -93,7 +93,7 @@ body {
 .v-modal {
     background-color: var(--black-opacity-80) !important;
     border-radius: 8px;
-    padding: 20px;
+/*    padding: 20px;*/
     border: 2px solid var(--primary-color) !important; /* Цвет рамки тултипа */
     color: white !important;
 }
