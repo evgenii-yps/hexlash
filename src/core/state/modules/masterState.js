@@ -77,7 +77,7 @@ const mutations = {
 const actions = {
     async login({commit}, credentials) {
         await masterService.login(credentials);
-        //await router.push('/profile');
+        await router.push('/profile');
     },
     async logout({commit}) {
 
