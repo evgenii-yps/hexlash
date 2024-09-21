@@ -49,15 +49,14 @@
                   text-size="1.5em">
         {{ t('auth.login.btnInvite') }}
       </ButtonText>
-      <div v-if="authState.authError">
+<!--      <div v-if="authState.authError">
         {{ t('auth.login.lblOrPass') }}
       <ButtonText @click="handleReset"
-                  textColor="var(--pink)"
+                  textColor="var(&#45;&#45;pink)"
                   text-size="1.5em">
         {{ t('auth.login.btnReset') }}
       </ButtonText>
-      </div>
-      ?
+      </div>?-->
     </div>
 
 

@@ -61,6 +61,8 @@ export const login = async (credentials) => {
         // // Получите данные текущего пользователя
         // const userData = await fetchMasterData(jwtToken);
 
+        throw new Error("Auth error");
+
         const userData = `{
               "id": "user123",
               "login": "userLogin",
@@ -141,11 +143,11 @@ export const sendInvite = async (inviteCode) => {
     // Имитируем API вызов
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
-    if (inviteCode === 'admin') {
+    /*if (inviteCode === 'admin') {
         return { success: true};
-    } else {
+    } else {*/
         throw new Error(i18n.global.t('auth.invite.errorInvalidInvite'));
-    }
+    //}
 };
 
 // Функция для получения данных текущего пользователя
