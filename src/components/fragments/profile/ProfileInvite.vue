@@ -54,11 +54,11 @@ const toggleTooltip = () => {
   color: white;
   text-align: center;
   font-weight: 800;
-  font-size: 0.6em;
+  font-size: 0.5em;
 }
 
 .invite-text {
-  margin-bottom: 0.5em;
+  margin-bottom: 0.2em;
 }
 
 .code-container {
@@ -68,7 +68,7 @@ const toggleTooltip = () => {
 }
 
 .invite-code {
-  font-size: 3.5rem;
+  font-size: 2.5rem;
   font-family: 'Anonymous', 'Arial', sans-serif;
   color: white;
   margin: 0;

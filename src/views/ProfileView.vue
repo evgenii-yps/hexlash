@@ -1,6 +1,6 @@
 <template>
   <div class="background background-profile">
-    <div  class="profile-container">
+    <div class="profile-container" @scroll="handleScroll">
       <div class="profile-content-wrapper">
 
         <div v-if="loading" class="loader-container">
@@ -105,6 +105,12 @@ watch(
     }
 );
 
+const emit = defineEmits(['scroll']);
+
+const handleScroll = (event) => {
+  emit('scroll', event.target.scrollTop);
+};
+
 </script>
 
 
@@ -147,9 +153,17 @@ watch(
   position: relative;
   z-index: 10;
   overflow-y: auto;
-  max-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
+  -webkit-overflow-scrolling: auto; /* Отключить резиновый скролл*/
+  overscroll-behavior-y: none;
+}
+
+@supports (height: 100dvh) {
+  .profile-container {
+    height: 100dvh;
+  }
 }
 
 .profile-content-wrapper {
@@ -171,7 +185,7 @@ watch(
 .scroll-gap {
   display: block;
   position: relative;
-  height: 50px;
+  height: 40px;
 }
 
 .loader-container {

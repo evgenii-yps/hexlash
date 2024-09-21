@@ -13,11 +13,11 @@ import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader'
 const props = defineProps({
   width: {
     type: Number,
-    default: 300
+    default: 250
   },
   height: {
     type: Number,
-    default: 400
+    default: 330
   }
 });
 
@@ -306,24 +306,24 @@ function createSoftVolume(bufferGeom, material) {
   );
 
   const sbConfig = volumeSoftBody.get_m_cfg();
-  sbConfig.set_viterations(40);
-  sbConfig.set_piterations(40);
+  sbConfig.set_viterations(20);
+  sbConfig.set_piterations(20);
 
-  sbConfig.set_kVC(0.1);  // Фактор сохранения объема
-  sbConfig.set_kVCF(0.1);  // Фактор сохранения объема
-  sbConfig.set_kSRHR_CL(1);  // Жесткость при контакте с жёсткими телами
-  sbConfig.set_kSR_SPLT_CL(1);  // Разделение мягких и жёстких тел при контакте
-  sbConfig.set_kDF(0.1);  // Фактор трения
+  //sbConfig.set_kVC(0.1);  // Фактор сохранения объема
+  //sbConfig.set_kVCF(0.1);  // Фактор сохранения объема
+  //sbConfig.set_kSRHR_CL(1);  // Жесткость при контакте с жёсткими телами
+  //sbConfig.set_kSR_SPLT_CL(1);  // Разделение мягких и жёстких тел при контакте
+  //sbConfig.set_kDF(0.1);  // Фактор трения
   sbConfig.set_kDP(0.05);  // Коэффициент демпфирования
 
   sbConfig.set_kPR(1000);  // Внутреннее давление, очень низкое, чтобы избежать деформаций
 
   // Soft-soft and soft-rigid collisions
-  sbConfig.set_collisions(0x11);
+  //sbConfig.set_collisions(0x11);
 
   // Stiffness
-  volumeSoftBody.get_m_materials().at(0).set_m_kLST(1);
-  volumeSoftBody.get_m_materials().at(0).set_m_kAST(1);
+  //volumeSoftBody.get_m_materials().at(0).set_m_kLST(1);
+  //volumeSoftBody.get_m_materials().at(0).set_m_kAST(1);
 
   volumeSoftBody.setTotalMass(100, false);
 

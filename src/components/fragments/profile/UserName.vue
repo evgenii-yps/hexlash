@@ -37,7 +37,7 @@ defineProps({
 .label-name {
   flex-grow: 1;
   font-weight: normal;
-  font-size: 2.3em;
+  font-size: 1.8em;
   max-width: 70vw;
   white-space: nowrap;
   overflow: hidden;

@@ -3,6 +3,7 @@ import store from "@/core/state/store.js";
 import RainView from "@/views/RainView.vue";
 import TrainingView from "@/views/TrainingView.vue";
 import ProfileView from "@/views/ProfileView.vue";
+import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
 
 const routeHistory = [];
 
@@ -16,11 +17,11 @@ const authRoutes = [
 const publicRoutes = [
     {path: '/privacy', name: 'Privacy', component: () => import("/src/views/PrivacyView.vue")},
     {path: '/404', name: 'NotFound', component: () => import("/src/views/NotFoundView.vue")},
+    {path: '/rules', name: 'Rules', component: () => import("/src/views/PageView.vue")},
 ];
 
 const protectedRoutes = [
     {path: '/', name: 'Home', component: RainView },
-    {path: '/rules', name: 'Rules', component: () => import("/src/views/PageView.vue")},
     {path: '/help', name: 'Help', component: () => import("/src/views/PageView.vue")},
     {path: '/arena', name: 'Arena', component: () => import("/src/views/ArenaView.vue")},
 
@@ -91,6 +92,12 @@ router.beforeEach(async (to, from, next) => {
 
     if (protectedRoutes.some(route => route.name === to.name || route.path === to.path)) {
         if (!isAuthenticated) {
+
+            if (to.name !== 'Home') {
+                const customMessage = InfoMessageModel.withTimeout("Access denied. You need to log in first", 2000);
+                store.commit('master/setInfoMessage', customMessage);
+            }
+
             console.log('Redirecting to Invite page');
             next({name: 'Invite'});
         }

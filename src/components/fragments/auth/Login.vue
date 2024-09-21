@@ -5,24 +5,24 @@
           :label="t('auth.login.lblLogin')"
           v-model="login"
           labelColor="var(--white)"
-          labelSize="10px"
+          labelSize="0.5rem"
           inputBgColor="var(--black-opacity)"
           inputBorderColor="var(--gray1)"
           inputTextColor="var(--white)"
-          padding="0.8rem"
-          marginBottom="0.5rem"
+          height="40px"
+          marginBottom="0.6rem"
       />
       <InputField
           :label="t('auth.login.lblPassword')"
           type="password"
           v-model="password"
           labelColor="var(--white)"
-          labelSize="10px"
+          labelSize="0.5rem"
           inputBgColor="var(--black-opacity)"
           inputBorderColor="var(--gray1)"
           inputTextColor="var(--white)"
-          padding="0.8rem"
-          marginBottom="1.3rem"
+          height="40px"
+          marginBottom="0.8rem"
       />
 
       <div v-if="authState.authError" class="error-message">{{ t('auth.login.authError') }}<!--{{ authState.authError }}--></div>
@@ -49,15 +49,14 @@
                   text-size="1.5em">
         {{ t('auth.login.btnInvite') }}
       </ButtonText>
-      <div v-if="authState.authError">
+<!--      <div v-if="authState.authError">
         {{ t('auth.login.lblOrPass') }}
       <ButtonText @click="handleReset"
-                  textColor="var(--pink)"
+                  textColor="var(&#45;&#45;pink)"
                   text-size="1.5em">
         {{ t('auth.login.btnReset') }}
       </ButtonText>
-      </div>
-      ?
+      </div>?-->
     </div>
 
 
@@ -108,9 +107,9 @@ const handleReset = () => {
 <style scoped>
 .login-container {
   position: absolute;
-  top: 50%;
+  bottom: 10vh;
   left: 50%;
-  transform: translate(-50%, 50%);
+  transform: translateX(-50%);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -120,12 +119,12 @@ form {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 200px;
+  width: 180px;
 }
 
 .invite {
   margin-top: 0.5rem;
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   color: var(--gray2);
   align-self: flex-end;
   display: block;
@@ -140,7 +139,7 @@ form {
 .auth-btn{
   color:white;
   width: 100%;
-  height: 44px !important;
+  height: 40px !important;
   cursor: pointer;
 }
 

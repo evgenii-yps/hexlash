@@ -295,11 +295,11 @@ const carouselItems = computed(() => {
 <style scoped>
 .achievements-container {
   color: white;
-  margin-top: 2em;
+  margin-top: 1em;
 }
 
 .achievements-container h2 {
-  font-size: 2.3rem;
+  font-size: 2rem;
   text-align: center;
   font-family: 'Anonymous', 'Arial', sans-serif;
   color: white;
@@ -313,7 +313,7 @@ const carouselItems = computed(() => {
 
 .achievement-item {
   position: relative;
-  margin: 10px 0;
+  margin:  0;
   padding: 5px;
   border-radius: 5px;
   text-align: center;
@@ -323,7 +323,7 @@ const carouselItems = computed(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 160px; /* фиксированная высота для всех карточек */
+  height: 120px; /* фиксированная высота для всех карточек */
   box-shadow: 0 3px 1px -2px var(--v-shadow-key-umbra-opacity, rgba(0, 0, 0, 0.2)), 0 2px 2px 0 var(--v-shadow-key-penumbra-opacity, rgba(0, 0, 0, 0.14)), 0 1px 5px 0 var(--v-shadow-key-ambient-opacity, rgba(0, 0, 0, 0.12))
 }
 
@@ -337,7 +337,7 @@ const carouselItems = computed(() => {
 
 .achievement-icon {
   width: auto;
-  height: 100px;
+  height: 60px;
 }
 
 .achievement-content {
@@ -349,7 +349,7 @@ const carouselItems = computed(() => {
 }
 
 .achievement-title {
-  font-size: 0.9em;
+  font-size: 0.8em;
   color: white;
   overflow: hidden; /* скрыть текст, если он выходит за пределы контейнера */
   text-overflow: ellipsis; /* добавить троеточие, если текст слишком длинный */
@@ -359,7 +359,7 @@ const carouselItems = computed(() => {
 
 .carousel-control {
   background: var(--black-opacity-80);
-  border: 2px solid grey;
+  border: 1px solid grey;
   border-radius: 50%; /* Круглая форма */
   cursor: pointer;
   padding: 6px;
@@ -393,8 +393,8 @@ const carouselItems = computed(() => {
 
 .achievement-icon.lock-overlay {
   position: absolute;
-  width: 65px; /* меньший размер замка */
-  height: 65px;
+  width: 45px; /* меньший размер замка */
+  height: 45px;
   margin-top: -20px
 }
 </style>

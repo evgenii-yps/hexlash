@@ -3,7 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <link rel="icon" href="/favicon.ico">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <!-- Цвет верхнего статус-бара -->
+    <meta name="theme-color" content="#000000">
+
     <title>Fight Club</title>
 
     <style>
@@ -14,6 +20,7 @@
             scrollbar-width: thin;
             scrollbar-color: var(--scrollbar-bg) transparent;
         }
+
         #app-loading {
             position: fixed;
             top: 0;
@@ -79,13 +86,21 @@
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         @keyframes fadeInText {
-            0% { opacity: 0; }
-            100% { opacity: 1; }
+            0% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 1;
+            }
         }
 
         #app-loading.hidden {
@@ -95,6 +110,7 @@
     </style>
 </head>
 <body>
+
 <div id="app-loading">
     <div id="loading-container">
         <p>This Is Your Life, and It's Ending One Minute at a Time.</p>

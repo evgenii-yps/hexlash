@@ -91,8 +91,8 @@ watch(store.getters['master/getMaster'], (newMaster) => {
 .avatar-container {
   position: relative;
   cursor: pointer;
-  width: 100px;
-  height: 100px;
+  width: 80px;
+  height: 80px;
   flex-shrink: 0;
   padding: 6px;
   border-radius: 50%;
@@ -111,7 +111,7 @@ watch(store.getters['master/getMaster'], (newMaster) => {
 }
 
 .default-avatar {
-  padding: 5px;
+  padding: 6px;
   object-fit: fill;
 }
 

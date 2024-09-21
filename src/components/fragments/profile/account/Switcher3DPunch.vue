@@ -49,11 +49,12 @@ onMounted(() => {
 
 .punch-btn {
   width: 100%;
-  height: 50px;
+  height: 40px;
   max-width: 500px;
   text-align: center;
   color: white;
   cursor: pointer;
+  font-size: 0.7rem !important;
 }
 
 
@@ -74,7 +75,7 @@ onMounted(() => {
 .switcher p {
   display: flex;
   align-items: center;
-  font-size: 1em;
+  font-size: 0.9em;
   flex-grow: 1;
 }
 

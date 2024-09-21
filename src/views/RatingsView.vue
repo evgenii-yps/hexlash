@@ -1,6 +1,6 @@
 <template>
   <div class="background background-rating">
-    <div class="rating-container">
+    <div class="rating-container" @scroll="handleScroll">
       <div class="rating-content-wrapper">
         <div class="rating-tabs">
           <VBtnDark :class="{'active-tab': activeTab === Tabs.CLUBS} "
@@ -95,7 +95,7 @@
                 inputBgColor="var(--black-opacity-80)"
                 inputBorderColor="var(--gray1)"
                 inputTextColor="var(--white)"
-                padding="0.8rem"
+                height="40px"
                 :placeholder="t('rating.participantPlaceholder')"
                 class="search-input"
                 @input="handleMemberSearchInput"
@@ -128,24 +128,24 @@
               <span class="column-name">{{t('rating.club')}}</span>
 
               <span class="column">
-                <img :class="{'active-sort-icon': sortParticipantBy === 'fc'}" src="@/assets/images/icon_tokens.svg"
+                <img class="icon" :class="{'active-sort-icon': sortParticipantBy === 'fc'}" src="@/assets/images/icon_tokens.svg"
                      alt="sort icon"/>
               </span>
               <span class="column">
-                <img :class="{'active-sort-icon': sortParticipantBy === 'losses'}" src="@/assets/images/icon_lose.svg"
+                <img class="icon" :class="{'active-sort-icon': sortParticipantBy === 'losses'}" src="@/assets/images/icon_lose.svg"
                      alt="sort icon"/>
               </span>
               <span class="column">
-                <img :class="{'active-sort-icon': sortParticipantBy === 'luck'}" src="@/assets/images/icon_lucky.svg"
+                <img class="icon" :class="{'active-sort-icon': sortParticipantBy === 'luck'}" src="@/assets/images/icon_lucky.svg"
                      alt="sort icon"/>
               </span>
               <span class="column">
-                <img :class="{'active-sort-icon': sortParticipantBy === 'total'}" src="@/assets/images/icon_fights.svg"
+                <img class="icon" :class="{'active-sort-icon': sortParticipantBy === 'total'}" src="@/assets/images/icon_fights.svg"
                      alt="sort icon"/>
               </span>
 
               <span class="column">
-                <img :class="{'active-sort-icon': sortParticipantBy === 'wins'}" src="@/assets/images/icon_wins.svg"
+                <img class="icon" :class="{'active-sort-icon': sortParticipantBy === 'wins'}" src="@/assets/images/icon_wins.svg"
                      alt="sort icon"/>
               </span>
             </div>
@@ -374,6 +374,12 @@ const updateQueryParams = () => {
   return queryParams;
 };
 
+const emit = defineEmits(['scroll']);
+
+const handleScroll = (event) => {
+  emit('scroll', event.target.scrollTop);
+};
+
 onMounted(() => {
   loadClubs({
     done: () => {
@@ -394,7 +400,7 @@ onMounted(() => {
 
 .background-rating::before {
   content: "";
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
@@ -405,7 +411,7 @@ onMounted(() => {
 
 .background-rating::after {
   content: "";
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
@@ -426,17 +432,25 @@ onMounted(() => {
   position: relative;
   z-index: 10;
   overflow-y: auto;
-  max-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
+  -webkit-overflow-scrolling: auto; /* Отключить резиновый скролл*/
+  overscroll-behavior-y: none;
+}
+
+@supports (height: 100dvh) {
+  .rating-container {
+    height: 100dvh;
+  }
 }
 
 .rating-content-wrapper {
   width: 100%;
-  padding: 10vh 0;
+  padding: 0;
   max-width: 700px;
   justify-content: center;
-  margin: 0 auto;
+  margin-top: 13vh;
 }
 
 .rating-tabs {
@@ -456,13 +470,14 @@ onMounted(() => {
   margin: 0 10px;
   cursor: pointer;
   color: var(--gray2);
-  height: 50px;
+  height: 40px;
   white-space: normal;
 
 }
 
 .rating-tabs :deep(button .v-btn__content) {
   white-space: pre-wrap !important;
+  font-size: 0.7rem;
 }
 
 .custom-select {
@@ -478,20 +493,21 @@ onMounted(() => {
 .table-wrapper {
   flex-grow: 1;
   overflow-y: auto;
-  margin: 30px 10px 0 10px;
+  margin: 20px 10px 0 10px;
 }
 
 .table-body {
-  margin-top: 20px;
+  margin-top: 10px;
   background-color: var(--black-opacity-80) !important;
   border: 1px solid var(--gray1) !important;
+  margin-bottom: 20px;
 }
 
 .table-header-row {
   color: white;
-  margin-top: 10px;
-  font-size: 1.1em;
-  padding: 10px 10px 0 10px;
+  margin-top: 5px;
+  font-size: 0.9em;
+  padding: 5px 10px 0 10px;
 
   display: flex;
   justify-content: space-between;
@@ -514,10 +530,10 @@ onMounted(() => {
 }
 
 .table-row {
-  padding: 10px 10px;
+  padding: 7px 10px;
   color: white;
   cursor: pointer;
-  font-size: 0.9em;
+  font-size: 0.8em;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -539,14 +555,21 @@ onMounted(() => {
   color: var(--gray3);
 }
 
+.icon{
+  width: 25px;
+  height: 25px;
+  padding: 5px;
+  object-fit: contain;
+}
 .active-sort-icon {
   background-color: var(--primary-color) !important;
   border-radius: 50%;
-  padding: 6px;
+  padding: 4px;
   object-fit: contain;
-  width: 35px;
-  height: 35px;
+  width: 25px;
+  height: 25px;
 }
+
 
 .search-input {
   max-width: 300px;
@@ -554,5 +577,9 @@ onMounted(() => {
   display: block;
   margin-right: 10px;
   width: 100%;
+}
+
+:deep(.v-select__selection-text){
+  font-size: 0.8rem;
 }
 </style>

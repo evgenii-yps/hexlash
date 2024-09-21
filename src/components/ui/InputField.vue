@@ -12,7 +12,7 @@
           :readonly="readonly"
           autocapitalize="none"
           :placeholder="placeholder"
-          style="font-size: 1em"
+          style="font-size: 0.7em"
       />
       <div v-if="showButton" class="slot-container">
         <slot></slot>
@@ -37,7 +37,7 @@ const props = defineProps({
   },
   labelSize: {
     type: String,
-    default: '12px'
+    default: '0.5rem'
   },
   inputBgColor: {
     type: String,
@@ -95,7 +95,6 @@ const inputStyles = computed(() => ({
   flexGrow: 1,
   borderRadius: props.showButton ? '4px 0 0 4px' : props.borderRadius,
   padding: props.padding,
-  borderRight: props.showButton ? 'none' : `1px solid ${props.inputBorderColor}`
 }));
 
 const wrapperStyles = computed(() => ({

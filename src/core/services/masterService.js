@@ -61,8 +61,10 @@ export const login = async (credentials) => {
         // // Получите данные текущего пользователя
         // const userData = await fetchMasterData(jwtToken);
 
+        throw new Error("Auth error");
+
         const userData = `{
-              "id": "5b11893d932e353c154e0148615f077be70832eb5c712730f557b8eeb59b0f94",
+              "id": "user123",
               "login": "userLogin",
               "name": "John Doe",
               "avatarUrl": "",
@@ -85,7 +87,7 @@ export const login = async (credentials) => {
               "noSkipDays": 365,
               "inviteId": "invite123",
               "email": "johndoe@example.com",
-              "achievements": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17],
+              "achievements": [1, 2, 3, 4, 5, 6, 7, 10, 11],
               "balance":30099,
               "skin":"skin_w_20.png",
               "isInitialize":true
@@ -141,11 +143,11 @@ export const sendInvite = async (inviteCode) => {
     // Имитируем API вызов
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
-    if (inviteCode === 'admin') {
+    /*if (inviteCode === 'admin') {
         return { success: true};
-    } else {
+    } else {*/
         throw new Error(i18n.global.t('auth.invite.errorInvalidInvite'));
-    }
+    //}
 };
 
 // Функция для получения данных текущего пользователя

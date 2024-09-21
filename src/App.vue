@@ -1,6 +1,6 @@
 <template>
   <div class="app-container">
-    <header class="header">
+    <header :style="headerStyle" class="header">
       <div class="header-content">
         <Logo/>
         <div v-if="balance !== null" class="balance">
@@ -10,7 +10,8 @@
     </header>
 
     <main class="content">
-      <RouterView/>
+      <RouterView v-if="isScrollableComponent" @scroll="handleChildScroll"/>
+      <RouterView v-else/>
     </main>
 
     <Info :text="infoMessage.text"
@@ -20,15 +21,15 @@
 
     <footer class="footer">
       <transition name="slide-up-down">
-        <BottomMenu v-if="showBottomMenu"/>
+        <BottomMenu v-if="showBottomMenu && scrollDirection !== 'down'"/>
       </transition>
     </footer>
   </div>
 </template>
 
 <script setup>
-import {RouterView} from 'vue-router'
-import {computed, onMounted, ref} from "vue";
+import {RouterView, useRoute} from 'vue-router'
+import {computed, onBeforeUnmount, onMounted, ref} from "vue";
 import BottomMenu from "@/components/menu/BottomMenu.vue";
 import Logo from "@/components/Logo.vue";
 import store from "@/core/state/store.js";
@@ -54,6 +55,16 @@ const infoMessage = computed(() => {
 
 const showBottomMenu = computed(() => {
   return store.getters['master/getAuthState'].isAuthenticated
+});
+
+const route = useRoute();
+const isScrollableComponent = computed(() => {
+  const scrollablePrefixes = ['/profile', '/ratings', '/fight']; // Префиксы маршрутов с дочерними маршрутами
+  const scrollableRoutes = ['/training', '/arena']; // Точные маршруты
+
+  // Проверка на точный маршрут или маршрут, начинающийся с одного из префиксов
+  return scrollableRoutes.includes(route.path) ||
+      scrollablePrefixes.some(prefix => route.path.startsWith(prefix));
 });
 
 
@@ -102,9 +113,50 @@ const modal = createWeb3Modal({
   enableAnalytics: true, // Optional - defaults to your Cloud configuration
 })
 
+const scrollTop = ref(0);
+const scrollDirection = ref('up');
+const lastScrollTop = ref(1);
+const scrollTimeout = ref(null);
+
+const handleChildScroll = (newScrollTop) => {
+  if (newScrollTop !== undefined) {
+    scrollTop.value = newScrollTop;
+
+    clearTimeout(scrollTimeout.value);
+
+    scrollTimeout.value = setTimeout(() => {
+      if (newScrollTop > lastScrollTop.value) {
+        scrollDirection.value = 'down';
+      } else {
+        scrollDirection.value = 'up';
+      }
+      lastScrollTop.value = newScrollTop;
+    }, 10); // Задержка в 10 мс
+  }
+};
+
+// Высчитываем стиль заголовка
+const headerStyle = computed(() => {
+  // Если скролл меньше 50px, плавно изменяем положение черного в градиенте
+  if (scrollTop.value <= 50) {
+    const blackStop = scrollTop.value; // Плавно изменяем точку остановки черного цвета от 0 до 50%
+    return {
+      background: `linear-gradient(to bottom, black ${blackStop}%, transparent ${blackStop * 2}%)`,
+      transition: 'background 0.3s ease', // Плавный переход для фона
+    };
+  }
+  // Если скролл больше 50px, фиксируем черный цвет на 50%
+  return {
+    background: 'linear-gradient(to bottom, black 50%, transparent 100%)',
+    transition: 'background 0.3s ease', // Плавный переход для фона
+  };
+});
+
+
 onMounted(() => {
   store.commit('contract/setWeb3Modal', modal)
 })
+
 
 </script>
 
@@ -117,17 +169,25 @@ onMounted(() => {
   font-style: normal;
 }
 
-.content {
+/*.content {
   position: relative;
   overflow-y: auto;
   height: 100vh;
 }
 
+@supports (height: 100dvh) {
+  .content {
+    height: 100dvh;
+  }
+}*/
+
 .header {
   width: 100vw;
-  position: relative;
-  z-index: 2;
+  height: 70px;
+  position: fixed;
+  z-index: 100;
 }
+
 
 .header-content {
   display: flex;

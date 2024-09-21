@@ -9,7 +9,7 @@
 
       <template #back>
         <!-- Кнопка "Назад" -->
-        <BackButton :defaultRoute="backRef(route)"/>
+        <BackButton style="margin-left: 0 !important;" :defaultRoute="backRef(route)"/>
       </template>
 
       <div class="help-content" v-html="content"></div>

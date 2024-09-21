@@ -5,12 +5,12 @@
           :label="t('auth.reset.lblEmail')"
           v-model="email"
           labelColor="var(--white)"
-          labelSize="10px"
+          labelSize="0.5rem"
           inputBgColor="var(--black-opacity)"
           inputBorderColor="var(--gray1)"
           inputTextColor="var(--white)"
-          padding="0.8rem"
-          marginBottom="1.3rem"
+          height="40px"
+          marginBottom="0.8rem"
       />
 
       <div v-if="resetState.errorMessage" class="error-message">{{ resetState.errorMessage }}</div>
@@ -66,9 +66,9 @@ const handleLogin = () => {
 <style scoped>
 .reset-container {
   position: absolute;
-  top: 50%;
+  bottom: 10vh;
   left: 50%;
-  transform: translate(-50%, 70%);
+  transform: translateX(-50%);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -78,12 +78,12 @@ form {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 200px;
+  width: 180px;
 }
 
 .login {
   margin-top: 0.5rem;
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   color: var(--gray2);
   align-self: flex-end;
   display: block;
@@ -105,7 +105,7 @@ form {
 .auth-btn {
   color: white;
   width: 100%;
-  height: 44px;
+  height: 40px;
   cursor: pointer;
 }
 </style>

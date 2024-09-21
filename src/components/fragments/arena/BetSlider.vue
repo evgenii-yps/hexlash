@@ -9,15 +9,15 @@
                 :ticks="tickLabels"
                 :max="betOptions.length - 1"
                 :step="1"
-                :thumb-size="30"
+                :thumb-size="20"
                 :thumb-label="false"
                 show-ticks="always"
-                tick-size="15"
-                track-size="6px"
+                tick-size="12"
+                track-size="5px"
                 :color="isBlocked ? 'var(--gray3)' : 'var(--primary-color)'"
                 :thumb-color="isBlocked ? 'var(--gray3)' : 'var(--primary-color)'"
                 :track-color="isBlocked ? 'var(--gray3)' : 'var(--gray1)'"
-                style="margin-bottom: 15px"
+                style="margin-bottom: 10px"
       />
       <img src="@/assets/images/icon_dollar.svg" alt="">
     </div>
@@ -45,7 +45,7 @@ const tickLabels = ref({
   1: '10',
   2: '100',
   3: '500',
-  4: '1000'
+  4: '1k'
 });
 
 const emits = defineEmits(['update:modelValue']);
@@ -71,18 +71,18 @@ const updateBet = (value) => {
 }
 
 .ticks {
-  width: 6px;
+  width: 5px;
   background-image: linear-gradient(to bottom, var(--gray1) 1px, transparent 1px);
   background-size: 5px 7px;
-  margin-top: 25px; /* Добавляем отступ сверху */
-  margin-bottom: 70px; /* Добавляем отступ снизу */
+  margin-top: 20px; /* Добавляем отступ сверху */
+  position: absolute;
+  height: 77%;
 }
 
 .ticks::before,
 .ticks::after {
   content: '';
   display: block;
-  height: 30px; /* Adjust the height to match the thumb size or desired offset */
   background: transparent;
 }
 
@@ -92,7 +92,9 @@ const updateBet = (value) => {
   background-color: var(--dark);
   justify-content: center;
   border-radius: 8px;
-  margin: 12px auto;
+  margin: 12px auto 0;
   padding-bottom: 10px;
 }
+
+
 </style>

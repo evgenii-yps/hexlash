@@ -5,6 +5,11 @@
     box-sizing: border-box;
     scrollbar-width: thin;
     scrollbar-color: var(--scrollbar-bg) transparent;
+    user-select: none;
+    -webkit-user-select: none; /* Для поддержки Safari */
+    -ms-user-select: none; /* Для поддержки старых версий IE */
+    -webkit-overflow-scrolling: auto;
+
 }
 
 /*@font-face {
@@ -33,6 +38,7 @@ body {
     font-family: 'Arial', sans-serif;
     font-weight: 400;
     background-color: #101010;
+    overflow: hidden;
 }
 
 /* Стили для Webkit-браузеров (Chrome, Safari) */
@@ -59,6 +65,12 @@ body {
     overflow: hidden;
 }
 
+@supports (height: 100dvh) {
+    .background {
+        height: 100dvh;
+    }
+}
+
 @font-face {
     font-family: 'Anonymous';
     src: url('@/assets/fonts/Anonymous.ttf') format('truetype');
@@ -81,15 +93,20 @@ body {
 .v-modal {
     background-color: var(--black-opacity-80) !important;
     border-radius: 8px;
-    padding: 20px;
+/*    padding: 20px;*/
     border: 2px solid var(--primary-color) !important; /* Цвет рамки тултипа */
     color: white !important;
+}
+
+:root .v-card-title{
+    font-size: 1.1rem;
 }
 
 .v-modal .cancel-btn {
     text-align: center;
     color: var(--gray2) !important;
     cursor: pointer;
+    font-size: 0.7rem !important;
 }
 
 .v-modal .confirm-btn {
@@ -98,6 +115,7 @@ body {
     background-color: var(--primary-color);
     color: white !important;
     margin: 10px;
+    font-size: 0.7rem !important;
 }
 
 .loader {
@@ -150,8 +168,8 @@ body {
 }
 :root .v-slider-track__tick-label{
     font-size: 0.5em;
-    margin-top: 8px;
-    margin-left: 28px !important;
+    margin-top: 6px;
+    margin-left: 20px !important;
     color: var(--gray2);
 }
 :root .v-slider-track__fill{
@@ -164,7 +182,7 @@ body {
 }
 
 :root .v-input--density-compact{
-    --v-input-control-height:45px !important;
+    --v-input-control-height:40px !important;
 }
 
 .v-list-item{
@@ -188,4 +206,10 @@ body {
 
 :root .v-btn--disabled{
     background-color: var(--gray1) !important;
+}
+
+
+/*Высота слайдеров*/
+:root .v-slider.v-input--vertical > .v-input__control{
+    min-height: 220px;
 }

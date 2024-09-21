@@ -1,6 +1,6 @@
 <template>
   <div class="background background-training">
-    <div class="training-container">
+    <div class="training-container" @scroll="handleScroll">
       <div class="training-content-wrapper">
 
         <div v-if="!loadingPunchInfo && !isTrainingBlocked" class="training-punch-container">
@@ -22,9 +22,8 @@
             </div>
 
             <!-- Элементы для отображения чисел -->
-            <div v-for="(num, index) in numbersAnimations" :key="index" class="number-animation" :style="num.style">+{{
-                num.value
-              }} &cent;
+            <div v-for="(num, index) in numbersAnimations" :key="num.id" class="number-animation" :style="num.style">
+              +{{ num.value }} &cent;
             </div>
 
           </div>
@@ -133,6 +132,7 @@ const moveCircle = (circle) => {
   setTimeout(() => moveCircle(circle), SPEED_MOVE_PUNCH_MS);
 };
 const handleClickPunch = (event, isFromCircleClick = false, value) => {
+
   const target = event.target;
   let left, top;
 
@@ -163,6 +163,13 @@ const handleClickPunch = (event, isFromCircleClick = false, value) => {
     },
   };
 
+  if (numbersAnimations.value.length >= 20) {
+
+    numbersAnimations.value.shift();
+  }
+
+
+  // Добавляем новое число в массив
   numbersAnimations.value.push(newNumber);
 
   store.dispatch('punch/handlePunch', value);
@@ -249,6 +256,13 @@ watchEffect(() => {
   }
 });
 
+
+const emit = defineEmits(['scroll']);
+
+const handleScroll = (event) => {
+  emit('scroll', event.target.scrollTop);
+};
+
 onBeforeMount( () => {
   store.dispatch('punch/synchronizePunchResetTime');
   store.dispatch('task/fetchAllSocialTasks');
@@ -275,7 +289,7 @@ onUnmounted(() => {
 
 .background-training::before {
   content: "";
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   background: linear-gradient(to top, black 0%, transparent 100%);
@@ -287,7 +301,7 @@ onUnmounted(() => {
 
 .background-training::after {
   content: "";
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   background: black;
@@ -308,20 +322,27 @@ onUnmounted(() => {
   position: relative;
   z-index: 10;
   overflow-y: auto;
-  max-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
   color: white;
+  -webkit-overflow-scrolling: auto; /* Отключить резиновый скролл*/
+  overscroll-behavior-y: none;
+}
+
+@supports (height: 100dvh) {
+  .training-container {
+    height: 100dvh;
+  }
 }
 
 .training-content-wrapper {
   width: 100%;
-  padding: 10vh 0;
   box-sizing: border-box;
   max-width: 1024px;
-  margin: 0 auto;
+  margin-top: 70px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -335,8 +356,8 @@ onUnmounted(() => {
 }
 
 .punch-img {
-  height: 400px;
-  width: 300px;
+  height: 350px;
+  width: 225px;
   position: absolute;
   top: -20px;
   left: 50%;
@@ -346,37 +367,39 @@ onUnmounted(() => {
 
 .training-title {
   font-family: Anonymous, sans-serif;
-  font-size: 2.5rem;
+  font-size: 2rem;
   z-index: 100;
-  margin-bottom: 260px;
+  margin-bottom: 210px;
 }
 
 .scroll-gap {
   display: block;
   position: relative;
   height: 50px;
+  padding-bottom: 50px;
 }
 
 .circle-container {
-  height: 240px;
-  width: 215px;
+  height: 200px;
+  width: 200px;
   position: absolute;
-  top: 120px;
+  top: 90px;
   left: 50%;
   transform: translateX(-50%);
+  border-radius: 20%;
 }
 
 
 .movement-container {
   position: relative;
-  width: 50px;
-  height: 50px;
+  width: 40px;
+  height: 40px;
 }
 
 .pulsing-circle {
   position: absolute;
-  width: 50px;
-  height: 50px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background-color: var(--black-opacity);
   animation: pulse 2s infinite;
@@ -466,7 +489,7 @@ onUnmounted(() => {
 }
 
 .timer-overlay {
-  font-size: 4rem;
+  font-size: 3rem;
   background-color: var(--black-opacity-80);
   padding: 10px;
   border-radius: 10px;
