@@ -7,7 +7,10 @@ RUN apk add --no-cache \
     automake \
     libtool \
     nasm \
-    build-base
+    build-base \
+    pkgconfig \
+    zlib-dev \
+    jpeg-dev
 
 # Устанавливаем рабочую директорию
 WORKDIR /app
