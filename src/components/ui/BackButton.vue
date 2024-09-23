@@ -14,9 +14,6 @@
 
 import {useI18n} from "vue-i18n";
 import router from "@/router/index.js";
-const route = useRoute();
-import { defineProps } from 'vue';
-import {useRoute} from "vue-router";
 
 const { t } = useI18n({ useScope: 'global' });
 
