@@ -1,5 +1,16 @@
 # Используем базовый образ для Node.js
-FROM node:18-alpine AS build
+FROM node:20-alpine AS build
+
+# Устанавливаем необходимые инструменты для сборки пакетов
+RUN apk add --no-cache \
+    autoconf \
+    automake \
+    libtool \
+    nasm \
+    build-base \
+    pkgconfig \
+    zlib-dev \
+    jpeg-dev
 
 # Устанавливаем рабочую директорию
 WORKDIR /app

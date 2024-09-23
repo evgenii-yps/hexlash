@@ -1,8 +1,6 @@
 import {createRouter, createWebHistory} from "vue-router";
 import store from "@/core/state/store.js";
 import RainView from "@/views/RainView.vue";
-import TrainingView from "@/views/TrainingView.vue";
-import ProfileView from "@/views/ProfileView.vue";
 import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
 
 const routeHistory = [];
@@ -25,18 +23,18 @@ const protectedRoutes = [
     {path: '/help', name: 'Help', component: () => import("/src/views/PageView.vue")},
     {path: '/arena', name: 'Arena', component: () => import("/src/views/ArenaView.vue")},
 
-    {path: '/user/:userLogin', name: 'UserProfile', component: ProfileView},
-    {path: '/profile', name: 'Profile', component: ProfileView},
-    {path: '/profile/balance', name: 'Balance', component: ProfileView},
-    {path: '/profile/wallet', name: 'Wallet', component: ProfileView},
-    {path: '/profile/account', name: 'Account', component: ProfileView},
+    {path: '/user/:userLogin', name: 'UserProfile', component: () => import("/src/views/ProfileView.vue")},
+    {path: '/profile', name: 'Profile',  component: () => import("/src/views/ProfileView.vue")},
+    {path: '/profile/balance', name: 'Balance', component: () => import("/src/views/ProfileView.vue")},
+    {path: '/profile/wallet', name: 'Wallet', component: () => import("/src/views/ProfileView.vue")},
+    {path: '/profile/account', name: 'Account', component: () => import("/src/views/ProfileView.vue")},
 
     {path: '/club/:id', name: 'Club', component: () => import("/src/views/ClubView.vue")},
 
     {path: '/ratings/:type', name: 'Ratings', component: () => import("/src/views/RatingsView.vue"), props: true},
     {path: '/ratings', redirect: '/ratings/clubs'},
 
-    {path: '/training', name: 'Training', component: TrainingView},
+    {path: '/training', name: 'Training', component: () => import("/src/views/TrainingView.vue")},
     {path: '/training/fight', name: 'Training fight', component: () => import("/src/views/FightView.vue")},
 
     {path: '/fight/:id', name: 'Fight', component: () => import("/src/views/FightView.vue")},
