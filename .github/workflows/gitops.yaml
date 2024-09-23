@@ -17,17 +17,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3  # Проверяем репозиторий
 
-      - name: Set up Node.js 20
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20'
-
-      - name: Install dependencies
-        run: npm ci  # Быстрая установка зависимостей
-
-      - name: Build frontend
-        run: npm run build  # Сборка проекта
-
       # - name: Check if branch is `main` and if it's approved
       #   if: github.ref == 'refs/heads/main' && github.event.pull_request.review.state == 'approved'
       #   run: echo "This is the main branch, proceeding only after approval"
