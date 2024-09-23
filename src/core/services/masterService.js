@@ -61,7 +61,7 @@ export const login = async (credentials) => {
         // // Получите данные текущего пользователя
         // const userData = await fetchMasterData(jwtToken);
 
-        throw new Error("Auth error");
+        //throw new Error("Auth error");
 
         const userData = `{
               "id": "user123",

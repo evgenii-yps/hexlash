@@ -14,81 +14,100 @@ import imageminPngquant from 'imagemin-pngquant'
 import {optimizeCssModules} from "vite-plugin-optimize-css-modules";
 
 // https://vitejs.dev/config/
-export default defineConfig({
-    plugins: [
-        vue(),
-        compression({
-            algorithm: 'brotliCompress',
-            ext: '.br',
-        }),
-        viteStaticCopy({
-            targets: [
-                {
-                    src: 'src/assets/models/punching-bags.bin',
-                    dest: 'assets'
-                }
-            ]
-        }),
-        obfuscator({
-            compact: true,
-            controlFlowFlattening: true,
-            controlFlowFlatteningThreshold: 0.75,
-            deadCodeInjection: true,
-            deadCodeInjectionThreshold: 0.4,
-            stringArray: false,
-            stringArrayThreshold: 0.75,
-            debugProtection: false,
-            exclude: ['src/router/**', 'node_modules/**'],
-        }),
-        viteImagemin({
-            plugins: {
-                jpg: imageminMozjpeg(),
-                png: imageminPngquant()
-            },
-            makeWebp: {
+export default defineConfig((mode) => {
+
+    const apiServers = {
+        prod: 'https://api.bitfightclub.com',
+        test: 'https://apitest.bitfightclub.com',
+    };
+    const apiServer = apiServers[mode] || apiServers.test;
+
+    return {
+        plugins: [
+            vue(),
+            compression({
+                algorithm: 'brotliCompress',
+                ext: '.br',
+            }),
+            viteStaticCopy({
+                targets: [
+                    {
+                        src: 'src/assets/models/punching-bags.bin',
+                        dest: 'assets'
+                    }
+                ]
+            }),
+            obfuscator({
+                compact: true,
+                controlFlowFlattening: true,
+                controlFlowFlatteningThreshold: 0.75,
+                deadCodeInjection: true,
+                deadCodeInjectionThreshold: 0.4,
+                stringArray: false,
+                stringArrayThreshold: 0.75,
+                debugProtection: false,
+                exclude: ['src/router/**', 'node_modules/**'],
+            }),
+            viteImagemin({
                 plugins: {
-                    jpg: imageminWebp(),
+                    jpg: imageminMozjpeg(),
+                    png: imageminPngquant()
+                },
+                makeWebp: {
+                    plugins: {
+                        jpg: imageminWebp(),
+                    },
+                },
+            }),
+
+            // optimizeCssModules()
+        ],
+        define:
+            {
+                __APP_VERSION__: JSON.stringify(version),
+                __SERVER_URL__: JSON.stringify(apiServer),
+            },
+        assetsInclude: ['**/*.glb', '**/*.gltf', '**/*.bin', '**/*.wasm'],
+        resolve:
+            {
+                alias: {
+                    '@':
+                        fileURLToPath(new URL('./src', import.meta.url)),
+                    util:
+                        "util/",
+                    buffer:
+                        "buffer/"
+                }
+            },
+        build: {
+            assetsInlineLimit: 4096,
+            sourcemap:
+                false,
+            minify:
+                'terser',
+            // Настройки для оптимизации
+            optimizeDeps:
+                {
+                    include: ['axios', 'vue-router'],
+                },
+            rollupOptions: {
+                output: {
+                    manualChunks(id) {
+                        if (id.includes('node_modules')) {
+                            return id.toString().split('node_modules/')[1].split('/')[0].toString();
+                        }
+                    }
+                },
+                treeshake: true,
+            },
+            // Удаление комментариев и консольных логов в продакшене
+            terserOptions: {
+                compress: {
+                    drop_console: true,
+                    drop_debugger:
+                        true,
                 },
             },
-        }),
-
-       // optimizeCssModules()
-    ],
-    define: {
-        __APP_VERSION__: JSON.stringify(version),
-    },
-    assetsInclude: ['**/*.glb', '**/*.gltf', '**/*.bin', '**/*.wasm'],
-    resolve: {
-        alias: {
-            '@': fileURLToPath(new URL('./src', import.meta.url)),
-            util: "util/",
-            buffer: "buffer/"
         }
-    },
-    build: {
-        assetsInlineLimit: 4096,
-        sourcemap: false,
-        minify: 'terser',
-        // Настройки для оптимизации
-        optimizeDeps: {
-            include: ['axios', 'vue-router'],
-        },
-        rollupOptions: {
-            output: {
-                manualChunks(id) {
-                    if (id.includes('node_modules')) {
-                        return id.toString().split('node_modules/')[1].split('/')[0].toString();
-                    }
-                }
-            },
-            treeshake: true,
-        },
-        // Удаление комментариев и консольных логов в продакшене
-        terserOptions: {
-            compress: {
-                drop_console: true,
-                drop_debugger: true,
-            },
-        },
     }
 })

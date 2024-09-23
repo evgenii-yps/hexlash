@@ -33,20 +33,12 @@ FROM nginx:1.26.2-alpine
 # Копируем файлы сборки в Nginx
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Копируем Nginx конфигурацию
-COPY nginx.test.conf /etc/nginx/nginx.test.conf
-COPY nginx.prod.conf /etc/nginx/nginx.prod.conf
-
-ARG TARGET_ENV=test
-RUN if [ "$TARGET_ENV" = "main" ]; then \
-cp /etc/nginx/nginx.prod.conf /etc/nginx/nginx.conf; \
-else \
-cp /etc/nginx/nginx.test.conf /etc/nginx/nginx.conf; \
-fi
+# Копируем шаблон Nginx конфигурации
+COPY nginx.template.conf /etc/nginx/nginx.template.conf
 
 # Открываем порт 8080, 8443
 EXPOSE 8080
 EXPOSE 8443
 
-# Запускаем Nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Используем переменные окружения для конфигурации
+CMD ["/bin/sh", "-c", "envsubst < /etc/nginx/nginx.template.conf > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"]
