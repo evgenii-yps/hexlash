@@ -82,9 +82,9 @@ export default defineConfig({
                         if (id.includes('axios')) {
                             return 'axios'; // Отдельный чанк для axios
                         }
-                        if (id.includes('three')) {
+                       /* if (id.includes('three')) {
                             return 'three'; // Все библиотеки для Three.js
-                        }
+                        }*/
                         if (id.includes('gsap')) {
                             return 'gsap'; // GSAP можно выделить в отдельный чанк
                         }
