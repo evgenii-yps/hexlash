@@ -25,7 +25,6 @@ RUN npm install
 COPY . .
 
 ARG TARGET_ENV=test
-
 # Собираем приложение
 RUN if [ "$TARGET_ENV" = "main" ]; then \
       npm run build:prod; \
@@ -43,7 +42,7 @@ COPY --from=build /app/dist /usr/share/nginx/html
 COPY nginx.test.conf /etc/nginx/nginx.test.conf
 COPY nginx.prod.conf /etc/nginx/nginx.prod.conf
 
-
+ARG TARGET_ENV=test
 RUN if [ "$TARGET_ENV" = "main" ]; then \
 cp /etc/nginx/nginx.prod.conf /etc/nginx/nginx.conf; \
 else \
