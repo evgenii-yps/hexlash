@@ -51,7 +51,8 @@ export default defineConfig({
                 },
             },
         }),
-        optimizeCssModules()
+
+       // optimizeCssModules()
     ],
     define: {
         __APP_VERSION__: JSON.stringify(version),
@@ -76,26 +77,7 @@ export default defineConfig({
             output: {
                 manualChunks(id) {
                     if (id.includes('node_modules')) {
-                        if (id.includes('vue')) {
-                            return 'vue'; // Все библиотеки, связанные с Vue.js, в один чанк
-                        }
-                        if (id.includes('axios')) {
-                            return 'axios'; // Отдельный чанк для axios
-                        }
-                       /* if (id.includes('three')) {
-                            return 'three'; // Все библиотеки для Three.js
-                        }*/
-                        if (id.includes('gsap')) {
-                            return 'gsap'; // GSAP можно выделить в отдельный чанк
-                        }
-                        if (
-                            id.includes('ethers') ||
-                            id.includes('@coinbase/wallet-sdk') ||
-                            id.includes('@web3modal')
-                        ) {
-                            return 'web3'; // Чанк для всех библиотек Web3
-                        }
-                        return 'vendor'; // Все остальные библиотеки в общий чанк vendor
+                        return id.toString().split('node_modules/')[1].split('/')[0].toString();
                     }
                 }
             },
