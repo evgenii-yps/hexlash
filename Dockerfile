@@ -1,5 +1,5 @@
 # Используем базовый образ для Node.js
-FROM node:18-alpine AS build
+FROM node:20-alpine AS build
 
 # Устанавливаем необходимые инструменты для сборки пакетов
 RUN apk add --no-cache \
@@ -7,8 +7,7 @@ RUN apk add --no-cache \
     automake \
     libtool \
     nasm \
-    build-base \
-    && npm install -g npm@10.8.3 # Обновляем NPM до нужной версии
+    build-base
 
 # Устанавливаем рабочую директорию
 WORKDIR /app
