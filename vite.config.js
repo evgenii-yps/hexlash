@@ -88,6 +88,13 @@ export default defineConfig({
                         if (id.includes('gsap')) {
                             return 'gsap'; // GSAP можно выделить в отдельный чанк
                         }
+                        if (
+                            id.includes('ethers') ||
+                            id.includes('@coinbase/wallet-sdk') ||
+                            id.includes('@web3modal')
+                        ) {
+                            return 'web3'; // Чанк для всех библиотек Web3
+                        }
                         return 'vendor'; // Все остальные библиотеки в общий чанк vendor
                     }
                 }
