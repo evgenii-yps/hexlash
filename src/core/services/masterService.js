@@ -8,38 +8,22 @@ import {jwtDecode} from "jwt-decode";
 import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
 import {i18n} from "@/main.js";
 
-export const getMasterFromLocalAndAPI = async () => {
+export const initializeMasterData = async () => {
     // Сначала берем данные из локальной базы данных
     const localData = await getMasterFromLocalDB();
 
+    const jwtToken = await getJwtToken(localData);
+
     if (localData) {
-
         store.commit('master/setMaster', localData);
-        store.commit('master/setAuthState', AuthStateModel.Authenticated(true));
-
-        // TODO включить когда будет jwt токен
-        // if (localData.jwtToken) {
-        //     try {
-        //         const decodedToken = jwtDecode(localData.jwtToken);
-        //         const currentTime = Math.floor(Date.now() / 1000); // Текущее время в секундах
-        //
-        //         if (decodedToken.exp && currentTime < decodedToken.exp) {
-        //             store.commit('master/setAuthState', AuthStateModel.Authenticated(true));
-        //         } else {
-        //             store.commit('master/setAuthState', AuthStateModel.Authenticated(false));
-        //         }
-        //     } catch (error) {
-        //         // Если токен не валиден или не может быть декодирован, устанавливаем флаг в false
-        //         store.commit('master/setAuthState', AuthStateModel.Authenticated(false));
-        //     }
-        // } else {
-        //     store.commit('master/setAuthState', AuthStateModel.Authenticated(false));
-        // }
-
-        // Асинхронно обновляем данные из API
-        getMasterFromAPI();
+        if (jwtToken && validateJwtToken(jwtToken)) {
+            store.commit('master/setAuthState', AuthStateModel.Authenticated(true));
+            // Асинхронно запускаем запрос на обновление данных через API
+            getMasterFromAPI();
+        } else {
+            store.commit('master/setAuthState', AuthStateModel.Authenticated(false));
+        }
     }
-
 };
 
 export const getMasterFromAPI = () => {
@@ -56,47 +40,13 @@ export const getMasterFromAPI = () => {
 // Метод логина
 export const login = async (credentials) => {
     try {
-        //const response = await apiClient.post('/auth/login', credentials);
-        //const {jwtToken} = response.data;
-        // // Получите данные текущего пользователя
-        // const userData = await fetchMasterData(jwtToken);
+        const response = await apiClient.post('/auth/login', credentials);
+        const {jwtToken} = response.data;
 
-        throw new Error("Auth error");
+        updateJwtToken(jwtToken);
 
-        const userData = `{
-              "id": "user123",
-              "login": "userLogin",
-              "name": "John Doe",
-              "avatarUrl": "",
-              "isBlocked": false,
-              "createdAt": "2024-07-23T10:00:00Z",
-              "updatedAt": "2024-07-23T10:00:00Z",
-              "clubId": "club123",
-              "walletAddress": "walletAddress123",
-              "walletType": "IMPORTED",
-              "totalFights": 100,
-              "wins": 50,
-              "losses": 30,
-              "draws": 20,
-              "luckPercentage": 75,
-              "wonTokens": 1000,
-              "freeTokens": 500,
-              "lostTokens": 200,
-              "invitedUsers": 10,
-              "daysInClub": 365,
-              "noSkipDays": 365,
-              "inviteId": "invite123",
-              "email": "johndoe@example.com",
-              "achievements": [1, 2, 3, 4, 5, 6, 7, 10, 11],
-              "balance":30099,
-              "skin":"skin_w_20.png",
-              "isInitialize":true
-        }`;
-
-
-        // Преобразуем данные пользователя в модель и добавляем токен
-        const masterModel = MasterModel.fromJSON(userData);
-        masterModel.jwtToken = "JWT";
+        // Получите данные текущего пользователя
+        const masterModel = await fetchMasterData();
 
         // Проверяем пользователя в базе данных
         const existingUser = await getMasterFromLocalDB();
@@ -133,32 +83,39 @@ export const resetPassword = async (email) => {
     // Имитируем API вызов
     await new Promise((resolve) => setTimeout(resolve, 2000));
     if (email === 'test@example.com') {
-        return { success: true, message: i18n.global.t('auth.reset.success') };
+        return {success: true, message: i18n.global.t('auth.reset.success')};
     } else {
         throw new Error(i18n.global.t('auth.reset.error'));
     }
 };
 
 export const sendInvite = async (inviteCode) => {
+
+    if(!validateInviteCode(inviteCode)){
+        throw new Error(i18n.global.t('auth.invite.errorInvalidInvite'));
+    }
+
     // Имитируем API вызов
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
     /*if (inviteCode === 'admin') {
         return { success: true};
     } else {*/
-        throw new Error(i18n.global.t('auth.invite.errorInvalidInvite'));
+    throw new Error(i18n.global.t('auth.invite.errorInvalidInvite'));
     //}
 };
 
+const validateInviteCode = (code) => {
+    const inviteCodePattern = /^[A-Za-z0-9]{6,10}$/;
+    return inviteCodePattern.test(code);
+};
+
 // Функция для получения данных текущего пользователя
-const fetchMasterData = async (token) => {
+const fetchMasterData = async () => {
     try {
-        const response = await apiClient.get('/users/me', {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        //return MasterModel.fromJSON(response.data);
+        const response = await apiClient.get('/user/me', {authRequired: true});
+        console.log(response);
+        return MasterModel.fromJSON(response.data);
     } catch (error) {
         throw new Error('Failed to fetch user data from server');
     }
@@ -167,7 +124,7 @@ const fetchMasterData = async (token) => {
 // Изменить профиль
 export const changeProfile = async (profileData) => {
     try {
-        const response = await apiClient.put('/users/edit', profileData, {authRequired: true});
+        const response = await apiClient.put('/user/edit', profileData, {authRequired: true});
         return response.data;
     } catch (error) {
         throw new Error('Failed to change profile');
@@ -177,7 +134,7 @@ export const changeProfile = async (profileData) => {
 // Изменить пароль
 export const changePassword = async (passwordData) => {
     try {
-        const response = await apiClient.put('/users/password', passwordData, {authRequired: true});
+        const response = await apiClient.put('/user/password', passwordData, {authRequired: true});
         return response.data;
     } catch (error) {
         throw new Error('Failed to change password');
@@ -201,7 +158,7 @@ export const logout = async () => {
 // Верифицировать пользователя
 export const verifyUser = async (verifyData) => {
     try {
-        const response = await apiClient.post('/users/verify-user', verifyData, {authRequired: true});
+        const response = await apiClient.post('/user/verify-user', verifyData, {authRequired: true});
         return response.data;
     } catch (error) {
         throw new Error('Failed to verify user');
@@ -211,7 +168,7 @@ export const verifyUser = async (verifyData) => {
 // Отправить запрос на верификацию почты
 export const sendVerifyEmail = async () => {
     try {
-        const response = await apiClient.post('/users/send-verify-email', {}, {authRequired: true});
+        const response = await apiClient.post('/user/send-verify-email', {}, {authRequired: true});
         return response.data;
     } catch (error) {
         throw new Error('Failed to send verify email');
@@ -266,3 +223,24 @@ export const fullReset = async (text) => {
     localStorage.clear();
 }
 
+const validateJwtToken = (jwtToken) => {
+    try {
+        const decodedToken = jwtDecode(jwtToken);
+        const currentTime = Math.floor(Date.now() / 1000); // Текущее время в секундах
+
+        return !!(decodedToken.exp && currentTime < decodedToken.exp);
+    } catch (error) {
+        return false; // Токен невалиден
+    }
+};
+
+export const getJwtToken = () => {
+    const KEY = 'jwtToken';
+    return localStorage.getItem(KEY) || null;
+};
+
+export const updateJwtToken = (jwtToken) => {
+    store.commit('master/setJwtToken', jwtToken);
+    const KEY = 'jwtToken';
+    localStorage.setItem(KEY, jwtToken);
+};

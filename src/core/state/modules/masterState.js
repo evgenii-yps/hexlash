@@ -8,8 +8,10 @@ import {i18n} from '@/main.js';
 import * as masterService from "@/core/services/masterService.js";
 
 
+
 const state = {
     master: null,
+    jwtToken: masterService.getJwtToken(),
     authState: new AuthStateModel(),
     inviteState: new InviteStateModel(),
     resetState: new PasswordResetStateModel(),
@@ -18,6 +20,7 @@ const state = {
 
 const getters = {
     getMaster: (state) => state.master,
+    getJwtToken: (state) => state.jwtToken,
     getAuthState: (state) => state.authState,
     getInviteState: (state) => state.inviteState,
     getResetState: (state) => state.resetState,
@@ -30,6 +33,9 @@ const getters = {
 const mutations = {
     setMaster: (state, masterData) => {
         state.master = masterData;
+    },
+    setJwtToken(state, token) {
+        state.jwtToken = token;
     },
     updateMaster(state, updatedMasterData) {
         if (state.master) {
@@ -54,11 +60,8 @@ const mutations = {
         state.master = null;
         state.authState = new AuthStateModel();
     },
-    setInviteState: (state, inviteState) => {
-        state.inviteState = inviteState;
-    },
-    clearInviteState: (state) => {
-        state.inviteState = InviteStateModel.Reset();
+    setInviteState: (state, payload) => {
+        Object.assign(state.inviteState, payload);
     },
     setInfoMessage(state, message) {
         state.infoMessage = message;
@@ -75,9 +78,19 @@ const mutations = {
 };
 
 const actions = {
+    async initializeMasterData({commit}) {
+        try {
+            await masterService.initializeMasterData();
+        } catch (error) {
+            console.error('Failed to fetch user data:', error);
+        }
+    },
     async login({commit}, credentials) {
         await masterService.login(credentials);
-        //await router.push('/profile');
+
+        await this.dispatch('master/initInitialize');
+
+        await router.push('/');
     },
     async logout({commit}) {
 
@@ -87,13 +100,6 @@ const actions = {
 
         await router.push('/');
     },
-    async fetchMaster({commit}) {
-        try {
-            await masterService.getMasterFromLocalAndAPI();
-        } catch (error) {
-            console.error('Failed to fetch user data:', error);
-        }
-    },
     /*syncMaster({commit}) {
         try {
            getMasterFromAPI();
@@ -101,6 +107,50 @@ const actions = {
             console.error('Failed to sync master data:', error);
         }
     },*/
+    async sendInvite({commit}, inviteCode) {
+        commit('setInviteState', { loading: true });
+        try {
+            const response = await masterService.sendInvite(inviteCode);
+
+            // Сначала полностью очистить всю базу с компьютера
+            await masterService.fullReset();
+
+            // Авторизуемся под временными данными
+            this.dispatch('master/login', {
+                login: response.data.login,
+                password: response.data.tempPassword
+            });
+
+        } catch (error) {
+            commit('setInviteState', { errorMessage: error.message, loading: false });
+        }
+    },
+    async initInitialize({commit}) {
+        // Если первый вход в приложение
+        if(!state.master.initialVerified) {
+            const master = state.master;
+
+            commit('setInviteState', {
+                generatedLogin: master.getLogin(),
+                generatedPassword: master.tempPassword,
+                loading: false,
+                errorMessage: null
+            });
+        }
+    },
+    async sendInitialize({commit, dispatch}, payload) {
+        try {
+            // TODO Еще отправляем язык пользователя, чтобы хранить его
+
+            // await someApiCall(payload);
+
+            // Обновляем мастера
+
+
+        } catch (error) {
+            throw error; // Исключение будет поймано в компоненте
+        }
+    },
     async updateMaster({commit, state}, updatedData) {
         try {
             // Обновление состояния
@@ -143,46 +193,10 @@ const actions = {
             console.error('Failed to update user data:', error);
         }
     },
-    async setLanguage({commit, dispatch, state}, language) {
-        dispatch('updateMaster', {language: language});
+    async setLanguage({commit, state}, language) {
+        this.dispatch('master/updateMaster', {language: language});
 
         i18n.global.locale.value = language
-
-        console.log(i18n.global.locale.value)
-    },
-    async sendInvite({commit}, inviteCode) {
-        commit('setInviteState', InviteStateModel.Loading(true));
-        try {
-            const response = await masterService.sendInvite(inviteCode);
-
-            // Сначала полностью очистить всю базу с компьютера
-            await masterService.fullReset();
-
-            commit('setInviteState', InviteStateModel.Success(
-                "jwt",
-                "generatedLogin",
-                "generatedPass")
-            );
-
-            await masterService.login(response);
-            await router.push('/');
-
-        } catch (error) {
-            commit('setInviteState', InviteStateModel.Error(error.message));
-        }
-    },
-    async sendInitialize({commit, dispatch}, payload) {
-        try {
-            // TODO Еще отправляем язык пользователя, чтобы хранить его
-
-            // await someApiCall(payload);
-
-            // Обновляем мастера
-
-
-        } catch (error) {
-            throw error; // Исключение будет поймано в компоненте
-        }
     },
     async resetPassword({commit}, email) {
         commit('setResetState', PasswordResetStateModel.Loading(true));

@@ -12,7 +12,7 @@
           :readonly="readonly"
           autocapitalize="none"
           :placeholder="placeholder"
-          style="font-size: 0.7em"
+          style="font-size: 0.8em"
       />
       <div v-if="showButton" class="slot-container">
         <slot></slot>
@@ -67,6 +67,14 @@ const props = defineProps({
     type: String,
     default: '1rem' // Значение по умолчанию
   },
+  upperCase:{
+    type: Boolean,
+    default:false
+  },
+  center:{
+    type: Boolean,
+    default:false
+  },
   showButton: {
     type: Boolean,
     default: false
@@ -95,6 +103,8 @@ const inputStyles = computed(() => ({
   flexGrow: 1,
   borderRadius: props.showButton ? '4px 0 0 4px' : props.borderRadius,
   padding: props.padding,
+  textTransform: props.upperCase ? 'uppercase' : 'none',
+  textAlign: props.center ? 'center' : 'none',
 }));
 
 const wrapperStyles = computed(() => ({

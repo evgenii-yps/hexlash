@@ -13,7 +13,8 @@
     "btnConfirm": "Confirmar",
     "btnOk": "Aceptar",
     "btnSave": "Guardar",
-    "btnCreate": "Crear"
+    "btnCreate": "Crear",
+    "btnNext": "Siguiente"
   },
   "auth": {
     "login": {

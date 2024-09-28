@@ -25,7 +25,7 @@
     <p v-if="!isAuthenticated" class="beta-text">{{ version }}</p>
 
 
-    <Getstarted v-if="isAuthenticated && !isInitialize"/>
+    <Getstarted v-if="isAuthenticated && !initialVerified"/>
 
   </div>
 
@@ -41,10 +41,10 @@ import Reset from "@/components/fragments/auth/Reset.vue";
 const {t} = useI18n({useScope: 'global'})
 
 const isAuthenticated = computed(() => store.getters["master/getAuthState"]?.isAuthenticated);
-const isInitialize = computed(() => {
+const initialVerified = computed(() => {
   const master = store.getters['master/getMaster'];
-  if (master && master.isInitialize) {
-    return master.isInitialize;
+  if (master && master.initialVerified) {
+    return master.initialVerified;
   }
   return false;
 });
@@ -1099,7 +1099,12 @@ onMounted(() => {
   if (isAuthenticated.value) {
     startCountdownListing();
     masterService.isShowPrivacyInfo(t('info.showPrivacyInfo'))
+
+    store.dispatch('master/initInitialize');
   }
+
+
+
 });
 
 onUnmounted(() => {

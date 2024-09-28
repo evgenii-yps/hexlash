@@ -113,7 +113,7 @@
 </template>
 
 <script setup>
-import {computed, ref} from 'vue';
+import {computed, ref, watch} from 'vue';
 import debounce from "debounce";
 import {useI18n} from "vue-i18n";
 
@@ -123,21 +123,19 @@ import store from "@/core/state/store.js";
 
 const {t} = useI18n({useScope: 'global'});
 
-const inviteState = computed(() => store.getters['master/getInviteState']);
-
 const dialogGetStarted = ref(true);
 
 const name = ref("");
 const nameError = ref('');
 
-const password = ref(inviteState.value.generatedPassword);
+const password = ref('');
 const confirmPassword = ref("");
 const passwordChanged = ref(false);
 const confirmPasswordError = ref('');
-const initialPassword = inviteState.value.generatedPassword;
+let initialPassword = '';
 const showPassword = ref(true);
 
-const login = ref(inviteState.value.generatedLogin);
+const login = ref('');
 const loginError = ref('');
 const loginChanged = ref(false);
 const loginAvailable = ref(false);
@@ -210,7 +208,9 @@ const debouncedCheckLoginExistence = debounce(async () => {
     // Задержка для демонстрации лоадера
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    const available = true;
+    // TODO запрос на проверку логина
+
+    const available = false;
     loginAvailable.value = available;
 
     if (!available) {
@@ -232,7 +232,9 @@ const toggleAgree = () => {
 };
 
 const isFormValid = computed(() => {
-  return name.value && login.value && password.value && agree.value;
+  return name.value && login.value && password.value && agree.value &&
+      !nameError.value && !loginError.value && !confirmPasswordError.value
+      && confirmPassword.value && confirmPassword.value === password.value;
 });
 
 
@@ -257,6 +259,12 @@ const saveChanges = async () => {
   }
 };
 
+
+watch(store.getters['master/getInviteState'], (initState) => {
+  login.value = initState.generatedLogin;
+  password.value = initState.generatedPassword;
+  initialPassword = initState.generatedPassword;
+}, { immediate: true });
 
 </script>
 

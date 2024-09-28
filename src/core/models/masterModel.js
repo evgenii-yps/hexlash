@@ -9,18 +9,18 @@ export class MasterModel {
                     inviteId = null,
                     email = '',
                     language = locale,
-                    jwtToken = '',
-                    isInitialize = false,
+                    initialVerified = false,
+                    tempPassword = null,
                     userData = {}
                 } = {}) {
         this.id = id;
         this.inviteId = inviteId;
         this.email = email;
-        this.language = language;
-        this.jwtToken = jwtToken;
-        this.isInitialize = isInitialize;
         this.userData = userData;
+        this.language = language;
 
+        this.initialVerified = initialVerified;
+        this.tempPassword = tempPassword;
     }
 
     getUuid() {
@@ -39,22 +39,49 @@ export class MasterModel {
         return (this.userData.balance / (10 ** DECIMALS)).toFixed(DECIMALS);
     }
 
-    static fromJSON(jsonString) {
+    static fromJSONString(jsonString) {
         try {
             const userData = JSON.parse(jsonString);
-            const {inviteId, email, isInitialize} = userData;
+            const {inviteId, email, initialVerified} = userData;
 
             // Удаляем поля из userData, чтобы не передавать их в MasterModel
             delete userData.inviteId;
             delete userData.email;
+            delete userData.initialVerified;
 
             // Возвращаем объект MasterModel и массив socialTasks
             return new MasterModel({
                 userData: userData,
                 inviteId,
                 email,
-                isInitialize,
+                initialVerified,
             });
+
+        } catch (error) {
+            console.error('Error parsing JSON string:', error);
+            return null;
+        }
+    }
+
+    static fromJSON(json) {
+        try {
+            const userData = json;
+            const {inviteId, email, initialVerified, tempPassword} = userData;
+
+            // Удаляем поля из userData, чтобы не передавать их в MasterModel
+            delete userData.inviteId;
+            delete userData.email;
+            delete userData.initialVerified;
+            delete userData.tempPassword;
+
+            return new MasterModel({
+                userData: userData,
+                inviteId,
+                email,
+                initialVerified,
+                tempPassword
+            });
+
 
         } catch (error) {
             console.error('Error parsing JSON string:', error);

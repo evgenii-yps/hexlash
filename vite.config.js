@@ -19,6 +19,7 @@ export default defineConfig((mode) => {
     const apiServers = {
         prod: 'https://api.bitfightclub.com',
         test: 'https://apitest.bitfightclub.com',
+
     };
     const apiServer = apiServers[mode] || apiServers.test;
 

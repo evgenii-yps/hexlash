@@ -86,7 +86,7 @@ router.beforeEach(async (to, from, next) => {
     }
 
     const isAuthenticated = store.getters["master/getAuthState"]?.isAuthenticated;
-    const isInitialize = store.getters["master/getMaster"]?.isInitialize;
+    const initialVerified = store.getters["master/getMaster"]?.initialVerified;
 
     if (protectedRoutes.some(route => route.name === to.name || route.path === to.path)) {
         if (!isAuthenticated) {
@@ -99,7 +99,7 @@ router.beforeEach(async (to, from, next) => {
             console.log('Redirecting to Invite page');
             next({name: 'Invite'});
         }
-        else if(!isInitialize && to.name !== 'Home') {
+        else if(!initialVerified && to.name !== 'Home') {
             next({name: 'Home'});
         }
         else{

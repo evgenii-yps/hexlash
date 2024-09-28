@@ -1,9 +1,9 @@
 import axios from 'axios';
+import store from "@/core/state/store.js";
 
-console.log(__SERVER_URL__);
 // Создание экземпляра axios с базовой конфигурацией
 const apiClient = axios.create({
-    baseURL: __SERVER_URL__ + "/api/v1",
+    baseURL: __SERVER_URL__ + "/v1",
     timeout: 10000, // настройка таймаута для запросов (в миллисекундах)
     headers: {
         'Content-Type': 'application/json', // тип контента
@@ -12,9 +12,17 @@ const apiClient = axios.create({
 // Добавление interceptor для обработки запросов
 apiClient.interceptors.request.use(
     (config) => {
+        // Проверяем, нужно ли добавлять токен
+        if (config.authRequired) {
+            const token = store.getters['master/getJwtToken']; // Получаем токен через getter Vuex
+            if (token) {
+                config.headers['Authorization'] = `Bearer ${token}`;
+            }
+        }
         return config;
     },
     (error) => {
+        console.error(error);
         return Promise.reject(error);
     }
 );
@@ -23,7 +31,7 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
     (response) => {
         // Обработка успешного ответа
-        return response;
+        return response.data;
     },
     (error) => {
         // Обработка ошибки ответа

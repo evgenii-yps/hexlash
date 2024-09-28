@@ -13,7 +13,8 @@
     "btnConfirm": "Подтвердить",
     "btnOk": "OK",
     "btnSave": "Сохранить",
-    "btnCreate": "Создать"
+    "btnCreate": "Создать",
+    "btnNext": "Далее"
   },
   "auth": {
     "login": {

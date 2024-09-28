@@ -11,6 +11,8 @@
           inputTextColor="var(--white)"
           height="40px"
           marginBottom="0.8rem"
+          :upperCase="true"
+          :center="true"
       />
 
       <div v-if="inviteState.errorMessage" class="error-message">{{ inviteState.errorMessage }}</div>
@@ -43,7 +45,7 @@
 import {ref, computed, onMounted} from 'vue';
 import InputField from "@/components/ui/InputField.vue";
 import ButtonText from "@/components/ui/ButtonText.vue";
-import { useRouter } from 'vue-router';
+import {useRoute, useRouter} from 'vue-router';
 import { useI18n } from "vue-i18n";
 import store from "@/core/state/store.js";
 import * as masterService from "@/core/services/masterService.js";
@@ -52,16 +54,28 @@ const { t } = useI18n({ useScope: 'global' });
 
 const inviteCode = ref('');
 const router = useRouter();
+const route = useRoute();
 
 const inviteState = computed(() => store.getters['master/getInviteState']);
 
 const handleInviteSubmit = () => {
-  store.dispatch('master/sendInvite', inviteCode.value);
+  if (inviteCode.value) {
+    store.dispatch('master/sendInvite', inviteCode.value);
+  }
 };
 
 const handleLogin = () => {
   router.push('/auth/login');
 };
+
+// Автоматически проверяем наличие параметра invite в URL
+onMounted(() => {
+  const inviteParam = route.query.code;
+  if (inviteParam) {
+    inviteCode.value = inviteParam.toUpperCase();  // Если нужно автоматически приводить в верхний регистр
+    handleInviteSubmit();  // Автоматически отправляем запрос
+  }
+});
 
 </script>
 
