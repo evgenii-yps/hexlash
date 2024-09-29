@@ -205,12 +205,8 @@ const debouncedCheckLoginExistence = debounce(async () => {
   loadingLogin.value = true;
 
   try {
-    // Задержка для демонстрации лоадера
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    const available = store.dispatch('master/sendCheckLoginAvailable', login);
 
-    // TODO запрос на проверку логина
-
-    const available = false;
     loginAvailable.value = available;
 
     if (!available) {
@@ -246,10 +242,11 @@ const saveChanges = async () => {
   loading.value = true;
 
   try {
-    await store.dispatch('master/sendInitialize', {
+    await store.dispatch('master/updateMaster', {
       name: name.value,
       login: login.value,
-      password: password.value
+      newPassword: password.value,
+      oldPassword: initialPassword,
     });
     hide();
   } catch (error) {
@@ -260,7 +257,7 @@ const saveChanges = async () => {
 };
 
 
-watch(store.getters['master/getInviteState'], (initState) => {
+watch(store.getters['master/getSignupState'], (initState) => {
   login.value = initState.generatedLogin;
   password.value = initState.generatedPassword;
   initialPassword = initState.generatedPassword;

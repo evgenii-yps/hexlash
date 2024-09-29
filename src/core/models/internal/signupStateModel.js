@@ -1,11 +1,9 @@
-export class InviteStateModel {
+export class SignupStateModel {
     constructor({
-                    loading = false,
                     errorMessage = null,
                     generatedLogin = '',
                     generatedPassword = ''
                 } = {}) {
-        this.loading = loading;
         this.errorMessage = errorMessage;
         this.generatedLogin = generatedLogin;
         this.generatedPassword = generatedPassword;

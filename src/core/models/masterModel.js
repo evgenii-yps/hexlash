@@ -10,7 +10,6 @@ export class MasterModel {
                     email = '',
                     language = locale,
                     initialVerified = false,
-                    tempPassword = null,
                     userData = {}
                 } = {}) {
         this.id = id;
@@ -20,7 +19,6 @@ export class MasterModel {
         this.language = language;
 
         this.initialVerified = initialVerified;
-        this.tempPassword = tempPassword;
     }
 
     getUuid() {
@@ -39,7 +37,7 @@ export class MasterModel {
         return (this.userData.balance / (10 ** DECIMALS)).toFixed(DECIMALS);
     }
 
-    static fromJSONString(jsonString) {
+   /* static fromJSONString(jsonString) {
         try {
             const userData = JSON.parse(jsonString);
             const {inviteId, email, initialVerified} = userData;
@@ -61,25 +59,23 @@ export class MasterModel {
             console.error('Error parsing JSON string:', error);
             return null;
         }
-    }
+    }*/
 
     static fromJSON(json) {
         try {
             const userData = json;
-            const {inviteId, email, initialVerified, tempPassword} = userData;
+            const {inviteId, email, initialVerified} = userData;
 
             // Удаляем поля из userData, чтобы не передавать их в MasterModel
             delete userData.inviteId;
             delete userData.email;
             delete userData.initialVerified;
-            delete userData.tempPassword;
 
             return new MasterModel({
                 userData: userData,
                 inviteId,
                 email,
-                initialVerified,
-                tempPassword
+                initialVerified
             });
 
 
@@ -88,6 +84,8 @@ export class MasterModel {
             return null;
         }
     }
+
+
 
 }
 

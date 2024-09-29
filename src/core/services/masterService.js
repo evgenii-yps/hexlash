@@ -3,7 +3,7 @@ import {clearDatabase, deleteDB} from '@/core/database/idb.js';
 import {getMasterFromLocalDB, saveMasterToLocalDB, updateMasterToLocalDB} from "@/core/database/masterRepository.js";
 import {MasterModel} from "@/core/models/masterModel.js";
 import store from "@/core/state/store.js";
-import {AuthStateModel} from "@/core/models/internal/authStateModel.js";
+import {LoginStateModel} from "@/core/models/internal/loginStateModel.js";
 import {jwtDecode} from "jwt-decode";
 import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
 import {i18n} from "@/main.js";
@@ -17,11 +17,11 @@ export const initializeMasterData = async () => {
     if (localData) {
         store.commit('master/setMaster', localData);
         if (jwtToken && validateJwtToken(jwtToken)) {
-            store.commit('master/setAuthState', AuthStateModel.Authenticated(true));
+            store.commit('master/setLoginState', {isAuthenticated: true});
             // Асинхронно запускаем запрос на обновление данных через API
             getMasterFromAPI();
         } else {
-            store.commit('master/setAuthState', AuthStateModel.Authenticated(false));
+            store.commit('master/setLoginState', {isAuthenticated: false});
         }
     }
 };
@@ -36,8 +36,6 @@ export const getMasterFromAPI = () => {
     });
 };
 
-
-// Метод логина
 export const login = async (credentials) => {
     try {
         const response = await apiClient.post('/auth/login', credentials);
@@ -60,12 +58,51 @@ export const login = async (credentials) => {
         await saveMasterToLocalDB(masterModel);
 
         store.commit('master/setMaster', masterModel);
-        store.commit('master/setAuthState', AuthStateModel.Authenticated(true));
+        store.commit('master/setLoginState', {isAuthenticated: true});
 
     } catch (error) {
-        const errorStr = error.response?.data?.message || error.message || 'Failed to login';
-        store.commit('master/setAuthState', AuthStateModel.Error(errorStr));
+        const errorStr = error.response?.error || error.message || 'Failed to login';
+        throw new Error(errorStr);
     }
+};
+
+export const sendCheckLoginAvailable = async (login) => {
+    try {
+        const response = await apiClient.get(`/auth/login-available/${login}`);
+
+        return response.data.available;
+    } catch (error) {
+        const errorStr = error.response?.error || error.message || 'Failed to login';
+        throw new Error(errorStr);
+    }
+};
+
+export const sendInvite = async (inviteCode) => {
+    if (!validateInviteCode(inviteCode)) {
+        throw new Error(i18n.global.t('auth.invite.errorInvalidInvite'));
+    }
+
+    try {
+        const response = await apiClient.post('/auth/signup', { inviteCode });
+
+        // Проверяем наличие полей login и tempPassword в ответе
+        const { login, temporaryPassword } = response.data.data;
+
+        if (!login || !temporaryPassword) {
+            return new Error(i18n.global.t('auth.invite.errorInvalidResponse'));
+        }
+
+        return { login, temporaryPassword };
+
+    } catch (error) {
+        const errorStr = error.response?.data?.error || error.message || 'Failed to invite';
+        throw new Error(errorStr);
+    }
+};
+
+const validateInviteCode = (code) => {
+    const inviteCodePattern = /^[A-Za-z0-9]{6,10}$/;
+    return inviteCodePattern.test(code);
 };
 
 export const resetPassword = async (email) => {
@@ -89,26 +126,6 @@ export const resetPassword = async (email) => {
     }
 };
 
-export const sendInvite = async (inviteCode) => {
-
-    if(!validateInviteCode(inviteCode)){
-        throw new Error(i18n.global.t('auth.invite.errorInvalidInvite'));
-    }
-
-    // Имитируем API вызов
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    /*if (inviteCode === 'admin') {
-        return { success: true};
-    } else {*/
-    throw new Error(i18n.global.t('auth.invite.errorInvalidInvite'));
-    //}
-};
-
-const validateInviteCode = (code) => {
-    const inviteCodePattern = /^[A-Za-z0-9]{6,10}$/;
-    return inviteCodePattern.test(code);
-};
 
 // Функция для получения данных текущего пользователя
 const fetchMasterData = async () => {
@@ -124,10 +141,10 @@ const fetchMasterData = async () => {
 // Изменить профиль
 export const changeProfile = async (profileData) => {
     try {
-        const response = await apiClient.put('/user/edit', profileData, {authRequired: true});
+        const response = await apiClient.post('/user/edit', profileData, {authRequired: true});
         return response.data;
     } catch (error) {
-        throw new Error('Failed to change profile');
+        throw new Error('Failed to change profile ' + error.response?.error || error.message);
     }
 };
 
@@ -218,7 +235,7 @@ export const isShowPrivacyInfo = (text) => {
     }
 };
 
-export const fullReset = async (text) => {
+export const resetClient = async () => {
     await deleteDB();
     localStorage.clear();
 }

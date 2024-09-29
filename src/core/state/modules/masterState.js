@@ -1,19 +1,19 @@
 import router from "@/router/index.js";
 import {updateMasterToLocalDB} from "@/core/database/masterRepository.js";
-import {AuthStateModel} from "@/core/models/internal/authStateModel.js";
+import {LoginStateModel} from "@/core/models/internal/loginStateModel.js";
 import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
 import {PasswordResetStateModel} from "@/core/models/internal/passwordResetStateModel.js";
-import {InviteStateModel} from "@/core/models/internal/inviteStateModel.js";
+import {SignupStateModel} from "@/core/models/internal/signupStateModel.js";
 import {i18n} from '@/main.js';
 import * as masterService from "@/core/services/masterService.js";
-
+import store from "@/core/state/store.js";
 
 
 const state = {
     master: null,
     jwtToken: masterService.getJwtToken(),
-    authState: new AuthStateModel(),
-    inviteState: new InviteStateModel(),
+    loginState: new LoginStateModel(),
+    signupState: new SignupStateModel(),
     resetState: new PasswordResetStateModel(),
     infoMessage: new InfoMessageModel(),
 };
@@ -21,8 +21,8 @@ const state = {
 const getters = {
     getMaster: (state) => state.master,
     getJwtToken: (state) => state.jwtToken,
-    getAuthState: (state) => state.authState,
-    getInviteState: (state) => state.inviteState,
+    getLoginState: (state) => state.loginState,
+    getSignupState: (state) => state.signupState,
     getResetState: (state) => state.resetState,
     getLanguage: (state) => state.master?.language,
     getInfoMessage(state) {
@@ -53,15 +53,15 @@ const mutations = {
             state.master.userData.balance += add;
         }
     },
-    setAuthState: (state, authState) => {
-        state.authState = authState;
+    setLoginState: (state, authState) => {
+        state.loginState = authState;
+    },
+    setSignupState: (state, payload) => {
+        Object.assign(state.signupState, payload);
     },
     clearAuthData: (state) => {
         state.master = null;
-        state.authState = new AuthStateModel();
-    },
-    setInviteState: (state, payload) => {
-        Object.assign(state.inviteState, payload);
+        state.loginState = {isAuthenticated: false, authError: null};
     },
     setInfoMessage(state, message) {
         state.infoMessage = message;
@@ -86,11 +86,16 @@ const actions = {
         }
     },
     async login({commit}, credentials) {
-        await masterService.login(credentials);
+        try {
+            await masterService.login(credentials);
 
-        await this.dispatch('master/initInitialize');
+            await this.dispatch('master/initGetStarted');
 
-        await router.push('/');
+            await router.push('/');
+
+        } catch (error) {
+            commit('setLoginState', {isAuthenticated: false, authError: error.message});
+        }
     },
     async logout({commit}) {
 
@@ -100,55 +105,50 @@ const actions = {
 
         await router.push('/');
     },
-    /*syncMaster({commit}) {
-        try {
-           getMasterFromAPI();
-        } catch (error) {
-            console.error('Failed to sync master data:', error);
-        }
-    },*/
     async sendInvite({commit}, inviteCode) {
-        commit('setInviteState', { loading: true });
         try {
-            const response = await masterService.sendInvite(inviteCode);
+            const {login, temporaryPassword} = await masterService.sendInvite(inviteCode);
 
             // Сначала полностью очистить всю базу с компьютера
-            await masterService.fullReset();
+            await masterService.resetClient();
+
+            // Записываем временный пароль, который мы рекомендуем ему поставить
+            commit('setSignupState', {
+                generatedPassword: temporaryPassword,
+            });
 
             // Авторизуемся под временными данными
             this.dispatch('master/login', {
-                login: response.data.login,
-                password: response.data.tempPassword
+                login: login,
+                password: temporaryPassword
             });
 
         } catch (error) {
-            commit('setInviteState', { errorMessage: error.message, loading: false });
+            commit('setSignupState', {errorMessage: error.message});
         }
     },
-    async initInitialize({commit}) {
-        // Если первый вход в приложение
-        if(!state.master.initialVerified) {
-            const master = state.master;
+    async sendCheckLoginAvailable({commit}, login) {
+        try {
+            const response = await masterService.sendCheckLoginAvailable(login);
 
-            commit('setInviteState', {
-                generatedLogin: master.getLogin(),
-                generatedPassword: master.tempPassword,
+            if (response.data.available) {
+                return true
+            }
+        } catch (error) {
+            commit('setInfoMessage', InfoMessageModel.withText(error.message));
+        }
+
+        return false;
+    },
+    async initGetStarted({commit}) {
+        // Если первый вход в приложение
+        if (state.master && !state.master.initialVerified) {
+            commit('setSignupState', {
+                generatedLogin: state.master.getLogin(),
+                generatedPassword: state.signupState.generatedPassword,
                 loading: false,
                 errorMessage: null
             });
-        }
-    },
-    async sendInitialize({commit, dispatch}, payload) {
-        try {
-            // TODO Еще отправляем язык пользователя, чтобы хранить его
-
-            // await someApiCall(payload);
-
-            // Обновляем мастера
-
-
-        } catch (error) {
-            throw error; // Исключение будет поймано в компоненте
         }
     },
     async updateMaster({commit, state}, updatedData) {
@@ -157,12 +157,16 @@ const actions = {
             commit('updateMaster', updatedData);
 
             // Отправка обновленных данных на сервер
-            // await updateUserOnAPI(state.currentUser);
+            const response = await masterService.changeProfile(updatedData);
+
+            if (!response.data) {
+                throw new Error(response.data.error);
+            }
 
             await updateMasterToLocalDB(updatedData);
 
         } catch (error) {
-            console.error('Failed to update user data:', error);
+            commit('setInfoMessage', InfoMessageModel.withText('Failed to update user data:', error.message));
         }
     },
     async uploadMasterAvatar({commit}, {avatarDataUrl, onUploadProgress}) {

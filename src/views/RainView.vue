@@ -40,7 +40,7 @@ import Reset from "@/components/fragments/auth/Reset.vue";
 
 const {t} = useI18n({useScope: 'global'})
 
-const isAuthenticated = computed(() => store.getters["master/getAuthState"]?.isAuthenticated);
+const isAuthenticated = computed(() => store.getters["master/getLoginState"].isAuthenticated);
 const initialVerified = computed(() => {
   const master = store.getters['master/getMaster'];
   if (master && master.initialVerified) {
@@ -97,7 +97,7 @@ import {BloomEffect, EffectComposer, EffectPass, RenderPass, FXAAEffect} from 'p
 import {RectAreaLightUniformsLib} from 'three/addons/lights/RectAreaLightUniformsLib.js'
 import {Howl} from 'howler'
 import gsap from 'gsap'
-import {computed, onMounted, onUnmounted, ref, shallowRef, watchEffect} from "vue";
+import {computed, onMounted, onUnmounted, ref, shallowRef, watch, watchEffect} from "vue";
 
 import brickNormal from '@/assets/textures/brick-normal2.jpg';
 import floorNormal from '@/assets/textures/asphalt-pbr01/normal.png';
@@ -1095,16 +1095,6 @@ const goTo = (page) => {
 onMounted(() => {
   sketch = new Sketch();
   sketch.create();
-
-  if (isAuthenticated.value) {
-    startCountdownListing();
-    masterService.isShowPrivacyInfo(t('info.showPrivacyInfo'))
-
-    store.dispatch('master/initInitialize');
-  }
-
-
-
 });
 
 onUnmounted(() => {
@@ -1113,6 +1103,16 @@ onUnmounted(() => {
     sketch = null;
   }
 });
+
+
+watch(isAuthenticated, (newValue) => {
+  if (newValue) {
+    startCountdownListing();
+    masterService.isShowPrivacyInfo(t('info.showPrivacyInfo'));
+    store.dispatch('master/initGetStarted');
+  }
+}, {immediate:true});
+
 
 </script>
 

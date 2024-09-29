@@ -85,7 +85,7 @@ router.beforeEach(async (to, from, next) => {
         routeHistory.shift();
     }
 
-    const isAuthenticated = store.getters["master/getAuthState"]?.isAuthenticated;
+    const isAuthenticated = store.getters["master/getLoginState"]?.isAuthenticated;
     const initialVerified = store.getters["master/getMaster"]?.initialVerified;
 
     if (protectedRoutes.some(route => route.name === to.name || route.path === to.path)) {

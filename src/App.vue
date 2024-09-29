@@ -54,7 +54,7 @@ const infoMessage = computed(() => {
 });
 
 const showBottomMenu = computed(() => {
-  return store.getters['master/getAuthState'].isAuthenticated
+  return store.getters['master/getLoginState'].isAuthenticated
 });
 
 const route = useRoute();

@@ -16,16 +16,15 @@
       />
 
       <div v-if="inviteState.errorMessage" class="error-message">{{ inviteState.errorMessage }}</div>
-      <div v-if="inviteState.successMessage" class="success-message">{{ inviteState.successMessage }}</div>
 
       <v-progress-circular
-          v-if="inviteState.loading"
+          v-if="loading"
           class="loader"
           size="40"
           indeterminate
       />
 
-      <VBtn v-if="!inviteState.loading" class="auth-btn" @click="handleInviteSubmit">
+      <VBtn v-if="!loading" class="auth-btn" @click="handleInviteSubmit">
         {{ t('auth.invite.btnInvite') }}
       </VBtn>
 
@@ -46,21 +45,28 @@ import {ref, computed, onMounted} from 'vue';
 import InputField from "@/components/ui/InputField.vue";
 import ButtonText from "@/components/ui/ButtonText.vue";
 import {useRoute, useRouter} from 'vue-router';
-import { useI18n } from "vue-i18n";
+import {useI18n} from "vue-i18n";
 import store from "@/core/state/store.js";
 import * as masterService from "@/core/services/masterService.js";
 
-const { t } = useI18n({ useScope: 'global' });
+const {t} = useI18n({useScope: 'global'});
 
 const inviteCode = ref('');
 const router = useRouter();
 const route = useRoute();
+const loading = ref(false);
 
-const inviteState = computed(() => store.getters['master/getInviteState']);
+const inviteState = computed(() => store.getters['master/getSignupState']);
 
-const handleInviteSubmit = () => {
+const handleInviteSubmit = async () => {
   if (inviteCode.value) {
-    store.dispatch('master/sendInvite', inviteCode.value);
+    loading.value = true;
+
+    try {
+      await store.dispatch('master/sendInvite', inviteCode.value);
+    } finally {
+      loading.value = false;
+    }
   }
 };
 

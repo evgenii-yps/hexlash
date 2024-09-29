@@ -79,7 +79,7 @@ const login = ref('');
 const password = ref('');
 const loading = ref(false);
 
-const authState = computed(() => store.getters['master/getAuthState']); // Получаем стейт
+const authState = computed(() => store.getters['master/getLoginState']); // Получаем стейт
 
 const handleSubmit = async () => {
 
