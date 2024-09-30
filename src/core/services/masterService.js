@@ -3,7 +3,6 @@ import {clearDatabase, deleteDB} from '@/core/database/idb.js';
 import {getMasterFromLocalDB, saveMasterToLocalDB, updateMasterToLocalDB} from "@/core/database/masterRepository.js";
 import {MasterModel} from "@/core/models/masterModel.js";
 import store from "@/core/state/store.js";
-import {LoginStateModel} from "@/core/models/internal/loginStateModel.js";
 import {jwtDecode} from "jwt-decode";
 import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
 import {i18n} from "@/main.js";
@@ -81,12 +80,11 @@ export const sendInvite = async (inviteCode) => {
     if (!validateInviteCode(inviteCode)) {
         throw new Error(i18n.global.t('auth.invite.errorInvalidInvite'));
     }
-
     try {
         const response = await apiClient.post('/auth/signup', { inviteCode });
 
         // Проверяем наличие полей login и tempPassword в ответе
-        const { login, temporaryPassword } = response.data.data;
+        const { login, temporaryPassword } = response.data;
 
         if (!login || !temporaryPassword) {
             return new Error(i18n.global.t('auth.invite.errorInvalidResponse'));
@@ -141,22 +139,12 @@ const fetchMasterData = async () => {
 // Изменить профиль
 export const changeProfile = async (profileData) => {
     try {
-        const response = await apiClient.post('/user/edit', profileData, {authRequired: true});
-        return response.data;
+        return await apiClient.post('/user/edit', profileData, {authRequired: true});
     } catch (error) {
         throw new Error('Failed to change profile ' + error.response?.error || error.message);
     }
 };
 
-// Изменить пароль
-export const changePassword = async (passwordData) => {
-    try {
-        const response = await apiClient.put('/user/password', passwordData, {authRequired: true});
-        return response.data;
-    } catch (error) {
-        throw new Error('Failed to change password');
-    }
-};
 
 // Выйти из системы
 export const logout = async () => {
@@ -164,9 +152,9 @@ export const logout = async () => {
         // const response = await apiClient.post('/users/logout', {}, {authRequired: true});
 
         await clearDatabase();
+        updateJwtToken("");
 
         return true;
-        // return response.data;
     } catch (error) {
         throw new Error('Failed to logout');
     }

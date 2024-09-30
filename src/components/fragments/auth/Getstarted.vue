@@ -228,9 +228,13 @@ const toggleAgree = () => {
 };
 
 const isFormValid = computed(() => {
-  return name.value && login.value && password.value && agree.value &&
-      !nameError.value && !loginError.value && !confirmPasswordError.value
-      && confirmPassword.value && confirmPassword.value === password.value;
+  const basicValidation = name.value && login.value && password.value && agree.value &&
+      !nameError.value && !loginError.value;
+
+  const confirmPasswordValidation = !confirmPasswordError.value && confirmPassword.value &&
+      confirmPassword.value === password.value;
+
+  return basicValidation && (confirmPasswordValidation || initialPassword === password.value);
 });
 
 
@@ -247,6 +251,7 @@ const saveChanges = async () => {
       login: login.value,
       newPassword: password.value,
       oldPassword: initialPassword,
+      initialVerified: true,
     });
     hide();
   } catch (error) {

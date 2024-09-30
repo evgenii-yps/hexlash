@@ -159,8 +159,8 @@ const actions = {
             // Отправка обновленных данных на сервер
             const response = await masterService.changeProfile(updatedData);
 
-            if (!response.data) {
-                throw new Error(response.data.error);
+            if (response.error) {
+                throw new Error(response.error);
             }
 
             await updateMasterToLocalDB(updatedData);
