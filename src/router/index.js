@@ -16,6 +16,7 @@ const publicRoutes = [
     {path: '/privacy', name: 'Privacy', component: () => import("/src/views/PrivacyView.vue")},
     {path: '/404', name: 'NotFound', component: () => import("/src/views/NotFoundView.vue")},
     {path: '/rules', name: 'Rules', component: () => import("/src/views/PageView.vue")},
+    {path: '/verify-email', name: 'VerifyEmail', component: () => import("/src/views/VerifyEmailView.vue")},
 ];
 
 const protectedRoutes = [

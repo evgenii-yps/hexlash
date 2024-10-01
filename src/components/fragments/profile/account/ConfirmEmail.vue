@@ -12,7 +12,7 @@
           height="40px"
           marginBottom="0.5rem"
           @input="checkEmailChange"
-          :showButton="emailChanged"
+          :showButton="emailChanged || !emailVerified"
       >
         <!-- Можно вставить любую кнопку, лоадер или любой другой элемент -->
         <template v-slot>
@@ -28,7 +28,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue';
+import {computed, onMounted, ref, watch} from 'vue';
 import InputField from '@/components/ui/InputField.vue';
 import store from "@/core/state/store.js";
 import {useI18n} from "vue-i18n";
@@ -36,6 +36,7 @@ import {useI18n} from "vue-i18n";
 const { t } = useI18n({ useScope: 'global' })
 
 const master = computed(() => store.getters['master/getMaster']);
+const emailVerified = ref(master.value.emailVerified);
 const originalEmail = ref(master.value.email);
 
 const email = ref(originalEmail.value);
@@ -60,10 +61,10 @@ const handleEmailSubmit = () => {
     return;
   }
 
-  // Обновляем email через мутацию
+  // Обновляем email через мутацию и отправляем на сервер, а сервер еще и запрос отправит по EMAIl с кодом
   store.dispatch("master/updateMaster", { email: email.value });
 
-  // TODO Send
+  emailVerified.value = true;
 };
 
 const checkEmailChange = () => {
@@ -75,6 +76,9 @@ watch(() => master.value.email, (newEmail) => {
   email.value = newEmail;
   emailChanged.value = false;
 }, {immediate: true});
+
+
+
 </script>
 
 <style scoped>

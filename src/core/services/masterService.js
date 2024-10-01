@@ -160,23 +160,17 @@ export const logout = async () => {
     }
 };
 
-// Верифицировать пользователя
-export const verifyUser = async (verifyData) => {
-    try {
-        const response = await apiClient.post('/user/verify-user', verifyData, {authRequired: true});
-        return response.data;
-    } catch (error) {
-        throw new Error('Failed to verify user');
-    }
-};
-
 // Отправить запрос на верификацию почты
-export const sendVerifyEmail = async () => {
+export const sendVerifyEmail = async (code) => {
     try {
-        const response = await apiClient.post('/user/send-verify-email', {}, {authRequired: true});
-        return response.data;
+        const response = await apiClient.post('/user/verify-email', {code}, {authRequired: false});
+
+        console.log(response);
+
+        return response.status === 200;
+
     } catch (error) {
-        throw new Error('Failed to send verify email');
+        throw new Error('Failed verify email');
     }
 };
 

@@ -150,12 +150,8 @@ const loadClub = async () => {
   loading.value = true;  // Устанавливаем флаг загрузки
 
   isMyClub.value = master.value && master.value.userData.clubId === clubId;
-  clubData.value = await store.dispatch('club/getClubById', clubId);
-  isOwner.value = master.value && master.value.userData.id === clubData.value.owner;
+  await store.dispatch('club/loadClubById', clubId);
 
-  isPublic.value = clubData.value.isPublic;
-
-  loading.value = false;  // Сбрасываем флаг загрузки после загрузки данных
 };
 
 onBeforeMount(loadClub);
@@ -167,6 +163,10 @@ watch(
     () => store.getters['club/getClubById'](clubId),
     (newValue) => {
       clubData.value = newValue;
+      isOwner.value = master.value && master.value.userData.id === clubData.value.owner;
+      isPublic.value = clubData.value.isPublic;
+      loading.value = false;  // Сбрасываем флаг загрузки после загрузки данных
+
     }
 );
 

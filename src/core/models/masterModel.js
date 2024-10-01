@@ -8,6 +8,7 @@ export class MasterModel {
                     id = MASTER_TAG,
                     inviteId = null,
                     email = '',
+                    emailVerified = false,
                     language = locale,
                     initialVerified = false,
                     userData = {}
@@ -15,6 +16,7 @@ export class MasterModel {
         this.id = id;
         this.inviteId = inviteId;
         this.email = email;
+        this.emailVerified = emailVerified;
         this.userData = userData;
         this.language = language;
 
@@ -37,45 +39,23 @@ export class MasterModel {
         return (this.userData.balance / (10 ** DECIMALS)).toFixed(DECIMALS);
     }
 
-   /* static fromJSONString(jsonString) {
-        try {
-            const userData = JSON.parse(jsonString);
-            const {inviteId, email, initialVerified} = userData;
-
-            // Удаляем поля из userData, чтобы не передавать их в MasterModel
-            delete userData.inviteId;
-            delete userData.email;
-            delete userData.initialVerified;
-
-            // Возвращаем объект MasterModel и массив socialTasks
-            return new MasterModel({
-                userData: userData,
-                inviteId,
-                email,
-                initialVerified,
-            });
-
-        } catch (error) {
-            console.error('Error parsing JSON string:', error);
-            return null;
-        }
-    }*/
-
     static fromJSON(json) {
         try {
             const userData = json;
-            const {inviteId, email, initialVerified} = userData;
+            const {inviteId, email, emailVerified, initialVerified} = userData;
 
             // Удаляем поля из userData, чтобы не передавать их в MasterModel
             delete userData.inviteId;
             delete userData.email;
+            delete userData.emailVerified;
             delete userData.initialVerified;
 
             return new MasterModel({
                 userData: userData,
                 inviteId,
                 email,
-                initialVerified
+                emailVerified,
+                initialVerified,
             });
 
 

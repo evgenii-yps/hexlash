@@ -151,6 +151,24 @@ const actions = {
             });
         }
     },
+    async sendVerifyEmail({commit, state}, code) {
+        try {
+            // Отправка обновленных данных на сервер
+            const isVerifyEmail = await masterService.sendVerifyEmail(code);
+
+            if (isVerifyEmail) {
+                if(state.master != null) {
+                    commit('updateMaster', {emailVerified: true})
+                }
+                return;
+            }
+
+        } catch (error) {
+            commit('setInfoMessage', InfoMessageModel.withText('Failed to verify email:', error.message));
+        }
+
+        throw new Error("Failed to verify email");
+    },
     async updateMaster({commit, state}, updatedData) {
         try {
             // Обновление состояния
@@ -169,6 +187,20 @@ const actions = {
             commit('setInfoMessage', InfoMessageModel.withText('Failed to update user data:', error.message));
         }
     },
+    async changeSkin({commit, state}, skinId) {
+        try {
+            // Обновление скина
+            this.dispatch('master/updateMaster', {skin: skinId});
+
+        } catch (error) {
+            console.error('Failed to update user data:', error);
+        }
+    },
+    async setLanguage({commit, state}, language) {
+        this.dispatch('master/updateMaster', {language: language});
+
+        i18n.global.locale.value = language
+    },
     async uploadMasterAvatar({commit}, {avatarDataUrl, onUploadProgress}) {
         try {
             // Симуляция загрузки на сервер
@@ -184,23 +216,6 @@ const actions = {
         } catch (error) {
             console.error('Failed to upload avatar:', error);
         }
-    },
-    async changeSkin({commit, state}, skinId) {
-        try {
-            // Обновление скина
-            this.dispatch('master/updateMaster', {skin: skinId});
-
-            // Отправка обновленных данных на сервер
-            // await updateSkinOnAPI(state.currentUser);
-
-        } catch (error) {
-            console.error('Failed to update user data:', error);
-        }
-    },
-    async setLanguage({commit, state}, language) {
-        this.dispatch('master/updateMaster', {language: language});
-
-        i18n.global.locale.value = language
     },
     async resetPassword({commit}, email) {
         commit('setResetState', PasswordResetStateModel.Loading(true));

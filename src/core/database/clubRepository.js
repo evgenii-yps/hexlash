@@ -42,6 +42,10 @@ export const updateClubToLocalDB = async (updatedData) => {
         // Сохраняем обновленный объект обратно в базу данных
         await store.put(currentData);
     }
+    else {
+        // Если объекта нет, создаём новую запись
+        await store.put(updatedData);
+    }
 
     await transaction.complete;
 };

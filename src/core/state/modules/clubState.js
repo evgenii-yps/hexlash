@@ -1,4 +1,5 @@
 import {
+    fetchClubData,
     getClubByIdFromLocalAndAPI,
     updateClubDataOnAPI,
 } from '@/core/services/clubService';
@@ -46,11 +47,24 @@ const mutations = {
 const actions = {
     async getClubById({commit, getters}, clubId) {
         let club = getters.getClubById(clubId);
+
         if (club) {
             return club;
         }
         try {
-            club = await getClubByIdFromLocalAndAPI(clubId);
+            club = await fetchClubData(clubId);
+            if (club) {
+                commit('setClub', club);
+            }
+            return club;
+        } catch (error) {
+            console.error('Error fetching user:', error);
+            throw error;
+        }
+    },
+    async loadClubById({commit, getters}, clubId) {
+        try {
+            const club = await getClubByIdFromLocalAndAPI(clubId);
             if (club) {
                 commit('setClub', club);
             }
@@ -64,7 +78,7 @@ const actions = {
     async updateClubData({commit}, updatedClubData) {
         try {
             // Обновляем данные на сервере
-            //await updateClubDataOnAPI(updatedClubData);
+            await updateClubDataOnAPI(updatedClubData);
 
             await updateClubToLocalDB(updatedClubData);
 
@@ -117,8 +131,6 @@ const actions = {
 
     // Действие для загрузки аватара для выбранного клуба
     async uploadClubAvatar({ commit }, { clubData, onUploadProgress }) {
-        console.log("clubData");
-        console.log(clubData);
         try {
             // Симуляция загрузки на сервер
             for (let i = 0; i <= 100; i++) {

@@ -34,4 +34,33 @@ export default class ClubModel {
     isOwner(userId) {
         return this.owner === userId;
     }
+
+    /**
+     * Создает экземпляр ClubModel из JSON-объекта.
+     * @param {Object} json - JSON-объект с данными клуба.
+     * @returns {ClubModel|null} - Возвращает объект ClubModel или null в случае ошибки.
+     */
+    static fromJSON(json) {
+        try {
+            // Извлекаем данные из JSON
+            const { id, name, description, avatarUrl, owner, balance = 0, battles = 0, wins = 0, isPublic = true, members = 0 } = json;
+
+            // Возвращаем новый экземпляр ClubModel
+            return new ClubModel({
+                id,
+                name,
+                description,
+                avatarUrl,
+                owner,
+                balance,
+                battles,
+                wins,
+                isPublic,
+                members
+            });
+        } catch (error) {
+            console.error('Error parsing JSON to ClubModel:', error);
+            return null;
+        }
+    }
 }
