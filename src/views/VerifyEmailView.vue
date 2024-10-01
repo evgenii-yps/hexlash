@@ -74,10 +74,12 @@ h1 {
 
 .error{
   color: var(--pinkDark);
+  margin: 0 20px;
 }
 
 .success{
   color: white;
+  margin: 0 20px;
 }
 
 

@@ -15,8 +15,8 @@
         <v-card-text>{{ t('profile.account.msgConfirmDelete') }}</v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <VBtnDark  @click="dialog = false" class="cancel-btn">{{ t('modal.btnCancel') }}</VBtnDark>
-          <VBtn  @click="handleDelete" class="confirm-delete-btn">{{ t('modal.btnConfirm') }}</VBtn>
+          <VBtnDark @click="dialog = false" class="cancel-btn">{{ t('modal.btnCancel') }}</VBtnDark>
+          <VBtn @click="handleDelete" class="confirm-delete-btn">{{ t('modal.btnConfirm') }}</VBtn>
         </v-card-actions>
       </VCard>
     </VModal>
@@ -24,15 +24,13 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import {ref} from 'vue';
 import store from "@/core/state/store.js";
 import router from "@/router/index.js";
 import {useI18n} from "vue-i18n";
+import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
 
-const { t } = useI18n({ useScope: 'global' })
-
-// Сервис для удаления аккаунта
-// import { deleteUserAccount } from '@/core/services/userService';
+const {t} = useI18n({useScope: 'global'})
 
 const dialog = ref(false);
 
@@ -41,16 +39,7 @@ const confirmDelete = () => {
 };
 
 const handleDelete = async () => {
-  try {
-    // const response = await deleteUserAccount();
-    // Обработка успешного удаления аккаунта
-    dialog.value = false;
-
-    await router.push("/");
-
-  } catch (error) {
-    console.error('Failed to delete account:', error);
-  }
+  await store.dispatch("master/deleteAccount")
 };
 </script>
 
@@ -81,7 +70,7 @@ const handleDelete = async () => {
   margin-left: 15px; /* Добавляем отступ справа для расстояния между иконкой и текстом */
 }
 
-.confirm-delete-btn{
+.confirm-delete-btn {
   cursor: pointer;
   background-color: var(--pinkDark);
   color: white !important;

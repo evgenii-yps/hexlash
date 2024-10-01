@@ -68,7 +68,7 @@ export const login = async (credentials) => {
 export const sendCheckLoginAvailable = async (login) => {
     try {
         const response = await apiClient.get(`/auth/login-available/${login}`);
-
+console.log(response);
         return response.data.available;
     } catch (error) {
         const errorStr = error.response?.error || error.message || 'Failed to login';
@@ -81,16 +81,16 @@ export const sendInvite = async (inviteCode) => {
         throw new Error(i18n.global.t('auth.invite.errorInvalidInvite'));
     }
     try {
-        const response = await apiClient.post('/auth/signup', { inviteCode });
+        const response = await apiClient.post('/auth/signup', {inviteCode});
 
         // Проверяем наличие полей login и tempPassword в ответе
-        const { login, temporaryPassword } = response.data;
+        const {login, temporaryPassword} = response.data;
 
         if (!login || !temporaryPassword) {
             return new Error(i18n.global.t('auth.invite.errorInvalidResponse'));
         }
 
-        return { login, temporaryPassword };
+        return {login, temporaryPassword};
 
     } catch (error) {
         const errorStr = error.response?.data?.error || error.message || 'Failed to invite';
@@ -141,7 +141,8 @@ export const changeProfile = async (profileData) => {
     try {
         return await apiClient.post('/user/edit', profileData, {authRequired: true});
     } catch (error) {
-        throw new Error('Failed to change profile ' + error.response?.error || error.message);
+        console.error(error.response?.data?.error);
+        throw new Error('Failed to change profile ' + error.response?.data?.error || error.message);
     }
 };
 
@@ -160,14 +161,29 @@ export const logout = async () => {
     }
 };
 
+// Удалить аккаунт
+export const deleteAccount = async () => {
+    try {
+        const response = await apiClient.post('/user/delete', null, {authRequired: true});
+
+        await resetClient();
+
+    } catch (error) {
+        console.error(error.response?.data?.error);
+        throw new Error('Failed to change profile ' + error.response?.data?.error || error.message);
+    }
+};
+
 // Отправить запрос на верификацию почты
 export const sendVerifyEmail = async (code) => {
     try {
-        const response = await apiClient.post('/user/verify-email', {code}, {authRequired: false});
+        const response = await apiClient.post('/user/verify-email', code, {authRequired: false});
 
-        console.log(response);
+       if(response.data){
+           return true;
+       }
 
-        return response.status === 200;
+        return false;
 
     } catch (error) {
         throw new Error('Failed verify email');

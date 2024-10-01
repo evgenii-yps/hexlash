@@ -49,6 +49,8 @@
     "account": {
       "lblChangeLanguage": "Язык",
       "lblChangeEmail": "ИЗМЕНИТЬ EMAIL",
+      "placeholderEmail": "Введите email...",
+      "sendEmailSuccess": "Письмо было отправлено",
       "lblEmailRequired": "Email обязателен",
       "lblInvalidEmailFormat": "Неверный формат email",
       "btnSendConfirm": "Отправить подтверждение",
@@ -67,6 +69,7 @@
       "lblConfirmNewPassword": "ПОДТВЕРДИТЕ НОВЫЙ ПАРОЛЬ",
       "lblAllFieldsRequired": "Все поля обязательны для заполнения",
       "lblPasswordsDoNotMatch": "Пароли не совпадают",
+      "lblPasswordsChangeSuccessful": "Пароль успешно изменен",
       "lblPasswordRequirements": "Пароль должен содержать не менее 8 символов и включать цифры и заглавные буквы",
       "lblConfirmation": "Подтверждение выбора скина",
       "msgSelectSkin": "Вы уверены, что хотите выбрать этот скин?",

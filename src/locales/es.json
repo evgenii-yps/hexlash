@@ -49,6 +49,8 @@
     "account": {
       "lblChangeLanguage": "Idioma",
       "lblChangeEmail": "CAMBIAR CORREO ELECTRÓNICO",
+      "placeholderEmail": "Introduce el correo...",
+      "sendEmailSuccess": "El correo ha sido enviado",
       "lblEmailRequired": "El correo electrónico es obligatorio",
       "lblInvalidEmailFormat": "Formato de correo electrónico no válido",
       "btnSendConfirm": "Enviar Confirmación",
@@ -67,6 +69,7 @@
       "lblConfirmNewPassword": "CONFIRMAR NUEVA CONTRASEÑA",
       "lblAllFieldsRequired": "Todos los campos son obligatorios",
       "lblPasswordsDoNotMatch": "Las contraseñas no coinciden",
+      "lblPasswordsChangeSuccessful": "La contraseña ha sido cambiada con éxito",
       "lblPasswordRequirements": "La contraseña debe tener al menos 8 caracteres e incluir números y letras mayúsculas",
       "lblConfirmation": "Confirmación de Selección de Skin",
       "msgSelectSkin": "¿Estás seguro de que quieres seleccionar este skin?",

@@ -3,7 +3,7 @@
     <header :style="headerStyle" class="header">
       <div class="header-content">
         <Logo/>
-        <div v-if="balance !== null" class="balance">
+        <div v-if="balance !== null && isAuth" class="balance">
           {{ balance }}$
         </div>
       </div>
@@ -21,7 +21,7 @@
 
     <footer class="footer">
       <transition name="slide-up-down">
-        <BottomMenu v-if="showBottomMenu && scrollDirection !== 'down'"/>
+        <BottomMenu v-if="isAuth && scrollDirection !== 'down'"/>
       </transition>
     </footer>
   </div>
@@ -53,7 +53,7 @@ const infoMessage = computed(() => {
   return newInfoMessage;
 });
 
-const showBottomMenu = computed(() => {
+const isAuth = computed(() => {
   return store.getters['master/getLoginState'].isAuthenticated
 });
 

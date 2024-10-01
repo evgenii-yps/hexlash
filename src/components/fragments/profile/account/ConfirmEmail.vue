@@ -12,7 +12,8 @@
           height="40px"
           marginBottom="0.5rem"
           @input="checkEmailChange"
-          :showButton="emailChanged || !emailVerified"
+          :placeholder="t('profile.account.placeholderEmail')"
+          :showButton="(emailChanged || !emailVerified) && email.length > 0"
       >
         <!-- Можно вставить любую кнопку, лоадер или любой другой элемент -->
         <template v-slot>
@@ -32,8 +33,9 @@ import {computed, onMounted, ref, watch} from 'vue';
 import InputField from '@/components/ui/InputField.vue';
 import store from "@/core/state/store.js";
 import {useI18n} from "vue-i18n";
+import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
 
-const { t } = useI18n({ useScope: 'global' })
+const {t} = useI18n({useScope: 'global'})
 
 const master = computed(() => store.getters['master/getMaster']);
 const emailVerified = ref(master.value.emailVerified);
@@ -48,7 +50,7 @@ const validateEmail = (email) => {
   return emailPattern.test(email);
 };
 
-const handleEmailSubmit = () => {
+const handleEmailSubmit = async () => {
   errorMessage.value = '';
 
   if (!email.value) {
@@ -62,7 +64,9 @@ const handleEmailSubmit = () => {
   }
 
   // Обновляем email через мутацию и отправляем на сервер, а сервер еще и запрос отправит по EMAIl с кодом
-  store.dispatch("master/updateMaster", { email: email.value });
+  if (await store.dispatch("master/updateMaster", {email: email.value})) {
+    store.commit('master/setInfoMessage', InfoMessageModel.withText(t('profile.account.sendEmailSuccess')));
+  }
 
   emailVerified.value = true;
 };
@@ -76,7 +80,6 @@ watch(() => master.value.email, (newEmail) => {
   email.value = newEmail;
   emailChanged.value = false;
 }, {immediate: true});
-
 
 
 </script>

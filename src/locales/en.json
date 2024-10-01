@@ -49,6 +49,8 @@
     "account": {
       "lblChangeLanguage": "Language",
       "lblChangeEmail": "CHANGE EMAIL",
+      "placeholderEmail": "Enter email...",
+      "sendEmailSuccess": "Email has been sent",
       "lblEmailRequired": "Email is required",
       "lblInvalidEmailFormat": "Invalid email format",
       "btnSendConfirm": "Send Confirm",
@@ -67,6 +69,7 @@
       "lblConfirmNewPassword": "CONFIRM NEW PASSWORD",
       "lblAllFieldsRequired": "All fields are required",
       "lblPasswordsDoNotMatch": "Passwords do not match",
+      "lblPasswordsChangeSuccessful": "Password has been successfully changed",
       "lblPasswordRequirements": "Password must be at least 8 characters long and include numbers and uppercase letters",
       "lblConfirmation": "Skin Selection Confirmation",
       "msgSelectSkin": "Are you sure you want to select this skin?",

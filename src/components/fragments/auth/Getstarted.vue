@@ -46,7 +46,8 @@
             @input="checkPasswordChange"
         >
           <template v-slot:append-inner>
-            <img @click.prevent="showPassword = !showPassword" :src="showPassword ? iconHide : iconShow" alt="password visibility" />
+            <img @click.prevent="showPassword = !showPassword" :src="showPassword ? iconHide : iconShow"
+                 alt="password visibility"/>
           </template>
         </v-text-field>
 
@@ -61,7 +62,8 @@
             @input="validateConfirmPassword"
         >
           <template v-slot:append-inner>
-            <img @click.prevent="showPassword = !showPassword" :src="showPassword ? iconHide : iconShow" alt="password visibility" />
+            <img @click.prevent="showPassword = !showPassword" :src="showPassword ? iconHide : iconShow"
+                 alt="password visibility"/>
           </template>
         </v-text-field>
 
@@ -106,7 +108,8 @@
         <VBtn @click="saveChanges"
               :class="{ disabled: !isFormValid }"
               :disabled="!isFormValid"
-              class="confirm-btn">{{ t('getStarted.btnGo') }}</VBtn>
+              class="confirm-btn">{{ t('getStarted.btnGo') }}
+        </VBtn>
       </v-card-actions>
     </VCard>
   </VModal>
@@ -121,7 +124,9 @@ import iconShow from "@/assets/images/icon_show.svg";
 import iconHide from "@/assets/images/icon_hide.svg";
 import store from "@/core/state/store.js";
 
-const {t} = useI18n({useScope: 'global'});
+const {t, locale} = useI18n({useScope: 'global'});
+
+const currentLocale = locale.value;
 
 const dialogGetStarted = ref(true);
 
@@ -252,10 +257,11 @@ const saveChanges = async () => {
       newPassword: password.value,
       oldPassword: initialPassword,
       initialVerified: true,
+      language: currentLocale
     });
     hide();
   } catch (error) {
-     resultMessage.value = error;
+    resultMessage.value = error;
   } finally {
     loading.value = false;
   }
@@ -266,13 +272,13 @@ watch(store.getters['master/getSignupState'], (initState) => {
   login.value = initState.generatedLogin;
   password.value = initState.generatedPassword;
   initialPassword = initState.generatedPassword;
-}, { immediate: true });
+}, {immediate: true});
 
 </script>
 
 <style scoped>
 
-.disabled{
+.disabled {
   background-color: var(--gray2) !important;
 }
 
@@ -302,7 +308,7 @@ watch(store.getters['master/getSignupState'], (initState) => {
   text-align: center;
 }
 
-.notice :deep(a){
+.notice :deep(a) {
   color: var(--pink);
   text-decoration: none;
   cursor: pointer;
@@ -320,7 +326,7 @@ watch(store.getters['master/getSignupState'], (initState) => {
   display: block;
 }
 
-.btn-privacy{
+.btn-privacy {
   color: var(--pink);
   text-decoration: none;
   cursor: pointer;
@@ -328,7 +334,7 @@ watch(store.getters['master/getSignupState'], (initState) => {
   font-weight: bold;
 }
 
-.text-field{
+.text-field {
   margin-top: 10px;
   margin-bottom: 10px;
 }

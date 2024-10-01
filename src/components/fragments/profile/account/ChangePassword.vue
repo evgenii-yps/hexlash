@@ -7,12 +7,12 @@
       <template #append>
         <img src="@/assets/images/icon_pencil.svg" alt="" class="custom-icon"/>
       </template>
-      {{t('profile.account.lblChangePassword')}}
+      {{ t('profile.account.lblChangePassword') }}
     </VBtnDark>
 
     <VModal v-model="dialog" max-width="500">
       <VCard>
-        <v-card-title class="headline">{{t('profile.account.lblChangePassword')}}</v-card-title>
+        <v-card-title class="headline">{{ t('profile.account.lblChangePassword') }}</v-card-title>
         <v-card-text style="margin-bottom: 0">
           <form @submit.prevent="handleSubmit">
             <InputField
@@ -62,7 +62,7 @@
         </v-card-text>
         <v-card-actions style="padding-top: 0">
           <VBtnDark class="cancel-btn" @click="cancel">{{ t('modal.btnCancel') }}</VBtnDark>
-          <VBtn class="confirm-btn" @click="handleSubmit" >{{ t('modal.btnConfirm') }}</VBtn>
+          <VBtn class="confirm-btn" @click="handleSubmit">{{ t('modal.btnConfirm') }}</VBtn>
         </v-card-actions>
       </VCard>
     </VModal>
@@ -70,14 +70,14 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
+import {computed, ref} from 'vue';
 import InputField from '@/components/ui/InputField.vue';
 import store from "@/core/state/store.js";
 import {useI18n} from "vue-i18n";
+import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
 
-const master = computed(() => store.getters['master/getMaster']);
 
-const { t } = useI18n({ useScope: 'global' })
+const {t} = useI18n({useScope: 'global'})
 
 const currentPassword = ref('');
 const newPassword = ref('');
@@ -91,11 +91,11 @@ const cancel = () => {
   errorMessage.value = '';
 }
 
-const handleSubmit = () => {
+const handleSubmit = async () => {
   errorMessage.value = '';
 
   if (!currentPassword.value || !newPassword.value || !confirmNewPassword.value) {
-    errorMessage.value =  t('profile.account.lblAllFieldsRequired');
+    errorMessage.value = t('profile.account.lblAllFieldsRequired');
     return;
   }
 
@@ -111,8 +111,16 @@ const handleSubmit = () => {
 
   loading.value = true;
 
-  // Дополнительная логика обработки смены пароля
-  // вызов API для смены пароля и обработка результата
+  if (await store.dispatch('master/updateMaster', {
+    newPassword: newPassword.value,
+    oldPassword: currentPassword.value,
+  })) {
+    cancel();
+    store.commit('master/setInfoMessage', InfoMessageModel.withText(t('profile.account.lblPasswordsChangeSuccessful')));
+  }
+
+  loading.value = false;
+
 };
 </script>
 
@@ -151,7 +159,6 @@ form {
   height: 15px;
   margin-left: 10px;
 }
-
 
 
 </style>

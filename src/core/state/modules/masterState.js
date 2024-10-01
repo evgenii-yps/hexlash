@@ -6,7 +6,6 @@ import {PasswordResetStateModel} from "@/core/models/internal/passwordResetState
 import {SignupStateModel} from "@/core/models/internal/signupStateModel.js";
 import {i18n} from '@/main.js';
 import * as masterService from "@/core/services/masterService.js";
-import store from "@/core/state/store.js";
 
 
 const state = {
@@ -129,11 +128,12 @@ const actions = {
     },
     async sendCheckLoginAvailable({commit}, login) {
         try {
-            const response = await masterService.sendCheckLoginAvailable(login);
-
-            if (response.data.available) {
-                return true
+            const isAvailable = await masterService.sendCheckLoginAvailable(login);
+            if(!isAvailable && login === state.master.getLogin()) {
+                return true;
             }
+
+            return isAvailable;
         } catch (error) {
             commit('setInfoMessage', InfoMessageModel.withText(error.message));
         }
@@ -171,22 +171,22 @@ const actions = {
     },
     async updateMaster({commit, state}, updatedData) {
         try {
-            // Обновление состояния
-            commit('updateMaster', updatedData);
 
             // Отправка обновленных данных на сервер
             const response = await masterService.changeProfile(updatedData);
 
-            if (response.error) {
-                throw new Error(response.error);
-            }
+            // Обновление состояния
+            commit('updateMaster', updatedData);
 
             await updateMasterToLocalDB(updatedData);
 
+            return true;
+
         } catch (error) {
-            commit('setInfoMessage', InfoMessageModel.withText('Failed to update user data:', error.message));
+            commit('setInfoMessage', InfoMessageModel.withText(error.message));
         }
     },
+
     async changeSkin({commit, state}, skinId) {
         try {
             // Обновление скина
@@ -224,6 +224,20 @@ const actions = {
             commit('setResetState', PasswordResetStateModel.Success(response.message));
         } catch (error) {
             commit('setResetState', PasswordResetStateModel.Error(error.message));
+        }
+    },
+    async deleteAccount({commit, state}) {
+        try {
+
+            // Отправка обновленных данных на сервер
+            const response = await masterService.deleteAccount();
+
+            commit('clearAuthData');
+
+            await router.push('/');
+
+        } catch (error) {
+            commit('setInfoMessage', InfoMessageModel.withText(error.message));
         }
     },
 };

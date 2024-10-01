@@ -55,10 +55,8 @@ import store from "@/core/state/store.js";
 import debounce from "debounce";
 import {useI18n} from "vue-i18n";
 
-// Сервис для проверки наличия логина
-// import { checkLoginAvailability } from '@/core/services/userService';
 
-const { t } = useI18n({ useScope: 'global' })
+const {t} = useI18n({useScope: 'global'})
 
 const master = computed(() => store.getters['master/getMaster']);
 const originalLogin = ref(master.value.userData.login);
@@ -113,6 +111,11 @@ const handleLoginInput = () => {
 
   loginChanged.value = login.value.length > 0;
 
+  if (login.value === originalLogin.value) {
+    loginChanged.value = false;
+    return;
+  }
+
   login.value = login.value.replace(/\s/g, '');
 
   const hasErrors = rules.required(login.value) !== true ||
@@ -137,11 +140,8 @@ const debouncedCheckLoginExistence = debounce(async () => {
 
   try {
 
-    // Добавляем задержку в 1 секунду, чтобы показать лоадер
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    const available = await store.dispatch("master/sendCheckLoginAvailable", login.value);
 
-    const available = true;
-    // const available = await checkLoginAvailability(login.value);
     loginAvailable.value = available;
 
     if (!available) {
