@@ -91,36 +91,14 @@ const actions = {
         }
     },
 
-    async createClub({commit}, title, description) {
+    async createClub({commit}, newClubData) {
         try {
 
-            //await createClubOnAPI(updatedClubData);
 
-            const masterData = store.getters['master/getMaster'].userData;
 
-            // TODO Get Model From API
-            const newClubModel = new ClubModel({
-                id: 'uid-' + Math.random().toString(36).substr(2, 9),
-                name: title,
-                description: description,
-                avatarUrl: "",
-                owner: masterData.id,
-                balance: 0,
-                battles: 0,
-                wins: 0,
-                isPublic: true,
-                members: 0
-            });
+            const newClubModel = await clubService.createClub(newClubData);
 
-            await saveClubDataToLocalDB(newClubModel);
-
-            commit('setClub', newClubModel);
-
-            await store.dispatch('master/updateMaster', {clubId: newClubModel.id, balance: masterData.balance - COST_CREATE_CLUB});
-
-            // TODO перезагрузка данных, взятие нового баланса и группы текущей
-            // Синхронизируем с сервером
-            await store.dispatch('master/syncMaster');
+            await store.dispatch('master/updateMaster', {clubId: newClubModel.id});
 
             return newClubModel;
 
@@ -129,7 +107,6 @@ const actions = {
             throw error;
         }
     },
-
     // Действие для загрузки аватара для выбранного клуба
     async uploadClubAvatar({ commit }, { formData, onUploadProgress }) {
         try {

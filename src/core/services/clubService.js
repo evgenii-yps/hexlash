@@ -72,5 +72,22 @@ export const uploadClubAvatar = async (formData, onUploadProgress) => {
     }
 };
 
+export const createClub = async (clubData) => {
+    try {
+
+        const response = await apiClient.post(`/club/add`, clubData, { authRequired: true });
+
+        console.log(response);
+
+        const createdClubModel = ClubModel.fromJSON(response.data);
+        await updateClubToLocalDB(createdClubModel);
+        store.commit('club/setClub', createdClubModel);
+
+        return createdClubModel;
+    } catch (error) {
+        throw new Error('Failed to create club: ' + (error.response?.data?.error || error.message));
+    }
+};
+
 
 

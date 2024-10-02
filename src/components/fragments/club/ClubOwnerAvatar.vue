@@ -5,7 +5,7 @@
     <img :src="avatarUrl" alt="Club Avatar" class="avatar"
          :class="{
        'loading-avatar': isUploading,
-       'non-default-avatar': avatarUrl !== defaultAvatarImg && !isLoading,
+       'non-default-avatar ': avatarUrl !== defaultAvatarImg && !isLoading,
        'default-avatar': avatarUrl === defaultAvatarImg
      }"/>
     <div v-if="isLoading" class="loader-container">
@@ -117,8 +117,9 @@ watch(localClubData, (localClubData) => {
 
 .default-avatar {
   padding: 5px;
-  object-fit: fill;
-  width: 80%;
+  object-fit: fill !important;
+  width: 80% !important;
+  border-radius: 0 !important;
 }
 
 .non-default-avatar {

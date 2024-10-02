@@ -101,7 +101,12 @@ const saveChanges = async () => {
   loading.value = true;
 
   try {
-    const club = await store.dispatch('club/createClub', title.value, description.value);
+    const club = await store.dispatch('club/createClub',
+        {
+          name: title.value,
+          description: description.value
+        }
+    );
     hide();
     if(club){
       await router.push({path: `/club/${club.id}`});
@@ -146,7 +151,7 @@ const saveChanges = async () => {
 .result-message {
   text-align: center;
   font-size: 0.8rem;
-  color: var(--gray3);
+  color: var(--pinkDark);
   margin-top: 10px;
 }
 
