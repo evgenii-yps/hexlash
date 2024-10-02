@@ -51,12 +51,13 @@
                       max-width="250px"
                       contentClass="v-tooltip__content">
                     <template #activator="{ props }">
-                      <img v-bind="props" @click.stop="toggleToolTip" src="@/assets/images/icon_lock_white.svg" alt="" class="custom-icon"/>
+                      <img v-bind="props" @click.stop="toggleToolTip" src="@/assets/images/icon_lock_white.svg" alt=""
+                           class="custom-icon"/>
                     </template>
-                    <span>{{t('club.lblCloseClubTooltip')}}</span>
+                    <span>{{ t('club.lblCloseClubTooltip') }}</span>
                   </v-tooltip>
                 </template>
-                {{t('club.lblOpenClub')}}
+                {{ t('club.lblOpenClub') }}
                 <template #append>
                   <span class="custom-icon"/>
                   <v-switch
@@ -86,7 +87,7 @@
                 <template #prepend>
                   <img src="@/assets/images/icon_arrow.svg" alt="" class="custom-icon"/>
                 </template>
-                {{t('club.lblChangeClub')}}
+                {{ t('club.lblChangeClub') }}
                 <template #append>
                   <span class="custom-icon"/>
                 </template>
@@ -94,14 +95,14 @@
 
               <VModal v-model="dialogChangeClub" max-width="500">
                 <VCard>
-                  <v-card-title class="headline">{{t('club.lblChangeClub')}}</v-card-title>
+                  <v-card-title class="headline">{{ t('club.lblChangeClub') }}</v-card-title>
                   <v-card-text>
-                    {{t('club.lblChangeClubDescription')}}
+                    {{ t('club.lblChangeClubDescription') }}
                   </v-card-text>
                   <v-card-actions>
                     <v-spacer></v-spacer>
-                    <v-btn @click="dialogChangeClub = false" class="cancel-btn">{{t('modal.btnCancel')}}</v-btn>
-                    <v-btn @click="confirmExit" class="confirm-btn">{{t('club.lblConfirm')}}</v-btn>
+                    <v-btn @click="dialogChangeClub = false" class="cancel-btn">{{ t('modal.btnCancel') }}</v-btn>
+                    <v-btn @click="confirmExit" class="confirm-btn">{{ t('club.lblConfirm') }}</v-btn>
                   </v-card-actions>
                 </VCard>
               </VModal>
@@ -167,8 +168,7 @@ watch(
       isPublic.value = clubData.value.isPublic;
       loading.value = false;  // Сбрасываем флаг загрузки после загрузки данных
 
-    }
-);
+    });
 
 
 const btnToMembers = () => {
@@ -203,7 +203,7 @@ const confirmExit = () => {
 
 
 // Формирование строки и замена числа на пустую строку
-const formattedMembers = computed( () => {
+const formattedMembers = computed(() => {
   const translation = t('club.lblClubMembers', clubData.value.members);
   const textWithoutNumber = translation.replace(clubData.value.members, '').trim();
   return `<span style="font-size: 1.5em; margin-right: 5px">${clubData.value.members}</span>${textWithoutNumber}`;

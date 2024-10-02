@@ -68,7 +68,7 @@ export const login = async (credentials) => {
 export const sendCheckLoginAvailable = async (login) => {
     try {
         const response = await apiClient.get(`/auth/login-available/${login}`);
-console.log(response);
+        console.log(response);
         return response.data.available;
     } catch (error) {
         const errorStr = error.response?.error || error.message || 'Failed to login';
@@ -179,14 +179,34 @@ export const sendVerifyEmail = async (code) => {
     try {
         const response = await apiClient.post('/user/verify-email', code, {authRequired: false});
 
-       if(response.data){
-           return true;
-       }
+        if (response.data) {
+            return true;
+        }
 
         return false;
 
     } catch (error) {
         throw new Error('Failed verify email');
+    }
+};
+
+export const uploadAvatar = async (formData, onUploadProgress) => {
+    try {
+        const response = await apiClient.post('/user/put-avatar', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+            authRequired: true,
+            onUploadProgress, // Обработчик для прогресса загрузки
+        });
+
+        // Сохраняем в базу данных
+        await updateMasterToLocalDB({avatarUrl: response.data.avatarUrl});
+
+        return response.data.avatarUrl;
+
+    } catch (error) {
+        throw new Error('Failed to upload avatar ' + (error.response?.data?.error || error.message));
     }
 };
 
@@ -204,6 +224,7 @@ export const showFightRulesReminder = (text) => {
         store.commit('master/setInfoMessage', customMessage);
     }
 };
+
 
 export const showTrainingRulesReminder = (text) => {
     const MESSAGE_KEY = 'firstTrainingToolTip';

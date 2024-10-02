@@ -2,6 +2,7 @@ import {getClubDataFromLocalDB, updateClubToLocalDB} from "@/core/database/clubR
 import apiClient from "@/core/api/apiClient.js";
 import store from "@/core/state/store.js";
 import ClubModel from "@/core/models/clubModel.js";
+import {updateMasterToLocalDB} from "@/core/database/masterRepository.js";
 
 // Получить данные клуба из локальной базы данных или из API
 export const getClubByIdFromLocalAndAPI = async (clubId) => {
@@ -50,5 +51,26 @@ export const updateClubDataOnAPI = async (clubModel) => {
         throw new Error('Failed to fetch club data from server');
     }
 };
+
+export const uploadClubAvatar = async (formData, onUploadProgress) => {
+    try {
+        const response = await apiClient.post('/club/put-avatar', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+            authRequired: true,
+            onUploadProgress, // Обработчик для прогресса загрузки
+        });
+
+        // Сохраняем в базу данных
+        await updateClubToLocalDB({id: response.data.id, avatarUrl: response.data.avatarUrl});
+
+        return response.data.avatarUrl;
+
+    } catch (error) {
+        throw new Error('Failed to upload avatar ' + (error.response?.data?.error || error.message));
+    }
+};
+
 
 

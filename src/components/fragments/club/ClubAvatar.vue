@@ -13,6 +13,7 @@
 <script setup>
 import {computed} from 'vue';
 import defaultAvatarImg from '@/assets/images/default_club_avatar.svg';
+import apiClient from "@/core/api/apiClient.js";
 
 // Определяем проп avatarUrl
 const props = defineProps({
@@ -23,7 +24,9 @@ const props = defineProps({
 });
 
 // Создаем вычисляемое свойство для аватара
-const computedAvatarUrl = computed(() => props.avatarUrl || defaultAvatarImg);
+const computedAvatarUrl = computed(() =>
+    apiClient.defaults.baseURL + "/file/get/" + props.avatarUrl || defaultAvatarImg);
+
 </script>
 
 <style scoped>
@@ -37,7 +40,6 @@ const computedAvatarUrl = computed(() => props.avatarUrl || defaultAvatarImg);
   width: 175px;
   height: 175px;
   margin: 0 auto;
-  cursor: pointer;
 }
 
 .default-avatar {

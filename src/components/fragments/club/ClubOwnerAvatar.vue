@@ -2,7 +2,7 @@
   <div class="avatar-container" @click="changeAvatar"
        :style="{ backgroundColor: avatarUrl !== defaultAvatarImg ? 'transparent' : 'var(--black-opacity-80)' }">
 
-    <img :src="avatarUrl" alt="User Avatar" class="avatar"
+    <img :src="avatarUrl" alt="Club Avatar" class="avatar"
          :class="{
        'loading-avatar': isUploading,
        'non-default-avatar': avatarUrl !== defaultAvatarImg && !isLoading,
@@ -30,15 +30,17 @@
 </template>
 
 <script setup>
-import {computed, ref, watch} from 'vue';
+import {computed, onMounted, ref, watch} from 'vue';
 import store from "@/core/state/store.js";
 
 import defaultAvatarImg from '@/assets/images/default_club_avatar.svg';
+import apiClient from "@/core/api/apiClient.js";
 
 const isLoading = ref(false);
 const isUploading = ref(false);
 const progress = ref(0);
 const fileInput = ref(null);
+const avatarUrl = ref(null);
 
 const props = defineProps({
   clubData: {
@@ -50,68 +52,50 @@ const props = defineProps({
 // Создаем локальную копию clubData для редактирования
 const localClubData = ref({...props.clubData});
 
-// В computed создаем прямую связь с полями localClubData
-const avatarUrl = computed({
-  get: () => localClubData.value.avatarUrl || defaultAvatarImg,
-  set: value => localClubData.value.avatarUrl = value,
-});
-
 const changeAvatar = () => {
   fileInput.value.click();
 };
 
-// TODO Вынести в стейт процесс загрузки, чтобы после переключения вью можно было вернутся и увидеть прогресс
 const uploadAvatar = (event) => {
   progress.value = 0;
   isLoading.value = true;
 
   const file = event.target.files[0];
   if (file) {
-    const reader = new FileReader();
-    reader.onloadstart = () => {
-      isUploading.value = true;
-    };
-    reader.onloadend = () => {
-      const avatarDataUrl = reader.result;
-      avatarUrl.value = avatarDataUrl; // Вставляем черно белую
+    const formData = new FormData();
+    formData.append('avatarFile', file);
 
-      const onUploadProgress = (event) => {
-        progress.value = Math.round((event.loaded * 100) / event.total);
-      };
-
-      store.dispatch('club/uploadClubAvatar', {
-        clubData: localClubData.value,
-        onUploadProgress
-      })
-          .then(() => {
-            isLoading.value = false;
-            isUploading.value = false;
-            avatarUrl.value = avatarDataUrl;
-          })
-          .catch((error) => {
-            console.error("Ошибка при загрузке аватара", error);
-            isLoading.value = false;
-            isUploading.value = false;
-          });
+    const onUploadProgress = (event) => {
+      progress.value = Math.round((event.loaded * 100) / event.total);
     };
-    reader.readAsDataURL(file);
+
+    store.dispatch('club/uploadClubAvatar', { formData, onUploadProgress })
+        .then((avatarFile) => {
+          console.log(avatarFile);
+          isLoading.value = false;
+          setAvatarUrl(avatarFile); // Обновляем URL аватара
+        })
+        .catch((error) => {
+          console.error('Ошибка при загрузке аватара', error);
+          isLoading.value = false;
+        });
   }
 };
 
-/*watch(store.getters['club/getClubById'](props.clubData.clubId), (clubData) => {
-  if (clubData) {
-    console.log("test");
-    avatarUrl.value = clubData.avatarUrl || defaultAvatarImg;
-  }
-}, {immediate: true});*/
 
-const clubData = computed(() => store.getters['club/getClubById'](props.clubData.clubId));
-
-watch(clubData, (newClubData) => {
-  if (newClubData) {
-    avatarUrl.value = newClubData.avatarUrl || defaultAvatarImg;
+const setAvatarUrl = (avatarFileName) => {
+  if (avatarFileName) {
+    avatarUrl.value = apiClient.defaults.baseURL + "/file/get/" + avatarFileName;
+  } else {
+    avatarUrl.value = defaultAvatarImg;
   }
-}, { immediate: true });
+};
+
+watch(localClubData, (localClubData) => {
+  if (localClubData) {
+    setAvatarUrl(localClubData.avatarUrl || null)
+  }
+}, {immediate: true});
 
 </script>
 
@@ -128,6 +112,7 @@ watch(clubData, (newClubData) => {
   height: 175px;
   margin: 0 auto;
   cursor: pointer;
+
 }
 
 .default-avatar {
@@ -144,6 +129,13 @@ watch(clubData, (newClubData) => {
   height: 100%;
 }
 
+.avatar{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
 .loader-container {
   width: 100%;
   height: 100%;
@@ -154,6 +146,8 @@ watch(clubData, (newClubData) => {
   display: flex;
   align-items: center;
   justify-content: center;
+
+
 }
 
 .loader-circle {
@@ -167,6 +161,7 @@ watch(clubData, (newClubData) => {
   border-radius: 50%;
   width: 100%;
   height: 100%;
+
 }
 
 .camera-icon-container {

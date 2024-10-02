@@ -1,13 +1,14 @@
 import {
     fetchClubData,
     getClubByIdFromLocalAndAPI,
-    updateClubDataOnAPI,
+    updateClubDataOnAPI, uploadClubAvatar,
 } from '@/core/services/clubService';
 
 import ClubModel from "@/core/models/clubModel.js";
 import store from "@/core/state/store.js";
 import {COST_CREATE_CLUB} from "@/core/constants.js";
 import {saveClubDataToLocalDB, updateClubToLocalDB} from "@/core/database/clubRepository.js";
+import * as clubService from "@/core/services/clubService.js";
 
 // Состояние модуля
 const state = {
@@ -130,19 +131,14 @@ const actions = {
     },
 
     // Действие для загрузки аватара для выбранного клуба
-    async uploadClubAvatar({ commit }, { clubData, onUploadProgress }) {
+    async uploadClubAvatar({ commit }, { formData, onUploadProgress }) {
         try {
-            // Симуляция загрузки на сервер
-            for (let i = 0; i <= 100; i++) {
-                await new Promise(resolve => setTimeout(resolve, 100));
-                onUploadProgress({loaded: i, total: 100});
-            }
+            const avatarUrl = await clubService.uploadClubAvatar(formData, onUploadProgress);
 
-            // TODO
             // После успешной симуляции загрузки обновляем аватар в стейте
-            commit('updateClub', clubData);
+            commit('updateClub', { avatarUrl });
 
-            // await updateUserOnAPI(state.currentUser);
+            return avatarUrl;
         } catch (error) {
             console.error('Failed to upload avatar:', error);
         }

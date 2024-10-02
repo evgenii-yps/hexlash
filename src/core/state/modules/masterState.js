@@ -193,7 +193,7 @@ const actions = {
             this.dispatch('master/updateMaster', {skin: skinId});
 
         } catch (error) {
-            console.error('Failed to update user data:', error);
+            commit('setInfoMessage', InfoMessageModel.withText(error.message));
         }
     },
     async setLanguage({commit, state}, language) {
@@ -201,18 +201,14 @@ const actions = {
 
         i18n.global.locale.value = language
     },
-    async uploadMasterAvatar({commit}, {avatarDataUrl, onUploadProgress}) {
+    async uploadMasterAvatar({commit}, {formData, onUploadProgress}) {
         try {
-            // Симуляция загрузки на сервер
-            for (let i = 0; i <= 100; i++) {
-                await new Promise(resolve => setTimeout(resolve, 100));
-                onUploadProgress({loaded: i, total: 100});
-            }
+            const avatarUrl = await masterService.uploadAvatar(formData, onUploadProgress);
 
-            // После успешной симуляции загрузки обновляем аватар в стейте
-            this.dispatch('master/updateMaster', {avatarUrl: avatarDataUrl});
+            commit('updateMaster', { avatarUrl });
 
-            // await updateUserOnAPI(state.currentUser);
+            return avatarUrl;
+
         } catch (error) {
             console.error('Failed to upload avatar:', error);
         }

@@ -32,6 +32,7 @@ import {computed, onMounted, ref, watch} from 'vue';
 import store from "@/core/state/store.js";
 
 import defaultAvatarImg from '@/assets/images/default_avatar.svg';
+import apiClient from "@/core/api/apiClient.js";
 
 const avatarUrl = ref(defaultAvatarImg);
 const isLoading = ref(false);
@@ -43,46 +44,50 @@ const changeAvatar = () => {
   fileInput.value.click();
 };
 
-// TODO Вынести в стейт процесс загрузки, чтобы после переключения вью можно было вернутся и увидеть прогресс
+const setAvatarUrl = (avatarFileName) => {
+  if (avatarFileName) {
+    avatarUrl.value = apiClient.defaults.baseURL + "/file/get/" + avatarFileName;
+  } else {
+    avatarUrl.value = defaultAvatarImg;
+  }
+};
+
 const uploadAvatar = (event) => {
   progress.value = 0;
   isLoading.value = true;
 
   const file = event.target.files[0];
   if (file) {
-    const reader = new FileReader();
-    reader.onloadstart = () => {
-      isUploading.value = true;
-    };
-    reader.onloadend = () => {
-      const avatarDataUrl = reader.result;
-      avatarUrl.value = avatarDataUrl; // Вставляем черно белую
+    const formData = new FormData();
+    formData.append('avatarFile', file);
 
-      const onUploadProgress = (event) => {
-        progress.value = Math.round((event.loaded * 100) / event.total);
-      };
-
-      store.dispatch('master/uploadMasterAvatar', { avatarDataUrl, onUploadProgress })
-          .then(() => {
-            isLoading.value = false;
-            isUploading.value = false;
-            avatarUrl.value = avatarDataUrl;
-          })
-          .catch((error) => {
-            console.error("Ошибка при загрузке аватара", error);
-            isLoading.value = false;
-            isUploading.value = false;
-          });
+    const onUploadProgress = (event) => {
+      progress.value = Math.round((event.loaded * 100) / event.total);
     };
-    reader.readAsDataURL(file);
+
+    store.dispatch('master/uploadMasterAvatar', { formData, onUploadProgress })
+        .then((avatarFile) => {
+          console.log(avatarFile);
+          isLoading.value = false;
+          setAvatarUrl(avatarFile); // Обновляем URL аватара
+        })
+        .catch((error) => {
+          console.error('Ошибка при загрузке аватара', error);
+          isLoading.value = false;
+        });
   }
 };
 
-watch(store.getters['master/getMaster'], (newMaster) => {
+watch(() => store.getters['master/getMaster'], (newMaster) => {
   if (newMaster && newMaster.userData) {
-    avatarUrl.value = newMaster.userData.avatarUrl || defaultAvatarImg;
+    setAvatarUrl(newMaster.userData.avatarUrl);
+  } else {
+    setAvatarUrl(null); // Используем дефолтный аватар, если ничего не пришло
   }
 }, { immediate: true });
+
+
+
 
 </script>
 
