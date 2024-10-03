@@ -1,37 +1,40 @@
 import {
     fetchClubData,
     getClubByIdFromLocalAndAPI,
-    updateClubDataOnAPI, uploadClubAvatar,
+    updateClubDataOnAPI,
 } from '@/core/services/clubService';
 
-import ClubModel from "@/core/models/clubModel.js";
 import store from "@/core/state/store.js";
-import {COST_CREATE_CLUB} from "@/core/constants.js";
-import {saveClubDataToLocalDB, updateClubToLocalDB} from "@/core/database/clubRepository.js";
+import {updateClubToLocalDB} from "@/core/database/clubRepository.js";
 import * as clubService from "@/core/services/clubService.js";
 
-// Состояние модуля
 const state = {
     clubs: [],
-};
-
-// Геттеры для получения данных из состояния
-const getters = {
-    // Геттер для получения выбранного клуба
-    getClubById: (state) => (clubId) => {
-        return state.clubs.find(club => club.id === clubId);
+    clubRatings: {
+        items: [],
+        limitReached: false,
+        pageSize: 20,
     },
 };
 
-// Мутации для изменения состояния
+const getters = {
+    getClubById: (state) => (clubId) => {
+        return state.clubs.find(club => club.id === clubId);
+    },
+    getClubRatingsList: (state) => {
+        return state.clubRatings.items;
+    },
+    isLimitReached: (state) => {
+        return state.clubRatings.limitReached;
+    },
+};
+
 const mutations = {
     setClub(state, club) {
-        const index = state.clubs.findIndex(c => c.id === c.id);
+        const index = state.clubs.findIndex(c => c.id === club.id);
         if (index !== -1) {
-            // Обновляем существующий клуб
             state.clubs.splice(index, 1, club);
         } else {
-            // Добавляем новый клуб
             state.clubs.push(club);
         }
     },
@@ -42,9 +45,21 @@ const mutations = {
             Object.assign(club, updatedClubData);
         }
     },
+    setClubRatings(state, clubs) {
+        state.clubRatings.items.push(...clubs);
+    },
+    resetClubRatings(state) {
+        state.clubRatings.items = [];
+        state.clubRatings.limitReached = false;
+    },
+    updateClubRatingsState(state, { field, value }) {
+        if (state.clubRatings.hasOwnProperty(field)) {
+            state.clubRatings[field] = value;
+        }
+    },
 };
 
-// Действия для асинхронных операций и бизнес-логики
+
 const actions = {
     async getClubById({commit, getters}, clubId) {
         let club = getters.getClubById(clubId);
@@ -75,7 +90,6 @@ const actions = {
             throw error;
         }
     },
-
     async updateClubData({commit}, updatedClubData) {
         try {
             // Обновляем данные на сервере
@@ -90,11 +104,8 @@ const actions = {
             throw error;
         }
     },
-
     async createClub({commit}, newClubData) {
         try {
-
-
 
             const newClubModel = await clubService.createClub(newClubData);
 
@@ -119,6 +130,23 @@ const actions = {
         } catch (error) {
             console.error('Failed to upload avatar:', error);
         }
+    },
+    async loadClubRatings({ commit, state }, { search, sortBy, page }) {
+
+        console.log(page);
+        const newClubs = await clubService.searchClubs({
+            name: search,
+            sortBy: sortBy,
+            page: page,
+            size: state.clubRatings.pageSize,
+        });
+
+        if (newClubs.length < state.clubRatings.pageSize) {
+            commit('updateClubRatingsState', { field: 'limitReached', value: true });
+        }
+
+        commit('setClubRatings', newClubs);
+
     },
 };
 

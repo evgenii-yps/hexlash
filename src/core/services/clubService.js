@@ -90,4 +90,23 @@ export const createClub = async (clubData) => {
 };
 
 
+export const searchClubs = async ({ name = '', sortBy = 'battles', page = 0, size = 10, sortDirection = 'DESC' }) => {
+    try {
+        const response = await apiClient.get('/club/search', {
+            params: {
+                name,
+                sortBy,
+                sortDirection,
+                page,
+                size,
+            },
+            authRequired: true,
+        });
+
+        return response.data.map(club => ClubModel.fromJSON(club));
+    } catch (error) {
+        throw new Error('Failed to search clubs: ' + (error.response?.data?.error || error.message));
+    }
+};
+
 

@@ -5,11 +5,11 @@
         <div class="rating-tabs">
           <VBtnDark :class="{'active-tab': activeTab === Tabs.CLUBS} "
                     @click="setActiveTab(Tabs.CLUBS)">
-            {{t('rating.clubs')}}
+            {{ t('rating.clubs') }}
           </VBtnDark>
           <VBtnDark :class="{'active-tab': activeTab === Tabs.FIGHTERS}"
                     @click="setActiveTab(Tabs.FIGHTERS)">
-            {{t('rating.fighters')}}
+            {{ t('rating.fighters') }}
           </VBtnDark>
         </div>
 
@@ -49,28 +49,34 @@
 
           <div class="table-body">
             <div class="table-header-row">
-              <span class="column-name">{{t('rating.clubName')}}</span>
+              <span class="column">№</span>
+              <span class="column-name">{{ t('rating.clubName') }}</span>
               <span class="column">
-    <img :class="{'active-sort-icon': sortClubBy === 'members'}" src="@/assets/images/icon_members.svg"
-         alt="sort icon"/>
-  </span>
+                <img :class="{'active-sort-icon': sortClubBy === 'members'}" src="@/assets/images/icon_members.svg"
+                     alt="sort icon"/>
+              </span>
               <span class="column">
-    <img :class="{'active-sort-icon': sortClubBy === 'points'}" src="@/assets/images/icon_wins.svg" alt="sort icon"/>
-  </span>
-
+                <img :class="{'active-sort-icon': sortClubBy === 'battles'}" src="@/assets/images/icon_fights.svg"
+                     alt="sort icon"/>
+              </span>
+              <span class="column">
+                <img :class="{'active-sort-icon': sortClubBy === 'wins'}" src="@/assets/images/icon_wins.svg"
+                     alt="sort icon"/>
+              </span>
             </div>
-
 
             <VInfiniteScroll :items="clubs" :onLoad="loadClubs" class="infinite-scroll">
               <template v-if="clubs.length" v-for="(club, index) in clubs" :key="club.id">
                 <div :class="['table-row', index % 2 === 0 ? '' : '']" @click="viewClub(club.id)">
+                  <span class="column">{{ index + 1 }}</span>
                   <span class="column-name">{{ club.name }}</span>
                   <span class="column">{{ club.members }}</span>
-                  <span class="column">{{ club.points }}</span>
+                  <span class="column">{{ club.battles }}</span>
+                  <span class="column">{{ club.wins }}</span>
                 </div>
               </template>
               <template v-else>
-                <div class="no-results" v-if="clubsLimitReached">{{t('rating.noResults')}}</div>
+                <div class="no-results" v-if="clubsLimitReached">{{ t('rating.noResults') }}</div>
               </template>
               <template v-slot:loading>
                 <v-progress-circular v-if="!clubsLimitReached" class="loader" size="40" indeterminate/>
@@ -78,8 +84,9 @@
               <template v-slot:error="{ props }">
                 <v-alert type="error">
                   <div class="d-flex justify-space-between align-center">
-                    {{t('rating.error')}}
-                    <v-btn color="white" size="small" variant="outlined" v-bind="props">{{t('rating.btnRetry')}}</v-btn>
+                    {{ t('rating.error') }}
+                    <v-btn color="white" size="small" variant="outlined" v-bind="props">{{ t('rating.btnRetry') }}
+                    </v-btn>
                   </div>
                 </v-alert>
               </template>
@@ -124,28 +131,33 @@
 
           <div class="table-body">
             <div class="table-header-row">
-              <span class="column-name">{{t('rating.participantName')}}</span>
-              <span class="column-name">{{t('rating.club')}}</span>
+              <span class="column-name">{{ t('rating.participantName') }}</span>
+              <span class="column-name">{{ t('rating.club') }}</span>
 
               <span class="column">
-                <img class="icon" :class="{'active-sort-icon': sortParticipantBy === 'fc'}" src="@/assets/images/icon_tokens.svg"
+                <img class="icon" :class="{'active-sort-icon': sortParticipantBy === 'fc'}"
+                     src="@/assets/images/icon_tokens.svg"
                      alt="sort icon"/>
               </span>
               <span class="column">
-                <img class="icon" :class="{'active-sort-icon': sortParticipantBy === 'losses'}" src="@/assets/images/icon_lose.svg"
+                <img class="icon" :class="{'active-sort-icon': sortParticipantBy === 'losses'}"
+                     src="@/assets/images/icon_lose.svg"
                      alt="sort icon"/>
               </span>
               <span class="column">
-                <img class="icon" :class="{'active-sort-icon': sortParticipantBy === 'luck'}" src="@/assets/images/icon_lucky.svg"
+                <img class="icon" :class="{'active-sort-icon': sortParticipantBy === 'luck'}"
+                     src="@/assets/images/icon_lucky.svg"
                      alt="sort icon"/>
               </span>
               <span class="column">
-                <img class="icon" :class="{'active-sort-icon': sortParticipantBy === 'total'}" src="@/assets/images/icon_fights.svg"
+                <img class="icon" :class="{'active-sort-icon': sortParticipantBy === 'battles'}"
+                     src="@/assets/images/icon_fights.svg"
                      alt="sort icon"/>
               </span>
 
               <span class="column">
-                <img class="icon" :class="{'active-sort-icon': sortParticipantBy === 'wins'}" src="@/assets/images/icon_wins.svg"
+                <img class="icon" :class="{'active-sort-icon': sortParticipantBy === 'wins'}"
+                     src="@/assets/images/icon_wins.svg"
                      alt="sort icon"/>
               </span>
             </div>
@@ -163,7 +175,7 @@
                 </div>
               </template>
               <template v-else>
-                <div class="no-results" v-if="participantsLimitReached">{{t('rating.noResults')}}</div>
+                <div class="no-results" v-if="participantsLimitReached">{{ t('rating.noResults') }}</div>
               </template>
               <template v-slot:loading>
                 <v-progress-circular v-if="!participantsLimitReached" class="loader" size="40" indeterminate/>
@@ -171,8 +183,9 @@
               <template v-slot:error="{ props }">
                 <v-alert type="error">
                   <div class="d-flex justify-space-between align-center">
-                    {{t('rating.error')}}
-                    <v-btn color="white" size="small" variant="outlined" v-bind="props"> {{t('rating.btnRetry')}}</v-btn>
+                    {{ t('rating.error') }}
+                    <v-btn color="white" size="small" variant="outlined" v-bind="props"> {{ t('rating.btnRetry') }}
+                    </v-btn>
                   </div>
                 </v-alert>
               </template>
@@ -186,11 +199,12 @@
   </div>
 </template>
 <script setup>
-import {ref, onMounted, watch} from 'vue';
+import {ref, onMounted, watch, computed, onUnmounted} from 'vue';
 import {useRouter, useRoute} from 'vue-router';
 import InputField from "@/components/ui/InputField.vue";
 import debounce from "debounce";
 import {useI18n} from "vue-i18n";
+import store from "@/core/state/store.js";
 
 const {t} = useI18n({useScope: 'global'})
 
@@ -206,113 +220,73 @@ const route = useRoute();
 const activeTab = ref(route.params.type === Tabs.CLUBS ? Tabs.CLUBS : Tabs.FIGHTERS);
 
 const searchClub = ref(activeTab.value === Tabs.CLUBS ? route.query.searchClub || '' : '');
+const sortClubBy = ref(activeTab.value === Tabs.CLUBS ? route.query.sortClubBy || 'battles' : 'battles');
+
 const searchMember = ref(activeTab.value === Tabs.FIGHTERS ? route.query.searchMember || '' : '');
 
-const sortClubBy = ref(activeTab.value === Tabs.CLUBS ? route.query.sortClubBy || 'points' : 'points');
 const sortParticipantBy = ref(activeTab.value === Tabs.FIGHTERS ? route.query.sortParticipantBy || 'wins' : 'wins');
-
 const participantsLimitReached = ref(false);
-const clubsLimitReached = ref(false);
+
 
 const clubSortItems = [
-  {name: t('rating.points'), value: 'points'},
-  {name: t('rating.members'), value: 'members'}
+  {name: t('rating.total'), value: 'battles'},
+  {name: t('rating.members'), value: 'members'},
+  {name: t('rating.wins'), value: 'wins'}
 ];
 
 const membersSortedItem = [
   {name: t('rating.wins'), value: 'wins'},
   {name: t('rating.fc'), value: 'fc'},
   {name: t('rating.losses'), value: 'losses'},
-  {name: t('rating.total'), value: 'total'},
+  {name: t('rating.total'), value: 'battles'},
   {name: t('rating.luck'), value: 'luck'}
 ];
 
-const clubs = ref([]);
+const clubs = computed(() => store.getters['club/getClubRatingsList']);
 const participants = ref([]);
 
-const clubPage = ref(1);
-const participantPage = ref(1);
-const pageSize = 10;
+const clubsLimitReached = computed(() => store.getters['club/isLimitReached']);
 
-const loadClubs = async ({done}) => {
-  const newClubs = await fetchClubsFromAPI({
+const page = ref(0);
+
+const loadClubs = async (options = {}) => {
+  const { done } = options;
+
+  if (clubsLimitReached.value) {
+    if (done) {
+      done();
+    }
+    return;
+  }
+
+  await store.dispatch('club/loadClubRatings', {
     search: searchClub.value,
     sortBy: sortClubBy.value,
-    page: clubPage.value,
-    limit: pageSize
+    page: page.value
   });
-  if (newClubs.length === 0) {
-    clubsLimitReached.value = true;
+
+  page.value = page.value + 1;
+
+  if(done){
+    done();
   }
-  clubs.value.push(...newClubs);
-  clubPage.value++;
-  done('ok');
+
+
 };
 
-const loadParticipants = async ({done}) => {
-  const newParticipants = await fetchParticipantsFromAPI({
-    searchMember: searchMember.value,
-    sortBy: sortParticipantBy.value,
-    page: participantPage.value,
-    limit: pageSize
-  });
-  if (newParticipants.length === 0) {
-    participantsLimitReached.value = true;
-  }
-  participants.value.push(...newParticipants);
-  participantPage.value++;
-  done('ok');
+const loadParticipants = async () => {
+  //await store.dispatch('users/loadClubRatings');
 };
-
-const fetchClubsFromAPI = async (params) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const totalClubs = 50; // Всего клубов
-      const start = (params.page - 1) * params.limit;
-      const end = params.page * params.limit;
-      const filteredClubs = Array.from({length: totalClubs}, (_, i) => ({
-        id: i + 1,
-        name: `Клуб ${i + 1}`,
-        points: Math.floor(Math.random() * 2000),
-        members: Math.floor(Math.random() * 50)
-      })).slice(start, end);
-
-      resolve(filteredClubs);
-    }, 1000);
-  });
-};
-
-const fetchParticipantsFromAPI = async (params) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const totalParticipants = 100; // Всего участников
-      const start = (params.page - 1) * params.limit;
-      const end = params.page * params.limit;
-      const filteredParticipants = Array.from({length: totalParticipants}, (_, i) => ({
-        id: i + 1,
-        name: `Участник ${i + 1}`,
-        club: `Клуб ${Math.floor(Math.random() * 10) + 1}`,
-        wins: Math.floor(Math.random() * 100),
-        fc: Math.floor(Math.random() * 150),
-        losses: Math.floor(Math.random() * 50),
-        total: Math.floor(Math.random() * 200),
-        luck: Math.floor(Math.random() * 100)
-      })).slice(start, end);
-
-      resolve(filteredParticipants);
-    }, 1000);
-  });
-};
-
 
 const setActiveTab = (tab) => {
   activeTab.value = tab;
-  router.replace({path: `/ratings/${tab}`, query: updateQueryParams()});
+  updateQueryParams();
 };
 
-
 const viewClub = (clubId) => {
-  console.log(`Просмотр клуба с ID: ${clubId}`);
+  if (clubId) {
+    router.push({path: `/club/${clubId}`});
+  }
 };
 
 const viewParticipant = (participantId) => {
@@ -320,25 +294,11 @@ const viewParticipant = (participantId) => {
 };
 
 const debouncedLoadClubs = debounce(() => {
-  clubs.value = [];
-  clubsLimitReached.value = false;
-  clubPage.value = 1;
-  loadClubs({
-    done: () => {
-    }
-  });
-  router.replace({query: updateQueryParams()});
+  updateQueryParams();
 }, 500);
 
 const debouncedLoadParticipants = debounce(() => {
-  participants.value = [];
-  participantsLimitReached.value = false;
-  participantPage.value = 1;
-  loadParticipants({
-    done: () => {
-    }
-  });
-  router.replace({query: updateQueryParams()});
+  updateQueryParams();
 }, 500);
 
 const handleClubSearchInput = () => {
@@ -347,6 +307,12 @@ const handleClubSearchInput = () => {
 
 const handleMemberSearchInput = () => {
   debouncedLoadParticipants();
+};
+
+const emit = defineEmits(['scroll']);
+
+const handleScroll = (event) => {
+  emit('scroll', event.target.scrollTop);
 };
 
 watch([searchClub, sortClubBy], () => {
@@ -361,35 +327,46 @@ watch([searchMember, sortParticipantBy], () => {
   }
 });
 
+watch(route, async (newRoute) => {
+  console.log("route changed");
+  // Сброс параметров
+  store.commit('club/resetClubRatings');
+  page.value = 0;
+
+  if (newRoute.params.type === Tabs.CLUBS) {
+    searchClub.value = newRoute.query.searchClub || '';
+    sortClubBy.value = newRoute.query.sortClubBy || 'wins';
+  } else {
+    searchMember.value = newRoute.query.searchMember || '';
+    sortParticipantBy.value = newRoute.query.sortParticipantBy || 'wins';
+  }
+});
+
 const updateQueryParams = () => {
   const queryParams = {};
   if (activeTab.value === Tabs.CLUBS) {
     queryParams.searchClub = searchClub.value;
-    queryParams.sortClubBy = sortClubBy.value || 'points';
+    queryParams.sortClubBy = sortClubBy.value || 'wins';
   } else {
     queryParams.searchMember = searchMember.value;
     queryParams.sortParticipantBy = sortParticipantBy.value || 'wins';
   }
 
-  return queryParams;
-};
-
-const emit = defineEmits(['scroll']);
-
-const handleScroll = (event) => {
-  emit('scroll', event.target.scrollTop);
+  router.replace({path: `/ratings/${activeTab.value}`, query: queryParams});
 };
 
 onMounted(() => {
-  loadClubs({
-    done: () => {
-    }
-  });
-  loadParticipants({
-    done: () => {
-    }
-  });
+ // page.value = 0;
+ /* if (activeTab.value === Tabs.CLUBS) {
+    loadClubs();
+  } else {
+    loadParticipants();
+  }*/
 });
+
+onUnmounted(() => {
+})
+
 </script>
 
 
@@ -450,7 +427,7 @@ onMounted(() => {
   padding: 0;
   max-width: 700px;
   justify-content: center;
-  margin-top: 13vh;
+  margin: 13vh auto 0;
 }
 
 .rating-tabs {
@@ -555,12 +532,13 @@ onMounted(() => {
   color: var(--gray3);
 }
 
-.icon{
+.icon {
   width: 25px;
   height: 25px;
   padding: 5px;
   object-fit: contain;
 }
+
 .active-sort-icon {
   background-color: var(--primary-color) !important;
   border-radius: 50%;
@@ -579,7 +557,7 @@ onMounted(() => {
   width: 100%;
 }
 
-:deep(.v-select__selection-text){
+:deep(.v-select__selection-text) {
   font-size: 0.8rem;
 }
 </style>

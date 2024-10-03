@@ -105,8 +105,7 @@ const { t } = useI18n({ useScope: 'global' })
 
 const master = computed(() => store.getters['master/getMaster']);
 const clubId = computed(() => master.value?.userData.clubId);
-//const isBalanceSufficient = computed(() => master.value?.userData.balance >= COST_CREATE_CLUB);
-const isBalanceSufficient = computed(() => true);
+const isBalanceSufficient = computed(() => master.value?.userData.balance >= COST_CREATE_CLUB);
 
 const isOwner = ref(false);
 const clubData = ref(null);

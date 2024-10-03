@@ -1,4 +1,4 @@
-export const COST_CREATE_CLUB = 100;
+export const COST_CREATE_CLUB = 1000;
 
 // PUNCH
 export const COST_PER_CLICK = 2;
