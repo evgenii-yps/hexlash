@@ -2,16 +2,27 @@ import * as userService from "@/core/services/userService.js";
 
 const state = {
     users: [], // Массив пользователей
+    participantRatings: {
+        items: [],
+        limitReached: false,
+        pageSize: 20,
+    },
 };
 
 const getters = {
     getUserByLogin: (state) => (login) => {
         return state.users.find(user => user.login === login);
     },
+    getParticipantRatingsList: (state) => {
+        return state.participantRatings.items;
+    },
+    isLimitReached: (state) => {
+        return state.participantRatings.limitReached;
+    },
 };
 
 const mutations = {
-    SetUser(state, user) {
+    setUser(state, user) {
         const index = state.users.findIndex(u => u.login === user.login);
         if (index !== -1) {
             // Обновляем существующего пользователя
@@ -19,6 +30,18 @@ const mutations = {
         } else {
             // Добавляем нового пользователя
             state.users.push(user);
+        }
+    },
+    setParticipantRatings(state, participants) {
+        state.participantRatings.items.push(...participants);
+    },
+    resetParticipantRatings(state) {
+        state.participantRatings.items = [];
+        state.participantRatings.limitReached = false;
+    },
+    updateParticipantRatingsState(state, { field, value }) {
+        if (state.participantRatings.hasOwnProperty(field)) {
+            state.participantRatings[field] = value;
         }
     },
 };
@@ -32,7 +55,7 @@ const actions = {
         try {
             user = await userService.getUserFromLocalAndAPI(userLogin);
             if (user) {
-                commit('SetUser', user);
+                commit('setUser', user);
             }
             return user;
         } catch (error) {
@@ -41,9 +64,24 @@ const actions = {
         }
     },
     async updateUser({commit}, user) {
-        commit('SetUser', user);
+        commit('setUser', user);
     },
+    async loadParticipantRatings({ commit, state }, { search, sortBy, page, clubId }) {
+        const newResult = await userService.searchParticipants({
+            name: search,
+            sortBy: sortBy,
+            page: page,
+            size: state.participantRatings.pageSize,
+            clubId: clubId,
+        });
 
+        commit('setParticipantRatings', newResult);
+
+        if (newResult.length < state.participantRatings.pageSize) {
+            commit('updateParticipantRatingsState', { field: 'limitReached', value: true });
+        }
+
+    },
 };
 
 export default {

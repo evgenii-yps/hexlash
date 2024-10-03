@@ -15,8 +15,6 @@ export default class UserModel {
      * @param {number} param0.balance - Игровой баланс.
      * @param {string} param0.clubId - Идентификатор клуба пользователя.
      * @param {string} param0.walletAddress - Адрес кошелька пользователя.
-     * @param {string} param0.walletType - Тип кошелька пользователя.
-     * @param {string} param0.walletBalance - Баланс на крипто кошельке.
      * @param {number} [param0.totalFights=0] - Общее количество боев пользователя.
      * @param {number} [param0.wins=0] - Количество побед пользователя.
      * @param {number} [param0.losses=0] - Количество поражений пользователя.
@@ -29,10 +27,7 @@ export default class UserModel {
      * @param {number} [param0.daysInClub=0] - Количество дней в клубе.
      * @param {number} [param0.noSkipDays=0] - Количество дней без пропусков.
      * @param {Array<number>} [param0.achievements=[]] - Список ID достижений пользователя.
-     * @param {number} [param0.skin=1] - Выбранный скин пользователя
-
-     * @param {string} [param0.inviteId] - Идентификатор приглашения. Только для текущего пользователя.
-     * @param {string} [param0.email] - Электронная почта пользователя. Только для текущего пользователя.
+     * @param {String} [param0.skin=""] - Выбранный скин пользователя
 
      */
     constructor({
@@ -51,8 +46,6 @@ export default class UserModel {
 
                     // Кошелек
                     walletAddress,
-                    walletType,
-                    walletBalance,
 
                     // Статистика
                     totalFights = 0,
@@ -71,12 +64,8 @@ export default class UserModel {
                     achievements = [],
 
                     // Выбранный скин
-                    skin = 1,
+                    skin = "skin_m_1.png",
 
-                    // Только для текущего пользователя
-                    inviteId,
-                    email,
-                    socialTasks
                 }) {
         // Базовые
         this.id = id;
@@ -95,8 +84,6 @@ export default class UserModel {
 
         // Кошелек
         this.walletAddress = walletAddress;
-        this.walletType = walletType;
-        this.walletBalance = walletBalance;
 
         // Статистика
         this.totalFights = totalFights;
@@ -115,16 +102,69 @@ export default class UserModel {
 
         this.skin = skin;
 
-        // Только для текущего пользователя (мастера)
-        // this.inviteId = inviteId;
-        // this.email = email;
+    }
+
+
+    static fromJSON(json) {
+        try {
+            // Извлекаем данные из JSON
+            const {
+                id,
+                login,
+                name = 'Anonymous',
+                avatarUrl = "",
+                isBlocked,
+                createdAt,
+                updatedAt,
+                balance = 0,
+                clubId,
+                walletAddress,
+                totalFights = 0,
+                wins = 0,
+                losses = 0,
+                draws = 0,
+                luckPercentage = 0,
+                wonTokens = 0,
+                freeTokens = 0,
+                lostTokens = 0,
+                invitedUsers = 0,
+                daysInClub = 0,
+                noSkipDays = 0,
+                achievements = [],
+                skin = "skin_m_1.png",
+            } = json;
+
+            // Возвращаем новый экземпляр UserModel
+            return new UserModel({
+                id,
+                login,
+                name,
+                avatarUrl,
+                isBlocked,
+                createdAt,
+                updatedAt,
+                balance,
+                clubId,
+                walletAddress,
+                totalFights,
+                wins,
+                losses,
+                draws,
+                luckPercentage,
+                wonTokens,
+                freeTokens,
+                lostTokens,
+                invitedUsers,
+                daysInClub,
+                noSkipDays,
+                achievements,
+                skin,
+            });
+        } catch (error) {
+            console.error('Error parsing JSON to UserModel:', error);
+            return null;
+        }
     }
 }
 
-// Определяем enum для типа кошелька
-const WalletTypes = Object.freeze({
-    IMPORTED: 'IMPORTED',
-    GENERATED: 'GENERATED',
-});
 
-export { UserModel, WalletTypes };

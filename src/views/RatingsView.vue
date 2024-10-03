@@ -132,7 +132,7 @@
           <div class="table-body">
             <div class="table-header-row">
               <span class="column-name">{{ t('rating.participantName') }}</span>
-              <span class="column-name">{{ t('rating.club') }}</span>
+<!--              <span class="column-name">{{ t('rating.club') }}</span>-->
 
               <span class="column">
                 <img class="icon" :class="{'active-sort-icon': sortParticipantBy === 'fc'}"
@@ -166,19 +166,19 @@
               <template v-if="participants.length" v-for="(participant, index) in participants" :key="participant.id">
                 <div :class="['table-row', index % 2 === 0 ? '' : '']" @click="viewParticipant(participant.id)">
                   <span class="column-name">{{ participant.name }}</span>
-                  <span class="column-name">{{ participant.club }}</span>
-                  <span class="column">{{ participant.fc }}</span>
+<!--                  <span class="column-name">{{ participant.club }}</span>-->
+                  <span class="column">{{ participant.wonTokens }}</span>
                   <span class="column">{{ participant.losses }}</span>
-                  <span class="column">{{ participant.luck }}</span>
-                  <span class="column">{{ participant.total }}</span>
+                  <span class="column">{{ participant.luckPercentage }}</span>
+                  <span class="column">{{ participant.totalFights }}</span>
                   <span class="column">{{ participant.wins }}</span>
                 </div>
               </template>
               <template v-else>
-                <div class="no-results" v-if="participantsLimitReached">{{ t('rating.noResults') }}</div>
+                <div class="no-results" v-if="participantLimitReached">{{ t('rating.noResults') }}</div>
               </template>
               <template v-slot:loading>
-                <v-progress-circular v-if="!participantsLimitReached" class="loader" size="40" indeterminate/>
+                <v-progress-circular v-if="!participantLimitReached" class="loader" size="40" indeterminate/>
               </template>
               <template v-slot:error="{ props }">
                 <v-alert type="error">
@@ -225,7 +225,10 @@ const sortClubBy = ref(activeTab.value === Tabs.CLUBS ? route.query.sortClubBy |
 const searchMember = ref(activeTab.value === Tabs.FIGHTERS ? route.query.searchMember || '' : '');
 
 const sortParticipantBy = ref(activeTab.value === Tabs.FIGHTERS ? route.query.sortParticipantBy || 'wins' : 'wins');
-const participantsLimitReached = ref(false);
+const clubsLimitReached = computed(() => store.getters['club/isLimitReached']);
+const participantLimitReached = computed(() => store.getters['user/isLimitReached']);
+
+const clubId = ref(route.query.clubId);
 
 
 const clubSortItems = [
@@ -243,18 +246,25 @@ const membersSortedItem = [
 ];
 
 const clubs = computed(() => store.getters['club/getClubRatingsList']);
-const participants = ref([]);
+const participants = computed(() => store.getters['user/getParticipantRatingsList']);
 
-const clubsLimitReached = computed(() => store.getters['club/isLimitReached']);
 
 const page = ref(0);
 
+let doneClubs = null;
+let doneParticipants = null;
+
 const loadClubs = async (options = {}) => {
-  const { done } = options;
+  const {done} = options;
+
+  if (done) {
+    doneClubs = done;
+  }
 
   if (clubsLimitReached.value) {
-    if (done) {
-      done();
+
+    if (doneClubs) {
+      doneClubs('empty');
     }
     return;
   }
@@ -267,15 +277,39 @@ const loadClubs = async (options = {}) => {
 
   page.value = page.value + 1;
 
-  if(done){
-    done();
+  if (doneClubs) {
+    doneClubs('ok');
   }
-
 
 };
 
-const loadParticipants = async () => {
-  //await store.dispatch('users/loadClubRatings');
+const loadParticipants = async (options = {}) => {
+  const {done} = options;
+
+  if (done) {
+    doneParticipants = done;
+  }
+
+  if (participantLimitReached.value) {
+
+    if (doneParticipants) {
+      doneParticipants('empty');
+    }
+    return;
+  }
+
+  await store.dispatch('user/loadParticipantRatings', {
+    search: searchMember.value,
+    sortBy: sortParticipantBy.value,
+    page: page.value,
+    clubId: clubId.value
+  });
+
+  page.value = page.value + 1;
+
+  if (doneParticipants) {
+    doneParticipants('ok');
+  }
 };
 
 const setActiveTab = (tab) => {
@@ -290,7 +324,9 @@ const viewClub = (clubId) => {
 };
 
 const viewParticipant = (participantId) => {
-  console.log(`Просмотр участника с ID: ${participantId}`);
+  if (participantId) {
+    router.push({path: `/user/${participantId}`});
+  }
 };
 
 const debouncedLoadClubs = debounce(() => {
@@ -328,17 +364,28 @@ watch([searchMember, sortParticipantBy], () => {
 });
 
 watch(route, async (newRoute) => {
-  console.log("route changed");
   // Сброс параметров
-  store.commit('club/resetClubRatings');
   page.value = 0;
 
   if (newRoute.params.type === Tabs.CLUBS) {
+    store.commit('club/resetClubRatings');
     searchClub.value = newRoute.query.searchClub || '';
     sortClubBy.value = newRoute.query.sortClubBy || 'wins';
+
+    if (doneClubs) {
+      doneClubs('ok');
+    }
+
   } else {
+    store.commit('user/resetParticipantRatings');
+
     searchMember.value = newRoute.query.searchMember || '';
     sortParticipantBy.value = newRoute.query.sortParticipantBy || 'wins';
+    clubId.value = newRoute.query.clubId || null;
+
+    if(doneParticipants){
+      doneParticipants('ok')
+    }
   }
 });
 
@@ -350,21 +397,16 @@ const updateQueryParams = () => {
   } else {
     queryParams.searchMember = searchMember.value;
     queryParams.sortParticipantBy = sortParticipantBy.value || 'wins';
+    queryParams.clubId = clubId.value || null;
   }
 
   router.replace({path: `/ratings/${activeTab.value}`, query: queryParams});
 };
 
-onMounted(() => {
- // page.value = 0;
- /* if (activeTab.value === Tabs.CLUBS) {
-    loadClubs();
-  } else {
-    loadParticipants();
-  }*/
-});
 
-onUnmounted(() => {
+onMounted(() => {
+  store.commit('club/resetClubRatings');
+  store.commit('user/resetParticipantRatings');
 })
 
 </script>
@@ -494,7 +536,7 @@ onUnmounted(() => {
 }
 
 .column-name {
-  flex: 3;
+  flex: 5;
   text-align: left;
 }
 

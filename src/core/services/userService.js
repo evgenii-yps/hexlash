@@ -2,6 +2,8 @@ import UserModel from "@/core/models/userModel.js";
 import store from "@/core/state/store.js";
 import router from "@/router/index.js";
 import {getUserByIdFromDB, getUserByLoginFromDB, saveUserDataToLocalDB} from "@/core/database/userRepository.js";
+import apiClient from "@/core/api/apiClient.js";
+import ClubModel from "@/core/models/clubModel.js";
 
 
 const testUsers = [
@@ -205,6 +207,28 @@ export const getUserFromLocalAndAPIById = async (userId) => {
         } catch (error) {
             console.error('Failed to fetch user data by ID:', error);
         }
+    }
+};
+
+
+export const searchParticipants = async ({ name = '', sortBy = 'battles', page = 0, size = 10, clubId = null, sortDirection = 'DESC' }) => {
+    try {
+
+        const response = await apiClient.get('/user/search', {
+            params: {
+                name,
+                sortBy,
+                sortDirection,
+                page,
+                size,
+                clubId
+            },
+            authRequired: true,
+        });
+
+        return response.data.map(user => UserModel.fromJSON(user));
+    } catch (error) {
+        throw new Error('Failed to search users: ' + (error.response?.data?.error || error.message));
     }
 };
 
