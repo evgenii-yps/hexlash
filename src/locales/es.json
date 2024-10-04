@@ -1,5 +1,6 @@
 {
   "loading": "Cargando...",
+  "connection": "No hay conexión con el servidor. Por favor, revise su conexión a internet.",
   "you": "(Tú)",
   "close": "Cerrar",
   "menu": {

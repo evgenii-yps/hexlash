@@ -208,7 +208,8 @@ const handleCircleClick = (event, circle) => {
 const startCountdown = () => {
   intervalId.value = setInterval(() => {
     const currentTime = Math.floor(Date.now() / 1000);
-    const remainingTime = punchInfo.value.unixTimeStart - currentTime;
+    const intervalStartTime = Math.floor(punchInfo.value.intervalStartMs / 1000);
+    const remainingTime = intervalStartTime - currentTime;
 
     if (remainingTime <= 0) {
       stopCountdown();
@@ -264,7 +265,7 @@ const handleScroll = (event) => {
 };
 
 onBeforeMount( () => {
-  store.dispatch('punch/synchronizePunchResetTime');
+  store.dispatch('punch/synchronizePunchInfo');
   store.dispatch('task/fetchAllSocialTasks');
   store.dispatch('task/fetchAllDailyTasks');
 
@@ -480,7 +481,7 @@ onUnmounted(() => {
 
 .timer-punch-container {
   position: absolute;
-  top: 20%;
+  top: 15%;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -494,6 +495,7 @@ onUnmounted(() => {
   padding: 10px;
   border-radius: 10px;
   display: flex;
+  justify-content: center;
 }
 
 .timer-text {

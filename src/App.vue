@@ -19,6 +19,8 @@
           :showButton="infoMessage.showButton"
     />
 
+    <NoConnection v-if="isAuth" />
+
     <footer class="footer">
       <transition name="slide-up-down">
         <BottomMenu v-if="isAuth && scrollDirection !== 'down'"/>
@@ -29,12 +31,13 @@
 
 <script setup>
 import {RouterView, useRoute} from 'vue-router'
-import {computed, onBeforeUnmount, onMounted, ref} from "vue";
+import {computed, onBeforeUnmount, onMounted, ref, watch} from "vue";
 import BottomMenu from "@/components/menu/BottomMenu.vue";
 import Logo from "@/components/Logo.vue";
 import store from "@/core/state/store.js";
 import Info from "@/components/Info.vue";
 import {createWeb3Modal, defaultConfig} from "@web3modal/ethers/vue";
+import NoConnection from "@/components/ui/NoConnection.vue";
 
 const balance = computed(() => {
   const master = store.getters['master/getMaster'];
@@ -152,10 +155,52 @@ const headerStyle = computed(() => {
   };
 });
 
+watch(isAuth, (newAuthState) => {
+  if (newAuthState) {
+    // Если пользователь авторизован, подключаемся к WebSocket
+    store.dispatch('webSocket/connectWebSocket');
+  } else {
+    // Отключаем WebSocket, если пользователь разлогинился
+    store.dispatch('webSocket/disconnectWebSocket');
+  }
+}, {immediate: true});
+
+
+// Отслеживание видимости вкладки
+const handleVisibilityChange = () => {
+  if (document.visibilityState === 'visible' && isAuth.value) {
+    console.log('Tab is now active. Checking WebSocket connection...');
+    if (!store.getters['webSocket/isConnected']) {
+      store.dispatch('webSocket/connectWebSocket');
+    }
+  }
+};
+
+// Отслеживание статуса интернет-соединения
+const handleOnlineStatus = () => {
+  if (navigator.onLine && isAuth.value) {
+    console.log('Internet is back online. Checking WebSocket connection...');
+    if (!store.getters['webSocket/isConnected']) {
+      store.dispatch('webSocket/connectWebSocket');
+    }
+  }
+};
+
+
 
 onMounted(() => {
   store.commit('contract/setWeb3Modal', modal)
+
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  window.addEventListener('online', handleOnlineStatus);
 })
+
+onBeforeUnmount(() => {
+  store.dispatch('webSocket/disconnectWebSocket');
+
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
+  window.removeEventListener('online', handleOnlineStatus);
+});
 
 
 </script>

@@ -6,6 +6,7 @@ import task from "@/core/state/modules/taskState.js";
 import punch from "@/core/state/modules/punchState.js";
 import fight from "@/core/state/modules/fightState.js";
 import contract from "@/core/state/modules/contractState.js";
+import webSocket from "@/core/state/modules/webSocketState.js";
 
 export default createStore({
     modules: {
@@ -15,6 +16,7 @@ export default createStore({
         task,
         punch,
         fight,
-        contract
+        contract,
+        webSocket
     },
 });

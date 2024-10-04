@@ -1,5 +1,6 @@
 {
   "loading": "Loading...",
+  "connection": "No connection to server. Please check your internet connection.",
   "you": "(You)",
   "close": "Close",
   "menu": {

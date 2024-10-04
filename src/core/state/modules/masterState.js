@@ -90,6 +90,8 @@ const actions = {
 
             await this.dispatch('master/initGetStarted');
 
+          //  await this.dispatch('webSocket/connectWebSocket');
+
             await router.push('/');
 
         } catch (error) {
@@ -97,6 +99,8 @@ const actions = {
         }
     },
     async logout({commit}) {
+
+        this.dispatch('webSocket/disconnectWebSocket');
 
         await masterService.logout();
 
@@ -224,6 +228,8 @@ const actions = {
     },
     async deleteAccount({commit, state}) {
         try {
+
+            this.dispatch('webSocket/disconnectWebSocket');
 
             // Отправка обновленных данных на сервер
             const response = await masterService.deleteAccount();

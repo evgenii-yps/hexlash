@@ -7,7 +7,7 @@ const state = {
     punchInfo: null,
     isLoadingPunchInfo: false,  // Состояние загрузки информации о груше
     isTrainingBlocked: false,
-    punchTimerId: null, // идентификатор таймера
+    punchTimerId: null,
     batchHitPunchAmount: [],
     is2DPunch: localStorage.getItem('is2DPunch') === 'true', // Если у нас 2д режим
 };
@@ -79,7 +79,7 @@ const actions = {
         // Увеличиваем баланс
         store.commit('master/increaseBalance', {add: value})
     },
-    async synchronizePunchResetTime({commit}) {
+    async synchronizePunchInfo({commit}) {
         try {
             commit('setIsLoadingPunchInfo', true);
             await punchService.getPunchLimitsFromLocalAndAPI();

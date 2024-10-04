@@ -23,6 +23,14 @@ export default defineConfig((mode) => {
     };
     const apiServer = apiServers[mode] || apiServers.test;
 
+    const wsServers = {
+        prod: 'wss://api.bitfightclub.com',
+        test: 'wss://apitest.bitfightclub.com:444',
+
+    };
+    const wsServer = wsServers[mode] || wsServers.test;
+
+
     return {
         plugins: [
             vue(),
@@ -66,7 +74,8 @@ export default defineConfig((mode) => {
         define:
             {
                 __APP_VERSION__: JSON.stringify(version),
-                __SERVER_URL__: JSON.stringify(apiServer),
+                __API_SERVER_URL__: JSON.stringify(apiServer),
+                __WEB_SOCKET_URL__: JSON.stringify(wsServer),
             },
         assetsInclude: ['**/*.glb', '**/*.gltf', '**/*.bin', '**/*.wasm'],
         resolve:

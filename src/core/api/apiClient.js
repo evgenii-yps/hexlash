@@ -3,7 +3,7 @@ import store from "@/core/state/store.js";
 
 // Создание экземпляра axios с базовой конфигурацией
 const apiClient = axios.create({
-    baseURL: __SERVER_URL__ + "/v1",
+    baseURL: __API_SERVER_URL__ + "/v1",
     timeout: 10000, // настройка таймаута для запросов (в миллисекундах)
     headers: {
         'Content-Type': 'application/json', // тип контента

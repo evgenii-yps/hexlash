@@ -152,6 +152,8 @@ export const logout = async () => {
     try {
         // const response = await apiClient.post('/users/logout', {}, {authRequired: true});
 
+
+
         await clearDatabase();
         updateJwtToken("");
 

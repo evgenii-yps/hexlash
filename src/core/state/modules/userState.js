@@ -1,4 +1,5 @@
 import * as userService from "@/core/services/userService.js";
+import {getUserByLoginFromLocalAndAPI} from "@/core/services/userService.js";
 
 const state = {
     users: [], // Массив пользователей
@@ -48,19 +49,25 @@ const mutations = {
 
 const actions = {
     async getUserByLogin({commit, getters}, userLogin) {
+        console.log(userLogin);
         let user = getters.getUserByLogin(userLogin);
-        if (user) {
-            return user;
-        }
+
         try {
-            user = await userService.getUserFromLocalAndAPI(userLogin);
+            user = await userService.getUserByLoginFromLocalAndAPI(userLogin);
             if (user) {
                 commit('setUser', user);
+            }else{
+                // Пользователя нет совсем, нужно загрузить и подождать
+                user = await userService.fetchUserByLogin(userLogin);
             }
             return user;
         } catch (error) {
             console.error('Error fetching user:', error);
-            throw error;
+            //throw error;
+        }
+
+        if (user) {
+            return user;
         }
     },
     async updateUser({commit}, user) {
