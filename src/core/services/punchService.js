@@ -1,6 +1,6 @@
 import store from "@/core/state/store.js";
 import {getPunchLimitsFromLocalDB, savePunchLimitsToLocalDB} from "@/core/database/punchRepository.js";
-import {PunchBatchRequestMsg} from "@/core/models/ws/req/PunchBatchRequestMsg.js";
+import {PunchBatchRequestMsg, PunchInfoRequestMsg} from "@/core/models/ws/req/PunchBatchRequestMsg.js";
 
 /**
  * Извлекает параметры лимита времени из локальной базы данных или обновляет их с сервера
@@ -23,8 +23,9 @@ export const getPunchLimitsFromLocalAndAPI = async () => {
         await store.commit('punch/setIsTrainingBlock', checkPunchTime(localData.intervalStartMs));
 
     } else {
-        // Если данных нет в локальной базе, ждем данных от Сокета
-        // Отправляем запрос в сокет за свежими данными TODO
+        console.error('get from socket');
+        // Отправляем запрос в сокет за свежими данными
+        await store.dispatch('webSocket/sendMessage', new PunchInfoRequestMsg());
     }
 };
 

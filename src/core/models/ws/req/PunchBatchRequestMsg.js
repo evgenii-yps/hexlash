@@ -9,3 +9,13 @@ export class PunchBatchRequestMsg extends WsBase {
         this.punchBatchRequest = {count: amount};
     }
 }
+
+
+export class PunchInfoRequestMsg extends WsBase {
+    static TYPE_NAME = "PunchInfoRequestMsg";
+
+    constructor() {
+        super();
+        this.type = PunchInfoRequestMsg.TYPE_NAME;
+    }
+}

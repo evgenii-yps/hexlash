@@ -71,11 +71,7 @@ const actions = {
     },
 
     sendMessage({state}, message) {
-        if (state.isConnected && state.socketClient) {
-            state.socketClient.sendMessage(message);
-        } else {
-            console.warn('WebSocket is not connected. Cannot send message.');
-        }
+        state.socketClient.sendMessage(message);
     },
 
     async handleMessage({commit}, message) {

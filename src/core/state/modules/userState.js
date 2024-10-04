@@ -1,5 +1,4 @@
 import * as userService from "@/core/services/userService.js";
-import {getUserByLoginFromLocalAndAPI} from "@/core/services/userService.js";
 
 const state = {
     users: [], // Массив пользователей
