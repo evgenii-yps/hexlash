@@ -236,6 +236,7 @@
     "btnNextFight": "next fight",
     "progress": "Time left in fight:",
     "waitingForOpponent": "Waiting for opponent...",
+    "fightCalculate": "Calculating result...",
     "fightFinished": "Fight finished!",
     "modalHelpTitle": "Step-by-step fight",
     "modalHelpTextHtml": "<p>Within the allocated time, choose actions for attack and defense.</p><br/><p style=\"margin-bottom: 10px\"><strong>Available actions:</strong></p><ul style=\"color:var(--white); margin-left: 20px\"><li><strong>HD (Head Defence):</strong> head defense</li><li><strong>BD (Body Defence):</strong> body defense</li><li><strong>HH (Head Hit):</strong> head hit</li><li><strong>BH (Body Hit):</strong> body hit</li></ul><br/><p>After selecting actions, a comparison with the opponent's actions occurs. The winner is the one who lands more hits and receives fewer.</p><br/><p style=\"margin-bottom: 10px; color:var(--white);\"><strong>Example:</strong></p><p>You: HD, HH, BD</p><p>Opponent: HH, BD, BH</p><p>Result: you landed 1 hit, blocked 2 of the opponent's hits. <strong>Winner:</strong> You </p><br/><p><strong style=\"color:var(--white)\">Important:</strong> You cannot select all actions as attacks or all as defenses. One of the actions must be the opposite.</p>"

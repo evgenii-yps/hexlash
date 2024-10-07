@@ -5,7 +5,7 @@ import {PunchBatchRequestMsg, PunchInfoRequestMsg} from "@/core/models/ws/req/Pu
 /**
  * Извлекает параметры лимита времени из локальной базы данных или обновляет их с сервера
  */
-export const getPunchLimitsFromLocalAndAPI = async () => {
+export const getPunchLimitsFromLocalAndSocket = async () => {
     let localData;
     try {
         // Сначала берем данные из локальной базы данных
@@ -22,11 +22,11 @@ export const getPunchLimitsFromLocalAndAPI = async () => {
         await store.commit('punch/setPunchInfo', localData);
         await store.commit('punch/setIsTrainingBlock', checkPunchTime(localData.intervalStartMs));
 
-    } else {
-        console.error('get from socket');
-        // Отправляем запрос в сокет за свежими данными
-        await store.dispatch('webSocket/sendMessage', new PunchInfoRequestMsg());
     }
+
+    // Отправляем запрос в сокет за свежими данными
+    await store.dispatch('webSocket/sendMessage', new PunchInfoRequestMsg());
+
 };
 
 
@@ -62,11 +62,9 @@ export const stopPunchBatch = async (punchInfo) => {
 
     await sendPunchBatch(punchInfo);
 
-    //store.commit('punch/setIsTrainingBlock', true);
-
 }
 
 function checkPunchTime(punchResetTime) {
-    const currentTime = Math.floor(Date.now() / 1000);
+    const currentTime = Math.floor(Date.now());
     return punchResetTime > currentTime;
 }

@@ -143,7 +143,7 @@ function createGLTF() {
     const objectPosition = new THREE.Vector3(sphereMesh.position.x, sphereMesh.position.y + 1.2, sphereMesh.position.z);
 
 // Установка позиции камеры ровно сбоку (слева или справа от объекта)
-    const cameraDistance = 4; // Расстояние камеры от объекта по оси X
+    const cameraDistance = 4.1; // Расстояние камеры от объекта по оси X
     camera.position.set(objectPosition.x + cameraDistance, objectPosition.y, objectPosition.z); // Камера справа от объекта
 
 // Направление камеры

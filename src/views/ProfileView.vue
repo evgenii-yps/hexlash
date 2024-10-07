@@ -27,7 +27,7 @@
             </div>
 
             <div v-else class="profile-header">
-              <UserAvatar :avatarUrl="userData?.avatarUrl"/>
+              <UserAvatar :avatarUrl="userData?.avatarUrl" width="80px" height="80px"/>
               <UserName :userName="userData?.name" style="margin: 10px 0 0 10px"/>
             </div>
 

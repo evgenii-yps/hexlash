@@ -32,18 +32,18 @@
 
 
         <div class="fighters-container">
-          <div class="fighter fighter-left">
+          <div v-if="fighterOne != null" class="fighter fighter-left">
             <Fighter
                 :flipped="false"
                 :action="master.userData.id === fighterOne?.id ? meAction : rivalAction"
                 :userData="fighterOne"
                 :isMaster="master.userData.id === fighterOne?.id"
-                :isMoveCircles="isMoveCircles && master.userData.id !== fighterOne.id"
+                :isMoveCircles="isMoveCircles && master.userData.id !== fighterOne?.id"
                 :isVisibleCircles="isVisibleCircles"
                 :statusFighter="leftFighterStatus"/>
           </div>
 
-          <div class="fighter fighter-right">
+          <div v-if="fighterTwo != null" class="fighter fighter-right">
             <Fighter
                 :flipped="true"
                 :action="master.userData.id === fighterTwo?.id ? meAction : rivalAction"
@@ -125,8 +125,8 @@ const countActionArray = ref(null);
 
 const txtProgress = ref(`${t('fight.progress')}`);
 
-// Создаем ref для хранения текущего боя
-const fight = ref(null);
+
+const fight = computed(store.getters['fight/getCurrentFight']);
 const progressTime = ref(null);  // Время, за которое прогресс должен завершиться
 
 const isMoveCircles = ref(false);
@@ -157,7 +157,6 @@ const hideHelp = () => {
 
 
 const btnAgain = () => {
-  fight.value = null;
   store.dispatch("fight/startFight")
 }
 
@@ -209,7 +208,7 @@ const meAction = (action) => {
 
   targetResults.value.push(val);
 
-  // TODO отправить в сокет
+  store.dispatch('fight/sendFightAction', {fightId: fight.value.id, fightAction: val});
 
   if (targetResults.value.length >= countActionArray.value.length) {
     isVisibleCircles.value = false;
@@ -238,7 +237,7 @@ const rivalAction = (action) => {
 
   targetResults.value.push(val);
 
-  // TODO отправить в сокет
+  store.dispatch('fight/sendFightAction', {fightId: fight.value.id, fightAction: val});
 
   if (targetResults.value.length >= countActionArray.value.length) {
     isVisibleCircles.value = false;
@@ -328,22 +327,26 @@ const startProgressLinear = () => {
     } else {
       progressValue.value = 0;
       clearInterval(interval);
-      onFightEnd();  // Вызываем функцию, когда бой завершен
+      if(store.getters['fight/sendFightAction']) {
+        onFightStop();  // Вызываем функцию, когда бой завершен
+      }
     }
   }, intervalTime);
 };
 
-const onFightEnd = () => {
+const onFightStop = () => {
   isVisibleCircles.value = false;
   progressValue.value = 0;
   countdown.value = 0;
-  txtProgress.value = t('fight.fightFinished');
-  isVisibleBtnAgain.value = true;
+  txtProgress.value = t('fight.fightCalculate');
 
-  store.dispatch('fight/endFight');
-
-  setFighterStatuses(fight.value.winnerId);
 };
+
+const onFightEnd = () => {
+  txtProgress.value = t('fight.fightFinished');
+  setFighterStatuses(fight.value.winnerId);
+  isVisibleBtnAgain.value = true;
+}
 
 onMounted(() => {
   loadFightData();
@@ -356,17 +359,28 @@ watch(() => route.params.id, async (newId, oldId) => {
   }
 });
 
+watch(fight, (newFightData) => {
+  if(newFightData) {
+    leftResults.value = newFightData.fighterOneActions;
+    rightResults.value = newFightData.fighterTwoActions;
+    if (newFightData && newFightData.isCompleted) {
+      onFightStop();
+      onFightEnd();
+      txtProgress.value = t('fight.fightFinished');
+    }
+  }
+});
+
 const loadFightData = async () => {
 
   clearState();
 
-  fight.value = await store.dispatch('fight/getFightById', route.params.id);
+  await store.dispatch('fight/getFightById', route.params.id);
 
   countActionArray.value = Array.from({length: fight.value.actions});
 
   if (!fight.value.isCompleted) {
     progressTime.value = fight.value.duration;
-    // TODO инициировать состояние на котором было прервано
     startFight();
   } else {
     isVisibleBtnAgain.value = false;
@@ -384,7 +398,6 @@ const clearState = () => {
   countdown.value = COUNTDOWN;
   countActionArray.value = null;
   txtProgress.value = `${t('fight.progress')}`;
-  fight.value = null;
   progressTime.value = null;
   isMoveCircles.value = false;
   isVisibleCircles.value = false;
@@ -399,10 +412,10 @@ const clearState = () => {
 };
 
 const setFighterStatuses = (winnerId) => {
-  if (winnerId === fighterOne.value.id) {
+  if (winnerId === fighterOne?.value?.id) {
     leftFighterStatus.value = 'WIN';
     rightFighterStatus.value = 'LOSE';
-  } else if (winnerId === fighterTwo.value.id) {
+  } else if (winnerId === fighterTwo?.value?.id) {
     leftFighterStatus.value = 'LOSE';
     rightFighterStatus.value = 'WIN';
   } else {

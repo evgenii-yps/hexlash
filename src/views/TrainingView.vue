@@ -214,6 +214,7 @@ const startCountdown = () => {
     if (remainingTime <= 0) {
       stopCountdown();
       countdownText.value = ''; // Время прошло, можем тренироваться
+      store.dispatch('punch/synchronizePunchInfo');
     } else {
       // Обновляем текст обратного отсчета
       const hours = Math.floor(remainingTime / 3600);

@@ -1,6 +1,8 @@
 import WebSocketClient from "@/core/websocket/WebSocketClient.js";
 import {PunchInfoModel} from "@/core/models/punchInfoModel.js";
 import * as punchService from "@/core/services/punchService.js";
+import * as fightService from "@/core/services/fightService.js";
+import {FightModel} from "@/core/models/fightModel.js";
 
 const state = {
     isConnected: false,
@@ -55,11 +57,15 @@ const actions = {
             state.socketClient.close();
             commit('setConnected', false);
             commit('clearReconnectInterval');
+
+            state.socketClient = null;
         }
     },
 
     attemptReconnect({commit, state, dispatch, rootGetters}) {
         if (rootGetters['master/getLoginState'].isAuthenticated && !state.isConnected && !state.reconnectInterval) {
+            state.socketClient = null;
+
             console.log('Attempting to reconnect to WebSocket in 10 seconds...');
             const interval = setInterval(() => {
                 console.log('Reconnecting...');
@@ -75,15 +81,18 @@ const actions = {
     },
 
     async handleMessage({commit}, message) {
-        console.log('Received WebSocket message:', message);
+        console.log('Received WebSocket message', message);
 
         const messageType = message.type;
 
         switch (messageType) {
             case PunchInfoModel.TYPE_NAME:
                 const punchInfoModel = PunchInfoModel.fromJSON(message.punchInfoResponse)
-                console.log('PunchInfo:', punchInfoModel);
                 await punchService.receivePunchBatch(punchInfoModel);
+                break;
+            case FightModel.TYPE_NAME:
+                const fightInfoModel = FightModel.fromJSON(message.fightInfo)
+                await fightService.receiveFightInfo(fightInfoModel);
                 break;
             default:
                 console.warn(`Unknown message type received: ${messageType}`);

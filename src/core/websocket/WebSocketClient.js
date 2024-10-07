@@ -29,8 +29,8 @@ class WebSocketClient {
 
             this.socket.onmessage = async (event) => {
                 try {
+                    console.log(event.data);
                     const message = JSON.parse(event.data);
-
                     await store.dispatch('webSocket/handleMessage', message);
                 } catch (err) {
                     console.error('Error processing WebSocket message:', err);
@@ -53,9 +53,10 @@ class WebSocketClient {
     sendMessage(message) {
         if (this.socket && this.socket.readyState === WebSocket.OPEN) {
             const msgSerialized = JSON.stringify(message)
-            console.log("message:", msgSerialized);
+            console.log("Message:", msgSerialized);
             this.socket.send(msgSerialized);
         } else {
+            console.log("Queue message:", message);
             this.messageQueue.push(message);
             console.warn('WebSocket is not connected. Message queued.');
         }

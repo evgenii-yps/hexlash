@@ -33,8 +33,8 @@
           @click="openTaskDialog(task)"
           v-ripple
       >
-        <img :src="getIconByCategory(task.category)" alt="Task Icon" class="task-icon"/>
-        <span class="task-description">{{ task.description }}</span>
+        <img :src="task.getIcon()" alt="Task Icon" class="task-icon"/>
+        <span class="task-description">{{ task.title }}</span>
         <span class="task-tokens">{{ task.tokens }} <span style="color:gray">$</span> </span>
 
       </div>
@@ -52,14 +52,6 @@
 import {computed, ref} from "vue";
 import IconShow from "@/assets/images/icon_show.svg";
 import IconHide from "@/assets/images/icon_hide.svg";
-import iFights from "@/assets/images/icon_fights.svg"
-import iTrainings from "@/assets/images/icon_trainings.svg"
-import iComment from "@/assets/images/icon_invites.svg"
-import iArrow from "@/assets/images/icon_arrow.svg"
-import iWin from "@/assets/images/icon_wins.svg"
-import iInvite from "@/assets/images/icon_members.svg"
-import iEarn from "@/assets/images/icon_token_less.svg"
-import iCalendar from "@/assets/images/icon_calendar.svg"
 import TaskModal from "@/components/fragments/training/TaskModal.vue";
 import store from "@/core/state/store.js";
 
@@ -85,21 +77,6 @@ const props = defineProps({
   }
 });
 
-const categoryIcons = [
-  {category: 'fight_x_battles', icon: iFights},
-  {category: 'punch_bag_x_minutes', icon: iTrainings},
-  {category: 'social_media', icon: iComment},
-  {category: 'watch_video', icon: iArrow},
-  {category: 'win_x_matches', icon: iWin},
-  {category: 'invite_x_friends', icon: iInvite},
-  {category: 'earn_x_tokens', icon: iEarn},
-  {category: 'complete_daily_tasks', icon: iCalendar}
-];
-
-function getIconByCategory(category) {
-  const categoryIcon = categoryIcons.find(item => item.category === category);
-  return categoryIcon.icon;
-}
 
 // Вычисляемое свойство для подсчета количества выполненных заданий
 const notCompletedTasksCount = computed(() => {

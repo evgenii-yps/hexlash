@@ -76,13 +76,14 @@ const actions = {
         state.batchHitPunchAmount.push(value);
         state.punchInfo.punchCounter++;
 
+        // TODO
         // Увеличиваем баланс
         store.commit('master/increaseBalance', {add: value})
     },
     async synchronizePunchInfo({commit}) {
         try {
             commit('setIsLoadingPunchInfo', true);
-            await punchService.getPunchLimitsFromLocalAndAPI();
+            await punchService.getPunchLimitsFromLocalAndSocket();
         } catch (error) {
             console.error('Error synchronizing punch reset time:', error);
         }

@@ -314,6 +314,12 @@ const loadParticipants = async (options = {}) => {
 
 const setActiveTab = (tab) => {
   activeTab.value = tab;
+
+  const { query, path } = router.currentRoute.value;
+  delete query.clubId; // Удаляем clubId из query
+  router.replace({ path, query });
+  clubId.value = null;
+
   updateQueryParams();
 };
 

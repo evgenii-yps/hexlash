@@ -1,7 +1,6 @@
 import * as fightService from "@/core/services/fightService.js";
 import {i18n} from "@/main.js";
 import router from "@/router/index.js";
-import * as userService from "@/core/services/userService.js";
 import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
 
 const state = {
@@ -11,6 +10,7 @@ const state = {
     currentFight: null,
     fighterOne: null,
     fighterTwo: null,
+    isFightActive: false,
 };
 
 const getters = {
@@ -20,6 +20,7 @@ const getters = {
     getMsgStatus: (state) => () => state.msgStatus,
     getFighterOne: (state) => state.fighterOne,
     getFighterTwo: (state) => state.fighterTwo,
+    isFightActive: (state) => state.isFightActive,
 };
 
 const mutations = {
@@ -40,6 +41,9 @@ const mutations = {
     },
     setFighterTwo(state, fighter) {
         state.fighterTwo = fighter;
+    },
+    setFightActive(state, isActive) {
+        state.isFightActive = isActive;
     }
 };
 
@@ -59,7 +63,7 @@ const actions = {
 
         commit('setArenaSettings', {...initParams, isDisableFight, bet});
     },
-    async startFight({commit, rootGetters, dispatch}) {
+    async startFight({commit, rootGetters}) {
 
         // Запускаем ожидания боя
         commit('setWaitingFight', true);
@@ -86,35 +90,55 @@ const actions = {
         }
 
         try {
-            const newFight = await fightService.createFight(state.arenaSettings)
+            await fightService.sendFightRequest(state.arenaSettings)
+        } catch (error) {
+            commit("setMsgStatus", error);
+        }
 
-            // Выставляем модель текущего боя после получения данных
-            commit('setCurrentFight', newFight);
+    },
+    async receiveUpdateFightInfo({commit, dispatch}, fightInfo) {
+        commit('setWaitingFight', false);
 
-            // Используем экшен для загрузки бойцов
-            const [fighterOne, fighterTwo] = await Promise.all([
-                dispatch('loadFighter', newFight.fighterOne),
-                dispatch('loadFighter', newFight.fighterTwo)
-            ]);
+        // Выставляем модель текущего боя после получения данных
+        commit('setCurrentFight', fightInfo);
+
+        // Проверяем, идет ли бой
+        if (!this.state.isFightActive) {
+            // Если бой не идет, это первое сообщение, загружаем бойцов
+            commit('setCurrentFight', fightInfo);
+
+            const fighterPromises = [];
+
+            // Проверяем, есть ли ID бойцов и добавляем их в массив промисов
+            if (fightInfo.fighterOne != null) {
+                fighterPromises.push(this.dispatch('fight/loadFighter', fightInfo.fighterOne));
+            }
+            if (fightInfo.fighterTwo != null) {
+                fighterPromises.push(this.dispatch('fight/loadFighter', fightInfo.fighterTwo));
+            }
+
+            const [fighterOne, fighterTwo] = await Promise.all(fighterPromises);
 
             // Устанавливаем бойцов в состояние
             commit('setFighterOne', fighterOne);
             commit('setFighterTwo', fighterTwo);
 
-            await router.push(`/fight/${newFight.id}`)
+            // Устанавливаем флаг боя в true
+            commit('setFightActive', true);
 
-        } catch (error) {
-            commit("setMsgStatus", error);
+            // Навигируем к экрану боя
+            await router.push(`/fight/${fightInfo.id}`);
+        } else if (fightInfo.isCompleted) {
+            commit('setFightActive', false);
+        } else {
+            commit('setCurrentFight', fightInfo);
         }
 
-        commit('setWaitingFight', false);
     },
-    async endFight({commit, dispatch}) {
-        console.log('endFight');
-        // Подсчет результатов,
-        // TODO
+    async sendFightAction({commit}, payload) {
+        await fightService.sendFightAction(payload.fightId, payload.fightAction)
     },
-    async getFightById({ commit, dispatch, getters }, fightId) {
+    async getFightById({commit, dispatch, getters}, fightId) {
         try {
             let fight = getters.getCurrentFight();
 
@@ -126,18 +150,22 @@ const actions = {
                 }
             }
 
-            if(!getters.getFighterOne || !getters.getFighterTwo) {
-                // Загружаем бойцов
-                const [fighterOne, fighterTwo] = await Promise.all([
-                    dispatch('loadFighter', fight.fighterOne),
-                    dispatch('loadFighter', fight.fighterTwo)
-                ]);
+            if (!getters.getFighterOne || !getters.getFighterTwo) {
+
+                const fighterPromises = [];
+
+                if (fight.fighterOne != null) {
+                    fighterPromises.push(this.dispatch('fight/loadFighter', fight.fighterOne));
+                }
+                if (fight.fighterTwo != null) {
+                    fighterPromises.push(this.dispatch('fight/loadFighter', fight.fighterTwo));
+                }
+
+                const [fighterOne, fighterTwo] = await Promise.all(fighterPromises);
 
                 commit('setFighterOne', fighterOne);
                 commit('setFighterTwo', fighterTwo);
             }
-
-            return fight;
         } catch (error) {
             console.error('Error fetching fight:', error);
             throw error;
@@ -150,7 +178,7 @@ const actions = {
         if (fighterId === master.userData.id) {
             fighter = master.userData;
         } else {
-            fighter = await userService.getUserFromLocalAndAPIById(fighterId);
+            fighter = this.dispatch('user/getUserById', fighterId);
         }
 
         return fighter;

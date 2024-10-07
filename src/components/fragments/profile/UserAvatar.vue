@@ -72,7 +72,7 @@ const computedAvatarUrl = computed(() =>
   object-fit: cover;
   border: 2px solid white;
   border-radius: 50%;
-  width: 80px;
-  height: 80px;
+  width: 100%;
+  height: 100%;
 }
 </style>

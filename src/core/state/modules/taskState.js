@@ -8,12 +8,6 @@ const state = {
 };
 
 const getters = {
-    getSocialTaskById: (state) => (id) => {
-        return state.socialTasks.find(task => task.id === id);
-    },
-    getDailyTaskById: (state) => (id) => {
-        return state.dailyTasks.find(task => task.id === id);
-    },
     getAllSocialTasks: (state) => {
         return state.socialTasks;
     },
@@ -64,20 +58,24 @@ const mutations = {
 };
 
 const actions = {
-    async fetchAllSocialTasks({commit}) {
+    async fetchAllSocialTasks({commit, rootGetters}) {
+        const language = rootGetters['master/getMaster'].language;
+
         commit('setIsLoadingSocialTasks', true);
         try {
-            await taskService.getAllSocialTasksFromLocalAndAPI();
+            await taskService.getAllSocialTasksFromLocalAndAPI(language);
         } catch (error) {
             console.error('Error fetching social tasks:', error);
         } finally {
             commit('setIsLoadingSocialTasks', false);
         }
     },
-    async fetchAllDailyTasks({commit}) {
+    async fetchAllDailyTasks({commit, rootGetters}) {
+        const language = rootGetters['master/getMaster'].language;
+
         commit('setIsLoadingDailyTasks', true);
         try {
-            await taskService.getAllDailyTasksFromLocalAndAPI();
+            await taskService.getAllDailyTasksFromLocalAndAPI(language);
         } catch (error) {
             console.error('Error fetching daily tasks:', error);
         } finally {

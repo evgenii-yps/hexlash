@@ -27,14 +27,6 @@
         </div>
 
         <div class="fight-button-wrapper">
-          <!--          <div class="btn-help-container">
-                      <VBtnDark
-                          size="small"
-                          class="btn-help"
-                          @click="dialogHelp = true">
-                        ?
-                      </VBtnDark>
-                    </div>-->
           <div class="text">{{ txtStatus }}</div>
           <VBtn :disabled="isDisableFight" v-if="!isWaitingFight" width="180" @click="startFight" size="large"
                 class="fight-btn">

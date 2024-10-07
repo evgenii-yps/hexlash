@@ -25,7 +25,7 @@
             class="task-item" @click="openSubscribeDialog(task)">
 
           <div class="cost">{{ task.tokens }}$</div>
-          <v-img :src="getIconByCategory(task.category)" aspect-ratio="1" class="task-img"/>
+          <v-img :src="task.getIcon()" aspect-ratio="1" class="task-img"/>
           <div class="desc">{{ task.title }}</div>
 
         </div>
@@ -43,12 +43,7 @@
 <script setup>
 
 import {computed, ref} from "vue";
-import iEmail from "@/assets/images/icon_invites.svg";
-import iTelegram from "@/assets/images/icon_telega.svg";
-import iX from "@/assets/images/icon_x.svg";
-import iYoutube from "@/assets/images/icon_yout.svg";
-import iDiscord from "@/assets/images/icon_disc.svg";
-import iInsta from "@/assets/images/icon_insta.svg";
+
 import SubscribeModal from "@/components/fragments/training/SubscribeModal.vue";
 import store from "@/core/state/store.js";
 
@@ -73,19 +68,6 @@ const props = defineProps({
   }
 });
 
-const categoryIcons = [
-  {category: 'email', icon: iEmail},
-  {category: 'telegram', icon: iTelegram},
-  {category: 'x', icon: iX},
-  {category: 'youtube', icon: iYoutube},
-  {category: 'discord', icon: iDiscord},
-  {category: 'instagram', icon: iInsta},
-];
-
-function getIconByCategory(category) {
-  const categoryIcon = categoryIcons.find(item => item.category === category);
-  return categoryIcon.icon;
-}
 
 const notCompletedCheckListCount = computed(() => {
   return props.socialTasks.filter(task => !task.isCompleted).length;
@@ -206,6 +188,6 @@ const openSubscribeDialog = (task) => {
   justify-content: center; /* Центрирование по горизонтали */
   align-items: center; /* Центрирование по вертикали */
   margin-top: 20px;
-  color: var(--gray2);
+  color: white;
 }
 </style>

@@ -13,6 +13,9 @@ const getters = {
     getUserByLogin: (state) => (login) => {
         return state.users.find(user => user.login === login);
     },
+    getUserById: (state) => (userId) => {
+        return state.users.find(user => user.id === userId);
+    },
     getParticipantRatingsList: (state) => {
         return state.participantRatings.items;
     },
@@ -48,7 +51,6 @@ const mutations = {
 
 const actions = {
     async getUserByLogin({commit, getters}, userLogin) {
-        console.log(userLogin);
         let user = getters.getUserByLogin(userLogin);
 
         try {
@@ -58,6 +60,27 @@ const actions = {
             }else{
                 // Пользователя нет совсем, нужно загрузить и подождать
                 user = await userService.fetchUserByLogin(userLogin);
+            }
+            return user;
+        } catch (error) {
+            console.error('Error fetching user:', error);
+            //throw error;
+        }
+
+        if (user) {
+            return user;
+        }
+    },
+    async getUserById({commit, getters}, userId) {
+        let user = getters.getUserById(userId);
+
+        try {
+            user = await userService.getUserByIdFromLocalAndAPI(userId);
+            if (user) {
+                commit('setUser', user);
+            }else{
+                // Пользователя нет совсем, нужно загрузить и подождать
+                user = await userService.fetchUserById(userId);
             }
             return user;
         } catch (error) {

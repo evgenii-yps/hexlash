@@ -6,8 +6,8 @@
         <UserAvatar :avatarUrl="props.userData.avatarUrl" width="50px" height="50px"/>
       </div>
       <p>
-        <UserName :userName="props.userData.name"/>
-        <span> {{ strYou }}</span></p>
+        <UserName style="width: auto !important;" :userName="props.userData.name"/>
+        <span class="you"> {{ strYou }}</span></p>
     </div>
 
     <div class="skin">
@@ -186,13 +186,17 @@ watch(isMoveCircles, (newVal) => {
   margin-top: 3px;
   margin-bottom: 10px;
   font-size: 0.4em;
+  justify-content: center;
 }
 
 .fighter-info p span {
   display: flex;
-  font-size: 2em;
+  font-size: 1.4em;
   color: var(--gray3);
+  vertical-align: center;
+  margin-left: 2px;
 }
+
 
 .fighter-avatar {
   display: flex;

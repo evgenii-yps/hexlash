@@ -1,4 +1,7 @@
 export class FightModel {
+
+    static TYPE_NAME = "FightInfoMsg";
+
     constructor({
                     id = null,
                     fighterOne = null,
@@ -26,27 +29,24 @@ export class FightModel {
     }
 
     // Статический метод для создания модели из JSON строки
-    static FromJSON(jsonString) {
+    static fromJSON(fightInfo) {
         try {
-           // const data = JSON.parse(jsonString);
-            const data = jsonString;
-
             const {
-                id,
-                fighterOne,
-                fighterTwo,
+                fightId,
+                fighterOneId: fighterOne,
+                fighterTwoId: fighterTwo,
                 fighterOneActions,
                 fighterTwoActions,
                 winnerId,
-                fightDate,
                 bet,
-                duration,
-                actions,
-                isCompleted,
-            } = data;
+                actionsNum: actions,
+                durationSec: duration,
+                finished: isCompleted,
+                createdAt: fightDate
+            } = fightInfo;
 
             return new FightModel({
-                id,
+                id:fightId,
                 fighterOne,
                 fighterTwo,
                 fighterOneActions,
@@ -60,7 +60,7 @@ export class FightModel {
             });
 
         } catch (error) {
-            console.error('Error parsing JSON string:', error);
+            console.error('Error parsing JSON response:', error);
             return null;
         }
     }

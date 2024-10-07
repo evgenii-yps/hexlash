@@ -236,6 +236,7 @@
     "btnNextFight": "siguiente pelea",
     "progress": "Tiempo restante en la pelea:",
     "waitingForOpponent": "Esperando al oponente...",
+    "fightCalculate": "Calculando el resultado...",
     "fightFinished": "¡Pelea terminada!",
     "modalHelpTitle": "Pelea paso a paso",
     "modalHelpTextHtml": "<p>Dentro del tiempo asignado, elige acciones para atacar y defender.</p><br/><p style=\"margin-bottom: 10px\"><strong>Acciones disponibles:</strong></p><ul style=\"color:var(--white); margin-left: 20px\"><li><strong>HD (Defensa de Cabeza):</strong> defensa de cabeza</li><li><strong>BD (Defensa de Cuerpo):</strong> defensa de cuerpo</li><li><strong>HH (Golpe a la Cabeza):</strong> golpe a la cabeza</li><li><strong>BH (Golpe al Cuerpo):</strong> golpe al cuerpo</li></ul><br/><p>Después de seleccionar las acciones, se comparan con las acciones del oponente. El ganador es el que asesta más golpes y recibe menos.</p><br/><p style=\"margin-bottom: 10px; color:var(--white);\"><strong>Ejemplo:</strong></p><p>Tú: HD, HH, BD</p><p>Oponente: HH, BD, BH</p><p>Resultado: asestaste 1 golpe, bloqueaste 2 golpes del oponente. <strong>Ganador:</strong> Tú</p><br/><p><strong style=\"color:var(--white)\">Importante:</strong> No puedes seleccionar todas las acciones como ataques o todas como defensas. Una de las acciones debe ser lo opuesto.</p>"

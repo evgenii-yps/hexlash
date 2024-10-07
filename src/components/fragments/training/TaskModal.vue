@@ -1,26 +1,22 @@
 <template>
   <VModal v-model="dialog" max-width="500" @click:outside="closeDialog">
     <VCard>
-      <v-card-title class="headline">Daily task</v-card-title>
+      <v-card-title class="headline">{{ props.task?.title }}</v-card-title>
       <v-card-text class="text">
         {{ props.task?.description }}
       </v-card-text>
 
-      <VBtn v-if="isSocialTask" size="large" @click="goToLink(props.task)" class="execute-task confirm-btn">Go to Task</VBtn>
+      <VBtn v-if="isSocialTask" size="large" @click="goToLink(props.task)" class="execute-task confirm-btn">{{ t('training.goToTaskButton') }}</VBtn>
 
-      <div v-if="isSocialTask" class="notice"><span style="color:var(--white)">ВНИМАНИЕ</span> - Нажимая "Подтвердить", ты берёшь на
-        себя обязательство. В этом клубе нет места для пустых обещаний. Например если подписался на канал, обратного
-        пути нет.
-        Отписка после подтверждения - прямой путь к бану. Здесь всё серьёзно: нарушил слово - попал в вечный бан.
-      </div>
+      <div v-if="isSocialTask" class="notice"><span style="color:var(--white)">{{ t('training.titleNotice') }}</span> {{ t('training.taskNotice') }}</div>
 
       <v-card-actions>
         <div v-if="isSocialTask">
-          <VBtnDark @click="closeDialog" class="cancel-btn">Cancel</VBtnDark>
-          <VBtn @click="completeTask" :disabled="!isOpenLink" class="confirm-btn">Подтвердить</VBtn>
+          <VBtnDark @click="closeDialog" class="cancel-btn">{{ t('modal.btnCancel') }}</VBtnDark>
+          <VBtn @click="completeTask" :disabled="!isOpenLink" class="confirm-btn">{{ t('modal.btnConfirm') }}</VBtn>
         </div>
         <div v-else>
-          <VBtn @click="closeDialog" class="confirm-btn">OK</VBtn>
+          <VBtn @click="closeDialog" class="confirm-btn">{{ t('modal.btnOk') }}</VBtn>
         </div>
 
       </v-card-actions>
@@ -30,9 +26,11 @@
 
 <script setup>
 import {ref, computed} from 'vue';
+import {useI18n} from "vue-i18n";
 
 const dialog = ref(false);
 const emit = defineEmits(['close', 'complete']);
+const {t} = useI18n({useScope: 'global'})
 
 const isOpenLink = ref(false);
 
@@ -41,7 +39,7 @@ const props = defineProps({
 });
 
 const isSocialTask = computed(() =>
-    props.task?.category === 'social_media' || props.task?.category === 'watch_video');
+    props.task?.category === 'SHARE_ON_SOCIAL_MEDIA' || props.task?.category === 'WATCH_VIDEO');
 
 const goToLink = (task) => {
   if (task.link.startsWith('https')) {

@@ -8,196 +8,77 @@ import {
 import store from "@/core/state/store.js";
 import {SocialTaskModel} from "@/core/models/socialTaskModel.js";
 import {DailyTaskModel} from "@/core/models/dailyTaskModel.js";
+import apiClient from "@/core/api/apiClient.js";
+import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
 
-const testSocialTasks = [
-    {
-        "id": 1,
-        "title": "Confirm Email",
-        "description": "Confirm",
-        "link": "/profile/account",
-        "tokens": 10,
-        "isCompleted": false,
-        "category": "email"
-    },
-    {
-        "id": 2,
-        "title": "Subscribe",
-        "description": "Subscribe",
-        "link": "https://telegram.org",
-        "tokens": 10,
-        "isCompleted": false,
-        "category": "telegram"
-    },
-    {
-        "id": 3,
-        "title": "Subscribe",
-        "description": "Subscribe",
-        "link": "https://x.com",
-        "tokens": 20,
-        "isCompleted": false,
-        "category": "x"
-    },
-    {
-        "id": 4,
-        "title": "Subscribe",
-        "description": "Subscribe",
-        "link": "https://youtube.com",
-        "tokens": 10,
-        "isCompleted": false,
-        "category": "youtube"
-    },
-    {
-        "id": 5,
-        "title": "Subscribe",
-        "description": "Subscribe",
-        "link": "https://discord.com",
-        "tokens": 10,
-        "isCompleted": false,
-        "category": "discord"
-    },
-    {
-        "id": 6,
-        "title": "Subscribe",
-        "description": "Subscribe",
-        "link": "https://instagram.com",
-        "tokens": 20,
-        "isCompleted": false,
-        "category": "instagram"
+
+export const getAllSocialTasksFromLocalAndAPI = async (language) => {
+    // Сначала берем данные из локальной базы данных
+    let socialTasks = await getAllSocialTasksFromLocalDB();
+    if (socialTasks) {
+        store.commit('task/setSocialTasks', socialTasks);
     }
-];
-
-const testDailyTasks = [
-    {
-        id: 1,
-        description: 'Репост сообщения',
-        tokens: 5,
-        isCompleted: false,
-        link: "https://instagram.com",
-        category: 'social_media'
-    },
-    {
-        id: 2,
-        description: 'Комментарий в социальной сети',
-        tokens: 3,
-        link: "https://instagram.com",
-        isCompleted: false,
-        category: 'social_media'
-    },
-    {
-        id: 3,
-        description: 'Сделать 1000 ударов груши',
-        value: 1000,
-        tokens: 7,
-        isCompleted: false,
-        category: 'punch_bag_x_minutes'
-    },
-    {id: 4, description: 'Провести 5 боев', value: 5, tokens: 10, isCompleted: false, category: 'fight_x_battles'},
-];
-
-const fetchAllSocialTasks = async () => {
-    try {
-        // Добавляем задержку в 1 секунду для симуляции вызова API
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
-        return testSocialTasks ?? [];
-    } catch (error) {
-        throw new Error('Failed to fetch social task data by id');
-    }
+    getSocialTasksFromAPI(language);
+    return socialTasks;
 };
 
-const fetchSocialTaskById = async (id) => {
-    try {
-        // Добавляем задержку в 1 секунду для симуляции вызова API
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        const task = testSocialTasks.find(t => t.id === id);
-        if (task) {
-            return new SocialTaskModel(task);
-        } else {
-            return null;
-        }
-    } catch (error) {
-        throw new Error('Failed to fetch social task data by id');
-    }
+export const getSocialTasksFromAPI = (language) => {
+    // Асинхронно обновляем данные из API
+    fetchAllSocialTasks(language).then(async (loadedTasks) => {
+        await saveSocialTasksToLocalDB(loadedTasks);
+        store.commit('task/setSocialTasks', loadedTasks);
+    }).catch((error) => {
+        console.error('Failed to fetch tasks data from API:', error);
+    });
 };
 
-const fetchAllDailyTasks = async () => {
+export const fetchAllSocialTasks = async (language = 'en') => {
     try {
-        // Добавляем задержку в 1 секунду для симуляции вызова API
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        return testDailyTasks ?? [];
-    } catch (error) {
-        throw new Error('Failed to fetch social task data by id');
-    }
-};
-
-const fetchDailyTaskById = async (id) => {
-    try {
-        // Добавляем задержку в 1 секунду для симуляции вызова API
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        const task = testDailyTasks.find(t => t.id === id);
-        if (task) {
-            return new DailyTaskModel(task);
-        } else {
-            return null;
-        }
-    } catch (error) {
-        throw new Error('Failed to fetch daily task data by id');
-    }
-};
-
-export const getAllSocialTasksFromLocalAndAPI = async () => {
-    let localData;
-    try {
-        // Сначала берем данные из локальной базы данных
-        localData = await getAllSocialTasksFromLocalDB();
-    } catch (error) {
-        console.error('Failed to fetch locales social tasks:', error);
-    }
-
-    // Возвращаем локальные данные, если они есть
-    if (localData && localData.length > 0) {
-        // Асинхронно обновляем данные из API
-        fetchAllSocialTasks().then(async (loadedTasks) => {
-            await saveSocialTasksToLocalDB(loadedTasks);
-            store.commit('task/setSocialTasks', loadedTasks);
-        }).catch((error) => {
-            console.error('Failed to fetch social task data from API:', error);
+        const response = await apiClient.get(`/task/social/${language}`, {
+            authRequired: true,
         });
+        return response.data.map(task => SocialTaskModel.fromJSON(task));
+    } catch (error) {
+        throw new Error('Failed to fetch social tasks from server');
+    }
+};
 
-        store.commit('task/setSocialTasks', localData);
 
-    } else {
-        // Если данных нет в локальной базе, ждем данных от API
-        try {
-            const loadedSocialTasks = await fetchAllSocialTasks();
-            if (loadedSocialTasks) {
-                await saveSocialTasksToLocalDB(loadedSocialTasks);
-                store.commit('task/setSocialTasks', loadedSocialTasks);
-            }
-        } catch (error) {
-            console.error('Failed to fetch social task data:', error);
-            return [];
-        }
+export const getAllDailyTasksFromLocalAndAPI = async (language) => {
+    // Сначала берем данные из локальной базы данных
+    let dailyTasks = await getAllDailyTasksFromLocalDB();
+    if (dailyTasks) {
+        store.commit('task/setDailyTasks', dailyTasks);
+    }
+    getDailyTasksFromAPI(language);
+    return dailyTasks;
+};
+
+export const getDailyTasksFromAPI = (language) => {
+    // Асинхронно обновляем данные из API
+    fetchAllDailyTasks(language).then(async (loadedTasks) => {
+        await saveDailyTasksToLocalDB(loadedTasks);
+        store.commit('task/setDailyTasks', loadedTasks);
+    }).catch((error) => {
+        console.error('Failed to fetch daily tasks data from API:', error);
+    });
+};
+
+export const fetchAllDailyTasks = async (language = 'en') => {
+    try {
+        const response = await apiClient.get(`/task/daily/${language}`, {
+            authRequired: true,
+        });
+        return response.data.map(task => DailyTaskModel.fromJSON(task));
+    } catch (error) {
+        throw new Error('Failed to fetch daily tasks from server');
     }
 };
 
 export const updateSocialTask = async (updatedTask) => {
     try {
+        await completeTaskApiCall(updatedTask.id);
 
-        /*
-        await fetch('/api/social-tasks/' + updatedTask.id, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(updatedTask),
-        });
-        */
-
-        // Обновляем локальную базу данных
         await saveSocialTasksToLocalDB([updatedTask]);
 
     } catch (error) {
@@ -207,57 +88,26 @@ export const updateSocialTask = async (updatedTask) => {
 
 export const updateDailyTask = async (updatedTask) => {
     try {
+        await completeTaskApiCall(updatedTask.id);
 
-        /*
-        await fetch('/api/daily-tasks/' + updatedTask.id, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(updatedTask),
-        });
-        */
-
-        // Обновляем локальную базу данных
         await saveDailyTasksToLocalDB([updatedTask]);
     } catch (error) {
         console.error('Failed to update daily task:', error);
     }
 };
 
+const completeTaskApiCall = async (taskId) => {
+    const response = await apiClient.post(`/task/complete/${taskId}`,
+        {},
+        {authRequired: true}
+    );
 
-export const getAllDailyTasksFromLocalAndAPI = async () => {
-    let localData;
-    try {
-        // Сначала берем данные из локальной базы данных
-        localData = await getAllDailyTasksFromLocalDB();
-    } catch (error) {
-        console.error('Failed to fetch locales daily tasks:', error);
+    if (!response.data) {
+        const error = 'Failed to complete task ' + (response?.data?.error || '');
+        store.commit('master/setInfoMessage',
+            InfoMessageModel.withTimeout(error, 2000));
+        throw new Error(error);
     }
 
-    // Возвращаем локальные данные, если они есть
-    if (localData && localData.length > 0) {
-        // Асинхронно обновляем данные из API
-        fetchAllDailyTasks().then(async (loadedTasks) => {
-            await saveDailyTasksToLocalDB(loadedTasks);
-            store.commit('task/setDailyTasks', loadedTasks);
-        }).catch((error) => {
-            console.error('Failed to fetch social task data from API:', error);
-        });
-
-        store.commit('task/setDailyTasks', localData);
-
-    } else {
-        // Если данных нет в локальной базе, ждем данных от API
-        try {
-            const loadedDailyTasks = await fetchAllDailyTasks();
-            if (loadedDailyTasks) {
-                await saveDailyTasksToLocalDB(loadedDailyTasks);
-                store.commit('task/setDailyTasks', loadedDailyTasks);
-            }
-        } catch (error) {
-            console.error('Failed to fetch social task data:', error);
-            return [];
-        }
-    }
+    return response.data;
 };
