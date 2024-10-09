@@ -29,7 +29,6 @@ class WebSocketClient {
 
             this.socket.onmessage = async (event) => {
                 try {
-                    console.log(event.data);
                     const message = JSON.parse(event.data);
                     await store.dispatch('webSocket/handleMessage', message);
                 } catch (err) {
@@ -38,7 +37,7 @@ class WebSocketClient {
             };
 
             this.socket.onerror = async (error) => {
-                await store.dispatch('webSocket/handleError', error);
+                await store.dispatch('webSocket/handleConnectionError', error);
             };
 
             this.socket.onclose = async (event) => {

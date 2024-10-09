@@ -40,18 +40,17 @@ const props = defineProps({
 
 const snackbarVisible = computed({
   get: () => props.text !== '',
-  set: () => store.commit('master/clearInfoMessage')
+  set: () => store.commit('master/clearErrorMessage')
 });
 
 const btnClose = () => {
-  store.commit('master/clearInfoMessage');
+  store.commit('master/clearErrorMessage');
 };
 </script>
 
 <style scoped>
 .btn-close {
   cursor: pointer;
-  background-color: var(--primary-color);
   border-radius: 50%;
   color: white !important;
   margin: 10px;
@@ -69,7 +68,7 @@ const btnClose = () => {
 }
 
 .snackbar :deep(.v-snackbar__wrapper) {
-  background-color: var(--dark);
+  background-color: #ff00002b !important;
   border: 1px solid var(--gray2);
 }
 
@@ -79,6 +78,5 @@ const btnClose = () => {
   font-weight: bold;
   font-size: 1.2em;
 }
-
 
 </style>

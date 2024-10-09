@@ -39,7 +39,7 @@
             <div v-if="isOwner" class="controls">
               <h2>Control</h2>
 
-              <ClubWithdraw :balance="String(clubData.balance)" :wallet="master.userData.walletAddress"/>
+              <ClubWithdraw :balance="String(clubData.getBalance())" :wallet="master.userData.walletAddress"/>
 
               <VBtnDark
                   class="club-btn"

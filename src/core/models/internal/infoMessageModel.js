@@ -2,7 +2,7 @@ export class InfoMessageModel {
     constructor({
                     text = '',
                     timeout = 2000,
-                    showButton = true
+                    showButton = false
                 } = {}) {
         this.text = text;
         this.timeout = timeout;
@@ -11,12 +11,12 @@ export class InfoMessageModel {
 
     // Статический метод для создания сообщения с текстом
     static withText(text) {
-        return new InfoMessageModel({ text });
+        return new InfoMessageModel({ text, showButton: true });
     }
 
     // Статический метод для создания сообщения с кастомным таймаутом
     static withTimeout(text, timeout) {
-        return new InfoMessageModel({ text, timeout });
+        return new InfoMessageModel({ text, timeout, showButton: true });
     }
 
     // Статический метод для создания сообщения без кнопки

@@ -25,7 +25,8 @@
           marginBottom="0.8rem"
       />
 
-      <div v-if="authState.authError" class="error-message">{{ t('auth.login.authError') }}<!--{{ authState.authError }}--></div>
+      <div v-if="authState.authError" class="error-message">{{ t('auth.login.authError') }}
+        <!--{{ authState.authError }}--></div>
 
       <v-progress-circular
           v-if="loading"
@@ -35,7 +36,7 @@
       />
 
 
-      <VBtn  v-if="!loading" class="auth-btn" @click="handleSubmit">
+      <VBtn v-if="!loading" class="auth-btn" @click="handleSubmit">
         {{ t('auth.login.btnLogin') }}
       </VBtn>
 
@@ -49,14 +50,15 @@
                   text-size="1.5em">
         {{ t('auth.login.btnInvite') }}
       </ButtonText>
-<!--      <div v-if="authState.authError">
-        {{ t('auth.login.lblOrPass') }}
+    </div>
+    <div class="reset-password" v-if="authState.authError">
+      {{ t('auth.login.lblOrPass') }}
       <ButtonText @click="handleReset"
-                  textColor="var(&#45;&#45;pink)"
+
+                  textColor="var(--pink)"
                   text-size="1.5em">
         {{ t('auth.login.btnReset') }}
       </ButtonText>
-      </div>?-->
     </div>
 
 
@@ -71,6 +73,7 @@ import {useRouter} from 'vue-router';
 
 import store from "@/core/state/store.js";
 import {useI18n} from "vue-i18n";
+
 const {t} = useI18n({useScope: 'global'})
 
 const router = useRouter();
@@ -130,14 +133,18 @@ form {
   display: block;
 }
 
+.reset-password {
+  color: gray;
+}
+
 .error-message {
   color: var(--pinkDark);
   font-size: 0.8rem;
   margin-bottom: 0.5rem;
 }
 
-.auth-btn{
-  color:white;
+.auth-btn {
+  color: white;
   width: 100%;
   height: 40px !important;
   cursor: pointer;

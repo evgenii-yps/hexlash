@@ -1,6 +1,7 @@
 import store from "@/core/state/store.js";
 import {getPunchLimitsFromLocalDB, savePunchLimitsToLocalDB} from "@/core/database/punchRepository.js";
 import {PunchBatchRequestMsg, PunchInfoRequestMsg} from "@/core/models/ws/req/PunchBatchRequestMsg.js";
+import {DECIMALS} from "@/core/constants.js";
 
 /**
  * Извлекает параметры лимита времени из локальной базы данных или обновляет их с сервера
@@ -33,9 +34,8 @@ export const getPunchLimitsFromLocalAndSocket = async () => {
 export const sendPunchBatch = async (punchInfo, totalValue) => {
     try {
 
-        console.log(`Sending ${totalValue}`);
-
-        const msg = new PunchBatchRequestMsg(totalValue);
+        const amount = (totalValue / 100) * Math.pow(10, DECIMALS);
+        const msg = new PunchBatchRequestMsg(amount);
 
         await store.dispatch('webSocket/sendMessage', msg);
 

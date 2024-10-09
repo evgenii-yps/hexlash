@@ -272,6 +272,7 @@
     "firstFight": "Antes de tu primera pelea, te recomendamos encarecidamente que te familiarices con las <a href=\"/rules?back=arena\">reglas</a> del juego.",
     "firstTraining": "El entrenamiento te da tokens, pero el tiempo corre. Tus tareas tienen un límite de tiempo. Asegúrate de entender las <a href=\"/rules?back=training\">reglas</a> antes de empezar.",
     "withdrawAfterListing": "La retirada de tokens a tu cartera estará disponible después de la cotización. Mantén un ojo en el temporizador de cuenta regresiva.",
+    "withdrawClubDisable": "La retirada del club está temporalmente deshabilitada. Pedimos disculpas por las molestias. Estará disponible en breve.",
     "showPrivacyInfo": "Al continuar usando este sitio, aceptas las <a href=\"/rules\" target=\"_blank\">Reglas</a> y la <a href=\"/privacy\" target=\"_blank\">Política de privacidad</a>."
   },
   "getStarted": {

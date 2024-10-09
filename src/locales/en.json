@@ -272,6 +272,7 @@
     "firstFight": "Before your first fight, we strongly recommend that you familiarize yourself with the <a href=\"/rules?back=arena\">rules</a> of the game.",
     "firstTraining": "Training gets you tokens, but the clock is ticking. Your tasks won't last forever. Make sure you understand the <a href=\"/rules?back=training\">rules</a> before you start.",
     "withdrawAfterListing": "Token withdrawal to your wallet will be available after the listing. Keep an eye on the countdown timer.",
+    "withdrawClubDisable": "Withdrawal from the club is temporarily disabled. We apologize for the inconvenience. It will be available shortly.",
     "showPrivacyInfo": "By continuing to use this site, you agree to the <a href=\"/rules\" target=\"_blank\">Rules</a> and <a href=\"/privacy\" target=\"_blank\">Privacy Policy</a>."
   },
   "getStarted": {

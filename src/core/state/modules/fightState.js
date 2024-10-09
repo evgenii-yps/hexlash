@@ -96,14 +96,17 @@ const actions = {
         }
 
     },
-    async receiveUpdateFightInfo({commit, dispatch}, fightInfo) {
-        commit('setWaitingFight', false);
+    async receiveUpdateFightInfo({commit, getters, dispatch}, fightInfo) {
 
-        // Выставляем модель текущего боя после получения данных
         commit('setCurrentFight', fightInfo);
 
-        // Проверяем, идет ли бой
-        if (!this.state.isFightActive) {
+        if (fightInfo.isCompleted) {
+            commit('setFightActive', false);
+            commit('setWaitingFight', false);
+            return;
+        }
+
+        if (!getters['isFightActive']) {
             // Если бой не идет, это первое сообщение, загружаем бойцов
             commit('setCurrentFight', fightInfo);
 
@@ -119,20 +122,17 @@ const actions = {
 
             const [fighterOne, fighterTwo] = await Promise.all(fighterPromises);
 
-            // Устанавливаем бойцов в состояние
             commit('setFighterOne', fighterOne);
             commit('setFighterTwo', fighterTwo);
 
-            // Устанавливаем флаг боя в true
             commit('setFightActive', true);
 
             // Навигируем к экрану боя
+            console.log("go to the fight");
             await router.push(`/fight/${fightInfo.id}`);
-        } else if (fightInfo.isCompleted) {
-            commit('setFightActive', false);
-        } else {
-            commit('setCurrentFight', fightInfo);
         }
+
+        commit('setWaitingFight', false);
 
     },
     async sendFightAction({commit}, payload) {

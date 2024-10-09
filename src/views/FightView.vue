@@ -157,6 +157,7 @@ const hideHelp = () => {
 
 
 const btnAgain = () => {
+  clearState();
   store.dispatch("fight/startFight")
 }
 

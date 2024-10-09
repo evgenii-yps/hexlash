@@ -69,6 +69,8 @@
 import {onMounted, ref, watch} from 'vue';
 import debounce from "debounce";
 import {useI18n} from "vue-i18n";
+import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
+import store from "@/core/state/store.js";
 
 const {t} = useI18n({useScope: 'global'})
 
@@ -99,6 +101,11 @@ const hide = () => {
 const btnWithdraw = () => {
   dialogWithdraw.value = true;
   calculateFC();
+
+  const withdraw = InfoMessageModel.withTimeout(t('info.withdrawClubDisable'), 3000);
+  store.commit('master/setInfoMessage', withdraw);
+
+  // TODO Сделать заявки на вывод
 };
 
 const updateAmount = debounce(async () => {

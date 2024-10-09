@@ -6,6 +6,7 @@ import {PasswordResetStateModel} from "@/core/models/internal/passwordResetState
 import {SignupStateModel} from "@/core/models/internal/signupStateModel.js";
 import {i18n} from '@/main.js';
 import * as masterService from "@/core/services/masterService.js";
+import {ErrorMessageModel} from "@/core/models/internal/ErrorMessageModel.js";
 
 
 const state = {
@@ -15,6 +16,7 @@ const state = {
     signupState: new SignupStateModel(),
     resetState: new PasswordResetStateModel(),
     infoMessage: new InfoMessageModel(),
+    errorMessage: new ErrorMessageModel(),
 };
 
 const getters = {
@@ -26,6 +28,9 @@ const getters = {
     getLanguage: (state) => state.master?.language,
     getInfoMessage(state) {
         return state.infoMessage;
+    },
+    getErrorMessage(state) {
+        return state.errorMessage;
     },
 };
 
@@ -65,8 +70,14 @@ const mutations = {
     setInfoMessage(state, message) {
         state.infoMessage = message;
     },
+    setErrorMessage(state, message) {
+        state.errorMessage = message;
+    },
     clearInfoMessage(state) {
         state.infoMessage = new InfoMessageModel();
+    },
+    clearErrorMessage(state) {
+        state.errorMessage = new ErrorMessageModel();
     },
     setResetState: (state, resetState) => {
         state.resetState = resetState;
@@ -89,8 +100,6 @@ const actions = {
             await masterService.login(credentials);
 
             await this.dispatch('master/initGetStarted');
-
-          //  await this.dispatch('webSocket/connectWebSocket');
 
             await router.push('/');
 
@@ -190,7 +199,20 @@ const actions = {
             commit('setInfoMessage', InfoMessageModel.withText(error.message));
         }
     },
+    async updateMasterFromSocket({commit, state}, updatedData) {
+        try {
 
+            // Обновление состояния
+            commit('updateMaster', updatedData);
+
+            await updateMasterToLocalDB(updatedData);
+
+            return true;
+
+        } catch (error) {
+            commit('setInfoMessage', InfoMessageModel.withText(error.message));
+        }
+    },
     async changeSkin({commit, state}, skinId) {
         try {
             // Обновление скина

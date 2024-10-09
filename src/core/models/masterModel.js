@@ -4,6 +4,8 @@ import {locale} from "@/main.js";
 
 
 export class MasterModel {
+    static TYPE_NAME = "UserResponseMsg";
+
     constructor({
                     id = MASTER_TAG,
                     inviteId = null,
@@ -36,7 +38,7 @@ export class MasterModel {
     }
 
     getBalance() {
-        return (this.userData.balance / (10 ** DECIMALS)).toFixed(DECIMALS);
+        return (this.userData.balance / (10 ** DECIMALS)).toFixed(2);
     }
 
     static fromJSON(json) {

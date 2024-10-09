@@ -14,9 +14,16 @@
       <RouterView v-else/>
     </main>
 
+    <FindFight v-if="isAuth && isWaitingFight && isNotArenaScreen" />
+
     <Info :text="infoMessage.text"
           :timeout="infoMessage.timeout"
           :showButton="infoMessage.showButton"
+    />
+
+    <Error :text="errorMessage.text"
+          :timeout="errorMessage.timeout"
+          :showButton="errorMessage.showButton"
     />
 
     <NoConnection v-if="isAuth" />
@@ -38,6 +45,8 @@ import store from "@/core/state/store.js";
 import Info from "@/components/Info.vue";
 import {createWeb3Modal, defaultConfig} from "@web3modal/ethers/vue";
 import NoConnection from "@/components/ui/NoConnection.vue";
+import Error from "@/components/Error.vue";
+import FindFight from "@/components/FindFight.vue";
 
 const balance = computed(() => {
   const master = store.getters['master/getMaster'];
@@ -47,13 +56,24 @@ const balance = computed(() => {
   return null;
 });
 
-// Определяем, нужно ли показывать InfoMessage
+
+const isWaitingFight = computed(store.getters['fight/isWaitingFight']);
+const isNotArenaScreen = computed(() => route.name !== 'Arena');
+
 const showInfoMessage = ref(false);
 
 const infoMessage = computed(() => {
   const newInfoMessage = store.getters['master/getInfoMessage'];
   showInfoMessage.value = newInfoMessage.text !== "";
   return newInfoMessage;
+});
+
+const showErrorMessage = ref(false);
+
+const errorMessage = computed(() => {
+  const newErrorMessage = store.getters['master/getErrorMessage'];
+  showErrorMessage.value = newErrorMessage.text !== "";
+  return newErrorMessage;
 });
 
 const isAuth = computed(() => {
@@ -189,6 +209,7 @@ const handleOnlineStatus = () => {
 
 
 onMounted(() => {
+
   store.commit('contract/setWeb3Modal', modal)
 
   document.addEventListener('visibilitychange', handleVisibilityChange);

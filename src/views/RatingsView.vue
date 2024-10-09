@@ -165,7 +165,7 @@
             <VInfiniteScroll :items="participants" :onLoad="loadParticipants" class="infinite-scroll">
               <template v-if="participants.length" v-for="(participant, index) in participants" :key="participant.id">
                 <div :class="['table-row', index % 2 === 0 ? '' : '']" @click="viewParticipant(participant.login)">
-                  <span class="column-name">{{ participant.name }}</span>
+                  <span class="column-name">{{ participant.name || t('profile.anonymous') }}</span>
 <!--                  <span class="column-name">{{ participant.club }}</span>-->
                   <span class="column">{{ participant.wonTokens }}</span>
                   <span class="column">{{ participant.losses }}</span>

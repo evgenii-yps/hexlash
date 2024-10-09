@@ -3,6 +3,10 @@ import {PunchInfoModel} from "@/core/models/punchInfoModel.js";
 import * as punchService from "@/core/services/punchService.js";
 import * as fightService from "@/core/services/fightService.js";
 import {FightModel} from "@/core/models/fightModel.js";
+import {ErrorSocketResponse} from "@/core/models/ws/res/ErrorSocket.js";
+import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
+import store from "@/core/state/store.js";
+import {MasterModel} from "@/core/models/masterModel.js";
 
 const state = {
     isConnected: false,
@@ -94,17 +98,28 @@ const actions = {
                 const fightInfoModel = FightModel.fromJSON(message.fightInfo)
                 await fightService.receiveFightInfo(fightInfoModel);
                 break;
+            case ErrorSocketResponse.TYPE_NAME:
+                const errorSocketModel = ErrorSocketResponse.fromJSON(message.errorDto)
+                await store.dispatch('webSocket/handleInternalError', errorSocketModel);
+                break;
+            case MasterModel.TYPE_NAME:
+                const masterModel = MasterModel.fromJSON(message.userResponse)
+                await store.dispatch('master/updateMasterFromSocket', masterModel);
+                break;
             default:
                 console.warn(`Unknown message type received: ${messageType}`);
                 break;
         }
     },
-
-    handleError({commit}, error) {
-        // Обработка ошибок
+    handleConnectionError({commit}, error) {
+        // Обработка ошибок соединения
         console.error('WebSocket error:', error.message);
 
-        this.dispatch('webSocket/attemptReconnect')
+        this.store.dispatch('webSocket/attemptReconnect')
+    },
+    handleInternalError({commit}, error) {
+        const socketError = InfoMessageModel.withTimeout(error.message, 3000);
+        store.commit('master/setErrorMessage', socketError);
     },
 };
 

@@ -1,3 +1,5 @@
+import {DECIMALS} from "@/core/constants.js";
+
 export default class ClubModel {
     /**
      * Конструктор для модели клуба.
@@ -33,6 +35,10 @@ export default class ClubModel {
      */
     isOwner(userId) {
         return this.owner === userId;
+    }
+
+    getBalance() {
+        return (this.balance / (10 ** DECIMALS)).toFixed(2);
     }
 
     /**

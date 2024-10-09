@@ -4,6 +4,7 @@ import store from "@/core/state/store.js";
 import {getFightByIdFromDB, updateFightToLocalDB} from "@/core/database/fightRepository.js";
 import {FightActionMsg, FightTicketMsg} from "@/core/models/ws/req/FightTicketRequest.js";
 import {i18n} from "@/main.js";
+import {DECIMALS} from "@/core/constants.js";
 
 
 // Взять пользователя по Login
@@ -71,12 +72,16 @@ export const sendFightRequest = async (arenaSettings) => {
     try {
         const master = store.getters['master/getMaster'];
         // Проверяем достаточно ли баланса у пользователя
-        const balance = master.userData.balance;
+        const balance = master.getBalance();
         if (balance < arenaSettings.bet) {
             throw new Error(i18n.global.t("arena.insufficientFunds"));
         }
 
-        const msg = new FightTicketMsg(arenaSettings.bet, arenaSettings.actions, arenaSettings.time);
+        const msg = new FightTicketMsg(
+            arenaSettings.bet * Math.pow(10, DECIMALS),
+            arenaSettings.actions,
+            arenaSettings.time
+        );
 
         await store.dispatch('webSocket/sendMessage', msg);
 

@@ -77,8 +77,6 @@ export const createClub = async (clubData) => {
 
         const response = await apiClient.post(`/club/add`, clubData, { authRequired: true });
 
-        console.log(response);
-
         const createdClubModel = ClubModel.fromJSON(response.data);
         await updateClubToLocalDB(createdClubModel);
         store.commit('club/setClub', createdClubModel);

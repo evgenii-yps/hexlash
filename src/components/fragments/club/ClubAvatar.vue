@@ -25,7 +25,10 @@ const props = defineProps({
 
 // Создаем вычисляемое свойство для аватара
 const computedAvatarUrl = computed(() =>
-    apiClient.defaults.baseURL + "/file/get/" + props.avatarUrl || defaultAvatarImg);
+    props.avatarUrl && props.avatarUrl !== ""
+        ? apiClient.defaults.baseURL + "/file/get/" + props.avatarUrl
+        : defaultAvatarImg
+);
 
 </script>
 

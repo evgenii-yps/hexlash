@@ -115,10 +115,11 @@ export const resetPassword = async (email) => {
         throw new Error(i18n.global.t('auth.reset.errorInvalidFormat'));
     }
 
-    // Имитируем API вызов
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    if (email === 'test@example.com') {
-        return {success: true, message: i18n.global.t('auth.reset.success')};
+    const response = await apiClient.post('/user/reset', { email });
+
+    // Проверяем ответ
+    if (response.data) {
+        return { success: true, message: i18n.global.t('auth.reset.success') };
     } else {
         throw new Error(i18n.global.t('auth.reset.error'));
     }
@@ -129,7 +130,6 @@ export const resetPassword = async (email) => {
 const fetchMasterData = async () => {
     try {
         const response = await apiClient.get('/user/me', {authRequired: true});
-        console.log(response);
         return MasterModel.fromJSON(response.data);
     } catch (error) {
         throw new Error('Failed to fetch user data from server');
