@@ -98,7 +98,6 @@ watch(route, loadUser);
 watch(
     () => store.getters['user/getUserByLogin'](route.params.userLogin),
     (newValue) => {
-      console.log("getUserByLogin", newValue)
       if (!isOwner.value) {
         userData.value = newValue;
       }

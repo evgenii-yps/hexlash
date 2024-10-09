@@ -31,7 +31,7 @@ export const getUserDataByLoginFromAPI = (login) => {
         await saveUserDataToLocalDB(userData);
         await store.dispatch('user/updateUser', userData);
     }).catch((error) => {
-        console.error('Failed to fetch user data from API:', error);
+        console.error('Failed to fetch user data from API by login:', error);
     });
 };
 

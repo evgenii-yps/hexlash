@@ -17,5 +17,18 @@ export const getUserByIdFromDB = async (id) => {
 
 export const saveUserDataToLocalDB = async (userModel) => {
     const db = await initDB();
-    await db.put(USERS_TABLE, {...userModel, id: userModel.id});
+    const tx = db.transaction(USERS_TABLE, 'readwrite');
+    const store = tx.objectStore(USERS_TABLE);
+    const index = store.index('login');
+
+    // Проверяем, существует ли уже пользователь с таким логином
+    const existingUser = await index.get(userModel.login);
+
+    if (existingUser) {
+        // Обновляем существующую запись
+        await store.put({...existingUser, ...userModel, id: existingUser.id});
+    } else {
+        // Вставляем новую запись
+        await store.put({...userModel, id: userModel.id});
+    }
 };
