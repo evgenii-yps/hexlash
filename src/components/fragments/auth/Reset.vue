@@ -1,6 +1,6 @@
 <template>
   <div class="reset-container">
-    <form @submit.prevent="handleResetSubmit">
+
       <InputField
           :label="t('auth.reset.lblEmail')"
           v-model="email"
@@ -35,12 +35,11 @@
           {{ t('auth.invite.btnLogin') }}
         </ButtonText>
       </div>
-    </form>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import {ref, computed, onMounted} from 'vue';
 import InputField from "@/components/ui/InputField.vue";
 import ButtonText from "@/components/ui/ButtonText.vue";
 import { useRouter } from 'vue-router';
@@ -61,6 +60,13 @@ const handleResetSubmit = () => {
 const handleLogin = () => {
   router.push('/auth/login');
 };
+
+onMounted(() => {
+  email.value = '';
+  store.commit('master/clearResetState');
+
+
+})
 </script>
 
 <style scoped>

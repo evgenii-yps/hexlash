@@ -51,7 +51,7 @@
       "lblChangeLanguage": "Язык",
       "lblChangeEmail": "ИЗМЕНИТЬ EMAIL",
       "placeholderEmail": "Введите email...",
-      "sendEmailSuccess": "Письмо было отправлено",
+      "sendEmailSuccess": "Письмо успешно отправлено на указанный адрес электронной почты",
       "lblEmailRequired": "Email обязателен",
       "lblInvalidEmailFormat": "Неверный формат email",
       "btnSendConfirm": "Отправить подтверждение",

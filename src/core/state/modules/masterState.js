@@ -196,7 +196,7 @@ const actions = {
             return true;
 
         } catch (error) {
-            commit('setInfoMessage', InfoMessageModel.withText(error.message));
+            commit('setInfoMessage', ErrorMessageModel.withText(error.message));
         }
     },
     async updateMasterFromSocket({commit, state}, updatedData) {

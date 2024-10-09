@@ -33,7 +33,9 @@ const success = ref(false);
 const error = ref(false);
 
 const verifyEmail = async () => {
-  const code = route.query.code;
+  let code = route.query.code;
+  code = decodeURIComponent(code);
+
 
   if (!code || code.length < 5) {
     loading.value = false;

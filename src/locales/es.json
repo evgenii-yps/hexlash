@@ -51,7 +51,7 @@
       "lblChangeLanguage": "Idioma",
       "lblChangeEmail": "CAMBIAR CORREO ELECTRÓNICO",
       "placeholderEmail": "Introduce el correo...",
-      "sendEmailSuccess": "El correo ha sido enviado",
+      "sendEmailSuccess": "El correo electrónico se ha enviado correctamente a la dirección de correo especificada",
       "lblEmailRequired": "El correo electrónico es obligatorio",
       "lblInvalidEmailFormat": "Formato de correo electrónico no válido",
       "btnSendConfirm": "Enviar Confirmación",

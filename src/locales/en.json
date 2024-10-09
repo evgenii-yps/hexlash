@@ -51,7 +51,7 @@
       "lblChangeLanguage": "Language",
       "lblChangeEmail": "CHANGE EMAIL",
       "placeholderEmail": "Enter email...",
-      "sendEmailSuccess": "Email has been sent",
+      "sendEmailSuccess": "The email has been successfully sent to the specified email address.",
       "lblEmailRequired": "Email is required",
       "lblInvalidEmailFormat": "Invalid email format",
       "btnSendConfirm": "Send Confirm",
