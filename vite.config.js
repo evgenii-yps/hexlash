@@ -11,7 +11,6 @@ import viteImagemin from "@vheemstra/vite-plugin-imagemin";
 import imageminMozjpeg from 'imagemin-mozjpeg'
 import imageminWebp from 'imagemin-webp'
 import imageminPngquant from 'imagemin-pngquant'
-import {optimizeCssModules} from "vite-plugin-optimize-css-modules";
 
 // https://vitejs.dev/config/
 export default defineConfig((mode) => {
