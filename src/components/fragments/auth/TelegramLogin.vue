@@ -62,6 +62,8 @@ const initTelegramWebApp = () => {
   errorMessage.value = '';
 
   if (window.Telegram && window.Telegram.WebApp) {
+    window.Telegram.WebApp.expand(); // Развернуть на весь экран
+    window.Telegram.WebApp.disableVerticalSwipes();
     initData.value = window.Telegram.WebApp.initData; // Сырой initData
 
     const initDataUnsafe = window.Telegram.WebApp.initDataUnsafe;

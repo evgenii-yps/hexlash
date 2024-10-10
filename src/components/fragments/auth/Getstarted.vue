@@ -305,7 +305,7 @@ watch(store.getters['master/getSignupState'], (initState) => {
 
 .notice {
   color: var(--gray3);
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   text-align: center;
 }
 
