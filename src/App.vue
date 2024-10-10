@@ -209,6 +209,10 @@ const handleOnlineStatus = () => {
 
 
 onMounted(() => {
+  if (window.Telegram && window.Telegram.WebApp) {
+    window.Telegram.WebApp.expand(); // Развернуть на весь экран
+    window.Telegram.WebApp.disableVerticalSwipes();
+  }
 
   store.commit('contract/setWeb3Modal', modal)
 
