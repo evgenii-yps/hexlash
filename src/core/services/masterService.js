@@ -65,6 +65,36 @@ export const login = async (credentials) => {
     }
 };
 
+export const telegram = async (payload) => {
+    try {
+        const response = await apiClient.post('/auth/telegram', payload);
+        const {jwtToken} = response.data;
+
+        updateJwtToken(jwtToken);
+
+        // Получите данные текущего пользователя
+        const masterModel = await fetchMasterData();
+
+        // Проверяем пользователя в базе данных
+        const existingUser = await getMasterFromLocalDB();
+
+        if (existingUser && existingUser.getUuid() !== masterModel.getUuid()) {
+            // Удаляем данные старого пользователя, если он отличается от текущего
+            await clearDatabase();
+        }
+
+        // Сохраняем данные пользователя в локальную базу данных
+        await saveMasterToLocalDB(masterModel);
+
+        store.commit('master/setMaster', masterModel);
+        store.commit('master/setLoginState', {isAuthenticated: true});
+
+    } catch (error) {
+        const errorStr = error.response?.error || error.message || 'Failed to login';
+        throw new Error(errorStr);
+    }
+};
+
 export const sendCheckLoginAvailable = async (login) => {
     try {
         const response = await apiClient.get(`/auth/login-available/${login}`);
@@ -151,8 +181,6 @@ export const changeProfile = async (profileData) => {
 export const logout = async () => {
     try {
         // const response = await apiClient.post('/users/logout', {}, {authRequired: true});
-
-
 
         await clearDatabase();
         updateJwtToken("");

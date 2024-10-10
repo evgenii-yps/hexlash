@@ -107,6 +107,18 @@ const actions = {
             commit('setLoginState', {isAuthenticated: false, authError: error.message});
         }
     },
+    async telegram({commit}, payload) {
+        try {
+            await masterService.telegram(payload);
+
+            await this.dispatch('master/initGetStarted');
+
+            await router.push('/');
+
+        } catch (error) {
+            commit('setLoginState', {isAuthenticated: false, authError: error.message});
+        }
+    },
     async logout({commit}) {
 
         this.dispatch('webSocket/disconnectWebSocket');

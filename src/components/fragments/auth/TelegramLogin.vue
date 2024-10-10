@@ -34,6 +34,7 @@
 import { ref, onMounted } from 'vue';
 import InputField from "@/components/ui/InputField.vue";
 import { useI18n } from 'vue-i18n';
+import store from "@/core/state/store.js";
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -67,11 +68,11 @@ const initTelegramWebApp = () => {
     chatId.value = initDataUnsafe?.user?.id || null;  // Сохраняем chatId
     hash.value = initDataUnsafe.hash;
 
-    console.log('Полученный chatId:', chatId.value);
-    console.log(initData.value);
-    console.log(hash.value);
-
-    // Если все это есть, отправляем сразу запрос к серверу на регистрацию
+    store.dispatch('master/telegram', {
+      chatId: chatId.value,
+      initData: initData.value,
+      hash: hash.value
+    });
 
   }
 };
