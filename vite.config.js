@@ -13,21 +13,24 @@ import imageminWebp from 'imagemin-webp'
 import imageminPngquant from 'imagemin-pngquant'
 
 // https://vitejs.dev/config/
-export default defineConfig((mode) => {
+export default defineConfig(({mode}) => {
 
+    //TODO ENABLE AFTER TESTS
     const apiServers = {
-        prod: 'https://api.bitfightclub.com',
+        //prod: 'https://api.bitfightclub.com',
         test: 'https://apitest.bitfightclub.com',
 
     };
     const apiServer = apiServers[mode] || apiServers.test;
 
     const wsServers = {
-        prod: 'wss://api.bitfightclub.com:444',
+        //prod: 'wss://api.bitfightclub.com:444',
         test: 'wss://apitest.bitfightclub.com:444',
     };
     const wsServer = wsServers[mode] || wsServers.test;
 
+    console.log(apiServer + " current api server");
+    console.log(wsServer + " current ws server");
 
     return {
         plugins: [
