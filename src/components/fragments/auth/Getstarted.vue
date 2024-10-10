@@ -269,6 +269,7 @@ const saveChanges = async () => {
 
 
 watch(store.getters['master/getSignupState'], (initState) => {
+  name.value = initState.name;
   login.value = initState.generatedLogin;
   password.value = initState.generatedPassword;
   initialPassword = initState.generatedPassword;

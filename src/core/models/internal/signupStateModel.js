@@ -2,11 +2,13 @@ export class SignupStateModel {
     constructor({
                     errorMessage = null,
                     generatedLogin = '',
-                    generatedPassword = ''
+                    generatedPassword = '',
+                    name = ''
                 } = {}) {
         this.errorMessage = errorMessage;
         this.generatedLogin = generatedLogin;
         this.generatedPassword = generatedPassword;
+        this.name = name
     }
 
 }

@@ -68,7 +68,18 @@ export const login = async (credentials) => {
 export const telegram = async (payload) => {
     try {
         const response = await apiClient.post('/auth/telegram', payload);
-        const {jwtToken} = response.data;
+        const {jwtToken, tempPassword, name} = response.data;
+
+        if(name && tempPassword) {
+            // Сначала полностью очистить всю базу с компьютера
+            await resetClient();
+
+            // Записываем временный пароль, который мы рекомендуем ему поставить
+            store.commit('master/setSignupState', {
+                generatedPassword: tempPassword,
+                name: name,
+            });
+        }
 
         updateJwtToken(jwtToken);
 
