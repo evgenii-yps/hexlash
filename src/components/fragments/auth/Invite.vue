@@ -74,6 +74,7 @@ const handleLogin = () => {
   router.push('/auth/login');
 };
 
+
 // Автоматически проверяем наличие параметра invite в URL
 onMounted(() => {
   const inviteParam = route.query.code;

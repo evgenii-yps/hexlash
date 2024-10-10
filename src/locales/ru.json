@@ -35,6 +35,10 @@
       "btnLogin": "Войти",
       "errorInvalidInvite": "Неверный код приглашения."
     },
+    "telegram": {
+      "lblAuth": "Авторизация через телеграмм...",
+      "retry": "Повторить"
+    },
     "reset": {
       "lblEmail": "Эл. почта",
       "btnReset": "Сбросить пароль",

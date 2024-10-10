@@ -37,6 +37,7 @@ import {useRoute} from "vue-router";
 import Login from "@/components/fragments/auth/Login.vue";
 import Invite from "@/components/fragments/auth/Invite.vue";
 import Reset from "@/components/fragments/auth/Reset.vue";
+import TelegramLogin from "@/components/fragments/auth/TelegramLogin.vue";
 
 const {t} = useI18n({useScope: 'global'})
 
@@ -60,6 +61,8 @@ const setCurrentComponent = () => {
     currentComponent.value = Invite;
   } else if (route.path === '/auth/reset') {
     currentComponent.value = Reset;
+  } else if (route.path === '/auth/telegram') {
+    currentComponent.value = TelegramLogin;
   }
   currentComponentKey.value = route.path;
 };

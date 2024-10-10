@@ -35,6 +35,10 @@
       "btnLogin": "Iniciar sesión",
       "errorInvalidInvite": "Código de invitación no válido."
     },
+    "telegram": {
+      "lblAuth": "Autorización a través de Telegram...",
+      "retry": "Reintentar"
+    },
     "reset": {
       "lblEmail": "Correo electrónico",
       "btnReset": "Restablecer contraseña",

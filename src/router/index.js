@@ -9,7 +9,8 @@ const routeHistory = [];
 const authRoutes = [
     {path: '/auth/login', name: 'Login', component: () => import("/src/views/RainView.vue")},
     {path: '/auth/invite', name: 'Invite', component: () => import("/src/views/RainView.vue")},
-    {path: '/auth/reset', name: 'Reset', component: () => import("/src/views/RainView.vue")}
+    {path: '/auth/reset', name: 'Reset', component: () => import("/src/views/RainView.vue")},
+    {path: '/auth/telegram', name: 'TelegramLogin', component: () => import("/src/views/RainView.vue")}
 ];
 
 const publicRoutes = [

@@ -35,6 +35,10 @@
       "btnLogin": "Login",
       "errorInvalidInvite": "Invalid invite code."
     },
+    "telegram": {
+      "lblAuth": "Authorization via Telegram...",
+      "retry": "Retry"
+    },
     "reset": {
       "lblEmail": "Email",
       "btnReset": "Reset Password",

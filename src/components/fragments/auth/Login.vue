@@ -66,7 +66,7 @@
 </template>
 
 <script setup>
-import {computed, ref} from 'vue';
+import {computed, onMounted, ref} from 'vue';
 import InputField from "@/components/ui/InputField.vue";
 import ButtonText from "@/components/ui/ButtonText.vue";
 import {useRouter} from 'vue-router';
@@ -104,6 +104,7 @@ const handleInvite = () => {
 const handleReset = () => {
   router.push('/auth/reset');
 };
+
 
 </script>
 
