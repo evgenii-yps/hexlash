@@ -3,8 +3,16 @@ import enHelp from '@/locales/pages/help/en.json'
 import enRules from '@/locales/pages/rules/en.json'
 
 import es from '@/locales/es.json'
-
 import ru from '@/locales/ru.json'
+import zh from '@/locales/zh.json'
+import fr from '@/locales/fr.json'
+import de from '@/locales/de.json'
+import pt from '@/locales/pt.json'
+import ar from '@/locales/ar.json'
+import hi from '@/locales/hi.json'
+import ja from '@/locales/ja.json'
+import ko from '@/locales/ko.json'
+
 import ruHelp from '@/locales/pages/help/ru.json'
 import ruRules from '@/locales/pages/rules/ru.json'
 
@@ -16,13 +24,6 @@ export const messages = {
             rules: enRules.pages.rules,
         }
     },
-    ru: {
-        ...ru,
-        pages: {
-            help: ruHelp.pages.help,
-            rules: ruRules.pages.rules,
-        }
-    },
     es: {
         ...es,
         pages: {
@@ -30,7 +31,71 @@ export const messages = {
             rules: enRules.pages.rules,
         }
     },
+    zh: {
+        ...zh,
+        pages: {
+            help: enHelp.pages.help,
+            rules: enRules.pages.rules,
+        }
+    },
+    fr: {
+        ...fr,
+        pages: {
+            help: enHelp.pages.help,
+            rules: enRules.pages.rules,
+        }
+    },
+    de: {
+        ...de,
+        pages: {
+            help: enHelp.pages.help,
+            rules: enRules.pages.rules,
+        }
+    },
+    pt: {
+        ...pt,
+        pages: {
+            help: enHelp.pages.help,
+            rules: enRules.pages.rules,
+        }
+    },
+    ar: {
+        ...ar,
+        pages: {
+            help: enHelp.pages.help,
+            rules: enRules.pages.rules,
+        }
+    },
+    hi: {
+        ...hi,
+        pages: {
+            help: enHelp.pages.help,
+            rules: enRules.pages.rules,
+        }
+    },
+    ja: {
+        ...ja,
+        pages: {
+            help: enHelp.pages.help,
+            rules: enRules.pages.rules,
+        }
+    },
+    ko: {
+        ...ko,
+        pages: {
+            help: enHelp.pages.help,
+            rules: enRules.pages.rules,
+        }
+    },
+    ru: {
+        ...ru,
+        pages: {
+            help: ruHelp.pages.help,
+            rules: ruRules.pages.rules,
+        }
+    }
 };
+
 
 export function ruCountRule(choice, choicesLength) {
 

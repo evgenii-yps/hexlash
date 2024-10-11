@@ -50,7 +50,7 @@ const languages = [
 
 watch(selectedLanguage, (newLanguage) => {
   store.dispatch('master/setLanguage', newLanguage);
-});
+}, {immediate: true});
 </script>
 
 <style scoped>
