@@ -57,6 +57,11 @@ const mutations = {
             state.master.userData.balance += add;
         }
     },
+    decreaseBalance(state, sub) {
+        if (state.master && state.master.userData.balance !== undefined) {
+            state.master.userData.balance -= sub;
+        }
+    },
     setLoginState: (state, authState) => {
         state.loginState = authState;
     },
@@ -215,9 +220,9 @@ const actions = {
         try {
 
             // Обновление состояния
-            commit('updateMaster', updatedData);
+           commit('updateMaster', updatedData);
 
-            await updateMasterToLocalDB(updatedData);
+           await updateMasterToLocalDB(updatedData);
 
             return true;
 

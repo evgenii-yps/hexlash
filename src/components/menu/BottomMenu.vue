@@ -1,5 +1,5 @@
 <template>
-  <div class="bottom-menu">
+  <div :class="['bottom-menu', { 'ios-adjust': isIOS }]">
     <router-link
         v-for="(item, index) in menuItems"
         :key="index"
@@ -20,6 +20,9 @@ import {computed, ref, watch} from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Howl } from 'howler'
 import {useI18n} from "vue-i18n";
+
+// Определяем, является ли устройство iOS
+const isIOS = ref(/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream);
 
 const {t, locale} = useI18n({useScope: 'global'})
 
@@ -71,6 +74,10 @@ const isActive = (item) => {
   background: linear-gradient(to top, black 40%, transparent 100%);
   z-index: -1;
 
+}
+
+.bottom-menu.ios-adjust {
+  padding-bottom: 1rem; /* Дополнительный отступ для iOS */
 }
 
 @media (min-width: 1024px) {

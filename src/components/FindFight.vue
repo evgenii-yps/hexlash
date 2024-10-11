@@ -21,7 +21,7 @@ const {t} = useI18n({useScope: 'global'});
 .container {
   position: fixed;
   right: 10px;
-  bottom: 10vh;
+  bottom: 13vh;
   background-color: var(--dark);
   border: 1px solid var(--gray2);
   padding: 10px;

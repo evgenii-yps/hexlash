@@ -265,6 +265,7 @@ const handleScroll = (event) => {
   emit('scroll', event.target.scrollTop);
 };
 
+
 onBeforeMount( () => {
   store.dispatch('punch/synchronizePunchInfo');
   store.dispatch('task/fetchAllSocialTasks');

@@ -8,7 +8,7 @@ import punchTexture from '@/assets/textures/punch_texture2.png';
 import {DRACOLoader} from "three/addons";
 import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader'
 
-
+const loading = ref(true);
 
 const props = defineProps({
   width: {
@@ -65,7 +65,6 @@ function initGraphics() {
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.setClearColor(0x000000, 0); // прозрачный фон
 
-  target.value.appendChild(renderer.domElement);
 
   textureLoader = new THREE.TextureLoader();
 
@@ -107,7 +106,6 @@ function createGLTF() {
 
   loader.load(punchModel, function (gltf) {
 
-    console.log(gltf);
     const geometry = gltf.scene.children[0].children[0].geometry;
 
     // Загрузка текстуры
@@ -134,6 +132,8 @@ function createGLTF() {
 
       material.map = texture;
       material.needsUpdate = true;
+
+      target.value.appendChild(renderer.domElement);
     });
 
     sphereMesh = createSoftVolume(geometry, material);
@@ -148,6 +148,10 @@ function createGLTF() {
 
 // Направление камеры
     camera.lookAt(objectPosition);
+
+    loading.value = false;
+
+
 
   }, undefined, function (error) {
     console.error('Ошибка при загрузке модели:', error);
@@ -473,7 +477,6 @@ function render() {
 onMounted(async () => {
   AmmoLib.then(function (AmmoLib) {
     Ammo = AmmoLib
-    console.log("ammo loaded " + Ammo)
     init();
   });
 });
@@ -534,7 +537,12 @@ onBeforeUnmount(() => {
     raycaster = null;
   }
 
+
   if (renderer) {
+    if (target.value) {
+      target.value.removeChild(renderer.domElement);
+    }
+
     renderer.forceContextLoss();
     renderer.setAnimationLoop(null);
     renderer.dispose();

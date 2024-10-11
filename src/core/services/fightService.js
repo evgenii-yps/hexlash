@@ -77,16 +77,25 @@ export const sendFightRequest = async (arenaSettings) => {
             throw new Error(i18n.global.t("arena.insufficientFunds"));
         }
 
+        const bet = arenaSettings.bet * Math.pow(10, DECIMALS);
         const msg = new FightTicketMsg(
-            arenaSettings.bet * Math.pow(10, DECIMALS),
+            bet,
             arenaSettings.actions,
             arenaSettings.time
         );
 
+        //await store.commit('master/decreaseBalance', bet); на клиенте
         await store.dispatch('webSocket/sendMessage', msg);
 
+        // Устанавливаем таймер на 15 секунд
+        setTimeout(() => {
+            store.commit("fight/setMsgStatus", i18n.global.t('arena.lblTestResolve'));
+            store.commit('fight/setWaitingFight', false);
+        }, 15000);
+
     } catch (error) {
-        console.error('Failed to sendFightRequest:', error);
+        store.commit("fight/setMsgStatus", error);
+        store.commit('fight/setWaitingFight', false);
     }
 };
 
@@ -124,31 +133,6 @@ export const receiveFightInfo = async (fightInfo) => {
 };
 
 
-
-// Тестовая функция эмуляции запроса на сервер
-export const mockServerRequest = async (arenaSettings) => {
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            const randomId = `fight-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
-
-            // Здесь мы эмулируем получение данных с сервера
-            const testFightModel = new FightModel({
-                id: `fight-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
-                fighterOne: 'user123',
-                fighterTwo: 'user1',
-                fighterOneActions: [],
-                fighterTwoActions: [],
-                winnerId: null,
-                fightDate: new Date(Date.now() + 3000),
-                bet: arenaSettings.bet,
-                duration: arenaSettings.time,
-                actions: arenaSettings.actions,
-                isCompleted: false
-            });
-            resolve(testFightModel);
-        }, 1000); // Задержка в 1 секунду
-    });
-};
 
 
 
