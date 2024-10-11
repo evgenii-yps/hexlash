@@ -44,7 +44,7 @@ export class MasterModel {
     static fromJSON(json) {
         try {
             const userData = json;
-            const {inviteId, email, emailVerified, initialVerified} = userData;
+            const {inviteId, email, emailVerified, initialVerified, language} = userData;
 
             // Удаляем поля из userData, чтобы не передавать их в MasterModel
             delete userData.inviteId;
@@ -58,6 +58,7 @@ export class MasterModel {
                 email,
                 emailVerified,
                 initialVerified,
+                language
             });
 
 

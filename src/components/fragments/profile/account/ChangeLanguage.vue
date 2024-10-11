@@ -26,7 +26,7 @@
 </template>
 
 <script setup>
-import {ref, watch} from 'vue';
+import {onMounted, ref, watch} from 'vue';
 import store from "@/core/state/store.js";
 import {useI18n} from "vue-i18n";
 const { t } = useI18n({ useScope: 'global' })
@@ -50,7 +50,7 @@ const languages = [
 
 watch(selectedLanguage, (newLanguage) => {
   store.dispatch('master/setLanguage', newLanguage);
-}, {immediate: true});
+});
 </script>
 
 <style scoped>
