@@ -77,7 +77,7 @@ const isActive = (item) => {
 }
 
 .bottom-menu.ios-adjust {
-  padding-bottom: 1rem; /* Дополнительный отступ для iOS */
+  padding-bottom: 2rem; /* Дополнительный отступ для iOS */
 }
 
 @media (min-width: 1024px) {
