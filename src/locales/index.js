@@ -3,18 +3,36 @@ import enHelp from '@/locales/pages/help/en.json'
 import enRules from '@/locales/pages/rules/en.json'
 
 import es from '@/locales/es.json'
-import ru from '@/locales/ru.json'
-import zh from '@/locales/zh.json'
-import fr from '@/locales/fr.json'
-import de from '@/locales/de.json'
-import pt from '@/locales/pt.json'
-import ar from '@/locales/ar.json'
-import hi from '@/locales/hi.json'
-import ja from '@/locales/ja.json'
-import ko from '@/locales/ko.json'
+import esRules from '@/locales/pages/rules/es.json'
 
+import ru from '@/locales/ru.json'
 import ruHelp from '@/locales/pages/help/ru.json'
 import ruRules from '@/locales/pages/rules/ru.json'
+
+import zh from '@/locales/zh.json'
+import zhRules from '@/locales/pages/rules/zh.json'
+
+import fr from '@/locales/fr.json'
+import frRules from '@/locales/pages/rules/fr.json'
+
+import de from '@/locales/de.json'
+import deRules from '@/locales/pages/rules/de.json'
+
+import pt from '@/locales/pt.json'
+import ptRules from '@/locales/pages/rules/pt.json'
+
+import ar from '@/locales/ar.json'
+import arRules from '@/locales/pages/rules/ar.json'
+
+import hi from '@/locales/hi.json'
+import hiRules from '@/locales/pages/rules/hi.json'
+
+import ja from '@/locales/ja.json'
+import jaRules from '@/locales/pages/rules/ja.json'
+
+import ko from '@/locales/ko.json'
+import koRules from '@/locales/pages/rules/ko.json'
+
 
 export const messages = {
     en: {
@@ -28,63 +46,63 @@ export const messages = {
         ...es,
         pages: {
             help: enHelp.pages.help,
-            rules: enRules.pages.rules,
+            rules: esRules.pages.rules,
         }
     },
     zh: {
         ...zh,
         pages: {
             help: enHelp.pages.help,
-            rules: enRules.pages.rules,
+            rules: zhRules.pages.rules,
         }
     },
     fr: {
         ...fr,
         pages: {
             help: enHelp.pages.help,
-            rules: enRules.pages.rules,
+            rules: frRules.pages.rules,
         }
     },
     de: {
         ...de,
         pages: {
             help: enHelp.pages.help,
-            rules: enRules.pages.rules,
+            rules: deRules.pages.rules,
         }
     },
     pt: {
         ...pt,
         pages: {
             help: enHelp.pages.help,
-            rules: enRules.pages.rules,
+            rules: ptRules.pages.rules,
         }
     },
     ar: {
         ...ar,
         pages: {
             help: enHelp.pages.help,
-            rules: enRules.pages.rules,
+            rules: arRules.pages.rules,
         }
     },
     hi: {
         ...hi,
         pages: {
             help: enHelp.pages.help,
-            rules: enRules.pages.rules,
+            rules: hiRules.pages.rules,
         }
     },
     ja: {
         ...ja,
         pages: {
             help: enHelp.pages.help,
-            rules: enRules.pages.rules,
+            rules: jaRules.pages.rules,
         }
     },
     ko: {
         ...ko,
         pages: {
             help: enHelp.pages.help,
-            rules: enRules.pages.rules,
+            rules: koRules.pages.rules,
         }
     },
     ru: {
