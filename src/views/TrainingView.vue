@@ -9,6 +9,13 @@
             <v-img :src="PunchImage" aspect-ratio="1" class="punch-img"/>
           </div>
           <div v-else>
+            <div v-if="delayLoader3dModel" class="loader-container">
+              <v-progress-circular
+                  class="loader"
+                  size="50"
+                  indeterminate
+              />
+            </div>
             <Punch3D class="punch-img"/>
           </div>
 
@@ -103,6 +110,7 @@ const hasIncompleteDailyTasks = computed(() => store.getters['task/hasIncomplete
 // Подключаем флаг 2D/3D
 const is2DPunch = computed(() => store.getters['punch/is2DPunchEnabled']);
 
+const delayLoader3dModel = ref(true);
 
 const playSound1 = () => {
   const sound = new Howl({
@@ -274,6 +282,9 @@ onBeforeMount( () => {
 })
 
 onMounted(() => {
+  setTimeout(() => {
+    delayLoader3dModel.value = false
+  }, 5000);
   // Показать пояснение что это за раздел
   showTrainingRulesReminder(t("info.firstTraining"));
 })
