@@ -121,8 +121,9 @@ export const sendInvite = async (inviteCode) => {
     if (!validateInviteCode(inviteCode)) {
         throw new Error(i18n.global.t('auth.invite.errorInvalidInvite'));
     }
+    inviteCode = inviteCode.toString().toUpperCase();
     try {
-        const response = await apiClient.post('/auth/signup', {inviteCode});
+        const response = await apiClient.post('/auth/signup', {inviteCode:inviteCode});
 
         // Проверяем наличие полей login и tempPassword в ответе
         const {login, temporaryPassword} = response.data;

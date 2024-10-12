@@ -284,7 +284,7 @@ onBeforeMount( () => {
 onMounted(() => {
   setTimeout(() => {
     delayLoader3dModel.value = false
-  }, 5000);
+  }, 10000);
   // Показать пояснение что это за раздел
   showTrainingRulesReminder(t("info.firstTraining"));
 })

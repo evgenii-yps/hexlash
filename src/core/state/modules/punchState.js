@@ -55,6 +55,7 @@ const actions = {
 
             // Сохраняем и отправляем
             if(totalValue > 0) {
+                if(totalValue > state.punchInfo.batchHitPunchAmount) {}
                 await punchService.sendPunchBatch(state.punchInfo, totalValue);
             }
 
