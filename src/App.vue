@@ -187,30 +187,26 @@ watch(isAuth, (newAuthState) => {
   }
 }, {immediate: true});
 
+const handleFocus = () => {
+  if (isAuth.value) {
+    console.log('App is now focused. Attempting WebSocket reconnection...');
+    store.dispatch('webSocket/attemptReconnect');
+  }
+};
 
 // Отслеживание видимости вкладки
 const handleVisibilityChange = () => {
   if (document.visibilityState === 'visible' && isAuth.value) {
     console.log('Tab is now active. Checking WebSocket connection...');
-    if (!store.getters['webSocket/isConnected']) {
+    //if (!store.getters['webSocket/isConnected']) {
       store.dispatch('webSocket/connectWebSocket');
-    }
+    //}
   }else if(!isAuth.value){
+    store.dispatch('webSocket/disconnectWebSocket');
     router.push('/');
   }
 };
 
-const handleViewportChange = (event) => {
-  alert(event);
-  if (event.is_expanded && isAuth.value) {
-    console.log('Mini app is now active. Checking WebSocket connection...');
-    if (!store.getters['webSocket/isConnected']) {
-      store.dispatch('webSocket/connectWebSocket');
-    }
-  } else if (!isAuth.value) {
-    router.push('/');
-  }
-};
 
 // Отслеживание статуса интернет-соединения
 const handleOnlineStatus = () => {
@@ -226,8 +222,6 @@ const handleOnlineStatus = () => {
 
 onMounted(() => {
   if (window.Telegram && window.Telegram.WebApp) {
-    window.Telegram.WebApp.onEvent("viewport_changed", handleViewportChange);
-
     window.Telegram.WebApp.expand(); // Развернуть на весь экран
     window.Telegram.WebApp.disableVerticalSwipes();
   }
@@ -236,6 +230,7 @@ onMounted(() => {
 
   document.addEventListener('visibilitychange', handleVisibilityChange);
   window.addEventListener('online', handleOnlineStatus);
+
 })
 
 onBeforeUnmount(() => {
@@ -244,9 +239,6 @@ onBeforeUnmount(() => {
   document.removeEventListener('visibilitychange', handleVisibilityChange);
   window.removeEventListener('online', handleOnlineStatus);
 
-  if (window.Telegram && window.Telegram.WebApp) {
-    window.Telegram.WebApp.offEvent("viewport_changed", handleViewportChange);
-  }
 
 });
 
