@@ -187,12 +187,7 @@ watch(isAuth, (newAuthState) => {
   }
 }, {immediate: true});
 
-const handleFocus = () => {
-  if (isAuth.value) {
-    console.log('App is now focused. Attempting WebSocket reconnection...');
-    store.dispatch('webSocket/attemptReconnect');
-  }
-};
+
 
 // Отслеживание видимости вкладки
 const handleVisibilityChange = () => {
