@@ -8,6 +8,7 @@ class WebSocketClient {
         this.protocols = ["fcproto", jwtToken];  // JWT в качестве протокола
         this.socket = null;
         this.messageQueue = [];
+        this.pingInterval = null;
     }
 
     connect() {
@@ -25,6 +26,8 @@ class WebSocketClient {
 
                 store.commit('webSocket/setConnected', true);
                 store.commit('webSocket/clearReconnectInterval');
+
+                this.setPingInterval();
             };
 
             this.socket.onmessage = async (event) => {
@@ -41,10 +44,12 @@ class WebSocketClient {
             };
 
             this.socket.onclose = async (event) => {
-                console.log('WebSocket disconnected');
+                console.log('WebSocket disconnected ', event);
 
                 store.commit('webSocket/setConnected', false);
                 await store.dispatch('webSocket/attemptReconnect')
+
+                this.clearPingInterval();
             };
         }
     }
@@ -64,6 +69,25 @@ class WebSocketClient {
     close() {
         if (this.socket) {
             this.socket.close();
+        }
+        this.clearPingInterval();
+    }
+
+    setPingInterval() {
+        this.clearPingInterval();
+        this.pingInterval = setInterval(() => {
+            console.log('ping');
+            if (this.socket.readyState === WebSocket.OPEN) {
+                this.socket.send(JSON.stringify({ type: 'ping' }));
+            }
+        }, 30000); // 30 сек
+    }
+
+
+    clearPingInterval() {
+        if (this.pingInterval) {
+            clearInterval(this.pingInterval);
+            this.pingInterval = null;
         }
     }
 }

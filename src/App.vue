@@ -37,7 +37,7 @@
 </template>
 
 <script setup>
-import {RouterView, useRoute} from 'vue-router'
+import {RouterView, useRoute, useRouter} from 'vue-router'
 import {computed, onBeforeUnmount, onMounted, ref, watch} from "vue";
 import BottomMenu from "@/components/menu/BottomMenu.vue";
 import Logo from "@/components/Logo.vue";
@@ -47,6 +47,8 @@ import {createWeb3Modal, defaultConfig} from "@web3modal/ethers/vue";
 import NoConnection from "@/components/ui/NoConnection.vue";
 import Error from "@/components/Error.vue";
 import FindFight from "@/components/FindFight.vue";
+
+const router = useRouter();
 
 const balance = computed(() => {
   const master = store.getters['master/getMaster'];
@@ -193,6 +195,20 @@ const handleVisibilityChange = () => {
     if (!store.getters['webSocket/isConnected']) {
       store.dispatch('webSocket/connectWebSocket');
     }
+  }else if(!isAuth.value){
+    router.push('/');
+  }
+};
+
+const handleViewportChange = (event) => {
+  alert(event);
+  if (event.is_expanded && isAuth.value) {
+    console.log('Mini app is now active. Checking WebSocket connection...');
+    if (!store.getters['webSocket/isConnected']) {
+      store.dispatch('webSocket/connectWebSocket');
+    }
+  } else if (!isAuth.value) {
+    router.push('/');
   }
 };
 
@@ -210,6 +226,8 @@ const handleOnlineStatus = () => {
 
 onMounted(() => {
   if (window.Telegram && window.Telegram.WebApp) {
+    window.Telegram.WebApp.onEvent("viewport_changed", handleViewportChange);
+
     window.Telegram.WebApp.expand(); // Развернуть на весь экран
     window.Telegram.WebApp.disableVerticalSwipes();
   }
@@ -225,6 +243,11 @@ onBeforeUnmount(() => {
 
   document.removeEventListener('visibilitychange', handleVisibilityChange);
   window.removeEventListener('online', handleOnlineStatus);
+
+  if (window.Telegram && window.Telegram.WebApp) {
+    window.Telegram.WebApp.offEvent("viewport_changed", handleViewportChange);
+  }
+
 });
 
 

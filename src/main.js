@@ -130,5 +130,8 @@ initializeApp().then(() => {
         .use(i18n)
         .mount('#app')
 }).catch((error) => {
-    console.error("Failed to initialize the app:", error);
+    // Показываем сообщение пользователю
+    alert("An error occurred while loading Fight Club. The game will now reload. ", error);
+
+    location.reload();
 });

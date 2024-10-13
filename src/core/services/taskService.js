@@ -1,6 +1,6 @@
 import {
     getAllDailyTasksFromLocalDB,
-    getAllSocialTasksFromLocalDB,
+    getAllSocialTasksFromLocalDB, removeOldDailyTasksFromLocalDB, removeOldSocialTasksFromLocalDB,
     saveDailyTasksToLocalDB,
     saveSocialTasksToLocalDB
 } from "@/core/database/taskRepository.js";
@@ -25,6 +25,7 @@ export const getAllSocialTasksFromLocalAndAPI = async (language) => {
 export const getSocialTasksFromAPI = (language) => {
     // Асинхронно обновляем данные из API
     fetchAllSocialTasks(language).then(async (loadedTasks) => {
+        await removeOldSocialTasksFromLocalDB(loadedTasks);
         await saveSocialTasksToLocalDB(loadedTasks);
         store.commit('task/setSocialTasks', loadedTasks);
     }).catch((error) => {
@@ -57,6 +58,7 @@ export const getAllDailyTasksFromLocalAndAPI = async (language) => {
 export const getDailyTasksFromAPI = (language) => {
     // Асинхронно обновляем данные из API
     fetchAllDailyTasks(language).then(async (loadedTasks) => {
+        await removeOldDailyTasksFromLocalDB(loadedTasks);
         await saveDailyTasksToLocalDB(loadedTasks);
         store.commit('task/setDailyTasks', loadedTasks);
     }).catch((error) => {

@@ -51,11 +51,11 @@ onUnmounted(() => {
 <style scoped>
 .no-connection {
   position: fixed;
-  bottom: 10vh;
+  bottom: 12vh;
   left: 50%;
   width: 100%;
   transform: translateX(-50%);
-  background-color: darkred;
+  background-color: #8b00009e;
   color: white;
   padding: 10px 20px;
   text-align: center;

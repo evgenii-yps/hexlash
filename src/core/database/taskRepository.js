@@ -128,3 +128,60 @@ export const getDailyTaskByIdFromLocalDB = async (id) => {
         return null;
     }
 };
+
+/**
+ * Удаляет задачи из локальной базы данных (IndexedDB), айди которых нет в массиве новых задач.
+ *
+ * @param {Array} newTasks - Массив задач, полученных с сервера.
+ * @returns {Promise<void>}
+ */
+export const removeOldSocialTasksFromLocalDB = async (newTasks) => {
+    const db = await initDB();
+    const transaction = db.transaction(SOCIAL_TASKS_TABLE, 'readwrite');
+    const tasksStore = transaction.objectStore(SOCIAL_TASKS_TABLE);
+
+    // Получаем все текущие задачи
+    const currentTasks = await tasksStore.getAll();
+
+    // Извлекаем все id задач, пришедших с сервера
+    const newTaskIds = newTasks.map(task => task.id);
+
+    // Фильтруем задачи, которых нет среди новых задач
+    const tasksToDelete = currentTasks.filter(task => !newTaskIds.includes(task.id));
+
+    // Удаляем старые задачи
+    for (let task of tasksToDelete) {
+        await tasksStore.delete(task.id);
+    }
+
+    await transaction.complete;
+};
+
+/**
+ * Удаляет ежедневные задачи из локальной базы данных (IndexedDB), айди которых нет в массиве новых задач.
+ *
+ * @param {Array} newTasks - Массив задач, полученных с сервера.
+ * @returns {Promise<void>}
+ */
+export const removeOldDailyTasksFromLocalDB = async (newTasks) => {
+    const db = await initDB();
+    const transaction = db.transaction(DAILY_TASKS_TABLE, 'readwrite');
+    const tasksStore = transaction.objectStore(DAILY_TASKS_TABLE);
+
+    // Получаем все текущие задачи
+    const currentTasks = await tasksStore.getAll();
+
+    // Извлекаем все id задач, пришедших с сервера
+    const newTaskIds = newTasks.map(task => task.id);
+
+    // Фильтруем задачи, которых нет среди новых задач
+    const tasksToDelete = currentTasks.filter(task => !newTaskIds.includes(task.id));
+
+    // Удаляем старые задачи
+    for (let task of tasksToDelete) {
+        await tasksStore.delete(task.id);
+    }
+
+    await transaction.complete;
+};
+
