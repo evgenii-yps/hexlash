@@ -92,6 +92,7 @@ const actions = {
     async fetchSelectedTokenBalance({commit, rootGetters}) {
         try {
             const walletAddress = rootGetters['master/getMaster'].userData.walletAddress;
+            console.log("WALLET_ADDRESS:", walletAddress);
             const balance = await getBalance(state.selectedToken, walletAddress);
             commit('setSelectedTokenBalance', balance);
         } catch (error) {

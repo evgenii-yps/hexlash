@@ -37,6 +37,8 @@ const getBalance = async (token, userAddress) => {
             return ethers.formatUnits(balance, token.decimals);
         }
 
+        console.log(token, userAddress);
+
         // В противном случае получаем баланс для ERC-20 токена
         const tokenContract = new ethers.Contract(token.address,
             ['function balanceOf(address) view returns (uint)',]

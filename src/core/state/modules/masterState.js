@@ -46,7 +46,7 @@ const mutations = {
             for (const [key, value] of Object.entries(updatedMasterData)) {
                 if (key in state.master) {
                     state.master[key] = value;
-                } else if (key in state.master.userData) {
+                } else {
                     state.master.userData[key] = value;
                 }
             }

@@ -49,15 +49,15 @@ const walletAddress = computed(() => address.value);
 
 
 
-watch(walletAddress, (newAddress) => {
+watch(walletAddress, async (newAddress) =>  {
       console.log("Address changed:", newAddress);
 
       if (newAddress) {
         // Выполнить действия при подключении кошелька
-        store.dispatch('master/updateMaster', {walletAddress: newAddress});
+        await store.dispatch('master/updateMaster', {walletAddress: newAddress});
       } else {
         // Выполнить действия при отключении кошелька
-        store.dispatch('master/updateMaster', {walletAddress: ''});
+        await store.dispatch('master/updateMaster', {walletAddress: ''});
       }
     }
 );
