@@ -187,7 +187,9 @@ watch(isAuth, (newAuthState) => {
   }
 }, {immediate: true});
 
-
+watch(route, () => {
+  scrollDirection.value = 'up'; // Всегда показываем меню при переходе на новую страницу
+});
 
 // Отслеживание видимости вкладки
 const handleVisibilityChange = () => {
