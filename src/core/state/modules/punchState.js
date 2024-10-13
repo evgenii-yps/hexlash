@@ -51,11 +51,14 @@ const actions = {
 
         const timerId = setInterval(async() => {
             // Считаем общее число
-            const totalValue = state.batchHitPunchAmount.reduce((sum, num) => sum + num, 0);
+            let totalValue = state.batchHitPunchAmount.reduce((sum, num) => sum + num, 0);
 
             // Сохраняем и отправляем
             if(totalValue > 0) {
-                if(totalValue > state.punchInfo.batchHitPunchAmount) {}
+                if(totalValue > 3000000/*state.punchInfo.batchHitPunchAmount*/) {
+                    // TODO брать из модели
+                    totalValue = 2999999
+                }
                 await punchService.sendPunchBatch(state.punchInfo, totalValue);
             }
 
