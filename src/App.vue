@@ -218,14 +218,9 @@ const handleOnlineStatus = () => {
 
 
 const handleViewportChange = (event) => {
-  if (event.isStateStable) {
-    const viewportHeight = window.Telegram.WebApp.viewportHeight;
-    const isFullScreen = window.innerHeight >= viewportHeight;
-
-    if (isFullScreen) {
-      alert(viewportHeight + " " + window.innerHeight);
+  if (event.isStateStable && window.Telegram.WebApp.isExpanded) {
+    alert("Expend");
       store.dispatch('webSocket/connectWebSocket');
-    }
   }
 };
 
