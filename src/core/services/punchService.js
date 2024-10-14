@@ -31,11 +31,11 @@ export const getPunchLimitsFromLocalAndSocket = async () => {
 };
 
 
-export const sendPunchBatch = async (punchInfo, totalValue) => {
+export const sendPunchBatch = async (punchInfo, totalValue, count) => {
     try {
 
         const amount = (totalValue / 100) * Math.pow(10, DECIMALS);
-        const msg = new PunchBatchRequestMsg(amount);
+        const msg = new PunchBatchRequestMsg(amount, count);
 
         await store.dispatch('webSocket/sendMessage', msg);
 

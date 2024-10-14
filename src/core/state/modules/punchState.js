@@ -9,6 +9,7 @@ const state = {
     isTrainingBlocked: false,
     punchTimerId: null,
     batchHitPunchAmount: [],
+    batchHitPunchCount: 0,
     is2DPunch: localStorage.getItem('is2DPunch') === 'true', // Если у нас 2д режим
 };
 
@@ -55,15 +56,15 @@ const actions = {
 
             // Сохраняем и отправляем
             if(totalValue > 0) {
-                if(totalValue > 3000000/*state.punchInfo.batchHitPunchAmount*/) {
-                    // TODO брать из модели
-                    totalValue = 2999999
+                if(totalValue > state.punchInfo.punchCounterMaxPerBatch) {
+                    totalValue = state.punchInfo.punchCounterMaxPerBatch
                 }
-                await punchService.sendPunchBatch(state.punchInfo, totalValue);
+                await punchService.sendPunchBatch(state.punchInfo, totalValue, state.batchHitPunchCount);
             }
 
             // Очищаем массив
             state.batchHitPunchAmount = [];
+            state.batchHitPunchCount = 0;
 
         }, BATCH_SEND_INTERVAL_MS);
 
@@ -78,7 +79,7 @@ const actions = {
             return;
         }
         state.batchHitPunchAmount.push(value);
-        state.punchInfo.punchCounter++;
+        state.batchHitPunchCount++;
 
         // Увеличиваем баланс
         const amount = (value / 100) * Math.pow(10, DECIMALS);
