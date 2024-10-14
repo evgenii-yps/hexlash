@@ -195,6 +195,7 @@ watch(route, () => {
 const handleVisibilityChange = () => {
   if (document.visibilityState === 'visible' && isAuth.value) {
     console.log('Tab is now active. Checking WebSocket connection...');
+    alert('Tab is now active. Checking WebSocket connection...');
     //if (!store.getters['webSocket/isConnected']) {
       store.dispatch('webSocket/connectWebSocket');
     //}
@@ -217,7 +218,7 @@ const handleOnlineStatus = () => {
 
 
 
-const handleViewportChange = (event) => {
+/*const handleViewportChange = (event) => {
   if (event.isStateStable && window.Telegram.WebApp.isExpanded) {
 
     setTimeout(() => {
@@ -225,7 +226,7 @@ const handleViewportChange = (event) => {
       store.dispatch('webSocket/connectWebSocket');
     }, 100);
   }
-};
+};*/
 
 onMounted(() => {
   if (window.Telegram && window.Telegram.WebApp) {
@@ -238,7 +239,7 @@ onMounted(() => {
   document.addEventListener('visibilitychange', handleVisibilityChange);
   window.addEventListener('online', handleOnlineStatus);
 
-  window.Telegram.WebApp.onEvent('viewportChanged', handleViewportChange);
+  //window.Telegram.WebApp.onEvent('viewportChanged', handleViewportChange);
 
 })
 
@@ -248,9 +249,9 @@ onBeforeUnmount(() => {
   document.removeEventListener('visibilitychange', handleVisibilityChange);
   window.removeEventListener('online', handleOnlineStatus);
 
-  if (window.Telegram && window.Telegram.WebApp) {
+ /* if (window.Telegram && window.Telegram.WebApp) {
     window.Telegram.WebApp.offEvent('viewportChanged', handleViewportChange);
-  }
+  }*/
 
 });
 
