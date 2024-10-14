@@ -216,16 +216,18 @@ const handleOnlineStatus = () => {
 };
 
 
-const handleViewportChange = () => {
-  const viewportHeight = window.Telegram.WebApp.viewportHeight;
-  const isFullScreen = window.innerHeight >= viewportHeight;
 
-  if (isFullScreen) {
-    alert("full screen");
-    store.dispatch('webSocket/connectWebSocket');
+const handleViewportChange = (event) => {
+  if (event.isStateStable) {
+    const viewportHeight = window.Telegram.WebApp.viewportHeight;
+    const isFullScreen = window.innerHeight >= viewportHeight;
+
+    if (isFullScreen) {
+      alert(viewportHeight + " " + window.innerHeight);
+      store.dispatch('webSocket/connectWebSocket');
+    }
   }
 };
-
 
 onMounted(() => {
   if (window.Telegram && window.Telegram.WebApp) {
