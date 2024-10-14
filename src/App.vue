@@ -156,7 +156,7 @@ const handleChildScroll = (newScrollTop) => {
         scrollDirection.value = 'up';
       }
       lastScrollTop.value = newScrollTop;
-    }, 10); // Задержка в 10 мс
+    }, 0); // Задержка в 10 мс
   }
 };
 
@@ -209,12 +209,22 @@ const handleVisibilityChange = () => {
 const handleOnlineStatus = () => {
   if (navigator.onLine && isAuth.value) {
     console.log('Internet is back online. Checking WebSocket connection...');
-    if (!store.getters['webSocket/isConnected']) {
+    //if (!store.getters['webSocket/isConnected']) {
       store.dispatch('webSocket/connectWebSocket');
-    }
+    //}
   }
 };
 
+
+const handleViewportChange = () => {
+  const viewportHeight = window.Telegram.WebApp.viewportHeight;
+  const isFullScreen = window.innerHeight >= viewportHeight;
+
+  if (isFullScreen) {
+    alert("full screen");
+    store.dispatch('webSocket/connectWebSocket');
+  }
+};
 
 
 onMounted(() => {
@@ -228,6 +238,8 @@ onMounted(() => {
   document.addEventListener('visibilitychange', handleVisibilityChange);
   window.addEventListener('online', handleOnlineStatus);
 
+  window.Telegram.WebApp.onEvent('viewportChanged', handleViewportChange);
+
 })
 
 onBeforeUnmount(() => {
@@ -236,6 +248,9 @@ onBeforeUnmount(() => {
   document.removeEventListener('visibilitychange', handleVisibilityChange);
   window.removeEventListener('online', handleOnlineStatus);
 
+  if (window.Telegram && window.Telegram.WebApp) {
+    window.Telegram.WebApp.offEvent('viewportChanged', handleViewportChange);
+  }
 
 });
 
