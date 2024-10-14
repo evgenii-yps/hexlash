@@ -16,7 +16,6 @@ class WebSocketClient {
 
         if (this.isConnecting || (this.socket && this.socket.readyState === WebSocket.OPEN)) {
             console.log('WebSocket is already connecting or connected.');
-            alert('WebSocket is already connecting or connected.');
             return;
         }
 
@@ -43,6 +42,7 @@ class WebSocketClient {
 
         this.socket.onmessage = async (event) => {
             try {
+                console.log(event.data);
                 const message = JSON.parse(event.data);
                 await store.dispatch('webSocket/handleMessage', message);
             } catch (err) {

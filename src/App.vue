@@ -217,15 +217,6 @@ const handleOnlineStatus = () => {
 
 
 
-/*const handleViewportChange = (event) => {
-  if (event.isStateStable && window.Telegram.WebApp.isExpanded) {
-
-    setTimeout(() => {
-      alert(window.Telegram.WebApp.isExpanded);
-      store.dispatch('webSocket/connectWebSocket');
-    }, 100);
-  }
-};*/
 
 onMounted(() => {
   if (window.Telegram && window.Telegram.WebApp) {
@@ -238,8 +229,6 @@ onMounted(() => {
   document.addEventListener('visibilitychange', handleVisibilityChange);
   window.addEventListener('online', handleOnlineStatus);
 
-  //window.Telegram.WebApp.onEvent('viewportChanged', handleViewportChange);
-
 })
 
 onBeforeUnmount(() => {
@@ -247,10 +236,6 @@ onBeforeUnmount(() => {
 
   document.removeEventListener('visibilitychange', handleVisibilityChange);
   window.removeEventListener('online', handleOnlineStatus);
-
- /* if (window.Telegram && window.Telegram.WebApp) {
-    window.Telegram.WebApp.offEvent('viewportChanged', handleViewportChange);
-  }*/
 
 });
 

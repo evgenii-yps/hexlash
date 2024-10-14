@@ -66,14 +66,18 @@ const actions = {
         }
     },
 
-    attemptReconnect({commit, state, dispatch, rootGetters}) {
+     attemptReconnect({commit, state, rootGetters}) {
         if (rootGetters['master/getLoginState'].isAuthenticated && !state.isConnected && !state.reconnectInterval) {
             state.socketClient = null;
 
             console.log('Attempting to reconnect to WebSocket in 10 seconds...');
-            const interval = setInterval(() => {
-                console.log('Reconnecting...');
-                dispatch('connectWebSocket');
+            const interval = setInterval(async () => {
+                try {
+                    console.log('Reconnecting...');
+                    await store.dispatch('webSocket/connectWebSocket');
+                } catch (error) {
+                    console.error('Reconnect failed:', error);
+                }
             }, state.reconnectTimeout);
 
             commit('setReconnectInterval', interval);
@@ -111,11 +115,11 @@ const actions = {
                 break;
         }
     },
-    handleConnectionError({commit}, error) {
+    async handleConnectionError({commit, dispatch}, error) {
         // Обработка ошибок соединения
-        console.error('WebSocket error:', error.message);
+        console.error('WebSocket error:', error);
 
-        this.store.dispatch('webSocket/attemptReconnect')
+        await dispatch('attemptReconnect')
     },
     handleInternalError({commit}, error) {
         const socketError = InfoMessageModel.withTimeout(error.message, 3000);
