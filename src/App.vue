@@ -195,7 +195,6 @@ watch(route, () => {
 const handleVisibilityChange = () => {
   if (document.visibilityState === 'visible' && isAuth.value) {
     console.log('Tab is now active. Checking WebSocket connection...');
-    alert('Tab is now active. Checking WebSocket connection...');
     //if (!store.getters['webSocket/isConnected']) {
       store.dispatch('webSocket/connectWebSocket');
     //}
