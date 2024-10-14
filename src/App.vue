@@ -223,7 +223,7 @@ const handleViewportChange = (event) => {
     setTimeout(() => {
       alert(window.Telegram.WebApp.isExpanded);
       store.dispatch('webSocket/connectWebSocket');
-    }, 30000);
+    }, 100);
   }
 };
 
