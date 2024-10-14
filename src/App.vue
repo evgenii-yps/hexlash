@@ -219,8 +219,11 @@ const handleOnlineStatus = () => {
 
 const handleViewportChange = (event) => {
   if (event.isStateStable && window.Telegram.WebApp.isExpanded) {
-    alert("Expend");
+
+    setTimeout(() => {
+      alert(window.Telegram.WebApp.isExpanded);
       store.dispatch('webSocket/connectWebSocket');
+    }, 30000);
   }
 };
 
