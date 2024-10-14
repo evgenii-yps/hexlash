@@ -16,6 +16,7 @@ class WebSocketClient {
 
         if (this.isConnecting || (this.socket && this.socket.readyState === WebSocket.OPEN)) {
             console.log('WebSocket is already connecting or connected.');
+            alert('WebSocket is already connecting or connected.');
             return;
         }
 

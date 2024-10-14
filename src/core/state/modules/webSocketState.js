@@ -43,13 +43,11 @@ const actions = {
 
         if (state.isConnected) {
             console.log('WebSocket is already connected. No need to reconnect.');
-            alert('WebSocket is already connected. No need to reconnect.');
             return; // Если уже подключен, выходим из функции
         }
 
         if (!state.socketClient) {
             const jwtToken = rootGetters['master/getJwtToken'];
-            alert('jwt ' + jwtToken);
             const socketClient = new WebSocketClient("Bearer_" + jwtToken);
 
             commit('setSocketClient', socketClient);
