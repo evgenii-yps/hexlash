@@ -67,7 +67,16 @@ const initTelegramWebApp = () => {
     const initDataUnsafe = window.Telegram.WebApp.initDataUnsafe;
 
     let startParam = window.Telegram.WebApp.initDataUnsafe.start_param;
-    alert(startParam);
+
+    const urlParams = new URLSearchParams(window.location.search);
+
+// Извлекаем параметр code
+    const code = urlParams.get('code');
+
+
+    alert(startParam + " " + initData.value + " " + code);
+
+
 
     chatId.value = initDataUnsafe?.user?.id || null;  // Сохраняем chatId
     hash.value = initDataUnsafe.hash;
