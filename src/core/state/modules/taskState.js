@@ -123,7 +123,7 @@ const actions = {
 
             if(task.isCompleted) {
                 const info = InfoMessageModel.withTimeout(i18n.global.t("training.successCompleteTask"), 5000);
-                this.store.commit('master/setInfoMessage', info);
+                store.commit('master/setInfoMessage', info);
             }
 
         } catch (error) {
