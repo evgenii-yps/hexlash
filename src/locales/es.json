@@ -175,7 +175,10 @@
     "invite": {
       "lblCopySuccess": "Código de invitación copiado al portapapeles",
       "lblCopyError": "Error al copiar texto {error}",
-      "lblTooltipText": "La primera regla del Club de la Lucha: cuéntaselo a todos. Recuerda, este es tu boleto a la libertad. Comparte esta libertad con los demás."
+      "lblTooltipText": "La primera regla del Club de la Lucha: cuéntaselo a todos. Recuerda, este es tu boleto a la libertad. Comparte esta libertad con los demás.",
+      "inviteFriend": "Invitar a un amigo",
+      "confirmInviteFriend": "¿Invitar a un amigo a través de Telegram? Se unirá automáticamente a tu club si sigue el enlace. También puedes darle el código personalmente, y podrá ingresarlo en el sitio web para unirse de esta manera.",
+      "inviteText": "🏋 ¡Hola! Únete a mi club de lucha. ¡Vamos a luchar juntos!"
     },
     "stats": {
       "lblTotalFights": "Peleas totales",
@@ -251,7 +254,8 @@
     "titleNotice": "AVISO",
     "taskNotice": " - Al hacer clic en \"Confirmar,\" te comprometes. No hay lugar para promesas vacías en este club. Por ejemplo, si te suscribes a un canal, no hay vuelta atrás. Darse de baja después de la confirmación es un camino directo al baneo. Aquí es serio: rompes tu palabra, enfrentas un baneo eterno.",
     "checklistCompleted": "¡Buen trabajo, lista de verificación completada!",
-    "noDailyTasks": "¡No hay tareas diarias disponibles hoy!"
+    "noDailyTasks": "¡No hay tareas diarias disponibles hoy!",
+    "successCompleteTask": "Has completado la tarea con éxito y has recibido tu merecida recompensa <a href=\"/training\">Tareas</a>"
   },
   "rating": {
     "clubs": "Clasificación de clubes",

@@ -72,6 +72,8 @@ class WebSocketClient {
             this.clearPingInterval(); // TODO удалить когда на сервере будет
         };
 
+
+
     }
 
     sendMessage(message) {
@@ -102,7 +104,7 @@ class WebSocketClient {
         this.pingInterval = setInterval(() => {
             console.log('ping');
             if (this.socket.readyState === WebSocket.OPEN) {
-                this.socket.send(JSON.stringify({type: 'ping'}));
+             //   this.socket.send(JSON.stringify({type: 'ping'}));
             }
         }, 30000); // 30 сек
     }

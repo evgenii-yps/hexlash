@@ -175,7 +175,10 @@
     "invite": {
       "lblCopySuccess": "Code d'invitation copié dans le presse-papiers",
       "lblCopyError": "Erreur lors de la copie du texte {error}",
-      "lblTooltipText": "La première règle du Fight Club : parlez à tout le monde du Fight Club. Rappelez-vous, c'est votre ticket pour la liberté. Partagez cette liberté avec les autres."
+      "lblTooltipText": "La première règle du Fight Club : parlez à tout le monde du Fight Club. Rappelez-vous, c'est votre ticket pour la liberté. Partagez cette liberté avec les autres.",
+      "inviteFriend": "Inviter un ami",
+      "confirmInviteFriend": "Inviter un ami via Telegram ? Il rejoindra automatiquement votre club s'il suit le lien. Vous pouvez également lui transmettre le code personnellement, qu'il pourra saisir sur le site pour rejoindre de cette manière.",
+      "inviteText": "🏋 Salut ! Rejoins mon club de combat. Combattons ensemble !"
     },
     "stats": {
       "lblTotalFights": "Total des combats",
@@ -251,7 +254,8 @@
     "titleNotice": "AVIS",
     "taskNotice": "- En cliquant sur « Confirmer », vous vous engagez. Il n'y a pas de place pour les promesses vides dans ce club. Par exemple, si vous vous abonnez à un canal, il n'y a pas de retour en arrière. Se désabonner après confirmation est un chemin direct vers un bannissement. Ici, c'est sérieux : brisez votre parole, affrontez un bannissement éternel.",
     "checklistCompleted": "Excellent travail, liste terminée !",
-    "noDailyTasks": "Aucune tâche quotidienne disponible aujourd'hui !"
+    "noDailyTasks": "Aucune tâche quotidienne disponible aujourd'hui !",
+    "successCompleteTask": "Vous avez terminé la tâche avec succès et reçu votre récompense bien méritée <a href=\"/training\">Tâches</a>"
   },
   "rating": {
     "clubs": "Classement des clubs",

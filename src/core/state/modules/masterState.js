@@ -281,6 +281,19 @@ const actions = {
             commit('setInfoMessage', InfoMessageModel.withText(error.message));
         }
     },
+    async sendShare({commit, state}) {
+        try {
+            const inviteId = state.master.inviteId;
+
+            const inviteText = i18n.global.t('profile.invite.inviteText');
+
+            const inviteLink = `https://t.me/share/url?url=https://t.me/bitfightclubbot/gameapp?startapp=${inviteId}&text=${encodeURIComponent(inviteText)}`;
+
+            window.open(inviteLink, '_blank');
+        } catch (error) {
+            commit('setInfoMessage', InfoMessageModel.withText(error.message));
+        }
+    }
 };
 
 export default {

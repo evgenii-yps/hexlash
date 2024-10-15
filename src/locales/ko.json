@@ -175,7 +175,10 @@
     "invite": {
       "lblCopySuccess": "초대 코드가 클립보드에 복사되었습니다.",
       "lblCopyError": "텍스트 복사 오류 {error}",
-      "lblTooltipText": "Fight Club의 첫 번째 규칙: 모든 사람에게 Fight Club에 대해 이야기하세요. 이것은 자유로 가는 티켓입니다. 이 자유를 다른 사람들과 나누세요."
+      "lblTooltipText": "Fight Club의 첫 번째 규칙: 모든 사람에게 Fight Club에 대해 이야기하세요. 이것은 자유로 가는 티켓입니다. 이 자유를 다른 사람들과 나누세요.",
+      "inviteFriend": "친구를 초대하다",
+      "confirmInviteFriend": "Telegram을 통해 친구를 초대하시겠습니까? 링크를 클릭하면 자동으로 클럽에 가입됩니다. 또한 코드를 직접 전달하여 웹사이트에 입력하고 이 방법으로 가입할 수 있습니다.",
+      "inviteText": "🏋 안녕하세요! 내 파이트 클럽에 가입하세요. 함께 싸우자!"
     },
     "stats": {
       "lblTotalFights": "총 전투 횟수",
@@ -251,7 +254,8 @@
     "titleNotice": "알림",
     "taskNotice": "- \"확인\"을 클릭하면 약속을 이행하는 것입니다. 이 클럽에서는 빈 약속은 허용되지 않습니다. 예를 들어, 채널을 구독하면 취소할 수 없습니다. 구독을 취소하면 바로 영구 정지됩니다. 여기서는 진지합니다: 약속을 어기면 영구 정지입니다.",
     "checklistCompleted": "훌륭한 작업, 체크리스트 완료!",
-    "noDailyTasks": "오늘 사용할 수 있는 일일 작업이 없습니다!"
+    "noDailyTasks": "오늘 사용할 수 있는 일일 작업이 없습니다!",
+    "successCompleteTask": "임무를 성공적으로 완료하고 정당한 보상을 받았습니다 <a href=\"/training\">작업</a>"
   },
   "rating": {
     "clubs": "클럽 평점",

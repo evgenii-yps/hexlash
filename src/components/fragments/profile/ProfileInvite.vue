@@ -1,5 +1,5 @@
 <template>
-  <div class="invite-container">
+  <div v-if="showInviteContainer" class="invite-container">
     <v-tooltip
         v-model="showTooltip"
         location="bottom"
@@ -8,31 +8,62 @@
     >
       <template #activator="{ props }">
         <div class="code-container">
+
           <h2 v-bind="props" @click="toggleTooltip" class="invite-code">{{ inviteCode }}</h2>
           <div class="copy-icon-container" @click="copyToClipboard">
             <img src="@/assets/images/icon_copy.svg" alt="Copy Icon" class="copy-icon">
+          </div>
+          <div class="share-icon-container" @click="openShare">
+            {{ t('profile.invite.inviteFriend') }}
           </div>
         </div>
       </template>
       <span>{{ t('profile.invite.lblTooltipText') }}</span>
     </v-tooltip>
   </div>
+
+  <!-- Модальное окно поделится -->
+  <VModal v-model="showDialogConfirmShare" max-width="500">
+    <VCard>
+      <v-card-title class="headline"></v-card-title>
+      <v-card-text>{{ t('profile.invite.confirmInviteFriend') }}</v-card-text>
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn @click="showDialogConfirmShare = false" class="cancel-btn">{{ t('modal.btnCancel') }}</v-btn>
+        <v-btn @click="goToUrl" class="confirm-btn">{{ t('modal.btnConfirm') }}</v-btn>
+      </v-card-actions>
+    </VCard>
+  </VModal>
+
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue';
+import {computed, onMounted, ref, watch} from 'vue';
 import store from "@/core/state/store.js";
 import {useI18n} from "vue-i18n";
+import {VBtn, VCard, VCardActions, VCardText, VCardTitle, VSpacer} from "vuetify/components";
 const { t } = useI18n({ useScope: 'global' })
 
 
 
+const clubId = ref(null);
 const inviteCode = ref(null);
+const showInviteContainer = ref(false);
 const showTooltip = ref(false);
+const showDialogConfirmShare = ref(false);
 
-watch(store.getters['master/getMaster'], (newMaster) => {
+watch(store.getters['master/getMaster'],  async(newMaster) => {
   if (newMaster && newMaster.userData) {
     inviteCode.value = newMaster.inviteId;
+    clubId.value = newMaster.userData.clubId;
+
+    if (clubId.value) {
+      const club = await store.dispatch('club/getClubById', clubId.value);
+      if (club) {
+        showInviteContainer.value = club.isPublic || club.owner === newMaster.userData.id;
+      }
+    }
+
   }
 }, { immediate: true });
 
@@ -47,6 +78,16 @@ const copyToClipboard = () => {
 const toggleTooltip = () => {
   showTooltip.value = !showTooltip.value;
 };
+
+const openShare = () => {
+  showDialogConfirmShare.value = !showDialogConfirmShare.value;
+}
+
+const goToUrl = () => {
+  showDialogConfirmShare.value = !showDialogConfirmShare.value;
+  store.dispatch('master/sendShare');
+}
+
 </script>
 
 <style scoped>
@@ -95,4 +136,18 @@ const toggleTooltip = () => {
 .copy-icon:hover {
   opacity: 0.8;
 }
+
+.share-icon-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--pink);
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  margin-left: 1em;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+
 </style>

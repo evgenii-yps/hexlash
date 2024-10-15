@@ -16,7 +16,11 @@ const categoryIcons = [
 ];
 
 
+
 export class SocialTaskModel {
+    static TYPE_NAME = "TaskResponseMsg";
+
+
     constructor({
                     id = null,
                     title = '',

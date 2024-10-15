@@ -1,4 +1,7 @@
 import * as taskService from "@/core/services/taskService.js";
+import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
+import {i18n} from "@/main.js";
+import store from "@/core/state/store.js";
 
 const state = {
     socialTasks: [],
@@ -83,9 +86,15 @@ const actions = {
         }
     },
     async updateSocialTask({commit}, task) {
-        try {
+        try { //TODO убрать дублирование
             await taskService.updateSocialTask(task);
             commit('addSocialTask', task);
+
+            if(task.isCompleted) {
+                const info = InfoMessageModel.withTimeout(i18n.global.t("training.successCompleteTask"), 5000);
+                store.commit('master/setInfoMessage', info);
+            }
+
         } catch (error) {
             console.error('Error updating social task:', error);
         }
@@ -94,6 +103,12 @@ const actions = {
         try {
             await taskService.updateDailyTask(task);
             commit('addDailyTask', task);
+
+            if(task.isCompleted) {
+                const info = InfoMessageModel.withTimeout(i18n.global.t("training.successCompleteTask"), 5000);
+                this.store.commit('master/setInfoMessage', info);
+            }
+
         } catch (error) {
             console.error('Error updating daily tasks:', error);
         }

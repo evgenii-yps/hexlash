@@ -175,7 +175,10 @@
     "invite": {
       "lblCopySuccess": "邀请码已复制到剪贴板",
       "lblCopyError": "复制文本时出错 {error}",
-      "lblTooltipText": "Fight Club的第一条规则：告诉所有人关于Fight Club的事。记住，这是您通往自由的门票。与他人分享这种自由。"
+      "lblTooltipText": "Fight Club的第一条规则：告诉所有人关于Fight Club的事。记住，这是您通往自由的门票。与他人分享这种自由。",
+      "inviteFriend": "邀请朋友",
+      "confirmInviteFriend": "通过Telegram邀请朋友吗？他们如果点击链接，将自动加入您的俱乐部。您也可以将代码亲自发给他们，他们可以在网站上输入代码并以这种方式加入。",
+      "inviteText": "🏋 嗨！加入我的格斗俱乐部。让我们一起战斗吧！"
     },
     "stats": {
       "lblTotalFights": "总战斗次数",
@@ -251,7 +254,8 @@
     "titleNotice": "注意",
     "taskNotice": "- 点击“确认”即表示您已做出承诺。在这个俱乐部里没有空话可言。例如，如果您订阅了一个频道，不能回头。确认后取消订阅将导致直接被禁。在这里很严肃：违背诺言，面临永远的禁令。",
     "checklistCompleted": "干得好，检查清单已完成！",
-    "noDailyTasks": "今天没有每日任务！"
+    "noDailyTasks": "今天没有每日任务！",
+    "successCompleteTask": "您已成功完成任务，并获得应得的奖励 <a href=\"/training\">任务</a>"
   },
   "rating": {
     "clubs": "俱乐部排名",

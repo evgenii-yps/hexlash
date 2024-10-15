@@ -48,7 +48,7 @@
 
 <script setup>
 import {useRoute} from 'vue-router';
-import {computed, onBeforeMount, ref, watch} from "vue";
+import {computed, onBeforeMount, onMounted, ref, watch} from "vue";
 import store from "@/core/state/store.js";
 
 import ProfileStats from "@/components/fragments/profile/ProfileStats.vue";
@@ -109,6 +109,7 @@ const emit = defineEmits(['scroll']);
 const handleScroll = (event) => {
   emit('scroll', event.target.scrollTop);
 };
+
 
 </script>
 

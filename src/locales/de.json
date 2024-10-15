@@ -175,7 +175,10 @@
     "invite": {
       "lblCopySuccess": "Einladungscode in die Zwischenablage kopiert",
       "lblCopyError": "Fehler beim Kopieren des Textes {error}",
-      "lblTooltipText": "Die erste Regel des Fight Clubs: Erzähle jedem vom Fight Club. Denke daran, dies ist dein Ticket zur Freiheit. Teile diese Freiheit mit anderen."
+      "lblTooltipText": "Die erste Regel des Fight Clubs: Erzähle jedem vom Fight Club. Denke daran, dies ist dein Ticket zur Freiheit. Teile diese Freiheit mit anderen.",
+      "inviteFriend": "Einen Freund einladen",
+      "confirmInviteFriend": "Einen Freund über Telegram einladen? Er tritt deinem Club automatisch bei, wenn er dem Link folgt. Du kannst ihm auch den Code persönlich mitteilen, den er auf der Website eingeben kann, um beizutreten.",
+      "inviteText": "🏋 Hallo! Tritt meinem Kampfclub bei. Lass uns zusammen kämpfen!"
     },
     "stats": {
       "lblTotalFights": "Gesamtkämpfe",
@@ -251,7 +254,8 @@
     "titleNotice": "HINWEIS",
     "taskNotice": "- Mit einem Klick auf \"Bestätigen\" verpflichtest du dich. Es gibt keinen Platz für leere Versprechen in diesem Club. Zum Beispiel: Wenn du einem Kanal folgst, gibt es kein Zurück mehr. Ein Abmelden nach der Bestätigung führt direkt zum Bann. Hier ist es ernst: brich dein Wort, und du bekommst einen ewigen Bann.",
     "checklistCompleted": "Großartige Arbeit, Checkliste abgeschlossen!",
-    "noDailyTasks": "Heute gibt es keine täglichen Aufgaben!"
+    "noDailyTasks": "Heute gibt es keine täglichen Aufgaben!",
+    "successCompleteTask": "Sie haben die Aufgabe erfolgreich abgeschlossen und Ihre wohlverdiente Belohnung erhalten <a href=\"/training\">Aufgaben</a>"
   },
   "rating": {
     "clubs": "Club-Rangliste",

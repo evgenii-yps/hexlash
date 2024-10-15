@@ -172,10 +172,8 @@ const handleClickPunch = (event, isFromCircleClick = false, value) => {
   };
 
   if (numbersAnimations.value.length >= 20) {
-
     numbersAnimations.value.shift();
   }
-
 
   // Добавляем новое число в массив
   numbersAnimations.value.push(newNumber);

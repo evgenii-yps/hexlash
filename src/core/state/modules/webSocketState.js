@@ -7,6 +7,8 @@ import {ErrorSocketResponse} from "@/core/models/ws/res/ErrorSocket.js";
 import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
 import store from "@/core/state/store.js";
 import {MasterModel} from "@/core/models/masterModel.js";
+import {SocialTaskModel} from "@/core/models/socialTaskModel.js";
+import {DailyTaskModel} from "@/core/models/dailyTaskModel.js";
 
 const state = {
     isConnected: false,
@@ -66,7 +68,7 @@ const actions = {
         }
     },
 
-     attemptReconnect({commit, state, rootGetters}) {
+    attemptReconnect({commit, state, rootGetters}) {
         if (rootGetters['master/getLoginState'].isAuthenticated && !state.isConnected && !state.reconnectInterval) {
             state.socketClient = null;
 
@@ -109,6 +111,16 @@ const actions = {
             case MasterModel.TYPE_NAME:
                 const masterModel = MasterModel.fromJSON(message.userResponse)
                 await store.dispatch('master/updateMasterFromSocket', masterModel);
+                break;
+            case SocialTaskModel.TYPE_NAME:
+                let taskModel;
+                if (message.taskResponse.type === 'SOCIAL') {
+                    taskModel = SocialTaskModel.fromJSON(message.taskResponse)
+                    await store.dispatch('task/updateSocialTask', taskModel);
+                } else if (message.taskResponse.type === 'DAILY') {
+                    taskModel = DailyTaskModel.fromJSON(message.taskResponse)
+                    await store.dispatch('task/updateDailyTask', taskModel);
+                }
                 break;
             default:
                 console.warn(`Unknown message type received: ${messageType}`);

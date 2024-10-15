@@ -175,7 +175,10 @@
     "invite": {
       "lblCopySuccess": "Invitation code copied to clipboard",
       "lblCopyError": "Error copying text {error}",
-      "lblTooltipText": "The first rule of Fight Club: tell everyone about Fight Club. Remember, this is your ticket to freedom. Share this freedom with others."
+      "lblTooltipText": "The first rule of Fight Club: tell everyone about Fight Club. Remember, this is your ticket to freedom. Share this freedom with others.",
+      "inviteFriend": "Invite a friend",
+      "confirmInviteFriend": "Invite a friend via Telegram? They will automatically join your club if they follow the link. You can also personally give them the code, which they can enter on the website to join this way.",
+      "inviteText": "🏋 Hey! Join my Fight Club. Let's fight together!"
     },
     "stats": {
       "lblTotalFights": "Total fights",
@@ -251,7 +254,8 @@
     "titleNotice": "NOTICE",
     "taskNotice": "- By clicking \"Confirm,\" you commit yourself. There's no room for empty promises in this club. For example, if you subscribe to a channel, there's no turning back. Unsubscribing after confirmation is a direct path to a ban. Here, it's serious: break your word, face an eternal ban.",
     "checklistCompleted": "Great work, checklist completed!",
-    "noDailyTasks": "No daily tasks available today!"
+    "noDailyTasks": "No daily tasks available today!",
+    "successCompleteTask": "You have successfully completed the task and received your well-deserved reward <a href=\"/training\">Tasks</a>"
   },
   "rating": {
     "clubs": "Club rating",

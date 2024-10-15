@@ -4,7 +4,7 @@
 
       <div>
         <h1>Email verification</h1>
-        <div v-if="!loading" class="loader-container">
+        <div v-if="loading" class="loader-container">
           <v-progress-circular
               class="loader"
               size="40"

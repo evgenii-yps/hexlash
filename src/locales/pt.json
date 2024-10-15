@@ -175,7 +175,10 @@
     "invite": {
       "lblCopySuccess": "Código de convite copiado para a área de transferência",
       "lblCopyError": "Erro ao copiar texto {error}",
-      "lblTooltipText": "A primeira regra do Fight Club: conte a todos sobre o Fight Club. Lembre-se, este é o seu ingresso para a liberdade. Compartilhe essa liberdade com outros."
+      "lblTooltipText": "A primeira regra do Fight Club: conte a todos sobre o Fight Club. Lembre-se, este é o seu ingresso para a liberdade. Compartilhe essa liberdade com outros.",
+      "inviteFriend": "Convidar um amigo",
+      "confirmInviteFriend": "Convidar um amigo pelo Telegram? Ele se juntará automaticamente ao seu clube se seguir o link. Você também pode dar o código pessoalmente, que ele pode inserir no site para se juntar dessa maneira.",
+      "inviteText": "🏋 Olá! Junte-se ao meu clube de luta. Vamos lutar juntos!"
     },
     "stats": {
       "lblTotalFights": "Total de lutas",
@@ -251,7 +254,8 @@
     "titleNotice": "AVISO",
     "taskNotice": "- Ao clicar em \"Confirmar\", você se compromete. Não há espaço para promessas vazias neste clube. Por exemplo, se você se inscrever em um canal, não há volta. Cancelar a inscrição após a confirmação é um caminho direto para o banimento. Aqui é sério: quebre sua palavra, enfrente um banimento eterno.",
     "checklistCompleted": "Ótimo trabalho, lista de tarefas concluída!",
-    "noDailyTasks": "Sem tarefas diárias disponíveis hoje!"
+    "noDailyTasks": "Sem tarefas diárias disponíveis hoje!",
+    "successCompleteTask": "Você completou a tarefa com sucesso e recebeu sua merecida recompensa <a href=\"/training\">Tarefas</a>"
   },
   "rating": {
     "clubs": "Classificação de clubes",

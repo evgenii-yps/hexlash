@@ -5,15 +5,15 @@ export class PunchInfoModel {
                     intervalStartMs = null,
                     intervalWaitTimeMs = null,
                     punchAmount = 1000,
-                    punchCounterMaxPerInterval = 10000,
-                    punchCounterMaxPerBatch = 10000,
+                    punchAmountMaxPerInterval = 10000,
+                    punchAmountMaxPerBatch = 10000,
                     punchCount
                 } = {}) {
         this.intervalStartMs = intervalStartMs;
         this.intervalWaitTimeMs = intervalWaitTimeMs;
         this.punchAmount = punchAmount;
-        this.punchAmountMaxPerInterval = punchCounterMaxPerInterval;
-        this.punchCounterMaxPerBatch = punchCounterMaxPerBatch;
+        this.punchAmountMaxPerInterval = punchAmountMaxPerInterval;
+        this.punchAmountMaxPerBatch = punchAmountMaxPerBatch;
         this.punchCount = punchCount;
     }
 
@@ -29,8 +29,8 @@ export class PunchInfoModel {
             intervalStartMs,
             intervalWaitTimeMs,
             punchAmount,
-            punchCounterMaxPerInterval,
-            punchCounterMaxPerBatch,
+            punchAmountMaxPerInterval,
+            punchAmountMaxPerBatch,
             punchCount
         } = json;
 
@@ -38,8 +38,8 @@ export class PunchInfoModel {
             intervalStartMs,
             intervalWaitTimeMs,
             punchAmount,
-            punchCounterMaxPerInterval,
-            punchCounterMaxPerBatch,
+            punchAmountMaxPerInterval,
+            punchAmountMaxPerBatch,
             punchCount
         });
     }
