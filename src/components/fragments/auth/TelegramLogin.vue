@@ -61,14 +61,6 @@ const initTelegramWebApp = () => {
   loading.value = true;
   errorMessage.value = '';
 
-  const urlParams = new URLSearchParams(window.location.search);
-
-// Извлекаем параметр code
-  const code = urlParams.get('code');
-
-  alert( urlParams);
-
-
   if (window.Telegram && window.Telegram.WebApp) {
     initData.value = window.Telegram.WebApp.initData; // Сырой initData
 
