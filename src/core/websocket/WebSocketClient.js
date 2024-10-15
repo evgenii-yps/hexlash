@@ -9,7 +9,6 @@ class WebSocketClient {
         this.socket = null;
         this.messageQueue = [];
         this.isConnecting = false;
-        this.pingInterval = null;
     }
 
     connect() {
@@ -37,7 +36,6 @@ class WebSocketClient {
 
             this.isConnecting = false;
 
-            this.setPingInterval(); // TODO удалить когда на сервере будет
         };
 
         this.socket.onmessage = async (event) => {
@@ -49,6 +47,7 @@ class WebSocketClient {
                 console.error('Error processing WebSocket message:', err);
             }
         };
+
 
         this.socket.onerror = async (error) => {
             this.isConnecting = false;
@@ -68,11 +67,7 @@ class WebSocketClient {
             } else {
                 console.log('WebSocket closed normally. No reconnection attempt.');
             }
-
-            this.clearPingInterval(); // TODO удалить когда на сервере будет
         };
-
-
 
     }
 
@@ -93,29 +88,12 @@ class WebSocketClient {
             this.socket.close(1000, "Normal closure");
         }
         this.isConnecting = false;
-
-        this.clearPingInterval(); // TODO удалить когда на сервере будет
     }
 
 
-    // TODO удалить когда на сервере будет
-    setPingInterval() {
-        this.clearPingInterval();
-        this.pingInterval = setInterval(() => {
-            console.log('ping');
-            if (this.socket.readyState === WebSocket.OPEN) {
-             //   this.socket.send(JSON.stringify({type: 'ping'}));
-            }
-        }, 30000); // 30 сек
-    }
 
-// TODO удалить когда на сервере будет
-    clearPingInterval() {
-        if (this.pingInterval) {
-            clearInterval(this.pingInterval);
-            this.pingInterval = null;
-        }
-    }
+
+
 }
 
 export default WebSocketClient;

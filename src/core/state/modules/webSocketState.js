@@ -116,10 +116,10 @@ const actions = {
                 let taskModel;
                 if (message.taskResponse.type === 'SOCIAL') {
                     taskModel = SocialTaskModel.fromJSON(message.taskResponse)
-                    await store.dispatch('task/updateSocialTask', taskModel);
+                    await store.dispatch('task/receivedSocialTask', taskModel);
                 } else if (message.taskResponse.type === 'DAILY') {
                     taskModel = DailyTaskModel.fromJSON(message.taskResponse)
-                    await store.dispatch('task/updateDailyTask', taskModel);
+                    await store.dispatch('task/receivedDailyTask', taskModel);
                 }
                 break;
             default:

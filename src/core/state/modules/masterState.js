@@ -287,7 +287,7 @@ const actions = {
 
             const inviteText = i18n.global.t('profile.invite.inviteText');
 
-            const inviteLink = `https://t.me/share/url?url=https://t.me/bitfightclubbot/gameapp?startapp=${inviteId}&text=${encodeURIComponent(inviteText)}`;
+            const inviteLink = `https://t.me/share/url?url=https://t.me/bitfightclubbot/start?invite=${inviteId}&text=${encodeURIComponent(inviteText)}`;
 
             window.open(inviteLink, '_blank');
         } catch (error) {

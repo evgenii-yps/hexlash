@@ -86,8 +86,25 @@ const actions = {
         }
     },
     async updateSocialTask({commit}, task) {
-        try { //TODO убрать дублирование
-            await taskService.updateSocialTask(task);
+        try {
+            await taskService.sendUpdateSocialTask(task);
+            commit('addSocialTask', task);
+        } catch (error) {
+            console.error('Error updating social task:', error);
+        }
+    },
+    async updateDailyTask({commit}, task) {
+        try {
+            await taskService.sendUpdateDailyTask(task);
+            commit('addDailyTask', task);
+
+        } catch (error) {
+            console.error('Error updating daily tasks:', error);
+        }
+    },
+    async receivedSocialTask({commit}, task) {
+        try {
+            await taskService.localUpdateSocialTask(task);
             commit('addSocialTask', task);
 
             if(task.isCompleted) {
@@ -99,9 +116,9 @@ const actions = {
             console.error('Error updating social task:', error);
         }
     },
-    async updateDailyTask({commit}, task) {
+    async receivedDailyTask({commit}, task) {
         try {
-            await taskService.updateDailyTask(task);
+            await taskService.localUpdateDailyTask(task);
             commit('addDailyTask', task);
 
             if(task.isCompleted) {
