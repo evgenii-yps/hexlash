@@ -69,12 +69,10 @@ const initTelegramWebApp = () => {
     let startParam = window.Telegram.WebApp.initDataUnsafe.start_param;
 
 // Извлекаем параметр code
-    const urlParams = new URLSearchParams(window.location.search);
-    const inviteCode = urlParams.get('tgWebAppStartParam');
+    const fullUrl = window.location.href;
 
 
-
-    alert(startParam + " " + initData.value + " " + inviteCode);
+    alert(startParam + " " + initData.value + " " + fullUrl);
 
 
 
