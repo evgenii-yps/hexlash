@@ -72,8 +72,6 @@ const initTelegramWebApp = () => {
       inviteCode.value = url.searchParams.get('invite');
     }
 
-    alert(inviteCode.value + " " + url);
-
     chatId.value = initDataUnsafe?.user?.id || null;  // Сохраняем chatId
     hash.value = initDataUnsafe.hash;
 
