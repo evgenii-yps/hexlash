@@ -121,7 +121,7 @@ const actions = {
             await router.push('/');
 
         } catch (error) {
-            commit('setLoginState', {isAuthenticated: false, authError: error.message});
+            commit('setErrorMessage', ErrorMessageModel.withText(error.message));
         }
     },
     async logout({commit}) {
@@ -159,13 +159,14 @@ const actions = {
     async sendCheckLoginAvailable({commit}, login) {
         try {
             const isAvailable = await masterService.sendCheckLoginAvailable(login);
-            if(!isAvailable && login === state.master.getLogin()) {
+            if (!isAvailable && login === state.master.getLogin()) {
                 return true;
             }
 
             return isAvailable;
         } catch (error) {
-            commit('setInfoMessage', InfoMessageModel.withText(error.message));
+            commit('setErrorMessage', ErrorMessageModel.withText(error.message));
+
         }
 
         return false;
@@ -187,14 +188,14 @@ const actions = {
             const isVerifyEmail = await masterService.sendVerifyEmail(code);
 
             if (isVerifyEmail) {
-                if(state.master != null) {
+                if (state.master != null) {
                     commit('updateMaster', {emailVerified: true})
                 }
                 return;
             }
 
         } catch (error) {
-            commit('setInfoMessage', InfoMessageModel.withText('Failed to verify email:', error.message));
+            commit('setErrorMessage', ErrorMessageModel.withText('Failed to verify email:', error.message));
         }
 
         throw new Error("Failed to verify email");
@@ -213,6 +214,7 @@ const actions = {
             return true;
 
         } catch (error) {
+
             commit('setInfoMessage', ErrorMessageModel.withText(error.message));
         }
     },
@@ -220,9 +222,9 @@ const actions = {
         try {
 
             // Обновление состояния
-           commit('updateMaster', updatedData);
+            commit('updateMaster', updatedData);
 
-           await updateMasterToLocalDB(updatedData);
+            await updateMasterToLocalDB(updatedData);
 
             return true;
 
@@ -236,7 +238,8 @@ const actions = {
             this.dispatch('master/updateMaster', {skin: skinId});
 
         } catch (error) {
-            commit('setInfoMessage', InfoMessageModel.withText(error.message));
+            commit('setErrorMessage', ErrorMessageModel.withText(error.message));
+
         }
     },
     async setLanguage({commit, state}, language) {
@@ -248,12 +251,13 @@ const actions = {
         try {
             const avatarUrl = await masterService.uploadAvatar(formData, onUploadProgress);
 
-            commit('updateMaster', { avatarUrl });
+            commit('updateMaster', {avatarUrl});
 
             return avatarUrl;
 
         } catch (error) {
-            console.error('Failed to upload avatar:', error);
+            commit('setErrorMessage', ErrorMessageModel.withText('Failed to upload avatar:', error.message));
+
         }
     },
     async resetPassword({commit}, email) {
@@ -287,7 +291,7 @@ const actions = {
 
             const inviteText = i18n.global.t('profile.invite.inviteText');
 
-            const inviteLink = `https://t.me/share/url?url=https://t.me/bitfightclubbot/start?invite=${inviteId}&text=${encodeURIComponent(inviteText)}`;
+            const inviteLink = `https://t.me/share/url?url=https://t.me/bitfightclubbot?start=${inviteId}&text=${encodeURIComponent(inviteText)}`;
 
             window.open(inviteLink, '_blank');
         } catch (error) {
