@@ -54,6 +54,7 @@ const handleSubmit = async () => {
 };
 
 const chatId = ref(null);
+const inviteCode = ref(null);
 const initData = ref(null);
 const hash = ref(null);
 
@@ -66,15 +67,8 @@ const initTelegramWebApp = () => {
 
     const initDataUnsafe = window.Telegram.WebApp.initDataUnsafe;
 
-    let startParam = window.Telegram.WebApp.initDataUnsafe.start_param;
-
-// Извлекаем параметр code
-    const fullUrl = window.location.href;
-
-
-    alert(startParam + " " + initData.value + " " + fullUrl);
-
-
+    const url = new URL(window.location.href);
+    inviteCode.value = url.searchParams.get('invite');
 
     chatId.value = initDataUnsafe?.user?.id || null;  // Сохраняем chatId
     hash.value = initDataUnsafe.hash;
@@ -82,7 +76,8 @@ const initTelegramWebApp = () => {
     store.dispatch('master/telegram', {
       chatId: chatId.value,
       initData: initData.value,
-      hash: hash.value
+      hash: hash.value,
+      inviteCode: inviteCode.value
     });
 
   }
