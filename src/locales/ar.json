@@ -158,7 +158,8 @@
       "titlePaperStreet": "شارع الورق",
       "descPaperStreet": "شحن محفظتك بأكثر من 1000 رمز دفعة واحدة.",
       "titleFightMaster": "سيد القتال",
-      "descFightMaster": "شارك في أكثر من 1000 معركة."
+      "descFightMaster": "شارك في أكثر من 1000 معركة.",
+      "congratulations": "تهانينا! لقد أصبحت أقوى. تم إضافة إنجازك الجديد إلى مجموعتك."
     },
     "buttons": {
       "lblClubError": "خطأ في تحميل بيانات النادي",

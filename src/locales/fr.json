@@ -158,7 +158,8 @@
       "titlePaperStreet": "Paper Street",
       "descPaperStreet": "Recharger votre portefeuille avec plus de 1000 tokens en une fois.",
       "titleFightMaster": "Maître du combat",
-      "descFightMaster": "Participez à plus de 1000 combats."
+      "descFightMaster": "Participez à plus de 1000 combats.",
+      "congratulations": "Félicitations ! Tu es devenu plus fort. Ton nouvel exploit a été ajouté à ta collection."
     },
     "buttons": {
       "lblClubError": "Erreur de chargement des données du club",

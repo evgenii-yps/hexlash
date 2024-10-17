@@ -33,12 +33,6 @@ const mutations = {
     setPunchTimer(state, timerId) {
         state.punchTimerId = timerId;
     },
-    clearPunchTimer(state) {
-        if (state.punchTimerId) {
-            clearInterval(state.punchTimerId);
-            state.punchTimerId = null;
-        }
-    },
     set2DPunch(state, isEnabled) {  // Мутация для изменения флага
         state.is2DPunch = isEnabled;
         localStorage.setItem('is2DPunch', isEnabled); // Обновляем localStorage
@@ -72,8 +66,11 @@ const actions = {
 
         commit('setPunchTimer', timerId);
     },
-    stopPunchTimer({commit}) {
-        commit('clearPunchTimer');
+    async stopPunchTimer({commit}) {
+        if (state.punchTimerId) {
+            clearInterval(state.punchTimerId);
+            commit('setPunchTimer', null);
+        }
     },
     async handlePunch({commit, dispatch}, value) {
         if (state.punchInfo.isLimitReach) {

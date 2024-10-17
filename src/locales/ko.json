@@ -158,7 +158,8 @@
       "titlePaperStreet": "페이퍼 스트리트",
       "descPaperStreet": "한 번에 1000개 이상의 토큰으로 지갑을 충전하세요.",
       "titleFightMaster": "전투 마스터",
-      "descFightMaster": "1000번 이상의 전투에 참여하세요."
+      "descFightMaster": "1000번 이상의 전투에 참여하세요.",
+      "congratulations": "축하합니다! 당신은 더 강해졌습니다. 새로운 업적이 컬렉션에 추가되었습니다."
     },
     "buttons": {
       "lblClubError": "클럽 데이터를 불러오는 중 오류 발생",

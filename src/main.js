@@ -38,6 +38,7 @@ import {
 import {createI18n} from "vue-i18n";
 import App from "@/App.vue";
 import {messages, ruCountRule} from "@/locales/index.js";
+import {initAllAchievements} from "@/core/models/achievementModel.js";
 
 
 const vuetify = createVuetify({
@@ -119,6 +120,9 @@ async function initializeApp() {
     // загрузки данных
     await store.dispatch('master/initializeMasterData');
     i18n.global.locale.value = store.getters['master/getLanguage'] || locale;
+
+    store.commit('achievement/setAllAchievements', initAllAchievements(i18n.global.t))
+
 
 }
 

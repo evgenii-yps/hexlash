@@ -287,10 +287,12 @@ onMounted(() => {
   showTrainingRulesReminder(t("info.firstTraining"));
 })
 
+
 onUnmounted(() => {
-  stopPunch();
+  //stopPunch();
   stopCountdown();
 });
+
 
 </script>
 

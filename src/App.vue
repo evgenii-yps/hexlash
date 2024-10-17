@@ -28,6 +28,8 @@
 
     <NoConnection v-if="isAuth" />
 
+    <NewAchievement v-if="isAuth"/>
+
     <footer class="footer">
       <transition name="slide-up-down">
         <BottomMenu v-if="isAuth && scrollDirection !== 'down'"/>
@@ -47,6 +49,7 @@ import {createWeb3Modal, defaultConfig} from "@web3modal/ethers/vue";
 import NoConnection from "@/components/ui/NoConnection.vue";
 import Error from "@/components/Error.vue";
 import FindFight from "@/components/FindFight.vue";
+import NewAchievement from "@/components/NewAchievement.vue";
 
 const router = useRouter();
 
@@ -219,6 +222,7 @@ const handleOnlineStatus = () => {
 
 
 onMounted(() => {
+
   if (window.Telegram && window.Telegram.WebApp) {
     window.Telegram.WebApp.expand(); // Развернуть на весь экран
     window.Telegram.WebApp.disableVerticalSwipes();

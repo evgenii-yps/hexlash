@@ -104,6 +104,11 @@ watch(
     }
 );
 
+watch(master, (newMaster) => {
+  userData.value = newMaster.userData;
+});
+
+
 const emit = defineEmits(['scroll']);
 
 const handleScroll = (event) => {

@@ -158,7 +158,8 @@
       "titlePaperStreet": "Papierstraße",
       "descPaperStreet": "Lade dein Wallet auf einmal mit mehr als 1000 Token auf.",
       "titleFightMaster": "Kampfmeister",
-      "descFightMaster": "Nimm an mehr als 1000 Kämpfen teil."
+      "descFightMaster": "Nimm an mehr als 1000 Kämpfen teil.",
+      "congratulations": "Glückwunsch! Du bist stärker geworden. Dein neues Erfolg wurde deiner Sammlung hinzugefügt."
     },
     "buttons": {
       "lblClubError": "Fehler beim Laden der Club-Daten",

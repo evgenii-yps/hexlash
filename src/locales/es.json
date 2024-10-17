@@ -158,7 +158,8 @@
       "titlePaperStreet": "Paper Street",
       "descPaperStreet": "Recarga tu billetera con más de 1000 tokens a la vez.",
       "titleFightMaster": "Maestro de la Lucha",
-      "descFightMaster": "Participa en más de 1000 peleas."
+      "descFightMaster": "Participa en más de 1000 peleas.",
+      "congratulations": "¡Felicidades! Te has vuelto más fuerte. Tu nuevo logro ha sido añadido a tu colección."
     },
     "buttons": {
       "lblClubError": "Error al cargar datos del club",

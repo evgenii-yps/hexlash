@@ -158,7 +158,8 @@
       "titlePaperStreet": "ペーパーストリート",
       "descPaperStreet": "一度に1000トークン以上をウォレットに入金する。",
       "titleFightMaster": "ファイトマスター",
-      "descFightMaster": "1000試合以上に参加する。"
+      "descFightMaster": "1000試合以上に参加する。",
+      "congratulations": "おめでとうございます！ あなたはより強くなりました。 新しい成果がコレクションに追加されました。"
     },
     "buttons": {
       "lblClubError": "クラブデータの読み込みエラー",

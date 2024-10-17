@@ -158,7 +158,8 @@
       "titlePaperStreet": "Rua de Papel",
       "descPaperStreet": "Adicione mais de 1000 tokens de uma vez na sua carteira.",
       "titleFightMaster": "Mestre de Luta",
-      "descFightMaster": "Participe de mais de 1000 lutas."
+      "descFightMaster": "Participe de mais de 1000 lutas.",
+      "congratulations": "Parabéns! Você ficou mais forte. Sua nova conquista foi adicionada à sua coleção."
     },
     "buttons": {
       "lblClubError": "Erro ao carregar dados do clube",

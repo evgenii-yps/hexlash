@@ -158,7 +158,8 @@
       "titlePaperStreet": "纸街",
       "descPaperStreet": "一次充值超过1000个代币。",
       "titleFightMaster": "战斗大师",
-      "descFightMaster": "参与超过1000场战斗。"
+      "descFightMaster": "参与超过1000场战斗。",
+      "congratulations": "恭喜！你变得更强大了。你的新成就已添加到你的收藏中。"
     },
     "buttons": {
       "lblClubError": "加载俱乐部数据时出错",

@@ -158,7 +158,8 @@
       "titlePaperStreet": "Paper Street",
       "descPaperStreet": "Top up your wallet with more than 1000 tokens at once.",
       "titleFightMaster": "Fight Master",
-      "descFightMaster": "Participate in more than 1000 fights."
+      "descFightMaster": "Participate in more than 1000 fights.",
+      "congratulations": "Congratulations! You've grown stronger. Your new achievement has been added to your collection."
     },
     "buttons": {
       "lblClubError": "Error loading club data",

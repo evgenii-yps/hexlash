@@ -83,166 +83,15 @@
 </template>
 
 <script setup>
-import {computed, getCurrentInstance, ref, watch} from 'vue';
-
-import achievementSocialIcon from '@/assets/images/achievement_social.png';
-import achievementNewbieIcon from '@/assets/images/achievement_newbie.png';
-
-import achievement100DaysIcon from '@/assets/images/achievement_100days.png';
-import achievementWinIcon from '@/assets/images/achievement_win.png';
-
-import achievementSocialLeaderIcon from '@/assets/images/achievement_social_leader.png';
-import achievement100WinsIcon from '@/assets/images/achievement_bob.png';
+import {computed, ref, watch} from 'vue';
 
 
-import achievementLuckIcon from '@/assets/images/achievement_luck.png';
-import achievementDailyLoginIcon from '@/assets/images/achievement_daily_login.png';
-import achievement30DaysIcon from '@/assets/images/achievement_30days.png';
-import achievementCoachIcon from '@/assets/images/achievement_coach.png';
-import achievementInviteIcon from '@/assets/images/achievement_invite.png';
-import achievementInvestIcon from '@/assets/images/achievement_invest.png';
-import achievementPromoIcon from '@/assets/images/achievement_promo.png';
-import achievementExpertIcon from '@/assets/images/achievement_expert.png';
-
-import achievementWalletIcon from '@/assets/images/achievement_wallet.png';
-import achievement1000FightsIcon from '@/assets/images/achievement_hero.png';
 import {useI18n} from "vue-i18n";
+import store from "@/core/state/store.js";
 
 const {t} = useI18n({useScope: 'global'})
 
-
-const allAchievements = [
-  {
-    id: 2,
-    title: t('profile.achievements.titleConnectedFighter'),
-    icon: achievementSocialIcon,
-    completed: false,
-    description: t('profile.achievements.descConnectedFighter'),
-    show: false
-  },
-  {
-    id: 3,
-    title: t('profile.achievements.titleNewbie'),
-    icon: achievementNewbieIcon,
-    completed: false,
-    description: t('profile.achievements.descNewbie'),
-    show: false
-  },
-  {
-    id: 4,
-    title: t('profile.achievements.titleMeetingParticipant'),
-    icon: achievementDailyLoginIcon,
-    completed: false,
-    description: t('profile.achievements.descMeetingParticipant'),
-    show: false
-  },
-  {
-    id: 5,
-    title: t('profile.achievements.titleGoldenRule'),
-    icon: achievement30DaysIcon,
-    completed: false,
-    description: t('profile.achievements.descGoldenRule'),
-    show: false
-  },
-  {
-    id: 6,
-    title: t('profile.achievements.titleBattleVeteran'),
-    icon: achievementWinIcon,
-    completed: false,
-    description: t('profile.achievements.descBattleVeteran'),
-    show: false
-  },
-  {
-    id: 7,
-    title: t('profile.achievements.titleCoach'),
-    icon: achievementCoachIcon,
-    completed: false,
-    description: t('profile.achievements.descCoach'),
-    show: false
-  },
-  {
-    id: 8,
-    title: t('profile.achievements.titleRecruiter'),
-    icon: achievementInviteIcon,
-    completed: false,
-    description: t('profile.achievements.descRecruiter'),
-    show: false
-  },
-  {
-    id: 9,
-    title: t('profile.achievements.titleProjectMayhem'),
-    icon: achievementSocialLeaderIcon,
-    completed: false,
-    description: t('profile.achievements.descProjectMayhem'),
-    show: false
-  },
-  {
-    id: 10,
-    title: t('profile.achievements.titleMeatloaf'),
-    icon: achievementInvestIcon,
-    completed: false,
-    description: t('profile.achievements.descMeatloaf'),
-    show: false
-  },
-  {
-    id: 11,
-    title: t('profile.achievements.titleTyler'),
-    icon: achievementPromoIcon,
-    completed: false,
-    description: t('profile.achievements.descTyler'),
-    show: false
-  },
-  {
-    id: 12,
-    title: t('profile.achievements.titleExpert'),
-    icon: achievementExpertIcon,
-    completed: false,
-    description: t('profile.achievements.descExpert'),
-    show: false
-  },
-  {
-    id: 13,
-    title: t('profile.achievements.titleRegularFighter'),
-    icon: achievement100DaysIcon,
-    completed: false,
-    description: t('profile.achievements.descRegularFighter'),
-    show: false
-  },
-  {
-    id: 14,
-    title: t('profile.achievements.titleLuckyOne'),
-    icon: achievementLuckIcon,
-    completed: false,
-    description: t('profile.achievements.descLuckyOne'),
-    show: false
-  },
-  {
-    id: 15,
-    title: t('profile.achievements.titleBob'),
-    icon: achievement100WinsIcon,
-    completed: false,
-    description: t('profile.achievements.descBob'),
-    show: false
-  },
-  {
-    id: 16,
-    title: t('profile.achievements.titlePaperStreet'),
-    icon: achievementWalletIcon,
-    completed: false,
-    description: t('profile.achievements.descPaperStreet'),
-    show: false
-  },
-  {
-    id: 17,
-    title: t('profile.achievements.titleFightMaster'),
-    icon: achievement1000FightsIcon,
-    completed: false,
-    description: t('profile.achievements.descFightMaster'),
-    show: false
-  }
-];
-
-
+const allAchievements = computed(() => store.getters['achievement/getAllAchievements']);
 const achievements = ref([]);
 
 const props = defineProps({
@@ -257,13 +106,22 @@ const props = defineProps({
 watch(() => props.userData, (userData) => {
   if (userData) {
     const completedAchievements = userData.achievements;
-    achievements.value = allAchievements.map(achievement => {
-      const completed = completedAchievements.includes(achievement.id);
+    achievements.value = allAchievements.value.map(achievement => {
+      const completed = completedAchievements.some(a => a.type === achievement.type && a.completed);
       return {
         ...achievement,
         completed,
       };
-    }).sort((a, b) => b.completed - a.completed);
+    }).sort((a, b) => {
+      // Сначала сортируем по флагу completed, затем по времени получения
+      if (b.completed !== a.completed) {
+        return b.completed - a.completed;
+      }
+      if (a.completed && b.completed) {
+        return b.obtainedAt - a.obtainedAt; // сортировка по времени получения
+      }
+      return 0;
+    });
 
     const firstUncompletedIndex = achievements.value.findIndex(a => !a.completed);
     if (firstUncompletedIndex !== -1) {

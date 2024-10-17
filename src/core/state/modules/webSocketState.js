@@ -9,6 +9,7 @@ import store from "@/core/state/store.js";
 import {MasterModel} from "@/core/models/masterModel.js";
 import {SocialTaskModel} from "@/core/models/socialTaskModel.js";
 import {DailyTaskModel} from "@/core/models/dailyTaskModel.js";
+import {AchievementModel} from "@/core/models/achievementModel.js";
 
 const state = {
     isConnected: false,
@@ -121,6 +122,10 @@ const actions = {
                     taskModel = DailyTaskModel.fromJSON(message.taskResponse)
                     await store.dispatch('task/receivedDailyTask', taskModel);
                 }
+                break;
+            case AchievementModel.TYPE_NAME:
+                const achievementModel = AchievementModel.fromJSON(message.achievementResponse)
+                await store.dispatch('achievement/receivedAchievement', achievementModel);
                 break;
             default:
                 console.warn(`Unknown message type received: ${messageType}`);
