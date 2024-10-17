@@ -201,7 +201,11 @@ const skins = ref([
   {id: 'skin_w_23.png', image: 'skin_w_23.png', price: 150, locked: false},
   {id: 'skin_w_24.png', image: 'skin_w_24.png', price: 200, locked: false},
   {id: 'skin_w_25.png', image: 'skin_w_25.png', price: 250, locked: false},
-  {id: 'skin_w_26.png', image: 'skin_w_26.png', price: 300, locked: false}
+  {id: 'skin_w_26.png', image: 'skin_w_26.png', price: 300, locked: false},
+  {id: 'vip_k1.png', image: 'vip_k1.png', price: 1500, locked: false},
+  {id: 'vip_k2.png', image: 'vip_k2.png', price: 1500, locked: false},
+  {id: 'vip_t1.png', image: 'vip_t1.png', price: 1500, locked: false},
+  {id: 'vip_t2.png', image: 'vip_t2.png', price: 1500, locked: false}
 ]);
 
 const selectedSkin = ref(skins.value[0].id);

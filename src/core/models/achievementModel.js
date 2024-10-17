@@ -151,7 +151,7 @@ export function initAllAchievements(t) {
 
 export class AchievementModel {
 
-    static TYPE_NAME = "AchievementInfo";
+    static TYPE_NAME = "AchievementResponseMsg";
 
     constructor({
                     id = null,
