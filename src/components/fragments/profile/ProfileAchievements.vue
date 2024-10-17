@@ -37,15 +37,15 @@
                     >
                       <template #activator="{ props }">
                         <div v-bind="props" @click="achievement.show = !achievement.show" class="achievement-content">
-                          <img v-if="achievement.completed" :src="achievement.icon" :alt="achievement.title"
+                          <img v-if="achievement.isCompleted" :src="achievement.icon" :alt="achievement.title"
                                class="achievement-icon"/>
                           <img v-else-if="achievement.transparent" :src="achievement.icon" :alt="achievement.title"
                                class="achievement-icon"/>
                           <img v-else src="@/assets/images/icon_lock.png" alt="Locked" class="achievement-icon"/>
                           <span class="achievement-title">{{
-                              achievement.completed || achievement.transparent ? achievement.title : t('profile.achievements.lblHidden')
+                              achievement.isCompleted || achievement.transparent ? achievement.title : t('profile.achievements.lblHidden')
                             }}</span>
-                          <img v-if="!achievement.completed && achievement.transparent"
+                          <img v-if="!achievement.isCompleted && achievement.transparent"
                                src="@/assets/images/icon_lock.svg" alt="Locked Overlay"
                                class="achievement-icon lock-overlay"/>
                         </div>
@@ -107,23 +107,24 @@ watch(() => props.userData, (userData) => {
   if (userData) {
     const completedAchievements = userData.achievements;
     achievements.value = allAchievements.value.map(achievement => {
-      const completed = completedAchievements.some(a => a.type === achievement.type && a.completed);
+      const completedAchievement = completedAchievements.find(a => a.type === achievement.type);
+
       return {
         ...achievement,
-        completed,
+        isCompleted: !!completedAchievement && completedAchievement.isCompleted,
+        obtainedAt: completedAchievement ? completedAchievement.obtainedAt : achievement.obtainedAt,
       };
     }).sort((a, b) => {
       // Сначала сортируем по флагу completed, затем по времени получения
-      if (b.completed !== a.completed) {
-        return b.completed - a.completed;
+      if (b.isCompleted !== a.isCompleted) {
+        return b.isCompleted - a.isCompleted;
       }
-      if (a.completed && b.completed) {
-        return b.obtainedAt - a.obtainedAt; // сортировка по времени получения
-      }
-      return 0;
+      return b.obtainedAt - a.obtainedAt;
+
+
     });
 
-    const firstUncompletedIndex = achievements.value.findIndex(a => !a.completed);
+    const firstUncompletedIndex = achievements.value.findIndex(a => !a.isCompleted);
     if (firstUncompletedIndex !== -1) {
       for (let i = firstUncompletedIndex; i < firstUncompletedIndex + 5; i++) {
         if (achievements.value[i]) {
@@ -132,10 +133,11 @@ watch(() => props.userData, (userData) => {
       }
     }
     achievements.value.forEach((achievement, index) => {
-      if (!achievement.completed && !achievement.transparent) {
+      if (!achievement.isCompleted && !achievement.transparent) {
         achievement.locked = true;
       }
     });
+
   }
 }, {immediate: true});
 
@@ -171,7 +173,7 @@ const carouselItems = computed(() => {
 
 .achievement-item {
   position: relative;
-  margin:  0;
+  margin: 0;
   padding: 5px;
   border-radius: 5px;
   text-align: center;
