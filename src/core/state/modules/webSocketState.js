@@ -11,7 +11,7 @@ import {SocialTaskModel} from "@/core/models/socialTaskModel.js";
 import {DailyTaskModel} from "@/core/models/dailyTaskModel.js";
 import {AchievementModel} from "@/core/models/achievementModel.js";
 import {validateJwtToken} from "@/core/services/masterService.js";
-import { useRouter } from "vue-router";
+import router from "@/router/index.js";
 
 const state = {
     isConnected: false,
@@ -54,13 +54,14 @@ const actions = {
         if (!state.socketClient) {
             const jwtToken = rootGetters['master/getJwtToken'];
 
-            if(!jwtToken || !validateJwtToken(jwtToken)){
+            if (!jwtToken || !validateJwtToken(jwtToken)) {
                 console.log('Jwt token is missing');
 
-                store.commit('master/setLoginState', {isAuthenticated: false});
+                store.dispatch('master/logout')
+                    .then(() => {
+                        console.error('Token is invalid or missing');
+                    });
 
-                const router = useRouter();
-                router.push({ name: 'Home' });
                 return;
             }
 

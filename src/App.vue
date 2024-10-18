@@ -50,6 +50,7 @@ import NoConnection from "@/components/ui/NoConnection.vue";
 import Error from "@/components/Error.vue";
 import FindFight from "@/components/FindFight.vue";
 import NewAchievement from "@/components/NewAchievement.vue";
+import {authRoutes} from "@/router/index.js";
 
 const router = useRouter();
 
@@ -187,8 +188,6 @@ watch(isAuth, (newAuthState) => {
   } else {
     // Отключаем WebSocket, если пользователь разлогинился
     store.dispatch('webSocket/disconnectWebSocket');
-
-    router.push('/auth/login');
   }
 }, {immediate: true});
 

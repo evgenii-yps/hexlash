@@ -6,7 +6,7 @@ import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
 const routeHistory = [];
 
 
-const authRoutes = [
+export const authRoutes = [
     {path: '/auth/login', name: 'Login', component: () => import("/src/views/RainView.vue")},
     {path: '/auth/invite', name: 'Invite', component: () => import("/src/views/RainView.vue")},
     {path: '/auth/reset', name: 'Reset', component: () => import("/src/views/RainView.vue")},
@@ -79,7 +79,7 @@ export function backRef(route) {
 
 // Навигационный гвард
 router.beforeEach(async (to, from, next) => {
-
+console.log("Change page");
     routeHistory.push(from);
 
     // Ограничиваем историю, например, до последних 10 маршрутов
@@ -87,10 +87,13 @@ router.beforeEach(async (to, from, next) => {
         routeHistory.shift();
     }
 
-    const isAuthenticated = store.getters["master/getLoginState"].isAuthenticated;
+    const isAuthenticated = store.getters["master/getLoginState"]?.isAuthenticated || false;
     const initialVerified = store.getters["master/getMaster"]?.initialVerified;
 
-    if (protectedRoutes.some(route => route.name === to.name || route.path === to.path)) {
+    const isProtectedRoute = protectedRoutes.some(route => route.name === to.name || route.path === to.path);
+
+    // Проверяем, если маршрут не является авторизационным и защищённым
+    if (isProtectedRoute) {
         if (!isAuthenticated) {
 
             if (to.name !== 'Home') {

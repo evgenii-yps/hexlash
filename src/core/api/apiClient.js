@@ -1,7 +1,6 @@
 import axios from 'axios';
 import store from "@/core/state/store.js";
 import {validateJwtToken} from "@/core/services/masterService.js";
-import {useRouter} from "vue-router";
 
 // Создание экземпляра axios с базовой конфигурацией
 const apiClient = axios.create({
@@ -17,8 +16,11 @@ apiClient.interceptors.request.use(
         // Проверяем, нужно ли добавлять токен
         if (config.authRequired) {
             const token = store.getters['master/getJwtToken']; // Получаем токен через getter Vuex
-            if (token) {
+            if (token && validateJwtToken(token)) {
                 config.headers['Authorization'] = `Bearer ${token}`;
+            }else{
+                store.dispatch('master/logout');
+                return Promise.reject(new Error('Token is invalid or missing'));
             }
         }
         return config;
@@ -38,11 +40,11 @@ apiClient.interceptors.response.use(
     (error) => {
         // Обработка ошибки ответа
         if (error.response && error.response.status === 401) {
-            console.error("401 " + error);
             // Если получен код 401, пользователь не авторизован, сбрасываем состояние аутентификации
-            store.commit('master/setLoginState', {isAuthenticated: false});
-            const router = useRouter();
-            router.push({ name: 'Home' });
+            return store.dispatch('master/logout')
+                .then(() => {
+                    return Promise.reject(new Error('Token is invalid or missing'));
+                });
         }
         return Promise.reject(error);
     }
