@@ -133,7 +133,6 @@ const actions = {
     },
     async loadClubRatings({ commit, state }, { search, sortBy, page }) {
 
-        console.log(page);
         const newClubs = await clubService.searchClubs({
             name: search,
             sortBy: sortBy,

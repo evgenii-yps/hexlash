@@ -74,7 +74,6 @@ class WebSocketClient {
     sendMessage(message) {
         if (this.socket && this.socket.readyState === WebSocket.OPEN) {
             const msgSerialized = JSON.stringify(message)
-            console.log("Message:", msgSerialized);
             this.socket.send(msgSerialized);
         } else {
             console.log("Queue message:", message);

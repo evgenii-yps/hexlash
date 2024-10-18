@@ -71,7 +71,6 @@ const uploadAvatar = (event) => {
 
     store.dispatch('club/uploadClubAvatar', { formData, onUploadProgress })
         .then((avatarFile) => {
-          console.log(avatarFile);
           isLoading.value = false;
           setAvatarUrl(avatarFile); // Обновляем URL аватара
         })

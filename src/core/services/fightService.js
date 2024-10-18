@@ -114,7 +114,6 @@ export const sendFightAction = async (fightId, fightAction) => {
 
 export const receiveFightInfo = async (fightInfo) => {
     try {
-        console.log(fightInfo);
         //
         // Проверяем чтобы я был участником боя
         const master = store.getters['master/getMaster'];

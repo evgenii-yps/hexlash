@@ -79,7 +79,6 @@ export function backRef(route) {
 
 // Навигационный гвард
 router.beforeEach(async (to, from, next) => {
-console.log("Change page");
     routeHistory.push(from);
 
     // Ограничиваем историю, например, до последних 10 маршрутов

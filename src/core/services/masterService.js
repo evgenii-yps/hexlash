@@ -109,7 +109,6 @@ export const telegram = async (payload) => {
 export const sendCheckLoginAvailable = async (login) => {
     try {
         const response = await apiClient.get(`/auth/login-available/${login}`);
-        console.log(response);
         return response.data.available;
     } catch (error) {
         const errorStr = error.response?.error || error.message || 'Failed to login';

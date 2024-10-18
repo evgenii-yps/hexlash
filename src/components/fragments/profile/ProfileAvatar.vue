@@ -67,7 +67,6 @@ const uploadAvatar = (event) => {
 
     store.dispatch('master/uploadMasterAvatar', { formData, onUploadProgress })
         .then((avatarFile) => {
-          console.log(avatarFile);
           isLoading.value = false;
           setAvatarUrl(avatarFile); // Обновляем URL аватара
         })

@@ -169,7 +169,7 @@
 <!--                  <span class="column-name">{{ participant.club }}</span>-->
                   <span class="column">{{ participant.wonTokens }}</span>
                   <span class="column">{{ participant.losses }}</span>
-                  <span class="column">{{ participant.luckPercentage }}</span>
+                  <span class="column">{{ participant.totalFights < 10 ? "-" : participant.luckPercentage }}</span>
                   <span class="column">{{ participant.totalFights }}</span>
                   <span class="column">{{ participant.wins }}</span>
                 </div>

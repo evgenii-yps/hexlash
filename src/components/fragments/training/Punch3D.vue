@@ -482,8 +482,6 @@ onMounted(async () => {
 });
 
 onBeforeUnmount(() => {
-  console.log("Component will unmount");
-
   // Удаляем все мягкие тела
   softBodies.forEach(body => {
     physicsWorld.removeSoftBody(body.userData.physicsBody);

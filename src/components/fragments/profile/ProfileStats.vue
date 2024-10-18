@@ -57,7 +57,7 @@ watch(() => props.userData, (userData) => {
       { id: 'stats-wins', title: t('profile.stats.lblWins'), value: userData.wins, icon: iconWins, show: false },
       { id: 'stats-losses', title: t('profile.stats.lblLosses'), value: userData.losses, icon: iconLosses, show: false },
       { id: 'stats-draws', title: t('profile.stats.lblDraws'), value: userData.draws, icon: iconDraws, show: false },
-      { id: 'stats-luckPercentage', title: t('profile.stats.lblLuckPercentage'), value: userData.luckPercentage + '%', icon: iconLuck, show: false },
+      { id: 'stats-luckPercentage', title: t('profile.stats.lblLuckPercentage'), value:  userData.totalFights < 10 ? "-" : userData.luckPercentage + '%', icon: iconLuck, show: false },
       { id: 'stats-wonTokens', title: t('profile.stats.lblWonTokens'), value: userData.wonTokens, icon: iconWonTokens, show: false },
       { id: 'stats-freeTokens', title: t('profile.stats.lblFreeTokens'), value: userData.freeTokens, icon: iconFreeTokens, show: false },
       { id: 'stats-invitedUsers', title: t('profile.stats.lblInvitedUsers'), value: userData.invitedUsers, icon: iconInvites, show: false },
