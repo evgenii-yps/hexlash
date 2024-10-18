@@ -17,13 +17,8 @@ apiClient.interceptors.request.use(
         // Проверяем, нужно ли добавлять токен
         if (config.authRequired) {
             const token = store.getters['master/getJwtToken']; // Получаем токен через getter Vuex
-            if (token && validateJwtToken(token)) {
+            if (token) {
                 config.headers['Authorization'] = `Bearer ${token}`;
-            }else{
-                store.commit('master/setLoginState', {isAuthenticated: false});
-                const router = useRouter();
-                router.push({ name: 'Home' });
-                return;
             }
         }
         return config;
@@ -43,8 +38,11 @@ apiClient.interceptors.response.use(
     (error) => {
         // Обработка ошибки ответа
         if (error.response && error.response.status === 401) {
+            console.error("401 " + error);
             // Если получен код 401, пользователь не авторизован, сбрасываем состояние аутентификации
             store.commit('master/setLoginState', {isAuthenticated: false});
+            const router = useRouter();
+            router.push({ name: 'Home' });
         }
         return Promise.reject(error);
     }
