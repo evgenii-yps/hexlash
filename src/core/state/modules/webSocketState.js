@@ -57,6 +57,7 @@ const actions = {
                 console.log('Jwt token is missing');
 
                 store.commit('master/setLoginState', {isAuthenticated: false});
+                // TODO redirect to auth
             }
 
             const socketClient = new WebSocketClient("Bearer_" + jwtToken);

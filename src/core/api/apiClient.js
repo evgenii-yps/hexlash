@@ -20,6 +20,7 @@ apiClient.interceptors.request.use(
                 config.headers['Authorization'] = `Bearer ${token}`;
             }else{
                 store.commit('master/setLoginState', {isAuthenticated: false});
+                // TODO Reset
             }
         }
         return config;

@@ -187,6 +187,8 @@ watch(isAuth, (newAuthState) => {
   } else {
     // Отключаем WebSocket, если пользователь разлогинился
     store.dispatch('webSocket/disconnectWebSocket');
+
+    router.push('/auth/login');
   }
 }, {immediate: true});
 
