@@ -39,7 +39,7 @@
 </template>
 
 <script setup>
-import {RouterView, useRoute, useRouter} from 'vue-router'
+import {RouterView, useRoute} from 'vue-router'
 import {computed, onBeforeUnmount, onMounted, ref, watch} from "vue";
 import BottomMenu from "@/components/menu/BottomMenu.vue";
 import Logo from "@/components/Logo.vue";
@@ -50,9 +50,6 @@ import NoConnection from "@/components/ui/NoConnection.vue";
 import Error from "@/components/Error.vue";
 import FindFight from "@/components/FindFight.vue";
 import NewAchievement from "@/components/NewAchievement.vue";
-import {authRoutes} from "@/router/index.js";
-
-const router = useRouter();
 
 const balance = computed(() => {
   const master = store.getters['master/getMaster'];

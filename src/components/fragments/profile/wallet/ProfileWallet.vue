@@ -65,19 +65,6 @@ watch(walletAddress, async (newAddress) =>  {
 watch(store.getters['master/getMaster'], async (master) => {
   if (master && master.userData) {
     gameBalance.value = master.getBalance();
-
-
-   /* if (hasWallet.value) {
-
-      // Подключение metamask или другого кошелька
-      //  isConnected.value = await checkConnection();
-      walletBalance.value = 0;
-      // TODO взять баланс со смарт контракта
-
-      titleText.value = t('profile.wallet.lblConnectAnotherWallet')
-    } else {
-      titleText.value = t('profile.wallet.lblAlreadyHaveWallet')
-    }*/
   }
 }, {immediate: true});
 
