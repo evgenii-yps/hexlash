@@ -71,8 +71,8 @@
                   <span class="column">{{ index + 1 }}</span>
                   <span class="column-name">{{ club.name }}</span>
                   <span class="column">{{ club.members }}</span>
-                  <span class="column">{{ club.battles }}</span>
-                  <span class="column">{{ club.wins }}</span>
+                  <span class="column">{{ formatNumber(club.battles) }}</span>
+                  <span class="column">{{ formatNumber(club.wins) }}</span>
                 </div>
               </template>
               <template v-else>
@@ -167,11 +167,11 @@
                 <div :class="['table-row', index % 2 === 0 ? '' : '']" @click="viewParticipant(participant.login)">
                   <span class="column-name">{{ participant.name || t('profile.anonymous') }}</span>
 <!--                  <span class="column-name">{{ participant.club }}</span>-->
-                  <span class="column">{{ participant.wonTokens }}</span>
-                  <span class="column">{{ participant.losses }}</span>
-                  <span class="column">{{ participant.totalFights < 10 ? "-" : participant.luckPercentage }}</span>
-                  <span class="column">{{ participant.totalFights }}</span>
-                  <span class="column">{{ participant.wins }}</span>
+                  <span class="column">{{ formatNumber(participant.wonTokens) }}</span>
+                  <span class="column">{{ formatNumber(participant.losses) }}</span>
+                  <span class="column">{{ participant.totalFights < 10 ? "-" : participant.luckPercentage + "%" }}</span>
+                  <span class="column">{{ formatNumber(participant.totalFights) }}</span>
+                  <span class="column">{{ formatNumber(participant.wins) }}</span>
                 </div>
               </template>
               <template v-else>
@@ -205,6 +205,7 @@ import InputField from "@/components/ui/InputField.vue";
 import debounce from "debounce";
 import {useI18n} from "vue-i18n";
 import store from "@/core/state/store.js";
+import {formatNumber} from "@/core/constants.js";
 
 const {t} = useI18n({useScope: 'global'})
 

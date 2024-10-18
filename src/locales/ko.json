@@ -247,7 +247,7 @@
     "fightCalculate": "결과 계산 중...",
     "fightFinished": "전투 종료!",
     "modalHelpTitle": "단계별 전투",
-    "modalHelpTextHtml": "<p>할당된 시간 안에 공격 및 방어 동작을 선택하세요.</p><br/><p style=\"margin-bottom: 10px\"><strong>가능한 동작:</strong></p><ul style=\"color:var(--white); margin-left: 20px\"><li><strong>HD (Head Defence):</strong> 머리 방어</li><li><strong>BD (Body Defence):</strong> 몸 방어</li><li><strong>HH (Head Hit):</strong> 머리 타격</li><li><strong>BH (Body Hit):</strong> 몸 타격</li></ul><br/><p>동작을 선택한 후, 상대의 동작과 비교합니다. 더 많은 타격을 가하고 덜 맞는 사람이 승리합니다.</p><br/><p style=\"margin-bottom: 10px; color:var(--white);\"><strong>예시:</strong></p><p>당신: HD, HH, BD</p><p>상대: HH, BD, BH</p><p>결과: 당신은 1번 타격을 가하고 상대의 2번 타격을 막았습니다. <strong>승자:</strong> 당신</p><br/><p><strong style=\"color:var(--white)\">중요:</strong> 모든 동작을 공격 또는 방어로만 선택할 수 없습니다. 하나의 동작은 반대이어야 합니다.</p>"
+    "modalHelpTextHtml": "<p>할당된 시간 안에 공격 및 방어 동작을 선택하세요.</p><br/><p style=\"margin-bottom: 10px\"><strong>가능한 동작:</strong></p><ul style=\"color:var(--white); margin-left: 20px\"><li><strong>HD (Head Defence):</strong> 머리 방어</li><li><strong>BD (Body Defence):</strong> 몸 방어</li><li><strong>HH (Head Hit):</strong> 머리 타격</li><li><strong>BH (Body Hit):</strong> 몸 타격</li></ul><br/><p>동작을 선택한 후, 상대의 동작과 비교합니다. 더 많은 타격을 가하고 덜 맞는 사람이 승리합니다.</p><br/><p style=\"margin-bottom: 10px; color:var(--white);\"><strong>예시:</strong></p><p>당신: HD, HH, BD</p><p>상대: HH, BD, BH</p><p>결과: 당신은 1번 타격을 가하고 상대의 2번 타격을 막았습니다. <strong>승자:</strong> 당신</p><br/><p></p>"
   },
   "training": {
     "timerText": "펀치백이 고장 났습니다, 전사. 조금만 기다리세요. 곧 교체해드리겠습니다.",

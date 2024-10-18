@@ -61,6 +61,7 @@ import ProfileInvite from "@/components/fragments/profile/ProfileInvite.vue";
 import ProfileAvatar from "@/components/fragments/profile/ProfileAvatar.vue";
 import UserName from "@/components/fragments/profile/UserName.vue";
 import UserAvatar from "@/components/fragments/profile/UserAvatar.vue";
+import {formatNumber} from "@/core/constants.js";
 
 const route = useRoute();
 
@@ -114,7 +115,6 @@ const emit = defineEmits(['scroll']);
 const handleScroll = (event) => {
   emit('scroll', event.target.scrollTop);
 };
-
 
 </script>
 

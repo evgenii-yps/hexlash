@@ -247,7 +247,7 @@
     "fightCalculate": "计算结果中...",
     "fightFinished": "战斗结束！",
     "modalHelpTitle": "逐步战斗说明",
-    "modalHelpTextHtml": "<p>在规定的时间内，选择攻击和防御的动作。</p><br/><p style=\"margin-bottom: 10px\"><strong>可用的动作：</strong></p><ul style=\"color:var(--white); margin-left: 20px\"><li><strong>HD (头部防御):</strong> 头部防御</li><li><strong>BD (身体防御):</strong> 身体防御</li><li><strong>HH (头部攻击):</strong> 头部攻击</li><li><strong>BH (身体攻击):</strong> 身体攻击</li></ul><br/><p>选择动作后，与对手的动作进行比较。谁击中更多，受到的攻击更少，谁就是赢家。</p><br/><p style=\"margin-bottom: 10px; color:var(--white);\"><strong>示例：</strong></p><p>您: HD, HH, BD</p><p>对手: HH, BD, BH</p><p>结果：您打中了1次，挡住了对手的2次攻击。 <strong>赢家:</strong> 您 </p><br/><p><strong style=\"color:var(--white)\">重要提示：</strong> 您不能选择所有动作为攻击或所有动作为防御。必须有一个动作与之相反。</p>"
+    "modalHelpTextHtml": "<p>在规定的时间内，选择攻击和防御的动作。</p><br/><p style=\"margin-bottom: 10px\"><strong>可用的动作：</strong></p><ul style=\"color:var(--white); margin-left: 20px\"><li><strong>HD (头部防御):</strong> 头部防御</li><li><strong>BD (身体防御):</strong> 身体防御</li><li><strong>HH (头部攻击):</strong> 头部攻击</li><li><strong>BH (身体攻击):</strong> 身体攻击</li></ul><br/><p>选择动作后，与对手的动作进行比较。谁击中更多，受到的攻击更少，谁就是赢家。</p><br/><p style=\"margin-bottom: 10px; color:var(--white);\"><strong>示例：</strong></p><p>您: HD, HH, BD</p><p>对手: HH, BD, BH</p><p>结果：您打中了1次，挡住了对手的2次攻击。 <strong>赢家:</strong> 您 </p><br/><p></p>"
   },
   "training": {
     "timerText": "拳击袋坏了，战士。稍等，我们很快就会为您更换一个。",

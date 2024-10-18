@@ -14,3 +14,17 @@ export const COUNTDOWN = 3; // Количество секунд перед на
 
 // LISTING
 export const LISTING = 1751760000;
+
+
+export const formatNumber = (num) => {
+    if (num >= 1e6) {
+        // Если число больше или равно 1 миллиону, сократить до "m"
+        return (num / 1e6).toFixed(1).replace(/\.0$/, '') + 'M';
+    } else if (num >= 1e3) {
+        // Если число больше или равно 1 тысяче, сократить до "k"
+        return (num / 1e3).toFixed(1).replace(/\.0$/, '') + 'k';
+    } else {
+        // В остальных случаях возвращаем число как есть
+        return num.toString();
+    }
+};

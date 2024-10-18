@@ -175,6 +175,14 @@ const getSquareClass = (leftAction, rightAction, isLeft) => {
         return 'attack-hit'; // Подсвечиваем успешный удар
       }
     }
+
+    // Проверяем левую сторону, если левое действие - это защита
+    if (leftAction === 'HD' || leftAction === 'BD') {
+      // Подсвечиваем успешную блокировку, если защита соответствует атаке
+      if (attackToDefenseMap[rightAction] === leftAction) {
+        return 'defense-block'; // Подсвечиваем успешную блокировку
+      }
+    }
   } else {
     // Проверяем правую сторону, если правое действие - это атака
     if (rightAction === 'HH' || rightAction === 'BH') {
@@ -183,9 +191,17 @@ const getSquareClass = (leftAction, rightAction, isLeft) => {
         return 'attack-hit'; // Подсвечиваем успешный удар
       }
     }
+
+    // Проверяем правую сторону, если правое действие - это защита
+    if (rightAction === 'HD' || rightAction === 'BD') {
+      // Подсвечиваем успешную блокировку, если защита соответствует атаке
+      if (attackToDefenseMap[leftAction] === rightAction) {
+        return 'defense-block'; // Подсвечиваем успешную блокировку
+      }
+    }
   }
 
-  return ''; // Ничего не подсвечиваем, если действие было защитное или заблокированное
+  return ''; // Ничего не подсвечиваем
 };
 
 const meAction = (action) => {
@@ -200,11 +216,6 @@ const meAction = (action) => {
     val = 'HD';
   } else if (action === 'body') {
     val = 'BD';
-  }
-
-  // Проверка на допустимость действия
-  if (!isValidAction(val)) {
-    return;
   }
 
   targetResults.value.push(val);
@@ -231,11 +242,6 @@ const rivalAction = (action) => {
     val = 'BH';
   }
 
-  // Проверка на допустимость действия
-  if (!isValidAction(val)) {
-    return;
-  }
-
   targetResults.value.push(val);
 
   store.dispatch('fight/sendFightAction', {fightId: fight.value.id, fightAction: val});
@@ -245,32 +251,6 @@ const rivalAction = (action) => {
     txtProgress.value = t('fight.waitingForOpponent');
   }
 }
-
-const isValidAction = (newAction) => {
-  const attackActions = ['HH', 'BH']; // Список всех атакующих действий
-  const defenseActions = ['HD', 'BD']; // Список всех защитных действий
-
-  // Определяем, какой массив нужно проверять в зависимости от позиции мастера
-  const targetResults = master.value.userData.id === fighterOne.value.id ? leftResults : rightResults;
-
-  // Подсчитываем количество атак и защит в текущем массиве
-  const attackCount = targetResults.value.filter(action => attackActions.includes(action)).length;
-  const defenseCount = targetResults.value.filter(action => defenseActions.includes(action)).length;
-
-  const maxActions = countActionArray.value.length;
-
-  // Правило: если в массиве уже maxActions - 1 атаки и новая тоже атака - запрещаем её
-  if (attackActions.includes(newAction) && attackCount >= maxActions - 1 && defenseCount === 0) {
-    return false;
-  }
-
-  // Правило: если в массиве уже maxActions - 1 защиты и новая тоже защита - запрещаем её
-  if (defenseActions.includes(newAction) && defenseCount >= maxActions - 1 && attackCount === 0) {
-    return false;
-  }
-
-  return true;
-};
 
 // Функция для управления обратным отсчетом
 const startFight = () => {
@@ -709,6 +689,13 @@ const handleScroll = (event) => {
 .attack-hit {
   border-color: var(--primary-color);
   background-color: var(--primary-color);
+
+  color: white;
+}
+
+.defense-block{
+  border-color: var(--pink);
+  background-color: var(--pink);
 
   color: white;
 }

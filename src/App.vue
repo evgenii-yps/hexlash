@@ -45,7 +45,6 @@ import BottomMenu from "@/components/menu/BottomMenu.vue";
 import Logo from "@/components/Logo.vue";
 import store from "@/core/state/store.js";
 import Info from "@/components/Info.vue";
-import {createWeb3Modal, defaultConfig} from "@web3modal/ethers/vue";
 import NoConnection from "@/components/ui/NoConnection.vue";
 import Error from "@/components/Error.vue";
 import FindFight from "@/components/FindFight.vue";
@@ -92,52 +91,6 @@ const isScrollableComponent = computed(() => {
   return scrollableRoutes.includes(route.path) ||
       scrollablePrefixes.some(prefix => route.path.startsWith(prefix));
 });
-
-
-const projectId = '96482c2638a251eef7399e040f66bcb5';
-
-const mainnet = {
-  chainId: 1,
-  name: 'Ethereum',
-  currency: 'ETH',
-  explorerUrl: 'https://etherscan.io',
-  rpcUrl: 'https://cloudflare-eth.com'
-}
-
-const metadata = {
-  name: 'FightClub',
-  description: 'The club is your right to life, a real life.\n' +
-      'Join us. Your liberation awaits.',
-  url: 'https://bitfightclub.com',
-  icons: ['/images/logo500x500.png'],
-}
-
-const ethersConfig = defaultConfig({
-  /*Required*/
-  metadata,
-
-  auth: {
-    email: false,
-    socials: [],
-    showWallets: true,
-    walletFeatures: true
-  },
-
-  /*Optional*/
-  enableEIP6963: true, // true by default
-  enableInjected: true, // true by default
-  enableCoinbase: true, // true by default
-  rpcUrl: '...', // used for the Coinbase SDK
-  defaultChainId: 1, // used for the Coinbase SDK
-})
-
-
-const modal = createWeb3Modal({
-  ethersConfig,
-  chains: [mainnet],
-  projectId,
-  enableAnalytics: true, // Optional - defaults to your Cloud configuration
-})
 
 const scrollTop = ref(0);
 const scrollDirection = ref('up');
@@ -224,8 +177,6 @@ onMounted(() => {
     window.Telegram.WebApp.expand(); // Развернуть на весь экран
     window.Telegram.WebApp.disableVerticalSwipes();
   }
-
-  store.commit('contract/setWeb3Modal', modal)
 
   document.addEventListener('visibilitychange', handleVisibilityChange);
   window.addEventListener('online', handleOnlineStatus);

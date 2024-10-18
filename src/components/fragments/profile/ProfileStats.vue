@@ -1,14 +1,16 @@
 <template>
   <div class="stats-container" v-if="stats.length > 0">
-    <div class="stat-item" v-for="(stat, index) in stats" :key="stat.id" :class="{ 'stat-header': index < 2, 'stat-grid-item': index >= 2 }">
+    <div class="stat-item" v-for="(stat, index) in stats" :key="stat.id"
+         :class="{ 'stat-header': index < 2, 'stat-grid-item': index >= 2 }">
       <v-tooltip
           v-model="stat.show"
           location="top"
           content-class="v-tooltip__content"
       >
         <template #activator="{ props }">
-          <div :id="stat.id" v-bind="props" @click="stat.show = !stat.show" :class="['stat-content', { 'stat-content-vertical': index >= 2 }]">
-            <img :src="stat.icon" :alt="stat.title" :class="['stat-icon', { 'stat-icon-large': index < 2 }]" />
+          <div :id="stat.id" v-bind="props" @click="stat.show = !stat.show"
+               :class="['stat-content', { 'stat-content-vertical': index >= 2 }]">
+            <img :src="stat.icon" :alt="stat.title" :class="['stat-icon', { 'stat-icon-large': index < 2 }]"/>
             <span :class="['stat-value', { 'stat-value-large': index < 2 }]">
               {{ stat.value }}<span v-if="index === 8" class="stat-value-gray">{{ stat.valueInBrackets }}</span>
             </span>
@@ -24,9 +26,10 @@
 </template>
 
 <script setup>
-import {  ref, watch } from 'vue';
+import {ref, watch} from 'vue';
 import {useI18n} from "vue-i18n";
-const { t } = useI18n({ useScope: 'global' })
+
+const {t} = useI18n({useScope: 'global'})
 
 import iconAllFights from '@/assets/images/icon_fights.svg';
 import iconWins from '@/assets/images/icon_wins.svg';
@@ -37,7 +40,7 @@ import iconWonTokens from '@/assets/images/icon_tokens.svg';
 import iconFreeTokens from '@/assets/images/icon_token_less.svg';
 import iconInvites from '@/assets/images/icon_invites.svg';
 import iconDaysInClub from '@/assets/images/icon_calendar.svg';
-
+import {formatNumber} from "@/core/constants.js";
 
 
 const stats = ref([]);
@@ -53,18 +56,73 @@ const props = defineProps({
 watch(() => props.userData, (userData) => {
   if (userData) {
     stats.value = [
-      { id: 'stats-totalFights', title: t('profile.stats.lblTotalFights'), value: userData.totalFights, icon: iconAllFights, show: false },
-      { id: 'stats-wins', title: t('profile.stats.lblWins'), value: userData.wins, icon: iconWins, show: false },
-      { id: 'stats-losses', title: t('profile.stats.lblLosses'), value: userData.losses, icon: iconLosses, show: false },
-      { id: 'stats-draws', title: t('profile.stats.lblDraws'), value: userData.draws, icon: iconDraws, show: false },
-      { id: 'stats-luckPercentage', title: t('profile.stats.lblLuckPercentage'), value:  userData.totalFights < 10 ? "-" : userData.luckPercentage + '%', icon: iconLuck, show: false },
-      { id: 'stats-wonTokens', title: t('profile.stats.lblWonTokens'), value: userData.wonTokens, icon: iconWonTokens, show: false },
-      { id: 'stats-freeTokens', title: t('profile.stats.lblFreeTokens'), value: userData.freeTokens, icon: iconFreeTokens, show: false },
-      { id: 'stats-invitedUsers', title: t('profile.stats.lblInvitedUsers'), value: userData.invitedUsers, icon: iconInvites, show: false },
-      { id: 'stats-daysInClubAndNoSkipDays', title: t('profile.stats.lblDaysInClub'), value: userData.daysInClub, valueInBrackets: `(${userData.noSkipDays})`, icon: iconDaysInClub, show: false },
+      {
+        id: 'stats-totalFights',
+        title: t('profile.stats.lblTotalFights'),
+        value: formatNumber(userData.totalFights),
+        icon: iconAllFights,
+        show: false
+      },
+      {
+        id: 'stats-wins',
+        title: t('profile.stats.lblWins'),
+        value: formatNumber(userData.wins),
+        icon: iconWins,
+        show: false
+      },
+      {
+        id: 'stats-losses',
+        title: t('profile.stats.lblLosses'),
+        value: formatNumber(userData.losses),
+        icon: iconLosses,
+        show: false
+      },
+      {
+        id: 'stats-draws',
+        title: t('profile.stats.lblDraws'),
+        value: formatNumber(userData.draws),
+        icon: iconDraws,
+        show: false
+      },
+      {
+        id: 'stats-luckPercentage',
+        title: t('profile.stats.lblLuckPercentage'),
+        value: userData.totalFights < 10 ? "-" : userData.luckPercentage + '%',
+        icon: iconLuck,
+        show: false
+      },
+      {
+        id: 'stats-wonTokens',
+        title: t('profile.stats.lblWonTokens'),
+        value: formatNumber(userData.wonTokens),
+        icon: iconWonTokens,
+        show: false
+      },
+      {
+        id: 'stats-freeTokens',
+        title: t('profile.stats.lblFreeTokens'),
+        value: formatNumber(userData.freeTokens),
+        icon: iconFreeTokens,
+        show: false
+      },
+      {
+        id: 'stats-invitedUsers',
+        title: t('profile.stats.lblInvitedUsers'),
+        value: userData.invitedUsers,
+        icon: iconInvites,
+        show: false
+      },
+      {
+        id: 'stats-daysInClubAndNoSkipDays',
+        title: t('profile.stats.lblDaysInClub'),
+        value: userData.daysInClub,
+        valueInBrackets: `(${userData.noSkipDays})`,
+        icon: iconDaysInClub,
+        show: false
+      },
     ];
   }
-}, { immediate: true });
+}, {immediate: true});
 
 </script>
 

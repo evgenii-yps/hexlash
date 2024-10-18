@@ -25,7 +25,7 @@ import {createWeb3Modal, defaultConfig, useWeb3ModalAccount} from '@web3modal/et
 import BackButton from "@/components/ui/BackButton.vue";
 import WalletInfo from "@/components/fragments/profile/wallet/WalletInfo.vue";
 import GameBalanceCard from "@/components/fragments/profile/wallet/GameBalanceCard.vue";
-import {computed, onMounted, ref, watch} from "vue";
+import {computed, onBeforeMount, onMounted, ref, watch} from "vue";
 import store from "@/core/state/store.js";
 import ConnectWallet from "@/components/fragments/profile/wallet/ConnectWallet.vue";
 import {useI18n} from "vue-i18n";
@@ -33,6 +33,53 @@ import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
 import {useRoute} from "vue-router";
 import {backRef} from "@/router/index.js";
 import BuyButton from "@/components/fragments/profile/wallet/BuyTokens.vue";
+
+
+
+const projectId = '96482c2638a251eef7399e040f66bcb5';
+
+const mainnet = {
+  chainId: 1,
+  name: 'Ethereum',
+  currency: 'ETH',
+  explorerUrl: 'https://etherscan.io',
+  rpcUrl: 'https://cloudflare-eth.com'
+}
+
+const metadata = {
+  name: 'FightClub',
+  description: 'The club is your right to life, a real life.\n' +
+      'Join us. Your liberation awaits.',
+  url: 'https://bitfightclub.com',
+  icons: ['/images/logo500x500.png'],
+}
+
+const ethersConfig = defaultConfig({
+  /*Required*/
+  metadata,
+
+  auth: {
+    email: false,
+    socials: [],
+    showWallets: true,
+    walletFeatures: true
+  },
+
+  /*Optional*/
+  enableEIP6963: true, // true by default
+  enableInjected: true, // true by default
+  enableCoinbase: true, // true by default
+  rpcUrl: '...', // used for the Coinbase SDK
+  defaultChainId: 1, // used for the Coinbase SDK
+})
+
+
+const modal = createWeb3Modal({
+  ethersConfig,
+  chains: [mainnet],
+  projectId,
+  enableAnalytics: true, // Optional - defaults to your Cloud configuration
+})
 
 
 const route = useRoute();
@@ -78,9 +125,8 @@ const withdraw = () => {
   store.commit('master/setInfoMessage', withdraw);
 }
 
-onMounted(() => {
-
-
+onBeforeMount(() => {
+  store.commit('contract/setWeb3Modal', modal)
 })
 
 
