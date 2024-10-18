@@ -11,6 +11,7 @@ import {SocialTaskModel} from "@/core/models/socialTaskModel.js";
 import {DailyTaskModel} from "@/core/models/dailyTaskModel.js";
 import {AchievementModel} from "@/core/models/achievementModel.js";
 import {validateJwtToken} from "@/core/services/masterService.js";
+import { useRouter } from "vue-router";
 
 const state = {
     isConnected: false,
@@ -57,7 +58,10 @@ const actions = {
                 console.log('Jwt token is missing');
 
                 store.commit('master/setLoginState', {isAuthenticated: false});
-                // TODO redirect to auth
+
+                const router = useRouter();
+                router.push({ name: 'Home' });
+                return;
             }
 
             const socketClient = new WebSocketClient("Bearer_" + jwtToken);

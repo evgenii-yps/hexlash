@@ -1,6 +1,7 @@
 import axios from 'axios';
 import store from "@/core/state/store.js";
 import {validateJwtToken} from "@/core/services/masterService.js";
+import {useRouter} from "vue-router";
 
 // Создание экземпляра axios с базовой конфигурацией
 const apiClient = axios.create({
@@ -20,7 +21,9 @@ apiClient.interceptors.request.use(
                 config.headers['Authorization'] = `Bearer ${token}`;
             }else{
                 store.commit('master/setLoginState', {isAuthenticated: false});
-                // TODO Reset
+                const router = useRouter();
+                router.push({ name: 'Home' });
+                return;
             }
         }
         return config;

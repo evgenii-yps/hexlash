@@ -205,7 +205,6 @@ const handleVisibilityChange = () => {
     //}
   }else if(!isAuth.value){
     store.dispatch('webSocket/disconnectWebSocket');
-    router.push('/');
   }
 };
 
