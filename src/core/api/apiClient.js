@@ -1,5 +1,6 @@
 import axios from 'axios';
 import store from "@/core/state/store.js";
+import {validateJwtToken} from "@/core/services/masterService.js";
 
 // Создание экземпляра axios с базовой конфигурацией
 const apiClient = axios.create({
@@ -15,8 +16,10 @@ apiClient.interceptors.request.use(
         // Проверяем, нужно ли добавлять токен
         if (config.authRequired) {
             const token = store.getters['master/getJwtToken']; // Получаем токен через getter Vuex
-            if (token) {
+            if (token && validateJwtToken(token)) {
                 config.headers['Authorization'] = `Bearer ${token}`;
+            }else{
+                store.commit('master/setLoginState', {isAuthenticated: false});
             }
         }
         return config;
@@ -35,7 +38,10 @@ apiClient.interceptors.response.use(
     },
     (error) => {
         // Обработка ошибки ответа
-        // Здесь можно добавить логику для обработки ошибок, например, обновление токена
+        if (error.response && error.response.status === 401) {
+            // Если получен код 401, пользователь не авторизован, сбрасываем состояние аутентификации
+            store.commit('master/setLoginState', {isAuthenticated: false});
+        }
         return Promise.reject(error);
     }
 );

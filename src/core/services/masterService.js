@@ -301,7 +301,7 @@ export const resetClient = async () => {
     localStorage.clear();
 }
 
-const validateJwtToken = (jwtToken) => {
+export const validateJwtToken = (jwtToken) => {
     try {
         const decodedToken = jwtDecode(jwtToken);
         const currentTime = Math.floor(Date.now() / 1000); // Текущее время в секундах
