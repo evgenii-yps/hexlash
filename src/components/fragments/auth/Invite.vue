@@ -47,7 +47,6 @@ import ButtonText from "@/components/ui/ButtonText.vue";
 import {useRoute, useRouter} from 'vue-router';
 import {useI18n} from "vue-i18n";
 import store from "@/core/state/store.js";
-import * as masterService from "@/core/services/masterService.js";
 
 const {t} = useI18n({useScope: 'global'});
 

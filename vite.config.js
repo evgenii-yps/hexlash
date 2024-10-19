@@ -2,6 +2,7 @@ import {fileURLToPath, URL} from 'node:url'
 
 import {defineConfig} from 'vite'
 import vue from '@vitejs/plugin-vue'
+import vuetify from "vite-plugin-vuetify";
 import {version} from "./package.json";
 import compression from 'vite-plugin-compression';
 import {viteStaticCopy} from 'vite-plugin-static-copy'
@@ -11,6 +12,7 @@ import viteImagemin from "@vheemstra/vite-plugin-imagemin";
 import imageminMozjpeg from 'imagemin-mozjpeg'
 import imageminWebp from 'imagemin-webp'
 import imageminPngquant from 'imagemin-pngquant'
+
 
 // https://vitejs.dev/config/
 export default defineConfig(({mode}) => {
@@ -35,6 +37,7 @@ export default defineConfig(({mode}) => {
     return {
         plugins: [
             vue(),
+            vuetify({autoImport: true}),
             compression({
                 algorithm: 'brotliCompress',
                 ext: '.br',
@@ -68,9 +71,7 @@ export default defineConfig(({mode}) => {
                         jpg: imageminWebp(),
                     },
                 },
-            }),
-
-            // optimizeCssModules()
+            })
         ],
         define:
             {
@@ -99,13 +100,31 @@ export default defineConfig(({mode}) => {
             // Настройки для оптимизации
             optimizeDeps:
                 {
-                    include: ['axios', 'vue-router'],
+                    include: ['three'],
                 },
             rollupOptions: {
                 output: {
                     manualChunks(id) {
                         if (id.includes('node_modules')) {
-                            return id.toString().split('node_modules/')[1].split('/')[0].toString();
+                            if (id.includes('three') || id.includes('postprocessing') || id.includes('kokomi')) {
+                                return 'three-vendor';  // Чанк для графических библиотек
+                            }
+                            if (id.includes('axios')) {
+                                return 'axios-vendor';  // Чанк для Axios
+                            }
+                            if (id.includes('ethers')) {
+                                return 'ethers-vendor';  // Чанк для ethers.js
+                            }
+                            if (id.includes('web3modal')) {
+                                return 'web3modal-vendor';  // Чанк для @web3modal/ethers
+                            }
+                            if (id.includes('coinbase')) {
+                                return 'coinbase-vendor';  // Чанк для @coinbase/wallet-sdk
+                            }
+                            if (id.includes('vue') || id.includes('vue-router') || id.includes('vuex') || id.includes('vue-i18n')) {
+                                return 'vue-vendor';  // Чанк для Vue и связанных библиотек
+                            }
+                            return 'vendor';  // Все остальные библиотеки в один чанк
                         }
                     }
                 },

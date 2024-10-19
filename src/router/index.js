@@ -1,6 +1,5 @@
 import {createRouter, createWebHistory} from "vue-router";
 import store from "@/core/state/store.js";
-import RainView from "@/views/RainView.vue";
 import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
 
 const routeHistory = [];
@@ -21,7 +20,7 @@ const publicRoutes = [
 ];
 
 const protectedRoutes = [
-    {path: '/', name: 'Home', component: RainView },
+    {path: '/', name: 'Home', component: () => import("/src/views/RainView.vue")},
     {path: '/help', name: 'Help', component: () => import("/src/views/PageView.vue")},
     {path: '/arena', name: 'Arena', component: () => import("/src/views/ArenaView.vue")},
 
