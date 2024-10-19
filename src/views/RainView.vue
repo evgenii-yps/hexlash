@@ -103,7 +103,7 @@ import gsap from 'gsap'
 import {computed, onMounted, onUnmounted, ref, shallowRef, watch, watchEffect} from "vue";
 
 import brickNormal from '@/assets/textures/brick-normal2.jpg';
-import floorNormal from '@/assets/textures/asphalt-pbr01/normal.png';
+import floorNormal from '@/assets/textures/asphalt-pbr01/normal.webp';
 import floorOpacity from '@/assets/textures/asphalt-pbr01/opacity.jpg';
 import floorRoughness from '@/assets/textures/asphalt-pbr01/roughness.jpg';
 import rainNormal from '@/assets/textures/rain-normal.png';
