@@ -105,11 +105,11 @@ import {computed, onMounted, onUnmounted, ref, shallowRef, watch, watchEffect} f
 import brickNormal from '@/assets/textures/brick-normal2.jpg';
 import floorNormal from '@/assets/textures/asphalt-pbr01/normal.webp';
 import floorOpacity from '@/assets/textures/asphalt-pbr01/opacity.jpg';
-import floorRoughness from '@/assets/textures/asphalt-pbr01/roughness.jpg';
+import floorRoughness from '@/assets/textures/asphalt-pbr01/roughness.webp';
 import rainNormal from '@/assets/textures/rain-normal.png';
 import shutterDiffuse from '@/assets/textures/door/shutter-Diffuse.webp';
 import shutterGlossiness from '@/assets/textures/door/shutter-Glossiness.png';
-import shutterNormal from '@/assets/textures/door/shutter-Normal.png';
+import shutterNormal from '@/assets/textures/door/shutter-Normal.webp';
 import topCoverDiffuse from '@/assets/textures/door/top-cover-Diffuse.png';
 import sideCoverDiffuse from '@/assets/textures/door/side-cover-Diffuse.png';
 import rainSound from '@/assets/sound/rain.mp3';
