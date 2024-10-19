@@ -103,7 +103,7 @@ export default defineConfig(({mode}) => {
                     include: ['three'],
                 },
             rollupOptions: {
-                output: {
+               /* output: {
                     manualChunks(id) {
                         if(id) {
                             if (id.includes('node_modules')) {
@@ -111,7 +111,7 @@ export default defineConfig(({mode}) => {
                             }
                         }
                     }
-                },
+                },*/
                 treeshake: true,
             },
             // Удаление комментариев и консольных логов в продакшене
