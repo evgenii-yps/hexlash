@@ -1,15 +1,16 @@
 import {createRouter, createWebHistory} from "vue-router";
 import store from "@/core/state/store.js";
+import RainView from "@/views/RainView.vue";
 import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
 
 const routeHistory = [];
 
 
 export const authRoutes = [
-    {path: '/auth/login', name: 'Login', component: () => import("/src/views/RainView.vue")},
-    {path: '/auth/invite', name: 'Invite', component: () => import("/src/views/RainView.vue")},
-    {path: '/auth/reset', name: 'Reset', component: () => import("/src/views/RainView.vue")},
-    {path: '/auth/telegram', name: 'TelegramLogin', component: () => import("/src/views/RainView.vue")}
+    {path: '/auth/login', name: 'Login', component: RainView},
+    {path: '/auth/invite', name: 'Invite', component: RainView},
+    {path: '/auth/reset', name: 'Reset', component: RainView},
+    {path: '/auth/telegram', name: 'TelegramLogin', component: RainView}
 ];
 
 const publicRoutes = [
@@ -20,12 +21,12 @@ const publicRoutes = [
 ];
 
 const protectedRoutes = [
-    {path: '/', name: 'Home', component: () => import("/src/views/RainView.vue")},
+    {path: '/', name: 'Home', component: RainView},
     {path: '/help', name: 'Help', component: () => import("/src/views/PageView.vue")},
     {path: '/arena', name: 'Arena', component: () => import("/src/views/ArenaView.vue")},
 
     {path: '/user/:userLogin', name: 'UserProfile', component: () => import("/src/views/ProfileView.vue")},
-    {path: '/profile', name: 'Profile',  component: () => import("/src/views/ProfileView.vue")},
+    {path: '/profile', name: 'Profile', component: () => import("/src/views/ProfileView.vue")},
     {path: '/profile/balance', name: 'Balance', component: () => import("/src/views/ProfileView.vue")},
     {path: '/profile/wallet', name: 'Wallet', component: () => import("/src/views/ProfileView.vue")},
     {path: '/profile/account', name: 'Account', component: () => import("/src/views/ProfileView.vue")},
@@ -101,11 +102,9 @@ router.beforeEach(async (to, from, next) => {
 
             console.log('Redirecting to Invite page');
             next({name: 'Invite'});
-        }
-        else if(!initialVerified && to.name !== 'Home') {
+        } else if (!initialVerified && to.name !== 'Home') {
             next({name: 'Home'});
-        }
-        else{
+        } else {
             next();
         }
     } else {
