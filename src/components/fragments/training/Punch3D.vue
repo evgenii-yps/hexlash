@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 
 
-import punchTexture from '@/assets/textures/punch_texture2.png';
+import punchTexture from '@/assets/textures/punch_texture2.webp';
 import {DRACOLoader} from "three/addons";
 import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader'
 
