@@ -105,26 +105,10 @@ export default defineConfig(({mode}) => {
             rollupOptions: {
                 output: {
                     manualChunks(id) {
-                        if (id.includes('node_modules')) {
-                            if (id.includes('three') || id.includes('postprocessing') || id.includes('kokomi')) {
-                                return 'three-vendor';  // Чанк для графических библиотек
+                        if(id) {
+                            if (id.includes('node_modules')) {
+                                return id.toString().split('node_modules/')[1].split('/')[0].toString();
                             }
-                            if (id.includes('axios')) {
-                                return 'axios-vendor';  // Чанк для Axios
-                            }
-                            if (id.includes('ethers')) {
-                                return 'ethers-vendor';  // Чанк для ethers.js
-                            }
-                            if (id.includes('web3modal')) {
-                                return 'web3modal-vendor';  // Чанк для @web3modal/ethers
-                            }
-                            if (id.includes('coinbase')) {
-                                return 'coinbase-vendor';  // Чанк для @coinbase/wallet-sdk
-                            }
-                            if (id.includes('vue') || id.includes('vue-router') || id.includes('vuex') || id.includes('vue-i18n')) {
-                                return 'vue-vendor';  // Чанк для Vue и связанных библиотек
-                            }
-                            return 'vendor';  // Все остальные библиотеки в один чанк
                         }
                     }
                 },
