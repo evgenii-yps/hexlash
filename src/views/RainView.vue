@@ -107,7 +107,7 @@ import floorNormal from '@/assets/textures/asphalt-pbr01/normal.webp';
 import floorOpacity from '@/assets/textures/asphalt-pbr01/opacity.jpg';
 import floorRoughness from '@/assets/textures/asphalt-pbr01/roughness.jpg';
 import rainNormal from '@/assets/textures/rain-normal.png';
-import shutterDiffuse from '@/assets/textures/door/shutter-Diffuse.png';
+import shutterDiffuse from '@/assets/textures/door/shutter-Diffuse.webp';
 import shutterGlossiness from '@/assets/textures/door/shutter-Glossiness.png';
 import shutterNormal from '@/assets/textures/door/shutter-Normal.png';
 import topCoverDiffuse from '@/assets/textures/door/top-cover-Diffuse.png';
