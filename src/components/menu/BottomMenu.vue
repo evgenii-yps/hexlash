@@ -1,17 +1,23 @@
 <template>
   <div :class="['bottom-menu', { 'ios-adjust': isIOS }]">
-    <router-link
+    <div
         v-for="(item, index) in menuItems"
         :key="index"
-        :to="item.route"
         class="menu-item"
         :class="{ active: isActive(item) }"
-        @click="playSound"
+        @click="handleMenuClick(index, item)"
         v-ripple
     >
-      <div :class="['menu-icon', item.icon]"></div>
+      <div v-if="loadingStates[index]" class="loader-container">
+        <v-progress-circular
+            class="loader"
+            size="30"
+            indeterminate
+        />
+      </div>
+      <div v-else :class="['menu-icon', item.icon]"></div>
       <div class="menu-text">{{ item.text }}</div>
-    </router-link>
+    </div>
   </div>
 </template>
 
@@ -24,9 +30,12 @@ import {useI18n} from "vue-i18n";
 // Определяем, является ли устройство iOS
 const isIOS = ref(/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream);
 
+
+
 const {t, locale} = useI18n({useScope: 'global'})
 
 import clickSound from '@/assets/sound/punch_air.mp3'
+import router from "@/router/index.js";
 
 const playSound = () => {
   const sound = new Howl({
@@ -50,6 +59,19 @@ const isActive = (item) => {
   }
   return route.path === item.route;
 }
+
+const loadingStates = ref(Array(menuItems.value.length).fill(false)); // Создаем массив для состояния загрузки каждого элемента меню
+
+const handleMenuClick = (index, item) => {
+  playSound(); // Воспроизведение звука
+  loadingStates.value[index] = true; // Включаем лоадер для конкретного пункта меню
+
+  // Переход по маршруту
+  router.push(item.route).finally(() => {
+    loadingStates.value[index] = false; // Выключаем лоадер после завершения перехода
+  });
+}
+
 </script>
 
 <style scoped>
@@ -146,5 +168,9 @@ const isActive = (item) => {
 
 :deep(.v-ripple__container) {
   color: grey !important;
+}
+
+.loader{
+  color: white;
 }
 </style>
