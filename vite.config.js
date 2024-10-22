@@ -18,7 +18,7 @@ import imageminPngquant from 'imagemin-pngquant'
 export default defineConfig(({mode}) => {
 
     const apiServers = {
-        prod: 'https://api.bitfightclub.com',
+       // prod: 'https://api.bitfightclub.com',
         test: 'https://apitest.bitfightclub.com',
 
     };
