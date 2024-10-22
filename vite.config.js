@@ -25,7 +25,7 @@ export default defineConfig(({mode}) => {
     const apiServer = apiServers[mode] || apiServers.test;
 
     const wsServers = {
-        //prod: 'wss://api.bitfightclub.com:444',
+        prod: 'wss://api.bitfightclub.com:444',
         test: 'wss://apitest.bitfightclub.com:444',
     };
     const wsServer = wsServers[mode] || wsServers.test;
