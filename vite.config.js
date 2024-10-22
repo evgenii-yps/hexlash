@@ -17,9 +17,8 @@ import imageminPngquant from 'imagemin-pngquant'
 // https://vitejs.dev/config/
 export default defineConfig(({mode}) => {
 
-    //TODO ENABLE AFTER TESTS
     const apiServers = {
-        //prod: 'https://api.bitfightclub.com',
+        prod: 'https://api.bitfightclub.com',
         test: 'https://apitest.bitfightclub.com',
 
     };
