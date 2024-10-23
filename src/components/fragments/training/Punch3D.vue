@@ -316,7 +316,7 @@ function createSoftVolume(bufferGeom, material) {
   );
 
   const sbConfig = volumeSoftBody.get_m_cfg();
-  sbConfig.set_viterations(20);
+  sbConfig.set_viterations(1);
   sbConfig.set_piterations(20);
 
   //sbConfig.set_kVC(0.1);  // Фактор сохранения объема
@@ -335,7 +335,7 @@ function createSoftVolume(bufferGeom, material) {
   //volumeSoftBody.get_m_materials().at(0).set_m_kLST(1);
   //volumeSoftBody.get_m_materials().at(0).set_m_kAST(1);
 
-  volumeSoftBody.setTotalMass(100, false);
+  volumeSoftBody.setTotalMass(10, false);
 
   // Set node masses to zero to immobilize
   const nodes = volumeSoftBody.get_m_nodes();
@@ -355,7 +355,7 @@ function createSoftVolume(bufferGeom, material) {
   Ammo.castObject(volumeSoftBody, Ammo.btCollisionObject).getCollisionShape().setMargin(margin);
   physicsWorld.addSoftBody(volumeSoftBody, 1, -1);
   volume.userData.physicsBody = volumeSoftBody;
-  volumeSoftBody.setActivationState(4); // Disable deactivation
+  //volumeSoftBody.setActivationState(4); // Disable deactivation
 
   softBodies.push(volume);
 
@@ -387,10 +387,10 @@ function onWindowResize() {
 }
 
 function updatePhysics(deltaTime) {
-  const fixedTimeStep = 1 / 60;  // Устанавливаем шаг физической симуляции на 60 FPS
+  //const fixedTimeStep = 1 / 60;  // Устанавливаем шаг физической симуляции на 60 FPS
   const maxSubSteps = 5;  // Максимальное количество подшагов
 
-  physicsWorld.stepSimulation(deltaTime, maxSubSteps, fixedTimeStep);
+  physicsWorld.stepSimulation(deltaTime, maxSubSteps);
 
   // Step world
 //  physicsWorld.stepSimulation(deltaTime, 10);
