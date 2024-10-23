@@ -57,12 +57,15 @@ function initGraphics() {
   scene = new THREE.Scene();
   scene.background = null;
 
-  renderer = new THREE.WebGLRenderer({antialias: true, alpha: true});
+  renderer = new THREE.WebGLRenderer({antialias: false, alpha: true});
+  //renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1)) // Low quality
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(props.width, props.height);
   renderer.setAnimationLoop(render);
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+  renderer.shadowMap.enabled = false;
+  //renderer.shadowMap.enabled = true; // High quality
+ //renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.setClearColor(0x000000, 0); // прозрачный фон
 
 
@@ -115,6 +118,9 @@ function createGLTF() {
     });
 
     textureLoader.load(punchTexture, function (texture) {
+      texture.minFilter = THREE.LinearFilter; // Более простой фильтр для низкого разрешения
+      texture.magFilter = THREE.LinearFilter; // Уменьшаем фильтрацию текстур
+
       texture.wrapS = THREE.RepeatWrapping;
       texture.wrapT = THREE.RepeatWrapping;
       texture.repeat.set(2, 2); // Устанавливаем масштаб повторения
@@ -381,8 +387,13 @@ function onWindowResize() {
 }
 
 function updatePhysics(deltaTime) {
+  const fixedTimeStep = 1 / 60;  // Устанавливаем шаг физической симуляции на 60 FPS
+  const maxSubSteps = 5;  // Максимальное количество подшагов
+
+  physicsWorld.stepSimulation(deltaTime, maxSubSteps, fixedTimeStep);
+
   // Step world
-  physicsWorld.stepSimulation(deltaTime, 10);
+//  physicsWorld.stepSimulation(deltaTime, 10);
 
   // Update soft volumes
   for (let i = 0, il = softBodies.length; i < il; i++) {
