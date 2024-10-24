@@ -39,7 +39,7 @@
             <div v-if="isOwner" class="controls">
               <h2>Control</h2>
 
-              <ClubWithdraw :balance="String(clubData.getBalance())" :wallet="master.userData.walletAddress"/>
+              <ClubWithdraw :balance="String(formatNumber(clubData.getBalance()))" :wallet="master.userData.walletAddress"/>
 
               <VBtnDark
                   class="club-btn"
@@ -126,6 +126,7 @@ import router from "@/router/index.js";
 import ClubWithdraw from "@/components/fragments/club/ClubWithdraw.vue";
 import ClubEdit from "@/components/fragments/club/ClubEdit.vue";
 import ClubOwnerAvatar from "@/components/fragments/club/ClubOwnerAvatar.vue";
+import {formatNumber} from "@/core/constants.js";
 
 
 const {t} = useI18n({useScope: 'global'})
@@ -206,7 +207,7 @@ const confirmExit = () => {
 const formattedMembers = computed(() => {
   const translation = t('club.lblClubMembers', clubData.value.members);
   const textWithoutNumber = translation.replace(clubData.value.members, '').trim();
-  return `<span style="font-size: 1.5em; margin-right: 5px">${clubData.value.members}</span>${textWithoutNumber}`;
+  return `<span style="font-size: 1.5em; margin-right: 5px">${formatNumber(clubData.value.members)}</span>${textWithoutNumber}`;
 });
 
 </script>

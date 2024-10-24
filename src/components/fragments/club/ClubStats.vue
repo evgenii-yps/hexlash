@@ -31,6 +31,7 @@ import {useI18n} from "vue-i18n";
 const {t} = useI18n({useScope: 'global'})
 import iconAllFights from '@/assets/images/icon_fights.svg';
 import iconWins from '@/assets/images/icon_wins.svg';
+import {formatNumber} from "@/core/constants.js";
 
 
 const stats = ref([]);
@@ -49,11 +50,11 @@ watch(() => props.clubData, (clubData) => {
       {
         id: 'stats-totalFights',
         title: t('club.lblTotalFights'),
-        value: clubData.battles,
+        value: formatNumber(clubData.battles),
         icon: iconAllFights,
         show: false
       },
-      {id: 'stats-wins', title: t('club.lblWins'), value: clubData.wins, icon: iconWins, show: false},
+      {id: 'stats-wins', title: t('club.lblWins'), value: formatNumber(clubData.wins), icon: iconWins, show: false},
 
     ];
   }
