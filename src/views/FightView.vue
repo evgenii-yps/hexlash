@@ -498,7 +498,7 @@ const handleScroll = (event) => {
 .fight-again {
   position: absolute;
   left: 50%;
-  bottom: 35%;
+  bottom: 45%;
   width: 100px;
   transform: translate(-50%, -50%);
   display: flex;
