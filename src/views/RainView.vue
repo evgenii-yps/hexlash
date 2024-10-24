@@ -100,7 +100,17 @@ import {BloomEffect, EffectComposer, EffectPass, RenderPass, FXAAEffect} from 'p
 import {RectAreaLightUniformsLib} from 'three/addons/lights/RectAreaLightUniformsLib.js'
 import {Howl} from 'howler'
 import gsap from 'gsap'
-import {computed, onMounted, onUnmounted, ref, shallowRef, watch, watchEffect} from "vue";
+import {
+  computed,
+  onBeforeMount,
+  onBeforeUnmount,
+  onMounted,
+  onUnmounted,
+  ref,
+  shallowRef,
+  watch,
+  watchEffect
+} from "vue";
 
 import brickNormal from '@/assets/textures/brick-normal2.jpg';
 import floorNormal from '@/assets/textures/asphalt-pbr01/normal.webp';
@@ -745,7 +755,13 @@ class Sketch extends kokomi.Base {
     this.am = am
 
     am.on("ready", async () => {
-      // document.querySelector(".loader-screen").classList.add("hollow");
+
+      if (isDestroyed) {
+        console.log("Component was destroyed before scene was ready");
+        return; // Отменяем инициализацию, если компонент был уничтожен
+      }
+
+      console.log("ready scene");
 
       soundRain = new Howl({
         src: [rainSound],
@@ -1094,13 +1110,17 @@ const goTo = (page) => {
 };
 
 
+let isDestroyed = false;
 
 onMounted(() => {
+  isDestroyed = false;
+
   sketch = new Sketch();
   sketch.create();
 });
 
-onUnmounted(() => {
+onBeforeUnmount(() => {
+  isDestroyed = true;
   if (sketch) {
     sketch.destroy();
     sketch = null;

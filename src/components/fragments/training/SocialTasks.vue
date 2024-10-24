@@ -165,9 +165,13 @@ const openSubscribeDialog = (task) => {
   margin: 0;
 }
 
-.desc{
-  color:white;
+.desc {
+  color: white;
   font-size: 0.6rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .checklist-section h3 {

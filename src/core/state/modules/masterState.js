@@ -6,7 +6,7 @@ import {PasswordResetStateModel} from "@/core/models/internal/passwordResetState
 import {SignupStateModel} from "@/core/models/internal/signupStateModel.js";
 import {i18n} from '@/main.js';
 import * as masterService from "@/core/services/masterService.js";
-import {ErrorMessageModel} from "@/core/models/internal/ErrorMessageModel.js";
+import {ErrorMessageModel} from "@/core/models/internal/errorMessageModel.js";
 import store from "@/core/state/store.js";
 
 

@@ -316,7 +316,7 @@ function createSoftVolume(bufferGeom, material) {
   );
 
   const sbConfig = volumeSoftBody.get_m_cfg();
-  sbConfig.set_viterations(1);
+  sbConfig.set_viterations(10);
   sbConfig.set_piterations(20);
 
   //sbConfig.set_kVC(0.1);  // Фактор сохранения объема
@@ -335,7 +335,7 @@ function createSoftVolume(bufferGeom, material) {
   //volumeSoftBody.get_m_materials().at(0).set_m_kLST(1);
   //volumeSoftBody.get_m_materials().at(0).set_m_kAST(1);
 
-  volumeSoftBody.setTotalMass(10, false);
+  volumeSoftBody.setTotalMass(100, false);
 
   // Set node masses to zero to immobilize
   const nodes = volumeSoftBody.get_m_nodes();

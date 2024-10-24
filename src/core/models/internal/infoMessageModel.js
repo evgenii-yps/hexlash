@@ -1,7 +1,7 @@
 export class InfoMessageModel {
     constructor({
                     text = '',
-                    timeout = 2000,
+                    timeout = 5000,
                     showButton = false
                 } = {}) {
         this.text = text;

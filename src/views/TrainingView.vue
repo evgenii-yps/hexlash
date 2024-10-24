@@ -390,7 +390,7 @@ onUnmounted(() => {
   display: block;
   position: relative;
   height: 50px;
-  padding-bottom: 50px;
+  padding-bottom: 150px;
 }
 
 .circle-container {
