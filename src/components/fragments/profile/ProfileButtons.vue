@@ -42,7 +42,7 @@
       </VBtnDark>
     </div>
 
-    <VBtnDark
+    <VBtnDark v-if="!isTelegram"
         class="profile-btn"
         @click="navigateTo('Wallet')">
       <template #prepend>
@@ -114,6 +114,7 @@ const showToolTip = ref(false);
 const dialogCreate = ref(false);
 const dialogExit = ref(false);
 
+const isTelegram = computed(() => store.getters['master/getIsTelegram']);
 
 const navigateTo = (route) => {
   router.push({name: route});

@@ -13,7 +13,7 @@
 
         <div v-else>
 
-          <div v-if="route.path.includes('/profile/wallet') && !isTelegram">
+          <div v-if="route.path.includes('/profile/wallet')">
             <ProfileWallet/>
           </div>
           <div v-else-if="route.path.includes('/profile/account')">
@@ -70,7 +70,6 @@ const isprod = __IS_PROD__;
 const route = useRoute();
 
 const master = computed(() => store.getters['master/getMaster']);
-const isTelegram = computed(() => store.getters['master/getIsTelegram']);
 const userData = ref(null);
 const isOwner = ref(false);
 const loading = ref(true);  // Флаг загрузки
