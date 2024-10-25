@@ -13,7 +13,7 @@
 
         <div v-else>
 
-          <div v-if="route.path.includes('/profile/wallet')">
+          <div v-if="route.path.includes('/profile/wallet') && !isTelegram">
             <ProfileWallet/>
           </div>
           <div v-else-if="route.path.includes('/profile/account')">
@@ -62,7 +62,6 @@ import ProfileInvite from "@/components/fragments/profile/ProfileInvite.vue";
 import ProfileAvatar from "@/components/fragments/profile/ProfileAvatar.vue";
 import UserName from "@/components/fragments/profile/UserName.vue";
 import UserAvatar from "@/components/fragments/profile/UserAvatar.vue";
-import {formatNumber} from "@/core/constants.js";
 
 const version = __APP_VERSION__;
 const isprod = __IS_PROD__;
@@ -71,6 +70,7 @@ const isprod = __IS_PROD__;
 const route = useRoute();
 
 const master = computed(() => store.getters['master/getMaster']);
+const isTelegram = computed(() => store.getters['master/getIsTelegram']);
 const userData = ref(null);
 const isOwner = ref(false);
 const loading = ref(true);  // Флаг загрузки
@@ -211,6 +211,6 @@ const handleScroll = (event) => {
   font-size: 10px;
   color: rgba(255, 255, 255, 0.7);
   display: flex;
-  margin-top: 10px;
+  margin-top: 20px;
 }
 </style>

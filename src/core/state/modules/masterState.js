@@ -7,7 +7,6 @@ import {SignupStateModel} from "@/core/models/internal/signupStateModel.js";
 import {i18n} from '@/main.js';
 import * as masterService from "@/core/services/masterService.js";
 import {ErrorMessageModel} from "@/core/models/internal/errorMessageModel.js";
-import store from "@/core/state/store.js";
 
 
 const state = {
@@ -18,6 +17,7 @@ const state = {
     resetState: new PasswordResetStateModel(),
     infoMessage: new InfoMessageModel(),
     errorMessage: new ErrorMessageModel(),
+    isTelegram: false
 };
 
 const getters = {
@@ -33,6 +33,9 @@ const getters = {
     getErrorMessage(state) {
         return state.errorMessage;
     },
+    getIsTelegram(state) {
+        return state.isTelegram;
+    }
 };
 
 const mutations = {
@@ -90,6 +93,9 @@ const mutations = {
     },
     clearResetState: (state) => {
         state.resetState = PasswordResetStateModel.Reset();
+    },
+    setIsTelegram: (state, isTelegram) => {
+        state.telegram = isTelegram;
     }
 };
 
