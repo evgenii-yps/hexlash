@@ -401,6 +401,8 @@ onUnmounted(() => {
   left: 50%;
   transform: translateX(-50%);
   border-radius: 20%;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 

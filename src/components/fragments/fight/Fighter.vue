@@ -251,6 +251,8 @@ watch(isMoveCircles, (newVal) => {
   position: relative;
   width: 30px;
   height: 30px;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .pulsing-circle {
