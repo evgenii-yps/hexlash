@@ -30,6 +30,9 @@ export default defineConfig(({mode}) => {
     };
     const wsServer = wsServers[mode] || wsServers.test;
 
+    const isProd = mode === 'prod';
+
+    console.log(isProd ? "Production mode" : "Test mode");
     console.log(apiServer + " current api server");
     console.log(wsServer + " current ws server");
 
@@ -77,6 +80,7 @@ export default defineConfig(({mode}) => {
                 __APP_VERSION__: JSON.stringify(version),
                 __API_SERVER_URL__: JSON.stringify(apiServer),
                 __WEB_SOCKET_URL__: JSON.stringify(wsServer),
+                __IS_PROD__: JSON.stringify(isProd),
             },
         assetsInclude: ['**/*.glb', '**/*.gltf', '**/*.bin', '**/*.wasm'],
         resolve:

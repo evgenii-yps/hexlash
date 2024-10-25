@@ -37,6 +37,7 @@
             <div v-if="isOwner">
               <ProfileInvite/>
               <ProfileButtons/>
+              <div class="beta-text">{{ isprod ? 'Prod' : 'Test' }} beta - {{version}} </div>
               <div class="scroll-gap"/>
             </div>
           </div>
@@ -62,6 +63,10 @@ import ProfileAvatar from "@/components/fragments/profile/ProfileAvatar.vue";
 import UserName from "@/components/fragments/profile/UserName.vue";
 import UserAvatar from "@/components/fragments/profile/UserAvatar.vue";
 import {formatNumber} from "@/core/constants.js";
+
+const version = __APP_VERSION__;
+const isprod = __IS_PROD__;
+
 
 const route = useRoute();
 
@@ -198,5 +203,14 @@ const handleScroll = (event) => {
   align-items: center;
   display: flex;
   justify-content: center;
+}
+
+.beta-text {
+  position: relative;
+  left: 20px;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.7);
+  display: flex;
+  margin-top: 10px;
 }
 </style>

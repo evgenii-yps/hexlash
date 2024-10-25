@@ -262,7 +262,7 @@ const formattedMembers = computed(() => {
   padding: 10vh 0;
   box-sizing: border-box;
   max-width: 1024px;
-  margin: 0 auto;
+  margin: 0 auto 100px;
 }
 
 .loader-container {
