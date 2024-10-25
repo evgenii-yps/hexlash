@@ -174,13 +174,6 @@ const handleOnlineStatus = () => {
 onMounted(() => {
 
   if (window.Telegram && window.Telegram.WebApp) {
-
-    const urlParams = new URLSearchParams(window.location.search);
-    // Проверяем наличие параметров, которые Telegram передает мини-приложениям
-    if (urlParams.has('tgWebApp') || urlParams.has('tg_auth')) {
-      store.commit('master/setIsTelegram', true);
-    }
-
     window.Telegram.WebApp.expand(); // Развернуть на весь экран
     window.Telegram.WebApp.disableVerticalSwipes();
   }

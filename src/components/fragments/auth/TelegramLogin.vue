@@ -67,6 +67,12 @@ const initTelegramWebApp = () => {
 
     const initDataUnsafe = window.Telegram.WebApp.initDataUnsafe;
 
+
+    if (initDataUnsafe) {
+      store.commit('master/setIsTelegram', true);
+    }
+
+
     const url = new URL(window.location.href);
     if(url.searchParams.get('invite')) {
       inviteCode.value = url.searchParams.get('invite');
