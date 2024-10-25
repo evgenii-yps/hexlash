@@ -61,7 +61,7 @@ export function getPreviousRoute() {
     if (routeHistory.length >= 1) {
         return routeHistory[routeHistory.length - 1].name; // Возвращаем предпоследний маршрут
     } else {
-        return 'Home'; // Если нет достаточной истории, возвращаем на главную
+        return 'Home';
     }
 }
 

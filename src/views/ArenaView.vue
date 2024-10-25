@@ -28,10 +28,14 @@
 
         <div class="fight-button-wrapper">
           <div class="text">{{ txtStatus }}</div>
-          <VBtn :disabled="isDisableFight" v-if="!isWaitingFight" width="180" @click="startFight" size="large"
+          <div v-if="!isWaitingFight && isDisableFight" class="goto-training">{{ t('arena.lblGoToTraining') }} <span @click="btnTraining">{{ t('arena.btnGoToTraining') }}</span></div>
+
+          <VBtn v-if="!isWaitingFight && !isDisableFight" width="180" @click="startFight" size="large"
                 class="fight-btn">
             {{ t('arena.lblStartFight') }}
           </VBtn>
+
+
           <v-progress-circular
               v-if="isWaitingFight"
               class="loader"
@@ -58,6 +62,7 @@ import ActionSlider from "@/components/fragments/arena/ActionSlider.vue";
 import TimeSlider from "@/components/fragments/arena/TimeSlider.vue";
 import {showFightRulesReminder} from "@/core/services/masterService.js";
 import store from "@/core/state/store.js";
+import router from "@/router/index.js";
 
 const params = computed(() => {
   return store.getters['fight/getArenaSettings']();
@@ -97,6 +102,10 @@ const emit = defineEmits(['scroll']);
 const handleScroll = (event) => {
   emit('scroll', event.target.scrollTop);
 };
+
+const btnTraining = () => {
+    router.push("/training" )
+}
 
 onMounted(() => {
   store.dispatch("fight/setArenaSettings", params.value) // Запускаем со стартовыми параметрами
@@ -269,8 +278,23 @@ onMounted(() => {
 .scroll-gap {
   display: block;
   position: relative;
-  height: 100px;
+  height: 150px;
 
+}
+
+.goto-training{
+  color: white;
+  max-width: 220px;
+  text-align: center;
+  font-size: 0.8rem;
+  padding: 10px;
+  background-color: var(--black-opacity-80);
+  border-radius: 4px;
+}
+
+.goto-training span{
+  font-size: 1.5em;
+  color: var(--primary-color);
 }
 
 </style>

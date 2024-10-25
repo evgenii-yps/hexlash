@@ -201,7 +201,9 @@
     "lblStartFight": "Start fight",
     "lblTestResolve": "It's time to test your resolve",
     "lblSearchOpponent": "The search for a worthy opponent...",
-    "insufficientFunds": "No money, no honey."
+    "insufficientFunds": "No money, no honey.",
+    "lblGoToTraining": "First, you need to punch the bag or complete tasks in the",
+    "btnGoToTraining": "Training"
   },
   "club": {
     "lblClubMembers": "{n} members",
