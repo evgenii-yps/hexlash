@@ -201,7 +201,9 @@
     "lblStartFight": "开始战斗",
     "lblTestResolve": "是时候测试您的决心了",
     "lblSearchOpponent": "寻找值得的对手...",
-    "insufficientFunds": "没钱，没甜头。"
+    "insufficientFunds": "没钱，没甜头。",
+    "lblGoToTraining": "首先，你需要打沙袋或在",
+    "btnGoToTraining": "训练"
   },
   "club": {
     "lblClubMembers": "{n} 名成员",

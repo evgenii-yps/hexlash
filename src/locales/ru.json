@@ -201,7 +201,9 @@
     "lblStartFight": "Начать бой",
     "lblTestResolve": "Время испытать твою решимость",
     "lblSearchOpponent": "Поиск достойного противника...",
-    "insufficientFunds": "Без денег нет веселья."
+    "insufficientFunds": "Без денег нет веселья.",
+    "lblGoToTraining": "Сначала вам нужно ударить по мешку или выполнить задания в",
+    "btnGoToTraining": "Тренировке"
   },
   "club": {
     "lblClubMembers": "нет участников | {n} участник | {n} участника | {n} участников",

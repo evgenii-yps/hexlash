@@ -201,7 +201,9 @@
     "lblStartFight": "試合を開始",
     "lblTestResolve": "決意を試す時が来た",
     "lblSearchOpponent": "適切な相手を探しています...",
-    "insufficientFunds": "お金がないと、何も得られない。"
+    "insufficientFunds": "お金がないと、何も得られない。",
+    "lblGoToTraining": "まず、バッグをパンチするか、タスクを完了する必要があります",
+    "btnGoToTraining": "トレーニング"
   },
   "club": {
     "lblClubMembers": "{n} 人のメンバー",

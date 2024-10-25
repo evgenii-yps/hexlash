@@ -201,7 +201,9 @@
     "lblStartFight": "लड़ाई शुरू करें",
     "lblTestResolve": "आपकी हिम्मत की परीक्षा का समय है",
     "lblSearchOpponent": "योग्य प्रतिद्वंद्वी की खोज...",
-    "insufficientFunds": "पैसा नहीं, तो मिठाई नहीं।"
+    "insufficientFunds": "पैसा नहीं, तो मिठाई नहीं।",
+    "lblGoToTraining": "पहले, आपको बैग को पंच करना होगा या में कार्य पूरे करने होंगे",
+    "btnGoToTraining": "प्रशिक्षण"
   },
   "club": {
     "lblClubMembers": "{n} सदस्य",

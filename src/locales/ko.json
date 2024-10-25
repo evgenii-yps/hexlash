@@ -201,7 +201,9 @@
     "lblStartFight": "전투 시작",
     "lblTestResolve": "당신의 결단력을 시험할 시간입니다",
     "lblSearchOpponent": "적합한 상대를 찾는 중...",
-    "insufficientFunds": "돈 없으면 꿀도 없습니다."
+    "insufficientFunds": "돈 없으면 꿀도 없습니다.",
+    "lblGoToTraining": "먼저, 주먹으로 치거나 작업을 완료해야 합니다",
+    "btnGoToTraining": "훈련"
   },
   "club": {
     "lblClubMembers": "{n} 명의 회원",

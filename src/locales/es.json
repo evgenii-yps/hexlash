@@ -201,7 +201,9 @@
     "lblStartFight": "Iniciar pelea",
     "lblTestResolve": "Es hora de poner a prueba tu resolución",
     "lblSearchOpponent": "Buscando un oponente digno...",
-    "insufficientFunds": "Sin dinero, no hay amor."
+    "insufficientFunds": "Sin dinero, no hay amor.",
+    "lblGoToTraining": "Primero, debes golpear el saco o completar tareas en el",
+    "btnGoToTraining": "Entrenamiento"
   },
   "club": {
     "lblClubMembers": "sin miembros | un miembro | {n} miembros",

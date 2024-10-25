@@ -201,7 +201,9 @@
     "lblStartFight": "Kampf starten",
     "lblTestResolve": "Es ist Zeit, deine Entschlossenheit zu testen",
     "lblSearchOpponent": "Die Suche nach einem würdigen Gegner...",
-    "insufficientFunds": "Kein Geld, kein Honig."
+    "insufficientFunds": "Kein Geld, kein Honig.",
+    "lblGoToTraining": "Zuerst musst du den Sack schlagen oder Aufgaben im",
+    "btnGoToTraining": "Training"
   },
   "club": {
     "lblClubMembers": "{n} Mitglieder",

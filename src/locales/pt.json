@@ -201,7 +201,9 @@
     "lblStartFight": "Iniciar luta",
     "lblTestResolve": "É hora de testar sua determinação",
     "lblSearchOpponent": "Procurando um oponente digno...",
-    "insufficientFunds": "Sem dinheiro, sem mel."
+    "insufficientFunds": "Sem dinheiro, sem mel.",
+    "lblGoToTraining": "Primeiro, você precisa socar o saco ou completar tarefas no",
+    "btnGoToTraining": "Treinamento"
   },
   "club": {
     "lblClubMembers": "{n} membros",

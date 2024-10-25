@@ -290,6 +290,7 @@ onMounted(() => {
   padding: 10px;
   background-color: var(--black-opacity-80);
   border-radius: 4px;
+  line-height: 1.2;
 }
 
 .goto-training span{

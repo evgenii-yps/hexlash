@@ -201,7 +201,9 @@
     "lblStartFight": "ابدأ القتال",
     "lblTestResolve": "حان الوقت لاختبار عزيمتك",
     "lblSearchOpponent": "البحث عن خصم جدير...",
-    "insufficientFunds": "لا أموال، لا عسل."
+    "insufficientFunds": "لا أموال، لا عسل.",
+    "lblGoToTraining": "أولاً، عليك ضرب الحقيبة أو إكمال المهام في",
+    "btnGoToTraining": "التدريب"
   },
   "club": {
     "lblClubMembers": "{n} عضو",

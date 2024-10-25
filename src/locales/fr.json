@@ -201,7 +201,9 @@
     "lblStartFight": "Au combat",
     "lblTestResolve": "Testez votre détermination",
     "lblSearchOpponent": "Recherche d'adversaire...",
-    "insufficientFunds": "Pas d'argent, pas de combat."
+    "insufficientFunds": "Pas d'argent, pas de combat.",
+    "lblGoToTraining": "D'abord, vous devez frapper le sac ou accomplir des tâches dans l'",
+    "btnGoToTraining": "Entraînement"
   },
   "club": {
     "lblClubMembers": "{n} membres",
