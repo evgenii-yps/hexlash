@@ -199,7 +199,8 @@ const btnToJoin = () => {
 const confirmExit = () => {
   dialogChangeClub.value = false;
 
-  // TODO Exit
+  store.dispatch('club/changeClub', clubData.value.id);
+
 }
 
 

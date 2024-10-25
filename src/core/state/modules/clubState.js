@@ -104,11 +104,21 @@ const actions = {
             throw error;
         }
     },
+    async changeClub({commit}, clubId) {
+        try {
+            const newClubModel = await clubService.changeClub(clubId);
+            await store.dispatch('master/updateMaster', {clubId: newClubModel.id});
+
+            await store.dispatch('club/loadClubById', newClubModel.id);
+
+        } catch (error) {
+            console.error('Failed to change club data:', error);
+            throw error;
+        }
+    },
     async createClub({commit}, newClubData) {
         try {
-
             const newClubModel = await clubService.createClub(newClubData);
-
             await store.dispatch('master/updateMaster', {clubId: newClubModel.id});
 
             return newClubModel;

@@ -91,6 +91,22 @@ export const createClub = async (clubData) => {
 };
 
 
+export const changeClub = async (clubId) => {
+    try {
+
+        const response = await apiClient.post(`/club/change`, clubId, { authRequired: true });
+
+        const newClubClubModel = ClubModel.fromJSON(response.data);
+        await updateClubToLocalDB(newClubClubModel);
+        store.commit('club/setClub', newClubClubModel);
+
+        return newClubClubModel;
+    } catch (error) {
+        throw new Error('Failed to create club: ' + (error.response?.data?.error || error.message));
+    }
+};
+
+
 export const searchClubs = async ({ name = '', sortBy = 'battles', page = 0, size = 10, sortDirection = 'DESC' }) => {
     try {
         const response = await apiClient.get('/club/search', {

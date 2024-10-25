@@ -151,8 +151,6 @@ const actions = {
             // Выключаем индикатор загрузки для покупки
             commit('setLoaderPurchaseTransaction', false);
 
-            // TODO update balance send to server for check
-
             commit('setTransactionSuccess', true);
 
         } catch (error) {
