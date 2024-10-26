@@ -211,5 +211,6 @@ const handleScroll = (event) => {
   color: rgba(255, 255, 255, 0.7);
   display: flex;
   margin-top: 20px;
+  width:150px;
 }
 </style>
