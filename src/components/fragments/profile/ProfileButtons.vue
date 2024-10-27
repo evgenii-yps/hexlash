@@ -101,6 +101,7 @@ import store from "@/core/state/store.js";
 import CreateClub from "@/components/fragments/club/CreateClub.vue";
 import {COST_CREATE_CLUB} from "@/core/constants.js";
 import {useI18n} from "vue-i18n";
+import * as masterService from "@/core/services/masterService.js";
 const { t } = useI18n({ useScope: 'global' })
 
 const master = computed(() => store.getters['master/getMaster']);
@@ -114,7 +115,7 @@ const showToolTip = ref(false);
 const dialogCreate = ref(false);
 const dialogExit = ref(false);
 
-const isTelegram = computed(() => store.getters['master/getIsTelegram']);
+const isTelegram = ref(false);
 
 const navigateTo = (route) => {
   router.push({name: route});
@@ -142,6 +143,9 @@ const logout = () => {
 }
 
 onMounted(async () => {
+
+  isTelegram.value = masterService.getTelegram();
+
   if (clubId.value) {
     const data = await store.dispatch('club/getClubById', clubId.value);
     if (data) {

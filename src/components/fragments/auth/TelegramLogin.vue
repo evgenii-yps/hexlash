@@ -67,11 +67,7 @@ const initTelegramWebApp = () => {
 
     const initDataUnsafe = window.Telegram.WebApp.initDataUnsafe;
 
-
-    if (initDataUnsafe) {
-      store.commit('master/setIsTelegram', true);
-    }
-
+    store.dispatch('master/saveTelegramFlag');
 
     const url = new URL(window.location.href);
     if(url.searchParams.get('invite')) {

@@ -321,3 +321,15 @@ export const updateJwtToken = (jwtToken) => {
     const KEY = 'jwtToken';
     localStorage.setItem(KEY, jwtToken);
 };
+
+
+export const getTelegram = () => {
+    const KEY = 'isTelegramMiniApp';
+    return localStorage.getItem(KEY) || false;
+};
+
+export const setTelegram = () => {
+    store.commit('master/setIsTelegram', true);
+    const KEY = 'isTelegramMiniApp';
+    localStorage.setItem(KEY, true);
+};
