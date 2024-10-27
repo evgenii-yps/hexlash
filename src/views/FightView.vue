@@ -471,6 +471,7 @@ const handleScroll = (event) => {
   color: white;
   height: 100vh;
   overflow-y: auto;
+  overflow-x: hidden;
   max-height: 100vh;
   -webkit-overflow-scrolling: auto; /* Отключить резиновый скролл*/
   overscroll-behavior-y: none;
