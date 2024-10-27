@@ -69,12 +69,14 @@ const setCurrentComponent = () => {
 
 // Функция для обработки изменения видимости страницы
 const handleVisibilityChange = () => {
-  if (document.hidden) {
-    // Останавливаем звук, если вкладка не активна
-    soundRain.pause();
-  } else {
-    // Включаем звук, если вкладка снова активна
-    soundRain.play();
+  if (soundRain) {
+    if (document.hidden) {
+      // Останавливаем звук, если вкладка не активна
+      soundRain.pause();
+    } else {
+      // Включаем звук, если вкладка снова активна
+      soundRain.play();
+    }
   }
 };
 
@@ -98,7 +100,7 @@ import * as kokomi from 'kokomi.js'
 import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader'
 import {BloomEffect, EffectComposer, EffectPass, RenderPass, FXAAEffect} from 'postprocessing'
 import {RectAreaLightUniformsLib} from 'three/addons/lights/RectAreaLightUniformsLib.js'
-import {Howl} from 'howler'
+//import {Howl} from 'howler'
 import gsap from 'gsap'
 import {
   computed,
@@ -122,7 +124,7 @@ import shutterGlossiness from '@/assets/textures/door/shutter-Glossiness.webp';
 import shutterNormal from '@/assets/textures/door/shutter-Normal.webp';
 import topCoverDiffuse from '@/assets/textures/door/top-cover-Diffuse.webp';
 import sideCoverDiffuse from '@/assets/textures/door/side-cover-Diffuse.webp';
-import rainSound from '@/assets/sound/rain.mp3';
+//import rainSound from '@/assets/sound/rain.mp3';
 import sceneModel from '@/assets/models/scene.glb';
 import store from "@/core/state/store.js";
 import {LISTING} from "@/core/constants.js";
@@ -763,12 +765,12 @@ class Sketch extends kokomi.Base {
 
       console.log("ready scene");
 
-      soundRain = new Howl({
-        src: [rainSound],
-        loop: true,
-        autoplay: true,
-        rate: config.soundRate
-      })
+      // soundRain = new Howl({
+      //   src: [rainSound],
+      //   loop: true,
+      //   autoplay: true,
+      //   rate: config.soundRate
+      // })
 
       // lights
       const pointLight1 = new THREE.PointLight("#81C8F2", 0.5, 17, 0.8)
@@ -1000,7 +1002,7 @@ class Sketch extends kokomi.Base {
             cameraZOffset: 10,
             soundRate: 1,
             onUpdate: () => {
-              if(soundRain) {
+              if (soundRain) {
                 soundRain.rate(config.soundRate)
               }
             }
@@ -1134,7 +1136,7 @@ watch(isAuthenticated, (newValue) => {
     masterService.isShowPrivacyInfo(t('info.showPrivacyInfo'));
     store.dispatch('master/initGetStarted');
   }
-}, {immediate:true});
+}, {immediate: true});
 
 
 </script>
@@ -1199,10 +1201,10 @@ watch(isAuthenticated, (newValue) => {
 }
 
 .text-pages-link {
- /* position: absolute;
-  top: 10%;
-  left: 50%;
-  transform: translateX(-50%);*/
+  /* position: absolute;
+   top: 10%;
+   left: 50%;
+   transform: translateX(-50%);*/
   display: flex;
   justify-content: center;
   flex-direction: row;
@@ -1215,7 +1217,7 @@ watch(isAuthenticated, (newValue) => {
   font-family: 'Anonymous', sans-serif;
   color: white;
   font-size: 2em;
-/*  background: rgba(51, 51, 51, 0.8);*/
+  /*  background: rgba(51, 51, 51, 0.8);*/
   background: var(--black-opacity-80);
   padding: 10px 20px;
   text-align: center;
