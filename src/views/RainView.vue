@@ -563,7 +563,7 @@ class Rain extends kokomi.Component {
   constructor(base, config = {}) {
     super(base);
 
-    const {count = 1000, speed = 1.5, debug = false} = config;
+    const {count = 800, speed = 1.5, debug = false} = config;
 
     const am = this.base.am;
 
@@ -693,7 +693,7 @@ class Sketch extends kokomi.Base {
 
     // config
     const config = {
-      rainCount: 700,
+      rainCount: 600,
       slowMoFactor: 1,
       rainSpeed: 1.5,
       debug: false,
