@@ -260,6 +260,12 @@ const saveChanges = async () => {
       language: currentLocale
     });
     hide();
+
+
+    // Amplitude
+    window.amplitude.setUserId(login.value);
+    window.amplitude.logEvent('Signup');
+
   } catch (error) {
     resultMessage.value = error;
   } finally {

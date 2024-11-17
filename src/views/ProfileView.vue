@@ -120,6 +120,11 @@ const handleScroll = (event) => {
   emit('scroll', event.target.scrollTop);
 };
 
+onMounted(() => {
+  // Amplitude
+  window.amplitude.logEvent('OpenProfileView');
+})
+
 </script>
 
 

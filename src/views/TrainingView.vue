@@ -285,6 +285,9 @@ onMounted(() => {
   }, 10000);
   // Показать пояснение что это за раздел
   showTrainingRulesReminder(t("info.firstTraining"));
+
+  // Amplitude
+  window.amplitude.logEvent('OpenTrainingView');
 })
 
 

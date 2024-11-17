@@ -201,6 +201,9 @@ const confirmExit = () => {
 
   store.dispatch('club/changeClub', clubData.value.id);
 
+  // Amplitude
+  window.amplitude.logEvent('ChangeClub', clubData.value.id);
+
 }
 
 

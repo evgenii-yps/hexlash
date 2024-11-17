@@ -46,6 +46,10 @@ const verifyEmail = async () => {
   loading.value = true;
   try {
     await store.dispatch('master/sendVerifyEmail', {code});
+
+    // Amplitude
+    window.amplitude.logEvent('VerifyEmail');
+
     success.value = true;
   } catch (err) {
     error.value = true;

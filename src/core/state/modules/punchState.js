@@ -54,8 +54,10 @@ const actions = {
                     totalValue = state.punchInfo.punchAmountMaxPerBatch
                 }
 
-
                 await punchService.sendPunchBatch(state.punchInfo, totalValue, state.batchHitPunchCount);
+
+                // Amplitude
+                window.amplitude.logEvent('SendPunch', state.punchInfo);
             }
 
             // Очищаем массив

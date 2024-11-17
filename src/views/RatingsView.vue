@@ -418,6 +418,10 @@ const updateQueryParams = () => {
 onMounted(() => {
   store.commit('club/resetClubRatings');
   store.commit('user/resetParticipantRatings');
+
+  // Amplitude
+  window.amplitude.logEvent('OpenRatingsView');
+
 })
 
 </script>

@@ -58,6 +58,9 @@ const completeTask = () => {
   emit('complete', props.task.id);
   emit('close');
   isOpenLink.value = false;
+
+  // Amplitude
+  window.amplitude.logEvent('CompleteSubscribeTask', props.task.category);
 };
 
 </script>
