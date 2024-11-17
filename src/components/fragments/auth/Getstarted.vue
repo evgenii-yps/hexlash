@@ -123,7 +123,7 @@ import {useI18n} from "vue-i18n";
 import iconShow from "@/assets/images/icon_show.svg";
 import iconHide from "@/assets/images/icon_hide.svg";
 import store from "@/core/state/store.js";
-import {ampli} from "@/amplitude.js";
+import * as amplitude from "@amplitude/analytics-browser";
 
 const {t, locale} = useI18n({useScope: 'global'});
 
@@ -264,8 +264,8 @@ const saveChanges = async () => {
 
 
     // Amplitude
-    ampli.setUserId(login.value);
-    ampli.logEvent('Signup');
+    amplitude.setUserId(login.value);
+    amplitude.track('Signup');
 
   } catch (error) {
     resultMessage.value = error;

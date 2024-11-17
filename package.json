@@ -1,6 +1,6 @@
 {
   "name": "fightclub",
-  "version": "0.0.137",
+  "version": "0.0.138",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,10 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@amplitude/analytics-browser": "^2.11.9",
     "@coinbase/wallet-sdk": "^4.1.0",
     "@vueuse/core": "^11.1.0",
     "@web3modal/ethers": "^5.1.11",
-    "amplitude-js": "^8.21.9",
     "axios": "^1.7.7",
     "debounce": "^2.2.0",
     "ethers": "^6.13.4",

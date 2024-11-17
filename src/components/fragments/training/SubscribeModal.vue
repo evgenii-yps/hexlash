@@ -22,6 +22,7 @@
 import {ref, computed} from 'vue';
 import router from "@/router/index.js";
 import {useI18n} from "vue-i18n";
+import * as amplitude from "@amplitude/analytics-browser";
 
 const dialog = ref(false);
 const emit = defineEmits(['close', 'complete']);
@@ -60,7 +61,7 @@ const completeTask = () => {
   isOpenLink.value = false;
 
   // Amplitude
-  ampli.logEvent('CompleteSubscribeTask', props.task.category);
+  amplitude.track('CompleteSubscribeTask', props.task.category);
 };
 
 </script>

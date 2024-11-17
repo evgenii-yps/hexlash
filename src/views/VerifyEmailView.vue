@@ -26,7 +26,7 @@
 import {ref, onBeforeMount, onMounted} from 'vue';
 import {useRoute} from 'vue-router';
 import store from '@/core/state/store.js';
-import {ampli} from "@/amplitude.js";
+import * as amplitude from "@amplitude/analytics-browser";
 
 const route = useRoute();
 const loading = ref(true);
@@ -49,7 +49,7 @@ const verifyEmail = async () => {
     await store.dispatch('master/sendVerifyEmail', {code});
 
     // Amplitude
-    ampli.logEvent('VerifyEmail');
+    amplitude.track('VerifyEmail');
 
     success.value = true;
   } catch (err) {

@@ -86,7 +86,7 @@ import {useI18n} from "vue-i18n";
 import Punch3D from "@/components/fragments/training/Punch3D.vue";
 import {Howl} from "howler";
 import {showTrainingRulesReminder} from "@/core/services/masterService.js";
-import {ampli} from "@/amplitude.js";
+import * as amplitude from "@amplitude/analytics-browser";
 
 const {t} = useI18n({useScope: 'global'})
 
@@ -288,7 +288,7 @@ onMounted(() => {
   showTrainingRulesReminder(t("info.firstTraining"));
 
   // Amplitude
-  ampli.logEvent('OpenTrainingView');
+  amplitude.track('OpenTrainingView');
 })
 
 

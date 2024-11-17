@@ -1,7 +1,7 @@
 import {BATCH_SEND_INTERVAL_MS, DECIMALS} from "@/core/constants.js";
 import * as punchService from "@/core/services/punchService.js";
 import store from "@/core/state/store.js";
-import {ampli} from "@/amplitude.js";
+import * as amplitude from "@amplitude/analytics-browser";
 
 
 const state = {
@@ -58,7 +58,7 @@ const actions = {
                 await punchService.sendPunchBatch(state.punchInfo, totalValue, state.batchHitPunchCount);
 
                 // Amplitude
-                ampli.logEvent('SendPunch', state.punchInfo);
+                amplitude.track('SendPunch', state.punchInfo);
             }
 
             // Очищаем массив

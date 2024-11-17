@@ -2,6 +2,7 @@ import * as fightService from "@/core/services/fightService.js";
 import {i18n} from "@/main.js";
 import router from "@/router/index.js";
 import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
+import * as amplitude from "@amplitude/analytics-browser";
 
 const state = {
     arenaSettings: {bet: 10, actions: 5, time: 10, isDisableFight: false},
@@ -93,7 +94,7 @@ const actions = {
             await fightService.sendFightRequest(state.arenaSettings)
 
             // Amplitude
-            ampli.logEvent('StartFight', state.arenaSettings);
+            amplitude.track('StartFight', state.arenaSettings);
 
         } catch (error) {
             commit("setMsgStatus", error);

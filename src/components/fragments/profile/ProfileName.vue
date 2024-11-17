@@ -24,6 +24,7 @@
 import {ref, nextTick, watch} from 'vue';
 import store from "@/core/state/store.js";
 import {useI18n} from "vue-i18n";
+import * as amplitude from "@amplitude/analytics-browser";
 const { t } = useI18n({ useScope: 'global' })
 
 const userName = ref(null);
@@ -42,7 +43,7 @@ const saveName = () => {
   store.dispatch('master/updateMaster', {name: userName.value});
 
   // Amplitude
-  ampli.logEvent('EditName');
+  amplitude.track('EditName');
 };
 
 watch(store.getters['master/getMaster'], (newMaster) => {

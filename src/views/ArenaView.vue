@@ -63,6 +63,7 @@ import TimeSlider from "@/components/fragments/arena/TimeSlider.vue";
 import {showFightRulesReminder} from "@/core/services/masterService.js";
 import store from "@/core/state/store.js";
 import router from "@/router/index.js";
+import * as amplitude from "@amplitude/analytics-browser";
 
 const params = computed(() => {
   return store.getters['fight/getArenaSettings']();
@@ -111,7 +112,7 @@ onMounted(() => {
   store.dispatch("fight/setArenaSettings", params.value) // Запускаем со стартовыми параметрами
 
   // Amplitude
-  ampli.logEvent('OpenArenaView');
+  amplitude.track('OpenArenaView');
 })
 
 </script>

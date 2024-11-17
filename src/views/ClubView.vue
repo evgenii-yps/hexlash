@@ -127,7 +127,7 @@ import ClubWithdraw from "@/components/fragments/club/ClubWithdraw.vue";
 import ClubEdit from "@/components/fragments/club/ClubEdit.vue";
 import ClubOwnerAvatar from "@/components/fragments/club/ClubOwnerAvatar.vue";
 import {formatNumber} from "@/core/constants.js";
-import {ampli} from "@/amplitude.js";
+import * as amplitude from "@amplitude/analytics-browser";
 
 
 const {t} = useI18n({useScope: 'global'})
@@ -203,7 +203,7 @@ const confirmExit = () => {
   store.dispatch('club/changeClub', clubData.value.id);
 
   // Amplitude
-  ampli.logEvent('ChangeClub', clubData.value.id);
+  amplitude.track('ChangeClub', clubData.value.id);
 
 }
 

@@ -49,6 +49,7 @@ import NoConnection from "@/components/ui/NoConnection.vue";
 import Error from "@/components/Error.vue";
 import FindFight from "@/components/FindFight.vue";
 import NewAchievement from "@/components/NewAchievement.vue";
+import * as amplitude from "@amplitude/analytics-browser";
 
 
 
@@ -182,6 +183,9 @@ onMounted(() => {
 
   document.addEventListener('visibilitychange', handleVisibilityChange);
   window.addEventListener('online', handleOnlineStatus);
+
+
+  amplitude.init('b8821737459f00f1058fd8ede71459fe', {"autocapture":true});
 
 })
 

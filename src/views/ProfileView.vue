@@ -62,7 +62,7 @@ import ProfileInvite from "@/components/fragments/profile/ProfileInvite.vue";
 import ProfileAvatar from "@/components/fragments/profile/ProfileAvatar.vue";
 import UserName from "@/components/fragments/profile/UserName.vue";
 import UserAvatar from "@/components/fragments/profile/UserAvatar.vue";
-import {ampli} from "@/amplitude.js";
+import * as amplitude from "@amplitude/analytics-browser";
 
 const version = __APP_VERSION__;
 const isprod = __IS_PROD__;
@@ -123,7 +123,7 @@ const handleScroll = (event) => {
 
 onMounted(() => {
   // Amplitude
-  ampli.logEvent('OpenProfileView');
+  amplitude.track('OpenProfileView');
 })
 
 </script>
