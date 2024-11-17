@@ -50,6 +50,8 @@ import Error from "@/components/Error.vue";
 import FindFight from "@/components/FindFight.vue";
 import NewAchievement from "@/components/NewAchievement.vue";
 
+
+
 const balance = computed(() => {
   const master = store.getters['master/getMaster'];
   if (master && master.userData) {

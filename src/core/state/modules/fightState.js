@@ -93,7 +93,7 @@ const actions = {
             await fightService.sendFightRequest(state.arenaSettings)
 
             // Amplitude
-            window.amplitude.logEvent('StartFight', state.arenaSettings);
+            ampli.logEvent('StartFight', state.arenaSettings);
 
         } catch (error) {
             commit("setMsgStatus", error);

@@ -42,7 +42,7 @@ const saveName = () => {
   store.dispatch('master/updateMaster', {name: userName.value});
 
   // Amplitude
-  window.amplitude.logEvent('EditName');
+  ampli.logEvent('EditName');
 };
 
 watch(store.getters['master/getMaster'], (newMaster) => {

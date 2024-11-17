@@ -206,6 +206,7 @@ import debounce from "debounce";
 import {useI18n} from "vue-i18n";
 import store from "@/core/state/store.js";
 import {formatNumber} from "@/core/constants.js";
+import {ampli} from "@/amplitude.js";
 
 const {t} = useI18n({useScope: 'global'})
 
@@ -420,7 +421,7 @@ onMounted(() => {
   store.commit('user/resetParticipantRatings');
 
   // Amplitude
-  window.amplitude.logEvent('OpenRatingsView');
+  ampli.logEvent('OpenRatingsView');
 
 })
 

@@ -60,7 +60,7 @@ const completeTask = () => {
   isOpenLink.value = false;
 
   // Amplitude
-  window.amplitude.logEvent('CompleteSubscribeTask', props.task.category);
+  ampli.logEvent('CompleteSubscribeTask', props.task.category);
 };
 
 </script>

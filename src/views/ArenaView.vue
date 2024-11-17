@@ -109,6 +109,9 @@ const btnTraining = () => {
 
 onMounted(() => {
   store.dispatch("fight/setArenaSettings", params.value) // Запускаем со стартовыми параметрами
+
+  // Amplitude
+  ampli.logEvent('OpenArenaView');
 })
 
 </script>

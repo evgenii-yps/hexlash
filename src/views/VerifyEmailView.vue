@@ -26,6 +26,7 @@
 import {ref, onBeforeMount, onMounted} from 'vue';
 import {useRoute} from 'vue-router';
 import store from '@/core/state/store.js';
+import {ampli} from "@/amplitude.js";
 
 const route = useRoute();
 const loading = ref(true);
@@ -48,7 +49,7 @@ const verifyEmail = async () => {
     await store.dispatch('master/sendVerifyEmail', {code});
 
     // Amplitude
-    window.amplitude.logEvent('VerifyEmail');
+    ampli.logEvent('VerifyEmail');
 
     success.value = true;
   } catch (err) {
