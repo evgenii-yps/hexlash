@@ -20,6 +20,7 @@ export default defineConfig(({mode}) => {
     const apiServers = {
        prod: 'https://api.bitfightclub.com',
         test: 'https://apitest.bitfightclub.com',
+        // test: 'http://localhost:8080',
 
     };
     const apiServer = apiServers[mode] || apiServers.test;
@@ -27,6 +28,7 @@ export default defineConfig(({mode}) => {
     const wsServers = {
         prod: 'wss://api.bitfightclub.com:444',
         test: 'wss://apitest.bitfightclub.com:444',
+        // test: 'ws://localhost:8444',
     };
     const wsServer = wsServers[mode] || wsServers.test;
 

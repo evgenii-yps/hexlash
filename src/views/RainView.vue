@@ -100,7 +100,7 @@ import * as kokomi from 'kokomi.js'
 import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader'
 import {BloomEffect, EffectComposer, EffectPass, RenderPass, FXAAEffect} from 'postprocessing'
 import {RectAreaLightUniformsLib} from 'three/addons/lights/RectAreaLightUniformsLib.js'
-//import {Howl} from 'howler'
+import {Howl} from 'howler'
 import gsap from 'gsap'
 import {
   computed,
@@ -124,7 +124,7 @@ import shutterGlossiness from '@/assets/textures/door/shutter-Glossiness.webp';
 import shutterNormal from '@/assets/textures/door/shutter-Normal.webp';
 import topCoverDiffuse from '@/assets/textures/door/top-cover-Diffuse.webp';
 import sideCoverDiffuse from '@/assets/textures/door/side-cover-Diffuse.webp';
-//import rainSound from '@/assets/sound/rain.mp3';
+import rainSound from '@/assets/sound/rain.mp3';
 import sceneModel from '@/assets/models/scene.glb';
 import store from "@/core/state/store.js";
 import {LISTING} from "@/core/constants.js";
@@ -765,12 +765,12 @@ class Sketch extends kokomi.Base {
 
       console.log("ready scene");
 
-      // soundRain = new Howl({
-      //   src: [rainSound],
-      //   loop: true,
-      //   autoplay: true,
-      //   rate: config.soundRate
-      // })
+      soundRain = new Howl({
+        src: [rainSound],
+        loop: true,
+        autoplay: true,
+        rate: config.soundRate
+      })
 
       // lights
       const pointLight1 = new THREE.PointLight("#81C8F2", 0.5, 17, 0.8)
