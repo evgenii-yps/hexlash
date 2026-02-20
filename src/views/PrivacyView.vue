@@ -13,8 +13,8 @@
     <div>&nbsp;</div>
     <div style="line-height:1.5;"><span
         style="color:rgb(89,89,89);font-size:15px;"><span>This Privacy Notice for&nbsp;<span
-        class="question">BitFightClub Inc.<span ></span> (doing business as <span
-        class="question">FightClub</span>)<span
+        class="question">Hexlash Inc.<span ></span> (doing business as <span
+        class="question">Hexlash</span>)<span
         class="statement-end-if-in-editor"></span>
   </span> (<span
         ></span>"<strong>we</strong>," "<strong>us</strong>," or "<strong>our</strong>"<span
@@ -25,8 +25,8 @@
     <ul>
       <li style="line-height:1.5;"><span style="color:rgb(89,89,89);font-size:15px;"><span
       >Visit our website<span ></span> at&nbsp;</span></span>
-        <span class="question"><a style="color:var(--primary-color);font-size:15px;" href="https://bitfightclub.com"
-                                  target="_blank">https://bitfightclub.com</a></span>
+        <span class="question"><a style="color:var(--primary-color);font-size:15px;" href="https://hexlash.com"
+                                  target="_blank">https://hexlash.com</a></span>
 
         <span
             class="statement-end-if-in-editor">, or any website of ours that links to this Privacy Notice</span>
@@ -52,7 +52,7 @@
         <div style="line-height:1.5;"><span style="color:rgb(127,127,127);font-size:15px;"><span
         ><strong>Questions or concerns?&nbsp;</strong>Reading this Privacy Notice will help you understand your privacy rights and choices. We are responsible for making decisions about how your personal information is processed. If you do not agree with our policies and practices, please do not use our Services.<span
             ></span> If you still have any questions or concerns, please contact us at <span
-            class="question">privacy@bitfightclub.com</span>.</span></span></div>
+            class="question">privacy@hexlash.com</span>.</span></span></div>
         <div style="line-height:1.5;">&nbsp;</div>
         <div style="line-height:1.5;">&nbsp;</div>
         <div style="line-height:1.5;"><span style="font-size:15px;"><span data-custom-class="heading_1"><strong>SUMMARY OF KEY POINTS</strong></span></span>
@@ -1066,7 +1066,7 @@
                                                                       >We do not knowingly collect, solicit data from, or market to children under 18 years of age, nor do we knowingly sell such personal information. By using the Services, you represent that you are at least 18 or that you are the parent or guardian of such a minor and consent to such minor dependent’s use of the Services. If we learn that personal information from users less than 18 years of age has been collected, we will deactivate the account and take reasonable measures to promptly delete such data from our records. If you become aware of any data we may have collected from children under age 18, please contact us at <span
                                                                           ></span>
         <span
-            class="question">privacy@bitfightclub.com</span>
+            class="question">privacy@hexlash.com</span>
         <span
             class="else-block"></span>.<span
                                                                             class="else-block">
@@ -1253,7 +1253,7 @@
                                                                       <div style="line-height:1.5;"><span
                                                                           style="font-size:15px;"><span
                                                                       >If you have questions or comments about your privacy rights, you may email us at <span
-                                                                          class="question">privacy@bitfightclub.com</span>.</span><span
+                                                                          class="question">privacy@hexlash.com</span>.</span><span
                                                                       ></span></span>
                                                                       </div>
                                                                       <div style="line-height:1.5;">&nbsp;</div>
@@ -2351,7 +2351,7 @@ We may also collect other personal information outside of these categories throu
            >Under certain US state data protection laws, if we decline to take action regarding your request, you may appeal our decision by emailing us at <span
                ></span>
 <span
-    class="question">privacy@bitfightclub.com</span>
+    class="question">privacy@hexlash.com</span>
 <span
     class="else-block"></span>. We will inform you in writing of any action taken or not taken in response to the appeal, including a written explanation of the reasons for the decisions. If your appeal is denied, you may submit a complaint to your state attorney general.
           </span>
@@ -2466,7 +2466,7 @@ We may also collect other personal information outside of these categories throu
     <span
         ></span>
 </span>email us at <span
-               class="question">privacy@bitfightclub.com or&nbsp;</span>
+               class="question">privacy@hexlash.com or&nbsp;</span>
 <span
     class="statement-end-if-in-editor">
     <span
@@ -2483,7 +2483,7 @@ We may also collect other personal information outside of these categories throu
                style="color:rgb(89,89,89);font-size:15px;"><span
            >
 <span
-    class="question">BitFightClub Inc.</span>
+    class="question">Hexlash Inc.</span>
 <span
     ></span>
           </span></span>

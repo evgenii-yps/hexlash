@@ -94,7 +94,7 @@
       "lblFCTokens": "tokens FC",
       "lblConnectWallet": "Conectar Carteira",
       "lblReconnectWallet": "Reconectar",
-      "msgConnectWalletTooltip": "Conecte sua carteira para comprar ou sacar tokens do Fight Club",
+      "msgConnectWalletTooltip": "Conecte sua carteira para comprar ou sacar tokens do Hexlash",
       "lblGameBalance": "SALDO DO JOGO",
       "lblWithdrawToWallet": "Sacar para a carteira",
       "lblConnectAnotherWallet": "Conectar outra carteira?",
@@ -176,7 +176,7 @@
     "invite": {
       "lblCopySuccess": "Código de convite copiado para a área de transferência",
       "lblCopyError": "Erro ao copiar texto {error}",
-      "lblTooltipText": "A primeira regra do Fight Club: conte a todos sobre o Fight Club. Lembre-se, este é o seu ingresso para a liberdade. Compartilhe essa liberdade com outros.",
+      "lblTooltipText": "A primeira regra do Hexlash: conte a todos sobre o Hexlash. Lembre-se, este é o seu ingresso para a liberdade. Compartilhe essa liberdade com outros.",
       "inviteFriend": "Convidar um amigo",
       "confirmInviteFriend": "Convidar um amigo pelo Telegram? Ele se juntará automaticamente ao seu clube se seguir o link. Você também pode dar o código pessoalmente, que ele pode inserir no site para se juntar dessa maneira.",
       "inviteText": "🏋 Olá! Junte-se ao meu clube de luta. Vamos lutar juntos!"
@@ -287,8 +287,8 @@
     "showPrivacyInfo": "Ao continuar a usar este site, você concorda com as <a href=\"/rules\" target=\"_blank\">Regras</a> e a <a href=\"/privacy\" target=\"_blank\">Política de Privacidade</a>."
   },
   "getStarted": {
-    "title": "Fight Club",
-    "noticeWelcome": "Bem-vindo ao FightClub! Antes de começar, recomendamos fortemente que você revise as <a href=\"/rules?back=home\">regras</a>, pois é crucial segui-las.",
+    "title": "Hexlash",
+    "noticeWelcome": "Bem-vindo ao Hexlash! Antes de começar, recomendamos fortemente que você revise as <a href=\"/rules?back=home\">regras</a>, pois é crucial segui-las.",
     "lblName": "Nome",
     "lblHintName": "Digite seu nome...",
     "lblLogin": "Login",
@@ -298,7 +298,7 @@
     "agreementText": "Eu concordo com",
     "rulesLinkText": "as regras",
     "tooltipText": "Abre em uma nova janela",
-    "joinText": "e estou pronto para entrar no Fight Club.",
+    "joinText": "e estou pronto para entrar no Hexlash.",
     "btnGo": "Vamos Lutar",
     "errorMinCharacters": "Mínimo de 8 caracteres",
     "errorRequired": "Não pode estar vazio",

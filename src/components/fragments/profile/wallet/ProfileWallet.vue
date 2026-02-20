@@ -47,10 +47,10 @@ const mainnet = {
 }
 
 const metadata = {
-  name: 'FightClub',
+  name: 'Hexlash',
   description: 'The club is your right to life, a real life.\n' +
       'Join us. Your liberation awaits.',
-  url: 'https://bitfightclub.com',
+  url: 'https://hexlash.com',
   icons: ['/images/logo500x500.png'],
 }
 

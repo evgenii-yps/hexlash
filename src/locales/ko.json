@@ -94,7 +94,7 @@
       "lblFCTokens": "FC 토큰",
       "lblConnectWallet": "지갑 연결",
       "lblReconnectWallet": "지갑 재연결",
-      "msgConnectWalletTooltip": "Fight Club 토큰을 구매하거나 인출하려면 지갑을 연결하세요.",
+      "msgConnectWalletTooltip": "Hexlash 토큰을 구매하거나 인출하려면 지갑을 연결하세요.",
       "lblGameBalance": "게임 잔액",
       "lblWithdrawToWallet": "지갑으로 인출",
       "lblConnectAnotherWallet": "다른 지갑 연결?",
@@ -176,7 +176,7 @@
     "invite": {
       "lblCopySuccess": "초대 코드가 클립보드에 복사되었습니다.",
       "lblCopyError": "텍스트 복사 오류 {error}",
-      "lblTooltipText": "Fight Club의 첫 번째 규칙: 모든 사람에게 Fight Club에 대해 이야기하세요. 이것은 자유로 가는 티켓입니다. 이 자유를 다른 사람들과 나누세요.",
+      "lblTooltipText": "Hexlash의 첫 번째 규칙: 모든 사람에게 Hexlash에 대해 이야기하세요. 이것은 자유로 가는 티켓입니다. 이 자유를 다른 사람들과 나누세요.",
       "inviteFriend": "친구를 초대하다",
       "confirmInviteFriend": "Telegram을 통해 친구를 초대하시겠습니까? 링크를 클릭하면 자동으로 클럽에 가입됩니다. 또한 코드를 직접 전달하여 웹사이트에 입력하고 이 방법으로 가입할 수 있습니다.",
       "inviteText": "🏋 안녕하세요! 내 파이트 클럽에 가입하세요. 함께 싸우자!"
@@ -287,8 +287,8 @@
     "showPrivacyInfo": "이 사이트를 계속 사용함으로써 <a href=\"/rules\" target=\"_blank\">규칙</a>과 <a href=\"/privacy\" target=\"_blank\">개인정보 보호 정책</a>에 동의하는 것입니다."
   },
   "getStarted": {
-    "title": "Fight Club",
-    "noticeWelcome": "Fight Club에 오신 것을 환영합니다! 시작하기 전에 <a href=\"/rules?back=home\">규칙</a>을 확인하는 것이 중요합니다.",
+    "title": "Hexlash",
+    "noticeWelcome": "Hexlash에 오신 것을 환영합니다! 시작하기 전에 <a href=\"/rules?back=home\">규칙</a>을 확인하는 것이 중요합니다.",
     "lblName": "이름",
     "lblHintName": "이름을 입력하세요...",
     "lblLogin": "로그인",
@@ -298,7 +298,7 @@
     "agreementText": "동의합니다",
     "rulesLinkText": "규칙에",
     "tooltipText": "새 창에서 열기",
-    "joinText": "Fight Club에 가입할 준비가 되었습니다.",
+    "joinText": "Hexlash에 가입할 준비가 되었습니다.",
     "btnGo": "싸우자",
     "errorMinCharacters": "최소 8자 이상 입력해야 합니다.",
     "errorRequired": "빈 칸을 입력할 수 없습니다.",

@@ -94,7 +94,7 @@
       "lblFCTokens": "tokens FC",
       "lblConnectWallet": "Connecter le portefeuille",
       "lblReconnectWallet": "Reconnecter",
-      "msgConnectWalletTooltip": "Connectez votre portefeuille pour acheter ou retirer des tokens Fight Club",
+      "msgConnectWalletTooltip": "Connectez votre portefeuille pour acheter ou retirer des tokens Hexlash",
       "lblGameBalance": "SOLDE DU JEU",
       "lblWithdrawToWallet": "Retirer vers le portefeuille",
       "lblConnectAnotherWallet": "Connecter un autre portefeuille?",
@@ -176,7 +176,7 @@
     "invite": {
       "lblCopySuccess": "Code d'invitation copié dans le presse-papiers",
       "lblCopyError": "Erreur lors de la copie du texte {error}",
-      "lblTooltipText": "La première règle du Fight Club : parlez à tout le monde du Fight Club. Rappelez-vous, c'est votre ticket pour la liberté. Partagez cette liberté avec les autres.",
+      "lblTooltipText": "La première règle du Hexlash : parlez à tout le monde du Hexlash. Rappelez-vous, c'est votre ticket pour la liberté. Partagez cette liberté avec les autres.",
       "inviteFriend": "Inviter un ami",
       "confirmInviteFriend": "Inviter un ami via Telegram ? Il rejoindra automatiquement votre club s'il suit le lien. Vous pouvez également lui transmettre le code personnellement, qu'il pourra saisir sur le site pour rejoindre de cette manière.",
       "inviteText": "🏋 Salut ! Rejoins mon club de combat. Combattons ensemble !"
@@ -287,8 +287,8 @@
     "showPrivacyInfo": "En continuant à utiliser ce site, vous acceptez les <a href=\"/rules\" target=\"_blank\">Règles</a> et la <a href=\"/privacy\" target=\"_blank\">Politique de confidentialité</a>."
   },
   "getStarted": {
-    "title": "Fight Club",
-    "noticeWelcome": "Bienvenue au FightClub ! Avant de commencer, nous vous recommandons fortement de consulter les <a href=\"/rules?back=home\">règles</a>, car il est crucial de les suivre.",
+    "title": "Hexlash",
+    "noticeWelcome": "Bienvenue au Hexlash ! Avant de commencer, nous vous recommandons fortement de consulter les <a href=\"/rules?back=home\">règles</a>, car il est crucial de les suivre.",
     "lblName": "Nom",
     "lblHintName": "Entrez votre nom...",
     "lblLogin": "Connexion",
@@ -298,7 +298,7 @@
     "agreementText": "J'accepte",
     "rulesLinkText": "les règles",
     "tooltipText": "S'ouvre dans une nouvelle fenêtre",
-    "joinText": "et je suis prêt à rejoindre le Fight Club.",
+    "joinText": "et je suis prêt à rejoindre le Hexlash.",
     "btnGo": "Allons combattre",
     "errorMinCharacters": "Minimum 8 caractères",
     "errorRequired": "Ne peut pas être vide",

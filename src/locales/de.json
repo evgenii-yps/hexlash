@@ -94,7 +94,7 @@
       "lblFCTokens": "FC-Tokens",
       "lblConnectWallet": "Wallet verbinden",
       "lblReconnectWallet": "Erneut verbinden",
-      "msgConnectWalletTooltip": "Verbinden Sie Ihre Wallet, um Fight Club-Tokens zu kaufen oder abzuheben",
+      "msgConnectWalletTooltip": "Verbinden Sie Ihre Wallet, um Hexlash-Tokens zu kaufen oder abzuheben",
       "lblGameBalance": "SPIELGUTHABEN",
       "lblWithdrawToWallet": "Auf Wallet abheben",
       "lblConnectAnotherWallet": "Anderes Wallet verbinden?",
@@ -176,7 +176,7 @@
     "invite": {
       "lblCopySuccess": "Einladungscode in die Zwischenablage kopiert",
       "lblCopyError": "Fehler beim Kopieren des Textes {error}",
-      "lblTooltipText": "Die erste Regel des Fight Clubs: Erzähle jedem vom Fight Club. Denke daran, dies ist dein Ticket zur Freiheit. Teile diese Freiheit mit anderen.",
+      "lblTooltipText": "Die erste Regel des Hexlashs: Erzähle jedem vom Hexlash. Denke daran, dies ist dein Ticket zur Freiheit. Teile diese Freiheit mit anderen.",
       "inviteFriend": "Einen Freund einladen",
       "confirmInviteFriend": "Einen Freund über Telegram einladen? Er tritt deinem Club automatisch bei, wenn er dem Link folgt. Du kannst ihm auch den Code persönlich mitteilen, den er auf der Website eingeben kann, um beizutreten.",
       "inviteText": "🏋 Hallo! Tritt meinem Kampfclub bei. Lass uns zusammen kämpfen!"
@@ -287,8 +287,8 @@
     "showPrivacyInfo": "Durch die weitere Nutzung dieser Website stimmst du den <a href=\"/rules\" target=\"_blank\">Regeln</a> und der <a href=\"/privacy\" target=\"_blank\">Datenschutzrichtlinie</a> zu."
   },
   "getStarted": {
-    "title": "Fight Club",
-    "noticeWelcome": "Willkommen im FightClub! Bevor du beginnst, empfehlen wir dringend, die <a href=\"/rules?back=home\">Regeln</a> zu lesen, da es wichtig ist, sie zu befolgen.",
+    "title": "Hexlash",
+    "noticeWelcome": "Willkommen im Hexlash! Bevor du beginnst, empfehlen wir dringend, die <a href=\"/rules?back=home\">Regeln</a> zu lesen, da es wichtig ist, sie zu befolgen.",
     "lblName": "Name",
     "lblHintName": "Gib deinen Namen ein...",
     "lblLogin": "Login",
@@ -298,7 +298,7 @@
     "agreementText": "Ich stimme den",
     "rulesLinkText": "Regeln",
     "tooltipText": "Öffnet in einem neuen Fenster",
-    "joinText": "zu und bin bereit, dem Fight Club beizutreten.",
+    "joinText": "zu und bin bereit, dem Hexlash beizutreten.",
     "btnGo": "Lass uns kämpfen",
     "errorMinCharacters": "Mindestens 8 Zeichen",
     "errorRequired": "Darf nicht leer sein",

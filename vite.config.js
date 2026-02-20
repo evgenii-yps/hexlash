@@ -18,16 +18,16 @@ import imageminPngquant from 'imagemin-pngquant'
 export default defineConfig(({mode}) => {
 
     const apiServers = {
-       prod: 'https://api.bitfightclub.com',
-        test: 'https://apitest.bitfightclub.com',
+       prod: 'https://api.hexlash.com',
+        test: 'https://apitest.hexlash.com',
         // test: 'http://localhost:8080',
 
     };
     const apiServer = apiServers[mode] || apiServers.test;
 
     const wsServers = {
-        prod: 'wss://api.bitfightclub.com:444',
-        test: 'wss://apitest.bitfightclub.com:444',
+        prod: 'wss://api.hexlash.com:444',
+        test: 'wss://apitest.hexlash.com:444',
         // test: 'ws://localhost:8444',
     };
     const wsServer = wsServers[mode] || wsServers.test;

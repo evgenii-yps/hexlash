@@ -94,7 +94,7 @@
       "lblFCTokens": "FC tokens",
       "lblConnectWallet": "Connect Wallet",
       "lblReconnectWallet": "Reconnect",
-      "msgConnectWalletTooltip": "Connect your wallet to buy or withdraw Fight Club tokens",
+      "msgConnectWalletTooltip": "Connect your wallet to buy or withdraw Hexlash tokens",
       "lblGameBalance": "GAME BALANCE",
       "lblWithdrawToWallet": "Withdraw to wallet",
       "lblConnectAnotherWallet": "Connect another wallet?",
@@ -176,10 +176,10 @@
     "invite": {
       "lblCopySuccess": "Invitation code copied to clipboard",
       "lblCopyError": "Error copying text {error}",
-      "lblTooltipText": "The first rule of Fight Club: tell everyone about Fight Club. Remember, this is your ticket to freedom. Share this freedom with others.",
+      "lblTooltipText": "The first rule of Hexlash: tell everyone about Hexlash. Remember, this is your ticket to freedom. Share this freedom with others.",
       "inviteFriend": "Invite a friend",
       "confirmInviteFriend": "Invite a friend via Telegram? They will automatically join your club if they follow the link. You can also personally give them the code, which they can enter on the website to join this way.",
-      "inviteText": "🏋 Hey! Join my Fight Club. Let's fight together!"
+      "inviteText": "🏋 Hey! Join my Hexlash. Let's fight together!"
     },
     "stats": {
       "lblTotalFights": "Total fights",
@@ -287,8 +287,8 @@
     "showPrivacyInfo": "By continuing to use this site, you agree to the <a href=\"/rules\" target=\"_blank\">Rules</a> and <a href=\"/privacy\" target=\"_blank\">Privacy Policy</a>."
   },
   "getStarted": {
-    "title": "Fight Club",
-    "noticeWelcome": "Welcome to FightClub! Before you start, we strongly recommend that you review the <a href=\"/rules?back=home\">rules</a>, as it is crucial to follow them.",
+    "title": "Hexlash",
+    "noticeWelcome": "Welcome to Hexlash! Before you start, we strongly recommend that you review the <a href=\"/rules?back=home\">rules</a>, as it is crucial to follow them.",
     "lblName": "Name",
     "lblHintName": "Enter your name...",
     "lblLogin": "Login",
@@ -298,7 +298,7 @@
     "agreementText": "I agree with",
     "rulesLinkText": "the rules",
     "tooltipText": "Opens in a new window",
-    "joinText": "and I'm ready to join Fight Club.",
+    "joinText": "and I'm ready to join Hexlash.",
     "btnGo": "Let's Fight",
     "errorMinCharacters": "Minimum 8 characters",
     "errorRequired": "Cannot be empty",

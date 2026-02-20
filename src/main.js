@@ -135,7 +135,7 @@ initializeApp().then(() => {
         .mount('#app')
 }).catch((error) => {
     // Показываем сообщение пользователю
-    alert("An error occurred while loading Fight Club. The game will now reload. ", error);
+    alert("An error occurred while loading Hexlash. The game will now reload. ", error);
 
     location.reload();
 });
