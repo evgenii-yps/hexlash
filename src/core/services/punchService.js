@@ -2,6 +2,7 @@ import store from "@/core/state/store.js";
 import {getPunchLimitsFromLocalDB, savePunchLimitsToLocalDB} from "@/core/database/punchRepository.js";
 import {PunchBatchRequestMsg, PunchInfoRequestMsg} from "@/core/models/ws/req/PunchBatchRequestMsg.js";
 import {DECIMALS} from "@/core/constants.js";
+import {isMockMode} from "@/core/mock/mockData.js";
 
 /**
  * Извлекает параметры лимита времени из локальной базы данных или обновляет их с сервера
@@ -32,6 +33,12 @@ export const getPunchLimitsFromLocalAndSocket = async () => {
 
 
 export const sendPunchBatch = async (punchInfo, totalValue, count) => {
+    if (isMockMode()) {
+        console.log('[MOCK] Punch batch sent:', {totalValue, count});
+        store.commit('master/increaseBalance', {add: Math.round((totalValue / 100) * Math.pow(10, DECIMALS))});
+        return;
+    }
+
     try {
 
         const amount = (totalValue / 100) * Math.pow(10, DECIMALS);

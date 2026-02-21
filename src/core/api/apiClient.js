@@ -1,6 +1,7 @@
 import axios from 'axios';
 import store from "@/core/state/store.js";
 import {validateJwtToken} from "@/core/services/masterService.js";
+import {isMockMode} from "@/core/mock/mockData.js";
 
 // Создание экземпляра axios с базовой конфигурацией
 const apiClient = axios.create({
@@ -13,6 +14,14 @@ const apiClient = axios.create({
 // Добавление interceptor для обработки запросов
 apiClient.interceptors.request.use(
     (config) => {
+        if (isMockMode()) {
+            // В мок-режиме отменяем реальные запросы
+            const cancelSource = axios.CancelToken.source();
+            config.cancelToken = cancelSource.token;
+            cancelSource.cancel('[MOCK] API request cancelled — using mock data');
+            return config;
+        }
+
         // Проверяем, нужно ли добавлять токен
         if (config.authRequired) {
             const token = store.getters['master/getJwtToken']; // Получаем токен через getter Vuex
@@ -38,6 +47,11 @@ apiClient.interceptors.response.use(
         return response.data;
     },
     (error) => {
+        if (isMockMode() && axios.isCancel(error)) {
+            console.log(error.message);
+            return Promise.resolve({data: {}});
+        }
+
         // Обработка ошибки ответа
         if (error.response && error.response.status === 401) {
             // Если получен код 401, пользователь не авторизован, сбрасываем состояние аутентификации

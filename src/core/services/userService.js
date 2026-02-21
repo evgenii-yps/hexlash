@@ -2,6 +2,7 @@ import UserModel from "@/core/models/userModel.js";
 import store from "@/core/state/store.js";
 import {getUserByIdFromDB, getUserByLoginFromDB, saveUserDataToLocalDB} from "@/core/database/userRepository.js";
 import apiClient from "@/core/api/apiClient.js";
+import {isMockMode, MOCK_USER_DATA} from "@/core/mock/mockData.js";
 
 
 export const getUserByLoginFromLocalAndAPI = async (login) => {
@@ -46,6 +47,10 @@ export const getUserDataByIdFromAPI = (id) => {
 };
 
 export const fetchUserByLogin = async (login) => {
+    if (isMockMode()) {
+        return UserModel.fromJSON({...MOCK_USER_DATA, login});
+    }
+
     try {
         const response = await apiClient.get(`/user/login/${login}`, {authRequired: true});
         return UserModel.fromJSON(response.data);
@@ -54,9 +59,13 @@ export const fetchUserByLogin = async (login) => {
     }
 };
 
-export const fetchUserById = async (login) => {
+export const fetchUserById = async (id) => {
+    if (isMockMode()) {
+        return UserModel.fromJSON({...MOCK_USER_DATA, id});
+    }
+
     try {
-        const response = await apiClient.get(`/user/id/${login}`, {authRequired: true});
+        const response = await apiClient.get(`/user/id/${id}`, {authRequired: true});
         return UserModel.fromJSON(response.data);
     } catch (error) {
        return null;
@@ -64,6 +73,10 @@ export const fetchUserById = async (login) => {
 };
 
 export const searchParticipants = async ({ name = '', sortBy = 'battles', page = 0, size = 10, clubId = null, sortDirection = 'DESC' }) => {
+    if (isMockMode()) {
+        return [];
+    }
+
     try {
 
         const response = await apiClient.get('/user/search', {

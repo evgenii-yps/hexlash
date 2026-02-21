@@ -33,8 +33,9 @@ export default defineConfig(({mode}) => {
     const wsServer = wsServers[mode] || wsServers.test;
 
     const isProd = mode === 'prod';
+    const isMock = mode === 'mock';
 
-    console.log(isProd ? "Production mode" : "Test mode");
+    console.log(isProd ? "Production mode" : isMock ? "Mock mode" : "Test mode");
     console.log(apiServer + " current api server");
     console.log(wsServer + " current ws server");
 
@@ -83,6 +84,7 @@ export default defineConfig(({mode}) => {
                 __API_SERVER_URL__: JSON.stringify(apiServer),
                 __WEB_SOCKET_URL__: JSON.stringify(wsServer),
                 __IS_PROD__: JSON.stringify(isProd),
+                __MOCK_MODE__: JSON.stringify(isMock),
             },
         assetsInclude: ['**/*.glb', '**/*.gltf', '**/*.bin', '**/*.wasm'],
         resolve:

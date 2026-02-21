@@ -10,6 +10,7 @@ import {SocialTaskModel} from "@/core/models/socialTaskModel.js";
 import {DailyTaskModel} from "@/core/models/dailyTaskModel.js";
 import apiClient from "@/core/api/apiClient.js";
 import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
+import {isMockMode} from "@/core/mock/mockData.js";
 
 
 export const getAllSocialTasksFromLocalAndAPI = async (language) => {
@@ -34,6 +35,10 @@ export const getSocialTasksFromAPI = (language) => {
 };
 
 export const fetchAllSocialTasks = async (language = 'en') => {
+    if (isMockMode()) {
+        return [];
+    }
+
     try {
         const response = await apiClient.get(`/task/social/${language}`, {
             authRequired: true,
@@ -67,6 +72,10 @@ export const getDailyTasksFromAPI = (language) => {
 };
 
 export const fetchAllDailyTasks = async (language = 'en') => {
+    if (isMockMode()) {
+        return [];
+    }
+
     try {
         const response = await apiClient.get(`/task/daily/${language}`, {
             authRequired: true,
@@ -115,6 +124,11 @@ export const localUpdateDailyTask = async (updatedTask) => {
 };
 
 const completeTaskApiCall = async (taskId) => {
+    if (isMockMode()) {
+        console.log('[MOCK] Task completed:', taskId);
+        return true;
+    }
+
     const response = await apiClient.post(`/task/complete/${taskId}`,
         {},
         {authRequired: true}

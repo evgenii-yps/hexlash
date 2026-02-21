@@ -6,8 +6,18 @@ import store from "@/core/state/store.js";
 import {jwtDecode} from "jwt-decode";
 import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
 import {i18n} from "@/main.js";
+import {isMockMode, createMockMaster, MOCK_JWT_TOKEN} from "@/core/mock/mockData.js";
 
 export const initializeMasterData = async () => {
+    if (isMockMode()) {
+        const mockMaster = createMockMaster();
+        store.commit('master/setMaster', mockMaster);
+        store.commit('master/setJwtToken', MOCK_JWT_TOKEN);
+        store.commit('master/setLoginState', {isAuthenticated: true});
+        console.log('[MOCK] Initialized with mock master data');
+        return;
+    }
+
     // Сначала берем данные из локальной базы данных
     const localData = await getMasterFromLocalDB();
 
@@ -36,6 +46,15 @@ export const getMasterFromAPI = () => {
 };
 
 export const login = async (credentials) => {
+    if (isMockMode()) {
+        const mockMaster = createMockMaster();
+        store.commit('master/setMaster', mockMaster);
+        store.commit('master/setJwtToken', MOCK_JWT_TOKEN);
+        store.commit('master/setLoginState', {isAuthenticated: true});
+        console.log('[MOCK] Login successful');
+        return;
+    }
+
     try {
         const response = await apiClient.post('/auth/login', credentials);
         const {jwtToken} = response.data;
@@ -66,6 +85,15 @@ export const login = async (credentials) => {
 };
 
 export const telegram = async (payload) => {
+    if (isMockMode()) {
+        const mockMaster = createMockMaster();
+        store.commit('master/setMaster', mockMaster);
+        store.commit('master/setJwtToken', MOCK_JWT_TOKEN);
+        store.commit('master/setLoginState', {isAuthenticated: true});
+        console.log('[MOCK] Telegram login successful');
+        return;
+    }
+
     try {
         const response = await apiClient.post('/auth/telegram', payload);
         const {jwtToken, tempPassword, name} = response.data;
@@ -107,6 +135,11 @@ export const telegram = async (payload) => {
 };
 
 export const sendCheckLoginAvailable = async (login) => {
+    if (isMockMode()) {
+        console.log('[MOCK] Login available check:', login);
+        return true;
+    }
+
     try {
         const response = await apiClient.get(`/auth/login-available/${login}`);
         return response.data.available;
@@ -117,6 +150,11 @@ export const sendCheckLoginAvailable = async (login) => {
 };
 
 export const sendInvite = async (inviteCode) => {
+    if (isMockMode()) {
+        console.log('[MOCK] Invite sent:', inviteCode);
+        return {login: 'mock_player', temporaryPassword: 'mock_pass_123'};
+    }
+
     if (!validateInviteCode(inviteCode)) {
         throw new Error(i18n.global.t('auth.invite.errorInvalidInvite'));
     }
@@ -145,6 +183,11 @@ const validateInviteCode = (code) => {
 };
 
 export const resetPassword = async (email) => {
+    if (isMockMode()) {
+        console.log('[MOCK] Password reset for:', email);
+        return {success: true, message: 'Mock: password reset email sent'};
+    }
+
     // Проверка на пустой email
     if (!email) {
         throw new Error(i18n.global.t('auth.reset.errorEmpty'));
@@ -169,6 +212,11 @@ export const resetPassword = async (email) => {
 
 // Функция для получения данных текущего пользователя
 const fetchMasterData = async () => {
+    if (isMockMode()) {
+        console.log('[MOCK] Fetching master data');
+        return createMockMaster();
+    }
+
     try {
         const response = await apiClient.get('/user/me', {authRequired: true});
         return MasterModel.fromJSON(response.data);
@@ -179,6 +227,11 @@ const fetchMasterData = async () => {
 
 // Изменить профиль
 export const changeProfile = async (profileData) => {
+    if (isMockMode()) {
+        console.log('[MOCK] Profile changed:', profileData);
+        return {data: profileData};
+    }
+
     try {
         return await apiClient.post('/user/edit', profileData, {authRequired: true});
     } catch (error) {
@@ -190,6 +243,12 @@ export const changeProfile = async (profileData) => {
 
 // Выйти из системы
 export const logout = async () => {
+    if (isMockMode()) {
+        console.log('[MOCK] Logout');
+        store.commit('master/clearAuthData');
+        return true;
+    }
+
     try {
         // const response = await apiClient.post('/users/logout', {}, {authRequired: true});
 
@@ -204,6 +263,11 @@ export const logout = async () => {
 
 // Удалить аккаунт
 export const deleteAccount = async () => {
+    if (isMockMode()) {
+        console.log('[MOCK] Account deleted');
+        return;
+    }
+
     try {
         const response = await apiClient.post('/user/delete', null, {authRequired: true});
 
@@ -217,6 +281,11 @@ export const deleteAccount = async () => {
 
 // Отправить запрос на верификацию почты
 export const sendVerifyEmail = async (code) => {
+    if (isMockMode()) {
+        console.log('[MOCK] Email verified');
+        return true;
+    }
+
     try {
         const response = await apiClient.post('/user/verify-email', code, {authRequired: false});
 
@@ -232,6 +301,11 @@ export const sendVerifyEmail = async (code) => {
 };
 
 export const uploadAvatar = async (formData, onUploadProgress) => {
+    if (isMockMode()) {
+        console.log('[MOCK] Avatar uploaded');
+        return '';
+    }
+
     try {
         const response = await apiClient.post('/user/put-avatar', formData, {
             headers: {
@@ -301,6 +375,10 @@ export const resetClient = async () => {
 }
 
 export const validateJwtToken = (jwtToken) => {
+    if (isMockMode()) {
+        return true;
+    }
+
     try {
         const decodedToken = jwtDecode(jwtToken);
         const currentTime = Math.floor(Date.now() / 1000); // Текущее время в секундах

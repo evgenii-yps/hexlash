@@ -4,6 +4,7 @@ import store from "@/core/state/store.js";
 import ClubModel from "@/core/models/clubModel.js";
 import {updateMasterToLocalDB} from "@/core/database/masterRepository.js";
 import {COST_CREATE_CLUB, DECIMALS} from "@/core/constants.js";
+import {isMockMode} from "@/core/mock/mockData.js";
 
 // Получить данные клуба из локальной базы данных или из API
 export const getClubByIdFromLocalAndAPI = async (clubId) => {
@@ -108,6 +109,10 @@ export const changeClub = async (clubId) => {
 
 
 export const searchClubs = async ({name = '', sortBy = 'battles', page = 0, size = 10, sortDirection = 'DESC'}) => {
+    if (isMockMode()) {
+        return [];
+    }
+
     try {
         const response = await apiClient.get('/club/search', {
             params: {

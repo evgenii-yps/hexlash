@@ -12,6 +12,7 @@ import {DailyTaskModel} from "@/core/models/dailyTaskModel.js";
 import {AchievementModel} from "@/core/models/achievementModel.js";
 import {validateJwtToken} from "@/core/services/masterService.js";
 import router from "@/router/index.js";
+import {isMockMode} from "@/core/mock/mockData.js";
 
 const state = {
     isConnected: false,
@@ -44,6 +45,12 @@ const mutations = {
 
 const actions = {
     connectWebSocket({commit, state, rootGetters}) {
+        if (isMockMode()) {
+            console.log('[MOCK] WebSocket connection skipped');
+            commit('setConnected', true);
+            return;
+        }
+
         console.log('Attempting to connect to WebSocket...');
 
         if (state.isConnected) {
@@ -102,6 +109,10 @@ const actions = {
     },
 
     sendMessage({state}, message) {
+        if (isMockMode()) {
+            console.log('[MOCK] WebSocket message:', message);
+            return;
+        }
         state.socketClient.sendMessage(message);
     },
 
