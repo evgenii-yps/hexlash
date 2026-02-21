@@ -1,0 +1,209 @@
+[
+  {
+    "id": "strike_head_basic",
+    "name": "Head Strike",
+    "type": "attack",
+    "target": "head",
+    "power": 15,
+    "priority": 5,
+    "cooldown": 0,
+    "rarity": "common",
+    "conditions": [],
+    "description": "A basic strike aimed at the opponent's head"
+  },
+  {
+    "id": "strike_body_basic",
+    "name": "Body Blow",
+    "type": "attack",
+    "target": "body",
+    "power": 15,
+    "priority": 5,
+    "cooldown": 0,
+    "rarity": "common",
+    "conditions": [],
+    "description": "A solid punch to the body"
+  },
+  {
+    "id": "power_punch",
+    "name": "Power Punch",
+    "type": "attack",
+    "target": "head",
+    "power": 25,
+    "priority": 4,
+    "cooldown": 1,
+    "rarity": "common",
+    "conditions": [],
+    "description": "A powerful strike that needs recovery time"
+  },
+  {
+    "id": "uppercut",
+    "name": "Uppercut",
+    "type": "attack",
+    "target": "body",
+    "power": 20,
+    "priority": 4,
+    "cooldown": 0,
+    "rarity": "common",
+    "conditions": [],
+    "description": "Rising strike from below"
+  },
+  {
+    "id": "guard_head",
+    "name": "Head Guard",
+    "type": "defense",
+    "target": "head",
+    "power": 15,
+    "priority": 5,
+    "cooldown": 0,
+    "rarity": "common",
+    "conditions": [],
+    "description": "Raise your guard to protect the head"
+  },
+  {
+    "id": "guard_body",
+    "name": "Body Guard",
+    "type": "defense",
+    "target": "body",
+    "power": 15,
+    "priority": 5,
+    "cooldown": 0,
+    "rarity": "common",
+    "conditions": [],
+    "description": "Tighten defense around the body"
+  },
+  {
+    "id": "dodge",
+    "name": "Dodge",
+    "type": "defense",
+    "target": "both",
+    "power": 10,
+    "priority": 3,
+    "cooldown": 0,
+    "rarity": "common",
+    "conditions": [],
+    "description": "Evade in any direction, weaker but flexible"
+  },
+  {
+    "id": "parry",
+    "name": "Parry",
+    "type": "defense",
+    "target": "head",
+    "power": 20,
+    "priority": 4,
+    "cooldown": 1,
+    "rarity": "common",
+    "conditions": [],
+    "description": "A precise deflection that requires timing"
+  },
+  {
+    "id": "counter_attack",
+    "name": "Counter-Attack",
+    "type": "special",
+    "target": "both",
+    "power": 0,
+    "priority": 3,
+    "cooldown": 2,
+    "rarity": "rare",
+    "conditions": [],
+    "description": "If you block this round, reflect 50% damage back",
+    "effect": "counter"
+  },
+  {
+    "id": "heal",
+    "name": "Heal",
+    "type": "special",
+    "target": "self",
+    "power": 10,
+    "priority": 3,
+    "cooldown": 2,
+    "rarity": "rare",
+    "conditions": [
+      { "type": "hp_below", "threshold": 50, "priorityBoost": 3 }
+    ],
+    "description": "Restore 10 HP",
+    "effect": "heal"
+  },
+  {
+    "id": "rage",
+    "name": "Rage",
+    "type": "special",
+    "target": "self",
+    "power": 10,
+    "priority": 3,
+    "cooldown": 2,
+    "rarity": "rare",
+    "conditions": [],
+    "description": "Boost your next attack by +10 power",
+    "effect": "buff_attack"
+  },
+  {
+    "id": "focus",
+    "name": "Focus",
+    "type": "special",
+    "target": "self",
+    "power": 10,
+    "priority": 3,
+    "cooldown": 2,
+    "rarity": "rare",
+    "conditions": [
+      { "type": "hp_below", "threshold": 40, "priorityBoost": 2 }
+    ],
+    "description": "Boost your next defense by +10 block",
+    "effect": "buff_defense"
+  },
+  {
+    "id": "berserker_strike",
+    "name": "Berserker Strike",
+    "type": "attack",
+    "target": "head",
+    "power": 30,
+    "priority": 3,
+    "cooldown": 2,
+    "rarity": "epic",
+    "conditions": [
+      { "type": "hp_below", "threshold": 30, "priorityBoost": 5 }
+    ],
+    "description": "Devastating blow that becomes stronger when desperate"
+  },
+  {
+    "id": "iron_wall",
+    "name": "Iron Wall",
+    "type": "defense",
+    "target": "both",
+    "power": 25,
+    "priority": 3,
+    "cooldown": 2,
+    "rarity": "epic",
+    "conditions": [
+      { "type": "hp_below", "threshold": 50, "priorityBoost": 4 }
+    ],
+    "description": "Impenetrable defense that activates under pressure"
+  },
+  {
+    "id": "critical_hit",
+    "name": "Critical Hit",
+    "type": "attack",
+    "target": "body",
+    "power": 35,
+    "priority": 2,
+    "cooldown": 2,
+    "rarity": "epic",
+    "conditions": [],
+    "description": "A devastating precision strike to the body"
+  },
+  {
+    "id": "second_wind",
+    "name": "Second Wind",
+    "type": "special",
+    "target": "self",
+    "power": 20,
+    "priority": 1,
+    "cooldown": 99,
+    "rarity": "epic",
+    "conditions": [
+      { "type": "hp_below", "threshold": 25, "priorityBoost": 8 }
+    ],
+    "description": "Restore 20 HP. Can only be used once per fight.",
+    "effect": "heal"
+  }
+]

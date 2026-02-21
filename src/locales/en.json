@@ -194,16 +194,16 @@
     }
   },
   "arena": {
-    "lblYourBet": "Your bet",
-    "lblNumberOfHits": "Number of hits",
-    "lblFightTime": "Fight time",
-    "lblSeconds": "sec",
-    "lblStartFight": "Start fight",
-    "lblTestResolve": "It's time to test your resolve",
-    "lblSearchOpponent": "The search for a worthy opponent...",
-    "insufficientFunds": "No money, no honey.",
-    "lblGoToTraining": "First, you need to punch the bag or complete tasks in the",
-    "btnGoToTraining": "Training"
+    "lblTitle": "Fighter Preparation",
+    "lblDeck": "Your Deck",
+    "lblAvailableCards": "Available Cards",
+    "lblDifficulty": "Difficulty",
+    "lblEasy": "Easy",
+    "lblMedium": "Medium",
+    "lblHard": "Hard",
+    "lblStartFight": "Start Fight",
+    "lblDeckTooSmall": "Equip at least 4 cards",
+    "lblDeckReady": "Your fighter is ready!"
   },
   "club": {
     "lblClubMembers": "{n} members",
@@ -243,13 +243,34 @@
     "errorCreate": "Error creating club"
   },
   "fight": {
-    "btnNextFight": "next fight",
-    "progress": "Time left in fight:",
-    "waitingForOpponent": "Waiting for opponent...",
-    "fightCalculate": "Calculating result...",
+    "lblRound": "Round {n}",
+    "lblHP": "HP",
+    "lblDamage": "-{n} HP",
+    "lblBlocked": "Blocked!",
+    "lblMissed": "Missed!",
+    "lblHealed": "+{n} HP",
+    "lblBuff": "Buffed!",
+    "lblCounter": "Counter!",
     "fightFinished": "Fight finished!",
-    "modalHelpTitle": "Step-by-step fight",
-    "modalHelpTextHtml": "<p>Within the allocated time, choose actions for attack and defense.</p><br/><p style=\"margin-bottom: 10px\"><strong>Available actions:</strong></p><ul style=\"color:var(--white); margin-left: 20px\"><li><strong>HD (Head Defence):</strong> head defense</li><li><strong>BD (Body Defence):</strong> body defense</li><li><strong>HH (Head Hit):</strong> head hit</li><li><strong>BH (Body Hit):</strong> body hit</li></ul><br/><p>After selecting actions, a comparison with the opponent's actions occurs. The winner is the one who lands more hits and receives fewer.</p><br/><p style=\"margin-bottom: 10px; color:var(--white);\"><strong>Example:</strong></p><p>You: HD, HH, BD</p><p>Opponent: HH, BD, BH</p><p>Result: you landed 1 hit, blocked 2 of the opponent's hits. <strong>Winner:</strong> You </p><br/><p></p>"
+    "lblFightAgain": "Fight Again",
+    "lblChangeDeck": "Change Deck",
+    "lblVictory": "VICTORY",
+    "lblDefeat": "DEFEAT",
+    "lblDraw": "DRAW",
+    "lblReport": "Fight Report",
+    "lblTotalDamage": "Total Damage",
+    "lblTotalBlocked": "Total Blocked",
+    "lblRoundsPlayed": "Rounds Played",
+    "lblCardsUsed": "Cards Used"
+  },
+  "cards": {
+    "attack": "Attack",
+    "defense": "Defense",
+    "special": "Special",
+    "common": "Common",
+    "rare": "Rare",
+    "epic": "Epic",
+    "legendary": "Legendary"
   },
   "training": {
     "timerText": "Punch bag is down, fighter. Hold on, we’ll replace it for you soon.",

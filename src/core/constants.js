@@ -12,6 +12,13 @@ export const DECIMALS = 6;
 // FIGHT
 export const COUNTDOWN = 3; // Количество секунд перед началом боя
 
+// CARD COMBAT
+export const MAX_HP = 100;
+export const MAX_DECK_SIZE = 8;
+export const MIN_DECK_SIZE = 4;
+export const MAX_ROUNDS = 12;
+export const ROUND_ANIMATION_MS = 1500;
+
 // LISTING
 export const LISTING = 1783306800;
 

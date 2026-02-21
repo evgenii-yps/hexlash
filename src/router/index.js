@@ -23,7 +23,7 @@ const publicRoutes = [
 const protectedRoutes = [
     {path: '/', name: 'Home', component: RainView},
     {path: '/help', name: 'Help', component: () => import("/src/views/PageView.vue")},
-    {path: '/arena', name: 'Arena', component: () => import("/src/views/ArenaView.vue")},
+    {path: '/arena', name: 'Arena', component: () => import("/src/views/PreparationView.vue")},
 
     {path: '/user/:userLogin', name: 'UserProfile', component: () => import("/src/views/ProfileView.vue")},
     {path: '/profile', name: 'Profile', component: () => import("/src/views/ProfileView.vue")},
@@ -37,9 +37,7 @@ const protectedRoutes = [
     {path: '/ratings', redirect: '/ratings/clubs'},
 
     {path: '/training', name: 'Training', component: () => import("/src/views/TrainingView.vue")},
-    {path: '/training/fight', name: 'Training fight', component: () => import("/src/views/FightView.vue")},
-
-    {path: '/fight/:id', name: 'Fight', component: () => import("/src/views/FightView.vue")},
+    {path: '/fight', name: 'Fight', component: () => import("/src/views/CardFightView.vue")},
 
 
 ];

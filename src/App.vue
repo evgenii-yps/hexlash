@@ -14,7 +14,7 @@
       <RouterView v-else/>
     </main>
 
-    <FindFight v-if="isAuth && isWaitingFight && isNotArenaScreen" />
+    <!-- FindFight removed: card-based combat uses client-side simulation -->
 
     <Info :text="infoMessage.text"
           :timeout="infoMessage.timeout"
@@ -47,7 +47,6 @@ import store from "@/core/state/store.js";
 import Info from "@/components/Info.vue";
 import NoConnection from "@/components/ui/NoConnection.vue";
 import Error from "@/components/Error.vue";
-import FindFight from "@/components/FindFight.vue";
 import NewAchievement from "@/components/NewAchievement.vue";
 import * as amplitude from "@amplitude/analytics-browser";
 
@@ -62,7 +61,6 @@ const balance = computed(() => {
 });
 
 
-const isWaitingFight = computed(store.getters['fight/isWaitingFight']);
 const isNotArenaScreen = computed(() => route.name !== 'Arena');
 
 const showInfoMessage = ref(false);

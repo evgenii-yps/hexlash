@@ -194,16 +194,16 @@
     }
   },
   "arena": {
-    "lblYourBet": "Ваша ставка",
-    "lblNumberOfHits": "Кол-во ударов",
-    "lblFightTime": "Время боя",
-    "lblSeconds": "сек",
+    "lblTitle": "Подготовка бойца",
+    "lblDeck": "Ваша колода",
+    "lblAvailableCards": "Доступные карты",
+    "lblDifficulty": "Сложность",
+    "lblEasy": "Легко",
+    "lblMedium": "Средне",
+    "lblHard": "Сложно",
     "lblStartFight": "Начать бой",
-    "lblTestResolve": "Время испытать твою решимость",
-    "lblSearchOpponent": "Поиск достойного противника...",
-    "insufficientFunds": "Без денег нет веселья.",
-    "lblGoToTraining": "Сначала вам нужно ударить по мешку или выполнить задания в",
-    "btnGoToTraining": "Тренировке"
+    "lblDeckTooSmall": "Экипируйте минимум 4 карты",
+    "lblDeckReady": "Ваш боец готов!"
   },
   "club": {
     "lblClubMembers": "нет участников | {n} участник | {n} участника | {n} участников",
@@ -243,13 +243,34 @@
     "errorCreate": "Ошибка создания клуба"
   },
   "fight": {
-    "btnNextFight": "Повторить",
-    "progress": "Оставшееся время в бою:",
-    "waitingForOpponent": "Ожидание противника...",
-    "fightCalculate": "Вычисляем результат...",
+    "lblRound": "Раунд {n}",
+    "lblHP": "HP",
+    "lblDamage": "-{n} HP",
+    "lblBlocked": "Заблокировано!",
+    "lblMissed": "Промах!",
+    "lblHealed": "+{n} HP",
+    "lblBuff": "Усиление!",
+    "lblCounter": "Контратака!",
     "fightFinished": "Бой завершен!",
-    "modalHelpTitle": "Пошаговый бой",
-    "modalHelpTextHtml": "<p>В отведенное время выберите действия для атаки и защиты.</p><br/><p style=\"margin-bottom: 10px\"><strong>Доступные действия:</strong></p><ul style=\"color:var(--white); margin-left: 20px\"><li><strong>HD (Head Defence):</strong> защита головы</li><li><strong>BD (Body Defence):</strong> защита тела</li><li><strong>HH (Head Hit):</strong> удар по голове</li><li><strong>BH (Body Hit):</strong> удар по телу</li></ul><br/><p>После выбора действий происходит сравнение с действиями противника. Побеждает тот, кто нанес больше ударов и получил меньше.</p><br/><p style=\"margin-bottom: 10px; color:var(--white);\"><strong>Пример:</strong></p><p>Вы: HD, HH, BD</p><p>Противник: HH, BD, BH</p><p>Результат: вы нанесли 1 удар, заблокировали 2 удара противника. <strong>Победитель:</strong> Вы</p><br/><p></p>"
+    "lblFightAgain": "Ещё бой",
+    "lblChangeDeck": "Сменить колоду",
+    "lblVictory": "ПОБЕДА",
+    "lblDefeat": "ПОРАЖЕНИЕ",
+    "lblDraw": "НИЧЬЯ",
+    "lblReport": "Отчет о бое",
+    "lblTotalDamage": "Нанесено урона",
+    "lblTotalBlocked": "Заблокировано урона",
+    "lblRoundsPlayed": "Раундов сыграно",
+    "lblCardsUsed": "Карт использовано"
+  },
+  "cards": {
+    "attack": "Атака",
+    "defense": "Защита",
+    "special": "Спец.",
+    "common": "Обычная",
+    "rare": "Редкая",
+    "epic": "Эпическая",
+    "legendary": "Легендарная"
   },
   "training": {
     "timerText": "Мешок для ударов сломался, боец. Подождите, скоро мы его заменим.",
