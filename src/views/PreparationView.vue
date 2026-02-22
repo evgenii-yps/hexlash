@@ -46,13 +46,11 @@
 
 <script setup>
 import {computed, onMounted} from 'vue';
-import {useStore} from "vuex";
+import store from "@/core/state/store.js";
 import {useI18n} from "vue-i18n";
 import UserAvatar from "@/components/fragments/profile/UserAvatar.vue";
 import UserName from "@/components/fragments/profile/UserName.vue";
 import DeckBuilder from "@/components/fragments/cards/DeckBuilder.vue";
-
-const store = useStore();
 const {t} = useI18n({useScope: 'global'});
 
 const master = computed(() => store.getters['master/getMaster']);

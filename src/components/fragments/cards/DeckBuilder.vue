@@ -41,12 +41,10 @@
 
 <script setup>
 import {computed} from "vue";
-import {useStore} from "vuex";
+import store from "@/core/state/store.js";
 import {useI18n} from "vue-i18n";
 import {MAX_DECK_SIZE} from "@/core/constants.js";
 import CardItem from "@/components/fragments/cards/CardItem.vue";
-
-const store = useStore();
 const {t} = useI18n({useScope: 'global'});
 
 const allCards = computed(() => store.getters['fight/getAllCards']);

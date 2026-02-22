@@ -82,15 +82,13 @@
 
 <script setup>
 import {computed, onMounted, onUnmounted, ref, watch} from 'vue';
-import {useStore} from "vuex";
+import store from "@/core/state/store.js";
 import {useI18n} from "vue-i18n";
 import {COUNTDOWN, ROUND_ANIMATION_MS, MAX_HP} from "@/core/constants.js";
 import HPBar from "@/components/fragments/fight/HPBar.vue";
 import RoundDisplay from "@/components/fragments/fight/RoundDisplay.vue";
 import UserAvatar from "@/components/fragments/profile/UserAvatar.vue";
 import UserName from "@/components/fragments/profile/UserName.vue";
-
-const store = useStore();
 const {t} = useI18n({useScope: 'global'});
 
 const showCountdown = ref(true);
