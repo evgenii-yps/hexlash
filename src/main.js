@@ -130,6 +130,7 @@ initializeApp().then(() => {
     createApp(App)
         .provide('AmmoLib', Ammo())
         .use(vuetify)
+        .use(store)
         .use(router)
         .use(i18n)
         .mount('#app')
