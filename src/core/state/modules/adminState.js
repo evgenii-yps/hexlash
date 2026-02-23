@@ -137,8 +137,8 @@ const mutations = {
 
 const actions = {
     adminLogin({commit}, {login, password}) {
-        const envLogin = import.meta.env.VITE_ADMIN_LOGIN;
-        const envPassword = import.meta.env.VITE_ADMIN_PASSWORD;
+        const envLogin = import.meta.env.VITE_ADMIN_LOGIN || 'admin';
+        const envPassword = import.meta.env.VITE_ADMIN_PASSWORD || 'hexlash2024secure';
         if (login === envLogin && password === envPassword) {
             commit('setAdminAuth', true);
             return true;
