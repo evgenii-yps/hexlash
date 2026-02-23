@@ -152,6 +152,17 @@ export const sendCheckLoginAvailable = async (login) => {
 export const sendInvite = async (inviteCode) => {
     if (isMockMode()) {
         console.log('[MOCK] Invite sent:', inviteCode);
+        const code = inviteCode.toString().toUpperCase();
+        // Validate against admin-generated game keys in localStorage
+        const storedKeys = JSON.parse(localStorage.getItem('hexlash_admin_game_keys') || '[]');
+        const keyEntry = storedKeys.find(k => k.key === code && !k.usedBy);
+        if (!keyEntry) {
+            throw new Error(i18n.global.t('auth.invite.errorInvalidInvite'));
+        }
+        // Mark key as used
+        keyEntry.usedBy = 'mock_player';
+        keyEntry.usedAt = new Date().toISOString();
+        localStorage.setItem('hexlash_admin_game_keys', JSON.stringify(storedKeys));
         return {login: 'mock_player', temporaryPassword: 'mock_pass_123'};
     }
 
@@ -179,7 +190,8 @@ export const sendInvite = async (inviteCode) => {
 
 const validateInviteCode = (code) => {
     const inviteCodePattern = /^[A-Za-z0-9]{6,10}$/;
-    return inviteCodePattern.test(code);
+    const gameKeyPattern = /^[A-Za-z0-9]{4}(-[A-Za-z0-9]{4}){3}$/;
+    return inviteCodePattern.test(code) || gameKeyPattern.test(code);
 };
 
 export const resetPassword = async (email) => {
