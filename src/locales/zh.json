@@ -22,18 +22,23 @@
       "lblLogin": "登录名",
       "lblPassword": "密码",
       "btnLogin": "登录",
-      "question": "您有",
-      "btnInvite": "邀请码",
+      "questionSignup": "没有账户？",
+      "btnSignup": "注册",
       "authError": "登录名或密码错误",
       "lblOrPass": "或密码",
       "btnReset": "重置"
     },
-    "invite": {
-      "lblInvite": "邀请码",
-      "btnInvite": "加入俱乐部",
+    "signup": {
+      "lblLogin": "登录名",
+      "lblPassword": "密码",
+      "lblConfirmPassword": "确认密码",
+      "btnSignup": "创建账户",
       "question": "已有账户？",
       "btnLogin": "登录",
-      "errorInvalidInvite": "邀请码无效。"
+      "errorAllFields": "所有字段都是必填的",
+      "errorMinPassword": "密码必须至少8个字符",
+      "errorPasswordsMismatch": "密码不匹配",
+      "errorGeneral": "注册失败。请重试。"
     },
     "telegram": {
       "lblAuth": "通过Telegram授权...",

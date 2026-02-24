@@ -149,49 +149,42 @@ export const sendCheckLoginAvailable = async (login) => {
     }
 };
 
-export const sendInvite = async (inviteCode) => {
+export const register = async (credentials) => {
     if (isMockMode()) {
-        console.log('[MOCK] Invite sent:', inviteCode);
-        const code = inviteCode.toString().toUpperCase();
-        // Validate against admin-generated game keys in localStorage
-        const storedKeys = JSON.parse(localStorage.getItem('hexlash_admin_game_keys') || '[]');
-        const keyEntry = storedKeys.find(k => k.key === code && !k.usedBy);
-        if (!keyEntry) {
-            throw new Error(i18n.global.t('auth.invite.errorInvalidInvite'));
-        }
-        // Mark key as used
-        keyEntry.usedBy = 'mock_player';
-        keyEntry.usedAt = new Date().toISOString();
-        localStorage.setItem('hexlash_admin_game_keys', JSON.stringify(storedKeys));
-        return {login: 'mock_player', temporaryPassword: 'mock_pass_123'};
+        console.log('[MOCK] Register:', credentials.login);
+        const mockMaster = createMockMaster();
+        store.commit('master/setMaster', mockMaster);
+        store.commit('master/setJwtToken', MOCK_JWT_TOKEN);
+        store.commit('master/setLoginState', {isAuthenticated: true});
+        return;
     }
 
-    if (!validateInviteCode(inviteCode)) {
-        throw new Error(i18n.global.t('auth.invite.errorInvalidInvite'));
-    }
-    inviteCode = inviteCode.toString().toUpperCase();
     try {
-        const response = await apiClient.post('/auth/signup', {inviteCode:inviteCode});
+        const response = await apiClient.post('/auth/register', {
+            login: credentials.login,
+            password: credentials.password
+        });
+        const {jwtToken} = response.data;
 
-        // Проверяем наличие полей login и tempPassword в ответе
-        const {login, temporaryPassword} = response.data;
+        updateJwtToken(jwtToken);
 
-        if (!login || !temporaryPassword) {
-            return new Error(i18n.global.t('auth.invite.errorInvalidResponse'));
+        const masterModel = await fetchMasterData();
+
+        const existingUser = await getMasterFromLocalDB();
+
+        if (existingUser && existingUser.getUuid() !== masterModel.getUuid()) {
+            await clearDatabase();
         }
 
-        return {login, temporaryPassword};
+        await saveMasterToLocalDB(masterModel);
+
+        store.commit('master/setMaster', masterModel);
+        store.commit('master/setLoginState', {isAuthenticated: true});
 
     } catch (error) {
-        const errorStr = error.response?.data?.error || error.message || 'Failed to invite';
+        const errorStr = error.response?.data?.error || error.message || 'Failed to register';
         throw new Error(errorStr);
     }
-};
-
-const validateInviteCode = (code) => {
-    const inviteCodePattern = /^[A-Za-z0-9]{6,10}$/;
-    const gameKeyPattern = /^[A-Za-z0-9]{4}(-[A-Za-z0-9]{4}){3}$/;
-    return inviteCodePattern.test(code) || gameKeyPattern.test(code);
 };
 
 export const resetPassword = async (email) => {

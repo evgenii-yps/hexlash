@@ -8,7 +8,7 @@ const routeHistory = [];
 
 export const authRoutes = [
     {path: '/auth/login', name: 'Login', component: RainView},
-    {path: '/auth/invite', name: 'Invite', component: RainView},
+    {path: '/auth/signup', name: 'Signup', component: RainView},
     {path: '/auth/reset', name: 'Reset', component: RainView},
     {path: '/auth/telegram', name: 'TelegramLogin', component: RainView}
 ];
@@ -122,8 +122,8 @@ router.beforeEach(async (to, from, next) => {
                 store.commit('master/setInfoMessage', customMessage);
             }
 
-            console.log('Redirecting to Invite page');
-            next({name: 'Invite'});
+            console.log('Redirecting to Login page');
+            next({name: 'Login'});
         } else if (!initialVerified && to.name !== 'Home') {
             next({name: 'Home'});
         } else {

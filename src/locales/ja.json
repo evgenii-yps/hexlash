@@ -22,18 +22,23 @@
       "lblLogin": "ログイン",
       "lblPassword": "パスワード",
       "btnLogin": "ログイン",
-      "question": "招待コードを持っていますか",
-      "btnInvite": "招待コード",
+      "questionSignup": "アカウントがない？",
+      "btnSignup": "新規登録",
       "authError": "ログインまたはパスワードが間違っています",
       "lblOrPass": "またはパスワード",
       "btnReset": "リセット"
     },
-    "invite": {
-      "lblInvite": "招待コード",
-      "btnInvite": "クラブに参加する",
+    "signup": {
+      "lblLogin": "ログイン",
+      "lblPassword": "パスワード",
+      "lblConfirmPassword": "パスワードの確認",
+      "btnSignup": "アカウント作成",
       "question": "アカウントをお持ちですか？",
       "btnLogin": "ログイン",
-      "errorInvalidInvite": "無効な招待コードです。"
+      "errorAllFields": "すべてのフィールドは必須です",
+      "errorMinPassword": "パスワードは8文字以上である必要があります",
+      "errorPasswordsMismatch": "パスワードが一致しません",
+      "errorGeneral": "登録に失敗しました。もう一度お試しください。"
     },
     "telegram": {
       "lblAuth": "Telegramによる認証中...",

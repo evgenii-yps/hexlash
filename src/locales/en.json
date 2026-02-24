@@ -22,18 +22,23 @@
       "lblLogin": "LOGIN",
       "lblPassword": "PASSWORD",
       "btnLogin": "Login",
-      "question": "Do you have",
-      "btnInvite": "invite",
+      "questionSignup": "No account?",
+      "btnSignup": "Sign up",
       "authError": "Wrong login or password",
       "lblOrPass": " or password",
       "btnReset": "reset"
     },
-    "invite": {
-      "lblInvite": "INVITE CODE",
-      "btnInvite": "Join Club",
+    "signup": {
+      "lblLogin": "LOGIN",
+      "lblPassword": "PASSWORD",
+      "lblConfirmPassword": "CONFIRM PASSWORD",
+      "btnSignup": "Create Account",
       "question": "Already have an account?",
       "btnLogin": "Login",
-      "errorInvalidInvite": "Invalid invite code."
+      "errorAllFields": "All fields are required",
+      "errorMinPassword": "Password must be at least 8 characters",
+      "errorPasswordsMismatch": "Passwords do not match",
+      "errorGeneral": "Registration failed. Please try again."
     },
     "telegram": {
       "lblAuth": "Authorization via Telegram...",

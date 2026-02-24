@@ -22,18 +22,23 @@
       "lblLogin": "लॉगिन",
       "lblPassword": "पासवर्ड",
       "btnLogin": "लॉगिन करें",
-      "question": "क्या आपके पास है",
-      "btnInvite": "आमंत्रण",
+      "questionSignup": "खाता नहीं है?",
+      "btnSignup": "साइन अप करें",
       "authError": "गलत लॉगिन या पासवर्ड",
       "lblOrPass": " या पासवर्ड",
       "btnReset": "रीसेट करें"
     },
-    "invite": {
-      "lblInvite": "आमंत्रण कोड",
-      "btnInvite": "क्लब में शामिल हों",
+    "signup": {
+      "lblLogin": "लॉगिन",
+      "lblPassword": "पासवर्ड",
+      "lblConfirmPassword": "पासवर्ड की पुष्टि करें",
+      "btnSignup": "खाता बनाएं",
       "question": "क्या आपके पास पहले से खाता है?",
       "btnLogin": "लॉगिन करें",
-      "errorInvalidInvite": "अमान्य आमंत्रण कोड।"
+      "errorAllFields": "सभी फ़ील्ड आवश्यक हैं",
+      "errorMinPassword": "पासवर्ड कम से कम 8 अक्षर का होना चाहिए",
+      "errorPasswordsMismatch": "पासवर्ड मेल नहीं खाते",
+      "errorGeneral": "पंजीकरण विफल रहा। कृपया पुन: प्रयास करें।"
     },
     "telegram": {
       "lblAuth": "टेलीग्राम के माध्यम से प्रमाणीकरण...",

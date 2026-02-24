@@ -22,18 +22,23 @@
       "lblLogin": "تسجيل الدخول",
       "lblPassword": "كلمة المرور",
       "btnLogin": "تسجيل الدخول",
-      "question": "هل لديك",
-      "btnInvite": "دعوة",
+      "questionSignup": "ليس لديك حساب؟",
+      "btnSignup": "إنشاء حساب",
       "authError": "خطأ في تسجيل الدخول أو كلمة المرور",
       "lblOrPass": " أو كلمة المرور",
       "btnReset": "إعادة تعيين"
     },
-    "invite": {
-      "lblInvite": "كود الدعوة",
-      "btnInvite": "انضم إلى النادي",
+    "signup": {
+      "lblLogin": "اسم المستخدم",
+      "lblPassword": "كلمة المرور",
+      "lblConfirmPassword": "تأكيد كلمة المرور",
+      "btnSignup": "إنشاء حساب",
       "question": "هل لديك حساب بالفعل؟",
       "btnLogin": "تسجيل الدخول",
-      "errorInvalidInvite": "كود الدعوة غير صالح."
+      "errorAllFields": "جميع الحقول مطلوبة",
+      "errorMinPassword": "يجب أن تتكون كلمة المرور من 8 أحرف على الأقل",
+      "errorPasswordsMismatch": "كلمات المرور غير متطابقة",
+      "errorGeneral": "فشل التسجيل. يرجى المحاولة مرة أخرى."
     },
     "telegram": {
       "lblAuth": "التفويض عبر تيليجرام...",

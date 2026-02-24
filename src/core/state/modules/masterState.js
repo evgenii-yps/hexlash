@@ -138,26 +138,16 @@ const actions = {
 
         await router.push('/');
     },
-    async sendInvite({commit}, inviteCode) {
+    async register({commit}, credentials) {
         try {
-            const {login, temporaryPassword} = await masterService.sendInvite(inviteCode);
+            await masterService.register(credentials);
 
-            // Сначала полностью очистить всю базу с компьютера
-            await masterService.resetClient();
+            await this.dispatch('master/initGetStarted');
 
-            // Записываем временный пароль, который мы рекомендуем ему поставить
-            commit('setSignupState', {
-                generatedPassword: temporaryPassword,
-            });
-
-            // Авторизуемся под временными данными
-            this.dispatch('master/login', {
-                login: login,
-                password: temporaryPassword
-            });
+            await router.push('/');
 
         } catch (error) {
-            commit('setSignupState', {errorMessage: error.message});
+            throw error;
         }
     },
     async sendCheckLoginAvailable({commit}, login) {

@@ -22,18 +22,23 @@
       "lblLogin": "ЛОГИН",
       "lblPassword": "ПАРОЛЬ",
       "btnLogin": "Войти",
-      "question": "У вас есть",
-      "btnInvite": "приглашение",
+      "questionSignup": "Нет аккаунта?",
+      "btnSignup": "Регистрация",
       "authError": "Неправильный логин или пароль",
       "lblOrPass": " или пароль",
       "btnReset": "сброс"
     },
-    "invite": {
-      "lblInvite": "КОД ПРИГЛАШЕНИЯ",
-      "btnInvite": "Вступить",
+    "signup": {
+      "lblLogin": "ЛОГИН",
+      "lblPassword": "ПАРОЛЬ",
+      "lblConfirmPassword": "ПОДТВЕРДИТЕ ПАРОЛЬ",
+      "btnSignup": "Создать аккаунт",
       "question": "Уже есть аккаунт?",
       "btnLogin": "Войти",
-      "errorInvalidInvite": "Неверный код приглашения."
+      "errorAllFields": "Все поля обязательны",
+      "errorMinPassword": "Пароль должен быть не менее 8 символов",
+      "errorPasswordsMismatch": "Пароли не совпадают",
+      "errorGeneral": "Ошибка регистрации. Попробуйте снова."
     },
     "telegram": {
       "lblAuth": "Авторизация через телеграмм...",

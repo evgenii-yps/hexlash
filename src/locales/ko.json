@@ -22,18 +22,23 @@
       "lblLogin": "로그인",
       "lblPassword": "비밀번호",
       "btnLogin": "로그인",
-      "question": "계정이 있습니까?",
-      "btnInvite": "초대",
+      "questionSignup": "계정이 없으신가요?",
+      "btnSignup": "회원가입",
       "authError": "잘못된 로그인 또는 비밀번호",
       "lblOrPass": " 또는 비밀번호",
       "btnReset": "비밀번호 재설정"
     },
-    "invite": {
-      "lblInvite": "초대 코드",
-      "btnInvite": "클럽 가입",
+    "signup": {
+      "lblLogin": "로그인",
+      "lblPassword": "비밀번호",
+      "lblConfirmPassword": "비밀번호 확인",
+      "btnSignup": "계정 만들기",
       "question": "계정이 있습니까?",
       "btnLogin": "로그인",
-      "errorInvalidInvite": "유효하지 않은 초대 코드입니다."
+      "errorAllFields": "모든 필드를 입력해야 합니다",
+      "errorMinPassword": "비밀번호는 최소 8자여야 합니다",
+      "errorPasswordsMismatch": "비밀번호가 일치하지 않습니다",
+      "errorGeneral": "등록에 실패했습니다. 다시 시도해주세요."
     },
     "telegram": {
       "lblAuth": "텔레그램을 통한 인증 중...",
