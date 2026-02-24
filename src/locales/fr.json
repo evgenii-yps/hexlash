@@ -22,18 +22,23 @@
       "lblLogin": "CONNEXION",
       "lblPassword": "MOT DE PASSE",
       "btnLogin": "Se connecter",
-      "question": "Avez-vous",
-      "btnInvite": "invitation",
+      "questionSignup": "Pas de compte ?",
+      "btnSignup": "S'inscrire",
       "authError": "Identifiant ou mot de passe incorrect",
       "lblOrPass": " ou mot de passe",
       "btnReset": "réinitialiser"
     },
-    "invite": {
-      "lblInvite": "CODE D'INVITATION",
-      "btnInvite": "Rejoindre le Club",
+    "signup": {
+      "lblLogin": "CONNEXION",
+      "lblPassword": "MOT DE PASSE",
+      "lblConfirmPassword": "CONFIRMER LE MOT DE PASSE",
+      "btnSignup": "Créer un compte",
       "question": "Vous avez déjà un compte ?",
       "btnLogin": "Se connecter",
-      "errorInvalidInvite": "Code d'invitation invalide."
+      "errorAllFields": "Tous les champs sont obligatoires",
+      "errorMinPassword": "Le mot de passe doit contenir au moins 8 caractères",
+      "errorPasswordsMismatch": "Les mots de passe ne correspondent pas",
+      "errorGeneral": "Échec de l'inscription. Veuillez réessayer."
     },
     "telegram": {
       "lblAuth": "Autorisation via Telegram...",

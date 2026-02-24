@@ -35,7 +35,7 @@
 <script setup>
 import {useRoute} from "vue-router";
 import Login from "@/components/fragments/auth/Login.vue";
-import Invite from "@/components/fragments/auth/Invite.vue";
+import Signup from "@/components/fragments/auth/Signup.vue";
 import Reset from "@/components/fragments/auth/Reset.vue";
 import TelegramLogin from "@/components/fragments/auth/TelegramLogin.vue";
 
@@ -57,8 +57,8 @@ const currentComponentKey = shallowRef(route.path);
 const setCurrentComponent = () => {
   if (route.path === '/auth/login') {
     currentComponent.value = Login;
-  } else if (route.path === '/auth/invite') {
-    currentComponent.value = Invite;
+  } else if (route.path === '/auth/signup') {
+    currentComponent.value = Signup;
   } else if (route.path === '/auth/reset') {
     currentComponent.value = Reset;
   } else if (route.path === '/auth/telegram') {

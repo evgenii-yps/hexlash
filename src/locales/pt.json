@@ -22,18 +22,23 @@
       "lblLogin": "LOGIN",
       "lblPassword": "SENHA",
       "btnLogin": "Entrar",
-      "question": "Você tem",
-      "btnInvite": "convite",
+      "questionSignup": "Não tem conta?",
+      "btnSignup": "Cadastrar",
       "authError": "Login ou senha incorretos",
       "lblOrPass": " ou senha",
       "btnReset": "redefinir"
     },
-    "invite": {
-      "lblInvite": "CÓDIGO DE CONVITE",
-      "btnInvite": "Entrar no Clube",
+    "signup": {
+      "lblLogin": "LOGIN",
+      "lblPassword": "SENHA",
+      "lblConfirmPassword": "CONFIRMAR SENHA",
+      "btnSignup": "Criar conta",
       "question": "Já tem uma conta?",
       "btnLogin": "Entrar",
-      "errorInvalidInvite": "Código de convite inválido."
+      "errorAllFields": "Todos os campos são obrigatórios",
+      "errorMinPassword": "A senha deve ter pelo menos 8 caracteres",
+      "errorPasswordsMismatch": "As senhas não coincidem",
+      "errorGeneral": "Falha no cadastro. Tente novamente."
     },
     "telegram": {
       "lblAuth": "Autorização via Telegram...",

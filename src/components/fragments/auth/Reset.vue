@@ -28,11 +28,11 @@
       </VBtn>
 
       <div class="login" v-if="!resetState.loading">
-        {{ t('auth.invite.question') }}
+        {{ t('auth.signup.question') }}
         <ButtonText @click="handleLogin"
                     textColor="var(--pink)"
                     text-size="1.5em">
-          {{ t('auth.invite.btnLogin') }}
+          {{ t('auth.signup.btnLogin') }}
         </ButtonText>
       </div>
   </div>
