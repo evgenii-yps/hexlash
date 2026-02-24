@@ -247,6 +247,9 @@
     "lblHP": "HP",
     "lblDamage": "-{n} HP",
     "lblBlocked": "Заблокировано!",
+    "lblDodged": "Уклонение!",
+    "lblCrit": "КРИТ!",
+    "lblShield": "ЩИТ!",
     "lblMissed": "Промах!",
     "lblHealed": "+{n} HP",
     "lblBuff": "Усиление!",
@@ -261,7 +264,12 @@
     "lblTotalDamage": "Нанесено урона",
     "lblTotalBlocked": "Заблокировано урона",
     "lblRoundsPlayed": "Раундов сыграно",
-    "lblCardsUsed": "Карт использовано"
+    "lblCardsUsed": "Карт использовано",
+    "lblDiceUsed": "Кубиков использовано",
+    "lblOverridesHit": "Override активаций",
+    "lblRemainingHP": "Осталось HP",
+    "lblDiceRolling": "Бросок кубика...",
+    "lblDiceTap": "ТАП!"
   },
   "cards": {
     "attack": "Атака",
