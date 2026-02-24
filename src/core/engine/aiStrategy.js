@@ -1,12 +1,22 @@
 /**
  * AI Strategy - selects cards for automated fighters.
- * Uses weighted random selection based on card priority + situational conditions.
+ *
+ * Archetypes change how cards are weighted:
+ *  'aggressor' – prefers attacks, goes berserk at low HP
+ *  'guardian'  – prefers defense and counter-attacks, heals when available
+ *  'brawler'   – ignores defense, only high-power attacks
+ *  'balanced'  – no modifier (default)
  */
 
 export class AIStrategy {
-    constructor(deck) {
-        this.deck = deck;       // array of CardModel
-        this.cooldowns = {};    // { cardId: turnsRemaining }
+    /**
+     * @param {CardModel[]} deck
+     * @param {string}      archetype – 'aggressor' | 'guardian' | 'brawler' | 'balanced'
+     */
+    constructor(deck, archetype = 'balanced') {
+        this.deck = deck;
+        this.archetype = archetype;
+        this.cooldowns = {};
         this.buffs = {
             attackBoost: 0,
             defenseBoost: 0,
@@ -14,35 +24,31 @@ export class AIStrategy {
     }
 
     /**
-     * Select a card for this round based on current fight state.
-     * @param {number} currentHP - fighter's current HP
-     * @param {number} maxHP - fighter's max HP
-     * @param {number} roundNum - current round number
-     * @returns {CardModel} selected card
+     * Select a card for this round.
      */
     selectCard(currentHP, maxHP, roundNum) {
-        const availableCards = this.getAvailableCards();
-        if (availableCards.length === 0) {
-            // All on cooldown, reset cooldowns and pick again
+        const available = this.getAvailableCards();
+        if (available.length === 0) {
             this.resetCooldowns();
             return this.selectCard(currentHP, maxHP, roundNum);
         }
 
-        const weights = availableCards.map(card => {
-            let weight = card.priority;
+        const weights = available.map(card => {
+            let w = card.priority;
 
-            // Apply condition bonuses
-            for (const condition of card.conditions) {
-                weight += this.evaluateCondition(condition, currentHP, maxHP, roundNum);
+            // Condition bonuses
+            for (const cond of card.conditions) {
+                w += this.evaluateCondition(cond, currentHP, maxHP, roundNum);
             }
 
-            // Ensure minimum weight of 1
-            return Math.max(1, weight);
+            // Archetype modifier
+            w += this.evaluateArchetype(card, currentHP, maxHP);
+
+            return Math.max(1, w);
         });
 
-        const selected = this.weightedRandom(availableCards, weights);
+        const selected = this.weightedRandom(available, weights);
 
-        // Apply cooldown
         if (selected.cooldown > 0) {
             this.cooldowns[selected.id] = selected.cooldown;
         }
@@ -50,21 +56,13 @@ export class AIStrategy {
         return selected;
     }
 
-    /**
-     * Get cards not currently on cooldown.
-     */
     getAvailableCards() {
-        return this.deck.filter(card => !this.cooldowns[card.id] || this.cooldowns[card.id] <= 0);
+        return this.deck.filter(c => !this.cooldowns[c.id] || this.cooldowns[c.id] <= 0);
     }
 
-    /**
-     * Tick cooldowns down by 1 turn.
-     */
     tickCooldowns() {
-        for (const cardId of Object.keys(this.cooldowns)) {
-            if (this.cooldowns[cardId] > 0) {
-                this.cooldowns[cardId]--;
-            }
+        for (const id of Object.keys(this.cooldowns)) {
+            if (this.cooldowns[id] > 0) this.cooldowns[id]--;
         }
     }
 
@@ -72,67 +70,77 @@ export class AIStrategy {
         this.cooldowns = {};
     }
 
-    /**
-     * Evaluate a condition and return priority boost.
-     */
     evaluateCondition(condition, currentHP, maxHP, roundNum) {
-        const hpPercent = (currentHP / maxHP) * 100;
-
+        const hpPct = (currentHP / maxHP) * 100;
         switch (condition.type) {
-            case 'hp_below':
-                return hpPercent <= condition.threshold ? condition.priorityBoost : 0;
-            case 'hp_above':
-                return hpPercent >= condition.threshold ? condition.priorityBoost : 0;
-            case 'round_after':
-                return roundNum >= condition.threshold ? condition.priorityBoost : 0;
+            case 'hp_below':  return hpPct <= condition.threshold ? condition.priorityBoost : 0;
+            case 'hp_above':  return hpPct >= condition.threshold ? condition.priorityBoost : 0;
+            case 'round_after': return roundNum >= condition.threshold ? condition.priorityBoost : 0;
+            default:          return 0;
+        }
+    }
+
+    /**
+     * Archetype-based weight modifier.
+     */
+    evaluateArchetype(card, currentHP, maxHP) {
+        const hpPct = (currentHP / maxHP) * 100;
+
+        switch (this.archetype) {
+            case 'aggressor':
+                // Loves attacks; at low HP goes fully berserk
+                if (card.isAttack()) {
+                    return hpPct < 30 ? 7 : 3;
+                }
+                if (card.isDefense()) return -1;
+                return 0;
+
+            case 'guardian':
+                // Loves defense and counter; heals when able
+                if (card.isDefense()) return 3;
+                if (card.effect === 'counter') return 4;
+                if (card.effect === 'heal') return hpPct < 60 ? 5 : 2;
+                if (card.effect === 'buff_defense') return 2;
+                if (card.isAttack()) return -1;
+                return 0;
+
+            case 'brawler':
+                // High-power attacks only, skips defense entirely
+                if (card.isAttack() && card.power >= 20) return 5;
+                if (card.isAttack()) return 2;
+                if (card.isDefense()) return -3;
+                return 0;
+
+            case 'balanced':
             default:
                 return 0;
         }
     }
 
-    /**
-     * Weighted random selection from an array.
-     */
     weightedRandom(items, weights) {
-        const totalWeight = weights.reduce((sum, w) => sum + w, 0);
-        let random = Math.random() * totalWeight;
-
+        const total = weights.reduce((s, w) => s + w, 0);
+        let r = Math.random() * total;
         for (let i = 0; i < items.length; i++) {
-            random -= weights[i];
-            if (random <= 0) {
-                return items[i];
-            }
+            r -= weights[i];
+            if (r <= 0) return items[i];
         }
-
         return items[items.length - 1];
     }
 
-    /**
-     * Apply a buff effect.
-     */
     applyBuff(effect, power) {
-        if (effect === 'buff_attack') {
-            this.buffs.attackBoost += power;
-        } else if (effect === 'buff_defense') {
-            this.buffs.defenseBoost += power;
-        }
+        if (effect === 'buff_attack')   this.buffs.attackBoost  += power;
+        if (effect === 'buff_defense')  this.buffs.defenseBoost += power;
     }
 
-    /**
-     * Consume and return attack boost, then reset it.
-     */
     consumeAttackBoost() {
-        const boost = this.buffs.attackBoost;
+        const v = this.buffs.attackBoost;
         this.buffs.attackBoost = 0;
-        return boost;
+        return v;
     }
 
-    /**
-     * Consume and return defense boost, then reset it.
-     */
     consumeDefenseBoost() {
-        const boost = this.buffs.defenseBoost;
+        const v = this.buffs.defenseBoost;
         this.buffs.defenseBoost = 0;
-        return boost;
+        return v;
     }
 }

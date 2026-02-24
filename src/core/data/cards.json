@@ -205,5 +205,45 @@
     ],
     "description": "Restore 20 HP. Can only be used once per fight.",
     "effect": "heal"
+  },
+  {
+    "id": "finishing_blow",
+    "name": "Finishing Blow",
+    "type": "attack",
+    "target": "head",
+    "power": 45,
+    "priority": 2,
+    "cooldown": 3,
+    "rarity": "legendary",
+    "conditions": [
+      { "type": "hp_below", "threshold": 40, "priorityBoost": 6 }
+    ],
+    "description": "A legendary strike that ends fights. Gains power when desperate."
+  },
+  {
+    "id": "stone_fortress",
+    "name": "Stone Fortress",
+    "type": "defense",
+    "target": "both",
+    "power": 40,
+    "priority": 2,
+    "cooldown": 3,
+    "rarity": "legendary",
+    "conditions": [
+      { "type": "hp_below", "threshold": 50, "priorityBoost": 5 }
+    ],
+    "description": "An impenetrable stance. Blocks any attack completely."
+  },
+  {
+    "id": "berserker_combo",
+    "name": "Berserker Combo",
+    "type": "attack",
+    "target": "body",
+    "power": 38,
+    "priority": 2,
+    "cooldown": 3,
+    "rarity": "legendary",
+    "conditions": [],
+    "description": "A legendary flurry of body shots that bypasses light guards."
   }
 ]
