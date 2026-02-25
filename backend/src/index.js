@@ -23,17 +23,33 @@ if (!fs.existsSync(uploadsPath)) {
   fs.mkdirSync(uploadsPath, { recursive: true });
 }
 
-// Middleware
+// CORS configuration
+const allowedOrigins = [
+  'https://hexlash.com',
+  'https://www.hexlash.com',
+  'https://hexlash.vercel.app',
+];
+if (FRONTEND_URL && !allowedOrigins.includes(FRONTEND_URL)) {
+  allowedOrigins.push(FRONTEND_URL);
+}
+
 app.use(cors({
-  origin: [
-    FRONTEND_URL,
-    'https://hexlash.com',
-    'https://www.hexlash.com',
-    'https://hexlash.vercel.app',
-    /\.vercel\.app$/,
-  ],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin) || /\.vercel\.app$/.test(origin)) {
+      return callback(null, true);
+    }
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 }));
+
+// Explicit preflight handling for all routes
+app.options('*', cors());
+
 app.use(express.json());
 
 // Health check
