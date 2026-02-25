@@ -1,13 +1,16 @@
 FROM node:20-alpine
 
+# Install OpenSSL for Prisma
+RUN apk add --no-cache openssl
+
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm install
-
+# Copy all files first so prisma schema is available during npm install (postinstall)
 COPY . .
 
-RUN npx prisma generate
+RUN npm install
+
+# Database setup
 RUN npx prisma db push
 RUN node prisma/seed.js
 
