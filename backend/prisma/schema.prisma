@@ -1,0 +1,165 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String   @id @default(uuid())
+  login           String   @unique
+  password        String
+  email           String   @default("")
+  emailVerified   Boolean  @default(false)
+  initialVerified Boolean  @default(false)
+  language        String   @default("en")
+  name            String   @default("Anonymous")
+  avatarUrl       String   @default("")
+  isBlocked       Boolean  @default(false)
+  balance         Int      @default(0)
+  walletAddress   String?
+  skin            String   @default("skin_m_1.png")
+
+  totalFights     Int      @default(0)
+  wins            Int      @default(0)
+  losses          Int      @default(0)
+  draws           Int      @default(0)
+  luckPercentage  Float    @default(0)
+  wonTokens       Int      @default(0)
+  freeTokens      Int      @default(0)
+  lostTokens      Int      @default(0)
+  invitedUsers    Int      @default(0)
+  daysInClub      Int      @default(0)
+  noSkipDays      Int      @default(0)
+
+  inviteId        String?  @unique @default(uuid())
+
+  clubId          String?
+  club            Club?    @relation(fields: [clubId], references: [id])
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  achievements    UserAchievement[]
+  ownedClubs      Club[]            @relation("ClubOwner")
+  socialTasks     UserSocialTask[]
+  dailyTasks      UserDailyTask[]
+  punchInfo       PunchInfo?
+
+  fightsAsOne     Fight[]  @relation("FighterOne")
+  fightsAsTwo     Fight[]  @relation("FighterTwo")
+  fightsWon       Fight[]  @relation("FightWinner")
+}
+
+model Club {
+  id          String   @id @default(uuid())
+  name        String
+  description String   @default("")
+  avatarUrl   String   @default("")
+  ownerId     String
+  owner       User     @relation("ClubOwner", fields: [ownerId], references: [id])
+  balance     Int      @default(0)
+  battles     Int      @default(0)
+  wins        Int      @default(0)
+  isPublic    Boolean  @default(true)
+  members     User[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Achievement {
+  id          Int     @id @default(autoincrement())
+  type        String  @unique
+  title       String
+  description String  @default("")
+  icon        String  @default("")
+  users       UserAchievement[]
+}
+
+model UserAchievement {
+  id            Int         @id @default(autoincrement())
+  userId        String
+  achievementId Int
+  obtainedAt    DateTime    @default(now())
+  user          User        @relation(fields: [userId], references: [id])
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+
+  @@unique([userId, achievementId])
+}
+
+model SocialTask {
+  id          String  @id @default(uuid())
+  title       String
+  description String  @default("")
+  link        String  @default("")
+  tokens      Int     @default(0)
+  category    String
+  language    String  @default("en")
+  users       UserSocialTask[]
+}
+
+model UserSocialTask {
+  id          Int        @id @default(autoincrement())
+  userId      String
+  taskId      String
+  completedAt DateTime   @default(now())
+  user        User       @relation(fields: [userId], references: [id])
+  task        SocialTask @relation(fields: [taskId], references: [id])
+
+  @@unique([userId, taskId])
+}
+
+model DailyTask {
+  id          String  @id @default(uuid())
+  title       String
+  description String  @default("")
+  tokens      Int     @default(0)
+  category    String
+  link        String  @default("")
+  value       Int?
+  language    String  @default("en")
+  users       UserDailyTask[]
+}
+
+model UserDailyTask {
+  id          Int       @id @default(autoincrement())
+  userId      String
+  taskId      String
+  completedAt DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id])
+  task        DailyTask @relation(fields: [taskId], references: [id])
+
+  @@unique([userId, taskId])
+}
+
+model Fight {
+  id               String   @id @default(uuid())
+  fighterOneId     String
+  fighterTwoId     String?
+  winnerId         String?
+  bet              Int      @default(0)
+  duration         Int      @default(0)
+  actions          Int      @default(0)
+  isCompleted      Boolean  @default(false)
+  fighterOneActions String  @default("[]")
+  fighterTwoActions String  @default("[]")
+  createdAt        DateTime @default(now())
+
+  fighterOne       User     @relation("FighterOne", fields: [fighterOneId], references: [id])
+  fighterTwo       User?    @relation("FighterTwo", fields: [fighterTwoId], references: [id])
+  winner           User?    @relation("FightWinner", fields: [winnerId], references: [id])
+}
+
+model PunchInfo {
+  id                     String   @id @default(uuid())
+  userId                 String   @unique
+  punchAmount            Int      @default(0)
+  punchCount             Int      @default(0)
+  intervalStartMs        BigInt   @default(0)
+  punchAmountMaxPerInterval Int   @default(10000)
+  punchAmountMaxPerBatch Int      @default(10000)
+  intervalWaitTimeMs     BigInt   @default(3600000)
+  user                   User     @relation(fields: [userId], references: [id])
+}
