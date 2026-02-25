@@ -4,25 +4,20 @@ RUN apk add --no-cache openssl
 
 WORKDIR /app
 
-# 1. Copy package files
+# 1. Copy package files and prisma schema
 COPY package*.json ./
-
-# 2. Copy prisma schema BEFORE npm install
 COPY prisma ./prisma
 
-# 3. Install dependencies (no postinstall issues now)
+# 2. Install dependencies
 RUN npm install
 
-# 4. Generate Prisma client explicitly
+# 3. Generate Prisma client
 RUN npx prisma generate
 
-# 5. Copy the rest of the app
+# 4. Copy the rest of the app
 COPY . .
-
-# 6. Setup database
-RUN npx prisma db push
-RUN node prisma/seed.js
 
 EXPOSE 3000
 
-CMD ["node", "src/index.js"]
+# 5. Start: create DB + seed + run server
+CMD ["sh", "-c", "npx prisma db push && node prisma/seed.js; node src/index.js"]

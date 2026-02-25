@@ -64,8 +64,10 @@ const server = http.createServer(app);
 // Setup WebSocket on the same server
 setupWebSocket(server);
 
-server.listen(PORT, () => {
-  console.log(`Hexlash API server running on port ${PORT}`);
-  console.log(`WebSocket available on ws://localhost:${PORT}/ws`);
-  console.log(`Health check: http://localhost:${PORT}/health`);
+// Use PORT from env (Railway sets this automatically)
+const port = process.env.PORT || PORT;
+server.listen(port, '0.0.0.0', () => {
+  console.log(`Hexlash API server running on port ${port}`);
+  console.log(`WebSocket available on ws://0.0.0.0:${port}`);
+  console.log(`Health check: http://0.0.0.0:${port}/health`);
 });
