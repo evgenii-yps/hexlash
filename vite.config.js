@@ -26,9 +26,9 @@ export default defineConfig(({mode}) => {
     const apiServer = apiServers[mode] || apiServers.test;
 
     const wsServers = {
-        prod: 'wss://api.hexlash.com:444',
-        test: 'wss://apitest.hexlash.com:444',
-        // test: 'ws://localhost:8444',
+        prod: 'wss://api.hexlash.com',
+        test: 'wss://apitest.hexlash.com',
+        // test: 'ws://localhost:8080',
     };
     const wsServer = wsServers[mode] || wsServers.test;
 
