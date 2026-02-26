@@ -38,43 +38,25 @@
           </div>
         </div>
 
-        <!-- Current round display -->
-        <RoundDisplay v-if="currentRound" :round="currentRound"/>
+        <!-- Current round display (action-based) -->
+        <RoundDisplay v-if="currentRound && fightPhase === 'fighting'" :round="currentRound"/>
 
-        <!-- ── Dice of Fate ────────────────────────────────────────── -->
-        <div class="dice-area" v-if="fightPhase === 'fighting'">
-
-          <!-- Rolling animation -->
-          <div v-if="diceState.rolling" class="dice-roll-anim">
-            <span class="dice-spin">🎲</span>
-            <span class="dice-spin-label">{{ t('fight.lblDiceRolling') }}</span>
+        <!-- Event title (dice pickup, emergency protocol, crits) -->
+        <transition name="title-pop">
+          <div v-if="eventTitle" class="event-title" :class="eventTitleClass">
+            {{ eventTitle }}
           </div>
+        </transition>
 
-          <!-- Active item: tap to use -->
-          <div
-              v-else-if="diceState.activeItem"
-              class="dice-item"
-              @click="onUseDice"
-          >
+        <!-- Dice item display (automatic, no tap) -->
+        <div class="dice-area" v-if="diceState.activeItem && fightPhase === 'fighting'">
+          <div class="dice-item-auto">
             <span class="dice-emoji">{{ diceState.activeItem.emoji }}</span>
             <div class="dice-info">
               <span class="dice-name">{{ diceState.activeItem.name }}</span>
               <span class="dice-desc">{{ diceState.activeItem.desc }}</span>
             </div>
-            <span class="dice-tap">{{ t('fight.lblDiceTap') }}</span>
           </div>
-        </div>
-
-        <!-- ── Manual Override ─────────────────────────────────────── -->
-        <div
-            v-if="overrideAvailable && fightPhase === 'fighting'"
-            class="override-btn"
-            :style="{ '--override-progress': overrideProgress + '%' }"
-            @click="onUseOverride"
-        >
-          <span class="override-icon">⚔️</span>
-          <span class="override-label">OVERRIDE!</span>
-          <span class="override-dmg">-{{ overrideDamage }} HP</span>
         </div>
 
         <!-- Active modifiers display -->
@@ -82,17 +64,6 @@
           <span v-if="playerModifiers.attackMultiplier > 1" class="mod-badge mod-double">⚡ 2x ATK</span>
           <span v-if="playerModifiers.shieldActive"         class="mod-badge mod-shield">🛡️ ЩИТ</span>
           <span v-if="playerModifiers.blindActive"          class="mod-badge mod-blind">✨ СЛЕПОТА</span>
-        </div>
-
-        <!-- Round history log -->
-        <div class="round-log" v-if="roundLog.length > 0" ref="logEndRef">
-          <div v-for="(r, i) in roundLog" :key="i" class="log-entry">
-            <span class="log-round">R{{ r.roundNum }}</span>
-            <span class="log-card left" :class="'log-' + r.card1.type">{{ r.card1.name }}</span>
-            <span class="log-vs">vs</span>
-            <span class="log-card right" :class="'log-' + r.card2.type">{{ r.card2.name }}</span>
-            <span class="log-hp">{{ r.hp1After }} / {{ r.hp2After }}</span>
-          </div>
         </div>
 
         <!-- Results overlay -->
@@ -110,12 +81,12 @@
               <span>{{ fightStats.totalDamageDealt }}</span>
             </div>
             <div class="report-row">
-              <span>{{ t('fight.lblDiceUsed') }}:</span>
-              <span>{{ fightStats.diceUsed }}</span>
+              <span>{{ t('fight.lblPickedUp') }}:</span>
+              <span>{{ fightStats.dicePickedUp }}</span>
             </div>
             <div class="report-row">
-              <span>{{ t('fight.lblOverridesHit') }}:</span>
-              <span>{{ fightStats.overridesHit }}</span>
+              <span>{{ t('fight.lblIgnored') }}:</span>
+              <span>{{ fightStats.diceIgnored }}</span>
             </div>
             <div class="report-row">
               <span>{{ t('fight.lblRemainingHP') }}:</span>
@@ -123,9 +94,36 @@
             </div>
           </div>
 
+          <!-- Expandable detailed log -->
+          <div class="log-section">
+            <button class="log-toggle" @click="showDetailedLog = !showDetailedLog">
+              {{ showDetailedLog ? t('fight.lblHideDetails') + ' ▲' : t('fight.lblShowDetails') + ' ▼' }}
+            </button>
+            <div v-if="showDetailedLog" class="detailed-log">
+              <div v-for="r in roundLog" :key="r.roundNum" class="log-entry">
+                <span class="log-round">R{{ r.roundNum }}</span>
+                <span class="log-action left" :class="'log-' + r.action1">{{ actionLabel(r.action1) }}</span>
+                <span class="log-vs">vs</span>
+                <span class="log-action right" :class="'log-' + r.action2">{{ actionLabel(r.action2) }}</span>
+                <span class="log-hp">{{ r.hp1After }} / {{ r.hp2After }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- AI Trainer stub -->
+          <div class="ai-trainer">
+            <div class="trainer-header">
+              <span class="trainer-avatar">🎯</span>
+              <span class="trainer-title">{{ t('fight.lblTrainerAnalysis') }}</span>
+            </div>
+            <div class="trainer-analysis">
+              <p>{{ trainerAnalysis }}</p>
+            </div>
+          </div>
+
           <div class="result-buttons">
-            <VBtn class="result-btn"           @click="fightAgain">{{ t('fight.lblFightAgain') }}</VBtn>
-            <VBtn class="result-btn result-btn-secondary" @click="changeDeck">{{ t('fight.lblChangeDeck') }}</VBtn>
+            <VBtn class="result-btn" @click="fightAgain">{{ t('fight.lblFightAgain') }}</VBtn>
+            <VBtn class="result-btn result-btn-secondary" @click="changeBuild">{{ t('fight.lblChangeDeck') }}</VBtn>
           </div>
         </div>
 
@@ -135,27 +133,25 @@
 </template>
 
 <script setup>
-import {computed, onMounted, onUnmounted, ref, watch, nextTick} from 'vue';
-import store from "@/core/state/store.js";
-import {useI18n} from "vue-i18n";
-import {COUNTDOWN, ROUND_ANIMATION_MS, MAX_HP} from "@/core/constants.js";
-import HPBar        from "@/components/fragments/fight/HPBar.vue";
-import RoundDisplay from "@/components/fragments/fight/RoundDisplay.vue";
-import UserAvatar   from "@/components/fragments/profile/UserAvatar.vue";
-import UserName     from "@/components/fragments/profile/UserName.vue";
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import store from '@/core/state/store.js';
+import { useI18n } from 'vue-i18n';
+import { COUNTDOWN, ROUND_ANIMATION_MS, MAX_HP } from '@/core/constants.js';
+import { ARCHETYPES } from '@/core/data/archetypes.js';
+import HPBar        from '@/components/fragments/fight/HPBar.vue';
+import RoundDisplay from '@/components/fragments/fight/RoundDisplay.vue';
+import UserAvatar   from '@/components/fragments/profile/UserAvatar.vue';
+import UserName     from '@/components/fragments/profile/UserName.vue';
 
-const {t} = useI18n({useScope: 'global'});
+const { t } = useI18n({ useScope: 'global' });
 
 // ── Countdown ──────────────────────────────────────────────────────────────
 const showCountdown  = ref(true);
 const countdownValue = ref(COUNTDOWN);
 let countdownTimer   = null;
 
-// ── Fight timers ───────────────────────────────────────────────────────────
-let roundTimer    = null;
-let diceTimer     = null;
-let diceItemTimer = null;
-let overrideTimer = null;
+// ── Fight timer ────────────────────────────────────────────────────────────
+let roundTimer = null;
 
 // ── Animations ─────────────────────────────────────────────────────────────
 const shakeLeft  = ref(false);
@@ -163,15 +159,15 @@ const shakeRight = ref(false);
 const flashActive = ref(false);
 const flashColor  = ref('transparent');
 
-// Override countdown (for progress bar)
-const overrideProgress  = ref(100);
-let overrideProgressInt = null;
-
-const logEndRef = ref(null);
+// ── Results state ──────────────────────────────────────────────────────────
+const showDetailedLog = ref(false);
 
 // ── Prev HP for shake detection ────────────────────────────────────────────
 let prevHP1 = MAX_HP;
 let prevHP2 = MAX_HP;
+
+// ── Event title timer ──────────────────────────────────────────────────────
+let eventTitleTimer = null;
 
 // ─── Store getters ──────────────────────────────────────────────────────────
 const fightPhase       = computed(() => store.getters['fight/getFightPhase']);
@@ -183,10 +179,11 @@ const currentRound     = computed(() => store.getters['fight/getCurrentRound']);
 const opponent         = computed(() => store.getters['fight/getOpponent']);
 const master           = computed(() => store.getters['master/getMaster']);
 const diceState        = computed(() => store.getters['fight/getDiceState']);
-const overrideAvailable= computed(() => store.getters['fight/getOverrideAvailable']);
-const overrideDamage   = computed(() => store.getters['fight/getOverrideDamage']);
 const playerModifiers  = computed(() => store.getters['fight/getPlayerModifiers']);
 const fightStats       = computed(() => store.getters['fight/getFightStats']);
+const eventTitle       = computed(() => store.getters['fight/getEventTitle']);
+const eventTitleClass  = computed(() => store.getters['fight/getEventTitleClass']);
+const playerModules    = computed(() => store.getters['fight/getPlayerModules']);
 
 const anyModActive = computed(() =>
     playerModifiers.value.attackMultiplier > 1 ||
@@ -194,15 +191,23 @@ const anyModActive = computed(() =>
     playerModifiers.value.blindActive
 );
 
+// ── Action labels ─────────────────────────────────────────────────────────
+const ACTION_LABELS = {
+  attack:   '⚔️ Атака',
+  defense:  '🛡️ Защита',
+  position: '👣 Позиция',
+};
+
+const actionLabel = (action) => ACTION_LABELS[action] || action;
+
 // ── Result UI ──────────────────────────────────────────────────────────────
 const statusLeft = computed(() => {
   if (fightPhase.value !== 'results') return '';
-  const p1win = liveHP1.value > liveHP2.value && liveHP2.value <= 0 || (liveHP1.value > 0 && liveHP2.value <= 0);
+  const p1win = (liveHP1.value > liveHP2.value && liveHP2.value <= 0) || (liveHP1.value > 0 && liveHP2.value <= 0);
   const draw  = liveHP1.value <= 0 && liveHP2.value <= 0;
   if (draw)  return t('fight.lblDraw');
   if (p1win) return t('fight.lblVictory');
   if (liveHP1.value <= 0) return t('fight.lblDefeat');
-  // by HP remaining
   if (liveHP1.value > liveHP2.value) return t('fight.lblVictory');
   if (liveHP1.value < liveHP2.value) return t('fight.lblDefeat');
   return t('fight.lblDraw');
@@ -224,32 +229,38 @@ const resultClass = computed(() => {
   return 'result-draw';
 });
 
-// ── Override progress bar ──────────────────────────────────────────────────
-watch(overrideAvailable, (val) => {
-  if (val) {
-    overrideProgress.value = 100;
-    clearInterval(overrideProgressInt);
-    overrideProgressInt = setInterval(() => {
-      overrideProgress.value -= 2.2;  // ~2.2s to drain (100 steps × ~22ms ≈ 2.2s)
-      if (overrideProgress.value <= 0) {
-        clearInterval(overrideProgressInt);
-      }
-    }, 22);
+// ── AI Trainer stub ──────────────────────────────────────────────────────
+const trainerAnalysis = computed(() => {
+  const won = liveHP1.value > liveHP2.value;
+  const modules = playerModules.value;
+  const names = modules.filter(id => id).map(id => ARCHETYPES[id]?.nameRu || id);
+  const buildStr = names.join(' + ');
 
-    overrideTimer = setTimeout(() => {
-      store.dispatch('fight/dismissOverride');
-    }, 2200);
+  if (won) {
+    return `Отличный бой! Ваш билд [${buildStr}] эффективно работал. ` +
+        `Особенно хорошо показал себя ${names[0]} в роли основного модуля.`;
   } else {
-    clearInterval(overrideProgressInt);
-    clearTimeout(overrideTimer);
+    return `Ваш боец [${buildStr}] проиграл. ` +
+        `Рекомендация: попробуйте заменить ${names[0]} на Стража для лучшей защиты против агрессивных стилей.`;
   }
 });
 
-// ── Shake + flash on HP change ─────────────────────────────────────────────
+// ── Auto-clear event title ──────────────────────────────────────────────
+watch(eventTitle, (val) => {
+  if (val) {
+    clearTimeout(eventTitleTimer);
+    eventTitleTimer = setTimeout(() => {
+      store.commit('fight/clearEventTitle');
+    }, 2000);
+  }
+});
+
+// ── Shake on HP change ──────────────────────────────────────────────────
 watch(liveHP1, (newVal) => {
   if (newVal < prevHP1) {
     shakeLeft.value = true;
     setTimeout(() => { shakeLeft.value = false; }, 400);
+    triggerFlash('damage');
   }
   prevHP1 = newVal;
 });
@@ -262,55 +273,23 @@ watch(liveHP2, (newVal) => {
   prevHP2 = newVal;
 });
 
-// Auto-scroll log
-watch(roundLog, async () => {
-  await nextTick();
-  if (logEndRef.value) {
-    logEndRef.value.scrollTop = logEndRef.value.scrollHeight;
-  }
-}, {deep: true});
-
-// ── Dice of Fate ──────────────────────────────────────────────────────────
-const rollDiceNow = () => {
-  if (fightPhase.value !== 'fighting') return;
-  if (diceState.value.rolling || diceState.value.activeItem) return;
-
-  store.dispatch('fight/rollDice');
-
-  // Auto-dismiss item after 3s if not used (1.2s spin + 3s window)
-  diceItemTimer = setTimeout(() => {
-    store.dispatch('fight/dismissDice');
-  }, 1200 + 3000);
-};
-
-const onUseDice = () => {
-  clearTimeout(diceItemTimer);
-  triggerFlash(diceState.value.activeItem?.effect);
-  store.dispatch('fight/useDice');
-};
-
+// ── Flash ───────────────────────────────────────────────────────────────
 const triggerFlash = (effect) => {
   const colors = {
-    heal:   'rgba(46, 204, 113, 0.25)',
-    double: 'rgba(255, 145, 0, 0.25)',
-    shield: 'rgba(68, 138, 255, 0.25)',
-    blind:  'rgba(224, 64, 251, 0.25)',
-    rage:   'rgba(255, 23, 68, 0.25)',
-    crit:   'rgba(255, 214, 0, 0.25)',
+    heal:       'rgba(46, 204, 113, 0.25)',
+    adrenaline: 'rgba(255, 145, 0, 0.25)',
+    shield:     'rgba(68, 138, 255, 0.25)',
+    blind:      'rgba(224, 64, 251, 0.25)',
+    rage:       'rgba(255, 23, 68, 0.25)',
+    crit:       'rgba(255, 214, 0, 0.25)',
+    damage:     'rgba(255, 23, 68, 0.15)',
   };
   flashColor.value  = colors[effect] || 'rgba(255,255,255,0.15)';
   flashActive.value = true;
   setTimeout(() => { flashActive.value = false; }, 350);
 };
 
-// ── Override ──────────────────────────────────────────────────────────────
-const onUseOverride = () => {
-  clearTimeout(overrideTimer);
-  triggerFlash('rage');
-  store.dispatch('fight/useOverride');
-};
-
-// ── Fight flow ─────────────────────────────────────────────────────────────
+// ── Fight flow (fully automatic) ────────────────────────────────────────
 const startCountdown = () => {
   showCountdown.value  = true;
   countdownValue.value = COUNTDOWN;
@@ -324,39 +303,27 @@ const startCountdown = () => {
       setTimeout(() => {
         countdownValue.value = 0;
         showCountdown.value  = false;
-        startFightTimers();
+        startFightTimer();
       }, 600);
     }
   }, 800);
 };
 
-const startFightTimers = () => {
-  stopFightTimers();
+const startFightTimer = () => {
+  stopFightTimer();
 
-  // Round timer
   roundTimer = setInterval(() => {
     if (fightPhase.value === 'fighting') {
       store.dispatch('fight/computeNextRound');
     } else {
-      stopFightTimers();
+      stopFightTimer();
     }
   }, ROUND_ANIMATION_MS);
-
-  // Dice timer: first roll after 2.5s, then every 7s
-  const firstDice = setTimeout(rollDiceNow, 2500);
-  diceTimer = setInterval(rollDiceNow, 7000);
-
-  // Store firstDice handle so we can cancel it
-  diceTimer._firstDice = firstDice;
 };
 
-const stopFightTimers = () => {
+const stopFightTimer = () => {
   clearInterval(roundTimer);
-  clearInterval(diceTimer);
-  clearTimeout(diceTimer?._firstDice);
-  clearTimeout(diceItemTimer);
-  clearTimeout(overrideTimer);
-  clearInterval(overrideProgressInt);
+  clearTimeout(eventTitleTimer);
 };
 
 // ── Lifecycle ─────────────────────────────────────────────────────────────
@@ -367,7 +334,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  stopFightTimers();
+  stopFightTimer();
   clearInterval(countdownTimer);
 });
 
@@ -376,21 +343,22 @@ watch(fightPhase, (val) => {
     startCountdown();
   }
   if (val === 'results') {
-    stopFightTimers();
+    stopFightTimer();
   }
 });
 
 // ── Navigation ────────────────────────────────────────────────────────────
 const fightAgain = async () => {
-  stopFightTimers();
+  stopFightTimer();
   clearInterval(countdownTimer);
+  showDetailedLog.value = false;
   prevHP1 = MAX_HP;
   prevHP2 = MAX_HP;
   await store.dispatch('fight/fightAgain');
   startCountdown();
 };
 
-const changeDeck = async () => {
+const changeBuild = async () => {
   await store.dispatch('fight/resetToPreparation');
 };
 
@@ -433,7 +401,6 @@ const flashStyle = computed(() => ({
   animation: fadeOut 1s forwards;
 }
 
-/* Screen flash overlay */
 .screen-flash::before {
   background: var(--flash-color, transparent) !important;
   animation: none !important;
@@ -551,116 +518,69 @@ const flashStyle = computed(() => ({
   100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 }
 
-/* ── Dice of Fate ────────────────────────────────────────────────── */
+/* ── Event title ─────────────────────────────────────────────────── */
+.event-title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  padding: 8px 20px;
+  border-radius: 8px;
+  text-align: center;
+  margin: 8px 0;
+  animation: titlePop 0.4s ease-out;
+}
+
+@keyframes titlePop {
+  0%   { opacity: 0; transform: scale(0.5); }
+  60%  { opacity: 1; transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.title-pop-enter-active { animation: titlePop 0.4s ease-out; }
+.title-pop-leave-active { transition: opacity 0.3s ease; }
+.title-pop-leave-to     { opacity: 0; }
+
+.event-emergency     { color: #FFD600; background: rgba(255, 214, 0, 0.15); border: 1px solid #FFD600; }
+.event-dice-pickup   { color: #2ecc71; background: rgba(46, 204, 113, 0.15); }
+.event-dice-ignore   { color: var(--gray3); background: rgba(255, 255, 255, 0.05); }
+
+/* ── Dice (automatic, no tap) ────────────────────────────────────── */
 .dice-area {
   width: 100%;
-  min-height: 56px;
-  margin: 8px 0;
+  min-height: 48px;
+  margin: 4px 0;
   display: flex;
   justify-content: center;
 }
 
-/* Rolling animation */
-.dice-roll-anim {
-  display: flex; flex-direction: column; align-items: center;
-  gap: 4px; padding: 10px;
-}
-
-@keyframes spin3d {
-  0%   { transform: rotateY(0deg); }
-  100% { transform: rotateY(360deg); }
-}
-.dice-spin {
-  font-size: 2rem;
-  display: inline-block;
-  animation: spin3d 0.3s linear infinite;
-}
-.dice-spin-label {
-  font-size: 0.6rem; color: var(--gray2); text-transform: uppercase; letter-spacing: 1px;
-}
-
-/* Active item card */
-.dice-item {
+.dice-item-auto {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 16px;
+  gap: 10px;
+  padding: 8px 14px;
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  border: 2px solid #FFD600;
-  border-radius: 12px;
-  cursor: pointer;
+  border: 1px solid rgba(255, 214, 0, 0.3);
+  border-radius: 10px;
   animation: dicePopIn 0.3s ease-out;
-  transition: transform 0.15s ease;
-  max-width: 320px; width: 100%;
+  max-width: 280px; width: 100%;
 }
-.dice-item:active { transform: scale(0.96); }
 
 @keyframes dicePopIn {
   from { opacity: 0; transform: scale(0.7); }
   to   { opacity: 1; transform: scale(1); }
 }
 
-.dice-emoji { font-size: 2rem; }
+.dice-emoji { font-size: 1.6rem; }
 
 .dice-info {
   display: flex; flex-direction: column; flex: 1;
 }
 .dice-name {
-  font-size: 0.85rem; font-weight: bold;
-  color: #FFD600; letter-spacing: 1px;
+  font-size: 0.75rem; font-weight: bold;
+  color: #FFD600; letter-spacing: 0.5px;
 }
 .dice-desc {
-  font-size: 0.7rem; color: var(--gray3);
+  font-size: 0.6rem; color: var(--gray3);
 }
-.dice-tap {
-  font-size: 0.6rem; color: var(--gray2);
-  text-transform: uppercase; letter-spacing: 1px;
-  animation: pulse 1s ease-in-out infinite;
-}
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.4; }
-}
-
-/* ── Override button ─────────────────────────────────────────────── */
-.override-btn {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 20px;
-  background: linear-gradient(135deg, #FF1744, #D50000);
-  border: 2px solid #FF1744;
-  border-radius: 12px;
-  cursor: pointer;
-  margin: 6px 0;
-  width: 100%;
-  max-width: 320px;
-  position: relative;
-  overflow: hidden;
-  animation: overridePulse 0.5s ease-in-out infinite alternate;
-  transition: transform 0.15s ease;
-}
-.override-btn:active { transform: scale(0.96); }
-
-/* Progress drain (CSS custom property updated by JS) */
-.override-btn::before {
-  content: '';
-  position: absolute;
-  bottom: 0; left: 0;
-  width: var(--override-progress, 100%);
-  height: 3px;
-  background: rgba(255, 255, 255, 0.5);
-  transition: width 0.022s linear;
-}
-
-@keyframes overridePulse {
-  from { box-shadow: 0 0 8px rgba(255, 23, 68, 0.6); }
-  to   { box-shadow: 0 0 20px rgba(255, 23, 68, 0.9); }
-}
-
-.override-icon  { font-size: 1.4rem; }
-.override-label { flex: 1; font-size: 1rem; font-weight: bold; color: white; letter-spacing: 2px; }
-.override-dmg   { font-size: 0.9rem; color: #FFD600; font-weight: bold; }
 
 /* ── Active modifiers ────────────────────────────────────────────── */
 .modifiers-bar {
@@ -674,30 +594,6 @@ const flashStyle = computed(() => ({
 .mod-double { background: rgba(255,145,0,0.3); border: 1px solid #FF9100; color: #FF9100; }
 .mod-shield { background: rgba(68,138,255,0.3); border: 1px solid #448AFF; color: #448AFF; }
 .mod-blind  { background: rgba(224,64,251,0.3); border: 1px solid #E040FB; color: #E040FB; }
-
-/* ── Round log ───────────────────────────────────────────────────── */
-.round-log {
-  width: 100%;
-  margin-top: 16px;
-  max-height: 200px;
-  overflow-y: auto;
-}
-.log-entry {
-  display: flex; align-items: center; gap: 6px;
-  padding: 4px 8px;
-  background-color: var(--black-opacity-80);
-  border-radius: 4px; margin-bottom: 4px;
-  font-size: 0.65rem;
-}
-.log-round { color: var(--gray2); min-width: 24px; }
-.log-card  { flex: 1; text-align: center; }
-.log-card.left  { text-align: right; }
-.log-card.right { text-align: left; }
-.log-attack  { color: #e74c3c; }
-.log-defense { color: #3498db; }
-.log-special { color: #f39c12; }
-.log-vs  { color: var(--gray2); font-size: 0.55rem; }
-.log-hp  { color: var(--gray3); min-width: 50px; text-align: right; font-size: 0.55rem; }
 
 /* ── Results ─────────────────────────────────────────────────────── */
 .results-overlay {
@@ -725,6 +621,85 @@ const flashStyle = computed(() => ({
   display: flex; justify-content: space-between;
   font-size: 0.7rem; color: var(--gray3); padding: 3px 0;
 }
+
+/* ── Expandable log ──────────────────────────────────────────────── */
+.log-section {
+  width: 100%; max-width: 300px;
+  margin-bottom: 12px;
+}
+
+.log-toggle {
+  width: 100%;
+  padding: 8px;
+  background-color: var(--black-opacity-80);
+  border: 1px solid var(--gray2);
+  border-radius: 6px;
+  color: var(--gray2);
+  font-size: 0.7rem;
+  cursor: pointer;
+  text-align: center;
+}
+
+.detailed-log {
+  margin-top: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.log-entry {
+  display: flex; align-items: center; gap: 6px;
+  padding: 4px 8px;
+  background-color: var(--black-opacity-80);
+  border-radius: 4px; margin-bottom: 3px;
+  font-size: 0.6rem;
+}
+.log-round  { color: var(--gray2); min-width: 24px; }
+.log-action { flex: 1; text-align: center; }
+.log-action.left  { text-align: right; }
+.log-action.right { text-align: left; }
+.log-attack   { color: #e74c3c; }
+.log-defense  { color: #3498db; }
+.log-position { color: #9b59b6; }
+.log-vs  { color: var(--gray2); font-size: 0.55rem; }
+.log-hp  { color: var(--gray3); min-width: 50px; text-align: right; font-size: 0.55rem; }
+
+/* ── AI Trainer ──────────────────────────────────────────────────── */
+.ai-trainer {
+  width: 100%; max-width: 300px;
+  background-color: var(--black-opacity-80);
+  border: 1px solid rgba(255, 214, 0, 0.2);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+
+.trainer-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.trainer-avatar {
+  font-size: 1.2rem;
+}
+
+.trainer-title {
+  font-size: 0.75rem;
+  color: #FFD600;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.trainer-analysis p {
+  font-size: 0.7rem;
+  color: var(--gray3);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────── */
 .result-buttons { display: flex; gap: 10px; margin-top: 8px; }
 .result-btn {
   background-color: var(--primary-color) !important;
