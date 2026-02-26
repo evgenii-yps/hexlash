@@ -25,7 +25,6 @@
     <p v-if="!isAuthenticated" class="beta-text">{{ version }}</p>
 
 
-    <Getstarted v-if="isAuthenticated && !initialVerified"/>
 
   </div>
 
@@ -42,13 +41,6 @@ import TelegramLogin from "@/components/fragments/auth/TelegramLogin.vue";
 const {t} = useI18n({useScope: 'global'})
 
 const isAuthenticated = computed(() => store.getters["master/getLoginState"].isAuthenticated);
-const initialVerified = computed(() => {
-  const master = store.getters['master/getMaster'];
-  if (master && master.initialVerified) {
-    return master.initialVerified;
-  }
-  return false;
-});
 
 const route = useRoute();
 const currentComponent = shallowRef(null);
@@ -128,7 +120,6 @@ import rainSound from '@/assets/sound/rain.mp3';
 import sceneModel from '@/assets/models/scene.glb';
 import store from "@/core/state/store.js";
 import {LISTING} from "@/core/constants.js";
-import Getstarted from "@/components/fragments/auth/Getstarted.vue";
 import router from "@/router/index.js";
 import * as masterService from "@/core/services/masterService.js";
 import {useI18n} from "vue-i18n";
@@ -1134,7 +1125,6 @@ watch(isAuthenticated, (newValue) => {
   if (newValue) {
     startCountdownListing();
     masterService.isShowPrivacyInfo(t('info.showPrivacyInfo'));
-    store.dispatch('master/initGetStarted');
   }
 }, {immediate: true});
 

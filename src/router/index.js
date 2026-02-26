@@ -109,8 +109,6 @@ router.beforeEach(async (to, from, next) => {
     }
 
     const isAuthenticated = store.getters["master/getLoginState"]?.isAuthenticated || false;
-    const initialVerified = store.getters["master/getMaster"]?.initialVerified;
-
     const isProtectedRoute = protectedRoutes.some(route => route.name === to.name || route.path === to.path);
 
     // Проверяем, если маршрут не является авторизационным и защищённым
@@ -124,8 +122,6 @@ router.beforeEach(async (to, from, next) => {
 
             console.log('Redirecting to Login page');
             next({name: 'Login'});
-        } else if (!initialVerified && to.name !== 'Home') {
-            next({name: 'Home'});
         } else {
             next();
         }

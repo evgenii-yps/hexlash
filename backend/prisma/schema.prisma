@@ -13,7 +13,7 @@ model User {
   password        String
   email           String   @default("")
   emailVerified   Boolean  @default(false)
-  initialVerified Boolean  @default(false)
+  initialVerified Boolean  @default(true)
   language        String   @default("en")
   name            String   @default("Anonymous")
   avatarUrl       String   @default("")
