@@ -27,13 +27,14 @@ if (!fs.existsSync(uploadsPath)) {
 const allowedOrigins = [
   'https://hexlash.com',
   'https://www.hexlash.com',
+  'https://test.hexlash.com',
   'https://hexlash.vercel.app',
 ];
 if (FRONTEND_URL && !allowedOrigins.includes(FRONTEND_URL)) {
   allowedOrigins.push(FRONTEND_URL);
 }
 
-app.use(cors({
+const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (mobile apps, curl, etc.)
     if (!origin) return callback(null, true);
@@ -45,10 +46,12 @@ app.use(cors({
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-}));
+};
+
+app.use(cors(corsOptions));
 
 // Explicit preflight handling for all routes
-app.options('*', cors());
+app.options('*', cors(corsOptions));
 
 app.use(express.json());
 
