@@ -8,7 +8,7 @@
           <UserName :userName="master?.userData?.name || ''" style="width: auto !important;"/>
         </div>
 
-        <DeckBuilder/>
+        <ModuleBuilder/>
 
         <div class="difficulty-section">
           <div class="difficulty-label">{{ t('arena.lblDifficulty') }}</div>
@@ -30,7 +30,7 @@
               width="200"
               size="large"
               class="fight-btn"
-              :disabled="!isDeckValid"
+              :disabled="!isBuildValid"
               @click="startFight"
           >
             {{ t('arena.lblStartFight') }}
@@ -50,11 +50,11 @@ import store from "@/core/state/store.js";
 import {useI18n} from "vue-i18n";
 import UserAvatar from "@/components/fragments/profile/UserAvatar.vue";
 import UserName from "@/components/fragments/profile/UserName.vue";
-import DeckBuilder from "@/components/fragments/cards/DeckBuilder.vue";
+import ModuleBuilder from "@/components/fragments/modules/ModuleBuilder.vue";
 const {t} = useI18n({useScope: 'global'});
 
 const master = computed(() => store.getters['master/getMaster']);
-const isDeckValid = computed(() => store.getters['fight/isDeckValid']);
+const isBuildValid = computed(() => store.getters['fight/isBuildValid']);
 const difficulty = computed(() => store.getters['fight/getDifficulty']);
 
 const setDifficulty = (level) => {
@@ -66,7 +66,7 @@ const startFight = async () => {
 };
 
 onMounted(() => {
-  store.dispatch('fight/loadCards');
+  store.dispatch('fight/loadModules');
 });
 
 const emit = defineEmits(['scroll']);
