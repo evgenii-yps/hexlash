@@ -1,7 +1,7 @@
 import { openDB } from 'idb';
 import {MasterModel} from "@/core/models/masterModel.js";
 
-const DB_NAME = 'fightClubDB';
+const DB_NAME = 'hexlashDB';
 const DB_VERSION = 1;
 
 export const MASTER_TABLE = 'master';

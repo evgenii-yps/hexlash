@@ -181,10 +181,10 @@
     "invite": {
       "lblCopySuccess": "招待コードがクリップボードにコピーされました",
       "lblCopyError": "コピーエラー {error}",
-      "lblTooltipText": "ファイトクラブの第一のルール：ファイトクラブについて全員に伝えること。これはあなたの自由へのチケットです。この自由を他人と共有しましょう。",
+      "lblTooltipText": "Hexlashの第一のルール：Hexlashについて全員に伝えること。これはあなたの自由へのチケットです。この自由を他人と共有しましょう。",
       "inviteFriend": "友達を招待する",
       "confirmInviteFriend": "Telegramで友達を招待しますか？リンクをクリックすると、自動的にあなたのクラブに参加します。また、コードを個人的に伝えることもでき、彼らはウェブサイトでコードを入力してこの方法で参加できます。",
-      "inviteText": "🏋 こんにちは！私のファイトクラブに参加しよう。 一緒に戦おう！"
+      "inviteText": "🏋 こんにちは！私のHexlashに参加しよう。 一緒に戦おう！"
     },
     "stats": {
       "lblTotalFights": "総試合数",
@@ -292,7 +292,7 @@
     "showPrivacyInfo": "このサイトの利用を続けることで、<a href=\"/rules\" target=\"_blank\">ルール</a>および<a href=\"/privacy\" target=\"_blank\">プライバシーポリシー</a>に同意したことになります。"
   },
   "getStarted": {
-    "title": "ファイトクラブ",
+    "title": "Hexlash",
     "noticeWelcome": "Hexlashへようこそ！始める前に、<a href=\"/rules?back=home\">ルール</a>を確認することを強くお勧めします。ルールを守ることが重要です。",
     "lblName": "名前",
     "lblHintName": "名前を入力...",

@@ -184,7 +184,7 @@
       "lblTooltipText": "Hexlash의 첫 번째 규칙: 모든 사람에게 Hexlash에 대해 이야기하세요. 이것은 자유로 가는 티켓입니다. 이 자유를 다른 사람들과 나누세요.",
       "inviteFriend": "친구를 초대하다",
       "confirmInviteFriend": "Telegram을 통해 친구를 초대하시겠습니까? 링크를 클릭하면 자동으로 클럽에 가입됩니다. 또한 코드를 직접 전달하여 웹사이트에 입력하고 이 방법으로 가입할 수 있습니다.",
-      "inviteText": "🏋 안녕하세요! 내 파이트 클럽에 가입하세요. 함께 싸우자!"
+      "inviteText": "🏋 안녕하세요! 내 Hexlash에 가입하세요. 함께 싸우자!"
     },
     "stats": {
       "lblTotalFights": "총 전투 횟수",

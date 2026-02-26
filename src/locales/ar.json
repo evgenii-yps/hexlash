@@ -99,7 +99,7 @@
       "lblFCTokens": "رموز FC",
       "lblConnectWallet": "اتصل بالمحفظة",
       "lblReconnectWallet": "إعادة الاتصال",
-      "msgConnectWalletTooltip": "اتصل بمحفظتك لشراء أو سحب رموز نادي القتال",
+      "msgConnectWalletTooltip": "اتصل بمحفظتك لشراء أو سحب رموز Hexlash",
       "lblGameBalance": "رصيد اللعبة",
       "lblWithdrawToWallet": "سحب إلى المحفظة",
       "lblConnectAnotherWallet": "هل ترغب في الاتصال بمحفظة أخرى؟",
@@ -181,10 +181,10 @@
     "invite": {
       "lblCopySuccess": "تم نسخ رمز الدعوة إلى الحافظة",
       "lblCopyError": "حدث خطأ أثناء نسخ النص {error}",
-      "lblTooltipText": "القاعدة الأولى لنادي القتال: أخبر الجميع عن نادي القتال. تذكر، هذا هو تذكرتك إلى الحرية. شارك هذه الحرية مع الآخرين.",
+      "lblTooltipText": "القاعدة الأولى لHexlash: أخبر الجميع عن Hexlash. تذكر، هذا هو تذكرتك إلى الحرية. شارك هذه الحرية مع الآخرين.",
       "inviteFriend": "دعوة صديق",
       "confirmInviteFriend": "دعوة صديق عبر Telegram؟ سينضم تلقائيًا إلى ناديك إذا اتبع الرابط. يمكنك أيضًا منحه الرمز شخصيًا، ويمكنه إدخاله على الموقع للانضمام بهذه الطريقة.",
-      "inviteText": "🏋 مرحبًا! انضم إلى نادي القتال الخاص بي. دعنا نحارب معًا!"
+      "inviteText": "🏋 مرحبًا! انضم إلى Hexlash الخاص بي. دعنا نحارب معًا!"
     },
     "stats": {
       "lblTotalFights": "إجمالي المعارك",
@@ -292,8 +292,8 @@
     "showPrivacyInfo": "بمواصلة استخدام هذا الموقع، فإنك توافق على <a href=\"/rules\" target=\"_blank\">القواعد</a> و <a href=\"/privacy\" target=\"_blank\">سياسة الخصوصية</a>."
   },
   "getStarted": {
-    "title": "نادي القتال",
-    "noticeWelcome": "مرحبًا بك في نادي القتال! قبل أن تبدأ، نوصيك بشدة بمراجعة <a href=\"/rules?back=home\">القواعد</a>، حيث من الضروري اتباعها.",
+    "title": "Hexlash",
+    "noticeWelcome": "مرحبًا بك في Hexlash! قبل أن تبدأ، نوصيك بشدة بمراجعة <a href=\"/rules?back=home\">القواعد</a>، حيث من الضروري اتباعها.",
     "lblName": "الاسم",
     "lblHintName": "أدخل اسمك...",
     "lblLogin": "تسجيل الدخول",
@@ -303,7 +303,7 @@
     "agreementText": "أوافق على",
     "rulesLinkText": "القواعد",
     "tooltipText": "يفتح في نافذة جديدة",
-    "joinText": "وأنا جاهز للانضمام إلى نادي القتال.",
+    "joinText": "وأنا جاهز للانضمام إلى Hexlash.",
     "btnGo": "لنقاتل",
     "errorMinCharacters": "الحد الأدنى 8 أحرف",
     "errorRequired": "لا يمكن أن يكون فارغًا",
