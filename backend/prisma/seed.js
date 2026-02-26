@@ -21,7 +21,7 @@ async function main() {
     { type: 'BOB', title: 'Bob', description: 'Completed all social tasks', icon: 'bob.png' },
     { type: 'PAPER_STREET', title: 'Paper Street', description: 'Created a club', icon: 'paper_street.png' },
     { type: 'MEETING_PARTICIPANT', title: 'Meeting Participant', description: 'Participated in a meeting', icon: 'meeting.png' },
-    { type: 'GOLDEN_RULE', title: 'Golden Rule', description: 'First rule of Fight Club', icon: 'golden_rule.png' },
+    { type: 'GOLDEN_RULE', title: 'Golden Rule', description: 'First rule of HexLash', icon: 'golden_rule.png' },
   ];
 
   for (const ach of achievements) {
