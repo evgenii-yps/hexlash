@@ -1,155 +1,149 @@
-import {AIStrategy} from "@/core/engine/aiStrategy.js";
-import {RoundResult, CombatResultModel} from "@/core/models/combatResultModel.js";
-import {MAX_HP, MAX_ROUNDS} from "@/core/constants.js";
+import { ModuleAIStrategy } from '@/core/engine/aiStrategy.js';
+import { RoundResult, CombatResultModel } from '@/core/models/combatResultModel.js';
+import { MAX_HP, MAX_ROUNDS, BASE_DAMAGE, POSITION_BONUS } from '@/core/constants.js';
 
-const DODGE_CHANCE = 0.12;  // 12% chance to fully dodge an attack
-const CRIT_CHANCE  = 0.10;  // 10% chance for 1.5x damage
+const DODGE_CHANCE = 0.12;
+const CRIT_CHANCE  = 0.10;
 const CRIT_MULT    = 1.5;
 
 /**
- * Combat Engine - runs card-based fights.
+ * Combat Engine - runs action-based fights.
  *
- * resolveRoundLive  – used by the live step-by-step fight (player can interact).
- * runCombat        – legacy batch-mode: runs all rounds at once.
+ * Actions: 'attack' | 'defense' | 'position'
+ *
+ * resolveRoundLive  - one round at a time (live fight)
+ * runCombat         - batch mode (all rounds at once)
  */
 export class CombatEngine {
 
-    // ─── Live fight (one round at a time) ─────────────────────────────────────
+    // ─── Live fight (one round at a time) ─────────────────────────────────
 
     /**
-     * Resolve ONE round for the live fight.
+     * Resolve ONE round of the live fight.
      *
-     * @param {CardModel}    card1      – fighter 1's selected card (player)
-     * @param {CardModel}    card2      – fighter 2's selected card (AI)
-     * @param {number}       hp1        – player's current HP before this round
-     * @param {number}       hp2        – opponent's current HP before this round
-     * @param {AIStrategy}   ai1        – player AI instance (for buff consumption)
-     * @param {AIStrategy}   ai2        – opponent AI instance
-     * @param {number}       roundNum
-     * @param {object}       playerMods – dice-granted modifiers for this round
-     *   { attackMultiplier: number, shieldActive: bool, blindActive: bool }
+     * @param {string}            action1    - fighter 1's action ('attack'|'defense'|'position')
+     * @param {string}            action2    - fighter 2's action
+     * @param {number}            hp1        - player's current HP
+     * @param {number}            hp2        - opponent's current HP
+     * @param {ModuleAIStrategy}  ai1        - player AI instance
+     * @param {ModuleAIStrategy}  ai2        - opponent AI instance
+     * @param {number}            roundNum
+     * @param {object}            playerMods - dice-granted modifiers
      * @returns {RoundResult}
      */
-    static resolveRoundLive(card1, card2, hp1, hp2, ai1, ai2, roundNum, playerMods = {}) {
+    static resolveRoundLive(action1, action2, hp1, hp2, ai1, ai2, roundNum, playerMods = {}) {
         const {
             attackMultiplier = 1,
             shieldActive     = false,
             blindActive      = false,
         } = playerMods;
 
-        let damage1 = 0;  // damage TO player (fighter 1)
-        let damage2 = 0;  // damage TO opponent (fighter 2)
+        let damage1 = 0;  // damage TO player
+        let damage2 = 0;  // damage TO opponent
         const events = [];
 
-        // ── Special cards (heal / buff) ──
-        const special1 = CombatEngine.handleSpecial(card1, ai1, hp1);
-        const special2 = CombatEngine.handleSpecial(card2, ai2, hp2);
+        // ── Fighter 1 actions ──
 
-        if (special1.healed) {
-            hp1 = Math.min(MAX_HP, hp1 + special1.healed);
-            events.push({fighter: 1, type: 'heal', value: special1.healed});
-        }
-        if (special2.healed) {
-            hp2 = Math.min(MAX_HP, hp2 + special2.healed);
-            events.push({fighter: 2, type: 'heal', value: special2.healed});
-        }
-        if (special1.buffed) events.push({fighter: 1, type: 'buff', value: special1.buffed});
-        if (special2.buffed) events.push({fighter: 2, type: 'buff', value: special2.buffed});
-
-        // ── Fighter 1 attacks Fighter 2 ──
-        if (card1.isAttack()) {
-            if (Math.random() < DODGE_CHANCE) {
-                // Opponent dodges
-                events.push({fighter: 2, type: 'dodge', value: 0});
-            } else {
-                let power = (card1.power + ai1.consumeAttackBoost()) * attackMultiplier;
-                const isCrit = Math.random() < CRIT_CHANCE;
-                if (isCrit) {
-                    power = Math.floor(power * CRIT_MULT);
-                    events.push({fighter: 2, type: 'crit', value: power});
-                }
-
-                const blocked = CombatEngine.calculateBlock(card1, card2, ai2);
-                const dealt = Math.max(0, power - blocked);
-                damage2 += dealt;
-
-                if (blocked > 0) events.push({fighter: 2, type: 'block', value: blocked});
-                if (dealt > 0) events.push({fighter: 2, type: 'damage', value: dealt});
-
-                // Counter-attack: if fighter2 played counter AND it blocked
-                if (special2.counter && blocked > 0) {
-                    const ctr = Math.floor(power * 0.5);
-                    damage1 += ctr;
-                    events.push({fighter: 1, type: 'counter', value: ctr});
-                }
-            }
-        }
-
-        // ── Fighter 2 attacks Fighter 1 ──
-        if (card2.isAttack()) {
-            if (blindActive) {
-                // Dice ОСЛЕПЛЕНИЕ: opponent misses entirely
-                events.push({fighter: 1, type: 'missed', value: 0});
-            } else if (Math.random() < DODGE_CHANCE) {
-                // Player dodges
-                events.push({fighter: 1, type: 'dodge', value: 0});
-            } else {
-                let power = card2.power + ai2.consumeAttackBoost();
-                const isCrit = Math.random() < CRIT_CHANCE;
-                if (isCrit) {
-                    power = Math.floor(power * CRIT_MULT);
-                    events.push({fighter: 1, type: 'crit', value: power});
-                }
-
-                if (shieldActive) {
-                    // Dice ЩИТ: block entire attack
-                    events.push({fighter: 1, type: 'shield', value: power});
-                    // no damage to player
+        if (action1 === 'attack') {
+            if (action2 === 'defense') {
+                // Opponent is defending — reduced damage
+                const baseDmg = (BASE_DAMAGE + ai1.consumeAttackBoost()) * attackMultiplier;
+                const blocked = Math.floor(baseDmg * 0.6);
+                damage2 = Math.max(0, baseDmg - blocked);
+                events.push({ fighter: 2, type: 'block', value: blocked });
+                if (damage2 > 0) events.push({ fighter: 2, type: 'damage', value: damage2 });
+            } else if (action2 === 'position') {
+                // Opponent is positioning — might dodge
+                if (Math.random() < DODGE_CHANCE + 0.1) {
+                    events.push({ fighter: 2, type: 'dodge', value: 0 });
                 } else {
-                    const blocked = CombatEngine.calculateBlock(card2, card1, ai1);
-                    const dealt = Math.max(0, power - blocked);
-                    damage1 += dealt;
-
-                    if (blocked > 0) events.push({fighter: 1, type: 'block', value: blocked});
-                    if (dealt > 0) events.push({fighter: 1, type: 'damage', value: dealt});
-
-                    if (special1.counter && blocked > 0) {
-                        const ctr = Math.floor(power * 0.5);
-                        damage2 += ctr;
-                        events.push({fighter: 2, type: 'counter', value: ctr});
-                    }
+                    const baseDmg = (BASE_DAMAGE + ai1.consumeAttackBoost()) * attackMultiplier;
+                    const isCrit = Math.random() < CRIT_CHANCE;
+                    damage2 = isCrit ? Math.floor(baseDmg * CRIT_MULT) : baseDmg;
+                    if (isCrit) events.push({ fighter: 2, type: 'crit', value: damage2 });
+                    else events.push({ fighter: 2, type: 'damage', value: damage2 });
                 }
+            } else {
+                // Both attacking — exchange blows
+                const baseDmg = (BASE_DAMAGE + ai1.consumeAttackBoost()) * attackMultiplier;
+                const isCrit = Math.random() < CRIT_CHANCE;
+                damage2 = isCrit ? Math.floor(baseDmg * CRIT_MULT) : baseDmg;
+                if (isCrit) events.push({ fighter: 2, type: 'crit', value: damage2 });
+                else events.push({ fighter: 2, type: 'damage', value: damage2 });
             }
+        } else if (action1 === 'position') {
+            // Positioning gives attack bonus for next round
+            ai1.applyBuff('attack', POSITION_BONUS);
+            events.push({ fighter: 1, type: 'position', value: POSITION_BONUS });
+        }
+        // defense — no active action
+
+        // ── Fighter 2 actions ──
+
+        if (action2 === 'attack') {
+            if (blindActive) {
+                // Dice BLIND: opponent misses entirely
+                events.push({ fighter: 1, type: 'missed', value: 0 });
+            } else if (shieldActive) {
+                // Dice SHIELD: block entire attack
+                events.push({ fighter: 1, type: 'shield', value: 0 });
+            } else if (action1 === 'defense') {
+                const baseDmg = BASE_DAMAGE + ai2.consumeAttackBoost();
+                const blocked = Math.floor(baseDmg * 0.6);
+                damage1 = Math.max(0, baseDmg - blocked);
+                events.push({ fighter: 1, type: 'block', value: blocked });
+                if (damage1 > 0) events.push({ fighter: 1, type: 'damage', value: damage1 });
+            } else if (action1 === 'position') {
+                // Player positioning — might dodge
+                if (Math.random() < DODGE_CHANCE + 0.1) {
+                    events.push({ fighter: 1, type: 'dodge', value: 0 });
+                } else {
+                    const baseDmg = BASE_DAMAGE + ai2.consumeAttackBoost();
+                    const isCrit = Math.random() < CRIT_CHANCE;
+                    damage1 = isCrit ? Math.floor(baseDmg * CRIT_MULT) : baseDmg;
+                    if (isCrit) events.push({ fighter: 1, type: 'crit', value: damage1 });
+                    else events.push({ fighter: 1, type: 'damage', value: damage1 });
+                }
+            } else {
+                // Both attacking — exchange blows
+                const baseDmg = BASE_DAMAGE + ai2.consumeAttackBoost();
+                const isCrit = Math.random() < CRIT_CHANCE;
+                damage1 = isCrit ? Math.floor(baseDmg * CRIT_MULT) : baseDmg;
+                if (isCrit) events.push({ fighter: 1, type: 'crit', value: damage1 });
+                else events.push({ fighter: 1, type: 'damage', value: damage1 });
+            }
+        } else if (action2 === 'position') {
+            ai2.applyBuff('attack', POSITION_BONUS);
+            events.push({ fighter: 2, type: 'position', value: POSITION_BONUS });
         }
 
         const hp1After = Math.max(0, hp1 - damage1);
         const hp2After = Math.max(0, hp2 - damage2);
 
-        return new RoundResult({roundNum, card1, card2, damage1, damage2, hp1After, hp2After, events});
+        return new RoundResult({ roundNum, action1, action2, damage1, damage2, hp1After, hp2After, events });
     }
 
-    // ─── Legacy batch mode ────────────────────────────────────────────────────
+    // ─── Batch mode ───────────────────────────────────────────────────────
 
-    static runCombat(deck1, deck2) {
+    static runCombat(modules1, modules2) {
         let hp1 = MAX_HP;
         let hp2 = MAX_HP;
         const rounds = [];
 
-        const ai1 = new AIStrategy(deck1);
-        const ai2 = new AIStrategy(deck2);
+        const ai1 = new ModuleAIStrategy(modules1);
+        const ai2 = new ModuleAIStrategy(modules2);
 
         for (let roundNum = 1; roundNum <= MAX_ROUNDS; roundNum++) {
-            const card1 = ai1.selectCard(hp1, MAX_HP, roundNum);
-            const card2 = ai2.selectCard(hp2, MAX_HP, roundNum);
+            const action1 = ai1.selectAction(hp1, MAX_HP);
+            const action2 = ai2.selectAction(hp2, MAX_HP);
 
-            const result = CombatEngine.resolveRoundLive(card1, card2, hp1, hp2, ai1, ai2, roundNum);
+            const result = CombatEngine.resolveRoundLive(
+                action1, action2, hp1, hp2, ai1, ai2, roundNum
+            );
 
             hp1 = result.hp1After;
             hp2 = result.hp2After;
             rounds.push(result);
-
-            ai1.tickCooldowns();
-            ai2.tickCooldowns();
 
             if (hp1 <= 0 || hp2 <= 0) break;
         }
@@ -157,40 +151,7 @@ export class CombatEngine {
         return CombatEngine.buildResult(rounds, hp1, hp2);
     }
 
-    // ─── Shared helpers ───────────────────────────────────────────────────────
-
-    static handleSpecial(card, ai, currentHP) {
-        const result = {healed: 0, buffed: null, counter: false};
-        if (!card.isSpecial()) return result;
-
-        switch (card.effect) {
-            case 'heal':
-                result.healed = card.power;
-                break;
-            case 'buff_attack':
-                ai.applyBuff('buff_attack', card.power);
-                result.buffed = 'attack';
-                break;
-            case 'buff_defense':
-                ai.applyBuff('buff_defense', card.power);
-                result.buffed = 'defense';
-                break;
-            case 'counter':
-                result.counter = true;
-                break;
-        }
-        return result;
-    }
-
-    static calculateBlock(attackCard, defenseCard, defenderAI) {
-        if (!defenseCard.isDefense()) return 0;
-        const defenseBoost = defenderAI.consumeDefenseBoost();
-        const total = defenseCard.power + defenseBoost;
-        if (defenseCard.target === 'both' || defenseCard.target === attackCard.target) {
-            return total;
-        }
-        return 0;
-    }
+    // ─── Shared helpers ───────────────────────────────────────────────────
 
     static buildResult(rounds, finalHP1, finalHP2) {
         let winnerId = null;
