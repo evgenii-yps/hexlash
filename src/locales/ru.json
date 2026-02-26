@@ -208,7 +208,12 @@
     "lblHard": "Сложно",
     "lblStartFight": "Начать бой",
     "lblDeckTooSmall": "Экипируйте минимум 4 карты",
-    "lblDeckReady": "Ваш боец готов!"
+    "lblDeckReady": "Ваш боец готов!",
+    "lblBuildStyle": "Стиль боя",
+    "lblEmergencyProtocol": "Экстренный протокол",
+    "lblSlotPrimary": "Основной",
+    "lblSlotSecondary": "Вторичный",
+    "lblSlotTertiary": "Дополнительный"
   },
   "club": {
     "lblClubMembers": "нет участников | {n} участник | {n} участника | {n} участников",
@@ -261,7 +266,7 @@
     "lblCounter": "Контратака!",
     "fightFinished": "Бой завершен!",
     "lblFightAgain": "Ещё бой",
-    "lblChangeDeck": "Сменить колоду",
+    "lblChangeDeck": "Пересобрать билд",
     "lblVictory": "ПОБЕДА",
     "lblDefeat": "ПОРАЖЕНИЕ",
     "lblDraw": "НИЧЬЯ",
@@ -270,11 +275,16 @@
     "lblTotalBlocked": "Заблокировано урона",
     "lblRoundsPlayed": "Раундов сыграно",
     "lblCardsUsed": "Карт использовано",
-    "lblDiceUsed": "Кубиков использовано",
-    "lblOverridesHit": "Override активаций",
+    "lblPickedUp": "Предметов подобрано",
+    "lblIgnored": "Предметов проигнорировано",
     "lblRemainingHP": "Осталось HP",
-    "lblDiceRolling": "Бросок кубика...",
-    "lblDiceTap": "ТАП!"
+    "lblShowDetails": "Показать подробности",
+    "lblHideDetails": "Скрыть подробности",
+    "lblTrainerAnalysis": "Анализ тренера",
+    "lblEventRage": "ЯРОСТЬ!",
+    "lblEventEmergency": "ЭКСТРЕННЫЙ ПРОТОКОЛ",
+    "lblEventCritical": "КРИТИЧЕСКИЙ УДАР!",
+    "lblDiceRolling": "Бросок кубика..."
   },
   "cards": {
     "attack": "Атака",
