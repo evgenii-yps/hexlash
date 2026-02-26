@@ -1,5 +1,5 @@
 import {
-    calculateBFCAmount,
+    calculateHXLAmount,
     getApprovedAmount,
     getBalance,
     getTokensAccepted, sendApprove, sendMint
@@ -80,7 +80,7 @@ const actions = {
 
         commit('setTransactionError', null);
 
-        const calculatedFC = await calculateBFCAmount(state.selectedToken, state.amount);
+        const calculatedFC = await calculateHXLAmount(state.selectedToken, state.amount);
         commit('setCalculatedFC', calculatedFC);
 
         const walletAddress = rootGetters['master/getMaster'].userData.walletAddress;

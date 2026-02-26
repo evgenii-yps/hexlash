@@ -162,7 +162,7 @@ const sendMint = async (token, amount, payload, walletProvider) => {
 };
 
 
-const calculateBFCAmount = async (token, amount) => {
+const calculateHXLAmount = async (token, amount) => {
     try {
         if (!contract) {
             await initializeContract();
@@ -180,7 +180,7 @@ const calculateBFCAmount = async (token, amount) => {
         return adjustedResult.toString();
 
     } catch (error) {
-        console.error("Error while calculating BFC amount:", error);
+        console.error("Error while calculating HXL amount:", error);
         //throw error;
     }
 };
@@ -194,5 +194,5 @@ const convertAmountToDecimals = (amount, decimals) => {
 };
 
 
-export {initializeContract, calculateBFCAmount,
+export {initializeContract, calculateHXLAmount,
     getTokensAccepted, getBalance, getApprovedAmount, sendApprove, sendMint};
