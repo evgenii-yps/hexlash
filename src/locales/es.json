@@ -181,10 +181,10 @@
     "invite": {
       "lblCopySuccess": "Código de invitación copiado al portapapeles",
       "lblCopyError": "Error al copiar texto {error}",
-      "lblTooltipText": "La primera regla del Club de la Lucha: cuéntaselo a todos. Recuerda, este es tu boleto a la libertad. Comparte esta libertad con los demás.",
+      "lblTooltipText": "La primera regla del Hexlash: cuéntaselo a todos. Recuerda, este es tu boleto a la libertad. Comparte esta libertad con los demás.",
       "inviteFriend": "Invitar a un amigo",
       "confirmInviteFriend": "¿Invitar a un amigo a través de Telegram? Se unirá automáticamente a tu club si sigue el enlace. También puedes darle el código personalmente, y podrá ingresarlo en el sitio web para unirse de esta manera.",
-      "inviteText": "🏋 ¡Hola! Únete a mi club de lucha. ¡Vamos a luchar juntos!"
+      "inviteText": "🏋 ¡Hola! Únete a mi Hexlash. ¡Vamos a luchar juntos!"
     },
     "stats": {
       "lblTotalFights": "Peleas totales",
@@ -292,8 +292,8 @@
     "showPrivacyInfo": "Al continuar usando este sitio, aceptas las <a href=\"/rules\" target=\"_blank\">Reglas</a> y la <a href=\"/privacy\" target=\"_blank\">Política de privacidad</a>."
   },
   "getStarted": {
-    "title": "El Club de la Lucha",
-    "noticeWelcome": "¡Bienvenido al Club de la Lucha! Antes de comenzar, te recomendamos encarecidamente que revises las <a href=\"/rules\" target=\"_blank\">reglas</a>, ya que es crucial seguirlas.",
+    "title": "El Hexlash",
+    "noticeWelcome": "¡Bienvenido al Hexlash! Antes de comenzar, te recomendamos encarecidamente que revises las <a href=\"/rules\" target=\"_blank\">reglas</a>, ya que es crucial seguirlas.",
     "lblName": "Nombre",
     "lblHintName": "Introduce tu nombre...",
     "lblLogin": "Usuario",
@@ -303,7 +303,7 @@
     "agreementText": "Estoy de acuerdo con",
     "rulesLinkText": "las reglas",
     "tooltipText": "Se abre en una nueva ventana",
-    "joinText": "y estoy listo para unirme al Club de la Lucha.",
+    "joinText": "y estoy listo para unirme al Hexlash.",
     "btnGo": "¡A Luchar!",
     "errorMinCharacters": "Mínimo 8 caracteres",
     "errorRequired": "No puede estar vacío",
