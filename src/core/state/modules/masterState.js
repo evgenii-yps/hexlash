@@ -37,6 +37,11 @@ const getters = {
 
 const mutations = {
     setMaster: (state, masterData) => {
+        // Восстанавливаем локально сохранённый скин, если сервер его не хранит
+        const savedSkin = localStorage.getItem('selectedSkin');
+        if (savedSkin && masterData?.userData) {
+            masterData.userData.skin = savedSkin;
+        }
         state.master = masterData;
     },
     setJwtToken(state, token) {
@@ -72,6 +77,7 @@ const mutations = {
     clearAuthData: (state) => {
         state.master = null;
         state.loginState = {isAuthenticated: false, authError: null};
+        localStorage.removeItem('selectedSkin');
     },
     setInfoMessage(state, message) {
         state.infoMessage = message;
@@ -228,7 +234,7 @@ const actions = {
     },
     async changeSkin({commit, state}, skinId) {
         try {
-            // Сохраняем скин локально (сервер пока не поддерживает skin в /user/edit)
+            localStorage.setItem('selectedSkin', skinId);
             commit('updateMaster', {skin: skinId});
             await updateMasterToLocalDB({skin: skinId});
         } catch (error) {
