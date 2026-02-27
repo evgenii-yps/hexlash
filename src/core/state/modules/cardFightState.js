@@ -259,7 +259,17 @@ const actions = {
         commit('resetPlayerModifiers');
 
         // Check end conditions
-        if (result.hp1After <= 0 || result.hp2After <= 0 || nextRound >= MAX_ROUNDS) {
+        if (result.hp1After <= 0 || result.hp2After <= 0) {
+            commit('setFightPhase', 'results');
+            return;
+        }
+        if (nextRound >= MAX_ROUNDS) {
+            // Final round: set loser HP to 0 for a clean finish
+            if (result.hp1After > result.hp2After) {
+                commit('setLiveHP2', 0);
+            } else if (result.hp2After > result.hp1After) {
+                commit('setLiveHP1', 0);
+            }
             commit('setFightPhase', 'results');
             return;
         }
