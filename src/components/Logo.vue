@@ -1,6 +1,6 @@
 <template>
   <div class="logo-container">
-    <img width="68" height="50" src="@/assets/images/logo.svg" alt="logo" @click="goToHome"/>
+    <span class="logo-text" @click="goToHome">HEXLASH</span>
   </div>
 </template>
 
@@ -12,7 +12,7 @@ const goToHome = () => {
 };
 </script>
 
-<style>
+<style scoped>
 .logo-container {
   position: absolute;
   top: 0;
@@ -22,7 +22,14 @@ const goToHome = () => {
   justify-content: space-between;
 }
 
-.logo-container img {
+.logo-text {
+  font-family: 'Anonymous', sans-serif;
+  font-size: 1.6em;
+  color: var(--pink);
+  letter-spacing: 3px;
   margin: 17px auto 0 17px;
+  cursor: pointer;
+  text-shadow: 0 0 8px rgba(255, 6, 111, 0.6);
+  user-select: none;
 }
 </style>
