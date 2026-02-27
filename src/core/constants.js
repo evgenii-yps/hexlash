@@ -16,18 +16,18 @@ export const COUNTDOWN = 3; // Количество секунд перед на
 export const MAX_HP = 100;
 export const MAX_DECK_SIZE = 8;
 export const MIN_DECK_SIZE = 4;
-export const MAX_ROUNDS = 12;
+export const MAX_ROUNDS = 10;
 export const ROUND_ANIMATION_MS = 1500;
 
 // MODULE COMBAT
 export const BASE_DAMAGE = 15;
 export const POSITION_BONUS = 5;
-export const DICE_COOLDOWN_ROUNDS = 4;
+export const DICE_COOLDOWN_ROUNDS = 3;
 export const EMERGENCY_HP_THRESHOLD = 30;
 
 // COACH ADVICE
-export const COACH_MIN_ROUND = 4;
-export const COACH_TRIGGER_CHANCE = 0.12;
+export const COACH_MIN_ROUND = 6;
+export const COACH_TRIGGER_CHANCE = 1.0;
 export const COACH_BOOST_ROUNDS = 4;
 
 // LISTING
