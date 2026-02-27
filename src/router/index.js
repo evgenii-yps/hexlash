@@ -13,11 +13,6 @@ export const authRoutes = [
     {path: '/auth/telegram', name: 'TelegramLogin', component: RainView}
 ];
 
-const adminRoutes = [
-    {path: '/admin', name: 'AdminLogin', component: () => import("/src/views/admin/AdminLoginView.vue")},
-    {path: '/admin/panel', name: 'AdminPanel', component: () => import("/src/views/admin/AdminPanelView.vue"), meta: {requiresAdmin: true}},
-];
-
 const publicRoutes = [
     {path: '/privacy', name: 'Privacy', component: () => import("/src/views/PrivacyView.vue")},
     {path: '/404', name: 'NotFound', component: () => import("/src/views/NotFoundView.vue")},
@@ -48,7 +43,6 @@ const protectedRoutes = [
 ];
 
 const routes = [
-    ...adminRoutes,
     ...authRoutes,
     ...publicRoutes,
     ...protectedRoutes,
@@ -88,24 +82,6 @@ router.beforeEach(async (to, from, next) => {
     // Ограничиваем историю, например, до последних 10 маршрутов
     if (routeHistory.length > 10) {
         routeHistory.shift();
-    }
-
-    // Admin routes guard
-    if (to.meta?.requiresAdmin) {
-        const isAdminAuth = store.getters['admin/isAdminAuth'];
-        if (!isAdminAuth) {
-            next({name: 'AdminLogin'});
-            return;
-        }
-        next();
-        return;
-    }
-
-    // Skip game guards for admin routes
-    const isAdminRoute = adminRoutes.some(route => route.name === to.name);
-    if (isAdminRoute) {
-        next();
-        return;
     }
 
     const isAuthenticated = store.getters["master/getLoginState"]?.isAuthenticated || false;

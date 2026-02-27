@@ -8,7 +8,6 @@ import cardFight from "@/core/state/modules/cardFightState.js";
 import contract from "@/core/state/modules/contractState.js";
 import webSocket from "@/core/state/modules/webSocketState.js";
 import achievement from "@/core/state/modules/achievementState.js";
-import admin from "@/core/state/modules/adminState.js";
 
 export default createStore({
     modules: {
@@ -21,6 +20,5 @@ export default createStore({
         contract,
         webSocket,
         achievement,
-        admin,
     },
 });

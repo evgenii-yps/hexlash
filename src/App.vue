@@ -1,8 +1,5 @@
 <template>
-  <!-- Admin pages render without the game shell -->
-  <RouterView v-if="isAdminPage" />
-
-  <div v-else class="app-container">
+  <div class="app-container">
     <header :style="headerStyle" class="header">
       <div class="header-content">
         <Logo/>
@@ -54,8 +51,6 @@ import NewAchievement from "@/components/NewAchievement.vue";
 import * as amplitude from "@amplitude/analytics-browser";
 
 
-
-const isAdminPage = computed(() => route.path.startsWith('/admin'));
 
 const balance = computed(() => {
   const master = store.getters['master/getMaster'];

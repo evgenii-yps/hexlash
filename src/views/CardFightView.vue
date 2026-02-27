@@ -758,6 +758,7 @@ const flashStyle = computed(() => ({
 .result-label {
   font-size: 2.5em; font-family: Anonymous, sans-serif;
   margin-bottom: 16px; letter-spacing: 2px;
+  text-align: center; width: 100%;
 }
 .result-win {
   color: #2ecc71;
@@ -773,7 +774,7 @@ const flashStyle = computed(() => ({
 }
 
 .fight-report {
-  width: 100%; max-width: 300px;
+  width: 92%; max-width: 400px;
   background: linear-gradient(135deg, rgba(9, 9, 9, 0.9) 0%, rgba(26, 26, 46, 0.65) 100%);
   border: 1px solid rgba(255, 6, 111, 0.2);
   border-radius: 10px;
@@ -801,7 +802,7 @@ const flashStyle = computed(() => ({
 
 /* ── Expandable log ──────────────────────────────────────────────── */
 .log-section {
-  width: 100%; max-width: 300px;
+  width: 92%; max-width: 400px;
   margin-bottom: 12px;
 }
 
@@ -852,7 +853,7 @@ const flashStyle = computed(() => ({
 
 /* ── AI Trainer ──────────────────────────────────────────────────── */
 .ai-trainer {
-  width: 100%; max-width: 300px;
+  width: 92%; max-width: 400px;
   background: linear-gradient(135deg, rgba(9, 9, 9, 0.9) 0%, rgba(26, 26, 46, 0.65) 100%);
   border: 1px solid rgba(255, 6, 111, 0.2);
   border-radius: 10px;
@@ -896,7 +897,7 @@ const flashStyle = computed(() => ({
 }
 
 /* ── Buttons ─────────────────────────────────────────────────────── */
-.result-buttons { display: flex; gap: 10px; margin-top: 8px; }
+.result-buttons { display: flex; gap: 10px; margin-top: 8px; justify-content: center; width: 92%; max-width: 400px; }
 .result-btn {
   background: var(--primary-color) !important;
   color: white !important;
