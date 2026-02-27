@@ -50,15 +50,13 @@
         </transition>
 
         <!-- Dice of Fate (manual, with cooldown) -->
-        <div class="dice-area" v-if="fightPhase === 'fighting'">
+        <div class="dice-area" v-if="fightPhase === 'fighting' && (diceState.ready || diceState.activeItem)">
           <button
-            class="dice-button"
-            :class="{ 'dice-ready': diceState.ready && !diceState.activeItem }"
-            :disabled="!diceState.ready || !!diceState.activeItem"
+            v-if="diceState.ready && !diceState.activeItem"
+            class="dice-button dice-ready"
             @click="rollDice"
           >
             <img :src="iconDice" class="dice-icon-img" alt=""/>
-            <span v-if="!diceState.ready && !diceState.activeItem" class="dice-cd">{{ diceState.cooldownLeft }}</span>
           </button>
           <transition name="title-pop">
             <div v-if="diceState.activeItem" class="dice-item-result">
@@ -78,8 +76,10 @@
           <span v-if="playerModifiers.blindActive"          class="mod-badge mod-blind"><img :src="iconBlind" class="mod-icon" alt=""/> СЛЕПОТА</span>
         </div>
 
-        <!-- Results overlay -->
-        <div v-if="fightPhase === 'results'" class="results-overlay">
+      </div><!-- /fight-content-wrapper -->
+
+      <!-- Results overlay (full-screen centered) -->
+      <div v-if="fightPhase === 'results'" class="results-overlay">
           <div class="result-label" :class="resultClass">{{ resultText }}</div>
 
           <div class="fight-report">
@@ -137,8 +137,6 @@
             <VBtn class="result-btn" @click="fightAgain">{{ t('fight.lblFightAgain') }}</VBtn>
             <VBtn class="result-btn result-btn-secondary" @click="changeBuild">{{ t('fight.lblChangeDeck') }}</VBtn>
           </div>
-        </div>
-
       </div>
     </div>
   </div>
@@ -636,7 +634,7 @@ const flashStyle = computed(() => ({
   position: relative;
   width: 56px; height: 56px;
   border-radius: 50%;
-  border: 2px solid rgba(255, 6, 111, 0.15);
+  border: 2px solid var(--primary-color);
   background: linear-gradient(135deg, #0d0d1a 0%, #1a1a2e 100%);
   cursor: pointer;
   display: flex;
@@ -644,23 +642,14 @@ const flashStyle = computed(() => ({
   justify-content: center;
   transition: all 0.3s ease;
   flex-shrink: 0;
-}
-
-.dice-button:disabled {
-  opacity: 0.3;
-  cursor: default;
-}
-
-.dice-button:active:not(:disabled) {
-  transform: scale(0.9);
-}
-
-.dice-button.dice-ready {
-  border-color: var(--primary-color);
   box-shadow:
     0 0 14px rgba(255, 6, 111, 0.5),
     0 0 30px rgba(255, 6, 111, 0.2);
   animation: dicePulse 1.5s ease-in-out infinite;
+}
+
+.dice-button:active {
+  transform: scale(0.9);
 }
 
 @keyframes dicePulse {
@@ -675,18 +664,6 @@ const flashStyle = computed(() => ({
 .dice-icon-img {
   width: 28px; height: 28px;
   filter: drop-shadow(0 0 4px rgba(255, 6, 111, 0.3));
-}
-
-.dice-cd {
-  position: absolute;
-  bottom: -2px; right: -2px;
-  font-size: 0.55rem;
-  font-weight: bold;
-  color: var(--gray3);
-  background: rgba(0, 0, 0, 0.85);
-  border-radius: 8px;
-  padding: 1px 5px;
-  line-height: 1;
 }
 
 .dice-item-result {
@@ -751,14 +728,33 @@ const flashStyle = computed(() => ({
 
 /* ── Results ─────────────────────────────────────────────────────── */
 .results-overlay {
-  width: 100%; margin-top: 12px;
-  display: flex; flex-direction: column; align-items: center;
-  animation: statusPopIn 0.5s ease-in-out forwards;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  z-index: 50;
+  background: rgba(0, 0, 0, 0.82);
+  animation: resultsOverlayIn 0.5s ease-out forwards;
+  overflow-y: auto;
+  padding: 24px 16px;
+  box-sizing: border-box;
+}
+@supports (height: 100dvh) { .results-overlay { height: 100dvh; } }
+@keyframes resultsOverlayIn {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
 }
 .result-label {
   font-size: 2.5em; font-family: Anonymous, sans-serif;
   margin-bottom: 16px; letter-spacing: 2px;
-  text-align: center; width: 100%;
+  text-align: center;
+  animation: resultLabelPop 0.6s ease-out forwards;
+}
+@keyframes resultLabelPop {
+  0%   { opacity: 0; transform: scale(2.5); }
+  60%  { opacity: 1; transform: scale(0.95); }
+  100% { transform: scale(1); }
 }
 .result-win {
   color: #2ecc71;
