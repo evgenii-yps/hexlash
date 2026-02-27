@@ -398,7 +398,12 @@ const flashStyle = computed(() => ({
   position: fixed;
   top: 0; left: 0;
   width: 100vw; height: 100vh;
-  background: linear-gradient(to right top, black 25%, transparent 125%);
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.88) 0%,
+    rgba(9, 9, 9, 0.65) 40%,
+    rgba(0, 0, 0, 0.92) 100%
+  );
   z-index: 1;
 }
 
@@ -437,7 +442,7 @@ const flashStyle = computed(() => ({
 
 .fight-content-wrapper {
   width: 100%;
-  padding: 20px 16px;
+  padding: 16px 12px;
   box-sizing: border-box;
   max-width: 500px;
   margin: 0 auto;
@@ -451,11 +456,13 @@ const flashStyle = computed(() => ({
   position: fixed;
   top: 40%; left: 50%;
   transform: translate(-50%, -50%);
-  font-size: 3em;
+  font-size: 4em;
   color: white;
   z-index: 100;
-  padding: 10px 20px;
-  border-radius: 4px;
+  font-family: Anonymous, sans-serif;
+  text-shadow:
+    0 0 30px var(--primary-color),
+    0 0 60px rgba(255, 6, 111, 0.4);
 }
 .fade-scale-enter-active, .fade-scale-leave-active { transition: opacity 0.5s ease, transform 0.5s ease; }
 .fade-scale-leave-to  { opacity: 0; transform: scale(3.5); }
@@ -472,14 +479,18 @@ const flashStyle = computed(() => ({
   justify-content: space-between;
   align-items: flex-start;
   width: 100%;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
+  padding: 12px 8px;
+  background: linear-gradient(135deg, rgba(9, 9, 9, 0.85) 0%, rgba(26, 26, 46, 0.5) 100%);
+  border: 1px solid rgba(255, 6, 111, 0.15);
+  border-radius: 12px;
 }
 
 .fighter-side {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 160px;
+  width: 150px;
   position: relative;
 }
 
@@ -498,21 +509,37 @@ const flashStyle = computed(() => ({
 }
 .fighter-info :deep(.user-name) { font-size: 0.5em; }
 
-.fighter-skin { width: 120px; height: 200px; padding: 5px; }
+.fighter-skin {
+  width: 100px; height: 170px; padding: 5px;
+  filter: drop-shadow(0 4px 16px rgba(255, 6, 111, 0.25));
+}
 .flipped { transform: scaleX(-1); }
 
 .vs-center {
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
-  font-size: 1.2rem; color: var(--gray2);
-  font-weight: bold; padding-top: 100px;
+  padding-top: 80px;
+}
+.vs-center > span {
+  font-size: 1.6rem;
+  font-weight: 900;
+  font-family: Anonymous, sans-serif;
+  color: var(--primary-color);
+  text-shadow:
+    0 0 20px rgba(255, 6, 111, 0.6),
+    0 0 40px rgba(255, 6, 111, 0.25);
+  letter-spacing: 3px;
 }
 
 .round-counter {
   font-size: 0.6rem;
   color: var(--gray3);
-  margin-top: 4px;
+  margin-top: 6px;
   letter-spacing: 1px;
+  padding: 2px 10px;
+  background: var(--black-opacity-80);
+  border: 1px solid rgba(255, 6, 111, 0.2);
+  border-radius: 10px;
 }
 
 .status-fighter {
@@ -520,9 +547,11 @@ const flashStyle = computed(() => ({
   transform: translate(-50%, -50%);
   z-index: 1;
   font-family: Anonymous, sans-serif;
-  font-size: 2em;
-  background-color: var(--black-opacity-80);
-  padding: 2px 16px; border-radius: 4px;
+  font-size: 1.6em;
+  background: var(--black-opacity-80);
+  border: 1px solid var(--primary-color);
+  padding: 4px 16px; border-radius: 6px;
+  text-shadow: 0 0 10px rgba(255, 6, 111, 0.5);
   animation: statusPopIn 0.5s ease-in-out forwards;
 }
 @keyframes statusPopIn {
@@ -532,12 +561,13 @@ const flashStyle = computed(() => ({
 
 /* ── Event title ─────────────────────────────────────────────────── */
 .event-title {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   font-weight: bold;
-  padding: 8px 20px;
+  padding: 8px 24px;
   border-radius: 8px;
   text-align: center;
-  margin: 8px 0;
+  margin: 6px 0;
+  border: 1px solid transparent;
   animation: titlePop 0.4s ease-out;
 }
 
@@ -551,27 +581,40 @@ const flashStyle = computed(() => ({
 .title-pop-leave-active { transition: opacity 0.3s ease; }
 .title-pop-leave-to     { opacity: 0; }
 
-.event-emergency     { color: #FFD600; background: rgba(255, 214, 0, 0.15); border: 1px solid #FFD600; }
-.event-dice-pickup   { color: #2ecc71; background: rgba(46, 204, 113, 0.15); }
-.event-dice-ignore   { color: var(--gray3); background: rgba(255, 255, 255, 0.05); }
+.event-emergency {
+  color: #FFD600;
+  background: rgba(255, 214, 0, 0.08);
+  border-color: rgba(255, 214, 0, 0.5);
+  box-shadow: 0 0 16px rgba(255, 214, 0, 0.2);
+}
+.event-dice-pickup {
+  color: #2ecc71;
+  background: rgba(46, 204, 113, 0.08);
+  border-color: rgba(46, 204, 113, 0.4);
+  box-shadow: 0 0 16px rgba(46, 204, 113, 0.15);
+}
+.event-dice-ignore {
+  color: var(--gray3);
+  background: rgba(255, 255, 255, 0.04);
+}
 
 /* ── Dice (manual, with cooldown) ────────────────────────────────── */
 .dice-area {
   width: 100%;
-  min-height: 48px;
-  margin: 4px 0;
+  min-height: 56px;
+  margin: 6px 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .dice-button {
   position: relative;
-  width: 48px; height: 48px;
+  width: 56px; height: 56px;
   border-radius: 50%;
-  border: 2px solid rgba(255, 214, 0, 0.2);
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border: 2px solid rgba(255, 6, 111, 0.15);
+  background: linear-gradient(135deg, #0d0d1a 0%, #1a1a2e 100%);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -581,22 +624,32 @@ const flashStyle = computed(() => ({
 }
 
 .dice-button:disabled {
-  opacity: 0.5;
+  opacity: 0.3;
   cursor: default;
 }
 
+.dice-button:active:not(:disabled) {
+  transform: scale(0.9);
+}
+
 .dice-button.dice-ready {
-  border-color: #FFD600;
-  box-shadow: 0 0 12px rgba(255, 214, 0, 0.4), 0 0 24px rgba(255, 214, 0, 0.15);
+  border-color: var(--primary-color);
+  box-shadow:
+    0 0 14px rgba(255, 6, 111, 0.5),
+    0 0 30px rgba(255, 6, 111, 0.2);
   animation: dicePulse 1.5s ease-in-out infinite;
 }
 
 @keyframes dicePulse {
-  0%, 100% { box-shadow: 0 0 12px rgba(255, 214, 0, 0.4), 0 0 24px rgba(255, 214, 0, 0.15); }
-  50%      { box-shadow: 0 0 18px rgba(255, 214, 0, 0.6), 0 0 36px rgba(255, 214, 0, 0.25); }
+  0%, 100% {
+    box-shadow: 0 0 14px rgba(255, 6, 111, 0.5), 0 0 30px rgba(255, 6, 111, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 22px rgba(255, 6, 111, 0.7), 0 0 44px rgba(255, 6, 111, 0.3);
+  }
 }
 
-.dice-icon { font-size: 1.4rem; }
+.dice-icon { font-size: 1.5rem; }
 
 .dice-cd {
   position: absolute;
@@ -604,9 +657,9 @@ const flashStyle = computed(() => ({
   font-size: 0.55rem;
   font-weight: bold;
   color: var(--gray3);
-  background: rgba(0,0,0,0.7);
+  background: rgba(0, 0, 0, 0.85);
   border-radius: 8px;
-  padding: 1px 4px;
+  padding: 1px 5px;
   line-height: 1;
 }
 
@@ -614,14 +667,15 @@ const flashStyle = computed(() => ({
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 14px;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  border: 1px solid rgba(255, 214, 0, 0.3);
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #0d0d1a 0%, #1a1a2e 100%);
+  border: 1px solid rgba(255, 214, 0, 0.4);
   border-radius: 10px;
   max-width: 220px;
+  box-shadow: 0 0 14px rgba(255, 214, 0, 0.12);
 }
 
-.dice-emoji { font-size: 1.6rem; }
+.dice-emoji { font-size: 1.8rem; }
 
 .dice-info {
   display: flex; flex-direction: column; flex: 1;
@@ -637,42 +691,80 @@ const flashStyle = computed(() => ({
 /* ── Active modifiers ────────────────────────────────────────────── */
 .modifiers-bar {
   display: flex; gap: 6px; flex-wrap: wrap;
-  justify-content: center; margin: 4px 0;
+  justify-content: center; margin: 6px 0;
 }
 .mod-badge {
-  padding: 3px 10px; border-radius: 20px;
+  padding: 4px 12px; border-radius: 20px;
   font-size: 0.65rem; font-weight: bold; letter-spacing: 0.5px;
 }
-.mod-double { background: rgba(255,145,0,0.3); border: 1px solid #FF9100; color: #FF9100; }
-.mod-shield { background: rgba(68,138,255,0.3); border: 1px solid #448AFF; color: #448AFF; }
-.mod-blind  { background: rgba(224,64,251,0.3); border: 1px solid #E040FB; color: #E040FB; }
+.mod-double {
+  background: rgba(255, 145, 0, 0.15);
+  border: 1px solid rgba(255, 145, 0, 0.6);
+  color: #FF9100;
+  box-shadow: 0 0 10px rgba(255, 145, 0, 0.2);
+}
+.mod-shield {
+  background: rgba(68, 138, 255, 0.15);
+  border: 1px solid rgba(68, 138, 255, 0.6);
+  color: #448AFF;
+  box-shadow: 0 0 10px rgba(68, 138, 255, 0.2);
+}
+.mod-blind {
+  background: rgba(224, 64, 251, 0.15);
+  border: 1px solid rgba(224, 64, 251, 0.6);
+  color: #E040FB;
+  box-shadow: 0 0 10px rgba(224, 64, 251, 0.2);
+}
 
 /* ── Results ─────────────────────────────────────────────────────── */
 .results-overlay {
-  width: 100%; margin-top: 20px;
+  width: 100%; margin-top: 12px;
   display: flex; flex-direction: column; align-items: center;
   animation: statusPopIn 0.5s ease-in-out forwards;
 }
 .result-label {
-  font-size: 2.5em; font-family: Anonymous, sans-serif; margin-bottom: 16px;
+  font-size: 2.5em; font-family: Anonymous, sans-serif;
+  margin-bottom: 16px; letter-spacing: 2px;
 }
-.result-win  { color: #2ecc71; }
-.result-lose { color: #e74c3c; }
-.result-draw { color: #f1c40f; }
+.result-win {
+  color: #2ecc71;
+  text-shadow: 0 0 20px rgba(46, 204, 113, 0.5), 0 0 40px rgba(46, 204, 113, 0.2);
+}
+.result-lose {
+  color: #e74c3c;
+  text-shadow: 0 0 20px rgba(231, 76, 60, 0.5), 0 0 40px rgba(231, 76, 60, 0.2);
+}
+.result-draw {
+  color: #f1c40f;
+  text-shadow: 0 0 20px rgba(241, 196, 15, 0.5), 0 0 40px rgba(241, 196, 15, 0.2);
+}
 
 .fight-report {
   width: 100%; max-width: 300px;
-  background-color: var(--black-opacity-80);
-  border-radius: 8px; padding: 12px 16px; margin-bottom: 16px;
+  background: linear-gradient(135deg, rgba(9, 9, 9, 0.9) 0%, rgba(26, 26, 46, 0.65) 100%);
+  border: 1px solid rgba(255, 6, 111, 0.2);
+  border-radius: 10px;
+  padding: 14px 18px; margin-bottom: 12px;
+  position: relative; overflow: hidden;
+}
+.fight-report::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
 }
 .report-title {
-  font-size: 0.8rem; color: var(--gray2); text-align: center;
-  margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;
+  font-size: 0.75rem; color: var(--primary-color); text-align: center;
+  margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px;
+  font-weight: bold;
 }
 .report-row {
   display: flex; justify-content: space-between;
-  font-size: 0.7rem; color: var(--gray3); padding: 3px 0;
+  font-size: 0.7rem; color: var(--gray3); padding: 4px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
+.report-row:last-child { border-bottom: none; }
 
 /* ── Expandable log ──────────────────────────────────────────────── */
 .log-section {
@@ -682,14 +774,18 @@ const flashStyle = computed(() => ({
 
 .log-toggle {
   width: 100%;
-  padding: 8px;
-  background-color: var(--black-opacity-80);
-  border: 1px solid var(--gray2);
-  border-radius: 6px;
+  padding: 10px;
+  background: linear-gradient(135deg, rgba(9, 9, 9, 0.9) 0%, rgba(26, 26, 46, 0.65) 100%);
+  border: 1px solid rgba(255, 6, 111, 0.15);
+  border-radius: 8px;
   color: var(--gray2);
   font-size: 0.7rem;
   cursor: pointer;
   text-align: center;
+  transition: border-color 0.2s ease;
+}
+.log-toggle:active {
+  border-color: var(--primary-color);
 }
 
 .detailed-log {
@@ -700,12 +796,14 @@ const flashStyle = computed(() => ({
 
 .log-entry {
   display: flex; align-items: center; gap: 6px;
-  padding: 4px 8px;
-  background-color: var(--black-opacity-80);
-  border-radius: 4px; margin-bottom: 3px;
+  padding: 5px 8px;
+  background: rgba(9, 9, 9, 0.7);
+  border-left: 2px solid rgba(255, 6, 111, 0.15);
+  border-radius: 0 4px 4px 0;
+  margin-bottom: 2px;
   font-size: 0.6rem;
 }
-.log-round  { color: var(--gray2); min-width: 24px; }
+.log-round  { color: var(--gray2); min-width: 24px; font-weight: bold; }
 .log-action { flex: 1; text-align: center; }
 .log-action.left  { text-align: right; }
 .log-action.right { text-align: left; }
@@ -718,11 +816,19 @@ const flashStyle = computed(() => ({
 /* ── AI Trainer ──────────────────────────────────────────────────── */
 .ai-trainer {
   width: 100%; max-width: 300px;
-  background-color: var(--black-opacity-80);
-  border: 1px solid rgba(255, 214, 0, 0.2);
-  border-radius: 8px;
-  padding: 12px 14px;
+  background: linear-gradient(135deg, rgba(9, 9, 9, 0.9) 0%, rgba(26, 26, 46, 0.65) 100%);
+  border: 1px solid rgba(255, 6, 111, 0.2);
+  border-radius: 10px;
+  padding: 14px 16px;
   margin-bottom: 16px;
+  position: relative; overflow: hidden;
+}
+.ai-trainer::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  width: 2px;
+  background: linear-gradient(to bottom, var(--primary-color), transparent);
 }
 
 .trainer-header {
@@ -738,7 +844,7 @@ const flashStyle = computed(() => ({
 
 .trainer-title {
   font-size: 0.75rem;
-  color: #FFD600;
+  color: var(--primary-color);
   font-weight: bold;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -754,11 +860,17 @@ const flashStyle = computed(() => ({
 /* ── Buttons ─────────────────────────────────────────────────────── */
 .result-buttons { display: flex; gap: 10px; margin-top: 8px; }
 .result-btn {
-  background-color: var(--primary-color) !important;
-  color: white !important; font-size: 0.8rem !important;
+  background: var(--primary-color) !important;
+  color: white !important;
+  font-size: 0.8rem !important;
+  border-radius: 8px !important;
+  letter-spacing: 0.5px !important;
+  box-shadow: 0 0 14px rgba(255, 6, 111, 0.3) !important;
 }
 .result-btn-secondary {
-  background-color: var(--black-opacity-80) !important;
-  border: 1px solid var(--gray2);
+  background: rgba(9, 9, 9, 0.8) !important;
+  border: 1px solid var(--primary-color) !important;
+  color: var(--primary-color) !important;
+  box-shadow: none !important;
 }
 </style>
