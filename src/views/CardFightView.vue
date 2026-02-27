@@ -364,6 +364,7 @@ const triggerFlash = (effect) => {
 
 // ── Fight flow (fully automatic) ────────────────────────────────────────
 const startCountdown = () => {
+  clearInterval(countdownTimer);  // prevent double-countdown if called twice
   showCountdown.value  = true;
   countdownValue.value = COUNTDOWN;
 
@@ -413,9 +414,6 @@ onUnmounted(() => {
 });
 
 watch(fightPhase, (val, oldVal) => {
-  if (val === 'fighting' && roundNum.value === 0) {
-    startCountdown();
-  }
   // Resume timer after coach advice
   if (val === 'fighting' && oldVal === 'coach') {
     startFightTimer();
@@ -454,7 +452,7 @@ const fightAgain = async () => {
   prevHP2 = MAX_HP;
   triggerLoadingOverlay();
   await store.dispatch('fight/fightAgain');
-  // startCountdown() is handled by watch(fightPhase) when phase becomes 'fighting'
+  startCountdown();
 };
 
 const changeBuild = async () => {
