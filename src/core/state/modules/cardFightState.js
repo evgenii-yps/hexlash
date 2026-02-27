@@ -49,8 +49,8 @@ const state = {
     // Dice of Fate (manual with cooldown)
     diceState: {
         activeItem:   null,
-        cooldownLeft: DICE_COOLDOWN_ROUNDS,
-        ready:        false,
+        cooldownLeft: 0,
+        ready:        true,
     },
 
     // Event title (replaces override)
@@ -121,7 +121,7 @@ const mutations = {
     },
 
     setDiceState(s, v) { s.diceState = { ...s.diceState, ...v }; },
-    clearDice(s)       { s.diceState = { activeItem: null, cooldownLeft: DICE_COOLDOWN_ROUNDS, ready: false }; },
+    clearDice(s)       { s.diceState = { activeItem: null, cooldownLeft: 0, ready: true }; },
 
     setEventTitle(s, { title, cls = '' }) {
         s.eventTitle = title;
