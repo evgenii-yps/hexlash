@@ -44,6 +44,7 @@
         <!-- Event title (dice pickup, emergency protocol, crits) -->
         <transition name="title-pop">
           <div v-if="eventTitle" class="event-title" :class="eventTitleClass">
+            <img v-if="eventImage" :src="eventImage" class="event-title-icon" alt=""/>
             {{ eventTitle }}
           </div>
         </transition>
@@ -109,9 +110,13 @@
             <div v-if="showDetailedLog" class="detailed-log">
               <div v-for="r in roundLog" :key="r.roundNum" class="log-entry">
                 <span class="log-round">R{{ r.roundNum }}</span>
-                <span class="log-action left" :class="'log-' + r.action1">{{ actionLabel(r.action1) }}</span>
+                <span class="log-action left" :class="'log-' + r.action1">
+                  <img :src="logActionImage(r.action1)" class="log-action-icon" alt=""/> {{ logActionName(r.action1) }}
+                </span>
                 <span class="log-vs">vs</span>
-                <span class="log-action right" :class="'log-' + r.action2">{{ actionLabel(r.action2) }}</span>
+                <span class="log-action right" :class="'log-' + r.action2">
+                  <img :src="logActionImage(r.action2)" class="log-action-icon" alt=""/> {{ logActionName(r.action2) }}
+                </span>
                 <span class="log-hp">{{ r.hp1After }} / {{ r.hp2After }}</span>
               </div>
             </div>
@@ -154,6 +159,9 @@ import iconTrainer  from '@/assets/images/icons/trainer.svg';
 import iconAdrenaline from '@/assets/images/icons/adrenaline.svg';
 import iconShield   from '@/assets/images/icons/shield.svg';
 import iconBlind    from '@/assets/images/icons/blind.svg';
+import iconAttack   from '@/assets/images/icons/attack.svg';
+import iconDefense  from '@/assets/images/icons/defense.svg';
+import iconPosition from '@/assets/images/icons/position.svg';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -195,6 +203,7 @@ const playerModifiers  = computed(() => store.getters['fight/getPlayerModifiers'
 const fightStats       = computed(() => store.getters['fight/getFightStats']);
 const eventTitle       = computed(() => store.getters['fight/getEventTitle']);
 const eventTitleClass  = computed(() => store.getters['fight/getEventTitleClass']);
+const eventImage       = computed(() => store.getters['fight/getEventImage']);
 const playerModules    = computed(() => store.getters['fight/getPlayerModules']);
 
 const anyModActive = computed(() =>
@@ -203,14 +212,15 @@ const anyModActive = computed(() =>
     playerModifiers.value.blindActive
 );
 
-// ── Action labels ─────────────────────────────────────────────────────────
-const ACTION_LABELS = {
-  attack:   '⚔️ Атака',
-  defense:  '🛡️ Защита',
-  position: '👣 Позиция',
+// ── Action labels (for log) ───────────────────────────────────────────────
+const LOG_ACTIONS = {
+  attack:   { image: iconAttack,   name: 'Атака' },
+  defense:  { image: iconDefense,  name: 'Защита' },
+  position: { image: iconPosition, name: 'Позиция' },
 };
 
-const actionLabel = (action) => ACTION_LABELS[action] || action;
+const logActionImage = (action) => LOG_ACTIONS[action]?.image || '';
+const logActionName  = (action) => LOG_ACTIONS[action]?.name || action;
 
 // ── Result UI ──────────────────────────────────────────────────────────────
 const statusLeft = computed(() => {
@@ -574,6 +584,14 @@ const flashStyle = computed(() => ({
   margin: 6px 0;
   border: 1px solid transparent;
   animation: titlePop 0.4s ease-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.event-title-icon {
+  width: 24px; height: 24px;
+  filter: drop-shadow(0 0 4px currentColor);
 }
 
 @keyframes titlePop {
@@ -819,9 +837,13 @@ const flashStyle = computed(() => ({
   font-size: 0.6rem;
 }
 .log-round  { color: var(--gray2); min-width: 24px; font-weight: bold; }
-.log-action { flex: 1; text-align: center; }
-.log-action.left  { text-align: right; }
-.log-action.right { text-align: left; }
+.log-action {
+  flex: 1; text-align: center;
+  display: flex; align-items: center; gap: 3px;
+}
+.log-action.left  { justify-content: flex-end; }
+.log-action.right { justify-content: flex-start; }
+.log-action-icon { width: 12px; height: 12px; flex-shrink: 0; }
 .log-attack   { color: #e74c3c; }
 .log-defense  { color: #3498db; }
 .log-position { color: #9b59b6; }
