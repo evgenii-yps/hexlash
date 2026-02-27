@@ -48,15 +48,26 @@
           </div>
         </transition>
 
-        <!-- Dice item display (automatic, no tap) -->
-        <div class="dice-area" v-if="diceState.activeItem && fightPhase === 'fighting'">
-          <div class="dice-item-auto">
-            <span class="dice-emoji">{{ diceState.activeItem.emoji }}</span>
-            <div class="dice-info">
-              <span class="dice-name">{{ diceState.activeItem.name }}</span>
-              <span class="dice-desc">{{ diceState.activeItem.desc }}</span>
+        <!-- Dice of Fate (manual, with cooldown) -->
+        <div class="dice-area" v-if="fightPhase === 'fighting'">
+          <button
+            class="dice-button"
+            :class="{ 'dice-ready': diceState.ready && !diceState.activeItem }"
+            :disabled="!diceState.ready || !!diceState.activeItem"
+            @click="rollDice"
+          >
+            <span class="dice-icon">🎲</span>
+            <span v-if="!diceState.ready && !diceState.activeItem" class="dice-cd">{{ diceState.cooldownLeft }}</span>
+          </button>
+          <transition name="title-pop">
+            <div v-if="diceState.activeItem" class="dice-item-result">
+              <span class="dice-emoji">{{ diceState.activeItem.emoji }}</span>
+              <div class="dice-info">
+                <span class="dice-name">{{ diceState.activeItem.name }}</span>
+                <span class="dice-desc">{{ diceState.activeItem.desc }}</span>
+              </div>
             </div>
-          </div>
+          </transition>
         </div>
 
         <!-- Active modifiers display -->
@@ -83,10 +94,6 @@
             <div class="report-row">
               <span>{{ t('fight.lblPickedUp') }}:</span>
               <span>{{ fightStats.dicePickedUp }}</span>
-            </div>
-            <div class="report-row">
-              <span>{{ t('fight.lblIgnored') }}:</span>
-              <span>{{ fightStats.diceIgnored }}</span>
             </div>
             <div class="report-row">
               <span>{{ t('fight.lblRemainingHP') }}:</span>
@@ -347,6 +354,11 @@ watch(fightPhase, (val) => {
   }
 });
 
+// ── Dice click ───────────────────────────────────────────────────────────
+const rollDice = () => {
+  store.dispatch('fight/rollDiceManual');
+};
+
 // ── Navigation ────────────────────────────────────────────────────────────
 const fightAgain = async () => {
   stopFightTimer();
@@ -543,16 +555,62 @@ const flashStyle = computed(() => ({
 .event-dice-pickup   { color: #2ecc71; background: rgba(46, 204, 113, 0.15); }
 .event-dice-ignore   { color: var(--gray3); background: rgba(255, 255, 255, 0.05); }
 
-/* ── Dice (automatic, no tap) ────────────────────────────────────── */
+/* ── Dice (manual, with cooldown) ────────────────────────────────── */
 .dice-area {
   width: 100%;
   min-height: 48px;
   margin: 4px 0;
   display: flex;
+  align-items: center;
   justify-content: center;
+  gap: 10px;
 }
 
-.dice-item-auto {
+.dice-button {
+  position: relative;
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 214, 0, 0.2);
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.dice-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.dice-button.dice-ready {
+  border-color: #FFD600;
+  box-shadow: 0 0 12px rgba(255, 214, 0, 0.4), 0 0 24px rgba(255, 214, 0, 0.15);
+  animation: dicePulse 1.5s ease-in-out infinite;
+}
+
+@keyframes dicePulse {
+  0%, 100% { box-shadow: 0 0 12px rgba(255, 214, 0, 0.4), 0 0 24px rgba(255, 214, 0, 0.15); }
+  50%      { box-shadow: 0 0 18px rgba(255, 214, 0, 0.6), 0 0 36px rgba(255, 214, 0, 0.25); }
+}
+
+.dice-icon { font-size: 1.4rem; }
+
+.dice-cd {
+  position: absolute;
+  bottom: -2px; right: -2px;
+  font-size: 0.55rem;
+  font-weight: bold;
+  color: var(--gray3);
+  background: rgba(0,0,0,0.7);
+  border-radius: 8px;
+  padding: 1px 4px;
+  line-height: 1;
+}
+
+.dice-item-result {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -560,13 +618,7 @@ const flashStyle = computed(() => ({
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
   border: 1px solid rgba(255, 214, 0, 0.3);
   border-radius: 10px;
-  animation: dicePopIn 0.3s ease-out;
-  max-width: 280px; width: 100%;
-}
-
-@keyframes dicePopIn {
-  from { opacity: 0; transform: scale(0.7); }
-  to   { opacity: 1; transform: scale(1); }
+  max-width: 220px;
 }
 
 .dice-emoji { font-size: 1.6rem; }

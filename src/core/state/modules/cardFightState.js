@@ -3,7 +3,7 @@ import { ModuleAIStrategy } from '@/core/engine/aiStrategy.js';
 import { OpponentGenerator } from '@/core/engine/opponentGenerator.js';
 import { ARCHETYPES } from '@/core/data/archetypes.js';
 import router from '@/router/index.js';
-import { MAX_HP, MAX_ROUNDS, DICE_MIN_INTERVAL, DICE_MAX_INTERVAL, EMERGENCY_HP_THRESHOLD } from '@/core/constants.js';
+import { MAX_HP, MAX_ROUNDS, DICE_COOLDOWN_ROUNDS, EMERGENCY_HP_THRESHOLD } from '@/core/constants.js';
 
 const MODULES_STORAGE_KEY = 'hexlash_player_modules';
 
@@ -20,13 +20,6 @@ export const DICE_ITEMS = [
 // ─── Module-level AI instances (NOT stored in Vuex) ──────────────────────────
 let _ai1 = null;
 let _ai2 = null;
-
-// ─── Next dice round tracking ────────────────────────────────────────────────
-let _nextDiceRound = 0;
-
-function rollNextDiceRound() {
-    return DICE_MIN_INTERVAL + Math.floor(Math.random() * (DICE_MAX_INTERVAL - DICE_MIN_INTERVAL + 1));
-}
 
 // ─── State ───────────────────────────────────────────────────────────────────
 const state = {
@@ -53,10 +46,11 @@ const state = {
         blindActive:      false,
     },
 
-    // Dice of Fate (automatic now)
+    // Dice of Fate (manual with cooldown)
     diceState: {
-        rolling:    false,
-        activeItem: null,
+        activeItem:   null,
+        cooldownLeft: DICE_COOLDOWN_ROUNDS,
+        ready:        false,
     },
 
     // Event title (replaces override)
@@ -127,7 +121,7 @@ const mutations = {
     },
 
     setDiceState(s, v) { s.diceState = { ...s.diceState, ...v }; },
-    clearDice(s)       { s.diceState = { rolling: false, activeItem: null }; },
+    clearDice(s)       { s.diceState = { activeItem: null, cooldownLeft: DICE_COOLDOWN_ROUNDS, ready: false }; },
 
     setEventTitle(s, { title, cls = '' }) {
         s.eventTitle = title;
@@ -191,9 +185,6 @@ const actions = {
         _ai1 = new ModuleAIStrategy(state.playerModules);
         _ai2 = new ModuleAIStrategy(opponent.modules);
 
-        // Init dice round
-        _nextDiceRound = rollNextDiceRound();
-
         // Reset live fight state
         commit('setLiveHP1', MAX_HP);
         commit('setLiveHP2', MAX_HP);
@@ -253,10 +244,10 @@ const actions = {
         // Check Emergency Protocol
         dispatch('checkEmergencyProtocol');
 
-        // Check automatic dice roll
-        if (nextRound >= _nextDiceRound) {
-            dispatch('rollDiceAutomatic');
-            _nextDiceRound = nextRound + rollNextDiceRound();
+        // Tick dice cooldown
+        if (state.diceState.cooldownLeft > 0) {
+            const newCd = state.diceState.cooldownLeft - 1;
+            commit('setDiceState', { cooldownLeft: newCd, ready: newCd <= 0 });
         }
     },
 
@@ -301,54 +292,48 @@ const actions = {
         }
     },
 
-    // ── Automatic Dice ─────────────────────────────────────────────────────
+    // ── Manual Dice ──────────────────────────────────────────────────────
 
-    rollDiceAutomatic({ commit, state }) {
-        if (!_ai1) return;
+    rollDiceManual({ commit, state }) {
+        if (!state.diceState.ready || state.fightPhase !== 'fighting') return;
 
         const item = DICE_ITEMS[Math.floor(Math.random() * DICE_ITEMS.length)];
-        const willPickup = _ai1.shouldPickupDiceItem(item.id);
 
-        commit('setDiceState', { rolling: false, activeItem: item });
+        commit('setDiceState', { activeItem: item, ready: false, cooldownLeft: DICE_COOLDOWN_ROUNDS });
 
-        if (willPickup) {
-            switch (item.effect) {
-                case 'heal':
-                    commit('setLiveHP1', state.liveHP1 + 15);
-                    break;
-                case 'adrenaline':
-                    commit('setPlayerModifiers', { attackMultiplier: 2 });
-                    break;
-                case 'shield':
-                    commit('setPlayerModifiers', { shieldActive: true });
-                    break;
-                case 'blind':
-                    commit('setPlayerModifiers', { blindActive: true });
-                    break;
-                case 'rage': {
-                    const hp2 = state.liveHP2 - 20;
-                    commit('setLiveHP2', hp2);
-                    if (hp2 <= 0) commit('setFightPhase', 'results');
-                    break;
-                }
-                case 'crit': {
-                    const hp2 = state.liveHP2 - 30;
-                    commit('setLiveHP2', hp2);
-                    if (hp2 <= 0) commit('setFightPhase', 'results');
-                    break;
-                }
+        switch (item.effect) {
+            case 'heal':
+                commit('setLiveHP1', Math.min(MAX_HP, state.liveHP1 + 15));
+                break;
+            case 'adrenaline':
+                commit('setPlayerModifiers', { attackMultiplier: 2 });
+                break;
+            case 'shield':
+                commit('setPlayerModifiers', { shieldActive: true });
+                break;
+            case 'blind':
+                commit('setPlayerModifiers', { blindActive: true });
+                break;
+            case 'rage': {
+                const hp2 = state.liveHP2 - 20;
+                commit('setLiveHP2', hp2);
+                if (hp2 <= 0) commit('setFightPhase', 'results');
+                break;
             }
-
-            commit('addStats', { dicePickedUp: 1 });
-            commit('setEventTitle', { title: `${item.emoji} ${item.name}!`, cls: 'event-dice-pickup' });
-        } else {
-            commit('addStats', { diceIgnored: 1 });
-            commit('setEventTitle', { title: `${item.emoji} Проигнорировано`, cls: 'event-dice-ignore' });
+            case 'crit': {
+                const hp2 = state.liveHP2 - 30;
+                commit('setLiveHP2', hp2);
+                if (hp2 <= 0) commit('setFightPhase', 'results');
+                break;
+            }
         }
 
-        // Clear dice display after short delay
+        commit('addStats', { dicePickedUp: 1 });
+        commit('setEventTitle', { title: `${item.emoji} ${item.name}!`, cls: 'event-dice-pickup' });
+
+        // Clear dice item display after short delay
         setTimeout(() => {
-            commit('clearDice');
+            commit('setDiceState', { activeItem: null });
         }, 1500);
     },
 
