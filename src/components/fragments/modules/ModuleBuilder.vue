@@ -15,7 +15,7 @@
             @click="openModuleSelect(slot - 1)"
         >
           <template v-if="selectedModules[slot - 1]">
-            <span class="module-icon">{{ getArchetype(selectedModules[slot - 1]).icon }}</span>
+            <img :src="getArchetype(selectedModules[slot - 1]).image" class="module-icon-img" alt=""/>
             <span class="module-name">{{ getArchetype(selectedModules[slot - 1]).nameRu }}</span>
           </template>
           <template v-else>
@@ -42,7 +42,7 @@
             :class="{ 'protocol-selected': selectedProtocol === protocol.id }"
             @click="selectProtocol(protocol.id)"
         >
-          <span class="protocol-icon">{{ protocol.icon }}</span>
+          <img :src="protocol.image" class="protocol-icon-img" alt=""/>
           <span class="protocol-name">{{ protocol.name }}</span>
           <span class="protocol-trigger">{{ protocol.trigger }}</span>
         </div>
@@ -61,7 +61,7 @@
               :class="{ 'archetype-used': isArchetypeUsed(archetype.id) }"
               @click="selectArchetype(archetype.id)"
           >
-            <span class="archetype-icon">{{ archetype.icon }}</span>
+            <img :src="archetype.image" class="archetype-icon-img" alt=""/>
             <span class="archetype-name">{{ archetype.nameRu }}</span>
             <span class="archetype-desc">{{ archetype.description }}</span>
           </div>
@@ -76,6 +76,9 @@ import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { ARCHETYPES } from '@/core/data/archetypes.js';
 import store from '@/core/state/store.js';
+import iconHeal from '@/assets/images/icons/heal.svg';
+import iconAdrenaline from '@/assets/images/icons/adrenaline.svg';
+import iconShield from '@/assets/images/icons/shield.svg';
 
 const { t } = useI18n({ useScope: 'global' });
 const master = computed(() => store.getters['master/getMaster']);
@@ -93,9 +96,9 @@ const showModal = ref(false);
 const activeSlot = ref(0);
 
 const emergencyProtocols = [
-  { id: 'medkit',     name: 'Аптечка',    icon: '💊', trigger: 'HP < 30%' },
-  { id: 'adrenaline', name: 'Адреналин',  icon: '⚡', trigger: 'Критический момент' },
-  { id: 'shield',     name: 'Щит',        icon: '🛡️', trigger: 'Серия ударов' },
+  { id: 'medkit',     name: 'Аптечка',    image: iconHeal,       trigger: 'HP < 30%' },
+  { id: 'adrenaline', name: 'Адреналин',  image: iconAdrenaline, trigger: 'Критический момент' },
+  { id: 'shield',     name: 'Щит',        image: iconShield,     trigger: 'Серия ударов' },
 ];
 
 const isComplete = computed(() => selectedModules.value.every(m => m !== null));
@@ -228,8 +231,10 @@ function selectProtocol(id) {
   box-shadow: 0 0 10px rgba(255, 214, 0, 0.3);
 }
 
-.module-icon {
-  font-size: 1.6rem;
+.module-icon-img {
+  width: 32px;
+  height: 32px;
+  filter: drop-shadow(0 0 4px rgba(255, 6, 111, 0.3));
 }
 
 .module-name {
@@ -313,8 +318,10 @@ function selectProtocol(id) {
   background-color: rgba(var(--primary-color-rgb, 68, 138, 255), 0.15);
 }
 
-.protocol-icon {
-  font-size: 1.3rem;
+.protocol-icon-img {
+  width: 28px;
+  height: 28px;
+  filter: drop-shadow(0 0 3px rgba(255, 6, 111, 0.25));
 }
 
 .protocol-name {
@@ -387,8 +394,10 @@ function selectProtocol(id) {
   pointer-events: none;
 }
 
-.archetype-icon {
-  font-size: 1.8rem;
+.archetype-icon-img {
+  width: 36px;
+  height: 36px;
+  filter: drop-shadow(0 0 4px rgba(255, 6, 111, 0.3));
 }
 
 .archetype-name {

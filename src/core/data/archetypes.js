@@ -1,3 +1,10 @@
+import iconPredator from '@/assets/images/icons/predator.svg';
+import iconSentinel from '@/assets/images/icons/sentinel.svg';
+import iconGhost from '@/assets/images/icons/ghost.svg';
+import iconAnalyst from '@/assets/images/icons/analyst.svg';
+import iconMaverick from '@/assets/images/icons/maverick.svg';
+import iconJuggernaut from '@/assets/images/icons/juggernaut.svg';
+
 /**
  * NFT Module Archetypes - behavioral archetypes that define fighter character.
  * Each archetype has action priorities (based on HP state) and dice item preferences.
@@ -10,6 +17,7 @@ export const ARCHETYPES = {
         nameRu: 'Хищник',
         description: 'Давит, не отпускает, идёт ва-банк при стрессе',
         icon: '🐺',
+        image: iconPredator,
         priorities: {
             high: { attack: 80, defense: 10, position: 10 },
             low:  { attack: 90, defense: 5,  position: 5  },
@@ -30,6 +38,7 @@ export const ARCHETYPES = {
         nameRu: 'Страж',
         description: 'Стена, контратаки, глухая оборона под давлением',
         icon: '🛡️',
+        image: iconSentinel,
         priorities: {
             high: { attack: 20, defense: 50, position: 30 },
             low:  { attack: 10, defense: 70, position: 20 },
@@ -50,6 +59,7 @@ export const ARCHETYPES = {
         nameRu: 'Призрак',
         description: 'Уклонения, обман, бьёт из тени',
         icon: '👻',
+        image: iconGhost,
         priorities: {
             high: { attack: 30, defense: 20, position: 50 },
             low:  { attack: 40, defense: 10, position: 50 },
@@ -70,6 +80,7 @@ export const ARCHETYPES = {
         nameRu: 'Аналитик',
         description: 'Читает паттерн, адаптируется, рационален',
         icon: '🧠',
+        image: iconAnalyst,
         priorities: {
             high: { attack: 35, defense: 30, position: 35 },
             low:  { attack: 30, defense: 30, position: 40 },
@@ -90,6 +101,7 @@ export const ARCHETYPES = {
         nameRu: 'Непредсказуемый',
         description: 'Хаотичные решения, вспышки гениальности',
         icon: '🎲',
+        image: iconMaverick,
         priorities: {
             high: { attack: 33, defense: 33, position: 34 },
             low: 'random',
@@ -110,6 +122,7 @@ export const ARCHETYPES = {
         nameRu: 'Неостановимый',
         description: 'Давление, напор, не меняет тактику',
         icon: '🦏',
+        image: iconJuggernaut,
         priorities: {
             high: { attack: 50, defense: 35, position: 15 },
             low:  { attack: 50, defense: 35, position: 15 },
