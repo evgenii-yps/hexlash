@@ -284,7 +284,17 @@
     "lblEventRage": "RAGE!",
     "lblEventEmergency": "EMERGENCY PROTOCOL",
     "lblEventCritical": "CRITICAL HIT!",
-    "lblDiceRolling": "ROLLING..."
+    "lblDiceRolling": "ROLLING...",
+    "lblCoachTitle": "COACH ADVICE",
+    "lblCoachSubtitle": "Fight paused. Give advice to your fighter — it will shift their tactics for 4 rounds.",
+    "lblCoachAttack": "Go! Attack!",
+    "lblCoachAttackDesc": "Attack priority +25",
+    "lblCoachDefense": "Hold. Wait for it.",
+    "lblCoachDefenseDesc": "Defense priority +25",
+    "lblCoachPosition": "Move. Don't stand.",
+    "lblCoachPositionDesc": "Position priority +25",
+    "lblCoachActive": "Coach active",
+    "lblCoachRoundsLeft": "rounds"
   },
   "cards": {
     "attack": "Attack",

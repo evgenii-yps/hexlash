@@ -284,7 +284,17 @@
     "lblEventRage": "ЯРОСТЬ!",
     "lblEventEmergency": "ЭКСТРЕННЫЙ ПРОТОКОЛ",
     "lblEventCritical": "КРИТИЧЕСКИЙ УДАР!",
-    "lblDiceRolling": "Бросок кубика..."
+    "lblDiceRolling": "Бросок кубика...",
+    "lblCoachTitle": "СОВЕТ ТРЕНЕРА",
+    "lblCoachSubtitle": "Бой приостановлен. Дайте совет вашему бойцу — он изменит тактику на 4 раунда.",
+    "lblCoachAttack": "Давай! Атакуй!",
+    "lblCoachAttackDesc": "Приоритет атаки +25",
+    "lblCoachDefense": "Терпи. Жди момент.",
+    "lblCoachDefenseDesc": "Приоритет защиты +25",
+    "lblCoachPosition": "Двигайся. Не стой.",
+    "lblCoachPositionDesc": "Приоритет позиции +25",
+    "lblCoachActive": "Совет активен",
+    "lblCoachRoundsLeft": "раундов"
   },
   "cards": {
     "attack": "Атака",

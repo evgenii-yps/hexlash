@@ -76,7 +76,43 @@
           <span v-if="playerModifiers.blindActive"          class="mod-badge mod-blind"><img :src="iconBlind" class="mod-icon" alt=""/> СЛЕПОТА</span>
         </div>
 
+        <!-- Coach boost active indicator -->
+        <div class="coach-active-bar" v-if="fightPhase === 'fighting' && coachAdvice.active">
+          <img :src="iconTrainer" class="coach-active-icon" alt=""/>
+          <span class="coach-active-label">{{ coachActionLabel(coachAdvice.action) }}</span>
+          <span class="coach-active-rounds">{{ coachAdvice.roundsLeft }}R</span>
+        </div>
+
       </div><!-- /fight-content-wrapper -->
+
+      <!-- Coach advice overlay -->
+      <div v-if="fightPhase === 'coach'" class="coach-overlay">
+        <div class="coach-panel">
+          <div class="coach-header">
+            <img :src="iconTrainer" class="coach-avatar" alt=""/>
+            <span class="coach-title">{{ t('fight.lblCoachTitle') }}</span>
+          </div>
+          <p class="coach-subtitle">{{ t('fight.lblCoachSubtitle') }}</p>
+
+          <div class="coach-options">
+            <button class="coach-btn coach-btn-attack" @click="giveCoachAdvice('attack')">
+              <img :src="iconAttack" class="coach-btn-icon" alt=""/>
+              <span class="coach-btn-text">{{ t('fight.lblCoachAttack') }}</span>
+              <span class="coach-btn-desc">{{ t('fight.lblCoachAttackDesc') }}</span>
+            </button>
+            <button class="coach-btn coach-btn-defense" @click="giveCoachAdvice('defense')">
+              <img :src="iconDefense" class="coach-btn-icon" alt=""/>
+              <span class="coach-btn-text">{{ t('fight.lblCoachDefense') }}</span>
+              <span class="coach-btn-desc">{{ t('fight.lblCoachDefenseDesc') }}</span>
+            </button>
+            <button class="coach-btn coach-btn-position" @click="giveCoachAdvice('position')">
+              <img :src="iconPosition" class="coach-btn-icon" alt=""/>
+              <span class="coach-btn-text">{{ t('fight.lblCoachPosition') }}</span>
+              <span class="coach-btn-desc">{{ t('fight.lblCoachPositionDesc') }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
 
       <!-- Results overlay (full-screen centered) -->
       <div v-if="fightPhase === 'results'" class="results-overlay">
@@ -203,6 +239,7 @@ const eventTitle       = computed(() => store.getters['fight/getEventTitle']);
 const eventTitleClass  = computed(() => store.getters['fight/getEventTitleClass']);
 const eventImage       = computed(() => store.getters['fight/getEventImage']);
 const playerModules    = computed(() => store.getters['fight/getPlayerModules']);
+const coachAdvice      = computed(() => store.getters['fight/getCoachAdvice']);
 
 const anyModActive = computed(() =>
     playerModifiers.value.attackMultiplier > 1 ||
@@ -358,9 +395,16 @@ onUnmounted(() => {
   clearInterval(countdownTimer);
 });
 
-watch(fightPhase, (val) => {
+watch(fightPhase, (val, oldVal) => {
   if (val === 'fighting' && roundNum.value === 0) {
     startCountdown();
+  }
+  // Resume timer after coach advice
+  if (val === 'fighting' && oldVal === 'coach') {
+    startFightTimer();
+  }
+  if (val === 'coach') {
+    stopFightTimer();
   }
   if (val === 'results') {
     stopFightTimer();
@@ -371,6 +415,18 @@ watch(fightPhase, (val) => {
 const rollDice = () => {
   store.dispatch('fight/rollDiceManual');
 };
+
+// ── Coach advice ─────────────────────────────────────────────────────────
+const giveCoachAdvice = (action) => {
+  store.dispatch('fight/applyCoachAdvice', action);
+};
+
+const COACH_LABELS = {
+  attack:   'ATK +',
+  defense:  'DEF +',
+  position: 'POS +',
+};
+const coachActionLabel = (action) => COACH_LABELS[action] || '';
 
 // ── Navigation ────────────────────────────────────────────────────────────
 const fightAgain = async () => {
@@ -907,5 +963,203 @@ const flashStyle = computed(() => ({
   border: 1px solid var(--primary-color) !important;
   color: var(--primary-color) !important;
   box-shadow: none !important;
+}
+
+/* ── Coach Overlay ──────────────────────────────────────────────── */
+.coach-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 60;
+  background: rgba(0, 0, 0, 0.85);
+  animation: coachFadeIn 0.4s ease-out forwards;
+  padding: 20px;
+  box-sizing: border-box;
+}
+@supports (height: 100dvh) { .coach-overlay { height: 100dvh; } }
+
+@keyframes coachFadeIn {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.coach-panel {
+  width: 92%;
+  max-width: 380px;
+  background: linear-gradient(135deg, rgba(9, 9, 9, 0.95) 0%, rgba(26, 26, 46, 0.8) 100%);
+  border: 1px solid rgba(255, 6, 111, 0.3);
+  border-radius: 14px;
+  padding: 24px 20px;
+  position: relative;
+  overflow: hidden;
+  animation: coachPanelPop 0.5s ease-out forwards;
+}
+.coach-panel::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
+}
+
+@keyframes coachPanelPop {
+  0%   { opacity: 0; transform: scale(0.85) translateY(20px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.coach-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.coach-avatar {
+  width: 32px; height: 32px;
+  filter: drop-shadow(0 0 6px rgba(255, 6, 111, 0.4));
+}
+
+.coach-title {
+  font-size: 1rem;
+  font-family: Anonymous, sans-serif;
+  color: var(--primary-color);
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  text-shadow: 0 0 10px rgba(255, 6, 111, 0.3);
+}
+
+.coach-subtitle {
+  font-size: 0.7rem;
+  color: var(--gray3);
+  margin: 0 0 18px 0;
+  line-height: 1.4;
+}
+
+.coach-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.coach-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(135deg, rgba(15, 15, 30, 0.9) 0%, rgba(30, 30, 55, 0.7) 100%);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+.coach-btn::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  width: 3px;
+  border-radius: 3px 0 0 3px;
+  transition: all 0.25s ease;
+}
+
+.coach-btn:active {
+  transform: scale(0.97);
+}
+
+.coach-btn-icon {
+  width: 28px; height: 28px;
+  flex-shrink: 0;
+  transition: filter 0.25s ease;
+}
+
+.coach-btn-text {
+  font-size: 0.85rem;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.coach-btn-desc {
+  font-size: 0.6rem;
+  color: var(--gray2);
+  margin-left: auto;
+}
+
+/* Attack */
+.coach-btn-attack {
+  border-color: rgba(231, 76, 60, 0.2);
+}
+.coach-btn-attack::before { background: #e74c3c; }
+.coach-btn-attack .coach-btn-text { color: #e74c3c; }
+.coach-btn-attack .coach-btn-icon { filter: drop-shadow(0 0 4px rgba(231, 76, 60, 0.4)); }
+.coach-btn-attack:active {
+  border-color: rgba(231, 76, 60, 0.5);
+  box-shadow: 0 0 20px rgba(231, 76, 60, 0.15);
+}
+
+/* Defense */
+.coach-btn-defense {
+  border-color: rgba(52, 152, 219, 0.2);
+}
+.coach-btn-defense::before { background: #3498db; }
+.coach-btn-defense .coach-btn-text { color: #3498db; }
+.coach-btn-defense .coach-btn-icon { filter: drop-shadow(0 0 4px rgba(52, 152, 219, 0.4)); }
+.coach-btn-defense:active {
+  border-color: rgba(52, 152, 219, 0.5);
+  box-shadow: 0 0 20px rgba(52, 152, 219, 0.15);
+}
+
+/* Position */
+.coach-btn-position {
+  border-color: rgba(155, 89, 182, 0.2);
+}
+.coach-btn-position::before { background: #9b59b6; }
+.coach-btn-position .coach-btn-text { color: #9b59b6; }
+.coach-btn-position .coach-btn-icon { filter: drop-shadow(0 0 4px rgba(155, 89, 182, 0.4)); }
+.coach-btn-position:active {
+  border-color: rgba(155, 89, 182, 0.5);
+  box-shadow: 0 0 20px rgba(155, 89, 182, 0.15);
+}
+
+/* ── Coach Active Indicator ─────────────────────────────────────── */
+.coach-active-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(9, 9, 9, 0.9) 0%, rgba(26, 26, 46, 0.7) 100%);
+  border: 1px solid rgba(255, 6, 111, 0.3);
+  margin: 6px 0;
+  animation: coachBarPulse 2s ease-in-out infinite;
+}
+
+@keyframes coachBarPulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(255, 6, 111, 0.2); }
+  50%      { box-shadow: 0 0 16px rgba(255, 6, 111, 0.4); }
+}
+
+.coach-active-icon {
+  width: 16px; height: 16px;
+  filter: drop-shadow(0 0 3px rgba(255, 6, 111, 0.3));
+}
+
+.coach-active-label {
+  font-size: 0.65rem;
+  font-weight: bold;
+  color: var(--primary-color);
+  letter-spacing: 0.5px;
+}
+
+.coach-active-rounds {
+  font-size: 0.55rem;
+  color: var(--gray3);
+  margin-left: 2px;
 }
 </style>

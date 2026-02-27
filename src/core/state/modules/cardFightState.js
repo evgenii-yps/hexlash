@@ -3,7 +3,7 @@ import { ModuleAIStrategy } from '@/core/engine/aiStrategy.js';
 import { OpponentGenerator } from '@/core/engine/opponentGenerator.js';
 import { ARCHETYPES } from '@/core/data/archetypes.js';
 import router from '@/router/index.js';
-import { MAX_HP, MAX_ROUNDS, DICE_COOLDOWN_ROUNDS, EMERGENCY_HP_THRESHOLD } from '@/core/constants.js';
+import { MAX_HP, MAX_ROUNDS, DICE_COOLDOWN_ROUNDS, EMERGENCY_HP_THRESHOLD, COACH_MIN_ROUND, COACH_TRIGGER_CHANCE, COACH_BOOST_ROUNDS } from '@/core/constants.js';
 import iconHeal from '@/assets/images/icons/heal.svg';
 import iconAdrenaline from '@/assets/images/icons/adrenaline.svg';
 import iconShield from '@/assets/images/icons/shield.svg';
@@ -59,12 +59,20 @@ const state = {
         ready:        true,
     },
 
+    // Coach Advice
+    coachAdvice: {
+        used:       false,  // one per fight
+        active:     false,  // boost currently running
+        action:     null,   // 'attack' | 'defense' | 'position'
+        roundsLeft: 0,
+    },
+
     // Event title (replaces override)
     eventTitle: null,
     eventTitleClass: '',
     eventImage: null,
 
-    fightPhase: 'idle',    // idle | preparation | fighting | results
+    fightPhase: 'idle',    // idle | preparation | fighting | coach | results
     difficulty: 'medium',
 
     // Fight statistics
@@ -96,6 +104,7 @@ const getters = {
     getEventTitleClass:  (s) => s.eventTitleClass,
     getEventImage:       (s) => s.eventImage,
 
+    getCoachAdvice:       (s) => s.coachAdvice,
     getEmergencyProtocol: (s) => s.emergencyProtocol,
     getBuildDescription:  (s) => {
         const names = s.playerModules
@@ -141,6 +150,9 @@ const mutations = {
         s.eventTitleClass = '';
         s.eventImage = null;
     },
+
+    setCoachAdvice(s, v)  { s.coachAdvice = { ...s.coachAdvice, ...v }; },
+    resetCoachAdvice(s)   { s.coachAdvice = { used: false, active: false, action: null, roundsLeft: 0 }; },
 
     setEmergencyProtocol(s, type)  { s.emergencyProtocol.type = type; },
     setEmergencyUsed(s, used)      { s.emergencyProtocol.used = used; },
@@ -203,6 +215,7 @@ const actions = {
         commit('resetPlayerModifiers');
         commit('clearDice');
         commit('clearEventTitle');
+        commit('resetCoachAdvice');
         commit('setEmergencyUsed', false);
         commit('resetStats');
         commit('setFightPhase', 'fighting');
@@ -258,6 +271,23 @@ const actions = {
         if (state.diceState.cooldownLeft > 0) {
             const newCd = state.diceState.cooldownLeft - 1;
             commit('setDiceState', { cooldownLeft: newCd, ready: newCd <= 0 });
+        }
+
+        // Tick coach boost
+        if (state.coachAdvice.active && state.coachAdvice.roundsLeft > 0) {
+            const newLeft = state.coachAdvice.roundsLeft - 1;
+            if (_ai1) _ai1.tickCoachBoost();
+            if (newLeft <= 0) {
+                commit('setCoachAdvice', { active: false, roundsLeft: 0, action: null });
+            } else {
+                commit('setCoachAdvice', { roundsLeft: newLeft });
+            }
+        }
+
+        // Check coach advice trigger (once per fight, from round COACH_MIN_ROUND)
+        if (!state.coachAdvice.used && nextRound >= COACH_MIN_ROUND && Math.random() < COACH_TRIGGER_CHANCE) {
+            commit('setFightPhase', 'coach');
+            return;
         }
     },
 
@@ -346,6 +376,21 @@ const actions = {
         setTimeout(() => {
             commit('setDiceState', { activeItem: null });
         }, 1500);
+    },
+
+    // ── Coach Advice ──────────────────────────────────────────────────────
+
+    applyCoachAdvice({ commit }, action) {
+        // action: 'attack' | 'defense' | 'position'
+        if (_ai1) _ai1.setCoachBoost(action, COACH_BOOST_ROUNDS);
+
+        commit('setCoachAdvice', {
+            used: true,
+            active: true,
+            action,
+            roundsLeft: COACH_BOOST_ROUNDS,
+        });
+        commit('setFightPhase', 'fighting');
     },
 
     // ── Navigation ────────────────────────────────────────────────────────

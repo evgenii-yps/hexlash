@@ -16,6 +16,7 @@ export class ModuleAIStrategy {
     constructor(modules) {
         this.modules = modules.map(id => ARCHETYPES[id]);
         this.buffs = { attackBoost: 0, defenseBoost: 0 };
+        this.coachBoost = null; // { action: 'attack'|'defense'|'position', roundsLeft: N }
     }
 
     /**
@@ -47,6 +48,11 @@ export class ModuleAIStrategy {
             combined.defense  += priorities.defense  * weights[index];
             combined.position += priorities.position * weights[index];
         });
+
+        // Apply coach boost
+        if (this.coachBoost && this.coachBoost.roundsLeft > 0) {
+            combined[this.coachBoost.action] += 25;
+        }
 
         return combined;
     }
@@ -94,6 +100,25 @@ export class ModuleAIStrategy {
         else style = 'Сбалансированный';
 
         return `${style}: ${names}`;
+    }
+
+    // ── Coach Boost ──────────────────────────────────────────────────────────
+
+    setCoachBoost(action, rounds) {
+        this.coachBoost = { action, roundsLeft: rounds };
+    }
+
+    tickCoachBoost() {
+        if (this.coachBoost && this.coachBoost.roundsLeft > 0) {
+            this.coachBoost.roundsLeft -= 1;
+            if (this.coachBoost.roundsLeft <= 0) {
+                this.coachBoost = null;
+            }
+        }
+    }
+
+    getCoachBoost() {
+        return this.coachBoost;
     }
 
     // ── Buffs ────────────────────────────────────────────────────────────────
