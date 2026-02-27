@@ -196,6 +196,10 @@
       "lblFreeTokens": "Токены за тренировки",
       "lblInvitedUsers": "Приглашенные пользователи",
       "lblDaysInClub": "Дни в клубе (без пропусков)"
+    },
+    "skins": {
+      "lblTitle": "СКИНЫ БОЙЦА",
+      "lblFree": "БЕСПЛАТНО"
     }
   },
   "arena": {

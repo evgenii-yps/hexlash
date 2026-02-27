@@ -35,6 +35,7 @@
             <ProfileAchievements :userData="userData"/>
 
             <div v-if="isOwner">
+              <SkinSelector/>
               <ProfileInvite/>
               <ProfileButtons/>
               <div class="beta-text">{{ isprod ? 'Prod' : 'Test' }} beta - {{version}} </div>
@@ -60,6 +61,7 @@ import ProfileSettings from "@/components/fragments/profile/account/ProfileAccou
 import ProfileName from "@/components/fragments/profile/ProfileName.vue";
 import ProfileInvite from "@/components/fragments/profile/ProfileInvite.vue";
 import ProfileAvatar from "@/components/fragments/profile/ProfileAvatar.vue";
+import SkinSelector from "@/components/fragments/profile/SkinSelector.vue";
 import UserName from "@/components/fragments/profile/UserName.vue";
 import UserAvatar from "@/components/fragments/profile/UserAvatar.vue";
 import * as amplitude from "@amplitude/analytics-browser";
