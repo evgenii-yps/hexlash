@@ -196,6 +196,10 @@
       "lblFreeTokens": "Workout tokens",
       "lblInvitedUsers": "Invited users",
       "lblDaysInClub": "Days in club (without skips)"
+    },
+    "skins": {
+      "lblTitle": "FIGHTER SKINS",
+      "lblFree": "FREE"
     }
   },
   "arena": {
