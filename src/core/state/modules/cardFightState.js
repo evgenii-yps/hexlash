@@ -62,6 +62,7 @@ const state = {
     // Event title (replaces override)
     eventTitle: null,
     eventTitleClass: '',
+    eventImage: null,
 
     fightPhase: 'idle',    // idle | preparation | fighting | results
     difficulty: 'medium',
@@ -93,6 +94,7 @@ const getters = {
     getFightStats:       (s) => s.fightStats,
     getEventTitle:       (s) => s.eventTitle,
     getEventTitleClass:  (s) => s.eventTitleClass,
+    getEventImage:       (s) => s.eventImage,
 
     getEmergencyProtocol: (s) => s.emergencyProtocol,
     getBuildDescription:  (s) => {
@@ -129,13 +131,15 @@ const mutations = {
     setDiceState(s, v) { s.diceState = { ...s.diceState, ...v }; },
     clearDice(s)       { s.diceState = { activeItem: null, cooldownLeft: 0, ready: true }; },
 
-    setEventTitle(s, { title, cls = '' }) {
+    setEventTitle(s, { title, cls = '', image = null }) {
         s.eventTitle = title;
         s.eventTitleClass = cls;
+        s.eventImage = image;
     },
     clearEventTitle(s) {
         s.eventTitle = null;
         s.eventTitleClass = '';
+        s.eventImage = null;
     },
 
     setEmergencyProtocol(s, type)  { s.emergencyProtocol.type = type; },
@@ -293,8 +297,9 @@ const actions = {
                     break;
             }
 
+            const PROTOCOL_IMAGES = { medkit: iconHeal, adrenaline: iconAdrenaline, shield: iconShield };
             commit('setEmergencyUsed', true);
-            commit('setEventTitle', { title: '⚡ ЭКСТРЕННЫЙ ПРОТОКОЛ', cls: 'event-emergency' });
+            commit('setEventTitle', { title: 'ЭКСТРЕННЫЙ ПРОТОКОЛ', cls: 'event-emergency', image: PROTOCOL_IMAGES[protocol.type] });
         }
     },
 
@@ -335,7 +340,7 @@ const actions = {
         }
 
         commit('addStats', { dicePickedUp: 1 });
-        commit('setEventTitle', { title: `${item.emoji} ${item.name}!`, cls: 'event-dice-pickup' });
+        commit('setEventTitle', { title: `${item.name}!`, cls: 'event-dice-pickup', image: item.image });
 
         // Clear dice item display after short delay
         setTimeout(() => {
