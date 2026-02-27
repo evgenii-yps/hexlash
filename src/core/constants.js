@@ -25,6 +25,11 @@ export const POSITION_BONUS = 5;
 export const DICE_COOLDOWN_ROUNDS = 4;
 export const EMERGENCY_HP_THRESHOLD = 30;
 
+// COACH ADVICE
+export const COACH_MIN_ROUND = 4;
+export const COACH_TRIGGER_CHANCE = 0.12;
+export const COACH_BOOST_ROUNDS = 4;
+
 // LISTING
 export const LISTING = 1783306800;
 
