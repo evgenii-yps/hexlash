@@ -1,5 +1,14 @@
 <template>
   <div class="background background-fight" :class="{ 'screen-flash': flashActive }" :style="flashStyle">
+
+    <!-- Loading overlay: "Never give up" -->
+    <Transition name="loading-fade">
+      <div v-if="showLoadingOverlay" class="loading-overlay">
+        <div class="loading-hexlash">HEXLASH</div>
+        <div class="loading-never-give-up">Never give up</div>
+      </div>
+    </Transition>
+
     <div class="fight-container" @scroll="handleScroll">
       <div class="fight-content-wrapper">
 
@@ -216,6 +225,13 @@ const flashColor  = ref('transparent');
 // ── Results state ──────────────────────────────────────────────────────────
 const showDetailedLog = ref(false);
 
+// ── Loading overlay ────────────────────────────────────────────────────────
+const showLoadingOverlay = ref(false);
+const triggerLoadingOverlay = () => {
+  showLoadingOverlay.value = true;
+  setTimeout(() => { showLoadingOverlay.value = false; }, 1200);
+};
+
 // ── Prev HP for shake detection ────────────────────────────────────────────
 let prevHP1 = MAX_HP;
 let prevHP2 = MAX_HP;
@@ -348,6 +364,7 @@ const triggerFlash = (effect) => {
 
 // ── Fight flow (fully automatic) ────────────────────────────────────────
 const startCountdown = () => {
+  clearInterval(countdownTimer);  // prevent double-countdown if called twice
   showCountdown.value  = true;
   countdownValue.value = COUNTDOWN;
 
@@ -385,6 +402,7 @@ const stopFightTimer = () => {
 
 // ── Lifecycle ─────────────────────────────────────────────────────────────
 onMounted(() => {
+  triggerLoadingOverlay();
   if (fightPhase.value === 'fighting' && roundNum.value === 0) {
     startCountdown();
   }
@@ -396,9 +414,6 @@ onUnmounted(() => {
 });
 
 watch(fightPhase, (val, oldVal) => {
-  if (val === 'fighting' && roundNum.value === 0) {
-    startCountdown();
-  }
   // Resume timer after coach advice
   if (val === 'fighting' && oldVal === 'coach') {
     startFightTimer();
@@ -435,6 +450,7 @@ const fightAgain = async () => {
   showDetailedLog.value = false;
   prevHP1 = MAX_HP;
   prevHP2 = MAX_HP;
+  triggerLoadingOverlay();
   await store.dispatch('fight/fightAgain');
   startCountdown();
 };
@@ -493,6 +509,47 @@ const flashStyle = computed(() => ({
 }
 
 @keyframes fadeOut { to { opacity: 0; } }
+
+/* ── Loading overlay ─────────────────────────────────────────────── */
+.loading-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  pointer-events: none;
+}
+
+.loading-hexlash {
+  position: absolute;
+  font-size: 72px;
+  font-weight: 900;
+  color: rgba(255, 6, 111, 0.08);
+  letter-spacing: 14px;
+  text-transform: uppercase;
+  user-select: none;
+  font-family: Anonymous, sans-serif;
+}
+
+.loading-never-give-up {
+  font-size: 24px;
+  font-weight: 700;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 5px;
+  z-index: 1;
+  font-family: Anonymous, sans-serif;
+  text-shadow:
+    0 0 20px var(--primary-color),
+    0 0 40px rgba(255, 6, 111, 0.4);
+}
+
+.loading-fade-leave-active { transition: opacity 0.4s ease; }
+.loading-fade-leave-to     { opacity: 0; }
 
 .fight-container {
   position: relative;
