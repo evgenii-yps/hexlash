@@ -5,37 +5,73 @@
           :label="t('auth.signup.lblLogin')"
           v-model="login"
           labelColor="var(--white)"
-          labelSize="0.5rem"
+          labelSize="0.65rem"
           inputBgColor="var(--black-opacity)"
           inputBorderColor="var(--gray1)"
           inputTextColor="var(--white)"
-          height="40px"
-          marginBottom="0.6rem"
+          padding="14px"
+          marginBottom="0.8rem"
       />
       <InputField
           :label="t('auth.signup.lblPassword')"
-          type="password"
+          :type="showPassword ? 'text' : 'password'"
           v-model="password"
           labelColor="var(--white)"
-          labelSize="0.5rem"
+          labelSize="0.65rem"
           inputBgColor="var(--black-opacity)"
           inputBorderColor="var(--gray1)"
           inputTextColor="var(--white)"
-          height="40px"
-          marginBottom="0.6rem"
-      />
+          padding="14px"
+          marginBottom="0.8rem"
+          :showButton="true"
+      >
+        <button type="button" class="eye-btn" @click="showPassword = !showPassword">
+          <svg v-if="!showPassword" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+               viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+          <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+               viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+            <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+            <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/>
+            <line x1="1" y1="1" x2="23" y2="23"/>
+          </svg>
+        </button>
+      </InputField>
       <InputField
           :label="t('auth.signup.lblConfirmPassword')"
-          type="password"
+          :type="showConfirmPassword ? 'text' : 'password'"
           v-model="confirmPassword"
           labelColor="var(--white)"
-          labelSize="0.5rem"
+          labelSize="0.65rem"
           inputBgColor="var(--black-opacity)"
           inputBorderColor="var(--gray1)"
           inputTextColor="var(--white)"
-          height="40px"
-          marginBottom="0.8rem"
-      />
+          padding="14px"
+          marginBottom="1rem"
+          :showButton="true"
+      >
+        <button type="button" class="eye-btn" @click="showConfirmPassword = !showConfirmPassword">
+          <svg v-if="!showConfirmPassword" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+               viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+          <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+               viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+            <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+            <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/>
+            <line x1="1" y1="1" x2="23" y2="23"/>
+          </svg>
+        </button>
+      </InputField>
 
       <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
 
@@ -49,16 +85,16 @@
       <VBtn v-if="!loading" class="auth-btn" @click="handleSubmit">
         {{ t('auth.signup.btnSignup') }}
       </VBtn>
-
-      <div class="login" v-if="!loading">
-        {{ t('auth.signup.question') }}
-        <ButtonText @click="handleLogin"
-                    textColor="var(--pink)"
-                    text-size="1.5em">
-          {{ t('auth.signup.btnLogin') }}
-        </ButtonText>
-      </div>
     </form>
+
+    <div class="login" v-if="!loading">
+      {{ t('auth.signup.question') }}
+      <ButtonText @click="handleLogin"
+                  textColor="var(--pink)"
+                  text-size="1.5em">
+        {{ t('auth.signup.btnLogin') }}
+      </ButtonText>
+    </div>
   </div>
 </template>
 
@@ -79,6 +115,8 @@ const password = ref('');
 const confirmPassword = ref('');
 const loading = ref(false);
 const errorMessage = ref('');
+const showPassword = ref(false);
+const showConfirmPassword = ref(false);
 
 const handleSubmit = async () => {
   errorMessage.value = '';
@@ -132,15 +170,15 @@ form {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 180px;
+  width: 240px;
 }
 
 .login {
-  margin-top: 0.5rem;
-  font-size: 0.7rem;
+  margin-top: 0.6rem;
+  font-size: 0.75rem;
   color: var(--gray2);
-  align-self: flex-end;
-  display: block;
+  text-align: center;
+  align-self: center;
 }
 
 .error-message {
@@ -153,7 +191,24 @@ form {
 .auth-btn {
   color: white;
   width: 100%;
-  height: 40px !important;
+  height: 50px !important;
   cursor: pointer;
+}
+
+.eye-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--gray2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  height: 100%;
+  transition: color 0.2s;
+}
+
+.eye-btn:hover {
+  color: var(--white);
 }
 </style>
