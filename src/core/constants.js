@@ -22,8 +22,7 @@ export const ROUND_ANIMATION_MS = 1500;
 // MODULE COMBAT
 export const BASE_DAMAGE = 15;
 export const POSITION_BONUS = 5;
-export const DICE_MIN_INTERVAL = 5;
-export const DICE_MAX_INTERVAL = 8;
+export const DICE_COOLDOWN_ROUNDS = 8;
 export const EMERGENCY_HP_THRESHOLD = 30;
 
 // LISTING
