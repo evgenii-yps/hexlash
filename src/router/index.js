@@ -30,6 +30,7 @@ const protectedRoutes = [
     {path: '/profile/balance', name: 'Balance', component: () => import("/src/views/ProfileView.vue")},
     {path: '/profile/wallet', name: 'Wallet', component: () => import("/src/views/ProfileView.vue")},
     {path: '/profile/account', name: 'Account', component: () => import("/src/views/ProfileView.vue")},
+    {path: '/profile/skins', name: 'Skins', component: () => import("/src/views/ProfileView.vue")},
 
     {path: '/club/:id', name: 'Club', component: () => import("/src/views/ClubView.vue")},
 

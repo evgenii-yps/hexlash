@@ -2,7 +2,6 @@
   <div class="profile-account">
     <BackButton :defaultRoute="backRef(route)" />
 
-    <ChangeSkin/>
     <ConfirmEmail/>
     <ChangeLogin/>
     <ChangeLanguage/>
@@ -21,7 +20,6 @@ import ChangePassword from "@/components/fragments/profile/account/ChangePasswor
 import ConfirmEmail from "@/components/fragments/profile/account/ConfirmEmail.vue";
 import ChangeLogin from "@/components/fragments/profile/account/ChangeLogin.vue";
 import DeleteAccount from "@/components/fragments/profile/account/DeleteAccount.vue";
-import ChangeSkin from "@/components/fragments/profile/account/ChangeSkin.vue";
 import ChangeLanguage from "@/components/fragments/profile/account/ChangeLanguage.vue";
 import Switcher3DPunch from "@/components/fragments/profile/account/Switcher3DPunch.vue";
 import {onMounted} from "vue";

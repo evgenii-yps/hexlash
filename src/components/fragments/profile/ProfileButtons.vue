@@ -53,6 +53,16 @@
 
     <VBtnDark
         class="profile-btn"
+        @click="navigateTo('Skins')"
+    >
+      <template #prepend>
+        <img src="@/assets/images/icon_arrow.svg" alt="Arrow Icon" class="custom-icon"/>
+      </template>
+      {{ t('profile.buttons.lblFightSkins') }}
+    </VBtnDark>
+
+    <VBtnDark
+        class="profile-btn"
         @click="navigateTo('Account')"
     >
       <template #prepend>
