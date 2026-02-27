@@ -1,16 +1,16 @@
 <template>
   <div class="reset-container">
-
+    <div class="form-wrapper">
       <InputField
           :label="t('auth.reset.lblEmail')"
           v-model="email"
           labelColor="var(--white)"
-          labelSize="0.5rem"
+          labelSize="0.65rem"
           inputBgColor="var(--black-opacity)"
           inputBorderColor="var(--gray1)"
           inputTextColor="var(--white)"
-          height="40px"
-          marginBottom="0.8rem"
+          padding="14px"
+          marginBottom="1rem"
       />
 
       <div v-if="resetState.errorMessage" class="error-message">{{ resetState.errorMessage }}</div>
@@ -26,15 +26,16 @@
       <VBtn v-if="!resetState.loading && !resetState.successMessage" class="auth-btn" @click="handleResetSubmit">
         {{ t('auth.reset.btnReset') }}
       </VBtn>
+    </div>
 
-      <div class="login" v-if="!resetState.loading">
-        {{ t('auth.signup.question') }}
-        <ButtonText @click="handleLogin"
-                    textColor="var(--pink)"
-                    text-size="1.5em">
-          {{ t('auth.signup.btnLogin') }}
-        </ButtonText>
-      </div>
+    <div class="login" v-if="!resetState.loading">
+      {{ t('auth.signup.question') }}
+      <ButtonText @click="handleLogin"
+                  textColor="var(--pink)"
+                  text-size="1.5em">
+        {{ t('auth.signup.btnLogin') }}
+      </ButtonText>
+    </div>
   </div>
 </template>
 
@@ -42,11 +43,11 @@
 import {ref, computed, onMounted} from 'vue';
 import InputField from "@/components/ui/InputField.vue";
 import ButtonText from "@/components/ui/ButtonText.vue";
-import { useRouter } from 'vue-router';
-import { useI18n } from "vue-i18n";
+import {useRouter} from 'vue-router';
+import {useI18n} from "vue-i18n";
 import store from "@/core/state/store.js";
 
-const { t } = useI18n({ useScope: 'global' });
+const {t} = useI18n({useScope: 'global'});
 
 const email = ref('');
 const router = useRouter();
@@ -64,9 +65,7 @@ const handleLogin = () => {
 onMounted(() => {
   email.value = '';
   store.commit('master/clearResetState');
-
-
-})
+});
 </script>
 
 <style scoped>
@@ -80,19 +79,19 @@ onMounted(() => {
   align-items: center;
 }
 
-form {
+.form-wrapper {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 180px;
+  width: 240px;
 }
 
 .login {
-  margin-top: 0.5rem;
-  font-size: 0.7rem;
+  margin-top: 0.6rem;
+  font-size: 0.75rem;
   color: var(--gray2);
-  align-self: flex-end;
-  display: block;
+  text-align: center;
+  align-self: center;
 }
 
 .error-message {
@@ -111,7 +110,7 @@ form {
 .auth-btn {
   color: white;
   width: 100%;
-  height: 40px !important;
+  height: 50px !important;
   cursor: pointer;
 }
 </style>
