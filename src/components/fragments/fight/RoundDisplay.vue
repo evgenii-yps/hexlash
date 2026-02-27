@@ -3,7 +3,7 @@
     <div class="round-number">{{ t('fight.lblRound', { n: round.roundNum }) }}</div>
     <div class="round-actions">
       <div class="round-action action-left" :class="actionClass(round.action1)">
-        <div class="action-icon">{{ actionIcon(round.action1) }}</div>
+        <img :src="actionImage(round.action1)" class="action-icon-img" alt=""/>
         <div class="action-label">{{ actionName(round.action1) }}</div>
         <div class="action-dmg dmg-red" v-if="round.damage2 > 0">-{{ round.damage2 }} HP</div>
         <div
@@ -17,7 +17,7 @@
       <div class="vs-label">VS</div>
 
       <div class="round-action action-right" :class="actionClass(round.action2)">
-        <div class="action-icon">{{ actionIcon(round.action2) }}</div>
+        <img :src="actionImage(round.action2)" class="action-icon-img" alt=""/>
         <div class="action-label">{{ actionName(round.action2) }}</div>
         <div class="action-dmg dmg-red" v-if="round.damage1 > 0">-{{ round.damage1 }} HP</div>
         <div
@@ -34,6 +34,9 @@
 <script setup>
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import iconAttack   from '@/assets/images/icons/attack.svg';
+import iconDefense  from '@/assets/images/icons/defense.svg';
+import iconPosition from '@/assets/images/icons/position.svg';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -42,13 +45,13 @@ const props = defineProps({
 });
 
 const ACTION_CONFIG = {
-  attack:   { icon: '⚔️', name: 'Атака',  cls: 'round-action-attack' },
-  defense:  { icon: '🛡️', name: 'Защита', cls: 'round-action-defense' },
-  position: { icon: '👣', name: 'Позиция', cls: 'round-action-position' },
+  attack:   { image: iconAttack,   name: 'Атака',  cls: 'round-action-attack' },
+  defense:  { image: iconDefense,  name: 'Защита', cls: 'round-action-defense' },
+  position: { image: iconPosition, name: 'Позиция', cls: 'round-action-position' },
 };
 
 const actionClass = (action) => ACTION_CONFIG[action]?.cls || '';
-const actionIcon  = (action) => ACTION_CONFIG[action]?.icon || '❓';
+const actionImage = (action) => ACTION_CONFIG[action]?.image || '';
 const actionName  = (action) => ACTION_CONFIG[action]?.name || action;
 
 const formatEvent = (evt) => {
@@ -131,7 +134,10 @@ const rightEvents = computed(() => {
   box-shadow: 0 0 10px rgba(155, 89, 182, 0.15);
 }
 
-.action-icon  { font-size: 1.3rem; margin-bottom: 2px; }
+.action-icon-img {
+  width: 28px; height: 28px; margin-bottom: 2px;
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.2));
+}
 .action-label {
   font-size: 0.65rem; color: white;
   margin-bottom: 4px; font-weight: bold;

@@ -56,12 +56,12 @@
             :disabled="!diceState.ready || !!diceState.activeItem"
             @click="rollDice"
           >
-            <span class="dice-icon">🎲</span>
+            <img :src="iconDice" class="dice-icon-img" alt=""/>
             <span v-if="!diceState.ready && !diceState.activeItem" class="dice-cd">{{ diceState.cooldownLeft }}</span>
           </button>
           <transition name="title-pop">
             <div v-if="diceState.activeItem" class="dice-item-result">
-              <span class="dice-emoji">{{ diceState.activeItem.emoji }}</span>
+              <img :src="diceState.activeItem.image" class="dice-result-icon" alt=""/>
               <div class="dice-info">
                 <span class="dice-name">{{ diceState.activeItem.name }}</span>
                 <span class="dice-desc">{{ diceState.activeItem.desc }}</span>
@@ -72,9 +72,9 @@
 
         <!-- Active modifiers display -->
         <div class="modifiers-bar" v-if="fightPhase === 'fighting' && anyModActive">
-          <span v-if="playerModifiers.attackMultiplier > 1" class="mod-badge mod-double">⚡ 2x ATK</span>
-          <span v-if="playerModifiers.shieldActive"         class="mod-badge mod-shield">🛡️ ЩИТ</span>
-          <span v-if="playerModifiers.blindActive"          class="mod-badge mod-blind">✨ СЛЕПОТА</span>
+          <span v-if="playerModifiers.attackMultiplier > 1" class="mod-badge mod-double"><img :src="iconAdrenaline" class="mod-icon" alt=""/> 2x ATK</span>
+          <span v-if="playerModifiers.shieldActive"         class="mod-badge mod-shield"><img :src="iconShield" class="mod-icon" alt=""/> ЩИТ</span>
+          <span v-if="playerModifiers.blindActive"          class="mod-badge mod-blind"><img :src="iconBlind" class="mod-icon" alt=""/> СЛЕПОТА</span>
         </div>
 
         <!-- Results overlay -->
@@ -120,7 +120,7 @@
           <!-- AI Trainer stub -->
           <div class="ai-trainer">
             <div class="trainer-header">
-              <span class="trainer-avatar">🎯</span>
+              <img :src="iconTrainer" class="trainer-avatar-img" alt=""/>
               <span class="trainer-title">{{ t('fight.lblTrainerAnalysis') }}</span>
             </div>
             <div class="trainer-analysis">
@@ -149,6 +149,11 @@ import HPBar        from '@/components/fragments/fight/HPBar.vue';
 import RoundDisplay from '@/components/fragments/fight/RoundDisplay.vue';
 import UserAvatar   from '@/components/fragments/profile/UserAvatar.vue';
 import UserName     from '@/components/fragments/profile/UserName.vue';
+import iconDice     from '@/assets/images/icons/dice.svg';
+import iconTrainer  from '@/assets/images/icons/trainer.svg';
+import iconAdrenaline from '@/assets/images/icons/adrenaline.svg';
+import iconShield   from '@/assets/images/icons/shield.svg';
+import iconBlind    from '@/assets/images/icons/blind.svg';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -649,7 +654,10 @@ const flashStyle = computed(() => ({
   }
 }
 
-.dice-icon { font-size: 1.5rem; }
+.dice-icon-img {
+  width: 28px; height: 28px;
+  filter: drop-shadow(0 0 4px rgba(255, 6, 111, 0.3));
+}
 
 .dice-cd {
   position: absolute;
@@ -675,7 +683,10 @@ const flashStyle = computed(() => ({
   box-shadow: 0 0 14px rgba(255, 214, 0, 0.12);
 }
 
-.dice-emoji { font-size: 1.8rem; }
+.dice-result-icon {
+  width: 32px; height: 32px;
+  filter: drop-shadow(0 0 6px rgba(255, 214, 0, 0.4));
+}
 
 .dice-info {
   display: flex; flex-direction: column; flex: 1;
@@ -696,6 +707,10 @@ const flashStyle = computed(() => ({
 .mod-badge {
   padding: 4px 12px; border-radius: 20px;
   font-size: 0.65rem; font-weight: bold; letter-spacing: 0.5px;
+  display: flex; align-items: center; gap: 4px;
+}
+.mod-icon {
+  width: 14px; height: 14px;
 }
 .mod-double {
   background: rgba(255, 145, 0, 0.15);
@@ -838,8 +853,9 @@ const flashStyle = computed(() => ({
   margin-bottom: 8px;
 }
 
-.trainer-avatar {
-  font-size: 1.2rem;
+.trainer-avatar-img {
+  width: 24px; height: 24px;
+  filter: drop-shadow(0 0 4px rgba(255, 6, 111, 0.3));
 }
 
 .trainer-title {

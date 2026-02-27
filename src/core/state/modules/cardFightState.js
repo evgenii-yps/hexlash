@@ -4,17 +4,23 @@ import { OpponentGenerator } from '@/core/engine/opponentGenerator.js';
 import { ARCHETYPES } from '@/core/data/archetypes.js';
 import router from '@/router/index.js';
 import { MAX_HP, MAX_ROUNDS, DICE_COOLDOWN_ROUNDS, EMERGENCY_HP_THRESHOLD } from '@/core/constants.js';
+import iconHeal from '@/assets/images/icons/heal.svg';
+import iconAdrenaline from '@/assets/images/icons/adrenaline.svg';
+import iconShield from '@/assets/images/icons/shield.svg';
+import iconBlind from '@/assets/images/icons/blind.svg';
+import iconRage from '@/assets/images/icons/rage.svg';
+import iconCrit from '@/assets/images/icons/crit.svg';
 
 const MODULES_STORAGE_KEY = 'hexlash_player_modules';
 
 // ─── Dice items ──────────────────────────────────────────────────────────────
 export const DICE_ITEMS = [
-    { id: 'heal',       name: 'АПТЕЧКА',    emoji: '💊', effect: 'heal',       desc: '+15 HP' },
-    { id: 'adrenaline', name: 'АДРЕНАЛИН',  emoji: '⚡', effect: 'adrenaline', desc: '2x урон' },
-    { id: 'shield',     name: 'ЩИТ',        emoji: '🛡️', effect: 'shield',     desc: 'Блок атаки' },
-    { id: 'blind',      name: 'ОСЛЕПЛЕНИЕ', emoji: '✨', effect: 'blind',      desc: 'Промах врага' },
-    { id: 'rage',       name: 'ЯРОСТЬ',     emoji: '🔥', effect: 'rage',       desc: '-20 HP врагу' },
-    { id: 'crit',       name: 'КРИТ',       emoji: '💀', effect: 'crit',       desc: '-30 HP врагу' },
+    { id: 'heal',       name: 'АПТЕЧКА',    emoji: '💊', image: iconHeal,       effect: 'heal',       desc: '+15 HP' },
+    { id: 'adrenaline', name: 'АДРЕНАЛИН',  emoji: '⚡', image: iconAdrenaline, effect: 'adrenaline', desc: '2x урон' },
+    { id: 'shield',     name: 'ЩИТ',        emoji: '🛡️', image: iconShield,     effect: 'shield',     desc: 'Блок атаки' },
+    { id: 'blind',      name: 'ОСЛЕПЛЕНИЕ', emoji: '✨', image: iconBlind,      effect: 'blind',      desc: 'Промах врага' },
+    { id: 'rage',       name: 'ЯРОСТЬ',     emoji: '🔥', image: iconRage,       effect: 'rage',       desc: '-20 HP врагу' },
+    { id: 'crit',       name: 'КРИТ',       emoji: '💀', image: iconCrit,       effect: 'crit',       desc: '-30 HP врагу' },
 ];
 
 // ─── Module-level AI instances (NOT stored in Vuex) ──────────────────────────
