@@ -526,6 +526,9 @@ const flashStyle = computed(() => ({
 
 .loading-hexlash {
   position: absolute;
+  top: 22%;
+  left: 50%;
+  transform: translateX(-50%);
   font-size: 72px;
   font-weight: 900;
   color: rgba(255, 6, 111, 0.08);
@@ -533,14 +536,17 @@ const flashStyle = computed(() => ({
   text-transform: uppercase;
   user-select: none;
   font-family: Anonymous, sans-serif;
+  white-space: nowrap;
 }
 
 .loading-never-give-up {
-  font-size: 24px;
+  font-size: 42px;
   font-weight: 700;
   color: #fff;
   text-transform: uppercase;
   letter-spacing: 5px;
+  text-align: center;
+  width: 100%;
   z-index: 1;
   font-family: Anonymous, sans-serif;
   text-shadow:
