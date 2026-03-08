@@ -12,8 +12,8 @@
 
 
     <div v-if="isAuthenticated" class="text-pages-link">
-      <a v-ripple class="btn-text-page" @click="goTo('rules')">Rules</a>
-      <a v-ripple class="btn-text-page" @click="goTo('help')">Help</a>
+      <a v-ripple class="btn-text-page" @click.stop="goTo('/rules')">Rules</a>
+      <a v-ripple class="btn-text-page" @click.stop="goTo('/help')">Help</a>
     </div>
 
     <p v-if="!isAuthenticated" class="beta-text">{{ version }}</p>
@@ -1185,14 +1185,14 @@ watch(isAuthenticated, (newValue) => {
 }
 
 .text-pages-link {
-  /* position: absolute;
-   top: 10%;
-   left: 50%;
-   transform: translateX(-50%);*/
+  position: absolute;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   justify-content: center;
   flex-direction: row;
-  flex-grow: 1;
+  z-index: 10;
 }
 
 .btn-text-page {
