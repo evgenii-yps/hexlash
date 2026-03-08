@@ -10,17 +10,6 @@
     </keep-alive>
 
 
-    <div v-if="countdownText.length > 0 && isAuthenticated" class="timer-listing-container">
-
-      <div class="timer-overlay">
-        {{ countdownText }}
-      </div>
-      <div class="timer-text"></div>
-      <div class="text-pages-link">
-        <a v-ripple class="btn-text-page" @click="goTo('rules')">Rules</a>
-        <a v-ripple class="btn-text-page" @click="goTo('help')">Help</a>
-      </div>
-    </div>
 
     <p v-if="!isAuthenticated" class="beta-text">{{ version }}</p>
 
