@@ -11,6 +11,11 @@
 
 
 
+    <div v-if="isAuthenticated" class="text-pages-link">
+      <a v-ripple class="btn-text-page" @click="goTo('rules')">Rules</a>
+      <a v-ripple class="btn-text-page" @click="goTo('help')">Help</a>
+    </div>
+
     <p v-if="!isAuthenticated" class="beta-text">{{ version }}</p>
 
 
