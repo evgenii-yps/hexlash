@@ -78,6 +78,14 @@ export function backRef(route) {
     }
 }
 
+// Helper: load saved fight from localStorage (no store dependency)
+function getSavedFightPhase() {
+    try {
+        const s = localStorage.getItem('hexlash_current_fight');
+        return s ? JSON.parse(s).fightPhase : null;
+    } catch(e) { return null; }
+}
+
 // Навигационный гвард
 router.beforeEach(async (to, from, next) => {
     routeHistory.push(from);
@@ -102,6 +110,14 @@ router.beforeEach(async (to, from, next) => {
             console.log('Redirecting to Login page');
             next({name: 'Login'});
         } else {
+            // If navigating to arena but a fight is already in progress, redirect to fight
+            if (to.path === '/arena') {
+                const savedPhase = getSavedFightPhase();
+                if (savedPhase === 'fighting' || savedPhase === 'coach' || savedPhase === 'results') {
+                    next('/fight');
+                    return;
+                }
+            }
             next();
         }
     } else {
