@@ -287,6 +287,7 @@ const goToTraining = () => {
 .branches-sidebar {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 6px;
   padding: 8px 0 8px 16px;
   width: 110px;
