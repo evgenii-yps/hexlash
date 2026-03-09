@@ -177,9 +177,8 @@ export default {
       const deck = [...state.deck];
       const idx = deck.indexOf(moveId);
       if (idx !== -1) {
-        if (deck.length > 3) {
-          deck.splice(idx, 1);
-        }
+        // Always allow removal — button validation handles minimum
+        deck.splice(idx, 1);
       } else {
         if (deck.length < 5) {
           deck.push(moveId);

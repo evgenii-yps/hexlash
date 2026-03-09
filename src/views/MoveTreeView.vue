@@ -23,28 +23,46 @@
               :class="{ active: activeBranch === key }"
               @click="activeBranch = key"
           >
-            {{ branch.name }}
+            <span>{{ branch.name }}</span>
+            <span class="tab-xp">{{ branchExp[key] }} XP</span>
           </button>
         </div>
 
         <transition name="fade-tab" mode="out-in">
-          <BranchColumn
-              :key="activeBranch"
-              :branch="branches[activeBranch]"
-              :moves="moves"
-              :taps="taps"
-              :branchExp="branchExp[activeBranch]"
-              :canLevelUpFn="canLevelUpFor"
-              :canUnlockFn="canUnlockFor"
-              :deck="deck"
-              @levelUp="handleLevelUp"
-              @unlock="handleUnlock"
-          />
+          <div :key="activeBranch" class="branch-cards">
+            <MoveTreeCard
+                v-for="(moveId, idx) in branches[activeBranch].moves"
+                :key="moveId"
+                :moveId="moveId"
+                :move="moves[moveId] || { level: 0, unlocked: false }"
+                :taps="taps"
+                :branchExp="branchExp[activeBranch]"
+                :canUnlock="canUnlockFor(moveId)"
+                :allMoves="moves"
+                :isLast="idx === branches[activeBranch].moves.length - 1"
+                @click="openModal(moveId)"
+            />
+          </div>
         </transition>
 
         <div class="scroll-gap" />
       </div>
     </div>
+
+    <MoveDetailsModal
+        v-if="selectedMoveId"
+        :moveId="selectedMoveId"
+        :move="moves[selectedMoveId] || { level: 0, unlocked: false }"
+        :taps="taps"
+        :branchExp="branchExp[activeBranchOfSelected]"
+        :canLevelUp="canLevelUpFor(selectedMoveId)"
+        :canUnlock="canUnlockFor(selectedMoveId)"
+        :allMoveStates="moves"
+        @close="selectedMoveId = null"
+        @levelUp="handleLevelUp"
+        @unlock="handleUnlock"
+        @train="goToTraining"
+    />
   </div>
 </template>
 
@@ -53,37 +71,59 @@ import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import store from '@/core/state/store.js';
 import { branches as branchData } from '@/data/branches.js';
-import BranchColumn from '@/components/fragments/training/BranchColumn.vue';
+import { allMoves as movesData } from '@/data/moves.js';
+import { InfoMessageModel } from '@/core/models/internal/infoMessageModel.js';
+import MoveTreeCard from '@/components/fragments/training/MoveTreeCard.vue';
+import MoveDetailsModal from '@/components/fragments/training/MoveDetailsModal.vue';
 
 const router = useRouter();
 const emit = defineEmits(['scroll']);
 
 const branches = branchData;
 const activeBranch = ref('speed');
+const selectedMoveId = ref(null);
 
 const taps = computed(() => store.getters['progression/getTaps']);
 const branchExp = computed(() => store.getters['progression/getBranchExp']);
 const moves = computed(() => store.getters['progression/getMoves']);
-const deck = computed(() => store.getters['progression/getDeck']);
 
 const canLevelUpFor = (moveId) => store.getters['progression/canLevelUp'](moveId);
-const canUnlockFor = (moveId) => store.getters['progression/canUnlock'](moveId);
+const canUnlockFor  = (moveId) => store.getters['progression/canUnlock'](moveId);
+
+const activeBranchOfSelected = computed(() => {
+  if (!selectedMoveId.value) return activeBranch.value;
+  return movesData[selectedMoveId.value]?.branch || activeBranch.value;
+});
+
+const openModal = (moveId) => {
+  selectedMoveId.value = moveId;
+  const branch = movesData[moveId]?.branch;
+  if (branch) activeBranch.value = branch;
+};
 
 const handleLevelUp = async (moveId) => {
   const success = await store.dispatch('progression/levelUpMove', moveId);
   if (!success) {
-    store.commit('master/setInfoMessage', { text: 'Недостаточно ресурсов!', timeout: 2000, showButton: false });
+    store.commit('master/setInfoMessage', InfoMessageModel.withoutButton('Недостаточно ресурсов!', 2000));
+  } else {
+    selectedMoveId.value = null;
   }
 };
 
 const handleUnlock = async (moveId) => {
   const success = await store.dispatch('progression/unlockMove', moveId);
   if (!success) {
-    store.commit('master/setInfoMessage', { text: 'Недостаточно ресурсов!', timeout: 2000, showButton: false });
+    store.commit('master/setInfoMessage', InfoMessageModel.withoutButton('Недостаточно ресурсов!', 2000));
+  } else {
+    selectedMoveId.value = null;
   }
 };
 
 const goBack = () => router.push('/training');
+const goToTraining = () => {
+  selectedMoveId.value = null;
+  router.push('/training');
+};
 
 const handleScroll = (e) => emit('scroll', e.target.scrollTop);
 </script>
@@ -116,13 +156,11 @@ const handleScroll = (e) => emit('scroll', e.target.scrollTop);
 }
 
 @supports (height: 100dvh) {
-  .move-tree-container {
-    height: 100dvh;
-  }
+  .move-tree-container { height: 100dvh; }
 }
 
 .move-tree-wrapper {
-  max-width: 600px;
+  max-width: 480px;
   margin: 0 auto;
   padding: 80px 16px 0;
   box-sizing: border-box;
@@ -149,18 +187,9 @@ const handleScroll = (e) => emit('scroll', e.target.scrollTop);
   transition: color 0.2s;
 }
 
-.btn-back:hover {
-  color: var(--white);
-}
-
-.back-arrow {
-  font-size: 1.1rem;
-}
-
-.resources {
-  display: flex;
-  gap: 16px;
-}
+.btn-back:hover { color: var(--white); }
+.back-arrow { font-size: 1.1rem; }
+.resources { display: flex; gap: 16px; }
 
 .resource-item {
   display: flex;
@@ -192,14 +221,18 @@ const handleScroll = (e) => emit('scroll', e.target.scrollTop);
 
 .branch-tab {
   flex: 1;
-  padding: 10px 8px;
+  padding: 8px 6px 6px;
   background: var(--black-opacity-80);
   border: 1px solid var(--gray1);
   border-radius: 4px;
   color: var(--gray3);
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   cursor: pointer;
   transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
 }
 
 .branch-tab.active {
@@ -208,17 +241,24 @@ const handleScroll = (e) => emit('scroll', e.target.scrollTop);
   background: rgba(255, 6, 111, 0.08);
 }
 
-.fade-tab-enter-active,
-.fade-tab-leave-active {
-  transition: opacity 0.15s;
+.tab-xp {
+  font-size: 0.65rem;
+  color: var(--gray2);
+  font-family: AnonymousBalance, sans-serif;
 }
+
+.branch-tab.active .tab-xp { color: var(--pink); }
+
+.branch-cards {
+  display: flex;
+  flex-direction: column;
+}
+
+.fade-tab-enter-active,
+.fade-tab-leave-active { transition: opacity 0.15s; }
 
 .fade-tab-enter-from,
-.fade-tab-leave-to {
-  opacity: 0;
-}
+.fade-tab-leave-to { opacity: 0; }
 
-.scroll-gap {
-  height: 100px;
-}
+.scroll-gap { height: 100px; }
 </style>
