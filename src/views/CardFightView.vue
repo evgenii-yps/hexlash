@@ -423,6 +423,10 @@ watch(fightPhase, (val, oldVal) => {
   }
   if (val === 'results') {
     stopFightTimer();
+    // Начислить XP за бой
+    const result = statusLeft.value === t('fight.lblVictory') ? 'win' : 'lose';
+    const deck = store.getters['progression/getDeck'];
+    store.dispatch('progression/onFightEnd', { result, deck });
   }
 });
 
