@@ -288,10 +288,11 @@ const goToTraining = () => {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 6px;
+  gap: 16px;
   padding: 8px 0 8px 16px;
   width: 110px;
   flex-shrink: 0;
+  align-self: stretch;
 }
 
 .branch-btn {
