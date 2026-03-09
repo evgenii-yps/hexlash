@@ -271,7 +271,7 @@ const goToTraining = () => {
 
 .xp-branch-val {
   font-family: AnonymousBalance, sans-serif;
-  font-size: 0.75rem;
+  font-size: 0.95rem;
   color: var(--pink);
 }
 
