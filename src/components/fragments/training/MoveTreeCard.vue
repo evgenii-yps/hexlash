@@ -10,9 +10,9 @@
         @click="$emit('click', moveId)"
     >
       <div class="card-top">
-        <span class="lock-icon" v-if="!move.unlocked">🔒</span>
         <span class="move-name">{{ moveData.name }}</span>
         <span v-if="move.unlocked" class="move-level">Ур.{{ move.level }}</span>
+        <span v-else class="move-locked-badge">закрыт</span>
       </div>
 
       <!-- Прогресс к следующему уровню (для открытых приёмов) -->
@@ -117,8 +117,12 @@ const unlockCost = computed(() => {
   margin-bottom: 6px;
 }
 
-.lock-icon {
-  font-size: 0.8rem;
+.move-locked-badge {
+  font-size: 0.65rem;
+  color: var(--gray2);
+  border: 1px solid var(--gray1);
+  border-radius: 3px;
+  padding: 1px 5px;
 }
 
 .move-name {
