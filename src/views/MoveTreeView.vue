@@ -294,7 +294,7 @@ const goToTraining = () => {
 
 .branches-center {
   position: absolute;
-  top: 50%;
+  top: 35%;
   left: 16px;
   transform: translateY(-50%);
   display: flex;
