@@ -35,15 +35,17 @@
 
         <!-- Левая колонка: ветки -->
         <div class="branches-sidebar">
-          <button
-              v-for="(branch, key) in branches"
-              :key="key"
-              class="branch-btn"
-              :class="{ active: activeBranch === key }"
-              @click="activeBranch = key"
-          >
-            <span class="branch-btn-name">{{ branch.name }}</span>
-          </button>
+          <div class="branches-center">
+            <button
+                v-for="(branch, key) in branches"
+                :key="key"
+                class="branch-btn"
+                :class="{ active: activeBranch === key }"
+                @click="activeBranch = key"
+            >
+              <span class="branch-btn-name">{{ branch.name }}</span>
+            </button>
+          </div>
         </div>
 
         <!-- Правая колонка: приёмы -->
@@ -285,14 +287,20 @@ const goToTraining = () => {
 
 /* ── Левая колонка с ветками ── */
 .branches-sidebar {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 16px;
-  padding: 8px 0 8px 16px;
+  position: relative;
   width: 110px;
   flex-shrink: 0;
-  align-self: stretch;
+}
+
+.branches-center {
+  position: absolute;
+  top: 50%;
+  left: 16px;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: calc(100% - 16px);
 }
 
 .branch-btn {
