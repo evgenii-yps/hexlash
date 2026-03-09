@@ -200,6 +200,7 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import store from '@/core/state/store.js';
+import router from '@/router/index.js';
 import { useI18n } from 'vue-i18n';
 import { COUNTDOWN, ROUND_ANIMATION_MS, MAX_HP } from '@/core/constants.js';
 import { ARCHETYPES } from '@/core/data/archetypes.js';
@@ -412,19 +413,55 @@ const stopFightTimer = () => {
 };
 
 // ── Lifecycle ─────────────────────────────────────────────────────────────
-onMounted(() => {
+onMounted(async () => {
   triggerLoadingOverlay();
-  if (fightPhase.value === 'fighting' && roundNum.value === 0) {
-    startCountdown();
+
+  // Restore fight from localStorage (handles page reload / tab switch)
+  await store.dispatch('fight/initFromStorage');
+
+  if (fightPhase.value === 'fighting') {
+    if (roundNum.value === 0) {
+      startCountdown();
+    } else {
+      // Restored in-progress fight — skip countdown, resume timer
+      showCountdown.value = false;
+      startFightTimer();
+    }
+  } else if (fightPhase.value === 'coach') {
+    showCountdown.value = false;
+    // Timer is paused; coach overlay will show
+  } else if (fightPhase.value !== 'results') {
+    // No active fight — go to preparation
+    await router.push('/arena');
   }
+
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  window.addEventListener('beforeunload', handleBeforeUnload);
 });
 
 onUnmounted(() => {
   stopFightTimer();
   clearInterval(countdownTimer);
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
+  window.removeEventListener('beforeunload', handleBeforeUnload);
 });
 
-const xpEarned = ref(null);
+// ── Tab visibility: dosimulate missed rounds when returning ───────────────
+const handleVisibilityChange = () => {
+  if (document.visibilityState === 'visible' && fightPhase.value === 'fighting') {
+    store.dispatch('fight/resumeMissedRounds');
+  }
+};
+
+// ── Warn before leaving during a fight ───────────────────────────────────
+const handleBeforeUnload = (e) => {
+  if (fightPhase.value === 'fighting' || fightPhase.value === 'coach') {
+    e.preventDefault();
+    e.returnValue = '';
+  }
+};
+
+const xpEarned = computed(() => store.getters['fight/getXpEarned']);
 
 watch(fightPhase, (val, oldVal) => {
   // Resume timer after coach advice
@@ -436,22 +473,24 @@ watch(fightPhase, (val, oldVal) => {
   }
   if (val === 'results') {
     stopFightTimer();
-    // Начислить XP за бой
-    const result = statusLeft.value === t('fight.lblVictory') ? 'win' : 'lose';
-    const deck = store.getters['progression/getDeck'];
-    // Вычислить сколько XP получено по каждой ветке
-    const expGain = result === 'win' ? 10 : 5;
-    const branchCount = { speed: 0, power: 0, technique: 0 };
-    deck.forEach(id => { const b = movesData[id]?.branch; if (b) branchCount[b]++; });
-    const earned = {};
-    Object.entries(branchCount).forEach(([branch, count]) => {
-      if (count > 0) {
-        const xp = Math.floor(expGain * count / deck.length);
-        if (xp > 0) earned[branch] = xp;
-      }
-    });
-    xpEarned.value = earned;
-    store.dispatch('progression/onFightEnd', { result, deck });
+    // Only award XP once (guard against double-award on restore)
+    if (!store.getters['fight/getXpAwarded']) {
+      const result = statusLeft.value === t('fight.lblVictory') ? 'win' : 'lose';
+      const deck = store.getters['progression/getDeck'];
+      const expGain = result === 'win' ? 10 : 5;
+      const branchCount = { speed: 0, power: 0, technique: 0 };
+      deck.forEach(id => { const b = movesData[id]?.branch; if (b) branchCount[b]++; });
+      const earned = {};
+      Object.entries(branchCount).forEach(([branch, count]) => {
+        if (count > 0) {
+          const xp = Math.floor(expGain * count / deck.length);
+          if (xp > 0) earned[branch] = xp;
+        }
+      });
+      store.commit('fight/setXpEarned', earned);
+      store.commit('fight/setXpAwarded', true);
+      store.dispatch('progression/onFightEnd', { result, deck });
+    }
   }
 });
 
