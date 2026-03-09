@@ -35,7 +35,7 @@
       >
         <img :src="task.getIcon()" alt="Task Icon" class="task-icon"/>
         <span class="task-description">{{ task.title }}</span>
-        <span class="task-tokens">{{ task.tokens }} <span style="color:gray">$</span> </span>
+        <span class="task-tokens">0 <span style="color:gray">$</span> </span>
 
       </div>
     </div>
