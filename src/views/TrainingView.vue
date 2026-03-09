@@ -39,6 +39,33 @@
 
         <div class="training-title">Training room</div>
 
+        <!-- Прогрессия: тапы и опыт -->
+        <div class="progression-bar">
+          <div class="prog-resource">
+            <span class="prog-label">Тапы</span>
+            <span class="prog-value">{{ progressionTaps }}</span>
+          </div>
+          <div class="prog-divider"/>
+          <div class="prog-resource">
+            <span class="prog-label">Скорость</span>
+            <span class="prog-value">{{ branchExp.speed }} XP</span>
+          </div>
+          <div class="prog-resource">
+            <span class="prog-label">Сила</span>
+            <span class="prog-value">{{ branchExp.power }} XP</span>
+          </div>
+          <div class="prog-resource">
+            <span class="prog-label">Техника</span>
+            <span class="prog-value">{{ branchExp.technique }} XP</span>
+          </div>
+        </div>
+
+        <!-- Кнопки навигации к приёмам и колоде -->
+        <div class="progression-actions">
+          <button class="btn-prog" @click="goToMoves">Приёмы</button>
+          <button class="btn-prog btn-prog-deck" @click="goToDeck">Колода ({{ deckSize }})</button>
+        </div>
+
         <div v-if="loadingPunchInfo" class="loader-container">
           <v-progress-circular
               class="loader"
@@ -87,6 +114,7 @@ import Punch3D from "@/components/fragments/training/Punch3D.vue";
 import {Howl} from "howler";
 import {showTrainingRulesReminder} from "@/core/services/masterService.js";
 import * as amplitude from "@amplitude/analytics-browser";
+import router from "@/router/index.js";
 
 const {t} = useI18n({useScope: 'global'})
 
@@ -95,6 +123,13 @@ const hitCircleRef = ref(null);
 
 const intervalId = ref(null);  // Для сохранения идентификатора интервала
 const countdownText = ref('');
+
+const progressionTaps = computed(() => store.getters['progression/getTaps']);
+const branchExp = computed(() => store.getters['progression/getBranchExp']);
+const deckSize = computed(() => store.getters['progression/getDeck'].length);
+
+const goToMoves = () => router.push('/training/moves');
+const goToDeck = () => router.push('/training/deck');
 
 const socialTasks = computed(() => store.getters['task/getAllSocialTasks']);
 const dailyTasks = computed(() => store.getters['task/getAllDailyTasks']);
@@ -180,6 +215,7 @@ const handleClickPunch = (event, isFromCircleClick = false, value) => {
   numbersAnimations.value.push(newNumber);
 
   store.dispatch('punch/handlePunch', value);
+  store.dispatch('progression/addTap');
 
   // Вибрация при клике
   if (navigator.vibrate) {
@@ -523,6 +559,75 @@ onUnmounted(() => {
   font-size: 1.1em;
   color: var(--dark);
   text-align: center;
+}
+
+.progression-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--black-opacity-80);
+  border: 1px solid var(--gray1);
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 90%;
+  max-width: 400px;
+  box-sizing: border-box;
+}
+
+.prog-resource {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.prog-label {
+  font-size: 0.65rem;
+  color: var(--gray2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.prog-value {
+  font-family: AnonymousBalance, sans-serif;
+  font-size: 0.9rem;
+  color: var(--pink);
+}
+
+.prog-divider {
+  width: 1px;
+  height: 28px;
+  background: var(--gray1);
+}
+
+.progression-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.btn-prog {
+  padding: 8px 20px;
+  background: var(--black-opacity-80);
+  border: 1px solid var(--gray1);
+  border-radius: 4px;
+  color: var(--gray3);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-prog:hover {
+  border-color: var(--pink);
+  color: var(--pink);
+}
+
+.btn-prog-deck {
+  border-color: rgba(255, 6, 111, 0.4);
+  color: var(--gray3);
 }
 
 </style>
