@@ -7,9 +7,26 @@
         <button class="btn-back" @click="goBack">
           <span class="back-arrow">←</span> Назад
         </button>
-        <div class="resource-item">
-          <span class="resource-label">Тапы</span>
-          <span class="resource-value">{{ taps }}</span>
+        <div class="resource-panel">
+          <div class="resource-taps">
+            <span class="resource-label">ТАПЫ</span>
+            <span class="resource-value">{{ taps }}</span>
+          </div>
+          <div class="resource-divider"></div>
+          <div class="resource-xp-grid">
+            <div class="xp-row">
+              <span class="xp-branch-name">Скорость</span>
+              <span class="xp-branch-val">{{ branchExp.speed }} XP</span>
+            </div>
+            <div class="xp-row">
+              <span class="xp-branch-name">Сила</span>
+              <span class="xp-branch-val">{{ branchExp.power }} XP</span>
+            </div>
+            <div class="xp-row">
+              <span class="xp-branch-name">Техника</span>
+              <span class="xp-branch-val">{{ branchExp.technique }} XP</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -26,7 +43,6 @@
               @click="activeBranch = key"
           >
             <span class="branch-btn-name">{{ branch.name }}</span>
-            <span class="branch-btn-xp">{{ branchExp[key] }} XP</span>
           </button>
         </div>
 
@@ -192,25 +208,72 @@ const goToTraining = () => {
 .btn-back:hover { color: var(--white); }
 .back-arrow { font-size: 1.1rem; }
 
-.resource-item {
+.resource-panel {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  background: var(--black-opacity-80);
+  border: 1px solid var(--gray1);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.resource-taps {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: var(--black-opacity-80);
-  border: 1px solid var(--gray1);
-  border-radius: 4px;
-  padding: 4px 14px;
+  justify-content: center;
+  padding: 6px 16px;
 }
 
 .resource-label {
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   color: var(--gray2);
   text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-family: Anonymous, sans-serif;
 }
 
 .resource-value {
   font-family: AnonymousBalance, sans-serif;
-  font-size: 1rem;
+  font-size: 1.5rem;
+  color: var(--pink);
+  line-height: 1.1;
+}
+
+.resource-divider {
+  width: 1px;
+  background: var(--gray1);
+  margin: 6px 0;
+}
+
+.resource-xp-grid {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  padding: 6px 12px 6px 10px;
+}
+
+.xp-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.xp-branch-name {
+  font-family: Anonymous, sans-serif;
+  font-size: 0.65rem;
+  color: var(--gray3);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  min-width: 54px;
+}
+
+.xp-branch-val {
+  font-family: AnonymousBalance, sans-serif;
+  font-size: 0.75rem;
   color: var(--pink);
 }
 
@@ -256,18 +319,8 @@ const goToTraining = () => {
 
 .branch-btn-name {
   font-family: Anonymous, sans-serif;
-  font-size: 0.85rem;
-}
-
-.branch-btn-xp {
-  font-size: 0.65rem;
-  color: var(--gray2);
-  font-family: AnonymousBalance, sans-serif;
-}
-
-.branch-btn.active .branch-btn-xp {
-  color: var(--pink);
-  opacity: 0.8;
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
 }
 
 /* ── Правая колонка с приёмами ── */
