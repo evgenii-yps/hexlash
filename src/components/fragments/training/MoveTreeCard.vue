@@ -127,7 +127,6 @@ const unlockCost = computed(() => {
 
 .move-name {
   flex: 1;
-  font-family: Anonymous, sans-serif;
   font-size: 0.95rem;
   color: var(--white);
 }
@@ -167,7 +166,6 @@ const unlockCost = computed(() => {
 .max-badge {
   font-size: 0.7rem;
   color: var(--pink);
-  font-family: Anonymous, sans-serif;
 }
 
 .unlock-req {

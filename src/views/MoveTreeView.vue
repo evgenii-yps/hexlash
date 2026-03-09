@@ -231,7 +231,6 @@ const goToTraining = () => {
   color: var(--gray2);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  font-family: Anonymous, sans-serif;
 }
 
 .resource-value {
@@ -263,7 +262,6 @@ const goToTraining = () => {
 }
 
 .xp-branch-name {
-  font-family: Anonymous, sans-serif;
   font-size: 0.65rem;
   color: var(--gray3);
   text-transform: uppercase;
@@ -318,7 +316,6 @@ const goToTraining = () => {
 }
 
 .branch-btn-name {
-  font-family: Anonymous, sans-serif;
   font-size: 0.9rem;
   letter-spacing: 0.02em;
 }
