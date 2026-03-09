@@ -24,7 +24,7 @@
             :key="task.id"
             class="task-item" @click="openSubscribeDialog(task)">
 
-          <div class="cost">{{ task.tokens }}$</div>
+          <div class="cost">0$</div>
           <v-img :src="task.getIcon()" aspect-ratio="1" class="task-img"/>
           <div class="desc">{{ task.title }}</div>
 

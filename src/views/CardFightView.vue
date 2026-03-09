@@ -148,12 +148,12 @@
           </div>
 
           <!-- XP за бой -->
-          <div v-if="xpEarned && Object.keys(xpEarned).length" class="xp-earned-block">
+          <div v-if="xpEarned" class="xp-earned-block">
             <div class="xp-earned-title">Получено опыта</div>
             <div class="xp-earned-rows">
-              <div v-if="xpEarned.speed"     class="xp-row"><span class="xp-branch">Скорость</span><span class="xp-val">+{{ xpEarned.speed }} XP</span></div>
-              <div v-if="xpEarned.power"     class="xp-row"><span class="xp-branch">Сила</span><span class="xp-val">+{{ xpEarned.power }} XP</span></div>
-              <div v-if="xpEarned.technique" class="xp-row"><span class="xp-branch">Техника</span><span class="xp-val">+{{ xpEarned.technique }} XP</span></div>
+              <div class="xp-row"><span class="xp-branch">Скорость</span><span class="xp-val">+{{ xpEarned.speed ?? 0 }} XP</span></div>
+              <div class="xp-row"><span class="xp-branch">Сила</span><span class="xp-val">+{{ xpEarned.power ?? 0 }} XP</span></div>
+              <div class="xp-row"><span class="xp-branch">Техника</span><span class="xp-val">+{{ xpEarned.technique ?? 0 }} XP</span></div>
             </div>
           </div>
 
