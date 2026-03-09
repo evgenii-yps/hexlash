@@ -38,6 +38,8 @@ const protectedRoutes = [
     {path: '/ratings', redirect: '/ratings/clubs'},
 
     {path: '/training', name: 'Training', component: () => import("/src/views/TrainingView.vue")},
+    {path: '/training/moves', name: 'MoveTree', component: () => import("/src/views/MoveTreeView.vue")},
+    {path: '/training/deck', name: 'DeckBuilder', component: () => import("/src/views/DeckBuilderView.vue")},
     {path: '/fight', name: 'Fight', component: () => import("/src/views/CardFightView.vue")},
 
 
