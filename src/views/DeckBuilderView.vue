@@ -8,6 +8,7 @@
             <span class="back-arrow">←</span> Назад
           </button>
           <div class="deck-title">Колода</div>
+          <button class="btn-tree" @click="goToTree">Приёмы</button>
         </div>
 
         <!-- Слоты колоды -->
@@ -71,7 +72,7 @@
               :disabled="!isDeckValid"
               @click="goToArena"
           >
-            В бой
+            В Арену
           </button>
         </div>
 
@@ -100,6 +101,7 @@ const toggleMove = (moveId) => {
 };
 
 const goBack = () => router.push('/training');
+const goToTree = () => router.push('/training/moves');
 const goToArena = () => {
   if (isDeckValid.value) router.push('/arena');
 };
@@ -174,6 +176,22 @@ const handleScroll = (e) => emit('scroll', e.target.scrollTop);
 
 .back-arrow {
   font-size: 1.1rem;
+}
+
+.btn-tree {
+  background: transparent;
+  border: 1px solid rgba(255, 6, 111, 0.4);
+  color: var(--gray3);
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-tree:hover {
+  border-color: var(--pink);
+  color: var(--pink);
 }
 
 .deck-title {
