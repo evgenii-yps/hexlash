@@ -147,6 +147,16 @@
             </div>
           </div>
 
+          <!-- XP за бой -->
+          <div v-if="xpEarned && Object.keys(xpEarned).length" class="xp-earned-block">
+            <div class="xp-earned-title">Получено опыта</div>
+            <div class="xp-earned-rows">
+              <div v-if="xpEarned.speed"     class="xp-row"><span class="xp-branch">Скорость</span><span class="xp-val">+{{ xpEarned.speed }} XP</span></div>
+              <div v-if="xpEarned.power"     class="xp-row"><span class="xp-branch">Сила</span><span class="xp-val">+{{ xpEarned.power }} XP</span></div>
+              <div v-if="xpEarned.technique" class="xp-row"><span class="xp-branch">Техника</span><span class="xp-val">+{{ xpEarned.technique }} XP</span></div>
+            </div>
+          </div>
+
           <!-- Expandable detailed log -->
           <div class="log-section">
             <button class="log-toggle" @click="showDetailedLog = !showDetailedLog">
@@ -193,6 +203,7 @@ import store from '@/core/state/store.js';
 import { useI18n } from 'vue-i18n';
 import { COUNTDOWN, ROUND_ANIMATION_MS, MAX_HP } from '@/core/constants.js';
 import { ARCHETYPES } from '@/core/data/archetypes.js';
+import { allMoves as movesData } from '@/data/moves.js';
 import HPBar        from '@/components/fragments/fight/HPBar.vue';
 import RoundDisplay from '@/components/fragments/fight/RoundDisplay.vue';
 import UserAvatar   from '@/components/fragments/profile/UserAvatar.vue';
@@ -413,6 +424,8 @@ onUnmounted(() => {
   clearInterval(countdownTimer);
 });
 
+const xpEarned = ref(null);
+
 watch(fightPhase, (val, oldVal) => {
   // Resume timer after coach advice
   if (val === 'fighting' && oldVal === 'coach') {
@@ -426,6 +439,18 @@ watch(fightPhase, (val, oldVal) => {
     // Начислить XP за бой
     const result = statusLeft.value === t('fight.lblVictory') ? 'win' : 'lose';
     const deck = store.getters['progression/getDeck'];
+    // Вычислить сколько XP получено по каждой ветке
+    const expGain = result === 'win' ? 10 : 5;
+    const branchCount = { speed: 0, power: 0, technique: 0 };
+    deck.forEach(id => { const b = movesData[id]?.branch; if (b) branchCount[b]++; });
+    const earned = {};
+    Object.entries(branchCount).forEach(([branch, count]) => {
+      if (count > 0) {
+        const xp = Math.floor(expGain * count / deck.length);
+        if (xp > 0) earned[branch] = xp;
+      }
+    });
+    xpEarned.value = earned;
     store.dispatch('progression/onFightEnd', { result, deck });
   }
 });
@@ -1228,5 +1253,45 @@ const flashStyle = computed(() => ({
   font-size: 0.55rem;
   color: var(--gray3);
   margin-left: 2px;
+}
+/* ── XP Earned block ── */
+.xp-earned-block {
+  background: rgba(255, 6, 111, 0.08);
+  border: 1px solid rgba(255, 6, 111, 0.3);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+}
+
+.xp-earned-title {
+  font-family: Anonymous, sans-serif;
+  font-size: 0.75rem;
+  color: var(--pink);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
+}
+
+.xp-earned-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.xp-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.xp-branch {
+  font-size: 0.85rem;
+  color: var(--gray3);
+}
+
+.xp-val {
+  font-family: AnonymousBalance, sans-serif;
+  font-size: 0.9rem;
+  color: var(--pink);
 }
 </style>
