@@ -5,32 +5,57 @@
       <div class="hp-bar-fill" :style="{ width: hpPercent + '%' }" :class="hpColorClass"></div>
     </div>
     <div class="hp-bar-text">{{ currentHP }} / {{ maxHP }}</div>
+
+    <transition name="float-pop">
+      <div
+        v-if="floatVisible"
+        class="hp-float"
+        :class="floatDelta > 0 ? 'hp-float-heal' : 'hp-float-damage'"
+      >{{ floatDelta > 0 ? '+' : '' }}{{ floatDelta }}</div>
+    </transition>
   </div>
 </template>
 
 <script setup>
-import {computed} from "vue";
-import {MAX_HP} from "@/core/constants.js";
+import { computed, ref, watch } from 'vue';
+import { MAX_HP } from '@/core/constants.js';
 
 const props = defineProps({
   currentHP: { type: Number, required: true },
-  maxHP: { type: Number, default: MAX_HP },
-  name: { type: String, default: '' },
+  maxHP:     { type: Number, default: MAX_HP },
+  name:      { type: String, default: '' },
 });
 
-const hpPercent = computed(() => Math.max(0, (props.currentHP / props.maxHP) * 100));
-
+const hpPercent  = computed(() => Math.max(0, (props.currentHP / props.maxHP) * 100));
 const hpColorClass = computed(() => {
   const pct = hpPercent.value;
   if (pct > 50) return 'hp-green';
   if (pct > 25) return 'hp-yellow';
   return 'hp-red';
 });
+
+const floatVisible = ref(false);
+const floatDelta   = ref(0);
+let floatTimer = null;
+
+watch(() => props.currentHP, (newVal, oldVal) => {
+  const delta = newVal - oldVal;
+  if (delta === 0) return;
+  floatDelta.value = delta;
+  floatVisible.value = false;
+  clearTimeout(floatTimer);
+  // next tick trick to re-trigger transition
+  setTimeout(() => {
+    floatVisible.value = true;
+    floatTimer = setTimeout(() => { floatVisible.value = false; }, 900);
+  }, 20);
+});
 </script>
 
 <style scoped>
 .hp-bar-container {
   width: 100%;
+  position: relative;
 }
 
 .hp-bar-label {
@@ -75,5 +100,41 @@ const hpColorClass = computed(() => {
   text-align: center;
   margin-top: 2px;
   font-weight: bold;
+}
+
+/* ── Floating delta ───────────────────────────────────────────────── */
+.hp-float {
+  position: absolute;
+  top: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.85rem;
+  font-weight: 900;
+  font-family: AnonymousBalance, Anonymous, sans-serif;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.hp-float-damage {
+  color: #e74c3c;
+  text-shadow: 0 0 8px rgba(231, 76, 60, 0.7);
+}
+
+.hp-float-heal {
+  color: #2ecc71;
+  text-shadow: 0 0 8px rgba(46, 204, 113, 0.7);
+}
+
+.float-pop-enter-active {
+  animation: floatUp 0.9s ease-out forwards;
+}
+.float-pop-leave-active {
+  display: none;
+}
+
+@keyframes floatUp {
+  0%   { opacity: 1;   transform: translateX(-50%) translateY(0);    }
+  70%  { opacity: 1;   transform: translateX(-50%) translateY(-18px); }
+  100% { opacity: 0;   transform: translateX(-50%) translateY(-26px); }
 }
 </style>

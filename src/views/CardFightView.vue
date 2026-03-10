@@ -33,7 +33,17 @@
 
           <div class="vs-center">
             <span>VS</span>
-            <div class="round-counter" v-if="fightPhase === 'fighting'">R{{ roundNum }}</div>
+            <div class="round-dots" v-if="fightPhase === 'fighting'">
+              <span
+                v-for="n in 10"
+                :key="n"
+                class="round-dot"
+                :class="{
+                  'round-dot-done':    n < roundNum,
+                  'round-dot-current': n === roundNum,
+                }"
+              ></span>
+            </div>
           </div>
 
           <div class="fighter-side fighter-right" :class="{ 'fighter-shake': shakeRight }">
@@ -202,6 +212,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import store from '@/core/state/store.js';
 import router from '@/router/index.js';
 import { useI18n } from 'vue-i18n';
+import apiClient from '@/core/api/apiClient.js';
 import { COUNTDOWN, ROUND_ANIMATION_MS, MAX_HP } from '@/core/constants.js';
 import { ARCHETYPES } from '@/core/data/archetypes.js';
 import { allMoves as movesData } from '@/data/moves.js';
@@ -490,6 +501,15 @@ watch(fightPhase, (val, oldVal) => {
       store.commit('fight/setXpEarned', earned);
       store.commit('fight/setXpAwarded', true);
       store.dispatch('progression/onFightEnd', { result, deck });
+
+      const isWin  = statusLeft.value === t('fight.lblVictory');
+      const isDraw = statusLeft.value === t('fight.lblDraw');
+      apiClient.post('/fight/save', {
+        isWin,
+        isDraw,
+        roundsPlayed: roundNum.value,
+        totalDamageDealt: fightStats.value.totalDamageDealt,
+      }, { authRequired: true }).catch(() => {});
     }
   }
 });
@@ -731,15 +751,31 @@ const flashStyle = computed(() => ({
   letter-spacing: 3px;
 }
 
-.round-counter {
-  font-size: 0.6rem;
-  color: var(--gray3);
-  margin-top: 6px;
-  letter-spacing: 1px;
-  padding: 2px 10px;
-  background: var(--black-opacity-80);
-  border: 1px solid rgba(255, 6, 111, 0.2);
-  border-radius: 10px;
+.round-dots {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.round-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transition: background 0.3s ease, transform 0.3s ease;
+}
+
+.round-dot-done {
+  background: rgba(255, 6, 111, 0.35);
+  border-color: rgba(255, 6, 111, 0.4);
+}
+
+.round-dot-current {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 6px rgba(255, 6, 111, 0.8);
+  transform: scale(1.3);
 }
 
 .status-fighter {
@@ -1080,20 +1116,33 @@ const flashStyle = computed(() => ({
 }
 
 /* ── Buttons ─────────────────────────────────────────────────────── */
-.result-buttons { display: flex; gap: 10px; margin-top: 8px; justify-content: center; width: 92%; max-width: 400px; }
+.result-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+  width: 92%;
+  max-width: 400px;
+}
 .result-btn {
+  width: 100% !important;
   background: var(--primary-color) !important;
   color: white !important;
-  font-size: 0.8rem !important;
+  font-size: 0.95rem !important;
+  font-weight: 700 !important;
   border-radius: 8px !important;
-  letter-spacing: 0.5px !important;
-  box-shadow: 0 0 14px rgba(255, 6, 111, 0.3) !important;
+  letter-spacing: 1px !important;
+  box-shadow: 0 0 20px rgba(255, 6, 111, 0.45) !important;
+  min-height: 48px !important;
 }
 .result-btn-secondary {
-  background: rgba(9, 9, 9, 0.8) !important;
-  border: 1px solid var(--primary-color) !important;
-  color: var(--primary-color) !important;
+  width: 100% !important;
+  background: transparent !important;
+  border: 1px solid rgba(255, 6, 111, 0.4) !important;
+  color: var(--gray3) !important;
+  font-size: 0.78rem !important;
   box-shadow: none !important;
+  min-height: 38px !important;
 }
 
 /* ── Coach Overlay ──────────────────────────────────────────────── */
