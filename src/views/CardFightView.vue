@@ -1116,20 +1116,33 @@ const flashStyle = computed(() => ({
 }
 
 /* ── Buttons ─────────────────────────────────────────────────────── */
-.result-buttons { display: flex; gap: 10px; margin-top: 8px; justify-content: center; width: 92%; max-width: 400px; }
+.result-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+  width: 92%;
+  max-width: 400px;
+}
 .result-btn {
+  width: 100% !important;
   background: var(--primary-color) !important;
   color: white !important;
-  font-size: 0.8rem !important;
+  font-size: 0.95rem !important;
+  font-weight: 700 !important;
   border-radius: 8px !important;
-  letter-spacing: 0.5px !important;
-  box-shadow: 0 0 14px rgba(255, 6, 111, 0.3) !important;
+  letter-spacing: 1px !important;
+  box-shadow: 0 0 20px rgba(255, 6, 111, 0.45) !important;
+  min-height: 48px !important;
 }
 .result-btn-secondary {
-  background: rgba(9, 9, 9, 0.8) !important;
-  border: 1px solid var(--primary-color) !important;
-  color: var(--primary-color) !important;
+  width: 100% !important;
+  background: transparent !important;
+  border: 1px solid rgba(255, 6, 111, 0.4) !important;
+  color: var(--gray3) !important;
+  font-size: 0.78rem !important;
   box-shadow: none !important;
+  min-height: 38px !important;
 }
 
 /* ── Coach Overlay ──────────────────────────────────────────────── */
