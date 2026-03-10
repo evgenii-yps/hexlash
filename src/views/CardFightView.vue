@@ -962,7 +962,7 @@ const flashStyle = computed(() => ({
   background: rgba(0, 0, 0, 0.82);
   animation: resultsOverlayIn 0.5s ease-out forwards;
   overflow-y: auto;
-  padding: 24px 16px 80px;
+  padding: 80px 16px 80px;
   box-sizing: border-box;
 }
 @supports (height: 100dvh) { .results-overlay { height: 100dvh; } }
