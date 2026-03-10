@@ -1,0 +1,257 @@
+# HEXLASH — Project Memory
+
+Full-stack Web3 fighting game. Vue 3 SPA + Express backend + SQLite. Telegram WebApp compatible.
+
+---
+
+## Tech Stack
+
+**Frontend:** Vue 3.5 · Vite 7 · Vuex 4 · Vue Router 4 · Vuetify 2 · Three.js · Howler.js · Ethers.js 6 · Vue-i18n 11 · Amplitude
+
+**Backend:** Express 4 · Prisma 5 (SQLite) · JWT · WebSocket (ws) · Multer · bcryptjs
+
+---
+
+## Project Structure
+
+```
+/src
+  App.vue                  — Root: header (Logo), router-view, BottomMenu, Info/Error toasts
+  main.js                  — Entry: Vue + Vuetify + i18n + Vuex store init
+  router/index.js          — Routes + auth guards + fight state restore
+  views/                   — 13 page-level components
+  components/              — 66 reusable components
+  core/
+    state/store.js         — Vuex store
+    state/modules/         — 10 Vuex modules
+    models/                — Data models
+    services/              — Business logic
+    database/              — LocalStorage/IDB persistence
+    api/apiClient.js       — Axios HTTP client
+    engine/                — Combat system (combatEngine, aiStrategy, opponentGenerator)
+    constants.js           — Game constants
+    websocket/             — WebSocket client
+  data/
+    branches.js            — 3 branches: speed, power, technique
+    moves.js               — 18 moves with damage/speed per level
+    requirements.js        — Tap/XP costs for unlock/levelup
+  assets/
+    main.css               — Global styles
+    colors.css             — CSS variables
+    fonts/                 — Anonymous, AnonymousBalance
+    images/                — Backgrounds, icons, achievements (23 types)
+    models/                — GLTF 3D models (punching bag, scene)
+    sound/                 — punch_air.mp3, punch_hit.mp3, rain.mp3
+  locales/                 — i18n: ru, en, de, es, fr, hi, ja, ko, pt, zh, ar
+
+/backend
+  src/
+    index.js               — Express server + WebSocket on same HTTP server
+    config.js              — Constants (PORT, JWT_SECRET, game balance)
+    routes/                — auth, user, club, task, file
+    middleware/            — auth.js (JWT guard), upload.js (Multer)
+    websocket/handler.js   — Real-time message routing
+    utils/helpers.js
+  prisma/
+    schema.prisma          — 10 models: User, Club, Fight, Achievement, Task, PunchInfo...
+    seed.js
+```
+
+---
+
+## Routes
+
+| Path | View | Auth |
+|------|------|------|
+| `/auth/login` `/auth/signup` `/auth/reset` `/auth/telegram` | RainView | No |
+| `/privacy` `/404` `/rules` `/verify-email` | Static | No |
+| `/` | RainView (home) | Yes |
+| `/arena` | PreparationView | Yes |
+| `/fight` | CardFightView | Yes |
+| `/training` | TrainingView | Yes |
+| `/training/moves` | MoveTreeView | Yes |
+| `/training/deck` | DeckBuilderView | Yes |
+| `/profile` `/profile/balance` `/profile/wallet` `/profile/account` `/profile/skins` | ProfileView | Yes |
+| `/club/:id` | ClubView | Yes |
+| `/ratings/:type` | RatingsView | Yes |
+| `/user/:userLogin` | ProfileView | Yes |
+
+---
+
+## Vuex Modules (10)
+
+| Module | Purpose |
+|--------|---------|
+| `masterState` | App init, auth status, info/error messages, language |
+| `userState` | Current user profile, stats, avatar |
+| `cardFightState` | Active fight: rounds, HP, dice, coach, localStorage persist |
+| `progressionState` | Moves unlocked/levels, taps, XP per branch |
+| `clubState` | Club info, members, balance |
+| `taskState` | Daily + social tasks |
+| `punchState` | Punch/tap rate limiting, cooldown |
+| `achievementState` | Achievements list + unlocking |
+| `contractState` | Web3 wallet, token balance |
+| `webSocketState` | WS connection, real-time messages |
+
+---
+
+## Game Data
+
+### Branches (`/src/data/branches.js`)
+- `speed` — Скорость: jab, double_jab, rapid_fire, combo_strike, flurry, hurricane
+- `power` — Сила: straight, hook, uppercut, haymaker, hammer_fist, knockout_blow
+- `technique` — Техника: block_strike, counter_jab, feint_cross, parry_punish, slip_counter, precision_strike
+
+### Moves (`/src/data/moves.js`)
+18 moves, each: `{ id, name, branch, description, damage[5], speed[5] }`
+- damage and speed arrays = values per level (1–5)
+
+### Requirements (`/src/data/requirements.js`)
+```js
+levelUpRequirements: { 2: {taps:100, exp:50}, 3: {taps:200, exp:100}, 4: {taps:350, exp:200}, 5: {taps:500, exp:350} }
+unlockRequirements:  { 3: {taps:300, exp:150}, 4: {taps:250, exp:120}, 5: {taps:200, exp:100} }
+```
+
+---
+
+## CSS Design System
+
+**Colors** (`/src/assets/colors.css`):
+```css
+--pink: #FF066F          /* primary accent - neon pink */
+--pinkDark: #a50344
+--dark: #090909
+--gray1: #3F3F3F66       /* semi-transparent */
+--gray2: #808080
+--gray3: #A0A0A0
+--white: #FFFFFF
+--black-opacity: #0000005c
+--black-opacity-80: #090909CC
+--primary-color: var(--pink)
+```
+
+**Fonts:**
+- `Anonymous` — special UI elements, titles
+- `AnonymousBalance` — numeric values (taps, XP, balance)
+
+**Design language:** Dark theme, neon pink accents, semi-transparent backgrounds, thin gray borders.
+
+---
+
+## Game Constants (`/src/core/constants.js`)
+
+```js
+COST_CREATE_CLUB = 10000
+COST_PER_CLICK = 2
+MULTIPLAYER_EXACT_CLICK = 3
+
+MAX_HP = 100
+MAX_ROUNDS = 10
+MAX_DECK_SIZE = 8
+MIN_DECK_SIZE = 4
+COUNTDOWN = 3            // seconds before fight
+
+BASE_DAMAGE = 15
+POSITION_BONUS = 5
+DICE_COOLDOWN_ROUNDS = 3
+EMERGENCY_HP_THRESHOLD = 30
+
+COACH_MIN_ROUND = 6
+COACH_TRIGGER_CHANCE = 1.0
+COACH_BOOST_ROUNDS = 4
+
+SPEED_MOVE_PUNCH_MS = 1500
+BATCH_SEND_INTERVAL_MS = 11000
+DECIMALS = 6             // token decimal places
+```
+
+---
+
+## Backend Config (`/backend/src/config.js`)
+
+```js
+PORT = 3000
+PUNCH_MAX_PER_INTERVAL = 10000
+PUNCH_INTERVAL_MS = 3600000   // 1 hour
+COST_PER_CLICK = 2
+COST_CREATE_CLUB = 10000
+```
+
+---
+
+## Combat System
+
+**Flow:** Build deck (4–8 modules) → Generate AI opponent → Simulate rounds → Dice mechanic → Coach advice → Save result
+
+**Dice effects:** Heal, Adrenaline, Shield, Blind, Rage, Crit
+
+**Files:**
+- `combatEngine.js` — Round simulation
+- `aiStrategy.js` — AI decision logic
+- `opponentGenerator.js` — Random opponent creation
+- `archetypes.js` — Speed/Power/Technique archetypes
+
+---
+
+## Key Views
+
+| View | File | Notes |
+|------|------|-------|
+| Training | `TrainingView.vue` | 3D punch bag, taps, daily/social tasks, progression bar |
+| Move Tree | `MoveTreeView.vue` | Branch sidebar (Speed/Power/Tech) + move cards. Sidebar buttons centered with `position:absolute; top:35%; transform:translateY(-50%)` |
+| Fight | `CardFightView.vue` | Main combat, dice, coach advice, HP bars |
+| Profile | `ProfileView.vue` | Tabs: balance, wallet, account, skins |
+| Ratings | `RatingsView.vue` | Club and player leaderboards |
+| Preparation | `PreparationView.vue` | Arena bet + opponent selection |
+
+---
+
+## Component Highlights
+
+- `Logo.vue` — header logo
+- `BottomMenu.vue` — bottom nav (Arena, Training, Ratings, Profile)
+- `Info.vue` / `Error.vue` — toast notifications
+- `NewAchievement.vue` — achievement popup
+- `Punch3D.vue` — Three.js punching bag
+- `MoveTreeCard.vue` — move row in tree
+- `MoveDetailsModal.vue` — move detail/unlock popup
+- `HPBar.vue` — fight health bar
+- `Fighter.vue` — fighter display in combat
+
+---
+
+## API (backend)
+
+Base: `/v1/`
+
+| Route | File | Purpose |
+|-------|------|---------|
+| `/auth` | auth.js | login, signup, reset, telegram |
+| `/user` | user.js | profile, stats, avatar, achievements |
+| `/club` | club.js | create/edit club, members, balance |
+| `/task` | task.js | daily + social tasks |
+| `/file` | file.js | avatar/file upload |
+
+Auth guard: JWT Bearer token via `middleware/auth.js`
+
+---
+
+## Database Models (Prisma/SQLite)
+
+User, Club, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask, UserDailyTask, Fight, PunchInfo
+
+---
+
+## Build & Deploy
+
+- **Frontend:** Vite + JS obfuscation + Brotli + image optimization (mozjpeg/pngquant/webp) + terser (drops console)
+- **Deploy:** Vercel or Nginx reverse proxy via Docker
+- **Backend:** Node.js + SQLite (local or Railway)
+- **WebSocket:** Authenticated via JWT, same HTTP server as Express
+
+---
+
+## Branch (Git)
+
+Development branch: `claude/finalize-game-rounds-NmQEw`
+Push: `git push -u origin claude/finalize-game-rounds-NmQEw`
