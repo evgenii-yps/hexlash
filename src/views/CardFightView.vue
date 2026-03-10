@@ -202,6 +202,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import store from '@/core/state/store.js';
 import router from '@/router/index.js';
 import { useI18n } from 'vue-i18n';
+import apiClient from '@/core/api/apiClient.js';
 import { COUNTDOWN, ROUND_ANIMATION_MS, MAX_HP } from '@/core/constants.js';
 import { ARCHETYPES } from '@/core/data/archetypes.js';
 import { allMoves as movesData } from '@/data/moves.js';
@@ -490,6 +491,15 @@ watch(fightPhase, (val, oldVal) => {
       store.commit('fight/setXpEarned', earned);
       store.commit('fight/setXpAwarded', true);
       store.dispatch('progression/onFightEnd', { result, deck });
+
+      const isWin  = statusLeft.value === t('fight.lblVictory');
+      const isDraw = statusLeft.value === t('fight.lblDraw');
+      apiClient.post('/fight/save', {
+        isWin,
+        isDraw,
+        roundsPlayed: roundNum.value,
+        totalDamageDealt: fightStats.value.totalDamageDealt,
+      }, { authRequired: true }).catch(() => {});
     }
   }
 });

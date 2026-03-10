@@ -1,0 +1,51 @@
+const express = require('express');
+const { PrismaClient } = require('@prisma/client');
+const { authMiddleware } = require('../middleware/auth');
+
+const router = express.Router();
+const prisma = new PrismaClient();
+
+// POST /v1/fight/save
+router.post('/save', authMiddleware, async (req, res) => {
+  try {
+    const { isWin, isDraw, roundsPlayed, totalDamageDealt } = req.body;
+
+    if (typeof isWin !== 'boolean' || typeof isDraw !== 'boolean') {
+      return res.status(400).json({ error: 'isWin and isDraw are required booleans' });
+    }
+
+    const updateData = {
+      totalFights: { increment: 1 },
+    };
+
+    if (isWin) {
+      updateData.wins = { increment: 1 };
+    } else if (isDraw) {
+      updateData.draws = { increment: 1 };
+    } else {
+      updateData.losses = { increment: 1 };
+    }
+
+    await prisma.user.update({
+      where: { id: req.userId },
+      data: updateData,
+    });
+
+    await prisma.fight.create({
+      data: {
+        fighterOneId: req.userId,
+        winnerId: isWin ? req.userId : null,
+        duration: roundsPlayed || 0,
+        actions: roundsPlayed || 0,
+        isCompleted: true,
+      },
+    });
+
+    res.json({ data: { success: true } });
+  } catch (err) {
+    console.error('Save fight error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+module.exports = router;
