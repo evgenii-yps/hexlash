@@ -134,8 +134,29 @@
       </div>
 
       <!-- Results overlay (full-screen centered) -->
-      <div v-if="fightPhase === 'results'" class="results-overlay">
+      <div v-if="fightPhase === 'results'" class="results-overlay" :class="resultClass + '-bg'">
           <div class="result-label" :class="resultClass">{{ resultText }}</div>
+
+          <!-- Fighter summary row -->
+          <div class="result-fighters-row">
+            <div class="result-fighter-card">
+              <UserAvatar :avatarUrl="master?.userData?.avatarUrl" width="38px" height="38px"/>
+              <span class="result-fighter-name">{{ master?.userData?.name || 'You' }}</span>
+              <div class="result-hp-bar-wrap">
+                <div class="result-hp-bar-fill" :style="{ width: liveHP1 + '%' }" :class="liveHP1 > 30 ? 'hp-alive' : 'hp-low'"/>
+              </div>
+              <span class="result-hp-num">{{ liveHP1 }} HP</span>
+            </div>
+            <div class="result-vs-badge">VS</div>
+            <div class="result-fighter-card result-fighter-right">
+              <UserAvatar :avatarUrl="opponent?.avatarUrl || ''" width="38px" height="38px"/>
+              <span class="result-fighter-name">{{ opponent?.name || 'Opponent' }}</span>
+              <div class="result-hp-bar-wrap">
+                <div class="result-hp-bar-fill" :style="{ width: liveHP2 + '%' }" :class="liveHP2 > 30 ? 'hp-alive' : 'hp-low'"/>
+              </div>
+              <span class="result-hp-num">{{ liveHP2 }} HP</span>
+            </div>
+          </div>
 
           <div class="fight-report">
             <div class="report-title">{{ t('fight.lblReport') }}</div>
@@ -161,9 +182,9 @@
           <div v-if="xpEarned" class="xp-earned-block">
             <div class="xp-earned-title">Получено опыта</div>
             <div class="xp-earned-rows">
-              <div class="xp-row"><span class="xp-branch">Скорость</span><span class="xp-val">+{{ xpEarned.speed ?? 0 }} XP</span></div>
-              <div class="xp-row"><span class="xp-branch">Сила</span><span class="xp-val">+{{ xpEarned.power ?? 0 }} XP</span></div>
-              <div class="xp-row"><span class="xp-branch">Техника</span><span class="xp-val">+{{ xpEarned.technique ?? 0 }} XP</span></div>
+              <div class="xp-row"><span class="xp-branch xp-speed">Скорость</span><span class="xp-val xp-speed">+{{ xpEarned.speed ?? 0 }} XP</span></div>
+              <div class="xp-row"><span class="xp-branch xp-power">Сила</span><span class="xp-val xp-power">+{{ xpEarned.power ?? 0 }} XP</span></div>
+              <div class="xp-row"><span class="xp-branch xp-technique">Техника</span><span class="xp-val xp-technique">+{{ xpEarned.technique ?? 0 }} XP</span></div>
             </div>
           </div>
 
@@ -962,7 +983,7 @@ const flashStyle = computed(() => ({
   background: rgba(0, 0, 0, 0.82);
   animation: resultsOverlayIn 0.5s ease-out forwards;
   overflow-y: auto;
-  padding: 24px 16px 80px;
+  padding: 80px 16px 80px;
   box-sizing: border-box;
 }
 @supports (height: 100dvh) { .results-overlay { height: 100dvh; } }
@@ -992,6 +1013,68 @@ const flashStyle = computed(() => ({
 .result-draw {
   color: #f1c40f;
   text-shadow: 0 0 20px rgba(241, 196, 15, 0.5), 0 0 40px rgba(241, 196, 15, 0.2);
+}
+
+/* overlay background glow based on result */
+.result-win-bg  { background: radial-gradient(ellipse at top, rgba(46, 204, 113, 0.10) 0%, rgba(0,0,0,0.88) 55%) !important; }
+.result-lose-bg { background: radial-gradient(ellipse at top, rgba(231, 76, 60, 0.10) 0%, rgba(0,0,0,0.88) 55%) !important; }
+.result-draw-bg { background: radial-gradient(ellipse at top, rgba(241, 196, 15, 0.10) 0%, rgba(0,0,0,0.88) 55%) !important; }
+
+/* Fighter summary */
+.result-fighters-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 92%; max-width: 400px;
+  margin-bottom: 14px;
+}
+.result-fighter-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.result-fighter-right {
+  align-items: center;
+}
+.result-fighter-name {
+  font-size: 0.65rem;
+  color: var(--gray3);
+  text-align: center;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.result-hp-bar-wrap {
+  width: 100%;
+  height: 4px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.result-hp-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.6s ease;
+}
+.hp-alive { background: #2ecc71; box-shadow: 0 0 6px rgba(46,204,113,0.5); }
+.hp-low   { background: #e74c3c; box-shadow: 0 0 6px rgba(231,76,60,0.5); }
+.result-hp-num {
+  font-family: AnonymousBalance, sans-serif;
+  font-size: 0.6rem;
+  color: var(--gray2);
+}
+.result-vs-badge {
+  font-family: Anonymous, sans-serif;
+  font-size: 0.8rem;
+  font-weight: 900;
+  color: var(--primary-color);
+  text-shadow: 0 0 10px rgba(255,6,111,0.5);
+  letter-spacing: 2px;
+  flex-shrink: 0;
 }
 
 .fight-report {
@@ -1384,4 +1467,9 @@ const flashStyle = computed(() => ({
   font-size: 0.9rem;
   color: var(--pink);
 }
+
+/* XP branch colors */
+.xp-speed    { color: #3d9ae8 !important; }
+.xp-power    { color: #e8703d !important; }
+.xp-technique { color: #a855f7 !important; }
 </style>
