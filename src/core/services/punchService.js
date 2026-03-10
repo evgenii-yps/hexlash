@@ -66,8 +66,6 @@ export const receivePunchBatch = async (punchInfo) => {
 
 export const stopPunchBatch = async (punchInfo) => {
     await store.commit('punch/setPunchInfo', punchInfo);
-    await sendPunchBatch(punchInfo);
-
 }
 
 function checkPunchTime(punchResetTime) {
