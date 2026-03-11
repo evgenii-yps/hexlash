@@ -37,33 +37,33 @@
 
         </div>
 
-        <div class="training-title">Training room</div>
+        <div class="training-title">{{ t('training.lblTitle') }}</div>
 
         <!-- Прогрессия: тапы и опыт -->
         <div class="progression-bar">
           <div class="prog-resource">
-            <span class="prog-label">Тапы</span>
+            <span class="prog-label">{{ t('training.lblTaps') }}</span>
             <span class="prog-value">{{ progressionTaps }}</span>
           </div>
           <div class="prog-divider"/>
           <div class="prog-resource">
-            <span class="prog-label">Скорость</span>
+            <span class="prog-label">{{ t('training.lblSpeed') }}</span>
             <span class="prog-value">{{ branchExp.speed }} XP</span>
           </div>
           <div class="prog-resource">
-            <span class="prog-label">Сила</span>
+            <span class="prog-label">{{ t('training.lblPower') }}</span>
             <span class="prog-value">{{ branchExp.power }} XP</span>
           </div>
           <div class="prog-resource">
-            <span class="prog-label">Техника</span>
+            <span class="prog-label">{{ t('training.lblTechnique') }}</span>
             <span class="prog-value">{{ branchExp.technique }} XP</span>
           </div>
         </div>
 
         <!-- Кнопки навигации к приёмам и колоде -->
         <div class="progression-actions">
-          <button class="btn-prog" @click="goToMoves">Приёмы</button>
-          <button class="btn-prog btn-prog-deck" @click="goToDeck">Колода ({{ deckSize }})</button>
+          <button class="btn-prog" @click="goToMoves">{{ t('training.lblMoves') }}</button>
+          <button class="btn-prog btn-prog-deck" @click="goToDeck">{{ t('training.lblDeck', { n: deckSize }) }}</button>
         </div>
 
         <div v-if="loadingPunchInfo" class="loader-container">

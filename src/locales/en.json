@@ -299,7 +299,18 @@
     "lblCoachPosition": "Move. Don't stand.",
     "lblCoachPositionDesc": "Position priority +25",
     "lblCoachActive": "Coach active",
-    "lblCoachRoundsLeft": "rounds"
+    "lblCoachRoundsLeft": "rounds",
+    "lblNeverGiveUp": "Never give up",
+    "lblVS": "VS",
+    "lblXpEarned": "XP Earned",
+    "lblActionAttack": "Attack",
+    "lblActionDefense": "Defense",
+    "lblActionPosition": "Position",
+    "trainerAnalysisWin": "Great fight! Your build [{build}] worked effectively. {name} especially stood out as the primary module.",
+    "trainerAnalysisLose": "Your fighter [{build}] lost. Recommendation: try replacing {name} with Sentinel for better defense against aggressive styles.",
+    "lblSpeed": "Speed",
+    "lblPower": "Power",
+    "lblTechnique": "Technique"
   },
   "cards": {
     "attack": "Attack",
@@ -317,7 +328,14 @@
     "taskNotice": "- By clicking \"Confirm,\" you commit yourself. There's no room for empty promises in this club. For example, if you subscribe to a channel, there's no turning back. Unsubscribing after confirmation is a direct path to a ban. Here, it's serious: break your word, face an eternal ban.",
     "checklistCompleted": "Great work, checklist completed!",
     "noDailyTasks": "No daily tasks available today!",
-    "successCompleteTask": "You have successfully completed the task and received your well-deserved reward <a href=\"/training\">Tasks</a>"
+    "successCompleteTask": "You have successfully completed the task and received your well-deserved reward <a href=\"/training\">Tasks</a>",
+    "lblTitle": "Training room",
+    "lblTaps": "Taps",
+    "lblSpeed": "Speed",
+    "lblPower": "Power",
+    "lblTechnique": "Technique",
+    "lblMoves": "Moves",
+    "lblDeck": "Deck ({n})"
   },
   "rating": {
     "clubs": "Club rating",
@@ -364,5 +382,25 @@
     "lblConfirmPassword": "Confirm Password",
     "errorPasswordsDoNotMatch": "Passwords do not match",
     "errorOnlyLatinAndNumbers": "Login can only contain Latin letters and numbers."
+  },
+  "deck": {
+    "lblBack": "Back",
+    "lblTitle": "Deck",
+    "lblMoves": "Moves",
+    "lblCurrentDeck": "Current deck ({n}/5)",
+    "lblLevel": "Lvl.",
+    "lblReady": "Deck ready",
+    "lblNeedMoves": "Need 3–5 moves",
+    "lblAvailableMoves": "Available Moves",
+    "lblDamage": "Damage:",
+    "lblToArena": "To Arena"
+  },
+  "moves": {
+    "lblBack": "Back",
+    "lblTaps": "TAPS",
+    "lblSpeed": "Speed",
+    "lblPower": "Power",
+    "lblTechnique": "Technique",
+    "lblInsufficientResources": "Insufficient resources!"
   }
 }

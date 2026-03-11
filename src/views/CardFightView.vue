@@ -5,7 +5,7 @@
     <Transition name="loading-fade">
       <div v-if="showLoadingOverlay" class="loading-overlay">
         <div class="loading-hexlash">HEXLASH</div>
-        <div class="loading-never-give-up">Never give up</div>
+        <div class="loading-never-give-up">{{ t('fight.lblNeverGiveUp') }}</div>
       </div>
     </Transition>
 
@@ -32,7 +32,7 @@
           </div>
 
           <div class="vs-center">
-            <span>VS</span>
+            <span>{{ t('fight.lblVS') }}</span>
             <div class="round-dots" v-if="fightPhase === 'fighting'">
               <span
                 v-for="n in 10"
@@ -164,11 +164,11 @@
 
           <!-- XP за бой -->
           <div v-if="xpEarned" class="xp-earned-block">
-            <div class="xp-earned-title">Получено опыта</div>
+            <div class="xp-earned-title">{{ t('fight.lblXpEarned') }}</div>
             <div class="xp-earned-rows">
-              <div class="xp-row"><span class="xp-branch">Скорость</span><span class="xp-val">+{{ xpEarned.speed ?? 0 }} XP</span></div>
-              <div class="xp-row"><span class="xp-branch">Сила</span><span class="xp-val">+{{ xpEarned.power ?? 0 }} XP</span></div>
-              <div class="xp-row"><span class="xp-branch">Техника</span><span class="xp-val">+{{ xpEarned.technique ?? 0 }} XP</span></div>
+              <div class="xp-row"><span class="xp-branch">{{ t('fight.lblSpeed') }}</span><span class="xp-val">+{{ xpEarned.speed ?? 0 }} XP</span></div>
+              <div class="xp-row"><span class="xp-branch">{{ t('fight.lblPower') }}</span><span class="xp-val">+{{ xpEarned.power ?? 0 }} XP</span></div>
+              <div class="xp-row"><span class="xp-branch">{{ t('fight.lblTechnique') }}</span><span class="xp-val">+{{ xpEarned.technique ?? 0 }} XP</span></div>
             </div>
           </div>
 
@@ -234,7 +234,7 @@ import iconAttack   from '@/assets/images/icons/attack.svg';
 import iconDefense  from '@/assets/images/icons/defense.svg';
 import iconPosition from '@/assets/images/icons/position.svg';
 
-const { t } = useI18n({ useScope: 'global' });
+const { t, locale } = useI18n({ useScope: 'global' });
 
 // ── Countdown ──────────────────────────────────────────────────────────────
 const showCountdown  = ref(true);
@@ -293,13 +293,13 @@ const anyModActive = computed(() =>
 
 // ── Action labels (for log) ───────────────────────────────────────────────
 const LOG_ACTIONS = {
-  attack:   { image: iconAttack,   name: 'Атака' },
-  defense:  { image: iconDefense,  name: 'Защита' },
-  position: { image: iconPosition, name: 'Позиция' },
+  attack:   { image: iconAttack,   key: 'fight.lblActionAttack' },
+  defense:  { image: iconDefense,  key: 'fight.lblActionDefense' },
+  position: { image: iconPosition, key: 'fight.lblActionPosition' },
 };
 
 const logActionImage = (action) => LOG_ACTIONS[action]?.image || '';
-const logActionName  = (action) => LOG_ACTIONS[action]?.name || action;
+const logActionName  = (action) => LOG_ACTIONS[action]?.key ? t(LOG_ACTIONS[action].key) : action;
 
 // ── Result UI ──────────────────────────────────────────────────────────────
 const statusLeft = computed(() => {
@@ -334,15 +334,15 @@ const resultClass = computed(() => {
 const trainerAnalysis = computed(() => {
   const won = liveHP1.value > liveHP2.value;
   const modules = playerModules.value;
-  const names = modules.filter(id => id).map(id => ARCHETYPES[id]?.nameRu || id);
+  const names = modules.filter(id => id).map(id =>
+    locale.value === 'ru' ? (ARCHETYPES[id]?.nameRu || id) : (ARCHETYPES[id]?.name || id)
+  );
   const buildStr = names.join(' + ');
 
   if (won) {
-    return `Отличный бой! Ваш билд [${buildStr}] эффективно работал. ` +
-        `Особенно хорошо показал себя ${names[0]} в роли основного модуля.`;
+    return t('fight.trainerAnalysisWin', { build: buildStr, name: names[0] });
   } else {
-    return `Ваш боец [${buildStr}] проиграл. ` +
-        `Рекомендация: попробуйте заменить ${names[0]} на Стража для лучшей защиты против агрессивных стилей.`;
+    return t('fight.trainerAnalysisLose', { build: buildStr, name: names[0] });
   }
 });
 
