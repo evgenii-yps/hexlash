@@ -254,7 +254,21 @@
     "fightCalculate": "परिणाम की गणना हो रही है...",
     "fightFinished": "लड़ाई समाप्त!",
     "modalHelpTitle": "कदम-दर-कदम लड़ाई",
-    "modalHelpTextHtml": "<p>आवंटित समय के भीतर, आक्रमण और रक्षा के लिए क्रियाएं चुनें।</p><br/><p style=\"margin-bottom: 10px\"><strong>उपलब्ध क्रियाएँ:</strong></p><ul style=\"color:var(--white); margin-left: 20px\"><li><strong>HD (मस्तिष्क रक्षा):</strong> मस्तिष्क रक्षा</li><li><strong>BD (शरीर रक्षा):</strong> शरीर रक्षा</li><li><strong>HH (मस्तिष्क पर प्रहार):</strong> मस्तिष्क पर प्रहार</li><li><strong>BH (शरीर पर प्रहार):</strong> शरीर पर प्रहार</li></ul><br/><p>क्रियाओं का चयन करने के बाद, प्रतिद्वंद्वी की क्रियाओं से तुलना की जाती है। विजेता वह होता है जिसने अधिक प्रहार किए और कम प्रहार झेले।</p><br/><p><strong>उदाहरण:</strong></p><p>आप: HD, HH, BD</p><p>प्रतिद्वंद्वी: HH, BD, BH</p><p>परिणाम: आपने 1 प्रहार किया, प्रतिद्वंद्वी के 2 प्रहारों को अवरुद्ध किया। <strong>विजेता:</strong> आप</p><br/><p></p>"
+    "modalHelpTextHtml": "<p>आवंटित समय के भीतर, आक्रमण और रक्षा के लिए क्रियाएं चुनें।</p><br/><p style=\"margin-bottom: 10px\"><strong>उपलब्ध क्रियाएँ:</strong></p><ul style=\"color:var(--white); margin-left: 20px\"><li><strong>HD (मस्तिष्क रक्षा):</strong> मस्तिष्क रक्षा</li><li><strong>BD (शरीर रक्षा):</strong> शरीर रक्षा</li><li><strong>HH (मस्तिष्क पर प्रहार):</strong> मस्तिष्क पर प्रहार</li><li><strong>BH (शरीर पर प्रहार):</strong> शरीर पर प्रहार</li></ul><br/><p>क्रियाओं का चयन करने के बाद, प्रतिद्वंद्वी की क्रियाओं से तुलना की जाती है। विजेता वह होता है जिसने अधिक प्रहार किए और कम प्रहार झेले।</p><br/><p><strong>उदाहरण:</strong></p><p>आप: HD, HH, BD</p><p>प्रतिद्वंद्वी: HH, BD, BH</p><p>परिणाम: आपने 1 प्रहार किया, प्रतिद्वंद्वी के 2 प्रहारों को अवरुद्ध किया। <strong>विजेता:</strong> आप</p><br/><p></p>",
+    "lblVictory": "जीत",
+    "lblDefeat": "हार",
+    "lblDraw": "ड्रॉ",
+    "lblNeverGiveUp": "कभी हार मत मानो",
+    "lblVS": "VS",
+    "lblXpEarned": "XP अर्जित",
+    "lblSpeed": "गति",
+    "lblPower": "शक्ति",
+    "lblTechnique": "तकनीक",
+    "lblActionAttack": "हमला",
+    "lblActionDefense": "रक्षा",
+    "lblActionPosition": "स्थिति",
+    "trainerAnalysisWin": "बेहतरीन लड़ाई! तुम्हारा बिल्ड [{build}] प्रभावी रहा। {name} प्राथमिक मॉड्यूल के रूप में विशेष रहा।",
+    "trainerAnalysisLose": "तुम्हारा योद्धा [{build}] हार गया। सुझाव: बेहतर सुरक्षा के लिए {name} को Sentinel से बदलें।"
   },
   "training": {
     "timerText": "पंच बैग नीचे है, फाइटर। होल्ड ऑन, हम जल्द ही इसे बदल देंगे।",

@@ -254,7 +254,21 @@
     "fightCalculate": "結果を計算中...",
     "fightFinished": "試合終了！",
     "modalHelpTitle": "ステップバイステップの戦い",
-    "modalHelpTextHtml": "<p>指定された時間内に、攻撃と防御のアクションを選択します。</p><br/><p style=\"margin-bottom: 10px\"><strong>利用可能なアクション:</strong></p><ul style=\"color:var(--white); margin-left: 20px\"><li><strong>HD（ヘッドディフェンス）:</strong> 頭部防御</li><li><strong>BD（ボディディフェンス）:</strong> 体幹防御</li><li><strong>HH（ヘッドヒット）:</strong> 頭部攻撃</li><li><strong>BH（ボディヒット）:</strong> 体幹攻撃</li></ul><br/><p>アクションを選択すると、相手のアクションとの比較が行われます。より多くの攻撃を成功させ、より少ない攻撃を受けた方が勝者です。</p><br/><p style=\"margin-bottom: 10px; color:var(--white);\"><strong>例:</strong></p><p>あなた: HD、HH、BD</p><p>相手: HH、BD、BH</p><p>結果: あなたは1回ヒットし、相手の攻撃を2回ブロックしました。 <strong>勝者:</strong> あなた </p><br/><p></p>"
+    "modalHelpTextHtml": "<p>指定された時間内に、攻撃と防御のアクションを選択します。</p><br/><p style=\"margin-bottom: 10px\"><strong>利用可能なアクション:</strong></p><ul style=\"color:var(--white); margin-left: 20px\"><li><strong>HD（ヘッドディフェンス）:</strong> 頭部防御</li><li><strong>BD（ボディディフェンス）:</strong> 体幹防御</li><li><strong>HH（ヘッドヒット）:</strong> 頭部攻撃</li><li><strong>BH（ボディヒット）:</strong> 体幹攻撃</li></ul><br/><p>アクションを選択すると、相手のアクションとの比較が行われます。より多くの攻撃を成功させ、より少ない攻撃を受けた方が勝者です。</p><br/><p style=\"margin-bottom: 10px; color:var(--white);\"><strong>例:</strong></p><p>あなた: HD、HH、BD</p><p>相手: HH、BD、BH</p><p>結果: あなたは1回ヒットし、相手の攻撃を2回ブロックしました。 <strong>勝者:</strong> あなた </p><br/><p></p>",
+    "lblVictory": "勝利",
+    "lblDefeat": "敗北",
+    "lblDraw": "引き分け",
+    "lblNeverGiveUp": "あきらめるな",
+    "lblVS": "VS",
+    "lblXpEarned": "XP獲得",
+    "lblSpeed": "スピード",
+    "lblPower": "パワー",
+    "lblTechnique": "テクニック",
+    "lblActionAttack": "攻撃",
+    "lblActionDefense": "防御",
+    "lblActionPosition": "ポジション",
+    "trainerAnalysisWin": "素晴らしい戦いだ！あなたのビルド [{build}] は効果的だった。{name} が主要モジュールとして活躍した。",
+    "trainerAnalysisLose": "あなたのファイター [{build}] は敗北した。推薦：より良い防御のため、{name} を Sentinel に交換してみよう。"
   },
   "training": {
     "timerText": "パンチバッグが倒れました。もう少しお待ちください、すぐに交換します。",

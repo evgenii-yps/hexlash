@@ -254,7 +254,21 @@
     "fightCalculate": "결과 계산 중...",
     "fightFinished": "전투 종료!",
     "modalHelpTitle": "단계별 전투",
-    "modalHelpTextHtml": "<p>할당된 시간 안에 공격 및 방어 동작을 선택하세요.</p><br/><p style=\"margin-bottom: 10px\"><strong>가능한 동작:</strong></p><ul style=\"color:var(--white); margin-left: 20px\"><li><strong>HD (Head Defence):</strong> 머리 방어</li><li><strong>BD (Body Defence):</strong> 몸 방어</li><li><strong>HH (Head Hit):</strong> 머리 타격</li><li><strong>BH (Body Hit):</strong> 몸 타격</li></ul><br/><p>동작을 선택한 후, 상대의 동작과 비교합니다. 더 많은 타격을 가하고 덜 맞는 사람이 승리합니다.</p><br/><p style=\"margin-bottom: 10px; color:var(--white);\"><strong>예시:</strong></p><p>당신: HD, HH, BD</p><p>상대: HH, BD, BH</p><p>결과: 당신은 1번 타격을 가하고 상대의 2번 타격을 막았습니다. <strong>승자:</strong> 당신</p><br/><p></p>"
+    "modalHelpTextHtml": "<p>할당된 시간 안에 공격 및 방어 동작을 선택하세요.</p><br/><p style=\"margin-bottom: 10px\"><strong>가능한 동작:</strong></p><ul style=\"color:var(--white); margin-left: 20px\"><li><strong>HD (Head Defence):</strong> 머리 방어</li><li><strong>BD (Body Defence):</strong> 몸 방어</li><li><strong>HH (Head Hit):</strong> 머리 타격</li><li><strong>BH (Body Hit):</strong> 몸 타격</li></ul><br/><p>동작을 선택한 후, 상대의 동작과 비교합니다. 더 많은 타격을 가하고 덜 맞는 사람이 승리합니다.</p><br/><p style=\"margin-bottom: 10px; color:var(--white);\"><strong>예시:</strong></p><p>당신: HD, HH, BD</p><p>상대: HH, BD, BH</p><p>결과: 당신은 1번 타격을 가하고 상대의 2번 타격을 막았습니다. <strong>승자:</strong> 당신</p><br/><p></p>",
+    "lblVictory": "승리",
+    "lblDefeat": "패배",
+    "lblDraw": "무승부",
+    "lblNeverGiveUp": "포기하지 마라",
+    "lblVS": "VS",
+    "lblXpEarned": "XP 획득",
+    "lblSpeed": "속도",
+    "lblPower": "파워",
+    "lblTechnique": "기술",
+    "lblActionAttack": "공격",
+    "lblActionDefense": "방어",
+    "lblActionPosition": "포지션",
+    "trainerAnalysisWin": "훌륭한 싸움! 당신의 빌드 [{build}]는 효과적으로 작동했습니다. {name}이 주요 모듈로 특히 활약했습니다.",
+    "trainerAnalysisLose": "당신의 파이터 [{build}]는 졌습니다. 추천: 더 나은 방어를 위해 {name}을 Sentinel로 교체해 보세요."
   },
   "training": {
     "timerText": "펀치백이 고장 났습니다, 전사. 조금만 기다리세요. 곧 교체해드리겠습니다.",
