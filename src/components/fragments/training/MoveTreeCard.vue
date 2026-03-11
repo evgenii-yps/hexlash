@@ -10,16 +10,16 @@
         @click="$emit('click', moveId)"
     >
       <div class="card-top">
-        <span class="move-name">{{ moveData.name }}</span>
-        <span v-if="move.unlocked" class="move-level">Ур.{{ move.level }}</span>
-        <span v-else class="move-locked-badge">закрыт</span>
+        <span class="move-name">{{ t.gameData.moves[moveId].name }}</span>
+        <span v-if="move.unlocked" class="move-level">{{ t.moves.lblLevel }}{{ move.level }}</span>
+        <span v-else class="move-locked-badge">{{ t.moves.lblLocked }}</span>
       </div>
 
       <!-- Прогресс к следующему уровню (для открытых приёмов) -->
       <template v-if="move.unlocked && move.level < 5">
         <div class="progress-label">
           <span>{{ taps }}</span>
-          <span class="progress-req">/ {{ nextReq.taps }} тапов</span>
+          <span class="progress-req">/ {{ nextReq.taps }} {{ t.moves.lblTapsUnit }}</span>
         </div>
         <div class="progress-bar">
           <div class="progress-fill" :style="{ width: Math.min(taps / nextReq.taps * 100, 100) + '%' }" />
@@ -30,7 +30,7 @@
 
       <!-- Требования для открытия -->
       <div v-else-if="canUnlock" class="unlock-req">
-        {{ unlockCost.taps }} тапов + {{ unlockCost.exp }} XP
+        {{ unlockCost.taps }} {{ t.moves.lblTapsUnit }} + {{ unlockCost.exp }} XP
       </div>
     </div>
 
@@ -44,6 +44,7 @@ import { computed } from 'vue';
 import { allMoves } from '@/data/moves.js';
 import { branches } from '@/data/branches.js';
 import { levelUpRequirements, unlockRequirements } from '@/data/requirements.js';
+import { t } from '@/locales/index.js';
 
 const props = defineProps({
   moveId:    { type: String, required: true },

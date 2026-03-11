@@ -43,7 +43,7 @@
                 :class="{ active: activeBranch === key }"
                 @click="activeBranch = key"
             >
-              <span class="branch-btn-name">{{ branch.name }}</span>
+              <span class="branch-btn-name">{{ t.gameData.branches[key].name }}</span>
             </button>
           </div>
         </div>

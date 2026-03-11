@@ -7,11 +7,11 @@
 
         <div class="modal-header">
           <span v-if="!move.unlocked" class="modal-lock">🔒</span>
-          <span class="modal-title">{{ moveData.name }}</span>
+          <span class="modal-title">{{ t.gameData.moves[moveId].name }}</span>
           <span v-if="move.unlocked" class="modal-level">{{ t.moves.lblLevel }} {{ move.level }}</span>
         </div>
 
-        <p class="modal-desc">{{ moveData.description }}</p>
+        <p class="modal-desc">{{ t.gameData.moves[moveId].description }}</p>
 
         <!-- Характеристики (для открытых приёмов) -->
         <div v-if="move.unlocked" class="modal-stats">
@@ -184,8 +184,8 @@ const lockedHint = computed(() => {
   const prevMoveId = branchMoves[idx - 1];
   const prevMove = props.allMoveStates[prevMoveId];
   const prevMoveData = movesData[prevMoveId];
-  if (!prevMove?.unlocked) return interpolate(t.value.moves.lblUnlockFirst, { name: prevMoveData?.name });
-  if (prevMove.level < 3) return interpolate(t.value.moves.lblUpgradeTo3, { name: prevMoveData?.name });
+  if (!prevMove?.unlocked) return interpolate(t.value.moves.lblUnlockFirst, { name: t.value.gameData.moves[prevMoveId]?.name });
+  if (prevMove.level < 3) return interpolate(t.value.moves.lblUpgradeTo3, { name: t.value.gameData.moves[prevMoveId]?.name });
   return t.value.moves.lblInsufficientResources;
 });
 </script>

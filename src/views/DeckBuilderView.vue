@@ -22,7 +22,7 @@
                 @click="toggleMove(moveId)"
                 v-ripple
             >
-              <span class="slot-name">{{ allMoves[moveId]?.name }}</span>
+              <span class="slot-name">{{ t.gameData.moves[moveId]?.name }}</span>
               <span class="slot-level">{{ t.deck.lblLevel }}{{ moves[moveId]?.level }}</span>
               <span class="slot-remove">✕</span>
             </div>
@@ -45,7 +45,7 @@
           <div class="section-label">{{ t.deck.lblAvailableMoves }}</div>
 
           <div v-for="branchKey in ['speed', 'power', 'technique']" :key="branchKey" class="branch-group">
-            <div class="branch-group-title">{{ branches[branchKey].name }}</div>
+            <div class="branch-group-title">{{ t.gameData.branches[branchKey].name }}</div>
             <div
                 v-for="moveId in branches[branchKey].moves.filter(id => moves[id]?.unlocked)"
                 :key="moveId"
@@ -55,7 +55,7 @@
                 v-ripple
             >
               <div class="available-move-info">
-                <span class="available-move-name">{{ allMoves[moveId]?.name }}</span>
+                <span class="available-move-name">{{ t.gameData.moves[moveId]?.name }}</span>
                 <span class="available-move-level">{{ t.deck.lblLevel }} {{ moves[moveId]?.level }}</span>
               </div>
               <div class="available-move-stats">

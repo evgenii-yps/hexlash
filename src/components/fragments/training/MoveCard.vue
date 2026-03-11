@@ -1,7 +1,7 @@
 <template>
   <div class="move-card" :class="{ locked: !move.unlocked, 'in-deck': isInDeck }">
     <div class="move-card-header">
-      <span class="move-name">{{ moveData.name }}</span>
+      <span class="move-name">{{ t.gameData.moves[moveId].name }}</span>
       <div class="move-levels">
         <span
             v-for="i in 5"
@@ -12,7 +12,7 @@
       </div>
     </div>
 
-    <p class="move-description">{{ moveData.description }}</p>
+    <p class="move-description">{{ t.gameData.moves[moveId].description }}</p>
 
     <div class="move-stats">
       <span class="stat">
@@ -112,8 +112,8 @@ const lockedHint = computed(() => {
   if (idx <= 0) return '';
   const prevMoveId = branchMoves[idx - 1];
   const prevMove = props.allMoveStates[prevMoveId];
-  if (!prevMove?.unlocked) return interpolate(t.value.moves.lblUnlockFirst, { name: allMoves[prevMoveId].name });
-  if (prevMove.level < 3) return interpolate(t.value.moves.lblUpgradeTo3, { name: allMoves[prevMoveId].name });
+  if (!prevMove?.unlocked) return interpolate(t.value.moves.lblUnlockFirst, { name: t.value.gameData.moves[prevMoveId].name });
+  if (prevMove.level < 3) return interpolate(t.value.moves.lblUpgradeTo3, { name: t.value.gameData.moves[prevMoveId].name });
   return t.value.moves.lblInsufficientResources;
 });
 </script>
