@@ -254,7 +254,21 @@
     "fightCalculate": "جارٍ حساب النتيجة...",
     "fightFinished": "المعركة انتهت!",
     "modalHelpTitle": "خطوة بخطوة المعركة",
-    "modalHelpTextHtml": "<p>ضمن الوقت المحدد، اختر إجراءات الهجوم والدفاع.</p><br/><p style=\"margin-bottom: 10px\"><strong>الإجراءات المتاحة:</strong></p><ul style=\"color:var(--white); margin-left: 20px\"><li><strong>HD (دفاع الرأس):</strong> دفاع الرأس</li><li><strong>BD (دفاع الجسم):</strong> دفاع الجسم</li><li><strong>HH (ضربة الرأس):</strong> ضربة الرأس</li><li><strong>BH (ضربة الجسم):</strong> ضربة الجسم</li></ul><br/><p>بعد اختيار الإجراءات، يتم مقارنة مع إجراءات الخصم. الفائز هو الذي يوجه المزيد من الضربات ويتلقى أقل.</p><br/><p><strong style=\"color:var(--white)\">مثال:</strong></p><p>أنت: HD, HH, BD</p><p>الخصم: HH, BD, BH</p><p>النتيجة: لقد وجهت ضربة واحدة، ومنعت اثنين من ضربات الخصم. <strong>الفائز:</strong> أنت </p><br/><p></p>"
+    "modalHelpTextHtml": "<p>ضمن الوقت المحدد، اختر إجراءات الهجوم والدفاع.</p><br/><p style=\"margin-bottom: 10px\"><strong>الإجراءات المتاحة:</strong></p><ul style=\"color:var(--white); margin-left: 20px\"><li><strong>HD (دفاع الرأس):</strong> دفاع الرأس</li><li><strong>BD (دفاع الجسم):</strong> دفاع الجسم</li><li><strong>HH (ضربة الرأس):</strong> ضربة الرأس</li><li><strong>BH (ضربة الجسم):</strong> ضربة الجسم</li></ul><br/><p>بعد اختيار الإجراءات، يتم مقارنة مع إجراءات الخصم. الفائز هو الذي يوجه المزيد من الضربات ويتلقى أقل.</p><br/><p><strong style=\"color:var(--white)\">مثال:</strong></p><p>أنت: HD, HH, BD</p><p>الخصم: HH, BD, BH</p><p>النتيجة: لقد وجهت ضربة واحدة، ومنعت اثنين من ضربات الخصم. <strong>الفائز:</strong> أنت </p><br/><p></p>",
+    "lblVictory": "فوز",
+    "lblDefeat": "هزيمة",
+    "lblDraw": "تعادل",
+    "lblNeverGiveUp": "لا تستسلم أبداً",
+    "lblVS": "VS",
+    "lblXpEarned": "XP مكتسب",
+    "lblSpeed": "السرعة",
+    "lblPower": "القوة",
+    "lblTechnique": "التقنية",
+    "lblActionAttack": "هجوم",
+    "lblActionDefense": "دفاع",
+    "lblActionPosition": "موضع",
+    "trainerAnalysisWin": "قتال رائع! بناؤك [{build}] عمل بفعالية. تميّز {name} كوحدة أساسية.",
+    "trainerAnalysisLose": "خسر مقاتلك [{build}]. التوصية: جرّب استبدال {name} بـ Sentinel للحصول على دفاع أفضل."
   },
   "training": {
     "timerText": "كيس الملاكمة انتهى، مقاتل. اصبر، سنقوم باستبداله قريبًا.",

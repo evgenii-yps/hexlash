@@ -254,7 +254,21 @@
     "fightCalculate": "Calcul des résultats...",
     "fightFinished": "Combat terminé !",
     "modalHelpTitle": "Combat pas à pas",
-    "modalHelpTextHtml": "<p>Dans le temps imparti, choisissez des actions pour l'attaque et la défense.</p><br/><p style=\"margin-bottom: 10px\"><strong>Actions disponibles :</strong></p><ul style=\"color:var(--white); margin-left: 20px\"><li><strong>HD (Défense de la tête) :</strong> défense de la tête</li><li><strong>BD (Défense du corps) :</strong> défense du corps</li><li><strong>HH (Coup à la tête) :</strong> coup à la tête</li><li><strong>BH (Coup au corps) :</strong> coup au corps</li></ul><br/><p>Après avoir sélectionné les actions, une comparaison avec les actions de l'adversaire a lieu. Le gagnant est celui qui inflige le plus de coups et en reçoit le moins.</p><br/><p style=\"margin-bottom: 10px; color:var(--white);\"><strong>Exemple :</strong></p><p>Vous : HD, HH, BD</p><p>Adversaire : HH, BD, BH</p><p>Résultat : vous avez infligé 1 coup et bloqué 2 coups de l'adversaire. <strong>Gagnant :</strong> Vous </p><br/><p></p>"
+    "modalHelpTextHtml": "<p>Dans le temps imparti, choisissez des actions pour l'attaque et la défense.</p><br/><p style=\"margin-bottom: 10px\"><strong>Actions disponibles :</strong></p><ul style=\"color:var(--white); margin-left: 20px\"><li><strong>HD (Défense de la tête) :</strong> défense de la tête</li><li><strong>BD (Défense du corps) :</strong> défense du corps</li><li><strong>HH (Coup à la tête) :</strong> coup à la tête</li><li><strong>BH (Coup au corps) :</strong> coup au corps</li></ul><br/><p>Après avoir sélectionné les actions, une comparaison avec les actions de l'adversaire a lieu. Le gagnant est celui qui inflige le plus de coups et en reçoit le moins.</p><br/><p style=\"margin-bottom: 10px; color:var(--white);\"><strong>Exemple :</strong></p><p>Vous : HD, HH, BD</p><p>Adversaire : HH, BD, BH</p><p>Résultat : vous avez infligé 1 coup et bloqué 2 coups de l'adversaire. <strong>Gagnant :</strong> Vous </p><br/><p></p>",
+    "lblVictory": "VICTOIRE",
+    "lblDefeat": "DÉFAITE",
+    "lblDraw": "MATCH NUL",
+    "lblNeverGiveUp": "N'abandonne jamais",
+    "lblVS": "VS",
+    "lblXpEarned": "XP gagné",
+    "lblSpeed": "Vitesse",
+    "lblPower": "Force",
+    "lblTechnique": "Technique",
+    "lblActionAttack": "Attaque",
+    "lblActionDefense": "Défense",
+    "lblActionPosition": "Position",
+    "trainerAnalysisWin": "Bon combat ! Ton build [{build}] a bien fonctionné. {name} s'est particulièrement illustré en module principal.",
+    "trainerAnalysisLose": "Ton combattant [{build}] a perdu. Recommandation : essaie de remplacer {name} par Sentinel pour une meilleure défense."
   },
   "training": {
     "timerText": "Le sac de frappe est à terre, combattant. Tiens bon, nous le remplacerons bientôt.",
@@ -312,6 +326,3 @@
     "errorOnlyLatinAndNumbers": "Le nom de connexion ne peut contenir que des lettres latines et des chiffres."
   }
 }
-
-
-

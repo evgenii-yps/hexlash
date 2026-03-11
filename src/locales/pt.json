@@ -254,7 +254,21 @@
     "fightCalculate": "Calculando resultado...",
     "fightFinished": "Luta terminada!",
     "modalHelpTitle": "Luta passo a passo",
-    "modalHelpTextHtml": "<p>Dentro do tempo alocado, escolha ações para ataque e defesa.</p><br/><p style=\"margin-bottom: 10px\"><strong>Ações disponíveis:</strong></p><ul style=\"color:var(--white); margin-left: 20px\"><li><strong>HD (Defesa de Cabeça):</strong> defesa de cabeça</li><li><strong>BD (Defesa de Corpo):</strong> defesa de corpo</li><li><strong>HH (Golpe na Cabeça):</strong> golpe na cabeça</li><li><strong>BH (Golpe no Corpo):</strong> golpe no corpo</li></ul><br/><p>Após selecionar as ações, ocorre uma comparação com as ações do oponente. O vencedor é quem aplica mais golpes e recebe menos.</p><br/><p style=\"margin-bottom: 10px; color:var(--white);\"><strong>Exemplo:</strong></p><p>Você: HD, HH, BD</p><p>Oponente: HH, BD, BH</p><p>Resultado: você acertou 1 golpe, bloqueou 2 golpes do oponente. <strong>Vencedor:</strong> Você </p><br/><p></p>"
+    "modalHelpTextHtml": "<p>Dentro do tempo alocado, escolha ações para ataque e defesa.</p><br/><p style=\"margin-bottom: 10px\"><strong>Ações disponíveis:</strong></p><ul style=\"color:var(--white); margin-left: 20px\"><li><strong>HD (Defesa de Cabeça):</strong> defesa de cabeça</li><li><strong>BD (Defesa de Corpo):</strong> defesa de corpo</li><li><strong>HH (Golpe na Cabeça):</strong> golpe na cabeça</li><li><strong>BH (Golpe no Corpo):</strong> golpe no corpo</li></ul><br/><p>Após selecionar as ações, ocorre uma comparação com as ações do oponente. O vencedor é quem aplica mais golpes e recebe menos.</p><br/><p style=\"margin-bottom: 10px; color:var(--white);\"><strong>Exemplo:</strong></p><p>Você: HD, HH, BD</p><p>Oponente: HH, BD, BH</p><p>Resultado: você acertou 1 golpe, bloqueou 2 golpes do oponente. <strong>Vencedor:</strong> Você </p><br/><p></p>",
+    "lblVictory": "VITÓRIA",
+    "lblDefeat": "DERROTA",
+    "lblDraw": "EMPATE",
+    "lblNeverGiveUp": "Nunca desista",
+    "lblVS": "VS",
+    "lblXpEarned": "XP ganho",
+    "lblSpeed": "Velocidade",
+    "lblPower": "Força",
+    "lblTechnique": "Técnica",
+    "lblActionAttack": "Ataque",
+    "lblActionDefense": "Defesa",
+    "lblActionPosition": "Posição",
+    "trainerAnalysisWin": "Ótima luta! Seu build [{build}] funcionou eficazmente. {name} se destacou como módulo primário.",
+    "trainerAnalysisLose": "Seu lutador [{build}] perdeu. Recomendação: tente substituir {name} por Sentinel para melhor defesa."
   },
   "training": {
     "timerText": "O saco de pancadas caiu, lutador. Aguente firme, vamos substituí-lo em breve.",

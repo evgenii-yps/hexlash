@@ -302,31 +302,38 @@ const logActionImage = (action) => LOG_ACTIONS[action]?.image || '';
 const logActionName  = (action) => LOG_ACTIONS[action]?.key ? t(LOG_ACTIONS[action].key) : action;
 
 // ── Result UI ──────────────────────────────────────────────────────────────
-const statusLeft = computed(() => {
+// Compute the raw result state (locale-independent) so comparisons
+// never depend on translated strings matching each other.
+const resultState = computed(() => {
   if (fightPhase.value !== 'results') return '';
   const p1win = (liveHP1.value > liveHP2.value && liveHP2.value <= 0) || (liveHP1.value > 0 && liveHP2.value <= 0);
   const draw  = liveHP1.value <= 0 && liveHP2.value <= 0;
-  if (draw)  return t('fight.lblDraw');
-  if (p1win) return t('fight.lblVictory');
-  if (liveHP1.value <= 0) return t('fight.lblDefeat');
-  if (liveHP1.value > liveHP2.value) return t('fight.lblVictory');
-  if (liveHP1.value < liveHP2.value) return t('fight.lblDefeat');
+  if (draw)  return 'draw';
+  if (p1win) return 'win';
+  if (liveHP1.value <= 0) return 'lose';
+  if (liveHP1.value > liveHP2.value) return 'win';
+  if (liveHP1.value < liveHP2.value) return 'lose';
+  return 'draw';
+});
+
+const statusLeft = computed(() => {
+  if (!resultState.value) return '';
+  if (resultState.value === 'win')  return t('fight.lblVictory');
+  if (resultState.value === 'lose') return t('fight.lblDefeat');
   return t('fight.lblDraw');
 });
 
 const statusRight = computed(() => {
-  if (fightPhase.value !== 'results') return '';
-  const left = statusLeft.value;
-  if (left === t('fight.lblVictory')) return t('fight.lblDefeat');
-  if (left === t('fight.lblDefeat'))  return t('fight.lblVictory');
+  if (!resultState.value) return '';
+  if (resultState.value === 'win')  return t('fight.lblDefeat');
+  if (resultState.value === 'lose') return t('fight.lblVictory');
   return t('fight.lblDraw');
 });
 
 const resultText  = computed(() => statusLeft.value);
 const resultClass = computed(() => {
-  const t2 = resultText.value;
-  if (t2 === t('fight.lblVictory')) return 'result-win';
-  if (t2 === t('fight.lblDefeat'))  return 'result-lose';
+  if (resultState.value === 'win')  return 'result-win';
+  if (resultState.value === 'lose') return 'result-lose';
   return 'result-draw';
 });
 
@@ -498,7 +505,7 @@ watch(fightPhase, (val, oldVal) => {
     stopFightTimer();
     // Only award XP once (guard against double-award on restore)
     if (!store.getters['fight/getXpAwarded']) {
-      const result = statusLeft.value === t('fight.lblVictory') ? 'win' : 'lose';
+      const result = resultState.value === 'win' ? 'win' : 'lose';
       const deck = store.getters['progression/getDeck'];
       const expGain = result === 'win' ? 10 : 5;
       const branchCount = { speed: 0, power: 0, technique: 0 };
@@ -514,8 +521,8 @@ watch(fightPhase, (val, oldVal) => {
       store.commit('fight/setXpAwarded', true);
       store.dispatch('progression/onFightEnd', { result, deck });
 
-      const isWin  = statusLeft.value === t('fight.lblVictory');
-      const isDraw = statusLeft.value === t('fight.lblDraw');
+      const isWin  = resultState.value === 'win';
+      const isDraw = resultState.value === 'draw';
       apiClient.post('/fight/save', {
         isWin,
         isDraw,

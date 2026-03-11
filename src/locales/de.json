@@ -254,7 +254,21 @@
     "fightCalculate": "Ergebnis wird berechnet...",
     "fightFinished": "Kampf beendet!",
     "modalHelpTitle": "Schritt-für-Schritt-Kampf",
-    "modalHelpTextHtml": "<p>Wähle innerhalb der zugewiesenen Zeit Aktionen für Angriff und Verteidigung.</p><br/><p style=\"margin-bottom: 10px\"><strong>Verfügbare Aktionen:</strong></p><ul style=\"color:var(--white); margin-left: 20px\"><li><strong>HD (Kopfverteidigung):</strong> Kopf verteidigen</li><li><strong>BD (Körperverteidigung):</strong> Körper verteidigen</li><li><strong>HH (Kopftreffer):</strong> Kopf treffen</li><li><strong>BH (Körpertreffer):</strong> Körper treffen</li></ul><br/><p>Nach Auswahl der Aktionen erfolgt ein Vergleich mit den Aktionen des Gegners. Der Gewinner ist derjenige, der mehr Treffer landet und weniger Treffer erhält.</p><br/><p style=\"margin-bottom: 10px; color:var(--white);\"><strong>Beispiel:</strong></p><p>Du: HD, HH, BD</p><p>Gegner: HH, BD, BH</p><p>Ergebnis: Du hast 1 Treffer gelandet und 2 Treffer des Gegners geblockt. <strong>Gewinner:</strong> Du </p><br/><p></p>"
+    "modalHelpTextHtml": "<p>Wähle innerhalb der zugewiesenen Zeit Aktionen für Angriff und Verteidigung.</p><br/><p style=\"margin-bottom: 10px\"><strong>Verfügbare Aktionen:</strong></p><ul style=\"color:var(--white); margin-left: 20px\"><li><strong>HD (Kopfverteidigung):</strong> Kopf verteidigen</li><li><strong>BD (Körperverteidigung):</strong> Körper verteidigen</li><li><strong>HH (Kopftreffer):</strong> Kopf treffen</li><li><strong>BH (Körpertreffer):</strong> Körper treffen</li></ul><br/><p>Nach Auswahl der Aktionen erfolgt ein Vergleich mit den Aktionen des Gegners. Der Gewinner ist derjenige, der mehr Treffer landet und weniger Treffer erhält.</p><br/><p style=\"margin-bottom: 10px; color:var(--white);\"><strong>Beispiel:</strong></p><p>Du: HD, HH, BD</p><p>Gegner: HH, BD, BH</p><p>Ergebnis: Du hast 1 Treffer gelandet und 2 Treffer des Gegners geblockt. <strong>Gewinner:</strong> Du </p><br/><p></p>",
+    "lblVictory": "SIEG",
+    "lblDefeat": "NIEDERLAGE",
+    "lblDraw": "UNENTSCHIEDEN",
+    "lblNeverGiveUp": "Niemals aufgeben",
+    "lblVS": "VS",
+    "lblXpEarned": "XP verdient",
+    "lblSpeed": "Geschwindigkeit",
+    "lblPower": "Kraft",
+    "lblTechnique": "Technik",
+    "lblActionAttack": "Angriff",
+    "lblActionDefense": "Verteidigung",
+    "lblActionPosition": "Position",
+    "trainerAnalysisWin": "Guter Kampf! Dein Build [{build}] hat effektiv funktioniert. {name} hat sich besonders als primäres Modul bewährt.",
+    "trainerAnalysisLose": "Dein Kämpfer [{build}] hat verloren. Empfehlung: Versuche, {name} durch Sentinel für bessere Verteidigung zu ersetzen."
   },
   "training": {
     "timerText": "Der Boxsack ist runter, Kämpfer. Halte durch, wir ersetzen ihn bald für dich.",
