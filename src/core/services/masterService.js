@@ -238,7 +238,7 @@ export const changeProfile = async (profileData) => {
     }
 
     try {
-        return await apiClient.post('/user/edit', profileData, {authRequired: true});
+        return await apiClient.post('/user/edit', { profileData }, {authRequired: true});
     } catch (error) {
         console.error(error.response?.data?.error);
         throw new Error('Failed to change profile ' + error.response?.data?.error || error.message);
