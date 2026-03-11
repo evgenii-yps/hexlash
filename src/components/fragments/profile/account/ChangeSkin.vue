@@ -19,7 +19,7 @@
 
         <div v-if="skin.locked" class="lock-overlay">
           <img src="@/assets/images/icon_lock.png" alt="Locked Overlay" class="lock-icon"/>
-          <p class="locked-text">{{ t('profile.account.lblLockedOverlay') }}</p>
+          <p class="locked-text">{{ t.profile.account.lblLockedOverlay }}</p>
         </div>
 
         <div class="price-overlay">
@@ -37,13 +37,13 @@
 
     <VModal v-model="dialog" max-width="500">
       <VCard>
-        <v-card-title class="headline">{{ t('profile.account.lblConfirmation') }}</v-card-title>
-        <v-card-text v-if="!skinToSelect.locked">{{ t('profile.account.msgSelectSkin') }}</v-card-text>
-        <v-card-text v-else>{{ t('profile.account.msgInsufficientFunds') }}</v-card-text>
+        <v-card-title class="headline">{{ t.profile.account.lblConfirmation }}</v-card-title>
+        <v-card-text v-if="!skinToSelect.locked">{{ t.profile.account.msgSelectSkin }}</v-card-text>
+        <v-card-text v-else>{{ t.profile.account.msgInsufficientFunds }}</v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn @click="dialog = false" class="cancel-btn">{{ t('modal.btnCancel') }}</v-btn>
-          <v-btn v-if="!skinToSelect.locked" @click="confirmSelection" class="confirm-btn">{{ t('modal.btnConfirm') }}</v-btn>
+          <v-btn @click="dialog = false" class="cancel-btn">{{ t.modal.btnCancel }}</v-btn>
+          <v-btn v-if="!skinToSelect.locked" @click="confirmSelection" class="confirm-btn">{{ t.modal.btnConfirm }}</v-btn>
         </v-card-actions>
       </VCard>
     </VModal>
@@ -54,8 +54,7 @@
 import { nextTick, ref, watch} from 'vue';
 import {VImg, VBtn, VCard, VCardTitle, VCardText, VCardActions, VSpacer} from 'vuetify/components';
 import store from "@/core/state/store.js";
-import {useI18n} from "vue-i18n";
-const { t } = useI18n({ useScope: 'global' })
+import {t} from "@/locales/index.js";
 
 
 const skins = ref([

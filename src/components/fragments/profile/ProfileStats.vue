@@ -21,15 +21,13 @@
     </div>
   </div>
   <div v-else>
-    {{ t('loading') }}
+    {{ t.loading }}
   </div>
 </template>
 
 <script setup>
 import {ref, watch} from 'vue';
-import {useI18n} from "vue-i18n";
-
-const {t} = useI18n({useScope: 'global'})
+import {t} from "@/locales/index.js";
 
 import iconAllFights from '@/assets/images/icon_fights.svg';
 import iconWins from '@/assets/images/icon_wins.svg';
@@ -58,63 +56,63 @@ watch(() => props.userData, (userData) => {
     stats.value = [
       {
         id: 'stats-totalFights',
-        title: t('profile.stats.lblTotalFights'),
+        title: t.value.profile.stats.lblTotalFights,
         value: formatNumber(userData.totalFights),
         icon: iconAllFights,
         show: false
       },
       {
         id: 'stats-wins',
-        title: t('profile.stats.lblWins'),
+        title: t.value.profile.stats.lblWins,
         value: formatNumber(userData.wins),
         icon: iconWins,
         show: false
       },
       {
         id: 'stats-losses',
-        title: t('profile.stats.lblLosses'),
+        title: t.value.profile.stats.lblLosses,
         value: formatNumber(userData.losses),
         icon: iconLosses,
         show: false
       },
       {
         id: 'stats-draws',
-        title: t('profile.stats.lblDraws'),
+        title: t.value.profile.stats.lblDraws,
         value: formatNumber(userData.draws),
         icon: iconDraws,
         show: false
       },
       {
         id: 'stats-luckPercentage',
-        title: t('profile.stats.lblLuckPercentage'),
+        title: t.value.profile.stats.lblLuckPercentage,
         value: userData.totalFights < 10 ? "-" : userData.luckPercentage + '%',
         icon: iconLuck,
         show: false
       },
       {
         id: 'stats-wonTokens',
-        title: t('profile.stats.lblWonTokens'),
+        title: t.value.profile.stats.lblWonTokens,
         value: formatNumber(userData.wonTokens),
         icon: iconWonTokens,
         show: false
       },
       {
         id: 'stats-freeTokens',
-        title: t('profile.stats.lblFreeTokens'),
+        title: t.value.profile.stats.lblFreeTokens,
         value: formatNumber(userData.freeTokens),
         icon: iconFreeTokens,
         show: false
       },
       {
         id: 'stats-invitedUsers',
-        title: t('profile.stats.lblInvitedUsers'),
+        title: t.value.profile.stats.lblInvitedUsers,
         value: userData.invitedUsers,
         icon: iconInvites,
         show: false
       },
       {
         id: 'stats-daysInClubAndNoSkipDays',
-        title: t('profile.stats.lblDaysInClub'),
+        title: t.value.profile.stats.lblDaysInClub,
         value: userData.daysInClub,
         valueInBrackets: `(${userData.noSkipDays})`,
         icon: iconDaysInClub,

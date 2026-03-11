@@ -8,7 +8,7 @@
         <div class="modal-header">
           <span v-if="!move.unlocked" class="modal-lock">🔒</span>
           <span class="modal-title">{{ moveData.name }}</span>
-          <span v-if="move.unlocked" class="modal-level">Ур. {{ move.level }}</span>
+          <span v-if="move.unlocked" class="modal-level">{{ t.moves.lblLevel }} {{ move.level }}</span>
         </div>
 
         <p class="modal-desc">{{ moveData.description }}</p>
@@ -16,12 +16,12 @@
         <!-- Характеристики (для открытых приёмов) -->
         <div v-if="move.unlocked" class="modal-stats">
           <div class="stat-row">
-            <span class="stat-lbl">Урон</span>
+            <span class="stat-lbl">{{ t.moves.lblDamage }}</span>
             <span class="stat-val">{{ currentDamage }}</span>
             <span v-if="move.level < 5" class="stat-next">→ {{ nextDamage }}</span>
           </div>
           <div class="stat-row">
-            <span class="stat-lbl">Скорость</span>
+            <span class="stat-lbl">{{ t.moves.lblSpeed }}</span>
             <span class="stat-val">{{ currentSpeed }}</span>
             <span v-if="move.level < 5" class="stat-next">→ {{ nextSpeed }}</span>
           </div>
@@ -35,7 +35,7 @@
         <!-- Прогресс к улучшению -->
         <div v-if="move.unlocked && move.level < 5" class="modal-progress">
           <div class="req-row">
-            <span class="req-label">Тапы</span>
+            <span class="req-label">{{ t.moves.lblTaps }}</span>
             <span class="req-bar-wrap">
               <span class="req-bar">
                 <span
@@ -66,9 +66,9 @@
 
         <!-- Требования для открытия -->
         <div v-else-if="!move.unlocked && unlockCost.taps" class="modal-progress">
-          <div class="section-hint">Для открытия:</div>
+          <div class="section-hint">{{ t.moves.lblToUnlock }}</div>
           <div class="req-row">
-            <span class="req-label">Тапы</span>
+            <span class="req-label">{{ t.moves.lblTaps }}</span>
             <span class="req-bar-wrap">
               <span class="req-bar">
                 <span
@@ -110,7 +110,7 @@
               :disabled="!canLevelUp"
               @click="$emit('levelUp', moveId)"
           >
-            Улучшить
+            {{ t.moves.lblUpgrade }}
           </button>
 
           <button
@@ -120,11 +120,11 @@
               :disabled="!canUnlock"
               @click="$emit('unlock', moveId)"
           >
-            Открыть
+            {{ t.moves.lblUnlock }}
           </button>
 
           <button class="btn-action btn-train" @click="$emit('train')">
-            Тренировать
+            {{ t.moves.lblTrain }}
           </button>
         </div>
 
@@ -138,6 +138,7 @@ import { computed } from 'vue';
 import { allMoves as movesData } from '@/data/moves.js';
 import { branches } from '@/data/branches.js';
 import { levelUpRequirements, unlockRequirements } from '@/data/requirements.js';
+import { t, interpolate } from '@/locales/index.js';
 
 const props = defineProps({
   moveId:    { type: String, required: true },
@@ -183,9 +184,9 @@ const lockedHint = computed(() => {
   const prevMoveId = branchMoves[idx - 1];
   const prevMove = props.allMoveStates[prevMoveId];
   const prevMoveData = movesData[prevMoveId];
-  if (!prevMove?.unlocked) return `Сначала откройте: ${prevMoveData?.name}`;
-  if (prevMove.level < 3) return `Прокачайте ${prevMoveData?.name} до ур. 3`;
-  return 'Недостаточно ресурсов';
+  if (!prevMove?.unlocked) return interpolate(t.value.moves.lblUnlockFirst, { name: prevMoveData?.name });
+  if (prevMove.level < 3) return interpolate(t.value.moves.lblUpgradeTo3, { name: prevMoveData?.name });
+  return t.value.moves.lblInsufficientResources;
 });
 </script>
 

@@ -54,10 +54,10 @@
                       <img v-bind="props" @click.stop="toggleToolTip" src="@/assets/images/icon_lock_white.svg" alt=""
                            class="custom-icon"/>
                     </template>
-                    <span>{{ t('club.lblCloseClubTooltip') }}</span>
+                    <span>{{ t.club.lblCloseClubTooltip }}</span>
                   </v-tooltip>
                 </template>
-                {{ t('club.lblOpenClub') }}
+                {{ t.club.lblOpenClub }}
                 <template #append>
                   <span class="custom-icon"/>
                   <v-switch
@@ -87,7 +87,7 @@
                 <template #prepend>
                   <img src="@/assets/images/icon_arrow.svg" alt="" class="custom-icon"/>
                 </template>
-                {{ t('club.lblChangeClub') }}
+                {{ t.club.lblChangeClub }}
                 <template #append>
                   <span class="custom-icon"/>
                 </template>
@@ -95,14 +95,14 @@
 
               <VModal v-model="dialogChangeClub" max-width="500">
                 <VCard>
-                  <v-card-title class="headline">{{ t('club.lblChangeClub') }}</v-card-title>
+                  <v-card-title class="headline">{{ t.club.lblChangeClub }}</v-card-title>
                   <v-card-text>
-                    {{ t('club.lblChangeClubDescription') }}
+                    {{ t.club.lblChangeClubDescription }}
                   </v-card-text>
                   <v-card-actions>
                     <v-spacer></v-spacer>
-                    <v-btn @click="dialogChangeClub = false" class="cancel-btn">{{ t('modal.btnCancel') }}</v-btn>
-                    <v-btn @click="confirmExit" class="confirm-btn">{{ t('club.lblConfirm') }}</v-btn>
+                    <v-btn @click="dialogChangeClub = false" class="cancel-btn">{{ t.modal.btnCancel }}</v-btn>
+                    <v-btn @click="confirmExit" class="confirm-btn">{{ t.club.lblConfirm }}</v-btn>
                   </v-card-actions>
                 </VCard>
               </VModal>
@@ -118,7 +118,7 @@
 import {ref, computed, nextTick, onMounted, onBeforeMount, watch} from 'vue';
 import {useRoute} from 'vue-router';
 import store from "@/core/state/store.js";
-import {useI18n} from "vue-i18n";
+import {t, interpolate} from "@/locales/index.js";
 
 import ClubAvatar from "@/components/fragments/club/ClubAvatar.vue";
 import ClubStats from "@/components/fragments/club/ClubStats.vue";
@@ -130,7 +130,6 @@ import {formatNumber} from "@/core/constants.js";
 import * as amplitude from "@amplitude/analytics-browser";
 
 
-const {t} = useI18n({useScope: 'global'})
 const route = useRoute();
 const clubId = route.params.id;
 const master = computed(() => store.getters['master/getMaster']);
@@ -210,9 +209,10 @@ const confirmExit = () => {
 
 // Формирование строки и замена числа на пустую строку
 const formattedMembers = computed(() => {
-  const translation = t('club.lblClubMembers', clubData.value.members);
-  const textWithoutNumber = translation.replace(clubData.value.members, '').trim();
-  return `<span style="font-size: 1.5em; margin-right: 5px">${formatNumber(clubData.value.members)}</span>${textWithoutNumber}`;
+  const members = clubData.value.members;
+  const translation = interpolate(t.value.club.lblClubMembers, { n: members });
+  const textWithoutNumber = translation.replace(String(members), '').trim();
+  return `<span style="font-size: 1.5em; margin-right: 5px">${formatNumber(members)}</span>${textWithoutNumber}`;
 });
 
 </script>

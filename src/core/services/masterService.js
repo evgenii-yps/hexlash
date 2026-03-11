@@ -5,7 +5,7 @@ import {MasterModel} from "@/core/models/masterModel.js";
 import store from "@/core/state/store.js";
 import {jwtDecode} from "jwt-decode";
 import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
-import {i18n} from "@/main.js";
+import {t, setLanguage as setLocaleLanguage} from "@/locales/index.js";
 import {isMockMode, createMockMaster, MOCK_JWT_TOKEN} from "@/core/mock/mockData.js";
 
 export const initializeMasterData = async () => {
@@ -45,7 +45,7 @@ export const getMasterFromAPI = () => {
         }
         await updateMasterToLocalDB(apiUserModel);
         store.commit('master/setMaster', apiUserModel);
-        i18n.global.locale.value = apiUserModel.language;
+        setLocaleLanguage(apiUserModel.language);
     }).catch((error) => {
         console.error('Failed to fetch user data from API:', error);
     });
@@ -201,22 +201,22 @@ export const resetPassword = async (email) => {
 
     // Проверка на пустой email
     if (!email) {
-        throw new Error(i18n.global.t('auth.reset.errorEmpty'));
+        throw new Error(t.value.auth.reset.errorEmpty);
     }
 
     // Проверка на правильный формат email
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailPattern.test(email)) {
-        throw new Error(i18n.global.t('auth.reset.errorInvalidFormat'));
+        throw new Error(t.value.auth.reset.errorInvalidFormat);
     }
 
     const response = await apiClient.post('/user/reset', { email });
 
     // Проверяем ответ
     if (response.data) {
-        return { success: true, message: i18n.global.t('auth.reset.success') };
+        return { success: true, message: t.value.auth.reset.success };
     } else {
-        throw new Error(i18n.global.t('auth.reset.error'));
+        throw new Error(t.value.auth.reset.error);
     }
 };
 

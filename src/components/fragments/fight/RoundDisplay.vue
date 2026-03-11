@@ -1,6 +1,6 @@
 <template>
   <div class="round-display" v-if="round">
-    <div class="round-number">{{ t('fight.lblRound', { n: round.roundNum }) }}</div>
+    <div class="round-number">{{ interpolate(t.fight.lblRound, { n: round.roundNum }) }}</div>
     <div class="round-actions">
       <div class="round-action action-left" :class="actionClass(round.action1)">
         <img :src="actionImage(round.action1)" class="action-icon-img" alt=""/>
@@ -33,12 +33,10 @@
 
 <script setup>
 import { computed } from 'vue';
-import { useI18n } from 'vue-i18n';
+import {t, interpolate} from "@/locales/index.js";
 import iconAttack   from '@/assets/images/icons/attack.svg';
 import iconDefense  from '@/assets/images/icons/defense.svg';
 import iconPosition from '@/assets/images/icons/position.svg';
-
-const { t } = useI18n({ useScope: 'global' });
 
 const props = defineProps({
   round: { type: Object, default: null },
@@ -56,11 +54,11 @@ const actionName  = (action) => ACTION_CONFIG[action]?.name || action;
 
 const formatEvent = (evt) => {
   switch (evt.type) {
-    case 'block':    return { text: t('fight.lblBlocked'),                cls: 'event-block' };
-    case 'dodge':    return { text: t('fight.lblDodged'),                 cls: 'event-dodge' };
-    case 'crit':     return { text: t('fight.lblCrit'),                   cls: 'event-crit' };
-    case 'shield':   return { text: t('fight.lblShield'),                 cls: 'event-shield' };
-    case 'missed':   return { text: t('fight.lblMissed'),                 cls: 'event-miss' };
+    case 'block':    return { text: t.value.fight.lblBlocked,               cls: 'event-block' };
+    case 'dodge':    return { text: t.value.fight.lblDodged,                cls: 'event-dodge' };
+    case 'crit':     return { text: t.value.fight.lblCrit,                  cls: 'event-crit' };
+    case 'shield':   return { text: t.value.fight.lblShield,                cls: 'event-shield' };
+    case 'missed':   return { text: t.value.fight.lblMissed,                cls: 'event-miss' };
     case 'position': return { text: `+${evt.value} ATK`,                  cls: 'event-position' };
     default:         return { text: evt.type,                             cls: '' };
   }

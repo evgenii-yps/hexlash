@@ -7,16 +7,16 @@
       <template #append>
         <img src="@/assets/images/icon_pencil.svg" alt="" class="custom-icon"/>
       </template>
-      {{ t('profile.account.lblChangePassword') }}
+      {{ t.profile.account.lblChangePassword }}
     </VBtnDark>
 
     <VModal v-model="dialog" max-width="500">
       <VCard>
-        <v-card-title class="headline">{{ t('profile.account.lblChangePassword') }}</v-card-title>
+        <v-card-title class="headline">{{ t.profile.account.lblChangePassword }}</v-card-title>
         <v-card-text style="margin-bottom: 0">
           <form @submit.prevent="handleSubmit">
             <InputField
-                :label="t('profile.account.lblCurrentPassword')"
+                :label="t.profile.account.lblCurrentPassword"
                 type="password"
                 v-model="currentPassword"
                 labelColor="var(--white)"
@@ -27,7 +27,7 @@
                 marginBottom="1rem"
             />
             <InputField
-                :label="t('profile.account.lblNewPassword')"
+                :label="t.profile.account.lblNewPassword"
                 type="password"
                 v-model="newPassword"
                 labelColor="var(--white)"
@@ -38,7 +38,7 @@
                 marginBottom="1rem"
             />
             <InputField
-                :label="t('profile.account.lblConfirmNewPassword')"
+                :label="t.profile.account.lblConfirmNewPassword"
                 type="password"
                 v-model="confirmNewPassword"
                 labelColor="var(--white)"
@@ -61,8 +61,8 @@
           </form>
         </v-card-text>
         <v-card-actions style="padding-top: 0">
-          <VBtnDark class="cancel-btn" @click="cancel">{{ t('modal.btnCancel') }}</VBtnDark>
-          <VBtn class="confirm-btn" @click="handleSubmit">{{ t('modal.btnConfirm') }}</VBtn>
+          <VBtnDark class="cancel-btn" @click="cancel">{{ t.modal.btnCancel }}</VBtnDark>
+          <VBtn class="confirm-btn" @click="handleSubmit">{{ t.modal.btnConfirm }}</VBtn>
         </v-card-actions>
       </VCard>
     </VModal>
@@ -73,11 +73,8 @@
 import {computed, ref} from 'vue';
 import InputField from '@/components/ui/InputField.vue';
 import store from "@/core/state/store.js";
-import {useI18n} from "vue-i18n";
+import {t} from "@/locales/index.js";
 import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
-
-
-const {t} = useI18n({useScope: 'global'})
 
 const currentPassword = ref('');
 const newPassword = ref('');
@@ -95,17 +92,17 @@ const handleSubmit = async () => {
   errorMessage.value = '';
 
   if (!currentPassword.value || !newPassword.value || !confirmNewPassword.value) {
-    errorMessage.value = t('profile.account.lblAllFieldsRequired');
+    errorMessage.value = t.value.profile.account.lblAllFieldsRequired;
     return;
   }
 
   if (newPassword.value !== confirmNewPassword.value) {
-    errorMessage.value = t('profile.account.lblPasswordsDoNotMatch');
+    errorMessage.value = t.value.profile.account.lblPasswordsDoNotMatch;
     return;
   }
 
   if (newPassword.value.length < 8 || !/\d/.test(newPassword.value) || !/[A-Z]/.test(newPassword.value)) {
-    errorMessage.value = t('profile.account.lblPasswordRequirements');
+    errorMessage.value = t.value.profile.account.lblPasswordRequirements;
     return;
   }
 
@@ -116,7 +113,7 @@ const handleSubmit = async () => {
     oldPassword: currentPassword.value,
   })) {
     cancel();
-    store.commit('master/setInfoMessage', InfoMessageModel.withText(t('profile.account.lblPasswordsChangeSuccessful')));
+    store.commit('master/setInfoMessage', InfoMessageModel.withText(t.value.profile.account.lblPasswordsChangeSuccessful));
   }
 
   loading.value = false;

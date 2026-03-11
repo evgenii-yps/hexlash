@@ -1,19 +1,18 @@
 <template>
   <VCard class="wallet-card">
-    <h3>{{ t('profile.wallet.lblWalletBalance') }}</h3>
+    <h3>{{ t.profile.wallet.lblWalletBalance }}</h3>
     <p v-if="isConnected">{{ balance }}</p>
     <div
         v-else
         class="loader"
-    >{{ t('profile.wallet.lblConnecting') }}</div>
+    >{{ t.profile.wallet.lblConnecting }}</div>
     <img src="@/assets/images/icon_money_in.svg" alt=""/>
-    <div class="desc">{{ t('profile.wallet.lblDepositToGame') }}</div>
+    <div class="desc">{{ t.profile.wallet.lblDepositToGame }}</div>
   </VCard>
 </template>
 
 <script setup>
-import {useI18n} from "vue-i18n";
-const { t } = useI18n({ useScope: 'global' })
+import {t} from "@/locales/index.js";
 
 const props = defineProps({
   balance: {

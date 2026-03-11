@@ -1,19 +1,19 @@
 <template>
   <div class="buy-button-container">
     <VBtn size="x-large" class="buy-btn" @click="btnModalBuy">
-      {{ t('profile.wallet.lblTopUpBalance') }}
+      {{ t.profile.wallet.lblTopUpBalance }}
     </VBtn>
 
     <VModal v-model="dialog" max-width="500" @click:outside="hide">
       <VCard>
-        <v-card-title class="headline"> {{ t('profile.wallet.lblBuyFCTokens') }}</v-card-title>
+        <v-card-title class="headline"> {{ t.profile.wallet.lblBuyFCTokens }}</v-card-title>
         <v-card-text class="text-center">
 
           <v-select
               class="custom-select"
               color="white"
               bg-color="var(--black-opacity)"
-              :label="t('profile.wallet.lblSelectToken')"
+              :label="t.profile.wallet.lblSelectToken"
               :items="tokensAccepted"
               item-value="address"
               item-title="name"
@@ -24,7 +24,7 @@
             <span>{{ selectedTokenBalance }}</span>
           </div>
           <v-text-field
-              :label="t('profile.wallet.lblAmount')"
+              :label="t.profile.wallet.lblAmount"
               v-model="localAmount"
               class="amount-field"
               @input="updateAmount"
@@ -41,15 +41,15 @@
             />
 
             <div v-else class="calculation-result">
-              <span>{{ t('profile.wallet.lblYouWillGet') }}</span> {{ calculatedAmount }}
-              <span>{{ t('profile.wallet.lblFCTokens') }}</span>
+              <span>{{ t.profile.wallet.lblYouWillGet }}</span> {{ calculatedAmount }}
+              <span>{{ t.profile.wallet.lblFCTokens }}</span>
             </div>
           </div>
 
         </v-card-text>
 
         <div v-if="!hasSufficientBalance" class="balance-warning">
-          {{ t('profile.wallet.lblInsufficientBalance') }}
+          {{ t.profile.wallet.lblInsufficientBalance }}
         </div>
         <div v-else-if="limitError" class="balance-warning">
           {{ limitError }}
@@ -68,9 +68,9 @@
                   class="loader"
                   size="20"
                   indeterminate/>
-              {{ t('profile.wallet.approveExplainTitle') }}
+              {{ t.profile.wallet.approveExplainTitle }}
             </div>
-            <div class="progressing-desc"> {{ t('profile.wallet.approveExplainDesc') }}</div>
+            <div class="progressing-desc"> {{ t.profile.wallet.approveExplainDesc }}</div>
           </div>
           <div v-else-if="loaderPurchaseTransaction" class="progressing-text-container">
             <div class="progressing-step">
@@ -79,9 +79,9 @@
                   class="loader"
                   size="20"
                   indeterminate/>
-              {{ t('profile.wallet.purchaseExplainTitle') }}
+              {{ t.profile.wallet.purchaseExplainTitle }}
             </div>
-            <div class="progressing-desc"> {{ t('profile.wallet.purchaseExplainDesc') }}</div>
+            <div class="progressing-desc"> {{ t.profile.wallet.purchaseExplainDesc }}</div>
           </div>
 
 
@@ -90,12 +90,12 @@
 
         <v-card-actions>
           <div v-if="!loading && approvedAmount > 0 && approvedAmount !== BigInt(999999999999991)" class="balance-warning">
-            {{ t('profile.wallet.approvedAmount') }} {{ approvedAmount }}
+            {{ t.profile.wallet.approvedAmount }} {{ approvedAmount }}
           </div>
           <v-spacer></v-spacer>
-          <VBtnDark v-if="!loaderApproveTransaction && !loaderPurchaseTransaction" @click="dialog = false" class="cancel-btn">{{ t('modal.btnCancel') }}</VBtnDark>
+          <VBtnDark v-if="!loaderApproveTransaction && !loaderPurchaseTransaction" @click="dialog = false" class="cancel-btn">{{ t.modal.btnCancel }}</VBtnDark>
           <VBtn :disabled="!hasSufficientBalance || limitError !== '' || loaderApproveTransaction || loaderPurchaseTransaction" @click="btnNext" class="confirm-btn">
-            {{ t('modal.btnNext') }}
+            {{ t.modal.btnNext }}
           </VBtn>
         </v-card-actions>
 
@@ -108,9 +108,7 @@
 <script setup>
 import store from "@/core/state/store.js";
 import {computed, ref, watch} from 'vue';
-import {useI18n} from "vue-i18n";
-
-const {t} = useI18n({useScope: 'global'})
+import {t} from "@/locales/index.js";
 
 import debounce from "debounce";
 import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
@@ -204,7 +202,7 @@ watch(transactionSuccess, (newValue) => {
   if (newValue) {
     // Закрываем модальное окно
     dialog.value = false;
-    const successMessage = InfoMessageModel.withText(t('profile.wallet.successPurchase'));
+    const successMessage = InfoMessageModel.withText(t.value.profile.wallet.successPurchase);
     store.commit('master/setInfoMessage', successMessage);
 
     // Сбрасываем флаг успешной транзакции
@@ -214,7 +212,7 @@ watch(transactionSuccess, (newValue) => {
 
 watch(calculatedAmount, (newValue) => {
   if (newValue < 100 || newValue > 100000) {
-    limitError.value = t('profile.wallet.checkLimits');
+    limitError.value = t.value.profile.wallet.checkLimits;
   } else {
     limitError.value = '';
   }

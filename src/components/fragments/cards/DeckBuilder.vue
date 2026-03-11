@@ -1,7 +1,7 @@
 <template>
   <div class="deck-builder">
     <div class="deck-section">
-      <div class="section-label">{{ t('arena.lblDeck') }} ({{ equippedCards.length }}/{{ MAX_DECK_SIZE }})</div>
+      <div class="section-label">{{ t.arena.lblDeck }} ({{ equippedCards.length }}/{{ MAX_DECK_SIZE }})</div>
       <div class="deck-slots">
         <div
             v-for="i in MAX_DECK_SIZE"
@@ -19,12 +19,12 @@
         </div>
       </div>
       <div class="deck-status" :class="{ 'deck-valid': isDeckValid, 'deck-invalid': !isDeckValid }">
-        {{ isDeckValid ? t('arena.lblDeckReady') : t('arena.lblDeckTooSmall') }}
+        {{ isDeckValid ? t.arena.lblDeckReady : t.arena.lblDeckTooSmall }}
       </div>
     </div>
 
     <div class="available-section">
-      <div class="section-label">{{ t('arena.lblAvailableCards') }}</div>
+      <div class="section-label">{{ t.arena.lblAvailableCards }}</div>
       <div class="cards-grid">
         <CardItem
             v-for="card in availableCards"
@@ -42,10 +42,9 @@
 <script setup>
 import {computed} from "vue";
 import store from "@/core/state/store.js";
-import {useI18n} from "vue-i18n";
+import {t} from "@/locales/index.js";
 import {MAX_DECK_SIZE} from "@/core/constants.js";
 import CardItem from "@/components/fragments/cards/CardItem.vue";
-const {t} = useI18n({useScope: 'global'});
 
 const allCards = computed(() => store.getters['fight/getAllCards']);
 const equippedCards = computed(() => store.getters['fight/getEquippedCards']);

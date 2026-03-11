@@ -2,7 +2,7 @@
   <div class="signup-container">
     <form @submit.prevent="handleSubmit">
       <InputField
-          :label="t('auth.signup.lblLogin')"
+          :label="t.auth.signup.lblLogin"
           v-model="login"
           labelColor="var(--white)"
           labelSize="0.65rem"
@@ -13,7 +13,7 @@
           marginBottom="0.8rem"
       />
       <InputField
-          :label="t('auth.signup.lblPassword')"
+          :label="t.auth.signup.lblPassword"
           :type="showPassword ? 'text' : 'password'"
           v-model="password"
           labelColor="var(--white)"
@@ -43,7 +43,7 @@
         </button>
       </InputField>
       <InputField
-          :label="t('auth.signup.lblConfirmPassword')"
+          :label="t.auth.signup.lblConfirmPassword"
           :type="showConfirmPassword ? 'text' : 'password'"
           v-model="confirmPassword"
           labelColor="var(--white)"
@@ -83,16 +83,16 @@
       />
 
       <VBtn v-if="!loading" class="auth-btn" @click="handleSubmit">
-        {{ t('auth.signup.btnSignup') }}
+        {{ t.auth.signup.btnSignup }}
       </VBtn>
     </form>
 
     <div class="login" v-if="!loading">
-      {{ t('auth.signup.question') }}
+      {{ t.auth.signup.question }}
       <ButtonText @click="handleLogin"
                   textColor="var(--pink)"
                   text-size="1.5em">
-        {{ t('auth.signup.btnLogin') }}
+        {{ t.auth.signup.btnLogin }}
       </ButtonText>
     </div>
   </div>
@@ -103,10 +103,8 @@ import {ref} from 'vue';
 import InputField from "@/components/ui/InputField.vue";
 import ButtonText from "@/components/ui/ButtonText.vue";
 import {useRouter} from 'vue-router';
-import {useI18n} from "vue-i18n";
+import {t} from "@/locales/index.js";
 import store from "@/core/state/store.js";
-
-const {t} = useI18n({useScope: 'global'});
 
 const router = useRouter();
 
@@ -122,17 +120,17 @@ const handleSubmit = async () => {
   errorMessage.value = '';
 
   if (!login.value || !password.value || !confirmPassword.value) {
-    errorMessage.value = t('auth.signup.errorAllFields');
+    errorMessage.value = t.value.auth.signup.errorAllFields;
     return;
   }
 
   if (password.value.length < 8) {
-    errorMessage.value = t('auth.signup.errorMinPassword');
+    errorMessage.value = t.value.auth.signup.errorMinPassword;
     return;
   }
 
   if (password.value !== confirmPassword.value) {
-    errorMessage.value = t('auth.signup.errorPasswordsMismatch');
+    errorMessage.value = t.value.auth.signup.errorPasswordsMismatch;
     return;
   }
 
@@ -144,7 +142,7 @@ const handleSubmit = async () => {
       password: password.value
     });
   } catch (error) {
-    errorMessage.value = error.message || t('auth.signup.errorGeneral');
+    errorMessage.value = error.message || t.value.auth.signup.errorGeneral;
   } finally {
     loading.value = false;
   }

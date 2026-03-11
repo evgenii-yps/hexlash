@@ -1,6 +1,6 @@
 import * as taskService from "@/core/services/taskService.js";
 import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
-import {i18n} from "@/main.js";
+import {t} from "@/locales/index.js";
 import store from "@/core/state/store.js";
 
 const state = {
@@ -108,7 +108,7 @@ const actions = {
             commit('addSocialTask', task);
 
             if(task.isCompleted) {
-                const info = InfoMessageModel.withTimeout(i18n.global.t("training.successCompleteTask"), 5000);
+                const info = InfoMessageModel.withTimeout(t.value.training.successCompleteTask, 5000);
                 store.commit('master/setInfoMessage', info);
             }
 
@@ -122,7 +122,7 @@ const actions = {
             commit('addDailyTask', task);
 
             if(task.isCompleted) {
-                const info = InfoMessageModel.withTimeout(i18n.global.t("training.successCompleteTask"), 5000);
+                const info = InfoMessageModel.withTimeout(t.value.training.successCompleteTask, 5000);
                 store.commit('master/setInfoMessage', info);
             }
 

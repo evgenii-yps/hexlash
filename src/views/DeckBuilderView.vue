@@ -5,15 +5,15 @@
 
         <div class="top-bar">
           <button class="btn-back" @click="goBack">
-            <span class="back-arrow">←</span> {{ t('deck.lblBack') }}
+            <span class="back-arrow">←</span> {{ t.deck.lblBack }}
           </button>
-          <div class="deck-title">{{ t('deck.lblTitle') }}</div>
-          <button class="btn-tree" @click="goToTree">{{ t('deck.lblMoves') }}</button>
+          <div class="deck-title">{{ t.deck.lblTitle }}</div>
+          <button class="btn-tree" @click="goToTree">{{ t.deck.lblMoves }}</button>
         </div>
 
         <!-- Слоты колоды -->
         <div class="deck-slots-section">
-          <div class="section-label">{{ t('deck.lblCurrentDeck', { n: deck.length }) }}</div>
+          <div class="section-label">{{ interpolate(t.deck.lblCurrentDeck, { n: deck.length }) }}</div>
           <div class="deck-slots">
             <div
                 v-for="moveId in deck"
@@ -23,7 +23,7 @@
                 v-ripple
             >
               <span class="slot-name">{{ allMoves[moveId]?.name }}</span>
-              <span class="slot-level">{{ t('deck.lblLevel') }}{{ moves[moveId]?.level }}</span>
+              <span class="slot-level">{{ t.deck.lblLevel }}{{ moves[moveId]?.level }}</span>
               <span class="slot-remove">✕</span>
             </div>
             <div
@@ -36,13 +36,13 @@
           </div>
 
           <div class="deck-valid-hint" :class="{ valid: isDeckValid, invalid: !isDeckValid }">
-            {{ isDeckValid ? t('deck.lblReady') : t('deck.lblNeedMoves') }}
+            {{ isDeckValid ? t.deck.lblReady : t.deck.lblNeedMoves }}
           </div>
         </div>
 
         <!-- Доступные приёмы -->
         <div class="available-section">
-          <div class="section-label">{{ t('deck.lblAvailableMoves') }}</div>
+          <div class="section-label">{{ t.deck.lblAvailableMoves }}</div>
 
           <div v-for="branchKey in ['speed', 'power', 'technique']" :key="branchKey" class="branch-group">
             <div class="branch-group-title">{{ branches[branchKey].name }}</div>
@@ -56,10 +56,10 @@
             >
               <div class="available-move-info">
                 <span class="available-move-name">{{ allMoves[moveId]?.name }}</span>
-                <span class="available-move-level">{{ t('deck.lblLevel') }} {{ moves[moveId]?.level }}</span>
+                <span class="available-move-level">{{ t.deck.lblLevel }} {{ moves[moveId]?.level }}</span>
               </div>
               <div class="available-move-stats">
-                <span class="mini-stat">{{ t('deck.lblDamage') }} {{ allMoves[moveId]?.damage[moves[moveId]?.level - 1] }}</span>
+                <span class="mini-stat">{{ t.deck.lblDamage }} {{ allMoves[moveId]?.damage[moves[moveId]?.level - 1] }}</span>
               </div>
               <span class="deck-indicator">{{ deck.includes(moveId) ? '✓' : '+' }}</span>
             </div>
@@ -72,7 +72,7 @@
               :disabled="!isDeckValid"
               @click="goToArena"
           >
-            {{ t('deck.lblToArena') }}
+            {{ t.deck.lblToArena }}
           </button>
         </div>
 
@@ -85,13 +85,12 @@
 <script setup>
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { useI18n } from 'vue-i18n';
+import { t, interpolate } from '@/locales/index.js';
 import store from '@/core/state/store.js';
 import { allMoves } from '@/data/moves.js';
 import { branches } from '@/data/branches.js';
 
 const router = useRouter();
-const { t } = useI18n({ useScope: 'global' });
 const emit = defineEmits(['scroll']);
 
 const moves = computed(() => store.getters['progression/getMoves']);

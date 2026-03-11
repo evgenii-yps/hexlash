@@ -16,11 +16,11 @@
 
     <div class="move-stats">
       <span class="stat">
-        <span class="stat-label">Урон</span>
+        <span class="stat-label">{{ t.moves.lblDamage }}</span>
         <span class="stat-value">{{ moveData.damage[Math.max(move.level - 1, 0)] }}</span>
       </span>
       <span class="stat">
-        <span class="stat-label">Скорость</span>
+        <span class="stat-label">{{ t.moves.lblSpeed }}</span>
         <span class="stat-value">{{ moveData.speed[Math.max(move.level - 1, 0)] }}</span>
       </span>
     </div>
@@ -28,7 +28,7 @@
     <div v-if="move.unlocked" class="move-actions">
       <div v-if="move.level < 5" class="upgrade-cost">
         <span class="cost-item" :class="{ 'not-enough': !canLevelUp && taps < nextReq.taps }">
-          {{ nextReq.taps }} тапов
+          {{ nextReq.taps }} {{ t.moves.lblTapsUnit }}
         </span>
         <span class="cost-sep">+</span>
         <span class="cost-item" :class="{ 'not-enough': !canLevelUp && branchExp < nextReq.exp }">
@@ -44,13 +44,13 @@
           :disabled="!canLevelUp"
           @click.stop="$emit('levelUp', moveData.id)"
       >
-        Улучшить
+        {{ t.moves.lblUpgrade }}
       </button>
     </div>
 
     <div v-else class="move-locked-info">
       <div v-if="canUnlock" class="upgrade-cost">
-        <span class="cost-item">{{ unlockCost.taps }} тапов</span>
+        <span class="cost-item">{{ unlockCost.taps }} {{ t.moves.lblTapsUnit }}</span>
         <span class="cost-sep">+</span>
         <span class="cost-item">{{ unlockCost.exp }} XP</span>
       </div>
@@ -62,7 +62,7 @@
           :disabled="!canUnlock"
           @click.stop="$emit('unlock', moveData.id)"
       >
-        Открыть
+        {{ t.moves.lblUnlock }}
       </button>
     </div>
   </div>
@@ -73,6 +73,7 @@ import { computed } from 'vue';
 import { allMoves } from '@/data/moves.js';
 import { branches } from '@/data/branches.js';
 import { levelUpRequirements, unlockRequirements } from '@/data/requirements.js';
+import { t, interpolate } from '@/locales/index.js';
 
 const props = defineProps({
   moveId: { type: String, required: true },
@@ -111,9 +112,9 @@ const lockedHint = computed(() => {
   if (idx <= 0) return '';
   const prevMoveId = branchMoves[idx - 1];
   const prevMove = props.allMoveStates[prevMoveId];
-  if (!prevMove?.unlocked) return `Сначала откройте ${allMoves[prevMoveId].name}`;
-  if (prevMove.level < 3) return `Прокачайте ${allMoves[prevMoveId].name} до ур. 3`;
-  return 'Недостаточно ресурсов';
+  if (!prevMove?.unlocked) return interpolate(t.value.moves.lblUnlockFirst, { name: allMoves[prevMoveId].name });
+  if (prevMove.level < 3) return interpolate(t.value.moves.lblUpgradeTo3, { name: allMoves[prevMoveId].name });
+  return t.value.moves.lblInsufficientResources;
 });
 </script>
 

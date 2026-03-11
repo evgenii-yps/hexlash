@@ -1,27 +1,27 @@
 <template>
   <VModal v-model="dialogGetStarted" max-width="500" persistent>
     <VCard>
-      <v-card-title class="headline">{{ t('getStarted.title') }}</v-card-title>
+      <v-card-title class="headline">{{ t.getStarted.title }}</v-card-title>
       <v-card-text class="text-center">
 
-        <p class="notice" v-html="t('getStarted.noticeWelcome')"/>
+        <p class="notice" v-html="t.getStarted.noticeWelcome"/>
 
         <!-- Поле для ввода имени -->
         <v-text-field
             class="text-field"
-            :label="t('getStarted.lblName')"
+            :label="t.getStarted.lblName"
             v-model="name"
-            :placeholder="t('getStarted.lblHintName')"
+            :placeholder="t.getStarted.lblHintName"
             :error-messages="nameError"
             :rules="[rules.required]"
         >
         </v-text-field>
 
-        <p class="notice" v-html="t('getStarted.noticeLogin')"/>
+        <p class="notice" v-html="t.getStarted.noticeLogin"/>
         <!-- Поле для ввода логина с проверкой доступности -->
         <v-text-field
             class="text-field"
-            :label="t('getStarted.lblLogin')"
+            :label="t.getStarted.lblLogin"
             v-model="login"
             :error-messages="loginError"
             :rules="[rules.required, rules.latinAndNumbers]"
@@ -29,17 +29,17 @@
 
           <template v-slot:append-inner>
             <div v-if="loginAvailable && loginChanged && !loginError" class="success-message">
-              {{ t('profile.account.lblAvailableLogin') }}
+              {{ t.profile.account.lblAvailableLogin }}
             </div>
             <v-progress-circular v-if="loadingLogin" color="var(--primary-color)" indeterminate :size="20"/>
           </template>
         </v-text-field>
 
-        <p class="notice" v-html="t('getStarted.noticePassword')"/>
+        <p class="notice" v-html="t.getStarted.noticePassword"/>
         <!-- Поле для ввода пароля -->
         <v-text-field
             class="text-field"
-            :label="t('getStarted.lblPassword')"
+            :label="t.getStarted.lblPassword"
             v-model="password"
             :type="showPassword ? 'text' : 'password'"
             :rules="[rules.required, rules.min]"
@@ -54,7 +54,7 @@
         <v-text-field
             v-if="passwordChanged"
             class="text-field"
-            :label="t('getStarted.lblConfirmPassword')"
+            :label="t.getStarted.lblConfirmPassword"
             v-model="confirmPassword"
             :type="showPassword ? 'text' : 'password'"
             :error-messages="confirmPasswordError"
@@ -71,7 +71,7 @@
         <div class="agree-checkbox">
           <div class="checkbox-custom" @click="toggleAgree" :class="{ checked: agree }"></div>
           <div>
-            {{ t('getStarted.agreementText') }}
+            {{ t.getStarted.agreementText }}
             <v-tooltip location="bottom">
               <template v-slot:activator="{ props }">
                 <a
@@ -81,12 +81,12 @@
                     @click.stop
                     class="btn-privacy"
                 >
-                  {{ t('getStarted.rulesLinkText') }}
+                  {{ t.getStarted.rulesLinkText }}
                 </a>
               </template>
-              {{ t('getStarted.tooltipText') }}
+              {{ t.getStarted.tooltipText }}
             </v-tooltip>
-            {{ t('getStarted.joinText') }}
+            {{ t.getStarted.joinText }}
           </div>
         </div>
 
@@ -108,7 +108,7 @@
         <VBtn @click="saveChanges"
               :class="{ disabled: !isFormValid }"
               :disabled="!isFormValid"
-              class="confirm-btn">{{ t('getStarted.btnGo') }}
+              class="confirm-btn">{{ t.getStarted.btnGo }}
         </VBtn>
       </v-card-actions>
     </VCard>
@@ -118,16 +118,14 @@
 <script setup>
 import {computed, ref, watch} from 'vue';
 import debounce from "debounce";
-import {useI18n} from "vue-i18n";
+import {t, getLanguage} from "@/locales/index.js";
 
 import iconShow from "@/assets/images/icon_show.svg";
 import iconHide from "@/assets/images/icon_hide.svg";
 import store from "@/core/state/store.js";
 import * as amplitude from "@amplitude/analytics-browser";
 
-const {t, locale} = useI18n({useScope: 'global'});
-
-const currentLocale = locale.value;
+const currentLocale = getLanguage();
 
 const dialogGetStarted = ref(true);
 
@@ -153,16 +151,16 @@ const resultMessage = ref('');
 
 
 const rules = {
-  required: value => !!value || t('getStarted.errorRequired'),
-  min: v => v.length >= 8 || t('getStarted.errorMinCharacters'),
-  match: v => v === password.value || t('getStarted.errorPasswordsDoNotMatch'),
-  latinAndNumbers: v => /^[a-zA-Z0-9]*$/.test(v) || t('getStarted.errorOnlyLatinAndNumbers')
+  required: value => !!value || t.value.getStarted.errorRequired,
+  min: v => v.length >= 8 || t.value.getStarted.errorMinCharacters,
+  match: v => v === password.value || t.value.getStarted.errorPasswordsDoNotMatch,
+  latinAndNumbers: v => /^[a-zA-Z0-9]*$/.test(v) || t.value.getStarted.errorOnlyLatinAndNumbers
 };
 
 // Валидация логина
 const validateLogin = (login) => {
   const loginPattern = /^[a-zA-Z0-9_]{3,32}$/;
-  return loginPattern.test(login) || t('profile.account.lblInvalidLoginFormat');
+  return loginPattern.test(login) || t.value.profile.account.lblInvalidLoginFormat;
 };
 
 const checkPasswordChange = () => {
@@ -178,7 +176,7 @@ const validateConfirmPassword = () => {
   }
 
   if (confirmPassword.value !== password.value) {
-    confirmPasswordError.value = t('getStarted.errorPasswordsDoNotMatch');
+    confirmPasswordError.value = t.value.getStarted.errorPasswordsDoNotMatch;
   } else {
     confirmPasswordError.value = '';
   }
@@ -201,7 +199,7 @@ const handleLoginInput = () => {
     debouncedCheckLoginExistence();
   } else {
     // Если есть ошибки, установим соответствующее сообщение
-    loginError.value = t('getStarted.errorOnlyLatinAndNumbers');
+    loginError.value = t.value.getStarted.errorOnlyLatinAndNumbers;
   }
 };
 
@@ -216,10 +214,10 @@ const debouncedCheckLoginExistence = debounce(async () => {
     loginAvailable.value = available;
 
     if (!available) {
-      loginError.value = t('profile.account.lblLoginAlreadyTaken');
+      loginError.value = t.value.profile.account.lblLoginAlreadyTaken;
     }
   } catch (error) {
-    loginError.value = t('profile.account.lblFailedToCheckLoginAvailability');
+    loginError.value = t.value.profile.account.lblFailedToCheckLoginAvailability;
   } finally {
     loadingLogin.value = false;
   }

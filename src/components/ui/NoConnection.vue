@@ -1,7 +1,7 @@
 <template>
   <transition name="fade">
     <div v-if="showNoConnection" class="no-connection">
-      {{ t('connection') }}
+      {{ t.connection }}
       <v-progress-circular
           class="loader color-pink"
           size="20"
@@ -14,9 +14,7 @@
 <script setup>
 import {computed, ref, watch, onUnmounted} from 'vue';
 import store from "@/core/state/store.js";
-import {useI18n} from "vue-i18n";
-
-const {t} = useI18n({useScope: 'global'});
+import {t} from "@/locales/index.js";
 const isConnected = computed(() => store.getters['webSocket/isConnected']);
 
 // Показывать "Нет соединения" через 5 секунд, если соединение не восстановилось

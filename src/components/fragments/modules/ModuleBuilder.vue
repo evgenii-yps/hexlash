@@ -27,13 +27,13 @@
 
     <!-- Build style preview -->
     <div class="build-preview" v-if="isComplete">
-      <div class="preview-title">{{ t('arena.lblBuildStyle') }}</div>
+      <div class="preview-title">{{ t.arena.lblBuildStyle }}</div>
       <div class="preview-text">{{ buildDescription }}</div>
     </div>
 
     <!-- Emergency Protocol selector -->
     <div class="emergency-protocol">
-      <div class="protocol-title">{{ t('arena.lblEmergencyProtocol') }}</div>
+      <div class="protocol-title">{{ t.arena.lblEmergencyProtocol }}</div>
       <div class="protocol-options">
         <div
             v-for="protocol in emergencyProtocols"
@@ -52,7 +52,7 @@
     <!-- Module selection modal -->
     <div class="module-modal" v-if="showModal" @click.self="closeModal">
       <div class="modal-content">
-        <div class="modal-title">{{ t('arena.lblSlotPrimary') }} {{ activeSlot + 1 }}</div>
+        <div class="modal-title">{{ t.arena.lblSlotPrimary }} {{ activeSlot + 1 }}</div>
         <div class="archetypes-grid">
           <div
               v-for="archetype in archetypes"
@@ -73,20 +73,19 @@
 
 <script setup>
 import { ref, computed } from 'vue';
-import { useI18n } from 'vue-i18n';
+import {t} from "@/locales/index.js";
 import { ARCHETYPES } from '@/core/data/archetypes.js';
 import store from '@/core/state/store.js';
 import iconHeal from '@/assets/images/icons/heal.svg';
 import iconAdrenaline from '@/assets/images/icons/adrenaline.svg';
 import iconShield from '@/assets/images/icons/shield.svg';
 
-const { t } = useI18n({ useScope: 'global' });
 const master = computed(() => store.getters['master/getMaster']);
 
 const slotLabels = computed(() => [
-  t('arena.lblSlotPrimary'),
-  t('arena.lblSlotSecondary'),
-  t('arena.lblSlotTertiary'),
+  t.value.arena.lblSlotPrimary,
+  t.value.arena.lblSlotSecondary,
+  t.value.arena.lblSlotTertiary,
 ]);
 const archetypes = Object.values(ARCHETYPES);
 

@@ -5,11 +5,11 @@
         <div class="rating-tabs">
           <VBtnDark :class="{'active-tab': activeTab === Tabs.CLUBS} "
                     @click="setActiveTab(Tabs.CLUBS)">
-            {{ t('rating.clubs') }}
+            {{ t.rating.clubs }}
           </VBtnDark>
           <VBtnDark :class="{'active-tab': activeTab === Tabs.FIGHTERS}"
                     @click="setActiveTab(Tabs.FIGHTERS)">
-            {{ t('rating.fighters') }}
+            {{ t.rating.fighters }}
           </VBtnDark>
         </div>
 
@@ -22,7 +22,7 @@
                 inputBorderColor="var(--gray1)"
                 inputTextColor="var(--white)"
                 padding="0.8rem"
-                :placeholder="t('rating.clubPlaceholder')"
+                :placeholder="t.rating.clubPlaceholder"
                 class="search-input"
                 @input="handleClubSearchInput"
             />
@@ -50,7 +50,7 @@
           <div class="table-body">
             <div class="table-header-row">
               <span class="column">№</span>
-              <span class="column-name">{{ t('rating.clubName') }}</span>
+              <span class="column-name">{{ t.rating.clubName }}</span>
               <span class="column">
                 <img :class="{'active-sort-icon': sortClubBy === 'members'}" src="@/assets/images/icon_members.svg"
                      alt="sort icon"/>
@@ -76,7 +76,7 @@
                 </div>
               </template>
               <template v-else>
-                <div class="no-results" v-if="clubsLimitReached">{{ t('rating.noResults') }}</div>
+                <div class="no-results" v-if="clubsLimitReached">{{ t.rating.noResults }}</div>
               </template>
               <template v-slot:loading>
                 <v-progress-circular v-if="!clubsLimitReached" class="loader" size="40" indeterminate/>
@@ -84,8 +84,8 @@
               <template v-slot:error="{ props }">
                 <v-alert type="error">
                   <div class="d-flex justify-space-between align-center">
-                    {{ t('rating.error') }}
-                    <v-btn color="white" size="small" variant="outlined" v-bind="props">{{ t('rating.btnRetry') }}
+                    {{ t.rating.error }}
+                    <v-btn color="white" size="small" variant="outlined" v-bind="props">{{ t.rating.btnRetry }}
                     </v-btn>
                   </div>
                 </v-alert>
@@ -103,7 +103,7 @@
                 inputBorderColor="var(--gray1)"
                 inputTextColor="var(--white)"
                 height="40px"
-                :placeholder="t('rating.participantPlaceholder')"
+                :placeholder="t.rating.participantPlaceholder"
                 class="search-input"
                 @input="handleMemberSearchInput"
             />
@@ -131,8 +131,8 @@
 
           <div class="table-body">
             <div class="table-header-row">
-              <span class="column-name">{{ t('rating.participantName') }}</span>
-<!--              <span class="column-name">{{ t('rating.club') }}</span>-->
+              <span class="column-name">{{ t.rating.participantName }}</span>
+<!--              <span class="column-name">{{ t.rating.club }}</span>-->
 
               <span class="column">
                 <img class="icon" :class="{'active-sort-icon': sortParticipantBy === 'fc'}"
@@ -165,7 +165,7 @@
             <VInfiniteScroll :items="participants" :onLoad="loadParticipants" class="infinite-scroll">
               <template v-if="participants.length" v-for="(participant, index) in participants" :key="participant.id">
                 <div :class="['table-row', index % 2 === 0 ? '' : '']" @click="viewParticipant(participant.login)">
-                  <span class="column-name">{{ participant.name || t('profile.anonymous') }}</span>
+                  <span class="column-name">{{ participant.name || t.profile.anonymous }}</span>
 <!--                  <span class="column-name">{{ participant.club }}</span>-->
                   <span class="column">{{ formatNumber(participant.wonTokens) }}</span>
                   <span class="column">{{ formatNumber(participant.losses) }}</span>
@@ -175,7 +175,7 @@
                 </div>
               </template>
               <template v-else>
-                <div class="no-results" v-if="participantLimitReached">{{ t('rating.noResults') }}</div>
+                <div class="no-results" v-if="participantLimitReached">{{ t.rating.noResults }}</div>
               </template>
               <template v-slot:loading>
                 <v-progress-circular v-if="!participantLimitReached" class="loader" size="40" indeterminate/>
@@ -183,8 +183,8 @@
               <template v-slot:error="{ props }">
                 <v-alert type="error">
                   <div class="d-flex justify-space-between align-center">
-                    {{ t('rating.error') }}
-                    <v-btn color="white" size="small" variant="outlined" v-bind="props"> {{ t('rating.btnRetry') }}
+                    {{ t.rating.error }}
+                    <v-btn color="white" size="small" variant="outlined" v-bind="props"> {{ t.rating.btnRetry }}
                     </v-btn>
                   </div>
                 </v-alert>
@@ -203,12 +203,11 @@ import {ref, onMounted, watch, computed, onUnmounted} from 'vue';
 import {useRouter, useRoute} from 'vue-router';
 import InputField from "@/components/ui/InputField.vue";
 import debounce from "debounce";
-import {useI18n} from "vue-i18n";
+import {t} from "@/locales/index.js";
 import store from "@/core/state/store.js";
 import {formatNumber} from "@/core/constants.js";
 import * as amplitude from "@amplitude/analytics-browser";
 
-const {t} = useI18n({useScope: 'global'})
 
 // Enum для вкладок
 const Tabs = {
@@ -233,19 +232,19 @@ const participantLimitReached = computed(() => store.getters['user/isLimitReache
 const clubId = ref(route.query.clubId);
 
 
-const clubSortItems = [
-  {name: t('rating.total'), value: 'battles'},
-  {name: t('rating.members'), value: 'members'},
-  {name: t('rating.wins'), value: 'wins'}
-];
+const clubSortItems = computed(() => [
+  {name: t.value.rating.total, value: 'battles'},
+  {name: t.value.rating.members, value: 'members'},
+  {name: t.value.rating.wins, value: 'wins'}
+]);
 
-const membersSortedItem = [
-  {name: t('rating.wins'), value: 'wins'},
-  {name: t('rating.fc'), value: 'fc'},
-  {name: t('rating.losses'), value: 'losses'},
-  {name: t('rating.total'), value: 'battles'},
-  {name: t('rating.luck'), value: 'luck'}
-];
+const membersSortedItem = computed(() => [
+  {name: t.value.rating.wins, value: 'wins'},
+  {name: t.value.rating.fc, value: 'fc'},
+  {name: t.value.rating.losses, value: 'losses'},
+  {name: t.value.rating.total, value: 'battles'},
+  {name: t.value.rating.luck, value: 'luck'}
+]);
 
 const clubs = computed(() => store.getters['club/getClubRatingsList']);
 const participants = computed(() => store.getters['user/getParticipantRatingsList']);

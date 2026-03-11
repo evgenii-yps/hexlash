@@ -23,9 +23,8 @@
 <script setup>
 import {ref, nextTick, watch} from 'vue';
 import store from "@/core/state/store.js";
-import {useI18n} from "vue-i18n";
+import {t} from "@/locales/index.js";
 import * as amplitude from "@amplitude/analytics-browser";
-const { t } = useI18n({ useScope: 'global' })
 
 const userName = ref(null);
 const isEditingName = ref(false);
@@ -48,7 +47,7 @@ const saveName = () => {
 
 watch(store.getters['master/getMaster'], (newMaster) => {
   if (newMaster && newMaster.userData) {
-    userName.value = newMaster.userData.name || t('profile.anonymous');
+    userName.value = newMaster.userData.name || t.value.profile.anonymous;
   }
 }, {immediate: true});
 

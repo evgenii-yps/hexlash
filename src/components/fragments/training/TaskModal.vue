@@ -6,17 +6,17 @@
         {{ props.task?.description }}
       </v-card-text>
 
-      <VBtn v-if="isSocialTask" size="large" @click="goToLink(props.task)" class="execute-task confirm-btn">{{ t('training.goToTaskButton') }}</VBtn>
+      <VBtn v-if="isSocialTask" size="large" @click="goToLink(props.task)" class="execute-task confirm-btn">{{ t.training.goToTaskButton }}</VBtn>
 
-      <div v-if="isSocialTask" class="notice"><span style="color:var(--white)">{{ t('training.titleNotice') }}</span> {{ t('training.taskNotice') }}</div>
+      <div v-if="isSocialTask" class="notice"><span style="color:var(--white)">{{ t.training.titleNotice }}</span> {{ t.training.taskNotice }}</div>
 
       <v-card-actions>
         <div v-if="isSocialTask">
-          <VBtnDark @click="closeDialog" class="cancel-btn">{{ t('modal.btnCancel') }}</VBtnDark>
-          <VBtn @click="completeTask" :disabled="!isOpenLink" class="confirm-btn">{{ t('modal.btnConfirm') }}</VBtn>
+          <VBtnDark @click="closeDialog" class="cancel-btn">{{ t.modal.btnCancel }}</VBtnDark>
+          <VBtn @click="completeTask" :disabled="!isOpenLink" class="confirm-btn">{{ t.modal.btnConfirm }}</VBtn>
         </div>
         <div v-else>
-          <VBtn @click="closeDialog" class="confirm-btn">{{ t('modal.btnOk') }}</VBtn>
+          <VBtn @click="closeDialog" class="confirm-btn">{{ t.modal.btnOk }}</VBtn>
         </div>
 
       </v-card-actions>
@@ -26,11 +26,10 @@
 
 <script setup>
 import {ref, computed} from 'vue';
-import {useI18n} from "vue-i18n";
+import {t} from "@/locales/index.js";
 
 const dialog = ref(false);
 const emit = defineEmits(['close', 'complete']);
-const {t} = useI18n({useScope: 'global'})
 
 const isOpenLink = ref(false);
 

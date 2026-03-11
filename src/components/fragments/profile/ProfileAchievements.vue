@@ -43,7 +43,7 @@
                                class="achievement-icon"/>
                           <img v-else src="@/assets/images/icon_lock.png" alt="Locked" class="achievement-icon"/>
                           <span class="achievement-title">{{
-                              achievement.isCompleted || achievement.transparent ? achievement.title : t('profile.achievements.lblHidden')
+                              achievement.isCompleted || achievement.transparent ? achievement.title : t.profile.achievements.lblHidden
                             }}</span>
                           <img v-if="!achievement.isCompleted && achievement.transparent"
                                src="@/assets/images/icon_lock.svg" alt="Locked Overlay"
@@ -62,10 +62,10 @@
                         <template #activator="{ props }">
                           <div v-bind="props" @click="achievement.show = !achievement.show" class="achievement-content">
                             <img src="@/assets/images/icon_lock.png" alt="Locked" class="achievement-icon"/>
-                            <span class="achievement-title">{{ t('profile.achievements.lblHidden') }}</span>
+                            <span class="achievement-title">{{ t.profile.achievements.lblHidden }}</span>
                           </div>
                         </template>
-                        <span>{{ t('profile.achievements.lblCompleteToUnlock') }}</span>
+                        <span>{{ t.profile.achievements.lblCompleteToUnlock }}</span>
                       </v-tooltip>
                     </div>
                   </div>
@@ -78,7 +78,7 @@
     </div>
   </div>
   <div v-else>
-    {{ t('loading') }}
+    {{ t.loading }}
   </div>
 </template>
 
@@ -86,10 +86,8 @@
 import {computed, ref, watch} from 'vue';
 
 
-import {useI18n} from "vue-i18n";
+import {t} from "@/locales/index.js";
 import store from "@/core/state/store.js";
-
-const {t} = useI18n({useScope: 'global'})
 
 const allAchievements = computed(() => store.getters['achievement/getAllAchievements']);
 const achievements = ref([]);

@@ -13,10 +13,10 @@
           <img v-bind="props" @click.stop="toggleToolTip" src="@/assets/images/icon_pencil.svg" alt=""
                class="custom-icon"/>
         </template>
-        <span>{{ t('club.lblEditTooltip') }}</span>
+        <span>{{ t.club.lblEditTooltip }}</span>
       </v-tooltip>
     </template>
-    {{ t('club.lblEditClub') }}
+    {{ t.club.lblEditClub }}
     <template #append>
       <span class="custom-icon"/>
     </template>
@@ -24,11 +24,11 @@
 
   <VModal v-model="dialogEdit" max-width="500" @click:outside="hide">
     <VCard>
-      <v-card-title class="headline">{{ t('club.lblEditClub') }}</v-card-title>
+      <v-card-title class="headline">{{ t.club.lblEditClub }}</v-card-title>
       <v-card-text class="text-center">
 
         <v-text-field
-            :label="t('club.lblClubName')"
+            :label="t.club.lblClubName"
             v-model="title"
             class="title-field"
             :error-messages="titleError"
@@ -36,7 +36,7 @@
         </v-text-field>
 
         <v-textarea
-            :label="t('club.lblClubDescription')"
+            :label="t.club.lblClubDescription"
             v-model="description"
             class="description-field"
         >
@@ -57,8 +57,8 @@
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <VBtnDark @click="hide" class="cancel-btn">{{ t('modal.btnCancel') }}</VBtnDark>
-        <VBtn @click="saveChanges" class="confirm-btn">{{ t('modal.btnSave') }}</VBtn>
+        <VBtnDark @click="hide" class="cancel-btn">{{ t.modal.btnCancel }}</VBtnDark>
+        <VBtn @click="saveChanges" class="confirm-btn">{{ t.modal.btnSave }}</VBtn>
       </v-card-actions>
     </VCard>
   </VModal>
@@ -67,9 +67,7 @@
 <script setup>
 import {computed, onMounted, ref} from 'vue';
 import store from "@/core/state/store.js";
-import {useI18n} from "vue-i18n";
-
-const {t} = useI18n({useScope: 'global'})
+import {t} from "@/locales/index.js";
 
 const props = defineProps({
   clubData: {
@@ -103,15 +101,15 @@ const showToolTip = ref(false);
 const validateTitle = () => {
   const regex = /^[a-zA-Z0-9\s]*$/; // Разрешены латинские буквы, цифры и пробелы
   if (!regex.test(title.value)) {
-    titleError.value = t('club.invalidCharacters');
+    titleError.value = t.value.club.invalidCharacters;
     return false;
   }
   if (title.value.length > 32) {
-    titleError.value = t('club.tooLong');
+    titleError.value = t.value.club.tooLong;
     return false;
   }
   if (title.value.length === 0) {
-    titleError.value = t('club.empty');
+    titleError.value = t.value.club.empty;
     return false;
   }
   titleError.value = '';
@@ -140,7 +138,7 @@ const saveChanges = async () => {
     hide();
 
   } catch (error) {
-    resultMessage.value = t('club.lblErrorSaving');
+    resultMessage.value = t.value.club.lblErrorSaving;
   } finally {
     loading.value = false;
   }

@@ -32,12 +32,12 @@
                 class="create-club-btn"
                 :class="{ 'sufficient-balance': isBalanceSufficient }"
                 @click.stop="btnCreateNewClub">
-              {{ t('profile.buttons.lblCreateClub') }}
+              {{ t.profile.buttons.lblCreateClub }}
             </VBtn>
 
             <CreateClub :dialogCreate="dialogCreate" @close="dialogCreate = false" />
           </template>
-          <span> {{ t('profile.buttons.tooltipInsufficientFunds') }}</span>
+          <span> {{ t.profile.buttons.tooltipInsufficientFunds }}</span>
         </VTooltip>
       </VBtnDark>
     </div>
@@ -48,7 +48,7 @@
       <template #prepend>
         <img src="@/assets/images/icon_arrow.svg" alt="Arrow Icon" class="custom-icon"/>
       </template>
-      {{ t('profile.buttons.lblWalletManagement') }}
+      {{ t.profile.buttons.lblWalletManagement }}
     </VBtnDark>
 
     <VBtnDark
@@ -58,7 +58,7 @@
       <template #prepend>
         <img src="@/assets/images/icon_arrow.svg" alt="Arrow Icon" class="custom-icon"/>
       </template>
-      {{ t('profile.buttons.lblFightSkins') }}
+      {{ t.profile.buttons.lblFightSkins }}
     </VBtnDark>
 
     <VBtnDark
@@ -68,7 +68,7 @@
       <template #prepend>
         <img src="@/assets/images/icon_arrow.svg" alt="Arrow Icon" class="custom-icon"/>
       </template>
-      {{ t('profile.buttons.lblSettings') }}
+      {{ t.profile.buttons.lblSettings }}
     </VBtnDark>
 
     <VBtnDark
@@ -77,7 +77,7 @@
       <template #prepend>
         <img src="@/assets/images/icon_arrow.svg" alt="Arrow Icon" class="custom-icon"/>
       </template>
-      {{ t('profile.buttons.lblHelp') }}
+      {{ t.profile.buttons.lblHelp }}
     </VBtnDark>
 
     <VBtnDark
@@ -86,17 +86,17 @@
       <template #prepend>
         <img src="@/assets/images/icon_arrow.svg" alt="Arrow Icon" class="custom-icon"/>
       </template>
-      {{ t('profile.buttons.lblLogout') }}
+      {{ t.profile.buttons.lblLogout }}
     </VBtnDark>
 
     <VModal v-model="dialogExit" max-width="500">
       <VCard>
-        <v-card-title class="headline">{{ t('profile.buttons.lblConfirmLogout') }}</v-card-title>
-        <v-card-text>{{ t('profile.buttons.msgConfirmLogout') }}</v-card-text>
+        <v-card-title class="headline">{{ t.profile.buttons.lblConfirmLogout }}</v-card-title>
+        <v-card-text>{{ t.profile.buttons.msgConfirmLogout }}</v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn @click="dialogExit = false" class="cancel-btn">{{ t('modal.btnCancel') }}</v-btn>
-          <v-btn @click="logout" class="confirm-btn">{{ t('profile.buttons.lblLogout') }}</v-btn>
+          <v-btn @click="dialogExit = false" class="cancel-btn">{{ t.modal.btnCancel }}</v-btn>
+          <v-btn @click="logout" class="confirm-btn">{{ t.profile.buttons.lblLogout }}</v-btn>
         </v-card-actions>
       </VCard>
     </VModal>
@@ -110,9 +110,8 @@ import router from "@/router/index.js";
 import store from "@/core/state/store.js";
 import CreateClub from "@/components/fragments/club/CreateClub.vue";
 import {COST_CREATE_CLUB} from "@/core/constants.js";
-import {useI18n} from "vue-i18n";
+import {t} from "@/locales/index.js";
 import * as masterService from "@/core/services/masterService.js";
-const { t } = useI18n({ useScope: 'global' })
 
 const master = computed(() => store.getters['master/getMaster']);
 const clubId = computed(() => master.value?.userData.clubId);
@@ -120,7 +119,7 @@ const isBalanceSufficient = computed(() => master.value?.getBalance() >= COST_CR
 
 const isOwner = ref(false);
 const clubData = ref(null);
-const clubText = ref(t('loading'));
+const clubText = ref(t.value.loading);
 const showToolTip = ref(false);
 const dialogCreate = ref(false);
 const dialogExit = ref(false);
@@ -160,10 +159,10 @@ onMounted(async () => {
     const data = await store.dispatch('club/getClubById', clubId.value);
     if (data) {
       clubData.value = data;
-      clubText.value = `${t('profile.buttons.lblClub')} ${clubData.value.name}`;
+      clubText.value = `${t.value.profile.buttons.lblClub} ${clubData.value.name}`;
       isOwner.value = master.value && master.value.userData.id === clubData.value.owner;
     } else {
-      clubText.value = t('profile.buttons.lblClubError') ;
+      clubText.value = t.value.profile.buttons.lblClubError;
     }
   }
 });

@@ -5,25 +5,25 @@
       <!-- Хедер -->
       <div class="top-bar">
         <button class="btn-back" @click="goBack">
-          <span class="back-arrow">←</span> {{ t('moves.lblBack') }}
+          <span class="back-arrow">←</span> {{ t.moves.lblBack }}
         </button>
         <div class="resource-panel">
           <div class="resource-taps">
-            <span class="resource-label">{{ t('moves.lblTaps') }}</span>
+            <span class="resource-label">{{ t.moves.lblTaps }}</span>
             <span class="resource-value">{{ taps }}</span>
           </div>
           <div class="resource-divider"></div>
           <div class="resource-xp-grid">
             <div class="xp-row">
-              <span class="xp-branch-name">{{ t('moves.lblSpeed') }}</span>
+              <span class="xp-branch-name">{{ t.moves.lblSpeed }}</span>
               <span class="xp-branch-val">{{ branchExp.speed }} XP</span>
             </div>
             <div class="xp-row">
-              <span class="xp-branch-name">{{ t('moves.lblPower') }}</span>
+              <span class="xp-branch-name">{{ t.moves.lblPower }}</span>
               <span class="xp-branch-val">{{ branchExp.power }} XP</span>
             </div>
             <div class="xp-row">
-              <span class="xp-branch-name">{{ t('moves.lblTechnique') }}</span>
+              <span class="xp-branch-name">{{ t.moves.lblTechnique }}</span>
               <span class="xp-branch-val">{{ branchExp.technique }} XP</span>
             </div>
           </div>
@@ -92,7 +92,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { useI18n } from 'vue-i18n';
+import { t } from '@/locales/index.js';
 import store from '@/core/state/store.js';
 import { branches as branchData } from '@/data/branches.js';
 import { allMoves as movesData } from '@/data/moves.js';
@@ -102,7 +102,7 @@ import MoveDetailsModal from '@/components/fragments/training/MoveDetailsModal.v
 
 const router = useRouter();
 const emit = defineEmits(['scroll']);
-const { t } = useI18n({ useScope: 'global' });
+
 
 const branches = branchData;
 const activeBranch = ref('speed');
@@ -130,7 +130,7 @@ const openModal = (moveId) => {
 const handleLevelUp = async (moveId) => {
   const success = await store.dispatch('progression/levelUpMove', moveId);
   if (!success) {
-    store.commit('master/setInfoMessage', InfoMessageModel.withoutButton(t('moves.lblInsufficientResources'), 2000));
+    store.commit('master/setInfoMessage', InfoMessageModel.withoutButton(t.value.moves.lblInsufficientResources, 2000));
   } else {
     selectedMoveId.value = null;
   }
@@ -139,7 +139,7 @@ const handleLevelUp = async (moveId) => {
 const handleUnlock = async (moveId) => {
   const success = await store.dispatch('progression/unlockMove', moveId);
   if (!success) {
-    store.commit('master/setInfoMessage', InfoMessageModel.withoutButton(t('moves.lblInsufficientResources'), 2000));
+    store.commit('master/setInfoMessage', InfoMessageModel.withoutButton(t.value.moves.lblInsufficientResources, 2000));
   } else {
     selectedMoveId.value = null;
   }

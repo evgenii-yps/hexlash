@@ -11,7 +11,7 @@
         <ModuleBuilder/>
 
         <div class="difficulty-section">
-          <div class="difficulty-label">{{ t('arena.lblDifficulty') }}</div>
+          <div class="difficulty-label">{{ t.arena.lblDifficulty }}</div>
           <div class="difficulty-buttons">
             <VBtn
                 v-for="level in ['easy', 'medium', 'hard']"
@@ -20,7 +20,7 @@
                 :class="['diff-btn', { 'diff-active': difficulty === level }]"
                 @click="setDifficulty(level)"
             >
-              {{ t('arena.lbl' + level.charAt(0).toUpperCase() + level.slice(1)) }}
+              {{ t.arena['lbl' + level.charAt(0).toUpperCase() + level.slice(1)] }}
             </VBtn>
           </div>
         </div>
@@ -33,7 +33,7 @@
               :disabled="!isBuildValid"
               @click="startFight"
           >
-            {{ t('arena.lblStartFight') }}
+            {{ t.arena.lblStartFight }}
           </VBtn>
         </div>
 
@@ -47,11 +47,10 @@
 <script setup>
 import {computed, onMounted} from 'vue';
 import store from "@/core/state/store.js";
-import {useI18n} from "vue-i18n";
+import {t} from "@/locales/index.js";
 import UserAvatar from "@/components/fragments/profile/UserAvatar.vue";
 import UserName from "@/components/fragments/profile/UserName.vue";
 import ModuleBuilder from "@/components/fragments/modules/ModuleBuilder.vue";
-const {t} = useI18n({useScope: 'global'});
 
 const master = computed(() => store.getters['master/getMaster']);
 const isBuildValid = computed(() => store.getters['fight/isBuildValid']);
