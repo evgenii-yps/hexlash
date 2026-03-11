@@ -69,7 +69,7 @@
         </transition>
 
         <!-- Dice of Fate (manual, with cooldown) -->
-        <div class="dice-area" v-if="fightPhase === 'fighting' && (diceState.ready || diceState.activeItem)">
+        <div class="dice-area" v-if="fightPhase === 'fighting' && roundNum > 0 && (diceState.ready || diceState.activeItem)">
           <button
             v-if="diceState.ready && !diceState.activeItem"
             class="dice-button dice-ready"
@@ -134,7 +134,7 @@
       </div>
 
       <!-- Results overlay (full-screen centered) -->
-      <div v-if="fightPhase === 'results'" class="results-overlay">
+      <div v-if="fightPhase === 'results'" class="results-overlay" @scroll="handleScroll">
           <div class="result-label" :class="resultClass">{{ resultText }}</div>
 
           <div class="fight-report">
@@ -664,7 +664,7 @@ const flashStyle = computed(() => ({
 
 .fight-content-wrapper {
   width: 100%;
-  padding: 16px 12px;
+  padding: 16px 12px 90px;
   box-sizing: border-box;
   max-width: 500px;
   margin: 0 auto;
@@ -962,7 +962,7 @@ const flashStyle = computed(() => ({
   background: rgba(0, 0, 0, 0.82);
   animation: resultsOverlayIn 0.5s ease-out forwards;
   overflow-y: auto;
-  padding: 80px 16px 80px;
+  padding: 80px 16px 110px;
   box-sizing: border-box;
 }
 @supports (height: 100dvh) { .results-overlay { height: 100dvh; } }
