@@ -16,7 +16,7 @@
         >
           <template v-if="selectedModules[slot - 1]">
             <img :src="getArchetype(selectedModules[slot - 1]).image" class="module-icon-img" alt=""/>
-            <span class="module-name">{{ getArchetype(selectedModules[slot - 1]).nameRu }}</span>
+            <span class="module-name">{{ t.arena.archetypes[selectedModules[slot - 1]] }}</span>
           </template>
           <template v-else>
             <span class="slot-placeholder">+</span>
@@ -62,8 +62,8 @@
               @click="selectArchetype(archetype.id)"
           >
             <img :src="archetype.image" class="archetype-icon-img" alt=""/>
-            <span class="archetype-name">{{ archetype.nameRu }}</span>
-            <span class="archetype-desc">{{ archetype.description }}</span>
+            <span class="archetype-name">{{ t.arena.archetypes[archetype.id] }}</span>
+            <span class="archetype-desc">{{ t.arena.archetypeDesc[archetype.id] }}</span>
           </div>
         </div>
       </div>
@@ -94,41 +94,30 @@ const selectedProtocol = ref(store.getters['fight/getEmergencyProtocol']?.type |
 const showModal = ref(false);
 const activeSlot = ref(0);
 
-const emergencyProtocols = [
-  { id: 'medkit',     name: 'Аптечка',    image: iconHeal,       trigger: 'HP < 30%' },
-  { id: 'adrenaline', name: 'Адреналин',  image: iconAdrenaline, trigger: 'Критический момент' },
-  { id: 'shield',     name: 'Щит',        image: iconShield,     trigger: 'Серия ударов' },
-];
+const emergencyProtocols = computed(() => [
+  { id: 'medkit',     name: t.value.arena.protocolName.medkit,     image: iconHeal,       trigger: t.value.arena.protocolTrigger.medkit },
+  { id: 'adrenaline', name: t.value.arena.protocolName.adrenaline, image: iconAdrenaline, trigger: t.value.arena.protocolTrigger.adrenaline },
+  { id: 'shield',     name: t.value.arena.protocolName.shield,     image: iconShield,     trigger: t.value.arena.protocolTrigger.shield },
+]);
 
 const isComplete = computed(() => selectedModules.value.every(m => m !== null));
 
 const buildDescription = computed(() => {
   if (!isComplete.value) return '';
-  const names = selectedModules.value.map(id => ARCHETYPES[id]?.nameRu || id);
+  const names = selectedModules.value.map(id => t.value.arena.archetypes[id] || id);
   return `${names.join(' + ')} — ${getBuildStyle()}`;
 });
 
 function getBuildStyle() {
   const modules = selectedModules.value;
-  if (modules.includes('predator') && modules.includes('analyst')) {
-    return 'Расчётливый хищник. Наблюдает, находит слабость, бьёт точно.';
-  }
-  if (modules.includes('sentinel') && modules.includes('juggernaut')) {
-    return 'Непробиваемый стратег. Держит удар, затем раздавливает.';
-  }
-  if (modules.includes('ghost') && modules.includes('maverick')) {
-    return 'Хаос из тени. Непредсказуем, то исчезает, то взрывается.';
-  }
-  if (modules.includes('predator') && modules.includes('juggernaut')) {
-    return 'Чистая агрессия. Давит без остановки, не даёт передышки.';
-  }
-  if (modules.includes('sentinel') && modules.includes('analyst')) {
-    return 'Стальная стена. Читает врага и контратакует в нужный момент.';
-  }
-  if (modules.includes('ghost') && modules.includes('analyst')) {
-    return 'Тень-стратег. Уклоняется и бьёт, когда противник раскрыт.';
-  }
-  return 'Уникальный стиль. Адаптируется под ситуацию.';
+  const styles = t.value.arena.buildStyle;
+  if (modules.includes('predator') && modules.includes('analyst')) return styles.predatorAnalyst;
+  if (modules.includes('sentinel') && modules.includes('juggernaut')) return styles.sentinelJuggernaut;
+  if (modules.includes('ghost') && modules.includes('maverick')) return styles.ghostMaverick;
+  if (modules.includes('predator') && modules.includes('juggernaut')) return styles.predatorJuggernaut;
+  if (modules.includes('sentinel') && modules.includes('analyst')) return styles.sentinelAnalyst;
+  if (modules.includes('ghost') && modules.includes('analyst')) return styles.ghostAnalyst;
+  return styles.default;
 }
 
 function getArchetype(id) {
