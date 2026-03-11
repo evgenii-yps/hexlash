@@ -861,7 +861,7 @@ const flashStyle = computed(() => ({
 @keyframes titlePop {
   0%   { opacity: 0; transform: scale(0.5); }
   60%  { opacity: 1; transform: scale(1.1); }
-  100% { transform: scale(1); }
+  100% { opacity: 1; transform: scale(1); }
 }
 
 .title-pop-enter-active { animation: titlePop 0.4s ease-out; }
@@ -1020,7 +1020,7 @@ const flashStyle = computed(() => ({
 @keyframes resultLabelPop {
   0%   { opacity: 0; transform: scale(2.5); }
   60%  { opacity: 1; transform: scale(0.95); }
-  100% { transform: scale(1); }
+  100% { opacity: 1; transform: scale(1); }
 }
 .result-win {
   color: #2ecc71;
