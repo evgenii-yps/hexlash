@@ -51,6 +51,7 @@ export class MasterModel {
             delete userData.email;
             delete userData.emailVerified;
             delete userData.initialVerified;
+            delete userData.language;
 
             return new MasterModel({
                 userData: userData,

@@ -38,8 +38,14 @@ export const initializeMasterData = async () => {
 export const getMasterFromAPI = () => {
     // Асинхронно обновляем данные из API
     fetchMasterData().then(async (apiUserModel) => {
+        // Приоритет: localStorage > сервер для языка
+        const savedLang = localStorage.getItem('preferredLanguage');
+        if (savedLang) {
+            apiUserModel.language = savedLang;
+        }
         await updateMasterToLocalDB(apiUserModel);
         store.commit('master/setMaster', apiUserModel);
+        i18n.global.locale.value = apiUserModel.language;
     }).catch((error) => {
         console.error('Failed to fetch user data from API:', error);
     });
@@ -375,8 +381,10 @@ export const isShowPrivacyInfo = (text) => {
 };
 
 export const resetClient = async () => {
+    const lang = localStorage.getItem('preferredLanguage');
     await deleteDB();
     localStorage.clear();
+    if (lang) localStorage.setItem('preferredLanguage', lang);
 }
 
 export const validateJwtToken = (jwtToken) => {

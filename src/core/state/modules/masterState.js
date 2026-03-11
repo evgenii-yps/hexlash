@@ -244,13 +244,13 @@ const actions = {
     async setLanguage({commit, state}, language) {
         localStorage.setItem('preferredLanguage', language);
         i18n.global.locale.value = language;
+        commit('updateMaster', { language });
+        await updateMasterToLocalDB({ language });
         // Sync to backend silently — language is already saved locally
         try {
             await masterService.changeProfile({ language });
-            commit('updateMaster', { language });
-            await updateMasterToLocalDB({ language });
         } catch {
-            // Ignore backend errors for language sync — localStorage persists the choice
+            // Ignore backend errors for language sync — locally already persisted
         }
     },
     async uploadMasterAvatar({commit}, {formData, onUploadProgress}) {
