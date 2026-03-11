@@ -43,14 +43,14 @@ const props = defineProps({
 });
 
 const ACTION_CONFIG = {
-  attack:   { image: iconAttack,   name: 'Атака',  cls: 'round-action-attack' },
-  defense:  { image: iconDefense,  name: 'Защита', cls: 'round-action-defense' },
-  position: { image: iconPosition, name: 'Позиция', cls: 'round-action-position' },
+  attack:   { image: iconAttack,   key: 'lblActionAttack',   cls: 'round-action-attack' },
+  defense:  { image: iconDefense,  key: 'lblActionDefense',  cls: 'round-action-defense' },
+  position: { image: iconPosition, key: 'lblActionPosition', cls: 'round-action-position' },
 };
 
 const actionClass = (action) => ACTION_CONFIG[action]?.cls || '';
 const actionImage = (action) => ACTION_CONFIG[action]?.image || '';
-const actionName  = (action) => ACTION_CONFIG[action]?.name || action;
+const actionName  = (action) => t.value.fight[ACTION_CONFIG[action]?.key] || action;
 
 const formatEvent = (evt) => {
   switch (evt.type) {

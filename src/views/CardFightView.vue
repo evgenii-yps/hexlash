@@ -81,8 +81,8 @@
             <div v-if="diceState.activeItem" class="dice-item-result">
               <img :src="diceState.activeItem.image" class="dice-result-icon" alt=""/>
               <div class="dice-info">
-                <span class="dice-name">{{ diceState.activeItem.name }}</span>
-                <span class="dice-desc">{{ diceState.activeItem.desc }}</span>
+                <span class="dice-name">{{ t.fight.diceName[diceState.activeItem.id] }}</span>
+                <span class="dice-desc">{{ t.fight.diceDesc[diceState.activeItem.id] }}</span>
               </div>
             </div>
           </transition>
@@ -91,8 +91,8 @@
         <!-- Active modifiers display -->
         <div class="modifiers-bar" v-if="fightPhase === 'fighting' && anyModActive">
           <span v-if="playerModifiers.attackMultiplier > 1" class="mod-badge mod-double"><img :src="iconAdrenaline" class="mod-icon" alt=""/> 2x ATK</span>
-          <span v-if="playerModifiers.shieldActive"         class="mod-badge mod-shield"><img :src="iconShield" class="mod-icon" alt=""/> ЩИТ</span>
-          <span v-if="playerModifiers.blindActive"          class="mod-badge mod-blind"><img :src="iconBlind" class="mod-icon" alt=""/> СЛЕПОТА</span>
+          <span v-if="playerModifiers.shieldActive"         class="mod-badge mod-shield"><img :src="iconShield" class="mod-icon" alt=""/> {{ t.fight.lblModShield }}</span>
+          <span v-if="playerModifiers.blindActive"          class="mod-badge mod-blind"><img :src="iconBlind" class="mod-icon" alt=""/> {{ t.fight.lblModBlind }}</span>
         </div>
 
         <!-- Coach boost active indicator -->

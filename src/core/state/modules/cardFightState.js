@@ -2,6 +2,7 @@ import { CombatEngine } from '@/core/engine/combatEngine.js';
 import { ModuleAIStrategy } from '@/core/engine/aiStrategy.js';
 import { OpponentGenerator } from '@/core/engine/opponentGenerator.js';
 import { ARCHETYPES } from '@/core/data/archetypes.js';
+import { t } from '@/locales/index.js';
 import router from '@/router/index.js';
 import { MAX_HP, MAX_ROUNDS, DICE_COOLDOWN_ROUNDS, EMERGENCY_HP_THRESHOLD, COACH_MIN_ROUND, COACH_TRIGGER_CHANCE, COACH_BOOST_ROUNDS, ROUND_ANIMATION_MS } from '@/core/constants.js';
 import iconHeal from '@/assets/images/icons/heal.svg';
@@ -16,12 +17,12 @@ const FIGHT_STORAGE_KEY   = 'hexlash_current_fight';
 
 // ─── Dice items ──────────────────────────────────────────────────────────────
 export const DICE_ITEMS = [
-    { id: 'heal',       name: 'АПТЕЧКА',    emoji: '💊', image: iconHeal,       effect: 'heal',       desc: '+15 HP' },
-    { id: 'adrenaline', name: 'АДРЕНАЛИН',  emoji: '⚡', image: iconAdrenaline, effect: 'adrenaline', desc: '2x урон' },
-    { id: 'shield',     name: 'ЩИТ',        emoji: '🛡️', image: iconShield,     effect: 'shield',     desc: 'Блок атаки' },
-    { id: 'blind',      name: 'ОСЛЕПЛЕНИЕ', emoji: '✨', image: iconBlind,      effect: 'blind',      desc: 'Промах врага' },
-    { id: 'rage',       name: 'ЯРОСТЬ',     emoji: '🔥', image: iconRage,       effect: 'rage',       desc: '-20 HP врагу' },
-    { id: 'crit',       name: 'КРИТ',       emoji: '💀', image: iconCrit,       effect: 'crit',       desc: '-30 HP врагу' },
+    { id: 'heal',       emoji: '💊', image: iconHeal,       effect: 'heal' },
+    { id: 'adrenaline', emoji: '⚡', image: iconAdrenaline, effect: 'adrenaline' },
+    { id: 'shield',     emoji: '🛡️', image: iconShield,     effect: 'shield' },
+    { id: 'blind',      emoji: '✨', image: iconBlind,      effect: 'blind' },
+    { id: 'rage',       emoji: '🔥', image: iconRage,       effect: 'rage' },
+    { id: 'crit',       emoji: '💀', image: iconCrit,       effect: 'crit' },
 ];
 
 // ─── Module-level AI instances (NOT stored in Vuex) ──────────────────────────
@@ -165,7 +166,7 @@ const getters = {
     getBuildDescription: (s) => {
         const names = s.playerModules
             .filter(id => id)
-            .map(id => ARCHETYPES[id]?.nameRu || id);
+            .map(id => t.value.arena.archetypes[id] || ARCHETYPES[id]?.name || id);
         return names.join(' + ');
     },
 
@@ -365,7 +366,7 @@ const actions = {
             }
             const PROTOCOL_IMAGES = { medkit: iconHeal, adrenaline: iconAdrenaline, shield: iconShield };
             commit('setEmergencyUsed', true);
-            commit('setEventTitle', { title: 'ЭКСТРЕННЫЙ ПРОТОКОЛ', cls: 'event-emergency', image: PROTOCOL_IMAGES[protocol.type] });
+            commit('setEventTitle', { title: t.value.fight.lblEventEmergency, cls: 'event-emergency', image: PROTOCOL_IMAGES[protocol.type] });
         }
     },
 
@@ -404,7 +405,8 @@ const actions = {
         }
 
         commit('addStats', { dicePickedUp: 1 });
-        commit('setEventTitle', { title: `${item.name}!`, cls: 'event-dice-pickup', image: item.image });
+        const diceName = t.value.fight.diceName[item.id] || item.id;
+        commit('setEventTitle', { title: `${diceName}!`, cls: 'event-dice-pickup', image: item.image });
 
         setTimeout(() => {
             commit('setDiceState', { activeItem: null });
