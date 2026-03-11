@@ -4,7 +4,7 @@ import {LoginStateModel} from "@/core/models/internal/loginStateModel.js";
 import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
 import {PasswordResetStateModel} from "@/core/models/internal/passwordResetStateModel.js";
 import {SignupStateModel} from "@/core/models/internal/signupStateModel.js";
-import {i18n} from '@/main.js';
+import {t, setLanguage as setLocaleLanguage} from '@/locales/index.js';
 import * as masterService from "@/core/services/masterService.js";
 import {ErrorMessageModel} from "@/core/models/internal/errorMessageModel.js";
 import {setTelegram, updateJwtToken} from "@/core/services/masterService.js";
@@ -242,8 +242,7 @@ const actions = {
         }
     },
     async setLanguage({commit, state}, language) {
-        localStorage.setItem('preferredLanguage', language);
-        i18n.global.locale.value = language;
+        setLocaleLanguage(language);
         commit('updateMaster', { language });
         await updateMasterToLocalDB({ language });
         // Sync to backend silently — language is already saved locally
@@ -295,7 +294,7 @@ const actions = {
         try {
             const inviteId = state.master.inviteId;
 
-            const inviteText = i18n.global.t('profile.invite.inviteText');
+            const inviteText = t.value.profile.invite.inviteText;
 
             const inviteLink = `https://t.me/share/url?url=https://t.me/hexlashbot?start=${inviteId}&text=${encodeURIComponent(inviteText)}`;
 

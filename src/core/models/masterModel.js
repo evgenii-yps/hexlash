@@ -1,6 +1,6 @@
 import {MASTER_TAG} from "@/core/database/masterRepository.js";
 import {DECIMALS} from "@/core/constants.js";
-import {locale} from "@/main.js";
+import {getLanguage} from "@/locales/index.js";
 
 
 export class MasterModel {
@@ -11,7 +11,7 @@ export class MasterModel {
                     inviteId = null,
                     email = '',
                     emailVerified = false,
-                    language = locale,
+                    language = getLanguage(),
                     initialVerified = false,
                     userData = {}
                 } = {}) {

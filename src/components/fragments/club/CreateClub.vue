@@ -2,11 +2,11 @@
 
   <VModal v-model="props.dialogCreate" max-width="500" @click:outside="hide">
     <VCard>
-      <v-card-title class="headline">{{ t('club.modalTitle') }}</v-card-title>
+      <v-card-title class="headline">{{ t.club.modalTitle }}</v-card-title>
       <v-card-text class="text-center">
 
         <v-text-field
-            :label="t('club.inputName')"
+            :label="t.club.inputName"
             v-model="title"
             class="title-field"
             :error-messages="titleError"
@@ -14,13 +14,13 @@
         </v-text-field>
 
         <v-textarea
-            :label="t('club.inputDescription')"
+            :label="t.club.inputDescription"
             v-model="description"
             class="description-field"
         >
         </v-textarea>
 
-        <div class="notice">{{ t('club.notice') }}</div>
+        <div class="notice">{{ t.club.notice }}</div>
 
         <div class="cost">{{ COST_CREATE_CLUB }}$</div>
 
@@ -38,8 +38,8 @@
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <VBtnDark @click="hide" class="cancel-btn">{{ t('modal.btnCancel') }}</VBtnDark>
-        <VBtn @click="saveChanges" class="confirm-btn">{{ t('modal.btnCreate') }}</VBtn>
+        <VBtnDark @click="hide" class="cancel-btn">{{ t.modal.btnCancel }}</VBtnDark>
+        <VBtn @click="saveChanges" class="confirm-btn">{{ t.modal.btnCreate }}</VBtn>
       </v-card-actions>
     </VCard>
   </VModal>
@@ -50,9 +50,7 @@ import {ref} from 'vue';
 import store from "@/core/state/store.js";
 import {COST_CREATE_CLUB} from "@/core/constants.js";
 import router from "@/router/index.js";
-import {useI18n} from "vue-i18n";
-
-const {t} = useI18n({useScope: 'global'})
+import {t} from "@/locales/index.js";
 
 
 const title = ref("");
@@ -74,15 +72,15 @@ const emit = defineEmits(['close']);
 const validateTitle = () => {
   const regex = /^[a-zA-Z0-9\s]*$/; // Разрешены латинские буквы, цифры и пробелы
   if (!regex.test(title.value)) {
-    titleError.value  = t('club.errorInvalidCharacters');
+    titleError.value  = t.value.club.errorInvalidCharacters;
     return false;
   }
   if (title.value.length > 32) {
-    titleError.value = t('club.errorTooLong');
+    titleError.value = t.value.club.errorTooLong;
     return false;
   }
   if(title.value.length === 0) {
-    titleError.value = t('club.errorEmpty');
+    titleError.value = t.value.club.errorEmpty;
     return false;
   }
   titleError.value = '';
@@ -112,7 +110,7 @@ const saveChanges = async () => {
       await router.push({path: `/club/${club.id}`});
     }
   } catch (error) {
-    resultMessage.value = t('club.errorCreate');
+    resultMessage.value = t.value.club.errorCreate;
   } finally {
     loading.value = false;
   }

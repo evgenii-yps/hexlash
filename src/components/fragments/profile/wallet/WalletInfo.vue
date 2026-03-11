@@ -2,7 +2,7 @@
   <div class="wallet-info">
 
     <InputField
-        :label="t('profile.wallet.lblConnectedWalletAddress')"
+        :label="t.profile.wallet.lblConnectedWalletAddress"
         type="text"
         v-model="walletAddress"
         labelColor="var(--white)"
@@ -34,10 +34,8 @@ import {computed} from 'vue';
 import InputField from "@/components/ui/InputField.vue";
 
 import BuyButton from "@/components/fragments/profile/wallet/BuyTokens.vue";
-import {useI18n} from "vue-i18n";
+import {t, interpolate} from "@/locales/index.js";
 import {useWeb3ModalAccount} from "@web3modal/ethers/vue";
-
-const { t } = useI18n({ useScope: 'global' })
 
 const { address } = useWeb3ModalAccount();
 
@@ -46,9 +44,9 @@ const walletAddress = computed(() => address.value);
 
 const copyToClipboard = () => {
   navigator.clipboard.writeText(walletAddress.value).then(() => {
-    alert(t('profile.wallet.msgWalletAddressCopied'));
+    alert(t.value.profile.wallet.msgWalletAddressCopied);
   }).catch(err => {
-    console.error(t('profile.wallet.msgCopyError', { error: err }));
+    console.error(interpolate(t.value.profile.wallet.msgCopyError, { error: err }));
   });
 };
 

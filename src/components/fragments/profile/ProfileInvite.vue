@@ -14,11 +14,11 @@
             <img src="@/assets/images/icon_copy.svg" alt="Copy Icon" class="copy-icon">
           </div>
           <div class="share-icon-container" @click="openShare">
-            {{ t('profile.invite.inviteFriend') }}
+            {{ t.profile.invite.inviteFriend }}
           </div>
         </div>
       </template>
-      <span>{{ t('profile.invite.lblTooltipText') }}</span>
+      <span>{{ t.profile.invite.lblTooltipText }}</span>
     </v-tooltip>
   </div>
 
@@ -26,11 +26,11 @@
   <VModal v-model="showDialogConfirmShare" max-width="500">
     <VCard>
       <v-card-title class="headline"></v-card-title>
-      <v-card-text>{{ t('profile.invite.confirmInviteFriend') }}</v-card-text>
+      <v-card-text>{{ t.profile.invite.confirmInviteFriend }}</v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn @click="showDialogConfirmShare = false" class="cancel-btn">{{ t('modal.btnCancel') }}</v-btn>
-        <v-btn @click="goToUrl" class="confirm-btn">{{ t('modal.btnConfirm') }}</v-btn>
+        <v-btn @click="showDialogConfirmShare = false" class="cancel-btn">{{ t.modal.btnCancel }}</v-btn>
+        <v-btn @click="goToUrl" class="confirm-btn">{{ t.modal.btnConfirm }}</v-btn>
       </v-card-actions>
     </VCard>
   </VModal>
@@ -40,9 +40,8 @@
 <script setup>
 import {computed, onMounted, ref, watch} from 'vue';
 import store from "@/core/state/store.js";
-import {useI18n} from "vue-i18n";
+import {t, interpolate} from "@/locales/index.js";
 import {VBtn, VCard, VCardActions, VCardText, VCardTitle, VSpacer} from "vuetify/components";
-const { t } = useI18n({ useScope: 'global' })
 
 
 
@@ -69,9 +68,9 @@ watch(store.getters['master/getMaster'],  async(newMaster) => {
 
 const copyToClipboard = () => {
   navigator.clipboard.writeText(inviteCode.value).then(() => {
-    alert(t('profile.invite.lblCopySuccess'));
+    alert(t.value.profile.invite.lblCopySuccess);
   }).catch(err => {
-    console.error( t('profile.invite.lblCopyError', { error: err }));
+    console.error(interpolate(t.value.profile.invite.lblCopyError, { error: err }));
   });
 };
 

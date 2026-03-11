@@ -9,17 +9,15 @@
             {{ buttonText }}
           </VBtnDark>
         </template>
-        <span>{{ t('profile.wallet.msgConnectWalletTooltip') }}</span>
+        <span>{{ t.profile.wallet.msgConnectWalletTooltip }}</span>
       </v-tooltip>
     </div>
   </div>
 </template>
 
 <script setup>
-import {useI18n} from "vue-i18n";
+import {t} from "@/locales/index.js";
 import {computed} from "vue";
-
-const { t } = useI18n({ useScope: 'global' })
 
 import {useDisconnect, useWeb3Modal, useWeb3ModalAccount} from '@web3modal/ethers/vue'
 
@@ -32,8 +30,8 @@ const walletAddress = computed(() => address.value);
 
 const buttonText = computed(() => {
   return address.value
-      ? t('profile.wallet.lblReconnectWallet') // Текст для кнопки "Реконнект"
-      : t('profile.wallet.lblConnectWallet'); // Текст для кнопки "Подключить кошелек"
+      ? t.value.profile.wallet.lblReconnectWallet // Текст для кнопки "Реконнект"
+      : t.value.profile.wallet.lblConnectWallet; // Текст для кнопки "Подключить кошелек"
 });
 
 const switchAccount = async () => {

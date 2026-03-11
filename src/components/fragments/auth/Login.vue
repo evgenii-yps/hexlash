@@ -2,7 +2,7 @@
   <div class="login-container">
     <form @submit.prevent="handleSubmit">
       <InputField
-          :label="t('auth.login.lblLogin')"
+          :label="t.auth.login.lblLogin"
           v-model="login"
           labelColor="var(--white)"
           labelSize="0.65rem"
@@ -13,7 +13,7 @@
           marginBottom="0.8rem"
       />
       <InputField
-          :label="t('auth.login.lblPassword')"
+          :label="t.auth.login.lblPassword"
           :type="showPassword ? 'text' : 'password'"
           v-model="password"
           labelColor="var(--white)"
@@ -45,7 +45,7 @@
         </button>
       </InputField>
 
-      <div v-if="authState.authError" class="error-message">{{ t('auth.login.authError') }}</div>
+      <div v-if="authState.authError" class="error-message">{{ t.auth.login.authError }}</div>
 
       <v-progress-circular
           v-if="loading"
@@ -55,24 +55,24 @@
       />
 
       <VBtn v-if="!loading" class="auth-btn" @click="handleSubmit">
-        {{ t('auth.login.btnLogin') }}
+        {{ t.auth.login.btnLogin }}
       </VBtn>
     </form>
 
     <div class="signup" v-if="!loading">
-      {{ t('auth.login.questionSignup') }}
+      {{ t.auth.login.questionSignup }}
       <ButtonText @click="handleSignup"
                   textColor="var(--pink)"
                   text-size="1.5em">
-        {{ t('auth.login.btnSignup') }}
+        {{ t.auth.login.btnSignup }}
       </ButtonText>
     </div>
     <div class="reset-password" v-if="authState.authError">
-      {{ t('auth.login.lblOrPass') }}
+      {{ t.auth.login.lblOrPass }}
       <ButtonText @click="handleReset"
                   textColor="var(--pink)"
                   text-size="1.5em">
-        {{ t('auth.login.btnReset') }}
+        {{ t.auth.login.btnReset }}
       </ButtonText>
     </div>
   </div>
@@ -85,9 +85,7 @@ import ButtonText from "@/components/ui/ButtonText.vue";
 import {useRouter} from 'vue-router';
 
 import store from "@/core/state/store.js";
-import {useI18n} from "vue-i18n";
-
-const {t} = useI18n({useScope: 'global'})
+import {t} from "@/locales/index.js";
 
 const router = useRouter();
 

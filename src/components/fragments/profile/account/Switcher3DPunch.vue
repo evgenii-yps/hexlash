@@ -3,7 +3,7 @@
     <VBtnDark
         class="punch-btn"
         @click="toggle3DPunch">
-      {{t('profile.account.is3dPunch')}}
+      {{ t.profile.account.is3dPunch }}
       <template #append>
         <span class="custom-icon"/>
         <v-switch
@@ -21,9 +21,8 @@
 <script setup>
 
 import {computed, onMounted, ref} from "vue";
-import {useI18n} from "vue-i18n";
+import {t} from "@/locales/index.js";
 import store from "@/core/state/store.js";
-const {t} = useI18n({useScope: 'global'})
 
 const is3DPunch = ref(!store.getters['punch/is2DPunchEnabled']); // Инвертируем начальное значение из store
 

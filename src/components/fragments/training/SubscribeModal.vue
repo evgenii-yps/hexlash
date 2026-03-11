@@ -6,13 +6,13 @@
         {{ props.task?.description }}
       </v-card-text>
 
-      <VBtn size="large" @click="goToLink(props.task)" class="execute-task confirm-btn">{{ t('training.goToTaskButton') }}</VBtn>
+      <VBtn size="large" @click="goToLink(props.task)" class="execute-task confirm-btn">{{ t.training.goToTaskButton }}</VBtn>
 
-      <div class="notice"><span style="color:var(--white)">{{ t('training.titleNotice') }}</span> {{ t('training.taskNotice') }}</div>
+      <div class="notice"><span style="color:var(--white)">{{ t.training.titleNotice }}</span> {{ t.training.taskNotice }}</div>
 
       <v-card-actions>
-        <VBtnDark @click="closeDialog" class="cancel-btn">{{ t('modal.btnCancel') }}</VBtnDark>
-        <VBtn @click="completeTask" :disabled="!isOpenLink" class="confirm-btn">{{ t('modal.btnConfirm') }}</VBtn>
+        <VBtnDark @click="closeDialog" class="cancel-btn">{{ t.modal.btnCancel }}</VBtnDark>
+        <VBtn @click="completeTask" :disabled="!isOpenLink" class="confirm-btn">{{ t.modal.btnConfirm }}</VBtn>
       </v-card-actions>
     </VCard>
   </VModal>
@@ -21,12 +21,11 @@
 <script setup>
 import {ref, computed} from 'vue';
 import router from "@/router/index.js";
-import {useI18n} from "vue-i18n";
+import {t} from "@/locales/index.js";
 import * as amplitude from "@amplitude/analytics-browser";
 
 const dialog = ref(false);
 const emit = defineEmits(['close', 'complete']);
-const {t} = useI18n({useScope: 'global'})
 
 const isOpenLink = ref(false);
 

@@ -12,8 +12,8 @@
 
 
     <div v-if="isAuthenticated" class="text-pages-link">
-      <a v-ripple class="btn-text-page" @click.stop="goTo('/rules')">Rules</a>
-      <a v-ripple class="btn-text-page" @click.stop="goTo('/help')">Help</a>
+      <a v-ripple class="btn-text-page" @click.stop="goTo('/rules')">{{ t.nav.rules }}</a>
+      <a v-ripple class="btn-text-page" @click.stop="goTo('/help')">{{ t.nav.help }}</a>
     </div>
 
     <p v-if="!isAuthenticated" class="beta-text">{{ version }}</p>
@@ -32,7 +32,6 @@ import Signup from "@/components/fragments/auth/Signup.vue";
 import Reset from "@/components/fragments/auth/Reset.vue";
 import TelegramLogin from "@/components/fragments/auth/TelegramLogin.vue";
 
-const {t} = useI18n({useScope: 'global'})
 
 const isAuthenticated = computed(() => store.getters["master/getLoginState"].isAuthenticated);
 
@@ -116,7 +115,7 @@ import store from "@/core/state/store.js";
 import {LISTING} from "@/core/constants.js";
 import router from "@/router/index.js";
 import * as masterService from "@/core/services/masterService.js";
-import {useI18n} from "vue-i18n";
+import {t} from "@/locales/index.js";
 
 const vertexShader = `
 uniform mat4 textureMatrix;
@@ -1118,7 +1117,7 @@ onBeforeUnmount(() => {
 watch(isAuthenticated, (newValue) => {
   if (newValue) {
     startCountdownListing();
-    masterService.isShowPrivacyInfo(t('info.showPrivacyInfo'));
+    masterService.isShowPrivacyInfo(t.value.info.showPrivacyInfo);
   }
 }, {immediate: true});
 

@@ -2,7 +2,7 @@
   <div class="invite-container">
     <form @submit.prevent="handleInviteSubmit">
       <InputField
-          :label="t('auth.invite.lblInvite')"
+          :label="t.auth.invite.lblInvite"
           v-model="inviteCode"
           labelColor="var(--white)"
           labelSize="0.5rem"
@@ -25,15 +25,15 @@
       />
 
       <VBtn v-if="!loading" class="auth-btn" @click="handleInviteSubmit">
-        {{ t('auth.invite.btnInvite') }}
+        {{ t.auth.invite.btnInvite }}
       </VBtn>
 
       <div class="login" v-if="!inviteState.loading">
-        {{ t('auth.invite.question') }}
+        {{ t.auth.invite.question }}
         <ButtonText @click="handleLogin"
                     textColor="var(--pink)"
                     text-size="1.5em">
-          {{ t('auth.invite.btnLogin') }}
+          {{ t.auth.invite.btnLogin }}
         </ButtonText>
       </div>
     </form>
@@ -45,10 +45,8 @@ import {ref, computed, onMounted} from 'vue';
 import InputField from "@/components/ui/InputField.vue";
 import ButtonText from "@/components/ui/ButtonText.vue";
 import {useRoute, useRouter} from 'vue-router';
-import {useI18n} from "vue-i18n";
+import {t} from "@/locales/index.js";
 import store from "@/core/state/store.js";
-
-const {t} = useI18n({useScope: 'global'});
 
 const inviteCode = ref('');
 const router = useRouter();

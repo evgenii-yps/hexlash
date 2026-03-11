@@ -6,11 +6,11 @@
       <v-card-text class="text-center">
         <img :src="achievement?.icon" alt="achievement image" class="achievement-image"/>
         <div class="title">{{ achievement?.title }}</div>
-        <div class="congratulations">{{ t('profile.achievements.congratulations') }} </div>
+        <div class="congratulations">{{ t.profile.achievements.congratulations }} </div>
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <VBtn @click="hide" class="confirm-btn">{{ t('modal.btnOk') }}</VBtn>
+        <VBtn @click="hide" class="confirm-btn">{{ t.modal.btnOk }}</VBtn>
       </v-card-actions>
     </VCard>
   </VModal>
@@ -19,10 +19,8 @@
 
 <script setup>
 import { ref, watch, computed } from 'vue';
-import { useI18n } from "vue-i18n";
+import {t} from "@/locales/index.js";
 import store from "@/core/state/store.js";
-
-const { t } = useI18n({ useScope: 'global' });
 
 const dialog = ref(false);
 

@@ -2,7 +2,7 @@
   <div class="login-change-container">
     <form @submit.prevent="handleLoginSubmit" novalidate>
       <InputField
-          :label="t('profile.account.lblChangeLogin')"
+          :label="t.profile.account.lblChangeLogin"
           type="text"
           v-model="login"
           labelColor="var(--white)"
@@ -18,7 +18,7 @@
           <div class="btn-container">
             <div class="status-container">
               <div v-if="loginAvailable && loginChanged && !errorMessage" class="success-message">
-                {{ t('profile.account.lblAvailableLogin') }}
+                {{ t.profile.account.lblAvailableLogin }}
               </div>
               <v-progress-circular v-if="loading" color="var(--primary-color)" indeterminate :size="20"/>
               <img v-if="!loading && loginAvailable && loginChanged" src="@/assets/images/icon_pencil.svg"
@@ -34,14 +34,14 @@
 
     <VModal v-model="dialog" max-width="500">
       <VCard>
-        <v-card-title class="headline"> {{ t('profile.account.lblConfirmChange') }}</v-card-title>
+        <v-card-title class="headline"> {{ t.profile.account.lblConfirmChange }}</v-card-title>
         <v-card-text>
-          {{ t('profile.account.msgConfirmChange', {newLogin: login}) }}
+          {{ interpolate(t.profile.account.msgConfirmChange, {newLogin: login}) }}
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn @click="dialog = false" class="cancel-btn"> {{ t('modal.btnCancel') }}</v-btn>
-          <v-btn @click="handleLoginSubmit" class="confirm-btn"> {{ t('modal.btnConfirm') }}</v-btn>
+          <v-btn @click="dialog = false" class="cancel-btn"> {{ t.modal.btnCancel }}</v-btn>
+          <v-btn @click="handleLoginSubmit" class="confirm-btn"> {{ t.modal.btnConfirm }}</v-btn>
         </v-card-actions>
       </VCard>
     </VModal>
@@ -53,10 +53,7 @@ import {computed, ref, watch} from 'vue';
 import InputField from '@/components/ui/InputField.vue';
 import store from "@/core/state/store.js";
 import debounce from "debounce";
-import {useI18n} from "vue-i18n";
-
-
-const {t} = useI18n({useScope: 'global'})
+import {t, interpolate} from "@/locales/index.js";
 
 const master = computed(() => store.getters['master/getMaster']);
 const originalLogin = ref(master.value.userData.login);
@@ -69,8 +66,8 @@ const errorMessage = ref('');
 const dialog = ref(false);
 
 const rules = {
-  required: value => !!value || t('getStarted.errorRequired'),
-  latinAndNumbers: v => /^[a-zA-Z0-9]*$/.test(v) || t('getStarted.errorOnlyLatinAndNumbers')
+  required: value => !!value || t.value.getStarted.errorRequired,
+  latinAndNumbers: v => /^[a-zA-Z0-9]*$/.test(v) || t.value.getStarted.errorOnlyLatinAndNumbers
 };
 
 const validateLogin = (login) => {
@@ -83,17 +80,17 @@ const handleLoginSubmit = () => {
   errorMessage.value = '';
 
   if (!login.value) {
-    errorMessage.value = t('profile.account.lblLoginRequired');
+    errorMessage.value = t.value.profile.account.lblLoginRequired;
     return;
   }
 
   if (!validateLogin(login.value)) {
-    errorMessage.value = t('profile.account.lblInvalidLoginFormat');
+    errorMessage.value = t.value.profile.account.lblInvalidLoginFormat;
     return;
   }
 
   if (!loginAvailable.value) {
-    errorMessage.value = t('profile.account.lblLoginNotAvailable');
+    errorMessage.value = t.value.profile.account.lblLoginNotAvailable;
     return;
   }
 
@@ -128,7 +125,7 @@ const handleLoginInput = () => {
     debouncedCheckLoginExistence();
   } else {
     // Если есть ошибки, установим соответствующее сообщение
-    errorMessage.value = t('getStarted.errorOnlyLatinAndNumbers');
+    errorMessage.value = t.value.getStarted.errorOnlyLatinAndNumbers;
   }
 };
 
@@ -145,10 +142,10 @@ const debouncedCheckLoginExistence = debounce(async () => {
     loginAvailable.value = available;
 
     if (!available) {
-      errorMessage.value = t('profile.account.lblLoginAlreadyTaken');
+      errorMessage.value = t.value.profile.account.lblLoginAlreadyTaken;
     }
   } catch (error) {
-    errorMessage.value = t('profile.account.lblFailedToCheckLoginAvailability');
+    errorMessage.value = t.value.profile.account.lblFailedToCheckLoginAvailability;
   } finally {
     loading.value = false;
   }

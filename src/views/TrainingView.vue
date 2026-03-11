@@ -37,33 +37,33 @@
 
         </div>
 
-        <div class="training-title">{{ t('training.lblTitle') }}</div>
+        <div class="training-title">{{ t.training.lblTitle }}</div>
 
         <!-- Прогрессия: тапы и опыт -->
         <div class="progression-bar">
           <div class="prog-resource">
-            <span class="prog-label">{{ t('training.lblTaps') }}</span>
+            <span class="prog-label">{{ t.training.lblTaps }}</span>
             <span class="prog-value">{{ progressionTaps }}</span>
           </div>
           <div class="prog-divider"/>
           <div class="prog-resource">
-            <span class="prog-label">{{ t('training.lblSpeed') }}</span>
+            <span class="prog-label">{{ t.training.lblSpeed }}</span>
             <span class="prog-value">{{ branchExp.speed }} XP</span>
           </div>
           <div class="prog-resource">
-            <span class="prog-label">{{ t('training.lblPower') }}</span>
+            <span class="prog-label">{{ t.training.lblPower }}</span>
             <span class="prog-value">{{ branchExp.power }} XP</span>
           </div>
           <div class="prog-resource">
-            <span class="prog-label">{{ t('training.lblTechnique') }}</span>
+            <span class="prog-label">{{ t.training.lblTechnique }}</span>
             <span class="prog-value">{{ branchExp.technique }} XP</span>
           </div>
         </div>
 
         <!-- Кнопки навигации к приёмам и колоде -->
         <div class="progression-actions">
-          <button class="btn-prog" @click="goToMoves">{{ t('training.lblMoves') }}</button>
-          <button class="btn-prog btn-prog-deck" @click="goToDeck">{{ t('training.lblDeck', { n: deckSize }) }}</button>
+          <button class="btn-prog" @click="goToMoves">{{ t.training.lblMoves }}</button>
+          <button class="btn-prog btn-prog-deck" @click="goToDeck">{{ interpolate(t.training.lblDeck, { n: deckSize }) }}</button>
         </div>
 
         <div v-if="loadingPunchInfo" class="loader-container">
@@ -78,7 +78,7 @@
           <div class="timer-overlay">
             {{ countdownText }}
           </div>
-          <div class="timer-text">{{t('training.timerText')}}</div>
+          <div class="timer-text">{{t.training.timerText}}</div>
         </div>
 
         <!-- Компонент DailyTasks -->
@@ -109,14 +109,14 @@ import SocialTasks from "@/components/fragments/training/SocialTasks.vue";
 import store from "@/core/state/store.js";
 import {COST_PER_CLICK, MULTIPLAYER_EXACT_CLICK, SPEED_MOVE_PUNCH_MS} from "@/core/constants.js";
 
-import {useI18n} from "vue-i18n";
+import {t, interpolate} from "@/locales/index.js";
 import Punch3D from "@/components/fragments/training/Punch3D.vue";
 import {Howl} from "howler";
 import {showTrainingRulesReminder} from "@/core/services/masterService.js";
 import * as amplitude from "@amplitude/analytics-browser";
 import router from "@/router/index.js";
 
-const {t} = useI18n({useScope: 'global'})
+
 
 const numbersAnimations = ref([]);
 const hitCircleRef = ref(null);
@@ -321,7 +321,7 @@ onMounted(() => {
     delayLoader3dModel.value = false
   }, 10000);
   // Показать пояснение что это за раздел
-  showTrainingRulesReminder(t("info.firstTraining"));
+  showTrainingRulesReminder(t.value.info.firstTraining);
 
   // Amplitude
   amplitude.track('OpenTrainingView');

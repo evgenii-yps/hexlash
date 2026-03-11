@@ -26,7 +26,7 @@
           aspect-ratio="1"
         />
         <div class="skin-card-price">
-          <span class="price-text">{{ t('profile.skins.lblFree') }}</span>
+          <span class="price-text">{{ t.profile.skins.lblFree }}</span>
         </div>
       </div>
     </div>
@@ -36,12 +36,10 @@
 <script setup>
 import { computed, onMounted } from 'vue';
 import store from '@/core/state/store.js';
-import { useI18n } from 'vue-i18n';
+import { t } from '@/locales/index.js';
 import { useRoute } from 'vue-router';
 import { backRef } from '@/router/index.js';
 import BackButton from '@/components/ui/BackButton.vue';
-
-const { t } = useI18n({ useScope: 'global' });
 const route = useRoute();
 
 const master = computed(() => store.getters['master/getMaster']);

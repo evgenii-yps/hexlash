@@ -3,7 +3,7 @@
       size="small"
       class="back-btn"
       @click="goBack">
-    {{ t('profile.back') }}
+    {{ t.profile.back }}
     <template #prepend>
       <img src="@/assets/images/icon_right_arrow.svg" alt="Arrow Icon" class="custom-icon"/>
     </template>
@@ -12,10 +12,8 @@
 
 <script setup>
 
-import {useI18n} from "vue-i18n";
+import {t} from "@/locales/index.js";
 import router from "@/router/index.js";
-
-const { t } = useI18n({ useScope: 'global' });
 
 // Определение пропсов
 const props = defineProps({

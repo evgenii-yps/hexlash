@@ -25,14 +25,10 @@
 import {computed, ref, watch} from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Howl } from 'howler'
-import {useI18n} from "vue-i18n";
+import {t} from "@/locales/index.js";
 
 // Определяем, является ли устройство iOS
 const isIOS = ref(/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream);
-
-
-
-const {t, locale} = useI18n({useScope: 'global'})
 
 import clickSound from '@/assets/sound/punch_air.mp3'
 import router from "@/router/index.js";
@@ -45,10 +41,10 @@ const playSound = () => {
 }
 
 const menuItems = computed(() => [
-  {icon: 'icon-arena', text: t('menu.arena'), route: '/arena'},
-  {icon: 'icon-trainings', text: t('menu.trainings'), route: '/training'},
-  {icon: 'icon-ratings', text: t('menu.ratings'), route: '/ratings/clubs'},
-  {icon: 'icon-profile', text: t('menu.profile'), route: '/profile'},
+  {icon: 'icon-arena', text: t.value.menu.arena, route: '/arena'},
+  {icon: 'icon-trainings', text: t.value.menu.trainings, route: '/training'},
+  {icon: 'icon-ratings', text: t.value.menu.ratings, route: '/ratings/clubs'},
+  {icon: 'icon-profile', text: t.value.menu.profile, route: '/profile'},
 ])
 
 const route = useRoute()

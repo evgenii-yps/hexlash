@@ -2,7 +2,7 @@
   <div class="chatid-container">
     <form @submit.prevent="handleSubmit">
       <InputField
-          :label="t('auth.telegram.lblAuth')"
+          :label="t.auth.telegram.lblAuth"
           v-model="chatId"
           labelColor="var(--white)"
           labelSize="0.5rem"
@@ -24,7 +24,7 @@
       />
 
       <VBtn v-if="!loading" class="auth-btn" @click="handleSubmit">
-        {{ t('auth.telegram.retry') }}
+        {{ t.auth.telegram.retry }}
       </VBtn>
     </form>
   </div>
@@ -33,10 +33,8 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import InputField from "@/components/ui/InputField.vue";
-import { useI18n } from 'vue-i18n';
+import {t} from "@/locales/index.js";
 import store from "@/core/state/store.js";
-
-const { t } = useI18n({ useScope: 'global' });
 
 const loading = ref(false);
 const errorMessage = ref('');

@@ -35,9 +35,8 @@ import {
     VTooltip,
     VSnackbar, VCheckbox
 } from 'vuetify/components';
-import {createI18n} from "vue-i18n";
 import App from "@/App.vue";
-import {messages, ruCountRule} from "@/locales/index.js";
+import {t, setLanguage, getLanguage} from "@/locales/index.js";
 import {initAllAchievements} from "@/core/models/achievementModel.js";
 
 
@@ -97,34 +96,17 @@ const vuetify = createVuetify({
     },
 });
 
-const availableLocales = Object.keys(messages);
-
-// Получаем язык пользователя из настроек браузера
-const userLocale = navigator.language.split('-')[0];
-
-// Проверяем, доступна ли локаль пользователя
-export const locale = availableLocales.includes(userLocale) ? userLocale : 'en';
-
-export const i18n = createI18n({
-    warnHtmlMessage: false,
-    legacy: false,
-    locale: locale,
-    fallbackLocale: 'en',
-    pluralRules: {
-        ru: ruCountRule
-    },
-    messages: Object.assign(messages),
-})
-
 async function initializeApp() {
-    // загрузки данных
     await store.dispatch('master/initializeMasterData');
-    const savedLanguage = localStorage.getItem('preferredLanguage');
-    i18n.global.locale.value = savedLanguage || store.getters['master/getLanguage'] || locale;
+    const savedLanguage = localStorage.getItem('preferredLanguage') || localStorage.getItem('hexlash-language');
+    if (savedLanguage) {
+        setLanguage(savedLanguage);
+    } else {
+        const storeLang = store.getters['master/getLanguage'];
+        if (storeLang) setLanguage(storeLang);
+    }
 
-    store.commit('achievement/setAllAchievements', initAllAchievements(i18n.global.t))
-
-
+    store.commit('achievement/setAllAchievements', initAllAchievements(t))
 }
 
 initializeApp().then(() => {
@@ -133,11 +115,8 @@ initializeApp().then(() => {
         .use(vuetify)
         .use(store)
         .use(router)
-        .use(i18n)
         .mount('#app')
 }).catch((error) => {
-    // Показываем сообщение пользователю
     alert("An error occurred while loading Hexlash. The game will now reload. ", error);
-
     location.reload();
 });

@@ -2,7 +2,7 @@
   <div class="email-confirmation-container">
     <form @submit.prevent="handleEmailSubmit" novalidate>
       <InputField
-          :label="t('profile.account.lblChangeEmail')"
+          :label="t.profile.account.lblChangeEmail"
           type="text"
           v-model="email"
           labelColor="var(--white)"
@@ -12,13 +12,13 @@
           height="40px"
           marginBottom="0.5rem"
           @input="checkEmailChange"
-          :placeholder="t('profile.account.placeholderEmail')"
+          :placeholder="t.profile.account.placeholderEmail"
           :showButton="(emailChanged || !emailVerified) && email.length > 0"
       >
         <!-- Можно вставить любую кнопку, лоадер или любой другой элемент -->
         <template v-slot>
           <VBtnDark size="small" @click="handleEmailSubmit" class="input-button">
-            {{ t('profile.account.btnSendConfirm') }}
+            {{ t.profile.account.btnSendConfirm }}
           </VBtnDark>
         </template>
 
@@ -32,10 +32,8 @@
 import {computed, onMounted, ref, watch} from 'vue';
 import InputField from '@/components/ui/InputField.vue';
 import store from "@/core/state/store.js";
-import {useI18n} from "vue-i18n";
+import {t} from "@/locales/index.js";
 import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
-
-const {t} = useI18n({useScope: 'global'})
 
 const master = computed(() => store.getters['master/getMaster']);
 const emailVerified = ref(master.value.emailVerified);
@@ -54,18 +52,18 @@ const handleEmailSubmit = async () => {
   errorMessage.value = '';
 
   if (!email.value) {
-    errorMessage.value = t('profile.account.lblEmailRequired');
+    errorMessage.value = t.value.profile.account.lblEmailRequired;
     return;
   }
 
   if (!validateEmail(email.value)) {
-    errorMessage.value = t('profile.account.lblInvalidEmailFormat');
+    errorMessage.value = t.value.profile.account.lblInvalidEmailFormat;
     return;
   }
 
   // Обновляем email через мутацию и отправляем на сервер, а сервер еще и запрос отправит по EMAIl с кодом
   if (await store.dispatch("master/updateMaster", {email: email.value})) {
-    store.commit('master/setInfoMessage', InfoMessageModel.withText(t('profile.account.sendEmailSuccess')));
+    store.commit('master/setInfoMessage', InfoMessageModel.withText(t.value.profile.account.sendEmailSuccess));
   }
 
   emailVerified.value = true;

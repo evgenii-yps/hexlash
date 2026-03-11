@@ -22,11 +22,9 @@
 import Card from "@/components/ui/Card.vue";
 import {ref, watch} from "vue";
 import {useRoute} from "vue-router";
-import {useI18n} from "vue-i18n";
+import {t} from "@/locales/index.js";
 import BackButton from "@/components/ui/BackButton.vue";
 import {backRef} from "@/router/index.js";
-
-const {t} = useI18n({useScope: 'global'})
 
 
 const route = useRoute();
@@ -35,7 +33,7 @@ const content = ref('');
 
 watch(route, () => {
   title.value = route.name.toLowerCase();
-  content.value = t(`pages.${title.value}`);
+  content.value = t.value.pages?.[title.value] || '';
 
 }, {immediate: true});
 

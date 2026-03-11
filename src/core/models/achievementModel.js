@@ -17,148 +17,149 @@ import achievementWalletIcon from '@/assets/images/achievement_wallet.png';
 import achievement1000FightsIcon from '@/assets/images/achievement_hero.png';
 
 export function initAllAchievements(t) {
+    const a = t.value.profile.achievements;
     return [
         new AchievementModel({
             type: 'CONNECTED_FIGHTER',
-            title: t('profile.achievements.titleConnectedFighter'),
+            title: a.titleConnectedFighter,
             icon: achievementSocialIcon,
             isCompleted: false,
-            description: t('profile.achievements.descConnectedFighter'),
+            description: a.descConnectedFighter,
             show: false,
             obtainedAt: 0
         }),
         new AchievementModel({
             type: 'NEWBIE',
-            title: t('profile.achievements.titleNewbie'),
+            title: a.titleNewbie,
             icon: achievementNewbieIcon,
             isCompleted: false,
-            description: t('profile.achievements.descNewbie'),
+            description: a.descNewbie,
             show: false,
             obtainedAt: 0
         }),
         new AchievementModel({
             type: 'MEETING_PARTICIPANT',
-            title: t('profile.achievements.titleMeetingParticipant'),
+            title: a.titleMeetingParticipant,
             icon: achievementDailyLoginIcon,
             isCompleted: false,
-            description: t('profile.achievements.descMeetingParticipant'),
+            description: a.descMeetingParticipant,
             show: false,
             obtainedAt: 0
         }),
         new AchievementModel({
             type: 'GOLDEN_RULE',
-            title: t('profile.achievements.titleGoldenRule'),
+            title: a.titleGoldenRule,
             icon: achievement30DaysIcon,
             isCompleted: false,
-            description: t('profile.achievements.descGoldenRule'),
+            description: a.descGoldenRule,
             show: false,
             obtainedAt: 0
         }),
         new AchievementModel({
             type: 'BATTLE_VETERAN',
-            title: t('profile.achievements.titleBattleVeteran'),
+            title: a.titleBattleVeteran,
             icon: achievementWinIcon,
             isCompleted: false,
-            description: t('profile.achievements.descBattleVeteran'),
+            description: a.descBattleVeteran,
             show: false,
             obtainedAt: 0
         }),
         new AchievementModel({
             type: 'COACH',
-            title: t('profile.achievements.titleCoach'),
+            title: a.titleCoach,
             icon: achievementCoachIcon,
             isCompleted: false,
-            description: t('profile.achievements.descCoach'),
+            description: a.descCoach,
             show: false,
             obtainedAt: 0
         }),
         new AchievementModel({
             type: 'RECRUITER',
-            title: t('profile.achievements.titleRecruiter'),
+            title: a.titleRecruiter,
             icon: achievementInviteIcon,
             isCompleted: false,
-            description: t('profile.achievements.descRecruiter'),
+            description: a.descRecruiter,
             show: false,
             obtainedAt: 0
         }),
         new AchievementModel({
             type: 'PROJECT_MAYHEM',
-            title: t('profile.achievements.titleProjectMayhem'),
+            title: a.titleProjectMayhem,
             icon: achievementSocialLeaderIcon,
             isCompleted: false,
-            description: t('profile.achievements.descProjectMayhem'),
+            description: a.descProjectMayhem,
             show: false,
             obtainedAt: 0
         }),
         new AchievementModel({
             type: 'MEATLOAF',
-            title: t('profile.achievements.titleMeatloaf'),
+            title: a.titleMeatloaf,
             icon: achievementInvestIcon,
             isCompleted: false,
-            description: t('profile.achievements.descMeatloaf'),
+            description: a.descMeatloaf,
             show: false,
             obtainedAt: 0
         }),
         new AchievementModel({
             type: 'TYLER',
-            title: t('profile.achievements.titleTyler'),
+            title: a.titleTyler,
             icon: achievementPromoIcon,
             isCompleted: false,
-            description: t('profile.achievements.descTyler'),
+            description: a.descTyler,
             show: false,
             obtainedAt: 0
         }),
         new AchievementModel({
             type: 'EXPERT',
-            title: t('profile.achievements.titleExpert'),
+            title: a.titleExpert,
             icon: achievementExpertIcon,
             isCompleted: false,
-            description: t('profile.achievements.descExpert'),
+            description: a.descExpert,
             show: false,
             obtainedAt: 0
         }),
         new AchievementModel({
             type: 'REGULAR_FIGHTER',
-            title: t('profile.achievements.titleRegularFighter'),
+            title: a.titleRegularFighter,
             icon: achievement100DaysIcon,
             isCompleted: false,
-            description: t('profile.achievements.descRegularFighter'),
+            description: a.descRegularFighter,
             show: false,
             obtainedAt: 0
         }),
         new AchievementModel({
             type: 'LUCKY_ONE',
-            title: t('profile.achievements.titleLuckyOne'),
+            title: a.titleLuckyOne,
             icon: achievementLuckIcon,
             isCompleted: false,
-            description: t('profile.achievements.descLuckyOne'),
+            description: a.descLuckyOne,
             show: false,
             obtainedAt: 0
         }),
         new AchievementModel({
             type: 'BOB',
-            title: t('profile.achievements.titleBob'),
+            title: a.titleBob,
             icon: achievement100WinsIcon,
             isCompleted: false,
-            description: t('profile.achievements.descBob'),
+            description: a.descBob,
             show: false,
             obtainedAt: 0
         }),
         new AchievementModel({
             type: 'PAPER_STREET',
-            title: t('profile.achievements.titlePaperStreet'),
+            title: a.titlePaperStreet,
             icon: achievementWalletIcon,
             isCompleted: false,
-            description: t('profile.achievements.descPaperStreet'),
+            description: a.descPaperStreet,
             show: false,
             obtainedAt: 0
         }),
         new AchievementModel({
             type: 'FIGHT_MASTER',
-            title: t('profile.achievements.titleFightMaster'),
+            title: a.titleFightMaster,
             icon: achievement1000FightsIcon,
             isCompleted: false,
-            description: t('profile.achievements.descFightMaster'),
+            description: a.descFightMaster,
             show: false,
             obtainedAt: 0
         })

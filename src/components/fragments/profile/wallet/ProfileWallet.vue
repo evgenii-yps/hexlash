@@ -28,7 +28,7 @@ import GameBalanceCard from "@/components/fragments/profile/wallet/GameBalanceCa
 import {computed, onBeforeMount, onMounted, ref, watch} from "vue";
 import store from "@/core/state/store.js";
 import ConnectWallet from "@/components/fragments/profile/wallet/ConnectWallet.vue";
-import {useI18n} from "vue-i18n";
+import {t} from "@/locales/index.js";
 import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
 import {useRoute} from "vue-router";
 import {backRef} from "@/router/index.js";
@@ -84,7 +84,6 @@ const modal = createWeb3Modal({
 
 const route = useRoute();
 
-const {t} = useI18n({useScope: 'global'})
 
 const {address, isConnected} = useWeb3ModalAccount();
 
@@ -121,7 +120,7 @@ const income = () => {
 }
 
 const withdraw = () => {
-  const withdraw = InfoMessageModel.withTimeout(t('info.withdrawAfterListing'), 3000);
+  const withdraw = InfoMessageModel.withTimeout(t.value.info.withdrawAfterListing, 3000);
   store.commit('master/setInfoMessage', withdraw);
 }
 

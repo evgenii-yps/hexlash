@@ -5,7 +5,7 @@
     <Transition name="loading-fade">
       <div v-if="showLoadingOverlay" class="loading-overlay">
         <div class="loading-hexlash">HEXLASH</div>
-        <div class="loading-never-give-up">{{ t('fight.lblNeverGiveUp') }}</div>
+        <div class="loading-never-give-up">{{ t.fight.lblNeverGiveUp }}</div>
       </div>
     </Transition>
 
@@ -27,12 +27,12 @@
               <UserName :userName="master?.userData?.name || 'You'" style="width: auto !important;"/>
             </div>
             <v-img :src="`/images/skins/${master?.userData?.skin || 'skin_m_1.png'}`" class="fighter-skin" aspect-ratio="1"/>
-            <HPBar :currentHP="liveHP1" :name="t('fight.lblHP')"/>
+            <HPBar :currentHP="liveHP1" :name="t.fight.lblHP"/>
             <div v-if="statusLeft" class="status-fighter">{{ statusLeft }}</div>
           </div>
 
           <div class="vs-center">
-            <span>{{ t('fight.lblVS') }}</span>
+            <span>{{ t.fight.lblVS }}</span>
             <div class="round-dots" v-if="fightPhase === 'fighting'">
               <span
                 v-for="n in 10"
@@ -52,7 +52,7 @@
               <UserName :userName="opponent?.name || 'Opponent'" style="width: auto !important;"/>
             </div>
             <v-img :src="`/images/skins/${opponent?.skin || 'skin_m_1.png'}`" class="fighter-skin flipped" aspect-ratio="1"/>
-            <HPBar :currentHP="liveHP2" :name="t('fight.lblHP')"/>
+            <HPBar :currentHP="liveHP2" :name="t.fight.lblHP"/>
             <div v-if="statusRight" class="status-fighter">{{ statusRight }}</div>
           </div>
         </div>
@@ -114,25 +114,25 @@
 
           <div class="coach-header">
             <img :src="iconTrainer" class="coach-avatar" alt=""/>
-            <span class="coach-title">{{ t('fight.lblCoachTitle') }}</span>
+            <span class="coach-title">{{ t.fight.lblCoachTitle }}</span>
           </div>
-          <p class="coach-subtitle">{{ t('fight.lblCoachSubtitle') }}</p>
+          <p class="coach-subtitle">{{ t.fight.lblCoachSubtitle }}</p>
 
           <div class="coach-options">
             <button class="coach-btn coach-btn-attack" @click="giveCoachAdvice('attack')">
               <img :src="iconAttack" class="coach-btn-icon" alt=""/>
-              <span class="coach-btn-text">{{ t('fight.lblCoachAttack') }}</span>
-              <span class="coach-btn-desc">{{ t('fight.lblCoachAttackDesc') }}</span>
+              <span class="coach-btn-text">{{ t.fight.lblCoachAttack }}</span>
+              <span class="coach-btn-desc">{{ t.fight.lblCoachAttackDesc }}</span>
             </button>
             <button class="coach-btn coach-btn-defense" @click="giveCoachAdvice('defense')">
               <img :src="iconDefense" class="coach-btn-icon" alt=""/>
-              <span class="coach-btn-text">{{ t('fight.lblCoachDefense') }}</span>
-              <span class="coach-btn-desc">{{ t('fight.lblCoachDefenseDesc') }}</span>
+              <span class="coach-btn-text">{{ t.fight.lblCoachDefense }}</span>
+              <span class="coach-btn-desc">{{ t.fight.lblCoachDefenseDesc }}</span>
             </button>
             <button class="coach-btn coach-btn-position" @click="giveCoachAdvice('position')">
               <img :src="iconPosition" class="coach-btn-icon" alt=""/>
-              <span class="coach-btn-text">{{ t('fight.lblCoachPosition') }}</span>
-              <span class="coach-btn-desc">{{ t('fight.lblCoachPositionDesc') }}</span>
+              <span class="coach-btn-text">{{ t.fight.lblCoachPosition }}</span>
+              <span class="coach-btn-desc">{{ t.fight.lblCoachPositionDesc }}</span>
             </button>
           </div>
         </div>
@@ -143,39 +143,39 @@
           <div class="result-label" :class="resultClass">{{ resultText }}</div>
 
           <div class="fight-report">
-            <div class="report-title">{{ t('fight.lblReport') }}</div>
+            <div class="report-title">{{ t.fight.lblReport }}</div>
             <div class="report-row">
-              <span>{{ t('fight.lblRoundsPlayed') }}:</span>
+              <span>{{ t.fight.lblRoundsPlayed }}:</span>
               <span>{{ roundNum }}</span>
             </div>
             <div class="report-row">
-              <span>{{ t('fight.lblTotalDamage') }}:</span>
+              <span>{{ t.fight.lblTotalDamage }}:</span>
               <span>{{ fightStats.totalDamageDealt }}</span>
             </div>
             <div class="report-row">
-              <span>{{ t('fight.lblPickedUp') }}:</span>
+              <span>{{ t.fight.lblPickedUp }}:</span>
               <span>{{ fightStats.dicePickedUp }}</span>
             </div>
             <div class="report-row">
-              <span>{{ t('fight.lblRemainingHP') }}:</span>
+              <span>{{ t.fight.lblRemainingHP }}:</span>
               <span>{{ liveHP1 }}</span>
             </div>
           </div>
 
           <!-- XP за бой -->
           <div v-if="xpEarned" class="xp-earned-block">
-            <div class="xp-earned-title">{{ t('fight.lblXpEarned') }}</div>
+            <div class="xp-earned-title">{{ t.fight.lblXpEarned }}</div>
             <div class="xp-earned-rows">
-              <div class="xp-row"><span class="xp-branch">{{ t('fight.lblSpeed') }}</span><span class="xp-val">+{{ xpEarned.speed ?? 0 }} XP</span></div>
-              <div class="xp-row"><span class="xp-branch">{{ t('fight.lblPower') }}</span><span class="xp-val">+{{ xpEarned.power ?? 0 }} XP</span></div>
-              <div class="xp-row"><span class="xp-branch">{{ t('fight.lblTechnique') }}</span><span class="xp-val">+{{ xpEarned.technique ?? 0 }} XP</span></div>
+              <div class="xp-row"><span class="xp-branch">{{ t.fight.lblSpeed }}</span><span class="xp-val">+{{ xpEarned.speed ?? 0 }} XP</span></div>
+              <div class="xp-row"><span class="xp-branch">{{ t.fight.lblPower }}</span><span class="xp-val">+{{ xpEarned.power ?? 0 }} XP</span></div>
+              <div class="xp-row"><span class="xp-branch">{{ t.fight.lblTechnique }}</span><span class="xp-val">+{{ xpEarned.technique ?? 0 }} XP</span></div>
             </div>
           </div>
 
           <!-- Expandable detailed log -->
           <div class="log-section">
             <button class="log-toggle" @click="showDetailedLog = !showDetailedLog">
-              {{ showDetailedLog ? t('fight.lblHideDetails') + ' ▲' : t('fight.lblShowDetails') + ' ▼' }}
+              {{ showDetailedLog ? t.fight.lblHideDetails + ' ▲' : t.fight.lblShowDetails + ' ▼' }}
             </button>
             <div v-if="showDetailedLog" class="detailed-log">
               <div v-for="r in roundLog" :key="r.roundNum" class="log-entry">
@@ -196,7 +196,7 @@
           <div class="ai-trainer">
             <div class="trainer-header">
               <img :src="iconTrainer" class="trainer-avatar-img" alt=""/>
-              <span class="trainer-title">{{ t('fight.lblTrainerAnalysis') }}</span>
+              <span class="trainer-title">{{ t.fight.lblTrainerAnalysis }}</span>
             </div>
             <div class="trainer-analysis">
               <p>{{ trainerAnalysis }}</p>
@@ -204,8 +204,8 @@
           </div>
 
           <div class="result-buttons">
-            <VBtn class="result-btn" @click="fightAgain">{{ t('fight.lblFightAgain') }}</VBtn>
-            <VBtn class="result-btn result-btn-secondary" @click="changeBuild">{{ t('fight.lblChangeDeck') }}</VBtn>
+            <VBtn class="result-btn" @click="fightAgain">{{ t.fight.lblFightAgain }}</VBtn>
+            <VBtn class="result-btn result-btn-secondary" @click="changeBuild">{{ t.fight.lblChangeDeck }}</VBtn>
           </div>
       </div>
     </div>
@@ -216,7 +216,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import store from '@/core/state/store.js';
 import router from '@/router/index.js';
-import { useI18n } from 'vue-i18n';
+import { t, interpolate } from '@/locales/index.js';
 import apiClient from '@/core/api/apiClient.js';
 import { COUNTDOWN, ROUND_ANIMATION_MS, MAX_HP } from '@/core/constants.js';
 import { ARCHETYPES } from '@/core/data/archetypes.js';
@@ -234,7 +234,7 @@ import iconAttack   from '@/assets/images/icons/attack.svg';
 import iconDefense  from '@/assets/images/icons/defense.svg';
 import iconPosition from '@/assets/images/icons/position.svg';
 
-const { t, locale } = useI18n({ useScope: 'global' });
+import { getLanguage } from '@/locales/index.js';
 
 // ── Countdown ──────────────────────────────────────────────────────────────
 const showCountdown  = ref(true);
@@ -299,7 +299,11 @@ const LOG_ACTIONS = {
 };
 
 const logActionImage = (action) => LOG_ACTIONS[action]?.image || '';
-const logActionName  = (action) => LOG_ACTIONS[action]?.key ? t(LOG_ACTIONS[action].key) : action;
+const logActionName  = (action) => {
+  if (!LOG_ACTIONS[action]?.key) return action;
+  const [ns, key] = LOG_ACTIONS[action].key.split('.');
+  return t.value[ns]?.[key] || action;
+};
 
 // ── Result UI ──────────────────────────────────────────────────────────────
 // Compute the raw result state (locale-independent) so comparisons
@@ -318,16 +322,16 @@ const resultState = computed(() => {
 
 const statusLeft = computed(() => {
   if (!resultState.value) return '';
-  if (resultState.value === 'win')  return t('fight.lblVictory');
-  if (resultState.value === 'lose') return t('fight.lblDefeat');
-  return t('fight.lblDraw');
+  if (resultState.value === 'win')  return t.value.fight.lblVictory;
+  if (resultState.value === 'lose') return t.value.fight.lblDefeat;
+  return t.value.fight.lblDraw;
 });
 
 const statusRight = computed(() => {
   if (!resultState.value) return '';
-  if (resultState.value === 'win')  return t('fight.lblDefeat');
-  if (resultState.value === 'lose') return t('fight.lblVictory');
-  return t('fight.lblDraw');
+  if (resultState.value === 'win')  return t.value.fight.lblDefeat;
+  if (resultState.value === 'lose') return t.value.fight.lblVictory;
+  return t.value.fight.lblDraw;
 });
 
 const resultText  = computed(() => statusLeft.value);
@@ -342,14 +346,14 @@ const trainerAnalysis = computed(() => {
   const won = liveHP1.value > liveHP2.value;
   const modules = playerModules.value;
   const names = modules.filter(id => id).map(id =>
-    locale.value === 'ru' ? (ARCHETYPES[id]?.nameRu || id) : (ARCHETYPES[id]?.name || id)
+    getLanguage() === 'ru' ? (ARCHETYPES[id]?.nameRu || id) : (ARCHETYPES[id]?.name || id)
   );
   const buildStr = names.join(' + ');
 
   if (won) {
-    return t('fight.trainerAnalysisWin', { build: buildStr, name: names[0] });
+    return interpolate(t.value.fight.trainerAnalysisWin, { build: buildStr, name: names[0] });
   } else {
-    return t('fight.trainerAnalysisLose', { build: buildStr, name: names[0] });
+    return interpolate(t.value.fight.trainerAnalysisLose, { build: buildStr, name: names[0] });
   }
 });
 
