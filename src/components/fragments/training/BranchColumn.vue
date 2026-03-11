@@ -1,10 +1,10 @@
 <template>
   <div class="branch-column">
     <div class="branch-header">
-      <span class="branch-name">{{ branch.name }}</span>
+      <span class="branch-name">{{ t.gameData.branches[branch.id].name }}</span>
       <span class="branch-xp">{{ branchExp }} XP</span>
     </div>
-    <p class="branch-desc">{{ branch.description }}</p>
+    <p class="branch-desc">{{ t.gameData.branches[branch.id].description }}</p>
 
     <MoveCard
         v-for="moveId in branch.moves"
@@ -25,6 +25,7 @@
 
 <script setup>
 import MoveCard from './MoveCard.vue';
+import { t } from '@/locales/index.js';
 
 const props = defineProps({
   branch: { type: Object, required: true },
