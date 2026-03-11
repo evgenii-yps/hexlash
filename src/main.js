@@ -119,7 +119,8 @@ export const i18n = createI18n({
 async function initializeApp() {
     // загрузки данных
     await store.dispatch('master/initializeMasterData');
-    i18n.global.locale.value = store.getters['master/getLanguage'] || locale;
+    const savedLanguage = localStorage.getItem('preferredLanguage');
+    i18n.global.locale.value = savedLanguage || store.getters['master/getLanguage'] || locale;
 
     store.commit('achievement/setAllAchievements', initAllAchievements(i18n.global.t))
 

@@ -4,7 +4,7 @@
   "description": "Backend API for Hexlash game",
   "main": "src/index.js",
   "scripts": {
-    "start": "node src/index.js",
+    "start": "npx prisma generate && npx prisma db push --accept-data-loss && node src/index.js",
     "dev": "node --watch src/index.js",
     "db:generate": "npx prisma generate",
     "db:push": "npx prisma db push",

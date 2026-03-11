@@ -242,9 +242,9 @@ const actions = {
         }
     },
     async setLanguage({commit, state}, language) {
+        localStorage.setItem('preferredLanguage', language);
+        i18n.global.locale.value = language;
         this.dispatch('master/updateMaster', {language: language});
-
-        i18n.global.locale.value = language
     },
     async uploadMasterAvatar({commit}, {formData, onUploadProgress}) {
         try {
