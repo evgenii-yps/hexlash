@@ -26,12 +26,15 @@
 </template>
 
 <script setup>
-import {onMounted, ref, watch} from 'vue';
+import {computed} from 'vue';
 import store from "@/core/state/store.js";
 import {useI18n} from "vue-i18n";
 const { t } = useI18n({ useScope: 'global' })
 
-const selectedLanguage = ref(store.getters['master/getLanguage']);
+const selectedLanguage = computed({
+  get: () => store.getters['master/getLanguage'] || localStorage.getItem('preferredLanguage') || 'en',
+  set: (val) => store.dispatch('master/setLanguage', val)
+});
 
 const languages = [
   {text: 'English', value: 'en'},
@@ -46,11 +49,6 @@ const languages = [
   {text: '한국어', value: 'ko'},
   {text: 'Русский', value: 'ru'},
 ];
-
-
-watch(selectedLanguage, (newLanguage) => {
-  store.dispatch('master/setLanguage', newLanguage);
-});
 </script>
 
 <style scoped>
