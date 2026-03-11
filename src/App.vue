@@ -86,7 +86,7 @@ const isAuth = computed(() => {
 const route = useRoute();
 const isScrollableComponent = computed(() => {
   const scrollablePrefixes = ['/profile', '/ratings', '/fight', '/training/']; // Префиксы маршрутов с дочерними маршрутами
-  const scrollableRoutes = ['/training', '/arena', '/404', '/verify-email']; // Точные маршруты
+  const scrollableRoutes = ['/training', '/arena', '/arena/autofight-log', '/404', '/verify-email']; // Точные маршруты
 
   // Проверка на точный маршрут или маршрут, начинающийся с одного из префиксов
   return scrollableRoutes.includes(route.path) ||
@@ -136,6 +136,8 @@ watch(isAuth, (newAuthState) => {
   if (newAuthState) {
     // Если пользователь авторизован, подключаемся к WebSocket
     store.dispatch('webSocket/connectWebSocket');
+    // Check for pending auto fights on auth
+    store.dispatch('autoFight/checkAndRunPending');
   } else {
     // Отключаем WebSocket, если пользователь разлогинился
     store.dispatch('webSocket/disconnectWebSocket');
@@ -153,6 +155,8 @@ const handleVisibilityChange = () => {
     //if (!store.getters['webSocket/isConnected']) {
       store.dispatch('webSocket/connectWebSocket');
     //}
+    // Check for pending auto fights
+    store.dispatch('autoFight/checkAndRunPending');
   }else if(!isAuth.value){
     store.dispatch('webSocket/disconnectWebSocket');
   }
@@ -182,6 +186,8 @@ onMounted(() => {
   document.addEventListener('visibilitychange', handleVisibilityChange);
   window.addEventListener('online', handleOnlineStatus);
 
+  // Initialize auto fight system
+  store.dispatch('autoFight/init');
 
   amplitude.init('b8821737459f00f1058fd8ede71459fe', {"autocapture":true});
 
