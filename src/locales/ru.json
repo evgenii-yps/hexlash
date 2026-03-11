@@ -299,7 +299,18 @@
     "lblCoachPosition": "Двигайся. Не стой.",
     "lblCoachPositionDesc": "Приоритет позиции +25",
     "lblCoachActive": "Совет активен",
-    "lblCoachRoundsLeft": "раундов"
+    "lblCoachRoundsLeft": "раундов",
+    "lblNeverGiveUp": "Никогда не сдавайся",
+    "lblVS": "VS",
+    "lblXpEarned": "Получено опыта",
+    "lblActionAttack": "Атака",
+    "lblActionDefense": "Защита",
+    "lblActionPosition": "Позиция",
+    "trainerAnalysisWin": "Отличный бой! Ваш билд [{build}] эффективно работал. Особенно хорошо показал себя {name} в роли основного модуля.",
+    "trainerAnalysisLose": "Ваш боец [{build}] проиграл. Рекомендация: попробуйте заменить {name} на Стража для лучшей защиты против агрессивных стилей.",
+    "lblSpeed": "Скорость",
+    "lblPower": "Сила",
+    "lblTechnique": "Техника"
   },
   "cards": {
     "attack": "Атака",
@@ -317,7 +328,14 @@
     "taskNotice": " - Нажимая \"Подтвердить\", ты берёшь на себя обязательство. В этом клубе нет места для пустых обещаний. Например, если подписался на канал, обратного пути нет. Отписка после подтверждения - прямой путь к бану. Здесь всё серьёзно: нарушил слово - попал в вечный бан.",
     "checklistCompleted": "Отличная работа, чек-лист выполнен!",
     "noDailyTasks": "На сегодня нет доступных задач!",
-    "successCompleteTask": "Вы успешно выполнили задачу, и получили заслуженную награду <a href=\"/training\">Задачи</a>"
+    "successCompleteTask": "Вы успешно выполнили задачу, и получили заслуженную награду <a href=\"/training\">Задачи</a>",
+    "lblTitle": "Тренировочный зал",
+    "lblTaps": "Тапы",
+    "lblSpeed": "Скорость",
+    "lblPower": "Сила",
+    "lblTechnique": "Техника",
+    "lblMoves": "Приёмы",
+    "lblDeck": "Колода ({n})"
   },
   "rating": {
     "clubs": "Рейтинг клубов",
@@ -364,5 +382,25 @@
     "lblConfirmPassword": "Подтвердите пароль",
     "errorPasswordsDoNotMatch": "Пароли не совпадают",
     "errorOnlyLatinAndNumbers": "Логин может содержать только латинские буквы и цифры."
+  },
+  "deck": {
+    "lblBack": "Назад",
+    "lblTitle": "Колода",
+    "lblMoves": "Приёмы",
+    "lblCurrentDeck": "Текущая колода ({n}/5)",
+    "lblLevel": "Ур.",
+    "lblReady": "Колода готова",
+    "lblNeedMoves": "Нужно 3–5 приёмов",
+    "lblAvailableMoves": "Доступные приёмы",
+    "lblDamage": "Урон:",
+    "lblToArena": "В Арену"
+  },
+  "moves": {
+    "lblBack": "Назад",
+    "lblTaps": "ТАПЫ",
+    "lblSpeed": "Скорость",
+    "lblPower": "Сила",
+    "lblTechnique": "Техника",
+    "lblInsufficientResources": "Недостаточно ресурсов!"
   }
 }
