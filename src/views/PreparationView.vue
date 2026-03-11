@@ -37,6 +37,11 @@
           </VBtn>
         </div>
 
+        <div class="autofight-section">
+          <AutoFightToggle/>
+          <AutoFightStatus/>
+        </div>
+
         <div class="scroll-gap"/>
 
       </div>
@@ -51,6 +56,8 @@ import {t} from "@/locales/index.js";
 import UserAvatar from "@/components/fragments/profile/UserAvatar.vue";
 import UserName from "@/components/fragments/profile/UserName.vue";
 import ModuleBuilder from "@/components/fragments/modules/ModuleBuilder.vue";
+import AutoFightToggle from "@/components/fragments/fight/AutoFightToggle.vue";
+import AutoFightStatus from "@/components/fragments/fight/AutoFightStatus.vue";
 
 const master = computed(() => store.getters['master/getMaster']);
 const isBuildValid = computed(() => store.getters['fight/isBuildValid']);
@@ -190,6 +197,15 @@ const handleScroll = (event) => {
 .fight-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.autofight-section {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
 }
 
 .scroll-gap {

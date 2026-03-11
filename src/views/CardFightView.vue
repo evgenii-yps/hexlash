@@ -12,6 +12,12 @@
     <div class="fight-container" @scroll="handleScroll">
       <div class="fight-content-wrapper">
 
+        <!-- Auto fight banner -->
+        <div v-if="isAutoFightEnabled" class="autofight-banner">
+          <span class="autofight-banner-icon">&#x1F504;</span>
+          <span class="autofight-banner-text">{{ t.autoFight.lblAutoFightInProgress }}</span>
+        </div>
+
         <!-- Countdown overlay -->
         <transition-group name="fade-scale" tag="div" class="countdown" v-if="showCountdown">
           <div v-if="countdownValue !== 0" :key="countdownValue" class="countdown-item">
@@ -291,6 +297,10 @@ const anyModActive = computed(() =>
     playerModifiers.value.blindActive
 );
 
+// ── Auto Fight ──────────────────────────────────────────────────────────────
+const isAutoFightEnabled = computed(() => store.getters['autoFight/isEnabled']);
+let autoFightContinueTimer = null;
+
 // ── Action labels (for log) ───────────────────────────────────────────────
 const LOG_ACTIONS = {
   attack:   { image: iconAttack,   key: 'fight.lblActionAttack' },
@@ -472,6 +482,7 @@ onUnmounted(() => {
   stopFightTimer();
   stopCoachTimer();
   clearInterval(countdownTimer);
+  clearTimeout(autoFightContinueTimer);
   document.removeEventListener('visibilitychange', handleVisibilityChange);
   window.removeEventListener('beforeunload', handleBeforeUnload);
 });
@@ -500,7 +511,16 @@ watch(fightPhase, (val, oldVal) => {
   }
   if (val === 'coach') {
     stopFightTimer();
-    startCoachTimer();
+    // Auto-handle coach when auto fight is active
+    if (isAutoFightEnabled.value) {
+      // Auto-select attack if low HP, else attack (aggressive auto strategy)
+      const autoAction = liveHP1.value < 50 ? 'defense' : 'attack';
+      setTimeout(() => {
+        store.dispatch('fight/applyCoachAdvice', autoAction);
+      }, 500);
+    } else {
+      startCoachTimer();
+    }
   }
   if (oldVal === 'coach' && val !== 'coach') {
     stopCoachTimer();
@@ -533,6 +553,24 @@ watch(fightPhase, (val, oldVal) => {
         roundsPlayed: roundNum.value,
         totalDamageDealt: fightStats.value.totalDamageDealt,
       }, { authRequired: true }).catch(() => {});
+
+      // Log to auto fight if enabled
+      if (isAutoFightEnabled.value) {
+        store.dispatch('autoFight/onFightEnd', {
+          result: resultState.value,
+          rounds: roundNum.value,
+          hp1: liveHP1.value,
+          hp2: liveHP2.value,
+        });
+
+        // Auto-continue to next fight after a short delay
+        clearTimeout(autoFightContinueTimer);
+        autoFightContinueTimer = setTimeout(() => {
+          if (isAutoFightEnabled.value && store.getters['autoFight/canStartAutoFight'].allowed) {
+            fightAgain();
+          }
+        }, 3000);
+      }
     }
   }
 });
@@ -541,6 +579,17 @@ watch(fightPhase, (val, oldVal) => {
 const rollDice = () => {
   store.dispatch('fight/rollDiceManual');
 };
+
+// ── Auto-dice for auto fights ──────────────────────────────────────────
+watch([() => diceState.value.ready, fightPhase], ([ready, phase]) => {
+  if (isAutoFightEnabled.value && ready && phase === 'fighting' && roundNum.value > 0) {
+    setTimeout(() => {
+      if (diceState.value.ready && fightPhase.value === 'fighting') {
+        store.dispatch('fight/rollDiceManual');
+      }
+    }, 800);
+  }
+});
 
 // ── Coach advice timer ────────────────────────────────────────────────────
 const adviceTimer = ref(15);
@@ -1468,5 +1517,42 @@ const flashStyle = computed(() => ({
   font-family: AnonymousBalance, sans-serif;
   font-size: 0.9rem;
   color: var(--pink);
+}
+
+/* ── Auto Fight Banner ──────────────────────────────────────────── */
+.autofight-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 6px 16px;
+  background: linear-gradient(135deg, rgba(255, 6, 111, 0.15) 0%, rgba(255, 6, 111, 0.05) 100%);
+  border: 1px solid rgba(255, 6, 111, 0.4);
+  border-radius: 20px;
+  margin-bottom: 8px;
+  animation: bannerPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes bannerPulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(255, 6, 111, 0.2); }
+  50% { box-shadow: 0 0 20px rgba(255, 6, 111, 0.5); }
+}
+
+.autofight-banner-icon {
+  font-size: 0.9rem;
+  animation: spin 3s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.autofight-banner-text {
+  font-size: 0.7rem;
+  font-weight: bold;
+  color: var(--primary-color);
+  letter-spacing: 1px;
+  text-transform: uppercase;
 }
 </style>

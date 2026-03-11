@@ -9,6 +9,7 @@ import contract from "@/core/state/modules/contractState.js";
 import webSocket from "@/core/state/modules/webSocketState.js";
 import achievement from "@/core/state/modules/achievementState.js";
 import progression from "@/core/state/modules/progressionState.js";
+import autoFight from "@/core/state/modules/autoFightState.js";
 
 export default createStore({
     modules: {
@@ -22,5 +23,6 @@ export default createStore({
         webSocket,
         achievement,
         progression,
+        autoFight,
     },
 });
