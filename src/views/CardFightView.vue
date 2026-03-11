@@ -107,6 +107,11 @@
       <!-- Coach advice overlay -->
       <div v-if="fightPhase === 'coach'" class="coach-overlay">
         <div class="coach-panel">
+          <!-- Countdown timer -->
+          <div class="advice-timer" :class="{ 'advice-timer--urgent': adviceTimer <= 3 }">
+            <span class="advice-timer__number" :key="adviceTimer">{{ adviceTimer }}</span>
+          </div>
+
           <div class="coach-header">
             <img :src="iconTrainer" class="coach-avatar" alt=""/>
             <span class="coach-title">{{ t('fight.lblCoachTitle') }}</span>
@@ -454,6 +459,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   stopFightTimer();
+  stopCoachTimer();
   clearInterval(countdownTimer);
   document.removeEventListener('visibilitychange', handleVisibilityChange);
   window.removeEventListener('beforeunload', handleBeforeUnload);
@@ -483,6 +489,10 @@ watch(fightPhase, (val, oldVal) => {
   }
   if (val === 'coach') {
     stopFightTimer();
+    startCoachTimer();
+  }
+  if (oldVal === 'coach' && val !== 'coach') {
+    stopCoachTimer();
   }
   if (val === 'results') {
     stopFightTimer();
@@ -521,8 +531,32 @@ const rollDice = () => {
   store.dispatch('fight/rollDiceManual');
 };
 
+// ── Coach advice timer ────────────────────────────────────────────────────
+const adviceTimer = ref(15);
+let coachTimerInterval = null;
+
+const startCoachTimer = () => {
+  adviceTimer.value = 15;
+  coachTimerInterval = setInterval(() => {
+    adviceTimer.value -= 1;
+    if (adviceTimer.value <= 0) {
+      clearInterval(coachTimerInterval);
+      coachTimerInterval = null;
+      store.dispatch('fight/skipCoachAdvice');
+    }
+  }, 1000);
+};
+
+const stopCoachTimer = () => {
+  if (coachTimerInterval) {
+    clearInterval(coachTimerInterval);
+    coachTimerInterval = null;
+  }
+};
+
 // ── Coach advice ─────────────────────────────────────────────────────────
 const giveCoachAdvice = (action) => {
+  stopCoachTimer();
   store.dispatch('fight/applyCoachAdvice', action);
 };
 
@@ -1166,6 +1200,46 @@ const flashStyle = computed(() => ({
 @keyframes coachFadeIn {
   0%   { opacity: 0; }
   100% { opacity: 1; }
+}
+
+/* ── Coach Timer ─────────────────────────────────────────────────── */
+.advice-timer {
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.advice-timer__number {
+  display: inline-block;
+  font-family: Anonymous, sans-serif;
+  font-size: 3rem;
+  font-weight: bold;
+  color: var(--primary-color);
+  text-shadow:
+    0 0 10px rgba(255, 6, 111, 0.8),
+    0 0 20px rgba(255, 6, 111, 0.5),
+    2px 2px 0 #000;
+  animation: coachTimerPulse 1s ease-in-out;
+}
+
+.advice-timer--urgent .advice-timer__number {
+  color: #FF2222;
+  text-shadow:
+    0 0 15px rgba(255, 34, 34, 0.9),
+    0 0 30px rgba(255, 34, 34, 0.6),
+    2px 2px 0 #000;
+  animation: coachTimerPulseUrgent 0.5s ease-in-out;
+}
+
+@keyframes coachTimerPulse {
+  0%   { transform: scale(1.15); opacity: 0.7; }
+  50%  { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes coachTimerPulseUrgent {
+  0%   { transform: scale(1.25); opacity: 0.6; }
+  50%  { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 .coach-panel {

@@ -418,6 +418,11 @@ const actions = {
         commit('setFightPhase', 'fighting');
     },
 
+    skipCoachAdvice({ commit }) {
+        commit('setCoachAdvice', { used: true, active: false, action: null, roundsLeft: 0 });
+        commit('setFightPhase', 'fighting');
+    },
+
     // ── Fight persistence ─────────────────────────────────────────────────
 
     /**
