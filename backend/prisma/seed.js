@@ -33,18 +33,14 @@ async function main() {
   }
   console.log(`Seeded ${achievements.length} achievements`);
 
-  // Social Tasks (English)
-  const socialTasksEn = [
+  // Social Tasks — idempotent: skip if already exists by category+language
+  const allSocialTasks = [
     { title: 'Subscribe to Telegram', description: 'Join our Telegram channel', link: 'https://t.me/hexlash', tokens: 50000, category: 'SUBSCRIBE_TELEGRAM', language: 'en' },
     { title: 'Follow on X', description: 'Follow us on X (Twitter)', link: 'https://x.com/hexlash', tokens: 50000, category: 'SUBSCRIBE_X', language: 'en' },
     { title: 'Subscribe on YouTube', description: 'Subscribe to our YouTube channel', link: 'https://youtube.com/@hexlash', tokens: 50000, category: 'SUBSCRIBE_YOUTUBE', language: 'en' },
     { title: 'Join Discord', description: 'Join our Discord server', link: 'https://discord.gg/hexlash', tokens: 50000, category: 'SUBSCRIBE_DISCORD', language: 'en' },
     { title: 'Follow on Instagram', description: 'Follow us on Instagram', link: 'https://instagram.com/hexlash', tokens: 50000, category: 'SUBSCRIBE_INSTAGRAM', language: 'en' },
     { title: 'Confirm Email', description: 'Verify your email address', link: '', tokens: 100000, category: 'TASK_CONFIRM_EMAIL', language: 'en' },
-  ];
-
-  // Social Tasks (Russian)
-  const socialTasksRu = [
     { title: 'Подписаться на Telegram', description: 'Присоединяйтесь к нашему Telegram каналу', link: 'https://t.me/hexlash', tokens: 50000, category: 'SUBSCRIBE_TELEGRAM', language: 'ru' },
     { title: 'Подписаться на X', description: 'Подпишитесь на нас в X (Twitter)', link: 'https://x.com/hexlash', tokens: 50000, category: 'SUBSCRIBE_X', language: 'ru' },
     { title: 'Подписаться на YouTube', description: 'Подпишитесь на наш YouTube канал', link: 'https://youtube.com/@hexlash', tokens: 50000, category: 'SUBSCRIBE_YOUTUBE', language: 'ru' },
@@ -53,31 +49,35 @@ async function main() {
     { title: 'Подтвердить Email', description: 'Подтвердите ваш email адрес', link: '', tokens: 100000, category: 'TASK_CONFIRM_EMAIL', language: 'ru' },
   ];
 
-  const allSocialTasks = [...socialTasksEn, ...socialTasksRu];
   for (const task of allSocialTasks) {
-    await prisma.socialTask.create({ data: task });
+    const existing = await prisma.socialTask.findFirst({
+      where: { category: task.category, language: task.language },
+    });
+    if (!existing) {
+      await prisma.socialTask.create({ data: task });
+    }
   }
   console.log(`Seeded ${allSocialTasks.length} social tasks`);
 
-  // Daily Tasks (English)
-  const dailyTasksEn = [
+  // Daily Tasks — idempotent: skip if already exists by category+language
+  const allDailyTasks = [
     { title: 'Fight 3 battles', description: 'Complete 3 battles today', tokens: 30000, category: 'FIGHT_X_BATTLES', value: 3, language: 'en' },
     { title: 'Hit the bag 500 times', description: 'Train by hitting the punching bag', tokens: 20000, category: 'HIT_BAG_X_TIMES', value: 500, language: 'en' },
     { title: 'Win 2 battles', description: 'Win 2 battles today', tokens: 50000, category: 'WIN_X_BATTLES', value: 2, language: 'en' },
     { title: 'Invite a friend', description: 'Invite a friend to join the game', tokens: 100000, category: 'INVITE_FRIEND', link: '', language: 'en' },
-  ];
-
-  // Daily Tasks (Russian)
-  const dailyTasksRu = [
     { title: 'Проведи 3 боя', description: 'Проведите 3 боя сегодня', tokens: 30000, category: 'FIGHT_X_BATTLES', value: 3, language: 'ru' },
     { title: 'Ударь грушу 500 раз', description: 'Тренируйтесь, ударяя грушу', tokens: 20000, category: 'HIT_BAG_X_TIMES', value: 500, language: 'ru' },
     { title: 'Выиграй 2 боя', description: 'Выиграйте 2 боя сегодня', tokens: 50000, category: 'WIN_X_BATTLES', value: 2, language: 'ru' },
     { title: 'Пригласи друга', description: 'Пригласите друга в игру', tokens: 100000, category: 'INVITE_FRIEND', link: '', language: 'ru' },
   ];
 
-  const allDailyTasks = [...dailyTasksEn, ...dailyTasksRu];
   for (const task of allDailyTasks) {
-    await prisma.dailyTask.create({ data: task });
+    const existing = await prisma.dailyTask.findFirst({
+      where: { category: task.category, language: task.language },
+    });
+    if (!existing) {
+      await prisma.dailyTask.create({ data: task });
+    }
   }
   console.log(`Seeded ${allDailyTasks.length} daily tasks`);
 

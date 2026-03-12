@@ -19,5 +19,5 @@ COPY . .
 
 EXPOSE 3000
 
-# 5. Start: create DB + seed + run server
-CMD ["sh", "-c", "npx prisma db push && node prisma/seed.js; node src/index.js"]
+# 5. Start: migrate + seed + run server
+CMD ["sh", "-c", "npx prisma migrate deploy && node prisma/seed.js && node src/index.js"]
