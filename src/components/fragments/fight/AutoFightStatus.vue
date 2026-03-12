@@ -157,7 +157,8 @@ const viewLog = async () => {
 
 .status-value {
   color: white;
-  font-family: AnonymousBalance, sans-serif;
+  font-family: system-ui, sans-serif;
+  font-weight: bold;
 }
 
 .status-win {
