@@ -99,7 +99,7 @@ const authState = computed(() => store.getters['master/getLoginState']);
 const handleSubmit = async () => {
   loading.value = true;
   try {
-    const credentials = {login: login.value, password: password.value};
+    const credentials = {login: login.value.trim(), password: password.value};
     await store.dispatch('master/login', credentials);
   } finally {
     loading.value = false;

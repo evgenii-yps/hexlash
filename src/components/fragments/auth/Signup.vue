@@ -138,7 +138,7 @@ const handleSubmit = async () => {
 
   try {
     await store.dispatch('master/register', {
-      login: login.value,
+      login: login.value.trim(),
       password: password.value
     });
   } catch (error) {

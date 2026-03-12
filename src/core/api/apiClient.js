@@ -54,11 +54,16 @@ apiClient.interceptors.response.use(
 
         // Обработка ошибки ответа
         if (error.response && error.response.status === 401) {
-            // Если получен код 401, пользователь не авторизован, сбрасываем состояние аутентификации
-            return store.dispatch('master/logout')
-                .then(() => {
-                    return Promise.reject(new Error('Token is invalid or missing'));
-                });
+            // Не вызываем logout для auth-роутов (login, register, telegram)
+            const url = error.config?.url || '';
+            const isAuthRoute = url.includes('/auth/');
+            if (!isAuthRoute) {
+                // Если получен код 401, пользователь не авторизован, сбрасываем состояние аутентификации
+                return store.dispatch('master/logout')
+                    .then(() => {
+                        return Promise.reject(new Error('Token is invalid or missing'));
+                    });
+            }
         }
         return Promise.reject(error);
     }

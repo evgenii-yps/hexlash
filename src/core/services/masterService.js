@@ -85,7 +85,7 @@ export const login = async (credentials) => {
         store.commit('master/setLoginState', {isAuthenticated: true});
 
     } catch (error) {
-        const errorStr = error.response?.error || error.message || 'Failed to login';
+        const errorStr = error.response?.data?.error || error.message || 'Failed to login';
         throw new Error(errorStr);
     }
 };
@@ -135,7 +135,7 @@ export const telegram = async (payload) => {
         store.commit('master/setLoginState', {isAuthenticated: true});
 
     } catch (error) {
-        const errorStr = error.response?.error || error.message || 'Failed to login';
+        const errorStr = error.response?.data?.error || error.message || 'Failed to login';
         throw new Error(errorStr);
     }
 };
@@ -150,7 +150,7 @@ export const sendCheckLoginAvailable = async (login) => {
         const response = await apiClient.get(`/auth/login-available/${login}`);
         return response.data.available;
     } catch (error) {
-        const errorStr = error.response?.error || error.message || 'Failed to login';
+        const errorStr = error.response?.data?.error || error.message || 'Failed to login';
         throw new Error(errorStr);
     }
 };

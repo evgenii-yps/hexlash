@@ -9,7 +9,8 @@ const prisma = new PrismaClient();
 // POST /v1/auth/login
 router.post('/login', async (req, res) => {
   try {
-    const { login, password } = req.body;
+    const { login: rawLogin, password } = req.body;
+    const login = rawLogin?.trim();
     if (!login || !password) {
       return res.status(400).json({ error: 'Login and password are required' });
     }
@@ -39,7 +40,8 @@ router.post('/login', async (req, res) => {
 // POST /v1/auth/register
 router.post('/register', async (req, res) => {
   try {
-    const { login, password } = req.body;
+    const { login: rawLogin, password } = req.body;
+    const login = rawLogin?.trim();
     if (!login || !password) {
       return res.status(400).json({ error: 'Login and password are required' });
     }
