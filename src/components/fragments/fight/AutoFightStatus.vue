@@ -50,17 +50,14 @@ const wins = computed(() => store.getters['autoFight/getWins']);
 const losses = computed(() => store.getters['autoFight/getLosses']);
 const isStopping = computed(() => store.getters['autoFight/isStoppingAfterCurrent']);
 
-const timeRemaining = ref(0);
+const nextFightAt = computed(() => store.state.autoFight.nextFightAt);
+const now = ref(Date.now());
 let timerInterval = null;
 
-const updateTimer = () => {
-  const ms = store.getters['autoFight/getTimeUntilNextFight'];
-  timeRemaining.value = ms ? Math.ceil(ms / 1000) : 0;
-};
-
 onMounted(() => {
-  updateTimer();
-  timerInterval = setInterval(updateTimer, 1000);
+  timerInterval = setInterval(() => {
+    now.value = Date.now();
+  }, 1000);
 });
 
 onUnmounted(() => {
@@ -68,10 +65,11 @@ onUnmounted(() => {
 });
 
 const timeDisplay = computed(() => {
-  const secs = timeRemaining.value;
-  if (secs <= 0) return '0:00';
-  const m = Math.floor(secs / 60);
-  const s = secs % 60;
+  if (!nextFightAt.value) return '0:00';
+  const diff = Math.max(0, Math.ceil((nextFightAt.value - now.value) / 1000));
+  if (diff <= 0) return '0:00';
+  const m = Math.floor(diff / 60);
+  const s = diff % 60;
   return `${m}:${s.toString().padStart(2, '0')}`;
 });
 
