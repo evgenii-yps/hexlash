@@ -27,6 +27,7 @@
 
         <div class="fight-button-wrapper">
           <VBtn
+              v-if="!isAutoFightEnabled"
               width="200"
               size="large"
               class="fight-btn"
@@ -35,6 +36,10 @@
           >
             {{ t.arena.lblStartFight }}
           </VBtn>
+          <div v-else class="fight-btn-blocked">
+            <span class="blocked-icon">&#x1F504;</span>
+            {{ t.autoFight.lblAutoFightInProgress }}
+          </div>
         </div>
 
         <div class="autofight-section">
@@ -61,6 +66,7 @@ import AutoFightStatus from "@/components/fragments/fight/AutoFightStatus.vue";
 
 const master = computed(() => store.getters['master/getMaster']);
 const isBuildValid = computed(() => store.getters['fight/isBuildValid']);
+const isAutoFightEnabled = computed(() => store.getters['autoFight/isEnabled']);
 const difficulty = computed(() => store.getters['fight/getDifficulty']);
 
 const setDifficulty = (level) => {
@@ -197,6 +203,32 @@ const handleScroll = (event) => {
 .fight-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.fight-btn-blocked {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 6, 111, 0.4);
+  background: rgba(255, 6, 111, 0.1);
+  color: var(--primary-color);
+  font-family: Anonymous, sans-serif;
+  font-size: 0.85rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.blocked-icon {
+  animation: spin 3s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .autofight-section {
