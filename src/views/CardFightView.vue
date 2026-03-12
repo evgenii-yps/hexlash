@@ -563,11 +563,11 @@ watch(fightPhase, (val, oldVal) => {
           hp2: liveHP2.value,
         });
 
-        // Auto-continue to next fight after a short delay
+        // Return to arena after showing the result — next fight will be scheduled by timer (30-60 min)
         clearTimeout(autoFightContinueTimer);
         autoFightContinueTimer = setTimeout(() => {
-          if (isAutoFightEnabled.value && store.getters['autoFight/canStartAutoFight'].allowed) {
-            fightAgain();
+          if (isAutoFightEnabled.value) {
+            router.push('/arena');
           }
         }, 3000);
       }

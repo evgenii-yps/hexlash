@@ -191,7 +191,8 @@ const handleScroll = (event) => {
 }
 
 .summary-value {
-  font-family: AnonymousBalance, sans-serif;
+  font-family: system-ui, sans-serif;
+  font-weight: bold;
   color: white;
   font-size: 1rem;
 }
@@ -241,7 +242,7 @@ const handleScroll = (event) => {
 .entry-time {
   font-size: 0.85rem;
   color: var(--gray2);
-  font-family: AnonymousBalance, sans-serif;
+  font-family: system-ui, sans-serif;
 }
 
 .entry-vs {
@@ -270,7 +271,8 @@ const handleScroll = (event) => {
 
 .entry-xp {
   color: var(--primary-color);
-  font-family: AnonymousBalance, sans-serif;
+  font-family: system-ui, sans-serif;
+  font-weight: bold;
 }
 
 .clear-btn {
