@@ -141,29 +141,33 @@ const handleScroll = (event) => {
 .log-content-wrapper {
   width: 100%;
   box-sizing: border-box;
-  max-width: 500px;
+  max-width: 700px;
   margin: 0 auto;
-  padding: 20px 16px;
+  padding: 80px 20px 20px;
 }
 
 .back-btn {
-  background: none;
-  border: none;
-  color: var(--gray2);
-  font-size: 0.75rem;
+  background: var(--black-opacity-80);
+  border: 1px solid var(--gray1);
+  color: var(--gray3);
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: 0.95rem;
   cursor: pointer;
-  padding: 4px 0;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
+  transition: color 0.2s;
 }
+
+.back-btn:hover { color: var(--white); }
 
 .log-header {
   text-align: center;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .log-title {
   font-family: Anonymous, sans-serif;
-  font-size: 1rem;
+  font-size: 1.4rem;
   color: var(--primary-color);
   letter-spacing: 2px;
   text-shadow: 0 0 10px rgba(255, 6, 111, 0.3);
@@ -173,43 +177,44 @@ const handleScroll = (event) => {
   background: linear-gradient(135deg, rgba(9,9,9,0.9) 0%, rgba(26,26,46,0.6) 100%);
   border: 1px solid rgba(255, 6, 111, 0.2);
   border-radius: 10px;
-  padding: 12px 16px;
-  margin-bottom: 16px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
 }
 
 .summary-row {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.7rem;
+  gap: 8px;
+  font-size: 0.9rem;
   color: var(--gray2);
-  padding: 3px 0;
+  padding: 4px 0;
 }
 
 .summary-value {
   font-family: AnonymousBalance, sans-serif;
   color: white;
+  font-size: 1rem;
 }
 
 .summary-win { color: #2ecc71; }
 .summary-lose { color: #e74c3c; }
 .summary-draw { color: #f1c40f; }
 .summary-xp { color: var(--primary-color); }
-.summary-sep { color: var(--gray2); font-size: 0.6rem; }
+.summary-sep { color: var(--gray2); font-size: 0.8rem; }
 
 .no-fights {
   text-align: center;
   color: var(--gray2);
-  font-size: 0.75rem;
-  padding: 40px 0;
+  font-size: 0.95rem;
+  padding: 50px 0;
 }
 
 .fight-entry {
   background: linear-gradient(135deg, rgba(9,9,9,0.85) 0%, rgba(26,26,46,0.5) 100%);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 8px;
-  padding: 10px 14px;
-  margin-bottom: 6px;
+  padding: 14px 18px;
+  margin-bottom: 8px;
   position: relative;
   overflow: hidden;
 }
@@ -229,24 +234,24 @@ const handleScroll = (event) => {
 .entry-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 4px;
+  gap: 10px;
+  margin-bottom: 6px;
 }
 
 .entry-time {
-  font-size: 0.65rem;
+  font-size: 0.85rem;
   color: var(--gray2);
   font-family: AnonymousBalance, sans-serif;
 }
 
 .entry-vs {
-  font-size: 0.7rem;
+  font-size: 0.95rem;
   color: white;
   flex: 1;
 }
 
 .entry-result {
-  font-size: 0.7rem;
+  font-size: 0.9rem;
   font-weight: bold;
   font-family: Anonymous, sans-serif;
   letter-spacing: 0.5px;
@@ -258,8 +263,8 @@ const handleScroll = (event) => {
 
 .entry-details {
   display: flex;
-  gap: 12px;
-  font-size: 0.6rem;
+  gap: 14px;
+  font-size: 0.8rem;
   color: var(--gray2);
 }
 
@@ -270,13 +275,13 @@ const handleScroll = (event) => {
 
 .clear-btn {
   display: block;
-  margin: 16px auto 0;
-  padding: 8px 24px;
+  margin: 20px auto 0;
+  padding: 10px 28px;
   border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.04);
   color: var(--gray2);
-  font-size: 0.7rem;
+  font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.2s ease;
 }

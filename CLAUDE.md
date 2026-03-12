@@ -19,11 +19,11 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + SQLite. Telegram We
   App.vue                  — Root: header (Logo), router-view, BottomMenu, Info/Error toasts
   main.js                  — Entry: Vue + Vuetify + i18n + Vuex store init
   router/index.js          — Routes + auth guards + fight state restore
-  views/                   — 13 page-level components
-  components/              — 66 reusable components
+  views/                   — 14 page-level components
+  components/              — 69 reusable components
   core/
     state/store.js         — Vuex store
-    state/modules/         — 10 Vuex modules
+    state/modules/         — 11 Vuex modules
     models/                — Data models
     services/              — Business logic
     database/              — LocalStorage/IDB persistence
@@ -32,8 +32,8 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + SQLite. Telegram We
     constants.js           — Game constants
     websocket/             — WebSocket client
   data/
-    branches.js            — 3 branches: speed, power, technique
-    moves.js               — 18 moves with damage/speed per level
+    branches.js            — 3 branches: speed, power, technique (numeric data only, names via i18n)
+    moves.js               — 18 moves with damage/speed per level (numeric data only, names/desc via i18n)
     requirements.js        — Tap/XP costs for unlock/levelup
   assets/
     main.css               — Global styles
@@ -67,6 +67,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + SQLite. Telegram We
 | `/privacy` `/404` `/rules` `/verify-email` | Static | No |
 | `/` | RainView (home) | Yes |
 | `/arena` | PreparationView | Yes |
+| `/arena/autofight-log` | AutoFightLogView | Yes |
 | `/fight` | CardFightView | Yes |
 | `/training` | TrainingView | Yes |
 | `/training/moves` | MoveTreeView | Yes |
@@ -78,7 +79,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + SQLite. Telegram We
 
 ---
 
-## Vuex Modules (10)
+## Vuex Modules (11)
 
 | Module | Purpose |
 |--------|---------|
@@ -92,6 +93,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + SQLite. Telegram We
 | `achievementState` | Achievements list + unlocking |
 | `contractState` | Web3 wallet, token balance |
 | `webSocketState` | WS connection, real-time messages |
+| `autoFightState` | Auto fight: scheduling, offline simulation, fight log, push notifications |
 
 ---
 
@@ -105,6 +107,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + SQLite. Telegram We
 ### Moves (`/src/data/moves.js`)
 18 moves, each: `{ id, name, branch, description, damage[5], speed[5] }`
 - damage and speed arrays = values per level (1–5)
+- `name` and `description` are legacy Russian fallbacks; UI uses `t.gameData.moves[id].name/description` from i18n
 
 ### Requirements (`/src/data/requirements.js`)
 ```js
@@ -163,6 +166,11 @@ COACH_BOOST_ROUNDS = 4
 SPEED_MOVE_PUNCH_MS = 1500
 BATCH_SEND_INTERVAL_MS = 11000
 DECIMALS = 6             // token decimal places
+
+AUTO_FIGHT_MIN_INTERVAL = 1800000   // 30 min
+AUTO_FIGHT_MAX_INTERVAL = 3600000   // 60 min
+AUTO_FIGHT_MAX_PER_DAY = 24
+AUTO_FIGHT_MAX_PER_SESSION = 48
 ```
 
 ---
@@ -183,6 +191,8 @@ COST_CREATE_CLUB = 10000
 
 **Flow:** Build deck (4–8 modules) → Generate AI opponent → Simulate rounds → Dice mechanic → Coach advice → Save result
 
+**Auto Fight:** Toggle on Arena screen → fights every 30–60 min offline → uses CombatEngine + ModuleAIStrategy → localStorage persist (`hexlash_autofight_state`, `hexlash_autofight_history`) → push notifications via Notification API → limits: 24/day, 48/session → auto-catches up missed fights on tab focus
+
 **Dice effects:** Heal, Adrenaline, Shield, Blind, Rage, Crit
 
 **Files:**
@@ -202,7 +212,23 @@ COST_CREATE_CLUB = 10000
 | Fight | `CardFightView.vue` | Main combat, dice, coach advice, HP bars |
 | Profile | `ProfileView.vue` | Tabs: balance, wallet, account, skins |
 | Ratings | `RatingsView.vue` | Club and player leaderboards |
-| Preparation | `PreparationView.vue` | Arena bet + opponent selection |
+| Preparation | `PreparationView.vue` | Arena bet + opponent selection + auto fight toggle/status |
+
+---
+
+## i18n System
+
+**Custom reactive i18n** (not vue-i18n): `locales/index.js` exports `t` (computed ref), `setLanguage()`, `interpolate()`
+
+**11 locales:** en, ru, de, es, fr, pt, ar, hi, ja, ko, zh
+
+**Key sections per locale:**
+- UI labels: `menu`, `auth`, `profile`, `arena`, `fight`, `training`, `moves`, `deck`, `cards`, `rating`, `club`, `info`, `nav`, `autoFight`
+- Game data translations: `gameData.branches[id].{name,description}`, `gameData.moves[id].{name,description}`
+
+**Usage in templates:** `{{ t.section.key }}` (auto-unwrapped ref)
+**Usage in script:** `t.value.section.key`
+**Interpolation:** `interpolate(t.value.moves.lblUnlockFirst, { name: '...' })`
 
 ---
 
@@ -215,6 +241,8 @@ COST_CREATE_CLUB = 10000
 - `Punch3D.vue` — Three.js punching bag
 - `MoveTreeCard.vue` — move row in tree
 - `MoveDetailsModal.vue` — move detail/unlock popup
+- `AutoFightToggle.vue` — auto fight on/off button
+- `AutoFightStatus.vue` — auto fight live status + countdown
 - `HPBar.vue` — fight health bar
 - `Fighter.vue` — fighter display in combat
 
@@ -253,5 +281,5 @@ User, Club, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask,
 
 ## Branch (Git)
 
-Development branch: `claude/finalize-game-rounds-NmQEw`
-Push: `git push -u origin claude/finalize-game-rounds-NmQEw`
+Development branch: `claude/fix-language-system-PPpvI`
+Push: `git push -u origin claude/fix-language-system-PPpvI`
