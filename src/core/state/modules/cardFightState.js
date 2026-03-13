@@ -542,9 +542,6 @@ const actions = {
         await dispatch('startFight');
     },
 
-    setDifficulty({ commit }, difficulty) {
-        commit('setDifficulty', difficulty);
-    },
 };
 
 export default {

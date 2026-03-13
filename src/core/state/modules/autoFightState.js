@@ -432,11 +432,6 @@ const actions = {
         } catch (e) { /* ignore */ }
     },
 
-    /** Set auto fight difficulty. */
-    setDifficulty({ commit, state }, difficulty) {
-        commit('setDifficulty', difficulty);
-        saveState(state);
-    },
 
     /** Clear fight history. */
     clearHistory({ commit }) {
