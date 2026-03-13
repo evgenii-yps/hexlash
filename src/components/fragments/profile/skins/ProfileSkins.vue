@@ -87,10 +87,9 @@ onMounted(() => {
 
 .back-btn-sticky {
   position: fixed;
-  top: 12px;
-  left: 0;
+  top: 80px;
+  left: 20px;
   z-index: 100;
-  padding: 0 0 0 20px;
 }
 
 /* ── Preview ─────────────────────────────────────────── */
