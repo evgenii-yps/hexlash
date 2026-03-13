@@ -1,6 +1,6 @@
 # HEXLASH — Project Memory
 
-Full-stack Web3 fighting game. Vue 3 SPA + Express backend + SQLite. Telegram WebApp compatible.
+Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegram WebApp compatible.
 
 ---
 
@@ -8,7 +8,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + SQLite. Telegram We
 
 **Frontend:** Vue 3.5 · Vite 7 · Vuex 4 · Vue Router 4 · Vuetify 2 · Three.js · Howler.js · Ethers.js 6 · Vue-i18n 11 · Amplitude
 
-**Backend:** Express 4 · Prisma 5 (SQLite) · JWT · WebSocket (ws) · Multer · bcryptjs
+**Backend:** Express 4 · Prisma 5 (PostgreSQL) · JWT · WebSocket (ws) · Multer · bcryptjs
 
 ---
 
@@ -20,7 +20,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + SQLite. Telegram We
   main.js                  — Entry: Vue + Vuetify + i18n + Vuex store init
   router/index.js          — Routes + auth guards + fight state restore
   views/                   — 14 page-level components
-  components/              — 69 reusable components
+  components/              — 68 reusable components
   core/
     state/store.js         — Vuex store
     state/modules/         — 11 Vuex modules
@@ -31,6 +31,10 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + SQLite. Telegram We
     engine/                — Combat system (combatEngine, aiStrategy, opponentGenerator)
     constants.js           — Game constants
     websocket/             — WebSocket client
+    models/                — 19+ data models (internal UI state, WS messages, game entities)
+    models/internal/       — errorMessageModel, infoMessageModel, loginStateModel, etc.
+    models/ws/             — WebSocket message models (WsBase, req/, res/)
+    mock/                  — Mock data for testing
   data/
     branches.js            — 3 branches: speed, power, technique (numeric data only, names via i18n)
     moves.js               — 18 moves with damage/speed per level (numeric data only, names/desc via i18n)
@@ -42,19 +46,23 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + SQLite. Telegram We
     images/                — Backgrounds, icons, achievements (23 types)
     models/                — GLTF 3D models (punching bag, scene)
     sound/                 — punch_air.mp3, punch_hit.mp3, rain.mp3
+    abi/                   — Smart contract ABI files (Web3)
+    textures/              — 3D textures for Three.js
   locales/                 — i18n: ru, en, de, es, fr, hi, ja, ko, pt, zh, ar
+  locales/pages/           — help/ and rules/ JSON pages per locale
 
 /backend
   src/
     index.js               — Express server + WebSocket on same HTTP server
     config.js              — Constants (PORT, JWT_SECRET, game balance)
-    routes/                — auth, user, club, task, file
+    routes/                — auth, user, club, task, file, fight
     middleware/            — auth.js (JWT guard), upload.js (Multer)
     websocket/handler.js   — Real-time message routing
     utils/helpers.js
   prisma/
-    schema.prisma          — 10 models: User, Club, Fight, Achievement, Task, PunchInfo...
-    seed.js
+    schema.prisma          — 10 models (PostgreSQL): User, Club, Fight, Achievement, Task, PunchInfo...
+    migrations/            — PostgreSQL migration files
+    seed.js                — Seeds 16 achievements + social/daily tasks (upsert)
 ```
 
 ---
@@ -164,8 +172,10 @@ COACH_TRIGGER_CHANCE = 1.0
 COACH_BOOST_ROUNDS = 4
 
 SPEED_MOVE_PUNCH_MS = 1500
+ROUND_ANIMATION_MS = 1500
 BATCH_SEND_INTERVAL_MS = 11000
 DECIMALS = 6             // token decimal places
+LISTING = 1783306800     // token listing timestamp
 
 AUTO_FIGHT_MIN_INTERVAL = 1800000   // 30 min
 AUTO_FIGHT_MAX_INTERVAL = 3600000   // 60 min
@@ -179,11 +189,16 @@ AUTO_FIGHT_MAX_PER_SESSION = 48
 
 ```js
 PORT = 3000
+WS_PORT = 444
 PUNCH_MAX_PER_INTERVAL = 10000
+PUNCH_MAX_PER_BATCH = 10000
 PUNCH_INTERVAL_MS = 3600000   // 1 hour
 COST_PER_CLICK = 2
 COST_CREATE_CLUB = 10000
 ```
+
+**CORS:** Allows `hexlash.com`, `test.hexlash.com`, `hexlash.vercel.app`, `*.vercel.app`
+**Health checks:** `GET /` and `GET /health`
 
 ---
 
@@ -225,6 +240,7 @@ COST_CREATE_CLUB = 10000
 **Key sections per locale:**
 - UI labels: `menu`, `auth`, `profile`, `arena`, `fight`, `training`, `moves`, `deck`, `cards`, `rating`, `club`, `info`, `nav`, `autoFight`
 - Game data translations: `gameData.branches[id].{name,description}`, `gameData.moves[id].{name,description}`
+- Page content: `locales/pages/help/{lang}.json`, `locales/pages/rules/{lang}.json`
 
 **Usage in templates:** `{{ t.section.key }}` (auto-unwrapped ref)
 **Usage in script:** `t.value.section.key`
@@ -259,14 +275,28 @@ Base: `/v1/`
 | `/club` | club.js | create/edit club, members, balance |
 | `/task` | task.js | daily + social tasks |
 | `/file` | file.js | avatar/file upload |
+| `/fight` | fight.js | save fight results, update win/loss/draw stats |
 
 Auth guard: JWT Bearer token via `middleware/auth.js`
 
+### WebSocket Protocol
+
+| Request Message | Response | Purpose |
+|----------------|----------|---------|
+| `PunchInfoRequestMsg` | `PunchInfoResponseMsg` | Get punch rate limit info |
+| `PunchBatchRequestMsg` | `UserResponseMsg` | Submit batch of punches |
+| `FightTicketMsg` | `FightInfoMsg` | Request new fight ticket |
+| `FightActionMsg` | — | Send PvP fight action |
+| — | `AchievementResponseMsg` | Auto-awarded achievement (punch milestones: 100, 1k, 5k, 10k) |
+| — | `ErrorMsg` | Error response |
+
 ---
 
-## Database Models (Prisma/SQLite)
+## Database Models (Prisma/PostgreSQL)
 
 User, Club, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask, UserDailyTask, Fight, PunchInfo
+
+**Seed data:** 16 achievements (NEWBIE, CONNECTED_FIGHTER, REGULAR_FIGHTER, BATTLE_VETERAN, FIGHT_MASTER, COACH, RECRUITER, PROJECT_MAYHEM, MEATLOAF, TYLER, EXPERT, LUCKY_ONE, BOB, PAPER_STREET, MEETING_PARTICIPANT, GOLDEN_RULE) + social/daily tasks (en/ru)
 
 ---
 
@@ -274,7 +304,7 @@ User, Club, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask,
 
 - **Frontend:** Vite + JS obfuscation + Brotli + image optimization (mozjpeg/pngquant/webp) + terser (drops console)
 - **Deploy:** Vercel or Nginx reverse proxy via Docker
-- **Backend:** Node.js + SQLite (local or Railway)
+- **Backend:** Node.js + PostgreSQL (Railway or local)
 - **WebSocket:** Authenticated via JWT, same HTTP server as Express
 
 ---
