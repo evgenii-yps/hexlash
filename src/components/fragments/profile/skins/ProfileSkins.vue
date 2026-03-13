@@ -1,6 +1,8 @@
 <template>
   <div class="profile-skins">
-    <BackButton :defaultRoute="backRef(route)"/>
+    <div class="back-btn-sticky">
+      <BackButton :defaultRoute="backRef(route)"/>
+    </div>
 
     <!-- Current skin preview -->
     <div class="skin-preview">
@@ -83,6 +85,14 @@ onMounted(() => {
   margin: 1.2rem 0 0 0;
 }
 
+.back-btn-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  padding: 8px 0;
+  background: linear-gradient(to bottom, rgba(9, 9, 9, 0.95) 60%, transparent);
+}
+
 /* ── Preview ─────────────────────────────────────────── */
 .skin-preview {
   display: flex;
@@ -99,8 +109,8 @@ onMounted(() => {
 /* ── Grid ────────────────────────────────────────────── */
 .skin-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
   padding: 0 16px 40px;
 }
 
@@ -128,8 +138,8 @@ onMounted(() => {
 
 .skin-card-img {
   width: 100%;
-  height: 120px;
-  padding: 4px;
+  height: 200px;
+  padding: 6px;
 }
 
 .skin-card-price {
