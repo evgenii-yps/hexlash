@@ -86,11 +86,11 @@ onMounted(() => {
 }
 
 .back-btn-sticky {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  padding: 8px 0;
-  background: linear-gradient(to bottom, rgba(9, 9, 9, 0.95) 60%, transparent);
+  position: fixed;
+  top: 12px;
+  left: 0;
+  z-index: 100;
+  padding: 0 0 0 20px;
 }
 
 /* ── Preview ─────────────────────────────────────────── */
