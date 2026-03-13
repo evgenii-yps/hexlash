@@ -10,21 +10,6 @@
 
         <ModuleBuilder/>
 
-        <div class="difficulty-section">
-          <div class="difficulty-label">{{ t.arena.lblDifficulty }}</div>
-          <div class="difficulty-buttons">
-            <VBtn
-                v-for="level in ['easy', 'medium', 'hard']"
-                :key="level"
-                size="small"
-                :class="['diff-btn', { 'diff-active': difficulty === level }]"
-                @click="setDifficulty(level)"
-            >
-              {{ t.arena['lbl' + level.charAt(0).toUpperCase() + level.slice(1)] }}
-            </VBtn>
-          </div>
-        </div>
-
         <div class="fight-button-wrapper">
           <VBtn
               v-if="!isAutoFightEnabled"
@@ -67,11 +52,6 @@ import AutoFightStatus from "@/components/fragments/fight/AutoFightStatus.vue";
 const master = computed(() => store.getters['master/getMaster']);
 const isBuildValid = computed(() => store.getters['fight/isBuildValid']);
 const isAutoFightEnabled = computed(() => store.getters['autoFight/isEnabled']);
-const difficulty = computed(() => store.getters['fight/getDifficulty']);
-
-const setDifficulty = (level) => {
-  store.dispatch('fight/setDifficulty', level);
-};
 
 const startFight = async () => {
   await store.dispatch('fight/startFight');
@@ -153,38 +133,6 @@ const handleScroll = (event) => {
   align-items: center;
   margin-bottom: 16px;
   gap: 4px;
-}
-
-.difficulty-section {
-  margin-top: 16px;
-  text-align: center;
-}
-
-.difficulty-label {
-  font-size: 0.75rem;
-  color: var(--gray2);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 8px;
-}
-
-.difficulty-buttons {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-}
-
-.diff-btn {
-  font-size: 0.75rem !important;
-  background-color: var(--black-opacity-80) !important;
-  color: var(--gray2) !important;
-  border: 1px solid var(--gray2);
-}
-
-.diff-active {
-  background-color: var(--primary-color) !important;
-  color: white !important;
-  border-color: var(--primary-color) !important;
 }
 
 .fight-button-wrapper {
