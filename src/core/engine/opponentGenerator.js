@@ -1,8 +1,10 @@
 /**
- * AI Opponent Generator - creates random opponents with module builds.
+ * AI Opponent Generator - creates random opponents with module builds
+ * and power-matched decks.
  */
 
 import { ARCHETYPES } from '@/core/data/archetypes.js';
+import { calculateTargetPower, generateDeckForPower, calculatePowerRating } from '@/utils/powerRating.js';
 
 const OPPONENT_NAMES = [
     'Shadow', 'Viper', 'Thunder', 'Blaze', 'Frost',
@@ -39,24 +41,46 @@ const DIFFICULTY_CONFIG = {
 export class OpponentGenerator {
 
     /**
-     * Generate a random AI opponent with a module build.
+     * Generate a random AI opponent with a module build and power-matched deck.
      * @param {string} difficulty - 'easy' | 'medium' | 'hard'
-     * @returns {{ id, name, avatarUrl, skin, modules: string[] }}
+     * @param {number} [playerPower] - Player's power rating for matchmaking.
+     *                                 If omitted, generates without deck (legacy mode).
+     * @returns {{ id, name, avatarUrl, skin, modules: string[], deck?: string[], cardLevels?: Object, power?: number }}
      */
-    static generate(difficulty = 'medium') {
+    static generate(difficulty = 'medium', playerPower = null) {
         const config = DIFFICULTY_CONFIG[difficulty] || DIFFICULTY_CONFIG.medium;
 
         const name = config.namePrefix + OPPONENT_NAMES[Math.floor(Math.random() * OPPONENT_NAMES.length)];
         const skin = OPPONENT_SKINS[Math.floor(Math.random() * OPPONENT_SKINS.length)];
         const modules = OpponentGenerator.buildModuleSet(config);
 
-        return {
+        const opponent = {
             id: 'ai_' + Date.now(),
             name,
             avatarUrl: '',
             skin,
             modules,
         };
+
+        // Power-based matchmaking: generate deck matched to player's strength
+        if (playerPower !== null && playerPower > 0) {
+            const targetPower = calculateTargetPower(playerPower, difficulty);
+            const { deck, cardLevels } = generateDeckForPower(targetPower);
+
+            opponent.deck = deck;
+            opponent.cardLevels = cardLevels;
+
+            // Calculate actual opponent power
+            const unlockedCount = deck.length; // opponent "unlocked" = deck size
+            opponent.power = calculatePowerRating({
+                deck,
+                cardLevels,
+                modules,
+                unlockedCards: deck, // use deck as unlocked for opponents
+            });
+        }
+
+        return opponent;
     }
 
     /**

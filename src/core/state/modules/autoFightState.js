@@ -1,6 +1,7 @@
 import { OpponentGenerator } from '@/core/engine/opponentGenerator.js';
 import { CombatEngine } from '@/core/engine/combatEngine.js';
 import { ModuleAIStrategy } from '@/core/engine/aiStrategy.js';
+import { calculatePowerRating, buildPlayerFighter } from '@/utils/powerRating.js';
 import {
     MAX_HP, MAX_ROUNDS, ROUND_ANIMATION_MS, COUNTDOWN,
     DICE_COOLDOWN_ROUNDS, EMERGENCY_HP_THRESHOLD,
@@ -56,8 +57,8 @@ function getRandomInterval() {
 }
 
 // ─── Fast offline fight simulation ──────────────────────────────────────────
-function simulateFullFight(playerModules, difficulty) {
-    const opponent = OpponentGenerator.generate(difficulty);
+function simulateFullFight(playerModules, difficulty, playerPower = null) {
+    const opponent = OpponentGenerator.generate(difficulty, playerPower);
     const ai1 = new ModuleAIStrategy(playerModules);
     const ai2 = new ModuleAIStrategy(opponent.modules);
 
@@ -299,7 +300,7 @@ const actions = {
      * Called on app load / visibility change.
      * Simulates missed fights instantly and schedules next one.
      */
-    checkAndRunPending({ commit, state, dispatch, rootGetters }) {
+    checkAndRunPending({ commit, state, dispatch, rootGetters, rootState }) {
         if (!state.enabled || state.stoppingAfterCurrent) return;
 
         const now = Date.now();
@@ -310,10 +311,15 @@ const actions = {
         const fightPhase = rootGetters['fight/getFightPhase'];
         if (fightPhase === 'fighting' || fightPhase === 'coach') return;
 
+        // Calculate player power for matchmaking
+        const progressionState = rootState.progression;
+        const playerFighter = buildPlayerFighter(progressionState, modules);
+        const playerPower = calculatePowerRating(playerFighter);
+
         // Simulate missed fights
         let nextAt = state.nextFightAt;
         while (nextAt && now >= nextAt && state.fightsToday < AUTO_FIGHT_MAX_PER_DAY && state.sessionFights < AUTO_FIGHT_MAX_PER_SESSION) {
-            const fightData = simulateFullFight(modules, state.difficulty);
+            const fightData = simulateFullFight(modules, state.difficulty, playerPower);
             const expGain = fightData.result === 'win' ? 10 : 5;
             const exp = { speed: Math.floor(expGain / 3), power: Math.floor(expGain / 3), technique: expGain - 2 * Math.floor(expGain / 3) };
 
