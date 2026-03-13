@@ -2,6 +2,7 @@ import { CombatEngine } from '@/core/engine/combatEngine.js';
 import { ModuleAIStrategy } from '@/core/engine/aiStrategy.js';
 import { OpponentGenerator } from '@/core/engine/opponentGenerator.js';
 import { ARCHETYPES } from '@/core/data/archetypes.js';
+import { calculatePowerRating, buildPlayerFighter } from '@/utils/powerRating.js';
 import { t } from '@/locales/index.js';
 import router from '@/router/index.js';
 import { MAX_HP, MAX_ROUNDS, DICE_COOLDOWN_ROUNDS, EMERGENCY_HP_THRESHOLD, COACH_MIN_ROUND, COACH_TRIGGER_CHANCE, COACH_BOOST_ROUNDS, ROUND_ANIMATION_MS } from '@/core/constants.js';
@@ -257,10 +258,15 @@ const actions = {
     },
 
     /** Start a live fight: generate opponent, init AI, reset state, save to localStorage. */
-    async startFight({ commit, state }) {
+    async startFight({ commit, state, rootState }) {
         if (!state.playerModules.every(m => m !== null)) return;
 
-        const opponent = OpponentGenerator.generate(state.difficulty);
+        // Calculate player power for matchmaking
+        const progressionState = rootState.progression;
+        const playerFighter = buildPlayerFighter(progressionState, state.playerModules);
+        const playerPower = calculatePowerRating(playerFighter);
+
+        const opponent = OpponentGenerator.generate(state.difficulty, playerPower);
         commit('setOpponent', opponent);
 
         _ai1 = new ModuleAIStrategy(state.playerModules);
