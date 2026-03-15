@@ -94,7 +94,8 @@ function _simulateOneRound(state, commit) {
     commit('setLiveHP2', result.hp2After);
     commit('setRoundNum', nextRound);
     commit('addRoundToLog', result);
-    commit('addStats', { totalDamageDealt: result.damage2, totalDamageTaken: result.damage1 });
+    const playerCrits = result.events.filter(e => e.fighter === 2 && e.type === 'crit').length;
+    commit('addStats', { totalDamageDealt: result.damage2, totalDamageTaken: result.damage1, criticalHits: playerCrits });
     commit('resetPlayerModifiers');
 
     if (result.hp1After <= 0 || result.hp2After <= 0) {
@@ -133,7 +134,7 @@ const state = {
     fightPhase: 'idle',    // idle | preparation | fighting | coach | results
     difficulty: 'medium',
 
-    fightStats: { totalDamageDealt: 0, totalDamageTaken: 0, dicePickedUp: 0, diceIgnored: 0 },
+    fightStats: { totalDamageDealt: 0, totalDamageTaken: 0, dicePickedUp: 0, diceIgnored: 0, criticalHits: 0 },
 
     xpEarned:  null,   // { speed, power, technique } — set when fight ends
     xpAwarded: false,  // true after progression/onFightEnd dispatched (prevent double-award)
@@ -221,10 +222,11 @@ const mutations = {
             totalDamageTaken: s.fightStats.totalDamageTaken + (delta.totalDamageTaken || 0),
             dicePickedUp:     s.fightStats.dicePickedUp     + (delta.dicePickedUp     || 0),
             diceIgnored:      s.fightStats.diceIgnored      + (delta.diceIgnored      || 0),
+            criticalHits:     s.fightStats.criticalHits     + (delta.criticalHits     || 0),
         };
     },
     resetStats(s) {
-        s.fightStats = { totalDamageDealt: 0, totalDamageTaken: 0, dicePickedUp: 0, diceIgnored: 0 };
+        s.fightStats = { totalDamageDealt: 0, totalDamageTaken: 0, dicePickedUp: 0, diceIgnored: 0, criticalHits: 0 };
     },
 
     setXpEarned(s, v)  { s.xpEarned  = v; },
@@ -399,12 +401,14 @@ const actions = {
             case 'rage': {
                 const hp2 = state.liveHP2 - 20;
                 commit('setLiveHP2', hp2);
+                commit('addStats', { totalDamageDealt: 20 });
                 if (hp2 <= 0) commit('setFightPhase', 'results');
                 break;
             }
             case 'crit': {
                 const hp2 = state.liveHP2 - 30;
                 commit('setLiveHP2', hp2);
+                commit('addStats', { totalDamageDealt: 30 });
                 if (hp2 <= 0) commit('setFightPhase', 'results');
                 break;
             }
