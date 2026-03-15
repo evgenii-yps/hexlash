@@ -469,7 +469,7 @@ const startCountdown = () => {
     if (countdownValue.value > 1) {
       countdownValue.value -= 1;
     } else {
-      countdownValue.value = 'Fight!';
+      countdownValue.value = t.value.fight.lblFight;
       clearInterval(countdownTimer);
       setTimeout(() => {
         countdownValue.value = 0;

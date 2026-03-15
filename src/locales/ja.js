@@ -300,6 +300,7 @@ export default {
     lblCounter: 'カウンター！',
     lblCrit: 'クリティカル！',
     lblShield: 'シールド！',
+    lblFight: 'ファイト！',
     fightFinished: '試合終了！',
     lblFightAgain: 'もう一度戦う',
     lblChangeDeck: 'ビルドを変更',

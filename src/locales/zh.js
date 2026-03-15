@@ -300,6 +300,7 @@ export default {
     lblCounter: '反击！',
     lblCrit: '暴击！',
     lblShield: '已护盾！',
+    lblFight: '开战！',
     fightFinished: '战斗结束！',
     lblFightAgain: '再战一场',
     lblChangeDeck: '更换配置',

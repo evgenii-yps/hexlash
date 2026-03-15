@@ -300,6 +300,7 @@ export default {
     lblCounter: 'هجوم مضاد!',
     lblCrit: 'ضربة حرجة!',
     lblShield: 'محمي!',
+    lblFight: '!قتال',
     fightFinished: 'المعركة انتهت!',
     lblFightAgain: 'قاتل مجددًا',
     lblChangeDeck: 'تغيير البناء',

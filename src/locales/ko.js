@@ -300,6 +300,7 @@ export default {
     lblCounter: '반격!',
     lblCrit: '크리티컬!',
     lblShield: '방패!',
+    lblFight: '싸움!',
     fightFinished: '전투 종료!',
     lblFightAgain: '다시 싸우기',
     lblChangeDeck: '빌드 변경',

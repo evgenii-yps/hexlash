@@ -300,6 +300,7 @@ export default {
     lblCounter: 'Counter!',
     lblCrit: 'CRITICAL!',
     lblShield: 'Shielded!',
+    lblFight: 'Fight!',
     fightFinished: 'Fight finished!',
     lblFightAgain: 'Fight Again',
     lblChangeDeck: 'Change Build',

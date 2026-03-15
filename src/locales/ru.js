@@ -300,6 +300,7 @@ export default {
     lblHealed: '+{n} HP',
     lblBuff: 'Усиление!',
     lblCounter: 'Контратака!',
+    lblFight: 'Бой!',
     fightFinished: 'Бой завершен!',
     lblFightAgain: 'Ещё бой',
     lblChangeDeck: 'Пересобрать билд',
