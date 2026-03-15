@@ -150,7 +150,7 @@ const state = {
     wins: 0,
     losses: 0,
     draws: 0,
-    totalExpGained: { speed: 0, power: 0, technique: 0 },
+    totalExpGained: 0,
     sessionFights: 0,
 
     // Fight log (persisted separately)
@@ -219,12 +219,8 @@ const mutations = {
         else s.draws++;
     },
 
-    addExp(s, exp) {
-        s.totalExpGained = {
-            speed: s.totalExpGained.speed + (exp.speed || 0),
-            power: s.totalExpGained.power + (exp.power || 0),
-            technique: s.totalExpGained.technique + (exp.technique || 0),
-        };
+    addExp(s, amount) {
+        s.totalExpGained += amount;
     },
 
     resetState(s) {
@@ -237,7 +233,7 @@ const mutations = {
         s.wins = 0;
         s.losses = 0;
         s.draws = 0;
-        s.totalExpGained = { speed: 0, power: 0, technique: 0 };
+        s.totalExpGained = 0;
         s.sessionFights = 0;
         s.liveFight = null;
     },
@@ -260,7 +256,7 @@ const actions = {
             commit('setWins', saved.wins || 0);
             commit('setLosses', saved.losses || 0);
             commit('setDraws', saved.draws || 0);
-            commit('setTotalExpGained', saved.totalExpGained || { speed: 0, power: 0, technique: 0 });
+            commit('setTotalExpGained', typeof saved.totalExpGained === 'number' ? saved.totalExpGained : 0);
             commit('setSessionFights', saved.sessionFights || 0);
 
             // Daily reset: if lastFightDate is not today, reset daily counter
@@ -346,7 +342,6 @@ const actions = {
         while (nextAt && now >= nextAt && state.fightsToday < AUTO_FIGHT_MAX_PER_DAY && state.sessionFights < AUTO_FIGHT_MAX_PER_SESSION) {
             const fightData = simulateFullFight(modules, state.difficulty, playerPower);
             const expGain = fightData.result === 'win' ? 10 : 5;
-            const exp = { speed: Math.floor(expGain / 3), power: Math.floor(expGain / 3), technique: expGain - 2 * Math.floor(expGain / 3) };
 
             const logEntry = {
                 id: 'autofight_' + nextAt,
@@ -357,17 +352,16 @@ const actions = {
                 rounds: fightData.rounds,
                 hp1Final: fightData.hp1Final,
                 hp2Final: fightData.hp2Final,
-                expGained: exp,
+                expGained: expGain,
             };
 
             commit('addFightToLog', logEntry);
             commit('incrementStats', fightData.result);
-            commit('addExp', exp);
+            commit('addExp', expGain);
 
-            // Award XP to progression
+            // Award XP to progression (freeXP)
             dispatch('progression/onFightEnd', {
                 result: fightData.result === 'win' ? 'win' : 'lose',
-                deck: rootGetters['progression/getDeck'],
             }, { root: true });
 
             // Send notification
@@ -407,7 +401,6 @@ const actions = {
 
         const opponent = rootGetters['fight/getOpponent'];
         const expGain = result === 'win' ? 10 : 5;
-        const exp = { speed: Math.floor(expGain / 3), power: Math.floor(expGain / 3), technique: expGain - 2 * Math.floor(expGain / 3) };
 
         const logEntry = {
             id: 'autofight_' + Date.now(),
@@ -418,12 +411,12 @@ const actions = {
             rounds,
             hp1Final: hp1,
             hp2Final: hp2,
-            expGained: exp,
+            expGained: expGain,
         };
 
         commit('addFightToLog', logEntry);
         commit('incrementStats', result);
-        commit('addExp', exp);
+        commit('addExp', expGain);
 
         if (state.stoppingAfterCurrent) {
             commit('setEnabled', false);
@@ -443,11 +436,12 @@ const actions = {
     sendNotification(_, { fight }) {
         if (!('Notification' in window) || Notification.permission !== 'granted') return;
         try {
+            const xp = typeof fight.expGained === 'number' ? fight.expGained : 0;
             const body = fight.result === 'win'
-                ? `Victory vs ${fight.opponent}! +${Object.values(fight.expGained).reduce((a, b) => a + b, 0)} XP`
+                ? `Victory vs ${fight.opponent}! +${xp} XP`
                 : fight.result === 'lose'
-                    ? `Defeat vs ${fight.opponent}. +${Object.values(fight.expGained).reduce((a, b) => a + b, 0)} XP`
-                    : `Draw vs ${fight.opponent}. +${Object.values(fight.expGained).reduce((a, b) => a + b, 0)} XP`;
+                    ? `Defeat vs ${fight.opponent}. +${xp} XP`
+                    : `Draw vs ${fight.opponent}. +${xp} XP`;
 
             new Notification('Hexlash Auto Fight', {
                 body,

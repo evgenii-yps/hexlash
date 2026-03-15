@@ -412,6 +412,12 @@ export default {
     lblNotificationLose: 'Поражение от {opponent}. +{xp} XP',
     lblNotificationDraw: 'Ничья с {opponent}. +{xp} XP',
   },
+  xpAllocation: {
+    freeXP: 'Свободно',
+    allocateTo: 'ВЛОЖИТЬ В',
+    allocate: 'УСИЛИТЬ',
+    cancel: 'Отмена',
+  },
   cards: {
     attack: 'Атака',
     defense: 'Защита',

@@ -89,6 +89,7 @@ const formatTime = (ts) => {
 
 const totalXp = (exp) => {
   if (!exp) return 0;
+  if (typeof exp === 'number') return exp;
   return (exp.speed || 0) + (exp.power || 0) + (exp.technique || 0);
 };
 

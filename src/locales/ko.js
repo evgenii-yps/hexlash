@@ -412,6 +412,12 @@ export default {
     lblNotificationLose: 'Defeat vs {opponent}. +{xp} XP',
     lblNotificationDraw: 'Draw vs {opponent}. +{xp} XP',
   },
+  xpAllocation: {
+    freeXP: '사용 가능',
+    allocateTo: '투자 대상',
+    allocate: '강화하기',
+    cancel: '취소',
+  },
   cards: {
     attack: '공격',
     defense: '방어',

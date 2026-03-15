@@ -15,6 +15,7 @@ function createInitialProgress() {
   });
   return {
     taps: 0,
+    freeXP: 0,
     branchExp: { speed: 0, power: 0, technique: 0 },
     moves,
     deck: [...STARTER_MOVES],
@@ -33,6 +34,7 @@ function loadProgress() {
       return {
         ...initial,
         ...data,
+        freeXP: data.freeXP || 0,
         moves: { ...initial.moves, ...(data.moves || {}) },
         branchExp: { ...initial.branchExp, ...(data.branchExp || {}) }
       };
@@ -47,6 +49,7 @@ function saveProgress(state) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       taps: state.taps,
+      freeXP: state.freeXP,
       branchExp: state.branchExp,
       moves: state.moves,
       deck: state.deck,
@@ -67,6 +70,7 @@ export default {
   getters: {
     getTaps: state => state.taps,
     getTotalTaps: state => state.totalTaps,
+    getFreeXP: state => state.freeXP,
     getBranchExp: state => state.branchExp,
     getMoves: state => state.moves,
     getDeck: state => state.deck,
@@ -153,23 +157,18 @@ export default {
       saveProgress(state);
     },
 
-    addExpFromFight(state, { result, deck }) {
-      const expGain = result === 'win' ? 10 : 5;
-      const branchCount = { speed: 0, power: 0, technique: 0 };
-      deck.forEach(moveId => {
-        const branch = allMoves[moveId]?.branch;
-        if (branch) branchCount[branch] += 1;
-      });
-      const totalMoves = deck.length;
-      const newExp = { ...state.branchExp };
-      Object.keys(branchCount).forEach(branch => {
-        if (branchCount[branch] > 0) {
-          newExp[branch] += Math.floor(expGain * branchCount[branch] / totalMoves);
-        }
-      });
-      state.branchExp = newExp;
+    addFreeXP(state, { amount, result }) {
+      state.freeXP += amount;
       state.totalFights += 1;
       if (result === 'win') state.totalWins += 1;
+      saveProgress(state);
+    },
+
+    allocateXP(state, { branch, amount }) {
+      if (amount <= 0 || amount > state.freeXP) return;
+      if (!state.branchExp.hasOwnProperty(branch)) return;
+      state.freeXP -= amount;
+      state.branchExp = { ...state.branchExp, [branch]: state.branchExp[branch] + amount };
       saveProgress(state);
     },
 
@@ -206,8 +205,15 @@ export default {
       return true;
     },
 
-    onFightEnd({ commit }, { result, deck }) {
-      commit('addExpFromFight', { result, deck });
+    onFightEnd({ commit }, { result }) {
+      const amount = result === 'win' ? 10 : 5;
+      commit('addFreeXP', { amount, result });
+    },
+
+    allocateXP({ commit, state }, { branch, amount }) {
+      if (amount <= 0 || amount > state.freeXP) return false;
+      commit('allocateXP', { branch, amount });
+      return true;
     },
 
     toggleDeckMove({ commit }, moveId) {
