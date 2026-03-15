@@ -437,6 +437,7 @@ export default {
     successCompleteTask: 'タスクを正常に完了し、正当な報酬を獲得しました <a href="/training">タスク</a>',
     lblTitle: 'トレーニングルーム',
     lblTaps: 'タップ',
+    lblAvailableXP: '利用可能XP',
     lblSpeed: 'スピード',
     lblPower: 'パワー',
     lblTechnique: 'テクニック',

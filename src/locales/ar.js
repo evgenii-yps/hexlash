@@ -437,6 +437,7 @@ export default {
     successCompleteTask: 'لقد أكملت المهمة بنجاح وحصلت على المكافأة التي تستحقها <a href="/training">المهام</a>',
     lblTitle: 'غرفة التدريب',
     lblTaps: 'النقرات',
+    lblAvailableXP: 'XP المتاحة',
     lblSpeed: 'السرعة',
     lblPower: 'القوة',
     lblTechnique: 'التقنية',

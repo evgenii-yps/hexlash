@@ -437,6 +437,7 @@ export default {
     successCompleteTask: '임무를 성공적으로 완료하고 정당한 보상을 받았습니다 <a href="/training">작업</a>',
     lblTitle: '훈련실',
     lblTaps: '탭',
+    lblAvailableXP: '사용 가능 XP',
     lblSpeed: '속도',
     lblPower: '파워',
     lblTechnique: '기술',

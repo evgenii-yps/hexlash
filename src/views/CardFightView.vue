@@ -1533,10 +1533,10 @@ const flashStyle = computed(() => ({
 .xp-earned-total {
   font-family: AnonymousBalance, sans-serif;
   font-size: 1.4rem;
-  color: #00FF88;
+  color: var(--pink);
   font-weight: bold;
   text-align: center;
-  text-shadow: 0 0 10px rgba(0, 255, 136, 0.4);
+  text-shadow: 0 0 10px rgba(255, 6, 111, 0.4);
 }
 
 /* ── Auto Fight Banner ──────────────────────────────────────────── */

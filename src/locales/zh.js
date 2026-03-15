@@ -437,6 +437,7 @@ export default {
     successCompleteTask: '您已成功完成任务，并获得应得的奖励 <a href="/training">任务</a>',
     lblTitle: '训练室',
     lblTaps: '点击次数',
+    lblAvailableXP: '可用XP',
     lblSpeed: '速度',
     lblPower: '力量',
     lblTechnique: '技术',
