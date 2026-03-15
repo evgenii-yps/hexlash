@@ -159,6 +159,14 @@
               <span>{{ fightStats.totalDamageDealt }}</span>
             </div>
             <div class="report-row">
+              <span>{{ t.fight.lblDamageReceived }}:</span>
+              <span>{{ fightStats.totalDamageTaken }}</span>
+            </div>
+            <div class="report-row">
+              <span>{{ t.fight.lblCriticalHits }}:</span>
+              <span>{{ fightStats.criticalHits }}</span>
+            </div>
+            <div class="report-row">
               <span>{{ t.fight.lblPickedUp }}:</span>
               <span>{{ fightStats.dicePickedUp }}</span>
             </div>
@@ -351,20 +359,60 @@ const resultClass = computed(() => {
   return 'result-draw';
 });
 
-// ── AI Trainer stub ──────────────────────────────────────────────────────
+// ── AI Trainer analysis (based on real fight data) ───────────────────────
 const trainerAnalysis = computed(() => {
-  const won = liveHP1.value > liveHP2.value;
+  const result = resultState.value;
+  const stats = fightStats.value;
+  const rounds = roundNum.value;
   const modules = playerModules.value;
   const names = modules.filter(id => id).map(id =>
     getLanguage() === 'ru' ? (ARCHETYPES[id]?.nameRu || id) : (ARCHETYPES[id]?.name || id)
   );
   const buildStr = names.join(' + ');
+  const f = t.value.fight;
 
-  if (won) {
-    return interpolate(t.value.fight.trainerAnalysisWin, { build: buildStr, name: names[0] });
+  const parts = [];
+
+  // Result-based opener
+  if (result === 'win') {
+    const hpLeft = liveHP1.value;
+    if (hpLeft > 70) parts.push(f.trainerDominant);
+    else if (hpLeft > 30) parts.push(f.trainerCloseWin);
+    else parts.push(f.trainerLuckyWin);
+  } else if (result === 'lose') {
+    const hpOpp = liveHP2.value;
+    if (hpOpp > 70) parts.push(f.trainerCrushed);
+    else if (hpOpp > 30) parts.push(f.trainerOutplayed);
+    else parts.push(f.trainerCloseLose);
   } else {
-    return interpolate(t.value.fight.trainerAnalysisLose, { build: buildStr, name: names[0] });
+    parts.push(f.trainerDrawResult);
   }
+
+  // Damage ratio analysis
+  const dealt = stats.totalDamageDealt || 0;
+  const taken = stats.totalDamageTaken || 0;
+  if (taken > 0) {
+    const ratio = dealt / taken;
+    if (ratio > 1.5) parts.push(f.trainerDamageDominance);
+    else if (ratio < 0.7) parts.push(f.trainerDamageDeficit);
+  }
+
+  // Round duration analysis
+  if (rounds <= 4) parts.push(f.trainerQuickFight);
+  else if (rounds >= 9) parts.push(f.trainerLongFight);
+
+  // Critical hits
+  if (stats.criticalHits >= 3) parts.push(f.trainerManyCrits);
+  else if (stats.criticalHits > 0) parts.push(interpolate(f.trainerCritsLanded, { count: stats.criticalHits }));
+
+  // Build verdict
+  if (result === 'win') {
+    parts.push(interpolate(f.trainerBuildEffective, { build: buildStr }));
+  } else if (result === 'lose') {
+    parts.push(interpolate(f.trainerBuildFailed, { build: buildStr }));
+  }
+
+  return parts.join(' ');
 });
 
 // ── Auto-clear event title ──────────────────────────────────────────────
@@ -1174,7 +1222,7 @@ const flashStyle = computed(() => ({
   border-radius: 10px;
   padding: 14px 16px;
   margin-bottom: 16px;
-  position: relative; overflow: hidden;
+  position: relative; overflow: visible;
 }
 .ai-trainer::before {
   content: "";
