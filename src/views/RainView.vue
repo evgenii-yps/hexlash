@@ -1199,12 +1199,11 @@ watch(isAuthenticated, (newValue) => {
   margin: 10px 10px;
   font-family: 'Anonymous', sans-serif;
   color: white;
-  font-size: 2em;
+  font-size: 1em;
   /*  background: rgba(51, 51, 51, 0.8);*/
   background: var(--black-opacity-80);
   padding: 10px 20px;
   text-align: center;
-  width: 100px;
   display: flex;
   justify-content: center;
   align-items: center;
