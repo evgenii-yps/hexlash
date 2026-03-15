@@ -13,19 +13,9 @@
             <span class="resource-value">{{ taps }}</span>
           </div>
           <div class="resource-divider"></div>
-          <div class="resource-xp-grid">
-            <div class="xp-row">
-              <span class="xp-branch-name">{{ t.moves.lblSpeed }}</span>
-              <span class="xp-branch-val">{{ branchExp.speed }} XP</span>
-            </div>
-            <div class="xp-row">
-              <span class="xp-branch-name">{{ t.moves.lblPower }}</span>
-              <span class="xp-branch-val">{{ branchExp.power }} XP</span>
-            </div>
-            <div class="xp-row">
-              <span class="xp-branch-name">{{ t.moves.lblTechnique }}</span>
-              <span class="xp-branch-val">{{ branchExp.technique }} XP</span>
-            </div>
+          <div class="resource-free-xp">
+            <span class="resource-label">{{ t.xpAllocation.freeXP }}</span>
+            <span class="resource-value free-xp-value">{{ freeXP }}</span>
           </div>
         </div>
       </div>
@@ -36,15 +26,23 @@
         <!-- Левая колонка: ветки -->
         <div class="branches-sidebar">
           <div class="branches-center">
-            <button
-                v-for="(branch, key) in branches"
-                :key="key"
-                class="branch-btn"
-                :class="{ active: activeBranch === key }"
-                @click="activeBranch = key"
-            >
-              <span class="branch-btn-name">{{ t.gameData.branches[key].name }}</span>
-            </button>
+            <div v-for="(branch, key) in branches" :key="key" class="branch-group">
+              <button
+                  class="branch-btn"
+                  :class="{ active: activeBranch === key }"
+                  @click="activeBranch = key"
+              >
+                <span class="branch-btn-name">{{ t.gameData.branches[key].name }}</span>
+                <span class="branch-xp-val">{{ branchExp[key] }} XP</span>
+              </button>
+              <button
+                  v-if="freeXP > 0"
+                  class="branch-add-xp-btn"
+                  @click.stop="openXPModal(key)"
+              >
+                + XP
+              </button>
+            </div>
           </div>
         </div>
 
@@ -70,6 +68,16 @@
 
       </div>
     </div>
+
+    <!-- Модалка распределения XP -->
+    <XPAllocationModal
+        :branch="xpModalBranch"
+        :branchName="xpModalBranchName"
+        :freeXP="freeXP"
+        :visible="xpModalVisible"
+        @allocate="handleAllocateXP"
+        @close="xpModalVisible = false"
+    />
 
     <!-- Модалка деталей приёма -->
     <MoveDetailsModal
@@ -99,6 +107,7 @@ import { allMoves as movesData } from '@/data/moves.js';
 import { InfoMessageModel } from '@/core/models/internal/infoMessageModel.js';
 import MoveTreeCard from '@/components/fragments/training/MoveTreeCard.vue';
 import MoveDetailsModal from '@/components/fragments/training/MoveDetailsModal.vue';
+import XPAllocationModal from '@/components/XPAllocationModal.vue';
 
 const router = useRouter();
 const emit = defineEmits(['scroll']);
@@ -110,8 +119,26 @@ const selectedMoveId = ref(null);
 const movesListRef = ref(null);
 
 const taps = computed(() => store.getters['progression/getTaps']);
+const freeXP = computed(() => store.getters['progression/getFreeXP']);
 const branchExp = computed(() => store.getters['progression/getBranchExp']);
 const moves = computed(() => store.getters['progression/getMoves']);
+
+// XP allocation modal
+const xpModalVisible = ref(false);
+const xpModalBranch = ref('speed');
+const xpModalBranchName = computed(() => {
+  return t.value.gameData.branches[xpModalBranch.value]?.name || xpModalBranch.value;
+});
+
+const openXPModal = (branch) => {
+  xpModalBranch.value = branch;
+  xpModalVisible.value = true;
+};
+
+const handleAllocateXP = async (branch, amount) => {
+  await store.dispatch('progression/allocateXP', { branch, amount });
+  xpModalVisible.value = false;
+};
 
 const canLevelUpFor = (moveId) => store.getters['progression/canLevelUp'](moveId);
 const canUnlockFor  = (moveId) => store.getters['progression/canUnlock'](moveId);
@@ -250,33 +277,17 @@ const goToTraining = () => {
   margin: 6px 0;
 }
 
-.resource-xp-grid {
+.resource-free-xp {
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  gap: 2px;
-  padding: 6px 12px 6px 10px;
-}
-
-.xp-row {
-  display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  justify-content: center;
+  padding: 6px 16px;
 }
 
-.xp-branch-name {
-  font-size: 0.65rem;
-  color: var(--gray3);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  min-width: 54px;
-}
-
-.xp-branch-val {
-  font-family: AnonymousBalance, sans-serif;
-  font-size: 0.95rem;
-  color: var(--pink);
+.free-xp-value {
+  color: #00FF88 !important;
+  text-shadow: 0 0 8px rgba(0, 255, 136, 0.4);
 }
 
 /* ── Основной layout ── */
@@ -327,9 +338,40 @@ const goToTraining = () => {
   background: rgba(255, 6, 111, 0.1);
 }
 
+.branch-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .branch-btn-name {
   font-size: 0.9rem;
   letter-spacing: 0.02em;
+}
+
+.branch-xp-val {
+  font-family: AnonymousBalance, sans-serif;
+  font-size: 0.7rem;
+  color: var(--pink);
+  opacity: 0.8;
+}
+
+.branch-add-xp-btn {
+  background: rgba(0, 255, 136, 0.1);
+  border: 1px solid rgba(0, 255, 136, 0.4);
+  border-radius: 4px;
+  color: #00FF88;
+  font-size: 0.7rem;
+  font-weight: bold;
+  padding: 4px 6px;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: all 0.2s;
+}
+
+.branch-add-xp-btn:active {
+  background: rgba(0, 255, 136, 0.25);
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
 }
 
 /* ── Правая колонка с приёмами ── */

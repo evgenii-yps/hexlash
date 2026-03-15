@@ -412,6 +412,12 @@ export default {
     lblNotificationLose: 'Defeat vs {opponent}. +{xp} XP',
     lblNotificationDraw: 'Draw vs {opponent}. +{xp} XP',
   },
+  xpAllocation: {
+    freeXP: 'उपलब्ध',
+    allocateTo: 'में निवेश करें',
+    allocate: 'मजबूत करें',
+    cancel: 'रद्द करें',
+  },
   cards: {
     attack: 'हमला',
     defense: 'रक्षा',

@@ -179,11 +179,7 @@
           <!-- XP за бой -->
           <div v-if="xpEarned" class="xp-earned-block">
             <div class="xp-earned-title">{{ t.fight.lblXpEarned }}</div>
-            <div class="xp-earned-rows">
-              <div class="xp-row"><span class="xp-branch">{{ t.fight.lblSpeed }}</span><span class="xp-val">+{{ xpEarned.speed ?? 0 }} XP</span></div>
-              <div class="xp-row"><span class="xp-branch">{{ t.fight.lblPower }}</span><span class="xp-val">+{{ xpEarned.power ?? 0 }} XP</span></div>
-              <div class="xp-row"><span class="xp-branch">{{ t.fight.lblTechnique }}</span><span class="xp-val">+{{ xpEarned.technique ?? 0 }} XP</span></div>
-            </div>
+            <div class="xp-earned-total">+{{ xpEarned }} XP</div>
           </div>
 
           <!-- Expandable detailed log -->
@@ -578,20 +574,10 @@ watch(fightPhase, (val, oldVal) => {
     // Only award XP once (guard against double-award on restore)
     if (!store.getters['fight/getXpAwarded']) {
       const result = resultState.value === 'win' ? 'win' : 'lose';
-      const deck = store.getters['progression/getDeck'];
       const expGain = result === 'win' ? 10 : 5;
-      const branchCount = { speed: 0, power: 0, technique: 0 };
-      deck.forEach(id => { const b = movesData[id]?.branch; if (b) branchCount[b]++; });
-      const earned = {};
-      Object.entries(branchCount).forEach(([branch, count]) => {
-        if (count > 0) {
-          const xp = Math.max(1, Math.floor(expGain * count / deck.length));
-          earned[branch] = xp;
-        }
-      });
-      store.commit('fight/setXpEarned', earned);
+      store.commit('fight/setXpEarned', expGain);
       store.commit('fight/setXpAwarded', true);
-      store.dispatch('progression/onFightEnd', { result, deck });
+      store.dispatch('progression/onFightEnd', { result });
 
       const isWin  = resultState.value === 'win';
       const isDraw = resultState.value === 'draw';
@@ -1544,27 +1530,13 @@ const flashStyle = computed(() => ({
   margin-bottom: 8px;
 }
 
-.xp-earned-rows {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.xp-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.xp-branch {
-  font-size: 0.85rem;
-  color: var(--gray3);
-}
-
-.xp-val {
+.xp-earned-total {
   font-family: AnonymousBalance, sans-serif;
-  font-size: 0.9rem;
-  color: var(--pink);
+  font-size: 1.4rem;
+  color: #00FF88;
+  font-weight: bold;
+  text-align: center;
+  text-shadow: 0 0 10px rgba(0, 255, 136, 0.4);
 }
 
 /* ── Auto Fight Banner ──────────────────────────────────────────── */

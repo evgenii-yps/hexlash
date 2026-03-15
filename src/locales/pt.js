@@ -412,6 +412,12 @@ export default {
     lblNotificationLose: 'Defeat vs {opponent}. +{xp} XP',
     lblNotificationDraw: 'Draw vs {opponent}. +{xp} XP',
   },
+  xpAllocation: {
+    freeXP: 'Disponível',
+    allocateTo: 'INVESTIR EM',
+    allocate: 'FORTALECER',
+    cancel: 'Cancelar',
+  },
   cards: {
     attack: 'Ataque',
     defense: 'Defesa',
