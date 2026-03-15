@@ -28,9 +28,6 @@
     </div>
 
     <div class="status-buttons">
-      <button class="status-btn status-btn-stop" @click="stopAutoFight">
-        {{ t.autoFight.lblStopAutoFight }}
-      </button>
       <button class="status-btn status-btn-log" @click="viewLog">
         {{ t.autoFight.lblViewFightLog }}
       </button>
