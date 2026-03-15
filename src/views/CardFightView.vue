@@ -585,8 +585,8 @@ watch(fightPhase, (val, oldVal) => {
       const earned = {};
       Object.entries(branchCount).forEach(([branch, count]) => {
         if (count > 0) {
-          const xp = Math.floor(expGain * count / deck.length);
-          if (xp > 0) earned[branch] = xp;
+          const xp = Math.max(1, Math.floor(expGain * count / deck.length));
+          earned[branch] = xp;
         }
       });
       store.commit('fight/setXpEarned', earned);

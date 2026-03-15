@@ -103,8 +103,13 @@ function _simulateOneRound(state, commit) {
         return false;
     }
     if (nextRound >= MAX_ROUNDS) {
-        if (result.hp1After > result.hp2After)       commit('setLiveHP2', 0);
-        else if (result.hp2After > result.hp1After)  commit('setLiveHP1', 0);
+        if (result.hp1After > result.hp2After) {
+            commit('addStats', { totalDamageDealt: result.hp2After });
+            commit('setLiveHP2', 0);
+        } else if (result.hp2After > result.hp1After) {
+            commit('addStats', { totalDamageTaken: result.hp1After });
+            commit('setLiveHP1', 0);
+        }
         commit('setFightPhase', 'results');
         return false;
     }
