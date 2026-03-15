@@ -927,7 +927,9 @@ const flashStyle = computed(() => ({
   transform: translate(-50%, -50%);
   z-index: 1;
   font-family: Anonymous, sans-serif;
-  font-size: 1.6em;
+  font-size: 1em;
+  font-weight: bold;
+  letter-spacing: 2px;
   background: var(--black-opacity-80);
   border: 1px solid var(--primary-color);
   padding: 4px 16px; border-radius: 6px;
@@ -1113,9 +1115,11 @@ const flashStyle = computed(() => ({
   100% { opacity: 1; }
 }
 .result-label {
-  font-size: 2.5em; font-family: Anonymous, sans-serif;
-  margin-bottom: 16px; letter-spacing: 2px;
+  font-size: 1.8em; font-family: Anonymous, sans-serif;
+  font-weight: bold;
+  margin-bottom: 16px; letter-spacing: 4px;
   text-align: center;
+  text-transform: uppercase;
   animation: resultLabelPop 0.6s ease-out forwards;
 }
 @keyframes resultLabelPop {
