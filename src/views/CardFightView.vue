@@ -926,10 +926,8 @@ const flashStyle = computed(() => ({
   position: absolute; top: 50%; left: 50%;
   transform: translate(-50%, -50%);
   z-index: 1;
-  font-family: Anonymous, sans-serif;
-  font-size: 1em;
-  font-weight: bold;
-  letter-spacing: 2px;
+  font-family: Anonymous, 'Courier New', monospace;
+  font-size: 1.6em;
   background: var(--black-opacity-80);
   border: 1px solid var(--primary-color);
   padding: 4px 16px; border-radius: 6px;
@@ -1115,11 +1113,9 @@ const flashStyle = computed(() => ({
   100% { opacity: 1; }
 }
 .result-label {
-  font-size: 1.8em; font-family: Anonymous, sans-serif;
-  font-weight: bold;
-  margin-bottom: 16px; letter-spacing: 4px;
+  font-size: 2.5em; font-family: Anonymous, 'Courier New', monospace;
+  margin-bottom: 16px; letter-spacing: 2px;
   text-align: center;
-  text-transform: uppercase;
   animation: resultLabelPop 0.6s ease-out forwards;
 }
 @keyframes resultLabelPop {
@@ -1146,7 +1142,7 @@ const flashStyle = computed(() => ({
   border: 1px solid rgba(255, 6, 111, 0.2);
   border-radius: 10px;
   padding: 14px 18px; margin-bottom: 12px;
-  position: relative; overflow: hidden;
+  position: relative; overflow: visible;
 }
 .fight-report::before {
   content: "";
