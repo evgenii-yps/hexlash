@@ -590,7 +590,6 @@ onUnmounted(() => {
 }
 
 .prog-value-xp {
-  font-size: 1.1rem;
   text-shadow: 0 0 8px rgba(255, 6, 111, 0.4);
 }
 
