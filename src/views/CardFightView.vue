@@ -1113,7 +1113,7 @@ const flashStyle = computed(() => ({
   100% { opacity: 1; }
 }
 .result-label {
-  font-size: 2.5em; font-family: Anonymous, sans-serif;
+  font-size: 2.5em; font-family: Arial, sans-serif;
   margin-bottom: 16px; letter-spacing: 2px;
   text-align: center;
   animation: resultLabelPop 0.6s ease-out forwards;
