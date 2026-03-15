@@ -211,6 +211,7 @@ onBeforeUnmount(() => {
   src: url('@/assets/fonts/AnonymousBalance.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
+  unicode-range: U+0000-024F, U+2000-206F, U+2200-22FF;
 }
 
 /*.content {
