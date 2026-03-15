@@ -437,6 +437,7 @@ export default {
     successCompleteTask: 'Você completou a tarefa com sucesso e recebeu sua merecida recompensa <a href="/training">Tarefas</a>',
     lblTitle: 'Sala de treinamento',
     lblTaps: 'Toques',
+    lblAvailableXP: 'XP disponível',
     lblSpeed: 'Velocidade',
     lblPower: 'Força',
     lblTechnique: 'Técnica',

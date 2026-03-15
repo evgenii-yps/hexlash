@@ -3,9 +3,7 @@
     <div class="xp-modal">
       <!-- Title -->
       <h2 class="modal-title">
-        <span class="icon">&#x26A1;</span>
         {{ t.xpAllocation.allocateTo }} {{ branchName }}
-        <span class="icon">&#x26A1;</span>
       </h2>
 
       <!-- Free XP -->
@@ -108,7 +106,9 @@ function close() {
 }
 
 .xp-modal {
-  background: rgba(15, 15, 25, 0.95);
+  background: rgba(15, 15, 25, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border: 2px solid var(--pink);
   border-radius: 16px;
   padding: 32px;
@@ -118,22 +118,17 @@ function close() {
   text-align: center;
   box-shadow:
     0 0 30px rgba(255, 6, 111, 0.4),
-    0 0 60px rgba(255, 6, 111, 0.2),
-    inset 0 0 30px rgba(255, 6, 111, 0.05);
+    0 0 60px rgba(255, 6, 111, 0.2);
 }
 
 .modal-title {
-  font-family: Anonymous, 'Courier New', monospace;
-  font-size: 1.2rem;
+  font-family: 'Impact', 'Anton', sans-serif;
+  font-size: 1.8rem;
   color: var(--pink);
   text-transform: uppercase;
-  letter-spacing: 2px;
+  letter-spacing: 3px;
   margin: 0 0 24px;
-  text-shadow: 0 0 10px rgba(255, 6, 111, 0.5);
-}
-
-.icon {
-  font-style: normal;
+  text-shadow: 0 0 15px rgba(255, 6, 111, 0.6);
 }
 
 .free-xp {
@@ -143,9 +138,9 @@ function close() {
 }
 
 .free-xp .xp-value {
-  color: #00FF88;
+  color: var(--pink);
   font-weight: bold;
-  font-size: 1.1rem;
+  font-size: 1.3rem;
 }
 
 .slider-container {
@@ -237,8 +232,9 @@ function close() {
   border: none;
   border-radius: 8px;
   color: white;
-  font-family: Anonymous, 'Courier New', monospace;
-  font-size: 1rem;
+  font-family: 'Inter', 'Roboto', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 2px;
   cursor: pointer;

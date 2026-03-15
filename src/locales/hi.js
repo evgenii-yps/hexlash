@@ -437,6 +437,7 @@ export default {
     successCompleteTask: 'आपने सफलतापूर्वक कार्य पूरा कर लिया है और अपनी योग्य इनाम प्राप्त की है <a href="/training">कार्य</a>',
     lblTitle: 'प्रशिक्षण कक्ष',
     lblTaps: 'टैप्स',
+    lblAvailableXP: 'उपलब्ध XP',
     lblSpeed: 'गति',
     lblPower: 'शक्ति',
     lblTechnique: 'तकनीक',

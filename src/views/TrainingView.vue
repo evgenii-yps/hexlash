@@ -47,16 +47,8 @@
           </div>
           <div class="prog-divider"/>
           <div class="prog-resource">
-            <span class="prog-label">{{ t.training.lblSpeed }}</span>
-            <span class="prog-value">{{ branchExp.speed }} XP</span>
-          </div>
-          <div class="prog-resource">
-            <span class="prog-label">{{ t.training.lblPower }}</span>
-            <span class="prog-value">{{ branchExp.power }} XP</span>
-          </div>
-          <div class="prog-resource">
-            <span class="prog-label">{{ t.training.lblTechnique }}</span>
-            <span class="prog-value">{{ branchExp.technique }} XP</span>
+            <span class="prog-label">{{ t.training.lblAvailableXP }}</span>
+            <span class="prog-value prog-value-xp">{{ freeXP }} XP</span>
           </div>
         </div>
 
@@ -125,7 +117,7 @@ const intervalId = ref(null);  // Для сохранения идентифик
 const countdownText = ref('');
 
 const progressionTaps = computed(() => store.getters['progression/getTaps']);
-const branchExp = computed(() => store.getters['progression/getBranchExp']);
+const freeXP = computed(() => store.getters['progression/getFreeXP']);
 const deckSize = computed(() => store.getters['progression/getDeck'].length);
 
 const goToMoves = () => router.push('/training/moves');
@@ -595,6 +587,11 @@ onUnmounted(() => {
   font-family: AnonymousBalance, sans-serif;
   font-size: 0.9rem;
   color: var(--pink);
+}
+
+.prog-value-xp {
+  font-size: 1.1rem;
+  text-shadow: 0 0 8px rgba(255, 6, 111, 0.4);
 }
 
 .prog-divider {

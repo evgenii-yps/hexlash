@@ -286,8 +286,8 @@ const goToTraining = () => {
 }
 
 .free-xp-value {
-  color: #00FF88 !important;
-  text-shadow: 0 0 8px rgba(0, 255, 136, 0.4);
+  color: var(--pink) !important;
+  text-shadow: 0 0 8px rgba(255, 6, 111, 0.4);
 }
 
 /* ── Основной layout ── */
@@ -357,10 +357,10 @@ const goToTraining = () => {
 }
 
 .branch-add-xp-btn {
-  background: rgba(0, 255, 136, 0.1);
-  border: 1px solid rgba(0, 255, 136, 0.4);
+  background: rgba(255, 6, 111, 0.1);
+  border: 1px solid rgba(255, 6, 111, 0.4);
   border-radius: 4px;
-  color: #00FF88;
+  color: var(--pink);
   font-size: 0.7rem;
   font-weight: bold;
   padding: 4px 6px;
@@ -370,8 +370,8 @@ const goToTraining = () => {
 }
 
 .branch-add-xp-btn:active {
-  background: rgba(0, 255, 136, 0.25);
-  box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+  background: rgba(255, 6, 111, 0.25);
+  box-shadow: 0 0 10px rgba(255, 6, 111, 0.3);
 }
 
 /* ── Правая колонка с приёмами ── */
