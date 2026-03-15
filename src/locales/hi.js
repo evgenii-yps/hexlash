@@ -300,6 +300,7 @@ export default {
     lblCounter: 'काउंटर!',
     lblCrit: 'क्रिटिकल!',
     lblShield: 'ढाल लगी!',
+    lblFight: 'लड़ाई!',
     fightFinished: 'लड़ाई समाप्त!',
     lblFightAgain: 'फिर से लड़ें',
     lblChangeDeck: 'बिल्ड बदलें',
