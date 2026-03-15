@@ -326,11 +326,25 @@ const actions = {
 
         const now = Date.now();
         const modules = rootGetters['fight/getPlayerModules'];
-        if (!modules || !modules.every(m => m !== null)) return;
+        if (!modules || !modules.every(m => m !== null)) {
+            // Reschedule so timer doesn't freeze at 0:00
+            if (state.nextFightAt && now >= state.nextFightAt) {
+                commit('setNextFightAt', now + getRandomInterval());
+                saveState(state);
+            }
+            return;
+        }
 
         // Check if there's an active manual fight
         const fightPhase = rootGetters['fight/getFightPhase'];
-        if (fightPhase === 'fighting' || fightPhase === 'coach') return;
+        if (fightPhase === 'fighting' || fightPhase === 'coach') {
+            // Reschedule so timer doesn't freeze at 0:00
+            if (state.nextFightAt && now >= state.nextFightAt) {
+                commit('setNextFightAt', now + getRandomInterval());
+                saveState(state);
+            }
+            return;
+        }
 
         // Calculate player power for matchmaking
         const progressionState = rootState.progression;
@@ -368,6 +382,11 @@ const actions = {
             dispatch('sendNotification', { fight: logEntry });
 
             nextAt = nextAt + getRandomInterval();
+        }
+
+        // Ensure nextFightAt is always in the future (prevents 0:00 freeze)
+        if (!nextAt || now >= nextAt) {
+            nextAt = now + getRandomInterval();
         }
 
         commit('setNextFightAt', nextAt);

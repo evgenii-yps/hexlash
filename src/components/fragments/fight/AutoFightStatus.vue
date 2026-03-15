@@ -53,6 +53,11 @@ let timerInterval = null;
 let fightTriggered = false;
 
 onMounted(() => {
+  // Run pending check immediately on mount
+  if (isEnabled.value) {
+    store.dispatch('autoFight/checkAndRunPending');
+  }
+
   timerInterval = setInterval(() => {
     now.value = Date.now();
 
@@ -76,9 +81,9 @@ watch(nextFightAt, () => {
 });
 
 const timeDisplay = computed(() => {
-  if (!nextFightAt.value) return '0:00';
+  if (!nextFightAt.value) return '--:--';
   const diff = Math.max(0, Math.ceil((nextFightAt.value - now.value) / 1000));
-  if (diff <= 0) return '0:00';
+  if (diff <= 0) return '--:--';
   const m = Math.floor(diff / 60);
   const s = diff % 60;
   return `${m}:${s.toString().padStart(2, '0')}`;
