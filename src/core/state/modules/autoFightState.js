@@ -23,6 +23,7 @@ function saveState(state) {
             stoppingAfterCurrent: state.stoppingAfterCurrent,
             difficulty: state.difficulty,
             fightsToday: state.fightsToday,
+            lastFightDate: state.lastFightDate,
             wins: state.wins,
             losses: state.losses,
             draws: state.draws,
@@ -54,6 +55,10 @@ function loadHistory() {
 
 function getRandomInterval() {
     return Math.random() * (AUTO_FIGHT_MAX_INTERVAL - AUTO_FIGHT_MIN_INTERVAL) + AUTO_FIGHT_MIN_INTERVAL;
+}
+
+function getTodayDate() {
+    return new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
 }
 
 // ─── Fast offline fight simulation ──────────────────────────────────────────
@@ -141,6 +146,7 @@ const state = {
 
     // Session stats
     fightsToday: 0,
+    lastFightDate: null, // YYYY-MM-DD string for daily reset
     wins: 0,
     losses: 0,
     draws: 0,
@@ -190,6 +196,7 @@ const mutations = {
     setStoppingAfterCurrent(s, v) { s.stoppingAfterCurrent = v; },
     setDifficulty(s, v) { s.difficulty = v; },
     setFightsToday(s, v) { s.fightsToday = v; },
+    setLastFightDate(s, v) { s.lastFightDate = v; },
     setWins(s, v) { s.wins = v; },
     setLosses(s, v) { s.losses = v; },
     setDraws(s, v) { s.draws = v; },
@@ -206,6 +213,7 @@ const mutations = {
     incrementStats(s, result) {
         s.fightsToday++;
         s.sessionFights++;
+        s.lastFightDate = getTodayDate();
         if (result === 'win') s.wins++;
         else if (result === 'lose') s.losses++;
         else s.draws++;
@@ -225,6 +233,7 @@ const mutations = {
         s.nextFightAt = null;
         s.stoppingAfterCurrent = false;
         s.fightsToday = 0;
+        s.lastFightDate = null;
         s.wins = 0;
         s.losses = 0;
         s.draws = 0;
@@ -238,7 +247,7 @@ const mutations = {
 const actions = {
 
     /** Initialize auto fight state from localStorage. */
-    init({ commit }) {
+    init({ commit, state }) {
         const saved = loadState();
         if (saved) {
             commit('setEnabled', saved.enabled);
@@ -247,11 +256,20 @@ const actions = {
             commit('setStoppingAfterCurrent', saved.stoppingAfterCurrent || false);
             commit('setDifficulty', saved.difficulty || 'medium');
             commit('setFightsToday', saved.fightsToday || 0);
+            commit('setLastFightDate', saved.lastFightDate || null);
             commit('setWins', saved.wins || 0);
             commit('setLosses', saved.losses || 0);
             commit('setDraws', saved.draws || 0);
             commit('setTotalExpGained', saved.totalExpGained || { speed: 0, power: 0, technique: 0 });
             commit('setSessionFights', saved.sessionFights || 0);
+
+            // Daily reset: if lastFightDate is not today, reset daily counter
+            const today = getTodayDate();
+            if (state.lastFightDate && state.lastFightDate !== today) {
+                commit('setFightsToday', 0);
+                commit('setLastFightDate', today);
+                saveState(state);
+            }
         }
         commit('setFightLog', loadHistory());
     },
@@ -302,6 +320,13 @@ const actions = {
      */
     checkAndRunPending({ commit, state, dispatch, rootGetters, rootState }) {
         if (!state.enabled || state.stoppingAfterCurrent) return;
+
+        // Daily reset check
+        const today = getTodayDate();
+        if (state.lastFightDate && state.lastFightDate !== today) {
+            commit('setFightsToday', 0);
+            commit('setLastFightDate', today);
+        }
 
         const now = Date.now();
         const modules = rootGetters['fight/getPlayerModules'];
