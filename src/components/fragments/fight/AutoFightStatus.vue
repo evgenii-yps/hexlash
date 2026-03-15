@@ -39,7 +39,7 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted, onUnmounted } from 'vue';
+import { computed, ref, onMounted, onUnmounted, watch } from 'vue';
 import store from '@/core/state/store.js';
 import router from '@/router/index.js';
 import { t } from '@/locales/index.js';
@@ -53,15 +53,29 @@ const isStopping = computed(() => store.getters['autoFight/isStoppingAfterCurren
 const nextFightAt = computed(() => store.state.autoFight.nextFightAt);
 const now = ref(Date.now());
 let timerInterval = null;
+let fightTriggered = false;
 
 onMounted(() => {
   timerInterval = setInterval(() => {
     now.value = Date.now();
+
+    // Trigger auto fight when timer reaches 0
+    if (isEnabled.value && nextFightAt.value && now.value >= nextFightAt.value && !fightTriggered) {
+      fightTriggered = true;
+      store.dispatch('autoFight/checkAndRunPending').then(() => {
+        fightTriggered = false;
+      });
+    }
   }, 1000);
 });
 
 onUnmounted(() => {
   clearInterval(timerInterval);
+});
+
+// Reset trigger flag when nextFightAt changes (new fight scheduled)
+watch(nextFightAt, () => {
+  fightTriggered = false;
 });
 
 const timeDisplay = computed(() => {
