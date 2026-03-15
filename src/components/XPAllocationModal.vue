@@ -107,9 +107,7 @@ function close() {
 }
 
 .xp-modal {
-  background: rgba(15, 15, 25, 0.7);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: transparent;
   border: 2px solid var(--pink);
   border-radius: 16px;
   padding: 32px;
