@@ -200,8 +200,10 @@ const actions = {
             if (Math.random() > 0.3) {
                 commit('clearOutgoingChallenge');
                 if (challengeTimeout) { clearTimeout(challengeTimeout); challengeTimeout = null; }
-                // TODO: transition to PvP fight
-                console.log('Challenge accepted by', friend.username);
+                // Notify App.vue to start PvP fight
+                window.dispatchEvent(new CustomEvent('pvp-challenge-accepted', {
+                    detail: friend,
+                }));
             } else {
                 commit('clearOutgoingChallenge');
                 if (challengeTimeout) { clearTimeout(challengeTimeout); challengeTimeout = null; }
@@ -238,8 +240,6 @@ const actions = {
         if (!challenger) return null;
 
         commit('clearIncomingChallenge');
-        // TODO: start PvP fight
-        console.log('Accepted challenge from', challenger.username);
         return challenger;
     },
 

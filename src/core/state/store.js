@@ -11,6 +11,7 @@ import achievement from "@/core/state/modules/achievementState.js";
 import progression from "@/core/state/modules/progressionState.js";
 import autoFight from "@/core/state/modules/autoFightState.js";
 import friends from "@/core/state/modules/friendsState.js";
+import pvp from "@/core/state/modules/pvpState.js";
 
 export default createStore({
     modules: {
@@ -26,5 +27,6 @@ export default createStore({
         progression,
         autoFight,
         friends,
+        pvp,
     },
 });

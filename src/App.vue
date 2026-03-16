@@ -53,7 +53,7 @@
 </template>
 
 <script setup>
-import {RouterView, useRoute} from 'vue-router'
+import {RouterView, useRoute, useRouter} from 'vue-router'
 import {computed, onBeforeUnmount, onMounted, ref, watch} from "vue";
 import BottomMenu from "@/components/menu/BottomMenu.vue";
 import Logo from "@/components/Logo.vue";
@@ -99,14 +99,34 @@ const isAuth = computed(() => {
   return store.getters['master/getLoginState'].isAuthenticated
 });
 
+const pvpRouter = useRouter();
+
 const incomingChallenge = computed(() => store.getters['friends/getIncomingChallenge']);
 
-const onAcceptChallenge = () => {
-  store.dispatch('friends/acceptIncomingChallenge');
+const onAcceptChallenge = async () => {
+  const challenger = await store.dispatch('friends/acceptIncomingChallenge');
+  if (challenger) {
+    store.dispatch('pvp/createPvPFight', { opponent: challenger, isRanked: false });
+    pvpRouter.push({ path: '/fight', query: { mode: 'pvp' } });
+  }
 };
 
 const onDeclineChallenge = () => {
   store.dispatch('friends/declineIncomingChallenge');
+};
+
+// Listen for outgoing challenge accepted (when opponent accepts our challenge)
+const handleChallengeAccepted = (event) => {
+  const friend = event.detail;
+  store.dispatch('pvp/createPvPFight', {
+    opponent: {
+      odId: friend.id,
+      username: friend.username,
+      rating: friend.rating,
+    },
+    isRanked: false,
+  });
+  pvpRouter.push({ path: '/fight', query: { mode: 'pvp' } });
 };
 
 const route = useRoute();
@@ -214,9 +234,13 @@ onMounted(() => {
 
   document.addEventListener('visibilitychange', handleVisibilityChange);
   window.addEventListener('online', handleOnlineStatus);
+  window.addEventListener('pvp-challenge-accepted', handleChallengeAccepted);
 
   // Initialize auto fight system
   store.dispatch('autoFight/init');
+
+  // Initialize PvP system
+  store.dispatch('pvp/init');
 
   // Periodic auto-fight check — runs globally so fights trigger even if user
   // navigates away from Arena (where AutoFightStatus component lives)
@@ -235,6 +259,7 @@ onBeforeUnmount(() => {
 
   document.removeEventListener('visibilitychange', handleVisibilityChange);
   window.removeEventListener('online', handleOnlineStatus);
+  window.removeEventListener('pvp-challenge-accepted', handleChallengeAccepted);
 
   clearInterval(autoFightInterval);
 });
