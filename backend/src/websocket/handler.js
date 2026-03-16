@@ -6,6 +6,7 @@ const { JWT_SECRET, COST_PER_CLICK, DECIMALS, PUNCH_MAX_PER_INTERVAL, PUNCH_MAX_
 
 const prisma = new PrismaClient();
 const clients = new Map(); // userId -> ws
+const matchmaking = require('../services/matchmaking');
 
 function setupWebSocket(server) {
   const wss = new WebSocketServer({ server });
@@ -66,12 +67,14 @@ function setupWebSocket(server) {
 
     ws.on('close', () => {
       clients.delete(userId);
+      matchmaking.removeFromQueue(userId);
       console.log(`WebSocket: user ${userId} disconnected. Total: ${clients.size}`);
     });
 
     ws.on('error', (err) => {
       console.error(`WebSocket error for user ${userId}:`, err.message);
       clients.delete(userId);
+      matchmaking.removeFromQueue(userId);
     });
   });
 
@@ -96,6 +99,14 @@ async function handleMessage(ws, userId, msg) {
 
     case 'FightActionMsg':
       await handleFightAction(ws, userId, msg);
+      break;
+
+    case 'MatchmakingStartMsg':
+      handleMatchmakingStart(ws, userId, msg);
+      break;
+
+    case 'MatchmakingCancelMsg':
+      handleMatchmakingCancel(ws, userId);
       break;
 
     default:
@@ -371,5 +382,74 @@ function sendToUser(userId, data) {
     ws.send(JSON.stringify(data));
   }
 }
+
+// ─── Matchmaking ──────────────────────────────────────────────────────────────
+
+function handleMatchmakingStart(ws, userId, msg) {
+  const { username, rating } = msg.matchmakingRequest || {};
+
+  const match = matchmaking.addToQueue({
+    odId: userId,
+    username: username || 'Player',
+    rating: rating || 1000,
+  });
+
+  // Send queue update
+  sendMessage(ws, {
+    type: 'MatchmakingQueueMsg',
+    queueSize: matchmaking.getQueueSize(),
+  });
+
+  if (match) {
+    notifyMatch(match);
+  }
+}
+
+function handleMatchmakingCancel(ws, userId) {
+  matchmaking.removeFromQueue(userId);
+  sendMessage(ws, {
+    type: 'MatchmakingCancelledMsg',
+  });
+}
+
+/** Notify both players that a match was found. */
+function notifyMatch(match) {
+  const ws1 = clients.get(match.player1.odId);
+  const ws2 = clients.get(match.player2.odId);
+
+  if (ws1) {
+    sendMessage(ws1, {
+      type: 'MatchFoundMsg',
+      matchId: match.matchId,
+      opponent: {
+        odId: match.player2.odId,
+        username: match.player2.username,
+        rating: match.player2.rating,
+      },
+    });
+  }
+
+  if (ws2) {
+    sendMessage(ws2, {
+      type: 'MatchFoundMsg',
+      matchId: match.matchId,
+      opponent: {
+        odId: match.player1.odId,
+        username: match.player1.username,
+        rating: match.player1.rating,
+      },
+    });
+  }
+}
+
+// Periodically try to match queued players (in case expand timers find matches)
+setInterval(() => {
+  for (const [odId] of matchmaking.queue) {
+    const match = matchmaking.tryFindMatch(odId);
+    if (match) {
+      notifyMatch(match);
+    }
+  }
+}, 3000);
 
 module.exports = { setupWebSocket, sendToUser, clients };
