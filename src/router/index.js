@@ -43,6 +43,7 @@ const protectedRoutes = [
     {path: '/fight', name: 'Fight', component: () => import("/src/views/CardFightView.vue")},
     {path: '/arena/autofight-log', name: 'AutoFightLog', component: () => import("/src/views/AutoFightLogView.vue")},
     {path: '/friends', name: 'Friends', component: () => import("/src/views/FriendsView.vue")},
+    {path: '/matchmaking', name: 'Matchmaking', component: () => import("/src/views/MatchmakingView.vue")},
 
 
 ];

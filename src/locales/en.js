@@ -463,6 +463,12 @@ export default {
     ranked: 'Ranked',
     friendly: 'Friendly',
     ratingChange: 'Rating Change',
+    vsPlayer: 'VS PLAYER',
+    findOpponent: 'Find random opponent',
+    fightFriends: 'Fight your friends',
+    online: 'Online',
+    searchingForOpponent: 'Searching for opponent...',
+    playersOnline: 'Players online',
   },
   xpAllocation: {
     freeXP: 'Available',
