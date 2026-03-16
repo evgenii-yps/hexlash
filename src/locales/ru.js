@@ -256,6 +256,10 @@ export default {
     pvpDesc: 'Бой с реальными игроками',
     autoDesc: 'Бои каждые 30-60 мин',
     autoFight: 'АВТОБОЙ',
+    startAuto: 'СТАРТ АВТО',
+    stopAuto: 'СТОП АВТО',
+    autoFightActive: 'АВТОБОЙ АКТИВЕН',
+    autoFightInactive: 'АВТОБОЙ ВЫКЛ',
   },
   club: {
     lblClubMembers: 'нет участников | {n} участник | {n} участника | {n} участников',
