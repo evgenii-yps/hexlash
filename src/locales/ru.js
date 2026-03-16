@@ -473,6 +473,17 @@ export default {
     cancel: 'ОТМЕНА',
     opponentFound: 'СОПЕРНИК НАЙДЕН!',
     fightStartsIn: 'Бой начнётся через',
+    statsTitle: 'PVP СТАТИСТИКА',
+    totalFights: 'Всего боёв',
+    nextLeague: 'Следующая лига',
+    leagues: {
+      bronze: 'Бронза',
+      silver: 'Серебро',
+      gold: 'Золото',
+      platinum: 'Платина',
+      diamond: 'Алмаз',
+      champion: 'Чемпион',
+    },
   },
   xpAllocation: {
     freeXP: 'Свободно',
