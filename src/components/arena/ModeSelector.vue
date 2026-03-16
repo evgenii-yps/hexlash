@@ -3,7 +3,7 @@
 
     <!-- Mode Button -->
     <button class="mode-btn" @click="toggleDropdown">
-      <span class="mode-icon">{{ currentModeIcon }}</span>
+      <span class="mode-icon-box" :class="currentModeClass" v-html="currentModeIcon"></span>
       <span class="mode-label">{{ t.arena.mode }}: {{ currentModeName }}</span>
       <span class="dropdown-arrow" :class="{ open: isOpen }">&#x25BC;</span>
     </button>
@@ -20,7 +20,9 @@
         :class="{ active: selectedMode === 'pve' }"
         @click="selectMode('pve')"
       >
-        <span class="option-icon">&#x1F916;</span>
+        <div class="option-icon pve-icon">
+          <span class="icon-label">AI</span>
+        </div>
         <div class="option-info">
           <div class="option-name">PVE</div>
           <div class="option-desc">{{ t.arena.pveDesc }}</div>
@@ -34,7 +36,9 @@
         :class="{ active: selectedMode === 'pvp' }"
         @click="selectMode('pvp')"
       >
-        <span class="option-icon">&#x2694;&#xFE0F;</span>
+        <div class="option-icon pvp-icon">
+          <span class="icon-cross">&#x2A2F;</span>
+        </div>
         <div class="option-info">
           <div class="option-name">PVP</div>
           <div class="option-desc">{{ t.arena.pvpDesc }}</div>
@@ -52,7 +56,9 @@
         :class="{ active: selectedMode === 'auto' }"
         @click="selectMode('auto')"
       >
-        <span class="option-icon">&#x1F504;</span>
+        <div class="option-icon auto-icon">
+          <span class="icon-sync">&#x21BB;</span>
+        </div>
         <div class="option-info">
           <div class="option-name">{{ t.arena.autoFight }}</div>
           <div class="option-desc">{{ t.arena.autoDesc }}</div>
@@ -79,13 +85,14 @@ const isOpen = ref(false);
 const selectedMode = ref('pve');
 
 const modes = {
-  pve: { icon: '\u{1F916}', name: 'PVE' },
-  pvp: { icon: '\u2694\uFE0F', name: 'PVP' },
-  auto: { icon: '\u{1F504}', name: 'AUTO' },
+  pve: { icon: 'AI', name: 'PVE', css: 'pve-icon' },
+  pvp: { icon: '&#x2A2F;', name: 'PVP', css: 'pvp-icon' },
+  auto: { icon: '&#x21BB;', name: 'AUTO', css: 'auto-icon' },
 };
 
 const currentModeIcon = computed(() => modes[selectedMode.value].icon);
 const currentModeName = computed(() => modes[selectedMode.value].name);
+const currentModeClass = computed(() => modes[selectedMode.value].css);
 
 function toggleDropdown() {
   isOpen.value = !isOpen.value;
@@ -130,8 +137,37 @@ function selectMode(mode) {
   box-shadow: 0 0 20px rgba(255, 6, 111, 0.4);
 }
 
-.mode-icon {
-  font-size: 20px;
+/* Mode icon in button */
+.mode-icon-box {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  font-family: Anonymous, sans-serif;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.mode-icon-box.pve-icon {
+  background: rgba(0, 191, 255, 0.15);
+  border: 1px solid rgba(0, 191, 255, 0.4);
+  color: #00BFFF;
+}
+
+.mode-icon-box.pvp-icon {
+  background: rgba(255, 6, 111, 0.15);
+  border: 1px solid rgba(255, 6, 111, 0.4);
+  color: #FF066F;
+  font-size: 18px;
+}
+
+.mode-icon-box.auto-icon {
+  background: rgba(0, 255, 136, 0.15);
+  border: 1px solid rgba(0, 255, 136, 0.4);
+  color: #00FF88;
+  font-size: 18px;
 }
 
 .dropdown-arrow {
@@ -193,8 +229,50 @@ function selectMode(mode) {
   background: rgba(255, 6, 111, 0.2);
 }
 
+/* Option icons */
 .option-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  font-family: Anonymous, sans-serif;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.pve-icon {
+  background: rgba(0, 191, 255, 0.15);
+  border: 1px solid rgba(0, 191, 255, 0.4);
+  color: #00BFFF;
+}
+
+.pvp-icon {
+  background: rgba(255, 6, 111, 0.15);
+  border: 1px solid rgba(255, 6, 111, 0.4);
+  color: #FF066F;
+}
+
+.auto-icon {
+  background: rgba(0, 255, 136, 0.15);
+  border: 1px solid rgba(0, 255, 136, 0.4);
+  color: #00FF88;
+}
+
+.icon-label {
+  font-size: 14px;
+  letter-spacing: 1px;
+}
+
+.icon-cross {
   font-size: 28px;
+  line-height: 1;
+}
+
+.icon-sync {
+  font-size: 24px;
+  line-height: 1;
 }
 
 .option-info {

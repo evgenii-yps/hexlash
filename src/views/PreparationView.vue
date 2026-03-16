@@ -41,13 +41,19 @@
         <!-- Friends Button -->
         <div class="friends-section">
           <button class="friends-btn" @click="goToFriends">
-            <span class="friends-icon">&#x1F465;</span>
+            <svg class="friends-svg" viewBox="0 0 24 24" width="20" height="20">
+              <circle cx="9" cy="8" r="3.5" fill="none" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M2 20c0-3.5 3.5-5.5 7-5.5s7 2 7 5.5" fill="none" stroke="currentColor" stroke-width="1.8"/>
+              <circle cx="17" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M17 14.5c2.5 0 5 1.5 5 5.5" fill="none" stroke="currentColor" stroke-width="1.8"/>
+            </svg>
             <span class="friends-label">{{ t.friends.title }}</span>
+            <span class="friends-divider">&#x2022;</span>
+            <span class="friends-online-inline">
+              <span class="online-dot-small"></span>
+              {{ t.friends.online }}: {{ onlineFriendsCount }}
+            </span>
           </button>
-          <div class="friends-online">
-            <span class="online-dot-small"></span>
-            {{ t.friends.online }}: {{ onlineFriendsCount }}
-          </div>
         </div>
 
         <div class="scroll-gap"/>
@@ -241,13 +247,13 @@ const handleScroll = (event) => {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  padding: 14px 32px;
+  padding: 14px 24px;
   background: rgba(20, 20, 30, 0.85);
   border: 1px solid rgba(255, 6, 111, 0.4);
   border-radius: 12px;
   color: #fff;
   font-family: Anonymous, sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   text-transform: uppercase;
   letter-spacing: 2px;
   cursor: pointer;
@@ -259,18 +265,25 @@ const handleScroll = (event) => {
   box-shadow: 0 0 20px rgba(255, 6, 111, 0.3);
 }
 
-.friends-icon {
-  font-size: 20px;
+.friends-svg {
+  color: #FF066F;
+  flex-shrink: 0;
 }
 
-.friends-online {
+.friends-divider {
+  color: #444;
+  font-size: 16px;
+}
+
+.friends-online-inline {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 6px;
-  margin-top: 8px;
   font-size: 12px;
-  color: #888;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: #00FF88;
 }
 
 .online-dot-small {
