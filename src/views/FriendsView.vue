@@ -9,7 +9,33 @@
           <span class="friends-title">FRIENDS</span>
         </div>
 
-        <div class="empty-state">
+        <!-- Search -->
+        <div class="search-wrapper">
+          <span class="search-icon">&#x1F50D;</span>
+          <input
+            v-model="searchQuery"
+            class="search-input"
+            type="text"
+            placeholder="Search by username..."
+          />
+        </div>
+
+        <!-- Search results -->
+        <div v-if="searchQuery.length >= 3" class="search-results">
+          <div class="section-label">SEARCH RESULTS</div>
+          <PlayerSearchResult
+            v-for="player in searchResults"
+            :key="player.id"
+            :player="player"
+            @add="onAddPlayer"
+          />
+          <div v-if="searchResults.length === 0" class="no-results">
+            Player not found
+          </div>
+        </div>
+
+        <!-- Empty state (only when not searching) -->
+        <div v-if="searchQuery.length < 3" class="empty-state">
           <div class="empty-icon">&#x1F465;</div>
           <div class="empty-text">No friends yet</div>
           <div class="empty-hint">Search to add friends</div>
@@ -22,7 +48,30 @@
 </template>
 
 <script setup>
+import { ref, computed } from 'vue';
 import router from '@/router/index.js';
+import PlayerSearchResult from '@/components/pvp/PlayerSearchResult.vue';
+
+const searchQuery = ref('');
+
+const mockPlayers = [
+  { id: 'p1', username: 'Shadow_X', rating: 1280 },
+  { id: 'p2', username: 'ShadowKnight', rating: 980 },
+  { id: 'p3', username: 'NightFury', rating: 1150 },
+  { id: 'p4', username: 'IronFist', rating: 1420 },
+  { id: 'p5', username: 'DarkPhoenix', rating: 1650 }
+];
+
+const searchResults = computed(() => {
+  if (searchQuery.value.length < 3) return [];
+  const q = searchQuery.value.toLowerCase();
+  return mockPlayers.filter(p => p.username.toLowerCase().includes(q));
+});
+
+const onAddPlayer = (player) => {
+  // TODO: implement add friend logic
+  console.log('Add friend:', player.username);
+};
 
 const goBack = async () => {
   await router.push('/arena');
@@ -101,6 +150,66 @@ const handleScroll = (event) => {
   text-shadow: 0 0 10px rgba(255, 6, 111, 0.3);
 }
 
+/* Search */
+.search-wrapper {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1rem;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 16px 12px 42px;
+  background: rgba(9, 9, 9, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: white;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.search-input::placeholder {
+  color: var(--gray2);
+}
+
+.search-input:focus {
+  border-color: var(--primary-color);
+}
+
+/* Search results */
+.search-results {
+  margin-bottom: 20px;
+}
+
+.section-label {
+  font-family: Anonymous, sans-serif;
+  font-size: 0.8rem;
+  color: var(--gray2);
+  letter-spacing: 1.5px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.no-results {
+  text-align: center;
+  color: var(--gray2);
+  font-size: 0.95rem;
+  padding: 30px 0;
+}
+
+/* Empty state */
 .empty-state {
   display: flex;
   flex-direction: column;
