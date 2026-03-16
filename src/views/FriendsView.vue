@@ -21,7 +21,7 @@
         </div>
 
         <!-- Search results -->
-        <div v-if="searchQuery.length >= 2" class="search-results">
+        <div v-if="searchQuery.length >= 3" class="search-results">
           <div class="section-label">{{ t.friends.searchResults }}</div>
           <PlayerSearchResult
             v-for="player in searchResults"
@@ -38,7 +38,7 @@
         </div>
 
         <!-- Friend Requests -->
-        <div v-if="searchQuery.length < 2 && incomingRequests.length > 0" class="section">
+        <div v-if="searchQuery.length < 3 && incomingRequests.length > 0" class="section">
           <div class="section-header">
             <span class="section-icon">&#x1F4E9;</span>
             {{ t.friends.friendRequests }} ({{ incomingRequests.length }})
@@ -56,7 +56,7 @@
         </div>
 
         <!-- Friends list -->
-        <div v-if="searchQuery.length < 2 && friends.length > 0" class="section">
+        <div v-if="searchQuery.length < 3 && friends.length > 0" class="section">
           <div class="section-header">
             {{ t.friends.title }} ({{ friends.length }})
           </div>
@@ -73,7 +73,7 @@
         </div>
 
         <!-- Empty state (only when not searching, no friends, no requests) -->
-        <div v-if="searchQuery.length < 2 && friends.length === 0 && incomingRequests.length === 0" class="empty-state">
+        <div v-if="searchQuery.length < 3 && friends.length === 0 && incomingRequests.length === 0" class="empty-state">
           <div class="empty-icon">&#x1F465;</div>
           <div class="empty-text">{{ t.friends.noFriends }}</div>
           <div class="empty-hint">{{ t.friends.searchToAdd }}</div>
@@ -129,11 +129,11 @@ const onWatch = (friend) => {
 };
 
 const onAccept = (request) => {
-  store.dispatch('friends/acceptFriendRequest', request);
+  store.dispatch('friends/acceptFriendRequest', request.id);
 };
 
 const onDecline = (request) => {
-  store.dispatch('friends/declineFriendRequest', request);
+  store.dispatch('friends/declineFriendRequest', request.id);
 };
 
 onMounted(() => {

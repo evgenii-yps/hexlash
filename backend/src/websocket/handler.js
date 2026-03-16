@@ -51,9 +51,8 @@ function setupWebSocket(server) {
       return;
     }
 
-    // Register client and update lastSeen
+    // Register client
     clients.set(userId, ws);
-    prisma.user.update({ where: { id: userId }, data: { lastSeen: new Date() } }).catch(() => {});
     console.log(`WebSocket: user ${userId} connected. Total: ${clients.size}`);
 
     ws.on('message', async (rawData) => {
