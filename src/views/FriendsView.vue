@@ -79,11 +79,6 @@
           <div class="empty-hint">{{ t.friends.searchToAdd }}</div>
         </div>
 
-        <!-- Test button for simulating incoming challenge -->
-        <button class="test-challenge-btn" @click="onTestChallenge">
-          Test Incoming Challenge
-        </button>
-
         <div class="scroll-gap"/>
       </div>
     </div>
@@ -124,10 +119,6 @@ const onRemoveFriend = (friend) => {
 
 const onChallenge = (friend) => {
   store.dispatch('friends/sendChallenge', friend);
-};
-
-const onTestChallenge = () => {
-  store.dispatch('friends/simulateIncomingChallenge');
 };
 
 const onWatch = (friend) => {
@@ -333,26 +324,6 @@ const handleScroll = (event) => {
 .empty-hint {
   font-size: 0.85rem;
   color: #666;
-}
-
-.test-challenge-btn {
-  width: 100%;
-  padding: 14px;
-  background: rgba(255, 184, 0, 0.15);
-  border: 1px dashed #FFB800;
-  border-radius: 12px;
-  color: #FFB800;
-  font-family: Anonymous, sans-serif;
-  font-size: 14px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  cursor: pointer;
-  margin-top: 24px;
-  transition: all 0.2s ease;
-}
-
-.test-challenge-btn:hover {
-  background: rgba(255, 184, 0, 0.25);
 }
 
 .scroll-gap {
