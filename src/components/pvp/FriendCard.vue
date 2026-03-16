@@ -4,7 +4,7 @@
 
     <div class="friend-info">
       <div class="friend-name">{{ friend.username }}</div>
-      <div class="friend-rating">Rating: {{ friend.rating }}</div>
+      <div class="friend-rating">{{ ratingText }}: {{ friend.rating }}</div>
     </div>
 
     <div class="friend-status" :class="statusClass">
@@ -31,7 +31,9 @@
 import { computed } from 'vue';
 
 const props = defineProps({
-  friend: { type: Object, required: true }
+  friend: { type: Object, required: true },
+  statusTexts: { type: Object, default: () => ({ online: 'Online', offline: 'Offline', in_fight: 'In Fight' }) },
+  ratingText: { type: String, default: 'Rating' },
 });
 
 defineEmits(['challenge', 'watch', 'remove']);
@@ -42,14 +44,7 @@ const statusClass = computed(() => ({
   'status-in-fight': props.friend.status === 'in_fight',
 }));
 
-const statusText = computed(() => {
-  switch (props.friend.status) {
-    case 'online': return 'Online';
-    case 'offline': return 'Offline';
-    case 'in_fight': return 'In Fight';
-    default: return 'Unknown';
-  }
-});
+const statusText = computed(() => props.statusTexts[props.friend.status] || props.friend.status);
 </script>
 
 <style scoped>
