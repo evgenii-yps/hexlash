@@ -1,23 +1,18 @@
 <template>
-  <div class="autofight-toggle-wrapper">
-    <button
-        class="autofight-toggle"
-        :class="{ 'autofight-active': isEnabled }"
-        :disabled="!canToggle"
-        @click="toggle"
-    >
-      <span class="autofight-icon">&#x1F504;</span>
-      <span class="autofight-label">{{ t.autoFight.lblAutoFight }}:</span>
-      <span class="autofight-state">{{ isEnabled ? t.autoFight.lblAutoFightOn : t.autoFight.lblAutoFightOff }}</span>
-    </button>
-    <div v-if="!isEnabled" class="autofight-tooltip">{{ t.autoFight.lblEnableTooltip }}</div>
-  </div>
+  <button
+      class="autofight-toggle"
+      :class="{ 'autofight-active': isEnabled }"
+      :disabled="!canToggle"
+      @click="toggle"
+  >
+    <span class="icon">&#x1F504;</span>
+    AUTO FIGHT
+  </button>
 </template>
 
 <script setup>
 import { computed } from 'vue';
 import store from '@/core/state/store.js';
-import { t } from '@/locales/index.js';
 
 const isEnabled = computed(() => store.getters['autoFight/isEnabled']);
 const isBuildValid = computed(() => store.getters['fight/isBuildValid']);
@@ -33,27 +28,23 @@ const toggle = () => {
 </script>
 
 <style scoped>
-.autofight-toggle-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-
 .autofight-toggle {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 24px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 6, 111, 0.5);
-  background: rgba(20, 20, 30, 0.8);
-  color: white;
+  justify-content: center;
+  gap: 10px;
+  min-width: 160px;
+  padding: 14px 24px;
+  background: rgba(20, 20, 30, 0.85);
+  border: 1px solid rgba(255, 6, 111, 0.6);
+  border-radius: 12px;
+  color: #FFFFFF;
   font-size: 14px;
-  font-weight: bold;
-  letter-spacing: 0.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .autofight-toggle:disabled {
@@ -63,7 +54,8 @@ const toggle = () => {
 
 .autofight-toggle:hover {
   border-color: #FF066F;
-  box-shadow: 0 0 15px rgba(255, 6, 111, 0.3);
+  background: rgba(255, 6, 111, 0.15);
+  box-shadow: 0 0 20px rgba(255, 6, 111, 0.3);
 }
 
 .autofight-active {
@@ -78,24 +70,7 @@ const toggle = () => {
   50% { box-shadow: 0 0 28px rgba(255, 6, 111, 0.7); }
 }
 
-.autofight-icon {
-  font-size: 1.1rem;
-}
-
-.autofight-label {
-  font-size: 0.75rem;
-}
-
-.autofight-state {
-  font-family: Anonymous, sans-serif;
-  font-size: 0.85rem;
-}
-
-.autofight-tooltip {
-  font-size: 0.6rem;
-  color: var(--gray2);
-  text-align: center;
-  max-width: 240px;
-  line-height: 1.3;
+.icon {
+  font-size: 18px;
 }
 </style>
