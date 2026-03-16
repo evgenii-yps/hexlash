@@ -34,8 +34,20 @@
           </div>
         </div>
 
-        <!-- Empty state (only when not searching) -->
-        <div v-if="searchQuery.length < 3" class="empty-state">
+        <!-- Friends list -->
+        <div v-if="searchQuery.length < 3 && friends.length > 0" class="friends-list">
+          <div class="section-label">FRIENDS ({{ friends.length }})</div>
+          <PlayerSearchResult
+            v-for="friend in friends"
+            :key="friend.id"
+            :player="friend"
+            :is-friend="true"
+            @remove="onRemoveFriend"
+          />
+        </div>
+
+        <!-- Empty state (only when not searching and no friends) -->
+        <div v-if="searchQuery.length < 3 && friends.length === 0" class="empty-state">
           <div class="empty-icon">&#x1F465;</div>
           <div class="empty-text">No friends yet</div>
           <div class="empty-hint">Search to add friends</div>
@@ -48,33 +60,33 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import store from '@/core/state/store.js';
 import router from '@/router/index.js';
 import PlayerSearchResult from '@/components/pvp/PlayerSearchResult.vue';
 
 const searchQuery = ref('');
+const searchResults = ref([]);
 
-const mockPlayers = [
-  { id: 'p1', username: 'Shadow_X', rating: 1280 },
-  { id: 'p2', username: 'ShadowKnight', rating: 980 },
-  { id: 'p3', username: 'NightFury', rating: 1150 },
-  { id: 'p4', username: 'IronFist', rating: 1420 },
-  { id: 'p5', username: 'DarkPhoenix', rating: 1650 },
-  { id: 'p6', username: 'BlazeFist', rating: 1100 },
-  { id: 'p7', username: 'StormRider', rating: 1320 },
-  { id: 'p8', username: 'ThunderBolt', rating: 890 }
-];
+const friends = computed(() => store.getters['friends/getFriends']);
 
-const searchResults = computed(() => {
-  if (searchQuery.value.length < 3) return [];
-  const q = searchQuery.value.toLowerCase();
-  return mockPlayers.filter(p => p.username.toLowerCase().includes(q));
+// Reactively search when query changes
+import { watch } from 'vue';
+watch(searchQuery, async (q) => {
+  searchResults.value = await store.dispatch('friends/searchPlayers', q);
 });
 
 const onAddPlayer = (player) => {
-  // TODO: implement add friend logic
-  console.log('Add friend:', player.username);
+  store.dispatch('friends/sendFriendRequest', player);
 };
+
+const onRemoveFriend = (player) => {
+  store.dispatch('friends/removeFriend', player.id);
+};
+
+onMounted(() => {
+  store.dispatch('friends/init');
+});
 
 const goBack = async () => {
   await router.push('/arena');
