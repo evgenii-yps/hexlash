@@ -44,12 +44,12 @@ const toggle = () => {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 20px;
-  border-radius: 24px;
-  border: 1px solid var(--gray2);
-  background: var(--black-opacity-80);
-  color: var(--gray2);
-  font-size: 0.8rem;
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 6, 111, 0.5);
+  background: rgba(20, 20, 30, 0.8);
+  color: white;
+  font-size: 14px;
   font-weight: bold;
   letter-spacing: 0.5px;
   cursor: pointer;
@@ -59,6 +59,11 @@ const toggle = () => {
 .autofight-toggle:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+.autofight-toggle:hover {
+  border-color: #FF066F;
+  box-shadow: 0 0 15px rgba(255, 6, 111, 0.3);
 }
 
 .autofight-active {

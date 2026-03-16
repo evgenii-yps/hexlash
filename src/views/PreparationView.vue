@@ -28,11 +28,11 @@
         </div>
 
         <div class="arena-actions">
-          <button class="friends-btn" @click="goToFriends">&#x1F465; FRIENDS</button>
+          <button class="action-btn" @click="goToFriends">&#x1F465; FRIENDS</button>
+          <AutoFightToggle/>
         </div>
 
-        <div class="autofight-section">
-          <AutoFightToggle/>
+        <div class="autofight-status-section">
           <AutoFightStatus/>
         </div>
 
@@ -189,39 +189,38 @@ const handleScroll = (event) => {
 }
 
 .arena-actions {
-  margin-top: 20px;
   display: flex;
   justify-content: center;
+  gap: 16px;
+  margin-top: 16px;
 }
 
-.friends-btn {
+.arena-actions .action-btn {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 24px;
+  padding: 12px 24px;
+  background: rgba(20, 20, 30, 0.8);
+  border: 1px solid rgba(255, 6, 111, 0.5);
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--gray3);
-  font-family: Anonymous, sans-serif;
-  font-size: 0.9rem;
+  color: white;
+  font-size: 14px;
   font-weight: bold;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.friends-btn:active {
-  border-color: var(--primary-color);
-  color: var(--primary-color);
+.arena-actions .action-btn:hover {
+  border-color: #FF066F;
+  box-shadow: 0 0 15px rgba(255, 6, 111, 0.3);
 }
 
-.autofight-section {
-  margin-top: 20px;
+.autofight-status-section {
+  margin-top: 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
   width: 100%;
 }
 
