@@ -66,7 +66,7 @@
 </template>
 
 <script setup>
-import {ref, computed, onMounted} from 'vue';
+import {ref, computed, onMounted, onBeforeUnmount} from 'vue';
 import store from "@/core/state/store.js";
 import router from "@/router/index.js";
 import {t} from "@/locales/index.js";
@@ -75,6 +75,7 @@ import UserName from "@/components/fragments/profile/UserName.vue";
 import ModuleBuilder from "@/components/fragments/modules/ModuleBuilder.vue";
 import AutoFightStatus from "@/components/fragments/fight/AutoFightStatus.vue";
 import ModeSelector from "@/components/arena/ModeSelector.vue";
+import {getOnlinePlayersCount} from "@/core/services/statsService.js";
 
 const master = computed(() => store.getters['master/getMaster']);
 const isBuildValid = computed(() => store.getters['fight/isBuildValid']);
@@ -82,7 +83,8 @@ const isAutoFightEnabled = computed(() => store.getters['autoFight/isEnabled']);
 
 // PvP data
 const onlineFriendsCount = computed(() => store.getters['friends/onlineFriendsCount']);
-const onlinePlayersCount = computed(() => Math.floor(Math.random() * 50) + 20);
+const onlinePlayersCount = ref(0);
+let onlineRefreshInterval = null;
 
 const selectedMode = ref('pve');
 
@@ -120,8 +122,18 @@ const goToFriends = async () => {
   await router.push('/friends');
 };
 
-onMounted(() => {
+onMounted(async () => {
   store.dispatch('fight/loadModules');
+  onlinePlayersCount.value = await getOnlinePlayersCount();
+  onlineRefreshInterval = setInterval(async () => {
+    onlinePlayersCount.value = await getOnlinePlayersCount();
+  }, 30000);
+});
+
+onBeforeUnmount(() => {
+  if (onlineRefreshInterval) {
+    clearInterval(onlineRefreshInterval);
+  }
 });
 
 const emit = defineEmits(['scroll']);

@@ -86,6 +86,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import store from '@/core/state/store.js';
 import router from '@/router/index.js';
 import { t } from '@/locales/index.js';
+import { getOnlinePlayersCount } from '@/core/services/statsService.js';
 
 // State
 const status = ref('searching'); // 'searching', 'found'
@@ -107,7 +108,8 @@ const playerName = computed(() => {
   return master?.userData?.name || 'Player';
 });
 const playerRating = computed(() => store.getters['pvp/getPvpStats'].rating);
-const onlineCount = computed(() => Math.floor(Math.random() * 30) + 30);
+const onlineCount = ref(0);
+let onlineRefreshInterval = null;
 
 const formattedTime = computed(() => {
   const minutes = Math.floor(searchTime.value / 60);
@@ -128,12 +130,19 @@ const mockOpponents = [
 ];
 
 // Lifecycle
-onMounted(() => {
+onMounted(async () => {
+  onlineCount.value = await getOnlinePlayersCount();
+  onlineRefreshInterval = setInterval(async () => {
+    onlineCount.value = await getOnlinePlayersCount();
+  }, 10000);
   startSearch();
 });
 
 onUnmounted(() => {
   cleanup();
+  if (onlineRefreshInterval) {
+    clearInterval(onlineRefreshInterval);
+  }
 });
 
 function startSearch() {
