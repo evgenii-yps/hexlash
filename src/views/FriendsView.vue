@@ -3,10 +3,10 @@
     <div class="friends-container" @scroll="handleScroll">
       <div class="friends-content-wrapper">
 
-        <button class="back-btn" @click="goBack">&larr; Back</button>
+        <button class="back-btn" @click="goBack">&larr; {{ t.friends.back }}</button>
 
         <div class="friends-header">
-          <span class="friends-title">FRIENDS</span>
+          <span class="friends-title">{{ t.friends.title }}</span>
         </div>
 
         <!-- Search -->
@@ -16,21 +16,24 @@
             v-model="searchQuery"
             class="search-input"
             type="text"
-            placeholder="Search by username..."
+            :placeholder="t.friends.searchPlaceholder"
           />
         </div>
 
         <!-- Search results -->
         <div v-if="searchQuery.length >= 3" class="search-results">
-          <div class="section-label">SEARCH RESULTS</div>
+          <div class="section-label">{{ t.friends.searchResults }}</div>
           <PlayerSearchResult
             v-for="player in searchResults"
             :key="player.id"
             :player="player"
+            :addText="t.friends.add"
+            :pendingText="t.friends.pending"
+            :ratingText="t.friends.rating"
             @add="onAddPlayer"
           />
           <div v-if="searchResults.length === 0" class="no-results">
-            Player not found
+            {{ t.friends.noResults }}
           </div>
         </div>
 
@@ -38,12 +41,15 @@
         <div v-if="searchQuery.length < 3 && incomingRequests.length > 0" class="section">
           <div class="section-header">
             <span class="section-icon">&#x1F4E9;</span>
-            FRIEND REQUESTS ({{ incomingRequests.length }})
+            {{ t.friends.friendRequests }} ({{ incomingRequests.length }})
           </div>
           <FriendRequestCard
             v-for="request in incomingRequests"
             :key="request.id"
             :request="request"
+            :acceptText="t.friends.accept"
+            :declineText="t.friends.decline"
+            :ratingText="t.friends.rating"
             @accept="onAccept"
             @decline="onDecline"
           />
@@ -52,12 +58,14 @@
         <!-- Friends list -->
         <div v-if="searchQuery.length < 3 && friends.length > 0" class="section">
           <div class="section-header">
-            FRIENDS ({{ friends.length }})
+            {{ t.friends.title }} ({{ friends.length }})
           </div>
           <FriendCard
             v-for="friend in sortedFriends"
             :key="friend.id"
             :friend="friend"
+            :statusTexts="{ online: t.friends.online, offline: t.friends.offline, in_fight: t.friends.inFight }"
+            :ratingText="t.friends.rating"
             @challenge="onChallenge"
             @watch="onWatch"
             @remove="onRemoveFriend"
@@ -67,8 +75,8 @@
         <!-- Empty state (only when not searching, no friends, no requests) -->
         <div v-if="searchQuery.length < 3 && friends.length === 0 && incomingRequests.length === 0" class="empty-state">
           <div class="empty-icon">&#x1F465;</div>
-          <div class="empty-text">No friends yet</div>
-          <div class="empty-hint">Search to add friends</div>
+          <div class="empty-text">{{ t.friends.noFriends }}</div>
+          <div class="empty-hint">{{ t.friends.searchToAdd }}</div>
         </div>
 
         <div class="scroll-gap"/>
@@ -81,6 +89,7 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import store from '@/core/state/store.js';
 import router from '@/router/index.js';
+import { t } from '@/locales/index.js';
 import PlayerSearchResult from '@/components/pvp/PlayerSearchResult.vue';
 import FriendCard from '@/components/pvp/FriendCard.vue';
 import FriendRequestCard from '@/components/pvp/FriendRequestCard.vue';

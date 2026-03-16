@@ -3,20 +3,27 @@
     <div class="player-avatar">&#x1F464;</div>
     <div class="player-info">
       <span class="player-name">{{ player.username }}</span>
-      <span class="player-rating">Rating: {{ player.rating }}</span>
+      <span class="player-rating">{{ ratingText }}: {{ player.rating }}</span>
     </div>
-    <button v-if="isFriend" class="remove-btn" @click.stop="$emit('remove', player)">&#x2715;</button>
-    <button v-else class="add-btn" @click.stop="$emit('add', player)">+ Add</button>
+    <span v-if="isPending" class="pending-badge">{{ pendingText }}</span>
+    <button v-else class="add-btn" @click.stop="$emit('add', player)">+ {{ addText }}</button>
   </div>
 </template>
 
 <script setup>
-defineProps({
+import { computed } from 'vue';
+import store from '@/core/state/store.js';
+
+const props = defineProps({
   player: { type: Object, required: true },
-  isFriend: { type: Boolean, default: false },
+  addText: { type: String, default: 'Add' },
+  pendingText: { type: String, default: 'Pending' },
+  ratingText: { type: String, default: 'Rating' },
 });
 
-defineEmits(['add', 'remove']);
+defineEmits(['add']);
+
+const isPending = computed(() => store.getters['friends/isRequestPending'](props.player.id));
 </script>
 
 <style scoped>
@@ -87,20 +94,14 @@ defineEmits(['add', 'remove']);
   color: #fff;
 }
 
-.remove-btn {
-  padding: 8px 12px;
-  background: transparent;
-  border: 1px solid #555;
+.pending-badge {
+  padding: 8px 16px;
+  background: rgba(255, 184, 0, 0.15);
+  border: 1px solid #FFB800;
   border-radius: 6px;
-  color: #888;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  color: #FFB800;
+  font-size: 12px;
+  font-weight: 600;
   flex-shrink: 0;
-}
-
-.remove-btn:hover {
-  border-color: #e74c3c;
-  color: #e74c3c;
 }
 </style>

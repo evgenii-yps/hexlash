@@ -4,15 +4,15 @@
 
     <div class="request-info">
       <div class="request-name">{{ request.username }}</div>
-      <div class="request-rating">Rating: {{ request.rating }}</div>
+      <div class="request-rating">{{ ratingText }}: {{ request.rating }}</div>
     </div>
 
     <div class="request-actions">
       <button class="accept-btn" @click="$emit('accept', request)">
-        &#x2713; Accept
+        &#x2713; {{ acceptText }}
       </button>
       <button class="decline-btn" @click="$emit('decline', request)">
-        &#x2716; Decline
+        &#x2716; {{ declineText }}
       </button>
     </div>
   </div>
@@ -20,7 +20,10 @@
 
 <script setup>
 defineProps({
-  request: { type: Object, required: true }
+  request: { type: Object, required: true },
+  acceptText: { type: String, default: 'Accept' },
+  declineText: { type: String, default: 'Decline' },
+  ratingText: { type: String, default: 'Rating' },
 });
 
 defineEmits(['accept', 'decline']);
