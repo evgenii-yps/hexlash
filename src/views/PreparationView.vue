@@ -12,19 +12,15 @@
 
         <div class="fight-button-wrapper">
           <VBtn
-              v-if="!isAutoFightEnabled"
               width="200"
               size="large"
               class="fight-btn"
-              :disabled="!isBuildValid"
+              :class="{ 'fight-btn-auto-active': selectedMode === 'auto' && isAutoFightEnabled }"
+              :disabled="!isBuildValid && selectedMode !== 'auto'"
               @click="startFight"
           >
-            {{ t.arena.lblStartFight }}
+            {{ startButtonText }}
           </VBtn>
-          <div v-else class="fight-btn-blocked">
-            <span class="blocked-icon">&#x1F504;</span>
-            {{ t.autoFight.lblAutoFightInProgress }}
-          </div>
         </div>
 
         <!-- Mode Selector -->
@@ -33,9 +29,15 @@
           @select="onModeSelect"
         />
 
-        <!-- Auto Fight Status (shown when auto mode active) -->
-        <div v-if="isAutoFightEnabled" class="autofight-status-section">
-          <AutoFightStatus/>
+        <!-- Auto Fight Status (shown when auto mode selected or auto fight active) -->
+        <div v-if="selectedMode === 'auto' || isAutoFightEnabled" class="autofight-status-section">
+          <AutoFightStatus v-if="isAutoFightEnabled"/>
+          <div v-else class="autofight-inactive-hint">
+            <svg class="hint-icon" viewBox="0 0 24 24" width="18" height="18">
+              <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z" fill="currentColor"/>
+            </svg>
+            <span>{{ t.arena.autoFightInactive }}</span>
+          </div>
         </div>
 
         <!-- Friends Button -->
@@ -84,6 +86,14 @@ const onlinePlayersCount = computed(() => Math.floor(Math.random() * 50) + 20);
 
 const selectedMode = ref('pve');
 
+// Button text depends on selected mode
+const startButtonText = computed(() => {
+  if (selectedMode.value === 'auto') {
+    return isAutoFightEnabled.value ? t.value.arena.stopAuto : t.value.arena.startAuto;
+  }
+  return t.value.arena.lblStartFight;
+});
+
 const onModeSelect = (mode) => {
   selectedMode.value = mode;
 };
@@ -94,7 +104,11 @@ const startFight = async () => {
       await router.push('/matchmaking');
       break;
     case 'auto':
-      await store.dispatch('autoFight/toggle');
+      if (isAutoFightEnabled.value) {
+        await store.dispatch('autoFight/disable');
+      } else {
+        await store.dispatch('autoFight/enable');
+      }
       break;
     default:
       await store.dispatch('fight/startFight');
@@ -202,30 +216,11 @@ const handleScroll = (event) => {
   cursor: not-allowed;
 }
 
-.fight-btn-blocked {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 24px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 6, 111, 0.4);
-  background: rgba(255, 6, 111, 0.1);
-  color: var(--primary-color);
-  font-family: Anonymous, sans-serif;
-  font-size: 0.85rem;
-  font-weight: bold;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-}
-
-.blocked-icon {
-  animation: spin 3s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+.fight-btn-auto-active {
+  background-color: transparent !important;
+  border: 2px solid #00FF88 !important;
+  color: #00FF88 !important;
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
 }
 
 /* ── Auto Fight Status ────────────────────────────────────── */
@@ -235,6 +230,26 @@ const handleScroll = (event) => {
   flex-direction: column;
   align-items: center;
   width: 100%;
+}
+
+.autofight-inactive-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  font-family: Anonymous, sans-serif;
+  font-size: 13px;
+  color: var(--gray2);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.hint-icon {
+  color: var(--gray2);
+  flex-shrink: 0;
 }
 
 /* ── Friends Section ─────────────────────────────────────── */

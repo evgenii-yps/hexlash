@@ -256,6 +256,10 @@ export default {
     pvpDesc: 'Fight real players',
     autoDesc: 'Fights every 30-60 min',
     autoFight: 'AUTO FIGHT',
+    startAuto: 'START AUTO',
+    stopAuto: 'STOP AUTO',
+    autoFightActive: 'AUTO FIGHT ACTIVE',
+    autoFightInactive: 'AUTO FIGHT OFF',
   },
   club: {
     lblClubMembers: '{n} members',
