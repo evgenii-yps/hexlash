@@ -64,9 +64,9 @@ onMounted(() => {
     // Trigger auto fight when timer reaches 0
     if (isEnabled.value && nextFightAt.value && now.value >= nextFightAt.value && !fightTriggered) {
       fightTriggered = true;
-      store.dispatch('autoFight/checkAndRunPending').then(() => {
-        fightTriggered = false;
-      });
+      store.dispatch('autoFight/checkAndRunPending')
+        .then(() => { fightTriggered = false; })
+        .catch(() => { fightTriggered = false; });
     }
   }, 1000);
 });
