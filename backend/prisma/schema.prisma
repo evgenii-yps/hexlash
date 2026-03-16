@@ -41,6 +41,7 @@ model User {
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  lastSeen        DateTime @default(now())
 
   achievements    UserAchievement[]
   ownedClubs      Club[]            @relation("ClubOwner")
@@ -51,6 +52,9 @@ model User {
   fightsAsOne     Fight[]  @relation("FighterOne")
   fightsAsTwo     Fight[]  @relation("FighterTwo")
   fightsWon       Fight[]  @relation("FightWinner")
+
+  sentFriendships     Friendship[] @relation("FriendshipSender")
+  receivedFriendships Friendship[] @relation("FriendshipReceiver")
 }
 
 model Club {
@@ -162,4 +166,21 @@ model PunchInfo {
   punchAmountMaxPerBatch Int      @default(10000)
   intervalWaitTimeMs     BigInt   @default(3600000)
   user                   User     @relation(fields: [userId], references: [id])
+}
+
+model Friendship {
+  id         String   @id @default(uuid())
+  senderId   String
+  receiverId String
+  status     String   @default("pending") // "pending", "accepted"
+  createdAt  DateTime @default(now())
+  acceptedAt DateTime?
+
+  sender   User @relation("FriendshipSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("FriendshipReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@unique([senderId, receiverId])
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([status])
 }
