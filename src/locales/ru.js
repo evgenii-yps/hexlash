@@ -463,6 +463,12 @@ export default {
     ranked: 'Рейтинговый',
     friendly: 'Дружеский',
     ratingChange: 'Изменение рейтинга',
+    vsPlayer: 'ПРОТИВ ИГРОКА',
+    findOpponent: 'Найти случайного соперника',
+    fightFriends: 'Сразись с друзьями',
+    online: 'Онлайн',
+    searchingForOpponent: 'Поиск соперника...',
+    playersOnline: 'Игроков онлайн',
   },
   xpAllocation: {
     freeXP: 'Свободно',

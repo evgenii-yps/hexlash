@@ -132,7 +132,7 @@ const handleChallengeAccepted = (event) => {
 const route = useRoute();
 const isScrollableComponent = computed(() => {
   const scrollablePrefixes = ['/profile', '/ratings', '/fight', '/training/']; // Префиксы маршрутов с дочерними маршрутами
-  const scrollableRoutes = ['/training', '/arena', '/arena/autofight-log', '/404', '/verify-email', '/friends']; // Точные маршруты
+  const scrollableRoutes = ['/training', '/arena', '/arena/autofight-log', '/404', '/verify-email', '/friends', '/matchmaking']; // Точные маршруты
 
   // Проверка на точный маршрут или маршрут, начинающийся с одного из префиксов
   return scrollableRoutes.includes(route.path) ||
