@@ -27,8 +27,10 @@
           </div>
         </div>
 
-        <div class="arena-actions">
-          <button class="action-btn" @click="goToFriends">&#x1F465; FRIENDS</button>
+        <div class="arena-secondary-actions">
+          <button class="arena-secondary-btn" @click="goToFriends">
+            <span class="icon">&#x1F465;</span> FRIENDS
+          </button>
           <AutoFightToggle/>
         </div>
 
@@ -188,32 +190,40 @@ const handleScroll = (event) => {
   to { transform: rotate(360deg); }
 }
 
-.arena-actions {
+.arena-secondary-actions {
   display: flex;
   justify-content: center;
   gap: 16px;
-  margin-top: 16px;
+  margin-top: 20px;
 }
 
-.arena-actions .action-btn {
+.arena-secondary-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 24px;
-  background: rgba(20, 20, 30, 0.8);
-  border: 1px solid rgba(255, 6, 111, 0.5);
-  border-radius: 8px;
-  color: white;
+  justify-content: center;
+  gap: 10px;
+  min-width: 160px;
+  padding: 14px 24px;
+  background: rgba(20, 20, 30, 0.85);
+  border: 1px solid rgba(255, 6, 111, 0.6);
+  border-radius: 12px;
+  color: #FFFFFF;
   font-size: 14px;
-  font-weight: bold;
-  letter-spacing: 0.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.arena-actions .action-btn:hover {
+.arena-secondary-btn:hover {
   border-color: #FF066F;
-  box-shadow: 0 0 15px rgba(255, 6, 111, 0.3);
+  background: rgba(255, 6, 111, 0.15);
+  box-shadow: 0 0 20px rgba(255, 6, 111, 0.3);
+}
+
+.arena-secondary-btn .icon {
+  font-size: 18px;
 }
 
 .autofight-status-section {
