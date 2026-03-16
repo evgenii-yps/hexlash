@@ -101,7 +101,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 | `achievementState` | Achievements list + unlocking |
 | `contractState` | Web3 wallet, token balance |
 | `webSocketState` | WS connection, real-time messages |
-| `autoFightState` | Auto fight: scheduling, offline simulation, fight log, push notifications |
+| `autoFightState` | Auto fight: scheduling, offline simulation, fight log, push notifications, daily auto-reset |
 
 ---
 
@@ -206,7 +206,7 @@ COST_CREATE_CLUB = 10000
 
 **Flow:** Build deck (4–8 modules) → Generate AI opponent → Simulate rounds → Dice mechanic → Coach advice → Save result
 
-**Auto Fight:** Toggle on Arena screen → fights every 30–60 min offline → uses CombatEngine + ModuleAIStrategy → localStorage persist (`hexlash_autofight_state`, `hexlash_autofight_history`) → push notifications via Notification API → limits: 24/day, 48/session → auto-catches up missed fights on tab focus
+**Auto Fight:** Toggle on Arena screen → fights every 30–60 min offline → uses CombatEngine + ModuleAIStrategy → localStorage persist (`hexlash_autofight_state`, `hexlash_autofight_history`) → push notifications via Notification API → limits: 24/day, 48/session → auto-catches up missed fights on tab focus → daily auto-reset: on new day clears fight log, wins/losses/draws/XP counters (no manual clear button)
 
 **Dice effects:** Heal, Adrenaline, Shield, Blind, Rage, Crit
 
@@ -311,5 +311,5 @@ User, Club, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask,
 
 ## Branch (Git)
 
-Development branch: `claude/fix-language-system-PPpvI`
-Push: `git push -u origin claude/fix-language-system-PPpvI`
+Development branch: `claude/game-improvements-WHMaI`
+Push: `git push -u origin claude/game-improvements-WHMaI`

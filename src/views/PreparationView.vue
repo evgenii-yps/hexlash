@@ -27,6 +27,10 @@
           </div>
         </div>
 
+        <div class="arena-actions">
+          <button class="friends-btn" @click="goToFriends">&#x1F465; FRIENDS</button>
+        </div>
+
         <div class="autofight-section">
           <AutoFightToggle/>
           <AutoFightStatus/>
@@ -42,6 +46,7 @@
 <script setup>
 import {computed, onMounted} from 'vue';
 import store from "@/core/state/store.js";
+import router from "@/router/index.js";
 import {t} from "@/locales/index.js";
 import UserAvatar from "@/components/fragments/profile/UserAvatar.vue";
 import UserName from "@/components/fragments/profile/UserName.vue";
@@ -55,6 +60,10 @@ const isAutoFightEnabled = computed(() => store.getters['autoFight/isEnabled']);
 
 const startFight = async () => {
   await store.dispatch('fight/startFight');
+};
+
+const goToFriends = async () => {
+  await router.push('/friends');
 };
 
 onMounted(() => {
@@ -177,6 +186,34 @@ const handleScroll = (event) => {
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+.arena-actions {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.friends-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--gray3);
+  font-family: Anonymous, sans-serif;
+  font-size: 0.9rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.friends-btn:active {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
 }
 
 .autofight-section {
