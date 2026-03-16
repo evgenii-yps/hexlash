@@ -437,6 +437,7 @@ export default {
     requestAccepted: 'Заявка принята',
     requestDeclined: 'Заявка отклонена',
     rating: 'Рейтинг',
+    watching: 'НАБЛЮДЕНИЕ',
     challenge: {
       title: 'ВЫЗОВ НА БОЙ!',
       wantsToFight: 'хочет с тобой сразиться!',

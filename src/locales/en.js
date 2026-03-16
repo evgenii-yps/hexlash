@@ -437,6 +437,7 @@ export default {
     requestAccepted: 'Request accepted',
     requestDeclined: 'Request declined',
     rating: 'Rating',
+    watching: 'WATCHING',
     challenge: {
       title: 'FIGHT CHALLENGE!',
       wantsToFight: 'wants to fight you!',

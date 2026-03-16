@@ -131,8 +131,10 @@ const onTestChallenge = () => {
 };
 
 const onWatch = (friend) => {
-  // TODO: implement watch fight
-  console.log('Watch:', friend.username);
+  router.push({
+    path: `/spectate/${friend.id}`,
+    query: { odName: friend.currentFight?.opponent },
+  });
 };
 
 const onAccept = (request) => {
