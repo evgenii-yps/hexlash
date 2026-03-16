@@ -372,4 +372,4 @@ function sendToUser(userId, data) {
   }
 }
 
-module.exports = { setupWebSocket, sendToUser };
+module.exports = { setupWebSocket, sendToUser, clients };
