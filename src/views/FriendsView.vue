@@ -34,9 +34,26 @@
           </div>
         </div>
 
+        <!-- Friend Requests -->
+        <div v-if="searchQuery.length < 3 && incomingRequests.length > 0" class="section">
+          <div class="section-header">
+            <span class="section-icon">&#x1F4E9;</span>
+            FRIEND REQUESTS ({{ incomingRequests.length }})
+          </div>
+          <FriendRequestCard
+            v-for="request in incomingRequests"
+            :key="request.id"
+            :request="request"
+            @accept="onAccept"
+            @decline="onDecline"
+          />
+        </div>
+
         <!-- Friends list -->
-        <div v-if="searchQuery.length < 3 && friends.length > 0" class="friends-list">
-          <div class="section-label">FRIENDS ({{ friends.length }})</div>
+        <div v-if="searchQuery.length < 3 && friends.length > 0" class="section">
+          <div class="section-header">
+            FRIENDS ({{ friends.length }})
+          </div>
           <FriendCard
             v-for="friend in sortedFriends"
             :key="friend.id"
@@ -47,8 +64,8 @@
           />
         </div>
 
-        <!-- Empty state (only when not searching and no friends) -->
-        <div v-if="searchQuery.length < 3 && friends.length === 0" class="empty-state">
+        <!-- Empty state (only when not searching, no friends, no requests) -->
+        <div v-if="searchQuery.length < 3 && friends.length === 0 && incomingRequests.length === 0" class="empty-state">
           <div class="empty-icon">&#x1F465;</div>
           <div class="empty-text">No friends yet</div>
           <div class="empty-hint">Search to add friends</div>
@@ -66,11 +83,13 @@ import store from '@/core/state/store.js';
 import router from '@/router/index.js';
 import PlayerSearchResult from '@/components/pvp/PlayerSearchResult.vue';
 import FriendCard from '@/components/pvp/FriendCard.vue';
+import FriendRequestCard from '@/components/pvp/FriendRequestCard.vue';
 
 const searchQuery = ref('');
 const searchResults = ref([]);
 
 const friends = computed(() => store.getters['friends/getFriends']);
+const incomingRequests = computed(() => store.getters['friends/getIncomingRequests']);
 
 const sortedFriends = computed(() => {
   const order = { 'online': 0, 'in_fight': 1, 'offline': 2 };
@@ -97,6 +116,14 @@ const onChallenge = (friend) => {
 const onWatch = (friend) => {
   // TODO: implement watch fight
   console.log('Watch:', friend.username);
+};
+
+const onAccept = (request) => {
+  store.dispatch('friends/acceptFriendRequest', request.id);
+};
+
+const onDecline = (request) => {
+  store.dispatch('friends/declineFriendRequest', request.id);
 };
 
 onMounted(() => {
@@ -218,12 +245,35 @@ const handleScroll = (event) => {
   box-shadow: 0 0 15px rgba(255, 6, 111, 0.3);
 }
 
+/* Sections */
+.section {
+  margin-bottom: 24px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: Anonymous, sans-serif;
+  font-size: 14px;
+  color: #FF066F;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 6, 111, 0.3);
+}
+
+.section-icon {
+  font-size: 16px;
+}
+
 /* Search results */
 .search-results {
   margin-bottom: 20px;
 }
 
-.section-label {
+.search-results .section-label {
   font-family: Anonymous, sans-serif;
   font-size: 0.8rem;
   color: var(--gray2);
