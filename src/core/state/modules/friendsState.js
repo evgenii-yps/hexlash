@@ -23,7 +23,7 @@ const mockPlayers = [
     { id: 'p1', username: 'Shadow_X', rating: 1280, status: 'online' },
     { id: 'p2', username: 'ShadowKnight', rating: 980, status: 'offline' },
     { id: 'p3', username: 'NightFury', rating: 1150, status: 'online' },
-    { id: 'p4', username: 'IronFist', rating: 1420, status: 'in_fight' },
+    { id: 'p4', username: 'IronFist', rating: 1420, status: 'in_fight', currentFight: { odId: 'opp_iron', opponent: 'VenomStrike', startedAt: Date.now() } },
     { id: 'p5', username: 'DarkPhoenix', rating: 1650, status: 'offline' },
     { id: 'p6', username: 'BlazeFist', rating: 1100, status: 'online' },
     { id: 'p7', username: 'StormRider', rating: 1320, status: 'offline' },
@@ -58,6 +58,10 @@ const getters = {
     getOutgoingChallenge: (s) => s.challenge.outgoing,
     getIncomingChallenge: (s) => s.challenge.incoming,
     hasPendingChallenge: (s) => (playerId) => s.challenge.outgoing?.odId === playerId,
+    getFriendFight: (s) => (friendId) => {
+        const friend = s.friends.find(f => f.id === friendId);
+        return (friend && friend.status === 'in_fight') ? friend.currentFight : null;
+    },
 };
 
 // ─── Mutations ──────────────────────────────────────────────────────────────
@@ -90,6 +94,13 @@ const mutations = {
     },
     clearIncomingChallenge(s) {
         s.challenge.incoming = null;
+    },
+    setFriendStatus(s, { friendId, status, currentFight }) {
+        const friend = s.friends.find(f => f.id === friendId);
+        if (friend) {
+            friend.status = status;
+            friend.currentFight = currentFight || null;
+        }
     },
 };
 
@@ -245,6 +256,31 @@ const actions = {
 
     declineIncomingChallenge({ commit }) {
         commit('clearIncomingChallenge');
+    },
+
+    // ─── Fight simulation (test) ────────────────────────────────────────────
+    simulateFriendsFighting({ commit, state: s }) {
+        // End fights for some currently fighting friends (30% chance each)
+        s.friends.filter(f => f.status === 'in_fight').forEach(friend => {
+            if (Math.random() < 0.3) {
+                commit('setFriendStatus', { friendId: friend.id, status: 'online', currentFight: null });
+            }
+        });
+
+        // Start a fight for a random online friend (20% chance)
+        const onlineFriends = s.friends.filter(f => f.status === 'online');
+        if (onlineFriends.length > 0 && Math.random() < 0.2) {
+            const randomFriend = onlineFriends[Math.floor(Math.random() * onlineFriends.length)];
+            commit('setFriendStatus', {
+                friendId: randomFriend.id,
+                status: 'in_fight',
+                currentFight: {
+                    odId: 'opp_' + Date.now(),
+                    opponent: 'RandomOpp_' + Math.floor(Math.random() * 100),
+                    startedAt: Date.now(),
+                },
+            });
+        }
     },
 };
 

@@ -437,6 +437,7 @@ export default {
     requestAccepted: 'Request accepted',
     requestDeclined: 'Request declined',
     rating: 'Rating',
+    watching: 'WATCHING',
     challenge: {
       title: 'FIGHT CHALLENGE!',
       wantsToFight: 'wants to fight you!',
@@ -484,6 +485,17 @@ export default {
       diamond: 'Diamond',
       champion: 'Champion',
     },
+  },
+  spectate: {
+    title: 'SPECTATING',
+    spectators: 'watching',
+    round: 'Round',
+    fightLog: 'FIGHT LOG',
+    uses: 'uses',
+    damage: 'damage',
+    critical: 'CRIT',
+    wins: 'wins',
+    leave: 'Leave',
   },
   xpAllocation: {
     freeXP: 'Available',

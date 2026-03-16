@@ -437,6 +437,7 @@ export default {
     requestAccepted: 'Заявка принята',
     requestDeclined: 'Заявка отклонена',
     rating: 'Рейтинг',
+    watching: 'НАБЛЮДЕНИЕ',
     challenge: {
       title: 'ВЫЗОВ НА БОЙ!',
       wantsToFight: 'хочет с тобой сразиться!',
@@ -484,6 +485,17 @@ export default {
       diamond: 'Алмаз',
       champion: 'Чемпион',
     },
+  },
+  spectate: {
+    title: 'НАБЛЮДЕНИЕ',
+    spectators: 'смотрят',
+    round: 'Раунд',
+    fightLog: 'ЛОГ БОЯ',
+    uses: 'использует',
+    damage: 'урон',
+    critical: 'КРИТ',
+    wins: 'побеждает',
+    leave: 'Уйти',
   },
   xpAllocation: {
     freeXP: 'Свободно',

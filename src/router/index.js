@@ -44,7 +44,7 @@ const protectedRoutes = [
     {path: '/arena/autofight-log', name: 'AutoFightLog', component: () => import("/src/views/AutoFightLogView.vue")},
     {path: '/friends', name: 'Friends', component: () => import("/src/views/FriendsView.vue")},
     {path: '/matchmaking', name: 'Matchmaking', component: () => import("/src/views/MatchmakingView.vue")},
-
+    {path: '/spectate/:odId', name: 'Spectate', component: () => import("/src/views/SpectateView.vue")},
 
 ];
 

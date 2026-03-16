@@ -1,10 +1,13 @@
 <template>
-  <div class="friend-card">
+  <div class="friend-card" :class="{ 'is-fighting': friend.status === 'in_fight' }">
     <div class="friend-avatar">&#x1F464;</div>
 
     <div class="friend-info">
       <div class="friend-name">{{ friend.username }}</div>
       <div class="friend-rating">{{ ratingText }}: {{ friend.rating }}</div>
+      <div v-if="friend.status === 'in_fight' && friend.currentFight" class="fight-info">
+        vs {{ friend.currentFight.opponent }}
+      </div>
     </div>
 
     <div class="friend-status" :class="statusClass">
@@ -70,6 +73,11 @@ const isPendingChallenge = computed(() => store.getters['friends/hasPendingChall
   background: rgba(255, 6, 111, 0.05);
 }
 
+.friend-card.is-fighting {
+  border-color: rgba(255, 184, 0, 0.5);
+  background: rgba(255, 184, 0, 0.05);
+}
+
 .friend-avatar {
   font-size: 28px;
   margin-right: 14px;
@@ -89,6 +97,13 @@ const isPendingChallenge = computed(() => store.getters['friends/hasPendingChall
 .friend-rating {
   font-size: 12px;
   color: #888;
+}
+
+.fight-info {
+  font-size: 11px;
+  color: #FFB800;
+  margin-top: 4px;
+  font-style: italic;
 }
 
 .friend-status {
@@ -125,10 +140,16 @@ const isPendingChallenge = computed(() => store.getters['friends/hasPendingChall
 .status-in-fight .status-dot {
   background: #FFB800;
   box-shadow: 0 0 8px rgba(255, 184, 0, 0.6);
+  animation: fightPulse 1s ease-in-out infinite;
 }
 
 .status-in-fight {
   color: #FFB800;
+}
+
+@keyframes fightPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 
 .friend-actions {
@@ -155,9 +176,19 @@ const isPendingChallenge = computed(() => store.getters['friends/hasPendingChall
   cursor: not-allowed;
 }
 
-.fight-btn:hover:not(:disabled), .watch-btn:hover {
+.fight-btn:hover:not(:disabled) {
   border-color: #FF066F;
   background: rgba(255, 6, 111, 0.2);
+}
+
+.watch-btn {
+  border-color: #FFB800;
+  background: rgba(255, 184, 0, 0.1);
+}
+
+.watch-btn:hover {
+  background: rgba(255, 184, 0, 0.3);
+  box-shadow: 0 0 15px rgba(255, 184, 0, 0.4);
 }
 
 .remove-btn:hover {
