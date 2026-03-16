@@ -56,6 +56,7 @@ const getters = {
     isFriend: (s) => (playerId) => s.friends.some(f => f.id === playerId),
     isRequestPending: (s) => (playerId) => s.friendRequests.outgoing.some(r => r.id === playerId),
     getOutgoingChallenge: (s) => s.challenge.outgoing,
+    getIncomingChallenge: (s) => s.challenge.incoming,
     hasPendingChallenge: (s) => (playerId) => s.challenge.outgoing?.odId === playerId,
 };
 
@@ -83,6 +84,12 @@ const mutations = {
     },
     clearOutgoingChallenge(s) {
         s.challenge.outgoing = null;
+    },
+    setIncomingChallenge(s, challenge) {
+        s.challenge.incoming = challenge;
+    },
+    clearIncomingChallenge(s) {
+        s.challenge.incoming = null;
     },
 };
 
@@ -208,6 +215,36 @@ const actions = {
     cancelChallenge({ commit }) {
         commit('clearOutgoingChallenge');
         if (challengeTimeout) { clearTimeout(challengeTimeout); challengeTimeout = null; }
+    },
+
+    // ─── Incoming Challenges ────────────────────────────────────────────────
+
+    simulateIncomingChallenge({ commit, state: s }) {
+        const onlineFriends = s.friends.filter(f => f.status === 'online');
+        if (onlineFriends.length === 0) return;
+
+        const randomFriend = onlineFriends[Math.floor(Math.random() * onlineFriends.length)];
+        commit('setIncomingChallenge', {
+            odId: randomFriend.id,
+            username: randomFriend.username,
+            rating: randomFriend.rating,
+            sentAt: Date.now(),
+            expiresAt: Date.now() + 30000,
+        });
+    },
+
+    acceptIncomingChallenge({ commit, state: s }) {
+        const challenger = s.challenge.incoming;
+        if (!challenger) return null;
+
+        commit('clearIncomingChallenge');
+        // TODO: start PvP fight
+        console.log('Accepted challenge from', challenger.username);
+        return challenger;
+    },
+
+    declineIncomingChallenge({ commit }) {
+        commit('clearIncomingChallenge');
     },
 };
 

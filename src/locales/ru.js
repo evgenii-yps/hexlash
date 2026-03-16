@@ -438,6 +438,11 @@ export default {
     requestDeclined: 'Заявка отклонена',
     rating: 'Рейтинг',
     challenge: {
+      title: 'ВЫЗОВ НА БОЙ!',
+      wantsToFight: 'хочет с тобой сразиться!',
+      accept: 'ПРИНЯТЬ',
+      decline: 'ОТКЛОНИТЬ',
+      expiresIn: 'Истекает через',
       sending: 'Отправка...',
       pending: 'Ожидание ответа...',
       accepted: 'Вызов принят!',

@@ -438,6 +438,11 @@ export default {
     requestDeclined: 'Request declined',
     rating: 'Rating',
     challenge: {
+      title: 'FIGHT CHALLENGE!',
+      wantsToFight: 'wants to fight you!',
+      accept: 'ACCEPT',
+      decline: 'DECLINE',
+      expiresIn: 'Expires in',
       sending: 'Sending...',
       pending: 'Waiting for response...',
       accepted: 'Challenge accepted!',
