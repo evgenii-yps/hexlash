@@ -30,6 +30,20 @@
 
     <NewAchievement v-if="isAuth"/>
 
+    <!-- Global challenge modal -->
+    <ChallengeModal
+      :visible="!!incomingChallenge"
+      :challenger="incomingChallenge || {}"
+      :challengeTitle="t.friends.challenge.title"
+      :wantsToFightText="t.friends.challenge.wantsToFight"
+      :acceptText="t.friends.challenge.accept"
+      :declineText="t.friends.challenge.decline"
+      :expiresInText="t.friends.challenge.expiresIn"
+      :ratingText="t.friends.rating"
+      @accept="onAcceptChallenge"
+      @decline="onDeclineChallenge"
+    />
+
     <footer class="footer">
       <transition name="slide-up-down">
         <BottomMenu v-if="isAuth && scrollDirection !== 'down'"/>
@@ -48,6 +62,8 @@ import Info from "@/components/Info.vue";
 import NoConnection from "@/components/ui/NoConnection.vue";
 import Error from "@/components/Error.vue";
 import NewAchievement from "@/components/NewAchievement.vue";
+import ChallengeModal from "@/components/pvp/ChallengeModal.vue";
+import { t } from "@/locales/index.js";
 import * as amplitude from "@amplitude/analytics-browser";
 
 
@@ -83,10 +99,20 @@ const isAuth = computed(() => {
   return store.getters['master/getLoginState'].isAuthenticated
 });
 
+const incomingChallenge = computed(() => store.getters['friends/getIncomingChallenge']);
+
+const onAcceptChallenge = () => {
+  store.dispatch('friends/acceptIncomingChallenge');
+};
+
+const onDeclineChallenge = () => {
+  store.dispatch('friends/declineIncomingChallenge');
+};
+
 const route = useRoute();
 const isScrollableComponent = computed(() => {
   const scrollablePrefixes = ['/profile', '/ratings', '/fight', '/training/']; // Префиксы маршрутов с дочерними маршрутами
-  const scrollableRoutes = ['/training', '/arena', '/arena/autofight-log', '/404', '/verify-email']; // Точные маршруты
+  const scrollableRoutes = ['/training', '/arena', '/arena/autofight-log', '/404', '/verify-email', '/friends']; // Точные маршруты
 
   // Проверка на точный маршрут или маршрут, начинающийся с одного из префиксов
   return scrollableRoutes.includes(route.path) ||
