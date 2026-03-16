@@ -152,6 +152,15 @@ const actions = {
                 const achievementModel = AchievementModel.fromJSON(message.achievementResponse)
                 await store.dispatch('achievement/receivedAchievement', achievementModel);
                 break;
+            case 'MatchFoundMsg':
+                window.dispatchEvent(new CustomEvent('matchmaking-match-found', { detail: message }));
+                break;
+            case 'MatchmakingQueueMsg':
+                window.dispatchEvent(new CustomEvent('matchmaking-queue-update', { detail: message }));
+                break;
+            case 'MatchmakingCancelledMsg':
+                window.dispatchEvent(new CustomEvent('matchmaking-cancelled', { detail: message }));
+                break;
             default:
                 console.warn(`Unknown message type received: ${messageType}`);
                 break;

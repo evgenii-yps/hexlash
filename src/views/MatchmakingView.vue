@@ -29,6 +29,10 @@
         <div class="search-stats">
           <div class="stat-item">
             <span class="stat-dot online"></span>
+            {{ t.pvp.playersSearching }}: {{ queueSize }}
+          </div>
+          <div class="stat-item">
+            <span class="stat-dot online-blue"></span>
             {{ t.pvp.playersOnline }}: {{ onlineCount }}
           </div>
           <div class="stat-item">
@@ -77,30 +81,45 @@
 
       </div>
 
+      <!-- Timeout / No Players State -->
+      <div v-else-if="status === 'timeout'" class="timeout-container">
+        <div class="timeout-icon">&#x23F0;</div>
+        <h2 class="timeout-title">{{ t.pvp.noPlayersFound }}</h2>
+        <p class="timeout-hint">{{ t.pvp.tryAgainLater }}</p>
+        <div class="timeout-buttons">
+          <button class="retry-btn" @click="retrySearch">
+            {{ t.pvp.tryAgain }}
+          </button>
+          <button class="back-btn" @click="goBack">
+            {{ t.pvp.backToArena }}
+          </button>
+        </div>
+      </div>
+
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import store from '@/core/state/store.js';
 import router from '@/router/index.js';
 import { t } from '@/locales/index.js';
 import { getOnlinePlayersCount } from '@/core/services/statsService.js';
 
 // State
-const status = ref('searching'); // 'searching', 'found'
+const status = ref('searching'); // 'searching', 'found', 'timeout'
 const searchTime = ref(0);
 const searchRange = ref(100);
 const countdown = ref(5);
 const foundOpponent = ref({ username: '', rating: 0 });
+const queueSize = ref(0);
+const onlineCount = ref(0);
 
 // Intervals
 let searchInterval = null;
 let countdownInterval = null;
-
-// Find time — pick once on mount
-let findTime = 3 + Math.floor(Math.random() * 5);
+let onlineRefreshInterval = null;
 
 // Computed
 const playerName = computed(() => {
@@ -108,8 +127,6 @@ const playerName = computed(() => {
   return master?.userData?.name || 'Player';
 });
 const playerRating = computed(() => store.getters['pvp/getPvpStats'].rating);
-const onlineCount = ref(0);
-let onlineRefreshInterval = null;
 
 const formattedTime = computed(() => {
   const minutes = Math.floor(searchTime.value / 60);
@@ -117,29 +134,48 @@ const formattedTime = computed(() => {
   return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 });
 
-// Mock opponents
-const mockOpponents = [
-  { id: 'opp1', username: 'Shadow_X', rating: 1180 },
-  { id: 'opp2', username: 'NightFury', rating: 1320 },
-  { id: 'opp3', username: 'IronFist', rating: 1250 },
-  { id: 'opp4', username: 'BlazeFist', rating: 1100 },
-  { id: 'opp5', username: 'StormRider', rating: 1400 },
-  { id: 'opp6', username: 'ThunderBolt', rating: 980 },
-  { id: 'opp7', username: 'DarkPhoenix', rating: 1550 },
-  { id: 'opp8', username: 'CyberWolf', rating: 1200 },
-];
+// WS event handlers
+function onMatchFound(e) {
+  const data = e.detail;
+  clearInterval(searchInterval);
+  searchInterval = null;
+
+  foundOpponent.value = data.opponent;
+  status.value = 'found';
+  countdown.value = 5;
+
+  countdownInterval = setInterval(() => {
+    countdown.value--;
+    if (countdown.value <= 0) {
+      startFight(data.matchId);
+    }
+  }, 1000);
+}
+
+function onQueueUpdate(e) {
+  const data = e.detail;
+  queueSize.value = data.queueSize || 0;
+}
 
 // Lifecycle
 onMounted(async () => {
+  // Fetch online count
   onlineCount.value = await getOnlinePlayersCount();
   onlineRefreshInterval = setInterval(async () => {
     onlineCount.value = await getOnlinePlayersCount();
   }, 10000);
+
+  // Listen for WS matchmaking events
+  window.addEventListener('matchmaking-match-found', onMatchFound);
+  window.addEventListener('matchmaking-queue-update', onQueueUpdate);
+
   startSearch();
 });
 
-onUnmounted(() => {
+onBeforeUnmount(() => {
   cleanup();
+  window.removeEventListener('matchmaking-match-found', onMatchFound);
+  window.removeEventListener('matchmaking-queue-update', onQueueUpdate);
   if (onlineRefreshInterval) {
     clearInterval(onlineRefreshInterval);
   }
@@ -150,58 +186,60 @@ function startSearch() {
   searchTime.value = 0;
   searchRange.value = 100;
 
+  // Send matchmaking start via WS
+  store.dispatch('webSocket/sendMessage', {
+    type: 'MatchmakingStartMsg',
+    matchmakingRequest: {
+      username: playerName.value,
+      rating: playerRating.value,
+    },
+  });
+
   searchInterval = setInterval(() => {
     searchTime.value++;
 
-    // Expand search range every 5 seconds
+    // Expand search range every 5 seconds (visual only — backend manages real range)
     if (searchTime.value % 5 === 0) {
       searchRange.value = Math.min(searchRange.value + 50, 500);
     }
 
-    // Simulate finding opponent after findTime seconds
-    if (searchTime.value >= findTime) {
-      onOpponentFound();
+    // Timeout after 2 minutes
+    if (searchTime.value >= 120) {
+      status.value = 'timeout';
+      cancelMatchmakingOnServer();
+      clearInterval(searchInterval);
+      searchInterval = null;
     }
   }, 1000);
 }
 
-function onOpponentFound() {
-  clearInterval(searchInterval);
-  searchInterval = null;
-
-  // Pick random opponent within rating range
-  const myRating = playerRating.value;
-  const validOpponents = mockOpponents.filter(opp =>
-    Math.abs(opp.rating - myRating) <= searchRange.value
-  );
-
-  foundOpponent.value = validOpponents.length > 0
-    ? validOpponents[Math.floor(Math.random() * validOpponents.length)]
-    : mockOpponents[Math.floor(Math.random() * mockOpponents.length)];
-
-  status.value = 'found';
-  countdown.value = 5;
-
-  countdownInterval = setInterval(() => {
-    countdown.value--;
-
-    if (countdown.value <= 0) {
-      startFight();
-    }
-  }, 1000);
-}
-
-function startFight() {
+function startFight(matchId) {
   cleanup();
 
   // Create ranked PvP fight
   store.dispatch('pvp/createPvPFight', { opponent: foundOpponent.value, isRanked: true });
 
   // Navigate to fight
-  router.push({ path: '/fight', query: { mode: 'pvp' } });
+  router.push({ path: '/fight', query: { mode: 'pvp', matchId } });
 }
 
 function cancelSearch() {
+  cancelMatchmakingOnServer();
+  cleanup();
+  router.push('/arena');
+}
+
+function cancelMatchmakingOnServer() {
+  store.dispatch('webSocket/sendMessage', {
+    type: 'MatchmakingCancelMsg',
+  });
+}
+
+function retrySearch() {
+  startSearch();
+}
+
+function goBack() {
   cleanup();
   router.push('/arena');
 }
@@ -356,6 +394,11 @@ function cleanup() {
   box-shadow: 0 0 8px rgba(0, 255, 136, 0.6);
 }
 
+.stat-dot.online-blue {
+  background: #00BFFF;
+  box-shadow: 0 0 8px rgba(0, 191, 255, 0.6);
+}
+
 .stat-icon {
   font-size: 16px;
 }
@@ -465,5 +508,77 @@ function cleanup() {
 @keyframes countdownPulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.6; }
+}
+
+/* ── Timeout State ───────────────────────────────────────────── */
+.timeout-container {
+  text-align: center;
+  max-width: 400px;
+  animation: scaleIn 0.5s ease;
+}
+
+.timeout-icon {
+  font-size: 60px;
+  margin-bottom: 16px;
+}
+
+.timeout-title {
+  font-family: Anonymous, sans-serif;
+  font-size: 22px;
+  color: #FFB800;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+}
+
+.timeout-hint {
+  font-size: 14px;
+  color: var(--gray2);
+  margin-bottom: 32px;
+}
+
+.timeout-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+
+.retry-btn {
+  padding: 16px 48px;
+  background: rgba(255, 6, 111, 0.15);
+  border: 2px solid #FF066F;
+  border-radius: 12px;
+  color: #FF066F;
+  font-family: Anonymous, sans-serif;
+  font-size: 16px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.retry-btn:active {
+  background: rgba(255, 6, 111, 0.3);
+  box-shadow: 0 0 20px rgba(255, 6, 111, 0.4);
+}
+
+.back-btn {
+  padding: 12px 32px;
+  background: transparent;
+  border: 1px solid var(--gray2);
+  border-radius: 12px;
+  color: var(--gray2);
+  font-family: Anonymous, sans-serif;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.back-btn:active {
+  border-color: #fff;
+  color: #fff;
 }
 </style>
