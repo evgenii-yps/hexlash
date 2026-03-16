@@ -12,8 +12,13 @@
     <div class="fight-container" @scroll="handleScroll">
       <div class="fight-content-wrapper">
 
+        <!-- PvP badge -->
+        <div v-if="isPvP && pvpFight" class="pvp-badge">
+          PVP: vs {{ pvpFight.opponent.username }}
+        </div>
+
         <!-- Auto fight banner -->
-        <div v-if="isAutoFightEnabled" class="autofight-banner">
+        <div v-if="isAutoFightEnabled && !isPvP" class="autofight-banner">
           <span class="autofight-banner-icon">&#x1F504;</span>
           <span class="autofight-banner-text">{{ t.autoFight.lblAutoFightInProgress }}</span>
         </div>
@@ -224,6 +229,7 @@
 
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import store from '@/core/state/store.js';
 import router from '@/router/index.js';
 import { t, interpolate } from '@/locales/index.js';
@@ -245,6 +251,11 @@ import iconDefense  from '@/assets/images/icons/defense.svg';
 import iconPosition from '@/assets/images/icons/position.svg';
 
 import { getLanguage } from '@/locales/index.js';
+
+// ── PvP mode detection ─────────────────────────────────────────────────────
+const fightRoute = useRoute();
+const isPvP = computed(() => fightRoute.query.mode === 'pvp');
+const pvpFight = computed(() => store.getters['pvp/getCurrentPvPFight']);
 
 // ── Countdown ──────────────────────────────────────────────────────────────
 const showCountdown  = ref(true);
@@ -497,8 +508,15 @@ const stopFightTimer = () => {
 onMounted(async () => {
   triggerLoadingOverlay();
 
-  // Restore fight from localStorage (handles page reload / tab switch)
-  await store.dispatch('fight/initFromStorage');
+  // PvP fight: use opponent from pvpState
+  if (isPvP.value && pvpFight.value) {
+    console.log('Starting PvP fight against', pvpFight.value.opponent.username);
+    // Use pvp opponent fighter data for the fight
+    await store.dispatch('fight/initFromStorage', { pvpOpponent: pvpFight.value.opponent.fighter });
+  } else {
+    // Restore fight from localStorage (handles page reload / tab switch)
+    await store.dispatch('fight/initFromStorage');
+  }
 
   if (fightPhase.value === 'fighting') {
     if (roundNum.value === 0) {
@@ -571,6 +589,10 @@ watch(fightPhase, (val, oldVal) => {
   }
   if (val === 'results') {
     stopFightTimer();
+    // Finish PvP fight if applicable
+    if (isPvP.value && pvpFight.value) {
+      store.dispatch('pvp/finishPvPFight', resultState.value);
+    }
     // Only award XP once (guard against double-award on restore)
     if (!store.getters['fight/getXpAwarded']) {
       const result = resultState.value === 'win' ? 'win' : 'lose';
@@ -1537,6 +1559,25 @@ const flashStyle = computed(() => ({
   font-weight: bold;
   text-align: center;
   text-shadow: 0 0 10px rgba(255, 6, 111, 0.4);
+}
+
+/* ── PvP Badge ─────────────────────────────────────────────────── */
+.pvp-badge {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 20px;
+  background: rgba(255, 6, 111, 0.2);
+  border: 1px solid #FF066F;
+  border-radius: 20px;
+  color: #FF066F;
+  font-weight: 600;
+  font-size: 14px;
+  z-index: 10;
+  font-family: Anonymous, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 /* ── Auto Fight Banner ──────────────────────────────────────────── */
