@@ -16,6 +16,9 @@
       <button v-if="friend.status === 'in_fight'" class="action-btn watch-btn" @click="$emit('watch', friend)">
         &#x1F441;&#xFE0F;
       </button>
+      <button v-else-if="isPendingChallenge" class="action-btn challenge-pending-btn" disabled>
+        <span class="spinner"></span>
+      </button>
       <button v-else class="action-btn fight-btn" @click="$emit('challenge', friend)" :disabled="friend.status === 'offline'">
         &#x2694;&#xFE0F;
       </button>
@@ -29,6 +32,7 @@
 
 <script setup>
 import { computed } from 'vue';
+import store from '@/core/state/store.js';
 
 const props = defineProps({
   friend: { type: Object, required: true },
@@ -45,6 +49,8 @@ const statusClass = computed(() => ({
 }));
 
 const statusText = computed(() => props.statusTexts[props.friend.status] || props.friend.status);
+
+const isPendingChallenge = computed(() => store.getters['friends/hasPendingChallenge'](props.friend.id));
 </script>
 
 <style scoped>
@@ -157,5 +163,24 @@ const statusText = computed(() => props.statusTexts[props.friend.status] || prop
 .remove-btn:hover {
   border-color: #FF3333;
   background: rgba(255, 51, 51, 0.2);
+}
+
+.challenge-pending-btn {
+  background: rgba(255, 184, 0, 0.2) !important;
+  border-color: #FFB800 !important;
+  cursor: wait !important;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top-color: #FFB800;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 </style>

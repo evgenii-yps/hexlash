@@ -118,8 +118,7 @@ const onRemoveFriend = (friend) => {
 };
 
 const onChallenge = (friend) => {
-  // TODO: implement PvP challenge
-  console.log('Challenge:', friend.username);
+  store.dispatch('friends/sendChallenge', friend);
 };
 
 const onWatch = (friend) => {

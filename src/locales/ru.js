@@ -437,6 +437,14 @@ export default {
     requestAccepted: 'Заявка принята',
     requestDeclined: 'Заявка отклонена',
     rating: 'Рейтинг',
+    challenge: {
+      sending: 'Отправка...',
+      pending: 'Ожидание ответа...',
+      accepted: 'Вызов принят!',
+      declined: 'Вызов отклонён',
+      expired: 'Вызов истёк',
+      startingFight: 'Бой начинается...',
+    },
   },
   xpAllocation: {
     freeXP: 'Свободно',
