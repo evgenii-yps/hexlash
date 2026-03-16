@@ -1,9 +1,9 @@
 <template>
-  <div class="search-result" @click="$emit('add', player)">
-    <div class="result-avatar">&#x1F464;</div>
-    <div class="result-info">
-      <span class="result-name">{{ player.username }}</span>
-      <span class="result-rating">Rating: {{ player.rating }}</span>
+  <div class="search-result-card">
+    <div class="player-avatar">&#x1F464;</div>
+    <div class="player-info">
+      <span class="player-name">{{ player.username }}</span>
+      <span class="player-rating">Rating: {{ player.rating }}</span>
     </div>
     <button class="add-btn" @click.stop="$emit('add', player)">+ Add</button>
   </div>
@@ -18,25 +18,25 @@ defineEmits(['add']);
 </script>
 
 <style scoped>
-.search-result {
+.search-result-card {
   display: flex;
   align-items: center;
-  gap: 12px;
   padding: 12px 16px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 8px;
-  margin-bottom: 8px;
-  cursor: pointer;
-  transition: border-color 0.2s;
+  background: rgba(20, 20, 30, 0.7);
+  border: 1px solid #333;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  transition: all 0.2s ease;
 }
 
-.search-result:hover {
-  border-color: rgba(255, 6, 111, 0.4);
+.search-result-card:hover {
+  border-color: #FF066F;
+  background: rgba(255, 6, 111, 0.1);
 }
 
-.result-avatar {
-  font-size: 1.6rem;
+.player-avatar {
+  font-size: 24px;
+  margin-right: 12px;
   width: 40px;
   height: 40px;
   display: flex;
@@ -47,7 +47,7 @@ defineEmits(['add']);
   flex-shrink: 0;
 }
 
-.result-info {
+.player-info {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -55,40 +55,33 @@ defineEmits(['add']);
   min-width: 0;
 }
 
-.result-name {
-  font-size: 0.95rem;
-  color: white;
-  font-weight: bold;
+.player-name {
+  font-weight: 600;
+  color: #fff;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.result-rating {
-  font-size: 0.8rem;
-  color: var(--gray2);
-  font-family: system-ui, sans-serif;
+.player-rating {
+  font-size: 12px;
+  color: #888;
 }
 
 .add-btn {
+  padding: 8px 16px;
   background: transparent;
-  border: 1px solid rgba(255, 6, 111, 0.4);
-  color: var(--primary-color);
+  border: 1px solid #FF066F;
   border-radius: 6px;
-  padding: 6px 14px;
-  font-size: 0.85rem;
-  font-weight: bold;
+  color: #FF066F;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   flex-shrink: 0;
 }
 
 .add-btn:hover {
-  background: rgba(255, 6, 111, 0.15);
-}
-
-.add-btn:active {
-  background: var(--primary-color);
-  color: white;
+  background: #FF066F;
+  color: #fff;
 }
 </style>

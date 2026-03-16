@@ -10,7 +10,7 @@
         </div>
 
         <!-- Search -->
-        <div class="search-wrapper">
+        <div class="search-input-container">
           <span class="search-icon">&#x1F50D;</span>
           <input
             v-model="searchQuery"
@@ -59,7 +59,10 @@ const mockPlayers = [
   { id: 'p2', username: 'ShadowKnight', rating: 980 },
   { id: 'p3', username: 'NightFury', rating: 1150 },
   { id: 'p4', username: 'IronFist', rating: 1420 },
-  { id: 'p5', username: 'DarkPhoenix', rating: 1650 }
+  { id: 'p5', username: 'DarkPhoenix', rating: 1650 },
+  { id: 'p6', username: 'BlazeFist', rating: 1100 },
+  { id: 'p7', username: 'StormRider', rating: 1320 },
+  { id: 'p8', username: 'ThunderBolt', rating: 890 }
 ];
 
 const searchResults = computed(() => {
@@ -151,40 +154,41 @@ const handleScroll = (event) => {
 }
 
 /* Search */
-.search-wrapper {
+.search-input-container {
   position: relative;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .search-icon {
   position: absolute;
-  left: 14px;
+  left: 16px;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 1rem;
-  opacity: 0.6;
+  color: #666;
+  font-size: 18px;
   pointer-events: none;
 }
 
 .search-input {
   width: 100%;
   box-sizing: border-box;
-  padding: 12px 16px 12px 42px;
-  background: rgba(9, 9, 9, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  color: white;
-  font-size: 0.95rem;
+  padding: 14px 16px 14px 48px;
+  background: rgba(20, 20, 30, 0.8);
+  border: 1px solid #444;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 16px;
   outline: none;
-  transition: border-color 0.2s;
+  transition: all 0.2s ease;
 }
 
 .search-input::placeholder {
-  color: var(--gray2);
+  color: #666;
 }
 
 .search-input:focus {
-  border-color: var(--primary-color);
+  border-color: #FF066F;
+  box-shadow: 0 0 15px rgba(255, 6, 111, 0.3);
 }
 
 /* Search results */
