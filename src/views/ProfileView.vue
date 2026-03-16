@@ -35,6 +35,16 @@
             </div>
 
             <ProfileStats :userData="userData"/>
+
+            <PvPStatsCard
+              :sectionTitle="t.pvp.statsTitle"
+              :winsText="t.pvp.wins"
+              :lossesText="t.pvp.losses"
+              :winRateText="t.pvp.winRate"
+              :totalFightsText="t.pvp.totalFights"
+              :nextLeagueText="t.pvp.nextLeague"
+            />
+
             <ProfileAchievements :userData="userData"/>
 
             <div v-if="isOwner">
@@ -54,8 +64,10 @@
 import {useRoute} from 'vue-router';
 import {computed, onBeforeMount, onMounted, ref, watch} from "vue";
 import store from "@/core/state/store.js";
+import {t} from "@/locales/index.js";
 
 import ProfileStats from "@/components/fragments/profile/ProfileStats.vue";
+import PvPStatsCard from "@/components/fragments/profile/PvPStatsCard.vue";
 import ProfileAchievements from "@/components/fragments/profile/ProfileAchievements.vue";
 import ProfileButtons from "@/components/fragments/profile/ProfileButtons.vue";
 import ProfileWallet from "@/components/fragments/profile/wallet/ProfileWallet.vue";

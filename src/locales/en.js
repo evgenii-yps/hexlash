@@ -473,6 +473,17 @@ export default {
     cancel: 'CANCEL',
     opponentFound: 'OPPONENT FOUND!',
     fightStartsIn: 'Fight starts in',
+    statsTitle: 'PVP STATS',
+    totalFights: 'Total Fights',
+    nextLeague: 'Next league',
+    leagues: {
+      bronze: 'Bronze',
+      silver: 'Silver',
+      gold: 'Gold',
+      platinum: 'Platinum',
+      diamond: 'Diamond',
+      champion: 'Champion',
+    },
   },
   xpAllocation: {
     freeXP: 'Available',
