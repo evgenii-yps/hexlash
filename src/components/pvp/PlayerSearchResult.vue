@@ -5,16 +5,18 @@
       <span class="player-name">{{ player.username }}</span>
       <span class="player-rating">Rating: {{ player.rating }}</span>
     </div>
-    <button class="add-btn" @click.stop="$emit('add', player)">+ Add</button>
+    <button v-if="isFriend" class="remove-btn" @click.stop="$emit('remove', player)">&#x2715;</button>
+    <button v-else class="add-btn" @click.stop="$emit('add', player)">+ Add</button>
   </div>
 </template>
 
 <script setup>
 defineProps({
-  player: { type: Object, required: true }
+  player: { type: Object, required: true },
+  isFriend: { type: Boolean, default: false },
 });
 
-defineEmits(['add']);
+defineEmits(['add', 'remove']);
 </script>
 
 <style scoped>
@@ -83,5 +85,22 @@ defineEmits(['add']);
 .add-btn:hover {
   background: #FF066F;
   color: #fff;
+}
+
+.remove-btn {
+  padding: 8px 12px;
+  background: transparent;
+  border: 1px solid #555;
+  border-radius: 6px;
+  color: #888;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.remove-btn:hover {
+  border-color: #e74c3c;
+  color: #e74c3c;
 }
 </style>

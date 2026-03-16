@@ -10,6 +10,7 @@ import webSocket from "@/core/state/modules/webSocketState.js";
 import achievement from "@/core/state/modules/achievementState.js";
 import progression from "@/core/state/modules/progressionState.js";
 import autoFight from "@/core/state/modules/autoFightState.js";
+import friends from "@/core/state/modules/friendsState.js";
 
 export default createStore({
     modules: {
@@ -24,5 +25,6 @@ export default createStore({
         achievement,
         progression,
         autoFight,
+        friends,
     },
 });
