@@ -30,12 +30,19 @@ const mockPlayers = [
     { id: 'p8', username: 'ThunderBolt', rating: 890, status: 'online' },
 ];
 
+// ─── Challenge timer ────────────────────────────────────────────────────────
+let challengeTimeout = null;
+
 // ─── State ──────────────────────────────────────────────────────────────────
 const state = () => ({
     friends: [],
     friendRequests: {
         incoming: [],
         outgoing: [],
+    },
+    challenge: {
+        outgoing: null, // { odId, odUser, odRating, sentAt, expiresAt }
+        incoming: null,
     },
 });
 
@@ -48,6 +55,8 @@ const getters = {
     incomingRequestsCount: (s) => s.friendRequests.incoming.length,
     isFriend: (s) => (playerId) => s.friends.some(f => f.id === playerId),
     isRequestPending: (s) => (playerId) => s.friendRequests.outgoing.some(r => r.id === playerId),
+    getOutgoingChallenge: (s) => s.challenge.outgoing,
+    hasPendingChallenge: (s) => (playerId) => s.challenge.outgoing?.odId === playerId,
 };
 
 // ─── Mutations ──────────────────────────────────────────────────────────────
@@ -68,6 +77,12 @@ const mutations = {
     },
     removeFriend(s, playerId) {
         s.friends = s.friends.filter(f => f.id !== playerId);
+    },
+    setOutgoingChallenge(s, challenge) {
+        s.challenge.outgoing = challenge;
+    },
+    clearOutgoingChallenge(s) {
+        s.challenge.outgoing = null;
     },
 };
 
@@ -142,6 +157,57 @@ const actions = {
         commit('removeFriend', playerId);
         saveToStorage(s);
         return true;
+    },
+
+    // ─── Challenges ─────────────────────────────────────────────────────────
+
+    sendChallenge({ commit, state: s }, friend) {
+        if (friend.status === 'offline') return false;
+        if (s.challenge.outgoing) return false;
+
+        const challenge = {
+            odId: friend.id,
+            odUser: friend.username,
+            odRating: friend.rating,
+            sentAt: Date.now(),
+            expiresAt: Date.now() + 30000,
+        };
+
+        commit('setOutgoingChallenge', challenge);
+
+        // Auto-cancel after 30 seconds
+        if (challengeTimeout) clearTimeout(challengeTimeout);
+        challengeTimeout = setTimeout(() => {
+            if (s.challenge.outgoing?.odId === friend.id) {
+                commit('clearOutgoingChallenge');
+            }
+            challengeTimeout = null;
+        }, 30000);
+
+        // Simulate: random response in 2-5 seconds (mock)
+        const responseTime = 2000 + Math.random() * 3000;
+        setTimeout(() => {
+            if (!s.challenge.outgoing || s.challenge.outgoing.odId !== friend.id) return;
+
+            // 70% chance to accept
+            if (Math.random() > 0.3) {
+                commit('clearOutgoingChallenge');
+                if (challengeTimeout) { clearTimeout(challengeTimeout); challengeTimeout = null; }
+                // TODO: transition to PvP fight
+                console.log('Challenge accepted by', friend.username);
+            } else {
+                commit('clearOutgoingChallenge');
+                if (challengeTimeout) { clearTimeout(challengeTimeout); challengeTimeout = null; }
+                console.log('Challenge declined by', friend.username);
+            }
+        }, responseTime);
+
+        return true;
+    },
+
+    cancelChallenge({ commit }) {
+        commit('clearOutgoingChallenge');
+        if (challengeTimeout) { clearTimeout(challengeTimeout); challengeTimeout = null; }
     },
 };
 

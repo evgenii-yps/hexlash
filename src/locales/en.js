@@ -437,6 +437,14 @@ export default {
     requestAccepted: 'Request accepted',
     requestDeclined: 'Request declined',
     rating: 'Rating',
+    challenge: {
+      sending: 'Sending...',
+      pending: 'Waiting for response...',
+      accepted: 'Challenge accepted!',
+      declined: 'Challenge declined',
+      expired: 'Challenge expired',
+      startingFight: 'Fight starting...',
+    },
   },
   xpAllocation: {
     freeXP: 'Available',
