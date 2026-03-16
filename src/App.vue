@@ -176,6 +176,9 @@ const handleOnlineStatus = () => {
 
 
 
+// Global auto-fight timer — checks every 30s regardless of which page is open
+let autoFightInterval = null;
+
 onMounted(() => {
 
   if (window.Telegram && window.Telegram.WebApp) {
@@ -189,6 +192,14 @@ onMounted(() => {
   // Initialize auto fight system
   store.dispatch('autoFight/init');
 
+  // Periodic auto-fight check — runs globally so fights trigger even if user
+  // navigates away from Arena (where AutoFightStatus component lives)
+  autoFightInterval = setInterval(() => {
+    if (store.getters['autoFight/isEnabled'] && isAuth.value) {
+      store.dispatch('autoFight/checkAndRunPending');
+    }
+  }, 30000);
+
   amplitude.init('b8821737459f00f1058fd8ede71459fe', {"autocapture":true});
 
 })
@@ -199,6 +210,7 @@ onBeforeUnmount(() => {
   document.removeEventListener('visibilitychange', handleVisibilityChange);
   window.removeEventListener('online', handleOnlineStatus);
 
+  clearInterval(autoFightInterval);
 });
 
 

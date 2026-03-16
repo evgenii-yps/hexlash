@@ -259,15 +259,24 @@ const actions = {
             commit('setTotalExpGained', typeof saved.totalExpGained === 'number' ? saved.totalExpGained : 0);
             commit('setSessionFights', saved.sessionFights || 0);
 
-            // Daily reset: if lastFightDate is not today, reset daily counter
+            // Daily reset: if lastFightDate is not today, reset daily stats and clear log
             const today = getTodayDate();
             if (state.lastFightDate && state.lastFightDate !== today) {
                 commit('setFightsToday', 0);
+                commit('setWins', 0);
+                commit('setLosses', 0);
+                commit('setDraws', 0);
+                commit('setTotalExpGained', 0);
                 commit('setLastFightDate', today);
+                commit('setFightLog', []);
                 saveState(state);
+                saveHistory([]);
+            } else {
+                commit('setFightLog', loadHistory());
             }
+        } else {
+            commit('setFightLog', loadHistory());
         }
-        commit('setFightLog', loadHistory());
     },
 
     /** Enable auto fight mode. */
@@ -317,81 +326,97 @@ const actions = {
     checkAndRunPending({ commit, state, dispatch, rootGetters, rootState }) {
         if (!state.enabled || state.stoppingAfterCurrent) return;
 
-        // Daily reset check
-        const today = getTodayDate();
-        if (state.lastFightDate && state.lastFightDate !== today) {
-            commit('setFightsToday', 0);
-            commit('setLastFightDate', today);
-        }
+        try {
+            // Daily reset check — clear stats and fight log on new day
+            const today = getTodayDate();
+            if (state.lastFightDate && state.lastFightDate !== today) {
+                commit('setFightsToday', 0);
+                commit('setWins', 0);
+                commit('setLosses', 0);
+                commit('setDraws', 0);
+                commit('setTotalExpGained', 0);
+                commit('setLastFightDate', today);
+                commit('setFightLog', []);
+                saveHistory([]);
+            }
 
-        const now = Date.now();
-        const modules = rootGetters['fight/getPlayerModules'];
-        if (!modules || !modules.every(m => m !== null)) {
-            // Reschedule so timer doesn't freeze at 0:00
-            if (state.nextFightAt && now >= state.nextFightAt) {
+            const now = Date.now();
+            const modules = rootGetters['fight/getPlayerModules'];
+            if (!modules || !modules.every(m => m !== null)) {
+                // Reschedule so timer doesn't freeze at 0:00
+                if (state.nextFightAt && now >= state.nextFightAt) {
+                    commit('setNextFightAt', now + getRandomInterval());
+                    saveState(state);
+                }
+                return;
+            }
+
+            // Check if there's an active manual fight
+            const fightPhase = rootGetters['fight/getFightPhase'];
+            if (fightPhase === 'fighting' || fightPhase === 'coach') {
+                // Reschedule so timer doesn't freeze at 0:00
+                if (state.nextFightAt && now >= state.nextFightAt) {
+                    commit('setNextFightAt', now + getRandomInterval());
+                    saveState(state);
+                }
+                return;
+            }
+
+            // Calculate player power for matchmaking
+            const progressionState = rootState.progression;
+            const playerFighter = buildPlayerFighter(progressionState, modules);
+            const playerPower = calculatePowerRating(playerFighter);
+
+            // Simulate missed fights
+            let nextAt = state.nextFightAt;
+            while (nextAt && now >= nextAt && state.fightsToday < AUTO_FIGHT_MAX_PER_DAY && state.sessionFights < AUTO_FIGHT_MAX_PER_SESSION) {
+                const fightData = simulateFullFight(modules, state.difficulty, playerPower);
+                const expGain = fightData.result === 'win' ? 10 : 5;
+
+                const logEntry = {
+                    id: 'autofight_' + nextAt,
+                    timestamp: nextAt,
+                    opponent: fightData.opponent.name,
+                    opponentSkin: fightData.opponent.skin,
+                    result: fightData.result,
+                    rounds: fightData.rounds,
+                    hp1Final: fightData.hp1Final,
+                    hp2Final: fightData.hp2Final,
+                    expGained: expGain,
+                };
+
+                commit('addFightToLog', logEntry);
+                commit('incrementStats', fightData.result);
+                commit('addExp', expGain);
+
+                // Award XP to progression (freeXP)
+                dispatch('progression/onFightEnd', {
+                    result: fightData.result === 'win' ? 'win' : 'lose',
+                }, { root: true });
+
+                // Send notification
+                dispatch('sendNotification', { fight: logEntry });
+
+                nextAt = nextAt + getRandomInterval();
+            }
+
+            // Ensure nextFightAt is always in the future (prevents 0:00 freeze)
+            if (!nextAt || now >= nextAt) {
+                nextAt = now + getRandomInterval();
+            }
+
+            commit('setNextFightAt', nextAt);
+            saveState(state);
+            saveHistory(state.fightLog);
+        } catch (e) {
+            console.error('[AutoFight] checkAndRunPending error:', e);
+            // Reschedule to prevent permanent freeze
+            const now = Date.now();
+            if (!state.nextFightAt || now >= state.nextFightAt) {
                 commit('setNextFightAt', now + getRandomInterval());
                 saveState(state);
             }
-            return;
         }
-
-        // Check if there's an active manual fight
-        const fightPhase = rootGetters['fight/getFightPhase'];
-        if (fightPhase === 'fighting' || fightPhase === 'coach') {
-            // Reschedule so timer doesn't freeze at 0:00
-            if (state.nextFightAt && now >= state.nextFightAt) {
-                commit('setNextFightAt', now + getRandomInterval());
-                saveState(state);
-            }
-            return;
-        }
-
-        // Calculate player power for matchmaking
-        const progressionState = rootState.progression;
-        const playerFighter = buildPlayerFighter(progressionState, modules);
-        const playerPower = calculatePowerRating(playerFighter);
-
-        // Simulate missed fights
-        let nextAt = state.nextFightAt;
-        while (nextAt && now >= nextAt && state.fightsToday < AUTO_FIGHT_MAX_PER_DAY && state.sessionFights < AUTO_FIGHT_MAX_PER_SESSION) {
-            const fightData = simulateFullFight(modules, state.difficulty, playerPower);
-            const expGain = fightData.result === 'win' ? 10 : 5;
-
-            const logEntry = {
-                id: 'autofight_' + nextAt,
-                timestamp: nextAt,
-                opponent: fightData.opponent.name,
-                opponentSkin: fightData.opponent.skin,
-                result: fightData.result,
-                rounds: fightData.rounds,
-                hp1Final: fightData.hp1Final,
-                hp2Final: fightData.hp2Final,
-                expGained: expGain,
-            };
-
-            commit('addFightToLog', logEntry);
-            commit('incrementStats', fightData.result);
-            commit('addExp', expGain);
-
-            // Award XP to progression (freeXP)
-            dispatch('progression/onFightEnd', {
-                result: fightData.result === 'win' ? 'win' : 'lose',
-            }, { root: true });
-
-            // Send notification
-            dispatch('sendNotification', { fight: logEntry });
-
-            nextAt = nextAt + getRandomInterval();
-        }
-
-        // Ensure nextFightAt is always in the future (prevents 0:00 freeze)
-        if (!nextAt || now >= nextAt) {
-            nextAt = now + getRandomInterval();
-        }
-
-        commit('setNextFightAt', nextAt);
-        saveState(state);
-        saveHistory(state.fightLog);
     },
 
     /**

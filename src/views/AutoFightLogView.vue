@@ -27,9 +27,7 @@
           </div>
           <div class="summary-row">
             <span>{{ t.autoFight.lblTotalXp }}:</span>
-            <span class="summary-value summary-xp">
-              S:{{ totalExp.speed }} P:{{ totalExp.power }} T:{{ totalExp.technique }}
-            </span>
+            <span class="summary-value summary-xp">{{ totalExp }} XP</span>
           </div>
         </div>
 
@@ -51,11 +49,6 @@
             <span class="entry-xp">+{{ totalXp(fight.expGained) }} XP</span>
           </div>
         </div>
-
-        <!-- Clear button -->
-        <button v-if="fightLog.length > 0" class="clear-btn" @click="clearHistory">
-          {{ t.autoFight.lblClearHistory }}
-        </button>
 
         <div class="scroll-gap"/>
       </div>
@@ -95,10 +88,6 @@ const totalXp = (exp) => {
 
 const goBack = async () => {
   await router.push('/arena');
-};
-
-const clearHistory = () => {
-  store.dispatch('autoFight/clearHistory');
 };
 
 const emit = defineEmits(['scroll']);
@@ -274,24 +263,6 @@ const handleScroll = (event) => {
   color: var(--primary-color);
   font-family: system-ui, sans-serif;
   font-weight: bold;
-}
-
-.clear-btn {
-  display: block;
-  margin: 20px auto 0;
-  padding: 10px 28px;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--gray2);
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.clear-btn:active {
-  border-color: var(--primary-color);
-  color: var(--primary-color);
 }
 
 .scroll-gap {
