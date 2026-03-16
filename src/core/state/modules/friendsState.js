@@ -79,6 +79,16 @@ const actions = {
             commit('setFriends', saved.friends || []);
             commit('setFriendRequests', saved.friendRequests || { incoming: [], outgoing: [] });
         }
+
+        // Add test incoming requests if none exist (temporary for UI testing)
+        if (saved?.friendRequests?.incoming?.length > 0) return;
+        commit('setFriendRequests', {
+            incoming: [
+                { id: 'test1', username: 'NewPlayer99', rating: 950, sentAt: Date.now() },
+                { id: 'test2', username: 'ProGamer2024', rating: 1180, sentAt: Date.now() },
+            ],
+            outgoing: saved?.friendRequests?.outgoing || [],
+        });
     },
 
     searchPlayers({ state: s }, query) {
