@@ -37,11 +37,12 @@
         <!-- Friends list -->
         <div v-if="searchQuery.length < 3 && friends.length > 0" class="friends-list">
           <div class="section-label">FRIENDS ({{ friends.length }})</div>
-          <PlayerSearchResult
-            v-for="friend in friends"
+          <FriendCard
+            v-for="friend in sortedFriends"
             :key="friend.id"
-            :player="friend"
-            :is-friend="true"
+            :friend="friend"
+            @challenge="onChallenge"
+            @watch="onWatch"
             @remove="onRemoveFriend"
           />
         </div>
@@ -60,18 +61,22 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import store from '@/core/state/store.js';
 import router from '@/router/index.js';
 import PlayerSearchResult from '@/components/pvp/PlayerSearchResult.vue';
+import FriendCard from '@/components/pvp/FriendCard.vue';
 
 const searchQuery = ref('');
 const searchResults = ref([]);
 
 const friends = computed(() => store.getters['friends/getFriends']);
 
-// Reactively search when query changes
-import { watch } from 'vue';
+const sortedFriends = computed(() => {
+  const order = { 'online': 0, 'in_fight': 1, 'offline': 2 };
+  return [...friends.value].sort((a, b) => (order[a.status] ?? 3) - (order[b.status] ?? 3));
+});
+
 watch(searchQuery, async (q) => {
   searchResults.value = await store.dispatch('friends/searchPlayers', q);
 });
@@ -80,8 +85,18 @@ const onAddPlayer = (player) => {
   store.dispatch('friends/sendFriendRequest', player);
 };
 
-const onRemoveFriend = (player) => {
-  store.dispatch('friends/removeFriend', player.id);
+const onRemoveFriend = (friend) => {
+  store.dispatch('friends/removeFriend', friend.id);
+};
+
+const onChallenge = (friend) => {
+  // TODO: implement PvP challenge
+  console.log('Challenge:', friend.username);
+};
+
+const onWatch = (friend) => {
+  // TODO: implement watch fight
+  console.log('Watch:', friend.username);
 };
 
 onMounted(() => {
