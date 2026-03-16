@@ -469,6 +469,10 @@ export default {
     online: 'Online',
     searchingForOpponent: 'Searching for opponent...',
     playersOnline: 'Players online',
+    searchRange: 'Search range',
+    cancel: 'CANCEL',
+    opponentFound: 'OPPONENT FOUND!',
+    fightStartsIn: 'Fight starts in',
   },
   xpAllocation: {
     freeXP: 'Available',
