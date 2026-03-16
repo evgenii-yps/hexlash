@@ -259,15 +259,24 @@ const actions = {
             commit('setTotalExpGained', typeof saved.totalExpGained === 'number' ? saved.totalExpGained : 0);
             commit('setSessionFights', saved.sessionFights || 0);
 
-            // Daily reset: if lastFightDate is not today, reset daily counter
+            // Daily reset: if lastFightDate is not today, reset daily stats and clear log
             const today = getTodayDate();
             if (state.lastFightDate && state.lastFightDate !== today) {
                 commit('setFightsToday', 0);
+                commit('setWins', 0);
+                commit('setLosses', 0);
+                commit('setDraws', 0);
+                commit('setTotalExpGained', 0);
                 commit('setLastFightDate', today);
+                commit('setFightLog', []);
                 saveState(state);
+                saveHistory([]);
+            } else {
+                commit('setFightLog', loadHistory());
             }
+        } else {
+            commit('setFightLog', loadHistory());
         }
-        commit('setFightLog', loadHistory());
     },
 
     /** Enable auto fight mode. */
@@ -318,11 +327,17 @@ const actions = {
         if (!state.enabled || state.stoppingAfterCurrent) return;
 
         try {
-            // Daily reset check
+            // Daily reset check — clear stats and fight log on new day
             const today = getTodayDate();
             if (state.lastFightDate && state.lastFightDate !== today) {
                 commit('setFightsToday', 0);
+                commit('setWins', 0);
+                commit('setLosses', 0);
+                commit('setDraws', 0);
+                commit('setTotalExpGained', 0);
                 commit('setLastFightDate', today);
+                commit('setFightLog', []);
+                saveHistory([]);
             }
 
             const now = Date.now();
