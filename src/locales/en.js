@@ -486,6 +486,17 @@ export default {
       champion: 'Champion',
     },
   },
+  spectate: {
+    title: 'SPECTATING',
+    spectators: 'watching',
+    round: 'Round',
+    fightLog: 'FIGHT LOG',
+    uses: 'uses',
+    damage: 'damage',
+    critical: 'CRIT',
+    wins: 'wins',
+    leave: 'Leave',
+  },
   xpAllocation: {
     freeXP: 'Available',
     allocateTo: 'INVEST IN',
