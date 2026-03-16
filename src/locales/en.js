@@ -250,6 +250,12 @@ export default {
       ghostAnalyst: 'Shadow strategist. Dodges and strikes when opponent is exposed.',
       default: 'Unique style. Adapts to the situation.',
     },
+    mode: 'MODE',
+    chooseMode: 'CHOOSE MODE',
+    pveDesc: 'Fight against bots',
+    pvpDesc: 'Fight real players',
+    autoDesc: 'Fights every 30-60 min',
+    autoFight: 'AUTO FIGHT',
   },
   club: {
     lblClubMembers: '{n} members',

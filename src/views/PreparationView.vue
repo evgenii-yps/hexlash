@@ -27,45 +27,27 @@
           </div>
         </div>
 
-        <!-- PvP Mode Cards -->
-        <div class="pvp-modes">
-          <!-- VS PLAYER Card -->
-          <div class="pvp-mode-card" @click="goToMatchmaking">
-            <div class="mode-icon">&#x2694;&#xFE0F;</div>
-            <div class="mode-title">{{ t.pvp.vsPlayer }}</div>
-            <div class="mode-description">{{ t.pvp.findOpponent }}</div>
-            <div class="mode-stats">
-              <div class="stat-row">
-                <span class="stat-dot online"></span>
-                <span>{{ t.pvp.online }}: {{ onlinePlayersCount }}</span>
-              </div>
-              <div class="stat-row">
-                <span class="stat-icon">&#x1F3C6;</span>
-                <span>{{ t.pvp.yourRating }}: {{ playerRating }} ({{ leagueName }})</span>
-              </div>
-            </div>
-          </div>
+        <!-- Mode Selector -->
+        <ModeSelector
+          :onlineCount="onlinePlayersCount"
+          @select="onModeSelect"
+        />
 
-          <!-- FRIENDS Card -->
-          <div class="pvp-mode-card" @click="goToFriends">
-            <div class="mode-icon">&#x1F465;</div>
-            <div class="mode-title">{{ t.friends.title }}</div>
-            <div class="mode-description">{{ t.pvp.fightFriends }}</div>
-            <div class="mode-stats">
-              <div class="stat-row">
-                <span class="stat-dot online"></span>
-                <span>{{ t.pvp.online }}: {{ onlineFriendsCount }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="auto-fight-section">
-          <AutoFightToggle/>
-        </div>
-
-        <div class="autofight-status-section">
+        <!-- Auto Fight Status (shown when auto mode active) -->
+        <div v-if="isAutoFightEnabled" class="autofight-status-section">
           <AutoFightStatus/>
+        </div>
+
+        <!-- Friends Button -->
+        <div class="friends-section">
+          <button class="friends-btn" @click="goToFriends">
+            <span class="friends-icon">&#x1F465;</span>
+            <span class="friends-label">{{ t.friends.title }}</span>
+          </button>
+          <div class="friends-online">
+            <span class="online-dot-small"></span>
+            {{ t.friends.online }}: {{ onlineFriendsCount }}
+          </div>
         </div>
 
         <div class="scroll-gap"/>
@@ -76,36 +58,46 @@
 </template>
 
 <script setup>
-import {computed, onMounted} from 'vue';
+import {ref, computed, onMounted} from 'vue';
 import store from "@/core/state/store.js";
 import router from "@/router/index.js";
 import {t} from "@/locales/index.js";
 import UserAvatar from "@/components/fragments/profile/UserAvatar.vue";
 import UserName from "@/components/fragments/profile/UserName.vue";
 import ModuleBuilder from "@/components/fragments/modules/ModuleBuilder.vue";
-import AutoFightToggle from "@/components/fragments/fight/AutoFightToggle.vue";
 import AutoFightStatus from "@/components/fragments/fight/AutoFightStatus.vue";
+import ModeSelector from "@/components/arena/ModeSelector.vue";
 
 const master = computed(() => store.getters['master/getMaster']);
 const isBuildValid = computed(() => store.getters['fight/isBuildValid']);
 const isAutoFightEnabled = computed(() => store.getters['autoFight/isEnabled']);
 
 // PvP data
-const playerRating = computed(() => store.getters['pvp/getPvpStats'].rating);
-const leagueName = computed(() => store.getters['pvp/league'].name);
 const onlineFriendsCount = computed(() => store.getters['friends/onlineFriendsCount']);
 const onlinePlayersCount = computed(() => Math.floor(Math.random() * 50) + 20);
 
+const selectedMode = ref('pve');
+
+const onModeSelect = (mode) => {
+  selectedMode.value = mode;
+};
+
 const startFight = async () => {
-  await store.dispatch('fight/startFight');
+  switch (selectedMode.value) {
+    case 'pvp':
+      await router.push('/matchmaking');
+      break;
+    case 'auto':
+      await store.dispatch('autoFight/toggle');
+      break;
+    default:
+      await store.dispatch('fight/startFight');
+      break;
+  }
 };
 
 const goToFriends = async () => {
   await router.push('/friends');
-};
-
-const goToMatchmaking = async () => {
-  await router.push('/matchmaking');
 };
 
 onMounted(() => {
@@ -230,98 +222,63 @@ const handleScroll = (event) => {
   to { transform: rotate(360deg); }
 }
 
-/* ── PvP Mode Cards ─────────────────────────────────────────── */
-.pvp-modes {
-  display: flex;
-  gap: 16px;
-  justify-content: center;
-  margin-top: 24px;
-  padding: 0 4px;
-}
-
-.pvp-mode-card {
-  flex: 1;
-  max-width: 280px;
-  background: rgba(20, 20, 30, 0.85);
-  border: 1px solid rgba(255, 6, 111, 0.3);
-  border-radius: 16px;
-  padding: 20px 16px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.pvp-mode-card:active {
-  border-color: #FF066F;
-  background: rgba(255, 6, 111, 0.1);
-  box-shadow: 0 0 30px rgba(255, 6, 111, 0.3);
-  transform: translateY(-2px);
-}
-
-.mode-icon {
-  font-size: 32px;
-  margin-bottom: 8px;
-}
-
-.mode-title {
-  font-family: Anonymous, sans-serif;
-  font-size: 18px;
-  color: #fff;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  margin-bottom: 6px;
-  font-weight: bold;
-}
-
-.mode-description {
-  font-size: 12px;
-  color: var(--gray2);
-  margin-bottom: 16px;
-  line-height: 1.3;
-}
-
-.mode-stats {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.stat-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 11px;
-  color: var(--gray3);
-}
-
-.stat-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.stat-dot.online {
-  background: #00FF88;
-  box-shadow: 0 0 8px rgba(0, 255, 136, 0.6);
-}
-
-.stat-icon {
-  font-size: 14px;
-}
-
-/* ── Auto Fight Section ────────────────────────────────────── */
-.auto-fight-section {
-  display: flex;
-  justify-content: center;
-  margin-top: 20px;
-}
-
+/* ── Auto Fight Status ────────────────────────────────────── */
 .autofight-status-section {
   margin-top: 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
   width: 100%;
+}
+
+/* ── Friends Section ─────────────────────────────────────── */
+.friends-section {
+  text-align: center;
+  margin-top: 24px;
+}
+
+.friends-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 32px;
+  background: rgba(20, 20, 30, 0.85);
+  border: 1px solid rgba(255, 6, 111, 0.4);
+  border-radius: 12px;
+  color: #fff;
+  font-family: Anonymous, sans-serif;
+  font-size: 16px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.friends-btn:active {
+  border-color: #FF066F;
+  box-shadow: 0 0 20px rgba(255, 6, 111, 0.3);
+}
+
+.friends-icon {
+  font-size: 20px;
+}
+
+.friends-online {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: #888;
+}
+
+.online-dot-small {
+  width: 6px;
+  height: 6px;
+  background: #00FF88;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(0, 255, 136, 0.8);
 }
 
 .scroll-gap {
