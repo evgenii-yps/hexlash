@@ -3,13 +3,24 @@
 
     <!-- Section Header -->
     <div class="section-header">
-      <span class="header-icon">&#x2694;&#xFE0F;</span>
+      <svg class="header-icon" viewBox="0 0 24 24" width="20" height="20">
+        <path d="M6 4l4 4-6 6 2 2 6-6 4 4V4H6z" fill="currentColor"/>
+        <path d="M18 20l-4-4 6-6-2-2-6 6-4-4v10h10z" fill="currentColor"/>
+      </svg>
       {{ sectionTitle }}
     </div>
 
     <!-- League Display -->
     <div class="league-display">
-      <div class="league-icon">{{ league.icon }}</div>
+      <div class="league-icon-wrapper">
+        <svg class="league-svg" viewBox="0 0 24 24" width="56" height="56">
+          <path d="M7 2l3 6H4l3-6z" :fill="league.color"/>
+          <path d="M17 2l-3 6h6l-3-6z" :fill="league.color"/>
+          <circle cx="12" cy="15" r="7" :fill="league.color" opacity="0.2"/>
+          <circle cx="12" cy="15" r="7" :stroke="league.color" stroke-width="2" fill="none"/>
+          <path d="M12 10l1.5 3 3.5.5-2.5 2.5.5 3.5-3-1.5-3 1.5.5-3.5-2.5-2.5 3.5-.5z" :fill="league.color"/>
+        </svg>
+      </div>
       <div class="league-name" :style="{ color: league.color }">{{ league.name }}</div>
       <div class="rating-value">{{ rating }}</div>
     </div>
@@ -74,12 +85,12 @@ const totalFights = computed(() => wins.value + losses.value + (pvpStats.value.d
 
 // Leagues data for progress calculation
 const leagues = [
-  { name: 'Bronze', min: 0, max: 999, icon: '\u{1F949}', color: '#CD7F32' },
-  { name: 'Silver', min: 1000, max: 1499, icon: '\u{1F948}', color: '#C0C0C0' },
-  { name: 'Gold', min: 1500, max: 1999, icon: '\u{1F947}', color: '#FFD700' },
-  { name: 'Platinum', min: 2000, max: 2499, icon: '\u{1F48E}', color: '#00CED1' },
-  { name: 'Diamond', min: 2500, max: 2999, icon: '\u{1F4A0}', color: '#00BFFF' },
-  { name: 'Champion', min: 3000, max: Infinity, icon: '\u{1F451}', color: '#FFD700' },
+  { name: 'Bronze', min: 0, max: 999, color: '#CD7F32' },
+  { name: 'Silver', min: 1000, max: 1499, color: '#C0C0C0' },
+  { name: 'Gold', min: 1500, max: 1999, color: '#FFD700' },
+  { name: 'Platinum', min: 2000, max: 2499, color: '#00CED1' },
+  { name: 'Diamond', min: 2500, max: 2999, color: '#00BFFF' },
+  { name: 'Champion', min: 3000, max: Infinity, color: '#FFD700' },
 ];
 
 const currentLeagueIndex = computed(() => {
@@ -109,11 +120,13 @@ const progressPercent = computed(() => {
 
 <style scoped>
 .pvp-stats-card {
-  background: rgba(20, 20, 30, 0.8);
-  border: 1px solid rgba(255, 6, 111, 0.3);
+  background: transparent;
+  border: 1px solid rgba(255, 6, 111, 0.5);
   border-radius: 16px;
   padding: 20px 16px;
   margin: 16px 15px;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
 }
 
 .section-header {
@@ -131,7 +144,8 @@ const progressPercent = computed(() => {
 }
 
 .header-icon {
-  font-size: 20px;
+  color: #FF066F;
+  flex-shrink: 0;
 }
 
 /* ── League Display ───────────────────────────────────────────── */
@@ -140,9 +154,13 @@ const progressPercent = computed(() => {
   margin-bottom: 20px;
 }
 
-.league-icon {
-  font-size: 48px;
+.league-icon-wrapper {
+  display: inline-block;
   margin-bottom: 6px;
+}
+
+.league-svg {
+  filter: drop-shadow(0 0 8px currentColor);
 }
 
 .league-name {
@@ -152,6 +170,7 @@ const progressPercent = computed(() => {
   letter-spacing: 3px;
   margin-bottom: 4px;
   font-weight: bold;
+  text-shadow: 0 0 15px currentColor;
 }
 
 .rating-value {
@@ -197,8 +216,8 @@ const progressPercent = computed(() => {
 
 .stat-box {
   flex: 1;
-  background: rgba(30, 30, 40, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 12px;
   padding: 14px 8px;
   text-align: center;
