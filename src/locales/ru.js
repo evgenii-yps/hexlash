@@ -469,6 +469,10 @@ export default {
     online: 'Онлайн',
     searchingForOpponent: 'Поиск соперника...',
     playersOnline: 'Игроков онлайн',
+    searchRange: 'Диапазон поиска',
+    cancel: 'ОТМЕНА',
+    opponentFound: 'СОПЕРНИК НАЙДЕН!',
+    fightStartsIn: 'Бой начнётся через',
   },
   xpAllocation: {
     freeXP: 'Свободно',
