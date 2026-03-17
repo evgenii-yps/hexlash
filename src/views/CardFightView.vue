@@ -643,6 +643,9 @@ const handleBeforeUnload = (e) => {
 const xpEarned = computed(() => store.getters['fight/getXpEarned']);
 
 watch(fightPhase, (val, oldVal) => {
+  // In PvP mode, server drives the fight — don't start local fight timer
+  if (isPvP.value && pvpMatchId.value) return;
+
   // Resume timer after coach advice
   if (val === 'fighting' && oldVal === 'coach') {
     startFightTimer();
@@ -786,12 +789,37 @@ function initPvPFight() {
   pvpStatus.value = 'waiting';
   showCountdown.value = false;
 
+  // Initialize fight store for PvP display
+  store.commit('fight/setLiveHP1', MAX_HP);
+  store.commit('fight/setLiveHP2', MAX_HP);
+  store.commit('fight/setRoundNum', 0);
+  store.commit('fight/clearRoundLog');
+  store.commit('fight/resetPlayerModifiers');
+  store.commit('fight/clearDice');
+  store.commit('fight/clearEventTitle');
+  store.commit('fight/resetCoachAdvice');
+  store.commit('fight/resetStats');
+  store.commit('fight/setXpEarned', null);
+  store.commit('fight/setXpAwarded', false);
+
+  // Set opponent from pvpState for display
+  const pvpOpp = store.getters['pvp/getOpponentInfo'];
+  if (pvpOpp) {
+    store.commit('fight/setOpponent', {
+      name: pvpOpp.username || 'Opponent',
+      skin: pvpOpp.skin || null,
+      avatarUrl: pvpOpp.avatarUrl || null,
+      modules: [],
+    });
+  }
+
   // Send ready + deck to server
-  const deck = store.getters['progression/getCurrentDeck'] || [];
+  const deck = store.getters['progression/getDeck'] || [];
+  console.log('[PVP] Sending pvp_ready, matchId:', pvpMatchId.value, 'deck:', deck);
   store.dispatch('webSocket/sendMessage', {
     type: 'pvp_ready',
     matchId: pvpMatchId.value,
-    deck,
+    deck: deck.map(id => ({ id, level: store.state.progression.moves[id]?.level || 1 })),
   });
 
   // Listen for PvP events
@@ -816,20 +844,35 @@ function cleanupPvP() {
 }
 
 function getMyOdId() {
-  return store.getters['user/getUser']?.id || store.getters['master/getMaster']?.userData?.id;
+  return store.getters['master/getMaster']?.userData?.id;
 }
 
 function onPvPFightStart(e) {
   const data = e.detail;
+  console.log('[PVP] fight_start received:', data);
   pvpStatus.value = 'countdown';
 
   const myId = getMyOdId();
-  const isP1 = data.player1.odId === myId;
+  console.log('[PVP] myId:', myId, 'p1:', data.player1?.odId, 'p2:', data.player2?.odId);
+  const isP1 = data.player1?.odId === myId;
+  const oppData = isP1 ? data.player2 : data.player1;
+
   store.commit('pvp/SET_PVP_MATCH', {
     matchId: data.matchId,
-    opponent: isP1 ? data.player2 : data.player1,
+    opponent: oppData,
     isPlayer1: isP1,
   });
+
+  // Set opponent in fight store for display
+  store.commit('fight/setOpponent', {
+    name: oppData?.username || 'Opponent',
+    skin: oppData?.skin || null,
+    avatarUrl: oppData?.avatarUrl || null,
+    modules: [],
+  });
+
+  // Set fight phase to fighting (needed for UI: round dots, dice, modifiers etc.)
+  store.commit('fight/setFightPhase', 'fighting');
 
   // Reuse existing countdown animation
   showCountdown.value = true;
@@ -852,6 +895,7 @@ function onPvPFightStart(e) {
 
 function onPvPRoundResult(e) {
   const data = e.detail;
+  console.log('[PVP] round_result:', data.round, data);
   const isP1 = store.getters['pvp/getIsPlayer1'];
 
   // Update HP via store
@@ -863,6 +907,21 @@ function onPvPRoundResult(e) {
   store.commit('fight/setLiveHP1', myHp);
   store.commit('fight/setLiveHP2', oppHp);
   store.commit('fight/setRoundNum', data.round);
+
+  // Add to round log and stats for fight report
+  store.commit('fight/addRoundToLog', {
+    round: data.round,
+    damage1: oppDmg,
+    damage2: myDmg,
+    hp1After: myHp,
+    hp2After: oppHp,
+    action1: data.firstAttacker === (isP1 ? 'player1' : 'player2') ? 'attack' : 'defense',
+    action2: data.firstAttacker === (isP1 ? 'player1' : 'player2') ? 'defense' : 'attack',
+  });
+  store.commit('fight/addStats', {
+    totalDamageDealt: myDmg,
+    totalDamageTaken: oppDmg,
+  });
 
   // Trigger shake animations
   if (oppDmg > 0) {
@@ -878,6 +937,7 @@ function onPvPRoundResult(e) {
 
 function onPvPDicePause(e) {
   const data = e.detail;
+  console.log('[PVP] dice_pause:', data);
   pvpStatus.value = 'paused_dice';
   showWaiting.value = false;
 
@@ -948,6 +1008,7 @@ function onPvPCoachResult() {
 
 function onPvPFightEnd(e) {
   const data = e.detail;
+  console.log('[PVP] fight_end:', data);
   pvpStatus.value = 'finished';
   clearPvPTimer();
   showWaiting.value = false;
@@ -970,6 +1031,16 @@ function onPvPFightEnd(e) {
     showPvPResult.value = true;
     pvpResultType.value = 'lose';
   }
+
+  // Set final HPs from server data
+  const isP1 = store.getters['pvp/getIsPlayer1'];
+  if (data.player1 && data.player2) {
+    store.commit('fight/setLiveHP1', isP1 ? data.player1.finalHp : data.player2.finalHp);
+    store.commit('fight/setLiveHP2', isP1 ? data.player2.finalHp : data.player1.finalHp);
+  }
+
+  // Transition fight store to results so the fight report can display
+  store.commit('fight/setFightPhase', 'results');
 
   // Update pvp stats
   store.dispatch('pvp/finishPvPFight', pvpResultType.value);
