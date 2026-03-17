@@ -605,6 +605,5 @@ export default {
     youWin: '승리',
     youLose: '패배',
     draw: '무승부',
-    backToArena: '아레나로 돌아가기',
   },
 }

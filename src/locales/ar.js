@@ -605,6 +605,5 @@ export default {
     youWin: 'فوز',
     youLose: 'هزيمة',
     draw: 'تعادل',
-    backToArena: 'العودة إلى الحلبة',
   },
 }

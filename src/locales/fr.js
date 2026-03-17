@@ -605,6 +605,5 @@ export default {
     youWin: 'VICTOIRE',
     youLose: 'DÉFAITE',
     draw: 'MATCH NUL',
-    backToArena: "RETOUR À L'ARÈNE",
   },
 }

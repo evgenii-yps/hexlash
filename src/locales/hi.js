@@ -605,6 +605,5 @@ export default {
     youWin: 'जीत',
     youLose: 'हार',
     draw: 'ड्रॉ',
-    backToArena: 'अखाड़े पर वापस',
   },
 }

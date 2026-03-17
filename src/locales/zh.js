@@ -605,6 +605,5 @@ export default {
     youWin: '胜利',
     youLose: '失败',
     draw: '平局',
-    backToArena: '返回竞技场',
   },
 }
