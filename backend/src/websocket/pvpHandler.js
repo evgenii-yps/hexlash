@@ -50,10 +50,10 @@ function handlePvPMessage(ws, message, user) {
       break;
     }
 
-    case 'dice_choice': {
+    case 'dice_roll': {
       const match = pvpMatchManager.getMatchByPlayer(user.odId);
       if (match) {
-        match.onDiceChoice(user.odId, data.choice); // { roll: true/false }
+        match.onDiceRoll(user.odId);
       }
       break;
     }
