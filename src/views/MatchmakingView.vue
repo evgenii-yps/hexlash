@@ -219,6 +219,13 @@ function startFight(matchId) {
   // Create ranked PvP fight
   store.dispatch('pvp/createPvPFight', { opponent: foundOpponent.value, isRanked: true });
 
+  // Pre-set PvP match data in store
+  store.commit('pvp/SET_PVP_MATCH', {
+    matchId,
+    opponent: foundOpponent.value,
+    isPlayer1: false, // server will confirm in fight_start
+  });
+
   // Navigate to fight
   router.push({ path: '/fight', query: { mode: 'pvp', matchId } });
 }
