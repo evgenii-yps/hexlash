@@ -19,7 +19,7 @@
 
         <!-- Auto fight banner -->
         <div v-if="isAutoFightEnabled && !isPvP" class="autofight-banner">
-          <span class="autofight-banner-icon">&#x1F504;</span>
+          <span class="autofight-banner-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FF066F" stroke-width="2" stroke-linecap="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10"/><path d="M20.49 15a9 9 0 01-14.85 3.36L1 14"/></svg></span>
           <span class="autofight-banner-text">{{ t.autoFight.lblAutoFightInProgress }}</span>
         </div>
 
@@ -149,6 +149,59 @@
         </div>
       </div>
 
+      <!-- PvP: Dice choice modal -->
+      <div v-if="isPvP && showDiceChoice" class="pvp-modal-overlay">
+        <div class="pvp-modal">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#FF066F" stroke-width="1.5" stroke-linecap="round">
+            <rect x="3" y="3" width="18" height="18" rx="3"/>
+            <circle cx="8" cy="8" r="1.2" fill="#FF066F"/>
+            <circle cx="16" cy="8" r="1.2" fill="#FF066F"/>
+            <circle cx="12" cy="12" r="1.2" fill="#FF066F"/>
+            <circle cx="8" cy="16" r="1.2" fill="#FF066F"/>
+            <circle cx="16" cy="16" r="1.2" fill="#FF066F"/>
+          </svg>
+          <div class="pvp-modal-title">{{ t.pvp.diceAvailable }}</div>
+          <div class="pvp-timer">{{ diceTimer }}s</div>
+          <div class="pvp-modal-buttons">
+            <button class="btn-roll" @click="onPlayerDiceChoice(true)">{{ t.pvp.rollDice }}</button>
+            <button class="btn-skip" @click="onPlayerDiceChoice(false)">{{ t.pvp.skip }}</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PvP: Coach choice modal -->
+      <div v-if="isPvP && showCoachChoice" class="pvp-modal-overlay">
+        <div class="pvp-modal">
+          <img :src="iconTrainer" class="coach-avatar" alt="" style="width: 48px; height: 48px;"/>
+          <div class="pvp-modal-title">{{ t.pvp.coachAdvice }}</div>
+          <p v-if="pvpCoachAdvice" class="pvp-coach-text">{{ pvpCoachAdvice }}</p>
+          <div class="pvp-timer">{{ coachTimerPvP }}s</div>
+          <div class="pvp-modal-buttons">
+            <button class="btn-roll" @click="onPlayerCoachChoice(true)">{{ t.pvp.accept }}</button>
+            <button class="btn-skip" @click="onPlayerCoachChoice(false)">{{ t.pvp.decline }}</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PvP: Waiting overlay -->
+      <div v-if="isPvP && showWaiting" class="pvp-waiting-overlay">
+        <div class="pvp-waiting-spinner"></div>
+        <div class="pvp-waiting-text">{{ waitingText }}</div>
+      </div>
+
+      <!-- PvP: Result overlay -->
+      <div v-if="isPvP && showPvPResult" class="pvp-result-overlay">
+        <div class="pvp-result-text" :class="'result-' + pvpResultType">
+          <template v-if="pvpResultType === 'win'">{{ t.pvp.youWin }}</template>
+          <template v-else-if="pvpResultType === 'lose'">{{ t.pvp.youLose }}</template>
+          <template v-else>{{ t.pvp.draw }}</template>
+        </div>
+        <div v-if="pvpResultReason === 'disconnect'" class="pvp-disconnect-note">
+          {{ t.pvp.opponentDisconnected }}
+        </div>
+        <button class="btn-back" @click="router.push('/arena')">{{ t.pvp.backToArena }}</button>
+      </div>
+
       <!-- Results overlay (full-screen centered) -->
       <div v-if="fightPhase === 'results'" class="results-overlay" @scroll="handleScroll">
           <div class="result-label" :class="resultClass">{{ resultText }}</div>
@@ -255,7 +308,23 @@ import { getLanguage } from '@/locales/index.js';
 // ── PvP mode detection ─────────────────────────────────────────────────────
 const fightRoute = useRoute();
 const isPvP = computed(() => fightRoute.query.mode === 'pvp');
+const pvpMatchId = computed(() => fightRoute.query.matchId);
 const pvpFight = computed(() => store.getters['pvp/getCurrentPvPFight']);
+
+// ── PvP state ──────────────────────────────────────────────────────────────
+const pvpStatus = ref('waiting');        // waiting, countdown, fighting, paused_dice, paused_coach, finished
+const showDiceChoice = ref(false);
+const diceAvailable = ref(false);
+const diceTimer = ref(10);
+const showCoachChoice = ref(false);
+const pvpCoachAdvice = ref(null);
+const coachTimerPvP = ref(10);
+const showWaiting = ref(false);
+const waitingText = ref('');
+const showPvPResult = ref(false);
+const pvpResultType = ref('');           // win, lose, draw
+const pvpResultReason = ref('');         // disconnect, normal
+let pvpTimerInterval = null;
 
 // ── Countdown ──────────────────────────────────────────────────────────────
 const showCountdown  = ref(true);
@@ -508,32 +577,38 @@ const stopFightTimer = () => {
 onMounted(async () => {
   triggerLoadingOverlay();
 
-  // PvP fight: use opponent from pvpState
-  if (isPvP.value && pvpFight.value) {
-    console.log('Starting PvP fight against', pvpFight.value.opponent.username);
-    // Use pvp opponent fighter data for the fight
+  if (isPvP.value && pvpMatchId.value) {
+    // PvP mode — server-driven fight
+    initPvPFight();
+  } else if (isPvP.value && pvpFight.value) {
+    // Legacy PvP path
     await store.dispatch('fight/initFromStorage', { pvpOpponent: pvpFight.value.opponent.fighter });
-  } else {
-    // Restore fight from localStorage (handles page reload / tab switch)
-    await store.dispatch('fight/initFromStorage');
-  }
-
-  if (fightPhase.value === 'fighting') {
-    if (roundNum.value === 0) {
-      startCountdown();
-    } else {
-      // Restored in-progress fight — skip countdown, resume timer
+    if (fightPhase.value === 'fighting') {
+      if (roundNum.value === 0) startCountdown();
+      else { showCountdown.value = false; startFightTimer(); }
+    } else if (fightPhase.value === 'results') {
       showCountdown.value = false;
-      startFightTimer();
+    } else {
+      await router.push('/arena');
     }
-  } else if (fightPhase.value === 'coach') {
-    showCountdown.value = false;
-    // Timer is paused; coach overlay will show
-  } else if (fightPhase.value === 'results') {
-    showCountdown.value = false;
   } else {
-    // No active fight — go to preparation
-    await router.push('/arena');
+    // PvE mode — existing logic untouched
+    await store.dispatch('fight/initFromStorage');
+
+    if (fightPhase.value === 'fighting') {
+      if (roundNum.value === 0) {
+        startCountdown();
+      } else {
+        showCountdown.value = false;
+        startFightTimer();
+      }
+    } else if (fightPhase.value === 'coach') {
+      showCountdown.value = false;
+    } else if (fightPhase.value === 'results') {
+      showCountdown.value = false;
+    } else {
+      await router.push('/arena');
+    }
   }
 
   document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -545,6 +620,7 @@ onUnmounted(() => {
   stopCoachTimer();
   clearInterval(countdownTimer);
   clearTimeout(autoFightContinueTimer);
+  if (isPvP.value) cleanupPvP();
   document.removeEventListener('visibilitychange', handleVisibilityChange);
   window.removeEventListener('beforeunload', handleBeforeUnload);
 });
@@ -704,6 +780,226 @@ const emit = defineEmits(['scroll']);
 const handleScroll = (event) => {
   emit('scroll', event.target.scrollTop);
 };
+
+// ── PvP functions ────────────────────────────────────────────────────────
+function initPvPFight() {
+  pvpStatus.value = 'waiting';
+  showCountdown.value = false;
+
+  // Send ready + deck to server
+  const deck = store.getters['progression/getCurrentDeck'] || [];
+  store.dispatch('webSocket/sendMessage', {
+    type: 'pvp_ready',
+    matchId: pvpMatchId.value,
+    deck,
+  });
+
+  // Listen for PvP events
+  window.addEventListener('pvp-fight_start', onPvPFightStart);
+  window.addEventListener('pvp-round_result', onPvPRoundResult);
+  window.addEventListener('pvp-dice_pause', onPvPDicePause);
+  window.addEventListener('pvp-dice_result', onPvPDiceResult);
+  window.addEventListener('pvp-coach_pause', onPvPCoachPause);
+  window.addEventListener('pvp-coach_result', onPvPCoachResult);
+  window.addEventListener('pvp-fight_end', onPvPFightEnd);
+}
+
+function cleanupPvP() {
+  clearPvPTimer();
+  window.removeEventListener('pvp-fight_start', onPvPFightStart);
+  window.removeEventListener('pvp-round_result', onPvPRoundResult);
+  window.removeEventListener('pvp-dice_pause', onPvPDicePause);
+  window.removeEventListener('pvp-dice_result', onPvPDiceResult);
+  window.removeEventListener('pvp-coach_pause', onPvPCoachPause);
+  window.removeEventListener('pvp-coach_result', onPvPCoachResult);
+  window.removeEventListener('pvp-fight_end', onPvPFightEnd);
+}
+
+function getMyOdId() {
+  return store.getters['user/getUser']?.id || store.getters['master/getMaster']?.userData?.id;
+}
+
+function onPvPFightStart(e) {
+  const data = e.detail;
+  pvpStatus.value = 'countdown';
+
+  const myId = getMyOdId();
+  const isP1 = data.player1.odId === myId;
+  store.commit('pvp/SET_PVP_MATCH', {
+    matchId: data.matchId,
+    opponent: isP1 ? data.player2 : data.player1,
+    isPlayer1: isP1,
+  });
+
+  // Reuse existing countdown animation
+  showCountdown.value = true;
+  countdownValue.value = 3;
+  clearInterval(countdownTimer);
+  countdownTimer = setInterval(() => {
+    if (countdownValue.value > 1) {
+      countdownValue.value -= 1;
+    } else {
+      countdownValue.value = t.value.fight.lblFight;
+      clearInterval(countdownTimer);
+      setTimeout(() => {
+        countdownValue.value = 0;
+        showCountdown.value = false;
+        pvpStatus.value = 'fighting';
+      }, 600);
+    }
+  }, 800);
+}
+
+function onPvPRoundResult(e) {
+  const data = e.detail;
+  const isP1 = store.getters['pvp/getIsPlayer1'];
+
+  // Update HP via store
+  const myHp = isP1 ? data.player1.hp : data.player2.hp;
+  const oppHp = isP1 ? data.player2.hp : data.player1.hp;
+  const myDmg = isP1 ? data.player1.damage : data.player2.damage;
+  const oppDmg = isP1 ? data.player2.damage : data.player1.damage;
+
+  store.commit('fight/setLiveHP1', myHp);
+  store.commit('fight/setLiveHP2', oppHp);
+  store.commit('fight/setRoundNum', data.round);
+
+  // Trigger shake animations
+  if (oppDmg > 0) {
+    shakeLeft.value = true;
+    triggerFlash('damage');
+    setTimeout(() => { shakeLeft.value = false; }, 400);
+  }
+  if (myDmg > 0) {
+    shakeRight.value = true;
+    setTimeout(() => { shakeRight.value = false; }, 400);
+  }
+}
+
+function onPvPDicePause(e) {
+  const data = e.detail;
+  pvpStatus.value = 'paused_dice';
+  showWaiting.value = false;
+
+  if (data.available) {
+    showDiceChoice.value = true;
+    diceAvailable.value = true;
+    diceTimer.value = 10;
+    startPvPTimer('dice');
+  } else {
+    showWaiting.value = true;
+    waitingText.value = t.value.pvp.waitingForOpponent;
+    diceTimer.value = 10;
+    startPvPTimer('dice');
+  }
+}
+
+function onPlayerDiceChoice(roll) {
+  store.dispatch('webSocket/sendMessage', {
+    type: 'dice_choice',
+    choice: { roll },
+  });
+  showDiceChoice.value = false;
+  showWaiting.value = true;
+  waitingText.value = t.value.pvp.waitingForOpponent;
+}
+
+function onPvPDiceResult(e) {
+  const data = e.detail;
+  pvpStatus.value = 'fighting';
+  showWaiting.value = false;
+  showDiceChoice.value = false;
+  clearPvPTimer();
+
+  // Show dice flash effects
+  const isP1 = store.getters['pvp/getIsPlayer1'];
+  const myResult = isP1 ? data.player1 : data.player2;
+  if (myResult.rolled && myResult.effect) {
+    triggerFlash(myResult.effect.type);
+  }
+}
+
+function onPvPCoachPause(e) {
+  const data = e.detail;
+  pvpStatus.value = 'paused_coach';
+  showWaiting.value = false;
+  showCoachChoice.value = true;
+  pvpCoachAdvice.value = data.advice;
+  coachTimerPvP.value = 10;
+  startPvPTimer('coach');
+}
+
+function onPlayerCoachChoice(accept) {
+  store.dispatch('webSocket/sendMessage', {
+    type: 'coach_choice',
+    choice: { accept },
+  });
+  showCoachChoice.value = false;
+  showWaiting.value = true;
+  waitingText.value = t.value.pvp.waitingForOpponent;
+}
+
+function onPvPCoachResult() {
+  pvpStatus.value = 'fighting';
+  showWaiting.value = false;
+  showCoachChoice.value = false;
+  clearPvPTimer();
+}
+
+function onPvPFightEnd(e) {
+  const data = e.detail;
+  pvpStatus.value = 'finished';
+  clearPvPTimer();
+  showWaiting.value = false;
+  showDiceChoice.value = false;
+  showCoachChoice.value = false;
+
+  const myId = getMyOdId();
+
+  if (data.reason === 'opponent_disconnected') {
+    showPvPResult.value = true;
+    pvpResultType.value = 'win';
+    pvpResultReason.value = 'disconnect';
+  } else if (data.winner === 'draw') {
+    showPvPResult.value = true;
+    pvpResultType.value = 'draw';
+  } else if (data.winner === myId) {
+    showPvPResult.value = true;
+    pvpResultType.value = 'win';
+  } else {
+    showPvPResult.value = true;
+    pvpResultType.value = 'lose';
+  }
+
+  // Update pvp stats
+  store.dispatch('pvp/finishPvPFight', pvpResultType.value);
+}
+
+function startPvPTimer(type) {
+  clearPvPTimer();
+  pvpTimerInterval = setInterval(() => {
+    if (type === 'dice') {
+      diceTimer.value--;
+      if (diceTimer.value <= 0) {
+        clearPvPTimer();
+        if (showDiceChoice.value) onPlayerDiceChoice(false);
+      }
+    } else if (type === 'coach') {
+      coachTimerPvP.value--;
+      if (coachTimerPvP.value <= 0) {
+        clearPvPTimer();
+        if (showCoachChoice.value) onPlayerCoachChoice(false);
+      }
+    }
+  }, 1000);
+}
+
+function clearPvPTimer() {
+  if (pvpTimerInterval) {
+    clearInterval(pvpTimerInterval);
+    pvpTimerInterval = null;
+  }
+}
 
 // ── Flash style ──────────────────────────────────────────────────────────
 const flashStyle = computed(() => ({
@@ -1615,5 +1911,183 @@ const flashStyle = computed(() => ({
   color: var(--primary-color);
   letter-spacing: 1px;
   text-transform: uppercase;
+}
+
+/* ── PvP Modals & Overlays ──────────────────────────────────────── */
+.pvp-modal-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 150;
+}
+
+.pvp-modal {
+  background: linear-gradient(135deg, rgba(20, 20, 20, 0.95) 0%, rgba(9, 9, 9, 0.98) 100%);
+  border: 1px solid rgba(255, 6, 111, 0.4);
+  border-radius: 16px;
+  padding: 32px 28px;
+  text-align: center;
+  max-width: 320px;
+  width: 90%;
+}
+
+.pvp-modal-title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #fff;
+  margin: 12px 0 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.pvp-timer {
+  font-size: 2rem;
+  font-weight: 900;
+  color: var(--primary-color);
+  font-family: AnonymousBalance, monospace;
+  margin: 8px 0 16px;
+  text-shadow: 0 0 15px rgba(255, 6, 111, 0.5);
+}
+
+.pvp-modal-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.btn-roll {
+  padding: 10px 24px;
+  background: linear-gradient(135deg, var(--primary-color) 0%, #a50344 100%);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-weight: bold;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: box-shadow 0.2s;
+}
+
+.btn-roll:hover {
+  box-shadow: 0 0 20px rgba(255, 6, 111, 0.6);
+}
+
+.btn-skip {
+  padding: 10px 24px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: bold;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: border-color 0.2s;
+}
+
+.btn-skip:hover {
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+.pvp-coach-text {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.85rem;
+  margin: 4px 0 8px;
+  line-height: 1.4;
+}
+
+.pvp-waiting-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 140;
+  gap: 16px;
+}
+
+.pvp-waiting-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 6, 111, 0.3);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.pvp-waiting-text {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.pvp-result-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 160;
+  gap: 16px;
+}
+
+.pvp-result-text {
+  font-size: 3rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  font-family: Anonymous, sans-serif;
+}
+
+.pvp-result-text.result-win {
+  color: #4caf50;
+  text-shadow: 0 0 30px rgba(76, 175, 80, 0.5);
+}
+
+.pvp-result-text.result-lose {
+  color: #f44336;
+  text-shadow: 0 0 30px rgba(244, 67, 54, 0.5);
+}
+
+.pvp-result-text.result-draw {
+  color: #ff9800;
+  text-shadow: 0 0 30px rgba(255, 152, 0, 0.5);
+}
+
+.pvp-disconnect-note {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.85rem;
+}
+
+.btn-back {
+  margin-top: 16px;
+  padding: 12px 32px;
+  background: linear-gradient(135deg, var(--primary-color) 0%, #a50344 100%);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: box-shadow 0.2s;
+}
+
+.btn-back:hover {
+  box-shadow: 0 0 20px rgba(255, 6, 111, 0.6);
 }
 </style>

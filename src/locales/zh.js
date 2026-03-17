@@ -556,4 +556,18 @@ export default {
     error: '电子邮件验证失败。',
     loading: '正在验证您的电子邮件...',
   },
+  pvp: {
+    diceAvailable: '骰子可用！',
+    rollDice: '投掷',
+    skip: '跳过',
+    coachAdvice: '教练建议',
+    accept: '接受',
+    decline: '拒绝',
+    waitingForOpponent: '等待对手...',
+    opponentDisconnected: '对手已断开连接',
+    youWin: '胜利',
+    youLose: '失败',
+    draw: '平局',
+    backToArena: '返回竞技场',
+  },
 }

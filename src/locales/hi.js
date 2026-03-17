@@ -556,4 +556,18 @@ export default {
     error: 'ईमेल सत्यापन विफल।',
     loading: 'आपका ईमेल सत्यापित हो रहा है...',
   },
+  pvp: {
+    diceAvailable: 'पासा उपलब्ध!',
+    rollDice: 'फेंकें',
+    skip: 'छोड़ें',
+    coachAdvice: 'कोच की सलाह',
+    accept: 'स्वीकार',
+    decline: 'अस्वीकार',
+    waitingForOpponent: 'प्रतिद्वंद्वी की प्रतीक्षा...',
+    opponentDisconnected: 'प्रतिद्वंद्वी डिस्कनेक्ट हो गया',
+    youWin: 'जीत',
+    youLose: 'हार',
+    draw: 'ड्रॉ',
+    backToArena: 'अखाड़े पर वापस',
+  },
 }

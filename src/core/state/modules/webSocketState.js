@@ -161,6 +161,15 @@ const actions = {
             case 'MatchmakingCancelledMsg':
                 window.dispatchEvent(new CustomEvent('matchmaking-cancelled', { detail: message }));
                 break;
+            case 'fight_start':
+            case 'round_result':
+            case 'dice_pause':
+            case 'dice_result':
+            case 'coach_pause':
+            case 'coach_result':
+            case 'fight_end':
+                window.dispatchEvent(new CustomEvent('pvp-' + messageType, { detail: message }));
+                break;
             default:
                 console.warn(`Unknown message type received: ${messageType}`);
                 break;

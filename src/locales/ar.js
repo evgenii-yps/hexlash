@@ -556,4 +556,18 @@ export default {
     error: 'فشل التحقق من البريد الإلكتروني.',
     loading: 'جارٍ التحقق من بريدك الإلكتروني...',
   },
+  pvp: {
+    diceAvailable: 'النرد متاح!',
+    rollDice: 'رمي',
+    skip: 'تخطي',
+    coachAdvice: 'نصيحة المدرب',
+    accept: 'قبول',
+    decline: 'رفض',
+    waitingForOpponent: 'في انتظار الخصم...',
+    opponentDisconnected: 'انقطع اتصال الخصم',
+    youWin: 'فوز',
+    youLose: 'هزيمة',
+    draw: 'تعادل',
+    backToArena: 'العودة إلى الحلبة',
+  },
 }

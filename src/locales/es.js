@@ -556,4 +556,18 @@ export default {
     error: 'La verificación del correo electrónico falló.',
     loading: 'Verificando tu correo electrónico...',
   },
+  pvp: {
+    diceAvailable: '¡Dado disponible!',
+    rollDice: 'LANZAR',
+    skip: 'SALTAR',
+    coachAdvice: 'Consejo del entrenador',
+    accept: 'ACEPTAR',
+    decline: 'RECHAZAR',
+    waitingForOpponent: 'Esperando al oponente...',
+    opponentDisconnected: 'Oponente desconectado',
+    youWin: 'VICTORIA',
+    youLose: 'DERROTA',
+    draw: 'EMPATE',
+    backToArena: 'VOLVER A LA ARENA',
+  },
 }

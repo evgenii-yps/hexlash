@@ -62,6 +62,10 @@ const state = () => ({
         draws: 0,
     },
     status: 'idle', // 'idle', 'searching', 'in_fight', 'finished'
+    currentMatchId: null,
+    pvpFightStatus: 'idle', // idle, ready, fighting, paused, finished
+    opponentInfo: null,
+    isPlayer1: false,
 });
 
 // ─── Getters ────────────────────────────────────────────────────────────────
@@ -87,6 +91,10 @@ const getters = {
     },
 
     isPvPFight: (s) => s.status === 'in_fight',
+    getCurrentMatchId: (s) => s.currentMatchId,
+    getPvpFightStatus: (s) => s.pvpFightStatus,
+    getOpponentInfo: (s) => s.opponentInfo,
+    getIsPlayer1: (s) => s.isPlayer1,
 };
 
 // ─── Mutations ──────────────────────────────────────────────────────────────
@@ -119,6 +127,18 @@ const mutations = {
         if (s.currentPvPFight) {
             s.currentPvPFight.ratingChange = change;
         }
+    },
+    SET_PVP_MATCH(s, { matchId, opponent, isPlayer1 }) {
+        s.currentMatchId = matchId;
+        s.opponentInfo = opponent;
+        s.isPlayer1 = isPlayer1;
+        s.pvpFightStatus = 'ready';
+    },
+    RESET_PVP_FIGHT(s) {
+        s.currentMatchId = null;
+        s.pvpFightStatus = 'idle';
+        s.opponentInfo = null;
+        s.isPlayer1 = false;
     },
 };
 

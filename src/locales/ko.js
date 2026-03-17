@@ -556,4 +556,18 @@ export default {
     error: '이메일 인증에 실패했습니다.',
     loading: '이메일 인증 중...',
   },
+  pvp: {
+    diceAvailable: '주사위 사용 가능!',
+    rollDice: '굴리기',
+    skip: '건너뛰기',
+    coachAdvice: '코치 조언',
+    accept: '수락',
+    decline: '거절',
+    waitingForOpponent: '상대를 기다리는 중...',
+    opponentDisconnected: '상대가 연결 해제됨',
+    youWin: '승리',
+    youLose: '패배',
+    draw: '무승부',
+    backToArena: '아레나로 돌아가기',
+  },
 }

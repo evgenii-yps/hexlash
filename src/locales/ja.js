@@ -556,4 +556,18 @@ export default {
     error: 'メール認証に失敗しました。',
     loading: 'メールを認証中...',
   },
+  pvp: {
+    diceAvailable: 'サイコロ使用可能！',
+    rollDice: '振る',
+    skip: 'スキップ',
+    coachAdvice: 'コーチのアドバイス',
+    accept: '受け入れる',
+    decline: '拒否',
+    waitingForOpponent: '対戦相手を待っています...',
+    opponentDisconnected: '対戦相手が切断されました',
+    youWin: '勝利',
+    youLose: '敗北',
+    draw: '引き分け',
+    backToArena: 'アリーナに戻る',
+  },
 }
