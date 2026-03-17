@@ -16,6 +16,7 @@ const taskRoutes = require('./routes/task');
 const fileRoutes = require('./routes/file');
 const fightRoutes = require('./routes/fight');
 const statsRoutes = require('./routes/stats');
+const friendsRoutes = require('./routes/friends');
 
 const app = express();
 
@@ -74,6 +75,7 @@ app.use('/v1/task', taskRoutes);
 app.use('/v1/file', fileRoutes);
 app.use('/v1/fight', fightRoutes);
 app.use('/v1/stats', statsRoutes);
+app.use('/v1/friends', friendsRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
