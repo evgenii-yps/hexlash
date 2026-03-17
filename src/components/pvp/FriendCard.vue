@@ -1,6 +1,6 @@
 <template>
   <div class="friend-card" :class="{ 'is-fighting': friend.status === 'in_fight' }">
-    <div class="friend-avatar">&#x1F464;</div>
+    <div class="friend-avatar"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#FF066F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M3 21c0-5 4-9 9-9s9 4 9 9"/></svg></div>
 
     <div class="friend-info">
       <div class="friend-name">{{ friend.username }}</div>
@@ -17,17 +17,17 @@
 
     <div class="friend-actions">
       <button v-if="friend.status === 'in_fight'" class="action-btn watch-btn" @click="$emit('watch', friend)">
-        &#x1F441;&#xFE0F;
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#FFB800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
       </button>
       <button v-else-if="isPendingChallenge" class="action-btn challenge-pending-btn" disabled>
         <span class="spinner"></span>
       </button>
       <button v-else class="action-btn fight-btn" @click="$emit('challenge', friend)" :disabled="friend.status === 'offline'">
-        &#x2694;&#xFE0F;
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#FF066F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="20" x2="14" y2="10"/><line x1="14" y1="10" x2="17" y2="7"/><line x1="17" y1="7" x2="21" y2="3"/><line x1="18" y1="6" x2="21" y2="3"/><line x1="20" y1="4" x2="14" y2="10"/><line x1="10" y1="14" x2="20" y2="4"/><line x1="3" y1="21" x2="10" y2="14"/><line x1="7" y1="17" x2="3" y2="21"/></svg>
       </button>
 
       <button class="action-btn remove-btn" @click="$emit('remove', friend)">
-        &#x2716;&#xFE0F;
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#FF3333" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
       </button>
     </div>
   </div>
@@ -79,8 +79,9 @@ const isPendingChallenge = computed(() => store.getters['friends/hasPendingChall
 }
 
 .friend-avatar {
-  font-size: 28px;
   margin-right: 14px;
+  display: flex;
+  align-items: center;
 }
 
 .friend-info {

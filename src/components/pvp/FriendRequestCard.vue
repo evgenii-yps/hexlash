@@ -1,6 +1,6 @@
 <template>
   <div class="request-card">
-    <div class="request-avatar">&#x1F464;</div>
+    <div class="request-avatar"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#FF066F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M3 21c0-5 4-9 9-9s9 4 9 9"/></svg></div>
 
     <div class="request-info">
       <div class="request-name">{{ request.username }}</div>
@@ -9,10 +9,10 @@
 
     <div class="request-actions">
       <button class="accept-btn" @click="$emit('accept', request)">
-        &#x2713; {{ acceptText }}
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#00FF88" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,12 10,18 20,6"/></svg> {{ acceptText }}
       </button>
       <button class="decline-btn" @click="$emit('decline', request)">
-        &#x2716; {{ declineText }}
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#FF3333" stroke-width="2.5" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg> {{ declineText }}
       </button>
     </div>
   </div>
@@ -47,8 +47,9 @@ defineEmits(['accept', 'decline']);
 }
 
 .request-avatar {
-  font-size: 28px;
   margin-right: 14px;
+  display: flex;
+  align-items: center;
 }
 
 .request-info {
@@ -73,6 +74,9 @@ defineEmits(['accept', 'decline']);
 }
 
 .accept-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   padding: 8px 16px;
   background: rgba(0, 255, 136, 0.15);
   border: 1px solid #00FF88;
@@ -90,6 +94,9 @@ defineEmits(['accept', 'decline']);
 }
 
 .decline-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   padding: 8px 16px;
   background: rgba(255, 51, 51, 0.1);
   border: 1px solid #FF3333;
