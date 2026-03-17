@@ -186,8 +186,10 @@ COACH_TRIGGER_CHANCE = 1.0
 COACH_BOOST_ROUNDS = 4
 
 SPEED_MOVE_PUNCH_MS = 1500
+ROUND_ANIMATION_MS = 1500
 BATCH_SEND_INTERVAL_MS = 11000
 DECIMALS = 6             // token decimal places
+LISTING = 1783306800     // token listing timestamp
 
 AUTO_FIGHT_MIN_INTERVAL = 3600000   // 60 min
 AUTO_FIGHT_MAX_INTERVAL = 3600000   // 60 min
@@ -214,6 +216,9 @@ PUNCH_MAX_PER_INTERVAL = 10000
 PUNCH_MAX_PER_BATCH = 10000
 PUNCH_INTERVAL_MS = 3600000   // 1 hour
 ```
+
+**CORS:** Allows `hexlash.com`, `test.hexlash.com`, `hexlash.vercel.app`, `*.vercel.app`
+**Health checks:** `GET /` and `GET /health`
 
 ---
 
@@ -259,6 +264,7 @@ PUNCH_INTERVAL_MS = 3600000   // 1 hour
 **Key sections per locale:**
 - UI labels: `menu`, `auth`, `profile`, `arena`, `fight`, `training`, `moves`, `deck`, `cards`, `rating`, `club`, `info`, `nav`, `autoFight`
 - Game data translations: `gameData.branches[id].{name,description}`, `gameData.moves[id].{name,description}`
+- Page content: `locales/pages/help/{lang}.json`, `locales/pages/rules/{lang}.json`
 
 **Usage in templates:** `{{ t.section.key }}` (auto-unwrapped ref)
 **Usage in script:** `t.value.section.key`
@@ -305,11 +311,24 @@ Base: `/v1/`
 
 Auth guard: JWT Bearer token via `middleware/auth.js`
 
+### WebSocket Protocol
+
+| Request Message | Response | Purpose |
+|----------------|----------|---------|
+| `PunchInfoRequestMsg` | `PunchInfoResponseMsg` | Get punch rate limit info |
+| `PunchBatchRequestMsg` | `UserResponseMsg` | Submit batch of punches |
+| `FightTicketMsg` | `FightInfoMsg` | Request new fight ticket |
+| `FightActionMsg` | — | Send PvP fight action |
+| — | `AchievementResponseMsg` | Auto-awarded achievement (punch milestones: 100, 1k, 5k, 10k) |
+| — | `ErrorMsg` | Error response |
+
 ---
 
 ## Database Models (Prisma/PostgreSQL)
 
 User, Club, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask, UserDailyTask, Fight, PunchInfo
+
+**Seed data:** 16 achievements (NEWBIE, CONNECTED_FIGHTER, REGULAR_FIGHTER, BATTLE_VETERAN, FIGHT_MASTER, COACH, RECRUITER, PROJECT_MAYHEM, MEATLOAF, TYLER, EXPERT, LUCKY_ONE, BOB, PAPER_STREET, MEETING_PARTICIPANT, GOLDEN_RULE) + social/daily tasks (en/ru)
 
 ---
 
