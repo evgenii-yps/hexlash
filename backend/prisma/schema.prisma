@@ -52,6 +52,11 @@ model User {
   fightsAsOne     Fight[]  @relation("FighterOne")
   fightsAsTwo     Fight[]  @relation("FighterTwo")
   fightsWon       Fight[]  @relation("FightWinner")
+
+  sentFriendRequests     FriendRequest[] @relation("SentRequests")
+  receivedFriendRequests FriendRequest[] @relation("ReceivedRequests")
+  friendships1           Friendship[]    @relation("Friendships1")
+  friendships2           Friendship[]    @relation("Friendships2")
 }
 
 model Club {
@@ -170,6 +175,35 @@ model Fight {
   @@index([player1Id])
   @@index([player2Id])
   @@index([matchId])
+}
+
+model FriendRequest {
+  id        String   @id @default(uuid())
+  fromId    String
+  toId      String
+  status    String   @default("pending") // pending, accepted, declined
+  createdAt DateTime @default(now())
+
+  from      User     @relation("SentRequests", fields: [fromId], references: [id])
+  to        User     @relation("ReceivedRequests", fields: [toId], references: [id])
+
+  @@unique([fromId, toId])
+  @@index([toId, status])
+  @@index([fromId, status])
+}
+
+model Friendship {
+  id        String   @id @default(uuid())
+  user1Id   String
+  user2Id   String
+  createdAt DateTime @default(now())
+
+  user1     User     @relation("Friendships1", fields: [user1Id], references: [id])
+  user2     User     @relation("Friendships2", fields: [user2Id], references: [id])
+
+  @@unique([user1Id, user2Id])
+  @@index([user1Id])
+  @@index([user2Id])
 }
 
 model PunchInfo {

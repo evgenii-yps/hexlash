@@ -134,7 +134,7 @@ const onWatch = (friend) => {
 };
 
 const onAccept = (request) => {
-  store.dispatch('friends/acceptFriendRequest', request.id);
+  store.dispatch('friends/acceptFriendRequest', request);
 };
 
 const onDecline = (request) => {

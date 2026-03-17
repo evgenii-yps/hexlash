@@ -1,25 +1,5 @@
 import apiClient from '@/core/api/apiClient.js';
 
-const STORAGE_KEY = 'hexlash_friends';
-
-// ─── Persistence ────────────────────────────────────────────────────────────
-function saveToStorage(state) {
-    try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({
-            friends: state.friends,
-            friendRequests: state.friendRequests,
-        }));
-    } catch (e) { /* ignore */ }
-}
-
-function loadFromStorage() {
-    try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) return JSON.parse(saved);
-    } catch (e) { /* ignore */ }
-    return null;
-}
-
 // ─── Challenge timer ────────────────────────────────────────────────────────
 let challengeTimeout = null;
 
@@ -58,6 +38,8 @@ const getters = {
 const mutations = {
     setFriends(s, friends) { s.friends = friends; },
     setFriendRequests(s, requests) { s.friendRequests = requests; },
+    setIncomingRequests(s, requests) { s.friendRequests.incoming = requests; },
+    setOutgoingRequests(s, requests) { s.friendRequests.outgoing = requests; },
     addOutgoingRequest(s, player) {
         s.friendRequests.outgoing.push({ ...player, sentAt: Date.now() });
     },
@@ -68,7 +50,9 @@ const mutations = {
         s.friendRequests.incoming = s.friendRequests.incoming.filter(r => r.id !== playerId);
     },
     addFriend(s, player) {
-        s.friends.push({ ...player, addedAt: Date.now() });
+        if (!s.friends.some(f => f.id === player.id)) {
+            s.friends.push({ ...player, addedAt: Date.now() });
+        }
     },
     removeFriend(s, playerId) {
         s.friends = s.friends.filter(f => f.id !== playerId);
@@ -96,11 +80,38 @@ const mutations = {
 
 // ─── Actions ────────────────────────────────────────────────────────────────
 const actions = {
-    init({ commit }) {
-        const saved = loadFromStorage();
-        if (saved) {
-            commit('setFriends', saved.friends || []);
-            commit('setFriendRequests', saved.friendRequests || { incoming: [], outgoing: [] });
+    async init({ dispatch }) {
+        await Promise.all([
+            dispatch('loadFriends'),
+            dispatch('loadIncomingRequests'),
+            dispatch('loadOutgoingRequests'),
+        ]);
+    },
+
+    async loadFriends({ commit }) {
+        try {
+            const response = await apiClient.get('/friends/list', { authRequired: true });
+            commit('setFriends', response.friends || []);
+        } catch (err) {
+            console.error('[FRIENDS] Failed to load friends:', err);
+        }
+    },
+
+    async loadIncomingRequests({ commit }) {
+        try {
+            const response = await apiClient.get('/friends/requests', { authRequired: true });
+            commit('setIncomingRequests', response.requests || []);
+        } catch (err) {
+            console.error('[FRIENDS] Failed to load incoming requests:', err);
+        }
+    },
+
+    async loadOutgoingRequests({ commit }) {
+        try {
+            const response = await apiClient.get('/friends/requests/outgoing', { authRequired: true });
+            commit('setOutgoingRequests', response.requests || []);
+        } catch (err) {
+            console.error('[FRIENDS] Failed to load outgoing requests:', err);
         }
     },
 
@@ -111,12 +122,12 @@ const actions = {
                 params: { name: query, size: 10 },
                 authRequired: true,
             });
-            const users = response.data || [];
+            // apiClient interceptor unwraps response.data, then server returns { data: [...] }
+            const users = response?.data || [];
             return users
                 .filter(u => {
                     const isFriend = s.friends.some(f => f.id === u.id);
-                    const isPending = s.friendRequests.outgoing.some(r => r.id === u.id);
-                    return !isFriend && !isPending;
+                    return !isFriend;
                 })
                 .map(u => ({
                     id: u.id,
@@ -133,49 +144,81 @@ const actions = {
         }
     },
 
-    sendFriendRequest({ commit, state: s }, player) {
+    async sendFriendRequest({ commit, dispatch, state: s }, player) {
         const alreadySent = s.friendRequests.outgoing.some(r => r.id === player.id);
         if (alreadySent) return false;
 
+        // Optimistically add to outgoing
         commit('addOutgoingRequest', player);
-        saveToStorage(s);
 
-        // Simulate: auto-accept after 3 seconds (mock)
-        setTimeout(() => {
-            const stillPending = s.friendRequests.outgoing.some(r => r.id === player.id);
-            if (stillPending) {
+        try {
+            const response = await apiClient.post('/friends/request',
+                { targetId: player.id },
+                { authRequired: true },
+            );
+
+            if (response.status === 'accepted') {
+                // Mutual request — auto-accepted
                 commit('removeOutgoingRequest', player.id);
                 commit('addFriend', player);
-                saveToStorage(s);
+                commit('removeIncomingRequest', player.id);
             }
-        }, 3000);
-
-        return true;
+            return true;
+        } catch (error) {
+            console.error('[FRIENDS] Failed to send request:', error);
+            // Revert optimistic update
+            commit('removeOutgoingRequest', player.id);
+            return false;
+        }
     },
 
-    acceptFriendRequest({ commit, state: s }, playerId) {
+    async acceptFriendRequest({ commit }, request) {
+        const requestId = request.requestId || request.id;
+        try {
+            await apiClient.post('/friends/accept',
+                { requestId },
+                { authRequired: true },
+            );
+            commit('removeIncomingRequest', request.id);
+            commit('addFriend', request);
+            return true;
+        } catch (error) {
+            console.error('[FRIENDS] Failed to accept request:', error);
+            return false;
+        }
+    },
+
+    async declineFriendRequest({ commit, state: s }, playerId) {
         const request = s.friendRequests.incoming.find(r => r.id === playerId);
-        if (!request) return false;
-
-        commit('removeIncomingRequest', playerId);
-        commit('addFriend', request);
-        saveToStorage(s);
-        return true;
+        const requestId = request?.requestId || playerId;
+        try {
+            await apiClient.post('/friends/decline',
+                { requestId },
+                { authRequired: true },
+            );
+            commit('removeIncomingRequest', playerId);
+            return true;
+        } catch (error) {
+            console.error('[FRIENDS] Failed to decline request:', error);
+            return false;
+        }
     },
 
-    declineFriendRequest({ commit, state: s }, playerId) {
-        commit('removeIncomingRequest', playerId);
-        saveToStorage(s);
-        return true;
+    async removeFriend({ commit }, playerId) {
+        try {
+            await apiClient.post('/friends/remove',
+                { friendId: playerId },
+                { authRequired: true },
+            );
+            commit('removeFriend', playerId);
+            return true;
+        } catch (error) {
+            console.error('[FRIENDS] Failed to remove friend:', error);
+            return false;
+        }
     },
 
-    removeFriend({ commit, state: s }, playerId) {
-        commit('removeFriend', playerId);
-        saveToStorage(s);
-        return true;
-    },
-
-    // ─── Challenges ─────────────────────────────────────────────────────────
+    // ─── Challenges (keep client-side for now, will be WebSocket later) ────
 
     sendChallenge({ commit, state: s }, friend) {
         if (friend.status === 'offline') return false;
@@ -191,7 +234,6 @@ const actions = {
 
         commit('setOutgoingChallenge', challenge);
 
-        // Auto-cancel after 30 seconds
         if (challengeTimeout) clearTimeout(challengeTimeout);
         challengeTimeout = setTimeout(() => {
             if (s.challenge.outgoing?.odId === friend.id) {
@@ -199,26 +241,6 @@ const actions = {
             }
             challengeTimeout = null;
         }, 30000);
-
-        // Simulate: random response in 2-5 seconds (mock)
-        const responseTime = 2000 + Math.random() * 3000;
-        setTimeout(() => {
-            if (!s.challenge.outgoing || s.challenge.outgoing.odId !== friend.id) return;
-
-            // 70% chance to accept
-            if (Math.random() > 0.3) {
-                commit('clearOutgoingChallenge');
-                if (challengeTimeout) { clearTimeout(challengeTimeout); challengeTimeout = null; }
-                // Notify App.vue to start PvP fight
-                window.dispatchEvent(new CustomEvent('pvp-challenge-accepted', {
-                    detail: friend,
-                }));
-            } else {
-                commit('clearOutgoingChallenge');
-                if (challengeTimeout) { clearTimeout(challengeTimeout); challengeTimeout = null; }
-                console.log('Challenge declined by', friend.username);
-            }
-        }, responseTime);
 
         return true;
     },
@@ -228,57 +250,15 @@ const actions = {
         if (challengeTimeout) { clearTimeout(challengeTimeout); challengeTimeout = null; }
     },
 
-    // ─── Incoming Challenges ────────────────────────────────────────────────
-
-    simulateIncomingChallenge({ commit, state: s }) {
-        const onlineFriends = s.friends.filter(f => f.status === 'online');
-        if (onlineFriends.length === 0) return;
-
-        const randomFriend = onlineFriends[Math.floor(Math.random() * onlineFriends.length)];
-        commit('setIncomingChallenge', {
-            odId: randomFriend.id,
-            username: randomFriend.username,
-            rating: randomFriend.rating,
-            sentAt: Date.now(),
-            expiresAt: Date.now() + 30000,
-        });
-    },
-
     acceptIncomingChallenge({ commit, state: s }) {
         const challenger = s.challenge.incoming;
         if (!challenger) return null;
-
         commit('clearIncomingChallenge');
         return challenger;
     },
 
     declineIncomingChallenge({ commit }) {
         commit('clearIncomingChallenge');
-    },
-
-    // ─── Fight simulation (test) ────────────────────────────────────────────
-    simulateFriendsFighting({ commit, state: s }) {
-        // End fights for some currently fighting friends (30% chance each)
-        s.friends.filter(f => f.status === 'in_fight').forEach(friend => {
-            if (Math.random() < 0.3) {
-                commit('setFriendStatus', { friendId: friend.id, status: 'online', currentFight: null });
-            }
-        });
-
-        // Start a fight for a random online friend (20% chance)
-        const onlineFriends = s.friends.filter(f => f.status === 'online');
-        if (onlineFriends.length > 0 && Math.random() < 0.2) {
-            const randomFriend = onlineFriends[Math.floor(Math.random() * onlineFriends.length)];
-            commit('setFriendStatus', {
-                friendId: randomFriend.id,
-                status: 'in_fight',
-                currentFight: {
-                    odId: 'opp_' + Date.now(),
-                    opponent: 'RandomOpp_' + Math.floor(Math.random() * 100),
-                    startedAt: Date.now(),
-                },
-            });
-        }
     },
 };
 
