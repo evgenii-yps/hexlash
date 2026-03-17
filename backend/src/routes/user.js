@@ -199,10 +199,12 @@ router.get('/search', authMiddleware, async (req, res) => {
     const where = {};
     if (name) {
       where.OR = [
-        { name: { contains: name } },
-        { login: { contains: name } },
+        { name: { contains: name, mode: 'insensitive' } },
+        { login: { contains: name, mode: 'insensitive' } },
       ];
     }
+    // Exclude the requesting user from results
+    where.NOT = { id: req.userId };
     if (clubId) {
       where.clubId = clubId;
     }

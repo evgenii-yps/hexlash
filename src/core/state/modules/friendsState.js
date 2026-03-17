@@ -1,3 +1,5 @@
+import apiClient from '@/core/api/apiClient.js';
+
 const STORAGE_KEY = 'hexlash_friends';
 
 // ─── Persistence ────────────────────────────────────────────────────────────
@@ -17,18 +19,6 @@ function loadFromStorage() {
     } catch (e) { /* ignore */ }
     return null;
 }
-
-// ─── Mock data ──────────────────────────────────────────────────────────────
-const mockPlayers = [
-    { id: 'p1', username: 'Shadow_X', rating: 1280, status: 'online' },
-    { id: 'p2', username: 'ShadowKnight', rating: 980, status: 'offline' },
-    { id: 'p3', username: 'NightFury', rating: 1150, status: 'online' },
-    { id: 'p4', username: 'IronFist', rating: 1420, status: 'in_fight', currentFight: { odId: 'opp_iron', opponent: 'VenomStrike', startedAt: Date.now() } },
-    { id: 'p5', username: 'DarkPhoenix', rating: 1650, status: 'offline' },
-    { id: 'p6', username: 'BlazeFist', rating: 1100, status: 'online' },
-    { id: 'p7', username: 'StormRider', rating: 1320, status: 'offline' },
-    { id: 'p8', username: 'ThunderBolt', rating: 890, status: 'online' },
-];
 
 // ─── Challenge timer ────────────────────────────────────────────────────────
 let challengeTimeout = null;
@@ -114,15 +104,33 @@ const actions = {
         }
     },
 
-    searchPlayers({ state: s }, query) {
+    async searchPlayers({ state: s }, query) {
         if (query.length < 3) return [];
-        const lowerQuery = query.toLowerCase();
-        return mockPlayers.filter(player => {
-            const isFriend = s.friends.some(f => f.id === player.id);
-            const isPending = s.friendRequests.outgoing.some(r => r.id === player.id);
-            return !isFriend && !isPending &&
-                player.username.toLowerCase().includes(lowerQuery);
-        });
+        try {
+            const response = await apiClient.get('/user/search', {
+                params: { name: query, size: 10 },
+                authRequired: true,
+            });
+            const users = response.data || [];
+            return users
+                .filter(u => {
+                    const isFriend = s.friends.some(f => f.id === u.id);
+                    const isPending = s.friendRequests.outgoing.some(r => r.id === u.id);
+                    return !isFriend && !isPending;
+                })
+                .map(u => ({
+                    id: u.id,
+                    username: u.name || u.login,
+                    login: u.login,
+                    rating: u.rating || 1000,
+                    status: 'offline',
+                    skin: u.skin,
+                    avatarUrl: u.avatarUrl,
+                }));
+        } catch (err) {
+            console.error('Search players error:', err);
+            return [];
+        }
     },
 
     sendFriendRequest({ commit, state: s }, player) {

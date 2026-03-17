@@ -105,8 +105,13 @@ const sortedFriends = computed(() => {
   return [...friends.value].sort((a, b) => (order[a.status] ?? 3) - (order[b.status] ?? 3));
 });
 
-watch(searchQuery, async (q) => {
-  searchResults.value = await store.dispatch('friends/searchPlayers', q);
+let searchTimer = null;
+watch(searchQuery, (q) => {
+  clearTimeout(searchTimer);
+  if (q.length < 3) { searchResults.value = []; return; }
+  searchTimer = setTimeout(async () => {
+    searchResults.value = await store.dispatch('friends/searchPlayers', q);
+  }, 300);
 });
 
 const onAddPlayer = (player) => {
