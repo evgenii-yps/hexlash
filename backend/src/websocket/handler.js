@@ -7,6 +7,7 @@ const { JWT_SECRET, COST_PER_CLICK, DECIMALS, PUNCH_MAX_PER_INTERVAL, PUNCH_MAX_
 const prisma = new PrismaClient();
 const clients = new Map(); // userId -> ws
 const matchmaking = require('../services/matchmaking');
+const { handlePvPMessage, handlePvPDisconnect } = require('./pvpHandler');
 
 function setupWebSocket(server) {
   const wss = new WebSocketServer({ server });
@@ -68,6 +69,7 @@ function setupWebSocket(server) {
     ws.on('close', () => {
       clients.delete(userId);
       matchmaking.removeFromQueue(userId);
+      handlePvPDisconnect(userId);
       console.log(`WebSocket: user ${userId} disconnected. Total: ${clients.size}`);
     });
 
@@ -75,6 +77,7 @@ function setupWebSocket(server) {
       console.error(`WebSocket error for user ${userId}:`, err.message);
       clients.delete(userId);
       matchmaking.removeFromQueue(userId);
+      handlePvPDisconnect(userId);
     });
   });
 
@@ -107,6 +110,12 @@ async function handleMessage(ws, userId, msg) {
 
     case 'MatchmakingCancelMsg':
       handleMatchmakingCancel(ws, userId);
+      break;
+
+    case 'pvp_ready':
+    case 'dice_choice':
+    case 'coach_choice':
+      handlePvPMessage(ws, msg, { odId: userId });
       break;
 
     default:

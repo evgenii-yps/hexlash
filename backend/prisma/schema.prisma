@@ -22,6 +22,7 @@ model User {
   walletAddress   String?
   skin            String   @default("skin_m_1.png")
 
+  rating          Int      @default(1000)
   totalFights     Int      @default(0)
   wins            Int      @default(0)
   losses          Int      @default(0)
@@ -136,20 +137,39 @@ model UserDailyTask {
 
 model Fight {
   id               String   @id @default(uuid())
+  mode             String   @default("pve")     // 'pve' or 'pvp'
+  matchId          String?                       // PvP match ID
+
   fighterOneId     String
   fighterTwoId     String?
   winnerId         String?
+
   bet              Int      @default(0)
   duration         Int      @default(0)
   actions          Int      @default(0)
   isCompleted      Boolean  @default(false)
   fighterOneActions String  @default("[]")
   fighterTwoActions String  @default("[]")
+
+  // PvP fields
+  player1Id        String?
+  player2Id        String?
+  player1Hp        Int?
+  player2Hp        Int?
+  winner           String?                       // odId or 'draw' for PvP
+  reason           String   @default("normal")   // 'normal', 'disconnect'
+  rounds           Int?
+  roundLog         Json?
+
   createdAt        DateTime @default(now())
 
   fighterOne       User     @relation("FighterOne", fields: [fighterOneId], references: [id])
   fighterTwo       User?    @relation("FighterTwo", fields: [fighterTwoId], references: [id])
-  winner           User?    @relation("FightWinner", fields: [winnerId], references: [id])
+  winnerUser       User?    @relation("FightWinner", fields: [winnerId], references: [id])
+
+  @@index([player1Id])
+  @@index([player2Id])
+  @@index([matchId])
 }
 
 model PunchInfo {
