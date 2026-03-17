@@ -149,26 +149,6 @@
         </div>
       </div>
 
-      <!-- PvP: Dice choice modal -->
-      <div v-if="isPvP && showDiceChoice" class="pvp-modal-overlay">
-        <div class="pvp-modal">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#FF066F" stroke-width="1.5" stroke-linecap="round">
-            <rect x="3" y="3" width="18" height="18" rx="3"/>
-            <circle cx="8" cy="8" r="1.2" fill="#FF066F"/>
-            <circle cx="16" cy="8" r="1.2" fill="#FF066F"/>
-            <circle cx="12" cy="12" r="1.2" fill="#FF066F"/>
-            <circle cx="8" cy="16" r="1.2" fill="#FF066F"/>
-            <circle cx="16" cy="16" r="1.2" fill="#FF066F"/>
-          </svg>
-          <div class="pvp-modal-title">{{ t.pvp.diceAvailable }}</div>
-          <div class="pvp-timer">{{ diceTimer }}s</div>
-          <div class="pvp-modal-buttons">
-            <button class="btn-roll" @click="onPlayerDiceChoice(true)">{{ t.pvp.rollDice }}</button>
-            <button class="btn-skip" @click="onPlayerDiceChoice(false)">{{ t.pvp.skip }}</button>
-          </div>
-        </div>
-      </div>
-
       <!-- PvP: Coach choice modal -->
       <div v-if="isPvP && showCoachChoice" class="pvp-modal-overlay">
         <div class="pvp-modal">
@@ -312,10 +292,7 @@ const pvpMatchId = computed(() => fightRoute.query.matchId);
 const pvpFight = computed(() => store.getters['pvp/getCurrentPvPFight']);
 
 // ── PvP state ──────────────────────────────────────────────────────────────
-const pvpStatus = ref('waiting');        // waiting, countdown, fighting, paused_dice, paused_coach, finished
-const showDiceChoice = ref(false);
-const diceAvailable = ref(false);
-const diceTimer = ref(10);
+const pvpStatus = ref('waiting');        // waiting, countdown, fighting, paused_coach, finished
 const showCoachChoice = ref(false);
 const pvpCoachAdvice = ref(null);
 const coachTimerPvP = ref(10);
@@ -712,7 +689,13 @@ watch(fightPhase, (val, oldVal) => {
 
 // ── Dice click ───────────────────────────────────────────────────────────
 const rollDice = () => {
-  store.dispatch('fight/rollDiceManual');
+  if (isPvP.value && pvpMatchId.value) {
+    // PvP: send dice_roll to server (instant, no pause)
+    store.dispatch('webSocket/sendMessage', { type: 'dice_roll' });
+    store.commit('fight/setDiceState', { activeItem: null, cooldownLeft: 0, ready: false });
+  } else {
+    store.dispatch('fight/rollDiceManual');
+  }
 };
 
 // ── Auto-dice for auto fights ──────────────────────────────────────────
@@ -825,8 +808,9 @@ function initPvPFight() {
   // Listen for PvP events
   window.addEventListener('pvp-fight_start', onPvPFightStart);
   window.addEventListener('pvp-round_result', onPvPRoundResult);
-  window.addEventListener('pvp-dice_pause', onPvPDicePause);
-  window.addEventListener('pvp-dice_result', onPvPDiceResult);
+  window.addEventListener('pvp-dice_available', onPvPDiceAvailable);
+  window.addEventListener('pvp-dice_rolled', onPvPDiceRolled);
+  window.addEventListener('pvp-dice_error', onPvPDiceError);
   window.addEventListener('pvp-coach_pause', onPvPCoachPause);
   window.addEventListener('pvp-coach_result', onPvPCoachResult);
   window.addEventListener('pvp-fight_end', onPvPFightEnd);
@@ -836,8 +820,9 @@ function cleanupPvP() {
   clearPvPTimer();
   window.removeEventListener('pvp-fight_start', onPvPFightStart);
   window.removeEventListener('pvp-round_result', onPvPRoundResult);
-  window.removeEventListener('pvp-dice_pause', onPvPDicePause);
-  window.removeEventListener('pvp-dice_result', onPvPDiceResult);
+  window.removeEventListener('pvp-dice_available', onPvPDiceAvailable);
+  window.removeEventListener('pvp-dice_rolled', onPvPDiceRolled);
+  window.removeEventListener('pvp-dice_error', onPvPDiceError);
   window.removeEventListener('pvp-coach_pause', onPvPCoachPause);
   window.removeEventListener('pvp-coach_result', onPvPCoachResult);
   window.removeEventListener('pvp-fight_end', onPvPFightEnd);
@@ -898,30 +883,58 @@ function onPvPRoundResult(e) {
   console.log('[PVP] round_result:', data.round, data);
   const isP1 = store.getters['pvp/getIsPlayer1'];
 
-  // Update HP via store
-  const myHp = isP1 ? data.player1.hp : data.player2.hp;
-  const oppHp = isP1 ? data.player2.hp : data.player1.hp;
-  const myDmg = isP1 ? data.player1.damage : data.player2.damage;
-  const oppDmg = isP1 ? data.player2.damage : data.player1.damage;
+  // Map server data to my perspective
+  const myData = isP1 ? data.player1 : data.player2;
+  const oppData = isP1 ? data.player2 : data.player1;
+  const myHp = myData.hp;
+  const oppHp = oppData.hp;
+  const myDmg = myData.damage;
+  const oppDmg = oppData.damage;
 
   store.commit('fight/setLiveHP1', myHp);
   store.commit('fight/setLiveHP2', oppHp);
   store.commit('fight/setRoundNum', data.round);
 
-  // Add to round log and stats for fight report
+  // Map branch to action type for RoundDisplay card styling
+  const branchToAction = (branch) => {
+    if (branch === 'speed') return 'attack';
+    if (branch === 'power') return 'attack';
+    if (branch === 'technique') return 'defense';
+    return 'attack';
+  };
+
+  const myAction = branchToAction(myData.module?.branch);
+  const oppAction = branchToAction(oppData.module?.branch);
+
+  // Build events array for RoundDisplay
+  const events = [];
+  // Build effects from active effects
+  for (const eff of (myData.effects || [])) {
+    events.push({ fighter: 1, type: eff.type, value: 0 });
+  }
+  for (const eff of (oppData.effects || [])) {
+    events.push({ fighter: 2, type: eff.type, value: 0 });
+  }
+
+  // Add to round log — matches PvE RoundResult format for RoundDisplay
   store.commit('fight/addRoundToLog', {
-    round: data.round,
+    roundNum: data.round,
+    action1: myAction,
+    action2: oppAction,
     damage1: oppDmg,
     damage2: myDmg,
     hp1After: myHp,
     hp2After: oppHp,
-    action1: data.firstAttacker === (isP1 ? 'player1' : 'player2') ? 'attack' : 'defense',
-    action2: data.firstAttacker === (isP1 ? 'player1' : 'player2') ? 'defense' : 'attack',
+    events,
   });
   store.commit('fight/addStats', {
     totalDamageDealt: myDmg,
     totalDamageTaken: oppDmg,
   });
+
+  // Update dice state — reset ready based on cooldown info from server
+  // (dice_available event will set ready=true when available)
+  store.commit('fight/setDiceState', { activeItem: null, cooldownLeft: 0, ready: false });
 
   // Trigger shake animations
   if (oppDmg > 0) {
@@ -935,48 +948,44 @@ function onPvPRoundResult(e) {
   }
 }
 
-function onPvPDicePause(e) {
-  const data = e.detail;
-  console.log('[PVP] dice_pause:', data);
-  pvpStatus.value = 'paused_dice';
-  showWaiting.value = false;
+function onPvPDiceAvailable(e) {
+  console.log('[PVP] dice_available:', e.detail);
+  // Show dice button — player can click to roll instantly
+  store.commit('fight/setDiceState', { activeItem: null, cooldownLeft: 0, ready: true });
+}
 
-  if (data.available) {
-    showDiceChoice.value = true;
-    diceAvailable.value = true;
-    diceTimer.value = 10;
-    startPvPTimer('dice');
-  } else {
-    showWaiting.value = true;
-    waitingText.value = t.value.pvp.waitingForOpponent;
-    diceTimer.value = 10;
-    startPvPTimer('dice');
+function onPvPDiceRolled(e) {
+  const data = e.detail;
+  console.log('[PVP] dice_rolled:', data);
+
+  // Apply dice effect visually
+  if (data.effect) {
+    triggerFlash(data.effect.type);
+
+    // Map effect to dice item for display
+    const DICE_EFFECTS = {
+      heal:       { id: 'heal',       image: iconDice },
+      adrenaline: { id: 'adrenaline', image: iconAdrenaline },
+      shield:     { id: 'shield',     image: iconShield },
+      blind:      { id: 'blind',      image: iconBlind },
+      rage:       { id: 'rage',       image: iconDice },
+      crit:       { id: 'crit',       image: iconDice },
+    };
+
+    const diceItem = DICE_EFFECTS[data.effect.type] || { id: data.effect.type, image: iconDice };
+    store.commit('fight/setDiceState', { activeItem: diceItem, cooldownLeft: 3, ready: false });
+
+    // Update HP if heal
+    if (data.effect.type === 'heal' && data.hp !== undefined) {
+      store.commit('fight/setLiveHP1', data.hp);
+    }
   }
 }
 
-function onPlayerDiceChoice(roll) {
-  store.dispatch('webSocket/sendMessage', {
-    type: 'dice_choice',
-    choice: { roll },
-  });
-  showDiceChoice.value = false;
-  showWaiting.value = true;
-  waitingText.value = t.value.pvp.waitingForOpponent;
-}
-
-function onPvPDiceResult(e) {
-  const data = e.detail;
-  pvpStatus.value = 'fighting';
-  showWaiting.value = false;
-  showDiceChoice.value = false;
-  clearPvPTimer();
-
-  // Show dice flash effects
-  const isP1 = store.getters['pvp/getIsPlayer1'];
-  const myResult = isP1 ? data.player1 : data.player2;
-  if (myResult.rolled && myResult.effect) {
-    triggerFlash(myResult.effect.type);
-  }
+function onPvPDiceError(e) {
+  console.log('[PVP] dice_error:', e.detail);
+  // Dice not available — hide button
+  store.commit('fight/setDiceState', { activeItem: null, cooldownLeft: 0, ready: false });
 }
 
 function onPvPCoachPause(e) {
@@ -1012,7 +1021,6 @@ function onPvPFightEnd(e) {
   pvpStatus.value = 'finished';
   clearPvPTimer();
   showWaiting.value = false;
-  showDiceChoice.value = false;
   showCoachChoice.value = false;
 
   const myId = getMyOdId();
@@ -1049,13 +1057,7 @@ function onPvPFightEnd(e) {
 function startPvPTimer(type) {
   clearPvPTimer();
   pvpTimerInterval = setInterval(() => {
-    if (type === 'dice') {
-      diceTimer.value--;
-      if (diceTimer.value <= 0) {
-        clearPvPTimer();
-        if (showDiceChoice.value) onPlayerDiceChoice(false);
-      }
-    } else if (type === 'coach') {
+    if (type === 'coach') {
       coachTimerPvP.value--;
       if (coachTimerPvP.value <= 0) {
         clearPvPTimer();

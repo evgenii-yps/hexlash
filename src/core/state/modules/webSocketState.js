@@ -163,8 +163,9 @@ const actions = {
                 break;
             case 'fight_start':
             case 'round_result':
-            case 'dice_pause':
-            case 'dice_result':
+            case 'dice_available':
+            case 'dice_rolled':
+            case 'dice_error':
             case 'coach_pause':
             case 'coach_result':
             case 'fight_end':

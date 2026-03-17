@@ -16,7 +16,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 
 ```
 /src
-  App.vue                  — Root: header (Logo), router-view, BottomMenu, Info/Error toasts
+  App.vue                  — Root: header (Logo), router-view, BottomMenu, Info/Error toasts, ChallengeNotification
   main.js                  — Entry: Vue + Vuetify + i18n + Vuex store init
   router/index.js          — Routes + auth guards + fight state restore
   views/                   — 17 page-level components
@@ -60,8 +60,11 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
     config.js              — Constants (PORT, WS_PORT, JWT_SECRET, game balance)
     routes/                — auth, user, club, task, file, fight, stats
     middleware/            — auth.js (JWT guard), upload.js (Multer)
-    websocket/handler.js   — Real-time message routing
+    websocket/handler.js   — Real-time message routing + challenge system
+    websocket/pvpHandler.js — PvP fight message handling
     services/matchmaking.js — PvP matchmaking service
+    services/pvpMatchManager.js — PvP match lifecycle management
+    services/pvpCombatEngine.js — PvP combat engine
     utils/helpers.js
   prisma/
     schema.prisma          — 10 models: User, Club, Fight, Achievement, Task, PunchInfo...
@@ -114,7 +117,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 | `webSocketState` | WS connection, real-time messages |
 | `autoFightState` | Auto fight: scheduling, offline simulation, fight log, push notifications, daily auto-reset |
 | `pvpState` | Real-time PvP matchmaking and fights |
-| `friendsState` | Friends list, friend requests, challenges |
+| `friendsState` | Friends list, friend requests, challenges (WebSocket-based) |
 
 ---
 
@@ -228,7 +231,9 @@ PUNCH_INTERVAL_MS = 3600000   // 1 hour
 
 **Auto Fight:** Toggle on Arena screen → fights every 60 min offline → uses CombatEngine + ModuleAIStrategy → localStorage persist (`hexlash_autofight_state`, `hexlash_autofight_history`) → push notifications via Notification API → limits: 24/day, 48/session → auto-catches up missed fights on tab focus → daily auto-reset: on new day clears fight log, wins/losses/draws/XP counters (no manual clear button)
 
-**PvP:** Real-time matchmaking via WebSocket → friend challenges → spectate mode → backend matchmaking service
+**PvP:** Real-time matchmaking via WebSocket → friend challenges (WebSocket-based, 10s timer) → spectate mode → backend matchmaking service
+
+**Friend Challenge Flow:** Player A clicks ⚔️ → `challenge_send` via WS → server checks online → `challenge_received` → Player B sees ChallengeNotification (top-of-screen, 10s auto-decline) → accept → server creates match via pvpMatchManager → `challenge_start` → both navigate to `/fight?mode=pvp&matchId=...`
 
 **Dice effects:** Heal, Adrenaline, Shield, Blind, Rage, Crit
 
@@ -262,7 +267,7 @@ PUNCH_INTERVAL_MS = 3600000   // 1 hour
 **11 locales:** en, ru, de, es, fr, pt, ar, hi, ja, ko, zh
 
 **Key sections per locale:**
-- UI labels: `menu`, `auth`, `profile`, `arena`, `fight`, `training`, `moves`, `deck`, `cards`, `rating`, `club`, `info`, `nav`, `autoFight`
+- UI labels: `menu`, `auth`, `profile`, `arena`, `fight`, `training`, `moves`, `deck`, `cards`, `rating`, `club`, `info`, `nav`, `autoFight`, `friends`, `pvp`, `spectate`, `xpAllocation`
 - Game data translations: `gameData.branches[id].{name,description}`, `gameData.moves[id].{name,description}`
 - Page content: `locales/pages/help/{lang}.json`, `locales/pages/rules/{lang}.json`
 
@@ -288,7 +293,8 @@ PUNCH_INTERVAL_MS = 3600000   // 1 hour
 - `ModeSelector.vue` — arena mode selector (AI/PvP)
 - `FriendCard.vue` — friend display card
 - `FriendRequestCard.vue` — incoming friend request
-- `ChallengeModal.vue` — PvP challenge popup
+- `ChallengeModal.vue` — PvP challenge popup (legacy, kept as fallback)
+- `ChallengeNotification.vue` — Top-of-screen challenge notification (global, z-index: 9999, 10s timer)
 - `PlayerSearchResult.vue` — player search result item
 - `XPAllocationModal.vue` — XP allocation modal
 - `PvPStatsCard.vue` — PvP statistics display
@@ -319,6 +325,13 @@ Auth guard: JWT Bearer token via `middleware/auth.js`
 | `PunchBatchRequestMsg` | `UserResponseMsg` | Submit batch of punches |
 | `FightTicketMsg` | `FightInfoMsg` | Request new fight ticket |
 | `FightActionMsg` | — | Send PvP fight action |
+| `challenge_send` | `challenge_sent` / `challenge_error` | Send PvP challenge to friend |
+| `challenge_accepted` | `challenge_start` | Accept incoming challenge → creates match |
+| `challenge_declined` | `challenge_declined` | Decline incoming challenge |
+| — | `challenge_received` | Incoming challenge notification |
+| `MatchmakingStartMsg` | `MatchmakingQueueMsg` / `MatchFoundMsg` | Join matchmaking queue |
+| `MatchmakingCancelMsg` | `MatchmakingCancelledMsg` | Leave matchmaking queue |
+| `pvp_ready` / `dice_choice` / `coach_choice` | PvP fight events | Real-time PvP fight actions |
 | — | `AchievementResponseMsg` | Auto-awarded achievement (punch milestones: 100, 1k, 5k, 10k) |
 | — | `ErrorMsg` | Error response |
 
@@ -344,5 +357,5 @@ User, Club, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask,
 
 ## Branch (Git)
 
-Development branch: `claude/game-improvements-WHMaI`
-Push: `git push -u origin claude/game-improvements-WHMaI`
+Development branch: `claude/review-hexlash-guidelines-K9Qo3`
+Push: `git push -u origin claude/review-hexlash-guidelines-K9Qo3`

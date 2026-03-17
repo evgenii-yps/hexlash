@@ -7,7 +7,6 @@ const {
   COUNTDOWN_MS,
   ROUND_ANIMATION_MS,
   DICE_COOLDOWN_ROUNDS,
-  DICE_PAUSE_TIMEOUT_MS,
   EMERGENCY_HP_THRESHOLD,
   COACH_MIN_ROUND,
   COACH_BOOST_ROUNDS,
@@ -46,7 +45,7 @@ class PvPCombatEngine {
 
     this.currentRound = 0;
     this.maxRounds = MAX_ROUNDS;
-    this.status = 'waiting'; // waiting, running, paused_dice, paused_coach, finished
+    this.status = 'waiting'; // waiting, running, paused_coach, finished
     this.roundResults = [];
     this.pauseTimer = null;
     this.pendingChoices = {};
@@ -87,13 +86,15 @@ class PvPCombatEngine {
       return;
     }
 
-    // Check dice availability
+    // Notify players of dice availability (no pause — they can roll instantly during the round)
     const p1Dice = (this.currentRound - this.player1.diceUsedRound) >= DICE_COOLDOWN_ROUNDS;
     const p2Dice = (this.currentRound - this.player2.diceUsedRound) >= DICE_COOLDOWN_ROUNDS;
 
-    if (p1Dice || p2Dice) {
-      this.pauseForDice(p1Dice, p2Dice);
-      return;
+    if (p1Dice) {
+      this.sendToPlayer(this.player1, 'dice_available', { round: this.currentRound });
+    }
+    if (p2Dice) {
+      this.sendToPlayer(this.player2, 'dice_available', { round: this.currentRound });
     }
 
     // Check coach — after COACH_MIN_ROUND, once per fight
@@ -182,18 +183,18 @@ class PvPCombatEngine {
     this.tickEffects(this.player1);
     this.tickEffects(this.player2);
 
-    // Build round result
+    // Build round result (enriched with name/branch for frontend display)
     const result = {
       round: this.currentRound,
       firstAttacker,
       player1: {
-        module: module1,
+        module: { id: module1.id, level: level1, name: moveData1.id, branch: moveData1.branch },
         damage: firstAttacker === 'player1' ? firstDamage : secondDamage,
         hp: this.player1.hp,
         effects: [...this.player1.activeEffects],
       },
       player2: {
-        module: module2,
+        module: { id: module2.id, level: level2, name: moveData2.id, branch: moveData2.branch },
         damage: firstAttacker === 'player2' ? firstDamage : secondDamage,
         hp: this.player2.hp,
         effects: [...this.player2.activeEffects],
@@ -268,75 +269,32 @@ class PvPCombatEngine {
     });
   }
 
-  // ── DICE PAUSE ─────────────────────────────────────────────────────────
+  // ── INSTANT DICE ROLL (no pause) ───────────────────────────────────────
 
-  pauseForDice(p1Available, p2Available) {
-    this.status = 'paused_dice';
-    this.pendingChoices = {
-      player1: p1Available ? null : { roll: false },
-      player2: p2Available ? null : { roll: false },
-    };
+  onDiceRoll(odId) {
+    if (this.status === 'finished') return;
 
-    this.sendToPlayer(this.player1, 'dice_pause', {
-      round: this.currentRound,
-      timeLimit: DICE_PAUSE_TIMEOUT_MS,
-      available: p1Available,
-      waitingForOpponent: !p1Available,
-    });
+    let player = null;
+    if (odId === this.player1.odId) player = this.player1;
+    else if (odId === this.player2.odId) player = this.player2;
+    else return;
 
-    this.sendToPlayer(this.player2, 'dice_pause', {
-      round: this.currentRound,
-      timeLimit: DICE_PAUSE_TIMEOUT_MS,
-      available: p2Available,
-      waitingForOpponent: !p2Available,
-    });
-
-    this.pauseTimer = setTimeout(() => {
-      // Timeout — whoever didn't choose, doesn't roll
-      if (this.pendingChoices.player1 === null) this.pendingChoices.player1 = { roll: false };
-      if (this.pendingChoices.player2 === null) this.pendingChoices.player2 = { roll: false };
-      this.resolveDicePause();
-    }, DICE_PAUSE_TIMEOUT_MS);
-  }
-
-  onDiceChoice(odId, choice) {
-    if (this.status !== 'paused_dice') return;
-
-    if (odId === this.player1.odId) this.pendingChoices.player1 = choice;
-    else if (odId === this.player2.odId) this.pendingChoices.player2 = choice;
-
-    if (this.pendingChoices.player1 !== null && this.pendingChoices.player2 !== null) {
-      clearTimeout(this.pauseTimer);
-      this.resolveDicePause();
-    }
-  }
-
-  resolveDicePause() {
-    this.status = 'running';
-
-    let p1Effect = null;
-    let p2Effect = null;
-
-    if (this.pendingChoices.player1?.roll) {
-      p1Effect = this.rollDice();
-      this.applyDiceEffect(this.player1, p1Effect);
-      this.player1.diceUsedRound = this.currentRound;
+    // Check cooldown
+    const available = (this.currentRound - player.diceUsedRound) >= DICE_COOLDOWN_ROUNDS;
+    if (!available) {
+      this.sendToPlayer(player, 'dice_error', { message: 'dice_on_cooldown' });
+      return;
     }
 
-    if (this.pendingChoices.player2?.roll) {
-      p2Effect = this.rollDice();
-      this.applyDiceEffect(this.player2, p2Effect);
-      this.player2.diceUsedRound = this.currentRound;
-    }
+    const effect = this.rollDice();
+    this.applyDiceEffect(player, effect);
+    player.diceUsedRound = this.currentRound;
 
-    this.emit('dice_result', {
-      player1: { rolled: !!this.pendingChoices.player1?.roll, effect: p1Effect },
-      player2: { rolled: !!this.pendingChoices.player2?.roll, effect: p2Effect },
+    // Notify the rolling player of their result
+    this.sendToPlayer(player, 'dice_rolled', {
+      effect,
+      hp: player.hp,
     });
-
-    setTimeout(() => {
-      this.simulateRound();
-    }, ROUND_ANIMATION_MS);
   }
 
   // ── COACH PAUSE ────────────────────────────────────────────────────────
