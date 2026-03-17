@@ -79,7 +79,10 @@ app.use('/v1/friends', friendsRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('Unhandled error:', err);
+  console.error('=== UNHANDLED ERROR ===');
+  console.error('URL:', req.method, req.originalUrl);
+  console.error('Error:', err.message);
+  console.error('Stack:', err.stack);
   res.status(500).json({ error: 'Internal server error' });
 });
 
