@@ -46,7 +46,7 @@ const props = defineProps({
 
 const emit = defineEmits(['accept', 'decline']);
 
-const CHALLENGE_DURATION = 30;
+const CHALLENGE_DURATION = 10;
 const timeLeft = ref(CHALLENGE_DURATION);
 let timerInterval = null;
 

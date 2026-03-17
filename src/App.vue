@@ -30,19 +30,8 @@
 
     <NewAchievement v-if="isAuth"/>
 
-    <!-- Global challenge modal -->
-    <ChallengeModal
-      :visible="!!incomingChallenge"
-      :challenger="incomingChallenge || {}"
-      :challengeTitle="t.friends.challenge.title"
-      :wantsToFightText="t.friends.challenge.wantsToFight"
-      :acceptText="t.friends.challenge.accept"
-      :declineText="t.friends.challenge.decline"
-      :expiresInText="t.friends.challenge.expiresIn"
-      :ratingText="t.friends.rating"
-      @accept="onAcceptChallenge"
-      @decline="onDeclineChallenge"
-    />
+    <!-- Global challenge notification (top of screen) -->
+    <ChallengeNotification v-if="isAuth" />
 
     <footer class="footer">
       <transition name="slide-up-down">
@@ -62,7 +51,7 @@ import Info from "@/components/Info.vue";
 import NoConnection from "@/components/ui/NoConnection.vue";
 import Error from "@/components/Error.vue";
 import NewAchievement from "@/components/NewAchievement.vue";
-import ChallengeModal from "@/components/pvp/ChallengeModal.vue";
+import ChallengeNotification from "@/components/pvp/ChallengeNotification.vue";
 import { t } from "@/locales/index.js";
 import * as amplitude from "@amplitude/analytics-browser";
 
@@ -98,36 +87,6 @@ const errorMessage = computed(() => {
 const isAuth = computed(() => {
   return store.getters['master/getLoginState'].isAuthenticated
 });
-
-const pvpRouter = useRouter();
-
-const incomingChallenge = computed(() => store.getters['friends/getIncomingChallenge']);
-
-const onAcceptChallenge = async () => {
-  const challenger = await store.dispatch('friends/acceptIncomingChallenge');
-  if (challenger) {
-    store.dispatch('pvp/createPvPFight', { opponent: challenger, isRanked: false });
-    pvpRouter.push({ path: '/fight', query: { mode: 'pvp' } });
-  }
-};
-
-const onDeclineChallenge = () => {
-  store.dispatch('friends/declineIncomingChallenge');
-};
-
-// Listen for outgoing challenge accepted (when opponent accepts our challenge)
-const handleChallengeAccepted = (event) => {
-  const friend = event.detail;
-  store.dispatch('pvp/createPvPFight', {
-    opponent: {
-      odId: friend.id,
-      username: friend.username,
-      rating: friend.rating,
-    },
-    isRanked: false,
-  });
-  pvpRouter.push({ path: '/fight', query: { mode: 'pvp' } });
-};
 
 const route = useRoute();
 const isScrollableComponent = computed(() => {
@@ -234,7 +193,6 @@ onMounted(() => {
 
   document.addEventListener('visibilitychange', handleVisibilityChange);
   window.addEventListener('online', handleOnlineStatus);
-  window.addEventListener('pvp-challenge-accepted', handleChallengeAccepted);
 
   // Initialize auto fight system
   store.dispatch('autoFight/init');
@@ -259,7 +217,6 @@ onBeforeUnmount(() => {
 
   document.removeEventListener('visibilitychange', handleVisibilityChange);
   window.removeEventListener('online', handleOnlineStatus);
-  window.removeEventListener('pvp-challenge-accepted', handleChallengeAccepted);
 
   clearInterval(autoFightInterval);
 });
