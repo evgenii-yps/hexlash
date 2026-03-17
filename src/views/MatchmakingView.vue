@@ -7,7 +7,7 @@
 
         <!-- Animated Icon -->
         <div class="search-icon-container">
-          <div class="search-icon">&#x2694;&#xFE0F;</div>
+          <div class="search-icon"><svg viewBox="0 0 64 64" width="60" height="60" fill="none" stroke="#FF066F" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="52" x2="42" y2="12"/><line x1="38" y1="12" x2="46" y2="12"/><line x1="42" y1="8" x2="42" y2="16"/><line x1="22" y1="38" x2="30" y2="42"/><line x1="52" y1="52" x2="22" y2="12"/><line x1="18" y1="12" x2="26" y2="12"/><line x1="22" y1="8" x2="22" y2="16"/><line x1="42" y1="38" x2="34" y2="42"/></svg></div>
           <div class="pulse-ring"></div>
           <div class="pulse-ring delay"></div>
         </div>
@@ -36,11 +36,11 @@
             {{ t.pvp.playersOnline }}: {{ onlineCount }}
           </div>
           <div class="stat-item">
-            <span class="stat-icon">&#x1F3C6;</span>
+            <span class="stat-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#FFD700" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h12v6a6 6 0 0 1-12 0V2z"/><path d="M6 4H2v2a4 4 0 0 0 4 4"/><path d="M18 4h4v2a4 4 0 0 1-4 4"/><line x1="12" y1="14" x2="12" y2="18"/><rect x="7" y="18" width="10" height="2" rx="1"/></svg></span>
             {{ t.pvp.yourRating }}: {{ playerRating }}
           </div>
           <div class="stat-item">
-            <span class="stat-icon">&#x1F4CA;</span>
+            <span class="stat-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#FF066F" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg></span>
             {{ t.pvp.searchRange }}: &plusmn;{{ searchRange }}
           </div>
         </div>
@@ -60,7 +60,7 @@
         <!-- VS Display -->
         <div class="vs-display">
           <div class="player-card me">
-            <div class="player-avatar">&#x1F464;</div>
+            <div class="player-avatar"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#FF066F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M3 21c0-5 4-9 9-9s9 4 9 9"/></svg></div>
             <div class="player-name">{{ playerName }}</div>
             <div class="player-rating">{{ playerRating }}</div>
           </div>
@@ -68,7 +68,7 @@
           <div class="vs-icon">VS</div>
 
           <div class="player-card opponent">
-            <div class="player-avatar">&#x1F464;</div>
+            <div class="player-avatar"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#00BFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M3 21c0-5 4-9 9-9s9 4 9 9"/></svg></div>
             <div class="player-name">{{ foundOpponent.username }}</div>
             <div class="player-rating">{{ foundOpponent.rating }}</div>
           </div>
@@ -83,7 +83,7 @@
 
       <!-- Timeout / No Players State -->
       <div v-else-if="status === 'timeout'" class="timeout-container">
-        <div class="timeout-icon">&#x23F0;</div>
+        <div class="timeout-icon"><svg viewBox="0 0 24 24" width="60" height="60" fill="none" stroke="#FFB800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="9"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="13" x2="15" y2="15"/><line x1="8" y1="2" x2="16" y2="2"/><line x1="12" y1="2" x2="12" y2="4"/></svg></div>
         <h2 class="timeout-title">{{ t.pvp.noPlayersFound }}</h2>
         <p class="timeout-hint">{{ t.pvp.tryAgainLater }}</p>
         <div class="timeout-buttons">
@@ -291,8 +291,10 @@ function cleanup() {
 }
 
 .search-icon {
-  font-size: 60px;
   z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   animation: iconPulse 1.5s ease-in-out infinite;
 }
 
@@ -400,7 +402,8 @@ function cleanup() {
 }
 
 .stat-icon {
-  font-size: 16px;
+  display: flex;
+  align-items: center;
 }
 
 .cancel-btn {
@@ -470,7 +473,9 @@ function cleanup() {
 }
 
 .player-avatar {
-  font-size: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-bottom: 8px;
 }
 
@@ -518,7 +523,9 @@ function cleanup() {
 }
 
 .timeout-icon {
-  font-size: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-bottom: 16px;
 }
 
