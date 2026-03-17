@@ -11,7 +11,7 @@
 
         <!-- Search -->
         <div class="search-input-container">
-          <span class="search-icon">&#x1F50D;</span>
+          <span class="search-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#FF066F" stroke-width="2" stroke-linecap="round"><circle cx="10" cy="10" r="7"/><line x1="15" y1="15" x2="21" y2="21"/></svg></span>
           <input
             v-model="searchQuery"
             class="search-input"
@@ -40,7 +40,7 @@
         <!-- Friend Requests -->
         <div v-if="searchQuery.length < 3 && incomingRequests.length > 0" class="section">
           <div class="section-header">
-            <span class="section-icon">&#x1F4E9;</span>
+            <span class="section-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#FF066F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22,4 12,13 2,4"/></svg></span>
             {{ t.friends.friendRequests }} ({{ incomingRequests.length }})
           </div>
           <FriendRequestCard
@@ -74,7 +74,7 @@
 
         <!-- Empty state (only when not searching, no friends, no requests) -->
         <div v-if="searchQuery.length < 3 && friends.length === 0 && incomingRequests.length === 0" class="empty-state">
-          <div class="empty-icon">&#x1F465;</div>
+          <div class="empty-icon"><svg viewBox="0 0 48 48" width="64" height="64" fill="none" stroke="#FF066F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="16" cy="14" r="6"/><path d="M6 38c0-6 4-12 10-12s10 6 10 12"/><circle cx="32" cy="14" r="6"/><path d="M22 38c0-6 4-12 10-12s10 6 10 12"/></svg></div>
           <div class="empty-text">{{ t.friends.noFriends }}</div>
           <div class="empty-hint">{{ t.friends.searchToAdd }}</div>
         </div>
@@ -228,9 +228,9 @@ const handleScroll = (event) => {
   left: 16px;
   top: 50%;
   transform: translateY(-50%);
-  color: #666;
-  font-size: 18px;
   pointer-events: none;
+  display: flex;
+  align-items: center;
 }
 
 .search-input {
@@ -275,7 +275,8 @@ const handleScroll = (event) => {
 }
 
 .section-icon {
-  font-size: 16px;
+  display: flex;
+  align-items: center;
 }
 
 /* Search results */
@@ -311,8 +312,10 @@ const handleScroll = (event) => {
 }
 
 .empty-icon {
-  font-size: 3rem;
   opacity: 0.6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .empty-text {
