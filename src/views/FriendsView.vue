@@ -145,10 +145,10 @@ let refreshInterval = null;
 
 onMounted(() => {
   store.dispatch('friends/init');
-  // Refresh friends list every 30s to update online status
+  // Refresh friends list every second to update online status
   refreshInterval = setInterval(() => {
     store.dispatch('friends/loadFriends');
-  }, 30000);
+  }, 1000);
 });
 
 onUnmounted(() => {
