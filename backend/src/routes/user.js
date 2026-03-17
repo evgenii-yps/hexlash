@@ -35,11 +35,21 @@ router.post('/edit', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'Profile data required' });
     }
 
-    const allowedFields = ['name', 'email', 'language', 'skin', 'walletAddress'];
+    const allowedFields = ['name', 'login', 'email', 'language', 'skin', 'walletAddress'];
     const updateData = {};
     for (const field of allowedFields) {
       if (profileData[field] !== undefined) {
         updateData[field] = profileData[field];
+      }
+    }
+
+    // Validate login uniqueness if changing login
+    if (updateData.login) {
+      const existing = await prisma.user.findFirst({
+        where: { login: { equals: updateData.login, mode: 'insensitive' }, NOT: { id: req.userId } },
+      });
+      if (existing) {
+        return res.status(409).json({ error: 'Login already taken' });
       }
     }
 

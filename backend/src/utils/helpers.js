@@ -20,6 +20,7 @@ function formatUserResponse(user) {
     balance: user.balance,
     walletAddress: user.walletAddress,
     skin: user.skin,
+    rating: user.rating,
     totalFights: user.totalFights,
     wins: user.wins,
     losses: user.losses,

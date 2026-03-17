@@ -10,12 +10,26 @@ router.post('/request', authMiddleware, async (req, res) => {
     const { targetId } = req.body;
     const fromId = req.userId;
 
+    console.log('[FRIENDS] Request from:', fromId, 'to:', targetId);
+
+    if (!targetId) {
+      return res.status(400).json({ error: 'targetId is required' });
+    }
+
     if (fromId === targetId) {
       return res.status(400).json({ error: 'Cannot add yourself' });
     }
 
-    // Check target exists
-    const targetUser = await prisma.user.findUnique({ where: { id: targetId } });
+    // Check both users exist before any FK operations
+    const [fromUser, targetUser] = await Promise.all([
+      prisma.user.findUnique({ where: { id: fromId } }),
+      prisma.user.findUnique({ where: { id: targetId } }),
+    ]);
+
+    if (!fromUser) {
+      console.error('[FRIENDS] Sender not found in DB! userId:', fromId);
+      return res.status(400).json({ error: 'Sender not found' });
+    }
     if (!targetUser) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -69,8 +83,8 @@ router.post('/request', authMiddleware, async (req, res) => {
     console.log('[FRIENDS] Request sent:', fromId, '->', targetId);
     res.json({ status: 'pending' });
   } catch (error) {
-    console.error('[FRIENDS] Error sending request:', error);
-    res.status(500).json({ error: 'Failed to send request' });
+    console.error('[FRIENDS] Error sending request:', error.message, error.code);
+    res.status(500).json({ error: 'Failed to send request', details: error.message });
   }
 });
 
