@@ -86,6 +86,7 @@ function setupWebSocket(server) {
 
 async function handleMessage(ws, userId, msg) {
   const { type } = msg;
+  console.log('[WS] Received:', type, 'from:', userId);
 
   switch (type) {
     case 'PunchInfoRequestMsg':
@@ -395,12 +396,14 @@ function sendToUser(userId, data) {
 // ─── Matchmaking ──────────────────────────────────────────────────────────────
 
 function handleMatchmakingStart(ws, userId, msg) {
-  const { username, rating } = msg.matchmakingRequest || {};
+  const { username, rating, skin, avatarUrl } = msg.matchmakingRequest || {};
 
   const match = matchmaking.addToQueue({
     odId: userId,
     username: username || 'Player',
     rating: rating || 1000,
+    skin: skin || null,
+    avatarUrl: avatarUrl || null,
   });
 
   // Send queue update
@@ -434,6 +437,8 @@ function notifyMatch(match) {
         odId: match.player2.odId,
         username: match.player2.username,
         rating: match.player2.rating,
+        skin: match.player2.skin || null,
+        avatarUrl: match.player2.avatarUrl || null,
       },
     });
   }
@@ -446,6 +451,8 @@ function notifyMatch(match) {
         odId: match.player1.odId,
         username: match.player1.username,
         rating: match.player1.rating,
+        skin: match.player1.skin || null,
+        avatarUrl: match.player1.avatarUrl || null,
       },
     });
   }

@@ -187,11 +187,14 @@ function startSearch() {
   searchRange.value = 100;
 
   // Send matchmaking start via WS
+  const masterData = store.getters['master/getMaster'];
   store.dispatch('webSocket/sendMessage', {
     type: 'MatchmakingStartMsg',
     matchmakingRequest: {
       username: playerName.value,
       rating: playerRating.value,
+      skin: masterData?.userData?.skin || null,
+      avatarUrl: masterData?.userData?.avatarUrl || null,
     },
   });
 

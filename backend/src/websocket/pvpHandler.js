@@ -8,12 +8,20 @@ function handlePvPMessage(ws, message, user) {
     return;
   }
 
+  console.log('[PVP] handlePvPMessage:', data.type, 'from:', user?.odId);
+
   switch (data.type) {
 
     case 'pvp_ready': {
+      console.log('[PVP] pvp_ready from:', user.odId, 'matchId:', data.matchId, 'deck:', data.deck?.length, 'modules');
+
       // Player is ready for the fight, sends their deck
       const match = pvpMatchManager.getMatch(data.matchId);
+      console.log('[PVP] Match found:', !!match);
+      console.log('[PVP] Active matches:', [...pvpMatchManager.activeMatches.keys()]);
+
       if (!match) {
+        console.log('[PVP] ERROR: Match not found! matchId:', data.matchId);
         ws.send(JSON.stringify({ type: 'error', message: 'Match not found' }));
         return;
       }
@@ -32,8 +40,11 @@ function handlePvPMessage(ws, message, user) {
         return;
       }
 
+      console.log('[PVP] Ready states: p1=', match.player1.ready, 'p2=', match.player2.ready);
+
       // Both ready → start the fight
       if (match.player1.ready && match.player2.ready) {
+        console.log('[PVP] Both ready — starting fight!');
         match.start();
       }
       break;

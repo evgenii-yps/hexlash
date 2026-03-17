@@ -26,6 +26,8 @@ class MatchmakingService {
       odId: player.odId,
       username: player.username,
       rating: player.rating || 1000,
+      skin: player.skin || null,
+      avatarUrl: player.avatarUrl || null,
       searchRange: SEARCH_RANGE_INITIAL,
       searchingSince: Date.now(),
     };
@@ -100,6 +102,7 @@ class MatchmakingService {
   /** Create a match between two players, removing both from queue. */
   createMatch(player1, player2) {
     const matchId = `match_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    console.log('[MATCHMAKING] Creating match:', matchId, 'P1:', player1.odId, player1.username, 'P2:', player2.odId, player2.username);
 
     this.removeFromQueue(player1.odId);
     this.removeFromQueue(player2.odId);
@@ -117,8 +120,8 @@ class MatchmakingService {
 
     return {
       matchId,
-      player1: { odId: player1.odId, username: player1.username, rating: player1.rating },
-      player2: { odId: player2.odId, username: player2.username, rating: player2.rating },
+      player1: { odId: player1.odId, username: player1.username, rating: player1.rating, skin: player1.skin, avatarUrl: player1.avatarUrl },
+      player2: { odId: player2.odId, username: player2.username, rating: player2.rating, skin: player2.skin, avatarUrl: player2.avatarUrl },
     };
   }
 
