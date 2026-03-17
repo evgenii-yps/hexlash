@@ -460,6 +460,8 @@ export default {
       declined: 'Challenge declined',
       expired: 'Challenge expired',
       startingFight: 'Fight starting...',
+      friendOffline: 'Friend is offline',
+      challengerOffline: 'Challenger is offline',
     },
   },
   pvp: {

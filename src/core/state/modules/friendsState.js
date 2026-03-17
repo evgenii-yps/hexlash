@@ -1,4 +1,5 @@
 import apiClient from '@/core/api/apiClient.js';
+import store from '@/core/state/store.js';
 
 // ─── Challenge timer ────────────────────────────────────────────────────────
 let challengeTimeout = null;
@@ -218,18 +219,30 @@ const actions = {
         }
     },
 
-    // ─── Challenges (keep client-side for now, will be WebSocket later) ────
+    // ─── Challenges (via WebSocket) ────────────────────────────────────────
 
-    sendChallenge({ commit, state: s }, friend) {
+    sendChallenge({ commit, state: s, rootGetters }, friend) {
         if (friend.status === 'offline') return false;
         if (s.challenge.outgoing) return false;
+
+        const master = rootGetters['master/getMaster'];
+        const username = master?.userData?.name || master?.userData?.login || 'Player';
+        const rating = master?.userData?.rating || 1000;
+
+        // Send via WebSocket
+        store.dispatch('webSocket/sendMessage', {
+            type: 'challenge_send',
+            targetUserId: friend.id,
+            username,
+            rating,
+        });
 
         const challenge = {
             odId: friend.id,
             odUser: friend.username,
             odRating: friend.rating,
             sentAt: Date.now(),
-            expiresAt: Date.now() + 30000,
+            expiresAt: Date.now() + 10000,
         };
 
         commit('setOutgoingChallenge', challenge);
@@ -240,7 +253,7 @@ const actions = {
                 commit('clearOutgoingChallenge');
             }
             challengeTimeout = null;
-        }, 30000);
+        }, 10000);
 
         return true;
     },

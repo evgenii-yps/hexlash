@@ -7,6 +7,7 @@ const { JWT_SECRET, COST_PER_CLICK, DECIMALS, PUNCH_MAX_PER_INTERVAL, PUNCH_MAX_
 const prisma = new PrismaClient();
 const clients = new Map(); // userId -> ws
 const matchmaking = require('../services/matchmaking');
+const pvpMatchManager = require('../services/pvpMatchManager');
 const { handlePvPMessage, handlePvPDisconnect } = require('./pvpHandler');
 
 function setupWebSocket(server) {
@@ -117,6 +118,18 @@ async function handleMessage(ws, userId, msg) {
     case 'dice_choice':
     case 'coach_choice':
       handlePvPMessage(ws, msg, { odId: userId });
+      break;
+
+    case 'challenge_send':
+      handleChallengeSend(ws, userId, msg);
+      break;
+
+    case 'challenge_accepted':
+      handleChallengeAccepted(ws, userId, msg);
+      break;
+
+    case 'challenge_declined':
+      handleChallengeDeclined(ws, userId, msg);
       break;
 
     default:
@@ -390,6 +403,116 @@ function sendToUser(userId, data) {
   const ws = clients.get(userId);
   if (ws && ws.readyState === ws.OPEN) {
     ws.send(JSON.stringify(data));
+  }
+}
+
+// ─── Challenges ─────────────────────────────────────────────────────────────
+
+function handleChallengeSend(ws, userId, msg) {
+  const { targetUserId, username, rating } = msg;
+  const targetSocket = clients.get(targetUserId);
+
+  console.log('[CHALLENGE] From:', userId, 'To:', targetUserId, 'Target online:', !!targetSocket);
+
+  if (!targetSocket) {
+    sendMessage(ws, {
+      type: 'challenge_error',
+      message: 'friend_offline',
+    });
+    return;
+  }
+
+  const challengeId = `challenge_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+
+  // Send challenge to target
+  sendMessage(targetSocket, {
+    type: 'challenge_received',
+    from: {
+      odId: userId,
+      username: username || 'Player',
+      rating: rating || 1000,
+    },
+    challengeId,
+  });
+
+  // Confirm to sender
+  sendMessage(ws, {
+    type: 'challenge_sent',
+    targetUserId,
+  });
+}
+
+function handleChallengeAccepted(ws, userId, msg) {
+  const { challengerOdId, challengerUsername, challengerRating } = msg;
+  const challengerSocket = clients.get(challengerOdId);
+
+  if (!challengerSocket) {
+    sendMessage(ws, {
+      type: 'challenge_error',
+      message: 'challenger_offline',
+    });
+    return;
+  }
+
+  // Fetch acceptor's username from DB
+  prisma.user.findUnique({ where: { id: userId } }).then((acceptor) => {
+    const acceptorUsername = acceptor?.name || acceptor?.login || 'Player';
+    const acceptorRating = acceptor?.rating || 1000;
+
+    // Create match
+    const matchId = `match_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+
+    pvpMatchManager.createMatch(matchId, {
+      odId: challengerOdId,
+      username: challengerUsername || 'Player',
+      deck: [],
+    }, {
+      odId: userId,
+      username: acceptorUsername,
+      deck: [],
+    });
+
+    // Notify challenger — fight starts
+    sendMessage(challengerSocket, {
+      type: 'challenge_start',
+      matchId,
+      opponent: {
+        odId: userId,
+        username: acceptorUsername,
+        rating: acceptorRating,
+      },
+    });
+
+    // Notify acceptor — fight starts
+    sendMessage(ws, {
+      type: 'challenge_start',
+      matchId,
+      opponent: {
+        odId: challengerOdId,
+        username: challengerUsername || 'Player',
+        rating: challengerRating || 1000,
+      },
+    });
+
+    console.log('[CHALLENGE] Match created:', matchId, 'between', challengerOdId, 'and', userId);
+  }).catch((err) => {
+    console.error('[CHALLENGE] Error creating match:', err);
+    sendMessage(ws, {
+      type: 'challenge_error',
+      message: 'match_creation_failed',
+    });
+  });
+}
+
+function handleChallengeDeclined(ws, userId, msg) {
+  const { challengerOdId } = msg;
+  const challengerSocket = clients.get(challengerOdId);
+
+  if (challengerSocket) {
+    sendMessage(challengerSocket, {
+      type: 'challenge_declined',
+      declinedBy: userId,
+    });
   }
 }
 

@@ -460,6 +460,8 @@ export default {
       declined: 'Вызов отклонён',
       expired: 'Вызов истёк',
       startingFight: 'Бой начинается...',
+      friendOffline: 'Друг не в сети',
+      challengerOffline: 'Отправитель вызова не в сети',
     },
   },
   pvp: {

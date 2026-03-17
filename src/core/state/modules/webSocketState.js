@@ -170,6 +170,27 @@ const actions = {
             case 'fight_end':
                 window.dispatchEvent(new CustomEvent('pvp-' + messageType, { detail: message }));
                 break;
+            // ─── Challenge messages ─────────────────────────────────────
+            case 'challenge_received':
+                store.commit('friends/setIncomingChallenge', message.from);
+                window.dispatchEvent(new CustomEvent('challenge-received', { detail: message }));
+                break;
+            case 'challenge_sent':
+                window.dispatchEvent(new CustomEvent('challenge-sent', { detail: message }));
+                break;
+            case 'challenge_declined':
+                store.commit('friends/clearOutgoingChallenge');
+                window.dispatchEvent(new CustomEvent('challenge-declined-response', { detail: message }));
+                break;
+            case 'challenge_error':
+                store.commit('friends/clearOutgoingChallenge');
+                window.dispatchEvent(new CustomEvent('challenge-error', { detail: message }));
+                break;
+            case 'challenge_start':
+                store.commit('friends/clearOutgoingChallenge');
+                store.commit('friends/clearIncomingChallenge');
+                window.dispatchEvent(new CustomEvent('challenge-start', { detail: message }));
+                break;
             default:
                 console.warn(`Unknown message type received: ${messageType}`);
                 break;
