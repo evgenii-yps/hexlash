@@ -15,7 +15,9 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Login and password are required' });
     }
 
-    const user = await prisma.user.findUnique({ where: { login } });
+    const user = await prisma.user.findFirst({
+      where: { login: { equals: login, mode: 'insensitive' } },
+    });
     if (!user) {
       return res.status(401).json({ error: 'Invalid login or password' });
     }
@@ -54,7 +56,9 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Password must be at least 6 characters' });
     }
 
-    const existing = await prisma.user.findUnique({ where: { login } });
+    const existing = await prisma.user.findFirst({
+      where: { login: { equals: login, mode: 'insensitive' } },
+    });
     if (existing) {
       return res.status(409).json({ error: 'Login already taken' });
     }
@@ -131,7 +135,9 @@ router.post('/telegram', async (req, res) => {
 router.get('/login-available/:login', async (req, res) => {
   try {
     const { login } = req.params;
-    const existing = await prisma.user.findUnique({ where: { login } });
+    const existing = await prisma.user.findFirst({
+      where: { login: { equals: login, mode: 'insensitive' } },
+    });
     res.json({ data: { available: !existing } });
   } catch (err) {
     console.error('Login check error:', err);
