@@ -3,6 +3,8 @@
  * Players join queue via WebSocket, service pairs them by rating proximity.
  */
 
+const pvpMatchManager = require('./pvpMatchManager');
+
 const SEARCH_RANGE_INITIAL = 100;
 const SEARCH_RANGE_STEP = 50;
 const SEARCH_RANGE_MAX = 500;
@@ -101,6 +103,17 @@ class MatchmakingService {
 
     this.removeFromQueue(player1.odId);
     this.removeFromQueue(player2.odId);
+
+    // Register the match in PvP match manager (decks come later via pvp_ready)
+    pvpMatchManager.createMatch(matchId, {
+      odId: player1.odId,
+      username: player1.username,
+      deck: [],
+    }, {
+      odId: player2.odId,
+      username: player2.username,
+      deck: [],
+    });
 
     return {
       matchId,

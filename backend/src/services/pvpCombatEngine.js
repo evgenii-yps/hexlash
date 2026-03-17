@@ -433,6 +433,7 @@ class PvPCombatEngine {
     };
 
     this.emit('fight_end', result);
+    this.saveFightResult(result);
     return result;
   }
 
@@ -460,7 +461,86 @@ class PvPCombatEngine {
       reason: 'opponent_disconnected',
     });
 
+    this.saveFightResult(result);
     return result;
+  }
+
+  // ── PERSISTENCE ────────────────────────────────────────────────────────
+
+  async saveFightResult(result) {
+    try {
+      const { PrismaClient } = require('@prisma/client');
+      const prisma = new PrismaClient();
+
+      await prisma.fight.create({
+        data: {
+          mode: 'pvp',
+          matchId: result.matchId,
+          fighterOneId: result.player1.odId,
+          fighterTwoId: result.player2.odId,
+          player1Id: result.player1.odId,
+          player2Id: result.player2.odId,
+          player1Hp: result.player1.finalHp,
+          player2Hp: result.player2.finalHp,
+          winner: result.winner,
+          winnerId: result.winner !== 'draw' ? result.winner : null,
+          reason: result.reason || 'normal',
+          rounds: result.rounds,
+          roundLog: result.roundLog || [],
+          isCompleted: true,
+        },
+      });
+
+      // Update ELO ratings
+      if (result.winner && result.winner !== 'draw') {
+        const winnerId = result.winner;
+        const loserId = winnerId === result.player1.odId ? result.player2.odId : result.player1.odId;
+
+        const winnerUser = await prisma.user.findUnique({ where: { id: winnerId } });
+        const loserUser = await prisma.user.findUnique({ where: { id: loserId } });
+
+        if (winnerUser && loserUser) {
+          const elo = this.calculateElo(winnerUser.rating || 1000, loserUser.rating || 1000);
+          await prisma.user.update({ where: { id: winnerId }, data: { rating: elo.winnerNew } });
+          await prisma.user.update({ where: { id: loserId }, data: { rating: elo.loserNew } });
+        }
+      } else if (result.winner === 'draw') {
+        // Draw — still adjust ratings
+        const p1 = await prisma.user.findUnique({ where: { id: result.player1.odId } });
+        const p2 = await prisma.user.findUnique({ where: { id: result.player2.odId } });
+
+        if (p1 && p2) {
+          const elo = this.calculateElo(p1.rating || 1000, p2.rating || 1000, true);
+          await prisma.user.update({ where: { id: p1.id }, data: { rating: elo.winnerNew } });
+          await prisma.user.update({ where: { id: p2.id }, data: { rating: elo.loserNew } });
+        }
+      }
+
+      await prisma.$disconnect();
+    } catch (e) {
+      console.error('Failed to save fight result:', e);
+    }
+
+    // Remove match from manager
+    const pvpMatchManager = require('./pvpMatchManager');
+    pvpMatchManager.removeMatch(this.matchId);
+  }
+
+  calculateElo(winnerRating, loserRating, isDraw = false) {
+    const K = 32;
+    const expected = 1 / (1 + Math.pow(10, (loserRating - winnerRating) / 400));
+
+    if (isDraw) {
+      return {
+        winnerNew: Math.round(winnerRating + K * (0.5 - expected)),
+        loserNew: Math.round(loserRating + K * (0.5 - (1 - expected))),
+      };
+    }
+
+    return {
+      winnerNew: Math.round(winnerRating + K * (1 - expected)),
+      loserNew: Math.round(loserRating + K * (0 - (1 - expected))),
+    };
   }
 
   // ── UTILITIES ──────────────────────────────────────────────────────────
