@@ -86,7 +86,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import store from '@/core/state/store.js';
 import router from '@/router/index.js';
 import { t } from '@/locales/index.js';
@@ -141,8 +141,21 @@ const onDecline = (request) => {
   store.dispatch('friends/declineFriendRequest', request.id);
 };
 
+let refreshInterval = null;
+
 onMounted(() => {
   store.dispatch('friends/init');
+  // Refresh friends list every 30s to update online status
+  refreshInterval = setInterval(() => {
+    store.dispatch('friends/loadFriends');
+  }, 30000);
+});
+
+onUnmounted(() => {
+  if (refreshInterval) {
+    clearInterval(refreshInterval);
+    refreshInterval = null;
+  }
 });
 
 const goBack = async () => {
