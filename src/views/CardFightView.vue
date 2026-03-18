@@ -159,34 +159,6 @@
       <div v-if="fightPhase === 'results'" class="results-overlay" @scroll="handleScroll">
           <div class="result-label" :class="resultClass">{{ resultText }}</div>
 
-          <div class="fight-report">
-            <div class="report-title">{{ t.fight.lblReport }}</div>
-            <div class="report-row">
-              <span>{{ t.fight.lblRoundsPlayed }}:</span>
-              <span>{{ roundNum }}</span>
-            </div>
-            <div class="report-row">
-              <span>{{ t.fight.lblTotalDamage }}:</span>
-              <span>{{ fightStats.totalDamageDealt }}</span>
-            </div>
-            <div class="report-row">
-              <span>{{ t.fight.lblDamageReceived }}:</span>
-              <span>{{ fightStats.totalDamageTaken }}</span>
-            </div>
-            <div class="report-row">
-              <span>{{ t.fight.lblCriticalHits }}:</span>
-              <span>{{ fightStats.criticalHits }}</span>
-            </div>
-            <div class="report-row">
-              <span>{{ t.fight.lblPickedUp }}:</span>
-              <span>{{ fightStats.dicePickedUp }}</span>
-            </div>
-            <div class="report-row">
-              <span>{{ t.fight.lblRemainingHP }}:</span>
-              <span>{{ liveHP1 }}</span>
-            </div>
-          </div>
-
           <!-- XP за бой -->
           <div v-if="xpEarned" class="xp-earned-block">
             <div class="xp-earned-title">{{ t.fight.lblXpEarned }}</div>
@@ -230,6 +202,10 @@
 
           <div v-if="!isPvP" class="result-buttons">
               <VBtn class="result-btn" @click="fightAgain">{{ t.fight.lblFightAgain }}</VBtn>
+              <VBtn class="result-btn result-btn-secondary" @click="changeBuild">{{ t.fight.lblChangeDeck }}</VBtn>
+          </div>
+          <div v-if="isPvP" class="result-buttons">
+              <VBtn class="result-btn" @click="pvpFightAgain">{{ t.fight.lblFightAgain }}</VBtn>
               <VBtn class="result-btn result-btn-secondary" @click="changeBuild">{{ t.fight.lblChangeDeck }}</VBtn>
           </div>
       </div>
@@ -367,6 +343,8 @@ const resultState = computed(() => {
   if (liveHP1.value < liveHP2.value) return 'lose';
   return 'draw';
 });
+
+const pvpDisconnect = computed(() => pvpResultReason.value === 'disconnect');
 
 const statusLeft = computed(() => {
   if (!resultState.value) return '';
@@ -622,12 +600,13 @@ watch(fightPhase, (val, oldVal) => {
   }
   if (val === 'results') {
     stopFightTimer();
-    // Finish PvP fight if applicable
-    if (isPvP.value && pvpFight.value) {
+    // Finish PvP fight if applicable (legacy PvP path only)
+    if (isPvP.value && pvpFight.value && !pvpMatchId.value) {
       store.dispatch('pvp/finishPvPFight', resultState.value);
     }
     // Only award XP once (guard against double-award on restore)
-    if (!store.getters['fight/getXpAwarded']) {
+    // Skip for server-driven PvP — XP is awarded in onPvPFightEnd
+    if (!store.getters['fight/getXpAwarded'] && !(isPvP.value && pvpMatchId.value)) {
       const result = resultState.value === 'win' ? 'win' : 'lose';
       const expGain = result === 'win' ? 10 : 5;
       store.commit('fight/setXpEarned', expGain);
@@ -732,6 +711,11 @@ const fightAgain = async () => {
   triggerLoadingOverlay();
   await store.dispatch('fight/fightAgain');
   startCountdown();
+};
+
+const pvpFightAgain = () => {
+  cleanupPvP();
+  router.push('/matchmaking');
 };
 
 const changeBuild = async () => {
@@ -1024,7 +1008,23 @@ function onPvPFightEnd(e) {
     store.commit('fight/setLiveHP2', isP1 ? data.player2.finalHp : data.player1.finalHp);
   }
 
-  // Transition fight store to results so the fight report can display
+  // Award XP for PvP fight
+  if (!store.getters['fight/getXpAwarded']) {
+    const xpFromServer = data.xp;
+    let expGain;
+    if (xpFromServer) {
+      const isP1 = store.getters['pvp/getIsPlayer1'];
+      expGain = isP1 ? xpFromServer.player1 : xpFromServer.player2;
+    } else {
+      // Fallback: same as PvE
+      expGain = pvpResultType.value === 'win' ? 10 : pvpResultType.value === 'draw' ? 7 : 5;
+    }
+    store.commit('fight/setXpEarned', expGain);
+    store.commit('fight/setXpAwarded', true);
+    store.dispatch('progression/onFightEnd', { result: pvpResultType.value === 'win' ? 'win' : 'lose' });
+  }
+
+  // Transition fight store to results so the result screen displays
   store.commit('fight/setFightPhase', 'results');
 
   // Update pvp stats
