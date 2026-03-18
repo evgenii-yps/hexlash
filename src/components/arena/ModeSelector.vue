@@ -5,7 +5,11 @@
     <button class="mode-btn" @click="toggleDropdown">
       <span class="mode-icon-box" :class="currentModeClass" v-html="currentModeIcon"></span>
       <span class="mode-label">{{ t.arena.mode }}: {{ currentModeName }}</span>
-      <span class="dropdown-arrow" :class="{ open: isOpen }">&#x25BC;</span>
+      <span class="dropdown-arrow" :class="{ open: isOpen }">
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#FF066F" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </span>
     </button>
 
     <!-- Overlay to close -->
@@ -21,13 +25,21 @@
         @click="selectMode('pve')"
       >
         <div class="option-icon pve-icon">
-          <span class="icon-label">AI</span>
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#00E5FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2L4 7v10l8 5 8-5V7z"/>
+            <path d="M12 22V12"/>
+            <path d="M4 7l8 5 8-5"/>
+          </svg>
         </div>
         <div class="option-info">
           <div class="option-name">PVE</div>
           <div class="option-desc">{{ t.arena.pveDesc }}</div>
         </div>
-        <span v-if="selectedMode === 'pve'" class="check">&#x2713;</span>
+        <span v-if="selectedMode === 'pve'" class="check">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#FF066F" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="4 12 10 18 20 6"/>
+          </svg>
+        </span>
       </div>
 
       <!-- PVP -->
@@ -37,7 +49,14 @@
         @click="selectMode('pvp')"
       >
         <div class="option-icon pvp-icon">
-          <span class="icon-cross">&#x2A2F;</span>
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#FF066F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="6" y1="20" x2="18" y2="4"/>
+            <line x1="16" y1="4" x2="20" y2="4"/>
+            <line x1="18" y1="2" x2="18" y2="6"/>
+            <line x1="18" y1="20" x2="6" y2="4"/>
+            <line x1="4" y1="4" x2="8" y2="4"/>
+            <line x1="6" y1="2" x2="6" y2="6"/>
+          </svg>
         </div>
         <div class="option-info">
           <div class="option-name">PVP</div>
@@ -47,7 +66,11 @@
             {{ t.pvp.online }}: {{ onlineCount }}
           </div>
         </div>
-        <span v-if="selectedMode === 'pvp'" class="check">&#x2713;</span>
+        <span v-if="selectedMode === 'pvp'" class="check">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#FF066F" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="4 12 10 18 20 6"/>
+          </svg>
+        </span>
       </div>
 
       <!-- Auto Fight -->
@@ -57,13 +80,22 @@
         @click="selectMode('auto')"
       >
         <div class="option-icon auto-icon">
-          <span class="icon-sync">&#x21BB;</span>
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#00FF88" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 2v6h-6"/>
+            <path d="M3 12a9 9 0 0 1 15-6.7L21 8"/>
+            <path d="M3 22v-6h6"/>
+            <path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
+          </svg>
         </div>
         <div class="option-info">
           <div class="option-name">{{ t.arena.autoFight }}</div>
           <div class="option-desc">{{ t.arena.autoDesc }}</div>
         </div>
-        <span v-if="selectedMode === 'auto'" class="check">&#x2713;</span>
+        <span v-if="selectedMode === 'auto'" class="check">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#FF066F" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="4 12 10 18 20 6"/>
+          </svg>
+        </span>
       </div>
 
     </div>
@@ -85,9 +117,18 @@ const isOpen = ref(false);
 const selectedMode = ref('pve');
 
 const modes = {
-  pve: { icon: 'AI', name: 'PVE', css: 'pve-icon' },
-  pvp: { icon: '&#x2A2F;', name: 'PVP', css: 'pvp-icon' },
-  auto: { icon: '&#x21BB;', name: 'AUTO', css: 'auto-icon' },
+  pve: {
+    icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#00E5FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L4 7v10l8 5 8-5V7z"/><path d="M12 22V12"/><path d="M4 7l8 5 8-5"/></svg>',
+    name: 'PVE', css: 'pve-icon'
+  },
+  pvp: {
+    icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#FF066F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="18" y2="4"/><line x1="16" y1="4" x2="20" y2="4"/><line x1="18" y1="2" x2="18" y2="6"/><line x1="18" y1="20" x2="6" y2="4"/><line x1="4" y1="4" x2="8" y2="4"/><line x1="6" y1="2" x2="6" y2="6"/></svg>',
+    name: 'PVP', css: 'pvp-icon'
+  },
+  auto: {
+    icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#00FF88" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>',
+    name: 'AUTO', css: 'auto-icon'
+  },
 };
 
 const currentModeIcon = computed(() => modes[selectedMode.value].icon);
@@ -260,20 +301,6 @@ function selectMode(mode) {
   color: #00FF88;
 }
 
-.icon-label {
-  font-size: 14px;
-  letter-spacing: 1px;
-}
-
-.icon-cross {
-  font-size: 28px;
-  line-height: 1;
-}
-
-.icon-sync {
-  font-size: 24px;
-  line-height: 1;
-}
 
 .option-info {
   flex: 1;
