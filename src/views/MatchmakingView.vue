@@ -60,7 +60,7 @@
         <!-- VS Display -->
         <div class="vs-display">
           <div class="player-card me">
-            <div class="player-avatar"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#FF066F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M3 21c0-5 4-9 9-9s9 4 9 9"/></svg></div>
+            <div class="player-avatar"><svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="#FF066F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M3 21c0-5 4-9 9-9s9 4 9 9"/></svg></div>
             <div class="player-name">{{ playerName }}</div>
             <div class="player-rating">{{ playerRating }}</div>
           </div>
@@ -68,7 +68,7 @@
           <div class="vs-icon">VS</div>
 
           <div class="player-card opponent">
-            <div class="player-avatar"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#00BFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M3 21c0-5 4-9 9-9s9 4 9 9"/></svg></div>
+            <div class="player-avatar"><svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="#00BFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M3 21c0-5 4-9 9-9s9 4 9 9"/></svg></div>
             <div class="player-name">{{ foundOpponent.username }}</div>
             <div class="player-rating">{{ foundOpponent.rating }}</div>
           </div>
@@ -448,7 +448,7 @@ function cleanup() {
 
 .found-title {
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
-  font-size: 28px;
+  font-size: 32px;
   color: #00FF88;
   text-transform: uppercase;
   letter-spacing: 3px;
@@ -460,16 +460,16 @@ function cleanup() {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 24px;
+  gap: 28px;
   margin-bottom: 40px;
 }
 
 .player-card {
-  padding: 20px 24px;
+  padding: 24px 28px;
   background: rgba(20, 20, 30, 0.8);
   border: 2px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
-  min-width: 120px;
+  min-width: 160px;
 }
 
 .player-card.me {
@@ -486,11 +486,11 @@ function cleanup() {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 
 .player-name {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 700;
   color: #fff;
   margin-bottom: 4px;
@@ -498,14 +498,14 @@ function cleanup() {
 }
 
 .player-rating {
-  font-size: 13px;
+  font-size: 16px;
   color: var(--gray2);
   font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
 }
 
 .vs-icon {
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
-  font-size: 28px;
+  font-size: 32px;
   font-weight: bold;
   color: #FF066F;
   text-shadow: 0 0 15px rgba(255, 6, 111, 0.6);
@@ -513,7 +513,7 @@ function cleanup() {
 
 .fight-countdown {
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
-  font-size: 20px;
+  font-size: 22px;
   color: #FFB800;
   text-transform: uppercase;
   letter-spacing: 2px;
