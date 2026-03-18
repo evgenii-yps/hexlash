@@ -338,7 +338,7 @@ function cleanup() {
 }
 
 .search-title {
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 20px;
   color: #FF066F;
   text-transform: uppercase;
@@ -348,7 +348,7 @@ function cleanup() {
 }
 
 .search-timer {
-  font-family: AnonymousBalance, sans-serif;
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 48px;
   font-weight: 700;
   color: #fff;
@@ -422,7 +422,7 @@ function cleanup() {
   border: 2px solid var(--gray2);
   border-radius: 12px;
   color: var(--gray2);
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 16px;
   text-transform: uppercase;
   letter-spacing: 2px;
@@ -447,7 +447,7 @@ function cleanup() {
 }
 
 .found-title {
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 28px;
   color: #00FF88;
   text-transform: uppercase;
@@ -494,17 +494,17 @@ function cleanup() {
   font-weight: 700;
   color: #fff;
   margin-bottom: 4px;
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
 }
 
 .player-rating {
   font-size: 13px;
   color: var(--gray2);
-  font-family: AnonymousBalance, sans-serif;
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
 }
 
 .vs-icon {
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 28px;
   font-weight: bold;
   color: #FF066F;
@@ -512,7 +512,7 @@ function cleanup() {
 }
 
 .fight-countdown {
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 20px;
   color: #FFB800;
   text-transform: uppercase;
@@ -540,7 +540,7 @@ function cleanup() {
 }
 
 .timeout-title {
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 22px;
   color: #FFB800;
   text-transform: uppercase;
@@ -567,7 +567,7 @@ function cleanup() {
   border: 2px solid #FF066F;
   border-radius: 12px;
   color: #FF066F;
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 16px;
   text-transform: uppercase;
   letter-spacing: 2px;
@@ -586,7 +586,7 @@ function cleanup() {
   border: 1px solid var(--gray2);
   border-radius: 12px;
   color: var(--gray2);
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 14px;
   text-transform: uppercase;
   letter-spacing: 1px;

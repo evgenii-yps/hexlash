@@ -241,14 +241,14 @@ const lockedHint = computed(() => {
 }
 
 .modal-title {
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 1.3rem;
   color: var(--white);
   flex: 1;
 }
 
 .modal-level {
-  font-family: AnonymousBalance, sans-serif;
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 1rem;
   color: var(--pink);
 }
@@ -282,7 +282,7 @@ const lockedHint = computed(() => {
 }
 
 .stat-val {
-  font-family: AnonymousBalance, sans-serif;
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 0.95rem;
   color: var(--white);
 }

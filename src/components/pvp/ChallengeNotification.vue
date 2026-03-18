@@ -178,20 +178,20 @@ function declineChallenge() {
 
 .challenge-title {
   color: var(--pink);
-  font-family: 'Anonymous', sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 12px;
   text-transform: uppercase;
 }
 
 .challenge-player {
   color: var(--white);
-  font-family: 'Anonymous', sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 16px;
   margin-top: 2px;
 }
 
 .challenge-timer {
-  font-family: 'AnonymousBalance', sans-serif;
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 24px;
   color: var(--pink);
 }
@@ -208,7 +208,7 @@ function declineChallenge() {
   color: var(--white);
   padding: 10px;
   border-radius: 6px;
-  font-family: 'Anonymous', sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 14px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -226,7 +226,7 @@ function declineChallenge() {
   color: var(--gray2);
   padding: 10px;
   border-radius: 6px;
-  font-family: 'Anonymous', sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 14px;
   cursor: pointer;
   transition: all 0.2s ease;

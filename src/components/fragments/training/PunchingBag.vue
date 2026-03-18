@@ -140,7 +140,7 @@ const handleTap = (e) => {
   position: absolute;
   font-size: 1rem;
   color: var(--pink);
-  font-family: AnonymousBalance, sans-serif;
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   pointer-events: none;
   animation: floatUp 0.8s ease-out forwards;
 }

@@ -22,14 +22,14 @@
 }
 
 h1 {
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 3rem;
   margin-bottom: 1rem;
   color: white;
 }
 
 p {
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 5rem;
   color: white;
 }

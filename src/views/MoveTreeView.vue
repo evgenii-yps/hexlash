@@ -265,7 +265,7 @@ const goToTraining = () => {
 }
 
 .resource-value {
-  font-family: AnonymousBalance, sans-serif;
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 1.5rem;
   color: var(--pink);
   line-height: 1.1;
@@ -350,7 +350,7 @@ const goToTraining = () => {
 }
 
 .branch-xp-val {
-  font-family: AnonymousBalance, sans-serif;
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 0.7rem;
   color: var(--pink);
   opacity: 0.8;

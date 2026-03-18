@@ -408,6 +408,6 @@ watch(store.getters['master/getMaster'], (newMaster) => {
 .price-text {
   margin: 0;
   font-size: 1.5em;
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
 }
 </style>

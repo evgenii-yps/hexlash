@@ -110,7 +110,7 @@ watch(() => props.currentHP, (newVal, oldVal) => {
   transform: translateX(-50%);
   font-size: 0.85rem;
   font-weight: 900;
-  font-family: AnonymousBalance, Anonymous, sans-serif;
+  font-family: 'AnonymousBalance', 'Anonymous', 'Courier New', Consolas, monospace;
   pointer-events: none;
   white-space: nowrap;
 }

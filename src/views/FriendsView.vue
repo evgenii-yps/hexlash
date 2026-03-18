@@ -228,7 +228,7 @@ const handleScroll = (event) => {
 }
 
 .friends-title {
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 1.4rem;
   color: var(--primary-color);
   letter-spacing: 2px;
@@ -282,7 +282,7 @@ const handleScroll = (event) => {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 14px;
   color: #FF066F;
   text-transform: uppercase;
@@ -303,7 +303,7 @@ const handleScroll = (event) => {
 }
 
 .search-results .section-label {
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 0.8rem;
   color: var(--gray2);
   letter-spacing: 1.5px;
@@ -339,7 +339,7 @@ const handleScroll = (event) => {
 .empty-text {
   font-size: 1.1rem;
   color: #888;
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
 }
 
 .empty-hint {

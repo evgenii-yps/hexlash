@@ -55,13 +55,13 @@ defineEmits(['levelUp', 'unlock']);
 }
 
 .branch-name {
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 1.2rem;
   color: var(--white);
 }
 
 .branch-xp {
-  font-family: AnonymousBalance, sans-serif;
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 0.9rem;
   color: var(--pink);
 }

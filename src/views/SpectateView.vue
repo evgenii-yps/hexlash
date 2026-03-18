@@ -287,7 +287,7 @@ onBeforeUnmount(() => {
 }
 
 .spectate-title {
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 22px;
   color: #FFB800;
   text-transform: uppercase;
@@ -321,7 +321,7 @@ onBeforeUnmount(() => {
 /* Round badge */
 .round-badge {
   text-align: center;
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 14px;
   color: var(--gray3);
   text-transform: uppercase;
@@ -354,7 +354,7 @@ onBeforeUnmount(() => {
 }
 
 .fighter-name {
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 14px;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -391,14 +391,14 @@ onBeforeUnmount(() => {
 }
 
 .hp-text {
-  font-family: AnonymousBalance, monospace;
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 12px;
   color: var(--gray2);
   text-align: right;
 }
 
 .vs-divider {
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 16px;
   color: #FFB800;
   font-weight: bold;
@@ -412,7 +412,7 @@ onBeforeUnmount(() => {
 }
 
 .log-header {
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 13px;
   color: var(--gray2);
   text-transform: uppercase;
@@ -457,7 +457,7 @@ onBeforeUnmount(() => {
 }
 
 .log-round {
-  font-family: AnonymousBalance, monospace;
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 11px;
   color: var(--gray2);
   min-width: 22px;
@@ -483,7 +483,7 @@ onBeforeUnmount(() => {
 }
 
 .log-damage {
-  font-family: AnonymousBalance, monospace;
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   color: #ff4444;
   font-weight: 600;
   min-width: 28px;
@@ -530,7 +530,7 @@ onBeforeUnmount(() => {
 }
 
 .result-text {
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 20px;
   text-transform: uppercase;
   letter-spacing: 3px;
@@ -546,7 +546,7 @@ onBeforeUnmount(() => {
   border: 1px solid rgba(255, 184, 0, 0.4);
   border-radius: 12px;
   color: #FFB800;
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 14px;
   text-transform: uppercase;
   letter-spacing: 1px;

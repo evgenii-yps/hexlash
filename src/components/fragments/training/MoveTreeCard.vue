@@ -133,7 +133,7 @@ const unlockCost = computed(() => {
 }
 
 .move-level {
-  font-family: AnonymousBalance, sans-serif;
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 0.85rem;
   color: var(--pink);
 }

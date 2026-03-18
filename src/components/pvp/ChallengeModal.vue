@@ -135,7 +135,7 @@ onUnmounted(() => stopTimer());
 }
 
 .challenge-title {
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 28px;
   color: #FF066F;
   text-transform: uppercase;
@@ -185,7 +185,7 @@ onUnmounted(() => stopTimer());
   border: none;
   border-radius: 12px;
   color: #fff;
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 18px;
   text-transform: uppercase;
   letter-spacing: 2px;
@@ -207,7 +207,7 @@ onUnmounted(() => stopTimer());
   border: 2px solid #666;
   border-radius: 12px;
   color: #888;
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 18px;
   text-transform: uppercase;
   letter-spacing: 2px;

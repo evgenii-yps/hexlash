@@ -252,7 +252,7 @@ const handleScroll = (event) => {
   padding: 12px 20px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 10px;
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 13px;
   color: var(--gray2);
   letter-spacing: 1px;
@@ -279,7 +279,7 @@ const handleScroll = (event) => {
   border: 1px solid rgba(255, 6, 111, 0.4);
   border-radius: 12px;
   color: #fff;
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 14px;
   text-transform: uppercase;
   letter-spacing: 2px;

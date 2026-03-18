@@ -228,10 +228,11 @@ onBeforeUnmount(() => {
 
 @font-face {
   font-family: 'AnonymousBalance';
-  src: url('@/assets/fonts/AnonymousBalance.ttf') format('truetype');
+  src: url('@/assets/fonts/AnonymousBalance.woff2') format('woff2'),
+       url('@/assets/fonts/AnonymousBalance.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
-  unicode-range: U+0000-024F, U+2000-206F, U+2200-22FF;
+  font-display: swap;
 }
 
 /*.content {
@@ -263,7 +264,7 @@ onBeforeUnmount(() => {
 .balance {
   font-size: 2.5em;
   color: white;
-  font-family: 'AnonymousBalance', sans-serif;
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   position: absolute;
   top: 0;
   right: 20px;

@@ -134,7 +134,7 @@ const progressPercent = computed(() => {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 16px;
   color: #FF066F;
   text-transform: uppercase;
@@ -164,7 +164,7 @@ const progressPercent = computed(() => {
 }
 
 .league-name {
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 22px;
   text-transform: uppercase;
   letter-spacing: 3px;
@@ -174,7 +174,7 @@ const progressPercent = computed(() => {
 }
 
 .rating-value {
-  font-family: AnonymousBalance, sans-serif;
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 32px;
   font-weight: 700;
   color: #fff;
@@ -224,7 +224,7 @@ const progressPercent = computed(() => {
 }
 
 .stat-value {
-  font-family: AnonymousBalance, sans-serif;
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 24px;
   font-weight: 700;
   margin-bottom: 4px;

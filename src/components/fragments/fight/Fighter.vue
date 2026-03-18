@@ -303,7 +303,7 @@ watch(isMoveCircles, (newVal) => {
   bottom: 50%;
   left: 50%;
   z-index: 1;
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 3em;
   opacity: 0;
   background-color: var(--black-opacity-80);

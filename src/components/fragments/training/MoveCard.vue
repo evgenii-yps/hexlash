@@ -144,7 +144,7 @@ const lockedHint = computed(() => {
 }
 
 .move-name {
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 1.05rem;
   color: var(--white);
 }
@@ -195,7 +195,7 @@ const lockedHint = computed(() => {
 .stat-value {
   font-size: 0.95rem;
   color: var(--white);
-  font-family: AnonymousBalance, sans-serif;
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
 }
 
 .move-actions, .move-locked-info {
@@ -227,7 +227,7 @@ const lockedHint = computed(() => {
 }
 
 .max-level {
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 0.85rem;
   color: var(--pink);
 }
