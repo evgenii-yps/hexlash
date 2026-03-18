@@ -387,10 +387,14 @@ class PvPCombatEngine {
     else if (this.player2.hp > this.player1.hp) winner = this.player2.odId;
     else winner = 'draw';
 
+    // Calculate XP: win=10, lose=5, draw=7
+    const xp = this.calculateXP(winner);
+
     const result = {
       matchId: this.matchId,
       winner,
       rounds: this.currentRound,
+      xp,
       player1: {
         odId: this.player1.odId,
         username: this.player1.username,
@@ -496,6 +500,22 @@ class PvPCombatEngine {
     // Remove match from manager
     const pvpMatchManager = require('./pvpMatchManager');
     pvpMatchManager.removeMatch(this.matchId);
+  }
+
+  calculateXP(winner) {
+    const BASE_XP = 5;
+    const WIN_BONUS = 5;
+    const DRAW_BONUS = 2;
+
+    if (winner === 'draw') {
+      return { player1: BASE_XP + DRAW_BONUS, player2: BASE_XP + DRAW_BONUS };
+    }
+
+    const p1Won = winner === this.player1.odId;
+    return {
+      player1: p1Won ? BASE_XP + WIN_BONUS : BASE_XP,
+      player2: p1Won ? BASE_XP : BASE_XP + WIN_BONUS,
+    };
   }
 
   calculateElo(winnerRating, loserRating, isDraw = false) {
