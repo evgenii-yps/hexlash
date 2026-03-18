@@ -149,40 +149,13 @@
         </div>
       </div>
 
-      <!-- PvP: Coach choice modal -->
-      <div v-if="isPvP && showCoachChoice" class="pvp-modal-overlay">
-        <div class="pvp-modal">
-          <img :src="iconTrainer" class="coach-avatar" alt="" style="width: 48px; height: 48px;"/>
-          <div class="pvp-modal-title">{{ t.pvp.coachAdvice }}</div>
-          <p v-if="pvpCoachAdvice" class="pvp-coach-text">{{ pvpCoachAdvice }}</p>
-          <div class="pvp-timer">{{ coachTimerPvP }}s</div>
-          <div class="pvp-modal-buttons">
-            <button class="btn-roll" @click="onPlayerCoachChoice(true)">{{ t.pvp.accept }}</button>
-            <button class="btn-skip" @click="onPlayerCoachChoice(false)">{{ t.pvp.decline }}</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- PvP: Waiting overlay -->
+      <!-- PvP: Waiting overlay (coach: waiting for opponent) -->
       <div v-if="isPvP && showWaiting" class="pvp-waiting-overlay">
         <div class="pvp-waiting-spinner"></div>
         <div class="pvp-waiting-text">{{ waitingText }}</div>
       </div>
 
-      <!-- PvP: Result overlay -->
-      <div v-if="isPvP && showPvPResult" class="pvp-result-overlay">
-        <div class="pvp-result-text" :class="'result-' + pvpResultType">
-          <template v-if="pvpResultType === 'win'">{{ t.pvp.youWin }}</template>
-          <template v-else-if="pvpResultType === 'lose'">{{ t.pvp.youLose }}</template>
-          <template v-else>{{ t.pvp.draw }}</template>
-        </div>
-        <div v-if="pvpResultReason === 'disconnect'" class="pvp-disconnect-note">
-          {{ t.pvp.opponentDisconnected }}
-        </div>
-        <button class="btn-back" @click="router.push('/arena')">{{ t.pvp.backToArena }}</button>
-      </div>
-
-      <!-- Results overlay (full-screen centered) -->
+      <!-- Results overlay (full-screen centered, same for PvE and PvP) -->
       <div v-if="fightPhase === 'results'" class="results-overlay" @scroll="handleScroll">
           <div class="result-label" :class="resultClass">{{ resultText }}</div>
 
@@ -251,9 +224,18 @@
             </div>
           </div>
 
+          <div v-if="pvpDisconnect" class="pvp-disconnect-note">
+            {{ t.pvp.opponentDisconnected }}
+          </div>
+
           <div class="result-buttons">
-            <VBtn class="result-btn" @click="fightAgain">{{ t.fight.lblFightAgain }}</VBtn>
-            <VBtn class="result-btn result-btn-secondary" @click="changeBuild">{{ t.fight.lblChangeDeck }}</VBtn>
+            <template v-if="isPvP">
+              <VBtn class="result-btn" @click="router.push('/arena')">{{ t.pvp.backToArena }}</VBtn>
+            </template>
+            <template v-else>
+              <VBtn class="result-btn" @click="fightAgain">{{ t.fight.lblFightAgain }}</VBtn>
+              <VBtn class="result-btn result-btn-secondary" @click="changeBuild">{{ t.fight.lblChangeDeck }}</VBtn>
+            </template>
           </div>
       </div>
     </div>
