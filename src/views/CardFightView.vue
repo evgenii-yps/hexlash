@@ -1490,33 +1490,6 @@ const flashStyle = computed(() => ({
   text-shadow: 0 0 20px rgba(241, 196, 15, 0.5), 0 0 40px rgba(241, 196, 15, 0.2);
 }
 
-.fight-report {
-  width: 92%; max-width: 400px;
-  background: linear-gradient(135deg, rgba(9, 9, 9, 0.9) 0%, rgba(26, 26, 46, 0.65) 100%);
-  border: 1px solid rgba(255, 6, 111, 0.2);
-  border-radius: 10px;
-  padding: 14px 18px; margin-bottom: 12px;
-  position: relative; overflow: visible;
-}
-.fight-report::before {
-  content: "";
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
-}
-.report-title {
-  font-size: 0.75rem; color: var(--primary-color); text-align: center;
-  margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px;
-  font-weight: bold;
-}
-.report-row {
-  display: flex; justify-content: space-between;
-  font-size: 0.7rem; color: var(--gray3); padding: 4px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-}
-.report-row:last-child { border-bottom: none; }
-
 /* ── Expandable log ──────────────────────────────────────────────── */
 .log-section {
   width: 92%; max-width: 400px;
