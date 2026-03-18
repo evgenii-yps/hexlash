@@ -24,7 +24,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
   core/
     state/store.js         — Vuex store
     state/modules/         — 13 Vuex modules
-    models/                — 16 data models (internal, ws, etc.)
+    models/                — 20 data models (internal, ws, etc.)
     services/              — 8 business logic services
     database/              — 7 LocalStorage/IDB repository files
     api/apiClient.js       — Axios HTTP client
@@ -58,7 +58,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
   src/
     index.js               — Express server + WebSocket on same HTTP server
     config.js              — Constants (PORT, WS_PORT, JWT_SECRET, game balance)
-    routes/                — auth, user, club, task, file, fight, stats
+    routes/                — auth, user, club, task, file, fight, stats, friends
     middleware/            — auth.js (JWT guard), upload.js (Multer)
     websocket/handler.js   — Real-time message routing + challenge system
     websocket/pvpHandler.js — PvP fight message handling
@@ -67,7 +67,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
     services/pvpCombatEngine.js — PvP combat engine
     utils/helpers.js
   prisma/
-    schema.prisma          — 10 models: User, Club, Fight, Achievement, Task, PunchInfo...
+    schema.prisma          — 12 models: User, Club, Fight, Achievement, Task, PunchInfo, FriendRequest, Friendship...
     seed.js
     migrations/            — PostgreSQL migrations
 
@@ -189,10 +189,8 @@ COACH_TRIGGER_CHANCE = 1.0
 COACH_BOOST_ROUNDS = 4
 
 SPEED_MOVE_PUNCH_MS = 1500
-ROUND_ANIMATION_MS = 1500
 BATCH_SEND_INTERVAL_MS = 11000
 DECIMALS = 6             // token decimal places
-LISTING = 1783306800     // token listing timestamp
 
 AUTO_FIGHT_MIN_INTERVAL = 3600000   // 60 min
 AUTO_FIGHT_MAX_INTERVAL = 3600000   // 60 min
@@ -218,6 +216,22 @@ COST_CREATE_CLUB = 10000
 PUNCH_MAX_PER_INTERVAL = 10000
 PUNCH_MAX_PER_BATCH = 10000
 PUNCH_INTERVAL_MS = 3600000   // 1 hour
+
+// PvP Combat
+MAX_HP = 100
+MAX_ROUNDS = 10
+MAX_DECK_SIZE = 8
+MIN_DECK_SIZE = 4
+COUNTDOWN_MS = 3000
+ROUND_ANIMATION_MS = 1500
+BASE_DAMAGE = 15
+POSITION_BONUS = 5
+DICE_COOLDOWN_ROUNDS = 3
+DICE_PAUSE_TIMEOUT_MS = 10000
+EMERGENCY_HP_THRESHOLD = 30
+COACH_MIN_ROUND = 6
+COACH_BOOST_ROUNDS = 4
+COACH_PAUSE_TIMEOUT_MS = 10000
 ```
 
 **CORS:** Allows `hexlash.com`, `test.hexlash.com`, `hexlash.vercel.app`, `*.vercel.app`
@@ -314,6 +328,7 @@ Base: `/v1/`
 | `/file` | file.js | avatar/file upload |
 | `/fight` | fight.js | fight creation, results, history |
 | `/stats` | stats.js | player and game statistics |
+| `/friends` | friends.js | friends list, requests, search players |
 
 Auth guard: JWT Bearer token via `middleware/auth.js`
 
@@ -339,7 +354,7 @@ Auth guard: JWT Bearer token via `middleware/auth.js`
 
 ## Database Models (Prisma/PostgreSQL)
 
-User, Club, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask, UserDailyTask, Fight, PunchInfo
+User, Club, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask, UserDailyTask, Fight, PunchInfo, FriendRequest, Friendship
 
 **Seed data:** 16 achievements (NEWBIE, CONNECTED_FIGHTER, REGULAR_FIGHTER, BATTLE_VETERAN, FIGHT_MASTER, COACH, RECRUITER, PROJECT_MAYHEM, MEATLOAF, TYLER, EXPERT, LUCKY_ONE, BOB, PAPER_STREET, MEETING_PARTICIPANT, GOLDEN_RULE) + social/daily tasks (en/ru)
 
@@ -350,7 +365,7 @@ User, Club, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask,
 - **Frontend:** Vite + JS obfuscation + Brotli + image optimization (mozjpeg/pngquant/webp) + terser (drops console)
 - **Deploy:** Vercel or Nginx reverse proxy via Docker (`nginx.prod.conf`, `nginx.test.conf`, `Dockerfile`)
 - **Backend:** Node.js + PostgreSQL (local or Railway)
-- **WebSocket:** Authenticated via JWT, same HTTP server as Express (WS_PORT 444)
+- **WebSocket:** Authenticated via JWT, same HTTP server as Express (shared port)
 - **CI/CD:** GitHub Actions (`.github/workflows/gitops.yaml`)
 
 ---
