@@ -228,14 +228,9 @@
             {{ t.pvp.opponentDisconnected }}
           </div>
 
-          <div class="result-buttons">
-            <template v-if="isPvP">
-              <VBtn class="result-btn" @click="router.push('/arena')">{{ t.pvp.backToArena }}</VBtn>
-            </template>
-            <template v-else>
+          <div v-if="!isPvP" class="result-buttons">
               <VBtn class="result-btn" @click="fightAgain">{{ t.fight.lblFightAgain }}</VBtn>
               <VBtn class="result-btn result-btn-secondary" @click="changeBuild">{{ t.fight.lblChangeDeck }}</VBtn>
-            </template>
           </div>
       </div>
     </div>
