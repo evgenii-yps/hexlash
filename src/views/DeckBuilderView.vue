@@ -196,7 +196,7 @@ const handleScroll = (e) => emit('scroll', e.target.scrollTop);
 }
 
 .deck-title {
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 1.4rem;
   color: var(--white);
 }
@@ -291,7 +291,7 @@ const handleScroll = (e) => emit('scroll', e.target.scrollTop);
 }
 
 .branch-group-title {
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 0.95rem;
   color: var(--gray3);
   border-bottom: 1px solid var(--gray1);
@@ -370,7 +370,7 @@ const handleScroll = (e) => emit('scroll', e.target.scrollTop);
   border: none;
   border-radius: 4px;
   color: var(--white);
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 1.1rem;
   cursor: pointer;
   transition: opacity 0.2s;

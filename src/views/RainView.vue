@@ -1174,7 +1174,7 @@ watch(isAuthenticated, (newValue) => {
 }
 
 .timer-overlay {
-  font-family: AnonymousBalance, sans-serif;
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   color: white;
   text-align: center;
   font-size: 4rem;
@@ -1197,7 +1197,7 @@ watch(isAuthenticated, (newValue) => {
 .btn-text-page {
   text-decoration: none;
   margin: 10px 10px;
-  font-family: 'Anonymous', sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   color: white;
   font-size: 1em;
   /*  background: rgba(51, 51, 51, 0.8);*/

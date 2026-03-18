@@ -109,7 +109,7 @@ const goToUrl = () => {
 
 .invite-code {
   font-size: 2.5rem;
-  font-family: 'Anonymous', 'Arial', sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   color: white;
   margin: 0;
   cursor: pointer;

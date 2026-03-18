@@ -287,7 +287,7 @@ const formattedMembers = computed(() => {
 .club-header h2 {
   font-size: 3em;
   margin-top: 10px;
-  font-family: 'Anonymous', sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   text-align: center;
 }
 
@@ -320,7 +320,7 @@ const formattedMembers = computed(() => {
   justify-content: center;
   color: white;
   margin: 30px auto 0 auto;
-  font-family: 'Anonymous', sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   display: flex;
 }
 

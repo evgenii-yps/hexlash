@@ -165,7 +165,7 @@ function selectMode(mode) {
   border: 2px solid rgba(255, 6, 111, 0.5);
   border-radius: 12px;
   color: #fff;
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 16px;
   text-transform: uppercase;
   letter-spacing: 2px;
@@ -186,7 +186,7 @@ function selectMode(mode) {
   align-items: center;
   justify-content: center;
   border-radius: 6px;
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 12px;
   font-weight: bold;
 }
@@ -278,7 +278,7 @@ function selectMode(mode) {
   align-items: center;
   justify-content: center;
   border-radius: 10px;
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-weight: bold;
   flex-shrink: 0;
 }
@@ -307,7 +307,7 @@ function selectMode(mode) {
 }
 
 .option-name {
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 18px;
   color: #fff;
   text-transform: uppercase;

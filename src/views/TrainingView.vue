@@ -412,7 +412,7 @@ onUnmounted(() => {
 }
 
 .training-title {
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 2rem;
   z-index: 100;
   margin-bottom: 210px;
@@ -584,7 +584,7 @@ onUnmounted(() => {
 }
 
 .prog-value {
-  font-family: AnonymousBalance, sans-serif;
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 0.9rem;
   color: var(--pink);
 }

@@ -1121,7 +1121,7 @@ const flashStyle = computed(() => ({
   letter-spacing: 14px;
   text-transform: uppercase;
   user-select: none;
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   white-space: nowrap;
 }
 
@@ -1134,7 +1134,7 @@ const flashStyle = computed(() => ({
   text-align: center;
   width: 100%;
   z-index: 1;
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   text-shadow:
     0 0 20px var(--primary-color),
     0 0 40px rgba(255, 6, 111, 0.4);
@@ -1177,7 +1177,7 @@ const flashStyle = computed(() => ({
   font-size: 4em;
   color: white;
   z-index: 100;
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   text-shadow:
     0 0 30px var(--primary-color),
     0 0 60px rgba(255, 6, 111, 0.4);
@@ -1241,7 +1241,7 @@ const flashStyle = computed(() => ({
 .vs-center > span {
   font-size: 1.6rem;
   font-weight: 900;
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   color: var(--primary-color);
   text-shadow:
     0 0 20px rgba(255, 6, 111, 0.6),
@@ -1280,7 +1280,7 @@ const flashStyle = computed(() => ({
   position: absolute; top: 50%; left: 50%;
   transform: translate(-50%, -50%);
   z-index: 1;
-  font-family: Anonymous, 'Courier New', monospace;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 1.6em;
   background: var(--black-opacity-80);
   border: 1px solid var(--primary-color);
@@ -1467,7 +1467,7 @@ const flashStyle = computed(() => ({
   100% { opacity: 1; }
 }
 .result-label {
-  font-size: 2.5em; font-family: Anonymous, 'Courier New', monospace;
+  font-size: 2.5em; font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   margin-bottom: 16px; letter-spacing: 2px;
   text-align: center;
   animation: resultLabelPop 0.6s ease-out forwards;
@@ -1672,7 +1672,7 @@ const flashStyle = computed(() => ({
 
 .advice-timer__number {
   display: inline-block;
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 3rem;
   font-weight: bold;
   color: var(--primary-color);
@@ -1742,7 +1742,7 @@ const flashStyle = computed(() => ({
 
 .coach-title {
   font-size: 1rem;
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   color: var(--primary-color);
   font-weight: bold;
   text-transform: uppercase;
@@ -1890,7 +1890,7 @@ const flashStyle = computed(() => ({
 }
 
 .xp-earned-title {
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 0.75rem;
   color: var(--pink);
   text-transform: uppercase;
@@ -1899,7 +1899,7 @@ const flashStyle = computed(() => ({
 }
 
 .xp-earned-total {
-  font-family: AnonymousBalance, sans-serif;
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 1.4rem;
   color: var(--pink);
   font-weight: bold;
@@ -1921,7 +1921,7 @@ const flashStyle = computed(() => ({
   font-weight: 600;
   font-size: 14px;
   z-index: 10;
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   text-transform: uppercase;
   letter-spacing: 1px;
 }
@@ -1998,7 +1998,7 @@ const flashStyle = computed(() => ({
   font-size: 2rem;
   font-weight: 900;
   color: var(--primary-color);
-  font-family: AnonymousBalance, monospace;
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   margin: 8px 0 16px;
   text-shadow: 0 0 15px rgba(255, 6, 111, 0.5);
 }
@@ -2099,7 +2099,7 @@ const flashStyle = computed(() => ({
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: 4px;
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
 }
 
 .pvp-result-text.result-win {

@@ -135,7 +135,7 @@ const openTaskDialog = (task) => {
 }
 
 .daily-tasks-section h3 {
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 1.5rem;
 }
 

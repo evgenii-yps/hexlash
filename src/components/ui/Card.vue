@@ -74,14 +74,6 @@ const cardStyles = computed(() => ({
 </script>
 
 <style scoped>
-@font-face {
-  font-family: 'Anonymous';
-  src: url('@/assets/fonts/Anonymous.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
-  unicode-range: U+0000-024F, U+2000-206F, U+2200-22FF;
-}
-
 .card-overlay {
   position: fixed;
   top: 0;
@@ -128,7 +120,7 @@ const cardStyles = computed(() => ({
   font-size: 5rem;
   flex-grow: 1;
   text-align: center;
-  font-family: 'Anonymous', sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
 }
 
 .close-btn {

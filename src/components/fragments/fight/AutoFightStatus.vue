@@ -143,7 +143,7 @@ const viewLog = async () => {
 }
 
 .status-title {
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 0.8rem;
   color: var(--primary-color);
   font-weight: bold;

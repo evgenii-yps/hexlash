@@ -156,7 +156,7 @@ const handleScroll = (event) => {
 }
 
 .log-title {
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 1.4rem;
   color: var(--primary-color);
   letter-spacing: 2px;
@@ -244,7 +244,7 @@ const handleScroll = (event) => {
 .entry-result {
   font-size: 0.9rem;
   font-weight: bold;
-  font-family: Anonymous, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   letter-spacing: 0.5px;
 }
 
