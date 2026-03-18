@@ -494,13 +494,13 @@ function cleanup() {
   font-weight: 700;
   color: #fff;
   margin-bottom: 4px;
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: 'Calibri', Arial, sans-serif;
 }
 
 .player-rating {
   font-size: 16px;
   color: var(--gray2);
-  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
+  font-family: 'Calibri', Arial, sans-serif;
 }
 
 .vs-icon {
@@ -512,7 +512,7 @@ function cleanup() {
 }
 
 .fight-countdown {
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: 'Calibri', Arial, sans-serif;
   font-size: 22px;
   color: #FFB800;
   text-transform: uppercase;
