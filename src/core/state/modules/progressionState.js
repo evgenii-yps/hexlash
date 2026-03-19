@@ -1,6 +1,9 @@
 import { allMoves } from '@/data/moves.js';
 import { branches } from '@/data/branches.js';
 import { levelUpRequirements, unlockRequirements } from '@/data/requirements.js';
+import apiClient from '@/core/api/apiClient.js';
+
+let syncTimeout = null;
 
 const STORAGE_KEY = 'hexlash_progression';
 const STARTER_MOVES = ["jab", "straight", "block_strike"];
@@ -207,35 +210,63 @@ export default {
   },
 
   actions: {
+    syncProgression({ state }) {
+      clearTimeout(syncTimeout);
+      syncTimeout = setTimeout(async () => {
+        try {
+          await apiClient.put('/user/progression', {
+            progression: {
+              moves: state.moves,
+              branchExp: state.branchExp,
+              taps: state.taps,
+              freeXP: state.freeXP,
+              totalTaps: state.totalTaps,
+              totalFights: state.totalFights,
+              totalWins: state.totalWins,
+            },
+            deck: state.deck,
+          }, { authRequired: true });
+          console.log('[SYNC] Progression saved to server');
+        } catch (error) {
+          console.error('[SYNC] Failed to save progression:', error);
+        }
+      }, 3000);
+    },
+
     addTap({ commit }) {
       commit('addTap');
     },
 
-    levelUpMove({ commit, getters }, moveId) {
+    levelUpMove({ commit, getters, dispatch }, moveId) {
       if (!getters.canLevelUp(moveId)) return false;
       commit('levelUpMove', moveId);
+      dispatch('syncProgression');
       return true;
     },
 
-    unlockMove({ commit, getters }, moveId) {
+    unlockMove({ commit, getters, dispatch }, moveId) {
       if (!getters.canUnlock(moveId)) return false;
       commit('unlockMove', moveId);
+      dispatch('syncProgression');
       return true;
     },
 
-    onFightEnd({ commit }, { result }) {
+    onFightEnd({ commit, dispatch }, { result }) {
       const amount = result === 'win' ? 10 : 5;
       commit('addFreeXP', { amount, result });
+      dispatch('syncProgression');
     },
 
-    allocateXP({ commit, state }, { branch, amount }) {
+    allocateXP({ commit, state, dispatch }, { branch, amount }) {
       if (amount <= 0 || amount > state.freeXP) return false;
       commit('allocateXP', { branch, amount });
+      dispatch('syncProgression');
       return true;
     },
 
-    toggleDeckMove({ commit }, moveId) {
+    toggleDeckMove({ commit, dispatch }, moveId) {
       commit('toggleDeckMove', moveId);
+      dispatch('syncProgression');
     }
   }
 };

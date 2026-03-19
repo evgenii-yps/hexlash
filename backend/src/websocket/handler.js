@@ -242,7 +242,10 @@ async function handlePunchBatch(ws, userId, msg) {
 
   const user = await prisma.user.update({
     where: { id: userId },
-    data: { balance: { increment: tokensEarned } },
+    data: {
+      balance: { increment: tokensEarned },
+      totalTaps: { increment: count },
+    },
     include: { achievements: true },
   });
 
