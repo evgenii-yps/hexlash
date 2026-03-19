@@ -520,6 +520,7 @@ function handleChallengeDeclined(ws, userId, msg) {
 
 function handleMatchmakingStart(ws, userId, msg) {
   const { username, rating, skin, avatarUrl } = msg.matchmakingRequest || {};
+  console.log('[WS] start_matchmaking from:', userId, 'data:', JSON.stringify({ username, rating, skin }));
 
   const match = matchmaking.addToQueue({
     odId: userId,

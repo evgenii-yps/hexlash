@@ -165,6 +165,17 @@
             <div class="xp-earned-total">+{{ xpEarned }} XP</div>
           </div>
 
+          <!-- AI Trainer analysis -->
+          <div class="ai-trainer">
+            <div class="trainer-header">
+              <img :src="iconTrainer" class="trainer-avatar-img" alt=""/>
+              <span class="trainer-title">{{ t.fight.lblTrainerAnalysis }}</span>
+            </div>
+            <div class="trainer-analysis">
+              <p>{{ trainerAnalysis }}</p>
+            </div>
+          </div>
+
           <!-- Expandable detailed log -->
           <div class="log-section">
             <button class="log-toggle" @click="showDetailedLog = !showDetailedLog">
@@ -182,17 +193,6 @@
                 </span>
                 <span class="log-hp">{{ r.hp1After }} / {{ r.hp2After }}</span>
               </div>
-            </div>
-          </div>
-
-          <!-- AI Trainer stub -->
-          <div class="ai-trainer">
-            <div class="trainer-header">
-              <img :src="iconTrainer" class="trainer-avatar-img" alt=""/>
-              <span class="trainer-title">{{ t.fight.lblTrainerAnalysis }}</span>
-            </div>
-            <div class="trainer-analysis">
-              <p>{{ trainerAnalysis }}</p>
             </div>
           </div>
 

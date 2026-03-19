@@ -5,9 +5,9 @@
 
 const pvpMatchManager = require('./pvpMatchManager');
 
-const SEARCH_RANGE_INITIAL = 100;
-const SEARCH_RANGE_STEP = 50;
-const SEARCH_RANGE_MAX = 500;
+const SEARCH_RANGE_INITIAL = 300;
+const SEARCH_RANGE_STEP = 100;
+const SEARCH_RANGE_MAX = 1000;
 const SEARCH_EXPAND_INTERVAL_MS = 5000;
 const SEARCH_TIMEOUT_MS = 120000; // 2 minutes
 
@@ -33,8 +33,10 @@ class MatchmakingService {
     };
 
     this.queue.set(player.odId, entry);
+    console.log('[MATCHMAKING] Adding to queue:', player.odId, 'rating:', entry.rating, 'queue size:', this.queue.size);
+    console.log('[MATCHMAKING] Queue players:', [...this.queue.keys()]);
 
-    // Start expanding search range periodically
+    // Start expanding search range periodically (matching is done by periodic check in handler.js)
     const expandTimer = setInterval(() => {
       const p = this.queue.get(player.odId);
       if (!p) {
@@ -44,15 +46,14 @@ class MatchmakingService {
       }
 
       p.searchRange = Math.min(p.searchRange + SEARCH_RANGE_STEP, SEARCH_RANGE_MAX);
+      console.log('[MATCHMAKING] Expanded range for', player.odId, 'to', p.searchRange);
 
       // Timeout — remove after 2 minutes
       if (Date.now() - p.searchingSince > SEARCH_TIMEOUT_MS) {
+        console.log('[MATCHMAKING] Timeout, removing:', player.odId);
         this.removeFromQueue(player.odId);
         return;
       }
-
-      // Try to find match with expanded range
-      this.tryFindMatch(player.odId);
     }, SEARCH_EXPAND_INTERVAL_MS);
 
     this.expandTimers.set(player.odId, expandTimer);
@@ -74,7 +75,12 @@ class MatchmakingService {
   /** Try to find a match for the given player. Returns match pair or null. */
   tryFindMatch(odId) {
     const player = this.queue.get(odId);
-    if (!player) return null;
+    if (!player) {
+      console.log('[MATCHMAKING] tryFindMatch: player not in queue:', odId);
+      return null;
+    }
+
+    console.log('[MATCHMAKING] Trying to find match for:', odId, 'rating:', player.rating, 'range:', player.searchRange);
 
     let bestMatch = null;
     let bestDiff = Infinity;
@@ -85,6 +91,8 @@ class MatchmakingService {
       const ratingDiff = Math.abs(player.rating - opponent.rating);
       const maxRange = Math.max(player.searchRange, opponent.searchRange);
 
+      console.log('[MATCHMAKING] Comparing with:', oppId, 'rating:', opponent.rating, 'diff:', ratingDiff, 'maxRange:', maxRange, 'match:', ratingDiff <= maxRange);
+
       if (ratingDiff <= maxRange && ratingDiff < bestDiff) {
         bestMatch = opponent;
         bestDiff = ratingDiff;
@@ -92,10 +100,12 @@ class MatchmakingService {
     }
 
     if (bestMatch) {
+      console.log('[MATCHMAKING] MATCH FOUND:', odId, 'vs', bestMatch.odId, 'diff:', bestDiff);
       const match = this.createMatch(player, bestMatch);
       return match;
     }
 
+    console.log('[MATCHMAKING] No match found for', odId);
     return null;
   }
 
