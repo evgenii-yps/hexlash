@@ -360,10 +360,23 @@ const statusRight = computed(() => {
   return t.value.fight.lblDraw;
 });
 
-const resultText  = computed(() => statusLeft.value);
+const resultText  = computed(() => {
+  if (fightPhase.value !== 'results') return '';
+  // For PvP, prefer server-determined result
+  if (isPvP.value && pvpResultType.value) {
+    if (pvpResultType.value === 'win')  return t.value.fight.lblVictory;
+    if (pvpResultType.value === 'lose') return t.value.fight.lblDefeat;
+    return t.value.fight.lblDraw;
+  }
+  // For PvE, use HP-based result
+  if (resultState.value === 'win')  return t.value.fight.lblVictory;
+  if (resultState.value === 'lose') return t.value.fight.lblDefeat;
+  return t.value.fight.lblDraw;
+});
 const resultClass = computed(() => {
-  if (resultState.value === 'win')  return 'result-win';
-  if (resultState.value === 'lose') return 'result-lose';
+  const state = (isPvP.value && pvpResultType.value) ? pvpResultType.value : resultState.value;
+  if (state === 'win')  return 'result-win';
+  if (state === 'lose') return 'result-lose';
   return 'result-draw';
 });
 
