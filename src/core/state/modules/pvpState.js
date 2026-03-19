@@ -157,6 +157,18 @@ const actions = {
         }
     },
 
+    restoreFromServer({ commit, state: s }, userData) {
+        if (!userData) return;
+        const stats = { ...s.pvpStats };
+        if (userData.rating !== undefined) stats.rating = userData.rating;
+        if (userData.pvpWins !== undefined) stats.wins = userData.pvpWins;
+        if (userData.pvpLosses !== undefined) stats.losses = userData.pvpLosses;
+        if (userData.pvpDraws !== undefined) stats.draws = userData.pvpDraws;
+        commit('setPvpStats', stats);
+        saveToStorage(s);
+        console.log('[APP] PvP stats restored from server');
+    },
+
     createPvPFight({ commit, state: s }, { opponent, isRanked = false }) {
         const fight = {
             id: 'pvp_' + Date.now(),
