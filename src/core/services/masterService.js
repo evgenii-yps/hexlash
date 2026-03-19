@@ -23,6 +23,9 @@ function restoreProgressionFromServer(userData) {
         store.commit('progressionState/restoreDeck', userData.deck);
         console.log('[APP] Deck restored from server');
     }
+
+    // Restore PvP stats (rating, wins, losses, draws) from server
+    store.dispatch('pvp/restoreFromServer', userData);
 }
 
 export const initializeMasterData = async () => {
