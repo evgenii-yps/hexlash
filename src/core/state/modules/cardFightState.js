@@ -420,8 +420,6 @@ const actions = {
         }
 
         commit('addStats', { dicePickedUp: 1 });
-        const diceName = t.value.fight.diceName[item.id] || item.id;
-        commit('setEventTitle', { title: `${diceName}!`, cls: 'event-dice-pickup', image: item.image });
 
         setTimeout(() => {
             commit('setDiceState', { activeItem: null });
