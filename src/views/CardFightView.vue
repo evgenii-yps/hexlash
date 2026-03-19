@@ -99,8 +99,8 @@
           </transition>
         </div>
 
-        <!-- Active modifiers display -->
-        <div class="modifiers-bar" v-if="fightPhase === 'fighting' && anyModActive">
+        <!-- Active modifiers display (hidden while dice result is showing) -->
+        <div class="modifiers-bar" v-if="fightPhase === 'fighting' && anyModActive && !diceState.activeItem">
           <span v-if="playerModifiers.attackMultiplier > 1" class="mod-badge mod-double"><img :src="iconAdrenaline" class="mod-icon" alt=""/> 2x ATK</span>
           <span v-if="playerModifiers.shieldActive"         class="mod-badge mod-shield"><img :src="iconShield" class="mod-icon" alt=""/> {{ t.fight.lblModShield }}</span>
           <span v-if="playerModifiers.blindActive"          class="mod-badge mod-blind"><img :src="iconBlind" class="mod-icon" alt=""/> {{ t.fight.lblModBlind }}</span>
@@ -1457,7 +1457,7 @@ const flashStyle = computed(() => ({
   width: 100vw; height: 100vh;
   display: flex; flex-direction: column;
   align-items: center; justify-content: flex-start;
-  z-index: 50;
+  z-index: 200;
   background: rgba(0, 0, 0, 0.82);
   animation: resultsOverlayIn 0.5s ease-out forwards;
   overflow-y: auto;
@@ -1627,7 +1627,7 @@ const flashStyle = computed(() => ({
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 60;
+  z-index: 200;
   background: rgba(0, 0, 0, 0.85);
   animation: coachFadeIn 0.4s ease-out forwards;
   padding: 20px;
