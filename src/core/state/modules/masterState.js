@@ -8,6 +8,7 @@ import {t, setLanguage as setLocaleLanguage} from '@/locales/index.js';
 import * as masterService from "@/core/services/masterService.js";
 import {ErrorMessageModel} from "@/core/models/internal/errorMessageModel.js";
 import {setTelegram, updateJwtToken} from "@/core/services/masterService.js";
+import apiClient from "@/core/api/apiClient.js";
 
 
 const state = {
@@ -240,14 +241,14 @@ const actions = {
         try {
             localStorage.setItem('selectedSkin', skinId);
             commit('updateMaster', {skin: skinId});
-            await updateMasterToLocalDB({skin: skinId});
-            // Sync skin to backend
-            try {
-                const apiClient = (await import('@/core/api/apiClient.js')).default;
-                await apiClient.put('/user/skin', { skin: skinId }, { authRequired: true });
-            } catch {
-                // Ignore backend errors — locally already persisted
-            }
+            // Run local DB and server sync in parallel — don't block one on the other
+            const localSave = updateMasterToLocalDB({skin: skinId}).catch(e =>
+                console.error('[SKIN] IndexedDB save failed:', e)
+            );
+            const serverSync = apiClient.put('/user/skin', { skin: skinId }, { authRequired: true })
+                .then(() => console.log('[SKIN] Saved to server:', skinId))
+                .catch(e => console.error('[SKIN] Server save failed:', e));
+            await Promise.all([localSave, serverSync]);
         } catch (error) {
             commit('setErrorMessage', ErrorMessageModel.withText(error.message));
         }
