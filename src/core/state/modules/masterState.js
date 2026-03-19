@@ -37,10 +37,14 @@ const getters = {
 
 const mutations = {
     setMaster: (state, masterData) => {
-        // Восстанавливаем локально сохранённый скин, если сервер его не хранит
-        const savedSkin = localStorage.getItem('selectedSkin');
-        if (savedSkin && masterData?.userData) {
-            masterData.userData.skin = savedSkin;
+        // Server skin takes priority; use localStorage only as fallback for new accounts
+        if (masterData?.userData) {
+            const savedSkin = localStorage.getItem('selectedSkin');
+            if (!masterData.userData.skin && savedSkin) {
+                masterData.userData.skin = savedSkin;
+            } else if (masterData.userData.skin) {
+                localStorage.setItem('selectedSkin', masterData.userData.skin);
+            }
         }
         state.master = masterData;
     },
@@ -237,6 +241,13 @@ const actions = {
             localStorage.setItem('selectedSkin', skinId);
             commit('updateMaster', {skin: skinId});
             await updateMasterToLocalDB({skin: skinId});
+            // Sync skin to backend
+            try {
+                const apiClient = (await import('@/core/api/apiClient.js')).default;
+                await apiClient.put('/user/skin', { skin: skinId }, { authRequired: true });
+            } catch {
+                // Ignore backend errors — locally already persisted
+            }
         } catch (error) {
             commit('setErrorMessage', ErrorMessageModel.withText(error.message));
         }
