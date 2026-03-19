@@ -213,8 +213,6 @@ router.get('/search', authMiddleware, async (req, res) => {
         { login: { contains: name, mode: 'insensitive' } },
       ];
     }
-    // Exclude the requesting user from results
-    where.NOT = { id: req.userId };
     if (clubId) {
       where.clubId = clubId;
     }
