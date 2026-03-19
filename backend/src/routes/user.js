@@ -234,4 +234,96 @@ router.get('/search', authMiddleware, async (req, res) => {
   }
 });
 
+// PUT /v1/user/skin
+router.put('/skin', authMiddleware, async (req, res) => {
+  try {
+    const { skin } = req.body;
+    if (!skin || typeof skin !== 'string') {
+      return res.status(400).json({ error: 'Invalid skin value' });
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: req.userId },
+      data: { skin },
+    });
+
+    res.json({ data: { skin: updated.skin } });
+  } catch (err) {
+    console.error('[USER] Skin error:', err);
+    res.status(500).json({ error: 'Failed to save skin' });
+  }
+});
+
+// PUT /v1/user/progression
+router.put('/progression', authMiddleware, async (req, res) => {
+  try {
+    const { progression, deck } = req.body;
+    const data = {};
+
+    if (progression !== undefined) {
+      if (progression.moveLevels) {
+        for (const [moveId, level] of Object.entries(progression.moveLevels)) {
+          if (level > 5 || level < 1) {
+            return res.status(400).json({ error: 'Invalid move level' });
+          }
+        }
+      }
+      if (progression.branchXP) {
+        for (const [branch, xp] of Object.entries(progression.branchXP)) {
+          if (xp < 0) {
+            return res.status(400).json({ error: 'Invalid XP value' });
+          }
+        }
+      }
+      data.progression = progression;
+    }
+
+    if (deck !== undefined) {
+      if (!Array.isArray(deck) || deck.length > 8) {
+        return res.status(400).json({ error: 'Invalid deck' });
+      }
+      data.deck = deck;
+    }
+
+    if (Object.keys(data).length === 0) {
+      return res.status(400).json({ error: 'No data to update' });
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: req.userId },
+      data,
+    });
+
+    res.json({ data: { progression: updated.progression, deck: updated.deck } });
+  } catch (err) {
+    console.error('[USER] Progression error:', err);
+    res.status(500).json({ error: 'Failed to save progression' });
+  }
+});
+
+// PUT /v1/user/settings
+router.put('/settings', authMiddleware, async (req, res) => {
+  try {
+    const { language, settings } = req.body;
+    const data = {};
+
+    if (language !== undefined) data.language = language;
+    if (settings !== undefined) data.settings = settings;
+
+    if (Object.keys(data).length === 0) {
+      return res.status(400).json({ error: 'No data to update' });
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: req.userId },
+      data,
+    });
+
+    res.json({ data: { language: updated.language, settings: updated.settings } });
+  } catch (err) {
+    console.error('[USER] Settings error:', err);
+    res.status(500).json({ error: 'Failed to save settings' });
+  }
+});
+
 module.exports = router;

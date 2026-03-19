@@ -16,14 +16,18 @@ router.post('/save', authMiddleware, async (req, res) => {
 
     const updateData = {
       totalFights: { increment: 1 },
+      pveTotalFights: { increment: 1 },
     };
 
     if (isWin) {
       updateData.wins = { increment: 1 };
+      updateData.pveWins = { increment: 1 };
     } else if (isDraw) {
       updateData.draws = { increment: 1 };
+      updateData.pveDraws = { increment: 1 };
     } else {
       updateData.losses = { increment: 1 };
+      updateData.pveLosses = { increment: 1 };
     }
 
     await prisma.user.update({
