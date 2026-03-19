@@ -8,6 +8,23 @@ import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
 import {t, setLanguage as setLocaleLanguage} from "@/locales/index.js";
 import {isMockMode, createMockMaster, MOCK_JWT_TOKEN} from "@/core/mock/mockData.js";
 
+/**
+ * Restore progression and deck from server data to progressionState.
+ * Server data takes priority over localStorage.
+ */
+function restoreProgressionFromServer(userData) {
+    if (!userData) return;
+
+    if (userData.progression) {
+        store.commit('progressionState/restoreProgression', userData.progression);
+        console.log('[APP] Progression restored from server');
+    }
+    if (userData.deck) {
+        store.commit('progressionState/restoreDeck', userData.deck);
+        console.log('[APP] Deck restored from server');
+    }
+}
+
 export const initializeMasterData = async () => {
     if (isMockMode()) {
         const mockMaster = createMockMaster();
@@ -46,6 +63,9 @@ export const getMasterFromAPI = () => {
         await updateMasterToLocalDB(apiUserModel);
         store.commit('master/setMaster', apiUserModel);
         setLocaleLanguage(apiUserModel.language);
+
+        // Restore progression and deck from server data
+        restoreProgressionFromServer(apiUserModel.userData);
     }).catch((error) => {
         console.error('Failed to fetch user data from API:', error);
     });
@@ -83,6 +103,7 @@ export const login = async (credentials) => {
 
         store.commit('master/setMaster', masterModel);
         store.commit('master/setLoginState', {isAuthenticated: true});
+        restoreProgressionFromServer(masterModel.userData);
 
     } catch (error) {
         const errorStr = error.response?.data?.error || error.message || 'Failed to login';
@@ -133,6 +154,7 @@ export const telegram = async (payload) => {
 
         store.commit('master/setMaster', masterModel);
         store.commit('master/setLoginState', {isAuthenticated: true});
+        restoreProgressionFromServer(masterModel.userData);
 
     } catch (error) {
         const errorStr = error.response?.data?.error || error.message || 'Failed to login';
@@ -186,6 +208,7 @@ export const register = async (credentials) => {
 
         store.commit('master/setMaster', masterModel);
         store.commit('master/setLoginState', {isAuthenticated: true});
+        restoreProgressionFromServer(masterModel.userData);
 
     } catch (error) {
         const errorStr = error.response?.data?.error || error.message || 'Failed to register';

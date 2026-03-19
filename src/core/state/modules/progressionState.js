@@ -172,6 +172,24 @@ export default {
       saveProgress(state);
     },
 
+    restoreProgression(state, data) {
+      if (data.moves) state.moves = { ...state.moves, ...data.moves };
+      if (data.branchExp) state.branchExp = { ...state.branchExp, ...data.branchExp };
+      if (data.taps !== undefined) state.taps = data.taps;
+      if (data.freeXP !== undefined) state.freeXP = data.freeXP;
+      if (data.totalTaps !== undefined) state.totalTaps = data.totalTaps;
+      if (data.totalFights !== undefined) state.totalFights = data.totalFights;
+      if (data.totalWins !== undefined) state.totalWins = data.totalWins;
+      saveProgress(state);
+    },
+
+    restoreDeck(state, deck) {
+      if (Array.isArray(deck) && deck.length > 0) {
+        state.deck = deck;
+        saveProgress(state);
+      }
+    },
+
     toggleDeckMove(state, moveId) {
       const deck = [...state.deck];
       const idx = deck.indexOf(moveId);
