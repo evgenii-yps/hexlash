@@ -467,7 +467,7 @@ class PvPCombatEngine {
         },
       });
 
-      // Update ELO ratings
+      // Update ELO ratings and PvP statistics
       if (result.winner && result.winner !== 'draw') {
         const winnerId = result.winner;
         const loserId = winnerId === result.player1.odId ? result.player2.odId : result.player1.odId;
@@ -477,18 +477,53 @@ class PvPCombatEngine {
 
         if (winnerUser && loserUser) {
           const elo = this.calculateElo(winnerUser.rating || 1000, loserUser.rating || 1000);
-          await prisma.user.update({ where: { id: winnerId }, data: { rating: elo.winnerNew } });
-          await prisma.user.update({ where: { id: loserId }, data: { rating: elo.loserNew } });
+          await prisma.user.update({
+            where: { id: winnerId },
+            data: {
+              rating: elo.winnerNew,
+              pvpTotalFights: { increment: 1 },
+              pvpWins: { increment: 1 },
+              totalFights: { increment: 1 },
+              wins: { increment: 1 },
+            },
+          });
+          await prisma.user.update({
+            where: { id: loserId },
+            data: {
+              rating: elo.loserNew,
+              pvpTotalFights: { increment: 1 },
+              pvpLosses: { increment: 1 },
+              totalFights: { increment: 1 },
+              losses: { increment: 1 },
+            },
+          });
         }
       } else if (result.winner === 'draw') {
-        // Draw — still adjust ratings
         const p1 = await prisma.user.findUnique({ where: { id: result.player1.odId } });
         const p2 = await prisma.user.findUnique({ where: { id: result.player2.odId } });
 
         if (p1 && p2) {
           const elo = this.calculateElo(p1.rating || 1000, p2.rating || 1000, true);
-          await prisma.user.update({ where: { id: p1.id }, data: { rating: elo.winnerNew } });
-          await prisma.user.update({ where: { id: p2.id }, data: { rating: elo.loserNew } });
+          await prisma.user.update({
+            where: { id: p1.id },
+            data: {
+              rating: elo.winnerNew,
+              pvpTotalFights: { increment: 1 },
+              pvpDraws: { increment: 1 },
+              totalFights: { increment: 1 },
+              draws: { increment: 1 },
+            },
+          });
+          await prisma.user.update({
+            where: { id: p2.id },
+            data: {
+              rating: elo.loserNew,
+              pvpTotalFights: { increment: 1 },
+              pvpDraws: { increment: 1 },
+              totalFights: { increment: 1 },
+              draws: { increment: 1 },
+            },
+          });
         }
       }
 
