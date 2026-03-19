@@ -1329,16 +1329,6 @@ const flashStyle = computed(() => ({
   border-color: rgba(255, 214, 0, 0.5);
   box-shadow: 0 0 16px rgba(255, 214, 0, 0.2);
 }
-.event-dice-pickup {
-  color: #2ecc71;
-  background: rgba(46, 204, 113, 0.08);
-  border-color: rgba(46, 204, 113, 0.4);
-  box-shadow: 0 0 16px rgba(46, 204, 113, 0.15);
-}
-.event-dice-ignore {
-  color: var(--gray3);
-  background: rgba(255, 255, 255, 0.04);
-}
 
 /* ── Dice (manual, with cooldown) ────────────────────────────────── */
 .dice-area {
