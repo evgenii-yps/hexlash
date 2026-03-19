@@ -111,11 +111,11 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 | `progressionState` | Moves unlocked/levels, taps, XP per branch |
 | `clubState` | Club info, members, balance |
 | `taskState` | Daily + social tasks |
-| `punchState` | Punch/tap rate limiting, cooldown |
+| `punchState` | Punch/tap rate limiting, cooldown, 2D/3D punch toggle, sound mute toggle |
 | `achievementState` | Achievements list + unlocking |
 | `contractState` | Web3 wallet, token balance |
 | `webSocketState` | WS connection, real-time messages |
-| `autoFightState` | Auto fight: scheduling, offline simulation, fight log, push notifications, daily auto-reset |
+| `autoFightState` | Auto fight: scheduling, offline simulation, fight log, push notifications, daily auto-reset, server sync (POST /fight/save) |
 | `pvpState` | Real-time PvP matchmaking and fights |
 | `friendsState` | Friends list, friend requests, challenges (WebSocket-based) |
 
@@ -243,7 +243,9 @@ COACH_PAUSE_TIMEOUT_MS = 10000
 
 **Flow:** Build deck (4–8 modules) → Generate AI opponent → Simulate rounds → Dice mechanic → Coach advice → Save result
 
-**Auto Fight:** Toggle on Arena screen → fights every 60 min offline → uses CombatEngine + ModuleAIStrategy → localStorage persist (`hexlash_autofight_state`, `hexlash_autofight_history`) → push notifications via Notification API → limits: 24/day, 48/session → auto-catches up missed fights on tab focus → daily auto-reset: on new day clears fight log, wins/losses/draws/XP counters (no manual clear button)
+**Auto Fight:** Toggle on Arena screen → fights every 60 min offline → uses CombatEngine + ModuleAIStrategy → localStorage persist (`hexlash_autofight_state`, `hexlash_autofight_history`) → push notifications via Notification API → limits: 24/day, 48/session → auto-catches up missed fights on tab focus → daily auto-reset: on new day clears fight log, wins/losses/draws/XP counters (no manual clear button) → **offline auto fights sync results to server** via `POST /fight/save` (increments pveWins/pveLosses/pveDraws/pveTotalFights)
+
+**Sound:** Howler.js for punch sounds (BottomMenu, TrainingView) and rain ambience (RainView). Mute toggle in Profile > Account (`SoundToggle.vue`), persisted in localStorage (`isMuted`), checked via `store.getters['punch/isMuted']`
 
 **PvP:** Real-time matchmaking via WebSocket → friend challenges (WebSocket-based, 10s timer) → spectate mode → backend matchmaking service
 
@@ -302,6 +304,7 @@ COACH_PAUSE_TIMEOUT_MS = 10000
 - `MoveDetailsModal.vue` — move detail/unlock popup
 - `AutoFightToggle.vue` — auto fight on/off button
 - `AutoFightStatus.vue` — auto fight live status + countdown
+- `SoundToggle.vue` — sound mute/unmute toggle (Profile > Account)
 - `HPBar.vue` — fight health bar
 - `Fighter.vue` — fighter display in combat
 - `ModeSelector.vue` — arena mode selector (AI/PvP)
@@ -372,5 +375,5 @@ User, Club, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask,
 
 ## Branch (Git)
 
-Development branch: `claude/review-hexlash-guidelines-K9Qo3`
-Push: `git push -u origin claude/review-hexlash-guidelines-K9Qo3`
+Development branch: `claude/review-hexlash-guidelines-twOer`
+Push: `git push -u origin claude/review-hexlash-guidelines-twOer`
