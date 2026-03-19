@@ -27,6 +27,30 @@ model User {
   wins            Int      @default(0)
   losses          Int      @default(0)
   draws           Int      @default(0)
+
+  // PvE statistics
+  pveWins         Int      @default(0)
+  pveLosses       Int      @default(0)
+  pveDraws        Int      @default(0)
+  pveTotalFights  Int      @default(0)
+
+  // PvP statistics
+  pvpWins         Int      @default(0)
+  pvpLosses       Int      @default(0)
+  pvpDraws        Int      @default(0)
+  pvpTotalFights  Int      @default(0)
+
+  // Taps
+  totalTaps       Int      @default(0)
+
+  // Progression (moves, levels, XP per branch)
+  progression     Json?
+
+  // Deck (array of module IDs)
+  deck            Json?
+
+  // User settings
+  settings        Json?
   luckPercentage  Float    @default(0)
   wonTokens       Int      @default(0)
   freeTokens      Int      @default(0)
