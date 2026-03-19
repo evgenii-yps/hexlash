@@ -6,6 +6,7 @@
     <ChangeLogin/>
     <ChangeLanguage/>
     <Switcher3DPunch/>
+    <SoundToggle/>
     <ChangePassword/>
     <DeleteAccount/>
 
@@ -22,6 +23,7 @@ import ChangeLogin from "@/components/fragments/profile/account/ChangeLogin.vue"
 import DeleteAccount from "@/components/fragments/profile/account/DeleteAccount.vue";
 import ChangeLanguage from "@/components/fragments/profile/account/ChangeLanguage.vue";
 import Switcher3DPunch from "@/components/fragments/profile/account/Switcher3DPunch.vue";
+import SoundToggle from "@/components/fragments/profile/account/SoundToggle.vue";
 import {onMounted} from "vue";
 import {backRef} from "@/router/index.js";
 import {useRoute} from "vue-router";

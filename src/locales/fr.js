@@ -89,6 +89,7 @@ export default {
       lblConfirmDeletion: 'Confirmer la suppression',
       msgConfirmDelete: 'Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.',
       is3dPunch: 'Coup 3D',
+      soundToggle: 'Son',
     },
     wallet: {
       lblTopUpBalance: 'Recharger le solde',

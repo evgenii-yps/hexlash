@@ -9,6 +9,7 @@ import {
     AUTO_FIGHT_MIN_INTERVAL, AUTO_FIGHT_MAX_INTERVAL,
     AUTO_FIGHT_MAX_PER_DAY, AUTO_FIGHT_MAX_PER_SESSION,
 } from '@/core/constants.js';
+import apiClient from '@/core/api/apiClient.js';
 
 const STORAGE_KEY = 'hexlash_autofight_state';
 const HISTORY_KEY = 'hexlash_autofight_history';
@@ -393,6 +394,14 @@ const actions = {
                 dispatch('progression/onFightEnd', {
                     result: fightData.result === 'win' ? 'win' : 'lose',
                 }, { root: true });
+
+                // Save to server (PvE stats)
+                apiClient.post('/fight/save', {
+                    isWin: fightData.result === 'win',
+                    isDraw: fightData.result === 'draw',
+                    roundsPlayed: fightData.rounds,
+                    totalDamageDealt: 0,
+                }, { authRequired: true }).catch(() => {});
 
                 // Send notification
                 dispatch('sendNotification', { fight: logEntry });

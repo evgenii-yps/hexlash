@@ -26,6 +26,7 @@ import {computed, ref, watch} from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Howl } from 'howler'
 import {t} from "@/locales/index.js";
+import store from "@/core/state/store.js";
 
 // Определяем, является ли устройство iOS
 const isIOS = ref(/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream);
@@ -34,6 +35,7 @@ import clickSound from '@/assets/sound/punch_air.mp3'
 import router from "@/router/index.js";
 
 const playSound = () => {
+  if (store.getters['punch/isMuted']) return;
   const sound = new Howl({
     src: [clickSound]
   });

@@ -89,6 +89,7 @@ export default {
       lblConfirmDeletion: 'Löschung bestätigen',
       msgConfirmDelete: 'Sind Sie sicher, dass Sie Ihr Konto löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.',
       is3dPunch: '3D-Schlag',
+      soundToggle: 'Ton',
     },
     wallet: {
       lblTopUpBalance: 'Saldo aufladen',

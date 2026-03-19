@@ -89,6 +89,7 @@ export default {
       lblConfirmDeletion: 'Confirmar Exclusão',
       msgConfirmDelete: 'Tem certeza de que deseja excluir sua conta? Esta ação não pode ser desfeita.',
       is3dPunch: 'Soco 3D',
+      soundToggle: 'Som',
     },
     wallet: {
       lblTopUpBalance: 'Adicionar Saldo',

@@ -89,6 +89,7 @@ export default {
       lblConfirmDeletion: 'Confirm Deletion',
       msgConfirmDelete: 'Are you sure you want to delete your account? This action cannot be undone.',
       is3dPunch: '3D Punch',
+      soundToggle: 'Sound',
     },
     wallet: {
       lblTopUpBalance: 'Top Up Balance',

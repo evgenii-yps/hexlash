@@ -89,6 +89,7 @@ export default {
       lblConfirmDeletion: '确认删除',
       msgConfirmDelete: '您确定要删除您的账户吗？此操作无法撤销。',
       is3dPunch: '3D 拳击',
+      soundToggle: '声音',
     },
     wallet: {
       lblTopUpBalance: '充值余额',

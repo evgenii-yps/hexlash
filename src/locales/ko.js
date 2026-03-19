@@ -89,6 +89,7 @@ export default {
       lblConfirmDeletion: '삭제 확인',
       msgConfirmDelete: '계정을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.',
       is3dPunch: '3D 펀치',
+      soundToggle: '사운드',
     },
     wallet: {
       lblTopUpBalance: '잔액 충전',
