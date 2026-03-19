@@ -89,6 +89,7 @@ export default {
       lblConfirmDeletion: 'Confirmar Eliminación',
       msgConfirmDelete: '¿Estás seguro de que quieres eliminar tu cuenta? Esta acción no se puede deshacer.',
       is3dPunch: 'Saco de Boxeo 3D',
+      soundToggle: 'Sonido',
     },
     wallet: {
       lblTopUpBalance: 'Recargar Saldo',

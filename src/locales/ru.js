@@ -89,6 +89,7 @@ export default {
       lblConfirmDeletion: 'Подтвердить удаление',
       msgConfirmDelete: 'Вы уверены, что хотите удалить свой аккаунт? Это действие невозможно будет отменить.',
       is3dPunch: '3D груша',
+      soundToggle: 'Звук',
     },
     wallet: {
       lblTopUpBalance: 'Пополнить баланс',

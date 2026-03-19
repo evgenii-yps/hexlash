@@ -89,6 +89,7 @@ export default {
       lblConfirmDeletion: 'हटाने की पुष्टि करें',
       msgConfirmDelete: 'क्या आप वाकई अपना खाता हटाना चाहते हैं? यह क्रिया पूर्ववत नहीं की जा सकती।',
       is3dPunch: '3डी पंच',
+      soundToggle: 'ध्वनि',
     },
     wallet: {
       lblTopUpBalance: 'बैलेंस बढ़ाएं',

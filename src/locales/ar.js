@@ -89,6 +89,7 @@ export default {
       lblConfirmDeletion: 'تأكيد الحذف',
       msgConfirmDelete: 'هل أنت متأكد من أنك تريد حذف حسابك؟ لا يمكن التراجع عن هذا الإجراء.',
       is3dPunch: 'ضربة ثلاثية الأبعاد',
+      soundToggle: 'الصوت',
     },
     wallet: {
       lblTopUpBalance: 'شحن الرصيد',

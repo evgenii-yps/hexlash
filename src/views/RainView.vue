@@ -752,7 +752,7 @@ class Sketch extends kokomi.Base {
       soundRain = new Howl({
         src: [rainSound],
         loop: true,
-        autoplay: true,
+        autoplay: !store.getters['punch/isMuted'],
         rate: config.soundRate
       })
 

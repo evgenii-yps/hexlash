@@ -141,6 +141,7 @@ const is2DPunch = computed(() => store.getters['punch/is2DPunchEnabled']);
 const delayLoader3dModel = ref(true);
 
 const playSound1 = () => {
+  if (store.getters['punch/isMuted']) return;
   const sound = new Howl({
     src: [clickSound]
   });
