@@ -166,11 +166,12 @@ function selectMode(mode) {
 .mode-compact-btn.mode-auto:active { border-color: #00FF88; box-shadow: 0 0 16px rgba(0, 255, 136, 0.3); }
 
 .mode-compact-label {
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
-  font-size: 15px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-size: 13px;
   font-weight: 700;
   color: #fff;
   line-height: 1;
+  text-transform: uppercase;
 }
 
 .mode-compact-btn.mode-pve .mode-compact-label { color: #00E5FF; }
@@ -281,6 +282,6 @@ function selectMode(mode) {
     width: 52px;
     height: 42px;
   }
-  .mode-compact-label { font-size: 13px; }
+  .mode-compact-label { font-size: 11px; }
 }
 </style>
