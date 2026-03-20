@@ -29,8 +29,6 @@
 
           <button class="friends-compact-btn" @click="goToFriends">
             <span class="friends-compact-label">Friends</span>
-            <span class="friends-compact-count">{{ onlineFriendsCount }}</span>
-            <span class="friends-compact-dot"></span>
           </button>
         </div>
 
@@ -260,24 +258,6 @@ const handleScroll = (event) => {
   line-height: 1;
 }
 
-.friends-compact-count {
-  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
-  font-size: 11px;
-  font-weight: bold;
-  color: #00FF88;
-  line-height: 1;
-}
-
-.friends-compact-dot {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 6px;
-  height: 6px;
-  background: #00FF88;
-  border-radius: 50%;
-  box-shadow: 0 0 6px rgba(0, 255, 136, 0.8);
-}
 
 /* ── Auto Fight Status ────────────────────────────────────── */
 .autofight-status-section {
@@ -314,7 +294,6 @@ const handleScroll = (event) => {
     height: 42px;
   }
   .friends-compact-label { font-size: 13px; }
-  .friends-compact-count { font-size: 9px; }
 }
 
 .scroll-gap {
