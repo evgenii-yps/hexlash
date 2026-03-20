@@ -139,13 +139,13 @@ function selectMode(mode) {
 
 /* ── Compact square button ───────────────────────────────── */
 .mode-compact-btn {
-  width: 48px;
+  width: 60px;
   height: 48px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1px;
+  gap: 2px;
   background: rgba(20, 20, 30, 0.9);
   border: 1px solid rgba(255, 6, 111, 0.4);
   border-radius: 12px;
@@ -167,7 +167,7 @@ function selectMode(mode) {
 
 .mode-compact-label {
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -280,9 +280,9 @@ function selectMode(mode) {
 
 @media (max-width: 400px) {
   .mode-compact-btn {
-    width: 40px;
-    height: 40px;
+    width: 52px;
+    height: 42px;
   }
-  .mode-compact-label { font-size: 10px; }
+  .mode-compact-label { font-size: 11px; }
 }
 </style>

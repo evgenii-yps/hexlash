@@ -28,6 +28,7 @@
           </VBtn>
 
           <button class="friends-compact-btn" @click="goToFriends">
+            <span class="friends-compact-label">Friends</span>
             <span class="friends-compact-count">{{ onlineFriendsCount }}</span>
             <span class="friends-compact-dot"></span>
           </button>
@@ -230,7 +231,7 @@ const handleScroll = (event) => {
 
 /* ── Friends compact button ──────────────────────────────── */
 .friends-compact-btn {
-  width: 48px;
+  width: 60px;
   height: 48px;
   display: flex;
   flex-direction: column;
@@ -251,9 +252,19 @@ const handleScroll = (event) => {
   box-shadow: 0 0 16px rgba(255, 6, 111, 0.3);
 }
 
+.friends-compact-label {
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-size: 13px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #fff;
+  line-height: 1;
+}
+
 .friends-compact-count {
   font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: bold;
   color: #00FF88;
   line-height: 1;
@@ -301,10 +312,10 @@ const handleScroll = (event) => {
 
 @media (max-width: 400px) {
   .friends-compact-btn {
-    width: 40px;
-    height: 40px;
+    width: 52px;
+    height: 42px;
   }
-  .friends-compact-svg { width: 16px; height: 16px; }
+  .friends-compact-label { font-size: 11px; }
   .friends-compact-count { font-size: 9px; }
 }
 
