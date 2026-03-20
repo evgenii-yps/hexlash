@@ -8,6 +8,8 @@ export class RoundResult {
         hp1After,
         hp2After,
         events = [],
+        move1 = null,
+        move2 = null,
     } = {}) {
         this.roundNum = roundNum;
         this.action1 = action1;   // 'attack' | 'defense' | 'position'
@@ -17,6 +19,8 @@ export class RoundResult {
         this.hp1After = hp1After;
         this.hp2After = hp2After;
         this.events = events;
+        this.move1 = move1;       // { id, damage, speed, branch, level } or null
+        this.move2 = move2;
     }
 }
 
