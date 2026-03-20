@@ -37,6 +37,10 @@ function saveFightState(state) {
         localStorage.setItem(FIGHT_STORAGE_KEY, JSON.stringify({
             playerModules:     state.playerModules,
             opponent:          state.opponent,
+            playerDeck:        state.playerDeck,
+            playerCardLevels:  state.playerCardLevels,
+            opponentDeck:      state.opponentDeck,
+            opponentCardLevels: state.opponentCardLevels,
             liveHP1:           state.liveHP1,
             liveHP2:           state.liveHP2,
             roundNum:          state.roundNum,
@@ -82,12 +86,19 @@ function _simulateOneRound(state, commit) {
     const action1 = _ai1.selectAction(state.liveHP1, MAX_HP);
     const action2 = _ai2.selectAction(state.liveHP2, MAX_HP);
 
+    const moveInfo = CombatEngine.getMoveInfo(
+        nextRound,
+        state.playerDeck, state.playerCardLevels,
+        state.opponentDeck, state.opponentCardLevels,
+    );
+
     const result = CombatEngine.resolveRoundLive(
         action1, action2,
         state.liveHP1, state.liveHP2,
         _ai1, _ai2,
         nextRound,
         state.playerModifiers,
+        moveInfo,
     );
 
     commit('setLiveHP1', result.hp1After);
@@ -120,6 +131,12 @@ function _simulateOneRound(state, commit) {
 const state = {
     playerModules: ['predator', 'analyst', 'ghost'],
     opponent: null,
+
+    // Deck data for move-based combat
+    playerDeck: [],         // array of move IDs
+    playerCardLevels: {},   // { moveId: level }
+    opponentDeck: [],
+    opponentCardLevels: {},
 
     emergencyProtocol: { type: 'medkit', used: false },
 
@@ -185,6 +202,8 @@ const getters = {
 const mutations = {
     setPlayerModules(s, modules) { s.playerModules = modules; },
     setOpponent(s, v)            { s.opponent = v; },
+    setPlayerDeck(s, { deck, cardLevels }) { s.playerDeck = deck; s.playerCardLevels = cardLevels; },
+    setOpponentDeck(s, { deck, cardLevels }) { s.opponentDeck = deck; s.opponentCardLevels = cardLevels; },
     setFightPhase(s, v)          { s.fightPhase = v; },
     setDifficulty(s, v)          { s.difficulty = v; },
 
@@ -275,6 +294,18 @@ const actions = {
 
         const opponent = OpponentGenerator.generate(state.difficulty, playerPower);
         commit('setOpponent', opponent);
+
+        // Set up deck data for move-based combat
+        const playerDeck = progressionState.deck || [];
+        const playerCardLevels = {};
+        playerDeck.forEach(moveId => {
+            playerCardLevels[moveId] = progressionState.moves[moveId]?.level || 1;
+        });
+        commit('setPlayerDeck', { deck: playerDeck, cardLevels: playerCardLevels });
+        commit('setOpponentDeck', {
+            deck: opponent.deck || [],
+            cardLevels: opponent.cardLevels || {},
+        });
 
         _ai1 = new ModuleAIStrategy(state.playerModules);
         _ai2 = new ModuleAIStrategy(opponent.modules);
@@ -455,6 +486,8 @@ const actions = {
         // Restore all persisted state
         commit('setPlayerModules', saved.playerModules);
         commit('setOpponent', saved.opponent);
+        commit('setPlayerDeck', { deck: saved.playerDeck || [], cardLevels: saved.playerCardLevels || {} });
+        commit('setOpponentDeck', { deck: saved.opponentDeck || [], cardLevels: saved.opponentCardLevels || {} });
         commit('setLiveHP1', saved.liveHP1);
         commit('setLiveHP2', saved.liveHP2);
         commit('setRoundNum', saved.roundNum);

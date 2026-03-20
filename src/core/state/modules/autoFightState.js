@@ -63,7 +63,7 @@ function getTodayDate() {
 }
 
 // ─── Fast offline fight simulation ──────────────────────────────────────────
-function simulateFullFight(playerModules, difficulty, playerPower = null) {
+function simulateFullFight(playerModules, difficulty, playerPower = null, playerDeck = null, playerCardLevels = null) {
     const opponent = OpponentGenerator.generate(difficulty, playerPower);
     const ai1 = new ModuleAIStrategy(playerModules);
     const ai2 = new ModuleAIStrategy(opponent.modules);
@@ -82,8 +82,14 @@ function simulateFullFight(playerModules, difficulty, playerPower = null) {
         const action1 = ai1.selectAction(hp1, MAX_HP);
         const action2 = ai2.selectAction(hp2, MAX_HP);
 
+        const moveInfo = CombatEngine.getMoveInfo(
+            roundNum,
+            playerDeck, playerCardLevels,
+            opponent.deck || [], opponent.cardLevels || {},
+        );
+
         const result = CombatEngine.resolveRoundLive(
-            action1, action2, hp1, hp2, ai1, ai2, roundNum, playerMods,
+            action1, action2, hp1, hp2, ai1, ai2, roundNum, playerMods, moveInfo,
         );
 
         hp1 = result.hp1After;
@@ -368,10 +374,17 @@ const actions = {
             const playerFighter = buildPlayerFighter(progressionState, modules);
             const playerPower = calculatePowerRating(playerFighter);
 
+            // Build player deck data for move-based combat
+            const playerDeck = progressionState.deck || [];
+            const playerCardLevels = {};
+            playerDeck.forEach(moveId => {
+                playerCardLevels[moveId] = progressionState.moves[moveId]?.level || 1;
+            });
+
             // Simulate missed fights
             let nextAt = state.nextFightAt;
             while (nextAt && now >= nextAt && state.fightsToday < AUTO_FIGHT_MAX_PER_DAY && state.sessionFights < AUTO_FIGHT_MAX_PER_SESSION) {
-                const fightData = simulateFullFight(modules, state.difficulty, playerPower);
+                const fightData = simulateFullFight(modules, state.difficulty, playerPower, playerDeck, playerCardLevels);
                 const expGain = fightData.result === 'win' ? 10 : 5;
 
                 const logEntry = {
