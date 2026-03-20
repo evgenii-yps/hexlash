@@ -251,11 +251,12 @@ const handleScroll = (event) => {
 }
 
 .friends-compact-label {
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
-  font-size: 15px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-size: 13px;
   font-weight: 700;
   color: #fff;
   line-height: 1;
+  text-transform: uppercase;
 }
 
 
@@ -293,7 +294,7 @@ const handleScroll = (event) => {
     width: 52px;
     height: 42px;
   }
-  .friends-compact-label { font-size: 13px; }
+  .friends-compact-label { font-size: 11px; }
 }
 
 .scroll-gap {
