@@ -254,10 +254,8 @@ const handleScroll = (event) => {
 
 .friends-compact-label {
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
-  font-size: 13px;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-size: 15px;
+  font-weight: 700;
   color: #fff;
   line-height: 1;
 }
@@ -315,7 +313,7 @@ const handleScroll = (event) => {
     width: 52px;
     height: 42px;
   }
-  .friends-compact-label { font-size: 11px; }
+  .friends-compact-label { font-size: 13px; }
   .friends-compact-count { font-size: 9px; }
 }
 
