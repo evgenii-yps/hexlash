@@ -1,12 +1,11 @@
 <template>
   <div class="mode-selector">
 
-    <!-- Mode Button -->
-    <button class="mode-btn" @click="toggleDropdown">
-      <span class="mode-icon-box" :class="currentModeClass" v-html="currentModeIcon"></span>
-      <span class="mode-label">{{ t.arena.mode }}: {{ currentModeName }}</span>
-      <span class="dropdown-arrow" :class="{ open: isOpen }">
-        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#FF066F" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Compact Mode Button -->
+    <button class="mode-compact-btn" :class="currentModeClass" @click="toggleDropdown">
+      <span class="mode-compact-label">{{ currentModeName }}</span>
+      <span class="mode-compact-arrow" :class="{ open: isOpen }">
+        <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="6 9 12 15 18 9"/>
         </svg>
       </span>
@@ -116,24 +115,11 @@ const emit = defineEmits(['select']);
 const isOpen = ref(false);
 const selectedMode = ref('pve');
 
-const modes = {
-  pve: {
-    icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#00E5FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L4 7v10l8 5 8-5V7z"/><path d="M12 22V12"/><path d="M4 7l8 5 8-5"/></svg>',
-    name: 'PVE', css: 'pve-icon'
-  },
-  pvp: {
-    icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#FF066F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="18" y2="4"/><line x1="16" y1="4" x2="20" y2="4"/><line x1="18" y1="2" x2="18" y2="6"/><line x1="18" y1="20" x2="6" y2="4"/><line x1="4" y1="4" x2="8" y2="4"/><line x1="6" y1="2" x2="6" y2="6"/></svg>',
-    name: 'PVP', css: 'pvp-icon'
-  },
-  auto: {
-    icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#00FF88" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>',
-    name: 'AUTO', css: 'auto-icon'
-  },
-};
+const modeNames = { pve: 'PvE', pvp: 'PvP', auto: 'Auto' };
+const modeCss   = { pve: 'mode-pve', pvp: 'mode-pvp', auto: 'mode-auto' };
 
-const currentModeIcon = computed(() => modes[selectedMode.value].icon);
-const currentModeName = computed(() => modes[selectedMode.value].name);
-const currentModeClass = computed(() => modes[selectedMode.value].css);
+const currentModeName  = computed(() => modeNames[selectedMode.value]);
+const currentModeClass = computed(() => modeCss[selectedMode.value]);
 
 function toggleDropdown() {
   isOpen.value = !isOpen.value;
@@ -149,83 +135,68 @@ function selectMode(mode) {
 <style scoped>
 .mode-selector {
   position: relative;
-  width: 100%;
-  max-width: 300px;
-  margin: 16px auto;
 }
 
-.mode-btn {
-  width: 100%;
+/* ── Compact square button ───────────────────────────────── */
+.mode-compact-btn {
+  width: 48px;
+  height: 48px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  padding: 14px 24px;
+  gap: 1px;
   background: rgba(20, 20, 30, 0.9);
-  border: 2px solid rgba(255, 6, 111, 0.5);
+  border: 1px solid rgba(255, 6, 111, 0.4);
   border-radius: 12px;
-  color: #fff;
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
-  font-size: 16px;
-  text-transform: uppercase;
-  letter-spacing: 2px;
   cursor: pointer;
   transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
-.mode-btn:active {
+.mode-compact-btn:active {
   border-color: #FF066F;
-  box-shadow: 0 0 20px rgba(255, 6, 111, 0.4);
+  box-shadow: 0 0 16px rgba(255, 6, 111, 0.3);
 }
 
-/* Mode icon in button */
-.mode-icon-box {
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
+.mode-compact-btn.mode-pve { border-color: rgba(0, 229, 255, 0.4); }
+.mode-compact-btn.mode-pve:active { border-color: #00E5FF; box-shadow: 0 0 16px rgba(0, 229, 255, 0.3); }
+.mode-compact-btn.mode-pvp { border-color: rgba(255, 6, 111, 0.4); }
+.mode-compact-btn.mode-auto { border-color: rgba(0, 255, 136, 0.4); }
+.mode-compact-btn.mode-auto:active { border-color: #00FF88; box-shadow: 0 0 16px rgba(0, 255, 136, 0.3); }
+
+.mode-compact-label {
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
-  font-size: 12px;
-  font-weight: bold;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #fff;
+  line-height: 1;
 }
 
-.mode-icon-box.pve-icon {
-  background: rgba(0, 191, 255, 0.15);
-  border: 1px solid rgba(0, 191, 255, 0.4);
-  color: #00BFFF;
-}
+.mode-compact-btn.mode-pve .mode-compact-label { color: #00E5FF; }
+.mode-compact-btn.mode-pvp .mode-compact-label { color: #FF066F; }
+.mode-compact-btn.mode-auto .mode-compact-label { color: #00FF88; }
 
-.mode-icon-box.pvp-icon {
-  background: rgba(255, 6, 111, 0.15);
-  border: 1px solid rgba(255, 6, 111, 0.4);
-  color: #FF066F;
-  font-size: 18px;
-}
-
-.mode-icon-box.auto-icon {
-  background: rgba(0, 255, 136, 0.15);
-  border: 1px solid rgba(0, 255, 136, 0.4);
-  color: #00FF88;
-  font-size: 18px;
-}
-
-.dropdown-arrow {
-  font-size: 12px;
+.mode-compact-arrow {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.4);
   transition: transform 0.2s ease;
+  line-height: 1;
+  display: flex;
 }
 
-.dropdown-arrow.open {
+.mode-compact-arrow.open {
   transform: rotate(180deg);
 }
 
-/* Dropdown */
+/* ── Dropdown ────────────────────────────────────────────── */
 .mode-dropdown {
   position: absolute;
   top: calc(100% + 8px);
   left: 0;
-  right: 0;
+  width: 280px;
   background: rgba(15, 15, 25, 0.98);
   border: 2px solid #FF066F;
   border-radius: 16px;
@@ -238,14 +209,8 @@ function selectMode(mode) {
 }
 
 @keyframes dropdownIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .mode-option {
@@ -258,19 +223,10 @@ function selectMode(mode) {
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.mode-option:last-child {
-  border-bottom: none;
-}
+.mode-option:last-child { border-bottom: none; }
+.mode-option:active { background: rgba(255, 6, 111, 0.15); }
+.mode-option.active { background: rgba(255, 6, 111, 0.2); }
 
-.mode-option:active {
-  background: rgba(255, 6, 111, 0.15);
-}
-
-.mode-option.active {
-  background: rgba(255, 6, 111, 0.2);
-}
-
-/* Option icons */
 .option-icon {
   width: 40px;
   height: 40px;
@@ -278,33 +234,14 @@ function selectMode(mode) {
   align-items: center;
   justify-content: center;
   border-radius: 10px;
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
-  font-weight: bold;
   flex-shrink: 0;
 }
 
-.pve-icon {
-  background: rgba(0, 191, 255, 0.15);
-  border: 1px solid rgba(0, 191, 255, 0.4);
-  color: #00BFFF;
-}
+.pve-icon  { background: rgba(0, 191, 255, 0.15); border: 1px solid rgba(0, 191, 255, 0.4); }
+.pvp-icon  { background: rgba(255, 6, 111, 0.15); border: 1px solid rgba(255, 6, 111, 0.4); }
+.auto-icon { background: rgba(0, 255, 136, 0.15); border: 1px solid rgba(0, 255, 136, 0.4); }
 
-.pvp-icon {
-  background: rgba(255, 6, 111, 0.15);
-  border: 1px solid rgba(255, 6, 111, 0.4);
-  color: #FF066F;
-}
-
-.auto-icon {
-  background: rgba(0, 255, 136, 0.15);
-  border: 1px solid rgba(0, 255, 136, 0.4);
-  color: #00FF88;
-}
-
-
-.option-info {
-  flex: 1;
-}
+.option-info { flex: 1; }
 
 .option-name {
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
@@ -315,10 +252,7 @@ function selectMode(mode) {
   margin-bottom: 4px;
 }
 
-.option-desc {
-  font-size: 12px;
-  color: #888;
-}
+.option-desc { font-size: 12px; color: #888; }
 
 .option-stat {
   display: flex;
@@ -330,26 +264,25 @@ function selectMode(mode) {
 }
 
 .online-dot {
-  width: 6px;
-  height: 6px;
+  width: 6px; height: 6px;
   background: #00FF88;
   border-radius: 50%;
   box-shadow: 0 0 6px rgba(0, 255, 136, 0.8);
 }
 
-.check {
-  color: #FF066F;
-  font-size: 18px;
-  font-weight: bold;
-}
+.check { color: #FF066F; }
 
-/* Overlay */
 .dropdown-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  top: 0; left: 0; right: 0; bottom: 0;
   z-index: 99;
+}
+
+@media (max-width: 400px) {
+  .mode-compact-btn {
+    width: 40px;
+    height: 40px;
+  }
+  .mode-compact-label { font-size: 10px; }
 }
 </style>
