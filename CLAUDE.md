@@ -160,6 +160,7 @@ unlockRequirements:  { 3: {taps:300, exp:150}, 4: {taps:250, exp:120}, 5: {taps:
 **Fonts:**
 - `Anonymous` — special UI elements, titles
 - `AnonymousBalance` — numeric values (taps, XP, balance)
+- System sans-serif (`-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, ...`) — compact arena buttons (Mode, Friends)
 
 **Design language:** Dark theme, neon pink accents, semi-transparent backgrounds, thin gray borders.
 
@@ -269,7 +270,7 @@ COACH_PAUSE_TIMEOUT_MS = 10000
 | Fight | `CardFightView.vue` | Main combat, dice, coach advice, HP bars |
 | Profile | `ProfileView.vue` | Tabs: balance, wallet, account, skins |
 | Ratings | `RatingsView.vue` | Club and player leaderboards |
-| Preparation | `PreparationView.vue` | Arena bet + opponent selection + auto fight toggle/status + mode selector |
+| Preparation | `PreparationView.vue` | Arena: action row (Mode + START FIGHT + Friends buttons), auto fight toggle/status. Friends button is text-only (no online indicator) |
 | Friends | `FriendsView.vue` | Friends list, friend requests, search players |
 | Matchmaking | `MatchmakingView.vue` | Real-time PvP matchmaking queue |
 | Spectate | `SpectateView.vue` | Watch live PvP fights |
@@ -307,7 +308,7 @@ COACH_PAUSE_TIMEOUT_MS = 10000
 - `SoundToggle.vue` — sound mute/unmute toggle (Profile > Account)
 - `HPBar.vue` — fight health bar
 - `Fighter.vue` — fighter display in combat
-- `ModeSelector.vue` — arena mode selector (AI/PvP)
+- `ModeSelector.vue` — arena mode selector (PvE/PvP/Auto), compact button with dropdown, system sans-serif font
 - `FriendCard.vue` — friend display card
 - `FriendRequestCard.vue` — incoming friend request
 - `ChallengeModal.vue` — PvP challenge popup (legacy, kept as fallback)
