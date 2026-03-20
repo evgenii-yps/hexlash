@@ -167,10 +167,8 @@ function selectMode(mode) {
 
 .mode-compact-label {
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
-  font-size: 13px;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-size: 15px;
+  font-weight: 700;
   color: #fff;
   line-height: 1;
 }
@@ -283,6 +281,6 @@ function selectMode(mode) {
     width: 52px;
     height: 42px;
   }
-  .mode-compact-label { font-size: 11px; }
+  .mode-compact-label { font-size: 13px; }
 }
 </style>
