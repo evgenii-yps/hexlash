@@ -10,9 +10,14 @@
 
         <ModuleBuilder/>
 
-        <div class="fight-button-wrapper">
+        <!-- Action row: Mode | START FIGHT | Friends -->
+        <div class="action-row">
+          <ModeSelector
+            :onlineCount="onlinePlayersCount"
+            @select="onModeSelect"
+          />
+
           <VBtn
-              width="200"
               size="large"
               class="fight-btn"
               :class="{ 'fight-btn-auto-active': selectedMode === 'auto' && isAutoFightEnabled }"
@@ -21,13 +26,12 @@
           >
             {{ startButtonText }}
           </VBtn>
-        </div>
 
-        <!-- Mode Selector -->
-        <ModeSelector
-          :onlineCount="onlinePlayersCount"
-          @select="onModeSelect"
-        />
+          <button class="friends-compact-btn" @click="goToFriends">
+            <span class="friends-compact-count">{{ onlineFriendsCount }}</span>
+            <span class="friends-compact-dot"></span>
+          </button>
+        </div>
 
         <!-- Auto Fight Status (shown when auto mode selected or auto fight active) -->
         <div v-if="selectedMode === 'auto' || isAutoFightEnabled" class="autofight-status-section">
@@ -38,24 +42,6 @@
             </svg>
             <span>{{ t.arena.autoFightInactive }}</span>
           </div>
-        </div>
-
-        <!-- Friends Button -->
-        <div class="friends-section">
-          <button class="friends-btn" @click="goToFriends">
-            <svg class="friends-svg" viewBox="0 0 24 24" width="20" height="20">
-              <circle cx="9" cy="8" r="3.5" fill="none" stroke="currentColor" stroke-width="1.8"/>
-              <path d="M2 20c0-3.5 3.5-5.5 7-5.5s7 2 7 5.5" fill="none" stroke="currentColor" stroke-width="1.8"/>
-              <circle cx="17" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/>
-              <path d="M17 14.5c2.5 0 5 1.5 5 5.5" fill="none" stroke="currentColor" stroke-width="1.8"/>
-            </svg>
-            <span class="friends-label">{{ t.friends.title }}</span>
-            <span class="friends-divider">&#x2022;</span>
-            <span class="friends-online-inline">
-              <span class="online-dot-small"></span>
-              {{ t.friends.online }}: {{ onlineFriendsCount }}
-            </span>
-          </button>
         </div>
 
         <div class="scroll-gap"/>
@@ -210,17 +196,24 @@ const handleScroll = (event) => {
   gap: 4px;
 }
 
-.fight-button-wrapper {
+/* ── Action Row ───────────────────────────────────────────── */
+.action-row {
   margin-top: 20px;
   display: flex;
+  align-items: center;
   justify-content: center;
+  gap: 12px;
+  width: 100%;
 }
 
 .fight-btn {
+  flex: 1;
+  max-width: 220px;
   cursor: pointer;
   background-color: var(--primary-color);
   color: white !important;
   font-size: 1rem;
+  min-height: 48px !important;
 }
 
 .fight-btn:disabled {
@@ -233,6 +226,48 @@ const handleScroll = (event) => {
   border: 2px solid #00FF88 !important;
   color: #00FF88 !important;
   box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+}
+
+/* ── Friends compact button ──────────────────────────────── */
+.friends-compact-btn {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: rgba(20, 20, 30, 0.9);
+  border: 1px solid rgba(255, 6, 111, 0.4);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.friends-compact-btn:active {
+  border-color: #FF066F;
+  box-shadow: 0 0 16px rgba(255, 6, 111, 0.3);
+}
+
+.friends-compact-count {
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
+  font-size: 10px;
+  font-weight: bold;
+  color: #00FF88;
+  line-height: 1;
+}
+
+.friends-compact-dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 6px;
+  height: 6px;
+  background: #00FF88;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(0, 255, 136, 0.8);
 }
 
 /* ── Auto Fight Status ────────────────────────────────────── */
@@ -264,61 +299,13 @@ const handleScroll = (event) => {
   flex-shrink: 0;
 }
 
-/* ── Friends Section ─────────────────────────────────────── */
-.friends-section {
-  text-align: center;
-  margin-top: 24px;
-}
-
-.friends-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 14px 24px;
-  background: rgba(20, 20, 30, 0.85);
-  border: 1px solid rgba(255, 6, 111, 0.4);
-  border-radius: 12px;
-  color: #fff;
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
-  font-size: 14px;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.friends-btn:active {
-  border-color: #FF066F;
-  box-shadow: 0 0 20px rgba(255, 6, 111, 0.3);
-}
-
-.friends-svg {
-  color: #FF066F;
-  flex-shrink: 0;
-}
-
-.friends-divider {
-  color: #444;
-  font-size: 16px;
-}
-
-.friends-online-inline {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 400;
-  text-transform: none;
-  letter-spacing: 0;
-  color: #00FF88;
-}
-
-.online-dot-small {
-  width: 6px;
-  height: 6px;
-  background: #00FF88;
-  border-radius: 50%;
-  box-shadow: 0 0 6px rgba(0, 255, 136, 0.8);
+@media (max-width: 400px) {
+  .friends-compact-btn {
+    width: 40px;
+    height: 40px;
+  }
+  .friends-compact-svg { width: 16px; height: 16px; }
+  .friends-compact-count { font-size: 9px; }
 }
 
 .scroll-gap {
