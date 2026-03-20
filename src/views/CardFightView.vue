@@ -56,9 +56,7 @@
                 }"
               ></span>
             </div>
-            <transition name="title-pop">
-              <span v-if="isOverdrive && fightPhase === 'fighting'" class="overdrive-label">{{ t.fight.overdrive }}</span>
-            </transition>
+            <span v-if="isOverdrive && fightPhase === 'fighting'" class="overdrive-label">{{ t.fight.overdrive }}</span>
           </div>
 
           <div class="fighter-side fighter-right" :class="{ 'fighter-shake': shakeRight }">
