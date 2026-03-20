@@ -1,6 +1,6 @@
 import { ModuleAIStrategy } from '@/core/engine/aiStrategy.js';
 import { RoundResult, CombatResultModel } from '@/core/models/combatResultModel.js';
-import { MAX_HP, MAX_ROUNDS, BASE_DAMAGE, POSITION_BONUS } from '@/core/constants.js';
+import { MAX_HP, MAX_ROUNDS, TOTAL_ROUNDS, EXTRA_ROUND_DAMAGE_MULTIPLIER, BASE_DAMAGE, POSITION_BONUS } from '@/core/constants.js';
 import { allMoves } from '@/data/moves.js';
 
 const DODGE_CHANCE = 0.12;
@@ -44,9 +44,13 @@ export class CombatEngine {
             blindActive      = false,
         } = playerMods;
 
+        // Overdrive: rounds > MAX_ROUNDS get damage multiplied
+        const isOverdrive = roundNum > MAX_ROUNDS;
+        const overdriveMult = isOverdrive ? EXTRA_ROUND_DAMAGE_MULTIPLIER : 1;
+
         // Get move damage for each fighter (fallback to BASE_DAMAGE for backward compat)
-        const moveDmg1 = moveInfo?.move1?.damage ?? BASE_DAMAGE;
-        const moveDmg2 = moveInfo?.move2?.damage ?? BASE_DAMAGE;
+        const moveDmg1 = ((moveInfo?.move1?.damage ?? BASE_DAMAGE) * overdriveMult);
+        const moveDmg2 = ((moveInfo?.move2?.damage ?? BASE_DAMAGE) * overdriveMult);
         const moveSpeed1 = moveInfo?.move1?.speed ?? 1.0;
         const moveSpeed2 = moveInfo?.move2?.speed ?? 1.0;
 
@@ -150,7 +154,7 @@ export class CombatEngine {
         }
 
         // Include move info in result for UI display
-        const resultData = { roundNum, action1, action2, damage1, damage2, hp1After, hp2After, events };
+        const resultData = { roundNum, action1, action2, damage1, damage2, hp1After, hp2After, events, isOverdrive };
         if (moveInfo) {
             resultData.move1 = moveInfo.move1;
             resultData.move2 = moveInfo.move2;
@@ -169,7 +173,7 @@ export class CombatEngine {
         const ai1 = new ModuleAIStrategy(modules1);
         const ai2 = new ModuleAIStrategy(modules2);
 
-        for (let roundNum = 1; roundNum <= MAX_ROUNDS; roundNum++) {
+        for (let roundNum = 1; roundNum <= TOTAL_ROUNDS; roundNum++) {
             const action1 = ai1.selectAction(hp1, MAX_HP);
             const action2 = ai2.selectAction(hp2, MAX_HP);
 

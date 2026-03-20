@@ -3,7 +3,7 @@ import { CombatEngine } from '@/core/engine/combatEngine.js';
 import { ModuleAIStrategy } from '@/core/engine/aiStrategy.js';
 import { calculatePowerRating, buildPlayerFighter } from '@/utils/powerRating.js';
 import {
-    MAX_HP, MAX_ROUNDS, ROUND_ANIMATION_MS, COUNTDOWN,
+    MAX_HP, MAX_ROUNDS, TOTAL_ROUNDS, ROUND_ANIMATION_MS, COUNTDOWN,
     DICE_COOLDOWN_ROUNDS, EMERGENCY_HP_THRESHOLD,
     COACH_MIN_ROUND, COACH_TRIGGER_CHANCE, COACH_BOOST_ROUNDS,
     AUTO_FIGHT_MIN_INTERVAL, AUTO_FIGHT_MAX_INTERVAL,
@@ -76,11 +76,16 @@ function simulateFullFight(playerModules, difficulty, playerPower = null, player
     let coachUsed = false;
     const roundLog = [];
 
-    while (roundNum < MAX_ROUNDS && hp1 > 0 && hp2 > 0) {
+    while (roundNum < TOTAL_ROUNDS && hp1 > 0 && hp2 > 0) {
         roundNum++;
 
-        const action1 = ai1.selectAction(hp1, MAX_HP);
-        const action2 = ai2.selectAction(hp2, MAX_HP);
+        // After MAX_ROUNDS, only continue into Overdrive if both alive
+        if (roundNum > MAX_ROUNDS && (hp1 <= 0 || hp2 <= 0)) break;
+
+        const isOverdrive = roundNum > MAX_ROUNDS;
+
+        const action1 = ai1.selectAction(hp1, MAX_HP, isOverdrive);
+        const action2 = ai2.selectAction(hp2, MAX_HP, isOverdrive);
 
         const moveInfo = CombatEngine.getMoveInfo(
             roundNum,
@@ -88,8 +93,13 @@ function simulateFullFight(playerModules, difficulty, playerPower = null, player
             opponent.deck || [], opponent.cardLevels || {},
         );
 
+        // In Overdrive: no dice effects (clear mods)
+        const modsToUse = isOverdrive
+            ? { attackMultiplier: 1, shieldActive: false, blindActive: false }
+            : playerMods;
+
         const result = CombatEngine.resolveRoundLive(
-            action1, action2, hp1, hp2, ai1, ai2, roundNum, playerMods, moveInfo,
+            action1, action2, hp1, hp2, ai1, ai2, roundNum, modsToUse, moveInfo,
         );
 
         hp1 = result.hp1After;
@@ -101,28 +111,31 @@ function simulateFullFight(playerModules, difficulty, playerPower = null, player
         playerMods.shieldActive = false;
         playerMods.blindActive = false;
 
-        // Emergency protocol (medkit) — auto uses medkit
-        if (!emergencyUsed && (hp1 / MAX_HP) * 100 < EMERGENCY_HP_THRESHOLD) {
-            hp1 = Math.min(MAX_HP, hp1 + 25);
-            emergencyUsed = true;
-        }
+        // In Overdrive: no emergency, no coach
+        if (!isOverdrive) {
+            // Emergency protocol (medkit) — auto uses medkit
+            if (!emergencyUsed && (hp1 / MAX_HP) * 100 < EMERGENCY_HP_THRESHOLD) {
+                hp1 = Math.min(MAX_HP, hp1 + 25);
+                emergencyUsed = true;
+            }
 
-        // Coach advice — auto picks attack if in danger, else position
-        if (!coachUsed && roundNum >= COACH_MIN_ROUND && Math.random() < COACH_TRIGGER_CHANCE) {
-            const coachAction = hp1 < 50 ? 'defense' : 'attack';
-            ai1.setCoachBoost(coachAction, COACH_BOOST_ROUNDS);
-            coachUsed = true;
-        }
+            // Coach advice — auto picks attack if in danger, else position
+            if (!coachUsed && roundNum >= COACH_MIN_ROUND && Math.random() < COACH_TRIGGER_CHANCE) {
+                const coachAction = hp1 < 50 ? 'defense' : 'attack';
+                ai1.setCoachBoost(coachAction, COACH_BOOST_ROUNDS);
+                coachUsed = true;
+            }
 
-        if (ai1._coachBoostRounds > 0) {
-            ai1.tickCoachBoost();
+            if (ai1._coachBoostRounds > 0) {
+                ai1.tickCoachBoost();
+            }
         }
 
         if (hp1 <= 0 || hp2 <= 0) break;
     }
 
-    // Tie-break at max rounds
-    if (roundNum >= MAX_ROUNDS && hp1 > 0 && hp2 > 0) {
+    // Tie-break at max total rounds
+    if (roundNum >= TOTAL_ROUNDS && hp1 > 0 && hp2 > 0) {
         if (hp1 > hp2) hp2 = 0;
         else if (hp2 > hp1) hp1 = 0;
     }

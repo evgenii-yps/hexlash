@@ -380,6 +380,9 @@ export default {
     lblModShield: 'SHIELD',
     lblModBlind: 'BLIND',
     lblEventEmergencyProtocol: 'EMERGENCY PROTOCOL',
+    overdrive: 'OVERDRIVE',
+    extraRound: 'エクストラ {n}',
+    overdriveStart: 'オーバードライブ！ダメージ2倍、ダイスとコーチなし！',
   },
   autoFight: {
     lblAutoFight: 'Auto Fight',

@@ -1,5 +1,5 @@
 <template>
-  <div class="background background-fight" :class="{ 'screen-flash': flashActive }" :style="flashStyle">
+  <div class="background background-fight" :class="{ 'screen-flash': flashActive, 'overdrive-active': isOverdrive }" :style="flashStyle">
 
     <!-- Loading overlay: "Never give up" -->
     <Transition name="loading-fade">
@@ -22,6 +22,14 @@
           <span class="autofight-banner-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FF066F" stroke-width="2" stroke-linecap="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10"/><path d="M20.49 15a9 9 0 01-14.85 3.36L1 14"/></svg></span>
           <span class="autofight-banner-text">{{ t.autoFight.lblAutoFightInProgress }}</span>
         </div>
+
+        <!-- Overdrive banner -->
+        <transition name="title-pop">
+          <div v-if="showOverdriveBanner" class="overdrive-banner">
+            <span class="overdrive-banner-text">{{ t.fight.overdrive }}</span>
+            <span class="overdrive-banner-desc">{{ t.fight.overdriveStart }}</span>
+          </div>
+        </transition>
 
         <!-- Countdown overlay -->
         <transition-group name="fade-scale" tag="div" class="countdown" v-if="showCountdown">
@@ -46,12 +54,13 @@
             <span>{{ t.fight.lblVS }}</span>
             <div class="round-dots" v-if="fightPhase === 'fighting'">
               <span
-                v-for="n in 10"
+                v-for="n in TOTAL_ROUNDS"
                 :key="n"
                 class="round-dot"
                 :class="{
-                  'round-dot-done':    n < roundNum,
-                  'round-dot-current': n === roundNum,
+                  'round-dot-done':      n < roundNum,
+                  'round-dot-current':   n === roundNum,
+                  'round-dot-overdrive': n > MAX_ROUNDS,
                 }"
               ></span>
             </div>
@@ -80,7 +89,7 @@
         </transition>
 
         <!-- Dice of Fate (manual, with cooldown) -->
-        <div class="dice-area" v-if="fightPhase === 'fighting' && roundNum > 0 && (diceState.ready || diceState.activeItem)">
+        <div class="dice-area" v-if="fightPhase === 'fighting' && roundNum > 0 && !isOverdrive && (diceState.ready || diceState.activeItem)">
           <button
             v-if="diceState.ready && !diceState.activeItem"
             class="dice-button dice-ready"
@@ -183,7 +192,7 @@
             </button>
             <div v-if="showDetailedLog" class="detailed-log">
               <div v-for="r in roundLog" :key="r.roundNum" class="log-entry">
-                <span class="log-round">R{{ r.roundNum }}</span>
+                <span class="log-round" :class="{ 'log-round-overdrive': r.roundNum > MAX_ROUNDS }">{{ r.roundNum > MAX_ROUNDS ? `E${r.roundNum - MAX_ROUNDS}` : `R${r.roundNum}` }}</span>
                 <span class="log-action left" :class="'log-' + r.action1">
                   <img :src="logActionImage(r.action1)" class="log-action-icon" alt=""/> {{ logActionName(r.action1) }}
                 </span>
@@ -220,7 +229,7 @@ import store from '@/core/state/store.js';
 import router from '@/router/index.js';
 import { t, interpolate } from '@/locales/index.js';
 import apiClient from '@/core/api/apiClient.js';
-import { COUNTDOWN, ROUND_ANIMATION_MS, MAX_HP } from '@/core/constants.js';
+import { COUNTDOWN, ROUND_ANIMATION_MS, MAX_HP, MAX_ROUNDS, TOTAL_ROUNDS } from '@/core/constants.js';
 import { ARCHETYPES } from '@/core/data/archetypes.js';
 import { allMoves as movesData } from '@/data/moves.js';
 import HPBar        from '@/components/fragments/fight/HPBar.vue';
@@ -310,6 +319,10 @@ const anyModActive = computed(() =>
     playerModifiers.value.shieldActive ||
     playerModifiers.value.blindActive
 );
+
+// ── Overdrive ──────────────────────────────────────────────────────────────
+const isOverdrive = computed(() => store.getters['fight/isOverdrive']);
+const showOverdriveBanner = ref(false);
 
 // ── Auto Fight ──────────────────────────────────────────────────────────────
 const isAutoFightEnabled = computed(() => store.getters['autoFight/isEnabled']);
@@ -446,6 +459,15 @@ watch(eventTitle, (val) => {
   }
 });
 
+// ── Watch for Overdrive start ──────────────────────────────────────────
+watch(roundNum, (newVal, oldVal) => {
+  if (newVal === MAX_ROUNDS + 1 && oldVal <= MAX_ROUNDS) {
+    showOverdriveBanner.value = true;
+    triggerFlash('overdrive');
+    setTimeout(() => { showOverdriveBanner.value = false; }, 2500);
+  }
+});
+
 // ── Shake on HP change ──────────────────────────────────────────────────
 watch(liveHP1, (newVal) => {
   if (newVal < prevHP1) {
@@ -474,6 +496,7 @@ const triggerFlash = (effect) => {
     rage:       'rgba(255, 23, 68, 0.25)',
     crit:       'rgba(255, 214, 0, 0.25)',
     damage:     'rgba(255, 23, 68, 0.15)',
+    overdrive:  'rgba(255, 100, 0, 0.3)',
   };
   flashColor.value  = colors[effect] || 'rgba(255,255,255,0.15)';
   flashActive.value = true;
@@ -788,6 +811,7 @@ function initPvPFight() {
   window.addEventListener('pvp-coach_pause', onPvPCoachPause);
   window.addEventListener('pvp-coach_result', onPvPCoachResult);
   window.addEventListener('pvp-fight_end', onPvPFightEnd);
+  window.addEventListener('pvp-overdrive_start', onPvPOverdriveStart);
 }
 
 function cleanupPvP() {
@@ -800,6 +824,7 @@ function cleanupPvP() {
   window.removeEventListener('pvp-coach_pause', onPvPCoachPause);
   window.removeEventListener('pvp-coach_result', onPvPCoachResult);
   window.removeEventListener('pvp-fight_end', onPvPFightEnd);
+  window.removeEventListener('pvp-overdrive_start', onPvPOverdriveStart);
 }
 
 function getMyOdId() {
@@ -1042,6 +1067,12 @@ function onPvPFightEnd(e) {
 
   // Update pvp stats
   store.dispatch('pvp/finishPvPFight', pvpResultType.value);
+}
+
+function onPvPOverdriveStart() {
+  showOverdriveBanner.value = true;
+  triggerFlash('overdrive');
+  setTimeout(() => { showOverdriveBanner.value = false; }, 2500);
 }
 
 function startPvPTimer(type) {
@@ -1287,6 +1318,21 @@ const flashStyle = computed(() => ({
   border-color: var(--primary-color);
   box-shadow: 0 0 6px rgba(255, 6, 111, 0.8);
   transform: scale(1.3);
+}
+
+.round-dot-overdrive {
+  border-color: rgba(255, 100, 0, 0.4);
+}
+
+.round-dot-overdrive.round-dot-done {
+  background: rgba(255, 100, 0, 0.5);
+  border-color: rgba(255, 100, 0, 0.6);
+}
+
+.round-dot-overdrive.round-dot-current {
+  background: #FF6400;
+  border-color: #FF6400;
+  box-shadow: 0 0 8px rgba(255, 100, 0, 0.9);
 }
 
 .status-fighter {
@@ -2115,5 +2161,63 @@ const flashStyle = computed(() => ({
 
 .btn-back:hover {
   box-shadow: 0 0 20px rgba(255, 6, 111, 0.6);
+}
+
+/* ── Overdrive ──────────────────────────────────────────────────── */
+.overdrive-active .fighters-section {
+  border-color: rgba(255, 100, 0, 0.4);
+  animation: overdrivePulse 1.5s ease-in-out infinite;
+}
+
+@keyframes overdrivePulse {
+  0%, 100% {
+    border-color: rgba(255, 100, 0, 0.3);
+    box-shadow: 0 0 10px rgba(255, 100, 0, 0.1);
+  }
+  50% {
+    border-color: rgba(255, 100, 0, 0.7);
+    box-shadow: 0 0 25px rgba(255, 100, 0, 0.3), inset 0 0 15px rgba(255, 100, 0, 0.05);
+  }
+}
+
+.overdrive-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, rgba(255, 100, 0, 0.2) 0%, rgba(255, 50, 0, 0.1) 100%);
+  border: 1px solid rgba(255, 100, 0, 0.6);
+  border-radius: 12px;
+  margin-bottom: 10px;
+  animation: overdriveBannerPop 0.5s ease-out;
+}
+
+@keyframes overdriveBannerPop {
+  0%   { opacity: 0; transform: scale(0.5); }
+  60%  { opacity: 1; transform: scale(1.1); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.overdrive-banner-text {
+  font-size: 1.8rem;
+  font-weight: 900;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  color: #FF6400;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  text-shadow:
+    0 0 20px rgba(255, 100, 0, 0.8),
+    0 0 40px rgba(255, 100, 0, 0.4);
+}
+
+.overdrive-banner-desc {
+  font-size: 0.65rem;
+  color: rgba(255, 160, 80, 0.9);
+  letter-spacing: 0.5px;
+}
+
+.log-round-overdrive {
+  color: #FF6400 !important;
 }
 </style>

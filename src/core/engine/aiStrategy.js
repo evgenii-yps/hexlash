@@ -59,10 +59,18 @@ export class ModuleAIStrategy {
 
     /**
      * Select an action based on weighted priorities.
+     * @param {boolean} [isOverdrive=false] - In Overdrive, AI skews heavily toward attack
      * @returns {'attack' | 'defense' | 'position'}
      */
-    selectAction(currentHP, maxHP) {
+    selectAction(currentHP, maxHP, isOverdrive = false) {
         const priorities = this.calculatePriorities(currentHP, maxHP);
+
+        // Overdrive: aggressive bias — boost attack, reduce position
+        if (isOverdrive) {
+            priorities.attack += 30;
+            priorities.position = Math.max(5, priorities.position - 15);
+        }
+
         const total = priorities.attack + priorities.defense + priorities.position;
         const roll = Math.random() * total;
 

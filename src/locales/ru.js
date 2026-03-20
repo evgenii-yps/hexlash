@@ -390,6 +390,9 @@ export default {
     lblModShield: 'ЩИТ',
     lblModBlind: 'СЛЕПОТА',
     lblEventEmergencyProtocol: 'ЭКСТРЕННЫЙ ПРОТОКОЛ',
+    overdrive: 'OVERDRIVE',
+    extraRound: 'ЭКСТРА {n}',
+    overdriveStart: 'Режим Overdrive! Урон x2, без dice и coach!',
   },
   autoFight: {
     lblAutoFight: 'Автобой',

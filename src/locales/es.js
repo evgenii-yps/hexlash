@@ -380,6 +380,9 @@ export default {
     lblModShield: 'SHIELD',
     lblModBlind: 'BLIND',
     lblEventEmergencyProtocol: 'EMERGENCY PROTOCOL',
+    overdrive: 'OVERDRIVE',
+    extraRound: 'EXTRA {n}',
+    overdriveStart: '¡Overdrive! Daño x2, sin dado ni entrenador!',
   },
   autoFight: {
     lblAutoFight: 'Auto Fight',

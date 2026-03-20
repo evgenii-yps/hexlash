@@ -380,6 +380,9 @@ export default {
     lblModShield: 'SHIELD',
     lblModBlind: 'BLIND',
     lblEventEmergencyProtocol: 'EMERGENCY PROTOCOL',
+    overdrive: 'OVERDRIVE',
+    extraRound: 'अतिरिक्त {n}',
+    overdriveStart: 'ओवरड्राइव! डैमेज x2, बिना डाइस और कोच!',
   },
   autoFight: {
     lblAutoFight: 'Auto Fight',

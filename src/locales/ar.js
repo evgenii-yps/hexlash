@@ -380,6 +380,9 @@ export default {
     lblModShield: 'SHIELD',
     lblModBlind: 'BLIND',
     lblEventEmergencyProtocol: 'EMERGENCY PROTOCOL',
+    overdrive: 'OVERDRIVE',
+    extraRound: 'إضافي {n}',
+    overdriveStart: 'أوفردرايف! ضرر مضاعف، بدون نرد أو مدرب!',
   },
   autoFight: {
     lblAutoFight: 'Auto Fight',
