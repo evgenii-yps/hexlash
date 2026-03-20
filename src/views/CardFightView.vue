@@ -23,14 +23,6 @@
           <span class="autofight-banner-text">{{ t.autoFight.lblAutoFightInProgress }}</span>
         </div>
 
-        <!-- Overdrive banner -->
-        <transition name="title-pop">
-          <div v-if="showOverdriveBanner" class="overdrive-banner">
-            <span class="overdrive-banner-text">{{ t.fight.overdrive }}</span>
-            <span class="overdrive-banner-desc">{{ t.fight.overdriveStart }}</span>
-          </div>
-        </transition>
-
         <!-- Countdown overlay -->
         <transition-group name="fade-scale" tag="div" class="countdown" v-if="showCountdown">
           <div v-if="countdownValue !== 0" :key="countdownValue" class="countdown-item">
@@ -64,6 +56,7 @@
                 }"
               ></span>
             </div>
+            <span v-if="isOverdrive && fightPhase === 'fighting'" class="overdrive-label">{{ t.fight.overdrive }}</span>
           </div>
 
           <div class="fighter-side fighter-right" :class="{ 'fighter-shake': shakeRight }">
@@ -322,7 +315,6 @@ const anyModActive = computed(() =>
 
 // ── Overdrive ──────────────────────────────────────────────────────────────
 const isOverdrive = computed(() => store.getters['fight/isOverdrive']);
-const showOverdriveBanner = ref(false);
 
 // ── Auto Fight ──────────────────────────────────────────────────────────────
 const isAutoFightEnabled = computed(() => store.getters['autoFight/isEnabled']);
@@ -462,9 +454,7 @@ watch(eventTitle, (val) => {
 // ── Watch for Overdrive start ──────────────────────────────────────────
 watch(roundNum, (newVal, oldVal) => {
   if (newVal === MAX_ROUNDS + 1 && oldVal <= MAX_ROUNDS) {
-    showOverdriveBanner.value = true;
     triggerFlash('overdrive');
-    setTimeout(() => { showOverdriveBanner.value = false; }, 2500);
   }
 });
 
@@ -1070,9 +1060,7 @@ function onPvPFightEnd(e) {
 }
 
 function onPvPOverdriveStart() {
-  showOverdriveBanner.value = true;
   triggerFlash('overdrive');
-  setTimeout(() => { showOverdriveBanner.value = false; }, 2500);
 }
 
 function startPvPTimer(type) {
@@ -2180,41 +2168,24 @@ const flashStyle = computed(() => ({
   }
 }
 
-.overdrive-banner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 12px 24px;
-  background: linear-gradient(135deg, rgba(255, 100, 0, 0.2) 0%, rgba(255, 50, 0, 0.1) 100%);
-  border: 1px solid rgba(255, 100, 0, 0.6);
-  border-radius: 12px;
-  margin-bottom: 10px;
-  animation: overdriveBannerPop 0.5s ease-out;
-}
-
-@keyframes overdriveBannerPop {
-  0%   { opacity: 0; transform: scale(0.5); }
-  60%  { opacity: 1; transform: scale(1.1); }
-  100% { opacity: 1; transform: scale(1); }
-}
-
-.overdrive-banner-text {
-  font-size: 1.8rem;
+.overdrive-label {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 0.65rem;
   font-weight: 900;
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
-  color: #FF6400;
+  color: #FF6B00;
   text-transform: uppercase;
-  letter-spacing: 4px;
+  letter-spacing: 2px;
   text-shadow:
-    0 0 20px rgba(255, 100, 0, 0.8),
-    0 0 40px rgba(255, 100, 0, 0.4);
+    0 0 8px rgba(255, 107, 0, 0.7),
+    0 0 16px rgba(255, 107, 0, 0.3);
+  animation: overdriveLabelPulse 1.5s ease-in-out infinite;
 }
 
-.overdrive-banner-desc {
-  font-size: 0.65rem;
-  color: rgba(255, 160, 80, 0.9);
-  letter-spacing: 0.5px;
+@keyframes overdriveLabelPulse {
+  0%, 100% { opacity: 0.8; }
+  50%      { opacity: 1; text-shadow: 0 0 12px rgba(255, 107, 0, 0.9), 0 0 24px rgba(255, 107, 0, 0.5); }
 }
 
 .log-round-overdrive {
