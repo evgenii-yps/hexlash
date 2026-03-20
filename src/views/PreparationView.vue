@@ -28,12 +28,6 @@
           </VBtn>
 
           <button class="friends-compact-btn" @click="goToFriends">
-            <svg class="friends-compact-svg" viewBox="0 0 24 24" width="18" height="18">
-              <circle cx="9" cy="8" r="3.5" fill="none" stroke="currentColor" stroke-width="1.8"/>
-              <path d="M2 20c0-3.5 3.5-5.5 7-5.5s7 2 7 5.5" fill="none" stroke="currentColor" stroke-width="1.8"/>
-              <circle cx="17" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/>
-              <path d="M17 14.5c2.5 0 5 1.5 5 5.5" fill="none" stroke="currentColor" stroke-width="1.8"/>
-            </svg>
             <span class="friends-compact-count">{{ onlineFriendsCount }}</span>
             <span class="friends-compact-dot"></span>
           </button>
@@ -255,10 +249,6 @@ const handleScroll = (event) => {
 .friends-compact-btn:active {
   border-color: #FF066F;
   box-shadow: 0 0 16px rgba(255, 6, 111, 0.3);
-}
-
-.friends-compact-svg {
-  color: #FF066F;
 }
 
 .friends-compact-count {
