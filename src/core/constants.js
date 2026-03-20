@@ -17,6 +17,9 @@ export const MAX_HP = 100;
 export const MAX_DECK_SIZE = 8;
 export const MIN_DECK_SIZE = 4;
 export const MAX_ROUNDS = 10;
+export const EXTRA_ROUNDS = 2;
+export const EXTRA_ROUND_DAMAGE_MULTIPLIER = 2;
+export const TOTAL_ROUNDS = MAX_ROUNDS + EXTRA_ROUNDS; // 12
 export const ROUND_ANIMATION_MS = 1500;
 
 // MODULE COMBAT

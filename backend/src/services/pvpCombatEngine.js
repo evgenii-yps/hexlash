@@ -4,6 +4,8 @@ const config = require('../config');
 const {
   MAX_HP,
   MAX_ROUNDS,
+  TOTAL_ROUNDS,
+  EXTRA_ROUND_DAMAGE_MULTIPLIER,
   COUNTDOWN_MS,
   ROUND_ANIMATION_MS,
   DICE_COOLDOWN_ROUNDS,
@@ -44,7 +46,7 @@ class PvPCombatEngine {
     };
 
     this.currentRound = 0;
-    this.maxRounds = MAX_ROUNDS;
+    this.maxRounds = TOTAL_ROUNDS;
     this.status = 'waiting'; // waiting, running, paused_coach, finished
     this.roundResults = [];
     this.pauseTimer = null;
@@ -65,6 +67,7 @@ class PvPCombatEngine {
       player1: { odId: this.player1.odId, username: this.player1.username },
       player2: { odId: this.player2.odId, username: this.player2.username },
       maxRounds: this.maxRounds,
+      overdriveStartRound: MAX_ROUNDS + 1,
     });
 
     setTimeout(() => {
@@ -78,7 +81,8 @@ class PvPCombatEngine {
     if (this.status === 'finished') return;
 
     this.currentRound++;
-    console.log('[ENGINE] Round', this.currentRound, 'P1 HP:', this.player1.hp, 'P2 HP:', this.player2.hp);
+    const isOverdrive = this.currentRound > MAX_ROUNDS;
+    console.log('[ENGINE] Round', this.currentRound, isOverdrive ? '(OVERDRIVE)' : '', 'P1 HP:', this.player1.hp, 'P2 HP:', this.player2.hp);
 
     // Fight over?
     if (this.currentRound > this.maxRounds || this.player1.hp <= 0 || this.player2.hp <= 0) {
@@ -86,21 +90,35 @@ class PvPCombatEngine {
       return;
     }
 
-    // Notify players of dice availability (no pause — they can roll instantly during the round)
-    const p1Dice = (this.currentRound - this.player1.diceUsedRound) >= DICE_COOLDOWN_ROUNDS;
-    const p2Dice = (this.currentRound - this.player2.diceUsedRound) >= DICE_COOLDOWN_ROUNDS;
-
-    if (p1Dice) {
-      this.sendToPlayer(this.player1, 'dice_available', { round: this.currentRound });
-    }
-    if (p2Dice) {
-      this.sendToPlayer(this.player2, 'dice_available', { round: this.currentRound });
-    }
-
-    // Check coach — after COACH_MIN_ROUND, once per fight
-    if (this.currentRound >= COACH_MIN_ROUND && !this.player1.coachTriggered && !this.player2.coachTriggered) {
-      this.pauseForCoach();
+    // After MAX_ROUNDS, only enter Overdrive if both alive
+    if (isOverdrive && (this.player1.hp <= 0 || this.player2.hp <= 0)) {
+      this.endFight();
       return;
+    }
+
+    // Notify Overdrive start
+    if (this.currentRound === MAX_ROUNDS + 1) {
+      this.emit('overdrive_start', { round: this.currentRound });
+    }
+
+    // Dice and coach disabled in Overdrive
+    if (!isOverdrive) {
+      // Notify players of dice availability
+      const p1Dice = (this.currentRound - this.player1.diceUsedRound) >= DICE_COOLDOWN_ROUNDS;
+      const p2Dice = (this.currentRound - this.player2.diceUsedRound) >= DICE_COOLDOWN_ROUNDS;
+
+      if (p1Dice) {
+        this.sendToPlayer(this.player1, 'dice_available', { round: this.currentRound });
+      }
+      if (p2Dice) {
+        this.sendToPlayer(this.player2, 'dice_available', { round: this.currentRound });
+      }
+
+      // Check coach — after COACH_MIN_ROUND, once per fight
+      if (this.currentRound >= COACH_MIN_ROUND && !this.player1.coachTriggered && !this.player2.coachTriggered) {
+        this.pauseForCoach();
+        return;
+      }
     }
 
     this.simulateRound();
@@ -141,11 +159,13 @@ class PvPCombatEngine {
     const speed1 = moveData1.speed[level1 - 1];
     const speed2 = moveData2.speed[level2 - 1];
 
-    // Base damage from move data
-    let damage1 = moveData1.damage[level1 - 1];
-    let damage2 = moveData2.damage[level2 - 1];
+    // Base damage from move data (doubled in Overdrive)
+    const isOverdrive = this.currentRound > MAX_ROUNDS;
+    const overdriveMult = isOverdrive ? EXTRA_ROUND_DAMAGE_MULTIPLIER : 1;
+    let damage1 = moveData1.damage[level1 - 1] * overdriveMult;
+    let damage2 = moveData2.damage[level2 - 1] * overdriveMult;
 
-    // Apply dice effects
+    // Apply dice effects (effects cleared in Overdrive via tickEffects)
     damage1 = this.applyEffects(damage1, this.player1, this.player2);
     damage2 = this.applyEffects(damage2, this.player2, this.player1);
 
@@ -186,6 +206,7 @@ class PvPCombatEngine {
     // Build round result (enriched with name/branch for frontend display)
     const result = {
       round: this.currentRound,
+      isOverdrive,
       firstAttacker,
       player1: {
         module: { id: module1.id, level: level1, name: moveData1.id, branch: moveData1.branch },
@@ -273,6 +294,8 @@ class PvPCombatEngine {
 
   onDiceRoll(odId) {
     if (this.status === 'finished') return;
+    // Dice disabled in Overdrive
+    if (this.currentRound > MAX_ROUNDS) return;
 
     let player = null;
     if (odId === this.player1.odId) player = this.player1;

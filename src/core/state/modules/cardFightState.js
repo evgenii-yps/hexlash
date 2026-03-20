@@ -5,7 +5,7 @@ import { ARCHETYPES } from '@/core/data/archetypes.js';
 import { calculatePowerRating, buildPlayerFighter } from '@/utils/powerRating.js';
 import { t } from '@/locales/index.js';
 import router from '@/router/index.js';
-import { MAX_HP, MAX_ROUNDS, DICE_COOLDOWN_ROUNDS, EMERGENCY_HP_THRESHOLD, COACH_MIN_ROUND, COACH_TRIGGER_CHANCE, COACH_BOOST_ROUNDS, ROUND_ANIMATION_MS } from '@/core/constants.js';
+import { MAX_HP, MAX_ROUNDS, TOTAL_ROUNDS, DICE_COOLDOWN_ROUNDS, EMERGENCY_HP_THRESHOLD, COACH_MIN_ROUND, COACH_TRIGGER_CHANCE, COACH_BOOST_ROUNDS, ROUND_ANIMATION_MS } from '@/core/constants.js';
 import iconHeal from '@/assets/images/icons/heal.svg';
 import iconAdrenaline from '@/assets/images/icons/adrenaline.svg';
 import iconShield from '@/assets/images/icons/shield.svg';
@@ -78,13 +78,24 @@ function _simulateOneRound(state, commit) {
         return false;
     }
     const nextRound = state.roundNum + 1;
-    if (nextRound > MAX_ROUNDS) {
+    if (nextRound > TOTAL_ROUNDS) {
         commit('setFightPhase', 'results');
         return false;
     }
 
-    const action1 = _ai1.selectAction(state.liveHP1, MAX_HP);
-    const action2 = _ai2.selectAction(state.liveHP2, MAX_HP);
+    // After MAX_ROUNDS (10), only enter Overdrive if both are alive
+    if (nextRound > MAX_ROUNDS && state.liveHP1 > 0 && state.liveHP2 > 0) {
+        // Overdrive rounds — dice/coach disabled, damage x2 handled by CombatEngine
+    } else if (nextRound > MAX_ROUNDS) {
+        // One is already dead — end fight
+        commit('setFightPhase', 'results');
+        return false;
+    }
+
+    const isOverdrive = nextRound > MAX_ROUNDS;
+
+    const action1 = _ai1.selectAction(state.liveHP1, MAX_HP, isOverdrive);
+    const action2 = _ai2.selectAction(state.liveHP2, MAX_HP, isOverdrive);
 
     const moveInfo = CombatEngine.getMoveInfo(
         nextRound,
@@ -92,12 +103,17 @@ function _simulateOneRound(state, commit) {
         state.opponentDeck, state.opponentCardLevels,
     );
 
+    // In Overdrive, strip player modifiers (no dice effects carry over)
+    const modsToUse = isOverdrive
+        ? { attackMultiplier: 1, shieldActive: false, blindActive: false }
+        : state.playerModifiers;
+
     const result = CombatEngine.resolveRoundLive(
         action1, action2,
         state.liveHP1, state.liveHP2,
         _ai1, _ai2,
         nextRound,
-        state.playerModifiers,
+        modsToUse,
         moveInfo,
     );
 
@@ -113,7 +129,8 @@ function _simulateOneRound(state, commit) {
         commit('setFightPhase', 'results');
         return false;
     }
-    if (nextRound >= MAX_ROUNDS) {
+    // After all TOTAL_ROUNDS: higher HP wins
+    if (nextRound >= TOTAL_ROUNDS) {
         if (result.hp1After > result.hp2After) {
             commit('addStats', { totalDamageDealt: result.hp2After });
             commit('setLiveHP2', 0);
@@ -194,6 +211,7 @@ const getters = {
         return names.join(' + ');
     },
 
+    isOverdrive:    (s) => s.roundNum > MAX_ROUNDS,
     isBuildValid:   (s) => s.playerModules.every(m => m !== null),
     hasSavedFight:  ()  => !!loadFightState(),
 };
@@ -342,32 +360,37 @@ const actions = {
             return;
         }
 
-        // Check Emergency Protocol
-        dispatch('checkEmergencyProtocol');
+        const isOverdrive = state.roundNum > MAX_ROUNDS;
 
-        // Tick dice cooldown
-        if (state.diceState.cooldownLeft > 0) {
-            const newCd = state.diceState.cooldownLeft - 1;
-            commit('setDiceState', { cooldownLeft: newCd, ready: newCd <= 0 });
-        }
+        // In Overdrive: no emergency, no dice, no coach
+        if (!isOverdrive) {
+            // Check Emergency Protocol
+            dispatch('checkEmergencyProtocol');
 
-        // Tick coach boost
-        if (state.coachAdvice.active && state.coachAdvice.roundsLeft > 0) {
-            const newLeft = state.coachAdvice.roundsLeft - 1;
-            if (_ai1) _ai1.tickCoachBoost();
-            if (newLeft <= 0) {
-                commit('setCoachAdvice', { active: false, roundsLeft: 0, action: null });
-            } else {
-                commit('setCoachAdvice', { roundsLeft: newLeft });
+            // Tick dice cooldown
+            if (state.diceState.cooldownLeft > 0) {
+                const newCd = state.diceState.cooldownLeft - 1;
+                commit('setDiceState', { cooldownLeft: newCd, ready: newCd <= 0 });
             }
-        }
 
-        // Check coach advice trigger (once per fight, from round COACH_MIN_ROUND)
-        if (!state.coachAdvice.used && state.roundNum >= COACH_MIN_ROUND && Math.random() < COACH_TRIGGER_CHANCE) {
-            commit('setFightPhase', 'coach');
-            _fightLastUpdateAt = Date.now();
-            saveFightState(state);
-            return;
+            // Tick coach boost
+            if (state.coachAdvice.active && state.coachAdvice.roundsLeft > 0) {
+                const newLeft = state.coachAdvice.roundsLeft - 1;
+                if (_ai1) _ai1.tickCoachBoost();
+                if (newLeft <= 0) {
+                    commit('setCoachAdvice', { active: false, roundsLeft: 0, action: null });
+                } else {
+                    commit('setCoachAdvice', { roundsLeft: newLeft });
+                }
+            }
+
+            // Check coach advice trigger (once per fight, from round COACH_MIN_ROUND)
+            if (!state.coachAdvice.used && state.roundNum >= COACH_MIN_ROUND && Math.random() < COACH_TRIGGER_CHANCE) {
+                commit('setFightPhase', 'coach');
+                _fightLastUpdateAt = Date.now();
+                saveFightState(state);
+                return;
+            }
         }
 
         _fightLastUpdateAt = Date.now();
@@ -417,6 +440,8 @@ const actions = {
     // ── Manual Dice ──────────────────────────────────────────────────────
     rollDiceManual({ commit, state }) {
         if (!state.diceState.ready || state.fightPhase !== 'fighting') return;
+        // Dice disabled in Overdrive
+        if (state.roundNum > MAX_ROUNDS) return;
 
         const item = DICE_ITEMS[Math.floor(Math.random() * DICE_ITEMS.length)];
         commit('setDiceState', { activeItem: item, ready: false, cooldownLeft: DICE_COOLDOWN_ROUNDS });
@@ -531,7 +556,7 @@ const actions = {
             const elapsed      = Date.now() - saved.lastUpdateAt;
             const missedRounds = Math.min(
                 Math.floor(elapsed / ROUND_ANIMATION_MS),
-                MAX_ROUNDS - saved.roundNum,
+                TOTAL_ROUNDS - saved.roundNum,
             );
             for (let i = 0; i < missedRounds && state.fightPhase === 'fighting'; i++) {
                 _simulateOneRound(state, commit);
@@ -553,7 +578,7 @@ const actions = {
         const elapsed      = Date.now() - _fightLastUpdateAt;
         const missedRounds = Math.min(
             Math.floor(elapsed / ROUND_ANIMATION_MS),
-            MAX_ROUNDS - state.roundNum,
+            TOTAL_ROUNDS - state.roundNum,
         );
         if (missedRounds <= 0) return;
 

@@ -390,6 +390,9 @@ export default {
     lblModShield: 'SHIELD',
     lblModBlind: 'BLIND',
     lblEventEmergencyProtocol: 'EMERGENCY PROTOCOL',
+    overdrive: 'OVERDRIVE',
+    extraRound: 'EXTRA {n}',
+    overdriveStart: 'Overdrive! Damage x2, no dice or coach!',
   },
   autoFight: {
     lblAutoFight: 'Auto Fight',

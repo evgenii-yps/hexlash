@@ -10,6 +10,7 @@ export class RoundResult {
         events = [],
         move1 = null,
         move2 = null,
+        isOverdrive = false,
     } = {}) {
         this.roundNum = roundNum;
         this.action1 = action1;   // 'attack' | 'defense' | 'position'
@@ -21,6 +22,7 @@ export class RoundResult {
         this.events = events;
         this.move1 = move1;       // { id, damage, speed, branch, level } or null
         this.move2 = move2;
+        this.isOverdrive = isOverdrive;
     }
 }
 

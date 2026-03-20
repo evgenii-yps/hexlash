@@ -380,6 +380,9 @@ export default {
     lblModShield: 'SHIELD',
     lblModBlind: 'BLIND',
     lblEventEmergencyProtocol: 'EMERGENCY PROTOCOL',
+    overdrive: 'OVERDRIVE',
+    extraRound: '엑스트라 {n}',
+    overdriveStart: '오버드라이브! 데미지 x2, 주사위와 코치 없음!',
   },
   autoFight: {
     lblAutoFight: 'Auto Fight',
