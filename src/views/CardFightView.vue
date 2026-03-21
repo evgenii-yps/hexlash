@@ -151,31 +151,6 @@
         </div>
       </div>
 
-      <!-- PvP: Coach advice overlay -->
-      <div v-if="isPvP && showCoachChoice" class="coach-overlay">
-        <div class="coach-panel">
-          <div class="advice-timer" :class="{ 'advice-timer--urgent': coachTimerPvP <= 3 }">
-            <span class="advice-timer__number" :key="coachTimerPvP">{{ coachTimerPvP }}</span>
-          </div>
-
-          <div class="coach-header">
-            <img :src="iconTrainer" class="coach-avatar" alt=""/>
-            <span class="coach-title">{{ t.pvp.coachAdvice }}</span>
-          </div>
-          <p class="coach-subtitle">{{ pvpCoachMessage }}</p>
-          <p class="coach-boost-desc">{{ t.pvp.coachBoostDesc }}</p>
-
-          <div class="coach-options" style="flex-direction: row; gap: 12px;">
-            <button class="coach-btn coach-btn-attack" @click="onPlayerCoachChoice(true)">
-              <span class="coach-btn-text">{{ t.pvp.accept }}</span>
-            </button>
-            <button class="coach-btn coach-btn-defense" @click="onPlayerCoachChoice(false)">
-              <span class="coach-btn-text">{{ t.pvp.decline }}</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
       <!-- PvP: Waiting overlay (coach: waiting for opponent) -->
       <div v-if="isPvP && showWaiting" class="pvp-waiting-overlay">
         <div class="pvp-waiting-spinner"></div>
@@ -282,12 +257,6 @@ const showPvPResult = ref(false);
 const pvpResultType = ref('');           // win, lose, draw
 const pvpResultReason = ref('');         // disconnect, normal
 let pvpTimerInterval = null;
-
-const pvpCoachMessage = computed(() => {
-  if (!pvpCoachAdvice.value) return '';
-  if (pvpCoachAdvice.value.type === 'use_dice') return t.value.pvp.coachAdviceLowHp;
-  return t.value.pvp.coachAdviceKeepGoing;
-});
 
 // ── Countdown ──────────────────────────────────────────────────────────────
 const showCountdown  = ref(true);
@@ -1796,13 +1765,6 @@ const flashStyle = computed(() => ({
   color: var(--gray3);
   margin: 0 0 18px 0;
   line-height: 1.4;
-}
-
-.coach-boost-desc {
-  font-size: 0.65rem;
-  color: var(--pink);
-  margin: -10px 0 18px 0;
-  font-family: 'AnonymousBalance', monospace;
 }
 
 .coach-options {
