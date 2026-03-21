@@ -246,6 +246,12 @@ class PvPCombatEngine {
         case 'adrenaline':
           damage = Math.round(damage * 1.3);
           break;
+        case 'coach_attack':
+          damage = Math.round(damage * 1.25);
+          break;
+        case 'coach_position':
+          damage = Math.round(damage * 1.15);
+          break;
       }
     }
 
@@ -256,6 +262,12 @@ class PvPCombatEngine {
           break;
         case 'blind':
           if (Math.random() < 0.5) damage = 0;
+          break;
+        case 'coach_defense':
+          damage = Math.round(damage * 0.7);
+          break;
+        case 'coach_position':
+          damage = Math.round(damage * 0.85);
           break;
       }
     }
@@ -326,24 +338,20 @@ class PvPCombatEngine {
     this.status = 'paused_coach';
     this.pendingChoices = { player1: null, player2: null };
 
-    const advice1 = this.generateCoachAdvice(this.player1);
-    const advice2 = this.generateCoachAdvice(this.player2);
-
+    // Send same 3 options as PvE: attack, defense, position
     this.sendToPlayer(this.player1, 'coach_pause', {
       round: this.currentRound,
       timeLimit: COACH_PAUSE_TIMEOUT_MS,
-      advice: advice1,
     });
 
     this.sendToPlayer(this.player2, 'coach_pause', {
       round: this.currentRound,
       timeLimit: COACH_PAUSE_TIMEOUT_MS,
-      advice: advice2,
     });
 
     this.pauseTimer = setTimeout(() => {
-      if (this.pendingChoices.player1 === null) this.pendingChoices.player1 = { accept: false };
-      if (this.pendingChoices.player2 === null) this.pendingChoices.player2 = { accept: false };
+      if (this.pendingChoices.player1 === null) this.pendingChoices.player1 = { action: null };
+      if (this.pendingChoices.player2 === null) this.pendingChoices.player2 = { action: null };
       this.resolveCoachPause();
     }, COACH_PAUSE_TIMEOUT_MS);
   }
@@ -354,6 +362,10 @@ class PvPCombatEngine {
     if (odId === this.player1.odId) this.pendingChoices.player1 = choice;
     else if (odId === this.player2.odId) this.pendingChoices.player2 = choice;
 
+    // Notify the other player that this one has chosen
+    const otherPlayer = (odId === this.player1.odId) ? this.player2 : this.player1;
+    this.sendToPlayer(otherPlayer, 'coach_opponent_ready', {});
+
     if (this.pendingChoices.player1 !== null && this.pendingChoices.player2 !== null) {
       clearTimeout(this.pauseTimer);
       this.resolveCoachPause();
@@ -363,19 +375,22 @@ class PvPCombatEngine {
   resolveCoachPause() {
     this.status = 'running';
 
-    if (this.pendingChoices.player1?.accept) {
-      this.applyCoachAdvice(this.player1);
+    const p1Action = this.pendingChoices.player1?.action;
+    const p2Action = this.pendingChoices.player2?.action;
+
+    if (p1Action) {
+      this.applyCoachAdvice(this.player1, p1Action);
     }
-    if (this.pendingChoices.player2?.accept) {
-      this.applyCoachAdvice(this.player2);
+    if (p2Action) {
+      this.applyCoachAdvice(this.player2, p2Action);
     }
 
     this.player1.coachTriggered = true;
     this.player2.coachTriggered = true;
 
     this.emit('coach_result', {
-      player1: { accepted: !!this.pendingChoices.player1?.accept },
-      player2: { accepted: !!this.pendingChoices.player2?.accept },
+      player1: { action: p1Action || null },
+      player2: { action: p2Action || null },
     });
 
     setTimeout(() => {
@@ -383,16 +398,10 @@ class PvPCombatEngine {
     }, ROUND_ANIMATION_MS);
   }
 
-  generateCoachAdvice(player) {
-    if (player.hp <= EMERGENCY_HP_THRESHOLD) {
-      return { type: 'use_dice', message: 'coach_advice_low_hp' };
-    }
-    return { type: 'keep_fighting', message: 'coach_advice_keep_going' };
-  }
-
-  applyCoachAdvice(player) {
-    // Adrenaline boost for COACH_BOOST_ROUNDS rounds
-    player.activeEffects.push({ type: 'adrenaline', roundsLeft: COACH_BOOST_ROUNDS });
+  applyCoachAdvice(player, action) {
+    // Same as PvE: boost chosen priority for COACH_BOOST_ROUNDS rounds
+    // attack: +25% damage, defense: -30% incoming, position: +15% dmg & -15% incoming
+    player.activeEffects.push({ type: `coach_${action}`, roundsLeft: COACH_BOOST_ROUNDS });
   }
 
   // ── END FIGHT ──────────────────────────────────────────────────────────

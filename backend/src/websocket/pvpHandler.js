@@ -61,7 +61,7 @@ function handlePvPMessage(ws, message, user) {
     case 'coach_choice': {
       const match = pvpMatchManager.getMatchByPlayer(user.odId);
       if (match) {
-        match.onCoachChoice(user.odId, data.choice); // { accept: true/false }
+        match.onCoachChoice(user.odId, data.choice); // { action: 'attack'|'defense'|'position' }
       }
       break;
     }
