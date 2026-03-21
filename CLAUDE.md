@@ -16,7 +16,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 
 ```
 /src
-  App.vue                  — Root: header (Logo), router-view, BottomMenu, Info/Error toasts, ChallengeNotification
+  App.vue                  — Root: header (Logo), router-view, BottomMenu (hidden on PvP screens), Info/Error toasts, ChallengeNotification
   main.js                  — Entry: Vue + Vuetify + i18n + Vuex store init
   router/index.js          — Routes + auth guards + fight state restore
   views/                   — 17 page-level components
@@ -72,7 +72,8 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
     migrations/            — PostgreSQL migrations
 
 /public
-  images/tgskins/          — 40+ Telegram skin images
+  images/skins/            — 145+ fighter skin images (skin_m_1..117.png, skin_w_1..26.png, vip_k1/k2/t1/t2.png)
+  images/tgskins/          — Same skins (symlink/copy), legacy path
 ```
 
 ---
@@ -248,16 +249,25 @@ COACH_PAUSE_TIMEOUT_MS = 10000
 
 **Sound:** Howler.js for punch sounds (BottomMenu, TrainingView) and rain ambience (RainView). Mute toggle in Profile > Account (`SoundToggle.vue`), persisted in localStorage (`isMuted`), checked via `store.getters['punch/isMuted']`
 
-**PvP:** Real-time matchmaking via WebSocket → friend challenges (WebSocket-based, 10s timer) → spectate mode → backend matchmaking service
+**PvP:** Real-time matchmaking via WebSocket → friend challenges (WebSocket-based, 10s timer) → spectate mode → backend matchmaking service. BottomMenu hidden on all PvP screens (matchmaking, fight, spectate). Opponent Found screen shows actual fighter skins (from `/images/skins/`).
 
 **Friend Challenge Flow:** Player A clicks ⚔️ → `challenge_send` via WS → server checks online → `challenge_received` → Player B sees ChallengeNotification (top-of-screen, 10s auto-decline) → accept → server creates match via pvpMatchManager → `challenge_start` → both navigate to `/fight?mode=pvp&matchId=...`
 
-**Dice effects:** Heal, Adrenaline, Shield, Blind, Rage, Crit
+**PvE Dice:** Available after round 1, cooldown 3 rounds. Player clicks dice button → random effect (Heal +15HP, Adrenaline 2x ATK, Shield, Blind, Rage -20HP, Crit -30HP). Dice stays on screen until clicked. Disabled in Overdrive.
+
+**PvP Dice:** Same as PvE but server-controlled. `dice_available` → player clicks → `dice_roll` via WS → server generates effect → `dice_rolled` response. Dice does NOT pause fight — rounds continue while dice button is visible. Effects: Heal +20HP, Adrenaline +30% dmg (2 rounds), Shield -50% incoming (2 rounds), Blind 50% miss (2 rounds), Rage +50% dmg (2 rounds), Crit x2 dmg (1 round).
+
+**PvE Coach Advice:** Triggers once per fight from round 6 (COACH_MIN_ROUND). Fight pauses, 15s timer. 3 options: Attack (+25 priority), Defense (+25 priority), Position (+25 priority). Boost lasts 4 rounds via aiStrategy.setCoachBoost(). Coach active bar shows remaining rounds.
+
+**PvP Coach Advice:** Same UI as PvE (3 options: Attack/Defense/Position) but 10s timer. Fight pauses for both players. Each player picks independently. Backend applies effects: `coach_attack` (+25% dmg), `coach_defense` (-30% incoming), `coach_position` (+15% dmg & -15% incoming) for 4 rounds. After choosing → "Waiting for opponent..." until both decide or timer expires. No boost if player doesn't choose.
 
 **Files:**
-- `combatEngine.js` — Round simulation
-- `aiStrategy.js` — AI decision logic
+- `combatEngine.js` — PvE round simulation
+- `aiStrategy.js` — AI decision logic + coach boost (+25 priority)
 - `opponentGenerator.js` — Random opponent creation
+- `pvpCombatEngine.js` — PvP round simulation, dice effects, coach effects
+- `pvpMatchManager.js` — PvP match lifecycle
+- `pvpHandler.js` — PvP WebSocket message handling (dice_roll, coach_choice)
 
 ---
 
@@ -267,12 +277,12 @@ COACH_PAUSE_TIMEOUT_MS = 10000
 |------|------|-------|
 | Training | `TrainingView.vue` | 3D punch bag, taps, daily/social tasks, progression bar |
 | Move Tree | `MoveTreeView.vue` | Branch sidebar (Speed/Power/Tech) + move cards. Sidebar buttons centered with `position:absolute; top:35%; transform:translateY(-50%)` |
-| Fight | `CardFightView.vue` | Main combat, dice, coach advice, HP bars |
+| Fight | `CardFightView.vue` | Main combat (PvE + PvP), dice, coach advice, HP bars. PvP mode: no BottomMenu, no PvP badge, reduced padding |
 | Profile | `ProfileView.vue` | Tabs: balance, wallet, account, skins |
 | Ratings | `RatingsView.vue` | Club and player leaderboards |
 | Preparation | `PreparationView.vue` | Arena: action row (Mode + START FIGHT + Friends buttons), auto fight toggle/status. Friends button is text-only (no online indicator) |
 | Friends | `FriendsView.vue` | Friends list, friend requests, search players |
-| Matchmaking | `MatchmakingView.vue` | Real-time PvP matchmaking queue |
+| Matchmaking | `MatchmakingView.vue` | Real-time PvP matchmaking queue. Opponent Found shows fighter skins (not icons). No colored borders. 100dvh support. |
 | Spectate | `SpectateView.vue` | Watch live PvP fights |
 
 ---
@@ -297,7 +307,7 @@ COACH_PAUSE_TIMEOUT_MS = 10000
 ## Component Highlights
 
 - `Logo.vue` — header logo
-- `BottomMenu.vue` — bottom nav (Arena, Training, Ratings, Profile)
+- `BottomMenu.vue` — bottom nav (Arena, Training, Ratings, Profile). Hidden on PvP screens via `isPvPScreen` computed in App.vue
 - `Info.vue` / `Error.vue` — toast notifications
 - `NewAchievement.vue` — achievement popup
 - `Punch3D.vue` — Three.js punching bag
@@ -350,7 +360,16 @@ Auth guard: JWT Bearer token via `middleware/auth.js`
 | — | `challenge_received` | Incoming challenge notification |
 | `MatchmakingStartMsg` | `MatchmakingQueueMsg` / `MatchFoundMsg` | Join matchmaking queue |
 | `MatchmakingCancelMsg` | `MatchmakingCancelledMsg` | Leave matchmaking queue |
-| `pvp_ready` / `dice_choice` / `coach_choice` | PvP fight events | Real-time PvP fight actions |
+| `pvp_ready` | `fight_start` | Signal readiness + send deck |
+| `dice_roll` | `dice_rolled` / `dice_error` | Roll dice in PvP (instant, no pause) |
+| — | `dice_available` | Server notifies dice is off cooldown |
+| `coach_choice` | — | Send coach advice choice `{ action: 'attack'\|'defense'\|'position' }` |
+| — | `coach_pause` | Server pauses fight for coach advice (10s) |
+| — | `coach_result` | Both players chose, fight resumes |
+| — | `coach_opponent_ready` | Opponent already made their coach choice |
+| — | `round_result` | Round simulation result with HP, damage, effects |
+| — | `fight_end` | Fight finished with winner, reason, XP |
+| — | `overdrive_start` | Overdrive phase started (rounds > MAX_ROUNDS) |
 | — | `AchievementResponseMsg` | Auto-awarded achievement (punch milestones: 100, 1k, 5k, 10k) |
 | — | `ErrorMsg` | Error response |
 
@@ -374,7 +393,17 @@ User, Club, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask,
 
 ---
 
+## Skins System
+
+**Storage:** `User.skin` field in Prisma (default: `"skin_m_1.png"`)
+**Frontend:** `master.userData.skin` via masterState. Change: `store.dispatch('master/changeSkin', skinId)` → saves to localStorage + IndexedDB + server (`PUT /v1/user/skin`)
+**Assets:** `/public/images/skins/` — 117 male (`skin_m_N.png`), 26 female (`skin_w_N.png`), 4 VIP (`vip_kN/tN.png`)
+**Rendering:** `<v-img :src="/images/skins/${skin}"/>` or `<img :src="/images/skins/${skin}"/>`
+**PvP:** Skin transmitted in `MatchmakingStartMsg` → stored in matchmaking queue → sent in `MatchFoundMsg` to opponent → displayed in Opponent Found and Fight screens
+
+---
+
 ## Branch (Git)
 
-Development branch: `claude/review-hexlash-guidelines-twOer`
-Push: `git push -u origin claude/review-hexlash-guidelines-twOer`
+Development branch: `claude/review-hexlash-guidelines-9CXTO`
+Push: `git push -u origin claude/review-hexlash-guidelines-9CXTO`
