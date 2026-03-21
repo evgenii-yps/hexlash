@@ -115,7 +115,6 @@ async function handleMessage(ws, userId, msg) {
       break;
 
     case 'pvp_ready':
-    case 'dice_roll':
     case 'dice_choice':
     case 'coach_choice':
       handlePvPMessage(ws, msg, { odId: userId });
