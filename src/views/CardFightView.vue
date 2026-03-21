@@ -151,6 +151,39 @@
         </div>
       </div>
 
+      <!-- PvP: Coach advice overlay (same 3 options as PvE, 10s timer) -->
+      <div v-if="isPvP && showCoachChoice" class="coach-overlay">
+        <div class="coach-panel">
+          <div class="advice-timer" :class="{ 'advice-timer--urgent': coachTimerPvP <= 3 }">
+            <span class="advice-timer__number" :key="coachTimerPvP">{{ coachTimerPvP }}</span>
+          </div>
+
+          <div class="coach-header">
+            <img :src="iconTrainer" class="coach-avatar" alt=""/>
+            <span class="coach-title">{{ t.fight.lblCoachTitle }}</span>
+          </div>
+          <p class="coach-subtitle">{{ t.fight.lblCoachSubtitle }}</p>
+
+          <div class="coach-options">
+            <button class="coach-btn coach-btn-attack" @click="onPvPCoachChoice('attack')">
+              <img :src="iconAttack" class="coach-btn-icon" alt=""/>
+              <span class="coach-btn-text">{{ t.fight.lblCoachAttack }}</span>
+              <span class="coach-btn-desc">{{ t.fight.lblCoachAttackDesc }}</span>
+            </button>
+            <button class="coach-btn coach-btn-defense" @click="onPvPCoachChoice('defense')">
+              <img :src="iconDefense" class="coach-btn-icon" alt=""/>
+              <span class="coach-btn-text">{{ t.fight.lblCoachDefense }}</span>
+              <span class="coach-btn-desc">{{ t.fight.lblCoachDefenseDesc }}</span>
+            </button>
+            <button class="coach-btn coach-btn-position" @click="onPvPCoachChoice('position')">
+              <img :src="iconPosition" class="coach-btn-icon" alt=""/>
+              <span class="coach-btn-text">{{ t.fight.lblCoachPosition }}</span>
+              <span class="coach-btn-desc">{{ t.fight.lblCoachPositionDesc }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- PvP: Waiting overlay (coach: waiting for opponent) -->
       <div v-if="isPvP && showWaiting" class="pvp-waiting-overlay">
         <div class="pvp-waiting-spinner"></div>
@@ -249,7 +282,6 @@ const pvpFight = computed(() => store.getters['pvp/getCurrentPvPFight']);
 // ── PvP state ──────────────────────────────────────────────────────────────
 const pvpStatus = ref('waiting');        // waiting, countdown, fighting, paused_coach, finished
 const showCoachChoice = ref(false);
-const pvpCoachAdvice = ref(null);
 const coachTimerPvP = ref(10);
 const showWaiting = ref(false);
 const waitingText = ref('');
@@ -921,9 +953,21 @@ function onPvPRoundResult(e) {
     totalDamageTaken: oppDmg,
   });
 
-  // Update dice state — reset ready based on cooldown info from server
-  // (dice_available event will set ready=true when available)
-  store.commit('fight/setDiceState', { activeItem: null, cooldownLeft: 0, ready: false });
+  // Clear dice result display after round, but preserve ready state
+  // (dice_available event controls when dice button appears)
+  if (diceState.value.activeItem) {
+    store.commit('fight/setDiceState', { activeItem: null });
+  }
+
+  // Tick coach boost rounds down
+  if (coachAdvice.value.active && coachAdvice.value.roundsLeft > 0) {
+    const newLeft = coachAdvice.value.roundsLeft - 1;
+    if (newLeft <= 0) {
+      store.commit('fight/setCoachAdvice', { active: false, roundsLeft: 0, action: null });
+    } else {
+      store.commit('fight/setCoachAdvice', { roundsLeft: newLeft });
+    }
+  }
 
   // Trigger shake animations
   if (oppDmg > 0) {
@@ -977,31 +1021,39 @@ function onPvPDiceError(e) {
   store.commit('fight/setDiceState', { activeItem: null, cooldownLeft: 0, ready: false });
 }
 
-function onPvPCoachPause(e) {
-  const data = e.detail;
+function onPvPCoachPause() {
   pvpStatus.value = 'paused_coach';
   showWaiting.value = false;
   showCoachChoice.value = true;
-  pvpCoachAdvice.value = data.advice;
   coachTimerPvP.value = 10;
   startPvPTimer('coach');
 }
 
-function onPlayerCoachChoice(accept) {
+function onPvPCoachChoice(action) {
   store.dispatch('webSocket/sendMessage', {
     type: 'coach_choice',
-    choice: { accept },
+    choice: { action },
   });
   showCoachChoice.value = false;
   showWaiting.value = true;
   waitingText.value = t.value.pvp.waitingForOpponent;
 }
 
-function onPvPCoachResult() {
+function onPvPCoachResult(e) {
+  const data = e.detail;
   pvpStatus.value = 'fighting';
   showWaiting.value = false;
   showCoachChoice.value = false;
   clearPvPTimer();
+
+  // Show coach active bar if player chose an action
+  const isP1 = store.getters['pvp/getIsPlayer1'];
+  const myResult = isP1 ? data.player1 : data.player2;
+  if (myResult?.action) {
+    store.commit('fight/setCoachAdvice', {
+      used: true, active: true, action: myResult.action, roundsLeft: 4,
+    });
+  }
 }
 
 function onPvPFightEnd(e) {
@@ -1070,7 +1122,7 @@ function startPvPTimer(type) {
       coachTimerPvP.value--;
       if (coachTimerPvP.value <= 0) {
         clearPvPTimer();
-        if (showCoachChoice.value) onPlayerCoachChoice(false);
+        if (showCoachChoice.value) onPvPCoachChoice(null);
       }
     }
   }, 1000);

@@ -168,6 +168,7 @@ const actions = {
             case 'dice_error':
             case 'coach_pause':
             case 'coach_result':
+            case 'coach_opponent_ready':
             case 'fight_end':
                 window.dispatchEvent(new CustomEvent('pvp-' + messageType, { detail: message }));
                 break;
