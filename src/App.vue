@@ -35,7 +35,7 @@
 
     <footer class="footer">
       <transition name="slide-up-down">
-        <BottomMenu v-if="isAuth && scrollDirection !== 'down'"/>
+        <BottomMenu v-if="isAuth && scrollDirection !== 'down' && !isPvPScreen"/>
       </transition>
     </footer>
   </div>
@@ -89,6 +89,14 @@ const isAuth = computed(() => {
 });
 
 const route = useRoute();
+
+// Hide BottomMenu during PvP: matchmaking, spectate, or fight with mode=pvp
+const isPvPScreen = computed(() => {
+  return route.path === '/matchmaking' ||
+      route.path.startsWith('/spectate') ||
+      (route.path === '/fight' && route.query.mode === 'pvp');
+});
+
 const isScrollableComponent = computed(() => {
   const scrollablePrefixes = ['/profile', '/ratings', '/fight', '/training/']; // Префиксы маршрутов с дочерними маршрутами
   const scrollableRoutes = ['/training', '/arena', '/arena/autofight-log', '/404', '/verify-email', '/friends', '/matchmaking']; // Точные маршруты

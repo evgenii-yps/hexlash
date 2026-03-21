@@ -59,16 +59,20 @@
 
         <!-- VS Display -->
         <div class="vs-display">
-          <div class="player-card me">
-            <div class="player-avatar"><svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="#FF066F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M3 21c0-5 4-9 9-9s9 4 9 9"/></svg></div>
+          <div class="player-card">
+            <div class="player-avatar">
+              <img :src="`/images/skins/${playerSkin}`" class="player-skin-img" alt=""/>
+            </div>
             <div class="player-name">{{ playerName }}</div>
             <div class="player-rating">{{ playerRating }}</div>
           </div>
 
           <div class="vs-icon">VS</div>
 
-          <div class="player-card opponent">
-            <div class="player-avatar"><svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="#00BFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M3 21c0-5 4-9 9-9s9 4 9 9"/></svg></div>
+          <div class="player-card">
+            <div class="player-avatar">
+              <img :src="`/images/skins/${foundOpponent.skin || 'skin_m_1.png'}`" class="player-skin-img" alt=""/>
+            </div>
             <div class="player-name">{{ foundOpponent.username }}</div>
             <div class="player-rating">{{ foundOpponent.rating }}</div>
           </div>
@@ -127,6 +131,10 @@ const playerName = computed(() => {
   return master?.userData?.name || 'Player';
 });
 const playerRating = computed(() => store.getters['pvp/getPvpStats'].rating);
+const playerSkin = computed(() => {
+  const master = store.getters['master/getMaster'];
+  return master?.userData?.skin || 'skin_m_1.png';
+});
 
 const formattedTime = computed(() => {
   const minutes = Math.floor(searchTime.value / 60);
@@ -281,6 +289,13 @@ function cleanup() {
   min-height: 100vh;
   color: white;
   padding: 20px;
+}
+
+@supports (min-height: 100dvh) {
+  .background-matchmaking,
+  .matchmaking-container {
+    min-height: 100dvh;
+  }
 }
 
 /* ── Searching State ─────────────────────────────────────────── */
@@ -465,21 +480,11 @@ function cleanup() {
 }
 
 .player-card {
-  padding: 24px 28px;
-  background: rgba(20, 20, 30, 0.8);
-  border: 2px solid rgba(255, 255, 255, 0.1);
+  padding: 16px 20px;
+  background: rgba(20, 20, 30, 0.6);
+  border: none;
   border-radius: 16px;
-  min-width: 160px;
-}
-
-.player-card.me {
-  border-color: #FF066F;
-  box-shadow: 0 0 20px rgba(255, 6, 111, 0.3);
-}
-
-.player-card.opponent {
-  border-color: #00BFFF;
-  box-shadow: 0 0 20px rgba(0, 191, 255, 0.3);
+  min-width: 140px;
 }
 
 .player-avatar {
@@ -487,6 +492,13 @@ function cleanup() {
   align-items: center;
   justify-content: center;
   margin-bottom: 12px;
+}
+
+.player-skin-img {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 8px rgba(255, 6, 111, 0.3));
 }
 
 .player-name {
