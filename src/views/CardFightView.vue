@@ -1,5 +1,5 @@
 <template>
-  <div class="background background-fight" :class="{ 'screen-flash': flashActive, 'overdrive-active': isOverdrive }" :style="flashStyle">
+  <div class="background background-fight" :class="{ 'screen-flash': flashActive, 'overdrive-active': isOverdrive, 'pvp-mode': isPvP }" :style="flashStyle">
 
     <!-- Loading overlay: "Never give up" -->
     <Transition name="loading-fade">
@@ -11,11 +11,6 @@
 
     <div class="fight-container" @scroll="handleScroll">
       <div class="fight-content-wrapper">
-
-        <!-- PvP badge -->
-        <div v-if="isPvP && pvpFight" class="pvp-badge">
-          PVP: vs {{ pvpFight.opponent.username }}
-        </div>
 
         <!-- Auto fight banner -->
         <div v-if="isAutoFightEnabled && !isPvP" class="autofight-banner">
@@ -1251,6 +1246,11 @@ const flashStyle = computed(() => ({
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+/* ── PvP mode: no BottomMenu, use full height ─────────────────────── */
+.pvp-mode .fight-content-wrapper {
+  padding-bottom: 20px;
 }
 
 /* ── Countdown ───────────────────────────────────────────────────── */
