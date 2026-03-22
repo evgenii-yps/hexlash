@@ -9,7 +9,10 @@
   <div v-else-if="analysis" class="ai-trainer-analysis">
     <div class="ai-trainer-header">{{ t.fight.lblAiTrainer }}</div>
     <div class="ai-trainer-divider"></div>
-    <div class="ai-trainer-text">{{ analysis }}</div>
+    <div v-for="(section, idx) in sections" :key="idx" class="ai-trainer-section">
+      <div v-if="section.label" class="ai-trainer-section-label">{{ section.label }}</div>
+      <div class="ai-trainer-section-text">{{ section.content }}</div>
+    </div>
     <div class="ai-trainer-badge">Powered by Claude</div>
   </div>
 
@@ -20,7 +23,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import apiClient from '@/core/api/apiClient.js';
 import { t } from '@/locales/index.js';
 
@@ -32,6 +35,37 @@ const props = defineProps({
 const loading = ref(true);
 const analysis = ref(null);
 const error = ref(false);
+
+const sections = computed(() => {
+  if (!analysis.value) return [];
+
+  const labels = ['Fight Summary', 'What You Did Well', 'What Went Wrong', 'Advice'];
+  const result = [];
+  let text = analysis.value;
+
+  for (let i = 0; i < labels.length; i++) {
+    const label = labels[i];
+    const nextLabel = labels[i + 1];
+
+    const startIdx = text.indexOf(label);
+    if (startIdx === -1) continue;
+
+    const contentStart = startIdx + label.length;
+    const endIdx = nextLabel ? text.indexOf(nextLabel, contentStart) : text.length;
+
+    const content = text.substring(contentStart, endIdx === -1 ? text.length : endIdx).trim();
+    if (content) {
+      result.push({ label, content });
+    }
+  }
+
+  // Fallback: if parsing failed — return entire text as single section
+  if (result.length === 0) {
+    result.push({ label: '', content: analysis.value });
+  }
+
+  return result;
+});
 
 onMounted(async () => {
   try {
@@ -74,7 +108,25 @@ onMounted(async () => {
   margin-bottom: 12px;
 }
 
-.ai-trainer-text {
+.ai-trainer-section {
+  margin-bottom: 12px;
+}
+
+.ai-trainer-section:last-child {
+  margin-bottom: 0;
+}
+
+.ai-trainer-section-label {
+  font-family: 'Anonymous', monospace;
+  color: var(--pink);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+  opacity: 0.8;
+}
+
+.ai-trainer-section-text {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   color: var(--white);
   font-size: 13px;
