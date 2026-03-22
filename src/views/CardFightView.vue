@@ -206,6 +206,13 @@
             </div>
           </div>
 
+          <!-- AI Trainer (Claude API) -->
+          <AiTrainerAnalysis
+            v-if="showAiTrainer"
+            :fight-data="aiTrainerFightData"
+            :locale="getLanguage()"
+          />
+
           <!-- Expandable detailed log -->
           <div class="log-section">
             <button class="log-toggle" @click="showDetailedLog = !showDetailedLog">
@@ -265,6 +272,7 @@ import iconBlind    from '@/assets/images/icons/blind.svg';
 import iconAttack   from '@/assets/images/icons/attack.svg';
 import iconDefense  from '@/assets/images/icons/defense.svg';
 import iconPosition from '@/assets/images/icons/position.svg';
+import AiTrainerAnalysis from '@/components/AiTrainerAnalysis.vue';
 
 import { getLanguage } from '@/locales/index.js';
 
@@ -466,6 +474,35 @@ const trainerAnalysis = computed(() => {
   }
 
   return parts.join(' ');
+});
+
+// ── AI Trainer (Claude API) ─────────────────────────────────────────────
+const aiTrainerFightData = computed(() => {
+  const state = store.state.fight;
+
+  let result = 'draw';
+  if (state.liveHP1 > state.liveHP2) result = 'win';
+  else if (state.liveHP1 < state.liveHP2) result = 'loss';
+
+  return {
+    rounds: state.roundLog || [],
+    playerDeck: state.playerDeck || [],
+    opponentDeck: state.opponentDeck || [],
+    result,
+    playerHP: state.liveHP1,
+    opponentHP: state.liveHP2,
+    totalRounds: state.roundNum || 0,
+    diceUsed: state.fightStats?.dicePickedUp > 0,
+    diceEffect: state.diceState?.activeItem || null,
+    coachUsed: state.coachAdvice?.used || false,
+    coachChoice: state.coachAdvice?.action || null,
+    emergencyUsed: state.emergencyProtocol?.used || false,
+    emergencyType: state.emergencyProtocol?.type || null,
+  };
+});
+
+const showAiTrainer = computed(() => {
+  return store.state.fight.fightPhase === 'results' && !isPvP.value;
 });
 
 // ── Auto-clear event title ──────────────────────────────────────────────
