@@ -195,17 +195,6 @@
             <div class="xp-earned-total">+{{ xpEarned }} XP</div>
           </div>
 
-          <!-- AI Trainer analysis -->
-          <div class="ai-trainer">
-            <div class="trainer-header">
-              <img :src="iconTrainer" class="trainer-avatar-img" alt=""/>
-              <span class="trainer-title">{{ t.fight.lblTrainerAnalysis }}</span>
-            </div>
-            <div class="trainer-analysis">
-              <p>{{ trainerAnalysis }}</p>
-            </div>
-          </div>
-
           <!-- AI Trainer (Claude API) -->
           <AiTrainerAnalysis
             v-if="showAiTrainer"
@@ -1666,51 +1655,6 @@ const flashStyle = computed(() => ({
 .log-position { color: #9b59b6; }
 .log-vs  { color: var(--gray2); font-size: 0.55rem; }
 .log-hp  { color: var(--gray3); min-width: 50px; text-align: right; font-size: 0.55rem; }
-
-/* ── AI Trainer ──────────────────────────────────────────────────── */
-.ai-trainer {
-  width: 92%; max-width: 400px;
-  background: linear-gradient(135deg, rgba(9, 9, 9, 0.9) 0%, rgba(26, 26, 46, 0.65) 100%);
-  border: 1px solid rgba(255, 6, 111, 0.2);
-  border-radius: 10px;
-  padding: 14px 16px;
-  margin-bottom: 16px;
-  position: relative; overflow: visible;
-}
-.ai-trainer::before {
-  content: "";
-  position: absolute;
-  top: 0; left: 0; bottom: 0;
-  width: 2px;
-  background: linear-gradient(to bottom, var(--primary-color), transparent);
-}
-
-.trainer-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.trainer-avatar-img {
-  width: 24px; height: 24px;
-  filter: drop-shadow(0 0 4px rgba(255, 6, 111, 0.3));
-}
-
-.trainer-title {
-  font-size: 0.75rem;
-  color: var(--primary-color);
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.trainer-analysis p {
-  font-size: 0.7rem;
-  color: var(--gray3);
-  line-height: 1.5;
-  margin: 0;
-}
 
 /* ── Buttons ─────────────────────────────────────────────────────── */
 .result-buttons {
