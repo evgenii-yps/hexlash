@@ -37,7 +37,17 @@ Rules:
 - Maximum 150 words
 - Respond in the language specified by locale
 
-CRITICAL FORMATTING RULE: Do NOT use any markdown formatting in your response. No bold (**), no headers (#), no bullet points (-), no numbered lists. Write in plain text only. Use line breaks to separate sections. Start each section with the label followed by colon, like: Fight Summary: ... What You Did Well: ... What Went Wrong: ... Advice: ...`;
+CRITICAL FORMATTING RULE:
+- Do NOT use markdown (no **, no ##, no bullets with -)
+- Separate each section with a blank line
+- Use these exact labels on their own line:
+
+Fight Summary (2-3 sentences about the fight)
+What You Did Well (specific positives)
+What Went Wrong (specific issues)
+Advice (concrete suggestions on modules and moves)
+
+Each section label must be on its own line, followed by the content on the next line. Keep total response under 150 words.`;
 
 function buildUserPrompt(fightLog, locale) {
   let prompt = 'Fight Analysis Request\n\n';
