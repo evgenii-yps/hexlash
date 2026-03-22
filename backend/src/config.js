@@ -31,4 +31,10 @@ module.exports = {
   COACH_MIN_ROUND: 6,
   COACH_BOOST_ROUNDS: 4,
   COACH_PAUSE_TIMEOUT_MS: 10000,
+
+  // AI Trainer
+  ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || '',
+  ANTHROPIC_MODEL: 'claude-sonnet-4-20250514',
+  AI_TRAINER_MAX_TOKENS: 500,
+  AI_TRAINER_ENABLED: true,
 };
