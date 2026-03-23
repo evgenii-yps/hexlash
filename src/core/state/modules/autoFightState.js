@@ -59,7 +59,11 @@ function getRandomInterval() {
 }
 
 function getTodayDate() {
-    return new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`; // Local date "YYYY-MM-DD"
 }
 
 // ─── Fast offline fight simulation ──────────────────────────────────────────
@@ -281,7 +285,7 @@ const actions = {
 
             // Daily reset: if lastFightDate is not today, reset daily stats and clear log
             const today = getTodayDate();
-            if (state.lastFightDate && state.lastFightDate !== today) {
+            if (state.lastFightDate !== today) {
                 commit('setFightsToday', 0);
                 commit('setWins', 0);
                 commit('setLosses', 0);
@@ -349,7 +353,7 @@ const actions = {
         try {
             // Daily reset check — clear stats and fight log on new day
             const today = getTodayDate();
-            if (state.lastFightDate && state.lastFightDate !== today) {
+            if (state.lastFightDate !== today) {
                 commit('setFightsToday', 0);
                 commit('setWins', 0);
                 commit('setLosses', 0);
