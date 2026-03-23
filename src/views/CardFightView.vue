@@ -491,7 +491,7 @@ const aiTrainerFightData = computed(() => {
 });
 
 const showAiTrainer = computed(() => {
-  return store.state.fight.fightPhase === 'results' && !isPvP.value;
+  return store.state.fight.fightPhase === 'results';
 });
 
 // ── Auto-clear event title ──────────────────────────────────────────────

@@ -267,7 +267,7 @@ AI_TRAINER_ENABLED = true
 
 **PvP Coach Advice:** Same UI as PvE (3 options: Attack/Defense/Position) but 10s timer. Fight pauses for both players. Each player picks independently. Backend applies effects: `coach_attack` (+25% dmg), `coach_defense` (-30% incoming), `coach_position` (+15% dmg & -15% incoming) for 4 rounds. After choosing → "Waiting for opponent..." until both decide or timer expires. No boost if player doesn't choose.
 
-**AI Trainer:** Claude-powered post-fight analysis (PvE only, not PvP). Component `AiTrainerAnalysis.vue` renders on CardFightView results screen. Sends fight data (rounds, decks, result, dice/coach/emergency usage) to `POST /v1/ai/analyze-fight` → backend calls Anthropic Claude API → returns 4-section analysis: Fight Summary, What You Did Well, What Went Wrong, Advice. Feature flag: `AI_TRAINER_ENABLED`. Graceful degradation on error. i18n keys: `fight.lblAiTrainer`, `fight.lblAiLoading`, `fight.lblAiError`.
+**AI Trainer:** Claude-powered post-fight analysis (PvE and PvP). Component `AiTrainerAnalysis.vue` renders on CardFightView results screen. Sends fight data (rounds, decks, result, dice/coach/emergency usage) to `POST /v1/ai/analyze-fight` → backend calls Anthropic Claude API → returns 4-section analysis: Fight Summary, What You Did Well, What Went Wrong, Advice. Feature flag: `AI_TRAINER_ENABLED`. Graceful degradation on error. i18n keys: `fight.lblAiTrainer`, `fight.lblAiLoading`, `fight.lblAiError`.
 
 **Data Persistence:** Progression (moves, XP, taps, deck, playerModules) syncs to server via `PUT /v1/user/progression` (debounced 3s). Server is source of truth — restores all data on login via `GET /v1/user/me`. PlayerModules (fighter archetypes) included in progression JSON. Auto fight state/history is localStorage-only (not critical — fight results already synced via `POST /fight/save`).
 
@@ -338,7 +338,7 @@ AI_TRAINER_ENABLED = true
 - `PlayerSearchResult.vue` — player search result item
 - `XPAllocationModal.vue` — XP allocation modal
 - `PvPStatsCard.vue` — PvP statistics display
-- `AiTrainerAnalysis.vue` — Claude-powered post-fight analysis (PvE only, results screen)
+- `AiTrainerAnalysis.vue` — Claude-powered post-fight analysis (PvE + PvP, results screen)
 
 ---
 
