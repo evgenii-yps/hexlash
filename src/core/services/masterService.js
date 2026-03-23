@@ -18,6 +18,13 @@ function restoreProgressionFromServer(userData) {
     if (userData.progression) {
         store.commit('progressionState/restoreProgression', userData.progression);
         console.log('[APP] Progression restored from server');
+
+        // Restore player modules (fighter archetypes) from server
+        if (Array.isArray(userData.progression.playerModules) && userData.progression.playerModules.length === 3) {
+            store.commit('fight/setPlayerModules', userData.progression.playerModules);
+            localStorage.setItem('hexlash_player_modules', JSON.stringify(userData.progression.playerModules));
+            console.log('[APP] Player modules restored from server');
+        }
     }
     if (userData.deck) {
         store.commit('progressionState/restoreDeck', userData.deck);

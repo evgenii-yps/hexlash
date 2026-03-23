@@ -210,7 +210,7 @@ export default {
   },
 
   actions: {
-    syncProgression({ state }) {
+    syncProgression({ state, rootState }) {
       clearTimeout(syncTimeout);
       syncTimeout = setTimeout(async () => {
         try {
@@ -223,6 +223,7 @@ export default {
               totalTaps: state.totalTaps,
               totalFights: state.totalFights,
               totalWins: state.totalWins,
+              playerModules: rootState.fight?.playerModules || null,
             },
             deck: state.deck,
           }, { authRequired: true });
