@@ -7,13 +7,18 @@
 
   <!-- Success -->
   <div v-else-if="analysis" class="ai-trainer-analysis">
-    <div class="ai-trainer-header">{{ t.fight.lblAiTrainer }}</div>
-    <div class="ai-trainer-divider"></div>
-    <div v-for="(section, idx) in sections" :key="idx" class="ai-trainer-section">
-      <div v-if="section.label" class="ai-trainer-section-label">{{ section.label }}</div>
-      <div class="ai-trainer-section-text">{{ section.content }}</div>
+    <div class="ai-trainer-header-row" @click="expanded = !expanded">
+      <div class="ai-trainer-header">{{ t.fight.lblAiTrainer }}</div>
+      <span class="ai-trainer-arrow" :class="{ 'ai-trainer-arrow--open': expanded }">▼</span>
     </div>
-    <div class="ai-trainer-badge">Powered by Claude</div>
+    <template v-if="expanded">
+      <div class="ai-trainer-divider"></div>
+      <div v-for="(section, idx) in sections" :key="idx" class="ai-trainer-section">
+        <div v-if="section.label" class="ai-trainer-section-label">{{ section.label }}</div>
+        <div class="ai-trainer-section-text">{{ section.content }}</div>
+      </div>
+      <div class="ai-trainer-badge">Powered by Claude</div>
+    </template>
   </div>
 
   <!-- Error -->
@@ -35,6 +40,7 @@ const props = defineProps({
 const loading = ref(true);
 const analysis = ref(null);
 const error = ref(false);
+const expanded = ref(false);
 
 const sections = computed(() => {
   if (!analysis.value) return [];
@@ -96,18 +102,35 @@ onMounted(async () => {
   animation: fadeInUp 0.3s ease-out;
 }
 
+.ai-trainer-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+}
+
 .ai-trainer-header {
   font-family: 'Anonymous', monospace;
   color: var(--pink);
   font-size: 14px;
-  margin-bottom: 8px;
   text-transform: uppercase;
   letter-spacing: 1px;
+}
+
+.ai-trainer-arrow {
+  color: var(--pink);
+  font-size: 12px;
+  transition: transform 0.2s ease;
+}
+
+.ai-trainer-arrow--open {
+  transform: rotate(180deg);
 }
 
 .ai-trainer-divider {
   height: 1px;
   background: var(--gray1);
+  margin-top: 12px;
   margin-bottom: 12px;
 }
 
