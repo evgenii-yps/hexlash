@@ -4,6 +4,38 @@ const Anthropic = require('@anthropic-ai/sdk').default;
 const config = require('../config');
 const { authMiddleware } = require('../middleware/auth');
 
+// In-memory rate limiter (no external dependencies)
+const rateLimitMap = new Map();
+const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
+const RATE_LIMIT_MAX = 5; // 5 requests per minute
+
+function checkRateLimit(userId) {
+  const now = Date.now();
+  const userRequests = rateLimitMap.get(userId) || [];
+
+  // Remove expired entries
+  const recent = userRequests.filter(ts => now - ts < RATE_LIMIT_WINDOW_MS);
+
+  if (recent.length >= RATE_LIMIT_MAX) {
+    rateLimitMap.set(userId, recent);
+    return false;
+  }
+
+  recent.push(now);
+  rateLimitMap.set(userId, recent);
+  return true;
+}
+
+// Cleanup Map every 5 minutes to prevent memory leaks
+setInterval(() => {
+  const now = Date.now();
+  for (const [userId, timestamps] of rateLimitMap) {
+    const recent = timestamps.filter(ts => now - ts < RATE_LIMIT_WINDOW_MS);
+    if (recent.length === 0) rateLimitMap.delete(userId);
+    else rateLimitMap.set(userId, recent);
+  }
+}, 5 * 60 * 1000);
+
 const SYSTEM_PROMPT = `You are an AI fighting trainer for Hexlash — an auto-battle game on Base blockchain.
 
 Players build fighters by combining 3 behavioral modules (archetypes):
@@ -83,6 +115,11 @@ router.post('/analyze-fight', authMiddleware, async (req, res) => {
     // API key check
     if (!config.ANTHROPIC_API_KEY) {
       return res.status(503).json({ error: 'AI Trainer temporarily unavailable' });
+    }
+
+    // Rate limit check
+    if (!checkRateLimit(req.userId)) {
+      return res.status(429).json({ error: 'Too many requests. Max 5 analyses per minute.' });
     }
 
     // Validate input
