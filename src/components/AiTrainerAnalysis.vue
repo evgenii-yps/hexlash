@@ -90,6 +90,9 @@ onMounted(async () => {
   border-radius: 8px;
   padding: 16px;
   margin-top: 16px;
+  max-width: 480px;
+  margin-left: auto;
+  margin-right: auto;
   animation: fadeInUp 0.3s ease-out;
 }
 
