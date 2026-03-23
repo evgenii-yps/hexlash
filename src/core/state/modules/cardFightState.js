@@ -292,9 +292,10 @@ const actions = {
         commit('setFightPhase', 'preparation');
     },
 
-    setPlayerModules({ commit }, modules) {
+    setPlayerModules({ commit, dispatch }, modules) {
         commit('setPlayerModules', modules);
         localStorage.setItem(MODULES_STORAGE_KEY, JSON.stringify(modules));
+        dispatch('progressionState/syncProgression', null, { root: true });
     },
 
     setEmergencyProtocol({ commit }, type) {
