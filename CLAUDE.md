@@ -8,7 +8,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 
 **Frontend:** Vue 3.5 · Vite 7 · Vuex 4 · Vue Router 4 · Vuetify 2 · Three.js · Howler.js · Ethers.js 6 · Vue-i18n 11 · Amplitude · Web3Modal
 
-**Backend:** Express 4 · Prisma 5 (PostgreSQL) · JWT · WebSocket (ws) · Multer · bcryptjs
+**Backend:** Express 4 · Prisma 5 (PostgreSQL) · JWT · WebSocket (ws) · Multer · bcryptjs · Anthropic SDK (AI Trainer)
 
 ---
 
@@ -58,7 +58,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
   src/
     index.js               — Express server + WebSocket on same HTTP server
     config.js              — Constants (PORT, WS_PORT, JWT_SECRET, game balance)
-    routes/                — auth, user, club, task, file, fight, stats, friends
+    routes/                — auth, user, club, task, file, fight, stats, friends, ai
     middleware/            — auth.js (JWT guard), upload.js (Multer)
     websocket/handler.js   — Real-time message routing + challenge system
     websocket/pvpHandler.js — PvP fight message handling
@@ -108,8 +108,8 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 |--------|---------|
 | `masterState` | App init, auth status, info/error messages, language |
 | `userState` | Current user profile, stats, avatar |
-| `cardFightState` | Active fight: rounds, HP, dice, coach, localStorage persist |
-| `progressionState` | Moves unlocked/levels, taps, XP per branch |
+| `cardFightState` | Active fight: rounds, HP, dice, coach, playerModules, localStorage persist |
+| `progressionState` | Moves unlocked/levels, taps, XP per branch, server sync (PUT /user/progression) |
 | `clubState` | Club info, members, balance |
 | `taskState` | Daily + social tasks |
 | `punchState` | Punch/tap rate limiting, cooldown, 2D/3D punch toggle, sound mute toggle |
@@ -234,6 +234,12 @@ EMERGENCY_HP_THRESHOLD = 30
 COACH_MIN_ROUND = 6
 COACH_BOOST_ROUNDS = 4
 COACH_PAUSE_TIMEOUT_MS = 10000
+
+// AI Trainer
+ANTHROPIC_API_KEY = env
+ANTHROPIC_MODEL = 'claude-sonnet-4-20250514'
+AI_TRAINER_MAX_TOKENS = 500
+AI_TRAINER_ENABLED = true
 ```
 
 **CORS:** Allows `hexlash.com`, `test.hexlash.com`, `hexlash.vercel.app`, `*.vercel.app`
@@ -261,6 +267,10 @@ COACH_PAUSE_TIMEOUT_MS = 10000
 
 **PvP Coach Advice:** Same UI as PvE (3 options: Attack/Defense/Position) but 10s timer. Fight pauses for both players. Each player picks independently. Backend applies effects: `coach_attack` (+25% dmg), `coach_defense` (-30% incoming), `coach_position` (+15% dmg & -15% incoming) for 4 rounds. After choosing → "Waiting for opponent..." until both decide or timer expires. No boost if player doesn't choose.
 
+**AI Trainer:** Claude-powered post-fight analysis (PvE only, not PvP). Component `AiTrainerAnalysis.vue` renders on CardFightView results screen. Sends fight data (rounds, decks, result, dice/coach/emergency usage) to `POST /v1/ai/analyze-fight` → backend calls Anthropic Claude API → returns 4-section analysis: Fight Summary, What You Did Well, What Went Wrong, Advice. Feature flag: `AI_TRAINER_ENABLED`. Graceful degradation on error. i18n keys: `fight.lblAiTrainer`, `fight.lblAiLoading`, `fight.lblAiError`.
+
+**Data Persistence:** Progression (moves, XP, taps, deck, playerModules) syncs to server via `PUT /v1/user/progression` (debounced 3s). Server is source of truth — restores all data on login via `GET /v1/user/me`. PlayerModules (fighter archetypes) included in progression JSON. Auto fight state/history is localStorage-only (not critical — fight results already synced via `POST /fight/save`).
+
 **Files:**
 - `combatEngine.js` — PvE round simulation
 - `aiStrategy.js` — AI decision logic + coach boost (+25 priority)
@@ -268,6 +278,8 @@ COACH_PAUSE_TIMEOUT_MS = 10000
 - `pvpCombatEngine.js` — PvP round simulation, dice effects, coach effects
 - `pvpMatchManager.js` — PvP match lifecycle
 - `pvpHandler.js` — PvP WebSocket message handling (dice_roll, coach_choice)
+- `AiTrainerAnalysis.vue` — AI Trainer post-fight analysis component
+- `backend/src/routes/ai.js` — AI Trainer API endpoint
 
 ---
 
@@ -277,7 +289,7 @@ COACH_PAUSE_TIMEOUT_MS = 10000
 |------|------|-------|
 | Training | `TrainingView.vue` | 3D punch bag, taps, daily/social tasks, progression bar |
 | Move Tree | `MoveTreeView.vue` | Branch sidebar (Speed/Power/Tech) + move cards. Sidebar buttons centered with `position:absolute; top:35%; transform:translateY(-50%)` |
-| Fight | `CardFightView.vue` | Main combat (PvE + PvP), dice, coach advice, HP bars. PvP mode: no BottomMenu, no PvP badge, reduced padding |
+| Fight | `CardFightView.vue` | Main combat (PvE + PvP), dice, coach advice, HP bars, AI Trainer (PvE results). PvP mode: no BottomMenu, no PvP badge, reduced padding |
 | Profile | `ProfileView.vue` | Tabs: balance, wallet, account, skins |
 | Ratings | `RatingsView.vue` | Club and player leaderboards |
 | Preparation | `PreparationView.vue` | Arena: action row (Mode + START FIGHT + Friends buttons), auto fight toggle/status. Friends button is text-only (no online indicator) |
@@ -326,6 +338,7 @@ COACH_PAUSE_TIMEOUT_MS = 10000
 - `PlayerSearchResult.vue` — player search result item
 - `XPAllocationModal.vue` — XP allocation modal
 - `PvPStatsCard.vue` — PvP statistics display
+- `AiTrainerAnalysis.vue` — Claude-powered post-fight analysis (PvE only, results screen)
 
 ---
 
@@ -343,6 +356,7 @@ Base: `/v1/`
 | `/fight` | fight.js | fight creation, results, history |
 | `/stats` | stats.js | player and game statistics |
 | `/friends` | friends.js | friends list, requests, search players |
+| `/ai` | ai.js | AI Trainer fight analysis (POST /analyze-fight) |
 
 Auth guard: JWT Bearer token via `middleware/auth.js`
 
@@ -405,5 +419,5 @@ User, Club, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask,
 
 ## Branch (Git)
 
-Development branch: `claude/review-hexlash-guidelines-9CXTO`
-Push: `git push -u origin claude/review-hexlash-guidelines-9CXTO`
+Development branch: `claude/fix-daily-reset-bug-XlZBd`
+Push: `git push -u origin claude/fix-daily-reset-bug-XlZBd`
