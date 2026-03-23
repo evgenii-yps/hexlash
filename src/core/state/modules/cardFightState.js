@@ -591,6 +591,11 @@ const actions = {
     },
 
     // ── Navigation ────────────────────────────────────────────────────────
+
+    clearSavedFight() {
+        clearFightState();
+    },
+
     async resetToPreparation({ commit }) {
         _ai1 = null;
         _ai2 = null;
