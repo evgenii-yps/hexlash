@@ -1128,6 +1128,9 @@ function onPvPFightEnd(e) {
   // Transition fight store to results so the result screen displays
   store.commit('fight/setFightPhase', 'results');
 
+  // Clear saved fight state — PvP fight is over, prevent stale restore on next visit
+  store.dispatch('fight/clearSavedFight');
+
   // Update pvp stats
   store.dispatch('pvp/finishPvPFight', pvpResultType.value);
 }
