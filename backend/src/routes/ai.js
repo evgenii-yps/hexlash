@@ -62,25 +62,6 @@ function getAnthropicClient() {
   return anthropicClient;
 }
 
-// Cleanup Map every 5 minutes to prevent memory leaks
-setInterval(() => {
-  const now = Date.now();
-  for (const [userId, timestamps] of rateLimitMap) {
-    const recent = timestamps.filter(ts => now - ts < RATE_LIMIT_WINDOW_MS);
-    if (recent.length === 0) rateLimitMap.delete(userId);
-    else rateLimitMap.set(userId, recent);
-  }
-  for (const [userId, timestamps] of buildDescRateLimitMap) {
-    const recent = timestamps.filter(ts => now - ts < RATE_LIMIT_WINDOW_MS);
-    if (recent.length === 0) buildDescRateLimitMap.delete(userId);
-    else buildDescRateLimitMap.set(userId, recent);
-  }
-  for (const [userId, timestamps] of autoFightRateLimitMap) {
-    const recent = timestamps.filter(ts => now - ts < RATE_LIMIT_WINDOW_MS);
-    if (recent.length === 0) autoFightRateLimitMap.delete(userId);
-    else autoFightRateLimitMap.set(userId, recent);
-  }
-}, 5 * 60 * 1000);
 
 const SYSTEM_PROMPT = `You are an AI fighting trainer for Hexlash — an auto-battle game on Base blockchain.
 
@@ -232,33 +213,49 @@ router.post('/analyze-fight', authMiddleware, async (req, res) => {
     // Build prompts
     const userPrompt = buildUserPrompt(fightLog, validLocale);
 
-    // Call Claude API
+    // Call Claude API with AbortController timeout
     const client = getAnthropicClient();
     if (!client) {
       return res.status(503).json({ error: 'AI Trainer temporarily unavailable' });
     }
-    const response = await client.messages.create({
-      model: config.ANTHROPIC_MODEL,
-      max_tokens: config.AI_TRAINER_MAX_TOKENS,
-      temperature: 0.7,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: userPrompt }],
-    });
 
-    const analysis = response.content[0].text;
-    const elapsed = Date.now() - startTime;
+    const abortController = new AbortController();
+    const timeout = setTimeout(() => abortController.abort(), 15000);
 
-    console.log(`[AI Trainer] User ${req.userId} | ${fightLog.result} | ${fightLog.totalRounds} rounds | ${elapsed}ms`);
+    try {
+      const response = await client.messages.create({
+        model: config.ANTHROPIC_MODEL,
+        max_tokens: config.AI_TRAINER_MAX_TOKENS,
+        temperature: 0.7,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: userPrompt }],
+      }, { signal: abortController.signal });
 
-    return res.json({
-      analysis,
-      model: config.ANTHROPIC_MODEL,
-    });
+      clearTimeout(timeout);
+
+      const analysis = response.content?.[0]?.text;
+      if (!analysis) {
+        return res.status(502).json({ error: 'Empty response from AI' });
+      }
+      const elapsed = Date.now() - startTime;
+
+      console.log(`[AI Trainer] User ${req.userId} | ${fightLog.result} | ${fightLog.totalRounds} rounds | ${elapsed}ms`);
+
+      return res.json({
+        analysis,
+        model: config.ANTHROPIC_MODEL,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
 
   } catch (error) {
     const elapsed = Date.now() - startTime;
     console.error(`[AI Trainer] Error for user ${req.userId} (${elapsed}ms):`, error.message);
 
+    if (error.name === 'AbortError') {
+      return res.status(503).json({ error: 'Analysis timed out' });
+    }
     if (error.status === 429) {
       return res.status(429).json({ error: 'Too many requests' });
     }
@@ -469,7 +466,10 @@ router.post('/auto-fight-summary', authMiddleware, async (req, res) => {
 
       clearTimeout(timeout);
 
-      const analysis = response.content[0].text;
+      const analysis = response.content?.[0]?.text;
+      if (!analysis) {
+        return res.status(502).json({ error: 'Empty response from AI' });
+      }
       const elapsed = Date.now() - startTime;
 
       console.log(`[Auto Fight Summary] User ${req.userId} | ${fights.length} fights | ${period} | ${elapsed}ms`);
@@ -559,30 +559,64 @@ router.post('/build-description', authMiddleware, async (req, res) => {
       return res.json({ description: buildDescriptionCache.get(cacheKey), cached: true });
     }
 
-    // Call Claude API
+    // Call Claude API with AbortController timeout
     const client = getAnthropicClient();
     if (!client) {
       return res.json({ description: null, error: 'AI service unavailable' });
     }
-    const response = await client.messages.create({
-      model: config.ANTHROPIC_MODEL,
-      max_tokens: config.AI_BUILD_DESCRIPTION_MAX_TOKENS,
-      temperature: 0.8,
-      system: BUILD_DESCRIPTION_SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: `Modules: ${sorted.join(', ')}\nLanguage: ${LOCALE_NAMES[lang]}` }],
-    });
 
-    const description = response.content[0].text;
-    buildDescriptionCache.set(cacheKey, description);
+    const abortController = new AbortController();
+    const timeout = setTimeout(() => abortController.abort(), 10000);
 
-    console.log(`[Build Description] ${cacheKey} | cache size: ${buildDescriptionCache.size}`);
+    try {
+      const response = await client.messages.create({
+        model: config.ANTHROPIC_MODEL,
+        max_tokens: config.AI_BUILD_DESCRIPTION_MAX_TOKENS,
+        temperature: 0.8,
+        system: BUILD_DESCRIPTION_SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: `Modules: ${sorted.join(', ')}\nLanguage: ${LOCALE_NAMES[lang]}` }],
+      }, { signal: abortController.signal });
 
-    return res.json({ description, cached: false });
+      clearTimeout(timeout);
+
+      const description = response.content?.[0]?.text;
+      if (!description) {
+        return res.json({ description: null, error: 'Empty response from AI' });
+      }
+      buildDescriptionCache.set(cacheKey, description);
+
+      console.log(`[Build Description] ${cacheKey} | cache size: ${buildDescriptionCache.size}`);
+
+      return res.json({ description, cached: false });
+    } finally {
+      clearTimeout(timeout);
+    }
 
   } catch (error) {
     console.error(`[Build Description] Error:`, error.message);
     return res.json({ description: null, error: 'AI service unavailable' });
   }
 });
+
+// Cleanup rate limit Maps every 5 minutes to prevent memory leaks
+// Placed after all Map declarations to avoid referencing before initialization
+setInterval(() => {
+  const now = Date.now();
+  for (const [userId, timestamps] of rateLimitMap) {
+    const recent = timestamps.filter(ts => now - ts < RATE_LIMIT_WINDOW_MS);
+    if (recent.length === 0) rateLimitMap.delete(userId);
+    else rateLimitMap.set(userId, recent);
+  }
+  for (const [userId, timestamps] of buildDescRateLimitMap) {
+    const recent = timestamps.filter(ts => now - ts < RATE_LIMIT_WINDOW_MS);
+    if (recent.length === 0) buildDescRateLimitMap.delete(userId);
+    else buildDescRateLimitMap.set(userId, recent);
+  }
+  for (const [userId, timestamps] of autoFightRateLimitMap) {
+    const recent = timestamps.filter(ts => now - ts < RATE_LIMIT_WINDOW_MS);
+    if (recent.length === 0) autoFightRateLimitMap.delete(userId);
+    else autoFightRateLimitMap.set(userId, recent);
+  }
+}, 5 * 60 * 1000);
 
 module.exports = router;

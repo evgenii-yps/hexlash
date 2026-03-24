@@ -427,7 +427,7 @@ const aiTrainerFightData = computed(() => {
     opponentHP: state.liveHP2,
     totalRounds: state.roundNum || 0,
     diceUsed: state.fightStats?.dicePickedUp > 0,
-    diceEffect: state.diceState?.activeItem || null,
+    diceEffect: state.diceState?.activeItem?.effect || null,
     coachUsed: state.coachAdvice?.used || false,
     coachChoice: state.coachAdvice?.action || null,
     emergencyUsed: state.emergencyProtocol?.used || false,
