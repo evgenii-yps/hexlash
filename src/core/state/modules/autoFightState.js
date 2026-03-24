@@ -342,7 +342,14 @@ const actions = {
             commit('setEnabled', saved.enabled);
             commit('setEnabledAt', saved.enabledAt);
             commit('setNextFightAt', saved.nextFightAt);
-            commit('setStoppingAfterCurrent', saved.stoppingAfterCurrent || false);
+            // BUG FIX: if stoppingAfterCurrent was persisted but liveFight is lost
+            // on reload (liveFight is not persisted), clear the stuck flag
+            const stopping = saved.stoppingAfterCurrent || false;
+            if (stopping && !state.liveFight) {
+                commit('setStoppingAfterCurrent', false);
+            } else {
+                commit('setStoppingAfterCurrent', stopping);
+            }
             commit('setDifficulty', saved.difficulty || 'medium');
             commit('setFightsToday', saved.fightsToday || 0);
             commit('setLastFightDate', saved.lastFightDate || null);
@@ -360,6 +367,7 @@ const actions = {
                 commit('setLosses', 0);
                 commit('setDraws', 0);
                 commit('setTotalExpGained', 0);
+                commit('setSessionFights', 0);
                 commit('setLastFightDate', today);
                 commit('setFightLog', []);
                 saveState(state);
@@ -401,6 +409,7 @@ const actions = {
         } else {
             commit('setEnabled', false);
             commit('setNextFightAt', null);
+            commit('setSessionFights', 0);
         }
         saveState(state);
     },
@@ -431,6 +440,7 @@ const actions = {
                 commit('setLosses', 0);
                 commit('setDraws', 0);
                 commit('setTotalExpGained', 0);
+                commit('setSessionFights', 0);
                 commit('setLastFightDate', today);
                 commit('setFightLog', []);
                 saveHistory([]);
