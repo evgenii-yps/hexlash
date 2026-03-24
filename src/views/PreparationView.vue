@@ -10,6 +10,8 @@
 
         <ModuleBuilder/>
 
+        <BuildDescription/>
+
         <!-- Action row: Mode | START FIGHT | Friends -->
         <div class="action-row">
           <ModeSelector
@@ -60,6 +62,7 @@ import UserName from "@/components/fragments/profile/UserName.vue";
 import ModuleBuilder from "@/components/fragments/modules/ModuleBuilder.vue";
 import AutoFightStatus from "@/components/fragments/fight/AutoFightStatus.vue";
 import ModeSelector from "@/components/arena/ModeSelector.vue";
+import BuildDescription from "@/components/arena/BuildDescription.vue";
 import {getOnlinePlayersCount} from "@/core/services/statsService.js";
 
 const master = computed(() => store.getters['master/getMaster']);
