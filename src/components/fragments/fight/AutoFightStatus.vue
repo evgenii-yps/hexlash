@@ -29,7 +29,7 @@
 
     <div class="status-buttons">
       <button class="status-btn status-btn-log" @click="viewLog">
-        {{ t.autoFight.lblViewFightLog }}
+        {{ t.autoFight.lblAnalysis }}
       </button>
     </div>
   </div>

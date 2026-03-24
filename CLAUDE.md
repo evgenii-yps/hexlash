@@ -116,7 +116,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 | `achievementState` | Achievements list + unlocking |
 | `contractState` | Web3 wallet, token balance |
 | `webSocketState` | WS connection, real-time messages |
-| `autoFightState` | Auto fight: scheduling, offline simulation, fight log, push notifications, daily auto-reset, server sync (POST /fight/save) |
+| `autoFightState` | Auto fight: scheduling, offline simulation, fight log, push notifications, daily auto-reset, server sync (POST /fight/save), AI analysis (series analysis via Claude API) |
 | `pvpState` | Real-time PvP matchmaking and fights |
 | `friendsState` | Friends list, friend requests, challenges (WebSocket-based) |
 
@@ -269,6 +269,8 @@ AI_TRAINER_ENABLED = true
 
 **AI Trainer:** Claude-powered post-fight analysis (PvE and PvP). Component `AiTrainerAnalysis.vue` renders on CardFightView results screen. Sends fight data (rounds, decks, result, dice/coach/emergency usage) to `POST /v1/ai/analyze-fight` → backend calls Anthropic Claude API → returns 4-section analysis: Fight Summary, What You Did Well, What Went Wrong, Advice. Feature flag: `AI_TRAINER_ENABLED`. Graceful degradation on error. i18n keys: `fight.lblAiTrainer`, `fight.lblAiLoading`, `fight.lblAiError`.
 
+**AI Auto Fight Analysis:** Claude-powered analysis of auto fight series. Component `AutoFightAnalysis.vue` renders on AutoFightLogView screen. Player selects period (Last 5 / Last 10 / All) and clicks "Analyze" → sends fight series data to `POST /v1/ai/auto-fight-summary` → returns 4-section analysis: Session Overview, Strengths, Weaknesses, Recommendation. Model: `claude-haiku-4-5-20251001`, max_tokens: 400, rate limit: 5/min. Vuex state in `autoFightState` (aiAnalysis, aiAnalysisLoading, aiAnalysisError, aiAnalysisPeriod). Auto fight log entries now include: playerModules, opponentModules, diceUsed, diceEffect, coachUsed, coachChoice, emergencyUsed.
+
 **Data Persistence:** Progression (moves, XP, taps, deck, playerModules) syncs to server via `PUT /v1/user/progression` (debounced 3s). Server is source of truth — restores all data on login via `GET /v1/user/me`. PlayerModules (fighter archetypes) included in progression JSON. Auto fight state/history is localStorage-only (not critical — fight results already synced via `POST /fight/save`). PvP fight state is cleared from localStorage on `fight_end` via `clearSavedFight` action to prevent stale restore on next visit.
 
 **Files:**
@@ -279,7 +281,8 @@ AI_TRAINER_ENABLED = true
 - `pvpMatchManager.js` — PvP match lifecycle
 - `pvpHandler.js` — PvP WebSocket message handling (dice_roll, coach_choice)
 - `AiTrainerAnalysis.vue` — AI Trainer post-fight analysis component
-- `backend/src/routes/ai.js` — AI Trainer API endpoint
+- `AutoFightAnalysis.vue` — AI auto fight series analysis component
+- `backend/src/routes/ai.js` — AI Trainer + Auto Fight Summary API endpoints
 
 ---
 
@@ -339,6 +342,7 @@ AI_TRAINER_ENABLED = true
 - `XPAllocationModal.vue` — XP allocation modal
 - `PvPStatsCard.vue` — PvP statistics display
 - `AiTrainerAnalysis.vue` — Claude-powered post-fight analysis (PvE + PvP, results screen)
+- `AutoFightAnalysis.vue` — Claude-powered auto fight series analysis (AutoFightLogView)
 
 ---
 
@@ -356,7 +360,7 @@ Base: `/v1/`
 | `/fight` | fight.js | fight creation, results, history |
 | `/stats` | stats.js | player and game statistics |
 | `/friends` | friends.js | friends list, requests, search players |
-| `/ai` | ai.js | AI Trainer fight analysis (POST /analyze-fight) |
+| `/ai` | ai.js | AI Trainer fight analysis (POST /analyze-fight), Auto fight summary (POST /auto-fight-summary) |
 
 Auth guard: JWT Bearer token via `middleware/auth.js`
 

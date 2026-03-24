@@ -67,6 +67,11 @@ setInterval(() => {
     if (recent.length === 0) buildDescRateLimitMap.delete(userId);
     else buildDescRateLimitMap.set(userId, recent);
   }
+  for (const [userId, timestamps] of autoFightRateLimitMap) {
+    const recent = timestamps.filter(ts => now - ts < RATE_LIMIT_WINDOW_MS);
+    if (recent.length === 0) autoFightRateLimitMap.delete(userId);
+    else autoFightRateLimitMap.set(userId, recent);
+  }
 }, 5 * 60 * 1000);
 
 const SYSTEM_PROMPT = `You are an AI fighting trainer for Hexlash — an auto-battle game on Base blockchain.
@@ -246,6 +251,237 @@ router.post('/analyze-fight', authMiddleware, async (req, res) => {
     const elapsed = Date.now() - startTime;
     console.error(`[AI Trainer] Error for user ${req.userId} (${elapsed}ms):`, error.message);
 
+    if (error.status === 429) {
+      return res.status(429).json({ error: 'Too many requests' });
+    }
+    return res.status(500).json({ error: 'Analysis failed' });
+  }
+});
+
+// ── Auto Fight Summary ──────────────────────────────────────────────────
+
+const autoFightRateLimitMap = new Map();
+const AUTO_FIGHT_RATE_LIMIT_MAX = 5; // 5 requests per minute
+
+function checkAutoFightRateLimit(userId) {
+  const now = Date.now();
+  const userRequests = autoFightRateLimitMap.get(userId) || [];
+  const recent = userRequests.filter(ts => now - ts < RATE_LIMIT_WINDOW_MS);
+
+  if (recent.length >= AUTO_FIGHT_RATE_LIMIT_MAX) {
+    autoFightRateLimitMap.set(userId, recent);
+    return false;
+  }
+
+  recent.push(now);
+  autoFightRateLimitMap.set(userId, recent);
+  return true;
+}
+
+const AUTO_FIGHT_SYSTEM_PROMPT = `You are an AI fighting trainer for Hexlash — an auto-battle game on Base blockchain.
+
+Players build fighters by combining 3 behavioral modules (archetypes):
+- Predator: Relentless aggression, goes all-in under pressure
+- Sentinel: Iron wall defense, counterattacks when pressured
+- Ghost: Evasion and deception, strikes from shadows
+- Analyst: Reads patterns, adapts, most rational fighter
+- Maverick: Pure chaos, unpredictable, flashes of brilliance
+- Juggernaut: Unstoppable pressure, never changes tactics
+
+Combat moves from 3 branches:
+- Speed: jab, double_jab, rapid_fire, combo_strike, flurry, hurricane
+- Power: straight, hook, uppercut, haymaker, hammer_fist, knockout_blow
+- Technique: block_strike, counter_jab, feint_cross, parry_punish, slip_counter, precision_strike
+
+Special mechanics:
+- Dice: random effects (Heal, Adrenaline, Shield, Blind, Rage, Crit)
+- Coach advice: Attack/Defense/Position boost for 4 rounds
+- Emergency protocol: Medkit (+HP), Adrenaline (x2 dmg), Shield (block)
+
+You are analyzing a SERIES of auto fights (not a single fight). Look for patterns across multiple fights.
+
+Respond with exactly 4 sections. CRITICAL: Section labels must ALWAYS be in English exactly as shown below, even when responding in another language. Only the content under each label should be in the requested language.
+
+Session Overview
+(Win/loss ratio, trends, average HP remaining, how many close fights)
+
+Strengths
+(What works well in the current build across multiple fights)
+
+Weaknesses
+(Recurring problems, patterns of losses)
+
+Recommendation
+(Concrete advice: modules to swap, moves to add/remove, dice/coach usage tips)
+
+Rules:
+- Be concise, direct, motivating — like a real boxing coach
+- Reference specific patterns across fights (not individual rounds)
+- Suggest concrete changes
+- Maximum 200 words total
+- Do NOT use markdown (no **, no ##, no bullets with -)
+- Each section label on its own line, content on the next line
+- Respond in the language specified by locale`;
+
+function buildAutoFightUserPrompt(fights, totalFights, period, locale) {
+  let prompt = `Auto Fight Series Analysis\n\n`;
+  prompt += `Period: ${period}\n`;
+  prompt += `Fights analyzed: ${fights.length} of ${totalFights} total\n\n`;
+
+  const wins = fights.filter(f => f.result === 'win').length;
+  const losses = fights.filter(f => f.result === 'loss').length;
+  const draws = fights.filter(f => f.result === 'draw').length;
+  prompt += `Record: ${wins}W / ${losses}L / ${draws}D\n`;
+
+  const avgPlayerHP = Math.round(fights.reduce((sum, f) => sum + f.playerHP, 0) / fights.length);
+  const avgRounds = Math.round(fights.reduce((sum, f) => sum + f.rounds, 0) / fights.length * 10) / 10;
+  prompt += `Avg player HP remaining: ${avgPlayerHP}/100\n`;
+  prompt += `Avg rounds: ${avgRounds}\n\n`;
+
+  // Module usage
+  const moduleCounts = {};
+  fights.forEach(f => {
+    (f.playerModules || []).forEach(m => { moduleCounts[m] = (moduleCounts[m] || 0) + 1; });
+  });
+  prompt += `Player modules used: ${Object.entries(moduleCounts).map(([m, c]) => `${m}(${c})`).join(', ')}\n`;
+
+  // Dice & coach usage
+  const diceUsedCount = fights.filter(f => f.diceUsed).length;
+  const coachUsedCount = fights.filter(f => f.coachUsed).length;
+  const emergencyUsedCount = fights.filter(f => f.emergencyUsed).length;
+  prompt += `Dice used: ${diceUsedCount}/${fights.length} fights\n`;
+  prompt += `Coach used: ${coachUsedCount}/${fights.length} fights\n`;
+  prompt += `Emergency used: ${emergencyUsedCount}/${fights.length} fights\n\n`;
+
+  // Dice effects breakdown
+  const diceEffects = {};
+  fights.filter(f => f.diceUsed && f.diceEffect).forEach(f => {
+    diceEffects[f.diceEffect] = (diceEffects[f.diceEffect] || 0) + 1;
+  });
+  if (Object.keys(diceEffects).length > 0) {
+    prompt += `Dice effects: ${Object.entries(diceEffects).map(([e, c]) => `${e}(${c})`).join(', ')}\n`;
+  }
+
+  // Coach choices breakdown
+  const coachChoices = {};
+  fights.filter(f => f.coachUsed && f.coachChoice).forEach(f => {
+    coachChoices[f.coachChoice] = (coachChoices[f.coachChoice] || 0) + 1;
+  });
+  if (Object.keys(coachChoices).length > 0) {
+    prompt += `Coach choices: ${Object.entries(coachChoices).map(([c, n]) => `${c}(${n})`).join(', ')}\n`;
+  }
+
+  prompt += `\nFight details:\n`;
+  fights.forEach((f, i) => {
+    prompt += `#${i + 1}: ${f.result} | HP ${f.playerHP}vs${f.opponentHP} | ${f.rounds}rds`;
+    prompt += ` | modules: ${(f.playerModules || []).join('+')}`;
+    prompt += ` vs ${(f.opponentModules || []).join('+')}`;
+    if (f.diceUsed) prompt += ` | dice:${f.diceEffect}`;
+    if (f.coachUsed) prompt += ` | coach:${f.coachChoice}`;
+    if (f.emergencyUsed) prompt += ` | emergency`;
+    prompt += `\n`;
+  });
+
+  prompt += `\nLocale: ${locale || 'en'}`;
+  return prompt;
+}
+
+router.post('/auto-fight-summary', authMiddleware, async (req, res) => {
+  const startTime = Date.now();
+
+  try {
+    // Feature flag check
+    if (!config.AI_TRAINER_ENABLED) {
+      return res.status(503).json({ error: 'AI features are disabled' });
+    }
+
+    // API key check
+    if (!config.ANTHROPIC_API_KEY) {
+      return res.status(503).json({ error: 'AI service temporarily unavailable' });
+    }
+
+    // Rate limit check
+    if (!checkAutoFightRateLimit(req.userId)) {
+      return res.status(429).json({ error: 'Too many requests. Max 5 analyses per minute.' });
+    }
+
+    // Validate input
+    const { fights, totalFights, period, locale } = req.body;
+
+    if (!Array.isArray(fights) || fights.length < 1 || fights.length > 48) {
+      return res.status(400).json({ error: 'fights must be an array with 1-48 entries' });
+    }
+
+    const VALID_PERIODS = ['last_5', 'last_10', 'all'];
+    if (!VALID_PERIODS.includes(period)) {
+      return res.status(400).json({ error: 'period must be last_5, last_10, or all' });
+    }
+
+    const VALID_RESULTS = ['win', 'loss', 'draw'];
+    for (const fight of fights) {
+      if (!fight.result || !VALID_RESULTS.includes(fight.result)) {
+        return res.status(400).json({ error: 'Each fight must have a valid result (win, loss, draw)' });
+      }
+      if (fight.playerHP != null) {
+        const hp = Number(fight.playerHP);
+        if (isNaN(hp) || hp < 0 || hp > 100) {
+          return res.status(400).json({ error: 'playerHP must be 0-100' });
+        }
+      }
+      if (fight.opponentHP != null) {
+        const hp = Number(fight.opponentHP);
+        if (isNaN(hp) || hp < 0 || hp > 100) {
+          return res.status(400).json({ error: 'opponentHP must be 0-100' });
+        }
+      }
+    }
+
+    const validLocale = SUPPORTED_LOCALES.includes(locale) ? locale : 'en';
+
+    // Build prompt
+    const userPrompt = buildAutoFightUserPrompt(fights, totalFights || fights.length, period, validLocale);
+
+    // Call Claude API with AbortController timeout
+    const client = getAnthropicClient();
+    if (!client) {
+      return res.status(503).json({ error: 'AI service temporarily unavailable' });
+    }
+
+    const abortController = new AbortController();
+    const timeout = setTimeout(() => abortController.abort(), 15000);
+
+    try {
+      const response = await client.messages.create({
+        model: config.ANTHROPIC_MODEL,
+        max_tokens: 400,
+        temperature: 0.7,
+        system: AUTO_FIGHT_SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: userPrompt }],
+      }, { signal: abortController.signal });
+
+      clearTimeout(timeout);
+
+      const analysis = response.content[0].text;
+      const elapsed = Date.now() - startTime;
+
+      console.log(`[Auto Fight Summary] User ${req.userId} | ${fights.length} fights | ${period} | ${elapsed}ms`);
+
+      return res.json({
+        analysis,
+        model: config.ANTHROPIC_MODEL,
+        fightsAnalyzed: fights.length,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
+
+  } catch (error) {
+    const elapsed = Date.now() - startTime;
+    console.error(`[Auto Fight Summary] Error for user ${req.userId} (${elapsed}ms):`, error.message);
+
+    if (error.name === 'AbortError') {
+      return res.status(503).json({ error: 'Analysis timed out' });
+    }
     if (error.status === 429) {
       return res.status(429).json({ error: 'Too many requests' });
     }

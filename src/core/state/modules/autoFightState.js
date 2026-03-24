@@ -66,6 +66,9 @@ function getTodayDate() {
     return `${yyyy}-${mm}-${dd}`; // Local date "YYYY-MM-DD"
 }
 
+// ─── Dice effects for auto fight simulation ────────────────────────────────
+const DICE_EFFECTS = ['heal', 'adrenaline', 'shield', 'blind', 'rage', 'crit'];
+
 // ─── Fast offline fight simulation ──────────────────────────────────────────
 function simulateFullFight(playerModules, difficulty, playerPower = null, playerDeck = null, playerCardLevels = null) {
     const opponent = OpponentGenerator.generate(difficulty, playerPower);
@@ -78,6 +81,10 @@ function simulateFullFight(playerModules, difficulty, playerPower = null, player
     const playerMods = { attackMultiplier: 1, shieldActive: false, blindActive: false };
     let emergencyUsed = false;
     let coachUsed = false;
+    let coachChoice = null;
+    let diceUsed = false;
+    let diceEffect = null;
+    let diceCooldown = 0;
     const roundLog = [];
 
     while (roundNum < TOTAL_ROUNDS && hp1 > 0 && hp2 > 0) {
@@ -115,8 +122,38 @@ function simulateFullFight(playerModules, difficulty, playerPower = null, player
         playerMods.shieldActive = false;
         playerMods.blindActive = false;
 
-        // In Overdrive: no emergency, no coach
+        // In Overdrive: no emergency, no coach, no dice
         if (!isOverdrive) {
+            // Dice simulation — available after round 1, with cooldown
+            if (diceCooldown > 0) diceCooldown--;
+            if (!diceUsed && roundNum > 1 && diceCooldown === 0 && Math.random() < 0.4) {
+                diceEffect = DICE_EFFECTS[Math.floor(Math.random() * DICE_EFFECTS.length)];
+                diceUsed = true;
+                diceCooldown = DICE_COOLDOWN_ROUNDS;
+
+                switch (diceEffect) {
+                    case 'heal':
+                        hp1 = Math.min(MAX_HP, hp1 + 15);
+                        break;
+                    case 'adrenaline':
+                        playerMods.attackMultiplier = 2;
+                        break;
+                    case 'shield':
+                        playerMods.shieldActive = true;
+                        break;
+                    case 'blind':
+                        playerMods.blindActive = true;
+                        break;
+                    case 'rage':
+                        hp1 = Math.max(1, hp1 - 20);
+                        playerMods.attackMultiplier = 2;
+                        break;
+                    case 'crit':
+                        hp2 = Math.max(0, hp2 - 30);
+                        break;
+                }
+            }
+
             // Emergency protocol (medkit) — auto uses medkit
             if (!emergencyUsed && (hp1 / MAX_HP) * 100 < EMERGENCY_HP_THRESHOLD) {
                 hp1 = Math.min(MAX_HP, hp1 + 25);
@@ -125,8 +162,8 @@ function simulateFullFight(playerModules, difficulty, playerPower = null, player
 
             // Coach advice — auto picks attack if in danger, else position
             if (!coachUsed && roundNum >= COACH_MIN_ROUND && Math.random() < COACH_TRIGGER_CHANCE) {
-                const coachAction = hp1 < 50 ? 'defense' : 'attack';
-                ai1.setCoachBoost(coachAction, COACH_BOOST_ROUNDS);
+                coachChoice = hp1 < 50 ? 'defense' : 'attack';
+                ai1.setCoachBoost(coachChoice, COACH_BOOST_ROUNDS);
                 coachUsed = true;
             }
 
@@ -157,6 +194,12 @@ function simulateFullFight(playerModules, difficulty, playerPower = null, player
         hp1Final: Math.max(0, hp1),
         hp2Final: Math.max(0, hp2),
         roundLog,
+        playerModules,
+        diceUsed,
+        diceEffect,
+        coachUsed,
+        coachChoice,
+        emergencyUsed,
     };
 }
 
@@ -182,6 +225,12 @@ const state = {
 
     // Current live auto fight (for spectating)
     liveFight: null, // { id, opponent, status, startedAt, hp1, hp2, round, roundLog }
+
+    // AI Analysis
+    aiAnalysis: null,
+    aiAnalysisLoading: false,
+    aiAnalysisError: false,
+    aiAnalysisPeriod: 'all',
 };
 
 // ─── Getters ────────────────────────────────────────────────────────────────
@@ -198,6 +247,22 @@ const getters = {
     getDifficulty: (s) => s.difficulty,
     getSessionFights: (s) => s.sessionFights,
     isStoppingAfterCurrent: (s) => s.stoppingAfterCurrent,
+
+    getAiAnalysis: (s) => s.aiAnalysis,
+    getAiAnalysisLoading: (s) => s.aiAnalysisLoading,
+    getAiAnalysisError: (s) => s.aiAnalysisError,
+    getAiAnalysisPeriod: (s) => s.aiAnalysisPeriod,
+
+    fightsForPeriod: (s) => {
+        const log = s.fightLog;
+        switch (s.aiAnalysisPeriod) {
+            case 'last_5': return log.slice(0, 5);
+            case 'last_10': return log.slice(0, 10);
+            default: return log;
+        }
+    },
+
+    canAnalyze: (s) => s.fightLog.length > 0,
 
     canStartAutoFight: (s) => {
         if (s.fightsToday >= AUTO_FIGHT_MAX_PER_DAY) return { allowed: false, reason: 'dailyLimit' };
@@ -228,6 +293,10 @@ const mutations = {
     setSessionFights(s, v) { s.sessionFights = v; },
     setFightLog(s, v) { s.fightLog = v; },
     setLiveFight(s, v) { s.liveFight = v; },
+    setAiAnalysis(s, v) { s.aiAnalysis = v; },
+    setAiAnalysisLoading(s, v) { s.aiAnalysisLoading = v; },
+    setAiAnalysisError(s, v) { s.aiAnalysisError = v; },
+    setAiAnalysisPeriod(s, v) { s.aiAnalysisPeriod = v; },
 
     addFightToLog(s, entry) {
         s.fightLog.unshift(entry);
@@ -414,6 +483,13 @@ const actions = {
                     hp1Final: fightData.hp1Final,
                     hp2Final: fightData.hp2Final,
                     expGained: expGain,
+                    playerModules: fightData.playerModules.map(m => m?.id || m),
+                    opponentModules: (fightData.opponent.modules || []).map(m => m?.id || m),
+                    diceUsed: fightData.diceUsed,
+                    diceEffect: fightData.diceEffect,
+                    coachUsed: fightData.coachUsed,
+                    coachChoice: fightData.coachChoice,
+                    emergencyUsed: fightData.emergencyUsed,
                 };
 
                 commit('addFightToLog', logEntry);
@@ -485,6 +561,12 @@ const actions = {
         const opponent = rootGetters['fight/getOpponent'];
         const expGain = result === 'win' ? 10 : 5;
 
+        // Collect combat details from cardFightState for AI analysis
+        const playerModules = rootGetters['fight/getPlayerModules'] || [];
+        const diceState = rootGetters['fight/getDiceState'];
+        const coachAdvice = rootGetters['fight/getCoachAdvice'];
+        const emergencyProtocol = rootGetters['fight/getEmergencyProtocol'];
+
         const logEntry = {
             id: 'autofight_' + Date.now(),
             timestamp: Date.now(),
@@ -495,6 +577,13 @@ const actions = {
             hp1Final: hp1,
             hp2Final: hp2,
             expGained: expGain,
+            playerModules: playerModules.map(m => m?.id || m),
+            opponentModules: (opponent?.modules || []).map(m => m?.id || m),
+            diceUsed: !!(diceState && diceState.activeItem),
+            diceEffect: diceState?.activeItem?.effect || null,
+            coachUsed: !!(coachAdvice && coachAdvice.used),
+            coachChoice: coachAdvice?.action || null,
+            emergencyUsed: !!(emergencyProtocol && emergencyProtocol.used),
         };
 
         commit('addFightToLog', logEntry);
@@ -534,6 +623,54 @@ const actions = {
         } catch (e) { /* ignore */ }
     },
 
+
+    /** Request AI analysis for selected period. */
+    async requestAnalysis({ commit, getters, state, rootGetters }) {
+        if (!getters.canAnalyze) return;
+
+        commit('setAiAnalysisLoading', true);
+        commit('setAiAnalysisError', false);
+        commit('setAiAnalysis', null);
+
+        try {
+            const fights = getters.fightsForPeriod.map(f => ({
+                result: f.result === 'lose' ? 'loss' : f.result,
+                playerHP: f.hp1Final,
+                opponentHP: f.hp2Final,
+                rounds: f.rounds,
+                totalRounds: 10,
+                playerModules: f.playerModules || [],
+                opponentModules: f.opponentModules || [],
+                diceUsed: f.diceUsed || false,
+                diceEffect: f.diceEffect || null,
+                coachUsed: f.coachUsed || false,
+                coachChoice: f.coachChoice || null,
+                emergencyUsed: f.emergencyUsed || false,
+                xpEarned: f.expGained || 0,
+            }));
+
+            const locale = rootGetters['master/getLanguage'] || 'en';
+            const response = await apiClient.analyzeAutoFights(
+                fights,
+                state.fightLog.length,
+                state.aiAnalysisPeriod,
+                locale,
+            );
+
+            commit('setAiAnalysis', response.analysis);
+        } catch (e) {
+            console.error('[AutoFight] AI analysis error:', e);
+            commit('setAiAnalysisError', true);
+        } finally {
+            commit('setAiAnalysisLoading', false);
+        }
+    },
+
+    /** Clear AI analysis state. */
+    clearAnalysis({ commit }) {
+        commit('setAiAnalysis', null);
+        commit('setAiAnalysisError', false);
+    },
 
     /** Clear fight history. */
     clearHistory({ commit }) {
