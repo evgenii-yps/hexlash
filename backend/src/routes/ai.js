@@ -302,7 +302,7 @@ router.post('/build-description', authMiddleware, async (req, res) => {
     }
     const response = await client.messages.create({
       model: config.ANTHROPIC_MODEL,
-      max_tokens: 60,
+      max_tokens: config.AI_BUILD_DESCRIPTION_MAX_TOKENS,
       temperature: 0.8,
       system: BUILD_DESCRIPTION_SYSTEM_PROMPT,
       messages: [{ role: 'user', content: `Modules: ${sorted.join(', ')}\nLanguage: ${LOCALE_NAMES[lang]}` }],
