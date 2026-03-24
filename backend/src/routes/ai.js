@@ -97,6 +97,7 @@ function buildUserPrompt(fightLog, locale) {
   let prompt = 'Fight Analysis Request\n\n';
   prompt += `Result: ${fightLog.result}\n`;
   prompt += `Player build: ${(fightLog.playerDeck || []).join(' + ')}\n`;
+  prompt += `Player modules: ${(fightLog.playerModules || []).join(' + ') || 'unknown'}\n`;
   prompt += `Opponent build: ${(fightLog.opponentDeck || []).join(' + ')}\n\n`;
   prompt += `Final HP: Player ${fightLog.playerHP}/100, Opponent ${fightLog.opponentHP}/100\n`;
   prompt += `Total rounds: ${fightLog.totalRounds || 'unknown'}\n\n`;
