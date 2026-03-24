@@ -255,7 +255,7 @@ export default {
     chooseMode: 'CHOOSE MODE',
     pveDesc: 'Fight against bots',
     pvpDesc: 'Fight real players',
-    autoDesc: 'Fights every 30-60 min',
+    autoDesc: 'Fight while you\'re away',
     autoFight: 'AUTO FIGHT',
     startAuto: 'START AUTO',
     stopAuto: 'STOP AUTO',
