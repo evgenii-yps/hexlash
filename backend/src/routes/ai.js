@@ -141,8 +141,60 @@ router.post('/analyze-fight', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'Invalid fight data' });
     }
 
+    const VALID_RESULTS = ['win', 'loss', 'draw'];
+    if (!VALID_RESULTS.includes(fightLog.result)) {
+      return res.status(400).json({ error: 'Invalid result. Must be win, loss, or draw.' });
+    }
+
+    const MAX_ROUNDS_LIMIT = 15;
+    const MAX_DECK = 8;
+
+    if (fightLog.rounds != null) {
+      if (!Array.isArray(fightLog.rounds)) {
+        return res.status(400).json({ error: 'rounds must be an array' });
+      }
+      if (fightLog.rounds.length > MAX_ROUNDS_LIMIT) {
+        fightLog.rounds = fightLog.rounds.slice(0, MAX_ROUNDS_LIMIT);
+      }
+    }
+
+    if (fightLog.playerDeck != null) {
+      if (!Array.isArray(fightLog.playerDeck) || fightLog.playerDeck.length > MAX_DECK) {
+        return res.status(400).json({ error: 'playerDeck must be an array of up to 8 strings' });
+      }
+    }
+
+    if (fightLog.opponentDeck != null) {
+      if (!Array.isArray(fightLog.opponentDeck) || fightLog.opponentDeck.length > MAX_DECK) {
+        return res.status(400).json({ error: 'opponentDeck must be an array of up to 8 strings' });
+      }
+    }
+
+    if (fightLog.playerHP != null) {
+      const hp = Number(fightLog.playerHP);
+      if (isNaN(hp) || hp < 0 || hp > 100) {
+        return res.status(400).json({ error: 'playerHP must be a number between 0 and 100' });
+      }
+    }
+
+    if (fightLog.opponentHP != null) {
+      const hp = Number(fightLog.opponentHP);
+      if (isNaN(hp) || hp < 0 || hp > 100) {
+        return res.status(400).json({ error: 'opponentHP must be a number between 0 and 100' });
+      }
+    }
+
+    if (fightLog.totalRounds != null) {
+      const tr = Number(fightLog.totalRounds);
+      if (isNaN(tr) || tr < 1 || tr > MAX_ROUNDS_LIMIT) {
+        return res.status(400).json({ error: `totalRounds must be a number between 1 and ${MAX_ROUNDS_LIMIT}` });
+      }
+    }
+
+    const validLocale = SUPPORTED_LOCALES.includes(locale) ? locale : 'en';
+
     // Build prompts
-    const userPrompt = buildUserPrompt(fightLog, locale);
+    const userPrompt = buildUserPrompt(fightLog, validLocale);
 
     // Call Claude API
     const client = getAnthropicClient();
