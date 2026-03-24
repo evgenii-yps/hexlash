@@ -84,6 +84,8 @@ CRITICAL FORMATTING RULE:
 - Separate each section with a blank line
 - Use these exact labels on their own line:
 
+CRITICAL: Section labels must ALWAYS be in English exactly as shown below, even when responding in another language. Only the content under each label should be in the requested language.
+
 Fight Summary (2-3 sentences about the fight)
 What You Did Well (specific positives)
 What Went Wrong (specific issues)
