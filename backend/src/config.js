@@ -36,5 +36,5 @@ module.exports = {
   ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || '',
   ANTHROPIC_MODEL: 'claude-haiku-4-5-20251001',
   AI_TRAINER_MAX_TOKENS: 500,
-  AI_TRAINER_ENABLED: true,
+  AI_TRAINER_ENABLED: process.env.AI_TRAINER_ENABLED !== 'false',
 };
