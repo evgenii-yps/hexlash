@@ -9,6 +9,9 @@ const rateLimitMap = new Map();
 const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
 const RATE_LIMIT_MAX = 5; // 5 requests per minute
 
+const buildDescRateLimitMap = new Map();
+const BUILD_DESC_RATE_LIMIT_MAX = 10; // 10 requests per minute
+
 function checkRateLimit(userId) {
   const now = Date.now();
   const userRequests = rateLimitMap.get(userId) || [];
@@ -23,6 +26,21 @@ function checkRateLimit(userId) {
 
   recent.push(now);
   rateLimitMap.set(userId, recent);
+  return true;
+}
+
+function checkBuildDescRateLimit(userId) {
+  const now = Date.now();
+  const userRequests = buildDescRateLimitMap.get(userId) || [];
+  const recent = userRequests.filter(ts => now - ts < RATE_LIMIT_WINDOW_MS);
+
+  if (recent.length >= BUILD_DESC_RATE_LIMIT_MAX) {
+    buildDescRateLimitMap.set(userId, recent);
+    return false;
+  }
+
+  recent.push(now);
+  buildDescRateLimitMap.set(userId, recent);
   return true;
 }
 
@@ -43,6 +61,11 @@ setInterval(() => {
     const recent = timestamps.filter(ts => now - ts < RATE_LIMIT_WINDOW_MS);
     if (recent.length === 0) rateLimitMap.delete(userId);
     else rateLimitMap.set(userId, recent);
+  }
+  for (const [userId, timestamps] of buildDescRateLimitMap) {
+    const recent = timestamps.filter(ts => now - ts < RATE_LIMIT_WINDOW_MS);
+    if (recent.length === 0) buildDescRateLimitMap.delete(userId);
+    else buildDescRateLimitMap.set(userId, recent);
   }
 }, 5 * 60 * 1000);
 
@@ -276,6 +299,10 @@ router.post('/build-description', authMiddleware, async (req, res) => {
       return res.json({ description: null, error: 'AI service unavailable' });
     }
 
+    if (!checkBuildDescRateLimit(req.userId)) {
+      return res.json({ description: null, error: 'Too many requests' });
+    }
+
     const { modules, locale } = req.body;
 
     // Validate modules
@@ -302,7 +329,7 @@ router.post('/build-description', authMiddleware, async (req, res) => {
     }
     const response = await client.messages.create({
       model: config.ANTHROPIC_MODEL,
-      max_tokens: 60,
+      max_tokens: config.AI_BUILD_DESCRIPTION_MAX_TOKENS,
       temperature: 0.8,
       system: BUILD_DESCRIPTION_SYSTEM_PROMPT,
       messages: [{ role: 'user', content: `Modules: ${sorted.join(', ')}\nLanguage: ${LOCALE_NAMES[lang]}` }],
