@@ -251,6 +251,7 @@ export default {
       ghostAnalyst: 'Shadow strategist. Dodges and strikes when opponent is exposed.',
       default: 'Unique style. Adapts to the situation.',
     },
+    autoDesc: 'Lute enquanto estiver fora',
   },
   club: {
     lblClubMembers: '{n} membros',

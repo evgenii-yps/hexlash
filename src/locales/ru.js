@@ -255,7 +255,7 @@ export default {
     chooseMode: 'ВЫБОР РЕЖИМА',
     pveDesc: 'Бой против ботов',
     pvpDesc: 'Бой с реальными игроками',
-    autoDesc: 'Бои каждые 30-60 мин',
+    autoDesc: 'Бои пока вас нет',
     autoFight: 'АВТОБОЙ',
     startAuto: 'СТАРТ АВТО',
     stopAuto: 'СТОП АВТО',

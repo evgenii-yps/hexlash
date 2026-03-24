@@ -251,6 +251,7 @@ export default {
       ghostAnalyst: 'Shadow strategist. Dodges and strikes when opponent is exposed.',
       default: 'Unique style. Adapts to the situation.',
     },
+    autoDesc: '부재 중 자동 전투',
   },
   club: {
     lblClubMembers: '{n} 명의 회원',
