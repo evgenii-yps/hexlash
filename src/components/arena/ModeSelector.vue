@@ -2,7 +2,7 @@
   <div class="mode-selector">
 
     <!-- Compact Mode Button -->
-    <button class="mode-compact-btn" :class="currentModeClass" @click="toggleDropdown">
+    <button class="mode-compact-btn" :class="[currentModeClass, { 'mode-locked': autoFightActive }]" @click="toggleDropdown">
       <span class="mode-compact-label">{{ currentModeName }}</span>
       <span class="mode-compact-arrow" :class="{ open: isOpen }">
         <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -106,8 +106,9 @@
 import { ref, computed } from 'vue';
 import { t } from '@/locales/index.js';
 
-defineProps({
+const props = defineProps({
   onlineCount: { type: Number, default: 0 },
+  autoFightActive: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['select']);
@@ -122,10 +123,12 @@ const currentModeName  = computed(() => modeNames[selectedMode.value]);
 const currentModeClass = computed(() => modeCss[selectedMode.value]);
 
 function toggleDropdown() {
+  if (props.autoFightActive) return;
   isOpen.value = !isOpen.value;
 }
 
 function selectMode(mode) {
+  if (props.autoFightActive && mode !== 'auto') return;
   selectedMode.value = mode;
   isOpen.value = false;
   emit('select', mode);
@@ -157,6 +160,11 @@ function selectMode(mode) {
 .mode-compact-btn:active {
   border-color: #FF066F;
   box-shadow: 0 0 16px rgba(255, 6, 111, 0.3);
+}
+
+.mode-compact-btn.mode-locked {
+  opacity: 0.4;
+  pointer-events: none;
 }
 
 .mode-compact-btn.mode-pve { border-color: rgba(0, 229, 255, 0.4); }

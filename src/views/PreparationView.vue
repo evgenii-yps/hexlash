@@ -14,6 +14,7 @@
         <div class="action-row">
           <ModeSelector
             :onlineCount="onlinePlayersCount"
+            :autoFightActive="isAutoFightEnabled"
             @select="onModeSelect"
           />
 
@@ -51,7 +52,7 @@
 </template>
 
 <script setup>
-import {ref, computed, onMounted, onBeforeUnmount} from 'vue';
+import {ref, computed, watch, onMounted, onBeforeUnmount} from 'vue';
 import store from "@/core/state/store.js";
 import router from "@/router/index.js";
 import {t} from "@/locales/index.js";
@@ -85,6 +86,11 @@ const startButtonText = computed(() => {
 const onModeSelect = (mode) => {
   selectedMode.value = mode;
 };
+
+// Force auto mode when auto fight is active
+watch(isAutoFightEnabled, (active) => {
+  if (active) selectedMode.value = 'auto';
+}, { immediate: true });
 
 const startFight = async () => {
   switch (selectedMode.value) {

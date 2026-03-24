@@ -121,6 +121,16 @@ router.beforeEach(async (to, from, next) => {
                     return;
                 }
             }
+
+            // Block manual fight/matchmaking while auto fight is active
+            if (to.path === '/fight' || to.path === '/matchmaking') {
+                const autoFightEnabled = store.getters['autoFight/isEnabled'];
+                if (autoFightEnabled) {
+                    next('/arena');
+                    return;
+                }
+            }
+
             next();
         }
     } else {
