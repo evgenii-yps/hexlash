@@ -360,6 +360,11 @@ function selectProtocol(id) {
   border: 2px solid transparent;
   cursor: pointer;
   transition: all 0.2s ease;
+  opacity: 0.4;
+}
+
+.protocol-option:hover {
+  opacity: 0.7;
 }
 
 .protocol-option:active {
@@ -367,8 +372,13 @@ function selectProtocol(id) {
 }
 
 .protocol-selected {
+  opacity: 1;
   border-color: var(--primary-color);
   background-color: rgba(var(--primary-color-rgb, 68, 138, 255), 0.15);
+}
+
+.protocol-selected:hover {
+  opacity: 1;
 }
 
 .protocol-icon-img {

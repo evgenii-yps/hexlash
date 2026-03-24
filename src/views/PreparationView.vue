@@ -221,6 +221,7 @@ const handleScroll = (event) => {
 /* ── Action Row ───────────────────────────────────────────── */
 .action-row {
   margin-top: 20px;
+  margin-bottom: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
