@@ -375,7 +375,10 @@ const actions = {
     /** Enable auto fight mode. */
     enable({ commit, state, rootGetters }) {
         const modules = rootGetters['fight/getPlayerModules'];
-        if (!modules || !modules.every(m => m !== null)) return false;
+        if (!modules || !modules.every(m => m !== null)) {
+            console.warn('[AutoFight] Enable failed — playerModules invalid:', JSON.stringify(modules));
+            return false;
+        }
 
         commit('setEnabled', true);
         commit('setEnabledAt', Date.now());
@@ -436,6 +439,7 @@ const actions = {
             const now = Date.now();
             const modules = rootGetters['fight/getPlayerModules'];
             if (!modules || !modules.every(m => m !== null)) {
+                console.warn('[AutoFight] Skipped — playerModules invalid:', JSON.stringify(modules));
                 // Reschedule so timer doesn't freeze at 0:00
                 if (state.nextFightAt && now >= state.nextFightAt) {
                     commit('setNextFightAt', now + getRandomInterval());
