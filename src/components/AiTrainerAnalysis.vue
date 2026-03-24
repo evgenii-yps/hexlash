@@ -28,7 +28,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import apiClient from '@/core/api/apiClient.js';
 import { t } from '@/locales/index.js';
 
@@ -73,19 +73,26 @@ const sections = computed(() => {
   return result;
 });
 
+const abortController = new AbortController();
+
 onMounted(async () => {
   try {
     const response = await apiClient.post('/ai/analyze-fight', {
       fightLog: props.fightData,
       locale: props.locale,
-    }, { authRequired: true });
+    }, { authRequired: true, signal: abortController.signal });
     analysis.value = response.analysis;
   } catch (err) {
+    if (err.name === 'AbortError' || err.code === 'ERR_CANCELED') return;
     console.warn('[AiTrainer] Analysis failed:', err.message);
     error.value = true;
   } finally {
     loading.value = false;
   }
+});
+
+onBeforeUnmount(() => {
+  abortController.abort();
 });
 </script>
 
