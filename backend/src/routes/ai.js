@@ -26,6 +26,16 @@ function checkRateLimit(userId) {
   return true;
 }
 
+// Anthropic client singleton
+let anthropicClient = null;
+
+function getAnthropicClient() {
+  if (!anthropicClient && config.ANTHROPIC_API_KEY) {
+    anthropicClient = new Anthropic({ apiKey: config.ANTHROPIC_API_KEY });
+  }
+  return anthropicClient;
+}
+
 // Cleanup Map every 5 minutes to prevent memory leaks
 setInterval(() => {
   const now = Date.now();
@@ -132,7 +142,10 @@ router.post('/analyze-fight', authMiddleware, async (req, res) => {
     const userPrompt = buildUserPrompt(fightLog, locale);
 
     // Call Claude API
-    const client = new Anthropic({ apiKey: config.ANTHROPIC_API_KEY });
+    const client = getAnthropicClient();
+    if (!client) {
+      return res.status(503).json({ error: 'AI Trainer temporarily unavailable' });
+    }
     const response = await client.messages.create({
       model: config.ANTHROPIC_MODEL,
       max_tokens: config.AI_TRAINER_MAX_TOKENS,
@@ -227,7 +240,10 @@ router.post('/build-description', authMiddleware, async (req, res) => {
     }
 
     // Call Claude API
-    const client = new Anthropic({ apiKey: config.ANTHROPIC_API_KEY });
+    const client = getAnthropicClient();
+    if (!client) {
+      return res.json({ description: null, error: 'AI service unavailable' });
+    }
     const response = await client.messages.create({
       model: config.ANTHROPIC_MODEL,
       max_tokens: 60,
