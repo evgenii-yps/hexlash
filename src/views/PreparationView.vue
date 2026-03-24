@@ -8,6 +8,11 @@
           <UserName :userName="master?.userData?.name || ''" style="width: auto !important;"/>
         </div>
 
+        <!-- Fighter avatar -->
+        <div class="fighter-avatar">
+          <v-img :src="`/images/skins/${master?.userData?.skin || 'skin_m_1.png'}`" class="avatar-skin"/>
+        </div>
+
         <!-- Action row: Mode | START FIGHT | Friends -->
         <div class="action-row">
           <ModeSelector
@@ -200,6 +205,17 @@ const handleScroll = (event) => {
   align-items: center;
   margin-bottom: 16px;
   gap: 4px;
+}
+
+.fighter-avatar {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.avatar-skin {
+  width: 120px;
+  height: 200px;
 }
 
 /* ── Action Row ───────────────────────────────────────────── */

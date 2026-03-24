@@ -1,10 +1,5 @@
 <template>
   <div class="module-builder">
-    <!-- Fighter avatar -->
-    <div class="fighter-avatar">
-      <v-img :src="`/images/skins/${master?.userData?.skin || 'skin_m_1.png'}`" class="avatar-skin"/>
-    </div>
-
     <!-- 3 module slots -->
     <div class="module-slots">
       <div v-for="slot in 3" :key="slot" class="module-slot" :class="{ 'slot-primary': slot === 1 }">
@@ -208,15 +203,6 @@ function selectProtocol(id) {
   display: flex;
   flex-direction: column;
   align-items: center;
-}
-
-.fighter-avatar {
-  margin-bottom: 12px;
-}
-
-.avatar-skin {
-  width: 120px;
-  height: 200px;
 }
 
 /* ── Module slots ──────────────────────────────────────────── */
