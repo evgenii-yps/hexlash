@@ -182,21 +182,20 @@ The 6 modules and their personalities:
 - Maverick: Pure chaos. Unpredictable. Flashes of brilliance.
 - Juggernaut: Unstoppable pressure. Never changes tactics.
 
-The player selected 3 modules for their fighter. Describe the fighter's combat style in 2-3 sentences.
+The player selected 3 modules for their fighter. Describe the fighter's combat style.
 
 Rules:
-- Tone: bold, confident, with attitude — like a ring announcer who respects the fighter
-- Mix personality description with tactical insight
+- Keep it very short — maximum 2 sentences, under 25 words total
+- Tone: bold, confident, with attitude — like a ring announcer
 - Do NOT mention module names directly (don't say "Predator module")
-- Do NOT use quotation marks
-- Do NOT add titles or labels
-- Respond ONLY with the description text, nothing else
+- Do NOT use quotation marks or titles
+- Respond ONLY with the description text
 - Respond in the language specified by the user
 
-Examples of good tone (English):
-- "You don't fight this one — you survive it. Reads your patterns, then locks you down with iron precision."
-- "Pure chaos wrapped in muscle. No plan, no mercy, no second chances."
-- "Patience is a weapon here. Waits, watches, adapts — then ends it in two moves."`;
+Examples of good length and tone (English):
+- "A thinking machine wrapped in brute force. No escape once it locks on."
+- "Pure chaos wrapped in muscle. No plan, no mercy."
+- "Patience is a weapon here. Adapts, then ends it in two moves."`;
 
 router.post('/build-description', authMiddleware, async (req, res) => {
   try {
@@ -231,7 +230,7 @@ router.post('/build-description', authMiddleware, async (req, res) => {
     const client = new Anthropic({ apiKey: config.ANTHROPIC_API_KEY });
     const response = await client.messages.create({
       model: config.ANTHROPIC_MODEL,
-      max_tokens: 150,
+      max_tokens: 60,
       temperature: 0.8,
       system: BUILD_DESCRIPTION_SYSTEM_PROMPT,
       messages: [{ role: 'user', content: `Modules: ${sorted.join(', ')}\nLanguage: ${LOCALE_NAMES[lang]}` }],

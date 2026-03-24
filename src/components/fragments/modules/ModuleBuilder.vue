@@ -28,7 +28,11 @@
     <!-- Build style preview -->
     <div class="build-preview" v-if="isComplete">
       <div class="preview-title">{{ t.arena.lblBuildStyle }}</div>
-      <div class="preview-text">{{ buildDescription }}</div>
+      <div v-if="aiLoading" class="preview-loading">
+        <span class="preview-loading-text">HEXLASH</span>
+        <span class="preview-spinner"></span>
+      </div>
+      <div v-else class="preview-text">{{ aiDescription || buildDescription }}</div>
     </div>
 
     <!-- Emergency Protocol selector -->
@@ -72,10 +76,11 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import {t} from "@/locales/index.js";
 import { ARCHETYPES } from '@/core/data/archetypes.js';
 import store from '@/core/state/store.js';
+import apiClient from '@/core/api/apiClient.js';
 import iconHeal from '@/assets/images/icons/heal.svg';
 import iconAdrenaline from '@/assets/images/icons/adrenaline.svg';
 import iconShield from '@/assets/images/icons/shield.svg';
@@ -119,6 +124,43 @@ function getBuildStyle() {
   if (modules.includes('ghost') && modules.includes('analyst')) return styles.ghostAnalyst;
   return styles.default;
 }
+
+// AI-generated build description
+const aiDescription = ref('');
+const aiLoading = ref(false);
+let aiDebounce = null;
+let aiLastKey = '';
+
+const language = computed(() => store.getters['master/getLanguage'] || 'en');
+
+watch([selectedModules, language], () => {
+  if (!isComplete.value) {
+    aiDescription.value = '';
+    return;
+  }
+  const sorted = [...selectedModules.value].sort();
+  const key = `${sorted.join('_')}_${language.value}`;
+  if (key === aiLastKey) return;
+
+  clearTimeout(aiDebounce);
+  aiDebounce = setTimeout(async () => {
+    aiLoading.value = true;
+    try {
+      const res = await apiClient.post('/ai/build-description', {
+        modules: sorted,
+        locale: language.value,
+      }, { authRequired: true });
+      if (res.description) {
+        aiDescription.value = res.description;
+        aiLastKey = key;
+      }
+    } catch {
+      // fallback to static text
+    } finally {
+      aiLoading.value = false;
+    }
+  }, 500);
+}, { deep: true });
 
 function getArchetype(id) {
   return ARCHETYPES[id] || {};
@@ -260,6 +302,34 @@ function selectProtocol(id) {
   font-size: 0.75rem;
   color: var(--gray3);
   line-height: 1.4;
+}
+
+.preview-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.preview-loading-text {
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--pink);
+  letter-spacing: 3px;
+}
+
+.preview-spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255, 6, 111, 0.3);
+  border-top-color: var(--pink);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 /* ── Emergency Protocol ────────────────────────────────────── */
