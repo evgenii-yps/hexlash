@@ -12,6 +12,14 @@ const RATE_LIMIT_MAX = 5; // 5 requests per minute
 const buildDescRateLimitMap = new Map();
 const BUILD_DESC_RATE_LIMIT_MAX = 10; // 10 requests per minute
 
+// ── Shared constants ────────────────────────────────────────────────────
+const VALID_MODULES = ['predator', 'sentinel', 'ghost', 'analyst', 'maverick', 'juggernaut'];
+const SUPPORTED_LOCALES = ['en', 'ru', 'de', 'es', 'fr', 'pt', 'ar', 'hi', 'ja', 'ko', 'zh'];
+const LOCALE_NAMES = {
+  en: 'English', ru: 'Russian', de: 'German', es: 'Spanish', fr: 'French',
+  pt: 'Portuguese', ar: 'Arabic', hi: 'Hindi', ja: 'Japanese', ko: 'Korean', zh: 'Chinese'
+};
+
 function checkRateLimit(userId) {
   const now = Date.now();
   const userRequests = rateLimitMap.get(userId) || [];
@@ -492,13 +500,6 @@ router.post('/auto-fight-summary', authMiddleware, async (req, res) => {
 // ── Build Description ────────────────────────────────────────────────────
 
 const buildDescriptionCache = new Map();
-
-const VALID_MODULES = ['predator', 'sentinel', 'ghost', 'analyst', 'maverick', 'juggernaut'];
-const SUPPORTED_LOCALES = ['en', 'ru', 'de', 'es', 'fr', 'pt', 'ar', 'hi', 'ja', 'ko', 'zh'];
-const LOCALE_NAMES = {
-  en: 'English', ru: 'Russian', de: 'German', es: 'Spanish', fr: 'French',
-  pt: 'Portuguese', ar: 'Arabic', hi: 'Hindi', ja: 'Japanese', ko: 'Korean', zh: 'Chinese'
-};
 
 const BUILD_DESCRIPTION_SYSTEM_PROMPT = `You are a fight narrator for Hexlash, an AI auto-battle game where players build fighters from behavioral modules.
 
