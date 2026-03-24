@@ -420,6 +420,7 @@ const aiTrainerFightData = computed(() => {
   return {
     rounds: state.roundLog || [],
     playerDeck: state.playerDeck || [],
+    playerModules: store.getters['fight/getPlayerModules'] || [],
     opponentDeck: state.opponentDeck || [],
     result,
     playerHP: state.liveHP1,

@@ -371,6 +371,7 @@ export default {
     lblAiTrainer: 'AI ТРЕНЕР',
     lblAiLoading: 'Анализирую бой...',
     lblAiError: 'AI анализ недоступен',
+    lblAiRetry: 'Повторить',
     lblSpeed: 'Скорость',
     lblPower: 'Сила',
     lblTechnique: 'Техника',

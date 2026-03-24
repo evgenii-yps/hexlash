@@ -76,7 +76,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onBeforeUnmount } from 'vue';
 import {t} from "@/locales/index.js";
 import { ARCHETYPES } from '@/core/data/archetypes.js';
 import store from '@/core/state/store.js';
@@ -130,6 +130,7 @@ const aiDescription = ref('');
 const aiLoading = ref(false);
 let aiDebounce = null;
 let aiLastKey = '';
+let aiAbortController = null;
 
 const language = computed(() => store.getters['master/getLanguage'] || 'en');
 
@@ -143,24 +144,32 @@ watch([selectedModules, language], () => {
   if (key === aiLastKey) return;
 
   clearTimeout(aiDebounce);
+  if (aiAbortController) aiAbortController.abort();
   aiDebounce = setTimeout(async () => {
+    aiAbortController = new AbortController();
     aiLoading.value = true;
     try {
       const res = await apiClient.post('/ai/build-description', {
         modules: sorted,
         locale: language.value,
-      }, { authRequired: true });
+      }, { authRequired: true, signal: aiAbortController.signal });
       if (res.description) {
         aiDescription.value = res.description;
         aiLastKey = key;
       }
-    } catch {
+    } catch (err) {
+      if (err.name === 'AbortError' || err.code === 'ERR_CANCELED') return;
       // fallback to static text
     } finally {
       aiLoading.value = false;
     }
   }, 500);
 }, { deep: true });
+
+onBeforeUnmount(() => {
+  clearTimeout(aiDebounce);
+  if (aiAbortController) aiAbortController.abort();
+});
 
 function getArchetype(id) {
   return ARCHETYPES[id] || {};
