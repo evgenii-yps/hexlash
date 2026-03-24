@@ -152,6 +152,7 @@ router.post('/analyze-fight', authMiddleware, async (req, res) => {
     const response = await client.messages.create({
       model: config.ANTHROPIC_MODEL,
       max_tokens: config.AI_TRAINER_MAX_TOKENS,
+      temperature: 0.7,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userPrompt }],
     });
