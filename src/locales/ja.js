@@ -361,6 +361,7 @@ export default {
     lblAiTrainer: 'AIトレーナー',
     lblAiLoading: '試合を分析中...',
     lblAiError: 'AI分析は利用できません',
+    lblAiRetry: '再試行',
     lblSpeed: 'スピード',
     lblPower: 'パワー',
     lblTechnique: 'テクニック',

@@ -361,6 +361,7 @@ export default {
     lblAiTrainer: 'KI-TRAINER',
     lblAiLoading: 'Kampf wird analysiert...',
     lblAiError: 'KI-Analyse nicht verfügbar',
+    lblAiRetry: 'Erneut versuchen',
     lblSpeed: 'Geschwindigkeit',
     lblPower: 'Kraft',
     lblTechnique: 'Technik',

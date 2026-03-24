@@ -361,6 +361,7 @@ export default {
     lblAiTrainer: 'AI 트레이너',
     lblAiLoading: '전투 분석 중...',
     lblAiError: 'AI 분석을 사용할 수 없습니다',
+    lblAiRetry: '다시 시도',
     lblSpeed: '속도',
     lblPower: '파워',
     lblTechnique: '기술',

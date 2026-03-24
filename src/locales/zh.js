@@ -361,6 +361,7 @@ export default {
     lblAiTrainer: 'AI训练师',
     lblAiLoading: '正在分析战斗...',
     lblAiError: 'AI分析不可用',
+    lblAiRetry: '重试',
     lblSpeed: '速度',
     lblPower: '力量',
     lblTechnique: '技术',

@@ -361,6 +361,7 @@ export default {
     lblAiTrainer: 'مدرب الذكاء الاصطناعي',
     lblAiLoading: 'جارٍ تحليل القتال...',
     lblAiError: 'تحليل الذكاء الاصطناعي غير متاح',
+    lblAiRetry: 'إعادة المحاولة',
     lblSpeed: 'السرعة',
     lblPower: 'القوة',
     lblTechnique: 'التقنية',

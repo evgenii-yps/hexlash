@@ -361,6 +361,7 @@ export default {
     lblAiTrainer: 'ENTRENADOR IA',
     lblAiLoading: 'Analizando combate...',
     lblAiError: 'Análisis IA no disponible',
+    lblAiRetry: 'Reintentar',
     lblSpeed: 'Velocidad',
     lblPower: 'Fuerza',
     lblTechnique: 'Técnica',

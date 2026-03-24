@@ -24,6 +24,7 @@
   <!-- Error -->
   <div v-else-if="error" class="ai-trainer-error">
     {{ t.fight.lblAiError }}
+    <button class="ai-trainer-retry" @click="retryAnalysis">{{ t.fight.lblAiRetry }}</button>
   </div>
 </template>
 
@@ -73,9 +74,13 @@ const sections = computed(() => {
   return result;
 });
 
-const abortController = new AbortController();
+let abortController = null;
 
-onMounted(async () => {
+async function fetchAnalysis() {
+  if (abortController) abortController.abort();
+  abortController = new AbortController();
+  loading.value = true;
+  error.value = false;
   try {
     const response = await apiClient.post('/ai/analyze-fight', {
       fightLog: props.fightData,
@@ -89,10 +94,18 @@ onMounted(async () => {
   } finally {
     loading.value = false;
   }
+}
+
+function retryAnalysis() {
+  fetchAnalysis();
+}
+
+onMounted(() => {
+  fetchAnalysis();
 });
 
 onBeforeUnmount(() => {
-  abortController.abort();
+  if (abortController) abortController.abort();
 });
 </script>
 
@@ -184,6 +197,23 @@ onBeforeUnmount(() => {
   font-size: 11px;
   text-align: center;
   margin-top: 8px;
+}
+
+.ai-trainer-retry {
+  background: none;
+  border: 1px solid var(--gray2);
+  color: var(--gray2);
+  font-size: 10px;
+  padding: 2px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: 8px;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.ai-trainer-retry:hover {
+  color: var(--pink);
+  border-color: var(--pink);
 }
 
 @keyframes fadeInUp {

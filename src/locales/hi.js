@@ -361,6 +361,7 @@ export default {
     lblAiTrainer: 'AI ट्रेनर',
     lblAiLoading: 'लड़ाई का विश्लेषण...',
     lblAiError: 'AI विश्लेषण उपलब्ध नहीं',
+    lblAiRetry: 'पुनः प्रयास',
     lblSpeed: 'गति',
     lblPower: 'शक्ति',
     lblTechnique: 'तकनीक',

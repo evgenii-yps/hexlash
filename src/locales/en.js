@@ -371,6 +371,7 @@ export default {
     lblAiTrainer: 'AI TRAINER',
     lblAiLoading: 'Analyzing fight...',
     lblAiError: 'AI analysis unavailable',
+    lblAiRetry: 'Retry',
     lblSpeed: 'Speed',
     lblPower: 'Power',
     lblTechnique: 'Technique',
