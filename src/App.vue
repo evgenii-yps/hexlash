@@ -205,6 +205,11 @@ onMounted(() => {
   // Initialize auto fight system
   store.dispatch('autoFight/init');
 
+  // Run pending auto fights immediately after init (catch up missed fights on reload)
+  if (store.getters['autoFight/isEnabled'] && isAuth.value) {
+    store.dispatch('autoFight/checkAndRunPending');
+  }
+
   // Initialize PvP system
   store.dispatch('pvp/init');
 
