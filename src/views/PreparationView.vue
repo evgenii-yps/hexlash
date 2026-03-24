@@ -8,8 +8,6 @@
           <UserName :userName="master?.userData?.name || ''" style="width: auto !important;"/>
         </div>
 
-        <ModuleBuilder/>
-
         <!-- Action row: Mode | START FIGHT | Friends -->
         <div class="action-row">
           <ModeSelector
@@ -43,6 +41,8 @@
             <span>{{ t.arena.autoFightInactive }}</span>
           </div>
         </div>
+
+        <ModuleBuilder/>
 
         <div class="scroll-gap"/>
 
