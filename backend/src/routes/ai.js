@@ -161,4 +161,93 @@ router.post('/analyze-fight', authMiddleware, async (req, res) => {
   }
 });
 
+// ── Build Description ────────────────────────────────────────────────────
+
+const buildDescriptionCache = new Map();
+
+const VALID_MODULES = ['predator', 'sentinel', 'ghost', 'analyst', 'maverick', 'juggernaut'];
+const SUPPORTED_LOCALES = ['en', 'ru', 'de', 'es', 'fr', 'pt', 'ar', 'hi', 'ja', 'ko', 'zh'];
+const LOCALE_NAMES = {
+  en: 'English', ru: 'Russian', de: 'German', es: 'Spanish', fr: 'French',
+  pt: 'Portuguese', ar: 'Arabic', hi: 'Hindi', ja: 'Japanese', ko: 'Korean', zh: 'Chinese'
+};
+
+const BUILD_DESCRIPTION_SYSTEM_PROMPT = `You are a fight narrator for Hexlash, an AI auto-battle game where players build fighters from behavioral modules.
+
+The 6 modules and their personalities:
+- Predator: Relentless aggression. Goes all-in under pressure. Never lets go.
+- Sentinel: Iron wall. Counterattacks. Full defense when pressured.
+- Ghost: Evasion and deception. Strikes from the shadows.
+- Analyst: Reads patterns. Adapts. The most rational fighter.
+- Maverick: Pure chaos. Unpredictable. Flashes of brilliance.
+- Juggernaut: Unstoppable pressure. Never changes tactics.
+
+The player selected 3 modules for their fighter. Describe the fighter's combat style in 2-3 sentences.
+
+Rules:
+- Tone: bold, confident, with attitude — like a ring announcer who respects the fighter
+- Mix personality description with tactical insight
+- Do NOT mention module names directly (don't say "Predator module")
+- Do NOT use quotation marks
+- Do NOT add titles or labels
+- Respond ONLY with the description text, nothing else
+- Respond in the language specified by the user
+
+Examples of good tone (English):
+- "You don't fight this one — you survive it. Reads your patterns, then locks you down with iron precision."
+- "Pure chaos wrapped in muscle. No plan, no mercy, no second chances."
+- "Patience is a weapon here. Waits, watches, adapts — then ends it in two moves."`;
+
+router.post('/build-description', authMiddleware, async (req, res) => {
+  try {
+    if (!config.AI_TRAINER_ENABLED) {
+      return res.json({ description: null, error: 'AI features disabled' });
+    }
+
+    if (!config.ANTHROPIC_API_KEY) {
+      return res.json({ description: null, error: 'AI service unavailable' });
+    }
+
+    const { modules, locale } = req.body;
+
+    // Validate modules
+    if (!Array.isArray(modules) || modules.length !== 3 || !modules.every(m => VALID_MODULES.includes(m))) {
+      return res.status(400).json({ description: null, error: 'Invalid modules' });
+    }
+
+    // Validate locale
+    const lang = SUPPORTED_LOCALES.includes(locale) ? locale : 'en';
+
+    // Normalize: sort for consistent cache key
+    const sorted = [...modules].sort();
+    const cacheKey = `${sorted.join('_')}_${lang}`;
+
+    // Check cache
+    if (buildDescriptionCache.has(cacheKey)) {
+      return res.json({ description: buildDescriptionCache.get(cacheKey), cached: true });
+    }
+
+    // Call Claude API
+    const client = new Anthropic({ apiKey: config.ANTHROPIC_API_KEY });
+    const response = await client.messages.create({
+      model: config.ANTHROPIC_MODEL,
+      max_tokens: 150,
+      temperature: 0.8,
+      system: BUILD_DESCRIPTION_SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: `Modules: ${sorted.join(', ')}\nLanguage: ${LOCALE_NAMES[lang]}` }],
+    });
+
+    const description = response.content[0].text;
+    buildDescriptionCache.set(cacheKey, description);
+
+    console.log(`[Build Description] ${cacheKey} | cache size: ${buildDescriptionCache.size}`);
+
+    return res.json({ description, cached: false });
+
+  } catch (error) {
+    console.error(`[Build Description] Error:`, error.message);
+    return res.json({ description: null, error: 'AI service unavailable' });
+  }
+});
+
 module.exports = router;
