@@ -194,10 +194,10 @@ SPEED_MOVE_PUNCH_MS = 1500
 BATCH_SEND_INTERVAL_MS = 11000
 DECIMALS = 6             // token decimal places
 
-AUTO_FIGHT_MIN_INTERVAL = 3600000   // 60 min
-AUTO_FIGHT_MAX_INTERVAL = 3600000   // 60 min
-AUTO_FIGHT_MAX_PER_DAY = 24
-AUTO_FIGHT_MAX_PER_SESSION = 48
+AUTO_FIGHT_MIN_INTERVAL = 600000    // 10 min
+AUTO_FIGHT_MAX_INTERVAL = 600000    // 10 min
+AUTO_FIGHT_MAX_PER_DAY = 144
+AUTO_FIGHT_MAX_PER_SESSION = 288
 
 LISTING = 1783306800     // token listing timestamp
 ```
@@ -251,7 +251,7 @@ AI_TRAINER_ENABLED = true
 
 **Flow:** Build deck (4–8 modules) → Generate AI opponent → Simulate rounds → Dice mechanic → Coach advice → Save result
 
-**Auto Fight:** Toggle on Arena screen → fights every 60 min offline → uses CombatEngine + ModuleAIStrategy → localStorage persist (`hexlash_autofight_state`, `hexlash_autofight_history`) → push notifications via Notification API → limits: 24/day, 48/session → auto-catches up missed fights on tab focus → daily auto-reset: on new day clears fight log, wins/losses/draws/XP counters (no manual clear button) → **offline auto fights sync results to server** via `POST /fight/save` (increments pveWins/pveLosses/pveDraws/pveTotalFights)
+**Auto Fight:** Toggle on Arena screen → fights every 10 min offline → uses CombatEngine + ModuleAIStrategy → localStorage persist (`hexlash_autofight_state`, `hexlash_autofight_history`) → push notifications via Notification API → limits: 144/day, 288/session → auto-catches up missed fights on tab focus → daily auto-reset: on new day clears fight log, wins/losses/draws/XP counters (no manual clear button) → **offline auto fights sync results to server** via `POST /fight/save` (increments pveWins/pveLosses/pveDraws/pveTotalFights)
 
 **Sound:** Howler.js for punch sounds (BottomMenu, TrainingView) and rain ambience (RainView). Mute toggle in Profile > Account (`SoundToggle.vue`), persisted in localStorage (`isMuted`), checked via `store.getters['punch/isMuted']`
 

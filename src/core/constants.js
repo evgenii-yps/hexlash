@@ -34,10 +34,10 @@ export const COACH_TRIGGER_CHANCE = 1.0;
 export const COACH_BOOST_ROUNDS = 4;
 
 // AUTO FIGHT
-export const AUTO_FIGHT_MIN_INTERVAL = 60 * 60 * 1000;  // 60 minutes
-export const AUTO_FIGHT_MAX_INTERVAL = 60 * 60 * 1000;  // 60 minutes
-export const AUTO_FIGHT_MAX_PER_DAY = 24;
-export const AUTO_FIGHT_MAX_PER_SESSION = 48;
+export const AUTO_FIGHT_MIN_INTERVAL = 10 * 60 * 1000;  // 10 minutes
+export const AUTO_FIGHT_MAX_INTERVAL = 10 * 60 * 1000;  // 10 minutes
+export const AUTO_FIGHT_MAX_PER_DAY = 144;
+export const AUTO_FIGHT_MAX_PER_SESSION = 288;
 
 // LISTING
 export const LISTING = 1783306800;
