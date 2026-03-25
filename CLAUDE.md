@@ -74,6 +74,20 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 /public
   images/skins/            — 145+ fighter skin images (skin_m_1..117.png, skin_w_1..26.png, vip_k1/k2/t1/t2.png)
   images/tgskins/          — Same skins (symlink/copy), legacy path
+
+/skills/                   — 12 Claude Code skill files
+  hexlash-dev/SKILL.md        — Core workflow, project structure, git
+  hexlash-vue/SKILL.md        — Vue 3 frontend conventions
+  hexlash-combat/SKILL.md     — Combat system (PvE, PvP, Auto Fight)
+  hexlash-websocket/SKILL.md  — WebSocket protocol
+  hexlash-deploy/SKILL.md     — Deploy & infrastructure
+  hexlash-design/SKILL.md     — Design system (colors, fonts, UI)
+  hexlash-api/SKILL.md        — Backend API (Express, Prisma, JWT)
+  hexlash-testing/SKILL.md    — Testing & QA procedures
+  hexlash-web3/SKILL.md       — Web3 integration (NFT, wallet, x402)
+  hexlash-ai/SKILL.md         — AI system (Claude API, Trainer)
+  hexlash-i18n/SKILL.md       — Localization (11 languages)
+  hexlash-gamedesign/SKILL.md — Game design & balance
 ```
 
 ---
@@ -418,6 +432,27 @@ User, Club, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask,
 **Assets:** `/public/images/skins/` — 117 male (`skin_m_N.png`), 26 female (`skin_w_N.png`), 4 VIP (`vip_kN/tN.png`)
 **Rendering:** `<v-img :src="/images/skins/${skin}"/>` or `<img :src="/images/skins/${skin}"/>`
 **PvP:** Skin transmitted in `MatchmakingStartMsg` → stored in matchmaking queue → sent in `MatchFoundMsg` to opponent → displayed in Opponent Found and Fight screens
+
+---
+
+## Skills System
+
+12 Claude Code skills in `/skills/` directory:
+
+| Skill | Triggers On |
+|-------|-------------|
+| `hexlash-dev` | Any task start, project structure, git, workflow |
+| `hexlash-vue` | Vue components, Vuex, Router, frontend |
+| `hexlash-combat` | Fight logic, PvE/PvP, dice, coach, engine |
+| `hexlash-websocket` | WebSocket, real-time, messages, matchmaking |
+| `hexlash-deploy` | Build, Docker, Nginx, Vercel, CI/CD |
+| `hexlash-design` | CSS, colors, fonts, UI, layout, responsive |
+| `hexlash-api` | API endpoints, Prisma, JWT, backend |
+| `hexlash-testing` | Testing, QA, regression, debug |
+| `hexlash-web3` | Blockchain, NFT, wallet, ERC-1155, x402 |
+| `hexlash-ai` | Claude API, AI Trainer, prompts |
+| `hexlash-i18n` | Translations, locales, i18n keys |
+| `hexlash-gamedesign` | Balance, archetypes, mechanics, formulas |
 
 ---
 
