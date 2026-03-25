@@ -8,7 +8,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 
 **Frontend:** Vue 3.5 · Vite 7 · Vuex 4 · Vue Router 4 · Vuetify 2 · Three.js · Howler.js · Ethers.js 6 · Vue-i18n 11 · Amplitude · Web3Modal
 
-**Backend:** Express 4 · Prisma 5 (PostgreSQL) · JWT · WebSocket (ws) · Multer · bcryptjs · Anthropic SDK (AI Trainer)
+**Backend:** Express 4 · Prisma 5 (PostgreSQL) · JWT · WebSocket (ws) · Multer · bcryptjs · express-rate-limit · Anthropic SDK (AI Trainer)
 
 ---
 
@@ -223,7 +223,7 @@ LISTING = 1783306800     // token listing timestamp
 ```js
 PORT = 3000
 WS_PORT = 444
-JWT_SECRET = env or 'default-secret'
+JWT_SECRET = env              // REQUIRED — server crashes without it (no default)
 FRONTEND_URL = 'http://localhost:5173'
 UPLOAD_DIR = './uploads'
 DECIMALS = 6
@@ -232,6 +232,10 @@ COST_CREATE_CLUB = 10000
 PUNCH_MAX_PER_INTERVAL = 10000
 PUNCH_MAX_PER_BATCH = 10000
 PUNCH_INTERVAL_MS = 3600000   // 1 hour
+
+// Telegram Auth
+TELEGRAM_BOT_TOKEN = env      // for HMAC-SHA256 signature validation
+TELEGRAM_AUTH_MAX_AGE_SEC = 300  // 5 min replay window
 
 // PvP Combat
 MAX_HP = 100
@@ -256,8 +260,9 @@ AI_TRAINER_MAX_TOKENS = 500
 AI_TRAINER_ENABLED = true
 ```
 
-**CORS:** Allows `hexlash.com`, `test.hexlash.com`, `hexlash.vercel.app`, `*.vercel.app`
+**CORS:** Allows `hexlash.com`, `test.hexlash.com`, `hexlash.vercel.app` (no wildcard `*.vercel.app`)
 **Health checks:** `GET /` and `GET /health`
+**Body limits:** `express.json({ limit: '1mb' })`, `express.urlencoded({ limit: '1mb' })`
 
 ---
 
@@ -287,11 +292,27 @@ AI_TRAINER_ENABLED = true
 
 **Data Persistence:** Progression (moves, XP, taps, deck, playerModules) syncs to server via `PUT /v1/user/progression` (debounced 3s). Server is source of truth — restores all data on login via `GET /v1/user/me`. PlayerModules (fighter archetypes) included in progression JSON. Auto fight state/history is localStorage-only (not critical — fight results already synced via `POST /fight/save`). PvP fight state is cleared from localStorage on `fight_end` via `clearSavedFight` action to prevent stale restore on next visit.
 
+**Known PvE vs PvP divergences (under review):**
+
+| Mechanic | PvE (frontend) | PvP (backend) | Status |
+|----------|---------------|---------------|--------|
+| Archetypes | 6 archetypes via ModuleAIStrategy (weighted action priorities) | Ignored — no actions system, pure DPS race | Planned: passive modifiers |
+| Actions | attack/defense/position each round | None — both always attack | Planned: port to PvP |
+| Dodge | 12% on position vs attack | None | Planned: archetype-based |
+| Crit | 10% chance x1.5 on attack | None (dice crit is separate) | Planned: archetype-based |
+| Dice Heal | +15 HP | +20 HP | Intentional |
+| Dice Adrenaline | x2 dmg, 1 round | x1.3 dmg, 2 rounds | Intentional |
+| Dice Shield | Full block, 1 round | -50% incoming, 2 rounds | Intentional |
+| Dice Blind | Guaranteed miss, 1 round | 50% miss, 2 rounds | Intentional |
+| Dice Rage | -20 HP instant damage | +50% dmg, 2 rounds | Intentional |
+| Dice Crit | -30 HP instant damage | x2 dmg, 1 round | Intentional |
+
 **Files:**
-- `combatEngine.js` — PvE round simulation
-- `aiStrategy.js` — AI decision logic + coach boost (+25 priority)
+- `combatEngine.js` — PvE round simulation (action-based: attack/defense/position, dodge/crit)
+- `aiStrategy.js` — AI decision logic: archetype priorities (slot weights 50/30/20%), coach boost, dice preferences
+- `archetypes.js` — 6 archetypes: Predator, Sentinel, Ghost, Analyst, Maverick, Juggernaut (priorities, dicePreferences)
 - `opponentGenerator.js` — Random opponent creation
-- `pvpCombatEngine.js` — PvP round simulation, dice effects, coach effects
+- `pvpCombatEngine.js` — PvP round simulation (no actions/archetypes, pure move damage + speed order), dice effects, coach effects
 - `pvpMatchManager.js` — PvP match lifecycle
 - `pvpHandler.js` — PvP WebSocket message handling (dice_roll, coach_choice)
 - `AiTrainerAnalysis.vue` — AI Trainer post-fight analysis component
@@ -337,7 +358,7 @@ AI_TRAINER_ENABLED = true
 
 - `Logo.vue` — header logo
 - `BottomMenu.vue` — bottom nav (Arena, Training, Ratings, Profile). Hidden on PvP screens via `isPvPScreen` computed in App.vue
-- `Info.vue` / `Error.vue` — toast notifications
+- `Info.vue` / `Error.vue` — toast notifications (text interpolation `{{ }}`, NOT v-html — XSS safe)
 - `NewAchievement.vue` — achievement popup
 - `Punch3D.vue` — Three.js punching bag
 - `MoveTreeCard.vue` — move row in tree
@@ -366,8 +387,8 @@ Base: `/v1/`
 
 | Route | File | Purpose |
 |-------|------|---------|
-| `/auth` | auth.js | login, signup, reset, telegram |
-| `/user` | user.js | profile, stats, avatar, achievements |
+| `/auth` | auth.js | login, signup, reset, telegram. Rate limited: login 5/15min, register 3/hr, telegram 10/15min |
+| `/user` | user.js | profile, stats, avatar, achievements. Skin validated via regex. Delete uses $transaction with cascade |
 | `/club` | club.js | create/edit club, members, balance |
 | `/task` | task.js | daily + social tasks |
 | `/file` | file.js | avatar/file upload |
@@ -377,6 +398,8 @@ Base: `/v1/`
 | `/ai` | ai.js | AI Trainer fight analysis (POST /analyze-fight), Auto fight summary (POST /auto-fight-summary) |
 
 Auth guard: JWT Bearer token via `middleware/auth.js`
+Telegram auth: HMAC-SHA256 signature validation via `validateTelegramPayload()` in auth.js
+Password reset: Returns 501 (not implemented) — no fake success
 
 ### WebSocket Protocol
 
@@ -456,7 +479,27 @@ User, Club, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask,
 
 ---
 
+## Security Hardening (applied)
+
+| Fix | File | Details |
+|-----|------|---------|
+| JWT no default secret | `config.js` | Server crashes on missing `JWT_SECRET` env var |
+| Telegram HMAC-SHA256 | `auth.js` | `validateTelegramPayload()` with replay protection (5min) |
+| Rate limiting | `auth.js` | login 5/15min, register 3/hr, telegram 10/15min via express-rate-limit |
+| Crypto temp password | `auth.js` | `crypto.randomBytes(12)` instead of `Math.random()` |
+| CORS wildcard removed | `index.js` | No more `*.vercel.app` — explicit origins only |
+| Body size limit | `index.js` | `express.json({ limit: '1mb' })` |
+| XSS in toasts | `Error.vue`, `Info.vue` | `v-html` replaced with `{{ }}` text interpolation |
+| Skin validation | `user.js` | Regex whitelist: `skin_(m|w)_\d{1,3}.png` or `vip_(k|t)\d{1,2}.png` |
+| Email verify auth | `user.js` | Now requires `authMiddleware`, uses `req.userId` |
+| Password reset honest | `user.js` | Returns 501 instead of fake success |
+| Cascade delete | `user.js` | `$transaction`: clubs, fights, friends, achievements, tasks, punch |
+
+**v-html policy:** Only allowed for trusted i18n content (PageView, ClubView, Getstarted). Forbidden for user/error data.
+
+---
+
 ## Branch (Git)
 
-Development branch: `claude/fix-daily-reset-bug-XlZBd`
-Push: `git push -u origin claude/fix-daily-reset-bug-XlZBd`
+Development branch: `claude/hexlash-full-audit-WvXMd`
+Push: `git push -u origin claude/hexlash-full-audit-WvXMd`
