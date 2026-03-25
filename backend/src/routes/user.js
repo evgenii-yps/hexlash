@@ -1,12 +1,11 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../lib/prisma');
 const { authMiddleware } = require('../middleware/auth');
 const { upload } = require('../middleware/upload');
 const { formatUserResponse } = require('../utils/helpers');
 
 const router = express.Router();
-const prisma = new PrismaClient();
 
 // GET /v1/user/me
 router.get('/me', authMiddleware, async (req, res) => {

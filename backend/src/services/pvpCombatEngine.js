@@ -586,8 +586,7 @@ class PvPCombatEngine {
 
   async saveFightResult(result) {
     try {
-      const { PrismaClient } = require('@prisma/client');
-      const prisma = new PrismaClient();
+      const prisma = require('../lib/prisma');
 
       await prisma.fight.create({
         data: {
@@ -668,7 +667,6 @@ class PvPCombatEngine {
         }
       }
 
-      await prisma.$disconnect();
     } catch (e) {
       console.error('Failed to save fight result:', e);
     }

@@ -253,13 +253,18 @@ COACH_MIN_ROUND = 6
 COACH_BOOST_ROUNDS = 4
 COACH_PAUSE_TIMEOUT_MS = 10000
 
+// PvP Archetype Modifiers (passive per-archetype bonuses)
+SLOT_WEIGHTS = [0.5, 0.3, 0.2]
+ARCHETYPE_MODIFIERS = { predator, sentinel, ghost, analyst, maverick, juggernaut }
+
 // AI Trainer
 ANTHROPIC_API_KEY = env
-ANTHROPIC_MODEL = 'claude-sonnet-4-20250514'
-AI_TRAINER_MAX_TOKENS = 500
+ANTHROPIC_MODEL = 'claude-haiku-4-5-20251001'
+AI_TRAINER_MAX_TOKENS = 300
 AI_TRAINER_ENABLED = true
 ```
 
+**Prisma:** Singleton via `backend/src/lib/prisma.js` — all routes and services use shared instance
 **CORS:** Allows `hexlash.com`, `test.hexlash.com`, `hexlash.vercel.app` (no wildcard `*.vercel.app`)
 **Health checks:** `GET /` and `GET /health`
 **Body limits:** `express.json({ limit: '1mb' })`, `express.urlencoded({ limit: '1mb' })`
@@ -270,7 +275,7 @@ AI_TRAINER_ENABLED = true
 
 **Flow:** Build deck (4–8 modules) → Generate AI opponent → Simulate rounds → Dice mechanic → Coach advice → Save result
 
-**Auto Fight:** Toggle on Arena screen → fights every 10 min offline → uses CombatEngine + ModuleAIStrategy → localStorage persist (`hexlash_autofight_state`, `hexlash_autofight_history`) → push notifications via Notification API → limits: 144/day, 288/session → auto-catches up missed fights on tab focus → daily auto-reset: on new day clears fight log, wins/losses/draws/XP counters (no manual clear button) → **offline auto fights sync results to server** via `POST /fight/save` (increments pveWins/pveLosses/pveDraws/pveTotalFights)
+**Auto Fight:** Toggle on Arena screen → fights every 10 min offline → uses CombatEngine + ModuleAIStrategy → localStorage persist (`hexlash_autofight_state`, `hexlash_autofight_history`) → push notifications via Notification API → limits: 144/day, 288/session → auto-catches up missed fights on tab focus → daily auto-reset: on new day clears fight log, wins/losses/draws/XP counters (no manual clear button) → **offline auto fights sync results to server** via `POST /fight/save` (increments pveWins/pveLosses/pveDraws/pveTotalFights). Dice uses cooldown (every 3 rounds, multiple per fight). XP: win=10, draw=7, lose=5.
 
 **Sound:** Howler.js for punch sounds (BottomMenu, TrainingView) and rain ambience (RainView). Mute toggle in Profile > Account (`SoundToggle.vue`), persisted in localStorage (`isMuted`), checked via `store.getters['punch/isMuted']`
 
@@ -278,9 +283,9 @@ AI_TRAINER_ENABLED = true
 
 **Friend Challenge Flow:** Player A clicks ⚔️ → `challenge_send` via WS → server checks online → `challenge_received` → Player B sees ChallengeNotification (top-of-screen, 10s auto-decline) → accept → server creates match via pvpMatchManager → `challenge_start` → both navigate to `/fight?mode=pvp&matchId=...`
 
-**PvE Dice:** Available after round 1, cooldown 3 rounds. Player clicks dice button → random effect (Heal +15HP, Adrenaline 2x ATK, Shield, Blind, Rage -20HP, Crit -30HP). Dice stays on screen until clicked. Disabled in Overdrive.
-
-**PvP Dice:** Same as PvE but server-controlled. `dice_available` → player clicks → `dice_roll` via WS → server generates effect → `dice_rolled` response. Dice does NOT pause fight — rounds continue while dice button is visible. Effects: Heal +20HP, Adrenaline +30% dmg (2 rounds), Shield -50% incoming (2 rounds), Blind 50% miss (2 rounds), Rage +50% dmg (2 rounds), Crit x2 dmg (1 round).
+**Dice (unified PvE/PvP):** Available after round 1, cooldown 3 rounds. Random effect: Heal +15HP, Adrenaline x2 ATK (1 round), Shield full block (1 round), Blind guaranteed miss (1 round), Rage -20HP instant, Crit -30HP instant. Rage/Crit can kill. Disabled in Overdrive.
+- **PvE:** Player clicks dice button on screen.
+- **PvP:** Server-controlled. `dice_available` → player clicks → `dice_roll` via WS → `dice_rolled` response. Rage/Crit send `oppHp` + `killed` flag. If killed → `fight_end` immediately.
 
 **PvE Coach Advice:** Triggers once per fight from round 6 (COACH_MIN_ROUND). Fight pauses, 15s timer. 3 options: Attack (+25 priority), Defense (+25 priority), Position (+25 priority). Boost lasts 4 rounds via aiStrategy.setCoachBoost(). Coach active bar shows remaining rounds.
 
@@ -296,16 +301,11 @@ AI_TRAINER_ENABLED = true
 
 | Mechanic | PvE (frontend) | PvP (backend) | Status |
 |----------|---------------|---------------|--------|
-| Archetypes | 6 archetypes via ModuleAIStrategy (weighted action priorities) | Ignored — no actions system, pure DPS race | Planned: passive modifiers |
-| Actions | attack/defense/position each round | None — both always attack | Planned: port to PvP |
-| Dodge | 12% on position vs attack | None | Planned: archetype-based |
-| Crit | 10% chance x1.5 on attack | None (dice crit is separate) | Planned: archetype-based |
-| Dice Heal | +15 HP | +20 HP | Intentional |
-| Dice Adrenaline | x2 dmg, 1 round | x1.3 dmg, 2 rounds | Intentional |
-| Dice Shield | Full block, 1 round | -50% incoming, 2 rounds | Intentional |
-| Dice Blind | Guaranteed miss, 1 round | 50% miss, 2 rounds | Intentional |
-| Dice Rage | -20 HP instant damage | +50% dmg, 2 rounds | Intentional |
-| Dice Crit | -30 HP instant damage | x2 dmg, 1 round | Intentional |
+| Archetypes | 6 archetypes via ModuleAIStrategy (weighted action priorities) | Passive modifiers: dmgBonus, incomingReduction, dodge, crit | Done |
+| Actions | attack/defense/position each round | None — both always attack | Divergent (by design) |
+| Dodge | 12% on position vs attack | Archetype-based (Ghost 8%, Analyst 2%, Maverick 4%) | Done |
+| Crit | 10% chance x1.5 on attack | Archetype-based (Predator 8%, Juggernaut 3%, Analyst 2%) | Done |
+| Dice | All 6 effects unified | Same as PvE (instant Rage/Crit, full Shield/Blind) | Unified |
 
 **Files:**
 - `combatEngine.js` — PvE round simulation (action-based: attack/defense/position, dodge/crit)
@@ -494,6 +494,7 @@ User, Club, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask,
 | Email verify auth | `user.js` | Now requires `authMiddleware`, uses `req.userId` |
 | Password reset honest | `user.js` | Returns 501 instead of fake success |
 | Cascade delete | `user.js` | `$transaction`: clubs, fights, friends, achievements, tasks, punch |
+| Prisma singleton | `lib/prisma.js` | Single PrismaClient shared across all 8 backend files (was 9 instances) |
 
 **v-html policy:** Only allowed for trusted i18n content (PageView, ClubView, Getstarted). Forbidden for user/error data.
 
