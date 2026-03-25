@@ -1,14 +1,14 @@
 <template>
   <div class="background">
     <div class="not-found-container">
-      <h1>Page not found</h1>
-      <p>ERROR 404</p>
+      <h1>{{ t.errors.pageNotFound }}</h1>
+      <p>{{ t.errors.error404Code }}</p>
     </div>
   </div>
 </template>
 
 <script setup>
-
+import {t} from '@/locales/index.js';
 </script>
 
 <style scoped>

@@ -35,7 +35,7 @@
           {{ nextReq.exp }} XP
         </span>
       </div>
-      <div v-else class="max-level">MAX</div>
+      <div v-else class="max-level">{{ t.moves.lblMax }}</div>
 
       <button
           v-if="move.level < 5"

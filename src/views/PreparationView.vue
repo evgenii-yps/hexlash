@@ -32,7 +32,7 @@
           </VBtn>
 
           <button class="friends-compact-btn" @click="goToFriends">
-            <span class="friends-compact-label">Friends</span>
+            <span class="friends-compact-label">{{ t.arena.lblFriends }}</span>
           </button>
         </div>
 

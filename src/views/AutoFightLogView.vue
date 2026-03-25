@@ -5,7 +5,7 @@
 
         <div class="top-bar">
           <button class="back-btn" @click="goBack">&larr; {{ t.autoFight.lblBack }}</button>
-          <span class="top-title">AI ANALYSIS</span>
+          <span class="top-title">{{ t.autoFight.lblAiAnalysis }}</span>
         </div>
 
         <!-- Period selector -->
@@ -75,7 +75,7 @@
         <div v-for="fight in fightLog" :key="fight.id" class="fight-entry" :class="'entry-' + fight.result">
           <div class="entry-header">
             <span class="entry-time">{{ formatTime(fight.timestamp) }}</span>
-            <span class="entry-vs">vs {{ fight.opponent }}</span>
+            <span class="entry-vs">{{ t.pvp.lblVs }} {{ fight.opponent }}</span>
             <span class="entry-result" :class="'result-' + fight.result">
               {{ resultLabel(fight.result) }}
             </span>

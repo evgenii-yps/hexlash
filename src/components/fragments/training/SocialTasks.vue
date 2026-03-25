@@ -1,7 +1,7 @@
 <template>
 
   <div class="checklist-section">
-    <h3>CheckList ({{ notCompletedCheckListCount }})</h3>
+    <h3>{{ t.training.lblChecklist }} ({{ notCompletedCheckListCount }})</h3>
 
     <div v-if="props.loadingSocialTasks" class="loader-container">
       <v-progress-circular
@@ -12,7 +12,7 @@
     </div>
 
     <div v-else-if="!props.hasIncompleteSocialTasks" class="no-tasks-container">
-      Great work, checklist completed!
+      {{ t.training.checklistCompleted }}
     </div>
 
     <div v-else class="checklist-scroll-container">
@@ -46,6 +46,7 @@ import {computed, ref} from "vue";
 
 import SubscribeModal from "@/components/fragments/training/SubscribeModal.vue";
 import store from "@/core/state/store.js";
+import {t} from '@/locales/index.js';
 
 
 const isSubscribeModalOpen = ref(false);

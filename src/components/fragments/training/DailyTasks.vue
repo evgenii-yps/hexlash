@@ -1,7 +1,7 @@
 <template>
   <div class="daily-tasks-section">
     <div class="header">
-      <h3>Daily tasks ({{ notCompletedTasksCount }})</h3>
+      <h3>{{ t.training.lblDailyTasks }} ({{ notCompletedTasksCount }})</h3>
 
       <VBtnDark
           v-if="completedTasksCount > 0"
@@ -21,7 +21,7 @@
     </div>
 
     <div v-else-if="!props.hasIncompleteDailyTasks && !showCompletedTasks" class="no-tasks-container">
-      No daily tasks available today!
+      {{ t.training.noTasksAvailable }}
     </div>
 
     <div v-else class="daily-tasks">
@@ -54,6 +54,7 @@ import IconShow from "@/assets/images/icon_show.svg";
 import IconHide from "@/assets/images/icon_hide.svg";
 import TaskModal from "@/components/fragments/training/TaskModal.vue";
 import store from "@/core/state/store.js";
+import {t} from '@/locales/index.js';
 
 
 const showCompletedTasks = ref(false);
