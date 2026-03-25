@@ -14,7 +14,6 @@ class WebSocketClient {
     connect() {
 
         if (this.isConnecting || (this.socket && this.socket.readyState === WebSocket.OPEN)) {
-            console.log('WebSocket is already connecting or connected.');
             return;
         }
 
@@ -23,8 +22,6 @@ class WebSocketClient {
         this.socket = new WebSocket(this.url, this.protocols);
 
         this.socket.onopen = () => {
-            console.log('WebSocket connected');
-
             // Отправляем все сообщения из очереди
             while (this.messageQueue.length > 0) {
                 const message = this.messageQueue.shift();
@@ -40,7 +37,6 @@ class WebSocketClient {
 
         this.socket.onmessage = async (event) => {
             try {
-                console.log(event.data);
                 const message = JSON.parse(event.data);
                 await store.dispatch('webSocket/handleMessage', message);
             } catch (err) {
@@ -57,15 +53,10 @@ class WebSocketClient {
         this.socket.onclose = async (event) => {
             this.isConnecting = false;
 
-            console.log('WebSocket disconnected ', event);
-
             store.commit('webSocket/setConnected', false);
 
             if (event.code !== 1000) {  // 1000 — нормальное закрытие
-                console.log('WebSocket disconnected unexpectedly. Attempting reconnection...');
                 await store.dispatch('webSocket/attemptReconnect');
-            } else {
-                console.log('WebSocket closed normally. No reconnection attempt.');
             }
         };
 
@@ -76,7 +67,6 @@ class WebSocketClient {
             const msgSerialized = JSON.stringify(message)
             this.socket.send(msgSerialized);
         } else {
-            console.log("Queue message:", message);
             this.messageQueue.push(message);
             console.warn('WebSocket is not connected. Message queued.');
         }

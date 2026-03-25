@@ -743,11 +743,8 @@ class Sketch extends kokomi.Base {
     am.on("ready", async () => {
 
       if (isDestroyed) {
-        console.log("Component was destroyed before scene was ready");
         return; // Отменяем инициализацию, если компонент был уничтожен
       }
-
-      console.log("ready scene");
 
       soundRain = new Howl({
         src: [rainSound],

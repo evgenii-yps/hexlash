@@ -166,7 +166,6 @@ const actions = {
         if (userData.pvpDraws !== undefined) stats.draws = userData.pvpDraws;
         commit('setPvpStats', stats);
         saveToStorage(s);
-        console.log('[APP] PvP stats restored from server');
     },
 
     createPvPFight({ commit, state: s }, { opponent, isRanked = false }) {

@@ -164,7 +164,6 @@ watch(route, () => {
 // Отслеживание видимости вкладки
 const handleVisibilityChange = () => {
   if (document.visibilityState === 'visible' && isAuth.value) {
-    console.log('Tab is now active. Checking WebSocket connection...');
     //if (!store.getters['webSocket/isConnected']) {
       store.dispatch('webSocket/connectWebSocket');
     //}
@@ -179,7 +178,6 @@ const handleVisibilityChange = () => {
 // Отслеживание статуса интернет-соединения
 const handleOnlineStatus = () => {
   if (navigator.onLine && isAuth.value) {
-    console.log('Internet is back online. Checking WebSocket connection...');
     //if (!store.getters['webSocket/isConnected']) {
       store.dispatch('webSocket/connectWebSocket');
     //}

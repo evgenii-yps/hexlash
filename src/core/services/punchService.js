@@ -34,7 +34,6 @@ export const getPunchLimitsFromLocalAndSocket = async () => {
 
 export const sendPunchBatch = async (punchInfo, totalValue, count) => {
     if (isMockMode()) {
-        console.log('[MOCK] Punch batch sent:', {totalValue, count});
         store.commit('master/increaseBalance', {add: Math.round((totalValue / 100) * Math.pow(10, DECIMALS))});
         return;
     }

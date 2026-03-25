@@ -96,8 +96,6 @@ const walletAddress = computed(() => address.value);
 
 
 watch(walletAddress, async (newAddress) =>  {
-      console.log("Address changed:", newAddress);
-
       if (newAddress) {
         // Выполнить действия при подключении кошелька
         await store.dispatch('master/updateMaster', {walletAddress: newAddress});
@@ -116,7 +114,6 @@ watch(store.getters['master/getMaster'], async (master) => {
 
 
 const income = () => {
-  console.log("income");
 }
 
 const withdraw = () => {

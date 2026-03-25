@@ -239,8 +239,6 @@ router.post('/analyze-fight', authMiddleware, async (req, res) => {
       }
       const elapsed = Date.now() - startTime;
 
-      console.log(`[AI Trainer] User ${req.userId} | ${fightLog.result} | ${fightLog.totalRounds} rounds | ${elapsed}ms`);
-
       return res.json({
         analysis,
         model: config.ANTHROPIC_MODEL,
@@ -472,8 +470,6 @@ router.post('/auto-fight-summary', authMiddleware, async (req, res) => {
       }
       const elapsed = Date.now() - startTime;
 
-      console.log(`[Auto Fight Summary] User ${req.userId} | ${fights.length} fights | ${period} | ${elapsed}ms`);
-
       return res.json({
         analysis,
         model: config.ANTHROPIC_MODEL,
@@ -584,8 +580,6 @@ router.post('/build-description', authMiddleware, async (req, res) => {
         return res.json({ description: null, error: 'Empty response from AI' });
       }
       buildDescriptionCache.set(cacheKey, description);
-
-      console.log(`[Build Description] ${cacheKey} | cache size: ${buildDescriptionCache.size}`);
 
       return res.json({ description, cached: false });
     } finally {

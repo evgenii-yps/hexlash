@@ -39,7 +39,6 @@ class MatchmakingService {
     };
 
     this.queue.set(player.odId, entry);
-    console.log('[MATCHMAKING] Added to queue:', player.odId, 'rating:', entry.rating, 'queue size:', this.queue.size);
 
     // Start expanding search range periodically (matching is done by periodic check in handler.js)
     const expandTimer = setInterval(() => {

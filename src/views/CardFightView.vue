@@ -783,7 +783,6 @@ function initPvPFight() {
 
   // Send ready + deck to server
   const deck = store.getters['progression/getDeck'] || [];
-  console.log('[PVP] Sending pvp_ready, matchId:', pvpMatchId.value, 'deck:', deck);
   const playerModules = store.state.fight.playerModules || [];
   store.dispatch('webSocket/sendMessage', {
     type: 'pvp_ready',
@@ -823,11 +822,9 @@ function getMyOdId() {
 
 function onPvPFightStart(e) {
   const data = e.detail;
-  console.log('[PVP] fight_start received:', data);
   pvpStatus.value = 'countdown';
 
   const myId = getMyOdId();
-  console.log('[PVP] myId:', myId, 'p1:', data.player1?.odId, 'p2:', data.player2?.odId);
   const isP1 = data.player1?.odId === myId;
   const oppData = isP1 ? data.player2 : data.player1;
 
@@ -869,7 +866,6 @@ function onPvPFightStart(e) {
 
 function onPvPRoundResult(e) {
   const data = e.detail;
-  console.log('[PVP] round_result:', data.round, data);
   const isP1 = store.getters['pvp/getIsPlayer1'];
 
   // Map server data to my perspective
@@ -970,15 +966,12 @@ function onPvPRoundResult(e) {
 }
 
 function onPvPDiceAvailable(e) {
-  console.log('[PVP] dice_available:', e.detail);
   // Show dice button — player can click to roll instantly
   store.commit('fight/setDiceState', { activeItem: null, cooldownLeft: 0, ready: true });
 }
 
 function onPvPDiceRolled(e) {
   const data = e.detail;
-  console.log('[PVP] dice_rolled:', data);
-
   // Apply dice effect visually
   if (data.effect) {
     triggerFlash(data.effect.type);
@@ -1021,7 +1014,6 @@ function onPvPDiceRolled(e) {
 }
 
 function onPvPDiceError(e) {
-  console.log('[PVP] dice_error:', e.detail);
   // Dice not available — hide button
   store.commit('fight/setDiceState', { activeItem: null, cooldownLeft: 0, ready: false });
 }
@@ -1063,7 +1055,6 @@ function onPvPCoachResult(e) {
 
 function onPvPFightEnd(e) {
   const data = e.detail;
-  console.log('[PVP] fight_end:', data);
   pvpStatus.value = 'finished';
   clearPvPTimer();
   showWaiting.value = false;

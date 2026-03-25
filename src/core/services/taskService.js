@@ -125,7 +125,6 @@ export const localUpdateDailyTask = async (updatedTask) => {
 
 const completeTaskApiCall = async (taskId) => {
     if (isMockMode()) {
-        console.log('[MOCK] Task completed:', taskId);
         return true;
     }
 

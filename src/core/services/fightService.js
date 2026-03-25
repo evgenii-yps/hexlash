@@ -16,9 +16,6 @@ export const receiveFightInfo = async (fightInfo) => {
 
         await updateFightToLocalDB(fightInfo);
 
-        // Legacy WebSocket fight info - log for future server-based integration
-        console.log('[fightService] Received fight info via WebSocket (not used in card combat mode)', fightInfo);
-
     } catch (error) {
         console.error('Failed to process fight info:', error);
     }

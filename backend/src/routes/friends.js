@@ -10,8 +10,6 @@ router.post('/request', authMiddleware, async (req, res) => {
     const { targetId } = req.body;
     const fromId = req.userId;
 
-    console.log('[FRIENDS] Request from:', fromId, 'to:', targetId);
-
     if (!targetId) {
       return res.status(400).json({ error: 'targetId is required' });
     }
@@ -80,7 +78,6 @@ router.post('/request', authMiddleware, async (req, res) => {
       });
     }
 
-    console.log('[FRIENDS] Request sent:', fromId, '->', targetId);
     res.json({ status: 'pending' });
   } catch (error) {
     console.error('[FRIENDS] Error sending request:', error);
@@ -199,7 +196,6 @@ router.post('/decline', authMiddleware, async (req, res) => {
       data: { status: 'declined' },
     });
 
-    console.log('[FRIENDS] Declined:', request.id);
     res.json({ status: 'declined' });
   } catch (error) {
     console.error('[FRIENDS] Error declining:', error);

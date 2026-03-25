@@ -121,9 +121,7 @@ class PvPCombatEngine {
     }
     this.status = 'running';
 
-    console.log('[ENGINE] Starting fight, matchId:', this.matchId);
-    console.log('[ENGINE] P1:', this.player1.odId, 'deck:', this.player1.deck?.length, 'items:', JSON.stringify(this.player1.deck));
-    console.log('[ENGINE] P2:', this.player2.odId, 'deck:', this.player2.deck?.length, 'items:', JSON.stringify(this.player2.deck));
+    console.log('[ENGINE] Fight started:', this.matchId, 'P1:', this.player1.odId, 'P2:', this.player2.odId);
 
     this.emit('fight_start', {
       matchId: this.matchId,
@@ -145,7 +143,6 @@ class PvPCombatEngine {
 
     this.currentRound++;
     const isOverdrive = this.currentRound > MAX_ROUNDS;
-    console.log('[ENGINE] Round', this.currentRound, isOverdrive ? '(OVERDRIVE)' : '', 'P1 HP:', this.player1.hp, 'P2 HP:', this.player2.hp);
 
     // Fight over?
     if (this.currentRound > this.maxRounds || this.player1.hp <= 0 || this.player2.hp <= 0) {
@@ -188,8 +185,6 @@ class PvPCombatEngine {
   }
 
   simulateRound() {
-    console.log('[ENGINE] Simulating round', this.currentRound);
-
     // Guard against empty decks
     if (!this.player1.deck?.length || !this.player2.deck?.length) {
       console.error('[ENGINE] Empty deck! P1:', this.player1.deck?.length, 'P2:', this.player2.deck?.length);
@@ -716,7 +711,6 @@ class PvPCombatEngine {
   // ── UTILITIES ──────────────────────────────────────────────────────────
 
   emit(type, data) {
-    console.log('[ENGINE] Emit:', type);
     const msg = JSON.stringify({ type, ...data });
     try { this.player1.socket?.send(msg); } catch (e) { console.error('[ENGINE] Failed to send to P1:', e.message); }
     try { this.player2.socket?.send(msg); } catch (e) { console.error('[ENGINE] Failed to send to P2:', e.message); }

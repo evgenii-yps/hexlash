@@ -31,7 +31,7 @@ import store from "@/core/state/store.js";
 import {t} from "@/locales/index.js";
 
 const selectedLanguage = computed({
-  get: () => store.getters['master/getLanguage'] || localStorage.getItem('preferredLanguage') || 'en',
+  get: () => store.getters['master/getLanguage'] || localStorage.getItem('hexlash-language') || 'en',
   set: (val) => store.dispatch('master/setLanguage', val)
 });
 

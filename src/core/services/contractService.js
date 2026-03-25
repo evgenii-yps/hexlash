@@ -37,8 +37,6 @@ const getBalance = async (token, userAddress) => {
             return ethers.formatUnits(balance, token.decimals);
         }
 
-        console.log(token, userAddress);
-
         // В противном случае получаем баланс для ERC-20 токена
         const tokenContract = new ethers.Contract(token.address,
             ['function balanceOf(address) view returns (uint)',]
@@ -107,7 +105,6 @@ const sendApprove = async (token, amount, walletProvider) => {
         // Ожидаем завершения транзакции
         await tx.wait();
 
-        console.log('Approval successful:', tx);
         return { success: true, transaction: tx };
     } catch (error) {
         //console.error("Error sending approve transaction:", error);
@@ -135,7 +132,6 @@ const sendMint = async (token, amount, payload, walletProvider) => {
             // Ожидаем завершения транзакции
             await tx.wait();
 
-            console.log('Mint successful for ETH:', tx);
             return { success: true, transaction: tx };
         }
 
@@ -151,7 +147,6 @@ const sendMint = async (token, amount, payload, walletProvider) => {
 
         await tx.wait();
 
-        console.log('Mint successful for ERC-20 token:', tx);
         return { success: true, transaction: tx };
 
     } catch (error) {

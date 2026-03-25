@@ -56,7 +56,6 @@ export function setLanguage(lang) {
   if (languages[lang]) {
     currentLanguage.value = lang
     localStorage.setItem(STORAGE_KEY, lang)
-    localStorage.setItem('preferredLanguage', lang)
   }
 }
 

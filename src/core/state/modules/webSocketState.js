@@ -46,15 +46,11 @@ const mutations = {
 const actions = {
     connectWebSocket({commit, state, rootGetters}) {
         if (isMockMode()) {
-            console.log('[MOCK] WebSocket connection skipped');
             commit('setConnected', true);
             return;
         }
 
-        console.log('Attempting to connect to WebSocket...');
-
         if (state.isConnected) {
-            console.log('WebSocket is already connected. No need to reconnect.');
             return; // Если уже подключен, выходим из функции
         }
 
@@ -62,8 +58,6 @@ const actions = {
             const jwtToken = rootGetters['master/getJwtToken'];
 
             if (!jwtToken || !validateJwtToken(jwtToken)) {
-                console.log('Jwt token is missing');
-
                 store.dispatch('master/logout')
                     .then(() => {
                         console.error('Token is invalid or missing');
@@ -94,10 +88,8 @@ const actions = {
         if (rootGetters['master/getLoginState'].isAuthenticated && !state.isConnected && !state.reconnectInterval) {
             state.socketClient = null;
 
-            console.log('Attempting to reconnect to WebSocket in 10 seconds...');
             const interval = setInterval(async () => {
                 try {
-                    console.log('Reconnecting...');
                     await store.dispatch('webSocket/connectWebSocket');
                 } catch (error) {
                     console.error('Reconnect failed:', error);
@@ -110,15 +102,12 @@ const actions = {
 
     sendMessage({state}, message) {
         if (isMockMode()) {
-            console.log('[MOCK] WebSocket message:', message);
             return;
         }
         state.socketClient.sendMessage(message);
     },
 
     async handleMessage({commit}, message) {
-        console.log('Received WebSocket message', message);
-
         const messageType = message.type;
 
         switch (messageType) {

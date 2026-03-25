@@ -110,7 +110,6 @@ router.beforeEach(async (to, from, next) => {
                 store.commit('master/setInfoMessage', customMessage);
             }
 
-            console.log('Redirecting to Login page');
             next({name: 'Login'});
         } else {
             // If navigating to arena but a fight is already in progress, redirect to fight
