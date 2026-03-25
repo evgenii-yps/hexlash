@@ -329,14 +329,8 @@ class PvPCombatEngine {
 
     for (const effect of attacker.activeEffects) {
       switch (effect.type) {
-        case 'rage':
-          damage = Math.round(damage * 1.5);
-          break;
-        case 'crit':
-          damage = Math.round(damage * 2);
-          break;
         case 'adrenaline':
-          damage = Math.round(damage * 1.3);
+          damage = Math.round(damage * 2);
           break;
         case 'coach_attack':
           damage = Math.round(damage * 1.25);
@@ -350,10 +344,10 @@ class PvPCombatEngine {
     for (const effect of defender.activeEffects) {
       switch (effect.type) {
         case 'shield':
-          damage = Math.round(damage * 0.5);
+          damage = 0; // full block
           break;
         case 'blind':
-          if (Math.random() < 0.5) damage = 0;
+          damage = 0; // guaranteed miss
           break;
         case 'coach_defense':
           damage = Math.round(damage * 0.7);
@@ -369,21 +363,31 @@ class PvPCombatEngine {
 
   rollDice() {
     const effects = [
-      { type: 'heal', duration: 0 },       // instant: +20 HP
-      { type: 'adrenaline', duration: 2 },  // 2 rounds: +30% damage
-      { type: 'shield', duration: 2 },      // 2 rounds: -50% incoming damage
-      { type: 'blind', duration: 2 },       // 2 rounds: 50% miss chance for opponent
-      { type: 'rage', duration: 2 },        // 2 rounds: +50% damage
-      { type: 'crit', duration: 1 },        // 1 round: x2 damage
+      { type: 'heal', duration: 0 },       // instant: +15 HP
+      { type: 'adrenaline', duration: 1 },  // 1 round: x2 damage
+      { type: 'shield', duration: 1 },      // 1 round: full block incoming
+      { type: 'blind', duration: 1 },       // 1 round: guaranteed miss for opponent
+      { type: 'rage', duration: 0 },        // instant: -20 HP to opponent
+      { type: 'crit', duration: 0 },        // instant: -30 HP to opponent
     ];
     return effects[Math.floor(Math.random() * effects.length)];
   }
 
-  applyDiceEffect(player, effect) {
-    if (effect.type === 'heal') {
-      player.hp = Math.min(MAX_HP, player.hp + 20);
-    } else {
-      player.activeEffects.push({ ...effect, roundsLeft: effect.duration });
+  applyDiceEffect(player, effect, opponent) {
+    switch (effect.type) {
+      case 'heal':
+        player.hp = Math.min(MAX_HP, player.hp + 15);
+        break;
+      case 'rage':
+        opponent.hp = Math.max(0, opponent.hp - 20);
+        break;
+      case 'crit':
+        opponent.hp = Math.max(0, opponent.hp - 30);
+        break;
+      default:
+        // Adrenaline, Shield, Blind — 1-round buffs
+        player.activeEffects.push({ ...effect, roundsLeft: effect.duration });
+        break;
     }
   }
 
@@ -402,9 +406,14 @@ class PvPCombatEngine {
     if (this.currentRound > MAX_ROUNDS) return;
 
     let player = null;
-    if (odId === this.player1.odId) player = this.player1;
-    else if (odId === this.player2.odId) player = this.player2;
-    else return;
+    let opponent = null;
+    if (odId === this.player1.odId) {
+      player = this.player1;
+      opponent = this.player2;
+    } else if (odId === this.player2.odId) {
+      player = this.player2;
+      opponent = this.player1;
+    } else return;
 
     // Check cooldown
     const available = (this.currentRound - player.diceUsedRound) >= DICE_COOLDOWN_ROUNDS;
@@ -414,14 +423,22 @@ class PvPCombatEngine {
     }
 
     const effect = this.rollDice();
-    this.applyDiceEffect(player, effect);
+    this.applyDiceEffect(player, effect, opponent);
     player.diceUsedRound = this.currentRound;
 
     // Notify the rolling player of their result
+    const isInstantDamage = effect.type === 'rage' || effect.type === 'crit';
     this.sendToPlayer(player, 'dice_rolled', {
       effect,
       hp: player.hp,
+      oppHp: isInstantDamage ? opponent.hp : undefined,
+      killed: isInstantDamage && opponent.hp <= 0,
     });
+
+    // If instant damage killed opponent — end fight immediately
+    if (isInstantDamage && opponent.hp <= 0) {
+      this.endFight();
+    }
   }
 
   // ── COACH PAUSE ────────────────────────────────────────────────────────

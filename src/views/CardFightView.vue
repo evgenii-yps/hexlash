@@ -996,9 +996,26 @@ function onPvPDiceRolled(e) {
     const diceItem = DICE_EFFECTS[data.effect.type] || { id: data.effect.type, image: iconDice };
     store.commit('fight/setDiceState', { activeItem: diceItem, cooldownLeft: 3, ready: false });
 
-    // Update HP if heal
-    if (data.effect.type === 'heal' && data.hp !== undefined) {
+    // Update HP for instant effects
+    if (data.hp !== undefined) {
       store.commit('fight/setLiveHP1', data.hp);
+    }
+
+    // Instant damage effects (rage/crit) — update opponent HP
+    if (data.oppHp !== undefined) {
+      store.commit('fight/setLiveHP2', data.oppHp);
+      store.commit('fight/addStats', {
+        totalDamageDealt: data.effect.type === 'rage' ? 20 : 30,
+      });
+
+      // Show event title for instant damage
+      const label = data.effect.type === 'rage' ? t.value.fight.lblEventRage : t.value.fight.lblEventCritical;
+      store.commit('fight/setEventTitle', { title: label, cls: 'event-' + data.effect.type });
+      setTimeout(() => store.commit('fight/clearEventTitle'), 1200);
+
+      // Shake opponent
+      shakeRight.value = true;
+      setTimeout(() => { shakeRight.value = false; }, 400);
     }
   }
 }
