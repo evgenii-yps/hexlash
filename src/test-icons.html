@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HEXLASH Pixel Icons — Visual Review</title>
+<style>
+  :root {
+    --hex-arch-predator: #FF2D2D;
+    --hex-arch-sentinel: #4DA6FF;
+    --hex-arch-ghost: #B44DFF;
+    --hex-arch-analyst: #00FF88;
+    --hex-arch-maverick: #FFB800;
+    --hex-arch-juggernaut: #FF6B1A;
+    --hex-branch-speed: #00E5FF;
+    --hex-branch-power: #FF066F;
+    --hex-branch-technique: #A855F7;
+    --hex-text-muted: rgba(255,255,255,0.35);
+    --hex-text-secondary: rgba(255,255,255,0.6);
+    --hex-primary: #FF066F;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #090909;
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    padding: 32px;
+  }
+  h1 { font-size: 24px; margin-bottom: 8px; color: #FF066F; text-transform: uppercase; letter-spacing: 2px; }
+  h2 { font-size: 16px; margin: 32px 0 16px; color: #aaa; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #333; padding-bottom: 8px; }
+  h3 { font-size: 13px; margin: 24px 0 12px; color: #666; }
+  .grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 32px;
+    margin-bottom: 24px;
+  }
+  .icon-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .icon-cell canvas {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+  .icon-name {
+    font-size: 11px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .icon-meta {
+    font-size: 9px;
+    color: #555;
+  }
+  .section-row {
+    display: flex;
+    gap: 48px;
+    align-items: flex-start;
+    margin-bottom: 16px;
+  }
+  .size-label {
+    font-size: 11px;
+    color: #555;
+    margin-bottom: 8px;
+    text-align: center;
+  }
+  .comparison {
+    display: grid;
+    grid-template-columns: repeat(15, 1fr);
+    gap: 16px;
+    margin: 16px 0;
+    padding: 16px;
+    background: #111;
+    border-radius: 8px;
+  }
+  .comparison .icon-cell { gap: 4px; }
+  .divider { width: 100%; height: 1px; background: #222; margin: 32px 0; }
+</style>
+</head>
+<body>
+
+<h1>HEXLASH Pixel Icons Review</h1>
+<p style="color:#666; margin-bottom: 32px;">Phase 1.2a — 15 icons, 3 sizes, with/without glow</p>
+
+<!-- All 15 at 48px -->
+<h2>All Icons @ 48px (default game size)</h2>
+<div class="grid" id="grid-48"></div>
+
+<!-- All 15 at 96px -->
+<h2>All Icons @ 96px (detail review)</h2>
+<div class="grid" id="grid-96"></div>
+
+<!-- All 15 at 128px -->
+<h2>All Icons @ 128px (maximum detail)</h2>
+<div class="grid" id="grid-128"></div>
+
+<div class="divider"></div>
+
+<!-- With glow -->
+<h2>All Icons @ 48px with GLOW effect</h2>
+<div class="grid" id="grid-48-glow"></div>
+
+<h2>All Icons @ 96px with GLOW effect</h2>
+<div class="grid" id="grid-96-glow"></div>
+
+<div class="divider"></div>
+
+<!-- Side by side comparison: normal vs glow -->
+<h2>Side-by-side: Normal vs Glow @ 48px</h2>
+<div id="comparison"></div>
+
+<div class="divider"></div>
+
+<!-- Disabled state -->
+<h2>Disabled state (opacity 0.35) @ 48px</h2>
+<div class="grid" id="grid-disabled"></div>
+
+<div class="divider"></div>
+
+<!-- Pixel density analysis -->
+<h2>Pixel Density Analysis</h2>
+<div id="density" style="font-family: monospace; font-size: 12px; color: #888; line-height: 1.8;"></div>
+
+<script>
+const colorMap = {
+  'var(--hex-arch-predator)': '#FF2D2D',
+  'var(--hex-arch-sentinel)': '#4DA6FF',
+  'var(--hex-arch-ghost)': '#B44DFF',
+  'var(--hex-arch-analyst)': '#00FF88',
+  'var(--hex-arch-maverick)': '#FFB800',
+  'var(--hex-arch-juggernaut)': '#FF6B1A',
+  'var(--hex-branch-speed)': '#00E5FF',
+  'var(--hex-branch-power)': '#FF066F',
+  'var(--hex-branch-technique)': '#A855F7',
+  'var(--hex-text-muted)': 'rgba(255,255,255,0.35)',
+  'var(--hex-text-secondary)': 'rgba(255,255,255,0.6)',
+};
+
+function resolveColor(c) {
+  return colorMap[c] || c;
+}
+
+function glowColor(c) {
+  const hex = resolveColor(c);
+  if (hex.startsWith('rgba')) return hex;
+  // Add alpha for glow
+  return hex + '80';
+}
+
+// Inline icon data (copied from pixelIcons.js)
+const pixelIcons = {
+  predator: {
+    grid: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,1,0,0,0,1,0,0,0,0,1,0,0,0,1,0,0,1,0,0,0,1,0,0,0,0,1,1,0,0,1,0,0,1,0,0,1,1,0,0,0,0,0,1,0,0,1,0,0,1,0,0,1,0,0,0,0,0,0,1,1,0,1,0,0,1,0,1,1,0,0,0,0,0,0,0,1,0,1,0,0,1,0,1,0,0,0,0,0,0,0,0,1,1,1,0,0,1,1,1,0,0,0,0,0,0,0,0,0,1,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    category: 'archetype', defaultColor: 'var(--hex-arch-predator)'
+  },
+  sentinel: {
+    grid: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,1,1,0,0,1,1,0,0,1,1,0,0,0,0,0,0,1,1,0,0,1,1,0,0,1,1,0,0,0,0,0,0,1,1,0,0,1,1,0,0,1,1,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,1,1,0,0,1,1,0,0,1,1,0,0,0,0,0,0,1,1,0,0,1,1,0,0,1,1,0,0,0,0,0,0,0,1,1,0,1,1,0,1,1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    category: 'archetype', defaultColor: 'var(--hex-arch-sentinel)'
+  },
+  ghost: {
+    grid: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,1,1,0,0,1,1,0,0,1,1,0,0,0,0,0,0,1,1,0,0,1,1,0,0,1,1,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,1,0,1,1,0,1,1,0,1,1,0,0,0,0,0,0,1,0,0,1,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    category: 'archetype', defaultColor: 'var(--hex-arch-ghost)'
+  },
+  analyst: {
+    grid: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,1,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,1,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,1,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    category: 'archetype', defaultColor: 'var(--hex-arch-analyst)'
+  },
+  maverick: {
+    grid: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,1,1,1,0,0,1,1,1,0,0,1,1,1,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    category: 'archetype', defaultColor: 'var(--hex-arch-maverick)'
+  },
+  juggernaut: {
+    grid: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,1,1,1,0,0,1,1,0,0,1,1,1,0,0,0,0,1,1,1,0,0,1,1,0,0,1,1,1,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    category: 'archetype', defaultColor: 'var(--hex-arch-juggernaut)'
+  },
+  speed: {
+    grid: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    category: 'branch', defaultColor: 'var(--hex-branch-speed)'
+  },
+  power: {
+    grid: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,1,1,0,0,0,1,1,1,0,0,0,0,0,0,0,0,1,1,0,0,0,1,1,1,0,0,0,0,0,0,0,1,1,1,0,0,0,0,1,1,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    category: 'branch', defaultColor: 'var(--hex-branch-power)'
+  },
+  technique: {
+    grid: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,1,1,1,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,1,1,1,1,0,0,1,0,0,0,0,1,1,0,0,0,1,1,1,1,0,0,0,1,1,0,0,1,1,0,0,0,1,1,1,1,0,0,0,1,1,0,0,0,0,1,0,0,1,1,1,1,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,1,1,1,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    category: 'branch', defaultColor: 'var(--hex-branch-technique)'
+  },
+  arena: {
+    grid: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,1,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,1,1,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    category: 'nav', defaultColor: 'var(--hex-text-muted)'
+  },
+  training: {
+    grid: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    category: 'nav', defaultColor: 'var(--hex-text-muted)'
+  },
+  ratings: {
+    grid: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,1,0,1,1,1,1,1,1,1,1,0,1,0,0,0,0,1,0,0,1,1,1,1,1,1,0,0,1,0,0,0,0,0,1,0,0,1,1,1,1,0,0,1,0,0,0,0,0,0,0,1,0,1,1,1,1,0,1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    category: 'nav', defaultColor: 'var(--hex-text-muted)'
+  },
+  profile: {
+    grid: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,1,1,0,0,0,1,1,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    category: 'nav', defaultColor: 'var(--hex-text-muted)'
+  },
+  close: {
+    grid: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,1,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,1,1,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    category: 'ui', defaultColor: 'var(--hex-text-secondary)'
+  },
+  menu: {
+    grid: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    category: 'ui', defaultColor: 'var(--hex-text-secondary)'
+  }
+};
+
+function renderIcon(container, name, size, glow = false, disabled = false) {
+  const cell = document.createElement('div');
+  cell.className = 'icon-cell';
+
+  const canvas = document.createElement('canvas');
+  canvas.width = 16;
+  canvas.height = 16;
+  canvas.style.width = size + 'px';
+  canvas.style.height = size + 'px';
+  canvas.style.imageRendering = 'pixelated';
+
+  const icon = pixelIcons[name];
+  const color = resolveColor(icon.defaultColor);
+
+  if (glow) {
+    canvas.style.filter = `drop-shadow(0 0 ${Math.max(4, size/8)}px ${glowColor(icon.defaultColor)})`;
+  }
+  if (disabled) {
+    canvas.style.opacity = '0.35';
+  }
+
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = color;
+  icon.grid.forEach((pixel, index) => {
+    if (pixel === 1) {
+      ctx.fillRect(index % 16, Math.floor(index / 16), 1, 1);
+    }
+  });
+
+  const label = document.createElement('div');
+  label.className = 'icon-name';
+  label.textContent = name;
+
+  const pixels = icon.grid.filter(p => p === 1).length;
+  const meta = document.createElement('div');
+  meta.className = 'icon-meta';
+  meta.textContent = `${pixels}px / ${(pixels/256*100).toFixed(0)}%`;
+
+  cell.appendChild(canvas);
+  cell.appendChild(label);
+  cell.appendChild(meta);
+  container.appendChild(cell);
+}
+
+const names = Object.keys(pixelIcons);
+
+// Render grids
+[48, 96, 128].forEach(size => {
+  const grid = document.getElementById(`grid-${size}`);
+  if (grid) names.forEach(n => renderIcon(grid, n, size));
+});
+
+// Glow grids
+[48, 96].forEach(size => {
+  const grid = document.getElementById(`grid-${size}-glow`);
+  if (grid) names.forEach(n => renderIcon(grid, n, size, true));
+});
+
+// Side by side
+const comp = document.getElementById('comparison');
+names.forEach(name => {
+  const pair = document.createElement('div');
+  pair.style.display = 'inline-flex';
+  pair.style.flexDirection = 'column';
+  pair.style.alignItems = 'center';
+  pair.style.gap = '4px';
+  pair.style.margin = '0 16px 16px 0';
+
+  const row = document.createElement('div');
+  row.style.display = 'flex';
+  row.style.gap = '8px';
+
+  const normalDiv = document.createElement('div');
+  const glowDiv = document.createElement('div');
+  renderIcon(normalDiv, name, 48);
+  renderIcon(glowDiv, name, 48, true);
+  row.appendChild(normalDiv);
+  row.appendChild(glowDiv);
+
+  const label = document.createElement('div');
+  label.className = 'icon-name';
+  label.textContent = name;
+  label.style.marginTop = '-12px';
+
+  pair.appendChild(row);
+  pair.appendChild(label);
+  comp.appendChild(pair);
+});
+
+// Disabled
+const disGrid = document.getElementById('grid-disabled');
+names.forEach(n => renderIcon(disGrid, n, 48, false, true));
+
+// Density analysis
+const density = document.getElementById('density');
+const sorted = names.map(n => ({name: n, pixels: pixelIcons[n].grid.filter(p=>p===1).length})).sort((a,b) => b.pixels - a.pixels);
+sorted.forEach(({name, pixels}) => {
+  const pct = (pixels/256*100).toFixed(0);
+  const bar = '█'.repeat(Math.round(pixels/4));
+  const color = resolveColor(pixelIcons[name].defaultColor);
+  density.innerHTML += `<span style="color:${color}">${name.padEnd(14, ' ')}</span> <span style="color:#555">${String(pixels).padStart(3)}px (${pct.padStart(2)}%)</span> <span style="color:${color}">${bar}</span>\n`;
+});
+</script>
+</body>
+</html>
