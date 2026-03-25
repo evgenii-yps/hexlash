@@ -70,8 +70,18 @@
 
 ### GAME-03. PvP creates new PrismaClient on every fight end
 - **File:** `backend/src/services/pvpCombatEngine.js:480-481`
-- **Description:** `saveFightResult()` creates `new PrismaClient()` every time a PvP fight ends. This leaks database connections and will crash the server under load.
+- **Description:** `saveFightResult()` creates `new PrismaClient()` every time a PvP fight ends. This leaks database connections and will crash the server under load. Also: `$disconnect()` is called on success but NOT on error (catch block on line 563 just logs), so errors leak connections too.
 - **Fix:** Import the shared Prisma instance instead of creating new ones.
+
+### SEC-09. User delete leaves dangling foreign keys
+- **File:** `backend/src/routes/user.js:93-106`
+- **Description:** `POST /v1/user/delete` deletes UserAchievement, UserSocialTask, UserDailyTask, PunchInfo, and User, but does NOT delete: Fights (fighterOneId/fighterTwoId/winnerId become dangling), FriendRequests, Friendships, or owned Clubs. This will cause foreign key constraint violations or orphaned data.
+- **Fix:** Delete or nullify all related records before deleting the User, or use cascading deletes in Prisma schema.
+
+### SEC-10. Skin value not validated against allowed filenames
+- **File:** `backend/src/routes/user.js:237-253`
+- **Description:** `PUT /v1/user/skin` accepts any string as skin value with no validation against allowed skin filenames. A user could set their skin to `../../etc/passwd` or an XSS payload that gets rendered in another user's browser via `<img :src="...">`.
+- **Fix:** Validate skin value against a whitelist of allowed skin filenames.
 
 ---
 
@@ -135,6 +145,31 @@
 - **File:** `backend/src/routes/user.js:70`
 - **Description:** `POST /v1/user/reset` has no auth middleware. While currently harmless (no-op), if someone adds reset logic later, it could be exploited to reset any user's password.
 
+### BE-08. WebSocket reconnect overwrites without closing old socket
+- **File:** `backend/src/websocket/handler.js:57`
+- **Description:** When a user reconnects, the old WebSocket reference is silently overwritten: `clients.set(userId, ws)`. The previous socket is not closed. If the old socket is still alive, its `close` event will fire later and remove the NEW valid connection from the `clients` map, leaving the user disconnected.
+- **Fix:** Close the old socket before replacing: `if (clients.has(userId)) clients.get(userId).close();`
+
+### BE-09. PvP match stuck in 'waiting' forever if one player never readies
+- **File:** `backend/src/services/pvpMatchManager.js`
+- **Description:** No timeout for matches stuck in `waiting` state. If one player sends `pvp_ready` but the other never does (disconnect, close tab), the match object stays in `activeMatches` forever (memory leak). No overall match timeout exists.
+- **Fix:** Add a 30s timeout after match creation; if both players haven't readied, cancel the match.
+
+### BE-10. No helmet middleware for security headers
+- **File:** `backend/src/index.js`
+- **Description:** No `helmet` middleware is installed. Missing security headers: X-Frame-Options, X-Content-Type-Options, Strict-Transport-Security, X-XSS-Protection, etc.
+- **Fix:** `npm install helmet` and `app.use(helmet())`.
+
+### BE-11. Friends error response leaks internal details
+- **File:** `backend/src/routes/friends.js:88`
+- **Description:** Error response includes `details: error.message` which can expose Prisma errors, stack traces, and internal DB schema to the client.
+- **Fix:** Remove `details` from error responses; log internally only.
+
+### BE-12. Matchmaking O(n^2) polling with excessive logging
+- **File:** `backend/src/websocket/handler.js:590-597`, `backend/src/services/matchmaking.js:94`
+- **Description:** Matchmaking poll (every 3s) iterates all queued players and for each calls `tryFindMatch` which iterates the entire queue — O(n^2) per tick. Each comparison logs to console (line 94), creating massive log volume under load.
+- **Fix:** Use event-driven matching instead of polling, or at minimum remove per-comparison logging.
+
 ---
 
 ## MINOR (Dead code, style, TODO)
@@ -173,8 +208,8 @@
 
 | Category | Count |
 |----------|-------|
-| Critical | 11 |
-| Important | 10 |
+| Critical | 13 |
+| Important | 15 |
 | Minor | 8 |
 | Frontend files checked | 96 (.vue) + 40+ (.js) |
 | Backend files checked | 15+ |
@@ -198,13 +233,19 @@
 3. **SEC-05**: Add rate limiting to auth endpoints
 4. **SEC-07**: Restrict CORS to specific Vercel domains
 5. **GAME-03**: Fix PrismaClient leak in pvpCombatEngine
+6. **SEC-09**: Fix user delete dangling foreign keys
+7. **SEC-10**: Validate skin value against whitelist
+8. **BE-08**: Fix WebSocket reconnect overwrite race condition
 
 ### Short-term (this sprint):
 1. **SEC-03**: Fix email verification endpoint
 2. **BE-01**: Consolidate PrismaClient to singleton
 3. **BE-02**: Add matchmaking timeout notification
 4. **BE-03**: Implement WebSocket heartbeat
-5. **GAME-01**: Document or unify PvE/PvP dice effects
+5. **BE-09**: Add PvP match ready timeout
+6. **BE-10**: Add helmet security headers
+7. **BE-11**: Stop leaking error details to client
+8. **GAME-01**: Document or unify PvE/PvP dice effects
 
 ### Medium-term (backlog):
 1. **FE-01**: Remove 9 unused components
@@ -212,3 +253,4 @@
 3. **SEC-04**: Implement actual password reset
 4. **GAME-02**: Document PvE/PvP combat differences
 5. **FE-02**: Remove unused models
+6. **BE-12**: Optimize matchmaking from O(n^2) polling
