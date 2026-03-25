@@ -26,7 +26,7 @@
         </div>
       </template>
 
-      <div v-else-if="move.unlocked" class="max-badge">MAX</div>
+      <div v-else-if="move.unlocked" class="max-badge">{{ t.moves.lblMax }}</div>
 
       <!-- Требования для открытия -->
       <div v-else-if="canUnlock" class="unlock-req">

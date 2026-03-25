@@ -227,7 +227,6 @@ export default {
             },
             deck: state.deck,
           }, { authRequired: true });
-          console.log('[SYNC] Progression saved to server');
         } catch (error) {
           console.error('[SYNC] Failed to save progression:', error);
         }

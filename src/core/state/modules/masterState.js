@@ -246,7 +246,6 @@ const actions = {
                 console.error('[SKIN] IndexedDB save failed:', e)
             );
             const serverSync = apiClient.put('/user/skin', { skin: skinId }, { authRequired: true })
-                .then(() => console.log('[SKIN] Saved to server:', skinId))
                 .catch(e => console.error('[SKIN] Server save failed:', e));
             await Promise.all([localSave, serverSync]);
         } catch (error) {

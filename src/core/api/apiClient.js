@@ -48,7 +48,6 @@ apiClient.interceptors.response.use(
     },
     (error) => {
         if (isMockMode() && axios.isCancel(error)) {
-            console.log(error.message);
             return Promise.resolve({data: {}});
         }
 

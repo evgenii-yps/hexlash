@@ -1,29 +1,29 @@
 <template>
   <!-- Idle — not yet requested -->
   <div v-if="!loading && !analysis && !error" class="ai-analysis ai-analysis--idle">
-    <div class="ai-analysis-header">AI ANALYSIS</div>
+    <div class="ai-analysis-header">{{ t.autoFight.lblAiAnalysis }}</div>
   </div>
 
   <!-- Loading -->
   <div v-else-if="loading" class="ai-analysis">
-    <div class="ai-analysis-header">AI ANALYSIS</div>
+    <div class="ai-analysis-header">{{ t.autoFight.lblAiAnalysis }}</div>
     <div class="ai-analysis-loading">{{ t.autoFight.lblAnalyzing }}</div>
   </div>
 
   <!-- Success -->
   <div v-else-if="analysis" class="ai-analysis">
-    <div class="ai-analysis-header">AI ANALYSIS</div>
+    <div class="ai-analysis-header">{{ t.autoFight.lblAiAnalysis }}</div>
     <div class="ai-analysis-divider"></div>
     <div v-for="(section, idx) in sections" :key="idx" class="ai-analysis-section">
       <div v-if="section.label" class="ai-analysis-section-label">{{ section.label }}</div>
       <div class="ai-analysis-section-text">{{ section.content }}</div>
     </div>
-    <div class="ai-analysis-badge">Powered by Claude</div>
+    <div class="ai-analysis-badge">{{ t.autoFight.lblPoweredBy }}</div>
   </div>
 
   <!-- Error -->
   <div v-else-if="error" class="ai-analysis ai-analysis--error">
-    <div class="ai-analysis-header">AI ANALYSIS</div>
+    <div class="ai-analysis-header">{{ t.autoFight.lblAiAnalysis }}</div>
     <div class="ai-analysis-error-text">
       {{ t.autoFight.lblAnalysisError }}
       <button class="ai-analysis-retry" @click="$emit('retry')">{{ t.autoFight.lblRetry }}</button>
@@ -46,7 +46,7 @@ defineEmits(['retry']);
 const sections = computed(() => {
   if (!props.analysis) return [];
 
-  const labels = ['Session Overview', 'Strengths', 'Weaknesses', 'Recommendation'];
+  const labels = [t.value.autoFight.aiLabels.overview, t.value.autoFight.aiLabels.strengths, t.value.autoFight.aiLabels.weaknesses, t.value.autoFight.aiLabels.recommendation];
   const result = [];
   const text = props.analysis;
 

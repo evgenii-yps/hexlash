@@ -15,6 +15,12 @@ class MatchmakingService {
   constructor() {
     this.queue = new Map(); // odId -> { odId, username, rating, searchRange, searchingSince }
     this.expandTimers = new Map(); // odId -> intervalId
+    this._sendToUser = null; // callback set by handler.js to avoid circular dependency
+  }
+
+  /** Register send callback (called from handler.js on init) */
+  setSendToUser(fn) {
+    this._sendToUser = fn;
   }
 
   /** Add a player to the matchmaking queue. Returns immediate match or null. */
@@ -33,8 +39,6 @@ class MatchmakingService {
     };
 
     this.queue.set(player.odId, entry);
-    console.log('[MATCHMAKING] Adding to queue:', player.odId, 'rating:', entry.rating, 'queue size:', this.queue.size);
-    console.log('[MATCHMAKING] Queue players:', [...this.queue.keys()]);
 
     // Start expanding search range periodically (matching is done by periodic check in handler.js)
     const expandTimer = setInterval(() => {
@@ -46,11 +50,13 @@ class MatchmakingService {
       }
 
       p.searchRange = Math.min(p.searchRange + SEARCH_RANGE_STEP, SEARCH_RANGE_MAX);
-      console.log('[MATCHMAKING] Expanded range for', player.odId, 'to', p.searchRange);
 
       // Timeout — remove after 2 minutes
       if (Date.now() - p.searchingSince > SEARCH_TIMEOUT_MS) {
         console.log('[MATCHMAKING] Timeout, removing:', player.odId);
+        if (this._sendToUser) {
+          this._sendToUser(player.odId, { type: 'matchmaking_timeout', reason: 'search_timeout' });
+        }
         this.removeFromQueue(player.odId);
         return;
       }
@@ -75,12 +81,7 @@ class MatchmakingService {
   /** Try to find a match for the given player. Returns match pair or null. */
   tryFindMatch(odId) {
     const player = this.queue.get(odId);
-    if (!player) {
-      console.log('[MATCHMAKING] tryFindMatch: player not in queue:', odId);
-      return null;
-    }
-
-    console.log('[MATCHMAKING] Trying to find match for:', odId, 'rating:', player.rating, 'range:', player.searchRange);
+    if (!player) return null;
 
     let bestMatch = null;
     let bestDiff = Infinity;
@@ -91,8 +92,6 @@ class MatchmakingService {
       const ratingDiff = Math.abs(player.rating - opponent.rating);
       const maxRange = Math.max(player.searchRange, opponent.searchRange);
 
-      console.log('[MATCHMAKING] Comparing with:', oppId, 'rating:', opponent.rating, 'diff:', ratingDiff, 'maxRange:', maxRange, 'match:', ratingDiff <= maxRange);
-
       if (ratingDiff <= maxRange && ratingDiff < bestDiff) {
         bestMatch = opponent;
         bestDiff = ratingDiff;
@@ -100,19 +99,18 @@ class MatchmakingService {
     }
 
     if (bestMatch) {
-      console.log('[MATCHMAKING] MATCH FOUND:', odId, 'vs', bestMatch.odId, 'diff:', bestDiff);
+      console.log('[MATCHMAKING] Match found:', odId, 'vs', bestMatch.odId, 'diff:', bestDiff);
       const match = this.createMatch(player, bestMatch);
       return match;
     }
 
-    console.log('[MATCHMAKING] No match found for', odId);
     return null;
   }
 
   /** Create a match between two players, removing both from queue. */
   createMatch(player1, player2) {
     const matchId = `match_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-    console.log('[MATCHMAKING] Creating match:', matchId, 'P1:', player1.odId, player1.username, 'P2:', player2.odId, player2.username);
+    console.log('[MATCHMAKING] Creating match:', matchId, player1.odId, 'vs', player2.odId);
 
     this.removeFromQueue(player1.odId);
     this.removeFromQueue(player2.odId);

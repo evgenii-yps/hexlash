@@ -37,7 +37,7 @@
             </VBtnDark>
 
             <div v-if="isOwner" class="controls">
-              <h2>Control</h2>
+              <h2>{{ t.club.lblControl }}</h2>
 
               <ClubWithdraw :balance="String(formatNumber(clubData.getBalance()))" :wallet="master.userData.walletAddress"/>
 

@@ -92,7 +92,6 @@ const actions = {
     async fetchSelectedTokenBalance({commit, rootGetters}) {
         try {
             const walletAddress = rootGetters['master/getMaster'].userData.walletAddress;
-            console.log("WALLET_ADDRESS:", walletAddress);
             const balance = await getBalance(state.selectedToken, walletAddress);
             commit('setSelectedTokenBalance', balance);
         } catch (error) {
@@ -113,8 +112,6 @@ const actions = {
                 commit('setLoaderApproveTransaction', false);
                 return;
             }
-
-            console.log('Approval succeeded:', result.transaction);
 
             // Выключаем индикатор загрузки для approve
             commit('setLoaderApproveTransaction', false);
@@ -145,8 +142,6 @@ const actions = {
                 commit('setLoaderPurchaseTransaction', false);
                 return;
             }
-
-            console.log('Purchase succeeded:', result.transaction);
 
             // Выключаем индикатор загрузки для покупки
             commit('setLoaderPurchaseTransaction', false);

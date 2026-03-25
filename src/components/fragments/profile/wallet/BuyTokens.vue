@@ -128,10 +128,8 @@ const btnModalBuy = () => {
 
 const btnNext = () => {
   if (localAmount.value > approvedAmount.value) {
-    console.log("Approve transaction")
     store.dispatch("contract/fetchSendApproveTransaction");
   } else {
-    console.log("Buy transaction")
     store.dispatch("contract/fetchSendPurchaseTransaction");
   }
 };

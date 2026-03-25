@@ -17,18 +17,15 @@ function restoreProgressionFromServer(userData) {
 
     if (userData.progression) {
         store.commit('progressionState/restoreProgression', userData.progression);
-        console.log('[APP] Progression restored from server');
 
         // Restore player modules (fighter archetypes) from server
         if (Array.isArray(userData.progression.playerModules) && userData.progression.playerModules.length === 3) {
             store.commit('fight/setPlayerModules', userData.progression.playerModules);
             localStorage.setItem('hexlash_player_modules', JSON.stringify(userData.progression.playerModules));
-            console.log('[APP] Player modules restored from server');
         }
     }
     if (userData.deck) {
         store.commit('progressionState/restoreDeck', userData.deck);
-        console.log('[APP] Deck restored from server');
     }
 
     // Restore PvP stats (rating, wins, losses, draws) from server
@@ -41,7 +38,6 @@ export const initializeMasterData = async () => {
         store.commit('master/setMaster', mockMaster);
         store.commit('master/setJwtToken', MOCK_JWT_TOKEN);
         store.commit('master/setLoginState', {isAuthenticated: true});
-        console.log('[MOCK] Initialized with mock master data');
         return;
     }
 
@@ -66,7 +62,7 @@ export const getMasterFromAPI = () => {
     // Асинхронно обновляем данные из API
     fetchMasterData().then(async (apiUserModel) => {
         // Приоритет: localStorage > сервер для языка
-        const savedLang = localStorage.getItem('preferredLanguage');
+        const savedLang = localStorage.getItem('hexlash-language') || localStorage.getItem('preferredLanguage');
         if (savedLang) {
             apiUserModel.language = savedLang;
         }
@@ -87,7 +83,6 @@ export const login = async (credentials) => {
         store.commit('master/setMaster', mockMaster);
         store.commit('master/setJwtToken', MOCK_JWT_TOKEN);
         store.commit('master/setLoginState', {isAuthenticated: true});
-        console.log('[MOCK] Login successful');
         return;
     }
 
@@ -127,7 +122,6 @@ export const telegram = async (payload) => {
         store.commit('master/setMaster', mockMaster);
         store.commit('master/setJwtToken', MOCK_JWT_TOKEN);
         store.commit('master/setLoginState', {isAuthenticated: true});
-        console.log('[MOCK] Telegram login successful');
         return;
     }
 
@@ -174,7 +168,6 @@ export const telegram = async (payload) => {
 
 export const sendCheckLoginAvailable = async (login) => {
     if (isMockMode()) {
-        console.log('[MOCK] Login available check:', login);
         return true;
     }
 
@@ -189,7 +182,6 @@ export const sendCheckLoginAvailable = async (login) => {
 
 export const register = async (credentials) => {
     if (isMockMode()) {
-        console.log('[MOCK] Register:', credentials.login);
         const mockMaster = createMockMaster();
         store.commit('master/setMaster', mockMaster);
         store.commit('master/setJwtToken', MOCK_JWT_TOKEN);
@@ -228,7 +220,6 @@ export const register = async (credentials) => {
 
 export const resetPassword = async (email) => {
     if (isMockMode()) {
-        console.log('[MOCK] Password reset for:', email);
         return {success: true, message: 'Mock: password reset email sent'};
     }
 
@@ -257,7 +248,6 @@ export const resetPassword = async (email) => {
 // Функция для получения данных текущего пользователя
 const fetchMasterData = async () => {
     if (isMockMode()) {
-        console.log('[MOCK] Fetching master data');
         return createMockMaster();
     }
 
@@ -272,7 +262,6 @@ const fetchMasterData = async () => {
 // Изменить профиль
 export const changeProfile = async (profileData) => {
     if (isMockMode()) {
-        console.log('[MOCK] Profile changed:', profileData);
         return {data: profileData};
     }
 
@@ -288,7 +277,6 @@ export const changeProfile = async (profileData) => {
 // Выйти из системы
 export const logout = async () => {
     if (isMockMode()) {
-        console.log('[MOCK] Logout');
         store.commit('master/clearAuthData');
         return true;
     }
@@ -308,7 +296,6 @@ export const logout = async () => {
 // Удалить аккаунт
 export const deleteAccount = async () => {
     if (isMockMode()) {
-        console.log('[MOCK] Account deleted');
         return;
     }
 
@@ -326,7 +313,6 @@ export const deleteAccount = async () => {
 // Отправить запрос на верификацию почты
 export const sendVerifyEmail = async (code) => {
     if (isMockMode()) {
-        console.log('[MOCK] Email verified');
         return true;
     }
 
@@ -346,7 +332,6 @@ export const sendVerifyEmail = async (code) => {
 
 export const uploadAvatar = async (formData, onUploadProgress) => {
     if (isMockMode()) {
-        console.log('[MOCK] Avatar uploaded');
         return '';
     }
 
@@ -414,10 +399,10 @@ export const isShowPrivacyInfo = (text) => {
 };
 
 export const resetClient = async () => {
-    const lang = localStorage.getItem('preferredLanguage');
+    const lang = localStorage.getItem('hexlash-language') || localStorage.getItem('preferredLanguage');
     await deleteDB();
     localStorage.clear();
-    if (lang) localStorage.setItem('preferredLanguage', lang);
+    if (lang) localStorage.setItem('hexlash-language', lang);
 }
 
 export const validateJwtToken = (jwtToken) => {

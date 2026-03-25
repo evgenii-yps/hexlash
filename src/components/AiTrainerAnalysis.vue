@@ -17,7 +17,7 @@
         <div v-if="section.label" class="ai-trainer-section-label">{{ section.label }}</div>
         <div class="ai-trainer-section-text">{{ section.content }}</div>
       </div>
-      <div class="ai-trainer-badge">Powered by Claude</div>
+      <div class="ai-trainer-badge">{{ t.fight.lblPoweredBy }}</div>
     </template>
   </div>
 
@@ -46,7 +46,7 @@ const expanded = ref(false);
 const sections = computed(() => {
   if (!analysis.value) return [];
 
-  const labels = ['Fight Summary', 'What You Did Well', 'What Went Wrong', 'Advice'];
+  const labels = [t.value.fight.aiLabels.summary, t.value.fight.aiLabels.wellDone, t.value.fight.aiLabels.wentWrong, t.value.fight.aiLabels.advice];
   const result = [];
   let text = analysis.value;
 

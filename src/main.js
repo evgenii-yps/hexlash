@@ -99,7 +99,7 @@ const vuetify = createVuetify({
 
 async function initializeApp() {
     await store.dispatch('master/initializeMasterData');
-    const savedLanguage = localStorage.getItem('preferredLanguage') || localStorage.getItem('hexlash-language');
+    const savedLanguage = localStorage.getItem('hexlash-language') || localStorage.getItem('preferredLanguage');
     if (savedLanguage) {
         setLanguage(savedLanguage);
     } else {

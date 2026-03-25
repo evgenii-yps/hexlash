@@ -3,7 +3,7 @@
     <div class="verification-container">
 
       <div>
-        <h1>Email verification</h1>
+        <h1>{{ t.verify.title }}</h1>
         <div v-if="loading" class="loader-container">
           <v-progress-circular
               class="loader"
@@ -12,10 +12,10 @@
           />
         </div>
         <p v-else-if="success" class="success">
-          Your email has been successfully verified! Thank you for confirming. You can continue using the service as usual.
+          {{ t.verify.successMsg }}
         </p>
         <p v-else-if="error" class="error">
-          There was an issue verifying your email. Please check the code and try again. If the problem persists, please contact support.
+          {{ t.verify.errorMsg }}
         </p>
       </div>
     </div>
@@ -26,6 +26,7 @@
 import {ref, onBeforeMount, onMounted} from 'vue';
 import {useRoute} from 'vue-router';
 import store from '@/core/state/store.js';
+import {t} from '@/locales/index.js';
 import * as amplitude from "@amplitude/analytics-browser";
 
 const route = useRoute();
