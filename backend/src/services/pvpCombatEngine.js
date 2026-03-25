@@ -115,6 +115,10 @@ class PvPCombatEngine {
   // ── START ──────────────────────────────────────────────────────────────
 
   start() {
+    if (this._readyTimeout) {
+      clearTimeout(this._readyTimeout);
+      this._readyTimeout = null;
+    }
     this.status = 'running';
 
     console.log('[ENGINE] Starting fight, matchId:', this.matchId);

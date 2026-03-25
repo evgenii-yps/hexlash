@@ -2,7 +2,7 @@ const { WebSocketServer } = require('ws');
 const jwt = require('jsonwebtoken');
 const prisma = require('../lib/prisma');
 const { v4: uuidv4 } = require('uuid');
-const { JWT_SECRET, COST_PER_CLICK, DECIMALS, PUNCH_MAX_PER_INTERVAL, PUNCH_MAX_PER_BATCH, PUNCH_INTERVAL_MS } = require('../config');
+const { JWT_SECRET, COST_PER_CLICK, DECIMALS, PUNCH_MAX_PER_INTERVAL, PUNCH_MAX_PER_BATCH, PUNCH_INTERVAL_MS, WS_PING_INTERVAL_MS, WS_PONG_TIMEOUT_MS } = require('../config');
 const clients = new Map(); // userId -> ws
 const matchmaking = require('../services/matchmaking');
 const pvpMatchManager = require('../services/pvpMatchManager');
@@ -51,9 +51,18 @@ function setupWebSocket(server) {
       return;
     }
 
+    // Close existing connection if user reconnects
+    const existingWs = clients.get(userId);
+    if (existingWs && existingWs !== ws && existingWs.readyState === existingWs.OPEN) {
+      existingWs.close(4000, 'Replaced by new connection');
+    }
+
     // Register client
     clients.set(userId, ws);
+    ws.isAlive = true;
     console.log(`WebSocket: user ${userId} connected. Total: ${clients.size}`);
+
+    ws.on('pong', () => { ws.isAlive = true; });
 
     ws.on('message', async (rawData) => {
       try {
@@ -78,6 +87,21 @@ function setupWebSocket(server) {
       matchmaking.removeFromQueue(userId);
       handlePvPDisconnect(userId);
     });
+  });
+
+  // ─── Heartbeat: ping every WS_PING_INTERVAL_MS, kill if no pong ───────────
+  const heartbeat = setInterval(() => {
+    wss.clients.forEach((ws) => {
+      if (!ws.isAlive) {
+        return ws.terminate();
+      }
+      ws.isAlive = false;
+      ws.ping();
+    });
+  }, WS_PING_INTERVAL_MS);
+
+  wss.on('close', () => {
+    clearInterval(heartbeat);
   });
 
   return wss;
@@ -114,7 +138,6 @@ async function handleMessage(ws, userId, msg) {
 
     case 'pvp_ready':
     case 'dice_roll':
-    case 'dice_choice':
     case 'coach_choice':
       handlePvPMessage(ws, msg, { odId: userId });
       break;
