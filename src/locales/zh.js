@@ -403,6 +403,9 @@ export default {
     lblTechnique: '技术',
     lblMoves: '招式',
     lblDeck: '卡组 ({n})',
+    lblDailyTasks: 'Daily tasks',
+    lblChecklist: 'CheckList',
+    noTasksAvailable: 'No daily tasks available today!',
   },
   rating: {
     clubs: '俱乐部排名',
@@ -493,7 +496,6 @@ export default {
       slip_counter: { name: '闪避反击', description: '闪避攻击后打击暴露的区域。' },
       precision_strike: { name: '精准打击', description: '终极技术。精确打击弱点。' },
     },
-    lblMax: 'MAX',
   },
   nav: {
     rules: '规则',
