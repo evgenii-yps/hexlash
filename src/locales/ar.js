@@ -386,8 +386,7 @@ export default {
     allocate: 'تعزيز',
     cancel: 'إلغاء',
   },
-  cards: {
-  },
+  cards: {},
   training: {
     timerText: 'كيس الملاكمة انتهى، مقاتل. اصبر، سنقوم باستبداله قريبًا.',
     goToTaskButton: 'اذهب إلى المهمة',
@@ -403,6 +402,9 @@ export default {
     lblTechnique: 'التقنية',
     lblMoves: 'الحركات',
     lblDeck: 'المجموعة ({n})',
+    lblDailyTasks: 'Daily tasks',
+    lblChecklist: 'CheckList',
+    noTasksAvailable: 'No daily tasks available today!',
   },
   rating: {
     clubs: 'تصنيف الأندية',
@@ -431,9 +433,7 @@ export default {
     showPrivacyInfo: 'بمواصلة استخدام هذا الموقع، فإنك توافق على <a href="/rules" target="_blank">القواعد</a> و <a href="/privacy" target="_blank">سياسة الخصوصية</a>.',
   },
   getStarted: {
-
     errorRequired: 'لا يمكن أن يكون فارغًا',
-
     errorOnlyLatinAndNumbers: 'يمكن أن يحتوي تسجيل الدخول فقط على الأحرف اللاتينية والأرقام.',
   },
   deck: {
@@ -493,7 +493,6 @@ export default {
       slip_counter: { name: 'انزلاق ورد', description: 'تفادى الهجوم واضرب المنطقة المكشوفة.' },
       precision_strike: { name: 'ضربة دقيقة', description: 'التقنية النهائية. اضرب بدقة في نقطة الضعف.' },
     },
-    lblMax: 'MAX',
   },
   nav: {
     rules: 'القواعد',

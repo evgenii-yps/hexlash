@@ -386,8 +386,7 @@ export default {
     allocate: 'मजबूत करें',
     cancel: 'रद्द करें',
   },
-  cards: {
-  },
+  cards: {},
   training: {
     timerText: 'पंच बैग नीचे है, फाइटर। होल्ड ऑन, हम जल्द ही इसे बदल देंगे।',
     goToTaskButton: 'कार्य पर जाएँ',
@@ -403,6 +402,9 @@ export default {
     lblTechnique: 'तकनीक',
     lblMoves: 'चालें',
     lblDeck: 'डेक ({n})',
+    lblDailyTasks: 'Daily tasks',
+    lblChecklist: 'CheckList',
+    noTasksAvailable: 'No daily tasks available today!',
   },
   rating: {
     clubs: 'क्लब रेटिंग',
@@ -431,9 +433,7 @@ export default {
     showPrivacyInfo: 'इस साइट का उपयोग जारी रखते हुए, आप <a href="/rules" target="_blank">नियमों</a> और <a href="/privacy" target="_blank">गोपनीयता नीति</a> से सहमत होते हैं।',
   },
   getStarted: {
-
     errorRequired: 'खाली नहीं हो सकता',
-
     errorOnlyLatinAndNumbers: 'लॉगिन में केवल लैटिन अक्षर और संख्या होनी चाहिए।',
   },
   deck: {
@@ -493,7 +493,6 @@ export default {
       slip_counter: { name: 'स्लिप काउंटर', description: 'हमले से बचें और खुली जगह पर प्रहार करें।' },
       precision_strike: { name: 'प्रिसिजन स्ट्राइक', description: 'परम तकनीक। कमज़ोर बिंदु पर सटीक प्रहार।' },
     },
-    lblMax: 'MAX',
   },
   nav: {
     rules: 'नियम',

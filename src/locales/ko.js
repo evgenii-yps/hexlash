@@ -403,6 +403,9 @@ export default {
     lblTechnique: '기술',
     lblMoves: '기술 목록',
     lblDeck: '덱 ({n})',
+    lblDailyTasks: 'Daily tasks',
+    lblChecklist: 'CheckList',
+    noTasksAvailable: 'No daily tasks available today!',
   },
   rating: {
     clubs: '클럽 평점',
@@ -431,9 +434,7 @@ export default {
     showPrivacyInfo: '이 사이트를 계속 사용함으로써 <a href="/rules" target="_blank">규칙</a>과 <a href="/privacy" target="_blank">개인정보 보호 정책</a>에 동의하는 것입니다.',
   },
   getStarted: {
-
     errorRequired: '빈 칸을 입력할 수 없습니다.',
-
     errorOnlyLatinAndNumbers: '로그인에는 라틴 문자와 숫자만 사용할 수 있습니다.',
   },
   deck: {
@@ -493,7 +494,6 @@ export default {
       slip_counter: { name: '슬립 카운터', description: '공격을 피하고 노출된 부위를 타격.' },
       precision_strike: { name: '프리시전 스트라이크', description: '궁극의 기술. 약점을 정확히 타격.' },
     },
-    lblMax: 'MAX',
   },
   nav: {
     rules: '규칙',

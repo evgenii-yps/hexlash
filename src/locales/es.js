@@ -403,6 +403,9 @@ export default {
     lblTechnique: 'Técnica',
     lblMoves: 'Movimientos',
     lblDeck: 'Mazo ({n})',
+    lblDailyTasks: 'Daily tasks',
+    lblChecklist: 'CheckList',
+    noTasksAvailable: 'No daily tasks available today!',
   },
   rating: {
     clubs: 'Clasificación de clubes',

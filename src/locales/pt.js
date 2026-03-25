@@ -386,7 +386,25 @@ export default {
     allocate: 'FORTALECER',
     cancel: 'Cancelar',
   },
-  cards: {
+  cards: {},
+  training: {
+    timerText: 'O saco de pancadas caiu, lutador. Aguente firme, vamos substituí-lo em breve.',
+    goToTaskButton: 'Ir para Tarefa',
+    titleNotice: 'AVISO',
+    taskNotice: '- Ao clicar em "Confirmar", você se compromete. Não há espaço para promessas vazias neste clube. Por exemplo, se você se inscrever em um canal, não há volta. Cancelar a inscrição após a confirmação é um caminho direto para o banimento. Aqui é sério: quebre sua palavra, enfrente um banimento eterno.',
+    successCompleteTask: 'Você completou a tarefa com sucesso e recebeu sua merecida recompensa <a href="/training">Tarefas</a>',
+    lblTitle: 'Sala de treinamento',
+    lblTaps: 'Toques',
+    lblAvailableXP: 'XP disponível',
+    lblSpeed: 'Velocidade',
+    lblPower: 'Força',
+    lblTechnique: 'Técnica',
+    lblMoves: 'Golpes',
+    lblDeck: 'Deck ({n})',
+    lblDailyTasks: 'Daily tasks',
+    lblChecklist: 'CheckList',
+    noTasksAvailable: 'No daily tasks available today!',
+    checklistCompleted: 'Great work, checklist completed!',
   },
   rating: {
     clubs: 'Classificação de clubes',
@@ -415,9 +433,7 @@ export default {
     showPrivacyInfo: 'Ao continuar a usar este site, você concorda com as <a href="/rules" target="_blank">Regras</a> e a <a href="/privacy" target="_blank">Política de Privacidade</a>.',
   },
   getStarted: {
-
     errorRequired: 'Não pode estar vazio',
-
     errorOnlyLatinAndNumbers: 'O login pode conter apenas letras latinas e números.',
   },
   deck: {
@@ -477,7 +493,6 @@ export default {
       slip_counter: { name: 'Esquiva-Contra', description: 'Esquive do ataque e golpeie a área exposta.' },
       precision_strike: { name: 'Golpe Preciso', description: 'Técnica definitiva. Golpeie precisamente no ponto fraco.' },
     },
-    lblMax: 'MAX',
   },
   nav: {
     rules: 'Regras',

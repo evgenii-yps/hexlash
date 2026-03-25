@@ -464,6 +464,9 @@ export default {
     lblTechnique: 'Technik',
     lblMoves: 'Moves',
     lblDeck: 'Deck ({n})',
+    lblDailyTasks: 'Daily tasks',
+    lblChecklist: 'CheckList',
+    noTasksAvailable: 'No daily tasks available today!',
   },
   rating: {
     clubs: 'Club-Rangliste',

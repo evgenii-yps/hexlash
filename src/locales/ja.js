@@ -386,7 +386,25 @@ export default {
     allocate: '強化する',
     cancel: 'キャンセル',
   },
-  cards: {
+  cards: {},
+  training: {
+    timerText: 'パンチバッグが倒れました。もう少しお待ちください、すぐに交換します。',
+    goToTaskButton: 'タスクへ進む',
+    titleNotice: '通知',
+    taskNotice: '- 「確認」をクリックすることで、あなたは約束を守ることを誓います。このクラブでは軽い約束は許されません。たとえば、チャンネルに登録する場合、後戻りはできません。確認後に登録を解除すると、即座にBANされます。ここでは真剣です。約束を破れば、永久追放が待っています。',
+    successCompleteTask: 'タスクを正常に完了し、正当な報酬を獲得しました <a href="/training">タスク</a>',
+    lblTitle: 'トレーニングルーム',
+    lblTaps: 'タップ',
+    lblAvailableXP: '利用可能XP',
+    lblSpeed: 'スピード',
+    lblPower: 'パワー',
+    lblTechnique: 'テクニック',
+    lblMoves: 'ムーブ',
+    lblDeck: 'デッキ ({n})',
+    lblDailyTasks: 'Daily tasks',
+    lblChecklist: 'CheckList',
+    noTasksAvailable: 'No daily tasks available today!',
+    checklistCompleted: 'Great work, checklist completed!',
   },
   rating: {
     clubs: 'クラブランキング',
@@ -415,9 +433,7 @@ export default {
     showPrivacyInfo: 'このサイトの利用を続けることで、<a href="/rules" target="_blank">ルール</a>および<a href="/privacy" target="_blank">プライバシーポリシー</a>に同意したことになります。',
   },
   getStarted: {
-
     errorRequired: '空にすることはできません',
-
     errorOnlyLatinAndNumbers: 'ログインはラテン文字と数字のみで構成できます。',
   },
   deck: {
@@ -477,7 +493,6 @@ export default {
       slip_counter: { name: 'スリップカウンター', description: '攻撃をかわして露出した部分を打つ。' },
       precision_strike: { name: 'プレシジョンストライク', description: '究極のテクニック。弱点を正確に打つ。' },
     },
-    lblMax: 'MAX',
   },
   nav: {
     rules: 'ルール',
