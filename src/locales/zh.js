@@ -434,9 +434,7 @@ export default {
     showPrivacyInfo: '继续使用本网站，即表示您同意<a href="/rules" target="_blank">规则</a>和<a href="/privacy" target="_blank">隐私政策</a>。',
   },
   getStarted: {
-
     errorRequired: '不能为空',
-
     errorOnlyLatinAndNumbers: '登录名只能包含拉丁字母和数字。',
   },
   deck: {
