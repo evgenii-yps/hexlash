@@ -73,6 +73,20 @@
 - **Description:** `saveFightResult()` creates `new PrismaClient()` every time a PvP fight ends. This leaks database connections and will crash the server under load. Also: `$disconnect()` is called on success but NOT on error (catch block on line 563 just logs), so errors leak connections too.
 - **Fix:** Import the shared Prisma instance instead of creating new ones.
 
+### GAME-04. PvP combat completely ignores player archetypes
+- **File:** `backend/src/services/pvpCombatEngine.js:127-200`
+- **Description:** PvP has NO action system (attack/defense/position). Both players simply deal their move's damage every round. Speed only determines knockout order. The archetype modules (predator, sentinel, ghost, analyst, maverick, juggernaut) that players carefully select are **completely ignored** in PvP — they are never consulted by the PvP engine. PvE uses a full action-based system with `ModuleAIStrategy` where archetypes drive behavior (dodge, crit, blocking, positioning). This means the core character-building mechanic has zero impact in PvP.
+- **Impact:** Major gameplay inconsistency. Players invest in archetype selection that only matters in PvE. PvP fights are purely deterministic based on deck composition + dice/coach RNG.
+
+### GAME-05. Auto Fight collapses draw to 'lose' for XP progression
+- **File:** `src/core/state/modules/autoFightState.js:514-516`
+- **Description:** Auto fight dispatches `progression/onFightEnd` with result mapped as `win` or `lose` — draws are collapsed into `lose` (`fightData.result === 'win' ? 'win' : 'lose'`). Draws give the same XP as losses in auto fight progression.
+- **Impact:** Players get penalized for draws in auto fight mode.
+
+### GAME-06. Auto Fight dice only used once per fight
+- **File:** `src/core/state/modules/autoFightState.js:129`
+- **Description:** Auto fight dice simulation uses `diceUsed` as a boolean that becomes true after first use and never resets. In live PvE, players can use dice multiple times (with cooldown). Auto fights are slightly weaker than manual play.
+
 ### SEC-09. User delete leaves dangling foreign keys
 - **File:** `backend/src/routes/user.js:93-106`
 - **Description:** `POST /v1/user/delete` deletes UserAchievement, UserSocialTask, UserDailyTask, PunchInfo, and User, but does NOT delete: Fights (fighterOneId/fighterTwoId/winnerId become dangling), FriendRequests, Friendships, or owned Clubs. This will cause foreign key constraint violations or orphaned data.
@@ -165,7 +179,11 @@
 - **Description:** Error response includes `details: error.message` which can expose Prisma errors, stack traces, and internal DB schema to the client.
 - **Fix:** Remove `details` from error responses; log internally only.
 
-### BE-12. Matchmaking O(n^2) polling with excessive logging
+### BE-12. CLAUDE.md documents stale AI config values
+- **File:** `CLAUDE.md` vs `backend/src/config.js:37-38`
+- **Description:** CLAUDE.md states `ANTHROPIC_MODEL = 'claude-sonnet-4-20250514'` and `AI_TRAINER_MAX_TOKENS = 500`, but actual code uses `'claude-haiku-4-5-20251001'` and `300`. Documentation is stale.
+
+### BE-13. Matchmaking O(n^2) polling with excessive logging
 - **File:** `backend/src/websocket/handler.js:590-597`, `backend/src/services/matchmaking.js:94`
 - **Description:** Matchmaking poll (every 3s) iterates all queued players and for each calls `tryFindMatch` which iterates the entire queue — O(n^2) per tick. Each comparison logs to console (line 94), creating massive log volume under load.
 - **Fix:** Use event-driven matching instead of polling, or at minimum remove per-comparison logging.
@@ -208,8 +226,8 @@
 
 | Category | Count |
 |----------|-------|
-| Critical | 13 |
-| Important | 15 |
+| Critical | 16 |
+| Important | 17 |
 | Minor | 8 |
 | Frontend files checked | 96 (.vue) + 40+ (.js) |
 | Backend files checked | 15+ |
@@ -236,6 +254,7 @@
 6. **SEC-09**: Fix user delete dangling foreign keys
 7. **SEC-10**: Validate skin value against whitelist
 8. **BE-08**: Fix WebSocket reconnect overwrite race condition
+9. **GAME-04**: Decide on PvP archetype system -- implement or document as intentional
 
 ### Short-term (this sprint):
 1. **SEC-03**: Fix email verification endpoint
@@ -246,6 +265,7 @@
 6. **BE-10**: Add helmet security headers
 7. **BE-11**: Stop leaking error details to client
 8. **GAME-01**: Document or unify PvE/PvP dice effects
+9. **GAME-05**: Fix auto fight draw-to-lose XP collapse
 
 ### Medium-term (backlog):
 1. **FE-01**: Remove 9 unused components
@@ -253,4 +273,5 @@
 3. **SEC-04**: Implement actual password reset
 4. **GAME-02**: Document PvE/PvP combat differences
 5. **FE-02**: Remove unused models
-6. **BE-12**: Optimize matchmaking from O(n^2) polling
+6. **BE-13**: Optimize matchmaking from O(n^2) polling
+7. **GAME-06**: Fix auto fight dice single-use limitation
