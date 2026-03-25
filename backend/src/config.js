@@ -36,6 +36,17 @@ module.exports = {
   COACH_BOOST_ROUNDS: 4,
   COACH_PAUSE_TIMEOUT_MS: 10000,
 
+  // PvP Archetype Modifiers (passive bonuses per archetype)
+  SLOT_WEIGHTS: [0.5, 0.3, 0.2],
+  ARCHETYPE_MODIFIERS: {
+    predator:   { dmgBonus: 0.10, incomingReduction: 0,    dodgeChance: 0,    critChance: 0.08, critMult: 1.5 },
+    sentinel:   { dmgBonus: 0,    incomingReduction: 0.15, dodgeChance: 0,    critChance: 0,    critMult: 1.0 },
+    ghost:      { dmgBonus: 0,    incomingReduction: 0,    dodgeChance: 0.08, critChance: 0,    critMult: 1.0 },
+    analyst:    { dmgBonus: 0.05, incomingReduction: 0.05, dodgeChance: 0.02, critChance: 0.02, critMult: 1.3 },
+    maverick:   { dmgBonus: 0,    incomingReduction: 0,    dodgeChance: 0.04, critChance: 0.04, critMult: 1.5, randomRange: 0.10 },
+    juggernaut: { dmgBonus: 0.08, incomingReduction: 0,    dodgeChance: 0,    critChance: 0.03, critMult: 1.5 },
+  },
+
   // Telegram
   TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN || '',
   TELEGRAM_AUTH_MAX_AGE_SEC: 300, // 5 minutes

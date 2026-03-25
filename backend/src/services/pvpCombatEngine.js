@@ -13,7 +13,62 @@ const {
   COACH_MIN_ROUND,
   COACH_BOOST_ROUNDS,
   COACH_PAUSE_TIMEOUT_MS,
+  SLOT_WEIGHTS,
+  ARCHETYPE_MODIFIERS,
 } = config;
+
+/**
+ * Calculate passive archetype modifiers from 3 module slots.
+ * Weights: slot1=50%, slot2=30%, slot3=20%.
+ * Returns { dmgBonus, incomingReduction, dodgeChance, critChance, critMult }.
+ */
+function calculateArchetypeModifiers(modules) {
+  const zero = { dmgBonus: 0, incomingReduction: 0, dodgeChance: 0, critChance: 0, critMult: 1.0 };
+  if (!modules || !modules.length) return zero;
+
+  let dmgBonus = 0;
+  let incomingReduction = 0;
+  let dodgeChance = 0;
+  let critChance = 0;
+  let critMultWeighted = 0;
+  let critSlots = 0;
+
+  for (let i = 0; i < Math.min(modules.length, 3); i++) {
+    const archId = modules[i];
+    const arch = ARCHETYPE_MODIFIERS[archId];
+    if (!arch) continue;
+
+    const w = SLOT_WEIGHTS[i];
+
+    let aDmg = arch.dmgBonus;
+    let aInc = arch.incomingReduction;
+    let aDodge = arch.dodgeChance;
+    let aCrit = arch.critChance;
+
+    // Maverick: randomize within ±randomRange per fight
+    if (arch.randomRange) {
+      const r = arch.randomRange;
+      aDmg = (Math.random() * 2 - 1) * r;
+      aInc = (Math.random() * 2 - 1) * r;
+      // dodge/crit keep base values for maverick (already set)
+    }
+
+    dmgBonus += aDmg * w;
+    incomingReduction += aInc * w;
+    dodgeChance += aDodge * w;
+    critChance += aCrit * w;
+
+    if (arch.critMult > 1.0) {
+      critMultWeighted += arch.critMult * w;
+      critSlots += w;
+    }
+  }
+
+  // Average crit multiplier across slots that contribute crit
+  const critMult = critSlots > 0 ? critMultWeighted / critSlots : 1.5;
+
+  return { dmgBonus, incomingReduction, dodgeChance, critChance, critMult };
+}
 
 class PvPCombatEngine {
   constructor(matchId, player1, player2) {
@@ -23,6 +78,8 @@ class PvPCombatEngine {
       odId: player1.odId,
       username: player1.username,
       deck: player1.deck,       // [{id, level}, ...]
+      modules: player1.modules || [],
+      modifiers: calculateArchetypeModifiers(player1.modules),
       hp: MAX_HP,
       diceUsedRound: -DICE_COOLDOWN_ROUNDS, // available from round 1
       coachUsed: false,
@@ -36,6 +93,8 @@ class PvPCombatEngine {
       odId: player2.odId,
       username: player2.username,
       deck: player2.deck,
+      modules: player2.modules || [],
+      modifiers: calculateArchetypeModifiers(player2.modules),
       hp: MAX_HP,
       diceUsedRound: -DICE_COOLDOWN_ROUNDS,
       coachUsed: false,
@@ -169,8 +228,29 @@ class PvPCombatEngine {
     damage1 = this.applyEffects(damage1, this.player1, this.player2);
     damage2 = this.applyEffects(damage2, this.player2, this.player1);
 
+    // Apply archetype passive modifiers: dmgBonus, incomingReduction, dodge, crit
+    const mod1 = this.player1.modifiers;
+    const mod2 = this.player2.modifiers;
+
+    // Damage bonus (attacker) and incoming reduction (defender)
+    damage1 = Math.round(damage1 * (1 + mod1.dmgBonus) * (1 - mod2.incomingReduction));
+    damage2 = Math.round(damage2 * (1 + mod2.dmgBonus) * (1 - mod1.incomingReduction));
+
+    // Dodge check (defender avoids all damage)
+    const p1Dodged = Math.random() < mod1.dodgeChance;
+    const p2Dodged = Math.random() < mod2.dodgeChance;
+    if (p2Dodged) damage1 = 0;
+    if (p1Dodged) damage2 = 0;
+
+    // Crit check (attacker deals bonus damage, only if not dodged)
+    const p1Critted = !p2Dodged && Math.random() < mod1.critChance;
+    const p2Critted = !p1Dodged && Math.random() < mod2.critChance;
+    if (p1Critted) damage1 = Math.round(damage1 * mod1.critMult);
+    if (p2Critted) damage2 = Math.round(damage2 * mod2.critMult);
+
     // Determine attack order by speed
     let firstAttacker, firstDamage, secondDamage, firstModule, secondModule;
+    let firstDodged, secondDodged, firstCritted, secondCritted;
 
     if (speed1 >= speed2) {
       firstAttacker = 'player1';
@@ -178,12 +258,20 @@ class PvPCombatEngine {
       secondDamage = damage2;
       firstModule = module1;
       secondModule = module2;
+      firstDodged = p2Dodged;
+      secondDodged = p1Dodged;
+      firstCritted = p1Critted;
+      secondCritted = p2Critted;
     } else {
       firstAttacker = 'player2';
       firstDamage = damage2;
       secondDamage = damage1;
       firstModule = module2;
       secondModule = module1;
+      firstDodged = p1Dodged;
+      secondDodged = p2Dodged;
+      firstCritted = p2Critted;
+      secondCritted = p1Critted;
     }
 
     // Apply damage — faster attacker hits first, second only hits if alive
@@ -213,12 +301,16 @@ class PvPCombatEngine {
         damage: firstAttacker === 'player1' ? firstDamage : secondDamage,
         hp: this.player1.hp,
         effects: [...this.player1.activeEffects],
+        dodged: firstAttacker === 'player1' ? firstDodged : secondDodged,
+        critted: firstAttacker === 'player1' ? firstCritted : secondCritted,
       },
       player2: {
         module: { id: module2.id, level: level2, name: moveData2.id, branch: moveData2.branch },
         damage: firstAttacker === 'player2' ? firstDamage : secondDamage,
         hp: this.player2.hp,
         effects: [...this.player2.activeEffects],
+        dodged: firstAttacker === 'player2' ? firstDodged : secondDodged,
+        critted: firstAttacker === 'player2' ? firstCritted : secondCritted,
       },
     };
 

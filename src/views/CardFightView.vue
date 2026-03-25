@@ -784,10 +784,12 @@ function initPvPFight() {
   // Send ready + deck to server
   const deck = store.getters['progression/getDeck'] || [];
   console.log('[PVP] Sending pvp_ready, matchId:', pvpMatchId.value, 'deck:', deck);
+  const playerModules = store.state.fight.playerModules || [];
   store.dispatch('webSocket/sendMessage', {
     type: 'pvp_ready',
     matchId: pvpMatchId.value,
     deck: deck.map(id => ({ id, level: store.state.progression.moves[id]?.level || 1 })),
+    modules: playerModules,
   });
 
   // Listen for PvP events
@@ -933,6 +935,26 @@ function onPvPRoundResult(e) {
     } else {
       store.commit('fight/setCoachAdvice', { roundsLeft: newLeft });
     }
+  }
+
+  // Show dodge/crit event titles for PvP archetype mechanics
+  const myDodged = myData.dodged;
+  const oppDodged = oppData.dodged;
+  const myCritted = myData.critted;
+  const oppCritted = oppData.critted;
+
+  if (myDodged) {
+    store.commit('fight/setEventTitle', { title: t.value.fight.lblDodged, cls: 'event-dodge' });
+    setTimeout(() => store.commit('fight/clearEventTitle'), 1200);
+  } else if (oppCritted) {
+    store.commit('fight/setEventTitle', { title: t.value.fight.lblCrit, cls: 'event-crit' });
+    setTimeout(() => store.commit('fight/clearEventTitle'), 1200);
+  } else if (oppDodged) {
+    store.commit('fight/setEventTitle', { title: t.value.fight.lblDodged, cls: 'event-dodge' });
+    setTimeout(() => store.commit('fight/clearEventTitle'), 1200);
+  } else if (myCritted) {
+    store.commit('fight/setEventTitle', { title: t.value.fight.lblCrit, cls: 'event-crit' });
+    setTimeout(() => store.commit('fight/clearEventTitle'), 1200);
   }
 
   // Trigger shake animations
