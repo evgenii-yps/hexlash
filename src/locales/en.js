@@ -509,6 +509,7 @@ export default {
     fightStartsIn: 'Fight starts in',
     playersSearching: 'Players searching',
     noPlayersFound: 'No players found',
+    lblMatchmakingTimeout: 'Search time expired',
     tryAgainLater: 'Try again later or invite a friend',
     tryAgain: 'TRY AGAIN',
     backToArena: 'BACK TO ARENA',

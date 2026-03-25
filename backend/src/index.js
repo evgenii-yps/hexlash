@@ -2,6 +2,7 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 const http = require('http');
 const path = require('path');
 const fs = require('fs');
@@ -52,6 +53,7 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 };
 
+app.use(helmet());
 app.use(cors(corsOptions));
 
 // Explicit preflight handling for all routes

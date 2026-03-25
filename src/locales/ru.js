@@ -509,6 +509,7 @@ export default {
     fightStartsIn: 'Бой начнётся через',
     playersSearching: 'Игроков в поиске',
     noPlayersFound: 'Игроки не найдены',
+    lblMatchmakingTimeout: 'Время поиска истекло',
     tryAgainLater: 'Попробуй позже или пригласи друга',
     tryAgain: 'ПОПРОБОВАТЬ',
     backToArena: 'В АРЕНУ',

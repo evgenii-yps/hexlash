@@ -165,6 +165,14 @@ function onQueueUpdate(e) {
   queueSize.value = data.queueSize || 0;
 }
 
+function onMatchmakingTimeout() {
+  if (searchInterval) {
+    clearInterval(searchInterval);
+    searchInterval = null;
+  }
+  status.value = 'timeout';
+}
+
 // Lifecycle
 onMounted(async () => {
   // Fetch online count
@@ -176,6 +184,7 @@ onMounted(async () => {
   // Listen for WS matchmaking events
   window.addEventListener('matchmaking-match-found', onMatchFound);
   window.addEventListener('matchmaking-queue-update', onQueueUpdate);
+  window.addEventListener('matchmaking-timeout', onMatchmakingTimeout);
 
   startSearch();
 });
@@ -184,6 +193,7 @@ onBeforeUnmount(() => {
   cleanup();
   window.removeEventListener('matchmaking-match-found', onMatchFound);
   window.removeEventListener('matchmaking-queue-update', onQueueUpdate);
+  window.removeEventListener('matchmaking-timeout', onMatchmakingTimeout);
   if (onlineRefreshInterval) {
     clearInterval(onlineRefreshInterval);
   }

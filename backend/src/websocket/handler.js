@@ -11,6 +11,9 @@ const { handlePvPMessage, handlePvPDisconnect } = require('./pvpHandler');
 function setupWebSocket(server) {
   const wss = new WebSocketServer({ server });
 
+  // Register sendToUser callback in matchmaking to avoid circular dependency
+  matchmaking.setSendToUser(sendToUser);
+
   wss.on('connection', async (ws, req) => {
     // Extract token from protocol
     const protocols = ws.protocol ? ws.protocol.split(',').map(p => p.trim()) : [];

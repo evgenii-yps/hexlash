@@ -83,8 +83,8 @@ router.post('/request', authMiddleware, async (req, res) => {
     console.log('[FRIENDS] Request sent:', fromId, '->', targetId);
     res.json({ status: 'pending' });
   } catch (error) {
-    console.error('[FRIENDS] Error sending request:', error.message, error.code);
-    res.status(500).json({ error: 'Failed to send request', details: error.message });
+    console.error('[FRIENDS] Error sending request:', error);
+    res.status(500).json({ error: 'Failed to send request' });
   }
 });
 

@@ -161,6 +161,12 @@ const actions = {
             case 'MatchmakingCancelledMsg':
                 window.dispatchEvent(new CustomEvent('matchmaking-cancelled', { detail: message }));
                 break;
+            case 'matchmaking_timeout':
+                window.dispatchEvent(new CustomEvent('matchmaking-timeout', { detail: message }));
+                break;
+            case 'match_cancelled':
+                window.dispatchEvent(new CustomEvent('match-cancelled', { detail: message }));
+                break;
             case 'fight_start':
             case 'round_result':
             case 'dice_available':
