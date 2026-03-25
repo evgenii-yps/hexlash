@@ -67,36 +67,64 @@ router.post('/edit', authMiddleware, async (req, res) => {
 });
 
 // POST /v1/user/reset
-router.post('/reset', async (req, res) => {
-  try {
-    const { email } = req.body;
-    if (!email) {
-      return res.status(400).json({ error: 'Email required' });
-    }
-
-    const user = await prisma.user.findFirst({ where: { email } });
-    if (!user) {
-      // Don't reveal if email exists
-      return res.json({ data: { success: true } });
-    }
-
-    // In production, send a password reset email here
-    // For now, just return success
-    res.json({ data: { success: true } });
-  } catch (err) {
-    console.error('Reset error:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
+// TODO: implement password reset with email token
+router.post('/reset', (req, res) => {
+  res.status(501).json({ error: 'Password reset is not yet implemented' });
 });
 
 // POST /v1/user/delete
 router.post('/delete', authMiddleware, async (req, res) => {
   try {
-    await prisma.userAchievement.deleteMany({ where: { userId: req.userId } });
-    await prisma.userSocialTask.deleteMany({ where: { userId: req.userId } });
-    await prisma.userDailyTask.deleteMany({ where: { userId: req.userId } });
-    await prisma.punchInfo.deleteMany({ where: { userId: req.userId } });
-    await prisma.user.delete({ where: { id: req.userId } });
+    await prisma.$transaction(async (tx) => {
+      const userId = req.userId;
+
+      // Remove user from clubs they belong to (not owner)
+      await tx.user.update({
+        where: { id: userId },
+        data: { clubId: null },
+      });
+
+      // Transfer or delete owned clubs
+      const ownedClubs = await tx.club.findMany({ where: { ownerId: userId } });
+      for (const club of ownedClubs) {
+        // Find another member to transfer ownership
+        const otherMember = await tx.user.findFirst({
+          where: { clubId: club.id, NOT: { id: userId } },
+        });
+        if (otherMember) {
+          await tx.club.update({
+            where: { id: club.id },
+            data: { ownerId: otherMember.id },
+          });
+        } else {
+          // No other members — delete the club
+          await tx.club.delete({ where: { id: club.id } });
+        }
+      }
+
+      // Delete all related records
+      await tx.userAchievement.deleteMany({ where: { userId } });
+      await tx.userSocialTask.deleteMany({ where: { userId } });
+      await tx.userDailyTask.deleteMany({ where: { userId } });
+      await tx.punchInfo.deleteMany({ where: { userId } });
+
+      // Nullify optional fight references (preserve fight history where possible)
+      await tx.fight.updateMany({ where: { fighterTwoId: userId }, data: { fighterTwoId: null } });
+      await tx.fight.updateMany({ where: { winnerId: userId }, data: { winnerId: null } });
+      // Delete fights where user is the required fighterOne (can't nullify required FK)
+      await tx.fight.deleteMany({ where: { fighterOneId: userId } });
+
+      // Delete friend requests and friendships
+      await tx.friendRequest.deleteMany({
+        where: { OR: [{ fromId: userId }, { toId: userId }] },
+      });
+      await tx.friendship.deleteMany({
+        where: { OR: [{ user1Id: userId }, { user2Id: userId }] },
+      });
+
+      // Finally delete the user
+      await tx.user.delete({ where: { id: userId } });
+    });
 
     res.json({ data: { success: true } });
   } catch (err) {
@@ -106,18 +134,19 @@ router.post('/delete', authMiddleware, async (req, res) => {
 });
 
 // POST /v1/user/verify-email
-router.post('/verify-email', async (req, res) => {
+// TODO: implement proper verification with email token instead of accepting any code
+router.post('/verify-email', authMiddleware, async (req, res) => {
   try {
-    // In production, verify the code and update user
-    // For now, accept any code and mark as verified
-    const { code, userId } = req.body;
-
-    if (userId) {
-      await prisma.user.update({
-        where: { id: userId },
-        data: { emailVerified: true },
-      });
+    const { code } = req.body;
+    if (!code) {
+      return res.status(400).json({ error: 'Verification code is required' });
     }
+
+    // Only allow verifying the authenticated user's own email
+    await prisma.user.update({
+      where: { id: req.userId },
+      data: { emailVerified: true },
+    });
 
     res.json({ data: true });
   } catch (err) {
@@ -233,10 +262,13 @@ router.get('/search', authMiddleware, async (req, res) => {
 });
 
 // PUT /v1/user/skin
+// Valid skin patterns: skin_m_1.png, skin_w_26.png, vip_k1.png, vip_t2.png
+const VALID_SKIN_PATTERN = /^(skin_(m|w)_\d{1,3}|vip_(k|t)\d{1,2})\.png$/;
+
 router.put('/skin', authMiddleware, async (req, res) => {
   try {
     const { skin } = req.body;
-    if (!skin || typeof skin !== 'string') {
+    if (!skin || typeof skin !== 'string' || !VALID_SKIN_PATTERN.test(skin)) {
       return res.status(400).json({ error: 'Invalid skin value' });
     }
 

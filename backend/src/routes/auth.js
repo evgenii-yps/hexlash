@@ -1,13 +1,42 @@
 const express = require('express');
+const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const { PrismaClient } = require('@prisma/client');
 const { generateToken } = require('../utils/helpers');
+const { TELEGRAM_BOT_TOKEN, TELEGRAM_AUTH_MAX_AGE_SEC } = require('../config');
+
+const rateLimit = require('express-rate-limit');
 
 const router = express.Router();
 const prisma = new PrismaClient();
 
+// Rate limiters for auth endpoints
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5,
+  message: { error: 'Too many login attempts, try again in 15 minutes' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 3,
+  message: { error: 'Too many registration attempts, try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const telegramLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10,
+  message: { error: 'Too many Telegram auth attempts, try again in 15 minutes' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // POST /v1/auth/login
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, async (req, res) => {
   try {
     const { login: rawLogin, password } = req.body;
     const login = rawLogin?.trim();
@@ -40,7 +69,7 @@ router.post('/login', async (req, res) => {
 });
 
 // POST /v1/auth/register
-router.post('/register', async (req, res) => {
+router.post('/register', registerLimiter, async (req, res) => {
   try {
     const { login: rawLogin, password } = req.body;
     const login = rawLogin?.trim();
@@ -89,23 +118,57 @@ router.post('/register', async (req, res) => {
   }
 });
 
+// Validate Telegram WebApp initData signature
+function validateTelegramPayload(payload) {
+  if (!TELEGRAM_BOT_TOKEN) return false;
+  const { hash, ...data } = payload;
+  if (!hash) return false;
+
+  // Check auth_date freshness
+  if (data.auth_date) {
+    const age = Math.floor(Date.now() / 1000) - parseInt(data.auth_date);
+    if (age > TELEGRAM_AUTH_MAX_AGE_SEC) return false;
+  }
+
+  // Build data-check-string: sorted key=value pairs
+  const checkString = Object.keys(data)
+    .sort()
+    .map(k => `${k}=${data[k]}`)
+    .join('\n');
+
+  // HMAC-SHA256 with key = SHA256(bot_token)
+  const secretKey = crypto.createHash('sha256').update(TELEGRAM_BOT_TOKEN).digest();
+  const hmac = crypto.createHmac('sha256', secretKey).update(checkString).digest('hex');
+
+  return hmac === hash;
+}
+
 // POST /v1/auth/telegram
-router.post('/telegram', async (req, res) => {
+router.post('/telegram', telegramLimiter, async (req, res) => {
   try {
     const { payload } = req.body;
     if (!payload) {
       return res.status(400).json({ error: 'Telegram payload required' });
     }
 
-    // For now, create or find user based on telegram data
+    // Validate Telegram signature (skip only if bot token not configured)
+    if (TELEGRAM_BOT_TOKEN && !validateTelegramPayload(payload)) {
+      return res.status(403).json({ error: 'Invalid Telegram signature' });
+    }
+
     const telegramId = payload.id || payload.user?.id;
     const telegramName = payload.first_name || payload.user?.first_name || 'TelegramUser';
+
+    if (!telegramId) {
+      return res.status(400).json({ error: 'Missing Telegram user ID' });
+    }
+
     const login = `tg_${telegramId}`;
 
     let user = await prisma.user.findUnique({ where: { login } });
 
     if (!user) {
-      const tempPassword = Math.random().toString(36).slice(-8);
+      const tempPassword = crypto.randomBytes(12).toString('base64url');
       const hashedPassword = await bcrypt.hash(tempPassword, 10);
 
       user = await prisma.user.create({
