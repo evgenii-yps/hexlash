@@ -87,6 +87,11 @@
 - **File:** `src/core/state/modules/autoFightState.js:129`
 - **Description:** Auto fight dice simulation uses `diceUsed` as a boolean that becomes true after first use and never resets. In live PvE, players can use dice multiple times (with cooldown). Auto fights are slightly weaker than manual play.
 
+### I18N-01. Invite component uses keys missing from ALL locales
+- **File:** `src/components/fragments/auth/Invite.vue:5,28,32,36`
+- **Description:** Uses `t.auth.invite.lblInvite`, `t.auth.invite.btnInvite`, `t.auth.invite.question`, `t.auth.invite.btnLogin`. The entire `auth.invite` section does **not exist in any locale file** (not even en.js). This component renders `undefined` for all text.
+- **Impact:** If this component is ever mounted, all text will display as `undefined`.
+
 ### SEC-09. User delete leaves dangling foreign keys
 - **File:** `backend/src/routes/user.js:93-106`
 - **Description:** `POST /v1/user/delete` deletes UserAchievement, UserSocialTask, UserDailyTask, PunchInfo, and User, but does NOT delete: Fights (fighterOneId/fighterTwoId/winnerId become dangling), FriendRequests, Friendships, or owned Clubs. This will cause foreign key constraint violations or orphaned data.
@@ -179,6 +184,23 @@
 - **Description:** Error response includes `details: error.message` which can expose Prisma errors, stack traces, and internal DB schema to the client.
 - **Fix:** Remove `details` from error responses; log internally only.
 
+### I18N-02. 9 locales missing arena + spectate translation keys
+- **Files:** `src/locales/{es,fr,pt,ar,hi,ja,ko,zh}.js` — 18 keys missing each; `src/locales/de.js` — 9 keys missing
+- **Description:** All non-RU locales are missing `arena.mode`, `arena.chooseMode`, `arena.pveDesc`, `arena.pvpDesc`, `arena.autoFight`, `arena.startAuto`, `arena.stopAuto`, `arena.autoFightActive`, `arena.autoFightInactive`. Additionally, 8 locales (all except en, ru, de) are missing the entire `spectate.*` section (9 keys).
+- **Impact:** Users in those languages see undefined/fallback text for arena mode selector and spectate UI.
+
+### I18N-03. ~90 dead i18n keys in locale files
+- **File:** `src/locales/en.js` (and mirrored in other locales)
+- **Description:** Approximately 90 keys exist in locale files but are never referenced in code. Major groups:
+  - 18 vestigial fight trainer analysis keys (pre-AI-Trainer system)
+  - 8 fight report keys
+  - 8 fight combat event keys
+  - 11 wallet keys
+  - 10 PvP keys (league names, etc.)
+  - 13 auto fight keys
+  - Various others (achievements, friends, cards, training, moves)
+- **Impact:** Bloated locale files. Not a bug, but maintenance burden.
+
 ### BE-12. CLAUDE.md documents stale AI config values
 - **File:** `CLAUDE.md` vs `backend/src/config.js:37-38`
 - **Description:** CLAUDE.md states `ANTHROPIC_MODEL = 'claude-sonnet-4-20250514'` and `AI_TRAINER_MAX_TOKENS = 500`, but actual code uses `'claude-haiku-4-5-20251001'` and `300`. Documentation is stale.
@@ -207,14 +229,23 @@
 - **File:** `backend/src/routes/auth.js:108`
 - **Description:** `Math.random().toString(36).slice(-8)` generates a weak 8-char password. While temporary, it's returned in the API response (`tempPassword`), which could be intercepted.
 
-### MINOR-05. Locale top-level keys are consistent
-- All 11 locales (en, ru, de, es, fr, pt, ar, hi, ja, ko, zh) have matching top-level key structure. Deep key comparison may reveal missing nested keys but top-level structure is sound.
+### MINOR-05. 6 unused image files
+- **Files:**
+  - `src/assets/images/achievement_email.png` — not referenced
+  - `src/assets/images/icon_again.svg` — not referenced
+  - `src/assets/images/icon_dollar.svg` — not referenced
+  - `src/assets/images/icon_hit.svg` — not referenced
+  - `src/assets/images/icon_time.svg` — not referenced
+  - `src/assets/images/logo.svg` — not referenced (Logo.vue uses text, not SVG)
 
-### MINOR-06. All sound files are used
-- `punch_air.mp3`, `punch_hit.mp3`, `rain.mp3` — all referenced in code (BottomMenu, TrainingView, RainView).
+### MINOR-06. 3 unused texture files
+- **Files:**
+  - `src/assets/textures/colors.png` — not referenced
+  - `src/assets/textures/grid.png` — not referenced
+  - `src/assets/textures/punch-texture.png` — superseded by `punch_texture2.webp`
 
-### MINOR-07. All 3D models are used
-- `punching-bags.gltf`, `punching-bags.bin`, `scene.glb` — referenced in Punch3D.vue.
+### MINOR-07. Inconsistent localStorage key naming
+- **Description:** Keys using `hexlash_*` prefix (`hexlash_current_fight`, `hexlash_player_modules`, `hexlash_progression`, `hexlash_pvp`, `hexlash_autofight_state/history`) coexist with unprefixed keys (`selectedSkin`, `is2DPunch`, `isMuted`, `jwtToken`, `firstFightToolTip`, etc.). 15 total keys, no conflicts, but inconsistent convention.
 
 ### MINOR-08. `combatResultModel.js` only imported in 1 file
 - **File:** `src/core/models/combatResultModel.js`
@@ -226,8 +257,8 @@
 
 | Category | Count |
 |----------|-------|
-| Critical | 16 |
-| Important | 17 |
+| Critical | 17 |
+| Important | 19 |
 | Minor | 8 |
 | Frontend files checked | 96 (.vue) + 40+ (.js) |
 | Backend files checked | 15+ |
@@ -238,7 +269,10 @@
 | TODO/FIXME comments | 1 |
 | Prisma models defined | 12 |
 | PrismaClient instances | 9 (should be 1) |
-| Locale languages | 11 (all structurally consistent) |
+| Locale languages | 11 (top-level consistent, deep keys: 9-18 missing per non-RU locale) |
+| Dead i18n keys | ~90 |
+| Unused images | 6 |
+| Unused textures | 3 |
 | Routes without auth that should have it | 2 (verify-email, reset) |
 
 ---
