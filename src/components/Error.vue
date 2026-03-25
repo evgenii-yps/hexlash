@@ -4,7 +4,7 @@
         v-model="snackbarVisible"
         :timeout="timeout"
         :multi-line="multiLine">
-      <div class="content-html" v-html="text"/>
+      <div class="content-html">{{ text }}</div>
 
       <template v-if="showButton" v-slot:actions>
         <VBtn class="btn-close"  @click="btnClose">
