@@ -9,31 +9,125 @@
 :root {
   /* === COLORS === */
 
-  /* Primary */
+  /* Primary — brand pink */
   --hex-primary: #FF066F;
   --hex-primary-light: #FF3D8E;
-  --hex-primary-dark: #CC0058;
+  --hex-primary-dark: #A50344;
   --hex-primary-glow: rgba(255, 6, 111, 0.5);
 
-  /* Background */
-  --hex-bg-dark: #0A0A0C;
-  --hex-bg-medium: #12121A;
-  --hex-bg-light: #1A1A24;
-  --hex-bg-card: rgba(20, 20, 30, 0.85);
+  /* Background — near-black surfaces */
+  --hex-bg-dark: #090909;
+  --hex-bg-medium: #111111;
+  --hex-bg-light: #1A1A1A;
+  --hex-bg-card: rgba(17, 17, 17, 0.85);
 
-  /* Text */
+  /* Text — white with opacity levels */
   --hex-text-primary: #FFFFFF;
-  --hex-text-secondary: #AAAAAA;
-  --hex-text-muted: #666666;
+  --hex-text-secondary: rgba(255, 255, 255, 0.6);
+  --hex-text-muted: rgba(255, 255, 255, 0.35);
 
   /* Status */
   --hex-success: #00FF88;
   --hex-danger: #FF3333;
   --hex-warning: #FFB800;
 
-  /* Borders */
-  --hex-border-color: rgba(255, 6, 111, 0.3);
-  --hex-border-active: #FF066F;
+  /* Borders — white-based for theme flexibility */
+  --hex-border-color: rgba(255, 255, 255, 0.08);
+  --hex-border-default: rgba(255, 255, 255, 0.08);
+  --hex-border-active: rgba(255, 255, 255, 0.15);
+  --hex-border-strong: rgba(255, 255, 255, 0.25);
+
+  /* --- ARCHETYPES (6) --- */
+
+  /* Predator — blood red, aggression */
+  --hex-arch-predator: #FF2D2D;
+  --hex-arch-predator-dark: #CC1A1A;
+  --hex-arch-predator-light: #FF6B6B;
+  --hex-arch-predator-bg: #330808;
+  --hex-arch-predator-glow: rgba(255, 45, 45, 0.5);
+
+  /* Sentinel — steel blue, defense */
+  --hex-arch-sentinel: #4DA6FF;
+  --hex-arch-sentinel-dark: #2B7ACC;
+  --hex-arch-sentinel-light: #8CC8FF;
+  --hex-arch-sentinel-bg: #081833;
+  --hex-arch-sentinel-glow: rgba(77, 166, 255, 0.5);
+
+  /* Ghost — phantom violet, evasion */
+  --hex-arch-ghost: #B44DFF;
+  --hex-arch-ghost-dark: #8A2BE2;
+  --hex-arch-ghost-light: #D199FF;
+  --hex-arch-ghost-bg: #1A0833;
+  --hex-arch-ghost-glow: rgba(180, 77, 255, 0.5);
+
+  /* Analyst — matrix green, data */
+  --hex-arch-analyst: #00FF88;
+  --hex-arch-analyst-dark: #00CC6A;
+  --hex-arch-analyst-light: #66FFBB;
+  --hex-arch-analyst-bg: #083320;
+  --hex-arch-analyst-glow: rgba(0, 255, 136, 0.5);
+
+  /* Maverick — electric amber, chaos */
+  --hex-arch-maverick: #FFB800;
+  --hex-arch-maverick-dark: #CC9200;
+  --hex-arch-maverick-light: #FFD466;
+  --hex-arch-maverick-bg: #332508;
+  --hex-arch-maverick-glow: rgba(255, 184, 0, 0.5);
+
+  /* Juggernaut — molten orange, unstoppable */
+  --hex-arch-juggernaut: #FF6B1A;
+  --hex-arch-juggernaut-dark: #CC5514;
+  --hex-arch-juggernaut-light: #FF9F66;
+  --hex-arch-juggernaut-bg: #331508;
+  --hex-arch-juggernaut-glow: rgba(255, 107, 26, 0.5);
+
+  /* --- BRANCHES (3) --- */
+
+  /* Speed — electric cyan */
+  --hex-branch-speed: #00E5FF;
+  --hex-branch-speed-dark: #008B99;
+  --hex-branch-speed-light: #66F0FF;
+  --hex-branch-speed-glow: rgba(0, 229, 255, 0.5);
+
+  /* Power — neon pink (= brand) */
+  --hex-branch-power: #FF066F;
+  --hex-branch-power-dark: #A50344;
+  --hex-branch-power-light: #FF66A3;
+  --hex-branch-power-glow: rgba(255, 6, 111, 0.5);
+
+  /* Technique — royal purple */
+  --hex-branch-technique: #A855F7;
+  --hex-branch-technique-dark: #7C3AED;
+  --hex-branch-technique-light: #C084FC;
+  --hex-branch-technique-glow: rgba(168, 85, 247, 0.5);
+
+  /* --- COMBAT ACTIONS (3) --- */
+  --hex-action-attack: #FF2D2D;
+  --hex-action-defense: #4DA6FF;
+  --hex-action-position: #A855F7;
+
+  /* --- DICE EFFECTS (6) --- */
+  --hex-dice-heal: #00FF88;
+  --hex-dice-adrenaline: #FF9100;
+  --hex-dice-shield: #4DA6FF;
+  --hex-dice-blind: #E040FB;
+  --hex-dice-rage: #FF1744;
+  --hex-dice-crit: #FFD600;
+
+  /* --- GAME STATUS --- */
+  --hex-victory: #00FF88;
+  --hex-victory-bg: #1A3320;
+  --hex-defeat: #FF4444;
+  --hex-defeat-bg: #331010;
+  --hex-draw: #FFB800;
+  --hex-draw-bg: #332B08;
+  --hex-info: #4DA6FF;
+  --hex-info-bg: #081833;
+
+  /* --- MODE COLORS (3) --- */
+  --hex-mode-pve: #00E5FF;
+  --hex-mode-pvp: #FF066F;
+  --hex-mode-auto: #00FF88;
 
 
   /* === SIZES === */
