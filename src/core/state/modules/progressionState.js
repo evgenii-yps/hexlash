@@ -253,7 +253,7 @@ export default {
     },
 
     onFightEnd({ commit, dispatch }, { result }) {
-      const amount = result === 'win' ? 10 : 5;
+      const amount = result === 'win' ? 10 : result === 'draw' ? 7 : 5;
       commit('addFreeXP', { amount, result });
       dispatch('syncProgression');
     },

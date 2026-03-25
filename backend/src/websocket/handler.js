@@ -1,10 +1,8 @@
 const { WebSocketServer } = require('ws');
 const jwt = require('jsonwebtoken');
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../lib/prisma');
 const { v4: uuidv4 } = require('uuid');
 const { JWT_SECRET, COST_PER_CLICK, DECIMALS, PUNCH_MAX_PER_INTERVAL, PUNCH_MAX_PER_BATCH, PUNCH_INTERVAL_MS } = require('../config');
-
-const prisma = new PrismaClient();
 const clients = new Map(); // userId -> ws
 const matchmaking = require('../services/matchmaking');
 const pvpMatchManager = require('../services/pvpMatchManager');

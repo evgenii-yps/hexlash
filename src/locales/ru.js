@@ -181,6 +181,10 @@ export default {
       lblClub: 'Клуб',
     },
     invite: {
+      lblInvite: 'Код приглашения',
+      btnInvite: 'Вступить',
+      question: 'Уже есть аккаунт?',
+      btnLogin: 'Войти',
       lblCopySuccess: 'Код приглашения скопирован в буфер обмена',
       lblCopyError: 'Ошибка копирования текста {error}',
       lblTooltipText: 'Первое правило Hexlash: расскажите всем о Hexlash. Помните, это ваш билет к свободе. Поделитесь этой свободой с другими.',

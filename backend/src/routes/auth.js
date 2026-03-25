@@ -1,14 +1,13 @@
 const express = require('express');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../lib/prisma');
 const { generateToken } = require('../utils/helpers');
 const { TELEGRAM_BOT_TOKEN, TELEGRAM_AUTH_MAX_AGE_SEC } = require('../config');
 
 const rateLimit = require('express-rate-limit');
 
 const router = express.Router();
-const prisma = new PrismaClient();
 
 // Rate limiters for auth endpoints
 const loginLimiter = rateLimit({

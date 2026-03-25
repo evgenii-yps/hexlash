@@ -26,13 +26,15 @@ function handlePvPMessage(ws, message, user) {
         return;
       }
 
-      // Bind deck and socket
+      // Bind deck, modules and socket
       if (user.odId === match.player1.odId) {
         match.player1.deck = data.deck;
+        match.player1.modules = data.modules || [];
         match.player1.socket = ws;
         match.player1.ready = true;
       } else if (user.odId === match.player2.odId) {
         match.player2.deck = data.deck;
+        match.player2.modules = data.modules || [];
         match.player2.socket = ws;
         match.player2.ready = true;
       } else {

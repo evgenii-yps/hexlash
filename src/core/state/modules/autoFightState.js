@@ -126,7 +126,7 @@ function simulateFullFight(playerModules, difficulty, playerPower = null, player
         if (!isOverdrive) {
             // Dice simulation — available after round 1, with cooldown
             if (diceCooldown > 0) diceCooldown--;
-            if (!diceUsed && roundNum > 1 && diceCooldown === 0 && Math.random() < 0.4) {
+            if (roundNum > 1 && diceCooldown === 0 && Math.random() < 0.4) {
                 diceEffect = DICE_EFFECTS[Math.floor(Math.random() * DICE_EFFECTS.length)];
                 diceUsed = true;
                 diceCooldown = DICE_COOLDOWN_ROUNDS;
@@ -512,7 +512,7 @@ const actions = {
 
                 // Award XP to progression (freeXP)
                 dispatch('progression/onFightEnd', {
-                    result: fightData.result === 'win' ? 'win' : 'lose',
+                    result: fightData.result,
                 }, { root: true });
 
                 // Save to server (PvE stats)

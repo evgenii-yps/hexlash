@@ -181,6 +181,10 @@ export default {
       lblClub: 'Club',
     },
     invite: {
+      lblInvite: 'Invite Code',
+      btnInvite: 'Join',
+      question: 'Already have an account?',
+      btnLogin: 'Login',
       lblCopySuccess: 'Invitation code copied to clipboard',
       lblCopyError: 'Error copying text {error}',
       lblTooltipText: 'The first rule of Hexlash: tell everyone about Hexlash. Remember, this is your ticket to freedom. Share this freedom with others.',

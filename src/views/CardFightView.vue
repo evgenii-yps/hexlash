@@ -784,10 +784,12 @@ function initPvPFight() {
   // Send ready + deck to server
   const deck = store.getters['progression/getDeck'] || [];
   console.log('[PVP] Sending pvp_ready, matchId:', pvpMatchId.value, 'deck:', deck);
+  const playerModules = store.state.fight.playerModules || [];
   store.dispatch('webSocket/sendMessage', {
     type: 'pvp_ready',
     matchId: pvpMatchId.value,
     deck: deck.map(id => ({ id, level: store.state.progression.moves[id]?.level || 1 })),
+    modules: playerModules,
   });
 
   // Listen for PvP events
@@ -935,6 +937,26 @@ function onPvPRoundResult(e) {
     }
   }
 
+  // Show dodge/crit event titles for PvP archetype mechanics
+  const myDodged = myData.dodged;
+  const oppDodged = oppData.dodged;
+  const myCritted = myData.critted;
+  const oppCritted = oppData.critted;
+
+  if (myDodged) {
+    store.commit('fight/setEventTitle', { title: t.value.fight.lblDodged, cls: 'event-dodge' });
+    setTimeout(() => store.commit('fight/clearEventTitle'), 1200);
+  } else if (oppCritted) {
+    store.commit('fight/setEventTitle', { title: t.value.fight.lblCrit, cls: 'event-crit' });
+    setTimeout(() => store.commit('fight/clearEventTitle'), 1200);
+  } else if (oppDodged) {
+    store.commit('fight/setEventTitle', { title: t.value.fight.lblDodged, cls: 'event-dodge' });
+    setTimeout(() => store.commit('fight/clearEventTitle'), 1200);
+  } else if (myCritted) {
+    store.commit('fight/setEventTitle', { title: t.value.fight.lblCrit, cls: 'event-crit' });
+    setTimeout(() => store.commit('fight/clearEventTitle'), 1200);
+  }
+
   // Trigger shake animations
   if (oppDmg > 0) {
     shakeLeft.value = true;
@@ -974,9 +996,26 @@ function onPvPDiceRolled(e) {
     const diceItem = DICE_EFFECTS[data.effect.type] || { id: data.effect.type, image: iconDice };
     store.commit('fight/setDiceState', { activeItem: diceItem, cooldownLeft: 3, ready: false });
 
-    // Update HP if heal
-    if (data.effect.type === 'heal' && data.hp !== undefined) {
+    // Update HP for instant effects
+    if (data.hp !== undefined) {
       store.commit('fight/setLiveHP1', data.hp);
+    }
+
+    // Instant damage effects (rage/crit) — update opponent HP
+    if (data.oppHp !== undefined) {
+      store.commit('fight/setLiveHP2', data.oppHp);
+      store.commit('fight/addStats', {
+        totalDamageDealt: data.effect.type === 'rage' ? 20 : 30,
+      });
+
+      // Show event title for instant damage
+      const label = data.effect.type === 'rage' ? t.value.fight.lblEventRage : t.value.fight.lblEventCritical;
+      store.commit('fight/setEventTitle', { title: label, cls: 'event-' + data.effect.type });
+      setTimeout(() => store.commit('fight/clearEventTitle'), 1200);
+
+      // Shake opponent
+      shakeRight.value = true;
+      setTimeout(() => { shakeRight.value = false; }, 400);
     }
   }
 }

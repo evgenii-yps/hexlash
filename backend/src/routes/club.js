@@ -1,12 +1,11 @@
 const express = require('express');
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../lib/prisma');
 const { authMiddleware } = require('../middleware/auth');
 const { upload } = require('../middleware/upload');
 const { formatClubResponse } = require('../utils/helpers');
 const { COST_CREATE_CLUB, DECIMALS } = require('../config');
 
 const router = express.Router();
-const prisma = new PrismaClient();
 
 // GET /v1/club/id/:clubId
 router.get('/id/:clubId', authMiddleware, async (req, res) => {
