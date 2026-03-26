@@ -25,11 +25,11 @@ const goToHome = () => {
 .logo-text {
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 1.6em;
-  color: var(--pink);
+  color: var(--hex-primary);
   letter-spacing: 3px;
   margin: 17px auto 0 17px;
   cursor: pointer;
-  text-shadow: 0 0 8px rgba(255, 6, 111, 0.6);
+  text-shadow: 0 0 8px var(--hex-primary-glow);
   user-select: none;
 }
 </style>

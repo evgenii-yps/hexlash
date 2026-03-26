@@ -134,14 +134,14 @@ const headerStyle = computed(() => {
   if (scrollTop.value <= 50) {
     const blackStop = scrollTop.value; // Плавно изменяем точку остановки черного цвета от 0 до 50%
     return {
-      background: `linear-gradient(to bottom, black ${blackStop}%, transparent ${blackStop * 2}%)`,
-      transition: 'background 0.3s ease', // Плавный переход для фона
+      background: `linear-gradient(to bottom, var(--hex-bg-dark) ${blackStop}%, transparent ${blackStop * 2}%)`,
+      transition: 'background 0.3s ease',
     };
   }
   // Если скролл больше 50px, фиксируем черный цвет на 50%
   return {
-    background: 'linear-gradient(to bottom, black 50%, transparent 100%)',
-    transition: 'background 0.3s ease', // Плавный переход для фона
+    background: 'linear-gradient(to bottom, var(--hex-bg-dark) 50%, transparent 100%)',
+    transition: 'background 0.3s ease',
   };
 });
 
@@ -274,7 +274,7 @@ onBeforeUnmount(() => {
 
 .balance {
   font-size: 2.5em;
-  color: white;
+  color: var(--hex-text-primary);
   font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   position: absolute;
   top: 0;
