@@ -128,7 +128,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 | `userState` | Current user profile, stats, avatar |
 | `cardFightState` | Active fight: rounds, HP, dice, coach, playerModules, localStorage persist |
 | `progressionState` | Moves unlocked/levels, taps, XP per branch, server sync (PUT /user/progression) |
-| `clubState` | Club info, members, balance |
+| `clubState` | Club info, members, balance, roles (set-role, transfer-ownership, kick) |
 | `taskState` | Daily + social tasks |
 | `punchState` | Punch/tap rate limiting, cooldown, 2D/3D punch toggle, sound mute toggle |
 | `achievementState` | Achievements list + unlocking |
@@ -389,7 +389,7 @@ AI_TRAINER_ENABLED = true
 | Move Tree | `MoveTreeView.vue` | Branch sidebar (Speed/Power/Tech) + move cards. Sidebar buttons centered with `position:absolute; top:35%; transform:translateY(-50%)` |
 | Fight | `CardFightView.vue` | Main combat (PvE + PvP), dice, coach advice, HP bars, AI Trainer (PvE results). PvP mode: no BottomMenu, no PvP badge, reduced padding. Fully migrated to --hex-* vars: HexButton for results, inline SVGs, dice/coach/victory/defeat/overdrive all use design system vars |
 | Profile | `ProfileView.vue` | Tabs: balance, wallet, account, skins |
-| Ratings (League) | `RatingsView.vue` | 3 tabs: My Club, Clubs (leaderboard), Fighters (leaderboard). Default tab: My Club. URL: `/ratings/:type` (myclub/clubs/fighters). My Club tab: `MyClubTab.vue` component — shows club card (avatar, stats, members top-5, owner controls) if user has club, or no-club state (create button, suggested clubs, browse link) |
+| Ratings (League) | `RatingsView.vue` | 3 tabs: My Club, Clubs (leaderboard), Fighters (leaderboard). Default tab: My Club. URL: `/ratings/:type` (myclub/clubs/fighters). My Club tab: `MyClubTab.vue` component — shows club card (avatar, stats, members top-5, role badges owner/deputy, action menus: promote/demote/kick for owner+deputy, transfer ownership for owner) if user has club, or no-club state (create button, suggested clubs, browse link) |
 | Preparation | `PreparationView.vue` | Arena: action row (Mode + START FIGHT + Friends buttons), auto fight toggle/status. Friends button is text-only (no online indicator) |
 | Friends | `FriendsView.vue` | Friends list, friend requests, search players |
 | Matchmaking | `MatchmakingView.vue` | Real-time PvP matchmaking queue. Opponent Found shows fighter skins (not icons). No colored borders. 100dvh support. |

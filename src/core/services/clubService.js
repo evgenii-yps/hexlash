@@ -121,6 +121,33 @@ export const changeClub = async (clubId) => {
 };
 
 
+export const setMemberRole = async (userId, role) => {
+    try {
+        const response = await apiClient.post('/club/set-role', {userId, role}, {authRequired: true});
+        return response.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.error || 'Failed to set role');
+    }
+};
+
+export const transferOwnership = async (newOwnerId) => {
+    try {
+        const response = await apiClient.post('/club/transfer-ownership', {newOwnerId}, {authRequired: true});
+        return response.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.error || 'Failed to transfer ownership');
+    }
+};
+
+export const kickMember = async (userId) => {
+    try {
+        const response = await apiClient.post('/club/kick', {userId}, {authRequired: true});
+        return response.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.error || 'Failed to kick member');
+    }
+};
+
 export const searchClubs = async ({name = '', sortBy = 'battles', page = 0, size = 10, sortDirection = 'DESC'}) => {
     if (isMockMode()) {
         return [];

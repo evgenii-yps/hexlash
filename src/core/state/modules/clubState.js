@@ -153,6 +153,30 @@ const actions = {
             console.error('Failed to upload avatar:', error);
         }
     },
+    async setMemberRole({commit}, {userId, role}) {
+        try {
+            await clubService.setMemberRole(userId, role);
+        } catch (error) {
+            console.error('Failed to set member role:', error);
+            throw error;
+        }
+    },
+    async transferOwnership({commit}, {newOwnerId}) {
+        try {
+            await clubService.transferOwnership(newOwnerId);
+        } catch (error) {
+            console.error('Failed to transfer ownership:', error);
+            throw error;
+        }
+    },
+    async kickMember({commit}, {userId}) {
+        try {
+            await clubService.kickMember(userId);
+        } catch (error) {
+            console.error('Failed to kick member:', error);
+            throw error;
+        }
+    },
     async loadClubRatings({ commit, state }, { search, sortBy, page }) {
 
         const newClubs = await clubService.searchClubs({
