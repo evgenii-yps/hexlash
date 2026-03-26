@@ -97,7 +97,7 @@ function close() {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: color-mix(in srgb, var(--hex-bg-dark) 40%, transparent);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   display: flex;
@@ -108,7 +108,7 @@ function close() {
 
 .xp-modal {
   background: transparent;
-  border: 2px solid var(--pink);
+  border: 2px solid var(--hex-primary);
   border-radius: 16px;
   padding: 32px;
   min-width: 300px;
@@ -116,28 +116,28 @@ function close() {
   width: 90%;
   text-align: center;
   box-shadow:
-    0 0 30px rgba(255, 6, 111, 0.4),
-    0 0 60px rgba(255, 6, 111, 0.2);
+    0 0 30px color-mix(in srgb, var(--hex-primary) 40%, transparent),
+    0 0 60px color-mix(in srgb, var(--hex-primary) 20%, transparent);
 }
 
 .modal-title {
   font-family: 'Impact', 'Anton', sans-serif;
   font-size: 1.8rem;
-  color: var(--pink);
+  color: var(--hex-primary);
   text-transform: uppercase;
   letter-spacing: 3px;
   margin: 0 0 24px;
-  text-shadow: 0 0 15px rgba(255, 6, 111, 0.6);
+  text-shadow: 0 0 15px var(--hex-primary-glow);
 }
 
 .free-xp {
   font-size: 0.9rem;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   margin-bottom: 24px;
 }
 
 .free-xp .xp-value {
-  color: var(--pink);
+  color: var(--hex-primary);
   font-weight: bold;
   font-size: 1.3rem;
 }
@@ -150,7 +150,7 @@ function close() {
 }
 
 .slider-min, .slider-max {
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   font-size: 0.8rem;
   min-width: 30px;
 }
@@ -159,7 +159,7 @@ function close() {
   flex: 1;
   -webkit-appearance: none;
   height: 6px;
-  background: #333;
+  background: var(--hex-bg-light);
   border-radius: 3px;
   outline: none;
 }
@@ -168,20 +168,20 @@ function close() {
   -webkit-appearance: none;
   width: 20px;
   height: 20px;
-  background: var(--pink);
+  background: var(--hex-primary);
   border-radius: 50%;
   cursor: pointer;
-  box-shadow: 0 0 10px rgba(255, 6, 111, 0.8);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--hex-primary) 80%, transparent);
 }
 
 .hex-slider::-moz-range-thumb {
   width: 20px;
   height: 20px;
-  background: var(--pink);
+  background: var(--hex-primary);
   border-radius: 50%;
   cursor: pointer;
   border: none;
-  box-shadow: 0 0 10px rgba(255, 6, 111, 0.8);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--hex-primary) 80%, transparent);
 }
 
 .input-container {
@@ -195,10 +195,10 @@ function close() {
 .hex-input {
   width: 100px;
   padding: 12px 16px;
-  background: rgba(30, 30, 40, 0.8);
-  border: 2px solid #444;
+  background: color-mix(in srgb, var(--hex-bg-light) 80%, transparent);
+  border: 2px solid var(--hex-border-strong);
   border-radius: 8px;
-  color: white;
+  color: var(--hex-text-primary);
   font-size: 1.2rem;
   font-weight: bold;
   text-align: center;
@@ -214,12 +214,12 @@ function close() {
 }
 
 .hex-input:focus {
-  border-color: var(--pink);
-  box-shadow: 0 0 15px rgba(255, 6, 111, 0.4);
+  border-color: var(--hex-primary);
+  box-shadow: 0 0 15px var(--hex-primary-glow);
 }
 
 .input-label {
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   font-size: 1rem;
   font-weight: bold;
 }
@@ -227,10 +227,10 @@ function close() {
 .hex-btn-filled {
   width: 100%;
   padding: 14px 32px;
-  background: var(--pink);
+  background: var(--hex-primary);
   border: none;
   border-radius: 8px;
-  color: white;
+  color: var(--hex-text-primary);
   font-family: 'Inter', 'Roboto', sans-serif;
   font-size: 1.1rem;
   font-weight: 700;
@@ -238,18 +238,18 @@ function close() {
   letter-spacing: 2px;
   cursor: pointer;
   margin-bottom: 12px;
-  box-shadow: 0 0 20px rgba(255, 6, 111, 0.5);
+  box-shadow: 0 0 20px var(--hex-primary-glow);
   transition: all 0.2s ease;
 }
 
 .hex-btn-filled:hover:not(:disabled) {
-  background: #FF3D8E;
-  box-shadow: 0 0 30px rgba(255, 6, 111, 0.8);
+  background: color-mix(in srgb, var(--hex-primary) 85%, white);
+  box-shadow: 0 0 30px color-mix(in srgb, var(--hex-primary) 80%, transparent);
   transform: translateY(-2px);
 }
 
 .hex-btn-filled:disabled {
-  background: #444;
+  background: var(--hex-border-strong);
   box-shadow: none;
   cursor: not-allowed;
   opacity: 0.5;
@@ -259,16 +259,16 @@ function close() {
   width: 100%;
   padding: 12px 24px;
   background: transparent;
-  border: 1px solid #666;
+  border: 1px solid var(--hex-border-active);
   border-radius: 8px;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   font-size: 0.85rem;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .hex-btn-secondary:hover {
-  border-color: var(--pink);
-  color: var(--pink);
+  border-color: var(--hex-primary);
+  color: var(--hex-primary);
 }
 </style>

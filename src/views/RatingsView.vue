@@ -17,10 +17,10 @@
           <div class="table-header">
             <InputField
                 v-model="searchClub"
-                labelColor="var(--white)"
-                inputBgColor="var(--black-opacity-80)"
-                inputBorderColor="var(--gray1)"
-                inputTextColor="var(--white)"
+                labelColor="var(--hex-text-primary)"
+                inputBgColor="var(--hex-bg-card)"
+                inputBorderColor="var(--hex-border-default)"
+                inputTextColor="var(--hex-text-primary)"
                 padding="0.8rem"
                 :placeholder="t.rating.clubPlaceholder"
                 class="search-input"
@@ -34,7 +34,7 @@
                 variant="outlined"
                 :menu-icon="null"
                 density="compact"
-                bg-color="var(--black-opacity-80)"
+                bg-color="var(--hex-bg-card)"
                 class="custom-select"
                 style="max-width: 250px; width: 70%"
                 :hideNoData="true">
@@ -98,10 +98,10 @@
           <div class="table-header">
             <InputField
                 v-model="searchMember"
-                labelColor="var(--white)"
-                inputBgColor="var(--black-opacity-80)"
-                inputBorderColor="var(--gray1)"
-                inputTextColor="var(--white)"
+                labelColor="var(--hex-text-primary)"
+                inputBgColor="var(--hex-bg-card)"
+                inputBorderColor="var(--hex-border-default)"
+                inputTextColor="var(--hex-text-primary)"
                 height="40px"
                 :placeholder="t.rating.participantPlaceholder"
                 class="search-input"
@@ -115,7 +115,7 @@
                 variant="outlined"
                 :menu-icon="null"
                 density="compact"
-                bg-color="var(--black-opacity-80)"
+                bg-color="var(--hex-bg-card)"
                 class="custom-select"
                 style="max-width: 250px; width: 70%"
                 :hideNoData="true"
@@ -439,7 +439,7 @@ onMounted(() => {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: linear-gradient(to left top, black 25%, transparent 75%);
+  background: linear-gradient(to left top, var(--hex-bg-dark) 25%, transparent 75%);
   z-index: 1;
 }
 
@@ -450,7 +450,7 @@ onMounted(() => {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: black;
+  background: var(--hex-bg-dark);
   z-index: 2;
   opacity: 1;
   animation: fadeOut 1s forwards;
@@ -494,8 +494,8 @@ onMounted(() => {
 }
 
 .rating-tabs .active-tab {
-  background-color: var(--primary-color) !important;
-  color: white;
+  background-color: var(--hex-primary) !important;
+  color: var(--hex-text-primary);
 }
 
 .rating-tabs button {
@@ -503,7 +503,7 @@ onMounted(() => {
   padding: 10px 20px;
   margin: 0 10px;
   cursor: pointer;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   height: 40px;
   white-space: normal;
 
@@ -515,7 +515,7 @@ onMounted(() => {
 }
 
 .custom-select {
-  color: var(--gray3) !important;
+  color: var(--hex-text-muted) !important;
 }
 
 .table-header {
@@ -532,13 +532,13 @@ onMounted(() => {
 
 .table-body {
   margin-top: 10px;
-  background-color: var(--black-opacity-80) !important;
-  border: 1px solid var(--gray1) !important;
+  background-color: var(--hex-bg-card) !important;
+  border: 1px solid var(--hex-border-default) !important;
   margin-bottom: 20px;
 }
 
 .table-header-row {
-  color: white;
+  color: var(--hex-text-primary);
   margin-top: 5px;
   font-size: 0.9em;
   padding: 5px 10px 0 10px;
@@ -560,12 +560,12 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--gray3) !important;
+  color: var(--hex-text-muted) !important;
 }
 
 .table-row {
   padding: 7px 10px;
-  color: white;
+  color: var(--hex-text-primary);
   cursor: pointer;
   font-size: 0.8em;
   display: flex;
@@ -576,7 +576,7 @@ onMounted(() => {
 }
 
 .table-row:hover {
-  background-color: var(--black-opacity) !important;
+  background-color: color-mix(in srgb, var(--hex-bg-dark) 36%, transparent) !important;
 }
 
 .infinite-scroll {
@@ -586,7 +586,7 @@ onMounted(() => {
 .no-results {
   text-align: center;
   padding: 20px;
-  color: var(--gray3);
+  color: var(--hex-text-muted);
 }
 
 .icon {
@@ -597,7 +597,7 @@ onMounted(() => {
 }
 
 .active-sort-icon {
-  background-color: var(--primary-color) !important;
+  background-color: var(--hex-primary) !important;
   border-radius: 50%;
   padding: 4px;
   object-fit: contain;

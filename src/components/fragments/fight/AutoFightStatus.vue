@@ -101,9 +101,9 @@ const viewLog = async () => {
 <style scoped>
 .autofight-status {
   width: 100%;
-  background: linear-gradient(135deg, rgba(9, 9, 9, 0.9) 0%, rgba(26, 26, 46, 0.6) 100%);
-  border: 1px solid rgba(255, 6, 111, 0.3);
-  border-radius: 12px;
+  background: linear-gradient(135deg, var(--hex-bg-dark) 0%, var(--hex-bg-light) 100%);
+  border: 1px solid color-mix(in srgb, var(--hex-primary) 30%, transparent);
+  border-radius: var(--hex-radius-lg);
   padding: 14px 16px;
   position: relative;
   overflow: hidden;
@@ -116,7 +116,7 @@ const viewLog = async () => {
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
+  background: linear-gradient(90deg, transparent, var(--hex-primary), transparent);
   animation: statusGlow 3s ease-in-out infinite;
 }
 
@@ -145,10 +145,10 @@ const viewLog = async () => {
 .status-title {
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 0.8rem;
-  color: var(--primary-color);
+  color: var(--hex-primary);
   font-weight: bold;
   letter-spacing: 1px;
-  text-shadow: 0 0 10px rgba(255, 6, 111, 0.3);
+  text-shadow: 0 0 10px var(--hex-primary-glow);
 }
 
 .status-rows {
@@ -166,31 +166,31 @@ const viewLog = async () => {
 }
 
 .status-label {
-  color: var(--gray2);
+  color: var(--hex-text-muted);
 }
 
 .status-value {
-  color: white;
+  color: var(--hex-text-primary);
   font-family: system-ui, sans-serif;
   font-weight: bold;
 }
 
 .status-win {
-  color: #2ecc71;
+  color: var(--hex-victory);
 }
 
 .status-lose {
-  color: #e74c3c;
+  color: var(--hex-defeat);
 }
 
 .status-separator {
-  color: var(--gray2);
+  color: var(--hex-text-muted);
   font-size: 0.6rem;
 }
 
 .status-stopping {
   font-size: 0.65rem;
-  color: #f1c40f;
+  color: var(--hex-warning);
   text-align: center;
   margin-bottom: 8px;
   animation: blink 1.5s ease-in-out infinite;
@@ -218,22 +218,22 @@ const viewLog = async () => {
 }
 
 .status-btn-stop {
-  background: rgba(231, 76, 60, 0.15);
-  border: 1px solid rgba(231, 76, 60, 0.5);
-  color: #e74c3c;
+  background: color-mix(in srgb, var(--hex-danger) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hex-danger) 50%, transparent);
+  color: var(--hex-danger);
 }
 
 .status-btn-stop:active {
-  background: rgba(231, 76, 60, 0.3);
+  background: color-mix(in srgb, var(--hex-danger) 30%, transparent);
 }
 
 .status-btn-log {
-  background: rgba(255, 6, 111, 0.1);
-  border: 1px solid rgba(255, 6, 111, 0.4);
-  color: var(--primary-color);
+  background: color-mix(in srgb, var(--hex-primary) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hex-primary) 40%, transparent);
+  color: var(--hex-primary);
 }
 
 .status-btn-log:active {
-  background: rgba(255, 6, 111, 0.25);
+  background: color-mix(in srgb, var(--hex-primary) 25%, transparent);
 }
 </style>

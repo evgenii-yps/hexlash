@@ -196,7 +196,7 @@ const handleClickPunch = (event, isFromCircleClick = false, value) => {
     style: {
       left: `${left}px`,
       top: `${top}px`,
-      color: isFromCircleClick ? 'var(--pink)' : 'white',
+      color: isFromCircleClick ? 'var(--hex-primary)' : 'var(--hex-text-primary)',
     },
   };
 
@@ -339,7 +339,7 @@ onUnmounted(() => {
   position: fixed;
   top: 0;
   left: 0;
-  background: linear-gradient(to top, black 0%, transparent 100%);
+  background: linear-gradient(to top, var(--hex-bg-dark) 0%, transparent 100%);
   z-index: 1;
   width: 100vw;
   height: 100vh;
@@ -351,7 +351,7 @@ onUnmounted(() => {
   position: fixed;
   top: 0;
   left: 0;
-  background: black;
+  background: var(--hex-bg-dark);
   z-index: 2;
   opacity: 1;
   animation: fadeOut 1s forwards; /* Анимация */
@@ -374,7 +374,7 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  color: white;
+  color: var(--hex-text-primary);
   -webkit-overflow-scrolling: auto; /* Отключить резиновый скролл*/
   overscroll-behavior-y: none;
 }
@@ -450,16 +450,16 @@ onUnmounted(() => {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background-color: var(--black-opacity);
+  background-color: color-mix(in srgb, var(--hex-bg-dark) 36%, transparent);
   animation: pulse 2s infinite;
-  border: 2px solid gray;
+  border: 2px solid var(--hex-text-muted);
   transition: transform 0.5s ease;
   cursor: pointer;
 }
 
 .pulsing-circle.clicked {
   transform: scale(1.5) !important;
-  border-color: var(--primary-color);
+  border-color: var(--hex-primary);
 }
 
 @keyframes pulse {
@@ -479,7 +479,7 @@ onUnmounted(() => {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background-color: var(--primary-color);
+  background-color: var(--hex-primary);
   opacity: 0;
   transform: scale(0);
   transition: transform 0.3s ease;
@@ -493,7 +493,7 @@ onUnmounted(() => {
 .number-animation {
   position: absolute;
   font-size: 1.5em;
-  color: var(--white);
+  color: var(--hex-text-primary);
   display: flex;
   flex-wrap: nowrap;
   width: 50px;
@@ -539,7 +539,7 @@ onUnmounted(() => {
 
 .timer-overlay {
   font-size: 3rem;
-  background-color: var(--black-opacity-80);
+  background-color: var(--hex-bg-card);
   padding: 10px;
   border-radius: 10px;
   display: flex;
@@ -550,7 +550,7 @@ onUnmounted(() => {
   margin-top: 20px;
   display: flex;
   font-size: 1.1em;
-  color: var(--dark);
+  color: var(--hex-text-secondary);
   text-align: center;
 }
 
@@ -558,8 +558,8 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: var(--black-opacity-80);
-  border: 1px solid var(--gray1);
+  background: var(--hex-bg-card);
+  border: 1px solid var(--hex-border-default);
   border-radius: 4px;
   padding: 8px 12px;
   margin-bottom: 10px;
@@ -579,7 +579,7 @@ onUnmounted(() => {
 
 .prog-label {
   font-size: 0.65rem;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -587,17 +587,17 @@ onUnmounted(() => {
 .prog-value {
   font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 0.9rem;
-  color: var(--pink);
+  color: var(--hex-primary);
 }
 
 .prog-value-xp {
-  text-shadow: 0 0 8px rgba(255, 6, 111, 0.4);
+  text-shadow: 0 0 8px var(--hex-primary-glow);
 }
 
 .prog-divider {
   width: 1px;
   height: 28px;
-  background: var(--gray1);
+  background: var(--hex-border-default);
 }
 
 .progression-actions {
@@ -608,23 +608,23 @@ onUnmounted(() => {
 
 .btn-prog {
   padding: 8px 20px;
-  background: var(--black-opacity-80);
-  border: 1px solid var(--gray1);
+  background: var(--hex-bg-card);
+  border: 1px solid var(--hex-border-default);
   border-radius: 4px;
-  color: var(--gray3);
+  color: var(--hex-text-muted);
   font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .btn-prog:hover {
-  border-color: var(--pink);
-  color: var(--pink);
+  border-color: var(--hex-primary);
+  color: var(--hex-primary);
 }
 
 .btn-prog-deck {
-  border-color: rgba(255, 6, 111, 0.4);
-  color: var(--gray3);
+  border-color: color-mix(in srgb, var(--hex-primary) 40%, transparent);
+  color: var(--hex-text-muted);
 }
 
 </style>

@@ -157,7 +157,7 @@ onMounted(() => {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: linear-gradient(to right bottom, black 35%, transparent 75%);
+  background: linear-gradient(to right bottom, var(--hex-bg-dark) 35%, transparent 75%);
   z-index: 1;
 }
 
@@ -168,7 +168,7 @@ onMounted(() => {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: black;
+  background: var(--hex-bg-dark);
   z-index: 2;
   opacity: 1;
   animation: fadeOut 1s forwards;
@@ -207,7 +207,7 @@ onMounted(() => {
 
 .profile-header {
   display: flex;
-  color: white;
+  color: var(--hex-text-primary);
   width: 100%;
   padding: 0 15px;
   align-items: flex-start;
@@ -230,7 +230,7 @@ onMounted(() => {
   position: relative;
   left: 20px;
   font-size: 10px;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--hex-text-secondary);
   display: flex;
   margin-top: 20px;
   width:150px;

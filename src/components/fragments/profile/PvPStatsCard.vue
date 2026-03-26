@@ -121,7 +121,7 @@ const progressPercent = computed(() => {
 <style scoped>
 .pvp-stats-card {
   background: transparent;
-  border: 1px solid rgba(255, 6, 111, 0.5);
+  border: 1px solid color-mix(in srgb, var(--hex-primary) 50%, transparent);
   border-radius: 16px;
   padding: 20px 16px;
   margin: 16px 15px;
@@ -136,15 +136,15 @@ const progressPercent = computed(() => {
   gap: 10px;
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 16px;
-  color: #FF066F;
+  color: var(--hex-primary);
   text-transform: uppercase;
   letter-spacing: 2px;
   margin-bottom: 20px;
-  text-shadow: 0 0 10px rgba(255, 6, 111, 0.4);
+  text-shadow: 0 0 10px var(--hex-primary-glow);
 }
 
 .header-icon {
-  color: #FF066F;
+  color: var(--hex-primary);
   flex-shrink: 0;
 }
 
@@ -177,7 +177,7 @@ const progressPercent = computed(() => {
   font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 32px;
   font-weight: 700;
-  color: #fff;
+  color: var(--hex-text-primary);
 }
 
 /* ── League Progress ──────────────────────────────────────────── */
@@ -187,7 +187,7 @@ const progressPercent = computed(() => {
 
 .progress-label {
   font-size: 11px;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   text-align: center;
   margin-bottom: 8px;
 }
@@ -195,14 +195,14 @@ const progressPercent = computed(() => {
 .progress-bar {
   width: 100%;
   height: 6px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--hex-border-default);
   border-radius: 3px;
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #FF066F, #FFB800);
+  background: linear-gradient(90deg, var(--hex-primary), var(--hex-draw));
   border-radius: 3px;
   transition: width 0.5s ease;
 }
@@ -217,7 +217,7 @@ const progressPercent = computed(() => {
 .stat-box {
   flex: 1;
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--hex-border-active);
   border-radius: 12px;
   padding: 14px 8px;
   text-align: center;
@@ -231,20 +231,20 @@ const progressPercent = computed(() => {
 }
 
 .stat-box.wins .stat-value {
-  color: #00FF88;
+  color: var(--hex-victory);
 }
 
 .stat-box.losses .stat-value {
-  color: #FF3333;
+  color: var(--hex-defeat);
 }
 
 .stat-box.winrate .stat-value {
-  color: #FFB800;
+  color: var(--hex-draw);
 }
 
 .stat-label {
   font-size: 10px;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   text-transform: uppercase;
   letter-spacing: 1px;
 }
@@ -253,6 +253,6 @@ const progressPercent = computed(() => {
 .total-fights {
   text-align: center;
   font-size: 12px;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
 }
 </style>

@@ -1126,7 +1126,7 @@ watch(isAuthenticated, (newValue) => {
 #sketch {
   width: 100vw;
   height: calc(var(--vh, 1vh) * 100);
-  background: black;
+  background: var(--hex-bg-dark);
   overflow: hidden;
 }
 
@@ -1157,7 +1157,7 @@ watch(isAuthenticated, (newValue) => {
   bottom: 1vh;
   left: 10px;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--hex-text-secondary);
 }
 
 .timer-listing-container {
@@ -1172,7 +1172,7 @@ watch(isAuthenticated, (newValue) => {
 
 .timer-overlay {
   font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
-  color: white;
+  color: var(--hex-text-primary);
   text-align: center;
   font-size: 4rem;
   padding: 10px;
@@ -1195,16 +1195,16 @@ watch(isAuthenticated, (newValue) => {
   text-decoration: none;
   margin: 10px 10px;
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
-  color: white;
+  color: var(--hex-text-primary);
   font-size: 1em;
   /*  background: rgba(51, 51, 51, 0.8);*/
-  background: var(--black-opacity-80);
+  background: var(--hex-bg-card);
   padding: 10px 20px;
   text-align: center;
   display: flex;
   justify-content: center;
   align-items: center;
-  border: 1px solid var(--gray1);
+  border: 1px solid var(--hex-border-default);
   border-radius: 4px;
   cursor: pointer;
 }

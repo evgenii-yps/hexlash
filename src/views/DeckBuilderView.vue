@@ -121,7 +121,7 @@ const handleScroll = (e) => emit('scroll', e.target.scrollTop);
   position: fixed;
   top: 0;
   left: 0;
-  background: linear-gradient(to top, black 0%, rgba(0,0,0,0.75) 100%);
+  background: linear-gradient(to top, var(--hex-bg-dark) 0%, color-mix(in srgb, var(--hex-bg-dark) 75%, transparent) 100%);
   z-index: 1;
   width: 100vw;
   height: 100vh;
@@ -132,7 +132,7 @@ const handleScroll = (e) => emit('scroll', e.target.scrollTop);
   z-index: 10;
   overflow-y: auto;
   height: 100vh;
-  color: white;
+  color: var(--hex-text-primary);
   -webkit-overflow-scrolling: auto;
   overscroll-behavior-y: none;
 }
@@ -158,9 +158,9 @@ const handleScroll = (e) => emit('scroll', e.target.scrollTop);
 }
 
 .btn-back {
-  background: var(--black-opacity-80);
-  border: 1px solid var(--gray1);
-  color: var(--gray3);
+  background: var(--hex-bg-card);
+  border: 1px solid var(--hex-border-default);
+  color: var(--hex-text-muted);
   border-radius: 4px;
   padding: 6px 14px;
   font-size: 0.9rem;
@@ -172,7 +172,7 @@ const handleScroll = (e) => emit('scroll', e.target.scrollTop);
 }
 
 .btn-back:hover {
-  color: var(--white);
+  color: var(--hex-text-primary);
 }
 
 .back-arrow {
@@ -181,8 +181,8 @@ const handleScroll = (e) => emit('scroll', e.target.scrollTop);
 
 .btn-tree {
   background: transparent;
-  border: 1px solid rgba(255, 6, 111, 0.4);
-  color: var(--gray3);
+  border: 1px solid color-mix(in srgb, var(--hex-primary) 40%, transparent);
+  color: var(--hex-text-muted);
   border-radius: 4px;
   padding: 6px 12px;
   font-size: 0.85rem;
@@ -191,19 +191,19 @@ const handleScroll = (e) => emit('scroll', e.target.scrollTop);
 }
 
 .btn-tree:hover {
-  border-color: var(--pink);
-  color: var(--pink);
+  border-color: var(--hex-primary);
+  color: var(--hex-primary);
 }
 
 .deck-title {
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 1.4rem;
-  color: var(--white);
+  color: var(--hex-text-primary);
 }
 
 .section-label {
   font-size: 0.75rem;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   margin-bottom: 10px;
@@ -225,8 +225,8 @@ const handleScroll = (e) => emit('scroll', e.target.scrollTop);
   min-width: 90px;
   padding: 10px 8px;
   border-radius: 4px;
-  border: 1px solid var(--gray1);
-  background: var(--black-opacity-80);
+  border: 1px solid var(--hex-border-default);
+  background: var(--hex-bg-card);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -237,7 +237,7 @@ const handleScroll = (e) => emit('scroll', e.target.scrollTop);
 }
 
 .deck-slot.filled {
-  border-color: var(--pink);
+  border-color: var(--hex-primary);
 }
 
 .deck-slot.empty {
@@ -247,13 +247,13 @@ const handleScroll = (e) => emit('scroll', e.target.scrollTop);
 
 .slot-name {
   font-size: 0.8rem;
-  color: var(--white);
+  color: var(--hex-text-primary);
   text-align: center;
 }
 
 .slot-level {
   font-size: 0.7rem;
-  color: var(--pink);
+  color: var(--hex-primary);
 }
 
 .slot-remove {
@@ -261,12 +261,12 @@ const handleScroll = (e) => emit('scroll', e.target.scrollTop);
   top: 4px;
   right: 6px;
   font-size: 0.65rem;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
 }
 
 .slot-empty-label {
   font-size: 1.2rem;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
 }
 
 .deck-valid-hint {
@@ -275,11 +275,11 @@ const handleScroll = (e) => emit('scroll', e.target.scrollTop);
 }
 
 .deck-valid-hint.valid {
-  color: #50c878;
+  color: var(--hex-success);
 }
 
 .deck-valid-hint.invalid {
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
 }
 
 .available-section {
@@ -293,8 +293,8 @@ const handleScroll = (e) => emit('scroll', e.target.scrollTop);
 .branch-group-title {
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 0.95rem;
-  color: var(--gray3);
-  border-bottom: 1px solid var(--gray1);
+  color: var(--hex-text-muted);
+  border-bottom: 1px solid var(--hex-border-default);
   padding-bottom: 4px;
   margin-bottom: 8px;
 }
@@ -304,8 +304,8 @@ const handleScroll = (e) => emit('scroll', e.target.scrollTop);
   align-items: center;
   gap: 12px;
   padding: 10px 12px;
-  background: var(--black-opacity-80);
-  border: 1px solid var(--gray1);
+  background: var(--hex-bg-card);
+  border: 1px solid var(--hex-border-default);
   border-radius: 4px;
   margin-bottom: 6px;
   cursor: pointer;
@@ -313,8 +313,8 @@ const handleScroll = (e) => emit('scroll', e.target.scrollTop);
 }
 
 .available-move.in-deck {
-  border-color: var(--pink);
-  background: rgba(255, 6, 111, 0.06);
+  border-color: var(--hex-primary);
+  background: color-mix(in srgb, var(--hex-primary) 6%, transparent);
 }
 
 .available-move.cant-add {
@@ -331,12 +331,12 @@ const handleScroll = (e) => emit('scroll', e.target.scrollTop);
 
 .available-move-name {
   font-size: 0.9rem;
-  color: var(--white);
+  color: var(--hex-text-primary);
 }
 
 .available-move-level {
   font-size: 0.7rem;
-  color: var(--gray3);
+  color: var(--hex-text-muted);
 }
 
 .available-move-stats {
@@ -346,12 +346,12 @@ const handleScroll = (e) => emit('scroll', e.target.scrollTop);
 
 .mini-stat {
   font-size: 0.75rem;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
 }
 
 .deck-indicator {
   font-size: 1rem;
-  color: var(--pink);
+  color: var(--hex-primary);
   width: 20px;
   text-align: center;
 }
@@ -366,19 +366,19 @@ const handleScroll = (e) => emit('scroll', e.target.scrollTop);
 
 .btn-fight {
   padding: 14px 48px;
-  background: var(--pink);
+  background: var(--hex-primary);
   border: none;
   border-radius: 4px;
-  color: var(--white);
+  color: var(--hex-text-primary);
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 1.1rem;
   cursor: pointer;
   transition: opacity 0.2s;
-  box-shadow: 0 0 20px rgba(255, 6, 111, 0.4);
+  box-shadow: 0 0 20px var(--hex-primary-glow);
 }
 
 .btn-fight:disabled {
-  background: var(--gray2);
+  background: var(--hex-text-secondary);
   cursor: not-allowed;
   box-shadow: none;
   opacity: 0.5;
