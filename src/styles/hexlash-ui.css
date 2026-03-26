@@ -264,7 +264,7 @@
 
 /* Numbers (HP, XP, damage) */
 .hex-number {
-  font-family: var(--hex-font-mono);
+  font-family: 'AnonymousBalance', 'Courier New', monospace;
   font-weight: 700;
 }
 
@@ -621,6 +621,8 @@
    ANIMATIONS
    -------------------------------------------- */
 
+/* --- Keyframes --- */
+
 @keyframes hex-fade-in {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
@@ -636,10 +638,22 @@
   50% { transform: scale(1.05); }
 }
 
-@keyframes hex-glow-pulse {
-  0%, 100% { box-shadow: var(--hex-glow-sm); }
-  50% { box-shadow: var(--hex-glow-lg); }
+@keyframes hex-pulse-opacity {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
 }
+
+@keyframes hex-glow-pulse {
+  0%, 100% { box-shadow: 0 0 8px var(--hex-primary-glow); }
+  50% { box-shadow: 0 0 20px var(--hex-primary-glow), 0 0 40px var(--hex-primary-glow); }
+}
+
+@keyframes hex-float-up {
+  0% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-40px); }
+}
+
+/* --- Animation classes --- */
 
 .hex-animate-fade-in {
   animation: hex-fade-in 0.3s ease-out;
@@ -651,6 +665,75 @@
 
 .hex-animate-pulse {
   animation: hex-pulse 1s ease-in-out infinite;
+}
+
+.hex-pulse {
+  animation: hex-pulse-opacity 1.5s ease infinite;
+}
+
+.hex-glow-pulse {
+  animation: hex-glow-pulse 2s ease infinite;
+}
+
+.hex-float-up {
+  animation: hex-float-up 0.8s ease forwards;
+}
+
+/* --- Transition utilities --- */
+
+.hex-transition {
+  transition: all 0.2s ease;
+}
+
+.hex-transition-slow {
+  transition: all 0.3s ease;
+}
+
+/* --- Hover states --- */
+
+.hex-hover-brighten:hover {
+  filter: brightness(1.15);
+}
+
+.hex-hover-lift:hover {
+  transform: translateY(-1px);
+}
+
+/* --- Press state --- */
+
+.hex-press:active {
+  transform: scale(0.97);
+}
+
+/* --- Vue transition: hex-fade --- */
+
+.hex-fade-enter-active,
+.hex-fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+.hex-fade-enter-from,
+.hex-fade-leave-to {
+  opacity: 0;
+}
+
+/* --- Vue transition: hex-slide-up (modals, toasts) --- */
+
+.hex-slide-up-enter-active,
+.hex-slide-up-leave-active {
+  transition: all 0.3s ease;
+}
+.hex-slide-up-enter-from,
+.hex-slide-up-leave-to {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+/* --- Font utilities --- */
+
+.hex-title {
+  font-family: 'Anonymous', 'Courier New', monospace;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 /* --------------------------------------------

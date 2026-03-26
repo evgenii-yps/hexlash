@@ -24,7 +24,7 @@
           <HexButton
               variant="primary"
               size="lg"
-              class="fight-btn"
+              class="fight-btn hex-glow-pulse"
               :class="{ 'fight-btn-auto-active': selectedMode === 'auto' && isAutoFightEnabled }"
               :disabled="!isBuildValid && selectedMode !== 'auto'"
               @click="startFight"
