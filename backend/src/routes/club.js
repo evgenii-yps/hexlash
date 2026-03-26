@@ -41,15 +41,13 @@ router.post('/add', authMiddleware, async (req, res) => {
     }
     const description = (clubData.description || '').trim().slice(0, 500);
 
-    // Check if user has enough balance and is not already in a club
+    // Check if user is not already in a club
     const user = await prisma.user.findUnique({ where: { id: req.userId } });
     if (user.clubId) {
       return res.status(400).json({ error: 'Already in a club' });
     }
-    const cost = COST_CREATE_CLUB * Math.pow(10, DECIMALS);
-    if (user.balance < cost) {
-      return res.status(400).json({ error: 'Insufficient balance' });
-    }
+
+    const isPublic = clubData.isPublic !== undefined ? clubData.isPublic : true;
 
     const fullClub = await prisma.$transaction(async (tx) => {
       const club = await tx.club.create({
@@ -57,13 +55,13 @@ router.post('/add', authMiddleware, async (req, res) => {
           name,
           description,
           ownerId: req.userId,
+          isPublic,
         },
       });
 
       await tx.user.update({
         where: { id: req.userId },
         data: {
-          balance: { decrement: cost },
           clubId: club.id,
         },
       });

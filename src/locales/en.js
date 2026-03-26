@@ -283,6 +283,9 @@ export default {
     lblEditClub: 'Edit club',
     lblPublic: 'Public',
     lblPrivate: 'Private',
+    lblPublicClub: 'Public club',
+    lblAnyoneCanJoin: 'Anyone can join',
+    lblInviteOnly: 'Invite only',
     lblControl: 'Control',
   },
   fight: {

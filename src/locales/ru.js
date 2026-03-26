@@ -283,6 +283,9 @@ export default {
     lblEditClub: 'Редактировать',
     lblPublic: 'Публичный',
     lblPrivate: 'Закрытый',
+    lblPublicClub: 'Публичный клуб',
+    lblAnyoneCanJoin: 'Любой может вступить',
+    lblInviteOnly: 'Только по приглашению',
     lblControl: 'Управление',
   },
   fight: {

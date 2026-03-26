@@ -3,7 +3,6 @@ import apiClient from "@/core/api/apiClient.js";
 import store from "@/core/state/store.js";
 import ClubModel from "@/core/models/clubModel.js";
 import {updateMasterToLocalDB} from "@/core/database/masterRepository.js";
-import {COST_CREATE_CLUB, DECIMALS} from "@/core/constants.js";
 import {isMockMode} from "@/core/mock/mockData.js";
 
 // Получить данные клуба из локальной базы данных или из API
@@ -90,8 +89,6 @@ export const createClub = async (clubData) => {
         const createdClubModel = ClubModel.fromJSON(response.data);
         await updateClubToLocalDB(createdClubModel);
         store.commit('club/setClub', createdClubModel);
-
-        store.commit('master/decreaseBalance', COST_CREATE_CLUB * (10 ** DECIMALS));
 
         return createdClubModel;
     } catch (error) {

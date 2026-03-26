@@ -95,12 +95,10 @@
       <div class="create-section">
         <HexButton
             variant="primary"
-            :disabled="!canCreate"
             @click="dialogCreate = true"
         >
           {{ t.profile.buttons.lblCreateClub }}
         </HexButton>
-        <p v-if="!canCreate" class="need-taps">{{ t.club.lblNeedTaps }}</p>
       </div>
 
       <CreateClub :dialogCreate="dialogCreate" @close="dialogCreate = false" />
@@ -138,7 +136,7 @@ import {ref, computed, watch} from 'vue';
 import store from "@/core/state/store.js";
 import {useRouter} from 'vue-router';
 import {t} from "@/locales/index.js";
-import {formatNumber, COST_CREATE_CLUB} from "@/core/constants.js";
+import {formatNumber} from "@/core/constants.js";
 import * as userService from "@/core/services/userService.js";
 import * as clubService from "@/core/services/clubService.js";
 import ClubAvatar from "@/components/fragments/club/ClubAvatar.vue";
@@ -155,7 +153,6 @@ const router = useRouter();
 
 const master = computed(() => store.getters['master/getMaster']);
 const clubId = computed(() => master.value?.userData?.clubId);
-const canCreate = computed(() => master.value?.getBalance() >= COST_CREATE_CLUB);
 
 const loading = ref(false);
 const clubData = ref(null);
@@ -454,12 +451,6 @@ watch(() => props.active, (val) => {
 
 .create-section {
   margin-bottom: 20px;
-}
-
-.need-taps {
-  color: var(--hex-text-muted);
-  font-size: 12px;
-  margin-top: 6px;
 }
 
 .divider-row {
