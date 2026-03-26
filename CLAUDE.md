@@ -2,6 +2,8 @@
 
 Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegram WebApp compatible.
 
+> **RULE: After every task, update this file.** Changed views/components → update descriptions. New components → add to Component Highlights. New data files → add to Project Structure. Changed architecture → update relevant sections. CLAUDE.md is the source of truth.
+
 ---
 
 ## Tech Stack
@@ -210,7 +212,10 @@ Internally uses `--_arch-color` CSS custom property for scoped styling.
 
 ---
 
-## CSS Design System (legacy)
+## CSS Design System (legacy → migrating to --hex-*)
+
+> **Active system:** `/src/styles/hexlash-ui.css` with `--hex-*` variables. All new/updated components use exclusively `--hex-*` vars.
+> **Legacy:** `/src/assets/colors.css` with `--pink`, `--dark`, `--gray*`, `--white` etc. Still used by unconverted components. Do NOT use legacy vars in new code.
 
 **Colors** (`/src/assets/colors.css`):
 ```css
@@ -410,8 +415,19 @@ AI_TRAINER_ENABLED = true
 
 ## Component Highlights
 
+**Design System (`/src/components/ui/`):**
+- `PixelIcon.vue` — Canvas-based 16×16 pixel icon renderer. Props: name, size, color, glow, glowColor, glowSize, disabled. Resolves CSS vars via `getComputedStyle`. Data in `pixelIcons.js` (45 icons).
+- `HexButton.vue` — Button with 5 variants (primary/secondary/ghost/danger/archetype), 3 sizes (sm/md/lg). Supports: PixelIcon via `icon` prop, loading spinner, block width, archetypeColor via `--_arch-color` CSS custom property.
+- `HexCard.vue` — Card with 5 variants (default/elevated/archetype/active/result). Archetype = left border accent, active = tinted bg + color border, result = top border (victory/defeat/draw). Slots: default, header, footer. Padding: none/sm/md/lg.
+- `HexProgress.vue` — Progress bar with 3 variants: hp (auto green>60%/yellow>30%/red), branch (speed/power/technique colors), generic. Props: label, showValue, showPercent. 3 sizes.
+- `HexBadge.vue` — Pill badge with 5 variants: archetype, branch, status (victory/defeat/draw/info), counter (auto circle<10/pill≥10), custom. Props: icon (PixelIcon), pulse animation.
+
+**Navigation & Layout:**
 - `Logo.vue` — header logo (Anonymous font, --hex-primary color + glow)
-- `BottomMenu.vue` — bottom nav (Arena, Training, Ratings, Profile). Uses PixelIcon with glow for active tab. Hidden on PvP screens via `isPvPScreen` computed in App.vue
+- `BottomMenu.vue` — bottom nav (Arena, Training, Ratings, Profile). Uses PixelIcon with glow for active tab. Solid bg `--hex-bg-medium`, no gradient. Hidden on PvP screens via `isPvPScreen` computed in App.vue
+- `App.vue` header — gradient uses `--hex-bg-dark`, balance in AnonymousBalance font with `--hex-text-primary`
+
+**Game Components:**
 - `Info.vue` / `Error.vue` — toast notifications (text interpolation `{{ }}`, NOT v-html — XSS safe)
 - `NewAchievement.vue` — achievement popup
 - `Punch3D.vue` — Three.js punching bag
