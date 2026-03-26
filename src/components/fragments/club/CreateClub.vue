@@ -1,6 +1,6 @@
 <template>
 
-  <VModal v-model="props.dialogCreate" max-width="500" @click:outside="hide">
+  <VModal v-model="showDialog" max-width="500" @click:outside="hide">
     <VCard>
       <v-card-title class="headline">{{ t.club.modalTitle }}</v-card-title>
       <v-card-text class="text-center">
@@ -46,7 +46,7 @@
 </template>
 
 <script setup>
-import {ref} from 'vue';
+import {ref, watch} from 'vue';
 import store from "@/core/state/store.js";
 import {COST_CREATE_CLUB} from "@/core/constants.js";
 import router from "@/router/index.js";
@@ -66,6 +66,18 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['close']);
+
+const showDialog = ref(false);
+
+watch(() => props.dialogCreate, (val) => {
+  showDialog.value = val;
+});
+
+watch(showDialog, (val) => {
+  if (!val) {
+    emit('close');
+  }
+});
 
 
 // Функция для валидации названия

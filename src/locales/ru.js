@@ -137,6 +137,7 @@ export default {
     },
     buttons: {
       lblClubError: 'Ошибка загрузки данных клуба',
+      lblNoClub: 'Нет клуба',
       lblCreateClub: 'Создать клуб',
       lblWalletManagement: 'Управление кошельком',
       lblFightSkins: 'Скины бойца',

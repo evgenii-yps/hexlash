@@ -34,12 +34,12 @@
                 @click.stop="btnCreateNewClub">
               {{ t.profile.buttons.lblCreateClub }}
             </VBtn>
-
-            <CreateClub :dialogCreate="dialogCreate" @close="dialogCreate = false" />
           </template>
           <span> {{ t.profile.buttons.tooltipInsufficientFunds }}</span>
         </VTooltip>
       </VBtnDark>
+
+      <CreateClub :dialogCreate="dialogCreate" @close="dialogCreate = false" />
     </div>
 
     <VBtnDark v-if="!isTelegram"
@@ -133,6 +133,8 @@ const navigateTo = (route) => {
 const navigateToClub = () => {
   if (clubId.value) {
     router.push({path: `/club/${clubId.value}`});
+  } else {
+    router.push({path: '/ratings/clubs'});
   }
 };
 
@@ -164,6 +166,8 @@ onMounted(async () => {
     } else {
       clubText.value = t.value.profile.buttons.lblClubError;
     }
+  } else {
+    clubText.value = t.value.profile.buttons.lblNoClub;
   }
 });
 

@@ -137,6 +137,7 @@ export default {
     },
     buttons: {
       lblClubError: 'Error loading club data',
+      lblNoClub: 'No Club',
       lblCreateClub: 'Create Club',
       lblWalletManagement: 'Wallet Management',
       lblFightSkins: 'Fight Skins',
