@@ -110,6 +110,16 @@
         </div>
 
         <div v-if="activeTab === Tabs.FIGHTERS" class="table-wrapper">
+          <PvPStatsCard
+            :sectionTitle="t.pvp.statsTitle"
+            :winsText="t.pvp.wins"
+            :lossesText="t.pvp.losses"
+            :winRateText="t.pvp.winRate"
+            :totalFightsText="t.pvp.totalFights"
+            :nextLeagueText="t.pvp.nextLeague"
+            class="fighters-pvp-card"
+          />
+
           <div class="table-header">
             <InputField
                 v-model="searchMember"
@@ -225,6 +235,7 @@ import * as amplitude from "@amplitude/analytics-browser";
 import HexButton from "@/components/ui/HexButton.vue";
 import CreateClub from "@/components/fragments/club/CreateClub.vue";
 import MyClubTab from "@/components/fragments/club/MyClubTab.vue";
+import PvPStatsCard from "@/components/fragments/profile/PvPStatsCard.vue";
 
 
 // Enum для вкладок
@@ -648,6 +659,14 @@ onMounted(() => {
   display: flex;
   justify-content: center;
   margin: 10px 0;
+}
+
+.fighters-pvp-card {
+  background: var(--hex-bg-light) !important;
+  border: 1px solid color-mix(in srgb, var(--hex-primary) 20%, transparent) !important;
+  border-radius: 12px !important;
+  padding: 16px !important;
+  margin-bottom: 16px;
 }
 
 :deep(.v-select__selection-text) {
