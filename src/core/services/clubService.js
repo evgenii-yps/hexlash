@@ -12,9 +12,17 @@ export const getClubByIdFromLocalAndAPI = async (clubId) => {
     let clubData = await getClubDataFromLocalDB(clubId);
     if (clubData) {
         store.commit('club/setClub', clubData);
+        // Обновляем из API в фоне
+        getClubDataFromAPI(clubId);
+        return clubData;
     }
-    getClubDataFromAPI(clubId);
-    return clubData;
+    // Нет кэша — ждём API
+    const apiClubModel = await fetchClubData(clubId);
+    if (apiClubModel) {
+        await updateClubToLocalDB(apiClubModel);
+        store.commit('club/setClub', apiClubModel);
+    }
+    return apiClubModel;
 };
 
 
@@ -77,7 +85,7 @@ export const uploadClubAvatar = async (formData, onUploadProgress) => {
 export const createClub = async (clubData) => {
     try {
 
-        const response = await apiClient.post(`/club/add`, clubData, {authRequired: true});
+        const response = await apiClient.post(`/club/add`, {clubData}, {authRequired: true});
 
         const createdClubModel = ClubModel.fromJSON(response.data);
         await updateClubToLocalDB(createdClubModel);
@@ -91,6 +99,14 @@ export const createClub = async (clubData) => {
     }
 };
 
+
+export const leaveClub = async () => {
+    try {
+        await apiClient.post(`/club/change`, {clubId: null}, {authRequired: true});
+    } catch (error) {
+        throw new Error('Failed to leave club: ' + (error.response?.data?.error || error.message));
+    }
+};
 
 export const changeClub = async (clubId) => {
     try {

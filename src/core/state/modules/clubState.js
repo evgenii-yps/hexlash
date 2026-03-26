@@ -104,6 +104,15 @@ const actions = {
             throw error;
         }
     },
+    async leaveClub({commit}) {
+        try {
+            await clubService.leaveClub();
+            await store.dispatch('master/updateMaster', {clubId: null});
+        } catch (error) {
+            console.error('Failed to leave club:', error);
+            throw error;
+        }
+    },
     async changeClub({commit}, clubId) {
         try {
             const newClubModel = await clubService.changeClub(clubId);
@@ -133,8 +142,11 @@ const actions = {
         try {
             const avatarUrl = await clubService.uploadClubAvatar(formData, onUploadProgress);
 
-            // После успешной симуляции загрузки обновляем аватар в стейте
-            commit('updateClub', { avatarUrl });
+            // После успешной загрузки обновляем аватар в стейте
+            const clubId = store.getters['master/getMaster']?.userData?.clubId;
+            if (clubId) {
+                commit('updateClub', { id: clubId, avatarUrl });
+            }
 
             return avatarUrl;
         } catch (error) {

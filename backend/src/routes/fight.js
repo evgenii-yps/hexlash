@@ -29,10 +29,22 @@ router.post('/save', authMiddleware, async (req, res) => {
       updateData.pveLosses = { increment: 1 };
     }
 
-    await prisma.user.update({
+    const user = await prisma.user.update({
       where: { id: req.userId },
       data: updateData,
     });
+
+    // Update club stats if user is in a club
+    if (user.clubId) {
+      const clubUpdate = { battles: { increment: 1 } };
+      if (isWin) {
+        clubUpdate.wins = { increment: 1 };
+      }
+      await prisma.club.update({
+        where: { id: user.clubId },
+        data: clubUpdate,
+      });
+    }
 
     await prisma.fight.create({
       data: {

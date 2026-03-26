@@ -63,7 +63,7 @@ const uploadAvatar = (event) => {
   const file = event.target.files[0];
   if (file) {
     const formData = new FormData();
-    formData.append('avatarFile', file);
+    formData.append('avatar', file);
 
     const onUploadProgress = (event) => {
       progress.value = Math.round((event.loaded * 100) / event.total);

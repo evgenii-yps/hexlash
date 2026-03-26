@@ -34,33 +34,44 @@ router.post('/add', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'Club name required' });
     }
 
-    // Check if user has enough balance
+    // Validate name and description
+    const name = clubData.name.trim();
+    if (!/^[a-zA-Z0-9 ]{1,32}$/.test(name)) {
+      return res.status(400).json({ error: 'Club name must be 1-32 characters, only letters, digits and spaces' });
+    }
+    const description = (clubData.description || '').trim().slice(0, 500);
+
+    // Check if user has enough balance and is not already in a club
     const user = await prisma.user.findUnique({ where: { id: req.userId } });
+    if (user.clubId) {
+      return res.status(400).json({ error: 'Already in a club' });
+    }
     const cost = COST_CREATE_CLUB * Math.pow(10, DECIMALS);
     if (user.balance < cost) {
       return res.status(400).json({ error: 'Insufficient balance' });
     }
 
-    const club = await prisma.club.create({
-      data: {
-        name: clubData.name,
-        description: clubData.description || '',
-        ownerId: req.userId,
-      },
-    });
+    const fullClub = await prisma.$transaction(async (tx) => {
+      const club = await tx.club.create({
+        data: {
+          name,
+          description,
+          ownerId: req.userId,
+        },
+      });
 
-    // Deduct cost and join club
-    await prisma.user.update({
-      where: { id: req.userId },
-      data: {
-        balance: { decrement: cost },
-        clubId: club.id,
-      },
-    });
+      await tx.user.update({
+        where: { id: req.userId },
+        data: {
+          balance: { decrement: cost },
+          clubId: club.id,
+        },
+      });
 
-    const fullClub = await prisma.club.findUnique({
-      where: { id: club.id },
-      include: { _count: { select: { members: true } } },
+      return tx.club.findUnique({
+        where: { id: club.id },
+        include: { _count: { select: { members: true } } },
+      });
     });
 
     res.json({ data: formatClubResponse(fullClub) });
@@ -87,8 +98,14 @@ router.post('/edit', authMiddleware, async (req, res) => {
     }
 
     const updateData = {};
-    if (name !== undefined) updateData.name = name;
-    if (description !== undefined) updateData.description = description;
+    if (name !== undefined) {
+      const trimmedName = name.trim();
+      if (!/^[a-zA-Z0-9 ]{1,32}$/.test(trimmedName)) {
+        return res.status(400).json({ error: 'Club name must be 1-32 characters, only letters, digits and spaces' });
+      }
+      updateData.name = trimmedName;
+    }
+    if (description !== undefined) updateData.description = description.trim().slice(0, 500);
     if (isPublic !== undefined) updateData.isPublic = isPublic;
 
     const updated = await prisma.club.update({
@@ -147,6 +164,11 @@ router.post('/change', authMiddleware, async (req, res) => {
       if (!club.isPublic) {
         return res.status(403).json({ error: 'Club is private' });
       }
+      // Check if user is already in this club
+      const user = await prisma.user.findUnique({ where: { id: req.userId } });
+      if (user.clubId === clubId) {
+        return res.status(400).json({ error: 'Already in this club' });
+      }
     }
 
     await prisma.user.update({
@@ -191,8 +213,10 @@ router.get('/search', authMiddleware, async (req, res) => {
       members: 'members',
     }[sortBy] || 'battles';
 
-    // For member sorting we can't use direct ordering, so default to battles
-    const orderField = sortField === 'members' ? 'battles' : sortField;
+    const sortOrder = sortDirection.toLowerCase();
+    const orderBy = sortField === 'members'
+      ? { members: { _count: sortOrder } }
+      : { [sortField]: sortOrder };
 
     const where = {};
     if (name) {
@@ -202,7 +226,7 @@ router.get('/search', authMiddleware, async (req, res) => {
     const clubs = await prisma.club.findMany({
       where,
       include: { _count: { select: { members: true } } },
-      orderBy: { [orderField]: sortDirection.toLowerCase() },
+      orderBy,
       skip: pageNum * pageSize,
       take: pageSize,
     });
