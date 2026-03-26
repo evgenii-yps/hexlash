@@ -589,5 +589,6 @@ Previous branch: `claude/hexlash-full-audit-WvXMd` (security audit, completed)
 | 3.1a | ✅ Done | Arena: PreparationView (HexButton, PixelIcon), ModeSelector (PixelIcon for pve/pvp/auto), AutoFightStatus (--hex-* vars) |
 | 3.2a | ✅ Done | Fight: CardFightView — 117 color replacements, 0 hardcoded colors remain. VBtn→HexButton, SVG→PixelIcon, dice/coach/victory/defeat all on --hex-* vars |
 | 3.3 | ✅ Done | Training + MoveTree — 72 color replacements across 4 files (TrainingView, MoveTreeView, MoveTreeCard, MoveDetailsModal). All legacy vars → --hex-* |
+| 3.4 | ✅ Done | Profile + DeckBuilder — 71 color replacements across 5 files (ProfileView, DeckBuilderView, PvPStatsCard, SoundToggle, XPAllocationModal). PvP stats: victory/defeat/draw colors |
 | 3.1b | 🔲 Next | Arena visual polish (module cards, fight style card) |
 | 3.2b | 🔲 | Fight visual polish (HP bars → HexProgress, layout improvements) |
