@@ -86,7 +86,6 @@ const handleMenuClick = (index, item) => {
   max-width: 1024px;
   z-index: 100;
   background: var(--hex-bg-medium);
-  border-top: 0.5px solid var(--hex-border-default);
 }
 
 .bottom-menu.ios-adjust {
@@ -99,8 +98,6 @@ const handleMenuClick = (index, item) => {
   align-items: center;
   justify-content: center;
   text-decoration: none;
-  transition: background-color 0.2s ease;
-  border-radius: 8px;
   padding: 8px 4px 4px;
   flex-grow: 1;
   flex-basis: 0;
@@ -111,33 +108,19 @@ const handleMenuClick = (index, item) => {
   background: transparent;
 }
 
-.menu-item:hover {
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.menu-item.active {
-  background: rgba(255, 6, 111, 0.08);
-}
-
 .menu-item .menu-text {
   margin-top: 4px;
-  color: var(--hex-text-muted);
+  color: var(--hex-text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   font-size: 10px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  transition: color 0.3s ease;
+  transition: color 0.2s ease;
 }
 
 .menu-item.active .menu-text {
   color: var(--hex-primary);
-}
-
-@media (min-width: 1024px) {
-  .bottom-menu {
-    border-top: 0.5px solid var(--hex-border-active);
-  }
 }
 
 :deep(.v-ripple__container) {
@@ -154,12 +137,12 @@ const handleMenuClick = (index, item) => {
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
-  filter: brightness(0) invert(0.6);
-  transition: filter 0.3s ease;
+  filter: brightness(0) invert(0.5);
+  transition: filter 0.2s ease;
 }
 
 .menu-item.active .menu-icon {
-  filter: brightness(0) invert(1);
+  filter: brightness(0) saturate(100%) invert(12%) sepia(95%) saturate(6500%) hue-rotate(330deg) brightness(100%) contrast(105%);
 }
 
 .icon-arena { background-image: url('@/assets/images/icon_arena.svg'); }
