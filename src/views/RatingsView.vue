@@ -18,9 +18,7 @@
         </div>
 
         <div v-if="activeTab === Tabs.MY_CLUB" class="table-wrapper">
-          <div class="my-club-placeholder">
-            <span class="placeholder-text">Coming soon</span>
-          </div>
+          <MyClubTab :active="activeTab === Tabs.MY_CLUB" @switchTab="setActiveTab" />
         </div>
 
         <div v-if="activeTab === Tabs.CLUBS" class="table-wrapper">
@@ -226,6 +224,7 @@ import {formatNumber, COST_CREATE_CLUB} from "@/core/constants.js";
 import * as amplitude from "@amplitude/analytics-browser";
 import HexButton from "@/components/ui/HexButton.vue";
 import CreateClub from "@/components/fragments/club/CreateClub.vue";
+import MyClubTab from "@/components/fragments/club/MyClubTab.vue";
 
 
 // Enum для вкладок
@@ -649,18 +648,6 @@ onMounted(() => {
   display: flex;
   justify-content: center;
   margin: 10px 0;
-}
-
-.my-club-placeholder {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 200px;
-}
-
-.placeholder-text {
-  color: var(--hex-text-muted);
-  font-size: 1rem;
 }
 
 :deep(.v-select__selection-text) {
