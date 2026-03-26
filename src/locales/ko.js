@@ -410,6 +410,9 @@ export default {
   rating: {
     clubs: '클럽 평점',
     fighters: '전사 평점',
+    lblMyClub: '내 클럽',
+    lblClubs: '클럽',
+    lblFighters: '전사',
     clubPlaceholder: '클럽 검색',
     participantPlaceholder: '검색',
     clubName: '클럽 이름',

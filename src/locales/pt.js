@@ -409,6 +409,9 @@ export default {
   rating: {
     clubs: 'Classificação de clubes',
     fighters: 'Classificação de lutadores',
+    lblMyClub: 'Meu Clube',
+    lblClubs: 'Clubes',
+    lblFighters: 'Lutadores',
     clubPlaceholder: 'Procurar clube',
     participantPlaceholder: 'Procurar',
     clubName: 'Nome do Clube',

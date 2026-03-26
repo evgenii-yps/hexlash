@@ -409,6 +409,9 @@ export default {
   rating: {
     clubs: 'क्लब रेटिंग',
     fighters: 'फाइटर रेटिंग',
+    lblMyClub: 'मेरा क्लब',
+    lblClubs: 'क्लब',
+    lblFighters: 'लड़ाके',
     clubPlaceholder: 'क्लब खोजें',
     participantPlaceholder: 'खोजें',
     clubName: 'क्लब का नाम',

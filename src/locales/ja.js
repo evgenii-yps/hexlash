@@ -409,6 +409,9 @@ export default {
   rating: {
     clubs: 'クラブランキング',
     fighters: 'ファイターランキング',
+    lblMyClub: 'マイクラブ',
+    lblClubs: 'クラブ',
+    lblFighters: 'ファイター',
     clubPlaceholder: 'クラブを検索',
     participantPlaceholder: '検索',
     clubName: 'クラブ名',

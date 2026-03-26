@@ -410,6 +410,9 @@ export default {
   rating: {
     clubs: '俱乐部排名',
     fighters: '战士排名',
+    lblMyClub: '我的俱乐部',
+    lblClubs: '俱乐部',
+    lblFighters: '战士',
     clubPlaceholder: '搜索俱乐部',
     participantPlaceholder: '搜索',
     clubName: '俱乐部名称',

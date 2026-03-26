@@ -389,7 +389,7 @@ AI_TRAINER_ENABLED = true
 | Move Tree | `MoveTreeView.vue` | Branch sidebar (Speed/Power/Tech) + move cards. Sidebar buttons centered with `position:absolute; top:35%; transform:translateY(-50%)` |
 | Fight | `CardFightView.vue` | Main combat (PvE + PvP), dice, coach advice, HP bars, AI Trainer (PvE results). PvP mode: no BottomMenu, no PvP badge, reduced padding. Fully migrated to --hex-* vars: HexButton for results, inline SVGs, dice/coach/victory/defeat/overdrive all use design system vars |
 | Profile | `ProfileView.vue` | Tabs: balance, wallet, account, skins |
-| Ratings | `RatingsView.vue` | Club and player leaderboards |
+| Ratings (League) | `RatingsView.vue` | 3 tabs: My Club (placeholder), Clubs (leaderboard), Fighters (leaderboard). Default tab: My Club. URL: `/ratings/:type` (myclub/clubs/fighters) |
 | Preparation | `PreparationView.vue` | Arena: action row (Mode + START FIGHT + Friends buttons), auto fight toggle/status. Friends button is text-only (no online indicator) |
 | Friends | `FriendsView.vue` | Friends list, friend requests, search players |
 | Matchmaking | `MatchmakingView.vue` | Real-time PvP matchmaking queue. Opponent Found shows fighter skins (not icons). No colored borders. 100dvh support. |

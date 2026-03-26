@@ -35,7 +35,7 @@ const protectedRoutes = [
     {path: '/club/:id', name: 'Club', component: () => import("/src/views/ClubView.vue")},
 
     {path: '/ratings/:type', name: 'Ratings', component: () => import("/src/views/RatingsView.vue"), props: true},
-    {path: '/ratings', redirect: '/ratings/clubs'},
+    {path: '/ratings', redirect: '/ratings/myclub'},
 
     {path: '/training', name: 'Training', component: () => import("/src/views/TrainingView.vue")},
     {path: '/training/moves', name: 'MoveTree', component: () => import("/src/views/MoveTreeView.vue")},

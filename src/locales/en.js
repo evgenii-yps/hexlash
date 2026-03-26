@@ -489,6 +489,9 @@ export default {
   rating: {
     clubs: 'Club rating',
     fighters: 'Fighter rating',
+    lblMyClub: 'My Club',
+    lblClubs: 'Clubs',
+    lblFighters: 'Fighters',
     clubPlaceholder: 'Search club',
     participantPlaceholder: 'Search',
     clubName: 'Club Name',

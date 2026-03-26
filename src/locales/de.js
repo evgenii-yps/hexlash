@@ -471,6 +471,9 @@ export default {
   rating: {
     clubs: 'Club-Rangliste',
     fighters: 'Kämpfer-Rangliste',
+    lblMyClub: 'Mein Club',
+    lblClubs: 'Clubs',
+    lblFighters: 'Kämpfer',
     clubPlaceholder: 'Club suchen',
     participantPlaceholder: 'Suche',
     clubName: 'Clubname',

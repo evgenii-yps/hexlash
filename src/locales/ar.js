@@ -409,6 +409,9 @@ export default {
   rating: {
     clubs: 'تصنيف الأندية',
     fighters: 'تصنيف المقاتلين',
+    lblMyClub: 'ناديي',
+    lblClubs: 'الأندية',
+    lblFighters: 'المقاتلون',
     clubPlaceholder: 'بحث عن النادي',
     participantPlaceholder: 'بحث',
     clubName: 'اسم النادي',

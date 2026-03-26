@@ -3,14 +3,24 @@
     <div class="rating-container" @scroll="handleScroll">
       <div class="rating-content-wrapper">
         <div class="rating-tabs">
-          <VBtnDark :class="{'active-tab': activeTab === Tabs.CLUBS} "
+          <VBtnDark :class="{'active-tab': activeTab === Tabs.MY_CLUB}"
+                    @click="setActiveTab(Tabs.MY_CLUB)">
+            {{ t.rating.lblMyClub }}
+          </VBtnDark>
+          <VBtnDark :class="{'active-tab': activeTab === Tabs.CLUBS}"
                     @click="setActiveTab(Tabs.CLUBS)">
-            {{ t.rating.clubs }}
+            {{ t.rating.lblClubs }}
           </VBtnDark>
           <VBtnDark :class="{'active-tab': activeTab === Tabs.FIGHTERS}"
                     @click="setActiveTab(Tabs.FIGHTERS)">
-            {{ t.rating.fighters }}
+            {{ t.rating.lblFighters }}
           </VBtnDark>
+        </div>
+
+        <div v-if="activeTab === Tabs.MY_CLUB" class="table-wrapper">
+          <div class="my-club-placeholder">
+            <span class="placeholder-text">Coming soon</span>
+          </div>
         </div>
 
         <div v-if="activeTab === Tabs.CLUBS" class="table-wrapper">
@@ -220,6 +230,7 @@ import CreateClub from "@/components/fragments/club/CreateClub.vue";
 
 // Enum для вкладок
 const Tabs = {
+  MY_CLUB: 'myclub',
   CLUBS: 'clubs',
   FIGHTERS: 'fighters'
 };
@@ -227,7 +238,13 @@ const Tabs = {
 const router = useRouter();
 const route = useRoute();
 
-const activeTab = ref(route.params.type === Tabs.CLUBS ? Tabs.CLUBS : Tabs.FIGHTERS);
+const getInitialTab = () => {
+  const type = route.params.type;
+  if (type === Tabs.CLUBS) return Tabs.CLUBS;
+  if (type === Tabs.FIGHTERS) return Tabs.FIGHTERS;
+  return Tabs.MY_CLUB;
+};
+const activeTab = ref(getInitialTab());
 
 const searchClub = ref(activeTab.value === Tabs.CLUBS ? route.query.searchClub || '' : '');
 const sortClubBy = ref(activeTab.value === Tabs.CLUBS ? route.query.sortClubBy || 'battles' : 'battles');
@@ -399,7 +416,7 @@ watch(route, async (newRoute) => {
       doneClubs('ok');
     }
 
-  } else {
+  } else if (newRoute.params.type === Tabs.FIGHTERS) {
     store.commit('user/resetParticipantRatings');
 
     searchMember.value = newRoute.query.searchMember || '';
@@ -503,6 +520,8 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   margin-bottom: 10px;
+  gap: 4px;
+  padding: 0 10px;
 }
 
 .rating-tabs .active-tab {
@@ -512,13 +531,13 @@ onMounted(() => {
 
 .rating-tabs button {
   flex: 1;
-  padding: 10px 20px;
-  margin: 0 10px;
+  padding: 10px 8px;
+  margin: 0;
   cursor: pointer;
   color: var(--hex-text-secondary);
   height: 40px;
   white-space: normal;
-
+  border-radius: 8px !important;
 }
 
 .rating-tabs :deep(button .v-btn__content) {
@@ -630,6 +649,18 @@ onMounted(() => {
   display: flex;
   justify-content: center;
   margin: 10px 0;
+}
+
+.my-club-placeholder {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+.placeholder-text {
+  color: var(--hex-text-muted);
+  font-size: 1rem;
 }
 
 :deep(.v-select__selection-text) {

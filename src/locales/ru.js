@@ -489,6 +489,9 @@ export default {
   rating: {
     clubs: 'Рейтинг клубов',
     fighters: 'Рейтинг бойцов',
+    lblMyClub: 'Мой клуб',
+    lblClubs: 'Клубы',
+    lblFighters: 'Бойцы',
     clubPlaceholder: 'Поиск клуба',
     participantPlaceholder: 'Поиск',
     clubName: 'Название клуба',
