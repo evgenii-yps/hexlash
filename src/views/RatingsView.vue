@@ -47,6 +47,13 @@
             </v-select>
           </div>
 
+          <div v-if="canCreateClub" class="create-club-row">
+            <HexButton variant="primary" size="sm" @click="dialogCreateClub = true">
+              {{ t.profile.buttons.lblCreateClub }}
+            </HexButton>
+            <CreateClub :dialogCreate="dialogCreateClub" @close="dialogCreateClub = false" />
+          </div>
+
           <div class="table-body">
             <div class="table-header-row">
               <span class="column">№</span>
@@ -205,8 +212,10 @@ import InputField from "@/components/ui/InputField.vue";
 import debounce from "debounce";
 import {t} from "@/locales/index.js";
 import store from "@/core/state/store.js";
-import {formatNumber} from "@/core/constants.js";
+import {formatNumber, COST_CREATE_CLUB} from "@/core/constants.js";
 import * as amplitude from "@amplitude/analytics-browser";
+import HexButton from "@/components/ui/HexButton.vue";
+import CreateClub from "@/components/fragments/club/CreateClub.vue";
 
 
 // Enum для вкладок
@@ -231,6 +240,9 @@ const participantLimitReached = computed(() => store.getters['user/isLimitReache
 
 const clubId = ref(route.query.clubId);
 
+const master = computed(() => store.getters['master/getMaster']);
+const canCreateClub = computed(() => !master.value?.userData?.clubId && master.value?.getBalance() >= COST_CREATE_CLUB);
+const dialogCreateClub = ref(false);
 
 const clubSortItems = computed(() => [
   {name: t.value.rating.total, value: 'battles'},
@@ -612,6 +624,12 @@ onMounted(() => {
   display: block;
   margin-right: 10px;
   width: 100%;
+}
+
+.create-club-row {
+  display: flex;
+  justify-content: center;
+  margin: 10px 0;
 }
 
 :deep(.v-select__selection-text) {
