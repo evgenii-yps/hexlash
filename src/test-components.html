@@ -79,6 +79,32 @@
   .hex-card__body--pad-lg { padding: 24px; }
   .hex-card__header { padding: 16px 16px 12px; border-bottom: 0.5px solid var(--hex-border-default); }
   .hex-card__footer { padding: 12px 16px 16px; border-top: 0.5px solid var(--hex-border-default); }
+
+  /* --- HexProgress --- */
+  .hex-progress { display: flex; align-items: center; gap: 8px; width: 100%; }
+  .hex-progress__track { flex: 1; background: rgba(255,255,255,0.06); overflow: hidden; }
+  .hex-progress--sm .hex-progress__track { height: 4px; border-radius: 2px; }
+  .hex-progress--md .hex-progress__track { height: 8px; border-radius: 4px; }
+  .hex-progress--lg .hex-progress__track { height: 14px; border-radius: 7px; }
+  .hex-progress__fill { height: 100%; border-radius: inherit; min-width: 0; }
+  .hex-progress__label { font-family: 'Anonymous', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--hex-text-muted); min-width: 30px; flex-shrink: 0; }
+  .hex-progress__value { font-family: 'AnonymousBalance', monospace; color: var(--hex-text-secondary); min-width: 40px; text-align: right; flex-shrink: 0; }
+  .hex-progress--sm .hex-progress__value { font-size: 11px; }
+  .hex-progress--md .hex-progress__value { font-size: 13px; }
+  .hex-progress--lg .hex-progress__value { font-size: 15px; }
+
+  /* --- HexBadge --- */
+  .hex-badge { display: inline-flex; align-items: center; gap: 4px; border-radius: 20px; font-family: 'Anonymous', monospace; letter-spacing: 0.5px; white-space: nowrap; line-height: 1; }
+  .hex-badge--uppercase { text-transform: uppercase; }
+  .hex-badge--sm { padding: 2px 8px; font-size: 10px; }
+  .hex-badge--md { padding: 4px 12px; font-size: 12px; }
+  .hex-badge--counter { font-family: 'AnonymousBalance', monospace; justify-content: center; padding: 0; }
+  .hex-badge--counter.hex-badge--sm { min-width: 18px; height: 18px; font-size: 10px; }
+  .hex-badge--counter.hex-badge--md { min-width: 22px; height: 22px; font-size: 12px; }
+  .hex-badge--circle { border-radius: 50%; }
+  .hex-badge--counter:not(.hex-badge--circle) { padding: 0 6px; border-radius: 20px; }
+  .hex-badge--pulse { animation: hex-badge-pulse 1.5s ease infinite; }
+  @keyframes hex-badge-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
 </style>
 </head>
 <body>
@@ -260,6 +286,129 @@
   <div class="hex-card hex-card--default">
     <div class="hex-card__body hex-card__body--pad-lg">pad: lg</div>
   </div>
+</div>
+
+<!-- ===== PROGRESS ===== -->
+<h2>HexProgress — HP variant</h2>
+<div style="max-width:400px;display:flex;flex-direction:column;gap:12px">
+  <div class="label">100% (green)</div>
+  <div class="hex-progress hex-progress--md">
+    <div class="hex-progress__track"><div class="hex-progress__fill" style="width:100%;background:var(--hex-success);transition:width 0.5s ease"></div></div>
+    <span class="hex-progress__value">100/100</span>
+  </div>
+  <div class="label">65% (yellow)</div>
+  <div class="hex-progress hex-progress--md">
+    <div class="hex-progress__track"><div class="hex-progress__fill" style="width:65%;background:var(--hex-warning);transition:width 0.5s ease"></div></div>
+    <span class="hex-progress__value">65/100</span>
+  </div>
+  <div class="label">25% (red)</div>
+  <div class="hex-progress hex-progress--md">
+    <div class="hex-progress__track"><div class="hex-progress__fill" style="width:25%;background:var(--hex-danger);transition:width 0.5s ease"></div></div>
+    <span class="hex-progress__value">25/100</span>
+  </div>
+  <div class="label">5% (red, critical)</div>
+  <div class="hex-progress hex-progress--md">
+    <div class="hex-progress__track"><div class="hex-progress__fill" style="width:5%;background:var(--hex-danger);transition:width 0.5s ease"></div></div>
+    <span class="hex-progress__value">5/100</span>
+  </div>
+</div>
+
+<h2>HexProgress — Branch variant</h2>
+<div style="max-width:400px;display:flex;flex-direction:column;gap:12px">
+  <div class="hex-progress hex-progress--md">
+    <span class="hex-progress__label">SPD</span>
+    <div class="hex-progress__track"><div class="hex-progress__fill" style="width:72%;background:var(--hex-branch-speed);transition:width 0.5s ease"></div></div>
+    <span class="hex-progress__value">72%</span>
+  </div>
+  <div class="hex-progress hex-progress--md">
+    <span class="hex-progress__label">PWR</span>
+    <div class="hex-progress__track"><div class="hex-progress__fill" style="width:45%;background:var(--hex-branch-power);transition:width 0.5s ease"></div></div>
+    <span class="hex-progress__value">45%</span>
+  </div>
+  <div class="hex-progress hex-progress--md">
+    <span class="hex-progress__label">TCH</span>
+    <div class="hex-progress__track"><div class="hex-progress__fill" style="width:88%;background:var(--hex-branch-technique);transition:width 0.5s ease"></div></div>
+    <span class="hex-progress__value">88%</span>
+  </div>
+</div>
+
+<h2>HexProgress — Sizes</h2>
+<div style="max-width:400px;display:flex;flex-direction:column;gap:12px">
+  <div class="label">sm (4px)</div>
+  <div class="hex-progress hex-progress--sm">
+    <div class="hex-progress__track"><div class="hex-progress__fill" style="width:60%;background:var(--hex-primary);transition:width 0.5s ease"></div></div>
+  </div>
+  <div class="label">md (8px)</div>
+  <div class="hex-progress hex-progress--md">
+    <div class="hex-progress__track"><div class="hex-progress__fill" style="width:60%;background:var(--hex-primary);transition:width 0.5s ease"></div></div>
+  </div>
+  <div class="label">lg (14px)</div>
+  <div class="hex-progress hex-progress--lg">
+    <div class="hex-progress__track"><div class="hex-progress__fill" style="width:60%;background:var(--hex-primary);transition:width 0.5s ease"></div></div>
+  </div>
+</div>
+
+<h2>HexProgress — Generic with custom color</h2>
+<div style="max-width:400px;display:flex;flex-direction:column;gap:12px">
+  <div class="hex-progress hex-progress--md">
+    <span class="hex-progress__label">XP</span>
+    <div class="hex-progress__track"><div class="hex-progress__fill" style="width:35%;background:#FFB800;transition:width 0.5s ease"></div></div>
+    <span class="hex-progress__value">350/1000</span>
+  </div>
+</div>
+
+<!-- ===== BADGES ===== -->
+<h2>HexBadge — Archetypes</h2>
+<div class="row">
+  <span class="hex-badge hex-badge--sm hex-badge--uppercase" style="color:var(--hex-arch-predator);background:var(--hex-arch-predator-bg)">Predator</span>
+  <span class="hex-badge hex-badge--sm hex-badge--uppercase" style="color:var(--hex-arch-sentinel);background:var(--hex-arch-sentinel-bg)">Sentinel</span>
+  <span class="hex-badge hex-badge--sm hex-badge--uppercase" style="color:var(--hex-arch-ghost);background:var(--hex-arch-ghost-bg)">Ghost</span>
+  <span class="hex-badge hex-badge--sm hex-badge--uppercase" style="color:var(--hex-arch-analyst);background:var(--hex-arch-analyst-bg)">Analyst</span>
+  <span class="hex-badge hex-badge--sm hex-badge--uppercase" style="color:var(--hex-arch-maverick);background:var(--hex-arch-maverick-bg)">Maverick</span>
+  <span class="hex-badge hex-badge--sm hex-badge--uppercase" style="color:var(--hex-arch-juggernaut);background:var(--hex-arch-juggernaut-bg)">Juggernaut</span>
+</div>
+
+<h2>HexBadge — Branches</h2>
+<div class="row">
+  <span class="hex-badge hex-badge--sm hex-badge--uppercase" style="color:var(--hex-branch-speed);background:color-mix(in srgb, var(--hex-branch-speed) 15%, transparent)">Speed</span>
+  <span class="hex-badge hex-badge--sm hex-badge--uppercase" style="color:var(--hex-branch-power);background:color-mix(in srgb, var(--hex-branch-power) 15%, transparent)">Power</span>
+  <span class="hex-badge hex-badge--sm hex-badge--uppercase" style="color:var(--hex-branch-technique);background:color-mix(in srgb, var(--hex-branch-technique) 15%, transparent)">Technique</span>
+</div>
+
+<h2>HexBadge — Status</h2>
+<div class="row">
+  <span class="hex-badge hex-badge--sm hex-badge--uppercase" style="color:var(--hex-victory);background:var(--hex-victory-bg)">Victory</span>
+  <span class="hex-badge hex-badge--sm hex-badge--uppercase" style="color:var(--hex-defeat);background:var(--hex-defeat-bg)">Defeat</span>
+  <span class="hex-badge hex-badge--sm hex-badge--uppercase" style="color:var(--hex-draw);background:var(--hex-draw-bg)">Draw</span>
+  <span class="hex-badge hex-badge--sm hex-badge--uppercase" style="color:var(--hex-info);background:var(--hex-info-bg)">Info</span>
+</div>
+
+<h2>HexBadge — Sizes</h2>
+<div class="row">
+  <span class="hex-badge hex-badge--sm hex-badge--uppercase" style="color:var(--hex-arch-predator);background:var(--hex-arch-predator-bg)">sm badge</span>
+  <span class="hex-badge hex-badge--md hex-badge--uppercase" style="color:var(--hex-arch-predator);background:var(--hex-arch-predator-bg)">md badge</span>
+</div>
+
+<h2>HexBadge — Counter</h2>
+<div class="row">
+  <span class="hex-badge hex-badge--sm hex-badge--counter hex-badge--circle" style="color:#fff;background:var(--hex-primary)">3</span>
+  <span class="hex-badge hex-badge--sm hex-badge--counter" style="color:#fff;background:var(--hex-primary);padding:0 6px;min-width:18px;height:18px">12</span>
+  <span class="hex-badge hex-badge--sm hex-badge--counter" style="color:#fff;background:var(--hex-primary);padding:0 6px;min-width:18px;height:18px">99</span>
+  <span class="hex-badge hex-badge--md hex-badge--counter hex-badge--circle" style="color:#fff;background:var(--hex-primary)">5</span>
+  <span class="hex-badge hex-badge--md hex-badge--counter" style="color:#fff;background:var(--hex-primary);padding:0 6px;min-width:22px;height:22px">42</span>
+</div>
+
+<h2>HexBadge — Pulse</h2>
+<div class="row">
+  <span class="hex-badge hex-badge--sm hex-badge--uppercase hex-badge--pulse" style="color:var(--hex-danger);background:var(--hex-defeat-bg)">Live</span>
+  <span class="hex-badge hex-badge--sm hex-badge--counter hex-badge--circle hex-badge--pulse" style="color:#fff;background:var(--hex-danger)">3</span>
+  <span class="hex-badge hex-badge--sm hex-badge--uppercase hex-badge--pulse" style="color:var(--hex-victory);background:var(--hex-victory-bg)">Online</span>
+</div>
+
+<h2>HexBadge — Custom</h2>
+<div class="row">
+  <span class="hex-badge hex-badge--sm hex-badge--uppercase" style="color:#fff;background:rgba(255,255,255,0.1)">Custom</span>
+  <span class="hex-badge hex-badge--md hex-badge--uppercase" style="color:#FFD600;background:rgba(255,214,0,0.12)">VIP</span>
 </div>
 
 <div style="height:64px"></div>
