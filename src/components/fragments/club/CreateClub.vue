@@ -20,9 +20,21 @@
         >
         </v-textarea>
 
-        <div class="notice">{{ t.club.notice }}</div>
+        <div class="public-toggle">
+          <div class="toggle-row">
+            <span class="toggle-label">{{ t.club.lblPublicClub }}</span>
+            <v-switch
+              v-model="isPublic"
+              :class="{ checked: isPublic }"
+              class="club-public-switch"
+              hide-details
+              color="var(--hex-primary)"
+            />
+          </div>
+          <span class="toggle-hint">{{ isPublic ? t.club.lblAnyoneCanJoin : t.club.lblInviteOnly }}</span>
+        </div>
 
-        <div class="cost">{{ COST_CREATE_CLUB }}$</div>
+        <div class="notice">{{ t.club.notice }}</div>
 
         <div  v-if="loading" class="loader-container">
           <v-progress-circular
@@ -48,13 +60,13 @@
 <script setup>
 import {ref, watch} from 'vue';
 import store from "@/core/state/store.js";
-import {COST_CREATE_CLUB} from "@/core/constants.js";
 import router from "@/router/index.js";
 import {t} from "@/locales/index.js";
 
 
 const title = ref("");
 const description = ref("");
+const isPublic = ref(true);
 
 const loading = ref(false);
 const resultMessage = ref('');
@@ -114,7 +126,8 @@ const saveChanges = async () => {
     const club = await store.dispatch('club/createClub',
         {
           name: title.value,
-          description: description.value
+          description: description.value,
+          isPublic: isPublic.value
         }
     );
     hide();
@@ -171,11 +184,28 @@ const saveChanges = async () => {
   text-align: center;
 }
 
-.cost{
+.public-toggle {
+  margin-bottom: 12px;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.toggle-label {
   color: var(--hex-text-primary);
-  font-size: 1.5em;
-  text-align: center;
-  margin-top: 10px;
+  font-size: 0.9rem;
+}
+
+.toggle-hint {
+  color: var(--hex-text-muted);
+  font-size: 0.75rem;
+}
+
+.club-public-switch {
+  flex: 0;
 }
 
 </style>

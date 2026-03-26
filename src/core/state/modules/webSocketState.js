@@ -188,6 +188,19 @@ const actions = {
                 store.commit('friends/clearIncomingChallenge');
                 window.dispatchEvent(new CustomEvent('challenge-start', { detail: message }));
                 break;
+            // ─── Club invite messages ────────────────────────────────────
+            case 'club_invite':
+                window.dispatchEvent(new CustomEvent('club-invite-received', { detail: message }));
+                break;
+            case 'club_invite_accepted':
+                window.dispatchEvent(new CustomEvent('club-invite-accepted', { detail: message }));
+                break;
+            case 'club_invite_declined':
+                window.dispatchEvent(new CustomEvent('club-invite-declined', { detail: message }));
+                break;
+            case 'club_invite_error':
+                window.dispatchEvent(new CustomEvent('club-invite-error', { detail: message }));
+                break;
             default:
                 console.warn(`Unknown message type received: ${messageType}`);
                 break;

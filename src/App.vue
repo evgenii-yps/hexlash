@@ -32,6 +32,7 @@
 
     <!-- Global challenge notification (top of screen) -->
     <ChallengeNotification v-if="isAuth" />
+    <ClubInviteNotification v-if="isAuth" />
 
     <footer class="footer">
       <transition name="slide-up-down">
@@ -52,6 +53,7 @@ import NoConnection from "@/components/ui/NoConnection.vue";
 import Error from "@/components/Error.vue";
 import NewAchievement from "@/components/NewAchievement.vue";
 import ChallengeNotification from "@/components/pvp/ChallengeNotification.vue";
+import ClubInviteNotification from "@/components/club/ClubInviteNotification.vue";
 import { t } from "@/locales/index.js";
 import * as amplitude from "@amplitude/analytics-browser";
 

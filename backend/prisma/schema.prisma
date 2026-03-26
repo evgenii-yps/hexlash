@@ -62,6 +62,7 @@ model User {
   inviteId        String?  @unique @default(uuid())
 
   clubId          String?
+  clubRole        String?  // "owner", "deputy", "member"
   club            Club?    @relation(fields: [clubId], references: [id])
 
   createdAt       DateTime @default(now())
@@ -94,6 +95,7 @@ model Club {
   battles     Int      @default(0)
   wins        Int      @default(0)
   isPublic    Boolean  @default(true)
+  maxMembers  Int      @default(50)
   members     User[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

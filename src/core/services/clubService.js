@@ -3,7 +3,6 @@ import apiClient from "@/core/api/apiClient.js";
 import store from "@/core/state/store.js";
 import ClubModel from "@/core/models/clubModel.js";
 import {updateMasterToLocalDB} from "@/core/database/masterRepository.js";
-import {COST_CREATE_CLUB, DECIMALS} from "@/core/constants.js";
 import {isMockMode} from "@/core/mock/mockData.js";
 
 // Получить данные клуба из локальной базы данных или из API
@@ -91,8 +90,6 @@ export const createClub = async (clubData) => {
         await updateClubToLocalDB(createdClubModel);
         store.commit('club/setClub', createdClubModel);
 
-        store.commit('master/decreaseBalance', COST_CREATE_CLUB * (10 ** DECIMALS));
-
         return createdClubModel;
     } catch (error) {
         throw new Error('Failed to create club: ' + (error.response?.data?.error || error.message));
@@ -123,6 +120,42 @@ export const changeClub = async (clubId) => {
     }
 };
 
+
+export const setMemberRole = async (userId, role) => {
+    try {
+        const response = await apiClient.post('/club/set-role', {userId, role}, {authRequired: true});
+        return response.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.error || 'Failed to set role');
+    }
+};
+
+export const transferOwnership = async (newOwnerId) => {
+    try {
+        const response = await apiClient.post('/club/transfer-ownership', {newOwnerId}, {authRequired: true});
+        return response.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.error || 'Failed to transfer ownership');
+    }
+};
+
+export const kickMember = async (userId) => {
+    try {
+        const response = await apiClient.post('/club/kick', {userId}, {authRequired: true});
+        return response.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.error || 'Failed to kick member');
+    }
+};
+
+export const inviteToClub = async (userId) => {
+    try {
+        const response = await apiClient.post('/club/invite', {userId}, {authRequired: true});
+        return response.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.error || 'Failed to send invite');
+    }
+};
 
 export const searchClubs = async ({name = '', sortBy = 'battles', page = 0, size = 10, sortDirection = 'DESC'}) => {
     if (isMockMode()) {

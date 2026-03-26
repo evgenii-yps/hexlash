@@ -230,7 +230,7 @@ import InputField from "@/components/ui/InputField.vue";
 import debounce from "debounce";
 import {t} from "@/locales/index.js";
 import store from "@/core/state/store.js";
-import {formatNumber, COST_CREATE_CLUB} from "@/core/constants.js";
+import {formatNumber} from "@/core/constants.js";
 import * as amplitude from "@amplitude/analytics-browser";
 import HexButton from "@/components/ui/HexButton.vue";
 import CreateClub from "@/components/fragments/club/CreateClub.vue";
@@ -268,7 +268,7 @@ const participantLimitReached = computed(() => store.getters['user/isLimitReache
 const clubId = ref(route.query.clubId);
 
 const master = computed(() => store.getters['master/getMaster']);
-const canCreateClub = computed(() => !master.value?.userData?.clubId && master.value?.getBalance() >= COST_CREATE_CLUB);
+const canCreateClub = computed(() => !master.value?.userData?.clubId);
 const dialogCreateClub = ref(false);
 
 const clubSortItems = computed(() => [

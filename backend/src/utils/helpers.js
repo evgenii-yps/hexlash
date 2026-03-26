@@ -45,6 +45,7 @@ function formatUserResponse(user) {
     daysInClub: user.daysInClub,
     noSkipDays: user.noSkipDays,
     clubId: user.clubId,
+    clubRole: user.clubRole,
     createdAt: user.createdAt.toISOString(),
     updatedAt: user.updatedAt.toISOString(),
     achievements: user.achievements
@@ -64,6 +65,7 @@ function formatClubResponse(club) {
     battles: club.battles,
     wins: club.wins,
     isPublic: club.isPublic,
+    maxMembers: club.maxMembers,
     members: club._count ? club._count.members : (club.members ? club.members.length : 0),
   };
 }
