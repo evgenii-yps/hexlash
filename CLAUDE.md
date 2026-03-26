@@ -449,9 +449,9 @@ AI_TRAINER_ENABLED = true
 - `PvPStatsCard.vue` — PvP statistics display
 - `AiTrainerAnalysis.vue` — Claude-powered post-fight analysis (PvE + PvP, results screen)
 - `AutoFightAnalysis.vue` — Claude-powered auto fight series analysis (AutoFightLogView)
-- `ProfileWallet.vue` — Wallet page: uses @wagmi/vue useAccount(), shows ConnectWallet + WalletInfo + GameBalanceCard. BuyTokens temporarily hidden (placeholder until Base contract ready)
-- `ConnectWallet.vue` — Wallet connect via @wagmi/vue: useConnect/useDisconnect/useConnectors. Shows connector list (injected, Coinbase, WalletConnect). HexButton UI
-- `WalletInfo.vue` — Connected wallet address display + copy + chain name. Uses @wagmi/vue useAccount()
+- `ProfileWallet.vue` — Wallet page: uses @wagmi/vue useAccount(), shows ConnectWallet + GameBalanceCard + HexCard placeholder. BuyTokens/WalletInfo removed from render
+- `ConnectWallet.vue` — Full wallet modal: Teleport modal with connector list (icons, dedup, rename Injected→Browser Wallet), connecting spinner, connected state (short address + chain + disconnect). Uses @wagmi/vue useConnect/useDisconnect/useConnectors. z-index 9000, Escape/overlay close, hex-fade/hex-slide-up transitions. 360px responsive
+- `WalletInfo.vue` — **Unused** — functionality moved into ConnectWallet connected state. File preserved
 - `BuyTokens.vue` — Token purchase modal. **Temporarily disabled** — not rendered in ProfileWallet, file preserved for Phase 2 (Base contract)
 - `GameBalanceCard.vue` — Game balance display with withdraw button (shows "after listing" message)
 
