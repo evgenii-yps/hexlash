@@ -193,7 +193,7 @@ Optimal weight: 40–70 filled pixels (15–27%). Exception: `online` dot = 32px
 
 ### CSS Variables (`/src/styles/hexlash-ui.css`)
 
-All new components use `--hex-*` variables exclusively. Legacy `--pink`, `--dark`, `--gray*` still exist in `colors.css` for unconverted components.
+All components use `--hex-*` variables exclusively. Legacy `--pink`, `--dark`, `--gray*` in `colors.css` only referenced by PrivacyView (auto-generated legal HTML).
 
 Key variable groups: `--hex-primary`, `--hex-bg-{dark,medium,light}`, `--hex-text-{primary,secondary,muted}`, `--hex-border-{default,active,strong}`, `--hex-arch-{name}` (6 archetypes × 5 variants each), `--hex-branch-{name}`, `--hex-dice-{effect}`, `--hex-mode-{type}`, `--hex-victory/defeat/draw` + `-bg`.
 
@@ -214,8 +214,8 @@ Internally uses `--_arch-color` CSS custom property for scoped styling.
 
 ## CSS Design System (legacy → migrating to --hex-*)
 
-> **Active system:** `/src/styles/hexlash-ui.css` with `--hex-*` variables. All new/updated components use exclusively `--hex-*` vars.
-> **Legacy:** `/src/assets/colors.css` with `--pink`, `--dark`, `--gray*`, `--white` etc. Still used by unconverted components. Do NOT use legacy vars in new code.
+> **Active system:** `/src/styles/hexlash-ui.css` with `--hex-*` variables. ALL components use exclusively `--hex-*` vars (Phase 5.1 complete).
+> **Legacy:** `/src/assets/colors.css` — only referenced by PrivacyView.vue (auto-generated legal HTML with inline styles). Do NOT use legacy vars in new code.
 
 **Colors** (`/src/assets/colors.css`):
 ```css
@@ -592,4 +592,6 @@ Previous branch: `claude/hexlash-full-audit-WvXMd` (security audit, completed)
 | 3.4 | ✅ Done | Profile + DeckBuilder — 71 color replacements across 5 files (ProfileView, DeckBuilderView, PvPStatsCard, SoundToggle, XPAllocationModal). PvP stats: victory/defeat/draw colors |
 | 4 | ✅ Done | Secondary screens — 280 color replacements across 11 files. All legacy/hardcoded colors → --hex-* vars. RainView Three.js colors preserved. |
 | P0 | ✅ Done | PixelIcon revert — removed all PixelIcon usage from app files, restored original SVG/img icons with --hex-* colors. PixelIcon.vue + pixelIcons.js preserved but unused. |
-| 5 | 🔲 Next | Visual polish (HP bars → HexProgress, module cards, layout improvements) |
+| 5.1 | ✅ Done | Final sweep — 330 legacy var replacements across 53 files. 0 legacy vars remain in active components. PrivacyView (legal, 58 inline styles) excluded. colors.css kept for PrivacyView compat. |
+| 5.2 | 🔲 Next | Animations and transitions |
+| 5.3 | 🔲 Next | Responsive + Telegram WebApp |
