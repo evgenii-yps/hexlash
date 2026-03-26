@@ -465,7 +465,7 @@ Base: `/v1/`
 |-------|------|---------|
 | `/auth` | auth.js | login, signup, reset, telegram. Rate limited: login 5/15min, register 3/hr, telegram 10/15min |
 | `/user` | user.js | profile, stats, avatar, achievements. Skin validated via regex. Delete uses $transaction with cascade |
-| `/club` | club.js | create/edit club, members, balance |
+| `/club` | club.js | create/edit club, members, balance, roles (set-role, transfer-ownership, kick). maxMembers=50, roles: owner/deputy/member |
 | `/task` | task.js | daily + social tasks |
 | `/file` | file.js | avatar/file upload |
 | `/fight` | fight.js | fight creation, results, history |
@@ -509,6 +509,8 @@ Password reset: Returns 501 (not implemented) — no fake success
 ## Database Models (Prisma/PostgreSQL)
 
 User, Club, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask, UserDailyTask, Fight, PunchInfo, FriendRequest, Friendship
+
+**Club system fields:** User.clubRole (`owner`/`deputy`/`member`/null), Club.maxMembers (default 50). Max 3 deputies per club. Owner can set roles, transfer ownership, kick anyone. Deputies can kick members only.
 
 **Seed data:** 16 achievements (NEWBIE, CONNECTED_FIGHTER, REGULAR_FIGHTER, BATTLE_VETERAN, FIGHT_MASTER, COACH, RECRUITER, PROJECT_MAYHEM, MEATLOAF, TYLER, EXPERT, LUCKY_ONE, BOB, PAPER_STREET, MEETING_PARTICIPANT, GOLDEN_RULE) + social/daily tasks (en/ru)
 

@@ -63,6 +63,7 @@ router.post('/add', authMiddleware, async (req, res) => {
         where: { id: req.userId },
         data: {
           clubId: club.id,
+          clubRole: 'owner',
         },
       });
 
@@ -155,32 +156,42 @@ router.post('/change', authMiddleware, async (req, res) => {
     const { clubId } = req.body;
 
     if (clubId) {
-      const club = await prisma.club.findUnique({ where: { id: clubId } });
+      // Joining a club
+      const club = await prisma.club.findUnique({
+        where: { id: clubId },
+        include: { _count: { select: { members: true } } },
+      });
       if (!club) {
         return res.status(404).json({ error: 'Club not found' });
       }
       if (!club.isPublic) {
         return res.status(403).json({ error: 'Club is private' });
       }
-      // Check if user is already in this club
       const user = await prisma.user.findUnique({ where: { id: req.userId } });
       if (user.clubId === clubId) {
         return res.status(400).json({ error: 'Already in this club' });
       }
-    }
+      if (club._count.members >= club.maxMembers) {
+        return res.status(400).json({ error: 'Club is full' });
+      }
 
-    await prisma.user.update({
-      where: { id: req.userId },
-      data: { clubId: clubId || null },
-    });
+      await prisma.user.update({
+        where: { id: req.userId },
+        data: { clubId, clubRole: 'member' },
+      });
 
-    if (clubId) {
       const fullClub = await prisma.club.findUnique({
         where: { id: clubId },
         include: { _count: { select: { members: true } } },
       });
       return res.json({ data: formatClubResponse(fullClub) });
     }
+
+    // Leaving a club
+    await prisma.user.update({
+      where: { id: req.userId },
+      data: { clubId: null, clubRole: null },
+    });
 
     res.json({ data: null });
   } catch (err) {
@@ -232,6 +243,167 @@ router.get('/search', authMiddleware, async (req, res) => {
     res.json({ data: clubs.map(formatClubResponse) });
   } catch (err) {
     console.error('Search clubs error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /v1/club/set-role
+router.post('/set-role', authMiddleware, async (req, res) => {
+  try {
+    const { userId, role } = req.body;
+
+    if (!userId || !role) {
+      return res.status(400).json({ error: 'userId and role required' });
+    }
+    if (!['deputy', 'member'].includes(role)) {
+      return res.status(400).json({ error: 'Role must be "deputy" or "member"' });
+    }
+
+    const requester = await prisma.user.findUnique({ where: { id: req.userId } });
+    if (!requester.clubId) {
+      return res.status(400).json({ error: 'You are not in a club' });
+    }
+
+    const club = await prisma.club.findUnique({ where: { id: requester.clubId } });
+    if (club.ownerId !== req.userId) {
+      return res.status(403).json({ error: 'Only club owner can set roles' });
+    }
+
+    if (userId === req.userId) {
+      return res.status(400).json({ error: 'Cannot change your own role' });
+    }
+
+    const target = await prisma.user.findUnique({ where: { id: userId } });
+    if (!target || target.clubId !== requester.clubId) {
+      return res.status(400).json({ error: 'User is not a member of this club' });
+    }
+
+    if (role === 'deputy') {
+      const deputyCount = await prisma.user.count({
+        where: { clubId: requester.clubId, clubRole: 'deputy' },
+      });
+      if (deputyCount >= 3) {
+        return res.status(400).json({ error: 'Maximum 3 deputies allowed' });
+      }
+    }
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: { clubRole: role },
+    });
+
+    res.json({ data: { userId, role } });
+  } catch (err) {
+    console.error('Set role error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /v1/club/transfer-ownership
+router.post('/transfer-ownership', authMiddleware, async (req, res) => {
+  try {
+    const { newOwnerId } = req.body;
+
+    if (!newOwnerId) {
+      return res.status(400).json({ error: 'newOwnerId required' });
+    }
+
+    const requester = await prisma.user.findUnique({ where: { id: req.userId } });
+    if (!requester.clubId) {
+      return res.status(400).json({ error: 'You are not in a club' });
+    }
+
+    const club = await prisma.club.findUnique({ where: { id: requester.clubId } });
+    if (club.ownerId !== req.userId) {
+      return res.status(403).json({ error: 'Only club owner can transfer ownership' });
+    }
+
+    if (newOwnerId === req.userId) {
+      return res.status(400).json({ error: 'Cannot transfer to yourself' });
+    }
+
+    const target = await prisma.user.findUnique({ where: { id: newOwnerId } });
+    if (!target || target.clubId !== requester.clubId) {
+      return res.status(400).json({ error: 'User is not a member of this club' });
+    }
+
+    // Determine old owner's new role
+    const deputyCount = await prisma.user.count({
+      where: { clubId: requester.clubId, clubRole: 'deputy' },
+    });
+    const oldOwnerRole = deputyCount < 3 ? 'deputy' : 'member';
+
+    await prisma.$transaction([
+      prisma.club.update({
+        where: { id: requester.clubId },
+        data: { ownerId: newOwnerId },
+      }),
+      prisma.user.update({
+        where: { id: newOwnerId },
+        data: { clubRole: 'owner' },
+      }),
+      prisma.user.update({
+        where: { id: req.userId },
+        data: { clubRole: oldOwnerRole },
+      }),
+    ]);
+
+    res.json({ data: { newOwnerId, oldOwnerRole } });
+  } catch (err) {
+    console.error('Transfer ownership error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /v1/club/kick
+router.post('/kick', authMiddleware, async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ error: 'userId required' });
+    }
+
+    if (userId === req.userId) {
+      return res.status(400).json({ error: 'Cannot kick yourself' });
+    }
+
+    const requester = await prisma.user.findUnique({ where: { id: req.userId } });
+    if (!requester.clubId) {
+      return res.status(400).json({ error: 'You are not in a club' });
+    }
+
+    const club = await prisma.club.findUnique({ where: { id: requester.clubId } });
+    const isOwner = club.ownerId === req.userId;
+    const isDeputy = requester.clubRole === 'deputy';
+
+    if (!isOwner && !isDeputy) {
+      return res.status(403).json({ error: 'Only owner or deputy can kick members' });
+    }
+
+    const target = await prisma.user.findUnique({ where: { id: userId } });
+    if (!target || target.clubId !== requester.clubId) {
+      return res.status(400).json({ error: 'User is not a member of this club' });
+    }
+
+    // Deputies can only kick regular members
+    if (isDeputy && target.clubRole !== 'member') {
+      return res.status(403).json({ error: 'Deputies can only kick regular members' });
+    }
+
+    // Owner cannot be kicked
+    if (target.clubRole === 'owner') {
+      return res.status(403).json({ error: 'Cannot kick the club owner' });
+    }
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: { clubId: null, clubRole: null },
+    });
+
+    res.json({ data: { kickedUserId: userId } });
+  } catch (err) {
+    console.error('Kick member error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
