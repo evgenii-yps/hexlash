@@ -528,31 +528,42 @@ onMounted(() => {
 
 .rating-tabs {
   display: flex;
-  justify-content: space-between;
+  border-bottom: 1px solid var(--hex-border-default);
   margin-bottom: 10px;
-  gap: 4px;
   padding: 0 10px;
 }
 
 .rating-tabs .active-tab {
-  background-color: var(--hex-primary) !important;
-  color: var(--hex-text-primary);
+  color: var(--hex-primary) !important;
+  border-bottom: 2px solid var(--hex-primary);
+  font-weight: 600;
 }
 
 .rating-tabs button {
   flex: 1;
-  padding: 10px 8px;
+  padding: 10px 0;
   margin: 0;
   cursor: pointer;
   color: var(--hex-text-secondary);
-  height: 40px;
+  background: transparent !important;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0 !important;
+  height: auto;
   white-space: normal;
-  border-radius: 8px !important;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  transition: color 0.2s ease;
+}
+
+.rating-tabs button:hover {
+  color: var(--hex-text-primary);
 }
 
 .rating-tabs :deep(button .v-btn__content) {
   white-space: pre-wrap !important;
-  font-size: 0.7rem;
+  font-size: 13px;
 }
 
 .custom-select {

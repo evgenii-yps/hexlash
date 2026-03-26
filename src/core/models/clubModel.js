@@ -15,7 +15,7 @@ export default class ClubModel {
      * @param {number} [param0.isPublic=true] - .
      * @param {number} [param0.members=0] - Количество участников клуба.
      */
-    constructor({ id, name, description, avatarUrl, owner, balance = 0, battles = 0, wins = 0, isPublic = true, members = 0 }) {
+    constructor({ id, name, description, avatarUrl, owner, balance = 0, battles = 0, wins = 0, isPublic = true, members = 0, maxMembers = 50 }) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -26,6 +26,7 @@ export default class ClubModel {
         this.wins = wins;
         this.isPublic = isPublic;
         this.members = members;
+        this.maxMembers = maxMembers;
     }
 
     /**
@@ -49,7 +50,7 @@ export default class ClubModel {
     static fromJSON(json) {
         try {
             // Извлекаем данные из JSON
-            const { id, name, description, avatarUrl, owner, balance = 0, battles = 0, wins = 0, isPublic = true, members = 0 } = json;
+            const { id, name, description, avatarUrl, owner, balance = 0, battles = 0, wins = 0, isPublic = true, members = 0, maxMembers = 50 } = json;
 
             // Возвращаем новый экземпляр ClubModel
             return new ClubModel({
@@ -62,7 +63,8 @@ export default class ClubModel {
                 battles,
                 wins,
                 isPublic,
-                members
+                members,
+                maxMembers
             });
         } catch (error) {
             console.error('Error parsing JSON to ClubModel:', error);

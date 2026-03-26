@@ -23,7 +23,7 @@
       <!-- Stats row -->
       <div class="stats-row">
         <div class="stat-card">
-          <span class="stat-value">{{ clubData.members }} / {{ clubData.maxMembers || 50 }}</span>
+          <span class="stat-value">{{ clubData.members }} / {{ clubData.maxMembers }}</span>
           <span class="stat-label">{{ t.rating.members }}</span>
         </div>
         <div class="stat-card">

@@ -107,7 +107,7 @@ const actions = {
     async leaveClub({commit}) {
         try {
             await clubService.leaveClub();
-            await store.dispatch('master/updateMaster', {clubId: null});
+            store.commit('master/updateMaster', {clubId: null, clubRole: null});
         } catch (error) {
             console.error('Failed to leave club:', error);
             throw error;
@@ -116,7 +116,7 @@ const actions = {
     async changeClub({commit}, clubId) {
         try {
             const newClubModel = await clubService.changeClub(clubId);
-            await store.dispatch('master/updateMaster', {clubId: newClubModel.id});
+            store.commit('master/updateMaster', {clubId: newClubModel.id, clubRole: 'member'});
 
             await store.dispatch('club/loadClubById', newClubModel.id);
 
@@ -128,7 +128,7 @@ const actions = {
     async createClub({commit}, newClubData) {
         try {
             const newClubModel = await clubService.createClub(newClubData);
-            await store.dispatch('master/updateMaster', {clubId: newClubModel.id});
+            store.commit('master/updateMaster', {clubId: newClubModel.id, clubRole: 'owner'});
 
             return newClubModel;
 
@@ -164,6 +164,7 @@ const actions = {
     async transferOwnership({commit}, {newOwnerId}) {
         try {
             await clubService.transferOwnership(newOwnerId);
+            store.commit('master/updateMaster', {clubRole: 'deputy'});
         } catch (error) {
             console.error('Failed to transfer ownership:', error);
             throw error;
