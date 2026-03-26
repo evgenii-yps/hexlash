@@ -14,7 +14,7 @@
 
         <!-- Auto fight banner -->
         <div v-if="isAutoFightEnabled && !isPvP" class="autofight-banner">
-          <span class="autofight-banner-icon"><PixelIcon name="auto" :size="14" color="var(--hex-primary)"/></span>
+          <span class="autofight-banner-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--hex-primary)" stroke-width="2" stroke-linecap="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10"/><path d="M20.49 15a9 9 0 01-14.85 3.36L1 14"/></svg></span>
           <span class="autofight-banner-text">{{ t.autoFight.lblAutoFightInProgress }}</span>
         </div>
 
@@ -263,7 +263,6 @@ import iconDefense  from '@/assets/images/icons/defense.svg';
 import iconPosition from '@/assets/images/icons/position.svg';
 import AiTrainerAnalysis from '@/components/AiTrainerAnalysis.vue';
 import HexButton from '@/components/ui/HexButton.vue';
-import PixelIcon from '@/components/ui/PixelIcon.vue';
 
 import { getLanguage } from '@/locales/index.js';
 

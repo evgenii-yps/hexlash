@@ -27,8 +27,6 @@
               class="fight-btn"
               :class="{ 'fight-btn-auto-active': selectedMode === 'auto' && isAutoFightEnabled }"
               :disabled="!isBuildValid && selectedMode !== 'auto'"
-              icon="arena"
-              icon-glow
               @click="startFight"
           >
             {{ startButtonText }}
@@ -38,7 +36,6 @@
               variant="secondary"
               size="sm"
               class="friends-compact-btn"
-              icon="friends"
               @click="goToFriends"
           >
             {{ t.arena.lblFriends }}
@@ -49,7 +46,7 @@
         <div v-if="selectedMode === 'auto' || isAutoFightEnabled" class="autofight-status-section">
           <AutoFightStatus v-if="isAutoFightEnabled"/>
           <div v-else class="autofight-inactive-hint">
-            <PixelIcon name="auto" :size="18" color="var(--hex-text-muted)"/>
+            <svg class="hint-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--hex-text-muted)" stroke-width="2" stroke-linecap="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10"/><path d="M20.49 15a9 9 0 01-14.85 3.36L1 14"/></svg>
             <span>{{ t.arena.autoFightInactive }}</span>
           </div>
         </div>
@@ -74,8 +71,6 @@ import ModuleBuilder from "@/components/fragments/modules/ModuleBuilder.vue";
 import AutoFightStatus from "@/components/fragments/fight/AutoFightStatus.vue";
 import ModeSelector from "@/components/arena/ModeSelector.vue";
 import HexButton from "@/components/ui/HexButton.vue";
-import PixelIcon from "@/components/ui/PixelIcon.vue";
-
 import {getOnlinePlayersCount} from "@/core/services/statsService.js";
 
 const master = computed(() => store.getters['master/getMaster']);
@@ -265,6 +260,10 @@ const handleScroll = (event) => {
   flex-direction: column;
   align-items: center;
   width: 100%;
+}
+
+.hint-icon {
+  flex-shrink: 0;
 }
 
 .autofight-inactive-hint {

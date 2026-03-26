@@ -24,13 +24,13 @@
         @click="selectMode('pve')"
       >
         <div class="option-icon pve-icon">
-          <PixelIcon name="pve" :size="24" color="var(--hex-mode-pve)"/>
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="var(--hex-mode-pve)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
         </div>
         <div class="option-info">
           <div class="option-name">PVE</div>
           <div class="option-desc">{{ t.arena.pveDesc }}</div>
         </div>
-        <span v-if="selectedMode === 'pve'" class="check">✓</span>
+        <span v-if="selectedMode === 'pve'" class="check"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--hex-primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 10 18 20 6"/></svg></span>
       </div>
 
       <!-- PVP -->
@@ -40,7 +40,7 @@
         @click="selectMode('pvp')"
       >
         <div class="option-icon pvp-icon">
-          <PixelIcon name="pvp" :size="24" color="var(--hex-mode-pvp)"/>
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="var(--hex-mode-pvp)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="20" x2="14" y2="10"/><line x1="14" y1="10" x2="17" y2="7"/><line x1="17" y1="7" x2="21" y2="3"/><line x1="18" y1="6" x2="21" y2="3"/><line x1="20" y1="4" x2="14" y2="10"/><line x1="10" y1="14" x2="20" y2="4"/><line x1="3" y1="21" x2="10" y2="14"/><line x1="7" y1="17" x2="3" y2="21"/></svg>
         </div>
         <div class="option-info">
           <div class="option-name">PVP</div>
@@ -50,7 +50,7 @@
             {{ t.pvp.online }}: {{ onlineCount }}
           </div>
         </div>
-        <span v-if="selectedMode === 'pvp'" class="check">✓</span>
+        <span v-if="selectedMode === 'pvp'" class="check"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--hex-primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 10 18 20 6"/></svg></span>
       </div>
 
       <!-- Auto Fight -->
@@ -60,13 +60,13 @@
         @click="selectMode('auto')"
       >
         <div class="option-icon auto-icon">
-          <PixelIcon name="auto" :size="24" color="var(--hex-mode-auto)"/>
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="var(--hex-mode-auto)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10"/><path d="M20.49 15a9 9 0 01-14.85 3.36L1 14"/></svg>
         </div>
         <div class="option-info">
           <div class="option-name">{{ t.arena.autoFight }}</div>
           <div class="option-desc">{{ t.arena.autoDesc }}</div>
         </div>
-        <span v-if="selectedMode === 'auto'" class="check">✓</span>
+        <span v-if="selectedMode === 'auto'" class="check"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--hex-primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 10 18 20 6"/></svg></span>
       </div>
 
     </div>
@@ -77,8 +77,6 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { t } from '@/locales/index.js';
-import PixelIcon from '@/components/ui/PixelIcon.vue';
-
 const props = defineProps({
   onlineCount: { type: Number, default: 0 },
   autoFightActive: { type: Boolean, default: false },
@@ -251,9 +249,8 @@ function selectMode(mode) {
 }
 
 .check {
-  color: var(--hex-primary);
-  font-size: 18px;
-  font-weight: bold;
+  display: flex;
+  align-items: center;
 }
 
 .dropdown-overlay {
