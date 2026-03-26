@@ -34,7 +34,6 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
     constants.js           — Game constants
     websocket/             — WebSocket client
     web3/wagmiConfig.js    — Wagmi config (Base chain, connectors: injected, coinbaseWallet, walletConnect)
-    web3/web3modal-shim.js — Compat shim: maps @web3modal/ethers/vue → @wagmi/vue (temporary, removed in Phase 1.2)
     mock/mockData.js       — Mock data for development
   data/
     branches.js            — 3 branches: speed, power, technique (numeric data only, names via i18n)
@@ -450,6 +449,11 @@ AI_TRAINER_ENABLED = true
 - `PvPStatsCard.vue` — PvP statistics display
 - `AiTrainerAnalysis.vue` — Claude-powered post-fight analysis (PvE + PvP, results screen)
 - `AutoFightAnalysis.vue` — Claude-powered auto fight series analysis (AutoFightLogView)
+- `ProfileWallet.vue` — Wallet page: uses @wagmi/vue useAccount(), shows ConnectWallet + WalletInfo + GameBalanceCard. BuyTokens temporarily hidden (placeholder until Base contract ready)
+- `ConnectWallet.vue` — Wallet connect via @wagmi/vue: useConnect/useDisconnect/useConnectors. Shows connector list (injected, Coinbase, WalletConnect). HexButton UI
+- `WalletInfo.vue` — Connected wallet address display + copy + chain name. Uses @wagmi/vue useAccount()
+- `BuyTokens.vue` — Token purchase modal. **Temporarily disabled** — not rendered in ProfileWallet, file preserved for Phase 2 (Base contract)
+- `GameBalanceCard.vue` — Game balance display with withdraw button (shows "after listing" message)
 
 ---
 
