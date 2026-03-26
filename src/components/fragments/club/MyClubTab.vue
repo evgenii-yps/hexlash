@@ -36,6 +36,13 @@
         </div>
       </div>
 
+      <!-- Invite friend button -->
+      <div v-if="isOwner || isDeputy" class="invite-row">
+        <HexButton variant="primary" size="sm" @click="openInviteModal">
+          {{ t.club.lblInviteFriend }}
+        </HexButton>
+      </div>
+
       <!-- Members list -->
       <div class="members-section">
         <div v-for="member in members" :key="member.id" class="member-row">
@@ -155,6 +162,32 @@
         </VCard>
       </VModal>
 
+      <!-- Invite friend modal -->
+      <VModal v-model="dialogInvite" max-width="400">
+        <VCard>
+          <v-card-title class="headline action-title">{{ t.club.lblInviteFriend }}</v-card-title>
+          <v-card-text>
+            <div v-if="invitableFriends.length === 0" class="no-friends-text">
+              {{ t.club.lblPlayerHasClub }}
+            </div>
+            <div v-else class="transfer-list">
+              <div
+                  v-for="friend in invitableFriends"
+                  :key="friend.id"
+                  class="transfer-item"
+                  @click="sendInvite(friend)"
+              >
+                <span>{{ friend.username || friend.name || friend.login }}</span>
+              </div>
+            </div>
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer />
+            <v-btn @click="dialogInvite = false" class="cancel-btn">{{ t.modal.btnCancel }}</v-btn>
+          </v-card-actions>
+        </VCard>
+      </VModal>
+
       <!-- Leave confirmation -->
       <VModal v-model="dialogLeave" max-width="500">
         <VCard>
@@ -214,7 +247,7 @@
 </template>
 
 <script setup>
-import {ref, computed, watch} from 'vue';
+import {ref, computed, watch, onMounted, onUnmounted} from 'vue';
 import store from "@/core/state/store.js";
 import {useRouter} from 'vue-router';
 import {t} from "@/locales/index.js";
@@ -246,6 +279,7 @@ const dialogCreate = ref(false);
 const dialogActions = ref(false);
 const dialogKick = ref(false);
 const dialogTransfer = ref(false);
+const dialogInvite = ref(false);
 const selectedMember = ref(null);
 const kickTarget = ref(null);
 const transferTarget = ref(null);
@@ -253,6 +287,9 @@ const loaded = ref(false);
 
 const isOwner = computed(() => myRole.value === 'owner');
 const isDeputy = computed(() => myRole.value === 'deputy');
+
+const friends = computed(() => store.getters['friends/getFriends'] || []);
+const invitableFriends = computed(() => friends.value.filter(f => !f.clubId));
 
 const transferCandidates = computed(() => {
   const myId = master.value?.userData?.id;
@@ -269,6 +306,30 @@ const canManage = (member) => {
   if (isOwner.value) return member.clubRole !== 'owner';
   if (isDeputy.value) return member.clubRole === 'member';
   return false;
+};
+
+const openInviteModal = () => {
+  store.dispatch('friends/loadFriends');
+  dialogInvite.value = true;
+};
+
+const sendInvite = async (friend) => {
+  try {
+    await clubService.inviteToClub(friend.id);
+    dialogInvite.value = false;
+    const name = friend.username || friend.name || friend.login;
+    store.commit('master/setInfoMessage', {
+      text: `${t.value.club.lblInviteSent} ${name}`,
+      timeout: 3000,
+      showButton: false,
+    });
+  } catch (e) {
+    store.commit('master/setErrorMessage', {
+      text: e.message || 'Failed to send invite',
+      timeout: 3000,
+      showButton: false,
+    });
+  }
 };
 
 const loadData = async () => {
@@ -420,6 +481,21 @@ const joinClub = async (id) => {
   }
 };
 
+// Reload when someone joins via invite
+const onInviteAccepted = (event) => {
+  if (event.detail.acceptedByName) {
+    reloadClub();
+  }
+};
+
+onMounted(() => {
+  window.addEventListener('club-invite-accepted', onInviteAccepted);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('club-invite-accepted', onInviteAccepted);
+});
+
 // Load when tab becomes active
 watch(() => props.active, (val) => {
   if (val) {
@@ -528,6 +604,20 @@ watch(() => props.active, (val) => {
   font-size: 11px;
   color: var(--hex-text-muted);
   margin-top: 2px;
+}
+
+/* Invite */
+.invite-row {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.no-friends-text {
+  text-align: center;
+  color: var(--hex-text-muted);
+  padding: 20px 0;
+  font-size: 13px;
 }
 
 /* Members */

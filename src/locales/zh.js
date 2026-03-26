@@ -283,6 +283,13 @@ export default {
     lblMaxDeputies: '最多3名副会长',
     lblClubFull: '俱乐部已满',
     lblMembersCount: '成员',
+    lblInviteFriend: '邀请好友',
+    lblInviteSent: '邀请已发送给',
+    lblInviteReceived: '俱乐部邀请',
+    lblInviteAccepted: '已加入俱乐部！',
+    lblInviteDeclined: '拒绝了邀请',
+    lblPlayerJoined: '加入了你的俱乐部！',
+    lblPlayerHasClub: '没有未加入俱乐部的好友',
   },
   fight: {
     lblRound: '第 {n} 回合',

@@ -297,6 +297,13 @@ export default {
     lblMaxDeputies: 'Maximum 3 deputies allowed',
     lblClubFull: 'Club is full',
     lblMembersCount: 'Members',
+    lblInviteFriend: 'Invite Friend',
+    lblInviteSent: 'Invite sent to',
+    lblInviteReceived: 'Club Invitation',
+    lblInviteAccepted: 'Joined the club!',
+    lblInviteDeclined: 'declined the invite',
+    lblPlayerJoined: 'joined your club!',
+    lblPlayerHasClub: 'No friends without a club',
   },
   fight: {
     lblRound: 'Round {n}',

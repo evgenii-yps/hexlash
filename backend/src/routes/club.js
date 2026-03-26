@@ -408,4 +408,71 @@ router.post('/kick', authMiddleware, async (req, res) => {
   }
 });
 
+// POST /v1/club/invite
+router.post('/invite', authMiddleware, async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ error: 'userId required' });
+    }
+
+    const requester = await prisma.user.findUnique({ where: { id: req.userId } });
+    if (!requester.clubId) {
+      return res.status(400).json({ error: 'You are not in a club' });
+    }
+
+    if (!['owner', 'deputy'].includes(requester.clubRole)) {
+      return res.status(403).json({ error: 'Only owner or deputy can invite' });
+    }
+
+    const club = await prisma.club.findUnique({
+      where: { id: requester.clubId },
+      include: { _count: { select: { members: true } } },
+    });
+
+    if (club._count.members >= club.maxMembers) {
+      return res.status(400).json({ error: 'Club is full' });
+    }
+
+    const target = await prisma.user.findUnique({ where: { id: userId } });
+    if (!target) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    if (target.clubId) {
+      return res.status(400).json({ error: 'User already in a club' });
+    }
+
+    // Check friendship
+    const friendship = await prisma.friendship.findFirst({
+      where: {
+        OR: [
+          { user1Id: req.userId, user2Id: userId },
+          { user1Id: userId, user2Id: req.userId },
+        ],
+      },
+    });
+    if (!friendship) {
+      return res.status(400).json({ error: 'User is not your friend' });
+    }
+
+    // Send invite via WebSocket
+    const { sendToUser } = require('../websocket/handler');
+    const inviterName = requester.name || requester.login || 'Player';
+
+    sendToUser(userId, {
+      type: 'club_invite',
+      clubId: club.id,
+      clubName: club.name,
+      inviterId: req.userId,
+      inviterName,
+    });
+
+    res.json({ data: { invited: userId } });
+  } catch (err) {
+    console.error('Club invite error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = router;

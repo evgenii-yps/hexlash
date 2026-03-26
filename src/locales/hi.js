@@ -283,6 +283,13 @@ export default {
     lblMaxDeputies: 'अधिकतम 3 उप-नेता अनुमत',
     lblClubFull: 'क्लब भरा हुआ है',
     lblMembersCount: 'सदस्य',
+    lblInviteFriend: 'दोस्त को आमंत्रित करें',
+    lblInviteSent: 'आमंत्रण भेजा गया',
+    lblInviteReceived: 'क्लब आमंत्रण',
+    lblInviteAccepted: 'क्लब में शामिल हो गए!',
+    lblInviteDeclined: 'ने आमंत्रण अस्वीकार किया',
+    lblPlayerJoined: 'आपके क्लब में शामिल हुआ!',
+    lblPlayerHasClub: 'बिना क्लब के कोई दोस्त नहीं',
   },
   fight: {
     lblRound: 'राउंड {n}',

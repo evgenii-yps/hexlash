@@ -297,6 +297,13 @@ export default {
     lblMaxDeputies: 'Максимум 3 заместителя',
     lblClubFull: 'Клуб заполнен',
     lblMembersCount: 'Участники',
+    lblInviteFriend: 'Пригласить друга',
+    lblInviteSent: 'Приглашение отправлено',
+    lblInviteReceived: 'Приглашение в клуб',
+    lblInviteAccepted: 'Вы вступили в клуб!',
+    lblInviteDeclined: 'отклонил приглашение',
+    lblPlayerJoined: 'вступил в ваш клуб!',
+    lblPlayerHasClub: 'Нет друзей без клуба',
   },
   fight: {
     lblRound: 'Раунд {n}',

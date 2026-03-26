@@ -283,6 +283,13 @@ export default {
     lblMaxDeputies: 'الحد الأقصى 3 نواب',
     lblClubFull: 'النادي ممتلئ',
     lblMembersCount: 'الأعضاء',
+    lblInviteFriend: 'دعوة صديق',
+    lblInviteSent: 'تم إرسال الدعوة إلى',
+    lblInviteReceived: 'دعوة للنادي',
+    lblInviteAccepted: 'انضممت إلى النادي!',
+    lblInviteDeclined: 'رفض الدعوة',
+    lblPlayerJoined: 'انضم إلى ناديك!',
+    lblPlayerHasClub: 'لا يوجد أصدقاء بدون نادي',
   },
   fight: {
     lblRound: 'الجولة {n}',

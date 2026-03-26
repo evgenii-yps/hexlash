@@ -283,6 +283,13 @@ export default {
     lblMaxDeputies: 'Máximo 3 adjuntos permitidos',
     lblClubFull: 'Club lleno',
     lblMembersCount: 'Miembros',
+    lblInviteFriend: 'Invitar amigo',
+    lblInviteSent: 'Invitación enviada a',
+    lblInviteReceived: 'Invitación al club',
+    lblInviteAccepted: '¡Te uniste al club!',
+    lblInviteDeclined: 'rechazó la invitación',
+    lblPlayerJoined: '¡se unió a tu club!',
+    lblPlayerHasClub: 'No hay amigos sin club',
   },
   fight: {
     lblRound: 'Ronda {n}',

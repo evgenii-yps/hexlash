@@ -283,6 +283,13 @@ export default {
     lblMaxDeputies: '副リーダーは最大3人まで',
     lblClubFull: 'クラブが満員です',
     lblMembersCount: 'メンバー',
+    lblInviteFriend: 'フレンドを招待',
+    lblInviteSent: '招待を送信しました',
+    lblInviteReceived: 'クラブ招待',
+    lblInviteAccepted: 'クラブに参加しました！',
+    lblInviteDeclined: 'は招待を辞退しました',
+    lblPlayerJoined: 'があなたのクラブに参加しました！',
+    lblPlayerHasClub: 'クラブに所属していないフレンドはいません',
   },
   fight: {
     lblRound: 'ラウンド {n}',

@@ -444,6 +444,7 @@ AI_TRAINER_ENABLED = true
 - `FriendRequestCard.vue` — incoming friend request
 - `ChallengeModal.vue` — PvP challenge popup (legacy, kept as fallback)
 - `ChallengeNotification.vue` — Top-of-screen challenge notification (global, z-index: 9999, 10s timer)
+- `ClubInviteNotification.vue` — Top-of-screen club invitation notification (global, z-index: 9998, 30s timer, accept/decline via WS)
 - `PlayerSearchResult.vue` — player search result item
 - `XPAllocationModal.vue` — XP allocation modal
 - `PvPStatsCard.vue` — PvP statistics display (league, rating, progress, wins/losses/winrate). Shown in Fighters tab of RatingsView
@@ -465,7 +466,7 @@ Base: `/v1/`
 |-------|------|---------|
 | `/auth` | auth.js | login, signup, reset, telegram. Rate limited: login 5/15min, register 3/hr, telegram 10/15min |
 | `/user` | user.js | profile, stats, avatar, achievements. Skin validated via regex. Delete uses $transaction with cascade |
-| `/club` | club.js | create/edit club, members, balance, roles (set-role, transfer-ownership, kick). maxMembers=50, roles: owner/deputy/member |
+| `/club` | club.js | create/edit club, members, balance, roles (set-role, transfer-ownership, kick, invite). maxMembers=50, roles: owner/deputy/member |
 | `/task` | task.js | daily + social tasks |
 | `/file` | file.js | avatar/file upload |
 | `/fight` | fight.js | fight creation, results, history |
@@ -502,6 +503,9 @@ Password reset: Returns 501 (not implemented) — no fake success
 | — | `fight_end` | Fight finished with winner, reason, XP |
 | — | `overdrive_start` | Overdrive phase started (rounds > MAX_ROUNDS) |
 | — | `AchievementResponseMsg` | Auto-awarded achievement (punch milestones: 100, 1k, 5k, 10k) |
+| — | `club_invite` | Club invitation notification (inviterName, clubName) |
+| `club_invite_accept` | `club_invite_accepted` | Accept club invitation → joins club |
+| `club_invite_decline` | `club_invite_declined` | Decline club invitation |
 | — | `ErrorMsg` | Error response |
 
 ---
@@ -510,7 +514,7 @@ Password reset: Returns 501 (not implemented) — no fake success
 
 User, Club, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask, UserDailyTask, Fight, PunchInfo, FriendRequest, Friendship
 
-**Club system fields:** User.clubRole (`owner`/`deputy`/`member`/null), Club.maxMembers (default 50). Max 3 deputies per club. Owner can set roles, transfer ownership, kick anyone. Deputies can kick members only.
+**Club system fields:** User.clubRole (`owner`/`deputy`/`member`/null), Club.maxMembers (default 50). Max 3 deputies per club. Owner can set roles, transfer ownership, kick anyone, invite friends. Deputies can kick members only, invite friends.
 
 **Seed data:** 16 achievements (NEWBIE, CONNECTED_FIGHTER, REGULAR_FIGHTER, BATTLE_VETERAN, FIGHT_MASTER, COACH, RECRUITER, PROJECT_MAYHEM, MEATLOAF, TYLER, EXPERT, LUCKY_ONE, BOB, PAPER_STREET, MEETING_PARTICIPANT, GOLDEN_RULE) + social/daily tasks (en/ru)
 

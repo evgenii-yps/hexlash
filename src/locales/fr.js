@@ -283,6 +283,13 @@ export default {
     lblMaxDeputies: 'Maximum 3 adjoints autorisés',
     lblClubFull: 'Club complet',
     lblMembersCount: 'Membres',
+    lblInviteFriend: 'Inviter un ami',
+    lblInviteSent: 'Invitation envoyée à',
+    lblInviteReceived: 'Invitation au club',
+    lblInviteAccepted: 'Vous avez rejoint le club !',
+    lblInviteDeclined: 'a refusé l\'invitation',
+    lblPlayerJoined: 'a rejoint votre club !',
+    lblPlayerHasClub: 'Aucun ami sans club',
   },
   fight: {
     lblRound: 'Round {n}',

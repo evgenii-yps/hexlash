@@ -283,6 +283,13 @@ export default {
     lblMaxDeputies: 'Máximo de 3 vice-líderes permitidos',
     lblClubFull: 'Clube lotado',
     lblMembersCount: 'Membros',
+    lblInviteFriend: 'Convidar amigo',
+    lblInviteSent: 'Convite enviado para',
+    lblInviteReceived: 'Convite para o clube',
+    lblInviteAccepted: 'Entrou no clube!',
+    lblInviteDeclined: 'recusou o convite',
+    lblPlayerJoined: 'entrou no seu clube!',
+    lblPlayerHasClub: 'Nenhum amigo sem clube',
   },
   fight: {
     lblRound: 'Round {n}',

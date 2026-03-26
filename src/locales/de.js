@@ -283,6 +283,13 @@ export default {
     lblMaxDeputies: 'Maximal 3 Stellvertreter erlaubt',
     lblClubFull: 'Club ist voll',
     lblMembersCount: 'Mitglieder',
+    lblInviteFriend: 'Freund einladen',
+    lblInviteSent: 'Einladung gesendet an',
+    lblInviteReceived: 'Clubeinladung',
+    lblInviteAccepted: 'Dem Club beigetreten!',
+    lblInviteDeclined: 'hat die Einladung abgelehnt',
+    lblPlayerJoined: 'ist deinem Club beigetreten!',
+    lblPlayerHasClub: 'Keine Freunde ohne Club',
   },
   fight: {
     lblRound: 'Runde {n}',

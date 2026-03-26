@@ -148,6 +148,15 @@ export const kickMember = async (userId) => {
     }
 };
 
+export const inviteToClub = async (userId) => {
+    try {
+        const response = await apiClient.post('/club/invite', {userId}, {authRequired: true});
+        return response.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.error || 'Failed to send invite');
+    }
+};
+
 export const searchClubs = async ({name = '', sortBy = 'battles', page = 0, size = 10, sortDirection = 'DESC'}) => {
     if (isMockMode()) {
         return [];

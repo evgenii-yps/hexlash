@@ -283,6 +283,13 @@ export default {
     lblMaxDeputies: '부리더는 최대 3명까지 가능',
     lblClubFull: '클럽이 가득 찼습니다',
     lblMembersCount: '멤버',
+    lblInviteFriend: '친구 초대',
+    lblInviteSent: '초대가 전송되었습니다',
+    lblInviteReceived: '클럽 초대',
+    lblInviteAccepted: '클럽에 가입했습니다!',
+    lblInviteDeclined: '이(가) 초대를 거절했습니다',
+    lblPlayerJoined: '이(가) 클럽에 가입했습니다!',
+    lblPlayerHasClub: '클럽이 없는 친구가 없습니다',
   },
   fight: {
     lblRound: '라운드 {n}',

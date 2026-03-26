@@ -156,6 +156,14 @@ async function handleMessage(ws, userId, msg) {
       handleChallengeDeclined(ws, userId, msg);
       break;
 
+    case 'club_invite_accept':
+      handleClubInviteAccept(ws, userId, msg);
+      break;
+
+    case 'club_invite_decline':
+      handleClubInviteDecline(ws, userId, msg);
+      break;
+
     default:
       sendError(ws, 400, `Unknown message type: ${type}`);
   }
@@ -539,6 +547,85 @@ function handleChallengeDeclined(ws, userId, msg) {
     sendMessage(challengerSocket, {
       type: 'challenge_declined',
       declinedBy: userId,
+    });
+  }
+}
+
+// ─── Club Invites ────────────────────────────────────────────────────────────
+
+async function handleClubInviteAccept(ws, userId, msg) {
+  const { clubId, inviterId } = msg;
+
+  try {
+    const club = await prisma.club.findUnique({
+      where: { id: clubId },
+      include: { _count: { select: { members: true } } },
+    });
+
+    if (!club) {
+      sendMessage(ws, { type: 'club_invite_error', message: 'Club not found' });
+      return;
+    }
+
+    if (club._count.members >= club.maxMembers) {
+      sendMessage(ws, { type: 'club_invite_error', message: 'Club is full' });
+      return;
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (user.clubId) {
+      sendMessage(ws, { type: 'club_invite_error', message: 'Already in a club' });
+      return;
+    }
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: { clubId, clubRole: 'member' },
+    });
+
+    const acceptorName = user.name || user.login || 'Player';
+
+    // Notify the person who accepted
+    sendMessage(ws, {
+      type: 'club_invite_accepted',
+      clubId,
+      clubName: club.name,
+    });
+
+    // Notify the inviter
+    const inviterSocket = clients.get(inviterId);
+    if (inviterSocket) {
+      sendMessage(inviterSocket, {
+        type: 'club_invite_accepted',
+        clubId,
+        acceptedBy: userId,
+        acceptedByName: acceptorName,
+      });
+    }
+  } catch (err) {
+    console.error('[CLUB INVITE] Accept error:', err);
+    sendMessage(ws, { type: 'club_invite_error', message: 'Failed to join club' });
+  }
+}
+
+function handleClubInviteDecline(ws, userId, msg) {
+  const { inviterId } = msg;
+  const inviterSocket = clients.get(inviterId);
+
+  if (inviterSocket) {
+    prisma.user.findUnique({ where: { id: userId } }).then((user) => {
+      const declinedByName = user?.name || user?.login || 'Player';
+      sendMessage(inviterSocket, {
+        type: 'club_invite_declined',
+        declinedBy: userId,
+        declinedByName,
+      });
+    }).catch(() => {
+      sendMessage(inviterSocket, {
+        type: 'club_invite_declined',
+        declinedBy: userId,
+        declinedByName: 'Player',
+      });
     });
   }
 }
