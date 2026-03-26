@@ -176,7 +176,7 @@ const carouselItems = computed(() => {
   border-radius: 5px;
   text-align: center;
   cursor: pointer;
-  background-color: var(--black-opacity-80);
+  background-color: var(--hex-bg-card);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -216,7 +216,7 @@ const carouselItems = computed(() => {
 }
 
 .carousel-control {
-  background: var(--black-opacity-80);
+  background: var(--hex-bg-card);
   border: 1px solid grey;
   border-radius: 50%; /* Круглая форма */
   cursor: pointer;

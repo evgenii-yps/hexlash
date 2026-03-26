@@ -120,8 +120,8 @@ const lockedHint = computed(() => {
 
 <style scoped>
 .move-card {
-  background: var(--black-opacity-80);
-  border: 1px solid var(--gray1);
+  background: var(--hex-bg-card);
+  border: 1px solid var(--hex-border-default);
   border-radius: 4px;
   padding: 12px 16px;
   margin-bottom: 8px;
@@ -133,7 +133,7 @@ const lockedHint = computed(() => {
 }
 
 .move-card.in-deck {
-  border-color: var(--pink);
+  border-color: var(--hex-primary);
 }
 
 .move-card-header {
@@ -146,7 +146,7 @@ const lockedHint = computed(() => {
 .move-name {
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 1.05rem;
-  color: var(--white);
+  color: var(--hex-text-primary);
 }
 
 .move-levels {
@@ -158,18 +158,18 @@ const lockedHint = computed(() => {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--gray1);
-  border: 1px solid var(--gray2);
+  background: var(--hex-bg-light);
+  border: 1px solid var(--hex-border-active);
 }
 
 .level-dot.filled {
-  background: var(--pink);
-  border-color: var(--pink);
+  background: var(--hex-primary);
+  border-color: var(--hex-primary);
 }
 
 .move-description {
   font-size: 0.8rem;
-  color: var(--gray3);
+  color: var(--hex-text-muted);
   margin: 0 0 8px;
   line-height: 1.4;
 }
@@ -188,13 +188,13 @@ const lockedHint = computed(() => {
 
 .stat-label {
   font-size: 0.7rem;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   text-transform: uppercase;
 }
 
 .stat-value {
   font-size: 0.95rem;
-  color: var(--white);
+  color: var(--hex-text-primary);
   font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
 }
 
@@ -214,36 +214,36 @@ const lockedHint = computed(() => {
 
 .cost-item {
   font-size: 0.75rem;
-  color: var(--gray3);
+  color: var(--hex-text-muted);
 }
 
 .cost-item.not-enough {
-  color: #e05050;
+  color: var(--hex-danger);
 }
 
 .cost-sep {
   font-size: 0.75rem;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
 }
 
 .max-level {
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 0.85rem;
-  color: var(--pink);
+  color: var(--hex-primary);
 }
 
 .locked-hint {
   font-size: 0.75rem;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   flex: 1;
 }
 
 .btn-upgrade {
   padding: 6px 14px;
-  border: 1px solid var(--gray2);
+  border: 1px solid var(--hex-border-active);
   border-radius: 4px;
   background: transparent;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   font-size: 0.8rem;
   cursor: pointer;
   white-space: nowrap;
@@ -251,13 +251,13 @@ const lockedHint = computed(() => {
 }
 
 .btn-upgrade.available {
-  border-color: var(--pink);
-  color: var(--pink);
+  border-color: var(--hex-primary);
+  color: var(--hex-primary);
 }
 
 .btn-upgrade.available:hover {
-  background: var(--pink);
-  color: var(--white);
+  background: var(--hex-primary);
+  color: var(--hex-text-primary);
 }
 
 .btn-upgrade:disabled {

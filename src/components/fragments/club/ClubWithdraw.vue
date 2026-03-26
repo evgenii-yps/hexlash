@@ -138,7 +138,7 @@ watch(amount, calculateFC);
   color: white;
   cursor: pointer;
   display: flex;
-  background-color: var(--gray1) !important;
+  background-color: var(--hex-bg-light) !important;
 }
 
 .club-btn span {
@@ -175,18 +175,18 @@ watch(amount, calculateFC);
 .calculation-result {
   text-align: center;
   font-size: 1.5rem;
-  color: var(--primary-color);
+  color: var(--hex-primary);
   margin-top: 10px;
 }
 
 .calculation-result span {
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   font-size: 1.2rem;
 }
 
 .notice{
   font-size: 0.5em;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   margin-top: 10px;
 }
 

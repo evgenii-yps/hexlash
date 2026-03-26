@@ -64,7 +64,7 @@ onMounted(() => {
   align-items: center;
   width: 80%;
   margin: 10px auto 10px auto;
-  background-color: var(--gray1);
+  background-color: var(--hex-bg-light);
   padding: 0 10px;
   border-radius: 4px;
   max-width: 500px;
@@ -79,7 +79,7 @@ onMounted(() => {
 }
 
 .switcher-3d-punch.checked :deep(.v-switch__thumb) {
-  background-color: var(--primary-color) !important;
+  background-color: var(--hex-primary) !important;
 }
 
 

@@ -81,11 +81,11 @@ const vuetify = createVuetify({
     },
     defaults: {
         VBtn: {
-            color: 'var(--primary-color)',
+            color: 'var(--hex-primary)',
             variant: 'elevated',
         },
         VBtnDark: {
-            color: 'var(--black-opacity-80)',
+            color: 'var(--hex-bg-card)',
             variant: 'elevated',
         },
         VCard: {

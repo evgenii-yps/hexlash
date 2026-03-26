@@ -4,11 +4,11 @@
       <InputField
           :label="t.auth.login.lblLogin"
           v-model="login"
-          labelColor="var(--white)"
+          labelColor="var(--hex-text-primary)"
           labelSize="0.65rem"
-          inputBgColor="var(--black-opacity)"
-          inputBorderColor="var(--gray1)"
-          inputTextColor="var(--white)"
+          inputBgColor="var(--hex-bg-card)"
+          inputBorderColor="var(--hex-border-default)"
+          inputTextColor="var(--hex-text-primary)"
           padding="14px"
           marginBottom="0.8rem"
       />
@@ -16,11 +16,11 @@
           :label="t.auth.login.lblPassword"
           :type="showPassword ? 'text' : 'password'"
           v-model="password"
-          labelColor="var(--white)"
+          labelColor="var(--hex-text-primary)"
           labelSize="0.65rem"
-          inputBgColor="var(--black-opacity)"
-          inputBorderColor="var(--gray1)"
-          inputTextColor="var(--white)"
+          inputBgColor="var(--hex-bg-card)"
+          inputBorderColor="var(--hex-border-default)"
+          inputTextColor="var(--hex-text-primary)"
           padding="14px"
           marginBottom="1rem"
           :showButton="true"
@@ -62,7 +62,7 @@
     <div class="signup" v-if="!loading">
       {{ t.auth.login.questionSignup }}
       <ButtonText @click="handleSignup"
-                  textColor="var(--pink)"
+                  textColor="var(--hex-primary)"
                   text-size="1.5em">
         {{ t.auth.login.btnSignup }}
       </ButtonText>
@@ -70,7 +70,7 @@
     <div class="reset-password" v-if="authState.authError">
       {{ t.auth.login.lblOrPass }}
       <ButtonText @click="handleReset"
-                  textColor="var(--pink)"
+                  textColor="var(--hex-primary)"
                   text-size="1.5em">
         {{ t.auth.login.btnReset }}
       </ButtonText>
@@ -136,7 +136,7 @@ form {
 .signup {
   margin-top: 0.6rem;
   font-size: 0.75rem;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   text-align: center;
   align-self: center;
 }
@@ -149,7 +149,7 @@ form {
 }
 
 .error-message {
-  color: var(--pinkDark);
+  color: var(--hex-primary-dark);
   font-size: 0.8rem;
   margin-bottom: 0.5rem;
 }
@@ -165,7 +165,7 @@ form {
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -175,6 +175,6 @@ form {
 }
 
 .eye-btn:hover {
-  color: var(--white);
+  color: var(--hex-text-primary);
 }
 </style>

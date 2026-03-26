@@ -135,12 +135,12 @@ const openSubscribeDialog = (task) => {
 
 .task-item {
   box-sizing: border-box;
-  border: 1px solid var(--gray1);
+  border: 1px solid var(--hex-border-default);
   cursor: pointer;
   width: 70px;
   height: 80px;
   border-radius: 4px;
-  background-color: var(--black-opacity-80);
+  background-color: var(--hex-bg-card);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -167,7 +167,7 @@ const openSubscribeDialog = (task) => {
 }
 
 .desc {
-  color: white;
+  color: var(--hex-text-primary);
   font-size: 0.6rem;
   white-space: nowrap;
   overflow: hidden;
@@ -193,6 +193,6 @@ const openSubscribeDialog = (task) => {
   justify-content: center; /* Центрирование по горизонтали */
   align-items: center; /* Центрирование по вертикали */
   margin-top: 20px;
-  color: white;
+  color: var(--hex-text-primary);
 }
 </style>

@@ -10,7 +10,7 @@ import { computed } from 'vue';
 const props = defineProps({
   textColor: {
     type: String,
-    default: 'var(--pink)'
+    default: 'var(--hex-primary)'
   },
   customClass: {
     type: String,

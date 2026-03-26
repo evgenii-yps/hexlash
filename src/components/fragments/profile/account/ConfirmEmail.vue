@@ -5,10 +5,10 @@
           :label="t.profile.account.lblChangeEmail"
           type="text"
           v-model="email"
-          labelColor="var(--white)"
-          inputBgColor="var(--black-opacity-80)"
-          inputBorderColor="var(--gray1)"
-          inputTextColor="var(--white)"
+          labelColor="var(--hex-text-primary)"
+          inputBgColor="var(--hex-bg-card)"
+          inputBorderColor="var(--hex-border-default)"
+          inputTextColor="var(--hex-text-primary)"
           height="40px"
           marginBottom="0.5rem"
           @input="checkEmailChange"
@@ -97,15 +97,15 @@ form {
 
 
 .error-message {
-  color: var(--pinkDark);
+  color: var(--hex-primary-dark);
   font-size: 0.8rem;
   margin-top: 0.5rem;
 }
 
 .input-button {
-  background-color: var(--black-opacity-80);
-  color: var(--white);
-  border: 0.5px solid var(--gray2);
+  background-color: var(--hex-bg-card);
+  color: var(--hex-text-primary);
+  border: 0.5px solid var(--hex-border-active);
   cursor: pointer;
   outline: none;
   padding: 0.5em 1em;
@@ -115,6 +115,6 @@ form {
 }
 
 .input-button:hover {
-  background-color: var(--gray2);
+  background-color: var(--hex-text-secondary);
 }
 </style>

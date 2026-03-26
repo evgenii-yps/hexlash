@@ -111,8 +111,8 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .ai-trainer-analysis {
-  background: rgba(9, 9, 9, 0.8);
-  border-left: 3px solid var(--pink);
+  background: var(--hex-bg-card);
+  border-left: 3px solid var(--hex-primary);
   border-radius: 8px;
   padding: 16px;
   margin-top: 16px;
@@ -131,14 +131,14 @@ onBeforeUnmount(() => {
 
 .ai-trainer-header {
   font-family: 'Anonymous', monospace;
-  color: var(--pink);
+  color: var(--hex-primary);
   font-size: 14px;
   text-transform: uppercase;
   letter-spacing: 1px;
 }
 
 .ai-trainer-arrow {
-  color: var(--pink);
+  color: var(--hex-primary);
   font-size: 12px;
   transition: transform 0.2s ease;
 }
@@ -149,7 +149,7 @@ onBeforeUnmount(() => {
 
 .ai-trainer-divider {
   height: 1px;
-  background: var(--gray1);
+  background: var(--hex-border-default);
   margin-top: 12px;
   margin-bottom: 12px;
 }
@@ -164,7 +164,7 @@ onBeforeUnmount(() => {
 
 .ai-trainer-section-label {
   font-family: 'Anonymous', monospace;
-  color: var(--pink);
+  color: var(--hex-primary);
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -174,26 +174,26 @@ onBeforeUnmount(() => {
 
 .ai-trainer-section-text {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  color: var(--white);
+  color: var(--hex-text-primary);
   font-size: 13px;
   line-height: 1.5;
 }
 
 .ai-trainer-badge {
   font-size: 10px;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   text-align: right;
   margin-top: 8px;
 }
 
 .ai-trainer-loading {
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   font-size: 13px;
   animation: pulse 1.5s infinite;
 }
 
 .ai-trainer-error {
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   font-size: 11px;
   text-align: center;
   margin-top: 8px;
@@ -201,8 +201,8 @@ onBeforeUnmount(() => {
 
 .ai-trainer-retry {
   background: none;
-  border: 1px solid var(--gray2);
-  color: var(--gray2);
+  border: 1px solid var(--hex-border-active);
+  color: var(--hex-text-secondary);
   font-size: 10px;
   padding: 2px 10px;
   border-radius: 4px;
@@ -212,8 +212,8 @@ onBeforeUnmount(() => {
 }
 
 .ai-trainer-retry:hover {
-  color: var(--pink);
-  border-color: var(--pink);
+  color: var(--hex-primary);
+  border-color: var(--hex-primary);
 }
 
 @keyframes fadeInUp {

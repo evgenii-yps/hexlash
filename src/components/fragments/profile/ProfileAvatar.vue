@@ -139,7 +139,7 @@ watch(() => store.getters['master/getMaster'], (newMaster) => {
   right: 0;
   width: 30px;
   height: 30px;
-  background-color: var(--pink);
+  background-color: var(--hex-primary);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -154,7 +154,7 @@ watch(() => store.getters['master/getMaster'], (newMaster) => {
 
 .circle-bg {
   fill: none;
-  stroke: rgba(255, 255, 255, 0.3);
+  stroke: var(--hex-border-strong);
   stroke-width: 3.8;
 }
 

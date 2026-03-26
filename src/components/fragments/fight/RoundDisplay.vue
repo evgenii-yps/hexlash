@@ -89,7 +89,7 @@ const rightEvents = computed(() => {
 .round-number {
   text-align: center;
   font-size: 0.7rem;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   text-transform: uppercase;
   letter-spacing: 2px;
   margin-bottom: 8px;
@@ -107,8 +107,8 @@ const rightEvents = computed(() => {
   max-width: 140px;
   padding: 10px 8px;
   border-radius: 8px;
-  background: linear-gradient(135deg, rgba(9, 9, 9, 0.85) 0%, rgba(26, 26, 46, 0.5) 100%);
-  border: 2px solid var(--gray2);
+  background: linear-gradient(135deg, var(--hex-bg-card) 0%, rgba(26, 26, 46, 0.5) 100%);
+  border: 2px solid var(--hex-border-active);
   text-align: center;
   animation: cardSlideIn 0.4s ease-out;
 }
@@ -120,16 +120,16 @@ const rightEvents = computed(() => {
 @keyframes cardSlideRight { from { transform: translateX(30px);  opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
 .round-action-attack {
-  border-color: #e74c3c;
-  box-shadow: 0 0 10px rgba(231, 76, 60, 0.15);
+  border-color: var(--hex-action-attack);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--hex-action-attack) 15%, transparent);
 }
 .round-action-defense {
-  border-color: #3498db;
-  box-shadow: 0 0 10px rgba(52, 152, 219, 0.15);
+  border-color: var(--hex-action-defense);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--hex-action-defense) 15%, transparent);
 }
 .round-action-position {
-  border-color: #9b59b6;
-  box-shadow: 0 0 10px rgba(155, 89, 182, 0.15);
+  border-color: var(--hex-action-position);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--hex-action-position) 15%, transparent);
 }
 
 .action-icon-img {
@@ -137,7 +137,7 @@ const rightEvents = computed(() => {
   filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.2));
 }
 .action-label {
-  font-size: 0.65rem; color: white;
+  font-size: 0.65rem; color: var(--hex-text-primary);
   margin-bottom: 4px; font-weight: bold;
   letter-spacing: 0.5px;
 }
@@ -146,8 +146,8 @@ const rightEvents = computed(() => {
   margin-top: 2px;
 }
 .dmg-red {
-  color: #e74c3c;
-  text-shadow: 0 0 6px rgba(231, 76, 60, 0.3);
+  color: var(--hex-action-attack);
+  text-shadow: 0 0 6px color-mix(in srgb, var(--hex-action-attack) 30%, transparent);
 }
 
 .action-event {
@@ -155,15 +155,15 @@ const rightEvents = computed(() => {
   font-weight: bold; letter-spacing: 0.3px;
 }
 
-.event-block    { color: #3498db; }
-.event-dodge    { color: #9b59b6; }
-.event-crit     { color: #FFD600; text-shadow: 0 0 6px rgba(255, 214, 0, 0.3); }
-.event-shield   { color: #448AFF; }
-.event-miss     { color: #7f8c8d; }
-.event-position { color: #9b59b6; }
+.event-block    { color: var(--hex-action-defense); }
+.event-dodge    { color: var(--hex-action-position); }
+.event-crit     { color: var(--hex-dice-crit); text-shadow: 0 0 6px color-mix(in srgb, var(--hex-dice-crit) 30%, transparent); }
+.event-shield   { color: var(--hex-dice-shield); }
+.event-miss     { color: var(--hex-text-muted); }
+.event-position { color: var(--hex-action-position); }
 
 .vs-label {
-  font-size: 0.8rem; color: var(--primary-color);
+  font-size: 0.8rem; color: var(--hex-primary);
   font-weight: 900; letter-spacing: 1px;
 }
 </style>

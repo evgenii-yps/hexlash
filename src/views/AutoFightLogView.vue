@@ -321,8 +321,8 @@ const handleScroll = (event) => {
 .summary-win { color: var(--hex-victory); }
 .summary-lose { color: var(--hex-defeat); }
 .summary-draw { color: var(--hex-draw); }
-.summary-xp { color: var(--primary-color); }
-.summary-sep { color: var(--gray2); font-size: 0.8rem; }
+.summary-xp { color: var(--hex-primary); }
+.summary-sep { color: var(--hex-text-secondary); font-size: 0.8rem; }
 
 .no-fights {
   text-align: center;

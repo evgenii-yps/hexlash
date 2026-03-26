@@ -444,7 +444,7 @@ function cleanup() {
 .cancel-btn {
   padding: 16px 48px;
   background: transparent;
-  border: 2px solid var(--gray2);
+  border: 2px solid var(--hex-border-active);
   border-radius: 12px;
   color: var(--hex-text-secondary);
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
@@ -605,7 +605,7 @@ function cleanup() {
 .back-btn {
   padding: 12px 32px;
   background: transparent;
-  border: 1px solid var(--gray2);
+  border: 1px solid var(--hex-border-active);
   border-radius: 12px;
   color: var(--hex-text-secondary);
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;

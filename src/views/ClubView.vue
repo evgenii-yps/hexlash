@@ -295,7 +295,7 @@ const formattedMembers = computed(() => {
   font-size: 1em;
   margin: 10px 10px;
   text-align: center;
-  color: var(--gray3);
+  color: var(--hex-text-muted);
 }
 
 .club-avatar-container {
@@ -304,7 +304,7 @@ const formattedMembers = computed(() => {
   border-radius: 50%;
   margin: 0 auto;
   cursor: pointer;
-  background-color: var(--black-opacity-80);
+  background-color: var(--hex-bg-card);
   align-items: center;
   display: flex;
   justify-content: center;
@@ -334,7 +334,7 @@ const formattedMembers = computed(() => {
   color: white;
   cursor: pointer;
   display: flex;
-  background-color: var(--gray1) !important;
+  background-color: var(--hex-bg-light) !important;
 }
 
 .custom-icon {
@@ -350,7 +350,7 @@ const formattedMembers = computed(() => {
   align-items: center;
   width: 80%;
   margin: 10px auto 10px auto;
-  background-color: var(--gray1);
+  background-color: var(--hex-bg-light);
   padding: 0 10px;
   border-radius: 4px;
   max-width: 500px;
@@ -365,7 +365,7 @@ const formattedMembers = computed(() => {
 }
 
 .club-switcher-public.checked :deep(.v-switch__thumb) {
-  background-color: var(--primary-color) !important;
+  background-color: var(--hex-primary) !important;
 }
 
 </style>

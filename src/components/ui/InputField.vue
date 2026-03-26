@@ -33,7 +33,7 @@ const props = defineProps({
   modelValue: String,
   labelColor: {
     type: String,
-    default: 'var(--gray2)'
+    default: 'var(--hex-text-secondary)'
   },
   labelSize: {
     type: String,
@@ -41,15 +41,15 @@ const props = defineProps({
   },
   inputBgColor: {
     type: String,
-    default: 'var(--white)'
+    default: 'var(--hex-text-primary)'
   },
   inputBorderColor: {
     type: String,
-    default: 'var(--gray1)'
+    default: 'var(--hex-border-default)'
   },
   inputTextColor: {
     type: String,
-    default: 'var(--dark)'
+    default: 'var(--hex-bg-dark)'
   },
   borderRadius: {
     type: String,
@@ -61,7 +61,7 @@ const props = defineProps({
   },
   focusBorderColor: {
     type: String,
-    default: 'var(--pink)' // Цвет розовой рамки при фокусе
+    default: 'var(--hex-primary)'
   },
   marginBottom: {
     type: String,
@@ -147,7 +147,7 @@ const wrapperStyles = computed(() => ({
 }
 
 .input-element:focus {
-  border-color: var(--pink);
+  border-color: var(--hex-primary);
 }
 
 .slot-container {
@@ -167,7 +167,7 @@ select:-webkit-autofill,
 select:-webkit-autofill:hover,
 select:-webkit-autofill:focus {
   -webkit-text-fill-color: white;
-  -webkit-box-shadow: 0 0 0 1000px var(--black-opacity) inset;
+  -webkit-box-shadow: 0 0 0 1000px var(--hex-bg-card) inset;
   transition: background-color 5000s ease-in-out 0s;
 }
 </style>

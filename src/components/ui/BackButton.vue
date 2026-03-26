@@ -36,7 +36,7 @@ const goBack = () => {
   text-align: left;
   color: white;
   cursor: pointer;
-  border: 0.5px solid var(--gray2);
+  border: 0.5px solid var(--hex-border-active);
   font-size: 0.7em;
   text-transform: none;
   font-weight: lighter;

@@ -69,12 +69,12 @@ const btnClose = () => {
 }
 
 .snackbar :deep(.v-snackbar__wrapper) {
-  background-color: #ff00002b !important;
-  border: 1px solid var(--gray2);
+  background-color: color-mix(in srgb, var(--hex-danger) 17%, transparent) !important;
+  border: 1px solid var(--hex-border-active);
 }
 
 :deep(.v-snackbar__content a) {
-  color: var(--pink) !important;
+  color: var(--hex-primary) !important;
   text-decoration: none;
   font-weight: bold;
   font-size: 1.2em;

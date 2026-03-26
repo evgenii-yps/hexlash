@@ -9,7 +9,7 @@
           variant="outlined"
           :menu-icon="null"
           density="compact"
-          bg-color="var(--black-opacity-80)"
+          bg-color="var(--hex-bg-card)"
           class="custom-select"
           style=""
           :hideNoData="true"
@@ -66,7 +66,7 @@ const languages = [
 
 .custom-select {
   width: 100%;
-  color: var(--gray3) !important;
+  color: var(--hex-text-muted) !important;
 }
 
 .select-label {

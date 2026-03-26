@@ -222,7 +222,7 @@ function selectProtocol(id) {
 
 .slot-label {
   font-size: 0.6rem;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 4px;
@@ -231,7 +231,7 @@ function selectProtocol(id) {
 .slot-content {
   height: 80px;
   border-radius: 8px;
-  border: 2px dashed var(--gray2);
+  border: 2px dashed var(--hex-border-active);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -239,7 +239,7 @@ function selectProtocol(id) {
   gap: 4px;
   cursor: pointer;
   transition: all 0.2s ease;
-  background-color: var(--black-opacity-80);
+  background-color: var(--hex-bg-card);
 }
 
 .slot-content:active {
@@ -248,18 +248,18 @@ function selectProtocol(id) {
 
 .slot-filled {
   border-style: solid;
-  border-color: var(--primary-color);
+  border-color: var(--hex-primary);
 }
 
 .slot-primary .slot-filled {
-  border-color: #FFD600;
-  box-shadow: 0 0 10px rgba(255, 214, 0, 0.3);
+  border-color: var(--hex-dice-crit);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--hex-dice-crit) 30%, transparent);
 }
 
 .module-icon-img {
   width: 32px;
   height: 32px;
-  filter: drop-shadow(0 0 4px rgba(255, 6, 111, 0.3));
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--hex-primary) 30%, transparent));
 }
 
 .module-name {
@@ -270,7 +270,7 @@ function selectProtocol(id) {
 
 .slot-placeholder {
   font-size: 1.5rem;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   opacity: 0.5;
 }
 
@@ -278,7 +278,7 @@ function selectProtocol(id) {
 .build-preview {
   width: 100%;
   max-width: 320px;
-  background-color: var(--black-opacity-80);
+  background-color: var(--hex-bg-card);
   border-radius: 8px;
   padding: 10px 14px;
   margin-bottom: 16px;
@@ -287,7 +287,7 @@ function selectProtocol(id) {
 
 .preview-title {
   font-size: 0.65rem;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   text-transform: uppercase;
   letter-spacing: 1px;
   margin-bottom: 4px;
@@ -295,7 +295,7 @@ function selectProtocol(id) {
 
 .preview-text {
   font-size: 0.75rem;
-  color: var(--gray3);
+  color: var(--hex-text-muted);
   line-height: 1.4;
 }
 
@@ -310,15 +310,15 @@ function selectProtocol(id) {
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 0.8rem;
   font-weight: 700;
-  color: var(--pink);
+  color: var(--hex-primary);
   letter-spacing: 3px;
 }
 
 .preview-spinner {
   width: 12px;
   height: 12px;
-  border: 2px solid rgba(255, 6, 111, 0.3);
-  border-top-color: var(--pink);
+  border: 2px solid color-mix(in srgb, var(--hex-primary) 30%, transparent);
+  border-top-color: var(--hex-primary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -335,7 +335,7 @@ function selectProtocol(id) {
 
 .protocol-title {
   font-size: 0.65rem;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   text-transform: uppercase;
   letter-spacing: 1px;
   margin-bottom: 8px;
@@ -355,7 +355,7 @@ function selectProtocol(id) {
   align-items: center;
   gap: 2px;
   padding: 8px 4px;
-  background-color: var(--black-opacity-80);
+  background-color: var(--hex-bg-card);
   border-radius: 8px;
   border: 2px solid transparent;
   cursor: pointer;
@@ -373,8 +373,8 @@ function selectProtocol(id) {
 
 .protocol-selected {
   opacity: 1;
-  border-color: var(--primary-color);
-  background-color: rgba(var(--primary-color-rgb, 68, 138, 255), 0.15);
+  border-color: var(--hex-primary);
+  background-color: color-mix(in srgb, var(--hex-primary) 15%, transparent);
 }
 
 .protocol-selected:hover {
@@ -384,7 +384,7 @@ function selectProtocol(id) {
 .protocol-icon-img {
   width: 28px;
   height: 28px;
-  filter: drop-shadow(0 0 3px rgba(255, 6, 111, 0.25));
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--hex-primary) 25%, transparent));
 }
 
 .protocol-name {
@@ -395,7 +395,7 @@ function selectProtocol(id) {
 
 .protocol-trigger {
   font-size: 0.5rem;
-  color: var(--gray3);
+  color: var(--hex-text-muted);
 }
 
 /* ── Module selection modal ────────────────────────────────── */
@@ -405,7 +405,7 @@ function selectProtocol(id) {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.85);
+  background: var(--hex-bg-card);
   z-index: 200;
   display: flex;
   align-items: center;
@@ -416,7 +416,7 @@ function selectProtocol(id) {
 .modal-content {
   width: 100%;
   max-width: 400px;
-  background: #1a1a2e;
+  background: var(--hex-bg-light);
   border-radius: 12px;
   padding: 20px;
 }
@@ -442,8 +442,8 @@ function selectProtocol(id) {
   gap: 4px;
   padding: 12px 8px;
   border-radius: 8px;
-  border: 2px solid var(--gray2);
-  background-color: var(--black-opacity-80);
+  border: 2px solid var(--hex-border-active);
+  background-color: var(--hex-bg-card);
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -460,7 +460,7 @@ function selectProtocol(id) {
 .archetype-icon-img {
   width: 36px;
   height: 36px;
-  filter: drop-shadow(0 0 4px rgba(255, 6, 111, 0.3));
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--hex-primary) 30%, transparent));
 }
 
 .archetype-name {
@@ -471,7 +471,7 @@ function selectProtocol(id) {
 
 .archetype-desc {
   font-size: 0.55rem;
-  color: var(--gray3);
+  color: var(--hex-text-muted);
   text-align: center;
   line-height: 1.3;
 }

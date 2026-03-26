@@ -102,7 +102,7 @@ onMounted(() => {
 .skin-preview-img {
   width: 120px;
   height: 200px;
-  filter: drop-shadow(0 4px 20px rgba(255, 6, 111, 0.35));
+  filter: drop-shadow(0 4px 20px color-mix(in srgb, var(--hex-primary) 35%, transparent));
 }
 
 /* ── Grid ────────────────────────────────────────────── */
@@ -118,8 +118,8 @@ onMounted(() => {
   flex-direction: column;
   align-items: center;
   border-radius: 6px;
-  border: 1.5px solid rgba(255, 255, 255, 0.12);
-  background: var(--black-opacity-80);
+  border: 1.5px solid var(--hex-border-active);
+  background: var(--hex-bg-card);
   cursor: pointer;
   transition: all 0.2s ease;
   position: relative;
@@ -131,8 +131,8 @@ onMounted(() => {
 }
 
 .skin-card-selected {
-  border-color: var(--pink);
-  box-shadow: 0 0 12px rgba(255, 6, 111, 0.45);
+  border-color: var(--hex-primary);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--hex-primary) 45%, transparent);
 }
 
 .skin-card-img {
@@ -145,13 +145,13 @@ onMounted(() => {
   width: 100%;
   text-align: center;
   padding: 3px 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: var(--hex-bg-card);
 }
 
 .price-text {
   font-size: 0.65rem;
   font-weight: bold;
-  color: #2ecc71;
+  color: var(--hex-success);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }

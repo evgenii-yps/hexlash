@@ -82,8 +82,8 @@ body {
 
 /* Настройка фона и рамки для тултипа */
 .v-tooltip__content {
-    background-color: var(--black-opacity-80) !important; /* Цвет фона тултипа */
-    border: 2px solid var(--pink); /* Цвет рамки тултипа */
+    background-color: var(--hex-bg-card) !important; /* Цвет фона тултипа */
+    border: 2px solid var(--hex-primary); /* Цвет рамки тултипа */
     border-radius: 5px; /* Радиус углов рамки */
     color: #fff; /* Цвет текста тултипа */
     padding: 10px; /* Отступы внутри тултипа */
@@ -93,10 +93,10 @@ body {
 /* Стиль модальных окон */
 
 .v-modal {
-    background-color: var(--black-opacity-80) !important;
+    background-color: var(--hex-bg-card) !important;
     border-radius: 8px;
 /*    padding: 20px;*/
-    border: 2px solid var(--primary-color) !important; /* Цвет рамки тултипа */
+    border: 2px solid var(--hex-primary) !important; /* Цвет рамки тултипа */
     color: white !important;
 }
 
@@ -106,7 +106,7 @@ body {
 
 .v-modal .cancel-btn {
     text-align: center;
-    color: var(--gray2) !important;
+    color: var(--hex-text-secondary) !important;
     cursor: pointer;
     font-size: 0.7rem !important;
 }
@@ -114,7 +114,7 @@ body {
 .v-modal .confirm-btn {
     cursor: pointer;
     /* text-transform: none;*/
-    background-color: var(--primary-color);
+    background-color: var(--hex-primary);
     color: white !important;
     margin: 10px;
     font-size: 0.7rem !important;
@@ -122,7 +122,7 @@ body {
 
 .loader {
     display: flex;
-    color: var(--primary-color);
+    color: var(--hex-primary);
     justify-content: center;
 }
 
@@ -130,14 +130,14 @@ body {
 :root {
     --v-theme-overlay-multiplier: 0.9;
     --v-hover-opacity: 0.08;
-    --v-border-color: 2px solid var(--primary-color);
+    --v-border-color: 2px solid var(--hex-primary);
 }
 
 :root .v-list {
-    background: var(--black-opacity) !important;
+    background: var(--hex-bg-card) !important;
     /*overflow: hidden !important;*/
     color: white;
-    border: 2px solid var(--gray1);
+    border: 2px solid var(--hex-border-default);
     border-top-left-radius: 0 !important;
     border-top-right-radius: 0 !important;
     padding: 0;
@@ -159,7 +159,7 @@ body {
     bottom: calc(100% - 15px - -10px) !important;
 }
 :root .v-slider-track__tick--filled{
-    background-color: var(--primary-color) !important;
+    background-color: var(--hex-primary) !important;
     width: 0;
 }
 :root .v-slider-thumb {
@@ -172,7 +172,7 @@ body {
     font-size: 0.5em;
     margin-top: 6px;
     margin-left: 20px !important;
-    color: var(--gray2);
+    color: var(--hex-text-secondary);
 }
 :root .v-slider-track__fill{
     width: 5px !important;
@@ -188,11 +188,11 @@ body {
 }
 
 .v-list-item{
-    background-color: var(--black-opacity-80) !important;
+    background-color: var(--hex-bg-card) !important;
 }
 
 .v-list-item--active{
-    background-color: var(--pink) !important;
+    background-color: var(--hex-primary) !important;
     --v-theme-overlay-multiplier:0 !important;
 }
 
@@ -207,7 +207,7 @@ body {
 }
 
 :root .v-btn--disabled{
-    background-color: var(--gray1) !important;
+    background-color: var(--hex-bg-light) !important;
 }
 
 

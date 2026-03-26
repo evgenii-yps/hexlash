@@ -149,18 +149,18 @@ const saveChanges = async () => {
 .result-message {
   text-align: center;
   font-size: 0.8rem;
-  color: var(--pinkDark);
+  color: var(--hex-primary-dark);
   margin-top: 10px;
 }
 
 .notice{
-  color: var(--gray3);
+  color: var(--hex-text-muted);
   font-size: 0.8rem;
   text-align: center;
 }
 
 .cost{
-  color: var(--white);
+  color: var(--hex-text-primary);
   font-size: 1.5em;
   text-align: center;
   margin-top: 10px;

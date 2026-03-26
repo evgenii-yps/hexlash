@@ -12,7 +12,7 @@
           <v-select
               class="custom-select"
               color="white"
-              bg-color="var(--black-opacity)"
+              bg-color="var(--hex-bg-card)"
               :label="t.profile.wallet.lblSelectToken"
               :items="tokensAccepted"
               item-value="address"
@@ -235,7 +235,7 @@ watch(calculatedAmount, (newValue) => {
   width: 210px;
   height: 48px !important;
   padding: 0 25px;
-  color: var(--white);
+  color: var(--hex-text-primary);
 }
 
 .text-center {
@@ -272,17 +272,17 @@ watch(calculatedAmount, (newValue) => {
 .calculation-result {
   text-align: center;
   font-size: 1.5rem;
-  color: var(--primary-color);
+  color: var(--hex-primary);
   margin-top: 10px;
 }
 
 .calculation-result span {
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   font-size: 1.2rem;
 }
 
 .userBalance {
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   font-size: 0.8rem;
   margin-bottom: 10px;
   margin-top: 5px;
@@ -290,19 +290,19 @@ watch(calculatedAmount, (newValue) => {
 }
 
 .userBalance span {
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   font-size: 0.9rem;
 }
 
 .balance-warning {
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   font-size: 0.8rem;
   text-align: center;
   margin: 0 20px;
 }
 
 .error-transaction{
-  color: var(--pinkDark);
+  color: var(--hex-primary-dark);
   font-size: 0.8rem;
   text-align: center;
   margin: 0 20px;
@@ -324,12 +324,12 @@ watch(calculatedAmount, (newValue) => {
 .progressing-step {
   margin-bottom: 5px;
   font-size: 1.2rem;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
 }
 
 .progressing-desc {
   font-size: 0.8rem;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
 }
 
 

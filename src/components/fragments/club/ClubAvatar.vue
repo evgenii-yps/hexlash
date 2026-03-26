@@ -1,6 +1,6 @@
 <template>
   <div class="avatar-container"
-       :style="{ backgroundColor: computedAvatarUrl !== defaultAvatarImg ? 'transparent' : 'var(--black-opacity-80)' }">
+       :style="{ backgroundColor: computedAvatarUrl !== defaultAvatarImg ? 'transparent' : 'var(--hex-bg-card)' }">
 
     <img :src="computedAvatarUrl" alt="Club Avatar"
          :class="{

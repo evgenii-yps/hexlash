@@ -77,22 +77,22 @@ h1 {
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 3rem;
   margin-bottom: 1rem;
-  color: white;
+  color: var(--hex-text-primary);
 }
 
 .error{
-  color: var(--pinkDark);
+  color: var(--hex-primary-dark);
   margin: 0 20px;
 }
 
 .success{
-  color: white;
+  color: var(--hex-text-primary);
   margin: 0 20px;
 }
 
 
 .loader {
-  color: var(--primary-color);
+  color: var(--hex-primary);
   margin: 0 auto;
 }
 </style>

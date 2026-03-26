@@ -44,7 +44,7 @@ const computedAvatarUrl = computed(() =>
   flex-shrink: 0;
   padding: 6px;
   border-radius: 50%;
-  background-color: var(--black-opacity-80);
+  background-color: var(--hex-bg-card);
 
 }
 
