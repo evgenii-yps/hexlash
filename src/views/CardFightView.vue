@@ -14,7 +14,7 @@
 
         <!-- Auto fight banner -->
         <div v-if="isAutoFightEnabled && !isPvP" class="autofight-banner">
-          <span class="autofight-banner-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FF066F" stroke-width="2" stroke-linecap="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10"/><path d="M20.49 15a9 9 0 01-14.85 3.36L1 14"/></svg></span>
+          <span class="autofight-banner-icon"><PixelIcon name="auto" :size="14" color="var(--hex-primary)"/></span>
           <span class="autofight-banner-text">{{ t.autoFight.lblAutoFightInProgress }}</span>
         </div>
 
@@ -227,12 +227,12 @@
           </div>
 
           <div v-if="!isPvP" class="result-buttons">
-              <VBtn class="result-btn" @click="fightAgain">{{ t.fight.lblFightAgain }}</VBtn>
-              <VBtn class="result-btn result-btn-secondary" @click="changeBuild">{{ t.fight.lblChangeDeck }}</VBtn>
+              <HexButton variant="primary" size="lg" block @click="fightAgain">{{ t.fight.lblFightAgain }}</HexButton>
+              <HexButton variant="secondary" size="md" block @click="changeBuild">{{ t.fight.lblChangeDeck }}</HexButton>
           </div>
           <div v-if="isPvP" class="result-buttons">
-              <VBtn class="result-btn" @click="pvpFightAgain">{{ t.fight.lblFightAgain }}</VBtn>
-              <VBtn class="result-btn result-btn-secondary" @click="changeBuild">{{ t.fight.lblChangeDeck }}</VBtn>
+              <HexButton variant="primary" size="lg" block @click="pvpFightAgain">{{ t.fight.lblFightAgain }}</HexButton>
+              <HexButton variant="secondary" size="md" block @click="changeBuild">{{ t.fight.lblChangeDeck }}</HexButton>
           </div>
       </div>
     </div>
@@ -262,6 +262,8 @@ import iconAttack   from '@/assets/images/icons/attack.svg';
 import iconDefense  from '@/assets/images/icons/defense.svg';
 import iconPosition from '@/assets/images/icons/position.svg';
 import AiTrainerAnalysis from '@/components/AiTrainerAnalysis.vue';
+import HexButton from '@/components/ui/HexButton.vue';
+import PixelIcon from '@/components/ui/PixelIcon.vue';
 
 import { getLanguage } from '@/locales/index.js';
 
@@ -477,16 +479,16 @@ watch(liveHP2, (newVal) => {
 // ── Flash ───────────────────────────────────────────────────────────────
 const triggerFlash = (effect) => {
   const colors = {
-    heal:       'rgba(46, 204, 113, 0.25)',
-    adrenaline: 'rgba(255, 145, 0, 0.25)',
-    shield:     'rgba(68, 138, 255, 0.25)',
-    blind:      'rgba(224, 64, 251, 0.25)',
-    rage:       'rgba(255, 23, 68, 0.25)',
-    crit:       'rgba(255, 214, 0, 0.25)',
-    damage:     'rgba(255, 23, 68, 0.15)',
-    overdrive:  'rgba(255, 100, 0, 0.3)',
+    heal:       'color-mix(in srgb, var(--hex-dice-heal) 25%, transparent)',
+    adrenaline: 'color-mix(in srgb, var(--hex-dice-adrenaline) 25%, transparent)',
+    shield:     'color-mix(in srgb, var(--hex-dice-shield) 25%, transparent)',
+    blind:      'color-mix(in srgb, var(--hex-dice-blind) 25%, transparent)',
+    rage:       'color-mix(in srgb, var(--hex-dice-rage) 25%, transparent)',
+    crit:       'color-mix(in srgb, var(--hex-dice-crit) 25%, transparent)',
+    damage:     'color-mix(in srgb, var(--hex-dice-rage) 15%, transparent)',
+    overdrive:  'color-mix(in srgb, var(--hex-warning) 30%, transparent)',
   };
-  flashColor.value  = colors[effect] || 'rgba(255,255,255,0.15)';
+  flashColor.value  = colors[effect] || 'color-mix(in srgb, var(--hex-text-primary) 15%, transparent)';
   flashActive.value = true;
   setTimeout(() => { flashActive.value = false; }, 350);
 };
@@ -1154,9 +1156,9 @@ const flashStyle = computed(() => ({
   width: 100vw; height: 100vh;
   background: linear-gradient(
     to bottom,
-    rgba(0, 0, 0, 0.88) 0%,
-    rgba(9, 9, 9, 0.65) 40%,
-    rgba(0, 0, 0, 0.92) 100%
+    color-mix(in srgb, var(--hex-bg-dark) 88%, transparent) 0%,
+    color-mix(in srgb, var(--hex-bg-dark) 65%, transparent) 40%,
+    color-mix(in srgb, var(--hex-bg-dark) 92%, transparent) 100%
   );
   z-index: 1;
 }
@@ -1166,7 +1168,7 @@ const flashStyle = computed(() => ({
   position: fixed;
   top: 0; left: 0;
   width: 100vw; height: 100vh;
-  background: black;
+  background: var(--hex-bg-dark);
   z-index: 2;
   opacity: 1;
   animation: fadeOut 1s forwards;
@@ -1184,7 +1186,7 @@ const flashStyle = computed(() => ({
   position: fixed;
   top: 0; left: 0;
   width: 100vw; height: 100vh;
-  background: #000;
+  background: var(--hex-bg-dark);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1200,7 +1202,7 @@ const flashStyle = computed(() => ({
   transform: translateX(-50%);
   font-size: 72px;
   font-weight: 900;
-  color: rgba(255, 6, 111, 0.08);
+  color: color-mix(in srgb, var(--hex-primary) 8%, transparent);
   letter-spacing: 14px;
   text-transform: uppercase;
   user-select: none;
@@ -1211,7 +1213,7 @@ const flashStyle = computed(() => ({
 .loading-never-give-up {
   font-size: 42px;
   font-weight: 700;
-  color: #fff;
+  color: var(--hex-text-primary);
   text-transform: uppercase;
   letter-spacing: 5px;
   text-align: center;
@@ -1219,8 +1221,8 @@ const flashStyle = computed(() => ({
   z-index: 1;
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   text-shadow:
-    0 0 20px var(--primary-color),
-    0 0 40px rgba(255, 6, 111, 0.4);
+    0 0 20px var(--hex-primary),
+    0 0 40px var(--hex-primary-glow);
 }
 
 .loading-fade-leave-active { transition: opacity 0.4s ease; }
@@ -1232,7 +1234,7 @@ const flashStyle = computed(() => ({
   display: flex;
   flex-direction: column;
   align-items: center;
-  color: white;
+  color: var(--hex-text-primary);
   height: 100vh;
   overflow-y: auto;
   overflow-x: hidden;
@@ -1263,12 +1265,12 @@ const flashStyle = computed(() => ({
   top: 40%; left: 50%;
   transform: translate(-50%, -50%);
   font-size: 4em;
-  color: white;
+  color: var(--hex-text-primary);
   z-index: 100;
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   text-shadow:
-    0 0 30px var(--primary-color),
-    0 0 60px rgba(255, 6, 111, 0.4);
+    0 0 30px var(--hex-primary),
+    0 0 60px var(--hex-primary-glow);
 }
 .fade-scale-enter-active, .fade-scale-leave-active { transition: opacity 0.5s ease, transform 0.5s ease; }
 .fade-scale-leave-to  { opacity: 0; transform: scale(3.5); }
@@ -1287,9 +1289,9 @@ const flashStyle = computed(() => ({
   width: 100%;
   margin-bottom: 12px;
   padding: 12px 8px;
-  background: linear-gradient(135deg, rgba(9, 9, 9, 0.85) 0%, rgba(26, 26, 46, 0.5) 100%);
-  border: 1px solid rgba(255, 6, 111, 0.15);
-  border-radius: 12px;
+  background: linear-gradient(135deg, var(--hex-bg-dark) 0%, var(--hex-bg-light) 100%);
+  border: 1px solid color-mix(in srgb, var(--hex-primary) 15%, transparent);
+  border-radius: var(--hex-radius-lg);
 }
 
 .fighter-side {
@@ -1317,7 +1319,7 @@ const flashStyle = computed(() => ({
 
 .fighter-skin {
   width: 100px; height: 170px; padding: 5px;
-  filter: drop-shadow(0 4px 16px rgba(255, 6, 111, 0.25));
+  filter: drop-shadow(0 4px 16px var(--hex-primary-glow));
 }
 .flipped { transform: scaleX(-1); }
 
@@ -1330,10 +1332,10 @@ const flashStyle = computed(() => ({
   font-size: 1.6rem;
   font-weight: 900;
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
-  color: var(--primary-color);
+  color: var(--hex-primary);
   text-shadow:
-    0 0 20px rgba(255, 6, 111, 0.6),
-    0 0 40px rgba(255, 6, 111, 0.25);
+    0 0 20px var(--hex-primary-glow),
+    0 0 40px color-mix(in srgb, var(--hex-primary) 25%, transparent);
   letter-spacing: 3px;
 }
 
@@ -1347,36 +1349,36 @@ const flashStyle = computed(() => ({
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: var(--hex-border-default);
+  border: 1px solid var(--hex-border-active);
   transition: background 0.3s ease, transform 0.3s ease;
 }
 
 .round-dot-done {
-  background: rgba(255, 6, 111, 0.35);
-  border-color: rgba(255, 6, 111, 0.4);
+  background: color-mix(in srgb, var(--hex-primary) 35%, transparent);
+  border-color: color-mix(in srgb, var(--hex-primary) 40%, transparent);
 }
 
 .round-dot-current {
-  background: var(--primary-color);
-  border-color: var(--primary-color);
-  box-shadow: 0 0 6px rgba(255, 6, 111, 0.8);
+  background: var(--hex-primary);
+  border-color: var(--hex-primary);
+  box-shadow: 0 0 6px var(--hex-primary-glow);
   transform: scale(1.3);
 }
 
 .round-dot-overdrive {
-  border-color: rgba(255, 100, 0, 0.4);
+  border-color: color-mix(in srgb, var(--hex-warning) 40%, transparent);
 }
 
 .round-dot-overdrive.round-dot-done {
-  background: rgba(255, 100, 0, 0.5);
-  border-color: rgba(255, 100, 0, 0.6);
+  background: color-mix(in srgb, var(--hex-warning) 50%, transparent);
+  border-color: color-mix(in srgb, var(--hex-warning) 60%, transparent);
 }
 
 .round-dot-overdrive.round-dot-current {
-  background: #FF6400;
-  border-color: #FF6400;
-  box-shadow: 0 0 8px rgba(255, 100, 0, 0.9);
+  background: var(--hex-warning);
+  border-color: var(--hex-warning);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--hex-warning) 90%, transparent);
 }
 
 .status-fighter {
@@ -1385,10 +1387,10 @@ const flashStyle = computed(() => ({
   z-index: 1;
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 1.6em;
-  background: var(--black-opacity-80);
-  border: 1px solid var(--primary-color);
+  background: color-mix(in srgb, var(--hex-bg-dark) 80%, transparent);
+  border: 1px solid var(--hex-primary);
   padding: 4px 16px; border-radius: 6px;
-  text-shadow: 0 0 10px rgba(255, 6, 111, 0.5);
+  text-shadow: 0 0 10px var(--hex-primary-glow);
   animation: statusPopIn 0.5s ease-in-out forwards;
 }
 @keyframes statusPopIn {
@@ -1427,10 +1429,10 @@ const flashStyle = computed(() => ({
 .title-pop-leave-to     { opacity: 0; }
 
 .event-emergency {
-  color: #FFD600;
-  background: rgba(255, 214, 0, 0.08);
-  border-color: rgba(255, 214, 0, 0.5);
-  box-shadow: 0 0 16px rgba(255, 214, 0, 0.2);
+  color: var(--hex-dice-crit);
+  background: color-mix(in srgb, var(--hex-dice-crit) 8%, transparent);
+  border-color: color-mix(in srgb, var(--hex-dice-crit) 50%, transparent);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--hex-dice-crit) 20%, transparent);
 }
 
 /* ── Dice (manual, with cooldown) ────────────────────────────────── */
@@ -1448,8 +1450,8 @@ const flashStyle = computed(() => ({
   position: relative;
   width: 56px; height: 56px;
   border-radius: 50%;
-  border: 2px solid var(--primary-color);
-  background: linear-gradient(135deg, #0d0d1a 0%, #1a1a2e 100%);
+  border: 2px solid var(--hex-primary);
+  background: linear-gradient(135deg, var(--hex-bg-dark) 0%, var(--hex-bg-light) 100%);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -1457,8 +1459,8 @@ const flashStyle = computed(() => ({
   transition: all 0.3s ease;
   flex-shrink: 0;
   box-shadow:
-    0 0 14px rgba(255, 6, 111, 0.5),
-    0 0 30px rgba(255, 6, 111, 0.2);
+    0 0 14px var(--hex-primary-glow),
+    0 0 30px color-mix(in srgb, var(--hex-primary) 20%, transparent);
   animation: dicePulse 1.5s ease-in-out infinite;
 }
 
@@ -1468,16 +1470,16 @@ const flashStyle = computed(() => ({
 
 @keyframes dicePulse {
   0%, 100% {
-    box-shadow: 0 0 14px rgba(255, 6, 111, 0.5), 0 0 30px rgba(255, 6, 111, 0.2);
+    box-shadow: 0 0 14px var(--hex-primary-glow), 0 0 30px color-mix(in srgb, var(--hex-primary) 20%, transparent);
   }
   50% {
-    box-shadow: 0 0 22px rgba(255, 6, 111, 0.7), 0 0 44px rgba(255, 6, 111, 0.3);
+    box-shadow: 0 0 22px color-mix(in srgb, var(--hex-primary) 70%, transparent), 0 0 44px color-mix(in srgb, var(--hex-primary) 30%, transparent);
   }
 }
 
 .dice-icon-img {
   width: 28px; height: 28px;
-  filter: drop-shadow(0 0 4px rgba(255, 6, 111, 0.3));
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--hex-primary) 30%, transparent));
 }
 
 .dice-item-result {
@@ -1485,16 +1487,16 @@ const flashStyle = computed(() => ({
   align-items: center;
   gap: 10px;
   padding: 10px 16px;
-  background: linear-gradient(135deg, #0d0d1a 0%, #1a1a2e 100%);
-  border: 1px solid rgba(255, 214, 0, 0.4);
+  background: linear-gradient(135deg, var(--hex-bg-dark) 0%, var(--hex-bg-light) 100%);
+  border: 1px solid color-mix(in srgb, var(--hex-dice-crit) 40%, transparent);
   border-radius: 10px;
   max-width: 220px;
-  box-shadow: 0 0 14px rgba(255, 214, 0, 0.12);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--hex-dice-crit) 12%, transparent);
 }
 
 .dice-result-icon {
   width: 32px; height: 32px;
-  filter: drop-shadow(0 0 6px rgba(255, 214, 0, 0.4));
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--hex-dice-crit) 40%, transparent));
 }
 
 .dice-info {
@@ -1502,10 +1504,10 @@ const flashStyle = computed(() => ({
 }
 .dice-name {
   font-size: 0.75rem; font-weight: bold;
-  color: #FFD600; letter-spacing: 0.5px;
+  color: var(--hex-dice-crit); letter-spacing: 0.5px;
 }
 .dice-desc {
-  font-size: 0.6rem; color: var(--gray3);
+  font-size: 0.6rem; color: var(--hex-text-muted);
 }
 
 /* ── Active modifiers ────────────────────────────────────────────── */
@@ -1522,22 +1524,22 @@ const flashStyle = computed(() => ({
   width: 14px; height: 14px;
 }
 .mod-double {
-  background: rgba(255, 145, 0, 0.15);
-  border: 1px solid rgba(255, 145, 0, 0.6);
-  color: #FF9100;
-  box-shadow: 0 0 10px rgba(255, 145, 0, 0.2);
+  background: color-mix(in srgb, var(--hex-dice-adrenaline) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hex-dice-adrenaline) 60%, transparent);
+  color: var(--hex-dice-adrenaline);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--hex-dice-adrenaline) 20%, transparent);
 }
 .mod-shield {
-  background: rgba(68, 138, 255, 0.15);
-  border: 1px solid rgba(68, 138, 255, 0.6);
-  color: #448AFF;
-  box-shadow: 0 0 10px rgba(68, 138, 255, 0.2);
+  background: color-mix(in srgb, var(--hex-dice-shield) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hex-dice-shield) 60%, transparent);
+  color: var(--hex-dice-shield);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--hex-dice-shield) 20%, transparent);
 }
 .mod-blind {
-  background: rgba(224, 64, 251, 0.15);
-  border: 1px solid rgba(224, 64, 251, 0.6);
-  color: #E040FB;
-  box-shadow: 0 0 10px rgba(224, 64, 251, 0.2);
+  background: color-mix(in srgb, var(--hex-dice-blind) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hex-dice-blind) 60%, transparent);
+  color: var(--hex-dice-blind);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--hex-dice-blind) 20%, transparent);
 }
 
 /* ── Results ─────────────────────────────────────────────────────── */
@@ -1548,7 +1550,7 @@ const flashStyle = computed(() => ({
   display: flex; flex-direction: column;
   align-items: center; justify-content: flex-start;
   z-index: 200;
-  background: rgba(0, 0, 0, 0.82);
+  background: color-mix(in srgb, var(--hex-bg-dark) 82%, transparent);
   animation: resultsOverlayIn 0.5s ease-out forwards;
   overflow-y: auto;
   padding: 80px 16px 110px;
@@ -1571,16 +1573,16 @@ const flashStyle = computed(() => ({
   100% { opacity: 1; transform: scale(1); }
 }
 .result-win {
-  color: #2ecc71;
-  text-shadow: 0 0 20px rgba(46, 204, 113, 0.5), 0 0 40px rgba(46, 204, 113, 0.2);
+  color: var(--hex-victory);
+  text-shadow: 0 0 20px color-mix(in srgb, var(--hex-victory) 50%, transparent), 0 0 40px color-mix(in srgb, var(--hex-victory) 20%, transparent);
 }
 .result-lose {
-  color: #e74c3c;
-  text-shadow: 0 0 20px rgba(231, 76, 60, 0.5), 0 0 40px rgba(231, 76, 60, 0.2);
+  color: var(--hex-defeat);
+  text-shadow: 0 0 20px color-mix(in srgb, var(--hex-defeat) 50%, transparent), 0 0 40px color-mix(in srgb, var(--hex-defeat) 20%, transparent);
 }
 .result-draw {
-  color: #f1c40f;
-  text-shadow: 0 0 20px rgba(241, 196, 15, 0.5), 0 0 40px rgba(241, 196, 15, 0.2);
+  color: var(--hex-draw);
+  text-shadow: 0 0 20px color-mix(in srgb, var(--hex-draw) 50%, transparent), 0 0 40px color-mix(in srgb, var(--hex-draw) 20%, transparent);
 }
 
 /* ── Expandable log ──────────────────────────────────────────────── */
@@ -1592,17 +1594,17 @@ const flashStyle = computed(() => ({
 .log-toggle {
   width: 100%;
   padding: 10px;
-  background: linear-gradient(135deg, rgba(9, 9, 9, 0.9) 0%, rgba(26, 26, 46, 0.65) 100%);
-  border: 1px solid rgba(255, 6, 111, 0.15);
-  border-radius: 8px;
-  color: var(--gray2);
+  background: linear-gradient(135deg, var(--hex-bg-dark) 0%, var(--hex-bg-light) 100%);
+  border: 1px solid color-mix(in srgb, var(--hex-primary) 15%, transparent);
+  border-radius: var(--hex-radius-md);
+  color: var(--hex-text-secondary);
   font-size: 0.7rem;
   cursor: pointer;
   text-align: center;
   transition: border-color 0.2s ease;
 }
 .log-toggle:active {
-  border-color: var(--primary-color);
+  border-color: var(--hex-primary);
 }
 
 .detailed-log {
@@ -1614,13 +1616,13 @@ const flashStyle = computed(() => ({
 .log-entry {
   display: flex; align-items: center; gap: 6px;
   padding: 5px 8px;
-  background: rgba(9, 9, 9, 0.7);
-  border-left: 2px solid rgba(255, 6, 111, 0.15);
+  background: color-mix(in srgb, var(--hex-bg-dark) 70%, transparent);
+  border-left: 2px solid color-mix(in srgb, var(--hex-primary) 15%, transparent);
   border-radius: 0 4px 4px 0;
   margin-bottom: 2px;
   font-size: 0.6rem;
 }
-.log-round  { color: var(--gray2); min-width: 24px; font-weight: bold; }
+.log-round  { color: var(--hex-text-secondary); min-width: 24px; font-weight: bold; }
 .log-action {
   flex: 1; text-align: center;
   display: flex; align-items: center; gap: 3px;
@@ -1628,11 +1630,11 @@ const flashStyle = computed(() => ({
 .log-action.left  { justify-content: flex-end; }
 .log-action.right { justify-content: flex-start; }
 .log-action-icon { width: 12px; height: 12px; flex-shrink: 0; }
-.log-attack   { color: #e74c3c; }
-.log-defense  { color: #3498db; }
-.log-position { color: #9b59b6; }
-.log-vs  { color: var(--gray2); font-size: 0.55rem; }
-.log-hp  { color: var(--gray3); min-width: 50px; text-align: right; font-size: 0.55rem; }
+.log-attack   { color: var(--hex-action-attack); }
+.log-defense  { color: var(--hex-action-defense); }
+.log-position { color: var(--hex-action-position); }
+.log-vs  { color: var(--hex-text-secondary); font-size: 0.55rem; }
+.log-hp  { color: var(--hex-text-muted); min-width: 50px; text-align: right; font-size: 0.55rem; }
 
 /* ── Buttons ─────────────────────────────────────────────────────── */
 .result-buttons {
@@ -1643,26 +1645,7 @@ const flashStyle = computed(() => ({
   width: 92%;
   max-width: 400px;
 }
-.result-btn {
-  width: 100% !important;
-  background: var(--primary-color) !important;
-  color: white !important;
-  font-size: 0.95rem !important;
-  font-weight: 700 !important;
-  border-radius: 8px !important;
-  letter-spacing: 1px !important;
-  box-shadow: 0 0 20px rgba(255, 6, 111, 0.45) !important;
-  min-height: 48px !important;
-}
-.result-btn-secondary {
-  width: 100% !important;
-  background: transparent !important;
-  border: 1px solid rgba(255, 6, 111, 0.4) !important;
-  color: var(--gray3) !important;
-  font-size: 0.78rem !important;
-  box-shadow: none !important;
-  min-height: 38px !important;
-}
+/* Result buttons use HexButton component — minimal overrides */
 
 /* ── Coach Overlay ──────────────────────────────────────────────── */
 .coach-overlay {
@@ -1673,7 +1656,7 @@ const flashStyle = computed(() => ({
   align-items: center;
   justify-content: center;
   z-index: 200;
-  background: rgba(0, 0, 0, 0.85);
+  background: color-mix(in srgb, var(--hex-bg-dark) 85%, transparent);
   animation: coachFadeIn 0.4s ease-out forwards;
   padding: 20px;
   box-sizing: border-box;
@@ -1696,20 +1679,20 @@ const flashStyle = computed(() => ({
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 3rem;
   font-weight: bold;
-  color: var(--primary-color);
+  color: var(--hex-primary);
   text-shadow:
-    0 0 10px rgba(255, 6, 111, 0.8),
-    0 0 20px rgba(255, 6, 111, 0.5),
-    2px 2px 0 #000;
+    0 0 10px var(--hex-primary-glow),
+    0 0 20px color-mix(in srgb, var(--hex-primary) 50%, transparent),
+    2px 2px 0 var(--hex-bg-dark);
   animation: coachTimerPulse 1s ease-in-out;
 }
 
 .advice-timer--urgent .advice-timer__number {
-  color: #FF2222;
+  color: var(--hex-danger);
   text-shadow:
-    0 0 15px rgba(255, 34, 34, 0.9),
-    0 0 30px rgba(255, 34, 34, 0.6),
-    2px 2px 0 #000;
+    0 0 15px color-mix(in srgb, var(--hex-danger) 90%, transparent),
+    0 0 30px color-mix(in srgb, var(--hex-danger) 60%, transparent),
+    2px 2px 0 var(--hex-bg-dark);
   animation: coachTimerPulseUrgent 0.5s ease-in-out;
 }
 
@@ -1728,8 +1711,8 @@ const flashStyle = computed(() => ({
 .coach-panel {
   width: 92%;
   max-width: 380px;
-  background: linear-gradient(135deg, rgba(9, 9, 9, 0.95) 0%, rgba(26, 26, 46, 0.8) 100%);
-  border: 1px solid rgba(255, 6, 111, 0.3);
+  background: linear-gradient(135deg, var(--hex-bg-dark) 0%, var(--hex-bg-light) 100%);
+  border: 1px solid color-mix(in srgb, var(--hex-primary) 30%, transparent);
   border-radius: 14px;
   padding: 24px 20px;
   position: relative;
@@ -1741,7 +1724,7 @@ const flashStyle = computed(() => ({
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 2px;
-  background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
+  background: linear-gradient(90deg, transparent, var(--hex-primary), transparent);
 }
 
 @keyframes coachPanelPop {
@@ -1758,22 +1741,22 @@ const flashStyle = computed(() => ({
 
 .coach-avatar {
   width: 32px; height: 32px;
-  filter: drop-shadow(0 0 6px rgba(255, 6, 111, 0.4));
+  filter: drop-shadow(0 0 6px var(--hex-primary-glow));
 }
 
 .coach-title {
   font-size: 1rem;
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
-  color: var(--primary-color);
+  color: var(--hex-primary);
   font-weight: bold;
   text-transform: uppercase;
   letter-spacing: 1.5px;
-  text-shadow: 0 0 10px rgba(255, 6, 111, 0.3);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--hex-primary) 30%, transparent);
 }
 
 .coach-subtitle {
   font-size: 0.7rem;
-  color: var(--gray3);
+  color: var(--hex-text-muted);
   margin: 0 0 18px 0;
   line-height: 1.4;
 }
@@ -1791,8 +1774,8 @@ const flashStyle = computed(() => ({
   width: 100%;
   padding: 14px 16px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: linear-gradient(135deg, rgba(15, 15, 30, 0.9) 0%, rgba(30, 30, 55, 0.7) 100%);
+  border: 1px solid var(--hex-border-default);
+  background: linear-gradient(135deg, var(--hex-bg-dark) 0%, var(--hex-bg-light) 100%);
   cursor: pointer;
   transition: all 0.25s ease;
   position: relative;
@@ -1826,44 +1809,44 @@ const flashStyle = computed(() => ({
 
 .coach-btn-desc {
   font-size: 0.6rem;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   margin-left: auto;
 }
 
 /* Attack */
 .coach-btn-attack {
-  border-color: rgba(231, 76, 60, 0.2);
+  border-color: color-mix(in srgb, var(--hex-action-attack) 20%, transparent);
 }
-.coach-btn-attack::before { background: #e74c3c; }
-.coach-btn-attack .coach-btn-text { color: #e74c3c; }
-.coach-btn-attack .coach-btn-icon { filter: drop-shadow(0 0 4px rgba(231, 76, 60, 0.4)); }
+.coach-btn-attack::before { background: var(--hex-action-attack); }
+.coach-btn-attack .coach-btn-text { color: var(--hex-action-attack); }
+.coach-btn-attack .coach-btn-icon { filter: drop-shadow(0 0 4px color-mix(in srgb, var(--hex-action-attack) 40%, transparent)); }
 .coach-btn-attack:active {
-  border-color: rgba(231, 76, 60, 0.5);
-  box-shadow: 0 0 20px rgba(231, 76, 60, 0.15);
+  border-color: color-mix(in srgb, var(--hex-action-attack) 50%, transparent);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--hex-action-attack) 15%, transparent);
 }
 
 /* Defense */
 .coach-btn-defense {
-  border-color: rgba(52, 152, 219, 0.2);
+  border-color: color-mix(in srgb, var(--hex-action-defense) 20%, transparent);
 }
-.coach-btn-defense::before { background: #3498db; }
-.coach-btn-defense .coach-btn-text { color: #3498db; }
-.coach-btn-defense .coach-btn-icon { filter: drop-shadow(0 0 4px rgba(52, 152, 219, 0.4)); }
+.coach-btn-defense::before { background: var(--hex-action-defense); }
+.coach-btn-defense .coach-btn-text { color: var(--hex-action-defense); }
+.coach-btn-defense .coach-btn-icon { filter: drop-shadow(0 0 4px color-mix(in srgb, var(--hex-action-defense) 40%, transparent)); }
 .coach-btn-defense:active {
-  border-color: rgba(52, 152, 219, 0.5);
-  box-shadow: 0 0 20px rgba(52, 152, 219, 0.15);
+  border-color: color-mix(in srgb, var(--hex-action-defense) 50%, transparent);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--hex-action-defense) 15%, transparent);
 }
 
 /* Position */
 .coach-btn-position {
-  border-color: rgba(155, 89, 182, 0.2);
+  border-color: color-mix(in srgb, var(--hex-action-position) 20%, transparent);
 }
-.coach-btn-position::before { background: #9b59b6; }
-.coach-btn-position .coach-btn-text { color: #9b59b6; }
-.coach-btn-position .coach-btn-icon { filter: drop-shadow(0 0 4px rgba(155, 89, 182, 0.4)); }
+.coach-btn-position::before { background: var(--hex-action-position); }
+.coach-btn-position .coach-btn-text { color: var(--hex-action-position); }
+.coach-btn-position .coach-btn-icon { filter: drop-shadow(0 0 4px color-mix(in srgb, var(--hex-action-position) 40%, transparent)); }
 .coach-btn-position:active {
-  border-color: rgba(155, 89, 182, 0.5);
-  box-shadow: 0 0 20px rgba(155, 89, 182, 0.15);
+  border-color: color-mix(in srgb, var(--hex-action-position) 50%, transparent);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--hex-action-position) 15%, transparent);
 }
 
 /* ── Coach Active Indicator ─────────────────────────────────────── */
@@ -1873,39 +1856,39 @@ const flashStyle = computed(() => ({
   gap: 6px;
   padding: 6px 14px;
   border-radius: 20px;
-  background: linear-gradient(135deg, rgba(9, 9, 9, 0.9) 0%, rgba(26, 26, 46, 0.7) 100%);
-  border: 1px solid rgba(255, 6, 111, 0.3);
+  background: linear-gradient(135deg, var(--hex-bg-dark) 0%, var(--hex-bg-light) 100%);
+  border: 1px solid color-mix(in srgb, var(--hex-primary) 30%, transparent);
   margin: 6px 0;
   animation: coachBarPulse 2s ease-in-out infinite;
 }
 
 @keyframes coachBarPulse {
-  0%, 100% { box-shadow: 0 0 8px rgba(255, 6, 111, 0.2); }
-  50%      { box-shadow: 0 0 16px rgba(255, 6, 111, 0.4); }
+  0%, 100% { box-shadow: 0 0 8px color-mix(in srgb, var(--hex-primary) 20%, transparent); }
+  50%      { box-shadow: 0 0 16px color-mix(in srgb, var(--hex-primary) 40%, transparent); }
 }
 
 .coach-active-icon {
   width: 16px; height: 16px;
-  filter: drop-shadow(0 0 3px rgba(255, 6, 111, 0.3));
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--hex-primary) 30%, transparent));
 }
 
 .coach-active-label {
   font-size: 0.65rem;
   font-weight: bold;
-  color: var(--primary-color);
+  color: var(--hex-primary);
   letter-spacing: 0.5px;
 }
 
 .coach-active-rounds {
   font-size: 0.55rem;
-  color: var(--gray3);
+  color: var(--hex-text-muted);
   margin-left: 2px;
 }
 /* ── XP Earned block ── */
 .xp-earned-block {
-  background: rgba(255, 6, 111, 0.08);
-  border: 1px solid rgba(255, 6, 111, 0.3);
-  border-radius: 8px;
+  background: color-mix(in srgb, var(--hex-primary) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hex-primary) 30%, transparent);
+  border-radius: var(--hex-radius-md);
   padding: 12px 16px;
   margin-bottom: 12px;
 }
@@ -1913,7 +1896,7 @@ const flashStyle = computed(() => ({
 .xp-earned-title {
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 0.75rem;
-  color: var(--pink);
+  color: var(--hex-primary);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   margin-bottom: 8px;
@@ -1922,10 +1905,10 @@ const flashStyle = computed(() => ({
 .xp-earned-total {
   font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 1.4rem;
-  color: var(--pink);
+  color: var(--hex-primary);
   font-weight: bold;
   text-align: center;
-  text-shadow: 0 0 10px rgba(255, 6, 111, 0.4);
+  text-shadow: 0 0 10px var(--hex-primary-glow);
 }
 
 /* ── PvP Badge ─────────────────────────────────────────────────── */
@@ -1935,10 +1918,10 @@ const flashStyle = computed(() => ({
   left: 50%;
   transform: translateX(-50%);
   padding: 8px 20px;
-  background: rgba(255, 6, 111, 0.2);
-  border: 1px solid #FF066F;
+  background: color-mix(in srgb, var(--hex-primary) 20%, transparent);
+  border: 1px solid var(--hex-primary);
   border-radius: 20px;
-  color: #FF066F;
+  color: var(--hex-primary);
   font-weight: 600;
   font-size: 14px;
   z-index: 10;
@@ -1954,16 +1937,16 @@ const flashStyle = computed(() => ({
   justify-content: center;
   gap: 8px;
   padding: 6px 16px;
-  background: linear-gradient(135deg, rgba(255, 6, 111, 0.15) 0%, rgba(255, 6, 111, 0.05) 100%);
-  border: 1px solid rgba(255, 6, 111, 0.4);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--hex-primary) 15%, transparent) 0%, color-mix(in srgb, var(--hex-primary) 5%, transparent) 100%);
+  border: 1px solid color-mix(in srgb, var(--hex-primary) 40%, transparent);
   border-radius: 20px;
   margin-bottom: 8px;
   animation: bannerPulse 2.5s ease-in-out infinite;
 }
 
 @keyframes bannerPulse {
-  0%, 100% { box-shadow: 0 0 8px rgba(255, 6, 111, 0.2); }
-  50% { box-shadow: 0 0 20px rgba(255, 6, 111, 0.5); }
+  0%, 100% { box-shadow: 0 0 8px color-mix(in srgb, var(--hex-primary) 20%, transparent); }
+  50% { box-shadow: 0 0 20px var(--hex-primary-glow); }
 }
 
 .autofight-banner-icon {
@@ -1979,7 +1962,7 @@ const flashStyle = computed(() => ({
 .autofight-banner-text {
   font-size: 0.7rem;
   font-weight: bold;
-  color: var(--primary-color);
+  color: var(--hex-primary);
   letter-spacing: 1px;
   text-transform: uppercase;
 }
@@ -1989,7 +1972,7 @@ const flashStyle = computed(() => ({
   position: fixed;
   top: 0; left: 0;
   width: 100vw; height: 100vh;
-  background: rgba(0, 0, 0, 0.85);
+  background: color-mix(in srgb, var(--hex-bg-dark) 85%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1997,8 +1980,8 @@ const flashStyle = computed(() => ({
 }
 
 .pvp-modal {
-  background: linear-gradient(135deg, rgba(20, 20, 20, 0.95) 0%, rgba(9, 9, 9, 0.98) 100%);
-  border: 1px solid rgba(255, 6, 111, 0.4);
+  background: linear-gradient(135deg, var(--hex-bg-medium) 0%, var(--hex-bg-dark) 100%);
+  border: 1px solid color-mix(in srgb, var(--hex-primary) 40%, transparent);
   border-radius: 16px;
   padding: 32px 28px;
   text-align: center;
@@ -2009,7 +1992,7 @@ const flashStyle = computed(() => ({
 .pvp-modal-title {
   font-size: 1.2rem;
   font-weight: bold;
-  color: #fff;
+  color: var(--hex-text-primary);
   margin: 12px 0 8px;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -2018,10 +2001,10 @@ const flashStyle = computed(() => ({
 .pvp-timer {
   font-size: 2rem;
   font-weight: 900;
-  color: var(--primary-color);
+  color: var(--hex-primary);
   font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   margin: 8px 0 16px;
-  text-shadow: 0 0 15px rgba(255, 6, 111, 0.5);
+  text-shadow: 0 0 15px var(--hex-primary-glow);
 }
 
 .pvp-modal-buttons {
@@ -2032,10 +2015,10 @@ const flashStyle = computed(() => ({
 
 .btn-roll {
   padding: 10px 24px;
-  background: linear-gradient(135deg, var(--primary-color) 0%, #a50344 100%);
+  background: linear-gradient(135deg, var(--hex-primary) 0%, var(--hex-primary-dark) 100%);
   border: none;
-  border-radius: 8px;
-  color: #fff;
+  border-radius: var(--hex-radius-md);
+  color: var(--hex-text-primary);
   font-weight: bold;
   font-size: 0.9rem;
   cursor: pointer;
@@ -2045,15 +2028,15 @@ const flashStyle = computed(() => ({
 }
 
 .btn-roll:hover {
-  box-shadow: 0 0 20px rgba(255, 6, 111, 0.6);
+  box-shadow: 0 0 20px var(--hex-primary-glow);
 }
 
 .btn-skip {
   padding: 10px 24px;
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 8px;
-  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--hex-border-strong);
+  border-radius: var(--hex-radius-md);
+  color: var(--hex-text-secondary);
   font-weight: bold;
   font-size: 0.9rem;
   cursor: pointer;
@@ -2063,11 +2046,11 @@ const flashStyle = computed(() => ({
 }
 
 .btn-skip:hover {
-  border-color: rgba(255, 255, 255, 0.6);
+  border-color: var(--hex-text-secondary);
 }
 
 .pvp-coach-text {
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--hex-text-secondary);
   font-size: 0.85rem;
   margin: 4px 0 8px;
   line-height: 1.4;
@@ -2077,7 +2060,7 @@ const flashStyle = computed(() => ({
   position: fixed;
   top: 0; left: 0;
   width: 100vw; height: 100vh;
-  background: rgba(0, 0, 0, 0.7);
+  background: color-mix(in srgb, var(--hex-bg-dark) 70%, transparent);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2089,14 +2072,14 @@ const flashStyle = computed(() => ({
 .pvp-waiting-spinner {
   width: 40px;
   height: 40px;
-  border: 3px solid rgba(255, 6, 111, 0.3);
-  border-top-color: var(--primary-color);
+  border: 3px solid color-mix(in srgb, var(--hex-primary) 30%, transparent);
+  border-top-color: var(--hex-primary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
 
 .pvp-waiting-text {
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--hex-text-secondary);
   font-size: 0.9rem;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -2106,7 +2089,7 @@ const flashStyle = computed(() => ({
   position: fixed;
   top: 0; left: 0;
   width: 100vw; height: 100vh;
-  background: rgba(0, 0, 0, 0.9);
+  background: color-mix(in srgb, var(--hex-bg-dark) 90%, transparent);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2124,32 +2107,32 @@ const flashStyle = computed(() => ({
 }
 
 .pvp-result-text.result-win {
-  color: #4caf50;
-  text-shadow: 0 0 30px rgba(76, 175, 80, 0.5);
+  color: var(--hex-victory);
+  text-shadow: 0 0 30px color-mix(in srgb, var(--hex-victory) 50%, transparent);
 }
 
 .pvp-result-text.result-lose {
-  color: #f44336;
-  text-shadow: 0 0 30px rgba(244, 67, 54, 0.5);
+  color: var(--hex-defeat);
+  text-shadow: 0 0 30px color-mix(in srgb, var(--hex-defeat) 50%, transparent);
 }
 
 .pvp-result-text.result-draw {
-  color: #ff9800;
-  text-shadow: 0 0 30px rgba(255, 152, 0, 0.5);
+  color: var(--hex-draw);
+  text-shadow: 0 0 30px color-mix(in srgb, var(--hex-draw) 50%, transparent);
 }
 
 .pvp-disconnect-note {
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--hex-text-secondary);
   font-size: 0.85rem;
 }
 
 .btn-back {
   margin-top: 16px;
   padding: 12px 32px;
-  background: linear-gradient(135deg, var(--primary-color) 0%, #a50344 100%);
+  background: linear-gradient(135deg, var(--hex-primary) 0%, var(--hex-primary-dark) 100%);
   border: none;
-  border-radius: 8px;
-  color: #fff;
+  border-radius: var(--hex-radius-md);
+  color: var(--hex-text-primary);
   font-weight: bold;
   font-size: 1rem;
   cursor: pointer;
@@ -2159,23 +2142,23 @@ const flashStyle = computed(() => ({
 }
 
 .btn-back:hover {
-  box-shadow: 0 0 20px rgba(255, 6, 111, 0.6);
+  box-shadow: 0 0 20px var(--hex-primary-glow);
 }
 
 /* ── Overdrive ──────────────────────────────────────────────────── */
 .overdrive-active .fighters-section {
-  border-color: rgba(255, 100, 0, 0.4);
+  border-color: color-mix(in srgb, var(--hex-warning) 40%, transparent);
   animation: overdrivePulse 1.5s ease-in-out infinite;
 }
 
 @keyframes overdrivePulse {
   0%, 100% {
-    border-color: rgba(255, 100, 0, 0.3);
-    box-shadow: 0 0 10px rgba(255, 100, 0, 0.1);
+    border-color: color-mix(in srgb, var(--hex-warning) 30%, transparent);
+    box-shadow: 0 0 10px color-mix(in srgb, var(--hex-warning) 10%, transparent);
   }
   50% {
-    border-color: rgba(255, 100, 0, 0.7);
-    box-shadow: 0 0 25px rgba(255, 100, 0, 0.3), inset 0 0 15px rgba(255, 100, 0, 0.05);
+    border-color: color-mix(in srgb, var(--hex-warning) 70%, transparent);
+    box-shadow: 0 0 25px color-mix(in srgb, var(--hex-warning) 30%, transparent), inset 0 0 15px color-mix(in srgb, var(--hex-warning) 5%, transparent);
   }
 }
 
@@ -2185,21 +2168,21 @@ const flashStyle = computed(() => ({
   font-size: 0.65rem;
   font-weight: 900;
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
-  color: #FF6B00;
+  color: var(--hex-warning);
   text-transform: uppercase;
   letter-spacing: 2px;
   text-shadow:
-    0 0 8px rgba(255, 107, 0, 0.7),
-    0 0 16px rgba(255, 107, 0, 0.3);
+    0 0 8px color-mix(in srgb, var(--hex-warning) 70%, transparent),
+    0 0 16px color-mix(in srgb, var(--hex-warning) 30%, transparent);
   animation: overdriveLabelPulse 1.5s ease-in-out infinite;
 }
 
 @keyframes overdriveLabelPulse {
   0%, 100% { opacity: 0.8; }
-  50%      { opacity: 1; text-shadow: 0 0 12px rgba(255, 107, 0, 0.9), 0 0 24px rgba(255, 107, 0, 0.5); }
+  50%      { opacity: 1; text-shadow: 0 0 12px color-mix(in srgb, var(--hex-warning) 90%, transparent), 0 0 24px color-mix(in srgb, var(--hex-warning) 50%, transparent); }
 }
 
 .log-round-overdrive {
-  color: #FF6400 !important;
+  color: var(--hex-warning) !important;
 }
 </style>
