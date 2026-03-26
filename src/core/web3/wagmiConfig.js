@@ -2,7 +2,7 @@ import { http, createConfig } from '@wagmi/vue'
 import { base } from '@wagmi/vue/chains'
 import { coinbaseWallet, walletConnect, injected } from '@wagmi/vue/connectors'
 
-const projectId = '96482c2638a251eef7399e040f66bcb5'
+const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || '5591a1606e3dab80a0262f4f534f494d'
 
 export const config = createConfig({
   chains: [base],
