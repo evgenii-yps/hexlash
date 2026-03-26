@@ -86,8 +86,8 @@ const unlockCost = computed(() => {
 
 .move-tree-card {
   width: 100%;
-  background: var(--black-opacity-80);
-  border: 1px solid var(--gray1);
+  background: var(--hex-bg-card);
+  border: 1px solid var(--hex-border-default);
   border-radius: 4px;
   padding: 10px 12px;
   cursor: pointer;
@@ -96,7 +96,7 @@ const unlockCost = computed(() => {
 }
 
 .move-tree-card:active {
-  background: rgba(255, 6, 111, 0.07);
+  background: color-mix(in srgb, var(--hex-primary) 7%, transparent);
 }
 
 .move-tree-card.locked {
@@ -104,11 +104,11 @@ const unlockCost = computed(() => {
 }
 
 .move-tree-card.can-unlock {
-  border-color: rgba(255, 6, 111, 0.5);
+  border-color: color-mix(in srgb, var(--hex-primary) 50%, transparent);
 }
 
 .move-tree-card.max-level {
-  border-color: rgba(255, 6, 111, 0.8);
+  border-color: color-mix(in srgb, var(--hex-primary) 80%, transparent);
 }
 
 .card-top {
@@ -120,8 +120,8 @@ const unlockCost = computed(() => {
 
 .move-locked-badge {
   font-size: 0.65rem;
-  color: var(--gray2);
-  border: 1px solid var(--gray1);
+  color: var(--hex-text-secondary);
+  border: 1px solid var(--hex-border-default);
   border-radius: 3px;
   padding: 1px 5px;
 }
@@ -129,54 +129,54 @@ const unlockCost = computed(() => {
 .move-name {
   flex: 1;
   font-size: 0.95rem;
-  color: var(--white);
+  color: var(--hex-text-primary);
 }
 
 .move-level {
   font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 0.85rem;
-  color: var(--pink);
+  color: var(--hex-primary);
 }
 
 .progress-label {
   display: flex;
   gap: 4px;
   font-size: 0.7rem;
-  color: var(--gray3);
+  color: var(--hex-text-muted);
   margin-bottom: 4px;
 }
 
 .progress-req {
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
 }
 
 .progress-bar {
   height: 3px;
-  background: var(--gray1);
+  background: var(--hex-border-default);
   border-radius: 2px;
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
-  background: var(--pink);
+  background: var(--hex-primary);
   border-radius: 2px;
   transition: width 0.3s ease;
 }
 
 .max-badge {
   font-size: 0.7rem;
-  color: var(--pink);
+  color: var(--hex-primary);
 }
 
 .unlock-req {
   font-size: 0.7rem;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
 }
 
 .connector-line {
   width: 2px;
   height: 12px;
-  background: var(--gray1);
+  background: var(--hex-border-default);
 }
 </style>

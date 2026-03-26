@@ -190,7 +190,7 @@ const goToTraining = () => {
   position: fixed;
   top: 0;
   left: 0;
-  background: linear-gradient(to top, black 0%, rgba(0,0,0,0.72) 100%);
+  background: linear-gradient(to top, var(--hex-bg-dark) 0%, color-mix(in srgb, var(--hex-bg-dark) 72%, transparent) 100%);
   z-index: 1;
   width: 100vw;
   height: 100vh;
@@ -204,7 +204,7 @@ const goToTraining = () => {
   height: 100vh;
   max-width: 1024px;
   margin: 0 auto;
-  color: white;
+  color: var(--hex-text-primary);
   box-sizing: border-box;
 }
 
@@ -223,9 +223,9 @@ const goToTraining = () => {
 }
 
 .btn-back {
-  background: var(--black-opacity-80);
-  border: 1px solid var(--gray1);
-  color: var(--gray3);
+  background: var(--hex-bg-card);
+  border: 1px solid var(--hex-border-default);
+  color: var(--hex-text-muted);
   border-radius: 4px;
   padding: 6px 14px;
   font-size: 0.9rem;
@@ -236,15 +236,15 @@ const goToTraining = () => {
   transition: color 0.2s;
 }
 
-.btn-back:hover { color: var(--white); }
+.btn-back:hover { color: var(--hex-text-primary); }
 .back-arrow { font-size: 1.1rem; }
 
 .resource-panel {
   display: flex;
   align-items: stretch;
   gap: 0;
-  background: var(--black-opacity-80);
-  border: 1px solid var(--gray1);
+  background: var(--hex-bg-card);
+  border: 1px solid var(--hex-border-default);
   border-radius: 6px;
   overflow: hidden;
 }
@@ -259,7 +259,7 @@ const goToTraining = () => {
 
 .resource-label {
   font-size: 0.6rem;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
@@ -267,13 +267,13 @@ const goToTraining = () => {
 .resource-value {
   font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 1.5rem;
-  color: var(--pink);
+  color: var(--hex-primary);
   line-height: 1.1;
 }
 
 .resource-divider {
   width: 1px;
-  background: var(--gray1);
+  background: var(--hex-border-default);
   margin: 6px 0;
 }
 
@@ -286,8 +286,8 @@ const goToTraining = () => {
 }
 
 .free-xp-value {
-  color: var(--pink) !important;
-  text-shadow: 0 0 8px rgba(255, 6, 111, 0.4);
+  color: var(--hex-primary) !important;
+  text-shadow: 0 0 8px var(--hex-primary-glow);
 }
 
 /* ── Основной layout ── */
@@ -322,10 +322,10 @@ const goToTraining = () => {
   align-items: center;
   gap: 3px;
   padding: 10px 6px;
-  background: var(--black-opacity-80);
-  border: 1px solid var(--gray1);
+  background: var(--hex-bg-card);
+  border: 1px solid var(--hex-border-default);
   border-radius: 4px;
-  color: var(--gray3);
+  color: var(--hex-text-muted);
   font-size: 0.82rem;
   cursor: pointer;
   transition: all 0.2s;
@@ -333,9 +333,9 @@ const goToTraining = () => {
 }
 
 .branch-btn.active {
-  border-color: var(--pink);
-  color: var(--pink);
-  background: rgba(255, 6, 111, 0.1);
+  border-color: var(--hex-primary);
+  color: var(--hex-primary);
+  background: color-mix(in srgb, var(--hex-primary) 10%, transparent);
 }
 
 .branch-group {
@@ -352,15 +352,15 @@ const goToTraining = () => {
 .branch-xp-val {
   font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 0.7rem;
-  color: var(--pink);
+  color: var(--hex-primary);
   opacity: 0.8;
 }
 
 .branch-add-xp-btn {
-  background: rgba(255, 6, 111, 0.1);
-  border: 1px solid rgba(255, 6, 111, 0.4);
+  background: color-mix(in srgb, var(--hex-primary) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hex-primary) 40%, transparent);
   border-radius: 4px;
-  color: var(--pink);
+  color: var(--hex-primary);
   font-size: 0.7rem;
   font-weight: bold;
   padding: 4px 6px;
@@ -370,8 +370,8 @@ const goToTraining = () => {
 }
 
 .branch-add-xp-btn:active {
-  background: rgba(255, 6, 111, 0.25);
-  box-shadow: 0 0 10px rgba(255, 6, 111, 0.3);
+  background: color-mix(in srgb, var(--hex-primary) 25%, transparent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--hex-primary) 30%, transparent);
 }
 
 /* ── Правая колонка с приёмами ── */

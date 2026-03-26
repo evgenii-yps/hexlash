@@ -194,7 +194,7 @@ const lockedHint = computed(() => {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.75);
+  background: color-mix(in srgb, var(--hex-bg-dark) 75%, transparent);
   z-index: 500;
   display: flex;
   align-items: flex-end;
@@ -203,8 +203,8 @@ const lockedHint = computed(() => {
 }
 
 .modal-card {
-  background: #111;
-  border: 1px solid var(--gray1);
+  background: var(--hex-bg-medium);
+  border: 1px solid var(--hex-border-default);
   border-radius: 8px 8px 4px 4px;
   padding: 20px 20px 16px;
   width: 100%;
@@ -224,7 +224,7 @@ const lockedHint = computed(() => {
   right: 14px;
   background: none;
   border: none;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   font-size: 1rem;
   cursor: pointer;
 }
@@ -243,26 +243,26 @@ const lockedHint = computed(() => {
 .modal-title {
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 1.3rem;
-  color: var(--white);
+  color: var(--hex-text-primary);
   flex: 1;
 }
 
 .modal-level {
   font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 1rem;
-  color: var(--pink);
+  color: var(--hex-primary);
 }
 
 .modal-desc {
   font-size: 0.82rem;
-  color: var(--gray3);
+  color: var(--hex-text-muted);
   line-height: 1.5;
   margin: 0 0 12px;
 }
 
 .modal-stats {
-  background: var(--black-opacity-80);
-  border: 1px solid var(--gray1);
+  background: var(--hex-bg-card);
+  border: 1px solid var(--hex-border-default);
   border-radius: 4px;
   padding: 8px 12px;
   margin-bottom: 10px;
@@ -277,19 +277,19 @@ const lockedHint = computed(() => {
 
 .stat-lbl {
   font-size: 0.75rem;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   width: 70px;
 }
 
 .stat-val {
   font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 0.95rem;
-  color: var(--white);
+  color: var(--hex-text-primary);
 }
 
 .stat-next {
   font-size: 0.8rem;
-  color: var(--pink);
+  color: var(--hex-primary);
 }
 
 .level-dots {
@@ -302,13 +302,13 @@ const lockedHint = computed(() => {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: var(--gray1);
-  border: 1px solid var(--gray2);
+  background: var(--hex-border-default);
+  border: 1px solid var(--hex-text-secondary);
 }
 
 .dot.filled {
-  background: var(--pink);
-  border-color: var(--pink);
+  background: var(--hex-primary);
+  border-color: var(--hex-primary);
 }
 
 .modal-progress {
@@ -317,7 +317,7 @@ const lockedHint = computed(() => {
 
 .section-hint {
   font-size: 0.72rem;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   margin-bottom: 6px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -332,7 +332,7 @@ const lockedHint = computed(() => {
 
 .req-label {
   font-size: 0.72rem;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   width: 30px;
 }
 
@@ -343,7 +343,7 @@ const lockedHint = computed(() => {
 .req-bar {
   display: block;
   height: 4px;
-  background: var(--gray1);
+  background: var(--hex-border-default);
   border-radius: 2px;
   overflow: hidden;
 }
@@ -351,29 +351,29 @@ const lockedHint = computed(() => {
 .req-bar-fill {
   display: block;
   height: 100%;
-  background: var(--pink);
+  background: var(--hex-primary);
   border-radius: 2px;
   transition: width 0.3s ease;
 }
 
 .req-nums {
   font-size: 0.72rem;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   white-space: nowrap;
 }
 
 .req-nums.enough {
-  color: #50c878;
+  color: var(--hex-success);
 }
 
 .locked-hint {
   font-size: 0.82rem;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   margin-bottom: 14px;
   padding: 8px 12px;
-  background: var(--black-opacity-80);
+  background: var(--hex-bg-card);
   border-radius: 4px;
-  border: 1px solid var(--gray1);
+  border: 1px solid var(--hex-border-default);
 }
 
 .modal-actions {
@@ -385,22 +385,22 @@ const lockedHint = computed(() => {
   flex: 1;
   padding: 10px 8px;
   border-radius: 4px;
-  border: 1px solid var(--gray1);
+  border: 1px solid var(--hex-border-default);
   background: transparent;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .btn-upgrade.active {
-  border-color: var(--pink);
-  color: var(--pink);
+  border-color: var(--hex-primary);
+  color: var(--hex-primary);
 }
 
 .btn-upgrade.active:hover {
-  background: var(--pink);
-  color: var(--white);
+  background: var(--hex-primary);
+  color: var(--hex-text-primary);
 }
 
 .btn-upgrade:disabled {
@@ -409,12 +409,12 @@ const lockedHint = computed(() => {
 }
 
 .btn-train {
-  border-color: var(--gray1);
-  color: var(--gray3);
+  border-color: var(--hex-border-default);
+  color: var(--hex-text-muted);
 }
 
 .btn-train:hover {
-  color: var(--white);
-  border-color: var(--gray2);
+  color: var(--hex-text-primary);
+  border-color: var(--hex-text-secondary);
 }
 </style>
