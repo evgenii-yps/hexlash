@@ -37,10 +37,11 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
     moves.js               — 18 moves with damage/speed per level (numeric data only, names/desc via i18n)
     requirements.js        — Tap/XP costs for unlock/levelup
     cardPower.js           — Card/module power balance data
+    pixelIcons.js          — 45 pixel icons (16×16 grid, flat array 256 values)
   utils/
     powerRating.js         — Power rating calculations
   styles/
-    hexlash-ui.css         — Additional UI styles
+    hexlash-ui.css         — Design system: CSS variables, component classes, animations
   assets/
     main.css               — Global styles
     colors.css             — CSS variables
@@ -156,7 +157,60 @@ unlockRequirements:  { 3: {taps:300, exp:150}, 4: {taps:250, exp:120}, 5: {taps:
 
 ---
 
-## CSS Design System
+## Design System — "Neon Discipline"
+
+**Status:** Phase 1 (foundation) + Phase 2 (navigation) complete.
+
+### UI Components (`/src/components/ui/`)
+
+| Component | File | Purpose |
+|-----------|------|---------|
+| `PixelIcon` | `PixelIcon.vue` | 16×16 canvas-based pixel icons. Props: name, size, color, glow, glowColor, glowSize, disabled. Resolves CSS vars for canvas fill. |
+| `HexButton` | `HexButton.vue` | 5 variants: primary, secondary, ghost, danger, archetype. 3 sizes (sm/md/lg). Props: icon (PixelIcon), loading (CSS spinner), block, disabled, archetypeColor. |
+| `HexCard` | `HexCard.vue` | 5 variants: default, elevated, archetype (left border), active (tinted bg), result (top border victory/defeat/draw). Slots: header, footer. Padding: none/sm/md/lg. |
+| `HexProgress` | `HexProgress.vue` | Progress bar. 3 variants: hp (auto green/yellow/red by %), branch (speed/power/technique colors), generic. 3 sizes. Props: label, showValue, showPercent. |
+| `HexBadge` | `HexBadge.vue` | Pill badge. 5 variants: archetype, branch, status (victory/defeat/draw/info), counter (circle/pill auto), custom. Props: icon (PixelIcon), pulse animation. |
+
+### Pixel Icons (`/src/data/pixelIcons.js`)
+
+45 icons across 9 categories. Each: 16×16 grid, flat array of 256 (0/1), row-major.
+
+| Category | Icons | Count |
+|----------|-------|-------|
+| archetype | predator, sentinel, ghost, analyst, maverick, juggernaut | 6 |
+| branch | speed, power, technique | 3 |
+| nav | arena, training, ratings, profile | 4 |
+| combat | hp, shield, dice, coach, damage, heal | 6 |
+| dice | dice_heal, dice_adrenaline, dice_shield, dice_blind, dice_rage, dice_crit | 6 |
+| mode | pve, pvp, auto | 3 |
+| social | friends, club, challenge, search, online, spectate | 6 |
+| progression | xp, taps, lock, unlock, star | 5 |
+| ui | close, menu, settings, sound, wallet, back | 6 |
+
+Optimal weight: 40–70 filled pixels (15–27%). Exception: `online` dot = 32px.
+
+### CSS Variables (`/src/styles/hexlash-ui.css`)
+
+All new components use `--hex-*` variables exclusively. Legacy `--pink`, `--dark`, `--gray*` still exist in `colors.css` for unconverted components.
+
+Key variable groups: `--hex-primary`, `--hex-bg-{dark,medium,light}`, `--hex-text-{primary,secondary,muted}`, `--hex-border-{default,active,strong}`, `--hex-arch-{name}` (6 archetypes × 5 variants each), `--hex-branch-{name}`, `--hex-dice-{effect}`, `--hex-mode-{type}`, `--hex-victory/defeat/draw` + `-bg`.
+
+### Archetype color → CSS var usage pattern
+
+For components that accept archetype colors dynamically (HexButton archetype, HexCard active/archetype), pass the CSS var string as prop:
+```vue
+<HexButton variant="archetype" archetype-color="var(--hex-arch-predator)">Attack</HexButton>
+<HexCard variant="active" archetype-color="var(--hex-arch-sentinel)">...</HexCard>
+```
+Internally uses `--_arch-color` CSS custom property for scoped styling.
+
+### Test/demo files
+- `test-icons.html` — all 45 pixel icons rendered at 48px, grouped by category
+- `src/test-components.html` — HexButton, HexCard, HexProgress, HexBadge demos
+
+---
+
+## CSS Design System (legacy)
 
 **Colors** (`/src/assets/colors.css`):
 ```css
@@ -356,8 +410,8 @@ AI_TRAINER_ENABLED = true
 
 ## Component Highlights
 
-- `Logo.vue` — header logo
-- `BottomMenu.vue` — bottom nav (Arena, Training, Ratings, Profile). Hidden on PvP screens via `isPvPScreen` computed in App.vue
+- `Logo.vue` — header logo (Anonymous font, --hex-primary color + glow)
+- `BottomMenu.vue` — bottom nav (Arena, Training, Ratings, Profile). Uses PixelIcon with glow for active tab. Hidden on PvP screens via `isPvPScreen` computed in App.vue
 - `Info.vue` / `Error.vue` — toast notifications (text interpolation `{{ }}`, NOT v-html — XSS safe)
 - `NewAchievement.vue` — achievement popup
 - `Punch3D.vue` — Three.js punching bag
@@ -502,5 +556,18 @@ User, Club, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask,
 
 ## Branch (Git)
 
-Development branch: `claude/hexlash-full-audit-WvXMd`
-Push: `git push -u origin claude/hexlash-full-audit-WvXMd`
+Development branch: `claude/add-pixel-icons-Hk6tn` (design system + UI redesign)
+Previous branch: `claude/hexlash-full-audit-WvXMd` (security audit, completed)
+
+### Redesign Progress
+
+| Phase | Status | What |
+|-------|--------|------|
+| 1.1 | ✅ Done | CSS variables (`hexlash-ui.css`) |
+| 1.2a | ✅ Done | 15 pixel icons (archetypes, branches, nav, ui) + `PixelIcon.vue` |
+| 1.2b | ✅ Done | 30 pixel icons (combat, dice, modes, social, progression, ui) |
+| 1.3a | ✅ Done | `HexButton.vue` + `HexCard.vue` |
+| 1.3b | ✅ Done | `HexProgress.vue` + `HexBadge.vue` |
+| 2.1 | ✅ Done | BottomMenu → PixelIcon with glow active state |
+| 2.2 | ✅ Done | Header/Logo → `--hex-*` CSS variables |
+| 3 | 🔲 Next | Screen redesigns (Arena first) |
