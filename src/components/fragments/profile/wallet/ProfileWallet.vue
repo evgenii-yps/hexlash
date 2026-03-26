@@ -4,29 +4,29 @@
 
     <div class="wallet-content">
 
-      <WalletInfo v-if="isConnected"/>
-
       <ConnectWallet/>
 
       <div class="balance-cards-container">
         <GameBalanceCard :balance="String(gameBalance)" @click="withdraw"/>
       </div>
 
-      <div v-if="isConnected" class="buy-tokens-placeholder">
-        <p>{{ t.profile?.wallet?.lblTokenPurchaseComingSoon || 'Token purchase coming soon on Base chain' }}</p>
-      </div>
+      <HexCard v-if="isConnected" variant="default" padding="md">
+        <p class="coming-soon-text">
+          {{ t.profile?.wallet?.lblTokenPurchaseComingSoon || 'Token purchase coming soon on Base chain' }}
+        </p>
+      </HexCard>
 
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { useAccount } from '@wagmi/vue'
 import BackButton from '@/components/ui/BackButton.vue'
-import WalletInfo from '@/components/fragments/profile/wallet/WalletInfo.vue'
 import GameBalanceCard from '@/components/fragments/profile/wallet/GameBalanceCard.vue'
 import ConnectWallet from '@/components/fragments/profile/wallet/ConnectWallet.vue'
+import HexCard from '@/components/ui/HexCard.vue'
 import { t } from '@/locales/index.js'
 import { InfoMessageModel } from '@/core/models/internal/infoMessageModel.js'
 import store from '@/core/state/store.js'
@@ -76,18 +76,10 @@ const withdraw = () => {
   margin: 1rem auto;
 }
 
-.buy-tokens-placeholder {
-  max-width: 500px;
-  margin: 1.5rem auto;
-  text-align: center;
-  padding: 1rem;
-  border: 1px dashed var(--hex-border-default);
-  border-radius: 8px;
-}
-
-.buy-tokens-placeholder p {
+.coming-soon-text {
   color: var(--hex-text-muted);
   font-size: 0.8rem;
   margin: 0;
+  text-align: center;
 }
 </style>
