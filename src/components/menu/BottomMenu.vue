@@ -85,7 +85,10 @@ const handleMenuClick = (index, item) => {
   width: 100%;
   max-width: 1024px;
   z-index: 100;
-  background: transparent;
+  background: rgba(9, 9, 9, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .bottom-menu.ios-adjust {
@@ -110,17 +113,19 @@ const handleMenuClick = (index, item) => {
 
 .menu-item .menu-text {
   margin-top: 4px;
-  color: var(--hex-text-secondary);
+  color: #B0B0B0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   font-size: 10px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  transition: color 0.2s ease;
+  transition: color 0.2s ease, text-shadow 0.2s ease;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.8);
 }
 
 .menu-item.active .menu-text {
   color: var(--hex-primary);
+  text-shadow: 0 0 8px rgba(255, 6, 111, 0.4);
 }
 
 :deep(.v-ripple__container) {
@@ -137,12 +142,13 @@ const handleMenuClick = (index, item) => {
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
-  filter: brightness(0) invert(0.5);
-  transition: filter 0.2s ease;
+  filter: brightness(0) invert(0.7);
+  transition: filter 0.2s ease, drop-shadow 0.2s ease;
+  -webkit-filter: brightness(0) invert(0.7);
 }
 
 .menu-item.active .menu-icon {
-  filter: brightness(0) saturate(100%) invert(12%) sepia(95%) saturate(6500%) hue-rotate(330deg) brightness(100%) contrast(105%);
+  filter: brightness(0) saturate(100%) invert(12%) sepia(95%) saturate(6500%) hue-rotate(330deg) brightness(100%) contrast(105%) drop-shadow(0 0 6px rgba(255, 6, 111, 0.4));
 }
 
 .icon-arena { background-image: url('@/assets/images/icon_arena.svg'); }
