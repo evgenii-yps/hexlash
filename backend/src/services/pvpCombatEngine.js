@@ -666,6 +666,20 @@ class PvPCombatEngine {
         }
       }
 
+      // Update club stats for both players
+      const player1 = await prisma.user.findUnique({ where: { id: result.player1.odId }, select: { clubId: true } });
+      const player2 = await prisma.user.findUnique({ where: { id: result.player2.odId }, select: { clubId: true } });
+      const clubIds = new Set([player1?.clubId, player2?.clubId].filter(Boolean));
+      for (const cId of clubIds) {
+        const isP1Win = result.winner === result.player1.odId && player1?.clubId === cId;
+        const isP2Win = result.winner === result.player2.odId && player2?.clubId === cId;
+        const clubUpdate = { battles: { increment: 1 } };
+        if (isP1Win || isP2Win) {
+          clubUpdate.wins = { increment: 1 };
+        }
+        await prisma.club.update({ where: { id: cId }, data: clubUpdate });
+      }
+
     } catch (e) {
       console.error('Failed to save fight result:', e);
     }

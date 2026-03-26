@@ -104,6 +104,15 @@ const actions = {
             throw error;
         }
     },
+    async leaveClub({commit}) {
+        try {
+            await clubService.leaveClub();
+            await store.dispatch('master/updateMaster', {clubId: null});
+        } catch (error) {
+            console.error('Failed to leave club:', error);
+            throw error;
+        }
+    },
     async changeClub({commit}, clubId) {
         try {
             const newClubModel = await clubService.changeClub(clubId);

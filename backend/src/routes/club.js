@@ -213,8 +213,10 @@ router.get('/search', authMiddleware, async (req, res) => {
       members: 'members',
     }[sortBy] || 'battles';
 
-    // For member sorting we can't use direct ordering, so default to battles
-    const orderField = sortField === 'members' ? 'battles' : sortField;
+    const sortOrder = sortDirection.toLowerCase();
+    const orderBy = sortField === 'members'
+      ? { members: { _count: sortOrder } }
+      : { [sortField]: sortOrder };
 
     const where = {};
     if (name) {
@@ -224,7 +226,7 @@ router.get('/search', authMiddleware, async (req, res) => {
     const clubs = await prisma.club.findMany({
       where,
       include: { _count: { select: { members: true } } },
-      orderBy: { [orderField]: sortDirection.toLowerCase() },
+      orderBy,
       skip: pageNum * pageSize,
       take: pageSize,
     });

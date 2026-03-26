@@ -271,6 +271,8 @@ export default {
     errorTooLong: 'The name must not exceed 32 characters.',
     errorEmpty: 'The name must not be empty.',
     errorCreate: 'Error creating club',
+    lblLeaveClub: 'Leave Club',
+    lblLeaveClubDescription: 'Are you sure you want to leave this club? If the club is private, you will not be able to rejoin.',
     lblControl: 'Control',
   },
   fight: {

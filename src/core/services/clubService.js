@@ -100,6 +100,14 @@ export const createClub = async (clubData) => {
 };
 
 
+export const leaveClub = async () => {
+    try {
+        await apiClient.post(`/club/change`, {clubId: null}, {authRequired: true});
+    } catch (error) {
+        throw new Error('Failed to leave club: ' + (error.response?.data?.error || error.message));
+    }
+};
+
 export const changeClub = async (clubId) => {
     try {
 

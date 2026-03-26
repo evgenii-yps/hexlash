@@ -74,8 +74,24 @@
 
             </div>
 
-            <div v-else-if="isMyClub">
+            <div v-else-if="isMyClub" style="margin-top: 20px; display: flex; justify-content: center;">
+              <HexButton variant="danger" size="sm" @click="dialogLeaveClub = true">
+                {{ t.club.lblLeaveClub }}
+              </HexButton>
 
+              <VModal v-model="dialogLeaveClub" max-width="500">
+                <VCard>
+                  <v-card-title class="headline">{{ t.club.lblLeaveClub }}</v-card-title>
+                  <v-card-text>
+                    {{ t.club.lblLeaveClubDescription }}
+                  </v-card-text>
+                  <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn @click="dialogLeaveClub = false" class="cancel-btn">{{ t.modal.btnCancel }}</v-btn>
+                    <v-btn @click="confirmLeave" class="confirm-btn">{{ t.club.lblConfirm }}</v-btn>
+                  </v-card-actions>
+                </VCard>
+              </VModal>
             </div>
 
             <div v-else>
@@ -130,6 +146,7 @@ import router from "@/router/index.js";
 import ClubWithdraw from "@/components/fragments/club/ClubWithdraw.vue";
 import ClubEdit from "@/components/fragments/club/ClubEdit.vue";
 import ClubOwnerAvatar from "@/components/fragments/club/ClubOwnerAvatar.vue";
+import HexButton from "@/components/ui/HexButton.vue";
 import {formatNumber} from "@/core/constants.js";
 import * as amplitude from "@amplitude/analytics-browser";
 
@@ -147,6 +164,7 @@ const isMyClub = ref(false);
 const showToolTip = ref(false);
 
 const dialogChangeClub = ref(false);  // Флаг для отображения модального окна
+const dialogLeaveClub = ref(false);
 
 const toggleToolTip = () => {
   showToolTip.value = !showToolTip.value;
@@ -214,7 +232,12 @@ const confirmExit = () => {
 
   // Amplitude
   amplitude.track('ChangeClub', clubData.value.id);
+}
 
+const confirmLeave = async () => {
+  dialogLeaveClub.value = false;
+  await store.dispatch('club/leaveClub');
+  router.push('/ratings/clubs');
 }
 
 
