@@ -594,4 +594,4 @@ Previous branch: `claude/hexlash-full-audit-WvXMd` (security audit, completed)
 | P0 | ✅ Done | PixelIcon revert — removed all PixelIcon usage from app files, restored original SVG/img icons with --hex-* colors. PixelIcon.vue + pixelIcons.js preserved but unused. |
 | 5.1 | ✅ Done | Final sweep — 330 legacy var replacements across 53 files. 0 legacy vars remain in active components. PrivacyView (legal, 58 inline styles) excluded. colors.css kept for PrivacyView compat. |
 | 5.2 | ✅ Done | Animations: 10 utility classes in hexlash-ui.css (transitions, hover, press, pulse, glow-pulse, float-up, Vue fade/slide-up). START FIGHT glow pulse. Existing component animations preserved. |
-| 5.3 | 🔲 Next | Responsive + Telegram WebApp |
+| 5.3 | ✅ Done | Responsive: 320px min-width support. @media 360px breakpoints for action row, mode dropdown, fighters, sidebar. Modal safe min-width via min(320px, 90vw). |
