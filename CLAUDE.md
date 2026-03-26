@@ -8,7 +8,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 
 ## Tech Stack
 
-**Frontend:** Vue 3.5 · Vite 7 · Vuex 4 · Vue Router 4 · Vuetify 2 · Three.js · Howler.js · Ethers.js 6 · Vue-i18n 11 · Amplitude · Web3Modal
+**Frontend:** Vue 3.5 · Vite 7 · Vuex 4 · Vue Router 4 · Vuetify 2 · Three.js · Howler.js · Ethers.js 6 · @wagmi/vue · viem · @tanstack/vue-query · Vue-i18n 11 · Amplitude
 
 **Backend:** Express 4 · Prisma 5 (PostgreSQL) · JWT · WebSocket (ws) · Multer · bcryptjs · express-rate-limit · Anthropic SDK (AI Trainer)
 
@@ -19,7 +19,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 ```
 /src
   App.vue                  — Root: header (Logo), router-view, BottomMenu (hidden on PvP screens), Info/Error toasts, ChallengeNotification
-  main.js                  — Entry: Vue + Vuetify + i18n + Vuex store init
+  main.js                  — Entry: Vue + Vuetify + i18n + Vuex + WagmiPlugin + VueQueryPlugin init
   router/index.js          — Routes + auth guards + fight state restore
   views/                   — 17 page-level components
   components/              — 75+ reusable components
@@ -33,6 +33,8 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
     engine/                — Combat system (combatEngine, aiStrategy, opponentGenerator)
     constants.js           — Game constants
     websocket/             — WebSocket client
+    web3/wagmiConfig.js    — Wagmi config (Base chain, connectors: injected, coinbaseWallet, walletConnect)
+    web3/web3modal-shim.js — Compat shim: maps @web3modal/ethers/vue → @wagmi/vue (temporary, removed in Phase 1.2)
     mock/mockData.js       — Mock data for development
   data/
     branches.js            — 3 branches: speed, power, technique (numeric data only, names via i18n)

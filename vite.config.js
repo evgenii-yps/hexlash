@@ -92,6 +92,10 @@ export default defineConfig(({mode}) => {
                 alias: {
                     '@':
                         fileURLToPath(new URL('./src', import.meta.url)),
+                    '@web3modal/ethers/vue':
+                        fileURLToPath(new URL('./src/core/web3/web3modal-shim.js', import.meta.url)),
+                    '@web3modal/ethers':
+                        fileURLToPath(new URL('./src/core/web3/web3modal-shim.js', import.meta.url)),
                     util:
                         "util/",
                     buffer:
