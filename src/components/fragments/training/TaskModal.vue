@@ -8,7 +8,7 @@
 
       <VBtn v-if="isSocialTask" size="large" @click="goToLink(props.task)" class="execute-task confirm-btn">{{ t.training.goToTaskButton }}</VBtn>
 
-      <div v-if="isSocialTask" class="notice"><span style="color:var(--white)">{{ t.training.titleNotice }}</span> {{ t.training.taskNotice }}</div>
+      <div v-if="isSocialTask" class="notice"><span style="color:var(--hex-text-primary)">{{ t.training.titleNotice }}</span> {{ t.training.taskNotice }}</div>
 
       <v-card-actions>
         <div v-if="isSocialTask">
@@ -70,7 +70,7 @@ const completeTask = () => {
 
 .notice {
   margin-top: 20px;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   font-size: 0.8rem;
   padding: 0 15px;
   line-height: 1.1rem;

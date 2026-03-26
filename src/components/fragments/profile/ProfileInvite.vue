@@ -121,7 +121,7 @@ const goToUrl = () => {
   align-items: center;
   width: 24px;
   height: 24px;
-  background-color: var(--pink);
+  background-color: var(--hex-primary);
   border-radius: 50%;
   margin-left: 1em;
   cursor: pointer;
@@ -140,7 +140,7 @@ const goToUrl = () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: var(--pink);
+  background-color: var(--hex-primary);
   padding: 0.5rem 1rem;
   border-radius: 4px;
   margin-left: 1em;

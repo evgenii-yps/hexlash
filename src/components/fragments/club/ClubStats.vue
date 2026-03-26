@@ -131,7 +131,7 @@ watch(() => props.clubData, (clubData) => {
 }
 
 .stat-value-gray {
-  color: var(--gray3);
+  color: var(--hex-text-muted);
   font-size: 1em;
 }
 </style>

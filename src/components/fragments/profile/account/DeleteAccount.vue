@@ -59,7 +59,7 @@ const handleDelete = async () => {
   cursor: pointer;
   opacity: 0.7;
   font-size: 0.7rem !important;
-  background-color: var(--gray2) !important;
+  background-color: var(--hex-text-secondary) !important;
 }
 
 .custom-icon {
@@ -70,7 +70,7 @@ const handleDelete = async () => {
 
 .confirm-delete-btn {
   cursor: pointer;
-  background-color: var(--pinkDark);
+  background-color: var(--hex-primary-dark);
   color: white !important;
   margin: 10px;
   opacity: 0.9;

@@ -197,7 +197,7 @@ watch(() => props.userData, (userData) => {
 }
 
 .stat-value-gray {
-  color: var(--gray3);
+  color: var(--hex-text-muted);
   font-size: 0.9em;
 }
 </style>

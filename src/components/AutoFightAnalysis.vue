@@ -77,8 +77,8 @@ const sections = computed(() => {
 
 <style scoped>
 .ai-analysis {
-  background: rgba(9, 9, 9, 0.8);
-  border-left: 3px solid var(--pink);
+  background: var(--hex-bg-card);
+  border-left: 3px solid var(--hex-primary);
   border-radius: 8px;
   padding: 16px;
   max-width: 480px;
@@ -92,12 +92,12 @@ const sections = computed(() => {
 }
 
 .ai-analysis--error {
-  border-left-color: var(--gray2);
+  border-left-color: var(--hex-border-active);
 }
 
 .ai-analysis-header {
   font-family: 'Anonymous', monospace;
-  color: var(--pink);
+  color: var(--hex-primary);
   font-size: 14px;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -105,7 +105,7 @@ const sections = computed(() => {
 
 .ai-analysis-divider {
   height: 1px;
-  background: var(--gray1);
+  background: var(--hex-border-default);
   margin-top: 12px;
   margin-bottom: 12px;
 }
@@ -120,7 +120,7 @@ const sections = computed(() => {
 
 .ai-analysis-section-label {
   font-family: 'Anonymous', monospace;
-  color: var(--pink);
+  color: var(--hex-primary);
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -130,35 +130,35 @@ const sections = computed(() => {
 
 .ai-analysis-section-text {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  color: var(--white);
+  color: var(--hex-text-primary);
   font-size: 13px;
   line-height: 1.5;
 }
 
 .ai-analysis-badge {
   font-size: 10px;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   text-align: right;
   margin-top: 8px;
 }
 
 .ai-analysis-loading {
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   font-size: 13px;
   margin-top: 8px;
   animation: pulse 1.5s infinite;
 }
 
 .ai-analysis-error-text {
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   font-size: 12px;
   margin-top: 8px;
 }
 
 .ai-analysis-retry {
   background: none;
-  border: 1px solid var(--gray2);
-  color: var(--gray2);
+  border: 1px solid var(--hex-border-active);
+  color: var(--hex-text-secondary);
   font-size: 10px;
   padding: 2px 10px;
   border-radius: 4px;
@@ -168,8 +168,8 @@ const sections = computed(() => {
 }
 
 .ai-analysis-retry:hover {
-  color: var(--pink);
-  border-color: var(--pink);
+  color: var(--hex-primary);
+  border-color: var(--hex-primary);
 }
 
 @keyframes fadeInUp {

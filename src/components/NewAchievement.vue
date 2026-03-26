@@ -54,11 +54,11 @@ const hide = () => {
   margin: 10px 0;
 }
 .desc{
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
 }
 
 .congratulations{
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
 }
 
 .achievement-image{

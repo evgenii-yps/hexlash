@@ -60,7 +60,7 @@ watch(() => props.currentHP, (newVal, oldVal) => {
 
 .hp-bar-label {
   font-size: 0.55rem;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   margin-bottom: 2px;
   text-align: center;
   text-transform: uppercase;
@@ -69,10 +69,10 @@ watch(() => props.currentHP, (newVal, oldVal) => {
 
 .hp-bar-track {
   height: 10px;
-  background: rgba(9, 9, 9, 0.8);
+  background: var(--hex-bg-card);
   border-radius: 5px;
   overflow: hidden;
-  border: 1px solid rgba(255, 6, 111, 0.2);
+  border: 1px solid color-mix(in srgb, var(--hex-primary) 20%, transparent);
 }
 
 .hp-bar-fill {
@@ -82,21 +82,21 @@ watch(() => props.currentHP, (newVal, oldVal) => {
 }
 
 .hp-green {
-  background: linear-gradient(90deg, #1a8a4a, #2ecc71);
-  box-shadow: 0 0 8px rgba(46, 204, 113, 0.3);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--hex-success) 60%, black), var(--hex-success));
+  box-shadow: 0 0 8px color-mix(in srgb, var(--hex-success) 30%, transparent);
 }
 .hp-yellow {
-  background: linear-gradient(90deg, #c49b0a, #f1c40f);
-  box-shadow: 0 0 8px rgba(241, 196, 15, 0.3);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--hex-warning) 60%, black), var(--hex-warning));
+  box-shadow: 0 0 8px color-mix(in srgb, var(--hex-warning) 30%, transparent);
 }
 .hp-red {
-  background: linear-gradient(90deg, #a33025, #e74c3c);
-  box-shadow: 0 0 8px rgba(231, 76, 60, 0.4);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--hex-danger) 60%, black), var(--hex-danger));
+  box-shadow: 0 0 8px color-mix(in srgb, var(--hex-danger) 40%, transparent);
 }
 
 .hp-bar-text {
   font-size: 0.6rem;
-  color: var(--gray3);
+  color: var(--hex-text-muted);
   text-align: center;
   margin-top: 2px;
   font-weight: bold;
@@ -116,13 +116,13 @@ watch(() => props.currentHP, (newVal, oldVal) => {
 }
 
 .hp-float-damage {
-  color: #e74c3c;
-  text-shadow: 0 0 8px rgba(231, 76, 60, 0.7);
+  color: var(--hex-danger);
+  text-shadow: 0 0 8px color-mix(in srgb, var(--hex-danger) 70%, transparent);
 }
 
 .hp-float-heal {
-  color: #2ecc71;
-  text-shadow: 0 0 8px rgba(46, 204, 113, 0.7);
+  color: var(--hex-success);
+  text-shadow: 0 0 8px color-mix(in srgb, var(--hex-success) 70%, transparent);
 }
 
 .float-pop-enter-active {

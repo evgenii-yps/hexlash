@@ -393,4 +393,13 @@ const goToTraining = () => {
 .fade-tab-leave-active { transition: opacity 0.15s; }
 .fade-tab-enter-from,
 .fade-tab-leave-to { opacity: 0; }
+
+@media (max-width: 360px) {
+  .branches-sidebar {
+    width: 80px;
+  }
+  .branches-center {
+    left: 8px;
+  }
+}
 </style>

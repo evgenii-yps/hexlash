@@ -5,10 +5,10 @@
           :label="t.profile.account.lblChangeLogin"
           type="text"
           v-model="login"
-          labelColor="var(--white)"
-          inputBgColor="var(--black-opacity-80)"
-          inputBorderColor="var(--gray1)"
-          inputTextColor="var(--white)"
+          labelColor="var(--hex-text-primary)"
+          inputBgColor="var(--hex-bg-card)"
+          inputBorderColor="var(--hex-border-default)"
+          inputTextColor="var(--hex-text-primary)"
           height="40px"
           marginBottom="0.5rem"
           @input="handleLoginInput"
@@ -20,7 +20,7 @@
               <div v-if="loginAvailable && loginChanged && !errorMessage" class="success-message">
                 {{ t.profile.account.lblAvailableLogin }}
               </div>
-              <v-progress-circular v-if="loading" color="var(--primary-color)" indeterminate :size="20"/>
+              <v-progress-circular v-if="loading" color="var(--hex-primary)" indeterminate :size="20"/>
               <img v-if="!loading && loginAvailable && loginChanged" src="@/assets/images/icon_pencil.svg"
                    @click="confirmChange"
                    alt="change login" class="btn-change-login"/>
@@ -184,7 +184,7 @@ form {
 }
 
 .success-message {
-  color: var(--white);
+  color: var(--hex-text-primary);
   font-size: 0.8rem;
   margin-right: 10px;
 }
@@ -194,7 +194,7 @@ form {
 }
 
 .error-message {
-  color: var(--pinkDark);
+  color: var(--hex-primary-dark);
   font-size: 0.8rem;
   text-align: center;
 }

@@ -1,6 +1,6 @@
 <template>
   <div class="avatar-container" @click="changeAvatar"
-       :style="{ backgroundColor: avatarUrl !== defaultAvatarImg ? 'transparent' : 'var(--black-opacity-80)' }">
+       :style="{ backgroundColor: avatarUrl !== defaultAvatarImg ? 'transparent' : 'var(--hex-bg-card)' }">
 
     <img :src="avatarUrl" alt="Club Avatar" class="avatar"
          :class="{
@@ -170,7 +170,7 @@ watch(localClubData, (localClubData) => {
   right: 0;
   width: 40px;
   height: 40px;
-  background-color: var(--pink);
+  background-color: var(--hex-primary);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -185,7 +185,7 @@ watch(localClubData, (localClubData) => {
 
 .circle-bg {
   fill: none;
-  stroke: rgba(255, 255, 255, 0.3);
+  stroke: var(--hex-border-strong);
   stroke-width: 3.8;
 }
 

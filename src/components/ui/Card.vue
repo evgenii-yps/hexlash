@@ -33,15 +33,15 @@ const props = defineProps({
   },
   bgColor: {
     type: String,
-    default: 'var(--white)'
+    default: 'var(--hex-text-primary)'
   },
   borderColor: {
     type: String,
-    default: 'var(--gray1)'
+    default: 'var(--hex-border-default)'
   },
   textColor: {
     type: String,
-    default: 'var(--dark)'
+    default: 'var(--hex-bg-dark)'
   },
   borderRadius: {
     type: String,
@@ -98,13 +98,13 @@ const cardStyles = computed(() => ({
 .card {
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--gray1);
+  border: 1px solid var(--hex-border-default);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
-  background: var(--white);
+  background: var(--hex-text-primary);
   box-sizing: border-box;
   overflow: auto;
-  --scrollbar-bg: var(--white);
-  --scrollbar-thin: var(--gray2);
+  --scrollbar-bg: var(--hex-text-primary);
+  --scrollbar-thin: var(--hex-text-secondary);
 }
 
 .card-header {
@@ -124,7 +124,7 @@ const cardStyles = computed(() => ({
 }
 
 .close-btn {
-  background: var(--pink);
+  background: var(--hex-primary);
   border: none;
   cursor: pointer;
   position: absolute;

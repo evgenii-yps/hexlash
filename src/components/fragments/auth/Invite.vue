@@ -4,11 +4,11 @@
       <InputField
           :label="t.auth.invite.lblInvite"
           v-model="inviteCode"
-          labelColor="var(--white)"
+          labelColor="var(--hex-text-primary)"
           labelSize="0.5rem"
-          inputBgColor="var(--black-opacity)"
-          inputBorderColor="var(--gray1)"
-          inputTextColor="var(--white)"
+          inputBgColor="var(--hex-bg-card)"
+          inputBorderColor="var(--hex-border-default)"
+          inputTextColor="var(--hex-text-primary)"
           height="40px"
           marginBottom="0.8rem"
           :upperCase="true"
@@ -31,7 +31,7 @@
       <div class="login" v-if="!inviteState.loading">
         {{ t.auth.invite.question }}
         <ButtonText @click="handleLogin"
-                    textColor="var(--pink)"
+                    textColor="var(--hex-primary)"
                     text-size="1.5em">
           {{ t.auth.invite.btnLogin }}
         </ButtonText>
@@ -104,14 +104,14 @@ form {
 .login {
   margin-top: 0.5rem;
   font-size: 0.7rem;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   align-self: flex-end;
   display: block;
 }
 
 
 .error-message {
-  color: var(--pinkDark);
+  color: var(--hex-primary-dark);
   font-size: 0.8rem;
   margin-bottom: 0.5rem;
 }

@@ -24,7 +24,7 @@
           <HexButton
               variant="primary"
               size="lg"
-              class="fight-btn"
+              class="fight-btn hex-glow-pulse"
               :class="{ 'fight-btn-auto-active': selectedMode === 'auto' && isAutoFightEnabled }"
               :disabled="!isBuildValid && selectedMode !== 'auto'"
               @click="startFight"
@@ -284,6 +284,15 @@ const handleScroll = (event) => {
 @media (max-width: 400px) {
   .friends-compact-btn {
     min-height: 42px;
+  }
+}
+
+@media (max-width: 360px) {
+  .fight-btn {
+    max-width: 160px;
+  }
+  .action-row {
+    gap: 8px;
   }
 }
 

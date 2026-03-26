@@ -208,14 +208,14 @@ onMounted(async () => {
   font-size: 0.8em;
   padding-left: 20px;
   clip-path: polygon(15% 0%, 100% 0%, 100% 100%, 0% 100%);
-  background-color: var(--gray2) !important;
+  background-color: var(--hex-text-secondary) !important;
   border-radius: 0 4px 4px 0 !important;
   opacity: 0.5;
 }
 
 
 .sufficient-balance {
-  background-color: var(--primary-color) !important;
+  background-color: var(--hex-primary) !important;
   opacity: 1;
 }
 

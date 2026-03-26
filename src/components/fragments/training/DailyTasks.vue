@@ -35,7 +35,7 @@
       >
         <img :src="task.getIcon()" alt="Task Icon" class="task-icon"/>
         <span class="task-description">{{ task.title }}</span>
-        <span class="task-tokens">0 <span style="color:gray">$</span> </span>
+        <span class="task-tokens">0 <span style="color:var(--hex-text-secondary)">$</span> </span>
 
       </div>
     </div>
@@ -154,8 +154,8 @@ const openTaskDialog = (task) => {
 .daily-tasks {
   list-style-type: none;
   padding: 0;
-  color: white;
-  background-color: var(--black-opacity-80);
+  color: var(--hex-text-primary);
+  background-color: var(--hex-bg-card);
   display: flex;
   flex-direction: column;
   border-radius: 4px;
@@ -194,7 +194,7 @@ const openTaskDialog = (task) => {
 
 .task-item.completed {
   position: relative;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   opacity: 0.8;
 }
 
@@ -222,7 +222,7 @@ const openTaskDialog = (task) => {
   justify-content: center; /* Центрирование по горизонтали */
   align-items: center; /* Центрирование по вертикали */
   margin-top: 20px;
-  color: var(--white);
+  color: var(--hex-text-primary);
 }
 
 </style>

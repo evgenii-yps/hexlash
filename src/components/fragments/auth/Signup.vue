@@ -4,11 +4,11 @@
       <InputField
           :label="t.auth.signup.lblLogin"
           v-model="login"
-          labelColor="var(--white)"
+          labelColor="var(--hex-text-primary)"
           labelSize="0.65rem"
-          inputBgColor="var(--black-opacity)"
-          inputBorderColor="var(--gray1)"
-          inputTextColor="var(--white)"
+          inputBgColor="var(--hex-bg-card)"
+          inputBorderColor="var(--hex-border-default)"
+          inputTextColor="var(--hex-text-primary)"
           padding="14px"
           marginBottom="0.8rem"
       />
@@ -16,11 +16,11 @@
           :label="t.auth.signup.lblPassword"
           :type="showPassword ? 'text' : 'password'"
           v-model="password"
-          labelColor="var(--white)"
+          labelColor="var(--hex-text-primary)"
           labelSize="0.65rem"
-          inputBgColor="var(--black-opacity)"
-          inputBorderColor="var(--gray1)"
-          inputTextColor="var(--white)"
+          inputBgColor="var(--hex-bg-card)"
+          inputBorderColor="var(--hex-border-default)"
+          inputTextColor="var(--hex-text-primary)"
           padding="14px"
           marginBottom="0.8rem"
           :showButton="true"
@@ -46,11 +46,11 @@
           :label="t.auth.signup.lblConfirmPassword"
           :type="showConfirmPassword ? 'text' : 'password'"
           v-model="confirmPassword"
-          labelColor="var(--white)"
+          labelColor="var(--hex-text-primary)"
           labelSize="0.65rem"
-          inputBgColor="var(--black-opacity)"
-          inputBorderColor="var(--gray1)"
-          inputTextColor="var(--white)"
+          inputBgColor="var(--hex-bg-card)"
+          inputBorderColor="var(--hex-border-default)"
+          inputTextColor="var(--hex-text-primary)"
           padding="14px"
           marginBottom="1rem"
           :showButton="true"
@@ -90,7 +90,7 @@
     <div class="login" v-if="!loading">
       {{ t.auth.signup.question }}
       <ButtonText @click="handleLogin"
-                  textColor="var(--pink)"
+                  textColor="var(--hex-primary)"
                   text-size="1.5em">
         {{ t.auth.signup.btnLogin }}
       </ButtonText>
@@ -174,13 +174,13 @@ form {
 .login {
   margin-top: 0.6rem;
   font-size: 0.75rem;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   text-align: center;
   align-self: center;
 }
 
 .error-message {
-  color: var(--pinkDark);
+  color: var(--hex-primary-dark);
   font-size: 0.8rem;
   margin-bottom: 0.5rem;
   text-align: center;
@@ -197,7 +197,7 @@ form {
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -207,6 +207,6 @@ form {
 }
 
 .eye-btn:hover {
-  color: var(--white);
+  color: var(--hex-text-primary);
 }
 </style>

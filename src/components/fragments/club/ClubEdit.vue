@@ -158,7 +158,7 @@ const saveChanges = async () => {
   color: white;
   cursor: pointer;
   display: flex;
-  background-color: var(--gray1) !important;
+  background-color: var(--hex-bg-light) !important;
 }
 
 .title-field :deep(.v-input__details) {
@@ -195,7 +195,7 @@ const saveChanges = async () => {
 .result-message {
   text-align: center;
   font-size: 0.8rem;
-  color: var(--gray3);
+  color: var(--hex-text-muted);
   margin-top: 10px;
 }
 

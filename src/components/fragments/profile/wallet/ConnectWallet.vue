@@ -62,8 +62,8 @@ const switchAccount = async () => {
 }
 
 .input-button {
-  border: 1px solid var(--gray1);
-  color: var(--gray2);
+  border: 1px solid var(--hex-border-default);
+  color: var(--hex-text-secondary);
   font-size: 0.8rem;
   cursor: pointer;
 }

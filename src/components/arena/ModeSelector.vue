@@ -266,4 +266,15 @@ function selectMode(mode) {
   }
   .mode-compact-label { font-size: 11px; }
 }
+
+@media (max-width: 360px) {
+  .mode-dropdown {
+    width: calc(100vw - 40px);
+  }
+  .mode-compact-btn {
+    width: 46px;
+    height: 40px;
+  }
+  .mode-compact-label { font-size: 10px; }
+}
 </style>

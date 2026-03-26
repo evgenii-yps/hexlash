@@ -35,8 +35,8 @@ const typeLabel = computed(() => {
   width: 80px;
   height: 100px;
   border-radius: 6px;
-  background-color: var(--black-opacity-80);
-  border: 2px solid var(--gray2);
+  background-color: var(--hex-bg-card);
+  border: 2px solid var(--hex-border-active);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -60,26 +60,26 @@ const typeLabel = computed(() => {
   height: 3px;
 }
 
-.card-type-attack { border-color: #e74c3c; }
-.card-type-defense { border-color: #3498db; }
-.card-type-special { border-color: #f39c12; }
+.card-type-attack { border-color: var(--hex-action-attack); }
+.card-type-defense { border-color: var(--hex-action-defense); }
+.card-type-special { border-color: var(--hex-warning); }
 
-.card-type-attack .card-rarity-bar { background-color: #e74c3c; }
-.card-type-defense .card-rarity-bar { background-color: #3498db; }
-.card-type-special .card-rarity-bar { background-color: #f39c12; }
+.card-type-attack .card-rarity-bar { background-color: var(--hex-action-attack); }
+.card-type-defense .card-rarity-bar { background-color: var(--hex-action-defense); }
+.card-type-special .card-rarity-bar { background-color: var(--hex-warning); }
 
 .card-rarity-rare {
-  box-shadow: 0 0 6px rgba(52, 152, 219, 0.4);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--hex-action-defense) 40%, transparent);
 }
 .card-rarity-epic {
-  box-shadow: 0 0 8px rgba(155, 89, 182, 0.5);
-  border-color: #9b59b6 !important;
+  box-shadow: 0 0 8px color-mix(in srgb, var(--hex-action-position) 50%, transparent);
+  border-color: var(--hex-action-position) !important;
 }
-.card-rarity-epic .card-rarity-bar { background-color: #9b59b6; }
+.card-rarity-epic .card-rarity-bar { background-color: var(--hex-action-position); }
 
 .card-equipped {
-  border-color: var(--primary-color) !important;
-  box-shadow: 0 0 10px rgba(var(--primary-color-rgb, 255, 77, 77), 0.5);
+  border-color: var(--hex-primary) !important;
+  box-shadow: 0 0 10px color-mix(in srgb, var(--hex-primary) 50%, transparent);
 }
 
 .card-disabled {
@@ -105,14 +105,14 @@ const typeLabel = computed(() => {
 
 .card-type-label {
   font-size: 0.5rem;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   text-transform: uppercase;
   letter-spacing: 1px;
 }
 
 .card-target {
   font-size: 0.5rem;
-  color: var(--gray3);
+  color: var(--hex-text-muted);
   text-transform: uppercase;
 }
 
@@ -121,6 +121,6 @@ const typeLabel = computed(() => {
   bottom: 2px;
   right: 4px;
   font-size: 0.45rem;
-  color: var(--gray3);
+  color: var(--hex-text-muted);
 }
 </style>

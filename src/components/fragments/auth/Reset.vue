@@ -4,11 +4,11 @@
       <InputField
           :label="t.auth.reset.lblEmail"
           v-model="email"
-          labelColor="var(--white)"
+          labelColor="var(--hex-text-primary)"
           labelSize="0.65rem"
-          inputBgColor="var(--black-opacity)"
-          inputBorderColor="var(--gray1)"
-          inputTextColor="var(--white)"
+          inputBgColor="var(--hex-bg-card)"
+          inputBorderColor="var(--hex-border-default)"
+          inputTextColor="var(--hex-text-primary)"
           padding="14px"
           marginBottom="1rem"
       />
@@ -31,7 +31,7 @@
     <div class="login" v-if="!resetState.loading">
       {{ t.auth.signup.question }}
       <ButtonText @click="handleLogin"
-                  textColor="var(--pink)"
+                  textColor="var(--hex-primary)"
                   text-size="1.5em">
         {{ t.auth.signup.btnLogin }}
       </ButtonText>
@@ -87,19 +87,19 @@ onMounted(() => {
 .login {
   margin-top: 0.6rem;
   font-size: 0.75rem;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   text-align: center;
   align-self: center;
 }
 
 .error-message {
-  color: var(--pinkDark);
+  color: var(--hex-primary-dark);
   font-size: 0.8rem;
   margin-bottom: 0.5rem;
 }
 
 .success-message {
-  color: var(--white);
+  color: var(--hex-text-primary);
   font-size: 0.8rem;
   text-align: center;
   margin-bottom: 0.5rem;

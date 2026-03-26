@@ -19,10 +19,10 @@
                 :label="t.profile.account.lblCurrentPassword"
                 type="password"
                 v-model="currentPassword"
-                labelColor="var(--white)"
-                inputBgColor="var(--black-opacity)"
-                inputBorderColor="var(--gray1)"
-                inputTextColor="var(--white)"
+                labelColor="var(--hex-text-primary)"
+                inputBgColor="var(--hex-bg-card)"
+                inputBorderColor="var(--hex-border-default)"
+                inputTextColor="var(--hex-text-primary)"
                 height="40px"
                 marginBottom="1rem"
             />
@@ -30,10 +30,10 @@
                 :label="t.profile.account.lblNewPassword"
                 type="password"
                 v-model="newPassword"
-                labelColor="var(--white)"
-                inputBgColor="var(--black-opacity)"
-                inputBorderColor="var(--gray1)"
-                inputTextColor="var(--white)"
+                labelColor="var(--hex-text-primary)"
+                inputBgColor="var(--hex-bg-card)"
+                inputBorderColor="var(--hex-border-default)"
+                inputTextColor="var(--hex-text-primary)"
                 height="40px"
                 marginBottom="1rem"
             />
@@ -41,10 +41,10 @@
                 :label="t.profile.account.lblConfirmNewPassword"
                 type="password"
                 v-model="confirmNewPassword"
-                labelColor="var(--white)"
-                inputBgColor="var(--black-opacity)"
-                inputBorderColor="var(--gray1)"
-                inputTextColor="var(--white)"
+                labelColor="var(--hex-text-primary)"
+                inputBgColor="var(--hex-bg-card)"
+                inputBorderColor="var(--hex-border-default)"
+                inputTextColor="var(--hex-text-primary)"
                 height="40px"
                 marginBottom="1rem"
             />
@@ -136,7 +136,7 @@ form {
 }
 
 .error-message {
-  color: var(--pinkDark);
+  color: var(--hex-primary-dark);
   font-size: 0.8rem;
   margin-bottom: 0.5rem;
 }
