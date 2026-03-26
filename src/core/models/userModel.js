@@ -43,6 +43,7 @@ export default class UserModel {
 
                     // Клуб
                     clubId,
+                    clubRole,
 
                     // Кошелек
                     walletAddress,
@@ -81,6 +82,7 @@ export default class UserModel {
 
         // Клуб
         this.clubId = clubId;
+        this.clubRole = clubRole;
 
         // Кошелек
         this.walletAddress = walletAddress;
@@ -118,6 +120,7 @@ export default class UserModel {
                 updatedAt,
                 balance = 0,
                 clubId,
+                clubRole,
                 walletAddress,
                 totalFights = 0,
                 wins = 0,
@@ -145,6 +148,7 @@ export default class UserModel {
                 updatedAt,
                 balance,
                 clubId,
+                clubRole,
                 walletAddress,
                 totalFights,
                 wins,

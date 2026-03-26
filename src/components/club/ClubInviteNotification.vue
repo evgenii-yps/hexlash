@@ -50,7 +50,7 @@ function onInviteAccepted(event) {
 
   // If this is the acceptor (has clubName), update master state
   if (data.clubName) {
-    store.dispatch('master/updateMaster', { clubId: data.clubId, clubRole: 'member' });
+    store.commit('master/updateMaster', { clubId: data.clubId, clubRole: 'member' });
     store.commit('master/setInfoMessage', {
       text: t.value.club.lblInviteAccepted,
       timeout: 3000,
