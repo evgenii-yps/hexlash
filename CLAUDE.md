@@ -386,7 +386,7 @@ AI_TRAINER_ENABLED = true
 |------|------|-------|
 | Training | `TrainingView.vue` | 3D punch bag, taps, daily/social tasks, progression bar |
 | Move Tree | `MoveTreeView.vue` | Branch sidebar (Speed/Power/Tech) + move cards. Sidebar buttons centered with `position:absolute; top:35%; transform:translateY(-50%)` |
-| Fight | `CardFightView.vue` | Main combat (PvE + PvP), dice, coach advice, HP bars, AI Trainer (PvE results). PvP mode: no BottomMenu, no PvP badge, reduced padding |
+| Fight | `CardFightView.vue` | Main combat (PvE + PvP), dice, coach advice, HP bars, AI Trainer (PvE results). PvP mode: no BottomMenu, no PvP badge, reduced padding. Fully migrated to --hex-* vars (Phase 3.2a): HexButton for results, PixelIcon for auto banner, dice/coach/victory/defeat/overdrive all use design system vars |
 | Profile | `ProfileView.vue` | Tabs: balance, wallet, account, skins |
 | Ratings | `RatingsView.vue` | Club and player leaderboards |
 | Preparation | `PreparationView.vue` | Arena: action row (Mode + START FIGHT + Friends buttons), auto fight toggle/status. Friends button is text-only (no online indicator) |
@@ -587,5 +587,6 @@ Previous branch: `claude/hexlash-full-audit-WvXMd` (security audit, completed)
 | 2.1 | ✅ Done | BottomMenu → PixelIcon with glow active state |
 | 2.2 | ✅ Done | Header/Logo → `--hex-*` CSS variables |
 | 3.1a | ✅ Done | Arena: PreparationView (HexButton, PixelIcon), ModeSelector (PixelIcon for pve/pvp/auto), AutoFightStatus (--hex-* vars) |
+| 3.2a | ✅ Done | Fight: CardFightView — 117 color replacements, 0 hardcoded colors remain. VBtn→HexButton, SVG→PixelIcon, dice/coach/victory/defeat all on --hex-* vars |
 | 3.1b | 🔲 Next | Arena visual polish (module cards, fight style card) |
-| 3.2 | 🔲 | Fight screen (CardFightView) redesign |
+| 3.2b | 🔲 | Fight visual polish (HP bars → HexProgress, layout improvements) |
