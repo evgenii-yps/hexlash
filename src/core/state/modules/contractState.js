@@ -1,3 +1,5 @@
+// TODO: Phase 2 — migrate to wagmi composables (useReadContract, useWriteContract)
+// Currently disabled — BuyTokens component hidden until Base contract is ready
 import {
     calculateHXLAmount,
     getApprovedAmount,

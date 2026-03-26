@@ -36,6 +36,9 @@ import {
     VTooltip,
     VSnackbar, VCheckbox
 } from 'vuetify/components';
+import { WagmiPlugin } from '@wagmi/vue'
+import { VueQueryPlugin } from '@tanstack/vue-query'
+import { config as wagmiConfig } from '@/core/web3/wagmiConfig.js'
 import App from "@/App.vue";
 import {t, setLanguage, getLanguage} from "@/locales/index.js";
 import {initAllAchievements} from "@/core/models/achievementModel.js";
@@ -116,6 +119,8 @@ initializeApp().then(() => {
         .use(vuetify)
         .use(store)
         .use(router)
+        .use(WagmiPlugin, { config: wagmiConfig })
+        .use(VueQueryPlugin, {})
         .mount('#app')
 }).catch((error) => {
     alert("An error occurred while loading Hexlash. The game will now reload. ", error);

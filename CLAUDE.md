@@ -8,7 +8,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 
 ## Tech Stack
 
-**Frontend:** Vue 3.5 · Vite 7 · Vuex 4 · Vue Router 4 · Vuetify 2 · Three.js · Howler.js · Ethers.js 6 · Vue-i18n 11 · Amplitude · Web3Modal
+**Frontend:** Vue 3.5 · Vite 7 · Vuex 4 · Vue Router 4 · Vuetify 2 · Three.js · Howler.js · Ethers.js 6 · @wagmi/vue · viem · @tanstack/vue-query · Vue-i18n 11 · Amplitude
 
 **Backend:** Express 4 · Prisma 5 (PostgreSQL) · JWT · WebSocket (ws) · Multer · bcryptjs · express-rate-limit · Anthropic SDK (AI Trainer)
 
@@ -19,7 +19,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 ```
 /src
   App.vue                  — Root: header (Logo), router-view, BottomMenu (hidden on PvP screens), Info/Error toasts, ChallengeNotification
-  main.js                  — Entry: Vue + Vuetify + i18n + Vuex store init
+  main.js                  — Entry: Vue + Vuetify + i18n + Vuex + WagmiPlugin + VueQueryPlugin init
   router/index.js          — Routes + auth guards + fight state restore
   views/                   — 17 page-level components
   components/              — 75+ reusable components
@@ -33,6 +33,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
     engine/                — Combat system (combatEngine, aiStrategy, opponentGenerator)
     constants.js           — Game constants
     websocket/             — WebSocket client
+    web3/wagmiConfig.js    — Wagmi config (Base chain, connectors: injected, coinbaseWallet, walletConnect)
     mock/mockData.js       — Mock data for development
   data/
     branches.js            — 3 branches: speed, power, technique (numeric data only, names via i18n)
@@ -448,6 +449,11 @@ AI_TRAINER_ENABLED = true
 - `PvPStatsCard.vue` — PvP statistics display
 - `AiTrainerAnalysis.vue` — Claude-powered post-fight analysis (PvE + PvP, results screen)
 - `AutoFightAnalysis.vue` — Claude-powered auto fight series analysis (AutoFightLogView)
+- `ProfileWallet.vue` — Wallet page: uses @wagmi/vue useAccount(), shows ConnectWallet + WalletInfo + GameBalanceCard. BuyTokens temporarily hidden (placeholder until Base contract ready)
+- `ConnectWallet.vue` — Wallet connect via @wagmi/vue: useConnect/useDisconnect/useConnectors. Shows connector list (injected, Coinbase, WalletConnect). HexButton UI
+- `WalletInfo.vue` — Connected wallet address display + copy + chain name. Uses @wagmi/vue useAccount()
+- `BuyTokens.vue` — Token purchase modal. **Temporarily disabled** — not rendered in ProfileWallet, file preserved for Phase 2 (Base contract)
+- `GameBalanceCard.vue` — Game balance display with withdraw button (shows "after listing" message)
 
 ---
 
