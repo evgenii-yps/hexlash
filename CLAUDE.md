@@ -167,8 +167,8 @@ unlockRequirements:  { 3: {taps:300, exp:150}, 4: {taps:250, exp:120}, 5: {taps:
 
 | Component | File | Purpose |
 |-----------|------|---------|
-| `PixelIcon` | `PixelIcon.vue` | 16×16 canvas-based pixel icons. Props: name, size, color, glow, glowColor, glowSize, disabled. Resolves CSS vars for canvas fill. |
-| `HexButton` | `HexButton.vue` | 5 variants: primary, secondary, ghost, danger, archetype. 3 sizes (sm/md/lg). Props: icon (PixelIcon), loading (CSS spinner), block, disabled, archetypeColor. |
+| `PixelIcon` | `PixelIcon.vue` | 16×16 canvas-based pixel icons. **Currently unused** — preserved but not referenced by any app file. Props: name, size, color, glow, glowColor, glowSize, disabled. |
+| `HexButton` | `HexButton.vue` | 5 variants: primary, secondary, ghost, danger, archetype. 3 sizes (sm/md/lg). Props: icon (PixelIcon, **unused by app**), loading (CSS spinner), block, disabled, archetypeColor. |
 | `HexCard` | `HexCard.vue` | 5 variants: default, elevated, archetype (left border), active (tinted bg), result (top border victory/defeat/draw). Slots: header, footer. Padding: none/sm/md/lg. |
 | `HexProgress` | `HexProgress.vue` | Progress bar. 3 variants: hp (auto green/yellow/red by %), branch (speed/power/technique colors), generic. 3 sizes. Props: label, showValue, showPercent. |
 | `HexBadge` | `HexBadge.vue` | Pill badge. 5 variants: archetype, branch, status (victory/defeat/draw/info), counter (circle/pill auto), custom. Props: icon (PixelIcon), pulse animation. |
@@ -386,7 +386,7 @@ AI_TRAINER_ENABLED = true
 |------|------|-------|
 | Training | `TrainingView.vue` | 3D punch bag, taps, daily/social tasks, progression bar |
 | Move Tree | `MoveTreeView.vue` | Branch sidebar (Speed/Power/Tech) + move cards. Sidebar buttons centered with `position:absolute; top:35%; transform:translateY(-50%)` |
-| Fight | `CardFightView.vue` | Main combat (PvE + PvP), dice, coach advice, HP bars, AI Trainer (PvE results). PvP mode: no BottomMenu, no PvP badge, reduced padding. Fully migrated to --hex-* vars (Phase 3.2a): HexButton for results, PixelIcon for auto banner, dice/coach/victory/defeat/overdrive all use design system vars |
+| Fight | `CardFightView.vue` | Main combat (PvE + PvP), dice, coach advice, HP bars, AI Trainer (PvE results). PvP mode: no BottomMenu, no PvP badge, reduced padding. Fully migrated to --hex-* vars: HexButton for results, inline SVGs, dice/coach/victory/defeat/overdrive all use design system vars |
 | Profile | `ProfileView.vue` | Tabs: balance, wallet, account, skins |
 | Ratings | `RatingsView.vue` | Club and player leaderboards |
 | Preparation | `PreparationView.vue` | Arena: action row (Mode + START FIGHT + Friends buttons), auto fight toggle/status. Friends button is text-only (no online indicator) |
@@ -416,15 +416,15 @@ AI_TRAINER_ENABLED = true
 ## Component Highlights
 
 **Design System (`/src/components/ui/`):**
-- `PixelIcon.vue` — Canvas-based 16×16 pixel icon renderer. Props: name, size, color, glow, glowColor, glowSize, disabled. Resolves CSS vars via `getComputedStyle`. Data in `pixelIcons.js` (45 icons).
-- `HexButton.vue` — Button with 5 variants (primary/secondary/ghost/danger/archetype), 3 sizes (sm/md/lg). Supports: PixelIcon via `icon` prop, loading spinner, block width, archetypeColor via `--_arch-color` CSS custom property.
+- `PixelIcon.vue` — Canvas-based 16×16 pixel icon renderer. **Currently unused** — preserved but no app file imports it. Data in `pixelIcons.js` (45 icons).
+- `HexButton.vue` — Button with 5 variants (primary/secondary/ghost/danger/archetype), 3 sizes (sm/md/lg). Supports: loading spinner, block width, archetypeColor via `--_arch-color` CSS custom property. Icon prop exists but unused by app.
 - `HexCard.vue` — Card with 5 variants (default/elevated/archetype/active/result). Archetype = left border accent, active = tinted bg + color border, result = top border (victory/defeat/draw). Slots: default, header, footer. Padding: none/sm/md/lg.
 - `HexProgress.vue` — Progress bar with 3 variants: hp (auto green>60%/yellow>30%/red), branch (speed/power/technique colors), generic. Props: label, showValue, showPercent. 3 sizes.
 - `HexBadge.vue` — Pill badge with 5 variants: archetype, branch, status (victory/defeat/draw/info), counter (auto circle<10/pill≥10), custom. Props: icon (PixelIcon), pulse animation.
 
 **Navigation & Layout:**
 - `Logo.vue` — header logo (Anonymous font, --hex-primary color + glow)
-- `BottomMenu.vue` — bottom nav (Arena, Training, Ratings, Profile). Uses PixelIcon with glow for active tab. Solid bg `--hex-bg-medium`, no gradient. Hidden on PvP screens via `isPvPScreen` computed in App.vue
+- `BottomMenu.vue` — bottom nav (Arena, Training, Ratings, Profile). Uses SVG background-image icons with filter-based active state. Solid bg `--hex-bg-medium`, no gradient. Hidden on PvP screens via `isPvPScreen` computed in App.vue
 - `App.vue` header — gradient uses `--hex-bg-dark`, balance in AnonymousBalance font with `--hex-text-primary`
 
 **Game Components:**
@@ -584,11 +584,12 @@ Previous branch: `claude/hexlash-full-audit-WvXMd` (security audit, completed)
 | 1.2b | ✅ Done | 30 pixel icons (combat, dice, modes, social, progression, ui) |
 | 1.3a | ✅ Done | `HexButton.vue` + `HexCard.vue` |
 | 1.3b | ✅ Done | `HexProgress.vue` + `HexBadge.vue` |
-| 2.1 | ✅ Done | BottomMenu → PixelIcon with glow active state |
+| 2.1 | ✅ Done | BottomMenu → SVG background-image icons with --hex-* colors |
 | 2.2 | ✅ Done | Header/Logo → `--hex-*` CSS variables |
-| 3.1a | ✅ Done | Arena: PreparationView (HexButton, PixelIcon), ModeSelector (PixelIcon for pve/pvp/auto), AutoFightStatus (--hex-* vars) |
-| 3.2a | ✅ Done | Fight: CardFightView — 117 color replacements, 0 hardcoded colors remain. VBtn→HexButton, SVG→PixelIcon, dice/coach/victory/defeat all on --hex-* vars |
+| 3.1a | ✅ Done | Arena: PreparationView (HexButton, inline SVGs), ModeSelector (inline SVGs for pve/pvp/auto), AutoFightStatus (--hex-* vars) |
+| 3.2a | ✅ Done | Fight: CardFightView — 117 color replacements, 0 hardcoded colors remain. VBtn→HexButton, dice/coach/victory/defeat all on --hex-* vars |
 | 3.3 | ✅ Done | Training + MoveTree — 72 color replacements across 4 files (TrainingView, MoveTreeView, MoveTreeCard, MoveDetailsModal). All legacy vars → --hex-* |
 | 3.4 | ✅ Done | Profile + DeckBuilder — 71 color replacements across 5 files (ProfileView, DeckBuilderView, PvPStatsCard, SoundToggle, XPAllocationModal). PvP stats: victory/defeat/draw colors |
 | 4 | ✅ Done | Secondary screens — 280 color replacements across 11 files. All legacy/hardcoded colors → --hex-* vars. RainView Three.js colors preserved. |
+| P0 | ✅ Done | PixelIcon revert — removed all PixelIcon usage from app files, restored original SVG/img icons with --hex-* colors. PixelIcon.vue + pixelIcons.js preserved but unused. |
 | 5 | 🔲 Next | Visual polish (HP bars → HexProgress, module cards, layout improvements) |

@@ -15,15 +15,7 @@
             indeterminate
         />
       </div>
-      <PixelIcon
-        v-else
-        :name="item.iconName"
-        :size="32"
-        :color="isActive(item) ? 'var(--hex-primary)' : 'var(--hex-text-muted)'"
-        :glow="isActive(item)"
-        :glow-color="'var(--hex-primary)'"
-        :glow-size="8"
-      />
+      <div v-else class="menu-icon" :class="item.icon"></div>
       <div class="menu-text">{{ item.text }}</div>
     </div>
   </div>
@@ -35,7 +27,6 @@ import { useRoute } from 'vue-router'
 import { Howl } from 'howler'
 import {t} from "@/locales/index.js";
 import store from "@/core/state/store.js";
-import PixelIcon from '@/components/ui/PixelIcon.vue'
 
 // Определяем, является ли устройство iOS
 const isIOS = ref(/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream);
@@ -52,16 +43,16 @@ const playSound = () => {
 }
 
 const menuItems = computed(() => [
-  {iconName: 'arena', text: t.value.menu.arena, route: '/arena'},
-  {iconName: 'training', text: t.value.menu.trainings, route: '/training'},
-  {iconName: 'ratings', text: t.value.menu.ratings, route: '/ratings/clubs'},
-  {iconName: 'profile', text: t.value.menu.profile, route: '/profile'},
+  {icon: 'icon-arena', text: t.value.menu.arena, route: '/arena'},
+  {icon: 'icon-trainings', text: t.value.menu.trainings, route: '/training'},
+  {icon: 'icon-ratings', text: t.value.menu.ratings, route: '/ratings/clubs'},
+  {icon: 'icon-profile', text: t.value.menu.profile, route: '/profile'},
 ])
 
 const route = useRoute()
 
 const isActive = (item) => {
-  if (item.iconName === 'ratings') {
+  if (item.icon === 'icon-ratings') {
     return route.path.includes('ratings');
   }
   if (item.route === '/arena') {
@@ -156,4 +147,23 @@ const handleMenuClick = (index, item) => {
 .loader {
   color: var(--hex-text-muted);
 }
+
+.menu-icon {
+  width: 32px;
+  height: 32px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  filter: brightness(0) invert(0.6);
+  transition: filter 0.3s ease;
+}
+
+.menu-item.active .menu-icon {
+  filter: brightness(0) invert(1);
+}
+
+.icon-arena { background-image: url('@/assets/images/icon_arena.svg'); }
+.icon-trainings { background-image: url('@/assets/images/icon_trainings.svg'); }
+.icon-ratings { background-image: url('@/assets/images/icon_ratings.svg'); }
+.icon-profile { background-image: url('@/assets/images/icon_profile.svg'); }
 </style>
