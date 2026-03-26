@@ -133,8 +133,11 @@ const actions = {
         try {
             const avatarUrl = await clubService.uploadClubAvatar(formData, onUploadProgress);
 
-            // После успешной симуляции загрузки обновляем аватар в стейте
-            commit('updateClub', { avatarUrl });
+            // После успешной загрузки обновляем аватар в стейте
+            const clubId = store.getters['master/getMaster']?.userData?.clubId;
+            if (clubId) {
+                commit('updateClub', { id: clubId, avatarUrl });
+            }
 
             return avatarUrl;
         } catch (error) {

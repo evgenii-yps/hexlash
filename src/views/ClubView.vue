@@ -11,7 +11,7 @@
           />
         </div>
 
-        <div v-else>
+        <div v-else-if="clubData">
 
           <div class="club-header">
 
@@ -33,7 +33,7 @@
                 <img src="@/assets/images/icon_members.svg" alt="" class="custom-icon" style="width:30px;"/>
               </template>
 
-              <div v-html="formattedMembers"/>
+              <span class="members-count">{{ formattedMembersCount }}</span> {{ formattedMembersText }}
             </VBtnDark>
 
             <div v-if="isOwner" class="controls">
@@ -109,6 +109,10 @@
             </div>
           </div>
         </div>
+
+        <div v-else class="not-found-container">
+          <p>{{ t.club.lblClubNotFound || 'Club not found' }}</p>
+        </div>
       </div>
     </div>
   </div>
@@ -148,12 +152,18 @@ const toggleToolTip = () => {
   showToolTip.value = !showToolTip.value;
 };
 
+const notFound = ref(false);
+
 const loadClub = async () => {
   loading.value = true;  // Устанавливаем флаг загрузки
+  notFound.value = false;
 
   isMyClub.value = master.value && master.value.userData.clubId === clubId;
-  await store.dispatch('club/loadClubById', clubId);
-
+  const result = await store.dispatch('club/loadClubById', clubId);
+  if (!result) {
+    loading.value = false;
+    notFound.value = true;
+  }
 };
 
 onBeforeMount(loadClub);
@@ -164,6 +174,7 @@ watch(route, loadClub);
 watch(
     () => store.getters['club/getClubById'](clubId),
     (newValue) => {
+      if (!newValue) return;
       clubData.value = newValue;
       isOwner.value = master.value && master.value.userData.id === clubData.value.owner;
       isPublic.value = clubData.value.isPublic;
@@ -207,12 +218,14 @@ const confirmExit = () => {
 }
 
 
-// Формирование строки и замена числа на пустую строку
-const formattedMembers = computed(() => {
+const formattedMembersCount = computed(() => {
+  return formatNumber(clubData.value.members);
+});
+
+const formattedMembersText = computed(() => {
   const members = clubData.value.members;
   const translation = interpolate(t.value.club.lblClubMembers, { n: members });
-  const textWithoutNumber = translation.replace(String(members), '').trim();
-  return `<span style="font-size: 1.5em; margin-right: 5px">${formatNumber(members)}</span>${textWithoutNumber}`;
+  return translation.replace(String(members), '').trim();
 });
 
 </script>
@@ -362,6 +375,20 @@ const formattedMembers = computed(() => {
   align-items: center;
   font-size: 1em;
   flex-grow: 1;
+}
+
+.not-found-container {
+  height: 75vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--hex-text-muted);
+  font-size: 1.2em;
+}
+
+.members-count {
+  font-size: 1.5em;
+  margin-right: 5px;
 }
 
 .club-switcher-public.checked :deep(.v-switch__thumb) {
