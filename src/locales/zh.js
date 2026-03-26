@@ -6,7 +6,7 @@ export default {
   menu: {
     arena: '竞技场',
     trainings: '训练',
-    ratings: '评分',
+    ratings: '联赛',
     profile: '个人资料',
   },
   modal: {

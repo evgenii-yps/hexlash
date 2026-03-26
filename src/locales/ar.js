@@ -6,7 +6,7 @@ export default {
   menu: {
     arena: 'الساحة',
     trainings: 'التدريب',
-    ratings: 'التصنيفات',
+    ratings: 'الدوري',
     profile: 'الملف الشخصي',
   },
   modal: {

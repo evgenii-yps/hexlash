@@ -6,7 +6,7 @@ export default {
   menu: {
     arena: '아레나',
     trainings: '훈련',
-    ratings: '평점',
+    ratings: '리그',
     profile: '프로필',
   },
   modal: {
