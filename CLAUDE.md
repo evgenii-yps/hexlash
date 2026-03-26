@@ -586,4 +586,6 @@ Previous branch: `claude/hexlash-full-audit-WvXMd` (security audit, completed)
 | 1.3b | ✅ Done | `HexProgress.vue` + `HexBadge.vue` |
 | 2.1 | ✅ Done | BottomMenu → PixelIcon with glow active state |
 | 2.2 | ✅ Done | Header/Logo → `--hex-*` CSS variables |
-| 3 | 🔲 Next | Screen redesigns (Arena first) |
+| 3.1a | ✅ Done | Arena: PreparationView (HexButton, PixelIcon), ModeSelector (PixelIcon for pve/pvp/auto), AutoFightStatus (--hex-* vars) |
+| 3.1b | 🔲 Next | Arena visual polish (module cards, fight style card) |
+| 3.2 | 🔲 | Fight screen (CardFightView) redesign |
