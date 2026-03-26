@@ -432,7 +432,7 @@
   border: var(--hex-border-width) solid var(--hex-primary);
   border-radius: var(--hex-radius-xl);
   padding: var(--hex-spacing-xl);
-  min-width: 320px;
+  min-width: min(320px, 90vw);
   max-width: 90vw;
   max-height: 90vh;
   overflow-y: auto;

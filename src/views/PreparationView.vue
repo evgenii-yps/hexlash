@@ -287,6 +287,15 @@ const handleScroll = (event) => {
   }
 }
 
+@media (max-width: 360px) {
+  .fight-btn {
+    max-width: 160px;
+  }
+  .action-row {
+    gap: 8px;
+  }
+}
+
 .scroll-gap {
   display: block;
   position: relative;

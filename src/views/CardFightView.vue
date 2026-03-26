@@ -2184,4 +2184,21 @@ const flashStyle = computed(() => ({
 .log-round-overdrive {
   color: var(--hex-warning) !important;
 }
+
+/* ── Responsive: small screens ──────────────────────────────────── */
+@media (max-width: 360px) {
+  .fight-content-wrapper {
+    padding: 12px 8px 90px;
+  }
+  .fighter-side {
+    width: 120px;
+  }
+  .fighter-skin {
+    width: 80px;
+    height: 136px;
+  }
+  .fighters-section {
+    padding: 8px 4px;
+  }
+}
 </style>
