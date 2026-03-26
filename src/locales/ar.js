@@ -6,7 +6,7 @@ export default {
   menu: {
     arena: 'الساحة',
     trainings: 'التدريب',
-    ratings: 'التصنيفات',
+    ratings: 'الدوري',
     profile: 'الملف الشخصي',
   },
   modal: {
@@ -258,6 +258,17 @@ export default {
     errorTooLong: 'يجب ألا يتجاوز الاسم 32 حرفًا.',
     errorEmpty: 'يجب ألا يكون الاسم فارغًا.',
     errorCreate: 'خطأ في إنشاء النادي',
+    lblNoClubYet: 'ليس لديك نادٍ بعد',
+    lblNeedTaps: 'تحتاج 10,000 نقرة',
+    lblOrJoinExisting: 'أو انضم إلى نادٍ موجود',
+    lblBrowseAllClubs: 'تصفح جميع الأندية',
+    lblViewAll: 'عرض الكل',
+    lblJoin: 'انضمام',
+    lblEditClub: 'تعديل',
+    lblPublic: 'عام',
+    lblPrivate: 'خاص',
+    lblLeaveClub: 'مغادرة النادي',
+    lblLeaveClubDescription: 'هل أنت متأكد أنك تريد مغادرة هذا النادي؟ إذا كان النادي خاصًا، فلن تتمكن من الانضمام مرة أخرى.',
     lblControl: 'Control',
   },
   fight: {
@@ -409,6 +420,9 @@ export default {
   rating: {
     clubs: 'تصنيف الأندية',
     fighters: 'تصنيف المقاتلين',
+    lblMyClub: 'ناديي',
+    lblClubs: 'الأندية',
+    lblFighters: 'المقاتلون',
     clubPlaceholder: 'بحث عن النادي',
     participantPlaceholder: 'بحث',
     clubName: 'اسم النادي',

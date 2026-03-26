@@ -6,7 +6,7 @@ export default {
   menu: {
     arena: 'Арена',
     trainings: 'Тренировки',
-    ratings: 'Рейтинги',
+    ratings: 'Лига',
     profile: 'Профиль',
   },
   modal: {
@@ -274,6 +274,15 @@ export default {
     errorCreate: 'Ошибка создания клуба',
     lblLeaveClub: 'Покинуть клуб',
     lblLeaveClubDescription: 'Вы уверены, что хотите покинуть этот клуб? Если клуб закрытый, вы не сможете вернуться.',
+    lblNoClubYet: 'У вас ещё нет клуба',
+    lblNeedTaps: 'Нужно 10 000 тапов',
+    lblOrJoinExisting: 'или вступить в существующий',
+    lblBrowseAllClubs: 'Смотреть все клубы',
+    lblViewAll: 'Смотреть всех',
+    lblJoin: 'Вступить',
+    lblEditClub: 'Редактировать',
+    lblPublic: 'Публичный',
+    lblPrivate: 'Закрытый',
     lblControl: 'Управление',
   },
   fight: {
@@ -489,6 +498,9 @@ export default {
   rating: {
     clubs: 'Рейтинг клубов',
     fighters: 'Рейтинг бойцов',
+    lblMyClub: 'Мой клуб',
+    lblClubs: 'Клубы',
+    lblFighters: 'Бойцы',
     clubPlaceholder: 'Поиск клуба',
     participantPlaceholder: 'Поиск',
     clubName: 'Название клуба',

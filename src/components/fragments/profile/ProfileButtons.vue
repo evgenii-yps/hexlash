@@ -1,47 +1,5 @@
 <template>
   <div class="buttons-container">
-    <div v-if="isOwner" class="split-button-container">
-      <VBtnDark
-          class="profile-btn"
-          @click="navigateToClub"
-      >
-        <template #prepend>
-          <img src="@/assets/images/icon_arrow.svg" alt="Arrow Icon" class="custom-icon"/>
-        </template>
-        {{ clubText }}
-      </VBtnDark>
-    </div>
-    <div v-else class="split-button-container">
-      <VBtnDark
-          class="profile-btn"
-          @click="navigateToClub">
-        <template #prepend>
-          <img src="@/assets/images/icon_arrow.svg" alt="Arrow Icon" class="custom-icon"/>
-        </template>
-
-        <span class="club-text">{{ clubText }}</span>
-
-        <VTooltip
-            v-model="showToolTip"
-            location="top"
-            max-width="250px"
-            contentClass="v-tooltip__content">
-          <template #activator="{ props }">
-            <VBtn
-                v-bind="props"
-                class="create-club-btn"
-                :class="{ 'sufficient-balance': isBalanceSufficient }"
-                @click.stop="btnCreateNewClub">
-              {{ t.profile.buttons.lblCreateClub }}
-            </VBtn>
-          </template>
-          <span> {{ t.profile.buttons.tooltipInsufficientFunds }}</span>
-        </VTooltip>
-      </VBtnDark>
-
-      <CreateClub :dialogCreate="dialogCreate" @close="dialogCreate = false" />
-    </div>
-
     <VBtnDark v-if="!isTelegram"
         class="profile-btn"
         @click="navigateTo('Wallet')">
@@ -105,70 +63,25 @@
 </template>
 
 <script setup>
-import {computed, onMounted, ref} from 'vue';
+import {onMounted, ref} from 'vue';
 import router from "@/router/index.js";
 import store from "@/core/state/store.js";
-import CreateClub from "@/components/fragments/club/CreateClub.vue";
-import {COST_CREATE_CLUB} from "@/core/constants.js";
 import {t} from "@/locales/index.js";
 import * as masterService from "@/core/services/masterService.js";
 
-const master = computed(() => store.getters['master/getMaster']);
-const clubId = computed(() => master.value?.userData.clubId);
-const isBalanceSufficient = computed(() => master.value?.getBalance() >= COST_CREATE_CLUB);
-
-const isOwner = ref(false);
-const clubData = ref(null);
-const clubText = ref(t.value.loading);
-const showToolTip = ref(false);
-const dialogCreate = ref(false);
 const dialogExit = ref(false);
-
 const isTelegram = ref(false);
 
 const navigateTo = (route) => {
   router.push({name: route});
 };
 
-const navigateToClub = () => {
-  if (clubId.value) {
-    router.push({path: `/club/${clubId.value}`});
-  } else {
-    router.push({path: '/ratings/clubs'});
-  }
-};
-
-const btnCreateNewClub = () => {
-  if (!isBalanceSufficient.value) {
-    showToolTip.value = true;
-    setTimeout(() => {
-      showToolTip.value = false;
-    }, 4000); // Тултип будет отображаться 4 секунды
-  } else {
-    dialogCreate.value = true;
-  }
-};
-
 const logout = () => {
   store.dispatch('master/logout');
 }
 
-onMounted(async () => {
-
+onMounted(() => {
   isTelegram.value = masterService.getTelegram();
-
-  if (clubId.value) {
-    const data = await store.dispatch('club/getClubById', clubId.value);
-    if (data) {
-      clubData.value = data;
-      clubText.value = `${t.value.profile.buttons.lblClub} ${clubData.value.name}`;
-      isOwner.value = master.value && master.value.userData.id === clubData.value.owner;
-    } else {
-      clubText.value = t.value.profile.buttons.lblClubError;
-    }
-  } else {
-    clubText.value = t.value.profile.buttons.lblNoClub;
-  }
 });
 
 </script>
@@ -204,49 +117,4 @@ onMounted(async () => {
   margin-right: 10px;
 }
 
-.create-club-btn {
-  color: white;
-  position: absolute;
-  right: 0;
-  height: 40px !important;
-  font-size: 0.8em;
-  padding-left: 20px;
-  clip-path: polygon(15% 0%, 100% 0%, 100% 100%, 0% 100%);
-  background-color: var(--hex-text-secondary) !important;
-  border-radius: 0 4px 4px 0 !important;
-  opacity: 0.5;
-}
-
-
-.sufficient-balance {
-  background-color: var(--hex-primary) !important;
-  opacity: 1;
-}
-
-
-.split-button-container {
-  position: relative;
-  width: 100%;
-  max-width: 500px;
-  height: 40px;
-  margin: 5px 0 10px 0;
-  display: flex;
-  flex-direction: row;
-  box-sizing: border-box;
-}
-
-.club-text {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: inline-block;
-  max-width: 100%;
-
-}
-
-@media (max-width: 600px) {
-  .club-text {
-    width: 200px;
-  }
-}
 </style>

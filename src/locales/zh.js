@@ -6,7 +6,7 @@ export default {
   menu: {
     arena: '竞技场',
     trainings: '训练',
-    ratings: '评分',
+    ratings: '联赛',
     profile: '个人资料',
   },
   modal: {
@@ -258,6 +258,17 @@ export default {
     errorTooLong: '名称不能超过32个字符。',
     errorEmpty: '名称不能为空。',
     errorCreate: '创建俱乐部时出错',
+    lblNoClubYet: '你还没有俱乐部',
+    lblNeedTaps: '需要10,000次点击',
+    lblOrJoinExisting: '或加入现有俱乐部',
+    lblBrowseAllClubs: '浏览所有俱乐部',
+    lblViewAll: '查看全部',
+    lblJoin: '加入',
+    lblEditClub: '编辑',
+    lblPublic: '公开',
+    lblPrivate: '私密',
+    lblLeaveClub: '离开俱乐部',
+    lblLeaveClubDescription: '你确定要离开这个俱乐部吗？如果俱乐部是私密的，你将无法重新加入。',
     lblControl: 'Control',
   },
   fight: {
@@ -410,6 +421,9 @@ export default {
   rating: {
     clubs: '俱乐部排名',
     fighters: '战士排名',
+    lblMyClub: '我的俱乐部',
+    lblClubs: '俱乐部',
+    lblFighters: '战士',
     clubPlaceholder: '搜索俱乐部',
     participantPlaceholder: '搜索',
     clubName: '俱乐部名称',

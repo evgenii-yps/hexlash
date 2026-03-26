@@ -6,7 +6,7 @@ export default {
   menu: {
     arena: 'Arena',
     trainings: 'Entreno',
-    ratings: 'Rangos',
+    ratings: 'Liga',
     profile: 'Perfil',
   },
   modal: {
@@ -258,6 +258,17 @@ export default {
     errorTooLong: 'El nombre no debe exceder los 32 caracteres.',
     errorEmpty: 'El nombre no debe estar vacío.',
     errorCreate: 'Error al crear el club',
+    lblNoClubYet: 'Aún no tienes un club',
+    lblNeedTaps: 'Se necesitan 10.000 taps',
+    lblOrJoinExisting: 'o únete a uno existente',
+    lblBrowseAllClubs: 'Ver todos los clubes',
+    lblViewAll: 'Ver todos',
+    lblJoin: 'Unirse',
+    lblEditClub: 'Editar',
+    lblPublic: 'Público',
+    lblPrivate: 'Privado',
+    lblLeaveClub: 'Dejar club',
+    lblLeaveClubDescription: '¿Estás seguro de que quieres dejar este club? Si el club es privado, no podrás volver a unirte.',
     lblControl: 'Control',
   },
   fight: {
@@ -410,6 +421,9 @@ export default {
   rating: {
     clubs: 'Clasificación de clubes',
     fighters: 'Clasificación de luchadores',
+    lblMyClub: 'Mi Club',
+    lblClubs: 'Clubes',
+    lblFighters: 'Luchadores',
     clubPlaceholder: 'Buscar club',
     participantPlaceholder: 'Buscar',
     clubName: 'Nombre del club',

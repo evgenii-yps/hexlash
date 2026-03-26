@@ -6,7 +6,7 @@ export default {
   menu: {
     arena: '아레나',
     trainings: '훈련',
-    ratings: '평점',
+    ratings: '리그',
     profile: '프로필',
   },
   modal: {
@@ -258,6 +258,17 @@ export default {
     errorTooLong: '이름은 32자를 초과할 수 없습니다.',
     errorEmpty: '이름을 입력해야 합니다.',
     errorCreate: '클럽 생성 오류',
+    lblNoClubYet: '아직 클럽이 없습니다',
+    lblNeedTaps: '10,000 탭이 필요합니다',
+    lblOrJoinExisting: '또는 기존 클럽에 가입',
+    lblBrowseAllClubs: '모든 클럽 보기',
+    lblViewAll: '전체 보기',
+    lblJoin: '가입',
+    lblEditClub: '편집',
+    lblPublic: '공개',
+    lblPrivate: '비공개',
+    lblLeaveClub: '클럽 탈퇴',
+    lblLeaveClubDescription: '정말 이 클럽을 탈퇴하시겠습니까? 클럽이 비공개인 경우 다시 가입할 수 없습니다.',
     lblControl: 'Control',
   },
   fight: {
@@ -410,6 +421,9 @@ export default {
   rating: {
     clubs: '클럽 평점',
     fighters: '전사 평점',
+    lblMyClub: '내 클럽',
+    lblClubs: '클럽',
+    lblFighters: '전사',
     clubPlaceholder: '클럽 검색',
     participantPlaceholder: '검색',
     clubName: '클럽 이름',

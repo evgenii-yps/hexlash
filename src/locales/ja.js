@@ -6,7 +6,7 @@ export default {
   menu: {
     arena: 'アリーナ',
     trainings: 'トレーニング',
-    ratings: 'ランキング',
+    ratings: 'リーグ',
     profile: 'プロフィール',
   },
   modal: {
@@ -258,6 +258,17 @@ export default {
     errorTooLong: '名前は32文字以内でなければなりません。',
     errorEmpty: '名前を空にすることはできません。',
     errorCreate: 'クラブ作成エラー',
+    lblNoClubYet: 'まだクラブに入っていません',
+    lblNeedTaps: '10,000タップが必要です',
+    lblOrJoinExisting: 'または既存のクラブに参加',
+    lblBrowseAllClubs: 'すべてのクラブを見る',
+    lblViewAll: 'すべて表示',
+    lblJoin: '参加',
+    lblEditClub: '編集',
+    lblPublic: '公開',
+    lblPrivate: '非公開',
+    lblLeaveClub: 'クラブを退出',
+    lblLeaveClubDescription: '本当にこのクラブを退出しますか？クラブが非公開の場合、再参加できなくなります。',
     lblControl: 'Control',
   },
   fight: {
@@ -409,6 +420,9 @@ export default {
   rating: {
     clubs: 'クラブランキング',
     fighters: 'ファイターランキング',
+    lblMyClub: 'マイクラブ',
+    lblClubs: 'クラブ',
+    lblFighters: 'ファイター',
     clubPlaceholder: 'クラブを検索',
     participantPlaceholder: '検索',
     clubName: 'クラブ名',

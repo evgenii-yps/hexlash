@@ -6,7 +6,7 @@ export default {
   menu: {
     arena: 'Arena',
     trainings: 'Training',
-    ratings: 'Ratings',
+    ratings: 'League',
     profile: 'Profile',
   },
   modal: {
@@ -274,6 +274,15 @@ export default {
     errorCreate: 'Error creating club',
     lblLeaveClub: 'Leave Club',
     lblLeaveClubDescription: 'Are you sure you want to leave this club? If the club is private, you will not be able to rejoin.',
+    lblNoClubYet: "You don't have a club yet",
+    lblNeedTaps: 'Need 10,000 taps',
+    lblOrJoinExisting: 'or join existing',
+    lblBrowseAllClubs: 'Browse all clubs',
+    lblViewAll: 'View all',
+    lblJoin: 'Join',
+    lblEditClub: 'Edit club',
+    lblPublic: 'Public',
+    lblPrivate: 'Private',
     lblControl: 'Control',
   },
   fight: {
@@ -489,6 +498,9 @@ export default {
   rating: {
     clubs: 'Club rating',
     fighters: 'Fighter rating',
+    lblMyClub: 'My Club',
+    lblClubs: 'Clubs',
+    lblFighters: 'Fighters',
     clubPlaceholder: 'Search club',
     participantPlaceholder: 'Search',
     clubName: 'Club Name',

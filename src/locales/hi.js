@@ -6,7 +6,7 @@ export default {
   menu: {
     arena: 'अरेना',
     trainings: 'प्रशिक्षण',
-    ratings: 'रेटिंग्स',
+    ratings: 'लीग',
     profile: 'प्रोफ़ाइल',
   },
   modal: {
@@ -258,6 +258,17 @@ export default {
     errorTooLong: 'नाम 32 वर्णों से अधिक नहीं होना चाहिए।',
     errorEmpty: 'नाम खाली नहीं होना चाहिए।',
     errorCreate: 'क्लब बनाने में त्रुटि',
+    lblNoClubYet: 'आपके पास अभी कोई क्लब नहीं है',
+    lblNeedTaps: '10,000 टैप्स चाहिए',
+    lblOrJoinExisting: 'या किसी मौजूदा में शामिल हों',
+    lblBrowseAllClubs: 'सभी क्लब देखें',
+    lblViewAll: 'सभी देखें',
+    lblJoin: 'शामिल हों',
+    lblEditClub: 'संपादित करें',
+    lblPublic: 'सार्वजनिक',
+    lblPrivate: 'निजी',
+    lblLeaveClub: 'क्लब छोड़ें',
+    lblLeaveClubDescription: 'क्या आप वाकई इस क्लब को छोड़ना चाहते हैं? यदि क्लब निजी है, तो आप दोबारा शामिल नहीं हो पाएंगे।',
     lblControl: 'Control',
   },
   fight: {
@@ -409,6 +420,9 @@ export default {
   rating: {
     clubs: 'क्लब रेटिंग',
     fighters: 'फाइटर रेटिंग',
+    lblMyClub: 'मेरा क्लब',
+    lblClubs: 'क्लब',
+    lblFighters: 'लड़ाके',
     clubPlaceholder: 'क्लब खोजें',
     participantPlaceholder: 'खोजें',
     clubName: 'क्लब का नाम',
