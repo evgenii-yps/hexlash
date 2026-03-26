@@ -2,9 +2,9 @@
   <div class="background">
     <Card
         :title="title"
-        bgColor="var(--black-opacity-80)"
-        borderColor="var(--gray1)"
-        textColor="var(--white)"
+        bgColor="var(--hex-bg-card)"
+        borderColor="var(--hex-border-default)"
+        textColor="var(--hex-text-primary)"
         :showCloseButton="false">
 
       <template #back>
@@ -78,7 +78,7 @@ Card {
 }
 
 .help-content :deep(a) {
-  color: var(--primary-color);
+  color: var(--hex-primary);
   text-decoration: none;
   font-size: 1.4em;
 }
@@ -93,7 +93,7 @@ Card {
 }
 
 .help-content :deep(span) {
-  color: var(--primary-color);
+  color: var(--hex-primary);
 }
 
 .help-content :deep(.margin-l-20) {

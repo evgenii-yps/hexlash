@@ -7,7 +7,7 @@
 
         <!-- Animated Icon -->
         <div class="search-icon-container">
-          <div class="search-icon"><svg viewBox="0 0 64 64" width="60" height="60" fill="none" stroke="#FF066F" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="52" x2="42" y2="12"/><line x1="38" y1="12" x2="46" y2="12"/><line x1="42" y1="8" x2="42" y2="16"/><line x1="22" y1="38" x2="30" y2="42"/><line x1="52" y1="52" x2="22" y2="12"/><line x1="18" y1="12" x2="26" y2="12"/><line x1="22" y1="8" x2="22" y2="16"/><line x1="42" y1="38" x2="34" y2="42"/></svg></div>
+          <div class="search-icon"><svg viewBox="0 0 64 64" width="60" height="60" fill="none" stroke="var(--hex-primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="52" x2="42" y2="12"/><line x1="38" y1="12" x2="46" y2="12"/><line x1="42" y1="8" x2="42" y2="16"/><line x1="22" y1="38" x2="30" y2="42"/><line x1="52" y1="52" x2="22" y2="12"/><line x1="18" y1="12" x2="26" y2="12"/><line x1="22" y1="8" x2="22" y2="16"/><line x1="42" y1="38" x2="34" y2="42"/></svg></div>
           <div class="pulse-ring"></div>
           <div class="pulse-ring delay"></div>
         </div>
@@ -36,11 +36,11 @@
             {{ t.pvp.playersOnline }}: {{ onlineCount }}
           </div>
           <div class="stat-item">
-            <span class="stat-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#FFD700" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h12v6a6 6 0 0 1-12 0V2z"/><path d="M6 4H2v2a4 4 0 0 0 4 4"/><path d="M18 4h4v2a4 4 0 0 1-4 4"/><line x1="12" y1="14" x2="12" y2="18"/><rect x="7" y="18" width="10" height="2" rx="1"/></svg></span>
+            <span class="stat-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--hex-warning)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h12v6a6 6 0 0 1-12 0V2z"/><path d="M6 4H2v2a4 4 0 0 0 4 4"/><path d="M18 4h4v2a4 4 0 0 1-4 4"/><line x1="12" y1="14" x2="12" y2="18"/><rect x="7" y="18" width="10" height="2" rx="1"/></svg></span>
             {{ t.pvp.yourRating }}: {{ playerRating }}
           </div>
           <div class="stat-item">
-            <span class="stat-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#FF066F" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg></span>
+            <span class="stat-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--hex-primary)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg></span>
             {{ t.pvp.searchRange }}: &plusmn;{{ searchRange }}
           </div>
         </div>
@@ -87,7 +87,7 @@
 
       <!-- Timeout / No Players State -->
       <div v-else-if="status === 'timeout'" class="timeout-container">
-        <div class="timeout-icon"><svg viewBox="0 0 24 24" width="60" height="60" fill="none" stroke="#FFB800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="9"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="13" x2="15" y2="15"/><line x1="8" y1="2" x2="16" y2="2"/><line x1="12" y1="2" x2="12" y2="4"/></svg></div>
+        <div class="timeout-icon"><svg viewBox="0 0 24 24" width="60" height="60" fill="none" stroke="var(--hex-warning)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="9"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="13" x2="15" y2="15"/><line x1="8" y1="2" x2="16" y2="2"/><line x1="12" y1="2" x2="12" y2="4"/></svg></div>
         <h2 class="timeout-title">{{ t.pvp.noPlayersFound }}</h2>
         <p class="timeout-hint">{{ t.pvp.tryAgainLater }}</p>
         <div class="timeout-buttons">
@@ -287,7 +287,7 @@ function cleanup() {
 <style scoped>
 .background-matchmaking {
   min-height: 100vh;
-  background: #090909;
+  background: var(--hex-bg-dark);
 }
 
 .matchmaking-container {
@@ -297,7 +297,7 @@ function cleanup() {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  color: white;
+  color: var(--hex-text-primary);
   padding: 20px;
 }
 
@@ -342,7 +342,7 @@ function cleanup() {
   position: absolute;
   width: 100%;
   height: 100%;
-  border: 3px solid #FF066F;
+  border: 3px solid var(--hex-primary);
   border-radius: 50%;
   animation: pulseRing 2s ease-out infinite;
 }
@@ -365,18 +365,18 @@ function cleanup() {
 .search-title {
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 20px;
-  color: #FF066F;
+  color: var(--hex-primary);
   text-transform: uppercase;
   letter-spacing: 3px;
   margin-bottom: 16px;
-  text-shadow: 0 0 20px rgba(255, 6, 111, 0.5);
+  text-shadow: 0 0 20px var(--hex-primary-glow);
 }
 
 .search-timer {
   font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 48px;
   font-weight: 700;
-  color: #fff;
+  color: var(--hex-text-primary);
   margin-bottom: 24px;
 }
 
@@ -387,7 +387,7 @@ function cleanup() {
 .progress-bar {
   width: 100%;
   height: 4px;
-  background: rgba(255, 255, 255, 0.1);
+  background: color-mix(in srgb, var(--hex-text-primary) 10%, transparent);
   border-radius: 2px;
   overflow: hidden;
 }
@@ -395,7 +395,7 @@ function cleanup() {
 .progress-fill {
   height: 100%;
   width: 30%;
-  background: linear-gradient(90deg, #FF066F, #FF3D8E);
+  background: linear-gradient(90deg, var(--hex-primary), color-mix(in srgb, var(--hex-primary) 85%, white));
   animation: progressMove 1.5s ease-in-out infinite;
 }
 
@@ -417,7 +417,7 @@ function cleanup() {
   justify-content: center;
   gap: 8px;
   font-size: 14px;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
 }
 
 .stat-dot {
@@ -427,13 +427,13 @@ function cleanup() {
 }
 
 .stat-dot.online {
-  background: #00FF88;
-  box-shadow: 0 0 8px rgba(0, 255, 136, 0.6);
+  background: var(--hex-victory);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--hex-victory) 60%, transparent);
 }
 
 .stat-dot.online-blue {
-  background: #00BFFF;
-  box-shadow: 0 0 8px rgba(0, 191, 255, 0.6);
+  background: var(--hex-mode-pve);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--hex-mode-pve) 60%, transparent);
 }
 
 .stat-icon {
@@ -446,7 +446,7 @@ function cleanup() {
   background: transparent;
   border: 2px solid var(--gray2);
   border-radius: 12px;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 16px;
   text-transform: uppercase;
@@ -456,8 +456,8 @@ function cleanup() {
 }
 
 .cancel-btn:active {
-  border-color: #FF3333;
-  color: #FF3333;
+  border-color: var(--hex-danger);
+  color: var(--hex-danger);
 }
 
 /* ── Found State ─────────────────────────────────────────────── */
@@ -474,11 +474,11 @@ function cleanup() {
 .found-title {
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 32px;
-  color: #00FF88;
+  color: var(--hex-victory);
   text-transform: uppercase;
   letter-spacing: 3px;
   margin-bottom: 40px;
-  text-shadow: 0 0 30px rgba(0, 255, 136, 0.5);
+  text-shadow: 0 0 30px color-mix(in srgb, var(--hex-victory) 50%, transparent);
 }
 
 .vs-display {
@@ -491,7 +491,7 @@ function cleanup() {
 
 .player-card {
   padding: 16px 20px;
-  background: rgba(20, 20, 30, 0.6);
+  background: color-mix(in srgb, var(--hex-bg-dark) 60%, transparent);
   border: none;
   border-radius: 16px;
   min-width: 140px;
@@ -508,20 +508,20 @@ function cleanup() {
   width: 100px;
   height: 100px;
   object-fit: contain;
-  filter: drop-shadow(0 0 8px rgba(255, 6, 111, 0.3));
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--hex-primary) 30%, transparent));
 }
 
 .player-name {
   font-size: 18px;
   font-weight: 700;
-  color: #fff;
+  color: var(--hex-text-primary);
   margin-bottom: 4px;
   font-family: 'Calibri', Arial, sans-serif;
 }
 
 .player-rating {
   font-size: 16px;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   font-family: 'Calibri', Arial, sans-serif;
 }
 
@@ -529,14 +529,14 @@ function cleanup() {
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 32px;
   font-weight: bold;
-  color: #FF066F;
-  text-shadow: 0 0 15px rgba(255, 6, 111, 0.6);
+  color: var(--hex-primary);
+  text-shadow: 0 0 15px color-mix(in srgb, var(--hex-primary) 60%, transparent);
 }
 
 .fight-countdown {
   font-family: 'Calibri', Arial, sans-serif;
   font-size: 22px;
-  color: #FFB800;
+  color: var(--hex-warning);
   text-transform: uppercase;
   letter-spacing: 2px;
   animation: countdownPulse 1s ease-in-out infinite;
@@ -564,7 +564,7 @@ function cleanup() {
 .timeout-title {
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 22px;
-  color: #FFB800;
+  color: var(--hex-warning);
   text-transform: uppercase;
   letter-spacing: 2px;
   margin-bottom: 8px;
@@ -572,7 +572,7 @@ function cleanup() {
 
 .timeout-hint {
   font-size: 14px;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   margin-bottom: 32px;
 }
 
@@ -585,10 +585,10 @@ function cleanup() {
 
 .retry-btn {
   padding: 16px 48px;
-  background: rgba(255, 6, 111, 0.15);
-  border: 2px solid #FF066F;
+  background: color-mix(in srgb, var(--hex-primary) 15%, transparent);
+  border: 2px solid var(--hex-primary);
   border-radius: 12px;
-  color: #FF066F;
+  color: var(--hex-primary);
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 16px;
   text-transform: uppercase;
@@ -598,8 +598,8 @@ function cleanup() {
 }
 
 .retry-btn:active {
-  background: rgba(255, 6, 111, 0.3);
-  box-shadow: 0 0 20px rgba(255, 6, 111, 0.4);
+  background: color-mix(in srgb, var(--hex-primary) 30%, transparent);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--hex-primary) 40%, transparent);
 }
 
 .back-btn {
@@ -607,7 +607,7 @@ function cleanup() {
   background: transparent;
   border: 1px solid var(--gray2);
   border-radius: 12px;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 14px;
   text-transform: uppercase;
@@ -617,7 +617,7 @@ function cleanup() {
 }
 
 .back-btn:active {
-  border-color: #fff;
-  color: #fff;
+  border-color: var(--hex-text-primary);
+  color: var(--hex-text-primary);
 }
 </style>

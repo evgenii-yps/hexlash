@@ -3,7 +3,7 @@
     <div v-if="challenge" class="challenge-notification">
       <div class="challenge-content">
         <div class="challenge-icon">
-          <svg viewBox="0 0 32 32" width="28" height="28" fill="none" stroke="#FF066F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg viewBox="0 0 32 32" width="28" height="28" fill="none" stroke="var(--hex-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="6" y1="26" x2="21" y2="6"/>
             <line x1="19" y1="6" x2="23" y2="6"/>
             <line x1="21" y1="4" x2="21" y2="8"/>
@@ -152,10 +152,10 @@ function declineChallenge() {
   left: 0;
   right: 0;
   z-index: 9999;
-  background: linear-gradient(180deg, rgba(9,9,9,0.98) 0%, rgba(9,9,9,0.95) 100%);
-  border-bottom: 1px solid var(--pink);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--hex-bg-dark) 98%, transparent) 0%, color-mix(in srgb, var(--hex-bg-dark) 95%, transparent) 100%);
+  border-bottom: 1px solid var(--hex-primary);
   padding: 12px 16px;
-  box-shadow: 0 4px 20px rgba(255, 6, 111, 0.3);
+  box-shadow: 0 4px 20px color-mix(in srgb, var(--hex-primary) 30%, transparent);
 }
 
 .challenge-content {
@@ -177,14 +177,14 @@ function declineChallenge() {
 }
 
 .challenge-title {
-  color: var(--pink);
+  color: var(--hex-primary);
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 12px;
   text-transform: uppercase;
 }
 
 .challenge-player {
-  color: var(--white);
+  color: var(--hex-text-primary);
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 16px;
   margin-top: 2px;
@@ -193,7 +193,7 @@ function declineChallenge() {
 .challenge-timer {
   font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 24px;
-  color: var(--pink);
+  color: var(--hex-primary);
 }
 
 .challenge-buttons {
@@ -203,9 +203,9 @@ function declineChallenge() {
 
 .btn-accept-challenge {
   flex: 1;
-  background: var(--pink);
+  background: var(--hex-primary);
   border: none;
-  color: var(--white);
+  color: var(--hex-text-primary);
   padding: 10px;
   border-radius: 6px;
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
@@ -215,15 +215,15 @@ function declineChallenge() {
 }
 
 .btn-accept-challenge:hover {
-  background: #FF3D8E;
-  box-shadow: 0 0 15px rgba(255, 6, 111, 0.5);
+  background: color-mix(in srgb, var(--hex-primary) 85%, white);
+  box-shadow: 0 0 15px var(--hex-primary-glow);
 }
 
 .btn-decline-challenge {
   flex: 1;
   background: transparent;
-  border: 1px solid var(--gray2);
-  color: var(--gray2);
+  border: 1px solid var(--hex-text-secondary);
+  color: var(--hex-text-secondary);
   padding: 10px;
   border-radius: 6px;
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
@@ -233,8 +233,8 @@ function declineChallenge() {
 }
 
 .btn-decline-challenge:hover {
-  border-color: #FF3333;
-  color: #FF3333;
+  border-color: var(--hex-danger);
+  color: var(--hex-danger);
 }
 
 /* Animation */

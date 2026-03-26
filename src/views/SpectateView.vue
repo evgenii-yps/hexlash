@@ -245,7 +245,7 @@ onBeforeUnmount(() => {
 <style scoped>
 .background-spectate {
   min-height: 100vh;
-  background: #090909;
+  background: var(--hex-bg-dark);
 }
 
 .spectate-container {
@@ -255,7 +255,7 @@ onBeforeUnmount(() => {
   flex-direction: column;
   align-items: center;
   min-height: 100vh;
-  color: white;
+  color: var(--hex-text-primary);
   padding: 20px;
 }
 
@@ -289,11 +289,11 @@ onBeforeUnmount(() => {
 .spectate-title {
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 22px;
-  color: #FFB800;
+  color: var(--hex-warning);
   text-transform: uppercase;
   letter-spacing: 3px;
   margin: 8px 0 4px;
-  text-shadow: 0 0 20px rgba(255, 184, 0, 0.4);
+  text-shadow: 0 0 20px color-mix(in srgb, var(--hex-warning) 40%, transparent);
 }
 
 .spectator-count {
@@ -302,13 +302,13 @@ onBeforeUnmount(() => {
   justify-content: center;
   gap: 6px;
   font-size: 13px;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
 }
 
 .spectator-dot {
   width: 8px;
   height: 8px;
-  background: #ff4444;
+  background: var(--hex-defeat);
   border-radius: 50%;
   animation: blink 1.5s ease-in-out infinite;
 }
@@ -323,7 +323,7 @@ onBeforeUnmount(() => {
   text-align: center;
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 14px;
-  color: var(--gray3);
+  color: var(--hex-text-muted);
   text-transform: uppercase;
   letter-spacing: 2px;
   margin-bottom: 16px;
@@ -339,18 +339,18 @@ onBeforeUnmount(() => {
 
 .fighter-card {
   flex: 1;
-  background: rgba(20, 20, 30, 0.85);
+  background: color-mix(in srgb, var(--hex-bg-dark) 85%, transparent);
   border-radius: 12px;
   padding: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--hex-border-default);
 }
 
 .fighter-friend {
-  border-color: rgba(255, 6, 111, 0.4);
+  border-color: color-mix(in srgb, var(--hex-primary) 40%, transparent);
 }
 
 .fighter-opponent {
-  border-color: rgba(0, 150, 255, 0.4);
+  border-color: color-mix(in srgb, var(--hex-action-defense) 40%, transparent);
 }
 
 .fighter-name {
@@ -364,13 +364,13 @@ onBeforeUnmount(() => {
   text-overflow: ellipsis;
 }
 
-.fighter-friend .fighter-name { color: #FF066F; }
-.fighter-opponent .fighter-name { color: #0096FF; }
+.fighter-friend .fighter-name { color: var(--hex-primary); }
+.fighter-opponent .fighter-name { color: var(--hex-action-defense); }
 
 .fighter-hp-bar {
   width: 100%;
   height: 10px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--hex-border-default);
   border-radius: 5px;
   overflow: hidden;
   margin-bottom: 6px;
@@ -383,27 +383,27 @@ onBeforeUnmount(() => {
 }
 
 .hp-fill-friend {
-  background: linear-gradient(90deg, #FF066F, #ff4d94);
+  background: linear-gradient(90deg, var(--hex-primary), color-mix(in srgb, var(--hex-primary) 70%, white));
 }
 
 .hp-fill-opponent {
-  background: linear-gradient(90deg, #0066cc, #0096FF);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--hex-action-defense) 70%, black), var(--hex-action-defense));
 }
 
 .hp-text {
   font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 12px;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   text-align: right;
 }
 
 .vs-divider {
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 16px;
-  color: #FFB800;
+  color: var(--hex-warning);
   font-weight: bold;
   flex-shrink: 0;
-  text-shadow: 0 0 10px rgba(255, 184, 0, 0.4);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--hex-warning) 40%, transparent);
 }
 
 /* Fight log */
@@ -414,12 +414,12 @@ onBeforeUnmount(() => {
 .log-header {
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 13px;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   text-transform: uppercase;
   letter-spacing: 2px;
   margin-bottom: 10px;
   padding-bottom: 6px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid color-mix(in srgb, var(--hex-text-primary) 6%, transparent);
 }
 
 .log-list {
@@ -436,7 +436,7 @@ onBeforeUnmount(() => {
 }
 
 .log-list::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--hex-border-active);
   border-radius: 2px;
 }
 
@@ -446,20 +446,20 @@ onBeforeUnmount(() => {
   gap: 8px;
   font-size: 13px;
   padding: 6px 10px;
-  background: rgba(20, 20, 30, 0.6);
+  background: color-mix(in srgb, var(--hex-bg-dark) 60%, transparent);
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  border: 1px solid color-mix(in srgb, var(--hex-text-primary) 4%, transparent);
 }
 
 .log-crit {
-  border-color: rgba(255, 184, 0, 0.3);
-  background: rgba(255, 184, 0, 0.06);
+  border-color: color-mix(in srgb, var(--hex-warning) 30%, transparent);
+  background: color-mix(in srgb, var(--hex-warning) 6%, transparent);
 }
 
 .log-round {
   font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 11px;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   min-width: 22px;
 }
 
@@ -471,11 +471,11 @@ onBeforeUnmount(() => {
   max-width: 80px;
 }
 
-.actor-friend { color: #FF066F; }
-.actor-opponent { color: #0096FF; }
+.actor-friend { color: var(--hex-primary); }
+.actor-opponent { color: var(--hex-action-defense); }
 
 .log-action {
-  color: var(--gray3);
+  color: var(--hex-text-muted);
   flex: 1;
   white-space: nowrap;
   overflow: hidden;
@@ -484,7 +484,7 @@ onBeforeUnmount(() => {
 
 .log-damage {
   font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
-  color: #ff4444;
+  color: var(--hex-defeat);
   font-weight: 600;
   min-width: 28px;
   text-align: right;
@@ -492,7 +492,7 @@ onBeforeUnmount(() => {
 
 .log-crit-badge {
   font-size: 10px;
-  color: #FFB800;
+  color: var(--hex-warning);
   text-transform: uppercase;
   font-weight: 700;
   letter-spacing: 1px;
@@ -500,7 +500,7 @@ onBeforeUnmount(() => {
 
 .log-empty {
   text-align: center;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   padding: 20px;
   font-size: 14px;
 }
@@ -520,13 +520,13 @@ onBeforeUnmount(() => {
 }
 
 .result-win {
-  background: rgba(255, 6, 111, 0.15);
-  border: 1px solid rgba(255, 6, 111, 0.4);
+  background: color-mix(in srgb, var(--hex-primary) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hex-primary) 40%, transparent);
 }
 
 .result-loss {
-  background: rgba(0, 150, 255, 0.15);
-  border: 1px solid rgba(0, 150, 255, 0.4);
+  background: color-mix(in srgb, var(--hex-action-defense) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hex-action-defense) 40%, transparent);
 }
 
 .result-text {
@@ -534,18 +534,18 @@ onBeforeUnmount(() => {
   font-size: 20px;
   text-transform: uppercase;
   letter-spacing: 3px;
-  color: #FFB800;
-  text-shadow: 0 0 15px rgba(255, 184, 0, 0.4);
+  color: var(--hex-warning);
+  text-shadow: 0 0 15px color-mix(in srgb, var(--hex-warning) 40%, transparent);
 }
 
 /* Leave button */
 .leave-btn {
   width: 100%;
   padding: 14px;
-  background: rgba(20, 20, 30, 0.85);
-  border: 1px solid rgba(255, 184, 0, 0.4);
+  background: color-mix(in srgb, var(--hex-bg-dark) 85%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hex-warning) 40%, transparent);
   border-radius: 12px;
-  color: #FFB800;
+  color: var(--hex-warning);
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 14px;
   text-transform: uppercase;
@@ -555,7 +555,7 @@ onBeforeUnmount(() => {
 }
 
 .leave-btn:active {
-  border-color: #FFB800;
-  box-shadow: 0 0 20px rgba(255, 184, 0, 0.3);
+  border-color: var(--hex-warning);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--hex-warning) 30%, transparent);
 }
 </style>

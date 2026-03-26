@@ -164,7 +164,7 @@ const handleScroll = (event) => {
   position: fixed;
   top: 0; left: 0;
   width: 100vw; height: 100vh;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.92) 0%, rgba(9,9,9,0.75) 50%, rgba(0,0,0,0.95) 100%);
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--hex-bg-dark) 92%, transparent) 0%, color-mix(in srgb, var(--hex-bg-dark) 75%, transparent) 50%, color-mix(in srgb, var(--hex-bg-dark) 95%, transparent) 100%);
   z-index: 1;
 }
 
@@ -176,7 +176,7 @@ const handleScroll = (event) => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  color: white;
+  color: var(--hex-text-primary);
   -webkit-overflow-scrolling: auto;
   overscroll-behavior-y: none;
 }
@@ -201,9 +201,9 @@ const handleScroll = (event) => {
 }
 
 .back-btn {
-  background: var(--black-opacity-80);
-  border: 1px solid var(--gray1);
-  color: var(--gray3);
+  background: var(--hex-bg-card);
+  border: 1px solid var(--hex-border-default);
+  color: var(--hex-text-muted);
   border-radius: 4px;
   padding: 8px 16px;
   font-size: 0.95rem;
@@ -211,14 +211,14 @@ const handleScroll = (event) => {
   transition: color 0.2s;
 }
 
-.back-btn:hover { color: var(--white); }
+.back-btn:hover { color: var(--hex-text-primary); }
 
 .top-title {
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 1.2rem;
-  color: var(--primary-color);
+  color: var(--hex-primary);
   letter-spacing: 2px;
-  text-shadow: 0 0 10px rgba(255, 6, 111, 0.3);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--hex-primary) 30%, transparent);
 }
 
 /* Period selector */
@@ -230,9 +230,9 @@ const handleScroll = (event) => {
 }
 
 .period-chip {
-  background: rgba(9, 9, 9, 0.6);
-  border: 1px solid var(--gray1);
-  color: var(--gray3);
+  background: color-mix(in srgb, var(--hex-bg-dark) 60%, transparent);
+  border: 1px solid var(--hex-border-default);
+  color: var(--hex-text-muted);
   border-radius: 16px;
   padding: 6px 16px;
   font-size: 0.85rem;
@@ -241,14 +241,14 @@ const handleScroll = (event) => {
 }
 
 .period-chip:hover {
-  border-color: var(--pink);
-  color: var(--white);
+  border-color: var(--hex-primary);
+  color: var(--hex-text-primary);
 }
 
 .period-chip--active {
-  background: rgba(255, 6, 111, 0.15);
-  border-color: var(--pink);
-  color: var(--pink);
+  background: color-mix(in srgb, var(--hex-primary) 15%, transparent);
+  border-color: var(--hex-primary);
+  color: var(--hex-primary);
 }
 
 /* Analyze button */
@@ -258,9 +258,9 @@ const handleScroll = (event) => {
 }
 
 .analyze-btn {
-  background: linear-gradient(135deg, var(--pink) 0%, var(--pinkDark) 100%);
+  background: linear-gradient(135deg, var(--hex-primary) 0%, var(--hex-primary-dark) 100%);
   border: none;
-  color: white;
+  color: var(--hex-text-primary);
   border-radius: 8px;
   padding: 10px 28px;
   font-size: 0.95rem;
@@ -289,14 +289,14 @@ const handleScroll = (event) => {
 .log-title {
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 1.2rem;
-  color: var(--primary-color);
+  color: var(--hex-primary);
   letter-spacing: 2px;
-  text-shadow: 0 0 10px rgba(255, 6, 111, 0.3);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--hex-primary) 30%, transparent);
 }
 
 .log-summary {
-  background: linear-gradient(135deg, rgba(9,9,9,0.9) 0%, rgba(26,26,46,0.6) 100%);
-  border: 1px solid rgba(255, 6, 111, 0.2);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--hex-bg-dark) 90%, transparent) 0%, color-mix(in srgb, var(--hex-bg-medium) 60%, transparent) 100%);
+  border: 1px solid color-mix(in srgb, var(--hex-primary) 20%, transparent);
   border-radius: 10px;
   padding: 16px 20px;
   margin-bottom: 20px;
@@ -307,33 +307,33 @@ const handleScroll = (event) => {
   align-items: center;
   gap: 8px;
   font-size: 0.9rem;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   padding: 4px 0;
 }
 
 .summary-value {
   font-family: system-ui, sans-serif;
   font-weight: bold;
-  color: white;
+  color: var(--hex-text-primary);
   font-size: 1rem;
 }
 
-.summary-win { color: #2ecc71; }
-.summary-lose { color: #e74c3c; }
-.summary-draw { color: #f1c40f; }
+.summary-win { color: var(--hex-victory); }
+.summary-lose { color: var(--hex-defeat); }
+.summary-draw { color: var(--hex-draw); }
 .summary-xp { color: var(--primary-color); }
 .summary-sep { color: var(--gray2); font-size: 0.8rem; }
 
 .no-fights {
   text-align: center;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   font-size: 0.95rem;
   padding: 50px 0;
 }
 
 .fight-entry {
-  background: linear-gradient(135deg, rgba(9,9,9,0.85) 0%, rgba(26,26,46,0.5) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--hex-bg-dark) 85%, transparent) 0%, color-mix(in srgb, var(--hex-bg-medium) 50%, transparent) 100%);
+  border: 1px solid color-mix(in srgb, var(--hex-text-primary) 6%, transparent);
   border-radius: 8px;
   padding: 14px 18px;
   margin-bottom: 8px;
@@ -349,9 +349,9 @@ const handleScroll = (event) => {
   border-radius: 3px 0 0 3px;
 }
 
-.entry-win::before { background: #2ecc71; }
-.entry-lose::before { background: #e74c3c; }
-.entry-draw::before { background: #f1c40f; }
+.entry-win::before { background: var(--hex-victory); }
+.entry-lose::before { background: var(--hex-defeat); }
+.entry-draw::before { background: var(--hex-draw); }
 
 .entry-header {
   display: flex;
@@ -362,13 +362,13 @@ const handleScroll = (event) => {
 
 .entry-time {
   font-size: 0.85rem;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
   font-family: system-ui, sans-serif;
 }
 
 .entry-vs {
   font-size: 0.95rem;
-  color: white;
+  color: var(--hex-text-primary);
   flex: 1;
 }
 
@@ -379,19 +379,19 @@ const handleScroll = (event) => {
   letter-spacing: 0.5px;
 }
 
-.result-win { color: #2ecc71; }
-.result-lose { color: #e74c3c; }
-.result-draw { color: #f1c40f; }
+.result-win { color: var(--hex-victory); }
+.result-lose { color: var(--hex-defeat); }
+.result-draw { color: var(--hex-draw); }
 
 .entry-details {
   display: flex;
   gap: 14px;
   font-size: 0.8rem;
-  color: var(--gray2);
+  color: var(--hex-text-secondary);
 }
 
 .entry-xp {
-  color: var(--primary-color);
+  color: var(--hex-primary);
   font-family: system-ui, sans-serif;
   font-weight: bold;
 }
