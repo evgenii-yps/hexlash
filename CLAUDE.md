@@ -572,26 +572,17 @@ User, Club, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask,
 
 ## Branch (Git)
 
-Development branch: `claude/add-pixel-icons-Hk6tn` (design system + UI redesign)
-Previous branch: `claude/hexlash-full-audit-WvXMd` (security audit, completed)
+Development branch: `claude/update-claude-md-XVzH6`
+Previous branches: `claude/add-pixel-icons-Hk6tn` (design system + UI redesign, completed & merged), `claude/hexlash-full-audit-WvXMd` (security audit, completed & merged)
 
-### Redesign Progress
+### "Neon Discipline" Redesign — ✅ COMPLETE
 
-| Phase | Status | What |
-|-------|--------|------|
-| 1.1 | ✅ Done | CSS variables (`hexlash-ui.css`) |
-| 1.2a | ✅ Done | 15 pixel icons (archetypes, branches, nav, ui) + `PixelIcon.vue` |
-| 1.2b | ✅ Done | 30 pixel icons (combat, dice, modes, social, progression, ui) |
-| 1.3a | ✅ Done | `HexButton.vue` + `HexCard.vue` |
-| 1.3b | ✅ Done | `HexProgress.vue` + `HexBadge.vue` |
-| 2.1 | ✅ Done | BottomMenu → SVG background-image icons with --hex-* colors |
-| 2.2 | ✅ Done | Header/Logo → `--hex-*` CSS variables |
-| 3.1a | ✅ Done | Arena: PreparationView (HexButton, inline SVGs), ModeSelector (inline SVGs for pve/pvp/auto), AutoFightStatus (--hex-* vars) |
-| 3.2a | ✅ Done | Fight: CardFightView — 117 color replacements, 0 hardcoded colors remain. VBtn→HexButton, dice/coach/victory/defeat all on --hex-* vars |
-| 3.3 | ✅ Done | Training + MoveTree — 72 color replacements across 4 files (TrainingView, MoveTreeView, MoveTreeCard, MoveDetailsModal). All legacy vars → --hex-* |
-| 3.4 | ✅ Done | Profile + DeckBuilder — 71 color replacements across 5 files (ProfileView, DeckBuilderView, PvPStatsCard, SoundToggle, XPAllocationModal). PvP stats: victory/defeat/draw colors |
-| 4 | ✅ Done | Secondary screens — 280 color replacements across 11 files. All legacy/hardcoded colors → --hex-* vars. RainView Three.js colors preserved. |
-| P0 | ✅ Done | PixelIcon revert — removed all PixelIcon usage from app files, restored original SVG/img icons with --hex-* colors. PixelIcon.vue + pixelIcons.js preserved but unused. |
-| 5.1 | ✅ Done | Final sweep — 330 legacy var replacements across 53 files. 0 legacy vars remain in active components. PrivacyView (legal, 58 inline styles) excluded. colors.css kept for PrivacyView compat. |
-| 5.2 | ✅ Done | Animations: 10 utility classes in hexlash-ui.css (transitions, hover, press, pulse, glow-pulse, float-up, Vue fade/slide-up). START FIGHT glow pulse. Existing component animations preserved. |
-| 5.3 | ✅ Done | Responsive: 320px min-width support. @media 360px breakpoints for action row, mode dropdown, fighters, sidebar. Modal safe min-width via min(320px, 90vw). |
+All phases finished and merged to main. Summary of work done:
+- **Phase 1:** CSS variables foundation (`hexlash-ui.css`), 45 pixel icons, 4 UI components (HexButton, HexCard, HexProgress, HexBadge)
+- **Phase 2:** Navigation migration (BottomMenu, Header/Logo → `--hex-*` vars)
+- **Phase 3:** Core screens migration (Arena, Fight, Training, MoveTree, Profile, DeckBuilder) — 260+ color replacements
+- **Phase 4:** Secondary screens — 280 color replacements across 11 files
+- **Phase P0:** PixelIcon revert — restored original SVG/img icons, PixelIcon preserved but unused
+- **Phase 5.1:** Final sweep — 330 legacy var replacements across 53 files, 0 legacy vars remain
+- **Phase 5.2:** Animation utilities (10 classes: transitions, hover, press, pulse, glow-pulse, float-up, Vue fade/slide-up)
+- **Phase 5.3:** Responsive fixes — 320px min-width, @media 360px breakpoints
