@@ -85,7 +85,7 @@ const handleMenuClick = (index, item) => {
   width: 100%;
   max-width: 1024px;
   z-index: 100;
-  background: var(--hex-bg-medium);
+  background: transparent;
 }
 
 .bottom-menu.ios-adjust {
