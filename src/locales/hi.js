@@ -165,7 +165,6 @@ export default {
       lblWonTokens: 'लड़ाइयों में जीते हुए टोकन',
       lblFreeTokens: 'वर्कआउट टोकन',
       lblInvitedUsers: 'आमंत्रित उपयोगकर्ता',
-      lblDaysInClub: 'क्लब में दिन (बिना छोड़े हुए)',
     },
     skins: {
       lblTitle: 'फाइटर स्किन्स',

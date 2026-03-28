@@ -50,7 +50,6 @@ export const updateClubDataOnAPI = async (clubModel) => {
             clubId: clubModel.id,
             name: clubModel.name,
             description: clubModel.description,
-            imageUrl: clubModel.imageUrl,
             isPublic: clubModel.isPublic,
         };
 
@@ -102,6 +101,14 @@ export const leaveClub = async () => {
         await apiClient.post(`/club/change`, {clubId: null}, {authRequired: true});
     } catch (error) {
         throw new Error('Failed to leave club: ' + (error.response?.data?.error || error.message));
+    }
+};
+
+export const deleteClub = async () => {
+    try {
+        await apiClient.delete(`/club`, {authRequired: true});
+    } catch (error) {
+        throw new Error('Failed to delete club: ' + (error.response?.data?.error || error.message));
     }
 };
 

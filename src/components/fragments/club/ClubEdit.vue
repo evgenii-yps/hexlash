@@ -62,12 +62,34 @@
       </v-card-actions>
     </VCard>
   </VModal>
+
+  <div class="dissolve-section">
+    <HexButton variant="danger" size="sm" @click="dialogDissolve = true">
+      {{ t.club.lblDissolve }}
+    </HexButton>
+  </div>
+
+  <VModal v-model="dialogDissolve" max-width="500">
+    <VCard>
+      <v-card-title class="headline">{{ t.club.lblDissolve }}</v-card-title>
+      <v-card-text>
+        {{ t.club.lblDissolveConfirm }}
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn @click="dialogDissolve = false" class="cancel-btn">{{ t.modal.btnCancel }}</v-btn>
+        <v-btn @click="confirmDissolve" class="confirm-btn">{{ t.club.lblConfirm }}</v-btn>
+      </v-card-actions>
+    </VCard>
+  </VModal>
 </template>
 
 <script setup>
 import {computed, onMounted, ref} from 'vue';
 import store from "@/core/state/store.js";
 import {t} from "@/locales/index.js";
+import HexButton from "@/components/ui/HexButton.vue";
+import router from "@/router/index.js";
 
 const props = defineProps({
   clubData: {
@@ -92,6 +114,7 @@ const description = computed({
 
 
 const dialogEdit = ref(false);
+const dialogDissolve = ref(false);
 const loading = ref(false);
 const resultMessage = ref('');
 const titleError = ref('');
@@ -122,6 +145,17 @@ const toggleToolTip = () => {
 
 const hide = () => {
   dialogEdit.value = false;
+};
+
+const confirmDissolve = async () => {
+  dialogDissolve.value = false;
+  try {
+    await store.dispatch('club/deleteClub');
+    store.commit('master/setInfoMessage', {text: t.value.club.lblDissolved, timeout: 3000, showButton: false});
+    router.push('/ratings/clubs');
+  } catch (error) {
+    store.commit('master/setErrorMessage', {text: error.message, timeout: 3000, showButton: false});
+  }
 };
 
 const saveChanges = async () => {
@@ -199,5 +233,10 @@ const saveChanges = async () => {
   margin-top: 10px;
 }
 
+.dissolve-section {
+  margin-top: 30px;
+  display: flex;
+  justify-content: center;
+}
 
 </style>

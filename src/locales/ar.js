@@ -165,7 +165,6 @@ export default {
       lblWonTokens: 'الرموز المكتسبة في المعارك',
       lblFreeTokens: 'رموز التمرين',
       lblInvitedUsers: 'المستخدمون المدعوون',
-      lblDaysInClub: 'أيام في النادي (بدون تخطي)',
     },
     skins: {
       lblTitle: 'أشكال المقاتل',

@@ -289,7 +289,8 @@ const clubs = computed(() => store.getters['club/getClubRatingsList']);
 const participants = computed(() => store.getters['user/getParticipantRatingsList']);
 
 
-const page = ref(0);
+const clubPage = ref(0);
+const fighterPage = ref(0);
 
 let doneClubs = null;
 let doneParticipants = null;
@@ -312,10 +313,10 @@ const loadClubs = async (options = {}) => {
   await store.dispatch('club/loadClubRatings', {
     search: searchClub.value,
     sortBy: sortClubBy.value,
-    page: page.value
+    page: clubPage.value
   });
 
-  page.value = page.value + 1;
+  clubPage.value = clubPage.value + 1;
 
   if (doneClubs) {
     doneClubs('ok');
@@ -341,11 +342,11 @@ const loadParticipants = async (options = {}) => {
   await store.dispatch('user/loadParticipantRatings', {
     search: searchMember.value,
     sortBy: sortParticipantBy.value,
-    page: page.value,
+    page: fighterPage.value,
     clubId: clubId.value
   });
 
-  page.value = page.value + 1;
+  fighterPage.value = fighterPage.value + 1;
 
   if (doneParticipants) {
     doneParticipants('ok');
@@ -414,10 +415,8 @@ watch([searchMember, sortParticipantBy], () => {
 });
 
 watch(route, async (newRoute) => {
-  // Сброс параметров
-  page.value = 0;
-
   if (newRoute.params.type === Tabs.CLUBS) {
+    clubPage.value = 0;
     store.commit('club/resetClubRatings');
     searchClub.value = newRoute.query.searchClub || '';
     sortClubBy.value = newRoute.query.sortClubBy || 'wins';
@@ -427,6 +426,7 @@ watch(route, async (newRoute) => {
     }
 
   } else if (newRoute.params.type === Tabs.FIGHTERS) {
+    fighterPage.value = 0;
     store.commit('user/resetParticipantRatings');
 
     searchMember.value = newRoute.query.searchMember || '';

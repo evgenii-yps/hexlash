@@ -170,7 +170,6 @@ export default {
       lblWonTokens: 'Tokens won in fights',
       lblFreeTokens: 'Workout tokens',
       lblInvitedUsers: 'Invited users',
-      lblDaysInClub: 'Days in club (without skips)',
     },
     skins: {
       lblTitle: 'FIGHTER SKINS',
@@ -274,6 +273,9 @@ export default {
     errorCreate: 'Error creating club',
     lblLeaveClub: 'Leave Club',
     lblLeaveClubDescription: 'Are you sure you want to leave this club? If the club is private, you will not be able to rejoin.',
+    lblDissolve: 'Dissolve Club',
+    lblDissolveConfirm: 'Are you sure? All members will be removed and the club will be deleted.',
+    lblDissolved: 'Club dissolved',
     lblNoClubYet: "You don't have a club yet",
     lblNeedTaps: 'Need 10,000 taps',
     lblOrJoinExisting: 'or join existing',

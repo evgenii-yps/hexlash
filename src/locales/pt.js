@@ -165,7 +165,6 @@ export default {
       lblWonTokens: 'Tokens ganhos em lutas',
       lblFreeTokens: 'Tokens de treino',
       lblInvitedUsers: 'Usuários convidados',
-      lblDaysInClub: 'Dias no clube (sem faltas)',
     },
     skins: {
       lblTitle: 'SKINS DE LUTADOR',

@@ -355,6 +355,8 @@ AI_TRAINER_ENABLED = true
 
 **AI Club Mode Analysis:** Claude-powered analysis of club mode fight series. Component `ClubModeAnalysis.vue` renders on ClubModeLogView screen. Player selects period (Last 5 / Last 10 / All) and clicks "Analyze" → sends fight series data to `POST /v1/ai/club-mode-summary` → returns 4-section analysis: Session Overview, Strengths, Weaknesses, Recommendation. Model: `claude-haiku-4-5-20251001`, max_tokens: 400, rate limit: 5/min. Vuex state in `clubModeState` (aiAnalysis, aiAnalysisLoading, aiAnalysisError, aiAnalysisPeriod). Club mode log entries now include: playerModules, opponentModules, diceUsed, diceEffect, coachUsed, coachChoice, emergencyUsed.
 
+**Club Stats:** When a fight result is saved (PvE via `POST /fight/save`, PvP via `pvpCombatEngine.saveFightResult`), if the player has a `clubId`, `Club.battles` is incremented by 1; if the player won, `Club.wins` is also incremented. Club Mode fights go through `/fight/save` so they increment too.
+
 **Data Persistence:** Progression (moves, XP, taps, deck, playerModules) syncs to server via `PUT /v1/user/progression` (debounced 3s). Server is source of truth — restores all data on login via `GET /v1/user/me`. PlayerModules (fighter archetypes) included in progression JSON. Club mode state/history is localStorage-only (not critical — fight results already synced via `POST /fight/save`). PvP fight state is cleared from localStorage on `fight_end` via `clearSavedFight` action to prevent stale restore on next visit.
 
 **Known PvE vs PvP divergences (under review):**
@@ -466,7 +468,7 @@ Base: `/v1/`
 |-------|------|---------|
 | `/auth` | auth.js | login, signup, reset, telegram. Rate limited: login 5/15min, register 3/hr, telegram 10/15min |
 | `/user` | user.js | profile, stats, avatar, achievements. Skin validated via regex. Delete uses $transaction with cascade |
-| `/club` | club.js | create/edit club, members, balance, roles (set-role, transfer-ownership, kick, invite). maxMembers=50, roles: owner/deputy/member |
+| `/club` | club.js | create/edit/delete club, avatar, members, balance, roles (set-role, transfer-ownership, kick, invite). maxMembers=50, roles: owner/deputy/member. DELETE / dissolves club (owner-only, clears all members) |
 | `/task` | task.js | daily + social tasks |
 | `/file` | file.js | avatar/file upload |
 | `/fight` | fight.js | fight creation, results, history |
@@ -514,7 +516,7 @@ Password reset: Returns 501 (not implemented) — no fake success
 
 User, Club, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask, UserDailyTask, Fight, PunchInfo, FriendRequest, Friendship
 
-**Club system fields:** User.clubRole (`owner`/`deputy`/`member`/null), Club.maxMembers (default 50). Max 3 deputies per club. Owner can set roles, transfer ownership, kick anyone, invite friends. Deputies can kick members only, invite friends.
+**Club system fields:** User.clubRole (`owner`/`deputy`/`member`/null), Club.maxMembers (default 50), Club.battles/wins (auto-incremented on fight save). Max 3 deputies per club. Owner can set roles, transfer ownership, kick anyone, invite friends, dissolve club. Deputies can kick members only, invite friends. `User.daysInClub` removed (was never incremented).
 
 **Seed data:** 16 achievements (NEWBIE, CONNECTED_FIGHTER, REGULAR_FIGHTER, BATTLE_VETERAN, FIGHT_MASTER, COACH, RECRUITER, PROJECT_MAYHEM, MEATLOAF, TYLER, EXPERT, LUCKY_ONE, BOB, PAPER_STREET, MEETING_PARTICIPANT, GOLDEN_RULE) + social/daily tasks (en/ru)
 
@@ -584,8 +586,15 @@ User, Club, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask,
 
 ## Branch (Git)
 
-Development branch: `claude/update-claude-md-XVzH6`
-Previous branches: `claude/add-pixel-icons-Hk6tn` (design system + UI redesign, completed & merged), `claude/hexlash-full-audit-WvXMd` (security audit, completed & merged)
+Development branch: `claude/rename-autofight-club-mode-o2bIJ`
+Previous branches: `claude/update-claude-md-XVzH6`, `claude/add-pixel-icons-Hk6tn` (design system + UI redesign, completed & merged), `claude/hexlash-full-audit-WvXMd` (security audit, completed & merged)
+
+### AutoFight → Club Mode Rename + Club System Audit — ✅ COMPLETE
+
+- **ТЗ 1-5:** Renamed AutoFight → Club Mode across entire codebase (constants, Vuex, components, views, router, i18n ×11, backend API, CLAUDE.md)
+- **Club 1/3:** Fixed 3 critical bugs (imageUrl phantom field, setError mutation mismatch, shared pagination counter) + 2 bonus fixes (case-insensitive search, 404 UI)
+- **Club 2/3:** Added DELETE /v1/club endpoint (dissolve club), club stats auto-increment (already working), removed unused `User.daysInClub` field + Prisma migration
+- **Club 3/3:** E2E code review, fixed stale state on club delete, CLAUDE.md update
 
 ### "Neon Discipline" Redesign — ✅ COMPLETE
 

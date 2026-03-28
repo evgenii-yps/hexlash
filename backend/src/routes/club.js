@@ -229,7 +229,7 @@ router.get('/search', authMiddleware, async (req, res) => {
 
     const where = {};
     if (name) {
-      where.name = { contains: name };
+      where.name = { contains: name, mode: 'insensitive' };
     }
 
     const clubs = await prisma.club.findMany({
@@ -471,6 +471,36 @@ router.post('/invite', authMiddleware, async (req, res) => {
     res.json({ data: { invited: userId } });
   } catch (err) {
     console.error('Club invite error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// DELETE /v1/club
+router.delete('/', authMiddleware, async (req, res) => {
+  try {
+    const requester = await prisma.user.findUnique({ where: { id: req.userId } });
+    if (!requester.clubId) {
+      return res.status(400).json({ error: 'You are not in a club' });
+    }
+
+    const club = await prisma.club.findUnique({ where: { id: requester.clubId } });
+    if (club.ownerId !== req.userId) {
+      return res.status(403).json({ error: 'Only club owner can dissolve the club' });
+    }
+
+    await prisma.$transaction([
+      prisma.user.updateMany({
+        where: { clubId: club.id },
+        data: { clubId: null, clubRole: null },
+      }),
+      prisma.club.delete({
+        where: { id: club.id },
+      }),
+    ]);
+
+    res.json({ data: { success: true } });
+  } catch (err) {
+    console.error('Delete club error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

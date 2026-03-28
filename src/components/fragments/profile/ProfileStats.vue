@@ -37,7 +37,6 @@ import iconLuck from '@/assets/images/icon_lucky.svg';
 import iconWonTokens from '@/assets/images/icon_tokens.svg';
 import iconFreeTokens from '@/assets/images/icon_token_less.svg';
 import iconInvites from '@/assets/images/icon_invites.svg';
-import iconDaysInClub from '@/assets/images/icon_calendar.svg';
 import {formatNumber} from "@/core/constants.js";
 
 
@@ -108,14 +107,6 @@ watch(() => props.userData, (userData) => {
         title: t.value.profile.stats.lblInvitedUsers,
         value: userData.invitedUsers,
         icon: iconInvites,
-        show: false
-      },
-      {
-        id: 'stats-daysInClubAndNoSkipDays',
-        title: t.value.profile.stats.lblDaysInClub,
-        value: userData.daysInClub,
-        valueInBrackets: `(${userData.noSkipDays})`,
-        icon: iconDaysInClub,
         show: false
       },
     ];

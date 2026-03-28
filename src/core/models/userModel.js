@@ -24,7 +24,6 @@ export default class UserModel {
      * @param {number} [param0.freeTokens=0] - Количество бесплатных токенов пользователя.
      * @param {number} [param0.lostTokens=0] - Количество потерянных токенов пользователя.
      * @param {number} [param0.invitedUsers=0] - Количество приглашённых пользователей.
-     * @param {number} [param0.daysInClub=0] - Количество дней в клубе.
      * @param {number} [param0.noSkipDays=0] - Количество дней без пропусков.
      * @param {Array<number>} [param0.achievements=[]] - Список ID достижений пользователя.
      * @param {String} [param0.skin=""] - Выбранный скин пользователя
@@ -58,7 +57,6 @@ export default class UserModel {
                     freeTokens = 0,
                     lostTokens = 0,
                     invitedUsers = 0,
-                    daysInClub = 0,
                     noSkipDays = 0,
 
                     // Достижения
@@ -97,7 +95,6 @@ export default class UserModel {
         this.freeTokens = freeTokens;
         this.lostTokens = lostTokens;
         this.invitedUsers = invitedUsers;
-        this.daysInClub = daysInClub;
         this.noSkipDays = noSkipDays;
 
         this.achievements = achievements;
@@ -131,7 +128,6 @@ export default class UserModel {
                 freeTokens = 0,
                 lostTokens = 0,
                 invitedUsers = 0,
-                daysInClub = 0,
                 noSkipDays = 0,
                 achievements = [],
                 skin = "skin_m_1.png",
@@ -159,7 +155,6 @@ export default class UserModel {
                 freeTokens,
                 lostTokens,
                 invitedUsers,
-                daysInClub,
                 noSkipDays,
                 achievements,
                 skin,

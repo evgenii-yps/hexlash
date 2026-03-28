@@ -56,7 +56,6 @@ model User {
   freeTokens      Int      @default(0)
   lostTokens      Int      @default(0)
   invitedUsers    Int      @default(0)
-  daysInClub      Int      @default(0)
   noSkipDays      Int      @default(0)
 
   inviteId        String?  @unique @default(uuid())

@@ -11,6 +11,11 @@
           />
         </div>
 
+        <div v-else-if="notFound" class="not-found-container">
+          <div class="not-found-text">{{ t.club.lblClubNotFound || 'Club not found' }}</div>
+          <button class="back-btn" @click="$router.push('/ratings/clubs')">&larr; {{ t.nav?.lblBack || 'Back' }}</button>
+        </div>
+
         <div v-else-if="clubData">
 
           <div class="club-header">
@@ -403,10 +408,27 @@ const formattedMembersText = computed(() => {
 .not-found-container {
   height: 75vh;
   display: flex;
+  flex-direction: column;
+  gap: 20px;
   align-items: center;
   justify-content: center;
   color: var(--hex-text-muted);
   font-size: 1.2em;
+}
+
+.back-btn {
+  padding: 8px 20px;
+  background-color: var(--hex-bg-light);
+  color: var(--hex-text-primary);
+  border: 1px solid var(--hex-border-default);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: background-color 0.2s;
+}
+
+.back-btn:hover {
+  background-color: var(--hex-bg-medium);
 }
 
 .members-count {
