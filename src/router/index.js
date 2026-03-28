@@ -18,6 +18,15 @@ const publicRoutes = [
     {path: '/404', name: 'NotFound', component: () => import("/src/views/NotFoundView.vue")},
     {path: '/rules', name: 'Rules', component: () => import("/src/views/PageView.vue")},
     {path: '/verify-email', name: 'VerifyEmail', component: () => import("/src/views/VerifyEmailView.vue")},
+    {
+        path: '/r/:username',
+        name: 'Referral',
+        beforeEnter: (to, from, next) => {
+            localStorage.setItem('hexlash_referral_code', to.params.username);
+            next('/auth/signup');
+        },
+        component: RainView,
+    },
 ];
 
 const protectedRoutes = [

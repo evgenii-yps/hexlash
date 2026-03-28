@@ -147,6 +147,7 @@ export default {
       lblConfirmLogout: 'Confirmer la déconnexion',
       msgConfirmLogout: 'Êtes-vous sûr de vouloir vous déconnecter de cet appareil ?',
       lblClub: 'Club',
+      lblReferralProgram: 'Referral Program',
     },
     invite: {
       lblCopySuccess: "Code d'invitation copié dans le presse-papiers",
@@ -502,6 +503,19 @@ export default {
     lblUnlockFirst: 'Débloquez {name} d\'abord',
     lblUpgradeTo3: 'Améliorez {name} au Niv. 3',
     lblMax: 'MAX',
+  },
+  referral: {
+    lblTitle: 'Referral Program',
+    lblYourLink: 'Your referral link',
+    lblCopyLink: 'Copy Link',
+    lblShare: 'Share',
+    lblCopied: 'Copied!',
+    lblFriendsInvited: 'Friends invited',
+    lblRewardPerInvite: '+500 taps per invite',
+    lblRecentReferrals: 'Recent referrals',
+    lblNoReferrals: 'No referrals yet. Share your link!',
+    lblDaysAgo: '{days} days ago',
+    lblToday: 'Today',
   },
   gameData: {
     branches: {

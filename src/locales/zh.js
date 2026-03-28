@@ -147,6 +147,7 @@ export default {
       lblConfirmLogout: '确认退出登录',
       msgConfirmLogout: '您确定要在此设备上退出登录吗？',
       lblClub: '俱乐部',
+      lblReferralProgram: 'Referral Program',
     },
     invite: {
       lblCopySuccess: '邀请码已复制到剪贴板',
@@ -500,6 +501,19 @@ export default {
     lblUnlockFirst: '先解锁 {name}',
     lblUpgradeTo3: '将 {name} 升级到Lv.3',
     lblMax: 'MAX',
+  },
+  referral: {
+    lblTitle: 'Referral Program',
+    lblYourLink: 'Your referral link',
+    lblCopyLink: 'Copy Link',
+    lblShare: 'Share',
+    lblCopied: 'Copied!',
+    lblFriendsInvited: 'Friends invited',
+    lblRewardPerInvite: '+500 taps per invite',
+    lblRecentReferrals: 'Recent referrals',
+    lblNoReferrals: 'No referrals yet. Share your link!',
+    lblDaysAgo: '{days} days ago',
+    lblToday: 'Today',
   },
   gameData: {
     branches: {

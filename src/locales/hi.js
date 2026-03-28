@@ -147,6 +147,7 @@ export default {
       lblConfirmLogout: 'लॉगआउट की पुष्टि करें',
       msgConfirmLogout: 'क्या आप इस डिवाइस पर लॉगआउट करना चाहते हैं?',
       lblClub: 'क्लब',
+      lblReferralProgram: 'Referral Program',
     },
     invite: {
       lblCopySuccess: 'आमंत्रण कोड क्लिपबोर्ड में कॉपी किया गया',
@@ -499,6 +500,19 @@ export default {
     lblUnlockFirst: 'पहले {name} अनलॉक करें',
     lblUpgradeTo3: '{name} को लेव. 3 तक अपग्रेड करें',
     lblMax: 'MAX',
+  },
+  referral: {
+    lblTitle: 'Referral Program',
+    lblYourLink: 'Your referral link',
+    lblCopyLink: 'Copy Link',
+    lblShare: 'Share',
+    lblCopied: 'Copied!',
+    lblFriendsInvited: 'Friends invited',
+    lblRewardPerInvite: '+500 taps per invite',
+    lblRecentReferrals: 'Recent referrals',
+    lblNoReferrals: 'No referrals yet. Share your link!',
+    lblDaysAgo: '{days} days ago',
+    lblToday: 'Today',
   },
   gameData: {
     branches: {

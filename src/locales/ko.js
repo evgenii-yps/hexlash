@@ -147,6 +147,7 @@ export default {
       lblConfirmLogout: '로그아웃 확인',
       msgConfirmLogout: '이 기기에서 로그아웃하시겠습니까?',
       lblClub: '클럽',
+      lblReferralProgram: 'Referral Program',
     },
     invite: {
       lblCopySuccess: '초대 코드가 클립보드에 복사되었습니다.',
@@ -500,6 +501,19 @@ export default {
     lblUnlockFirst: '먼저 {name}을(를) 해제하세요',
     lblUpgradeTo3: '{name}을(를) Lv. 3으로 업그레이드',
     lblMax: 'MAX',
+  },
+  referral: {
+    lblTitle: 'Referral Program',
+    lblYourLink: 'Your referral link',
+    lblCopyLink: 'Copy Link',
+    lblShare: 'Share',
+    lblCopied: 'Copied!',
+    lblFriendsInvited: 'Friends invited',
+    lblRewardPerInvite: '+500 taps per invite',
+    lblRecentReferrals: 'Recent referrals',
+    lblNoReferrals: 'No referrals yet. Share your link!',
+    lblDaysAgo: '{days} days ago',
+    lblToday: 'Today',
   },
   gameData: {
     branches: {

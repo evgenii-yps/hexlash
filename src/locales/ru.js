@@ -148,6 +148,7 @@ export default {
       lblConfirmLogout: 'Подтвердите выход',
       msgConfirmLogout: 'Вы уверены, что хотите выйти с этого устройства?',
       lblClub: 'Клуб',
+      lblReferralProgram: 'Реферальная программа',
     },
     invite: {
       lblInvite: 'Код приглашения',
@@ -579,7 +580,20 @@ export default {
     lblToUnlock: 'Для открытия:',
     lblUnlockFirst: 'Сначала откройте {name}',
     lblUpgradeTo3: 'Прокачайте {name} до ур. 3',
-    lblMax: 'МАКС',
+    lblMax: 'М��КС',
+  },
+  referral: {
+    lblTitle: 'Реферальная программа',
+    lblYourLink: 'Твоя реферальная ссылка',
+    lblCopyLink: 'Копировать',
+    lblShare: 'Поделиться',
+    lblCopied: 'Скопировано!',
+    lblFriendsInvited: 'Друзей приглашено',
+    lblRewardPerInvite: '+500 тапов за приглашение',
+    lblRecentReferrals: 'Недавние рефералы',
+    lblNoReferrals: 'Пока нет рефералов. Поделись ссылкой!',
+    lblDaysAgo: '{days} дн. назад',
+    lblToday: 'Сегодня',
   },
   gameData: {
     branches: {

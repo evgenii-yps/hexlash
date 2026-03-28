@@ -40,10 +40,20 @@
 
             <div v-if="isOwner">
               <ProfileInvite/>
+              <div class="referral-btn-wrapper">
+                <HexButton variant="secondary" block @click="showReferralModal = true">
+                  {{ t.profile.lblReferralProgram }}
+                </HexButton>
+              </div>
               <ProfileButtons/>
               <div class="beta-text">{{ isprod ? 'Prod' : 'Test' }} beta - {{version}} </div>
               <div class="scroll-gap"/>
             </div>
+
+            <ReferralModal
+                v-if="showReferralModal"
+                @close="showReferralModal = false"
+            />
           </div>
         </div>
       </div>
@@ -68,6 +78,8 @@ import ProfileAvatar from "@/components/fragments/profile/ProfileAvatar.vue";
 import ProfileSkins from "@/components/fragments/profile/skins/ProfileSkins.vue";
 import UserName from "@/components/fragments/profile/UserName.vue";
 import UserAvatar from "@/components/fragments/profile/UserAvatar.vue";
+import HexButton from "@/components/ui/HexButton.vue";
+import ReferralModal from "@/components/fragments/profile/ReferralModal.vue";
 import * as amplitude from "@amplitude/analytics-browser";
 
 const version = __APP_VERSION__;
@@ -79,7 +91,8 @@ const route = useRoute();
 const master = computed(() => store.getters['master/getMaster']);
 const userData = ref(null);
 const isOwner = ref(false);
-const loading = ref(true);  // Флаг загрузки
+const loading = ref(true);
+const showReferralModal = ref(false);
 
 const loadUser = async () => {
 
@@ -224,5 +237,9 @@ onMounted(() => {
   display: flex;
   margin-top: 20px;
   width:150px;
+}
+
+.referral-btn-wrapper {
+  padding: 10px 15px;
 }
 </style>

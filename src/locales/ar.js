@@ -147,6 +147,7 @@ export default {
       lblConfirmLogout: 'تأكيد تسجيل الخروج',
       msgConfirmLogout: 'هل أنت متأكد من أنك تريد تسجيل الخروج من هذا الجهاز؟',
       lblClub: 'نادي',
+      lblReferralProgram: 'Referral Program',
     },
     invite: {
       lblCopySuccess: 'تم نسخ رمز الدعوة إلى الحافظة',
@@ -499,6 +500,19 @@ export default {
     lblUnlockFirst: 'افتح {name} أولاً',
     lblUpgradeTo3: 'رقّي {name} إلى مست. 3',
     lblMax: 'MAX',
+  },
+  referral: {
+    lblTitle: 'Referral Program',
+    lblYourLink: 'Your referral link',
+    lblCopyLink: 'Copy Link',
+    lblShare: 'Share',
+    lblCopied: 'Copied!',
+    lblFriendsInvited: 'Friends invited',
+    lblRewardPerInvite: '+500 taps per invite',
+    lblRecentReferrals: 'Recent referrals',
+    lblNoReferrals: 'No referrals yet. Share your link!',
+    lblDaysAgo: '{days} days ago',
+    lblToday: 'Today',
   },
   gameData: {
     branches: {
