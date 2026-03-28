@@ -21,6 +21,16 @@
 
     <VBtnDark
         class="profile-btn"
+        @click="emit('open-referral')"
+    >
+      <template #prepend>
+        <img src="@/assets/images/icon_arrow.svg" alt="Arrow Icon" class="custom-icon"/>
+      </template>
+      {{ t.profile.lblReferralProgram }}
+    </VBtnDark>
+
+    <VBtnDark
+        class="profile-btn"
         @click="navigateTo('Account')"
     >
       <template #prepend>
@@ -69,6 +79,7 @@ import store from "@/core/state/store.js";
 import {t} from "@/locales/index.js";
 import * as masterService from "@/core/services/masterService.js";
 
+const emit = defineEmits(['open-referral']);
 const dialogExit = ref(false);
 const isTelegram = ref(false);
 
