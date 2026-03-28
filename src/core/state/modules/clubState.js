@@ -45,6 +45,10 @@ const mutations = {
             Object.assign(club, updatedClubData);
         }
     },
+    removeClub(state, clubId) {
+        state.clubs = state.clubs.filter(c => c.id !== clubId);
+        state.clubRatings.items = state.clubRatings.items.filter(c => c.id !== clubId);
+    },
     setClubRatings(state, clubs) {
         state.clubRatings.items.push(...clubs);
     },
@@ -127,7 +131,11 @@ const actions = {
     },
     async deleteClub({commit}) {
         try {
+            const clubId = store.getters['master/getMaster']?.userData?.clubId;
             await clubService.deleteClub();
+            if (clubId) {
+                commit('removeClub', clubId);
+            }
             store.commit('master/updateMaster', {clubId: null, clubRole: null});
         } catch (error) {
             console.error('Failed to delete club:', error);
