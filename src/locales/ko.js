@@ -165,7 +165,6 @@ export default {
       lblWonTokens: '전투에서 얻은 토큰',
       lblFreeTokens: '훈련 토큰',
       lblInvitedUsers: '초대된 사용자',
-      lblDaysInClub: '클럽에서의 일수 (결석 없음)',
     },
     skins: {
       lblTitle: '전투 스킨',

@@ -125,6 +125,15 @@ const actions = {
             throw error;
         }
     },
+    async deleteClub({commit}) {
+        try {
+            await clubService.deleteClub();
+            store.commit('master/updateMaster', {clubId: null, clubRole: null});
+        } catch (error) {
+            console.error('Failed to delete club:', error);
+            throw error;
+        }
+    },
     async createClub({commit}, newClubData) {
         try {
             const newClubModel = await clubService.createClub(newClubData);

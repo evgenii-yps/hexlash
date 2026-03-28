@@ -165,7 +165,6 @@ export default {
       lblWonTokens: 'In Kämpfen gewonnene Token',
       lblFreeTokens: 'Trainings-Token',
       lblInvitedUsers: 'Eingeladene Benutzer',
-      lblDaysInClub: 'Tage im Club (ohne Unterbrechungen)',
     },
     skins: {
       lblTitle: 'KÄMPFER-SKINS',

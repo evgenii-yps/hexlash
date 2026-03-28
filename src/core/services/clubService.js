@@ -104,6 +104,14 @@ export const leaveClub = async () => {
     }
 };
 
+export const deleteClub = async () => {
+    try {
+        await apiClient.delete(`/club`, {authRequired: true});
+    } catch (error) {
+        throw new Error('Failed to delete club: ' + (error.response?.data?.error || error.message));
+    }
+};
+
 export const changeClub = async (clubId) => {
     try {
 

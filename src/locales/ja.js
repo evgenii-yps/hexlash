@@ -165,7 +165,6 @@ export default {
       lblWonTokens: '試合で獲得したトークン',
       lblFreeTokens: 'トレーニングで得たトークン',
       lblInvitedUsers: '招待したユーザー',
-      lblDaysInClub: 'クラブ在籍日数 (欠席なし)',
     },
     skins: {
       lblTitle: 'ファイタースキン',

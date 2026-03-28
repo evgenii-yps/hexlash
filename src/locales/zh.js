@@ -165,7 +165,6 @@ export default {
       lblWonTokens: '战斗中赢得的代币',
       lblFreeTokens: '训练代币',
       lblInvitedUsers: '邀请的用户',
-      lblDaysInClub: '俱乐部中的天数（无缺席）',
     },
     skins: {
       lblTitle: '战斗皮肤',

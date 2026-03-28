@@ -22,7 +22,6 @@ export const MOCK_USER_DATA = {
     freeTokens: 500,
     lostTokens: 300,
     invitedUsers: 3,
-    daysInClub: 0,
     noSkipDays: 0,
     achievements: [],
     skin: 'skin_m_1.png',

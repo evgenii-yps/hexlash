@@ -170,7 +170,6 @@ export default {
       lblWonTokens: 'Заработанные в боях токены',
       lblFreeTokens: 'Токены за тренировки',
       lblInvitedUsers: 'Приглашенные пользователи',
-      lblDaysInClub: 'Дни в клубе (без пропусков)',
     },
     skins: {
       lblTitle: 'СКИНЫ БОЙЦА',
@@ -274,6 +273,9 @@ export default {
     errorCreate: 'Ошибка создания клуба',
     lblLeaveClub: 'Покинуть клуб',
     lblLeaveClubDescription: 'Вы уверены, что хотите покинуть этот клуб? Если клуб закрытый, вы не сможете вернуться.',
+    lblDissolve: 'Распустить клуб',
+    lblDissolveConfirm: 'Уверены? Все участники будут удалены, а клуб — ликвидирован.',
+    lblDissolved: 'Клуб распущен',
     lblNoClubYet: 'У вас ещё нет клуба',
     lblNeedTaps: 'Нужно 10 000 тапов',
     lblOrJoinExisting: 'или вступить в существующий',
