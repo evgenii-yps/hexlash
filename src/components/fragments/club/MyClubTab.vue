@@ -411,7 +411,7 @@ const promoteDeputy = async () => {
     dialogActions.value = false;
     await reloadClub();
   } catch (e) {
-    store.commit('master/setError', e.message);
+    store.commit('master/setErrorMessage', { text: e.message, timeout: 3000, showButton: false });
   }
 };
 
@@ -424,7 +424,7 @@ const demoteMember = async () => {
     dialogActions.value = false;
     await reloadClub();
   } catch (e) {
-    store.commit('master/setError', e.message);
+    store.commit('master/setErrorMessage', { text: e.message, timeout: 3000, showButton: false });
   }
 };
 
@@ -441,7 +441,7 @@ const doKick = async () => {
     kickTarget.value = null;
     await reloadClub();
   } catch (e) {
-    store.commit('master/setError', e.message);
+    store.commit('master/setErrorMessage', { text: e.message, timeout: 3000, showButton: false });
   }
 };
 
@@ -458,7 +458,7 @@ const doTransfer = async () => {
     transferTarget.value = null;
     await reloadClub();
   } catch (e) {
-    store.commit('master/setError', e.message);
+    store.commit('master/setErrorMessage', { text: e.message, timeout: 3000, showButton: false });
   }
 };
 

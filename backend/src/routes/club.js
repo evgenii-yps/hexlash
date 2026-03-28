@@ -229,7 +229,7 @@ router.get('/search', authMiddleware, async (req, res) => {
 
     const where = {};
     if (name) {
-      where.name = { contains: name };
+      where.name = { contains: name, mode: 'insensitive' };
     }
 
     const clubs = await prisma.club.findMany({

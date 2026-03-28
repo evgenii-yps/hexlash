@@ -50,7 +50,6 @@ export const updateClubDataOnAPI = async (clubModel) => {
             clubId: clubModel.id,
             name: clubModel.name,
             description: clubModel.description,
-            imageUrl: clubModel.imageUrl,
             isPublic: clubModel.isPublic,
         };
 
