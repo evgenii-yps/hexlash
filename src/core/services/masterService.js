@@ -126,7 +126,12 @@ export const telegram = async (payload) => {
     }
 
     try {
+        const referralCode = localStorage.getItem('hexlash_referral_code');
+        if (referralCode) {
+            payload.referralCode = referralCode;
+        }
         const response = await apiClient.post('/auth/telegram', payload);
+        localStorage.removeItem('hexlash_referral_code');
         const {jwtToken, tempPassword, name} = response.data;
 
         if(name && tempPassword) {
@@ -190,10 +195,13 @@ export const register = async (credentials) => {
     }
 
     try {
+        const referralCode = localStorage.getItem('hexlash_referral_code');
         const response = await apiClient.post('/auth/register', {
             login: credentials.login,
-            password: credentials.password
+            password: credentials.password,
+            ...(referralCode ? { referralCode } : {}),
         });
+        localStorage.removeItem('hexlash_referral_code');
         const {jwtToken} = response.data;
 
         updateJwtToken(jwtToken);

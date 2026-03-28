@@ -3,7 +3,7 @@ const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const prisma = require('../lib/prisma');
 const { generateToken } = require('../utils/helpers');
-const { TELEGRAM_BOT_TOKEN, TELEGRAM_AUTH_MAX_AGE_SEC } = require('../config');
+const { TELEGRAM_BOT_TOKEN, TELEGRAM_AUTH_MAX_AGE_SEC, REFERRAL_REWARD_TAPS } = require('../config');
 
 const rateLimit = require('express-rate-limit');
 
@@ -33,6 +33,36 @@ const telegramLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+// Process referral reward for a newly created user
+async function processReferral(newUser, referralCode) {
+  if (!referralCode || referralCode === newUser.login) return;
+  try {
+    const referrer = await prisma.user.findUnique({
+      where: { login: referralCode },
+    });
+    if (!referrer) return;
+
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: newUser.id },
+        data: {
+          referredBy: referrer.login,
+          totalTaps: { increment: REFERRAL_REWARD_TAPS },
+        },
+      }),
+      prisma.user.update({
+        where: { id: referrer.id },
+        data: {
+          invitedUsers: { increment: 1 },
+          totalTaps: { increment: REFERRAL_REWARD_TAPS },
+        },
+      }),
+    ]);
+  } catch (err) {
+    console.error('Referral processing error:', err);
+  }
+}
 
 // POST /v1/auth/login
 router.post('/login', loginLimiter, async (req, res) => {
@@ -70,7 +100,7 @@ router.post('/login', loginLimiter, async (req, res) => {
 // POST /v1/auth/register
 router.post('/register', registerLimiter, async (req, res) => {
   try {
-    const { login: rawLogin, password } = req.body;
+    const { login: rawLogin, password, referralCode } = req.body;
     const login = rawLogin?.trim();
     if (!login || !password) {
       return res.status(400).json({ error: 'Login and password are required' });
@@ -109,6 +139,9 @@ router.post('/register', registerLimiter, async (req, res) => {
       });
     }
 
+    // Process referral reward
+    await processReferral(user, referralCode?.trim());
+
     const jwtToken = generateToken(user.id);
     res.json({ data: { jwtToken } });
   } catch (err) {
@@ -145,7 +178,7 @@ function validateTelegramPayload(payload) {
 // POST /v1/auth/telegram
 router.post('/telegram', telegramLimiter, async (req, res) => {
   try {
-    const { payload } = req.body;
+    const { payload, referralCode } = req.body;
     if (!payload) {
       return res.status(400).json({ error: 'Telegram payload required' });
     }
@@ -178,6 +211,9 @@ router.post('/telegram', telegramLimiter, async (req, res) => {
           balance: 1000000,
         },
       });
+
+      // Process referral reward for new Telegram user
+      await processReferral(user, referralCode?.trim());
 
       const jwtToken = generateToken(user.id);
       return res.json({

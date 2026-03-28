@@ -147,6 +147,7 @@ export default {
       lblConfirmLogout: 'ログアウトの確認',
       msgConfirmLogout: 'このデバイスでログアウトしてもよろしいですか？',
       lblClub: 'クラブ',
+      lblReferralProgram: 'Referral Program',
     },
     invite: {
       lblCopySuccess: '招待コードがクリップボードにコピーされました',
@@ -499,6 +500,19 @@ export default {
     lblUnlockFirst: '先に{name}をアンロックしてください',
     lblUpgradeTo3: '{name}をLv.3にアップグレード',
     lblMax: 'MAX',
+  },
+  referral: {
+    lblTitle: 'Referral Program',
+    lblYourLink: 'Your referral link',
+    lblCopyLink: 'Copy Link',
+    lblShare: 'Share',
+    lblCopied: 'Copied!',
+    lblFriendsInvited: 'Friends invited',
+    lblRewardPerInvite: '+500 taps per invite',
+    lblRecentReferrals: 'Recent referrals',
+    lblNoReferrals: 'No referrals yet. Share your link!',
+    lblDaysAgo: '{days} days ago',
+    lblToday: 'Today',
   },
   gameData: {
     branches: {

@@ -101,6 +101,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 | Path | View | Auth |
 |------|------|------|
 | `/auth/login` `/auth/signup` `/auth/reset` `/auth/telegram` | RainView | No |
+| `/r/:username` | Referral redirect → `/auth/signup` | No |
 | `/privacy` `/404` `/rules` `/verify-email` | Static | No |
 | `/` | RainView (home) | Yes |
 | `/help` | PageView | Yes |
@@ -293,6 +294,9 @@ PUNCH_MAX_PER_INTERVAL = 10000
 PUNCH_MAX_PER_BATCH = 10000
 PUNCH_INTERVAL_MS = 3600000   // 1 hour
 
+// Referral
+REFERRAL_REWARD_TAPS = 500    // taps awarded to both referrer and referred
+
 // Telegram Auth
 TELEGRAM_BOT_TOKEN = env      // for HMAC-SHA256 signature validation
 TELEGRAM_AUTH_MAX_AGE_SEC = 300  // 5 min replay window
@@ -406,7 +410,7 @@ AI_TRAINER_ENABLED = true
 **11 locales:** en, ru, de, es, fr, pt, ar, hi, ja, ko, zh
 
 **Key sections per locale:**
-- UI labels: `menu`, `auth`, `profile`, `arena`, `fight`, `training`, `moves`, `deck`, `cards`, `rating`, `club`, `info`, `nav`, `clubMode`, `friends`, `pvp`, `spectate`, `xpAllocation`
+- UI labels: `menu`, `auth`, `profile`, `arena`, `fight`, `training`, `moves`, `deck`, `cards`, `rating`, `club`, `info`, `nav`, `clubMode`, `friends`, `pvp`, `spectate`, `xpAllocation`, `referral`
 - Game data translations: `gameData.branches[id].{name,description}`, `gameData.moves[id].{name,description}`
 - Page content: `locales/pages/help/{lang}.json`, `locales/pages/rules/{lang}.json`
 
@@ -457,6 +461,7 @@ AI_TRAINER_ENABLED = true
 - `WalletInfo.vue` — **Unused** — functionality moved into ConnectWallet connected state. File preserved
 - `BuyTokens.vue` — Token purchase modal. **Temporarily disabled** — not rendered in ProfileWallet, file preserved for Phase 2 (Base contract)
 - `GameBalanceCard.vue` — Game balance display with withdraw button (shows "after listing" message)
+- `ReferralModal.vue` — Referral program modal: QR code (qrcode lib), copy link (clipboard API), share (Web Share API with fallback), referral stats + list. Opens from ProfileView button
 
 ---
 
@@ -466,8 +471,8 @@ Base: `/v1/`
 
 | Route | File | Purpose |
 |-------|------|---------|
-| `/auth` | auth.js | login, signup, reset, telegram. Rate limited: login 5/15min, register 3/hr, telegram 10/15min |
-| `/user` | user.js | profile, stats, avatar, achievements. Skin validated via regex. Delete uses $transaction with cascade |
+| `/auth` | auth.js | login, signup, reset, telegram. Rate limited: login 5/15min, register 3/hr, telegram 10/15min. Register + telegram accept `referralCode` — rewards both users +500 taps |
+| `/user` | user.js | profile, stats, avatar, achievements, referrals. Skin validated via regex. Delete uses $transaction with cascade. GET /referrals returns referral stats + list |
 | `/club` | club.js | create/edit/delete club, avatar, members, balance, roles (set-role, transfer-ownership, kick, invite). maxMembers=50, roles: owner/deputy/member. DELETE / dissolves club (owner-only, clears all members) |
 | `/task` | task.js | daily + social tasks |
 | `/file` | file.js | avatar/file upload |
@@ -517,6 +522,8 @@ Password reset: Returns 501 (not implemented) — no fake success
 User, Club, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask, UserDailyTask, Fight, PunchInfo, FriendRequest, Friendship
 
 **Club system fields:** User.clubRole (`owner`/`deputy`/`member`/null), Club.maxMembers (default 50), Club.battles/wins (auto-incremented on fight save). Max 3 deputies per club. Owner can set roles, transfer ownership, kick anyone, invite friends, dissolve club. Deputies can kick members only, invite friends. `User.daysInClub` removed (was never incremented).
+
+**Referral system fields:** User.referredBy (String?, login of referrer), User.invitedUsers (Int, referral count). On register/telegram with referralCode: both users get +500 taps (REFERRAL_REWARD_TAPS), invitedUsers incremented. Self-referral and non-existent referrer silently ignored.
 
 **Seed data:** 16 achievements (NEWBIE, CONNECTED_FIGHTER, REGULAR_FIGHTER, BATTLE_VETERAN, FIGHT_MASTER, COACH, RECRUITER, PROJECT_MAYHEM, MEATLOAF, TYLER, EXPERT, LUCKY_ONE, BOB, PAPER_STREET, MEETING_PARTICIPANT, GOLDEN_RULE) + social/daily tasks (en/ru)
 
@@ -595,6 +602,12 @@ Previous branches: `claude/update-claude-md-XVzH6`, `claude/add-pixel-icons-Hk6t
 - **Club 1/3:** Fixed 3 critical bugs (imageUrl phantom field, setError mutation mismatch, shared pagination counter) + 2 bonus fixes (case-insensitive search, 404 UI)
 - **Club 2/3:** Added DELETE /v1/club endpoint (dissolve club), club stats auto-increment (already working), removed unused `User.daysInClub` field + Prisma migration
 - **Club 3/3:** E2E code review, fixed stale state on club delete, CLAUDE.md update
+
+### Referral System — ✅ COMPLETE
+
+- **Referral 1/3:** Backend — User.referredBy field, processReferral() in auth.js (register + telegram), GET /user/referrals, REFERRAL_REWARD_TAPS=500, formatUserResponse updated
+- **Referral 2/3:** Frontend — /r/:username route, referralCode in localStorage → register/telegram, ReferralModal.vue (QR, copy, share, stats), ProfileView button, i18n ×11
+- **Referral 3/3:** E2E code review (all 9 steps verified), CLAUDE.md update
 
 ### "Neon Discipline" Redesign — ✅ COMPLETE
 

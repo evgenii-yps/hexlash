@@ -355,4 +355,37 @@ router.put('/settings', authMiddleware, async (req, res) => {
   }
 });
 
+// GET /v1/user/referrals
+router.get('/referrals', authMiddleware, async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.userId },
+      select: { login: true, invitedUsers: true, referredBy: true },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const referrals = await prisma.user.findMany({
+      where: { referredBy: user.login },
+      select: { login: true, createdAt: true },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
+
+    res.json({
+      data: {
+        referralCode: user.login,
+        referralCount: user.invitedUsers,
+        referredBy: user.referredBy,
+        referrals: referrals.map(r => ({ login: r.login, joinedAt: r.createdAt })),
+      },
+    });
+  } catch (err) {
+    console.error('Get referrals error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = router;

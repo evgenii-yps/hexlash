@@ -147,6 +147,7 @@ export default {
       lblConfirmLogout: 'Confirmar cierre de sesión',
       msgConfirmLogout: '¿Estás seguro de que quieres cerrar sesión en este dispositivo?',
       lblClub: 'Club',
+      lblReferralProgram: 'Referral Program',
     },
     invite: {
       lblCopySuccess: 'Código de invitación copiado al portapapeles',
@@ -502,6 +503,19 @@ export default {
     lblUnlockFirst: 'Desbloquea {name} primero',
     lblUpgradeTo3: 'Mejora {name} al Niv. 3',
     lblMax: 'MAX',
+  },
+  referral: {
+    lblTitle: 'Referral Program',
+    lblYourLink: 'Your referral link',
+    lblCopyLink: 'Copy Link',
+    lblShare: 'Share',
+    lblCopied: 'Copied!',
+    lblFriendsInvited: 'Friends invited',
+    lblRewardPerInvite: '+500 taps per invite',
+    lblRecentReferrals: 'Recent referrals',
+    lblNoReferrals: 'No referrals yet. Share your link!',
+    lblDaysAgo: '{days} days ago',
+    lblToday: 'Today',
   },
   gameData: {
     branches: {
