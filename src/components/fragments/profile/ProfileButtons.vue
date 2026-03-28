@@ -26,7 +26,7 @@
       <template #prepend>
         <img src="@/assets/images/icon_arrow.svg" alt="Arrow Icon" class="custom-icon"/>
       </template>
-      {{ t.profile.lblReferralProgram }}
+      {{ t.profile.buttons.lblReferralProgram }}
     </VBtnDark>
 
     <VBtnDark
