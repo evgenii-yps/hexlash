@@ -152,7 +152,7 @@ watch(isAuth, (newAuthState) => {
     // Если пользователь авторизован, подключаемся к WebSocket
     store.dispatch('webSocket/connectWebSocket');
     // Check for pending auto fights on auth
-    store.dispatch('autoFight/checkAndRunPending');
+    store.dispatch('clubMode/checkAndRunPending');
   } else {
     // Отключаем WebSocket, если пользователь разлогинился
     store.dispatch('webSocket/disconnectWebSocket');
@@ -170,7 +170,7 @@ const handleVisibilityChange = () => {
       store.dispatch('webSocket/connectWebSocket');
     //}
     // Check for pending auto fights
-    store.dispatch('autoFight/checkAndRunPending');
+    store.dispatch('clubMode/checkAndRunPending');
   }else if(!isAuth.value){
     store.dispatch('webSocket/disconnectWebSocket');
   }
@@ -203,11 +203,11 @@ onMounted(() => {
   window.addEventListener('online', handleOnlineStatus);
 
   // Initialize auto fight system
-  store.dispatch('autoFight/init');
+  store.dispatch('clubMode/init');
 
   // Run pending auto fights immediately after init (catch up missed fights on reload)
-  if (store.getters['autoFight/isEnabled'] && isAuth.value) {
-    store.dispatch('autoFight/checkAndRunPending');
+  if (store.getters['clubMode/isEnabled'] && isAuth.value) {
+    store.dispatch('clubMode/checkAndRunPending');
   }
 
   // Initialize PvP system
@@ -216,8 +216,8 @@ onMounted(() => {
   // Periodic auto-fight check — runs globally so fights trigger even if user
   // navigates away from Arena (where AutoFightStatus component lives)
   autoFightInterval = setInterval(() => {
-    if (store.getters['autoFight/isEnabled'] && isAuth.value) {
-      store.dispatch('autoFight/checkAndRunPending');
+    if (store.getters['clubMode/isEnabled'] && isAuth.value) {
+      store.dispatch('clubMode/checkAndRunPending');
     }
   }, 30000);
 

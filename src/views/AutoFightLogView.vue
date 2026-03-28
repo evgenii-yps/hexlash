@@ -99,17 +99,17 @@ import router from '@/router/index.js';
 import { t } from '@/locales/index.js';
 import AutoFightAnalysis from '@/components/AutoFightAnalysis.vue';
 
-const fightsToday = computed(() => store.getters['autoFight/getFightsToday']);
-const wins = computed(() => store.getters['autoFight/getWins']);
-const losses = computed(() => store.getters['autoFight/getLosses']);
-const draws = computed(() => store.getters['autoFight/getDraws']);
-const totalExp = computed(() => store.getters['autoFight/getTotalExpGained']);
-const fightLog = computed(() => store.getters['autoFight/getFightLog']);
-const canAnalyze = computed(() => store.getters['autoFight/canAnalyze']);
-const aiAnalysis = computed(() => store.getters['autoFight/getAiAnalysis']);
-const aiLoading = computed(() => store.getters['autoFight/getAiAnalysisLoading']);
-const aiError = computed(() => store.getters['autoFight/getAiAnalysisError']);
-const selectedPeriod = computed(() => store.getters['autoFight/getAiAnalysisPeriod']);
+const fightsToday = computed(() => store.getters['clubMode/getFightsToday']);
+const wins = computed(() => store.getters['clubMode/getWins']);
+const losses = computed(() => store.getters['clubMode/getLosses']);
+const draws = computed(() => store.getters['clubMode/getDraws']);
+const totalExp = computed(() => store.getters['clubMode/getTotalExpGained']);
+const fightLog = computed(() => store.getters['clubMode/getFightLog']);
+const canAnalyze = computed(() => store.getters['clubMode/canAnalyze']);
+const aiAnalysis = computed(() => store.getters['clubMode/getAiAnalysis']);
+const aiLoading = computed(() => store.getters['clubMode/getAiAnalysisLoading']);
+const aiError = computed(() => store.getters['clubMode/getAiAnalysisError']);
+const selectedPeriod = computed(() => store.getters['clubMode/getAiAnalysisPeriod']);
 
 const periods = computed(() => [
   { value: 'last_5', label: t.value.autoFight.lblLast5 },
@@ -118,12 +118,12 @@ const periods = computed(() => [
 ]);
 
 const selectPeriod = (period) => {
-  store.commit('autoFight/setAiAnalysisPeriod', period);
-  store.dispatch('autoFight/clearAnalysis');
+  store.commit('clubMode/setAiAnalysisPeriod', period);
+  store.dispatch('clubMode/clearAnalysis');
 };
 
 const runAnalysis = () => {
-  store.dispatch('autoFight/requestAnalysis');
+  store.dispatch('clubMode/requestAnalysis');
 };
 
 const resultLabel = (result) => {

@@ -75,7 +75,7 @@ import {getOnlinePlayersCount} from "@/core/services/statsService.js";
 
 const master = computed(() => store.getters['master/getMaster']);
 const isBuildValid = computed(() => store.getters['fight/isBuildValid']);
-const isAutoFightEnabled = computed(() => store.getters['autoFight/isEnabled']);
+const isAutoFightEnabled = computed(() => store.getters['clubMode/isEnabled']);
 
 // PvP data
 const onlineFriendsCount = computed(() => store.getters['friends/onlineFriendsCount']);
@@ -108,9 +108,9 @@ const startFight = async () => {
       break;
     case 'auto':
       if (isAutoFightEnabled.value) {
-        await store.dispatch('autoFight/disable');
+        await store.dispatch('clubMode/disable');
       } else {
-        await store.dispatch('autoFight/enable');
+        await store.dispatch('clubMode/enable');
       }
       break;
     default:

@@ -342,7 +342,7 @@ const anyModActive = computed(() =>
 const isOverdrive = computed(() => store.getters['fight/isOverdrive']);
 
 // ── Auto Fight ──────────────────────────────────────────────────────────────
-const isAutoFightEnabled = computed(() => store.getters['autoFight/isEnabled']);
+const isAutoFightEnabled = computed(() => store.getters['clubMode/isEnabled']);
 let autoFightContinueTimer = null;
 
 // ── Action labels (for log) ───────────────────────────────────────────────
@@ -649,7 +649,7 @@ watch(fightPhase, (val, oldVal) => {
 
       // Log to auto fight if enabled
       if (isAutoFightEnabled.value) {
-        store.dispatch('autoFight/onFightEnd', {
+        store.dispatch('clubMode/onFightEnd', {
           result: resultState.value,
           rounds: roundNum.value,
           hp1: liveHP1.value,

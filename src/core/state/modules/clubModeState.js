@@ -6,13 +6,25 @@ import {
     MAX_HP, MAX_ROUNDS, TOTAL_ROUNDS, ROUND_ANIMATION_MS, COUNTDOWN,
     DICE_COOLDOWN_ROUNDS, EMERGENCY_HP_THRESHOLD,
     COACH_MIN_ROUND, COACH_TRIGGER_CHANCE, COACH_BOOST_ROUNDS,
-    AUTO_FIGHT_MIN_INTERVAL, AUTO_FIGHT_MAX_INTERVAL,
-    AUTO_FIGHT_MAX_PER_DAY, AUTO_FIGHT_MAX_PER_SESSION,
+    CLUB_MODE_MIN_INTERVAL, CLUB_MODE_MAX_INTERVAL,
+    CLUB_MODE_MAX_PER_DAY, CLUB_MODE_MAX_PER_SESSION,
 } from '@/core/constants.js';
 import apiClient from '@/core/api/apiClient.js';
 
-const STORAGE_KEY = 'hexlash_autofight_state';
-const HISTORY_KEY = 'hexlash_autofight_history';
+// Миграция localStorage ключей: autofight → clubmode
+const oldState = localStorage.getItem('hexlash_autofight_state');
+if (oldState && !localStorage.getItem('hexlash_clubmode_state')) {
+    localStorage.setItem('hexlash_clubmode_state', oldState);
+    localStorage.removeItem('hexlash_autofight_state');
+}
+const oldHistory = localStorage.getItem('hexlash_autofight_history');
+if (oldHistory && !localStorage.getItem('hexlash_clubmode_history')) {
+    localStorage.setItem('hexlash_clubmode_history', oldHistory);
+    localStorage.removeItem('hexlash_autofight_history');
+}
+
+const STORAGE_KEY = 'hexlash_clubmode_state';
+const HISTORY_KEY = 'hexlash_clubmode_history';
 
 // ─── Persistence ────────────────────────────────────────────────────────────
 function saveState(state) {
@@ -55,7 +67,7 @@ function loadHistory() {
 }
 
 function getRandomInterval() {
-    return Math.random() * (AUTO_FIGHT_MAX_INTERVAL - AUTO_FIGHT_MIN_INTERVAL) + AUTO_FIGHT_MIN_INTERVAL;
+    return Math.random() * (CLUB_MODE_MAX_INTERVAL - CLUB_MODE_MIN_INTERVAL) + CLUB_MODE_MIN_INTERVAL;
 }
 
 function getTodayDate() {
@@ -66,7 +78,7 @@ function getTodayDate() {
     return `${yyyy}-${mm}-${dd}`; // Local date "YYYY-MM-DD"
 }
 
-// ─── Dice effects for auto fight simulation ────────────────────────────────
+// ─── Dice effects for club mode simulation ─────────────────────────────────
 const DICE_EFFECTS = ['heal', 'adrenaline', 'shield', 'blind', 'rage', 'crit'];
 
 // ─── Fast offline fight simulation ──────────────────────────────────────────
@@ -223,7 +235,7 @@ const state = {
     // Fight log (persisted separately)
     fightLog: [],
 
-    // Current live auto fight (for spectating)
+    // Current live club mode fight (for spectating)
     liveFight: null, // { id, opponent, status, startedAt, hp1, hp2, round, roundLog }
 
     // AI Analysis
@@ -264,9 +276,9 @@ const getters = {
 
     canAnalyze: (s) => s.fightLog.length > 0,
 
-    canStartAutoFight: (s) => {
-        if (s.fightsToday >= AUTO_FIGHT_MAX_PER_DAY) return { allowed: false, reason: 'dailyLimit' };
-        if (s.sessionFights >= AUTO_FIGHT_MAX_PER_SESSION) return { allowed: false, reason: 'sessionLimit' };
+    canStartClubMode: (s) => {
+        if (s.fightsToday >= CLUB_MODE_MAX_PER_DAY) return { allowed: false, reason: 'dailyLimit' };
+        if (s.sessionFights >= CLUB_MODE_MAX_PER_SESSION) return { allowed: false, reason: 'sessionLimit' };
         return { allowed: true };
     },
 
@@ -335,7 +347,7 @@ const mutations = {
 // ─── Actions ────────────────────────────────────────────────────────────────
 const actions = {
 
-    /** Initialize auto fight state from localStorage. */
+    /** Initialize club mode state from localStorage. */
     init({ commit, state }) {
         const saved = loadState();
         if (saved) {
@@ -380,11 +392,11 @@ const actions = {
         }
     },
 
-    /** Enable auto fight mode. */
+    /** Enable club mode. */
     enable({ commit, state, rootGetters }) {
         const modules = rootGetters['fight/getPlayerModules'];
         if (!modules || !modules.every(m => m !== null)) {
-            console.warn('[AutoFight] Enable failed — playerModules invalid:', JSON.stringify(modules));
+            console.warn('[ClubMode] Enable failed — playerModules invalid:', JSON.stringify(modules));
             return false;
         }
 
@@ -402,7 +414,7 @@ const actions = {
         return true;
     },
 
-    /** Disable auto fight mode. */
+    /** Disable club mode. */
     disable({ commit, state }) {
         if (state.liveFight) {
             commit('setStoppingAfterCurrent', true);
@@ -424,7 +436,7 @@ const actions = {
     },
 
     /**
-     * Check and run any pending auto fights.
+     * Check and run any pending club mode fights.
      * Called on app load / visibility change.
      * Simulates missed fights instantly and schedules next one.
      */
@@ -449,7 +461,7 @@ const actions = {
             const now = Date.now();
             const modules = rootGetters['fight/getPlayerModules'];
             if (!modules || !modules.every(m => m !== null)) {
-                console.warn('[AutoFight] Skipped — playerModules invalid:', JSON.stringify(modules));
+                console.warn('[ClubMode] Skipped — playerModules invalid:', JSON.stringify(modules));
                 // Reschedule so timer doesn't freeze at 0:00
                 if (state.nextFightAt && now >= state.nextFightAt) {
                     commit('setNextFightAt', now + getRandomInterval());
@@ -483,12 +495,12 @@ const actions = {
 
             // Simulate missed fights
             let nextAt = state.nextFightAt;
-            while (nextAt && now >= nextAt && state.fightsToday < AUTO_FIGHT_MAX_PER_DAY && state.sessionFights < AUTO_FIGHT_MAX_PER_SESSION) {
+            while (nextAt && now >= nextAt && state.fightsToday < CLUB_MODE_MAX_PER_DAY && state.sessionFights < CLUB_MODE_MAX_PER_SESSION) {
                 const fightData = simulateFullFight(modules, state.difficulty, playerPower, playerDeck, playerCardLevels);
                 const expGain = fightData.result === 'win' ? 10 : 5;
 
                 const logEntry = {
-                    id: 'autofight_' + nextAt,
+                    id: 'clubmode_' + nextAt,
                     timestamp: nextAt,
                     opponent: fightData.opponent.name,
                     opponentSkin: fightData.opponent.skin,
@@ -538,7 +550,7 @@ const actions = {
             saveState(state);
             saveHistory(state.fightLog);
         } catch (e) {
-            console.error('[AutoFight] checkAndRunPending error:', e);
+            console.error('[ClubMode] checkAndRunPending error:', e);
             // Reschedule to prevent permanent freeze
             const now = Date.now();
             if (!state.nextFightAt || now >= state.nextFightAt) {
@@ -549,13 +561,13 @@ const actions = {
     },
 
     /**
-     * Run a single auto fight live (player is watching).
+     * Run a single club mode fight live (player is watching).
      * This uses the existing cardFightState to run the fight.
      */
     async startLiveFight({ commit, state, dispatch, rootGetters }) {
         if (!state.enabled) return;
 
-        const canStart = rootGetters['autoFight/canStartAutoFight'];
+        const canStart = rootGetters['clubMode/canStartClubMode'];
         if (!canStart.allowed) {
             dispatch('disable');
             return;
@@ -567,7 +579,7 @@ const actions = {
 
     /**
      * Called when a fight ends (from CardFightView watcher).
-     * If auto fight is enabled, log the result and schedule next.
+     * If club mode is enabled, log the result and schedule next.
      */
     onFightEnd({ commit, state, dispatch, rootGetters }, { result, rounds, hp1, hp2 }) {
         if (!state.enabled) return;
@@ -582,7 +594,7 @@ const actions = {
         const emergencyProtocol = rootGetters['fight/getEmergencyProtocol'];
 
         const logEntry = {
-            id: 'autofight_' + Date.now(),
+            id: 'clubmode_' + Date.now(),
             timestamp: Date.now(),
             opponent: opponent?.name || 'Unknown',
             opponentSkin: opponent?.skin || 'skin_m_1.png',
@@ -629,10 +641,10 @@ const actions = {
                     ? `Defeat vs ${fight.opponent}. +${xp} XP`
                     : `Draw vs ${fight.opponent}. +${xp} XP`;
 
-            new Notification('Hexlash Auto Fight', {
+            new Notification('Hexlash Club Mode', {
                 body,
                 icon: '/favicon.ico',
-                tag: 'autofight-' + fight.id,
+                tag: 'clubmode-' + fight.id,
             });
         } catch (e) { /* ignore */ }
     },
@@ -664,7 +676,7 @@ const actions = {
             }));
 
             const locale = rootGetters['master/getLanguage'] || 'en';
-            const response = await apiClient.analyzeAutoFights(
+            const response = await apiClient.analyzeClubModeFights(
                 fights,
                 state.fightLog.length,
                 state.aiAnalysisPeriod,
@@ -673,7 +685,7 @@ const actions = {
 
             commit('setAiAnalysis', response.analysis);
         } catch (e) {
-            console.error('[AutoFight] AI analysis error:', e);
+            console.error('[ClubMode] AI analysis error:', e);
             commit('setAiAnalysisError', true);
         } finally {
             commit('setAiAnalysisLoading', false);

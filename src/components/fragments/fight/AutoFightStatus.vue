@@ -41,11 +41,11 @@ import store from '@/core/state/store.js';
 import router from '@/router/index.js';
 import { t } from '@/locales/index.js';
 
-const isEnabled = computed(() => store.getters['autoFight/isEnabled']);
-const fightsToday = computed(() => store.getters['autoFight/getFightsToday']);
-const wins = computed(() => store.getters['autoFight/getWins']);
-const losses = computed(() => store.getters['autoFight/getLosses']);
-const isStopping = computed(() => store.getters['autoFight/isStoppingAfterCurrent']);
+const isEnabled = computed(() => store.getters['clubMode/isEnabled']);
+const fightsToday = computed(() => store.getters['clubMode/getFightsToday']);
+const wins = computed(() => store.getters['clubMode/getWins']);
+const losses = computed(() => store.getters['clubMode/getLosses']);
+const isStopping = computed(() => store.getters['clubMode/isStoppingAfterCurrent']);
 
 const nextFightAt = computed(() => store.state.autoFight.nextFightAt);
 const now = ref(Date.now());
@@ -55,7 +55,7 @@ let fightTriggered = false;
 onMounted(() => {
   // Run pending check immediately on mount
   if (isEnabled.value) {
-    store.dispatch('autoFight/checkAndRunPending');
+    store.dispatch('clubMode/checkAndRunPending');
   }
 
   timerInterval = setInterval(() => {
@@ -64,7 +64,7 @@ onMounted(() => {
     // Trigger auto fight when timer reaches 0
     if (isEnabled.value && nextFightAt.value && now.value >= nextFightAt.value && !fightTriggered) {
       fightTriggered = true;
-      store.dispatch('autoFight/checkAndRunPending')
+      store.dispatch('clubMode/checkAndRunPending')
         .then(() => { fightTriggered = false; })
         .catch(() => { fightTriggered = false; });
     }
@@ -90,7 +90,7 @@ const timeDisplay = computed(() => {
 });
 
 const stopAutoFight = () => {
-  store.dispatch('autoFight/disable');
+  store.dispatch('clubMode/disable');
 };
 
 const viewLog = async () => {
