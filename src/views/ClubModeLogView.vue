@@ -32,7 +32,7 @@
         </div>
 
         <!-- AI Analysis result -->
-        <AutoFightAnalysis
+        <ClubModeAnalysis
           v-if="aiAnalysis || aiLoading || aiError"
           :loading="aiLoading"
           :analysis="aiAnalysis"
@@ -97,7 +97,7 @@ import { computed } from 'vue';
 import store from '@/core/state/store.js';
 import router from '@/router/index.js';
 import { t } from '@/locales/index.js';
-import AutoFightAnalysis from '@/components/AutoFightAnalysis.vue';
+import ClubModeAnalysis from '@/components/ClubModeAnalysis.vue';
 
 const fightsToday = computed(() => store.getters['clubMode/getFightsToday']);
 const wins = computed(() => store.getters['clubMode/getWins']);

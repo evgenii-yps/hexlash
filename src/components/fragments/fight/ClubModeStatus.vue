@@ -1,5 +1,5 @@
 <template>
-  <div v-if="isEnabled" class="autofight-status">
+  <div v-if="isEnabled" class="clubmode-status">
     <div class="status-header">
       <span class="status-icon">&#x1F504;</span>
       <span class="status-title">{{ t.autoFight.lblAutoFightActive }}</span>
@@ -47,7 +47,7 @@ const wins = computed(() => store.getters['clubMode/getWins']);
 const losses = computed(() => store.getters['clubMode/getLosses']);
 const isStopping = computed(() => store.getters['clubMode/isStoppingAfterCurrent']);
 
-const nextFightAt = computed(() => store.state.autoFight.nextFightAt);
+const nextFightAt = computed(() => store.state.clubMode.nextFightAt);
 const now = ref(Date.now());
 let timerInterval = null;
 let fightTriggered = false;
@@ -89,17 +89,17 @@ const timeDisplay = computed(() => {
   return `${m}:${s.toString().padStart(2, '0')}`;
 });
 
-const stopAutoFight = () => {
+const stopClubMode = () => {
   store.dispatch('clubMode/disable');
 };
 
 const viewLog = async () => {
-  await router.push('/arena/autofight-log');
+  await router.push('/arena/club-mode-log');
 };
 </script>
 
 <style scoped>
-.autofight-status {
+.clubmode-status {
   width: 100%;
   background: linear-gradient(135deg, var(--hex-bg-dark) 0%, var(--hex-bg-light) 100%);
   border: 1px solid color-mix(in srgb, var(--hex-primary) 30%, transparent);
@@ -109,7 +109,7 @@ const viewLog = async () => {
   overflow: hidden;
 }
 
-.autofight-status::before {
+.clubmode-status::before {
   content: "";
   position: absolute;
   top: 0;
