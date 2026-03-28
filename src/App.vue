@@ -151,7 +151,7 @@ watch(isAuth, (newAuthState) => {
   if (newAuthState) {
     // Если пользователь авторизован, подключаемся к WebSocket
     store.dispatch('webSocket/connectWebSocket');
-    // Check for pending auto fights on auth
+    // Check for pending club mode fights on auth
     store.dispatch('clubMode/checkAndRunPending');
   } else {
     // Отключаем WebSocket, если пользователь разлогинился
@@ -169,7 +169,7 @@ const handleVisibilityChange = () => {
     //if (!store.getters['webSocket/isConnected']) {
       store.dispatch('webSocket/connectWebSocket');
     //}
-    // Check for pending auto fights
+    // Check for pending club mode fights
     store.dispatch('clubMode/checkAndRunPending');
   }else if(!isAuth.value){
     store.dispatch('webSocket/disconnectWebSocket');
@@ -189,8 +189,8 @@ const handleOnlineStatus = () => {
 
 
 
-// Global auto-fight timer — checks every 30s regardless of which page is open
-let autoFightInterval = null;
+// Global club mode timer — checks every 30s regardless of which page is open
+let clubModeInterval = null;
 
 onMounted(() => {
 
@@ -202,10 +202,10 @@ onMounted(() => {
   document.addEventListener('visibilitychange', handleVisibilityChange);
   window.addEventListener('online', handleOnlineStatus);
 
-  // Initialize auto fight system
+  // Initialize club mode system
   store.dispatch('clubMode/init');
 
-  // Run pending auto fights immediately after init (catch up missed fights on reload)
+  // Run pending club mode fights immediately after init (catch up missed fights on reload)
   if (store.getters['clubMode/isEnabled'] && isAuth.value) {
     store.dispatch('clubMode/checkAndRunPending');
   }
@@ -213,9 +213,9 @@ onMounted(() => {
   // Initialize PvP system
   store.dispatch('pvp/init');
 
-  // Periodic auto-fight check — runs globally so fights trigger even if user
-  // navigates away from Arena (where AutoFightStatus component lives)
-  autoFightInterval = setInterval(() => {
+  // Periodic club mode check — runs globally so fights trigger even if user
+  // navigates away from Arena (where ClubModeStatus component lives)
+  clubModeInterval = setInterval(() => {
     if (store.getters['clubMode/isEnabled'] && isAuth.value) {
       store.dispatch('clubMode/checkAndRunPending');
     }
@@ -231,7 +231,7 @@ onBeforeUnmount(() => {
   document.removeEventListener('visibilitychange', handleVisibilityChange);
   window.removeEventListener('online', handleOnlineStatus);
 
-  clearInterval(autoFightInterval);
+  clearInterval(clubModeInterval);
 });
 
 

@@ -12,10 +12,10 @@
     <div class="fight-container" @scroll="handleScroll">
       <div class="fight-content-wrapper">
 
-        <!-- Auto fight banner -->
+        <!-- Club mode banner -->
         <div v-if="isClubModeEnabled && !isPvP" class="clubmode-banner">
           <span class="clubmode-banner-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--hex-primary)" stroke-width="2" stroke-linecap="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10"/><path d="M20.49 15a9 9 0 01-14.85 3.36L1 14"/></svg></span>
-          <span class="clubmode-banner-text">{{ t.autoFight.lblAutoFightInProgress }}</span>
+          <span class="clubmode-banner-text">{{ t.clubMode.lblClubModeInProgress }}</span>
         </div>
 
         <!-- Countdown overlay -->
@@ -341,7 +341,7 @@ const anyModActive = computed(() =>
 // ── Overdrive ──────────────────────────────────────────────────────────────
 const isOverdrive = computed(() => store.getters['fight/isOverdrive']);
 
-// ── Auto Fight ──────────────────────────────────────────────────────────────
+// ── Club Mode ──────────────────────────────────────────────────────────────
 const isClubModeEnabled = computed(() => store.getters['clubMode/isEnabled']);
 let clubModeContinueTimer = null;
 
@@ -609,7 +609,7 @@ watch(fightPhase, (val, oldVal) => {
   }
   if (val === 'coach') {
     stopFightTimer();
-    // Auto-handle coach when auto fight is active
+    // Auto-handle coach when club mode is active
     if (isClubModeEnabled.value) {
       // Auto-select attack if low HP, else attack (aggressive auto strategy)
       const autoAction = liveHP1.value < 50 ? 'defense' : 'attack';
@@ -647,7 +647,7 @@ watch(fightPhase, (val, oldVal) => {
         totalDamageDealt: fightStats.value.totalDamageDealt,
       }, { authRequired: true }).catch(() => {});
 
-      // Log to auto fight if enabled
+      // Log to club mode if enabled
       if (isClubModeEnabled.value) {
         store.dispatch('clubMode/onFightEnd', {
           result: resultState.value,
@@ -679,7 +679,7 @@ const rollDice = () => {
   }
 };
 
-// ── Auto-dice for auto fights ──────────────────────────────────────────
+// ── Auto-dice for club mode fights ──────────────────────────────────────────
 watch([() => diceState.value.ready, fightPhase], ([ready, phase]) => {
   if (isClubModeEnabled.value && ready && phase === 'fighting' && roundNum.value > 0) {
     setTimeout(() => {
@@ -1929,7 +1929,7 @@ const flashStyle = computed(() => ({
   letter-spacing: 1px;
 }
 
-/* ── Auto Fight Banner ──────────────────────────────────────────── */
+/* ── Club Mode Banner ──────────────────────────────────────────── */
 .clubmode-banner {
   display: flex;
   align-items: center;

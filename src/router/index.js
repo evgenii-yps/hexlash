@@ -121,7 +121,7 @@ router.beforeEach(async (to, from, next) => {
                 }
             }
 
-            // Block manual fight/matchmaking while auto fight is active
+            // Block manual fight/matchmaking while club mode is active
             if (to.path === '/fight' || to.path === '/matchmaking') {
                 const clubModeEnabled = store.getters['clubMode/isEnabled'];
                 if (clubModeEnabled) {

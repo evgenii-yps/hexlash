@@ -53,7 +53,7 @@
         <span v-if="selectedMode === 'pvp'" class="check"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--hex-primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 10 18 20 6"/></svg></span>
       </div>
 
-      <!-- Auto Fight -->
+      <!-- Club Mode -->
       <div
         class="mode-option"
         :class="{ active: selectedMode === 'club' }"
@@ -63,8 +63,8 @@
           <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="var(--hex-mode-club)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10"/><path d="M20.49 15a9 9 0 01-14.85 3.36L1 14"/></svg>
         </div>
         <div class="option-info">
-          <div class="option-name">{{ t.arena.autoFight }}</div>
-          <div class="option-desc">{{ t.arena.autoDesc }}</div>
+          <div class="option-name">{{ t.arena.clubMode }}</div>
+          <div class="option-desc">{{ t.arena.clubDesc }}</div>
         </div>
         <span v-if="selectedMode === 'club'" class="check"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--hex-primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 10 18 20 6"/></svg></span>
       </div>

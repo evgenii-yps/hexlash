@@ -2,34 +2,34 @@
   <div v-if="isEnabled" class="clubmode-status">
     <div class="status-header">
       <span class="status-icon">&#x1F504;</span>
-      <span class="status-title">{{ t.autoFight.lblAutoFightActive }}</span>
+      <span class="status-title">{{ t.clubMode.lblClubModeActive }}</span>
     </div>
 
     <div class="status-rows">
       <div class="status-row">
-        <span class="status-label">{{ t.autoFight.lblNextFightIn }}:</span>
+        <span class="status-label">{{ t.clubMode.lblNextFightIn }}:</span>
         <span class="status-value">{{ timeDisplay }}</span>
       </div>
       <div class="status-row">
-        <span class="status-label">{{ t.autoFight.lblFightsToday }}:</span>
+        <span class="status-label">{{ t.clubMode.lblFightsToday }}:</span>
         <span class="status-value">{{ fightsToday }}</span>
       </div>
       <div class="status-row">
-        <span class="status-label">{{ t.autoFight.lblWins }}:</span>
+        <span class="status-label">{{ t.clubMode.lblWins }}:</span>
         <span class="status-value status-win">{{ wins }}</span>
         <span class="status-separator">|</span>
-        <span class="status-label">{{ t.autoFight.lblLosses }}:</span>
+        <span class="status-label">{{ t.clubMode.lblLosses }}:</span>
         <span class="status-value status-lose">{{ losses }}</span>
       </div>
     </div>
 
     <div v-if="isStopping" class="status-stopping">
-      {{ t.autoFight.lblStopping }}
+      {{ t.clubMode.lblStopping }}
     </div>
 
     <div class="status-buttons">
       <button class="status-btn status-btn-log" @click="viewLog">
-        {{ t.autoFight.lblAnalysis }}
+        {{ t.clubMode.lblAnalysis }}
       </button>
     </div>
   </div>
@@ -61,7 +61,7 @@ onMounted(() => {
   timerInterval = setInterval(() => {
     now.value = Date.now();
 
-    // Trigger auto fight when timer reaches 0
+    // Trigger club mode fight when timer reaches 0
     if (isEnabled.value && nextFightAt.value && now.value >= nextFightAt.value && !fightTriggered) {
       fightTriggered = true;
       store.dispatch('clubMode/checkAndRunPending')

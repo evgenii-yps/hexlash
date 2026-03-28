@@ -4,8 +4,8 @@
       <div class="log-content-wrapper">
 
         <div class="top-bar">
-          <button class="back-btn" @click="goBack">&larr; {{ t.autoFight.lblBack }}</button>
-          <span class="top-title">{{ t.autoFight.lblAiAnalysis }}</span>
+          <button class="back-btn" @click="goBack">&larr; {{ t.clubMode.lblBack }}</button>
+          <span class="top-title">{{ t.clubMode.lblAiAnalysis }}</span>
         </div>
 
         <!-- Period selector -->
@@ -26,8 +26,8 @@
             :disabled="!canAnalyze || aiLoading"
             @click="runAnalysis"
           >
-            <span v-if="!aiLoading">{{ t.autoFight.lblAnalyze }}</span>
-            <span v-else>{{ t.autoFight.lblAnalyzing }}</span>
+            <span v-if="!aiLoading">{{ t.clubMode.lblAnalyze }}</span>
+            <span v-else>{{ t.clubMode.lblAnalyzing }}</span>
           </button>
         </div>
 
@@ -42,34 +42,34 @@
 
         <!-- Fight Log section -->
         <div class="log-header">
-          <span class="log-title">{{ t.autoFight.lblFightLog }}</span>
+          <span class="log-title">{{ t.clubMode.lblFightLog }}</span>
         </div>
 
         <!-- Summary -->
         <div class="log-summary">
           <div class="summary-row">
-            <span>{{ t.autoFight.lblFightsToday }}:</span>
+            <span>{{ t.clubMode.lblFightsToday }}:</span>
             <span class="summary-value">{{ fightsToday }}</span>
           </div>
           <div class="summary-row">
-            <span>{{ t.autoFight.lblWins }}:</span>
+            <span>{{ t.clubMode.lblWins }}:</span>
             <span class="summary-value summary-win">{{ wins }}</span>
             <span class="summary-sep">|</span>
-            <span>{{ t.autoFight.lblLosses }}:</span>
+            <span>{{ t.clubMode.lblLosses }}:</span>
             <span class="summary-value summary-lose">{{ losses }}</span>
             <span class="summary-sep">|</span>
-            <span>{{ t.autoFight.lblDraws }}:</span>
+            <span>{{ t.clubMode.lblDraws }}:</span>
             <span class="summary-value summary-draw">{{ draws }}</span>
           </div>
           <div class="summary-row">
-            <span>{{ t.autoFight.lblTotalXp }}:</span>
+            <span>{{ t.clubMode.lblTotalXp }}:</span>
             <span class="summary-value summary-xp">{{ totalExp }} XP</span>
           </div>
         </div>
 
         <!-- Fight entries -->
         <div v-if="fightLog.length === 0" class="no-fights">
-          {{ t.autoFight.lblNoFights }}
+          {{ t.clubMode.lblNoFights }}
         </div>
 
         <div v-for="fight in fightLog" :key="fight.id" class="fight-entry" :class="'entry-' + fight.result">
@@ -81,7 +81,7 @@
             </span>
           </div>
           <div class="entry-details">
-            <span class="entry-rounds">{{ t.autoFight.lblRounds }}: {{ fight.rounds }}</span>
+            <span class="entry-rounds">{{ t.clubMode.lblRounds }}: {{ fight.rounds }}</span>
             <span class="entry-xp">+{{ totalXp(fight.expGained) }} XP</span>
           </div>
         </div>
@@ -112,9 +112,9 @@ const aiError = computed(() => store.getters['clubMode/getAiAnalysisError']);
 const selectedPeriod = computed(() => store.getters['clubMode/getAiAnalysisPeriod']);
 
 const periods = computed(() => [
-  { value: 'last_5', label: t.value.autoFight.lblLast5 },
-  { value: 'last_10', label: t.value.autoFight.lblLast10 },
-  { value: 'all', label: t.value.autoFight.lblAll },
+  { value: 'last_5', label: t.value.clubMode.lblLast5 },
+  { value: 'last_10', label: t.value.clubMode.lblLast10 },
+  { value: 'all', label: t.value.clubMode.lblAll },
 ]);
 
 const selectPeriod = (period) => {
@@ -127,9 +127,9 @@ const runAnalysis = () => {
 };
 
 const resultLabel = (result) => {
-  if (result === 'win') return t.value.autoFight.lblWin;
-  if (result === 'lose') return t.value.autoFight.lblLose;
-  return t.value.autoFight.lblDraw;
+  if (result === 'win') return t.value.clubMode.lblWin;
+  if (result === 'lose') return t.value.clubMode.lblLose;
+  return t.value.clubMode.lblDraw;
 };
 
 const formatTime = (ts) => {

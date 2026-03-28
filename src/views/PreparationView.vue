@@ -42,12 +42,12 @@
           </HexButton>
         </div>
 
-        <!-- Auto Fight Status (shown when auto mode selected or auto fight active) -->
+        <!-- Club Mode Status (shown when club mode selected or active) -->
         <div v-if="selectedMode === 'club' || isClubModeEnabled" class="clubmode-status-section">
           <ClubModeStatus v-if="isClubModeEnabled"/>
           <div v-else class="clubmode-inactive-hint">
             <svg class="hint-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--hex-text-muted)" stroke-width="2" stroke-linecap="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10"/><path d="M20.49 15a9 9 0 01-14.85 3.36L1 14"/></svg>
-            <span>{{ t.arena.autoFightInactive }}</span>
+            <span>{{ t.arena.clubModeInactive }}</span>
           </div>
         </div>
 
@@ -87,7 +87,7 @@ const selectedMode = ref('pve');
 // Button text depends on selected mode
 const startButtonText = computed(() => {
   if (selectedMode.value === 'club') {
-    return isClubModeEnabled.value ? t.value.arena.stopAuto : t.value.arena.startAuto;
+    return isClubModeEnabled.value ? t.value.arena.stopClub : t.value.arena.startClub;
   }
   return t.value.arena.lblStartFight;
 });
@@ -96,7 +96,7 @@ const onModeSelect = (mode) => {
   selectedMode.value = mode;
 };
 
-// Force auto mode when auto fight is active
+// Force club mode when club mode is active
 watch(isClubModeEnabled, (active) => {
   if (active) selectedMode.value = 'club';
 }, { immediate: true });
@@ -253,7 +253,7 @@ const handleScroll = (event) => {
 }
 
 
-/* ── Auto Fight Status ────────────────────────────────────── */
+/* ── Club Mode Status ────────────────────────────────────── */
 .clubmode-status-section {
   margin-top: 12px;
   display: flex;
