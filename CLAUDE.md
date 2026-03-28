@@ -82,7 +82,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 /skills/                   — 12 Claude Code skill files
   hexlash-dev/SKILL.md        — Core workflow, project structure, git
   hexlash-vue/SKILL.md        — Vue 3 frontend conventions
-  hexlash-combat/SKILL.md     — Combat system (PvE, PvP, Auto Fight)
+  hexlash-combat/SKILL.md     — Combat system (PvE, PvP, Club Mode)
   hexlash-websocket/SKILL.md  — WebSocket protocol
   hexlash-deploy/SKILL.md     — Deploy & infrastructure
   hexlash-design/SKILL.md     — Design system (colors, fonts, UI)
@@ -105,7 +105,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 | `/` | RainView (home) | Yes |
 | `/help` | PageView | Yes |
 | `/arena` | PreparationView | Yes |
-| `/arena/autofight-log` | AutoFightLogView | Yes |
+| `/arena/club-mode-log` | ClubModeLogView | Yes |
 | `/fight` | CardFightView | Yes |
 | `/training` | TrainingView | Yes |
 | `/training/moves` | MoveTreeView | Yes |
@@ -134,7 +134,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 | `achievementState` | Achievements list + unlocking |
 | `contractState` | Web3 wallet, token balance |
 | `webSocketState` | WS connection, real-time messages |
-| `autoFightState` | Auto fight: scheduling, offline simulation, fight log, push notifications, daily auto-reset, server sync (POST /fight/save), AI analysis (series analysis via Claude API) |
+| `clubModeState` | Club mode: scheduling, offline simulation, fight log, push notifications, daily auto-reset, server sync (POST /fight/save), AI analysis (series analysis via Claude API) |
 | `pvpState` | Real-time PvP matchmaking and fights |
 | `friendsState` | Friends list, friend requests, challenges (WebSocket-based) |
 
@@ -268,10 +268,10 @@ SPEED_MOVE_PUNCH_MS = 1500
 BATCH_SEND_INTERVAL_MS = 11000
 DECIMALS = 6             // token decimal places
 
-AUTO_FIGHT_MIN_INTERVAL = 600000    // 10 min
-AUTO_FIGHT_MAX_INTERVAL = 600000    // 10 min
-AUTO_FIGHT_MAX_PER_DAY = 144
-AUTO_FIGHT_MAX_PER_SESSION = 288
+CLUB_MODE_MIN_INTERVAL = 600000    // 10 min
+CLUB_MODE_MAX_INTERVAL = 600000    // 10 min
+CLUB_MODE_MAX_PER_DAY = 144
+CLUB_MODE_MAX_PER_SESSION = 288
 
 LISTING = 1783306800     // token listing timestamp
 ```
@@ -335,7 +335,7 @@ AI_TRAINER_ENABLED = true
 
 **Flow:** Build deck (4–8 modules) → Generate AI opponent → Simulate rounds → Dice mechanic → Coach advice → Save result
 
-**Auto Fight:** Toggle on Arena screen → fights every 10 min offline → uses CombatEngine + ModuleAIStrategy → localStorage persist (`hexlash_autofight_state`, `hexlash_autofight_history`) → push notifications via Notification API → limits: 144/day, 288/session → auto-catches up missed fights on tab focus → daily auto-reset: on new day clears fight log, wins/losses/draws/XP counters (no manual clear button) → **offline auto fights sync results to server** via `POST /fight/save` (increments pveWins/pveLosses/pveDraws/pveTotalFights). Dice uses cooldown (every 3 rounds, multiple per fight). XP: win=10, draw=7, lose=5.
+**Club Mode:** Toggle on Arena screen → fights every 10 min offline → uses CombatEngine + ModuleAIStrategy → localStorage persist (`hexlash_clubmode_state`, `hexlash_clubmode_history`) → push notifications via Notification API → limits: 144/day, 288/session → auto-catches up missed fights on tab focus → daily auto-reset: on new day clears fight log, wins/losses/draws/XP counters (no manual clear button) → **offline club mode fights sync results to server** via `POST /fight/save` (increments pveWins/pveLosses/pveDraws/pveTotalFights). Dice uses cooldown (every 3 rounds, multiple per fight). XP: win=10, draw=7, lose=5.
 
 **Sound:** Howler.js for punch sounds (BottomMenu, TrainingView) and rain ambience (RainView). Mute toggle in Profile > Account (`SoundToggle.vue`), persisted in localStorage (`isMuted`), checked via `store.getters['punch/isMuted']`
 
@@ -353,9 +353,9 @@ AI_TRAINER_ENABLED = true
 
 **AI Trainer:** Claude-powered post-fight analysis (PvE and PvP). Component `AiTrainerAnalysis.vue` renders on CardFightView results screen. Sends fight data (rounds, decks, result, dice/coach/emergency usage) to `POST /v1/ai/analyze-fight` → backend calls Anthropic Claude API → returns 4-section analysis: Fight Summary, What You Did Well, What Went Wrong, Advice. Feature flag: `AI_TRAINER_ENABLED`. Graceful degradation on error. i18n keys: `fight.lblAiTrainer`, `fight.lblAiLoading`, `fight.lblAiError`.
 
-**AI Auto Fight Analysis:** Claude-powered analysis of auto fight series. Component `AutoFightAnalysis.vue` renders on AutoFightLogView screen. Player selects period (Last 5 / Last 10 / All) and clicks "Analyze" → sends fight series data to `POST /v1/ai/auto-fight-summary` → returns 4-section analysis: Session Overview, Strengths, Weaknesses, Recommendation. Model: `claude-haiku-4-5-20251001`, max_tokens: 400, rate limit: 5/min. Vuex state in `autoFightState` (aiAnalysis, aiAnalysisLoading, aiAnalysisError, aiAnalysisPeriod). Auto fight log entries now include: playerModules, opponentModules, diceUsed, diceEffect, coachUsed, coachChoice, emergencyUsed.
+**AI Club Mode Analysis:** Claude-powered analysis of club mode fight series. Component `ClubModeAnalysis.vue` renders on ClubModeLogView screen. Player selects period (Last 5 / Last 10 / All) and clicks "Analyze" → sends fight series data to `POST /v1/ai/club-mode-summary` → returns 4-section analysis: Session Overview, Strengths, Weaknesses, Recommendation. Model: `claude-haiku-4-5-20251001`, max_tokens: 400, rate limit: 5/min. Vuex state in `clubModeState` (aiAnalysis, aiAnalysisLoading, aiAnalysisError, aiAnalysisPeriod). Club mode log entries now include: playerModules, opponentModules, diceUsed, diceEffect, coachUsed, coachChoice, emergencyUsed.
 
-**Data Persistence:** Progression (moves, XP, taps, deck, playerModules) syncs to server via `PUT /v1/user/progression` (debounced 3s). Server is source of truth — restores all data on login via `GET /v1/user/me`. PlayerModules (fighter archetypes) included in progression JSON. Auto fight state/history is localStorage-only (not critical — fight results already synced via `POST /fight/save`). PvP fight state is cleared from localStorage on `fight_end` via `clearSavedFight` action to prevent stale restore on next visit.
+**Data Persistence:** Progression (moves, XP, taps, deck, playerModules) syncs to server via `PUT /v1/user/progression` (debounced 3s). Server is source of truth — restores all data on login via `GET /v1/user/me`. PlayerModules (fighter archetypes) included in progression JSON. Club mode state/history is localStorage-only (not critical — fight results already synced via `POST /fight/save`). PvP fight state is cleared from localStorage on `fight_end` via `clearSavedFight` action to prevent stale restore on next visit.
 
 **Known PvE vs PvP divergences (under review):**
 
@@ -376,8 +376,8 @@ AI_TRAINER_ENABLED = true
 - `pvpMatchManager.js` — PvP match lifecycle
 - `pvpHandler.js` — PvP WebSocket message handling (dice_roll, coach_choice)
 - `AiTrainerAnalysis.vue` — AI Trainer post-fight analysis component
-- `AutoFightAnalysis.vue` — AI auto fight series analysis component
-- `backend/src/routes/ai.js` — AI Trainer + Auto Fight Summary API endpoints
+- `ClubModeAnalysis.vue` — AI club mode fight series analysis component
+- `backend/src/routes/ai.js` — AI Trainer + Club Mode Summary API endpoints
 
 ---
 
@@ -390,7 +390,7 @@ AI_TRAINER_ENABLED = true
 | Fight | `CardFightView.vue` | Main combat (PvE + PvP), dice, coach advice, HP bars, AI Trainer (PvE results). PvP mode: no BottomMenu, no PvP badge, reduced padding. Fully migrated to --hex-* vars: HexButton for results, inline SVGs, dice/coach/victory/defeat/overdrive all use design system vars |
 | Profile | `ProfileView.vue` | Tabs: balance, wallet, account, skins |
 | Ratings (League) | `RatingsView.vue` | 3 tabs: My Club, Clubs (leaderboard), Fighters (leaderboard). Default tab: My Club. URL: `/ratings/:type` (myclub/clubs/fighters). My Club tab: `MyClubTab.vue` component — shows club card (avatar, stats, members top-5, role badges owner/deputy, action menus: promote/demote/kick for owner+deputy, transfer ownership for owner) if user has club, or no-club state (create button, suggested clubs, browse link) |
-| Preparation | `PreparationView.vue` | Arena: action row (Mode + START FIGHT + Friends buttons), auto fight toggle/status. Friends button is text-only (no online indicator) |
+| Preparation | `PreparationView.vue` | Arena: action row (Mode + START FIGHT + Friends buttons), club mode toggle/status. Friends button is text-only (no online indicator) |
 | Friends | `FriendsView.vue` | Friends list, friend requests, search players |
 | Matchmaking | `MatchmakingView.vue` | Real-time PvP matchmaking queue. Opponent Found shows fighter skins (not icons). No colored borders. 100dvh support. |
 | Spectate | `SpectateView.vue` | Watch live PvP fights |
@@ -404,7 +404,7 @@ AI_TRAINER_ENABLED = true
 **11 locales:** en, ru, de, es, fr, pt, ar, hi, ja, ko, zh
 
 **Key sections per locale:**
-- UI labels: `menu`, `auth`, `profile`, `arena`, `fight`, `training`, `moves`, `deck`, `cards`, `rating`, `club`, `info`, `nav`, `autoFight`, `friends`, `pvp`, `spectate`, `xpAllocation`
+- UI labels: `menu`, `auth`, `profile`, `arena`, `fight`, `training`, `moves`, `deck`, `cards`, `rating`, `club`, `info`, `nav`, `clubMode`, `friends`, `pvp`, `spectate`, `xpAllocation`
 - Game data translations: `gameData.branches[id].{name,description}`, `gameData.moves[id].{name,description}`
 - Page content: `locales/pages/help/{lang}.json`, `locales/pages/rules/{lang}.json`
 
@@ -434,12 +434,12 @@ AI_TRAINER_ENABLED = true
 - `Punch3D.vue` — Three.js punching bag
 - `MoveTreeCard.vue` — move row in tree
 - `MoveDetailsModal.vue` — move detail/unlock popup
-- `AutoFightToggle.vue` — auto fight on/off button
-- `AutoFightStatus.vue` — auto fight live status + countdown
+- `ClubModeToggle.vue` — club mode on/off button
+- `ClubModeStatus.vue` — club mode live status + countdown
 - `SoundToggle.vue` — sound mute/unmute toggle (Profile > Account)
 - `HPBar.vue` — fight health bar
 - `Fighter.vue` — fighter display in combat
-- `ModeSelector.vue` — arena mode selector (PvE/PvP/Auto), compact button with dropdown, system sans-serif font
+- `ModeSelector.vue` — arena mode selector (PvE/PvP/Club), compact button with dropdown, system sans-serif font
 - `FriendCard.vue` — friend display card
 - `FriendRequestCard.vue` — incoming friend request
 - `ChallengeModal.vue` — PvP challenge popup (legacy, kept as fallback)
@@ -449,7 +449,7 @@ AI_TRAINER_ENABLED = true
 - `XPAllocationModal.vue` — XP allocation modal
 - `PvPStatsCard.vue` — PvP statistics display (league, rating, progress, wins/losses/winrate). Shown in Fighters tab of RatingsView
 - `AiTrainerAnalysis.vue` — Claude-powered post-fight analysis (PvE + PvP, results screen)
-- `AutoFightAnalysis.vue` — Claude-powered auto fight series analysis (AutoFightLogView)
+- `ClubModeAnalysis.vue` — Claude-powered club mode fight series analysis (ClubModeLogView)
 - `ProfileWallet.vue` — Wallet page: uses @wagmi/vue useAccount(), shows ConnectWallet + GameBalanceCard + HexCard placeholder. BuyTokens/WalletInfo removed from render
 - `ConnectWallet.vue` — Full wallet modal: Teleport modal with connector list (icons, dedup, rename Injected→Browser Wallet), connecting spinner, connected state (short address + chain + disconnect). Uses @wagmi/vue useConnect/useDisconnect/useConnectors. z-index 9000, Escape/overlay close, hex-fade/hex-slide-up transitions. 360px responsive
 - `WalletInfo.vue` — **Unused** — functionality moved into ConnectWallet connected state. File preserved
@@ -472,7 +472,7 @@ Base: `/v1/`
 | `/fight` | fight.js | fight creation, results, history |
 | `/stats` | stats.js | player and game statistics |
 | `/friends` | friends.js | friends list, requests, search players |
-| `/ai` | ai.js | AI Trainer fight analysis (POST /analyze-fight), Auto fight summary (POST /auto-fight-summary) |
+| `/ai` | ai.js | AI Trainer fight analysis (POST /analyze-fight), Club mode summary (POST /club-mode-summary) |
 
 Auth guard: JWT Bearer token via `middleware/auth.js`
 Telegram auth: HMAC-SHA256 signature validation via `validateTelegramPayload()` in auth.js
