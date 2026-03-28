@@ -17,6 +17,9 @@ module.exports = {
   PUNCH_MAX_PER_BATCH: 10000,
   PUNCH_INTERVAL_MS: 3600000, // 1 hour
 
+  // Referral
+  REFERRAL_REWARD_TAPS: 500,
+
   // PvP Combat
   MAX_HP: 100,
   MAX_ROUNDS: 10,

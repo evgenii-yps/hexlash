@@ -42,6 +42,7 @@ function formatUserResponse(user) {
     freeTokens: user.freeTokens,
     lostTokens: user.lostTokens,
     invitedUsers: user.invitedUsers,
+    referredBy: user.referredBy,
     noSkipDays: user.noSkipDays,
     clubId: user.clubId,
     clubRole: user.clubRole,
