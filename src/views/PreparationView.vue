@@ -241,9 +241,9 @@ const handleScroll = (event) => {
 
 .fight-btn-club-active {
   background-color: transparent !important;
-  border: 2px solid var(--hex-mode-auto) !important;
-  color: var(--hex-mode-auto) !important;
-  box-shadow: 0 0 20px color-mix(in srgb, var(--hex-mode-auto) 30%, transparent);
+  border: 2px solid var(--hex-mode-club) !important;
+  color: var(--hex-mode-club) !important;
+  box-shadow: 0 0 20px color-mix(in srgb, var(--hex-mode-club) 30%, transparent);
 }
 
 /* ── Friends compact button ──────────────────────────────── */
