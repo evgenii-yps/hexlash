@@ -39,13 +39,7 @@
             <ProfileAchievements :userData="userData"/>
 
             <div v-if="isOwner">
-              <ProfileInvite/>
-              <div class="referral-btn-wrapper">
-                <HexButton variant="secondary" block @click="showReferralModal = true">
-                  {{ t.profile.lblReferralProgram }}
-                </HexButton>
-              </div>
-              <ProfileButtons/>
+              <ProfileButtons @open-referral="showReferralModal = true"/>
               <div class="beta-text">{{ isprod ? 'Prod' : 'Test' }} beta - {{version}} </div>
               <div class="scroll-gap"/>
             </div>
@@ -73,12 +67,10 @@ import ProfileButtons from "@/components/fragments/profile/ProfileButtons.vue";
 import ProfileWallet from "@/components/fragments/profile/wallet/ProfileWallet.vue";
 import ProfileSettings from "@/components/fragments/profile/account/ProfileAccount.vue";
 import ProfileName from "@/components/fragments/profile/ProfileName.vue";
-import ProfileInvite from "@/components/fragments/profile/ProfileInvite.vue";
 import ProfileAvatar from "@/components/fragments/profile/ProfileAvatar.vue";
 import ProfileSkins from "@/components/fragments/profile/skins/ProfileSkins.vue";
 import UserName from "@/components/fragments/profile/UserName.vue";
 import UserAvatar from "@/components/fragments/profile/UserAvatar.vue";
-import HexButton from "@/components/ui/HexButton.vue";
 import ReferralModal from "@/components/fragments/profile/ReferralModal.vue";
 import * as amplitude from "@amplitude/analytics-browser";
 
@@ -239,7 +231,4 @@ onMounted(() => {
   width:150px;
 }
 
-.referral-btn-wrapper {
-  padding: 10px 15px;
-}
 </style>
