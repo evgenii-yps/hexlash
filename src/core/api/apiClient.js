@@ -69,8 +69,8 @@ apiClient.interceptors.response.use(
 );
 
 // ── AI API helpers ──────────────────────────────────────────────────────────
-apiClient.analyzeAutoFights = function (fights, totalFights, period, locale) {
-    return this.post('/ai/auto-fight-summary', { fights, totalFights, period, locale }, { authRequired: true });
+apiClient.analyzeClubModeFights = function (fights, totalFights, period, locale) {
+    return this.post('/ai/club-mode-summary', { fights, totalFights, period, locale }, { authRequired: true });
 };
 
 export default apiClient;

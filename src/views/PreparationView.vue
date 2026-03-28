@@ -17,7 +17,7 @@
         <div class="action-row">
           <ModeSelector
             :onlineCount="onlinePlayersCount"
-            :autoFightActive="isAutoFightEnabled"
+            :clubModeActive="isClubModeEnabled"
             @select="onModeSelect"
           />
 
@@ -25,8 +25,8 @@
               variant="primary"
               size="lg"
               class="fight-btn hex-glow-pulse"
-              :class="{ 'fight-btn-auto-active': selectedMode === 'auto' && isAutoFightEnabled }"
-              :disabled="!isBuildValid && selectedMode !== 'auto'"
+              :class="{ 'fight-btn-club-active': selectedMode === 'club' && isClubModeEnabled }"
+              :disabled="!isBuildValid && selectedMode !== 'club'"
               @click="startFight"
           >
             {{ startButtonText }}
@@ -42,12 +42,12 @@
           </HexButton>
         </div>
 
-        <!-- Auto Fight Status (shown when auto mode selected or auto fight active) -->
-        <div v-if="selectedMode === 'auto' || isAutoFightEnabled" class="autofight-status-section">
-          <AutoFightStatus v-if="isAutoFightEnabled"/>
-          <div v-else class="autofight-inactive-hint">
+        <!-- Club Mode Status (shown when club mode selected or active) -->
+        <div v-if="selectedMode === 'club' || isClubModeEnabled" class="clubmode-status-section">
+          <ClubModeStatus v-if="isClubModeEnabled"/>
+          <div v-else class="clubmode-inactive-hint">
             <svg class="hint-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--hex-text-muted)" stroke-width="2" stroke-linecap="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10"/><path d="M20.49 15a9 9 0 01-14.85 3.36L1 14"/></svg>
-            <span>{{ t.arena.autoFightInactive }}</span>
+            <span>{{ t.arena.clubModeInactive }}</span>
           </div>
         </div>
 
@@ -68,14 +68,14 @@ import {t} from "@/locales/index.js";
 import UserAvatar from "@/components/fragments/profile/UserAvatar.vue";
 import UserName from "@/components/fragments/profile/UserName.vue";
 import ModuleBuilder from "@/components/fragments/modules/ModuleBuilder.vue";
-import AutoFightStatus from "@/components/fragments/fight/AutoFightStatus.vue";
+import ClubModeStatus from "@/components/fragments/fight/ClubModeStatus.vue";
 import ModeSelector from "@/components/arena/ModeSelector.vue";
 import HexButton from "@/components/ui/HexButton.vue";
 import {getOnlinePlayersCount} from "@/core/services/statsService.js";
 
 const master = computed(() => store.getters['master/getMaster']);
 const isBuildValid = computed(() => store.getters['fight/isBuildValid']);
-const isAutoFightEnabled = computed(() => store.getters['autoFight/isEnabled']);
+const isClubModeEnabled = computed(() => store.getters['clubMode/isEnabled']);
 
 // PvP data
 const onlineFriendsCount = computed(() => store.getters['friends/onlineFriendsCount']);
@@ -86,8 +86,8 @@ const selectedMode = ref('pve');
 
 // Button text depends on selected mode
 const startButtonText = computed(() => {
-  if (selectedMode.value === 'auto') {
-    return isAutoFightEnabled.value ? t.value.arena.stopAuto : t.value.arena.startAuto;
+  if (selectedMode.value === 'club') {
+    return isClubModeEnabled.value ? t.value.arena.stopClub : t.value.arena.startClub;
   }
   return t.value.arena.lblStartFight;
 });
@@ -96,9 +96,9 @@ const onModeSelect = (mode) => {
   selectedMode.value = mode;
 };
 
-// Force auto mode when auto fight is active
-watch(isAutoFightEnabled, (active) => {
-  if (active) selectedMode.value = 'auto';
+// Force club mode when club mode is active
+watch(isClubModeEnabled, (active) => {
+  if (active) selectedMode.value = 'club';
 }, { immediate: true });
 
 const startFight = async () => {
@@ -106,11 +106,11 @@ const startFight = async () => {
     case 'pvp':
       await router.push('/matchmaking');
       break;
-    case 'auto':
-      if (isAutoFightEnabled.value) {
-        await store.dispatch('autoFight/disable');
+    case 'club':
+      if (isClubModeEnabled.value) {
+        await store.dispatch('clubMode/disable');
       } else {
-        await store.dispatch('autoFight/enable');
+        await store.dispatch('clubMode/enable');
       }
       break;
     default:
@@ -239,11 +239,11 @@ const handleScroll = (event) => {
   min-height: 48px !important;
 }
 
-.fight-btn-auto-active {
+.fight-btn-club-active {
   background-color: transparent !important;
-  border: 2px solid var(--hex-mode-auto) !important;
-  color: var(--hex-mode-auto) !important;
-  box-shadow: 0 0 20px color-mix(in srgb, var(--hex-mode-auto) 30%, transparent);
+  border: 2px solid var(--hex-mode-club) !important;
+  color: var(--hex-mode-club) !important;
+  box-shadow: 0 0 20px color-mix(in srgb, var(--hex-mode-club) 30%, transparent);
 }
 
 /* ── Friends compact button ──────────────────────────────── */
@@ -253,8 +253,8 @@ const handleScroll = (event) => {
 }
 
 
-/* ── Auto Fight Status ────────────────────────────────────── */
-.autofight-status-section {
+/* ── Club Mode Status ────────────────────────────────────── */
+.clubmode-status-section {
   margin-top: 12px;
   display: flex;
   flex-direction: column;
@@ -266,7 +266,7 @@ const handleScroll = (event) => {
   flex-shrink: 0;
 }
 
-.autofight-inactive-hint {
+.clubmode-inactive-hint {
   display: flex;
   align-items: center;
   justify-content: center;

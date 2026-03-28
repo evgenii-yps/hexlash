@@ -9,7 +9,7 @@ import contract from "@/core/state/modules/contractState.js";
 import webSocket from "@/core/state/modules/webSocketState.js";
 import achievement from "@/core/state/modules/achievementState.js";
 import progression from "@/core/state/modules/progressionState.js";
-import autoFight from "@/core/state/modules/autoFightState.js";
+import clubMode from "@/core/state/modules/clubModeState.js";
 import friends from "@/core/state/modules/friendsState.js";
 import pvp from "@/core/state/modules/pvpState.js";
 
@@ -25,7 +25,7 @@ export default createStore({
         webSocket,
         achievement,
         progression,
-        autoFight,
+        clubMode,
         friends,
         pvp,
     },

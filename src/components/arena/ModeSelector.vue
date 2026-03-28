@@ -2,7 +2,7 @@
   <div class="mode-selector">
 
     <!-- Compact Mode Button -->
-    <button class="mode-compact-btn" :class="[currentModeClass, { 'mode-locked': autoFightActive }]" @click="toggleDropdown">
+    <button class="mode-compact-btn" :class="[currentModeClass, { 'mode-locked': clubModeActive }]" @click="toggleDropdown">
       <span class="mode-compact-label">{{ currentModeName }}</span>
       <span class="mode-compact-arrow" :class="{ open: isOpen }">
         <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -53,20 +53,20 @@
         <span v-if="selectedMode === 'pvp'" class="check"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--hex-primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 10 18 20 6"/></svg></span>
       </div>
 
-      <!-- Auto Fight -->
+      <!-- Club Mode -->
       <div
         class="mode-option"
-        :class="{ active: selectedMode === 'auto' }"
-        @click="selectMode('auto')"
+        :class="{ active: selectedMode === 'club' }"
+        @click="selectMode('club')"
       >
-        <div class="option-icon auto-icon">
-          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="var(--hex-mode-auto)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10"/><path d="M20.49 15a9 9 0 01-14.85 3.36L1 14"/></svg>
+        <div class="option-icon club-icon">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="var(--hex-mode-club)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10"/><path d="M20.49 15a9 9 0 01-14.85 3.36L1 14"/></svg>
         </div>
         <div class="option-info">
-          <div class="option-name">{{ t.arena.autoFight }}</div>
-          <div class="option-desc">{{ t.arena.autoDesc }}</div>
+          <div class="option-name">{{ t.arena.clubMode }}</div>
+          <div class="option-desc">{{ t.arena.clubDesc }}</div>
         </div>
-        <span v-if="selectedMode === 'auto'" class="check"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--hex-primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 10 18 20 6"/></svg></span>
+        <span v-if="selectedMode === 'club'" class="check"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--hex-primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 10 18 20 6"/></svg></span>
       </div>
 
     </div>
@@ -79,7 +79,7 @@ import { ref, computed } from 'vue';
 import { t } from '@/locales/index.js';
 const props = defineProps({
   onlineCount: { type: Number, default: 0 },
-  autoFightActive: { type: Boolean, default: false },
+  clubModeActive: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['select']);
@@ -87,19 +87,19 @@ const emit = defineEmits(['select']);
 const isOpen = ref(false);
 const selectedMode = ref('pve');
 
-const modeNames = { pve: 'PvE', pvp: 'PvP', auto: 'Auto' };
-const modeCss   = { pve: 'mode-pve', pvp: 'mode-pvp', auto: 'mode-auto' };
+const modeNames = { pve: 'PvE', pvp: 'PvP', club: 'Club' };
+const modeCss   = { pve: 'mode-pve', pvp: 'mode-pvp', club: 'mode-club' };
 
 const currentModeName  = computed(() => modeNames[selectedMode.value]);
 const currentModeClass = computed(() => modeCss[selectedMode.value]);
 
 function toggleDropdown() {
-  if (props.autoFightActive) return;
+  if (props.clubModeActive) return;
   isOpen.value = !isOpen.value;
 }
 
 function selectMode(mode) {
-  if (props.autoFightActive && mode !== 'auto') return;
+  if (props.clubModeActive && mode !== 'club') return;
   selectedMode.value = mode;
   isOpen.value = false;
   emit('select', mode);
@@ -141,8 +141,8 @@ function selectMode(mode) {
 .mode-compact-btn.mode-pve { border-color: color-mix(in srgb, var(--hex-mode-pve) 40%, transparent); }
 .mode-compact-btn.mode-pve:active { border-color: var(--hex-mode-pve); box-shadow: 0 0 16px color-mix(in srgb, var(--hex-mode-pve) 30%, transparent); }
 .mode-compact-btn.mode-pvp { border-color: color-mix(in srgb, var(--hex-mode-pvp) 40%, transparent); }
-.mode-compact-btn.mode-auto { border-color: color-mix(in srgb, var(--hex-mode-auto) 40%, transparent); }
-.mode-compact-btn.mode-auto:active { border-color: var(--hex-mode-auto); box-shadow: 0 0 16px color-mix(in srgb, var(--hex-mode-auto) 30%, transparent); }
+.mode-compact-btn.mode-club { border-color: color-mix(in srgb, var(--hex-mode-club) 40%, transparent); }
+.mode-compact-btn.mode-club:active { border-color: var(--hex-mode-club); box-shadow: 0 0 16px color-mix(in srgb, var(--hex-mode-club) 30%, transparent); }
 
 .mode-compact-label {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -155,7 +155,7 @@ function selectMode(mode) {
 
 .mode-compact-btn.mode-pve .mode-compact-label { color: var(--hex-mode-pve); }
 .mode-compact-btn.mode-pvp .mode-compact-label { color: var(--hex-mode-pvp); }
-.mode-compact-btn.mode-auto .mode-compact-label { color: var(--hex-mode-auto); }
+.mode-compact-btn.mode-club .mode-compact-label { color: var(--hex-mode-club); }
 
 .mode-compact-arrow {
   font-size: 10px;
@@ -217,7 +217,7 @@ function selectMode(mode) {
 
 .pve-icon  { background: color-mix(in srgb, var(--hex-mode-pve) 15%, transparent); border: 1px solid color-mix(in srgb, var(--hex-mode-pve) 40%, transparent); }
 .pvp-icon  { background: color-mix(in srgb, var(--hex-mode-pvp) 15%, transparent); border: 1px solid color-mix(in srgb, var(--hex-mode-pvp) 40%, transparent); }
-.auto-icon { background: color-mix(in srgb, var(--hex-mode-auto) 15%, transparent); border: 1px solid color-mix(in srgb, var(--hex-mode-auto) 40%, transparent); }
+.club-icon { background: color-mix(in srgb, var(--hex-mode-club) 15%, transparent); border: 1px solid color-mix(in srgb, var(--hex-mode-club) 40%, transparent); }
 
 .option-info { flex: 1; }
 
@@ -237,15 +237,15 @@ function selectMode(mode) {
   align-items: center;
   gap: 6px;
   font-size: 11px;
-  color: var(--hex-mode-auto);
+  color: var(--hex-mode-club);
   margin-top: 4px;
 }
 
 .online-dot {
   width: 6px; height: 6px;
-  background: var(--hex-mode-auto);
+  background: var(--hex-mode-club);
   border-radius: 50%;
-  box-shadow: 0 0 6px color-mix(in srgb, var(--hex-mode-auto) 80%, transparent);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--hex-mode-club) 80%, transparent);
 }
 
 .check {

@@ -261,27 +261,27 @@ router.post('/analyze-fight', authMiddleware, async (req, res) => {
   }
 });
 
-// ── Auto Fight Summary ──────────────────────────────────────────────────
+// ── Club Mode Summary ──────────────────────────────────────────────────
 
-const autoFightRateLimitMap = new Map();
-const AUTO_FIGHT_RATE_LIMIT_MAX = 5; // 5 requests per minute
+const clubModeRateLimitMap = new Map();
+const CLUB_MODE_RATE_LIMIT_MAX = 5; // 5 requests per minute
 
-function checkAutoFightRateLimit(userId) {
+function checkClubModeRateLimit(userId) {
   const now = Date.now();
-  const userRequests = autoFightRateLimitMap.get(userId) || [];
+  const userRequests = clubModeRateLimitMap.get(userId) || [];
   const recent = userRequests.filter(ts => now - ts < RATE_LIMIT_WINDOW_MS);
 
-  if (recent.length >= AUTO_FIGHT_RATE_LIMIT_MAX) {
-    autoFightRateLimitMap.set(userId, recent);
+  if (recent.length >= CLUB_MODE_RATE_LIMIT_MAX) {
+    clubModeRateLimitMap.set(userId, recent);
     return false;
   }
 
   recent.push(now);
-  autoFightRateLimitMap.set(userId, recent);
+  clubModeRateLimitMap.set(userId, recent);
   return true;
 }
 
-const AUTO_FIGHT_SYSTEM_PROMPT = `You are an AI fighting trainer for Hexlash — an auto-battle game on Base blockchain.
+const CLUB_MODE_SYSTEM_PROMPT = `You are an AI fighting trainer for Hexlash — an auto-battle game on Base blockchain.
 
 Players build fighters by combining 3 behavioral modules (archetypes):
 - Predator: Relentless aggression, goes all-in under pressure
@@ -301,7 +301,7 @@ Special mechanics:
 - Coach advice: Attack/Defense/Position boost for 4 rounds
 - Emergency protocol: Medkit (+HP), Adrenaline (x2 dmg), Shield (block)
 
-You are analyzing a SERIES of auto fights (not a single fight). Look for patterns across multiple fights.
+You are analyzing a SERIES of club mode fights (not a single fight). Look for patterns across multiple fights.
 
 Respond with exactly 4 sections. CRITICAL: Section labels must ALWAYS be in English exactly as shown below, even when responding in another language. Only the content under each label should be in the requested language.
 
@@ -326,8 +326,8 @@ Rules:
 - Each section label on its own line, content on the next line
 - Respond in the language specified by locale`;
 
-function buildAutoFightUserPrompt(fights, totalFights, period, locale) {
-  let prompt = `Auto Fight Series Analysis\n\n`;
+function buildClubModeUserPrompt(fights, totalFights, period, locale) {
+  let prompt = `Club Mode Series Analysis\n\n`;
   prompt += `Period: ${period}\n`;
   prompt += `Fights analyzed: ${fights.length} of ${totalFights} total\n\n`;
 
@@ -389,7 +389,7 @@ function buildAutoFightUserPrompt(fights, totalFights, period, locale) {
   return prompt;
 }
 
-router.post('/auto-fight-summary', authMiddleware, async (req, res) => {
+router.post('/club-mode-summary', authMiddleware, async (req, res) => {
   const startTime = Date.now();
 
   try {
@@ -404,7 +404,7 @@ router.post('/auto-fight-summary', authMiddleware, async (req, res) => {
     }
 
     // Rate limit check
-    if (!checkAutoFightRateLimit(req.userId)) {
+    if (!checkClubModeRateLimit(req.userId)) {
       return res.status(429).json({ error: 'Too many requests. Max 5 analyses per minute.' });
     }
 
@@ -442,7 +442,7 @@ router.post('/auto-fight-summary', authMiddleware, async (req, res) => {
     const validLocale = SUPPORTED_LOCALES.includes(locale) ? locale : 'en';
 
     // Build prompt
-    const userPrompt = buildAutoFightUserPrompt(fights, totalFights || fights.length, period, validLocale);
+    const userPrompt = buildClubModeUserPrompt(fights, totalFights || fights.length, period, validLocale);
 
     // Call Claude API with AbortController timeout
     const client = getAnthropicClient();
@@ -458,7 +458,7 @@ router.post('/auto-fight-summary', authMiddleware, async (req, res) => {
         model: config.ANTHROPIC_MODEL,
         max_tokens: 400,
         temperature: 0.7,
-        system: AUTO_FIGHT_SYSTEM_PROMPT,
+        system: CLUB_MODE_SYSTEM_PROMPT,
         messages: [{ role: 'user', content: userPrompt }],
       }, { signal: abortController.signal });
 
@@ -481,7 +481,7 @@ router.post('/auto-fight-summary', authMiddleware, async (req, res) => {
 
   } catch (error) {
     const elapsed = Date.now() - startTime;
-    console.error(`[Auto Fight Summary] Error for user ${req.userId} (${elapsed}ms):`, error.message);
+    console.error(`[Club Mode Summary] Error for user ${req.userId} (${elapsed}ms):`, error.message);
 
     if (error.name === 'AbortError') {
       return res.status(503).json({ error: 'Analysis timed out' });
@@ -606,10 +606,10 @@ setInterval(() => {
     if (recent.length === 0) buildDescRateLimitMap.delete(userId);
     else buildDescRateLimitMap.set(userId, recent);
   }
-  for (const [userId, timestamps] of autoFightRateLimitMap) {
+  for (const [userId, timestamps] of clubModeRateLimitMap) {
     const recent = timestamps.filter(ts => now - ts < RATE_LIMIT_WINDOW_MS);
-    if (recent.length === 0) autoFightRateLimitMap.delete(userId);
-    else autoFightRateLimitMap.set(userId, recent);
+    if (recent.length === 0) clubModeRateLimitMap.delete(userId);
+    else clubModeRateLimitMap.set(userId, recent);
   }
 }, 5 * 60 * 1000);
 
