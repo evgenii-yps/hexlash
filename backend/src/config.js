@@ -56,6 +56,25 @@ module.exports = {
     juggernaut: { dmgBonus: 0.08, incomingReduction: 0,    dodgeChance: 0,    critChance: 0.03, critMult: 1.5 },
   },
 
+  // Clan Level System
+  CLAN_LEVEL_CONFIG: {
+    1:  { xpRequired: 0,      maxMembers: 20, xpBonus: 0 },
+    2:  { xpRequired: 1000,   maxMembers: 20, xpBonus: 0 },
+    3:  { xpRequired: 3000,   maxMembers: 25, xpBonus: 0 },
+    4:  { xpRequired: 6000,   maxMembers: 25, xpBonus: 5 },
+    5:  { xpRequired: 10000,  maxMembers: 30, xpBonus: 10 },
+    6:  { xpRequired: 20000,  maxMembers: 30, xpBonus: 10 },
+    7:  { xpRequired: 35000,  maxMembers: 40, xpBonus: 15 },
+    8:  { xpRequired: 55000,  maxMembers: 40, xpBonus: 15 },
+    9:  { xpRequired: 80000,  maxMembers: 45, xpBonus: 20 },
+    10: { xpRequired: 120000, maxMembers: 50, xpBonus: 20 },
+  },
+  CLAN_XP_REWARDS: {
+    win: 10,
+    draw: 5,
+    lose: 3,
+  },
+
   // Telegram
   TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN || '',
   TELEGRAM_AUTH_MAX_AGE_SEC: 300, // 5 minutes

@@ -233,6 +233,7 @@ router.get('/search', authMiddleware, async (req, res) => {
       balance: 'balance',
       name: 'name',
       members: 'members',
+      level: 'level',
     }[sortBy] || 'battles';
 
     const sortOrder = sortDirection.toLowerCase();

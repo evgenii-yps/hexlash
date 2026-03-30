@@ -98,8 +98,10 @@ model Club {
   balance     Int          @default(0)
   battles     Int          @default(0)
   wins        Int          @default(0)
+  level       Int          @default(1)
+  xp          Int          @default(0)
   isPublic    Boolean      @default(true)
-  maxMembers  Int          @default(50)
+  maxMembers  Int          @default(20)
   members     User[]
   invites     ClubInvite[]
   createdAt   DateTime     @default(now())

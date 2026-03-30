@@ -1,6 +1,7 @@
 const express = require('express');
 const prisma = require('../lib/prisma');
 const { authMiddleware } = require('../middleware/auth');
+const { awardClanXP } = require('../utils/clanLevel');
 
 const router = express.Router();
 
@@ -34,7 +35,7 @@ router.post('/save', authMiddleware, async (req, res) => {
       data: updateData,
     });
 
-    // Update club stats if user is in a club
+    // Update club stats and award clan XP if user is in a club
     if (user.clubId) {
       const clubUpdate = { battles: { increment: 1 } };
       if (isWin) {
@@ -44,6 +45,9 @@ router.post('/save', authMiddleware, async (req, res) => {
         where: { id: user.clubId },
         data: clubUpdate,
       });
+
+      const fightResult = isWin ? 'win' : isDraw ? 'draw' : 'lose';
+      awardClanXP(user.clubId, fightResult).catch(e => console.error('Clan XP error:', e));
     }
 
     await prisma.fight.create({

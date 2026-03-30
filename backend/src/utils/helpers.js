@@ -64,6 +64,8 @@ function formatClubResponse(club) {
     balance: club.balance,
     battles: club.battles,
     wins: club.wins,
+    level: club.level || 1,
+    xp: club.xp || 0,
     isPublic: club.isPublic,
     maxMembers: club.maxMembers,
     members: club._count ? club._count.members : (club.members ? club.members.length : 0),

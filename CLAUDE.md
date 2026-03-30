@@ -321,6 +321,10 @@ COACH_PAUSE_TIMEOUT_MS = 10000
 SLOT_WEIGHTS = [0.5, 0.3, 0.2]
 ARCHETYPE_MODIFIERS = { predator, sentinel, ghost, analyst, maverick, juggernaut }
 
+// Clan Level System
+CLAN_LEVEL_CONFIG = { 1..10: { xpRequired, maxMembers, xpBonus } }
+CLAN_XP_REWARDS = { win: 10, draw: 5, lose: 3 }
+
 // AI Trainer
 ANTHROPIC_API_KEY = env
 ANTHROPIC_MODEL = 'claude-haiku-4-5-20251001'
@@ -899,3 +903,35 @@ Extracted all shared clan page content (header, stats, tabs, members leaderboard
 - `src/components/fragments/club/ClanPageContent.vue` — **new** shared component
 - `src/views/ClubView.vue` — refactored to use ClanPageContent for member view
 - `src/components/fragments/club/MyClubTab.vue` — full rewrite: ClanPageContent for has-clan, browse/search for no-clan
+
+### Clan Level + XP System — Backend (ТЗ D1) — ✅ COMPLETE
+
+Added clan XP + level progression system. Fights award XP to clans, clans level up and unlock higher member limits + XP bonuses.
+
+**Prisma schema:** Added `level` (Int, default 1) and `xp` (Int, default 0) to Club model. Default `maxMembers` changed from 50 to 20 (level 1 default). Migration: `20260330000000_add_clan_level_xp`.
+
+**Config (`config.js`):**
+- `CLAN_LEVEL_CONFIG` — 10 levels: xpRequired (0→120,000), maxMembers (20→50), xpBonus (0→20%)
+- `CLAN_XP_REWARDS` — win: 10, draw: 5, lose: 3
+
+**Helper (`utils/clanLevel.js`):**
+- `getClanLevelInfo(level, xp)` — returns level info for display (level, xp, xpRequired, maxMembers, xpBonus, isMaxLevel)
+- `awardClanXP(clubId, result)` — increments XP, checks for level-up, updates maxMembers on promotion
+
+**XP awarded on:**
+- PvE fights: `POST /v1/fight/save` → `awardClanXP()` (async, non-blocking)
+- PvP fights: `pvpCombatEngine.saveFightResult()` → each player awards XP to their clan (win/draw/lose based on individual result)
+
+**API responses:** `formatClubResponse()` now includes `level` and `xp` fields. Search supports `sortBy: 'level'`.
+
+**maxMembers enforcement:** `club.maxMembers` is updated on level-up by `awardClanXP()`, existing join checks (`/change`, `/invite/respond`) use this field — no changes needed.
+
+**Files changed:**
+- `backend/prisma/schema.prisma` — level + xp fields on Club
+- `backend/prisma/migrations/20260330000000_add_clan_level_xp/` — SQL migration
+- `backend/src/config.js` — CLAN_LEVEL_CONFIG, CLAN_XP_REWARDS
+- `backend/src/utils/clanLevel.js` — **new** helper
+- `backend/src/utils/helpers.js` — formatClubResponse includes level/xp
+- `backend/src/routes/fight.js` — PvE clan XP
+- `backend/src/routes/club.js` — search sortBy level
+- `backend/src/services/pvpCombatEngine.js` — PvP clan XP
