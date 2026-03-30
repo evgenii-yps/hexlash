@@ -104,8 +104,22 @@ model Club {
   maxMembers  Int          @default(20)
   members     User[]
   invites     ClubInvite[]
+  events      ClanEvent[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
+}
+
+model ClanEvent {
+  id        String   @id @default(uuid())
+  clubId    String
+  club      Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  type      String   // fight_win, fight_lose, fight_draw, member_join, member_leave, member_kick, role_change, level_up
+  actorId   String?
+  targetId  String?
+  data      Json?
+  createdAt DateTime @default(now())
+
+  @@index([clubId, createdAt])
 }
 
 model ClubInvite {

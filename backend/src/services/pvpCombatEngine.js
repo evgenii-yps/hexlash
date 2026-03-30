@@ -681,6 +681,7 @@ class PvPCombatEngine {
 
       // Update club stats + award clan XP for both players
       const { awardClanXP } = require('../utils/clanLevel');
+      const { createClanEvent } = require('../utils/clanEvents');
       const player1 = await prisma.user.findUnique({ where: { id: result.player1.odId }, select: { clubId: true } });
       const player2 = await prisma.user.findUnique({ where: { id: result.player2.odId }, select: { clubId: true } });
       const clubIds = new Set([player1?.clubId, player2?.clubId].filter(Boolean));
@@ -695,14 +696,28 @@ class PvPCombatEngine {
         }
         await prisma.club.update({ where: { id: cId }, data: clubUpdate });
 
-        // Award clan XP per player in this club
+        // Award clan XP per player in this club + log events
         if (isP1Club) {
           const p1Result = result.winner === 'draw' ? 'draw' : (result.winner === result.player1.odId ? 'win' : 'lose');
           awardClanXP(cId, p1Result).catch(e => console.error('Clan XP error:', e));
+          const p1EventType = p1Result === 'win' ? 'fight_win' : p1Result === 'draw' ? 'fight_draw' : 'fight_lose';
+          createClanEvent(cId, p1EventType, result.player1.odId, null, {
+            opponentName: result.player2.login || 'Opponent',
+            playerHp: result.player1.finalHp,
+            opponentHp: result.player2.finalHp,
+            mode: 'pvp',
+          });
         }
         if (isP2Club) {
           const p2Result = result.winner === 'draw' ? 'draw' : (result.winner === result.player2.odId ? 'win' : 'lose');
           awardClanXP(cId, p2Result).catch(e => console.error('Clan XP error:', e));
+          const p2EventType = p2Result === 'win' ? 'fight_win' : p2Result === 'draw' ? 'fight_draw' : 'fight_lose';
+          createClanEvent(cId, p2EventType, result.player2.odId, null, {
+            opponentName: result.player1.login || 'Opponent',
+            playerHp: result.player2.finalHp,
+            opponentHp: result.player1.finalHp,
+            mode: 'pvp',
+          });
         }
       }
 

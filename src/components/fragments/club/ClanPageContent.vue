@@ -142,7 +142,7 @@
 
     <!-- Activity Tab -->
     <div v-if="activeTab === 'activity'" class="tab-content">
-      <ClanActivityFeed :members="membersList" :clubData="clubData" />
+      <ClanActivityFeed :clubId="clubId" />
     </div>
 
     <!-- Settings Tab -->

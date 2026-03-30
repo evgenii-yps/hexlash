@@ -325,6 +325,7 @@ ARCHETYPE_MODIFIERS = { predator, sentinel, ghost, analyst, maverick, juggernaut
 // Clan Level System
 CLAN_LEVEL_CONFIG = { 1..10: { xpRequired, maxMembers, xpBonus } }
 CLAN_XP_REWARDS = { win: 10, draw: 5, lose: 3 }
+CLAN_TAP_SHARE = 0.05              // 5% of member taps → clan treasury
 
 // AI Trainer
 ANTHROPIC_API_KEY = env
@@ -469,7 +470,7 @@ AI_TRAINER_ENABLED = true
 - `GameBalanceCard.vue` — Game balance display with withdraw button (shows "after listing" message)
 - `ReferralModal.vue` — Referral program modal: QR code (qrcode lib), copy link (clipboard API), share (Web Share API with fallback), referral stats + list. Opens from ProfileView button
 - `ClanPageContent.vue` — Shared clan page content component (header, stats, tabs Members/Activity/Settings, leaderboard with action menu, confirm modals, invite modal). Used by ClubView (member view) and MyClubTab (has-clan state). Props: clubData, clubId. Events: club-left, club-deleted
-- `ClanActivityFeed.vue` — Activity feed for clan page. Events grouped by day, color-coded dots (fight_win/lose, member_join/leave/kick, role_change, achievement). Currently mock data from members list; real API (ClanEvent table) planned
+- `ClanActivityFeed.vue` — Activity feed for clan page. Real data from `GET /v1/club/:clubId/events`. Events grouped by day, color-coded dots (fight_win/lose/draw, member_join/leave/kick, role_change, level_up). Props: clubId. Cursor pagination via "Load more" button. Vuex state in clubState (clanEvents, clanEventsLoading, clanEventsHasMore)
 
 ---
 
@@ -481,7 +482,7 @@ Base: `/v1/`
 |-------|------|---------|
 | `/auth` | auth.js | login, signup, reset, telegram. Rate limited: login 5/15min, register 3/hr, telegram 10/15min. Register + telegram accept `referralCode` — rewards both users +500 taps |
 | `/user` | user.js | profile, stats, avatar, achievements, referrals. Skin validated via regex. Delete uses $transaction with cascade. GET /referrals returns referral stats + list |
-| `/club` | club.js | create/edit/delete club, avatar, members, balance, roles (set-role, transfer-ownership, kick, invite). maxMembers=50, roles: owner/deputy/member. DELETE / dissolves club (owner-only, clears all members + invites). Invite: DB-persisted (48h), GET /invites, POST /invite/respond |
+| `/club` | club.js | create/edit/delete club, avatar, members, balance, roles (set-role, transfer-ownership, kick, invite). maxMembers=50, roles: owner/deputy/member. DELETE / dissolves club (owner-only, clears all members + invites). Invite: DB-persisted (48h), GET /invites, POST /invite/respond. Events: GET /:clubId/events (members only, cursor pagination) |
 | `/task` | task.js | daily + social tasks |
 | `/file` | file.js | avatar/file upload |
 | `/fight` | fight.js | fight creation, results, history |
@@ -528,11 +529,13 @@ Password reset: Returns 501 (not implemented) — no fake success
 
 ## Database Models (Prisma/PostgreSQL)
 
-User, Club, ClubInvite, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask, UserDailyTask, Fight, PunchInfo, FriendRequest, Friendship
+User, Club, ClubInvite, ClanEvent, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask, UserDailyTask, Fight, PunchInfo, FriendRequest, Friendship
 
 **Club system fields:** User.clubRole (`owner`/`deputy`/`member`/null), Club.maxMembers (default 50), Club.battles/wins (auto-incremented on fight save). Max 3 deputies per club. Owner can set roles, transfer ownership, kick anyone, invite friends, dissolve club. Deputies can kick members only, invite friends. Club creation costs `COST_CREATE_CLUB` (10000) taps — deducted from `User.totalTaps` in $transaction. Club name: 3-30 chars, unicode letters/digits/spaces (`\p{L}\p{N}`), no emoji. Achievements: `PAPER_STREET` on create, `PROJECT_MAYHEM` on join (idempotent via `awardAchievement()` in helpers.js).
 
 **Club invite system:** `ClubInvite` model — `id`, `clubId` → Club, `inviterId` → User, `inviteeId` → User, `status` (pending/accepted/declined/expired), `createdAt`, `expiresAt` (48h). Persisted in DB + real-time WS notification. Endpoints: `POST /club/invite` (creates DB record + WS), `GET /club/invites` (pending for current user), `POST /club/invite/respond` (accept/decline by inviteId). Auto-expire on query (no cron). Frontend: `ClubInviteNotification.vue` loads pending invites on mount, shows queue one by one.
+
+**Clan event system:** `ClanEvent` model — `id` (uuid), `clubId` → Club (cascade delete), `type` (String), `actorId` (String?), `targetId` (String?), `data` (Json?), `createdAt`. Index on `[clubId, createdAt]`. Types: `fight_win`, `fight_lose`, `fight_draw`, `member_join`, `member_leave`, `member_kick`, `role_change`, `level_up`. Helper: `createClanEvent()` in `backend/src/utils/clanEvents.js` — silent try/catch, fire-and-forget. Events recorded in: fight.js (PvE), pvpCombatEngine.js (PvP both players), club.js (join/leave/kick/set-role, invite accept), clanLevel.js (level_up). API: `GET /v1/club/:clubId/events?limit=30&before=timestamp` — members only, cursor pagination, includes actor/target `{id, login, skin}`.
 
 **Referral system fields:** User.referredBy (String?, login of referrer), User.invitedUsers (Int, referral count). On register/telegram with referralCode: both users get +500 taps (REFERRAL_REWARD_TAPS), invitedUsers incremented. Self-referral and non-existent referrer silently ignored.
 
@@ -962,3 +965,78 @@ Replaced all mock level/XP data with real values from API. Backend already retur
 - `src/components/fragments/club/ClanPageContent.vue` — real level/XP/bonuses/members
 - `src/views/ClubView.vue` — real level/XP for visitor view
 - `src/components/fragments/club/MyClubTab.vue` — real LVL badge
+
+### ClanEvent Model + Helper + Event Recording (ТЗ E1) — ✅ COMPLETE
+
+Added ClanEvent Prisma model, helper, event recording in 7 backend locations, and API endpoint.
+
+**1. Prisma model `ClanEvent`:**
+- Fields: id (uuid), clubId → Club (cascade), type (String), actorId (String?), targetId (String?), data (Json?), createdAt
+- Index: `[clubId, createdAt]`
+- Types: `fight_win`, `fight_lose`, `fight_draw`, `member_join`, `member_leave`, `member_kick`, `role_change`, `level_up`
+- Migration: `20260330100000_add_clan_events`
+
+**2. Helper `backend/src/utils/clanEvents.js`:**
+- `createClanEvent(clubId, type, actorId, targetId, data)` — silent try/catch, returns null on error
+
+**3. Events recorded in:**
+- `fight.js` POST /save — fight_win/lose/draw (PvE, data: opponentName, playerHp, opponentHp, mode: 'pve')
+- `pvpCombatEngine.js` saveFightResult — fight_win/lose/draw for both players (data: opponentName, playerHp, opponentHp, mode: 'pvp')
+- `club.js` POST /change join — member_join
+- `club.js` POST /change leave — member_leave
+- `club.js` POST /kick — member_kick (actorId=kicker, targetId=kicked)
+- `club.js` POST /set-role — role_change (data: { role })
+- `club.js` POST /invite/respond accept — member_join
+- `clanLevel.js` awardClanXP — level_up (data: { level: newLevel })
+
+**4. API endpoint:**
+- `GET /v1/club/:clubId/events?limit=30&before=timestamp` — members only, cursor pagination, batch user lookup for actor/target {id, login, skin}
+
+**Files changed:**
+- `backend/prisma/schema.prisma` — ClanEvent model + Club.events relation
+- `backend/prisma/migrations/20260330100000_add_clan_events/` — SQL migration
+- `backend/src/utils/clanEvents.js` — **new** helper
+- `backend/src/utils/clanLevel.js` — level_up event on level-up
+- `backend/src/routes/fight.js` — PvE fight events
+- `backend/src/routes/club.js` — join/leave/kick/set-role/invite-accept events + GET events endpoint
+- `backend/src/services/pvpCombatEngine.js` — PvP fight events for both players
+
+### Activity Feed Frontend (ТЗ E2) — ✅ COMPLETE
+
+Replaced mock data in ClanActivityFeed.vue with real API data from `GET /v1/club/:clubId/events`.
+
+**1. API + Vuex:**
+- `clubService.js` — `getClanEvents(clubId, limit, before)` API call
+- `clubState.js` — state: `clanEvents`, `clanEventsLoading`, `clanEventsHasMore`. Mutations: `setClanEvents`, `appendClanEvents`, `resetClanEvents`. Action: `fetchClanEvents` with pagination support
+
+**2. ClanActivityFeed.vue rewrite:**
+- Props changed: `members`+`clubData` → `clubId` only
+- Fetches real events on mount via Vuex action
+- Renders 8 event types with color-coded dots and formatted text
+- "Load more" button with cursor pagination (`before` = last event's `createdAt`)
+- Loading + empty states
+
+**3. i18n keys added (all 11 locales):**
+- `lblDrewMatch`, `lblWasKickedBy`, `lblToRole`, `lblClanReachedLevel`, `lblLoadMore`, `lblLoading`
+- en + ru translated, other 9 locales use English values
+
+**Files changed:**
+- `src/components/fragments/club/ClanActivityFeed.vue` — full rewrite to real API data
+- `src/components/fragments/club/ClanPageContent.vue` — updated ClanActivityFeed props
+- `src/core/services/clubService.js` — `getClanEvents()` API call
+- `src/core/state/modules/clubState.js` — clanEvents state + fetchClanEvents action
+- `src/locales/en.js`, `src/locales/ru.js` + 9 other locales — new i18n keys
+
+### Clan Balance — 5% Taps to Treasury (ТЗ E3) — ✅ COMPLETE
+
+Added automatic 5% tap share from member punches to clan treasury balance.
+
+**1. Config:** `CLAN_TAP_SHARE = 0.05` in `backend/src/config.js`
+
+**2. Backend:** In `handler.js` `handlePunchBatch()`, after user taps are credited: if user has `clubId` and batch >= 20 taps → `Math.max(1, Math.floor(count * 0.05))` credited to `Club.balance` via fire-and-forget `.catch()`.
+
+**3. Frontend:** No changes — Treasury in Settings already displays `club.balance`.
+
+**Files changed:**
+- `backend/src/config.js` — `CLAN_TAP_SHARE` constant
+- `backend/src/websocket/handler.js` — clan balance increment in handlePunchBatch

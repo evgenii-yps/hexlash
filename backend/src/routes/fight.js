@@ -2,6 +2,7 @@ const express = require('express');
 const prisma = require('../lib/prisma');
 const { authMiddleware } = require('../middleware/auth');
 const { awardClanXP } = require('../utils/clanLevel');
+const { createClanEvent } = require('../utils/clanEvents');
 
 const router = express.Router();
 
@@ -48,6 +49,14 @@ router.post('/save', authMiddleware, async (req, res) => {
 
       const fightResult = isWin ? 'win' : isDraw ? 'draw' : 'lose';
       awardClanXP(user.clubId, fightResult).catch(e => console.error('Clan XP error:', e));
+
+      const eventType = isWin ? 'fight_win' : isDraw ? 'fight_draw' : 'fight_lose';
+      createClanEvent(user.clubId, eventType, req.userId, null, {
+        opponentName: req.body.opponentName || 'AI',
+        playerHp: req.body.playerHp ?? null,
+        opponentHp: req.body.opponentHp ?? null,
+        mode: 'pve',
+      });
     }
 
     await prisma.fight.create({

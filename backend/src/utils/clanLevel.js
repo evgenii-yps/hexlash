@@ -1,5 +1,6 @@
 const { CLAN_LEVEL_CONFIG, CLAN_XP_REWARDS } = require('../config');
 const prisma = require('../lib/prisma');
+const { createClanEvent } = require('./clanEvents');
 
 /**
  * Get clan level info for display.
@@ -42,6 +43,7 @@ async function awardClanXP(clubId, result) {
         maxMembers: nextConfig.maxMembers,
       },
     });
+    createClanEvent(clubId, 'level_up', null, null, { level: nextLevel });
   }
 }
 
