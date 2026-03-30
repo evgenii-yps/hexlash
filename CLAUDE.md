@@ -610,7 +610,7 @@ Full audit of PvP chain (matchmaking → ready → rounds → dice/coach → fig
 **P1 — Serious bugs:**
 - **P1-5:** Fixed dice `endFight` race condition — dice rage/crit could end fight while `setTimeout(nextRound)` was pending, causing double `endFight()`. Now: save `roundTimer` ref, `clearTimeout` in `endFight()` and `onPlayerDisconnect()`
 - **P1-6:** Fixed matchmaking race condition — periodic 3s interval could match same player twice. Now: snapshot queue keys before iteration, track `matchedThisTick` Set
-- **P1-7:** Added deck validation in `pvp_ready` handler — validates array, length (MIN_DECK_SIZE..MAX_DECK_SIZE), each entry has id + level (1-5). Recalculates archetype modifiers after binding modules
+- **P1-7:** Added deck validation in `pvp_ready` handler — validates array, length (MIN_PVP_DECK_SIZE..MAX_DECK_SIZE), each entry has id + level (1-5). Recalculates archetype modifiers after binding modules
 - **P1-8:** Added coach_choice validation — action must be `attack|defense|position` or null
 
 **Files changed:**
@@ -620,12 +620,21 @@ Full audit of PvP chain (matchmaking → ready → rounds → dice/coach → fig
 - `backend/src/websocket/pvpHandler.js` — P1-7 (deck validation), P1-8 (coach validation)
 - `backend/src/services/pvpCombatEngine.js` — P1-5 (roundTimer), exported `calculateArchetypeModifiers`
 
-**P2/P3 — Deferred (stability/improvements):**
-- ELO update should use `$transaction`
-- WS reconnect with exponential backoff (currently fixed 10s)
-- Frontend timeout for `fight_start` (30s → show error)
-- `dice_error` UX improvement (show toast, don't permanently disable)
-- Rate limiting on `dice_roll` at handler level
+**P1-hotfix:** Fixed deck validation rejecting new players — default deck has 3 moves but validation required MIN_DECK_SIZE (4). Added `MIN_PVP_DECK_SIZE = 3` in config.
+
+**P2 — Stability improvements (✅ COMPLETE):**
+- **P2-1:** ELO update wrapped in `prisma.$transaction([])` — both players' ratings update atomically
+- **P2-2:** WS reconnect with exponential backoff — 10s → 20s → 40s → ... → max 300s, ±20% jitter, reset on success
+- **P2-3:** Frontend `fight_start` timeout — 30s after `pvp_ready`, if no response → toast + navigate to `/arena`
+- **P2-4:** `dice_error` UX — show event title instead of permanent disable, re-enable dice after 2s debounce
+- **P2-5:** `MIN_PVP_DECK_SIZE = 3` in config, used in pvpHandler validation (separate from PvE `MIN_DECK_SIZE = 4`)
+- **P2-6:** Defensive validation: `dice_roll` checks match exists + status `running`; `coach_choice` checks status `paused_coach`
+
+**P3 — Final improvements (✅ COMPLETE):**
+- **P3-1:** Rate limit `dice_roll` — max 1 per 2s per player via `lastDiceRoll` Map in pvpHandler
+- **P3-2:** Rate limit `coach_choice` — max 1 per pause session via `coachChoiceSent` Map, cleaned up on disconnect
+- **P3-3:** `overdrive_start` UI — shows "OVERDRIVE" event title with `--hex-primary` glow + 2s display, CSS class `event-overdrive`
+- **P3-4:** PvP refresh recovery — if page refreshed during PvP fight (no opponent context in store), shows toast + redirects to `/arena` instead of hanging
 
 ### AutoFight → Club Mode Rename + Club System Audit — ✅ COMPLETE
 

@@ -282,6 +282,7 @@ const showPvPResult = ref(false);
 const pvpResultType = ref('');           // win, lose, draw
 const pvpResultReason = ref('');         // disconnect, normal
 let pvpTimerInterval = null;
+let fightStartTimeout = null;
 
 // ── Countdown ──────────────────────────────────────────────────────────────
 const showCountdown  = ref(true);
@@ -536,6 +537,14 @@ onMounted(async () => {
 
   if (isPvP.value && pvpMatchId.value) {
     // PvP mode — server-driven fight
+    // If store has no opponent info (page was refreshed), the match is lost
+    const hasMatchContext = store.getters['pvp/getOpponentInfo'] || store.getters['pvp/getCurrentMatchId'];
+    if (!hasMatchContext) {
+      store.commit('pvp/RESET_PVP_FIGHT');
+      store.commit('master/setInfoMessage', { text: t.value.pvp.fightLostOnRefresh || 'Fight lost due to page reload', timeout: 3000 });
+      await router.push('/arena');
+      return;
+    }
     initPvPFight();
   } else if (isPvP.value && pvpFight.value) {
     // Legacy PvP path
@@ -804,10 +813,23 @@ function initPvPFight() {
   window.addEventListener('pvp-fight_end', onPvPFightEnd);
   window.addEventListener('pvp-overdrive_start', onPvPOverdriveStart);
   window.addEventListener('match-cancelled', onMatchCancelled);
+
+  // Timeout: if fight_start doesn't arrive within 30s, abort
+  fightStartTimeout = setTimeout(() => {
+    if (pvpStatus.value === 'waiting') {
+      cleanupPvP();
+      store.commit('master/setInfoMessage', { text: t.value.pvp.fightStartFailed || 'Failed to start fight', timeout: 3000 });
+      router.push('/arena');
+    }
+  }, 30000);
 }
 
 function cleanupPvP() {
   clearPvPTimer();
+  if (fightStartTimeout) {
+    clearTimeout(fightStartTimeout);
+    fightStartTimeout = null;
+  }
   window.removeEventListener('pvp-fight_start', onPvPFightStart);
   window.removeEventListener('pvp-round_result', onPvPRoundResult);
   window.removeEventListener('pvp-dice_available', onPvPDiceAvailable);
@@ -827,6 +849,11 @@ function getMyOdId() {
 
 function onPvPFightStart(e) {
   const data = e.detail;
+  // Clear fight_start timeout — we got the event
+  if (fightStartTimeout) {
+    clearTimeout(fightStartTimeout);
+    fightStartTimeout = null;
+  }
   pvpStatus.value = 'countdown';
 
   const myId = getMyOdId();
@@ -1019,8 +1046,17 @@ function onPvPDiceRolled(e) {
 }
 
 function onPvPDiceError(e) {
-  // Dice not available — hide button
+  // Dice on cooldown — show brief info, then re-enable after 2s
+  const msg = e.detail?.message || 'dice_on_cooldown';
+  store.commit('fight/setEventTitle', { title: t.value.fight.lblDiceUnavailable || 'Dice unavailable', cls: 'event-info' });
+  setTimeout(() => store.commit('fight/clearEventTitle'), 1500);
   store.commit('fight/setDiceState', { activeItem: null, cooldownLeft: 0, ready: false });
+  // Re-enable dice button after 2s debounce so player can retry
+  setTimeout(() => {
+    if (pvpStatus.value === 'fighting') {
+      store.commit('fight/setDiceState', { activeItem: null, cooldownLeft: 0, ready: true });
+    }
+  }, 2000);
 }
 
 function onPvPCoachPause() {
@@ -1131,6 +1167,8 @@ function onPvPFightEnd(e) {
 
 function onPvPOverdriveStart() {
   triggerFlash('overdrive');
+  store.commit('fight/setEventTitle', { title: t.value.fight.overdrive || 'OVERDRIVE', cls: 'event-overdrive' });
+  setTimeout(() => store.commit('fight/clearEventTitle'), 2000);
 }
 
 function startPvPTimer(type) {
@@ -1450,6 +1488,17 @@ const flashStyle = computed(() => ({
   background: color-mix(in srgb, var(--hex-dice-crit) 8%, transparent);
   border-color: color-mix(in srgb, var(--hex-dice-crit) 50%, transparent);
   box-shadow: 0 0 16px color-mix(in srgb, var(--hex-dice-crit) 20%, transparent);
+}
+
+.event-overdrive {
+  color: var(--hex-primary);
+  background: color-mix(in srgb, var(--hex-primary) 12%, transparent);
+  border-color: color-mix(in srgb, var(--hex-primary) 60%, transparent);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--hex-primary) 30%, transparent);
+  font-size: 1.3rem;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  text-shadow: 0 0 12px var(--hex-primary-glow);
 }
 
 /* ── Dice (manual, with cooldown) ────────────────────────────────── */
