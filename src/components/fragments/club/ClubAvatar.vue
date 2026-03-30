@@ -2,7 +2,7 @@
   <div class="avatar-container"
        :style="{ backgroundColor: computedAvatarUrl !== defaultAvatarImg ? 'transparent' : 'var(--hex-bg-card)' }">
 
-    <img :src="computedAvatarUrl" alt="Club Avatar"
+    <img :src="computedAvatarUrl" alt="Clan Avatar"
          :class="{
            'non-default-avatar': computedAvatarUrl !== defaultAvatarImg,
            'default-avatar': computedAvatarUrl === defaultAvatarImg

@@ -122,19 +122,24 @@ const showToolTip = ref(false);
 
 // Функция для валидации названия
 const validateTitle = () => {
-  const regex = /^[a-zA-Z0-9\s]*$/; // Разрешены латинские буквы, цифры и пробелы
-  if (!regex.test(title.value)) {
-    titleError.value = t.value.club.invalidCharacters;
-    return false;
-  }
-  if (title.value.length > 32) {
-    titleError.value = t.value.club.tooLong;
-    return false;
-  }
-  if (title.value.length === 0) {
+  const trimmed = title.value.trim().replace(/\s{2,}/g, ' ');
+  if (trimmed.length === 0) {
     titleError.value = t.value.club.empty;
     return false;
   }
+  if (trimmed.length < 3) {
+    titleError.value = t.value.club.errorTooShort || 'Name must be at least 3 characters';
+    return false;
+  }
+  if (trimmed.length > 30) {
+    titleError.value = t.value.club.tooLong;
+    return false;
+  }
+  if (!/^[\p{L}\p{N} ]+$/u.test(trimmed)) {
+    titleError.value = t.value.club.invalidCharacters;
+    return false;
+  }
+  title.value = trimmed;
   titleError.value = '';
   return true;
 };

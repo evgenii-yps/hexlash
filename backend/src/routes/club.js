@@ -2,7 +2,7 @@ const express = require('express');
 const prisma = require('../lib/prisma');
 const { authMiddleware } = require('../middleware/auth');
 const { upload } = require('../middleware/upload');
-const { formatClubResponse } = require('../utils/helpers');
+const { formatClubResponse, awardAchievement } = require('../utils/helpers');
 const { COST_CREATE_CLUB, DECIMALS } = require('../config');
 
 const router = express.Router();
@@ -36,8 +36,9 @@ router.post('/add', authMiddleware, async (req, res) => {
 
     // Validate name and description
     const name = clubData.name.trim();
-    if (!/^[a-zA-Z0-9 ]{1,32}$/.test(name)) {
-      return res.status(400).json({ error: 'Club name must be 1-32 characters, only letters, digits and spaces' });
+    const sanitizedName = name.replace(/\s{2,}/g, ' ');
+    if (!/^[\p{L}\p{N} ]{3,30}$/u.test(sanitizedName)) {
+      return res.status(400).json({ error: 'Club name must be 3-30 characters, only letters, digits and spaces' });
     }
     const description = (clubData.description || '').trim().slice(0, 500);
 
@@ -47,12 +48,17 @@ router.post('/add', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'Already in a club' });
     }
 
+    // Check if user has enough taps
+    if (user.totalTaps < COST_CREATE_CLUB) {
+      return res.status(400).json({ error: 'Not enough taps' });
+    }
+
     const isPublic = clubData.isPublic !== undefined ? clubData.isPublic : true;
 
     const fullClub = await prisma.$transaction(async (tx) => {
       const club = await tx.club.create({
         data: {
-          name,
+          name: sanitizedName,
           description,
           ownerId: req.userId,
           isPublic,
@@ -64,6 +70,7 @@ router.post('/add', authMiddleware, async (req, res) => {
         data: {
           clubId: club.id,
           clubRole: 'owner',
+          totalTaps: { decrement: COST_CREATE_CLUB },
         },
       });
 
@@ -72,6 +79,9 @@ router.post('/add', authMiddleware, async (req, res) => {
         include: { _count: { select: { members: true } } },
       });
     });
+
+    // Award PAPER_STREET achievement for creating a club
+    awardAchievement(prisma, req.userId, 'PAPER_STREET').catch(() => {});
 
     res.json({ data: formatClubResponse(fullClub) });
   } catch (err) {
@@ -98,9 +108,9 @@ router.post('/edit', authMiddleware, async (req, res) => {
 
     const updateData = {};
     if (name !== undefined) {
-      const trimmedName = name.trim();
-      if (!/^[a-zA-Z0-9 ]{1,32}$/.test(trimmedName)) {
-        return res.status(400).json({ error: 'Club name must be 1-32 characters, only letters, digits and spaces' });
+      const trimmedName = name.trim().replace(/\s{2,}/g, ' ');
+      if (!/^[\p{L}\p{N} ]{3,30}$/u.test(trimmedName)) {
+        return res.status(400).json({ error: 'Club name must be 3-30 characters, only letters, digits and spaces' });
       }
       updateData.name = trimmedName;
     }
@@ -179,6 +189,9 @@ router.post('/change', authMiddleware, async (req, res) => {
         where: { id: req.userId },
         data: { clubId, clubRole: 'member' },
       });
+
+      // Award PROJECT_MAYHEM achievement for joining a club
+      awardAchievement(prisma, req.userId, 'PROJECT_MAYHEM').catch(() => {});
 
       const fullClub = await prisma.club.findUnique({
         where: { id: clubId },
@@ -456,21 +469,176 @@ router.post('/invite', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'User is not your friend' });
     }
 
-    // Send invite via WebSocket
+    // Expire any stale pending invites for this user+club
+    await prisma.clubInvite.updateMany({
+      where: {
+        clubId: club.id,
+        inviteeId: userId,
+        status: 'pending',
+        expiresAt: { lt: new Date() },
+      },
+      data: { status: 'expired' },
+    });
+
+    // Check for existing pending invite
+    const existingInvite = await prisma.clubInvite.findFirst({
+      where: {
+        clubId: club.id,
+        inviteeId: userId,
+        status: 'pending',
+        expiresAt: { gt: new Date() },
+      },
+    });
+    if (existingInvite) {
+      return res.status(400).json({ error: 'Invite already pending' });
+    }
+
+    // Create persistent invite (48h expiry)
+    const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
+    const invite = await prisma.clubInvite.create({
+      data: {
+        clubId: club.id,
+        inviterId: req.userId,
+        inviteeId: userId,
+        expiresAt,
+      },
+    });
+
+    // Send real-time notification via WebSocket (if online)
     const { sendToUser } = require('../websocket/handler');
     const inviterName = requester.name || requester.login || 'Player';
 
     sendToUser(userId, {
       type: 'club_invite',
+      inviteId: invite.id,
       clubId: club.id,
       clubName: club.name,
       inviterId: req.userId,
       inviterName,
     });
 
-    res.json({ data: { invited: userId } });
+    res.json({ data: { invited: userId, inviteId: invite.id } });
   } catch (err) {
     console.error('Club invite error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /v1/club/invites — get pending invites for current user
+router.get('/invites', authMiddleware, async (req, res) => {
+  try {
+    // Expire stale invites first
+    await prisma.clubInvite.updateMany({
+      where: {
+        inviteeId: req.userId,
+        status: 'pending',
+        expiresAt: { lt: new Date() },
+      },
+      data: { status: 'expired' },
+    });
+
+    const invites = await prisma.clubInvite.findMany({
+      where: {
+        inviteeId: req.userId,
+        status: 'pending',
+        expiresAt: { gt: new Date() },
+      },
+      include: {
+        club: { select: { id: true, name: true, avatarUrl: true } },
+        inviter: { select: { id: true, name: true, login: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    res.json({
+      data: invites.map(inv => ({
+        id: inv.id,
+        clubId: inv.club.id,
+        clubName: inv.club.name,
+        clubAvatarUrl: inv.club.avatarUrl,
+        inviterId: inv.inviter.id,
+        inviterName: inv.inviter.name || inv.inviter.login || 'Player',
+        createdAt: inv.createdAt.toISOString(),
+        expiresAt: inv.expiresAt.toISOString(),
+      })),
+    });
+  } catch (err) {
+    console.error('Get invites error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /v1/club/invite/respond — accept or decline an invite
+router.post('/invite/respond', authMiddleware, async (req, res) => {
+  try {
+    const { inviteId, action } = req.body;
+
+    if (!inviteId || !['accept', 'decline'].includes(action)) {
+      return res.status(400).json({ error: 'inviteId and action (accept/decline) required' });
+    }
+
+    const invite = await prisma.clubInvite.findUnique({
+      where: { id: inviteId },
+      include: { club: { include: { _count: { select: { members: true } } } } },
+    });
+
+    if (!invite || invite.inviteeId !== req.userId) {
+      return res.status(404).json({ error: 'Invite not found' });
+    }
+
+    if (invite.status !== 'pending') {
+      return res.status(400).json({ error: 'Invite already ' + invite.status });
+    }
+
+    if (invite.expiresAt < new Date()) {
+      await prisma.clubInvite.update({ where: { id: inviteId }, data: { status: 'expired' } });
+      return res.status(400).json({ error: 'Invite expired' });
+    }
+
+    if (action === 'decline') {
+      await prisma.clubInvite.update({ where: { id: inviteId }, data: { status: 'declined' } });
+      return res.json({ data: { status: 'declined' } });
+    }
+
+    // Accept — validate and join
+    const user = await prisma.user.findUnique({ where: { id: req.userId } });
+    if (user.clubId) {
+      return res.status(400).json({ error: 'Already in a club' });
+    }
+
+    if (invite.club._count.members >= invite.club.maxMembers) {
+      return res.status(400).json({ error: 'Club is full' });
+    }
+
+    await prisma.$transaction([
+      prisma.clubInvite.update({ where: { id: inviteId }, data: { status: 'accepted' } }),
+      prisma.user.update({
+        where: { id: req.userId },
+        data: { clubId: invite.clubId, clubRole: 'member' },
+      }),
+    ]);
+
+    // Award PROJECT_MAYHEM achievement for joining a club
+    awardAchievement(prisma, req.userId, 'PROJECT_MAYHEM').catch(() => {});
+
+    const fullClub = await prisma.club.findUnique({
+      where: { id: invite.clubId },
+      include: { _count: { select: { members: true } } },
+    });
+
+    // Notify inviter via WS
+    const { sendToUser } = require('../websocket/handler');
+    const acceptorName = user.name || user.login || 'Player';
+    sendToUser(invite.inviterId, {
+      type: 'club_invite_accepted',
+      acceptedBy: req.userId,
+      acceptedByName: acceptorName,
+      clubId: invite.clubId,
+    });
+
+    res.json({ data: formatClubResponse(fullClub) });
+  } catch (err) {
+    console.error('Invite respond error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -489,6 +657,9 @@ router.delete('/', authMiddleware, async (req, res) => {
     }
 
     await prisma.$transaction([
+      prisma.clubInvite.deleteMany({
+        where: { clubId: club.id },
+      }),
       prisma.user.updateMany({
         where: { clubId: club.id },
         data: { clubId: null, clubRole: null },
