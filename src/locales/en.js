@@ -308,6 +308,27 @@ export default {
     lblInviteDeclined: 'declined the invite',
     lblPlayerJoined: 'joined your clan!',
     lblPlayerHasClub: 'No friends without a clan',
+    // Tabs
+    tabMembers: 'Members',
+    tabActivity: 'Activity',
+    tabSettings: 'Settings',
+    // Leaderboard
+    lblLeaderboard: 'CLAN LEADERBOARD',
+    lblFights: 'fights',
+    // Activity feed
+    lblToday: 'Today',
+    lblYesterday: 'Yesterday',
+    lblWonPvP: 'won PvP vs',
+    lblWonPvE: 'won PvE',
+    lblLostPvP: 'lost PvP vs',
+    lblLostPvE: 'lost PvE',
+    lblJoinedClan: 'joined the clan',
+    lblLeftClan: 'left the clan',
+    lblWasKicked: 'was kicked',
+    lblPromotedTo: 'promoted',
+    lblToDeputy: 'to Deputy',
+    lblReachedMilestone: 'reached a milestone',
+    lblNoActivity: 'No activity yet',
   },
   fight: {
     lblRound: 'Round {n}',

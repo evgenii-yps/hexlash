@@ -463,6 +463,7 @@ AI_TRAINER_ENABLED = true
 - `BuyTokens.vue` — Token purchase modal. **Temporarily disabled** — not rendered in ProfileWallet, file preserved for Phase 2 (Base contract)
 - `GameBalanceCard.vue` — Game balance display with withdraw button (shows "after listing" message)
 - `ReferralModal.vue` — Referral program modal: QR code (qrcode lib), copy link (clipboard API), share (Web Share API with fallback), referral stats + list. Opens from ProfileView button
+- `ClanActivityFeed.vue` — Activity feed for clan page. Events grouped by day, color-coded dots (fight_win/lose, member_join/leave/kick, role_change, achievement). Currently mock data from members list; real API (ClanEvent table) planned
 
 ---
 
@@ -754,3 +755,53 @@ Redesigned ClubView.vue and MyClubTab.vue upper sections. "Neon Discipline" styl
 - `src/views/ClubView.vue` — complete header redesign
 - `src/components/fragments/club/MyClubTab.vue` — matching header + ClubStats integration
 - `src/components/fragments/club/ClubStats.vue` — rewritten: 4-card grid + win rate bar
+
+### Clan Page Redesign — ТЗ B: Tabs + Members + Activity — ✅ COMPLETE
+
+Added tab navigation, members leaderboard, and activity feed to ClubView.vue.
+
+**Tab Navigation:**
+- 3 tabs: Members | Activity | Settings
+- `--hex-bg-medium` background, Anonymous font 11px uppercase, letter-spacing 1px
+- Active: `--hex-primary` color + border-bottom 2px
+- Activity tab: badge with event count (`--hex-primary` bg, 9px)
+- Sticky top on scroll, z-index 50
+- Tabs shown only for clan members (`isMyClub`); visitors see members list directly
+
+**Members Tab (default):**
+- "CLAN LEADERBOARD" section label (10px uppercase, `--hex-text-muted`)
+- Member rows: rank (Anonymous font, top-1,2 = `--hex-draw`) | avatar (38px, border-radius 8px) | name + role badge + online dot | wins + fights | ⋯ menu
+- Role badges: OWNER = `--hex-primary` bg, DEPUTY = `--hex-draw` with opacity
+- Online dot: 6px green with glow
+- Stats: wins in `--hex-victory`, total fights in `--hex-text-muted`
+- Sorted by wins DESC, loads up to 50 members
+- Invite Friend button for owner/deputy
+
+**Action Menu (⋯):**
+- Teleported to body, positioned absolutely near trigger button
+- `--hex-bg-card` bg, `--hex-border-active` border, border-radius 8px, backdrop-filter blur
+- Owner on deputy: Transfer Ownership, Demote to Member, Kick (red)
+- Owner on member: Promote to Deputy, Kick (red)
+- Deputy on member: Kick only (red)
+- Click outside or Escape closes menu
+- Kick + Transfer use `confirm()` dialog (full modal in ТЗ C)
+
+**Activity Feed (`ClanActivityFeed.vue`):**
+- Events grouped by day ("Today", "Yesterday", date)
+- Each event: colored dot (8px) | text with bold names | time
+- Event types: fight_win (green glow), fight_lose (red), member_join (pink glow), member_leave (gray), member_kick (red), role_change (blue), achievement (gold glow)
+- Mock data: generates events from members list (join dates, win/loss stats)
+- Real Activity Feed API (ClanEvent table) — separate ТЗ
+
+**Settings Tab:** Placeholder with existing owner controls (will be redesigned in ТЗ C)
+
+**i18n keys added (all 11 locales):**
+- `tabMembers`, `tabActivity`, `tabSettings`, `lblLeaderboard`, `lblFights`
+- `lblToday`, `lblYesterday`, `lblWonPvP`, `lblWonPvE`, `lblLostPvP`, `lblLostPvE`
+- `lblJoinedClan`, `lblLeftClan`, `lblWasKicked`, `lblPromotedTo`, `lblToDeputy`, `lblReachedMilestone`, `lblNoActivity`
+- en + ru translated, other 9 locales use English values
+
+**Files changed:**
+- `src/views/ClubView.vue` — tabs, members leaderboard, action menu, activity/settings tabs
+- `src/components/fragments/club/ClanActivityFeed.vue` — new component
+- `src/locales/*.js` — 18 new i18n keys in all 11 locales

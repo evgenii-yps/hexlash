@@ -290,6 +290,27 @@ export default {
     lblInviteDeclined: 'は招待を辞退しました',
     lblPlayerJoined: 'があなたのクランに参加しました！',
     lblPlayerHasClub: 'クランに所属していないフレンドはいません',
+    // Tabs
+    tabMembers: 'Members',
+    tabActivity: 'Activity',
+    tabSettings: 'Settings',
+    // Leaderboard
+    lblLeaderboard: 'CLAN LEADERBOARD',
+    lblFights: 'fights',
+    // Activity feed
+    lblToday: 'Today',
+    lblYesterday: 'Yesterday',
+    lblWonPvP: 'won PvP vs',
+    lblWonPvE: 'won PvE',
+    lblLostPvP: 'lost PvP vs',
+    lblLostPvE: 'lost PvE',
+    lblJoinedClan: 'joined the clan',
+    lblLeftClan: 'left the clan',
+    lblWasKicked: 'was kicked',
+    lblPromotedTo: 'promoted',
+    lblToDeputy: 'to Deputy',
+    lblReachedMilestone: 'reached a milestone',
+    lblNoActivity: 'No activity yet',
   },
   fight: {
     lblRound: 'ラウンド {n}',

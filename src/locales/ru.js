@@ -308,6 +308,27 @@ export default {
     lblInviteDeclined: 'отклонил приглашение',
     lblPlayerJoined: 'вступил в ваш клан!',
     lblPlayerHasClub: 'Нет друзей без клана',
+    // Tabs
+    tabMembers: 'Участники',
+    tabActivity: 'Активность',
+    tabSettings: 'Настройки',
+    // Leaderboard
+    lblLeaderboard: 'РЕЙТИНГ КЛАНА',
+    lblFights: 'боёв',
+    // Activity feed
+    lblToday: 'Сегодня',
+    lblYesterday: 'Вчера',
+    lblWonPvP: 'победил в PvP против',
+    lblWonPvE: 'победил в PvE',
+    lblLostPvP: 'проиграл PvP против',
+    lblLostPvE: 'проиграл PvE',
+    lblJoinedClan: 'вступил в клан',
+    lblLeftClan: 'покинул клан',
+    lblWasKicked: 'был исключён',
+    lblPromotedTo: 'повысил',
+    lblToDeputy: 'до Заместителя',
+    lblReachedMilestone: 'достиг вехи',
+    lblNoActivity: 'Пока нет активности',
   },
   fight: {
     lblRound: 'Раунд {n}',

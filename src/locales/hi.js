@@ -290,6 +290,27 @@ export default {
     lblInviteDeclined: 'ने आमंत्रण अस्वीकार किया',
     lblPlayerJoined: 'आपके क्लैन में शामिल हुआ!',
     lblPlayerHasClub: 'बिना क्लैन के कोई दोस्त नहीं',
+    // Tabs
+    tabMembers: 'Members',
+    tabActivity: 'Activity',
+    tabSettings: 'Settings',
+    // Leaderboard
+    lblLeaderboard: 'CLAN LEADERBOARD',
+    lblFights: 'fights',
+    // Activity feed
+    lblToday: 'Today',
+    lblYesterday: 'Yesterday',
+    lblWonPvP: 'won PvP vs',
+    lblWonPvE: 'won PvE',
+    lblLostPvP: 'lost PvP vs',
+    lblLostPvE: 'lost PvE',
+    lblJoinedClan: 'joined the clan',
+    lblLeftClan: 'left the clan',
+    lblWasKicked: 'was kicked',
+    lblPromotedTo: 'promoted',
+    lblToDeputy: 'to Deputy',
+    lblReachedMilestone: 'reached a milestone',
+    lblNoActivity: 'No activity yet',
   },
   fight: {
     lblRound: 'राउंड {n}',

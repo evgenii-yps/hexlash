@@ -290,6 +290,27 @@ export default {
     lblInviteDeclined: '이(가) 초대를 거절했습니다',
     lblPlayerJoined: '이(가) 클랜에 가입했습니다!',
     lblPlayerHasClub: '클랜이 없는 친구가 없습니다',
+    // Tabs
+    tabMembers: 'Members',
+    tabActivity: 'Activity',
+    tabSettings: 'Settings',
+    // Leaderboard
+    lblLeaderboard: 'CLAN LEADERBOARD',
+    lblFights: 'fights',
+    // Activity feed
+    lblToday: 'Today',
+    lblYesterday: 'Yesterday',
+    lblWonPvP: 'won PvP vs',
+    lblWonPvE: 'won PvE',
+    lblLostPvP: 'lost PvP vs',
+    lblLostPvE: 'lost PvE',
+    lblJoinedClan: 'joined the clan',
+    lblLeftClan: 'left the clan',
+    lblWasKicked: 'was kicked',
+    lblPromotedTo: 'promoted',
+    lblToDeputy: 'to Deputy',
+    lblReachedMilestone: 'reached a milestone',
+    lblNoActivity: 'No activity yet',
   },
   fight: {
     lblRound: '라운드 {n}',
