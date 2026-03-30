@@ -342,6 +342,17 @@
             </VCard>
           </VModal>
 
+          <!-- Confirm modal for dangerous actions -->
+          <ClanConfirmModal
+              :show="confirmModal.show"
+              :title="confirmModal.title"
+              :description="confirmModal.description"
+              :confirmText="confirmModal.confirmText"
+              :confirmDanger="confirmModal.danger"
+              @confirm="handleConfirm"
+              @cancel="closeConfirmModal"
+          />
+
         </div>
 
         <div v-else class="not-found-container">
@@ -366,6 +377,7 @@ import router from "@/router/index.js";
 import ClubEdit from "@/components/fragments/club/ClubEdit.vue";
 import ClubOwnerAvatar from "@/components/fragments/club/ClubOwnerAvatar.vue";
 import HexButton from "@/components/ui/HexButton.vue";
+import ClanConfirmModal from "@/components/fragments/club/ClanConfirmModal.vue";
 import {formatNumber} from "@/core/constants.js";
 import * as userService from "@/core/services/userService.js";
 import * as clubService from "@/core/services/clubService.js";
@@ -392,6 +404,29 @@ const activityCount = ref(0);
 const dialogChangeClub = ref(false);
 const dialogLeaveClub = ref(false);
 const dialogInvite = ref(false);
+
+// Confirm modal state
+const confirmModal = ref({
+  show: false,
+  title: '',
+  description: '',
+  confirmText: '',
+  danger: false,
+  onConfirm: null,
+});
+
+const openConfirmModal = (opts) => {
+  confirmModal.value = { show: true, ...opts };
+};
+
+const closeConfirmModal = () => {
+  confirmModal.value = { ...confirmModal.value, show: false, onConfirm: null };
+};
+
+const handleConfirm = () => {
+  if (confirmModal.value.onConfirm) confirmModal.value.onConfirm();
+  closeConfirmModal();
+};
 
 // Action menu
 const actionMenuOpen = ref(false);
@@ -537,30 +572,46 @@ const doDemote = async () => {
   }
 };
 
-const doKick = async () => {
+const doKick = () => {
   const member = selectedMember.value;
   closeActionMenu();
   const name = member.name || member.login;
-  if (!confirm(`${t.value.club.lblKickConfirm} ${name}?`)) return;
-  try {
-    await store.dispatch('club/kickMember', { userId: member.id });
-    await loadMembers();
-  } catch (e) {
-    store.commit('master/setErrorMessage', { text: e.message, timeout: 3000, showButton: false });
-  }
+  const desc = (t.value.club.lblKickDesc || '').replace('{name}', name);
+  openConfirmModal({
+    title: t.value.club.lblKickTitle,
+    description: desc,
+    confirmText: t.value.club.lblKick,
+    danger: true,
+    onConfirm: async () => {
+      try {
+        await store.dispatch('club/kickMember', { userId: member.id });
+        await loadMembers();
+      } catch (e) {
+        store.commit('master/setErrorMessage', { text: e.message, timeout: 3000, showButton: false });
+      }
+    },
+  });
 };
 
-const doTransfer = async () => {
+const doTransfer = () => {
   const member = selectedMember.value;
   closeActionMenu();
   const name = member.name || member.login;
-  if (!confirm(`${t.value.club.lblTransferConfirm} ${name}?`)) return;
-  try {
-    await store.dispatch('club/transferOwnership', { newOwnerId: member.id });
-    await loadMembers();
-  } catch (e) {
-    store.commit('master/setErrorMessage', { text: e.message, timeout: 3000, showButton: false });
-  }
+  const desc = (t.value.club.lblTransferDesc || '').replace('{name}', name);
+  openConfirmModal({
+    title: t.value.club.lblTransferTitle,
+    description: desc,
+    confirmText: t.value.club.lblTransferOwnership,
+    danger: false,
+    onConfirm: async () => {
+      try {
+        await store.dispatch('club/transferOwnership', { newOwnerId: member.id });
+        await loadMembers();
+      } catch (e) {
+        store.commit('master/setErrorMessage', { text: e.message, timeout: 3000, showButton: false });
+      }
+    },
+  });
 };
 
 // Invite
@@ -599,15 +650,29 @@ const clubCreatedDate = computed(() => {
 });
 
 const confirmDisband = () => {
-  if (!confirm(t.value.club.lblDisbandDesc || 'This will permanently delete the clan. All members will be removed.')) return;
-  store.dispatch('club/deleteClub');
-  router.push('/ratings/clubs');
+  openConfirmModal({
+    title: t.value.club.lblDisbandTitle,
+    description: t.value.club.lblDisbandDesc,
+    confirmText: t.value.club.btnDisband || 'Disband',
+    danger: true,
+    onConfirm: () => {
+      store.dispatch('club/deleteClub');
+      router.push('/ratings/clubs');
+    },
+  });
 };
 
 const confirmLeaveSettings = () => {
-  if (!confirm(t.value.club.lblLeaveDesc || 'You will lose your role and clan XP bonuses.')) return;
-  store.dispatch('club/leaveClub');
-  router.push('/ratings/clubs');
+  openConfirmModal({
+    title: t.value.club.lblLeaveTitle,
+    description: t.value.club.lblLeaveDesc,
+    confirmText: t.value.club.lblLeaveClub,
+    danger: true,
+    onConfirm: () => {
+      store.dispatch('club/leaveClub');
+      router.push('/ratings/clubs');
+    },
+  });
 };
 
 const btnToJoin = () => {

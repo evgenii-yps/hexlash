@@ -813,7 +813,7 @@ Replaced Settings tab placeholder with full settings UI.
 **Clan Info section:** Name, Description, Type (Public/Private), Created date — settings rows with labels and values.
 **Level Bonuses section:** Max members (green + muted hint), XP bonus (+0% mock), Next unlock (--hex-draw color).
 **Treasury section:** Balance in AnonymousBalance font (--hex-draw), Income description.
-**Actions:** Owner sees Edit Clan + Disband Clan (danger). Member sees Leave Clan (danger). Disband/Leave use confirm() for now (custom modals in C3).
+**Actions:** Owner sees Edit Clan + Disband Clan (danger). Member sees Leave Clan (danger). All dangerous actions use ClanConfirmModal (C3).
 
 Removed old placeholder with VBtnDark/VSwitch/ClubWithdraw from settings. Cleaned up dead code (showToolTip, btnIsPublic, club-switcher-public CSS).
 
@@ -852,3 +852,20 @@ When visiting `/club/:id` as non-member:
 - `src/components/fragments/club/MyClubTab.vue` — complete no-clan state redesign, pending invites, enhanced suggested clans
 - `src/views/ClubView.vue` — visitor view with top-5 members, more-members text, join/private/full action bar
 - `src/locales/*.js` — `lblClanFull` added to all 11 locales
+
+### Clan Page Redesign — ТЗ C3: Confirmation Modals — ✅ COMPLETE
+
+Replaced all `confirm()` calls with `ClanConfirmModal.vue` (created in C1) for dangerous actions in ClubView.vue.
+
+**4 actions migrated:**
+1. **Kick member** — danger modal, title from `lblKickTitle`, desc with `<strong>{name}</strong>` from `lblKickDesc`
+2. **Leave clan** (settings tab) — danger modal, `lblLeaveTitle` / `lblLeaveDesc`
+3. **Disband clan** — danger modal, `lblDisbandTitle` / `lblDisbandDesc`
+4. **Transfer ownership** — non-danger (primary) modal, `lblTransferTitle` / `lblTransferDesc` with `<strong>{name}</strong>`
+
+**Implementation:** Reactive `confirmModal` state object (`show`, `title`, `description`, `confirmText`, `danger`, `onConfirm`). Helper functions `openConfirmModal()`, `closeConfirmModal()`, `handleConfirm()`. Single `<ClanConfirmModal>` instance in template with bound props.
+
+**i18n:** All keys already existed from C1 pre-add (`lblKickTitle`, `lblKickDesc`, `lblLeaveTitle`, `lblLeaveDesc`, `lblDisbandTitle`, `lblDisbandDesc`, `lblTransferTitle`, `lblTransferDesc`) in all 11 locales.
+
+**Files changed:**
+- `src/views/ClubView.vue` — replaced 4× `confirm()` with ClanConfirmModal, added import + reactive state
