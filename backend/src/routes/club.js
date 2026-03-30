@@ -4,6 +4,7 @@ const { authMiddleware } = require('../middleware/auth');
 const { upload } = require('../middleware/upload');
 const { formatClubResponse, awardAchievement } = require('../utils/helpers');
 const { COST_CREATE_CLUB, DECIMALS } = require('../config');
+const { createClanEvent } = require('../utils/clanEvents');
 
 const router = express.Router();
 
@@ -192,6 +193,7 @@ router.post('/change', authMiddleware, async (req, res) => {
 
       // Award PROJECT_MAYHEM achievement for joining a club
       awardAchievement(prisma, req.userId, 'PROJECT_MAYHEM').catch(() => {});
+      createClanEvent(clubId, 'member_join', req.userId);
 
       const fullClub = await prisma.club.findUnique({
         where: { id: clubId },
@@ -201,10 +203,17 @@ router.post('/change', authMiddleware, async (req, res) => {
     }
 
     // Leaving a club
+    const leavingUser = await prisma.user.findUnique({ where: { id: req.userId } });
+    const leavingClubId = leavingUser?.clubId;
+
     await prisma.user.update({
       where: { id: req.userId },
       data: { clubId: null, clubRole: null },
     });
+
+    if (leavingClubId) {
+      createClanEvent(leavingClubId, 'member_leave', req.userId);
+    }
 
     res.json({ data: null });
   } catch (err) {
@@ -305,6 +314,8 @@ router.post('/set-role', authMiddleware, async (req, res) => {
       where: { id: userId },
       data: { clubRole: role },
     });
+
+    createClanEvent(requester.clubId, 'role_change', req.userId, userId, { role });
 
     res.json({ data: { userId, role } });
   } catch (err) {
@@ -414,6 +425,8 @@ router.post('/kick', authMiddleware, async (req, res) => {
       where: { id: userId },
       data: { clubId: null, clubRole: null },
     });
+
+    createClanEvent(requester.clubId, 'member_kick', req.userId, userId);
 
     res.json({ data: { kickedUserId: userId } });
   } catch (err) {
@@ -621,6 +634,7 @@ router.post('/invite/respond', authMiddleware, async (req, res) => {
 
     // Award PROJECT_MAYHEM achievement for joining a club
     awardAchievement(prisma, req.userId, 'PROJECT_MAYHEM').catch(() => {});
+    createClanEvent(invite.clubId, 'member_join', req.userId);
 
     const fullClub = await prisma.club.findUnique({
       where: { id: invite.clubId },
@@ -640,6 +654,64 @@ router.post('/invite/respond', authMiddleware, async (req, res) => {
     res.json({ data: formatClubResponse(fullClub) });
   } catch (err) {
     console.error('Invite respond error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /v1/club/:clubId/events
+router.get('/:clubId/events', authMiddleware, async (req, res) => {
+  try {
+    const { clubId } = req.params;
+    const limit = Math.min(parseInt(req.query.limit) || 30, 50);
+    const before = req.query.before ? new Date(req.query.before) : null;
+
+    // Access check: only clan members
+    const user = await prisma.user.findUnique({ where: { id: req.userId } });
+    if (user.clubId !== clubId) {
+      return res.status(403).json({ error: 'Only clan members can view events' });
+    }
+
+    const where = { clubId };
+    if (before) {
+      where.createdAt = { lt: before };
+    }
+
+    const events = await prisma.clanEvent.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+      include: {
+        club: false,
+      },
+    });
+
+    // Collect unique actor/target IDs for batch lookup
+    const userIds = new Set();
+    for (const e of events) {
+      if (e.actorId) userIds.add(e.actorId);
+      if (e.targetId) userIds.add(e.targetId);
+    }
+
+    const users = userIds.size > 0
+      ? await prisma.user.findMany({
+          where: { id: { in: [...userIds] } },
+          select: { id: true, login: true, skin: true },
+        })
+      : [];
+    const userMap = Object.fromEntries(users.map(u => [u.id, u]));
+
+    res.json({
+      data: events.map(e => ({
+        id: e.id,
+        type: e.type,
+        actor: e.actorId ? (userMap[e.actorId] || { id: e.actorId }) : null,
+        target: e.targetId ? (userMap[e.targetId] || { id: e.targetId }) : null,
+        data: e.data,
+        createdAt: e.createdAt.toISOString(),
+      })),
+    });
+  } catch (err) {
+    console.error('Get clan events error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
