@@ -2,6 +2,10 @@ const pvpMatchManager = require('../services/pvpMatchManager');
 const { MIN_PVP_DECK_SIZE, MAX_DECK_SIZE } = require('../config');
 
 const VALID_COACH_ACTIONS = ['attack', 'defense', 'position'];
+const DICE_ROLL_COOLDOWN_MS = 2000; // max 1 dice_roll per 2s per player
+
+const lastDiceRoll = new Map();   // userId -> timestamp
+const coachChoiceSent = new Map(); // matchId:odId -> true (one choice per pause)
 
 function handlePvPMessage(ws, message, user) {
   let data;
@@ -71,6 +75,15 @@ function handlePvPMessage(ws, message, user) {
     }
 
     case 'dice_roll': {
+      // Rate limit: max 1 per 2s per player
+      const now = Date.now();
+      const lastTime = lastDiceRoll.get(user.odId) || 0;
+      if (now - lastTime < DICE_ROLL_COOLDOWN_MS) {
+        ws.send(JSON.stringify({ type: 'dice_error', message: 'rate_limited' }));
+        break;
+      }
+      lastDiceRoll.set(user.odId, now);
+
       const match = pvpMatchManager.getMatchByPlayer(user.odId);
       if (!match) {
         ws.send(JSON.stringify({ type: 'dice_error', message: 'no_active_match' }));
@@ -89,6 +102,11 @@ function handlePvPMessage(ws, message, user) {
       if (!match) break;
       if (match.status !== 'paused_coach') break;
 
+      // Rate limit: max 1 coach_choice per pause session
+      const coachKey = `${match.matchId}:${user.odId}`;
+      if (coachChoiceSent.has(coachKey)) break;
+      coachChoiceSent.set(coachKey, true);
+
       const action = data.choice?.action;
       // Validate: must be a valid action or null (timeout)
       if (action !== null && action !== undefined && !VALID_COACH_ACTIONS.includes(action)) {
@@ -104,6 +122,12 @@ function handlePvPMessage(ws, message, user) {
 function handlePvPDisconnect(odId) {
   const match = pvpMatchManager.getMatchByPlayer(odId);
   if (match && match.status !== 'finished') {
+    // Clean up rate limit state for both players
+    lastDiceRoll.delete(match.player1.odId);
+    lastDiceRoll.delete(match.player2.odId);
+    coachChoiceSent.delete(`${match.matchId}:${match.player1.odId}`);
+    coachChoiceSent.delete(`${match.matchId}:${match.player2.odId}`);
+
     match.onPlayerDisconnect(odId);
     pvpMatchManager.removeMatch(match.matchId);
   }

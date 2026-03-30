@@ -630,9 +630,11 @@ Full audit of PvP chain (matchmaking → ready → rounds → dice/coach → fig
 - **P2-5:** `MIN_PVP_DECK_SIZE = 3` in config, used in pvpHandler validation (separate from PvE `MIN_DECK_SIZE = 4`)
 - **P2-6:** Defensive validation: `dice_roll` checks match exists + status `running`; `coach_choice` checks status `paused_coach`
 
-**P3 — Remaining (low priority):**
-- Rate limiting on `dice_roll` at handler level
-- PvP fight state recovery on tab refresh
+**P3 — Final improvements (✅ COMPLETE):**
+- **P3-1:** Rate limit `dice_roll` — max 1 per 2s per player via `lastDiceRoll` Map in pvpHandler
+- **P3-2:** Rate limit `coach_choice` — max 1 per pause session via `coachChoiceSent` Map, cleaned up on disconnect
+- **P3-3:** `overdrive_start` UI — shows "OVERDRIVE" event title with `--hex-primary` glow + 2s display, CSS class `event-overdrive`
+- **P3-4:** PvP refresh recovery — if page refreshed during PvP fight (no opponent context in store), shows toast + redirects to `/arena` instead of hanging
 
 ### AutoFight → Club Mode Rename + Club System Audit — ✅ COMPLETE
 
