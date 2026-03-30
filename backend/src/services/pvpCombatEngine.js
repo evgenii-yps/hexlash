@@ -109,6 +109,7 @@ class PvPCombatEngine {
     this.status = 'waiting'; // waiting, running, paused_coach, finished
     this.roundResults = [];
     this.pauseTimer = null;
+    this.roundTimer = null;
     this.pendingChoices = {};
   }
 
@@ -131,7 +132,7 @@ class PvPCombatEngine {
       overdriveStartRound: MAX_ROUNDS + 1,
     });
 
-    setTimeout(() => {
+    this.roundTimer = setTimeout(() => {
       this.nextRound();
     }, COUNTDOWN_MS);
   }
@@ -206,7 +207,7 @@ class PvPCombatEngine {
     if (!moveData1 || !moveData2) {
       // Invalid move — skip round with 0 damage
       this.roundResults.push({ round: this.currentRound, error: 'invalid_move' });
-      setTimeout(() => this.nextRound(), ROUND_ANIMATION_MS);
+      this.roundTimer = setTimeout(() => this.nextRound(), ROUND_ANIMATION_MS);
       return;
     }
 
@@ -316,7 +317,7 @@ class PvPCombatEngine {
     this.roundResults.push(result);
     this.emit('round_result', result);
 
-    setTimeout(() => {
+    this.roundTimer = setTimeout(() => {
       this.nextRound();
     }, ROUND_ANIMATION_MS);
   }
@@ -501,7 +502,9 @@ class PvPCombatEngine {
       player2: { action: p2Action || null },
     });
 
-    setTimeout(() => {
+    // Coach pause consumed the current round — simulate it now
+    // (currentRound was already incremented in nextRound() before pauseForCoach())
+    this.roundTimer = setTimeout(() => {
       this.simulateRound();
     }, ROUND_ANIMATION_MS);
   }
@@ -518,6 +521,7 @@ class PvPCombatEngine {
     if (this.status === 'finished') return;
     this.status = 'finished';
     clearTimeout(this.pauseTimer);
+    clearTimeout(this.roundTimer);
 
     let winner = null;
     if (this.player1.hp <= 0 && this.player2.hp <= 0) winner = 'draw';
@@ -560,6 +564,7 @@ class PvPCombatEngine {
 
     this.status = 'finished';
     clearTimeout(this.pauseTimer);
+    clearTimeout(this.roundTimer);
 
     const winner = odId === this.player1.odId ? this.player2 : this.player1;
 
@@ -737,4 +742,5 @@ class PvPCombatEngine {
   }
 }
 
+PvPCombatEngine.calculateArchetypeModifiers = calculateArchetypeModifiers;
 module.exports = PvPCombatEngine;

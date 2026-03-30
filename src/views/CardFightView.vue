@@ -800,8 +800,10 @@ function initPvPFight() {
   window.addEventListener('pvp-dice_error', onPvPDiceError);
   window.addEventListener('pvp-coach_pause', onPvPCoachPause);
   window.addEventListener('pvp-coach_result', onPvPCoachResult);
+  window.addEventListener('pvp-coach_opponent_ready', onPvPCoachOpponentReady);
   window.addEventListener('pvp-fight_end', onPvPFightEnd);
   window.addEventListener('pvp-overdrive_start', onPvPOverdriveStart);
+  window.addEventListener('match-cancelled', onMatchCancelled);
 }
 
 function cleanupPvP() {
@@ -813,8 +815,10 @@ function cleanupPvP() {
   window.removeEventListener('pvp-dice_error', onPvPDiceError);
   window.removeEventListener('pvp-coach_pause', onPvPCoachPause);
   window.removeEventListener('pvp-coach_result', onPvPCoachResult);
+  window.removeEventListener('pvp-coach_opponent_ready', onPvPCoachOpponentReady);
   window.removeEventListener('pvp-fight_end', onPvPFightEnd);
   window.removeEventListener('pvp-overdrive_start', onPvPOverdriveStart);
+  window.removeEventListener('match-cancelled', onMatchCancelled);
 }
 
 function getMyOdId() {
@@ -1035,6 +1039,20 @@ function onPvPCoachChoice(action) {
   showCoachChoice.value = false;
   showWaiting.value = true;
   waitingText.value = t.value.pvp.waitingForOpponent;
+}
+
+function onPvPCoachOpponentReady() {
+  // Opponent has chosen their coach advice — update waiting text
+  if (showWaiting.value) {
+    waitingText.value = t.value.pvp.opponentReady || t.value.pvp.waitingForOpponent;
+  }
+}
+
+function onMatchCancelled() {
+  // Match was cancelled by server (e.g. ready_timeout) — navigate back to arena
+  cleanupPvP();
+  store.commit('master/setInfoMessage', { text: t.value.pvp.matchCancelled || 'Match cancelled', timeout: 3000 });
+  router.push('/arena');
 }
 
 function onPvPCoachResult(e) {
