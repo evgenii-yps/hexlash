@@ -395,10 +395,11 @@ AI_TRAINER_ENABLED = true
 | Move Tree | `MoveTreeView.vue` | Branch sidebar (Speed/Power/Tech) + move cards. Sidebar buttons centered with `position:absolute; top:35%; transform:translateY(-50%)` |
 | Fight | `CardFightView.vue` | Main combat (PvE + PvP), dice, coach advice, HP bars, AI Trainer (PvE results). PvP mode: no BottomMenu, no PvP badge, reduced padding. Fully migrated to --hex-* vars: HexButton for results, inline SVGs, dice/coach/victory/defeat/overdrive all use design system vars |
 | Profile | `ProfileView.vue` | Tabs: balance, wallet, account, skins |
-| Ratings (League) | `RatingsView.vue` | 3 tabs: My Club, Clubs (leaderboard), Fighters (leaderboard). Default tab: My Club. URL: `/ratings/:type` (myclub/clubs/fighters). My Club tab: `MyClubTab.vue` component — shows club card (avatar, stats, members top-5, role badges owner/deputy, action menus: promote/demote/kick for owner+deputy, transfer ownership for owner) if user has club, or no-club state (create button, suggested clubs, browse link) |
+| Ratings (League) | `RatingsView.vue` | 3 tabs: My Club, Clubs (leaderboard), Fighters (leaderboard). Default tab: My Club. URL: `/ratings/:type` (myclub/clubs/fighters). My Club tab: `MyClubTab.vue` component — redesigned clan header (avatar 64px with --hex-primary glow, name in Anonymous font, italic description, LVL badge, member count, level progress bar), stats grid (4 cards: Members/Wins/Losses/Win Rate with colored values), win rate bar, members top-5, role badges owner/deputy, action menus, no-club state |
 | Preparation | `PreparationView.vue` | Arena: action row (Mode + START FIGHT + Friends buttons), club mode toggle/status. Friends button is text-only (no online indicator) |
 | Friends | `FriendsView.vue` | Friends list, friend requests, search players |
 | Matchmaking | `MatchmakingView.vue` | Real-time PvP matchmaking queue. Opponent Found shows fighter skins (not icons). No colored borders. 100dvh support. |
+| Clan | `ClubView.vue` | Redesigned clan page: header with avatar (64px, --hex-primary border + glow, 12px radius), name (Anonymous font), italic description, meta row (LVL badge, member count), level progress bar (6px gradient fill), stats grid via `ClubStats.vue` (4 cards + win rate bar), owner controls |
 | Spectate | `SpectateView.vue` | Watch live PvP fights |
 
 ---
@@ -719,3 +720,37 @@ Renamed all user-visible "Club" strings to "Clan" across the entire UI. Backend 
 - `ClubOwnerAvatar.vue` — alt text "Club Avatar" → "Clan Avatar"
 
 **Not changed (by design):** i18n keys (`lblClub`, `clubMode`, etc.), Vuex module names (`clubState`, `clubModeState`), file names, API routes, Prisma schema, DB fields
+
+### Clan Page Redesign — ТЗ A: Header + Stats — ✅ COMPLETE
+
+Redesigned ClubView.vue and MyClubTab.vue upper sections. "Neon Discipline" style.
+
+**Clan Header (both views):**
+- Avatar: 64px, border-radius 12px, 2px `--hex-primary` border, `box-shadow` glow
+- Name: Anonymous font, `--hex-text-primary`
+- Description: italic, `--hex-text-muted`, 2-line clamp
+- Meta row: LVL badge (`--hex-primary` bg, AnonymousBalance font), member count "N / 50 Members"
+- Background: gradient `--hex-bg-medium` → `--hex-bg-dark` with subtle radial `--hex-primary` glow
+
+**Level Progress Bar:**
+- "LEVEL 1 → 2" left (Anonymous, `--hex-primary`), "0 / 1,000 XP" right (AnonymousBalance, `--hex-text-muted`)
+- 6px bar, gradient fill `--hex-primary` → `#FF3399`, glow
+- Static mock data: Level 1, 0/1000 XP (real system in separate ТЗ)
+
+**Stats Grid (ClubStats.vue rewritten):**
+- 4 cards: Members, Wins, Losses, Win Rate
+- `--hex-bg-card` bg, `--hex-border-default`, AnonymousBalance font
+- Colors: wins=`--hex-victory`, losses=`--hex-defeat`, win rate=`--hex-draw`
+- Labels: 9px uppercase, `--hex-text-muted`
+- Win Rate = `Math.round(wins / battles * 100)` or 0
+
+**Win Rate Bar:**
+- 4px under stats grid
+- Green wins% + red losses%, opacity 0.5, border-radius 2px
+
+**Removed from ClubView header:** old plain-text stats layout, old btnToMembers button with icon
+
+**Files changed:**
+- `src/views/ClubView.vue` — complete header redesign
+- `src/components/fragments/club/MyClubTab.vue` — matching header + ClubStats integration
+- `src/components/fragments/club/ClubStats.vue` — rewritten: 4-card grid + win rate bar

@@ -9,32 +9,40 @@
     <!-- State 1: Has club -->
     <div v-else-if="clubData" class="club-card">
 
-      <!-- Avatar + info -->
-      <div class="club-header">
-        <div class="club-avatar">
-          <ClubAvatar :avatarUrl="clubData.avatarUrl" />
+      <!-- Clan Header -->
+      <div class="clan-header">
+        <div class="clan-header-bg"></div>
+        <div class="clan-header-content">
+          <div class="clan-avatar-wrap" @click="goToClub">
+            <ClubAvatar :avatarUrl="clubData.avatarUrl" />
+          </div>
+          <div class="clan-title-block">
+            <h3 class="clan-name" @click="goToClub">{{ clubData.name }}</h3>
+            <p v-if="clubData.description" class="clan-description">{{ clubData.description }}</p>
+          </div>
         </div>
-        <div class="club-info">
-          <h3 class="club-name">{{ clubData.name }}</h3>
-          <p v-if="clubData.description" class="club-description">{{ clubData.description }}</p>
+
+        <!-- Meta row -->
+        <div class="clan-meta">
+          <span class="level-badge">LVL {{ clanLevel }}</span>
+          <span class="meta-separator">·</span>
+          <span class="meta-text">{{ clubData.members }} / {{ clubData.maxMembers || 50 }} {{ t.rating.members }}</span>
+        </div>
+
+        <!-- Level progress bar -->
+        <div class="level-progress">
+          <div class="level-labels">
+            <span class="level-current">LEVEL {{ clanLevel }} → {{ clanLevel + 1 }}</span>
+            <span class="level-xp">{{ formatNumber(clanXP) }} / {{ formatNumber(clanXPMax) }} XP</span>
+          </div>
+          <div class="level-bar">
+            <div class="level-bar-fill" :style="{ width: clanXPPercent + '%' }"></div>
+          </div>
         </div>
       </div>
 
-      <!-- Stats row -->
-      <div class="stats-row">
-        <div class="stat-card">
-          <span class="stat-value">{{ clubData.members }} / {{ clubData.maxMembers }}</span>
-          <span class="stat-label">{{ t.rating.members }}</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-value">{{ formatNumber(clubData.battles) }}</span>
-          <span class="stat-label">{{ t.rating.total }}</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-value stat-wins">{{ formatNumber(clubData.wins) }}</span>
-          <span class="stat-label">{{ t.rating.wins }}</span>
-        </div>
-      </div>
+      <!-- Stats Grid -->
+      <ClubStats :clubData="clubData" />
 
       <!-- Invite friend button -->
       <div v-if="isOwner || isDeputy" class="invite-row">
@@ -255,6 +263,7 @@ import {formatNumber} from "@/core/constants.js";
 import * as userService from "@/core/services/userService.js";
 import * as clubService from "@/core/services/clubService.js";
 import ClubAvatar from "@/components/fragments/club/ClubAvatar.vue";
+import ClubStats from "@/components/fragments/club/ClubStats.vue";
 import HexButton from "@/components/ui/HexButton.vue";
 import CreateClub from "@/components/fragments/club/CreateClub.vue";
 
@@ -287,6 +296,15 @@ const loaded = ref(false);
 
 const isOwner = computed(() => myRole.value === 'owner');
 const isDeputy = computed(() => myRole.value === 'deputy');
+
+// Clan Level — static mock (will be replaced by real system later)
+const clanLevel = ref(1);
+const clanXP = ref(0);
+const clanXPMax = ref(1000);
+const clanXPPercent = computed(() => {
+  if (clanXPMax.value === 0) return 0;
+  return Math.min(100, Math.round(clanXP.value / clanXPMax.value * 100));
+});
 
 const friends = computed(() => store.getters['friends/getFriends'] || []);
 const invitableFriends = computed(() => friends.value.filter(f => !f.clubId));
@@ -521,49 +539,87 @@ watch(() => props.active, (val) => {
   margin: 0 auto;
 }
 
-.club-header {
+/* ===== CLAN HEADER ===== */
+.clan-header {
+  position: relative;
+  padding: 16px;
+  border-radius: var(--hex-radius-lg);
+  overflow: hidden;
+  margin-bottom: 0;
+}
+
+.clan-header-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, var(--hex-bg-medium) 0%, var(--hex-bg-dark) 100%);
+  z-index: 0;
+}
+
+.clan-header-bg::after {
+  content: '';
+  position: absolute;
+  top: -40%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120%;
+  height: 80%;
+  background: radial-gradient(ellipse, rgba(255, 6, 111, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.clan-header-content {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   gap: 16px;
-  margin-bottom: 16px;
 }
 
-.club-avatar {
+.clan-avatar-wrap {
   flex-shrink: 0;
   width: 64px;
   height: 64px;
+  cursor: pointer;
 }
 
-.club-avatar :deep(.avatar-container) {
+.clan-avatar-wrap :deep(.avatar-container) {
   width: 64px !important;
   height: 64px !important;
   border: 2px solid var(--hex-primary);
-  border-radius: 50%;
+  border-radius: var(--hex-radius-lg);
+  box-shadow: 0 0 12px var(--hex-primary-glow);
 }
 
-.club-avatar :deep(.default-avatar) {
+.clan-avatar-wrap :deep(.default-avatar) {
   width: 60%;
 }
 
-.club-avatar :deep(.non-default-avatar) {
+.clan-avatar-wrap :deep(.non-default-avatar) {
   border: none;
+  border-radius: var(--hex-radius-lg);
 }
 
-.club-info {
+.clan-title-block {
   flex: 1;
   min-width: 0;
 }
 
-.club-name {
-  font-size: 16px;
-  font-weight: bold;
+.clan-name {
+  font-size: 18px;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   color: var(--hex-text-primary);
   margin: 0;
+  cursor: pointer;
+  line-height: 1.2;
 }
 
-.club-description {
+.clan-description {
   font-size: 12px;
-  color: var(--hex-text-secondary);
+  font-style: italic;
+  color: var(--hex-text-muted);
   margin: 4px 0 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -572,45 +628,85 @@ watch(() => props.active, (val) => {
   -webkit-box-orient: vertical;
 }
 
-/* Stats */
-.stats-row {
+/* Meta row */
+.clan-meta {
+  position: relative;
+  z-index: 1;
   display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.stat-card {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
   align-items: center;
-  padding: 10px 8px;
-  background: var(--hex-bg-light);
-  border: 0.5px solid var(--hex-border-default);
-  border-radius: 10px;
+  gap: 8px;
+  margin-top: 12px;
 }
 
-.stat-value {
-  font-size: 16px;
-  font-weight: bold;
+.level-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  background: var(--hex-primary);
   color: var(--hex-text-primary);
+  font-size: 10px;
+  font-weight: bold;
+  font-family: 'AnonymousBalance', 'Courier New', monospace;
+  border-radius: var(--hex-radius-sm);
+  letter-spacing: 0.5px;
 }
 
-.stat-wins {
-  color: var(--hex-victory);
-}
-
-.stat-label {
-  font-size: 11px;
+.meta-separator {
   color: var(--hex-text-muted);
-  margin-top: 2px;
+  font-size: 12px;
+}
+
+.meta-text {
+  color: var(--hex-text-secondary);
+  font-size: 12px;
+}
+
+/* Level Progress Bar */
+.level-progress {
+  position: relative;
+  z-index: 1;
+  margin-top: 10px;
+}
+
+.level-labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 4px;
+}
+
+.level-current {
+  font-size: 10px;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  color: var(--hex-primary);
+  letter-spacing: 0.5px;
+}
+
+.level-xp {
+  font-size: 10px;
+  font-family: 'AnonymousBalance', 'Courier New', monospace;
+  color: var(--hex-text-muted);
+}
+
+.level-bar {
+  height: 6px;
+  background: var(--hex-bg-dark);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.level-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--hex-primary), #FF3399);
+  border-radius: 3px;
+  box-shadow: 0 0 8px var(--hex-primary-glow);
+  transition: width 0.4s ease;
 }
 
 /* Invite */
 .invite-row {
   display: flex;
   justify-content: center;
-  margin-bottom: 12px;
+  margin: 12px 0;
 }
 
 .no-friends-text {

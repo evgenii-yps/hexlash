@@ -16,31 +16,46 @@
           <button class="back-btn" @click="$router.push('/ratings/clubs')">&larr; {{ t.nav?.lblBack || 'Back' }}</button>
         </div>
 
-        <div v-else-if="clubData">
+        <div v-else-if="clubData" class="clan-page">
 
-          <div class="club-header">
+          <!-- Clan Header -->
+          <div class="clan-header">
+            <div class="clan-header-bg"></div>
+            <div class="clan-header-content">
+              <div class="clan-avatar-wrap">
+                <ClubOwnerAvatar v-if="isOwner" :clubData="clubData"/>
+                <ClubAvatar v-else :avatarUrl="clubData.avatarUrl"/>
+              </div>
+              <div class="clan-title-block">
+                <h2 class="clan-name">{{ clubData.name }}</h2>
+                <p v-if="clubData.description" class="clan-description">{{ clubData.description }}</p>
+              </div>
+            </div>
 
-            <ClubOwnerAvatar v-if="isOwner" :clubData="clubData"/>
-            <ClubAvatar v-else :avatarUrl="clubData.avatarUrl"/>
+            <!-- Meta row: level badge, member count, online -->
+            <div class="clan-meta">
+              <span class="level-badge">LVL {{ clanLevel }}</span>
+              <span class="meta-separator">·</span>
+              <span class="meta-text">{{ clubData.members }} / {{ clubData.maxMembers || 50 }} {{ t.rating.members }}</span>
+            </div>
 
-            <h2>{{ clubData.name }}</h2>
-            <p>{{ clubData.description }}</p>
-
+            <!-- Level progress bar -->
+            <div class="level-progress">
+              <div class="level-labels">
+                <span class="level-current">LEVEL {{ clanLevel }} → {{ clanLevel + 1 }}</span>
+                <span class="level-xp">{{ formatNumber(clanXP) }} / {{ formatNumber(clanXPMax) }} XP</span>
+              </div>
+              <div class="level-bar">
+                <div class="level-bar-fill" :style="{ width: clanXPPercent + '%' }"></div>
+              </div>
+            </div>
           </div>
 
+          <!-- Stats Grid + Win Rate Bar -->
           <ClubStats :clubData="clubData"/>
 
+          <!-- Action Buttons -->
           <div class="club-buttons">
-            <VBtnDark
-                class="club-btn"
-                @click="btnToMembers">
-              <template #prepend>
-                <img src="@/assets/images/icon_members.svg" alt="" class="custom-icon" style="width:30px;"/>
-              </template>
-
-              <span class="members-count">{{ formattedMembersCount }}</span> {{ formattedMembersText }}
-            </VBtnDark>
-
             <div v-if="isOwner" class="controls">
               <h2>{{ t.club.lblControl }}</h2>
 
@@ -140,7 +155,7 @@
 </template>
 
 <script setup>
-import {ref, computed, nextTick, onMounted, onBeforeMount, watch} from 'vue';
+import {ref, computed, onBeforeMount, watch} from 'vue';
 import {useRoute} from 'vue-router';
 import store from "@/core/state/store.js";
 import {t, interpolate} from "@/locales/index.js";
@@ -161,15 +176,24 @@ const clubId = route.params.id;
 const master = computed(() => store.getters['master/getMaster']);
 
 const clubData = ref(null);
-const loading = ref(true);  // Флаг загрузки
+const loading = ref(true);
 
 const isPublic = ref(true);
 const isOwner = ref(false);
 const isMyClub = ref(false);
 const showToolTip = ref(false);
 
-const dialogChangeClub = ref(false);  // Флаг для отображения модального окна
+const dialogChangeClub = ref(false);
 const dialogLeaveClub = ref(false);
+
+// Clan Level — static mock (will be replaced by real system later)
+const clanLevel = ref(1);
+const clanXP = ref(0);
+const clanXPMax = ref(1000);
+const clanXPPercent = computed(() => {
+  if (clanXPMax.value === 0) return 0;
+  return Math.min(100, Math.round(clanXP.value / clanXPMax.value * 100));
+});
 
 const toggleToolTip = () => {
   showToolTip.value = !showToolTip.value;
@@ -178,7 +202,7 @@ const toggleToolTip = () => {
 const notFound = ref(false);
 
 const loadClub = async () => {
-  loading.value = true;  // Устанавливаем флаг загрузки
+  loading.value = true;
   notFound.value = false;
 
   isMyClub.value = master.value && master.value.userData.clubId === clubId;
@@ -193,7 +217,6 @@ onBeforeMount(loadClub);
 
 watch(route, loadClub);
 
-// Следим за изменением данных пользователя в хранилище и обновляем clubData
 watch(
     () => store.getters['club/getClubById'](clubId),
     (newValue) => {
@@ -201,30 +224,15 @@ watch(
       clubData.value = newValue;
       isOwner.value = master.value && master.value.userData.id === clubData.value.owner;
       isPublic.value = clubData.value.isPublic;
-      loading.value = false;  // Сбрасываем флаг загрузки после загрузки данных
-
+      loading.value = false;
     });
-
-
-const btnToMembers = () => {
-  router.push({
-    path: `/ratings/fighters`,
-    query: {
-      sortParticipantBy: 'wins',
-      clubId: clubId
-    }
-  });
-}
 
 
 const btnIsPublic = () => {
   isPublic.value = !isPublic.value;
-
-  clubData.value.isPublic = isPublic.value
-
+  clubData.value.isPublic = isPublic.value;
   store.dispatch('club/updateClubData', clubData.value);
 }
-
 
 const btnToJoin = () => {
   dialogChangeClub.value = true;
@@ -232,10 +240,7 @@ const btnToJoin = () => {
 
 const confirmExit = () => {
   dialogChangeClub.value = false;
-
   store.dispatch('club/changeClub', clubData.value.id);
-
-  // Amplitude
   amplitude.track('ChangeClub', clubData.value.id);
 }
 
@@ -244,17 +249,6 @@ const confirmLeave = async () => {
   await store.dispatch('club/leaveClub');
   router.push('/ratings/clubs');
 }
-
-
-const formattedMembersCount = computed(() => {
-  return formatNumber(clubData.value.members);
-});
-
-const formattedMembersText = computed(() => {
-  const members = clubData.value.members;
-  const translation = interpolate(t.value.club.lblClubMembers, { n: members });
-  return translation.replace(String(members), '').trim();
-});
 
 </script>
 
@@ -302,7 +296,6 @@ const formattedMembersText = computed(() => {
   flex-direction: column;
 }
 
-
 .club-content-wrapper {
   width: 100%;
   padding: 10vh 0;
@@ -318,39 +311,166 @@ const formattedMembersText = computed(() => {
   justify-content: center;
 }
 
-.club-header {
+/* ===== CLAN HEADER ===== */
+.clan-header {
+  position: relative;
+  padding: 20px 16px 16px;
+  overflow: hidden;
+}
+
+.clan-header-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, var(--hex-bg-medium) 0%, var(--hex-bg-dark) 100%);
+  z-index: 0;
+}
+
+.clan-header-bg::after {
+  content: '';
+  position: absolute;
+  top: -40%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120%;
+  height: 80%;
+  background: radial-gradient(ellipse, rgba(255, 6, 111, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.clan-header-content {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
-  flex-direction: column;
-  color: white;
+  gap: 16px;
 }
 
-.club-header h2 {
-  font-size: 3em;
-  margin-top: 10px;
+.clan-avatar-wrap {
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+}
+
+.clan-avatar-wrap :deep(.avatar-container) {
+  width: 64px !important;
+  height: 64px !important;
+  border: 2px solid var(--hex-primary);
+  border-radius: var(--hex-radius-lg);
+  box-shadow: 0 0 12px var(--hex-primary-glow);
+}
+
+.clan-avatar-wrap :deep(.default-avatar) {
+  width: 60%;
+}
+
+.clan-avatar-wrap :deep(.non-default-avatar) {
+  border: none;
+  border-radius: var(--hex-radius-lg);
+}
+
+.clan-title-block {
+  flex: 1;
+  min-width: 0;
+}
+
+.clan-name {
+  font-size: 22px;
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
-  text-align: center;
+  color: var(--hex-text-primary);
+  margin: 0;
+  line-height: 1.2;
 }
 
-.club-header p {
-  font-size: 1em;
-  margin: 10px 10px;
-  text-align: center;
+.clan-description {
+  font-size: 12px;
+  font-style: italic;
+  color: var(--hex-text-muted);
+  margin: 4px 0 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* Meta row */
+.clan-meta {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.level-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  background: var(--hex-primary);
+  color: var(--hex-text-primary);
+  font-size: 10px;
+  font-weight: bold;
+  font-family: 'AnonymousBalance', 'Courier New', monospace;
+  border-radius: var(--hex-radius-sm);
+  letter-spacing: 0.5px;
+}
+
+.meta-separator {
+  color: var(--hex-text-muted);
+  font-size: 12px;
+}
+
+.meta-text {
+  color: var(--hex-text-secondary);
+  font-size: 12px;
+}
+
+/* Level Progress Bar */
+.level-progress {
+  position: relative;
+  z-index: 1;
+  margin-top: 10px;
+}
+
+.level-labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 4px;
+}
+
+.level-current {
+  font-size: 10px;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  color: var(--hex-primary);
+  letter-spacing: 0.5px;
+}
+
+.level-xp {
+  font-size: 10px;
+  font-family: 'AnonymousBalance', 'Courier New', monospace;
   color: var(--hex-text-muted);
 }
 
-.club-avatar-container {
-  width: 175px;
-  height: 175px;
-  border-radius: 50%;
-  margin: 0 auto;
-  cursor: pointer;
-  background-color: var(--hex-bg-card);
-  align-items: center;
-  display: flex;
-  justify-content: center;
+.level-bar {
+  height: 6px;
+  background: var(--hex-bg-dark);
+  border-radius: 3px;
+  overflow: hidden;
 }
 
+.level-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--hex-primary), #FF3399);
+  border-radius: 3px;
+  box-shadow: 0 0 8px var(--hex-primary-glow);
+  transition: width 0.4s ease;
+}
+
+/* ===== BUTTONS (legacy, moved to Settings in ТЗ C) ===== */
 .club-buttons {
   margin-top: 20px;
   margin-bottom: 40px;
@@ -379,30 +499,9 @@ const formattedMembersText = computed(() => {
 }
 
 .custom-icon {
-  width: 25px; /* Увеличиваем ширину изображения */
-  height: 25px; /* Увеличиваем высоту изображения */
-  margin-right: 10px; /* Добавляем отступ справа для расстояния между иконкой и текстом */
-}
-
-.switcher {
-  color: white;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 80%;
-  margin: 10px auto 10px auto;
-  background-color: var(--hex-bg-light);
-  padding: 0 10px;
-  border-radius: 4px;
-  max-width: 500px;
-  text-transform: uppercase;
-}
-
-.switcher p {
-  display: flex;
-  align-items: center;
-  font-size: 1em;
-  flex-grow: 1;
+  width: 25px;
+  height: 25px;
+  margin-right: 10px;
 }
 
 .not-found-container {
@@ -431,13 +530,7 @@ const formattedMembersText = computed(() => {
   background-color: var(--hex-bg-medium);
 }
 
-.members-count {
-  font-size: 1.5em;
-  margin-right: 5px;
-}
-
 .club-switcher-public.checked :deep(.v-switch__thumb) {
   background-color: var(--hex-primary) !important;
 }
-
 </style>
