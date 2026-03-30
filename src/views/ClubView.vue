@@ -45,13 +45,16 @@
               <div class="clan-meta">
                 <span class="level-badge">LVL {{ clanLevel }}</span>
                 <span class="meta-separator">&middot;</span>
-                <span class="meta-text">{{ clubData.members }} / {{ clubData.maxMembers || 50 }} {{ t.rating.members }}</span>
+                <span class="meta-text">{{ clubData.members }} / {{ levelProgress.maxMembers }} {{ t.rating.members }}</span>
               </div>
 
               <div class="level-progress">
                 <div class="level-labels">
-                  <span class="level-current">LEVEL {{ clanLevel }} &rarr; {{ clanLevel + 1 }}</span>
-                  <span class="level-xp">{{ formatNumber(clanXP) }} / {{ formatNumber(clanXPMax) }} XP</span>
+                  <span class="level-current">
+                    <template v-if="levelProgress.isMaxLevel">LEVEL {{ clanLevel }} &mdash; MAX</template>
+                    <template v-else>LEVEL {{ clanLevel }} &rarr; {{ clanLevel + 1 }}</template>
+                  </span>
+                  <span class="level-xp">{{ formatNumber(levelProgress.progressXP) }} / {{ formatNumber(levelProgress.progressMax) }} XP</span>
                 </div>
                 <div class="level-bar">
                   <div class="level-bar-fill" :style="{ width: clanXPPercent + '%' }"></div>
@@ -153,6 +156,7 @@ import ClubStats from "@/components/fragments/club/ClubStats.vue";
 import ClanPageContent from "@/components/fragments/club/ClanPageContent.vue";
 import HexButton from "@/components/ui/HexButton.vue";
 import {formatNumber} from "@/core/constants.js";
+import {getClanLevelProgress} from "@/data/clanLevels.js";
 import * as userService from "@/core/services/userService.js";
 import router from "@/router/index.js";
 import * as amplitude from "@amplitude/analytics-browser";
@@ -173,14 +177,10 @@ const isMyClub = ref(false);
 const dialogChangeClub = ref(false);
 const notFound = ref(false);
 
-// Clan Level — static mock
-const clanLevel = ref(1);
-const clanXP = ref(0);
-const clanXPMax = ref(1000);
-const clanXPPercent = computed(() => {
-  if (clanXPMax.value === 0) return 0;
-  return Math.min(100, Math.round(clanXP.value / clanXPMax.value * 100));
-});
+// Clan Level — from API data
+const levelProgress = computed(() => getClanLevelProgress(clubData.value?.level || 1, clubData.value?.xp || 0));
+const clanLevel = computed(() => levelProgress.value.level);
+const clanXPPercent = computed(() => levelProgress.value.percent);
 
 const visitorMembers = computed(() => membersList.value.slice(0, 5));
 const remainingMembers = computed(() => {

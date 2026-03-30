@@ -40,6 +40,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
     moves.js               — 18 moves with damage/speed per level (numeric data only, names/desc via i18n)
     requirements.js        — Tap/XP costs for unlock/levelup
     cardPower.js           — Card/module power balance data
+    clanLevels.js          — Clan level config (10 levels, XP thresholds, member limits, XP bonuses) + getClanLevelProgress()
     pixelIcons.js          — 45 pixel icons (16×16 grid, flat array 256 values)
   utils/
     powerRating.js         — Power rating calculations
@@ -935,3 +936,29 @@ Added clan XP + level progression system. Fights award XP to clans, clans level 
 - `backend/src/routes/fight.js` — PvE clan XP
 - `backend/src/routes/club.js` — search sortBy level
 - `backend/src/services/pvpCombatEngine.js` — PvP clan XP
+
+### Clan Level + XP System — Frontend (ТЗ D2) — ✅ COMPLETE
+
+Replaced all mock level/XP data with real values from API. Backend already returns `level` and `xp` in Club responses.
+
+**ClubModel:** Added `level` (default 1) and `xp` (default 0) to constructor + `fromJSON`. Default `maxMembers` changed from 50 to 20.
+
+**`src/data/clanLevels.js` (NEW):** Frontend copy of `CLAN_LEVEL_CONFIG` (10 levels) + `getClanLevelProgress(level, xp)` helper that calculates progress between current and next threshold (progressXP, progressMax, percent, isMaxLevel, maxMembers, xpBonus).
+
+**ClanPageContent.vue:**
+- Level badge: `LVL {club.level}` from API
+- Level label: `LEVEL N → N+1` or `LEVEL 10 — MAX`
+- XP bar: progress between current and next threshold (e.g. level 5, xp=14500 → 4,500 / 10,000 XP, 45%)
+- Members count: `N / {config.maxMembers}` from level config
+- Settings > Level Bonuses: real maxMembers, real xpBonus, next unlock text (shows what next level gives)
+
+**ClubView.vue (visitor):** Same level/XP logic as ClanPageContent — real data from API.
+
+**MyClubTab.vue:** LVL badge in clan list shows `club.level` from API instead of hardcoded "LVL 1".
+
+**Files changed:**
+- `src/core/models/clubModel.js` — added level, xp fields
+- `src/data/clanLevels.js` — **new** frontend level config + helper
+- `src/components/fragments/club/ClanPageContent.vue` — real level/XP/bonuses/members
+- `src/views/ClubView.vue` — real level/XP for visitor view
+- `src/components/fragments/club/MyClubTab.vue` — real LVL badge
