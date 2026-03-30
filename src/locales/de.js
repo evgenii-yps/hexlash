@@ -333,6 +333,7 @@ export default {
     // Visitor
     lblJoinClan: 'BEITRETEN',
     lblClanPrivate: 'Dieser Clan ist privat',
+    lblClanFull: 'Clan is full',
     lblMoreMembers: '+ {n} weitere Mitglieder',
     // Confirm modals
     lblKickTitle: 'Mitglied kicken?',

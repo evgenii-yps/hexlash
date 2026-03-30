@@ -67,10 +67,10 @@
             </button>
           </div>
 
-          <!-- Members Tab (default) -->
-          <div v-if="activeTab === 'members'" class="tab-content">
+          <!-- Members Tab (default) — for members -->
+          <div v-if="activeTab === 'members' && isMyClub" class="tab-content">
             <!-- Invite button -->
-            <div v-if="(isOwner || isDeputy) && isMyClub" class="invite-row">
+            <div v-if="isOwner || isDeputy" class="invite-row">
               <HexButton variant="primary" size="sm" @click="openInviteModal">
                 {{ t.club.lblInviteFriend }}
               </HexButton>
@@ -147,18 +147,69 @@
               </div>
             </Teleport>
 
-            <!-- Join button for visitors -->
-            <div v-if="!isMyClub && isPublic" class="join-row">
-              <HexButton variant="primary" @click="btnToJoin">
-                {{ t.club.lblChangeClub }}
-              </HexButton>
-            </div>
-
-            <!-- Leave for members -->
-            <div v-if="isMyClub && !isOwner" class="leave-row">
+            <!-- Leave for members (non-owner) -->
+            <div v-if="!isOwner" class="leave-row">
               <HexButton variant="danger" size="sm" @click="dialogLeaveClub = true">
                 {{ t.club.lblLeaveClub }}
               </HexButton>
+            </div>
+          </div>
+
+          <!-- Visitor View — no tabs, top-5 members, join bar -->
+          <div v-if="!isMyClub" class="visitor-section">
+            <div v-if="membersLoading" class="members-loader">
+              <v-progress-circular size="24" indeterminate />
+            </div>
+
+            <div v-else class="members-list">
+              <div
+                  v-for="(member, index) in visitorMembers"
+                  :key="member.id"
+                  class="member-row"
+              >
+                <span :class="['member-rank', { 'rank-top': index < 2 }]">{{ index + 1 }}</span>
+                <div class="member-avatar">
+                  <span>{{ getInitial(member.name || member.login) }}</span>
+                </div>
+                <div class="member-info" @click="viewMember(member)">
+                  <div class="member-name-row">
+                    <span class="member-name">{{ member.name || member.login }}</span>
+                    <span v-if="member.clubRole === 'owner'" class="role-badge owner-badge">OWNER</span>
+                    <span v-else-if="member.clubRole === 'deputy'" class="role-badge deputy-badge">{{ t.club.lblDeputy }}</span>
+                  </div>
+                  <div class="member-stats-text">
+                    <span class="member-wins">{{ formatNumber(member.wins || 0) }} W</span>
+                    <span class="member-fights">{{ formatNumber(member.battles || member.totalFights || 0) }} {{ t.club.lblFights || 'fights' }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- "+ N more members" -->
+              <div v-if="remainingMembers > 0" class="more-members">
+                + {{ remainingMembers }} more {{ t.rating.members }}
+              </div>
+            </div>
+
+            <!-- Join action bar -->
+            <div class="visitor-action-bar">
+              <HexButton
+                  v-if="isClanFull"
+                  variant="primary"
+                  block
+                  disabled
+              >{{ t.club.lblClanFull }}</HexButton>
+              <HexButton
+                  v-else-if="!isPublic"
+                  variant="primary"
+                  block
+                  disabled
+              >{{ t.club.lblClanPrivate }}</HexButton>
+              <HexButton
+                  v-else
+                  variant="primary"
+                  block
+                  @click="btnToJoin"
+              >{{ t.club.lblJoinClan }} {{ clubData.name }}</HexButton>
             </div>
           </div>
 
@@ -291,6 +342,17 @@
             </VCard>
           </VModal>
 
+          <!-- Confirm modal for dangerous actions -->
+          <ClanConfirmModal
+              :show="confirmModal.show"
+              :title="confirmModal.title"
+              :description="confirmModal.description"
+              :confirmText="confirmModal.confirmText"
+              :confirmDanger="confirmModal.danger"
+              @confirm="handleConfirm"
+              @cancel="closeConfirmModal"
+          />
+
         </div>
 
         <div v-else class="not-found-container">
@@ -315,6 +377,7 @@ import router from "@/router/index.js";
 import ClubEdit from "@/components/fragments/club/ClubEdit.vue";
 import ClubOwnerAvatar from "@/components/fragments/club/ClubOwnerAvatar.vue";
 import HexButton from "@/components/ui/HexButton.vue";
+import ClanConfirmModal from "@/components/fragments/club/ClanConfirmModal.vue";
 import {formatNumber} from "@/core/constants.js";
 import * as userService from "@/core/services/userService.js";
 import * as clubService from "@/core/services/clubService.js";
@@ -342,6 +405,29 @@ const dialogChangeClub = ref(false);
 const dialogLeaveClub = ref(false);
 const dialogInvite = ref(false);
 
+// Confirm modal state
+const confirmModal = ref({
+  show: false,
+  title: '',
+  description: '',
+  confirmText: '',
+  danger: false,
+  onConfirm: null,
+});
+
+const openConfirmModal = (opts) => {
+  confirmModal.value = { show: true, ...opts };
+};
+
+const closeConfirmModal = () => {
+  confirmModal.value = { ...confirmModal.value, show: false, onConfirm: null };
+};
+
+const handleConfirm = () => {
+  if (confirmModal.value.onConfirm) confirmModal.value.onConfirm();
+  closeConfirmModal();
+};
+
 // Action menu
 const actionMenuOpen = ref(false);
 const selectedMember = ref(null);
@@ -354,6 +440,16 @@ const clanXPMax = ref(1000);
 const clanXPPercent = computed(() => {
   if (clanXPMax.value === 0) return 0;
   return Math.min(100, Math.round(clanXP.value / clanXPMax.value * 100));
+});
+
+const visitorMembers = computed(() => membersList.value.slice(0, 5));
+const remainingMembers = computed(() => {
+  const total = clubData.value?.members || membersList.value.length;
+  return Math.max(0, total - 5);
+});
+const isClanFull = computed(() => {
+  const max = clubData.value?.maxMembers || 50;
+  return (clubData.value?.members || 0) >= max;
 });
 
 const tabs = computed(() => [
@@ -476,30 +572,46 @@ const doDemote = async () => {
   }
 };
 
-const doKick = async () => {
+const doKick = () => {
   const member = selectedMember.value;
   closeActionMenu();
   const name = member.name || member.login;
-  if (!confirm(`${t.value.club.lblKickConfirm} ${name}?`)) return;
-  try {
-    await store.dispatch('club/kickMember', { userId: member.id });
-    await loadMembers();
-  } catch (e) {
-    store.commit('master/setErrorMessage', { text: e.message, timeout: 3000, showButton: false });
-  }
+  const desc = (t.value.club.lblKickDesc || '').replace('{name}', name);
+  openConfirmModal({
+    title: t.value.club.lblKickTitle,
+    description: desc,
+    confirmText: t.value.club.lblKick,
+    danger: true,
+    onConfirm: async () => {
+      try {
+        await store.dispatch('club/kickMember', { userId: member.id });
+        await loadMembers();
+      } catch (e) {
+        store.commit('master/setErrorMessage', { text: e.message, timeout: 3000, showButton: false });
+      }
+    },
+  });
 };
 
-const doTransfer = async () => {
+const doTransfer = () => {
   const member = selectedMember.value;
   closeActionMenu();
   const name = member.name || member.login;
-  if (!confirm(`${t.value.club.lblTransferConfirm} ${name}?`)) return;
-  try {
-    await store.dispatch('club/transferOwnership', { newOwnerId: member.id });
-    await loadMembers();
-  } catch (e) {
-    store.commit('master/setErrorMessage', { text: e.message, timeout: 3000, showButton: false });
-  }
+  const desc = (t.value.club.lblTransferDesc || '').replace('{name}', name);
+  openConfirmModal({
+    title: t.value.club.lblTransferTitle,
+    description: desc,
+    confirmText: t.value.club.lblTransferOwnership,
+    danger: false,
+    onConfirm: async () => {
+      try {
+        await store.dispatch('club/transferOwnership', { newOwnerId: member.id });
+        await loadMembers();
+      } catch (e) {
+        store.commit('master/setErrorMessage', { text: e.message, timeout: 3000, showButton: false });
+      }
+    },
+  });
 };
 
 // Invite
@@ -538,15 +650,29 @@ const clubCreatedDate = computed(() => {
 });
 
 const confirmDisband = () => {
-  if (!confirm(t.value.club.lblDisbandDesc || 'This will permanently delete the clan. All members will be removed.')) return;
-  store.dispatch('club/deleteClub');
-  router.push('/ratings/clubs');
+  openConfirmModal({
+    title: t.value.club.lblDisbandTitle,
+    description: t.value.club.lblDisbandDesc,
+    confirmText: t.value.club.btnDisband || 'Disband',
+    danger: true,
+    onConfirm: () => {
+      store.dispatch('club/deleteClub');
+      router.push('/ratings/clubs');
+    },
+  });
 };
 
 const confirmLeaveSettings = () => {
-  if (!confirm(t.value.club.lblLeaveDesc || 'You will lose your role and clan XP bonuses.')) return;
-  store.dispatch('club/leaveClub');
-  router.push('/ratings/clubs');
+  openConfirmModal({
+    title: t.value.club.lblLeaveTitle,
+    description: t.value.club.lblLeaveDesc,
+    confirmText: t.value.club.lblLeaveClub,
+    danger: true,
+    onConfirm: () => {
+      store.dispatch('club/leaveClub');
+      router.push('/ratings/clubs');
+    },
+  });
 };
 
 const btnToJoin = () => {
@@ -1044,12 +1170,28 @@ onBeforeUnmount(() => {
   color: var(--hex-defeat);
 }
 
-/* Join / Leave rows */
-.join-row,
+/* Leave row */
 .leave-row {
   display: flex;
   justify-content: center;
   margin-top: 20px;
+}
+
+/* ===== VISITOR VIEW ===== */
+.visitor-section {
+  margin-top: 12px;
+}
+
+.more-members {
+  text-align: center;
+  font-size: 13px;
+  color: var(--hex-text-muted);
+  padding: 12px 0 4px;
+}
+
+.visitor-action-bar {
+  padding: 16px;
+  margin-top: 8px;
 }
 
 

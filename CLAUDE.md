@@ -395,11 +395,11 @@ AI_TRAINER_ENABLED = true
 | Move Tree | `MoveTreeView.vue` | Branch sidebar (Speed/Power/Tech) + move cards. Sidebar buttons centered with `position:absolute; top:35%; transform:translateY(-50%)` |
 | Fight | `CardFightView.vue` | Main combat (PvE + PvP), dice, coach advice, HP bars, AI Trainer (PvE results). PvP mode: no BottomMenu, no PvP badge, reduced padding. Fully migrated to --hex-* vars: HexButton for results, inline SVGs, dice/coach/victory/defeat/overdrive all use design system vars |
 | Profile | `ProfileView.vue` | Tabs: balance, wallet, account, skins |
-| Ratings (League) | `RatingsView.vue` | 3 tabs: My Club, Clubs (leaderboard), Fighters (leaderboard). Default tab: My Club. URL: `/ratings/:type` (myclub/clubs/fighters). My Club tab: `MyClubTab.vue` component — redesigned clan header (avatar 64px with --hex-primary glow, name in Anonymous font, italic description, LVL badge, member count, level progress bar), stats grid (4 cards: Members/Wins/Losses/Win Rate with colored values), win rate bar, members top-5, role badges owner/deputy, action menus, no-club state |
+| Ratings (League) | `RatingsView.vue` | 3 tabs: My Club, Clubs (leaderboard), Fighters (leaderboard). Default tab: My Club. URL: `/ratings/:type` (myclub/clubs/fighters). My Club tab: `MyClubTab.vue` component — redesigned clan header (avatar 64px with --hex-primary glow, name in Anonymous font, italic description, LVL badge, member count, level progress bar), stats grid (4 cards: Members/Wins/Losses/Win Rate with colored values), win rate bar, members top-5, role badges owner/deputy, action menus. No-clan state: ⚔ icon hero, CREATE/BROWSE buttons, pending invites banners, suggested clans with stats |
 | Preparation | `PreparationView.vue` | Arena: action row (Mode + START FIGHT + Friends buttons), club mode toggle/status. Friends button is text-only (no online indicator) |
 | Friends | `FriendsView.vue` | Friends list, friend requests, search players |
 | Matchmaking | `MatchmakingView.vue` | Real-time PvP matchmaking queue. Opponent Found shows fighter skins (not icons). No colored borders. 100dvh support. |
-| Clan | `ClubView.vue` | Redesigned clan page: header with avatar (64px, --hex-primary border + glow, 12px radius), name (Anonymous font), italic description, meta row (LVL badge, member count), level progress bar (6px gradient fill), stats grid via `ClubStats.vue` (4 cards + win rate bar), owner controls |
+| Clan | `ClubView.vue` | Redesigned clan page: header with avatar (64px, --hex-primary border + glow, 12px radius), name (Anonymous font), italic description, meta row (LVL badge, member count), level progress bar (6px gradient fill), stats grid via `ClubStats.vue` (4 cards + win rate bar), owner controls. Visitor view: top-5 members (no action menu), "+ N more members", JOIN/private/full action bar |
 | Spectate | `SpectateView.vue` | Watch live PvP fights |
 
 ---
@@ -813,7 +813,7 @@ Replaced Settings tab placeholder with full settings UI.
 **Clan Info section:** Name, Description, Type (Public/Private), Created date — settings rows with labels and values.
 **Level Bonuses section:** Max members (green + muted hint), XP bonus (+0% mock), Next unlock (--hex-draw color).
 **Treasury section:** Balance in AnonymousBalance font (--hex-draw), Income description.
-**Actions:** Owner sees Edit Clan + Disband Clan (danger). Member sees Leave Clan (danger). Disband/Leave use confirm() for now (custom modals in C3).
+**Actions:** Owner sees Edit Clan + Disband Clan (danger). Member sees Leave Clan (danger). All dangerous actions use ClanConfirmModal (C3).
 
 Removed old placeholder with VBtnDark/VSwitch/ClubWithdraw from settings. Cleaned up dead code (showToolTip, btnIsPublic, club-switcher-public CSS).
 
@@ -824,3 +824,48 @@ Removed old placeholder with VBtnDark/VSwitch/ClubWithdraw from settings. Cleane
 **Files changed:**
 - `src/views/ClubView.vue` — settings tab rewrite, dead code cleanup
 - `src/locales/en.js`, `src/locales/ru.js` — new i18n keys
+
+### Clan Page Redesign — ТЗ C2: No Clan State + Visitor View — ✅ COMPLETE
+
+**Part 1: No Clan State (MyClubTab.vue)**
+
+Redesigned the "no clan" state shown in RatingsView > My Club tab when player has no clan:
+- Hero section: ⚔ icon (48px, opacity 0.6), "NO CLAN YET" (Anonymous 18px), description (13px `--hex-text-muted`)
+- Actions: "CREATE CLAN" btn-primary block + "Cost: 10,000 taps" (11px muted) + "BROWSE CLANS" btn-secondary block (switches to Clubs tab)
+- Pending invites: loads from `GET /v1/club/invites` on mount, gradient banners with ✉ icon, clan name in `--hex-primary`, members + expiry, Accept/Decline buttons
+- Suggested clans: label "SUGGESTED CLANS" (11px uppercase muted), avatar (40px, first letter), name + LVL badge, "N members · N wins · N% WR", JOIN button
+
+**Part 2: Visitor View (ClubView.vue)**
+
+When visiting `/club/:id` as non-member:
+- Header + stats shown as before (ТЗ A)
+- No tab navigation (tabs only for members)
+- Top-5 members without action menu (⋯)
+- "+ N more members" text below list (`--hex-text-muted`, centered)
+- Full-width action bar: "JOIN [CLAN NAME]" btn-primary
+- Private clan: button disabled, text "This clan is private"
+- Full clan (members >= maxMembers): button disabled, text "Clan is full"
+
+**i18n:** Added `lblClanFull` to all 11 locales (en: "Clan is full", ru: "Клан заполнен")
+
+**Files changed:**
+- `src/components/fragments/club/MyClubTab.vue` — complete no-clan state redesign, pending invites, enhanced suggested clans
+- `src/views/ClubView.vue` — visitor view with top-5 members, more-members text, join/private/full action bar
+- `src/locales/*.js` — `lblClanFull` added to all 11 locales
+
+### Clan Page Redesign — ТЗ C3: Confirmation Modals — ✅ COMPLETE
+
+Replaced all `confirm()` calls with `ClanConfirmModal.vue` (created in C1) for dangerous actions in ClubView.vue.
+
+**4 actions migrated:**
+1. **Kick member** — danger modal, title from `lblKickTitle`, desc with `<strong>{name}</strong>` from `lblKickDesc`
+2. **Leave clan** (settings tab) — danger modal, `lblLeaveTitle` / `lblLeaveDesc`
+3. **Disband clan** — danger modal, `lblDisbandTitle` / `lblDisbandDesc`
+4. **Transfer ownership** — non-danger (primary) modal, `lblTransferTitle` / `lblTransferDesc` with `<strong>{name}</strong>`
+
+**Implementation:** Reactive `confirmModal` state object (`show`, `title`, `description`, `confirmText`, `danger`, `onConfirm`). Helper functions `openConfirmModal()`, `closeConfirmModal()`, `handleConfirm()`. Single `<ClanConfirmModal>` instance in template with bound props.
+
+**i18n:** All keys already existed from C1 pre-add (`lblKickTitle`, `lblKickDesc`, `lblLeaveTitle`, `lblLeaveDesc`, `lblDisbandTitle`, `lblDisbandDesc`, `lblTransferTitle`, `lblTransferDesc`) in all 11 locales.
+
+**Files changed:**
+- `src/views/ClubView.vue` — replaced 4× `confirm()` with ClanConfirmModal, added import + reactive state
