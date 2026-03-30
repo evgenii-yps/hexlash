@@ -29,7 +29,8 @@ class WebSocketClient {
             }
 
             store.commit('webSocket/setConnected', true);
-            store.commit('webSocket/clearReconnectInterval');
+            store.commit('webSocket/clearReconnectTimer');
+            store.commit('webSocket/resetReconnectDelay');
 
             this.isConnecting = false;
 

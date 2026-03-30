@@ -28,6 +28,7 @@ module.exports = {
   TOTAL_ROUNDS: 12,
   MAX_DECK_SIZE: 8,
   MIN_DECK_SIZE: 4,
+  MIN_PVP_DECK_SIZE: 3,     // PvP allows starter deck (3 moves), PvE DeckBuilder enforces 4
   COUNTDOWN_MS: 3000,
   ROUND_ANIMATION_MS: 1500,
   BASE_DAMAGE: 15,

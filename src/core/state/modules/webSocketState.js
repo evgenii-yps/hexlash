@@ -14,11 +14,15 @@ import {validateJwtToken} from "@/core/services/masterService.js";
 import router from "@/router/index.js";
 import {isMockMode} from "@/core/mock/mockData.js";
 
+const RECONNECT_BASE_MS = 10000;   // initial delay: 10s
+const RECONNECT_MAX_MS = 300000;   // max delay: 5 min
+const RECONNECT_JITTER = 0.2;      // ±20% jitter
+
 const state = {
     isConnected: false,
     socketClient: null,
-    reconnectInterval: null, // Интервал для повторных попыток подключения
-    reconnectTimeout: 10000,  // Интервал времени между попытками
+    reconnectTimer: null,
+    reconnectDelay: RECONNECT_BASE_MS,
 };
 
 const getters = {
@@ -32,14 +36,17 @@ const mutations = {
     setSocketClient(state, client) {
         state.socketClient = client;
     },
-    setReconnectInterval(state, interval) {
-        state.reconnectInterval = interval;
+    setReconnectTimer(state, timer) {
+        state.reconnectTimer = timer;
     },
-    clearReconnectInterval(state) {
-        if (state.reconnectInterval) {
-            clearInterval(state.reconnectInterval);
-            state.reconnectInterval = null;
+    clearReconnectTimer(state) {
+        if (state.reconnectTimer) {
+            clearTimeout(state.reconnectTimer);
+            state.reconnectTimer = null;
         }
+    },
+    resetReconnectDelay(state) {
+        state.reconnectDelay = RECONNECT_BASE_MS;
     },
 };
 
@@ -78,26 +85,39 @@ const actions = {
         if (state.socketClient) {
             state.socketClient.close();
             commit('setConnected', false);
-            commit('clearReconnectInterval');
+            commit('clearReconnectTimer');
+            commit('resetReconnectDelay');
 
             state.socketClient = null;
         }
     },
 
     attemptReconnect({commit, state, rootGetters}) {
-        if (rootGetters['master/getLoginState'].isAuthenticated && !state.isConnected && !state.reconnectInterval) {
-            state.socketClient = null;
-
-            const interval = setInterval(async () => {
-                try {
-                    await store.dispatch('webSocket/connectWebSocket');
-                } catch (error) {
-                    console.error('Reconnect failed:', error);
-                }
-            }, state.reconnectTimeout);
-
-            commit('setReconnectInterval', interval);
+        if (!rootGetters['master/getLoginState'].isAuthenticated || state.isConnected || state.reconnectTimer) {
+            return;
         }
+
+        state.socketClient = null;
+
+        // Apply jitter: delay ± 20%
+        const jitter = 1 + (Math.random() * 2 - 1) * RECONNECT_JITTER;
+        const delay = Math.round(state.reconnectDelay * jitter);
+
+        const timer = setTimeout(async () => {
+            commit('setReconnectTimer', null);
+            try {
+                await store.dispatch('webSocket/connectWebSocket');
+            } catch (error) {
+                console.error('Reconnect failed:', error);
+            }
+            // If still not connected after attempt, schedule next with doubled delay
+            if (!state.isConnected) {
+                state.reconnectDelay = Math.min(state.reconnectDelay * 2, RECONNECT_MAX_MS);
+                store.dispatch('webSocket/attemptReconnect');
+            }
+        }, delay);
+
+        commit('setReconnectTimer', timer);
     },
 
     sendMessage({state}, message) {

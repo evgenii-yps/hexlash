@@ -1,5 +1,5 @@
 const pvpMatchManager = require('../services/pvpMatchManager');
-const { MIN_DECK_SIZE, MAX_DECK_SIZE } = require('../config');
+const { MIN_PVP_DECK_SIZE, MAX_DECK_SIZE } = require('../config');
 
 const VALID_COACH_ACTIONS = ['attack', 'defense', 'position'];
 
@@ -22,10 +22,10 @@ function handlePvPMessage(ws, message, user) {
         return;
       }
 
-      // Validate deck — at least 1 move required (new players may have < MIN_DECK_SIZE)
+      // Validate deck
       const deck = data.deck;
-      if (!Array.isArray(deck) || deck.length < 1 || deck.length > MAX_DECK_SIZE) {
-        ws.send(JSON.stringify({ type: 'error', message: `Deck must have 1-${MAX_DECK_SIZE} moves` }));
+      if (!Array.isArray(deck) || deck.length < MIN_PVP_DECK_SIZE || deck.length > MAX_DECK_SIZE) {
+        ws.send(JSON.stringify({ type: 'error', message: `Deck must have ${MIN_PVP_DECK_SIZE}-${MAX_DECK_SIZE} moves` }));
         return;
       }
 
@@ -72,21 +72,27 @@ function handlePvPMessage(ws, message, user) {
 
     case 'dice_roll': {
       const match = pvpMatchManager.getMatchByPlayer(user.odId);
-      if (match) {
-        match.onDiceRoll(user.odId);
+      if (!match) {
+        ws.send(JSON.stringify({ type: 'dice_error', message: 'no_active_match' }));
+        break;
       }
+      if (match.status !== 'running') {
+        ws.send(JSON.stringify({ type: 'dice_error', message: 'fight_not_running' }));
+        break;
+      }
+      match.onDiceRoll(user.odId);
       break;
     }
 
     case 'coach_choice': {
       const match = pvpMatchManager.getMatchByPlayer(user.odId);
       if (!match) break;
+      if (match.status !== 'paused_coach') break;
 
       const action = data.choice?.action;
       // Validate: must be a valid action or null (timeout)
       if (action !== null && action !== undefined && !VALID_COACH_ACTIONS.includes(action)) {
-        ws.send(JSON.stringify({ type: 'error', message: 'Invalid coach action' }));
-        break;
+        break; // silently ignore invalid action
       }
 
       match.onCoachChoice(user.odId, data.choice);
