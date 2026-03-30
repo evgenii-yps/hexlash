@@ -395,10 +395,11 @@ AI_TRAINER_ENABLED = true
 | Move Tree | `MoveTreeView.vue` | Branch sidebar (Speed/Power/Tech) + move cards. Sidebar buttons centered with `position:absolute; top:35%; transform:translateY(-50%)` |
 | Fight | `CardFightView.vue` | Main combat (PvE + PvP), dice, coach advice, HP bars, AI Trainer (PvE results). PvP mode: no BottomMenu, no PvP badge, reduced padding. Fully migrated to --hex-* vars: HexButton for results, inline SVGs, dice/coach/victory/defeat/overdrive all use design system vars |
 | Profile | `ProfileView.vue` | Tabs: balance, wallet, account, skins |
-| Ratings (League) | `RatingsView.vue` | 3 tabs: My Club, Clubs (leaderboard), Fighters (leaderboard). Default tab: My Club. URL: `/ratings/:type` (myclub/clubs/fighters). My Club tab: `MyClubTab.vue` component — shows club card (avatar, stats, members top-5, role badges owner/deputy, action menus: promote/demote/kick for owner+deputy, transfer ownership for owner) if user has club, or no-club state (create button, suggested clubs, browse link) |
+| Ratings (League) | `RatingsView.vue` | 3 tabs: My Club, Clubs (leaderboard), Fighters (leaderboard). Default tab: My Club. URL: `/ratings/:type` (myclub/clubs/fighters). My Club tab: `MyClubTab.vue` component — redesigned clan header (avatar 64px with --hex-primary glow, name in Anonymous font, italic description, LVL badge, member count, level progress bar), stats grid (4 cards: Members/Wins/Losses/Win Rate with colored values), win rate bar, members top-5, role badges owner/deputy, action menus, no-club state |
 | Preparation | `PreparationView.vue` | Arena: action row (Mode + START FIGHT + Friends buttons), club mode toggle/status. Friends button is text-only (no online indicator) |
 | Friends | `FriendsView.vue` | Friends list, friend requests, search players |
 | Matchmaking | `MatchmakingView.vue` | Real-time PvP matchmaking queue. Opponent Found shows fighter skins (not icons). No colored borders. 100dvh support. |
+| Clan | `ClubView.vue` | Redesigned clan page: header with avatar (64px, --hex-primary border + glow, 12px radius), name (Anonymous font), italic description, meta row (LVL badge, member count), level progress bar (6px gradient fill), stats grid via `ClubStats.vue` (4 cards + win rate bar), owner controls |
 | Spectate | `SpectateView.vue` | Watch live PvP fights |
 
 ---
@@ -462,6 +463,7 @@ AI_TRAINER_ENABLED = true
 - `BuyTokens.vue` — Token purchase modal. **Temporarily disabled** — not rendered in ProfileWallet, file preserved for Phase 2 (Base contract)
 - `GameBalanceCard.vue` — Game balance display with withdraw button (shows "after listing" message)
 - `ReferralModal.vue` — Referral program modal: QR code (qrcode lib), copy link (clipboard API), share (Web Share API with fallback), referral stats + list. Opens from ProfileView button
+- `ClanActivityFeed.vue` — Activity feed for clan page. Events grouped by day, color-coded dots (fight_win/lose, member_join/leave/kick, role_change, achievement). Currently mock data from members list; real API (ClanEvent table) planned
 
 ---
 
@@ -719,3 +721,106 @@ Renamed all user-visible "Club" strings to "Clan" across the entire UI. Backend 
 - `ClubOwnerAvatar.vue` — alt text "Club Avatar" → "Clan Avatar"
 
 **Not changed (by design):** i18n keys (`lblClub`, `clubMode`, etc.), Vuex module names (`clubState`, `clubModeState`), file names, API routes, Prisma schema, DB fields
+
+### Clan Page Redesign — ТЗ A: Header + Stats — ✅ COMPLETE
+
+Redesigned ClubView.vue and MyClubTab.vue upper sections. "Neon Discipline" style.
+
+**Clan Header (both views):**
+- Avatar: 64px, border-radius 12px, 2px `--hex-primary` border, `box-shadow` glow
+- Name: Anonymous font, `--hex-text-primary`
+- Description: italic, `--hex-text-muted`, 2-line clamp
+- Meta row: LVL badge (`--hex-primary` bg, AnonymousBalance font), member count "N / 50 Members"
+- Background: gradient `--hex-bg-medium` → `--hex-bg-dark` with subtle radial `--hex-primary` glow
+
+**Level Progress Bar:**
+- "LEVEL 1 → 2" left (Anonymous, `--hex-primary`), "0 / 1,000 XP" right (AnonymousBalance, `--hex-text-muted`)
+- 6px bar, gradient fill `--hex-primary` → `#FF3399`, glow
+- Static mock data: Level 1, 0/1000 XP (real system in separate ТЗ)
+
+**Stats Grid (ClubStats.vue rewritten):**
+- 4 cards: Members, Wins, Losses, Win Rate
+- `--hex-bg-card` bg, `--hex-border-default`, AnonymousBalance font
+- Colors: wins=`--hex-victory`, losses=`--hex-defeat`, win rate=`--hex-draw`
+- Labels: 9px uppercase, `--hex-text-muted`
+- Win Rate = `Math.round(wins / battles * 100)` or 0
+
+**Win Rate Bar:**
+- 4px under stats grid
+- Green wins% + red losses%, opacity 0.5, border-radius 2px
+
+**Removed from ClubView header:** old plain-text stats layout, old btnToMembers button with icon
+
+**Files changed:**
+- `src/views/ClubView.vue` — complete header redesign
+- `src/components/fragments/club/MyClubTab.vue` — matching header + ClubStats integration
+- `src/components/fragments/club/ClubStats.vue` — rewritten: 4-card grid + win rate bar
+
+### Clan Page Redesign — ТЗ B: Tabs + Members + Activity — ✅ COMPLETE
+
+Added tab navigation, members leaderboard, and activity feed to ClubView.vue.
+
+**Tab Navigation:**
+- 3 tabs: Members | Activity | Settings
+- `--hex-bg-medium` background, Anonymous font 11px uppercase, letter-spacing 1px
+- Active: `--hex-primary` color + border-bottom 2px
+- Activity tab: badge with event count (`--hex-primary` bg, 9px)
+- Sticky top on scroll, z-index 50
+- Tabs shown only for clan members (`isMyClub`); visitors see members list directly
+
+**Members Tab (default):**
+- "CLAN LEADERBOARD" section label (10px uppercase, `--hex-text-muted`)
+- Member rows: rank (Anonymous font, top-1,2 = `--hex-draw`) | avatar (38px, border-radius 8px) | name + role badge + online dot | wins + fights | ⋯ menu
+- Role badges: OWNER = `--hex-primary` bg, DEPUTY = `--hex-draw` with opacity
+- Online dot: 6px green with glow
+- Stats: wins in `--hex-victory`, total fights in `--hex-text-muted`
+- Sorted by wins DESC, loads up to 50 members
+- Invite Friend button for owner/deputy
+
+**Action Menu (⋯):**
+- Teleported to body, positioned absolutely near trigger button
+- `--hex-bg-card` bg, `--hex-border-active` border, border-radius 8px, backdrop-filter blur
+- Owner on deputy: Transfer Ownership, Demote to Member, Kick (red)
+- Owner on member: Promote to Deputy, Kick (red)
+- Deputy on member: Kick only (red)
+- Click outside or Escape closes menu
+- Kick + Transfer use `confirm()` dialog (full modal in ТЗ C)
+
+**Activity Feed (`ClanActivityFeed.vue`):**
+- Events grouped by day ("Today", "Yesterday", date)
+- Each event: colored dot (8px) | text with bold names | time
+- Event types: fight_win (green glow), fight_lose (red), member_join (pink glow), member_leave (gray), member_kick (red), role_change (blue), achievement (gold glow)
+- Mock data: generates events from members list (join dates, win/loss stats)
+- Real Activity Feed API (ClanEvent table) — separate ТЗ
+
+**Settings Tab:** 3 sections (Clan Info, Level Bonuses, Treasury) with settings rows + action buttons (Edit/Disband for owner, Leave for member)
+
+**i18n keys added (all 11 locales):**
+- `tabMembers`, `tabActivity`, `tabSettings`, `lblLeaderboard`, `lblFights`
+- `lblToday`, `lblYesterday`, `lblWonPvP`, `lblWonPvE`, `lblLostPvP`, `lblLostPvE`
+- `lblJoinedClan`, `lblLeftClan`, `lblWasKicked`, `lblPromotedTo`, `lblToDeputy`, `lblReachedMilestone`, `lblNoActivity`
+- en + ru translated, other 9 locales use English values
+
+**Files changed:**
+- `src/views/ClubView.vue` — tabs, members leaderboard, action menu, activity/settings tabs
+- `src/components/fragments/club/ClanActivityFeed.vue` — new component
+- `src/locales/*.js` — 18 new i18n keys in all 11 locales
+
+### Clan Page Redesign — ТЗ C1: Settings Tab — ✅ COMPLETE
+
+Replaced Settings tab placeholder with full settings UI.
+
+**Clan Info section:** Name, Description, Type (Public/Private), Created date — settings rows with labels and values.
+**Level Bonuses section:** Max members (green + muted hint), XP bonus (+0% mock), Next unlock (--hex-draw color).
+**Treasury section:** Balance in AnonymousBalance font (--hex-draw), Income description.
+**Actions:** Owner sees Edit Clan + Disband Clan (danger). Member sees Leave Clan (danger). Disband/Leave use confirm() for now (custom modals in C3).
+
+Removed old placeholder with VBtnDark/VSwitch/ClubWithdraw from settings. Cleaned up dead code (showToolTip, btnIsPublic, club-switcher-public CSS).
+
+**i18n keys added (en + ru, 9 locales via background agent):**
+- `lblClanInfo`, `lblLevelBonuses`, `lblTreasury`, `lblIncome`, `lblMaxMembers`, `lblXpBonus`, `lblNextUnlock`, `lblFromLevel`, `lblCreated`, `lblType`, `btnEdit`, `btnDisband`
+- Plus C2/C3 keys pre-added: `lblNoClan`, `lblNoClanDesc`, `lblCreateCost`, `lblBrowseClans`, `lblSuggestedClans`, `lblJoinClan`, `lblClanPrivate`, `lblMoreMembers`, confirm modal keys
+
+**Files changed:**
+- `src/views/ClubView.vue` — settings tab rewrite, dead code cleanup
+- `src/locales/en.js`, `src/locales/ru.js` — new i18n keys
