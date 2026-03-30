@@ -1302,7 +1302,7 @@ const flashStyle = computed(() => ({
 
 .fight-content-wrapper {
   width: 100%;
-  padding: 16px 12px 90px;
+  padding: 76px 12px 90px;
   box-sizing: border-box;
   max-width: 500px;
   margin: 0 auto;
