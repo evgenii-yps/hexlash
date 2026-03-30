@@ -173,6 +173,13 @@ function onMatchmakingTimeout() {
   status.value = 'timeout';
 }
 
+function onMatchCancelled() {
+  // Match was cancelled by server (e.g. player not ready within timeout)
+  cleanup();
+  store.commit('master/setInfoMessage', { text: t.pvp?.matchCancelled || 'Match cancelled', timeout: 3000 });
+  router.push('/arena');
+}
+
 // Lifecycle
 onMounted(async () => {
   // Fetch online count
@@ -185,6 +192,7 @@ onMounted(async () => {
   window.addEventListener('matchmaking-match-found', onMatchFound);
   window.addEventListener('matchmaking-queue-update', onQueueUpdate);
   window.addEventListener('matchmaking-timeout', onMatchmakingTimeout);
+  window.addEventListener('match-cancelled', onMatchCancelled);
 
   startSearch();
 });
@@ -194,6 +202,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('matchmaking-match-found', onMatchFound);
   window.removeEventListener('matchmaking-queue-update', onQueueUpdate);
   window.removeEventListener('matchmaking-timeout', onMatchmakingTimeout);
+  window.removeEventListener('match-cancelled', onMatchCancelled);
   if (onlineRefreshInterval) {
     clearInterval(onlineRefreshInterval);
   }

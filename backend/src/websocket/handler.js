@@ -56,14 +56,33 @@ function setupWebSocket(server) {
 
     // Close existing connection if user reconnects
     const existingWs = clients.get(userId);
-    if (existingWs && existingWs !== ws && existingWs.readyState === existingWs.OPEN) {
-      existingWs.close(4000, 'Replaced by new connection');
+    let isReconnect = false;
+    if (existingWs && existingWs !== ws) {
+      isReconnect = true;
+      // Mark old socket as replaced so its close handler won't trigger PvP disconnect
+      existingWs._replaced = true;
+      if (existingWs.readyState === existingWs.OPEN) {
+        existingWs.close(4000, 'Replaced by new connection');
+      }
     }
 
     // Register client
     clients.set(userId, ws);
     ws.isAlive = true;
     console.log(`WebSocket: user ${userId} connected. Total: ${clients.size}`);
+
+    // Re-bind socket to active PvP match on reconnect
+    if (isReconnect) {
+      const activeMatch = pvpMatchManager.getMatchByPlayer(userId);
+      if (activeMatch && activeMatch.status !== 'finished') {
+        if (activeMatch.player1.odId === userId) {
+          activeMatch.player1.socket = ws;
+        } else if (activeMatch.player2.odId === userId) {
+          activeMatch.player2.socket = ws;
+        }
+        console.log(`[PVP] Reconnected player ${userId} to match ${activeMatch.matchId}`);
+      }
+    }
 
     ws.on('pong', () => { ws.isAlive = true; });
 
@@ -78,6 +97,8 @@ function setupWebSocket(server) {
     });
 
     ws.on('close', () => {
+      // If this socket was replaced by a new connection, don't trigger PvP disconnect
+      if (ws._replaced) return;
       clients.delete(userId);
       matchmaking.removeFromQueue(userId);
       handlePvPDisconnect(userId);
@@ -86,6 +107,7 @@ function setupWebSocket(server) {
 
     ws.on('error', (err) => {
       console.error(`WebSocket error for user ${userId}:`, err.message);
+      if (ws._replaced) return;
       clients.delete(userId);
       matchmaking.removeFromQueue(userId);
       handlePvPDisconnect(userId);
@@ -697,9 +719,20 @@ function notifyMatch(match) {
 
 // Periodically try to match queued players (in case expand timers find matches)
 setInterval(() => {
-  for (const [odId] of matchmaking.queue) {
+  // Snapshot queue keys to avoid issues with Map modification during iteration
+  const queuedIds = [...matchmaking.queue.keys()];
+  const matchedThisTick = new Set();
+
+  for (const odId of queuedIds) {
+    // Skip players already matched in this tick
+    if (matchedThisTick.has(odId)) continue;
+    // Skip players no longer in queue (removed by a prior match in this tick)
+    if (!matchmaking.queue.has(odId)) continue;
+
     const match = matchmaking.tryFindMatch(odId);
     if (match) {
+      matchedThisTick.add(match.player1.odId);
+      matchedThisTick.add(match.player2.odId);
       notifyMatch(match);
     }
   }

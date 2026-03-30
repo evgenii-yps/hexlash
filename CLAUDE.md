@@ -508,6 +508,7 @@ Password reset: Returns 501 (not implemented) — no fake success
 | — | `coach_opponent_ready` | Opponent already made their coach choice |
 | — | `round_result` | Round simulation result with HP, damage, effects |
 | — | `fight_end` | Fight finished with winner, reason, XP |
+| — | `match_cancelled` | Match cancelled (reason: ready_timeout) — handled by MatchmakingView + CardFightView |
 | — | `overdrive_start` | Overdrive phase started (rounds > MAX_ROUNDS) |
 | — | `AchievementResponseMsg` | Auto-awarded achievement (punch milestones: 100, 1k, 5k, 10k) |
 | — | `club_invite` | Club invitation notification (inviterName, clubName) |
@@ -593,8 +594,38 @@ User, Club, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask,
 
 ## Branch (Git)
 
-Development branch: `claude/rename-autofight-club-mode-o2bIJ`
-Previous branches: `claude/update-claude-md-XVzH6`, `claude/add-pixel-icons-Hk6tn` (design system + UI redesign, completed & merged), `claude/hexlash-full-audit-WvXMd` (security audit, completed & merged)
+Development branch: `claude/pvp-system-audit-TJU4i`
+Previous branches: `claude/rename-autofight-club-mode-o2bIJ`, `claude/update-claude-md-XVzH6`, `claude/add-pixel-icons-Hk6tn` (design system + UI redesign, completed & merged), `claude/hexlash-full-audit-WvXMd` (security audit, completed & merged)
+
+### PvP System Audit — P0+P1 Fixes — ✅ COMPLETE
+
+Full audit of PvP chain (matchmaking → ready → rounds → dice/coach → fight end). Found and fixed critical issues:
+
+**P0 — Critical (PvP was non-functional):**
+- **P0-1:** Added `coach_opponent_ready` event handler in CardFightView — was completely missing, coach UI hung forever when opponent chose first
+- **P0-2:** Added `match_cancelled` event handler in MatchmakingView + CardFightView — server sent it on ready_timeout but neither view handled it, players saw frozen screen
+- **P0-3:** Fixed WS reconnect killing PvP fights — old socket's `close` event triggered `handlePvPDisconnect` ending the match. Now: mark replaced sockets with `_replaced` flag, skip disconnect handler; re-bind new socket to active match engine on reconnect
+- **P0-4:** Verified coach round counting — was actually correct (round incremented in `nextRound()` before `pauseForCoach()` call), added clarifying comment
+
+**P1 — Serious bugs:**
+- **P1-5:** Fixed dice `endFight` race condition — dice rage/crit could end fight while `setTimeout(nextRound)` was pending, causing double `endFight()`. Now: save `roundTimer` ref, `clearTimeout` in `endFight()` and `onPlayerDisconnect()`
+- **P1-6:** Fixed matchmaking race condition — periodic 3s interval could match same player twice. Now: snapshot queue keys before iteration, track `matchedThisTick` Set
+- **P1-7:** Added deck validation in `pvp_ready` handler — validates array, length (MIN_DECK_SIZE..MAX_DECK_SIZE), each entry has id + level (1-5). Recalculates archetype modifiers after binding modules
+- **P1-8:** Added coach_choice validation — action must be `attack|defense|position` or null
+
+**Files changed:**
+- `src/views/CardFightView.vue` — P0-1, P0-2 (event handlers)
+- `src/views/MatchmakingView.vue` — P0-2 (event handler)
+- `backend/src/websocket/handler.js` — P0-3 (reconnect), P1-6 (matchmaking race)
+- `backend/src/websocket/pvpHandler.js` — P1-7 (deck validation), P1-8 (coach validation)
+- `backend/src/services/pvpCombatEngine.js` — P1-5 (roundTimer), exported `calculateArchetypeModifiers`
+
+**P2/P3 — Deferred (stability/improvements):**
+- ELO update should use `$transaction`
+- WS reconnect with exponential backoff (currently fixed 10s)
+- Frontend timeout for `fight_start` (30s → show error)
+- `dice_error` UX improvement (show toast, don't permanently disable)
+- Rate limiting on `dice_roll` at handler level
 
 ### AutoFight → Club Mode Rename + Club System Audit — ✅ COMPLETE
 
