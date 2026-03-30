@@ -119,10 +119,14 @@ class MatchmakingService {
     pvpMatchManager.createMatch(matchId, {
       odId: player1.odId,
       username: player1.username,
+      skin: player1.skin || null,
+      avatarUrl: player1.avatarUrl || null,
       deck: [],
     }, {
       odId: player2.odId,
       username: player2.username,
+      skin: player2.skin || null,
+      avatarUrl: player2.avatarUrl || null,
       deck: [],
     });
 

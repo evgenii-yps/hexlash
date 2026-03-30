@@ -77,6 +77,8 @@ class PvPCombatEngine {
     this.player1 = {
       odId: player1.odId,
       username: player1.username,
+      skin: player1.skin || null,
+      avatarUrl: player1.avatarUrl || null,
       deck: player1.deck,       // [{id, level}, ...]
       modules: player1.modules || [],
       modifiers: calculateArchetypeModifiers(player1.modules),
@@ -92,6 +94,8 @@ class PvPCombatEngine {
     this.player2 = {
       odId: player2.odId,
       username: player2.username,
+      skin: player2.skin || null,
+      avatarUrl: player2.avatarUrl || null,
       deck: player2.deck,
       modules: player2.modules || [],
       modifiers: calculateArchetypeModifiers(player2.modules),
@@ -126,8 +130,8 @@ class PvPCombatEngine {
 
     this.emit('fight_start', {
       matchId: this.matchId,
-      player1: { odId: this.player1.odId, username: this.player1.username },
-      player2: { odId: this.player2.odId, username: this.player2.username },
+      player1: { odId: this.player1.odId, username: this.player1.username, skin: this.player1.skin, avatarUrl: this.player1.avatarUrl },
+      player2: { odId: this.player2.odId, username: this.player2.username, skin: this.player2.skin, avatarUrl: this.player2.avatarUrl },
       maxRounds: this.maxRounds,
       overdriveStartRound: MAX_ROUNDS + 1,
     });
