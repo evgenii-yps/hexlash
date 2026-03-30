@@ -167,42 +167,75 @@
             <ClanActivityFeed :members="membersList" :clubData="clubData" />
           </div>
 
-          <!-- Settings Tab (placeholder for ТЗ C) -->
-          <div v-if="activeTab === 'settings'" class="tab-content">
-            <div class="settings-placeholder">
-              <div v-if="isOwner" class="controls">
-                <ClubWithdraw :balance="String(formatNumber(clubData.getBalance()))" :wallet="master.userData.walletAddress"/>
+          <!-- Settings Tab -->
+          <div v-if="activeTab === 'settings'" class="tab-content settings-tab">
 
-                <VBtnDark
-                    class="club-btn"
-                    @click="btnIsPublic">
-                  <template #prepend>
-                    <v-tooltip
-                        v-model="showToolTip"
-                        location="top"
-                        max-width="250px"
-                        contentClass="v-tooltip__content">
-                      <template #activator="{ props }">
-                        <img v-bind="props" @click.stop="toggleToolTip" src="@/assets/images/icon_lock_white.svg" alt=""
-                             class="custom-icon"/>
-                      </template>
-                      <span>{{ t.club.lblCloseClubTooltip }}</span>
-                    </v-tooltip>
-                  </template>
-                  {{ t.club.lblOpenClub }}
-                  <template #append>
-                    <span class="custom-icon"/>
-                    <v-switch
-                        style="position: absolute; right:10px;"
-                        v-model="isPublic"
-                        :class="{ checked: isPublic }"
-                        class="club-switcher-public"
-                        hide-details
-                    ></v-switch>
-                  </template>
-                </VBtnDark>
+            <!-- Clan Info -->
+            <div class="settings-section">
+              <div class="settings-title">{{ t.club.lblClanInfo || 'CLAN INFO' }}</div>
+              <div class="settings-row">
+                <span class="settings-label">{{ t.club.lblClubName || 'Name' }}</span>
+                <span class="settings-value">{{ clubData.name }}</span>
+              </div>
+              <div class="settings-row">
+                <span class="settings-label">{{ t.club.lblClubDescription || 'Description' }}</span>
+                <span class="settings-value settings-value-desc">{{ clubData.description || '—' }}</span>
+              </div>
+              <div class="settings-row">
+                <span class="settings-label">{{ t.club.lblType || 'Type' }}</span>
+                <span class="settings-value">{{ isPublic ? (t.club.lblPublic || 'Public') : (t.club.lblPrivate || 'Private') }}</span>
+              </div>
+              <div class="settings-row">
+                <span class="settings-label">{{ t.club.lblCreated || 'Created' }}</span>
+                <span class="settings-value">{{ clubCreatedDate }}</span>
+              </div>
+            </div>
 
+            <!-- Level Bonuses -->
+            <div class="settings-section">
+              <div class="settings-title">{{ t.club.lblLevelBonuses || 'LEVEL BONUSES' }}</div>
+              <div class="settings-row">
+                <span class="settings-label">{{ t.club.lblMaxMembers || 'Max members' }}</span>
+                <span class="settings-value">
+                  <span class="value-green">{{ clubData.maxMembers || 50 }}</span>
+                  <span class="value-muted"> (+0 {{ t.club.lblFromLevel || 'from level' }})</span>
+                </span>
+              </div>
+              <div class="settings-row">
+                <span class="settings-label">{{ t.club.lblXpBonus || 'XP bonus' }}</span>
+                <span class="settings-value value-green">+0%</span>
+              </div>
+              <div class="settings-row">
+                <span class="settings-label">{{ t.club.lblNextUnlock || 'Next unlock' }}</span>
+                <span class="settings-value value-xp">Level 2</span>
+              </div>
+            </div>
+
+            <!-- Treasury -->
+            <div class="settings-section">
+              <div class="settings-title">{{ t.club.lblTreasury || 'TREASURY' }}</div>
+              <div class="settings-row">
+                <span class="settings-label">Balance</span>
+                <span class="settings-value value-balance">{{ formatNumber(clubBalance) }}</span>
+              </div>
+              <div class="settings-row">
+                <span class="settings-label">{{ t.club.lblIncome || 'Income' }}</span>
+                <span class="settings-value value-secondary">{{ t.club.lblIncome || '5% of member taps' }}</span>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="settings-actions">
+              <div v-if="isOwner" class="settings-btn-group">
                 <ClubEdit :clubData="clubData"/>
+                <HexButton variant="danger" size="sm" @click="confirmDisband">
+                  {{ t.club.btnDisband || 'Disband Clan' }}
+                </HexButton>
+              </div>
+              <div v-else class="settings-btn-group">
+                <HexButton variant="danger" size="sm" @click="confirmLeaveSettings">
+                  {{ t.club.lblLeaveClub }}
+                </HexButton>
               </div>
             </div>
           </div>
@@ -278,7 +311,7 @@ import ClubAvatar from "@/components/fragments/club/ClubAvatar.vue";
 import ClubStats from "@/components/fragments/club/ClubStats.vue";
 import ClanActivityFeed from "@/components/fragments/club/ClanActivityFeed.vue";
 import router from "@/router/index.js";
-import ClubWithdraw from "@/components/fragments/club/ClubWithdraw.vue";
+// ClubWithdraw removed from Settings — balance display only now
 import ClubEdit from "@/components/fragments/club/ClubEdit.vue";
 import ClubOwnerAvatar from "@/components/fragments/club/ClubOwnerAvatar.vue";
 import HexButton from "@/components/ui/HexButton.vue";
@@ -301,7 +334,6 @@ const isPublic = ref(true);
 const isOwner = ref(false);
 const isDeputy = computed(() => master.value?.userData?.clubRole === 'deputy');
 const isMyClub = ref(false);
-const showToolTip = ref(false);
 
 const activeTab = ref('members');
 const activityCount = ref(0);
@@ -332,10 +364,6 @@ const tabs = computed(() => [
 
 const friends = computed(() => store.getters['friends/getFriends'] || []);
 const invitableFriends = computed(() => friends.value.filter(f => !f.clubId));
-
-const toggleToolTip = () => {
-  showToolTip.value = !showToolTip.value;
-};
 
 const notFound = ref(false);
 
@@ -499,11 +527,27 @@ const sendInvite = async (friend) => {
   }
 };
 
-const btnIsPublic = () => {
-  isPublic.value = !isPublic.value;
-  clubData.value.isPublic = isPublic.value;
-  store.dispatch('club/updateClubData', clubData.value);
-}
+const clubBalance = computed(() => {
+  try { return clubData.value?.getBalance?.() || 0; } catch { return 0; }
+});
+
+const clubCreatedDate = computed(() => {
+  const d = clubData.value?.createdAt;
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString();
+});
+
+const confirmDisband = () => {
+  if (!confirm(t.value.club.lblDisbandDesc || 'This will permanently delete the clan. All members will be removed.')) return;
+  store.dispatch('club/deleteClub');
+  router.push('/ratings/clubs');
+};
+
+const confirmLeaveSettings = () => {
+  if (!confirm(t.value.club.lblLeaveDesc || 'You will lose your role and clan XP bonuses.')) return;
+  store.dispatch('club/leaveClub');
+  router.push('/ratings/clubs');
+};
 
 const btnToJoin = () => {
   dialogChangeClub.value = true;
@@ -1008,28 +1052,86 @@ onBeforeUnmount(() => {
   margin-top: 20px;
 }
 
-/* Settings placeholder */
-.settings-placeholder {
-  padding: 16px;
+
+/* ===== SETTINGS TAB ===== */
+.settings-tab {
+  padding: 0 16px;
 }
 
-.controls .club-btn {
-  height: 50px !important;
-  margin: 15px auto;
-  width: 80%;
-  max-width: 500px;
-  justify-content: space-between;
-  text-align: center;
-  color: white;
-  cursor: pointer;
+.settings-section {
+  margin-bottom: 20px;
+}
+
+.settings-title {
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--hex-text-muted);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--hex-border-default);
+  margin-bottom: 8px;
+}
+
+.settings-row {
   display: flex;
-  background-color: var(--hex-bg-light) !important;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
 }
 
-.custom-icon {
-  width: 25px;
-  height: 25px;
-  margin-right: 10px;
+.settings-label {
+  font-size: 13px;
+  color: var(--hex-text-secondary);
+}
+
+.settings-value {
+  font-size: 13px;
+  color: var(--hex-text-primary);
+  text-align: right;
+  max-width: 60%;
+}
+
+.settings-value-desc {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.value-green {
+  color: var(--hex-victory);
+}
+
+.value-muted {
+  color: var(--hex-text-muted);
+  font-size: 11px;
+}
+
+.value-xp {
+  color: var(--hex-draw);
+}
+
+.value-balance {
+  font-family: 'AnonymousBalance', 'Courier New', monospace;
+  color: var(--hex-draw);
+  font-size: 16px;
+}
+
+.value-secondary {
+  color: var(--hex-text-secondary);
+}
+
+.settings-actions {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--hex-border-default);
+}
+
+.settings-btn-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
 }
 
 /* Not found */
@@ -1057,10 +1159,6 @@ onBeforeUnmount(() => {
 
 .back-btn:hover {
   background-color: var(--hex-bg-medium);
-}
-
-.club-switcher-public.checked :deep(.v-switch__thumb) {
-  background-color: var(--hex-primary) !important;
 }
 
 /* Invite modal */

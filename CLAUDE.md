@@ -793,7 +793,7 @@ Added tab navigation, members leaderboard, and activity feed to ClubView.vue.
 - Mock data: generates events from members list (join dates, win/loss stats)
 - Real Activity Feed API (ClanEvent table) — separate ТЗ
 
-**Settings Tab:** Placeholder with existing owner controls (will be redesigned in ТЗ C)
+**Settings Tab:** 3 sections (Clan Info, Level Bonuses, Treasury) with settings rows + action buttons (Edit/Disband for owner, Leave for member)
 
 **i18n keys added (all 11 locales):**
 - `tabMembers`, `tabActivity`, `tabSettings`, `lblLeaderboard`, `lblFights`
@@ -805,3 +805,22 @@ Added tab navigation, members leaderboard, and activity feed to ClubView.vue.
 - `src/views/ClubView.vue` — tabs, members leaderboard, action menu, activity/settings tabs
 - `src/components/fragments/club/ClanActivityFeed.vue` — new component
 - `src/locales/*.js` — 18 new i18n keys in all 11 locales
+
+### Clan Page Redesign — ТЗ C1: Settings Tab — ✅ COMPLETE
+
+Replaced Settings tab placeholder with full settings UI.
+
+**Clan Info section:** Name, Description, Type (Public/Private), Created date — settings rows with labels and values.
+**Level Bonuses section:** Max members (green + muted hint), XP bonus (+0% mock), Next unlock (--hex-draw color).
+**Treasury section:** Balance in AnonymousBalance font (--hex-draw), Income description.
+**Actions:** Owner sees Edit Clan + Disband Clan (danger). Member sees Leave Clan (danger). Disband/Leave use confirm() for now (custom modals in C3).
+
+Removed old placeholder with VBtnDark/VSwitch/ClubWithdraw from settings. Cleaned up dead code (showToolTip, btnIsPublic, club-switcher-public CSS).
+
+**i18n keys added (en + ru, 9 locales via background agent):**
+- `lblClanInfo`, `lblLevelBonuses`, `lblTreasury`, `lblIncome`, `lblMaxMembers`, `lblXpBonus`, `lblNextUnlock`, `lblFromLevel`, `lblCreated`, `lblType`, `btnEdit`, `btnDisband`
+- Plus C2/C3 keys pre-added: `lblNoClan`, `lblNoClanDesc`, `lblCreateCost`, `lblBrowseClans`, `lblSuggestedClans`, `lblJoinClan`, `lblClanPrivate`, `lblMoreMembers`, confirm modal keys
+
+**Files changed:**
+- `src/views/ClubView.vue` — settings tab rewrite, dead code cleanup
+- `src/locales/en.js`, `src/locales/ru.js` — new i18n keys
