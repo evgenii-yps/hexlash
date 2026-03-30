@@ -69,6 +69,7 @@ module.exports = {
     9:  { xpRequired: 80000,  maxMembers: 45, xpBonus: 20 },
     10: { xpRequired: 120000, maxMembers: 50, xpBonus: 20 },
   },
+  CLAN_TAP_SHARE: 0.05, // 5% of member taps go to clan treasury
   CLAN_XP_REWARDS: {
     win: 10,
     draw: 5,

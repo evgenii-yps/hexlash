@@ -2,7 +2,7 @@ const { WebSocketServer } = require('ws');
 const jwt = require('jsonwebtoken');
 const prisma = require('../lib/prisma');
 const { v4: uuidv4 } = require('uuid');
-const { JWT_SECRET, COST_PER_CLICK, DECIMALS, PUNCH_MAX_PER_INTERVAL, PUNCH_MAX_PER_BATCH, PUNCH_INTERVAL_MS, WS_PING_INTERVAL_MS, WS_PONG_TIMEOUT_MS } = require('../config');
+const { JWT_SECRET, COST_PER_CLICK, DECIMALS, PUNCH_MAX_PER_INTERVAL, PUNCH_MAX_PER_BATCH, PUNCH_INTERVAL_MS, WS_PING_INTERVAL_MS, WS_PONG_TIMEOUT_MS, CLAN_TAP_SHARE } = require('../config');
 const clients = new Map(); // userId -> ws
 const matchmaking = require('../services/matchmaking');
 const pvpMatchManager = require('../services/pvpMatchManager');
@@ -302,6 +302,15 @@ async function handlePunchBatch(ws, userId, msg) {
     },
     include: { achievements: true },
   });
+
+  // Credit 5% of taps to clan treasury
+  if (user.clubId && count >= 20) {
+    const clanShare = Math.max(1, Math.floor(count * CLAN_TAP_SHARE));
+    prisma.club.update({
+      where: { id: user.clubId },
+      data: { balance: { increment: clanShare } },
+    }).catch(e => console.error('Clan balance error:', e.message));
+  }
 
   // Send updated punch info
   sendMessage(ws, {

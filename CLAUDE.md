@@ -325,6 +325,7 @@ ARCHETYPE_MODIFIERS = { predator, sentinel, ghost, analyst, maverick, juggernaut
 // Clan Level System
 CLAN_LEVEL_CONFIG = { 1..10: { xpRequired, maxMembers, xpBonus } }
 CLAN_XP_REWARDS = { win: 10, draw: 5, lose: 3 }
+CLAN_TAP_SHARE = 0.05              // 5% of member taps → clan treasury
 
 // AI Trainer
 ANTHROPIC_API_KEY = env
@@ -1025,3 +1026,17 @@ Replaced mock data in ClanActivityFeed.vue with real API data from `GET /v1/club
 - `src/core/services/clubService.js` — `getClanEvents()` API call
 - `src/core/state/modules/clubState.js` — clanEvents state + fetchClanEvents action
 - `src/locales/en.js`, `src/locales/ru.js` + 9 other locales — new i18n keys
+
+### Clan Balance — 5% Taps to Treasury (ТЗ E3) — ✅ COMPLETE
+
+Added automatic 5% tap share from member punches to clan treasury balance.
+
+**1. Config:** `CLAN_TAP_SHARE = 0.05` in `backend/src/config.js`
+
+**2. Backend:** In `handler.js` `handlePunchBatch()`, after user taps are credited: if user has `clubId` and batch >= 20 taps → `Math.max(1, Math.floor(count * 0.05))` credited to `Club.balance` via fire-and-forget `.catch()`.
+
+**3. Frontend:** No changes — Treasury in Settings already displays `club.balance`.
+
+**Files changed:**
+- `backend/src/config.js` — `CLAN_TAP_SHARE` constant
+- `backend/src/websocket/handler.js` — clan balance increment in handlePunchBatch
