@@ -333,6 +333,7 @@ export default {
     // Visitor
     lblJoinClan: '加入',
     lblClanPrivate: '此战队为私密',
+    lblClanFull: 'Clan is full',
     lblMoreMembers: '+ 还有{n}位成员',
     // Confirm modals
     lblKickTitle: '踢出成员？',

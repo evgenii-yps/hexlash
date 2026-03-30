@@ -333,6 +333,7 @@ export default {
     // Visitor
     lblJoinClan: '가입',
     lblClanPrivate: '이 클랜은 비공개입니다',
+    lblClanFull: 'Clan is full',
     lblMoreMembers: '+ {n}명 더',
     // Confirm modals
     lblKickTitle: '멤버를 추방하시겠습니까?',

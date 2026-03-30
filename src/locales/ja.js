@@ -333,6 +333,7 @@ export default {
     // Visitor
     lblJoinClan: '参加',
     lblClanPrivate: 'このクランはプライベートです',
+    lblClanFull: 'Clan is full',
     lblMoreMembers: '+ 他{n}人のメンバー',
     // Confirm modals
     lblKickTitle: 'メンバーをキックしますか？',

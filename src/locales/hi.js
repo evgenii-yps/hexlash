@@ -333,6 +333,7 @@ export default {
     // Visitor
     lblJoinClan: 'शामिल हों',
     lblClanPrivate: 'यह क्लैन प्राइवेट है',
+    lblClanFull: 'Clan is full',
     lblMoreMembers: '+ {n} और सदस्य',
     // Confirm modals
     lblKickTitle: 'सदस्य को निकालें?',

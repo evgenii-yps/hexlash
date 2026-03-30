@@ -213,42 +213,62 @@
     <!-- State 2: No club -->
     <div v-else class="no-club">
 
-      <p class="no-club-text">{{ t.club.lblNoClubYet }}</p>
+      <div class="no-clan-hero">
+        <span class="no-clan-icon">⚔</span>
+        <h3 class="no-clan-title">{{ t.club.lblNoClan }}</h3>
+        <p class="no-clan-desc">{{ t.club.lblNoClanDesc }}</p>
+      </div>
 
-      <div class="create-section">
-        <HexButton
-            variant="primary"
-            @click="dialogCreate = true"
-        >
+      <div class="no-clan-actions">
+        <HexButton variant="primary" block @click="dialogCreate = true">
           {{ t.profile.buttons.lblCreateClub }}
+        </HexButton>
+        <span class="create-cost">{{ t.club.lblCreateCost }}</span>
+
+        <HexButton variant="secondary" block @click="$emit('switchTab', 'clubs')">
+          {{ t.club.lblBrowseClans }}
         </HexButton>
       </div>
 
       <CreateClub :dialogCreate="dialogCreate" @close="dialogCreate = false" />
 
-      <div class="divider-row">
-        <span class="divider-line" />
-        <span class="divider-text">{{ t.club.lblOrJoinExisting }}</span>
-        <span class="divider-line" />
-      </div>
-
-      <!-- Mini club list -->
-      <div v-if="suggestedClubs.length" class="suggested-clubs">
-        <div v-for="club in suggestedClubs" :key="club.id" class="suggested-row">
-          <div class="suggested-info">
-            <span class="suggested-name">{{ club.name }}</span>
-            <span class="suggested-members">{{ club.members }} {{ t.rating.members }}</span>
+      <!-- Pending Invites -->
+      <div v-if="pendingInvites.length" class="pending-invites">
+        <div v-for="invite in pendingInvites" :key="invite.id" class="invite-banner">
+          <div class="invite-banner-content">
+            <span class="invite-icon">✉</span>
+            <div class="invite-info">
+              <span class="invite-club-name">{{ invite.club?.name || invite.clubName }}</span>
+              <span class="invite-meta">{{ invite.club?.members || '?' }} {{ t.rating.members }} · {{ formatExpiry(invite.expiresAt) }}</span>
+            </div>
           </div>
-          <HexButton variant="primary" size="sm" @click="joinClub(club.id)">
-            {{ t.club.lblJoin }}
-          </HexButton>
+          <div class="invite-banner-actions">
+            <HexButton variant="primary" size="sm" @click="acceptInvite(invite)">Accept</HexButton>
+            <HexButton variant="ghost" size="sm" @click="declineInvite(invite)">Decline</HexButton>
+          </div>
         </div>
       </div>
 
-      <div class="browse-row">
-        <span class="browse-link" @click="$emit('switchTab', 'clubs')">
-          {{ t.club.lblBrowseAllClubs }} →
-        </span>
+      <!-- Suggested Clans -->
+      <div v-if="suggestedClubs.length" class="suggested-section">
+        <div class="suggested-label">{{ t.club.lblSuggestedClans }}</div>
+        <div class="suggested-clubs">
+          <div v-for="club in suggestedClubs" :key="club.id" class="suggested-row">
+            <div class="suggested-avatar">
+              <span>{{ getInitial(club.name) }}</span>
+            </div>
+            <div class="suggested-info">
+              <div class="suggested-name-row">
+                <span class="suggested-name">{{ club.name }}</span>
+                <span class="suggested-lvl">LVL 1</span>
+              </div>
+              <span class="suggested-meta">{{ club.members }} {{ t.rating.members }} · {{ club.wins || 0 }} W · {{ getWinRate(club) }}% WR</span>
+            </div>
+            <HexButton variant="primary" size="sm" @click="joinClub(club.id)">
+              {{ t.club.lblJoinClan }}
+            </HexButton>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -283,6 +303,7 @@ const loading = ref(false);
 const clubData = ref(null);
 const members = ref([]);
 const suggestedClubs = ref([]);
+const pendingInvites = ref([]);
 const dialogLeave = ref(false);
 const dialogCreate = ref(false);
 const dialogActions = ref(false);
@@ -350,6 +371,39 @@ const sendInvite = async (friend) => {
   }
 };
 
+const getWinRate = (club) => {
+  if (!club.battles || club.battles === 0) return 0;
+  return Math.round((club.wins || 0) / club.battles * 100);
+};
+
+const formatExpiry = (expiresAt) => {
+  if (!expiresAt) return '';
+  const diff = new Date(expiresAt) - new Date();
+  if (diff <= 0) return 'Expired';
+  const hours = Math.ceil(diff / (1000 * 60 * 60));
+  return `Expires in ${hours}h`;
+};
+
+const acceptInvite = async (invite) => {
+  try {
+    await clubService.respondToInvite(invite.id, true);
+    pendingInvites.value = pendingInvites.value.filter(i => i.id !== invite.id);
+    loaded.value = false;
+    await loadData();
+  } catch (e) {
+    store.commit('master/setErrorMessage', { text: e.message || 'Failed to accept invite', timeout: 3000, showButton: false });
+  }
+};
+
+const declineInvite = async (invite) => {
+  try {
+    await clubService.respondToInvite(invite.id, false);
+    pendingInvites.value = pendingInvites.value.filter(i => i.id !== invite.id);
+  } catch (e) {
+    store.commit('master/setErrorMessage', { text: e.message || 'Failed to decline invite', timeout: 3000, showButton: false });
+  }
+};
+
 const loadData = async () => {
   if (loaded.value) return;
   loading.value = true;
@@ -368,11 +422,16 @@ const loadData = async () => {
         members.value = membersList || [];
       }
     } else {
-      const clubs = await clubService.searchClubs({
-        sortBy: 'members',
-        size: 5,
-        sortDirection: 'DESC',
-      });
+      // Load pending invites + suggested clubs in parallel
+      const [invites, clubs] = await Promise.all([
+        clubService.getPendingInvites().catch(() => []),
+        clubService.searchClubs({
+          sortBy: 'members',
+          size: 5,
+          sortDirection: 'DESC',
+        }).catch(() => []),
+      ]);
+      pendingInvites.value = invites || [];
       suggestedClubs.value = (clubs || []).filter(c => c.isPublic);
     }
   } catch (e) {
@@ -882,87 +941,184 @@ watch(() => props.active, (val) => {
   flex-wrap: wrap;
 }
 
-/* No club state */
+/* ===== NO CLAN STATE ===== */
 .no-club {
   max-width: 500px;
   margin: 0 auto;
+  padding: 10px;
+}
+
+.no-clan-hero {
   text-align: center;
+  padding: 24px 0 20px;
 }
 
-.no-club-text {
-  color: var(--hex-text-secondary);
-  font-size: 14px;
-  margin-bottom: 20px;
-  padding-top: 20px;
+.no-clan-icon {
+  display: block;
+  font-size: 48px;
+  opacity: 0.6;
+  margin-bottom: 12px;
 }
 
-.create-section {
-  margin-bottom: 20px;
+.no-clan-title {
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-size: 18px;
+  color: var(--hex-text-primary);
+  margin: 0 0 8px;
 }
 
-.divider-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 20px 0;
-}
-
-.divider-line {
-  flex: 1;
-  height: 1px;
-  background: var(--hex-border-default);
-}
-
-.divider-text {
+.no-clan-desc {
+  font-size: 13px;
   color: var(--hex-text-muted);
-  font-size: 12px;
-  white-space: nowrap;
+  margin: 0;
+  line-height: 1.5;
+  max-width: 320px;
+  margin-inline: auto;
 }
 
-/* Suggested clubs */
-.suggested-clubs {
-  margin-bottom: 16px;
-}
-
-.suggested-row {
+.no-clan-actions {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
-  padding: 10px 12px;
-  border-radius: 8px;
-  background: var(--hex-bg-light);
-  border: 0.5px solid var(--hex-border-default);
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.create-cost {
+  font-size: 11px;
+  color: var(--hex-text-muted);
+  margin-bottom: 4px;
+}
+
+/* Pending Invites */
+.pending-invites {
+  margin-bottom: 20px;
+}
+
+.invite-banner {
+  background: linear-gradient(135deg, rgba(255, 6, 111, 0.08) 0%, rgba(255, 6, 111, 0.03) 100%);
+  border: 1px solid rgba(255, 6, 111, 0.2);
+  border-radius: var(--hex-radius-md);
+  padding: 12px;
   margin-bottom: 8px;
 }
 
-.suggested-info {
+.invite-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.invite-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.invite-info {
   display: flex;
   flex-direction: column;
-  text-align: left;
+  min-width: 0;
 }
 
-.suggested-name {
+.invite-club-name {
   font-size: 14px;
-  color: var(--hex-text-primary);
   font-weight: bold;
+  color: var(--hex-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.suggested-members {
+.invite-meta {
   font-size: 11px;
   color: var(--hex-text-muted);
 }
 
-.browse-row {
-  margin-top: 12px;
+.invite-banner-actions {
+  display: flex;
+  gap: 8px;
 }
 
-.browse-link {
-  color: var(--hex-primary);
+/* Suggested Clans */
+.suggested-section {
+  margin-bottom: 16px;
+}
+
+.suggested-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--hex-text-muted);
+  margin-bottom: 10px;
+}
+
+.suggested-clubs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.suggested-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--hex-radius-md);
+  background: var(--hex-bg-light);
+  border: 0.5px solid var(--hex-border-default);
+}
+
+.suggested-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--hex-radius-md);
+  background: var(--hex-bg-medium);
+  border: 1px solid var(--hex-border-default);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 16px;
+  font-weight: bold;
+  color: var(--hex-text-primary);
+}
+
+.suggested-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.suggested-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.suggested-name {
   font-size: 13px;
-  cursor: pointer;
+  font-weight: 600;
+  color: var(--hex-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.browse-link:hover {
-  text-decoration: underline;
+.suggested-lvl {
+  font-size: 9px;
+  padding: 1px 5px;
+  background: var(--hex-primary);
+  color: var(--hex-text-primary);
+  border-radius: 3px;
+  font-family: 'AnonymousBalance', 'Courier New', monospace;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.suggested-meta {
+  font-size: 11px;
+  color: var(--hex-text-muted);
+  display: block;
+  margin-top: 2px;
 }
 </style>

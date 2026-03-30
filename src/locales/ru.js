@@ -351,6 +351,7 @@ export default {
     // Visitor
     lblJoinClan: 'ВСТУПИТЬ',
     lblClanPrivate: 'Этот клан приватный',
+    lblClanFull: 'Клан заполнен',
     lblMoreMembers: '+ ещё {n} участников',
     // Confirm modals
     lblKickTitle: 'Исключить участника?',
