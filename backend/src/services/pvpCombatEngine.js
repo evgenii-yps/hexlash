@@ -679,18 +679,31 @@ class PvPCombatEngine {
         }
       }
 
-      // Update club stats for both players
+      // Update club stats + award clan XP for both players
+      const { awardClanXP } = require('../utils/clanLevel');
       const player1 = await prisma.user.findUnique({ where: { id: result.player1.odId }, select: { clubId: true } });
       const player2 = await prisma.user.findUnique({ where: { id: result.player2.odId }, select: { clubId: true } });
       const clubIds = new Set([player1?.clubId, player2?.clubId].filter(Boolean));
       for (const cId of clubIds) {
-        const isP1Win = result.winner === result.player1.odId && player1?.clubId === cId;
-        const isP2Win = result.winner === result.player2.odId && player2?.clubId === cId;
+        const isP1Club = player1?.clubId === cId;
+        const isP2Club = player2?.clubId === cId;
+        const isP1Win = result.winner === result.player1.odId && isP1Club;
+        const isP2Win = result.winner === result.player2.odId && isP2Club;
         const clubUpdate = { battles: { increment: 1 } };
         if (isP1Win || isP2Win) {
           clubUpdate.wins = { increment: 1 };
         }
         await prisma.club.update({ where: { id: cId }, data: clubUpdate });
+
+        // Award clan XP per player in this club
+        if (isP1Club) {
+          const p1Result = result.winner === 'draw' ? 'draw' : (result.winner === result.player1.odId ? 'win' : 'lose');
+          awardClanXP(cId, p1Result).catch(e => console.error('Clan XP error:', e));
+        }
+        if (isP2Club) {
+          const p2Result = result.winner === 'draw' ? 'draw' : (result.winner === result.player2.odId ? 'win' : 'lose');
+          awardClanXP(cId, p2Result).catch(e => console.error('Clan XP error:', e));
+        }
       }
 
     } catch (e) {

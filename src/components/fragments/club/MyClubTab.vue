@@ -71,7 +71,7 @@
           <div class="clan-info">
             <div class="clan-name-row">
               <span class="clan-name">{{ club.name }}</span>
-              <span class="clan-lvl">LVL 1</span>
+              <span class="clan-lvl">LVL {{ club.level || 1 }}</span>
             </div>
             <span class="clan-meta">{{ club.members }} {{ t.rating.members }} &middot; {{ club.wins || 0 }} W &middot; {{ getWinRate(club) }}% WR</span>
           </div>

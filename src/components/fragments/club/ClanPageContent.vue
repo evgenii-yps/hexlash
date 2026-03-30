@@ -19,14 +19,17 @@
       <div class="clan-meta">
         <span class="level-badge">LVL {{ clanLevel }}</span>
         <span class="meta-separator">&middot;</span>
-        <span class="meta-text">{{ clubData.members }} / {{ clubData.maxMembers || 50 }} {{ t.rating.members }}</span>
+        <span class="meta-text">{{ clubData.members }} / {{ levelProgress.maxMembers }} {{ t.rating.members }}</span>
       </div>
 
       <!-- Level progress bar -->
       <div class="level-progress">
         <div class="level-labels">
-          <span class="level-current">LEVEL {{ clanLevel }} &rarr; {{ clanLevel + 1 }}</span>
-          <span class="level-xp">{{ formatNumber(clanXP) }} / {{ formatNumber(clanXPMax) }} XP</span>
+          <span class="level-current">
+            <template v-if="levelProgress.isMaxLevel">LEVEL {{ clanLevel }} &mdash; MAX</template>
+            <template v-else>LEVEL {{ clanLevel }} &rarr; {{ clanLevel + 1 }}</template>
+          </span>
+          <span class="level-xp">{{ formatNumber(levelProgress.progressXP) }} / {{ formatNumber(levelProgress.progressMax) }} XP</span>
         </div>
         <div class="level-bar">
           <div class="level-bar-fill" :style="{ width: clanXPPercent + '%' }"></div>
@@ -169,17 +172,16 @@
         <div class="settings-row">
           <span class="settings-label">{{ t.club.lblMaxMembers || 'Max members' }}</span>
           <span class="settings-value">
-            <span class="value-green">{{ clubData.maxMembers || 50 }}</span>
-            <span class="value-muted"> (+0 {{ t.club.lblFromLevel || 'from level' }})</span>
+            <span class="value-green">{{ levelProgress.maxMembers }}</span>
           </span>
         </div>
         <div class="settings-row">
           <span class="settings-label">{{ t.club.lblXpBonus || 'XP bonus' }}</span>
-          <span class="settings-value value-green">+0%</span>
+          <span class="settings-value value-green">+{{ levelProgress.xpBonus }}%</span>
         </div>
         <div class="settings-row">
           <span class="settings-label">{{ t.club.lblNextUnlock || 'Next unlock' }}</span>
-          <span class="settings-value value-xp">Level 2</span>
+          <span class="settings-value value-xp">{{ nextUnlockText }}</span>
         </div>
       </div>
 
@@ -266,6 +268,7 @@ import {useRouter} from 'vue-router';
 import store from "@/core/state/store.js";
 import {t} from "@/locales/index.js";
 import {formatNumber} from "@/core/constants.js";
+import {CLAN_LEVEL_CONFIG, getClanLevelProgress} from "@/data/clanLevels.js";
 import * as userService from "@/core/services/userService.js";
 import * as clubService from "@/core/services/clubService.js";
 
@@ -309,13 +312,25 @@ const actionMenuOpen = ref(false);
 const selectedMember = ref(null);
 const actionMenuStyle = ref({});
 
-// Clan Level — static mock
-const clanLevel = ref(1);
-const clanXP = ref(0);
-const clanXPMax = ref(1000);
-const clanXPPercent = computed(() => {
-  if (clanXPMax.value === 0) return 0;
-  return Math.min(100, Math.round(clanXP.value / clanXPMax.value * 100));
+// Clan Level — from API data
+const levelProgress = computed(() => getClanLevelProgress(props.clubData.level || 1, props.clubData.xp || 0));
+const clanLevel = computed(() => levelProgress.value.level);
+const clanXPPercent = computed(() => levelProgress.value.percent);
+
+const nextUnlockText = computed(() => {
+  const lp = levelProgress.value;
+  if (lp.isMaxLevel) return t.value.club.lblAllBonuses || 'All bonuses unlocked';
+  const nextConfig = CLAN_LEVEL_CONFIG[lp.level + 1];
+  const currentConfig = CLAN_LEVEL_CONFIG[lp.level];
+  const parts = [];
+  if (nextConfig.maxMembers > currentConfig.maxMembers) {
+    parts.push(`+${nextConfig.maxMembers - currentConfig.maxMembers} member slots`);
+  }
+  if (nextConfig.xpBonus > currentConfig.xpBonus) {
+    parts.push(`+${nextConfig.xpBonus - currentConfig.xpBonus}% XP bonus`);
+  }
+  if (parts.length === 0) return `Level ${lp.level + 1}`;
+  return `Level ${lp.level + 1}: ${parts.join(', ')}`;
 });
 
 const tabs = computed(() => [
