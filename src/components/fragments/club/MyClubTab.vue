@@ -6,240 +6,27 @@
       <v-progress-circular size="40" indeterminate />
     </div>
 
-    <!-- State 1: Has club -->
-    <div v-else-if="clubData" class="club-card">
+    <!-- State 1: Has club — full clan page -->
+    <ClanPageContent
+        v-else-if="clubData"
+        :clubData="clubData"
+        :clubId="String(clubId)"
+        @club-left="onClubLeft"
+        @club-deleted="onClubDeleted"
+    />
 
-      <!-- Clan Header -->
-      <div class="clan-header">
-        <div class="clan-header-bg"></div>
-        <div class="clan-header-content">
-          <div class="clan-avatar-wrap" @click="goToClub">
-            <ClubAvatar :avatarUrl="clubData.avatarUrl" />
-          </div>
-          <div class="clan-title-block">
-            <h3 class="clan-name" @click="goToClub">{{ clubData.name }}</h3>
-            <p v-if="clubData.description" class="clan-description">{{ clubData.description }}</p>
-          </div>
-        </div>
-
-        <!-- Meta row -->
-        <div class="clan-meta">
-          <span class="level-badge">LVL {{ clanLevel }}</span>
-          <span class="meta-separator">·</span>
-          <span class="meta-text">{{ clubData.members }} / {{ clubData.maxMembers || 50 }} {{ t.rating.members }}</span>
-        </div>
-
-        <!-- Level progress bar -->
-        <div class="level-progress">
-          <div class="level-labels">
-            <span class="level-current">LEVEL {{ clanLevel }} → {{ clanLevel + 1 }}</span>
-            <span class="level-xp">{{ formatNumber(clanXP) }} / {{ formatNumber(clanXPMax) }} XP</span>
-          </div>
-          <div class="level-bar">
-            <div class="level-bar-fill" :style="{ width: clanXPPercent + '%' }"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Stats Grid -->
-      <ClubStats :clubData="clubData" />
-
-      <!-- Invite friend button -->
-      <div v-if="isOwner || isDeputy" class="invite-row">
-        <HexButton variant="primary" size="sm" @click="openInviteModal">
-          {{ t.club.lblInviteFriend }}
-        </HexButton>
-      </div>
-
-      <!-- Members list -->
-      <div class="members-section">
-        <div v-for="member in members" :key="member.id" class="member-row">
-          <div class="member-left" @click="viewMember(member)">
-            <div class="member-avatar">
-              <span>{{ getInitial(member.name || member.login) }}</span>
-            </div>
-            <span class="member-name">{{ member.name || member.login || t.profile.anonymous }}</span>
-            <span v-if="member.clubRole === 'owner'" class="role-badge owner-badge">OWNER</span>
-            <span v-else-if="member.clubRole === 'deputy'" class="role-badge deputy-badge">{{ t.club.lblDeputy }}</span>
-          </div>
-          <div class="member-right">
-            <span class="member-wins">{{ formatNumber(member.wins) }} W</span>
-            <!-- Action menu button -->
-            <button
-                v-if="canManage(member)"
-                class="action-btn"
-                @click.stop="openActions(member)"
-            >⋮</button>
-          </div>
-        </div>
-
-        <div v-if="clubData.members > 5" class="view-all-row">
-          <HexButton variant="ghost" size="sm" @click="goToClub">
-            {{ t.club.lblViewAll }} →
-          </HexButton>
-        </div>
-      </div>
-
-      <!-- Owner controls -->
-      <div v-if="isOwner" class="controls-row">
-        <HexButton variant="ghost" size="sm" @click="goToClub">
-          {{ t.club.lblEditClub }}
-        </HexButton>
-        <HexButton variant="ghost" size="sm" @click="togglePublic">
-          {{ clubData.isPublic ? t.club.lblPublic : t.club.lblPrivate }}
-        </HexButton>
-        <HexButton variant="ghost" size="sm" @click="dialogTransfer = true">
-          {{ t.club.lblTransferOwnership }}
-        </HexButton>
-      </div>
-
-      <!-- Non-owner: leave -->
-      <div v-else class="controls-row">
-        <HexButton variant="danger" size="sm" @click="dialogLeave = true">
-          {{ t.club.lblLeaveClub }}
-        </HexButton>
-      </div>
-
-      <!-- Action menu modal -->
-      <VModal v-model="dialogActions" max-width="320">
-        <VCard v-if="selectedMember">
-          <v-card-title class="headline action-title">{{ selectedMember.name || selectedMember.login }}</v-card-title>
-          <v-card-text class="action-list">
-            <!-- Owner sees promote/demote + kick -->
-            <template v-if="isOwner">
-              <button
-                  v-if="selectedMember.clubRole === 'member'"
-                  class="action-item"
-                  @click="promoteDeputy"
-              >{{ t.club.lblPromoteDeputy }}</button>
-              <button
-                  v-if="selectedMember.clubRole === 'deputy'"
-                  class="action-item"
-                  @click="demoteMember"
-              >{{ t.club.lblDemoteMember }}</button>
-            </template>
-            <button class="action-item action-danger" @click="confirmKick">
-              {{ t.club.lblKick }}
-            </button>
-          </v-card-text>
-          <v-card-actions>
-            <v-spacer />
-            <v-btn @click="dialogActions = false" class="cancel-btn">{{ t.modal.btnCancel }}</v-btn>
-          </v-card-actions>
-        </VCard>
-      </VModal>
-
-      <!-- Kick confirmation -->
-      <VModal v-model="dialogKick" max-width="500">
-        <VCard>
-          <v-card-title class="headline">{{ t.club.lblKick }}</v-card-title>
-          <v-card-text>{{ t.club.lblKickConfirm }} {{ kickTarget?.name || kickTarget?.login }}?</v-card-text>
-          <v-card-actions>
-            <v-spacer />
-            <v-btn @click="dialogKick = false" class="cancel-btn">{{ t.modal.btnCancel }}</v-btn>
-            <v-btn @click="doKick" class="confirm-btn">{{ t.club.lblKick }}</v-btn>
-          </v-card-actions>
-        </VCard>
-      </VModal>
-
-      <!-- Transfer ownership modal -->
-      <VModal v-model="dialogTransfer" max-width="500">
-        <VCard>
-          <v-card-title class="headline">{{ t.club.lblTransferOwnership }}</v-card-title>
-          <v-card-text>
-            <div v-if="!transferTarget" class="transfer-list">
-              <div
-                  v-for="member in transferCandidates"
-                  :key="member.id"
-                  class="transfer-item"
-                  @click="transferTarget = member"
-              >
-                <span>{{ member.name || member.login }}</span>
-                <span class="role-hint" v-if="member.clubRole === 'deputy'">{{ t.club.lblDeputy }}</span>
-              </div>
-            </div>
-            <div v-else>
-              {{ t.club.lblTransferConfirm }} {{ transferTarget.name || transferTarget.login }}?
-            </div>
-          </v-card-text>
-          <v-card-actions>
-            <v-spacer />
-            <v-btn @click="cancelTransfer" class="cancel-btn">{{ t.modal.btnCancel }}</v-btn>
-            <v-btn v-if="transferTarget" @click="doTransfer" class="confirm-btn">{{ t.modal.btnConfirm }}</v-btn>
-          </v-card-actions>
-        </VCard>
-      </VModal>
-
-      <!-- Invite friend modal -->
-      <VModal v-model="dialogInvite" max-width="400">
-        <VCard>
-          <v-card-title class="headline action-title">{{ t.club.lblInviteFriend }}</v-card-title>
-          <v-card-text>
-            <div v-if="invitableFriends.length === 0" class="no-friends-text">
-              {{ t.club.lblPlayerHasClub }}
-            </div>
-            <div v-else class="transfer-list">
-              <div
-                  v-for="friend in invitableFriends"
-                  :key="friend.id"
-                  class="transfer-item"
-                  @click="sendInvite(friend)"
-              >
-                <span>{{ friend.username || friend.name || friend.login }}</span>
-              </div>
-            </div>
-          </v-card-text>
-          <v-card-actions>
-            <v-spacer />
-            <v-btn @click="dialogInvite = false" class="cancel-btn">{{ t.modal.btnCancel }}</v-btn>
-          </v-card-actions>
-        </VCard>
-      </VModal>
-
-      <!-- Leave confirmation -->
-      <VModal v-model="dialogLeave" max-width="500">
-        <VCard>
-          <v-card-title class="headline">{{ t.club.lblLeaveClub }}</v-card-title>
-          <v-card-text>{{ t.club.lblLeaveClubDescription }}</v-card-text>
-          <v-card-actions>
-            <v-spacer />
-            <v-btn @click="dialogLeave = false" class="cancel-btn">{{ t.modal.btnCancel }}</v-btn>
-            <v-btn @click="confirmLeave" class="confirm-btn">{{ t.club.lblConfirm }}</v-btn>
-          </v-card-actions>
-        </VCard>
-      </VModal>
-    </div>
-
-    <!-- State 2: No club -->
+    <!-- State 2: No club — browse/search clans -->
     <div v-else class="no-club">
 
-      <div class="no-clan-hero">
-        <span class="no-clan-icon">⚔</span>
-        <h3 class="no-clan-title">{{ t.club.lblNoClan }}</h3>
-        <p class="no-clan-desc">{{ t.club.lblNoClanDesc }}</p>
-      </div>
-
-      <div class="no-clan-actions">
-        <HexButton variant="primary" block @click="dialogCreate = true">
-          {{ t.profile.buttons.lblCreateClub }}
-        </HexButton>
-        <span class="create-cost">{{ t.club.lblCreateCost }}</span>
-
-        <HexButton variant="secondary" block @click="$emit('switchTab', 'clubs')">
-          {{ t.club.lblBrowseClans }}
-        </HexButton>
-      </div>
-
-      <CreateClub :dialogCreate="dialogCreate" @close="dialogCreate = false" />
-
-      <!-- Pending Invites -->
+      <!-- Pending Invites (top) -->
       <div v-if="pendingInvites.length" class="pending-invites">
+        <div class="section-label">{{ t.club.lblPendingInvites || 'PENDING INVITES' }}</div>
         <div v-for="invite in pendingInvites" :key="invite.id" class="invite-banner">
           <div class="invite-banner-content">
-            <span class="invite-icon">✉</span>
+            <span class="invite-icon">&#x2709;</span>
             <div class="invite-info">
               <span class="invite-club-name">{{ invite.club?.name || invite.clubName }}</span>
-              <span class="invite-meta">{{ invite.club?.members || '?' }} {{ t.rating.members }} · {{ formatExpiry(invite.expiresAt) }}</span>
+              <span class="invite-meta">{{ invite.club?.members || '?' }} {{ t.rating.members }} &middot; {{ formatExpiry(invite.expiresAt) }}</span>
             </div>
           </div>
           <div class="invite-banner-actions">
@@ -249,26 +36,60 @@
         </div>
       </div>
 
-      <!-- Suggested Clans -->
-      <div v-if="suggestedClubs.length" class="suggested-section">
-        <div class="suggested-label">{{ t.club.lblSuggestedClans }}</div>
-        <div class="suggested-clubs">
-          <div v-for="club in suggestedClubs" :key="club.id" class="suggested-row">
-            <div class="suggested-avatar">
-              <span>{{ getInitial(club.name) }}</span>
-            </div>
-            <div class="suggested-info">
-              <div class="suggested-name-row">
-                <span class="suggested-name">{{ club.name }}</span>
-                <span class="suggested-lvl">LVL 1</span>
-              </div>
-              <span class="suggested-meta">{{ club.members }} {{ t.rating.members }} · {{ club.wins || 0 }} W · {{ getWinRate(club) }}% WR</span>
-            </div>
-            <HexButton variant="primary" size="sm" @click="joinClub(club.id)">
-              {{ t.club.lblJoinClan }}
-            </HexButton>
+      <!-- Create button + Search -->
+      <div class="browse-header">
+        <HexButton variant="primary" size="sm" @click="dialogCreate = true">
+          {{ t.profile.buttons.lblCreateClub }}
+        </HexButton>
+        <CreateClub :dialogCreate="dialogCreate" @close="dialogCreate = false" />
+      </div>
+
+      <div class="search-row">
+        <input
+            v-model="searchQuery"
+            type="text"
+            class="search-input"
+            :placeholder="t.rating.clubPlaceholder || 'Search clans...'"
+            @input="debouncedSearch"
+        />
+      </div>
+
+      <!-- Clan list -->
+      <div v-if="searchLoading" class="clans-loader">
+        <v-progress-circular size="24" indeterminate />
+      </div>
+
+      <div v-else-if="clanList.length === 0" class="no-results">
+        {{ t.rating.noResults || 'No clans found' }}
+      </div>
+
+      <div v-else class="clan-list">
+        <div v-for="club in clanList" :key="club.id" class="clan-row" @click="viewClan(club.id)">
+          <div class="clan-avatar">
+            <span>{{ getInitial(club.name) }}</span>
           </div>
+          <div class="clan-info">
+            <div class="clan-name-row">
+              <span class="clan-name">{{ club.name }}</span>
+              <span class="clan-lvl">LVL 1</span>
+            </div>
+            <span class="clan-meta">{{ club.members }} {{ t.rating.members }} &middot; {{ club.wins || 0 }} W &middot; {{ getWinRate(club) }}% WR</span>
+          </div>
+          <HexButton
+              v-if="club.isPublic"
+              variant="primary"
+              size="sm"
+              @click.stop="joinClan(club.id)"
+          >{{ t.club.lblJoinClan }}</HexButton>
+          <span v-else class="private-label">{{ t.club.lblPrivate }}</span>
         </div>
+      </div>
+
+      <!-- Load more -->
+      <div v-if="!searchLoading && clanList.length > 0 && !allLoaded" class="load-more-row">
+        <HexButton variant="ghost" size="sm" @click="loadMore">
+          {{ t.rating.loadMore || 'Load more' }}
+        </HexButton>
       </div>
     </div>
   </div>
@@ -276,14 +97,12 @@
 
 <script setup>
 import {ref, computed, watch, onMounted, onUnmounted} from 'vue';
-import store from "@/core/state/store.js";
 import {useRouter} from 'vue-router';
+import store from "@/core/state/store.js";
 import {t} from "@/locales/index.js";
 import {formatNumber} from "@/core/constants.js";
-import * as userService from "@/core/services/userService.js";
 import * as clubService from "@/core/services/clubService.js";
-import ClubAvatar from "@/components/fragments/club/ClubAvatar.vue";
-import ClubStats from "@/components/fragments/club/ClubStats.vue";
+import ClanPageContent from "@/components/fragments/club/ClanPageContent.vue";
 import HexButton from "@/components/ui/HexButton.vue";
 import CreateClub from "@/components/fragments/club/CreateClub.vue";
 
@@ -297,79 +116,24 @@ const router = useRouter();
 
 const master = computed(() => store.getters['master/getMaster']);
 const clubId = computed(() => master.value?.userData?.clubId);
-const myRole = computed(() => master.value?.userData?.clubRole);
 
 const loading = ref(false);
 const clubData = ref(null);
-const members = ref([]);
-const suggestedClubs = ref([]);
-const pendingInvites = ref([]);
-const dialogLeave = ref(false);
-const dialogCreate = ref(false);
-const dialogActions = ref(false);
-const dialogKick = ref(false);
-const dialogTransfer = ref(false);
-const dialogInvite = ref(false);
-const selectedMember = ref(null);
-const kickTarget = ref(null);
-const transferTarget = ref(null);
 const loaded = ref(false);
 
-const isOwner = computed(() => myRole.value === 'owner');
-const isDeputy = computed(() => myRole.value === 'deputy');
+// No-clan state
+const pendingInvites = ref([]);
+const searchQuery = ref('');
+const clanList = ref([]);
+const searchLoading = ref(false);
+const dialogCreate = ref(false);
+const currentPage = ref(0);
+const allLoaded = ref(false);
+const PAGE_SIZE = 15;
 
-// Clan Level — static mock (will be replaced by real system later)
-const clanLevel = ref(1);
-const clanXP = ref(0);
-const clanXPMax = ref(1000);
-const clanXPPercent = computed(() => {
-  if (clanXPMax.value === 0) return 0;
-  return Math.min(100, Math.round(clanXP.value / clanXPMax.value * 100));
-});
+let searchTimeout = null;
 
-const friends = computed(() => store.getters['friends/getFriends'] || []);
-const invitableFriends = computed(() => friends.value.filter(f => !f.clubId));
-
-const transferCandidates = computed(() => {
-  const myId = master.value?.userData?.id;
-  return members.value.filter(m => m.id !== myId);
-});
-
-const getInitial = (name) => {
-  return name ? name.charAt(0).toUpperCase() : '?';
-};
-
-const canManage = (member) => {
-  const myId = master.value?.userData?.id;
-  if (member.id === myId) return false;
-  if (isOwner.value) return member.clubRole !== 'owner';
-  if (isDeputy.value) return member.clubRole === 'member';
-  return false;
-};
-
-const openInviteModal = () => {
-  store.dispatch('friends/loadFriends');
-  dialogInvite.value = true;
-};
-
-const sendInvite = async (friend) => {
-  try {
-    await clubService.inviteToClub(friend.id);
-    dialogInvite.value = false;
-    const name = friend.username || friend.name || friend.login;
-    store.commit('master/setInfoMessage', {
-      text: `${t.value.club.lblInviteSent} ${name}`,
-      timeout: 3000,
-      showButton: false,
-    });
-  } catch (e) {
-    store.commit('master/setErrorMessage', {
-      text: e.message || 'Failed to send invite',
-      timeout: 3000,
-      showButton: false,
-    });
-  }
-};
+const getInitial = (name) => name ? name.charAt(0).toUpperCase() : '?';
 
 const getWinRate = (club) => {
   if (!club.battles || club.battles === 0) return 0;
@@ -404,6 +168,44 @@ const declineInvite = async (invite) => {
   }
 };
 
+const loadClans = async (append = false) => {
+  searchLoading.value = !append;
+  try {
+    const clubs = await clubService.searchClubs({
+      name: searchQuery.value,
+      sortBy: 'members',
+      size: PAGE_SIZE,
+      page: currentPage.value,
+      sortDirection: 'DESC',
+    });
+    const result = clubs || [];
+    if (append) {
+      clanList.value = [...clanList.value, ...result];
+    } else {
+      clanList.value = result;
+    }
+    allLoaded.value = result.length < PAGE_SIZE;
+  } catch (e) {
+    console.error('Load clans error:', e);
+  } finally {
+    searchLoading.value = false;
+  }
+};
+
+const loadMore = () => {
+  currentPage.value++;
+  loadClans(true);
+};
+
+const debouncedSearch = () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    currentPage.value = 0;
+    allLoaded.value = false;
+    loadClans();
+  }, 300);
+};
+
 const loadData = async () => {
   if (loaded.value) return;
   loading.value = true;
@@ -413,26 +215,14 @@ const loadData = async () => {
       const club = await store.dispatch('club/getClubById', clubId.value);
       if (club) {
         clubData.value = club;
-        const membersList = await userService.searchParticipants({
-          clubId: clubId.value,
-          sortBy: 'wins',
-          size: 5,
-          sortDirection: 'DESC',
-        });
-        members.value = membersList || [];
       }
     } else {
-      // Load pending invites + suggested clubs in parallel
-      const [invites, clubs] = await Promise.all([
+      // Load pending invites + clan list in parallel
+      const [invites] = await Promise.all([
         clubService.getPendingInvites().catch(() => []),
-        clubService.searchClubs({
-          sortBy: 'members',
-          size: 5,
-          sortDirection: 'DESC',
-        }).catch(() => []),
+        loadClans(),
       ]);
       pendingInvites.value = invites || [];
-      suggestedClubs.value = (clubs || []).filter(c => c.isPublic);
     }
   } catch (e) {
     console.error('MyClubTab load error:', e);
@@ -442,127 +232,37 @@ const loadData = async () => {
   }
 };
 
-const reloadClub = async () => {
-  loaded.value = false;
-  await loadData();
+const viewClan = (id) => {
+  router.push({ path: `/club/${id}` });
 };
 
-const goToClub = () => {
-  if (clubData.value) {
-    router.push({path: `/club/${clubData.value.id}`});
-  }
-};
-
-const viewMember = (member) => {
-  if (member.login) {
-    if (master.value.getLogin() === member.login) {
-      router.push({path: '/profile'});
-    } else {
-      router.push({path: `/user/${member.login}`});
-    }
-  }
-};
-
-const togglePublic = async () => {
-  if (!clubData.value) return;
-  const newValue = !clubData.value.isPublic;
-  await store.dispatch('club/updateClubData', {
-    id: clubData.value.id,
-    isPublic: newValue,
-  });
-  clubData.value.isPublic = newValue;
-};
-
-// Action menu
-const openActions = (member) => {
-  selectedMember.value = member;
-  dialogActions.value = true;
-};
-
-const promoteDeputy = async () => {
-  try {
-    await store.dispatch('club/setMemberRole', {
-      userId: selectedMember.value.id,
-      role: 'deputy',
-    });
-    dialogActions.value = false;
-    await reloadClub();
-  } catch (e) {
-    store.commit('master/setErrorMessage', { text: e.message, timeout: 3000, showButton: false });
-  }
-};
-
-const demoteMember = async () => {
-  try {
-    await store.dispatch('club/setMemberRole', {
-      userId: selectedMember.value.id,
-      role: 'member',
-    });
-    dialogActions.value = false;
-    await reloadClub();
-  } catch (e) {
-    store.commit('master/setErrorMessage', { text: e.message, timeout: 3000, showButton: false });
-  }
-};
-
-const confirmKick = () => {
-  kickTarget.value = selectedMember.value;
-  dialogActions.value = false;
-  dialogKick.value = true;
-};
-
-const doKick = async () => {
-  try {
-    await store.dispatch('club/kickMember', {userId: kickTarget.value.id});
-    dialogKick.value = false;
-    kickTarget.value = null;
-    await reloadClub();
-  } catch (e) {
-    store.commit('master/setErrorMessage', { text: e.message, timeout: 3000, showButton: false });
-  }
-};
-
-// Transfer ownership
-const cancelTransfer = () => {
-  dialogTransfer.value = false;
-  transferTarget.value = null;
-};
-
-const doTransfer = async () => {
-  try {
-    await store.dispatch('club/transferOwnership', {newOwnerId: transferTarget.value.id});
-    dialogTransfer.value = false;
-    transferTarget.value = null;
-    await reloadClub();
-  } catch (e) {
-    store.commit('master/setErrorMessage', { text: e.message, timeout: 3000, showButton: false });
-  }
-};
-
-const confirmLeave = async () => {
-  dialogLeave.value = false;
-  await store.dispatch('club/leaveClub');
-  clubData.value = null;
-  members.value = [];
-  loaded.value = false;
-  await loadData();
-};
-
-const joinClub = async (id) => {
+const joinClan = async (id) => {
   try {
     await store.dispatch('club/changeClub', id);
     loaded.value = false;
     await loadData();
   } catch (e) {
-    console.error('Join club error:', e);
+    store.commit('master/setErrorMessage', { text: e.message || 'Failed to join clan', timeout: 3000, showButton: false });
   }
 };
 
+// ClanPageContent events
+const onClubLeft = () => {
+  clubData.value = null;
+  loaded.value = false;
+  loadData();
+};
+
+const onClubDeleted = () => {
+  clubData.value = null;
+  loaded.value = false;
+  loadData();
+};
+
 // Reload when someone joins via invite
-const onInviteAccepted = (event) => {
-  if (event.detail.acceptedByName) {
-    reloadClub();
-  }
+const onInviteAccepted = () => {
+  loaded.value = false;
+  loadData();
 };
 
 onMounted(() => {
@@ -571,6 +271,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('club-invite-accepted', onInviteAccepted);
+  clearTimeout(searchTimeout);
 });
 
 // Load when tab becomes active
@@ -592,407 +293,23 @@ watch(() => props.active, (val) => {
   padding: 40px 0;
 }
 
-/* Club card */
-.club-card {
-  max-width: 500px;
-  margin: 0 auto;
-}
-
-/* ===== CLAN HEADER ===== */
-.clan-header {
-  position: relative;
-  padding: 16px;
-  border-radius: var(--hex-radius-lg);
-  overflow: hidden;
-  margin-bottom: 0;
-}
-
-.clan-header-bg {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(180deg, var(--hex-bg-medium) 0%, var(--hex-bg-dark) 100%);
-  z-index: 0;
-}
-
-.clan-header-bg::after {
-  content: '';
-  position: absolute;
-  top: -40%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 120%;
-  height: 80%;
-  background: radial-gradient(ellipse, rgba(255, 6, 111, 0.08) 0%, transparent 70%);
-  pointer-events: none;
-}
-
-.clan-header-content {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.clan-avatar-wrap {
-  flex-shrink: 0;
-  width: 64px;
-  height: 64px;
-  cursor: pointer;
-}
-
-.clan-avatar-wrap :deep(.avatar-container) {
-  width: 64px !important;
-  height: 64px !important;
-  border: 2px solid var(--hex-primary);
-  border-radius: var(--hex-radius-lg);
-  box-shadow: 0 0 12px var(--hex-primary-glow);
-}
-
-.clan-avatar-wrap :deep(.default-avatar) {
-  width: 60%;
-}
-
-.clan-avatar-wrap :deep(.non-default-avatar) {
-  border: none;
-  border-radius: var(--hex-radius-lg);
-}
-
-.clan-title-block {
-  flex: 1;
-  min-width: 0;
-}
-
-.clan-name {
-  font-size: 18px;
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
-  color: var(--hex-text-primary);
-  margin: 0;
-  cursor: pointer;
-  line-height: 1.2;
-}
-
-.clan-description {
-  font-size: 12px;
-  font-style: italic;
-  color: var(--hex-text-muted);
-  margin: 4px 0 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-}
-
-/* Meta row */
-.clan-meta {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.level-badge {
-  display: inline-block;
-  padding: 2px 8px;
-  background: var(--hex-primary);
-  color: var(--hex-text-primary);
-  font-size: 10px;
-  font-weight: bold;
-  font-family: 'AnonymousBalance', 'Courier New', monospace;
-  border-radius: var(--hex-radius-sm);
-  letter-spacing: 0.5px;
-}
-
-.meta-separator {
-  color: var(--hex-text-muted);
-  font-size: 12px;
-}
-
-.meta-text {
-  color: var(--hex-text-secondary);
-  font-size: 12px;
-}
-
-/* Level Progress Bar */
-.level-progress {
-  position: relative;
-  z-index: 1;
-  margin-top: 10px;
-}
-
-.level-labels {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 4px;
-}
-
-.level-current {
-  font-size: 10px;
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
-  color: var(--hex-primary);
-  letter-spacing: 0.5px;
-}
-
-.level-xp {
-  font-size: 10px;
-  font-family: 'AnonymousBalance', 'Courier New', monospace;
-  color: var(--hex-text-muted);
-}
-
-.level-bar {
-  height: 6px;
-  background: var(--hex-bg-dark);
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.level-bar-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--hex-primary), #FF3399);
-  border-radius: 3px;
-  box-shadow: 0 0 8px var(--hex-primary-glow);
-  transition: width 0.4s ease;
-}
-
-/* Invite */
-.invite-row {
-  display: flex;
-  justify-content: center;
-  margin: 12px 0;
-}
-
-.no-friends-text {
-  text-align: center;
-  color: var(--hex-text-muted);
-  padding: 20px 0;
-  font-size: 13px;
-}
-
-/* Members */
-.members-section {
-  margin-bottom: 16px;
-}
-
-.member-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 10px;
-  border-radius: 6px;
-}
-
-.member-row:hover {
-  background: color-mix(in srgb, var(--hex-bg-light) 50%, transparent);
-}
-
-.member-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-  cursor: pointer;
-  flex: 1;
-}
-
-.member-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.member-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--hex-bg-light);
-  border: 1px solid var(--hex-border-default);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  font-size: 14px;
-  font-weight: bold;
-  color: var(--hex-text-primary);
-}
-
-.member-name {
-  font-size: 13px;
-  color: var(--hex-text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.role-badge {
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 4px;
-  color: white;
-  white-space: nowrap;
-}
-
-.owner-badge {
-  background: var(--hex-primary);
-}
-
-.deputy-badge {
-  background: var(--hex-draw);
-  color: var(--hex-bg-dark);
-}
-
-.member-wins {
-  font-size: 12px;
-  color: var(--hex-text-muted);
-  white-space: nowrap;
-}
-
-.action-btn {
-  background: none;
-  border: none;
-  color: var(--hex-text-secondary);
-  font-size: 18px;
-  cursor: pointer;
-  padding: 2px 6px;
-  border-radius: 4px;
-  line-height: 1;
-}
-
-.action-btn:hover {
-  background: var(--hex-bg-light);
-  color: var(--hex-text-primary);
-}
-
-.view-all-row {
-  display: flex;
-  justify-content: center;
-  margin-top: 8px;
-}
-
-/* Action modal */
-.action-title {
-  font-size: 14px !important;
-}
-
-.action-list {
-  padding: 8px 16px !important;
-}
-
-.action-item {
-  display: block;
-  width: 100%;
-  text-align: left;
-  padding: 10px 12px;
-  background: none;
-  border: none;
-  border-radius: 6px;
-  color: var(--hex-text-primary);
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.action-item:hover {
-  background: var(--hex-bg-light);
-}
-
-.action-danger {
-  color: var(--hex-defeat);
-}
-
-/* Transfer modal */
-.transfer-list {
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-.transfer-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 12px;
-  cursor: pointer;
-  border-radius: 6px;
-  color: var(--hex-text-primary);
-  font-size: 14px;
-}
-
-.transfer-item:hover {
-  background: var(--hex-bg-light);
-}
-
-.role-hint {
-  font-size: 11px;
-  color: var(--hex-draw);
-}
-
-/* Controls */
-.controls-row {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 8px;
-  flex-wrap: wrap;
-}
-
 /* ===== NO CLAN STATE ===== */
 .no-club {
   max-width: 500px;
   margin: 0 auto;
-  padding: 10px;
 }
 
-.no-clan-hero {
-  text-align: center;
-  padding: 24px 0 20px;
-}
-
-.no-clan-icon {
-  display: block;
-  font-size: 48px;
-  opacity: 0.6;
-  margin-bottom: 12px;
-}
-
-.no-clan-title {
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
-  font-size: 18px;
-  color: var(--hex-text-primary);
-  margin: 0 0 8px;
-}
-
-.no-clan-desc {
-  font-size: 13px;
-  color: var(--hex-text-muted);
-  margin: 0;
-  line-height: 1.5;
-  max-width: 320px;
-  margin-inline: auto;
-}
-
-.no-clan-actions {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 24px;
-}
-
-.create-cost {
+.section-label {
   font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
   color: var(--hex-text-muted);
-  margin-bottom: 4px;
+  margin-bottom: 8px;
 }
 
 /* Pending Invites */
 .pending-invites {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .invite-banner {
@@ -1040,26 +357,60 @@ watch(() => props.active, (val) => {
   gap: 8px;
 }
 
-/* Suggested Clans */
-.suggested-section {
-  margin-bottom: 16px;
+/* Browse header */
+.browse-header {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
 }
 
-.suggested-label {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+/* Search */
+.search-row {
+  margin-bottom: 12px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--hex-bg-card);
+  border: 1px solid var(--hex-border-default);
+  border-radius: var(--hex-radius-md);
+  color: var(--hex-text-primary);
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.search-input:focus {
+  border-color: var(--hex-border-active);
+}
+
+.search-input::placeholder {
   color: var(--hex-text-muted);
-  margin-bottom: 10px;
 }
 
-.suggested-clubs {
+/* Clan list */
+.clans-loader {
+  display: flex;
+  justify-content: center;
+  padding: 30px 0;
+}
+
+.no-results {
+  text-align: center;
+  color: var(--hex-text-muted);
+  font-size: 13px;
+  padding: 30px 0;
+}
+
+.clan-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
-.suggested-row {
+.clan-row {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -1067,9 +418,15 @@ watch(() => props.active, (val) => {
   border-radius: var(--hex-radius-md);
   background: var(--hex-bg-light);
   border: 0.5px solid var(--hex-border-default);
+  cursor: pointer;
+  transition: background 0.15s;
 }
 
-.suggested-avatar {
+.clan-row:hover {
+  background: color-mix(in srgb, var(--hex-bg-light) 80%, var(--hex-primary) 20%);
+}
+
+.clan-avatar {
   width: 40px;
   height: 40px;
   border-radius: var(--hex-radius-md);
@@ -1084,18 +441,18 @@ watch(() => props.active, (val) => {
   color: var(--hex-text-primary);
 }
 
-.suggested-info {
+.clan-info {
   flex: 1;
   min-width: 0;
 }
 
-.suggested-name-row {
+.clan-name-row {
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-.suggested-name {
+.clan-name {
   font-size: 13px;
   font-weight: 600;
   color: var(--hex-text-primary);
@@ -1104,7 +461,7 @@ watch(() => props.active, (val) => {
   text-overflow: ellipsis;
 }
 
-.suggested-lvl {
+.clan-lvl {
   font-size: 9px;
   padding: 1px 5px;
   background: var(--hex-primary);
@@ -1115,10 +472,22 @@ watch(() => props.active, (val) => {
   white-space: nowrap;
 }
 
-.suggested-meta {
+.clan-meta {
   font-size: 11px;
   color: var(--hex-text-muted);
   display: block;
   margin-top: 2px;
+}
+
+.private-label {
+  font-size: 11px;
+  color: var(--hex-text-muted);
+  white-space: nowrap;
+}
+
+.load-more-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
 }
 </style>

@@ -463,6 +463,7 @@ AI_TRAINER_ENABLED = true
 - `BuyTokens.vue` — Token purchase modal. **Temporarily disabled** — not rendered in ProfileWallet, file preserved for Phase 2 (Base contract)
 - `GameBalanceCard.vue` — Game balance display with withdraw button (shows "after listing" message)
 - `ReferralModal.vue` — Referral program modal: QR code (qrcode lib), copy link (clipboard API), share (Web Share API with fallback), referral stats + list. Opens from ProfileView button
+- `ClanPageContent.vue` — Shared clan page content component (header, stats, tabs Members/Activity/Settings, leaderboard with action menu, confirm modals, invite modal). Used by ClubView (member view) and MyClubTab (has-clan state). Props: clubData, clubId. Events: club-left, club-deleted
 - `ClanActivityFeed.vue` — Activity feed for clan page. Events grouped by day, color-coded dots (fight_win/lose, member_join/leave/kick, role_change, achievement). Currently mock data from members list; real API (ClanEvent table) planned
 
 ---
@@ -869,3 +870,32 @@ Replaced all `confirm()` calls with `ClanConfirmModal.vue` (created in C1) for d
 
 **Files changed:**
 - `src/views/ClubView.vue` — replaced 4× `confirm()` with ClanConfirmModal, added import + reactive state
+
+### MyClubTab → Full Clan Page + Browse Clans — ✅ COMPLETE
+
+Refactored MyClubTab to show full clan page (not abbreviated) and browse/search clans when no clan.
+
+**Shared component: `ClanPageContent.vue`**
+Extracted all shared clan page content (header, stats, tabs, members leaderboard, activity feed, settings, action menu, confirm modals, invite modal) into a reusable component. Used by both ClubView (member view) and MyClubTab (has clan state). Props: `clubData`, `clubId`. Events: `club-left`, `club-deleted`.
+
+**Has clan state (MyClubTab):**
+- Renders `<ClanPageContent>` with full tabs/members/activity/settings
+- Handles `club-left` / `club-deleted` events to reset and reload
+
+**No clan state (MyClubTab):**
+- Pending invites at top (from `GET /v1/club/invites`)
+- CREATE CLAN button
+- Search input with 300ms debounce
+- Clan list: avatar (40px, first letter), name + LVL badge, "N members · N wins · N% WR", JOIN button (public) or "Private" label
+- Click row → navigate to `/club/:id`
+- Load more pagination (15 per page)
+
+**ClubView refactored:**
+- Member view (isMyClub) → `<ClanPageContent>`
+- Visitor view unchanged (header, top-5 members, join/private/full bar)
+- Removed ~500 lines of duplicated member management code
+
+**Files changed:**
+- `src/components/fragments/club/ClanPageContent.vue` — **new** shared component
+- `src/views/ClubView.vue` — refactored to use ClanPageContent for member view
+- `src/components/fragments/club/MyClubTab.vue` — full rewrite: ClanPageContent for has-clan, browse/search for no-clan
