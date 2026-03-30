@@ -1,78 +1,92 @@
 <template>
   <div class="activity-feed">
-    <div v-if="groupedEvents.length === 0" class="no-activity">
+    <div v-if="!loaded && loading" class="no-activity">
+      {{ t.club.lblLoading || 'Loading...' }}
+    </div>
+
+    <div v-else-if="groupedEvents.length === 0" class="no-activity">
       {{ t.club.lblNoActivity || 'No activity yet' }}
     </div>
 
-    <div v-for="group in groupedEvents" :key="group.label" class="day-group">
-      <div class="day-label">{{ group.label }}</div>
-      <div v-for="event in group.events" :key="event.id" class="event-row">
-        <span class="event-dot" :class="'dot-' + event.type"></span>
-        <span class="event-text" v-html="event.html"></span>
-        <span class="event-time">{{ event.timeStr }}</span>
+    <template v-else>
+      <div v-for="group in groupedEvents" :key="group.label" class="day-group">
+        <div class="day-label">{{ group.label }}</div>
+        <div v-for="event in group.events" :key="event.id" class="event-row">
+          <span class="event-dot" :class="'dot-' + event.type"></span>
+          <span class="event-text" v-html="event.html"></span>
+          <span class="event-time">{{ event.timeStr }}</span>
+        </div>
       </div>
-    </div>
+
+      <div v-if="hasMore" class="load-more">
+        <button class="load-more-btn" :disabled="loading" @click="loadMore">
+          {{ loading ? (t.club.lblLoading || 'Loading...') : (t.club.lblLoadMore || 'Load more') }}
+        </button>
+      </div>
+    </template>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, onMounted, ref } from 'vue';
+import { useStore } from 'vuex';
 import { t } from "@/locales/index.js";
 
 const props = defineProps({
-  members: { type: Array, default: () => [] },
-  clubData: { type: Object, default: null },
+  clubId: { type: String, required: true },
 });
 
-// Generate mock activity events from member data
-const events = computed(() => {
-  const list = [];
-  const now = new Date();
+const store = useStore();
+const loaded = ref(false);
 
-  // Generate member_join events from members list
-  if (props.members && props.members.length) {
-    props.members.forEach((m, i) => {
-      const name = m.name || m.login || 'Unknown';
-      const joinDate = m.createdAt ? new Date(m.createdAt) : new Date(now.getTime() - (i + 1) * 86400000);
-      list.push({
-        id: `join-${m.id}`,
-        type: 'member_join',
-        html: `<b>${esc(name)}</b> ${t.value.club.lblJoinedClan || 'joined the clan'}`,
-        date: joinDate,
-      });
-    });
-  }
+const loading = computed(() => store.state.club.clanEventsLoading);
+const hasMore = computed(() => store.state.club.clanEventsHasMore);
+const rawEvents = computed(() => store.state.club.clanEvents);
 
-  // Generate fight events from members' wins data (mock)
-  if (props.members && props.members.length) {
-    props.members.slice(0, 5).forEach((m, i) => {
-      const name = m.name || m.login || 'Unknown';
-      const wins = m.wins || 0;
-      if (wins > 0) {
-        const fightDate = new Date(now.getTime() - i * 3600000 - Math.random() * 7200000);
-        list.push({
-          id: `fight-win-${m.id}`,
-          type: 'fight_win',
-          html: `<b>${esc(name)}</b> ${t.value.club.lblWonPvE || 'won PvE'}`,
-          date: fightDate,
-        });
-      }
-      if (m.losses > 0 || (m.battles && m.battles > wins)) {
-        const loseDate = new Date(now.getTime() - i * 5400000 - Math.random() * 3600000);
-        list.push({
-          id: `fight-lose-${m.id}`,
-          type: 'fight_lose',
-          html: `<b>${esc(name)}</b> ${t.value.club.lblLostPvE || 'lost PvE'}`,
-          date: loseDate,
-        });
-      }
-    });
-  }
-
-  // Sort newest first
-  list.sort((a, b) => b.date - a.date);
-  return list.slice(0, 20);
+onMounted(async () => {
+  store.commit('club/resetClanEvents');
+  await store.dispatch('club/fetchClanEvents', { clubId: props.clubId, limit: 30 });
+  loaded.value = true;
 });
+
+async function loadMore() {
+  const events = rawEvents.value;
+  if (!events.length) return;
+  const lastEvent = events[events.length - 1];
+  await store.dispatch('club/fetchClanEvents', {
+    clubId: props.clubId,
+    limit: 30,
+    before: lastEvent.createdAt,
+  });
+}
+
+function renderEventHtml(event) {
+  const actorName = event.actor?.login || event.actor?.name || 'Unknown';
+  const targetName = event.target?.login || event.target?.name || 'Unknown';
+  const data = event.data || {};
+  const mode = data.mode === 'pvp' ? 'PvP' : 'PvE';
+
+  switch (event.type) {
+    case 'fight_win':
+      return `<b>${esc(actorName)}</b> ${t.value.club.lblWonPvP || 'won'} ${mode} vs <b>${esc(data.opponentName || '?')}</b> — ${data.playerHp ?? '?'} to ${data.opponentHp ?? '?'} HP`;
+    case 'fight_lose':
+      return `<b>${esc(actorName)}</b> ${t.value.club.lblLostPvP || 'lost'} ${mode} — ${data.playerHp ?? '?'} to ${data.opponentHp ?? '?'} HP`;
+    case 'fight_draw':
+      return `<b>${esc(actorName)}</b> ${t.value.club.lblDrewMatch || 'drew'} ${mode}`;
+    case 'member_join':
+      return `<b>${esc(actorName)}</b> ${t.value.club.lblJoinedClan || 'joined the clan'}`;
+    case 'member_leave':
+      return `<b>${esc(actorName)}</b> ${t.value.club.lblLeftClan || 'left the clan'}`;
+    case 'member_kick':
+      return `<b>${esc(targetName)}</b> ${t.value.club.lblWasKickedBy || 'was kicked by'} <b>${esc(actorName)}</b>`;
+    case 'role_change':
+      return `<b>${esc(actorName)}</b> ${t.value.club.lblPromotedTo || 'promoted'} <b>${esc(targetName)}</b> ${t.value.club.lblToRole || 'to'} ${data.role || '?'}`;
+    case 'level_up':
+      return `${t.value.club.lblClanReachedLevel || 'Clan reached Level'} <b>${data.level || '?'}</b>!`;
+    default:
+      return event.type;
+  }
+}
 
 // Group events by day
 const groupedEvents = computed(() => {
@@ -83,17 +97,23 @@ const groupedEvents = computed(() => {
   let currentKey = null;
   let currentGroup = null;
 
-  for (const event of events.value) {
-    const key = dateKey(event.date);
-    const timeStr = event.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const enriched = { ...event, timeStr };
+  for (const event of rawEvents.value) {
+    const date = new Date(event.createdAt);
+    const key = dateKey(date);
+    const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const enriched = {
+      id: event.id,
+      type: event.type,
+      html: renderEventHtml(event),
+      timeStr,
+    };
 
     if (key !== currentKey) {
       currentKey = key;
       let label;
       if (key === todayStr) label = t.value.club.lblToday || 'Today';
       else if (key === yesterdayStr) label = t.value.club.lblYesterday || 'Yesterday';
-      else label = event.date.toLocaleDateString();
+      else label = date.toLocaleDateString();
       currentGroup = { label, events: [] };
       groups.push(currentGroup);
     }
@@ -161,6 +181,10 @@ function esc(str) {
   background: var(--hex-defeat);
 }
 
+.dot-fight_draw {
+  background: var(--hex-text-muted);
+}
+
 .dot-member_join {
   background: var(--hex-primary);
   box-shadow: 0 0 6px var(--hex-primary-glow);
@@ -178,7 +202,7 @@ function esc(str) {
   background: var(--hex-info);
 }
 
-.dot-achievement {
+.dot-level_up {
   background: var(--hex-draw);
   box-shadow: 0 0 6px rgba(255, 184, 0, 0.5);
 }
@@ -200,5 +224,33 @@ function esc(str) {
   font-size: 10px;
   color: var(--hex-text-muted);
   margin-top: 2px;
+}
+
+.load-more {
+  text-align: center;
+  padding: 12px 0 4px;
+}
+
+.load-more-btn {
+  background: transparent;
+  border: 1px solid var(--hex-border-default);
+  color: var(--hex-text-secondary);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 8px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.load-more-btn:hover:not(:disabled) {
+  border-color: var(--hex-primary);
+  color: var(--hex-primary);
+}
+
+.load-more-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 </style>

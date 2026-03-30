@@ -469,7 +469,7 @@ AI_TRAINER_ENABLED = true
 - `GameBalanceCard.vue` — Game balance display with withdraw button (shows "after listing" message)
 - `ReferralModal.vue` — Referral program modal: QR code (qrcode lib), copy link (clipboard API), share (Web Share API with fallback), referral stats + list. Opens from ProfileView button
 - `ClanPageContent.vue` — Shared clan page content component (header, stats, tabs Members/Activity/Settings, leaderboard with action menu, confirm modals, invite modal). Used by ClubView (member view) and MyClubTab (has-clan state). Props: clubData, clubId. Events: club-left, club-deleted
-- `ClanActivityFeed.vue` — Activity feed for clan page. Events grouped by day, color-coded dots (fight_win/lose/draw, member_join/leave/kick, role_change, level_up). Currently mock data from members list; real API via `GET /v1/club/:clubId/events` (ClanEvent table) ready on backend
+- `ClanActivityFeed.vue` — Activity feed for clan page. Real data from `GET /v1/club/:clubId/events`. Events grouped by day, color-coded dots (fight_win/lose/draw, member_join/leave/kick, role_change, level_up). Props: clubId. Cursor pagination via "Load more" button. Vuex state in clubState (clanEvents, clanEventsLoading, clanEventsHasMore)
 
 ---
 
@@ -999,3 +999,29 @@ Added ClanEvent Prisma model, helper, event recording in 7 backend locations, an
 - `backend/src/routes/fight.js` — PvE fight events
 - `backend/src/routes/club.js` — join/leave/kick/set-role/invite-accept events + GET events endpoint
 - `backend/src/services/pvpCombatEngine.js` — PvP fight events for both players
+
+### Activity Feed Frontend (ТЗ E2) — ✅ COMPLETE
+
+Replaced mock data in ClanActivityFeed.vue with real API data from `GET /v1/club/:clubId/events`.
+
+**1. API + Vuex:**
+- `clubService.js` — `getClanEvents(clubId, limit, before)` API call
+- `clubState.js` — state: `clanEvents`, `clanEventsLoading`, `clanEventsHasMore`. Mutations: `setClanEvents`, `appendClanEvents`, `resetClanEvents`. Action: `fetchClanEvents` with pagination support
+
+**2. ClanActivityFeed.vue rewrite:**
+- Props changed: `members`+`clubData` → `clubId` only
+- Fetches real events on mount via Vuex action
+- Renders 8 event types with color-coded dots and formatted text
+- "Load more" button with cursor pagination (`before` = last event's `createdAt`)
+- Loading + empty states
+
+**3. i18n keys added (all 11 locales):**
+- `lblDrewMatch`, `lblWasKickedBy`, `lblToRole`, `lblClanReachedLevel`, `lblLoadMore`, `lblLoading`
+- en + ru translated, other 9 locales use English values
+
+**Files changed:**
+- `src/components/fragments/club/ClanActivityFeed.vue` — full rewrite to real API data
+- `src/components/fragments/club/ClanPageContent.vue` — updated ClanActivityFeed props
+- `src/core/services/clubService.js` — `getClanEvents()` API call
+- `src/core/state/modules/clubState.js` — clanEvents state + fetchClanEvents action
+- `src/locales/en.js`, `src/locales/ru.js` + 9 other locales — new i18n keys

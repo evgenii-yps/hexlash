@@ -183,6 +183,18 @@ export const respondToInvite = async (inviteId, action) => {
     }
 };
 
+export const getClanEvents = async (clubId, limit = 30, before = null) => {
+    try {
+        const params = { limit };
+        if (before) params.before = before;
+        const response = await apiClient.get(`/club/${clubId}/events`, { params, authRequired: true });
+        return response.data || [];
+    } catch (error) {
+        console.error('Failed to get clan events:', error);
+        return [];
+    }
+};
+
 export const searchClubs = async ({name = '', sortBy = 'battles', page = 0, size = 10, sortDirection = 'DESC'}) => {
     if (isMockMode()) {
         return [];

@@ -15,6 +15,9 @@ const state = {
         limitReached: false,
         pageSize: 20,
     },
+    clanEvents: [],
+    clanEventsLoading: false,
+    clanEventsHasMore: true,
 };
 
 const getters = {
@@ -60,6 +63,22 @@ const mutations = {
         if (state.clubRatings.hasOwnProperty(field)) {
             state.clubRatings[field] = value;
         }
+    },
+    setClanEvents(state, events) {
+        state.clanEvents = events;
+    },
+    appendClanEvents(state, events) {
+        state.clanEvents.push(...events);
+    },
+    setClanEventsLoading(state, val) {
+        state.clanEventsLoading = val;
+    },
+    setClanEventsHasMore(state, val) {
+        state.clanEventsHasMore = val;
+    },
+    resetClanEvents(state) {
+        state.clanEvents = [];
+        state.clanEventsHasMore = true;
     },
 };
 
@@ -193,6 +212,24 @@ const actions = {
         } catch (error) {
             console.error('Failed to kick member:', error);
             throw error;
+        }
+    },
+    async fetchClanEvents({ commit, state }, { clubId, limit = 30, before = null }) {
+        commit('setClanEventsLoading', true);
+        try {
+            const events = await clubService.getClanEvents(clubId, limit, before);
+            if (before) {
+                commit('appendClanEvents', events);
+            } else {
+                commit('setClanEvents', events);
+            }
+            if (events.length < limit) {
+                commit('setClanEventsHasMore', false);
+            }
+        } catch (error) {
+            console.error('Failed to fetch clan events:', error);
+        } finally {
+            commit('setClanEventsLoading', false);
         }
     },
     async loadClubRatings({ commit, state }, { search, sortBy, page }) {
