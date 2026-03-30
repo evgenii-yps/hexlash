@@ -466,7 +466,7 @@ function sendToUser(userId, data) {
 // ─── Challenges ─────────────────────────────────────────────────────────────
 
 function handleChallengeSend(ws, userId, msg) {
-  const { targetUserId, username, rating } = msg;
+  const { targetUserId, username, rating, challengerSkin, challengerAvatarUrl } = msg;
   const targetSocket = clients.get(targetUserId);
 
   console.log('[CHALLENGE] From:', userId, 'To:', targetUserId, 'Target online:', !!targetSocket);
@@ -488,6 +488,8 @@ function handleChallengeSend(ws, userId, msg) {
       odId: userId,
       username: username || 'Player',
       rating: rating || 1000,
+      skin: challengerSkin || null,
+      avatarUrl: challengerAvatarUrl || null,
     },
     challengeId,
   });
@@ -512,9 +514,13 @@ function handleChallengeAccepted(ws, userId, msg) {
   }
 
   // Fetch acceptor's username from DB
+  const { challengerSkin, challengerAvatarUrl } = msg;
+
   prisma.user.findUnique({ where: { id: userId } }).then((acceptor) => {
     const acceptorUsername = acceptor?.name || acceptor?.login || 'Player';
     const acceptorRating = acceptor?.rating || 1000;
+    const acceptorSkin = acceptor?.skin || null;
+    const acceptorAvatarUrl = acceptor?.avatarUrl || null;
 
     // Create match
     const matchId = `match_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
@@ -522,10 +528,14 @@ function handleChallengeAccepted(ws, userId, msg) {
     pvpMatchManager.createMatch(matchId, {
       odId: challengerOdId,
       username: challengerUsername || 'Player',
+      skin: challengerSkin || null,
+      avatarUrl: challengerAvatarUrl || null,
       deck: [],
     }, {
       odId: userId,
       username: acceptorUsername,
+      skin: acceptorSkin,
+      avatarUrl: acceptorAvatarUrl,
       deck: [],
     });
 
@@ -537,6 +547,8 @@ function handleChallengeAccepted(ws, userId, msg) {
         odId: userId,
         username: acceptorUsername,
         rating: acceptorRating,
+        skin: acceptorSkin,
+        avatarUrl: acceptorAvatarUrl,
       },
     });
 
@@ -548,6 +560,8 @@ function handleChallengeAccepted(ws, userId, msg) {
         odId: challengerOdId,
         username: challengerUsername || 'Player',
         rating: challengerRating || 1000,
+        skin: challengerSkin || null,
+        avatarUrl: challengerAvatarUrl || null,
       },
     });
 

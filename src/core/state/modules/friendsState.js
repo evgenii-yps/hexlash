@@ -228,6 +228,8 @@ const actions = {
         const master = rootGetters['master/getMaster'];
         const username = master?.userData?.name || master?.userData?.login || 'Player';
         const rating = master?.userData?.rating || 1000;
+        const skin = master?.userData?.skin || null;
+        const avatarUrl = master?.userData?.avatarUrl || null;
 
         // Send via WebSocket
         store.dispatch('webSocket/sendMessage', {
@@ -235,6 +237,8 @@ const actions = {
             targetUserId: friend.id,
             username,
             rating,
+            challengerSkin: skin,
+            challengerAvatarUrl: avatarUrl,
         });
 
         const challenge = {

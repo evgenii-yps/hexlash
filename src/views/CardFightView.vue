@@ -867,10 +867,12 @@ function onPvPFightStart(e) {
   });
 
   // Set opponent in fight store for display
+  // Use skin from fight_start data (now included), fall back to existing store data
+  const existingOpponent = store.state.fight?.opponent;
   store.commit('fight/setOpponent', {
     name: oppData?.username || 'Opponent',
-    skin: oppData?.skin || null,
-    avatarUrl: oppData?.avatarUrl || null,
+    skin: oppData?.skin || existingOpponent?.skin || null,
+    avatarUrl: oppData?.avatarUrl || existingOpponent?.avatarUrl || null,
     modules: [],
   });
 

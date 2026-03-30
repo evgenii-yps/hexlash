@@ -636,6 +636,20 @@ Full audit of PvP chain (matchmaking → ready → rounds → dice/coach → fig
 - **P3-3:** `overdrive_start` UI — shows "OVERDRIVE" event title with `--hex-primary` glow + 2s display, CSS class `event-overdrive`
 - **P3-4:** PvP refresh recovery — if page refreshed during PvP fight (no opponent context in store), shows toast + redirects to `/arena` instead of hanging
 
+**P4 — Skin bug fix (✅ COMPLETE):**
+- **P4-1:** Opponent skin not displaying in PvP — `fight_start` message didn't include `skin`/`avatarUrl`, and `onPvPFightStart` overwrote correct data from MatchFoundMsg with incomplete data
+- **Fix (matchmaking flow):** `matchmaking.createMatch()` passes skin/avatarUrl → `pvpCombatEngine` constructor stores them → `fight_start` emission includes skin/avatarUrl for both players
+- **Fix (challenge flow):** `challenge_send` now includes `challengerSkin`/`challengerAvatarUrl` → `challenge_received` passes skin to target → `challenge_accepted` echoes back → `handleChallengeAccepted` stores skin in match + sends in `challenge_start`
+- **Fix (frontend):** `onPvPFightStart` uses skin from `fight_start` data, falls back to existing store opponent data
+
+**Files changed:**
+- `backend/src/services/pvpCombatEngine.js` — skin/avatarUrl in constructor + fight_start emission
+- `backend/src/services/matchmaking.js` — passes skin/avatarUrl to pvpMatchManager.createMatch
+- `backend/src/websocket/handler.js` — challenge flow: skin in challenge_received, challenge_start, createMatch
+- `src/views/CardFightView.vue` — onPvPFightStart preserves existing skin as fallback
+- `src/core/state/modules/friendsState.js` — sends skin in challenge_send
+- `src/components/pvp/ChallengeNotification.vue` — passes skin in challenge_accepted
+
 ### AutoFight → Club Mode Rename + Club System Audit — ✅ COMPLETE
 
 - **ТЗ 1-5:** Renamed AutoFight → Club Mode across entire codebase (constants, Vuex, components, views, router, i18n ×11, backend API, CLAUDE.md)

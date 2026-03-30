@@ -128,6 +128,8 @@ function acceptChallenge() {
     challengerOdId: challenge.value.from.odId,
     challengerUsername: challenge.value.from.username,
     challengerRating: challenge.value.from.rating,
+    challengerSkin: challenge.value.from.skin || null,
+    challengerAvatarUrl: challenge.value.from.avatarUrl || null,
   });
   clearTimer();
   // Don't hide — wait for challenge_start from server
