@@ -22,10 +22,10 @@ function handlePvPMessage(ws, message, user) {
         return;
       }
 
-      // Validate deck
+      // Validate deck — at least 1 move required (new players may have < MIN_DECK_SIZE)
       const deck = data.deck;
-      if (!Array.isArray(deck) || deck.length < MIN_DECK_SIZE || deck.length > MAX_DECK_SIZE) {
-        ws.send(JSON.stringify({ type: 'error', message: `Deck must have ${MIN_DECK_SIZE}-${MAX_DECK_SIZE} moves` }));
+      if (!Array.isArray(deck) || deck.length < 1 || deck.length > MAX_DECK_SIZE) {
+        ws.send(JSON.stringify({ type: 'error', message: `Deck must have 1-${MAX_DECK_SIZE} moves` }));
         return;
       }
 
