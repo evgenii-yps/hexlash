@@ -164,6 +164,25 @@ export const inviteToClub = async (userId) => {
     }
 };
 
+export const getPendingInvites = async () => {
+    try {
+        const response = await apiClient.get('/club/invites', {authRequired: true});
+        return response.data || [];
+    } catch (error) {
+        console.error('Failed to get pending invites:', error);
+        return [];
+    }
+};
+
+export const respondToInvite = async (inviteId, action) => {
+    try {
+        const response = await apiClient.post('/club/invite/respond', {inviteId, action}, {authRequired: true});
+        return response.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.error || 'Failed to respond to invite');
+    }
+};
+
 export const searchClubs = async ({name = '', sortBy = 'battles', page = 0, size = 10, sortDirection = 'DESC'}) => {
     if (isMockMode()) {
         return [];

@@ -84,23 +84,42 @@ model User {
   receivedFriendRequests FriendRequest[] @relation("ReceivedRequests")
   friendships1           Friendship[]    @relation("Friendships1")
   friendships2           Friendship[]    @relation("Friendships2")
+  sentClubInvites        ClubInvite[]    @relation("SentClubInvites")
+  receivedClubInvites    ClubInvite[]    @relation("ReceivedClubInvites")
 }
 
 model Club {
-  id          String   @id @default(uuid())
+  id          String       @id @default(uuid())
   name        String
-  description String   @default("")
-  avatarUrl   String   @default("")
+  description String       @default("")
+  avatarUrl   String       @default("")
   ownerId     String
-  owner       User     @relation("ClubOwner", fields: [ownerId], references: [id])
-  balance     Int      @default(0)
-  battles     Int      @default(0)
-  wins        Int      @default(0)
-  isPublic    Boolean  @default(true)
-  maxMembers  Int      @default(50)
+  owner       User         @relation("ClubOwner", fields: [ownerId], references: [id])
+  balance     Int          @default(0)
+  battles     Int          @default(0)
+  wins        Int          @default(0)
+  isPublic    Boolean      @default(true)
+  maxMembers  Int          @default(50)
   members     User[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  invites     ClubInvite[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model ClubInvite {
+  id         String   @id @default(uuid())
+  clubId     String
+  club       Club     @relation(fields: [clubId], references: [id])
+  inviterId  String
+  inviter    User     @relation("SentClubInvites", fields: [inviterId], references: [id])
+  inviteeId  String
+  invitee    User     @relation("ReceivedClubInvites", fields: [inviteeId], references: [id])
+  status     String   @default("pending") // pending, accepted, declined, expired
+  createdAt  DateTime @default(now())
+  expiresAt  DateTime
+
+  @@unique([clubId, inviteeId, status])
+  @@index([inviteeId, status])
 }
 
 model Achievement {

@@ -70,4 +70,31 @@ function formatClubResponse(club) {
   };
 }
 
-module.exports = { generateToken, formatUserResponse, formatClubResponse };
+/**
+ * Award an achievement to a user (idempotent — skips if already awarded).
+ * Returns the achievement type if newly awarded, null otherwise.
+ */
+async function awardAchievement(prismaClient, userId, achievementType) {
+  const achievement = await prismaClient.achievement.findUnique({
+    where: { type: achievementType },
+  });
+  if (!achievement) return null;
+
+  const existing = await prismaClient.userAchievement.findUnique({
+    where: {
+      userId_achievementId: {
+        userId,
+        achievementId: achievement.id,
+      },
+    },
+  });
+  if (existing) return null;
+
+  await prismaClient.userAchievement.create({
+    data: { userId, achievementId: achievement.id },
+  });
+
+  return achievementType;
+}
+
+module.exports = { generateToken, formatUserResponse, formatClubResponse, awardAchievement };

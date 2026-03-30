@@ -34,7 +34,11 @@
           <span class="toggle-hint">{{ isPublic ? t.club.lblAnyoneCanJoin : t.club.lblInviteOnly }}</span>
         </div>
 
-        <div class="notice">{{ t.club.notice }}</div>
+        <div class="cost-row">
+          <span class="cost-label">{{ t.club.cost }}:</span>
+          <span class="cost-value" :class="{ 'cost-insufficient': !canAfford }">{{ COST_CREATE_CLUB.toLocaleString() }} {{ t.club.lblTaps || 'taps' }}</span>
+        </div>
+        <div v-if="!canAfford" class="cost-warning">{{ t.club.lblNeedTaps }}</div>
 
         <div  v-if="loading" class="loader-container">
           <v-progress-circular
@@ -51,17 +55,18 @@
       <v-card-actions>
         <v-spacer></v-spacer>
         <VBtnDark @click="hide" class="cancel-btn">{{ t.modal.btnCancel }}</VBtnDark>
-        <VBtn @click="saveChanges" class="confirm-btn">{{ t.modal.btnCreate }}</VBtn>
+        <VBtn @click="saveChanges" class="confirm-btn" :disabled="!canAfford">{{ t.modal.btnCreate }}</VBtn>
       </v-card-actions>
     </VCard>
   </VModal>
 </template>
 
 <script setup>
-import {ref, watch} from 'vue';
+import {ref, computed, watch} from 'vue';
 import store from "@/core/state/store.js";
 import router from "@/router/index.js";
 import {t} from "@/locales/index.js";
+import {COST_CREATE_CLUB} from "@/core/constants.js";
 
 
 const title = ref("");
@@ -71,6 +76,9 @@ const isPublic = ref(true);
 const loading = ref(false);
 const resultMessage = ref('');
 const titleError = ref('');
+
+const userTaps = computed(() => store.getters['master/getMaster']?.userData?.totalTaps || 0);
+const canAfford = computed(() => userTaps.value >= COST_CREATE_CLUB);
 
 const props = defineProps({
   dialogCreate: Boolean,
@@ -94,19 +102,24 @@ watch(showDialog, (val) => {
 
 // Функция для валидации названия
 const validateTitle = () => {
-  const regex = /^[a-zA-Z0-9\s]*$/; // Разрешены латинские буквы, цифры и пробелы
-  if (!regex.test(title.value)) {
-    titleError.value  = t.value.club.errorInvalidCharacters;
-    return false;
-  }
-  if (title.value.length > 32) {
-    titleError.value = t.value.club.errorTooLong;
-    return false;
-  }
-  if(title.value.length === 0) {
+  const trimmed = title.value.trim().replace(/\s{2,}/g, ' ');
+  if (trimmed.length === 0) {
     titleError.value = t.value.club.errorEmpty;
     return false;
   }
+  if (trimmed.length < 3) {
+    titleError.value = t.value.club.errorTooShort || 'Name must be at least 3 characters';
+    return false;
+  }
+  if (trimmed.length > 30) {
+    titleError.value = t.value.club.errorTooLong;
+    return false;
+  }
+  if (!/^[\p{L}\p{N} ]+$/u.test(trimmed)) {
+    titleError.value = t.value.club.errorInvalidCharacters;
+    return false;
+  }
+  title.value = trimmed;
   titleError.value = '';
   return true;
 };
@@ -178,10 +191,35 @@ const saveChanges = async () => {
   margin-top: 10px;
 }
 
-.notice{
-  color: var(--hex-text-muted);
-  font-size: 0.8rem;
+.cost-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.cost-label {
+  color: var(--hex-text-secondary);
+  font-size: 0.9rem;
+}
+
+.cost-value {
+  color: var(--hex-text-primary);
+  font-size: 0.9rem;
+  font-weight: bold;
+  font-family: 'AnonymousBalance', monospace;
+}
+
+.cost-insufficient {
+  color: var(--hex-defeat);
+}
+
+.cost-warning {
+  color: var(--hex-defeat);
+  font-size: 0.75rem;
   text-align: center;
+  margin-bottom: 8px;
 }
 
 .public-toggle {

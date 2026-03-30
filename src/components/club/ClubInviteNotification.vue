@@ -30,15 +30,25 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import store from '@/core/state/store.js';
 import { t } from '@/locales/index.js';
+import * as clubService from '@/core/services/clubService.js';
 
 const INVITE_DURATION = 30;
 const invite = ref(null);
 const timer = ref(INVITE_DURATION);
 let timerInterval = null;
+// Queue of pending invites from DB (shown one by one)
+const pendingQueue = ref([]);
 
 function onInviteReceived(event) {
   const data = event.detail;
-  invite.value = data;
+  // WS invite now includes inviteId from DB
+  invite.value = {
+    inviteId: data.inviteId || null,
+    clubId: data.clubId,
+    clubName: data.clubName,
+    inviterId: data.inviterId,
+    inviterName: data.inviterName,
+  };
   timer.value = INVITE_DURATION;
   startTimer();
 }
@@ -91,6 +101,8 @@ onMounted(() => {
   window.addEventListener('club-invite-accepted', onInviteAccepted);
   window.addEventListener('club-invite-declined', onInviteDeclined);
   window.addEventListener('club-invite-error', onInviteError);
+  // Check for pending DB invites on login
+  loadPendingInvites();
 });
 
 onUnmounted(() => {
@@ -118,25 +130,97 @@ function clearTimer() {
   }
 }
 
-function acceptInvite() {
-  store.dispatch('webSocket/sendMessage', {
-    type: 'club_invite_accept',
-    clubId: invite.value.clubId,
-    inviterId: invite.value.inviterId,
-  });
+async function acceptInvite() {
   clearTimer();
-  // Don't hide — wait for club_invite_accepted from server
+  const current = invite.value;
+  if (!current) return;
+
+  if (current.inviteId) {
+    // DB-backed invite — use REST API
+    try {
+      const result = await clubService.respondToInvite(current.inviteId, 'accept');
+      store.commit('master/updateMaster', { clubId: current.clubId, clubRole: 'member' });
+      store.commit('master/setInfoMessage', {
+        text: t.value.club.lblInviteAccepted,
+        timeout: 3000,
+        showButton: false,
+      });
+      invite.value = null;
+      showNextPending();
+    } catch (e) {
+      store.commit('master/setErrorMessage', {
+        text: e.message || 'Failed to accept invite',
+        timeout: 3000,
+        showButton: false,
+      });
+      invite.value = null;
+      showNextPending();
+    }
+  } else {
+    // Legacy WS-only invite
+    store.dispatch('webSocket/sendMessage', {
+      type: 'club_invite_accept',
+      clubId: current.clubId,
+      inviterId: current.inviterId,
+    });
+    // Don't hide — wait for club_invite_accepted from server
+  }
 }
 
-function declineInvite() {
-  if (invite.value) {
+async function declineInvite() {
+  const current = invite.value;
+  clearTimer();
+
+  if (current?.inviteId) {
+    // DB-backed invite — use REST API
+    clubService.respondToInvite(current.inviteId, 'decline').catch(() => {});
+  } else if (current) {
+    // Legacy WS-only invite
     store.dispatch('webSocket/sendMessage', {
       type: 'club_invite_decline',
-      inviterId: invite.value.inviterId,
+      inviterId: current.inviterId,
     });
   }
-  clearTimer();
+
   invite.value = null;
+  showNextPending();
+}
+
+function showNextPending() {
+  if (pendingQueue.value.length > 0) {
+    const next = pendingQueue.value.shift();
+    invite.value = next;
+    timer.value = INVITE_DURATION;
+    startTimer();
+  }
+}
+
+async function loadPendingInvites() {
+  // Only check if user is authenticated and not already in a club
+  const master = store.getters['master/getMaster'];
+  if (!master?.userData || master.userData.clubId) return;
+
+  const invites = await clubService.getPendingInvites();
+  if (invites.length > 0 && !invite.value) {
+    // Show first invite immediately, queue the rest
+    const [first, ...rest] = invites;
+    invite.value = {
+      inviteId: first.id,
+      clubId: first.clubId,
+      clubName: first.clubName,
+      inviterId: first.inviterId,
+      inviterName: first.inviterName,
+    };
+    pendingQueue.value = rest.map(inv => ({
+      inviteId: inv.id,
+      clubId: inv.clubId,
+      clubName: inv.clubName,
+      inviterId: inv.inviterId,
+      inviterName: inv.inviterName,
+    }));
+    timer.value = INVITE_DURATION;
+    startTimer();
+  }
 }
 </script>
 

@@ -473,7 +473,7 @@ Base: `/v1/`
 |-------|------|---------|
 | `/auth` | auth.js | login, signup, reset, telegram. Rate limited: login 5/15min, register 3/hr, telegram 10/15min. Register + telegram accept `referralCode` — rewards both users +500 taps |
 | `/user` | user.js | profile, stats, avatar, achievements, referrals. Skin validated via regex. Delete uses $transaction with cascade. GET /referrals returns referral stats + list |
-| `/club` | club.js | create/edit/delete club, avatar, members, balance, roles (set-role, transfer-ownership, kick, invite). maxMembers=50, roles: owner/deputy/member. DELETE / dissolves club (owner-only, clears all members) |
+| `/club` | club.js | create/edit/delete club, avatar, members, balance, roles (set-role, transfer-ownership, kick, invite). maxMembers=50, roles: owner/deputy/member. DELETE / dissolves club (owner-only, clears all members + invites). Invite: DB-persisted (48h), GET /invites, POST /invite/respond |
 | `/task` | task.js | daily + social tasks |
 | `/file` | file.js | avatar/file upload |
 | `/fight` | fight.js | fight creation, results, history |
@@ -520,9 +520,11 @@ Password reset: Returns 501 (not implemented) — no fake success
 
 ## Database Models (Prisma/PostgreSQL)
 
-User, Club, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask, UserDailyTask, Fight, PunchInfo, FriendRequest, Friendship
+User, Club, ClubInvite, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask, UserDailyTask, Fight, PunchInfo, FriendRequest, Friendship
 
-**Club system fields:** User.clubRole (`owner`/`deputy`/`member`/null), Club.maxMembers (default 50), Club.battles/wins (auto-incremented on fight save). Max 3 deputies per club. Owner can set roles, transfer ownership, kick anyone, invite friends, dissolve club. Deputies can kick members only, invite friends. `User.daysInClub` removed (was never incremented).
+**Club system fields:** User.clubRole (`owner`/`deputy`/`member`/null), Club.maxMembers (default 50), Club.battles/wins (auto-incremented on fight save). Max 3 deputies per club. Owner can set roles, transfer ownership, kick anyone, invite friends, dissolve club. Deputies can kick members only, invite friends. Club creation costs `COST_CREATE_CLUB` (10000) taps — deducted from `User.totalTaps` in $transaction. Club name: 3-30 chars, unicode letters/digits/spaces (`\p{L}\p{N}`), no emoji. Achievements: `PAPER_STREET` on create, `PROJECT_MAYHEM` on join (idempotent via `awardAchievement()` in helpers.js).
+
+**Club invite system:** `ClubInvite` model — `id`, `clubId` → Club, `inviterId` → User, `inviteeId` → User, `status` (pending/accepted/declined/expired), `createdAt`, `expiresAt` (48h). Persisted in DB + real-time WS notification. Endpoints: `POST /club/invite` (creates DB record + WS), `GET /club/invites` (pending for current user), `POST /club/invite/respond` (accept/decline by inviteId). Auto-expire on query (no cron). Frontend: `ClubInviteNotification.vue` loads pending invites on mount, shows queue one by one.
 
 **Referral system fields:** User.referredBy (String?, login of referrer), User.invitedUsers (Int, referral count). On register/telegram with referralCode: both users get +500 taps (REFERRAL_REWARD_TAPS), invitedUsers incremented. Self-referral and non-existent referrer silently ignored.
 
@@ -649,6 +651,23 @@ Full audit of PvP chain (matchmaking → ready → rounds → dice/coach → fig
 - `src/views/CardFightView.vue` — onPvPFightStart preserves existing skin as fallback
 - `src/core/state/modules/friendsState.js` — sends skin in challenge_send
 - `src/components/pvp/ChallengeNotification.vue` — passes skin in challenge_accepted
+
+### Club System — Этап 1: Backend фиксы (✅ COMPLETE)
+
+- **1. Списание тапов при создании клана:** `POST /club/add` проверяет `totalTaps >= COST_CREATE_CLUB (10000)`, списывает в $transaction. Frontend: стоимость в CreateClub.vue, disabled кнопка если не хватает.
+- **2. Achievements за клуб:** `awardAchievement()` helper (idempotent). `PAPER_STREET` при создании, `PROJECT_MAYHEM` при вступлении (change + invite/respond).
+- **3. Pending invites в БД:** `ClubInvite` модель (Prisma), 3 новых endpoint: `GET /club/invites`, `POST /club/invite/respond`, обновлён `POST /club/invite`. 48h expiry, auto-expire on query. Frontend: ClubInviteNotification загружает pending на mount, очередь показа.
+- **4. Unicode в названии клана:** regex `\p{L}\p{N}` вместо `a-zA-Z0-9`, min 3 / max 30, sanitize множественных пробелов. i18n обновлён (en + ru).
+
+**Files changed:**
+- `backend/src/routes/club.js` — taps deduction, achievements, invite persistence, new endpoints, unicode regex
+- `backend/src/utils/helpers.js` — `awardAchievement()` utility
+- `backend/prisma/schema.prisma` — `ClubInvite` model + relations
+- `src/components/fragments/club/CreateClub.vue` — cost display, canAfford, unicode validation
+- `src/components/fragments/club/ClubEdit.vue` — unicode validation
+- `src/components/club/ClubInviteNotification.vue` — REST API accept/decline, pending invites on mount
+- `src/core/services/clubService.js` — `getPendingInvites()`, `respondToInvite()`
+- `src/locales/en.js`, `src/locales/ru.js` — updated validation messages
 
 ### AutoFight → Club Mode Rename + Club System Audit — ✅ COMPLETE
 
