@@ -2,7 +2,7 @@
   <div class="avatar-container" @click="changeAvatar"
        :style="{ backgroundColor: avatarUrl !== defaultAvatarImg ? 'transparent' : 'var(--hex-bg-card)' }">
 
-    <img :src="avatarUrl" alt="Club Avatar" class="avatar"
+    <img :src="avatarUrl" alt="Clan Avatar" class="avatar"
          :class="{
        'loading-avatar': isUploading,
        'non-default-avatar ': avatarUrl !== defaultAvatarImg && !isLoading,

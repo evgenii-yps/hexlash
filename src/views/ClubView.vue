@@ -12,7 +12,7 @@
         </div>
 
         <div v-else-if="notFound" class="not-found-container">
-          <div class="not-found-text">{{ t.club.lblClubNotFound || 'Club not found' }}</div>
+          <div class="not-found-text">{{ t.club.lblClubNotFound || 'Clan not found' }}</div>
           <button class="back-btn" @click="$router.push('/ratings/clubs')">&larr; {{ t.nav?.lblBack || 'Back' }}</button>
         </div>
 
@@ -132,7 +132,7 @@
         </div>
 
         <div v-else class="not-found-container">
-          <p>{{ t.club.lblClubNotFound || 'Club not found' }}</p>
+          <p>{{ t.club.lblClubNotFound || 'Clan not found' }}</p>
         </div>
       </div>
     </div>

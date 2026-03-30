@@ -693,3 +693,29 @@ All phases finished and merged to main. Summary of work done:
 - **Phase 5.1:** Final sweep — 330 legacy var replacements across 53 files, 0 legacy vars remain
 - **Phase 5.2:** Animation utilities (10 classes: transitions, hover, press, pulse, glow-pulse, float-up, Vue fade/slide-up)
 - **Phase 5.3:** Responsive fixes — 320px min-width, @media 360px breakpoints
+
+### Club → Clan UI Rename — ✅ COMPLETE
+
+Renamed all user-visible "Club" strings to "Clan" across the entire UI. Backend unchanged (API routes, Prisma models, DB fields, Vuex module names, file names, JS variables all remain "club").
+
+**i18n replacements (11 locales):**
+| Locale | File | Replacement | Approx. count |
+|--------|------|-------------|---------------|
+| en | en.js | Club → Clan | ~40 |
+| ru | ru.js | клуб → клан (all grammatical forms) | ~40 |
+| de | de.js | Club/Klub → Clan | ~35 |
+| es | es.js | club → clan | ~35 |
+| fr | fr.js | club → clan | ~35 |
+| pt | pt.js | clube → clã | ~35 |
+| ar | ar.js | النادي → العشيرة | ~35 |
+| hi | hi.js | क्लब → क्लैन | ~34 |
+| ja | ja.js | クラブ → クラン | ~38 |
+| ko | ko.js | 클럽 → 클랜 | ~37 |
+| zh | zh.js | 俱乐部 → 战队 | ~37 |
+
+**Component fixes:**
+- `ClubView.vue` — fallback strings "Club not found" → "Clan not found" (×2)
+- `ClubAvatar.vue` — alt text "Club Avatar" → "Clan Avatar"
+- `ClubOwnerAvatar.vue` — alt text "Club Avatar" → "Clan Avatar"
+
+**Not changed (by design):** i18n keys (`lblClub`, `clubMode`, etc.), Vuex module names (`clubState`, `clubModeState`), file names, API routes, Prisma schema, DB fields
