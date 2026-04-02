@@ -26,7 +26,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
   core/
     state/store.js         — Vuex store
     state/modules/         — 13 Vuex modules
-    models/                — 20 data models (internal, ws, etc.)
+    models/                — 20+ data models (internal, ws, etc.)
     services/              — 8 business logic services
     database/              — 7 LocalStorage/IDB repository files
     api/apiClient.js       — Axios HTTP client
@@ -72,7 +72,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
     services/pvpCombatEngine.js — PvP combat engine
     utils/helpers.js
   prisma/
-    schema.prisma          — 12 models: User, Club, Fight, Achievement, Task, PunchInfo, FriendRequest, Friendship...
+    schema.prisma          — 18 models: User, Club, Agent, AgentTactics, AgentProgression, AgentFightLog, Fight, Achievement, Task, PunchInfo, FriendRequest, Friendship...
     seed.js
     migrations/            — PostgreSQL migrations
 
@@ -529,15 +529,23 @@ Password reset: Returns 501 (not implemented) — no fake success
 
 ## Database Models (Prisma/PostgreSQL)
 
-User, Club, ClubInvite, ClanEvent, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask, UserDailyTask, Fight, PunchInfo, FriendRequest, Friendship
+User, Club, ClubInvite, ClanEvent, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask, UserDailyTask, Fight, PunchInfo, FriendRequest, Friendship, Agent, AgentTactics, AgentProgression, AgentFightLog
 
-**Club system fields:** User.clubRole (`owner`/`deputy`/`member`/null), Club.maxMembers (default 50), Club.battles/wins (auto-incremented on fight save). Max 3 deputies per club. Owner can set roles, transfer ownership, kick anyone, invite friends, dissolve club. Deputies can kick members only, invite friends. Club creation costs `COST_CREATE_CLUB` (10000) taps — deducted from `User.totalTaps` in $transaction. Club name: 3-30 chars, unicode letters/digits/spaces (`\p{L}\p{N}`), no emoji. Achievements: `PAPER_STREET` on create, `PROJECT_MAYHEM` on join (idempotent via `awardAchievement()` in helpers.js).
+**Club system fields:** User.clubRole (`owner`/`deputy`/`member`/null), Club.maxMembers (default 20, grows with level), Club.maxAgents (default 2, grows with level: 1→2, 2→3, 3→4, 4→5, 5+→6), Club.legendSkin/legendArchetype/legendBuff (retired fighter legend system), Club.battles/wins (auto-incremented on fight save). Max 3 deputies per club. Owner can set roles, transfer ownership, kick anyone, invite friends, dissolve club. Deputies can kick members only, invite friends. Club creation costs `COST_CREATE_CLUB` (10000) taps — deducted from `User.totalTaps` in $transaction. Club name: 3-30 chars, unicode letters/digits/spaces (`\p{L}\p{N}`), no emoji. Achievements: `PAPER_STREET` on create, `PROJECT_MAYHEM` on join (idempotent via `awardAchievement()` in helpers.js).
 
 **Club invite system:** `ClubInvite` model — `id`, `clubId` → Club, `inviterId` → User, `inviteeId` → User, `status` (pending/accepted/declined/expired), `createdAt`, `expiresAt` (48h). Persisted in DB + real-time WS notification. Endpoints: `POST /club/invite` (creates DB record + WS), `GET /club/invites` (pending for current user), `POST /club/invite/respond` (accept/decline by inviteId). Auto-expire on query (no cron). Frontend: `ClubInviteNotification.vue` loads pending invites on mount, shows queue one by one.
 
 **Clan event system:** `ClanEvent` model — `id` (uuid), `clubId` → Club (cascade delete), `type` (String), `actorId` (String?), `targetId` (String?), `data` (Json?), `createdAt`. Index on `[clubId, createdAt]`. Types: `fight_win`, `fight_lose`, `fight_draw`, `member_join`, `member_leave`, `member_kick`, `role_change`, `level_up`. Helper: `createClanEvent()` in `backend/src/utils/clanEvents.js` — silent try/catch, fire-and-forget. Events recorded in: fight.js (PvE), pvpCombatEngine.js (PvP both players), club.js (join/leave/kick/set-role, invite accept), clanLevel.js (level_up). API: `GET /v1/club/:clubId/events?limit=30&before=timestamp` — members only, cursor pagination, includes actor/target `{id, login, skin}`.
 
 **Referral system fields:** User.referredBy (String?, login of referrer), User.invitedUsers (Int, referral count). On register/telegram with referralCode: both users get +500 taps (REFERRAL_REWARD_TAPS), invitedUsers incremented. Self-referral and non-existent referrer silently ignored.
+
+**Club Mode Agent system:** 4 new models for autonomous clan fighters.
+- `Agent` — clan fighter unit. Fields: name (2-20 chars), skin, 3 modules (primaryModule/secondaryModule/tertiaryModule — one of 6 archetypes each), elo (default 1000), wins/losses/draws/totalFights, xp, level, status (idle|fighting|resting), lastFightAt/nextFightAt. Relations: Club (cascade), User owner (cascade). Indexes: clubId, ownerId, elo, status.
+- `AgentTactics` — 1:1 with Agent. Behavior settings: aggression (cautious|balanced|aggressive), dicePolicy (always|smart|never), coachPreference (attack|defense|position|auto), emergencyThreshold (30|20|0), restPeriod (ms: 600000|1800000|3600000). Cascade delete.
+- `AgentProgression` — 1:1 with Agent. XP per branch (speedXp/powerXp/techniqueXp), moves (JSON [{moveId, level}]), deck (JSON [moveId...] 4-8 items). Cascade delete.
+- `AgentFightLog` — N:1 with Agent. Fight history: mode (pve_training|ranked|free_arena), result (victory|defeat|draw), opponent info, rounds/HP/xpEarned/eloChange, fightData (full JSON for AI analysis). Indexes: agentId, createdAt, mode. Cascade delete.
+- Validation (app-level, not Prisma): name 2-20 chars no special chars, skin regex, modules from 6 archetypes, agents count ≤ club.maxAgents, deck 4-8 moveId.
+- Migration: `20260402000000_add_club_mode_agents`
 
 **Seed data:** 16 achievements (NEWBIE, CONNECTED_FIGHTER, REGULAR_FIGHTER, BATTLE_VETERAN, FIGHT_MASTER, COACH, RECRUITER, PROJECT_MAYHEM, MEATLOAF, TYLER, EXPERT, LUCKY_ONE, BOB, PAPER_STREET, MEETING_PARTICIPANT, GOLDEN_RULE) + social/daily tasks (en/ru)
 
@@ -607,7 +615,7 @@ User, Club, ClubInvite, ClanEvent, Achievement, UserAchievement, SocialTask, Use
 
 ## Branch (Git)
 
-Development branch: `claude/pvp-system-audit-TJU4i`
+Development branch: `claude/add-club-mode-agents-lmXTI`
 Previous branches: `claude/rename-autofight-club-mode-o2bIJ`, `claude/update-claude-md-XVzH6`, `claude/add-pixel-icons-Hk6tn` (design system + UI redesign, completed & merged), `claude/hexlash-full-audit-WvXMd` (security audit, completed & merged)
 
 ### PvP System Audit — P0+P1 Fixes — ✅ COMPLETE
@@ -1040,3 +1048,28 @@ Added automatic 5% tap share from member punches to clan treasury balance.
 **Files changed:**
 - `backend/src/config.js` — `CLAN_TAP_SHARE` constant
 - `backend/src/websocket/handler.js` — clan balance increment in handlePunchBatch
+
+### Club Mode Agents — Prisma Models (ТЗ-01) — ✅ COMPLETE
+
+Added 4 new Prisma models for Club Mode agent system + extended Club model.
+
+**Club model — new fields:**
+- `maxAgents` (Int, default 2) — max agents per clan, grows with level (1→2, 2→3, 3→4, 4→5, 5+→6)
+- `legendSkin` (String?) — retired fighter skin
+- `legendArchetype` (String?) — retired fighter archetype
+- `legendBuff` (Json?) — legend buff {xpBonus, dmgBonus, archetype}
+
+**New models:**
+- `Agent` — clan fighter: name, skin, 3 archetype modules, elo/stats, xp/level, status (idle|fighting|resting), relations to Club + User (both cascade). Indexes: clubId, ownerId, elo, status
+- `AgentTactics` — 1:1 with Agent: aggression, dicePolicy, coachPreference, emergencyThreshold, restPeriod
+- `AgentProgression` — 1:1 with Agent: speedXp/powerXp/techniqueXp, moves JSON, deck JSON
+- `AgentFightLog` — N:1 with Agent: mode, result, opponent info, rounds/HP, xpEarned/eloChange, fightData JSON
+
+**User model:** added `agents Agent[]` reverse relation
+**Club model:** added `agents Agent[]` reverse relation
+
+**Migration:** `20260402000000_add_club_mode_agents`
+
+**Files changed:**
+- `backend/prisma/schema.prisma` — 4 new models, Club + User extended
+- `backend/prisma/migrations/20260402000000_add_club_mode_agents/migration.sql` — SQL migration

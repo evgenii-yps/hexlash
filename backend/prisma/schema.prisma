@@ -86,6 +86,7 @@ model User {
   friendships2           Friendship[]    @relation("Friendships2")
   sentClubInvites        ClubInvite[]    @relation("SentClubInvites")
   receivedClubInvites    ClubInvite[]    @relation("ReceivedClubInvites")
+  agents                 Agent[]
 }
 
 model Club {
@@ -102,9 +103,14 @@ model Club {
   xp          Int          @default(0)
   isPublic    Boolean      @default(true)
   maxMembers  Int          @default(20)
+  maxAgents        Int          @default(2)    // max agents per level: 1→2, 2→3, 3→4, 4→5, 5+→6
+  legendSkin       String?                     // retired fighter skin (legend)
+  legendArchetype  String?                     // retired fighter archetype
+  legendBuff       Json?                       // legend buff {xpBonus, dmgBonus, archetype}
   members     User[]
   invites     ClubInvite[]
   events      ClanEvent[]
+  agents      Agent[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 }
@@ -279,4 +285,113 @@ model PunchInfo {
   punchAmountMaxPerBatch Int      @default(10000)
   intervalWaitTimeMs     BigInt   @default(3600000)
   user                   User     @relation(fields: [userId], references: [id])
+}
+
+model Agent {
+  id               String   @id @default(uuid())
+  name             String                  // agent name (2-20 chars)
+  skin             String                  // skin from /images/skins/
+
+  // Build (3 modules — like playerModules)
+  primaryModule    String                  // predator|sentinel|ghost|analyst|maverick|juggernaut
+  secondaryModule  String
+  tertiaryModule   String
+
+  // Statistics
+  elo              Int       @default(1000)
+  wins             Int       @default(0)
+  losses           Int       @default(0)
+  draws            Int       @default(0)
+  totalFights      Int       @default(0)
+
+  // Progression
+  xp               Int       @default(0)
+  level            Int       @default(1)
+
+  // Status
+  status           String    @default("idle")  // idle|fighting|resting
+  lastFightAt      DateTime?
+  nextFightAt      DateTime?
+
+  // Relations
+  clubId           String
+  club             Club      @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  ownerId          String
+  owner            User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  // Reverse relations
+  tactics          AgentTactics?
+  progression      AgentProgression?
+  fightLogs        AgentFightLog[]
+
+  @@index([clubId])
+  @@index([ownerId])
+  @@index([elo])
+  @@index([status])
+}
+
+model AgentTactics {
+  id                 String   @id @default(uuid())
+
+  aggression         String   @default("balanced")     // cautious|balanced|aggressive
+  dicePolicy         String   @default("smart")        // always|smart|never
+  coachPreference    String   @default("auto")         // attack|defense|position|auto
+  emergencyThreshold Int      @default(30)             // 30|20|0 (0 = never)
+  restPeriod         Int      @default(600000)         // ms: 600000(10min)|1800000(30min)|3600000(1hr)
+
+  agentId            String   @unique
+  agent              Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+}
+
+model AgentProgression {
+  id               String   @id @default(uuid())
+
+  // XP per branch
+  speedXp          Int      @default(0)
+  powerXp          Int      @default(0)
+  techniqueXp      Int      @default(0)
+
+  // Learned moves: JSON [{moveId: string, level: number}]
+  moves            Json     @default("[]")
+
+  // Agent deck: JSON [moveId, moveId, ...] (4-8 items)
+  deck             Json     @default("[]")
+
+  agentId          String   @unique
+  agent            Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+}
+
+model AgentFightLog {
+  id               String   @id @default(uuid())
+
+  mode             String                  // pve_training|ranked|free_arena
+  result           String                  // victory|defeat|draw
+
+  // Opponent
+  opponentName     String?                 // bot or agent name
+  opponentId       String?                 // opponent agent id (ranked/free_arena)
+  opponentOwnerId  String?                 // opponent owner id
+
+  // Fight details
+  rounds           Int                     // number of rounds
+  playerHpLeft     Int                     // agent HP at end
+  opponentHpLeft   Int                     // opponent HP at end
+  xpEarned         Int       @default(0)
+  eloChange        Int       @default(0)   // ranked only
+
+  // Full fight log (rounds, moves, dice, coach) — for AI analysis
+  fightData        Json?
+
+  // Relations
+  agentId          String
+  agent            Agent     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  createdAt        DateTime  @default(now())
+
+  @@index([agentId])
+  @@index([createdAt])
+  @@index([mode])
 }
