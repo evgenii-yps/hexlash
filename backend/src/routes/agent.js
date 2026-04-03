@@ -22,7 +22,7 @@ const VALID_DICE_POLICY = ['always', 'smart', 'never'];
 const VALID_COACH_PREF = ['attack', 'defense', 'position', 'auto'];
 const VALID_EMERGENCY = [0, 20, 30];
 const VALID_REST_PERIOD = [600000, 1800000, 3600000];
-const VALID_FIGHT_MODE = ['pve_training', 'ranked'];
+const VALID_FIGHT_MODE = ['pve_training', 'ranked', 'free_arena'];
 const NAME_REGEX = /^[a-zA-Zа-яА-ЯёЁ0-9\s_-]{2,20}$/;
 const SKIN_REGEX = /^(skin_(m|w)_\d{1,3}|vip_(k|t)\d{1,2})\.png$/;
 

@@ -8,6 +8,7 @@ const {
   ELO_MATCH_RANGE,
   RANKED_REMATCH_COOLDOWN,
   RANKED_MAX_PAIRS_PER_TICK,
+  FREE_ARENA_MAX_PAIRS_PER_TICK,
   AGENT_MAX_FIGHTS_PER_DAY,
 } = require('../config');
 
@@ -80,4 +81,69 @@ async function findRankedPairs() {
   return pairs;
 }
 
-module.exports = { findRankedPairs };
+/**
+ * Find pairs for Free Arena fights.
+ * No ELO range limit, no rematch cooldown, random shuffle, different owners.
+ * @returns {Array<{agent1: Object, agent2: Object}>}
+ */
+async function findFreeArenaPairs() {
+  const now = new Date();
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  const agents = await prisma.agent.findMany({
+    where: {
+      status: 'idle',
+      autoFight: true,
+      tactics: { fightMode: 'free_arena' },
+    },
+    include: {
+      tactics: true,
+      progression: true,
+      _count: {
+        select: {
+          fightLogs: { where: { createdAt: { gte: startOfDay } } },
+        },
+      },
+    },
+  });
+
+  // Filter: deck >= 4, daily limit
+  const eligible = agents.filter(a => {
+    const deck = a.progression?.deck;
+    if (!Array.isArray(deck) || deck.length < 4) return false;
+    if (a._count.fightLogs >= AGENT_MAX_FIGHTS_PER_DAY) return false;
+    return true;
+  });
+
+  if (eligible.length < 2) return [];
+
+  // Shuffle
+  for (let i = eligible.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [eligible[i], eligible[j]] = [eligible[j], eligible[i]];
+  }
+
+  const pairs = [];
+  const matched = new Set();
+
+  for (let i = 0; i < eligible.length && pairs.length < FREE_ARENA_MAX_PAIRS_PER_TICK; i++) {
+    if (matched.has(eligible[i].id)) continue;
+    const a1 = eligible[i];
+
+    for (let j = i + 1; j < eligible.length; j++) {
+      if (matched.has(eligible[j].id)) continue;
+      const a2 = eligible[j];
+
+      if (a1.ownerId === a2.ownerId) continue;
+
+      pairs.push({ agent1: a1, agent2: a2 });
+      matched.add(a1.id);
+      matched.add(a2.id);
+      break;
+    }
+  }
+
+  return pairs;
+}
+
+module.exports = { findRankedPairs, findFreeArenaPairs };

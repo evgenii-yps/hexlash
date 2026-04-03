@@ -4,8 +4,8 @@
  */
 
 const prisma = require('../lib/prisma');
-const { runAutoFight, runRankedFight } = require('./agentFightService');
-const { findRankedPairs } = require('./rankedMatchmaker');
+const { runAutoFight, runRankedFight, runFreeArenaFight } = require('./agentFightService');
+const { findRankedPairs, findFreeArenaPairs } = require('./rankedMatchmaker');
 const {
   AGENT_SCHEDULER_TICK_MS,
   AGENT_MAX_FIGHTS_PER_TICK,
@@ -88,6 +88,26 @@ async function tick() {
       }
     } catch (err) {
       console.error('[AgentScheduler] Ranked matchmaking error:', err.message);
+    }
+
+    // Free Arena fights
+    try {
+      const freeArenaPairs = await findFreeArenaPairs();
+      for (const { agent1, agent2 } of freeArenaPairs) {
+        if (fightsRun >= AGENT_MAX_FIGHTS_PER_TICK) break;
+        try {
+          await runFreeArenaFight(agent1.id, agent2.id);
+          const rest1 = agent1.tactics?.restPeriod || 600000;
+          const rest2 = agent2.tactics?.restPeriod || 600000;
+          await prisma.agent.update({ where: { id: agent1.id }, data: { status: 'resting', nextFightAt: new Date(Date.now() + rest1) } });
+          await prisma.agent.update({ where: { id: agent2.id }, data: { status: 'resting', nextFightAt: new Date(Date.now() + rest2) } });
+          fightsRun += 2;
+        } catch (err) {
+          console.error('[AgentScheduler] Free Arena fight failed:', err.message);
+        }
+      }
+    } catch (err) {
+      console.error('[AgentScheduler] Free Arena matchmaking error:', err.message);
     }
 
     if (fightsRun > 0) {

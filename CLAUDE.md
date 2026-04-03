@@ -1275,3 +1275,27 @@ Ranked fights: agent vs agent from different owners. ELO rating, matchmaking by 
 - `backend/src/services/agentFightService.js` — runRankedFight + eloService import
 - `backend/src/services/agentScheduler.js` — ranked flow in tick + imports
 - `backend/src/routes/agent.js` — rankings endpoint + fightMode in tactics
+
+### Free Arena Mode (ТЗ-09) — ✅ COMPLETE
+
+Free Arena: agent vs agent, random matchmaking, no ELO change, 80% XP. For testing builds without rating risk.
+
+**Refactored `agentFightService.js`:**
+- Extracted `_executeAgentVsAgentFight(a1Id, a2Id, options)` — shared core for ranked + free arena
+- `runRankedFight()` → wrapper: `{ mode: 'ranked', applyElo: true, xpMultiplier: 1.0 }`
+- `runFreeArenaFight()` → wrapper: `{ mode: 'free_arena', applyElo: false, xpMultiplier: 0.8 }`
+
+**Extended `rankedMatchmaker.js`:**
+- `findFreeArenaPairs()` — no ELO range, no rematch cooldown, random shuffle, different owners only
+
+**Extended `agentScheduler.js`:**
+- tick() now has 3 modes: PvE → Ranked → Free Arena
+
+**Config:** `FREE_ARENA_MAX_PAIRS_PER_TICK=5`
+
+**Files changed:**
+- `backend/src/config.js` — FREE_ARENA_MAX_PAIRS_PER_TICK
+- `backend/src/services/agentFightService.js` — refactored: _executeAgentVsAgentFight + runFreeArenaFight
+- `backend/src/services/rankedMatchmaker.js` — findFreeArenaPairs
+- `backend/src/services/agentScheduler.js` — free arena flow in tick
+- `backend/src/routes/agent.js` — 'free_arena' in VALID_FIGHT_MODE
