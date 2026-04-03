@@ -475,6 +475,17 @@ export default {
     lblRetireWarning: 'This action cannot be undone',
     lblRetireSuccess: 'Your fighter has retired as a Legend!',
     errNotEligible: 'Not eligible for retirement',
+    // NFT Mint
+    lblNftRequired: 'NFT Required',
+    lblMintAgent: 'Mint Agent NFT',
+    lblMinting: 'Minting...',
+    lblFirstFree: 'First agent is free!',
+    lblNeedNfts: 'Mint an Agent NFT for additional agents.',
+    lblMintSuccess: 'NFT minted successfully!',
+    lblConnectWalletToMint: 'Connect wallet to mint',
+    errMintFailed: 'Mint failed',
+    errNoWallet: 'Connect wallet first',
+    errSoldOut: 'All Agent NFTs minted',
   },
   fight: {
     lblRound: 'الجولة {n}',

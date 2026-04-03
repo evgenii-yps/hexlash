@@ -493,6 +493,17 @@ export default {
     lblRetireWarning: 'Это действие нельзя отменить',
     lblRetireSuccess: 'Ваш боец стал Легендой!',
     errNotEligible: 'Не готов к пенсии',
+    // NFT Mint
+    lblNftRequired: 'Требуется NFT',
+    lblMintAgent: 'Минт Agent NFT',
+    lblMinting: 'Минтинг...',
+    lblFirstFree: 'Первый агент бесплатно!',
+    lblNeedNfts: 'Для дополнительных агентов нужен Agent NFT.',
+    lblMintSuccess: 'NFT успешно создан!',
+    lblConnectWalletToMint: 'Подключите кошелёк',
+    errMintFailed: 'Ошибка минта',
+    errNoWallet: 'Сначала подключите кошелёк',
+    errSoldOut: 'Все Agent NFT разобраны',
   },
   fight: {
     lblRound: 'Раунд {n}',

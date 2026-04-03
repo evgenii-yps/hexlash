@@ -1434,3 +1434,30 @@ Agent leaderboard with 6 league tiers, integrated into RatingsView as 4th tab.
 - `src/components/ratings/AgentLeaderboard.vue` — **new** component
 - `src/views/RatingsView.vue` — AGENTS tab + import
 - `src/locales/*.js` — rating.* agent keys (15 new)
+
+### NFT Mint Agents — ERC-1155 on Base (ТЗ-23) — ✅ COMPLETE
+
+Agent NFT minting: first agent free, additional require ERC-1155 NFT on Base. Feature flag disabled by default.
+
+**Smart contract:** `contracts/HexlashAgents.sol` — ERC-1155, mint with ETH, owner mint, max supply/per-wallet limits
+**ABI:** `src/assets/abi/HexlashAgents.json` — human-readable for ethers.js
+
+**Backend:**
+- `services/nftService.js` — `getAgentNftBalance()`, `checkMintRequirement()` (feature flag bypass)
+- `routes/agent.js` — NFT check in POST /agent/create (after roster limit, before validation)
+- `config.js` — `NFT_MINTING_ENABLED`, `AGENT_NFT_CONTRACT`, `BASE_RPC_URL`
+
+**Frontend:**
+- `core/services/nftMintService.js` — `getAgentNftBalance()`, `getMintInfo()`, `mintAgentNft()`
+- `CreateAgentView.vue` — conditional NFT mint section on step 3
+
+**Feature flag:** `NFT_MINTING_ENABLED=false` → all agents free. `true` → first free, 2+ require NFT.
+
+**Files changed:**
+- `contracts/HexlashAgents.sol` — **new** ERC-1155 contract
+- `src/assets/abi/HexlashAgents.json` — **new** ABI
+- `backend/src/services/nftService.js` — **new** on-chain verification
+- `backend/src/routes/agent.js` — NFT check in create
+- `backend/src/config.js` — NFT constants
+- `src/core/services/nftMintService.js` — **new** frontend mint helpers
+- `src/views/CreateAgentView.vue` — NFT mint UI
