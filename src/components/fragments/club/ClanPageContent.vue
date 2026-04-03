@@ -42,6 +42,7 @@
 
     <!-- Agent Roster (Club Mode) -->
     <ClubLevelBar v-if="clubLevelData" :clubLevel="clubLevelData" />
+    <MorningReport v-if="agentsList.length > 0" />
     <AgentRoster
       :agents="agentsList"
       :maxAgents="clubLevelData?.maxAgents || 2"
@@ -289,6 +290,7 @@ import ClubStats from "@/components/fragments/club/ClubStats.vue";
 import ClanActivityFeed from "@/components/fragments/club/ClanActivityFeed.vue";
 import ClubLevelBar from "@/components/club/ClubLevelBar.vue";
 import AgentRoster from "@/components/club/AgentRoster.vue";
+import MorningReport from "@/components/club/MorningReport.vue";
 import ClubEdit from "@/components/fragments/club/ClubEdit.vue";
 import HexButton from "@/components/ui/HexButton.vue";
 import ClanConfirmModal from "@/components/fragments/club/ClanConfirmModal.vue";

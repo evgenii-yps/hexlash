@@ -592,6 +592,128 @@ router.post('/build-description', authMiddleware, async (req, res) => {
   }
 });
 
+// ── Morning Report ────────────────────────────────────────────────────
+
+const morningReportRateLimitMap = new Map();
+const MORNING_REPORT_RATE_LIMIT_WINDOW = 60 * 60 * 1000; // 1 hour
+const MORNING_REPORT_RATE_LIMIT_MAX = 3;
+const morningReportCache = new Map();
+const MORNING_REPORT_CACHE_TTL = 30 * 60 * 1000; // 30 min
+
+function checkMorningReportRateLimit(userId) {
+  const now = Date.now();
+  const reqs = (morningReportRateLimitMap.get(userId) || []).filter(ts => now - ts < MORNING_REPORT_RATE_LIMIT_WINDOW);
+  if (reqs.length >= MORNING_REPORT_RATE_LIMIT_MAX) { morningReportRateLimitMap.set(userId, reqs); return false; }
+  reqs.push(now);
+  morningReportRateLimitMap.set(userId, reqs);
+  return true;
+}
+
+const { gatherClubStats, buildMorningReportPrompt } = require('../services/morningReportService');
+
+router.post('/morning-report', authMiddleware, async (req, res) => {
+  try {
+    if (!config.AI_TRAINER_ENABLED || !config.ANTHROPIC_API_KEY) {
+      return res.status(503).json({ error: 'AI analysis unavailable' });
+    }
+
+    if (!checkMorningReportRateLimit(req.userId)) {
+      return res.status(429).json({ error: 'Too many requests. Max 3 reports per hour.' });
+    }
+
+    const prisma = require('../lib/prisma');
+    const user = await prisma.user.findUnique({ where: { id: req.userId }, select: { clubId: true } });
+    if (!user?.clubId) {
+      return res.status(400).json({ error: 'You are not in a club' });
+    }
+
+    const { period = 'today' } = req.body;
+    const VALID_PERIODS = ['today', 'yesterday', 'last_7d'];
+    if (!VALID_PERIODS.includes(period)) {
+      return res.status(400).json({ error: 'Invalid period' });
+    }
+
+    // Check cache
+    const dateKey = new Date().toISOString().slice(0, 13); // hourly granularity
+    const cacheKey = `${user.clubId}:${period}:${dateKey}`;
+    const cached = morningReportCache.get(cacheKey);
+    if (cached && Date.now() - cached.generatedAt < MORNING_REPORT_CACHE_TTL) {
+      return res.json({ report: cached.report, cached: true });
+    }
+
+    // Gather stats
+    const stats = await gatherClubStats(user.clubId, period);
+
+    if (stats.totalFights === 0) {
+      return res.json({
+        report: {
+          period,
+          generatedAt: new Date().toISOString(),
+          stats: { totalFights: 0, wins: 0, losses: 0, draws: 0, winRate: 0, bestAgent: null, worstAgent: null, totalXpEarned: 0 },
+          analysis: null,
+        },
+      });
+    }
+
+    // Get club info
+    const club = await prisma.club.findUnique({ where: { id: user.clubId }, select: { name: true, level: true } });
+    const prompt = buildMorningReportPrompt(club?.name || 'Unknown', club?.level || 1, stats);
+
+    // Call Claude
+    const client = getAnthropicClient();
+    if (!client) return res.status(503).json({ error: 'AI service unavailable' });
+
+    const abortController = new AbortController();
+    const timeout = setTimeout(() => abortController.abort(), 15000);
+
+    try {
+      const response = await client.messages.create({
+        model: config.ANTHROPIC_MODEL,
+        max_tokens: 400,
+        temperature: 0.7,
+        messages: [{ role: 'user', content: prompt }],
+      }, { signal: abortController.signal });
+      clearTimeout(timeout);
+
+      const rawText = response.content?.[0]?.text || '';
+      let analysis = null;
+      try {
+        // Try to parse JSON from response
+        const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+        if (jsonMatch) analysis = JSON.parse(jsonMatch[0]);
+      } catch {
+        // Fallback: use raw text as summary
+        analysis = { summary: rawText, highlights: '', concerns: '', recommendation: '' };
+      }
+
+      const report = {
+        period,
+        generatedAt: new Date().toISOString(),
+        stats: {
+          totalFights: stats.totalFights,
+          wins: stats.wins,
+          losses: stats.losses,
+          draws: stats.draws,
+          winRate: stats.winRate,
+          bestAgent: stats.bestAgent ? { name: stats.bestAgent.name, winRate: stats.bestAgent.winRate, fights: stats.bestAgent.fights } : null,
+          worstAgent: stats.worstAgent ? { name: stats.worstAgent.name, winRate: stats.worstAgent.winRate, fights: stats.worstAgent.fights } : null,
+          totalXpEarned: stats.totalXpEarned,
+        },
+        analysis,
+      };
+
+      morningReportCache.set(cacheKey, { report, generatedAt: Date.now() });
+      return res.json({ report, cached: false });
+    } finally {
+      clearTimeout(timeout);
+    }
+  } catch (error) {
+    console.error('[Morning Report] Error:', error.message);
+    if (error.name === 'AbortError') return res.status(503).json({ error: 'Analysis timed out' });
+    return res.status(500).json({ error: 'Report generation failed' });
+  }
+});
+
 // Cleanup rate limit Maps every 5 minutes to prevent memory leaks
 // Placed after all Map declarations to avoid referencing before initialization
 setInterval(() => {
@@ -610,6 +732,15 @@ setInterval(() => {
     const recent = timestamps.filter(ts => now - ts < RATE_LIMIT_WINDOW_MS);
     if (recent.length === 0) clubModeRateLimitMap.delete(userId);
     else clubModeRateLimitMap.set(userId, recent);
+  }
+  for (const [userId, timestamps] of morningReportRateLimitMap) {
+    const recent = timestamps.filter(ts => now - ts < MORNING_REPORT_RATE_LIMIT_WINDOW);
+    if (recent.length === 0) morningReportRateLimitMap.delete(userId);
+    else morningReportRateLimitMap.set(userId, recent);
+  }
+  // Clean stale report cache
+  for (const [key, entry] of morningReportCache) {
+    if (Date.now() - entry.generatedAt > MORNING_REPORT_CACHE_TTL) morningReportCache.delete(key);
   }
 }, 5 * 60 * 1000);
 
