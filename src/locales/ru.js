@@ -460,6 +460,13 @@ export default {
     lblGenerating: 'Генерация...',
     lblNoFights: 'Нет боёв за этот период',
     lblAiUnavailable: 'AI анализ недоступен',
+    // Morning Report Lv2
+    lblAgentDetails: 'ДЕТАЛИ АГЕНТОВ',
+    lblAssessment: 'Оценка',
+    lblTacticsAdvice: 'Советы по тактике',
+    lblBuildAdvice: 'Советы по билду',
+    lblRecentResults: 'Последние',
+    lblNoFightsAgent: 'Нет боёв за период',
   },
   fight: {
     lblRound: 'Раунд {n}',

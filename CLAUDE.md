@@ -1332,3 +1332,25 @@ Claude AI daily club report: stats + 4-section analysis (summary, highlights, co
 - `backend/src/routes/ai.js` — morning-report endpoint with cache + rate limit
 - `src/components/club/MorningReport.vue` — **new** frontend component
 - `src/components/fragments/club/ClanPageContent.vue` — integrated MorningReport
+
+### Morning Report Lv2 — Per-Agent Analysis (ТЗ-19) — ✅ COMPLETE
+
+Extended Morning Report with per-agent individual analysis: assessment, tactics advice, build advice.
+
+**Extended `morningReportService.js`:**
+- `gatherClubStats()` now returns enriched agentStats: skin, elo change, tactics, build, recentResults, avgRounds, dice/coach/emergency rates
+- `buildMorningReportPrompt()` includes per-agent details in prompt, requests `agents[]` in JSON response
+
+**Extended endpoint:**
+- Dynamic max_tokens: 400 + 150 per active agent (cap 1200)
+- Response includes `stats.agentStats[]` (per-agent stats) + `analysis.agents[]` (per-agent AI text)
+
+**Extended `MorningReport.vue`:**
+- Agent accordion section below club analysis
+- Each agent: header (skin, name, ELO change, W/L) → expandable body (recent results, assessment, tactics advice, build advice)
+- Sorted by winRate DESC, matched to AI analysis by agent name
+
+**Files changed:**
+- `backend/src/services/morningReportService.js` — enriched stats + Lv2 prompt
+- `backend/src/routes/ai.js` — dynamic tokens + agentStats in response
+- `src/components/club/MorningReport.vue` — agent accordion UI
