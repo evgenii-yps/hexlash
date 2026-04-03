@@ -82,6 +82,12 @@ module.exports = {
     agent_ranked_lose: 5,
   },
 
+  // Agent Scheduler
+  AGENT_SCHEDULER_TICK_MS: 30000,       // 30 seconds
+  AGENT_MAX_FIGHTS_PER_TICK: 10,
+  AGENT_MAX_FIGHTS_PER_DAY: 50,
+  AGENT_STUCK_TIMEOUT_MS: 5 * 60 * 1000, // 5 minutes
+
   // Telegram
   TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN || '',
   TELEGRAM_AUTH_MAX_AGE_SEC: 300, // 5 minutes

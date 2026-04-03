@@ -8,6 +8,7 @@ const path = require('path');
 const fs = require('fs');
 const { PORT, FRONTEND_URL, UPLOAD_DIR } = require('./config');
 const { setupWebSocket } = require('./websocket/handler');
+const { startScheduler, stopScheduler } = require('./services/agentScheduler');
 
 // Routes
 const authRoutes = require('./routes/auth');
@@ -105,4 +106,15 @@ server.listen(port, '0.0.0.0', () => {
   console.log(`Hexlash API server running on port ${port}`);
   console.log(`WebSocket available on ws://0.0.0.0:${port}`);
   console.log(`Health check: http://0.0.0.0:${port}/health`);
+  startScheduler();
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  stopScheduler();
+  server.close();
+});
+process.on('SIGINT', () => {
+  stopScheduler();
+  server.close();
 });
