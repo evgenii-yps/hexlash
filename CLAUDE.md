@@ -1304,3 +1304,31 @@ Free Arena: agent vs agent, random matchmaking, no ELO change, 80% XP. For testi
 - `backend/src/services/rankedMatchmaker.js` — findFreeArenaPairs
 - `backend/src/services/agentScheduler.js` — free arena flow in tick
 - `backend/src/routes/agent.js` — 'free_arena' in VALID_FIGHT_MODE
+
+### Club Mode UI + Create Agent + Agent Detail (ТЗ-13/14/15) — ✅ COMPLETE
+
+Frontend for Club Mode agents. See Views table for details.
+
+- `src/core/state/modules/agentState.js` — Vuex module (14th): agents CRUD, club level, detail actions (fetch/update/train/moves/deck/tactics/fights)
+- `src/components/club/` — AgentCard, ClubLevelBar, AgentRoster, MorningReport, SkinPicker, ArchetypeSelector
+- `src/views/CreateAgentView.vue` — 3-step wizard (name+skin → build → confirm)
+- `src/views/AgentDetailView.vue` — 4-tab management (overview, moves, tactics, fights) + edit/deck/delete modals
+- `src/utils/fightStylePreview.js` — template-based fight style description generator
+
+### Morning Report Lv1 (ТЗ-18) — ✅ COMPLETE
+
+Claude AI daily club report: stats + 4-section analysis (summary, highlights, concerns, recommendation).
+
+**New service (`services/morningReportService.js`):**
+- `gatherClubStats(clubId, period)` — aggregates AgentFightLog per agent for period
+- `buildMorningReportPrompt()` — formats club data for Claude prompt
+
+**New endpoint:** `POST /v1/ai/morning-report` — period (today/yesterday/last_7d), rate limit 3/hr, 30min cache
+
+**New component:** `MorningReport.vue` — period selector, stats bar, 4 AI analysis sections, generate button
+
+**Files changed:**
+- `backend/src/services/morningReportService.js` — **new** stats gathering + prompt builder
+- `backend/src/routes/ai.js` — morning-report endpoint with cache + rate limit
+- `src/components/club/MorningReport.vue` — **new** frontend component
+- `src/components/fragments/club/ClanPageContent.vue` — integrated MorningReport
