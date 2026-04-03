@@ -376,6 +376,7 @@ export default {
     lblAgents: 'Agents',
     lblAutoFight: 'Auto',
     lblIdle: 'Idle',
+    lblStatus: 'Status',
     lblFighting: 'Fighting...',
     lblResting: 'Resting',
     lblElo: 'ELO',

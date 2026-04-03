@@ -376,6 +376,7 @@ export default {
     lblAgents: 'Агенты',
     lblAutoFight: 'Авто',
     lblIdle: 'Свободен',
+    lblStatus: 'Статус',
     lblFighting: 'В бою...',
     lblResting: 'Отдых',
     lblElo: 'ELO',
