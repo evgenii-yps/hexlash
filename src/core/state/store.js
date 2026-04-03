@@ -12,6 +12,7 @@ import progression from "@/core/state/modules/progressionState.js";
 import clubMode from "@/core/state/modules/clubModeState.js";
 import friends from "@/core/state/modules/friendsState.js";
 import pvp from "@/core/state/modules/pvpState.js";
+import agent from "@/core/state/modules/agentState.js";
 
 export default createStore({
     modules: {
@@ -28,5 +29,6 @@ export default createStore({
         clubMode,
         friends,
         pvp,
+        agent,
     },
 });
