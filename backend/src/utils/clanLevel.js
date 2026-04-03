@@ -41,6 +41,7 @@ async function awardClanXP(clubId, result) {
       data: {
         level: nextLevel,
         maxMembers: nextConfig.maxMembers,
+        maxAgents: nextConfig.maxAgents,
       },
     });
     createClanEvent(clubId, 'level_up', null, null, { level: nextLevel });

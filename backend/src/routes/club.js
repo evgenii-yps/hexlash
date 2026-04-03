@@ -716,6 +716,34 @@ router.get('/:clubId/events', authMiddleware, async (req, res) => {
   }
 });
 
+// GET /v1/club/:id/level
+router.get('/:id/level', authMiddleware, async (req, res) => {
+  try {
+    const club = await prisma.club.findUnique({
+      where: { id: req.params.id },
+    });
+
+    if (!club) {
+      return res.status(404).json({ error: 'Club not found' });
+    }
+
+    const { getLevelInfo } = require('../services/clubLevelService');
+    const info = getLevelInfo(club.xp);
+
+    const currentAgents = await prisma.agent.count({ where: { clubId: club.id } });
+
+    res.json({
+      data: {
+        ...info,
+        currentAgents,
+      },
+    });
+  } catch (err) {
+    console.error('Get club level error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // DELETE /v1/club
 router.delete('/', authMiddleware, async (req, res) => {
   try {
