@@ -71,6 +71,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
     services/pvpMatchManager.js — PvP match lifecycle management
     services/pvpCombatEngine.js — PvP combat engine
     services/clubLevelService.js — Club level system (calculateLevel, getLevelInfo, addClubXp, getFightXpReward)
+    services/researchGateService.js — Research Gate: controls agent move learning based on player progression
     utils/helpers.js
   prisma/
     schema.prisma          — 18 models: User, Club, Agent, AgentTactics, AgentProgression, AgentFightLog, Fight, Achievement, Task, PunchInfo, FriendRequest, Friendship...
@@ -490,7 +491,7 @@ Base: `/v1/`
 | `/stats` | stats.js | player and game statistics |
 | `/friends` | friends.js | friends list, requests, search players |
 | `/ai` | ai.js | AI Trainer fight analysis (POST /analyze-fight), Club mode summary (POST /club-mode-summary) |
-| `/agent` | agent.js | CRUD agents (list, get, create, update, delete), tactics update, fight history |
+| `/agent` | agent.js | CRUD agents (list, get, create, update, delete), tactics update, fight history, Research Gate (available-moves, learn-move, deck) |
 
 Auth guard: JWT Bearer token via `middleware/auth.js`
 Telegram auth: HMAC-SHA256 signature validation via `validateTelegramPayload()` in auth.js
@@ -1123,3 +1124,30 @@ Extended existing clan level system with agent support. Single unified level sys
 - `backend/src/routes/club.js` — GET /:id/level endpoint
 - `backend/src/utils/syncClubLevels.js` — **new** sync script
 - `src/data/clanLevels.js` — maxAgents added
+
+### Research Gate — Agent Move Learning (ТЗ-04) — ✅ COMPLETE
+
+Implemented Research Gate: agents can only learn moves the player has researched, up to the player's level.
+
+**New service (`services/researchGateService.js`):**
+- `MOVE_BRANCHES` — backend copy of move→branch mapping (18 moves)
+- `LEVEL_UP_XP_COST` — XP cost per level: Lv1=free, Lv2=50, Lv3=100, Lv4=200, Lv5=350
+- `getPlayerResearch(userId)` — extract unlocked moves from User.progression JSON
+- `canAgentLearnMove(userId, moveId, targetLevel)` — Research Gate check
+- `validateAgentDeck(userId, deck, agentMoves)` — validate entire deck against Research Gate
+- `getAvailableMovesForAgent(userId, agentId)` — list moves agent can learn with current/max levels
+
+**New endpoints in agent.js:**
+- `GET /v1/agent/:id/available-moves` — moves available to agent (maxLevel from player, agentCurrentLevel, canUpgrade, xpCost)
+- `POST /v1/agent/:id/learn-move` — agent learns/upgrades a move (Research Gate + XP deduction from branch)
+- `PUT /v1/agent/:id/deck` — update agent deck (4-8 moves, all learned, no duplicates, Research Gate validated)
+
+**Research Gate rules:**
+- Agent can learn move only if player has it unlocked
+- Agent level for a move cannot exceed player's level for that move
+- Level 1 is free, levels 2-5 cost branch XP (same costs as player)
+- Cannot learn or change deck while agent status is 'fighting'
+
+**Files changed:**
+- `backend/src/services/researchGateService.js` — **new** service
+- `backend/src/routes/agent.js` — 3 new endpoints + researchGateService import

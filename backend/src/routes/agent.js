@@ -2,6 +2,15 @@ const express = require('express');
 const rateLimit = require('express-rate-limit');
 const prisma = require('../lib/prisma');
 const { authMiddleware } = require('../middleware/auth');
+const {
+  MOVE_BRANCHES,
+  ALL_MOVE_IDS,
+  LEVEL_UP_XP_COST,
+  BRANCH_XP_FIELD,
+  canAgentLearnMove,
+  validateAgentDeck,
+  getAvailableMovesForAgent,
+} = require('../services/researchGateService');
 
 const router = express.Router();
 
@@ -323,6 +332,164 @@ router.get('/:id/fights', authMiddleware, async (req, res) => {
     res.json({ fights, total });
   } catch (err) {
     console.error('Get agent fights error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /v1/agent/:id/available-moves
+router.get('/:id/available-moves', authMiddleware, async (req, res) => {
+  try {
+    const agent = await prisma.agent.findUnique({ where: { id: req.params.id } });
+
+    if (!agent) {
+      return res.status(404).json({ error: 'Agent not found' });
+    }
+    if (agent.ownerId !== req.userId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const moves = await getAvailableMovesForAgent(req.userId, req.params.id);
+
+    res.json({ moves });
+  } catch (err) {
+    console.error('Get available moves error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /v1/agent/:id/learn-move
+router.post('/:id/learn-move', authMiddleware, async (req, res) => {
+  try {
+    const agent = await prisma.agent.findUnique({
+      where: { id: req.params.id },
+      include: { progression: true },
+    });
+
+    if (!agent) {
+      return res.status(404).json({ error: 'Agent not found' });
+    }
+    if (agent.ownerId !== req.userId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    if (agent.status === 'fighting') {
+      return res.status(400).json({ error: 'Cannot learn while fighting' });
+    }
+
+    const { moveId, targetLevel } = req.body;
+
+    // Validate moveId exists
+    if (!ALL_MOVE_IDS.includes(moveId)) {
+      return res.status(400).json({ error: 'Unknown move' });
+    }
+
+    // Validate targetLevel
+    if (!Number.isInteger(targetLevel) || targetLevel < 1 || targetLevel > 5) {
+      return res.status(400).json({ error: 'Invalid target level' });
+    }
+
+    // Check current agent level for this move
+    const agentMoves = Array.isArray(agent.progression.moves) ? agent.progression.moves : [];
+    const currentMove = agentMoves.find(m => m.moveId === moveId);
+    const currentLevel = currentMove ? currentMove.level : 0;
+
+    if (targetLevel !== currentLevel + 1) {
+      return res.status(400).json({ error: 'Can only upgrade one level at a time' });
+    }
+
+    // Research Gate check
+    const check = await canAgentLearnMove(req.userId, moveId, targetLevel);
+    if (!check.allowed) {
+      return res.status(403).json({ error: check.reason });
+    }
+
+    // XP cost (level 1 is free)
+    const xpCost = targetLevel <= 1 ? 0 : (LEVEL_UP_XP_COST[targetLevel] || 0);
+    const branch = MOVE_BRANCHES[moveId];
+    const xpField = BRANCH_XP_FIELD[branch];
+
+    if (xpCost > 0 && agent.progression[xpField] < xpCost) {
+      return res.status(400).json({ error: 'Not enough XP' });
+    }
+
+    // Update moves array
+    const updatedMoves = [...agentMoves];
+    const existingIdx = updatedMoves.findIndex(m => m.moveId === moveId);
+    if (existingIdx >= 0) {
+      updatedMoves[existingIdx] = { moveId, level: targetLevel };
+    } else {
+      updatedMoves.push({ moveId, level: targetLevel });
+    }
+
+    // Build update data
+    const updateData = { moves: updatedMoves };
+    if (xpCost > 0) {
+      updateData[xpField] = { decrement: xpCost };
+    }
+
+    const progression = await prisma.agentProgression.update({
+      where: { agentId: req.params.id },
+      data: updateData,
+    });
+
+    res.json({ progression, learned: { moveId, level: targetLevel } });
+  } catch (err) {
+    console.error('Learn move error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PUT /v1/agent/:id/deck
+router.put('/:id/deck', authMiddleware, async (req, res) => {
+  try {
+    const agent = await prisma.agent.findUnique({
+      where: { id: req.params.id },
+      include: { progression: true },
+    });
+
+    if (!agent) {
+      return res.status(404).json({ error: 'Agent not found' });
+    }
+    if (agent.ownerId !== req.userId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    if (agent.status === 'fighting') {
+      return res.status(400).json({ error: 'Cannot change deck while fighting' });
+    }
+
+    const { deck } = req.body;
+
+    if (!Array.isArray(deck) || deck.length < 4 || deck.length > 8) {
+      return res.status(400).json({ error: 'Deck must have 4-8 moves' });
+    }
+
+    // Check duplicates
+    if (new Set(deck).size !== deck.length) {
+      return res.status(400).json({ error: 'Duplicate moves in deck' });
+    }
+
+    // Check all moves are learned by agent
+    const agentMoves = Array.isArray(agent.progression.moves) ? agent.progression.moves : [];
+    const agentMoveIds = new Set(agentMoves.map(m => m.moveId));
+    for (const moveId of deck) {
+      if (!agentMoveIds.has(moveId)) {
+        return res.status(400).json({ error: `Move not learned: ${moveId}` });
+      }
+    }
+
+    // Validate against Research Gate
+    const validation = await validateAgentDeck(req.userId, deck, agentMoves);
+    if (!validation.valid) {
+      return res.status(400).json({ error: validation.reasons[0] });
+    }
+
+    const progression = await prisma.agentProgression.update({
+      where: { agentId: req.params.id },
+      data: { deck },
+    });
+
+    res.json({ progression });
+  } catch (err) {
+    console.error('Update deck error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
