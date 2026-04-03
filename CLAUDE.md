@@ -63,7 +63,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
   src/
     index.js               — Express server + WebSocket on same HTTP server
     config.js              — Constants (PORT, WS_PORT, JWT_SECRET, game balance)
-    routes/                — auth, user, club, task, file, fight, stats, friends, ai
+    routes/                — auth, user, club, task, file, fight, stats, friends, ai, agent
     middleware/            — auth.js (JWT guard), upload.js (Multer)
     websocket/handler.js   — Real-time message routing + challenge system
     websocket/pvpHandler.js — PvP fight message handling
@@ -489,6 +489,7 @@ Base: `/v1/`
 | `/stats` | stats.js | player and game statistics |
 | `/friends` | friends.js | friends list, requests, search players |
 | `/ai` | ai.js | AI Trainer fight analysis (POST /analyze-fight), Club mode summary (POST /club-mode-summary) |
+| `/agent` | agent.js | CRUD agents (list, get, create, update, delete), tactics update, fight history |
 
 Auth guard: JWT Bearer token via `middleware/auth.js`
 Telegram auth: HMAC-SHA256 signature validation via `validateTelegramPayload()` in auth.js
@@ -1073,3 +1074,20 @@ Added 4 new Prisma models for Club Mode agent system + extended Club model.
 **Files changed:**
 - `backend/prisma/schema.prisma` — 4 new models, Club + User extended
 - `backend/prisma/migrations/20260402000000_add_club_mode_agents/migration.sql` — SQL migration
+
+### Club Mode Agents — CRUD API (ТЗ-02) — ✅ COMPLETE
+
+Added REST API for agent management with full validation and rate limiting.
+
+**Endpoints (all require auth):**
+- `GET /v1/agent/list` — list all agents for current user (includes tactics + progression)
+- `GET /v1/agent/:id` — get single agent (ownership check)
+- `POST /v1/agent/create` — create agent ($transaction: Agent + Tactics + Progression). Rate limit: 10/hr. Validates: club membership, roster limit (maxAgents), name regex, skin regex, archetypes whitelist
+- `PUT /v1/agent/:id` — update agent (name/skin/modules). Cannot change modules while fighting
+- `DELETE /v1/agent/:id` — delete agent (cascade). Cannot delete while fighting
+- `PUT /v1/agent/:id/tactics` — update tactics (aggression, dicePolicy, coachPreference, emergencyThreshold, restPeriod). Each field validated against whitelist
+- `GET /v1/agent/:id/fights` — fight history with mode filter, pagination (limit/offset), sorted by createdAt DESC
+
+**Files changed:**
+- `backend/src/routes/agent.js` — **new** route file (7 endpoints)
+- `backend/src/index.js` — added agent route import + mount at `/v1/agent`
