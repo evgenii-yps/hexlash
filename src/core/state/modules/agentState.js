@@ -6,6 +6,16 @@ const state = {
   agentError: null,
   clubLevel: null,
   clubLevelLoading: false,
+  // Detail view state
+  currentAgent: null,
+  currentAgentLoading: false,
+  availableMoves: [],
+  availableMovesLoading: false,
+  fightHistory: [],
+  fightHistoryTotal: 0,
+  fightHistoryLoading: false,
+  trainResult: null,
+  trainLoading: false,
 };
 
 const getters = {
@@ -34,6 +44,19 @@ const mutations = {
   },
   SET_CLUB_LEVEL(state, data) { state.clubLevel = data; },
   SET_CLUB_LEVEL_LOADING(state, val) { state.clubLevelLoading = val; },
+  // Detail
+  SET_CURRENT_AGENT(state, agent) { state.currentAgent = agent; },
+  SET_CURRENT_AGENT_LOADING(state, val) { state.currentAgentLoading = val; },
+  SET_AVAILABLE_MOVES(state, moves) { state.availableMoves = moves; },
+  SET_AVAILABLE_MOVES_LOADING(state, val) { state.availableMovesLoading = val; },
+  SET_FIGHT_HISTORY(state, { fights, total, append }) {
+    if (append) state.fightHistory.push(...fights);
+    else state.fightHistory = fights;
+    state.fightHistoryTotal = total;
+  },
+  SET_FIGHT_HISTORY_LOADING(state, val) { state.fightHistoryLoading = val; },
+  SET_TRAIN_RESULT(state, val) { state.trainResult = val; },
+  SET_TRAIN_LOADING(state, val) { state.trainLoading = val; },
 };
 
 const actions = {
@@ -81,6 +104,92 @@ const actions = {
   async refreshAgentStatus({ commit }, id) {
     const { data } = await apiClient.get(`/agent/${id}/auto-fight-status`, { authRequired: true });
     commit('UPDATE_AGENT', { id, autoFight: data.autoFight, status: data.status, nextFightAt: data.nextFightAt });
+  },
+
+  // Detail view actions
+  async fetchAgent({ commit }, agentId) {
+    commit('SET_CURRENT_AGENT_LOADING', true);
+    try {
+      const { data } = await apiClient.get(`/agent/${agentId}`, { authRequired: true });
+      commit('SET_CURRENT_AGENT', data.agent);
+    } catch (err) {
+      console.error('Failed to fetch agent:', err);
+    } finally {
+      commit('SET_CURRENT_AGENT_LOADING', false);
+    }
+  },
+
+  async updateAgent({ commit }, { id, ...data }) {
+    const res = await apiClient.put(`/agent/${id}`, data, { authRequired: true });
+    commit('SET_CURRENT_AGENT', res.data.agent);
+    commit('UPDATE_AGENT', res.data.agent);
+    return res.data.agent;
+  },
+
+  async updateTactics({ commit, state: s }, { id, ...data }) {
+    const res = await apiClient.put(`/agent/${id}/tactics`, data, { authRequired: true });
+    if (s.currentAgent && s.currentAgent.id === id) {
+      commit('SET_CURRENT_AGENT', { ...s.currentAgent, tactics: res.data.tactics });
+    }
+    return res.data.tactics;
+  },
+
+  async fetchAvailableMoves({ commit }, agentId) {
+    commit('SET_AVAILABLE_MOVES_LOADING', true);
+    try {
+      const { data } = await apiClient.get(`/agent/${agentId}/available-moves`, { authRequired: true });
+      commit('SET_AVAILABLE_MOVES', data.moves || []);
+    } catch (err) {
+      console.error('Failed to fetch available moves:', err);
+    } finally {
+      commit('SET_AVAILABLE_MOVES_LOADING', false);
+    }
+  },
+
+  async learnMove({ commit, dispatch, state: s }, { agentId, moveId, targetLevel }) {
+    const res = await apiClient.post(`/agent/${agentId}/learn-move`, { moveId, targetLevel }, { authRequired: true });
+    if (s.currentAgent && s.currentAgent.id === agentId) {
+      commit('SET_CURRENT_AGENT', { ...s.currentAgent, progression: res.data.progression });
+    }
+    await dispatch('fetchAvailableMoves', agentId);
+    return res.data;
+  },
+
+  async updateDeck({ commit, state: s }, { agentId, deck }) {
+    const res = await apiClient.put(`/agent/${agentId}/deck`, { deck }, { authRequired: true });
+    if (s.currentAgent && s.currentAgent.id === agentId) {
+      commit('SET_CURRENT_AGENT', { ...s.currentAgent, progression: res.data.progression });
+    }
+    return res.data;
+  },
+
+  async fetchFightHistory({ commit }, { agentId, mode, limit = 20, offset = 0, append = false }) {
+    commit('SET_FIGHT_HISTORY_LOADING', true);
+    try {
+      const params = { limit, offset };
+      if (mode) params.mode = mode;
+      const { data } = await apiClient.get(`/agent/${agentId}/fights`, { params, authRequired: true });
+      commit('SET_FIGHT_HISTORY', { fights: data.fights || [], total: data.total || 0, append });
+    } catch (err) {
+      console.error('Failed to fetch fight history:', err);
+    } finally {
+      commit('SET_FIGHT_HISTORY_LOADING', false);
+    }
+  },
+
+  async trainAgent({ commit, dispatch }, agentId) {
+    commit('SET_TRAIN_LOADING', true);
+    commit('SET_TRAIN_RESULT', null);
+    try {
+      const { data } = await apiClient.post(`/agent/${agentId}/train`, {}, { authRequired: true });
+      commit('SET_TRAIN_RESULT', data);
+      await dispatch('fetchAgent', agentId);
+      return data;
+    } catch (err) {
+      throw err;
+    } finally {
+      commit('SET_TRAIN_LOADING', false);
+    }
   },
 };
 
