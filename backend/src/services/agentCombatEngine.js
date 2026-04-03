@@ -235,8 +235,15 @@ function createFighterState(fighter) {
  */
 function simulateAgentFight(fighter1, fighter2, options = {}) {
   const mode = options.mode || 'pve_training';
+  const legendBuff = options.legendBuff || null; // { xpBonus, dmgBonus, archetype }
   const f1 = createFighterState(fighter1);
   const f2 = createFighterState(fighter2);
+
+  // Apply legend damage multiplier
+  if (legendBuff && legendBuff.dmgBonus) {
+    f1.legendDmgMult = 1 + (f1.modules[0] === legendBuff.archetype ? legendBuff.dmgBonus * 1.5 : legendBuff.dmgBonus);
+    f2.legendDmgMult = 1 + (f2.modules[0] === legendBuff.archetype ? legendBuff.dmgBonus * 1.5 : legendBuff.dmgBonus);
+  }
 
   const roundLog = [];
   let totalDice = { fighter1: 0, fighter2: 0 };
@@ -362,9 +369,9 @@ function resolveRound(f1, f2, action1, action2, move1, move2, overdriveMult) {
   let f1Dodge = false, f2Dodge = false;
   let f1Crit = false, f2Crit = false;
 
-  // Calculate base damages
-  const baseDmg1 = (move1.damage + f1.positionBonus) * overdriveMult;
-  const baseDmg2 = (move2.damage + f2.positionBonus) * overdriveMult;
+  // Calculate base damages (with legend buff if present)
+  const baseDmg1 = (move1.damage + f1.positionBonus) * overdriveMult * (f1.legendDmgMult || 1);
+  const baseDmg2 = (move2.damage + f2.positionBonus) * overdriveMult * (f2.legendDmgMult || 1);
 
   // Reset position bonus after use
   f1.positionBonus = 0;

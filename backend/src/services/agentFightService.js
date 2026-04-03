@@ -8,6 +8,7 @@ const { simulateAgentFight, generatePveBot } = require('./agentCombatEngine');
 const { addClubXp, getFightXpReward } = require('./clubLevelService');
 const { MOVE_BRANCHES } = require('./researchGateService');
 const { calculateElo } = require('./eloService');
+const { getClubLegendBuff } = require('./retirementService');
 
 // XP multipliers by mode
 const XP_MULTIPLIERS = {
@@ -78,11 +79,17 @@ async function _executeFight(agent, options = {}) {
     };
 
     const bot = generatePveBot(agent.elo);
-    const fightResult = simulateAgentFight(fighter1, bot, { mode: 'pve_training' });
+    const legendBuff = await getClubLegendBuff(agent.clubId);
+    const fightResult = simulateAgentFight(fighter1, bot, { mode: 'pve_training', legendBuff });
 
-    // Calculate XP
+    // Calculate XP (with legend XP buff)
     const rawXp = BASE_FIGHT_XP[fightResult.result] || BASE_FIGHT_XP.defeat;
-    const earnedXp = Math.round(rawXp * XP_MULTIPLIERS.pve_training);
+    let xpMultiplier = XP_MULTIPLIERS.pve_training;
+    if (legendBuff?.xpBonus) {
+      const archMatch = agent.primaryModule === legendBuff.archetype;
+      xpMultiplier *= 1 + (archMatch ? legendBuff.xpBonus * 1.5 : legendBuff.xpBonus);
+    }
+    const earnedXp = Math.round(rawXp * xpMultiplier);
     const branchXp = distributeXpByBranch(fightResult.roundLog, earnedXp);
     const clubXpAmount = getFightXpReward(fightResult.result, 'pve_training');
 
@@ -245,7 +252,9 @@ async function _executeAgentVsAgentFight(agent1Id, agent2Id, options) {
       tactics: a2.tactics, progression: a2.progression,
     };
 
-    const fightResult = simulateAgentFight(fighter1, fighter2, { mode });
+    // Get legend buff (use a1's club, both agents may have different clubs)
+    const legendBuff1 = await getClubLegendBuff(a1.clubId);
+    const fightResult = simulateAgentFight(fighter1, fighter2, { mode, legendBuff: legendBuff1 });
 
     // ELO (only for ranked)
     let eloChangeA = 0, eloChangeB = 0, newEloA = a1.elo, newEloB = a2.elo;

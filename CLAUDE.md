@@ -1384,3 +1384,33 @@ Premium deep analysis: global meta comparison, optimal builds, training plan, EL
 - `backend/src/services/morningReportService.js` — buildLv3Prompt
 - `backend/src/routes/ai.js` — premium-report endpoint
 - `src/components/club/MorningReport.vue` — deep analysis UI
+
+### Retirement + Legacy System (ТЗ-21) — ✅ COMPLETE
+
+Fighter retirement: fully trained fighter becomes a Legend, grants passive buffs to all clan agents.
+
+**New service (`services/retirementService.js`):**
+- `checkRetirementEligibility(userId)` — checks all 5 requirements (18 moves unlocked, 12 at Lv3+, 3 at Lv5, has club, no existing legend)
+- `calculateRetirementProgress(progression)` — weighted progress 0-100%
+- `calculateLegendBuff(progression, primaryModule)` — xpBonus (5%+1%/Lv5 move), dmgBonus (2%+0.5%/Lv4+ move), archetype match ×1.5
+- `retireFighter(userId, primaryModule)` — sets Club.legendSkin/legendArchetype/legendBuff, marks User.progression.retired=true
+- `getClubLegendBuff(clubId)` — quick lookup for combat engine
+
+**New endpoints in user.js:**
+- `GET /v1/user/retirement-status` — progress, requirements, legend info, buff preview
+- `POST /v1/user/retire` — execute retirement (irreversible)
+
+**Legend buff in combat:**
+- `agentCombatEngine.js` — legendDmgMult applied to base damage in resolveRound
+- `agentFightService.js` — legend xpBonus applied to earned XP in _executeFight + _executeAgentVsAgentFight
+- Archetype match: if agent's primaryModule === legend archetype → buff × 1.5
+
+**New component:** `RetirementPanel.vue` — progress/requirements display, buff preview, retire button, legend display
+
+**Files changed:**
+- `backend/src/services/retirementService.js` — **new** retirement logic
+- `backend/src/routes/user.js` — 2 new endpoints
+- `backend/src/services/agentCombatEngine.js` — legendDmgMult in damage calc
+- `backend/src/services/agentFightService.js` — legend XP buff + getClubLegendBuff import
+- `src/components/club/RetirementPanel.vue` — **new** frontend component
+- `src/components/fragments/club/ClanPageContent.vue` — integrated RetirementPanel
