@@ -34,12 +34,6 @@
           <span class="toggle-hint">{{ isPublic ? t.club.lblAnyoneCanJoin : t.club.lblInviteOnly }}</span>
         </div>
 
-        <div class="cost-row">
-          <span class="cost-label">{{ t.club.cost }}:</span>
-          <span class="cost-value" :class="{ 'cost-insufficient': !canAfford }">{{ COST_CREATE_CLUB.toLocaleString() }} {{ t.club.lblTaps || 'taps' }}</span>
-        </div>
-        <div v-if="!canAfford" class="cost-warning">{{ t.club.lblNeedTaps }}</div>
-
         <div  v-if="loading" class="loader-container">
           <v-progress-circular
               class="loader"
@@ -55,7 +49,7 @@
       <v-card-actions>
         <v-spacer></v-spacer>
         <VBtnDark @click="hide" class="cancel-btn">{{ t.modal.btnCancel }}</VBtnDark>
-        <VBtn @click="saveChanges" class="confirm-btn" :disabled="!canAfford">{{ t.modal.btnCreate }}</VBtn>
+        <VBtn @click="saveChanges" class="confirm-btn">{{ t.modal.btnCreate }}</VBtn>
       </v-card-actions>
     </VCard>
   </VModal>
@@ -66,7 +60,7 @@ import {ref, computed, watch} from 'vue';
 import store from "@/core/state/store.js";
 import router from "@/router/index.js";
 import {t} from "@/locales/index.js";
-import {COST_CREATE_CLUB} from "@/core/constants.js";
+// Clan creation is now free
 
 
 const title = ref("");
@@ -77,8 +71,7 @@ const loading = ref(false);
 const resultMessage = ref('');
 const titleError = ref('');
 
-const userTaps = computed(() => store.getters['master/getMaster']?.userData?.totalTaps || 0);
-const canAfford = computed(() => userTaps.value >= COST_CREATE_CLUB);
+// Clan creation is free — no taps check needed
 
 const props = defineProps({
   dialogCreate: Boolean,

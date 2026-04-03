@@ -49,11 +49,6 @@ router.post('/add', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'Already in a club' });
     }
 
-    // Check if user has enough taps
-    if (user.totalTaps < COST_CREATE_CLUB) {
-      return res.status(400).json({ error: 'Not enough taps' });
-    }
-
     const isPublic = clubData.isPublic !== undefined ? clubData.isPublic : true;
 
     const fullClub = await prisma.$transaction(async (tx) => {
@@ -71,7 +66,6 @@ router.post('/add', authMiddleware, async (req, res) => {
         data: {
           clubId: club.id,
           clubRole: 'owner',
-          totalTaps: { decrement: COST_CREATE_CLUB },
         },
       });
 
