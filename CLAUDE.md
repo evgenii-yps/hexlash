@@ -419,6 +419,8 @@ AI_TRAINER_ENABLED = true
 | Matchmaking | `MatchmakingView.vue` | Real-time PvP matchmaking queue. Opponent Found shows fighter skins (not icons). No colored borders. 100dvh support. |
 | Clan | `ClubView.vue` | Redesigned clan page: header with avatar (64px, --hex-primary border + glow, 12px radius), name (Anonymous font), italic description, meta row (LVL badge, member count), level progress bar (6px gradient fill), stats grid via `ClubStats.vue` (4 cards + win rate bar), owner controls. Visitor view: top-5 members (no action menu), "+ N more members", JOIN/private/full action bar |
 | Spectate | `SpectateView.vue` | Watch live PvP fights |
+| Create Agent | `CreateAgentView.vue` | 3-step wizard: name+skin → archetype build → confirm+create |
+| Agent Detail | `AgentDetailView.vue` | 4-tab agent management: Overview (stats, deck, XP, train), Moves (Research Gate tree), Tactics (fight mode, aggression, dice, coach, emergency, rest), Fights (history with filter+pagination). Edit modal (name/skin/build), deck editor, delete |
 
 ---
 
