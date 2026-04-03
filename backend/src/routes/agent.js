@@ -11,6 +11,7 @@ const {
   validateAgentDeck,
   getAvailableMovesForAgent,
 } = require('../services/researchGateService');
+const { runPveTraining } = require('../services/agentFightService');
 
 const router = express.Router();
 
@@ -332,6 +333,26 @@ router.get('/:id/fights', authMiddleware, async (req, res) => {
     res.json({ fights, total });
   } catch (err) {
     console.error('Get agent fights error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+const trainLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 30,
+  message: { error: 'Too many training fights, try again later' },
+});
+
+// POST /v1/agent/:id/train
+router.post('/:id/train', authMiddleware, trainLimiter, async (req, res) => {
+  try {
+    const result = await runPveTraining(req.params.id, req.userId);
+    res.json(result);
+  } catch (err) {
+    if (err.status) {
+      return res.status(err.status).json({ error: err.message });
+    }
+    console.error('Train agent error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
