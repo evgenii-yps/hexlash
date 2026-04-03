@@ -4,7 +4,8 @@
  */
 
 const prisma = require('../lib/prisma');
-const { runAutoFight } = require('./agentFightService');
+const { runAutoFight, runRankedFight } = require('./agentFightService');
+const { findRankedPairs } = require('./rankedMatchmaker');
 const {
   AGENT_SCHEDULER_TICK_MS,
   AGENT_MAX_FIGHTS_PER_TICK,
@@ -55,15 +56,38 @@ async function tick() {
     const readyAgents = await getReadyAgents();
 
     let fightsRun = 0;
-    for (const agent of readyAgents) {
-      if (fightsRun >= AGENT_MAX_FIGHTS_PER_TICK) break;
 
+    // PvE Training fights
+    const pveAgents = readyAgents.filter(a => !a.tactics?.fightMode || a.tactics.fightMode === 'pve_training');
+    for (const agent of pveAgents) {
+      if (fightsRun >= AGENT_MAX_FIGHTS_PER_TICK) break;
       try {
         await runScheduledFight(agent);
         fightsRun++;
       } catch (err) {
-        console.error(`[AgentScheduler] Fight failed for agent ${agent.id}:`, err.message);
+        console.error(`[AgentScheduler] PvE fight failed for agent ${agent.id}:`, err.message);
       }
+    }
+
+    // Ranked fights
+    try {
+      const pairs = await findRankedPairs();
+      for (const { agent1, agent2 } of pairs) {
+        if (fightsRun >= AGENT_MAX_FIGHTS_PER_TICK) break;
+        try {
+          await runRankedFight(agent1.id, agent2.id);
+          // Set both to resting
+          const rest1 = agent1.tactics?.restPeriod || 600000;
+          const rest2 = agent2.tactics?.restPeriod || 600000;
+          await prisma.agent.update({ where: { id: agent1.id }, data: { status: 'resting', nextFightAt: new Date(Date.now() + rest1) } });
+          await prisma.agent.update({ where: { id: agent2.id }, data: { status: 'resting', nextFightAt: new Date(Date.now() + rest2) } });
+          fightsRun += 2;
+        } catch (err) {
+          console.error(`[AgentScheduler] Ranked fight failed:`, err.message);
+        }
+      }
+    } catch (err) {
+      console.error('[AgentScheduler] Ranked matchmaking error:', err.message);
     }
 
     if (fightsRun > 0) {

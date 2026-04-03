@@ -75,6 +75,8 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
     services/agentCombatEngine.js — Agent fight simulation (action-based + archetype modifiers, dice, coach, emergency)
     services/agentFightService.js — Agent fight orchestrator (PvE training, XP distribution, fight logging)
     services/agentScheduler.js — Auto-fight scheduler (30s tick, resting/idle cycle, daily limit 50)
+    services/eloService.js — ELO rating calculation (K=32, clamp 100-3000)
+    services/rankedMatchmaker.js — Ranked matchmaking (ELO range ±200, rematch cooldown, different owners)
     utils/helpers.js
   prisma/
     schema.prisma          — 18 models: User, Club, Agent, AgentTactics, AgentProgression, AgentFightLog, Fight, Achievement, Task, PunchInfo, FriendRequest, Friendship...
@@ -1237,3 +1239,39 @@ Server-side scheduler: agents fight PvE bots automatically based on restPeriod. 
 - `backend/src/services/agentFightService.js` — refactored: _executeFight + runAutoFight
 - `backend/src/routes/agent.js` — 2 new endpoints (auto-fight, auto-fight-status)
 - `backend/src/index.js` — startScheduler on boot + graceful shutdown
+
+### Ranked Mode — Agent vs Agent with ELO (ТЗ-08) — ✅ COMPLETE
+
+Ranked fights: agent vs agent from different owners. ELO rating, matchmaking by proximity, 100% XP.
+
+**Schema:** Added `fightMode` (String, default 'pve_training') to AgentTactics. Migration: `20260403100000_add_agent_fight_mode`.
+
+**New services:**
+- `eloService.js` — `calculateElo(ratingA, ratingB, result)`: K=32, clamp 100-3000, standard ELO formula
+- `rankedMatchmaker.js` — `findRankedPairs()`: ELO range ±200, different owners, rematch cooldown (last 5 fights), max 5 pairs/tick
+
+**Extended `agentFightService.js`:**
+- `runRankedFight(agent1Id, agent2Id)` — full ranked fight: simulate → ELO calc → XP 100% both agents → fight logs both → club XP both → atomic $transaction (8 operations)
+- Inverted result for agent2 (victory↔defeat, draw=draw)
+
+**Extended `agentScheduler.js`:**
+- tick() now splits: PvE agents (fightMode='pve_training') vs Ranked agents (fightMode='ranked')
+- Ranked: findRankedPairs() → runRankedFight() → set both resting
+
+**New endpoint:**
+- `GET /v1/agent/rankings` — leaderboard sorted by ELO DESC, wins DESC. Min 5 fights to appear. Includes owner info. Pagination.
+
+**Updated endpoint:**
+- `PUT /v1/agent/:id/tactics` — now accepts `fightMode` ('pve_training'|'ranked')
+
+**Config:** `ELO_K_FACTOR=32`, `ELO_MIN=100`, `ELO_MAX=3000`, `ELO_MATCH_RANGE=200`, `RANKED_REMATCH_COOLDOWN=5`, `RANKED_MAX_PAIRS_PER_TICK=5`, `RANKED_MIN_FIGHTS_FOR_RANKING=5`
+
+**Files changed:**
+- `backend/prisma/schema.prisma` — fightMode in AgentTactics
+- `backend/prisma/migrations/20260403100000_add_agent_fight_mode/` — SQL migration
+- `backend/src/config.js` — ELO + ranked constants
+- `backend/src/services/eloService.js` — **new** ELO calculator
+- `backend/src/services/rankedMatchmaker.js` — **new** matchmaker
+- `backend/src/services/agentFightService.js` — runRankedFight + eloService import
+- `backend/src/services/agentScheduler.js` — ranked flow in tick + imports
+- `backend/src/routes/agent.js` — rankings endpoint + fightMode in tactics
