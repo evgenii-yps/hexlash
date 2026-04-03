@@ -19,6 +19,7 @@ const fightRoutes = require('./routes/fight');
 const statsRoutes = require('./routes/stats');
 const friendsRoutes = require('./routes/friends');
 const aiRoutes = require('./routes/ai');
+const agentRoutes = require('./routes/agent');
 
 const app = express();
 
@@ -81,6 +82,7 @@ app.use('/v1/fight', fightRoutes);
 app.use('/v1/stats', statsRoutes);
 app.use('/v1/friends', friendsRoutes);
 app.use('/v1/ai', aiRoutes);
+app.use('/v1/agent', agentRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
