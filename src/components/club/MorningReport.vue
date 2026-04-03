@@ -86,6 +86,39 @@
       {{ t.club.lblNoFights || 'No fights in this period' }}
     </div>
 
+    <!-- Deep Analysis (Lv3) -->
+    <div v-if="report?.stats?.totalFights > 0" class="deep-section">
+      <div class="deep-divider"></div>
+      <template v-if="premiumReport?.analysis">
+        <div class="analysis-section" v-if="premiumReport.analysis.metaSummary">
+          <div class="analysis-label analysis-label--meta">{{ t.club.lblMetaPosition || 'Meta Position' }}</div>
+          <div class="analysis-text">{{ premiumReport.analysis.metaSummary }}</div>
+        </div>
+        <div class="analysis-section" v-if="premiumReport.analysis.clubStrength">
+          <div class="analysis-label analysis-label--good">{{ t.club.lblClubStrength || 'Strength' }}</div>
+          <div class="analysis-text">{{ premiumReport.analysis.clubStrength }}</div>
+        </div>
+        <div class="analysis-section" v-if="premiumReport.analysis.clubWeakness">
+          <div class="analysis-label analysis-label--warn">{{ t.club.lblClubWeakness || 'Weakness' }}</div>
+          <div class="analysis-text">{{ premiumReport.analysis.clubWeakness }}</div>
+        </div>
+        <div class="analysis-section" v-if="premiumReport.analysis.trainingPlan">
+          <div class="analysis-label analysis-label--tip">{{ t.club.lblTrainingPlan || 'Training Plan' }}</div>
+          <div class="analysis-text">{{ premiumReport.analysis.trainingPlan }}</div>
+        </div>
+        <div class="analysis-section" v-if="premiumReport.analysis.forecast">
+          <div class="analysis-label">{{ t.club.lblForecast || 'Forecast' }}</div>
+          <div class="analysis-text">{{ premiumReport.analysis.forecast }}</div>
+        </div>
+      </template>
+      <template v-else>
+        <HexButton variant="secondary" size="sm" block :loading="premiumLoading" @click="generatePremium">
+          {{ premiumLoading ? (t.club.lblGenerating || 'Generating...') : (x402Enabled ? (t.club.lblUnlockDeep || 'Unlock — $0.02 USDC') : (t.club.lblFreePreview || 'Deep Analysis (Free Preview)')) }}
+        </HexButton>
+      </template>
+      <div v-if="premiumError" class="error-text">{{ premiumError }}</div>
+    </div>
+
     <!-- Generate / loading -->
     <div class="report-action">
       <HexButton v-if="!report || period !== lastPeriod" variant="primary" size="sm" block :loading="loading" @click="generate">
@@ -113,6 +146,10 @@ export default {
     const loading = ref(false);
     const error = ref(null);
     const expandedAgents = reactive({});
+    const premiumReport = ref(null);
+    const premiumLoading = ref(false);
+    const premiumError = ref(null);
+    const x402Enabled = ref(false); // TODO: read from config endpoint
 
     const periods = computed(() => [
       { id: 'today', label: t.value.club?.lblToday || 'Today' },
@@ -120,7 +157,7 @@ export default {
       { id: 'last_7d', label: t.value.club?.lbl7Days || '7 Days' },
     ]);
 
-    watch(period, () => { report.value = null; error.value = null; });
+    watch(period, () => { report.value = null; error.value = null; premiumReport.value = null; premiumError.value = null; });
 
     const sortedAgentStats = computed(() => {
       const stats = report.value?.stats?.agentStats || [];
@@ -150,7 +187,22 @@ export default {
       }
     };
 
-    return { t, period, lastPeriod, periods, report, loading, error, expandedAgents, sortedAgentStats, getAgentAnalysis, toggleAgent, generate };
+    const generatePremium = async () => {
+      premiumLoading.value = true;
+      premiumError.value = null;
+      try {
+        const headers = {};
+        // TODO: when x402Enabled, do USDC payment first and set X-Payment-Tx header
+        const { data } = await apiClient.post('/ai/premium-report', { period: period.value }, { authRequired: true, headers });
+        premiumReport.value = data.report;
+      } catch (err) {
+        premiumError.value = err?.response?.data?.error || 'Deep analysis failed';
+      } finally {
+        premiumLoading.value = false;
+      }
+    };
+
+    return { t, period, lastPeriod, periods, report, loading, error, expandedAgents, sortedAgentStats, getAgentAnalysis, toggleAgent, generate, premiumReport, premiumLoading, premiumError, x402Enabled, generatePremium };
   },
 };
 </script>
@@ -288,6 +340,11 @@ export default {
 .agent-ai-label--build { color: var(--hex-primary); }
 .agent-ai-text { font-size: 11px; color: var(--hex-text-secondary); line-height: 1.4; }
 .agent-ai-unavailable { font-size: 11px; color: var(--hex-text-muted); font-style: italic; }
+
+/* Deep Analysis (Lv3) */
+.deep-section { margin-top: 12px; }
+.deep-divider { height: 1px; background: var(--hex-border-default); margin-bottom: 12px; }
+.analysis-label--meta { color: var(--hex-info, var(--hex-primary)); }
 
 .report-action { margin-top: 10px; }
 .empty-text { text-align: center; font-size: 12px; color: var(--hex-text-muted); padding: 12px 0; }
