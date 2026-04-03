@@ -1,0 +1,11 @@
+[
+  "function mint(uint256 amount) external payable",
+  "function balanceOf(address account, uint256 id) view returns (uint256)",
+  "function mintPrice() view returns (uint256)",
+  "function totalMinted() view returns (uint256)",
+  "function maxSupply() view returns (uint256)",
+  "function mintedPerWallet(address) view returns (uint256)",
+  "function mintingEnabled() view returns (bool)",
+  "function STANDARD_AGENT() view returns (uint256)",
+  "function maxPerWallet() view returns (uint256)"
+]

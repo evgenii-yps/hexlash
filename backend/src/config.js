@@ -118,4 +118,9 @@ module.exports = {
   X402_PREMIUM_REPORT_PRICE: 20000, // 0.02 USDC (6 decimals)
   X402_PAYMENT_RECEIVER: process.env.PAYMENT_RECEIVER_ADDRESS || '',
   USDC_CONTRACT_BASE: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+
+  // NFT Minting
+  NFT_MINTING_ENABLED: process.env.NFT_MINTING_ENABLED === 'true',
+  AGENT_NFT_CONTRACT: process.env.AGENT_NFT_CONTRACT || '',
+  BASE_RPC_URL: process.env.BASE_RPC_URL || 'https://mainnet.base.org',
 };

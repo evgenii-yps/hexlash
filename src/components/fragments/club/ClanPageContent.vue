@@ -51,6 +51,7 @@
       @agent-click="(id) => $router.push(`/club/agent/${id}`)"
       @toggle-auto="onToggleAutoFight"
     />
+    <RetirementPanel v-if="isOwner" />
 
     <!-- Tab Navigation -->
     <div class="tab-nav">
@@ -291,6 +292,7 @@ import ClanActivityFeed from "@/components/fragments/club/ClanActivityFeed.vue";
 import ClubLevelBar from "@/components/club/ClubLevelBar.vue";
 import AgentRoster from "@/components/club/AgentRoster.vue";
 import MorningReport from "@/components/club/MorningReport.vue";
+import RetirementPanel from "@/components/club/RetirementPanel.vue";
 import ClubEdit from "@/components/fragments/club/ClubEdit.vue";
 import HexButton from "@/components/ui/HexButton.vue";
 import ClanConfirmModal from "@/components/fragments/club/ClanConfirmModal.vue";

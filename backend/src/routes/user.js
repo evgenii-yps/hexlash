@@ -388,4 +388,56 @@ router.get('/referrals', authMiddleware, async (req, res) => {
   }
 });
 
+// ── Retirement ──────────────────────────────────────────────────────
+
+const { checkRetirementEligibility, retireFighter, calculateLegendBuff } = require('../services/retirementService');
+
+router.get('/retirement-status', authMiddleware, async (req, res) => {
+  try {
+    const eligibility = await checkRetirementEligibility(req.userId);
+    const user = await prisma.user.findUnique({ where: { id: req.userId }, select: { clubId: true, progression: true } });
+
+    let legend = null;
+    if (user?.clubId) {
+      const club = await prisma.club.findUnique({ where: { id: user.clubId }, select: { legendSkin: true, legendArchetype: true, legendBuff: true } });
+      if (club?.legendSkin) legend = { skin: club.legendSkin, archetype: club.legendArchetype, buff: club.legendBuff };
+    }
+
+    let buffPreview = null;
+    if (eligibility.canRetire && user?.progression) {
+      const pm = user.progression.playerModules;
+      buffPreview = calculateLegendBuff(user.progression, Array.isArray(pm) ? pm[0] : 'predator');
+    }
+
+    res.json({
+      isRetired: eligibility.isRetired || false,
+      canRetire: eligibility.canRetire,
+      progress: eligibility.progress,
+      requirements: eligibility.requirements,
+      legend,
+      buffPreview,
+    });
+  } catch (err) {
+    console.error('Retirement status error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.post('/retire', authMiddleware, async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.userId }, select: { progression: true } });
+    const pm = user?.progression?.playerModules;
+    const result = await retireFighter(req.userId, Array.isArray(pm) ? pm[0] : 'predator');
+
+    if (!result.success) {
+      return res.status(400).json({ error: 'Not eligible for retirement', reasons: result.reasons });
+    }
+
+    res.json({ success: true, legend: result.legend, message: 'Your fighter has retired as a Legend!' });
+  } catch (err) {
+    console.error('Retire error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = router;

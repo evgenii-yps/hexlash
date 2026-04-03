@@ -134,6 +134,14 @@ router.post('/create', authMiddleware, createAgentLimiter, async (req, res) => {
       return res.status(400).json({ error: 'Agent roster is full' });
     }
 
+    // NFT check (feature flag)
+    const { checkMintRequirement } = require('../services/nftService');
+    const ownedAgents = await prisma.agent.count({ where: { ownerId: req.userId } });
+    const mintCheck = await checkMintRequirement(user.walletAddress, ownedAgents);
+    if (!mintCheck.allowed) {
+      return res.status(403).json({ error: mintCheck.reason, nftRequired: true, nftBalance: mintCheck.nftBalance });
+    }
+
     // Validate name
     if (!name || !NAME_REGEX.test(name)) {
       return res.status(400).json({ error: 'Invalid agent name' });

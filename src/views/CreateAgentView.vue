@@ -100,8 +100,17 @@
           <div class="confirm-stat-muted">{{ t.club.lblDeckEmpty || 'Empty deck — learn moves first' }}</div>
         </div>
 
+        <!-- NFT Mint (when enabled and not first agent) -->
+        <div v-if="nftRequired" class="confirm-card nft-card">
+          <div class="confirm-card-title">{{ t.club.lblNftRequired || 'NFT Required' }}</div>
+          <div class="nft-text">{{ t.club.lblFirstFree || 'First agent is free!' }} {{ t.club.lblNeedNfts || 'Mint an Agent NFT for additional agents.' }}</div>
+          <HexButton variant="secondary" block :loading="minting" @click="onMint" style="margin-top: 8px">
+            {{ minting ? (t.club.lblMinting || 'Minting...') : (t.club.lblMintAgent || 'Mint Agent NFT') }}
+          </HexButton>
+        </div>
+
         <div class="step-actions">
-          <HexButton variant="primary" block :loading="creating" @click="onCreate">
+          <HexButton variant="primary" block :loading="creating" :disabled="nftRequired" @click="onCreate">
             {{ creating ? (t.club.lblCreating || 'Creating...') : (t.club.lblCreateAgent || 'Create Agent') }}
           </HexButton>
           <HexButton variant="ghost" block @click="step = 1" style="margin-top: 8px">
@@ -132,6 +141,8 @@ const NAME_REGEX = /^[a-zA-Zа-яА-ЯёЁ0-9\s_-]{2,20}$/;
 const step = ref(0);
 const creating = ref(false);
 const createError = ref(null);
+const minting = ref(false);
+const nftRequired = ref(false); // set to true when NFT_MINTING_ENABLED + not first agent
 
 const form = ref({
   name: '',
@@ -177,6 +188,14 @@ const archName = (id) => {
 const onBack = () => {
   if (step.value > 0) step.value--;
   else router.back();
+};
+
+const onMint = async () => {
+  // TODO: integrate with nftMintService when NFT_MINTING_ENABLED=true
+  minting.value = true;
+  try {
+    store.commit('master/setInfo', { text: 'NFT minting not yet enabled' });
+  } finally { minting.value = false; }
 };
 
 const onCreate = async () => {
@@ -373,6 +392,9 @@ const onCreate = async () => {
   color: var(--hex-text-muted);
   margin-top: 2px;
 }
+
+.nft-card { border-color: var(--hex-draw); }
+.nft-text { font-size: 12px; color: var(--hex-text-secondary); line-height: 1.4; }
 
 .error-msg {
   margin-top: 12px;

@@ -1384,3 +1384,80 @@ Premium deep analysis: global meta comparison, optimal builds, training plan, EL
 - `backend/src/services/morningReportService.js` — buildLv3Prompt
 - `backend/src/routes/ai.js` — premium-report endpoint
 - `src/components/club/MorningReport.vue` — deep analysis UI
+
+### Retirement + Legacy System (ТЗ-21) — ✅ COMPLETE
+
+Fighter retirement: fully trained fighter becomes a Legend, grants passive buffs to all clan agents.
+
+**New service (`services/retirementService.js`):**
+- `checkRetirementEligibility(userId)` — checks all 5 requirements (18 moves unlocked, 12 at Lv3+, 3 at Lv5, has club, no existing legend)
+- `calculateRetirementProgress(progression)` — weighted progress 0-100%
+- `calculateLegendBuff(progression, primaryModule)` — xpBonus (5%+1%/Lv5 move), dmgBonus (2%+0.5%/Lv4+ move), archetype match ×1.5
+- `retireFighter(userId, primaryModule)` — sets Club.legendSkin/legendArchetype/legendBuff, marks User.progression.retired=true
+- `getClubLegendBuff(clubId)` — quick lookup for combat engine
+
+**New endpoints in user.js:**
+- `GET /v1/user/retirement-status` — progress, requirements, legend info, buff preview
+- `POST /v1/user/retire` — execute retirement (irreversible)
+
+**Legend buff in combat:**
+- `agentCombatEngine.js` — legendDmgMult applied to base damage in resolveRound
+- `agentFightService.js` — legend xpBonus applied to earned XP in _executeFight + _executeAgentVsAgentFight
+- Archetype match: if agent's primaryModule === legend archetype → buff × 1.5
+
+**New component:** `RetirementPanel.vue` — progress/requirements display, buff preview, retire button, legend display
+
+**Files changed:**
+- `backend/src/services/retirementService.js` — **new** retirement logic
+- `backend/src/routes/user.js` — 2 new endpoints
+- `backend/src/services/agentCombatEngine.js` — legendDmgMult in damage calc
+- `backend/src/services/agentFightService.js` — legend XP buff + getClubLegendBuff import
+- `src/components/club/RetirementPanel.vue` — **new** frontend component
+- `src/components/fragments/club/ClanPageContent.vue` — integrated RetirementPanel
+
+### Agent Rankings + Leagues (ТЗ-26) — ✅ COMPLETE
+
+Agent leaderboard with 6 league tiers, integrated into RatingsView as 4th tab.
+
+**Leagues:** Bronze (0-899), Silver (900-1099), Gold (1100-1299), Platinum (1300-1499), Diamond (1500-1799), Champion (1800+)
+
+**New files:**
+- `src/utils/leagues.js` — league constants, `getLeague(elo)`, `getLeagueColor(elo)`
+- `src/components/ratings/LeagueBadge.vue` — ELO-based colored league badge
+- `src/components/ratings/AgentLeaderboard.vue` — full leaderboard with league filter, "Your Agents" section, pagination
+
+**Extended `RatingsView.vue`:** Added 4th tab "Agents" with `AgentLeaderboard` component
+
+**Files changed:**
+- `src/utils/leagues.js` — **new** league utility
+- `src/components/ratings/LeagueBadge.vue` — **new** component
+- `src/components/ratings/AgentLeaderboard.vue` — **new** component
+- `src/views/RatingsView.vue` — AGENTS tab + import
+- `src/locales/*.js` — rating.* agent keys (15 new)
+
+### NFT Mint Agents — ERC-1155 on Base (ТЗ-23) — ✅ COMPLETE
+
+Agent NFT minting: first agent free, additional require ERC-1155 NFT on Base. Feature flag disabled by default.
+
+**Smart contract:** `contracts/HexlashAgents.sol` — ERC-1155, mint with ETH, owner mint, max supply/per-wallet limits
+**ABI:** `src/assets/abi/HexlashAgents.json` — human-readable for ethers.js
+
+**Backend:**
+- `services/nftService.js` — `getAgentNftBalance()`, `checkMintRequirement()` (feature flag bypass)
+- `routes/agent.js` — NFT check in POST /agent/create (after roster limit, before validation)
+- `config.js` — `NFT_MINTING_ENABLED`, `AGENT_NFT_CONTRACT`, `BASE_RPC_URL`
+
+**Frontend:**
+- `core/services/nftMintService.js` — `getAgentNftBalance()`, `getMintInfo()`, `mintAgentNft()`
+- `CreateAgentView.vue` — conditional NFT mint section on step 3
+
+**Feature flag:** `NFT_MINTING_ENABLED=false` → all agents free. `true` → first free, 2+ require NFT.
+
+**Files changed:**
+- `contracts/HexlashAgents.sol` — **new** ERC-1155 contract
+- `src/assets/abi/HexlashAgents.json` — **new** ABI
+- `backend/src/services/nftService.js` — **new** on-chain verification
+- `backend/src/routes/agent.js` — NFT check in create
+- `backend/src/config.js` — NFT constants
+- `src/core/services/nftMintService.js` — **new** frontend mint helpers
+- `src/views/CreateAgentView.vue` — NFT mint UI

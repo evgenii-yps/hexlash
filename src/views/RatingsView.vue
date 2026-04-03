@@ -15,6 +15,10 @@
                     @click="setActiveTab(Tabs.FIGHTERS)">
             {{ t.rating.lblFighters }}
           </VBtnDark>
+          <VBtnDark :class="{'active-tab': activeTab === Tabs.AGENTS}"
+                    @click="setActiveTab(Tabs.AGENTS)">
+            {{ t.rating.lblAgents || 'Agents' }}
+          </VBtnDark>
         </div>
 
         <div v-if="activeTab === Tabs.MY_CLUB" class="table-wrapper">
@@ -218,9 +222,12 @@
           </div>
         </div>
 
+        <div v-if="activeTab === Tabs.AGENTS" class="table-wrapper">
+          <AgentLeaderboard />
+        </div>
+
       </div>
     </div>
-
   </div>
 </template>
 <script setup>
@@ -236,13 +243,15 @@ import HexButton from "@/components/ui/HexButton.vue";
 import CreateClub from "@/components/fragments/club/CreateClub.vue";
 import MyClubTab from "@/components/fragments/club/MyClubTab.vue";
 import PvPStatsCard from "@/components/fragments/profile/PvPStatsCard.vue";
+import AgentLeaderboard from "@/components/ratings/AgentLeaderboard.vue";
 
 
 // Enum для вкладок
 const Tabs = {
   MY_CLUB: 'myclub',
   CLUBS: 'clubs',
-  FIGHTERS: 'fighters'
+  FIGHTERS: 'fighters',
+  AGENTS: 'agents',
 };
 
 const router = useRouter();
@@ -252,6 +261,7 @@ const getInitialTab = () => {
   const type = route.params.type;
   if (type === Tabs.CLUBS) return Tabs.CLUBS;
   if (type === Tabs.FIGHTERS) return Tabs.FIGHTERS;
+  if (type === Tabs.AGENTS) return Tabs.AGENTS;
   return Tabs.MY_CLUB;
 };
 const activeTab = ref(getInitialTab());
