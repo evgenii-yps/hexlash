@@ -22,6 +22,7 @@ const VALID_DICE_POLICY = ['always', 'smart', 'never'];
 const VALID_COACH_PREF = ['attack', 'defense', 'position', 'auto'];
 const VALID_EMERGENCY = [0, 20, 30];
 const VALID_REST_PERIOD = [600000, 1800000, 3600000];
+const VALID_FIGHT_MODE = ['pve_training', 'ranked'];
 const NAME_REGEX = /^[a-zA-Zа-яА-ЯёЁ0-9\s_-]{2,20}$/;
 const SKIN_REGEX = /^(skin_(m|w)_\d{1,3}|vip_(k|t)\d{1,2})\.png$/;
 
@@ -34,6 +35,47 @@ const createAgentLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 10,
   message: { error: 'Too many agents created, try again later' },
+});
+
+// GET /v1/agent/rankings
+router.get('/rankings', authMiddleware, async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit) || 20, 100);
+    const offset = parseInt(req.query.offset) || 0;
+
+    const where = { totalFights: { gte: 5 } };
+    const [rankings, total] = await Promise.all([
+      prisma.agent.findMany({
+        where,
+        orderBy: [{ elo: 'desc' }, { wins: 'desc' }],
+        take: limit,
+        skip: offset,
+        select: {
+          id: true, name: true, skin: true, elo: true,
+          primaryModule: true, secondaryModule: true, tertiaryModule: true,
+          wins: true, losses: true, draws: true, totalFights: true,
+          owner: { select: { id: true, login: true, skin: true } },
+        },
+      }),
+      prisma.agent.count({ where }),
+    ]);
+
+    res.json({
+      rankings: rankings.map((a, i) => ({
+        rank: offset + i + 1,
+        agent: {
+          id: a.id, name: a.name, skin: a.skin, elo: a.elo,
+          primaryModule: a.primaryModule, secondaryModule: a.secondaryModule, tertiaryModule: a.tertiaryModule,
+          wins: a.wins, losses: a.losses, draws: a.draws, totalFights: a.totalFights,
+        },
+        owner: a.owner,
+      })),
+      total,
+    });
+  } catch (err) {
+    console.error('Get rankings error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 // GET /v1/agent/list
@@ -282,6 +324,14 @@ router.put('/:id/tactics', authMiddleware, async (req, res) => {
         return res.status(400).json({ error: 'Invalid rest period value' });
       }
       updateData.restPeriod = restPeriod;
+    }
+
+    const { fightMode } = req.body;
+    if (fightMode !== undefined) {
+      if (!VALID_FIGHT_MODE.includes(fightMode)) {
+        return res.status(400).json({ error: 'Invalid fight mode value' });
+      }
+      updateData.fightMode = fightMode;
     }
 
     if (Object.keys(updateData).length === 0) {

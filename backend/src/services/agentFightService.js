@@ -7,6 +7,7 @@ const prisma = require('../lib/prisma');
 const { simulateAgentFight, generatePveBot } = require('./agentCombatEngine');
 const { addClubXp, getFightXpReward } = require('./clubLevelService');
 const { MOVE_BRANCHES } = require('./researchGateService');
+const { calculateElo } = require('./eloService');
 
 // XP multipliers by mode
 const XP_MULTIPLIERS = {
@@ -211,6 +212,127 @@ async function runAutoFight(agentId, ownerId) {
   return _executeFight(agent, { statusAfterFight: 'idle' });
 }
 
+/**
+ * Run a ranked fight between two agents. Both get XP (100%), ELO changes, fight logs.
+ * @param {string} agent1Id
+ * @param {string} agent2Id
+ * @returns {Object} fight result for both agents
+ */
+async function runRankedFight(agent1Id, agent2Id) {
+  const [a1, a2] = await Promise.all([
+    prisma.agent.findUnique({ where: { id: agent1Id }, include: { tactics: true, progression: true } }),
+    prisma.agent.findUnique({ where: { id: agent2Id }, include: { tactics: true, progression: true } }),
+  ]);
+
+  if (!a1 || !a2) throw new Error('Agent not found');
+  if (a1.status !== 'idle' || a2.status !== 'idle') throw new Error('Agent not idle');
+
+  // Set both to fighting
+  await prisma.$transaction([
+    prisma.agent.update({ where: { id: agent1Id }, data: { status: 'fighting' } }),
+    prisma.agent.update({ where: { id: agent2Id }, data: { status: 'fighting' } }),
+  ]);
+
+  try {
+    const fighter1 = {
+      agent: { primaryModule: a1.primaryModule, secondaryModule: a1.secondaryModule, tertiaryModule: a1.tertiaryModule },
+      tactics: a1.tactics,
+      progression: a1.progression,
+    };
+    const fighter2 = {
+      agent: { primaryModule: a2.primaryModule, secondaryModule: a2.secondaryModule, tertiaryModule: a2.tertiaryModule },
+      tactics: a2.tactics,
+      progression: a2.progression,
+    };
+
+    const fightResult = simulateAgentFight(fighter1, fighter2, { mode: 'ranked' });
+
+    // ELO
+    const elo = calculateElo(a1.elo, a2.elo, fightResult.result);
+
+    // XP for both (100% for ranked)
+    const a1RawXp = BASE_FIGHT_XP[fightResult.result] || BASE_FIGHT_XP.defeat;
+    const a1Xp = Math.round(a1RawXp * XP_MULTIPLIERS.ranked);
+    const a1BranchXp = distributeXpByBranch(fightResult.roundLog, a1Xp);
+
+    // Invert result for agent 2
+    const a2Result = fightResult.result === 'victory' ? 'defeat' : fightResult.result === 'defeat' ? 'victory' : 'draw';
+    const a2RawXp = BASE_FIGHT_XP[a2Result] || BASE_FIGHT_XP.defeat;
+    const a2Xp = Math.round(a2RawXp * XP_MULTIPLIERS.ranked);
+    // For a2, count fighter2 moves in round log
+    const a2BranchCounts = { speed: 0, power: 0, technique: 0 };
+    for (const round of fightResult.roundLog) {
+      const moveId = round.fighter2?.move?.moveId;
+      if (moveId && MOVE_BRANCHES[moveId]) a2BranchCounts[MOVE_BRANCHES[moveId]]++;
+    }
+    const a2TotalUses = a2BranchCounts.speed + a2BranchCounts.power + a2BranchCounts.technique;
+    const a2BranchXp = a2TotalUses === 0
+      ? { speedXp: 0, powerXp: 0, techniqueXp: 0 }
+      : {
+          speedXp: Math.max(a2BranchCounts.speed > 0 ? 1 : 0, Math.floor(a2Xp * a2BranchCounts.speed / a2TotalUses)),
+          powerXp: Math.max(a2BranchCounts.power > 0 ? 1 : 0, Math.floor(a2Xp * a2BranchCounts.power / a2TotalUses)),
+          techniqueXp: Math.max(a2BranchCounts.technique > 0 ? 1 : 0, Math.floor(a2Xp * a2BranchCounts.technique / a2TotalUses)),
+        };
+
+    // Stats helpers
+    const statsFor = (result, eloNew) => {
+      const s = { totalFights: { increment: 1 }, lastFightAt: new Date(), status: 'idle', elo: eloNew };
+      if (result === 'victory') s.wins = { increment: 1 };
+      else if (result === 'defeat') s.losses = { increment: 1 };
+      else s.draws = { increment: 1 };
+      return s;
+    };
+
+    // Club XP amounts
+    const a1ClubXp = getFightXpReward(fightResult.result, 'ranked');
+    const a2ClubXp = getFightXpReward(a2Result, 'ranked');
+
+    // Atomic transaction
+    await prisma.$transaction([
+      prisma.agent.update({ where: { id: agent1Id }, data: statsFor(fightResult.result, elo.newRatingA) }),
+      prisma.agent.update({ where: { id: agent2Id }, data: statsFor(a2Result, elo.newRatingB) }),
+      prisma.agentProgression.update({
+        where: { agentId: agent1Id },
+        data: { speedXp: { increment: a1BranchXp.speedXp }, powerXp: { increment: a1BranchXp.powerXp }, techniqueXp: { increment: a1BranchXp.techniqueXp } },
+      }),
+      prisma.agentProgression.update({
+        where: { agentId: agent2Id },
+        data: { speedXp: { increment: a2BranchXp.speedXp }, powerXp: { increment: a2BranchXp.powerXp }, techniqueXp: { increment: a2BranchXp.techniqueXp } },
+      }),
+      prisma.agentFightLog.create({
+        data: {
+          agentId: agent1Id, mode: 'ranked', result: fightResult.result,
+          opponentName: a2.name, opponentId: agent2Id, opponentOwnerId: a2.ownerId,
+          rounds: fightResult.rounds, playerHpLeft: fightResult.fighter1HpLeft, opponentHpLeft: fightResult.fighter2HpLeft,
+          xpEarned: a1Xp, eloChange: elo.changeA, fightData: fightResult,
+        },
+      }),
+      prisma.agentFightLog.create({
+        data: {
+          agentId: agent2Id, mode: 'ranked', result: a2Result,
+          opponentName: a1.name, opponentId: agent1Id, opponentOwnerId: a1.ownerId,
+          rounds: fightResult.rounds, playerHpLeft: fightResult.fighter2HpLeft, opponentHpLeft: fightResult.fighter1HpLeft,
+          xpEarned: a2Xp, eloChange: elo.changeB, fightData: fightResult,
+        },
+      }),
+    ]);
+
+    // Club XP (async, non-blocking)
+    if (a1.clubId && a1ClubXp > 0) addClubXp(a1.clubId, a1ClubXp).catch(e => console.error('Club XP error:', e));
+    if (a2.clubId && a2ClubXp > 0) addClubXp(a2.clubId, a2ClubXp).catch(e => console.error('Club XP error:', e));
+
+    return {
+      result: fightResult.result,
+      rounds: fightResult.rounds,
+      agent1: { id: agent1Id, result: fightResult.result, eloChange: elo.changeA, newElo: elo.newRatingA, xpEarned: a1Xp },
+      agent2: { id: agent2Id, result: a2Result, eloChange: elo.changeB, newElo: elo.newRatingB, xpEarned: a2Xp },
+    };
+  } catch (err) {
+    await prisma.agent.updateMany({ where: { id: { in: [agent1Id, agent2Id] } }, data: { status: 'idle' } }).catch(() => {});
+    throw err;
+  }
+}
+
 module.exports = {
   XP_MULTIPLIERS,
   BASE_FIGHT_XP,
@@ -218,4 +340,5 @@ module.exports = {
   distributeXpByBranch,
   runPveTraining,
   runAutoFight,
+  runRankedFight,
 };

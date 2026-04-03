@@ -342,6 +342,7 @@ model AgentTactics {
   coachPreference    String   @default("auto")         // attack|defense|position|auto
   emergencyThreshold Int      @default(30)             // 30|20|0 (0 = never)
   restPeriod         Int      @default(600000)         // ms: 600000(10min)|1800000(30min)|3600000(1hr)
+  fightMode          String   @default("pve_training") // pve_training|ranked
 
   agentId            String   @unique
   agent              Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
