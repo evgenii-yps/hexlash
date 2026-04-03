@@ -356,6 +356,10 @@ export default {
     lblTransferDesc: '<strong>{name}</strong>将成为队长。你将成为普通成员。',
     // Agent Roster
     lblMyFightClub: 'MY FIGHT CLUB',
+    lblClubMode: 'CLUB MODE',
+    lblEnterFightClub: 'Enter Fight Club',
+    lblManageFightClub: 'Manage Fight Club',
+    lblPromoDesc: 'Train AI fighters. Send them to battle 24/7. Rise through leagues.',
     lblRoster: 'ROSTER',
     lblNewAgent: 'New Agent',
     lblCreateAgent: 'Create Agent',

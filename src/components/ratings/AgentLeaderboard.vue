@@ -1,5 +1,23 @@
 <template>
   <div class="agent-leaderboard">
+
+    <!-- Onboarding: no agents yet -->
+    <div v-if="!loading && !hasOwnAgents" class="onboarding-block">
+      <div class="onboarding-icon">🥊</div>
+      <div class="onboarding-title">{{ t.club.lblClubMode || 'CLUB MODE' }}</div>
+      <div class="onboarding-desc">{{ t.club.lblPromoDesc || 'Train AI fighters. Send them to battle 24/7. Rise through leagues.' }}</div>
+      <HexButton variant="primary" block @click="router.push('/fight-club')">
+        {{ t.club.lblEnterFightClub || 'Enter Fight Club' }}
+      </HexButton>
+    </div>
+
+    <!-- Has agents: manage button -->
+    <div v-if="!loading && hasOwnAgents" class="manage-row">
+      <HexButton variant="secondary" size="sm" @click="router.push('/fight-club')">
+        {{ t.club.lblManageFightClub || 'Manage Fight Club' }}
+      </HexButton>
+    </div>
+
     <!-- League filter -->
     <div class="league-filter">
       <button v-for="f in filters" :key="f.id" :class="['filter-btn', { active: leagueFilter === f.id }]" @click="setFilter(f.id)">
@@ -7,10 +25,10 @@
       </button>
     </div>
 
-    <!-- My Agents -->
-    <div v-if="myAgents.length > 0" class="my-agents-section">
+    <!-- My Agents (from rankings) -->
+    <div v-if="myRankedAgents.length > 0" class="my-agents-section">
       <div class="section-label">{{ t.rating.lblYourAgents || 'YOUR AGENTS' }}</div>
-      <div v-for="entry in myAgents" :key="'my-' + entry.agent.id" class="rank-row rank-row--mine" @click="viewAgent(entry.agent.id)">
+      <div v-for="entry in myRankedAgents" :key="'my-' + entry.agent.id" class="rank-row rank-row--mine" @click="viewAgent(entry.agent.id)">
         <span class="rank-num">{{ entry.rank }}</span>
         <img class="rank-skin" :src="`/images/skins/${entry.agent.skin}`" :alt="entry.agent.name" />
         <div class="rank-info">
@@ -70,7 +88,7 @@ import { useRouter } from 'vue-router'
 import { t } from '@/locales/index.js'
 import store from '@/core/state/store.js'
 import apiClient from '@/core/api/apiClient.js'
-import { LEAGUES, getLeague, getLeagueColor } from '@/utils/leagues.js'
+import { LEAGUES, getLeagueColor } from '@/utils/leagues.js'
 import HexButton from '@/components/ui/HexButton.vue'
 import LeagueBadge from '@/components/ratings/LeagueBadge.vue'
 
@@ -88,6 +106,7 @@ export default {
     const limit = 20;
 
     const currentUserId = computed(() => store.getters['master/getMaster']?.userData?.odId);
+    const hasOwnAgents = computed(() => (store.state.agent.agents || []).length > 0);
 
     const filters = computed(() => [
       { id: 'all', label: t.value.rating?.lblAll || 'All' },
@@ -101,7 +120,7 @@ export default {
       return rankings.value.filter(e => e.agent.elo >= league.min && e.agent.elo <= league.max);
     });
 
-    const myAgents = computed(() => {
+    const myRankedAgents = computed(() => {
       if (!currentUserId.value) return [];
       return rankings.value.filter(e => e.owner?.id === currentUserId.value);
     });
@@ -120,23 +139,53 @@ export default {
       finally { loading.value = false; loadingMore.value = false; }
     };
 
-    const loadMore = () => {
-      offset.value += limit;
-      fetchRankings(true);
-    };
-
+    const loadMore = () => { offset.value += limit; fetchRankings(true); };
     const setFilter = (id) => { leagueFilter.value = id; };
     const viewAgent = (id) => router.push(`/club/agent/${id}`);
     const shortBuild = (a) => [a.primaryModule, a.secondaryModule, a.tertiaryModule].map(m => m?.slice(0, 3).toUpperCase()).join('/');
 
-    onMounted(() => fetchRankings());
+    onMounted(() => {
+      fetchRankings();
+      store.dispatch('agent/fetchAgents');
+    });
 
-    return { t, rankings, filteredRankings, myAgents, loading, loadingMore, hasMore, leagueFilter, filters, setFilter, loadMore, viewAgent, shortBuild, getLeagueColor };
+    return { t, router, rankings, filteredRankings, myRankedAgents, hasOwnAgents, loading, loadingMore, hasMore, leagueFilter, filters, setFilter, loadMore, viewAgent, shortBuild, getLeagueColor };
   },
 };
 </script>
 
 <style scoped>
+/* Onboarding */
+.onboarding-block {
+  text-align: center;
+  padding: 24px 16px;
+  margin-bottom: 16px;
+  background: var(--hex-bg-medium);
+  border: 1px solid var(--hex-border-default);
+  border-radius: 10px;
+}
+.onboarding-icon { font-size: 36px; margin-bottom: 8px; }
+.onboarding-title {
+  font-family: 'Anonymous', monospace;
+  font-size: 16px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--hex-primary);
+  margin-bottom: 8px;
+}
+.onboarding-desc {
+  font-size: 13px;
+  color: var(--hex-text-muted);
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+.manage-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
 .league-filter {
   display: flex;
   gap: 4px;
