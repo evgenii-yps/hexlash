@@ -649,7 +649,7 @@ router.post('/morning-report', authMiddleware, async (req, res) => {
         report: {
           period,
           generatedAt: new Date().toISOString(),
-          stats: { totalFights: 0, wins: 0, losses: 0, draws: 0, winRate: 0, bestAgent: null, worstAgent: null, totalXpEarned: 0 },
+          stats: { totalFights: 0, wins: 0, losses: 0, draws: 0, winRate: 0, bestAgent: null, worstAgent: null, totalXpEarned: 0, agentStats: [] },
           analysis: null,
         },
       });
@@ -658,6 +658,10 @@ router.post('/morning-report', authMiddleware, async (req, res) => {
     // Get club info
     const club = await prisma.club.findUnique({ where: { id: user.clubId }, select: { name: true, level: true } });
     const prompt = buildMorningReportPrompt(club?.name || 'Unknown', club?.level || 1, stats);
+
+    // Dynamic max_tokens based on agent count
+    const activeAgents = stats.agentStats.filter(a => a.fights > 0).length;
+    const maxTokens = Math.min(400 + activeAgents * 150, 1200);
 
     // Call Claude
     const client = getAnthropicClient();
@@ -669,7 +673,7 @@ router.post('/morning-report', authMiddleware, async (req, res) => {
     try {
       const response = await client.messages.create({
         model: config.ANTHROPIC_MODEL,
-        max_tokens: 400,
+        max_tokens: maxTokens,
         temperature: 0.7,
         messages: [{ role: 'user', content: prompt }],
       }, { signal: abortController.signal });
@@ -678,13 +682,12 @@ router.post('/morning-report', authMiddleware, async (req, res) => {
       const rawText = response.content?.[0]?.text || '';
       let analysis = null;
       try {
-        // Try to parse JSON from response
         const jsonMatch = rawText.match(/\{[\s\S]*\}/);
         if (jsonMatch) analysis = JSON.parse(jsonMatch[0]);
       } catch {
-        // Fallback: use raw text as summary
-        analysis = { summary: rawText, highlights: '', concerns: '', recommendation: '' };
+        analysis = { summary: rawText, highlights: '', concerns: '', recommendation: '', agents: [] };
       }
+      if (analysis && !analysis.agents) analysis.agents = [];
 
       const report = {
         period,
@@ -698,6 +701,11 @@ router.post('/morning-report', authMiddleware, async (req, res) => {
           bestAgent: stats.bestAgent ? { name: stats.bestAgent.name, winRate: stats.bestAgent.winRate, fights: stats.bestAgent.fights } : null,
           worstAgent: stats.worstAgent ? { name: stats.worstAgent.name, winRate: stats.worstAgent.winRate, fights: stats.worstAgent.fights } : null,
           totalXpEarned: stats.totalXpEarned,
+          agentStats: stats.agentStats.map(a => ({
+            agentId: a.agentId, name: a.name, skin: a.skin, elo: a.elo, eloChange: a.eloChange,
+            fights: a.fights, wins: a.wins, losses: a.losses, draws: a.draws, winRate: a.winRate,
+            recentResults: a.recentResults,
+          })),
         },
         analysis,
       };

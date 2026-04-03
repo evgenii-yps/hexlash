@@ -442,6 +442,13 @@ export default {
     lblGenerating: 'Generating...',
     lblNoFights: 'No fights in this period',
     lblAiUnavailable: 'AI analysis unavailable',
+    // Morning Report Lv2
+    lblAgentDetails: 'AGENT DETAILS',
+    lblAssessment: 'Assessment',
+    lblTacticsAdvice: 'Tactics Advice',
+    lblBuildAdvice: 'Build Advice',
+    lblRecentResults: 'Recent',
+    lblNoFightsAgent: 'No fights this period',
   },
   fight: {
     lblRound: 'ラウンド {n}',
