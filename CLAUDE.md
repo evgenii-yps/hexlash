@@ -72,6 +72,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
     services/pvpCombatEngine.js — PvP combat engine
     services/clubLevelService.js — Club level system (calculateLevel, getLevelInfo, addClubXp, getFightXpReward)
     services/researchGateService.js — Research Gate: controls agent move learning based on player progression
+    services/agentCombatEngine.js — Agent fight simulation (action-based + archetype modifiers, dice, coach, emergency)
     utils/helpers.js
   prisma/
     schema.prisma          — 18 models: User, Club, Agent, AgentTactics, AgentProgression, AgentFightLog, Fight, Achievement, Task, PunchInfo, FriendRequest, Friendship...
@@ -387,6 +388,8 @@ AI_TRAINER_ENABLED = true
 - `archetypes.js` — 6 archetypes: Predator, Sentinel, Ghost, Analyst, Maverick, Juggernaut (priorities, dicePreferences)
 - `opponentGenerator.js` — Random opponent creation
 - `pvpCombatEngine.js` — PvP round simulation (no actions/archetypes, pure move damage + speed order), dice effects, coach effects
+- `agentCombatEngine.js` — Agent fight simulation: hybrid PvE (action-based) + PvP (archetype modifiers). Tactics drive decisions. Includes PvE bot generator
+- `backend/src/data/archetypes.js` — Backend copy of archetype priorities + dicePreferences (keep in sync with frontend)
 - `pvpMatchManager.js` — PvP match lifecycle
 - `pvpHandler.js` — PvP WebSocket message handling (dice_roll, coach_choice)
 - `AiTrainerAnalysis.vue` — AI Trainer post-fight analysis component
@@ -1151,3 +1154,26 @@ Implemented Research Gate: agents can only learn moves the player has researched
 **Files changed:**
 - `backend/src/services/researchGateService.js` — **new** service
 - `backend/src/routes/agent.js` — 3 new endpoints + researchGateService import
+
+### Agent Combat Engine (ТЗ-05) — ✅ COMPLETE
+
+Server-side fight simulation for clan agents. Hybrid of PvE action-based combat + PvP archetype passive modifiers.
+
+**New files:**
+- `backend/src/services/agentCombatEngine.js` — `simulateAgentFight()` (synchronous, no Prisma) + `generatePveBot()`
+- `backend/src/data/archetypes.js` — backend copy of archetype priorities + dicePreferences
+
+**How agents fight:**
+- Action selection: archetype priorities (50/30/20% slot weights) + aggression modifier (cautious/balanced/aggressive) + emergency override + coach boost
+- Move selection: from deck — best damage for attack, best speed for defense, cycle for position
+- Damage: move-based + archetype passive modifiers (dmgBonus, incomingReduction, dodge, crit from ARCHETYPE_MODIFIERS)
+- Speed-based KO: both attacking → faster hits first, can KO before counter
+- Dice: policy-driven (always/smart/never), cooldown 3 rounds, 6 effects
+- Coach: preference-driven (attack/defense/position/auto), once per fight from round 6
+- Emergency: threshold-based (30/20/0 HP%), switches to permanent defense
+- Overdrive: after round 10, +5HP drain/round, dice disabled, attack bias
+- PvE bot generator: scales by ELO (weak <900, medium 900-1100, strong >1100)
+
+**Files changed:**
+- `backend/src/services/agentCombatEngine.js` — **new** fight engine
+- `backend/src/data/archetypes.js` — **new** backend archetype data
