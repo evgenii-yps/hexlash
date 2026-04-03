@@ -25,7 +25,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
   components/              — 75+ reusable components
   core/
     state/store.js         — Vuex store
-    state/modules/         — 13 Vuex modules
+    state/modules/         — 14 Vuex modules
     models/                — 20+ data models (internal, ws, etc.)
     services/              — 8 business logic services
     database/              — 7 LocalStorage/IDB repository files
@@ -121,6 +121,8 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 | `/training/deck` | DeckBuilderView | Yes |
 | `/profile` `/profile/balance` `/profile/wallet` `/profile/account` `/profile/skins` | ProfileView | Yes |
 | `/club/:id` | ClubView | Yes |
+| `/club/agent/create` | CreateAgentView | Yes |
+| `/club/agent/:agentId` | AgentDetailView | Yes |
 | `/ratings/:type` | RatingsView | Yes |
 | `/user/:userLogin` | ProfileView | Yes |
 | `/friends` | FriendsView | Yes |
@@ -129,7 +131,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 
 ---
 
-## Vuex Modules (13)
+## Vuex Modules (14)
 
 | Module | Purpose |
 |--------|---------|
@@ -146,6 +148,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 | `clubModeState` | Club mode: scheduling, offline simulation, fight log, push notifications, daily auto-reset, server sync (POST /fight/save), AI analysis (series analysis via Claude API) |
 | `pvpState` | Real-time PvP matchmaking and fights |
 | `friendsState` | Friends list, friend requests, challenges (WebSocket-based) |
+| `agentState` | Agent roster: CRUD, auto-fight toggle, club level, 30s auto-refresh |
 
 ---
 
