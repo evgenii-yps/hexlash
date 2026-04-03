@@ -1354,3 +1354,33 @@ Extended Morning Report with per-agent individual analysis: assessment, tactics 
 - `backend/src/services/morningReportService.js` — enriched stats + Lv2 prompt
 - `backend/src/routes/ai.js` — dynamic tokens + agentStats in response
 - `src/components/club/MorningReport.vue` — agent accordion UI
+
+### Morning Report Lv3 — Deep Meta Analysis + x402 (ТЗ-20) — ✅ COMPLETE
+
+Premium deep analysis: global meta comparison, optimal builds, training plan, ELO forecast. x402 micropayment (feature flag, disabled by default).
+
+**New service (`services/metaAnalysisService.js`):**
+- `gatherMetaStats()` — global ELO distribution, top builds, archetype win rates, best tactics
+- `getClubRanking(clubId)` — club position vs all clubs (rank, percentile)
+
+**New middleware (`middleware/x402.js`):**
+- Payment verification with feature flag (`X402_ENABLED`). When disabled: bypasses payment. When enabled: requires `X-Payment-Tx` header with USDC tx hash.
+
+**Extended `morningReportService.js`:**
+- `buildLv3Prompt()` — includes meta stats, club ranking, per-agent meta position
+
+**New endpoint:** `POST /v1/ai/premium-report` — deep analysis (2000 tokens), x402 payment, 10/day rate limit
+
+**Extended `MorningReport.vue`:**
+- "Deep Analysis" section below Lv2. Free preview button (when x402 disabled) or unlock button ($0.02 USDC)
+- Renders: meta position, strength, weakness, training plan, forecast
+
+**Config:** `PREMIUM_REPORT_MAX_TOKENS=2000`, `X402_ENABLED`, `X402_PREMIUM_REPORT_PRICE=20000`, `USDC_CONTRACT_BASE`
+
+**Files changed:**
+- `backend/src/config.js` — x402 + premium constants
+- `backend/src/services/metaAnalysisService.js` — **new** global meta stats
+- `backend/src/middleware/x402.js` — **new** payment middleware (feature flag)
+- `backend/src/services/morningReportService.js` — buildLv3Prompt
+- `backend/src/routes/ai.js` — premium-report endpoint
+- `src/components/club/MorningReport.vue` — deep analysis UI

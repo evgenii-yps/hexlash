@@ -197,4 +197,68 @@ Respond in JSON format:
 Include one entry in "agents" for each agent listed above. Be concise, specific. Tone: professional fight manager.`;
 }
 
-module.exports = { gatherClubStats, buildMorningReportPrompt, getDateRange };
+/**
+ * Build Lv3 deep analysis prompt with meta comparison.
+ */
+function buildLv3Prompt(clubName, clubLevel, stats, metaStats, clubRanking) {
+  const activeAgents = stats.agentStats.filter(a => a.fights > 0);
+
+  let agentSections = '';
+  for (const a of activeAgents) {
+    agentSections += `\n${a.name} (${a.build.primary}/${a.build.secondary}/${a.build.tertiary})
+ELO: ${a.elo} (${a.eloChange >= 0 ? '+' : ''}${a.eloChange}) | ${a.fightMode}
+Tactics: ${a.tactics.aggression}/${a.tactics.dicePolicy}/${a.tactics.coachPreference}
+Record: ${a.wins}W/${a.losses}L/${a.draws}D | Dice:${a.diceUsageRate}% Emergency:${a.emergencyRate}%`;
+  }
+
+  let metaSection = '';
+  if (metaStats) {
+    metaSection = `
+=== GLOBAL META ===
+Total agents: ${metaStats.totalAgents}, Average ELO: ${metaStats.avgElo}
+ELO Distribution: 25th=${metaStats.p25}, 50th=${metaStats.p50}, 75th=${metaStats.p75}, 90th=${metaStats.p90}
+
+Top Builds:
+${metaStats.topBuilds.map(b => `${b.primary}/${b.secondary}/${b.tertiary}: ${b.winRate}% (${b.fights} fights)`).join('\n')}
+
+Archetype Win Rates: ${Object.entries(metaStats.archetypeWinRates).map(([a, wr]) => `${a}:${wr}%`).join(', ')}
+
+Best Tactics: ${metaStats.bestTactics.map(t => `${t.aggression}/${t.dicePolicy}:${t.winRate}%`).join(', ')}`;
+  }
+
+  return `You are an elite AI fight club strategist for Hexlash.
+Provide a DEEP strategic analysis. Compare against global meta and give optimization advice.
+
+Club: "${clubName}" (Level ${clubLevel})
+Ranking: #${clubRanking.rank} of ${clubRanking.totalClubs} (Top ${clubRanking.percentile}%)
+Club avg ELO: ${clubRanking.avgElo}
+
+Fights: ${stats.totalFights} (${stats.wins}W/${stats.losses}L/${stats.draws}D, ${stats.winRate}%)
+Modes: PvE:${stats.pveCount} Ranked:${stats.rankedCount} FreeArena:${stats.freeCount}
+
+Agents:${agentSections}
+${metaSection}
+
+Respond in JSON:
+{
+  "metaSummary": "2-3 sentences: where this club stands in the global meta",
+  "clubStrength": "What makes this club competitive (1-2 sentences)",
+  "clubWeakness": "Biggest strategic gap (1-2 sentences)",
+  "agents": [
+    {
+      "name": "exact agent name",
+      "metaPosition": "1 sentence: where this agent stands",
+      "optimalBuild": "Recommended build or 'Current build is optimal'",
+      "optimalTactics": "Recommended tactics or 'Current tactics are optimal'",
+      "priorityMoves": "Which moves to learn/upgrade next",
+      "projectedElo": "Estimated ELO after optimizations"
+    }
+  ],
+  "trainingPlan": "3-5 step prioritized plan",
+  "forecast": "1-2 sentence projection if they follow the plan"
+}
+
+Be specific, use numbers. Tone: elite strategist.`;
+}
+
+module.exports = { gatherClubStats, buildMorningReportPrompt, buildLv3Prompt, getDateRange };
