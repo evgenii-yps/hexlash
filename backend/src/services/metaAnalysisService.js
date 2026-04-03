@@ -95,23 +95,30 @@ async function gatherMetaStats() {
 /**
  * Get club's position in global ranking.
  */
-async function getClubRanking(clubId) {
-  const club = await prisma.club.findUnique({ where: { id: clubId }, select: { wins: true, battles: true } });
-  if (!club) return { rank: 0, totalClubs: 0, percentile: 0 };
+async function getClubRanking(fightClubId) {
+  // Rank fight clubs by total agent wins
+  const fc = await prisma.fightClub.findUnique({ where: { id: fightClubId } });
+  if (!fc) return { rank: 0, totalClubs: 0, percentile: 0 };
 
-  const totalClubs = await prisma.club.count({ where: { battles: { gt: 0 } } });
-  const clubsAbove = await prisma.club.count({
-    where: { battles: { gt: 0 }, wins: { gt: club.wins } },
-  });
-
-  const rank = clubsAbove + 1;
-  const percentile = totalClubs > 0 ? Math.round((rank / totalClubs) * 100) : 100;
-
-  // Avg ELO of club's agents
-  const eloAgg = await prisma.agent.aggregate({
-    where: { clubId },
+  const agentStats = await prisma.agent.aggregate({
+    where: { fightClubId },
+    _sum: { wins: true, totalFights: true },
     _avg: { elo: true },
   });
+  const totalWins = agentStats._sum.wins || 0;
+
+  // Count fight clubs with more wins
+  const allFightClubs = await prisma.fightClub.findMany({
+    select: { id: true, agents: { select: { wins: true } } },
+  });
+  const fcWins = allFightClubs.map(f => ({ id: f.id, wins: f.agents.reduce((s, a) => s + a.wins, 0) }));
+  const totalClubs = fcWins.filter(f => f.wins > 0).length;
+  const clubsAbove = fcWins.filter(f => f.wins > totalWins).length;
+
+  const rank = totalClubs > 0 ? clubsAbove + 1 : 0;
+  const percentile = totalClubs > 0 ? Math.round((rank / totalClubs) * 100) : 100;
+
+  const eloAgg = agentStats;
 
   return {
     rank,

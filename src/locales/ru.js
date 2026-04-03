@@ -369,6 +369,7 @@ export default {
     lblTransferTitle: 'Передать владение?',
     lblTransferDesc: '<strong>{name}</strong> станет владельцем. Вы станете участником.',
     // Agent Roster
+    lblMyFightClub: 'МОЙ БОЙЦОВСКИЙ КЛУБ',
     lblRoster: 'РОСТЕР',
     lblNewAgent: 'Новый агент',
     lblCreateAgent: 'Создать агента',

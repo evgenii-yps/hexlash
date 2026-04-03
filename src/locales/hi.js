@@ -355,6 +355,7 @@ export default {
     lblTransferTitle: 'स्वामित्व हस्तांतरित करें?',
     lblTransferDesc: '<strong>{name}</strong> मालिक बन जाएगा। आप सदस्य बन जाएंगे।',
     // Agent Roster
+    lblMyFightClub: 'MY FIGHT CLUB',
     lblRoster: 'ROSTER',
     lblNewAgent: 'New Agent',
     lblCreateAgent: 'Create Agent',

@@ -622,10 +622,8 @@ router.post('/morning-report', authMiddleware, async (req, res) => {
     }
 
     const prisma = require('../lib/prisma');
-    const user = await prisma.user.findUnique({ where: { id: req.userId }, select: { clubId: true } });
-    if (!user?.clubId) {
-      return res.status(400).json({ error: 'You are not in a club' });
-    }
+    const { getOrCreateFightClub } = require('../services/fightClubService');
+    const fightClub = await getOrCreateFightClub(req.userId);
 
     const { period = 'today' } = req.body;
     const VALID_PERIODS = ['today', 'yesterday', 'last_7d'];
@@ -634,15 +632,15 @@ router.post('/morning-report', authMiddleware, async (req, res) => {
     }
 
     // Check cache
-    const dateKey = new Date().toISOString().slice(0, 13); // hourly granularity
-    const cacheKey = `${user.clubId}:${period}:${dateKey}`;
+    const dateKey = new Date().toISOString().slice(0, 13);
+    const cacheKey = `${fightClub.id}:${period}:${dateKey}`;
     const cached = morningReportCache.get(cacheKey);
     if (cached && Date.now() - cached.generatedAt < MORNING_REPORT_CACHE_TTL) {
       return res.json({ report: cached.report, cached: true });
     }
 
     // Gather stats
-    const stats = await gatherClubStats(user.clubId, period);
+    const stats = await gatherClubStats(fightClub.id, period);
 
     if (stats.totalFights === 0) {
       return res.json({
@@ -655,9 +653,8 @@ router.post('/morning-report', authMiddleware, async (req, res) => {
       });
     }
 
-    // Get club info
-    const club = await prisma.club.findUnique({ where: { id: user.clubId }, select: { name: true, level: true } });
-    const prompt = buildMorningReportPrompt(club?.name || 'Unknown', club?.level || 1, stats);
+    // Get fight club info
+    const prompt = buildMorningReportPrompt('Fight Club', fightClub.level || 1, stats);
 
     // Dynamic max_tokens based on agent count
     const activeAgents = stats.agentStats.filter(a => a.fights > 0).length;
@@ -750,20 +747,18 @@ router.post('/premium-report', authMiddleware, verifyPayment, async (req, res) =
       return res.status(429).json({ error: 'Rate limit: max 10 premium reports per day' });
     }
 
-    const prisma = require('../lib/prisma');
-    const user = await prisma.user.findUnique({ where: { id: req.userId }, select: { clubId: true } });
-    if (!user?.clubId) return res.status(400).json({ error: 'You are not in a club' });
+    const { getOrCreateFightClub: getOrCreateFC } = require('../services/fightClubService');
+    const fightClub = await getOrCreateFC(req.userId);
 
     const { period = 'today' } = req.body;
     const VALID_PERIODS = ['today', 'yesterday', 'last_7d'];
     if (!VALID_PERIODS.includes(period)) return res.status(400).json({ error: 'Invalid period' });
 
     // Gather all data
-    const [stats, metaStats, clubRanking, club] = await Promise.all([
-      gatherClubStats(user.clubId, period),
+    const [stats, metaStats, clubRanking] = await Promise.all([
+      gatherClubStats(fightClub.id, period),
       gatherMetaStats(),
-      getClubRanking(user.clubId),
-      prisma.club.findUnique({ where: { id: user.clubId }, select: { name: true, level: true } }),
+      getClubRanking(fightClub.id),
     ]);
 
     if (stats.totalFights === 0) {
@@ -776,7 +771,7 @@ router.post('/premium-report', authMiddleware, verifyPayment, async (req, res) =
       });
     }
 
-    const prompt = buildLv3Prompt(club?.name || 'Unknown', club?.level || 1, stats, metaStats, clubRanking);
+    const prompt = buildLv3Prompt('Fight Club', fightClub.level || 1, stats, metaStats, clubRanking);
 
     const client = getAnthropicClient();
     if (!client) return res.status(503).json({ error: 'AI service unavailable' });

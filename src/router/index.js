@@ -42,6 +42,7 @@ const protectedRoutes = [
     {path: '/profile/skins', name: 'Skins', component: () => import("/src/views/ProfileView.vue")},
 
     {path: '/club/:id', name: 'Club', component: () => import("/src/views/ClubView.vue")},
+    {path: '/fight-club', name: 'FightClub', component: () => import("/src/views/FightClubView.vue")},
     {path: '/club/agent/create', name: 'CreateAgent', component: () => import("/src/views/CreateAgentView.vue")},
     {path: '/club/agent/:agentId', name: 'AgentDetail', component: () => import("/src/views/AgentDetailView.vue")},
 

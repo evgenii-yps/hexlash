@@ -37,6 +37,20 @@ const createAgentLimiter = rateLimit({
   message: { error: 'Too many agents created, try again later' },
 });
 
+// GET /v1/agent/fight-club — get fight club level info
+router.get('/fight-club', authMiddleware, async (req, res) => {
+  try {
+    const { getOrCreateFightClub, getLevelInfo } = require('../services/fightClubService');
+    const fc = await getOrCreateFightClub(req.userId);
+    const info = getLevelInfo(fc.xp);
+    const currentAgents = await prisma.agent.count({ where: { fightClubId: fc.id } });
+    res.json({ data: { ...info, currentAgents, fightClubId: fc.id } });
+  } catch (err) {
+    console.error('Get fight club error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // GET /v1/agent/rankings
 router.get('/rankings', authMiddleware, async (req, res) => {
   try {
@@ -121,16 +135,14 @@ router.post('/create', authMiddleware, createAgentLimiter, async (req, res) => {
   try {
     const { name, skin, primaryModule, secondaryModule, tertiaryModule } = req.body;
 
-    // Validate user has a club
+    // Get or create FightClub (auto-created, no clan required)
+    const { getOrCreateFightClub } = require('../services/fightClubService');
     const user = await prisma.user.findUnique({ where: { id: req.userId } });
-    if (!user.clubId) {
-      return res.status(400).json({ error: 'No club found' });
-    }
+    const fightClub = await getOrCreateFightClub(req.userId);
 
     // Validate roster limit
-    const club = await prisma.club.findUnique({ where: { id: user.clubId } });
-    const agentCount = await prisma.agent.count({ where: { clubId: user.clubId } });
-    if (agentCount >= club.maxAgents) {
+    const agentCount = await prisma.agent.count({ where: { fightClubId: fightClub.id } });
+    if (agentCount >= fightClub.maxAgents) {
       return res.status(400).json({ error: 'Agent roster is full' });
     }
 
@@ -168,7 +180,7 @@ router.post('/create', authMiddleware, createAgentLimiter, async (req, res) => {
           primaryModule,
           secondaryModule,
           tertiaryModule,
-          clubId: user.clubId,
+          fightClubId: fightClub.id,
           ownerId: req.userId,
         },
       });

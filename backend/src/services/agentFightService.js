@@ -5,10 +5,9 @@
 
 const prisma = require('../lib/prisma');
 const { simulateAgentFight, generatePveBot } = require('./agentCombatEngine');
-const { addClubXp, getFightXpReward } = require('./clubLevelService');
+const { addFightClubXp, getFightClubLegendBuff, getFightXpReward } = require('./fightClubService');
 const { MOVE_BRANCHES } = require('./researchGateService');
 const { calculateElo } = require('./eloService');
-const { getClubLegendBuff } = require('./retirementService');
 
 // XP multipliers by mode
 const XP_MULTIPLIERS = {
@@ -79,7 +78,7 @@ async function _executeFight(agent, options = {}) {
     };
 
     const bot = generatePveBot(agent.elo);
-    const legendBuff = await getClubLegendBuff(agent.clubId);
+    const legendBuff = await getFightClubLegendBuff(agent.fightClubId);
     const fightResult = simulateAgentFight(fighter1, bot, { mode: 'pve_training', legendBuff });
 
     // Calculate XP (with legend XP buff)
@@ -131,8 +130,8 @@ async function _executeFight(agent, options = {}) {
 
     // Club XP (async, non-blocking)
     let clubXpResult = { earned: clubXpAmount, leveledUp: false };
-    if (agent.clubId && clubXpAmount > 0) {
-      addClubXp(agent.clubId, clubXpAmount)
+    if (agent.fightClubId && clubXpAmount > 0) {
+      addFightClubXp(agent.fightClubId, clubXpAmount)
         .then(r => { if (r.leveledUp) clubXpResult.leveledUp = true; })
         .catch(e => console.error('Club XP error:', e));
     }
@@ -253,7 +252,7 @@ async function _executeAgentVsAgentFight(agent1Id, agent2Id, options) {
     };
 
     // Get legend buff (use a1's club, both agents may have different clubs)
-    const legendBuff1 = await getClubLegendBuff(a1.clubId);
+    const legendBuff1 = await getFightClubLegendBuff(a1.fightClubId);
     const fightResult = simulateAgentFight(fighter1, fighter2, { mode, legendBuff: legendBuff1 });
 
     // ELO (only for ranked)
@@ -331,8 +330,8 @@ async function _executeAgentVsAgentFight(agent1Id, agent2Id, options) {
       }),
     ]);
 
-    if (a1.clubId && a1ClubXp > 0) addClubXp(a1.clubId, a1ClubXp).catch(e => console.error('Club XP error:', e));
-    if (a2.clubId && a2ClubXp > 0) addClubXp(a2.clubId, a2ClubXp).catch(e => console.error('Club XP error:', e));
+    if (a1.fightClubId && a1ClubXp > 0) addFightClubXp(a1.fightClubId, a1ClubXp).catch(e => console.error('Club XP error:', e));
+    if (a2.fightClubId && a2ClubXp > 0) addFightClubXp(a2.fightClubId, a2ClubXp).catch(e => console.error('Club XP error:', e));
 
     return {
       result: fightResult.result, rounds: fightResult.rounds,

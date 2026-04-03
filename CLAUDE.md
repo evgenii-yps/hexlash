@@ -1461,3 +1461,34 @@ Agent NFT minting: first agent free, additional require ERC-1155 NFT on Base. Fe
 - `backend/src/config.js` — NFT constants
 - `src/core/services/nftMintService.js` — **new** frontend mint helpers
 - `src/views/CreateAgentView.vue` — NFT mint UI
+
+### Refactor: Decouple Club Mode from Clan (ТЗ-R1) — ✅ COMPLETE
+
+Club Mode (agents) now independent from Clan. Personal FightClub per user, auto-created.
+
+**New Prisma model `FightClub`:** 1:1 with User. Fields: level, xp, maxAgents, legendSkin/Archetype/Buff. Auto-created on first access.
+
+**Agent.clubId → Agent.fightClubId:** Agents belong to FightClub, not Club.
+
+**Club model cleaned:** Removed maxAgents, legendSkin, legendArchetype, legendBuff, agents relation.
+
+**New service `fightClubService.js`:** getOrCreateFightClub, addFightClubXp, getFightClubLegendBuff, getFightXpReward, getLevelInfo.
+
+**New view `FightClubView.vue`:** All Club Mode UI (level bar, morning report, retirement, roster) moved from ClanPageContent to standalone `/fight-club` route.
+
+**Files changed (16):**
+- `backend/prisma/schema.prisma` — FightClub model, Agent.fightClubId, Club cleaned
+- `backend/prisma/migrations/20260404000000_refactor_fight_club/` — data migration SQL
+- `backend/src/services/fightClubService.js` — **new** FightClub service
+- `backend/src/services/agentFightService.js` — club→fightClub references
+- `backend/src/services/retirementService.js` — Club→FightClub for legend
+- `backend/src/services/morningReportService.js` — fightClubId queries
+- `backend/src/services/metaAnalysisService.js` — FightClub ranking
+- `backend/src/routes/agent.js` — getOrCreateFightClub, fightClubId, GET /agent/fight-club
+- `backend/src/routes/ai.js` — fightClub for reports
+- `backend/src/routes/club.js` — removed GET /:id/level (moved to agent)
+- `backend/src/routes/user.js` — FightClub for retirement
+- `src/views/FightClubView.vue` — **new** standalone Club Mode view
+- `src/core/state/modules/agentState.js` — fetchFightClubLevel
+- `src/components/fragments/club/ClanPageContent.vue` — removed Club Mode UI
+- `src/router/index.js` — /fight-club route
