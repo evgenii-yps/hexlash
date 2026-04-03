@@ -1414,3 +1414,23 @@ Fighter retirement: fully trained fighter becomes a Legend, grants passive buffs
 - `backend/src/services/agentFightService.js` — legend XP buff + getClubLegendBuff import
 - `src/components/club/RetirementPanel.vue` — **new** frontend component
 - `src/components/fragments/club/ClanPageContent.vue` — integrated RetirementPanel
+
+### Agent Rankings + Leagues (ТЗ-26) — ✅ COMPLETE
+
+Agent leaderboard with 6 league tiers, integrated into RatingsView as 4th tab.
+
+**Leagues:** Bronze (0-899), Silver (900-1099), Gold (1100-1299), Platinum (1300-1499), Diamond (1500-1799), Champion (1800+)
+
+**New files:**
+- `src/utils/leagues.js` — league constants, `getLeague(elo)`, `getLeagueColor(elo)`
+- `src/components/ratings/LeagueBadge.vue` — ELO-based colored league badge
+- `src/components/ratings/AgentLeaderboard.vue` — full leaderboard with league filter, "Your Agents" section, pagination
+
+**Extended `RatingsView.vue`:** Added 4th tab "Agents" with `AgentLeaderboard` component
+
+**Files changed:**
+- `src/utils/leagues.js` — **new** league utility
+- `src/components/ratings/LeagueBadge.vue` — **new** component
+- `src/components/ratings/AgentLeaderboard.vue` — **new** component
+- `src/views/RatingsView.vue` — AGENTS tab + import
+- `src/locales/*.js` — rating.* agent keys (15 new)
