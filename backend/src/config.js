@@ -58,22 +58,28 @@ module.exports = {
 
   // Clan Level System
   CLAN_LEVEL_CONFIG: {
-    1:  { xpRequired: 0,      maxMembers: 20, xpBonus: 0 },
-    2:  { xpRequired: 1000,   maxMembers: 20, xpBonus: 0 },
-    3:  { xpRequired: 3000,   maxMembers: 25, xpBonus: 0 },
-    4:  { xpRequired: 6000,   maxMembers: 25, xpBonus: 5 },
-    5:  { xpRequired: 10000,  maxMembers: 30, xpBonus: 10 },
-    6:  { xpRequired: 20000,  maxMembers: 30, xpBonus: 10 },
-    7:  { xpRequired: 35000,  maxMembers: 40, xpBonus: 15 },
-    8:  { xpRequired: 55000,  maxMembers: 40, xpBonus: 15 },
-    9:  { xpRequired: 80000,  maxMembers: 45, xpBonus: 20 },
-    10: { xpRequired: 120000, maxMembers: 50, xpBonus: 20 },
+    1:  { xpRequired: 0,      maxMembers: 20, maxAgents: 2, xpBonus: 0 },
+    2:  { xpRequired: 1000,   maxMembers: 20, maxAgents: 3, xpBonus: 0 },
+    3:  { xpRequired: 3000,   maxMembers: 25, maxAgents: 4, xpBonus: 0 },
+    4:  { xpRequired: 6000,   maxMembers: 25, maxAgents: 5, xpBonus: 5 },
+    5:  { xpRequired: 10000,  maxMembers: 30, maxAgents: 6, xpBonus: 10 },
+    6:  { xpRequired: 20000,  maxMembers: 30, maxAgents: 6, xpBonus: 10 },
+    7:  { xpRequired: 35000,  maxMembers: 40, maxAgents: 6, xpBonus: 15 },
+    8:  { xpRequired: 55000,  maxMembers: 40, maxAgents: 6, xpBonus: 15 },
+    9:  { xpRequired: 80000,  maxMembers: 45, maxAgents: 6, xpBonus: 20 },
+    10: { xpRequired: 120000, maxMembers: 50, maxAgents: 6, xpBonus: 20 },
   },
   CLAN_TAP_SHARE: 0.05, // 5% of member taps go to clan treasury
   CLAN_XP_REWARDS: {
     win: 10,
     draw: 5,
     lose: 3,
+    agent_win: 10,
+    agent_draw: 5,
+    agent_lose: 2,
+    agent_ranked_win: 20,
+    agent_ranked_draw: 10,
+    agent_ranked_lose: 5,
   },
 
   // Telegram

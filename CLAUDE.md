@@ -70,6 +70,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
     services/matchmaking.js — PvP matchmaking service
     services/pvpMatchManager.js — PvP match lifecycle management
     services/pvpCombatEngine.js — PvP combat engine
+    services/clubLevelService.js — Club level system (calculateLevel, getLevelInfo, addClubXp, getFightXpReward)
     utils/helpers.js
   prisma/
     schema.prisma          — 18 models: User, Club, Agent, AgentTactics, AgentProgression, AgentFightLog, Fight, Achievement, Task, PunchInfo, FriendRequest, Friendship...
@@ -482,7 +483,7 @@ Base: `/v1/`
 |-------|------|---------|
 | `/auth` | auth.js | login, signup, reset, telegram. Rate limited: login 5/15min, register 3/hr, telegram 10/15min. Register + telegram accept `referralCode` — rewards both users +500 taps |
 | `/user` | user.js | profile, stats, avatar, achievements, referrals. Skin validated via regex. Delete uses $transaction with cascade. GET /referrals returns referral stats + list |
-| `/club` | club.js | create/edit/delete club, avatar, members, balance, roles (set-role, transfer-ownership, kick, invite). maxMembers=50, roles: owner/deputy/member. DELETE / dissolves club (owner-only, clears all members + invites). Invite: DB-persisted (48h), GET /invites, POST /invite/respond. Events: GET /:clubId/events (members only, cursor pagination) |
+| `/club` | club.js | create/edit/delete club, avatar, members, balance, roles (set-role, transfer-ownership, kick, invite), level info. maxMembers=50, roles: owner/deputy/member. DELETE / dissolves club (owner-only, clears all members + invites). Invite: DB-persisted (48h), GET /invites, POST /invite/respond. Events: GET /:clubId/events (members only, cursor pagination) |
 | `/task` | task.js | daily + social tasks |
 | `/file` | file.js | avatar/file upload |
 | `/fight` | fight.js | fight creation, results, history |
@@ -924,8 +925,8 @@ Added clan XP + level progression system. Fights award XP to clans, clans level 
 **Prisma schema:** Added `level` (Int, default 1) and `xp` (Int, default 0) to Club model. Default `maxMembers` changed from 50 to 20 (level 1 default). Migration: `20260330000000_add_clan_level_xp`.
 
 **Config (`config.js`):**
-- `CLAN_LEVEL_CONFIG` — 10 levels: xpRequired (0→120,000), maxMembers (20→50), xpBonus (0→20%)
-- `CLAN_XP_REWARDS` — win: 10, draw: 5, lose: 3
+- `CLAN_LEVEL_CONFIG` — 10 levels: xpRequired (0→120,000), maxMembers (20→50), maxAgents (2→6), xpBonus (0→20%)
+- `CLAN_XP_REWARDS` — player: win 10, draw 5, lose 3; agent: win 10, draw 5, lose 2; agent_ranked: win 20, draw 10, lose 5
 
 **Helper (`utils/clanLevel.js`):**
 - `getClanLevelInfo(level, xp)` — returns level info for display (level, xp, xpRequired, maxMembers, xpBonus, isMaxLevel)
@@ -1091,3 +1092,34 @@ Added REST API for agent management with full validation and rate limiting.
 **Files changed:**
 - `backend/src/routes/agent.js` — **new** route file (7 endpoints)
 - `backend/src/index.js` — added agent route import + mount at `/v1/agent`
+
+### Club Level System for Agents (ТЗ-03) — ✅ COMPLETE
+
+Extended existing clan level system with agent support. Single unified level system — no parallel configs.
+
+**Config changes (`config.js`):**
+- `CLAN_LEVEL_CONFIG` — added `maxAgents` field per level (2→6, caps at level 5)
+- `CLAN_XP_REWARDS` — added agent-specific rewards: `agent_win/draw/lose` (10/5/2), `agent_ranked_win/draw/lose` (20/10/5)
+
+**New service (`services/clubLevelService.js`):**
+- `calculateLevel(xp)` — derive level 1-10 from total XP
+- `calculateMaxAgents(level)` — get maxAgents for level
+- `getLevelInfo(xp)` — full level info with progress%, maxAgents, maxMembers, xpBonus, isMaxLevel
+- `addClubXp(clubId, xpAmount)` — increment XP + auto level-up (updates level, maxMembers, maxAgents, fires level_up event)
+- `getFightXpReward(result, mode)` — map fight result + mode to XP reward amount
+
+**Endpoint:** `GET /v1/club/:id/level` — level info + currentAgents count (public, any authenticated user)
+
+**Updated:** `awardClanXP()` in `clanLevel.js` — now also updates `maxAgents` on level-up
+
+**Sync utility:** `backend/src/utils/syncClubLevels.js` — one-time script to recalculate level/maxMembers/maxAgents for all clubs
+
+**Frontend:** `src/data/clanLevels.js` — added `maxAgents` to all levels
+
+**Files changed:**
+- `backend/src/config.js` — CLAN_LEVEL_CONFIG + CLAN_XP_REWARDS extended
+- `backend/src/services/clubLevelService.js` — **new** service
+- `backend/src/utils/clanLevel.js` — maxAgents in level-up
+- `backend/src/routes/club.js` — GET /:id/level endpoint
+- `backend/src/utils/syncClubLevels.js` — **new** sync script
+- `src/data/clanLevels.js` — maxAgents added
