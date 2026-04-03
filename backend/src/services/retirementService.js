@@ -49,7 +49,7 @@ function calculateLegendBuff(progression, primaryModule) {
 async function checkRetirementEligibility(userId) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { progression: true, clubId: true },
+    select: { progression: true },
   });
 
   if (!user) return { canRetire: false, progress: null, reasons: ['User not found'] };
@@ -63,22 +63,24 @@ async function checkRetirementEligibility(userId) {
   const allUnlocked = progress.unlockedMoves >= TOTAL_MOVES;
   const minLevel3 = progress.movesAtLevel3Plus >= MIN_LEVEL3_MOVES;
   const minLevel5 = progress.movesAtLevel5 >= MIN_LEVEL5_MOVES;
-  const hasClub = !!user.clubId;
+
+  // FightClub check (auto-created, so always exists if user has accessed Club Mode)
+  const fightClub = await prisma.fightClub.findUnique({ where: { ownerId: userId }, select: { id: true, legendSkin: true } });
+  const hasFightClub = !!fightClub;
 
   if (!allUnlocked) reasons.push(`Need all ${TOTAL_MOVES} moves unlocked (have ${progress.unlockedMoves})`);
   if (!minLevel3) reasons.push(`Need ${MIN_LEVEL3_MOVES} moves at Level 3+ (have ${progress.movesAtLevel3Plus})`);
   if (!minLevel5) reasons.push(`Need ${MIN_LEVEL5_MOVES} moves at Level 5 (have ${progress.movesAtLevel5})`);
-  if (!hasClub) reasons.push('Must be in a club');
+  if (!hasFightClub) reasons.push('Must have a Fight Club');
 
   let noExistingLegend = true;
-  if (hasClub) {
-    const club = await prisma.club.findUnique({ where: { id: user.clubId }, select: { legendSkin: true } });
-    noExistingLegend = !club?.legendSkin;
-    if (!noExistingLegend) reasons.push('Club already has a legend');
+  if (hasFightClub) {
+    noExistingLegend = !fightClub.legendSkin;
+    if (!noExistingLegend) reasons.push('Fight Club already has a legend');
   }
 
-  const requirements = { allUnlocked, minLevel3, minLevel5, hasClub, noExistingLegend };
-  const canRetire = allUnlocked && minLevel3 && minLevel5 && hasClub && noExistingLegend;
+  const requirements = { allUnlocked, minLevel3, minLevel5, hasClub: hasFightClub, noExistingLegend };
+  const canRetire = allUnlocked && minLevel3 && minLevel5 && hasFightClub && noExistingLegend;
 
   return { canRetire, progress, requirements, reasons, isRetired: false };
 }
@@ -94,17 +96,18 @@ async function retireFighter(userId, primaryModule) {
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { skin: true, clubId: true, progression: true },
+    select: { skin: true, progression: true },
   });
 
-  const buff = calculateLegendBuff(user.progression, primaryModule || 'predator');
+  const fightClub = await prisma.fightClub.findUnique({ where: { ownerId: userId } });
+  if (!fightClub) return { success: false, reasons: ['No Fight Club'] };
 
-  // Update club with legend + mark user as retired in progression
+  const buff = calculateLegendBuff(user.progression, primaryModule || 'predator');
   const updatedProgression = { ...user.progression, retired: true, retiredAt: new Date().toISOString() };
 
   await prisma.$transaction([
-    prisma.club.update({
-      where: { id: user.clubId },
+    prisma.fightClub.update({
+      where: { id: fightClub.id },
       data: {
         legendSkin: user.skin,
         legendArchetype: primaryModule || 'predator',
@@ -123,24 +126,11 @@ async function retireFighter(userId, primaryModule) {
   };
 }
 
-/**
- * Get legend buff for a club (used by combat engine).
- */
-async function getClubLegendBuff(clubId) {
-  if (!clubId) return null;
-  const club = await prisma.club.findUnique({
-    where: { id: clubId },
-    select: { legendBuff: true },
-  });
-  return club?.legendBuff || null;
-}
-
 module.exports = {
   calculateRetirementProgress,
   calculateLegendBuff,
   checkRetirementEligibility,
   retireFighter,
-  getClubLegendBuff,
   TOTAL_MOVES,
   MIN_LEVEL3_MOVES,
   MIN_LEVEL5_MOVES,

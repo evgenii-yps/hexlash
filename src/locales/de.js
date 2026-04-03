@@ -355,6 +355,7 @@ export default {
     lblTransferTitle: 'Eigentum übertragen?',
     lblTransferDesc: '<strong>{name}</strong> wird der Besitzer. Du wirst zum Mitglied.',
     // Agent Roster
+    lblMyFightClub: 'MY FIGHT CLUB',
     lblRoster: 'ROSTER',
     lblNewAgent: 'New Agent',
     lblCreateAgent: 'Create Agent',

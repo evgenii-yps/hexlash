@@ -40,19 +40,6 @@
     <!-- Stats Grid + Win Rate Bar -->
     <ClubStats :clubData="clubData"/>
 
-    <!-- Agent Roster (Club Mode) -->
-    <ClubLevelBar v-if="clubLevelData" :clubLevel="clubLevelData" />
-    <MorningReport v-if="agentsList.length > 0" />
-    <AgentRoster
-      :agents="agentsList"
-      :maxAgents="clubLevelData?.maxAgents || 2"
-      :loading="agentsLoading"
-      @create="$router.push('/club/agent/create')"
-      @agent-click="(id) => $router.push(`/club/agent/${id}`)"
-      @toggle-auto="onToggleAutoFight"
-    />
-    <RetirementPanel v-if="isOwner" />
-
     <!-- Tab Navigation -->
     <div class="tab-nav">
       <button
@@ -289,10 +276,7 @@ import ClubAvatar from "@/components/fragments/club/ClubAvatar.vue";
 import ClubOwnerAvatar from "@/components/fragments/club/ClubOwnerAvatar.vue";
 import ClubStats from "@/components/fragments/club/ClubStats.vue";
 import ClanActivityFeed from "@/components/fragments/club/ClanActivityFeed.vue";
-import ClubLevelBar from "@/components/club/ClubLevelBar.vue";
-import AgentRoster from "@/components/club/AgentRoster.vue";
-import MorningReport from "@/components/club/MorningReport.vue";
-import RetirementPanel from "@/components/club/RetirementPanel.vue";
+// Club Mode UI moved to FightClubView
 import ClubEdit from "@/components/fragments/club/ClubEdit.vue";
 import HexButton from "@/components/ui/HexButton.vue";
 import ClanConfirmModal from "@/components/fragments/club/ClanConfirmModal.vue";
@@ -355,11 +339,6 @@ const tabs = computed(() => [
   { id: 'activity', label: t.value.club.tabActivity || 'Activity' },
   { id: 'settings', label: t.value.club.tabSettings || 'Settings' },
 ]);
-
-// Agent roster
-const agentsList = computed(() => store.getters['agent/agentsList']);
-const agentsLoading = computed(() => store.state.agent.agentsLoading);
-const clubLevelData = computed(() => store.state.agent.clubLevel);
 
 const friends = computed(() => store.getters['friends/getFriends'] || []);
 const invitableFriends = computed(() => friends.value.filter(f => !f.clubId));
@@ -561,30 +540,13 @@ const onKeydown = (e) => {
   if (e.key === 'Escape') closeActionMenu();
 };
 
-let agentRefreshInterval = null;
-
-const onToggleAutoFight = async (id, enabled) => {
-  try {
-    await store.dispatch('agent/toggleAutoFight', { id, enabled });
-  } catch (err) {
-    console.error('Toggle auto-fight error:', err);
-  }
-};
-
 onMounted(() => {
   document.addEventListener('keydown', onKeydown);
   loadMembers();
-  // Load agent data
-  store.dispatch('agent/fetchAgents');
-  if (props.clubId) store.dispatch('agent/fetchClubLevel', props.clubId);
-  agentRefreshInterval = setInterval(() => {
-    store.dispatch('agent/fetchAgents');
-  }, 30000);
 });
 
 onBeforeUnmount(() => {
   document.removeEventListener('keydown', onKeydown);
-  if (agentRefreshInterval) clearInterval(agentRefreshInterval);
 });
 
 // Reload members when clubData changes (e.g. after edit)

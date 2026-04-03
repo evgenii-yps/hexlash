@@ -87,6 +87,7 @@ model User {
   sentClubInvites        ClubInvite[]    @relation("SentClubInvites")
   receivedClubInvites    ClubInvite[]    @relation("ReceivedClubInvites")
   agents                 Agent[]
+  fightClub              FightClub?
 }
 
 model Club {
@@ -103,14 +104,9 @@ model Club {
   xp          Int          @default(0)
   isPublic    Boolean      @default(true)
   maxMembers  Int          @default(20)
-  maxAgents        Int          @default(2)    // max agents per level: 1→2, 2→3, 3→4, 4→5, 5+→6
-  legendSkin       String?                     // retired fighter skin (legend)
-  legendArchetype  String?                     // retired fighter archetype
-  legendBuff       Json?                       // legend buff {xpBonus, dmgBonus, archetype}
   members     User[]
   invites     ClubInvite[]
   events      ClanEvent[]
-  agents      Agent[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 }
@@ -287,6 +283,28 @@ model PunchInfo {
   user                   User     @relation(fields: [userId], references: [id])
 }
 
+model FightClub {
+  id               String   @id @default(uuid())
+
+  // Level and progression
+  level            Int      @default(1)
+  xp               Int      @default(0)
+  maxAgents        Int      @default(2)
+
+  // Legend (retired fighter)
+  legendSkin       String?
+  legendArchetype  String?
+  legendBuff       Json?
+
+  // Relations
+  ownerId          String   @unique
+  owner            User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  agents           Agent[]
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
 model Agent {
   id               String   @id @default(uuid())
   name             String                  // agent name (2-20 chars)
@@ -315,8 +333,8 @@ model Agent {
   nextFightAt      DateTime?
 
   // Relations
-  clubId           String
-  club             Club      @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  fightClubId      String
+  fightClub        FightClub @relation(fields: [fightClubId], references: [id], onDelete: Cascade)
   ownerId          String
   owner            User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
@@ -328,7 +346,7 @@ model Agent {
   progression      AgentProgression?
   fightLogs        AgentFightLog[]
 
-  @@index([clubId])
+  @@index([fightClubId])
   @@index([ownerId])
   @@index([elo])
   @@index([status])

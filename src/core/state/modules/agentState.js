@@ -73,10 +73,10 @@ const actions = {
     }
   },
 
-  async fetchClubLevel({ commit }, clubId) {
+  async fetchFightClubLevel({ commit }) {
     commit('SET_CLUB_LEVEL_LOADING', true);
     try {
-      const { data } = await apiClient.get(`/club/${clubId}/level`, { authRequired: true });
+      const { data } = await apiClient.get('/agent/fight-club', { authRequired: true });
       commit('SET_CLUB_LEVEL', data.data || data);
     } catch (err) {
       console.error('Failed to fetch club level:', err);

@@ -395,13 +395,11 @@ const { checkRetirementEligibility, retireFighter, calculateLegendBuff } = requi
 router.get('/retirement-status', authMiddleware, async (req, res) => {
   try {
     const eligibility = await checkRetirementEligibility(req.userId);
-    const user = await prisma.user.findUnique({ where: { id: req.userId }, select: { clubId: true, progression: true } });
+    const user = await prisma.user.findUnique({ where: { id: req.userId }, select: { progression: true } });
 
     let legend = null;
-    if (user?.clubId) {
-      const club = await prisma.club.findUnique({ where: { id: user.clubId }, select: { legendSkin: true, legendArchetype: true, legendBuff: true } });
-      if (club?.legendSkin) legend = { skin: club.legendSkin, archetype: club.legendArchetype, buff: club.legendBuff };
-    }
+    const fightClub = await prisma.fightClub.findUnique({ where: { ownerId: req.userId }, select: { legendSkin: true, legendArchetype: true, legendBuff: true } });
+    if (fightClub?.legendSkin) legend = { skin: fightClub.legendSkin, archetype: fightClub.legendArchetype, buff: fightClub.legendBuff };
 
     let buffPreview = null;
     if (eligibility.canRetire && user?.progression) {

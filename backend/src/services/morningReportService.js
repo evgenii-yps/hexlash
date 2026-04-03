@@ -31,18 +31,18 @@ function getDateRange(period) {
  * @param {string} period
  * @returns {Object} stats
  */
-async function gatherClubStats(clubId, period) {
+async function gatherClubStats(fightClubId, period) {
   const { start, end } = getDateRange(period);
 
   const agents = await prisma.agent.findMany({
-    where: { clubId },
+    where: { fightClubId },
     include: { tactics: true },
     select: undefined, // need all fields + tactics
   });
 
   // Re-query with select since include and select can't combine
   const agentsRaw = await prisma.agent.findMany({
-    where: { clubId },
+    where: { fightClubId },
     include: { tactics: true },
   });
 
