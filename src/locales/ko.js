@@ -356,6 +356,10 @@ export default {
     lblTransferDesc: '<strong>{name}</strong>이(가) 소유자가 됩니다. 당신은 멤버가 됩니다.',
     // Agent Roster
     lblMyFightClub: 'MY FIGHT CLUB',
+    lblClubMode: 'CLUB MODE',
+    lblEnterFightClub: 'Enter Fight Club',
+    lblManageFightClub: 'Manage Fight Club',
+    lblPromoDesc: 'Train AI fighters. Send them to battle 24/7. Rise through leagues.',
     lblRoster: 'ROSTER',
     lblNewAgent: 'New Agent',
     lblCreateAgent: 'Create Agent',

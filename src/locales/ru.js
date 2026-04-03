@@ -370,6 +370,10 @@ export default {
     lblTransferDesc: '<strong>{name}</strong> станет владельцем. Вы станете участником.',
     // Agent Roster
     lblMyFightClub: 'МОЙ БОЙЦОВСКИЙ КЛУБ',
+    lblClubMode: 'CLUB MODE',
+    lblEnterFightClub: 'Войти в Fight Club',
+    lblManageFightClub: 'Управление Fight Club',
+    lblPromoDesc: 'Тренируй AI бойцов. Отправляй в бой 24/7. Поднимайся по лигам.',
     lblRoster: 'РОСТЕР',
     lblNewAgent: 'Новый агент',
     lblCreateAgent: 'Создать агента',
