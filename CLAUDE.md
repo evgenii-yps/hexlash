@@ -73,6 +73,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
     services/clubLevelService.js — Club level system (calculateLevel, getLevelInfo, addClubXp, getFightXpReward)
     services/researchGateService.js — Research Gate: controls agent move learning based on player progression
     services/agentCombatEngine.js — Agent fight simulation (action-based + archetype modifiers, dice, coach, emergency)
+    services/agentFightService.js — Agent fight orchestrator (PvE training, XP distribution, fight logging)
     utils/helpers.js
   prisma/
     schema.prisma          — 18 models: User, Club, Agent, AgentTactics, AgentProgression, AgentFightLog, Fight, Achievement, Task, PunchInfo, FriendRequest, Friendship...
@@ -494,7 +495,7 @@ Base: `/v1/`
 | `/stats` | stats.js | player and game statistics |
 | `/friends` | friends.js | friends list, requests, search players |
 | `/ai` | ai.js | AI Trainer fight analysis (POST /analyze-fight), Club mode summary (POST /club-mode-summary) |
-| `/agent` | agent.js | CRUD agents (list, get, create, update, delete), tactics update, fight history, Research Gate (available-moves, learn-move, deck) |
+| `/agent` | agent.js | CRUD agents (list, get, create, update, delete), tactics update, fight history, Research Gate (available-moves, learn-move, deck), PvE training (train) |
 
 Auth guard: JWT Bearer token via `middleware/auth.js`
 Telegram auth: HMAC-SHA256 signature validation via `validateTelegramPayload()` in auth.js
@@ -1177,3 +1178,23 @@ Server-side fight simulation for clan agents. Hybrid of PvE action-based combat 
 **Files changed:**
 - `backend/src/services/agentCombatEngine.js` — **new** fight engine
 - `backend/src/data/archetypes.js` — **new** backend archetype data
+
+### PvE Training Mode (ТЗ-06) — ✅ COMPLETE
+
+Agent PvE Training: fight a bot on demand, earn XP (70%), no ELO change.
+
+**New service (`services/agentFightService.js`):**
+- `runPveTraining(agentId, userId)` — full fight orchestration: validate → set fighting → simulate → distribute XP → log → update stats → set idle
+- `distributeXpByBranch(roundLog, totalXp)` — proportional XP distribution across speed/power/technique based on moves used
+- XP multipliers: pve_training 70%, ranked 100%, free_arena 80%
+- Base XP: victory 20, defeat 8, draw 14
+- 10s cooldown between manual fights
+
+**New endpoint:**
+- `POST /v1/agent/:id/train` — run PvE training fight. Rate limit: 30/hr. Returns fight result + updated agent stats + progression + club XP
+
+**Flow:** idle → fighting → simulate → XP to agent branches + XP to club → fight log → idle
+
+**Files changed:**
+- `backend/src/services/agentFightService.js` — **new** fight orchestrator
+- `backend/src/routes/agent.js` — POST /:id/train endpoint + import
