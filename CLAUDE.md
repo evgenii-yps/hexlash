@@ -74,6 +74,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
     services/researchGateService.js — Research Gate: controls agent move learning based on player progression
     services/agentCombatEngine.js — Agent fight simulation (action-based + archetype modifiers, dice, coach, emergency)
     services/agentFightService.js — Agent fight orchestrator (PvE training, XP distribution, fight logging)
+    services/agentScheduler.js — Auto-fight scheduler (30s tick, resting/idle cycle, daily limit 50)
     utils/helpers.js
   prisma/
     schema.prisma          — 18 models: User, Club, Agent, AgentTactics, AgentProgression, AgentFightLog, Fight, Achievement, Task, PunchInfo, FriendRequest, Friendship...
@@ -1198,3 +1199,41 @@ Agent PvE Training: fight a bot on demand, earn XP (70%), no ELO change.
 **Files changed:**
 - `backend/src/services/agentFightService.js` — **new** fight orchestrator
 - `backend/src/routes/agent.js` — POST /:id/train endpoint + import
+
+### Agent Auto-Fight Scheduler (ТЗ-07) — ✅ COMPLETE
+
+Server-side scheduler: agents fight PvE bots automatically based on restPeriod. Player wakes up to results.
+
+**Schema:** Added `autoFight` (Boolean, default false) to Agent model. Migration: `20260403000000_add_agent_auto_fight`.
+
+**New service (`services/agentScheduler.js`):**
+- `startScheduler()` — starts 30s interval, first tick immediately on boot
+- `stopScheduler()` — graceful shutdown
+- `tick()` — recover stuck agents → wake resting → find ready → run fights (max 10/tick)
+- Stuck recovery: agents in 'fighting' > 5min reset to 'idle'
+- Daily limit: 50 fights/agent/day (counted via AgentFightLog.createdAt)
+
+**Refactored `agentFightService.js`:**
+- Extracted `_executeFight()` — shared core logic
+- `runPveTraining()` — manual (cooldown 10s, status→idle)
+- `runAutoFight()` — scheduler (no cooldown, scheduler sets resting+nextFightAt)
+
+**New endpoints in agent.js:**
+- `PUT /v1/agent/:id/auto-fight` — toggle auto-fight (validates deck≥4, sets nextFightAt=now)
+- `GET /v1/agent/:id/auto-fight-status` — auto-fight status (todayFights, nextFightAt, lastResult)
+
+**Config:** `AGENT_SCHEDULER_TICK_MS=30000`, `AGENT_MAX_FIGHTS_PER_TICK=10`, `AGENT_MAX_FIGHTS_PER_DAY=50`, `AGENT_STUCK_TIMEOUT_MS=300000`
+
+**Status flow:**
+- Manual: `idle → fighting → idle`
+- Auto: `idle (autoFight=true) → fighting → resting → idle → ...`
+- Disable: `any → idle (autoFight=false, nextFightAt=null)`
+
+**Files changed:**
+- `backend/prisma/schema.prisma` — autoFight field on Agent
+- `backend/prisma/migrations/20260403000000_add_agent_auto_fight/` — SQL migration
+- `backend/src/config.js` — scheduler constants
+- `backend/src/services/agentScheduler.js` — **new** scheduler
+- `backend/src/services/agentFightService.js` — refactored: _executeFight + runAutoFight
+- `backend/src/routes/agent.js` — 2 new endpoints (auto-fight, auto-fight-status)
+- `backend/src/index.js` — startScheduler on boot + graceful shutdown

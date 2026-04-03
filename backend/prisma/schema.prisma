@@ -310,6 +310,7 @@ model Agent {
 
   // Status
   status           String    @default("idle")  // idle|fighting|resting
+  autoFight        Boolean   @default(false)   // auto-fight enabled
   lastFightAt      DateTime?
   nextFightAt      DateTime?
 

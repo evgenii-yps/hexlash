@@ -357,6 +357,80 @@ router.post('/:id/train', authMiddleware, trainLimiter, async (req, res) => {
   }
 });
 
+// PUT /v1/agent/:id/auto-fight
+router.put('/:id/auto-fight', authMiddleware, async (req, res) => {
+  try {
+    const agent = await prisma.agent.findUnique({
+      where: { id: req.params.id },
+      include: { progression: true },
+    });
+
+    if (!agent) return res.status(404).json({ error: 'Agent not found' });
+    if (agent.ownerId !== req.userId) return res.status(403).json({ error: 'Access denied' });
+
+    const { enabled } = req.body;
+    if (typeof enabled !== 'boolean') {
+      return res.status(400).json({ error: 'enabled must be a boolean' });
+    }
+
+    if (enabled) {
+      const deck = Array.isArray(agent.progression?.deck) ? agent.progression.deck : [];
+      if (deck.length < 4) {
+        return res.status(400).json({ error: 'Agent needs at least 4 moves in deck' });
+      }
+    }
+
+    const updated = await prisma.agent.update({
+      where: { id: req.params.id },
+      data: {
+        autoFight: enabled,
+        status: 'idle',
+        nextFightAt: enabled ? new Date() : null,
+      },
+      select: { id: true, autoFight: true, status: true, nextFightAt: true },
+    });
+
+    res.json({ agent: updated });
+  } catch (err) {
+    console.error('Toggle auto-fight error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /v1/agent/:id/auto-fight-status
+router.get('/:id/auto-fight-status', authMiddleware, async (req, res) => {
+  try {
+    const agent = await prisma.agent.findUnique({ where: { id: req.params.id } });
+
+    if (!agent) return res.status(404).json({ error: 'Agent not found' });
+    if (agent.ownerId !== req.userId) return res.status(403).json({ error: 'Access denied' });
+
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayFights = await prisma.agentFightLog.count({
+      where: { agentId: agent.id, createdAt: { gte: startOfDay } },
+    });
+
+    const lastFight = await prisma.agentFightLog.findFirst({
+      where: { agentId: agent.id },
+      orderBy: { createdAt: 'desc' },
+      select: { result: true },
+    });
+
+    res.json({
+      autoFight: agent.autoFight,
+      status: agent.status,
+      nextFightAt: agent.nextFightAt,
+      todayFights,
+      maxFightsPerDay: 50,
+      lastFightResult: lastFight?.result || null,
+    });
+  } catch (err) {
+    console.error('Auto-fight status error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // GET /v1/agent/:id/available-moves
 router.get('/:id/available-moves', authMiddleware, async (req, res) => {
   try {
