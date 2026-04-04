@@ -220,6 +220,19 @@ export default {
       default: 'Unique style. Adapts to the situation.',
     },
     lblFriends: 'Friends',
+    hub: {
+      fight: {
+        title: 'FIGHT',
+        subtitle: 'The ring',
+        description: 'Step in. Pick your deck. Face the opponent.',
+      },
+      club: {
+        title: 'CLUB',
+        subtitle: 'Your fighters',
+        description: 'You are the coach. Teach them what you know. Watch them fight.',
+      },
+      switchBack: '← Arena',
+    },
   },
   club: {
     lblClubMembers: '{n} सदस्य',

@@ -211,7 +211,7 @@ const onCreate = async () => {
       tertiaryModule: form.value.tertiaryModule,
     });
     store.commit('master/setInfo', { text: t.value.club?.msgAgentCreated || 'Agent created!' });
-    router.push(`/club/agent/${agent.id}`);
+    router.push(`/arena/club/${agent.id}`);
   } catch (err) {
     createError.value = err?.response?.data?.error || t.value.club?.errCreateAgent || 'Failed to create agent';
   } finally {

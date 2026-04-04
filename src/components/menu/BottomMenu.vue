@@ -56,7 +56,7 @@ const isActive = (item) => {
     return route.path.includes('ratings');
   }
   if (item.route === '/arena') {
-    return route.path === '/arena' || route.path === '/';
+    return route.path === '/' || route.path.startsWith('/arena');
   }
   return route.path === item.route || route.path.startsWith(item.route + '/');
 }

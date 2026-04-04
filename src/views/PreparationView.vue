@@ -3,6 +3,10 @@
     <div class="arena-container" @scroll="handleScroll">
       <div class="arena-content-wrapper">
 
+        <button class="switch-mode-btn" @click="$router.push('/arena?force=true')">
+          {{ t.arena.hub?.switchBack || '← Arena' }}
+        </button>
+
         <div class="player-header">
           <UserAvatar :avatarUrl="master?.userData?.avatarUrl" width="50px" height="50px"/>
           <UserName :userName="master?.userData?.name || ''" style="width: auto !important;"/>
@@ -232,5 +236,24 @@ const handleScroll = (event) => {
   display: block;
   position: relative;
   height: 150px;
+}
+
+.switch-mode-btn {
+  align-self: flex-start;
+  background: none;
+  border: 1px solid var(--hex-border-default);
+  border-radius: var(--hex-radius-md);
+  color: var(--hex-text-muted);
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-size: 12px;
+  letter-spacing: 1px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.switch-mode-btn:hover {
+  color: var(--hex-text-primary);
+  border-color: var(--hex-border-active);
 }
 </style>

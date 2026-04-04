@@ -1,6 +1,10 @@
 <template>
   <div class="background">
     <div class="fight-club-container">
+      <button class="switch-mode-btn" @click="$router.push('/arena?force=true')">
+        {{ t.arena.hub?.switchBack || '← Arena' }}
+      </button>
+
       <div class="fc-header">
         <h2 class="fc-title">{{ t.club.lblMyFightClub || 'MY FIGHT CLUB' }}</h2>
       </div>
@@ -15,8 +19,8 @@
         :agents="agents"
         :maxAgents="fightClubLevel?.maxAgents || 2"
         :loading="loading"
-        @create="$router.push('/club/agent/create')"
-        @agent-click="(id) => $router.push(`/club/agent/${id}`)"
+        @create="$router.push('/arena/club/create')"
+        @agent-click="(id) => $router.push(`/arena/club/${id}`)"
         @toggle-auto="onToggleAutoFight"
       />
     </div>
@@ -73,5 +77,24 @@ onUnmounted(() => {
   letter-spacing: 2px;
   color: var(--hex-primary);
   text-align: center;
+}
+
+.switch-mode-btn {
+  background: none;
+  border: 1px solid var(--hex-border-default);
+  border-radius: var(--hex-radius-md);
+  color: var(--hex-text-muted);
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-size: 12px;
+  letter-spacing: 1px;
+  padding: 6px 12px;
+  cursor: pointer;
+  margin-bottom: 12px;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.switch-mode-btn:hover {
+  color: var(--hex-text-primary);
+  border-color: var(--hex-border-active);
 }
 </style>

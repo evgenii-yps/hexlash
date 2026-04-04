@@ -21,7 +21,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
   App.vue                  — Root: header (Logo), router-view, BottomMenu (hidden on PvP screens), Info/Error toasts, ChallengeNotification
   main.js                  — Entry: Vue + Vuetify + i18n + Vuex + WagmiPlugin + VueQueryPlugin init
   router/index.js          — Routes + auth guards + fight state restore
-  views/                   — 17 page-level components
+  views/                   — 18 page-level components (incl. ArenaHubView)
   components/              — 75+ reusable components
   core/
     state/store.js         — Vuex store
@@ -113,16 +113,17 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 | `/privacy` `/404` `/rules` `/verify-email` | Static | No |
 | `/` | RainView (home) | Yes |
 | `/help` | PageView | Yes |
-| `/arena` | PreparationView | Yes |
-| `/arena/club-mode-log` | ClubModeLogView | Yes |
+| `/arena` | ArenaHubView (Fight/Club split) | Yes |
+| `/arena/fight` | PreparationView | Yes |
+| `/arena/club` | FightClubView | Yes |
+| `/arena/club/create` | CreateAgentView | Yes |
+| `/arena/club/:agentId` | AgentDetailView | Yes |
 | `/fight` | CardFightView | Yes |
 | `/training` | TrainingView | Yes |
 | `/training/moves` | MoveTreeView | Yes |
 | `/training/deck` | DeckBuilderView | Yes |
 | `/profile` `/profile/balance` `/profile/wallet` `/profile/account` `/profile/skins` | ProfileView | Yes |
 | `/club/:id` | ClubView | Yes |
-| `/club/agent/create` | CreateAgentView | Yes |
-| `/club/agent/:agentId` | AgentDetailView | Yes |
 | `/ratings/:type` | RatingsView | Yes |
 | `/user/:userLogin` | ProfileView | Yes |
 | `/friends` | FriendsView | Yes |
@@ -131,7 +132,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 
 ---
 
-## Vuex Modules (14)
+## Vuex Modules (13)
 
 | Module | Purpose |
 |--------|---------|
@@ -145,7 +146,6 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 | `achievementState` | Achievements list + unlocking |
 | `contractState` | Web3 wallet, token balance |
 | `webSocketState` | WS connection, real-time messages |
-| `clubModeState` | Club mode: scheduling, offline simulation, fight log, push notifications, daily auto-reset, server sync (POST /fight/save), AI analysis (series analysis via Claude API) |
 | `pvpState` | Real-time PvP matchmaking and fights |
 | `friendsState` | Friends list, friend requests, challenges (WebSocket-based) |
 | `agentState` | Agent roster: CRUD, auto-fight toggle, club level, 30s auto-refresh |
@@ -280,11 +280,6 @@ SPEED_MOVE_PUNCH_MS = 1500
 BATCH_SEND_INTERVAL_MS = 11000
 DECIMALS = 6             // token decimal places
 
-CLUB_MODE_MIN_INTERVAL = 600000    // 10 min
-CLUB_MODE_MAX_INTERVAL = 600000    // 10 min
-CLUB_MODE_MAX_PER_DAY = 144
-CLUB_MODE_MAX_PER_SESSION = 288
-
 LISTING = 1783306800     // token listing timestamp
 ```
 
@@ -414,7 +409,8 @@ AI_TRAINER_ENABLED = true
 | Fight | `CardFightView.vue` | Main combat (PvE + PvP), dice, coach advice, HP bars, AI Trainer (PvE results). PvP mode: no BottomMenu, no PvP badge, reduced padding. Fully migrated to --hex-* vars: HexButton for results, inline SVGs, dice/coach/victory/defeat/overdrive all use design system vars |
 | Profile | `ProfileView.vue` | Tabs: balance, wallet, account, skins |
 | Ratings (League) | `RatingsView.vue` | 3 tabs: My Club, Clubs (leaderboard), Fighters (leaderboard). Default tab: My Club. URL: `/ratings/:type` (myclub/clubs/fighters). My Club tab: `MyClubTab.vue` component — redesigned clan header (avatar 64px with --hex-primary glow, name in Anonymous font, italic description, LVL badge, member count, level progress bar), stats grid (4 cards: Members/Wins/Losses/Win Rate with colored values), win rate bar, members top-5, role badges owner/deputy, action menus. No-clan state: ⚔ icon hero, CREATE/BROWSE buttons, pending invites banners, suggested clans with stats |
-| Preparation | `PreparationView.vue` | Arena: action row (Mode + START FIGHT + Friends buttons), club mode toggle/status. Friends button is text-only (no online indicator) |
+| Arena Hub | `ArenaHubView.vue` | Split screen at `/arena`: Fight (pink) and Club (green) cards. localStorage remembers last choice, `?force=true` bypasses. "← Arena" switch button in both sub-views |
+| Preparation | `PreparationView.vue` | `/arena/fight`: action row (Mode + START FIGHT + Friends buttons). Friends button is text-only (no online indicator). "← Arena" switch button in header |
 | Friends | `FriendsView.vue` | Friends list, friend requests, search players |
 | Matchmaking | `MatchmakingView.vue` | Real-time PvP matchmaking queue. Opponent Found shows fighter skins (not icons). No colored borders. 100dvh support. |
 | Clan | `ClubView.vue` | Redesigned clan page: header with avatar (64px, --hex-primary border + glow, 12px radius), name (Anonymous font), italic description, meta row (LVL badge, member count), level progress bar (6px gradient fill), stats grid via `ClubStats.vue` (4 cards + win rate bar), owner controls. Visitor view: top-5 members (no action menu), "+ N more members", JOIN/private/full action bar |
