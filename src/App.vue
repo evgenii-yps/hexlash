@@ -101,7 +101,7 @@ const isPvPScreen = computed(() => {
 
 const isScrollableComponent = computed(() => {
   const scrollablePrefixes = ['/profile', '/ratings', '/fight', '/training/']; // Префиксы маршрутов с дочерними маршрутами
-  const scrollableRoutes = ['/training', '/arena', '/arena/club-mode-log', '/404', '/verify-email', '/friends', '/matchmaking']; // Точные маршруты
+  const scrollableRoutes = ['/training', '/arena', '/404', '/verify-email', '/friends', '/matchmaking']; // Точные маршруты
 
   // Проверка на точный маршрут или маршрут, начинающийся с одного из префиксов
   return scrollableRoutes.includes(route.path) ||
@@ -151,8 +151,6 @@ watch(isAuth, (newAuthState) => {
   if (newAuthState) {
     // Если пользователь авторизован, подключаемся к WebSocket
     store.dispatch('webSocket/connectWebSocket');
-    // Check for pending club mode fights on auth
-    store.dispatch('clubMode/checkAndRunPending');
   } else {
     // Отключаем WebSocket, если пользователь разлогинился
     store.dispatch('webSocket/disconnectWebSocket');
@@ -169,8 +167,6 @@ const handleVisibilityChange = () => {
     //if (!store.getters['webSocket/isConnected']) {
       store.dispatch('webSocket/connectWebSocket');
     //}
-    // Check for pending club mode fights
-    store.dispatch('clubMode/checkAndRunPending');
   }else if(!isAuth.value){
     store.dispatch('webSocket/disconnectWebSocket');
   }
@@ -189,9 +185,6 @@ const handleOnlineStatus = () => {
 
 
 
-// Global club mode timer — checks every 30s regardless of which page is open
-let clubModeInterval = null;
-
 onMounted(() => {
 
   if (window.Telegram && window.Telegram.WebApp) {
@@ -202,24 +195,8 @@ onMounted(() => {
   document.addEventListener('visibilitychange', handleVisibilityChange);
   window.addEventListener('online', handleOnlineStatus);
 
-  // Initialize club mode system
-  store.dispatch('clubMode/init');
-
-  // Run pending club mode fights immediately after init (catch up missed fights on reload)
-  if (store.getters['clubMode/isEnabled'] && isAuth.value) {
-    store.dispatch('clubMode/checkAndRunPending');
-  }
-
   // Initialize PvP system
   store.dispatch('pvp/init');
-
-  // Periodic club mode check — runs globally so fights trigger even if user
-  // navigates away from Arena (where ClubModeStatus component lives)
-  clubModeInterval = setInterval(() => {
-    if (store.getters['clubMode/isEnabled'] && isAuth.value) {
-      store.dispatch('clubMode/checkAndRunPending');
-    }
-  }, 30000);
 
   amplitude.init('b8821737459f00f1058fd8ede71459fe', {"autocapture":true});
 
@@ -230,8 +207,6 @@ onBeforeUnmount(() => {
 
   document.removeEventListener('visibilitychange', handleVisibilityChange);
   window.removeEventListener('online', handleOnlineStatus);
-
-  clearInterval(clubModeInterval);
 });
 
 

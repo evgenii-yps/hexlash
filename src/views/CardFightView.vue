@@ -12,12 +12,6 @@
     <div class="fight-container" @scroll="handleScroll">
       <div class="fight-content-wrapper">
 
-        <!-- Club mode banner -->
-        <div v-if="isClubModeEnabled && !isPvP" class="clubmode-banner">
-          <span class="clubmode-banner-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--hex-primary)" stroke-width="2" stroke-linecap="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10"/><path d="M20.49 15a9 9 0 01-14.85 3.36L1 14"/></svg></span>
-          <span class="clubmode-banner-text">{{ t.clubMode.lblClubModeInProgress }}</span>
-        </div>
-
         <!-- Countdown overlay -->
         <transition-group name="fade-scale" tag="div" class="countdown" v-if="showCountdown">
           <div v-if="countdownValue !== 0" :key="countdownValue" class="countdown-item">
@@ -342,9 +336,6 @@ const anyModActive = computed(() =>
 // ── Overdrive ──────────────────────────────────────────────────────────────
 const isOverdrive = computed(() => store.getters['fight/isOverdrive']);
 
-// ── Club Mode ──────────────────────────────────────────────────────────────
-const isClubModeEnabled = computed(() => store.getters['clubMode/isEnabled']);
-let clubModeContinueTimer = null;
 
 // ── Action labels (for log) ───────────────────────────────────────────────
 const LOG_ACTIONS = {
@@ -585,7 +576,6 @@ onUnmounted(() => {
   stopFightTimer();
   stopCoachTimer();
   clearInterval(countdownTimer);
-  clearTimeout(clubModeContinueTimer);
   if (isPvP.value) cleanupPvP();
   document.removeEventListener('visibilitychange', handleVisibilityChange);
   window.removeEventListener('beforeunload', handleBeforeUnload);
@@ -618,16 +608,7 @@ watch(fightPhase, (val, oldVal) => {
   }
   if (val === 'coach') {
     stopFightTimer();
-    // Auto-handle coach when club mode is active
-    if (isClubModeEnabled.value) {
-      // Auto-select attack if low HP, else attack (aggressive auto strategy)
-      const autoAction = liveHP1.value < 50 ? 'defense' : 'attack';
-      setTimeout(() => {
-        store.dispatch('fight/applyCoachAdvice', autoAction);
-      }, 500);
-    } else {
-      startCoachTimer();
-    }
+    startCoachTimer();
   }
   if (oldVal === 'coach' && val !== 'coach') {
     stopCoachTimer();
@@ -656,23 +637,6 @@ watch(fightPhase, (val, oldVal) => {
         totalDamageDealt: fightStats.value.totalDamageDealt,
       }, { authRequired: true }).catch(() => {});
 
-      // Log to club mode if enabled
-      if (isClubModeEnabled.value) {
-        store.dispatch('clubMode/onFightEnd', {
-          result: resultState.value,
-          rounds: roundNum.value,
-          hp1: liveHP1.value,
-          hp2: liveHP2.value,
-        });
-
-        // Return to arena after showing the result — next fight will be scheduled by timer (30-60 min)
-        clearTimeout(clubModeContinueTimer);
-        clubModeContinueTimer = setTimeout(() => {
-          if (isClubModeEnabled.value) {
-            router.push('/arena');
-          }
-        }, 3000);
-      }
     }
   }
 });
@@ -687,17 +651,6 @@ const rollDice = () => {
     store.dispatch('fight/rollDiceManual');
   }
 };
-
-// ── Auto-dice for club mode fights ──────────────────────────────────────────
-watch([() => diceState.value.ready, fightPhase], ([ready, phase]) => {
-  if (isClubModeEnabled.value && ready && phase === 'fighting' && roundNum.value > 0) {
-    setTimeout(() => {
-      if (diceState.value.ready && fightPhase.value === 'fighting') {
-        store.dispatch('fight/rollDiceManual');
-      }
-    }, 800);
-  }
-});
 
 // ── Coach advice timer ────────────────────────────────────────────────────
 const adviceTimer = ref(15);
@@ -1996,43 +1949,6 @@ const flashStyle = computed(() => ({
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   text-transform: uppercase;
   letter-spacing: 1px;
-}
-
-/* ── Club Mode Banner ──────────────────────────────────────────── */
-.clubmode-banner {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 6px 16px;
-  background: linear-gradient(135deg, color-mix(in srgb, var(--hex-primary) 15%, transparent) 0%, color-mix(in srgb, var(--hex-primary) 5%, transparent) 100%);
-  border: 1px solid color-mix(in srgb, var(--hex-primary) 40%, transparent);
-  border-radius: 20px;
-  margin-bottom: 8px;
-  animation: bannerPulse 2.5s ease-in-out infinite;
-}
-
-@keyframes bannerPulse {
-  0%, 100% { box-shadow: 0 0 8px color-mix(in srgb, var(--hex-primary) 20%, transparent); }
-  50% { box-shadow: 0 0 20px var(--hex-primary-glow); }
-}
-
-.clubmode-banner-icon {
-  font-size: 0.9rem;
-  animation: spin 3s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.clubmode-banner-text {
-  font-size: 0.7rem;
-  font-weight: bold;
-  color: var(--hex-primary);
-  letter-spacing: 1px;
-  text-transform: uppercase;
 }
 
 /* ── PvP Modals & Overlays ──────────────────────────────────────── */

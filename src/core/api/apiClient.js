@@ -68,11 +68,6 @@ apiClient.interceptors.response.use(
     }
 );
 
-// ── AI API helpers ──────────────────────────────────────────────────────────
-apiClient.analyzeClubModeFights = function (fights, totalFights, period, locale) {
-    return this.post('/ai/club-mode-summary', { fights, totalFights, period, locale }, { authRequired: true });
-};
-
 // ── Referral API helpers ───────────────────────────────────────────────────
 apiClient.getReferrals = function () {
     return this.get('/user/referrals', { authRequired: true });
