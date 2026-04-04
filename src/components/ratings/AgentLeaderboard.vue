@@ -6,14 +6,14 @@
       <div class="onboarding-icon">🥊</div>
       <div class="onboarding-title">{{ t.club.lblClubMode || 'CLUB MODE' }}</div>
       <div class="onboarding-desc">{{ t.club.lblPromoDesc || 'Train AI fighters. Send them to battle 24/7. Rise through leagues.' }}</div>
-      <HexButton variant="primary" block @click="router.push('/fight-club')">
+      <HexButton variant="primary" block @click="router.push('/arena/club')">
         {{ t.club.lblEnterFightClub || 'Enter Fight Club' }}
       </HexButton>
     </div>
 
     <!-- Has agents: manage button -->
     <div v-if="!loading && hasOwnAgents" class="manage-row">
-      <HexButton variant="secondary" size="sm" @click="router.push('/fight-club')">
+      <HexButton variant="secondary" size="sm" @click="router.push('/arena/club')">
         {{ t.club.lblManageFightClub || 'Manage Fight Club' }}
       </HexButton>
     </div>
@@ -141,7 +141,7 @@ export default {
 
     const loadMore = () => { offset.value += limit; fetchRankings(true); };
     const setFilter = (id) => { leagueFilter.value = id; };
-    const viewAgent = (id) => router.push(`/club/agent/${id}`);
+    const viewAgent = (id) => router.push(`/arena/club/${id}`);
     const shortBuild = (a) => [a.primaryModule, a.secondaryModule, a.tertiaryModule].map(m => m?.slice(0, 3).toUpperCase()).join('/');
 
     onMounted(() => {

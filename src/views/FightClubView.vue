@@ -15,8 +15,8 @@
         :agents="agents"
         :maxAgents="fightClubLevel?.maxAgents || 2"
         :loading="loading"
-        @create="$router.push('/club/agent/create')"
-        @agent-click="(id) => $router.push(`/club/agent/${id}`)"
+        @create="$router.push('/arena/club/create')"
+        @agent-click="(id) => $router.push(`/arena/club/${id}`)"
         @toggle-auto="onToggleAutoFight"
       />
     </div>

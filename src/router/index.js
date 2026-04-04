@@ -32,7 +32,22 @@ const publicRoutes = [
 const protectedRoutes = [
     {path: '/', name: 'Home', component: RainView},
     {path: '/help', name: 'Help', component: () => import("/src/views/PageView.vue")},
-    {path: '/arena', name: 'Arena', component: () => import("/src/views/PreparationView.vue")},
+    {
+        path: '/arena',
+        name: 'ArenaHub',
+        component: () => import("/src/views/ArenaHubView.vue"),
+        beforeEnter: (to, from, next) => {
+            if (to.query.force === 'true') { next(); return; }
+            const last = localStorage.getItem('hexlash_last_arena_choice');
+            if (last === 'fight') { next('/arena/fight'); return; }
+            if (last === 'club') { next('/arena/club'); return; }
+            next();
+        },
+    },
+    {path: '/arena/fight', name: 'ArenaFight', component: () => import("/src/views/PreparationView.vue")},
+    {path: '/arena/club', name: 'ArenaClub', component: () => import("/src/views/FightClubView.vue")},
+    {path: '/arena/club/create', name: 'CreateAgent', component: () => import("/src/views/CreateAgentView.vue")},
+    {path: '/arena/club/:agentId', name: 'AgentDetail', component: () => import("/src/views/AgentDetailView.vue")},
 
     {path: '/user/:userLogin', name: 'UserProfile', component: () => import("/src/views/ProfileView.vue")},
     {path: '/profile', name: 'Profile', component: () => import("/src/views/ProfileView.vue")},
@@ -42,9 +57,9 @@ const protectedRoutes = [
     {path: '/profile/skins', name: 'Skins', component: () => import("/src/views/ProfileView.vue")},
 
     {path: '/club/:id', name: 'Club', component: () => import("/src/views/ClubView.vue")},
-    {path: '/fight-club', name: 'FightClub', component: () => import("/src/views/FightClubView.vue")},
-    {path: '/club/agent/create', name: 'CreateAgent', component: () => import("/src/views/CreateAgentView.vue")},
-    {path: '/club/agent/:agentId', name: 'AgentDetail', component: () => import("/src/views/AgentDetailView.vue")},
+    {path: '/fight-club', redirect: '/arena/club'},
+    {path: '/club/agent/create', redirect: '/arena/club/create'},
+    {path: '/club/agent/:agentId', redirect: to => `/arena/club/${to.params.agentId}`},
 
     {path: '/ratings/:type', name: 'Ratings', component: () => import("/src/views/RatingsView.vue"), props: true},
     {path: '/ratings', redirect: '/ratings/myclub'},
@@ -123,8 +138,8 @@ router.beforeEach(async (to, from, next) => {
 
             next({name: 'Login'});
         } else {
-            // If navigating to arena but a fight is already in progress, redirect to fight
-            if (to.path === '/arena') {
+            // If navigating to arena/fight but a fight is already in progress, redirect to fight
+            if (to.path === '/arena/fight' || to.path === '/arena') {
                 const savedPhase = getSavedFightPhase();
                 if (savedPhase === 'fighting' || savedPhase === 'coach' || savedPhase === 'results') {
                     next('/fight');
