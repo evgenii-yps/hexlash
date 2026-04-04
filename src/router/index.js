@@ -53,7 +53,6 @@ const protectedRoutes = [
     {path: '/training/moves', name: 'MoveTree', component: () => import("/src/views/MoveTreeView.vue")},
     {path: '/training/deck', name: 'DeckBuilder', component: () => import("/src/views/DeckBuilderView.vue")},
     {path: '/fight', name: 'Fight', component: () => import("/src/views/CardFightView.vue")},
-    {path: '/arena/club-mode-log', name: 'ClubModeLog', component: () => import("/src/views/ClubModeLogView.vue")},
     {path: '/friends', name: 'Friends', component: () => import("/src/views/FriendsView.vue")},
     {path: '/matchmaking', name: 'Matchmaking', component: () => import("/src/views/MatchmakingView.vue")},
     {path: '/spectate/:odId', name: 'Spectate', component: () => import("/src/views/SpectateView.vue")},
@@ -129,15 +128,6 @@ router.beforeEach(async (to, from, next) => {
                 const savedPhase = getSavedFightPhase();
                 if (savedPhase === 'fighting' || savedPhase === 'coach' || savedPhase === 'results') {
                     next('/fight');
-                    return;
-                }
-            }
-
-            // Block manual fight/matchmaking while club mode is active
-            if (to.path === '/fight' || to.path === '/matchmaking') {
-                const clubModeEnabled = store.getters['clubMode/isEnabled'];
-                if (clubModeEnabled) {
-                    next('/arena');
                     return;
                 }
             }

@@ -17,7 +17,6 @@
         <div class="action-row">
           <ModeSelector
             :onlineCount="onlinePlayersCount"
-            :clubModeActive="isClubModeEnabled"
             @select="onModeSelect"
           />
 
@@ -25,11 +24,10 @@
               variant="primary"
               size="lg"
               class="fight-btn hex-glow-pulse"
-              :class="{ 'fight-btn-club-active': selectedMode === 'club' && isClubModeEnabled }"
-              :disabled="!isBuildValid && selectedMode !== 'club'"
+              :disabled="!isBuildValid"
               @click="startFight"
           >
-            {{ startButtonText }}
+            {{ t.arena.lblStartFight }}
           </HexButton>
 
           <HexButton
@@ -42,15 +40,6 @@
           </HexButton>
         </div>
 
-        <!-- Club Mode Status (shown when club mode selected or active) -->
-        <div v-if="selectedMode === 'club' || isClubModeEnabled" class="clubmode-status-section">
-          <ClubModeStatus v-if="isClubModeEnabled"/>
-          <div v-else class="clubmode-inactive-hint">
-            <svg class="hint-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--hex-text-muted)" stroke-width="2" stroke-linecap="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10"/><path d="M20.49 15a9 9 0 01-14.85 3.36L1 14"/></svg>
-            <span>{{ t.arena.clubModeInactive }}</span>
-          </div>
-        </div>
-
         <ModuleBuilder/>
 
         <div class="scroll-gap"/>
@@ -61,21 +50,19 @@
 </template>
 
 <script setup>
-import {ref, computed, watch, onMounted, onBeforeUnmount} from 'vue';
+import {ref, computed, onMounted, onBeforeUnmount} from 'vue';
 import store from "@/core/state/store.js";
 import router from "@/router/index.js";
 import {t} from "@/locales/index.js";
 import UserAvatar from "@/components/fragments/profile/UserAvatar.vue";
 import UserName from "@/components/fragments/profile/UserName.vue";
 import ModuleBuilder from "@/components/fragments/modules/ModuleBuilder.vue";
-import ClubModeStatus from "@/components/fragments/fight/ClubModeStatus.vue";
 import ModeSelector from "@/components/arena/ModeSelector.vue";
 import HexButton from "@/components/ui/HexButton.vue";
 import {getOnlinePlayersCount} from "@/core/services/statsService.js";
 
 const master = computed(() => store.getters['master/getMaster']);
 const isBuildValid = computed(() => store.getters['fight/isBuildValid']);
-const isClubModeEnabled = computed(() => store.getters['clubMode/isEnabled']);
 
 // PvP data
 const onlineFriendsCount = computed(() => store.getters['friends/onlineFriendsCount']);
@@ -84,34 +71,14 @@ let onlineRefreshInterval = null;
 
 const selectedMode = ref('pve');
 
-// Button text depends on selected mode
-const startButtonText = computed(() => {
-  if (selectedMode.value === 'club') {
-    return isClubModeEnabled.value ? t.value.arena.stopClub : t.value.arena.startClub;
-  }
-  return t.value.arena.lblStartFight;
-});
-
 const onModeSelect = (mode) => {
   selectedMode.value = mode;
 };
-
-// Force club mode when club mode is active
-watch(isClubModeEnabled, (active) => {
-  if (active) selectedMode.value = 'club';
-}, { immediate: true });
 
 const startFight = async () => {
   switch (selectedMode.value) {
     case 'pvp':
       await router.push('/matchmaking');
-      break;
-    case 'club':
-      if (isClubModeEnabled.value) {
-        await store.dispatch('clubMode/disable');
-      } else {
-        await store.dispatch('clubMode/enable');
-      }
       break;
     default:
       await store.dispatch('fight/startFight');
@@ -239,47 +206,12 @@ const handleScroll = (event) => {
   min-height: 48px !important;
 }
 
-.fight-btn-club-active {
-  background-color: transparent !important;
-  border: 2px solid var(--hex-mode-club) !important;
-  color: var(--hex-mode-club) !important;
-  box-shadow: 0 0 20px color-mix(in srgb, var(--hex-mode-club) 30%, transparent);
-}
-
 /* ── Friends compact button ──────────────────────────────── */
 .friends-compact-btn {
   flex-shrink: 0;
   min-height: 48px;
 }
 
-
-/* ── Club Mode Status ────────────────────────────────────── */
-.clubmode-status-section {
-  margin-top: 12px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-}
-
-.hint-icon {
-  flex-shrink: 0;
-}
-
-.clubmode-inactive-hint {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 20px;
-  border: 1px solid var(--hex-border-default);
-  border-radius: 10px;
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
-  font-size: 13px;
-  color: var(--hex-text-muted);
-  letter-spacing: 1px;
-  text-transform: uppercase;
-}
 
 @media (max-width: 400px) {
   .friends-compact-btn {

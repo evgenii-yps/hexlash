@@ -33,12 +33,6 @@ export const COACH_MIN_ROUND = 6;
 export const COACH_TRIGGER_CHANCE = 1.0;
 export const COACH_BOOST_ROUNDS = 4;
 
-// CLUB MODE
-export const CLUB_MODE_MIN_INTERVAL = 10 * 60 * 1000;  // 10 minutes
-export const CLUB_MODE_MAX_INTERVAL = 10 * 60 * 1000;  // 10 minutes
-export const CLUB_MODE_MAX_PER_DAY = 144;
-export const CLUB_MODE_MAX_PER_SESSION = 288;
-
 // LISTING
 export const LISTING = 1783306800;
 
