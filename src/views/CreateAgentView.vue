@@ -222,7 +222,7 @@ const onCreate = async () => {
 
 <style scoped>
 .create-agent-container {
-  padding: 16px;
+  padding: 80px 16px 16px;
   max-width: 480px;
   margin: 0 auto;
 }
