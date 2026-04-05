@@ -449,7 +449,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.agent-detail { max-width: 480px; margin: 0 auto; padding: 0 16px 24px; }
+.agent-detail { max-width: 480px; margin: 0 auto; padding: 80px 16px 24px; }
 .loader-wrap { display: flex; justify-content: center; padding: 48px 0; }
 
 /* Header */

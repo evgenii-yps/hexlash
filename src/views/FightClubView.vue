@@ -65,7 +65,7 @@ onUnmounted(() => {
 
 <style scoped>
 .fight-club-container {
-  padding: 24px 16px;
+  padding: 80px 16px 24px;
   max-width: 600px;
   margin: 0 auto;
 }
