@@ -1,12 +1,12 @@
 <template>
   <div class="background">
     <div class="fight-club-container">
-      <button class="switch-mode-btn" @click="$router.push('/arena')">
-        {{ t.arena.hub?.switchBack || '← Arena' }}
-      </button>
-
-      <div class="fc-header">
+      <div class="fc-top-bar">
+        <button class="back-link" @click="$router.push('/arena')">
+          {{ t.arena.hub?.switchBack || '← Arena' }}
+        </button>
         <h2 class="fc-title">{{ t.club.lblMyFightClub || 'MY FIGHT CLUB' }}</h2>
+        <span class="fc-top-spacer"></span>
       </div>
 
       <ClubLevelBar v-if="fightClubLevel" :clubLevel="fightClubLevel" />
@@ -69,7 +69,15 @@ onUnmounted(() => {
   max-width: 600px;
   margin: 0 auto;
 }
-.fc-header { margin-bottom: 24px; }
+.fc-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+.fc-top-spacer {
+  width: 70px;
+}
 .fc-title {
   font-family: 'Anonymous', monospace;
   font-size: 28px;
@@ -79,23 +87,20 @@ onUnmounted(() => {
   text-align: center;
   text-shadow: 0 0 24px rgba(255, 6, 111, 0.4);
 }
-
-.switch-mode-btn {
+.back-link {
+  font-size: 16px;
+  color: var(--hex-primary);
   background: none;
-  border: 1px solid var(--hex-border-default);
-  border-radius: var(--hex-radius-md);
-  color: var(--hex-text-muted);
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
-  font-size: 13px;
-  letter-spacing: 1px;
-  padding: 8px 16px;
+  border: none;
   cursor: pointer;
-  margin-bottom: 16px;
-  transition: color 0.2s, border-color 0.2s;
+  font-family: 'Anonymous', monospace;
+  letter-spacing: 0.5px;
+  padding: 4px 0;
+  transition: opacity 0.2s;
+  white-space: nowrap;
+  min-width: 70px;
 }
-
-.switch-mode-btn:hover {
-  color: var(--hex-text-primary);
-  border-color: var(--hex-border-active);
+.back-link:hover {
+  opacity: 0.7;
 }
 </style>
