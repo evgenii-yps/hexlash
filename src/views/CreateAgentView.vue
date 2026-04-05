@@ -1,12 +1,12 @@
 <template>
   <div class="background">
-    <div class="create-agent-container">
-      <!-- Header -->
-      <div class="wizard-header">
-        <button class="back-link" @click="onBack">&larr; {{ t.club.lblBack || 'Back' }}</button>
-        <span class="wizard-step">{{ stepTitles[step] }} &nbsp; {{ step + 1 }}/3</span>
-      </div>
+    <div class="view-topbar">
+      <button class="back-link" @click="onBack">&larr; {{ t.club.lblBack || 'Back' }}</button>
+      <span class="wizard-step">{{ stepTitles[step] }} &nbsp; {{ step + 1 }}/3</span>
+      <span class="topbar-spacer"></span>
+    </div>
 
+    <div class="create-agent-container">
       <!-- Step indicators -->
       <div class="step-dots">
         <span v-for="i in 3" :key="i" :class="['dot', { active: i - 1 === step, done: i - 1 < step }]" />
@@ -221,31 +221,46 @@ const onCreate = async () => {
 </script>
 
 <style scoped>
-.create-agent-container {
-  padding: 16px;
-  max-width: 480px;
-  margin: 0 auto;
-}
-
-.wizard-header {
+.view-topbar {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  justify-content: space-between;
+  padding: 16px 20px;
+  width: 100%;
+}
+.topbar-spacer {
+  width: 80px;
 }
 .back-link {
-  font-size: 13px;
+  font-size: 16px;
   color: var(--hex-primary);
   background: none;
   border: none;
   cursor: pointer;
+  font-family: 'Anonymous', monospace;
+  letter-spacing: 0.5px;
+  padding: 6px 0;
+  transition: opacity 0.2s;
+  white-space: nowrap;
+  min-width: 80px;
+  text-align: left;
+}
+.back-link:hover {
+  opacity: 0.7;
 }
 .wizard-step {
   font-family: 'Anonymous', monospace;
-  font-size: 11px;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 1px;
   color: var(--hex-text-muted);
+  flex: 1;
+  text-align: center;
+}
+.create-agent-container {
+  padding: 0 16px 16px;
+  max-width: 480px;
+  margin: 0 auto;
 }
 
 .step-dots {
