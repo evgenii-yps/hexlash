@@ -65,18 +65,19 @@ onUnmounted(() => {
 
 <style scoped>
 .fight-club-container {
-  padding: 16px;
+  padding: 20px 16px;
   max-width: 520px;
   margin: 0 auto;
 }
-.fc-header { margin-bottom: 16px; }
+.fc-header { margin-bottom: 20px; }
 .fc-title {
   font-family: 'Anonymous', monospace;
-  font-size: 16px;
+  font-size: 22px;
   text-transform: uppercase;
   letter-spacing: 2px;
   color: var(--hex-primary);
   text-align: center;
+  text-shadow: 0 0 20px rgba(255, 6, 111, 0.4);
 }
 
 .switch-mode-btn {

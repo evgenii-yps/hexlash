@@ -85,8 +85,8 @@ export default {
 }
 
 .agent-skin {
-  width: 48px;
-  height: 48px;
+  width: 56px;
+  height: 56px;
   border-radius: 8px;
   object-fit: cover;
   border: 1px solid var(--hex-border-default);
@@ -97,7 +97,7 @@ export default {
 
 .agent-name {
   font-family: 'Anonymous', monospace;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--hex-text-primary);
   white-space: nowrap;
   overflow: hidden;
@@ -115,7 +115,7 @@ export default {
   gap: 8px;
   margin-top: 4px;
   font-family: 'AnonymousBalance', monospace;
-  font-size: 11px;
+  font-size: 12px;
 }
 .stat-win { color: var(--hex-victory); }
 .stat-lose { color: var(--hex-defeat); }
@@ -123,7 +123,7 @@ export default {
 
 .agent-elo {
   font-family: 'AnonymousBalance', monospace;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: bold;
   flex-shrink: 0;
   margin-left: auto;

@@ -73,7 +73,7 @@ export default {
 }
 .roster-title {
   font-family: 'Anonymous', monospace;
-  font-size: 11px;
+  font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 1px;
   color: var(--hex-text-muted);
@@ -88,7 +88,7 @@ export default {
 .roster-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 12px;
 }
 
 @media (max-width: 360px) {
@@ -103,7 +103,7 @@ export default {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 120px;
+  min-height: 160px;
   border: 1px dashed var(--hex-border-default);
   border-radius: 10px;
   background: var(--hex-bg-dark);
@@ -117,13 +117,13 @@ export default {
 .empty-slot--disabled:hover { border-color: var(--hex-border-default); }
 
 .empty-slot-icon {
-  font-size: 24px;
+  font-size: 36px;
   color: var(--hex-text-muted);
   line-height: 1;
 }
 .empty-slot-text {
-  margin-top: 6px;
-  font-size: 11px;
+  margin-top: 8px;
+  font-size: 13px;
   color: var(--hex-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
