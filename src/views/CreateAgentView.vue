@@ -187,7 +187,7 @@ const archName = (id) => {
 
 const onBack = () => {
   if (step.value > 0) step.value--;
-  else router.back();
+  else router.push('/arena/club');
 };
 
 const onMint = async () => {

@@ -3,7 +3,7 @@
     <div class="arena-container" @scroll="handleScroll">
       <div class="arena-content-wrapper">
 
-        <button class="switch-mode-btn" @click="$router.push('/arena?force=true')">
+        <button class="switch-mode-btn" @click="$router.push('/arena')">
           {{ t.arena.hub?.switchBack || '← Arena' }}
         </button>
 

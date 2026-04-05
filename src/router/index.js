@@ -32,18 +32,7 @@ const publicRoutes = [
 const protectedRoutes = [
     {path: '/', name: 'Home', component: RainView},
     {path: '/help', name: 'Help', component: () => import("/src/views/PageView.vue")},
-    {
-        path: '/arena',
-        name: 'ArenaHub',
-        component: () => import("/src/views/ArenaHubView.vue"),
-        beforeEnter: (to, from, next) => {
-            if (to.query.force === 'true') { next(); return; }
-            const last = localStorage.getItem('hexlash_last_arena_choice');
-            if (last === 'fight') { next('/arena/fight'); return; }
-            if (last === 'club') { next('/arena/club'); return; }
-            next();
-        },
-    },
+    {path: '/arena', name: 'ArenaHub', component: () => import("/src/views/ArenaHubView.vue")},
     {path: '/arena/fight', name: 'ArenaFight', component: () => import("/src/views/PreparationView.vue")},
     {path: '/arena/club', name: 'ArenaClub', component: () => import("/src/views/FightClubView.vue")},
     {path: '/arena/club/create', name: 'CreateAgent', component: () => import("/src/views/CreateAgentView.vue")},

@@ -1,7 +1,7 @@
 <template>
   <div class="background">
     <div class="fight-club-container">
-      <button class="switch-mode-btn" @click="$router.push('/arena?force=true')">
+      <button class="switch-mode-btn" @click="$router.push('/arena')">
         {{ t.arena.hub?.switchBack || '← Arena' }}
       </button>
 
