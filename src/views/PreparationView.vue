@@ -171,7 +171,7 @@ const handleScroll = (event) => {
   box-sizing: border-box;
   max-width: 500px;
   margin: 0 auto;
-  padding: 20px 16px;
+  padding: 80px 16px 20px;
 }
 
 .player-header {
@@ -241,19 +241,18 @@ const handleScroll = (event) => {
 .switch-mode-btn {
   align-self: flex-start;
   background: none;
-  border: 1px solid var(--hex-border-default);
-  border-radius: var(--hex-radius-md);
-  color: var(--hex-text-muted);
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
-  font-size: 12px;
-  letter-spacing: 1px;
-  padding: 6px 12px;
+  border: none;
+  color: var(--hex-primary);
+  font-family: 'Anonymous', monospace;
+  font-size: 16px;
+  letter-spacing: 0.5px;
+  padding: 6px 0;
   cursor: pointer;
-  transition: color 0.2s, border-color 0.2s;
+  transition: opacity 0.2s;
+  white-space: nowrap;
 }
 
 .switch-mode-btn:hover {
-  color: var(--hex-text-primary);
-  border-color: var(--hex-border-active);
+  opacity: 0.7;
 }
 </style>
