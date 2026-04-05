@@ -1,14 +1,14 @@
 <template>
   <div class="background">
-    <div class="fight-club-container">
-      <div class="fc-top-bar">
-        <button class="back-link" @click="$router.push('/arena')">
-          {{ t.arena.hub?.switchBack || '← Arena' }}
-        </button>
-        <h2 class="fc-title">{{ t.club.lblMyFightClub || 'MY FIGHT CLUB' }}</h2>
-        <span class="fc-top-spacer"></span>
-      </div>
+    <div class="view-topbar">
+      <button class="back-link" @click="$router.push('/arena')">
+        {{ t.arena.hub?.switchBack || '← Arena' }}
+      </button>
+      <h2 class="fc-title">{{ t.club.lblMyFightClub || 'MY FIGHT CLUB' }}</h2>
+      <span class="topbar-spacer"></span>
+    </div>
 
+    <div class="fight-club-container">
       <ClubLevelBar v-if="fightClubLevel" :clubLevel="fightClubLevel" />
 
       <MorningReport v-if="agents.length > 0" />
@@ -64,28 +64,15 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.fight-club-container {
-  padding: 24px 16px;
-  max-width: 600px;
-  margin: 0 auto;
-}
-.fc-top-bar {
+.view-topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24px;
+  padding: 16px 20px;
+  width: 100%;
 }
-.fc-top-spacer {
-  width: 70px;
-}
-.fc-title {
-  font-family: 'Anonymous', monospace;
-  font-size: 28px;
-  text-transform: uppercase;
-  letter-spacing: 3px;
-  color: var(--hex-primary);
-  text-align: center;
-  text-shadow: 0 0 24px rgba(255, 6, 111, 0.4);
+.topbar-spacer {
+  width: 80px;
 }
 .back-link {
   font-size: 16px;
@@ -95,12 +82,28 @@ onUnmounted(() => {
   cursor: pointer;
   font-family: 'Anonymous', monospace;
   letter-spacing: 0.5px;
-  padding: 4px 0;
+  padding: 6px 0;
   transition: opacity 0.2s;
   white-space: nowrap;
-  min-width: 70px;
+  min-width: 80px;
+  text-align: left;
 }
 .back-link:hover {
   opacity: 0.7;
+}
+.fc-title {
+  font-family: 'Anonymous', monospace;
+  font-size: 24px;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  color: var(--hex-primary);
+  text-align: center;
+  text-shadow: 0 0 24px rgba(255, 6, 111, 0.4);
+  flex: 1;
+}
+.fight-club-container {
+  padding: 0 16px 24px;
+  max-width: 600px;
+  margin: 0 auto;
 }
 </style>
