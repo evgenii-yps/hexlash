@@ -286,15 +286,16 @@ const onCreate = async () => {
 }
 .skin-preview {
   width: 120px;
-  height: 120px;
+  height: 160px;
   border-radius: 12px;
   object-fit: cover;
+  object-position: top;
   border: 2px solid var(--hex-primary);
   box-shadow: 0 0 16px rgba(255, 6, 111, 0.3);
 }
 .skin-preview-placeholder {
   width: 120px;
-  height: 120px;
+  height: 160px;
   border-radius: 12px;
   border: 2px dashed var(--hex-border-default);
   display: flex;
@@ -348,9 +349,10 @@ const onCreate = async () => {
 }
 .confirm-skin {
   width: 128px;
-  height: 128px;
+  height: 170px;
   border-radius: 12px;
   object-fit: cover;
+  object-position: top;
   border: 2px solid var(--hex-primary);
   box-shadow: 0 0 20px rgba(255, 6, 111, 0.3);
 }

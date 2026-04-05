@@ -89,6 +89,7 @@ export default {
   height: 64px;
   border-radius: 10px;
   object-fit: cover;
+  object-position: top;
   border: 1px solid var(--hex-border-default);
   flex-shrink: 0;
 }
