@@ -164,10 +164,9 @@ router.post('/create', authMiddleware, createAgentLimiter, async (req, res) => {
       return res.status(400).json({ error: 'Invalid skin' });
     }
 
-    // Validate modules
-    const modules = [primaryModule, secondaryModule, tertiaryModule];
-    for (const mod of modules) {
-      if (!VALID_ARCHETYPES.includes(mod)) {
+    // Validate modules (optional — can be set later in AgentDetail)
+    for (const mod of [primaryModule, secondaryModule, tertiaryModule]) {
+      if (mod != null && !VALID_ARCHETYPES.includes(mod)) {
         return res.status(400).json({ error: 'Invalid module' });
       }
     }
@@ -177,9 +176,9 @@ router.post('/create', authMiddleware, createAgentLimiter, async (req, res) => {
         data: {
           name: name.trim(),
           skin,
-          primaryModule,
-          secondaryModule,
-          tertiaryModule,
+          primaryModule: primaryModule || null,
+          secondaryModule: secondaryModule || null,
+          tertiaryModule: tertiaryModule || null,
           fightClubId: fightClub.id,
           ownerId: req.userId,
         },

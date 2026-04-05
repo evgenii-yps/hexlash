@@ -18,11 +18,12 @@
             <img :src="`/images/skins/${agent.skin}`" class="header-skin" />
             <div class="header-text">
               <div class="header-name">{{ agent.name }}</div>
-              <div class="header-arch">
+              <div v-if="agent.primaryModule" class="header-arch">
                 <HexBadge variant="archetype" :archetype="agent.primaryModule" size="sm">{{ shortArch(agent.primaryModule) }}</HexBadge>
                 <HexBadge variant="archetype" :archetype="agent.secondaryModule" size="sm">{{ shortArch(agent.secondaryModule) }}</HexBadge>
                 <HexBadge variant="archetype" :archetype="agent.tertiaryModule" size="sm">{{ shortArch(agent.tertiaryModule) }}</HexBadge>
               </div>
+              <div v-else class="header-arch-empty">{{ t.club.lblNoModules || 'No modules set' }}</div>
               <div class="header-stats">
                 <span class="s-win">W:{{ agent.wins }}</span>
                 <span class="s-lose">L:{{ agent.losses }}</span>
@@ -465,6 +466,7 @@ onMounted(() => {
 .header-text { flex: 1; min-width: 0; }
 .header-name { font-family: 'Anonymous', monospace; font-size: 16px; color: var(--hex-text-primary); }
 .header-arch { display: flex; gap: 3px; margin-top: 4px; }
+.header-arch-empty { font-size: 11px; color: var(--hex-text-muted); margin-top: 4px; font-style: italic; }
 .header-stats { display: flex; gap: 8px; margin-top: 4px; font-family: 'AnonymousBalance', monospace; font-size: 11px; }
 .s-win { color: var(--hex-victory); } .s-lose { color: var(--hex-defeat); } .s-draw { color: var(--hex-draw); }
 .s-wr { color: var(--hex-text-muted); }

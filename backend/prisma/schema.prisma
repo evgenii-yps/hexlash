@@ -310,10 +310,10 @@ model Agent {
   name             String                  // agent name (2-20 chars)
   skin             String                  // skin from /images/skins/
 
-  // Build (3 modules — like playerModules)
-  primaryModule    String                  // predator|sentinel|ghost|analyst|maverick|juggernaut
-  secondaryModule  String
-  tertiaryModule   String
+  // Build (3 modules — like playerModules, optional until configured)
+  primaryModule    String?                 // predator|sentinel|ghost|analyst|maverick|juggernaut
+  secondaryModule  String?
+  tertiaryModule   String?
 
   // Statistics
   elo              Int       @default(1000)

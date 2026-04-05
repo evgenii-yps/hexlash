@@ -3,13 +3,13 @@
     <div class="create-agent-container">
       <div class="wizard-header">
         <button class="back-link" @click="onBack">&larr; {{ t.club.lblBack || 'Back' }}</button>
-        <span class="wizard-step">{{ stepTitles[step] }} &nbsp; {{ step + 1 }}/3</span>
+        <span class="wizard-step">{{ stepTitles[step] }} &nbsp; {{ step + 1 }}/2</span>
         <span class="wizard-header-spacer"></span>
       </div>
 
       <!-- Step indicators -->
       <div class="step-dots">
-        <span v-for="i in 3" :key="i" :class="['dot', { active: i - 1 === step, done: i - 1 < step }]" />
+        <span v-for="i in 2" :key="i" :class="['dot', { active: i - 1 === step, done: i - 1 < step }]" />
       </div>
 
       <!-- Step 0: Name & Skin -->
@@ -42,62 +42,17 @@
         </div>
       </div>
 
-      <!-- Step 1: Build -->
+      <!-- Step 1: Confirm -->
       <div v-if="step === 1" class="step-content hex-fade-in">
-        <ArchetypeSelector
-          v-model="form.primaryModule"
-          :label="t.club.lblPrimaryModule || 'Primary Module (50%)'"
-        />
-        <div class="module-spacer" />
-        <ArchetypeSelector
-          v-model="form.secondaryModule"
-          :label="t.club.lblSecondaryModule || 'Secondary Module (30%)'"
-        />
-        <div class="module-spacer" />
-        <ArchetypeSelector
-          v-model="form.tertiaryModule"
-          :label="t.club.lblTertiaryModule || 'Tertiary Module (20%)'"
-        />
-
-        <div class="step-actions">
-          <HexButton variant="primary" block :disabled="!step1Valid" @click="step = 2">
-            {{ t.club.lblNext || 'Next' }} &rarr;
-          </HexButton>
-        </div>
-      </div>
-
-      <!-- Step 2: Confirm -->
-      <div v-if="step === 2" class="step-content hex-fade-in">
         <div class="confirm-preview">
           <img :src="`/images/skins/${form.skin}`" class="confirm-skin" />
           <div class="confirm-name">{{ form.name }}</div>
         </div>
 
         <div class="confirm-card">
-          <div class="confirm-card-title">{{ t.club.lblBuild || 'Build' }}</div>
-          <div class="confirm-row">
-            <HexBadge variant="archetype" :archetype="form.primaryModule">{{ archName(form.primaryModule) }}</HexBadge>
-            <span class="confirm-weight">50%</span>
-          </div>
-          <div class="confirm-row">
-            <HexBadge variant="archetype" :archetype="form.secondaryModule">{{ archName(form.secondaryModule) }}</HexBadge>
-            <span class="confirm-weight">30%</span>
-          </div>
-          <div class="confirm-row">
-            <HexBadge variant="archetype" :archetype="form.tertiaryModule">{{ archName(form.tertiaryModule) }}</HexBadge>
-            <span class="confirm-weight">20%</span>
-          </div>
-        </div>
-
-        <div v-if="fightStyle" class="confirm-card">
-          <div class="confirm-card-title">{{ t.club.lblFightStyle || 'Fight Style' }}</div>
-          <div class="fight-style-text">{{ fightStyle }}</div>
-        </div>
-
-        <div class="confirm-card">
           <div class="confirm-card-title">{{ t.club.lblStartingStats || 'Starting Stats' }}</div>
           <div class="confirm-stat">ELO: 1000</div>
-          <div class="confirm-stat-muted">{{ t.club.lblDeckEmpty || 'Empty deck — learn moves first' }}</div>
+          <div class="confirm-stat-muted">{{ t.club.lblModulesHint || 'Configure modules and deck after creation' }}</div>
         </div>
 
         <!-- NFT Mint (when enabled and not first agent) -->
@@ -113,7 +68,7 @@
           <HexButton variant="primary" block :loading="creating" :disabled="nftRequired" @click="onCreate">
             {{ creating ? (t.club.lblCreating || 'Creating...') : (t.club.lblCreateAgent || 'Create Agent') }}
           </HexButton>
-          <HexButton variant="ghost" block @click="step = 1" style="margin-top: 8px">
+          <HexButton variant="ghost" block @click="step = 0" style="margin-top: 8px">
             &larr; {{ t.club.lblEdit || 'Edit' }}
           </HexButton>
         </div>
@@ -129,11 +84,8 @@ import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import store from '@/core/state/store.js';
 import { t } from '@/locales/index.js';
-import { generateFightStylePreview } from '@/utils/fightStylePreview.js';
 import HexButton from '@/components/ui/HexButton.vue';
-import HexBadge from '@/components/ui/HexBadge.vue';
 import SkinPicker from '@/components/club/SkinPicker.vue';
-import ArchetypeSelector from '@/components/club/ArchetypeSelector.vue';
 
 const router = useRouter();
 const NAME_REGEX = /^[a-zA-Zа-яА-ЯёЁ0-9\s_-]{2,20}$/;
@@ -142,19 +94,15 @@ const step = ref(0);
 const creating = ref(false);
 const createError = ref(null);
 const minting = ref(false);
-const nftRequired = ref(false); // set to true when NFT_MINTING_ENABLED + not first agent
+const nftRequired = ref(false);
 
 const form = ref({
   name: '',
   skin: 'skin_m_1.png',
-  primaryModule: null,
-  secondaryModule: null,
-  tertiaryModule: null,
 });
 
 const stepTitles = computed(() => [
   t.value.club?.lblNameAndSkin || 'Name & Skin',
-  t.value.club?.lblBuild || 'Build',
   t.value.club?.lblConfirmStep || 'Confirm',
 ]);
 
@@ -171,27 +119,12 @@ const step0Valid = computed(() => {
   return form.value.name.length >= 2 && form.value.name.length <= 20 && !nameError.value && form.value.skin;
 });
 
-const step1Valid = computed(() => {
-  return form.value.primaryModule && form.value.secondaryModule && form.value.tertiaryModule;
-});
-
-const fightStyle = computed(() => {
-  if (!step1Valid.value) return '';
-  return generateFightStylePreview(form.value.primaryModule, form.value.secondaryModule, form.value.tertiaryModule);
-});
-
-const archName = (id) => {
-  if (!id) return '';
-  return t.value.cards?.archetypes?.[id] || id.charAt(0).toUpperCase() + id.slice(1);
-};
-
 const onBack = () => {
   if (step.value > 0) step.value--;
   else router.push('/arena/club');
 };
 
 const onMint = async () => {
-  // TODO: integrate with nftMintService when NFT_MINTING_ENABLED=true
   minting.value = true;
   try {
     store.commit('master/setInfo', { text: 'NFT minting not yet enabled' });
@@ -206,9 +139,6 @@ const onCreate = async () => {
     const agent = await store.dispatch('agent/createAgent', {
       name: form.value.name.trim(),
       skin: form.value.skin,
-      primaryModule: form.value.primaryModule,
-      secondaryModule: form.value.secondaryModule,
-      tertiaryModule: form.value.tertiaryModule,
     });
     store.commit('master/setInfo', { text: t.value.club?.msgAgentCreated || 'Agent created!' });
     router.push(`/arena/club/${agent.id}`);
@@ -339,10 +269,7 @@ const onCreate = async () => {
 
 .step-actions { margin-top: 20px; }
 
-/* Step 1: Build */
-.module-spacer { height: 16px; }
-
-/* Step 2: Confirm */
+/* Step 1: Confirm */
 .confirm-preview {
   text-align: center;
   margin-bottom: 16px;
@@ -377,23 +304,6 @@ const onCreate = async () => {
   letter-spacing: 1px;
   color: var(--hex-text-muted);
   margin-bottom: 8px;
-}
-.confirm-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 6px;
-}
-.confirm-weight {
-  font-family: 'AnonymousBalance', monospace;
-  font-size: 12px;
-  color: var(--hex-text-muted);
-}
-
-.fight-style-text {
-  font-size: 13px;
-  color: var(--hex-text-secondary);
-  line-height: 1.5;
 }
 
 .confirm-stat {
