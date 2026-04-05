@@ -43,7 +43,7 @@ router.get('/fight-club', authMiddleware, async (req, res) => {
     const { getOrCreateFightClub, getLevelInfo } = require('../services/fightClubService');
     const fc = await getOrCreateFightClub(req.userId);
     const info = getLevelInfo(fc.xp);
-    const currentAgents = await prisma.agent.count({ where: { fightClubId: fc.id } });
+    const currentAgents = await prisma.agent.count({ where: { ownerId: req.userId } });
     res.json({ data: { ...info, currentAgents, fightClubId: fc.id } });
   } catch (err) {
     console.error('Get fight club error:', err);
@@ -141,9 +141,9 @@ router.post('/create', authMiddleware, createAgentLimiter, async (req, res) => {
     const fightClub = await getOrCreateFightClub(req.userId);
 
     // Validate roster limit
-    const agentCount = await prisma.agent.count({ where: { fightClubId: fightClub.id } });
+    const agentCount = await prisma.agent.count({ where: { ownerId: req.userId } });
     if (agentCount >= fightClub.maxAgents) {
-      return res.status(400).json({ error: 'Agent roster is full' });
+      return res.status(400).json({ error: 'Agent roster is full', currentAgents: agentCount, maxAgents: fightClub.maxAgents });
     }
 
     // NFT check (feature flag)
