@@ -44,6 +44,7 @@ router.get('/fight-club', authMiddleware, async (req, res) => {
     const fc = await getOrCreateFightClub(req.userId);
     const info = getLevelInfo(fc.xp);
     const currentAgents = await prisma.agent.count({ where: { ownerId: req.userId } });
+    console.log('[AGENT FIGHT-CLUB]', { ownerId: req.userId, currentAgents, maxAgents: info.maxAgents, fightClubId: fc.id });
     res.json({ data: { ...info, currentAgents, fightClubId: fc.id } });
   } catch (err) {
     console.error('Get fight club error:', err);
@@ -101,6 +102,7 @@ router.get('/list', authMiddleware, async (req, res) => {
       orderBy: { createdAt: 'asc' },
     });
 
+    console.log('[AGENT LIST]', { ownerId: req.userId, count: agents.length, agents: agents.map(a => ({ id: a.id, name: a.name })) });
     res.json({ agents });
   } catch (err) {
     console.error('List agents error:', err);
@@ -142,6 +144,7 @@ router.post('/create', authMiddleware, createAgentLimiter, async (req, res) => {
 
     // Validate roster limit
     const agentCount = await prisma.agent.count({ where: { ownerId: req.userId } });
+    console.log('[AGENT CREATE] roster check', { ownerId: req.userId, agentCount, maxAgents: fightClub.maxAgents, fightClubId: fightClub.id });
     if (agentCount >= fightClub.maxAgents) {
       return res.status(400).json({ error: 'Agent roster is full', currentAgents: agentCount, maxAgents: fightClub.maxAgents });
     }
