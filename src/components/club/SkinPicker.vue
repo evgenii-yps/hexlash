@@ -102,8 +102,9 @@ export default {
 }
 .skin-thumb {
   width: 100%;
-  aspect-ratio: 1;
+  aspect-ratio: 3 / 4;
   object-fit: cover;
+  object-position: top;
   display: block;
 }
 </style>
