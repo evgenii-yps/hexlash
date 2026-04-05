@@ -5,11 +5,12 @@
         <img class="agent-skin" :src="`/images/skins/${agent.skin}`" :alt="agent.name" />
         <div class="agent-info">
           <div class="agent-name">{{ agent.name }}</div>
-          <div class="agent-archetype-row">
+          <div v-if="agent.primaryModule" class="agent-archetype-row">
             <HexBadge variant="archetype" :archetype="agent.primaryModule" size="sm">{{ shortArch(agent.primaryModule) }}</HexBadge>
             <HexBadge variant="archetype" :archetype="agent.secondaryModule" size="sm">{{ shortArch(agent.secondaryModule) }}</HexBadge>
             <HexBadge variant="archetype" :archetype="agent.tertiaryModule" size="sm">{{ shortArch(agent.tertiaryModule) }}</HexBadge>
           </div>
+          <div v-else class="agent-no-modules">{{ t.club.lblNoModules || 'No modules set' }}</div>
           <div class="agent-stats">
             <span class="stat-win">W:{{ agent.wins }}</span>
             <span class="stat-lose">L:{{ agent.losses }}</span>
@@ -103,6 +104,13 @@ export default {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.agent-no-modules {
+  font-size: 11px;
+  color: var(--hex-text-muted);
+  margin-top: 6px;
+  font-style: italic;
 }
 
 .agent-archetype-row {
