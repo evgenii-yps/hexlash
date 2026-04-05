@@ -41,12 +41,10 @@ import { t } from '@/locales/index.js';
 const router = useRouter();
 
 function selectFight() {
-  localStorage.setItem('hexlash_last_arena_choice', 'fight');
   router.push('/arena/fight');
 }
 
 function selectClub() {
-  localStorage.setItem('hexlash_last_arena_choice', 'club');
   router.push('/arena/club');
 }
 </script>

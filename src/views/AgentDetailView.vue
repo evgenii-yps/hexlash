@@ -8,7 +8,7 @@
         <!-- Header -->
         <div class="agent-header">
           <div class="header-top">
-            <button class="back-link" @click="$router.back()">&larr;</button>
+            <button class="back-link" @click="$router.push('/arena/club')">&larr;</button>
             <div class="header-actions">
               <button class="icon-btn" @click="showEdit = true">&#9881;</button>
               <button class="icon-btn icon-btn--danger" @click="confirmDelete">&#128465;</button>
@@ -413,7 +413,7 @@ const confirmDelete = async () => {
   if (!confirm(t.value.club?.lblDeleteConfirm || 'Delete this agent?')) return;
   try {
     await store.dispatch('agent/deleteAgent', agentId);
-    router.back();
+    router.push('/arena/club');
   } catch (err) {
     store.commit('master/setError', { text: err?.response?.data?.error || 'Failed' });
   }
