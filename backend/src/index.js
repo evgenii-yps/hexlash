@@ -23,6 +23,7 @@ const aiRoutes = require('./routes/ai');
 const agentRoutes = require('./routes/agent');
 
 const app = express();
+app.set('trust proxy', 1);
 
 // Ensure uploads directory exists
 const uploadsPath = path.resolve(UPLOAD_DIR);
