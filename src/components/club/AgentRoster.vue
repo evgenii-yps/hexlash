@@ -2,12 +2,6 @@
   <div class="agent-roster">
     <div class="roster-header">
       <span class="roster-title">{{ t.club.lblRoster || 'ROSTER' }} ({{ agents.length }}/{{ maxAgents }})</span>
-      <HexButton
-        variant="primary"
-        size="sm"
-        :disabled="!canCreate"
-        @click="$emit('create')"
-      >+ {{ t.club.lblNewAgent || 'New Agent' }}</HexButton>
     </div>
 
     <div v-if="loading" class="roster-loading">
@@ -42,12 +36,11 @@
 <script>
 import { computed } from 'vue'
 import { t } from '@/locales/index.js'
-import HexButton from '@/components/ui/HexButton.vue'
 import AgentCard from '@/components/club/AgentCard.vue'
 
 export default {
   name: 'AgentRoster',
-  components: { HexButton, AgentCard },
+  components: { AgentCard },
   props: {
     agents: { type: Array, default: () => [] },
     maxAgents: { type: Number, default: 2 },
@@ -66,9 +59,6 @@ export default {
 .agent-roster { margin-bottom: 24px; }
 
 .roster-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   margin-bottom: 16px;
 }
 .roster-title {
