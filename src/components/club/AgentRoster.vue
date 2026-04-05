@@ -63,32 +63,32 @@ export default {
 </script>
 
 <style scoped>
-.agent-roster { margin-bottom: 16px; }
+.agent-roster { margin-bottom: 24px; }
 
 .roster-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 .roster-title {
   font-family: 'Anonymous', monospace;
-  font-size: 11px;
+  font-size: 16px;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 1.5px;
   color: var(--hex-text-muted);
 }
 
 .roster-loading {
   display: flex;
   justify-content: center;
-  padding: 32px 0;
+  padding: 40px 0;
 }
 
 .roster-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 16px;
 }
 
 @media (max-width: 360px) {
@@ -103,9 +103,9 @@ export default {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 120px;
+  min-height: 180px;
   border: 1px dashed var(--hex-border-default);
-  border-radius: 10px;
+  border-radius: 12px;
   background: var(--hex-bg-dark);
   transition: border-color 0.2s;
 }
@@ -117,15 +117,15 @@ export default {
 .empty-slot--disabled:hover { border-color: var(--hex-border-default); }
 
 .empty-slot-icon {
-  font-size: 24px;
+  font-size: 48px;
   color: var(--hex-text-muted);
   line-height: 1;
 }
 .empty-slot-text {
-  margin-top: 6px;
-  font-size: 11px;
+  margin-top: 10px;
+  font-size: 15px;
   color: var(--hex-text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
 }
 </style>
