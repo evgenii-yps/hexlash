@@ -65,19 +65,19 @@ onUnmounted(() => {
 
 <style scoped>
 .fight-club-container {
-  padding: 20px 16px;
-  max-width: 520px;
+  padding: 24px 16px;
+  max-width: 600px;
   margin: 0 auto;
 }
-.fc-header { margin-bottom: 20px; }
+.fc-header { margin-bottom: 24px; }
 .fc-title {
   font-family: 'Anonymous', monospace;
-  font-size: 22px;
+  font-size: 28px;
   text-transform: uppercase;
-  letter-spacing: 2px;
+  letter-spacing: 3px;
   color: var(--hex-primary);
   text-align: center;
-  text-shadow: 0 0 20px rgba(255, 6, 111, 0.4);
+  text-shadow: 0 0 24px rgba(255, 6, 111, 0.4);
 }
 
 .switch-mode-btn {
@@ -86,11 +86,11 @@ onUnmounted(() => {
   border-radius: var(--hex-radius-md);
   color: var(--hex-text-muted);
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
-  font-size: 12px;
+  font-size: 13px;
   letter-spacing: 1px;
-  padding: 6px 12px;
+  padding: 8px 16px;
   cursor: pointer;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
   transition: color 0.2s, border-color 0.2s;
 }
 

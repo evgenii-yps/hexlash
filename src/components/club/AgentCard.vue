@@ -75,19 +75,19 @@ export default {
 
 <style scoped>
 .agent-card { cursor: pointer; }
-.agent-card--fighting :deep(.hex-card) { box-shadow: 0 0 12px rgba(255, 6, 111, 0.3); }
+.agent-card--fighting :deep(.hex-card) { box-shadow: 0 0 14px rgba(255, 6, 111, 0.3); }
 .agent-card--auto :deep(.hex-card) { border-color: var(--hex-border-active); }
 
 .agent-card-top {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
+  gap: 12px;
 }
 
 .agent-skin {
-  width: 56px;
-  height: 56px;
-  border-radius: 8px;
+  width: 64px;
+  height: 64px;
+  border-radius: 10px;
   object-fit: cover;
   border: 1px solid var(--hex-border-default);
   flex-shrink: 0;
@@ -97,7 +97,7 @@ export default {
 
 .agent-name {
   font-family: 'Anonymous', monospace;
-  font-size: 14px;
+  font-size: 16px;
   color: var(--hex-text-primary);
   white-space: nowrap;
   overflow: hidden;
@@ -106,16 +106,16 @@ export default {
 
 .agent-archetype-row {
   display: flex;
-  gap: 3px;
-  margin-top: 4px;
+  gap: 4px;
+  margin-top: 6px;
 }
 
 .agent-stats {
   display: flex;
-  gap: 8px;
-  margin-top: 4px;
+  gap: 10px;
+  margin-top: 6px;
   font-family: 'AnonymousBalance', monospace;
-  font-size: 12px;
+  font-size: 14px;
 }
 .stat-win { color: var(--hex-victory); }
 .stat-lose { color: var(--hex-defeat); }
@@ -123,7 +123,7 @@ export default {
 
 .agent-elo {
   font-family: 'AnonymousBalance', monospace;
-  font-size: 18px;
+  font-size: 22px;
   font-weight: bold;
   flex-shrink: 0;
   margin-left: auto;
@@ -133,7 +133,7 @@ export default {
 .elo-high { color: var(--hex-victory); }
 
 .agent-card-bottom {
-  margin-top: 10px;
+  margin-top: 12px;
 }
 
 .agent-status-row {
@@ -145,17 +145,17 @@ export default {
 .auto-toggle {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   cursor: pointer;
 }
 .auto-toggle input {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   accent-color: var(--hex-primary);
   cursor: pointer;
 }
 .auto-toggle-label {
-  font-size: 10px;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--hex-text-muted);
