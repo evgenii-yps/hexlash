@@ -1,12 +1,12 @@
 <template>
   <div class="background">
-    <div class="view-topbar">
-      <button class="back-link" @click="onBack">&larr; {{ t.club.lblBack || 'Back' }}</button>
-      <span class="wizard-step">{{ stepTitles[step] }} &nbsp; {{ step + 1 }}/3</span>
-      <span class="topbar-spacer"></span>
-    </div>
-
     <div class="create-agent-container">
+      <div class="wizard-header">
+        <button class="back-link" @click="onBack">&larr; {{ t.club.lblBack || 'Back' }}</button>
+        <span class="wizard-step">{{ stepTitles[step] }} &nbsp; {{ step + 1 }}/3</span>
+        <span class="wizard-header-spacer"></span>
+      </div>
+
       <!-- Step indicators -->
       <div class="step-dots">
         <span v-for="i in 3" :key="i" :class="['dot', { active: i - 1 === step, done: i - 1 < step }]" />
@@ -221,15 +221,18 @@ const onCreate = async () => {
 </script>
 
 <style scoped>
-.view-topbar {
+.create-agent-container {
+  padding: 16px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+.wizard-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-  width: 100%;
+  margin-bottom: 12px;
 }
-.topbar-spacer {
-  width: 80px;
+.wizard-header-spacer {
+  min-width: 60px;
 }
 .back-link {
   font-size: 16px;
@@ -242,8 +245,7 @@ const onCreate = async () => {
   padding: 6px 0;
   transition: opacity 0.2s;
   white-space: nowrap;
-  min-width: 80px;
-  text-align: left;
+  min-width: 60px;
 }
 .back-link:hover {
   opacity: 0.7;
@@ -256,11 +258,6 @@ const onCreate = async () => {
   color: var(--hex-text-muted);
   flex: 1;
   text-align: center;
-}
-.create-agent-container {
-  padding: 0 16px 16px;
-  max-width: 480px;
-  margin: 0 auto;
 }
 
 .step-dots {

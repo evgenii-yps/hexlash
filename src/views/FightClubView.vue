@@ -1,14 +1,14 @@
 <template>
   <div class="background">
-    <div class="view-topbar">
-      <button class="back-link" @click="$router.push('/arena')">
-        {{ t.arena.hub?.switchBack || '← Arena' }}
-      </button>
-      <h2 class="fc-title">{{ t.club.lblMyFightClub || 'MY FIGHT CLUB' }}</h2>
-      <span class="topbar-spacer"></span>
-    </div>
-
     <div class="fight-club-container">
+      <div class="fc-header-row">
+        <button class="back-link" @click="$router.push('/arena')">
+          {{ t.arena.hub?.switchBack || '← Arena' }}
+        </button>
+        <h2 class="fc-title">{{ t.club.lblMyFightClub || 'MY FIGHT CLUB' }}</h2>
+        <span class="fc-header-spacer"></span>
+      </div>
+
       <ClubLevelBar v-if="fightClubLevel" :clubLevel="fightClubLevel" />
 
       <MorningReport v-if="agents.length > 0" />
@@ -64,15 +64,18 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.view-topbar {
+.fight-club-container {
+  padding: 24px 16px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+.fc-header-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-  width: 100%;
+  margin-bottom: 24px;
 }
-.topbar-spacer {
-  width: 80px;
+.fc-header-spacer {
+  min-width: 80px;
 }
 .back-link {
   font-size: 16px;
@@ -86,7 +89,6 @@ onUnmounted(() => {
   transition: opacity 0.2s;
   white-space: nowrap;
   min-width: 80px;
-  text-align: left;
 }
 .back-link:hover {
   opacity: 0.7;
@@ -100,10 +102,5 @@ onUnmounted(() => {
   text-align: center;
   text-shadow: 0 0 24px rgba(255, 6, 111, 0.4);
   flex: 1;
-}
-.fight-club-container {
-  padding: 0 16px 24px;
-  max-width: 600px;
-  margin: 0 auto;
 }
 </style>
