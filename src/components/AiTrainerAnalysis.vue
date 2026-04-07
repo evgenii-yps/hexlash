@@ -112,8 +112,8 @@ onBeforeUnmount(() => {
 <style scoped>
 .ai-trainer-analysis {
   background: var(--hex-bg-card);
-  border-left: 3px solid var(--hex-primary);
-  border-radius: 8px;
+  border: 1px solid var(--hex-border-default);
+  border-radius: var(--hex-radius-md);
   padding: 16px;
   margin-top: 16px;
   max-width: 480px;
@@ -130,15 +130,16 @@ onBeforeUnmount(() => {
 }
 
 .ai-trainer-header {
-  font-family: 'Anonymous', monospace;
-  color: var(--hex-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: var(--hex-text-primary);
   font-size: 14px;
+  font-weight: bold;
   text-transform: uppercase;
   letter-spacing: 1px;
 }
 
 .ai-trainer-arrow {
-  color: var(--hex-primary);
+  color: var(--hex-text-secondary);
   font-size: 12px;
   transition: transform 0.2s ease;
 }
@@ -163,13 +164,13 @@ onBeforeUnmount(() => {
 }
 
 .ai-trainer-section-label {
-  font-family: 'Anonymous', monospace;
-  color: var(--hex-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: var(--hex-text-primary);
   font-size: 11px;
+  font-weight: bold;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 4px;
-  opacity: 0.8;
 }
 
 .ai-trainer-section-text {
@@ -212,8 +213,8 @@ onBeforeUnmount(() => {
 }
 
 .ai-trainer-retry:hover {
-  color: var(--hex-primary);
-  border-color: var(--hex-primary);
+  color: var(--hex-text-primary);
+  border-color: var(--hex-border-strong);
 }
 
 @keyframes fadeInUp {

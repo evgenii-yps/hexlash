@@ -411,7 +411,7 @@ AI_TRAINER_ENABLED = true
 |------|------|-------|
 | Training | `TrainingView.vue` | 3D punch bag, taps, daily/social tasks, progression bar |
 | Move Tree | `MoveTreeView.vue` | Branch sidebar (Speed/Power/Tech) + move cards. Sidebar buttons centered with `position:absolute; top:35%; transform:translateY(-50%)` |
-| Fight | `CardFightView.vue` | Main combat (PvE + PvP), dice, coach advice, HP bars, AI Trainer (PvE results). PvP mode: no BottomMenu, no PvP badge, reduced padding. Fully migrated to --hex-* vars: HexButton for results, inline SVGs, dice/coach/victory/defeat/overdrive all use design system vars |
+| Fight | `CardFightView.vue` | Main combat (PvE + PvP), dice, coach advice, HP bars, AI Trainer (PvE results). PvP mode: no BottomMenu, no PvP badge, reduced padding. Fully migrated to --hex-* vars: HexButton for results, inline SVGs, dice/coach/victory/defeat/overdrive all use design system vars. Visual System v1.0 compliant: pink only on CTA buttons (dice, Fight Again), VICTORY/DEFEAT/DRAW + OVERDRIVE pixel-font, HP in AnonymousBalance, dice effects in characteristic colors, coach buttons in action-specific colors |
 | Profile | `ProfileView.vue` | Tabs: balance, wallet, account, skins |
 | Ratings (League) | `RatingsView.vue` | 3 tabs: My Club, Clubs (leaderboard), Fighters (leaderboard). Default tab: My Club. URL: `/ratings/:type` (myclub/clubs/fighters). My Club tab: `MyClubTab.vue` component — redesigned clan header (avatar 64px with --hex-primary glow, name in Anonymous font, italic description, LVL badge, member count, level progress bar), stats grid (4 cards: Members/Wins/Losses/Win Rate with colored values), win rate bar, members top-5, role badges owner/deputy, action menus. No-clan state: ⚔ icon hero, CREATE/BROWSE buttons, pending invites banners, suggested clans with stats |
 | Arena Hub | `ArenaHubView.vue` | Split screen at `/arena`: Fight (pink) and Club (green) cards. localStorage remembers last choice, `?force=true` bypasses. "← Arena" switch button in both sub-views |
@@ -465,7 +465,7 @@ AI_TRAINER_ENABLED = true
 - `ClubModeToggle.vue` — club mode on/off button
 - `ClubModeStatus.vue` — club mode live status + countdown
 - `SoundToggle.vue` — sound mute/unmute toggle (Profile > Account)
-- `HPBar.vue` — fight health bar
+- `HPBar.vue` — fight health bar. Visual System v1.0 compliant: status colors (success/warning/danger), AnonymousBalance HP numbers, no pink
 - `Fighter.vue` — fighter display in combat
 - `ModeSelector.vue` — arena mode selector (PvE/PvP), compact button with dropdown, system sans-serif font. Visual System v1.0 compliant: neutral compact btn (no mode-specific colors), neutral dropdown (no glow), system sans labels, touch-targets ≥44px
 - `ModuleBuilder.vue` — fighter module slots (3 slots: primary/secondary/tertiary), build preview with AI description, emergency protocol selector, archetype selection modal. Visual System v1.0 compliant: neutral slots (no pink), archetype icons via `<img>` (no dynamic arch colors yet — TODO: inline SVG for var(--hex-arch-*)), system sans, no glow
@@ -477,7 +477,7 @@ AI_TRAINER_ENABLED = true
 - `PlayerSearchResult.vue` — player search result item
 - `XPAllocationModal.vue` — XP allocation modal
 - `PvPStatsCard.vue` — PvP statistics display (league, rating, progress, wins/losses/winrate). Shown in Fighters tab of RatingsView
-- `AiTrainerAnalysis.vue` — Claude-powered post-fight analysis (PvE + PvP, results screen)
+- `AiTrainerAnalysis.vue` — Claude-powered post-fight analysis (PvE + PvP, results screen). Visual System v1.0 compliant: neutral card, system sans, no pink, no Anonymous font
 - `ClubModeAnalysis.vue` — Claude-powered club mode fight series analysis (ClubModeLogView)
 - `ProfileWallet.vue` — Wallet page: uses @wagmi/vue useAccount(), shows ConnectWallet + GameBalanceCard + HexCard placeholder. BuyTokens/WalletInfo removed from render
 - `ConnectWallet.vue` — Full wallet modal: Teleport modal with connector list (icons, dedup, rename Injected→Browser Wallet), connecting spinner, connected state (short address + chain + disconnect). Uses @wagmi/vue useConnect/useDisconnect/useConnectors. z-index 9000, Escape/overlay close, hex-fade/hex-slide-up transitions. 360px responsive

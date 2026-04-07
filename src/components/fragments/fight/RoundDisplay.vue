@@ -107,7 +107,7 @@ const rightEvents = computed(() => {
   max-width: 140px;
   padding: 10px 8px;
   border-radius: 8px;
-  background: linear-gradient(135deg, var(--hex-bg-card) 0%, rgba(26, 26, 46, 0.5) 100%);
+  background: linear-gradient(135deg, var(--hex-bg-card) 0%, rgba(26, 26, 46, 0.5) 100%); /* gradient base, no var equivalent */
   border: 2px solid var(--hex-border-active);
   text-align: center;
   animation: cardSlideIn 0.4s ease-out;
@@ -134,7 +134,7 @@ const rightEvents = computed(() => {
 
 .action-icon-img {
   width: 28px; height: 28px; margin-bottom: 2px;
-  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.2));
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.2)); /* subtle highlight on action icon */
 }
 .action-label {
   font-size: 0.65rem; color: var(--hex-text-primary);
@@ -163,7 +163,8 @@ const rightEvents = computed(() => {
 .event-position { color: var(--hex-action-position); }
 
 .vs-label {
-  font-size: 0.8rem; color: var(--hex-primary);
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
+  font-size: 0.8rem; color: var(--hex-text-secondary);
   font-weight: 900; letter-spacing: 1px;
 }
 </style>
