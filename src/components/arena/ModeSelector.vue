@@ -30,7 +30,7 @@
           <div class="option-name">PVE</div>
           <div class="option-desc">{{ t.arena.pveDesc }}</div>
         </div>
-        <span v-if="selectedMode === 'pve'" class="check"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--hex-primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 10 18 20 6"/></svg></span>
+        <span v-if="selectedMode === 'pve'" class="check"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--hex-text-primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 10 18 20 6"/></svg></span>
       </div>
 
       <!-- PVP -->
@@ -50,7 +50,7 @@
             {{ t.pvp.online }}: {{ onlineCount }}
           </div>
         </div>
-        <span v-if="selectedMode === 'pvp'" class="check"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--hex-primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 10 18 20 6"/></svg></span>
+        <span v-if="selectedMode === 'pvp'" class="check"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--hex-text-primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 10 18 20 6"/></svg></span>
       </div>
 
     </div>
@@ -100,7 +100,7 @@ function selectMode(mode) {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 4px;
   background: var(--hex-bg-card);
   border: 1px solid var(--hex-border-active);
   border-radius: var(--hex-radius-lg);
@@ -110,13 +110,9 @@ function selectMode(mode) {
 }
 
 .mode-compact-btn:active {
-  border-color: var(--hex-primary);
-  box-shadow: 0 0 16px var(--hex-primary-glow);
+  border-color: var(--hex-border-strong);
+  background: var(--hex-bg-light);
 }
-
-.mode-compact-btn.mode-pve { border-color: color-mix(in srgb, var(--hex-mode-pve) 40%, transparent); }
-.mode-compact-btn.mode-pve:active { border-color: var(--hex-mode-pve); box-shadow: 0 0 16px color-mix(in srgb, var(--hex-mode-pve) 30%, transparent); }
-.mode-compact-btn.mode-pvp { border-color: color-mix(in srgb, var(--hex-mode-pvp) 40%, transparent); }
 
 .mode-compact-label {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -126,9 +122,6 @@ function selectMode(mode) {
   line-height: 1;
   text-transform: uppercase;
 }
-
-.mode-compact-btn.mode-pve .mode-compact-label { color: var(--hex-mode-pve); }
-.mode-compact-btn.mode-pvp .mode-compact-label { color: var(--hex-mode-pvp); }
 
 .mode-compact-arrow {
   font-size: 10px;
@@ -149,13 +142,11 @@ function selectMode(mode) {
   left: 0;
   width: 280px;
   background: var(--hex-bg-medium);
-  border: 2px solid var(--hex-primary);
+  border: 1px solid var(--hex-border-strong);
   border-radius: var(--hex-radius-xl);
   overflow: hidden;
   z-index: 100;
-  box-shadow:
-    0 0 30px var(--hex-primary-glow),
-    0 10px 40px rgba(0, 0, 0, 0.8);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8); /* deep shadow, no glow */
   animation: dropdownIn 0.2s ease;
 }
 
@@ -167,7 +158,7 @@ function selectMode(mode) {
 .mode-option {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   padding: 16px 20px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -175,8 +166,8 @@ function selectMode(mode) {
 }
 
 .mode-option:last-child { border-bottom: none; }
-.mode-option:active { background: color-mix(in srgb, var(--hex-primary) 15%, transparent); }
-.mode-option.active { background: color-mix(in srgb, var(--hex-primary) 20%, transparent); }
+.mode-option:active { background: var(--hex-bg-light); }
+.mode-option.active { background: var(--hex-bg-light); }
 
 .option-icon {
   width: 40px;
@@ -184,7 +175,7 @@ function selectMode(mode) {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 10px;
+  border-radius: var(--hex-radius-md);
   flex-shrink: 0;
 }
 
@@ -194,8 +185,9 @@ function selectMode(mode) {
 .option-info { flex: 1; }
 
 .option-name {
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
-  font-size: 18px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
   color: var(--hex-text-primary);
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -207,7 +199,7 @@ function selectMode(mode) {
 .option-stat {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   font-size: 11px;
   color: var(--hex-success);
   margin-top: 4px;
@@ -234,7 +226,7 @@ function selectMode(mode) {
 @media (max-width: 400px) {
   .mode-compact-btn {
     width: 52px;
-    height: 42px;
+    height: 44px;
   }
   .mode-compact-label { font-size: 11px; }
 }
@@ -244,8 +236,8 @@ function selectMode(mode) {
     width: calc(100vw - 40px);
   }
   .mode-compact-btn {
-    width: 46px;
-    height: 40px;
+    width: 48px;
+    height: 44px;
   }
   .mode-compact-label { font-size: 10px; }
 }
