@@ -219,7 +219,7 @@ const handleScroll = (event) => {
 
 @media (max-width: 400px) {
   .friends-compact-btn {
-    min-height: 42px;
+    min-height: 44px;
   }
 }
 
@@ -242,14 +242,16 @@ const handleScroll = (event) => {
   align-self: flex-start;
   background: none;
   border: none;
-  color: var(--hex-primary);
-  font-family: 'Anonymous', monospace;
-  font-size: 16px;
-  letter-spacing: 0.5px;
-  padding: 6px 0;
+  color: var(--hex-text-secondary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  padding: 8px 0;
   cursor: pointer;
   transition: opacity 0.2s;
   white-space: nowrap;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
 }
 
 .switch-mode-btn:hover {
