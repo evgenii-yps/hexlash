@@ -34,14 +34,14 @@ Source of truth: `/src/styles/hexlash-ui.css`
 ### Backgrounds
 
 ```css
+--hex-bg-deep: #050507;       /* deepest black: shadows, overlays, empty states */
 --hex-bg-dark: #090909;       /* page background */
 --hex-bg-medium: #111111;     /* panels, nav bar */
 --hex-bg-light: #1A1A1A;      /* inputs, elevated surfaces */
 --hex-bg-card: rgba(17, 17, 17, 0.85);  /* cards (semi-transparent) */
 ```
 
-- **Rule:** Darker = further back. `bg-dark` → `bg-medium` → `bg-light` → `bg-card`. Never invert.
-- TODO: add `--hex-bg-deep: #050507` in next CSS update ТЗ (referenced in PDF but not yet in CSS).
+- **Rule:** Darker = further back. `bg-deep` → `bg-dark` → `bg-medium` → `bg-light` → `bg-card`. Never invert.
 
 ### Text
 
@@ -59,9 +59,8 @@ Source of truth: `/src/styles/hexlash-ui.css`
 --hex-border-default: rgba(255,255,255,0.08);  /* resting cards */
 --hex-border-active: rgba(255,255,255,0.15);   /* hover, focus */
 --hex-border-strong: rgba(255,255,255,0.25);   /* selected, important */
+--hex-border-hi: #4A4A50;                      /* accent border for hover/active neutral elements */
 ```
-
-- TODO: add `--hex-border-hi: #4A4A50` in next CSS update ТЗ (referenced in PDF but not yet in CSS).
 
 ### Status
 

@@ -16,6 +16,7 @@
   --hex-primary-glow: rgba(255, 6, 111, 0.5);
 
   /* Background — near-black surfaces */
+  --hex-bg-deep: #050507;
   --hex-bg-dark: #090909;
   --hex-bg-medium: #111111;
   --hex-bg-light: #1A1A1A;
@@ -36,6 +37,7 @@
   --hex-border-default: rgba(255, 255, 255, 0.08);
   --hex-border-active: rgba(255, 255, 255, 0.15);
   --hex-border-strong: rgba(255, 255, 255, 0.25);
+  --hex-border-hi: #4A4A50;
 
   /* --- ARCHETYPES (6) --- */
 
