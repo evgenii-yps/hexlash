@@ -52,10 +52,10 @@ const btnClose = () => {
 .btn-close {
   cursor: pointer;
   border-radius: 50%;
-  color: white !important;
-  margin: 10px;
-  width: 40px;
-  height: 40px;
+  color: var(--hex-text-primary) !important;
+  margin: 8px;
+  width: 44px;
+  height: 44px;
   font-size: 1.3em;
 }
 
@@ -72,12 +72,4 @@ const btnClose = () => {
   background-color: color-mix(in srgb, var(--hex-danger) 17%, transparent) !important;
   border: 1px solid var(--hex-border-active);
 }
-
-:deep(.v-snackbar__content a) {
-  color: var(--hex-primary) !important;
-  text-decoration: none;
-  font-weight: bold;
-  font-size: 1.2em;
-}
-
 </style>

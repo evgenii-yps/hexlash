@@ -164,7 +164,7 @@ function declineChallenge() {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .challenge-icon {
@@ -187,9 +187,10 @@ function declineChallenge() {
 
 .challenge-player {
   color: var(--hex-text-primary);
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 600;
   font-size: 16px;
-  margin-top: 2px;
+  margin-top: 4px;
 }
 
 .challenge-timer {
@@ -200,7 +201,7 @@ function declineChallenge() {
 
 .challenge-buttons {
   display: flex;
-  gap: 10px;
+  gap: 8px;
 }
 
 .btn-accept-challenge {
@@ -208,12 +209,14 @@ function declineChallenge() {
   background: var(--hex-primary);
   border: none;
   color: var(--hex-text-primary);
-  padding: 10px;
-  border-radius: 6px;
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  padding: 12px;
+  border-radius: var(--hex-radius-md);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 600;
   font-size: 14px;
   cursor: pointer;
   transition: all 0.2s ease;
+  min-height: 44px;
 }
 
 .btn-accept-challenge:hover {
@@ -226,12 +229,13 @@ function declineChallenge() {
   background: transparent;
   border: 1px solid var(--hex-text-secondary);
   color: var(--hex-text-secondary);
-  padding: 10px;
-  border-radius: 6px;
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  padding: 12px;
+  border-radius: var(--hex-radius-md);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 14px;
   cursor: pointer;
   transition: all 0.2s ease;
+  min-height: 44px;
 }
 
 .btn-decline-challenge:hover {

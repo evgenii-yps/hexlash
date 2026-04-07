@@ -457,8 +457,8 @@ AI_TRAINER_ENABLED = true
 - `App.vue` header — scroll-dependent gradient uses `--hex-bg-dark`, balance in AnonymousBalance font with `--hex-text-primary`. Visual System v1.0 compliant: --hex-bg-dark, AnonymousBalance for balance, no decorative gradients
 
 **Game Components:**
-- `Info.vue` / `Error.vue` — toast notifications (text interpolation `{{ }}`, NOT v-html — XSS safe)
-- `NewAchievement.vue` — achievement popup
+- `Info.vue` / `Error.vue` — toast notifications (text interpolation `{{ }}`, NOT v-html — XSS safe). Visual System v1.0 compliant: bg-card neutral, hex-success/hex-danger accent, text via {{ }} (XSS safe)
+- `NewAchievement.vue` — achievement popup. Visual System v1.0 compliant: pixel-font title, hex-bg-card + hex-border-strong via :deep(), VBtn styled as primary. TODO: replace VModal with custom modal for dramatic 600ms animation
 - `Punch3D.vue` — Three.js punching bag
 - `MoveTreeCard.vue` — move row in tree
 - `MoveDetailsModal.vue` — move detail/unlock popup
@@ -471,7 +471,7 @@ AI_TRAINER_ENABLED = true
 - `FriendCard.vue` — friend display card
 - `FriendRequestCard.vue` — incoming friend request
 - `ChallengeModal.vue` — PvP challenge popup (legacy, kept as fallback)
-- `ChallengeNotification.vue` — Top-of-screen challenge notification (global, z-index: 9999, 10s timer)
+- `ChallengeNotification.vue` — Top-of-screen challenge notification (global, z-index: 9999, 10s timer). Visual System v1.0 compliant: primary border-bottom accent, slide-down 300ms, name via {{ }} (XSS safe)
 - `ClubInviteNotification.vue` — Top-of-screen club invitation notification (global, z-index: 9998, 30s timer, accept/decline via WS)
 - `PlayerSearchResult.vue` — player search result item
 - `XPAllocationModal.vue` — XP allocation modal
