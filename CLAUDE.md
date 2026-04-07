@@ -174,7 +174,10 @@ unlockRequirements:  { 3: {taps:300, exp:150}, 4: {taps:250, exp:120}, 5: {taps:
 
 ## Design System — "Neon Discipline"
 
-**Status:** Phase 1 (foundation) + Phase 2 (navigation) complete.
+**Status:** v1.0 — Visual System established.
+**Full visual guide:** Hexlash_Visual_System.pdf v1.0
+**Operational reference:** /skills/hexlash-design/SKILL.md
+**Key rules:** 1) one pink accent per screen, 2) pixel-font (Anonymous) only for titles/impact moments, 3) archetype colors only in fighter icons/active context, 4) backgrounds = atmosphere (stylized underground), UI = function.
 
 ### UI Components (`/src/components/ui/`)
 
@@ -226,6 +229,8 @@ Internally uses `--_arch-color` CSS custom property for scoped styling.
 ---
 
 ## CSS Design System (legacy → migrating to --hex-*)
+
+> **Visual System v1.0** — full guide in Hexlash_Visual_System.pdf, operational version in /skills/hexlash-design/SKILL.md. Key rules: one pink accent per screen, pixel-font only for titles/impact, archetype colors only in fighter icons/active context, backgrounds = atmosphere (stylized underground), UI = function.
 
 > **Active system:** `/src/styles/hexlash-ui.css` with `--hex-*` variables. ALL components use exclusively `--hex-*` vars (Phase 5.1 complete).
 > **Legacy:** `/src/assets/colors.css` — only referenced by PrivacyView.vue (auto-generated legal HTML with inline styles). Do NOT use legacy vars in new code.
