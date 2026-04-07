@@ -45,24 +45,51 @@ const hide = () => {
 </script>
 
 <style scoped>
-.text-center{
+/* TODO: Replace VModal/VCard with custom modal for dramatic 600ms animation control */
+
+.text-center {
   text-align: center;
 }
 
-.title{
+.title {
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 1.5rem;
-  margin: 10px 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--hex-text-primary);
+  margin: 8px 0;
 }
-.desc{
+
+.desc {
   color: var(--hex-text-secondary);
 }
 
-.congratulations{
+.congratulations {
   color: var(--hex-text-secondary);
 }
 
-.achievement-image{
+.achievement-image {
   width: 180px;
   margin-bottom: 20px;
+}
+
+:deep(.v-card) {
+  background-color: var(--hex-bg-card) !important;
+  border: 1px solid var(--hex-border-strong) !important;
+}
+
+:deep(.v-card-title) {
+  color: var(--hex-text-primary) !important;
+}
+
+:deep(.v-card-text) {
+  color: var(--hex-text-primary) !important;
+}
+
+.confirm-btn {
+  background-color: var(--hex-primary) !important;
+  color: var(--hex-text-primary) !important;
+  min-width: 44px;
+  min-height: 44px;
 }
 </style>
