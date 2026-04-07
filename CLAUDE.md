@@ -452,9 +452,9 @@ AI_TRAINER_ENABLED = true
 - `HexBadge.vue` — Pill badge with 5 variants: archetype, branch, status (victory/defeat/draw/info), counter (auto circle<10/pill≥10), custom. Props: icon (PixelIcon), pulse animation.
 
 **Navigation & Layout:**
-- `Logo.vue` — header logo (Anonymous font, --hex-primary color + glow)
-- `BottomMenu.vue` — bottom nav (Arena, Training, Ratings, Profile). Uses SVG background-image icons with filter-based active state. Solid bg `--hex-bg-medium`, no gradient. Hidden on PvP screens via `isPvPScreen` computed in App.vue
-- `App.vue` header — gradient uses `--hex-bg-dark`, balance in AnonymousBalance font with `--hex-text-primary`
+- `Logo.vue` — header logo (Anonymous font, --hex-primary color + glow). Visual System v1.0 compliant: pixel-font for brand, subtle glow, --hex-text-primary
+- `BottomMenu.vue` — bottom nav (Arena, Training, Ratings, Profile). Uses SVG background-image icons with filter-based active state. Semi-transparent bg with backdrop-blur. Hidden on PvP screens via `isPvPScreen` computed in App.vue. Visual System v1.0 compliant: line-icons, system sans for labels, active tab = single pink accent in zone
+- `App.vue` header — scroll-dependent gradient uses `--hex-bg-dark`, balance in AnonymousBalance font with `--hex-text-primary`. Visual System v1.0 compliant: --hex-bg-dark, AnonymousBalance for balance, no decorative gradients
 
 **Game Components:**
 - `Info.vue` / `Error.vue` — toast notifications (text interpolation `{{ }}`, NOT v-html — XSS safe)

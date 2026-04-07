@@ -27,7 +27,7 @@ const goToHome = () => {
   font-size: 1.6em;
   color: var(--hex-primary);
   letter-spacing: 3px;
-  margin: 17px auto 0 17px;
+  margin: 16px auto 0 16px;
   cursor: pointer;
   text-shadow: 0 0 8px var(--hex-primary-glow);
   user-select: none;
