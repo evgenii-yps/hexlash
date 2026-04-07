@@ -468,6 +468,7 @@ AI_TRAINER_ENABLED = true
 - `HPBar.vue` — fight health bar
 - `Fighter.vue` — fighter display in combat
 - `ModeSelector.vue` — arena mode selector (PvE/PvP), compact button with dropdown, system sans-serif font. Visual System v1.0 compliant: neutral compact btn (no mode-specific colors), neutral dropdown (no glow), system sans labels, touch-targets ≥44px
+- `ModuleBuilder.vue` — fighter module slots (3 slots: primary/secondary/tertiary), build preview with AI description, emergency protocol selector, archetype selection modal. Visual System v1.0 compliant: neutral slots (no pink), archetype icons via `<img>` (no dynamic arch colors yet — TODO: inline SVG for var(--hex-arch-*)), system sans, no glow
 - `FriendCard.vue` — friend display card
 - `FriendRequestCard.vue` — incoming friend request
 - `ChallengeModal.vue` — PvP challenge popup (legacy, kept as fallback)

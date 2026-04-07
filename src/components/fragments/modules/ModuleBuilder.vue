@@ -248,23 +248,17 @@ function selectProtocol(id) {
 
 .slot-filled {
   border-style: solid;
-  border-color: var(--hex-primary);
-}
-
-.slot-primary .slot-filled {
-  border-color: var(--hex-dice-crit);
-  box-shadow: 0 0 10px color-mix(in srgb, var(--hex-dice-crit) 30%, transparent);
+  border-color: var(--hex-border-strong);
 }
 
 .module-icon-img {
   width: 32px;
   height: 32px;
-  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--hex-primary) 30%, transparent));
 }
 
 .module-name {
   font-size: 0.65rem;
-  color: white;
+  color: var(--hex-text-primary);
   font-weight: bold;
 }
 
@@ -279,8 +273,8 @@ function selectProtocol(id) {
   width: 100%;
   max-width: 320px;
   background-color: var(--hex-bg-card);
-  border-radius: 8px;
-  padding: 10px 14px;
+  border-radius: var(--hex-radius-md);
+  padding: 8px 12px;
   margin-bottom: 16px;
   text-align: center;
 }
@@ -307,18 +301,18 @@ function selectProtocol(id) {
 }
 
 .preview-loading-text {
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--hex-primary);
-  letter-spacing: 3px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--hex-text-secondary);
+  letter-spacing: 1px;
 }
 
 .preview-spinner {
   width: 12px;
   height: 12px;
-  border: 2px solid color-mix(in srgb, var(--hex-primary) 30%, transparent);
-  border-top-color: var(--hex-primary);
+  border: 2px solid var(--hex-text-muted);
+  border-top-color: var(--hex-text-secondary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -344,7 +338,7 @@ function selectProtocol(id) {
 
 .protocol-options {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   justify-content: center;
 }
 
@@ -353,10 +347,10 @@ function selectProtocol(id) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
   padding: 8px 4px;
   background-color: var(--hex-bg-card);
-  border-radius: 8px;
+  border-radius: var(--hex-radius-md);
   border: 2px solid transparent;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -373,8 +367,8 @@ function selectProtocol(id) {
 
 .protocol-selected {
   opacity: 1;
-  border-color: var(--hex-primary);
-  background-color: color-mix(in srgb, var(--hex-primary) 15%, transparent);
+  border-color: var(--hex-border-strong);
+  background-color: var(--hex-bg-light);
 }
 
 .protocol-selected:hover {
@@ -384,12 +378,11 @@ function selectProtocol(id) {
 .protocol-icon-img {
   width: 28px;
   height: 28px;
-  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--hex-primary) 25%, transparent));
 }
 
 .protocol-name {
   font-size: 0.6rem;
-  color: white;
+  color: var(--hex-text-primary);
   font-weight: bold;
 }
 
@@ -423,7 +416,7 @@ function selectProtocol(id) {
 
 .modal-title {
   font-size: 0.85rem;
-  color: white;
+  color: var(--hex-text-primary);
   text-align: center;
   margin-bottom: 16px;
   font-weight: bold;
@@ -460,12 +453,11 @@ function selectProtocol(id) {
 .archetype-icon-img {
   width: 36px;
   height: 36px;
-  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--hex-primary) 30%, transparent));
 }
 
 .archetype-name {
   font-size: 0.75rem;
-  color: white;
+  color: var(--hex-text-primary);
   font-weight: bold;
 }
 
