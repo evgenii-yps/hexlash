@@ -20,7 +20,7 @@
               <div v-if="loginAvailable && loginChanged && !errorMessage" class="success-message">
                 {{ t.profile.account.lblAvailableLogin }}
               </div>
-              <v-progress-circular v-if="loading" color="var(--hex-primary)" indeterminate :size="20"/>
+              <v-progress-circular v-if="loading" color="var(--hex-text-secondary)" indeterminate :size="20"/>
               <img v-if="!loading && loginAvailable && loginChanged" src="@/assets/images/icon_pencil.svg"
                    @click="confirmChange"
                    alt="change login" class="btn-change-login"/>
@@ -194,7 +194,7 @@ form {
 }
 
 .error-message {
-  color: var(--hex-primary-dark);
+  color: var(--hex-danger);
   font-size: 0.8rem;
   text-align: center;
 }

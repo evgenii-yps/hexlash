@@ -51,14 +51,14 @@ onMounted(() => {
   height: 40px;
   max-width: 500px;
   text-align: center;
-  color: white;
+  color: var(--hex-text-primary);
   cursor: pointer;
   font-size: 0.7rem !important;
 }
 
 
 .switcher {
-  color: white;
+  color: var(--hex-text-primary);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -79,7 +79,7 @@ onMounted(() => {
 }
 
 .switcher-3d-punch.checked :deep(.v-switch__thumb) {
-  background-color: var(--hex-primary) !important;
+  background-color: var(--hex-success) !important;
 }
 
 

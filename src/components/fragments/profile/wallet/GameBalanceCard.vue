@@ -35,7 +35,8 @@ const props = defineProps({
 
 .game-card p {
   margin: 0;
-  color: var(--hex-primary);
+  color: var(--hex-text-primary);
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 2rem;
 
 }
@@ -47,7 +48,7 @@ const props = defineProps({
 
 .desc {
   font-size: 0.8em;
-  color: white;
+  color: var(--hex-text-primary);
   padding: 10px 0 0;
   text-align: center;
   width: 150px;

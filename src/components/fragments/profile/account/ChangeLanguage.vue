@@ -70,7 +70,7 @@ const languages = [
 }
 
 .select-label {
-  color: white;
+  color: var(--hex-text-primary);
   text-transform: uppercase;
   margin-bottom: 5px;
   text-align: center;

@@ -297,7 +297,7 @@ onUnmounted(() => {
 }
 
 .connector-btn:hover {
-  border-color: var(--hex-primary);
+  border-color: var(--hex-border-active);
   background: var(--hex-bg-card);
 }
 
@@ -344,7 +344,7 @@ onUnmounted(() => {
   width: 40px;
   height: 40px;
   border: 3px solid var(--hex-border-default);
-  border-top-color: var(--hex-primary);
+  border-top-color: var(--hex-text-secondary);
   border-radius: 50%;
   animation: wallet-spin 0.8s linear infinite;
 }

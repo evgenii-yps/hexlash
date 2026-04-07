@@ -152,15 +152,16 @@ const carouselItems = computed(() => {
 
 <style scoped>
 .achievements-container {
-  color: white;
+  color: var(--hex-text-primary);
   margin-top: 1em;
 }
 
 .achievements-container h2 {
   font-size: 2rem;
   text-align: center;
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
-  color: white;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: bold;
+  color: var(--hex-text-primary);
 }
 
 .achievements-list {
@@ -208,7 +209,7 @@ const carouselItems = computed(() => {
 
 .achievement-title {
   font-size: 0.8em;
-  color: white;
+  color: var(--hex-text-primary);
   overflow: hidden; /* скрыть текст, если он выходит за пределы контейнера */
   text-overflow: ellipsis; /* добавить троеточие, если текст слишком длинный */
   margin-top: 10px;

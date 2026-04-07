@@ -118,7 +118,7 @@ watch(() => props.userData, (userData) => {
 <style scoped>
 .stats-container {
   margin-top: 15px;
-  color: white;
+  color: var(--hex-text-primary);
   position: relative;
   z-index: 3;
   display: flex;

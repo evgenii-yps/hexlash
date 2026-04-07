@@ -97,7 +97,7 @@ form {
 
 
 .error-message {
-  color: var(--hex-primary-dark);
+  color: var(--hex-danger);
   font-size: 0.8rem;
   margin-top: 0.5rem;
 }
