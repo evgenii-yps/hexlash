@@ -72,7 +72,7 @@ watch(() => props.currentHP, (newVal, oldVal) => {
   background: var(--hex-bg-card);
   border-radius: 5px;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--hex-primary) 20%, transparent);
+  border: 1px solid var(--hex-border-default);
 }
 
 .hp-bar-fill {
@@ -95,6 +95,7 @@ watch(() => props.currentHP, (newVal, oldVal) => {
 }
 
 .hp-bar-text {
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 0.6rem;
   color: var(--hex-text-muted);
   text-align: center;

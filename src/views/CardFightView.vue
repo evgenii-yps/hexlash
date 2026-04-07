@@ -1212,11 +1212,11 @@ const flashStyle = computed(() => ({
   transform: translateX(-50%);
   font-size: 72px;
   font-weight: 900;
-  color: color-mix(in srgb, var(--hex-primary) 8%, transparent);
+  color: color-mix(in srgb, var(--hex-text-secondary) 8%, transparent);
   letter-spacing: 14px;
   text-transform: uppercase;
   user-select: none;
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   white-space: nowrap;
 }
 
@@ -1229,10 +1229,7 @@ const flashStyle = computed(() => ({
   text-align: center;
   width: 100%;
   z-index: 1;
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
-  text-shadow:
-    0 0 20px var(--hex-primary),
-    0 0 40px var(--hex-primary-glow);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .loading-fade-leave-active { transition: opacity 0.4s ease; }
@@ -1277,10 +1274,7 @@ const flashStyle = computed(() => ({
   font-size: 4em;
   color: var(--hex-text-primary);
   z-index: 100;
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
-  text-shadow:
-    0 0 30px var(--hex-primary),
-    0 0 60px var(--hex-primary-glow);
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
 }
 .fade-scale-enter-active, .fade-scale-leave-active { transition: opacity 0.5s ease, transform 0.5s ease; }
 .fade-scale-leave-to  { opacity: 0; transform: scale(3.5); }
@@ -1300,7 +1294,7 @@ const flashStyle = computed(() => ({
   margin-bottom: 12px;
   padding: 12px 8px;
   background: linear-gradient(135deg, var(--hex-bg-dark) 0%, var(--hex-bg-light) 100%);
-  border: 1px solid color-mix(in srgb, var(--hex-primary) 15%, transparent);
+  border: 1px solid var(--hex-border-default);
   border-radius: var(--hex-radius-lg);
 }
 
@@ -1329,7 +1323,6 @@ const flashStyle = computed(() => ({
 
 .fighter-skin {
   width: 100px; height: 170px; padding: 5px;
-  filter: drop-shadow(0 4px 16px var(--hex-primary-glow));
 }
 .flipped { transform: scaleX(-1); }
 
@@ -1341,11 +1334,8 @@ const flashStyle = computed(() => ({
 .vs-center > span {
   font-size: 1.6rem;
   font-weight: 900;
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
-  color: var(--hex-primary);
-  text-shadow:
-    0 0 20px var(--hex-primary-glow),
-    0 0 40px color-mix(in srgb, var(--hex-primary) 25%, transparent);
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
+  color: var(--hex-text-secondary);
   letter-spacing: 3px;
 }
 
@@ -1365,14 +1355,13 @@ const flashStyle = computed(() => ({
 }
 
 .round-dot-done {
-  background: color-mix(in srgb, var(--hex-primary) 35%, transparent);
-  border-color: color-mix(in srgb, var(--hex-primary) 40%, transparent);
+  background: var(--hex-text-muted);
+  border-color: var(--hex-text-muted);
 }
 
 .round-dot-current {
-  background: var(--hex-primary);
-  border-color: var(--hex-primary);
-  box-shadow: 0 0 6px var(--hex-primary-glow);
+  background: var(--hex-text-primary);
+  border-color: var(--hex-text-primary);
   transform: scale(1.3);
 }
 
@@ -1395,12 +1384,11 @@ const flashStyle = computed(() => ({
   position: absolute; top: 50%; left: 50%;
   transform: translate(-50%, -50%);
   z-index: 1;
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 1.6em;
   background: color-mix(in srgb, var(--hex-bg-dark) 80%, transparent);
-  border: 1px solid var(--hex-primary);
-  padding: 4px 16px; border-radius: 6px;
-  text-shadow: 0 0 10px var(--hex-primary-glow);
+  border: 1px solid var(--hex-border-strong);
+  padding: 4px 16px; border-radius: 8px;
   animation: statusPopIn 0.5s ease-in-out forwards;
 }
 @keyframes statusPopIn {
@@ -1446,14 +1434,14 @@ const flashStyle = computed(() => ({
 }
 
 .event-overdrive {
-  color: var(--hex-primary);
-  background: color-mix(in srgb, var(--hex-primary) 12%, transparent);
-  border-color: color-mix(in srgb, var(--hex-primary) 60%, transparent);
-  box-shadow: 0 0 20px color-mix(in srgb, var(--hex-primary) 30%, transparent);
+  color: var(--hex-warning);
+  background: color-mix(in srgb, var(--hex-warning) 12%, transparent);
+  border-color: color-mix(in srgb, var(--hex-warning) 60%, transparent);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--hex-warning) 30%, transparent);
   font-size: 1.3rem;
   letter-spacing: 4px;
   text-transform: uppercase;
-  text-shadow: 0 0 12px var(--hex-primary-glow);
+  text-shadow: 0 0 12px color-mix(in srgb, var(--hex-warning) 70%, transparent);
 }
 
 /* ── Dice (manual, with cooldown) ────────────────────────────────── */
@@ -1500,7 +1488,6 @@ const flashStyle = computed(() => ({
 
 .dice-icon-img {
   width: 28px; height: 28px;
-  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--hex-primary) 30%, transparent));
 }
 
 .dice-item-result {
@@ -1614,9 +1601,9 @@ const flashStyle = computed(() => ({
 
 .log-toggle {
   width: 100%;
-  padding: 10px;
+  padding: 12px;
   background: linear-gradient(135deg, var(--hex-bg-dark) 0%, var(--hex-bg-light) 100%);
-  border: 1px solid color-mix(in srgb, var(--hex-primary) 15%, transparent);
+  border: 1px solid var(--hex-border-default);
   border-radius: var(--hex-radius-md);
   color: var(--hex-text-secondary);
   font-size: 0.7rem;
@@ -1625,7 +1612,7 @@ const flashStyle = computed(() => ({
   transition: border-color 0.2s ease;
 }
 .log-toggle:active {
-  border-color: var(--hex-primary);
+  border-color: var(--hex-border-strong);
 }
 
 .detailed-log {
@@ -1638,7 +1625,7 @@ const flashStyle = computed(() => ({
   display: flex; align-items: center; gap: 6px;
   padding: 5px 8px;
   background: color-mix(in srgb, var(--hex-bg-dark) 70%, transparent);
-  border-left: 2px solid color-mix(in srgb, var(--hex-primary) 15%, transparent);
+  border-left: 2px solid var(--hex-border-default);
   border-radius: 0 4px 4px 0;
   margin-bottom: 2px;
   font-size: 0.6rem;
@@ -1697,14 +1684,11 @@ const flashStyle = computed(() => ({
 
 .advice-timer__number {
   display: inline-block;
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 3rem;
   font-weight: bold;
-  color: var(--hex-primary);
-  text-shadow:
-    0 0 10px var(--hex-primary-glow),
-    0 0 20px color-mix(in srgb, var(--hex-primary) 50%, transparent),
-    2px 2px 0 var(--hex-bg-dark);
+  color: var(--hex-text-primary);
+  text-shadow: 2px 2px 0 var(--hex-bg-dark);
   animation: coachTimerPulse 1s ease-in-out;
 }
 
@@ -1733,7 +1717,7 @@ const flashStyle = computed(() => ({
   width: 92%;
   max-width: 380px;
   background: linear-gradient(135deg, var(--hex-bg-dark) 0%, var(--hex-bg-light) 100%);
-  border: 1px solid color-mix(in srgb, var(--hex-primary) 30%, transparent);
+  border: 1px solid var(--hex-border-strong);
   border-radius: 14px;
   padding: 24px 20px;
   position: relative;
@@ -1744,8 +1728,8 @@ const flashStyle = computed(() => ({
   content: "";
   position: absolute;
   top: 0; left: 0; right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--hex-primary), transparent);
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--hex-border-active), transparent);
 }
 
 @keyframes coachPanelPop {
@@ -1762,17 +1746,15 @@ const flashStyle = computed(() => ({
 
 .coach-avatar {
   width: 32px; height: 32px;
-  filter: drop-shadow(0 0 6px var(--hex-primary-glow));
 }
 
 .coach-title {
   font-size: 1rem;
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
-  color: var(--hex-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: var(--hex-text-primary);
   font-weight: bold;
   text-transform: uppercase;
   letter-spacing: 1.5px;
-  text-shadow: 0 0 10px color-mix(in srgb, var(--hex-primary) 30%, transparent);
 }
 
 .coach-subtitle {
@@ -1874,29 +1856,22 @@ const flashStyle = computed(() => ({
 .coach-active-bar {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
+  gap: 8px;
+  padding: 8px 16px;
   border-radius: 20px;
   background: linear-gradient(135deg, var(--hex-bg-dark) 0%, var(--hex-bg-light) 100%);
-  border: 1px solid color-mix(in srgb, var(--hex-primary) 30%, transparent);
-  margin: 6px 0;
-  animation: coachBarPulse 2s ease-in-out infinite;
-}
-
-@keyframes coachBarPulse {
-  0%, 100% { box-shadow: 0 0 8px color-mix(in srgb, var(--hex-primary) 20%, transparent); }
-  50%      { box-shadow: 0 0 16px color-mix(in srgb, var(--hex-primary) 40%, transparent); }
+  border: 1px solid var(--hex-border-default);
+  margin: 8px 0;
 }
 
 .coach-active-icon {
   width: 16px; height: 16px;
-  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--hex-primary) 30%, transparent));
 }
 
 .coach-active-label {
   font-size: 0.65rem;
   font-weight: bold;
-  color: var(--hex-primary);
+  color: var(--hex-text-secondary);
   letter-spacing: 0.5px;
 }
 
@@ -1907,17 +1882,17 @@ const flashStyle = computed(() => ({
 }
 /* ── XP Earned block ── */
 .xp-earned-block {
-  background: color-mix(in srgb, var(--hex-primary) 8%, transparent);
-  border: 1px solid color-mix(in srgb, var(--hex-primary) 30%, transparent);
+  background: var(--hex-bg-card);
+  border: 1px solid var(--hex-border-default);
   border-radius: var(--hex-radius-md);
   padding: 12px 16px;
   margin-bottom: 12px;
 }
 
 .xp-earned-title {
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 0.75rem;
-  color: var(--hex-primary);
+  color: var(--hex-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   margin-bottom: 8px;
@@ -1926,10 +1901,9 @@ const flashStyle = computed(() => ({
 .xp-earned-total {
   font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 1.4rem;
-  color: var(--hex-primary);
+  color: var(--hex-success);
   font-weight: bold;
   text-align: center;
-  text-shadow: 0 0 10px var(--hex-primary-glow);
 }
 
 /* ── PvP Badge ─────────────────────────────────────────────────── */
@@ -1939,14 +1913,14 @@ const flashStyle = computed(() => ({
   left: 50%;
   transform: translateX(-50%);
   padding: 8px 20px;
-  background: color-mix(in srgb, var(--hex-primary) 20%, transparent);
-  border: 1px solid var(--hex-primary);
+  background: var(--hex-bg-card);
+  border: 1px solid var(--hex-border-default);
   border-radius: 20px;
-  color: var(--hex-primary);
+  color: var(--hex-text-secondary);
   font-weight: 600;
   font-size: 14px;
   z-index: 10;
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   text-transform: uppercase;
   letter-spacing: 1px;
 }
@@ -1965,7 +1939,7 @@ const flashStyle = computed(() => ({
 
 .pvp-modal {
   background: linear-gradient(135deg, var(--hex-bg-medium) 0%, var(--hex-bg-dark) 100%);
-  border: 1px solid color-mix(in srgb, var(--hex-primary) 40%, transparent);
+  border: 1px solid var(--hex-border-strong);
   border-radius: 16px;
   padding: 32px 28px;
   text-align: center;
@@ -1985,10 +1959,9 @@ const flashStyle = computed(() => ({
 .pvp-timer {
   font-size: 2rem;
   font-weight: 900;
-  color: var(--hex-primary);
+  color: var(--hex-text-primary);
   font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   margin: 8px 0 16px;
-  text-shadow: 0 0 15px var(--hex-primary-glow);
 }
 
 .pvp-modal-buttons {
@@ -2056,8 +2029,8 @@ const flashStyle = computed(() => ({
 .pvp-waiting-spinner {
   width: 40px;
   height: 40px;
-  border: 3px solid color-mix(in srgb, var(--hex-primary) 30%, transparent);
-  border-top-color: var(--hex-primary);
+  border: 3px solid var(--hex-text-muted);
+  border-top-color: var(--hex-text-secondary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -2110,10 +2083,11 @@ const flashStyle = computed(() => ({
   font-size: 0.85rem;
 }
 
+/* btn-back and btn-roll use HexButton primary style */
 .btn-back {
   margin-top: 16px;
   padding: 12px 32px;
-  background: linear-gradient(135deg, var(--hex-primary) 0%, var(--hex-primary-dark) 100%);
+  background: var(--hex-primary);
   border: none;
   border-radius: var(--hex-radius-md);
   color: var(--hex-text-primary);
