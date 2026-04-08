@@ -25,12 +25,12 @@ h1 {
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 3rem;
   margin-bottom: 1rem;
-  color: white;
+  color: var(--hex-text-primary);
 }
 
 p {
   font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 5rem;
-  color: white;
+  color: var(--hex-text-primary);
 }
 </style>
