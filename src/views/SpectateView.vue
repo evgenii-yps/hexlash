@@ -287,7 +287,8 @@ onBeforeUnmount(() => {
 }
 
 .spectate-title {
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: bold;
   font-size: 22px;
   color: var(--hex-warning);
   text-transform: uppercase;
@@ -321,7 +322,7 @@ onBeforeUnmount(() => {
 /* Round badge */
 .round-badge {
   text-align: center;
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 14px;
   color: var(--hex-text-muted);
   text-transform: uppercase;
@@ -346,7 +347,7 @@ onBeforeUnmount(() => {
 }
 
 .fighter-friend {
-  border-color: color-mix(in srgb, var(--hex-primary) 40%, transparent);
+  border-color: color-mix(in srgb, var(--hex-victory) 40%, transparent);
 }
 
 .fighter-opponent {
@@ -354,7 +355,8 @@ onBeforeUnmount(() => {
 }
 
 .fighter-name {
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: bold;
   font-size: 14px;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -364,7 +366,7 @@ onBeforeUnmount(() => {
   text-overflow: ellipsis;
 }
 
-.fighter-friend .fighter-name { color: var(--hex-primary); }
+.fighter-friend .fighter-name { color: var(--hex-victory); }
 .fighter-opponent .fighter-name { color: var(--hex-action-defense); }
 
 .fighter-hp-bar {
@@ -383,7 +385,7 @@ onBeforeUnmount(() => {
 }
 
 .hp-fill-friend {
-  background: linear-gradient(90deg, var(--hex-primary), color-mix(in srgb, var(--hex-primary) 70%, white));
+  background: linear-gradient(90deg, color-mix(in srgb, var(--hex-victory) 70%, black), var(--hex-victory));
 }
 
 .hp-fill-opponent {
@@ -398,7 +400,7 @@ onBeforeUnmount(() => {
 }
 
 .vs-divider {
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 16px;
   color: var(--hex-warning);
   font-weight: bold;
@@ -412,7 +414,8 @@ onBeforeUnmount(() => {
 }
 
 .log-header {
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: bold;
   font-size: 13px;
   color: var(--hex-text-secondary);
   text-transform: uppercase;
@@ -471,7 +474,7 @@ onBeforeUnmount(() => {
   max-width: 80px;
 }
 
-.actor-friend { color: var(--hex-primary); }
+.actor-friend { color: var(--hex-victory); }
 .actor-opponent { color: var(--hex-action-defense); }
 
 .log-action {
@@ -520,8 +523,8 @@ onBeforeUnmount(() => {
 }
 
 .result-win {
-  background: color-mix(in srgb, var(--hex-primary) 15%, transparent);
-  border: 1px solid color-mix(in srgb, var(--hex-primary) 40%, transparent);
+  background: color-mix(in srgb, var(--hex-victory) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hex-victory) 40%, transparent);
 }
 
 .result-loss {
@@ -530,7 +533,8 @@ onBeforeUnmount(() => {
 }
 
 .result-text {
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: bold;
   font-size: 20px;
   text-transform: uppercase;
   letter-spacing: 3px;
@@ -546,7 +550,8 @@ onBeforeUnmount(() => {
   border: 1px solid color-mix(in srgb, var(--hex-warning) 40%, transparent);
   border-radius: 12px;
   color: var(--hex-warning);
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: bold;
   font-size: 14px;
   text-transform: uppercase;
   letter-spacing: 1px;
