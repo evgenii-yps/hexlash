@@ -241,7 +241,8 @@ const lockedHint = computed(() => {
 }
 
 .modal-title {
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: bold;
   font-size: 1.3rem;
   color: var(--hex-text-primary);
   flex: 1;
@@ -250,7 +251,7 @@ const lockedHint = computed(() => {
 .modal-level {
   font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 1rem;
-  color: var(--hex-primary);
+  color: var(--hex-text-secondary);
 }
 
 .modal-desc {
@@ -289,7 +290,7 @@ const lockedHint = computed(() => {
 
 .stat-next {
   font-size: 0.8rem;
-  color: var(--hex-primary);
+  color: var(--hex-text-secondary);
 }
 
 .level-dots {
@@ -307,8 +308,8 @@ const lockedHint = computed(() => {
 }
 
 .dot.filled {
-  background: var(--hex-primary);
-  border-color: var(--hex-primary);
+  background: var(--hex-text-primary);
+  border-color: var(--hex-text-primary);
 }
 
 .modal-progress {
@@ -351,7 +352,7 @@ const lockedHint = computed(() => {
 .req-bar-fill {
   display: block;
   height: 100%;
-  background: var(--hex-primary);
+  background: var(--hex-text-primary);
   border-radius: 2px;
   transition: width 0.3s ease;
 }
