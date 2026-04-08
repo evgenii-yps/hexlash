@@ -1194,7 +1194,8 @@ watch(isAuthenticated, (newValue) => {
 .btn-text-page {
   text-decoration: none;
   margin: 10px 10px;
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: bold;
   color: var(--hex-text-primary);
   font-size: 1em;
   /*  background: rgba(51, 51, 51, 0.8);*/
