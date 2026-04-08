@@ -629,8 +629,10 @@ User, Club, ClubInvite, ClanEvent, Achievement, UserAchievement, SocialTask, Use
 
 ## Branch (Git)
 
-Development branch: `claude/add-club-mode-agents-lmXTI`
-Previous branches: `claude/rename-autofight-club-mode-o2bIJ`, `claude/update-claude-md-XVzH6`, `claude/add-pixel-icons-Hk6tn` (design system + UI redesign, completed & merged), `claude/hexlash-full-audit-WvXMd` (security audit, completed & merged)
+Development branch: `claude/hexlash-project-setup-X2K7i`
+Road 1 (Neon Discipline visual migration): **COMPLETE**. See `/docs/road1-final-report.md` and `/docs/road2-parking-list.md`.
+Next: **ТЗ #18.5** — HexButton/HexCard library audit.
+Previous branches: `claude/review-hexlash-guidelines-vxdZD` (Road 1 Visual System alignment), `claude/add-club-mode-agents-lmXTI`, `claude/club-mode-navigation-571kx`, `claude/rename-autofight-club-mode-o2bIJ`, `claude/update-claude-md-XVzH6`, `claude/add-pixel-icons-Hk6tn` (design system + UI redesign, completed & merged), `claude/hexlash-full-audit-WvXMd` (security audit, completed & merged)
 
 ### PvP System Audit — P0+P1 Fixes — ✅ COMPLETE
 
@@ -1491,3 +1493,23 @@ Club Mode (agents) now independent from Clan. Personal FightClub per user, auto-
 - `src/core/state/modules/agentState.js` — fetchFightClubLevel
 - `src/components/fragments/club/ClanPageContent.vue` — removed Club Mode UI
 - `src/router/index.js` — /fight-club route
+
+### Road 1 — Complete
+
+**Status:** Finished 2026-04-08
+**Scope:** Визуальная миграция всех экранов к дизайн-системе Neon Discipline.
+**Duration:** 53 коммитов, 2026-03-15 — 2026-04-08
+
+**Финальные документы:**
+- `/docs/road1-final-report.md` — полный отчёт с статистикой
+- `/docs/road2-parking-list.md` — парковочный список для Phase 1
+
+**Инварианты подтверждены:**
+- 0 legacy `--pink`/`--dark` вне PrivacyView (документированное исключение)
+- i18n: 0 изменений в locale файлах от Road 1 коммитов (чисто визуальная миграция)
+- backend: 0 изменений в `/backend/` от Road 1 коммитов
+- CLAUDE.md <> код <> Visual System PDF v1.1 синхронизированы
+
+**Следующее ТЗ:** #18.5 — аудит библиотеки HexButton/HexCard
+
+**Phase 1 (Club Mode) вход через парковочный список.**
