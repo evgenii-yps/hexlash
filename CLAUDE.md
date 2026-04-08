@@ -373,7 +373,7 @@ AI_TRAINER_ENABLED = true
 
 **AI Trainer:** Claude-powered post-fight analysis (PvE and PvP). Component `AiTrainerAnalysis.vue` renders on CardFightView results screen. Sends fight data (rounds, decks, result, dice/coach/emergency usage) to `POST /v1/ai/analyze-fight` → backend calls Anthropic Claude API → returns 4-section analysis: Fight Summary, What You Did Well, What Went Wrong, Advice. Feature flag: `AI_TRAINER_ENABLED`. Graceful degradation on error. i18n keys: `fight.lblAiTrainer`, `fight.lblAiLoading`, `fight.lblAiError`.
 
-**AI Club Mode Analysis:** Claude-powered analysis of club mode fight series. Component `ClubModeAnalysis.vue` renders on ClubModeLogView screen. Player selects period (Last 5 / Last 10 / All) and clicks "Analyze" → sends fight series data to `POST /v1/ai/club-mode-summary` → returns 4-section analysis: Session Overview, Strengths, Weaknesses, Recommendation. Model: `claude-haiku-4-5-20251001`, max_tokens: 400, rate limit: 5/min. Vuex state in `clubModeState` (aiAnalysis, aiAnalysisLoading, aiAnalysisError, aiAnalysisPeriod). Club mode log entries now include: playerModules, opponentModules, diceUsed, diceEffect, coachUsed, coachChoice, emergencyUsed.
+**AI Club Mode Analysis:** Backend endpoint `POST /v1/ai/club-mode-summary` exists. Frontend component was removed during Club Mode decoupling. See MorningReport.vue in FightClubView for current implementation.
 
 **Club Stats:** When a fight result is saved (PvE via `POST /fight/save`, PvP via `pvpCombatEngine.saveFightResult`), if the player has a `clubId`, `Club.battles` is incremented by 1; if the player won, `Club.wins` is also incremented. Club Mode fights go through `/fight/save` so they increment too.
 
@@ -400,7 +400,6 @@ AI_TRAINER_ENABLED = true
 - `pvpMatchManager.js` — PvP match lifecycle
 - `pvpHandler.js` — PvP WebSocket message handling (dice_roll, coach_choice)
 - `AiTrainerAnalysis.vue` — AI Trainer post-fight analysis component
-- `ClubModeAnalysis.vue` — AI club mode fight series analysis component
 - `backend/src/routes/ai.js` — AI Trainer + Club Mode Summary API endpoints
 
 ---
@@ -465,23 +464,18 @@ AI_TRAINER_ENABLED = true
 - `Punch3D.vue` — Three.js punching bag
 - `MoveTreeCard.vue` — move row in tree
 - `MoveDetailsModal.vue` — move detail/unlock popup
-- `ClubModeToggle.vue` — club mode on/off button
-- `ClubModeStatus.vue` — club mode live status + countdown
 - `SoundToggle.vue` — sound mute/unmute toggle (Profile > Account). Visual System v1.0 compliant: success green on-state, no pink
 - `HPBar.vue` — fight health bar. Visual System v1.0 compliant: status colors (success/warning/danger), AnonymousBalance HP numbers, no pink
-- `Fighter.vue` — fighter display in combat
 - `ModeSelector.vue` — arena mode selector (PvE/PvP), compact button with dropdown, system sans-serif font. Visual System v1.0 compliant: neutral compact btn (no mode-specific colors), neutral dropdown (no glow), system sans labels, touch-targets ≥44px
 - `ModuleBuilder.vue` — fighter module slots (3 slots: primary/secondary/tertiary), build preview with AI description, emergency protocol selector, archetype selection modal. Visual System v1.0 compliant: neutral slots (no pink), archetype icons via `<img>` (no dynamic arch colors yet — TODO: inline SVG for var(--hex-arch-*)), system sans, no glow
 - `FriendCard.vue` — friend display card
 - `FriendRequestCard.vue` — incoming friend request
-- `ChallengeModal.vue` — PvP challenge popup (legacy, kept as fallback)
 - `ChallengeNotification.vue` — Top-of-screen challenge notification (global, z-index: 9999, 10s timer). Visual System v1.0 compliant: primary border-bottom accent, slide-down 300ms, name via {{ }} (XSS safe)
 - `ClubInviteNotification.vue` — Top-of-screen club invitation notification (global, z-index: 9998, 30s timer, accept/decline via WS)
 - `PlayerSearchResult.vue` — player search result item
 - `XPAllocationModal.vue` — XP allocation modal
 - `PvPStatsCard.vue` — PvP statistics display (league, rating, progress, wins/losses/winrate). Shown in Fighters tab of RatingsView. Visual System v1.0 compliant: 0 pink, league colors preserved (brand identity), AnonymousBalance for numbers, system sans for labels
 - `AiTrainerAnalysis.vue` — Claude-powered post-fight analysis (PvE + PvP, results screen). Visual System v1.0 compliant: neutral card, system sans, no pink, no Anonymous font
-- `ClubModeAnalysis.vue` — Claude-powered club mode fight series analysis (ClubModeLogView)
 - `ProfileWallet.vue` — Wallet page: uses @wagmi/vue useAccount(), shows ConnectWallet + GameBalanceCard + HexCard placeholder. BuyTokens/WalletInfo removed from render
 - `ConnectWallet.vue` — Full wallet modal: Teleport modal with connector list (icons, dedup, rename Injected→Browser Wallet), connecting spinner, connected state (short address + chain + disconnect). Uses @wagmi/vue useConnect/useDisconnect/useConnectors. z-index 9000, Escape/overlay close, hex-fade/hex-slide-up transitions. 360px responsive
 - `WalletInfo.vue` — **Unused** — functionality moved into ConnectWallet connected state. File preserved
