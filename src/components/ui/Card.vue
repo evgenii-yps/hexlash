@@ -120,11 +120,14 @@ const cardStyles = computed(() => ({
   font-size: 5rem;
   flex-grow: 1;
   text-align: center;
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: bold;
 }
 
 .close-btn {
-  background: var(--hex-primary);
+  background: transparent;
+  color: var(--hex-text-secondary);
+  transition: color 0.2s, background 0.2s;
   border: none;
   cursor: pointer;
   position: absolute;
@@ -137,6 +140,13 @@ const cardStyles = computed(() => ({
   justify-content: center;
   align-items: center;
   padding: 0;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.close-btn:hover {
+  color: var(--hex-text-primary);
+  background: var(--hex-bg-card);
 }
 
 .close-icon {

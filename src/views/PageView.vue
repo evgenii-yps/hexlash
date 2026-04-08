@@ -69,22 +69,27 @@ Card {
 
 .help-content :deep(ul) {
   list-style-type: none;
-  padding: 0 10px;
+  padding: 0 12px;
 }
 
 .help-content :deep(li) {
   margin-top: 20px;
-  margin-bottom: 20px; /* Увеличивает отступы между пунктами списка */
+  margin-bottom: 20px;
 }
 
 .help-content :deep(a) {
-  color: var(--hex-primary);
-  text-decoration: none;
+  color: var(--hex-text-primary);
+  text-decoration: underline;
   font-size: 1.4em;
+  transition: color 0.2s;
+}
+
+.help-content :deep(a:hover) {
+  color: var(--hex-primary-light);
 }
 
 .help-content :deep(h2) {
-  margin: 10px 0;
+  margin: 12px 0;
 }
 
 .help-content :deep(p) {
@@ -93,7 +98,7 @@ Card {
 }
 
 .help-content :deep(span) {
-  color: var(--hex-primary);
+  color: var(--hex-primary-light);
 }
 
 .help-content :deep(.margin-l-20) {

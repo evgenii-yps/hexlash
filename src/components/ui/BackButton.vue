@@ -34,7 +34,7 @@ const goBack = () => {
 .back-btn {
   margin-left: 20px;
   text-align: left;
-  color: white;
+  color: var(--hex-text-primary);
   cursor: pointer;
   border: 0.5px solid var(--hex-border-active);
   font-size: 0.7em;
