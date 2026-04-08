@@ -371,9 +371,9 @@ const onClubDeleted = () => {
 .clan-avatar-wrap :deep(.avatar-container) {
   width: 64px !important;
   height: 64px !important;
-  border: 2px solid var(--hex-primary);
+  border: 2px solid var(--hex-border-strong);
   border-radius: var(--hex-radius-lg);
-  box-shadow: 0 0 12px var(--hex-primary-glow);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.08);
 }
 
 .clan-avatar-wrap :deep(.default-avatar) { width: 60%; }
@@ -383,7 +383,8 @@ const onClubDeleted = () => {
 
 .clan-name {
   font-size: 22px;
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: bold;
   color: var(--hex-text-primary);
   margin: 0;
   line-height: 1.2;
@@ -409,13 +410,14 @@ const onClubDeleted = () => {
 .level-badge {
   display: inline-block;
   padding: 2px 8px;
-  background: var(--hex-primary);
+  background: var(--hex-bg-light);
   color: var(--hex-text-primary);
   font-size: 10px;
   font-weight: bold;
   font-family: 'AnonymousBalance', 'Courier New', monospace;
   border-radius: var(--hex-radius-sm);
   letter-spacing: 0.5px;
+  border: 1px solid var(--hex-border-default);
 }
 
 .meta-separator { color: var(--hex-text-muted); font-size: 12px; }
@@ -423,10 +425,10 @@ const onClubDeleted = () => {
 
 .level-progress { position: relative; z-index: 1; margin-top: 10px; }
 .level-labels { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
-.level-current { font-size: 10px; font-family: 'Anonymous', 'Courier New', Consolas, monospace; color: var(--hex-primary); letter-spacing: 0.5px; }
+.level-current { font-size: 10px; font-family: 'AnonymousBalance', 'Courier New', monospace; color: var(--hex-success); letter-spacing: 0.5px; }
 .level-xp { font-size: 10px; font-family: 'AnonymousBalance', 'Courier New', monospace; color: var(--hex-text-muted); }
 .level-bar { height: 6px; background: var(--hex-bg-dark); border-radius: 3px; overflow: hidden; }
-.level-bar-fill { height: 100%; background: linear-gradient(90deg, var(--hex-primary), #FF3399); border-radius: 3px; box-shadow: 0 0 8px var(--hex-primary-glow); transition: width 0.4s ease; }
+.level-bar-fill { height: 100%; background: linear-gradient(90deg, var(--hex-success), #33CC77); border-radius: 3px; box-shadow: 0 0 8px rgba(0, 255, 136, 0.3); transition: width 0.4s ease; }
 
 /* ===== VISITOR MEMBERS ===== */
 .visitor-section { margin-top: 12px; }
@@ -439,7 +441,7 @@ const onClubDeleted = () => {
 }
 .member-row:hover { background: color-mix(in srgb, var(--hex-bg-light) 50%, transparent); }
 
-.member-rank { width: 24px; text-align: center; font-family: 'Anonymous', 'Courier New', Consolas, monospace; font-size: 14px; color: var(--hex-text-muted); flex-shrink: 0; }
+.member-rank { width: 24px; text-align: center; font-family: 'AnonymousBalance', 'Courier New', monospace; font-size: 14px; color: var(--hex-text-muted); flex-shrink: 0; }
 .rank-top { color: var(--hex-draw); }
 
 .member-avatar {
@@ -453,9 +455,9 @@ const onClubDeleted = () => {
 .member-name-row { display: flex; align-items: center; gap: 6px; }
 .member-name { font-size: 13px; font-weight: 600; color: var(--hex-text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-.role-badge { font-size: 9px; padding: 1px 5px; border-radius: 3px; color: white; white-space: nowrap; font-weight: bold; letter-spacing: 0.3px; }
-.owner-badge { background: var(--hex-primary); }
-.deputy-badge { background: var(--hex-draw); opacity: 0.8; color: var(--hex-bg-dark); }
+.role-badge { font-size: 9px; padding: 1px 5px; border-radius: 3px; color: var(--hex-text-primary); white-space: nowrap; font-weight: bold; letter-spacing: 0.3px; }
+.owner-badge { background: var(--hex-bg-light); border: 1px solid var(--hex-border-active); }
+.deputy-badge { background: var(--hex-bg-light); border: 1px solid var(--hex-border-default); opacity: 0.8; }
 
 .member-stats-text { display: flex; gap: 8px; margin-top: 2px; }
 .member-wins { font-size: 11px; color: var(--hex-victory); }

@@ -135,7 +135,7 @@ watch(amount, calculateFC);
   max-width: 500px;
   justify-content: space-between;
   text-align: center;
-  color: white;
+  color: var(--hex-text-primary);
   cursor: pointer;
   display: flex;
   background-color: var(--hex-bg-light) !important;
@@ -157,7 +157,7 @@ watch(amount, calculateFC);
 }
 
 .amount-field :deep(.v-text-field__prefix) {
-  color: white !important;
+  color: var(--hex-text-primary) !important;
 }
 
 .amount-field :deep(.v-input__control .v-field__input) {
@@ -175,7 +175,7 @@ watch(amount, calculateFC);
 .calculation-result {
   text-align: center;
   font-size: 1.5rem;
-  color: var(--hex-primary);
+  color: var(--hex-text-primary);
   margin-top: 10px;
 }
 

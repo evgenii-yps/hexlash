@@ -602,9 +602,9 @@ watch(() => props.clubData, () => {
 .clan-avatar-wrap :deep(.avatar-container) {
   width: 64px !important;
   height: 64px !important;
-  border: 2px solid var(--hex-primary);
+  border: 2px solid var(--hex-border-strong);
   border-radius: var(--hex-radius-lg);
-  box-shadow: 0 0 12px var(--hex-primary-glow);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.08);
 }
 
 .clan-avatar-wrap :deep(.default-avatar) {
@@ -623,7 +623,8 @@ watch(() => props.clubData, () => {
 
 .clan-name {
   font-size: 22px;
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: bold;
   color: var(--hex-text-primary);
   margin: 0;
   line-height: 1.2;
@@ -654,13 +655,14 @@ watch(() => props.clubData, () => {
 .level-badge {
   display: inline-block;
   padding: 2px 8px;
-  background: var(--hex-primary);
+  background: var(--hex-bg-light);
   color: var(--hex-text-primary);
   font-size: 10px;
   font-weight: bold;
   font-family: 'AnonymousBalance', 'Courier New', monospace;
   border-radius: var(--hex-radius-sm);
   letter-spacing: 0.5px;
+  border: 1px solid var(--hex-border-default);
 }
 
 .meta-separator {
@@ -689,8 +691,8 @@ watch(() => props.clubData, () => {
 
 .level-current {
   font-size: 10px;
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
-  color: var(--hex-primary);
+  font-family: 'AnonymousBalance', 'Courier New', monospace;
+  color: var(--hex-success);
   letter-spacing: 0.5px;
 }
 
@@ -709,9 +711,9 @@ watch(() => props.clubData, () => {
 
 .level-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--hex-primary), #FF3399);
+  background: linear-gradient(90deg, var(--hex-success), #33CC77);
   border-radius: 3px;
-  box-shadow: 0 0 8px var(--hex-primary-glow);
+  box-shadow: 0 0 8px rgba(0, 255, 136, 0.3);
   transition: width 0.4s ease;
 }
 
@@ -732,7 +734,8 @@ watch(() => props.clubData, () => {
   border: none;
   border-bottom: 2px solid transparent;
   color: var(--hex-text-muted);
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: bold;
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -742,8 +745,8 @@ watch(() => props.clubData, () => {
 }
 
 .tab-btn.active {
-  color: var(--hex-primary);
-  border-bottom-color: var(--hex-primary);
+  color: var(--hex-text-primary);
+  border-bottom-color: var(--hex-text-primary);
 }
 
 .tab-btn:hover:not(.active) {
@@ -758,8 +761,8 @@ watch(() => props.clubData, () => {
   height: 16px;
   padding: 0 4px;
   margin-left: 4px;
-  background: var(--hex-primary);
-  color: var(--hex-text-primary);
+  background: transparent;
+  color: var(--hex-text-muted);
   font-size: 9px;
   font-family: 'AnonymousBalance', 'Courier New', monospace;
   border-radius: 8px;
@@ -813,7 +816,8 @@ watch(() => props.clubData, () => {
 .member-rank {
   width: 24px;
   text-align: center;
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: bold;
   font-size: 14px;
   color: var(--hex-text-muted);
   flex-shrink: 0;
@@ -863,14 +867,15 @@ watch(() => props.clubData, () => {
   font-size: 9px;
   padding: 1px 5px;
   border-radius: 3px;
-  color: white;
+  color: var(--hex-text-primary);
   white-space: nowrap;
   font-weight: bold;
   letter-spacing: 0.3px;
 }
 
 .owner-badge {
-  background: var(--hex-primary);
+  background: var(--hex-bg-light);
+  border: 1px solid var(--hex-border-active);
 }
 
 .deputy-badge {
@@ -979,11 +984,12 @@ watch(() => props.clubData, () => {
 }
 
 .settings-title {
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: bold;
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 1px;
-  color: var(--hex-text-muted);
+  color: var(--hex-text-primary);
   padding-bottom: 8px;
   border-bottom: 1px solid var(--hex-border-default);
   margin-bottom: 8px;

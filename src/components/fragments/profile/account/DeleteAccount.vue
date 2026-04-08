@@ -55,7 +55,7 @@ const handleDelete = async () => {
   height: 40px !important;
   max-width: 500px;
   text-align: center;
-  color: white;
+  color: var(--hex-text-primary);
   cursor: pointer;
   opacity: 0.7;
   font-size: 0.7rem !important;
@@ -70,8 +70,8 @@ const handleDelete = async () => {
 
 .confirm-delete-btn {
   cursor: pointer;
-  background-color: var(--hex-primary-dark);
-  color: white !important;
+  background-color: var(--hex-danger);
+  color: var(--hex-text-primary) !important;
   margin: 10px;
   opacity: 0.9;
 }

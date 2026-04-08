@@ -90,8 +90,8 @@ watch(store.getters['master/getMaster'], (newMaster) => {
   font-size: 1.8em;
   background: transparent;
   border: none;
-  border-bottom: 1px solid white;
-  color: white;
+  border-bottom: 1px solid var(--hex-text-primary);
+  color: var(--hex-text-primary);
   outline: none;
   width: 100%;
   margin-right: 15px;

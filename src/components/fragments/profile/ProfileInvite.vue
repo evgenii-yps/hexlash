@@ -91,7 +91,7 @@ const goToUrl = () => {
 
 <style scoped>
 .invite-container {
-  color: white;
+  color: var(--hex-text-primary);
   text-align: center;
   font-weight: 800;
   font-size: 0.5em;
@@ -109,8 +109,8 @@ const goToUrl = () => {
 
 .invite-code {
   font-size: 2.5rem;
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
-  color: white;
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
+  color: var(--hex-text-primary);
   margin: 0;
   cursor: pointer;
 }
@@ -121,7 +121,7 @@ const goToUrl = () => {
   align-items: center;
   width: 24px;
   height: 24px;
-  background-color: var(--hex-primary);
+  background-color: var(--hex-text-secondary);
   border-radius: 50%;
   margin-left: 1em;
   cursor: pointer;
@@ -140,7 +140,7 @@ const goToUrl = () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: var(--hex-primary);
+  background-color: var(--hex-text-secondary);
   padding: 0.5rem 1rem;
   border-radius: 4px;
   margin-left: 1em;

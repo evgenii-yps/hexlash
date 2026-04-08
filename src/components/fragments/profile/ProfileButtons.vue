@@ -112,7 +112,7 @@ onMounted(() => {
   max-width: 500px;
   justify-content: flex-start;
   text-align: left;
-  color: white;
+  color: var(--hex-text-primary);
   cursor: pointer;
 
 }

@@ -61,7 +61,8 @@ const onCancel = () => emit('cancel');
 }
 
 .confirm-title {
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: bold;
   font-size: 14px;
   color: var(--hex-text-primary);
   margin: 0 0 12px;

@@ -254,7 +254,7 @@ watch(calculatedAmount, (newValue) => {
 }
 
 .amount-field :deep(.v-text-field__prefix) {
-  color: white !important;
+  color: var(--hex-text-primary) !important;
 }
 
 .amount-field :deep(.v-input__control .v-field__input) {
@@ -272,8 +272,9 @@ watch(calculatedAmount, (newValue) => {
 .calculation-result {
   text-align: center;
   font-size: 1.5rem;
-  color: var(--hex-primary);
-  margin-top: 10px;
+  color: var(--hex-text-primary);
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
+  margin-top: 12px;
 }
 
 .calculation-result span {
@@ -302,7 +303,7 @@ watch(calculatedAmount, (newValue) => {
 }
 
 .error-transaction{
-  color: var(--hex-primary-dark);
+  color: var(--hex-danger);
   font-size: 0.8rem;
   text-align: center;
   margin: 0 20px;

@@ -412,13 +412,13 @@ AI_TRAINER_ENABLED = true
 | Training | `TrainingView.vue` | 3D punch bag, taps, daily/social tasks, progression bar |
 | Move Tree | `MoveTreeView.vue` | Branch sidebar (Speed/Power/Tech) + move cards. Sidebar buttons centered with `position:absolute; top:35%; transform:translateY(-50%)` |
 | Fight | `CardFightView.vue` | Main combat (PvE + PvP), dice, coach advice, HP bars, AI Trainer (PvE results). PvP mode: no BottomMenu, no PvP badge, reduced padding. Fully migrated to --hex-* vars: HexButton for results, inline SVGs, dice/coach/victory/defeat/overdrive all use design system vars. Visual System v1.0 compliant: pink only on CTA buttons (dice, Fight Again), VICTORY/DEFEAT/DRAW + OVERDRIVE pixel-font, HP in AnonymousBalance, dice effects in characteristic colors, coach buttons in action-specific colors |
-| Profile | `ProfileView.vue` | Tabs: balance, wallet, account, skins |
+| Profile | `ProfileView.vue` | Tabs: balance, wallet, account, skins. Visual System v1.0 compliant: AnonymousBalance for numerical values, neutral header (no pink), 0-1 pink accent per tab, toggles green (success), delete btn danger |
 | Ratings (League) | `RatingsView.vue` | 3 tabs: My Club, Clubs (leaderboard), Fighters (leaderboard). Default tab: My Club. URL: `/ratings/:type` (myclub/clubs/fighters). My Club tab: `MyClubTab.vue` component — redesigned clan header (avatar 64px with --hex-primary glow, name in Anonymous font, italic description, LVL badge, member count, level progress bar), stats grid (4 cards: Members/Wins/Losses/Win Rate with colored values), win rate bar, members top-5, role badges owner/deputy, action menus. No-clan state: ⚔ icon hero, CREATE/BROWSE buttons, pending invites banners, suggested clans with stats |
 | Arena Hub | `ArenaHubView.vue` | Split screen at `/arena`: Fight (pink) and Club (green) cards. localStorage remembers last choice, `?force=true` bypasses. "← Arena" switch button in both sub-views |
 | Preparation | `PreparationView.vue` | `/arena/fight`: action row (Mode + START FIGHT + Friends buttons). Friends button is text-only (no online indicator). "← Arena" switch button in header. Visual System v1.0 compliant: single pink accent (START FIGHT), ModeSelector neutral, AnonymousBalance where needed |
 | Friends | `FriendsView.vue` | Friends list, friend requests, search players |
 | Matchmaking | `MatchmakingView.vue` | Real-time PvP matchmaking queue. Opponent Found shows fighter skins (not icons). No colored borders. 100dvh support. |
-| Clan | `ClubView.vue` | Redesigned clan page: header with avatar (64px, --hex-primary border + glow, 12px radius), name (Anonymous font), italic description, meta row (LVL badge, member count), level progress bar (6px gradient fill), stats grid via `ClubStats.vue` (4 cards + win rate bar), owner controls. Visitor view: top-5 members (no action menu), "+ N more members", JOIN/private/full action bar |
+| Clan | `ClubView.vue` | Redesigned clan page: header with avatar (64px, --hex-primary border + glow, 12px radius), name (Anonymous font), italic description, meta row (LVL badge, member count), level progress bar (6px gradient fill), stats grid via `ClubStats.vue` (4 cards + win rate bar), owner controls. Visitor view: top-5 members (no action menu), "+ N more members", JOIN/private/full action bar. Visual System v1.0 compliant: neutral header (no pink glow), system sans for names/labels, AnonymousBalance for numbers, success green level progress, 1 pink CTA max (Join/Create), solid bg-card |
 | Spectate | `SpectateView.vue` | Watch live PvP fights |
 | Create Agent | `CreateAgentView.vue` | 3-step wizard: name+skin → archetype build → confirm+create |
 | Agent Detail | `AgentDetailView.vue` | 4-tab agent management: Overview (stats, deck, XP, train), Moves (Research Gate tree), Tactics (fight mode, aggression, dice, coach, emergency, rest), Fights (history with filter+pagination). Edit modal (name/skin/build), deck editor, delete |
@@ -464,7 +464,7 @@ AI_TRAINER_ENABLED = true
 - `MoveDetailsModal.vue` — move detail/unlock popup
 - `ClubModeToggle.vue` — club mode on/off button
 - `ClubModeStatus.vue` — club mode live status + countdown
-- `SoundToggle.vue` — sound mute/unmute toggle (Profile > Account)
+- `SoundToggle.vue` — sound mute/unmute toggle (Profile > Account). Visual System v1.0 compliant: success green on-state, no pink
 - `HPBar.vue` — fight health bar. Visual System v1.0 compliant: status colors (success/warning/danger), AnonymousBalance HP numbers, no pink
 - `Fighter.vue` — fighter display in combat
 - `ModeSelector.vue` — arena mode selector (PvE/PvP), compact button with dropdown, system sans-serif font. Visual System v1.0 compliant: neutral compact btn (no mode-specific colors), neutral dropdown (no glow), system sans labels, touch-targets ≥44px

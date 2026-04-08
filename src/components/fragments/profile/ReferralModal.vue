@@ -166,7 +166,8 @@ function formatDate(dateStr) {
 }
 
 .referral-title {
-  font-family: 'Anonymous', monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: bold;
   font-size: 1rem;
   color: var(--hex-text-primary);
   margin: 0;
@@ -204,7 +205,7 @@ function formatDate(dateStr) {
 
 .link-text {
   font-family: 'AnonymousBalance', monospace;
-  color: var(--hex-primary);
+  color: var(--hex-text-primary);
   font-size: 0.85rem;
   margin-bottom: 12px;
   word-break: break-all;

@@ -28,7 +28,7 @@
               :class="{ checked: isPublic }"
               class="club-public-switch"
               hide-details
-              color="var(--hex-primary)"
+              color="var(--hex-success)"
             />
           </div>
           <span class="toggle-hint">{{ isPublic ? t.club.lblAnyoneCanJoin : t.club.lblInviteOnly }}</span>
@@ -180,7 +180,7 @@ const saveChanges = async () => {
 .result-message {
   text-align: center;
   font-size: 0.8rem;
-  color: var(--hex-primary-dark);
+  color: var(--hex-danger);
   margin-top: 10px;
 }
 

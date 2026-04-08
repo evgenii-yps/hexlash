@@ -102,7 +102,7 @@ onMounted(() => {
 .skin-preview-img {
   width: 120px;
   height: 200px;
-  filter: drop-shadow(0 4px 20px color-mix(in srgb, var(--hex-primary) 35%, transparent));
+  /* no decorative shadow on preview */
 }
 
 /* ── Grid ────────────────────────────────────────────── */
@@ -131,8 +131,7 @@ onMounted(() => {
 }
 
 .skin-card-selected {
-  border-color: var(--hex-primary);
-  box-shadow: 0 0 12px color-mix(in srgb, var(--hex-primary) 45%, transparent);
+  border-color: var(--hex-border-strong);
 }
 
 .skin-card-img {

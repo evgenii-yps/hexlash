@@ -54,6 +54,6 @@ onMounted(() => {
 }
 
 .sound-toggle-switch.checked :deep(.v-switch__thumb) {
-  background-color: var(--hex-primary) !important;
+  background-color: var(--hex-success) !important;
 }
 </style>

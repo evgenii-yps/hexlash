@@ -182,12 +182,11 @@ function esc(str) {
 }
 
 .dot-fight_draw {
-  background: var(--hex-text-muted);
+  background: var(--hex-draw);
 }
 
 .dot-member_join {
-  background: var(--hex-primary);
-  box-shadow: 0 0 6px var(--hex-primary-glow);
+  background: var(--hex-text-secondary);
 }
 
 .dot-member_leave {
@@ -195,7 +194,7 @@ function esc(str) {
 }
 
 .dot-member_kick {
-  background: var(--hex-defeat);
+  background: var(--hex-warning, #FF9800);
 }
 
 .dot-role_change {
@@ -203,8 +202,8 @@ function esc(str) {
 }
 
 .dot-level_up {
-  background: var(--hex-draw);
-  box-shadow: 0 0 6px rgba(255, 184, 0, 0.5);
+  background: var(--hex-success);
+  box-shadow: 0 0 6px rgba(0, 255, 136, 0.3);
 }
 
 .event-text {
@@ -245,8 +244,8 @@ function esc(str) {
 }
 
 .load-more-btn:hover:not(:disabled) {
-  border-color: var(--hex-primary);
-  color: var(--hex-primary);
+  border-color: var(--hex-border-active);
+  color: var(--hex-text-primary);
 }
 
 .load-more-btn:disabled {

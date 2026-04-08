@@ -136,7 +136,7 @@ form {
 }
 
 .error-message {
-  color: var(--hex-primary-dark);
+  color: var(--hex-danger);
   font-size: 0.8rem;
   margin-bottom: 0.5rem;
 }
@@ -146,7 +146,7 @@ form {
   height: 40px !important;
   max-width: 500px;
   text-align: center;
-  color: white;
+  color: var(--hex-text-primary);
   cursor: pointer;
   font-size: 0.7rem !important;
 }
