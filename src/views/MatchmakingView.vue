@@ -7,7 +7,7 @@
 
         <!-- Animated Icon -->
         <div class="search-icon-container">
-          <div class="search-icon"><svg viewBox="0 0 64 64" width="60" height="60" fill="none" stroke="var(--hex-primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="52" x2="42" y2="12"/><line x1="38" y1="12" x2="46" y2="12"/><line x1="42" y1="8" x2="42" y2="16"/><line x1="22" y1="38" x2="30" y2="42"/><line x1="52" y1="52" x2="22" y2="12"/><line x1="18" y1="12" x2="26" y2="12"/><line x1="22" y1="8" x2="22" y2="16"/><line x1="42" y1="38" x2="34" y2="42"/></svg></div>
+          <div class="search-icon"><svg viewBox="0 0 64 64" width="60" height="60" fill="none" stroke="var(--hex-text-secondary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="52" x2="42" y2="12"/><line x1="38" y1="12" x2="46" y2="12"/><line x1="42" y1="8" x2="42" y2="16"/><line x1="22" y1="38" x2="30" y2="42"/><line x1="52" y1="52" x2="22" y2="12"/><line x1="18" y1="12" x2="26" y2="12"/><line x1="22" y1="8" x2="22" y2="16"/><line x1="42" y1="38" x2="34" y2="42"/></svg></div>
           <div class="pulse-ring"></div>
           <div class="pulse-ring delay"></div>
         </div>
@@ -40,7 +40,7 @@
             {{ t.pvp.yourRating }}: {{ playerRating }}
           </div>
           <div class="stat-item">
-            <span class="stat-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--hex-primary)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg></span>
+            <span class="stat-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--hex-text-secondary)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg></span>
             {{ t.pvp.searchRange }}: &plusmn;{{ searchRange }}
           </div>
         </div>
@@ -351,7 +351,7 @@ function cleanup() {
   position: absolute;
   width: 100%;
   height: 100%;
-  border: 3px solid var(--hex-primary);
+  border: 3px solid var(--hex-text-muted);
   border-radius: 50%;
   animation: pulseRing 2s ease-out infinite;
 }
@@ -372,13 +372,13 @@ function cleanup() {
 }
 
 .search-title {
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: bold;
   font-size: 20px;
-  color: var(--hex-primary);
+  color: var(--hex-text-primary);
   text-transform: uppercase;
   letter-spacing: 3px;
   margin-bottom: 16px;
-  text-shadow: 0 0 20px var(--hex-primary-glow);
 }
 
 .search-timer {
@@ -404,7 +404,7 @@ function cleanup() {
 .progress-fill {
   height: 100%;
   width: 30%;
-  background: linear-gradient(90deg, var(--hex-primary), color-mix(in srgb, var(--hex-primary) 85%, white));
+  background: linear-gradient(90deg, var(--hex-text-muted), var(--hex-text-secondary));
   animation: progressMove 1.5s ease-in-out infinite;
 }
 
@@ -456,7 +456,8 @@ function cleanup() {
   border: 2px solid var(--hex-border-active);
   border-radius: 12px;
   color: var(--hex-text-secondary);
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: bold;
   font-size: 16px;
   text-transform: uppercase;
   letter-spacing: 2px;
@@ -517,7 +518,7 @@ function cleanup() {
   width: 100px;
   height: 100px;
   object-fit: contain;
-  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--hex-primary) 30%, transparent));
+  /* no decorative shadow on skin */
 }
 
 .player-name {
@@ -525,25 +526,24 @@ function cleanup() {
   font-weight: 700;
   color: var(--hex-text-primary);
   margin-bottom: 4px;
-  font-family: 'Calibri', Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .player-rating {
   font-size: 16px;
   color: var(--hex-text-secondary);
-  font-family: 'Calibri', Arial, sans-serif;
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
 }
 
 .vs-icon {
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 32px;
   font-weight: bold;
-  color: var(--hex-primary);
-  text-shadow: 0 0 15px color-mix(in srgb, var(--hex-primary) 60%, transparent);
+  color: var(--hex-text-secondary);
 }
 
 .fight-countdown {
-  font-family: 'Calibri', Arial, sans-serif;
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 22px;
   color: var(--hex-warning);
   text-transform: uppercase;
@@ -571,7 +571,8 @@ function cleanup() {
 }
 
 .timeout-title {
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: bold;
   font-size: 22px;
   color: var(--hex-warning);
   text-transform: uppercase;
@@ -598,7 +599,8 @@ function cleanup() {
   border: 2px solid var(--hex-primary);
   border-radius: 12px;
   color: var(--hex-primary);
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: bold;
   font-size: 16px;
   text-transform: uppercase;
   letter-spacing: 2px;
@@ -617,7 +619,7 @@ function cleanup() {
   border: 1px solid var(--hex-border-active);
   border-radius: 12px;
   color: var(--hex-text-secondary);
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 14px;
   text-transform: uppercase;
   letter-spacing: 1px;
