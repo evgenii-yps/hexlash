@@ -11,7 +11,7 @@
 
         <!-- Search -->
         <div class="search-input-container">
-          <span class="search-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--hex-primary)" stroke-width="2" stroke-linecap="round"><circle cx="10" cy="10" r="7"/><line x1="15" y1="15" x2="21" y2="21"/></svg></span>
+          <span class="search-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--hex-text-secondary)" stroke-width="2" stroke-linecap="round"><circle cx="10" cy="10" r="7"/><line x1="15" y1="15" x2="21" y2="21"/></svg></span>
           <input
             v-model="searchQuery"
             class="search-input"
@@ -40,7 +40,7 @@
         <!-- Friend Requests -->
         <div v-if="searchQuery.length < 3 && incomingRequests.length > 0" class="section">
           <div class="section-header">
-            <span class="section-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--hex-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22,4 12,13 2,4"/></svg></span>
+            <span class="section-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--hex-text-secondary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22,4 12,13 2,4"/></svg></span>
             {{ t.friends.friendRequests }} ({{ incomingRequests.length }})
           </div>
           <FriendRequestCard
@@ -74,7 +74,7 @@
 
         <!-- Empty state (only when not searching, no friends, no requests) -->
         <div v-if="searchQuery.length < 3 && friends.length === 0 && incomingRequests.length === 0" class="empty-state">
-          <div class="empty-icon"><svg viewBox="0 0 48 48" width="64" height="64" fill="none" stroke="var(--hex-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="16" cy="14" r="6"/><path d="M6 38c0-6 4-12 10-12s10 6 10 12"/><circle cx="32" cy="14" r="6"/><path d="M22 38c0-6 4-12 10-12s10 6 10 12"/></svg></div>
+          <div class="empty-icon"><svg viewBox="0 0 48 48" width="64" height="64" fill="none" stroke="var(--hex-text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="16" cy="14" r="6"/><path d="M6 38c0-6 4-12 10-12s10 6 10 12"/><circle cx="32" cy="14" r="6"/><path d="M22 38c0-6 4-12 10-12s10 6 10 12"/></svg></div>
           <div class="empty-text">{{ t.friends.noFriends }}</div>
           <div class="empty-hint">{{ t.friends.searchToAdd }}</div>
         </div>
@@ -228,11 +228,11 @@ const handleScroll = (event) => {
 }
 
 .friends-title {
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: bold;
   font-size: 1.4rem;
-  color: var(--hex-primary);
+  color: var(--hex-text-primary);
   letter-spacing: 2px;
-  text-shadow: 0 0 10px color-mix(in srgb, var(--hex-primary) 30%, transparent);
 }
 
 /* Search */
@@ -269,8 +269,7 @@ const handleScroll = (event) => {
 }
 
 .search-input:focus {
-  border-color: var(--hex-primary);
-  box-shadow: 0 0 15px color-mix(in srgb, var(--hex-primary) 30%, transparent);
+  border-color: var(--hex-border-active);
 }
 
 /* Sections */
@@ -282,14 +281,15 @@ const handleScroll = (event) => {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: bold;
   font-size: 14px;
-  color: var(--hex-primary);
+  color: var(--hex-text-primary);
   text-transform: uppercase;
   letter-spacing: 2px;
   margin-bottom: 16px;
   padding-bottom: 8px;
-  border-bottom: 1px solid color-mix(in srgb, var(--hex-primary) 30%, transparent);
+  border-bottom: 1px solid var(--hex-border-default);
 }
 
 .section-icon {
@@ -303,7 +303,8 @@ const handleScroll = (event) => {
 }
 
 .search-results .section-label {
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: bold;
   font-size: 0.8rem;
   color: var(--hex-text-secondary);
   letter-spacing: 1.5px;
@@ -339,7 +340,7 @@ const handleScroll = (event) => {
 .empty-text {
   font-size: 1.1rem;
   color: var(--hex-text-muted);
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .empty-hint {

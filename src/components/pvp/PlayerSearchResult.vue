@@ -1,6 +1,6 @@
 <template>
   <div class="search-result-card">
-    <div class="player-avatar"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="var(--hex-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M3 21c0-5 4-9 9-9s9 4 9 9"/></svg></div>
+    <div class="player-avatar"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="var(--hex-text-secondary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M3 21c0-5 4-9 9-9s9 4 9 9"/></svg></div>
     <div class="player-info">
       <span class="player-name">{{ player.username }}</span>
       <span class="player-rating">{{ ratingText }}: {{ player.rating }}</span>
@@ -39,8 +39,8 @@ const isPending = computed(() => store.getters['friends/isRequestPending'](props
 }
 
 .search-result-card:hover {
-  border-color: var(--hex-primary);
-  background: color-mix(in srgb, var(--hex-primary) 10%, transparent);
+  border-color: var(--hex-border-active);
+  background: var(--hex-bg-light);
 }
 
 .player-avatar {
