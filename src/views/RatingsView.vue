@@ -534,8 +534,8 @@ onMounted(() => {
 }
 
 .rating-tabs .active-tab {
-  color: var(--hex-primary) !important;
-  border-bottom: 2px solid var(--hex-primary);
+  color: var(--hex-text-primary) !important;
+  border-bottom: 2px solid var(--hex-text-primary);
   font-weight: 600;
 }
 
@@ -649,7 +649,7 @@ onMounted(() => {
 }
 
 .active-sort-icon {
-  background-color: var(--hex-primary) !important;
+  background-color: var(--hex-bg-light) !important;
   border-radius: 50%;
   padding: 4px;
   object-fit: contain;
@@ -674,7 +674,7 @@ onMounted(() => {
 
 .fighters-pvp-card {
   background: var(--hex-bg-light) !important;
-  border: 1px solid color-mix(in srgb, var(--hex-primary) 20%, transparent) !important;
+  border: 1px solid var(--hex-border-default) !important;
   border-radius: 12px !important;
   padding: 16px !important;
   margin-bottom: 16px;

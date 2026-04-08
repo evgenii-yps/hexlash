@@ -121,7 +121,7 @@ const progressPercent = computed(() => {
 <style scoped>
 .pvp-stats-card {
   background: transparent;
-  border: 1px solid color-mix(in srgb, var(--hex-primary) 50%, transparent);
+  border: 1px solid var(--hex-border-default);
   border-radius: 16px;
   padding: 20px 16px;
   margin: 16px 15px;
@@ -134,17 +134,17 @@ const progressPercent = computed(() => {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: bold;
   font-size: 16px;
-  color: var(--hex-primary);
+  color: var(--hex-text-primary);
   text-transform: uppercase;
   letter-spacing: 2px;
   margin-bottom: 20px;
-  text-shadow: 0 0 10px var(--hex-primary-glow);
 }
 
 .header-icon {
-  color: var(--hex-primary);
+  color: var(--hex-text-secondary);
   flex-shrink: 0;
 }
 
@@ -164,7 +164,8 @@ const progressPercent = computed(() => {
 }
 
 .league-name {
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: bold;
   font-size: 22px;
   text-transform: uppercase;
   letter-spacing: 3px;
@@ -202,7 +203,7 @@ const progressPercent = computed(() => {
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--hex-primary), var(--hex-draw));
+  background: linear-gradient(90deg, var(--hex-success), var(--hex-draw));
   border-radius: 3px;
   transition: width 0.5s ease;
 }
