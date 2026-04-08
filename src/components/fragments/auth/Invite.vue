@@ -31,7 +31,6 @@
       <div class="login" v-if="!inviteState.loading">
         {{ t.auth.invite.question }}
         <ButtonText @click="handleLogin"
-                    textColor="var(--hex-primary)"
                     text-size="1.5em">
           {{ t.auth.invite.btnLogin }}
         </ButtonText>
@@ -111,16 +110,21 @@ form {
 
 
 .error-message {
-  color: var(--hex-primary-dark);
+  color: var(--hex-danger);
   font-size: 0.8rem;
   margin-bottom: 0.5rem;
 }
 
 .auth-btn {
-  color: white;
+  background-color: var(--hex-primary) !important;
+  color: var(--hex-text-primary) !important;
   width: 100%;
-  height: 40px !important;
+  height: 44px !important;
+  min-height: 44px;
   cursor: pointer;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 

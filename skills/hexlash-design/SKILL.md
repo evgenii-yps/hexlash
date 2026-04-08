@@ -354,6 +354,45 @@ Sizes used in project:
 
 ---
 
+## Additional Tokens (defined in hexlash-ui.css, available for use)
+
+These are not primary design tokens but cover practical gaps.
+
+### Shadows
+
+```css
+--hex-shadow-card: 0 4px 20px rgba(0, 0, 0, 0.5);       /* default card elevation */
+--hex-shadow-elevated: 0 8px 32px rgba(0, 0, 0, 0.7);    /* elevated panels, popovers */
+--hex-shadow-modal: 0 0 40px var(--hex-primary-glow), 0 20px 60px rgba(0, 0, 0, 0.8);  /* modal overlays */
+```
+
+### Blur (for backdrop-filter)
+
+```css
+--hex-blur-sm: blur(5px);
+--hex-blur-md: blur(10px);
+--hex-blur-lg: blur(20px);
+```
+
+### Misc
+
+```css
+--hex-border-width: 2px;   /* default border width for consistency */
+--hex-line-height: 1.5;    /* default body text line-height */
+```
+
+### Font aliases (defined in CSS, used only by hexlash-ui.css utility classes, NOT by .vue components)
+
+```css
+--hex-font-display: 'Impact', 'Anton', 'Bebas Neue', sans-serif;       /* NOT Anonymous — hex-title-* classes only */
+--hex-font-body: 'Inter', 'Roboto', 'SF Pro', -apple-system, sans-serif; /* NOT the system sans stack used in .vue files */
+--hex-font-mono: 'JetBrains Mono', 'Fira Code', monospace;              /* NOT AnonymousBalance — hex utility classes only */
+```
+
+**Important:** .vue components use `'Anonymous'`, `'AnonymousBalance'`, and `-apple-system, BlinkMacSystemFont...` directly. These CSS aliases are a parallel system in hexlash-ui.css utility classes that components don't reference. Do NOT substitute one for the other.
+
+---
+
 ## M. Screen Readiness Checklist
 
 Before marking a screen done, verify:

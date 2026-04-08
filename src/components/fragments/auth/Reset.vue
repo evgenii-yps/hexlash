@@ -31,7 +31,6 @@
     <div class="login" v-if="!resetState.loading">
       {{ t.auth.signup.question }}
       <ButtonText @click="handleLogin"
-                  textColor="var(--hex-primary)"
                   text-size="1.5em">
         {{ t.auth.signup.btnLogin }}
       </ButtonText>
@@ -93,7 +92,7 @@ onMounted(() => {
 }
 
 .error-message {
-  color: var(--hex-primary-dark);
+  color: var(--hex-danger);
   font-size: 0.8rem;
   margin-bottom: 0.5rem;
 }
@@ -106,9 +105,15 @@ onMounted(() => {
 }
 
 .auth-btn {
-  color: white;
+  background-color: var(--hex-primary) !important;
+  color: var(--hex-text-primary) !important;
   width: 100%;
   height: 50px !important;
+  min-height: 48px;
   cursor: pointer;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  box-shadow: 0 0 8px rgba(255, 6, 111, 0.5) /* glow from --hex-primary */;
 }
 </style>
