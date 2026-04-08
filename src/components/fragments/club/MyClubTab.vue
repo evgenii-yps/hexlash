@@ -341,7 +341,7 @@ watch(() => props.active, (val) => {
 .invite-club-name {
   font-size: 14px;
   font-weight: bold;
-  color: var(--hex-primary);
+  color: var(--hex-text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -423,7 +423,7 @@ watch(() => props.active, (val) => {
 }
 
 .clan-row:hover {
-  background: color-mix(in srgb, var(--hex-bg-light) 80%, var(--hex-primary) 20%);
+  background: var(--hex-bg-light);
 }
 
 .clan-avatar {
@@ -464,7 +464,7 @@ watch(() => props.active, (val) => {
 .clan-lvl {
   font-size: 9px;
   padding: 1px 5px;
-  background: var(--hex-primary);
+  background: var(--hex-bg-light);
   color: var(--hex-text-primary);
   border-radius: 3px;
   font-family: 'AnonymousBalance', 'Courier New', monospace;

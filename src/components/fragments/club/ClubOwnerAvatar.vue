@@ -123,7 +123,7 @@ watch(localClubData, (localClubData) => {
 
 .non-default-avatar {
   object-fit: cover;
-  border: 2px solid white;
+  border: 2px solid var(--hex-border-strong);
   border-radius: 50%;
   width: 100%;
   height: 100%;
@@ -170,7 +170,7 @@ watch(localClubData, (localClubData) => {
   right: 0;
   width: 40px;
   height: 40px;
-  background-color: var(--hex-primary);
+  background-color: var(--hex-text-secondary);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -191,14 +191,14 @@ watch(localClubData, (localClubData) => {
 
 .circle {
   fill: transparent;
-  stroke: white;
+  stroke: var(--hex-border-strong);
   stroke-width: 3.8;
   stroke-linecap: round;
   transition: stroke-dasharray 0.3s;
 }
 
 .progress-text {
-  fill: white;
+  fill: var(--hex-text-primary);
   font-size: 0.4em;
   text-anchor: middle;
 }

@@ -194,7 +194,7 @@ const saveChanges = async () => {
   max-width: 500px;
   justify-content: space-between;
   text-align: center;
-  color: white;
+  color: var(--hex-text-primary);
   cursor: pointer;
   display: flex;
   background-color: var(--hex-bg-light) !important;

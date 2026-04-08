@@ -3,7 +3,7 @@
     <div v-if="invite" class="club-invite-notification">
       <div class="invite-content">
         <div class="invite-icon">
-          <svg viewBox="0 0 32 32" width="28" height="28" fill="none" stroke="var(--hex-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg viewBox="0 0 32 32" width="28" height="28" fill="none" stroke="var(--hex-victory)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="4" y="8" width="24" height="18" rx="2"/>
             <path d="M4 10l12 8 12-8"/>
           </svg>
@@ -257,14 +257,16 @@ async function loadPendingInvites() {
 
 .invite-title {
   color: var(--hex-victory);
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: bold;
   font-size: 12px;
   text-transform: uppercase;
 }
 
 .invite-detail {
   color: var(--hex-text-primary);
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: bold;
   font-size: 14px;
   margin-top: 2px;
 }
@@ -287,7 +289,7 @@ async function loadPendingInvites() {
   color: var(--hex-bg-dark);
   padding: 10px;
   border-radius: 6px;
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 14px;
   font-weight: bold;
   cursor: pointer;
@@ -306,7 +308,7 @@ async function loadPendingInvites() {
   color: var(--hex-text-secondary);
   padding: 10px;
   border-radius: 6px;
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 14px;
   cursor: pointer;
   transition: all 0.2s ease;

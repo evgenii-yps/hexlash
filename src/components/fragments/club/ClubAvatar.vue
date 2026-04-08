@@ -53,7 +53,7 @@ const computedAvatarUrl = computed(() =>
 
 .non-default-avatar {
   object-fit: cover;
-  border: 2px solid white;
+  border: 2px solid var(--hex-border-strong);
   border-radius: 50%;
   width: 100%;
   height: 100%;
