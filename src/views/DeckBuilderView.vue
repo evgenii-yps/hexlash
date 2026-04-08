@@ -181,7 +181,7 @@ const handleScroll = (e) => emit('scroll', e.target.scrollTop);
 
 .btn-tree {
   background: transparent;
-  border: 1px solid color-mix(in srgb, var(--hex-primary) 40%, transparent);
+  border: 1px solid var(--hex-border-default);
   color: var(--hex-text-muted);
   border-radius: 4px;
   padding: 6px 12px;
@@ -191,12 +191,13 @@ const handleScroll = (e) => emit('scroll', e.target.scrollTop);
 }
 
 .btn-tree:hover {
-  border-color: var(--hex-primary);
-  color: var(--hex-primary);
+  border-color: var(--hex-border-active);
+  color: var(--hex-text-primary);
 }
 
 .deck-title {
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: bold;
   font-size: 1.4rem;
   color: var(--hex-text-primary);
 }
@@ -237,7 +238,7 @@ const handleScroll = (e) => emit('scroll', e.target.scrollTop);
 }
 
 .deck-slot.filled {
-  border-color: var(--hex-primary);
+  border-color: var(--hex-border-strong);
 }
 
 .deck-slot.empty {
@@ -253,7 +254,7 @@ const handleScroll = (e) => emit('scroll', e.target.scrollTop);
 
 .slot-level {
   font-size: 0.7rem;
-  color: var(--hex-primary);
+  color: var(--hex-text-secondary);
 }
 
 .slot-remove {
@@ -291,7 +292,8 @@ const handleScroll = (e) => emit('scroll', e.target.scrollTop);
 }
 
 .branch-group-title {
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: bold;
   font-size: 0.95rem;
   color: var(--hex-text-muted);
   border-bottom: 1px solid var(--hex-border-default);
@@ -313,8 +315,8 @@ const handleScroll = (e) => emit('scroll', e.target.scrollTop);
 }
 
 .available-move.in-deck {
-  border-color: var(--hex-primary);
-  background: color-mix(in srgb, var(--hex-primary) 6%, transparent);
+  border-color: var(--hex-border-strong);
+  background: var(--hex-bg-light);
 }
 
 .available-move.cant-add {
@@ -351,7 +353,7 @@ const handleScroll = (e) => emit('scroll', e.target.scrollTop);
 
 .deck-indicator {
   font-size: 1rem;
-  color: var(--hex-primary);
+  color: var(--hex-text-primary);
   width: 20px;
   text-align: center;
 }
@@ -370,7 +372,10 @@ const handleScroll = (e) => emit('scroll', e.target.scrollTop);
   border: none;
   border-radius: 4px;
   color: var(--hex-text-primary);
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
   font-size: 1.1rem;
   cursor: pointer;
   transition: opacity 0.2s;
