@@ -108,26 +108,23 @@ function close() {
 
 .xp-modal {
   background: transparent;
-  border: 2px solid var(--hex-primary);
+  border: 1px solid var(--hex-border-strong);
   border-radius: 16px;
   padding: 32px;
   min-width: 300px;
   max-width: 360px;
   width: 90%;
   text-align: center;
-  box-shadow:
-    0 0 30px color-mix(in srgb, var(--hex-primary) 40%, transparent),
-    0 0 60px color-mix(in srgb, var(--hex-primary) 20%, transparent);
 }
 
 .modal-title {
-  font-family: 'Impact', 'Anton', sans-serif;
-  font-size: 1.8rem;
-  color: var(--hex-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: bold;
+  font-size: 1.4rem;
+  color: var(--hex-text-primary);
   text-transform: uppercase;
-  letter-spacing: 3px;
+  letter-spacing: 2px;
   margin: 0 0 24px;
-  text-shadow: 0 0 15px var(--hex-primary-glow);
 }
 
 .free-xp {
@@ -137,7 +134,7 @@ function close() {
 }
 
 .free-xp .xp-value {
-  color: var(--hex-primary);
+  color: var(--hex-text-primary);
   font-weight: bold;
   font-size: 1.3rem;
 }
@@ -168,20 +165,18 @@ function close() {
   -webkit-appearance: none;
   width: 20px;
   height: 20px;
-  background: var(--hex-primary);
+  background: var(--hex-text-primary);
   border-radius: 50%;
   cursor: pointer;
-  box-shadow: 0 0 10px color-mix(in srgb, var(--hex-primary) 80%, transparent);
 }
 
 .hex-slider::-moz-range-thumb {
   width: 20px;
   height: 20px;
-  background: var(--hex-primary);
+  background: var(--hex-text-primary);
   border-radius: 50%;
   cursor: pointer;
   border: none;
-  box-shadow: 0 0 10px color-mix(in srgb, var(--hex-primary) 80%, transparent);
 }
 
 .input-container {
@@ -214,8 +209,7 @@ function close() {
 }
 
 .hex-input:focus {
-  border-color: var(--hex-primary);
-  box-shadow: 0 0 15px var(--hex-primary-glow);
+  border-color: var(--hex-border-active);
 }
 
 .input-label {
@@ -268,7 +262,7 @@ function close() {
 }
 
 .hex-btn-secondary:hover {
-  border-color: var(--hex-primary);
-  color: var(--hex-primary);
+  border-color: var(--hex-text-primary);
+  color: var(--hex-text-primary);
 }
 </style>

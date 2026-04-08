@@ -96,7 +96,7 @@ const unlockCost = computed(() => {
 }
 
 .move-tree-card:active {
-  background: color-mix(in srgb, var(--hex-primary) 7%, transparent);
+  background: var(--hex-bg-light);
 }
 
 .move-tree-card.locked {
@@ -104,11 +104,11 @@ const unlockCost = computed(() => {
 }
 
 .move-tree-card.can-unlock {
-  border-color: color-mix(in srgb, var(--hex-primary) 50%, transparent);
+  border-color: var(--hex-border-strong);
 }
 
 .move-tree-card.max-level {
-  border-color: color-mix(in srgb, var(--hex-primary) 80%, transparent);
+  border-color: var(--hex-success);
 }
 
 .card-top {
@@ -135,7 +135,7 @@ const unlockCost = computed(() => {
 .move-level {
   font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 0.85rem;
-  color: var(--hex-primary);
+  color: var(--hex-text-primary);
 }
 
 .progress-label {
@@ -159,14 +159,14 @@ const unlockCost = computed(() => {
 
 .progress-fill {
   height: 100%;
-  background: var(--hex-primary);
+  background: var(--hex-text-primary);
   border-radius: 2px;
   transition: width 0.3s ease;
 }
 
 .max-badge {
   font-size: 0.7rem;
-  color: var(--hex-primary);
+  color: var(--hex-text-primary);
 }
 
 .unlock-req {

@@ -1,6 +1,6 @@
 <template>
   <div class="friend-card" :class="{ 'is-fighting': friend.status === 'in_fight' }">
-    <div class="friend-avatar"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="var(--hex-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M3 21c0-5 4-9 9-9s9 4 9 9"/></svg></div>
+    <div class="friend-avatar"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="var(--hex-text-secondary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M3 21c0-5 4-9 9-9s9 4 9 9"/></svg></div>
 
     <div class="friend-info">
       <div class="friend-name">{{ friend.username }}</div>
@@ -23,7 +23,7 @@
         <span class="spinner"></span>
       </button>
       <button v-else class="action-btn fight-btn" @click="$emit('challenge', friend)" :disabled="friend.status === 'offline'">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--hex-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="20" x2="14" y2="10"/><line x1="14" y1="10" x2="17" y2="7"/><line x1="17" y1="7" x2="21" y2="3"/><line x1="18" y1="6" x2="21" y2="3"/><line x1="20" y1="4" x2="14" y2="10"/><line x1="10" y1="14" x2="20" y2="4"/><line x1="3" y1="21" x2="10" y2="14"/><line x1="7" y1="17" x2="3" y2="21"/></svg>
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--hex-text-secondary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="20" x2="14" y2="10"/><line x1="14" y1="10" x2="17" y2="7"/><line x1="17" y1="7" x2="21" y2="3"/><line x1="18" y1="6" x2="21" y2="3"/><line x1="20" y1="4" x2="14" y2="10"/><line x1="10" y1="14" x2="20" y2="4"/><line x1="3" y1="21" x2="10" y2="14"/><line x1="7" y1="17" x2="3" y2="21"/></svg>
       </button>
 
       <button class="action-btn remove-btn" @click="$emit('remove', friend)">
@@ -69,8 +69,8 @@ const isPendingChallenge = computed(() => store.getters['friends/hasPendingChall
 }
 
 .friend-card:hover {
-  border-color: color-mix(in srgb, var(--hex-primary) 50%, transparent);
-  background: color-mix(in srgb, var(--hex-primary) 5%, transparent);
+  border-color: var(--hex-border-active);
+  background: var(--hex-bg-light);
 }
 
 .friend-card.is-fighting {
@@ -178,8 +178,8 @@ const isPendingChallenge = computed(() => store.getters['friends/hasPendingChall
 }
 
 .fight-btn:hover:not(:disabled) {
-  border-color: var(--hex-primary);
-  background: color-mix(in srgb, var(--hex-primary) 20%, transparent);
+  border-color: var(--hex-border-active);
+  background: var(--hex-bg-light);
 }
 
 .watch-btn {

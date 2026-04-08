@@ -176,7 +176,8 @@ const openSubscribeDialog = (task) => {
 }
 
 .checklist-section h3 {
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: bold;
   font-size: 1.5rem;
   margin-left: 25px;
 }

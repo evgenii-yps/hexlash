@@ -267,7 +267,7 @@ const goToTraining = () => {
 .resource-value {
   font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 1.5rem;
-  color: var(--hex-primary);
+  color: var(--hex-text-primary);
   line-height: 1.1;
 }
 
@@ -286,8 +286,7 @@ const goToTraining = () => {
 }
 
 .free-xp-value {
-  color: var(--hex-primary) !important;
-  text-shadow: 0 0 8px var(--hex-primary-glow);
+  color: var(--hex-text-primary) !important;
 }
 
 /* ── Основной layout ── */
@@ -333,9 +332,9 @@ const goToTraining = () => {
 }
 
 .branch-btn.active {
-  border-color: var(--hex-primary);
-  color: var(--hex-primary);
-  background: color-mix(in srgb, var(--hex-primary) 10%, transparent);
+  border-color: var(--hex-border-strong);
+  color: var(--hex-text-primary);
+  background: var(--hex-bg-light);
 }
 
 .branch-group {
@@ -352,15 +351,15 @@ const goToTraining = () => {
 .branch-xp-val {
   font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 0.7rem;
-  color: var(--hex-primary);
+  color: var(--hex-text-primary);
   opacity: 0.8;
 }
 
 .branch-add-xp-btn {
-  background: color-mix(in srgb, var(--hex-primary) 10%, transparent);
-  border: 1px solid color-mix(in srgb, var(--hex-primary) 40%, transparent);
+  background: var(--hex-bg-light);
+  border: 1px solid var(--hex-border-active);
   border-radius: 4px;
-  color: var(--hex-primary);
+  color: var(--hex-text-primary);
   font-size: 0.7rem;
   font-weight: bold;
   padding: 4px 6px;
@@ -370,8 +369,7 @@ const goToTraining = () => {
 }
 
 .branch-add-xp-btn:active {
-  background: color-mix(in srgb, var(--hex-primary) 25%, transparent);
-  box-shadow: 0 0 10px color-mix(in srgb, var(--hex-primary) 30%, transparent);
+  background: var(--hex-bg-light);
 }
 
 /* ── Правая колонка с приёмами ── */

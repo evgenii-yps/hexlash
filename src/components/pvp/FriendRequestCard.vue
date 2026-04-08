@@ -1,6 +1,6 @@
 <template>
   <div class="request-card">
-    <div class="request-avatar"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="var(--hex-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M3 21c0-5 4-9 9-9s9 4 9 9"/></svg></div>
+    <div class="request-avatar"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="var(--hex-text-secondary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M3 21c0-5 4-9 9-9s9 4 9 9"/></svg></div>
 
     <div class="request-info">
       <div class="request-name">{{ request.username }}</div>
