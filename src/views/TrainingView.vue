@@ -196,7 +196,7 @@ const handleClickPunch = (event, isFromCircleClick = false, value) => {
     style: {
       left: `${left}px`,
       top: `${top}px`,
-      color: isFromCircleClick ? 'var(--hex-primary)' : 'var(--hex-text-primary)',
+      color: isFromCircleClick ? 'var(--hex-warning)' : 'var(--hex-text-primary)',
     },
   };
 
@@ -413,7 +413,8 @@ onUnmounted(() => {
 }
 
 .training-title {
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: bold;
   font-size: 2rem;
   z-index: 100;
   margin-bottom: 210px;
@@ -459,7 +460,7 @@ onUnmounted(() => {
 
 .pulsing-circle.clicked {
   transform: scale(1.5) !important;
-  border-color: var(--hex-primary);
+  border-color: var(--hex-text-primary);
 }
 
 @keyframes pulse {
@@ -479,7 +480,7 @@ onUnmounted(() => {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background-color: var(--hex-primary);
+  background-color: var(--hex-text-primary);
   opacity: 0;
   transform: scale(0);
   transition: transform 0.3s ease;
@@ -587,11 +588,7 @@ onUnmounted(() => {
 .prog-value {
   font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 0.9rem;
-  color: var(--hex-primary);
-}
-
-.prog-value-xp {
-  text-shadow: 0 0 8px var(--hex-primary-glow);
+  color: var(--hex-text-primary);
 }
 
 .prog-divider {
@@ -618,13 +615,8 @@ onUnmounted(() => {
 }
 
 .btn-prog:hover {
-  border-color: var(--hex-primary);
-  color: var(--hex-primary);
-}
-
-.btn-prog-deck {
-  border-color: color-mix(in srgb, var(--hex-primary) 40%, transparent);
-  color: var(--hex-text-muted);
+  border-color: var(--hex-border-active);
+  color: var(--hex-text-primary);
 }
 
 </style>

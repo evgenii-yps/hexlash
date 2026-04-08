@@ -409,7 +409,7 @@ AI_TRAINER_ENABLED = true
 
 | View | File | Notes |
 |------|------|-------|
-| Training | `TrainingView.vue` | 3D punch bag, taps, daily/social tasks, progression bar |
+| Training | `TrainingView.vue` | 3D punch bag, taps, daily/social tasks, progression bar. Visual System v1.0 compliant: neutral UI overlay, AnonymousBalance for taps/XP numbers, system sans for labels, 3D not touched, XP Allocate = primary CTA |
 | Move Tree | `MoveTreeView.vue` | Branch sidebar (Speed/Power/Tech) + move cards. Sidebar buttons centered with `position:absolute; top:35%; transform:translateY(-50%)` |
 | Fight | `CardFightView.vue` | Main combat (PvE + PvP), dice, coach advice, HP bars, AI Trainer (PvE results). PvP mode: no BottomMenu, no PvP badge, reduced padding. Fully migrated to --hex-* vars: HexButton for results, inline SVGs, dice/coach/victory/defeat/overdrive all use design system vars. Visual System v1.0 compliant: pink only on CTA buttons (dice, Fight Again), VICTORY/DEFEAT/DRAW + OVERDRIVE pixel-font, HP in AnonymousBalance, dice effects in characteristic colors, coach buttons in action-specific colors |
 | Profile | `ProfileView.vue` | Tabs: balance, wallet, account, skins. Visual System v1.0 compliant: AnonymousBalance for numerical values, neutral header (no pink), 0-1 pink accent per tab, toggles green (success), delete btn danger |
