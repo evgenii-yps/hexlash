@@ -1,3 +1,4 @@
+<!-- ProfileInvite — referral feature disabled, preserved for future reactivation. -->
 <template>
   <div v-if="showInviteContainer" class="invite-container">
     <v-tooltip

@@ -1,3 +1,4 @@
+<!-- ClubWithdraw — feature disabled, preserved for future reactivation. Visual System v1.0 compliant (ТЗ #6). -->
 <template>
   <VBtnDark
       class="club-btn"

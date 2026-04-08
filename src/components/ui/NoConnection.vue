@@ -54,7 +54,7 @@ onUnmounted(() => {
   width: 100%;
   transform: translateX(-50%);
   background-color: color-mix(in srgb, var(--hex-danger) 62%, transparent);
-  color: white;
+  color: var(--hex-text-primary);
   padding: 10px 20px;
   text-align: center;
   font-family: Arial, sans-serif;
