@@ -236,7 +236,7 @@ export default {
         description: 'Выходи. Собери колоду. Встреть соперника.',
       },
       club: {
-        title: 'КЛУБ',
+        title: 'FIGHT CLUB',
         subtitle: 'Твои бойцы',
         description: 'Ты — тренер. Учи их тому, что знаешь. Смотри, как они дерутся.',
       },
@@ -384,7 +384,7 @@ export default {
   },
   club: {
     // Agent Roster
-    lblMyFightClub: 'МОЙ БОЙЦОВСКИЙ КЛУБ',
+    lblMyFightClub: 'МОЙ FIGHT CLUB',
     lblClubMode: 'CLUB MODE',
     lblEnterFightClub: 'Войти в Fight Club',
     lblManageFightClub: 'Управление Fight Club',
@@ -392,7 +392,7 @@ export default {
     lblRoster: 'РОСТЕР',
     lblNewAgent: 'Новый агент',
     lblCreateAgent: 'Создать агента',
-    lblClubLevel: 'УРОВЕНЬ КЛАНА',
+    lblClubLevel: 'УРОВЕНЬ FIGHT CLUB',
     lblAgents: 'Агенты',
     lblAutoFight: 'Авто',
     lblIdle: 'Свободен',

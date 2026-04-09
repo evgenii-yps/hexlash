@@ -227,7 +227,7 @@ export default {
         description: 'Step in. Pick your deck. Face the opponent.',
       },
       club: {
-        title: 'CLUB',
+        title: 'FIGHT CLUB',
         subtitle: 'Your fighters',
         description: 'You are the coach. Teach them what you know. Watch them fight.',
       },
@@ -383,7 +383,7 @@ export default {
     lblRoster: 'ROSTER',
     lblNewAgent: 'New Agent',
     lblCreateAgent: 'Create Agent',
-    lblClubLevel: 'CLUB LEVEL',
+    lblClubLevel: 'FIGHT CLUB LEVEL',
     lblAgents: 'Agents',
     lblAutoFight: 'Auto',
     lblIdle: 'Idle',
