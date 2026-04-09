@@ -670,7 +670,7 @@ Full audit of PvP chain (matchmaking → ready → rounds → dice/coach → fig
 **P3 — Final improvements (✅ COMPLETE):**
 - **P3-1:** Rate limit `dice_roll` — max 1 per 2s per player via `lastDiceRoll` Map in pvpHandler
 - **P3-2:** Rate limit `coach_choice` — max 1 per pause session via `coachChoiceSent` Map, cleaned up on disconnect
-- **P3-3:** `overdrive_start` UI — shows "OVERDRIVE" event title with `--hex-primary` glow + 2s display, CSS class `event-overdrive`
+- **P3-3:** `overdrive_start` UI — shows "OVERDRIVE" event title with `--hex-warning` glow + 2s display, CSS class `event-overdrive`
 - **P3-4:** PvP refresh recovery — if page refreshed during PvP fight (no opponent context in store), shows toast + redirects to `/arena` instead of hanging
 
 **P4 — Skin bug fix (✅ COMPLETE):**
