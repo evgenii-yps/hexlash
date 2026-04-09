@@ -123,7 +123,7 @@ async function _executeFight(agent, options = {}) {
           opponentHpLeft: fightResult.fighter2HpLeft,
           xpEarned: earnedXp,
           eloChange: 0,
-          fightData: fightResult,
+          fightData: { ...fightResult, opponentBeltAtFight: null },
         },
       }),
     ]);
@@ -317,7 +317,7 @@ async function _executeAgentVsAgentFight(agent1Id, agent2Id, options) {
           agentId: agent1Id, mode, result: fightResult.result,
           opponentName: a2.name, opponentId: agent2Id, opponentOwnerId: a2.ownerId,
           rounds: fightResult.rounds, playerHpLeft: fightResult.fighter1HpLeft, opponentHpLeft: fightResult.fighter2HpLeft,
-          xpEarned: a1Xp, eloChange: eloChangeA, fightData: fightResult,
+          xpEarned: a1Xp, eloChange: eloChangeA, fightData: { ...fightResult, opponentBeltAtFight: a2.belt },
         },
       }),
       prisma.agentFightLog.create({
@@ -325,7 +325,7 @@ async function _executeAgentVsAgentFight(agent1Id, agent2Id, options) {
           agentId: agent2Id, mode, result: a2Result,
           opponentName: a1.name, opponentId: agent1Id, opponentOwnerId: a1.ownerId,
           rounds: fightResult.rounds, playerHpLeft: fightResult.fighter2HpLeft, opponentHpLeft: fightResult.fighter1HpLeft,
-          xpEarned: a2Xp, eloChange: eloChangeB, fightData: fightResult,
+          xpEarned: a2Xp, eloChange: eloChangeB, fightData: { ...fightResult, opponentBeltAtFight: a1.belt },
         },
       }),
     ]);
