@@ -2,7 +2,7 @@ const express = require('express');
 const prisma = require('../lib/prisma');
 const { authMiddleware } = require('../middleware/auth');
 const { upload } = require('../middleware/upload');
-const { formatClubResponse, awardAchievement } = require('../utils/helpers');
+const { formatClanResponse, awardAchievement } = require('../utils/helpers');
 const { COST_CREATE_CLUB, DECIMALS } = require('../config');
 const { createClanEvent } = require('../utils/clanEvents');
 
@@ -20,7 +20,7 @@ router.get('/id/:clanId', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'Clan not found' });
     }
 
-    res.json({ data: formatClubResponse(clan) });
+    res.json({ data: formatClanResponse(clan) });
   } catch (err) {
     console.error('Get clan error:', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -78,7 +78,7 @@ router.post('/add', authMiddleware, async (req, res) => {
     // Award PAPER_STREET achievement for creating a clan
     awardAchievement(prisma, req.userId, 'PAPER_STREET').catch(() => {});
 
-    res.json({ data: formatClubResponse(fullClan) });
+    res.json({ data: formatClanResponse(fullClan) });
   } catch (err) {
     console.error('Create clan error:', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -118,7 +118,7 @@ router.post('/edit', authMiddleware, async (req, res) => {
       include: { _count: { select: { members: true } } },
     });
 
-    res.json({ data: formatClubResponse(updated) });
+    res.json({ data: formatClanResponse(updated) });
   } catch (err) {
     console.error('Edit clan error:', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -193,7 +193,7 @@ router.post('/change', authMiddleware, async (req, res) => {
         where: { id: clanId },
         include: { _count: { select: { members: true } } },
       });
-      return res.json({ data: formatClubResponse(fullClan) });
+      return res.json({ data: formatClanResponse(fullClan) });
     }
 
     // Leaving a clan
@@ -257,7 +257,7 @@ router.get('/search', authMiddleware, async (req, res) => {
       take: pageSize,
     });
 
-    res.json({ data: clans.map(formatClubResponse) });
+    res.json({ data: clans.map(formatClanResponse) });
   } catch (err) {
     console.error('Search clans error:', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -645,7 +645,7 @@ router.post('/invite/respond', authMiddleware, async (req, res) => {
       clanId: invite.clanId,
     });
 
-    res.json({ data: formatClubResponse(fullClan) });
+    res.json({ data: formatClanResponse(fullClan) });
   } catch (err) {
     console.error('Invite respond error:', err);
     res.status(500).json({ error: 'Internal server error' });

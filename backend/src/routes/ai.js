@@ -377,7 +377,7 @@ function checkMorningReportRateLimit(userId) {
   return true;
 }
 
-const { gatherClubStats, buildMorningReportPrompt } = require('../services/morningReportService');
+const { gatherClanStats, buildMorningReportPrompt } = require('../services/morningReportService');
 
 router.post('/morning-report', authMiddleware, async (req, res) => {
   try {
@@ -408,7 +408,7 @@ router.post('/morning-report', authMiddleware, async (req, res) => {
     }
 
     // Gather stats
-    const stats = await gatherClubStats(fightClub.id, period);
+    const stats = await gatherClanStats(fightClub.id, period);
 
     if (stats.totalFights === 0) {
       return res.json({
@@ -490,7 +490,7 @@ router.post('/morning-report', authMiddleware, async (req, res) => {
 // ── Premium Report (Lv3) ─────────────────────────────────────────────
 
 const { verifyPayment } = require('../middleware/x402');
-const { gatherMetaStats, getClubRanking } = require('../services/metaAnalysisService');
+const { gatherMetaStats, getClanRanking } = require('../services/metaAnalysisService');
 const { buildLv3Prompt } = require('../services/morningReportService');
 
 const premiumRateLimitMap = new Map();
@@ -523,23 +523,23 @@ router.post('/premium-report', authMiddleware, verifyPayment, async (req, res) =
     if (!VALID_PERIODS.includes(period)) return res.status(400).json({ error: 'Invalid period' });
 
     // Gather all data
-    const [stats, metaStats, clubRanking] = await Promise.all([
-      gatherClubStats(fightClub.id, period),
+    const [stats, metaStats, clanRanking] = await Promise.all([
+      gatherClanStats(fightClub.id, period),
       gatherMetaStats(),
-      getClubRanking(fightClub.id),
+      getClanRanking(fightClub.id),
     ]);
 
     if (stats.totalFights === 0) {
       return res.json({
         report: {
           period, generatedAt: new Date().toISOString(),
-          stats: { totalFights: 0 }, meta: clubRanking, analysis: null,
+          stats: { totalFights: 0 }, meta: clanRanking, analysis: null,
         },
         payment: { txHash: req.paymentTxHash, verified: req.paymentVerified },
       });
     }
 
-    const prompt = buildLv3Prompt('Fight Club', fightClub.level || 1, stats, metaStats, clubRanking);
+    const prompt = buildLv3Prompt('Fight Club', fightClub.level || 1, stats, metaStats, clanRanking);
 
     const client = getAnthropicClient();
     if (!client) return res.status(503).json({ error: 'AI service unavailable' });
@@ -578,7 +578,7 @@ router.post('/premium-report', authMiddleware, verifyPayment, async (req, res) =
               fights: a.fights, wins: a.wins, losses: a.losses, winRate: a.winRate,
             })),
           },
-          meta: clubRanking,
+          meta: clanRanking,
           analysis,
         },
         payment: { txHash: req.paymentTxHash, verified: req.paymentVerified },

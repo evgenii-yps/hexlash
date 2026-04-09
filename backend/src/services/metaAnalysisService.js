@@ -93,12 +93,12 @@ async function gatherMetaStats() {
 }
 
 /**
- * Get club's position in global ranking.
+ * Get clan's position in global ranking.
  */
-async function getClubRanking(fightClubId) {
+async function getClanRanking(fightClubId) {
   // Rank fight clubs by total agent wins
   const fc = await prisma.fightClub.findUnique({ where: { id: fightClubId } });
-  if (!fc) return { rank: 0, totalClubs: 0, percentile: 0 };
+  if (!fc) return { rank: 0, totalClans: 0, percentile: 0 };
 
   const agentStats = await prisma.agent.aggregate({
     where: { fightClubId },
@@ -112,20 +112,20 @@ async function getClubRanking(fightClubId) {
     select: { id: true, agents: { select: { wins: true } } },
   });
   const fcWins = allFightClubs.map(f => ({ id: f.id, wins: f.agents.reduce((s, a) => s + a.wins, 0) }));
-  const totalClubs = fcWins.filter(f => f.wins > 0).length;
-  const clubsAbove = fcWins.filter(f => f.wins > totalWins).length;
+  const totalClans = fcWins.filter(f => f.wins > 0).length;
+  const clansAbove = fcWins.filter(f => f.wins > totalWins).length;
 
-  const rank = totalClubs > 0 ? clubsAbove + 1 : 0;
-  const percentile = totalClubs > 0 ? Math.round((rank / totalClubs) * 100) : 100;
+  const rank = totalClans > 0 ? clansAbove + 1 : 0;
+  const percentile = totalClans > 0 ? Math.round((rank / totalClans) * 100) : 100;
 
   const eloAgg = agentStats;
 
   return {
     rank,
-    totalClubs,
+    totalClans,
     percentile,
     avgElo: Math.round(eloAgg._avg.elo || 1000),
   };
 }
 
-module.exports = { gatherMetaStats, getClubRanking, MIN_AGENTS_FOR_META };
+module.exports = { gatherMetaStats, getClanRanking, MIN_AGENTS_FOR_META };

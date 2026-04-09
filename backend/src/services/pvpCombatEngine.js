@@ -679,25 +679,25 @@ class PvPCombatEngine {
         }
       }
 
-      // Update club stats + award clan XP for both players
+      // Update clan stats + award clan XP for both players
       const { awardClanXP } = require('../utils/clanLevel');
       const { createClanEvent } = require('../utils/clanEvents');
-      const player1 = await prisma.user.findUnique({ where: { id: result.player1.odId }, select: { clubId: true } });
-      const player2 = await prisma.user.findUnique({ where: { id: result.player2.odId }, select: { clubId: true } });
-      const clubIds = new Set([player1?.clubId, player2?.clubId].filter(Boolean));
-      for (const cId of clubIds) {
-        const isP1Club = player1?.clubId === cId;
-        const isP2Club = player2?.clubId === cId;
-        const isP1Win = result.winner === result.player1.odId && isP1Club;
-        const isP2Win = result.winner === result.player2.odId && isP2Club;
-        const clubUpdate = { battles: { increment: 1 } };
+      const player1 = await prisma.user.findUnique({ where: { id: result.player1.odId }, select: { clanId: true } });
+      const player2 = await prisma.user.findUnique({ where: { id: result.player2.odId }, select: { clanId: true } });
+      const clanIds = new Set([player1?.clanId, player2?.clanId].filter(Boolean));
+      for (const cId of clanIds) {
+        const isP1Clan = player1?.clanId === cId;
+        const isP2Clan = player2?.clanId === cId;
+        const isP1Win = result.winner === result.player1.odId && isP1Clan;
+        const isP2Win = result.winner === result.player2.odId && isP2Clan;
+        const clanUpdate = { battles: { increment: 1 } };
         if (isP1Win || isP2Win) {
-          clubUpdate.wins = { increment: 1 };
+          clanUpdate.wins = { increment: 1 };
         }
-        await prisma.club.update({ where: { id: cId }, data: clubUpdate });
+        await prisma.clan.update({ where: { id: cId }, data: clanUpdate });
 
-        // Award clan XP per player in this club + log events
-        if (isP1Club) {
+        // Award clan XP per player in this clan + log events
+        if (isP1Clan) {
           const p1Result = result.winner === 'draw' ? 'draw' : (result.winner === result.player1.odId ? 'win' : 'lose');
           awardClanXP(cId, p1Result).catch(e => console.error('Clan XP error:', e));
           const p1EventType = p1Result === 'win' ? 'fight_win' : p1Result === 'draw' ? 'fight_draw' : 'fight_lose';
@@ -708,7 +708,7 @@ class PvPCombatEngine {
             mode: 'pvp',
           });
         }
-        if (isP2Club) {
+        if (isP2Clan) {
           const p2Result = result.winner === 'draw' ? 'draw' : (result.winner === result.player2.odId ? 'win' : 'lose');
           awardClanXP(cId, p2Result).catch(e => console.error('Clan XP error:', e));
           const p2EventType = p2Result === 'win' ? 'fight_win' : p2Result === 'draw' ? 'fight_draw' : 'fight_lose';

@@ -44,8 +44,8 @@ function formatUserResponse(user) {
     invitedUsers: user.invitedUsers,
     referredBy: user.referredBy,
     noSkipDays: user.noSkipDays,
-    clubId: user.clubId,
-    clubRole: user.clubRole,
+    clanId: user.clanId,
+    clanRole: user.clanRole,
     createdAt: user.createdAt.toISOString(),
     updatedAt: user.updatedAt.toISOString(),
     achievements: user.achievements
@@ -54,21 +54,21 @@ function formatUserResponse(user) {
   };
 }
 
-function formatClubResponse(club) {
+function formatClanResponse(clan) {
   return {
-    id: club.id,
-    name: club.name,
-    description: club.description,
-    avatarUrl: club.avatarUrl,
-    owner: club.ownerId,
-    balance: club.balance,
-    battles: club.battles,
-    wins: club.wins,
-    level: club.level || 1,
-    xp: club.xp || 0,
-    isPublic: club.isPublic,
-    maxMembers: club.maxMembers,
-    members: club._count ? club._count.members : (club.members ? club.members.length : 0),
+    id: clan.id,
+    name: clan.name,
+    description: clan.description,
+    avatarUrl: clan.avatarUrl,
+    owner: clan.ownerId,
+    balance: clan.balance,
+    battles: clan.battles,
+    wins: clan.wins,
+    level: clan.level || 1,
+    xp: clan.xp || 0,
+    isPublic: clan.isPublic,
+    maxMembers: clan.maxMembers,
+    members: clan._count ? clan._count.members : (clan.members ? clan.members.length : 0),
   };
 }
 
@@ -99,4 +99,4 @@ async function awardAchievement(prismaClient, userId, achievementType) {
   return achievementType;
 }
 
-module.exports = { generateToken, formatUserResponse, formatClubResponse, awardAchievement };
+module.exports = { generateToken, formatUserResponse, formatClanResponse, awardAchievement };

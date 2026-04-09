@@ -1,5 +1,5 @@
 /**
- * Morning Report Service — gathers club stats and builds Claude prompt for daily reports.
+ * Morning Report Service — gathers clan stats and builds Claude prompt for daily reports.
  */
 
 const prisma = require('../lib/prisma');
@@ -26,12 +26,12 @@ function getDateRange(period) {
 }
 
 /**
- * Gather club fight stats for a period (Lv2: includes per-agent details).
- * @param {string} clubId
+ * Gather clan fight stats for a period (Lv2: includes per-agent details).
+ * @param {string} fightClubId
  * @param {string} period
  * @returns {Object} stats
  */
-async function gatherClubStats(fightClubId, period) {
+async function gatherClanStats(fightClubId, period) {
   const { start, end } = getDateRange(period);
 
   const agents = await prisma.agent.findMany({
@@ -146,7 +146,7 @@ async function gatherClubStats(fightClubId, period) {
 /**
  * Build Claude prompt for morning report (Lv2: includes per-agent analysis request).
  */
-function buildMorningReportPrompt(clubName, clubLevel, stats) {
+function buildMorningReportPrompt(clanName, clanLevel, stats) {
   const activeAgents = stats.agentStats.filter(a => a.fights > 0);
 
   let agentSections = '';
@@ -165,7 +165,7 @@ Dice use: ${a.diceUsageRate}%, Coach use: ${a.coachUsageRate}%, Emergency: ${a.e
 
 Analyze this club's performance and provide a morning report with per-agent analysis.
 
-Club: "${clubName}" (Level ${clubLevel})
+Club: "${clanName}" (Level ${clanLevel})
 Active agents: ${activeAgents.length}
 
 Fight Summary:
@@ -200,7 +200,7 @@ Include one entry in "agents" for each agent listed above. Be concise, specific.
 /**
  * Build Lv3 deep analysis prompt with meta comparison.
  */
-function buildLv3Prompt(clubName, clubLevel, stats, metaStats, clubRanking) {
+function buildLv3Prompt(clanName, clanLevel, stats, metaStats, clanRanking) {
   const activeAgents = stats.agentStats.filter(a => a.fights > 0);
 
   let agentSections = '';
@@ -229,9 +229,9 @@ Best Tactics: ${metaStats.bestTactics.map(t => `${t.aggression}/${t.dicePolicy}:
   return `You are an elite AI fight club strategist for Hexlash.
 Provide a DEEP strategic analysis. Compare against global meta and give optimization advice.
 
-Club: "${clubName}" (Level ${clubLevel})
-Ranking: #${clubRanking.rank} of ${clubRanking.totalClubs} (Top ${clubRanking.percentile}%)
-Club avg ELO: ${clubRanking.avgElo}
+Club: "${clanName}" (Level ${clanLevel})
+Ranking: #${clanRanking.rank} of ${clanRanking.totalClans} (Top ${clanRanking.percentile}%)
+Club avg ELO: ${clanRanking.avgElo}
 
 Fights: ${stats.totalFights} (${stats.wins}W/${stats.losses}L/${stats.draws}D, ${stats.winRate}%)
 Modes: PvE:${stats.pveCount} Ranked:${stats.rankedCount} FreeArena:${stats.freeCount}
@@ -261,4 +261,4 @@ Respond in JSON:
 Be specific, use numbers. Tone: elite strategist.`;
 }
 
-module.exports = { gatherClubStats, buildMorningReportPrompt, buildLv3Prompt, getDateRange };
+module.exports = { gatherClanStats, buildMorningReportPrompt, buildLv3Prompt, getDateRange };
