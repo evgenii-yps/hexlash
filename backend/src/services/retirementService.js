@@ -64,7 +64,7 @@ async function checkRetirementEligibility(userId) {
   const minLevel3 = progress.movesAtLevel3Plus >= MIN_LEVEL3_MOVES;
   const minLevel5 = progress.movesAtLevel5 >= MIN_LEVEL5_MOVES;
 
-  // FightClub check (auto-created, so always exists if user has accessed Club Mode)
+  // FightClub check (auto-created, so always exists if user has accessed Fight Club)
   const fightClub = await prisma.fightClub.findUnique({ where: { ownerId: userId }, select: { id: true, legendSkin: true } });
   const hasFightClub = !!fightClub;
 
