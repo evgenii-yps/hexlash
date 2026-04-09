@@ -137,51 +137,31 @@ async function acceptInvite() {
   const current = invite.value;
   if (!current) return;
 
-  if (current.inviteId) {
-    // DB-backed invite — use REST API
-    try {
-      const result = await clanService.respondToInvite(current.inviteId, 'accept');
-      store.commit('master/updateMaster', { clanId: current.clanId, clanRole: 'member' });
-      store.commit('master/setInfoMessage', {
-        text: t.value.clan.lblInviteAccepted,
-        timeout: 3000,
-        showButton: false,
-      });
-      invite.value = null;
-      showNextPending();
-    } catch (e) {
-      store.commit('master/setErrorMessage', {
-        text: e.message || 'Failed to accept invite',
-        timeout: 3000,
-        showButton: false,
-      });
-      invite.value = null;
-      showNextPending();
-    }
-  } else {
-    // Legacy WS-only invite
-    store.dispatch('webSocket/sendMessage', {
-      type: 'club_invite_accept',
-      clanId: current.clanId,
-      inviterId: current.inviterId,
+  try {
+    await clanService.respondToInvite(current.inviteId, 'accept');
+    store.commit('master/updateMaster', { clanId: current.clanId, clanRole: 'member' });
+    store.commit('master/setInfoMessage', {
+      text: t.value.clan.lblInviteAccepted,
+      timeout: 3000,
+      showButton: false,
     });
-    // Don't hide — wait for club_invite_accepted from server
+  } catch (e) {
+    store.commit('master/setErrorMessage', {
+      text: e.message || 'Failed to accept invite',
+      timeout: 3000,
+      showButton: false,
+    });
   }
+  invite.value = null;
+  showNextPending();
 }
 
 async function declineInvite() {
   const current = invite.value;
   clearTimer();
 
-  if (current?.inviteId) {
-    // DB-backed invite — use REST API
+  if (current) {
     clanService.respondToInvite(current.inviteId, 'decline').catch(() => {});
-  } else if (current) {
-    // Legacy WS-only invite
-    store.dispatch('webSocket/sendMessage', {
-      type: 'club_invite_decline',
-      inviterId: current.inviterId,
-    });
   }
 
   invite.value = null;
