@@ -1,7 +1,7 @@
-<!-- ClubWithdraw — feature disabled, preserved for future reactivation. Visual System v1.0 compliant (ТЗ #6). -->
+<!-- ClanWithdraw — feature disabled, preserved for future reactivation. Visual System v1.0 compliant (ТЗ #6). -->
 <template>
   <VBtnDark
-      class="club-btn"
+      class="clan-btn"
       @click="dialogWithdraw = true">
     <template #prepend>
       <v-tooltip
@@ -129,7 +129,7 @@ watch(amount, calculateFC);
 
 
 <style scoped>
-.club-btn {
+.clan-btn {
   height: 50px !important;
   margin: 15px auto;
   width: 80%;
@@ -142,7 +142,7 @@ watch(amount, calculateFC);
   background-color: var(--hex-bg-light) !important;
 }
 
-.club-btn span {
+.clan-btn span {
   font-size: 1.5em;
   margin-right: 5px
 }

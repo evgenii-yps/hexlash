@@ -33,7 +33,7 @@ import { useStore } from 'vuex';
 import { t } from "@/locales/index.js";
 
 const props = defineProps({
-  clubId: { type: String, required: true },
+  clanId: { type: String, required: true },
 });
 
 const store = useStore();
@@ -45,7 +45,7 @@ const rawEvents = computed(() => store.state.clan.clanEvents);
 
 onMounted(async () => {
   store.commit('clan/resetClanEvents');
-  await store.dispatch('clan/fetchClanEvents', { clanId: props.clubId, limit: 30 });
+  await store.dispatch('clan/fetchClanEvents', { clanId: props.clanId, limit: 30 });
   loaded.value = true;
 });
 
@@ -54,7 +54,7 @@ async function loadMore() {
   if (!events.length) return;
   const lastEvent = events[events.length - 1];
   await store.dispatch('clan/fetchClanEvents', {
-    clanId: props.clubId,
+    clanId: props.clanId,
     limit: 30,
     before: lastEvent.createdAt,
   });

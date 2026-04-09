@@ -1,7 +1,7 @@
 <template>
-  <div class="background background_club">
-    <div class="club-container">
-      <div class="club-content-wrapper">
+  <div class="background background_clan">
+    <div class="clan-container">
+      <div class="clan-content-wrapper">
 
         <div v-if="loading" class="loader-container">
           <v-progress-circular
@@ -13,39 +13,39 @@
 
         <div v-else-if="notFound" class="not-found-container">
           <div class="not-found-text">{{ t.club.lblClubNotFound || 'Clan not found' }}</div>
-          <button class="back-btn" @click="$router.push('/ratings/clubs')">&larr; {{ t.nav?.lblBack || 'Back' }}</button>
+          <button class="back-btn" @click="$router.push('/ratings/clans')">&larr; {{ t.nav?.lblBack || 'Back' }}</button>
         </div>
 
-        <div v-else-if="clubData" class="clan-page">
+        <div v-else-if="clanData" class="clan-page">
 
           <!-- Member view — full clan page via shared component -->
           <ClanPageContent
-              v-if="isMyClub"
-              :clubData="clubData"
-              :clubId="clubId"
-              @club-left="onClubLeft"
-              @club-deleted="onClubDeleted"
+              v-if="isMyClan"
+              :clanData="clanData"
+              :clanId="clanId"
+              @clan-left="onClanLeft"
+              @clan-deleted="onClanDeleted"
           />
 
           <!-- Visitor view -->
-          <template v-if="!isMyClub">
+          <template v-if="!isMyClan">
             <!-- Clan Header (visitor) -->
             <div class="clan-header">
               <div class="clan-header-bg"></div>
               <div class="clan-header-content">
                 <div class="clan-avatar-wrap">
-                  <ClubAvatar :avatarUrl="clubData.avatarUrl"/>
+                  <ClanAvatar :avatarUrl="clanData.avatarUrl"/>
                 </div>
                 <div class="clan-title-block">
-                  <h2 class="clan-name">{{ clubData.name }}</h2>
-                  <p v-if="clubData.description" class="clan-description">{{ clubData.description }}</p>
+                  <h2 class="clan-name">{{ clanData.name }}</h2>
+                  <p v-if="clanData.description" class="clan-description">{{ clanData.description }}</p>
                 </div>
               </div>
 
               <div class="clan-meta">
                 <span class="level-badge">LVL {{ clanLevel }}</span>
                 <span class="meta-separator">&middot;</span>
-                <span class="meta-text">{{ clubData.members }} / {{ levelProgress.maxMembers }} {{ t.rating.members }}</span>
+                <span class="meta-text">{{ clanData.members }} / {{ levelProgress.maxMembers }} {{ t.rating.members }}</span>
               </div>
 
               <div class="level-progress">
@@ -62,7 +62,7 @@
               </div>
             </div>
 
-            <ClubStats :clubData="clubData"/>
+            <ClanStats :clanData="clanData"/>
 
             <!-- Top-5 members without action menu -->
             <div class="visitor-section">
@@ -83,8 +83,8 @@
                   <div class="member-info" @click="viewMember(member)">
                     <div class="member-name-row">
                       <span class="member-name">{{ member.name || member.login }}</span>
-                      <span v-if="member.clubRole === 'owner'" class="role-badge owner-badge">OWNER</span>
-                      <span v-else-if="member.clubRole === 'deputy'" class="role-badge deputy-badge">{{ t.club.lblDeputy }}</span>
+                      <span v-if="member.clanRole === 'owner'" class="role-badge owner-badge">OWNER</span>
+                      <span v-else-if="member.clanRole === 'deputy'" class="role-badge deputy-badge">{{ t.club.lblDeputy }}</span>
                     </div>
                     <div class="member-stats-text">
                       <span class="member-wins">{{ formatNumber(member.wins || 0) }} W</span>
@@ -117,18 +117,18 @@
                     variant="primary"
                     block
                     @click="btnToJoin"
-                >{{ t.club.lblJoinClan }} {{ clubData.name }}</HexButton>
+                >{{ t.club.lblJoinClan }} {{ clanData.name }}</HexButton>
               </div>
             </div>
 
-            <!-- Change club modal (visitor) -->
-            <VModal v-model="dialogChangeClub" max-width="500">
+            <!-- Change clan modal (visitor) -->
+            <VModal v-model="dialogChangeClan" max-width="500">
               <VCard>
                 <v-card-title class="headline">{{ t.club.lblChangeClub }}</v-card-title>
                 <v-card-text>{{ t.club.lblChangeClubDescription }}</v-card-text>
                 <v-card-actions>
                   <v-spacer></v-spacer>
-                  <v-btn @click="dialogChangeClub = false" class="cancel-btn">{{ t.modal.btnCancel }}</v-btn>
+                  <v-btn @click="dialogChangeClan = false" class="cancel-btn">{{ t.modal.btnCancel }}</v-btn>
                   <v-btn @click="confirmExit" class="confirm-btn">{{ t.club.lblConfirm }}</v-btn>
                 </v-card-actions>
               </VCard>
@@ -151,9 +151,9 @@ import {useRoute} from 'vue-router';
 import store from "@/core/state/store.js";
 import {t} from "@/locales/index.js";
 
-import ClubAvatar from "@/components/fragments/club/ClubAvatar.vue";
-import ClubStats from "@/components/fragments/club/ClubStats.vue";
-import ClanPageContent from "@/components/fragments/club/ClanPageContent.vue";
+import ClanAvatar from "@/components/fragments/clan/ClanAvatar.vue";
+import ClanStats from "@/components/fragments/clan/ClanStats.vue";
+import ClanPageContent from "@/components/fragments/clan/ClanPageContent.vue";
 import HexButton from "@/components/ui/HexButton.vue";
 import {formatNumber} from "@/core/constants.js";
 import {getClanLevelProgress} from "@/data/clanLevels.js";
@@ -163,41 +163,41 @@ import * as amplitude from "@amplitude/analytics-browser";
 
 
 const route = useRoute();
-const clubId = route.params.id;
+const clanId = route.params.id;
 const master = computed(() => store.getters['master/getMaster']);
 
-const clubData = ref(null);
+const clanData = ref(null);
 const loading = ref(true);
 const membersLoading = ref(false);
 const membersList = ref([]);
 
 const isPublic = ref(true);
-const isMyClub = ref(false);
+const isMyClan = ref(false);
 
-const dialogChangeClub = ref(false);
+const dialogChangeClan = ref(false);
 const notFound = ref(false);
 
 // Clan Level — from API data
-const levelProgress = computed(() => getClanLevelProgress(clubData.value?.level || 1, clubData.value?.xp || 0));
+const levelProgress = computed(() => getClanLevelProgress(clanData.value?.level || 1, clanData.value?.xp || 0));
 const clanLevel = computed(() => levelProgress.value.level);
 const clanXPPercent = computed(() => levelProgress.value.percent);
 
 const visitorMembers = computed(() => membersList.value.slice(0, 5));
 const remainingMembers = computed(() => {
-  const total = clubData.value?.members || membersList.value.length;
+  const total = clanData.value?.members || membersList.value.length;
   return Math.max(0, total - 5);
 });
 const isClanFull = computed(() => {
-  const max = clubData.value?.maxMembers || 50;
-  return (clubData.value?.members || 0) >= max;
+  const max = clanData.value?.maxMembers || 50;
+  return (clanData.value?.members || 0) >= max;
 });
 
 const loadClub = async () => {
   loading.value = true;
   notFound.value = false;
 
-  isMyClub.value = master.value && master.value.userData.clanId === clubId;
-  const result = await store.dispatch('clan/loadClanById', clubId);
+  isMyClan.value = master.value && master.value.userData.clanId === clanId;
+  const result = await store.dispatch('clan/loadClanById', clanId);
   if (!result) {
     loading.value = false;
     notFound.value = true;
@@ -208,7 +208,7 @@ const loadMembers = async () => {
   membersLoading.value = true;
   try {
     const list = await userService.searchParticipants({
-      clanId: clubId,
+      clanId: clanId,
       sortBy: 'wins',
       size: 50,
       sortDirection: 'DESC',
@@ -226,14 +226,14 @@ onBeforeMount(loadClub);
 watch(route, loadClub);
 
 watch(
-    () => store.getters['clan/getClanById'](clubId),
+    () => store.getters['clan/getClanById'](clanId),
     (newValue) => {
       if (!newValue) return;
-      clubData.value = newValue;
-      isPublic.value = clubData.value.isPublic;
+      clanData.value = newValue;
+      isPublic.value = clanData.value.isPublic;
       loading.value = false;
       // Only load members for visitor view; member view handled by ClanPageContent
-      if (!isMyClub.value) {
+      if (!isMyClan.value) {
         loadMembers();
       }
     });
@@ -252,31 +252,31 @@ const viewMember = (member) => {
 };
 
 const btnToJoin = () => {
-  dialogChangeClub.value = true;
+  dialogChangeClan.value = true;
 };
 
 const confirmExit = () => {
-  dialogChangeClub.value = false;
-  store.dispatch('clan/changeClan', clubData.value.id);
-  amplitude.track('ChangeClub', clubData.value.id);
+  dialogChangeClan.value = false;
+  store.dispatch('clan/changeClan', clanData.value.id);
+  amplitude.track('ChangeClan', clanData.value.id);
 };
 
 // ClanPageContent events
-const onClubLeft = () => {
-  router.push('/ratings/clubs');
+const onClanLeft = () => {
+  router.push('/ratings/clans');
 };
 
-const onClubDeleted = () => {
-  router.push('/ratings/clubs');
+const onClanDeleted = () => {
+  router.push('/ratings/clans');
 };
 </script>
 
 <style scoped>
-.background_club {
+.background_clan {
   background: url('@/assets/images/background_club.webp') no-repeat 35% center;
 }
 
-.background_club::before {
+.background_clan::before {
   content: "";
   position: absolute;
   top: 0;
@@ -287,7 +287,7 @@ const onClubDeleted = () => {
   z-index: 1;
 }
 
-.background_club::after {
+.background_clan::after {
   content: "";
   position: absolute;
   top: 0;
@@ -306,7 +306,7 @@ const onClubDeleted = () => {
   }
 }
 
-.club-container {
+.clan-container {
   position: relative;
   z-index: 10;
   overflow-y: auto;
@@ -315,7 +315,7 @@ const onClubDeleted = () => {
   flex-direction: column;
 }
 
-.club-content-wrapper {
+.clan-content-wrapper {
   width: 100%;
   padding: 10vh 0;
   box-sizing: border-box;

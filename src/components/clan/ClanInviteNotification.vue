@@ -1,6 +1,6 @@
 <template>
   <Transition name="slide-down">
-    <div v-if="invite" class="club-invite-notification">
+    <div v-if="invite" class="clan-invite-notification">
       <div class="invite-content">
         <div class="invite-icon">
           <svg viewBox="0 0 32 32" width="28" height="28" fill="none" stroke="var(--hex-victory)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -141,7 +141,7 @@ async function acceptInvite() {
     // DB-backed invite — use REST API
     try {
       const result = await clanService.respondToInvite(current.inviteId, 'accept');
-      store.commit('master/updateMaster', { clanId: current.clanId, clubRole: 'member' });
+      store.commit('master/updateMaster', { clanId: current.clanId, clanRole: 'member' });
       store.commit('master/setInfoMessage', {
         text: t.value.club.lblInviteAccepted,
         timeout: 3000,
@@ -198,7 +198,7 @@ function showNextPending() {
 }
 
 async function loadPendingInvites() {
-  // Only check if user is authenticated and not already in a club
+  // Only check if user is authenticated and not already in a clan
   const master = store.getters['master/getMaster'];
   if (!master?.userData || master.userData.clanId) return;
 
@@ -228,7 +228,7 @@ async function loadPendingInvites() {
 </script>
 
 <style scoped>
-.club-invite-notification {
+.clan-invite-notification {
   position: fixed;
   top: 0;
   left: 0;

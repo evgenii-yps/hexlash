@@ -1,13 +1,13 @@
 <template>
-  <div class="clan-stats" v-if="clubData">
+  <div class="clan-stats" v-if="clanData">
     <!-- Stats Grid: 4 cards -->
     <div class="stats-grid">
       <div class="stat-card">
-        <span class="stat-value">{{ clubData.members }}</span>
+        <span class="stat-value">{{ clanData.members }}</span>
         <span class="stat-label">{{ t.rating.members }}</span>
       </div>
       <div class="stat-card">
-        <span class="stat-value stat-wins">{{ formatNumber(clubData.wins || 0) }}</span>
+        <span class="stat-value stat-wins">{{ formatNumber(clanData.wins || 0) }}</span>
         <span class="stat-label">{{ t.rating.wins }}</span>
       </div>
       <div class="stat-card">
@@ -34,18 +34,18 @@ import { t } from "@/locales/index.js";
 import { formatNumber } from "@/core/constants.js";
 
 const props = defineProps({
-  clubData: {
+  clanData: {
     type: Object,
     required: true,
     default: () => ({})
   },
 });
 
-const totalFights = computed(() => props.clubData?.battles || 0);
-const losses = computed(() => totalFights.value - (props.clubData?.wins || 0));
+const totalFights = computed(() => props.clanData?.battles || 0);
+const losses = computed(() => totalFights.value - (props.clanData?.wins || 0));
 const winRate = computed(() => {
   if (totalFights.value === 0) return 0;
-  return Math.round((props.clubData.wins || 0) / totalFights.value * 100);
+  return Math.round((props.clanData.wins || 0) / totalFights.value * 100);
 });
 </script>
 

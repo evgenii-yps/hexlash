@@ -45,13 +45,14 @@ const protectedRoutes = [
     {path: '/profile/account', name: 'Account', component: () => import("/src/views/ProfileView.vue")},
     {path: '/profile/skins', name: 'Skins', component: () => import("/src/views/ProfileView.vue")},
 
-    {path: '/club/:id', name: 'Club', component: () => import("/src/views/ClubView.vue")},
+    {path: '/clan/:id', name: 'Clan', component: () => import("/src/views/ClanView.vue")},
+    {path: '/club/:id', redirect: to => '/clan/' + to.params.id},
     {path: '/fight-club', redirect: '/arena/club'},
     {path: '/club/agent/create', redirect: '/arena/club/create'},
     {path: '/club/agent/:agentId', redirect: to => `/arena/club/${to.params.agentId}`},
 
     {path: '/ratings/:type', name: 'Ratings', component: () => import("/src/views/RatingsView.vue"), props: true},
-    {path: '/ratings', redirect: '/ratings/myclub'},
+    {path: '/ratings', redirect: '/ratings/myclan'},
 
     {path: '/training', name: 'Training', component: () => import("/src/views/TrainingView.vue")},
     {path: '/training/moves', name: 'MoveTree', component: () => import("/src/views/MoveTreeView.vue")},
