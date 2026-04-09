@@ -21,11 +21,13 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
   App.vue                  — Root: header (Logo), router-view, BottomMenu (hidden on PvP screens), Info/Error toasts, ChallengeNotification
   main.js                  — Entry: Vue + Vuetify + i18n + Vuex + WagmiPlugin + VueQueryPlugin init
   router/index.js          — Routes + auth guards + fight state restore
-  views/                   — 18 page-level components (incl. ArenaHubView)
+  views/                   — 21 page-level components (incl. ArenaHubView, FightClubView, CreateAgentView, AgentDetailView)
   components/              — 75+ reusable components
+  components/club/         — 7 Club Mode components (AgentRoster, AgentCard, ClubLevelBar, MorningReport, RetirementPanel, SkinPicker, ArchetypeSelector)
+  components/ratings/      — AgentLeaderboard, LeagueBadge
   core/
     state/store.js         — Vuex store
-    state/modules/         — 14 Vuex modules
+    state/modules/         — 14 Vuex modules (incl. agentState for Club Mode)
     models/                — 20+ data models (internal, ws, etc.)
     services/              — 8 business logic services
     database/              — 7 LocalStorage/IDB repository files
@@ -44,6 +46,8 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
     pixelIcons.js          — 45 pixel icons (16×16 grid, flat array 256 values)
   utils/
     powerRating.js         — Power rating calculations
+    leagues.js             — 6 ELO-based league tiers + getLeague()/getLeagueColor()
+    fightStylePreview.js   — Template-based fight style description (DEAD CODE — not imported)
   styles/
     hexlash-ui.css         — Design system: CSS variables, component classes, animations
   assets/
@@ -68,6 +72,16 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
     websocket/handler.js   — Real-time message routing + challenge system
     websocket/pvpHandler.js — PvP fight message handling
     services/matchmaking.js — PvP matchmaking service
+    services/agentCombatEngine.js — Agent fight simulation (action-based + archetype modifiers)
+    services/agentFightService.js — Agent fight orchestrator (PvE, ranked, free arena)
+    services/agentScheduler.js — Auto-fight scheduler (30s tick)
+    services/eloService.js — ELO rating calculation
+    services/rankedMatchmaker.js — Ranked + free arena matchmaking
+    services/fightClubService.js — Personal FightClub management
+    services/retirementService.js — Fighter retirement + legend buff
+    services/morningReportService.js — Claude AI morning report stats + prompts
+    services/metaAnalysisService.js — Global meta statistics for premium reports
+    services/nftService.js — NFT minting verification (feature flag off)
     services/pvpMatchManager.js — PvP match lifecycle management
     services/pvpCombatEngine.js — PvP combat engine
     services/clubLevelService.js — Club level system (calculateLevel, getLevelInfo, addClubXp, getFightXpReward)
@@ -82,6 +96,11 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
     schema.prisma          — 18 models: User, Club, Agent, AgentTactics, AgentProgression, AgentFightLog, Fight, Achievement, Task, PunchInfo, FriendRequest, Friendship...
     seed.js
     migrations/            — PostgreSQL migrations
+
+/docs
+  phase1-parking-list.md   — 52 technical debts from deepdive #1a-#1i
+  road1-final-report.md    — Road 1 completion report
+  road2-parking-list.md    — Road 2 parking list
 
 /public
   images/skins/            — 145+ fighter skin images (skin_m_1..117.png, skin_w_1..26.png, vip_k1/k2/t1/t2.png)
@@ -132,7 +151,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 
 ---
 
-## Vuex Modules (13)
+## Vuex Modules (14)
 
 | Module | Purpose |
 |--------|---------|
@@ -422,7 +441,7 @@ AI_TRAINER_ENABLED = true
 | Spectate | `SpectateView.vue` | Watch live PvP fights. Visual System v1.0 compliant: 0 pink, friend side=hex-victory (green), opponent=hex-action-defense (blue), LIVE dot=hex-defeat (red) with pulse, AnonymousBalance for numbers, system sans for all text |
 | RainView (Auth) | `RainView.vue` | 3D rain scene + auth forms (Login, Signup, Reset, TelegramLogin). Visual System v1.0 compliant: 3D untouched, submit btns = primary CTA per form, links neutral (white via ButtonText), errors hex-danger, InputField shared fix |
 | PageView | `PageView.vue` | Static help/rules pages via v-html from i18n. Visual System v1.0 compliant: 0 full pink, spans/link-hover use hex-primary-light (PINK_DIM), white underlined links, v-html preserved for trusted i18n |
-| Create Agent | `CreateAgentView.vue` | 3-step wizard: name+skin → archetype build → confirm+create |
+| Create Agent | `CreateAgentView.vue` | 2-step wizard: name+skin → confirm+create. Modules configured after creation in AgentDetailView edit modal |
 | Agent Detail | `AgentDetailView.vue` | 4-tab agent management: Overview (stats, deck, XP, train), Moves (Research Gate tree), Tactics (fight mode, aggression, dice, coach, emergency, rest), Fights (history with filter+pagination). Edit modal (name/skin/build), deck editor, delete |
 
 ---
@@ -501,8 +520,8 @@ Base: `/v1/`
 | `/fight` | fight.js | fight creation, results, history |
 | `/stats` | stats.js | player and game statistics |
 | `/friends` | friends.js | friends list, requests, search players |
-| `/ai` | ai.js | AI Trainer fight analysis (POST /analyze-fight), Club mode summary (POST /club-mode-summary) |
-| `/agent` | agent.js | CRUD agents (list, get, create, update, delete), tactics update, fight history, Research Gate (available-moves, learn-move, deck), PvE training (train) |
+| `/ai` | ai.js | AI Trainer fight analysis (POST /analyze-fight), build description (POST /build-description), morning report (POST /morning-report), premium report (POST /premium-report) |
+| `/agent` | agent.js | 16 endpoints: CRUD agents, tactics, fight history, Research Gate (available-moves, learn-move, deck), PvE training (train), auto-fight toggle/status, rankings, fight-club level |
 
 Auth guard: JWT Bearer token via `middleware/auth.js`
 Telegram auth: HMAC-SHA256 signature validation via `validateTelegramPayload()` in auth.js
@@ -543,7 +562,7 @@ Password reset: Returns 501 (not implemented) — no fake success
 
 ## Database Models (Prisma/PostgreSQL)
 
-User, Club, ClubInvite, ClanEvent, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask, UserDailyTask, Fight, PunchInfo, FriendRequest, Friendship, Agent, AgentTactics, AgentProgression, AgentFightLog
+User, Club, ClubInvite, ClanEvent, FightClub, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask, UserDailyTask, Fight, PunchInfo, FriendRequest, Friendship, Agent, AgentTactics, AgentProgression, AgentFightLog
 
 **Club system fields:** User.clubRole (`owner`/`deputy`/`member`/null), Club.maxMembers (default 20, grows with level), Club.maxAgents (default 2, grows with level: 1→2, 2→3, 3→4, 4→5, 5+→6), Club.legendSkin/legendArchetype/legendBuff (retired fighter legend system), Club.battles/wins (auto-incremented on fight save). Max 3 deputies per club. Owner can set roles, transfer ownership, kick anyone, invite friends, dissolve club. Deputies can kick members only, invite friends. Club creation costs `COST_CREATE_CLUB` (10000) taps — deducted from `User.totalTaps` in $transaction. Club name: 3-30 chars, unicode letters/digits/spaces (`\p{L}\p{N}`), no emoji. Achievements: `PAPER_STREET` on create, `PROJECT_MAYHEM` on join (idempotent via `awardAchievement()` in helpers.js).
 
@@ -553,8 +572,10 @@ User, Club, ClubInvite, ClanEvent, Achievement, UserAchievement, SocialTask, Use
 
 **Referral system fields:** User.referredBy (String?, login of referrer), User.invitedUsers (Int, referral count). On register/telegram with referralCode: both users get +500 taps (REFERRAL_REWARD_TAPS), invitedUsers incremented. Self-referral and non-existent referrer silently ignored.
 
+**FightClub (personal agent container):** `FightClub` model — 1:1 with User (ownerId @unique, cascade delete). Fields: level (1-10), xp, maxAgents (2-6, grows with level), legendSkin/legendArchetype/legendBuff (from fighter retirement). Auto-created on first access via `getOrCreateFightClub()`. Uses `CLAN_LEVEL_CONFIG` from config.js for level thresholds.
+
 **Club Mode Agent system:** 4 new models for autonomous clan fighters.
-- `Agent` — clan fighter unit. Fields: name (2-20 chars), skin, 3 modules (primaryModule/secondaryModule/tertiaryModule — one of 6 archetypes each), elo (default 1000), wins/losses/draws/totalFights, xp, level, status (idle|fighting|resting), lastFightAt/nextFightAt. Relations: Club (cascade), User owner (cascade). Indexes: clubId, ownerId, elo, status.
+- `Agent` — clan fighter unit. Fields: name (2-20 chars), skin, 3 modules (primaryModule/secondaryModule/tertiaryModule — one of 6 archetypes each, nullable), elo (default 1000), wins/losses/draws/totalFights, xp, level, status (idle|fighting|resting), autoFight (boolean), lastFightAt/nextFightAt. Relations: FightClub (cascade), User owner (cascade). Indexes: fightClubId, ownerId, elo, status.
 - `AgentTactics` — 1:1 with Agent. Behavior settings: aggression (cautious|balanced|aggressive), dicePolicy (always|smart|never), coachPreference (attack|defense|position|auto), emergencyThreshold (30|20|0), restPeriod (ms: 600000|1800000|3600000). Cascade delete.
 - `AgentProgression` — 1:1 with Agent. XP per branch (speedXp/powerXp/techniqueXp), moves (JSON [{moveId, level}]), deck (JSON [moveId...] 4-8 items). Cascade delete.
 - `AgentFightLog` — N:1 with Agent. Fight history: mode (pve_training|ranked|free_arena), result (victory|defeat|draw), opponent info, rounds/HP/xpEarned/eloChange, fightData (full JSON for AI analysis). Indexes: agentId, createdAt, mode. Cascade delete.
@@ -629,10 +650,10 @@ User, Club, ClubInvite, ClanEvent, Achievement, UserAchievement, SocialTask, Use
 
 ## Branch (Git)
 
-Development branch: `claude/hexlash-project-setup-X2K7i`
+Development branch: `claude/hexlash-project-setup-WYkbK`
+Club Mode prototype: **IN PROGRESS** — 109 commits ahead of main, ~6000 lines, deepdive complete (#1a-#1i), Phase 1 work starting.
 Road 1 (Neon Discipline visual migration): **COMPLETE**. See `/docs/road1-final-report.md` and `/docs/road2-parking-list.md`.
-Next: **ТЗ #18.5** — HexButton/HexCard library audit.
-Previous branches: `claude/review-hexlash-guidelines-vxdZD` (Road 1 Visual System alignment), `claude/add-club-mode-agents-lmXTI`, `claude/club-mode-navigation-571kx`, `claude/rename-autofight-club-mode-o2bIJ`, `claude/update-claude-md-XVzH6`, `claude/add-pixel-icons-Hk6tn` (design system + UI redesign, completed & merged), `claude/hexlash-full-audit-WvXMd` (security audit, completed & merged)
+Previous branches: `claude/hexlash-project-setup-X2K7i` (Road 1), `claude/review-hexlash-guidelines-vxdZD`, `claude/add-club-mode-agents-lmXTI`, `claude/club-mode-navigation-571kx`, `claude/rename-autofight-club-mode-o2bIJ`, `claude/update-claude-md-XVzH6`, `claude/add-pixel-icons-Hk6tn`, `claude/hexlash-full-audit-WvXMd`
 
 ### PvP System Audit — P0+P1 Fixes — ✅ COMPLETE
 
@@ -1510,6 +1531,97 @@ Club Mode (agents) now independent from Clan. Personal FightClub per user, auto-
 - backend: 0 изменений в `/backend/` от Road 1 коммитов
 - CLAUDE.md <> код <> Visual System PDF v1.1 синхронизированы
 
-**Следующее ТЗ:** #18.5 — аудит библиотеки HexButton/HexCard
+**Следующее ТЗ:** Phase 1 — Club Mode Foundation (см. секцию Phase 1 ниже)
 
-**Phase 1 (Club Mode) вход через парковочный список.**
+---
+
+## Club Mode (Phase 1 in progress)
+
+Prototype Club Mode — система автономных бойцов (агентов) под управлением игрока. ~6000 строк кода, 109 коммитов впереди main, не залит. Полностью задокументирован после deepdive серии #1a-#1i (9 апреля 2026).
+
+### Словарь Phase 1
+
+| Концепция | В коде (Prisma/backend) | В UI и i18n | Что это |
+|-----------|------------------------|-------------|---------|
+| Социальная клановая система | Club → Clan (after rename) | Clan | Объединение игроков (существующая система) |
+| Команда бойцов одного игрока | FightClub (остаётся) | Club | Ядро Phase 1 — персональный контейнер |
+| Один боец | Agent | Fighter | Сущность которая дерётся |
+| Лицо клуба для PvP | Agent.isCaptain (новое) | Captain | Один Agent с флагом, идёт в PvP |
+
+### Архитектура
+
+**Prisma модели (5+1):** FightClub (1:1 User), Agent (N:1 FightClub), AgentTactics (1:1 Agent), AgentProgression (1:1 Agent), AgentFightLog (N:1 Agent). Плюс ClanEvent для социальной системы.
+
+**API:** 16 эндпоинтов на `/v1/agent/*` — CRUD, tactics, fight history, Research Gate (available-moves, learn-move, deck), PvE training, auto-fight, rankings, fight-club level. Плюс AI эндпоинты: morning-report, premium-report в `/v1/ai/*`.
+
+**Backend сервисы (6):** agentCombatEngine (643 строки, чистая sync функция), agentFightService (366 строк, orchestrator), agentScheduler (204 строки, 30s tick), eloService (31 строка), rankedMatchmaker (149 строк), fightClubService (111 строк). Плюс: retirementService, morningReportService, metaAnalysisService, nftService.
+
+**Frontend:** 3 view (FightClubView 106, CreateAgentView 329, AgentDetailView 563 строк), 7 компонентов в `components/club/`, agentState Vuex модуль (202 строки, 14 actions, 7 getters).
+
+### Agent Combat Engine
+
+Гибрид PvE (action-based: attack/defense/position с архетипными приоритетами) и PvP (passive archetype modifiers: dmgBonus, dodge, crit из ARCHETYPE_MODIFIERS). Чистая синхронная функция без Prisma/WebSocket. Тактика (aggression, dicePolicy, coachPreference, emergencyThreshold) управляет решениями AI. Не унифицируем с PvE/PvP combat engines — control flow принципиально разный.
+
+### Lifecycle боя
+
+Scheduler tick (30s) → recoverStuck → wakeResting → getReady → matchmaker (ranked/free_arena пары) → fightService (`_executeFight` / `_executeAgentVsAgentFight`) → combat engine simulation → $transaction (Agent stats + AgentProgression XP + AgentFightLog + optional ELO) → status transitions (fighting → idle → resting) → club XP (fire-and-forget).
+
+### Две параллельные системы прогрессии
+
+- **User progression** — школа тренера. Vuex `progressionState`, frontend-driven (taps → freeXP → allocate → branchExp → unlock/levelup moves). Сохраняется в `User.progression` Json blob через `PUT /user/progression`. Формат moves: `{ moveId: { level, unlocked } }`.
+- **Agent progression** — ученики. `AgentProgression` Prisma table, backend-validated. Branch XP зарабатывается в боях автоматически (`distributeXpByBranch`). Формат moves: `[{ moveId, level }]`.
+- **Research Gate** соединяет: Agent не может выучить мув, не разлоченный игроком. Max level агента ≤ level мува игрока. Работающая механика с полным циклом (available-moves → learn-move → validate-deck).
+- **НЕ выпиливаем** User progression в Phase 1 — обе системы остаются параллельно.
+
+### x402 / Premium
+
+Feature flag `X402_ENABLED=false` на проде. On-chain verification = TODO (принимает любой tx hash). Premium report = free preview.
+
+### Известные баги
+
+52 пункта в `docs/phase1-parking-list.md`. Критичные: legend buff на обоих бойцах (#1), race condition scheduler vs train (#2), /user/progression доверяет фронтенду (#3). 11 из 52 фиксятся в Phase 1.
+
+---
+
+## Phase 1 — Club Mode Foundation
+
+**Цель:** Переход от "один боец" к "клуб бойцов". Игрок становится тренером. Текущая прогрессия User мигрирует в Fighter №1 (Agent).
+
+### Архитектурные решения (зафиксированы 9 апреля 2026)
+
+1. **freeXP миграция:** `User.freeXP` делится поровну на 3 ветки Agent при миграции в Fighter №1. `floor()` округление, остаток теряется (max 2 XP).
+2. **Deck size unification:** min deck = 3 для всех систем (User, Agent, PvP). Backend: `MIN_AGENT_DECK_SIZE` 4→3. Закрывает несоответствие трёх разных policies.
+3. **FightClub naming:** FightClub остаётся FightClub в коде. В UI и i18n — "Club". Только Prisma `Club → Clan` rename для социальной системы. Phase 2 может сделать FightClub→Club отдельно.
+4. **Captain real-time:** polling в AgentDetailView каждые 15 сек, с pause при `document.hidden` (Page Visibility API). WebSocket push отложен на Phase 2.
+5. **Belt System семантика:** count-based с фильтром качества. Победы над равным или выше поясом копятся на нашивку. 10 поясов × 3 нашивки + Hexmaster = 31 ступень. Поражения не штрафуют. Точные числа добиваются в #P1-belt-1.
+
+### Карта ТЗ Phase 1
+
+| # | ТЗ | Описание | Зависимости |
+|---|-----|----------|-------------|
+| P1-doc | Документация | Текущий ТЗ — CLAUDE.md + parking list | — |
+| P1-design-migration | Дизайн-документ миграции | БЛОКИРУЕТ всё | После doc |
+| P1-rename-1 | Prisma migration: Club→Clan + ClubInvite→ClanInvite | | После design |
+| P1-rename-2 | Backend rename: routes, services, config | | После rename-1 |
+| P1-rename-3 | Frontend rename: Vuex, components, переменные | | После rename-2 |
+| P1-rename-4 | i18n rename: 38 ключей × 11 локалей + Agent→Fighter | | После rename-3 |
+| P1-cleanup | Удаление мёртвого кода (fightStylePreview, nftMintService, HexlashAgents.sol+ABI, clubLevelService.addClubXp) | | После rename-4 |
+| P1-club-name | Add FightClub.name поле + миграция + default из User.login | | После cleanup |
+| P1-fix-legend | Фикс legend buff (раздельно f1/f2 в engine) | | До belt-2 |
+| P1-belt-1 | Belt data model + beltService | | После club-name |
+| P1-belt-2 | Замена ELO в core gameplay | | После belt-1 |
+| P1-belt-3 | BeltBadge frontend + замена ELO display | | После belt-2 |
+| P1-belt-4a | Замена ELO→Belt в AI services (механическая) | | После belt-2 |
+| P1-belt-4b | Redesign AI prompts под Belt semantics | | После belt-4a |
+| P1-migration | Миграция User.progression → Fighter №1 + hide retirement UI | | После belt-1 |
+| P1-captain-1 | Captain как поле + базовая логика + создание из Fighter №1 | | После migration |
+| P1-captain-2 | Adapt Arena flow под Captain | | После captain-1 |
+| P1-captain-3 | Adapt Profile/Ratings под Captain | | Параллельно с captain-2 |
+
+### i18n политика Phase 1
+
+9 локалей (de, es, fr, pt, ar, hi, ja, ko, zh) находятся в English fallback для Club Mode подсекций (134 ключа). Phase 1 ТЗ добавляют новые ключи обязательно в en + ru, остальные 9 = English fallback. Это соответствует существующей практике Club Mode раздела.
+
+### Парковочный список
+
+52 пункта долгов в `docs/phase1-parking-list.md`. 11 фиксятся в Phase 1, 41 — в Дороге 2 после deploy.
