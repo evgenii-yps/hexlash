@@ -77,27 +77,27 @@ router.post('/delete', authMiddleware, async (req, res) => {
     await prisma.$transaction(async (tx) => {
       const userId = req.userId;
 
-      // Remove user from clubs they belong to (not owner)
+      // Remove user from clans they belong to (not owner)
       await tx.user.update({
         where: { id: userId },
-        data: { clubId: null },
+        data: { clanId: null },
       });
 
-      // Transfer or delete owned clubs
-      const ownedClubs = await tx.club.findMany({ where: { ownerId: userId } });
-      for (const club of ownedClubs) {
+      // Transfer or delete owned clans
+      const ownedClans = await tx.clan.findMany({ where: { ownerId: userId } });
+      for (const clan of ownedClans) {
         // Find another member to transfer ownership
         const otherMember = await tx.user.findFirst({
-          where: { clubId: club.id, NOT: { id: userId } },
+          where: { clanId: clan.id, NOT: { id: userId } },
         });
         if (otherMember) {
-          await tx.club.update({
-            where: { id: club.id },
+          await tx.clan.update({
+            where: { id: clan.id },
             data: { ownerId: otherMember.id },
           });
         } else {
-          // No other members — delete the club
-          await tx.club.delete({ where: { id: club.id } });
+          // No other members — delete the clan
+          await tx.clan.delete({ where: { id: clan.id } });
         }
       }
 
@@ -221,8 +221,9 @@ router.get('/search', authMiddleware, async (req, res) => {
       sortDirection = 'DESC',
       page = '0',
       size = '10',
-      clubId = null,
     } = req.query;
+    // TODO #P1-rename-3: remove clubId alias after frontend rename
+    const clanId = req.query.clanId || req.query.clubId || null;
 
     const pageNum = parseInt(page);
     const pageSize = Math.min(parseInt(size), 50);
@@ -241,8 +242,8 @@ router.get('/search', authMiddleware, async (req, res) => {
         { login: { contains: name, mode: 'insensitive' } },
       ];
     }
-    if (clubId) {
-      where.clubId = clubId;
+    if (clanId) {
+      where.clanId = clanId;
     }
 
     const users = await prisma.user.findMany({

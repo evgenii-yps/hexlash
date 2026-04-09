@@ -36,22 +36,22 @@ router.post('/save', authMiddleware, async (req, res) => {
       data: updateData,
     });
 
-    // Update club stats and award clan XP if user is in a club
-    if (user.clubId) {
-      const clubUpdate = { battles: { increment: 1 } };
+    // Update clan stats and award clan XP if user is in a clan
+    if (user.clanId) {
+      const clanUpdate = { battles: { increment: 1 } };
       if (isWin) {
-        clubUpdate.wins = { increment: 1 };
+        clanUpdate.wins = { increment: 1 };
       }
-      await prisma.club.update({
-        where: { id: user.clubId },
-        data: clubUpdate,
+      await prisma.clan.update({
+        where: { id: user.clanId },
+        data: clanUpdate,
       });
 
       const fightResult = isWin ? 'win' : isDraw ? 'draw' : 'lose';
-      awardClanXP(user.clubId, fightResult).catch(e => console.error('Clan XP error:', e));
+      awardClanXP(user.clanId, fightResult).catch(e => console.error('Clan XP error:', e));
 
       const eventType = isWin ? 'fight_win' : isDraw ? 'fight_draw' : 'fight_lose';
-      createClanEvent(user.clubId, eventType, req.userId, null, {
+      createClanEvent(user.clanId, eventType, req.userId, null, {
         opponentName: req.body.opponentName || 'AI',
         playerHp: req.body.playerHp ?? null,
         opponentHp: req.body.opponentHp ?? null,
