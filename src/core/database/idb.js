@@ -6,7 +6,8 @@ const DB_VERSION = 1;
 
 export const MASTER_TABLE = 'master';
 export const USERS_TABLE = 'users';
-export const CLUBS_TABLE = 'clubs';
+// IndexedDB store name kept as 'clubs' for data compatibility, see #P1-migration
+export const CLANS_TABLE = 'clubs';
 export const SOCIAL_TASKS_TABLE = 'social_tasks';
 export const DAILY_TASKS_TABLE = 'daily_tasks';
 export const PUNCH_LIMIT_TABLE = 'punch_limits';
@@ -23,7 +24,7 @@ export const initDB = () => {
                     const usersStore = db.createObjectStore(USERS_TABLE, { keyPath: 'id' });
                     usersStore.createIndex('login', 'login', { unique: true });
 
-                    db.createObjectStore(CLUBS_TABLE, { keyPath: 'id' });
+                    db.createObjectStore(CLANS_TABLE, { keyPath: 'id' });
                     db.createObjectStore(SOCIAL_TASKS_TABLE, { keyPath: 'id' });
                     db.createObjectStore(DAILY_TASKS_TABLE, { keyPath: 'id' });
                     db.createObjectStore(PUNCH_LIMIT_TABLE, { keyPath: 'id' });

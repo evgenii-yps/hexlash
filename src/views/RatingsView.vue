@@ -3,12 +3,12 @@
     <div class="rating-container" @scroll="handleScroll">
       <div class="rating-content-wrapper">
         <div class="rating-tabs">
-          <VBtnDark :class="{'active-tab': activeTab === Tabs.MY_CLUB}"
-                    @click="setActiveTab(Tabs.MY_CLUB)">
+          <VBtnDark :class="{'active-tab': activeTab === Tabs.MY_CLAN}"
+                    @click="setActiveTab(Tabs.MY_CLAN)">
             {{ t.rating.lblMyClub }}
           </VBtnDark>
-          <VBtnDark :class="{'active-tab': activeTab === Tabs.CLUBS}"
-                    @click="setActiveTab(Tabs.CLUBS)">
+          <VBtnDark :class="{'active-tab': activeTab === Tabs.CLANS}"
+                    @click="setActiveTab(Tabs.CLANS)">
             {{ t.rating.lblClubs }}
           </VBtnDark>
           <VBtnDark :class="{'active-tab': activeTab === Tabs.FIGHTERS}"
@@ -17,14 +17,14 @@
           </VBtnDark>
         </div>
 
-        <div v-if="activeTab === Tabs.MY_CLUB" class="table-wrapper">
-          <MyClubTab :active="activeTab === Tabs.MY_CLUB" @switchTab="setActiveTab" />
+        <div v-if="activeTab === Tabs.MY_CLAN" class="table-wrapper">
+          <MyClanTab :active="activeTab === Tabs.MY_CLAN" @switchTab="setActiveTab" />
         </div>
 
-        <div v-if="activeTab === Tabs.CLUBS" class="table-wrapper">
+        <div v-if="activeTab === Tabs.CLANS" class="table-wrapper">
           <div class="table-header">
             <InputField
-                v-model="searchClub"
+                v-model="searchClan"
                 labelColor="var(--hex-text-primary)"
                 inputBgColor="var(--hex-bg-card)"
                 inputBorderColor="var(--hex-border-default)"
@@ -32,12 +32,12 @@
                 padding="0.8rem"
                 :placeholder="t.rating.clubPlaceholder"
                 class="search-input"
-                @input="handleClubSearchInput"
+                @input="handleClanSearchInput"
             />
 
             <v-select
-                v-model="sortClubBy"
-                :items="clubSortItems"
+                v-model="sortClanBy"
+                :items="clanSortItems"
                 item-title="name"
                 variant="outlined"
                 :menu-icon="null"
@@ -55,11 +55,11 @@
             </v-select>
           </div>
 
-          <div v-if="canCreateClub" class="create-club-row">
-            <HexButton variant="primary" size="sm" @click="dialogCreateClub = true">
+          <div v-if="canCreateClan" class="create-clan-row">
+            <HexButton variant="primary" size="sm" @click="dialogCreateClan = true">
               {{ t.profile.buttons.lblCreateClub }}
             </HexButton>
-            <CreateClub :dialogCreate="dialogCreateClub" @close="dialogCreateClub = false" />
+            <CreateClan :dialogCreate="dialogCreateClan" @close="dialogCreateClan = false" />
           </div>
 
           <div class="table-body">
@@ -67,34 +67,34 @@
               <span class="column">№</span>
               <span class="column-name">{{ t.rating.clubName }}</span>
               <span class="column">
-                <img :class="{'active-sort-icon': sortClubBy === 'members'}" src="@/assets/images/icon_members.svg"
+                <img :class="{'active-sort-icon': sortClanBy === 'members'}" src="@/assets/images/icon_members.svg"
                      alt="sort icon"/>
               </span>
               <span class="column">
-                <img :class="{'active-sort-icon': sortClubBy === 'battles'}" src="@/assets/images/icon_fights.svg"
+                <img :class="{'active-sort-icon': sortClanBy === 'battles'}" src="@/assets/images/icon_fights.svg"
                      alt="sort icon"/>
               </span>
               <span class="column">
-                <img :class="{'active-sort-icon': sortClubBy === 'wins'}" src="@/assets/images/icon_wins.svg"
+                <img :class="{'active-sort-icon': sortClanBy === 'wins'}" src="@/assets/images/icon_wins.svg"
                      alt="sort icon"/>
               </span>
             </div>
 
-            <VInfiniteScroll :items="clubs" :onLoad="loadClubs" class="infinite-scroll">
-              <template v-if="clubs.length" v-for="(club, index) in clubs" :key="club.id">
-                <div :class="['table-row', index % 2 === 0 ? '' : '']" @click="viewClub(club.id)">
+            <VInfiniteScroll :items="clans" :onLoad="loadClans" class="infinite-scroll">
+              <template v-if="clans.length" v-for="(clan, index) in clans" :key="clan.id">
+                <div :class="['table-row', index % 2 === 0 ? '' : '']" @click="viewClan(clan.id)">
                   <span class="column">{{ index + 1 }}</span>
-                  <span class="column-name">{{ club.name }}</span>
-                  <span class="column">{{ club.members }}</span>
-                  <span class="column">{{ formatNumber(club.battles) }}</span>
-                  <span class="column">{{ formatNumber(club.wins) }}</span>
+                  <span class="column-name">{{ clan.name }}</span>
+                  <span class="column">{{ clan.members }}</span>
+                  <span class="column">{{ formatNumber(clan.battles) }}</span>
+                  <span class="column">{{ formatNumber(clan.wins) }}</span>
                 </div>
               </template>
               <template v-else>
-                <div class="no-results" v-if="clubsLimitReached">{{ t.rating.noResults }}</div>
+                <div class="no-results" v-if="clansLimitReached">{{ t.rating.noResults }}</div>
               </template>
               <template v-slot:loading>
-                <v-progress-circular v-if="!clubsLimitReached" class="loader" size="40" indeterminate/>
+                <v-progress-circular v-if="!clansLimitReached" class="loader" size="40" indeterminate/>
               </template>
               <template v-slot:error="{ props }">
                 <v-alert type="error">
@@ -233,15 +233,15 @@ import store from "@/core/state/store.js";
 import {formatNumber} from "@/core/constants.js";
 import * as amplitude from "@amplitude/analytics-browser";
 import HexButton from "@/components/ui/HexButton.vue";
-import CreateClub from "@/components/fragments/club/CreateClub.vue";
-import MyClubTab from "@/components/fragments/club/MyClubTab.vue";
+import CreateClan from "@/components/fragments/clan/CreateClan.vue";
+import MyClanTab from "@/components/fragments/clan/MyClanTab.vue";
 import PvPStatsCard from "@/components/fragments/profile/PvPStatsCard.vue";
 
 
 // Enum для вкладок
 const Tabs = {
-  MY_CLUB: 'myclub',
-  CLUBS: 'clubs',
+  MY_CLAN: 'myclan',
+  CLANS: 'clans',
   FIGHTERS: 'fighters',
 };
 
@@ -250,28 +250,28 @@ const route = useRoute();
 
 const getInitialTab = () => {
   const type = route.params.type;
-  if (type === Tabs.CLUBS) return Tabs.CLUBS;
+  if (type === Tabs.CLANS) return Tabs.CLANS;
   if (type === Tabs.FIGHTERS) return Tabs.FIGHTERS;
-  return Tabs.MY_CLUB;
+  return Tabs.MY_CLAN;
 };
 const activeTab = ref(getInitialTab());
 
-const searchClub = ref(activeTab.value === Tabs.CLUBS ? route.query.searchClub || '' : '');
-const sortClubBy = ref(activeTab.value === Tabs.CLUBS ? route.query.sortClubBy || 'battles' : 'battles');
+const searchClan = ref(activeTab.value === Tabs.CLANS ? route.query.searchClan || '' : '');
+const sortClanBy = ref(activeTab.value === Tabs.CLANS ? route.query.sortClanBy || 'battles' : 'battles');
 
 const searchMember = ref(activeTab.value === Tabs.FIGHTERS ? route.query.searchMember || '' : '');
 
 const sortParticipantBy = ref(activeTab.value === Tabs.FIGHTERS ? route.query.sortParticipantBy || 'wins' : 'wins');
-const clubsLimitReached = computed(() => store.getters['club/isLimitReached']);
+const clansLimitReached = computed(() => store.getters['clan/isLimitReached']);
 const participantLimitReached = computed(() => store.getters['user/isLimitReached']);
 
-const clubId = ref(route.query.clubId);
+const clanId = ref(route.query.clanId);
 
 const master = computed(() => store.getters['master/getMaster']);
-const canCreateClub = computed(() => !master.value?.userData?.clubId);
-const dialogCreateClub = ref(false);
+const canCreateClan = computed(() => !master.value?.userData?.clanId);
+const dialogCreateClan = ref(false);
 
-const clubSortItems = computed(() => [
+const clanSortItems = computed(() => [
   {name: t.value.rating.total, value: 'battles'},
   {name: t.value.rating.members, value: 'members'},
   {name: t.value.rating.wins, value: 'wins'}
@@ -285,41 +285,41 @@ const membersSortedItem = computed(() => [
   {name: t.value.rating.luck, value: 'luck'}
 ]);
 
-const clubs = computed(() => store.getters['club/getClubRatingsList']);
+const clans = computed(() => store.getters['clan/getClanRatingsList']);
 const participants = computed(() => store.getters['user/getParticipantRatingsList']);
 
 
-const clubPage = ref(0);
+const clanPage = ref(0);
 const fighterPage = ref(0);
 
-let doneClubs = null;
+let doneClans = null;
 let doneParticipants = null;
 
-const loadClubs = async (options = {}) => {
+const loadClans = async (options = {}) => {
   const {done} = options;
 
   if (done) {
-    doneClubs = done;
+    doneClans = done;
   }
 
-  if (clubsLimitReached.value) {
+  if (clansLimitReached.value) {
 
-    if (doneClubs) {
-      doneClubs('empty');
+    if (doneClans) {
+      doneClans('empty');
     }
     return;
   }
 
-  await store.dispatch('club/loadClubRatings', {
-    search: searchClub.value,
-    sortBy: sortClubBy.value,
-    page: clubPage.value
+  await store.dispatch('clan/loadClanRatings', {
+    search: searchClan.value,
+    sortBy: sortClanBy.value,
+    page: clanPage.value
   });
 
-  clubPage.value = clubPage.value + 1;
+  clanPage.value = clanPage.value + 1;
 
-  if (doneClubs) {
-    doneClubs('ok');
+  if (doneClans) {
+    doneClans('ok');
   }
 
 };
@@ -343,7 +343,7 @@ const loadParticipants = async (options = {}) => {
     search: searchMember.value,
     sortBy: sortParticipantBy.value,
     page: fighterPage.value,
-    clubId: clubId.value
+    clanId: clanId.value
   });
 
   fighterPage.value = fighterPage.value + 1;
@@ -357,16 +357,16 @@ const setActiveTab = (tab) => {
   activeTab.value = tab;
 
   const { query, path } = router.currentRoute.value;
-  delete query.clubId; // Удаляем clubId из query
+  delete query.clanId; // Удаляем clanId из query
   router.replace({ path, query });
-  clubId.value = null;
+  clanId.value = null;
 
   updateQueryParams();
 };
 
-const viewClub = (clubId) => {
-  if (clubId) {
-    router.push({path: `/club/${clubId}`});
+const viewClan = (clanId) => {
+  if (clanId) {
+    router.push({path: `/clan/${clanId}`});
   }
 };
 
@@ -380,7 +380,7 @@ const viewParticipant = (participantLogin) => {
   }
 };
 
-const debouncedLoadClubs = debounce(() => {
+const debouncedLoadClans = debounce(() => {
   updateQueryParams();
 }, 500);
 
@@ -388,8 +388,8 @@ const debouncedLoadParticipants = debounce(() => {
   updateQueryParams();
 }, 500);
 
-const handleClubSearchInput = () => {
-  debouncedLoadClubs();
+const handleClanSearchInput = () => {
+  debouncedLoadClans();
 };
 
 const handleMemberSearchInput = () => {
@@ -402,9 +402,9 @@ const handleScroll = (event) => {
   emit('scroll', event.target.scrollTop);
 };
 
-watch([searchClub, sortClubBy], () => {
-  if (activeTab.value === Tabs.CLUBS) {
-    debouncedLoadClubs();
+watch([searchClan, sortClanBy], () => {
+  if (activeTab.value === Tabs.CLANS) {
+    debouncedLoadClans();
   }
 });
 
@@ -415,14 +415,14 @@ watch([searchMember, sortParticipantBy], () => {
 });
 
 watch(route, async (newRoute) => {
-  if (newRoute.params.type === Tabs.CLUBS) {
-    clubPage.value = 0;
-    store.commit('club/resetClubRatings');
-    searchClub.value = newRoute.query.searchClub || '';
-    sortClubBy.value = newRoute.query.sortClubBy || 'wins';
+  if (newRoute.params.type === Tabs.CLANS) {
+    clanPage.value = 0;
+    store.commit('clan/resetClanRatings');
+    searchClan.value = newRoute.query.searchClan || '';
+    sortClanBy.value = newRoute.query.sortClanBy || 'wins';
 
-    if (doneClubs) {
-      doneClubs('ok');
+    if (doneClans) {
+      doneClans('ok');
     }
 
   } else if (newRoute.params.type === Tabs.FIGHTERS) {
@@ -431,7 +431,7 @@ watch(route, async (newRoute) => {
 
     searchMember.value = newRoute.query.searchMember || '';
     sortParticipantBy.value = newRoute.query.sortParticipantBy || 'wins';
-    clubId.value = newRoute.query.clubId || null;
+    clanId.value = newRoute.query.clanId || null;
 
     if(doneParticipants){
       doneParticipants('ok')
@@ -441,13 +441,13 @@ watch(route, async (newRoute) => {
 
 const updateQueryParams = () => {
   const queryParams = {};
-  if (activeTab.value === Tabs.CLUBS) {
-    queryParams.searchClub = searchClub.value;
-    queryParams.sortClubBy = sortClubBy.value || 'wins';
+  if (activeTab.value === Tabs.CLANS) {
+    queryParams.searchClan = searchClan.value;
+    queryParams.sortClanBy = sortClanBy.value || 'wins';
   } else {
     queryParams.searchMember = searchMember.value;
     queryParams.sortParticipantBy = sortParticipantBy.value || 'wins';
-    queryParams.clubId = clubId.value || null;
+    queryParams.clanId = clanId.value || null;
   }
 
   router.replace({path: `/ratings/${activeTab.value}`, query: queryParams});
@@ -455,7 +455,7 @@ const updateQueryParams = () => {
 
 
 onMounted(() => {
-  store.commit('club/resetClubRatings');
+  store.commit('clan/resetClanRatings');
   store.commit('user/resetParticipantRatings');
 
   // Amplitude
@@ -666,7 +666,7 @@ onMounted(() => {
   width: 100%;
 }
 
-.create-club-row {
+.create-clan-row {
   display: flex;
   justify-content: center;
   margin: 10px 0;

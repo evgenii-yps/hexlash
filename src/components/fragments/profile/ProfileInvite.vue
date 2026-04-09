@@ -46,7 +46,7 @@ import {VBtn, VCard, VCardActions, VCardText, VCardTitle, VSpacer} from "vuetify
 
 
 
-const clubId = ref(null);
+const clanId = ref(null);
 const inviteCode = ref(null);
 const showInviteContainer = ref(false);
 const showTooltip = ref(false);
@@ -55,12 +55,12 @@ const showDialogConfirmShare = ref(false);
 watch(store.getters['master/getMaster'],  async(newMaster) => {
   if (newMaster && newMaster.userData) {
     inviteCode.value = newMaster.inviteId;
-    clubId.value = newMaster.userData.clubId;
+    clanId.value = newMaster.userData.clanId;
 
-    if (clubId.value) {
-      const club = await store.dispatch('club/getClubById', clubId.value);
-      if (club) {
-        showInviteContainer.value = club.isPublic || club.owner === newMaster.userData.id;
+    if (clanId.value) {
+      const clan = await store.dispatch('clan/getClanById', clanId.value);
+      if (clan) {
+        showInviteContainer.value = clan.isPublic || clan.owner === newMaster.userData.id;
       }
     }
 

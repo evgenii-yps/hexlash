@@ -6,12 +6,12 @@
       <div class="clan-header-bg"></div>
       <div class="clan-header-content">
         <div class="clan-avatar-wrap">
-          <ClubOwnerAvatar v-if="isOwner" :clubData="clubData"/>
-          <ClubAvatar v-else :avatarUrl="clubData.avatarUrl"/>
+          <ClanOwnerAvatar v-if="isOwner" :clanData="clanData"/>
+          <ClanAvatar v-else :avatarUrl="clanData.avatarUrl"/>
         </div>
         <div class="clan-title-block">
-          <h2 class="clan-name">{{ clubData.name }}</h2>
-          <p v-if="clubData.description" class="clan-description">{{ clubData.description }}</p>
+          <h2 class="clan-name">{{ clanData.name }}</h2>
+          <p v-if="clanData.description" class="clan-description">{{ clanData.description }}</p>
         </div>
       </div>
 
@@ -19,7 +19,7 @@
       <div class="clan-meta">
         <span class="level-badge">LVL {{ clanLevel }}</span>
         <span class="meta-separator">&middot;</span>
-        <span class="meta-text">{{ clubData.members }} / {{ levelProgress.maxMembers }} {{ t.rating.members }}</span>
+        <span class="meta-text">{{ clanData.members }} / {{ levelProgress.maxMembers }} {{ t.rating.members }}</span>
       </div>
 
       <!-- Level progress bar -->
@@ -38,7 +38,7 @@
     </div>
 
     <!-- Stats Grid + Win Rate Bar -->
-    <ClubStats :clubData="clubData"/>
+    <ClanStats :clanData="clanData"/>
 
     <!-- Tab Navigation -->
     <div class="tab-nav">
@@ -80,8 +80,8 @@
           <div class="member-info" @click="viewMember(member)">
             <div class="member-name-row">
               <span class="member-name">{{ member.name || member.login }}</span>
-              <span v-if="member.clubRole === 'owner'" class="role-badge owner-badge">OWNER</span>
-              <span v-else-if="member.clubRole === 'deputy'" class="role-badge deputy-badge">{{ t.club.lblDeputy }}</span>
+              <span v-if="member.clanRole === 'owner'" class="role-badge owner-badge">OWNER</span>
+              <span v-else-if="member.clanRole === 'deputy'" class="role-badge deputy-badge">{{ t.club.lblDeputy }}</span>
               <span v-if="member.isOnline" class="online-dot"></span>
             </div>
             <div class="member-stats-text">
@@ -111,17 +111,17 @@
         >
           <template v-if="isOwner">
             <button
-                v-if="selectedMember.clubRole === 'deputy'"
+                v-if="selectedMember.clanRole === 'deputy'"
                 class="action-menu-item"
                 @click="doTransfer"
             >{{ t.club.lblTransferOwnership }}</button>
             <button
-                v-if="selectedMember.clubRole === 'deputy'"
+                v-if="selectedMember.clanRole === 'deputy'"
                 class="action-menu-item"
                 @click="doDemote"
             >{{ t.club.lblDemoteMember }}</button>
             <button
-                v-if="selectedMember.clubRole === 'member'"
+                v-if="selectedMember.clanRole === 'member'"
                 class="action-menu-item"
                 @click="doPromote"
             >{{ t.club.lblPromoteDeputy }}</button>
@@ -134,7 +134,7 @@
 
       <!-- Leave for members (non-owner) -->
       <div v-if="!isOwner" class="leave-row">
-        <HexButton variant="danger" size="sm" @click="dialogLeaveClub = true">
+        <HexButton variant="danger" size="sm" @click="dialogLeaveClan = true">
           {{ t.club.lblLeaveClub }}
         </HexButton>
       </div>
@@ -142,7 +142,7 @@
 
     <!-- Activity Tab -->
     <div v-if="activeTab === 'activity'" class="tab-content">
-      <ClanActivityFeed :clubId="clubId" />
+      <ClanActivityFeed :clanId="clanId" />
     </div>
 
     <!-- Settings Tab -->
@@ -151,19 +151,19 @@
         <div class="settings-title">{{ t.club.lblClanInfo || 'CLAN INFO' }}</div>
         <div class="settings-row">
           <span class="settings-label">{{ t.club.lblClubName || 'Name' }}</span>
-          <span class="settings-value">{{ clubData.name }}</span>
+          <span class="settings-value">{{ clanData.name }}</span>
         </div>
         <div class="settings-row">
           <span class="settings-label">{{ t.club.lblClubDescription || 'Description' }}</span>
-          <span class="settings-value settings-value-desc">{{ clubData.description || '&mdash;' }}</span>
+          <span class="settings-value settings-value-desc">{{ clanData.description || '&mdash;' }}</span>
         </div>
         <div class="settings-row">
           <span class="settings-label">{{ t.club.lblType || 'Type' }}</span>
-          <span class="settings-value">{{ clubData.isPublic ? (t.club.lblPublic || 'Public') : (t.club.lblPrivate || 'Private') }}</span>
+          <span class="settings-value">{{ clanData.isPublic ? (t.club.lblPublic || 'Public') : (t.club.lblPrivate || 'Private') }}</span>
         </div>
         <div class="settings-row">
           <span class="settings-label">{{ t.club.lblCreated || 'Created' }}</span>
-          <span class="settings-value">{{ clubCreatedDate }}</span>
+          <span class="settings-value">{{ clanCreatedDate }}</span>
         </div>
       </div>
 
@@ -189,7 +189,7 @@
         <div class="settings-title">{{ t.club.lblTreasury || 'TREASURY' }}</div>
         <div class="settings-row">
           <span class="settings-label">Balance</span>
-          <span class="settings-value value-balance">{{ formatNumber(clubBalance) }}</span>
+          <span class="settings-value value-balance">{{ formatNumber(clanBalance) }}</span>
         </div>
         <div class="settings-row">
           <span class="settings-label">{{ t.club.lblIncome || 'Income' }}</span>
@@ -199,7 +199,7 @@
 
       <div class="settings-actions">
         <div v-if="isOwner" class="settings-btn-group">
-          <ClubEdit :clubData="clubData"/>
+          <ClanEdit :clanData="clanData"/>
           <HexButton variant="danger" size="sm" @click="confirmDisband">
             {{ t.club.btnDisband || 'Disband Clan' }}
           </HexButton>
@@ -213,13 +213,13 @@
     </div>
 
     <!-- Modals -->
-    <VModal v-model="dialogLeaveClub" max-width="500">
+    <VModal v-model="dialogLeaveClan" max-width="500">
       <VCard>
         <v-card-title class="headline">{{ t.club.lblLeaveClub }}</v-card-title>
         <v-card-text>{{ t.club.lblLeaveClubDescription }}</v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn @click="dialogLeaveClub = false" class="cancel-btn">{{ t.modal.btnCancel }}</v-btn>
+          <v-btn @click="dialogLeaveClan = false" class="cancel-btn">{{ t.modal.btnCancel }}</v-btn>
           <v-btn @click="confirmLeave" class="confirm-btn">{{ t.club.lblConfirm }}</v-btn>
         </v-card-actions>
       </VCard>
@@ -270,36 +270,36 @@ import {t} from "@/locales/index.js";
 import {formatNumber} from "@/core/constants.js";
 import {CLAN_LEVEL_CONFIG, getClanLevelProgress} from "@/data/clanLevels.js";
 import * as userService from "@/core/services/userService.js";
-import * as clubService from "@/core/services/clubService.js";
+import * as clanService from "@/core/services/clanService.js";
 
-import ClubAvatar from "@/components/fragments/club/ClubAvatar.vue";
-import ClubOwnerAvatar from "@/components/fragments/club/ClubOwnerAvatar.vue";
-import ClubStats from "@/components/fragments/club/ClubStats.vue";
-import ClanActivityFeed from "@/components/fragments/club/ClanActivityFeed.vue";
+import ClanAvatar from "@/components/fragments/clan/ClanAvatar.vue";
+import ClanOwnerAvatar from "@/components/fragments/clan/ClanOwnerAvatar.vue";
+import ClanStats from "@/components/fragments/clan/ClanStats.vue";
+import ClanActivityFeed from "@/components/fragments/clan/ClanActivityFeed.vue";
 // Club Mode UI moved to FightClubView
-import ClubEdit from "@/components/fragments/club/ClubEdit.vue";
+import ClanEdit from "@/components/fragments/clan/ClanEdit.vue";
 import HexButton from "@/components/ui/HexButton.vue";
-import ClanConfirmModal from "@/components/fragments/club/ClanConfirmModal.vue";
+import ClanConfirmModal from "@/components/fragments/clan/ClanConfirmModal.vue";
 
 const props = defineProps({
-  clubData: { type: Object, required: true },
-  clubId: { type: String, required: true },
+  clanData: { type: Object, required: true },
+  clanId: { type: String, required: true },
 });
 
-const emit = defineEmits(['club-left', 'club-deleted']);
+const emit = defineEmits(['clan-left', 'clan-deleted']);
 
 const router = useRouter();
 const master = computed(() => store.getters['master/getMaster']);
 
-const isOwner = computed(() => master.value?.userData?.clubRole === 'owner' && master.value?.userData?.clubId === props.clubId);
-const isDeputy = computed(() => master.value?.userData?.clubRole === 'deputy' && master.value?.userData?.clubId === props.clubId);
+const isOwner = computed(() => master.value?.userData?.clanRole === 'owner' && master.value?.userData?.clanId === props.clanId);
+const isDeputy = computed(() => master.value?.userData?.clanRole === 'deputy' && master.value?.userData?.clanId === props.clanId);
 
 const membersLoading = ref(false);
 const membersList = ref([]);
 const activeTab = ref('members');
 const activityCount = ref(0);
 
-const dialogLeaveClub = ref(false);
+const dialogLeaveClan = ref(false);
 const dialogInvite = ref(false);
 
 // Confirm modal
@@ -314,7 +314,7 @@ const selectedMember = ref(null);
 const actionMenuStyle = ref({});
 
 // Clan Level — from API data
-const levelProgress = computed(() => getClanLevelProgress(props.clubData.level || 1, props.clubData.xp || 0));
+const levelProgress = computed(() => getClanLevelProgress(props.clanData.level || 1, props.clanData.xp || 0));
 const clanLevel = computed(() => levelProgress.value.level);
 const clanXPPercent = computed(() => levelProgress.value.percent);
 
@@ -341,14 +341,14 @@ const tabs = computed(() => [
 ]);
 
 const friends = computed(() => store.getters['friends/getFriends'] || []);
-const invitableFriends = computed(() => friends.value.filter(f => !f.clubId));
+const invitableFriends = computed(() => friends.value.filter(f => !f.clanId));
 
-const clubBalance = computed(() => {
-  try { return props.clubData?.getBalance?.() || 0; } catch { return 0; }
+const clanBalance = computed(() => {
+  try { return props.clanData?.getBalance?.() || 0; } catch { return 0; }
 });
 
-const clubCreatedDate = computed(() => {
-  const d = props.clubData?.createdAt;
+const clanCreatedDate = computed(() => {
+  const d = props.clanData?.createdAt;
   if (!d) return '—';
   return new Date(d).toLocaleDateString();
 });
@@ -358,7 +358,7 @@ const loadMembers = async () => {
   membersLoading.value = true;
   try {
     const list = await userService.searchParticipants({
-      clubId: props.clubId,
+      clanId: props.clanId,
       sortBy: 'wins',
       size: 50,
       sortDirection: 'DESC',
@@ -387,8 +387,8 @@ const viewMember = (member) => {
 const canManage = (member) => {
   const myId = master.value?.userData?.id;
   if (member.id === myId) return false;
-  if (isOwner.value) return member.clubRole !== 'owner';
-  if (isDeputy.value) return member.clubRole === 'member';
+  if (isOwner.value) return member.clanRole !== 'owner';
+  if (isDeputy.value) return member.clanRole === 'member';
   return false;
 };
 
@@ -417,7 +417,7 @@ const doPromote = async () => {
   const member = selectedMember.value;
   closeActionMenu();
   try {
-    await store.dispatch('club/setMemberRole', { userId: member.id, role: 'deputy' });
+    await store.dispatch('clan/setMemberRole', { userId: member.id, role: 'deputy' });
     await loadMembers();
   } catch (e) {
     store.commit('master/setErrorMessage', { text: e.message, timeout: 3000, showButton: false });
@@ -428,7 +428,7 @@ const doDemote = async () => {
   const member = selectedMember.value;
   closeActionMenu();
   try {
-    await store.dispatch('club/setMemberRole', { userId: member.id, role: 'member' });
+    await store.dispatch('clan/setMemberRole', { userId: member.id, role: 'member' });
     await loadMembers();
   } catch (e) {
     store.commit('master/setErrorMessage', { text: e.message, timeout: 3000, showButton: false });
@@ -447,7 +447,7 @@ const doKick = () => {
     danger: true,
     onConfirm: async () => {
       try {
-        await store.dispatch('club/kickMember', { userId: member.id });
+        await store.dispatch('clan/kickMember', { userId: member.id });
         await loadMembers();
       } catch (e) {
         store.commit('master/setErrorMessage', { text: e.message, timeout: 3000, showButton: false });
@@ -468,7 +468,7 @@ const doTransfer = () => {
     danger: false,
     onConfirm: async () => {
       try {
-        await store.dispatch('club/transferOwnership', { newOwnerId: member.id });
+        await store.dispatch('clan/transferOwnership', { newOwnerId: member.id });
         await loadMembers();
       } catch (e) {
         store.commit('master/setErrorMessage', { text: e.message, timeout: 3000, showButton: false });
@@ -485,7 +485,7 @@ const openInviteModal = () => {
 
 const sendInvite = async (friend) => {
   try {
-    await clubService.inviteToClub(friend.id);
+    await clanService.inviteToClan(friend.id);
     dialogInvite.value = false;
     const name = friend.username || friend.name || friend.login;
     store.commit('master/setInfoMessage', {
@@ -504,9 +504,9 @@ const sendInvite = async (friend) => {
 
 // Leave / Disband
 const confirmLeave = async () => {
-  dialogLeaveClub.value = false;
-  await store.dispatch('club/leaveClub');
-  emit('club-left');
+  dialogLeaveClan.value = false;
+  await store.dispatch('clan/leaveClan');
+  emit('clan-left');
 };
 
 const confirmLeaveSettings = () => {
@@ -516,8 +516,8 @@ const confirmLeaveSettings = () => {
     confirmText: t.value.club.lblLeaveClub,
     danger: true,
     onConfirm: async () => {
-      await store.dispatch('club/leaveClub');
-      emit('club-left');
+      await store.dispatch('clan/leaveClan');
+      emit('clan-left');
     },
   });
 };
@@ -529,8 +529,8 @@ const confirmDisband = () => {
     confirmText: t.value.club.btnDisband || 'Disband',
     danger: true,
     onConfirm: async () => {
-      await store.dispatch('club/deleteClub');
-      emit('club-deleted');
+      await store.dispatch('clan/deleteClan');
+      emit('clan-deleted');
     },
   });
 };
@@ -549,8 +549,8 @@ onBeforeUnmount(() => {
   document.removeEventListener('keydown', onKeydown);
 });
 
-// Reload members when clubData changes (e.g. after edit)
-watch(() => props.clubData, () => {
+// Reload members when clanData changes (e.g. after edit)
+watch(() => props.clanData, () => {
   loadMembers();
 });
 </script>

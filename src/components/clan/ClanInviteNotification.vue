@@ -1,6 +1,6 @@
 <template>
   <Transition name="slide-down">
-    <div v-if="invite" class="club-invite-notification">
+    <div v-if="invite" class="clan-invite-notification">
       <div class="invite-content">
         <div class="invite-icon">
           <svg viewBox="0 0 32 32" width="28" height="28" fill="none" stroke="var(--hex-victory)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -30,7 +30,7 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import store from '@/core/state/store.js';
 import { t } from '@/locales/index.js';
-import * as clubService from '@/core/services/clubService.js';
+import * as clanService from '@/core/services/clanService.js';
 
 const INVITE_DURATION = 30;
 const invite = ref(null);
@@ -42,9 +42,10 @@ const pendingQueue = ref([]);
 function onInviteReceived(event) {
   const data = event.detail;
   // WS invite now includes inviteId from DB
+  // TODO #P1-rename-3-cleanup: remove clubId fallback after backend WS response rename
   invite.value = {
     inviteId: data.inviteId || null,
-    clubId: data.clubId,
+    clanId: data.clanId || data.clubId,
     clubName: data.clubName,
     inviterId: data.inviterId,
     inviterName: data.inviterName,
@@ -59,8 +60,9 @@ function onInviteAccepted(event) {
   invite.value = null;
 
   // If this is the acceptor (has clubName), update master state
+  // TODO #P1-rename-3-cleanup: remove clubId fallback after backend WS response rename
   if (data.clubName) {
-    store.commit('master/updateMaster', { clubId: data.clubId, clubRole: 'member' });
+    store.commit('master/updateMaster', { clanId: data.clanId || data.clubId, clanRole: 'member' });
     store.commit('master/setInfoMessage', {
       text: t.value.club.lblInviteAccepted,
       timeout: 3000,
@@ -97,19 +99,19 @@ function onInviteError(event) {
 }
 
 onMounted(() => {
-  window.addEventListener('club-invite-received', onInviteReceived);
-  window.addEventListener('club-invite-accepted', onInviteAccepted);
-  window.addEventListener('club-invite-declined', onInviteDeclined);
-  window.addEventListener('club-invite-error', onInviteError);
+  window.addEventListener('clan-invite-received', onInviteReceived);
+  window.addEventListener('clan-invite-accepted', onInviteAccepted);
+  window.addEventListener('clan-invite-declined', onInviteDeclined);
+  window.addEventListener('clan-invite-error', onInviteError);
   // Check for pending DB invites on login
   loadPendingInvites();
 });
 
 onUnmounted(() => {
-  window.removeEventListener('club-invite-received', onInviteReceived);
-  window.removeEventListener('club-invite-accepted', onInviteAccepted);
-  window.removeEventListener('club-invite-declined', onInviteDeclined);
-  window.removeEventListener('club-invite-error', onInviteError);
+  window.removeEventListener('clan-invite-received', onInviteReceived);
+  window.removeEventListener('clan-invite-accepted', onInviteAccepted);
+  window.removeEventListener('clan-invite-declined', onInviteDeclined);
+  window.removeEventListener('clan-invite-error', onInviteError);
   clearTimer();
 });
 
@@ -138,8 +140,8 @@ async function acceptInvite() {
   if (current.inviteId) {
     // DB-backed invite — use REST API
     try {
-      const result = await clubService.respondToInvite(current.inviteId, 'accept');
-      store.commit('master/updateMaster', { clubId: current.clubId, clubRole: 'member' });
+      const result = await clanService.respondToInvite(current.inviteId, 'accept');
+      store.commit('master/updateMaster', { clanId: current.clanId, clanRole: 'member' });
       store.commit('master/setInfoMessage', {
         text: t.value.club.lblInviteAccepted,
         timeout: 3000,
@@ -160,7 +162,7 @@ async function acceptInvite() {
     // Legacy WS-only invite
     store.dispatch('webSocket/sendMessage', {
       type: 'club_invite_accept',
-      clubId: current.clubId,
+      clanId: current.clanId,
       inviterId: current.inviterId,
     });
     // Don't hide — wait for club_invite_accepted from server
@@ -173,7 +175,7 @@ async function declineInvite() {
 
   if (current?.inviteId) {
     // DB-backed invite — use REST API
-    clubService.respondToInvite(current.inviteId, 'decline').catch(() => {});
+    clanService.respondToInvite(current.inviteId, 'decline').catch(() => {});
   } else if (current) {
     // Legacy WS-only invite
     store.dispatch('webSocket/sendMessage', {
@@ -196,24 +198,25 @@ function showNextPending() {
 }
 
 async function loadPendingInvites() {
-  // Only check if user is authenticated and not already in a club
+  // Only check if user is authenticated and not already in a clan
   const master = store.getters['master/getMaster'];
-  if (!master?.userData || master.userData.clubId) return;
+  if (!master?.userData || master.userData.clanId) return;
 
-  const invites = await clubService.getPendingInvites();
+  const invites = await clanService.getPendingInvites();
   if (invites.length > 0 && !invite.value) {
     // Show first invite immediately, queue the rest
     const [first, ...rest] = invites;
+    // TODO #P1-rename-3-cleanup: remove clubId fallback after backend WS response rename
     invite.value = {
       inviteId: first.id,
-      clubId: first.clubId,
+      clanId: first.clanId || first.clubId,
       clubName: first.clubName,
       inviterId: first.inviterId,
       inviterName: first.inviterName,
     };
     pendingQueue.value = rest.map(inv => ({
       inviteId: inv.id,
-      clubId: inv.clubId,
+      clanId: inv.clanId || inv.clubId,
       clubName: inv.clubName,
       inviterId: inv.inviterId,
       inviterName: inv.inviterName,
@@ -225,7 +228,7 @@ async function loadPendingInvites() {
 </script>
 
 <style scoped>
-.club-invite-notification {
+.clan-invite-notification {
   position: fixed;
   top: 0;
   left: 0;

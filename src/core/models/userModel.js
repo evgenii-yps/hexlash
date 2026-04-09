@@ -13,7 +13,7 @@ export default class UserModel {
      * @param {string} param0.createdAt - Дата создания пользователя.
      * @param {string} param0.updatedAt - Дата последнего обновления пользователя.
      * @param {number} param0.balance - Игровой баланс.
-     * @param {string} param0.clubId - Идентификатор клуба пользователя.
+     * @param {string} param0.clanId - Идентификатор клана пользователя.
      * @param {string} param0.walletAddress - Адрес кошелька пользователя.
      * @param {number} [param0.totalFights=0] - Общее количество боев пользователя.
      * @param {number} [param0.wins=0] - Количество побед пользователя.
@@ -40,9 +40,9 @@ export default class UserModel {
                     updatedAt,
                     balance, // игровой баланс
 
-                    // Клуб
-                    clubId,
-                    clubRole,
+                    // Клан
+                    clanId,
+                    clanRole,
 
                     // Кошелек
                     walletAddress,
@@ -78,9 +78,9 @@ export default class UserModel {
         // Игровой баланс
         this.balance = balance;
 
-        // Клуб
-        this.clubId = clubId;
-        this.clubRole = clubRole;
+        // Клан
+        this.clanId = clanId;
+        this.clanRole = clanRole;
 
         // Кошелек
         this.walletAddress = walletAddress;
@@ -107,6 +107,7 @@ export default class UserModel {
     static fromJSON(json) {
         try {
             // Извлекаем данные из JSON
+            // TODO #P1-rename-3-cleanup: remove clubId/clubRole fallback after frontend rename
             const {
                 id,
                 login,
@@ -116,8 +117,8 @@ export default class UserModel {
                 createdAt,
                 updatedAt,
                 balance = 0,
-                clubId,
-                clubRole,
+                clanId, clubId,
+                clanRole, clubRole,
                 walletAddress,
                 totalFights = 0,
                 wins = 0,
@@ -143,8 +144,8 @@ export default class UserModel {
                 createdAt,
                 updatedAt,
                 balance,
-                clubId,
-                clubRole,
+                clanId: clanId || clubId,
+                clanRole: clanRole || clubRole,
                 walletAddress,
                 totalFights,
                 wins,

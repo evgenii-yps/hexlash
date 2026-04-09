@@ -1,22 +1,22 @@
 <template>
-  <div class="my-club-tab">
+  <div class="my-clan-tab">
 
     <!-- Loading -->
     <div v-if="loading" class="tab-loader">
       <v-progress-circular size="40" indeterminate />
     </div>
 
-    <!-- State 1: Has club — full clan page -->
+    <!-- State 1: Has clan — full clan page -->
     <ClanPageContent
-        v-else-if="clubData"
-        :clubData="clubData"
-        :clubId="String(clubId)"
-        @club-left="onClubLeft"
-        @club-deleted="onClubDeleted"
+        v-else-if="clanData"
+        :clanData="clanData"
+        :clanId="String(clanId)"
+        @clan-left="onClanLeft"
+        @clan-deleted="onClanDeleted"
     />
 
-    <!-- State 2: No club — browse/search clans -->
-    <div v-else class="no-club">
+    <!-- State 2: No clan — browse/search clans -->
+    <div v-else class="no-clan">
 
       <!-- Pending Invites (top) -->
       <div v-if="pendingInvites.length" class="pending-invites">
@@ -25,8 +25,10 @@
           <div class="invite-banner-content">
             <span class="invite-icon">&#x2709;</span>
             <div class="invite-info">
-              <span class="invite-club-name">{{ invite.club?.name || invite.clubName }}</span>
-              <span class="invite-meta">{{ invite.club?.members || '?' }} {{ t.rating.members }} &middot; {{ formatExpiry(invite.expiresAt) }}</span>
+              <!-- NOTE: Backend GET /clan/invites returns flat fields (clanName, clanId), not a nested clan object.
+                   invite.clan?.name / invite.clan?.members are legacy placeholders; clanName fallback is the actual field. -->
+              <span class="invite-clan-name">{{ invite.clan?.name || invite.clanName }}</span>
+              <span class="invite-meta">{{ invite.clan?.members || '?' }} {{ t.rating.members }} &middot; {{ formatExpiry(invite.expiresAt) }}</span>
             </div>
           </div>
           <div class="invite-banner-actions">
@@ -41,7 +43,7 @@
         <HexButton variant="primary" size="sm" @click="dialogCreate = true">
           {{ t.profile.buttons.lblCreateClub }}
         </HexButton>
-        <CreateClub :dialogCreate="dialogCreate" @close="dialogCreate = false" />
+        <CreateClan :dialogCreate="dialogCreate" @close="dialogCreate = false" />
       </div>
 
       <div class="search-row">
@@ -64,22 +66,22 @@
       </div>
 
       <div v-else class="clan-list">
-        <div v-for="club in clanList" :key="club.id" class="clan-row" @click="viewClan(club.id)">
+        <div v-for="clan in clanList" :key="clan.id" class="clan-row" @click="viewClan(clan.id)">
           <div class="clan-avatar">
-            <span>{{ getInitial(club.name) }}</span>
+            <span>{{ getInitial(clan.name) }}</span>
           </div>
           <div class="clan-info">
             <div class="clan-name-row">
-              <span class="clan-name">{{ club.name }}</span>
-              <span class="clan-lvl">LVL {{ club.level || 1 }}</span>
+              <span class="clan-name">{{ clan.name }}</span>
+              <span class="clan-lvl">LVL {{ clan.level || 1 }}</span>
             </div>
-            <span class="clan-meta">{{ club.members }} {{ t.rating.members }} &middot; {{ club.wins || 0 }} W &middot; {{ getWinRate(club) }}% WR</span>
+            <span class="clan-meta">{{ clan.members }} {{ t.rating.members }} &middot; {{ clan.wins || 0 }} W &middot; {{ getWinRate(clan) }}% WR</span>
           </div>
           <HexButton
-              v-if="club.isPublic"
+              v-if="clan.isPublic"
               variant="primary"
               size="sm"
-              @click.stop="joinClan(club.id)"
+              @click.stop="joinClan(clan.id)"
           >{{ t.club.lblJoinClan }}</HexButton>
           <span v-else class="private-label">{{ t.club.lblPrivate }}</span>
         </div>
@@ -101,10 +103,10 @@ import {useRouter} from 'vue-router';
 import store from "@/core/state/store.js";
 import {t} from "@/locales/index.js";
 import {formatNumber} from "@/core/constants.js";
-import * as clubService from "@/core/services/clubService.js";
-import ClanPageContent from "@/components/fragments/club/ClanPageContent.vue";
+import * as clanService from "@/core/services/clanService.js";
+import ClanPageContent from "@/components/fragments/clan/ClanPageContent.vue";
 import HexButton from "@/components/ui/HexButton.vue";
-import CreateClub from "@/components/fragments/club/CreateClub.vue";
+import CreateClan from "@/components/fragments/clan/CreateClan.vue";
 
 const props = defineProps({
   active: Boolean,
@@ -115,10 +117,10 @@ const emit = defineEmits(['switchTab']);
 const router = useRouter();
 
 const master = computed(() => store.getters['master/getMaster']);
-const clubId = computed(() => master.value?.userData?.clubId);
+const clanId = computed(() => master.value?.userData?.clanId);
 
 const loading = ref(false);
-const clubData = ref(null);
+const clanData = ref(null);
 const loaded = ref(false);
 
 // No-clan state
@@ -135,9 +137,9 @@ let searchTimeout = null;
 
 const getInitial = (name) => name ? name.charAt(0).toUpperCase() : '?';
 
-const getWinRate = (club) => {
-  if (!club.battles || club.battles === 0) return 0;
-  return Math.round((club.wins || 0) / club.battles * 100);
+const getWinRate = (clan) => {
+  if (!clan.battles || clan.battles === 0) return 0;
+  return Math.round((clan.wins || 0) / clan.battles * 100);
 };
 
 const formatExpiry = (expiresAt) => {
@@ -150,7 +152,7 @@ const formatExpiry = (expiresAt) => {
 
 const acceptInvite = async (invite) => {
   try {
-    await clubService.respondToInvite(invite.id, true);
+    await clanService.respondToInvite(invite.id, true);
     pendingInvites.value = pendingInvites.value.filter(i => i.id !== invite.id);
     loaded.value = false;
     await loadData();
@@ -161,7 +163,7 @@ const acceptInvite = async (invite) => {
 
 const declineInvite = async (invite) => {
   try {
-    await clubService.respondToInvite(invite.id, false);
+    await clanService.respondToInvite(invite.id, false);
     pendingInvites.value = pendingInvites.value.filter(i => i.id !== invite.id);
   } catch (e) {
     store.commit('master/setErrorMessage', { text: e.message || 'Failed to decline invite', timeout: 3000, showButton: false });
@@ -171,14 +173,14 @@ const declineInvite = async (invite) => {
 const loadClans = async (append = false) => {
   searchLoading.value = !append;
   try {
-    const clubs = await clubService.searchClubs({
+    const clans = await clanService.searchClans({
       name: searchQuery.value,
       sortBy: 'members',
       size: PAGE_SIZE,
       page: currentPage.value,
       sortDirection: 'DESC',
     });
-    const result = clubs || [];
+    const result = clans || [];
     if (append) {
       clanList.value = [...clanList.value, ...result];
     } else {
@@ -211,21 +213,21 @@ const loadData = async () => {
   loading.value = true;
 
   try {
-    if (clubId.value) {
-      const club = await store.dispatch('club/getClubById', clubId.value);
-      if (club) {
-        clubData.value = club;
+    if (clanId.value) {
+      const clan = await store.dispatch('clan/getClanById', clanId.value);
+      if (clan) {
+        clanData.value = clan;
       }
     } else {
       // Load pending invites + clan list in parallel
       const [invites] = await Promise.all([
-        clubService.getPendingInvites().catch(() => []),
+        clanService.getPendingInvites().catch(() => []),
         loadClans(),
       ]);
       pendingInvites.value = invites || [];
     }
   } catch (e) {
-    console.error('MyClubTab load error:', e);
+    console.error('MyClanTab load error:', e);
   } finally {
     loading.value = false;
     loaded.value = true;
@@ -233,12 +235,12 @@ const loadData = async () => {
 };
 
 const viewClan = (id) => {
-  router.push({ path: `/club/${id}` });
+  router.push({ path: `/clan/${id}` });
 };
 
 const joinClan = async (id) => {
   try {
-    await store.dispatch('club/changeClub', id);
+    await store.dispatch('clan/changeClan', id);
     loaded.value = false;
     await loadData();
   } catch (e) {
@@ -247,14 +249,14 @@ const joinClan = async (id) => {
 };
 
 // ClanPageContent events
-const onClubLeft = () => {
-  clubData.value = null;
+const onClanLeft = () => {
+  clanData.value = null;
   loaded.value = false;
   loadData();
 };
 
-const onClubDeleted = () => {
-  clubData.value = null;
+const onClanDeleted = () => {
+  clanData.value = null;
   loaded.value = false;
   loadData();
 };
@@ -266,11 +268,11 @@ const onInviteAccepted = () => {
 };
 
 onMounted(() => {
-  window.addEventListener('club-invite-accepted', onInviteAccepted);
+  window.addEventListener('clan-invite-accepted', onInviteAccepted);
 });
 
 onUnmounted(() => {
-  window.removeEventListener('club-invite-accepted', onInviteAccepted);
+  window.removeEventListener('clan-invite-accepted', onInviteAccepted);
   clearTimeout(searchTimeout);
 });
 
@@ -283,7 +285,7 @@ watch(() => props.active, (val) => {
 </script>
 
 <style scoped>
-.my-club-tab {
+.my-clan-tab {
   padding: 10px;
 }
 
@@ -294,7 +296,7 @@ watch(() => props.active, (val) => {
 }
 
 /* ===== NO CLAN STATE ===== */
-.no-club {
+.no-clan {
   max-width: 500px;
   margin: 0 auto;
 }
@@ -338,7 +340,7 @@ watch(() => props.active, (val) => {
   min-width: 0;
 }
 
-.invite-club-name {
+.invite-clan-name {
   font-size: 14px;
   font-weight: bold;
   color: var(--hex-text-primary);

@@ -95,13 +95,13 @@ const actions = {
     async updateUser({commit}, user) {
         commit('setUser', user);
     },
-    async loadParticipantRatings({ commit, state }, { search, sortBy, page, clubId }) {
+    async loadParticipantRatings({ commit, state }, { search, sortBy, page, clanId }) {
         const newResult = await userService.searchParticipants({
             name: search,
             sortBy: sortBy,
             page: page,
             size: state.participantRatings.pageSize,
-            clubId: clubId,
+            clanId: clanId,
         });
 
         commit('setParticipantRatings', newResult);

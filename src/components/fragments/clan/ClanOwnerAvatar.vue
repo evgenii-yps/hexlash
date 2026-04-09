@@ -43,14 +43,14 @@ const fileInput = ref(null);
 const avatarUrl = ref(null);
 
 const props = defineProps({
-  clubData: {
+  clanData: {
     type: Object,
     required: true
   }
 });
 
-// Создаем локальную копию clubData для редактирования
-const localClubData = ref({...props.clubData});
+// Создаем локальную копию clanData для редактирования
+const localClanData = ref({...props.clanData});
 
 const changeAvatar = () => {
   fileInput.value.click();
@@ -69,7 +69,7 @@ const uploadAvatar = (event) => {
       progress.value = Math.round((event.loaded * 100) / event.total);
     };
 
-    store.dispatch('club/uploadClubAvatar', { formData, onUploadProgress })
+    store.dispatch('clan/uploadClanAvatar', { formData, onUploadProgress })
         .then((avatarFile) => {
           isLoading.value = false;
           setAvatarUrl(avatarFile); // Обновляем URL аватара
@@ -90,9 +90,9 @@ const setAvatarUrl = (avatarFileName) => {
   }
 };
 
-watch(localClubData, (localClubData) => {
-  if (localClubData) {
-    setAvatarUrl(localClubData.avatarUrl || null)
+watch(localClanData, (localClanData) => {
+  if (localClanData) {
+    setAvatarUrl(localClanData.avatarUrl || null)
   }
 }, {immediate: true});
 

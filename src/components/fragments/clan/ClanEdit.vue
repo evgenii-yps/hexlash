@@ -1,7 +1,7 @@
 <template>
 
   <VBtnDark
-      class="club-btn"
+      class="clan-btn"
       @click="dialogEdit = true">
     <template #prepend>
       <v-tooltip
@@ -92,24 +92,24 @@ import HexButton from "@/components/ui/HexButton.vue";
 import router from "@/router/index.js";
 
 const props = defineProps({
-  clubData: {
+  clanData: {
     type: Object,
     required: true,
   }
 });
 
-// Создаем локальную копию clubData для редактирования
-const localClubData = ref({...props.clubData});
+// Создаем локальную копию clanData для редактирования
+const localClanData = ref({...props.clanData});
 
-// В computed создаем прямую связь с полями localClubData
+// В computed создаем прямую связь с полями localClanData
 const title = computed({
-  get: () => localClubData.value.name,
-  set: value => localClubData.value.name = value,
+  get: () => localClanData.value.name,
+  set: value => localClanData.value.name = value,
 });
 
 const description = computed({
-  get: () => localClubData.value.description,
-  set: value => localClubData.value.description = value,
+  get: () => localClanData.value.description,
+  set: value => localClanData.value.description = value,
 });
 
 
@@ -155,9 +155,9 @@ const hide = () => {
 const confirmDissolve = async () => {
   dialogDissolve.value = false;
   try {
-    await store.dispatch('club/deleteClub');
+    await store.dispatch('clan/deleteClan');
     store.commit('master/setInfoMessage', {text: t.value.club.lblDissolved, timeout: 3000, showButton: false});
-    router.push('/ratings/clubs');
+    router.push('/ratings/clans');
   } catch (error) {
     store.commit('master/setErrorMessage', {text: error.message, timeout: 3000, showButton: false});
   }
@@ -172,7 +172,7 @@ const saveChanges = async () => {
 
   try {
 
-    await store.dispatch('club/updateClubData', localClubData.value);
+    await store.dispatch('clan/updateClanData', localClanData.value);
 
     hide();
 
@@ -187,7 +187,7 @@ const saveChanges = async () => {
 </script>
 
 <style scoped>
-.club-btn {
+.clan-btn {
   height: 50px !important;
   margin: 15px auto;
   width: 80%;
@@ -204,7 +204,7 @@ const saveChanges = async () => {
   display: block !important;
 }
 
-.club-btn span {
+.clan-btn span {
   font-size: 1.5em;
   margin-right: 5px
 }

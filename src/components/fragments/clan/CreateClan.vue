@@ -26,7 +26,7 @@
             <v-switch
               v-model="isPublic"
               :class="{ checked: isPublic }"
-              class="club-public-switch"
+              class="clan-public-switch"
               hide-details
               color="var(--hex-success)"
             />
@@ -129,7 +129,7 @@ const saveChanges = async () => {
   loading.value = true;
 
   try {
-    const club = await store.dispatch('club/createClub',
+    const clan = await store.dispatch('clan/createClan',
         {
           name: title.value,
           description: description.value,
@@ -137,8 +137,8 @@ const saveChanges = async () => {
         }
     );
     hide();
-    if(club){
-      await router.push({path: `/club/${club.id}`});
+    if(clan){
+      await router.push({path: `/clan/${clan.id}`});
     }
   } catch (error) {
     resultMessage.value = t.value.club.errorCreate;
@@ -156,7 +156,7 @@ const saveChanges = async () => {
   display: block !important;
 }
 
-.club-btn span {
+.clan-btn span {
   font-size: 1.5em;
   margin-right: 5px
 }
@@ -235,7 +235,7 @@ const saveChanges = async () => {
   font-size: 0.75rem;
 }
 
-.club-public-switch {
+.clan-public-switch {
   flex: 0;
 }
 
