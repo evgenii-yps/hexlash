@@ -28,6 +28,13 @@ Impact/Inter/JetBrains Mono, но 0 Vue компонентов их исполь
 system sans-serif (body). Решение: удалить мёртвые font-переменные
 или переназначить под реальные шрифты проекта.
 
+**A7.** Dead CSS в CardFightView (`.btn-roll`, `.btn-back`):
+два orphaned CSS класса с pink-стилями (`var(--hex-primary)`
+gradient/background, hover glow), не используются в template —
+остались от старой PvP UI до перехода на HexButton.
+Безопасно удалить в будущей сессии зачистки мёртвого кода.
+Найдено: ТЗ #18c-3.
+
 ## Категория B: TODO для ТЗ #18.5 (аудит библиотеки HexButton/HexCard)
 
 **B1.** HexButton `secondary` variant рендерит розовый outline вместо нейтрального.
@@ -86,6 +93,14 @@ Visual System alignment. Оба используют одинаковые сти
 
 **D7.** Punch3D фон vs underground фон TrainingView — проверить что
 3D-сцена и background не конкурируют визуально. 3D untouched в Road 1.
+
+**D8.** i18n gap snapshot (09.04.2026):
+en=732, ru=732, de=721 (-11), es/fr=712 (-20),
+pt/ar/hi/ja/ko/zh=711 (-21). Help pages exist only in en/ru.
+Not caused by Road 1 — existed before.
+Fix scope: during Phase 1 Club Mode rollout (mass new keys
+anyway, одной волной синхронизируем 11 локалей).
+Найдено: ТЗ #18c-1.
 
 ## Категория E: Функциональные баги (не визуальные — отдельный трек)
 
