@@ -1437,10 +1437,12 @@ Fighter retirement: fully trained fighter becomes a Legend, grants passive buffs
 - `GET /v1/user/retirement-status` — progress, requirements, legend info, buff preview
 - `POST /v1/user/retire` — execute retirement (irreversible)
 
-**Legend buff in combat:**
-- `agentCombatEngine.js` — legendDmgMult applied to base damage in resolveRound
-- `agentFightService.js` — legend xpBonus applied to earned XP in _executeFight + _executeAgentVsAgentFight
-- Archetype match: if agent's primaryModule === legend archetype → buff × 1.5
+**Legend buff in combat:** Each FightClub can have one Legend (retired fighter) with passive buff `{ xpBonus, dmgBonus, archetype }`. Buff applied separately per fighter:
+- **PvE** (`_executeFight`): player gets their club's buff as `legendBuff1`, bot gets `null`
+- **Agent vs Agent** (`_executeAgentVsAgentFight`): both agents get their own FightClub's buff via `Promise.all` → `legendBuff1` / `legendBuff2`
+- **Engine** (`simulateAgentFight`): accepts `options.legendBuff1` + `options.legendBuff2`, applies each only to its fighter's `legendDmgMult`
+- **Archetype synergy:** if fighter's primaryModule === legend archetype → dmgBonus and xpBonus × 1.5
+- **XP bonus:** applied in service layer (not engine) — multiplies earned XP by `(1 + xpBonus)` with archetype synergy
 
 **New component:** `RetirementPanel.vue` — progress/requirements display, buff preview, retire button, legend display
 
@@ -1594,7 +1596,7 @@ Feature flag `X402_ENABLED=false` на проде. On-chain verification = TODO 
 
 ### Известные баги
 
-52 пункта в `docs/phase1-parking-list.md`. Критичные: legend buff на обоих бойцах (#1), race condition scheduler vs train (#2), /user/progression доверяет фронтенду (#3). 11 из 52 фиксятся в Phase 1.
+52 пункта в `docs/phase1-parking-list.md`. Критичные: ~~legend buff на обоих бойцах (#1)~~ **FIXED**, race condition scheduler vs train (#2), /user/progression доверяет фронтенду (#3). 11 из 52 фиксятся в Phase 1.
 
 ---
 
@@ -1624,7 +1626,7 @@ Feature flag `X402_ENABLED=false` на проде. On-chain verification = TODO 
 | P1-rename-4 | i18n split club:→clan:+club: (120 Clan keys × 11 locales, call-sites) | ✅ DONE | После rename-3c |
 | P1-cleanup | Удаление мёртвого кода (fightStylePreview, nftMintService, HexlashAgents.sol+ABI, clubLevelService.addClubXp) | | После rename-4 |
 | P1-club-name | Add FightClub.name поле + миграция + default из User.login | | После cleanup |
-| P1-fix-legend | Фикс legend buff (раздельно f1/f2 в engine) | | До belt-2 |
+| P1-fix-legend | Фикс legend buff (раздельно f1/f2 в engine) | ✅ DONE | До belt-2 |
 | P1-belt-1 | Belt data model + beltService | | После club-name |
 | P1-belt-2 | Замена ELO в core gameplay | | После belt-1 |
 | P1-belt-3 | BeltBadge frontend + замена ELO display | | После belt-2 |

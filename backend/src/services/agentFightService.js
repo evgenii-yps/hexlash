@@ -79,7 +79,7 @@ async function _executeFight(agent, options = {}) {
 
     const bot = generatePveBot(agent.elo);
     const legendBuff = await getFightClubLegendBuff(agent.fightClubId);
-    const fightResult = simulateAgentFight(fighter1, bot, { mode: 'pve_training', legendBuff });
+    const fightResult = simulateAgentFight(fighter1, bot, { mode: 'pve_training', legendBuff1: legendBuff, legendBuff2: null });
 
     // Calculate XP (with legend XP buff)
     const rawXp = BASE_FIGHT_XP[fightResult.result] || BASE_FIGHT_XP.defeat;
@@ -251,9 +251,11 @@ async function _executeAgentVsAgentFight(agent1Id, agent2Id, options) {
       tactics: a2.tactics, progression: a2.progression,
     };
 
-    // Get legend buff (use a1's club, both agents may have different clubs)
-    const legendBuff1 = await getFightClubLegendBuff(a1.fightClubId);
-    const fightResult = simulateAgentFight(fighter1, fighter2, { mode, legendBuff: legendBuff1 });
+    const [legendBuff1, legendBuff2] = await Promise.all([
+      getFightClubLegendBuff(a1.fightClubId),
+      getFightClubLegendBuff(a2.fightClubId),
+    ]);
+    const fightResult = simulateAgentFight(fighter1, fighter2, { mode, legendBuff1, legendBuff2 });
 
     // ELO (only for ranked)
     let eloChangeA = 0, eloChangeB = 0, newEloA = a1.elo, newEloB = a2.elo;
@@ -265,15 +267,25 @@ async function _executeAgentVsAgentFight(agent1Id, agent2Id, options) {
       newEloB = elo.newRatingB;
     }
 
-    // XP for agent 1
+    // XP for agent 1 (with legend XP buff)
     const a1RawXp = BASE_FIGHT_XP[fightResult.result] || BASE_FIGHT_XP.defeat;
-    const a1Xp = Math.round(a1RawXp * xpMultiplier);
+    let a1XpMult = xpMultiplier;
+    if (legendBuff1?.xpBonus) {
+      const archMatch = a1.primaryModule === legendBuff1.archetype;
+      a1XpMult *= 1 + (archMatch ? legendBuff1.xpBonus * 1.5 : legendBuff1.xpBonus);
+    }
+    const a1Xp = Math.round(a1RawXp * a1XpMult);
     const a1BranchXp = distributeXpByBranch(fightResult.roundLog, a1Xp);
 
     // Invert result for agent 2
     const a2Result = fightResult.result === 'victory' ? 'defeat' : fightResult.result === 'defeat' ? 'victory' : 'draw';
     const a2RawXp = BASE_FIGHT_XP[a2Result] || BASE_FIGHT_XP.defeat;
-    const a2Xp = Math.round(a2RawXp * xpMultiplier);
+    let a2XpMult = xpMultiplier;
+    if (legendBuff2?.xpBonus) {
+      const archMatch = a2.primaryModule === legendBuff2.archetype;
+      a2XpMult *= 1 + (archMatch ? legendBuff2.xpBonus * 1.5 : legendBuff2.xpBonus);
+    }
+    const a2Xp = Math.round(a2RawXp * a2XpMult);
 
     // XP distribution for agent 2 (fighter2 moves)
     const a2BranchCounts = { speed: 0, power: 0, technique: 0 };

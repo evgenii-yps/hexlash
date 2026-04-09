@@ -230,19 +230,22 @@ function createFighterState(fighter) {
  * Simulate a full fight between two fighters.
  * @param {Object} fighter1 - { agent, tactics, progression }
  * @param {Object} fighter2 - { agent, tactics, progression }
- * @param {Object} options - { mode: 'pve_training'|'ranked'|'free_arena' }
+ * @param {Object} options - { mode, legendBuff1, legendBuff2 }
  * @returns {Object} fightResult
  */
 function simulateAgentFight(fighter1, fighter2, options = {}) {
   const mode = options.mode || 'pve_training';
-  const legendBuff = options.legendBuff || null; // { xpBonus, dmgBonus, archetype }
+  const legendBuff1 = options.legendBuff1 || null; // { xpBonus, dmgBonus, archetype }
+  const legendBuff2 = options.legendBuff2 || null;
   const f1 = createFighterState(fighter1);
   const f2 = createFighterState(fighter2);
 
-  // Apply legend damage multiplier
-  if (legendBuff && legendBuff.dmgBonus) {
-    f1.legendDmgMult = 1 + (f1.modules[0] === legendBuff.archetype ? legendBuff.dmgBonus * 1.5 : legendBuff.dmgBonus);
-    f2.legendDmgMult = 1 + (f2.modules[0] === legendBuff.archetype ? legendBuff.dmgBonus * 1.5 : legendBuff.dmgBonus);
+  // Apply legend damage multipliers (separate per fighter)
+  if (legendBuff1 && legendBuff1.dmgBonus) {
+    f1.legendDmgMult = 1 + (f1.modules[0] === legendBuff1.archetype ? legendBuff1.dmgBonus * 1.5 : legendBuff1.dmgBonus);
+  }
+  if (legendBuff2 && legendBuff2.dmgBonus) {
+    f2.legendDmgMult = 1 + (f2.modules[0] === legendBuff2.archetype ? legendBuff2.dmgBonus * 1.5 : legendBuff2.dmgBonus);
   }
 
   const roundLog = [];
