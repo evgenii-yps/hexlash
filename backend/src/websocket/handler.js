@@ -599,11 +599,13 @@ function handleChallengeDeclined(ws, userId, msg) {
 // ─── Clan Invites ────────────────────────────────────────────────────────────
 
 async function handleClanInviteAccept(ws, userId, msg) {
-  const { clubId, inviterId } = msg; // clubId from WS protocol (frontend sends this field name)
+  // TODO #P1-rename-3-cleanup: remove clubId fallback after frontend rename
+  const { clanId, clubId, inviterId } = msg;
+  const effectiveClanId = clanId || clubId;
 
   try {
     const clan = await prisma.clan.findUnique({
-      where: { id: clubId },
+      where: { id: effectiveClanId },
       include: { _count: { select: { members: true } } },
     });
 
@@ -625,7 +627,7 @@ async function handleClanInviteAccept(ws, userId, msg) {
 
     await prisma.user.update({
       where: { id: userId },
-      data: { clanId: clubId, clanRole: 'member' },
+      data: { clanId: effectiveClanId, clanRole: 'member' },
     });
 
     const acceptorName = user.name || user.login || 'Player';
@@ -633,7 +635,7 @@ async function handleClanInviteAccept(ws, userId, msg) {
     // Notify the person who accepted
     sendMessage(ws, {
       type: 'club_invite_accepted',
-      clubId,
+      clubId: effectiveClanId,
       clubName: clan.name,
     });
 
@@ -642,7 +644,7 @@ async function handleClanInviteAccept(ws, userId, msg) {
     if (inviterSocket) {
       sendMessage(inviterSocket, {
         type: 'club_invite_accepted',
-        clubId,
+        clubId: effectiveClanId,
         acceptedBy: userId,
         acceptedByName: acceptorName,
       });
