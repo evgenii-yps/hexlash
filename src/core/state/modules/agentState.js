@@ -4,8 +4,8 @@ const state = {
   agents: [],
   agentsLoading: false,
   agentError: null,
-  clubLevel: null,
-  clubLevelLoading: false,
+  fightClubLevel: null,
+  fightClubLevelLoading: false,
   // Detail view state
   currentAgent: null,
   currentAgentLoading: false,
@@ -22,14 +22,14 @@ const getters = {
   agentsList: (state) => [...state.agents].sort((a, b) => b.elo - a.elo),
   agentById: (state) => (id) => state.agents.find(a => a.id === id),
   canCreateAgent: (state) => {
-    if (!state.clubLevel) return false;
-    return state.clubLevel.currentAgents < state.clubLevel.maxAgents;
+    if (!state.fightClubLevel) return false;
+    return state.fightClubLevel.currentAgents < state.fightClubLevel.maxAgents;
   },
   activeAgents: (state) => state.agents.filter(a => a.autoFight),
   idleAgents: (state) => state.agents.filter(a => a.status === 'idle'),
   fightingAgents: (state) => state.agents.filter(a => a.status === 'fighting'),
   restingAgents: (state) => state.agents.filter(a => a.status === 'resting'),
-  clubProgress: (state) => state.clubLevel,
+  fightClubProgress: (state) => state.fightClubLevel,
 };
 
 const mutations = {
@@ -42,8 +42,8 @@ const mutations = {
     const idx = state.agents.findIndex(a => a.id === updated.id);
     if (idx !== -1) state.agents.splice(idx, 1, { ...state.agents[idx], ...updated });
   },
-  SET_CLUB_LEVEL(state, data) { state.clubLevel = data; },
-  SET_CLUB_LEVEL_LOADING(state, val) { state.clubLevelLoading = val; },
+  SET_FIGHT_CLUB_LEVEL(state, data) { state.fightClubLevel = data; },
+  SET_FIGHT_CLUB_LEVEL_LOADING(state, val) { state.fightClubLevelLoading = val; },
   // Detail
   SET_CURRENT_AGENT(state, agent) { state.currentAgent = agent; },
   SET_CURRENT_AGENT_LOADING(state, val) { state.currentAgentLoading = val; },
@@ -74,14 +74,14 @@ const actions = {
   },
 
   async fetchFightClubLevel({ commit }) {
-    commit('SET_CLUB_LEVEL_LOADING', true);
+    commit('SET_FIGHT_CLUB_LEVEL_LOADING', true);
     try {
       const res = await apiClient.get('/agent/fight-club', { authRequired: true });
-      commit('SET_CLUB_LEVEL', res.data || res);
+      commit('SET_FIGHT_CLUB_LEVEL', res.data || res);
     } catch (err) {
-      console.error('Failed to fetch club level:', err);
+      console.error('Failed to fetch fight club level:', err);
     } finally {
-      commit('SET_CLUB_LEVEL_LOADING', false);
+      commit('SET_FIGHT_CLUB_LEVEL_LOADING', false);
     }
   },
 

@@ -38,7 +38,7 @@ import AgentRoster from '@/components/club/AgentRoster.vue';
 
 const agents = computed(() => store.getters['agent/agentsList']);
 const loading = computed(() => store.state.agent.agentsLoading);
-const fightClubLevel = computed(() => store.state.agent.clubLevel);
+const fightClubLevel = computed(() => store.state.agent.fightClubLevel);
 
 let refreshInterval = null;
 
