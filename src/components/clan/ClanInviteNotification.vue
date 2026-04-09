@@ -10,7 +10,7 @@
         </div>
         <div class="invite-info">
           <span class="invite-title">{{ t.clan.lblInviteReceived }}</span>
-          <span class="invite-detail">{{ invite.inviterName }} → {{ invite.clubName }}</span>
+          <span class="invite-detail">{{ invite.inviterName }} → {{ invite.clanName }}</span>
         </div>
         <div class="invite-timer">{{ timer }}s</div>
       </div>
@@ -42,11 +42,10 @@ const pendingQueue = ref([]);
 function onInviteReceived(event) {
   const data = event.detail;
   // WS invite now includes inviteId from DB
-  // TODO #P1-rename-3-cleanup: remove clubId fallback after backend WS response rename
   invite.value = {
     inviteId: data.inviteId || null,
-    clanId: data.clanId || data.clubId,
-    clubName: data.clubName,
+    clanId: data.clanId,
+    clanName: data.clanName,
     inviterId: data.inviterId,
     inviterName: data.inviterName,
   };
@@ -59,10 +58,9 @@ function onInviteAccepted(event) {
   clearTimer();
   invite.value = null;
 
-  // If this is the acceptor (has clubName), update master state
-  // TODO #P1-rename-3-cleanup: remove clubId fallback after backend WS response rename
-  if (data.clubName) {
-    store.commit('master/updateMaster', { clanId: data.clanId || data.clubId, clanRole: 'member' });
+  // If this is the acceptor (has clanName), update master state
+  if (data.clanName) {
+    store.commit('master/updateMaster', { clanId: data.clanId, clanRole: 'member' });
     store.commit('master/setInfoMessage', {
       text: t.value.clan.lblInviteAccepted,
       timeout: 3000,
@@ -186,18 +184,17 @@ async function loadPendingInvites() {
   if (invites.length > 0 && !invite.value) {
     // Show first invite immediately, queue the rest
     const [first, ...rest] = invites;
-    // TODO #P1-rename-3-cleanup: remove clubId fallback after backend WS response rename
     invite.value = {
       inviteId: first.id,
-      clanId: first.clanId || first.clubId,
-      clubName: first.clubName,
+      clanId: first.clanId,
+      clanName: first.clanName,
       inviterId: first.inviterId,
       inviterName: first.inviterName,
     };
     pendingQueue.value = rest.map(inv => ({
       inviteId: inv.id,
-      clanId: inv.clanId || inv.clubId,
-      clubName: inv.clubName,
+      clanId: inv.clanId,
+      clanName: inv.clanName,
       inviterId: inv.inviterId,
       inviterName: inv.inviterName,
     }));
