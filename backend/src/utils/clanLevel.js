@@ -20,31 +20,31 @@ function getClanLevelInfo(level, xp) {
 
 /**
  * Award XP to a clan after a fight and handle level-ups.
- * @param {string} clubId - The club ID
+ * @param {string} clanId - The clan ID
  * @param {'win'|'draw'|'lose'} result - Fight result for the member
  */
-async function awardClanXP(clubId, result) {
+async function awardClanXP(clanId, result) {
   const xpReward = CLAN_XP_REWARDS[result] || 0;
   if (!xpReward) return;
 
-  const club = await prisma.club.update({
-    where: { id: clubId },
+  const clan = await prisma.clan.update({
+    where: { id: clanId },
     data: { xp: { increment: xpReward } },
   });
 
   // Check for level up
-  const nextLevel = club.level + 1;
+  const nextLevel = clan.level + 1;
   const nextConfig = CLAN_LEVEL_CONFIG[nextLevel];
-  if (nextConfig && club.xp >= nextConfig.xpRequired) {
-    await prisma.club.update({
-      where: { id: clubId },
+  if (nextConfig && clan.xp >= nextConfig.xpRequired) {
+    await prisma.clan.update({
+      where: { id: clanId },
       data: {
         level: nextLevel,
         maxMembers: nextConfig.maxMembers,
         maxAgents: nextConfig.maxAgents,
       },
     });
-    createClanEvent(clubId, 'level_up', null, null, { level: nextLevel });
+    createClanEvent(clanId, 'level_up', null, null, { level: nextLevel });
   }
 }
 

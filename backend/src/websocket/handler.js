@@ -179,11 +179,11 @@ async function handleMessage(ws, userId, msg) {
       break;
 
     case 'club_invite_accept':
-      handleClubInviteAccept(ws, userId, msg);
+      handleClanInviteAccept(ws, userId, msg);
       break;
 
     case 'club_invite_decline':
-      handleClubInviteDecline(ws, userId, msg);
+      handleClanInviteDecline(ws, userId, msg);
       break;
 
     default:
@@ -304,10 +304,10 @@ async function handlePunchBatch(ws, userId, msg) {
   });
 
   // Credit 5% of taps to clan treasury
-  if (user.clubId && count >= 20) {
+  if (user.clanId && count >= 20) {
     const clanShare = Math.max(1, Math.floor(count * CLAN_TAP_SHARE));
-    prisma.club.update({
-      where: { id: user.clubId },
+    prisma.clan.update({
+      where: { id: user.clanId },
       data: { balance: { increment: clanShare } },
     }).catch(e => console.error('Clan balance error:', e.message));
   }
@@ -596,36 +596,36 @@ function handleChallengeDeclined(ws, userId, msg) {
   }
 }
 
-// ─── Club Invites ────────────────────────────────────────────────────────────
+// ─── Clan Invites ────────────────────────────────────────────────────────────
 
-async function handleClubInviteAccept(ws, userId, msg) {
-  const { clubId, inviterId } = msg;
+async function handleClanInviteAccept(ws, userId, msg) {
+  const { clubId, inviterId } = msg; // clubId from WS protocol (frontend sends this field name)
 
   try {
-    const club = await prisma.club.findUnique({
+    const clan = await prisma.clan.findUnique({
       where: { id: clubId },
       include: { _count: { select: { members: true } } },
     });
 
-    if (!club) {
-      sendMessage(ws, { type: 'club_invite_error', message: 'Club not found' });
+    if (!clan) {
+      sendMessage(ws, { type: 'club_invite_error', message: 'Clan not found' });
       return;
     }
 
-    if (club._count.members >= club.maxMembers) {
-      sendMessage(ws, { type: 'club_invite_error', message: 'Club is full' });
+    if (clan._count.members >= clan.maxMembers) {
+      sendMessage(ws, { type: 'club_invite_error', message: 'Clan is full' });
       return;
     }
 
     const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (user.clubId) {
-      sendMessage(ws, { type: 'club_invite_error', message: 'Already in a club' });
+    if (user.clanId) {
+      sendMessage(ws, { type: 'club_invite_error', message: 'Already in a clan' });
       return;
     }
 
     await prisma.user.update({
       where: { id: userId },
-      data: { clubId, clubRole: 'member' },
+      data: { clanId: clubId, clanRole: 'member' },
     });
 
     const acceptorName = user.name || user.login || 'Player';
@@ -634,7 +634,7 @@ async function handleClubInviteAccept(ws, userId, msg) {
     sendMessage(ws, {
       type: 'club_invite_accepted',
       clubId,
-      clubName: club.name,
+      clubName: clan.name,
     });
 
     // Notify the inviter
@@ -648,12 +648,12 @@ async function handleClubInviteAccept(ws, userId, msg) {
       });
     }
   } catch (err) {
-    console.error('[CLUB INVITE] Accept error:', err);
-    sendMessage(ws, { type: 'club_invite_error', message: 'Failed to join club' });
+    console.error('[CLAN INVITE] Accept error:', err);
+    sendMessage(ws, { type: 'club_invite_error', message: 'Failed to join clan' });
   }
 }
 
-function handleClubInviteDecline(ws, userId, msg) {
+function handleClanInviteDecline(ws, userId, msg) {
   const { inviterId } = msg;
   const inviterSocket = clients.get(inviterId);
 
