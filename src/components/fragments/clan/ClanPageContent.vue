@@ -57,11 +57,11 @@
     <div v-if="activeTab === 'members'" class="tab-content">
       <div v-if="isOwner || isDeputy" class="invite-row">
         <HexButton variant="primary" size="sm" @click="openInviteModal">
-          {{ t.club.lblInviteFriend }}
+          {{ t.clan.lblInviteFriend }}
         </HexButton>
       </div>
 
-      <div class="leaderboard-label">{{ t.club.lblLeaderboard || 'CLAN LEADERBOARD' }}</div>
+      <div class="leaderboard-label">{{ t.clan.lblLeaderboard || 'CLAN LEADERBOARD' }}</div>
 
       <div v-if="membersLoading" class="members-loader">
         <v-progress-circular size="24" indeterminate />
@@ -81,12 +81,12 @@
             <div class="member-name-row">
               <span class="member-name">{{ member.name || member.login }}</span>
               <span v-if="member.clanRole === 'owner'" class="role-badge owner-badge">OWNER</span>
-              <span v-else-if="member.clanRole === 'deputy'" class="role-badge deputy-badge">{{ t.club.lblDeputy }}</span>
+              <span v-else-if="member.clanRole === 'deputy'" class="role-badge deputy-badge">{{ t.clan.lblDeputy }}</span>
               <span v-if="member.isOnline" class="online-dot"></span>
             </div>
             <div class="member-stats-text">
               <span class="member-wins">{{ formatNumber(member.wins || 0) }} W</span>
-              <span class="member-fights">{{ formatNumber(member.battles || member.totalFights || 0) }} {{ t.club.lblFights || 'fights' }}</span>
+              <span class="member-fights">{{ formatNumber(member.battles || member.totalFights || 0) }} {{ t.clan.lblFights || 'fights' }}</span>
             </div>
           </div>
           <button
@@ -114,20 +114,20 @@
                 v-if="selectedMember.clanRole === 'deputy'"
                 class="action-menu-item"
                 @click="doTransfer"
-            >{{ t.club.lblTransferOwnership }}</button>
+            >{{ t.clan.lblTransferOwnership }}</button>
             <button
                 v-if="selectedMember.clanRole === 'deputy'"
                 class="action-menu-item"
                 @click="doDemote"
-            >{{ t.club.lblDemoteMember }}</button>
+            >{{ t.clan.lblDemoteMember }}</button>
             <button
                 v-if="selectedMember.clanRole === 'member'"
                 class="action-menu-item"
                 @click="doPromote"
-            >{{ t.club.lblPromoteDeputy }}</button>
+            >{{ t.clan.lblPromoteDeputy }}</button>
           </template>
           <button class="action-menu-item action-danger" @click="doKick">
-            {{ t.club.lblKick }}
+            {{ t.clan.lblKick }}
           </button>
         </div>
       </Teleport>
@@ -135,7 +135,7 @@
       <!-- Leave for members (non-owner) -->
       <div v-if="!isOwner" class="leave-row">
         <HexButton variant="danger" size="sm" @click="dialogLeaveClan = true">
-          {{ t.club.lblLeaveClub }}
+          {{ t.clan.lblLeaveClan }}
         </HexButton>
       </div>
     </div>
@@ -148,52 +148,52 @@
     <!-- Settings Tab -->
     <div v-if="activeTab === 'settings'" class="tab-content settings-tab">
       <div class="settings-section">
-        <div class="settings-title">{{ t.club.lblClanInfo || 'CLAN INFO' }}</div>
+        <div class="settings-title">{{ t.clan.lblClanInfo || 'CLAN INFO' }}</div>
         <div class="settings-row">
-          <span class="settings-label">{{ t.club.lblClubName || 'Name' }}</span>
+          <span class="settings-label">{{ t.clan.lblClanName || 'Name' }}</span>
           <span class="settings-value">{{ clanData.name }}</span>
         </div>
         <div class="settings-row">
-          <span class="settings-label">{{ t.club.lblClubDescription || 'Description' }}</span>
+          <span class="settings-label">{{ t.clan.lblClanDescription || 'Description' }}</span>
           <span class="settings-value settings-value-desc">{{ clanData.description || '&mdash;' }}</span>
         </div>
         <div class="settings-row">
-          <span class="settings-label">{{ t.club.lblType || 'Type' }}</span>
-          <span class="settings-value">{{ clanData.isPublic ? (t.club.lblPublic || 'Public') : (t.club.lblPrivate || 'Private') }}</span>
+          <span class="settings-label">{{ t.clan.lblType || 'Type' }}</span>
+          <span class="settings-value">{{ clanData.isPublic ? (t.clan.lblPublic || 'Public') : (t.clan.lblPrivate || 'Private') }}</span>
         </div>
         <div class="settings-row">
-          <span class="settings-label">{{ t.club.lblCreated || 'Created' }}</span>
+          <span class="settings-label">{{ t.clan.lblCreated || 'Created' }}</span>
           <span class="settings-value">{{ clanCreatedDate }}</span>
         </div>
       </div>
 
       <div class="settings-section">
-        <div class="settings-title">{{ t.club.lblLevelBonuses || 'LEVEL BONUSES' }}</div>
+        <div class="settings-title">{{ t.clan.lblLevelBonuses || 'LEVEL BONUSES' }}</div>
         <div class="settings-row">
-          <span class="settings-label">{{ t.club.lblMaxMembers || 'Max members' }}</span>
+          <span class="settings-label">{{ t.clan.lblMaxMembers || 'Max members' }}</span>
           <span class="settings-value">
             <span class="value-green">{{ levelProgress.maxMembers }}</span>
           </span>
         </div>
         <div class="settings-row">
-          <span class="settings-label">{{ t.club.lblXpBonus || 'XP bonus' }}</span>
+          <span class="settings-label">{{ t.clan.lblXpBonus || 'XP bonus' }}</span>
           <span class="settings-value value-green">+{{ levelProgress.xpBonus }}%</span>
         </div>
         <div class="settings-row">
-          <span class="settings-label">{{ t.club.lblNextUnlock || 'Next unlock' }}</span>
+          <span class="settings-label">{{ t.clan.lblNextUnlock || 'Next unlock' }}</span>
           <span class="settings-value value-xp">{{ nextUnlockText }}</span>
         </div>
       </div>
 
       <div class="settings-section">
-        <div class="settings-title">{{ t.club.lblTreasury || 'TREASURY' }}</div>
+        <div class="settings-title">{{ t.clan.lblTreasury || 'TREASURY' }}</div>
         <div class="settings-row">
           <span class="settings-label">Balance</span>
           <span class="settings-value value-balance">{{ formatNumber(clanBalance) }}</span>
         </div>
         <div class="settings-row">
-          <span class="settings-label">{{ t.club.lblIncome || 'Income' }}</span>
-          <span class="settings-value value-secondary">{{ t.club.lblIncome || '5% of member taps' }}</span>
+          <span class="settings-label">{{ t.clan.lblIncome || 'Income' }}</span>
+          <span class="settings-value value-secondary">{{ t.clan.lblIncome || '5% of member taps' }}</span>
         </div>
       </div>
 
@@ -201,12 +201,12 @@
         <div v-if="isOwner" class="settings-btn-group">
           <ClanEdit :clanData="clanData"/>
           <HexButton variant="danger" size="sm" @click="confirmDisband">
-            {{ t.club.btnDisband || 'Disband Clan' }}
+            {{ t.clan.btnDisband || 'Disband Clan' }}
           </HexButton>
         </div>
         <div v-else class="settings-btn-group">
           <HexButton variant="danger" size="sm" @click="confirmLeaveSettings">
-            {{ t.club.lblLeaveClub }}
+            {{ t.clan.lblLeaveClan }}
           </HexButton>
         </div>
       </div>
@@ -215,22 +215,22 @@
     <!-- Modals -->
     <VModal v-model="dialogLeaveClan" max-width="500">
       <VCard>
-        <v-card-title class="headline">{{ t.club.lblLeaveClub }}</v-card-title>
-        <v-card-text>{{ t.club.lblLeaveClubDescription }}</v-card-text>
+        <v-card-title class="headline">{{ t.clan.lblLeaveClan }}</v-card-title>
+        <v-card-text>{{ t.clan.lblLeaveClanDescription }}</v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn @click="dialogLeaveClan = false" class="cancel-btn">{{ t.modal.btnCancel }}</v-btn>
-          <v-btn @click="confirmLeave" class="confirm-btn">{{ t.club.lblConfirm }}</v-btn>
+          <v-btn @click="confirmLeave" class="confirm-btn">{{ t.clan.lblConfirm }}</v-btn>
         </v-card-actions>
       </VCard>
     </VModal>
 
     <VModal v-model="dialogInvite" max-width="400">
       <VCard>
-        <v-card-title class="headline action-title">{{ t.club.lblInviteFriend }}</v-card-title>
+        <v-card-title class="headline action-title">{{ t.clan.lblInviteFriend }}</v-card-title>
         <v-card-text>
           <div v-if="invitableFriends.length === 0" class="no-friends-text">
-            {{ t.club.lblPlayerHasClub }}
+            {{ t.clan.lblPlayerHasClan }}
           </div>
           <div v-else class="invite-list">
             <div
@@ -320,7 +320,7 @@ const clanXPPercent = computed(() => levelProgress.value.percent);
 
 const nextUnlockText = computed(() => {
   const lp = levelProgress.value;
-  if (lp.isMaxLevel) return t.value.club.lblAllBonuses || 'All bonuses unlocked';
+  if (lp.isMaxLevel) return t.value.clan.lblAllBonuses || 'All bonuses unlocked';
   const nextConfig = CLAN_LEVEL_CONFIG[lp.level + 1];
   const currentConfig = CLAN_LEVEL_CONFIG[lp.level];
   const parts = [];
@@ -335,9 +335,9 @@ const nextUnlockText = computed(() => {
 });
 
 const tabs = computed(() => [
-  { id: 'members', label: t.value.club.tabMembers || 'Members' },
-  { id: 'activity', label: t.value.club.tabActivity || 'Activity' },
-  { id: 'settings', label: t.value.club.tabSettings || 'Settings' },
+  { id: 'members', label: t.value.clan.tabMembers || 'Members' },
+  { id: 'activity', label: t.value.clan.tabActivity || 'Activity' },
+  { id: 'settings', label: t.value.clan.tabSettings || 'Settings' },
 ]);
 
 const friends = computed(() => store.getters['friends/getFriends'] || []);
@@ -439,11 +439,11 @@ const doKick = () => {
   const member = selectedMember.value;
   closeActionMenu();
   const name = member.name || member.login;
-  const desc = (t.value.club.lblKickDesc || '').replace('{name}', name);
+  const desc = (t.value.clan.lblKickDesc || '').replace('{name}', name);
   openConfirmModal({
-    title: t.value.club.lblKickTitle,
+    title: t.value.clan.lblKickTitle,
     description: desc,
-    confirmText: t.value.club.lblKick,
+    confirmText: t.value.clan.lblKick,
     danger: true,
     onConfirm: async () => {
       try {
@@ -460,11 +460,11 @@ const doTransfer = () => {
   const member = selectedMember.value;
   closeActionMenu();
   const name = member.name || member.login;
-  const desc = (t.value.club.lblTransferDesc || '').replace('{name}', name);
+  const desc = (t.value.clan.lblTransferDesc || '').replace('{name}', name);
   openConfirmModal({
-    title: t.value.club.lblTransferTitle,
+    title: t.value.clan.lblTransferTitle,
     description: desc,
-    confirmText: t.value.club.lblTransferOwnership,
+    confirmText: t.value.clan.lblTransferOwnership,
     danger: false,
     onConfirm: async () => {
       try {
@@ -489,7 +489,7 @@ const sendInvite = async (friend) => {
     dialogInvite.value = false;
     const name = friend.username || friend.name || friend.login;
     store.commit('master/setInfoMessage', {
-      text: `${t.value.club.lblInviteSent} ${name}`,
+      text: `${t.value.clan.lblInviteSent} ${name}`,
       timeout: 3000,
       showButton: false,
     });
@@ -511,9 +511,9 @@ const confirmLeave = async () => {
 
 const confirmLeaveSettings = () => {
   openConfirmModal({
-    title: t.value.club.lblLeaveTitle,
-    description: t.value.club.lblLeaveDesc,
-    confirmText: t.value.club.lblLeaveClub,
+    title: t.value.clan.lblLeaveTitle,
+    description: t.value.clan.lblLeaveDesc,
+    confirmText: t.value.clan.lblLeaveClan,
     danger: true,
     onConfirm: async () => {
       await store.dispatch('clan/leaveClan');
@@ -524,9 +524,9 @@ const confirmLeaveSettings = () => {
 
 const confirmDisband = () => {
   openConfirmModal({
-    title: t.value.club.lblDisbandTitle,
-    description: t.value.club.lblDisbandDesc,
-    confirmText: t.value.club.btnDisband || 'Disband',
+    title: t.value.clan.lblDisbandTitle,
+    description: t.value.clan.lblDisbandDesc,
+    confirmText: t.value.clan.btnDisband || 'Disband',
     danger: true,
     onConfirm: async () => {
       await store.dispatch('clan/deleteClan');

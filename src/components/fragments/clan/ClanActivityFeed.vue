@@ -1,11 +1,11 @@
 <template>
   <div class="activity-feed">
     <div v-if="!loaded && loading" class="no-activity">
-      {{ t.club.lblLoading || 'Loading...' }}
+      {{ t.clan.lblLoading || 'Loading...' }}
     </div>
 
     <div v-else-if="groupedEvents.length === 0" class="no-activity">
-      {{ t.club.lblNoActivity || 'No activity yet' }}
+      {{ t.clan.lblNoActivity || 'No activity yet' }}
     </div>
 
     <template v-else>
@@ -20,7 +20,7 @@
 
       <div v-if="hasMore" class="load-more">
         <button class="load-more-btn" :disabled="loading" @click="loadMore">
-          {{ loading ? (t.club.lblLoading || 'Loading...') : (t.club.lblLoadMore || 'Load more') }}
+          {{ loading ? (t.clan.lblLoading || 'Loading...') : (t.clan.lblLoadMore || 'Load more') }}
         </button>
       </div>
     </template>
@@ -68,21 +68,21 @@ function renderEventHtml(event) {
 
   switch (event.type) {
     case 'fight_win':
-      return `<b>${esc(actorName)}</b> ${t.value.club.lblWonPvP || 'won'} ${mode} vs <b>${esc(data.opponentName || '?')}</b> — ${data.playerHp ?? '?'} to ${data.opponentHp ?? '?'} HP`;
+      return `<b>${esc(actorName)}</b> ${t.value.clan.lblWonPvP || 'won'} ${mode} vs <b>${esc(data.opponentName || '?')}</b> — ${data.playerHp ?? '?'} to ${data.opponentHp ?? '?'} HP`;
     case 'fight_lose':
-      return `<b>${esc(actorName)}</b> ${t.value.club.lblLostPvP || 'lost'} ${mode} — ${data.playerHp ?? '?'} to ${data.opponentHp ?? '?'} HP`;
+      return `<b>${esc(actorName)}</b> ${t.value.clan.lblLostPvP || 'lost'} ${mode} — ${data.playerHp ?? '?'} to ${data.opponentHp ?? '?'} HP`;
     case 'fight_draw':
-      return `<b>${esc(actorName)}</b> ${t.value.club.lblDrewMatch || 'drew'} ${mode}`;
+      return `<b>${esc(actorName)}</b> ${t.value.clan.lblDrewMatch || 'drew'} ${mode}`;
     case 'member_join':
-      return `<b>${esc(actorName)}</b> ${t.value.club.lblJoinedClan || 'joined the clan'}`;
+      return `<b>${esc(actorName)}</b> ${t.value.clan.lblJoinedClan || 'joined the clan'}`;
     case 'member_leave':
-      return `<b>${esc(actorName)}</b> ${t.value.club.lblLeftClan || 'left the clan'}`;
+      return `<b>${esc(actorName)}</b> ${t.value.clan.lblLeftClan || 'left the clan'}`;
     case 'member_kick':
-      return `<b>${esc(targetName)}</b> ${t.value.club.lblWasKickedBy || 'was kicked by'} <b>${esc(actorName)}</b>`;
+      return `<b>${esc(targetName)}</b> ${t.value.clan.lblWasKickedBy || 'was kicked by'} <b>${esc(actorName)}</b>`;
     case 'role_change':
-      return `<b>${esc(actorName)}</b> ${t.value.club.lblPromotedTo || 'promoted'} <b>${esc(targetName)}</b> ${t.value.club.lblToRole || 'to'} ${data.role || '?'}`;
+      return `<b>${esc(actorName)}</b> ${t.value.clan.lblPromotedTo || 'promoted'} <b>${esc(targetName)}</b> ${t.value.clan.lblToRole || 'to'} ${data.role || '?'}`;
     case 'level_up':
-      return `${t.value.club.lblClanReachedLevel || 'Clan reached Level'} <b>${data.level || '?'}</b>!`;
+      return `${t.value.clan.lblClanReachedLevel || 'Clan reached Level'} <b>${data.level || '?'}</b>!`;
     default:
       return event.type;
   }
@@ -111,8 +111,8 @@ const groupedEvents = computed(() => {
     if (key !== currentKey) {
       currentKey = key;
       let label;
-      if (key === todayStr) label = t.value.club.lblToday || 'Today';
-      else if (key === yesterdayStr) label = t.value.club.lblYesterday || 'Yesterday';
+      if (key === todayStr) label = t.value.clan.lblToday || 'Today';
+      else if (key === yesterdayStr) label = t.value.clan.lblYesterday || 'Yesterday';
       else label = date.toLocaleDateString();
       currentGroup = { label, events: [] };
       groups.push(currentGroup);

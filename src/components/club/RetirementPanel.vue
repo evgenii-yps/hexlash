@@ -43,7 +43,7 @@
           {{ data.requirements?.minLevel5 ? '✅' : '❌' }} {{ data.progress?.movesAtLevel5 }} moves at Lv5 (need 3)
         </div>
         <div :class="['req', { done: data.requirements?.hasClub }]">
-          {{ data.requirements?.hasClub ? '✅' : '❌' }} {{ t.club.lblHasClub || 'In a clan' }}
+          {{ data.requirements?.hasClub ? '✅' : '❌' }} {{ t.clan.lblHasClan || 'In a clan' }}
         </div>
         <div :class="['req', { done: data.requirements?.noExistingLegend }]">
           {{ data.requirements?.noExistingLegend ? '✅' : '❌' }} {{ t.club.lblNoLegend || 'No existing legend' }}

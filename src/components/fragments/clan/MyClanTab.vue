@@ -20,7 +20,7 @@
 
       <!-- Pending Invites (top) -->
       <div v-if="pendingInvites.length" class="pending-invites">
-        <div class="section-label">{{ t.club.lblPendingInvites || 'PENDING INVITES' }}</div>
+        <div class="section-label">{{ t.clan.lblPendingInvites || 'PENDING INVITES' }}</div>
         <div v-for="invite in pendingInvites" :key="invite.id" class="invite-banner">
           <div class="invite-banner-content">
             <span class="invite-icon">&#x2709;</span>
@@ -41,7 +41,7 @@
       <!-- Create button + Search -->
       <div class="browse-header">
         <HexButton variant="primary" size="sm" @click="dialogCreate = true">
-          {{ t.profile.buttons.lblCreateClub }}
+          {{ t.profile.buttons.lblCreateClan }}
         </HexButton>
         <CreateClan :dialogCreate="dialogCreate" @close="dialogCreate = false" />
       </div>
@@ -51,7 +51,7 @@
             v-model="searchQuery"
             type="text"
             class="search-input"
-            :placeholder="t.rating.clubPlaceholder || 'Search clans...'"
+            :placeholder="t.rating.clanPlaceholder || 'Search clans...'"
             @input="debouncedSearch"
         />
       </div>
@@ -82,8 +82,8 @@
               variant="primary"
               size="sm"
               @click.stop="joinClan(clan.id)"
-          >{{ t.club.lblJoinClan }}</HexButton>
-          <span v-else class="private-label">{{ t.club.lblPrivate }}</span>
+          >{{ t.clan.lblJoinClan }}</HexButton>
+          <span v-else class="private-label">{{ t.clan.lblPrivate }}</span>
         </div>
       </div>
 
