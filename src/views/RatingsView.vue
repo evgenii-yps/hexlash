@@ -5,11 +5,11 @@
         <div class="rating-tabs">
           <VBtnDark :class="{'active-tab': activeTab === Tabs.MY_CLAN}"
                     @click="setActiveTab(Tabs.MY_CLAN)">
-            {{ t.rating.lblMyClub }}
+            {{ t.rating.lblMyClan }}
           </VBtnDark>
           <VBtnDark :class="{'active-tab': activeTab === Tabs.CLANS}"
                     @click="setActiveTab(Tabs.CLANS)">
-            {{ t.rating.lblClubs }}
+            {{ t.rating.lblClans }}
           </VBtnDark>
           <VBtnDark :class="{'active-tab': activeTab === Tabs.FIGHTERS}"
                     @click="setActiveTab(Tabs.FIGHTERS)">
@@ -30,7 +30,7 @@
                 inputBorderColor="var(--hex-border-default)"
                 inputTextColor="var(--hex-text-primary)"
                 padding="0.8rem"
-                :placeholder="t.rating.clubPlaceholder"
+                :placeholder="t.rating.clanPlaceholder"
                 class="search-input"
                 @input="handleClanSearchInput"
             />
@@ -57,7 +57,7 @@
 
           <div v-if="canCreateClan" class="create-clan-row">
             <HexButton variant="primary" size="sm" @click="dialogCreateClan = true">
-              {{ t.profile.buttons.lblCreateClub }}
+              {{ t.profile.buttons.lblCreateClan }}
             </HexButton>
             <CreateClan :dialogCreate="dialogCreateClan" @close="dialogCreateClan = false" />
           </div>
@@ -65,7 +65,7 @@
           <div class="table-body">
             <div class="table-header-row">
               <span class="column">№</span>
-              <span class="column-name">{{ t.rating.clubName }}</span>
+              <span class="column-name">{{ t.rating.clanName }}</span>
               <span class="column">
                 <img :class="{'active-sort-icon': sortClanBy === 'members'}" src="@/assets/images/icon_members.svg"
                      alt="sort icon"/>
@@ -157,7 +157,7 @@
           <div class="table-body">
             <div class="table-header-row">
               <span class="column-name">{{ t.rating.participantName }}</span>
-<!--              <span class="column-name">{{ t.rating.club }}</span>-->
+<!--              <span class="column-name">{{ t.rating.clan }}</span>-->
 
               <span class="column">
                 <img class="icon" :class="{'active-sort-icon': sortParticipantBy === 'fc'}"

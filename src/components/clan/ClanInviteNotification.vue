@@ -9,7 +9,7 @@
           </svg>
         </div>
         <div class="invite-info">
-          <span class="invite-title">{{ t.club.lblInviteReceived }}</span>
+          <span class="invite-title">{{ t.clan.lblInviteReceived }}</span>
           <span class="invite-detail">{{ invite.inviterName }} → {{ invite.clubName }}</span>
         </div>
         <div class="invite-timer">{{ timer }}s</div>
@@ -64,14 +64,14 @@ function onInviteAccepted(event) {
   if (data.clubName) {
     store.commit('master/updateMaster', { clanId: data.clanId || data.clubId, clanRole: 'member' });
     store.commit('master/setInfoMessage', {
-      text: t.value.club.lblInviteAccepted,
+      text: t.value.clan.lblInviteAccepted,
       timeout: 3000,
       showButton: false,
     });
   } else if (data.acceptedByName) {
     // This is the inviter getting notified
     store.commit('master/setInfoMessage', {
-      text: `${data.acceptedByName} ${t.value.club.lblPlayerJoined}`,
+      text: `${data.acceptedByName} ${t.value.clan.lblPlayerJoined}`,
       timeout: 3000,
       showButton: false,
     });
@@ -81,7 +81,7 @@ function onInviteAccepted(event) {
 function onInviteDeclined(event) {
   const data = event.detail;
   store.commit('master/setInfoMessage', {
-    text: `${data.declinedByName} ${t.value.club.lblInviteDeclined}`,
+    text: `${data.declinedByName} ${t.value.clan.lblInviteDeclined}`,
     timeout: 3000,
     showButton: false,
   });
@@ -143,7 +143,7 @@ async function acceptInvite() {
       const result = await clanService.respondToInvite(current.inviteId, 'accept');
       store.commit('master/updateMaster', { clanId: current.clanId, clanRole: 'member' });
       store.commit('master/setInfoMessage', {
-        text: t.value.club.lblInviteAccepted,
+        text: t.value.clan.lblInviteAccepted,
         timeout: 3000,
         showButton: false,
       });

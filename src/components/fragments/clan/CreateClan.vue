@@ -2,11 +2,11 @@
 
   <VModal v-model="showDialog" max-width="500" @click:outside="hide">
     <VCard>
-      <v-card-title class="headline">{{ t.club.modalTitle }}</v-card-title>
+      <v-card-title class="headline">{{ t.clan.modalTitle }}</v-card-title>
       <v-card-text class="text-center">
 
         <v-text-field
-            :label="t.club.inputName"
+            :label="t.clan.inputName"
             v-model="title"
             class="title-field"
             :error-messages="titleError"
@@ -14,7 +14,7 @@
         </v-text-field>
 
         <v-textarea
-            :label="t.club.inputDescription"
+            :label="t.clan.inputDescription"
             v-model="description"
             class="description-field"
         >
@@ -22,7 +22,7 @@
 
         <div class="public-toggle">
           <div class="toggle-row">
-            <span class="toggle-label">{{ t.club.lblPublicClub }}</span>
+            <span class="toggle-label">{{ t.clan.lblPublicClan }}</span>
             <v-switch
               v-model="isPublic"
               :class="{ checked: isPublic }"
@@ -31,7 +31,7 @@
               color="var(--hex-success)"
             />
           </div>
-          <span class="toggle-hint">{{ isPublic ? t.club.lblAnyoneCanJoin : t.club.lblInviteOnly }}</span>
+          <span class="toggle-hint">{{ isPublic ? t.clan.lblAnyoneCanJoin : t.clan.lblInviteOnly }}</span>
         </div>
 
         <div  v-if="loading" class="loader-container">
@@ -97,19 +97,19 @@ watch(showDialog, (val) => {
 const validateTitle = () => {
   const trimmed = title.value.trim().replace(/\s{2,}/g, ' ');
   if (trimmed.length === 0) {
-    titleError.value = t.value.club.errorEmpty;
+    titleError.value = t.value.clan.errorEmpty;
     return false;
   }
   if (trimmed.length < 3) {
-    titleError.value = t.value.club.errorTooShort || 'Name must be at least 3 characters';
+    titleError.value = t.value.clan.errorTooShort || 'Name must be at least 3 characters';
     return false;
   }
   if (trimmed.length > 30) {
-    titleError.value = t.value.club.errorTooLong;
+    titleError.value = t.value.clan.errorTooLong;
     return false;
   }
   if (!/^[\p{L}\p{N} ]+$/u.test(trimmed)) {
-    titleError.value = t.value.club.errorInvalidCharacters;
+    titleError.value = t.value.clan.errorInvalidCharacters;
     return false;
   }
   title.value = trimmed;
@@ -141,7 +141,7 @@ const saveChanges = async () => {
       await router.push({path: `/clan/${clan.id}`});
     }
   } catch (error) {
-    resultMessage.value = t.value.club.errorCreate;
+    resultMessage.value = t.value.clan.errorCreate;
   } finally {
     loading.value = false;
   }

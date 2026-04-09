@@ -12,7 +12,7 @@
         </div>
 
         <div v-else-if="notFound" class="not-found-container">
-          <div class="not-found-text">{{ t.club.lblClubNotFound || 'Clan not found' }}</div>
+          <div class="not-found-text">{{ t.clan.lblClanNotFound || 'Clan not found' }}</div>
           <button class="back-btn" @click="$router.push('/ratings/clans')">&larr; {{ t.nav?.lblBack || 'Back' }}</button>
         </div>
 
@@ -84,11 +84,11 @@
                     <div class="member-name-row">
                       <span class="member-name">{{ member.name || member.login }}</span>
                       <span v-if="member.clanRole === 'owner'" class="role-badge owner-badge">OWNER</span>
-                      <span v-else-if="member.clanRole === 'deputy'" class="role-badge deputy-badge">{{ t.club.lblDeputy }}</span>
+                      <span v-else-if="member.clanRole === 'deputy'" class="role-badge deputy-badge">{{ t.clan.lblDeputy }}</span>
                     </div>
                     <div class="member-stats-text">
                       <span class="member-wins">{{ formatNumber(member.wins || 0) }} W</span>
-                      <span class="member-fights">{{ formatNumber(member.battles || member.totalFights || 0) }} {{ t.club.lblFights || 'fights' }}</span>
+                      <span class="member-fights">{{ formatNumber(member.battles || member.totalFights || 0) }} {{ t.clan.lblFights || 'fights' }}</span>
                     </div>
                   </div>
                 </div>
@@ -105,31 +105,31 @@
                     variant="primary"
                     block
                     disabled
-                >{{ t.club.lblClanFull }}</HexButton>
+                >{{ t.clan.lblClanFull }}</HexButton>
                 <HexButton
                     v-else-if="!isPublic"
                     variant="primary"
                     block
                     disabled
-                >{{ t.club.lblClanPrivate }}</HexButton>
+                >{{ t.clan.lblClanPrivate }}</HexButton>
                 <HexButton
                     v-else
                     variant="primary"
                     block
                     @click="btnToJoin"
-                >{{ t.club.lblJoinClan }} {{ clanData.name }}</HexButton>
+                >{{ t.clan.lblJoinClan }} {{ clanData.name }}</HexButton>
               </div>
             </div>
 
             <!-- Change clan modal (visitor) -->
             <VModal v-model="dialogChangeClan" max-width="500">
               <VCard>
-                <v-card-title class="headline">{{ t.club.lblChangeClub }}</v-card-title>
-                <v-card-text>{{ t.club.lblChangeClubDescription }}</v-card-text>
+                <v-card-title class="headline">{{ t.clan.lblChangeClan }}</v-card-title>
+                <v-card-text>{{ t.clan.lblChangeClanDescription }}</v-card-text>
                 <v-card-actions>
                   <v-spacer></v-spacer>
                   <v-btn @click="dialogChangeClan = false" class="cancel-btn">{{ t.modal.btnCancel }}</v-btn>
-                  <v-btn @click="confirmExit" class="confirm-btn">{{ t.club.lblConfirm }}</v-btn>
+                  <v-btn @click="confirmExit" class="confirm-btn">{{ t.clan.lblConfirm }}</v-btn>
                 </v-card-actions>
               </VCard>
             </VModal>
@@ -138,7 +138,7 @@
         </div>
 
         <div v-else class="not-found-container">
-          <p>{{ t.club.lblClubNotFound || 'Clan not found' }}</p>
+          <p>{{ t.clan.lblClanNotFound || 'Clan not found' }}</p>
         </div>
       </div>
     </div>

@@ -13,10 +13,10 @@
           <img v-bind="props" @click.stop="toggleToolTip" src="@/assets/images/icon_pencil.svg" alt=""
                class="custom-icon"/>
         </template>
-        <span>{{ t.club.lblEditTooltip }}</span>
+        <span>{{ t.clan.lblEditTooltip }}</span>
       </v-tooltip>
     </template>
-    {{ t.club.lblEditClub }}
+    {{ t.clan.lblEditClan }}
     <template #append>
       <span class="custom-icon"/>
     </template>
@@ -24,11 +24,11 @@
 
   <VModal v-model="dialogEdit" max-width="500" @click:outside="hide">
     <VCard>
-      <v-card-title class="headline">{{ t.club.lblEditClub }}</v-card-title>
+      <v-card-title class="headline">{{ t.clan.lblEditClan }}</v-card-title>
       <v-card-text class="text-center">
 
         <v-text-field
-            :label="t.club.lblClubName"
+            :label="t.clan.lblClanName"
             v-model="title"
             class="title-field"
             :error-messages="titleError"
@@ -36,7 +36,7 @@
         </v-text-field>
 
         <v-textarea
-            :label="t.club.lblClubDescription"
+            :label="t.clan.lblClanDescription"
             v-model="description"
             class="description-field"
         >
@@ -65,20 +65,20 @@
 
   <div class="dissolve-section">
     <HexButton variant="danger" size="sm" @click="dialogDissolve = true">
-      {{ t.club.lblDissolve }}
+      {{ t.clan.lblDissolve }}
     </HexButton>
   </div>
 
   <VModal v-model="dialogDissolve" max-width="500">
     <VCard>
-      <v-card-title class="headline">{{ t.club.lblDissolve }}</v-card-title>
+      <v-card-title class="headline">{{ t.clan.lblDissolve }}</v-card-title>
       <v-card-text>
-        {{ t.club.lblDissolveConfirm }}
+        {{ t.clan.lblDissolveConfirm }}
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
         <v-btn @click="dialogDissolve = false" class="cancel-btn">{{ t.modal.btnCancel }}</v-btn>
-        <v-btn @click="confirmDissolve" class="confirm-btn">{{ t.club.lblConfirm }}</v-btn>
+        <v-btn @click="confirmDissolve" class="confirm-btn">{{ t.clan.lblConfirm }}</v-btn>
       </v-card-actions>
     </VCard>
   </VModal>
@@ -124,19 +124,19 @@ const showToolTip = ref(false);
 const validateTitle = () => {
   const trimmed = title.value.trim().replace(/\s{2,}/g, ' ');
   if (trimmed.length === 0) {
-    titleError.value = t.value.club.empty;
+    titleError.value = t.value.clan.empty;
     return false;
   }
   if (trimmed.length < 3) {
-    titleError.value = t.value.club.errorTooShort || 'Name must be at least 3 characters';
+    titleError.value = t.value.clan.errorTooShort || 'Name must be at least 3 characters';
     return false;
   }
   if (trimmed.length > 30) {
-    titleError.value = t.value.club.tooLong;
+    titleError.value = t.value.clan.tooLong;
     return false;
   }
   if (!/^[\p{L}\p{N} ]+$/u.test(trimmed)) {
-    titleError.value = t.value.club.invalidCharacters;
+    titleError.value = t.value.clan.invalidCharacters;
     return false;
   }
   title.value = trimmed;
@@ -156,7 +156,7 @@ const confirmDissolve = async () => {
   dialogDissolve.value = false;
   try {
     await store.dispatch('clan/deleteClan');
-    store.commit('master/setInfoMessage', {text: t.value.club.lblDissolved, timeout: 3000, showButton: false});
+    store.commit('master/setInfoMessage', {text: t.value.clan.lblDissolved, timeout: 3000, showButton: false});
     router.push('/ratings/clans');
   } catch (error) {
     store.commit('master/setErrorMessage', {text: error.message, timeout: 3000, showButton: false});
@@ -177,7 +177,7 @@ const saveChanges = async () => {
     hide();
 
   } catch (error) {
-    resultMessage.value = t.value.club.lblErrorSaving;
+    resultMessage.value = t.value.clan.lblErrorSaving;
   } finally {
     loading.value = false;
   }

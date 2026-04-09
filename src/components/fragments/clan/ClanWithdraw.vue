@@ -12,10 +12,10 @@
         <template #activator="{ props }">
           <img v-bind="props" @click.stop="toggleToolTip" src="@/assets/images/icon_tokens.svg" alt="" class="custom-icon"/>
         </template>
-        <span>{{ t.club.lblWithdrawTooltip }}</span>
+        <span>{{ t.clan.lblWithdrawTooltip }}</span>
       </v-tooltip>
     </template>
-    {{ t.club.lblClubTokens }}
+    {{ t.clan.lblClanTokens }}
     <template #append>
       <span class="custom-icon"/>
       <span style="right: 0; position: absolute;">{{ balance }}$</span>
@@ -24,18 +24,18 @@
 
   <VModal v-model="dialogWithdraw" max-width="500" @click:outside="hide">
     <VCard>
-      <v-card-title class="headline">{{ t.club.lblTokensWithdraw }}</v-card-title>
+      <v-card-title class="headline">{{ t.clan.lblTokensWithdraw }}</v-card-title>
       <v-card-text class="text-center">
 
         <v-text-field
-            :label="t.club.lblWallet"
+            :label="t.clan.lblWallet"
             v-model="wallet"
             class="wallet-field"
         >
         </v-text-field>
 
         <v-text-field
-            :label="t.club.lblAmount"
+            :label="t.clan.lblAmount"
             v-model="amount"
             class="amount-field"
             @input="updateAmount"
@@ -51,8 +51,8 @@
           />
 
           <div v-else class="calculation-result">
-            <span>{{ t.club.lblCalculationResult }} </span> {{ calculatedFC }} <span>{{ t.club.lblFCTokens }}</span>
-            <p class="notice">{{ t.club.lblNotice }}</p>
+            <span>{{ t.clan.lblCalculationResult }} </span> {{ calculatedFC }} <span>{{ t.clan.lblFCTokens }}</span>
+            <p class="notice">{{ t.clan.lblNotice }}</p>
           </div>
         </div>
 
@@ -60,7 +60,7 @@
       <v-card-actions>
         <v-spacer></v-spacer>
         <VBtnDark @click="hide" class="cancel-btn">{{ t.modal.btnCancel }}</VBtnDark>
-        <VBtn @click="btnWithdraw" class="confirm-btn">{{ t.club.lblWithdraw }}</VBtn>
+        <VBtn @click="btnWithdraw" class="confirm-btn">{{ t.clan.lblWithdraw }}</VBtn>
       </v-card-actions>
     </VCard>
   </VModal>
@@ -101,7 +101,7 @@ const btnWithdraw = () => {
   dialogWithdraw.value = true;
   calculateFC();
 
-  const withdraw = InfoMessageModel.withTimeout(t.value.info.withdrawClubDisable, 3000);
+  const withdraw = InfoMessageModel.withTimeout(t.value.info.withdrawClanDisable, 3000);
   store.commit('master/setInfoMessage', withdraw);
 
   // TODO Сделать заявки на вывод

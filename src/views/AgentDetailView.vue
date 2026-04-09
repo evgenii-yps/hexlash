@@ -46,7 +46,7 @@
         <div v-if="activeTab === 'overview'" class="tab-content hex-fade-in">
           <div class="stats-grid">
             <div class="stat-card"><div class="stat-val" :class="eloClass">{{ agent.elo }}</div><div class="stat-label">ELO</div></div>
-            <div class="stat-card"><div class="stat-val">{{ agent.totalFights }}</div><div class="stat-label">{{ t.club.lblTotalFights || 'Fights' }}</div></div>
+            <div class="stat-card"><div class="stat-val">{{ agent.totalFights }}</div><div class="stat-label">{{ t.clan.lblTotalFights || 'Fights' }}</div></div>
             <div class="stat-card"><div class="stat-val">{{ winRate }}%</div><div class="stat-label">{{ t.club.lblWinRate || 'Win Rate' }}</div></div>
           </div>
 
@@ -188,7 +188,7 @@
               </div>
             </div>
             <HexButton v-if="fightHistory.length < fightHistoryTotal" variant="ghost" block @click="loadMoreFights" :loading="fightHistoryLoading" style="margin-top:12px">
-              {{ t.club.lblLoadMore || 'Load More' }}
+              {{ t.clan.lblLoadMore || 'Load More' }}
             </HexButton>
             <div v-if="!fightHistory.length && !fightHistoryLoading" class="empty-text">No fights yet</div>
           </div>

@@ -1608,7 +1608,7 @@ Feature flag `X402_ENABLED=false` на проде. On-chain verification = TODO 
 | P1-rename-3a | Backend alias /v1/club + WS clubId backward-compat | ✅ DONE | После rename-2 |
 | P1-rename-3b | Frontend core: Vuex clan/, clanService, clanRepository, ClanModel, dispatches | ✅ DONE | После rename-3a |
 | P1-rename-3c | Frontend UI: .vue files, dirs, props, CSS, router /clan/:id, template bindings | ✅ DONE | После rename-3b |
-| P1-rename-4 | i18n rename: 38 ключей × 11 локалей + Agent→Fighter | | После rename-3 |
+| P1-rename-4 | i18n split club:→clan:+club: (120 Clan keys × 11 locales, call-sites) | ✅ DONE | После rename-3c |
 | P1-cleanup | Удаление мёртвого кода (fightStylePreview, nftMintService, HexlashAgents.sol+ABI, clubLevelService.addClubXp) | | После rename-4 |
 | P1-club-name | Add FightClub.name поле + миграция + default из User.login | | После cleanup |
 | P1-fix-legend | Фикс legend buff (раздельно f1/f2 в engine) | | До belt-2 |
