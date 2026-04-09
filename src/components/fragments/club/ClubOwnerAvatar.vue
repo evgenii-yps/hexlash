@@ -69,7 +69,7 @@ const uploadAvatar = (event) => {
       progress.value = Math.round((event.loaded * 100) / event.total);
     };
 
-    store.dispatch('club/uploadClubAvatar', { formData, onUploadProgress })
+    store.dispatch('clan/uploadClanAvatar', { formData, onUploadProgress })
         .then((avatarFile) => {
           isLoading.value = false;
           setAvatarUrl(avatarFile); // Обновляем URL аватара

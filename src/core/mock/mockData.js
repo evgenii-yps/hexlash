@@ -11,7 +11,7 @@ export const MOCK_USER_DATA = {
     createdAt: '2025-01-01T00:00:00Z',
     updatedAt: '2025-01-01T00:00:00Z',
     balance: 50000000,
-    clubId: null,
+    clanId: null,
     walletAddress: null,
     totalFights: 42,
     wins: 25,

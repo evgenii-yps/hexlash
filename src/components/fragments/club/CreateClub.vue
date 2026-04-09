@@ -129,7 +129,7 @@ const saveChanges = async () => {
   loading.value = true;
 
   try {
-    const club = await store.dispatch('club/createClub',
+    const club = await store.dispatch('clan/createClan',
         {
           name: title.value,
           description: description.value,

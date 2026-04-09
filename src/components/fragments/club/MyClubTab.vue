@@ -101,7 +101,7 @@ import {useRouter} from 'vue-router';
 import store from "@/core/state/store.js";
 import {t} from "@/locales/index.js";
 import {formatNumber} from "@/core/constants.js";
-import * as clubService from "@/core/services/clubService.js";
+import * as clanService from "@/core/services/clanService.js";
 import ClanPageContent from "@/components/fragments/club/ClanPageContent.vue";
 import HexButton from "@/components/ui/HexButton.vue";
 import CreateClub from "@/components/fragments/club/CreateClub.vue";
@@ -115,7 +115,7 @@ const emit = defineEmits(['switchTab']);
 const router = useRouter();
 
 const master = computed(() => store.getters['master/getMaster']);
-const clubId = computed(() => master.value?.userData?.clubId);
+const clubId = computed(() => master.value?.userData?.clanId);
 
 const loading = ref(false);
 const clubData = ref(null);
@@ -150,7 +150,7 @@ const formatExpiry = (expiresAt) => {
 
 const acceptInvite = async (invite) => {
   try {
-    await clubService.respondToInvite(invite.id, true);
+    await clanService.respondToInvite(invite.id, true);
     pendingInvites.value = pendingInvites.value.filter(i => i.id !== invite.id);
     loaded.value = false;
     await loadData();
@@ -161,7 +161,7 @@ const acceptInvite = async (invite) => {
 
 const declineInvite = async (invite) => {
   try {
-    await clubService.respondToInvite(invite.id, false);
+    await clanService.respondToInvite(invite.id, false);
     pendingInvites.value = pendingInvites.value.filter(i => i.id !== invite.id);
   } catch (e) {
     store.commit('master/setErrorMessage', { text: e.message || 'Failed to decline invite', timeout: 3000, showButton: false });
@@ -171,7 +171,7 @@ const declineInvite = async (invite) => {
 const loadClans = async (append = false) => {
   searchLoading.value = !append;
   try {
-    const clubs = await clubService.searchClubs({
+    const clubs = await clanService.searchClans({
       name: searchQuery.value,
       sortBy: 'members',
       size: PAGE_SIZE,
@@ -212,14 +212,14 @@ const loadData = async () => {
 
   try {
     if (clubId.value) {
-      const club = await store.dispatch('club/getClubById', clubId.value);
+      const club = await store.dispatch('clan/getClanById', clubId.value);
       if (club) {
         clubData.value = club;
       }
     } else {
       // Load pending invites + clan list in parallel
       const [invites] = await Promise.all([
-        clubService.getPendingInvites().catch(() => []),
+        clanService.getPendingInvites().catch(() => []),
         loadClans(),
       ]);
       pendingInvites.value = invites || [];
@@ -238,7 +238,7 @@ const viewClan = (id) => {
 
 const joinClan = async (id) => {
   try {
-    await store.dispatch('club/changeClub', id);
+    await store.dispatch('clan/changeClan', id);
     loaded.value = false;
     await loadData();
   } catch (e) {
@@ -266,11 +266,11 @@ const onInviteAccepted = () => {
 };
 
 onMounted(() => {
-  window.addEventListener('club-invite-accepted', onInviteAccepted);
+  window.addEventListener('clan-invite-accepted', onInviteAccepted);
 });
 
 onUnmounted(() => {
-  window.removeEventListener('club-invite-accepted', onInviteAccepted);
+  window.removeEventListener('clan-invite-accepted', onInviteAccepted);
   clearTimeout(searchTimeout);
 });
 

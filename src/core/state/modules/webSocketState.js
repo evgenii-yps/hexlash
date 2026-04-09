@@ -208,18 +208,19 @@ const actions = {
                 store.commit('friends/clearIncomingChallenge');
                 window.dispatchEvent(new CustomEvent('challenge-start', { detail: message }));
                 break;
-            // ─── Club invite messages ────────────────────────────────────
+            // ─── Clan invite messages ────────────────────────────────────
+            // WS message types stay as club_invite_* (backend sends them)
             case 'club_invite':
-                window.dispatchEvent(new CustomEvent('club-invite-received', { detail: message }));
+                window.dispatchEvent(new CustomEvent('clan-invite-received', { detail: message }));
                 break;
             case 'club_invite_accepted':
-                window.dispatchEvent(new CustomEvent('club-invite-accepted', { detail: message }));
+                window.dispatchEvent(new CustomEvent('clan-invite-accepted', { detail: message }));
                 break;
             case 'club_invite_declined':
-                window.dispatchEvent(new CustomEvent('club-invite-declined', { detail: message }));
+                window.dispatchEvent(new CustomEvent('clan-invite-declined', { detail: message }));
                 break;
             case 'club_invite_error':
-                window.dispatchEvent(new CustomEvent('club-invite-error', { detail: message }));
+                window.dispatchEvent(new CustomEvent('clan-invite-error', { detail: message }));
                 break;
             default:
                 console.warn(`Unknown message type received: ${messageType}`);

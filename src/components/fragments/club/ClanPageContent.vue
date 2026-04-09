@@ -270,7 +270,7 @@ import {t} from "@/locales/index.js";
 import {formatNumber} from "@/core/constants.js";
 import {CLAN_LEVEL_CONFIG, getClanLevelProgress} from "@/data/clanLevels.js";
 import * as userService from "@/core/services/userService.js";
-import * as clubService from "@/core/services/clubService.js";
+import * as clanService from "@/core/services/clanService.js";
 
 import ClubAvatar from "@/components/fragments/club/ClubAvatar.vue";
 import ClubOwnerAvatar from "@/components/fragments/club/ClubOwnerAvatar.vue";
@@ -291,8 +291,8 @@ const emit = defineEmits(['club-left', 'club-deleted']);
 const router = useRouter();
 const master = computed(() => store.getters['master/getMaster']);
 
-const isOwner = computed(() => master.value?.userData?.clubRole === 'owner' && master.value?.userData?.clubId === props.clubId);
-const isDeputy = computed(() => master.value?.userData?.clubRole === 'deputy' && master.value?.userData?.clubId === props.clubId);
+const isOwner = computed(() => master.value?.userData?.clanRole === 'owner' && master.value?.userData?.clanId === props.clubId);
+const isDeputy = computed(() => master.value?.userData?.clanRole === 'deputy' && master.value?.userData?.clanId === props.clubId);
 
 const membersLoading = ref(false);
 const membersList = ref([]);
@@ -341,7 +341,7 @@ const tabs = computed(() => [
 ]);
 
 const friends = computed(() => store.getters['friends/getFriends'] || []);
-const invitableFriends = computed(() => friends.value.filter(f => !f.clubId));
+const invitableFriends = computed(() => friends.value.filter(f => !f.clanId));
 
 const clubBalance = computed(() => {
   try { return props.clubData?.getBalance?.() || 0; } catch { return 0; }
@@ -358,7 +358,7 @@ const loadMembers = async () => {
   membersLoading.value = true;
   try {
     const list = await userService.searchParticipants({
-      clubId: props.clubId,
+      clanId: props.clubId,
       sortBy: 'wins',
       size: 50,
       sortDirection: 'DESC',
@@ -387,8 +387,8 @@ const viewMember = (member) => {
 const canManage = (member) => {
   const myId = master.value?.userData?.id;
   if (member.id === myId) return false;
-  if (isOwner.value) return member.clubRole !== 'owner';
-  if (isDeputy.value) return member.clubRole === 'member';
+  if (isOwner.value) return member.clanRole !== 'owner';
+  if (isDeputy.value) return member.clanRole === 'member';
   return false;
 };
 
@@ -417,7 +417,7 @@ const doPromote = async () => {
   const member = selectedMember.value;
   closeActionMenu();
   try {
-    await store.dispatch('club/setMemberRole', { userId: member.id, role: 'deputy' });
+    await store.dispatch('clan/setMemberRole', { userId: member.id, role: 'deputy' });
     await loadMembers();
   } catch (e) {
     store.commit('master/setErrorMessage', { text: e.message, timeout: 3000, showButton: false });
@@ -428,7 +428,7 @@ const doDemote = async () => {
   const member = selectedMember.value;
   closeActionMenu();
   try {
-    await store.dispatch('club/setMemberRole', { userId: member.id, role: 'member' });
+    await store.dispatch('clan/setMemberRole', { userId: member.id, role: 'member' });
     await loadMembers();
   } catch (e) {
     store.commit('master/setErrorMessage', { text: e.message, timeout: 3000, showButton: false });
@@ -447,7 +447,7 @@ const doKick = () => {
     danger: true,
     onConfirm: async () => {
       try {
-        await store.dispatch('club/kickMember', { userId: member.id });
+        await store.dispatch('clan/kickMember', { userId: member.id });
         await loadMembers();
       } catch (e) {
         store.commit('master/setErrorMessage', { text: e.message, timeout: 3000, showButton: false });
@@ -468,7 +468,7 @@ const doTransfer = () => {
     danger: false,
     onConfirm: async () => {
       try {
-        await store.dispatch('club/transferOwnership', { newOwnerId: member.id });
+        await store.dispatch('clan/transferOwnership', { newOwnerId: member.id });
         await loadMembers();
       } catch (e) {
         store.commit('master/setErrorMessage', { text: e.message, timeout: 3000, showButton: false });
@@ -485,7 +485,7 @@ const openInviteModal = () => {
 
 const sendInvite = async (friend) => {
   try {
-    await clubService.inviteToClub(friend.id);
+    await clanService.inviteToClan(friend.id);
     dialogInvite.value = false;
     const name = friend.username || friend.name || friend.login;
     store.commit('master/setInfoMessage', {
@@ -505,7 +505,7 @@ const sendInvite = async (friend) => {
 // Leave / Disband
 const confirmLeave = async () => {
   dialogLeaveClub.value = false;
-  await store.dispatch('club/leaveClub');
+  await store.dispatch('clan/leaveClan');
   emit('club-left');
 };
 
@@ -516,7 +516,7 @@ const confirmLeaveSettings = () => {
     confirmText: t.value.club.lblLeaveClub,
     danger: true,
     onConfirm: async () => {
-      await store.dispatch('club/leaveClub');
+      await store.dispatch('clan/leaveClan');
       emit('club-left');
     },
   });
@@ -529,7 +529,7 @@ const confirmDisband = () => {
     confirmText: t.value.club.btnDisband || 'Disband',
     danger: true,
     onConfirm: async () => {
-      await store.dispatch('club/deleteClub');
+      await store.dispatch('clan/deleteClan');
       emit('club-deleted');
     },
   });

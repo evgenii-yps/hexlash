@@ -39,13 +39,13 @@ const props = defineProps({
 const store = useStore();
 const loaded = ref(false);
 
-const loading = computed(() => store.state.club.clanEventsLoading);
-const hasMore = computed(() => store.state.club.clanEventsHasMore);
-const rawEvents = computed(() => store.state.club.clanEvents);
+const loading = computed(() => store.state.clan.clanEventsLoading);
+const hasMore = computed(() => store.state.clan.clanEventsHasMore);
+const rawEvents = computed(() => store.state.clan.clanEvents);
 
 onMounted(async () => {
-  store.commit('club/resetClanEvents');
-  await store.dispatch('club/fetchClanEvents', { clubId: props.clubId, limit: 30 });
+  store.commit('clan/resetClanEvents');
+  await store.dispatch('clan/fetchClanEvents', { clanId: props.clubId, limit: 30 });
   loaded.value = true;
 });
 
@@ -53,8 +53,8 @@ async function loadMore() {
   const events = rawEvents.value;
   if (!events.length) return;
   const lastEvent = events[events.length - 1];
-  await store.dispatch('club/fetchClanEvents', {
-    clubId: props.clubId,
+  await store.dispatch('clan/fetchClanEvents', {
+    clanId: props.clubId,
     limit: 30,
     before: lastEvent.createdAt,
   });

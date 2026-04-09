@@ -55,10 +55,10 @@ const showDialogConfirmShare = ref(false);
 watch(store.getters['master/getMaster'],  async(newMaster) => {
   if (newMaster && newMaster.userData) {
     inviteCode.value = newMaster.inviteId;
-    clubId.value = newMaster.userData.clubId;
+    clubId.value = newMaster.userData.clanId;
 
     if (clubId.value) {
-      const club = await store.dispatch('club/getClubById', clubId.value);
+      const club = await store.dispatch('clan/getClanById', clubId.value);
       if (club) {
         showInviteContainer.value = club.isPublic || club.owner === newMaster.userData.id;
       }

@@ -196,8 +196,8 @@ const loadClub = async () => {
   loading.value = true;
   notFound.value = false;
 
-  isMyClub.value = master.value && master.value.userData.clubId === clubId;
-  const result = await store.dispatch('club/loadClubById', clubId);
+  isMyClub.value = master.value && master.value.userData.clanId === clubId;
+  const result = await store.dispatch('clan/loadClanById', clubId);
   if (!result) {
     loading.value = false;
     notFound.value = true;
@@ -208,7 +208,7 @@ const loadMembers = async () => {
   membersLoading.value = true;
   try {
     const list = await userService.searchParticipants({
-      clubId: clubId,
+      clanId: clubId,
       sortBy: 'wins',
       size: 50,
       sortDirection: 'DESC',
@@ -226,7 +226,7 @@ onBeforeMount(loadClub);
 watch(route, loadClub);
 
 watch(
-    () => store.getters['club/getClubById'](clubId),
+    () => store.getters['clan/getClanById'](clubId),
     (newValue) => {
       if (!newValue) return;
       clubData.value = newValue;
@@ -257,7 +257,7 @@ const btnToJoin = () => {
 
 const confirmExit = () => {
   dialogChangeClub.value = false;
-  store.dispatch('club/changeClub', clubData.value.id);
+  store.dispatch('clan/changeClan', clubData.value.id);
   amplitude.track('ChangeClub', clubData.value.id);
 };
 

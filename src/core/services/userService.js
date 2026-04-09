@@ -72,7 +72,7 @@ export const fetchUserById = async (id) => {
     }
 };
 
-export const searchParticipants = async ({ name = '', sortBy = 'battles', page = 0, size = 10, clubId = null, sortDirection = 'DESC' }) => {
+export const searchParticipants = async ({ name = '', sortBy = 'battles', page = 0, size = 10, clanId = null, sortDirection = 'DESC' }) => {
     if (isMockMode()) {
         return [];
     }
@@ -86,7 +86,7 @@ export const searchParticipants = async ({ name = '', sortBy = 'battles', page =
                 sortDirection,
                 page,
                 size,
-                clubId
+                clanId
             },
             authRequired: true,
         });

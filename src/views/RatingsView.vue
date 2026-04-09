@@ -262,13 +262,13 @@ const sortClubBy = ref(activeTab.value === Tabs.CLUBS ? route.query.sortClubBy |
 const searchMember = ref(activeTab.value === Tabs.FIGHTERS ? route.query.searchMember || '' : '');
 
 const sortParticipantBy = ref(activeTab.value === Tabs.FIGHTERS ? route.query.sortParticipantBy || 'wins' : 'wins');
-const clubsLimitReached = computed(() => store.getters['club/isLimitReached']);
+const clubsLimitReached = computed(() => store.getters['clan/isLimitReached']);
 const participantLimitReached = computed(() => store.getters['user/isLimitReached']);
 
 const clubId = ref(route.query.clubId);
 
 const master = computed(() => store.getters['master/getMaster']);
-const canCreateClub = computed(() => !master.value?.userData?.clubId);
+const canCreateClub = computed(() => !master.value?.userData?.clanId);
 const dialogCreateClub = ref(false);
 
 const clubSortItems = computed(() => [
@@ -285,7 +285,7 @@ const membersSortedItem = computed(() => [
   {name: t.value.rating.luck, value: 'luck'}
 ]);
 
-const clubs = computed(() => store.getters['club/getClubRatingsList']);
+const clubs = computed(() => store.getters['clan/getClanRatingsList']);
 const participants = computed(() => store.getters['user/getParticipantRatingsList']);
 
 
@@ -310,7 +310,7 @@ const loadClubs = async (options = {}) => {
     return;
   }
 
-  await store.dispatch('club/loadClubRatings', {
+  await store.dispatch('clan/loadClanRatings', {
     search: searchClub.value,
     sortBy: sortClubBy.value,
     page: clubPage.value
@@ -343,7 +343,7 @@ const loadParticipants = async (options = {}) => {
     search: searchMember.value,
     sortBy: sortParticipantBy.value,
     page: fighterPage.value,
-    clubId: clubId.value
+    clanId: clubId.value
   });
 
   fighterPage.value = fighterPage.value + 1;
@@ -417,7 +417,7 @@ watch([searchMember, sortParticipantBy], () => {
 watch(route, async (newRoute) => {
   if (newRoute.params.type === Tabs.CLUBS) {
     clubPage.value = 0;
-    store.commit('club/resetClubRatings');
+    store.commit('clan/resetClanRatings');
     searchClub.value = newRoute.query.searchClub || '';
     sortClubBy.value = newRoute.query.sortClubBy || 'wins';
 
@@ -455,7 +455,7 @@ const updateQueryParams = () => {
 
 
 onMounted(() => {
-  store.commit('club/resetClubRatings');
+  store.commit('clan/resetClanRatings');
   store.commit('user/resetParticipantRatings');
 
   // Amplitude

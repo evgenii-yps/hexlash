@@ -155,7 +155,7 @@ const hide = () => {
 const confirmDissolve = async () => {
   dialogDissolve.value = false;
   try {
-    await store.dispatch('club/deleteClub');
+    await store.dispatch('clan/deleteClan');
     store.commit('master/setInfoMessage', {text: t.value.club.lblDissolved, timeout: 3000, showButton: false});
     router.push('/ratings/clubs');
   } catch (error) {
@@ -172,7 +172,7 @@ const saveChanges = async () => {
 
   try {
 
-    await store.dispatch('club/updateClubData', localClubData.value);
+    await store.dispatch('clan/updateClanData', localClubData.value);
 
     hide();
 
