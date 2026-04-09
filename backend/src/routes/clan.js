@@ -8,51 +8,51 @@ const { createClanEvent } = require('../utils/clanEvents');
 
 const router = express.Router();
 
-// GET /v1/club/id/:clubId
-router.get('/id/:clubId', authMiddleware, async (req, res) => {
+// GET /v1/clan/id/:clanId
+router.get('/id/:clanId', authMiddleware, async (req, res) => {
   try {
-    const club = await prisma.club.findUnique({
-      where: { id: req.params.clubId },
+    const clan = await prisma.clan.findUnique({
+      where: { id: req.params.clanId },
       include: { _count: { select: { members: true } } },
     });
 
-    if (!club) {
-      return res.status(404).json({ error: 'Club not found' });
+    if (!clan) {
+      return res.status(404).json({ error: 'Clan not found' });
     }
 
-    res.json({ data: formatClubResponse(club) });
+    res.json({ data: formatClubResponse(clan) });
   } catch (err) {
-    console.error('Get club error:', err);
+    console.error('Get clan error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// POST /v1/club/add
+// POST /v1/clan/add
 router.post('/add', authMiddleware, async (req, res) => {
   try {
-    const { clubData } = req.body;
-    if (!clubData || !clubData.name) {
-      return res.status(400).json({ error: 'Club name required' });
+    const { clanData } = req.body;
+    if (!clanData || !clanData.name) {
+      return res.status(400).json({ error: 'Clan name required' });
     }
 
     // Validate name and description
-    const name = clubData.name.trim();
+    const name = clanData.name.trim();
     const sanitizedName = name.replace(/\s{2,}/g, ' ');
     if (!/^[\p{L}\p{N} ]{3,30}$/u.test(sanitizedName)) {
-      return res.status(400).json({ error: 'Club name must be 3-30 characters, only letters, digits and spaces' });
+      return res.status(400).json({ error: 'Clan name must be 3-30 characters, only letters, digits and spaces' });
     }
-    const description = (clubData.description || '').trim().slice(0, 500);
+    const description = (clanData.description || '').trim().slice(0, 500);
 
-    // Check if user is not already in a club
+    // Check if user is not already in a clan
     const user = await prisma.user.findUnique({ where: { id: req.userId } });
-    if (user.clubId) {
-      return res.status(400).json({ error: 'Already in a club' });
+    if (user.clanId) {
+      return res.status(400).json({ error: 'Already in a clan' });
     }
 
-    const isPublic = clubData.isPublic !== undefined ? clubData.isPublic : true;
+    const isPublic = clanData.isPublic !== undefined ? clanData.isPublic : true;
 
-    const fullClub = await prisma.$transaction(async (tx) => {
-      const club = await tx.club.create({
+    const fullClan = await prisma.$transaction(async (tx) => {
+      const clan = await tx.clan.create({
         data: {
           name: sanitizedName,
           description,
@@ -64,68 +64,68 @@ router.post('/add', authMiddleware, async (req, res) => {
       await tx.user.update({
         where: { id: req.userId },
         data: {
-          clubId: club.id,
-          clubRole: 'owner',
+          clanId: clan.id,
+          clanRole: 'owner',
         },
       });
 
-      return tx.club.findUnique({
-        where: { id: club.id },
+      return tx.clan.findUnique({
+        where: { id: clan.id },
         include: { _count: { select: { members: true } } },
       });
     });
 
-    // Award PAPER_STREET achievement for creating a club
+    // Award PAPER_STREET achievement for creating a clan
     awardAchievement(prisma, req.userId, 'PAPER_STREET').catch(() => {});
 
-    res.json({ data: formatClubResponse(fullClub) });
+    res.json({ data: formatClubResponse(fullClan) });
   } catch (err) {
-    console.error('Create club error:', err);
+    console.error('Create clan error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// POST /v1/club/edit
+// POST /v1/clan/edit
 router.post('/edit', authMiddleware, async (req, res) => {
   try {
-    const { clubId, name, description, isPublic } = req.body;
-    if (!clubId) {
-      return res.status(400).json({ error: 'Club ID required' });
+    const { clanId, name, description, isPublic } = req.body;
+    if (!clanId) {
+      return res.status(400).json({ error: 'Clan ID required' });
     }
 
-    const club = await prisma.club.findUnique({ where: { id: clubId } });
-    if (!club) {
-      return res.status(404).json({ error: 'Club not found' });
+    const clan = await prisma.clan.findUnique({ where: { id: clanId } });
+    if (!clan) {
+      return res.status(404).json({ error: 'Clan not found' });
     }
-    if (club.ownerId !== req.userId) {
-      return res.status(403).json({ error: 'Only club owner can edit' });
+    if (clan.ownerId !== req.userId) {
+      return res.status(403).json({ error: 'Only clan owner can edit' });
     }
 
     const updateData = {};
     if (name !== undefined) {
       const trimmedName = name.trim().replace(/\s{2,}/g, ' ');
       if (!/^[\p{L}\p{N} ]{3,30}$/u.test(trimmedName)) {
-        return res.status(400).json({ error: 'Club name must be 3-30 characters, only letters, digits and spaces' });
+        return res.status(400).json({ error: 'Clan name must be 3-30 characters, only letters, digits and spaces' });
       }
       updateData.name = trimmedName;
     }
     if (description !== undefined) updateData.description = description.trim().slice(0, 500);
     if (isPublic !== undefined) updateData.isPublic = isPublic;
 
-    const updated = await prisma.club.update({
-      where: { id: clubId },
+    const updated = await prisma.clan.update({
+      where: { id: clanId },
       data: updateData,
       include: { _count: { select: { members: true } } },
     });
 
     res.json({ data: formatClubResponse(updated) });
   } catch (err) {
-    console.error('Edit club error:', err);
+    console.error('Edit clan error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// POST /v1/club/put-avatar
+// POST /v1/clan/put-avatar
 router.post('/put-avatar', authMiddleware, upload.single('avatar'), async (req, res) => {
   try {
     if (!req.file) {
@@ -133,90 +133,90 @@ router.post('/put-avatar', authMiddleware, upload.single('avatar'), async (req, 
     }
 
     const user = await prisma.user.findUnique({ where: { id: req.userId } });
-    if (!user.clubId) {
-      return res.status(400).json({ error: 'User is not in a club' });
+    if (!user.clanId) {
+      return res.status(400).json({ error: 'User is not in a clan' });
     }
 
-    const club = await prisma.club.findUnique({ where: { id: user.clubId } });
-    if (club.ownerId !== req.userId) {
-      return res.status(403).json({ error: 'Only club owner can change avatar' });
+    const clan = await prisma.clan.findUnique({ where: { id: user.clanId } });
+    if (clan.ownerId !== req.userId) {
+      return res.status(403).json({ error: 'Only clan owner can change avatar' });
     }
 
     const avatarUrl = req.file.filename;
-    await prisma.club.update({
-      where: { id: user.clubId },
+    await prisma.clan.update({
+      where: { id: user.clanId },
       data: { avatarUrl },
     });
 
-    res.json({ data: { id: user.clubId, avatarUrl } });
+    res.json({ data: { id: user.clanId, avatarUrl } });
   } catch (err) {
-    console.error('Club avatar error:', err);
+    console.error('Clan avatar error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// POST /v1/club/change
+// POST /v1/clan/change
 router.post('/change', authMiddleware, async (req, res) => {
   try {
-    const { clubId } = req.body;
+    const { clanId } = req.body;
 
-    if (clubId) {
-      // Joining a club
-      const club = await prisma.club.findUnique({
-        where: { id: clubId },
+    if (clanId) {
+      // Joining a clan
+      const clan = await prisma.clan.findUnique({
+        where: { id: clanId },
         include: { _count: { select: { members: true } } },
       });
-      if (!club) {
-        return res.status(404).json({ error: 'Club not found' });
+      if (!clan) {
+        return res.status(404).json({ error: 'Clan not found' });
       }
-      if (!club.isPublic) {
-        return res.status(403).json({ error: 'Club is private' });
+      if (!clan.isPublic) {
+        return res.status(403).json({ error: 'Clan is private' });
       }
       const user = await prisma.user.findUnique({ where: { id: req.userId } });
-      if (user.clubId === clubId) {
-        return res.status(400).json({ error: 'Already in this club' });
+      if (user.clanId === clanId) {
+        return res.status(400).json({ error: 'Already in this clan' });
       }
-      if (club._count.members >= club.maxMembers) {
-        return res.status(400).json({ error: 'Club is full' });
+      if (clan._count.members >= clan.maxMembers) {
+        return res.status(400).json({ error: 'Clan is full' });
       }
 
       await prisma.user.update({
         where: { id: req.userId },
-        data: { clubId, clubRole: 'member' },
+        data: { clanId, clanRole: 'member' },
       });
 
-      // Award PROJECT_MAYHEM achievement for joining a club
+      // Award PROJECT_MAYHEM achievement for joining a clan
       awardAchievement(prisma, req.userId, 'PROJECT_MAYHEM').catch(() => {});
-      createClanEvent(clubId, 'member_join', req.userId);
+      createClanEvent(clanId, 'member_join', req.userId);
 
-      const fullClub = await prisma.club.findUnique({
-        where: { id: clubId },
+      const fullClan = await prisma.clan.findUnique({
+        where: { id: clanId },
         include: { _count: { select: { members: true } } },
       });
-      return res.json({ data: formatClubResponse(fullClub) });
+      return res.json({ data: formatClubResponse(fullClan) });
     }
 
-    // Leaving a club
+    // Leaving a clan
     const leavingUser = await prisma.user.findUnique({ where: { id: req.userId } });
-    const leavingClubId = leavingUser?.clubId;
+    const leavingClanId = leavingUser?.clanId;
 
     await prisma.user.update({
       where: { id: req.userId },
-      data: { clubId: null, clubRole: null },
+      data: { clanId: null, clanRole: null },
     });
 
-    if (leavingClubId) {
-      createClanEvent(leavingClubId, 'member_leave', req.userId);
+    if (leavingClanId) {
+      createClanEvent(leavingClanId, 'member_leave', req.userId);
     }
 
     res.json({ data: null });
   } catch (err) {
-    console.error('Change club error:', err);
+    console.error('Change clan error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// GET /v1/club/search
+// GET /v1/clan/search
 router.get('/search', authMiddleware, async (req, res) => {
   try {
     const {
@@ -249,7 +249,7 @@ router.get('/search', authMiddleware, async (req, res) => {
       where.name = { contains: name, mode: 'insensitive' };
     }
 
-    const clubs = await prisma.club.findMany({
+    const clans = await prisma.clan.findMany({
       where,
       include: { _count: { select: { members: true } } },
       orderBy,
@@ -257,14 +257,14 @@ router.get('/search', authMiddleware, async (req, res) => {
       take: pageSize,
     });
 
-    res.json({ data: clubs.map(formatClubResponse) });
+    res.json({ data: clans.map(formatClubResponse) });
   } catch (err) {
-    console.error('Search clubs error:', err);
+    console.error('Search clans error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// POST /v1/club/set-role
+// POST /v1/clan/set-role
 router.post('/set-role', authMiddleware, async (req, res) => {
   try {
     const { userId, role } = req.body;
@@ -277,13 +277,13 @@ router.post('/set-role', authMiddleware, async (req, res) => {
     }
 
     const requester = await prisma.user.findUnique({ where: { id: req.userId } });
-    if (!requester.clubId) {
-      return res.status(400).json({ error: 'You are not in a club' });
+    if (!requester.clanId) {
+      return res.status(400).json({ error: 'You are not in a clan' });
     }
 
-    const club = await prisma.club.findUnique({ where: { id: requester.clubId } });
-    if (club.ownerId !== req.userId) {
-      return res.status(403).json({ error: 'Only club owner can set roles' });
+    const clan = await prisma.clan.findUnique({ where: { id: requester.clanId } });
+    if (clan.ownerId !== req.userId) {
+      return res.status(403).json({ error: 'Only clan owner can set roles' });
     }
 
     if (userId === req.userId) {
@@ -291,13 +291,13 @@ router.post('/set-role', authMiddleware, async (req, res) => {
     }
 
     const target = await prisma.user.findUnique({ where: { id: userId } });
-    if (!target || target.clubId !== requester.clubId) {
-      return res.status(400).json({ error: 'User is not a member of this club' });
+    if (!target || target.clanId !== requester.clanId) {
+      return res.status(400).json({ error: 'User is not a member of this clan' });
     }
 
     if (role === 'deputy') {
       const deputyCount = await prisma.user.count({
-        where: { clubId: requester.clubId, clubRole: 'deputy' },
+        where: { clanId: requester.clanId, clanRole: 'deputy' },
       });
       if (deputyCount >= 3) {
         return res.status(400).json({ error: 'Maximum 3 deputies allowed' });
@@ -306,10 +306,10 @@ router.post('/set-role', authMiddleware, async (req, res) => {
 
     await prisma.user.update({
       where: { id: userId },
-      data: { clubRole: role },
+      data: { clanRole: role },
     });
 
-    createClanEvent(requester.clubId, 'role_change', req.userId, userId, { role });
+    createClanEvent(requester.clanId, 'role_change', req.userId, userId, { role });
 
     res.json({ data: { userId, role } });
   } catch (err) {
@@ -318,7 +318,7 @@ router.post('/set-role', authMiddleware, async (req, res) => {
   }
 });
 
-// POST /v1/club/transfer-ownership
+// POST /v1/clan/transfer-ownership
 router.post('/transfer-ownership', authMiddleware, async (req, res) => {
   try {
     const { newOwnerId } = req.body;
@@ -328,13 +328,13 @@ router.post('/transfer-ownership', authMiddleware, async (req, res) => {
     }
 
     const requester = await prisma.user.findUnique({ where: { id: req.userId } });
-    if (!requester.clubId) {
-      return res.status(400).json({ error: 'You are not in a club' });
+    if (!requester.clanId) {
+      return res.status(400).json({ error: 'You are not in a clan' });
     }
 
-    const club = await prisma.club.findUnique({ where: { id: requester.clubId } });
-    if (club.ownerId !== req.userId) {
-      return res.status(403).json({ error: 'Only club owner can transfer ownership' });
+    const clan = await prisma.clan.findUnique({ where: { id: requester.clanId } });
+    if (clan.ownerId !== req.userId) {
+      return res.status(403).json({ error: 'Only clan owner can transfer ownership' });
     }
 
     if (newOwnerId === req.userId) {
@@ -342,28 +342,28 @@ router.post('/transfer-ownership', authMiddleware, async (req, res) => {
     }
 
     const target = await prisma.user.findUnique({ where: { id: newOwnerId } });
-    if (!target || target.clubId !== requester.clubId) {
-      return res.status(400).json({ error: 'User is not a member of this club' });
+    if (!target || target.clanId !== requester.clanId) {
+      return res.status(400).json({ error: 'User is not a member of this clan' });
     }
 
     // Determine old owner's new role
     const deputyCount = await prisma.user.count({
-      where: { clubId: requester.clubId, clubRole: 'deputy' },
+      where: { clanId: requester.clanId, clanRole: 'deputy' },
     });
     const oldOwnerRole = deputyCount < 3 ? 'deputy' : 'member';
 
     await prisma.$transaction([
-      prisma.club.update({
-        where: { id: requester.clubId },
+      prisma.clan.update({
+        where: { id: requester.clanId },
         data: { ownerId: newOwnerId },
       }),
       prisma.user.update({
         where: { id: newOwnerId },
-        data: { clubRole: 'owner' },
+        data: { clanRole: 'owner' },
       }),
       prisma.user.update({
         where: { id: req.userId },
-        data: { clubRole: oldOwnerRole },
+        data: { clanRole: oldOwnerRole },
       }),
     ]);
 
@@ -374,7 +374,7 @@ router.post('/transfer-ownership', authMiddleware, async (req, res) => {
   }
 });
 
-// POST /v1/club/kick
+// POST /v1/clan/kick
 router.post('/kick', authMiddleware, async (req, res) => {
   try {
     const { userId } = req.body;
@@ -388,39 +388,39 @@ router.post('/kick', authMiddleware, async (req, res) => {
     }
 
     const requester = await prisma.user.findUnique({ where: { id: req.userId } });
-    if (!requester.clubId) {
-      return res.status(400).json({ error: 'You are not in a club' });
+    if (!requester.clanId) {
+      return res.status(400).json({ error: 'You are not in a clan' });
     }
 
-    const club = await prisma.club.findUnique({ where: { id: requester.clubId } });
-    const isOwner = club.ownerId === req.userId;
-    const isDeputy = requester.clubRole === 'deputy';
+    const clan = await prisma.clan.findUnique({ where: { id: requester.clanId } });
+    const isOwner = clan.ownerId === req.userId;
+    const isDeputy = requester.clanRole === 'deputy';
 
     if (!isOwner && !isDeputy) {
       return res.status(403).json({ error: 'Only owner or deputy can kick members' });
     }
 
     const target = await prisma.user.findUnique({ where: { id: userId } });
-    if (!target || target.clubId !== requester.clubId) {
-      return res.status(400).json({ error: 'User is not a member of this club' });
+    if (!target || target.clanId !== requester.clanId) {
+      return res.status(400).json({ error: 'User is not a member of this clan' });
     }
 
     // Deputies can only kick regular members
-    if (isDeputy && target.clubRole !== 'member') {
+    if (isDeputy && target.clanRole !== 'member') {
       return res.status(403).json({ error: 'Deputies can only kick regular members' });
     }
 
     // Owner cannot be kicked
-    if (target.clubRole === 'owner') {
-      return res.status(403).json({ error: 'Cannot kick the club owner' });
+    if (target.clanRole === 'owner') {
+      return res.status(403).json({ error: 'Cannot kick the clan owner' });
     }
 
     await prisma.user.update({
       where: { id: userId },
-      data: { clubId: null, clubRole: null },
+      data: { clanId: null, clanRole: null },
     });
 
-    createClanEvent(requester.clubId, 'member_kick', req.userId, userId);
+    createClanEvent(requester.clanId, 'member_kick', req.userId, userId);
 
     res.json({ data: { kickedUserId: userId } });
   } catch (err) {
@@ -429,7 +429,7 @@ router.post('/kick', authMiddleware, async (req, res) => {
   }
 });
 
-// POST /v1/club/invite
+// POST /v1/clan/invite
 router.post('/invite', authMiddleware, async (req, res) => {
   try {
     const { userId } = req.body;
@@ -439,29 +439,29 @@ router.post('/invite', authMiddleware, async (req, res) => {
     }
 
     const requester = await prisma.user.findUnique({ where: { id: req.userId } });
-    if (!requester.clubId) {
-      return res.status(400).json({ error: 'You are not in a club' });
+    if (!requester.clanId) {
+      return res.status(400).json({ error: 'You are not in a clan' });
     }
 
-    if (!['owner', 'deputy'].includes(requester.clubRole)) {
+    if (!['owner', 'deputy'].includes(requester.clanRole)) {
       return res.status(403).json({ error: 'Only owner or deputy can invite' });
     }
 
-    const club = await prisma.club.findUnique({
-      where: { id: requester.clubId },
+    const clan = await prisma.clan.findUnique({
+      where: { id: requester.clanId },
       include: { _count: { select: { members: true } } },
     });
 
-    if (club._count.members >= club.maxMembers) {
-      return res.status(400).json({ error: 'Club is full' });
+    if (clan._count.members >= clan.maxMembers) {
+      return res.status(400).json({ error: 'Clan is full' });
     }
 
     const target = await prisma.user.findUnique({ where: { id: userId } });
     if (!target) {
       return res.status(404).json({ error: 'User not found' });
     }
-    if (target.clubId) {
-      return res.status(400).json({ error: 'User already in a club' });
+    if (target.clanId) {
+      return res.status(400).json({ error: 'User already in a clan' });
     }
 
     // Check friendship
@@ -477,10 +477,10 @@ router.post('/invite', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'User is not your friend' });
     }
 
-    // Expire any stale pending invites for this user+club
-    await prisma.clubInvite.updateMany({
+    // Expire any stale pending invites for this user+clan
+    await prisma.clanInvite.updateMany({
       where: {
-        clubId: club.id,
+        clanId: clan.id,
         inviteeId: userId,
         status: 'pending',
         expiresAt: { lt: new Date() },
@@ -489,9 +489,9 @@ router.post('/invite', authMiddleware, async (req, res) => {
     });
 
     // Check for existing pending invite
-    const existingInvite = await prisma.clubInvite.findFirst({
+    const existingInvite = await prisma.clanInvite.findFirst({
       where: {
-        clubId: club.id,
+        clanId: clan.id,
         inviteeId: userId,
         status: 'pending',
         expiresAt: { gt: new Date() },
@@ -503,9 +503,9 @@ router.post('/invite', authMiddleware, async (req, res) => {
 
     // Create persistent invite (48h expiry)
     const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
-    const invite = await prisma.clubInvite.create({
+    const invite = await prisma.clanInvite.create({
       data: {
-        clubId: club.id,
+        clanId: clan.id,
         inviterId: req.userId,
         inviteeId: userId,
         expiresAt,
@@ -517,26 +517,26 @@ router.post('/invite', authMiddleware, async (req, res) => {
     const inviterName = requester.name || requester.login || 'Player';
 
     sendToUser(userId, {
-      type: 'club_invite',
+      type: 'clan_invite',
       inviteId: invite.id,
-      clubId: club.id,
-      clubName: club.name,
+      clanId: clan.id,
+      clanName: clan.name,
       inviterId: req.userId,
       inviterName,
     });
 
     res.json({ data: { invited: userId, inviteId: invite.id } });
   } catch (err) {
-    console.error('Club invite error:', err);
+    console.error('Clan invite error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// GET /v1/club/invites — get pending invites for current user
+// GET /v1/clan/invites — get pending invites for current user
 router.get('/invites', authMiddleware, async (req, res) => {
   try {
     // Expire stale invites first
-    await prisma.clubInvite.updateMany({
+    await prisma.clanInvite.updateMany({
       where: {
         inviteeId: req.userId,
         status: 'pending',
@@ -545,14 +545,14 @@ router.get('/invites', authMiddleware, async (req, res) => {
       data: { status: 'expired' },
     });
 
-    const invites = await prisma.clubInvite.findMany({
+    const invites = await prisma.clanInvite.findMany({
       where: {
         inviteeId: req.userId,
         status: 'pending',
         expiresAt: { gt: new Date() },
       },
       include: {
-        club: { select: { id: true, name: true, avatarUrl: true } },
+        clan: { select: { id: true, name: true, avatarUrl: true } },
         inviter: { select: { id: true, name: true, login: true } },
       },
       orderBy: { createdAt: 'desc' },
@@ -561,9 +561,9 @@ router.get('/invites', authMiddleware, async (req, res) => {
     res.json({
       data: invites.map(inv => ({
         id: inv.id,
-        clubId: inv.club.id,
-        clubName: inv.club.name,
-        clubAvatarUrl: inv.club.avatarUrl,
+        clanId: inv.clan.id,
+        clanName: inv.clan.name,
+        clanAvatarUrl: inv.clan.avatarUrl,
         inviterId: inv.inviter.id,
         inviterName: inv.inviter.name || inv.inviter.login || 'Player',
         createdAt: inv.createdAt.toISOString(),
@@ -576,7 +576,7 @@ router.get('/invites', authMiddleware, async (req, res) => {
   }
 });
 
-// POST /v1/club/invite/respond — accept or decline an invite
+// POST /v1/clan/invite/respond — accept or decline an invite
 router.post('/invite/respond', authMiddleware, async (req, res) => {
   try {
     const { inviteId, action } = req.body;
@@ -585,9 +585,9 @@ router.post('/invite/respond', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'inviteId and action (accept/decline) required' });
     }
 
-    const invite = await prisma.clubInvite.findUnique({
+    const invite = await prisma.clanInvite.findUnique({
       where: { id: inviteId },
-      include: { club: { include: { _count: { select: { members: true } } } } },
+      include: { clan: { include: { _count: { select: { members: true } } } } },
     });
 
     if (!invite || invite.inviteeId !== req.userId) {
@@ -599,39 +599,39 @@ router.post('/invite/respond', authMiddleware, async (req, res) => {
     }
 
     if (invite.expiresAt < new Date()) {
-      await prisma.clubInvite.update({ where: { id: inviteId }, data: { status: 'expired' } });
+      await prisma.clanInvite.update({ where: { id: inviteId }, data: { status: 'expired' } });
       return res.status(400).json({ error: 'Invite expired' });
     }
 
     if (action === 'decline') {
-      await prisma.clubInvite.update({ where: { id: inviteId }, data: { status: 'declined' } });
+      await prisma.clanInvite.update({ where: { id: inviteId }, data: { status: 'declined' } });
       return res.json({ data: { status: 'declined' } });
     }
 
     // Accept — validate and join
     const user = await prisma.user.findUnique({ where: { id: req.userId } });
-    if (user.clubId) {
-      return res.status(400).json({ error: 'Already in a club' });
+    if (user.clanId) {
+      return res.status(400).json({ error: 'Already in a clan' });
     }
 
-    if (invite.club._count.members >= invite.club.maxMembers) {
-      return res.status(400).json({ error: 'Club is full' });
+    if (invite.clan._count.members >= invite.clan.maxMembers) {
+      return res.status(400).json({ error: 'Clan is full' });
     }
 
     await prisma.$transaction([
-      prisma.clubInvite.update({ where: { id: inviteId }, data: { status: 'accepted' } }),
+      prisma.clanInvite.update({ where: { id: inviteId }, data: { status: 'accepted' } }),
       prisma.user.update({
         where: { id: req.userId },
-        data: { clubId: invite.clubId, clubRole: 'member' },
+        data: { clanId: invite.clanId, clanRole: 'member' },
       }),
     ]);
 
-    // Award PROJECT_MAYHEM achievement for joining a club
+    // Award PROJECT_MAYHEM achievement for joining a clan
     awardAchievement(prisma, req.userId, 'PROJECT_MAYHEM').catch(() => {});
-    createClanEvent(invite.clubId, 'member_join', req.userId);
+    createClanEvent(invite.clanId, 'member_join', req.userId);
 
-    const fullClub = await prisma.club.findUnique({
-      where: { id: invite.clubId },
+    const fullClan = await prisma.clan.findUnique({
+      where: { id: invite.clanId },
       include: { _count: { select: { members: true } } },
     });
 
@@ -639,33 +639,33 @@ router.post('/invite/respond', authMiddleware, async (req, res) => {
     const { sendToUser } = require('../websocket/handler');
     const acceptorName = user.name || user.login || 'Player';
     sendToUser(invite.inviterId, {
-      type: 'club_invite_accepted',
+      type: 'clan_invite_accepted',
       acceptedBy: req.userId,
       acceptedByName: acceptorName,
-      clubId: invite.clubId,
+      clanId: invite.clanId,
     });
 
-    res.json({ data: formatClubResponse(fullClub) });
+    res.json({ data: formatClubResponse(fullClan) });
   } catch (err) {
     console.error('Invite respond error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// GET /v1/club/:clubId/events
-router.get('/:clubId/events', authMiddleware, async (req, res) => {
+// GET /v1/clan/:clanId/events
+router.get('/:clanId/events', authMiddleware, async (req, res) => {
   try {
-    const { clubId } = req.params;
+    const { clanId } = req.params;
     const limit = Math.min(parseInt(req.query.limit) || 30, 50);
     const before = req.query.before ? new Date(req.query.before) : null;
 
     // Access check: only clan members
     const user = await prisma.user.findUnique({ where: { id: req.userId } });
-    if (user.clubId !== clubId) {
+    if (user.clanId !== clanId) {
       return res.status(403).json({ error: 'Only clan members can view events' });
     }
 
-    const where = { clubId };
+    const where = { clanId };
     if (before) {
       where.createdAt = { lt: before };
     }
@@ -675,7 +675,7 @@ router.get('/:clubId/events', authMiddleware, async (req, res) => {
       orderBy: { createdAt: 'desc' },
       take: limit,
       include: {
-        club: false,
+        clan: false,
       },
     });
 
@@ -710,35 +710,35 @@ router.get('/:clubId/events', authMiddleware, async (req, res) => {
   }
 });
 
-// DELETE /v1/club
+// DELETE /v1/clan
 router.delete('/', authMiddleware, async (req, res) => {
   try {
     const requester = await prisma.user.findUnique({ where: { id: req.userId } });
-    if (!requester.clubId) {
-      return res.status(400).json({ error: 'You are not in a club' });
+    if (!requester.clanId) {
+      return res.status(400).json({ error: 'You are not in a clan' });
     }
 
-    const club = await prisma.club.findUnique({ where: { id: requester.clubId } });
-    if (club.ownerId !== req.userId) {
-      return res.status(403).json({ error: 'Only club owner can dissolve the club' });
+    const clan = await prisma.clan.findUnique({ where: { id: requester.clanId } });
+    if (clan.ownerId !== req.userId) {
+      return res.status(403).json({ error: 'Only clan owner can dissolve the clan' });
     }
 
     await prisma.$transaction([
-      prisma.clubInvite.deleteMany({
-        where: { clubId: club.id },
+      prisma.clanInvite.deleteMany({
+        where: { clanId: clan.id },
       }),
       prisma.user.updateMany({
-        where: { clubId: club.id },
-        data: { clubId: null, clubRole: null },
+        where: { clanId: clan.id },
+        data: { clanId: null, clanRole: null },
       }),
-      prisma.club.delete({
-        where: { id: club.id },
+      prisma.clan.delete({
+        where: { id: clan.id },
       }),
     ]);
 
     res.json({ data: { success: true } });
   } catch (err) {
-    console.error('Delete club error:', err);
+    console.error('Delete clan error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

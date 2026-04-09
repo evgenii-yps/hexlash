@@ -13,7 +13,7 @@ const { startScheduler, stopScheduler } = require('./services/agentScheduler');
 // Routes
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
-const clubRoutes = require('./routes/club');
+const clanRoutes = require('./routes/clan');
 const taskRoutes = require('./routes/task');
 const fileRoutes = require('./routes/file');
 const fightRoutes = require('./routes/fight');
@@ -77,7 +77,7 @@ app.get('/health', (req, res) => {
 // API Routes (all under /v1)
 app.use('/v1/auth', authRoutes);
 app.use('/v1/user', userRoutes);
-app.use('/v1/club', clubRoutes);
+app.use('/v1/clan', clanRoutes);
 app.use('/v1/task', taskRoutes);
 app.use('/v1/file', fileRoutes);
 app.use('/v1/fight', fightRoutes);

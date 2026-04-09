@@ -63,15 +63,15 @@ model User {
 
   inviteId        String?  @unique @default(uuid())
 
-  clubId          String?
-  clubRole        String?  // "owner", "deputy", "member"
-  club            Club?    @relation(fields: [clubId], references: [id])
+  clanId          String?
+  clanRole        String?  // "owner", "deputy", "member"
+  clan            Clan?    @relation(fields: [clanId], references: [id])
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
   achievements    UserAchievement[]
-  ownedClubs      Club[]            @relation("ClubOwner")
+  ownedClans      Clan[]            @relation("ClanOwner")
   socialTasks     UserSocialTask[]
   dailyTasks      UserDailyTask[]
   punchInfo       PunchInfo?
@@ -84,19 +84,19 @@ model User {
   receivedFriendRequests FriendRequest[] @relation("ReceivedRequests")
   friendships1           Friendship[]    @relation("Friendships1")
   friendships2           Friendship[]    @relation("Friendships2")
-  sentClubInvites        ClubInvite[]    @relation("SentClubInvites")
-  receivedClubInvites    ClubInvite[]    @relation("ReceivedClubInvites")
+  sentClanInvites        ClanInvite[]    @relation("SentClanInvites")
+  receivedClanInvites    ClanInvite[]    @relation("ReceivedClanInvites")
   agents                 Agent[]
   fightClub              FightClub?
 }
 
-model Club {
+model Clan {
   id          String       @id @default(uuid())
   name        String
   description String       @default("")
   avatarUrl   String       @default("")
   ownerId     String
-  owner       User         @relation("ClubOwner", fields: [ownerId], references: [id])
+  owner       User         @relation("ClanOwner", fields: [ownerId], references: [id])
   balance     Int          @default(0)
   battles     Int          @default(0)
   wins        Int          @default(0)
@@ -105,7 +105,7 @@ model Club {
   isPublic    Boolean      @default(true)
   maxMembers  Int          @default(20)
   members     User[]
-  invites     ClubInvite[]
+  invites     ClanInvite[]
   events      ClanEvent[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
@@ -113,30 +113,30 @@ model Club {
 
 model ClanEvent {
   id        String   @id @default(uuid())
-  clubId    String
-  club      Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  clanId    String
+  clan      Clan     @relation(fields: [clanId], references: [id], onDelete: Cascade)
   type      String   // fight_win, fight_lose, fight_draw, member_join, member_leave, member_kick, role_change, level_up
   actorId   String?
   targetId  String?
   data      Json?
   createdAt DateTime @default(now())
 
-  @@index([clubId, createdAt])
+  @@index([clanId, createdAt])
 }
 
-model ClubInvite {
+model ClanInvite {
   id         String   @id @default(uuid())
-  clubId     String
-  club       Club     @relation(fields: [clubId], references: [id])
+  clanId     String
+  clan       Clan     @relation(fields: [clanId], references: [id])
   inviterId  String
-  inviter    User     @relation("SentClubInvites", fields: [inviterId], references: [id])
+  inviter    User     @relation("SentClanInvites", fields: [inviterId], references: [id])
   inviteeId  String
-  invitee    User     @relation("ReceivedClubInvites", fields: [inviteeId], references: [id])
+  invitee    User     @relation("ReceivedClanInvites", fields: [inviteeId], references: [id])
   status     String   @default("pending") // pending, accepted, declined, expired
   createdAt  DateTime @default(now())
   expiresAt  DateTime
 
-  @@unique([clubId, inviteeId, status])
+  @@unique([clanId, inviteeId, status])
   @@index([inviteeId, status])
 }
 
