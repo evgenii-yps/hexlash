@@ -322,6 +322,11 @@ model Agent {
   draws            Int       @default(0)
   totalFights      Int       @default(0)
 
+  // Belt System
+  belt             Int       @default(0)      // 0-32 grade
+  qualifiedWins    Int       @default(0)      // wins that count toward belt
+  isHexmaster      Boolean   @default(false)
+
   // Progression
   xp               Int       @default(0)
   level            Int       @default(1)
@@ -350,6 +355,7 @@ model Agent {
   @@index([ownerId])
   @@index([elo])
   @@index([status])
+  @@index([belt])
 }
 
 model AgentTactics {
