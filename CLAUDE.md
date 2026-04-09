@@ -27,7 +27,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
   components/ratings/      — AgentLeaderboard, LeagueBadge
   core/
     state/store.js         — Vuex store
-    state/modules/         — 14 Vuex modules (incl. agentState for Club Mode)
+    state/modules/         — 14 Vuex modules (incl. agentState for Club Mode, clanState for social clans)
     models/                — 20+ data models (internal, ws, etc.)
     services/              — 8 business logic services
     database/              — 7 LocalStorage/IDB repository files
@@ -159,7 +159,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 | `userState` | Current user profile, stats, avatar |
 | `cardFightState` | Active fight: rounds, HP, dice, coach, playerModules, localStorage persist |
 | `progressionState` | Moves unlocked/levels, taps, XP per branch, server sync (PUT /user/progression) |
-| `clubState` | Club info, members, balance, roles (set-role, transfer-ownership, kick) |
+| `clanState` | Clan info, members, balance, roles (set-role, transfer-ownership, kick). Namespace `clan/`. File: `clanState.js` |
 | `taskState` | Daily + social tasks |
 | `punchState` | Punch/tap rate limiting, cooldown, 2D/3D punch toggle, sound mute toggle |
 | `achievementState` | Achievements list + unlocking |
@@ -514,7 +514,7 @@ Base: `/v1/`
 |-------|------|---------|
 | `/auth` | auth.js | login, signup, reset, telegram. Rate limited: login 5/15min, register 3/hr, telegram 10/15min. Register + telegram accept `referralCode` — rewards both users +500 taps |
 | `/user` | user.js | profile, stats, avatar, achievements, referrals. Skin validated via regex. Delete uses $transaction with cascade. GET /referrals returns referral stats + list |
-| `/club` | club.js | create/edit/delete club, avatar, members, balance, roles (set-role, transfer-ownership, kick, invite), level info. maxMembers=50, roles: owner/deputy/member. DELETE / dissolves club (owner-only, clears all members + invites). Invite: DB-persisted (48h), GET /invites, POST /invite/respond. Events: GET /:clubId/events (members only, cursor pagination) |
+| `/clan` | clan.js | create/edit/delete clan, avatar, members, balance, roles (set-role, transfer-ownership, kick, invite), level info. maxMembers=50, roles: owner/deputy/member. DELETE / dissolves clan (owner-only, clears all members + invites). Invite: DB-persisted (48h), GET /invites, POST /invite/respond. Events: GET /:clanId/events (members only, cursor pagination). **Alias:** `/v1/club` → same router (backward-compat, TODO #P1-rename-3-cleanup). Frontend uses `/v1/clan/*` exclusively. |
 | `/task` | task.js | daily + social tasks |
 | `/file` | file.js | avatar/file upload |
 | `/fight` | fight.js | fight creation, results, history |
@@ -1603,7 +1603,9 @@ Feature flag `X402_ENABLED=false` на проде. On-chain verification = TODO 
 | P1-design-migration | Дизайн-документ миграции | БЛОКИРУЕТ всё | После doc |
 | P1-rename-1 | Prisma migration: Club→Clan + ClubInvite→ClanInvite | | После design |
 | P1-rename-2 | Backend rename: routes, services, config | | После rename-1 |
-| P1-rename-3 | Frontend rename: Vuex, components, переменные | | После rename-2 |
+| P1-rename-3a | Backend alias /v1/club + WS clubId backward-compat | ✅ DONE | После rename-2 |
+| P1-rename-3b | Frontend core: Vuex clan/, clanService, clanRepository, ClanModel, dispatches | ✅ DONE | После rename-3a |
+| P1-rename-3c | Frontend .vue files: rename files/dirs, template bindings, props, CSS, router paths | | После rename-3b |
 | P1-rename-4 | i18n rename: 38 ключей × 11 локалей + Agent→Fighter | | После rename-3 |
 | P1-cleanup | Удаление мёртвого кода (fightStylePreview, nftMintService, HexlashAgents.sol+ABI, clubLevelService.addClubXp) | | После rename-4 |
 | P1-club-name | Add FightClub.name поле + миграция + default из User.login | | После cleanup |
