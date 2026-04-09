@@ -29,7 +29,7 @@ const getters = {
   idleAgents: (state) => state.agents.filter(a => a.status === 'idle'),
   fightingAgents: (state) => state.agents.filter(a => a.status === 'fighting'),
   restingAgents: (state) => state.agents.filter(a => a.status === 'resting'),
-  clubProgress: (state) => state.fightClubLevel,
+  fightClubProgress: (state) => state.fightClubLevel,
 };
 
 const mutations = {
