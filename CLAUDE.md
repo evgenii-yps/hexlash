@@ -24,6 +24,8 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
   views/                   — 21 page-level components (incl. ArenaHubView, FightClubView, CreateAgentView, AgentDetailView)
   components/              — 75+ reusable components
   components/club/         — 7 Club Mode components (AgentRoster, AgentCard, ClubLevelBar, MorningReport, RetirementPanel, SkinPicker, ArchetypeSelector)
+  components/clan/         — 1 Clan social component (ClanInviteNotification)
+  components/fragments/clan/ — 10 Clan social fragments (ClanPageContent, ClanActivityFeed, ClanEdit, ClanStats, ClanAvatar, ClanOwnerAvatar, ClanWithdraw, ClanConfirmModal, CreateClan, MyClanTab)
   components/ratings/      — AgentLeaderboard, LeagueBadge
   core/
     state/store.js         — Vuex store
@@ -142,7 +144,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 | `/training/moves` | MoveTreeView | Yes |
 | `/training/deck` | DeckBuilderView | Yes |
 | `/profile` `/profile/balance` `/profile/wallet` `/profile/account` `/profile/skins` | ProfileView | Yes |
-| `/club/:id` | ClubView | Yes |
+| `/clan/:id` | ClanView | Yes |
 | `/ratings/:type` | RatingsView | Yes |
 | `/user/:userLogin` | ProfileView | Yes |
 | `/friends` | FriendsView | Yes |
@@ -437,7 +439,7 @@ AI_TRAINER_ENABLED = true
 | Preparation | `PreparationView.vue` | `/arena/fight`: action row (Mode + START FIGHT + Friends buttons). Friends button is text-only (no online indicator). "← Arena" switch button in header. Visual System v1.0 compliant: single pink accent (START FIGHT), ModeSelector neutral, AnonymousBalance where needed |
 | Friends | `FriendsView.vue` | Friends list, friend requests, search players. Visual System v1.0 compliant: neutral cards, online indicator hex-success, Accept=green/Decline=danger, Add friend=primary CTA, system sans |
 | Matchmaking | `MatchmakingView.vue` | Real-time PvP matchmaking queue. Opponent Found shows actual fighter skins (from `/images/skins/`). No colored borders. 100dvh support. Visual System v1.0 compliant: neutral spinner in search, OPPONENT FOUND pixel-font (impact), AnonymousBalance for timer/rating/countdown, retry btn = sole pink CTA in timeout |
-| Clan | `ClubView.vue` | Redesigned clan page: header with avatar (64px, --hex-primary border + glow, 12px radius), name (Anonymous font), italic description, meta row (LVL badge, member count), level progress bar (6px gradient fill), stats grid via `ClubStats.vue` (4 cards + win rate bar), owner controls. Visitor view: top-5 members (no action menu), "+ N more members", JOIN/private/full action bar. Visual System v1.0 compliant: neutral header (no pink glow), system sans for names/labels, AnonymousBalance for numbers, success green level progress, 1 pink CTA max (Join/Create), solid bg-card |
+| Clan | `ClanView.vue` | Redesigned clan page: header with avatar (64px, --hex-primary border + glow, 12px radius), name (Anonymous font), italic description, meta row (LVL badge, member count), level progress bar (6px gradient fill), stats grid via `ClanStats.vue` (4 cards + win rate bar), owner controls. Visitor view: top-5 members (no action menu), "+ N more members", JOIN/private/full action bar. Route: `/clan/:id` (redirect from `/club/:id`). Visual System v1.0 compliant. |
 | Spectate | `SpectateView.vue` | Watch live PvP fights. Visual System v1.0 compliant: 0 pink, friend side=hex-victory (green), opponent=hex-action-defense (blue), LIVE dot=hex-defeat (red) with pulse, AnonymousBalance for numbers, system sans for all text |
 | RainView (Auth) | `RainView.vue` | 3D rain scene + auth forms (Login, Signup, Reset, TelegramLogin). Visual System v1.0 compliant: 3D untouched, submit btns = primary CTA per form, links neutral (white via ButtonText), errors hex-danger, InputField shared fix |
 | PageView | `PageView.vue` | Static help/rules pages via v-html from i18n. Visual System v1.0 compliant: 0 full pink, spans/link-hover use hex-primary-light (PINK_DIM), white underlined links, v-html preserved for trusted i18n |
@@ -1605,7 +1607,7 @@ Feature flag `X402_ENABLED=false` на проде. On-chain verification = TODO 
 | P1-rename-2 | Backend rename: routes, services, config | | После rename-1 |
 | P1-rename-3a | Backend alias /v1/club + WS clubId backward-compat | ✅ DONE | После rename-2 |
 | P1-rename-3b | Frontend core: Vuex clan/, clanService, clanRepository, ClanModel, dispatches | ✅ DONE | После rename-3a |
-| P1-rename-3c | Frontend .vue files: rename files/dirs, template bindings, props, CSS, router paths | | После rename-3b |
+| P1-rename-3c | Frontend UI: .vue files, dirs, props, CSS, router /clan/:id, template bindings | ✅ DONE | После rename-3b |
 | P1-rename-4 | i18n rename: 38 ключей × 11 локалей + Agent→Fighter | | После rename-3 |
 | P1-cleanup | Удаление мёртвого кода (fightStylePreview, nftMintService, HexlashAgents.sol+ABI, clubLevelService.addClubXp) | | После rename-4 |
 | P1-club-name | Add FightClub.name поле + миграция + default из User.login | | После cleanup |
