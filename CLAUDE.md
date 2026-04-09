@@ -29,7 +29,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
   components/ratings/      — AgentLeaderboard, LeagueBadge
   core/
     state/store.js         — Vuex store
-    state/modules/         — 14 Vuex modules (incl. agentState for Club Mode, clanState for social clans)
+    state/modules/         — 14 Vuex modules (incl. agentState for Fight Club, clanState for social clans)
     models/                — 20+ data models (internal, ws, etc.)
     services/              — 8 business logic services
     database/              — 7 LocalStorage/IDB repository files
@@ -169,7 +169,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 | `webSocketState` | WS connection, real-time messages |
 | `pvpState` | Real-time PvP matchmaking and fights |
 | `friendsState` | Friends list, friend requests, challenges (WebSocket-based) |
-| `agentState` | Agent roster: CRUD, auto-fight toggle, club level, 30s auto-refresh |
+| `agentState` | Agent roster: CRUD, auto-fight toggle, Fight Club level, 30s auto-refresh |
 
 ---
 
@@ -647,6 +647,19 @@ User, Club, ClubInvite, ClanEvent, FightClub, Achievement, UserAchievement, Soci
 | Prisma singleton | `lib/prisma.js` | Single PrismaClient shared across all 8 backend files (was 9 instances) |
 
 **v-html policy:** Only allowed for trusted i18n content (PageView, ClubView, Getstarted). Forbidden for user/error data.
+
+---
+
+## FightClub Naming Policy
+
+- **Internal (code, Prisma, Vuex, files):** `FightClub` / `fightClub` / `fightClubId`. Единый префикс, исключает путаницу с Clan (social).
+- **User-facing:** "Fight Club" — имя собственное, английскими буквами во всех 11 локалях (как "iPhone").
+- **Technical mode label:** "CLUB MODE" — только рядом с PvE/PvP/Auto как обозначение режима.
+- **Route path:** `/arena/club` — исторически, не меняется.
+- **Route name:** `ArenaFightClub`.
+- **Vuex state:** `fightClubLevel`, `fightClubLevelLoading`, `fightClubProgress`, mutations `SET_FIGHT_CLUB_LEVEL*`, action `fetchFightClubLevel`.
+- **Prisma:** `FightClub` model, `fightClubId` FK on Agent.
+- **FightClub ≠ Clan.** FightClub = Fight Club (агенты, ростер, `/arena/club`). Clan = социальная группа игроков (`/clan/:id`).
 
 ---
 
@@ -1333,7 +1346,7 @@ Free Arena: agent vs agent, random matchmaking, no ELO change, 80% XP. For testi
 
 Frontend for Club Mode agents. See Views table for details.
 
-- `src/core/state/modules/agentState.js` — Vuex module (14th): agents CRUD, club level, detail actions (fetch/update/train/moves/deck/tactics/fights)
+- `src/core/state/modules/agentState.js` — Vuex module (14th): agents CRUD, Fight Club level (`fightClubLevel`, `SET_FIGHT_CLUB_LEVEL`, `fetchFightClubLevel`), detail actions (fetch/update/train/moves/deck/tactics/fights)
 - `src/components/club/` — AgentCard, ClubLevelBar, AgentRoster, MorningReport, SkinPicker, ArchetypeSelector
 - `src/views/CreateAgentView.vue` — 3-step wizard (name+skin → build → confirm)
 - `src/views/AgentDetailView.vue` — 4-tab management (overview, moves, tactics, fights) + edit/deck/delete modals

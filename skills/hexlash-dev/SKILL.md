@@ -110,3 +110,9 @@ Notes: [any warnings, caveats, or follow-up items]
 - CSS: scoped styles, use CSS variables from `colors.css`
 - Naming: camelCase for JS, kebab-case for CSS classes and file names
 - Constants: ALL_CAPS in `constants.js` or `config.js`
+
+## Naming: FightClub vs Clan
+
+- **FightClub** (Fight Club) — агенты, ростер, `/arena/club`, Prisma `FightClub`. Internal: `FightClub`/`fightClub`. User-facing: "Fight Club" (имя собственное во всех локалях).
+- **Clan** (социальная группа) — отдельная сущность. `Clan`/`clan` везде, `/clan/:id`.
+- Не путать. Подробности — CLAUDE.md "FightClub Naming Policy".
