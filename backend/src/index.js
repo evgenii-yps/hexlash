@@ -78,8 +78,6 @@ app.get('/health', (req, res) => {
 app.use('/v1/auth', authRoutes);
 app.use('/v1/user', userRoutes);
 app.use('/v1/clan', clanRoutes);
-// TODO #P1-rename-3-cleanup: remove after frontend rename deployed
-app.use('/v1/club', clanRoutes);
 app.use('/v1/task', taskRoutes);
 app.use('/v1/file', fileRoutes);
 app.use('/v1/fight', fightRoutes);

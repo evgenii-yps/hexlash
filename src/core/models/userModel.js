@@ -107,7 +107,6 @@ export default class UserModel {
     static fromJSON(json) {
         try {
             // Извлекаем данные из JSON
-            // TODO #P1-rename-3-cleanup: remove clubId/clubRole fallback after frontend rename
             const {
                 id,
                 login,
@@ -117,8 +116,8 @@ export default class UserModel {
                 createdAt,
                 updatedAt,
                 balance = 0,
-                clanId, clubId,
-                clanRole, clubRole,
+                clanId,
+                clanRole,
                 walletAddress,
                 totalFights = 0,
                 wins = 0,
@@ -144,8 +143,8 @@ export default class UserModel {
                 createdAt,
                 updatedAt,
                 balance,
-                clanId: clanId || clubId,
-                clanRole: clanRole || clubRole,
+                clanId,
+                clanRole,
                 walletAddress,
                 totalFights,
                 wins,
