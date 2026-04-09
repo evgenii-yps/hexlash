@@ -79,7 +79,7 @@ async function _executeFight(agent, options = {}) {
 
     const bot = generatePveBot(agent.elo);
     const legendBuff = await getFightClubLegendBuff(agent.fightClubId);
-    const fightResult = simulateAgentFight(fighter1, bot, { mode: 'pve_training', legendBuff });
+    const fightResult = simulateAgentFight(fighter1, bot, { mode: 'pve_training', legendBuff1: legendBuff, legendBuff2: null });
 
     // Calculate XP (with legend XP buff)
     const rawXp = BASE_FIGHT_XP[fightResult.result] || BASE_FIGHT_XP.defeat;
