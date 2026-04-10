@@ -510,6 +510,14 @@ export default {
     errMintFailed: 'Mint failed',
     errNoWallet: 'Connect wallet first',
     errSoldOut: 'All Agent NFTs minted',
+    // Captain
+    lblCaptain: 'الكابتن',
+    lblMakeCaptain: 'جعله كابتن',
+    lblCaptainConfirmTitle: 'تغيير الكابتن؟',
+    lblCaptainConfirmMsg: '{name} سيصبح كابتنك الجديد. الكابتن الحالي سيتنحى.',
+    lblCaptainSet: '{name} أصبح كابتنك الآن',
+    lblCaptainProtected: 'لا يمكن حذف الكابتن. عيّن كابتناً آخر أولاً.',
+    lblAgentFighting: 'هذا المقاتل في قتال حالياً ولا يمكن جعله كابتن',
   },
   fight: {
     lblRound: 'الجولة {n}',

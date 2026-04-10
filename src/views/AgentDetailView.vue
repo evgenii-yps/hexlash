@@ -30,6 +30,10 @@
                 <span class="s-draw">D:{{ agent.draws }}</span>
                 <span class="s-wr">({{ winRate }}%)</span>
               </div>
+              <div class="header-captain-row">
+                <span v-if="agent.isCaptain" class="captain-indicator">★ {{ t.club.lblCaptain || 'CAPTAIN' }}</span>
+                <HexButton v-else variant="secondary" size="sm" @click="confirmSetCaptain">{{ t.club.lblMakeCaptain || 'Make Captain' }}</HexButton>
+              </div>
             </div>
             <BeltBadge :grade="agent.belt || 0" :is-hexmaster="agent.isHexmaster || false" size="lg" />
           </div>
@@ -447,6 +451,19 @@ const confirmDelete = async () => {
   }
 };
 
+const confirmSetCaptain = async () => {
+  const name = agent.value?.name || 'this agent';
+  const msg = (t.value.club?.lblCaptainConfirmMsg || '{name} will become your new Captain. Your current Captain will step down.').replace('{name}', name);
+  if (!confirm(t.value.club?.lblCaptainConfirmTitle || msg)) return;
+  try {
+    await store.dispatch('agent/setCaptain', agentId);
+    await store.dispatch('agent/fetchAgent', agentId);
+    store.commit('master/setInfo', { text: (t.value.club?.lblCaptainSet || '{name} is now your Captain').replace('{name}', name) });
+  } catch (err) {
+    store.commit('master/setError', { text: err?.response?.data?.error || 'Failed to set captain' });
+  }
+};
+
 const onFightFilter = (mode) => {
   fightFilter.value = mode;
   store.dispatch('agent/fetchFightHistory', { agentId, mode, offset: 0 });
@@ -495,6 +512,8 @@ onMounted(() => {
 .header-arch { display: flex; gap: 3px; margin-top: 4px; }
 .header-arch-empty { font-size: 11px; color: var(--hex-text-muted); margin-top: 4px; font-style: italic; }
 .header-stats { display: flex; gap: 8px; margin-top: 4px; font-family: 'AnonymousBalance', monospace; font-size: 11px; }
+.header-captain-row { margin-top: 6px; }
+.captain-indicator { font-family: 'Anonymous', monospace; font-size: 12px; color: var(--hex-primary); letter-spacing: 0.5px; }
 .s-win { color: var(--hex-victory); } .s-lose { color: var(--hex-defeat); } .s-draw { color: var(--hex-draw); }
 .s-wr { color: var(--hex-text-muted); }
 .belt-card {

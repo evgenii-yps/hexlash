@@ -20,11 +20,13 @@ const state = {
 
 const getters = {
   agentsList: (state) => [...state.agents].sort((a, b) => {
+    if (a.isCaptain !== b.isCaptain) return a.isCaptain ? -1 : 1;
     if (a.isHexmaster !== b.isHexmaster) return a.isHexmaster ? -1 : 1;
     if (b.belt !== a.belt) return b.belt - a.belt;
     return (b.qualifiedWins || 0) - (a.qualifiedWins || 0);
   }),
   agentById: (state) => (id) => state.agents.find(a => a.id === id),
+  currentCaptain: (state) => state.agents.find(a => a.isCaptain) || null,
   canCreateAgent: (state) => {
     if (!state.fightClubLevel) return false;
     return state.fightClubLevel.currentAgents < state.fightClubLevel.maxAgents;
@@ -103,6 +105,11 @@ const actions = {
   async toggleAutoFight({ commit }, { id, enabled }) {
     const res = await apiClient.put(`/agent/${id}/auto-fight`, { enabled }, { authRequired: true });
     commit('UPDATE_AGENT', { id, autoFight: res.agent.autoFight, status: res.agent.status, nextFightAt: res.agent.nextFightAt });
+  },
+
+  async setCaptain({ dispatch }, agentId) {
+    await apiClient.put(`/agent/${agentId}/captain`, {}, { authRequired: true });
+    await dispatch('fetchAgents');
   },
 
   async refreshAgentStatus({ commit }, id) {

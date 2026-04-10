@@ -519,6 +519,14 @@ export default {
     errMintFailed: 'Ошибка минта',
     errNoWallet: 'Сначала подключите кошелёк',
     errSoldOut: 'Все Agent NFT разобраны',
+    // Captain
+    lblCaptain: 'КАПИТАН',
+    lblMakeCaptain: 'Сделать капитаном',
+    lblCaptainConfirmTitle: 'Сменить капитана?',
+    lblCaptainConfirmMsg: '{name} станет вашим новым капитаном. Текущий капитан сложит полномочия.',
+    lblCaptainSet: '{name} теперь ваш капитан',
+    lblCaptainProtected: 'Нельзя удалить капитана. Сначала назначьте другого капитана.',
+    lblAgentFighting: 'Этот боец сейчас в бою и не может стать капитаном',
   },
   fight: {
     lblRound: 'Раунд {n}',

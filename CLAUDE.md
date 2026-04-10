@@ -169,7 +169,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 | `webSocketState` | WS connection, real-time messages |
 | `pvpState` | Real-time PvP matchmaking and fights |
 | `friendsState` | Friends list, friend requests, challenges (WebSocket-based) |
-| `agentState` | Agent roster: CRUD, auto-fight toggle, Fight Club level, 30s auto-refresh. `agentsList` sorted by isHexmaster → belt → qualifiedWins |
+| `agentState` | Agent roster: CRUD, auto-fight toggle, Fight Club level, 30s auto-refresh. `agentsList` sorted by isCaptain → isHexmaster → belt → qualifiedWins. Getter `currentCaptain`. Action `setCaptain`. |
 
 ---
 
@@ -209,7 +209,9 @@ unlockRequirements:  { 3: {taps:300, exp:150}, 4: {taps:250, exp:120}, 5: {taps:
 
 **Backend:** `beltService.js` (isQualifyingWin, calculateBelt, checkHexmaster, applyWin). Belt updated atomically in same $transaction as fight stats.
 
-**Agent fields:** `belt` (Int, 0-32), `qualifiedWins` (Int), `isHexmaster` (Boolean). Backfill script: `backend/scripts/backfill-belts.js`.
+**Agent fields:** `belt` (Int, 0-32), `qualifiedWins` (Int), `isHexmaster` (Boolean), `isCaptain` (Boolean). Backfill scripts: `backend/scripts/backfill-belts.js`, `backend/scripts/backfill-captains.js`.
+
+**Captain:** One Agent per FightClub with `isCaptain=true`. PvP representative. Atomic swap via `captainService.setCaptain()`. Cannot delete captain if other agents exist. `PUT /v1/agent/:id/captain` endpoint. Migration creates Fighter #1 as captain.
 
 ---
 
@@ -1652,7 +1654,7 @@ Feature flag `X402_ENABLED=false` на проде. On-chain verification = TODO 
 | P1-belt-4a | Замена ELO→Belt в AI services (механическая) | | После belt-2 |
 | P1-belt-4b | Redesign AI prompts под Belt semantics | | После belt-4a |
 | P1-migration | Миграция User.progression → Fighter №1 + hide retirement UI | ✅ DONE | После belt-1 |
-| P1-captain-1 | Captain как поле + базовая логика + создание из Fighter №1 | | После migration |
+| P1-captain-1 | Captain как поле + базовая логика + создание из Fighter №1 | ✅ DONE | После migration |
 | P1-captain-2 | Adapt Arena flow под Captain | | После captain-1 |
 | P1-captain-3 | Adapt Profile/Ratings под Captain | | Параллельно с captain-2 |
 
