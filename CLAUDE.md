@@ -213,6 +213,10 @@ unlockRequirements:  { 3: {taps:300, exp:150}, 4: {taps:250, exp:120}, 5: {taps:
 
 **Captain:** One Agent per FightClub with `isCaptain=true`. PvP representative. Atomic swap via `captainService.setCaptain()`. Cannot delete captain if other agents exist. `PUT /v1/agent/:id/captain` endpoint. Migration creates Fighter #1 as captain.
 
+**Captain in Arena:** After #P1-captain-2, PvE and PvP fights use Captain Agent data (deck, moves, modules, skin, ELO). User stats (pveWins, pvpWins, rating) are frozen legacy — no longer updated. Belt progression applies to Captain Agent. `progressionState` is trainer-only (TrainingView, MoveTree, DeckBuilder).
+
+**Captain in Public UI:** After #P1-captain-3, all public views show `UserCaptainBadge` (BeltBadge + captain name) instead of User.rating. API responses include `captain` sub-object via `getCaptainPublicInfo`/`getCaptainsForUsers` (bulk, no N+1). ProfileView has two layers: Trainer (User) + Captain (Agent).
+
 ---
 
 ## Design System — "Neon Discipline"
@@ -496,6 +500,7 @@ AI_TRAINER_ENABLED = true
 - `HexProgress.vue` — Progress bar with 3 variants: hp (auto green>60%/yellow>30%/red), branch (speed/power/technique colors), generic. Props: label, showValue, showPercent. 3 sizes.
 - `HexBadge.vue` — Pill badge with 5 variants: archetype, branch, status (victory/defeat/draw/info), counter (auto circle<10/pill≥10), custom. Props: icon (PixelIcon), pulse animation.
 - `BeltBadge.vue` — SVG belt badge for 33 grades + Hexmaster. Line-style: rect body, buckle, stripes. 3 sizes: sm (16×6), md (40×14), lg (120×40). Hexmaster pulse glow md/lg, static glow sm. Props: grade (0-32), isHexmaster, size. CSS vars: `--hex-belt-*`. Stripes hidden on sm. White/black enhanced outlines.
+- `UserCaptainBadge.vue` — Composite badge: BeltBadge + optional captain name. Sizes xs/sm/md. Shows "—" when no captain. Used in FriendCard, PlayerSearchResult, ChallengeNotification, RatingsView Players tab, MatchmakingView.
 
 **Navigation & Layout:**
 - `Logo.vue` — header logo (Anonymous font, --hex-primary color + glow). Visual System v1.0 compliant: pixel-font for brand, subtle glow, --hex-text-primary
@@ -1656,7 +1661,7 @@ Feature flag `X402_ENABLED=false` на проде. On-chain verification = TODO 
 | P1-migration | Миграция User.progression → Fighter №1 + hide retirement UI | ✅ DONE | После belt-1 |
 | P1-captain-1 | Captain как поле + базовая логика + создание из Fighter №1 | ✅ DONE | После migration |
 | P1-captain-2 | Adapt Arena flow под Captain | ✅ DONE | После captain-1 |
-| P1-captain-3 | Adapt Profile/Ratings под Captain | | Параллельно с captain-2 |
+| P1-captain-3 | Adapt Profile/Ratings под Captain | ✅ DONE | Параллельно с captain-2 |
 
 ### P1-migration — User → Fighter #1 — ✅ COMPLETE
 
