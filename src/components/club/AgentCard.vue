@@ -17,7 +17,7 @@
             <span class="stat-draw">D:{{ agent.draws }}</span>
           </div>
         </div>
-        <div class="agent-elo" :class="eloClass">{{ agent.elo }}</div>
+        <BeltBadge :grade="agent.belt || 0" :is-hexmaster="agent.isHexmaster || false" size="md" />
       </div>
 
       <div class="agent-card-bottom">
@@ -41,21 +41,16 @@ import { computed } from 'vue'
 import { t } from '@/locales/index.js'
 import HexCard from '@/components/ui/HexCard.vue'
 import HexBadge from '@/components/ui/HexBadge.vue'
+import BeltBadge from '@/components/ui/BeltBadge.vue'
 
 export default {
   name: 'AgentCard',
-  components: { HexCard, HexBadge },
+  components: { HexCard, HexBadge, BeltBadge },
   props: {
     agent: { type: Object, required: true },
   },
   emits: ['click', 'toggle-auto'],
   setup(props) {
-    const eloClass = computed(() => {
-      if (props.agent.elo < 900) return 'elo-low';
-      if (props.agent.elo > 1100) return 'elo-high';
-      return 'elo-mid';
-    });
-
     const restingText = computed(() => {
       if (!props.agent.nextFightAt) return t.value.club.lblResting || 'Resting';
       const diff = new Date(props.agent.nextFightAt).getTime() - Date.now();
@@ -69,7 +64,7 @@ export default {
       return name.slice(0, 3).toUpperCase();
     };
 
-    return { t, eloClass, restingText, shortArch };
+    return { t, restingText, shortArch };
   },
 };
 </script>
@@ -129,17 +124,6 @@ export default {
 .stat-win { color: var(--hex-victory); }
 .stat-lose { color: var(--hex-defeat); }
 .stat-draw { color: var(--hex-draw); }
-
-.agent-elo {
-  font-family: 'AnonymousBalance', monospace;
-  font-size: 22px;
-  font-weight: bold;
-  flex-shrink: 0;
-  margin-left: auto;
-}
-.elo-low { color: var(--hex-defeat); }
-.elo-mid { color: var(--hex-text-secondary); }
-.elo-high { color: var(--hex-victory); }
 
 .agent-card-bottom {
   margin-top: 12px;
