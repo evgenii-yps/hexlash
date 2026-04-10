@@ -109,12 +109,45 @@ function getNextThreshold(qualifiedWins, currentGrade) {
   };
 }
 
+/**
+ * Applies belt progression for a winning agent.
+ * Pure function — caller is responsible for persisting.
+ * @param {{ belt: number, qualifiedWins: number, isHexmaster: boolean }} agent
+ * @param {number|null} opponentBelt - opponent belt at fight time (null = PvE bot)
+ * @returns {{ belt: number, qualifiedWins: number, isHexmaster: boolean, beltChanged: boolean, hexmasterUnlocked: boolean, qualified: boolean }}
+ */
+function applyWin(agent, opponentBelt) {
+  const qualified = isQualifyingWin(agent.belt, opponentBelt);
+  if (!qualified) {
+    return {
+      belt: agent.belt,
+      qualifiedWins: agent.qualifiedWins,
+      isHexmaster: agent.isHexmaster,
+      beltChanged: false,
+      hexmasterUnlocked: false,
+      qualified: false,
+    };
+  }
+  const newQualifiedWins = agent.qualifiedWins + 1;
+  const newBelt = calculateBelt(newQualifiedWins);
+  const newHexmaster = agent.isHexmaster || checkHexmaster(newQualifiedWins);
+  return {
+    belt: newBelt,
+    qualifiedWins: newQualifiedWins,
+    isHexmaster: newHexmaster,
+    beltChanged: newBelt !== agent.belt,
+    hexmasterUnlocked: newHexmaster && !agent.isHexmaster,
+    qualified: true,
+  };
+}
+
 module.exports = {
   isQualifyingWin,
   calculateBelt,
   checkHexmaster,
   getBeltDisplay,
   getNextThreshold,
+  applyWin,
   BELT_THRESHOLDS,
   HEXMASTER_THRESHOLD,
   QUALITY_FILTER_GRADE,
