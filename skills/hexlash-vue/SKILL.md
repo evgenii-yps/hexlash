@@ -8,7 +8,7 @@ description: Фронтенд-конвенции проекта Hexlash. Три�
 ## Стек и версии
 
 - **Vue 3.5** — преимущественно Options API, Composition API допускается для новых сложных компонентов
-- **Vuex 4** — глобальный store, 14 модулей
+- **Vuex 4** — глобальный store, 13 модулей
 - **Vue Router 4** — auth guards, восстановление состояния боя
 - **Vuetify 2** — частично используется (`<v-img>`, `<v-btn>` в легаси), новые компоненты — без Vuetify
 - **Vite 7** — dev server на :5173, build с обфускацией + Brotli + image optimization
@@ -54,7 +54,7 @@ description: Фронтенд-конвенции проекта Hexlash. Три�
 
 Store: `/src/core/state/store.js`, модули в `/src/core/state/modules/`.
 
-### 14 модулей
+### 13 модулей
 
 | Модуль | Назначение |
 |--------|-----------|

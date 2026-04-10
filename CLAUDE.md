@@ -21,7 +21,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
   App.vue                  — Root: header (Logo), router-view, BottomMenu (hidden on PvP screens), Info/Error toasts, ChallengeNotification
   main.js                  — Entry: Vue + Vuetify + i18n + Vuex + WagmiPlugin + VueQueryPlugin init
   router/index.js          — Routes + auth guards + fight state restore
-  views/                   — 21 page-level components (incl. ArenaHubView, FightClubView, CreateAgentView, AgentDetailView)
+  views/                   — 20 page-level components (incl. ArenaHubView, FightClubView, CreateAgentView, AgentDetailView)
   components/              — 75+ reusable components
   components/club/         — 7 Club Mode components (AgentRoster, AgentCard, ClubLevelBar, MorningReport, RetirementPanel, SkinPicker, ArchetypeSelector)
   components/clan/         — 1 Clan social component (ClanInviteNotification)
@@ -29,7 +29,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
   components/ratings/      — AgentLeaderboard
   core/
     state/store.js         — Vuex store
-    state/modules/         — 14 Vuex modules (incl. agentState for Fight Club, clanState for social clans)
+    state/modules/         — 13 Vuex modules (incl. agentState for Fight Club, clanState for social clans)
     models/                — 20+ data models (internal, ws, etc.)
     services/              — 8 business logic services
     database/              — 7 LocalStorage/IDB repository files
@@ -48,7 +48,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
     pixelIcons.js          — 45 pixel icons (16×16 grid, flat array 256 values)
   utils/
     powerRating.js         — Power rating calculations
-    leagues.js             — 6 ELO-based league tiers + getLeague()/getLeagueColor()
+    beltDisplay.js         — Belt display helpers (BELT_THRESHOLDS, getBeltDisplay, getNextThreshold, getBeltProgressPercent)
     fightStylePreview.js   — Template-based fight style description (DEAD CODE — not imported)
   styles/
     hexlash-ui.css         — Design system: CSS variables, component classes, animations
@@ -69,7 +69,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
   src/
     index.js               — Express server + WebSocket on same HTTP server
     config.js              — Constants (PORT, WS_PORT, JWT_SECRET, game balance)
-    routes/                — auth, user, club, task, file, fight, stats, friends, ai, agent
+    routes/                — auth, user, clan, task, file, fight, stats, friends, ai, agent
     middleware/            — auth.js (JWT guard), upload.js (Multer)
     websocket/handler.js   — Real-time message routing + challenge system
     websocket/pvpHandler.js — PvP fight message handling
@@ -153,7 +153,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 
 ---
 
-## Vuex Modules (14)
+## Vuex Modules (13)
 
 | Module | Purpose |
 |--------|---------|
@@ -235,6 +235,8 @@ unlockRequirements:  { 3: {taps:300, exp:150}, 4: {taps:250, exp:120}, 5: {taps:
 | `HexCard` | `HexCard.vue` | 5 variants: default, elevated, archetype (left border), active (tinted bg), result (top border victory/defeat/draw). Slots: header, footer. Padding: none/sm/md/lg. |
 | `HexProgress` | `HexProgress.vue` | Progress bar. 3 variants: hp (auto green/yellow/red by %), branch (speed/power/technique colors), generic. 3 sizes. Props: label, showValue, showPercent. |
 | `HexBadge` | `HexBadge.vue` | Pill badge. 5 variants: archetype, branch, status (victory/defeat/draw/info), counter (circle/pill auto), custom. Props: icon (PixelIcon), pulse animation. |
+| `BeltBadge` | `BeltBadge.vue` | SVG belt badge for 33 grades + Hexmaster. Line-style: rect body, buckle, stripes. 3 sizes: sm (16×6), md (40×14), lg (120×40). Props: grade (0-32), isHexmaster, size. |
+| `UserCaptainBadge` | `UserCaptainBadge.vue` | Composite badge: BeltBadge + optional captain name. Sizes xs/sm/md. Shows "—" when no captain. |
 
 ### Pixel Icons (`/src/data/pixelIcons.js`)
 
@@ -531,7 +533,7 @@ AI_TRAINER_ENABLED = true
 - `BuyTokens.vue` — Token purchase modal. **Temporarily disabled** — not rendered in ProfileWallet, file preserved for Phase 2 (Base contract)
 - `GameBalanceCard.vue` — Game balance display with withdraw button (shows "after listing" message)
 - `ReferralModal.vue` — Referral program modal: QR code (qrcode lib), copy link (clipboard API), share (Web Share API with fallback), referral stats + list. Opens from ProfileView button
-- `ClanPageContent.vue` — Shared clan page content component (header, stats, tabs Members/Activity/Settings, leaderboard with action menu, confirm modals, invite modal). Used by ClubView (member view) and MyClubTab (has-clan state). Props: clubData, clubId. Events: club-left, club-deleted
+- `ClanPageContent.vue` — Shared clan page content component (header, stats, tabs Members/Activity/Settings, leaderboard with action menu, confirm modals, invite modal). Used by ClanView (member view) and MyClubTab (has-clan state). Props: clubData, clubId. Events: club-left, club-deleted
 - `ClanActivityFeed.vue` — Activity feed for clan page. Real data from `GET /v1/club/:clubId/events`. Events grouped by day, color-coded dots (fight_win/lose/draw, member_join/leave/kick, role_change, level_up). Props: clubId. Cursor pagination via "Load more" button. Vuex state in clubState (clanEvents, clanEventsLoading, clanEventsHasMore)
 
 ---
@@ -674,7 +676,7 @@ User, Club, ClubInvite, ClanEvent, FightClub, Achievement, UserAchievement, Soci
 | Cascade delete | `user.js` | `$transaction`: clubs, fights, friends, achievements, tasks, punch |
 | Prisma singleton | `lib/prisma.js` | Single PrismaClient shared across all 8 backend files (was 9 instances) |
 
-**v-html policy:** Only allowed for trusted i18n content (PageView, ClubView, Getstarted). Forbidden for user/error data.
+**v-html policy:** Only allowed for trusted i18n content (PageView, ClanView, Getstarted). Forbidden for user/error data.
 
 ---
 
