@@ -18,7 +18,7 @@ Triggers on any deploy/infra task: pushing to test or prod, env var changes, CI/
 - **Backend hosting:** Node.js Docker container (`backend/Dockerfile`), port 3000. CMD runs `prisma migrate deploy && seed.js && node src/index.js` on every start. Backend CI/CD is NOT in this repo — deployed separately via external GitOps.
 
 ### Prod — hexlash.com
-- **Database:** production PostgreSQL. [UNKNOWN — needs human input: Railway / Supabase / self-hosted? Comment in index.js:104 says "Railway sets this automatically" — likely Railway]
+- **Database:** Railway PostgreSQL (likely — based on `backend/src/index.js:104` comment "Railway sets this automatically" and Phase 1 handoff references). Not fully verified, treat as Railway by default but confirm before any DB operation.
 - **Frontend hosting:** Docker + Nginx via `nginx.prod.conf`. Same CI pipeline as test but deploys to `fc-prod/applications/frontend/WEB-deployment.yaml`
 - **Backend hosting:** [UNKNOWN — needs human input: likely same Docker + Railway pattern as test, but backend workflow not in this repo]
 - **Deploy trigger:** auto from push to `main` branch via same `gitops.yaml` workflow
@@ -122,7 +122,17 @@ Both on backend Express server, used by load balancer / monitoring.
 
 **Build logs:** GitHub Actions UI → "Build and Deploy Frontend" workflow. Docker image tags visible on Docker Hub (`invariant0x/hexlash-frontend`).
 
-**IMPORTANT:** This workflow deploys FRONTEND ONLY. Backend deployment is handled separately (not in this repo).
+**IMPORTANT:** This workflow deploys FRONTEND ONLY.
+
+### Backend deploy (CRITICAL — separate from frontend)
+Backend CI/CD is **NOT in the hexlash repo**. Frontend pushes to `test`/`main` branches trigger frontend-only Docker builds via `.github/workflows/gitops.yaml`.
+
+Backend deploy mechanism: **UNKNOWN — needs clarification from Yura/DevOps**. Likely candidates:
+- Separate `HexLashApp-DevOps` GitOps repo
+- Railway auto-deploy from main
+- Manual SSH/Docker push by DevOps team
+
+**Implication:** a single push to `main` or `test` does NOT redeploy backend. Backend changes (config.js, routes, services) require a separate trigger that is currently undocumented in this skill. Before any rollout that touches backend code, confirm with Yura how to actually push the backend.
 
 ## CORS Configuration
 
@@ -147,6 +157,7 @@ Adding new subdomain requires editing `allowedOrigins` array in `backend/src/ind
 
 ### Migration rollout (Captain series and similar schema/data changes)
 **Pre-flight (CRITICAL):**
+0. **Check current state of target DB** before assuming "fresh start": open `prisma studio` against target `DATABASE_URL`. Check if `Agent` table has any rows with `isCaptain=true` (lazy migration already ran). Check if `User` table has rows where corresponding Agent #1 exists (partial migration state). If state is mixed: STOP. Decide whether to clean up, continue from where lazy left off, or rebuild test DB from prod snapshot.
 1. Confirm `DATABASE_URL` points to TEST DB (not prod) — triple check
 2. Confirm DB backup exists (last 24h)
 3. Confirm `MIGRATION_ENABLED=false` BEFORE deploy (prevents lazy migration race with batch script)
@@ -181,13 +192,15 @@ Obfuscator config (`vite.config.js:58-68`):
 - **DATABASE_URL leak:** copying prod env to test → catastrophic. Always verify URL hostname before any DB operation.
 - **JWT_SECRET missing:** backend exits immediately on startup, no fallback (intentional security hardening). Check logs for crash loop.
 - **MIGRATION_ENABLED race:** if you run `migrate-all-users.js` while `MIGRATION_ENABLED=true`, lazy migration fires on `/me` calls in parallel → unpredictable state. Always: set false → batch run → set true. The script itself forces `MIGRATION_ENABLED=true` internally via `process.env`.
-- **Backend start runs migrations:** both `npm start` and `backend/Dockerfile` CMD execute `prisma migrate deploy && seed.js` on every boot. Seed is idempotent. Migrations are append-only. But be aware: deploying backend ALWAYS applies pending migrations.
+- **`backend/npm start` runs migrate + seed + start** on every backend restart (`npx prisma migrate deploy && node prisma/seed.js && node src/index.js`). Seed is verified idempotent: achievements use `upsert` by type, social/daily tasks use `findFirst + skip if exists`. Safe to restart, no data corruption. But: any future seed additions MUST follow the same pattern, or restarts will duplicate data.
 - **Prisma client out of date:** after schema change, must run `prisma generate` before backend starts, otherwise type errors. `postinstall` hook handles this on `npm install`.
 - **CORS explicit allowlist:** no wildcard `*.vercel.app`. Adding new subdomain requires explicit entry in `backend/src/index.js`.
 - **Body limit 1mb:** uploads larger than 1mb fail on `express.json`. Avatar upload uses Multer (separate middleware) to bypass this.
 - **WebSocket and HTTP share port:** `WS_PORT=444` in config.js is legacy/unused. WebSocket attaches to Express HTTP server. Don't try to expose port 444 separately.
 - **Amplitude key hardcoded:** in `App.vue:201`, not configurable via env. Changing requires code change + redeploy.
 - **Frontend env vars are build-time:** `__API_SERVER_URL__` etc. are baked into JS at build. Changing API URL requires rebuild, not just env var change.
+- **Frontend push ≠ backend deploy.** GH Actions only builds frontend. Backend lives in external GitOps. Pushing to main updates frontend in ~5min, backend could lag or never deploy without explicit action.
+- **`MIGRATION_ENABLED=true` is the silent default.** Any backend instance without explicit `MIGRATION_ENABLED=false` runs lazy migration on every `/me` call. Before any "fresh" rollout, check the actual state of the test DB — partial lazy migration may have already happened.
 
 ## Prisma Database
 
