@@ -31,7 +31,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
     state/store.js         — Vuex store
     state/modules/         — 13 Vuex modules (incl. agentState for Fight Club, clanState for social clans)
     models/                — 20+ data models (internal, ws, etc.)
-    services/              — 8 business logic services
+    services/              — 9 business logic services (clanService, contractService, fightService, masterService, nftMintService, punchService, statsService, taskService, userService)
     database/              — 7 LocalStorage/IDB repository files
     api/apiClient.js       — Axios HTTP client
     engine/                — Combat system (combatEngine, aiStrategy, opponentGenerator)
@@ -74,28 +74,38 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
     websocket/handler.js   — Real-time message routing + challenge system
     websocket/pvpHandler.js — PvP fight message handling
     services/matchmaking.js — PvP matchmaking service
-    services/agentCombatEngine.js — Agent fight simulation (action-based + archetype modifiers)
-    services/agentFightService.js — Agent fight orchestrator (PvE, ranked, free arena)
-    services/agentScheduler.js — Auto-fight scheduler (30s tick)
-    services/eloService.js — ELO rating calculation
-    services/rankedMatchmaker.js — Ranked + free arena matchmaking
-    services/fightClubService.js — Personal FightClub management
+    services/pvpMatchManager.js — PvP match lifecycle management
+    services/pvpCombatEngine.js — PvP combat engine
+    services/agentCombatEngine.js — Agent fight simulation (action-based + archetype modifiers, dice, coach, emergency)
+    services/agentFightService.js — Agent fight orchestrator (PvE training, ranked, free arena, XP distribution)
+    services/agentScheduler.js — Auto-fight scheduler (30s tick, resting/idle cycle, daily limit 50)
+    services/eloService.js — ELO rating calculation (K=32, clamp 100-3000)
+    services/rankedMatchmaker.js — Ranked + free arena matchmaking (ELO range ±200, rematch cooldown)
+    services/fightClubService.js — Personal FightClub management (getOrCreate, addXp, getLegendBuff)
+    services/beltService.js — Belt system (isQualifyingWin, calculateBelt, checkHexmaster, applyWin)
+    services/captainService.js — Captain Agent management (setCaptain, atomic swap)
     services/retirementService.js — Fighter retirement + legend buff
+    services/researchGateService.js — Research Gate: agent move learning based on player progression
     services/morningReportService.js — Claude AI morning report stats + prompts
     services/metaAnalysisService.js — Global meta statistics for premium reports
     services/nftService.js — NFT minting verification (feature flag off)
-    services/pvpMatchManager.js — PvP match lifecycle management
-    services/pvpCombatEngine.js — PvP combat engine
-    services/clubLevelService.js — Club level system (calculateLevel, getLevelInfo, addClubXp, getFightXpReward)
-    services/researchGateService.js — Research Gate: controls agent move learning based on player progression
-    services/agentCombatEngine.js — Agent fight simulation (action-based + archetype modifiers, dice, coach, emergency)
-    services/agentFightService.js — Agent fight orchestrator (PvE training, XP distribution, fight logging)
-    services/agentScheduler.js — Auto-fight scheduler (30s tick, resting/idle cycle, daily limit 50)
-    services/eloService.js — ELO rating calculation (K=32, clamp 100-3000)
-    services/rankedMatchmaker.js — Ranked matchmaking (ELO range ±200, rematch cooldown, different owners)
-    utils/helpers.js
+    services/userMigrationService.js — Lazy User→Fighter #1 migration on /me
+    utils/helpers.js       — awardAchievement, formatClubResponse, formatUserResponse
+    utils/clanEvents.js    — createClanEvent helper (fire-and-forget)
+    utils/clanLevel.js     — getClanLevelInfo, awardClanXP
+    utils/migrationHelpers.js — transformMoves, extractModules, calculateBranchXp
+    data/archetypes.js     — Backend copy of archetype priorities + dicePreferences
+    data/branches.js       — Branch definitions (backend copy)
+    data/cardPower.js      — Card power balance (backend copy)
+    data/moves.js          — Move definitions (backend copy)
+  scripts/
+    backfill-belts.js      — Recalculate belts for all agents
+    backfill-captains.js   — Set isCaptain for first agents
+    calibrate-belts.js     — Belt calibration utility
+    cleanup-agents.js      — Agent data cleanup
+    migrate-all-users.js   — Batch User→Fighter migration
   prisma/
-    schema.prisma          — 18 models: User, Club, Agent, AgentTactics, AgentProgression, AgentFightLog, Fight, Achievement, Task, PunchInfo, FriendRequest, Friendship...
+    schema.prisma          — 19 models: User, Clan, ClanInvite, ClanEvent, FightClub, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask, UserDailyTask, Fight, PunchInfo, FriendRequest, Friendship, Agent, AgentTactics, AgentProgression, AgentFightLog
     seed.js
     migrations/            — PostgreSQL migrations
 
@@ -316,6 +326,9 @@ MULTIPLAYER_EXACT_CLICK = 3
 
 MAX_HP = 100
 MAX_ROUNDS = 10
+EXTRA_ROUNDS = 2
+EXTRA_ROUND_DAMAGE_MULTIPLIER = 2
+TOTAL_ROUNDS = 12        // MAX_ROUNDS + EXTRA_ROUNDS
 MAX_DECK_SIZE = 8
 MIN_DECK_SIZE = 4
 COUNTDOWN = 3            // seconds before fight
@@ -364,8 +377,12 @@ TELEGRAM_AUTH_MAX_AGE_SEC = 300  // 5 min replay window
 // PvP Combat
 MAX_HP = 100
 MAX_ROUNDS = 10
+EXTRA_ROUNDS = 2
+EXTRA_ROUND_DAMAGE_MULTIPLIER = 2
+TOTAL_ROUNDS = 12
 MAX_DECK_SIZE = 8
 MIN_DECK_SIZE = 4
+MIN_PVP_DECK_SIZE = 3     // PvP allows starter deck (3 moves)
 COUNTDOWN_MS = 3000
 ROUND_ANIMATION_MS = 1500
 BASE_DAMAGE = 15
@@ -377,20 +394,58 @@ COACH_MIN_ROUND = 6
 COACH_BOOST_ROUNDS = 4
 COACH_PAUSE_TIMEOUT_MS = 10000
 
+// WebSocket
+WS_PING_INTERVAL_MS = 30000    // server ping every 30s
+WS_PONG_TIMEOUT_MS = 10000     // kill connection if no pong in 10s
+PVP_READY_TIMEOUT_MS = 15000   // cancel match if player not ready in 15s
+
 // PvP Archetype Modifiers (passive per-archetype bonuses)
 SLOT_WEIGHTS = [0.5, 0.3, 0.2]
 ARCHETYPE_MODIFIERS = { predator, sentinel, ghost, analyst, maverick, juggernaut }
 
 // Clan Level System
-CLAN_LEVEL_CONFIG = { 1..10: { xpRequired, maxMembers, xpBonus } }
-CLAN_XP_REWARDS = { win: 10, draw: 5, lose: 3 }
+CLAN_LEVEL_CONFIG = { 1..10: { xpRequired, maxMembers, maxAgents, xpBonus } }
+CLAN_XP_REWARDS = { win: 10, draw: 5, lose: 3, agent_win: 10, agent_draw: 5, agent_lose: 2, agent_ranked_win: 20, agent_ranked_draw: 10, agent_ranked_lose: 5 }
 CLAN_TAP_SHARE = 0.05              // 5% of member taps → clan treasury
+
+// Agent Scheduler
+AGENT_SCHEDULER_TICK_MS = 30000       // 30 seconds
+AGENT_MAX_FIGHTS_PER_TICK = 10
+AGENT_MAX_FIGHTS_PER_DAY = 50
+AGENT_STUCK_TIMEOUT_MS = 300000       // 5 minutes
+
+// ELO System
+ELO_K_FACTOR = 32
+ELO_MIN = 100
+ELO_MAX = 3000
+ELO_MATCH_RANGE = 200
+
+// Ranked
+RANKED_REMATCH_COOLDOWN = 5
+RANKED_MAX_PAIRS_PER_TICK = 5
+RANKED_MIN_FIGHTS_FOR_RANKING = 5
+FREE_ARENA_MAX_PAIRS_PER_TICK = 5
 
 // AI Trainer
 ANTHROPIC_API_KEY = env
 ANTHROPIC_MODEL = 'claude-haiku-4-5-20251001'
 AI_TRAINER_MAX_TOKENS = 300
+AI_BUILD_DESCRIPTION_MAX_TOKENS = 60
 AI_TRAINER_ENABLED = true
+
+// Premium Report (Lv3)
+PREMIUM_REPORT_MAX_TOKENS = 2000
+X402_ENABLED = false               // feature flag, disabled by default
+X402_PREMIUM_REPORT_PRICE = 20000  // 0.02 USDC (6 decimals)
+USDC_CONTRACT_BASE = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'
+
+// NFT Minting
+NFT_MINTING_ENABLED = false        // feature flag, disabled by default
+AGENT_NFT_CONTRACT = env
+BASE_RPC_URL = 'https://mainnet.base.org'
+
+// Migration
+MIGRATION_ENABLED = true           // lazy User→Fighter #1 on /me
 ```
 
 **Prisma:** Singleton via `backend/src/lib/prisma.js` — all routes and services use shared instance
@@ -404,7 +459,7 @@ AI_TRAINER_ENABLED = true
 
 **Flow:** Build deck (4–8 modules) → Generate AI opponent → Simulate rounds → Dice mechanic → Coach advice → Save result
 
-**Club Mode:** Toggle on Arena screen → fights every 10 min offline → uses CombatEngine + ModuleAIStrategy → localStorage persist (`hexlash_clubmode_state`, `hexlash_clubmode_history`) → push notifications via Notification API → limits: 144/day, 288/session → auto-catches up missed fights on tab focus → daily auto-reset: on new day clears fight log, wins/losses/draws/XP counters (no manual clear button) → **offline club mode fights sync results to server** via `POST /fight/save` (increments pveWins/pveLosses/pveDraws/pveTotalFights). Dice uses cooldown (every 3 rounds, multiple per fight). XP: win=10, draw=7, lose=5.
+**Club Mode (Agents):** Backend-driven via `agentScheduler.js` (30s tick). Agents fight PvE bots or each other (ranked/free arena) automatically based on `AgentTactics.restPeriod`. No frontend localStorage — all state in Prisma (Agent, AgentTactics, AgentProgression, AgentFightLog). Fight results saved atomically in $transaction. Daily limit: 50 fights/agent/day. Three modes: `pve_training` (70% XP, no ELO), `ranked` (100% XP, ELO change), `free_arena` (80% XP, no ELO). XP distributed per branch proportionally to moves used.
 
 **Sound:** Howler.js for punch sounds (BottomMenu, TrainingView) and rain ambience (RainView). Mute toggle in Profile > Account (`SoundToggle.vue`), persisted in localStorage (`isMuted`), checked via `store.getters['punch/isMuted']`
 
@@ -585,16 +640,13 @@ Password reset: Returns 501 (not implemented) — no fake success
 | — | `match_cancelled` | Match cancelled (reason: ready_timeout) — handled by MatchmakingView + CardFightView |
 | — | `overdrive_start` | Overdrive phase started (rounds > MAX_ROUNDS) |
 | — | `AchievementResponseMsg` | Auto-awarded achievement (punch milestones: 100, 1k, 5k, 10k) |
-| — | `club_invite` | Club invitation notification (inviterName, clubName) |
-| `club_invite_accept` | `club_invite_accepted` | Accept club invitation → joins club |
-| `club_invite_decline` | `club_invite_declined` | Decline club invitation |
 | — | `ErrorMsg` | Error response |
 
 ---
 
 ## Database Models (Prisma/PostgreSQL)
 
-User, Club, ClubInvite, ClanEvent, FightClub, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask, UserDailyTask, Fight, PunchInfo, FriendRequest, Friendship, Agent, AgentTactics, AgentProgression, AgentFightLog
+User, Clan, ClanInvite, ClanEvent, FightClub, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask, UserDailyTask, Fight, PunchInfo, FriendRequest, Friendship, Agent, AgentTactics, AgentProgression, AgentFightLog
 
 **Club system fields:** User.clubRole (`owner`/`deputy`/`member`/null), Club.maxMembers (default 20, grows with level), Club.maxAgents (default 2, grows with level: 1→2, 2→3, 3→4, 4→5, 5+→6), Club.legendSkin/legendArchetype/legendBuff (retired fighter legend system), Club.battles/wins (auto-incremented on fight save). Max 3 deputies per club. Owner can set roles, transfer ownership, kick anyone, invite friends, dissolve club. Deputies can kick members only, invite friends. Club creation costs `COST_CREATE_CLUB` (10000) taps — deducted from `User.totalTaps` in $transaction. Club name: 3-30 chars, unicode letters/digits/spaces (`\p{L}\p{N}`), no emoji. Achievements: `PAPER_STREET` on create, `PROJECT_MAYHEM` on join (idempotent via `awardAchievement()` in helpers.js).
 

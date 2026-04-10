@@ -149,17 +149,17 @@ PvE и PvP — **разные системы**, живут в разных ме�
 
 ---
 
-## Auto Fight
+## Club Mode (Agent Auto-Fight)
 
-- Toggle на `PreparationView`
-- Использует тот же `combatEngine.js` + `aiStrategy.js` что и PvE
-- Бой каждые 10 минут (AUTO_FIGHT_MIN_INTERVAL = 600000)
-- Лимиты: 144 боя/день, 288/сессия
-- При возврате на вкладку — догоняет пропущенные бои (catch-up)
-- Push notifications через Notification API
-- Daily auto-reset: новый день → очищается лог + счётчики
-- **Sync на сервер:** результаты через POST `/v1/fight/save`
-- State и история: localStorage only (`hexlash_clubmode_state`, `hexlash_clubmode_history`)
+Backend-driven через `agentScheduler.js` (30s tick). Агенты дерутся автоматически.
+
+- **Нет frontend localStorage** — всё в Prisma (Agent, AgentTactics, AgentProgression, AgentFightLog)
+- Три подрежима: `pve_training` (70% XP, no ELO), `ranked` (100% XP, ELO change), `free_arena` (80% XP, no ELO)
+- Daily limit: 50 fights/agent/day
+- Status flow: `idle → fighting → resting → idle → ...`
+- Stuck recovery: agents in 'fighting' > 5min reset to 'idle'
+- XP распределяется по веткам пропорционально использованным мувам
+- Управление: `FightClubView.vue` → AgentDetailView (tactics tab)
 
 ---
 
