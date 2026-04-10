@@ -1,142 +1,210 @@
 ---
 name: hexlash-vue
-description: Vue 3 frontend conventions for Hexlash. Use this skill when working with Vue components, Vuex store modules, Vue Router, Vuetify, component structure, reactive state, computed properties, watchers, template syntax, props, emits, slots, lifecycle hooks, or any frontend logic. Triggers on mentions of views, components, store, modules, router, Vuetify, frontend, SPA, reactive, computed, watch, dispatch, getter, action, mutation, v-model, v-if, v-for, template, script, style, scoped, or frontend files in /src.
+description: Фронтенд-конвенции проекта Hexlash. Триггерится на Vue компоненты, Vuex модули, Router, фронтенд-логику, store, views, components, props, computed, реактивность, шаблоны, slots, lifecycle hooks, dispatch, getters, actions, mutations, v-model, v-if, v-for, template, script, style, scoped, или любые файлы в /src. Грузить вместе с hexlash-dev (всегда) и hexlash-design (если задача затрагивает UI).
 ---
 
-# Hexlash Vue Frontend
+# hexlash-vue — Frontend Conventions
 
-## Tech Stack
+## Стек и версии
 
-- Vue 3.5 with Vite 7
-- Vuex 4 (state management)
-- Vue Router 4 (routing + auth guards)
-- Vuetify 2 (UI component library)
-- Three.js (3D punching bag)
-- Howler.js (sound effects)
-- Ethers.js 6 (blockchain)
+- **Vue 3.5** — преимущественно Options API, Composition API допускается для новых сложных компонентов
+- **Vuex 4** — глобальный store, 14 модулей
+- **Vue Router 4** — auth guards, восстановление состояния боя
+- **Vuetify 2** — частично используется (`<v-img>`, `<v-btn>` в легаси), новые компоненты — без Vuetify
+- **Vite 7** — dev server на :5173, build с обфускацией + Brotli + image optimization
+- **Howler.js** — звук (punch, rain)
+- **Three.js** — 3D punching bag в TrainingView
+- **Кастомный i18n** — `/src/locales/index.js`, **НЕ vue-i18n**
 
-## Views (17 Page-Level Components)
+---
 
-| Path | View | Auth | Notes |
-|------|------|------|-------|
-| `/auth/login` `/auth/signup` `/auth/reset` `/auth/telegram` | RainView | No | Auth screens |
-| `/privacy` `/404` `/rules` `/verify-email` | Static | No | Info pages |
-| `/` | RainView | Yes | Home |
-| `/help` | PageView | Yes | Help content |
-| `/arena` | PreparationView | Yes | Mode select, start fight, auto fight |
-| `/arena/autofight-log` | AutoFightLogView | Yes | Auto fight history |
-| `/fight` | CardFightView | Yes | PvE + PvP combat |
-| `/training` | TrainingView | Yes | 3D punch bag, tasks |
-| `/training/moves` | MoveTreeView | Yes | Move unlock tree |
-| `/training/deck` | DeckBuilderView | Yes | Deck editor |
-| `/profile` (+ subtabs) | ProfileView | Yes | Balance, wallet, account, skins |
-| `/club/:id` | ClubView | Yes | Club page |
-| `/ratings/:type` | RatingsView | Yes | Leaderboards |
-| `/friends` | FriendsView | Yes | Friends, requests, search |
-| `/matchmaking` | MatchmakingView | Yes | PvP queue |
-| `/spectate/:odId` | SpectateView | Yes | Watch live PvP |
+## Структура фронтенда
 
-## Vuex Modules (13)
+```
+/src
+  App.vue               — root, header, BottomMenu, тосты, ChallengeNotification
+  main.js               — Vue + Vuetify + i18n + store init
+  router/index.js       — routes, auth guards, fight state restore
+  views/                — page-level (21 view, суффикс View)
+  components/           — 75+ компонентов
+    ui/                 — дизайн-система (Hex* префикс): HexButton, HexCard, HexProgress, HexBadge, BeltBadge, UserCaptainBadge, PixelIcon
+    club/               — 7 Club Mode компонентов
+    clan/               — 1 Clan социальный компонент
+    fragments/clan/     — 10 Clan фрагментов
+    ratings/            — AgentLeaderboard
+  core/
+    state/store.js      — Vuex store
+    state/modules/      — 14 Vuex модулей
+    services/           — 8 бизнес-сервисов
+    database/           — 7 LocalStorage/IDB репозиториев
+    api/apiClient.js    — Axios HTTP клиент
+    engine/             — combat (combatEngine, aiStrategy, opponentGenerator)
+    websocket/          — WebSocket клиент
+    constants.js        — игровые константы
+  data/                 — статические данные (branches, moves, requirements, cardPower, clanLevels, pixelIcons)
+  locales/              — i18n: 11 языков
+  styles/hexlash-ui.css — дизайн-система (источник правды по CSS)
+```
 
-| Module | Purpose |
-|--------|---------|
-| `masterState` | App init, auth status, info/error messages, language |
-| `userState` | Current user profile, stats, avatar |
-| `cardFightState` | Active fight: rounds, HP, dice, coach, playerModules, localStorage persist |
+Детали — в CLAUDE.md секция "Project Structure".
+
+---
+
+## Vuex — правила работы
+
+Store: `/src/core/state/store.js`, модули в `/src/core/state/modules/`.
+
+### 14 модулей
+
+| Модуль | Назначение |
+|--------|-----------|
+| `masterState` | App init, auth, info/error сообщения, язык |
+| `userState` | Профиль, статистика, аватар |
+| `cardFightState` | Активный бой: раунды, HP, dice, coach, playerModules, localStorage persist |
 | `progressionState` | Moves unlocked/levels, taps, XP per branch, server sync (PUT /user/progression) |
-| `clubState` | Club info, members, balance |
-| `taskState` | Daily + social tasks |
+| `clanState` | Clan инфо, участники, баланс, роли. Namespace `clan/` |
+| `taskState` | Daily + social задачи |
 | `punchState` | Punch/tap rate limiting, cooldown, 2D/3D toggle, sound mute |
-| `achievementState` | Achievements list + unlocking |
-| `contractState` | Web3 wallet, token balance |
-| `webSocketState` | WS connection, real-time messages |
-| `autoFightState` | Auto fight scheduling, log, notifications, daily reset, AI analysis |
-| `pvpState` | Real-time PvP matchmaking and fights |
-| `friendsState` | Friends list, requests, challenges (WebSocket) |
+| `achievementState` | Достижения + разблокировка |
+| `contractState` | Web3 кошелёк, баланс токенов |
+| `webSocketState` | WS соединение, real-time сообщения |
+| `pvpState` | Real-time PvP matchmaking и бои |
+| `friendsState` | Друзья, заявки, challenges (WebSocket) |
+| `agentState` | Agent roster: CRUD, auto-fight, Fight Club level, detail actions |
 
-## Vuex Patterns
+**Все модули namespaced.** Доступ:
+- Геттер: `store.getters['module/getterName']`
+- Действие: `store.dispatch('module/actionName', payload)`
+- Мутация: только из actions, **никогда** напрямую из компонентов
 
-```js
-// Components — dispatch actions, use getters
-store.dispatch('module/actionName', payload)
-store.getters['module/getterName']
+В компонентах: `mapState`, `mapGetters`, `mapActions` или прямой `this.$store`.
 
-// NEVER commit mutations directly from components
-// BAD: store.commit('module/MUTATION_NAME', payload)
+Persist в localStorage — через подписку в action или helper, не через vuex-persistedstate.
 
-// Actions handle async logic, call mutations internally
-// Getters derive computed state
-```
+Server sync: progression — debounced PUT через action в `progressionState`.
 
-## Router
+---
 
-- Auth guard checks `masterState.isAuthenticated`
-- Fight state restore: on page reload, `cardFightState` restores from localStorage
-- PvP routes: `/matchmaking`, `/fight?mode=pvp`, `/spectate/:odId`
+## Router — правила
 
-## Template Patterns
+- Файл: `/src/router/index.js`
+- Auth guard: проверяет JWT в localStorage, редирект на `/auth/login` для protected routes
+- Fight state restore: при перезагрузке во время боя — восстанавливается из localStorage
+- BottomMenu скрывается на PvP-экранах через computed `isPvPScreen` в App.vue (matchmaking, fight в pvp режиме, spectate)
+- Таблица маршрутов — в CLAUDE.md секции "Routes"
 
-```vue
-<!-- i18n text -->
-{{ t.section.key }}
+---
 
-<!-- Interpolation -->
-{{ interpolate(t.value.moves.lblUnlockFirst, { name: moveName }) }}
+## i18n — критически важно
 
-<!-- Conditional rendering -->
-<div v-if="isAuthenticated">...</div>
+**НЕ используем vue-i18n.** Кастомный реактивный i18n.
 
-<!-- List rendering -->
-<div v-for="item in items" :key="item.id">...</div>
-```
+- Файл: `/src/locales/index.js`
+- Экспортирует:
+  - `t` — computed ref, **в шаблонах без `.value`**
+  - `setLanguage(lang)` — смена языка
+  - `interpolate(str, vars)` — подстановка переменных
+- 11 локалей: `en, ru, de, es, fr, pt, ar, hi, ja, ko, zh`
 
-## Component Structure
+Использование:
+- **В шаблоне:** `{{ t.section.key }}` (auto-unwrap ref)
+- **В script:** `t.value.section.key`
+- **С интерполяцией:** `interpolate(t.value.moves.lblUnlockFirst, { name: '...' })`
 
-```vue
-<template>
-  <!-- Use Vuetify components: v-btn, v-card, v-dialog, v-img, etc. -->
-</template>
+**Любой новый текст → в `/src/locales/{lang}.js`** для всех 11 локалей. EN fallback обязателен.
 
-<script>
-import { t } from '@/locales'
+Для деталей — грузить `hexlash-i18n`.
 
-export default {
-  name: 'ComponentName',
-  // props, data, computed, methods, watch, lifecycle hooks
-}
-</script>
+---
 
-<style scoped>
-/* Use CSS variables from colors.css */
-/* Keep styles scoped to prevent leaks */
-</style>
-```
+## Стилизация компонентов
 
-## Key Components (75+)
+- **Только** `--hex-*` CSS переменные из `/src/styles/hexlash-ui.css`
+- Никаких легаси `--pink, --dark, --gray*` (исключение — PrivacyView)
+- Для UI правил, цветов, шрифтов — грузить `hexlash-design`
+- Готовые UI компоненты в `/src/components/ui/`: **сначала проверить, есть ли подходящий**, потом писать новый
+- Готовые: `HexButton`, `HexCard`, `HexProgress`, `HexBadge`, `BeltBadge`, `UserCaptainBadge`, `PixelIcon` (последний preserved но не используется)
+- `<style scoped>` обязателен в новых компонентах
 
-- `Logo.vue` — Header logo
-- `BottomMenu.vue` — Bottom nav (hidden on PvP screens)
-- `Info.vue` / `Error.vue` — Toast notifications
-- `HPBar.vue` — Fight health bar
-- `Fighter.vue` — Fighter display in combat
-- `Punch3D.vue` — Three.js punching bag
-- `ModeSelector.vue` — Arena PvE/PvP/Auto selector
-- `ChallengeNotification.vue` — PvP challenge popup (z-index: 9999)
-- `AiTrainerAnalysis.vue` — Post-fight AI analysis
-- `AutoFightAnalysis.vue` — Auto fight series AI analysis
+---
 
-## Data Flow
+## Файловые и кодовые конвенции
 
-- Server is source of truth for user data
-- Progression syncs to server via `PUT /v1/user/progression` (debounced 3s)
-- Login restores all data from `GET /v1/user/me`
-- Auto fight state is localStorage-only (fight results sync via POST /fight/save)
-- PvP fight state cleared from localStorage on `fight_end`
+- Компоненты: PascalCase (`FriendCard.vue`, `MorningReport.vue`)
+- Views: суффикс `View` (`ProfileView.vue`, `CardFightView.vue`)
+- UI дизайн-системы: префикс `Hex` (`HexButton.vue`)
+- Vuex модули: camelCase + суффикс `State` (`agentState.js`, `pvpState.js`)
+- Сервисы: camelCase (`combatEngine.js`, `aiStrategy.js`)
+- Один компонент = один файл `.vue` (template + script + scoped style)
+- Импорты: алиас `@` = `/src` (настроен в Vite)
+- ES modules везде
 
-## Styles
+---
 
-- Use scoped styles in components
-- Reference CSS variables: `var(--pink)`, `var(--dark)`, etc.
-- See `hexlash-design` skill for full design system
-- Mobile-first, support 100dvh
-- Dark theme throughout
+## Реактивность и работа с данными
+
+- Source of truth для прогрессии (moves, XP, taps, deck, playerModules) — **сервер**
+- Локальные изменения → debounced PUT `/v1/user/progression` (3s) через `progressionState`
+- При логине — восстанавливается через GET `/v1/user/me`
+- PvP fight state — очищается из localStorage на `fight_end` через action `clearSavedFight`
+- API клиент: `/src/core/api/apiClient.js` — Axios, JWT в Authorization header
+- Для backend деталей — грузить `hexlash-api`
+
+---
+
+## WebSocket в компонентах
+
+- Клиент: `/src/core/websocket/`
+- Vuex модуль: `webSocketState`
+- Подписка через `store.dispatch('webSocket/...')` или геттеры
+- **Не открывать WebSocket напрямую из компонента** — всегда через сервис
+- Для деталей — грузить `hexlash-websocket`
+
+---
+
+## Звук
+
+- Howler.js: punch sounds (BottomMenu, TrainingView), rain (RainView)
+- Mute toggle: Profile > Account, компонент `SoundToggle.vue`
+- Состояние: `store.getters['punch/isMuted']`, persist в localStorage ключ `isMuted`
+- **Перед воспроизведением звука всегда проверять isMuted**
+
+---
+
+## Запрещено
+
+- Импортировать vue-i18n — у нас свой
+- Использовать `--pink, --dark, --gray*` в новых файлах
+- Использовать `v-html` для пользовательских данных (XSS) — только для доверенного i18n контента
+- Прямые мутации Vuex state из компонентов
+- Создавать компонент, дублирующий существующий из `/src/components/ui/`
+- `localStorage.setItem` напрямую из компонентов для критичных данных — через сервис/action
+- Хардкодить тексты в шаблонах — всегда через i18n
+- Открывать WebSocket напрямую — через сервис
+- Использовать Composition API ради моды — Options API остаётся дефолтом
+
+---
+
+## Чеклист готовности компонента
+
+- [ ] Использует только `--hex-*` переменные
+- [ ] Все тексты вынесены в i18n (11 локалей, EN fallback)
+- [ ] `<style scoped>`
+- [ ] PascalCase имя файла
+- [ ] Если UI элемент — пройден чеклист `hexlash-design`
+- [ ] Touch targets минимум 44×44px (mobile-first)
+- [ ] Работает на ширине 320px (iPhone SE)
+- [ ] Если требует данные с сервера — есть loading/empty/error состояния
+- [ ] Если меняет state — через Vuex action, не напрямую
+- [ ] Не дублирует существующий компонент
+
+---
+
+## Связанные скиллы
+
+- `hexlash-dev` — базовый воркфлоу (всегда первым)
+- `hexlash-design` — для любых UI задач
+- `hexlash-i18n` — для работы с переводами
+- `hexlash-api` — когда нужны backend данные
+- `hexlash-websocket` — для real-time
+- `hexlash-combat` — для combat-related компонентов
