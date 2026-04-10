@@ -19,7 +19,11 @@ const state = {
 };
 
 const getters = {
-  agentsList: (state) => [...state.agents].sort((a, b) => b.elo - a.elo),
+  agentsList: (state) => [...state.agents].sort((a, b) => {
+    if (a.isHexmaster !== b.isHexmaster) return a.isHexmaster ? -1 : 1;
+    if (b.belt !== a.belt) return b.belt - a.belt;
+    return (b.qualifiedWins || 0) - (a.qualifiedWins || 0);
+  }),
   agentById: (state) => (id) => state.agents.find(a => a.id === id),
   canCreateAgent: (state) => {
     if (!state.fightClubLevel) return false;
