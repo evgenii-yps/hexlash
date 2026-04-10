@@ -510,6 +510,14 @@ export default {
     errMintFailed: 'Mint failed',
     errNoWallet: 'Connect wallet first',
     errSoldOut: 'All Agent NFTs minted',
+    // Captain
+    lblCaptain: '队长',
+    lblMakeCaptain: '设为队长',
+    lblCaptainConfirmTitle: '更换队长？',
+    lblCaptainConfirmMsg: '{name}将成为你的新队长。当前队长将卸任。',
+    lblCaptainSet: '{name}现在是你的队长',
+    lblCaptainProtected: '无法删除队长。请先指定其他队长。',
+    lblAgentFighting: '该战士正在战斗中，无法成为队长',
   },
   fight: {
     lblRound: '第 {n} 回合',

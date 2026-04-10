@@ -510,6 +510,14 @@ export default {
     errMintFailed: 'Mint failed',
     errNoWallet: 'Connect wallet first',
     errSoldOut: 'All Agent NFTs minted',
+    // Captain
+    lblCaptain: 'CAPITÃO',
+    lblMakeCaptain: 'Tornar capitão',
+    lblCaptainConfirmTitle: 'Trocar capitão?',
+    lblCaptainConfirmMsg: '{name} será seu novo capitão. Seu capitão atual deixará o cargo.',
+    lblCaptainSet: '{name} agora é seu capitão',
+    lblCaptainProtected: 'Não é possível excluir seu capitão. Atribua outro capitão primeiro.',
+    lblAgentFighting: 'Este lutador está em combate e não pode se tornar capitão',
   },
   fight: {
     lblRound: 'Round {n}',
