@@ -23,10 +23,10 @@
         <div class="fighters-section">
           <div class="fighter-side" :class="{ 'fighter-shake': shakeLeft }">
             <div class="fighter-info">
-              <UserAvatar :avatarUrl="master?.userData?.avatarUrl" width="40px" height="40px"/>
-              <UserName :userName="master?.userData?.name || 'You'" style="width: auto !important;"/>
+              <UserAvatar :avatarUrl="captainSkin ? '' : master?.userData?.avatarUrl" width="40px" height="40px"/>
+              <UserName :userName="captainName || master?.userData?.name || 'You'" style="width: auto !important;"/>
             </div>
-            <v-img :src="`/images/skins/${master?.userData?.skin || 'skin_m_1.png'}`" class="fighter-skin" aspect-ratio="1"/>
+            <v-img :src="`/images/skins/${captainSkin || master?.userData?.skin || 'skin_m_1.png'}`" class="fighter-skin" aspect-ratio="1"/>
             <HPBar :currentHP="liveHP1" :name="t.fight.lblHP"/>
             <div v-if="statusLeft" class="status-fighter">{{ statusLeft }}</div>
           </div>
@@ -318,6 +318,9 @@ const roundLog         = computed(() => store.getters['fight/getRoundLog']);
 const currentRound     = computed(() => store.getters['fight/getCurrentRound']);
 const opponent         = computed(() => store.getters['fight/getOpponent']);
 const master           = computed(() => store.getters['master/getMaster']);
+const currentCaptain   = computed(() => store.getters['agent/currentCaptain']);
+const captainSkin      = computed(() => currentCaptain.value?.skin);
+const captainName      = computed(() => currentCaptain.value?.name);
 const diceState        = computed(() => store.getters['fight/getDiceState']);
 const playerModifiers  = computed(() => store.getters['fight/getPlayerModifiers']);
 const fightStats       = computed(() => store.getters['fight/getFightStats']);
@@ -626,7 +629,7 @@ watch(fightPhase, (val, oldVal) => {
       const expGain = result === 'win' ? 10 : 5;
       store.commit('fight/setXpEarned', expGain);
       store.commit('fight/setXpAwarded', true);
-      store.dispatch('progression/onFightEnd', { result });
+      // Captain Agent earns XP via backend — User progression no longer updated from PvE
 
       const isWin  = resultState.value === 'win';
       const isDraw = resultState.value === 'draw';
@@ -635,7 +638,9 @@ watch(fightPhase, (val, oldVal) => {
         isDraw,
         roundsPlayed: roundNum.value,
         totalDamageDealt: fightStats.value.totalDamageDealt,
-      }, { authRequired: true }).catch(() => {});
+      }, { authRequired: true })
+        .then(() => store.dispatch('agent/fetchAgents'))
+        .catch(() => {});
 
     }
   }
@@ -1107,7 +1112,7 @@ function onPvPFightEnd(e) {
     }
     store.commit('fight/setXpEarned', expGain);
     store.commit('fight/setXpAwarded', true);
-    store.dispatch('progression/onFightEnd', { result: pvpResultType.value === 'win' ? 'win' : 'lose' });
+    // Captain Agent earns XP via backend — User progression no longer updated from PvP
   }
 
   // Transition fight store to results so the result screen displays
