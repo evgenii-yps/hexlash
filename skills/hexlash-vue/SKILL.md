@@ -25,7 +25,7 @@ description: Фронтенд-конвенции проекта Hexlash. Три�
   App.vue               — root, header, BottomMenu, тосты, ChallengeNotification
   main.js               — Vue + Vuetify + i18n + store init
   router/index.js       — routes, auth guards, fight state restore
-  views/                — page-level (21 view, суффикс View)
+  views/                — page-level (20 view, суффикс View)
   components/           — 75+ компонентов
     ui/                 — дизайн-система (Hex* префикс): HexButton, HexCard, HexProgress, HexBadge, BeltBadge, UserCaptainBadge, PixelIcon
     club/               — 7 Club Mode компонентов
@@ -34,8 +34,8 @@ description: Фронтенд-конвенции проекта Hexlash. Три�
     ratings/            — AgentLeaderboard
   core/
     state/store.js      — Vuex store
-    state/modules/      — 14 Vuex модулей
-    services/           — 8 бизнес-сервисов
+    state/modules/      — 13 Vuex модулей
+    services/           — 9 бизнес-сервисов
     database/           — 7 LocalStorage/IDB репозиториев
     api/apiClient.js    — Axios HTTP клиент
     engine/             — combat (combatEngine, aiStrategy, opponentGenerator)
