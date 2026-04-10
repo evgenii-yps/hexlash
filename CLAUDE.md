@@ -104,6 +104,11 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
     calibrate-belts.js     — Belt calibration utility
     cleanup-agents.js      — Agent data cleanup
     migrate-all-users.js   — Batch User→Fighter migration
+  tests/
+    userMigrationService.test.js — User→Fighter migration tests (14 tests)
+    beltService.test.js    — Belt system: qualifying wins, belt calc, hexmaster
+    captainService.test.js — Captain: setCaptain, atomic swap
+    captainArenaFlow.test.js — Captain in arena: PvE/PvP flow
   prisma/
     schema.prisma          — 19 models: User, Clan, ClanInvite, ClanEvent, FightClub, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask, UserDailyTask, Fight, PunchInfo, FriendRequest, Friendship, Agent, AgentTactics, AgentProgression, AgentFightLog
     seed.js
