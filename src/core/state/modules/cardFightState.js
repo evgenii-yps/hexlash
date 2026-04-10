@@ -176,7 +176,7 @@ const state = {
     fightStats: { totalDamageDealt: 0, totalDamageTaken: 0, dicePickedUp: 0, diceIgnored: 0, criticalHits: 0 },
 
     xpEarned:  null,   // { speed, power, technique } — set when fight ends
-    xpAwarded: false,  // true after progression/onFightEnd dispatched (prevent double-award)
+    xpAwarded: false,  // true after XP display (Captain XP awarded via backend, not progressionState)
 };
 
 // ─── Getters ─────────────────────────────────────────────────────────────────

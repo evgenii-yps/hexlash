@@ -1,3 +1,14 @@
+/**
+ * progressionState — TRAINER progression module.
+ * Holds the player's "school": tap count, freeXP, branch XP, unlocked moves, deck.
+ *
+ * IMPORTANT: After #P1-captain-2, this module is NO LONGER used by combat.
+ * Combat (PvE/PvP) uses Captain Agent's own progression (agent.progression.*).
+ * This module remains as the trainer's meta-state — used by TrainingView,
+ * MoveTreeView, DeckBuilderView for the trainer's personal progress and
+ * for seeding new agents at creation time.
+ */
+
 import { allMoves } from '@/data/moves.js';
 import { branches } from '@/data/branches.js';
 import { levelUpRequirements, unlockRequirements } from '@/data/requirements.js';
