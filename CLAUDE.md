@@ -616,6 +616,12 @@ Password reset: Returns 501 (not implemented) — no fake success
 
 ### WebSocket Protocol
 
+**Auth:** JWT передаётся через WebSocket protocol header в формате `Bearer_<token>` (не query param — избегаем утечки токена в access-логи). Валидируется до регистрации клиента. Без валидного токена — connection закрыт с кодом 4001.
+
+**Heartbeat:** Сервер ping каждые `WS_PING_INTERVAL_MS` (30s), клиент должен ответить pong в течение `WS_PONG_TIMEOUT_MS` (10s). Без pong — сервер закрывает соединение.
+
+**Reconnect:** Клиент использует exponential backoff (10s → 20s → 40s → ... → max 300s, ±20% jitter, reset on success). При reconnect старый socket помечается `_replaced` (close handler не триггерит PvP disconnect), новый socket ре-биндится к активному матчу если есть.
+
 | Request Message | Response | Purpose |
 |----------------|----------|---------|
 | `PunchInfoRequestMsg` | `PunchInfoResponseMsg` | Get punch rate limit info |
