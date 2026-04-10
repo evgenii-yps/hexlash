@@ -8,6 +8,7 @@ const { simulateAgentFight, generatePveBot } = require('./agentCombatEngine');
 const { addFightClubXp, getFightClubLegendBuff, getFightXpReward } = require('./fightClubService');
 const { MOVE_BRANCHES } = require('./researchGateService');
 const { calculateElo } = require('./eloService');
+const { applyWin } = require('./beltService');
 
 // XP multipliers by mode
 const XP_MULTIPLIERS = {
@@ -92,6 +93,12 @@ async function _executeFight(agent, options = {}) {
     const branchXp = distributeXpByBranch(fightResult.roundLog, earnedXp);
     const clubXpAmount = getFightXpReward(fightResult.result, 'pve_training');
 
+    // Belt progression (before stats update — uses agent's current belt)
+    let beltUpdate = null;
+    if (fightResult.result === 'victory') {
+      beltUpdate = applyWin(agent, null); // PvE bot = null
+    }
+
     // Stats update
     const statsUpdate = {
       totalFights: { increment: 1 },
@@ -101,6 +108,13 @@ async function _executeFight(agent, options = {}) {
     if (fightResult.result === 'victory') statsUpdate.wins = { increment: 1 };
     else if (fightResult.result === 'defeat') statsUpdate.losses = { increment: 1 };
     else statsUpdate.draws = { increment: 1 };
+
+    // Merge belt fields into stats update (same transaction)
+    if (beltUpdate?.qualified) {
+      statsUpdate.belt = beltUpdate.belt;
+      statsUpdate.qualifiedWins = beltUpdate.qualifiedWins;
+      statsUpdate.isHexmaster = beltUpdate.isHexmaster;
+    }
 
     const [updatedAgent, updatedProgression, fightLog] = await prisma.$transaction([
       prisma.agent.update({ where: { id: agent.id }, data: statsUpdate }),
@@ -160,6 +174,7 @@ async function _executeFight(agent, options = {}) {
         techniqueXp: updatedProgression.techniqueXp,
       },
       clubXp: clubXpResult,
+      beltUpdate: beltUpdate || undefined,
     };
   } catch (err) {
     await prisma.agent.update({ where: { id: agent.id }, data: { status: 'idle' } }).catch(() => {});
