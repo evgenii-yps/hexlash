@@ -30,7 +30,7 @@ PvE и PvP — **разные системы**, живут в разных ме�
 **Frontend (PvE + Auto Fight):**
 - `/src/core/engine/combatEngine.js` — симуляция раунда (action-based: attack/defense/position, dodge/crit)
 - `/src/core/engine/aiStrategy.js` — логика AI (приоритеты архетипов, coach boost, dice preferences)
-- `/src/core/engine/archetypes.js` — 6 архетипов с приоритетами и dice preferences
+- `/src/core/data/archetypes.js` — 6 архетипов с приоритетами и dice preferences
 - `/src/core/engine/opponentGenerator.js` — генерация случайного оппонента
 - `/src/core/state/modules/cardFightState.js` — Vuex state активного боя (rounds, HP, dice, coach, playerModules), persist в localStorage
 - `/src/views/CardFightView.vue` — главный экран боя (PvE + PvP)
@@ -73,7 +73,7 @@ PvE и PvP — **разные системы**, живут в разных ме�
 
 ## Архетипы (6 штук)
 
-Файл: `/src/core/engine/archetypes.js` (frontend) и `ARCHETYPE_MODIFIERS` в `/backend/src/config.js`.
+Файл: `/src/core/data/archetypes.js` (frontend) и `ARCHETYPE_MODIFIERS` в `/backend/src/config.js`.
 
 | Архетип | PvE поведение (priorities) | PvP модификатор |
 |---------|---------------------------|-----------------|

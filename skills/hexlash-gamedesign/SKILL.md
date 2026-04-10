@@ -1,185 +1,207 @@
 ---
 name: hexlash-gamedesign
-description: Hexlash game design — combat balance, archetypes, move formulas, progression requirements, deck building, dice effects, new mechanics design. Use this skill when discussing game balance, proposing new features, adjusting damage/speed values, working with archetypes, designing new game mechanics, or evaluating combat math. Triggers on mentions of balance, game design, archetype, module, damage, speed, XP, taps, progression, unlock, levelup, level up, deck, meta, mechanics, power rating, card power, branch, move tree, fighter, strategy, win rate, difficulty, fairness, design philosophy, game feel, player experience.
+description: Геймдизайн и баланс Hexlash — формулы урона, архетипы, прокачка, экономика. Триггерится на баланс, balance, формула, formula, урон, damage, архетип, archetype, ветка, branch, движение, move, прокачка, progression, XP, taps, requirements, cardPower, ELO, ranked, экономика, BASE_DAMAGE, POSITION_BONUS, power rating. Грузить вместе с hexlash-dev. Для боя — hexlash-combat. Для backend — hexlash-api. Для UI — hexlash-vue + hexlash-design.
 ---
 
-# Hexlash Game Design
+# hexlash-gamedesign — Balance & Mechanics
 
-## Philosophy
+## Главное правило
 
-**"A fighting game where you never press a button."**
+Геймдизайн живёт в **трёх местах**: `/src/data/`, `/src/core/constants.js`, `/backend/src/config.js`. Многие значения **должны совпадать** между фронтом и бэком. Изменение одного без другого ломает баланс PvE↔PvP. Перед изменением — определить **все места** параметра, менять синхронно.
 
-The player is the coach, not the fighter. You build the deck, choose the strategy, pick the coach advice — but the fighter acts autonomously. Every fight should feel unique. Depth over complexity. Emotional investment in your fighter. Social by default.
+---
 
-### Core Principles
+## Источники правды
 
-1. **Player thinks, fighter acts** — Strategic decisions before and during fight, execution is automatic
-2. **Every fight is unique** — Dice, coach, emergency create variance
-3. **Depth over complexity** — Simple rules, deep strategy
-4. **Emotional investment** — Your fighter grows, your decisions matter
-5. **Social by default** — PvP, clubs, friends, challenges, spectate
+| Домен | Файл |
+|-------|------|
+| Константы боя (фронт) | `/src/core/constants.js` |
+| Константы боя (бэк) | `/backend/src/config.js` |
+| Ветки (3) | `/src/data/branches.js` |
+| Движения (18) | `/src/data/moves.js` |
+| Прокачка | `/src/data/requirements.js` |
+| Кардпавер | `/src/data/cardPower.js` |
+| Архетипы PvE | `/src/core/data/archetypes.js` |
+| Архетипы PvP | `/backend/src/config.js` → `ARCHETYPE_MODIFIERS` |
+| Архетипы бэкенд (Agent) | `/backend/src/data/archetypes.js` |
+| Power rating | `/src/utils/powerRating.js` |
 
-## Fighter Archetypes (6 NFT Modules)
+---
 
-| Archetype | Style | Strengths | Weaknesses |
-|-----------|-------|-----------|------------|
-| **Predator** | Aggressive rushdown | High burst damage, early pressure | Low defense, vulnerable late |
-| **Sentinel** | Defensive wall | Damage reduction, sustain | Low damage output |
-| **Ghost** | Evasion specialist | High dodge, counter-attacks | Low HP, weak to AoE |
-| **Analyst** | Adaptive strategy | Counters opponent patterns | Slow start, needs data |
-| **Maverick** | Unpredictable | Random bonuses, dice synergy | Inconsistent results |
-| **Juggernaut** | Tank | Massive HP, steady damage | Slow, predictable |
+## Ключевые константы (фронт ↔ бэк совпадают)
 
-## Branches (3)
+MAX_HP=100, MAX_ROUNDS=10, EXTRA_ROUNDS=2, TOTAL_ROUNDS=12, BASE_DAMAGE=15, POSITION_BONUS=5, MIN_DECK_SIZE=4, MAX_DECK_SIZE=8, DICE_COOLDOWN_ROUNDS=3, EMERGENCY_HP_THRESHOLD=30, COACH_MIN_ROUND=6, COACH_BOOST_ROUNDS=4, COST_PER_CLICK=2, COST_CREATE_CLUB=10000
 
-### Speed Branch
-Moves: jab, double_jab, rapid_fire, combo_strike, flurry, hurricane
-Focus: Fast attacks, multiple hits, combo potential
+**PvP-only (бэк):** MIN_PVP_DECK_SIZE=3, SLOT_WEIGHTS=[0.5,0.3,0.2], ARCHETYPE_MODIFIERS
 
-### Power Branch
-Moves: straight, hook, uppercut, haymaker, hammer_fist, knockout_blow
-Focus: High damage per hit, knockout potential
+**Точные значения → файлы.** Здесь карта, не дублирование.
 
-### Technique Branch
-Moves: block_strike, counter_jab, feint_cross, parry_punish, slip_counter, precision_strike
-Focus: Counter-attacks, defense + offense hybrid, positioning
+---
 
-## Moves (18 Total)
+## 6 архетипов
 
-Each move has damage[5] and speed[5] arrays — values per level (1-5).
+| Архетип | PvE поведение | PvP модификатор |
+|---------|---------------|-----------------|
+| **Predator** | attack 80/90% high/low HP | dmgBonus + crit 8% |
+| **Sentinel** | defense 50/70% high/low HP | incomingReduction 15% |
+| **Ghost** | position 50/50% | dodge 8% |
+| **Analyst** | balanced 35/30/35 → 30/30/40 | dodge 2%, crit 2% |
+| **Maverick** | equal high, random low | dodge 4%, crit 4% |
+| **Juggernaut** | attack 50% (stable) | dmgBonus + crit 3% |
 
-Data source: `/src/data/moves.js`
-Names/descriptions: i18n via `t.gameData.moves[id].name/description`
+**Слот-веса:** slot1=50%, slot2=30%, slot3=20%. Frontend: object `{ slot1, slot2, slot3 }`. Backend: array `[0.5, 0.3, 0.2]`.
 
-### Speed Moves
-| Move | Damage (L1-L5) | Speed (L1-L5) |
-|------|----------------|----------------|
-| jab | Low-Med | Very High |
-| double_jab | Low-Med | High |
-| rapid_fire | Low | Very High |
-| combo_strike | Med | Med-High |
-| flurry | Med-High | High |
-| hurricane | High | Med |
+**Dice preferences** per archetype — в `/src/core/data/archetypes.js`.
 
-### Power Moves
-| Move | Damage (L1-L5) | Speed (L1-L5) |
-|------|----------------|----------------|
-| straight | Med | Med |
-| hook | Med-High | Med |
-| uppercut | High | Low-Med |
-| haymaker | Very High | Low |
-| hammer_fist | High | Low |
-| knockout_blow | Very High | Very Low |
+---
 
-### Technique Moves
-| Move | Damage (L1-L5) | Speed (L1-L5) |
-|------|----------------|----------------|
-| block_strike | Low-Med | Med |
-| counter_jab | Med | Med-High |
-| feint_cross | Med | Med |
-| parry_punish | Med-High | Med |
-| slip_counter | Med-High | Med-High |
-| precision_strike | High | Med |
+## 3 ветки, 18 движений
 
-*Exact numeric values in `/src/data/moves.js`*
+- **Speed** (cyan): jab, double_jab, rapid_fire, combo_strike, flurry, hurricane
+- **Power** (pink): straight, hook, uppercut, haymaker, hammer_fist, knockout_blow
+- **Technique** (purple): block_strike, counter_jab, feint_cross, parry_punish, slip_counter, precision_strike
 
-## Progression Requirements
+Каждое: `{ damage[5], speed[5] }` — по уровням 1-5. Имена через i18n.
 
-### Level Up (upgrade move level)
-```js
-levelUpRequirements: {
-  2: { taps: 100, exp: 50 },
-  3: { taps: 200, exp: 100 },
-  4: { taps: 350, exp: 200 },
-  5: { taps: 500, exp: 350 }
-}
+---
+
+## Прокачка
+
+```
+levelUp:  2={100t,50xp} 3={200t,100xp} 4={350t,200xp} 5={500t,350xp}
+unlock:   3={300t,150xp} 4={250t,120xp} 5={200t,100xp}
 ```
 
-### Unlock (unlock new move in branch)
-```js
-unlockRequirements: {
-  3: { taps: 300, exp: 150 },   // 3rd move in branch
-  4: { taps: 250, exp: 120 },   // 4th move
-  5: { taps: 200, exp: 100 },   // 5th move
-  // 6th move: highest requirement
-}
-```
+**XP с боёв:** win=10, draw=7, lose=5. **Taps:** грушу × COST_PER_CLICK=2.
 
-Data source: `/src/data/requirements.js`
+---
 
-## Deck Building
+## Кубик — 6 эффектов
 
-- Deck size: 4-8 modules (MIN_DECK_SIZE / MAX_DECK_SIZE)
-- Player selects moves from unlocked pool
-- Balance calculation: `/src/data/cardPower.js` + `/src/utils/powerRating.js`
-- Opponent generation matches player deck power level
+| Эффект | Сила | Тип |
+|--------|------|-----|
+| Heal | +15 HP | Восстановление |
+| Adrenaline | x2 ATK 1 раунд | Бафф |
+| Shield | Полная блокировка 1 раунд | Защита |
+| Blind | Промах противника 1 раунд | Дебафф |
+| Rage | -20 HP мгновенно | Финишер |
+| Crit | -30 HP мгновенно | Финишер |
 
-## Combat Balance Constants
+Cooldown 3 раунда, после round 1, отключён в Overdrive. **Rage/Crit могут убить.**
 
-```js
-MAX_HP = 100
-MAX_ROUNDS = 10
-BASE_DAMAGE = 15
-POSITION_BONUS = 5
-DICE_COOLDOWN_ROUNDS = 3
-EMERGENCY_HP_THRESHOLD = 30
-COACH_MIN_ROUND = 6
-COACH_BOOST_ROUNDS = 4
-```
+---
 
-## Dice Effects
+## Coach — расхождение by design
 
-### PvE (Client-Side)
-| Effect | Impact |
-|--------|--------|
-| Heal | +15 HP |
-| Adrenaline | 2x ATK |
-| Shield | Damage reduction |
-| Blind | Opponent accuracy down |
-| Rage | -20 HP to opponent |
-| Crit | -30 HP to opponent |
+| | PvE | PvP |
+|--|-----|-----|
+| Эффект | +25 priority (action) | % бонусы (dmg/incoming) |
+| Timer | 15s | 10s |
+| Attack | +25 attack priority | +25% dmg |
+| Defense | +25 defense priority | -30% incoming |
+| Position | +25 position priority | +15% dmg, -15% incoming |
 
-### PvP (Server-Side)
-| Effect | Impact | Duration |
-|--------|--------|----------|
-| Heal | +20 HP | Instant |
-| Adrenaline | +30% dmg | 2 rounds |
-| Shield | -50% incoming | 2 rounds |
-| Blind | 50% miss | 2 rounds |
-| Rage | +50% dmg | 2 rounds |
-| Crit | x2 dmg | 1 round |
+Длительность: 4 раунда. Один раз за бой, с round ≥6.
 
-## Economy
+---
 
-```js
-COST_PER_CLICK = 2        // Tokens earned per tap
-COST_CREATE_CLUB = 10000  // Club creation cost
-DECIMALS = 6              // Token decimals
-```
+## Power Rating
 
-## Planned Mechanics
+`/src/utils/powerRating.js` — расчёт силы на основе колоды, модулей, прогрессии.
 
-### Fighter Lifecycle
-Fighters age and evolve through fights. Veteran fighters gain passive bonuses but may retire.
+Difficulty ranges: easy (0.70-0.85), medium (0.90-1.10), hard (1.15-1.30). Position weights: [0.5, 0.3, 0.2].
 
-### Rivalry System
-Repeated PvP matches against same opponent create rivalries with bonus stakes.
+---
 
-### Night Fights
-Time-based events with special rules and increased rewards.
+## ELO / Ranked
 
-### Chaos Arenas
-Randomized arena modifiers that change combat rules each fight.
+Backend config: ELO_K_FACTOR=32, ELO_MIN=100, ELO_MAX=3000, ELO_MATCH_RANGE=200. RANKED_REMATCH_COOLDOWN=5, RANKED_MIN_FIGHTS_FOR_RANKING=5.
 
-### Trainer Reputation
-Players earn reputation as trainers, unlocking special abilities and cosmetics.
+---
 
-## Design Guidelines for New Mechanics
+## Clan экономика
 
-1. Does it add meaningful decisions for the player?
-2. Does it maintain the "coach not fighter" philosophy?
-3. Is it simple to understand but deep to master?
-4. Does it create interesting counter-play?
-5. Can it be expressed through the existing branch/move/deck system?
-6. Is it testable in Auto Fight mode?
-7. Does it work in both PvE and PvP?
+Создание: 10000 taps. Levels 1-10: `CLAN_LEVEL_CONFIG` (xpRequired, maxMembers, maxAgents, xpBonus). XP rewards: `CLAN_XP_REWARDS` (player + agent-specific). Tap share: 5%.
+
+---
+
+## Каскады — что ломается
+
+| Меняешь | Затрагивает |
+|---------|-------------|
+| MAX_HP | Все формулы, кубик (Heal/Rage/Crit), длительность |
+| BASE_DAMAGE | Длительность, архетипы, кубик value |
+| MAX_ROUNDS | Coach trigger, Overdrive, длительность |
+| damage[] в moves.js | Power rating, баланс веток, win-rate |
+| ARCHETYPE_MODIFIERS | Win-rate PvP, выбор архетипов |
+| Кубик values | Стратегия dice, модули |
+| XP rewards | Скорость прогрессии, удержание |
+| requirements.js | Кривая обучения |
+| ELO K-factor | Стабильность рейтинга |
+
+---
+
+## Balance test process
+
+1. Определить все места параметра (фронт + бэк + data)
+2. Изменить синхронно
+3. 10 PvE боёв с разными колодами
+4. 1 PvP бой (2 устройства)
+5. Сравнить win-rate/урон/длительность до и после
+6. Документировать в commit
+
+---
+
+## Запрещено
+
+- Константу боя только в одном файле
+- `damage[]`/`speed[]` без проверки всех 5 уровней
+- Унифицировать PvE/PvP без запроса
+- Архетип modifier без проверки win-rate
+- XP rewards без учёта кривой прогрессии
+- Хардкод значений в компоненты вместо `/src/data/`
+- Переводить имена архетипов в коде (через i18n)
+- Игнорировать каскады
+
+---
+
+## Чеклист изменения баланса
+
+- [ ] Все места параметра определены
+- [ ] Изменения синхронны (frontend + backend + data)
+- [ ] Каскад проверен
+- [ ] 10 PvE боёв прогнаны
+- [ ] PvP smoke (если затронут)
+- [ ] Win-rate / длительность сравнены
+- [ ] CLAUDE.md обновлён (Game Constants / Backend Config / Combat System)
+
+---
+
+## Где что искать
+
+| Хочешь | Файл |
+|--------|------|
+| Frontend константы | `/src/core/constants.js` |
+| Backend константы | `/backend/src/config.js` |
+| Ветки | `/src/data/branches.js` |
+| Движения | `/src/data/moves.js` |
+| Requirements | `/src/data/requirements.js` |
+| Card power | `/src/data/cardPower.js` |
+| Архетипы PvE | `/src/core/data/archetypes.js` |
+| Архетипы PvP | `/backend/src/config.js` → `ARCHETYPE_MODIFIERS` |
+| Power rating | `/src/utils/powerRating.js` |
+| PvE engine | `/src/core/engine/combatEngine.js` |
+| PvP engine | `/backend/src/services/pvpCombatEngine.js` |
+| AI strategy | `/src/core/engine/aiStrategy.js` |
+
+---
+
+## Связанные скиллы
+
+- `hexlash-dev` — всегда первым
+- `hexlash-combat` — механики боя, PvE/PvP
+- `hexlash-api` — backend константы, ELO
+- `hexlash-vue` — UI отображение
+- `hexlash-i18n` — имена движений/архетипов
+- `hexlash-design` — UI правила
+- `hexlash-testing` — regression при balance changes
