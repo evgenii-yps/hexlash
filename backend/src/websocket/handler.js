@@ -590,18 +590,25 @@ function handleChallengeDeclined(ws, userId, msg) {
 
 // ─── Matchmaking ──────────────────────────────────────────────────────────────
 
-function handleMatchmakingStart(ws, userId, msg) {
-  const { username, rating, skin, avatarUrl } = msg.matchmakingRequest || {};
+async function handleMatchmakingStart(ws, userId, msg) {
+  const { getCaptainForCombat } = require('../services/captainService');
+  const { username, skin, avatarUrl } = msg.matchmakingRequest || {};
+
+  // Validate Captain exists + use authoritative ELO from DB
+  const captain = await getCaptainForCombat(userId);
+  if (!captain) {
+    sendMessage(ws, { type: 'ErrorMsg', error: 'No Captain set. Create a fighter in Club Mode first.', code: 'NO_CAPTAIN_SET' });
+    return;
+  }
 
   const match = matchmaking.addToQueue({
     odId: userId,
-    username: username || 'Player',
-    rating: rating || 1000,
-    skin: skin || null,
+    username: captain.name || username || 'Player',
+    rating: captain.elo || 1000, // Authoritative from DB, not client
+    skin: captain.skin || skin || null,
     avatarUrl: avatarUrl || null,
   });
 
-  // Send queue update
   sendMessage(ws, {
     type: 'MatchmakingQueueMsg',
     queueSize: matchmaking.getQueueSize(),

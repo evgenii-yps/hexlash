@@ -595,6 +595,8 @@ class PvPCombatEngine {
   async saveFightResult(result) {
     try {
       const prisma = require('../lib/prisma');
+      const { getCaptainForCombat } = require('./captainService');
+      const { applyWin } = require('./beltService');
 
       await prisma.fight.create({
         data: {
@@ -615,68 +617,60 @@ class PvPCombatEngine {
         },
       });
 
-      // Update ELO ratings and PvP statistics in a transaction
-      if (result.winner && result.winner !== 'draw') {
-        const winnerId = result.winner;
-        const loserId = winnerId === result.player1.odId ? result.player2.odId : result.player1.odId;
+      // Load Captain Agents for both players
+      const [cap1, cap2] = await Promise.all([
+        getCaptainForCombat(result.player1.odId),
+        getCaptainForCombat(result.player2.odId),
+      ]);
 
-        const winnerUser = await prisma.user.findUnique({ where: { id: winnerId } });
-        const loserUser = await prisma.user.findUnique({ where: { id: loserId } });
+      // Update Captain Agent ELO + stats (not User)
+      if (result.winner && result.winner !== 'draw' && cap1 && cap2) {
+        const winnerCap = result.winner === result.player1.odId ? cap1 : cap2;
+        const loserCap = result.winner === result.player1.odId ? cap2 : cap1;
 
-        if (winnerUser && loserUser) {
-          const elo = this.calculateElo(winnerUser.rating || 1000, loserUser.rating || 1000);
-          await prisma.$transaction([
-            prisma.user.update({
-              where: { id: winnerId },
-              data: {
-                rating: elo.winnerNew,
-                pvpTotalFights: { increment: 1 },
-                pvpWins: { increment: 1 },
-                totalFights: { increment: 1 },
-                wins: { increment: 1 },
-              },
-            }),
-            prisma.user.update({
-              where: { id: loserId },
-              data: {
-                rating: elo.loserNew,
-                pvpTotalFights: { increment: 1 },
-                pvpLosses: { increment: 1 },
-                totalFights: { increment: 1 },
-                losses: { increment: 1 },
-              },
-            }),
-          ]);
-        }
-      } else if (result.winner === 'draw') {
-        const p1 = await prisma.user.findUnique({ where: { id: result.player1.odId } });
-        const p2 = await prisma.user.findUnique({ where: { id: result.player2.odId } });
+        const elo = this.calculateElo(winnerCap.elo || 1000, loserCap.elo || 1000);
 
-        if (p1 && p2) {
-          const elo = this.calculateElo(p1.rating || 1000, p2.rating || 1000, true);
-          await prisma.$transaction([
-            prisma.user.update({
-              where: { id: p1.id },
-              data: {
-                rating: elo.winnerNew,
-                pvpTotalFights: { increment: 1 },
-                pvpDraws: { increment: 1 },
-                totalFights: { increment: 1 },
-                draws: { increment: 1 },
-              },
-            }),
-            prisma.user.update({
-              where: { id: p2.id },
-              data: {
-                rating: elo.loserNew,
-                pvpTotalFights: { increment: 1 },
-                pvpDraws: { increment: 1 },
-                totalFights: { increment: 1 },
-                draws: { increment: 1 },
-              },
-            }),
-          ]);
-        }
+        // Belt progression for winner
+        const beltUpdate = applyWin(winnerCap, loserCap.belt);
+        const winnerBeltData = beltUpdate.qualified ? {
+          belt: beltUpdate.belt, qualifiedWins: beltUpdate.qualifiedWins, isHexmaster: beltUpdate.isHexmaster,
+        } : {};
+
+        await prisma.$transaction([
+          prisma.agent.update({
+            where: { id: winnerCap.id },
+            data: {
+              elo: elo.winnerNew,
+              totalFights: { increment: 1 }, wins: { increment: 1 }, lastFightAt: new Date(),
+              ...winnerBeltData,
+            },
+          }),
+          prisma.agent.update({
+            where: { id: loserCap.id },
+            data: {
+              elo: elo.loserNew,
+              totalFights: { increment: 1 }, losses: { increment: 1 }, lastFightAt: new Date(),
+            },
+          }),
+        ]);
+      } else if (result.winner === 'draw' && cap1 && cap2) {
+        const elo = this.calculateElo(cap1.elo || 1000, cap2.elo || 1000, true);
+        await prisma.$transaction([
+          prisma.agent.update({
+            where: { id: cap1.id },
+            data: {
+              elo: elo.winnerNew,
+              totalFights: { increment: 1 }, draws: { increment: 1 }, lastFightAt: new Date(),
+            },
+          }),
+          prisma.agent.update({
+            where: { id: cap2.id },
+            data: {
+              elo: elo.loserNew,
+              totalFights: { increment: 1 }, draws: { increment: 1 }, lastFightAt: new Date(),
+            },
+          }),
+        ]);
       }
 
       // Update clan stats + award clan XP for both players
