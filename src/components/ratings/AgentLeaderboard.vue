@@ -5,7 +5,7 @@
     <div v-if="!loading && !hasOwnAgents" class="onboarding-block">
       <div class="onboarding-icon">🥊</div>
       <div class="onboarding-title">{{ t.club.lblClubMode || 'CLUB MODE' }}</div>
-      <div class="onboarding-desc">{{ t.club.lblPromoDesc || 'Train AI fighters. Send them to battle 24/7. Rise through leagues.' }}</div>
+      <div class="onboarding-desc">{{ t.club.lblPromoDesc || 'Train AI fighters. Send them to battle 24/7. Rise through belts.' }}</div>
       <HexButton variant="primary" block @click="router.push('/arena/club')">
         {{ t.club.lblEnterFightClub || 'Enter Fight Club' }}
       </HexButton>
@@ -18,13 +18,6 @@
       </HexButton>
     </div>
 
-    <!-- League filter -->
-    <div class="league-filter">
-      <button v-for="f in filters" :key="f.id" :class="['filter-btn', { active: leagueFilter === f.id }]" @click="setFilter(f.id)">
-        {{ f.label }}
-      </button>
-    </div>
-
     <!-- My Agents (from rankings) -->
     <div v-if="myRankedAgents.length > 0" class="my-agents-section">
       <div class="section-label">{{ t.rating.lblYourAgents || 'YOUR AGENTS' }}</div>
@@ -35,8 +28,7 @@
           <div class="rank-name">{{ entry.agent.name }}</div>
           <div class="rank-owner">@{{ entry.owner?.login }}</div>
         </div>
-        <div class="rank-elo" :style="{ color: getLeagueColor(entry.agent.elo) }">{{ entry.agent.elo }}</div>
-        <LeagueBadge :elo="entry.agent.elo" />
+        <BeltBadge :grade="entry.agent.belt || 0" :is-hexmaster="entry.agent.isHexmaster || false" size="md" />
         <div class="rank-wl">
           <span class="wl-win">{{ entry.agent.wins }}</span>/<span class="wl-lose">{{ entry.agent.losses }}</span>
         </div>
@@ -52,11 +44,11 @@
     <div v-else>
       <div class="section-label">{{ t.rating.lblAgentRankings || 'AGENT RANKINGS' }}</div>
 
-      <div v-if="filteredRankings.length === 0" class="empty-text">
+      <div v-if="rankings.length === 0" class="empty-text">
         {{ t.rating.lblNoRankedAgents || 'No ranked agents yet' }}
       </div>
 
-      <div v-for="entry in filteredRankings" :key="entry.agent.id" :class="['rank-row', { 'rank-row--top': entry.rank <= 3 }]" @click="viewAgent(entry.agent.id)">
+      <div v-for="entry in rankings" :key="entry.agent.id" :class="['rank-row', { 'rank-row--top': entry.rank <= 3 }]" @click="viewAgent(entry.agent.id)">
         <span :class="['rank-num', { 'rank-gold': entry.rank === 1, 'rank-silver': entry.rank === 2, 'rank-bronze': entry.rank === 3 }]">{{ entry.rank }}</span>
         <img class="rank-skin" :src="`/images/skins/${entry.agent.skin}`" :alt="entry.agent.name" />
         <div class="rank-info">
@@ -66,8 +58,7 @@
             <span class="rank-build">{{ shortBuild(entry.agent) }}</span>
           </div>
         </div>
-        <div class="rank-elo" :style="{ color: getLeagueColor(entry.agent.elo) }">{{ entry.agent.elo }}</div>
-        <LeagueBadge :elo="entry.agent.elo" />
+        <BeltBadge :grade="entry.agent.belt || 0" :is-hexmaster="entry.agent.isHexmaster || false" size="md" />
         <div class="rank-wl">
           <span class="wl-win">{{ entry.agent.wins }}</span>/<span class="wl-lose">{{ entry.agent.losses }}</span>
         </div>
@@ -88,37 +79,23 @@ import { useRouter } from 'vue-router'
 import { t } from '@/locales/index.js'
 import store from '@/core/state/store.js'
 import apiClient from '@/core/api/apiClient.js'
-import { LEAGUES, getLeagueColor } from '@/utils/leagues.js'
 import HexButton from '@/components/ui/HexButton.vue'
-import LeagueBadge from '@/components/ratings/LeagueBadge.vue'
+import BeltBadge from '@/components/ui/BeltBadge.vue'
 
 export default {
   name: 'AgentLeaderboard',
-  components: { HexButton, LeagueBadge },
+  components: { HexButton, BeltBadge },
   setup() {
     const router = useRouter();
     const rankings = ref([]);
     const total = ref(0);
     const loading = ref(true);
     const loadingMore = ref(false);
-    const leagueFilter = ref('all');
     const offset = ref(0);
     const limit = 20;
 
     const currentUserId = computed(() => store.getters['master/getMaster']?.userData?.odId);
     const hasOwnAgents = computed(() => (store.state.agent.agents || []).length > 0);
-
-    const filters = computed(() => [
-      { id: 'all', label: t.value.rating?.lblAll || 'All' },
-      ...LEAGUES.map(l => ({ id: l.id, label: l.name })),
-    ]);
-
-    const filteredRankings = computed(() => {
-      if (leagueFilter.value === 'all') return rankings.value;
-      const league = LEAGUES.find(l => l.id === leagueFilter.value);
-      if (!league) return rankings.value;
-      return rankings.value.filter(e => e.agent.elo >= league.min && e.agent.elo <= league.max);
-    });
 
     const myRankedAgents = computed(() => {
       if (!currentUserId.value) return [];
@@ -140,7 +117,6 @@ export default {
     };
 
     const loadMore = () => { offset.value += limit; fetchRankings(true); };
-    const setFilter = (id) => { leagueFilter.value = id; };
     const viewAgent = (id) => router.push(`/arena/club/${id}`);
     const shortBuild = (a) => [a.primaryModule, a.secondaryModule, a.tertiaryModule].map(m => m?.slice(0, 3).toUpperCase()).join('/');
 
@@ -149,7 +125,7 @@ export default {
       store.dispatch('agent/fetchAgents');
     });
 
-    return { t, router, rankings, filteredRankings, myRankedAgents, hasOwnAgents, loading, loadingMore, hasMore, leagueFilter, filters, setFilter, loadMore, viewAgent, shortBuild, getLeagueColor };
+    return { t, router, rankings, myRankedAgents, hasOwnAgents, loading, loadingMore, hasMore, loadMore, viewAgent, shortBuild };
   },
 };
 </script>
@@ -184,30 +160,6 @@ export default {
   display: flex;
   justify-content: flex-end;
   margin-bottom: 12px;
-}
-
-.league-filter {
-  display: flex;
-  gap: 4px;
-  margin-bottom: 12px;
-  flex-wrap: wrap;
-}
-.filter-btn {
-  padding: 4px 8px;
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  border: 1px solid var(--hex-border-default);
-  border-radius: 6px;
-  background: var(--hex-bg-dark);
-  color: var(--hex-text-muted);
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.filter-btn.active {
-  border-color: var(--hex-primary);
-  color: var(--hex-primary);
-  background: rgba(255, 6, 111, 0.08);
 }
 
 .section-label {
@@ -275,13 +227,6 @@ export default {
 .rank-meta { display: flex; gap: 6px; }
 .rank-owner { font-size: 10px; color: var(--hex-text-muted); }
 .rank-build { font-size: 9px; color: var(--hex-text-muted); }
-
-.rank-elo {
-  font-family: 'AnonymousBalance', monospace;
-  font-size: 14px;
-  font-weight: bold;
-  flex-shrink: 0;
-}
 
 .rank-wl {
   font-family: 'AnonymousBalance', monospace;
