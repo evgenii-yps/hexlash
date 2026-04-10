@@ -482,7 +482,7 @@ MIGRATION_ENABLED = true           // lazy User→Fighter #1 on /me
 
 **AI Trainer:** Claude-powered post-fight analysis (PvE and PvP). Component `AiTrainerAnalysis.vue` renders on CardFightView results screen. Sends fight data (rounds, decks, result, dice/coach/emergency usage) to `POST /v1/ai/analyze-fight` → backend calls Anthropic Claude API → returns 4-section analysis: Fight Summary, What You Did Well, What Went Wrong, Advice. Feature flag: `AI_TRAINER_ENABLED`. Graceful degradation on error. i18n keys: `fight.lblAiTrainer`, `fight.lblAiLoading`, `fight.lblAiError`.
 
-**AI Club Mode Analysis:** Backend endpoint `POST /v1/ai/club-mode-summary` exists. Frontend component was removed during Club Mode decoupling. See MorningReport.vue in FightClubView for current implementation.
+**AI Club Reports:** Morning Report (`POST /v1/ai/morning-report`) and Premium Report (`POST /v1/ai/premium-report`) provide AI analysis of FightClub stats. Frontend: `MorningReport.vue` in `FightClubView`. Legacy `club-mode-summary` endpoint removed.
 
 **Club Stats:** When a fight result is saved (PvE via `POST /fight/save`, PvP via `pvpCombatEngine.saveFightResult`), if the player has a `clubId`, `Club.battles` is incremented by 1; if the player won, `Club.wins` is also incremented. Club Mode fights go through `/fight/save` so they increment too.
 
