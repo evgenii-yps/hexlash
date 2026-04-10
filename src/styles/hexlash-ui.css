@@ -192,6 +192,22 @@
   --hex-blur-lg: blur(20px);
 
 
+  /* === BELT SYSTEM === */
+
+  --hex-belt-white: #F5F5F5;
+  --hex-belt-yellow: #FBBF24;
+  --hex-belt-orange: #FB923C;
+  --hex-belt-green: #22C55E;
+  --hex-belt-blue: #60A5FA;
+  --hex-belt-purple: #A855F7;
+  --hex-belt-brown: #8B4513;
+  --hex-belt-red: #DC2626;
+  --hex-belt-black: #0A0A0A;
+  --hex-belt-hexmaster: var(--hex-primary);
+  --hex-belt-stripe: #FFFFFF;
+  --hex-belt-outline: rgba(255, 255, 255, 0.25);
+
+
   /* === ANIMATIONS === */
 
   --hex-transition-fast: 0.15s ease;
