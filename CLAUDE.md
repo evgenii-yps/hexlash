@@ -1651,10 +1651,37 @@ Feature flag `X402_ENABLED=false` на проде. On-chain verification = TODO 
 | P1-belt-3 | BeltBadge frontend + замена ELO display | | После belt-2 |
 | P1-belt-4a | Замена ELO→Belt в AI services (механическая) | | После belt-2 |
 | P1-belt-4b | Redesign AI prompts под Belt semantics | | После belt-4a |
-| P1-migration | Миграция User.progression → Fighter №1 + hide retirement UI | | После belt-1 |
+| P1-migration | Миграция User.progression → Fighter №1 + hide retirement UI | ✅ DONE | После belt-1 |
 | P1-captain-1 | Captain как поле + базовая логика + создание из Fighter №1 | | После migration |
 | P1-captain-2 | Adapt Arena flow под Captain | | После captain-1 |
 | P1-captain-3 | Adapt Profile/Ratings под Captain | | Параллельно с captain-2 |
+
+### P1-migration — User → Fighter #1 — ✅ COMPLETE
+
+Lazy per-user migration on `GET /v1/user/me`. Creates Agent "Fighter #1" from User.progression data.
+
+**Service:** `backend/src/services/userMigrationService.js` — `migrateUserToFighter(userId)`
+**Helpers:** `backend/src/utils/migrationHelpers.js` — `transformMoves`, `extractModules`, `calculateBranchXp`
+**Trigger:** `GET /v1/user/me` (non-blocking try/catch, failure doesn't break `/me`)
+**Feature flag:** `MIGRATION_ENABLED` env var (default true)
+**Backfill:** `backend/scripts/migrate-all-users.js` — manual prod rollout tool
+
+**What migrates:**
+- `User.progression.moves` (object) → `AgentProgression.moves` (array) — filter unlocked + level > 0
+- `User.progression.branchExp` + `floor(freeXP/3)` → `AgentProgression.speedXp/powerXp/techniqueXp`
+- `User.progression.playerModules[0,1,2]` → `Agent.primaryModule/secondaryModule/tertiaryModule`
+- `User.deck` → `AgentProgression.deck`
+- `User.skin` → `Agent.skin`
+
+**What does NOT migrate:** wins/losses/draws (belt starts at 0), ELO (starts at 1000).
+
+**Files changed:**
+- `backend/src/services/userMigrationService.js` — **new**
+- `backend/src/utils/migrationHelpers.js` — **new**
+- `backend/src/routes/user.js` — trigger in `/me`
+- `backend/src/config.js` — `MIGRATION_ENABLED`
+- `backend/tests/userMigrationService.test.js` — **new** (14 tests)
+- `backend/scripts/migrate-all-users.js` — **new**
 
 ### i18n политика Phase 1
 
