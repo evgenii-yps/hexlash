@@ -325,12 +325,34 @@ async function _executeAgentVsAgentFight(agent1Id, agent2Id, options) {
       return s;
     };
 
+    // Belt progression (before stats — uses pre-fight belt values)
+    let a1BeltUpdate = null, a2BeltUpdate = null;
+    if (fightResult.result === 'victory') {
+      a1BeltUpdate = applyWin(a1, a2.belt);
+    } else if (a2Result === 'victory') {
+      a2BeltUpdate = applyWin(a2, a1.belt);
+    }
+
+    const a1Stats = statsFor(fightResult.result, newEloA);
+    const a2Stats = statsFor(a2Result, newEloB);
+
+    if (a1BeltUpdate?.qualified) {
+      a1Stats.belt = a1BeltUpdate.belt;
+      a1Stats.qualifiedWins = a1BeltUpdate.qualifiedWins;
+      a1Stats.isHexmaster = a1BeltUpdate.isHexmaster;
+    }
+    if (a2BeltUpdate?.qualified) {
+      a2Stats.belt = a2BeltUpdate.belt;
+      a2Stats.qualifiedWins = a2BeltUpdate.qualifiedWins;
+      a2Stats.isHexmaster = a2BeltUpdate.isHexmaster;
+    }
+
     const a1ClubXp = getFightXpReward(fightResult.result, mode);
     const a2ClubXp = getFightXpReward(a2Result, mode);
 
     await prisma.$transaction([
-      prisma.agent.update({ where: { id: agent1Id }, data: statsFor(fightResult.result, newEloA) }),
-      prisma.agent.update({ where: { id: agent2Id }, data: statsFor(a2Result, newEloB) }),
+      prisma.agent.update({ where: { id: agent1Id }, data: a1Stats }),
+      prisma.agent.update({ where: { id: agent2Id }, data: a2Stats }),
       prisma.agentProgression.update({
         where: { agentId: agent1Id },
         data: { speedXp: { increment: a1BranchXp.speedXp }, powerXp: { increment: a1BranchXp.powerXp }, techniqueXp: { increment: a1BranchXp.techniqueXp } },
@@ -360,10 +382,16 @@ async function _executeAgentVsAgentFight(agent1Id, agent2Id, options) {
     if (a1.fightClubId && a1ClubXp > 0) addFightClubXp(a1.fightClubId, a1ClubXp).catch(e => console.error('Club XP error:', e));
     if (a2.fightClubId && a2ClubXp > 0) addFightClubXp(a2.fightClubId, a2ClubXp).catch(e => console.error('Club XP error:', e));
 
+    // Build beltUpdates array (only entries where something happened)
+    const beltUpdates = [];
+    if (a1BeltUpdate) beltUpdates.push({ agentId: agent1Id, ...a1BeltUpdate });
+    if (a2BeltUpdate) beltUpdates.push({ agentId: agent2Id, ...a2BeltUpdate });
+
     return {
       result: fightResult.result, rounds: fightResult.rounds,
       agent1: { id: agent1Id, result: fightResult.result, eloChange: eloChangeA, newElo: newEloA, xpEarned: a1Xp },
       agent2: { id: agent2Id, result: a2Result, eloChange: eloChangeB, newElo: newEloB, xpEarned: a2Xp },
+      beltUpdates: beltUpdates.length > 0 ? beltUpdates : undefined,
     };
   } catch (err) {
     await prisma.agent.updateMany({ where: { id: { in: [agent1Id, agent2Id] } }, data: { status: 'idle' } }).catch(() => {});
