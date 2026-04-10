@@ -4,7 +4,7 @@
 
     <div class="friend-info">
       <div class="friend-name">{{ friend.username }}</div>
-      <div class="friend-rating">{{ ratingText }}: {{ friend.rating }}</div>
+      <UserCaptainBadge :captain="friend.captain" size="sm" />
       <div v-if="friend.status === 'in_fight' && friend.currentFight" class="fight-info">
         vs {{ friend.currentFight.opponent }}
       </div>
@@ -36,6 +36,7 @@
 <script setup>
 import { computed } from 'vue';
 import store from '@/core/state/store.js';
+import UserCaptainBadge from '@/components/ui/UserCaptainBadge.vue';
 
 const props = defineProps({
   friend: { type: Object, required: true },
