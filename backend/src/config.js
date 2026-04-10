@@ -123,4 +123,7 @@ module.exports = {
   NFT_MINTING_ENABLED: process.env.NFT_MINTING_ENABLED === 'true',
   AGENT_NFT_CONTRACT: process.env.AGENT_NFT_CONTRACT || '',
   BASE_RPC_URL: process.env.BASE_RPC_URL || 'https://mainnet.base.org',
+
+  // Migration
+  MIGRATION_ENABLED: process.env.MIGRATION_ENABLED !== 'false', // default true, set 'false' to disable
 };

@@ -4,12 +4,24 @@ const prisma = require('../lib/prisma');
 const { authMiddleware } = require('../middleware/auth');
 const { upload } = require('../middleware/upload');
 const { formatUserResponse } = require('../utils/helpers');
+const { migrateUserToFighter } = require('../services/userMigrationService');
 
 const router = express.Router();
 
 // GET /v1/user/me
 router.get('/me', authMiddleware, async (req, res) => {
   try {
+    // Lazy migration: User → Fighter #1 (idempotent, no-op if already migrated)
+    try {
+      const migration = await migrateUserToFighter(req.userId);
+      if (migration.migrated) {
+        console.log(`[migration] user=${req.userId} → agent=${migration.agentId}`);
+      }
+    } catch (migrationErr) {
+      console.error('[migration] error:', req.userId, migrationErr.message);
+      // Migration failure is non-blocking — user can still use the app
+    }
+
     const user = await prisma.user.findUnique({
       where: { id: req.userId },
       include: { achievements: true },
