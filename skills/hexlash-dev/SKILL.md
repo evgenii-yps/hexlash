@@ -1,118 +1,121 @@
 ---
 name: hexlash-dev
-description: Core development workflow and project structure for Hexlash — AI battle platform. Use this skill FIRST before any task in the Hexlash codebase. Triggers on any mention of Hexlash development, project structure, file locations, git workflow, coding conventions, code style, linting, file organization, folder structure, where to find, how to start, new task, feature request, bug fix, refactor, or when starting any new task. Always read CLAUDE.md before making changes.
+description: Базовый операционный скилл проекта Hexlash. Загружается ПЕРВЫМ перед любой задачей. Триггерится на любую задачу в Hexlash, старт работы, упоминание структуры проекта, git, воркфлоу, файловых конвенций, кодстайла, организации кода, новой фичи, бага, рефакторинга. Всегда читать CLAUDE.md первым.
 ---
 
-# Hexlash Core Development Workflow
+# hexlash-dev — Core Workflow
 
-## Rule #1: Read CLAUDE.md First
+## Главное правило
 
-Before every task, read `/CLAUDE.md` in the project root. It contains the full project memory: structure, constants, conventions, and current state. Never skip this step.
+Перед началом ЛЮБОЙ задачи:
+1. Прочитать `CLAUDE.md` — source of truth
+2. Загрузить релевантные доменные скиллы (см. карту ниже)
+3. Проанализировать связанные файлы
+4. Только потом — план и реализация
 
-## Project Structure
+---
 
-```
-/src
-  App.vue                  — Root: header, router-view, BottomMenu, toasts, ChallengeNotification
-  main.js                  — Entry: Vue + Vuetify + i18n + Vuex store init
-  router/index.js          — Routes + auth guards + fight state restore
-  views/                   — 17 page-level components
-  components/              — 75+ reusable components
-  core/
-    state/store.js         — Vuex store
-    state/modules/         — 13 Vuex modules
-    models/                — 20 data models (internal, ws, etc.)
-    services/              — 8 business logic services
-    database/              — 7 LocalStorage/IDB repository files
-    api/apiClient.js       — Axios HTTP client
-    engine/                — Combat system (combatEngine, aiStrategy, opponentGenerator)
-    constants.js           — Game constants
-    websocket/             — WebSocket client
-    mock/mockData.js       — Mock data for development
-  data/
-    branches.js            — 3 branches: speed, power, technique
-    moves.js               — 18 moves with damage/speed per level
-    requirements.js        — Tap/XP costs for unlock/levelup
-    cardPower.js           — Card/module power balance data
-  utils/
-    powerRating.js         — Power rating calculations
-  styles/
-    hexlash-ui.css         — Additional UI styles
-  assets/                  — CSS, fonts, images, models, sounds, textures, ABIs
-  locales/                 — i18n: 11 languages (en, ru, de, es, fr, hi, ja, ko, pt, zh, ar)
+## Tech Stack
 
-/backend
-  src/
-    index.js               — Express server + WebSocket on same HTTP server
-    config.js              — Constants (PORT, WS_PORT, JWT_SECRET, game balance)
-    routes/                — auth, user, club, task, file, fight, stats, friends, ai
-    middleware/             — auth.js (JWT guard), upload.js (Multer)
-    websocket/             — handler.js, pvpHandler.js
-    services/              — matchmaking.js, pvpMatchManager.js, pvpCombatEngine.js
-    utils/helpers.js
-  prisma/
-    schema.prisma          — 12 models
-    seed.js
-    migrations/            — PostgreSQL migrations
+- **Frontend:** Vue 3.5, Vite 7, Vuex 4, Vue Router 4, Vuetify 2, Three.js, Howler.js, Ethers.js 6, кастомный i18n (не vue-i18n)
+- **Backend:** Express 4, Prisma 5 (PostgreSQL), JWT, ws, Multer, Anthropic SDK
+- **Real-time:** WebSocket на том же HTTP-сервере что и Express
 
-/public
-  images/skins/            — 145+ fighter skin images
-  images/tgskins/          — Legacy skin path
+---
 
-/skills/                   — 12 Claude Code skill files
-```
-
-## Protected Files — DO NOT Modify Without Permission
-
-- `prisma/migrations/` — Never edit existing migrations
-- `prisma/seed.js` — Seed data, changes affect all environments
-- `src/assets/abi/` — Smart contract ABIs, linked to deployed contracts
-- `.github/workflows/` — CI/CD pipelines
-- `nginx.prod.conf` / `nginx.test.conf` — Production/test server configs
-- `Dockerfile` — Production container definition
-
-## Git Workflow
-
-- Branch naming: `claude/feature-name-XXXXX` (random suffix)
-- Commit messages: English, imperative mood, concise
-- Always commit related changes together
-- Push to feature branch, never directly to main/master
-
-## Task Execution Rules
-
-1. Read CLAUDE.md before starting
-2. Take small, incremental steps
-3. Provide status after each step
-4. Test changes mentally — check for side effects
-5. Update CLAUDE.md if you add new modules, routes, components, or constants
-
-## Report Format
-
-After completing a task, provide:
+## Структура проекта
 
 ```
-Done: [brief description of what was done]
-Files changed: [list of modified files]
-Notes: [any warnings, caveats, or follow-up items]
+/src              — Vue фронтенд (views, components, core/state, core/services, data, locales, styles)
+/backend          — Express + Prisma + WebSocket
+/public           — статика, скины бойцов
+/skills           — 12 Claude Code скиллов
+CLAUDE.md         — source of truth, всегда читать первым
 ```
 
-## Tech Stack Summary
+Детали структуры — в CLAUDE.md секция "Project Structure".
 
-- **Frontend:** Vue 3.5 + Vite 7 + Vuex 4 + Vue Router 4 + Vuetify 2 + Three.js + Howler.js + Ethers.js 6
-- **Backend:** Express 4 + Prisma 5 (PostgreSQL) + JWT + WebSocket (ws) + Anthropic SDK
-- **Deploy:** Vercel (frontend) + Docker/Nginx (backend) + GitHub Actions CI/CD
+---
 
-## Coding Conventions
+## Карта доменных скиллов
 
-- Use Vue 3 Options API or Composition API consistently within each file
-- Vuex: dispatch actions from components, never commit mutations directly
-- i18n: never hardcode text, use `t.section.key` pattern
-- CSS: scoped styles, use CSS variables from `colors.css`
-- Naming: camelCase for JS, kebab-case for CSS classes and file names
-- Constants: ALL_CAPS in `constants.js` or `config.js`
+| Триггер задачи | Скилл |
+|----------------|-------|
+| UI, CSS, цвета, дизайн, верстка, компоненты | `hexlash-design` (+ открыть `Hexlash_Visual_System.pdf` при сложных задачах) |
+| Vue компоненты, Vuex, Router, фронтенд логика | `hexlash-vue` |
+| Бой, PvE/PvP, движок, кубик, коуч, archetype | `hexlash-combat` |
+| WebSocket сообщения, real-time, матчмейкинг, challenges | `hexlash-websocket` |
+| Backend endpoints, Express, Prisma, JWT, миграции | `hexlash-api` |
+| Деплой, Docker, Nginx, Vercel, CI/CD | `hexlash-deploy` |
+| Тесты, QA, регрессия, дебаг | `hexlash-testing` |
+| Web3, NFT ERC-1155, кошелёк, x402, Base | `hexlash-web3` |
+| Claude API, AI Trainer, промпты, анализ боя | `hexlash-ai` |
+| Локализация, переводы, 11 языков, locales/ | `hexlash-i18n` |
+| Баланс, архетипы, формулы урона, механики | `hexlash-gamedesign` |
 
-## Naming: FightClub vs Clan
+**Правило:** всегда грузить ВСЕ релевантные скиллы. UI-задача с бэкенд частью = `hexlash-design` + `hexlash-vue` + `hexlash-api`.
 
-- **FightClub** (Fight Club) — агенты, ростер, `/arena/club`, Prisma `FightClub`. Internal: `FightClub`/`fightClub`. User-facing: "Fight Club" (имя собственное во всех локалях).
-- **Clan** (социальная группа) — отдельная сущность. `Clan`/`clan` везде, `/clan/:id`.
-- Не путать. Подробности — CLAUDE.md "FightClub Naming Policy".
+---
+
+## Git workflow
+
+- Основная ветка: `main`
+- Текущая dev-ветка фиксируется в CLAUDE.md (секция "Branch (Git)")
+- Перед любым коммитом — проверить, что ветка та, что нужна
+- Имена коммитов: краткие, по делу, без воды
+- Перед PR — обновить CLAUDE.md если изменения затрагивают архитектуру/компоненты/views
+
+---
+
+## Файловые конвенции
+
+- Vue компоненты: PascalCase (`HexButton.vue`, `FriendCard.vue`)
+- UI компоненты дизайн-системы: `/src/components/ui/` с префиксом `Hex` (`HexButton`, `HexCard`, `HexProgress`, `HexBadge`)
+- Views: `/src/views/`, суффикс `View` (`ProfileView.vue`, `CardFightView.vue`)
+- Vuex модули: `/src/core/state/modules/`, camelCase (`agentState.js`)
+- Сервисы: `/src/core/services/`, camelCase
+- Backend routes: `/backend/src/routes/`, lowercase (`auth.js`, `user.js`)
+
+---
+
+## Base URLs и порты
+
+- Frontend dev: `http://localhost:5173` (Vite)
+- Backend dev: `http://localhost:3000` (Express)
+- WebSocket: same HTTP server as Express (shared port 3000 в проде, `WS_PORT=444` в конфиге для разработки)
+- API base path: `/v1/`
+- Production: `hexlash.com`, `test.hexlash.com`
+
+---
+
+## Критические правила работы
+
+- **CLAUDE.md — source of truth.** Любое изменение архитектуры → обновить CLAUDE.md в той же задаче.
+- **Скиллы > общие знания.** Если скилл говорит одно, а общие знания LLM другое — скилл прав.
+- **Шаги маленькие, статусы короткие.** Не делать большие необратимые правки без подтверждения.
+- **Не угадывать.** Если что-то не покрыто — стоп, спросить.
+- **JWT_SECRET обязателен.** Backend крашится без него — это by design, не баг.
+- **Только `--hex-*` CSS переменные.** Никаких легаси `--pink/--dark/--gray*` в новом коде.
+- **i18n для всех новых текстов.** 11 локалей, EN fallback обязателен.
+
+---
+
+## После выполнения задачи — обновить CLAUDE.md
+
+Чеклист:
+- Изменён view/компонент → обновить описание в "Key Views" или "Component Highlights"
+- Новый компонент → добавить в "Component Highlights"
+- Новый файл данных → добавить в "Project Structure"
+- Изменена архитектура → обновить релевантную секцию
+- Новый Vuex модуль → обновить таблицу "Vuex Modules"
+- Новый route → обновить таблицу "Routes"
+- Новый WebSocket message → обновить таблицу "WebSocket Protocol"
+
+---
+
+## Связанные документы
+
+- `/CLAUDE.md` — source of truth по проекту
+- `/Hexlash_Pitch.pdf` — продуктовый питч (для контекста product-задач)
+- `/Hexlash_OnePager.pdf` — краткая выжимка проекта
+- `/Hexlash_Visual_System.pdf` — полный визуальный гайд (для дизайн-задач)
