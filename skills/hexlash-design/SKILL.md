@@ -1,450 +1,297 @@
 ---
 name: hexlash-design
-description: "Neon Discipline v1.0 — visual system for Hexlash. Use for any UI, CSS, styling, layout, responsive, animation, component, color, font, spacing, border, background, gradient, glow, dark theme, design token task. Triggers on: colors, fonts, CSS, styles, design, theme, UI, layout, responsive, mobile, visual, neon, pink, dark theme, animation, transition, opacity, border, background, gradient, glow, card, button, badge, modal, icon, spacing, typography."
+description: Дизайн-система "Neon Discipline" проекта Hexlash. Триггерится на UI, CSS, цвет, color, шрифт, font, кнопка, button, карточка, card, иконка, icon, анимация, animation, экран, screen, верстка, layout, padding, margin, glow, неон, neon, дизайн, design, hex-, --hex. Грузить ВСЕГДА перед UI-задачами вместе с hexlash-dev и hexlash-vue. Для сложных задач — открыть /Hexlash_Visual_System.pdf.
 ---
 
-# Neon Discipline v1.0 — Operational Reference
+# hexlash-design — Neon Discipline
 
-> Full visual guide: **Hexlash_Visual_System.pdf v1.0**
-> This file is a short operational extract. For examples and rationale — see the PDF.
+## Главное правило
+
+- **Источник правды — `/src/styles/hexlash-ui.css`.** При расхождениях с PDF и SKILL.md прав код.
+- **Только `--hex-*` переменные.** Никаких `--pink, --dark, --gray*`. Исключение — PrivacyView.
+- **Один розовый акцент на экран.** Одна точка фокуса.
+- **Pixel-font (`Anonymous`) — один ударный блок на экран.**
+- **Архетипные цвета — только в иконках или активном контексте бойца.**
+- **Перед добавлением нового цвета/токена — стоп.** Обновить CSS + скилл + PDF.
 
 ---
 
-## A. Vision
+## Видение
 
-**Two-layer metaphor:** underground fight club atmosphere (dark, raw, concrete) + neon tech overlay (pink accents, glow, data). Backgrounds = atmosphere. UI = function.
+> «Минималистичный underground, поверх которого AI рисует точную и сдержанную неоновую разметку. Voice — тихий, уверенный, без улыбок».
+
+Два слоя: реальный мир (бетон, лампы, силуэты) = **фон, атмосфера**. Цифровой мир (розовый неон, числа, pixel-font) = **UI, функция**. Они не смешиваются.
 
 ---
 
-## B. Palette — CSS Variables
+## Палитра — CSS переменные
 
-Source of truth: `/src/styles/hexlash-ui.css`
+**Все значения — в `/src/styles/hexlash-ui.css`.** Здесь только токены и правила.
 
-### Primary (brand pink)
+### Фоны
+`--hex-bg-deep` (оверлеи) → `--hex-bg-dark` (страница) → `--hex-bg-medium` (панели) → `--hex-bg-light` (инпуты) → `--hex-bg-card` (полупрозрачный, ~85% opacity)
 
-```css
---hex-primary: #FF066F;
---hex-primary-light: #FF3D8E;
---hex-primary-dark: #A50344;
---hex-primary-glow: rgba(255, 6, 111, 0.5);
-```
+Темнее = дальше назад.
 
-- **Rule:** One pink accent per screen. Pink = the single loudest element (CTA button, active state, key number). If everything is pink, nothing is pink.
+### Бордеры
+`--hex-border-default` (покой) → `--hex-border-active` (hover/focus) → `--hex-border-strong` (выбранный) → `--hex-border-hi` (акцентный нейтральный)
 
-### Backgrounds
+### Текст (3 уровня — не больше)
+- `--hex-text-primary` (#FFF) — заголовки, body, ключевые значения
+- `--hex-text-secondary` (60% white) — описания
+- `--hex-text-muted` (35% white) — метки, подсказки
 
-```css
---hex-bg-deep: #050507;       /* deepest black: shadows, overlays, empty states */
---hex-bg-dark: #090909;       /* page background */
---hex-bg-medium: #111111;     /* panels, nav bar */
---hex-bg-light: #1A1A1A;      /* inputs, elevated surfaces */
---hex-bg-card: rgba(17, 17, 17, 0.85);  /* cards (semi-transparent) */
-```
+### Главный акцент — розовый
+- `--hex-primary` (#FF066F) — **одна точка фокуса на экран**
+- `--hex-primary-light` — hover
+- `--hex-primary-dark` — pressed
+- `--hex-primary-glow` — box-shadow
 
-- **Rule:** Darker = further back. `bg-deep` → `bg-dark` → `bg-medium` → `bg-light` → `bg-card`. Never invert.
-
-### Text
-
-```css
---hex-text-primary: #FFFFFF;             /* headings, key values */
---hex-text-secondary: rgba(255,255,255,0.6);  /* body text */
---hex-text-muted: rgba(255,255,255,0.35);     /* labels, hints, timestamps */
-```
-
-- **Rule:** 3 tiers only. No custom opacities. If you need emphasis — use `--hex-primary`, not a 4th white tier.
-
-### Borders
-
-```css
---hex-border-default: rgba(255,255,255,0.08);  /* resting cards */
---hex-border-active: rgba(255,255,255,0.15);   /* hover, focus */
---hex-border-strong: rgba(255,255,255,0.25);   /* selected, important */
---hex-border-hi: #4A4A50;                      /* accent border for hover/active neutral elements */
-```
-
-### Status
-
-```css
---hex-success: #00FF88;
---hex-danger: #FF3333;
---hex-warning: #FFB800;
-```
+### Статусные
+`--hex-success` (#00FF88), `--hex-warning` (#FFB800), `--hex-danger` (#FF3333), `--hex-info` (#4DA6FF)
 
 ### Game status
+`--hex-victory` / `--hex-victory-bg`, `--hex-defeat` / `--hex-defeat-bg`, `--hex-draw` / `--hex-draw-bg`, `--hex-info` / `--hex-info-bg`
 
-```css
---hex-victory: #00FF88;    --hex-victory-bg: #1A3320;
---hex-defeat: #FF4444;     --hex-defeat-bg: #331010;
---hex-draw: #FFB800;       --hex-draw-bg: #332B08;
---hex-info: #4DA6FF;       --hex-info-bg: #081833;
-```
-
-### Branches (3)
-
-```css
---hex-branch-speed: #00E5FF;       /* cyan */
---hex-branch-power: #FF066F;       /* pink = brand */
---hex-branch-technique: #A855F7;   /* purple */
-```
-
-Each has `-dark`, `-light`, `-glow` variants.
+### Ветки
+`--hex-branch-speed` (cyan), `--hex-branch-power` (pink = brand), `--hex-branch-technique` (purple). Каждая с `-dark`, `-light`, `-glow`.
 
 ### Combat actions
+`--hex-action-attack` (red), `--hex-action-defense` (blue), `--hex-action-position` (purple)
 
-```css
---hex-action-attack: #FF2D2D;
---hex-action-defense: #4DA6FF;
---hex-action-position: #A855F7;
-```
-
-### Dice effects (6)
-
-```css
---hex-dice-heal: #00FF88;       --hex-dice-adrenaline: #FF9100;
---hex-dice-shield: #4DA6FF;     --hex-dice-blind: #E040FB;
---hex-dice-rage: #FF1744;       --hex-dice-crit: #FFD600;
-```
+### Dice эффекты
+`--hex-dice-heal` (green), `--hex-dice-adrenaline` (orange), `--hex-dice-shield` (blue), `--hex-dice-blind` (purple), `--hex-dice-rage` (red), `--hex-dice-crit` (yellow)
 
 ### Mode colors
+`--hex-mode-pve` (cyan), `--hex-mode-pvp` (pink), `--hex-mode-club` (green)
 
-```css
---hex-mode-pve: #00E5FF;
---hex-mode-pvp: #FF066F;
---hex-mode-club: #00FF88;
-```
+### Belt system
+`--hex-belt-white` ... `--hex-belt-black`, `--hex-belt-hexmaster`, `--hex-belt-stripe`, `--hex-belt-outline`
 
-### Belt System colors (12)
+### Утилиты
+- Тени: `--hex-shadow-card`, `--hex-shadow-elevated`, `--hex-shadow-modal`
+- Glow: `--hex-glow-sm`, `--hex-glow-md`, `--hex-glow-lg`
+- Blur: `--hex-blur-sm/md/lg`
+- Border: `--hex-border-width` (2px), `--hex-line-height` (1.5)
+- Spacing: `--hex-spacing-xs(4)/sm(8)/md(16)/lg(24)/xl(32)/xxl(48)`
+- Radius: `--hex-radius-sm(4)/md(8)/lg(12)/xl(16)/round(50%)`
+- Transitions: `--hex-transition-fast` (0.15s), `--hex-transition-normal` (0.25s), `--hex-transition-slow` (0.4s)
 
-```css
---hex-belt-white: #F5F5F5;    --hex-belt-yellow: #FBBF24;
---hex-belt-orange: #FB923C;   --hex-belt-green: #22C55E;
---hex-belt-blue: #60A5FA;     --hex-belt-purple: #A855F7;
---hex-belt-brown: #8B4513;    --hex-belt-red: #DC2626;
---hex-belt-black: #0A0A0A;    --hex-belt-hexmaster: var(--hex-primary);
---hex-belt-stripe: #FFFFFF;   --hex-belt-outline: rgba(255, 255, 255, 0.25);
-```
-
-Belt colors are a **separate namespace** from archetype colors. One belt color per screen as accent (same as one pink accent rule).
+### Шрифтовые алиасы — ВНИМАНИЕ
+В CSS: `--hex-font-display` (Impact), `--hex-font-body` (Inter), `--hex-font-mono` (JetBrains Mono). Компоненты **используют напрямую**: `'Anonymous'`, `'AnonymousBalance'`, system sans. **Две параллельные системы.** Не подменять одну другой.
 
 ---
 
-## C. Archetypes — 6 Colors
+## Архетипы — отдельный язык
 
-| Archetype | Base | CSS var |
-|-----------|------|---------|
-| Predator | #FF2D2D | `--hex-arch-predator` |
-| Sentinel | #4DA6FF | `--hex-arch-sentinel` |
-| Ghost | #B44DFF | `--hex-arch-ghost` |
-| Analyst | #00FF88 | `--hex-arch-analyst` |
-| Maverick | #FFB800 | `--hex-arch-maverick` |
-| Juggernaut | #FF6B1A | `--hex-arch-juggernaut` |
+| Архетип | Токен | Идея |
+|---------|-------|------|
+| Predator | `--hex-arch-predator` (#FF2D2D) | Агрессия |
+| Sentinel | `--hex-arch-sentinel` (#4DA6FF) | Защита |
+| Ghost | `--hex-arch-ghost` (#B44DFF) | Уклонение |
+| Analyst | `--hex-arch-analyst` (#00FF88) | Анализ |
+| Maverick | `--hex-arch-maverick` (#FFB800) | Хаос |
+| Juggernaut | `--hex-arch-juggernaut` (#FF6B1A) | Давление |
 
-Each has 5 variants: base, `-dark`, `-light`, `-bg`, `-glow`.
+Каждый с `-dark`, `-light`, `-bg`, `-glow`.
 
-**Rule:** Archetype colors appear ONLY in:
-- Fighter icon/avatar border or glow
-- Active archetype context (selected build slot, agent card in focus)
-- Small accent (badge dot, thin left border on archetype card)
+**Где используется:** иконки архетипов (всегда в своём цвете), контекст активного бойца (тонкий бордер/свечение).
 
-❌ Never use archetype color as page background, full card fill, or button fill.
-❌ Never mix two archetype colors on one element.
+**Где НЕ используется:** глобальный UI, кнопки, текст, фоны. Два архетипных цвета на одном элементе — никогда.
 
-Usage in components:
-```vue
-<HexButton variant="archetype" archetype-color="var(--hex-arch-predator)">Attack</HexButton>
-<HexCard variant="active" archetype-color="var(--hex-arch-sentinel)">...</HexCard>
-```
-Internally sets `--_arch-color` CSS custom property.
+Динамическая передача: `archetype-color="var(--hex-arch-ghost)"` → `--_arch-color` внутри.
 
 ---
 
-## D. Typography — Three Voices
+## Типографика — три голоса
 
-| Voice | Font | Usage | CSS |
-|-------|------|-------|-----|
-| **Display** | `Anonymous` | Titles, headings, logo, section labels, uppercase UI | `font-family: 'Anonymous', 'Courier New', monospace` |
-| **Data** | `AnonymousBalance` | Numbers: HP, XP, taps, ELO, balance, damage, timers | `font-family: 'AnonymousBalance', 'Courier New', monospace` |
-| **Body** | System sans-serif | Body text, descriptions, compact buttons | `-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif` |
+| Голос | Шрифт | Где |
+|-------|-------|-----|
+| Бренд/удар | `Anonymous` (pixel) | Лого, START FIGHT, VICTORY/DEFEAT/DRAW, OVERDRIVE. **Один блок на экран.** |
+| Числа | `AnonymousBalance` | HP, баланс, taps, XP, win-score |
+| Спокойная речь | System sans (`-apple-system, ...`) | Всё остальное |
 
-**Rules:**
-- Anonymous (pixel-font) = impact moments only. Titles, fight labels, key stats. NOT for body text or descriptions.
-- AnonymousBalance = any number the player tracks. Always.
-- Body = everything else. Default choice when unsure.
+**Размеры (mobile 360-414px):** Display 32, H1 24, H2 18, H3 14, Body 14, Caption 11, Micro 9.
 
-### Font sizes (from CSS)
-
-| Token | Size |
-|-------|------|
-| `--hex-font-size-xs` | 10px |
-| `--hex-font-size-sm` | 12px |
-| `--hex-font-size-md` | 14px |
-| `--hex-font-size-lg` | 16px |
-| `--hex-font-size-xl` | 20px |
-| `--hex-font-size-xxl` | 24px |
-| `--hex-font-size-giant` | 32px |
-| `--hex-font-size-huge` | 48px |
+Правила: max 3 размера на экран, body = `--hex-text-primary`, серый для второстепенного, line-height 1.4-1.5, ALL CAPS только лейблы и удары (≤3 слов).
 
 ---
 
-## E. Spacing
+## UI компоненты
 
-Base: 4px. Tokens from CSS:
+Готовые в `/src/components/ui/`. **Перед написанием нового — проверить.**
 
-| Token | Value |
-|-------|-------|
-| `--hex-spacing-xs` | 4px |
-| `--hex-spacing-sm` | 8px |
-| `--hex-spacing-md` | 16px |
-| `--hex-spacing-lg` | 24px |
-| `--hex-spacing-xl` | 32px |
-| `--hex-spacing-xxl` | 48px |
-
-Utility classes: `.hex-mt-sm`, `.hex-mt-md`, `.hex-mt-lg`, `.hex-mb-sm`, `.hex-mb-md`, `.hex-mb-lg`, `.hex-gap-sm`, `.hex-gap-md`, `.hex-gap-lg`.
-
-### Border radius
-
-| Token | Value |
-|-------|-------|
-| `--hex-radius-sm` | 4px |
-| `--hex-radius-md` | 8px |
-| `--hex-radius-lg` | 12px |
-| `--hex-radius-xl` | 16px |
-| `--hex-radius-round` | 50% |
+| Компонент | Варианты |
+|-----------|----------|
+| `HexButton` | primary, secondary, ghost, danger, archetype × sm/md/lg |
+| `HexCard` | default, elevated, archetype, active, result × padding |
+| `HexProgress` | hp, branch, generic × 3 size |
+| `HexBadge` | archetype, branch, status, counter, custom |
+| `BeltBadge` | grade 0-32, isHexmaster, sm/md/lg |
+| `UserCaptainBadge` | xs/sm/md |
+| `PixelIcon` | **Не используется**, preserved |
 
 ---
 
-## F. Cards — 5 Variants
+## Кнопки — 4 типа
 
-| Variant | When | Visual |
-|---------|------|--------|
-| **default** | Generic content | `--hex-bg-card`, `--hex-border-default`, `--hex-radius-lg` |
-| **elevated** | Important panel | Same + `--hex-shadow-elevated` |
-| **archetype** | Fighter/agent context | Left border 3px in archetype color |
-| **active** | Selected/focused item | Tinted bg + archetype color border |
-| **result** | Fight outcome | Top border: `--hex-victory`/`--hex-defeat`/`--hex-draw` |
+- **primary** — розовый. **Одна на экран.** START FIGHT, SAVE.
+- **secondary** — тёмная + бордер. CHANGE, EDIT, BACK.
+- **ghost** — без заливки. Cancel, Skip.
+- **danger** — бордер `--hex-danger`. Delete, Retire.
 
-Component: `HexCard.vue`. Slots: default, header, footer. Padding prop: none/sm/md/lg.
+Размеры: sm 32px, md 40px, lg 48px. Состояния: default/hover/active/disabled/loading.
 
-Interactive cards add `.hex-card-interactive` (hover → pink border + glow).
-Locked cards: `.hex-card-locked` (opacity 0.5, grayscale 50%).
+**Запрещено:** две primary рядом, цветные кнопки кроме pink/danger, градиенты, ALL CAPS на ghost.
 
 ---
 
-## G. Buttons — 4 Types + Sizes
+## Карточки — 5 вариантов
 
-| Type | When | Visual |
-|------|------|--------|
-| **primary** | Main CTA (1 per screen) | Pink fill, white text, glow |
-| **secondary** | Secondary actions | Pink outline, pink text → fill on hover |
-| **ghost** | Tertiary, dismiss, cancel | Muted border → pink on hover |
-| **danger** | Destructive actions | Red accent (use via HexButton `variant="danger"`) |
+- **default** — `--hex-bg-card`, бордер default
+- **elevated** — с `--hex-shadow-elevated`
+- **archetype** — левая полоска 2px в архетипном цвете
+- **active** — бордер 1.5px архетипный
+- **result** — верхняя полоска (victory/defeat/draw)
 
-Component: `HexButton.vue`. Also supports `variant="archetype"` with `archetypeColor` prop.
-
-| Size | Class | Padding |
-|------|-------|---------|
-| sm | `.hex-btn-sm` | 8px 16px |
-| md | (default) | 16px 24px |
-| lg | `.hex-btn-lg` | 24px 32px |
-| full | `.hex-btn-full` | width: 100% |
-
-**Rules:**
-- ✅ One primary button per screen/modal
-- ✅ Disabled = `opacity: 0.5; cursor: not-allowed`
-- ❌ Never two primary buttons side by side
-- ❌ Never use pink fill for non-CTA elements
+Max 2 уровня вложенности. Фон не светлее `--hex-bg-card`.
 
 ---
 
-## H. Icons — Line Style
+## Glow — правила
 
-**Style:** Line icons (Lucide-compatible). Inline SVG or `<img>` with filter.
-**PixelIcon system:** Exists in code (`PixelIcon.vue`, `pixelIcons.js`) but currently unused by app. Preserved for future.
+**Допустим:** primary кнопка (одна!), лого, VICTORY, Hexmaster belt, активный таб, карточка активного бойца.
 
-Sizes used in project:
-- 16px — inline with text, badges
-- 20px — buttons, nav items
-- 24px — section headers, standalone
-- 32px+ — hero/empty states
+**Запрещён:** текст, secondary/ghost/danger кнопки, карточки default, иконки нав, бейджи, фоны.
 
-**Rule:** Icons are `--hex-text-secondary` by default, `--hex-primary` when active.
+**Один светящийся объект на экран.**
 
 ---
 
-## I. Glow
+## Анимации
 
-### Where glow is allowed ✅
+| Длительность | Где |
+|-------------|-----|
+| 100ms | Press feedback |
+| 150ms | Tooltip |
+| 250ms | **Дефолт.** Карточки, табы |
+| 400ms | Модалки |
+| 600ms | VICTORY, ключевые |
+| 1500ms | Glow pulse |
 
-- Primary CTA button (`.hex-glow-sm`)
-- Active/selected card border
-- Active nav item
-- Modal border (`--hex-shadow-modal`)
-- Hero elements (fight title, victory screen)
-- Avatar border in clan header
-
-### Where glow is forbidden ❌
-
-- Body text
-- Every card on a list (only the selected one)
-- Disabled elements
-- Background surfaces
-- More than 2 glowing elements visible at once
-
-### Glow tokens
-
-```css
---hex-glow-sm: 0 0 10px var(--hex-primary-glow);
---hex-glow-md: 0 0 20px var(--hex-primary-glow);
---hex-glow-lg: 0 0 30px var(--hex-primary-glow), 0 0 60px var(--hex-primary-glow);
-```
+Запрещено: bounce, rotation (кроме спиннеров), parallax, >600ms для рутины.
 
 ---
 
-## J. Animations — 6 Base Timings
+## Сетка и отступы
 
-| Token | Duration | Use |
-|-------|----------|-----|
-| `--hex-transition-fast` | 0.15s ease | Hover, press, toggle |
-| `--hex-transition-normal` | 0.25s ease | State change, progress bar |
-| `--hex-transition-slow` | 0.4s ease | Page transition, modal |
+Базовая единица: **4px**. Spacing: `--hex-spacing-xs(4)/sm(8)/md(16)/lg(24)/xl(32)/xxl(48)`.
 
-### Keyframe animations
-
-| Class | Animation | Duration |
-|-------|-----------|----------|
-| `.hex-animate-fade-in` | Fade + slide up 10px | 0.3s |
-| `.hex-animate-scale-in` | Fade + scale from 0.9 | 0.3s |
-| `.hex-animate-pulse` | Scale pulse 1→1.05 | 1s infinite |
-| `.hex-pulse` | Opacity pulse 1→0.6 | 1.5s infinite |
-| `.hex-glow-pulse` | Box-shadow pulse | 2s infinite |
-| `.hex-float-up` | Float up + fade out | 0.8s forwards |
-
-### Vue transitions
-
-- `hex-fade` — opacity 0.3s (modals, overlays)
-- `hex-slide-up` — opacity + translateY 20px 0.3s (toasts, bottom sheets)
-
-### Hover/press utilities
-
-- `.hex-hover-brighten` — `filter: brightness(1.15)` on hover
-- `.hex-hover-lift` — `translateY(-1px)` on hover
-- `.hex-press` — `scale(0.97)` on `:active`
-
-**Rules:**
-- ✅ Transitions on every interactive element
-- ❌ No animation >0.5s for UI state changes
-- ❌ No bounce/elastic easing (feels gamey, not underground)
-- ❌ Never animate more than 2 properties simultaneously (use `will-change`)
+- Container padding-x: 16px
+- Min: 320px (iPhone SE). Target: 360-414px. Max content: 480px
+- Touch-targets: ≥44×44px
+- Max 5-7 элементов в первом экране
+- Max 3 уровня иерархии
 
 ---
 
-## K. States — Loading / Empty / Error / Success / Disabled
+## Фоны
 
-| State | Pattern |
-|-------|---------|
-| **Loading** | `.hex-pulse` on skeleton placeholder OR spinner inside HexButton (`loading` prop) |
-| **Empty** | Icon (32px+, `--hex-text-muted`) + title (Anonymous, `--hex-text-secondary`) + description (body, `--hex-text-muted`) + CTA button |
-| **Error** | `--hex-danger` accent. Toast via `Error.vue` (text interpolation, NOT v-html). Inline: red border + message |
-| **Success** | `--hex-success` accent. Toast via `Info.vue`. Brief, auto-dismiss |
-| **Disabled** | `opacity: 0.5; cursor: not-allowed; pointer-events: none`. No glow, no hover |
+Фон = атмосфера, не функция. Underground, Sin City + Cyberpunk Edgerunners.
+- Затемнение `::before` overlay #0A0A0A с opacity 0.75-0.85
+- Тёмный центр, vignette по краям
+- Лимит: ≤200KB
 
 ---
 
-## L. TOP-10 Bans (Anti-patterns)
+## Состояния
 
-| # | ❌ DON'T | ✅ DO INSTEAD |
-|---|---------|--------------|
-| 1 | Use legacy `--pink`, `--dark`, `--gray*` vars | Use `--hex-*` vars exclusively |
-| 2 | Hardcode colors (`#FF066F`, `rgba(...)` inline) | Use CSS variable tokens |
-| 3 | Make everything pink / multiple pink CTAs | One pink accent per screen |
-| 4 | Use Anonymous font for body text or descriptions | Anonymous = titles/labels only. Body = system sans |
-| 5 | Apply glow to every card in a list | Glow on selected/active element only |
-| 6 | Use `v-html` for user-supplied or error content | Text interpolation `{{ }}`. v-html only for trusted i18n |
-| 7 | Invent custom opacity/color values | Use the 3-tier text system + defined status colors |
-| 8 | Add bounce/elastic animations | Use `ease` only. Underground, not cartoon |
-| 9 | Skip disabled/loading/empty states | Every interactive element needs all states |
-| 10 | Use archetype colors as fills/backgrounds for non-fighter elements | Archetype color = icons, borders, small accents in fighter context only |
+- **Loading:** skeleton (pulse opacity). Нет "Loading..." текста.
+- **Empty:** иконка xl + заголовок + описание + primary кнопка
+- **Error:** `--hex-danger` иконка + заголовок + RETRY. Inline.
+- **Disabled:** **не opacity** — disabled вариант компонента. `--hex-text-muted`, `--hex-bg-card`.
 
 ---
 
-## Additional Tokens (defined in hexlash-ui.css, available for use)
+## 10 антипаттернов
 
-These are not primary design tokens but cover practical gaps.
-
-### Shadows
-
-```css
---hex-shadow-card: 0 4px 20px rgba(0, 0, 0, 0.5);       /* default card elevation */
---hex-shadow-elevated: 0 8px 32px rgba(0, 0, 0, 0.7);    /* elevated panels, popovers */
---hex-shadow-modal: 0 0 40px var(--hex-primary-glow), 0 20px 60px rgba(0, 0, 0, 0.8);  /* modal overlays */
-```
-
-### Blur (for backdrop-filter)
-
-```css
---hex-blur-sm: blur(5px);
---hex-blur-md: blur(10px);
---hex-blur-lg: blur(20px);
-```
-
-### Misc
-
-```css
---hex-border-width: 2px;   /* default border width for consistency */
---hex-line-height: 1.5;    /* default body text line-height */
-```
-
-### Font aliases (defined in CSS, used only by hexlash-ui.css utility classes, NOT by .vue components)
-
-```css
---hex-font-display: 'Impact', 'Anton', 'Bebas Neue', sans-serif;       /* NOT Anonymous — hex-title-* classes only */
---hex-font-body: 'Inter', 'Roboto', 'SF Pro', -apple-system, sans-serif; /* NOT the system sans stack used in .vue files */
---hex-font-mono: 'JetBrains Mono', 'Fira Code', monospace;              /* NOT AnonymousBalance — hex utility classes only */
-```
-
-**Important:** .vue components use `'Anonymous'`, `'AnonymousBalance'`, and `-apple-system, BlinkMacSystemFont...` directly. These CSS aliases are a parallel system in hexlash-ui.css utility classes that components don't reference. Do NOT substitute one for the other.
+1. Множественные розовые акценты
+2. Pixel-font везде
+3. Конкурирующие фоны
+4. Полупрозрачные карточки с просвечиванием
+5. Серые dashed плейсхолдеры
+6. Inconsistent terminology
+7. Mix outlined/filled иконок
+8. Вторая палитра "случайно"
+9. Яркий фон-фото
+10. `--pink/--dark` вместо `--hex-*`
 
 ---
 
-## M. Screen Readiness Checklist
+## Чеклист готовности экрана
 
-Before marking a screen done, verify:
+**Цвета:** одна розовая точка, архетипы в иконках, нет легаси, нет цветов вне палитры.
 
-- [ ] All colors use `--hex-*` variables (zero hardcoded values)
-- [ ] Text hierarchy: max 3 tiers (`primary` / `secondary` / `muted`)
-- [ ] One pink CTA maximum
-- [ ] Numbers in `AnonymousBalance`, titles in `Anonymous`, body in system sans
-- [ ] Cards use `HexCard` variants (not raw divs with ad-hoc styles)
-- [ ] Buttons use `HexButton` or `.hex-btn-*` classes
-- [ ] Loading state exists (skeleton or spinner)
-- [ ] Empty state exists (icon + title + description + CTA)
-- [ ] Error state exists (toast or inline)
-- [ ] Disabled elements: opacity 0.5, no glow, no hover
-- [ ] No glow on more than 2 elements at once
-- [ ] Animations use `--hex-transition-*` tokens
-- [ ] Responsive: works at 320px min-width, tested at 360px breakpoint
-- [ ] `100dvh` for full-height screens
-- [ ] No `v-html` with user/error data
-- [ ] Scoped styles in component (no global leaks)
+**Типографика:** pixel-font max 1, AnonymousBalance для чисел, max 3 размера.
+
+**Сетка:** кратно 4px, min 16px padding, touch ≥44px, 320px min.
+
+**Компоненты:** существующие из ui/, max 1 primary, все состояния.
+
+**Glow:** max 1 объект, только разрешённые.
+
+**Состояния:** loading/empty/error/disabled.
+
+**i18n:** 11 локалей, ширина +30%.
+
+**Финал:** узнаётся как Hexlash, главное действие за 1с, нет антипаттернов.
 
 ---
 
-## N. File Map
+## Когда грузить PDF
 
-| File | Purpose |
-|------|---------|
-| `/src/styles/hexlash-ui.css` | All CSS variables, utility classes, base component styles |
-| `/src/assets/colors.css` | **LEGACY** — only used by PrivacyView. Do NOT use in new code |
-| `/src/assets/main.css` | Global resets |
-| `/src/components/ui/HexButton.vue` | Button component (5 variants) |
-| `/src/components/ui/HexCard.vue` | Card component (5 variants) |
-| `/src/components/ui/HexProgress.vue` | Progress bar (hp/branch/generic) |
-| `/src/components/ui/HexBadge.vue` | Badge (archetype/branch/status/counter) |
-| `/src/components/ui/PixelIcon.vue` | Pixel icon renderer (preserved, currently unused) |
-| `/src/data/pixelIcons.js` | 45 pixel icon data (preserved, currently unused) |
+Открывать `/Hexlash_Visual_System.pdf` если:
+- Новый экран целиком
+- Новый компонент в `/src/components/ui/`
+- Вопрос по философии
+- Нужны примеры по экранам
+- Сомнения по архетипным цветам/фонам
+- Правка скилла или `hexlash-ui.css`
 
 ---
 
-> **Version:** Neon Discipline v1.0
-> **Full guide:** Hexlash_Visual_System.pdf v1.0
-> **This file:** operational extract for Claude Code. When in doubt — check the PDF.
+## Связь с кодом
+
+| Где | Что |
+|-----|-----|
+| `/src/styles/hexlash-ui.css` | **ИСТОЧНИК ПРАВДЫ.** |
+| `/src/components/ui/` | Компоненты дизайн-системы |
+| Этот SKILL.md | Операционная выжимка |
+| `/Hexlash_Visual_System.pdf` v1.1 | Полная философия + примеры |
+
+Цикл: решение → CSS (код первым!) → SKILL → PDF → CLAUDE.md → компоненты.
+
+---
+
+## Запрещено
+
+- Новый цвет без обновления CSS + скилл + PDF
+- Легаси `--pink/--dark/--gray*`
+- Дублировать компонент из ui/
+- Хардкодить hex-цвета
+- Opacity для disabled
+- Архетипный цвет вне иконок/активного контекста
+- Два розовых акцента
+- Pixel-font в нескольких местах
+- Использовать `--hex-font-*` алиасы вместо реальных Anonymous/system-sans
+- Игнорировать чеклист
+
+---
+
+## Связанные скиллы
+
+- `hexlash-dev` — всегда первым
+- `hexlash-vue` — конвенции компонентов
+- `hexlash-i18n` — тексты на 11 языках
+- `hexlash-combat` — если UI боя
+- `hexlash-gamedesign` — если UI отображает баланс
