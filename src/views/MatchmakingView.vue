@@ -64,7 +64,7 @@
               <img :src="`/images/skins/${playerSkin}`" class="player-skin-img" alt=""/>
             </div>
             <div class="player-name">{{ playerName }}</div>
-            <div class="player-rating">{{ playerRating }}</div>
+            <UserCaptainBadge :captain="myCapt" size="sm" />
           </div>
 
           <div class="vs-icon">VS</div>
@@ -110,6 +110,7 @@ import store from '@/core/state/store.js';
 import router from '@/router/index.js';
 import { t } from '@/locales/index.js';
 import { getOnlinePlayersCount } from '@/core/services/statsService.js';
+import UserCaptainBadge from '@/components/ui/UserCaptainBadge.vue';
 
 // State
 const status = ref('searching'); // 'searching', 'found', 'timeout'
@@ -142,6 +143,8 @@ const playerSkin = computed(() => {
   const master = store.getters['master/getMaster'];
   return master?.userData?.skin || 'skin_m_1.png';
 });
+
+const myCapt = computed(() => store.getters['agent/currentCaptain']);
 
 const formattedTime = computed(() => {
   const minutes = Math.floor(searchTime.value / 60);

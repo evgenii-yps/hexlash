@@ -190,7 +190,7 @@
             <VInfiniteScroll :items="participants" :onLoad="loadParticipants" class="infinite-scroll">
               <template v-if="participants.length" v-for="(participant, index) in participants" :key="participant.id">
                 <div :class="['table-row', index % 2 === 0 ? '' : '']" @click="viewParticipant(participant.login)">
-                  <span class="column-name">{{ participant.name || t.profile.anonymous }}</span>
+                  <span class="column-name">{{ participant.name || t.profile.anonymous }} <UserCaptainBadge :captain="participant.captain" size="xs" /></span>
 <!--                  <span class="column-name">{{ participant.club }}</span>-->
                   <span class="column">{{ formatNumber(participant.wonTokens) }}</span>
                   <span class="column">{{ formatNumber(participant.losses) }}</span>
@@ -233,6 +233,7 @@ import store from "@/core/state/store.js";
 import {formatNumber} from "@/core/constants.js";
 import * as amplitude from "@amplitude/analytics-browser";
 import HexButton from "@/components/ui/HexButton.vue";
+import UserCaptainBadge from "@/components/ui/UserCaptainBadge.vue";
 import CreateClan from "@/components/fragments/clan/CreateClan.vue";
 import MyClanTab from "@/components/fragments/clan/MyClanTab.vue";
 import PvPStatsCard from "@/components/fragments/profile/PvPStatsCard.vue";

@@ -171,6 +171,12 @@ export default {
       lblTitle: '战斗皮肤',
       lblFree: '免费',
     },
+    lblTrainer: 'Trainer',
+    lblYourCaptain: 'Your Captain',
+    lblNoCaptainTitle: 'No Captain Set',
+    lblNoCaptainDesc: 'Set a Captain in Club Mode to compete',
+    btnSetCaptain: 'Go to Club',
+    btnViewCaptain: 'View Captain →',
   },
   arena: {
     lblTitle: '战士准备',

@@ -171,6 +171,12 @@ export default {
       lblTitle: 'फाइटर स्किन्स',
       lblFree: 'मुफ़्त',
     },
+    lblTrainer: 'Trainer',
+    lblYourCaptain: 'Your Captain',
+    lblNoCaptainTitle: 'No Captain Set',
+    lblNoCaptainDesc: 'Set a Captain in Club Mode to compete',
+    btnSetCaptain: 'Go to Club',
+    btnViewCaptain: 'View Captain →',
   },
   arena: {
     lblTitle: 'फाइटर की तैयारी',

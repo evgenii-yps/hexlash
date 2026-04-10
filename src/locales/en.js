@@ -176,6 +176,13 @@ export default {
       lblTitle: 'FIGHTER SKINS',
       lblFree: 'FREE',
     },
+    // Captain layer
+    lblTrainer: 'Trainer',
+    lblYourCaptain: 'Your Captain',
+    lblNoCaptainTitle: 'No Captain Set',
+    lblNoCaptainDesc: 'Set a Captain in Club Mode to compete',
+    btnSetCaptain: 'Go to Club',
+    btnViewCaptain: 'View Captain →',
   },
   arena: {
     lblTitle: 'Fighter Preparation',

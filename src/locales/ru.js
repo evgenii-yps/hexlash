@@ -176,6 +176,12 @@ export default {
       lblTitle: 'СКИНЫ БОЙЦА',
       lblFree: 'БЕСПЛАТНО',
     },
+    lblTrainer: 'Тренер',
+    lblYourCaptain: 'Твой капитан',
+    lblNoCaptainTitle: 'Капитан не назначен',
+    lblNoCaptainDesc: 'Назначьте капитана в режиме клуба для участия в боях',
+    btnSetCaptain: 'Перейти в клуб',
+    btnViewCaptain: 'Капитан →',
   },
   arena: {
     lblTitle: 'Подготовка бойца',
