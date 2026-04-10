@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HEXLASH — Belt Badge Demo</title>
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<link rel="stylesheet" href="./styles/hexlash-ui.css">
+<style>
+  @font-face {
+    font-family: 'Anonymous';
+    src: url('./assets/fonts/Anonymous.ttf') format('truetype');
+  }
+  @font-face {
+    font-family: 'AnonymousBalance';
+    src: url('./assets/fonts/AnonymousBalance.ttf') format('truetype');
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { color: #fff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 32px; transition: background 0.2s ease; }
+  h1 { font-family: 'Anonymous', monospace; color: #FF066F; margin-bottom: 4px; font-size: 20px; }
+  h2 { color: rgba(255,255,255,0.6); font-size: 13px; text-transform: uppercase; letter-spacing: 2px; margin: 32px 0 16px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 6px; }
+  .subtitle { color: rgba(255,255,255,0.35); font-size: 12px; margin-bottom: 24px; }
+
+  /* Background switcher */
+  .bg-switcher { display: flex; gap: 8px; margin-bottom: 24px; }
+  .bg-btn {
+    padding: 6px 14px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.15);
+    background: transparent; color: rgba(255,255,255,0.5); cursor: pointer; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.15s ease;
+  }
+  .bg-btn:hover { border-color: rgba(255,255,255,0.3); color: rgba(255,255,255,0.8); }
+  .bg-btn.active { border-color: #FF066F; color: #FF066F; }
+
+  /* Belt grid */
+  .belt-grid { display: grid; grid-template-columns: 32px 60px 140px 1fr; align-items: center; gap: 8px 16px; margin-bottom: 8px; }
+  .belt-grid .grade-num { font-family: 'AnonymousBalance', monospace; font-size: 12px; color: rgba(255,255,255,0.35); text-align: right; }
+  .belt-grid .belt-label { font-size: 11px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.5px; }
+
+  .sizes-row { display: flex; align-items: center; gap: 16px; }
+  .size-label { font-size: 9px; color: rgba(255,255,255,0.2); width: 24px; text-align: right; }
+
+  /* Belt badge inline styles (mirrors BeltBadge.vue) */
+  .belt-badge { display: inline-flex; align-items: center; justify-content: center; line-height: 0; }
+  .belt-badge svg { width: 100%; height: 100%; display: block; }
+  .size-sm { width: 16px; height: 6px; }
+  .size-md { width: 40px; height: 14px; }
+  .size-lg { width: 120px; height: 40px; }
+
+  .is-hexmaster.size-md svg,
+  .is-hexmaster.size-lg svg {
+    filter: drop-shadow(0 0 4px var(--hex-primary-glow));
+    animation: hexmaster-pulse 1500ms ease-in-out infinite;
+  }
+  .is-hexmaster.size-sm svg {
+    filter: drop-shadow(0 0 2px var(--hex-primary-glow));
+  }
+  @keyframes hexmaster-pulse {
+    0%, 100% { filter: drop-shadow(0 0 4px var(--hex-primary-glow)); }
+    50% { filter: drop-shadow(0 0 12px var(--hex-primary-glow)); }
+  }
+
+  /* Hexmaster row highlight */
+  .hexmaster-row { margin-top: 24px; padding: 12px 0; border-top: 1px solid rgba(255, 6, 111, 0.2); }
+  .hexmaster-row .belt-label { color: #FF066F; font-family: 'Anonymous', monospace; font-weight: bold; }
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>BELT BADGE</h1>
+  <div class="subtitle">33 grades (0-32) + Hexmaster — line-style SVG in 3 sizes</div>
+
+  <!-- Background switcher -->
+  <h2>Background</h2>
+  <div class="bg-switcher">
+    <button class="bg-btn" :class="{ active: bg === 'dark' }" @click="setBg('dark')">--hex-bg-dark (#090909)</button>
+    <button class="bg-btn" :class="{ active: bg === 'medium' }" @click="setBg('medium')">--hex-bg-medium (#1a1a1a)</button>
+    <button class="bg-btn" :class="{ active: bg === 'black' }" @click="setBg('black')">#000000</button>
+    <button class="bg-btn" :class="{ active: bg === 'card' }" @click="setBg('card')">--hex-bg-card (#242424)</button>
+  </div>
+
+  <!-- All 33 grades -->
+  <h2>All Grades (sm · md · lg)</h2>
+  <div v-for="g in grades" :key="g.grade" class="belt-grid">
+    <span class="grade-num">{{ g.grade }}</span>
+    <span class="belt-label">{{ g.color }}-{{ g.stripes }}</span>
+    <div class="sizes-row">
+      <belt-badge :grade="g.grade" size="sm"></belt-badge>
+      <belt-badge :grade="g.grade" size="md"></belt-badge>
+      <belt-badge :grade="g.grade" size="lg"></belt-badge>
+    </div>
+  </div>
+
+  <!-- Hexmaster -->
+  <div class="hexmaster-row">
+    <div class="belt-grid">
+      <span class="grade-num">★</span>
+      <span class="belt-label">HEXMASTER</span>
+      <div class="sizes-row">
+        <belt-badge :grade="32" :is-hexmaster="true" size="sm"></belt-badge>
+        <belt-badge :grade="32" :is-hexmaster="true" size="md"></belt-badge>
+        <belt-badge :grade="32" :is-hexmaster="true" size="lg"></belt-badge>
+      </div>
+    </div>
+  </div>
+
+  <!-- Critical cases -->
+  <h2>Critical Cases</h2>
+  <div style="margin-bottom: 16px;">
+    <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 8px;">White belt visibility (grade 0 — should have visible outline on dark bg)</div>
+    <div class="sizes-row">
+      <span class="size-label">sm</span><belt-badge :grade="0" size="sm"></belt-badge>
+      <span class="size-label">md</span><belt-badge :grade="0" size="md"></belt-badge>
+      <span class="size-label">lg</span><belt-badge :grade="0" size="lg"></belt-badge>
+    </div>
+  </div>
+  <div style="margin-bottom: 16px;">
+    <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 8px;">Black belt visibility (grade 32 — should have bright outline, not disappear)</div>
+    <div class="sizes-row">
+      <span class="size-label">sm</span><belt-badge :grade="32" size="sm"></belt-badge>
+      <span class="size-label">md</span><belt-badge :grade="32" size="md"></belt-badge>
+      <span class="size-label">lg</span><belt-badge :grade="32" size="lg"></belt-badge>
+    </div>
+  </div>
+  <div style="margin-bottom: 16px;">
+    <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 8px;">Stripe comparison: 0 vs 1 vs 2 vs 3 stripes (yellow, md size)</div>
+    <div class="sizes-row" style="gap: 24px;">
+      <div style="text-align: center;"><belt-badge :grade="4" size="md"></belt-badge><div style="font-size:9px;color:rgba(255,255,255,0.3);margin-top:4px;">0</div></div>
+      <div style="text-align: center;"><belt-badge :grade="5" size="md"></belt-badge><div style="font-size:9px;color:rgba(255,255,255,0.3);margin-top:4px;">1</div></div>
+      <div style="text-align: center;"><belt-badge :grade="6" size="md"></belt-badge><div style="font-size:9px;color:rgba(255,255,255,0.3);margin-top:4px;">2</div></div>
+      <div style="text-align: center;"><belt-badge :grade="7" size="md"></belt-badge><div style="font-size:9px;color:rgba(255,255,255,0.3);margin-top:4px;">3</div></div>
+    </div>
+  </div>
+  <div style="margin-bottom: 16px;">
+    <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 8px;">Stripe comparison at lg size (green)</div>
+    <div class="sizes-row" style="gap: 24px;">
+      <div style="text-align: center;"><belt-badge :grade="12" size="lg"></belt-badge><div style="font-size:9px;color:rgba(255,255,255,0.3);margin-top:4px;">0</div></div>
+      <div style="text-align: center;"><belt-badge :grade="13" size="lg"></belt-badge><div style="font-size:9px;color:rgba(255,255,255,0.3);margin-top:4px;">1</div></div>
+      <div style="text-align: center;"><belt-badge :grade="14" size="lg"></belt-badge><div style="font-size:9px;color:rgba(255,255,255,0.3);margin-top:4px;">2</div></div>
+      <div style="text-align: center;"><belt-badge :grade="15" size="lg"></belt-badge><div style="font-size:9px;color:rgba(255,255,255,0.3);margin-top:4px;">3</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const BELT_GRADES = [
+  { grade: 0,  color: 'white',  stripes: 0 }, { grade: 1,  color: 'white',  stripes: 1 },
+  { grade: 2,  color: 'white',  stripes: 2 }, { grade: 3,  color: 'white',  stripes: 3 },
+  { grade: 4,  color: 'yellow', stripes: 0 }, { grade: 5,  color: 'yellow', stripes: 1 },
+  { grade: 6,  color: 'yellow', stripes: 2 }, { grade: 7,  color: 'yellow', stripes: 3 },
+  { grade: 8,  color: 'orange', stripes: 0 }, { grade: 9,  color: 'orange', stripes: 1 },
+  { grade: 10, color: 'orange', stripes: 2 }, { grade: 11, color: 'orange', stripes: 3 },
+  { grade: 12, color: 'green',  stripes: 0 }, { grade: 13, color: 'green',  stripes: 1 },
+  { grade: 14, color: 'green',  stripes: 2 }, { grade: 15, color: 'green',  stripes: 3 },
+  { grade: 16, color: 'blue',   stripes: 0 }, { grade: 17, color: 'blue',   stripes: 1 },
+  { grade: 18, color: 'blue',   stripes: 2 }, { grade: 19, color: 'blue',   stripes: 3 },
+  { grade: 20, color: 'purple', stripes: 0 }, { grade: 21, color: 'purple', stripes: 1 },
+  { grade: 22, color: 'purple', stripes: 2 }, { grade: 23, color: 'purple', stripes: 3 },
+  { grade: 24, color: 'brown',  stripes: 0 }, { grade: 25, color: 'brown',  stripes: 1 },
+  { grade: 26, color: 'brown',  stripes: 2 }, { grade: 27, color: 'brown',  stripes: 3 },
+  { grade: 28, color: 'red',    stripes: 0 }, { grade: 29, color: 'red',    stripes: 1 },
+  { grade: 30, color: 'red',    stripes: 2 }, { grade: 31, color: 'red',    stripes: 3 },
+  { grade: 32, color: 'black',  stripes: 0 },
+];
+
+function getBeltDisplay(grade) {
+  const clamped = Math.max(0, Math.min(32, Math.floor(grade)));
+  return BELT_GRADES[clamped];
+}
+
+const BG_MAP = {
+  dark: '#090909',
+  medium: '#1a1a1a',
+  black: '#000000',
+  card: '#242424',
+};
+
+const { createApp } = Vue;
+
+const BeltBadge = {
+  props: {
+    grade: { type: Number, required: true },
+    isHexmaster: { type: Boolean, default: false },
+    size: { type: String, default: 'md' },
+  },
+  computed: {
+    display() {
+      if (this.isHexmaster) return { color: 'hexmaster', stripes: 0 };
+      return getBeltDisplay(this.grade);
+    },
+    sizeClass() { return `size-${this.size}`; },
+    fillColor() { return `var(--hex-belt-${this.display.color})`; },
+    strokeColor() {
+      if (this.display.color === 'white') return 'rgba(255, 255, 255, 0.4)';
+      if (this.display.color === 'black') return 'rgba(255, 255, 255, 0.35)';
+      return 'var(--hex-belt-outline)';
+    },
+    strokeW() {
+      return (this.display.color === 'white' || this.display.color === 'black') ? 0.7 : 0.4;
+    },
+    buckleStroke() {
+      if (this.display.color === 'white') return 'rgba(0, 0, 0, 0.3)';
+      if (this.display.color === 'black') return 'rgba(255, 255, 255, 0.4)';
+      return 'rgba(255, 255, 255, 0.5)';
+    },
+    showStripes() {
+      return this.size !== 'sm' && this.display.stripes > 0;
+    },
+  },
+  methods: {
+    stripeX(i) { return 31 + (i - 1) * 2.5; },
+  },
+  template: `
+    <div class="belt-badge" :class="[sizeClass, { 'is-hexmaster': isHexmaster }]">
+      <svg viewBox="0 0 48 16" xmlns="http://www.w3.org/2000/svg">
+        <rect :x="2" :y="4" :width="44" :height="8" :rx="1.5"
+              :fill="fillColor" :stroke="strokeColor" :stroke-width="strokeW" />
+        <rect :x="21" :y="3" :width="6" :height="10" :rx="0.5"
+              fill="none" :stroke="buckleStroke" :stroke-width="0.8" />
+        <template v-if="showStripes">
+          <line v-for="i in display.stripes" :key="i"
+                :x1="stripeX(i)" :y1="4.5" :x2="stripeX(i)" :y2="11.5"
+                stroke="var(--hex-belt-stripe)" :stroke-width="1" stroke-linecap="round" />
+        </template>
+      </svg>
+    </div>
+  `,
+};
+
+createApp({
+  data() {
+    return { grades: BELT_GRADES, bg: 'dark' };
+  },
+  methods: {
+    setBg(key) {
+      this.bg = key;
+      document.body.style.background = BG_MAP[key];
+    },
+  },
+  mounted() {
+    document.body.style.background = BG_MAP[this.bg];
+  },
+  components: { BeltBadge },
+}).mount('#app');
+</script>
+</body>
+</html>
