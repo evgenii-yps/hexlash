@@ -845,5 +845,9 @@ export default {
     lblStripes: 'stripes',
     lblNextBelt: 'Next belt',
     lblHexmasterUnlocked: 'HEXMASTER UNLOCKED',
+    lblWinsToNext: 'wins to next belt',
+    lblWinsToHexmaster: 'wins to Hexmaster',
+    lblPromoted: 'Promoted to',
+    lblMaxBelt: 'Max belt reached',
   },
 }

@@ -822,5 +822,9 @@ export default {
     lblStripes: '줄',
     lblNextBelt: '다음 벨트',
     lblHexmasterUnlocked: 'HEXMASTER 해제',
+    lblWinsToNext: '승 다음 벨트까지',
+    lblWinsToHexmaster: '승 Hexmaster까지',
+    lblPromoted: '승격:',
+    lblMaxBelt: '최고 벨트 달성',
   },
 }

@@ -821,5 +821,9 @@ export default {
     lblStripes: 'listras',
     lblNextBelt: 'Próxima faixa',
     lblHexmasterUnlocked: 'HEXMASTER DESBLOQUEADO',
+    lblWinsToNext: 'vitórias para a próxima faixa',
+    lblWinsToHexmaster: 'vitórias para Hexmaster',
+    lblPromoted: 'Promovido a',
+    lblMaxBelt: 'Faixa máxima alcançada',
   },
 }

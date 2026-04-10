@@ -836,5 +836,9 @@ export default {
     lblStripes: 'Streifen',
     lblNextBelt: 'Nächster Gürtel',
     lblHexmasterUnlocked: 'HEXMASTER FREIGESCHALTET',
+    lblWinsToNext: 'Siege bis zum nächsten Gürtel',
+    lblWinsToHexmaster: 'Siege bis Hexmaster',
+    lblPromoted: 'Aufgestiegen zu',
+    lblMaxBelt: 'Maximaler Gürtel erreicht',
   },
 }

@@ -821,5 +821,9 @@ export default {
     lblStripes: 'पट्टियाँ',
     lblNextBelt: 'अगला बेल्ट',
     lblHexmasterUnlocked: 'HEXMASTER अनलॉक',
+    lblWinsToNext: 'जीत अगले बेल्ट के लिए',
+    lblWinsToHexmaster: 'जीत Hexmaster के लिए',
+    lblPromoted: 'प्रमोशन',
+    lblMaxBelt: 'अधिकतम बेल्ट प्राप्त',
   },
 }

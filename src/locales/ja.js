@@ -821,5 +821,9 @@ export default {
     lblStripes: '線',
     lblNextBelt: '次の帯',
     lblHexmasterUnlocked: 'HEXMASTER 解放',
+    lblWinsToNext: '勝で次の帯へ',
+    lblWinsToHexmaster: '勝でHexmasterへ',
+    lblPromoted: '昇格:',
+    lblMaxBelt: '最高帯に到達',
   },
 }

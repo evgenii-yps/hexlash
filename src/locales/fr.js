@@ -825,5 +825,9 @@ export default {
     lblStripes: 'bandes',
     lblNextBelt: 'Prochaine ceinture',
     lblHexmasterUnlocked: 'HEXMASTER DÉBLOQUÉ',
+    lblWinsToNext: 'victoires pour la prochaine ceinture',
+    lblWinsToHexmaster: 'victoires pour Hexmaster',
+    lblPromoted: 'Promu à',
+    lblMaxBelt: 'Ceinture maximale atteinte',
   },
 }

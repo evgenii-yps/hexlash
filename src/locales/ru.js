@@ -844,5 +844,9 @@ export default {
     lblStripes: 'полосы',
     lblNextBelt: 'Следующий пояс',
     lblHexmasterUnlocked: 'ХЕКСМАСТЕР РАЗБЛОКИРОВАН',
+    lblWinsToNext: 'побед до следующего пояса',
+    lblWinsToHexmaster: 'побед до Хексмастера',
+    lblPromoted: 'Повышение до',
+    lblMaxBelt: 'Максимальный пояс достигнут',
   },
 }

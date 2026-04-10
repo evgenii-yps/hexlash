@@ -821,5 +821,9 @@ export default {
     lblStripes: 'أشرطة',
     lblNextBelt: 'الحزام التالي',
     lblHexmasterUnlocked: 'HEXMASTER مفتوح',
+    lblWinsToNext: 'انتصارات للحزام التالي',
+    lblWinsToHexmaster: 'انتصارات لـ Hexmaster',
+    lblPromoted: 'ترقية إلى',
+    lblMaxBelt: 'تم الوصول للحزام الأقصى',
   },
 }
