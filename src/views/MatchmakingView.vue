@@ -127,11 +127,18 @@ let onlineRefreshInterval = null;
 
 // Computed
 const playerName = computed(() => {
+  const captain = store.getters['agent/currentCaptain'];
+  if (captain?.name) return captain.name;
   const master = store.getters['master/getMaster'];
   return master?.userData?.name || 'Player';
 });
-const playerRating = computed(() => store.getters['pvp/getPvpStats'].rating);
+const playerRating = computed(() => {
+  const captain = store.getters['agent/currentCaptain'];
+  return captain?.elo || store.getters['pvp/getPvpStats'].rating;
+});
 const playerSkin = computed(() => {
+  const captain = store.getters['agent/currentCaptain'];
+  if (captain?.skin) return captain.skin;
   const master = store.getters['master/getMaster'];
   return master?.userData?.skin || 'skin_m_1.png';
 });
@@ -213,14 +220,15 @@ function startSearch() {
   searchTime.value = 0;
   searchRange.value = 100;
 
-  // Send matchmaking start via WS
+  // Send matchmaking start via WS — Captain data (ELO validated server-side)
+  const captain = store.getters['agent/currentCaptain'];
   const masterData = store.getters['master/getMaster'];
   store.dispatch('webSocket/sendMessage', {
     type: 'MatchmakingStartMsg',
     matchmakingRequest: {
-      username: playerName.value,
-      rating: playerRating.value,
-      skin: masterData?.userData?.skin || null,
+      username: captain?.name || playerName.value,
+      rating: captain?.elo || playerRating.value,
+      skin: captain?.skin || masterData?.userData?.skin || null,
       avatarUrl: masterData?.userData?.avatarUrl || null,
     },
   });

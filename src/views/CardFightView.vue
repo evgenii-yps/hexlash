@@ -749,14 +749,19 @@ function initPvPFight() {
     });
   }
 
-  // Send ready + deck to server
-  const deck = store.getters['progression/getDeck'] || [];
-  const playerModules = store.state.fight.playerModules || [];
+  // Send ready + Captain deck/modules to server
+  const captain = store.getters['agent/currentCaptain'];
+  const captainProg = captain?.progression || {};
+  const captainDeck = Array.isArray(captainProg.deck) ? captainProg.deck : [];
+  const captainMoves = Array.isArray(captainProg.moves) ? captainProg.moves : [];
+  const captainModules = [captain?.primaryModule, captain?.secondaryModule, captain?.tertiaryModule].filter(Boolean);
+  const moveLevelMap = {};
+  for (const m of captainMoves) { if (m.moveId) moveLevelMap[m.moveId] = m.level || 1; }
   store.dispatch('webSocket/sendMessage', {
     type: 'pvp_ready',
     matchId: pvpMatchId.value,
-    deck: deck.map(id => ({ id, level: store.state.progression.moves[id]?.level || 1 })),
-    modules: playerModules,
+    deck: captainDeck.map(id => ({ id, level: moveLevelMap[id] || 1 })),
+    modules: captainModules,
   });
 
   // Listen for PvP events
