@@ -678,11 +678,12 @@ User, Clan, ClanInvite, ClanEvent, FightClub, Achievement, UserAchievement, Soci
 
 ## Build & Deploy
 
-- **Frontend:** Vite + JS obfuscation + Brotli + image optimization (mozjpeg/pngquant/webp) + terser (drops console)
-- **Deploy:** Vercel or Nginx reverse proxy via Docker (`nginx.prod.conf`, `nginx.test.conf`, `Dockerfile`)
-- **Backend:** Node.js + PostgreSQL (local or Railway)
-- **WebSocket:** Authenticated via JWT, same HTTP server as Express (shared port)
-- **CI/CD:** GitHub Actions (`.github/workflows/gitops.yaml`)
+- **Frontend:** Vite 7 + JS obfuscation + Brotli + image optimization (mozjpeg/pngquant/webp) + terser (drops console). Compile-time defines `__API_SERVER_URL__`, `__WEB_SOCKET_URL__`, `__IS_PROD__`, `__MOCK_MODE__`, `__APP_VERSION__` (NOT `import.meta.env`).
+- **Deploy frontend:** Vercel (`vercel.json` SPA rewrites) **or** Docker+Nginx (`Dockerfile` multi-stage Node→Nginx, `nginx.prod.conf`, `nginx.test.conf`). Nginx serves static only (NOT reverse proxy) — backend runs separately at `api.hexlash.com` / `apitest.hexlash.com`.
+- **Deploy backend:** `backend/Dockerfile` (Node 20 + Prisma). Railway or VPS.
+- **WebSocket:** Authenticated via JWT protocol header, same HTTP server as Express (shared port)
+- **CI/CD:** GitHub Actions GitOps (`.github/workflows/gitops.yaml`) — push to `test`/`main` → Docker build → push Docker Hub → update K8s deployment YAML in DevOps repo
+- **Nginx ports:** 8080 (HTTP→HTTPS redirect), 8443 (SSL). Certs at `/etc/certs/hexlash.com.*`
 
 ---
 
