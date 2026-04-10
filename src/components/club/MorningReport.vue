@@ -44,9 +44,7 @@
             <img class="accordion-skin" :src="`/images/skins/${agent.skin}`" :alt="agent.name" />
             <div class="accordion-info">
               <span class="accordion-name">{{ agent.name }}</span>
-              <span class="accordion-elo">{{ agent.elo }}
-                <span :class="agent.eloChange >= 0 ? 'elo-up' : 'elo-down'">{{ agent.eloChange >= 0 ? '+' : '' }}{{ agent.eloChange }}</span>
-              </span>
+              <BeltBadge :grade="agent.belt || 0" :is-hexmaster="agent.isHexmaster || false" size="sm" class="accordion-belt" />
             </div>
             <div class="accordion-record">
               <span class="rec-win">{{ agent.wins }}W</span>/<span class="rec-lose">{{ agent.losses }}L</span>
@@ -135,10 +133,11 @@ import { ref, reactive, computed, watch } from 'vue'
 import { t } from '@/locales/index.js'
 import apiClient from '@/core/api/apiClient.js'
 import HexButton from '@/components/ui/HexButton.vue'
+import BeltBadge from '@/components/ui/BeltBadge.vue'
 
 export default {
   name: 'MorningReport',
-  components: { HexButton },
+  components: { HexButton, BeltBadge },
   setup() {
     const period = ref('today');
     const lastPeriod = ref(null);
@@ -298,14 +297,7 @@ export default {
   font-size: 12px;
   color: var(--hex-text-primary);
 }
-.accordion-elo {
-  font-family: 'AnonymousBalance', monospace;
-  font-size: 11px;
-  color: var(--hex-text-muted);
-  margin-left: 6px;
-}
-.elo-up { color: var(--hex-victory); font-size: 10px; }
-.elo-down { color: var(--hex-defeat); font-size: 10px; }
+.accordion-belt { margin-left: 6px; }
 
 .accordion-record {
   font-family: 'AnonymousBalance', monospace;

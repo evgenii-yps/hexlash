@@ -825,5 +825,9 @@ export default {
     lblStripes: 'franjas',
     lblNextBelt: 'Siguiente cinturón',
     lblHexmasterUnlocked: 'HEXMASTER DESBLOQUEADO',
+    lblWinsToNext: 'victorias para el siguiente cinturón',
+    lblWinsToHexmaster: 'victorias para Hexmaster',
+    lblPromoted: 'Ascendido a',
+    lblMaxBelt: 'Cinturón máximo alcanzado',
   },
 }

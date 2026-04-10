@@ -113,6 +113,19 @@ Each has `-dark`, `-light`, `-glow` variants.
 --hex-mode-club: #00FF88;
 ```
 
+### Belt System colors (12)
+
+```css
+--hex-belt-white: #F5F5F5;    --hex-belt-yellow: #FBBF24;
+--hex-belt-orange: #FB923C;   --hex-belt-green: #22C55E;
+--hex-belt-blue: #60A5FA;     --hex-belt-purple: #A855F7;
+--hex-belt-brown: #8B4513;    --hex-belt-red: #DC2626;
+--hex-belt-black: #0A0A0A;    --hex-belt-hexmaster: var(--hex-primary);
+--hex-belt-stripe: #FFFFFF;   --hex-belt-outline: rgba(255, 255, 255, 0.25);
+```
+
+Belt colors are a **separate namespace** from archetype colors. One belt color per screen as accent (same as one pink accent rule).
+
 ---
 
 ## C. Archetypes — 6 Colors

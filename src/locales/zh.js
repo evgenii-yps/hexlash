@@ -822,5 +822,9 @@ export default {
     lblStripes: '条纹',
     lblNextBelt: '下一个腰带',
     lblHexmasterUnlocked: 'HEXMASTER 已解锁',
+    lblWinsToNext: '胜即可升级腰带',
+    lblWinsToHexmaster: '胜即可达到Hexmaster',
+    lblPromoted: '晋升为',
+    lblMaxBelt: '已达最高腰带',
   },
 }

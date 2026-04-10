@@ -26,7 +26,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
   components/club/         — 7 Club Mode components (AgentRoster, AgentCard, ClubLevelBar, MorningReport, RetirementPanel, SkinPicker, ArchetypeSelector)
   components/clan/         — 1 Clan social component (ClanInviteNotification)
   components/fragments/clan/ — 10 Clan social fragments (ClanPageContent, ClanActivityFeed, ClanEdit, ClanStats, ClanAvatar, ClanOwnerAvatar, ClanWithdraw, ClanConfirmModal, CreateClan, MyClanTab)
-  components/ratings/      — AgentLeaderboard, LeagueBadge
+  components/ratings/      — AgentLeaderboard
   core/
     state/store.js         — Vuex store
     state/modules/         — 14 Vuex modules (incl. agentState for Fight Club, clanState for social clans)
@@ -169,7 +169,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 | `webSocketState` | WS connection, real-time messages |
 | `pvpState` | Real-time PvP matchmaking and fights |
 | `friendsState` | Friends list, friend requests, challenges (WebSocket-based) |
-| `agentState` | Agent roster: CRUD, auto-fight toggle, Fight Club level, 30s auto-refresh |
+| `agentState` | Agent roster: CRUD, auto-fight toggle, Fight Club level, 30s auto-refresh. `agentsList` sorted by isHexmaster → belt → qualifiedWins |
 
 ---
 
@@ -190,6 +190,26 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 levelUpRequirements: { 2: {taps:100, exp:50}, 3: {taps:200, exp:100}, 4: {taps:350, exp:200}, 5: {taps:500, exp:350} }
 unlockRequirements:  { 3: {taps:300, exp:150}, 4: {taps:250, exp:120}, 5: {taps:200, exp:100} }
 ```
+
+---
+
+## Belt System
+
+**Replaces:** ELO-based League System (LeagueBadge, leagues.js — deleted). ELO remains as hidden matchmaking score in `rankedMatchmaker.js` and `eloService.js`.
+
+**33 grades:** 9 colors × 4 stripes (0-3) + Black (0 stripes) = grades 0-32. Count-based progression via `qualifiedWins`.
+
+**Colors:** White (0-3), Yellow (4-7), Orange (8-11), Green (12-15), Blue (16-19), Purple (20-23), Brown (24-27), Red (28-31), Black (32).
+
+**Quality filter:** From grade 8 (Orange-0), only wins vs opponents at belt grade ≥ agent-1 count. PvE bots treated as belt 0.
+
+**Hexmaster:** Separate boolean flag, requires 4000 qualified wins. Terminal — once earned, never lost.
+
+**Frontend:** `BeltBadge.vue` (3 sizes), `beltDisplay.js` (BELT_THRESHOLDS mirror + getBeltDisplay/getNextThreshold/getBeltProgressPercent).
+
+**Backend:** `beltService.js` (isQualifyingWin, calculateBelt, checkHexmaster, applyWin). Belt updated atomically in same $transaction as fight stats.
+
+**Agent fields:** `belt` (Int, 0-32), `qualifiedWins` (Int), `isHexmaster` (Boolean). Backfill script: `backend/scripts/backfill-belts.js`.
 
 ---
 
@@ -473,6 +493,7 @@ AI_TRAINER_ENABLED = true
 - `HexCard.vue` — Card with 5 variants (default/elevated/archetype/active/result). Archetype = left border accent, active = tinted bg + color border, result = top border (victory/defeat/draw). Slots: default, header, footer. Padding: none/sm/md/lg.
 - `HexProgress.vue` — Progress bar with 3 variants: hp (auto green>60%/yellow>30%/red), branch (speed/power/technique colors), generic. Props: label, showValue, showPercent. 3 sizes.
 - `HexBadge.vue` — Pill badge with 5 variants: archetype, branch, status (victory/defeat/draw/info), counter (auto circle<10/pill≥10), custom. Props: icon (PixelIcon), pulse animation.
+- `BeltBadge.vue` — SVG belt badge for 33 grades + Hexmaster. Line-style: rect body, buckle, stripes. 3 sizes: sm (16×6), md (40×14), lg (120×40). Hexmaster pulse glow md/lg, static glow sm. Props: grade (0-32), isHexmaster, size. CSS vars: `--hex-belt-*`. Stripes hidden on sm. White/black enhanced outlines.
 
 **Navigation & Layout:**
 - `Logo.vue` — header logo (Anonymous font, --hex-primary color + glow). Visual System v1.0 compliant: pixel-font for brand, subtle glow, --hex-text-primary
@@ -1301,7 +1322,7 @@ Ranked fights: agent vs agent from different owners. ELO rating, matchmaking by 
 - Ranked: findRankedPairs() → runRankedFight() → set both resting
 
 **New endpoint:**
-- `GET /v1/agent/rankings` — leaderboard sorted by ELO DESC, wins DESC. Min 5 fights to appear. Includes owner info. Pagination.
+- `GET /v1/agent/rankings` — leaderboard sorted by isHexmaster DESC, belt DESC, qualifiedWins DESC. Min 5 fights to appear. Includes owner info + belt/qualifiedWins/isHexmaster. Pagination.
 
 **Updated endpoint:**
 - `PUT /v1/agent/:id/tactics` — now accepts `fightMode` ('pve_training'|'ranked')
@@ -1461,9 +1482,7 @@ Agent leaderboard with 6 league tiers, integrated into RatingsView as 4th tab.
 **Leagues:** Bronze (0-899), Silver (900-1099), Gold (1100-1299), Platinum (1300-1499), Diamond (1500-1799), Champion (1800+)
 
 **New files:**
-- `src/utils/leagues.js` — league constants, `getLeague(elo)`, `getLeagueColor(elo)`
-- `src/components/ratings/LeagueBadge.vue` — ELO-based colored league badge
-- `src/components/ratings/AgentLeaderboard.vue` — full leaderboard with league filter, "Your Agents" section, pagination
+- `src/components/ratings/AgentLeaderboard.vue` — full leaderboard with BeltBadge, "Your Agents" section, pagination. LeagueBadge/leagues.js deleted — Belt System replaced League System
 
 **Extended `RatingsView.vue`:** Added 4th tab "Agents" with `AgentLeaderboard` component
 

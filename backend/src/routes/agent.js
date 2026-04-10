@@ -62,7 +62,7 @@ router.get('/rankings', authMiddleware, async (req, res) => {
     const [rankings, total] = await Promise.all([
       prisma.agent.findMany({
         where,
-        orderBy: [{ elo: 'desc' }, { wins: 'desc' }],
+        orderBy: [{ isHexmaster: 'desc' }, { belt: 'desc' }, { qualifiedWins: 'desc' }],
         take: limit,
         skip: offset,
         select: {
