@@ -171,6 +171,12 @@ export default {
       lblTitle: 'ファイタースキン',
       lblFree: '無料',
     },
+    lblTrainer: 'Trainer',
+    lblYourCaptain: 'Your Captain',
+    lblNoCaptainTitle: 'No Captain Set',
+    lblNoCaptainDesc: 'Set a Captain in Club Mode to compete',
+    btnSetCaptain: 'Go to Club',
+    btnViewCaptain: 'View Captain →',
   },
   arena: {
     lblTitle: 'ファイター準備',

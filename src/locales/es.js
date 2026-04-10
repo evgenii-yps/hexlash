@@ -171,6 +171,12 @@ export default {
       lblTitle: 'SKINS DE LUCHADOR',
       lblFree: 'GRATIS',
     },
+    lblTrainer: 'Trainer',
+    lblYourCaptain: 'Your Captain',
+    lblNoCaptainTitle: 'No Captain Set',
+    lblNoCaptainDesc: 'Set a Captain in Club Mode to compete',
+    btnSetCaptain: 'Go to Club',
+    btnViewCaptain: 'View Captain →',
   },
   arena: {
     lblTitle: 'Preparación del Luchador',
