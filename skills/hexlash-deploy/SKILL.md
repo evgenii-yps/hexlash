@@ -20,7 +20,7 @@ description: Сборка, деплой и инфраструктура Hexlash.
 | Production | `hexlash.com` | `api.hexlash.com` | `wss://api.hexlash.com` |
 | Vercel | `hexlash.vercel.app` | (настраивается) | (настраивается) |
 
-CORS на бэкенде: `hexlash.com`, `test.hexlash.com`, `hexlash.vercel.app` (без wildcard).
+CORS на бэкенде: `hexlash.com`, `www.hexlash.com`, `test.hexlash.com`, `hexlash.vercel.app` + FRONTEND_URL. Никаких wildcard.
 
 ---
 

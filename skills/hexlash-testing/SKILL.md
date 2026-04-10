@@ -83,11 +83,14 @@ description: Тестирование, QA и регрессия Hexlash. Три�
 - Decline / timeout → корректно
 - Offline → `challenge_error`
 
-### Club Mode (Agent scheduler)
-- Agent auto-fight toggle
-- Бой проходит автоматически
-- Daily limit соблюдается
-- Результаты синкаются
+### Club Mode (Agent scheduler — backend)
+- Создать агента в `FightClubView` → `CreateAgentView`
+- Включить auto-fight для агента в `AgentDetailView` (tactics tab)
+- Через ~30s (scheduler tick) проверить: бой произошёл, AgentFightLog записан
+- Статистика агента обновилась (wins/losses, XP, belt)
+- Daily limit (50 fights/agent/day) соблюдается
+- Остановка auto-fight работает (агент переходит в idle)
+- Morning Report (`POST /v1/ai/morning-report`) приходит с данными
 
 ### Training & Punches
 - Батчи каждые 11s

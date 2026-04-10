@@ -21,7 +21,7 @@ PvE и PvP — **разные системы**, живут в разных ме�
 |-------|------------------|-----------|------|
 | PvE | Фронтенд (`/src/core/engine/`) | Клиент | Нет |
 | PvP | Бэкенд (`/backend/src/services/pvp*`) | Сервер | WebSocket |
-| Auto Fight | Фронтенд (тот же combatEngine) + sync на сервер | Клиент | HTTP POST /fight/save |
+| Agent Auto-Fight (Club Mode) | Бэкенд (`agentScheduler.js`, 30s tick) | Сервер | Внутренний (Prisma, без HTTP/WS от клиента) |
 
 ---
 
@@ -180,7 +180,7 @@ Backend-driven через `agentScheduler.js` (30s tick). Агенты деру�
 - **PvE fight state** → localStorage через `cardFightState`, восстанавливается при перезагрузке
 - **PvP fight state** → очищается из localStorage на `fight_end` через action `clearSavedFight` (предотвращает stale restore)
 - **Прогрессия** (moves, XP, taps, deck, playerModules) → debounced PUT `/v1/user/progression` (3s), сервер = source of truth
-- **Auto Fight state/history** — localStorage only (результаты синкаются через `/fight/save`)
+- **Agent Auto-Fight state** — Prisma на бэке (нет frontend localStorage). Результаты в БД через agentScheduler/agentFightService.
 
 ---
 
