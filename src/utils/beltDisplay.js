@@ -43,3 +43,15 @@ export function getNextThreshold(qualifiedWins, currentGrade) {
   const next = BELT_THRESHOLDS[currentGrade + 1][1];
   return { current: qualifiedWins, next, remaining: next - qualifiedWins, hexmasterRemaining };
 }
+
+/**
+ * Progress percentage within current belt grade band (0-100).
+ */
+export function getBeltProgressPercent(qualifiedWins, currentGrade) {
+  if (currentGrade >= 32) return 100;
+  const currThreshold = BELT_THRESHOLDS[currentGrade][1];
+  const nextThreshold = BELT_THRESHOLDS[currentGrade + 1][1];
+  const range = nextThreshold - currThreshold;
+  if (range <= 0) return 100;
+  return Math.min(100, Math.round(((qualifiedWins - currThreshold) / range) * 100));
+}

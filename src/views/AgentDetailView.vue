@@ -31,7 +31,7 @@
                 <span class="s-wr">({{ winRate }}%)</span>
               </div>
             </div>
-            <div class="header-elo" :class="eloClass">{{ agent.elo }}</div>
+            <BeltBadge :grade="agent.belt || 0" :is-hexmaster="agent.isHexmaster || false" size="lg" />
           </div>
         </div>
 
@@ -44,10 +44,25 @@
 
         <!-- Overview Tab -->
         <div v-if="activeTab === 'overview'" class="tab-content hex-fade-in">
+          <div class="belt-card">
+            <div class="belt-card-row">
+              <BeltBadge :grade="agent.belt || 0" :is-hexmaster="agent.isHexmaster || false" size="md" />
+              <span class="belt-card-name">{{ beltName }}</span>
+            </div>
+            <div v-if="beltProgress.remaining !== null" class="belt-progress-section">
+              <HexProgress :value="beltProgressPercent" :max="100" variant="generic" size="sm" />
+              <span class="belt-progress-label">{{ beltProgress.remaining }} {{ t.belts?.lblWinsToNext || 'wins to next belt' }}</span>
+            </div>
+            <div v-else-if="!agent.isHexmaster && beltProgress.hexmasterRemaining" class="belt-progress-section">
+              <span class="belt-progress-label">{{ beltProgress.hexmasterRemaining }} {{ t.belts?.lblWinsToHexmaster || 'wins to Hexmaster' }}</span>
+            </div>
+            <div v-else-if="agent.isHexmaster" class="belt-hexmaster-label">★ {{ t.belts?.hexmaster || 'Hexmaster' }}</div>
+          </div>
+
           <div class="stats-grid">
-            <div class="stat-card"><div class="stat-val" :class="eloClass">{{ agent.elo }}</div><div class="stat-label">ELO</div></div>
             <div class="stat-card"><div class="stat-val">{{ agent.totalFights }}</div><div class="stat-label">{{ t.clan.lblTotalFights || 'Fights' }}</div></div>
             <div class="stat-card"><div class="stat-val">{{ winRate }}%</div><div class="stat-label">{{ t.club.lblWinRate || 'Win Rate' }}</div></div>
+            <div class="stat-card"><div class="stat-val">{{ agent.qualifiedWins || 0 }}</div><div class="stat-label">{{ t.belts?.lblBelt || 'Belt' }} Wins</div></div>
           </div>
 
           <div class="section">
@@ -250,6 +265,8 @@ import { branches } from '@/data/branches.js';
 import HexButton from '@/components/ui/HexButton.vue';
 import HexBadge from '@/components/ui/HexBadge.vue';
 import HexProgress from '@/components/ui/HexProgress.vue';
+import BeltBadge from '@/components/ui/BeltBadge.vue';
+import { getBeltDisplay, getNextThreshold, getBeltProgressPercent } from '@/utils/beltDisplay.js';
 import SkinPicker from '@/components/club/SkinPicker.vue';
 import ArchetypeSelector from '@/components/club/ArchetypeSelector.vue';
 
@@ -285,11 +302,21 @@ const winRate = computed(() => {
   return Math.round((agent.value.wins / agent.value.totalFights) * 100);
 });
 
-const eloClass = computed(() => {
+const beltDisplay = computed(() => agent.value ? getBeltDisplay(agent.value.belt || 0) : { color: 'white', stripes: 0 });
+const beltName = computed(() => {
   if (!agent.value) return '';
-  if (agent.value.elo < 900) return 'elo-low';
-  if (agent.value.elo > 1100) return 'elo-high';
-  return 'elo-mid';
+  if (agent.value.isHexmaster) return t.value.belts?.hexmaster || 'Hexmaster';
+  const d = beltDisplay.value;
+  const colorName = t.value.belts?.[d.color] || d.color;
+  return d.stripes > 0 ? `${colorName} ${'●'.repeat(d.stripes)}` : colorName;
+});
+const beltProgress = computed(() => {
+  if (!agent.value) return { remaining: null, hexmasterRemaining: null };
+  return getNextThreshold(agent.value.qualifiedWins || 0, agent.value.belt || 0);
+});
+const beltProgressPercent = computed(() => {
+  if (!agent.value) return 0;
+  return getBeltProgressPercent(agent.value.qualifiedWins || 0, agent.value.belt || 0);
 });
 
 const shortArch = (n) => n ? n.slice(0, 3).toUpperCase() : '';
@@ -470,8 +497,18 @@ onMounted(() => {
 .header-stats { display: flex; gap: 8px; margin-top: 4px; font-family: 'AnonymousBalance', monospace; font-size: 11px; }
 .s-win { color: var(--hex-victory); } .s-lose { color: var(--hex-defeat); } .s-draw { color: var(--hex-draw); }
 .s-wr { color: var(--hex-text-muted); }
-.header-elo { font-family: 'AnonymousBalance', monospace; font-size: 20px; font-weight: bold; margin-left: auto; flex-shrink: 0; }
-.elo-low { color: var(--hex-defeat); } .elo-mid { color: var(--hex-text-secondary); } .elo-high { color: var(--hex-victory); }
+.belt-card {
+  background: var(--hex-bg-medium);
+  border: 1px solid var(--hex-border-default);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+.belt-card-row { display: flex; align-items: center; gap: 10px; }
+.belt-card-name { font-family: 'Anonymous', monospace; font-size: 14px; color: var(--hex-text-primary); }
+.belt-progress-section { margin-top: 8px; }
+.belt-progress-label { font-size: 11px; color: var(--hex-text-muted); margin-top: 4px; display: block; }
+.belt-hexmaster-label { font-family: 'Anonymous', monospace; font-size: 13px; color: var(--hex-primary); margin-top: 8px; }
 
 /* Tabs */
 .tab-bar { display: flex; border-bottom: 1px solid var(--hex-border-default); margin-bottom: 16px; }
