@@ -449,7 +449,7 @@ MIGRATION_ENABLED = true           // lazy User→Fighter #1 on /me
 ```
 
 **Prisma:** Singleton via `backend/src/lib/prisma.js` — all routes and services use shared instance
-**CORS:** Allows `hexlash.com`, `test.hexlash.com`, `hexlash.vercel.app` (no wildcard `*.vercel.app`)
+**CORS:** Allows `hexlash.com`, `www.hexlash.com`, `test.hexlash.com`, `hexlash.vercel.app` + FRONTEND_URL (no wildcard)
 **Health checks:** `GET /` and `GET /health`
 **Body limits:** `express.json({ limit: '1mb' })`, `express.urlencoded({ limit: '1mb' })`
 
@@ -601,7 +601,7 @@ Base: `/v1/`
 |-------|------|---------|
 | `/auth` | auth.js | login, signup, reset, telegram. Rate limited: login 5/15min, register 3/hr, telegram 10/15min. Register + telegram accept `referralCode` — rewards both users +500 taps |
 | `/user` | user.js | profile, stats, avatar, achievements, referrals. Skin validated via regex. Delete uses $transaction with cascade. GET /referrals returns referral stats + list |
-| `/clan` | clan.js | create/edit/delete clan, avatar, members, balance, roles (set-role, transfer-ownership, kick, invite), level info. maxMembers=50, roles: owner/deputy/member. DELETE / dissolves clan (owner-only, clears all members + invites). Invite: DB-persisted (48h), GET /invites, POST /invite/respond. Events: GET /:clanId/events (members only, cursor pagination). **Alias:** `/v1/club` → same router (backward-compat, TODO #P1-rename-3-cleanup). Frontend uses `/v1/clan/*` exclusively. |
+| `/clan` | clan.js | create/edit/delete clan, avatar, members, balance, roles (set-role, transfer-ownership, kick, invite), level info. maxMembers=50, roles: owner/deputy/member. DELETE / dissolves clan (owner-only, clears all members + invites). Invite: DB-persisted (48h), GET /invites, POST /invite/respond. Events: GET /:clanId/events (members only, cursor pagination). Frontend uses `/v1/clan/*` exclusively. |
 | `/task` | task.js | daily + social tasks |
 | `/file` | file.js | avatar/file upload |
 | `/fight` | fight.js | fight creation, results, history |

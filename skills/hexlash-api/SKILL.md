@@ -1,155 +1,211 @@
 ---
 name: hexlash-api
-description: Hexlash backend API — Express routes, Prisma database, JWT auth, middleware, error handling, server-side logic. Use this skill when working on API endpoints, database queries, authentication, authorization, middleware, server-side validation, request handling, response format, or any backend code in /backend. Triggers on mentions of API, endpoint, route, Prisma, database, query, auth, JWT, middleware, backend, server, Express, request, response, POST, GET, PUT, DELETE, token, bearer, model, schema, SQL, migration.
+description: Backend API Hexlash — Express, Prisma, JWT, миграции, middleware, валидация. Триггерится на API, endpoint, route, Express, Prisma, schema, migration, JWT, auth, middleware, validation, rate limit, backend, /v1/, req, res, model, database, PostgreSQL, security, CORS. Грузить вместе с hexlash-dev. Для WS — hexlash-websocket. Для деплоя — hexlash-deploy. Для AI — hexlash-ai.
 ---
 
-# Hexlash Backend API
+# hexlash-api — Backend API
 
-## Architecture
+## Главное правило
 
-- **Framework:** Express 4
-- **Location:** `/backend/src/`
-- **Entry point:** `/backend/src/index.js` — Express server + WebSocket on same HTTP server
-- **Config:** `/backend/src/config.js` — All constants and environment variables
-- **Base path:** `/v1/`
+Backend прошёл **security hardening**. Перед изменениями в auth, env, validation или Prisma — прочитать CLAUDE.md "Security Hardening". Не откатывать защитные меры. Новая ручка = auth middleware по умолчанию.
 
-## Route Files
+---
 
-| Route | File | Purpose |
-|-------|------|---------|
-| `/v1/auth` | `routes/auth.js` | Login, signup, password reset, Telegram auth |
-| `/v1/user` | `routes/user.js` | Profile, stats, avatar, achievements, progression, skin |
-| `/v1/club` | `routes/club.js` | Create/edit club, members, balance |
-| `/v1/task` | `routes/task.js` | Daily + social tasks |
-| `/v1/file` | `routes/file.js` | Avatar/file upload |
-| `/v1/fight` | `routes/fight.js` | Fight creation, results, history |
-| `/v1/stats` | `routes/stats.js` | Player and game statistics |
-| `/v1/friends` | `routes/friends.js` | Friends list, requests, search players |
-| `/v1/ai` | `routes/ai.js` | AI Trainer fight analysis, auto fight summary |
+## Стек
 
-## Key Endpoints
+Express 4, Prisma 5 (PostgreSQL), JWT, bcryptjs, ws (shared HTTP), Multer, express-rate-limit, @anthropic-ai/sdk, helmet
 
-### Auth
-- `POST /v1/auth/signup` — Register new user
-- `POST /v1/auth/login` — Login, returns JWT token
-- `POST /v1/auth/reset` — Password reset
-- `POST /v1/auth/telegram` — Telegram WebApp auth
+---
 
-### User
-- `GET /v1/user/me` — Get current user (source of truth for all user data)
-- `PUT /v1/user/progression` — Sync progression (moves, XP, taps, deck, playerModules). Debounced 3s on client
-- `PUT /v1/user/skin` — Change fighter skin
-
-### Fight
-- `POST /v1/fight/save` — Save fight result (PvE auto fight sync)
-
-### AI
-- `POST /v1/ai/analyze-fight` — AI Trainer post-fight analysis (Claude API)
-- `POST /v1/ai/auto-fight-summary` — Auto fight series analysis (Claude API)
-
-## JWT Auth Flow
+## Структура
 
 ```
-1. User calls POST /v1/auth/login with credentials
-2. Server validates → returns { token: "jwt..." }
-3. Client stores token, sends as: Authorization: Bearer <token>
-4. middleware/auth.js validates token on protected routes
-5. req.user populated with decoded user data
+/backend/src/
+  index.js           — Express + WebSocket entry, CORS, health checks
+  config.js          — все константы и env (ИСТОЧНИК ПРАВДЫ)
+  lib/prisma.js      — Prisma singleton (использовать ВСЕГДА)
+  routes/            — 10 файлов: auth, user, clan, task, file, fight, stats, friends, ai, agent
+  middleware/         — auth.js (JWT), upload.js (Multer), x402.js (payment, feature flag)
+  websocket/         — handler.js (общий), pvpHandler.js (PvP)
+  services/          — 17 сервисов (см. CLAUDE.md)
+  utils/             — helpers, clanEvents, clanLevel, migrationHelpers
+  data/              — archetypes, branches, cardPower, moves
+/backend/prisma/
+  schema.prisma      — 19 моделей (ИСТОЧНИК ПРАВДЫ по БД)
+  seed.js            — achievements + tasks
+  migrations/        — НЕ РЕДАКТИРОВАТЬ применённые
+/backend/scripts/    — backfill, calibrate, cleanup, migrate
 ```
 
-## Middleware
+---
 
-| File | Purpose |
-|------|---------|
-| `middleware/auth.js` | JWT guard — validates Bearer token, populates req.user |
-| `middleware/upload.js` | Multer — file upload handling |
+## Базовые правила
 
-## Prisma Database
+- **Путь:** `/v1/<resource>`
+- **JSON:** `express.json({ limit: '1mb' })`. Не повышать без nginx.
+- **CORS:** `hexlash.com`, `www.hexlash.com`, `test.hexlash.com`, `hexlash.vercel.app` + FRONTEND_URL. **Никаких wildcard.**
+- **Health:** `GET /` и `GET /health` — публичные
+- **Auth:** Bearer token → `middleware/auth.js` → `req.userId`
+- **Все защищённые ручки** используют `req.userId`, никогда userId из body/query
+- **Errors:** 400/401/403/404/429/500. Не светить stack traces.
 
-### 12 Models
-User, Club, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask, UserDailyTask, Fight, PunchInfo, FriendRequest, Friendship
+---
 
-### Query Patterns
-```js
-// Find one
-const user = await prisma.user.findUnique({ where: { id } })
+## Prisma — обязательно
 
-// Update
-await prisma.user.update({ where: { id }, data: { ... } })
+- **Singleton:** `require('../lib/prisma')`. **Никогда** `new PrismaClient()`.
+- **Транзакции:** `prisma.$transaction([...])` для каскадных операций
+- **Prod:** только `prisma migrate deploy`. **Никогда** `db push`.
+- **Schema:** `/backend/prisma/schema.prisma` — источник правды
+- **Cascade delete** пользователя: через `$transaction` (clans, fights, friends, achievements, tasks, punch)
+- **`onDelete`** — проверять перед изменением relations
 
-// Create
-await prisma.fight.create({ data: { ... } })
+---
 
-// Find many with relations
-const clubs = await prisma.club.findMany({ include: { members: true } })
-```
+## Миграции
 
-### Schema Location
-`/backend/prisma/schema.prisma`
+- Dev: `npx prisma migrate dev --name <short_snake_case>`
+- Prod: `npx prisma migrate deploy`
+- Никогда не редактировать применённые
+- Перед прод: проверить на test
+- Подробности: `hexlash-deploy`
 
-## Config Constants (`/backend/src/config.js`)
+---
 
-```js
-PORT = 3000
-WS_PORT = 444
-JWT_SECRET = env or 'default-secret'
-FRONTEND_URL = 'http://localhost:5173'
-UPLOAD_DIR = './uploads'
-DECIMALS = 6
-COST_PER_CLICK = 2
-COST_CREATE_CLUB = 10000
-PUNCH_MAX_PER_INTERVAL = 10000
-PUNCH_MAX_PER_BATCH = 10000
-PUNCH_INTERVAL_MS = 3600000      // 1 hour
+## Аутентификация
 
-// PvP Combat
-MAX_HP = 100
-MAX_ROUNDS = 10
-BASE_DAMAGE = 15
-POSITION_BONUS = 5
-DICE_COOLDOWN_ROUNDS = 3
+- **JWT_SECRET** — env, **сервер крашится без него** (by design)
+- **Bearer:** `Authorization: Bearer <token>`
+- **Telegram:** HMAC-SHA256 via `validateTelegramPayload()`, replay window 5 мин
+- **Password reset:** 501 (не реализовано). **Не fake success.**
+- **Temp passwords:** `crypto.randomBytes(12)`, **не `Math.random()`**
 
-// AI
-ANTHROPIC_API_KEY = env
-ANTHROPIC_MODEL = 'claude-sonnet-4-20250514'
-AI_TRAINER_MAX_TOKENS = 500
-AI_TRAINER_ENABLED = true
-```
+---
 
-## Error Handling
+## Rate limiting
 
-Standard response format:
-```js
-// Success
-res.json({ success: true, data: { ... } })
+- Login: 5 / 15 мин
+- Register: 3 / час
+- Telegram: 10 / 15 мин
+- AI morning-report: 3 / час
+- AI premium-report: 10 / день
+- Agent create: 10 / час
+- Agent train: 30 / час
 
-// Error
-res.status(400).json({ success: false, error: 'Error message' })
-```
+Публичные endpoints — рассмотреть rate limit.
 
-Always wrap route handlers in try/catch.
+---
 
-## Adding New Routes
+## Routes
 
-1. Create route file in `/backend/src/routes/`
-2. Define Express router with endpoints
-3. Apply `auth` middleware for protected routes
-4. Register router in `/backend/src/index.js`
-5. Update CLAUDE.md API section
+| Файл | Путь | Назначение |
+|------|------|-----------|
+| `auth.js` | `/v1/auth` | login, signup, reset, telegram |
+| `user.js` | `/v1/user` | profile, stats, avatar, achievements, skin, progression, retirement, delete |
+| `clan.js` | `/v1/clan` | create, edit, members, balance, invites, events, roles |
+| `task.js` | `/v1/task` | daily + social tasks |
+| `file.js` | `/v1/file` | avatar upload |
+| `fight.js` | `/v1/fight` | save result, history |
+| `stats.js` | `/v1/stats` | player + game statistics |
+| `friends.js` | `/v1/friends` | list, requests, search |
+| `ai.js` | `/v1/ai` | analyze-fight, morning-report, premium-report, build-description |
+| `agent.js` | `/v1/agent` | CRUD, tactics, fights, Research Gate, train, auto-fight, rankings, fight-club level, captain |
 
-```js
-// Example: /backend/src/routes/newFeature.js
-const router = require('express').Router()
-const auth = require('../middleware/auth')
+---
 
-router.get('/', auth, async (req, res) => {
-  try {
-    const data = await prisma.model.findMany()
-    res.json({ success: true, data })
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message })
-  }
-})
+## Валидация
 
-module.exports = router
-```
+- **Skin:** `/^skin_(m|w)_\d{1,3}\.png$|^vip_(k|t)\d{1,2}\.png$/`
+- **Clan name:** unicode `\p{L}\p{N}`, 3-30 chars, no emoji
+- **Agent name:** 2-20 chars, no special chars
+- **Deck:** 4-8 moveId (PvP min 3 via `MIN_PVP_DECK_SIZE`)
+- **Modules:** from 6 archetypes whitelist
+- **Tactics:** каждое поле — whitelist
+- Whitelist > blacklist. Числа — type + range.
+
+---
+
+## Env-переменные
+
+**Обязательные (crash):** `JWT_SECRET`, `DATABASE_URL`
+
+**Важные:** `TELEGRAM_BOT_TOKEN`, `ANTHROPIC_API_KEY`
+
+**С дефолтами:** PORT(3000), FRONTEND_URL, UPLOAD_DIR, ANTHROPIC_MODEL, AI_TRAINER_ENABLED(true), NFT_MINTING_ENABLED(false), X402_ENABLED(false), MIGRATION_ENABLED(true)
+
+Полный список → `/backend/src/config.js`.
+
+---
+
+## Security Hardening (не откатывать)
+
+- JWT без default secret
+- Telegram HMAC-SHA256
+- Rate limiting auth
+- Crypto temp passwords
+- CORS без wildcard
+- Body limit 1mb
+- XSS: `{{ }}` вместо `v-html`
+- Skin regex validation
+- Email verify requires auth
+- Password reset honest 501
+- Cascade delete $transaction
+- Prisma singleton
+
+---
+
+## Запрещено
+
+- `new PrismaClient()` — только singleton
+- userId из body/query вместо `req.userId`
+- `prisma db push` в проде
+- Редактировать применённые миграции
+- CORS wildcard
+- Stack traces клиенту
+- Хардкодить секреты
+- `Math.random()` для security
+- Endpoints без auth для user data
+- Поднимать body limit без nginx
+- Fake success на password reset
+- Откатывать Security Hardening
+
+---
+
+## Чеклист новой ручки
+
+- [ ] Путь `/v1/<resource>`
+- [ ] `authMiddleware` если user data
+- [ ] `req.userId`, не из body
+- [ ] Входные данные валидированы
+- [ ] Prisma singleton
+- [ ] Понятные коды и сообщения
+- [ ] Без stack traces
+- [ ] Транзакция при каскадных изменениях
+- [ ] Rate limit для публичных
+- [ ] Миграция если новая модель
+- [ ] CLAUDE.md обновлён (routes table)
+
+---
+
+## Где что искать
+
+| Хочешь | Файл |
+|--------|------|
+| Env + константы | `/backend/src/config.js` |
+| Prisma singleton | `/backend/src/lib/prisma.js` |
+| Auth middleware | `/backend/src/middleware/auth.js` |
+| x402 payment | `/backend/src/middleware/x402.js` |
+| Schema БД | `/backend/prisma/schema.prisma` |
+| CORS / limits | `/backend/src/index.js` |
+| Agent 16 endpoints | `/backend/src/routes/agent.js` |
+| AI endpoints | `/backend/src/routes/ai.js` |
+
+---
+
+## Связанные скиллы
+
+- `hexlash-dev` — всегда первым
+- `hexlash-websocket` — для WS-протокола
+- `hexlash-deploy` — для миграций и env в проде
+- `hexlash-ai` — для AI endpoints и промптов
+- `hexlash-vue` — если затрагивает фронт-сторону
