@@ -6,15 +6,18 @@
 const prisma = require('../lib/prisma');
 
 /**
- * Atomically swap Captain in a FightClub.
+ * Atomically swap Captain in a FightClub + one-time ELO seed.
  * @param {string} fightClubId
  * @param {string} newCaptainId - Agent to become Captain
  * @param {string} requestUserId - User making the request (ownership check)
- * @returns {{ oldCaptainId: string|null, newCaptainId: string, noop?: boolean }}
+ * @returns {{ oldCaptainId: string|null, newCaptainId: string, noop?: boolean, eloSeeded?: boolean }}
  */
 async function setCaptain(fightClubId, newCaptainId, requestUserId) {
   return await prisma.$transaction(async (tx) => {
-    const club = await tx.fightClub.findUnique({ where: { id: fightClubId } });
+    const club = await tx.fightClub.findUnique({
+      where: { id: fightClubId },
+      include: { owner: { select: { rating: true } } },
+    });
     if (!club || club.ownerId !== requestUserId) {
       throw Object.assign(new Error('Access denied'), { status: 403, code: 'FORBIDDEN' });
     }
@@ -40,9 +43,18 @@ async function setCaptain(fightClubId, newCaptainId, requestUserId) {
     if (oldCaptain) {
       await tx.agent.update({ where: { id: oldCaptain.id }, data: { isCaptain: false } });
     }
-    await tx.agent.update({ where: { id: newCaptainId }, data: { isCaptain: true } });
 
-    return { oldCaptainId: oldCaptain?.id ?? null, newCaptainId };
+    // One-time ELO seed: if agent has default ELO and owner has non-default rating
+    let eloSeeded = false;
+    const seedData = { isCaptain: true };
+    if (newCaptain.elo === 1000 && club.owner.rating && club.owner.rating !== 1000) {
+      seedData.elo = club.owner.rating;
+      eloSeeded = true;
+    }
+
+    await tx.agent.update({ where: { id: newCaptainId }, data: seedData });
+
+    return { oldCaptainId: oldCaptain?.id ?? null, newCaptainId, eloSeeded };
   });
 }
 
@@ -55,6 +67,21 @@ async function getCaptain(fightClubId) {
   return prisma.agent.findFirst({
     where: { fightClubId, isCaptain: true },
     include: { tactics: true, progression: true },
+  });
+}
+
+/**
+ * Get Captain Agent fully populated for combat usage.
+ * Returns null if user has no FightClub or no Captain.
+ * @param {string} userId
+ * @returns {Object|null} Agent with progression + tactics
+ */
+async function getCaptainForCombat(userId) {
+  const club = await prisma.fightClub.findUnique({ where: { ownerId: userId } });
+  if (!club) return null;
+  return prisma.agent.findFirst({
+    where: { fightClubId: club.id, isCaptain: true },
+    include: { progression: true, tactics: true },
   });
 }
 
@@ -74,7 +101,6 @@ async function canDeleteAgent(agentId) {
   if (!agent) return { canDelete: false, reason: 'not_found' };
   if (!agent.isCaptain) return { canDelete: true };
 
-  // Captain — check if there are other agents in the club
   const othersCount = await prisma.agent.count({
     where: { fightClubId: agent.fightClubId, id: { not: agentId } },
   });
@@ -86,4 +112,4 @@ async function canDeleteAgent(agentId) {
   return { canDelete: true };
 }
 
-module.exports = { setCaptain, getCaptain, canDeleteAgent };
+module.exports = { setCaptain, getCaptain, getCaptainForCombat, canDeleteAgent };
