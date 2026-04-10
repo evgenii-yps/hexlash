@@ -1,10 +1,13 @@
 <template>
-  <div class="agent-card" :class="{ 'agent-card--fighting': agent.status === 'fighting', 'agent-card--auto': agent.autoFight }" @click="$emit('click', agent.id)">
+  <div class="agent-card" :class="{ 'agent-card--fighting': agent.status === 'fighting', 'agent-card--auto': agent.autoFight, 'agent-card--captain': agent.isCaptain }" @click="$emit('click', agent.id)">
     <HexCard variant="default" padding="md" clickable>
       <div class="agent-card-top">
         <img class="agent-skin" :src="`/images/skins/${agent.skin}`" :alt="agent.name" />
         <div class="agent-info">
-          <div class="agent-name">{{ agent.name }}</div>
+          <div class="agent-name">
+            {{ agent.name }}
+            <span v-if="agent.isCaptain" class="captain-badge">{{ t.club.lblCaptain || 'CAPTAIN' }}</span>
+          </div>
           <div v-if="agent.primaryModule" class="agent-archetype-row">
             <HexBadge variant="archetype" :archetype="agent.primaryModule" size="sm">{{ shortArch(agent.primaryModule) }}</HexBadge>
             <HexBadge variant="archetype" :archetype="agent.secondaryModule" size="sm">{{ shortArch(agent.secondaryModule) }}</HexBadge>
@@ -73,6 +76,7 @@ export default {
 .agent-card { cursor: pointer; }
 .agent-card--fighting :deep(.hex-card) { box-shadow: 0 0 14px rgba(255, 6, 111, 0.3); }
 .agent-card--auto :deep(.hex-card) { border-color: var(--hex-border-active); }
+.agent-card--captain :deep(.hex-card) { border-color: var(--hex-primary); box-shadow: 0 0 8px rgba(255, 6, 111, 0.15); }
 
 .agent-card-top {
   display: flex;
@@ -99,6 +103,23 @@ export default {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.captain-badge {
+  font-size: 9px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--hex-primary);
+  background: rgba(255, 6, 111, 0.1);
+  border: 1px solid rgba(255, 6, 111, 0.3);
+  border-radius: 3px;
+  padding: 1px 5px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .agent-no-modules {
