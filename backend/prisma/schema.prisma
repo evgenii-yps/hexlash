@@ -331,6 +331,9 @@ model Agent {
   xp               Int       @default(0)
   level            Int       @default(1)
 
+  // Captain
+  isCaptain        Boolean   @default(false)   // one per FightClub, PvP representative
+
   // Status
   status           String    @default("idle")  // idle|fighting|resting
   autoFight        Boolean   @default(false)   // auto-fight enabled
@@ -352,6 +355,7 @@ model Agent {
   fightLogs        AgentFightLog[]
 
   @@index([fightClubId])
+  @@index([fightClubId, isCaptain])
   @@index([ownerId])
   @@index([elo])
   @@index([status])
