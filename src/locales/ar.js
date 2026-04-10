@@ -597,6 +597,9 @@ export default {
     overdrive: 'OVERDRIVE',
     extraRound: 'إضافي {n}',
     overdriveStart: 'أوفردرايف! ضرر مضاعف، بدون نرد أو مدرب!',
+    errNoCaptain: 'Set a Captain in Club Mode first',
+    errCaptainFighting: 'Your Captain is currently fighting',
+    errCaptainResting: 'Your Captain is resting',
     lblPoweredBy: 'Powered by Claude',
     aiLabels: {
       summary: 'Fight Summary',

@@ -614,6 +614,10 @@ export default {
     },
     extraRound: 'EXTRA {n}',
     overdriveStart: 'Overdrive! Damage x2, no dice or coach!',
+    // Captain guards
+    errNoCaptain: 'Set a Captain in Club Mode first',
+    errCaptainFighting: 'Your Captain is currently fighting',
+    errCaptainResting: 'Your Captain is resting',
   },
   friends: {
     title: 'FRIENDS',

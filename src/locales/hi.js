@@ -597,6 +597,9 @@ export default {
     overdrive: 'OVERDRIVE',
     extraRound: 'अतिरिक्त {n}',
     overdriveStart: 'ओवरड्राइव! डैमेज x2, बिना डाइस और कोच!',
+    errNoCaptain: 'Set a Captain in Club Mode first',
+    errCaptainFighting: 'Your Captain is currently fighting',
+    errCaptainResting: 'Your Captain is resting',
     lblPoweredBy: 'Powered by Claude',
     aiLabels: {
       summary: 'Fight Summary',

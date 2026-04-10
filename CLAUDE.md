@@ -1655,7 +1655,7 @@ Feature flag `X402_ENABLED=false` на проде. On-chain verification = TODO 
 | P1-belt-4b | Redesign AI prompts под Belt semantics | | После belt-4a |
 | P1-migration | Миграция User.progression → Fighter №1 + hide retirement UI | ✅ DONE | После belt-1 |
 | P1-captain-1 | Captain как поле + базовая логика + создание из Fighter №1 | ✅ DONE | После migration |
-| P1-captain-2 | Adapt Arena flow под Captain | | После captain-1 |
+| P1-captain-2 | Adapt Arena flow под Captain | ✅ DONE | После captain-1 |
 | P1-captain-3 | Adapt Profile/Ratings под Captain | | Параллельно с captain-2 |
 
 ### P1-migration — User → Fighter #1 — ✅ COMPLETE

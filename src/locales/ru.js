@@ -613,6 +613,9 @@ export default {
     },
     extraRound: 'ЭКСТРА {n}',
     overdriveStart: 'Режим Overdrive! Урон x2, без dice и coach!',
+    errNoCaptain: 'Сначала назначьте капитана в режиме клуба',
+    errCaptainFighting: 'Ваш капитан сейчас в бою',
+    errCaptainResting: 'Ваш капитан отдыхает',
   },
   friends: {
     title: 'ДРУЗЬЯ',

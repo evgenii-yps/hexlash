@@ -597,6 +597,9 @@ export default {
     overdrive: 'OVERDRIVE',
     extraRound: 'エクストラ {n}',
     overdriveStart: 'オーバードライブ！ダメージ2倍、ダイスとコーチなし！',
+    errNoCaptain: 'Set a Captain in Club Mode first',
+    errCaptainFighting: 'Your Captain is currently fighting',
+    errCaptainResting: 'Your Captain is resting',
     lblPoweredBy: 'Powered by Claude',
     aiLabels: {
       summary: 'Fight Summary',

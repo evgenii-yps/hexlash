@@ -597,6 +597,9 @@ export default {
     overdrive: 'OVERDRIVE',
     extraRound: 'EXTRA {n}',
     overdriveStart: 'Overdrive! Dano x2, sem dado ou treinador!',
+    errNoCaptain: 'Set a Captain in Club Mode first',
+    errCaptainFighting: 'Your Captain is currently fighting',
+    errCaptainResting: 'Your Captain is resting',
     lblPoweredBy: 'Powered by Claude',
     aiLabels: {
       summary: 'Fight Summary',

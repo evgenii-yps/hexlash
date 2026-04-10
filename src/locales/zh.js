@@ -597,6 +597,9 @@ export default {
     overdrive: 'OVERDRIVE',
     extraRound: '额外 {n}',
     overdriveStart: '超载模式！伤害x2，无骰子和教练！',
+    errNoCaptain: 'Set a Captain in Club Mode first',
+    errCaptainFighting: 'Your Captain is currently fighting',
+    errCaptainResting: 'Your Captain is resting',
     lblPoweredBy: 'Powered by Claude',
     aiLabels: {
       summary: 'Fight Summary',
