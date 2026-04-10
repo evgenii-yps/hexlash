@@ -112,4 +112,50 @@ async function canDeleteAgent(agentId) {
   return { canDelete: true };
 }
 
-module.exports = { setCaptain, getCaptain, getCaptainForCombat, canDeleteAgent };
+const CAPTAIN_PUBLIC_SELECT = {
+  id: true, name: true, skin: true,
+  belt: true, qualifiedWins: true, isHexmaster: true, elo: true,
+};
+
+/**
+ * Get Captain summary for public display (leaderboards, friends, opponents).
+ * Returns null if user has no Captain.
+ * @param {string} userId
+ * @returns {Object|null}
+ */
+async function getCaptainPublicInfo(userId) {
+  const club = await prisma.fightClub.findUnique({ where: { ownerId: userId } });
+  if (!club) return null;
+  return prisma.agent.findFirst({
+    where: { fightClubId: club.id, isCaptain: true },
+    select: CAPTAIN_PUBLIC_SELECT,
+  });
+}
+
+/**
+ * Bulk version for leaderboards / friend lists. One query, no N+1.
+ * @param {string[]} userIds
+ * @returns {Map<string, Object|null>}
+ */
+async function getCaptainsForUsers(userIds) {
+  if (!userIds.length) return new Map();
+  const clubs = await prisma.fightClub.findMany({
+    where: { ownerId: { in: userIds } },
+    select: {
+      ownerId: true,
+      agents: {
+        where: { isCaptain: true },
+        select: CAPTAIN_PUBLIC_SELECT,
+        take: 1,
+      },
+    },
+  });
+  const map = new Map();
+  for (const uid of userIds) map.set(uid, null);
+  for (const club of clubs) {
+    map.set(club.ownerId, club.agents[0] || null);
+  }
+  return map;
+}
+
+module.exports = { setCaptain, getCaptain, getCaptainForCombat, canDeleteAgent, getCaptainPublicInfo, getCaptainsForUsers };
