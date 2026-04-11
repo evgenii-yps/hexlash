@@ -115,7 +115,7 @@ export default {
       if (props.variant === 'status' && props.status) {
         return STATUS_COLORS[props.status]?.text || 'var(--hex-text-primary)'
       }
-      if (props.variant === 'counter') return '#FFFFFF'
+      if (props.variant === 'counter') return 'var(--hex-text-primary)'
       return props.color || 'var(--hex-text-primary)'
     })
 

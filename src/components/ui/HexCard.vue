@@ -16,9 +16,9 @@
 import { computed } from 'vue'
 
 const RESULT_COLORS = {
-  victory: '#00FF88',
-  defeat: '#FF4444',
-  draw: '#FFB800'
+  victory: 'var(--hex-victory)',
+  defeat: 'var(--hex-defeat)',
+  draw: 'var(--hex-draw)'
 }
 
 export default {

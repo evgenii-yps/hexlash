@@ -137,7 +137,7 @@ export default {
 
 .hex-button--primary {
   background: var(--hex-primary);
-  color: #FFFFFF;
+  color: var(--hex-text-primary);
   border: none;
 }
 .hex-button--primary:hover:not(:disabled) {
@@ -164,7 +164,7 @@ export default {
 
 .hex-button--danger {
   background: var(--hex-danger);
-  color: #FFFFFF;
+  color: var(--hex-text-primary);
   border: none;
 }
 .hex-button--danger:hover:not(:disabled) {
@@ -201,7 +201,7 @@ export default {
   width: 16px;
   height: 16px;
   border: 2px solid rgba(255, 255, 255, 0.25);
-  border-top-color: #FFFFFF;
+  border-top-color: var(--hex-text-primary);
   border-radius: 50%;
   animation: hex-btn-spin 0.7s linear infinite;
 }
