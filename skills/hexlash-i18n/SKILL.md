@@ -1,171 +1,173 @@
 ---
 name: hexlash-i18n
-description: Hexlash localization system — 11 languages, custom reactive i18n, game data translations, page content. Use this skill when adding new text, translating content, working with locale files, fixing missing translations, adding new i18n keys, or dealing with text display issues. Triggers on mentions of i18n, translation, translate, locale, language, text, label, localization, multilingual, RTL, Arabic, locale file, missing text, hardcoded text, string, message, internationalization, lang, t.value, setLanguage, interpolate.
+description: Локализация Hexlash — 11 языков, кастомный реактивный i18n. Триггерится на i18n, локализация, перевод, translation, locale, language, язык, t.value, interpolate, en/ru/de/es/fr/pt/ar/hi/ja/ko/zh, текст в UI, label, lbl. Грузить вместе с hexlash-dev. Для компонентов — hexlash-vue. Для UI текстов — hexlash-design.
 ---
 
-# Hexlash i18n Localization
+# hexlash-i18n — Localization
 
-## Architecture
+## Главное правило
 
-Custom reactive i18n system (NOT vue-i18n).
+**Кастомный i18n, НЕ vue-i18n.** Любой новый текст → **все 11 локалей одновременно**. EN — fallback. Хардкод текстов запрещён.
 
-**File:** `/src/locales/index.js`
+---
 
-**Exports:**
-- `t` — Computed ref with all translations for current language
-- `setLanguage(lang)` — Switch active language
-- `interpolate(template, values)` — Replace `{placeholders}` in strings
+## Локали
 
-## Supported Languages (11)
+| Код | Язык | RTL | Help | Rules |
+|-----|------|-----|------|-------|
+| en | English (fallback) | нет | да | да |
+| ru | Русский | нет | да | да |
+| de | Deutsch | нет | EN fallback | да |
+| es | Español | нет | EN fallback | да |
+| fr | Français | нет | EN fallback | да |
+| pt | Português | нет | EN fallback | да |
+| ar | العربية | **да** | EN fallback | да |
+| hi | हिन्दी | нет | EN fallback | да |
+| ja | 日本語 | нет | EN fallback | да |
+| ko | 한국어 | нет | EN fallback | да |
+| zh | 中文 | нет | EN fallback | да |
 
-| Code | Language | RTL |
-|------|----------|-----|
-| `en` | English | No |
-| `ru` | Russian | No |
-| `de` | German | No |
-| `es` | Spanish | No |
-| `fr` | French | No |
-| `pt` | Portuguese | No |
-| `ar` | Arabic | **Yes** |
-| `hi` | Hindi | No |
-| `ja` | Japanese | No |
-| `ko` | Korean | No |
-| `zh` | Chinese | No |
+Help pages: только en + ru. Остальные 9 → EN fallback. Rules: все 11.
 
-## Locale File Structure
+---
 
-Each locale file contains these sections:
+## Архитектура
 
-```js
-{
-  menu: { ... },          // Navigation labels
-  auth: { ... },          // Login/signup/reset
-  profile: { ... },       // Profile page
-  arena: { ... },         // Arena/preparation
-  fight: { ... },         // Fight screen
-  training: { ... },      // Training screen
-  moves: { ... },         // Move tree
-  deck: { ... },          // Deck builder
-  cards: { ... },         // Card/module names
-  rating: { ... },        // Ratings/leaderboards
-  club: { ... },          // Club page
-  info: { ... },          // Info messages
-  nav: { ... },           // Navigation
-  autoFight: { ... },     // Auto fight
-  friends: { ... },       // Friends
-  pvp: { ... },           // PvP
-  spectate: { ... },      // Spectate
-  xpAllocation: { ... },  // XP distribution
-  gameData: {
-    branches: {
-      speed: { name, description },
-      power: { name, description },
-      technique: { name, description }
-    },
-    moves: {
-      jab: { name, description },
-      double_jab: { name, description },
-      // ... all 18 moves
-    }
-  }
-}
-```
+- **Движок:** `/src/locales/index.js`
+- **Экспорт:**
+  - `t` — computed ref (реактивный)
+  - `setLanguage(lang)` — смена + localStorage
+  - `getLanguage()` — текущий язык
+  - `interpolate(str, vars)` — подстановка `{varName}`
+  - `availableLanguages` — массив `[{code, name}]`
+  - `ruCountRule(choice, choicesLength)` — русские склонения
+- **Storage key:** `hexlash-language` (localStorage)
+- **Auto-detect:** browser language → fallback EN
 
-## Page Content
+---
 
-Stored as separate JSON files:
+## Использование
 
-- `/src/locales/pages/rules/{lang}.json` — Game rules (11 files)
-- `/src/locales/pages/help/{lang}.json` — Help pages (en, ru)
+**В template:** `{{ t.section.key }}` (auto-unwrap, без `.value`)
 
-## Usage Patterns
+**В script:** `t.value.section.key`
 
-### In Templates
-```vue
-<!-- Direct access (auto-unwrapped ref) -->
-{{ t.fight.lblRound }}
-{{ t.profile.lblBalance }}
-{{ t.gameData.moves.jab.name }}
-
-<!-- With interpolation -->
-{{ interpolate(t.value.moves.lblUnlockFirst, { name: moveName }) }}
-```
-
-### In Script
+**С интерполяцией:**
 ```js
 import { t, interpolate } from '@/locales'
-
-// Access translation (ref — need .value)
-const label = t.value.fight.lblRound
-
-// Interpolation
-const msg = interpolate(t.value.moves.lblUnlockFirst, { name: 'Jab' })
+interpolate(t.value.moves.lblUnlockFirst, { name: 'Hurricane' })
 ```
 
-### Game Data
-```vue
-<!-- Branch name -->
-{{ t.gameData.branches.speed.name }}
+**Смена языка:** `setLanguage('ru')`
 
-<!-- Move name and description -->
-{{ t.gameData.moves[moveId].name }}
-{{ t.gameData.moves[moveId].description }}
-```
+---
 
-## Key Naming Convention
+## Секции (из en.js — источник правды)
 
-| Prefix | Usage | Example |
-|--------|-------|---------|
-| `lbl` | Labels, titles | `lblRound`, `lblBalance` |
-| `msg` | Messages, descriptions | `msgFightWon`, `msgNoFriends` |
-| `btn` | Button text | `btnStart`, `btnCancel` |
+`menu`, `modal`, `auth`, `profile`, `arena`, `clan`, `club` (Fight Club UI), `fight`, `friends`, `pvp`, `spectate`, `xpAllocation`, `cards`, `training`, `rating`, `info`, `getStarted`, `deck`, `moves`, `referral`, `gameData`, `nav`, `verify`, `errors`, `belts`
 
-## Rules
+**Game data:** `gameData.branches[id].{name,description}`, `gameData.moves[id].{name,description}`
 
-1. **NEVER hardcode text** in templates or scripts. Always use i18n keys.
-2. **Add keys to ALL 11 locales** when adding new text. Missing keys show the key path in UI.
-3. **Use English as the primary locale** — write English text first, then add translations.
-4. **Prefix convention** — Use `lbl`, `msg`, `btn` prefixes consistently.
-5. **Game data translations** go in `gameData.branches` and `gameData.moves` sections.
-6. **Page content** goes in `/src/locales/pages/` as separate JSON files.
-7. **Test Arabic (ar)** — it uses RTL direction. Verify layout doesn't break.
+---
 
-## Common Issues
+## Конвенция ключей
 
-| Problem | Cause | Fix |
-|---------|-------|-----|
-| Key path shown in UI (e.g., `fight.lblNew`) | Key missing from locale file | Add key to all 11 locale files |
-| Interpolation shows `{placeholder}` literally | Wrong placeholder name or missing `interpolate()` call | Match placeholder names exactly |
-| Russian text in move names | Legacy fallback from `moves.js` | UI should use `t.gameData.moves[id].name` |
-| RTL layout broken | Arabic text without proper CSS | Add `direction: rtl` support, test with `ar` locale |
-| Wrong language on load | Language preference not restored | Check `masterState.language` and localStorage |
+- **Иерархия:** `section.key` или `section.subsection.key`
+- **Префиксы:** `lbl*` (кнопки/поля), `txt*` (параграфы), `err*` (ошибки), `msg*` (инфо)
+- **Интерполяция:** `{varName}` — одинаковые ключи переменных во всех локалях
 
-## Adding New Text
+---
 
-1. Define the key in English locale first
-2. Copy to all 10 other locale files with translated values
-3. Use consistent prefix (lbl/msg/btn)
-4. Place in the correct section (fight, profile, arena, etc.)
-5. Test with at least 2 languages (en + one other)
-6. Test Arabic for RTL layout if the text is in a new UI area
+## Добавление текста — flow
 
-## Locale Files Location
+1. Определить секцию и ключ (по конвенции)
+2. Добавить EN в `/src/locales/en.js` (обязательный fallback)
+3. Добавить во все **10 остальных** локалей
+4. Использовать: `{{ t.section.key }}` или `t.value.section.key`
+5. Проверить: DE/RU (длинные слова), AR (RTL)
 
-```
-/src/locales/
-  index.js          — i18n system (t, setLanguage, interpolate)
-  en.js             — English
-  ru.js             — Russian
-  de.js             — German
-  es.js             — Spanish
-  fr.js             — French
-  pt.js             — Portuguese
-  ar.js             — Arabic (RTL)
-  hi.js             — Hindi
-  ja.js             — Japanese
-  ko.js             — Korean
-  zh.js             — Chinese
-  pages/
-    rules/          — Rules content per language
-    help/           — Help content per language
-```
+**Никогда не комитить текст без всех 11 локалей.**
+
+---
+
+## Страничный контент
+
+- Help: `/src/locales/pages/help/{lang}.json` — только en + ru, остальные → EN fallback
+- Rules: `/src/locales/pages/rules/{lang}.json` — все 11 языков
+
+---
+
+## RTL — арабский
+
+- `ar` — единственный RTL
+- При смене на ar — `dir="rtl"` на html (проверить реализацию)
+- Direction-зависимая вёрстка: `margin-inline`, `padding-inline`, стрелки зеркалятся
+
+---
+
+## Проверка перед коммитом
+
+- [ ] Нет хардкода текстов
+- [ ] Все 11 локалей содержат новые ключи
+- [ ] EN fallback корректен
+- [ ] DE/RU не ломают вёрстку (+30% длины)
+- [ ] AR (RTL) работает
+- [ ] Интерполяция: все `{varName}` имеют значения
+- [ ] Ключи по конвенции (`lbl*`, `txt*`, `err*`)
+- [ ] Новая секция → все 11 файлов
+
+---
+
+## Качество переводов
+
+- **EN** — вычитанный, fallback
+- **RU** — основной для команды, качественный
+- **9 остальных** — машинные, но технически корректные (теги сохранены)
+- При сомнении → EN fallback + TODO
+- **Не переводить:** Hexlash, Predator, Sentinel, Ghost, Analyst, Maverick, Juggernaut
+
+---
+
+## Связь с UI
+
+- Текстовые блоки выдерживают +30% длины (DE, RU)
+- Pixel-font (Anonymous) ≤3 слов — длинные локали могут не влезть
+- Лейблы навигации — короткие во всех языках
+- Подробнее → `hexlash-design`
+
+---
+
+## Запрещено
+
+- Хардкод текста в template/script
+- Импортировать vue-i18n
+- Ключ только в одну локаль
+- Удалять EN ключ, оставив в других
+- Менять имя ключа без обновления всех call-sites
+- `v-html` для пользовательского i18n контента (XSS)
+- Переводить бренды и архетипы
+- `if (lang === 'ru')` — через i18n систему
+- Разные имена переменных в разных локалях (`{name}` vs `{имя}`)
+
+---
+
+## Где что искать
+
+| Хочешь | Файл |
+|--------|------|
+| i18n движок | `/src/locales/index.js` |
+| EN (fallback) | `/src/locales/en.js` |
+| RU | `/src/locales/ru.js` |
+| Все локали | `/src/locales/{lang}.js` |
+| Help pages | `/src/locales/pages/help/{lang}.json` |
+| Rules pages | `/src/locales/pages/rules/{lang}.json` |
+| Game data | `{lang}.js` → `gameData.branches`, `gameData.moves` |
+
+---
+
+## Связанные скиллы
+
+- `hexlash-dev` — всегда первым
+- `hexlash-vue` — использование i18n в компонентах
+- `hexlash-design` — длина текстов в UI
+- `hexlash-gamedesign` — переводы движений и веток

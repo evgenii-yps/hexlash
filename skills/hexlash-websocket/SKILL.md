@@ -1,64 +1,56 @@
 ---
 name: hexlash-websocket
-description: Hexlash WebSocket protocol — real-time communication between client and server. Use this skill when working on WebSocket messages, real-time features, PvP communication, matchmaking queue, friend challenges, punch batches, spectate mode, online status, or any WS-related code. Triggers on mentions of WebSocket, WS, real-time, realtime, socket, messages, matchmaking, challenge, spectate, punch batch, online, connection, reconnect, ws handler, pvp messages, fight messages.
+description: WebSocket-протокол Hexlash — real-time коммуникация. Триггерится на WebSocket, ws, real-time, матчмейкинг, matchmaking, challenge, fight message, dice_roll, coach_choice, ping, pong, MatchFoundMsg, broadcast, online status, reconnect, socket, spectate, punch batch. Грузить вместе с hexlash-dev. Для PvP боя — hexlash-combat. Для backend — hexlash-api. Для UI — hexlash-vue.
 ---
 
-# Hexlash WebSocket Protocol
+# hexlash-websocket — WebSocket Protocol
 
-## Architecture
+## Главное правило
 
-- WebSocket runs on the same HTTP server as Express (shared port)
-- Authentication: JWT token sent on connection
-- Messages: JSON with `type` field for routing
-- Client: Vuex `webSocketState` module handles connection, reconnection, message dispatch
-- Server: `websocket/handler.js` routes messages, `websocket/pvpHandler.js` handles PvP
+WebSocket-протокол — **контракт между фронтом и бэком**. Любое изменение требует синхронной правки обеих сторон + обновления таблицы в CLAUDE.md. Запрещено добавлять "временное" сообщение только на одной стороне.
 
-## Message Protocol
+---
 
-### Client → Server
+## Архитектура
 
-| Message Type | Payload | Purpose |
-|-------------|---------|---------|
-| `PunchInfoRequestMsg` | — | Get punch rate limit info |
-| `PunchBatchRequestMsg` | `{ punches }` | Submit batch of punches |
-| `FightTicketMsg` | — | Request new fight ticket |
-| `FightActionMsg` | `{ action }` | Send PvP fight action |
-| `challenge_send` | `{ targetUserId }` | Send PvP challenge to friend |
-| `challenge_accepted` | `{ challengeId }` | Accept incoming challenge |
-| `challenge_declined` | `{ challengeId }` | Decline incoming challenge |
-| `MatchmakingStartMsg` | `{ deck, skin }` | Join matchmaking queue |
-| `MatchmakingCancelMsg` | — | Leave matchmaking queue |
-| `pvp_ready` | `{ matchId, deck }` | Signal readiness + send deck |
-| `dice_roll` | `{ matchId }` | Roll dice in PvP |
-| `coach_choice` | `{ matchId, action }` | Coach advice choice (attack/defense/position) |
+- **Backend WS:** библиотека `ws`, тот же HTTP-сервер что Express (shared port)
+- **Точка входа:** `/backend/src/index.js` поднимает WebSocket поверх httpServer
+- **Аутентификация:** JWT в protocol при handshake (`Bearer_<token>`), валидируется до регистрации клиента. Без валидного токена — connection отклонён.
+- **Handlers:**
+  - `/backend/src/websocket/handler.js` — общий: punches, achievements, challenges, matchmaking
+  - `/backend/src/websocket/pvpHandler.js` — PvP бой (dice_roll, coach_choice, round messaging)
+- **Frontend клиент:** `/src/core/websocket/`
+- **Vuex модуль:** `webSocketState` — connection status, real-time messages
+- **Heartbeat:** ping каждые `WS_PING_INTERVAL_MS` (30s), pong timeout `WS_PONG_TIMEOUT_MS` (10s)
 
-### Server → Client
+---
 
-| Message Type | Payload | Purpose |
-|-------------|---------|---------|
-| `PunchInfoResponseMsg` | `{ limit, remaining }` | Punch rate limit info |
-| `UserResponseMsg` | `{ user }` | Updated user data after punches |
-| `FightInfoMsg` | `{ fight }` | Fight ticket data |
-| `challenge_sent` | `{ challengeId }` | Challenge sent confirmation |
-| `challenge_error` | `{ error }` | Challenge failed (offline, etc.) |
-| `challenge_received` | `{ from, challengeId }` | Incoming challenge notification |
-| `challenge_start` | `{ matchId }` | Challenge accepted, match created |
-| `challenge_declined` | `{ challengeId }` | Challenge was declined |
-| `MatchmakingQueueMsg` | `{ position }` | Queue position update |
-| `MatchFoundMsg` | `{ matchId, opponent, skin }` | Match found |
-| `MatchmakingCancelledMsg` | — | Left queue confirmation |
-| `fight_start` | `{ matchId, players }` | PvP fight begins |
-| `dice_available` | `{ matchId }` | Dice off cooldown |
-| `dice_rolled` | `{ matchId, effect }` | Dice roll result |
-| `dice_error` | `{ error }` | Dice roll failed |
-| `coach_pause` | `{ matchId }` | Fight paused for coach advice (10s) |
-| `coach_result` | `{ matchId, effects }` | Both chose, fight resumes |
-| `coach_opponent_ready` | `{ matchId }` | Opponent made coach choice |
-| `round_result` | `{ round, hp, damage, effects }` | Round simulation result |
-| `fight_end` | `{ winner, reason, xp }` | Fight finished |
-| `overdrive_start` | `{ matchId }` | Overdrive phase (sudden death) |
-| `AchievementResponseMsg` | `{ achievement }` | Auto-awarded achievement |
-| `ErrorMsg` | `{ error }` | Error response |
+## Контракт сообщений
+
+Сообщения сериализуются в JSON. Формат:
+```json
+{ "type": "MessageTypeName", ...payload }
+```
+
+Имена: **PascalCase для legacy** (`MatchFoundMsg`, `PunchInfoRequestMsg`) и **snake_case для новых** (`challenge_send`, `dice_roll`). Исторически сложилось — **не унифицировать** без явного запроса. Новые сообщения — snake_case.
+
+**Полная карта сообщений → CLAUDE.md секция "WebSocket Protocol"** (источник правды).
+
+---
+
+## Категории сообщений
+
+| Категория | Назначение | Файл-обработчик |
+|-----------|------------|-----------------|
+| Punches | Rate-limit info, batch submit | `handler.js` |
+| Fight tickets (legacy) | Старый flow создания боя | `handler.js` |
+| Friend challenges | Вызов друга на PvP, accept/decline | `handler.js` |
+| Matchmaking | Очередь PvP, поиск соперника | `handler.js` |
+| PvP combat | Ready, dice, coach, round, end | `pvpHandler.js` |
+| Achievements | Авто-награды (punch milestones) | `handler.js` |
+| Errors | Стандартный ErrorMsg | оба |
+
+---
 
 ## Friend Challenge Flow
 
@@ -73,59 +65,134 @@ Player A                    Server                    Player B
     |                         |     (10s auto-decline)  |
     |                         |                         |
     |                         |<-- challenge_accepted --|
-    |                         |                         |
     |                         |-- (create match via     |
     |                         |    pvpMatchManager)     |
-    |                         |                         |
     |<-- challenge_start -----|-- challenge_start ----->|
     |                         |                         |
     | (navigate to /fight?mode=pvp&matchId=...)         |
 ```
 
-## PvP Match Flow
+Если B жмёт decline или таймаут → `challenge_declined`. На ошибке (B offline, B в бою) → `challenge_error`.
+
+---
+
+## PvP Combat Flow
 
 ```
-1. MatchmakingStartMsg  → Server adds to queue with deck + skin
-2. MatchFoundMsg         ← Server finds match, sends opponent info
-3. pvp_ready             → Both players signal ready with deck
-4. fight_start           ← Server starts match
-5. round_result          ← Each round result sent to both
-6. dice_available        ← Server notifies dice ready (cooldown 3 rounds)
-7. dice_roll             → Player rolls dice
-8. dice_rolled           ← Server sends effect
-9. coach_pause           ← Fight pauses for coach (from round 6)
-10. coach_choice         → Player sends choice
-11. coach_result         ← Both chose, resume
-12. overdrive_start      ← If rounds > MAX_ROUNDS
-13. fight_end            ← Winner, XP, reason
+1. MatchFoundMsg / challenge_start → оба знают matchId
+2. pvp_ready          → оба шлют колоду
+3. fight_start        ← сервер подтверждает, бой начинается
+4. round_result       ← каждый раунд обоим
+5. dice_available     ← кубик off cooldown (after round 1, cooldown 3)
+6. dice_roll          → игрок жмёт
+7. dice_rolled        ← эффект + oppHp + killed flag
+8. coach_pause        ← пауза на coach (round ≥6, 10s timer)
+9. coach_choice       → каждый выбирает attack/defense/position
+10. coach_result      ← оба выбрали или таймаут, бой продолжается
+11. coach_opponent_ready ← соперник выбрал раньше
+12. overdrive_start   ← если раунды > MAX_ROUNDS (кубик отключён)
+13. fight_end         ← winner, reason, XP
 ```
 
-## Implementation Details
+**Важно:** PvP fight state на клиенте **очищается из localStorage** на `fight_end` через `clearSavedFight` — иначе stale restore.
 
-### Client Side
-- `webSocketState` Vuex module manages connection lifecycle
-- Auto-reconnection on disconnect
-- Messages are JSON stringified/parsed
-- Punch batches sent every 11s (BATCH_SEND_INTERVAL_MS)
+---
 
-### Server Side
-- `handler.js` — Main message router, challenge system
-- `pvpHandler.js` — PvP-specific messages (dice_roll, coach_choice, round flow)
-- `matchmaking.js` — Queue management, match pairing
-- `pvpMatchManager.js` — Match lifecycle (create, start, end)
+## Matchmaking Flow
 
-### Timeouts
-- Dice pause: 10s (DICE_PAUSE_TIMEOUT_MS)
-- Coach pause: 10s (COACH_PAUSE_TIMEOUT_MS)
-- Punch batch interval: 11s (BATCH_SEND_INTERVAL_MS)
-- Challenge auto-decline: 10s
+1. `MatchmakingStartMsg` с колодой + скином → попадает в очередь
+2. `MatchmakingQueueMsg` ← позиция / поиск
+3. Найден соперник → `MatchFoundMsg` обоим (opponent data + matchId + skin)
+4. Отмена → `MatchmakingCancelMsg` → `MatchmakingCancelledMsg`
+5. После `MatchFoundMsg` → PvP combat flow
 
-## Key Files
+---
 
-| File | Location |
-|------|----------|
-| `webSocketState.js` | `/src/core/state/modules/` |
-| `handler.js` | `/backend/src/websocket/` |
-| `pvpHandler.js` | `/backend/src/websocket/` |
-| `matchmaking.js` | `/backend/src/services/` |
-| `pvpMatchManager.js` | `/backend/src/services/` |
+## Punches (rate-limit batch)
+
+- Клиент батчит таппы → `PunchBatchRequestMsg` каждые `BATCH_SEND_INTERVAL_MS` (11s)
+- Сервер валидирует: `PUNCH_MAX_PER_BATCH=10000`, `PUNCH_MAX_PER_INTERVAL=10000` за час
+- Ответ: `UserResponseMsg` или `ErrorMsg`
+- На milestones (100, 1k, 5k, 10k) → `AchievementResponseMsg` автоматически
+- `PunchInfoRequestMsg` → `PunchInfoResponseMsg` — текущий лимит
+
+---
+
+## Server-pushed сообщения (без request)
+
+Сервер присылает **без явного запроса** — клиент должен иметь обработчики:
+- `challenge_received` — входящий вызов
+- `MatchFoundMsg` — найден соперник
+- `dice_available` — кубик off cooldown
+- `coach_pause` — пауза на coach
+- `coach_opponent_ready` — соперник уже выбрал
+- `round_result`, `overdrive_start`, `fight_end` — из боя
+- `match_cancelled` — матч отменён (ready_timeout)
+- `AchievementResponseMsg` — авто-награда
+- `ErrorMsg` — ошибка
+
+---
+
+## Heartbeat и reconnect
+
+- Сервер ping каждые `WS_PING_INTERVAL_MS` (30s)
+- Pong timeout: `WS_PONG_TIMEOUT_MS` (10s) — нет pong → сервер закрывает
+- Клиент reconnect с exponential backoff (10s → 20s → 40s → ... → max 300s, ±20% jitter)
+- При reconnect: старый socket помечается `_replaced`, close handler не триггерит PvP disconnect
+- Новый socket ре-биндится к активному матчу если есть
+
+---
+
+## Запрещено
+
+- Открывать WebSocket напрямую из Vue компонента — через `/src/core/websocket/`
+- Добавлять сообщение только на одной стороне
+- Менять имя существующего сообщения без обеих сторон + CLAUDE.md
+- Унифицировать PascalCase legacy и snake_case новые без запроса
+- Слать сообщения без `type` поля
+- Доверять данным с клиента без серверной валидации (особенно PvP)
+- Не очищать `hexlash_pvp` localStorage на `fight_end`
+- Игнорировать ping/pong — утечка соединений
+- Создавать второй WebSocket-сервер на отдельном порту
+
+---
+
+## Чеклист изменения протокола
+
+- [ ] Определена сторона: клиент / сервер / обе
+- [ ] Если обе — обе изменены в одном коммите
+- [ ] Имя сообщения: snake_case для нового
+- [ ] Добавлен обработчик на принимающей стороне
+- [ ] Обновлена таблица "WebSocket Protocol" в CLAUDE.md
+- [ ] Если PvP combat — синхронно с `hexlash-combat`
+- [ ] Auth защита проверена
+- [ ] Heartbeat не сломан
+- [ ] Reconnect-сценарий работает
+- [ ] Backward compatibility учтена
+
+---
+
+## Где что искать
+
+| Хочешь | Файл |
+|--------|------|
+| Точку входа WS | `/backend/src/index.js` |
+| Общие сообщения (challenges, matchmaking, punches) | `/backend/src/websocket/handler.js` |
+| PvP combat сообщения | `/backend/src/websocket/pvpHandler.js` |
+| Очередь матчмейкинга | `/backend/src/services/matchmaking.js` |
+| Lifecycle PvP матча | `/backend/src/services/pvpMatchManager.js` |
+| Симуляция PvP раундов | `/backend/src/services/pvpCombatEngine.js` |
+| Vuex модуль соединения | `/src/core/state/modules/webSocketState.js` |
+| Клиентская обвязка | `/src/core/websocket/` |
+| Полная таблица сообщений | CLAUDE.md "WebSocket Protocol" |
+| Friend Challenge Flow | CLAUDE.md "Friend Challenge Flow" |
+| Backend config (intervals, timeouts) | `/backend/src/config.js` |
+
+---
+
+## Связанные скиллы
+
+- `hexlash-dev` — всегда первым
+- `hexlash-combat` — для PvP combat flow и dice/coach
+- `hexlash-api` — для backend изменений и JWT auth
+- `hexlash-vue` — для UI компонентов, потребляющих WS

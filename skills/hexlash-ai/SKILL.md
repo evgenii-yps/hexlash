@@ -1,119 +1,166 @@
 ---
 name: hexlash-ai
-description: Hexlash AI system — Claude API integration for AI Trainer post-fight analysis, auto fight series analysis, and future AI features. Use this skill when working on AI Trainer, Claude API calls, Anthropic SDK, fight analysis prompts, AI-related components, prompt engineering, or expanding AI functionality. Triggers on mentions of AI, Claude, Anthropic, trainer, analysis, prompt, AI Trainer, fight analysis, coaching, auto fight analysis, AI series, analyze, Claude API, model, max_tokens, AI feature, machine learning, LLM.
+description: AI система Hexlash — Anthropic Claude API. Триггерится на AI, Claude, Anthropic, prompt, промпт, AI Trainer, analyze-fight, build-description, morning-report, premium-report, claude-haiku, model, max_tokens, system prompt, генерация. Грузить вместе с hexlash-dev. Для endpoints — hexlash-api. Для UI — hexlash-vue + hexlash-design. Для контекста боя — hexlash-combat.
 ---
 
-# Hexlash AI System
+# hexlash-ai — Claude API Integration
 
-## Architecture
+## Главное правило
+
+AI — **вспомогательный слой**, не критичный путь. Любая AI-фича → **graceful degradation** на ошибке: понятное сообщение, не ломает UX. Не блокировать flow ожиданием AI. Промпты — **детерминированная структура** (фиксированные секции), фронт парсит по заголовкам.
+
+---
+
+## Стек
+
+- **SDK:** `@anthropic-ai/sdk` (Node.js, backend only)
+- **Модель:** `claude-haiku-4-5-20251001` (env `ANTHROPIC_MODEL`)
+- **API key:** `ANTHROPIC_API_KEY` env (без неё AI endpoints → 503)
+- **Feature flag:** `AI_TRAINER_ENABLED` (default true)
+- **Client:** singleton `getAnthropicClient()` в `ai.js`
+
+---
+
+## Endpoints (реальные, из кода)
+
+| Endpoint | Назначение | Rate limit | Timeout | Max tokens | Auth |
+|----------|------------|------------|---------|------------|------|
+| `POST /v1/ai/analyze-fight` | Анализ одного боя (PvE + PvP) | 5/min | 15s | 300 | JWT |
+| `POST /v1/ai/build-description` | Описание боевого стиля (2 предложения) | 10/min | 10s | 60 | JWT |
+| `POST /v1/ai/morning-report` | Утренний отчёт FightClub (Lv1+Lv2) | 3/hr | 15s | 400+150/agent (max 1200) | JWT |
+| `POST /v1/ai/premium-report` | Premium отчёт с мета-анализом (Lv3) | 10/day | 25s | 2000 | JWT + x402 |
+
+**Нет endpoint `auto-fight-summary`** — был в ранней версии, удалён. Нет `AutoFightAnalysis.vue`.
+
+---
+
+## Промпты — структура
+
+### analyze-fight (4 секции, фиксированные EN заголовки)
 
 ```
-Frontend Component          Backend Endpoint              External API
-─────────────────          ─────────────────              ────────────
-AiTrainerAnalysis.vue  →   POST /v1/ai/analyze-fight  →  Claude API
-AutoFightAnalysis.vue  →   POST /v1/ai/auto-fight-summary → Claude API
+Fight Summary (2-3 предложения)
+What You Did Well (конкретные позитивы)
+What Went Wrong (конкретные проблемы)
+Advice (рекомендации по модулям и мувам)
 ```
 
-## Backend: AI Routes
+- **Заголовки ВСЕГДА на EN** даже при ответе на другом языке — это в system prompt
+- **Без markdown** (no **, no ##, no bullets)
+- **Max 150 слов**, temperature 0.7
+- Фронт парсит по этим заголовкам
 
-**File:** `/backend/src/routes/ai.js`
+### build-description (короткий)
 
-### POST /v1/ai/analyze-fight
-- **Purpose:** Post-fight analysis (PvE and PvP)
-- **Model:** `claude-sonnet-4-20250514` (ANTHROPIC_MODEL)
-- **Max tokens:** 500 (AI_TRAINER_MAX_TOKENS)
-- **Input:** Fight data (rounds, decks, result, dice/coach/emergency usage)
-- **Output:** 4-section analysis text
+- 2 предложения, <25 слов, tone: bold ring announcer
+- Не упоминать имена модулей напрямую
+- Temperature 0.8, max 60 tokens
+- **Кэшируется** по sorted modules + locale
 
-### POST /v1/ai/auto-fight-summary
-- **Purpose:** Auto fight series analysis
-- **Model:** `claude-haiku-4-5-20251001`
-- **Max tokens:** 400
-- **Rate limit:** 5 requests/minute
-- **Input:** Array of fight results with period selection
-- **Output:** 4-section analysis text
+### morning-report (JSON)
 
-## Analysis Sections
+Ответ — JSON с полями: `summary`, `highlights`, `concerns`, `recommendation`, `agents[]`
+- Per-agent: assessment, tactics advice, build advice
+- Temperature 0.7, dynamic tokens 400 + 150/agent (cap 1200)
+- **30 мин кэш** по fightClubId + period + hour
 
-### Fight Analysis (analyze-fight)
-1. **Fight Summary** — Overview of what happened
-2. **What You Did Well** — Positive tactical decisions
-3. **What Went Wrong** — Mistakes and missed opportunities
-4. **Advice** — Actionable recommendations
+### premium-report (JSON)
 
-### Auto Fight Analysis (auto-fight-summary)
-1. **Session Overview** — Win/loss/draw stats for period
-2. **Strengths** — What deck/strategy excels at
-3. **Weaknesses** — Patterns of failure
-4. **Recommendation** — Deck/strategy adjustments
+Ответ — JSON с: `metaSummary`, `agents[]`, `trainingPlan`, `forecast`
+- Temperature 0.7, max 2000 tokens
+- **x402 payment required** (когда X402_ENABLED=true)
 
-## Config Constants
+---
 
-```js
-ANTHROPIC_API_KEY = env            // Required for AI features
-ANTHROPIC_MODEL = 'claude-sonnet-4-20250514'  // Fight analysis model
-AI_TRAINER_MAX_TOKENS = 500        // Max response tokens (fight analysis)
-AI_TRAINER_ENABLED = true          // Feature flag
-```
+## Данные в промптах
 
-## Frontend Components
+### analyze-fight получает:
+- result (win/loss/draw), playerDeck, playerModules, opponentDeck
+- playerHP, opponentHP, totalRounds
+- diceUsed + diceEffect, coachUsed + coachChoice, emergencyUsed + emergencyType
+- rounds[] (round-by-round JSON)
+- locale
 
-### AiTrainerAnalysis.vue
-- **Location:** Renders on `CardFightView.vue` results screen
-- **Trigger:** Automatically after fight ends (PvE and PvP)
-- **Loading state:** Shows spinner with `fight.lblAiLoading` text
-- **Error state:** Shows `fight.lblAiError` with graceful degradation
-- **Data sent:** Rounds, player deck, opponent deck, result, dice usage/effect, coach usage/choice, emergency usage
+### morning-report получает:
+- Club name, level, period (today/yesterday/last_7d)
+- Aggregated stats: totalFights, wins, losses, draws, winRate
+- Per-agent: name, skin, elo, eloChange, tactics, build, recentResults, dice/coach/emergency rates
 
-### AutoFightAnalysis.vue
-- **Location:** Renders on `AutoFightLogView` screen
-- **Trigger:** Player clicks "Analyze" button after selecting period
-- **Periods:** Last 5 / Last 10 / All fights
-- **Vuex state:** `autoFightState.aiAnalysis`, `aiAnalysisLoading`, `aiAnalysisError`, `aiAnalysisPeriod`
+---
 
-## Fight Data Fields
+## Обработка ошибок
 
-Auto fight log entries include:
-- `playerModules` — Player's deck modules
-- `opponentModules` — Opponent's deck modules
-- `diceUsed` — Whether dice was used
-- `diceEffect` — Which effect was rolled
-- `coachUsed` — Whether coach advice was used
-- `coachChoice` — Which option was chosen (attack/defense/position)
-- `emergencyUsed` — Whether emergency protocol triggered
+| Ситуация | Код | Поведение |
+|----------|-----|-----------|
+| `AI_TRAINER_ENABLED=false` | 503 | "AI Trainer is disabled" |
+| `ANTHROPIC_API_KEY` отсутствует | 503 | "AI Trainer temporarily unavailable" |
+| Claude API ошибка | 500 | "Analysis failed" (лог на сервере) |
+| Claude API timeout | 503 | "Analysis timed out" (AbortController) |
+| Anthropic rate limit | 429 | "Too many requests" |
+| App rate limit | 429 | "Max N per minute/hour/day" |
+| Пустой ответ Claude | 502 | "Empty response from AI" |
 
-## i18n Keys
+**Frontend:** loading → error → fallback (raw text если парсинг не удался).
 
-- `fight.lblAiTrainer` — "AI Trainer" title
-- `fight.lblAiLoading` — Loading message
-- `fight.lblAiError` — Error message
+---
 
-## Monetization
+## i18n
 
-- $0.01 per AI analysis via x402 USDC micropayments
-- Integrated with Web3 payment system (see hexlash-web3 skill)
+- **Тело ответа Claude** — на языке из `locale` param (analyze-fight, build-description) или EN
+- **Заголовки секций** analyze-fight — **всегда EN** (Fight Summary, What You Did Well, etc.)
+- **UI обёртка** — через i18n: `fight.lblAiTrainer`, `fight.lblAiLoading`, `fight.lblAiError`
+- 11 локалей поддерживаются в `SUPPORTED_LOCALES` массиве в ai.js
 
-## Error Handling
+---
 
-- Feature flag: `AI_TRAINER_ENABLED` — disable without code changes
-- Graceful degradation: if API fails, show error message, fight screen still works
-- Rate limiting on auto-fight-summary: 5 requests/minute
-- Never block fight flow on AI errors
+## Запрещено
 
-## Adding New AI Features
+- Хардкодить `ANTHROPIC_API_KEY`
+- Вызывать Claude с фронта — только через backend
+- Пользовательский ввод в промпт **без валидации** (prompt injection)
+- Логировать API key или полные ответы в production
+- Блокировать flow ожиданием AI
+- Менять 4 секции промпта без синхронизации фронт-парсера
+- Дорогие модели (Sonnet/Opus) для рутинных задач
+- Claude в цикле без ограничения частоты
+- Stack traces Anthropic SDK клиенту
 
-1. Create endpoint in `/backend/src/routes/ai.js`
-2. Design prompt with clear system instructions
-3. Create Vue component for the UI
-4. Add i18n keys in all 11 locales
-5. Add feature flag in config
-6. Add error handling with graceful degradation
-7. Consider rate limiting
-8. Update CLAUDE.md
+---
 
-## Future Features (Planned)
+## Чеклист
 
-- **Build Description** — AI-generated description of player's fighting style
-- **Strategy Advisor** — Pre-fight deck recommendations
-- **Fight Predictions** — Win probability before fight
-- **Training Recommendations** — Which moves to unlock/upgrade next
+- [ ] Прочитан `/backend/src/routes/ai.js`
+- [ ] Структура секций сохранена или фронт обновлён
+- [ ] Стоимость модели рассмотрена
+- [ ] max_tokens в config.js
+- [ ] Fight log данные соответствуют промпту
+- [ ] Rate limit обновлён
+- [ ] i18n ключи в 11 локалях
+- [ ] Graceful degradation: spinner → error → fallback
+- [ ] Тест: success, 500, 429, feature flag off
+
+---
+
+## Где что искать
+
+| Хочешь | Файл |
+|--------|------|
+| Все AI endpoints + промпты | `/backend/src/routes/ai.js` |
+| Модель, tokens, flags | `/backend/src/config.js` |
+| Morning report stats gathering | `/backend/src/services/morningReportService.js` |
+| Meta stats (premium) | `/backend/src/services/metaAnalysisService.js` |
+| UI Trainer (single fight) | `/src/components/AiTrainerAnalysis.vue` |
+| UI Morning Report | `/src/components/club/MorningReport.vue` |
+| x402 payment middleware | `/backend/src/middleware/x402.js` |
+
+---
+
+## Связанные скиллы
+
+- `hexlash-dev` — всегда первым
+- `hexlash-api` — endpoints, rate limits, env
+- `hexlash-vue` — UI компоненты
+- `hexlash-design` — UI правила
+- `hexlash-combat` — контекст данных боя
+- `hexlash-i18n` — i18n ключи
+- `hexlash-web3` — x402 premium

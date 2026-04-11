@@ -1,158 +1,245 @@
 ---
 name: hexlash-combat
-description: Hexlash combat system — PvE, PvP, and Auto Fight engines. Use this skill when working on fight logic, combat engine, AI strategy, opponent generation, dice mechanics, coach advice, HP calculations, round simulation, emergency protocols, damage formulas, deck building, module selection, fight results, overdrive, or any battle-related feature. Triggers on mentions of fight, combat, battle, dice, coach, HP, rounds, damage, deck, modules, PvE, PvP, auto fight, autofight, matchmaking, round simulation, knockout, overdrive, emergency, heal, adrenaline, shield, blind, rage, crit.
+description: Боевая система Hexlash — PvE, PvP, Auto Fight. Триггерится на бой, fight, combat, дамаг, damage, кубик, dice, коуч, coach, архетип, archetype, PvE, PvP, Auto Fight, overdrive, opponent, deck, модуль, module, AI strategy, combatEngine, раунд, round, HP, урон, emergency, heal, adrenaline, shield, blind, rage, crit. Грузить вместе с hexlash-dev. Для UI боя — hexlash-vue + hexlash-design. Для PvP — hexlash-websocket. Для баланса — hexlash-gamedesign.
 ---
 
-# Hexlash Combat System
+# hexlash-combat — Combat System
 
-## Combat Constants
+## Главное правило
 
-```js
-// Core
-MAX_HP = 100
-MAX_ROUNDS = 10
-MAX_DECK_SIZE = 8
-MIN_DECK_SIZE = 4
-COUNTDOWN = 3              // seconds before fight
-ROUND_ANIMATION_MS = 1500
+PvE и PvP — **разные системы**, живут в разных местах, имеют намеренные расхождения. Перед изменениями:
+1. Понять, какой режим затрагивается
+2. Прочитать соответствующий движок целиком
+3. Если изменение касается обоих режимов — менять оба синхронно и явно сказать в отчёте
+4. **Не "унифицировать" PvE и PvP без явного запроса** — расхождения by design
 
-// Damage
-BASE_DAMAGE = 15
-POSITION_BONUS = 5
+---
 
-// Dice
-DICE_COOLDOWN_ROUNDS = 3
-DICE_PAUSE_TIMEOUT_MS = 10000  // PvP server timeout
+## Три режима — обзор
 
-// Coach
-COACH_MIN_ROUND = 6
-COACH_TRIGGER_CHANCE = 1.0
-COACH_BOOST_ROUNDS = 4
-COACH_PAUSE_TIMEOUT_MS = 10000 // PvP server timeout
+| Режим | Где живёт логика | Авторитет | Сеть |
+|-------|------------------|-----------|------|
+| PvE | Фронтенд (`/src/core/engine/`) | Клиент | Нет |
+| PvP | Бэкенд (`/backend/src/services/pvp*`) | Сервер | WebSocket |
+| Agent Auto-Fight (Club Mode) | Бэкенд (`agentScheduler.js`, 30s tick) | Сервер | Внутренний (Prisma, без HTTP/WS от клиента) |
 
-// Emergency
-EMERGENCY_HP_THRESHOLD = 30
+---
 
-// Auto Fight
-AUTO_FIGHT_MIN_INTERVAL = 600000   // 10 min
-AUTO_FIGHT_MAX_INTERVAL = 600000   // 10 min
-AUTO_FIGHT_MAX_PER_DAY = 144
-AUTO_FIGHT_MAX_PER_SESSION = 288
-```
+## Файлы (карта кода)
 
-## Engine Files
+**Frontend (PvE + Auto Fight):**
+- `/src/core/engine/combatEngine.js` — симуляция раунда (action-based: attack/defense/position, dodge/crit)
+- `/src/core/engine/aiStrategy.js` — логика AI (приоритеты архетипов, coach boost, dice preferences)
+- `/src/core/data/archetypes.js` — 6 архетипов с приоритетами и dice preferences
+- `/src/core/engine/opponentGenerator.js` — генерация случайного оппонента
+- `/src/core/state/modules/cardFightState.js` — Vuex state активного боя (rounds, HP, dice, coach, playerModules), persist в localStorage
+- `/src/views/CardFightView.vue` — главный экран боя (PvE + PvP)
+- `/src/components/AiTrainerAnalysis.vue` — пост-фактум AI анализ боя
 
-| File | Location | Purpose |
-|------|----------|---------|
-| `combatEngine.js` | `/src/core/engine/` | PvE round simulation |
-| `aiStrategy.js` | `/src/core/engine/` | AI decision logic + coach boost (+25 priority) |
-| `opponentGenerator.js` | `/src/core/engine/` | Random opponent creation |
-| `pvpCombatEngine.js` | `/backend/src/services/` | PvP round simulation, dice/coach effects |
-| `pvpMatchManager.js` | `/backend/src/services/` | PvP match lifecycle management |
-| `pvpHandler.js` | `/backend/src/websocket/` | PvP WebSocket message handling |
+**Backend (PvP):**
+- `/backend/src/services/pvpCombatEngine.js` — симуляция раунда PvP (без actions/архетипов как priorities, чистый move damage + speed order)
+- `/backend/src/services/pvpMatchManager.js` — lifecycle PvP матча
+- `/backend/src/services/matchmaking.js` — очередь матчмейкинга
+- `/backend/src/websocket/pvpHandler.js` — WS обработка PvP сообщений (dice_roll, coach_choice)
+- `/backend/src/config.js` — константы боя (см. секцию ниже)
 
-## PvE Flow
+**Backend (Agent Combat — Club Mode):**
+- `/backend/src/services/agentCombatEngine.js` — симуляция боя агентов (гибрид PvE actions + PvP archetype modifiers)
+- `/backend/src/services/agentFightService.js` — оркестратор (PvE training, ranked, free arena)
+- `/backend/src/services/agentScheduler.js` — автобой агентов (30s tick)
+- `/backend/src/data/archetypes.js` — бэкенд-копия архетипных приоритетов
 
-1. Player builds deck (4-8 modules) in DeckBuilderView
-2. Player starts fight from PreparationView (Arena)
-3. `opponentGenerator.js` creates AI opponent matching player level
-4. `combatEngine.js` simulates rounds:
-   - Each round: both fighters select moves based on deck/strategy
-   - Damage = BASE_DAMAGE + move.damage[level] + POSITION_BONUS (if applicable)
-   - HP reduced, round result displayed with 1500ms animation
-5. Dice available after round 1, cooldown 3 rounds
-6. Coach advice triggers from round 6 (once per fight)
-7. Emergency protocol at HP <= 30
-8. Fight ends: winner determined, XP awarded, result saved via POST /fight/save
+---
 
-## PvP Flow
+## Игровые константы (где источник правды)
 
-1. Player joins matchmaking queue or receives friend challenge
-2. Match found → both players send `pvp_ready` with deck
-3. Server starts round simulation via `pvpCombatEngine.js`
-4. Each round: `round_result` sent to both players
-5. Dice: server sends `dice_available` → player sends `dice_roll` → server responds `dice_rolled`
-6. Coach: server sends `coach_pause` → both players choose → `coach_result`
-7. If rounds > MAX_ROUNDS → `overdrive_start` (sudden death)
-8. `fight_end` sent with winner, reason, XP
+- **Frontend:** `/src/core/constants.js`
+- **Backend:** `/backend/src/config.js`
+- **Они должны совпадать** для значений видимых игроку: MAX_HP=100, MAX_ROUNDS=10, BASE_DAMAGE=15, POSITION_BONUS=5, DICE_COOLDOWN_ROUNDS=3, EMERGENCY_HP_THRESHOLD=30, COACH_MIN_ROUND=6, COACH_BOOST_ROUNDS=4, MIN_DECK_SIZE=4, MAX_DECK_SIZE=8
+- **При изменении любой константы боя** — менять в обоих файлах одновременно
+- **Backend-only:** SLOT_WEIGHTS, ARCHETYPE_MODIFIERS, COUNTDOWN_MS, ROUND_ANIMATION_MS, DICE_PAUSE_TIMEOUT_MS, COACH_PAUSE_TIMEOUT_MS
 
-## Dice Mechanics
+---
 
-### PvE Dice (Client-Side)
-Available after round 1, cooldown 3 rounds. Player clicks → random effect. Disabled in Overdrive.
+## Колода и модули
 
-| Effect | Value |
-|--------|-------|
-| Heal | +15 HP |
-| Adrenaline | 2x ATK |
-| Shield | Damage reduction |
-| Blind | Opponent accuracy reduced |
-| Rage | -20 HP to opponent |
-| Crit | -30 HP to opponent |
+- Размер колоды: 4-8 модулей (MIN_DECK_SIZE / MAX_DECK_SIZE)
+- 18 движений в `/src/data/moves.js`, по 3 ветки в `/src/data/branches.js`: speed, power, technique
+- Каждое движение: `{ id, name, branch, description, damage[5], speed[5] }` — массивы по уровням 1-5
+- Игрок собирает колоду в `/src/views/DeckBuilderView.vue`
+- В бой колода передаётся вместе с `playerModules` (выбранные архетипы)
 
-### PvP Dice (Server-Side)
-Same trigger rules. `dice_available` → `dice_roll` → `dice_rolled`. Rounds continue while dice visible.
+---
 
-| Effect | Value | Duration |
-|--------|-------|----------|
-| Heal | +20 HP | Instant |
-| Adrenaline | +30% dmg | 2 rounds |
-| Shield | -50% incoming | 2 rounds |
-| Blind | 50% miss chance | 2 rounds |
-| Rage | +50% dmg | 2 rounds |
-| Crit | x2 dmg | 1 round |
+## Архетипы (6 штук)
 
-## Coach Advice
+Файл: `/src/core/data/archetypes.js` (frontend) и `ARCHETYPE_MODIFIERS` в `/backend/src/config.js`.
 
-### PvE Coach
-- Triggers once per fight from round 6 (100% chance)
-- Fight pauses, 15s timer
-- 3 options: Attack (+25 priority), Defense (+25 priority), Position (+25 priority)
-- Boost lasts 4 rounds via `aiStrategy.setCoachBoost()`
-- Coach active bar shows remaining rounds
+| Архетип | PvE поведение (priorities) | PvP модификатор |
+|---------|---------------------------|-----------------|
+| Predator | Агрессия, attack-приоритет | dmgBonus + crit 8% |
+| Sentinel | Защита, defense-приоритет | incomingReduction |
+| Ghost | Уклонение | dodge 8% |
+| Analyst | Адаптация | dodge 2%, crit 2% |
+| Maverick | Хаос | dodge 4% |
+| Juggernaut | Давление | dmgBonus + crit 3% |
 
-### PvP Coach
-- Same UI, but 10s timer
-- Fight pauses for BOTH players
-- Each player picks independently
-- Effects: `coach_attack` (+25% dmg), `coach_defense` (-30% incoming), `coach_position` (+15% dmg & -15% incoming)
-- Lasts 4 rounds
-- "Waiting for opponent..." until both decide or timer expires
-- No boost if player doesn't choose
+**Слот-веса:** SLOT_WEIGHTS = [0.5, 0.3, 0.2] — первый слот 50%, второй 30%, третий 20%.
 
-## Auto Fight System
+Точные значения — в `archetypes.js` и `config.js`. **Это источник правды**, не копировать в SKILL.md.
 
-- Toggle on Arena screen (PreparationView)
-- Fights every 10 min (offline capable)
-- Uses `CombatEngine` + `ModuleAIStrategy`
-- localStorage persist: `hexlash_autofight_state`, `hexlash_autofight_history`
-- Push notifications via Notification API
-- Limits: 144/day, 288/session
-- Auto-catches up missed fights on tab focus
-- Daily auto-reset: new day clears fight log, wins/losses/draws/XP counters
-- Results sync to server via `POST /fight/save`
-- AI series analysis via `POST /v1/ai/auto-fight-summary`
-- Log entries include: playerModules, opponentModules, diceUsed, diceEffect, coachUsed, coachChoice, emergencyUsed
+---
 
-## Emergency Protocol
+## PvE — как работает
 
-Triggers when player HP drops to <= EMERGENCY_HP_THRESHOLD (30).
-Three options available to the player — specific behavior defined in combat engine.
+1. Игрок в `PreparationView` → START FIGHT
+2. `opponentGenerator.js` создаёт случайного оппонента
+3. `combatEngine.js` симулирует раунды
+4. Каждый раунд: оба бойца выбирают action (`attack`/`defense`/`position`) через `aiStrategy.js`
+5. Action-based матрица: атака vs защита — урон снижен, атака vs позиция — 12% dodge, и т.д.
+6. Crit: 10% шанс x1.5 на attack
+7. На раунде ≥6 (COACH_MIN_ROUND) — Coach Advice: пауза 15s, игрок выбирает Attack/Defense/Position → +25 priority, длительность COACH_BOOST_ROUNDS=4
+8. Кубик доступен после раунда 1, cooldown 3 раунда. Игрок жмёт сам
+9. Результат сохраняется через POST `/v1/fight/save`
+10. XP: win=10, draw=7, lose=5
 
-## Frontend Components
+---
 
-- `CardFightView.vue` — Main fight screen (PvE + PvP)
-- `HPBar.vue` — Health bar display
-- `Fighter.vue` — Fighter avatar in combat
-- `DeckBuilderView.vue` — Deck editor (4-8 modules)
-- `PreparationView.vue` — Arena with mode select and auto fight
-- `AutoFightToggle.vue` — Auto fight on/off
-- `AutoFightStatus.vue` — Live status + countdown
-- `AiTrainerAnalysis.vue` — Post-fight AI analysis
-- `AutoFightAnalysis.vue` — Auto fight series analysis
+## PvP — как работает
 
-## Vuex State
+1. Игрок жмёт PvP в `MatchmakingView` → `MatchmakingStartMsg` через WS → очередь
+2. `matchmaking.js` находит соперника → `MatchFoundMsg` обоим
+3. Оба переходят в `CardFightView` с `?mode=pvp&matchId=...`
+4. Каждый шлёт `pvp_ready` с колодой → `fight_start`
+5. `pvpCombatEngine.js` симулирует раунды **на сервере**
+6. **PvP отличия от PvE:**
+   - Нет actions (attack/defense/position) — оба всегда атакуют
+   - Нет coach priority boost через action — coach даёт **процентные бонусы**: `coach_attack` (+25% dmg), `coach_defense` (-30% incoming), `coach_position` (+15% dmg & -15% incoming) на 4 раунда
+   - Архетипы — пассивные модификаторы, не priorities
+   - Dodge/crit — из ARCHETYPE_MODIFIERS, не из action-матрицы
+7. Кубик: server-controlled. `dice_available` → игрок жмёт → `dice_roll` → `dice_rolled`. Rage/Crit могут убить → `fight_end`
+8. Coach Advice: 10s timer (не 15s как PvE), оба игрока выбирают независимо, бой паузится для обоих
 
-- `cardFightState` — Active fight state, rounds, HP, dice, coach, playerModules
-- `autoFightState` — Auto fight scheduling, log, AI analysis
-- `pvpState` — PvP matchmaking and fights
+---
+
+## Кубик — единая система (PvE и PvP)
+
+Доступен после раунда 1, cooldown 3 раунда. 6 эффектов случайно:
+
+| Эффект | Действие | Мгновенный |
+|--------|----------|------------|
+| Heal | +15 HP | Да |
+| Adrenaline | x2 ATK на 1 раунд | Нет |
+| Shield | Полная блокировка на 1 раунд | Нет |
+| Blind | Гарантированный промах противника на 1 раунд | Нет |
+| Rage | -20 HP мгновенно | Да |
+| Crit | -30 HP мгновенно | Да |
+
+- Rage и Crit **могут убить**
+- Кубик **отключён в Overdrive**
+
+---
+
+## Overdrive
+
+- Триггер: бой длится дольше MAX_ROUNDS (10)
+- WebSocket: `overdrive_start`
+- Кубик отключён, бой идёт до победителя
+- Отдельная UI-индикация в `CardFightView`
+
+---
+
+## Club Mode (Agent Auto-Fight)
+
+Backend-driven через `agentScheduler.js` (30s tick). Агенты дерутся автоматически.
+
+- **Нет frontend localStorage** — всё в Prisma (Agent, AgentTactics, AgentProgression, AgentFightLog)
+- Три подрежима: `pve_training` (70% XP, no ELO), `ranked` (100% XP, ELO change), `free_arena` (80% XP, no ELO)
+- Daily limit: 50 fights/agent/day
+- Status flow: `idle → fighting → resting → idle → ...`
+- Stuck recovery: agents in 'fighting' > 5min reset to 'idle'
+- XP распределяется по веткам пропорционально использованным мувам
+- Управление: `FightClubView.vue` → AgentDetailView (tactics tab)
+
+---
+
+## AI Trainer (пост-фактум анализ боя)
+
+- Компонент: `AiTrainerAnalysis.vue` на экране результатов в `CardFightView`
+- Работает для PvE и PvP
+- POST `/v1/ai/analyze-fight` → backend → Anthropic Claude API
+- Возвращает 4 секции: Fight Summary, What You Did Well, What Went Wrong, Advice
+- Feature flag: `AI_TRAINER_ENABLED` в backend config
+- Graceful degradation на ошибке
+- Для деталей промптов и Claude API — грузить `hexlash-ai`
+
+---
+
+## Persist и восстановление
+
+- **PvE fight state** → localStorage через `cardFightState`, восстанавливается при перезагрузке
+- **PvP fight state** → очищается из localStorage на `fight_end` через action `clearSavedFight` (предотвращает stale restore)
+- **Прогрессия** (moves, XP, taps, deck, playerModules) → debounced PUT `/v1/user/progression` (3s), сервер = source of truth
+- **Agent Auto-Fight state** — Prisma на бэке (нет frontend localStorage). Результаты в БД через agentScheduler/agentFightService.
+
+---
+
+## WebSocket сообщения боя (краткая ссылка)
+
+Только перечисление, детали — в `hexlash-websocket`:
+- **Запросы:** `pvp_ready`, `dice_roll`, `coach_choice`, `MatchmakingStartMsg`, `MatchmakingCancelMsg`
+- **Ответы:** `fight_start`, `round_result`, `dice_available`, `dice_rolled`, `coach_pause`, `coach_result`, `coach_opponent_ready`, `overdrive_start`, `fight_end`, `match_cancelled`
+
+---
+
+## Намеренные расхождения PvE ↔ PvP (**НЕ "чинить"**)
+
+| Механика | PvE | PvP | Статус |
+|----------|-----|-----|--------|
+| Архетипы | 6 архетипов через priorities в ModuleAIStrategy | Пассивные модификаторы (dmgBonus, incomingReduction, dodge, crit) | **By design** |
+| Actions | attack/defense/position каждый раунд | Нет — оба всегда атакуют | **By design** |
+| Dodge | 12% при position vs attack | Архетипный (Ghost 8%, Analyst 2%, Maverick 4%) | **By design** |
+| Crit | 10% шанс x1.5 на attack | Архетипный (Predator 8%, Juggernaut 3%, Analyst 2%) | **By design** |
+| Coach effect | +25 priority для action | Процентные бонусы на dmg/incoming | **By design** |
+| Coach timer | 15s | 10s | **By design** |
+| Dice | Все 6 эффектов | Те же 6 эффектов | Унифицировано |
+
+---
+
+## Запрещено
+
+- "Унифицировать" PvE и PvP без явного запроса
+- Менять константу боя только в одном файле (фронт без бэка или наоборот) для значений, которые должны совпадать
+- Делать кубик доступным в Overdrive
+- Делать кубик доступным в раунде 1 или ломать cooldown 3 раунда
+- Триггерить Coach до COACH_MIN_ROUND=6
+- Менять формулы урона без чеклиста баланса (грузить `hexlash-gamedesign`)
+- Применять PvE логику actions к PvP движку или наоборот
+- Не очищать PvP fight state на `fight_end` (stale restore)
+
+---
+
+## Чеклист изменений в боевой системе
+
+- [ ] Определён режим: PvE / PvP / Auto Fight / все три
+- [ ] Прочитан соответствующий движок целиком
+- [ ] Если меняется константа боя — синхронизирована между `/src/core/constants.js` и `/backend/src/config.js`
+- [ ] Если меняется баланс — прочитан `hexlash-gamedesign`
+- [ ] Если меняется WS-протокол — прочитан `hexlash-websocket`, обновлены обе стороны
+- [ ] Если меняется UI боя — прочитан `hexlash-design`
+- [ ] Auto Fight по-прежнему синкается на сервер
+- [ ] PvP fight state очищается на `fight_end`
+- [ ] AI Trainer не сломан (graceful degradation)
+- [ ] Обновлён CLAUDE.md если задеты публичные части
+
+---
+
+## Связанные скиллы
+
+- `hexlash-dev` — всегда первым
+- `hexlash-vue` — для UI боя на фронте
+- `hexlash-websocket` — для PvP протокола
+- `hexlash-api` — для backend endpoints (fight, ai)
+- `hexlash-gamedesign` — для баланса и формул
+- `hexlash-ai` — для AI Trainer и Claude API
+- `hexlash-design` — для UI боя

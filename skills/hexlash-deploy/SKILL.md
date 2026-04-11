@@ -134,7 +134,7 @@ Backend deploy mechanism: **UNKNOWN — needs clarification from Yura/DevOps**. 
 
 **Implication:** a single push to `main` or `test` does NOT redeploy backend. Backend changes (config.js, routes, services) require a separate trigger that is currently undocumented in this skill. Before any rollout that touches backend code, confirm with Yura how to actually push the backend.
 
-## CORS Configuration
+## CORS Allowed Origins
 
 Allowed origins (explicit, no wildcards):
 - `https://hexlash.com`
@@ -202,12 +202,10 @@ Obfuscator config (`vite.config.js:58-68`):
 - **Frontend push ≠ backend deploy.** GH Actions only builds frontend. Backend lives in external GitOps. Pushing to main updates frontend in ~5min, backend could lag or never deploy without explicit action.
 - **`MIGRATION_ENABLED=true` is the silent default.** Any backend instance without explicit `MIGRATION_ENABLED=false` runs lazy migration on every `/me` call. Before any "fresh" rollout, check the actual state of the test DB — partial lazy migration may have already happened.
 
-## Prisma Database
-
-### 20 Models
+## Database Models (20)
 User, Club, ClubInvite, ClanEvent, FightClub, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask, UserDailyTask, Fight, PunchInfo, FriendRequest, Friendship, Agent, AgentTactics, AgentProgression, AgentFightLog
 
-### Rules
+### Migration Rules
 - NEVER edit existing migration files in `prisma/migrations/`
 - Create new migrations for schema changes
 - Test migrations locally before deploying

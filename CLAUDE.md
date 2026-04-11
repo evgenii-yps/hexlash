@@ -21,7 +21,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
   App.vue                  — Root: header (Logo), router-view, BottomMenu (hidden on PvP screens), Info/Error toasts, ChallengeNotification
   main.js                  — Entry: Vue + Vuetify + i18n + Vuex + WagmiPlugin + VueQueryPlugin init
   router/index.js          — Routes + auth guards + fight state restore
-  views/                   — 21 page-level components (incl. ArenaHubView, FightClubView, CreateAgentView, AgentDetailView)
+  views/                   — 20 page-level components (incl. ArenaHubView, FightClubView, CreateAgentView, AgentDetailView)
   components/              — 75+ reusable components
   components/club/         — 7 Club Mode components (AgentRoster, AgentCard, ClubLevelBar, MorningReport, RetirementPanel, SkinPicker, ArchetypeSelector)
   components/clan/         — 1 Clan social component (ClanInviteNotification)
@@ -29,9 +29,9 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
   components/ratings/      — AgentLeaderboard
   core/
     state/store.js         — Vuex store
-    state/modules/         — 14 Vuex modules (incl. agentState for Fight Club, clanState for social clans)
+    state/modules/         — 13 Vuex modules (incl. agentState for Fight Club, clanState for social clans)
     models/                — 20+ data models (internal, ws, etc.)
-    services/              — 8 business logic services
+    services/              — 9 business logic services (clanService, contractService, fightService, masterService, nftMintService, punchService, statsService, taskService, userService)
     database/              — 7 LocalStorage/IDB repository files
     api/apiClient.js       — Axios HTTP client
     engine/                — Combat system (combatEngine, aiStrategy, opponentGenerator)
@@ -48,7 +48,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
     pixelIcons.js          — 45 pixel icons (16×16 grid, flat array 256 values)
   utils/
     powerRating.js         — Power rating calculations
-    leagues.js             — 6 ELO-based league tiers + getLeague()/getLeagueColor()
+    beltDisplay.js         — Belt display helpers (BELT_THRESHOLDS, getBeltDisplay, getNextThreshold, getBeltProgressPercent)
     fightStylePreview.js   — Template-based fight style description (DEAD CODE — not imported)
   styles/
     hexlash-ui.css         — Design system: CSS variables, component classes, animations
@@ -69,33 +69,48 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
   src/
     index.js               — Express server + WebSocket on same HTTP server
     config.js              — Constants (PORT, WS_PORT, JWT_SECRET, game balance)
-    routes/                — auth, user, club, task, file, fight, stats, friends, ai, agent
+    routes/                — auth, user, clan, task, file, fight, stats, friends, ai, agent
     middleware/            — auth.js (JWT guard), upload.js (Multer)
     websocket/handler.js   — Real-time message routing + challenge system
     websocket/pvpHandler.js — PvP fight message handling
     services/matchmaking.js — PvP matchmaking service
-    services/agentCombatEngine.js — Agent fight simulation (action-based + archetype modifiers)
-    services/agentFightService.js — Agent fight orchestrator (PvE, ranked, free arena)
-    services/agentScheduler.js — Auto-fight scheduler (30s tick)
-    services/eloService.js — ELO rating calculation
-    services/rankedMatchmaker.js — Ranked + free arena matchmaking
-    services/fightClubService.js — Personal FightClub management
+    services/pvpMatchManager.js — PvP match lifecycle management
+    services/pvpCombatEngine.js — PvP combat engine
+    services/agentCombatEngine.js — Agent fight simulation (action-based + archetype modifiers, dice, coach, emergency)
+    services/agentFightService.js — Agent fight orchestrator (PvE training, ranked, free arena, XP distribution)
+    services/agentScheduler.js — Auto-fight scheduler (30s tick, resting/idle cycle, daily limit 50)
+    services/eloService.js — ELO rating calculation (K=32, clamp 100-3000)
+    services/rankedMatchmaker.js — Ranked + free arena matchmaking (ELO range ±200, rematch cooldown)
+    services/fightClubService.js — Personal FightClub management (getOrCreate, addXp, getLegendBuff)
+    services/beltService.js — Belt system (isQualifyingWin, calculateBelt, checkHexmaster, applyWin)
+    services/captainService.js — Captain Agent management (setCaptain, atomic swap)
     services/retirementService.js — Fighter retirement + legend buff
+    services/researchGateService.js — Research Gate: agent move learning based on player progression
     services/morningReportService.js — Claude AI morning report stats + prompts
     services/metaAnalysisService.js — Global meta statistics for premium reports
     services/nftService.js — NFT minting verification (feature flag off)
-    services/pvpMatchManager.js — PvP match lifecycle management
-    services/pvpCombatEngine.js — PvP combat engine
-    services/clubLevelService.js — Club level system (calculateLevel, getLevelInfo, addClubXp, getFightXpReward)
-    services/researchGateService.js — Research Gate: controls agent move learning based on player progression
-    services/agentCombatEngine.js — Agent fight simulation (action-based + archetype modifiers, dice, coach, emergency)
-    services/agentFightService.js — Agent fight orchestrator (PvE training, XP distribution, fight logging)
-    services/agentScheduler.js — Auto-fight scheduler (30s tick, resting/idle cycle, daily limit 50)
-    services/eloService.js — ELO rating calculation (K=32, clamp 100-3000)
-    services/rankedMatchmaker.js — Ranked matchmaking (ELO range ±200, rematch cooldown, different owners)
-    utils/helpers.js
+    services/userMigrationService.js — Lazy User→Fighter #1 migration on /me
+    utils/helpers.js       — awardAchievement, formatClubResponse, formatUserResponse
+    utils/clanEvents.js    — createClanEvent helper (fire-and-forget)
+    utils/clanLevel.js     — getClanLevelInfo, awardClanXP
+    utils/migrationHelpers.js — transformMoves, extractModules, calculateBranchXp
+    data/archetypes.js     — Backend copy of archetype priorities + dicePreferences
+    data/branches.js       — Branch definitions (backend copy)
+    data/cardPower.js      — Card power balance (backend copy)
+    data/moves.js          — Move definitions (backend copy)
+  scripts/
+    backfill-belts.js      — Recalculate belts for all agents
+    backfill-captains.js   — Set isCaptain for first agents
+    calibrate-belts.js     — Belt calibration utility
+    cleanup-agents.js      — Agent data cleanup
+    migrate-all-users.js   — Batch User→Fighter migration
+  tests/
+    userMigrationService.test.js — User→Fighter migration tests (14 tests)
+    beltService.test.js    — Belt system: qualifying wins, belt calc, hexmaster
+    captainService.test.js — Captain: setCaptain, atomic swap
+    captainArenaFlow.test.js — Captain in arena: PvE/PvP flow
   prisma/
-    schema.prisma          — 18 models: User, Club, Agent, AgentTactics, AgentProgression, AgentFightLog, Fight, Achievement, Task, PunchInfo, FriendRequest, Friendship...
+    schema.prisma          — 19 models: User, Clan, ClanInvite, ClanEvent, FightClub, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask, UserDailyTask, Fight, PunchInfo, FriendRequest, Friendship, Agent, AgentTactics, AgentProgression, AgentFightLog
     seed.js
     migrations/            — PostgreSQL migrations
 
@@ -153,7 +168,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 
 ---
 
-## Vuex Modules (14)
+## Vuex Modules (13)
 
 | Module | Purpose |
 |--------|---------|
@@ -235,6 +250,8 @@ unlockRequirements:  { 3: {taps:300, exp:150}, 4: {taps:250, exp:120}, 5: {taps:
 | `HexCard` | `HexCard.vue` | 5 variants: default, elevated, archetype (left border), active (tinted bg), result (top border victory/defeat/draw). Slots: header, footer. Padding: none/sm/md/lg. |
 | `HexProgress` | `HexProgress.vue` | Progress bar. 3 variants: hp (auto green/yellow/red by %), branch (speed/power/technique colors), generic. 3 sizes. Props: label, showValue, showPercent. |
 | `HexBadge` | `HexBadge.vue` | Pill badge. 5 variants: archetype, branch, status (victory/defeat/draw/info), counter (circle/pill auto), custom. Props: icon (PixelIcon), pulse animation. |
+| `BeltBadge` | `BeltBadge.vue` | SVG belt badge for 33 grades + Hexmaster. Line-style: rect body, buckle, stripes. 3 sizes: sm (16×6), md (40×14), lg (120×40). Props: grade (0-32), isHexmaster, size. |
+| `UserCaptainBadge` | `UserCaptainBadge.vue` | Composite badge: BeltBadge + optional captain name. Sizes xs/sm/md. Shows "—" when no captain. |
 
 ### Pixel Icons (`/src/data/pixelIcons.js`)
 
@@ -314,6 +331,9 @@ MULTIPLAYER_EXACT_CLICK = 3
 
 MAX_HP = 100
 MAX_ROUNDS = 10
+EXTRA_ROUNDS = 2
+EXTRA_ROUND_DAMAGE_MULTIPLIER = 2
+TOTAL_ROUNDS = 12        // MAX_ROUNDS + EXTRA_ROUNDS
 MAX_DECK_SIZE = 8
 MIN_DECK_SIZE = 4
 COUNTDOWN = 3            // seconds before fight
@@ -362,8 +382,12 @@ TELEGRAM_AUTH_MAX_AGE_SEC = 300  // 5 min replay window
 // PvP Combat
 MAX_HP = 100
 MAX_ROUNDS = 10
+EXTRA_ROUNDS = 2
+EXTRA_ROUND_DAMAGE_MULTIPLIER = 2
+TOTAL_ROUNDS = 12
 MAX_DECK_SIZE = 8
 MIN_DECK_SIZE = 4
+MIN_PVP_DECK_SIZE = 3     // PvP allows starter deck (3 moves)
 COUNTDOWN_MS = 3000
 ROUND_ANIMATION_MS = 1500
 BASE_DAMAGE = 15
@@ -375,24 +399,62 @@ COACH_MIN_ROUND = 6
 COACH_BOOST_ROUNDS = 4
 COACH_PAUSE_TIMEOUT_MS = 10000
 
+// WebSocket
+WS_PING_INTERVAL_MS = 30000    // server ping every 30s
+WS_PONG_TIMEOUT_MS = 10000     // kill connection if no pong in 10s
+PVP_READY_TIMEOUT_MS = 15000   // cancel match if player not ready in 15s
+
 // PvP Archetype Modifiers (passive per-archetype bonuses)
 SLOT_WEIGHTS = [0.5, 0.3, 0.2]
 ARCHETYPE_MODIFIERS = { predator, sentinel, ghost, analyst, maverick, juggernaut }
 
 // Clan Level System
-CLAN_LEVEL_CONFIG = { 1..10: { xpRequired, maxMembers, xpBonus } }
-CLAN_XP_REWARDS = { win: 10, draw: 5, lose: 3 }
+CLAN_LEVEL_CONFIG = { 1..10: { xpRequired, maxMembers, maxAgents, xpBonus } }
+CLAN_XP_REWARDS = { win: 10, draw: 5, lose: 3, agent_win: 10, agent_draw: 5, agent_lose: 2, agent_ranked_win: 20, agent_ranked_draw: 10, agent_ranked_lose: 5 }
 CLAN_TAP_SHARE = 0.05              // 5% of member taps → clan treasury
+
+// Agent Scheduler
+AGENT_SCHEDULER_TICK_MS = 30000       // 30 seconds
+AGENT_MAX_FIGHTS_PER_TICK = 10
+AGENT_MAX_FIGHTS_PER_DAY = 50
+AGENT_STUCK_TIMEOUT_MS = 300000       // 5 minutes
+
+// ELO System
+ELO_K_FACTOR = 32
+ELO_MIN = 100
+ELO_MAX = 3000
+ELO_MATCH_RANGE = 200
+
+// Ranked
+RANKED_REMATCH_COOLDOWN = 5
+RANKED_MAX_PAIRS_PER_TICK = 5
+RANKED_MIN_FIGHTS_FOR_RANKING = 5
+FREE_ARENA_MAX_PAIRS_PER_TICK = 5
 
 // AI Trainer
 ANTHROPIC_API_KEY = env
 ANTHROPIC_MODEL = 'claude-haiku-4-5-20251001'
 AI_TRAINER_MAX_TOKENS = 300
+AI_BUILD_DESCRIPTION_MAX_TOKENS = 60
 AI_TRAINER_ENABLED = true
+
+// Premium Report (Lv3)
+PREMIUM_REPORT_MAX_TOKENS = 2000
+X402_ENABLED = false               // feature flag, disabled by default
+X402_PREMIUM_REPORT_PRICE = 20000  // 0.02 USDC (6 decimals)
+USDC_CONTRACT_BASE = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'
+
+// NFT Minting
+NFT_MINTING_ENABLED = false        // feature flag, disabled by default
+AGENT_NFT_CONTRACT = env
+BASE_RPC_URL = 'https://mainnet.base.org'
+
+// Migration
+MIGRATION_ENABLED = true           // lazy User→Fighter #1 on /me
 ```
 
 **Prisma:** Singleton via `backend/src/lib/prisma.js` — all routes and services use shared instance
-**CORS:** Allows `hexlash.com`, `test.hexlash.com`, `hexlash.vercel.app` (no wildcard `*.vercel.app`)
+**CORS:** Allows `hexlash.com`, `www.hexlash.com`, `test.hexlash.com`, `hexlash.vercel.app` + FRONTEND_URL (no wildcard)
 **Health checks:** `GET /` and `GET /health`
 **Body limits:** `express.json({ limit: '1mb' })`, `express.urlencoded({ limit: '1mb' })`
 
@@ -402,7 +464,7 @@ AI_TRAINER_ENABLED = true
 
 **Flow:** Build deck (4–8 modules) → Generate AI opponent → Simulate rounds → Dice mechanic → Coach advice → Save result
 
-**Club Mode:** Toggle on Arena screen → fights every 10 min offline → uses CombatEngine + ModuleAIStrategy → localStorage persist (`hexlash_clubmode_state`, `hexlash_clubmode_history`) → push notifications via Notification API → limits: 144/day, 288/session → auto-catches up missed fights on tab focus → daily auto-reset: on new day clears fight log, wins/losses/draws/XP counters (no manual clear button) → **offline club mode fights sync results to server** via `POST /fight/save` (increments pveWins/pveLosses/pveDraws/pveTotalFights). Dice uses cooldown (every 3 rounds, multiple per fight). XP: win=10, draw=7, lose=5.
+**Club Mode (Agents):** Backend-driven via `agentScheduler.js` (30s tick). Agents fight PvE bots or each other (ranked/free arena) automatically based on `AgentTactics.restPeriod`. No frontend localStorage — all state in Prisma (Agent, AgentTactics, AgentProgression, AgentFightLog). Fight results saved atomically in $transaction. Daily limit: 50 fights/agent/day. Three modes: `pve_training` (70% XP, no ELO), `ranked` (100% XP, ELO change), `free_arena` (80% XP, no ELO). XP distributed per branch proportionally to moves used.
 
 **Sound:** Howler.js for punch sounds (BottomMenu, TrainingView) and rain ambience (RainView). Mute toggle in Profile > Account (`SoundToggle.vue`), persisted in localStorage (`isMuted`), checked via `store.getters['punch/isMuted']`
 
@@ -420,7 +482,7 @@ AI_TRAINER_ENABLED = true
 
 **AI Trainer:** Claude-powered post-fight analysis (PvE and PvP). Component `AiTrainerAnalysis.vue` renders on CardFightView results screen. Sends fight data (rounds, decks, result, dice/coach/emergency usage) to `POST /v1/ai/analyze-fight` → backend calls Anthropic Claude API → returns 4-section analysis: Fight Summary, What You Did Well, What Went Wrong, Advice. Feature flag: `AI_TRAINER_ENABLED`. Graceful degradation on error. i18n keys: `fight.lblAiTrainer`, `fight.lblAiLoading`, `fight.lblAiError`.
 
-**AI Club Mode Analysis:** Backend endpoint `POST /v1/ai/club-mode-summary` exists. Frontend component was removed during Club Mode decoupling. See MorningReport.vue in FightClubView for current implementation.
+**AI Club Reports:** Morning Report (`POST /v1/ai/morning-report`) and Premium Report (`POST /v1/ai/premium-report`) provide AI analysis of FightClub stats. Frontend: `MorningReport.vue` in `FightClubView`. Legacy `club-mode-summary` endpoint removed.
 
 **Club Stats:** When a fight result is saved (PvE via `POST /fight/save`, PvP via `pvpCombatEngine.saveFightResult`), if the player has a `clubId`, `Club.battles` is incremented by 1; if the player won, `Club.wins` is also incremented. Club Mode fights go through `/fight/save` so they increment too.
 
@@ -531,7 +593,7 @@ AI_TRAINER_ENABLED = true
 - `BuyTokens.vue` — Token purchase modal. **Temporarily disabled** — not rendered in ProfileWallet, file preserved for Phase 2 (Base contract)
 - `GameBalanceCard.vue` — Game balance display with withdraw button (shows "after listing" message)
 - `ReferralModal.vue` — Referral program modal: QR code (qrcode lib), copy link (clipboard API), share (Web Share API with fallback), referral stats + list. Opens from ProfileView button
-- `ClanPageContent.vue` — Shared clan page content component (header, stats, tabs Members/Activity/Settings, leaderboard with action menu, confirm modals, invite modal). Used by ClubView (member view) and MyClubTab (has-clan state). Props: clubData, clubId. Events: club-left, club-deleted
+- `ClanPageContent.vue` — Shared clan page content component (header, stats, tabs Members/Activity/Settings, leaderboard with action menu, confirm modals, invite modal). Used by ClanView (member view) and MyClubTab (has-clan state). Props: clubData, clubId. Events: club-left, club-deleted
 - `ClanActivityFeed.vue` — Activity feed for clan page. Real data from `GET /v1/club/:clubId/events`. Events grouped by day, color-coded dots (fight_win/lose/draw, member_join/leave/kick, role_change, level_up). Props: clubId. Cursor pagination via "Load more" button. Vuex state in clubState (clanEvents, clanEventsLoading, clanEventsHasMore)
 
 ---
@@ -544,7 +606,7 @@ Base: `/v1/`
 |-------|------|---------|
 | `/auth` | auth.js | login, signup, reset, telegram. Rate limited: login 5/15min, register 3/hr, telegram 10/15min. Register + telegram accept `referralCode` — rewards both users +500 taps |
 | `/user` | user.js | profile, stats, avatar, achievements, referrals. Skin validated via regex. Delete uses $transaction with cascade. GET /referrals returns referral stats + list |
-| `/clan` | clan.js | create/edit/delete clan, avatar, members, balance, roles (set-role, transfer-ownership, kick, invite), level info. maxMembers=50, roles: owner/deputy/member. DELETE / dissolves clan (owner-only, clears all members + invites). Invite: DB-persisted (48h), GET /invites, POST /invite/respond. Events: GET /:clanId/events (members only, cursor pagination). **Alias:** `/v1/club` → same router (backward-compat, TODO #P1-rename-3-cleanup). Frontend uses `/v1/clan/*` exclusively. |
+| `/clan` | clan.js | create/edit/delete clan, avatar, members, balance, roles (set-role, transfer-ownership, kick, invite), level info. maxMembers=50, roles: owner/deputy/member. DELETE / dissolves clan (owner-only, clears all members + invites). Invite: DB-persisted (48h), GET /invites, POST /invite/respond. Events: GET /:clanId/events (members only, cursor pagination). Frontend uses `/v1/clan/*` exclusively. |
 | `/task` | task.js | daily + social tasks |
 | `/file` | file.js | avatar/file upload |
 | `/fight` | fight.js | fight creation, results, history |
@@ -558,6 +620,12 @@ Telegram auth: HMAC-SHA256 signature validation via `validateTelegramPayload()` 
 Password reset: Returns 501 (not implemented) — no fake success
 
 ### WebSocket Protocol
+
+**Auth:** JWT передаётся через WebSocket protocol header в формате `Bearer_<token>` (не query param — избегаем утечки токена в access-логи). Валидируется до регистрации клиента. Без валидного токена — connection закрыт с кодом 4001.
+
+**Heartbeat:** Сервер ping каждые `WS_PING_INTERVAL_MS` (30s), клиент должен ответить pong в течение `WS_PONG_TIMEOUT_MS` (10s). Без pong — сервер закрывает соединение.
+
+**Reconnect:** Клиент использует exponential backoff (10s → 20s → 40s → ... → max 300s, ±20% jitter, reset on success). При reconnect старый socket помечается `_replaced` (close handler не триггерит PvP disconnect), новый socket ре-биндится к активному матчу если есть.
 
 | Request Message | Response | Purpose |
 |----------------|----------|---------|
@@ -583,16 +651,13 @@ Password reset: Returns 501 (not implemented) — no fake success
 | — | `match_cancelled` | Match cancelled (reason: ready_timeout) — handled by MatchmakingView + CardFightView |
 | — | `overdrive_start` | Overdrive phase started (rounds > MAX_ROUNDS) |
 | — | `AchievementResponseMsg` | Auto-awarded achievement (punch milestones: 100, 1k, 5k, 10k) |
-| — | `club_invite` | Club invitation notification (inviterName, clubName) |
-| `club_invite_accept` | `club_invite_accepted` | Accept club invitation → joins club |
-| `club_invite_decline` | `club_invite_declined` | Decline club invitation |
 | — | `ErrorMsg` | Error response |
 
 ---
 
 ## Database Models (Prisma/PostgreSQL)
 
-User, Club, ClubInvite, ClanEvent, FightClub, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask, UserDailyTask, Fight, PunchInfo, FriendRequest, Friendship, Agent, AgentTactics, AgentProgression, AgentFightLog
+User, Clan, ClanInvite, ClanEvent, FightClub, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask, UserDailyTask, Fight, PunchInfo, FriendRequest, Friendship, Agent, AgentTactics, AgentProgression, AgentFightLog
 
 **Club system fields:** User.clubRole (`owner`/`deputy`/`member`/null), Club.maxMembers (default 20, grows with level), Club.maxAgents (default 2, grows with level: 1→2, 2→3, 3→4, 4→5, 5+→6), Club.legendSkin/legendArchetype/legendBuff (retired fighter legend system), Club.battles/wins (auto-incremented on fight save). Max 3 deputies per club. Owner can set roles, transfer ownership, kick anyone, invite friends, dissolve club. Deputies can kick members only, invite friends. Club creation costs `COST_CREATE_CLUB` (10000) taps — deducted from `User.totalTaps` in $transaction. Club name: 3-30 chars, unicode letters/digits/spaces (`\p{L}\p{N}`), no emoji. Achievements: `PAPER_STREET` on create, `PROJECT_MAYHEM` on join (idempotent via `awardAchievement()` in helpers.js).
 
@@ -618,11 +683,12 @@ User, Club, ClubInvite, ClanEvent, FightClub, Achievement, UserAchievement, Soci
 
 ## Build & Deploy
 
-- **Frontend:** Vite + JS obfuscation + Brotli + image optimization (mozjpeg/pngquant/webp) + terser (drops console)
-- **Deploy:** Vercel or Nginx reverse proxy via Docker (`nginx.prod.conf`, `nginx.test.conf`, `Dockerfile`)
-- **Backend:** Node.js + PostgreSQL (local or Railway)
-- **WebSocket:** Authenticated via JWT, same HTTP server as Express (shared port)
-- **CI/CD:** GitHub Actions (`.github/workflows/gitops.yaml`)
+- **Frontend:** Vite 7 + JS obfuscation + Brotli + image optimization (mozjpeg/pngquant/webp) + terser (drops console). Compile-time defines `__API_SERVER_URL__`, `__WEB_SOCKET_URL__`, `__IS_PROD__`, `__MOCK_MODE__`, `__APP_VERSION__` (NOT `import.meta.env`).
+- **Deploy frontend:** Vercel (`vercel.json` SPA rewrites) **or** Docker+Nginx (`Dockerfile` multi-stage Node→Nginx, `nginx.prod.conf`, `nginx.test.conf`). Nginx serves static only (NOT reverse proxy) — backend runs separately at `api.hexlash.com` / `apitest.hexlash.com`.
+- **Deploy backend:** `backend/Dockerfile` (Node 20 + Prisma). Railway or VPS.
+- **WebSocket:** Authenticated via JWT protocol header, same HTTP server as Express (shared port)
+- **CI/CD:** GitHub Actions GitOps (`.github/workflows/gitops.yaml`) — push to `test`/`main` → Docker build → push Docker Hub → update K8s deployment YAML in DevOps repo
+- **Nginx ports:** 8080 (HTTP→HTTPS redirect), 8443 (SSL). Certs at `/etc/certs/hexlash.com.*`
 
 ---
 
@@ -674,7 +740,7 @@ User, Club, ClubInvite, ClanEvent, FightClub, Achievement, UserAchievement, Soci
 | Cascade delete | `user.js` | `$transaction`: clubs, fights, friends, achievements, tasks, punch |
 | Prisma singleton | `lib/prisma.js` | Single PrismaClient shared across all 8 backend files (was 9 instances) |
 
-**v-html policy:** Only allowed for trusted i18n content (PageView, ClubView, Getstarted). Forbidden for user/error data.
+**v-html policy:** Only allowed for trusted i18n content (PageView, ClanView, Getstarted). Forbidden for user/error data.
 
 ---
 
