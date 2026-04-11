@@ -14,11 +14,11 @@
     <div class="league-display">
       <div class="league-icon-wrapper">
         <svg class="league-svg" viewBox="0 0 24 24" width="56" height="56">
-          <path d="M7 2l3 6H4l3-6z" :fill="league.color"/>
-          <path d="M17 2l-3 6h6l-3-6z" :fill="league.color"/>
-          <circle cx="12" cy="15" r="7" :fill="league.color" opacity="0.2"/>
-          <circle cx="12" cy="15" r="7" :stroke="league.color" stroke-width="2" fill="none"/>
-          <path d="M12 10l1.5 3 3.5.5-2.5 2.5.5 3.5-3-1.5-3 1.5.5-3.5-2.5-2.5 3.5-.5z" :fill="league.color"/>
+          <path d="M7 2l3 6H4l3-6z" :style="{ fill: league.color }"/>
+          <path d="M17 2l-3 6h6l-3-6z" :style="{ fill: league.color }"/>
+          <circle cx="12" cy="15" r="7" :style="{ fill: league.color }" opacity="0.2"/>
+          <circle cx="12" cy="15" r="7" :style="{ stroke: league.color }" stroke-width="2" fill="none"/>
+          <path d="M12 10l1.5 3 3.5.5-2.5 2.5.5 3.5-3-1.5-3 1.5.5-3.5-2.5-2.5 3.5-.5z" :style="{ fill: league.color }"/>
         </svg>
       </div>
       <div class="league-name" :style="{ color: league.color }">{{ league.name }}</div>
@@ -85,12 +85,12 @@ const totalFights = computed(() => wins.value + losses.value + (pvpStats.value.d
 
 // Leagues data for progress calculation
 const leagues = [
-  { name: 'Bronze', min: 0, max: 999, color: '#CD7F32' },
-  { name: 'Silver', min: 1000, max: 1499, color: '#C0C0C0' },
-  { name: 'Gold', min: 1500, max: 1999, color: '#FFD700' },
-  { name: 'Platinum', min: 2000, max: 2499, color: '#00CED1' },
-  { name: 'Diamond', min: 2500, max: 2999, color: '#00BFFF' },
-  { name: 'Champion', min: 3000, max: Infinity, color: '#FFD700' },
+  { name: 'Bronze', min: 0, max: 999, color: 'var(--hex-rank-bronze)' },
+  { name: 'Silver', min: 1000, max: 1499, color: 'var(--hex-rank-silver)' },
+  { name: 'Gold', min: 1500, max: 1999, color: 'var(--hex-rank-gold)' },
+  { name: 'Platinum', min: 2000, max: 2499, color: 'var(--hex-rank-platinum)' },
+  { name: 'Diamond', min: 2500, max: 2999, color: 'var(--hex-rank-diamond)' },
+  { name: 'Champion', min: 3000, max: Infinity, color: 'var(--hex-rank-gold)' },
 ];
 
 const currentLeagueIndex = computed(() => {

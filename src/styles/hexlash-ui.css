@@ -126,6 +126,13 @@
   --hex-info: #4DA6FF;
   --hex-info-bg: #081833;
 
+  /* --- RANK COLORS --- */
+  --hex-rank-bronze: #CD7F32;
+  --hex-rank-silver: #C0C0C0;
+  --hex-rank-gold: #FFD700;
+  --hex-rank-platinum: #00CED1;
+  --hex-rank-diamond: #00BFFF;
+
   /* --- MODE COLORS (3) --- */
   --hex-mode-pve: #00E5FF;
   --hex-mode-pvp: #FF066F;

@@ -203,9 +203,9 @@ export default {
   text-align: center;
   flex-shrink: 0;
 }
-.rank-gold { color: #FFD700; }
-.rank-silver { color: #C0C0C0; }
-.rank-bronze { color: #CD7F32; }
+.rank-gold { color: var(--hex-rank-gold); }
+.rank-silver { color: var(--hex-rank-silver); }
+.rank-bronze { color: var(--hex-rank-bronze); }
 
 .rank-skin {
   width: 32px;
