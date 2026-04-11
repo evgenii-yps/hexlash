@@ -221,8 +221,21 @@ User, Club, ClubInvite, ClanEvent, FightClub, Achievement, UserAchievement, Soci
 - `Dockerfile`, `backend/Dockerfile` (without testing locally first)
 - `src/assets/abi/*` — contract ABIs
 
+## Change Checklist (before merging deploy-related changes)
+- Target identified: Vercel / Docker / backend / CI / all
+- If env changes: updated in config.js, GitHub Secrets, target environment
+- If build changes: `npm run build` works locally with no errors
+- If nginx changes: both prod and test configs reviewed
+- If Prisma changes: migration created via `migrate dev`, tested on test env
+- If CORS changes: `allowedOrigins` updated in `backend/src/index.js`
+- CLAUDE.md updated if architectural parts touched
+
 ## Related
+- **`hexlash-dev`** — always first; project structure, git workflow
 - **`hexlash-api`** — backend env vars deep dive, JWT, Prisma singleton pattern
+- **`hexlash-vue`** — frontend build pipeline, Vite config
+- **`hexlash-websocket`** — if WS protocol changes, requires synchronized frontend + backend deploy
+- **`hexlash-i18n`** — if adding new languages to production builds
 - **`hexlash-testing`** — smoke test checklists, regression checks after rollout
 - **CLAUDE.md sections:** Backend Config, Build & Deploy, Security Hardening, Database Models
 - **Phase 1 map:** rollout state, kill switch procedures, parking debt
