@@ -187,7 +187,9 @@ export default {
 }
 
 .hex-button:disabled {
-  opacity: 0.35;
+  background: var(--hex-bg-card);
+  color: var(--hex-text-muted);
+  border-color: var(--hex-border-default);
   pointer-events: none;
   cursor: default;
 }
