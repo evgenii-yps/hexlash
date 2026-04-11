@@ -1,6 +1,6 @@
 ---
 name: hexlash-design
-description: Дизайн-система "Neon Discipline" проекта Hexlash. Триггерится на UI, CSS, цвет, color, шрифт, font, кнопка, button, карточка, card, иконка, icon, анимация, animation, экран, screen, верстка, layout, padding, margin, glow, неон, neon, дизайн, design, hex-, --hex. Грузить ВСЕГДА перед UI-задачами вместе с hexlash-dev и hexlash-vue. Для сложных задач — открыть /Hexlash_Visual_System.pdf.
+description: Дизайн-система "Neon Discipline" проекта Hexlash. Триггерится на UI, CSS, цвет, color, шрифт, font, кнопка, button, карточка, card, иконка, icon, анимация, animation, экран, screen, верстка, layout, padding, margin, glow, неон, neon, дизайн, design, hex-, --hex. Грузить ВСЕГДА перед UI-задачами вместе с hexlash-dev и hexlash-vue. Для сложных задач — см. секцию антипаттернов в этом SKILL.md.
 ---
 
 # hexlash-design — Neon Discipline
@@ -248,15 +248,9 @@ Max 2 уровня вложенности. Фон не светлее `--hex-bg-
 
 ---
 
-## Когда грузить PDF
+## Расширенный контекст
 
-Открывать `/Hexlash_Visual_System.pdf` если:
-- Новый экран целиком
-- Новый компонент в `/src/components/ui/`
-- Вопрос по философии
-- Нужны примеры по экранам
-- Сомнения по архетипным цветам/фонам
-- Правка скилла или `hexlash-ui.css`
+`Hexlash_Visual_System.pdf` — **не в репо**. Этот SKILL.md является полным операционным источником правды по визуалу. Если PDF появится — обновить ссылки.
 
 ---
 
@@ -267,7 +261,7 @@ Max 2 уровня вложенности. Фон не светлее `--hex-bg-
 | `/src/styles/hexlash-ui.css` | **ИСТОЧНИК ПРАВДЫ.** |
 | `/src/components/ui/` | Компоненты дизайн-системы |
 | Этот SKILL.md | Операционная выжимка |
-| `/Hexlash_Visual_System.pdf` v1.1 | Полная философия + примеры |
+| `Hexlash_Visual_System.pdf` | **Не в репо.** Этот SKILL.md = источник правды |
 
 Цикл: решение → CSS (код первым!) → SKILL → PDF → CLAUDE.md → компоненты.
 
