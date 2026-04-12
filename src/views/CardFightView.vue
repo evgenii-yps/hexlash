@@ -1222,11 +1222,12 @@ const flashStyle = computed(() => ({
   transform: translateX(-50%);
   font-size: 72px;
   font-weight: 900;
-  color: color-mix(in srgb, var(--hex-text-secondary) 8%, transparent);
+  color: var(--hex-primary);
   letter-spacing: 14px;
   text-transform: uppercase;
   user-select: none;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  text-shadow: 0 0 8px var(--hex-primary-glow);
   white-space: nowrap;
 }
 
