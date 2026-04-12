@@ -322,6 +322,8 @@ Internally uses `--_arch-color` CSS custom property for scoped styling.
 
 **Scrollable View Pattern:** `.background` in `main.css` is `position: fixed; overflow: hidden; height: 100vh` — it does NOT scroll. Every view must have its own scrollable inner container with: `position: relative; z-index: 10; overflow-y: auto; height: 100vh` (+ `@supports (height: 100dvh)`), `-webkit-overflow-scrolling: auto; overscroll-behavior-y: none`. BottomMenu is `position: fixed; ~72-96px` tall — views need sufficient `padding-bottom` (arena-views use 120px) or spacer elements (Profile/Training use `.scroll-gap`). Technical debt: two scroll placement patterns exist — PreparationView applies scroll on outer `.arena-container` (like Profile/Training), while FightClubView/AgentDetailView/CreateAgentView apply scroll directly on their content container. Two BottomMenu compensation patterns (padding-bottom vs `.scroll-gap`) also coexist. Unification is a future task.
 
+**Desktop Scaling (first desktop optimization):** `@media (min-width: 1024px)` in `main.css` sets `html { font-size: 18px }` (mobile default 16px). View containers expand to `max-width: 1024px` on desktop via scoped media queries in each view. Updated: FightClub, AgentDetail, CreateAgent, Preparation, DeckBuilder, Friends, Spectate, Ratings. Excluded: CardFightView, MatchmakingView (specialized combat layout — keep narrow). Already 1024px: Profile, Training, Clan, MoveTree. Technical debt: ~2519 px-based values vs ~245 rem — converting key design tokens to rem for proportional scaling is a separate task. No existing desktop breakpoints existed before this change.
+
 ---
 
 ## Game Constants (`/src/core/constants.js`)
