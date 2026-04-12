@@ -174,7 +174,7 @@ const handleScroll = (event) => {
   box-sizing: border-box;
   max-width: 500px;
   margin: 0 auto;
-  padding: 80px 16px 20px;
+  padding: 80px 16px 120px;
 }
 
 .player-header {

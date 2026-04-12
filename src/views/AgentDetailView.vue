@@ -494,7 +494,23 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.agent-detail { max-width: 480px; margin: 0 auto; padding: 80px 16px 24px; }
+.agent-detail {
+  position: relative;
+  z-index: 10;
+  overflow-y: auto;
+  height: 100vh;
+  -webkit-overflow-scrolling: auto;
+  overscroll-behavior-y: none;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 80px 16px 120px;
+}
+
+@supports (height: 100dvh) {
+  .agent-detail {
+    height: 100dvh;
+  }
+}
 .loader-wrap { display: flex; justify-content: center; padding: 48px 0; }
 
 /* Header */

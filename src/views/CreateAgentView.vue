@@ -152,9 +152,21 @@ const onCreate = async () => {
 
 <style scoped>
 .create-agent-container {
-  padding: 80px 16px 16px;
+  position: relative;
+  z-index: 10;
+  overflow-y: auto;
+  height: 100vh;
+  -webkit-overflow-scrolling: auto;
+  overscroll-behavior-y: none;
+  padding: 80px 16px 120px;
   max-width: 480px;
   margin: 0 auto;
+}
+
+@supports (height: 100dvh) {
+  .create-agent-container {
+    height: 100dvh;
+  }
 }
 .wizard-header {
   display: flex;
