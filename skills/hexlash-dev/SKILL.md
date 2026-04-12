@@ -41,7 +41,7 @@ CLAUDE.md         — source of truth, всегда читать первым
 
 | Триггер задачи | Скилл |
 |----------------|-------|
-| UI, CSS, цвета, дизайн, верстка, компоненты | `hexlash-design` (+ открыть `Hexlash_Visual_System.pdf` при сложных задачах) |
+| UI, CSS, цвета, дизайн, верстка, компоненты | `hexlash-design` |
 | Vue компоненты, Vuex, Router, фронтенд логика | `hexlash-vue` |
 | Бой, PvE/PvP, движок, кубик, коуч, archetype | `hexlash-combat` |
 | WebSocket сообщения, real-time, матчмейкинг, challenges | `hexlash-websocket` |
@@ -118,4 +118,4 @@ CLAUDE.md         — source of truth, всегда читать первым
 - `/CLAUDE.md` — source of truth по проекту
 - `/Hexlash_Pitch.pdf` — продуктовый питч (для контекста product-задач)
 - `/Hexlash_OnePager.pdf` — краткая выжимка проекта
-- `/Hexlash_Visual_System.pdf` — полный визуальный гайд (для дизайн-задач)
+- `Hexlash_Visual_System.pdf` — **не в репо**; источник правды по визуалу = `hexlash-design/SKILL.md`

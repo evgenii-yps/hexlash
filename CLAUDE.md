@@ -8,7 +8,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 
 ## Tech Stack
 
-**Frontend:** Vue 3.5 · Vite 7 · Vuex 4 · Vue Router 4 · Vuetify 2 · Three.js · Howler.js · Ethers.js 6 · @wagmi/vue · viem · @tanstack/vue-query · Vue-i18n 11 · Amplitude
+**Frontend:** Vue 3.5 · Vite 7 · Vuex 4 · Vue Router 4 · Vuetify 2 · Three.js · Howler.js · Ethers.js 6 (legacy, wagmi migration planned) · @wagmi/vue · viem · @tanstack/vue-query · Custom i18n (11 locales) · Amplitude
 
 **Backend:** Express 4 · Prisma 5 (PostgreSQL) · JWT · WebSocket (ws) · Multer · bcryptjs · express-rate-limit · Anthropic SDK (AI Trainer)
 
@@ -237,7 +237,7 @@ unlockRequirements:  { 3: {taps:300, exp:150}, 4: {taps:250, exp:120}, 5: {taps:
 ## Design System — "Neon Discipline"
 
 **Status:** v1.0 — Visual System established.
-**Full visual guide:** Hexlash_Visual_System.pdf v1.0
+**Full visual guide:** Hexlash_Visual_System.pdf v1.0 (file not in repo — source of truth is hexlash-design/SKILL.md)
 **Operational reference:** /skills/hexlash-design/SKILL.md
 **Key rules:** 1) one pink accent per screen, 2) pixel-font (Anonymous) only for titles/impact moments, 3) archetype colors only in fighter icons/active context, 4) backgrounds = atmosphere (stylized underground), UI = function.
 
@@ -294,7 +294,7 @@ Internally uses `--_arch-color` CSS custom property for scoped styling.
 
 ## CSS Design System (legacy → migrating to --hex-*)
 
-> **Visual System v1.0** — full guide in Hexlash_Visual_System.pdf, operational version in /skills/hexlash-design/SKILL.md. Key rules: one pink accent per screen, pixel-font only for titles/impact, archetype colors only in fighter icons/active context, backgrounds = atmosphere (stylized underground), UI = function.
+> **Visual System v1.0** — operational reference in /skills/hexlash-design/SKILL.md (Hexlash_Visual_System.pdf not in repo). Key rules: one pink accent per screen, pixel-font only for titles/impact, archetype colors only in fighter icons/active context, backgrounds = atmosphere (stylized underground), UI = function.
 
 > **Active system:** `/src/styles/hexlash-ui.css` with `--hex-*` variables. ALL components use exclusively `--hex-*` vars (Phase 5.1 complete).
 > **Legacy:** `/src/assets/colors.css` — only referenced by PrivacyView.vue (auto-generated legal HTML with inline styles). Do NOT use legacy vars in new code.
