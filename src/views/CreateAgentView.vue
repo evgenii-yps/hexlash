@@ -338,4 +338,10 @@ const onCreate = async () => {
   font-size: 12px;
   color: var(--hex-defeat);
 }
+
+@media (min-width: 1024px) {
+  .create-agent-container {
+    max-width: 1024px;
+  }
+}
 </style>

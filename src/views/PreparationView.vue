@@ -267,4 +267,10 @@ const handleScroll = (event) => {
 .switch-mode-btn:hover {
   opacity: 0.7;
 }
+
+@media (min-width: 1024px) {
+  .arena-content-wrapper {
+    max-width: 1024px;
+  }
+}
 </style>

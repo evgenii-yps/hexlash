@@ -632,4 +632,10 @@ onMounted(() => {
 /* Deck chips */
 .deck-chip { display: inline-flex; padding: 4px 8px; font-size: 11px; border-radius: 4px; background: var(--hex-bg-light); color: var(--hex-text-primary); cursor: pointer; border: 1px solid var(--hex-border-default); }
 .deck-chip--add { border-style: dashed; color: var(--hex-text-muted); }
+
+@media (min-width: 1024px) {
+  .agent-detail {
+    max-width: 1024px;
+  }
+}
 </style>

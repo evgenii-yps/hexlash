@@ -563,4 +563,10 @@ onBeforeUnmount(() => {
   border-color: var(--hex-warning);
   box-shadow: 0 0 20px color-mix(in srgb, var(--hex-warning) 30%, transparent);
 }
+
+@media (min-width: 1024px) {
+  .spectate-content-wrapper {
+    max-width: 1024px;
+  }
+}
 </style>

@@ -149,4 +149,10 @@ onUnmounted(() => {
   text-shadow: 0 0 24px rgba(255, 6, 111, 0.4);
   flex: 1;
 }
+
+@media (min-width: 1024px) {
+  .fight-club-container {
+    max-width: 1024px;
+  }
+}
 </style>

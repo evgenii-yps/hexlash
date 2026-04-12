@@ -684,4 +684,10 @@ onMounted(() => {
 :deep(.v-select__selection-text) {
   font-size: 0.8rem;
 }
+
+@media (min-width: 1024px) {
+  .rating-content-wrapper {
+    max-width: 1024px;
+  }
+}
 </style>
