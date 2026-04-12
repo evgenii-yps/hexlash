@@ -1,5 +1,5 @@
 <template>
-  <div class="background">
+  <div class="background background-arena">
     <div class="fight-club-container">
       <div class="fc-header-row">
         <button class="back-link" @click="$router.push('/arena')">
@@ -64,6 +64,40 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.background-arena {
+  background: url('@/assets/images/background_arena.webp') no-repeat center center;
+}
+
+.background-arena::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(to right bottom, var(--hex-bg-dark) 25%, transparent 75%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.background-arena::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: var(--hex-bg-dark);
+  z-index: 2;
+  opacity: 1;
+  animation: fadeOut 1s forwards;
+  pointer-events: none;
+}
+
+@keyframes fadeOut {
+  to { opacity: 0; }
+}
+
 .fight-club-container {
   position: relative;
   z-index: 10;
