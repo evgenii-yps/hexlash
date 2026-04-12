@@ -391,6 +391,7 @@ export default {
     lblClubLevel: 'УРОВЕНЬ FIGHT CLUB',
     lblAgents: 'Агенты',
     lblAutoFight: 'Авто',
+    lblFight: 'БОЙ',
     lblIdle: 'Свободен',
     lblStatus: 'Статус',
     lblFighting: 'В бою...',

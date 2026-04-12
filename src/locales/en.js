@@ -388,6 +388,7 @@ export default {
     lblClubLevel: 'FIGHT CLUB LEVEL',
     lblAgents: 'Agents',
     lblAutoFight: 'Auto',
+    lblFight: 'FIGHT',
     lblIdle: 'Idle',
     lblStatus: 'Status',
     lblFighting: 'Fighting...',

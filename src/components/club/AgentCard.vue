@@ -35,25 +35,35 @@
           </label>
         </div>
       </div>
+
+      <div v-if="agent.isCaptain" class="agent-card-fight" @click.stop>
+        <HexButton variant="primary" block :disabled="fightDisabled" @click="goToFight">
+          {{ t.club.lblFight || 'FIGHT' }}
+        </HexButton>
+      </div>
     </HexCard>
   </div>
 </template>
 
 <script>
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { t } from '@/locales/index.js'
 import HexCard from '@/components/ui/HexCard.vue'
+import HexButton from '@/components/ui/HexButton.vue'
 import HexBadge from '@/components/ui/HexBadge.vue'
 import BeltBadge from '@/components/ui/BeltBadge.vue'
 
 export default {
   name: 'AgentCard',
-  components: { HexCard, HexBadge, BeltBadge },
+  components: { HexCard, HexButton, HexBadge, BeltBadge },
   props: {
     agent: { type: Object, required: true },
   },
   emits: ['click', 'toggle-auto'],
   setup(props) {
+    const router = useRouter();
+
     const restingText = computed(() => {
       if (!props.agent.nextFightAt) return t.value.club.lblResting || 'Resting';
       const diff = new Date(props.agent.nextFightAt).getTime() - Date.now();
@@ -67,7 +77,15 @@ export default {
       return name.slice(0, 3).toUpperCase();
     };
 
-    return { t, restingText, shortArch };
+    const fightDisabled = computed(() =>
+      props.agent.status === 'fighting' || props.agent.status === 'resting'
+    );
+
+    const goToFight = () => {
+      router.push('/arena/fight');
+    };
+
+    return { t, restingText, shortArch, fightDisabled, goToFight };
   },
 };
 </script>
@@ -173,5 +191,9 @@ export default {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--hex-text-muted);
+}
+
+.agent-card-fight {
+  margin-top: 12px;
 }
 </style>
