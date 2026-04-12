@@ -236,16 +236,6 @@ export default {
     pvpDesc: 'Бой с реальными игроками',
     lblFriends: 'Друзья',
     hub: {
-      fight: {
-        title: 'БОЙ',
-        subtitle: 'Ринг',
-        description: 'Выходи. Собери колоду. Встреть соперника.',
-      },
-      club: {
-        title: 'FIGHT CLUB',
-        subtitle: 'Твои бойцы',
-        description: 'Ты — тренер. Учи их тому, что знаешь. Смотри, как они дерутся.',
-      },
       switchBack: '← Арена',
     },
   },

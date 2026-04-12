@@ -237,16 +237,6 @@ export default {
     pvpDesc: 'Fight real players',
     lblFriends: 'Friends',
     hub: {
-      fight: {
-        title: 'FIGHT',
-        subtitle: 'The ring',
-        description: 'Step in. Pick your deck. Face the opponent.',
-      },
-      club: {
-        title: 'FIGHT CLUB',
-        subtitle: 'Your fighters',
-        description: 'You are the coach. Teach them what you know. Watch them fight.',
-      },
       switchBack: '← Arena',
     },
   },
