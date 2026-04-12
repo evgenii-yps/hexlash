@@ -21,7 +21,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
   App.vue                  — Root: header (Logo), router-view, BottomMenu (hidden on PvP screens), Info/Error toasts, ChallengeNotification
   main.js                  — Entry: Vue + Vuetify + i18n + Vuex + WagmiPlugin + VueQueryPlugin init
   router/index.js          — Routes + auth guards + fight state restore
-  views/                   — 20 page-level components (incl. ArenaHubView, FightClubView, CreateAgentView, AgentDetailView)
+  views/                   — 19 page-level components (incl. FightClubView, CreateAgentView, AgentDetailView)
   components/              — 75+ reusable components
   components/club/         — 7 Club Mode components (AgentRoster, AgentCard, ClubLevelBar, MorningReport, RetirementPanel, SkinPicker, ArchetypeSelector)
   components/clan/         — 1 Clan social component (ClanInviteNotification)
@@ -149,7 +149,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 | `/privacy` `/404` `/rules` `/verify-email` | Static | No |
 | `/` | RainView (home) | Yes |
 | `/help` | PageView | Yes |
-| `/arena` | ArenaHubView (Fight/Club split) | Yes |
+| `/arena` | Redirect → `/arena/club` | Yes |
 | `/arena/fight` | PreparationView | Yes |
 | `/arena/club` | FightClubView | Yes |
 | `/arena/club/create` | CreateAgentView | Yes |
@@ -523,7 +523,7 @@ MIGRATION_ENABLED = true           // lazy User→Fighter #1 on /me
 | Fight | `CardFightView.vue` | Main combat (PvE + PvP), dice, coach advice, HP bars, AI Trainer (PvE results). PvP mode: no BottomMenu, no PvP badge, reduced padding. Fully migrated to --hex-* vars: HexButton for results, inline SVGs, dice/coach/victory/defeat/overdrive all use design system vars. Visual System v1.0 compliant: pink only on CTA buttons (dice, Fight Again), VICTORY/DEFEAT/DRAW + OVERDRIVE pixel-font, HP in AnonymousBalance, dice effects in characteristic colors, coach buttons in action-specific colors |
 | Profile | `ProfileView.vue` | Tabs: balance, wallet, account, skins. Visual System v1.0 compliant: AnonymousBalance for numerical values, neutral header (no pink), 0-1 pink accent per tab, toggles green (success), delete btn danger |
 | Ratings (League) | `RatingsView.vue` | 3 tabs: My Club, Clubs (leaderboard), Fighters (leaderboard). Default tab: My Club. URL: `/ratings/:type` (myclub/clubs/fighters). My Club tab: `MyClubTab.vue` component — redesigned clan header (avatar 64px with --hex-primary glow, name in Anonymous font, italic description, LVL badge, member count, level progress bar), stats grid (4 cards: Members/Wins/Losses/Win Rate with colored values), win rate bar, members top-5, role badges owner/deputy, action menus. No-clan state: ⚔ icon hero, CREATE/BROWSE buttons, pending invites banners, suggested clans with stats |
-| Arena Hub | `ArenaHubView.vue` | Split screen at `/arena`: Fight (pink) and Club (green) cards. localStorage remembers last choice, `?force=true` bypasses. "← Arena" switch button in both sub-views |
+| Fight Club | `FightClubView.vue` | `/arena/club` (also reachable via `/arena` redirect). Agent roster, Club Level bar, Morning Report, Retirement Panel. "← Arena" switch button in header. Captain's AgentCard has primary FIGHT button (navigates to PreparationView, disabled when fighting/resting) |
 | Preparation | `PreparationView.vue` | `/arena/fight`: action row (Mode + START FIGHT + Friends buttons). Friends button is text-only (no online indicator). "← Arena" switch button in header. Visual System v1.0 compliant: single pink accent (START FIGHT), ModeSelector neutral, AnonymousBalance where needed |
 | Friends | `FriendsView.vue` | Friends list, friend requests, search players. Visual System v1.0 compliant: neutral cards, online indicator hex-success, Accept=green/Decline=danger, Add friend=primary CTA, system sans |
 | Matchmaking | `MatchmakingView.vue` | Real-time PvP matchmaking queue. Opponent Found shows actual fighter skins (from `/images/skins/`). No colored borders. 100dvh support. Visual System v1.0 compliant: neutral spinner in search, OPPONENT FOUND pixel-font (impact), AnonymousBalance for timer/rating/countdown, retry btn = sole pink CTA in timeout |
@@ -1441,7 +1441,7 @@ Free Arena: agent vs agent, random matchmaking, no ELO change, 80% XP. For testi
 Frontend for Club Mode agents. See Views table for details.
 
 - `src/core/state/modules/agentState.js` — Vuex module (14th): agents CRUD, Fight Club level (`fightClubLevel`, `SET_FIGHT_CLUB_LEVEL`, `fetchFightClubLevel`), detail actions (fetch/update/train/moves/deck/tactics/fights)
-- `src/components/club/` — AgentCard, ClubLevelBar, AgentRoster, MorningReport, SkinPicker, ArchetypeSelector
+- `src/components/club/` — AgentCard (captain has FIGHT button → PreparationView, disabled when fighting/resting), ClubLevelBar, AgentRoster, MorningReport, SkinPicker, ArchetypeSelector
 - `src/views/CreateAgentView.vue` — 3-step wizard (name+skin → build → confirm)
 - `src/views/AgentDetailView.vue` — 4-tab management (overview, moves, tactics, fights) + edit/deck/delete modals
 - `src/utils/fightStylePreview.js` — template-based fight style description generator
@@ -1605,7 +1605,7 @@ Club Mode (agents) now independent from Clan. Personal FightClub per user, auto-
 
 **New service `fightClubService.js`:** getOrCreateFightClub, addFightClubXp, getFightClubLegendBuff, getFightXpReward, getLevelInfo.
 
-**New view `FightClubView.vue`:** All Club Mode UI (level bar, morning report, retirement, roster) moved from ClanPageContent to standalone `/fight-club` route.
+**New view `FightClubView.vue`:** All Club Mode UI (level bar, morning report, retirement, roster) moved from ClanPageContent to standalone `/arena/club` route (`/arena` redirects here, `/fight-club` also redirects here).
 
 **Files changed (16):**
 - `backend/prisma/schema.prisma` — FightClub model, Agent.fightClubId, Club cleaned
