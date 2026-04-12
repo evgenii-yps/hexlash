@@ -71,6 +71,12 @@ body {
     }
 }
 
+@media (min-width: 1024px) {
+    html {
+        font-size: 18px;
+    }
+}
+
 @font-face {
     font-family: 'Anonymous';
     src: url('@/assets/fonts/Anonymous.woff2') format('woff2'),

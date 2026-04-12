@@ -353,4 +353,10 @@ const handleScroll = (event) => {
   position: relative;
   height: 150px;
 }
+
+@media (min-width: 1024px) {
+  .friends-content-wrapper {
+    max-width: 1024px;
+  }
+}
 </style>

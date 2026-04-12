@@ -392,4 +392,10 @@ const handleScroll = (e) => emit('scroll', e.target.scrollTop);
 .scroll-gap {
   height: 120px;
 }
+
+@media (min-width: 1024px) {
+  .deck-wrapper {
+    max-width: 1024px;
+  }
+}
 </style>
