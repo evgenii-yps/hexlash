@@ -320,7 +320,7 @@ Internally uses `--_arch-color` CSS custom property for scoped styling.
 
 **Design language:** Dark theme, neon pink accents, semi-transparent backgrounds, thin gray borders.
 
-**Scrollable View Pattern:** `.background` in `main.css` is `position: fixed; overflow: hidden; height: 100vh` — it does NOT scroll. Every view must have its own scrollable inner container with: `position: relative; z-index: 10; overflow-y: auto; height: 100vh` (+ `@supports (height: 100dvh)`), `-webkit-overflow-scrolling: auto; overscroll-behavior-y: none`. BottomMenu is `position: fixed; ~72-96px` tall — views need sufficient `padding-bottom` (arena-views use 120px) or spacer elements (Profile/Training use `.scroll-gap`). Two patterns coexist — unification is a future task.
+**Scrollable View Pattern:** `.background` in `main.css` is `position: fixed; overflow: hidden; height: 100vh` — it does NOT scroll. Every view must have its own scrollable inner container with: `position: relative; z-index: 10; overflow-y: auto; height: 100vh` (+ `@supports (height: 100dvh)`), `-webkit-overflow-scrolling: auto; overscroll-behavior-y: none`. BottomMenu is `position: fixed; ~72-96px` tall — views need sufficient `padding-bottom` (arena-views use 120px) or spacer elements (Profile/Training use `.scroll-gap`). Technical debt: two scroll placement patterns exist — PreparationView applies scroll on outer `.arena-container` (like Profile/Training), while FightClubView/AgentDetailView/CreateAgentView apply scroll directly on their content container. Two BottomMenu compensation patterns (padding-bottom vs `.scroll-gap`) also coexist. Unification is a future task.
 
 ---
 
