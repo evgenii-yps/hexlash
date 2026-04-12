@@ -65,9 +65,21 @@ onUnmounted(() => {
 
 <style scoped>
 .fight-club-container {
-  padding: 80px 16px 24px;
+  position: relative;
+  z-index: 10;
+  overflow-y: auto;
+  height: 100vh;
+  -webkit-overflow-scrolling: auto;
+  overscroll-behavior-y: none;
+  padding: 80px 16px 120px;
   max-width: 600px;
   margin: 0 auto;
+}
+
+@supports (height: 100dvh) {
+  .fight-club-container {
+    height: 100dvh;
+  }
 }
 .fc-header-row {
   display: flex;
