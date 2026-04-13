@@ -1,20 +1,27 @@
 <template>
   <div class="background background-arena">
     <div class="fight-club-container">
-      <div class="fc-header-row">
-        <button class="back-link" @click="$router.push('/arena')">
-          {{ t.arena.hub?.switchBack || '← Arena' }}
-        </button>
-        <h2 class="fc-title">{{ t.club.lblMyFightClub || 'MY FIGHT CLUB' }}</h2>
-        <span class="fc-header-spacer"></span>
+      <!-- Header -->
+      <div class="pit-header">
+        <h1 class="pit-title">{{ t.club.lblThePit || 'THE PIT' }}</h1>
+        <div v-if="fightClubLevel" class="pit-subtitle">
+          {{ interpolate(t.club.lblLevelAgents || 'Level {level} · {current} / {max} agents', { level: fightClubLevel.level, current: fightClubLevel.currentAgents, max: fightClubLevel.maxAgents }) }}
+        </div>
       </div>
 
-      <ClubLevelBar v-if="fightClubLevel" :clubLevel="fightClubLevel" />
+      <!-- XP bar -->
+      <div v-if="fightClubLevel" class="pit-xp">
+        <div class="pit-xp-bar">
+          <div class="pit-xp-fill" :style="{ width: xpPercent + '%' }"></div>
+        </div>
+        <div class="pit-xp-meta">
+          <span>{{ formatXp(xpProgress) }} / {{ formatXp(xpTotal) }} XP</span>
+          <span v-if="!fightClubLevel.isMaxLevel">{{ interpolate(t.club.lblNextLevel || 'next: Lv {n}', { n: fightClubLevel.level + 1 }) }}</span>
+          <span v-else>{{ t.club.lblMaxLevelFull || 'Max Level' }}</span>
+        </div>
+      </div>
 
-      <MorningReport v-if="agents.length > 0" />
-
-      <RetirementPanel />
-
+      <!-- Roster -->
       <AgentRoster
         :agents="agents"
         :maxAgents="fightClubLevel?.maxAgents || 2"
@@ -22,6 +29,9 @@
         @create="$router.push('/arena/club/create')"
         @agent-click="(id) => $router.push(`/arena/club/${id}`)"
       />
+
+      <!-- Report -->
+      <MorningReport v-if="agents.length > 0" />
     </div>
   </div>
 </template>
@@ -29,15 +39,32 @@
 <script setup>
 import { computed, onMounted, onUnmounted } from 'vue';
 import store from '@/core/state/store.js';
-import { t } from '@/locales/index.js';
-import ClubLevelBar from '@/components/club/ClubLevelBar.vue';
+import { t, interpolate } from '@/locales/index.js';
 import MorningReport from '@/components/club/MorningReport.vue';
-import RetirementPanel from '@/components/club/RetirementPanel.vue';
 import AgentRoster from '@/components/club/AgentRoster.vue';
 
 const agents = computed(() => store.getters['agent/agentsList']);
 const loading = computed(() => store.state.agent.agentsLoading);
 const fightClubLevel = computed(() => store.state.agent.fightClubLevel);
+
+const xpProgress = computed(() => {
+  const fl = fightClubLevel.value;
+  if (!fl) return 0;
+  return fl.xp - (fl.xpForCurrentLevel || 0);
+});
+const xpTotal = computed(() => {
+  const fl = fightClubLevel.value;
+  if (!fl || !fl.xpForNextLevel) return 0;
+  return fl.xpForNextLevel - (fl.xpForCurrentLevel || 0);
+});
+const xpPercent = computed(() => {
+  if (!xpTotal.value) return 0;
+  return Math.min(100, Math.round((xpProgress.value / xpTotal.value) * 100));
+});
+const formatXp = (n) => {
+  if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+  return String(n);
+};
 
 let refreshInterval = null;
 
@@ -106,39 +133,47 @@ onUnmounted(() => {
     height: 100dvh;
   }
 }
-.fc-header-row {
-  display: flex;
-  align-items: center;
-  margin-bottom: 24px;
-}
-.fc-header-spacer {
-  min-width: 80px;
-}
-.back-link {
-  font-size: 16px;
+
+/* Header */
+.pit-header { text-align: center; margin-bottom: 6px; }
+.pit-title {
+  font-family: 'Anonymous', monospace;
+  font-size: 32px;
+  letter-spacing: 6px;
   color: var(--hex-primary);
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-family: 'Anonymous', monospace;
-  letter-spacing: 0.5px;
-  padding: 6px 0;
-  transition: opacity 0.2s;
-  white-space: nowrap;
-  min-width: 80px;
-}
-.back-link:hover {
-  opacity: 0.7;
-}
-.fc-title {
-  font-family: 'Anonymous', monospace;
-  font-size: 24px;
+  text-shadow: 0 0 24px var(--hex-primary-glow);
+  line-height: 1;
+  margin: 0;
   text-transform: uppercase;
+}
+.pit-subtitle {
+  font-size: 10px;
+  color: var(--hex-text-muted);
   letter-spacing: 3px;
-  color: var(--hex-primary);
-  text-align: center;
-  text-shadow: 0 0 24px rgba(255, 6, 111, 0.4);
-  flex: 1;
+  text-transform: uppercase;
+  margin-top: 8px;
+}
+
+/* XP bar */
+.pit-xp { margin-bottom: 22px; }
+.pit-xp-bar {
+  height: 3px;
+  background: var(--hex-bg-light);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+.pit-xp-fill {
+  height: 100%;
+  background: var(--hex-text-muted);
+  border-radius: 2px;
+  transition: width 300ms;
+}
+.pit-xp-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--hex-text-muted);
 }
 
 @media (min-width: 1024px) {

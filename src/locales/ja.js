@@ -372,6 +372,12 @@ export default {
   club: {
     // Agent Roster
     lblMyFightClub: 'MY FIGHT CLUB',
+    lblThePit: 'THE PIT',
+    lblLevelAgents: 'レベル {level} · {current} / {max} エージェント',
+    lblNextLevel: '次: Lv {n}',
+    lblMaxLevelFull: '最大レベル',
+    lblReport: 'レポート',
+    lblReportLimit: '3 / 時間',
     lblClubMode: 'CLUB MODE',
     lblEnterFightClub: 'Enter Fight Club',
     lblManageFightClub: 'Manage Fight Club',

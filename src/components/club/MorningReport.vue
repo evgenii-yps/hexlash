@@ -1,7 +1,8 @@
 <template>
   <div class="morning-report">
     <div class="report-header">
-      <span class="report-title">{{ t.club.lblMorningReport || 'Morning Report' }}</span>
+      <span class="report-title">{{ t.club.lblReport || 'Report' }}</span>
+      <span class="report-limit">{{ t.club.lblReportLimit || '3 / hr' }}</span>
     </div>
 
     <div class="period-select">
@@ -10,9 +11,9 @@
 
     <!-- Stats bar -->
     <div v-if="report?.stats?.totalFights > 0" class="report-stats">
-      <div class="rstat"><span class="rstat-val">{{ report.stats.totalFights }}</span><span class="rstat-label">Fights</span></div>
-      <div class="rstat"><span class="rstat-val rstat-win">{{ report.stats.wins }}</span><span class="rstat-label">Wins</span></div>
-      <div class="rstat"><span class="rstat-val">{{ report.stats.winRate }}%</span><span class="rstat-label">Win Rate</span></div>
+      <div class="stat-col"><div class="stat-num">{{ report.stats.totalFights }}</div><div class="stat-label">{{ t.club.lblFights || 'Fights' }}</div></div>
+      <div class="stat-col"><div class="stat-num stat-num--win">{{ report.stats.wins }}</div><div class="stat-label">{{ t.club.lblWins || 'Wins' }}</div></div>
+      <div class="stat-col"><div class="stat-num">{{ report.stats.winRate }}%</div><div class="stat-label">{{ t.club.lblWinRate || 'Win Rate' }}</div></div>
     </div>
 
     <!-- AI Analysis (club-level) -->
@@ -214,47 +215,52 @@ export default {
   padding: 14px;
   margin-bottom: 16px;
 }
-.report-header { margin-bottom: 10px; }
+.report-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .report-title {
-  font-family: 'Anonymous', monospace;
-  font-size: 12px;
+  font-size: 11px;
+  color: var(--hex-text-secondary);
+  letter-spacing: 2px;
   text-transform: uppercase;
+}
+.report-limit {
+  font-size: 9px;
+  color: var(--hex-text-muted);
   letter-spacing: 1px;
-  color: var(--hex-primary);
+  text-transform: uppercase;
 }
 
-.period-select { display: flex; gap: 4px; margin-bottom: 12px; }
+.period-select { display: flex; gap: 0; border-bottom: 1px solid var(--hex-border-default); margin-bottom: 14px; }
 .period-btn {
   flex: 1;
-  padding: 5px 0;
+  text-align: center;
+  padding: 8px 0;
   font-size: 10px;
+  letter-spacing: 2px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  border: 1px solid var(--hex-border-default);
-  border-radius: 6px;
-  background: var(--hex-bg-dark);
+  border: none;
+  background: none;
   color: var(--hex-text-muted);
   cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
   transition: all 0.15s;
 }
 .period-btn.active {
-  border-color: var(--hex-primary);
-  color: var(--hex-primary);
-  background: rgba(255, 6, 111, 0.08);
+  color: var(--hex-text-primary);
+  border-bottom-color: var(--hex-text-primary);
 }
 
-.report-stats { display: flex; gap: 8px; margin-bottom: 12px; }
-.rstat { flex: 1; text-align: center; padding: 6px; background: var(--hex-bg-dark); border-radius: 6px; }
-.rstat-val { display: block; font-family: 'AnonymousBalance', monospace; font-size: 16px; color: var(--hex-text-primary); }
-.rstat-win { color: var(--hex-victory); }
-.rstat-label { font-size: 9px; text-transform: uppercase; color: var(--hex-text-muted); }
+.report-stats { display: flex; justify-content: space-around; padding: 10px 0; margin-bottom: 14px; border-bottom: 1px solid var(--hex-border-default); }
+.stat-col { text-align: center; }
+.stat-num { font-size: 18px; color: var(--hex-text-primary); line-height: 1; }
+.stat-num--win { color: var(--hex-victory); }
+.stat-label { font-size: 9px; color: var(--hex-text-muted); letter-spacing: 1.5px; text-transform: uppercase; margin-top: 3px; }
 
 .analysis-section { margin-bottom: 10px; }
 .analysis-label {
-  font-family: 'Anonymous', monospace;
   font-size: 10px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 2px;
   color: var(--hex-text-muted);
   margin-bottom: 3px;
 }
@@ -266,7 +272,6 @@ export default {
 /* Agent Details Accordion */
 .agent-details-section { margin-top: 14px; }
 .agent-details-title {
-  font-family: 'Anonymous', monospace;
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -293,14 +298,12 @@ export default {
 .accordion-skin { width: 28px; height: 28px; border-radius: 6px; object-fit: cover; flex-shrink: 0; }
 .accordion-info { flex: 1; min-width: 0; }
 .accordion-name {
-  font-family: 'Anonymous', monospace;
   font-size: 12px;
   color: var(--hex-text-primary);
 }
 .accordion-belt { margin-left: 6px; }
 
 .accordion-record {
-  font-family: 'AnonymousBalance', monospace;
   font-size: 11px;
   flex-shrink: 0;
 }

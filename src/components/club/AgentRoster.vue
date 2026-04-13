@@ -1,9 +1,5 @@
 <template>
   <div class="agent-roster">
-    <div class="roster-header">
-      <span class="roster-title">{{ t.club.lblRoster || 'ROSTER' }} ({{ agents.length }}/{{ maxAgents }})</span>
-    </div>
-
     <div v-if="loading" class="roster-loading">
       <v-progress-circular size="28" indeterminate />
     </div>
@@ -21,12 +17,11 @@
         v-for="i in emptySlots"
         :key="'empty-' + i"
         class="empty-slot hex-fade-in"
+        :class="{ 'empty-slot--disabled': !canCreate }"
         @click="canCreate && $emit('create')"
       >
-        <div class="empty-slot-inner" :class="{ 'empty-slot--disabled': !canCreate }">
-          <span class="empty-slot-icon">+</span>
-          <span class="empty-slot-text">{{ canCreate ? (t.club.lblCreateAgent || 'Create Agent') : (t.club.lblRosterFull || 'Roster Full') }}</span>
-        </div>
+        <div class="empty-plus">+</div>
+        <div class="empty-label">{{ canCreate ? (t.club.lblCreateAgent || 'Create Agent') : (t.club.lblRosterFull || 'Roster Full') }}</div>
       </div>
     </div>
   </div>
@@ -57,17 +52,6 @@ export default {
 <style scoped>
 .agent-roster { margin-bottom: 24px; }
 
-.roster-header {
-  margin-bottom: 16px;
-}
-.roster-title {
-  font-family: 'Anonymous', monospace;
-  font-size: 16px;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  color: var(--hex-text-muted);
-}
-
 .roster-loading {
   display: flex;
   justify-content: center;
@@ -85,36 +69,36 @@ export default {
 }
 
 .empty-slot {
-  cursor: pointer;
-}
-.empty-slot-inner {
+  background: var(--hex-bg-light);
+  border: 1px solid var(--hex-border-default);
+  border-radius: var(--hex-radius-md, 8px);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  padding: 12px;
   min-height: 180px;
-  border: 1px dashed var(--hex-border-default);
-  border-radius: 12px;
-  background: var(--hex-bg-dark);
-  transition: border-color 0.2s;
+  cursor: pointer;
+  transition: border-color 150ms, background 150ms;
 }
-.empty-slot-inner:hover { border-color: var(--hex-primary); }
+.empty-slot:hover { background: var(--hex-bg-medium); }
 .empty-slot--disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
-.empty-slot--disabled:hover { border-color: var(--hex-border-default); }
+.empty-slot--disabled:hover { background: var(--hex-bg-light); border-color: var(--hex-border-default); }
 
-.empty-slot-icon {
-  font-size: 48px;
+.empty-plus {
+  font-size: 24px;
   color: var(--hex-text-muted);
+  margin-bottom: 6px;
   line-height: 1;
 }
-.empty-slot-text {
-  margin-top: 10px;
-  font-size: 15px;
+.empty-label {
+  font-size: 10px;
   color: var(--hex-text-muted);
+  letter-spacing: 2px;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  text-align: center;
 }
 </style>

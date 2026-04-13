@@ -372,6 +372,12 @@ export default {
   club: {
     // Agent Roster
     lblMyFightClub: 'MY FIGHT CLUB',
+    lblThePit: 'THE PIT',
+    lblLevelAgents: 'Niveau {level} · {current} / {max} agents',
+    lblNextLevel: 'suivant: Nv {n}',
+    lblMaxLevelFull: 'Niveau Max',
+    lblReport: 'Rapport',
+    lblReportLimit: '3 / hr',
     lblClubMode: 'CLUB MODE',
     lblEnterFightClub: 'Enter Fight Club',
     lblManageFightClub: 'Manage Fight Club',
