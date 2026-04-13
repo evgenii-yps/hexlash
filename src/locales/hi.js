@@ -372,6 +372,12 @@ export default {
   club: {
     // Agent Roster
     lblMyFightClub: 'MY FIGHT CLUB',
+    lblThePit: 'THE PIT',
+    lblLevelAgents: 'स्तर {level} · {current} / {max} एजेंट',
+    lblNextLevel: 'अगला: Lv {n}',
+    lblMaxLevelFull: 'अधिकतम स्तर',
+    lblReport: 'रिपोर्ट',
+    lblReportLimit: '3 / घंटा',
     lblClubMode: 'CLUB MODE',
     lblEnterFightClub: 'Enter Fight Club',
     lblManageFightClub: 'Manage Fight Club',

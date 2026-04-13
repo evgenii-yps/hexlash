@@ -372,6 +372,12 @@ export default {
   club: {
     // Agent Roster
     lblMyFightClub: 'MY FIGHT CLUB',
+    lblThePit: 'THE PIT',
+    lblLevelAgents: '等级 {level} · {current} / {max} 特工',
+    lblNextLevel: '下一级: Lv {n}',
+    lblMaxLevelFull: '最高等级',
+    lblReport: '报告',
+    lblReportLimit: '3 / 小时',
     lblClubMode: 'CLUB MODE',
     lblEnterFightClub: 'Enter Fight Club',
     lblManageFightClub: 'Manage Fight Club',
