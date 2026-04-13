@@ -453,6 +453,10 @@ export default {
     lblMaxLevel: 'MAX',
     lblResearchFirst: 'Player must research first',
     lblWinRate: 'Win Rate',
+    lblFightsShort: 'Kämpfe',
+    lblWinrateShort: 'Siegrate',
+    lblDeckShort: 'Deck',
+    lblEditDeckShort: 'bearb.',
     // Morning Report
     lblMorningReport: 'Morning Report',
     lbl7Days: '7 Days',
@@ -845,6 +849,7 @@ export default {
     lblNextBelt: 'Nächster Gürtel',
     lblHexmasterUnlocked: 'HEXMASTER FREIGESCHALTET',
     lblWinsToNext: 'Siege bis zum nächsten Gürtel',
+    lblWinsToNextShort: 'wins to next',
     lblWinsToHexmaster: 'Siege bis Hexmaster',
     lblPromoted: 'Aufgestiegen zu',
     lblMaxBelt: 'Maximaler Gürtel erreicht',

@@ -453,6 +453,10 @@ export default {
     lblMaxLevel: 'MAX',
     lblResearchFirst: 'Player must research first',
     lblWinRate: 'Win Rate',
+    lblFightsShort: '試合',
+    lblWinrateShort: '勝率',
+    lblDeckShort: 'デッキ',
+    lblEditDeckShort: '編集',
     // Morning Report
     lblMorningReport: 'Morning Report',
     lbl7Days: '7 Days',
@@ -830,6 +834,7 @@ export default {
     lblNextBelt: '次の帯',
     lblHexmasterUnlocked: 'HEXMASTER 解放',
     lblWinsToNext: '勝で次の帯へ',
+    lblWinsToNextShort: 'wins to next',
     lblWinsToHexmaster: '勝でHexmasterへ',
     lblPromoted: '昇格:',
     lblMaxBelt: '最高帯に到達',

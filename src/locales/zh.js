@@ -453,6 +453,10 @@ export default {
     lblMaxLevel: 'MAX',
     lblResearchFirst: 'Player must research first',
     lblWinRate: 'Win Rate',
+    lblFightsShort: '场次',
+    lblWinrateShort: '胜率',
+    lblDeckShort: '卡组',
+    lblEditDeckShort: '编辑',
     // Morning Report
     lblMorningReport: 'Morning Report',
     lbl7Days: '7 Days',
@@ -831,6 +835,7 @@ export default {
     lblNextBelt: '下一个腰带',
     lblHexmasterUnlocked: 'HEXMASTER 已解锁',
     lblWinsToNext: '胜即可升级腰带',
+    lblWinsToNextShort: 'wins to next',
     lblWinsToHexmaster: '胜即可达到Hexmaster',
     lblPromoted: '晋升为',
     lblMaxBelt: '已达最高腰带',

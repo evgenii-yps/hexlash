@@ -453,6 +453,10 @@ export default {
     lblMaxLevel: 'MAX',
     lblResearchFirst: 'Player must research first',
     lblWinRate: 'Win Rate',
+    lblFightsShort: '경기',
+    lblWinrateShort: '승률',
+    lblDeckShort: '덱',
+    lblEditDeckShort: '편집',
     // Morning Report
     lblMorningReport: 'Morning Report',
     lbl7Days: '7 Days',
@@ -831,6 +835,7 @@ export default {
     lblNextBelt: '다음 벨트',
     lblHexmasterUnlocked: 'HEXMASTER 해제',
     lblWinsToNext: '승 다음 벨트까지',
+    lblWinsToNextShort: 'wins to next',
     lblWinsToHexmaster: '승 Hexmaster까지',
     lblPromoted: '승격:',
     lblMaxBelt: '최고 벨트 달성',
