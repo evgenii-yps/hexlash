@@ -161,6 +161,8 @@ const onCreate = async () => {
   padding: 80px 16px 120px;
   max-width: 480px;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
 }
 
 @supports (height: 100dvh) {
@@ -172,6 +174,7 @@ const onCreate = async () => {
   display: flex;
   align-items: center;
   margin-bottom: 12px;
+  flex-shrink: 0;
 }
 .wizard-header-spacer {
   min-width: 60px;
@@ -207,6 +210,7 @@ const onCreate = async () => {
   justify-content: center;
   gap: 8px;
   margin-bottom: 20px;
+  flex-shrink: 0;
 }
 .dot {
   width: 8px;
@@ -218,13 +222,14 @@ const onCreate = async () => {
 .dot.active { background: var(--hex-primary); box-shadow: 0 0 6px rgba(255, 6, 111, 0.5); }
 .dot.done { background: var(--hex-primary); opacity: 0.5; }
 
-.step-content { min-height: 300px; }
+.step-content { min-height: 0; flex: 1; display: flex; flex-direction: column; }
 
 /* Step 0: Name & Skin */
 .skin-preview-wrap {
   display: flex;
   justify-content: center;
   margin-bottom: 16px;
+  flex-shrink: 0;
 }
 .skin-preview {
   width: 120px;
@@ -247,7 +252,7 @@ const onCreate = async () => {
   color: var(--hex-text-muted);
 }
 
-.field { margin-bottom: 16px; }
+.field { margin-bottom: 16px; flex-shrink: 0; }
 .name-input {
   width: 100%;
   padding: 10px 12px;
@@ -277,9 +282,13 @@ const onCreate = async () => {
   letter-spacing: 1px;
   color: var(--hex-text-muted);
   margin-bottom: 8px;
+  flex-shrink: 0;
 }
 
-.step-actions { margin-top: 20px; }
+.step-content :deep(.skin-picker) { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.step-content :deep(.skin-grid-scroll) { max-height: none; flex: 1; min-height: 0; }
+
+.step-actions { margin-top: 20px; flex-shrink: 0; }
 
 /* Step 1: Confirm */
 .confirm-preview {
