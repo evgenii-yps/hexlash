@@ -371,7 +371,6 @@ export default {
   },
   club: {
     // Agent Roster
-    lblMyFightClub: 'MY FIGHT CLUB',
     lblThePit: 'THE PIT',
     lblLevelAgents: 'Nivel {level} · {current} / {max} agentes',
     lblNextLevel: 'siguiente: Nv {n}',
@@ -477,6 +476,8 @@ export default {
     lblGenerating: 'Generating...',
     lblNoFights: 'No fights in this period',
     lblAiUnavailable: 'AI analysis unavailable',
+    lblAnalysisUnavailable: 'Analysis not available',
+    lblDeepAnalysisFailed: 'Deep analysis failed',
     // Morning Report Lv2
     lblAgentDetails: 'AGENT DETAILS',
     lblAssessment: 'Assessment',

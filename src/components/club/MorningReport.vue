@@ -56,7 +56,7 @@
             <!-- Recent results -->
             <div v-if="agent.recentResults?.length" class="recent-row">
               <span class="recent-label">{{ t.club.lblRecentResults || 'Recent' }}:</span>
-              <span v-for="(r, i) in agent.recentResults" :key="i" :class="['recent-icon', `recent-${r}`]">{{ r === 'W' ? '✅' : r === 'L' ? '❌' : '➖' }}</span>
+              <span v-for="(r, i) in agent.recentResults" :key="i" :class="['result-dot', r === 'W' ? 'result-dot--win' : r === 'L' ? 'result-dot--loss' : 'result-dot--draw']"></span>
             </div>
 
             <!-- AI per-agent analysis -->
@@ -74,7 +74,7 @@
                 <div class="agent-ai-text">{{ getAgentAnalysis(agent.name).buildAdvice }}</div>
               </div>
             </template>
-            <div v-else class="agent-ai-unavailable">Analysis not available</div>
+            <div v-else class="agent-ai-unavailable">{{ t.club.lblAnalysisUnavailable || 'Analysis not available' }}</div>
           </div>
         </div>
       </div>
@@ -196,7 +196,7 @@ export default {
         const { data } = await apiClient.post('/ai/premium-report', { period: period.value }, { authRequired: true, headers });
         premiumReport.value = data.report;
       } catch (err) {
-        premiumError.value = err?.response?.data?.error || 'Deep analysis failed';
+        premiumError.value = err?.response?.data?.error || t.value.club?.lblDeepAnalysisFailed || 'Deep analysis failed';
       } finally {
         premiumLoading.value = false;
       }
@@ -321,7 +321,10 @@ export default {
 
 .recent-row { margin-bottom: 8px; display: flex; align-items: center; gap: 4px; }
 .recent-label { font-size: 10px; color: var(--hex-text-muted); text-transform: uppercase; }
-.recent-icon { font-size: 12px; }
+.result-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
+.result-dot--win { background: var(--hex-victory); }
+.result-dot--loss { background: var(--hex-defeat); }
+.result-dot--draw { background: var(--hex-draw); }
 
 .agent-ai-section { margin-bottom: 6px; }
 .agent-ai-label {
@@ -344,4 +347,32 @@ export default {
 .report-action { margin-top: 10px; }
 .empty-text { text-align: center; font-size: 12px; color: var(--hex-text-muted); padding: 12px 0; }
 .error-text { margin-top: 8px; font-size: 11px; color: var(--hex-defeat); text-align: center; }
+
+@media (min-width: 1024px) {
+  .morning-report { padding: 22px; border-radius: 10px; }
+  .report-header { margin-bottom: 18px; }
+  .report-title { font-size: 13px; letter-spacing: 2.5px; }
+  .report-limit { font-size: 11px; }
+  .period-select { margin-bottom: 18px; }
+  .period-btn { padding: 11px 0; font-size: 12px; letter-spacing: 2.5px; }
+  .report-stats { padding: 14px 0; margin-bottom: 18px; }
+  .stat-num { font-size: 24px; }
+  .stat-label { font-size: 11px; letter-spacing: 2px; margin-top: 4px; }
+  .analysis-label { font-size: 12px; letter-spacing: 2px; margin-bottom: 4px; }
+  .analysis-text { font-size: 14px; line-height: 1.6; }
+  .analysis-section { margin-bottom: 14px; }
+  .agent-details-title { font-size: 12px; letter-spacing: 1.5px; }
+  .agent-accordion-header { padding: 10px 14px; gap: 10px; }
+  .accordion-skin { width: 34px; height: 34px; }
+  .accordion-name { font-size: 14px; }
+  .accordion-record { font-size: 13px; }
+  .agent-accordion-body { padding: 14px 16px; }
+  .agent-ai-label { font-size: 11px; }
+  .agent-ai-text { font-size: 13px; }
+  .result-dot { width: 10px; height: 10px; }
+  .recent-label { font-size: 12px; }
+  .deep-section { margin-top: 16px; }
+  .report-action { margin-top: 14px; }
+  .empty-text { font-size: 14px; }
+}
 </style>
