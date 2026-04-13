@@ -101,4 +101,12 @@ export default {
   text-transform: uppercase;
   text-align: center;
 }
+
+@media (min-width: 1024px) {
+  .agent-roster { margin-bottom: 32px; }
+  .roster-grid { gap: 20px; }
+  .empty-slot { padding: 20px; min-height: 260px; border-radius: 10px; }
+  .empty-plus { font-size: 40px; margin-bottom: 10px; }
+  .empty-label { font-size: 13px; letter-spacing: 2.5px; }
+}
 </style>

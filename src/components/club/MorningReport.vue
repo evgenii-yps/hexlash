@@ -347,4 +347,32 @@ export default {
 .report-action { margin-top: 10px; }
 .empty-text { text-align: center; font-size: 12px; color: var(--hex-text-muted); padding: 12px 0; }
 .error-text { margin-top: 8px; font-size: 11px; color: var(--hex-defeat); text-align: center; }
+
+@media (min-width: 1024px) {
+  .morning-report { padding: 22px; border-radius: 10px; }
+  .report-header { margin-bottom: 18px; }
+  .report-title { font-size: 13px; letter-spacing: 2.5px; }
+  .report-limit { font-size: 11px; }
+  .period-select { margin-bottom: 18px; }
+  .period-btn { padding: 11px 0; font-size: 12px; letter-spacing: 2.5px; }
+  .report-stats { padding: 14px 0; margin-bottom: 18px; }
+  .stat-num { font-size: 24px; }
+  .stat-label { font-size: 11px; letter-spacing: 2px; margin-top: 4px; }
+  .analysis-label { font-size: 12px; letter-spacing: 2px; margin-bottom: 4px; }
+  .analysis-text { font-size: 14px; line-height: 1.6; }
+  .analysis-section { margin-bottom: 14px; }
+  .agent-details-title { font-size: 12px; letter-spacing: 1.5px; }
+  .agent-accordion-header { padding: 10px 14px; gap: 10px; }
+  .accordion-skin { width: 34px; height: 34px; }
+  .accordion-name { font-size: 14px; }
+  .accordion-record { font-size: 13px; }
+  .agent-accordion-body { padding: 14px 16px; }
+  .agent-ai-label { font-size: 11px; }
+  .agent-ai-text { font-size: 13px; }
+  .result-dot { width: 10px; height: 10px; }
+  .recent-label { font-size: 12px; }
+  .deep-section { margin-top: 16px; }
+  .report-action { margin-top: 14px; }
+  .empty-text { font-size: 14px; }
+}
 </style>

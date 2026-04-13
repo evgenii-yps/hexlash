@@ -178,7 +178,21 @@ onUnmounted(() => {
 
 @media (min-width: 1024px) {
   .fight-club-container {
-    max-width: 1024px;
+    max-width: 1200px;
+    padding: 100px 24px 120px;
   }
+  .pit-title {
+    font-size: 56px;
+    letter-spacing: 12px;
+    text-shadow: 0 0 40px var(--hex-primary-glow), 0 0 80px var(--hex-primary-glow);
+  }
+  .pit-subtitle {
+    font-size: 13px;
+    letter-spacing: 4px;
+    margin-top: 12px;
+  }
+  .pit-xp { margin-bottom: 36px; }
+  .pit-xp-bar { height: 4px; margin-bottom: 6px; }
+  .pit-xp-meta { font-size: 12px; }
 }
 </style>

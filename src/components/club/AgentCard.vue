@@ -152,4 +152,18 @@ export default {
 /* Fight button */
 .card-fight { padding-top: 0; }
 .fight-btn[disabled] { background: transparent; border: 1px solid var(--hex-border-default); }
+
+@media (min-width: 1024px) {
+  .card-header-left { gap: 16px; }
+  .card-skin { width: 72px; height: 72px; }
+  .card-name { font-size: 18px; letter-spacing: 1.5px; }
+  .captain-star { font-size: 14px; }
+  .card-meta { font-size: 12px; letter-spacing: 1.5px; }
+  .card-status { font-size: 11px; letter-spacing: 2px; }
+  .card-divider { margin: 10px 0; }
+  .card-archetypes { gap: 8px; }
+  .arch-abbr { font-size: 13px; letter-spacing: 1.5px; }
+  .arch-dot { font-size: 13px; }
+  .card-no-modules { font-size: 13px; }
+}
 </style>
