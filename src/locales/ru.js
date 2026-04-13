@@ -402,6 +402,7 @@ export default {
     lblAgentDeleted: 'Агент удалён',
     lblAutoFightOn: 'Автобой включён',
     lblAutoFightOff: 'Автобой выключен',
+    lblAutoFightDesc: 'Автоматические бои в режиме ожидания',
     errCreateAgent: 'Ошибка создания агента',
     errDeleteAgent: 'Ошибка удаления агента',
     errLoadAgents: 'Ошибка загрузки агентов',

@@ -1,46 +1,43 @@
 <template>
-  <div class="agent-card" :class="{ 'agent-card--fighting': agent.status === 'fighting', 'agent-card--auto': agent.autoFight, 'agent-card--captain': agent.isCaptain }" @click="$emit('click', agent.id)">
+  <div class="agent-card" @click="$emit('click', agent.id)">
     <HexCard variant="default" padding="md" clickable>
-      <div class="agent-card-top">
-        <img class="agent-skin" :src="`/images/skins/${agent.skin}`" :alt="agent.name" />
-        <div class="agent-info">
-          <div class="agent-name">
-            {{ agent.name }}
-            <span v-if="agent.isCaptain" class="captain-badge">{{ t.club.lblCaptain || 'CAPTAIN' }}</span>
-          </div>
-          <div v-if="agent.primaryModule" class="agent-archetype-row">
-            <HexBadge variant="archetype" :archetype="agent.primaryModule" size="sm">{{ shortArch(agent.primaryModule) }}</HexBadge>
-            <HexBadge variant="archetype" :archetype="agent.secondaryModule" size="sm">{{ shortArch(agent.secondaryModule) }}</HexBadge>
-            <HexBadge variant="archetype" :archetype="agent.tertiaryModule" size="sm">{{ shortArch(agent.tertiaryModule) }}</HexBadge>
-          </div>
-          <div v-else class="agent-no-modules">{{ t.club.lblNoModules || 'No modules set' }}</div>
-          <div class="agent-stats">
-            <span class="stat-win">W:{{ agent.wins }}</span>
-            <span class="stat-lose">L:{{ agent.losses }}</span>
-            <span class="stat-draw">D:{{ agent.draws }}</span>
+      <!-- Header row -->
+      <div class="card-header">
+        <div class="card-header-left">
+          <img class="card-skin" :src="`/images/skins/${agent.skin}`" :alt="agent.name" />
+          <div class="card-identity">
+            <div class="card-name">
+              <span v-if="agent.isCaptain" class="captain-star">★</span>
+              {{ agent.name }}
+            </div>
+            <div class="card-meta">
+              {{ beltName }} · {{ agent.wins }}-{{ agent.losses }}-{{ agent.draws }}
+            </div>
           </div>
         </div>
-        <BeltBadge :grade="agent.belt || 0" :is-hexmaster="agent.isHexmaster || false" size="md" />
+        <span class="card-status">{{ statusText }}</span>
       </div>
 
-      <div class="agent-card-bottom">
-        <div class="agent-status-row">
-          <HexBadge v-if="agent.status === 'idle'" variant="custom" color="var(--hex-text-muted)" bg-color="var(--hex-bg-light)">{{ t.club.lblIdle || 'Idle' }}</HexBadge>
-          <HexBadge v-else-if="agent.status === 'fighting'" variant="custom" color="var(--hex-primary)" bg-color="var(--hex-primary-bg, rgba(255,6,111,0.15))" :pulse="true">{{ t.club.lblFighting || 'Fighting...' }}</HexBadge>
-          <HexBadge v-else-if="agent.status === 'resting'" variant="custom" color="var(--hex-draw)" bg-color="var(--hex-draw-bg)">{{ restingText }}</HexBadge>
+      <!-- Divider + Meta row (archetypes) -->
+      <div class="card-divider"></div>
+      <div v-if="agent.primaryModule" class="card-archetypes">
+        <span class="arch-abbr" :style="{ color: `var(--hex-arch-${agent.primaryModule})` }">{{ shortArch(agent.primaryModule) }}</span>
+        <span class="arch-dot">·</span>
+        <span class="arch-abbr" :style="{ color: `var(--hex-arch-${agent.secondaryModule})` }">{{ shortArch(agent.secondaryModule) }}</span>
+        <span class="arch-dot">·</span>
+        <span class="arch-abbr" :style="{ color: `var(--hex-arch-${agent.tertiaryModule})` }">{{ shortArch(agent.tertiaryModule) }}</span>
+      </div>
+      <div v-else class="card-no-modules">{{ t.club.lblNoModules || 'No modules set' }}</div>
 
-          <label class="auto-toggle" @click.stop>
-            <input type="checkbox" :checked="agent.autoFight" @change="$emit('toggle-auto', agent.id, $event.target.checked)" />
-            <span class="auto-toggle-label">{{ t.club.lblAutoFight || 'Auto' }}</span>
-          </label>
+      <!-- Fight button (captain only) -->
+      <template v-if="agent.isCaptain">
+        <div class="card-divider"></div>
+        <div class="card-fight" @click.stop>
+          <HexButton variant="primary" block :disabled="agent.status !== 'idle'" @click="goToFight" class="fight-btn">
+            {{ t.club.lblFight || 'FIGHT' }}
+          </HexButton>
         </div>
-      </div>
-
-      <div v-if="agent.isCaptain" class="agent-card-fight" @click.stop>
-        <HexButton variant="primary" block :disabled="fightDisabled" @click="goToFight">
-          {{ t.club.lblFight || 'FIGHT' }}
-        </HexButton>
-      </div>
+      </template>
     </HexCard>
   </div>
 </template>
@@ -49,151 +46,110 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { t } from '@/locales/index.js'
+import { getBeltDisplay } from '@/utils/beltDisplay.js'
 import HexCard from '@/components/ui/HexCard.vue'
 import HexButton from '@/components/ui/HexButton.vue'
-import HexBadge from '@/components/ui/HexBadge.vue'
-import BeltBadge from '@/components/ui/BeltBadge.vue'
 
 export default {
   name: 'AgentCard',
-  components: { HexCard, HexButton, HexBadge, BeltBadge },
+  components: { HexCard, HexButton },
   props: {
     agent: { type: Object, required: true },
   },
-  emits: ['click', 'toggle-auto'],
+  emits: ['click'],
   setup(props) {
     const router = useRouter();
 
-    const restingText = computed(() => {
-      if (!props.agent.nextFightAt) return t.value.club.lblResting || 'Resting';
-      const diff = new Date(props.agent.nextFightAt).getTime() - Date.now();
-      if (diff <= 0) return t.value.club.lblIdle || 'Idle';
-      const min = Math.ceil(diff / 60000);
-      return `${min}m`;
+    const beltName = computed(() => {
+      const d = getBeltDisplay(props.agent.belt || 0);
+      return t.value.belts?.[d.color] || d.color;
     });
 
-    const shortArch = (name) => {
-      if (!name) return '';
-      return name.slice(0, 3).toUpperCase();
-    };
+    const statusText = computed(() => {
+      if (props.agent.status === 'fighting') return t.value.club.lblFighting || 'Fighting';
+      if (props.agent.status === 'resting') {
+        if (!props.agent.nextFightAt) return t.value.club.lblResting || 'Resting';
+        const diff = new Date(props.agent.nextFightAt).getTime() - Date.now();
+        if (diff <= 0) return t.value.club.lblIdle || 'Idle';
+        return `${Math.ceil(diff / 60000)}m`;
+      }
+      return t.value.club.lblIdle || 'Idle';
+    });
 
-    const fightDisabled = computed(() =>
-      props.agent.status === 'fighting' || props.agent.status === 'resting'
-    );
+    const shortArch = (name) => name ? name.slice(0, 3).toUpperCase() : '';
 
-    const goToFight = () => {
-      router.push('/arena/fight');
-    };
+    const goToFight = () => router.push('/arena/fight');
 
-    return { t, restingText, shortArch, fightDisabled, goToFight };
+    return { t, beltName, statusText, shortArch, goToFight };
   },
 };
 </script>
 
 <style scoped>
 .agent-card { cursor: pointer; }
-.agent-card--fighting :deep(.hex-card) { box-shadow: 0 0 14px rgba(255, 6, 111, 0.3); }
-.agent-card--auto :deep(.hex-card) { border-color: var(--hex-border-active); }
-.agent-card--captain :deep(.hex-card) { border-color: var(--hex-primary); box-shadow: 0 0 8px rgba(255, 6, 111, 0.15); }
 
-.agent-card-top {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
+/* Header */
+.card-header { display: flex; justify-content: space-between; align-items: flex-start; }
+.card-header-left { display: flex; gap: 12px; align-items: center; min-width: 0; }
 
-.agent-skin {
-  width: 64px;
-  height: 64px;
-  border-radius: 10px;
+.card-skin {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--hex-radius-md, 8px);
   object-fit: cover;
   object-position: top;
   border: 1px solid var(--hex-border-default);
   flex-shrink: 0;
 }
 
-.agent-info { flex: 1; min-width: 0; }
+.card-identity { min-width: 0; }
 
-.agent-name {
+.card-name {
   font-family: 'Anonymous', monospace;
-  font-size: 16px;
+  font-size: 14px;
+  letter-spacing: 1px;
   color: var(--hex-text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 }
 
-.captain-badge {
+.captain-star { color: var(--hex-primary); font-size: 11px; }
+
+.card-meta {
   font-size: 9px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  letter-spacing: 1px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--hex-primary);
-  background: rgba(255, 6, 111, 0.1);
-  border: 1px solid rgba(255, 6, 111, 0.3);
-  border-radius: 3px;
-  padding: 1px 5px;
+  color: var(--hex-text-muted);
+  margin-top: 4px;
+}
+
+.card-status {
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--hex-text-muted);
   white-space: nowrap;
   flex-shrink: 0;
+  padding-top: 2px;
 }
 
-.agent-no-modules {
-  font-size: 11px;
-  color: var(--hex-text-muted);
-  margin-top: 6px;
-  font-style: italic;
+/* Divider */
+.card-divider {
+  border-top: 1px solid var(--hex-border-default);
+  margin: 8px 0;
 }
 
-.agent-archetype-row {
-  display: flex;
-  gap: 4px;
-  margin-top: 6px;
-}
+/* Archetypes */
+.card-archetypes { display: flex; gap: 6px; align-items: center; }
+.arch-abbr { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; }
+.arch-dot { color: var(--hex-text-muted); font-size: 10px; }
+.card-no-modules { font-size: 11px; color: var(--hex-text-muted); font-style: italic; }
 
-.agent-stats {
-  display: flex;
-  gap: 10px;
-  margin-top: 6px;
-  font-family: 'AnonymousBalance', monospace;
-  font-size: 14px;
-}
-.stat-win { color: var(--hex-victory); }
-.stat-lose { color: var(--hex-defeat); }
-.stat-draw { color: var(--hex-draw); }
-
-.agent-card-bottom {
-  margin-top: 12px;
-}
-
-.agent-status-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.auto-toggle {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-}
-.auto-toggle input {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--hex-primary);
-  cursor: pointer;
-}
-.auto-toggle-label {
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--hex-text-muted);
-}
-
-.agent-card-fight {
-  margin-top: 12px;
-}
+/* Fight button */
+.card-fight { padding-top: 0; }
+.fight-btn[disabled] { background: transparent; border: 1px solid var(--hex-border-default); }
 </style>

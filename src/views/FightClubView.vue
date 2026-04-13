@@ -21,7 +21,6 @@
         :loading="loading"
         @create="$router.push('/arena/club/create')"
         @agent-click="(id) => $router.push(`/arena/club/${id}`)"
-        @toggle-auto="onToggleAutoFight"
       />
     </div>
   </div>
@@ -41,14 +40,6 @@ const loading = computed(() => store.state.agent.agentsLoading);
 const fightClubLevel = computed(() => store.state.agent.fightClubLevel);
 
 let refreshInterval = null;
-
-const onToggleAutoFight = async (id, enabled) => {
-  try {
-    await store.dispatch('agent/toggleAutoFight', { id, enabled });
-  } catch (err) {
-    console.error('Toggle auto-fight error:', err);
-  }
-};
 
 onMounted(() => {
   store.dispatch('agent/fetchAgents');

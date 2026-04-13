@@ -393,6 +393,7 @@ export default {
     lblAgentDeleted: 'Agent deleted',
     lblAutoFightOn: 'Auto Fight enabled',
     lblAutoFightOff: 'Auto Fight disabled',
+    lblAutoFightDesc: 'アイドル時に自動的にバトルを実行',
     errCreateAgent: 'Failed to create agent',
     errDeleteAgent: 'Failed to delete agent',
     errLoadAgents: 'Failed to load agents',
