@@ -453,6 +453,10 @@ export default {
     lblMaxLevel: 'MAX',
     lblResearchFirst: 'Player must research first',
     lblWinRate: 'Win Rate',
+    lblFightsShort: 'lutas',
+    lblWinrateShort: 'taxa',
+    lblDeckShort: 'Deck',
+    lblEditDeckShort: 'editar',
     // Morning Report
     lblMorningReport: 'Morning Report',
     lbl7Days: '7 Days',
@@ -830,6 +834,7 @@ export default {
     lblNextBelt: 'Próxima faixa',
     lblHexmasterUnlocked: 'HEXMASTER DESBLOQUEADO',
     lblWinsToNext: 'vitórias para a próxima faixa',
+    lblWinsToNextShort: 'wins to next',
     lblWinsToHexmaster: 'vitórias para Hexmaster',
     lblPromoted: 'Promovido a',
     lblMaxBelt: 'Faixa máxima alcançada',

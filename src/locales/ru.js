@@ -462,6 +462,10 @@ export default {
     lblMaxLevel: 'МАКС',
     lblResearchFirst: 'Сначала исследуйте приём',
     lblWinRate: 'Винрейт',
+    lblFightsShort: 'боёв',
+    lblWinrateShort: 'винрейт',
+    lblDeckShort: 'Колода',
+    lblEditDeckShort: 'ред.',
     // Morning Report
     lblMorningReport: 'Утренний отчёт',
     lbl7Days: '7 дней',
@@ -853,6 +857,7 @@ export default {
     lblNextBelt: 'Следующий пояс',
     lblHexmasterUnlocked: 'ХЕКСМАСТЕР РАЗБЛОКИРОВАН',
     lblWinsToNext: 'побед до следующего пояса',
+    lblWinsToNextShort: 'побед до след.',
     lblWinsToHexmaster: 'побед до Хексмастера',
     lblPromoted: 'Повышение до',
     lblMaxBelt: 'Максимальный пояс достигнут',

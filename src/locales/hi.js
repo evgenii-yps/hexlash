@@ -453,6 +453,10 @@ export default {
     lblMaxLevel: 'MAX',
     lblResearchFirst: 'Player must research first',
     lblWinRate: 'Win Rate',
+    lblFightsShort: 'लड़ाइयाँ',
+    lblWinrateShort: 'जीत दर',
+    lblDeckShort: 'डेक',
+    lblEditDeckShort: 'संपादन',
     // Morning Report
     lblMorningReport: 'Morning Report',
     lbl7Days: '7 Days',
@@ -830,6 +834,7 @@ export default {
     lblNextBelt: 'अगला बेल्ट',
     lblHexmasterUnlocked: 'HEXMASTER अनलॉक',
     lblWinsToNext: 'जीत अगले बेल्ट के लिए',
+    lblWinsToNextShort: 'wins to next',
     lblWinsToHexmaster: 'जीत Hexmaster के लिए',
     lblPromoted: 'प्रमोशन',
     lblMaxBelt: 'अधिकतम बेल्ट प्राप्त',

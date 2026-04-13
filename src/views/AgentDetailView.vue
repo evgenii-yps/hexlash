@@ -5,38 +5,52 @@
       <div v-if="loading" class="loader-wrap"><v-progress-circular size="36" indeterminate /></div>
 
       <template v-else-if="agent">
-        <!-- Header -->
-        <div class="agent-header">
-          <div class="header-top">
-            <button class="back-link" @click="$router.push('/arena/club')">&larr;</button>
-            <div class="header-actions">
-              <button class="icon-btn" @click="showEdit = true">&#9881;</button>
-              <button class="icon-btn icon-btn--danger" @click="confirmDelete">&#128465;</button>
+        <!-- Header Actions -->
+        <div class="header-top">
+          <button class="back-link" @click="$router.push('/arena/club')">&larr;</button>
+          <div class="header-actions">
+            <button class="icon-btn" @click="showEdit = true">&#9881;</button>
+            <button class="icon-btn icon-btn--danger" @click="confirmDelete">&#128465;</button>
+          </div>
+        </div>
+
+        <!-- Hero -->
+        <div class="hero">
+          <img :src="`/images/skins/${agent.skin}`" class="hero-skin" />
+          <div class="hero-identity">
+            <div class="hero-name">
+              <span v-if="agent.isCaptain" class="captain-star">★</span>
+              {{ agent.name }}
+            </div>
+            <HexButton v-if="!agent.isCaptain" variant="ghost" size="sm" @click="confirmSetCaptain" class="make-captain-btn">{{ t.club.lblMakeCaptain || 'Make Captain' }}</HexButton>
+            <div v-if="agent.primaryModule" class="hero-arch">
+              <HexBadge variant="archetype" :archetype="agent.primaryModule" size="sm">{{ shortArch(agent.primaryModule) }} 50%</HexBadge>
+              <HexBadge variant="archetype" :archetype="agent.secondaryModule" size="sm">{{ shortArch(agent.secondaryModule) }} 30%</HexBadge>
+              <HexBadge variant="archetype" :archetype="agent.tertiaryModule" size="sm">{{ shortArch(agent.tertiaryModule) }} 20%</HexBadge>
+            </div>
+            <div v-else class="hero-arch-empty">{{ t.club.lblNoModules || 'No modules set' }}</div>
+            <div class="hero-inline-stats">
+              <span class="stat-num">{{ agent.totalFights }}</span> {{ t.club.lblFightsShort || 'fights' }}
+              · <span class="stat-num">{{ winRate }}%</span> {{ t.club.lblWinrateShort || 'winrate' }}
             </div>
           </div>
-          <div class="header-info">
-            <img :src="`/images/skins/${agent.skin}`" class="header-skin" />
-            <div class="header-text">
-              <div class="header-name">{{ agent.name }}</div>
-              <div v-if="agent.primaryModule" class="header-arch">
-                <HexBadge variant="archetype" :archetype="agent.primaryModule" size="sm">{{ shortArch(agent.primaryModule) }}</HexBadge>
-                <HexBadge variant="archetype" :archetype="agent.secondaryModule" size="sm">{{ shortArch(agent.secondaryModule) }}</HexBadge>
-                <HexBadge variant="archetype" :archetype="agent.tertiaryModule" size="sm">{{ shortArch(agent.tertiaryModule) }}</HexBadge>
-              </div>
-              <div v-else class="header-arch-empty">{{ t.club.lblNoModules || 'No modules set' }}</div>
-              <div class="header-stats">
-                <span class="s-win">W:{{ agent.wins }}</span>
-                <span class="s-lose">L:{{ agent.losses }}</span>
-                <span class="s-draw">D:{{ agent.draws }}</span>
-                <span class="s-wr">({{ winRate }}%)</span>
-              </div>
-              <div class="header-captain-row">
-                <span v-if="agent.isCaptain" class="captain-indicator">★ {{ t.club.lblCaptain || 'CAPTAIN' }}</span>
-                <HexButton v-else variant="secondary" size="sm" @click="confirmSetCaptain">{{ t.club.lblMakeCaptain || 'Make Captain' }}</HexButton>
-              </div>
+        </div>
+
+        <!-- Belt -->
+        <div class="belt-row">
+          <template v-if="agent.isHexmaster">
+            <div class="belt-hexmaster">★ {{ t.belts?.hexmaster || 'Hexmaster' }}</div>
+          </template>
+          <template v-else>
+            <div class="belt-labels">
+              <span class="belt-current">{{ beltName }}</span>
+              <span v-if="nextBeltName" class="belt-next">→ {{ nextBeltName }}</span>
+              <span class="belt-remaining">{{ beltProgress.remaining }} {{ t.belts?.lblWinsToNextShort || 'wins to next' }}</span>
             </div>
-            <BeltBadge :grade="agent.belt || 0" :is-hexmaster="agent.isHexmaster || false" size="lg" />
-          </div>
+            <div class="belt-bar">
+              <div class="belt-bar-fill" :style="{ width: beltProgressPercent + '%' }"></div>
+            </div>
+          </template>
         </div>
 
         <!-- Tabs -->
@@ -48,56 +62,38 @@
 
         <!-- Overview Tab -->
         <div v-if="activeTab === 'overview'" class="tab-content hex-fade-in">
-          <div class="belt-card">
-            <div class="belt-card-row">
-              <BeltBadge :grade="agent.belt || 0" :is-hexmaster="agent.isHexmaster || false" size="md" />
-              <span class="belt-card-name">{{ beltName }}</span>
+          <!-- Branch XP -->
+          <div class="branch-xp">
+            <div class="xp-row">
+              <span class="xp-label">{{ t.gameData?.branches?.speed?.name || 'Speed' }}</span>
+              <HexProgress :value="prog.speedXp" :max="Math.max(prog.speedXp, 100)" variant="branch" branch="speed" size="sm" />
+              <span class="xp-val">{{ prog.speedXp }} / {{ Math.max(prog.speedXp, 100) }}</span>
             </div>
-            <div v-if="beltProgress.remaining !== null" class="belt-progress-section">
-              <HexProgress :value="beltProgressPercent" :max="100" variant="generic" size="sm" />
-              <span class="belt-progress-label">{{ beltProgress.remaining }} {{ t.belts?.lblWinsToNext || 'wins to next belt' }}</span>
+            <div class="xp-row">
+              <span class="xp-label">{{ t.gameData?.branches?.power?.name || 'Power' }}</span>
+              <HexProgress :value="prog.powerXp" :max="Math.max(prog.powerXp, 100)" variant="branch" branch="power" size="sm" />
+              <span class="xp-val">{{ prog.powerXp }} / {{ Math.max(prog.powerXp, 100) }}</span>
             </div>
-            <div v-else-if="!agent.isHexmaster && beltProgress.hexmasterRemaining" class="belt-progress-section">
-              <span class="belt-progress-label">{{ beltProgress.hexmasterRemaining }} {{ t.belts?.lblWinsToHexmaster || 'wins to Hexmaster' }}</span>
-            </div>
-            <div v-else-if="agent.isHexmaster" class="belt-hexmaster-label">★ {{ t.belts?.hexmaster || 'Hexmaster' }}</div>
-          </div>
-
-          <div class="stats-grid">
-            <div class="stat-card"><div class="stat-val">{{ agent.totalFights }}</div><div class="stat-label">{{ t.clan.lblTotalFights || 'Fights' }}</div></div>
-            <div class="stat-card"><div class="stat-val">{{ winRate }}%</div><div class="stat-label">{{ t.club.lblWinRate || 'Win Rate' }}</div></div>
-            <div class="stat-card"><div class="stat-val">{{ agent.qualifiedWins || 0 }}</div><div class="stat-label">{{ t.belts?.lblBelt || 'Belt' }} Wins</div></div>
-          </div>
-
-          <div class="section">
-            <div class="section-label">{{ t.club.lblStatus || 'STATUS' }}</div>
-            <div class="status-row">
-              <span>Mode: <strong>{{ agent.tactics?.fightMode || 'pve_training' }}</strong></span>
-              <span>Auto: <strong :style="{ color: agent.autoFight ? 'var(--hex-victory)' : 'var(--hex-text-muted)' }">{{ agent.autoFight ? 'ON' : 'OFF' }}</strong></span>
-            </div>
-            <div class="status-row">
-              <span>Status: <strong>{{ agent.status }}</strong></span>
+            <div class="xp-row">
+              <span class="xp-label">{{ t.gameData?.branches?.technique?.name || 'Technique' }}</span>
+              <HexProgress :value="prog.techniqueXp" :max="Math.max(prog.techniqueXp, 100)" variant="branch" branch="technique" size="sm" />
+              <span class="xp-val">{{ prog.techniqueXp }} / {{ Math.max(prog.techniqueXp, 100) }}</span>
             </div>
           </div>
 
-          <div v-if="deck.length" class="section">
-            <div class="section-label-row">
-              <span class="section-label">{{ t.club.lblDeck || 'DECK' }} ({{ deck.length }})</span>
-              <button class="link-btn" @click="showDeckEdit = true">{{ t.club.lblEdit || 'Edit' }}</button>
+          <!-- Deck -->
+          <div v-if="deck.length" class="deck-section">
+            <div class="deck-header">
+              <span class="deck-title">{{ t.club.lblDeckShort || 'Deck' }} <span class="deck-count">{{ deck.length }} / 8</span></span>
+              <button class="deck-edit-link" @click="showDeckEdit = true">{{ t.club.lblEditDeckShort || 'edit' }} →</button>
             </div>
-            <div class="deck-badges">
-              <HexBadge v-for="m in deck" :key="m" variant="branch" :branch="moveBranch(m)">{{ m }} Lv{{ moveLevel(m) }}</HexBadge>
+            <div class="deck-chips">
+              <span v-for="m in deck" :key="m" class="deck-chip">{{ moveName(m) }}</span>
             </div>
           </div>
 
-          <div class="section">
-            <div class="section-label">XP</div>
-            <div class="xp-row"><span class="xp-label">Speed</span><HexProgress :value="prog.speedXp" :max="Math.max(prog.speedXp, 100)" variant="branch" branch="speed" size="sm" :show-value="true" /></div>
-            <div class="xp-row"><span class="xp-label">Power</span><HexProgress :value="prog.powerXp" :max="Math.max(prog.powerXp, 100)" variant="branch" branch="power" size="sm" :show-value="true" /></div>
-            <div class="xp-row"><span class="xp-label">Technique</span><HexProgress :value="prog.techniqueXp" :max="Math.max(prog.techniqueXp, 100)" variant="branch" branch="technique" size="sm" :show-value="true" /></div>
-          </div>
-
-          <HexButton variant="primary" block :loading="trainLoading" :disabled="agent.status !== 'idle'" @click="onTrain">
+          <!-- Train Now -->
+          <HexButton variant="primary" block :loading="trainLoading" :disabled="agent.status !== 'idle'" @click="onTrain" class="train-btn">
             {{ t.club.lblTrainNow || 'Train Now' }}
           </HexButton>
           <div v-if="trainResult" class="train-result" :class="trainResult.fight.result">
@@ -323,7 +319,18 @@ const beltProgressPercent = computed(() => {
   return getBeltProgressPercent(agent.value.qualifiedWins || 0, agent.value.belt || 0);
 });
 
+const nextBeltName = computed(() => {
+  if (!agent.value || agent.value.isHexmaster) return null;
+  const nextGrade = Math.min((agent.value.belt || 0) + 1, 32);
+  const nd = getBeltDisplay(nextGrade);
+  return t.value.belts?.[nd.color] || nd.color;
+});
+
 const shortArch = (n) => n ? n.slice(0, 3).toUpperCase() : '';
+
+const moveName = (id) => {
+  return t.value.gameData?.moves?.[id]?.name || id;
+};
 
 // Moves
 const branchMoves = computed(() => branches[activeBranch.value]?.moves || []);
@@ -513,67 +520,65 @@ onMounted(() => {
 }
 .loader-wrap { display: flex; justify-content: center; padding: 48px 0; }
 
-/* Header */
-.agent-header { padding: 12px 0; }
+/* Header Actions */
 .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .back-link { font-size: 18px; color: var(--hex-primary); background: none; border: none; cursor: pointer; }
 .header-actions { display: flex; gap: 8px; }
 .icon-btn { font-size: 16px; color: var(--hex-text-muted); background: none; border: none; cursor: pointer; }
 .icon-btn--danger { color: var(--hex-defeat); }
 
-.header-info { display: flex; gap: 12px; align-items: flex-start; }
-.header-skin { width: 72px; height: 72px; border-radius: 10px; object-fit: cover; border: 1.5px solid var(--hex-border-active); flex-shrink: 0; }
-.header-text { flex: 1; min-width: 0; }
-.header-name { font-family: 'Anonymous', monospace; font-size: 16px; color: var(--hex-text-primary); }
-.header-arch { display: flex; gap: 3px; margin-top: 4px; }
-.header-arch-empty { font-size: 11px; color: var(--hex-text-muted); margin-top: 4px; font-style: italic; }
-.header-stats { display: flex; gap: 8px; margin-top: 4px; font-family: 'AnonymousBalance', monospace; font-size: 11px; }
-.header-captain-row { margin-top: 6px; }
-.captain-indicator { font-family: 'Anonymous', monospace; font-size: 12px; color: var(--hex-primary); letter-spacing: 0.5px; }
-.s-win { color: var(--hex-victory); } .s-lose { color: var(--hex-defeat); } .s-draw { color: var(--hex-draw); }
-.s-wr { color: var(--hex-text-muted); }
-.belt-card {
-  background: var(--hex-bg-medium);
-  border: 1px solid var(--hex-border-default);
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 12px;
-}
-.belt-card-row { display: flex; align-items: center; gap: 10px; }
-.belt-card-name { font-family: 'Anonymous', monospace; font-size: 14px; color: var(--hex-text-primary); }
-.belt-progress-section { margin-top: 8px; }
-.belt-progress-label { font-size: 11px; color: var(--hex-text-muted); margin-top: 4px; display: block; }
-.belt-hexmaster-label { font-family: 'Anonymous', monospace; font-size: 13px; color: var(--hex-primary); margin-top: 8px; }
+/* Hero */
+.hero { display: flex; gap: 18px; align-items: flex-start; margin-bottom: 16px; }
+.hero-skin { width: 120px; height: 120px; border-radius: var(--hex-radius-md, 8px); object-fit: cover; object-position: top; border: 1px solid var(--hex-border-default); flex-shrink: 0; }
+.hero-identity { flex: 1; min-width: 0; }
+.hero-name { font-family: 'Anonymous', monospace; font-size: 20px; letter-spacing: 1.5px; color: var(--hex-text-primary); display: flex; align-items: center; gap: 6px; }
+.captain-star { color: var(--hex-primary); }
+.make-captain-btn { margin-top: 4px; }
+.hero-arch { display: flex; gap: 6px; margin-top: 8px; }
+.hero-arch-empty { font-size: 11px; color: var(--hex-text-muted); margin-top: 8px; font-style: italic; }
+.hero-inline-stats { font-size: 11px; color: var(--hex-text-muted); margin-top: 8px; }
+.stat-num { color: var(--hex-text-primary); }
+
+/* Belt */
+.belt-row { margin-bottom: 20px; }
+.belt-labels { display: flex; align-items: baseline; gap: 6px; font-size: 11px; margin-bottom: 6px; }
+.belt-current { color: var(--hex-text-primary); }
+.belt-next { color: var(--hex-text-muted); }
+.belt-remaining { margin-left: auto; color: var(--hex-text-muted); }
+.belt-bar { height: 3px; background: var(--hex-border-default); border-radius: 2px; overflow: hidden; }
+.belt-bar-fill { height: 100%; background: var(--hex-text-muted); border-radius: 2px; transition: width 0.3s; }
+.belt-hexmaster { font-size: 13px; color: var(--hex-text-primary); }
+.belt-hexmaster span:first-child { color: var(--hex-primary); }
 
 /* Tabs */
-.tab-bar { display: flex; border-bottom: 1px solid var(--hex-border-default); margin-bottom: 16px; }
-.tab-btn { flex: 1; padding: 8px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--hex-text-muted); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; transition: all 0.2s; }
-.tab-btn.active { color: var(--hex-primary); border-bottom-color: var(--hex-primary); }
+.tab-bar { display: flex; gap: 24px; border-bottom: 1px solid var(--hex-border-default); margin-bottom: 16px; }
+.tab-btn { padding: 8px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: var(--hex-text-muted); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; transition: all 0.2s; }
+.tab-btn.active { color: var(--hex-text-primary); border-bottom-color: var(--hex-text-primary); }
 
-/* Sections */
+/* Sections (used by Moves/Tactics/Fights tabs) */
 .section { margin-bottom: 16px; }
-.section-label { font-family: 'Anonymous', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--hex-text-muted); margin-bottom: 8px; }
-.section-label-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-.link-btn { font-size: 11px; color: var(--hex-primary); background: none; border: none; cursor: pointer; }
+.section-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--hex-text-muted); margin-bottom: 8px; }
 
-/* Stats grid */
-.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
-.stat-card { background: var(--hex-bg-medium); border: 1px solid var(--hex-border-default); border-radius: 8px; padding: 10px; text-align: center; }
-.stat-val { font-family: 'AnonymousBalance', monospace; font-size: 18px; color: var(--hex-text-primary); }
-.stat-label { font-size: 9px; text-transform: uppercase; color: var(--hex-text-muted); margin-top: 2px; }
-
-/* Status */
-.status-row { display: flex; gap: 16px; font-size: 12px; color: var(--hex-text-secondary); margin-bottom: 4px; }
+/* Branch XP */
+.branch-xp { margin-bottom: 20px; }
+.xp-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.xp-label { width: 80px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--hex-text-secondary); flex-shrink: 0; }
+.xp-val { width: 48px; text-align: right; font-size: 10px; color: var(--hex-text-muted); flex-shrink: 0; }
 
 /* Deck */
+.deck-section { margin-bottom: 20px; }
+.deck-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.deck-title { font-size: 11px; color: var(--hex-text-muted); }
+.deck-count { color: var(--hex-text-muted); }
+.deck-edit-link { font-size: 11px; color: var(--hex-text-muted); background: none; border: none; cursor: pointer; }
+.deck-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .deck-badges { display: flex; flex-wrap: wrap; gap: 4px; }
-
-/* XP */
-.xp-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-.xp-label { font-family: 'Anonymous', monospace; font-size: 10px; text-transform: uppercase; color: var(--hex-text-muted); width: 70px; flex-shrink: 0; }
+.deck-chip { background: var(--hex-bg-light); border: 1px solid var(--hex-border-default); color: var(--hex-text-secondary); padding: 3px 8px; font-size: 11px; border-radius: 3px; }
 
 /* Train */
-.train-result { margin-top: 10px; text-align: center; font-family: 'Anonymous', monospace; font-size: 13px; padding: 8px; border-radius: 6px; }
+.train-btn { margin-top: 20px; }
+.train-btn[disabled] { background: transparent; border: 1px solid var(--hex-border-default); }
+.train-result { margin-top: 10px; text-align: center; font-size: 13px; padding: 8px; border-radius: 6px; }
 .train-result.victory { color: var(--hex-victory); background: var(--hex-victory-bg); }
 .train-result.defeat { color: var(--hex-defeat); background: var(--hex-defeat-bg); }
 .train-result.draw { color: var(--hex-draw); background: var(--hex-draw-bg); }

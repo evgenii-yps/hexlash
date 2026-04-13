@@ -453,6 +453,10 @@ export default {
     lblMaxLevel: 'MAX',
     lblResearchFirst: 'Player must research first',
     lblWinRate: 'Win Rate',
+    lblFightsShort: 'معارك',
+    lblWinrateShort: 'نسبة الفوز',
+    lblDeckShort: 'مجموعة',
+    lblEditDeckShort: 'تعديل',
     // Morning Report
     lblMorningReport: 'Morning Report',
     lbl7Days: '7 Days',
@@ -830,6 +834,7 @@ export default {
     lblNextBelt: 'الحزام التالي',
     lblHexmasterUnlocked: 'HEXMASTER مفتوح',
     lblWinsToNext: 'انتصارات للحزام التالي',
+    lblWinsToNextShort: 'wins to next',
     lblWinsToHexmaster: 'انتصارات لـ Hexmaster',
     lblPromoted: 'ترقية إلى',
     lblMaxBelt: 'تم الوصول للحزام الأقصى',
