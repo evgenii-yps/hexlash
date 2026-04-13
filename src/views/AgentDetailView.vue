@@ -687,7 +687,35 @@ onMounted(() => {
 
 @media (min-width: 1024px) {
   .agent-detail {
-    max-width: 1024px;
+    max-width: 1200px;
+    padding: 100px 32px 120px;
   }
+  .back-link { font-size: 20px; }
+  .icon-btn { font-size: 18px; }
+  .hero { gap: 24px; margin-bottom: 24px; }
+  .hero-skin { width: 160px; height: 160px; }
+  .hero-name { font-size: 28px; letter-spacing: 2px; gap: 8px; }
+  .captain-star { font-size: 18px; }
+  .hero-arch { gap: 8px; margin-top: 10px; }
+  .hero-arch-empty { font-size: 13px; }
+  .hero-inline-stats { font-size: 14px; margin-top: 10px; }
+  .make-captain-btn { margin-top: 6px; }
+  .belt-row { margin-bottom: 28px; }
+  .belt-labels { font-size: 13px; margin-bottom: 8px; }
+  .belt-bar { height: 4px; }
+  .belt-hexmaster { font-size: 15px; }
+  .tab-bar { gap: 32px; margin-bottom: 24px; }
+  .tab-btn { padding: 12px 0; font-size: 13px; letter-spacing: 2.5px; }
+  .branch-xp { margin-bottom: 28px; }
+  .xp-row { gap: 12px; margin-bottom: 10px; }
+  .xp-label { width: 100px; font-size: 13px; }
+  .xp-val { width: 56px; font-size: 12px; }
+  .deck-section { margin-bottom: 28px; }
+  .deck-header { margin-bottom: 12px; }
+  .deck-title { font-size: 13px; }
+  .deck-edit-link { font-size: 13px; }
+  .deck-chips { gap: 8px; }
+  .deck-chip { padding: 5px 12px; font-size: 13px; }
+  .train-btn { margin-top: 24px; }
 }
 </style>

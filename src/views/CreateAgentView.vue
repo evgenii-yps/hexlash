@@ -303,7 +303,21 @@ const onCreate = async () => {
 
 @media (min-width: 1024px) {
   .create-agent-container {
-    max-width: 1024px;
+    max-width: 1200px;
+    padding: 100px 32px 120px;
   }
+  .back-arrow { font-size: 28px; width: 28px; }
+  .step-indicator { font-size: 18px; letter-spacing: 4px; }
+  .header-spacer { width: 28px; }
+  .create-header { margin-bottom: 32px; }
+  .name-field { margin-bottom: 30px; }
+  .name-label { font-size: 16px; letter-spacing: 3px; margin-bottom: 14px; }
+  .name-input { padding: 18px 20px; font-size: 18px; }
+  .name-hint { font-size: 13px; }
+  .step-content :deep(.skin-filter) { margin-bottom: 20px; }
+  .step-content :deep(.filter-btn) { padding: 12px 0; font-size: 13px; letter-spacing: 2.5px; }
+  .step-content :deep(.skin-grid) { gap: 12px; }
+  .step-content :deep(.skin-item) { border-radius: 8px; }
+  .step-actions { margin-top: 24px; }
 }
 </style>

@@ -155,4 +155,16 @@ export default {
   border-top: 0.5px solid var(--hex-border-default);
   margin-top: 0;
 }
+
+@media (min-width: 1024px) {
+  .hex-card--default,
+  .hex-card--elevated,
+  .hex-card--active,
+  .hex-card--result { border-radius: 14px; }
+  .hex-card__body--pad-sm { padding: 12px 16px; }
+  .hex-card__body--pad-md { padding: 20px; }
+  .hex-card__body--pad-lg { padding: 28px; }
+  .hex-card__header { padding: 20px 20px 14px; }
+  .hex-card__footer { padding: 14px 20px 20px; }
+}
 </style>

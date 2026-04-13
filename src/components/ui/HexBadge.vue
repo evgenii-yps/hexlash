@@ -208,4 +208,12 @@ export default {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.6; }
 }
+
+@media (min-width: 1024px) {
+  .hex-badge { letter-spacing: 0.8px; }
+  .hex-badge--sm { padding: 3px 10px; font-size: 12px; }
+  .hex-badge--md { padding: 5px 14px; font-size: 13px; }
+  .hex-badge--counter.hex-badge--sm { min-width: 20px; height: 20px; font-size: 11px; }
+  .hex-badge--counter.hex-badge--md { min-width: 24px; height: 24px; font-size: 13px; }
+}
 </style>
