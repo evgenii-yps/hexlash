@@ -56,7 +56,7 @@
             <!-- Recent results -->
             <div v-if="agent.recentResults?.length" class="recent-row">
               <span class="recent-label">{{ t.club.lblRecentResults || 'Recent' }}:</span>
-              <span v-for="(r, i) in agent.recentResults" :key="i" :class="['recent-icon', `recent-${r}`]">{{ r === 'W' ? '✅' : r === 'L' ? '❌' : '➖' }}</span>
+              <span v-for="(r, i) in agent.recentResults" :key="i" :class="['result-dot', r === 'W' ? 'result-dot--win' : r === 'L' ? 'result-dot--loss' : 'result-dot--draw']"></span>
             </div>
 
             <!-- AI per-agent analysis -->
@@ -74,7 +74,7 @@
                 <div class="agent-ai-text">{{ getAgentAnalysis(agent.name).buildAdvice }}</div>
               </div>
             </template>
-            <div v-else class="agent-ai-unavailable">Analysis not available</div>
+            <div v-else class="agent-ai-unavailable">{{ t.club.lblAnalysisUnavailable || 'Analysis not available' }}</div>
           </div>
         </div>
       </div>
@@ -196,7 +196,7 @@ export default {
         const { data } = await apiClient.post('/ai/premium-report', { period: period.value }, { authRequired: true, headers });
         premiumReport.value = data.report;
       } catch (err) {
-        premiumError.value = err?.response?.data?.error || 'Deep analysis failed';
+        premiumError.value = err?.response?.data?.error || t.value.club?.lblDeepAnalysisFailed || 'Deep analysis failed';
       } finally {
         premiumLoading.value = false;
       }
@@ -321,7 +321,10 @@ export default {
 
 .recent-row { margin-bottom: 8px; display: flex; align-items: center; gap: 4px; }
 .recent-label { font-size: 10px; color: var(--hex-text-muted); text-transform: uppercase; }
-.recent-icon { font-size: 12px; }
+.result-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
+.result-dot--win { background: var(--hex-victory); }
+.result-dot--loss { background: var(--hex-defeat); }
+.result-dot--draw { background: var(--hex-draw); }
 
 .agent-ai-section { margin-bottom: 6px; }
 .agent-ai-label {

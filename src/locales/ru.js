@@ -380,7 +380,6 @@ export default {
   },
   club: {
     // Agent Roster
-    lblMyFightClub: 'МОЙ FIGHT CLUB',
     lblThePit: 'THE PIT',
     lblLevelAgents: 'Уровень {level} · {current} / {max} агентов',
     lblNextLevel: 'след: Ур {n}',
@@ -486,6 +485,8 @@ export default {
     lblGenerating: 'Генерация...',
     lblNoFights: 'Нет боёв за этот период',
     lblAiUnavailable: 'AI анализ недоступен',
+    lblAnalysisUnavailable: 'Анализ недоступен',
+    lblDeepAnalysisFailed: 'Глубокий анализ не удался',
     // Morning Report Lv2
     lblAgentDetails: 'ДЕТАЛИ АГЕНТОВ',
     lblAssessment: 'Оценка',

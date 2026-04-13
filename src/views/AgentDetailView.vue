@@ -120,7 +120,7 @@
                     <span class="move-max">MAX</span>
                   </template>
                   <template v-else-if="moveAvail(moveId).canUpgrade">
-                    <HexButton variant="primary" size="sm" @click="onLearnMove(moveId, moveAvail(moveId).agentCurrentLevel + 1)">
+                    <HexButton variant="secondary" size="sm" @click="onLearnMove(moveId, moveAvail(moveId).agentCurrentLevel + 1)">
                       {{ moveAvail(moveId).agentCurrentLevel === 0 ? (t.club.lblLearn || 'Learn') : (t.club.lblUpgrade || 'Upgrade') }}
                       {{ moveAvail(moveId).xpCost ? `— ${moveAvail(moveId).xpCost} XP` : '— Free' }}
                     </HexButton>
@@ -211,7 +211,6 @@
               </div>
               <div class="fight-meta">
                 <span class="fight-xp">+{{ fight.xpEarned }} XP</span>
-                <span v-if="fight.eloChange" class="fight-elo" :class="fight.eloChange > 0 ? 'elo-up' : 'elo-down'">ELO {{ fight.eloChange > 0 ? '+' : '' }}{{ fight.eloChange }}</span>
               </div>
             </div>
             <HexButton v-if="fightHistory.length < fightHistoryTotal" variant="ghost" block @click="loadMoreFights" :loading="fightHistoryLoading" style="margin-top:12px">
@@ -669,9 +668,8 @@ onMounted(() => {
 .fight-card--draw .fight-result { color: var(--hex-draw); }
 .fight-time { font-size: 10px; color: var(--hex-text-muted); }
 .fight-details { font-size: 11px; color: var(--hex-text-secondary); display: flex; gap: 10px; }
-.fight-meta { display: flex; gap: 10px; margin-top: 4px; font-family: 'AnonymousBalance', monospace; font-size: 11px; }
+.fight-meta { display: flex; gap: 10px; margin-top: 4px; font-size: 11px; }
 .fight-xp { color: var(--hex-primary); }
-.elo-up { color: var(--hex-victory); } .elo-down { color: var(--hex-defeat); }
 .empty-text { text-align: center; color: var(--hex-text-muted); font-size: 13px; padding: 24px 0; }
 
 /* Modals */
