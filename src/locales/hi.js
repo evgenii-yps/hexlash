@@ -393,6 +393,7 @@ export default {
     lblAgentDeleted: 'Agent deleted',
     lblAutoFightOn: 'Auto Fight enabled',
     lblAutoFightOff: 'Auto Fight disabled',
+    lblAutoFightDesc: 'निष्क्रिय होने पर स्वचालित लड़ाई चलाएं',
     errCreateAgent: 'Failed to create agent',
     errDeleteAgent: 'Failed to delete agent',
     errLoadAgents: 'Failed to load agents',

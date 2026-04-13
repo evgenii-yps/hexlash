@@ -393,6 +393,7 @@ export default {
     lblAgentDeleted: 'Agent deleted',
     lblAutoFightOn: 'Auto Fight enabled',
     lblAutoFightOff: 'Auto Fight disabled',
+    lblAutoFightDesc: '대기 시 자동으로 전투 실행',
     errCreateAgent: 'Failed to create agent',
     errDeleteAgent: 'Failed to delete agent',
     errLoadAgents: 'Failed to load agents',

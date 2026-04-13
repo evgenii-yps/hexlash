@@ -15,7 +15,6 @@
         :agent="agent"
         class="hex-fade-in"
         @click="$emit('agent-click', $event)"
-        @toggle-auto="(id, enabled) => $emit('toggle-auto', id, enabled)"
       />
 
       <div
@@ -46,7 +45,7 @@ export default {
     maxAgents: { type: Number, default: 2 },
     loading: { type: Boolean, default: false },
   },
-  emits: ['create', 'agent-click', 'toggle-auto'],
+  emits: ['create', 'agent-click'],
   setup(props) {
     const canCreate = computed(() => props.agents.length < props.maxAgents);
     const emptySlots = computed(() => Math.max(0, props.maxAgents - props.agents.length));

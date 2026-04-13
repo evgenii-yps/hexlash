@@ -137,6 +137,18 @@
 
         <!-- Tactics Tab -->
         <div v-if="activeTab === 'tactics'" class="tab-content hex-fade-in">
+          <div class="auto-fight-section">
+            <div class="auto-fight-header">
+              <div>
+                <div class="tactic-label">{{ t.club.lblAutoFight || 'Auto Fight' }}</div>
+                <div class="auto-fight-desc">{{ t.club.lblAutoFightDesc || 'Run battles automatically when idle' }}</div>
+              </div>
+              <button class="auto-switch" :class="{ 'auto-switch--on': agent.autoFight }" @click="onToggleAuto">
+                <span class="auto-switch-knob"></span>
+              </button>
+            </div>
+          </div>
+          <div class="tactic-divider"></div>
           <div class="tactic-group">
             <div class="tactic-label">{{ t.club.lblFightMode || 'Fight Mode' }}</div>
             <div class="tactic-btns">
@@ -394,6 +406,15 @@ const addDeckMove = (id) => { if (deckEditForm.value.length < 8) deckEditForm.va
 const removeDeckMove = (id) => { deckEditForm.value = deckEditForm.value.filter(m => m !== id); };
 
 // Actions
+const onToggleAuto = async () => {
+  try {
+    await store.dispatch('agent/toggleAutoFight', { id: agentId, enabled: !agent.value.autoFight });
+    await store.dispatch('agent/fetchAgent', agentId);
+  } catch (err) {
+    store.commit('master/setError', { text: err?.response?.data?.error || 'Failed to toggle auto fight' });
+  }
+};
+
 const onTrain = async () => {
   try {
     await store.dispatch('agent/trainAgent', agentId);
@@ -599,8 +620,36 @@ onMounted(() => {
 .move-locked-text { font-size: 11px; color: var(--hex-text-muted); margin-top: 4px; }
 
 /* Tactics */
+.auto-fight-section { margin-bottom: 4px; }
+.auto-fight-header { display: flex; justify-content: space-between; align-items: center; }
+.auto-fight-desc { font-size: 11px; color: var(--hex-text-muted); margin-top: 2px; }
+.auto-switch {
+  position: relative;
+  width: 24px;
+  height: 14px;
+  background: var(--hex-bg-light);
+  border-radius: 7px;
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.auto-switch--on { background: var(--hex-text-secondary); }
+.auto-switch-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 10px;
+  height: 10px;
+  background: var(--hex-text-primary);
+  border-radius: 50%;
+  transition: left 0.15s;
+}
+.auto-switch--on .auto-switch-knob { left: 12px; }
+.tactic-divider { border-top: 1px solid var(--hex-border-default); margin: 12px 0; }
+
 .tactic-group { margin-bottom: 14px; }
-.tactic-label { font-family: 'Anonymous', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--hex-text-muted); margin-bottom: 6px; }
+.tactic-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--hex-text-muted); margin-bottom: 6px; }
 .tactic-btns { display: flex; gap: 4px; }
 .t-btn { flex: 1; padding: 7px 4px; font-size: 10px; text-transform: capitalize; border: 1px solid var(--hex-border-default); border-radius: 6px; background: var(--hex-bg-dark); color: var(--hex-text-muted); cursor: pointer; transition: all 0.15s; white-space: nowrap; }
 .t-btn.active { border-color: var(--hex-primary); color: var(--hex-primary); background: rgba(255, 6, 111, 0.08); }
