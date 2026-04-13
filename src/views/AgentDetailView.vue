@@ -103,32 +103,32 @@
 
         <!-- Moves Tab -->
         <div v-if="activeTab === 'moves'" class="tab-content hex-fade-in">
-          <div class="branch-tabs">
-            <button v-for="b in branchIds" :key="b" :class="['branch-btn', { active: activeBranch === b }]" @click="activeBranch = b">{{ b }}</button>
+          <div class="pill-row">
+            <button v-for="b in branchIds" :key="b" :class="['hex-pill', { 'is-active': activeBranch === b }]" @click="activeBranch = b">{{ t.gameData?.branches?.[b]?.name || b }}</button>
           </div>
           <div v-if="availableMovesLoading" class="loader-wrap"><v-progress-circular size="24" indeterminate /></div>
           <div v-else class="moves-list">
             <div v-for="moveId in branchMoves" :key="moveId" class="move-card" :class="{ 'move-card--locked': !moveAvail(moveId) }">
               <template v-if="moveAvail(moveId)">
                 <div class="move-top">
-                  <span class="move-name">{{ moveId }}</span>
+                  <span class="move-name">{{ moveName(moveId) }}</span>
                   <span class="move-lvl">Lv {{ moveAvail(moveId).agentCurrentLevel }} / {{ moveAvail(moveId).maxLevel }}</span>
                 </div>
                 <HexProgress :value="moveAvail(moveId).agentCurrentLevel" :max="moveAvail(moveId).maxLevel" variant="generic" size="sm" />
                 <div class="move-action">
                   <template v-if="moveAvail(moveId).agentCurrentLevel >= moveAvail(moveId).maxLevel">
-                    <span class="move-max">MAX</span>
+                    <span class="move-max">{{ t.club.lblMaxLevel || 'MAX' }}</span>
                   </template>
                   <template v-else-if="moveAvail(moveId).canUpgrade">
                     <HexButton variant="secondary" size="sm" @click="onLearnMove(moveId, moveAvail(moveId).agentCurrentLevel + 1)">
                       {{ moveAvail(moveId).agentCurrentLevel === 0 ? (t.club.lblLearn || 'Learn') : (t.club.lblUpgrade || 'Upgrade') }}
-                      {{ moveAvail(moveId).xpCost ? `— ${moveAvail(moveId).xpCost} XP` : '— Free' }}
+                      — {{ moveAvail(moveId).xpCost ? `${moveAvail(moveId).xpCost} XP` : (t.club.lblFree || 'Free') }}
                     </HexButton>
                   </template>
                 </div>
               </template>
               <template v-else>
-                <div class="move-top"><span class="move-name move-name--locked">{{ moveId }}</span></div>
+                <div class="move-top"><span class="move-name move-name--locked">{{ moveName(moveId) }}</span></div>
                 <div class="move-locked-text">{{ t.club.lblResearchFirst || 'Player must research first' }}</div>
               </template>
             </div>
@@ -151,72 +151,72 @@
           <div class="tactic-divider"></div>
           <div class="tactic-group">
             <div class="tactic-label">{{ t.club.lblFightMode || 'Fight Mode' }}</div>
-            <div class="tactic-btns">
-              <button v-for="m in ['pve_training','ranked','free_arena']" :key="m" :class="['t-btn', { active: tacticsForm.fightMode === m }]" @click="tacticsForm.fightMode = m">{{ m.replace('_', ' ') }}</button>
+            <div class="pill-row">
+              <button v-for="m in ['pve_training','ranked','free_arena']" :key="m" :class="['hex-pill', { 'is-active': tacticsForm.fightMode === m }]" @click="tacticsForm.fightMode = m">{{ tacticLabel('fightMode', m) }}</button>
             </div>
           </div>
           <div class="tactic-group">
             <div class="tactic-label">{{ t.club.lblAggression || 'Aggression' }}</div>
-            <div class="tactic-btns">
-              <button v-for="v in ['cautious','balanced','aggressive']" :key="v" :class="['t-btn', { active: tacticsForm.aggression === v }]" @click="tacticsForm.aggression = v">{{ v }}</button>
+            <div class="pill-row">
+              <button v-for="v in ['cautious','balanced','aggressive']" :key="v" :class="['hex-pill', { 'is-active': tacticsForm.aggression === v }]" @click="tacticsForm.aggression = v">{{ tacticLabel('aggression', v) }}</button>
             </div>
           </div>
           <div class="tactic-group">
             <div class="tactic-label">{{ t.club.lblDicePolicy || 'Dice Policy' }}</div>
-            <div class="tactic-btns">
-              <button v-for="v in ['always','smart','never']" :key="v" :class="['t-btn', { active: tacticsForm.dicePolicy === v }]" @click="tacticsForm.dicePolicy = v">{{ v }}</button>
+            <div class="pill-row">
+              <button v-for="v in ['always','smart','never']" :key="v" :class="['hex-pill', { 'is-active': tacticsForm.dicePolicy === v }]" @click="tacticsForm.dicePolicy = v">{{ tacticLabel('dicePolicy', v) }}</button>
             </div>
           </div>
           <div class="tactic-group">
             <div class="tactic-label">{{ t.club.lblCoachPref || 'Coach' }}</div>
-            <div class="tactic-btns">
-              <button v-for="v in ['attack','defense','position','auto']" :key="v" :class="['t-btn', { active: tacticsForm.coachPreference === v }]" @click="tacticsForm.coachPreference = v">{{ v }}</button>
+            <div class="pill-row">
+              <button v-for="v in ['attack','defense','position','auto']" :key="v" :class="['hex-pill', { 'is-active': tacticsForm.coachPreference === v }]" @click="tacticsForm.coachPreference = v">{{ tacticLabel('coach', v) }}</button>
             </div>
           </div>
           <div class="tactic-group">
             <div class="tactic-label">{{ t.club.lblEmergency || 'Emergency' }}</div>
-            <div class="tactic-btns">
-              <button v-for="v in [30, 20, 0]" :key="v" :class="['t-btn', { active: tacticsForm.emergencyThreshold === v }]" @click="tacticsForm.emergencyThreshold = v">{{ v === 0 ? 'Off' : v + '% HP' }}</button>
+            <div class="pill-row">
+              <button v-for="v in [30, 20, 0]" :key="v" :class="['hex-pill', { 'is-active': tacticsForm.emergencyThreshold === v }]" @click="tacticsForm.emergencyThreshold = v">{{ tacticLabel('emergency', String(v)) }}</button>
             </div>
           </div>
           <div class="tactic-group">
             <div class="tactic-label">{{ t.club.lblRestPeriod || 'Rest Period' }}</div>
-            <div class="tactic-btns">
-              <button v-for="v in [600000, 1800000, 3600000]" :key="v" :class="['t-btn', { active: tacticsForm.restPeriod === v }]" @click="tacticsForm.restPeriod = v">{{ v === 600000 ? '10m' : v === 1800000 ? '30m' : '1h' }}</button>
+            <div class="pill-row">
+              <button v-for="v in [600000, 1800000, 3600000]" :key="v" :class="['hex-pill', { 'is-active': tacticsForm.restPeriod === v }]" @click="tacticsForm.restPeriod = v">{{ tacticLabel('restPeriod', String(v)) }}</button>
             </div>
           </div>
-          <HexButton variant="primary" block :loading="savingTactics" @click="onSaveTactics" style="margin-top:16px">
+          <HexButton variant="primary" block :loading="savingTactics" :disabled="!tacticsDirty" @click="onSaveTactics" class="tactic-save">
             {{ t.club.lblSaveTactics || 'Save Tactics' }}
           </HexButton>
         </div>
 
         <!-- Fights Tab -->
         <div v-if="activeTab === 'fights'" class="tab-content hex-fade-in">
-          <div class="fight-filter">
-            <button v-for="m in [null,'pve_training','ranked','free_arena']" :key="String(m)" :class="['filter-btn', { active: fightFilter === m }]" @click="onFightFilter(m)">
-              {{ m ? m.replace('_', ' ') : 'All' }}
+          <div class="pill-row">
+            <button v-for="m in [null,'pve_training','ranked','free_arena']" :key="String(m)" :class="['hex-pill', { 'is-active': fightFilter === m }]" @click="onFightFilter(m)">
+              {{ m ? tacticLabel('fightMode', m) : (t.club.lblAll || 'All') }}
             </button>
           </div>
           <div v-if="fightHistoryLoading && !fightHistory.length" class="loader-wrap"><v-progress-circular size="24" indeterminate /></div>
           <div v-else>
             <div v-for="fight in fightHistory" :key="fight.id" :class="['fight-card', `fight-card--${fight.result}`]">
               <div class="fight-top">
-                <span class="fight-result">{{ fight.result.toUpperCase() }}</span>
+                <span class="fight-result">{{ fightResultLabel(fight.result) }}</span>
                 <span class="fight-time">{{ relativeTime(fight.createdAt) }}</span>
               </div>
               <div class="fight-details">
-                <span>vs {{ fight.opponentName || 'Bot' }}</span>
-                <span>{{ fight.rounds }} rounds</span>
-                <span>HP: {{ fight.playerHpLeft }}/100</span>
+                <span>{{ t.club.lblVs || 'vs' }} {{ fight.opponentName || (t.club.lblBot || 'Bot') }}</span>
+                <span>{{ fight.rounds }} {{ t.club.lblRoundsShort || 'rounds' }}</span>
+                <span>{{ t.club.lblHpShort || 'HP' }}: {{ fight.playerHpLeft }}/100</span>
               </div>
               <div class="fight-meta">
                 <span class="fight-xp">+{{ fight.xpEarned }} XP</span>
               </div>
             </div>
-            <HexButton v-if="fightHistory.length < fightHistoryTotal" variant="ghost" block @click="loadMoreFights" :loading="fightHistoryLoading" style="margin-top:12px">
+            <HexButton v-if="fightHistory.length < fightHistoryTotal" variant="ghost" block @click="loadMoreFights" :loading="fightHistoryLoading" class="fights-load-more">
               {{ t.clan.lblLoadMore || 'Load More' }}
             </HexButton>
-            <div v-if="!fightHistory.length && !fightHistoryLoading" class="empty-text">No fights yet</div>
+            <div v-if="!fightHistory.length && !fightHistoryLoading" class="empty-text">{{ t.club.lblNoFightsYet || 'No fights yet' }}</div>
           </div>
         </div>
 
@@ -500,13 +500,43 @@ const loadMoreFights = () => {
   store.dispatch('agent/fetchFightHistory', { agentId, mode: fightFilter.value, offset: fightHistory.value.length, append: true });
 };
 
+// Tactic label helper
+const TACTIC_LABELS = {
+  fightMode: { pve_training: 'PvE Training', ranked: 'Ranked', free_arena: 'Free Arena' },
+  aggression: { cautious: 'Cautious', balanced: 'Balanced', aggressive: 'Aggressive' },
+  dicePolicy: { always: 'Always', smart: 'Smart', never: 'Never' },
+  coach: { attack: 'Attack', defense: 'Defense', position: 'Position', auto: 'Auto' },
+  emergency: { '30': '30% HP', '20': '20% HP', '0': 'Off' },
+  restPeriod: { '600000': '10m', '1800000': '30m', '3600000': '1h' },
+};
+const tacticLabel = (group, value) => {
+  return t.value.club?.tactics?.[group]?.[value] || TACTIC_LABELS[group]?.[value] || value;
+};
+
+const tacticsDirty = computed(() => {
+  if (!agent.value?.tactics) return false;
+  const orig = agent.value.tactics;
+  return tacticsForm.value.fightMode !== (orig.fightMode || 'pve_training')
+    || tacticsForm.value.aggression !== (orig.aggression || 'balanced')
+    || tacticsForm.value.dicePolicy !== (orig.dicePolicy || 'smart')
+    || tacticsForm.value.coachPreference !== (orig.coachPreference || 'auto')
+    || tacticsForm.value.emergencyThreshold !== (orig.emergencyThreshold ?? 30)
+    || tacticsForm.value.restPeriod !== (orig.restPeriod || 600000);
+});
+
+const fightResultLabel = (result) => {
+  const key = `lbl${result.charAt(0).toUpperCase() + result.slice(1)}`;
+  return (t.value.club?.[key] || result).toUpperCase();
+};
+
 const relativeTime = (dateStr) => {
   const diff = Date.now() - new Date(dateStr).getTime();
   const min = Math.floor(diff / 60000);
-  if (min < 60) return `${min}m ago`;
+  const ago = t.value.club?.lblAgo || 'ago';
+  if (min < 60) return `${min}${t.value.club?.lblMinShort || 'm'} ${ago}`;
   const hr = Math.floor(min / 60);
-  if (hr < 24) return `${hr}h ago`;
-  return `${Math.floor(hr / 24)}d ago`;
+  if (hr < 24) return `${hr}${t.value.club?.lblHourShort || 'h'} ${ago}`;
+  return `${Math.floor(hr / 24)}${t.value.club?.lblDayShort || 'd'} ${ago}`;
 };
 
 // Tab watchers — load data on tab switch
@@ -603,19 +633,19 @@ onMounted(() => {
 .train-result.defeat { color: var(--hex-defeat); background: var(--hex-defeat-bg); }
 .train-result.draw { color: var(--hex-draw); background: var(--hex-draw-bg); }
 
+/* Pill row (shared by Moves/Tactics/Fights) */
+.pill-row { display: flex; gap: 4px; margin-bottom: 12px; }
+
 /* Moves */
-.branch-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
-.branch-btn { flex: 1; padding: 6px; font-size: 11px; text-transform: uppercase; border: 1px solid var(--hex-border-default); border-radius: 6px; background: var(--hex-bg-dark); color: var(--hex-text-muted); cursor: pointer; }
-.branch-btn.active { border-color: var(--hex-primary); color: var(--hex-primary); }
 .moves-list { display: flex; flex-direction: column; gap: 8px; }
 .move-card { background: var(--hex-bg-medium); border: 1px solid var(--hex-border-default); border-radius: 8px; padding: 10px; }
 .move-card--locked { opacity: 0.4; }
 .move-top { display: flex; justify-content: space-between; margin-bottom: 6px; }
-.move-name { font-family: 'Anonymous', monospace; font-size: 12px; color: var(--hex-text-primary); }
+.move-name { font-size: 13px; color: var(--hex-text-primary); }
 .move-name--locked { color: var(--hex-text-muted); }
-.move-lvl { font-family: 'AnonymousBalance', monospace; font-size: 11px; color: var(--hex-text-muted); }
+.move-lvl { font-size: 11px; color: var(--hex-text-muted); }
 .move-action { margin-top: 6px; }
-.move-max { font-size: 11px; color: var(--hex-victory); font-family: 'Anonymous', monospace; }
+.move-max { font-size: 10px; color: var(--hex-victory); text-transform: uppercase; letter-spacing: 1px; }
 .move-locked-text { font-size: 11px; color: var(--hex-text-muted); margin-top: 4px; }
 
 /* Tactics */
@@ -646,30 +676,25 @@ onMounted(() => {
 }
 .auto-switch--on .auto-switch-knob { left: 12px; }
 .tactic-divider { border-top: 1px solid var(--hex-border-default); margin: 12px 0; }
-
 .tactic-group { margin-bottom: 14px; }
 .tactic-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--hex-text-muted); margin-bottom: 6px; }
-.tactic-btns { display: flex; gap: 4px; }
-.t-btn { flex: 1; padding: 7px 4px; font-size: 10px; text-transform: capitalize; border: 1px solid var(--hex-border-default); border-radius: 6px; background: var(--hex-bg-dark); color: var(--hex-text-muted); cursor: pointer; transition: all 0.15s; white-space: nowrap; }
-.t-btn.active { border-color: var(--hex-primary); color: var(--hex-primary); background: rgba(255, 6, 111, 0.08); }
+.tactic-save { margin-top: 20px; }
 
 /* Fights */
-.fight-filter { display: flex; gap: 4px; margin-bottom: 12px; }
-.filter-btn { flex: 1; padding: 6px 2px; font-size: 10px; text-transform: capitalize; border: 1px solid var(--hex-border-default); border-radius: 6px; background: var(--hex-bg-dark); color: var(--hex-text-muted); cursor: pointer; white-space: nowrap; }
-.filter-btn.active { border-color: var(--hex-primary); color: var(--hex-primary); }
 .fight-card { background: var(--hex-bg-medium); border-radius: 8px; padding: 10px; margin-bottom: 8px; border-left: 3px solid var(--hex-border-default); }
 .fight-card--victory { border-left-color: var(--hex-victory); }
 .fight-card--defeat { border-left-color: var(--hex-defeat); }
 .fight-card--draw { border-left-color: var(--hex-draw); }
 .fight-top { display: flex; justify-content: space-between; margin-bottom: 4px; }
-.fight-result { font-family: 'Anonymous', monospace; font-size: 12px; font-weight: bold; }
+.fight-result { font-size: 12px; font-weight: 600; }
 .fight-card--victory .fight-result { color: var(--hex-victory); }
 .fight-card--defeat .fight-result { color: var(--hex-defeat); }
 .fight-card--draw .fight-result { color: var(--hex-draw); }
 .fight-time { font-size: 10px; color: var(--hex-text-muted); }
 .fight-details { font-size: 11px; color: var(--hex-text-secondary); display: flex; gap: 10px; }
 .fight-meta { display: flex; gap: 10px; margin-top: 4px; font-size: 11px; }
-.fight-xp { color: var(--hex-primary); }
+.fight-xp { color: var(--hex-victory); }
+.fights-load-more { margin-top: 12px; }
 .empty-text { text-align: center; color: var(--hex-text-muted); font-size: 13px; padding: 24px 0; }
 
 /* Modals */
@@ -717,5 +742,20 @@ onMounted(() => {
   .deck-chips { gap: 8px; }
   .deck-chip { padding: 5px 12px; font-size: 13px; }
   .train-btn { margin-top: 24px; }
+  /* Moves desktop */
+  .move-name { font-size: 15px; }
+  .move-lvl { font-size: 13px; }
+  .move-max { font-size: 12px; }
+  .move-card { padding: 14px; }
+  /* Tactics desktop */
+  .tactic-label { font-size: 12px; }
+  .auto-fight-desc { font-size: 13px; }
+  .tactic-save { margin-top: 24px; }
+  /* Fights desktop */
+  .fight-card { padding: 14px; }
+  .fight-result { font-size: 14px; }
+  .fight-time { font-size: 12px; }
+  .fight-details { font-size: 13px; }
+  .fight-meta { font-size: 13px; }
 }
 </style>
