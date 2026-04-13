@@ -414,6 +414,8 @@ export default {
     lblStartingStats: 'Starting Stats',
     lblDeckEmpty: 'Empty deck — learn moves first',
     lblNext: 'Next',
+    lblStep: '단계',
+    lblName: '이름',
     lblBack: 'Back',
     lblEdit: 'Edit',
     lblCreating: 'Creating...',

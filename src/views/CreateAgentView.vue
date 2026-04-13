@@ -1,43 +1,34 @@
 <template>
   <div class="background">
     <div class="create-agent-container">
-      <div class="wizard-header">
-        <button class="back-link" @click="onBack">&larr; {{ t.club.lblBack || 'Back' }}</button>
-        <span class="wizard-step">{{ stepTitles[step] }} &nbsp; {{ step + 1 }}/2</span>
-        <span class="wizard-header-spacer"></span>
-      </div>
-
-      <!-- Step indicators -->
-      <div class="step-dots">
-        <span v-for="i in 2" :key="i" :class="['dot', { active: i - 1 === step, done: i - 1 < step }]" />
+      <!-- Header -->
+      <div class="create-header">
+        <button class="back-arrow" @click="onBack">&larr;</button>
+        <span class="step-indicator">{{ t.club.lblStep || 'Step' }} {{ step + 1 }} / 2</span>
+        <span class="header-spacer"></span>
       </div>
 
       <!-- Step 0: Name & Skin -->
       <div v-if="step === 0" class="step-content hex-fade-in">
-        <div class="skin-preview-wrap">
-          <img v-if="form.skin" :src="`/images/skins/${form.skin}`" class="skin-preview" />
-          <div v-else class="skin-preview-placeholder">?</div>
-        </div>
-
-        <div class="field">
+        <div class="name-field">
+          <label class="name-label">{{ t.club.lblName || 'NAME' }}</label>
           <input
             v-model="form.name"
             type="text"
             class="name-input"
-            :placeholder="t.club.lblAgentName || 'Agent name'"
+            :placeholder="t.club.lblAgentName || 'Fighter name'"
             maxlength="20"
           />
-          <div class="field-hint" :class="{ 'field-error': nameError }">
+          <div class="name-hint" :class="{ 'name-hint--error': nameError }">
             {{ nameError || (t.club.lblNameHint || '2-20 characters') }}
           </div>
         </div>
 
-        <div class="section-label">{{ t.club.lblChooseSkin || 'CHOOSE SKIN' }}</div>
         <SkinPicker v-model="form.skin" />
 
         <div class="step-actions">
-          <HexButton variant="primary" block :disabled="!step0Valid" @click="step = 1">
-            {{ t.club.lblNext || 'Next' }} &rarr;
+          <HexButton variant="primary" block :disabled="!step0Valid" @click="step = 1" class="next-btn">
+            {{ t.club.lblNext || 'NEXT' }}
           </HexButton>
         </div>
       </div>
@@ -100,11 +91,6 @@ const form = ref({
   name: '',
   skin: 'skin_m_1.png',
 });
-
-const stepTitles = computed(() => [
-  t.value.club?.lblNameAndSkin || 'Name & Skin',
-  t.value.club?.lblConfirmStep || 'Confirm',
-]);
 
 const nameError = computed(() => {
   const n = form.value.name;
@@ -170,125 +156,92 @@ const onCreate = async () => {
     height: 100dvh;
   }
 }
-.wizard-header {
+/* Header */
+.create-header {
   display: flex;
   align-items: center;
-  margin-bottom: 12px;
+  justify-content: space-between;
+  margin-bottom: 24px;
   flex-shrink: 0;
 }
-.wizard-header-spacer {
-  min-width: 60px;
-}
-.back-link {
-  font-size: 16px;
+.back-arrow {
+  font-size: 22px;
   color: var(--hex-primary);
   background: none;
   border: none;
   cursor: pointer;
-  font-family: 'Anonymous', monospace;
-  letter-spacing: 0.5px;
-  padding: 6px 0;
-  transition: opacity 0.2s;
-  white-space: nowrap;
-  min-width: 60px;
+  width: 22px;
 }
-.back-link:hover {
-  opacity: 0.7;
-}
-.wizard-step {
-  font-family: 'Anonymous', monospace;
-  font-size: 12px;
+.back-arrow:hover { opacity: 0.7; }
+.step-indicator {
+  font-size: 14px;
+  color: var(--hex-text-secondary);
+  letter-spacing: 3px;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  color: var(--hex-text-muted);
-  flex: 1;
-  text-align: center;
 }
-
-.step-dots {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin-bottom: 20px;
-  flex-shrink: 0;
-}
-.dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--hex-bg-light);
-  transition: all 0.2s;
-}
-.dot.active { background: var(--hex-primary); box-shadow: 0 0 6px rgba(255, 6, 111, 0.5); }
-.dot.done { background: var(--hex-primary); opacity: 0.5; }
+.header-spacer { width: 22px; }
 
 .step-content { min-height: 0; flex: 1; display: flex; flex-direction: column; }
 
 /* Step 0: Name & Skin */
-.skin-preview-wrap {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 16px;
-  flex-shrink: 0;
-}
-.skin-preview {
-  width: 120px;
-  height: 160px;
-  border-radius: 12px;
-  object-fit: cover;
-  object-position: top;
-  border: 2px solid var(--hex-primary);
-  box-shadow: 0 0 16px rgba(255, 6, 111, 0.3);
-}
-.skin-preview-placeholder {
-  width: 120px;
-  height: 160px;
-  border-radius: 12px;
-  border: 2px dashed var(--hex-border-default);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 32px;
+.name-field { margin-bottom: 22px; flex-shrink: 0; }
+.name-label {
+  display: block;
+  font-size: 13px;
   color: var(--hex-text-muted);
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
 }
-
-.field { margin-bottom: 16px; flex-shrink: 0; }
 .name-input {
   width: 100%;
-  padding: 10px 12px;
-  font-family: 'Anonymous', monospace;
-  font-size: 14px;
+  padding: 14px 16px;
+  font-size: 16px;
+  font-family: inherit;
   color: var(--hex-text-primary);
-  background: var(--hex-bg-dark);
+  background: var(--hex-bg-light);
   border: 1px solid var(--hex-border-default);
-  border-radius: 8px;
+  border-radius: var(--hex-radius-md, 8px);
   outline: none;
+  box-sizing: border-box;
   transition: border-color 0.2s;
 }
 .name-input:focus { border-color: var(--hex-primary); }
 .name-input::placeholder { color: var(--hex-text-muted); }
+.name-hint { margin-top: 6px; font-size: 11px; color: var(--hex-text-muted); }
+.name-hint--error { color: var(--hex-defeat); }
 
-.field-hint {
-  margin-top: 4px;
-  font-size: 11px;
-  color: var(--hex-text-muted);
-}
-.field-error { color: var(--hex-defeat); }
-
-.section-label {
-  font-family: 'Anonymous', monospace;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: var(--hex-text-muted);
-  margin-bottom: 8px;
-  flex-shrink: 0;
-}
-
+/* SkinPicker overrides */
 .step-content :deep(.skin-picker) { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .step-content :deep(.skin-grid-scroll) { max-height: none; flex: 1; min-height: 0; }
+.step-content :deep(.skin-filter) {
+  gap: 0;
+  border-bottom: 1px solid var(--hex-border-default);
+  margin-bottom: 14px;
+}
+.step-content :deep(.filter-btn) {
+  border: none;
+  border-radius: 0;
+  background: none;
+  padding: 8px 0;
+  font-size: 11px;
+  letter-spacing: 2px;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.step-content :deep(.filter-btn.active) {
+  color: var(--hex-text-primary);
+  border-bottom-color: var(--hex-text-primary);
+  background: none;
+}
+.step-content :deep(.skin-item--selected) {
+  border-color: var(--hex-text-primary);
+  box-shadow: none;
+}
+.step-content :deep(.skin-grid) { gap: 8px; }
 
 .step-actions { margin-top: 20px; flex-shrink: 0; }
+.next-btn[disabled] { background: transparent; border: 1px solid var(--hex-border-default); }
 
 /* Step 1: Confirm */
 .confirm-preview {
