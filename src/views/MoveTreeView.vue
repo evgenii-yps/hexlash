@@ -20,6 +20,12 @@
         </div>
       </div>
 
+      <!-- Research header -->
+      <div class="research-header">
+        <h2 class="research-title">{{ t.training.lblResearch || 'Research' }}</h2>
+        <p class="research-subtitle">{{ t.training.lblResearchExplanation || 'Research moves as a trainer. Your agents will learn them up to your level.' }}</p>
+      </div>
+
       <!-- Основной layout: ветки слева + приёмы справа -->
       <div class="tree-layout">
 
@@ -287,6 +293,26 @@ const goToTraining = () => {
 
 .free-xp-value {
   color: var(--hex-text-primary) !important;
+}
+
+/* ── Research header ── */
+.research-header {
+  text-align: center;
+  margin-bottom: 16px;
+}
+.research-title {
+  font-size: 16px;
+  color: var(--hex-text-primary);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-weight: 500;
+  margin: 0;
+}
+.research-subtitle {
+  font-size: 11px;
+  color: var(--hex-text-muted);
+  margin-top: 4px;
+  line-height: 1.4;
 }
 
 /* ── Основной layout ── */
