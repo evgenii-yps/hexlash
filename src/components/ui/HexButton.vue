@@ -219,4 +219,13 @@ export default {
 @keyframes hex-btn-spin {
   to { transform: rotate(360deg); }
 }
+
+@media (min-width: 1024px) {
+  .hex-button { letter-spacing: 1.5px; border-radius: 10px; }
+  .hex-button--sm { padding: 8px 16px; font-size: 13px; }
+  .hex-button--md { padding: 14px 24px; font-size: 15px; }
+  .hex-button--lg { padding: 18px 32px; font-size: 17px; }
+  .hex-button--sm .hex-btn-spinner { width: 14px; height: 14px; }
+  .hex-button--lg .hex-btn-spinner { width: 22px; height: 22px; }
+}
 </style>
