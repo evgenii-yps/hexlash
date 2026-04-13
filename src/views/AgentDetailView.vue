@@ -18,10 +18,8 @@
         <div class="hero">
           <img :src="`/images/skins/${agent.skin}`" class="hero-skin" />
           <div class="hero-identity">
-            <div class="hero-name">
-              <span v-if="agent.isCaptain" class="captain-star">★</span>
-              {{ agent.name }}
-            </div>
+            <div v-if="agent.isCaptain" class="hero-captain-label">{{ t.club.lblCaptain || 'CAPTAIN' }}</div>
+            <div class="hero-name">{{ agent.name }}</div>
             <HexButton v-if="!agent.isCaptain" variant="ghost" size="sm" @click="confirmSetCaptain" class="make-captain-btn">{{ t.club.lblMakeCaptain || 'Make Captain' }}</HexButton>
             <div v-if="agent.primaryModule" class="hero-arch">
               <HexBadge variant="archetype" :archetype="agent.primaryModule" size="sm">{{ shortArch(agent.primaryModule) }} 50%</HexBadge>
@@ -581,8 +579,8 @@ onMounted(() => {
 .hero { display: flex; gap: 18px; align-items: flex-start; margin-bottom: 16px; }
 .hero-skin { width: 120px; height: 120px; border-radius: var(--hex-radius-md, 8px); object-fit: cover; object-position: top; border: 1px solid var(--hex-border-default); flex-shrink: 0; }
 .hero-identity { flex: 1; min-width: 0; }
-.hero-name { font-family: 'Anonymous', monospace; font-size: 20px; letter-spacing: 1.5px; color: var(--hex-text-primary); display: flex; align-items: center; gap: 6px; }
-.captain-star { color: var(--hex-primary); }
+.hero-captain-label { font-size: 12px; color: var(--hex-primary); letter-spacing: 3px; text-transform: uppercase; font-weight: 500; margin-bottom: 6px; }
+.hero-name { font-size: 24px; color: var(--hex-text-primary); font-weight: 500; line-height: 1.1; letter-spacing: 0.5px; }
 .make-captain-btn { margin-top: 4px; }
 .hero-arch { display: flex; gap: 6px; margin-top: 8px; }
 .hero-arch-empty { font-size: 11px; color: var(--hex-text-muted); margin-top: 8px; font-style: italic; }
@@ -719,8 +717,8 @@ onMounted(() => {
   .icon-btn { font-size: 18px; }
   .hero { gap: 24px; margin-bottom: 24px; }
   .hero-skin { width: 160px; height: 160px; }
-  .hero-name { font-size: 28px; letter-spacing: 2px; gap: 8px; }
-  .captain-star { font-size: 18px; }
+  .hero-captain-label { font-size: 14px; letter-spacing: 3.5px; }
+  .hero-name { font-size: 32px; }
   .hero-arch { gap: 8px; margin-top: 10px; }
   .hero-arch-empty { font-size: 13px; }
   .hero-inline-stats { font-size: 14px; margin-top: 10px; }

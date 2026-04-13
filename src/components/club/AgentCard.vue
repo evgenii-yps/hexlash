@@ -6,10 +6,8 @@
         <div class="card-header-left">
           <img class="card-skin" :src="`/images/skins/${agent.skin}`" :alt="agent.name" />
           <div class="card-identity">
-            <div class="card-name">
-              <span v-if="agent.isCaptain" class="captain-star">★</span>
-              {{ agent.name }}
-            </div>
+            <div v-if="agent.isCaptain" class="card-captain-label">{{ t.club.lblCaptain || 'CAPTAIN' }}</div>
+            <div class="card-name">{{ agent.name }}</div>
             <div class="card-meta">
               {{ beltName }} · {{ agent.wins }}-{{ agent.losses }}-{{ agent.draws }}
             </div>
@@ -104,20 +102,26 @@ export default {
 
 .card-identity { min-width: 0; }
 
+.card-captain-label {
+  font-size: 10px;
+  color: var(--hex-primary);
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
 .card-name {
-  font-family: 'Anonymous', monospace;
-  font-size: 14px;
-  letter-spacing: 1px;
+  font-size: 18px;
   color: var(--hex-text-primary);
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: 0.5px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  margin-bottom: 4px;
 }
-
-.captain-star { color: var(--hex-primary); font-size: 11px; }
 
 .card-meta {
   font-size: 9px;
@@ -156,8 +160,8 @@ export default {
 @media (min-width: 1024px) {
   .card-header-left { gap: 16px; }
   .card-skin { width: 72px; height: 72px; }
-  .card-name { font-size: 18px; letter-spacing: 1.5px; }
-  .captain-star { font-size: 14px; }
+  .card-captain-label { font-size: 11px; letter-spacing: 3px; }
+  .card-name { font-size: 22px; }
   .card-meta { font-size: 12px; letter-spacing: 1.5px; }
   .card-status { font-size: 11px; letter-spacing: 2px; }
   .card-divider { margin: 10px 0; }
