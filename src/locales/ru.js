@@ -423,6 +423,8 @@ export default {
     lblStartingStats: 'Начальная статистика',
     lblDeckEmpty: 'Пустая колода — сначала изучи приёмы',
     lblNext: 'Далее',
+    lblStep: 'Шаг',
+    lblName: 'ИМЯ',
     lblBack: 'Назад',
     lblEdit: 'Изменить',
     lblCreating: 'Создание...',
