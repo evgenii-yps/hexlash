@@ -156,8 +156,8 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 | `/arena/club/:agentId` | AgentDetailView | Yes |
 | `/fight` | CardFightView | Yes |
 | `/training` | TrainingView | Yes |
-| `/training/moves` | MoveTreeView | Yes |
-| `/training/deck` | DeckBuilderView | Yes |
+| `/training/moves` | *Deleted* — research moved to AgentDetailView Moves tab | — |
+| `/training/deck` | *Deleted* — deck editing in AgentDetailView | — |
 | `/profile` `/profile/balance` `/profile/wallet` `/profile/account` `/profile/skins` | ProfileView | Yes |
 | `/clan/:id` | ClanView | Yes |
 | `/ratings/:type` | RatingsView | Yes |
@@ -175,7 +175,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 | `masterState` | App init, auth status, info/error messages, language |
 | `userState` | Current user profile, stats, avatar |
 | `cardFightState` | Active fight: rounds, HP, dice, coach, playerModules, localStorage persist |
-| `progressionState` | Moves unlocked/levels, taps, XP per branch, server sync (PUT /user/progression) |
+| `progressionState` | Taps, freeXP, legacy deck/moves, server sync (PUT /user/progression). Research moved per-agent. |
 | `clanState` | Clan info, members, balance, roles (set-role, transfer-ownership, kick). Namespace `clan/`. File: `clanState.js` |
 | `taskState` | Daily + social tasks |
 | `punchState` | Punch/tap rate limiting, cooldown, 2D/3D punch toggle, sound mute toggle |
@@ -522,8 +522,8 @@ MIGRATION_ENABLED = true           // lazy User→Fighter #1 on /me
 | View | File | Notes |
 |------|------|-------|
 | Training | `TrainingView.vue` | 3D punch bag, taps, daily/social tasks, progression bar. Visual System v1.0 compliant: neutral UI overlay, AnonymousBalance for taps/XP numbers, system sans for labels, 3D not touched, XP Allocate = primary CTA |
-| Move Tree | `MoveTreeView.vue` | Branch sidebar (Speed/Power/Tech) + move cards. Sidebar buttons centered with `position:absolute; top:35%; transform:translateY(-50%)`. Visual System v1.0 compliant: neutral cards in tree, Upgrade CTA only in modal, branch active = neutral bg-light, AnonymousBalance for levels/resources |
-| Deck Builder | `DeckBuilderView.vue` | Deck assembly (4-8 moves). Auto-save on toggle. Visual System v1.0 compliant: neutral selected moves (border-strong, no pink), TO ARENA = sole pink CTA, AnonymousBalance for levels/stats |
+| Move Tree | *Deleted* (`MoveTreeView.vue`) | Research moved per-agent to AgentDetailView → Moves tab (ResearchTree.vue) |
+| Deck Builder | *Deleted* (`DeckBuilderView.vue`) | Deck editing via AgentDetailView deck editor modal |
 | Fight | `CardFightView.vue` | Main combat (PvE + PvP), dice, coach advice, HP bars, AI Trainer (PvE results). Loading splash: HEXLASH in Anonymous pixel-font with --hex-primary + glow (matches Logo.vue style, same as index.html pre-app splash). PvP mode: no BottomMenu, no PvP badge, reduced padding. Fully migrated to --hex-* vars: HexButton for results, inline SVGs, dice/coach/victory/defeat/overdrive all use design system vars. Visual System v1.0 compliant: pink only on CTA buttons (dice, Fight Again), VICTORY/DEFEAT/DRAW + OVERDRIVE pixel-font, HP in AnonymousBalance, dice effects in characteristic colors, coach buttons in action-specific colors |
 | Profile | `ProfileView.vue` | Tabs: balance, wallet, account, skins. Visual System v1.0 compliant: AnonymousBalance for numerical values, neutral header (no pink), 0-1 pink accent per tab, toggles green (success), delete btn danger |
 | Ratings (League) | `RatingsView.vue` | 3 tabs: My Club, Clubs (leaderboard), Fighters (leaderboard). Default tab: My Club. URL: `/ratings/:type` (myclub/clubs/fighters). My Club tab: `MyClubTab.vue` component — redesigned clan header (avatar 64px with --hex-primary glow, name in Anonymous font, italic description, LVL badge, member count, level progress bar), stats grid (4 cards: Members/Wins/Losses/Win Rate with colored values), win rate bar, members top-5, role badges owner/deputy, action menus. No-clan state: ⚔ icon hero, CREATE/BROWSE buttons, pending invites banners, suggested clans with stats |
@@ -577,8 +577,8 @@ MIGRATION_ENABLED = true           // lazy User→Fighter #1 on /me
 - `Info.vue` / `Error.vue` — toast notifications (text interpolation `{{ }}`, NOT v-html — XSS safe). Visual System v1.0 compliant: bg-card neutral, hex-success/hex-danger accent, text via {{ }} (XSS safe)
 - `NewAchievement.vue` — achievement popup. Visual System v1.0 compliant: pixel-font title, hex-bg-card + hex-border-strong via :deep(), VBtn styled as primary. TODO: replace VModal with custom modal for dramatic 600ms animation
 - `Punch3D.vue` — Three.js punching bag
-- `MoveTreeCard.vue` — move row in tree
-- `MoveDetailsModal.vue` — move detail/unlock popup
+- `MoveTreeCard.vue` — *Deleted* (was move row in tree)
+- `MoveDetailsModal.vue` — *Deleted* (was move detail/unlock popup)
 - `SoundToggle.vue` — sound mute/unmute toggle (Profile > Account). Visual System v1.0 compliant: success green on-state, no pink
 - `HPBar.vue` — fight health bar. Visual System v1.0 compliant: status colors (success/warning/danger), AnonymousBalance HP numbers, no pink
 - `ModeSelector.vue` — arena mode selector (PvE/PvP), compact button with dropdown, system sans-serif font. Visual System v1.0 compliant: neutral compact btn (no mode-specific colors), neutral dropdown (no glow), system sans labels, touch-targets ≥44px
@@ -588,7 +588,7 @@ MIGRATION_ENABLED = true           // lazy User→Fighter #1 on /me
 - `ChallengeNotification.vue` — Top-of-screen challenge notification (global, z-index: 9999, 10s timer). Visual System v1.0 compliant: primary border-bottom accent, slide-down 300ms, name via {{ }} (XSS safe)
 - `ClubInviteNotification.vue` — Top-of-screen club invitation notification (global, z-index: 9998, 30s timer, accept/decline via WS)
 - `PlayerSearchResult.vue` — player search result item
-- `XPAllocationModal.vue` — XP allocation modal
+- `XPAllocationModal.vue` — *Deleted* (XP allocation now via ResearchTree +10 XP buttons)
 - `PvPStatsCard.vue` — PvP statistics display (league, rating, progress, wins/losses/winrate). Shown in Fighters tab of RatingsView. Visual System v1.0 compliant: 0 pink, league colors preserved (brand identity), AnonymousBalance for numbers, system sans for labels
 - `AiTrainerAnalysis.vue` — Claude-powered post-fight analysis (PvE + PvP, results screen). Visual System v1.0 compliant: neutral card, system sans, no pink, no Anonymous font
 - `ProfileWallet.vue` — Wallet page: uses @wagmi/vue useAccount(), shows ConnectWallet + GameBalanceCard + HexCard placeholder. BuyTokens removed from render, WalletInfo deleted
