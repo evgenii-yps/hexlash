@@ -1,17 +1,13 @@
 /**
  * progressionState — TRAINER progression module.
- * Holds the player's "school": tap count, freeXP, branch XP, unlocked moves, deck.
+ * Holds the player's "school": tap count, freeXP, deck, legacy moves/branchExp.
  *
- * IMPORTANT: After #P1-captain-2, this module is NO LONGER used by combat.
- * Combat (PvE/PvP) uses Captain Agent's own progression (agent.progression.*).
- * This module remains as the trainer's meta-state — used by TrainingView,
- * MoveTreeView, DeckBuilderView for the trainer's personal progress and
- * for seeding new agents at creation time.
+ * Research (moves unlock/upgrade) is now per-agent via ResearchTree.
+ * This module remains for: taps (TrainingView), freeXP display, deck (legacy),
+ * syncProgression to server, and data restore on login.
  */
 
 import { allMoves } from '@/data/moves.js';
-import { branches } from '@/data/branches.js';
-import { levelUpRequirements, unlockRequirements } from '@/data/requirements.js';
 import apiClient from '@/core/api/apiClient.js';
 
 let syncTimeout = null;
@@ -85,7 +81,6 @@ export default {
     getTaps: state => state.taps,
     getTotalTaps: state => state.totalTaps,
     getFreeXP: state => state.freeXP,
-    getBranchExp: state => state.branchExp,
     getMoves: state => state.moves,
     getDeck: state => state.deck,
     getStats: state => ({
@@ -95,36 +90,6 @@ export default {
     getUnlockedMoves: state => Object.entries(state.moves)
       .filter(([, m]) => m.unlocked)
       .map(([id]) => id),
-
-    canLevelUp: state => moveId => {
-      const move = state.moves[moveId];
-      if (!move || !move.unlocked || move.level >= 5) return false;
-      const req = levelUpRequirements[move.level + 1];
-      if (!req) return false;
-      const branch = allMoves[moveId]?.branch;
-      return state.taps >= req.taps && state.branchExp[branch] >= req.exp;
-    },
-
-    canUnlock: state => moveId => {
-      const moveData = allMoves[moveId];
-      if (!moveData) return false;
-      const branch = moveData.branch;
-      const branchMoves = branches[branch].moves;
-      const moveIndex = branchMoves.indexOf(moveId);
-      if (moveIndex <= 0) return false;
-      const prevMoveId = branchMoves[moveIndex - 1];
-      const prevMove = state.moves[prevMoveId];
-      if (!prevMove?.unlocked || prevMove.level < 3) return false;
-      const req = unlockRequirements[prevMove.level];
-      if (!req) return false;
-      return state.taps >= req.taps && state.branchExp[branch] >= req.exp;
-    },
-
-    getLevelUpCost: () => moveId => {
-      const move_data = allMoves[moveId];
-      if (!move_data) return null;
-      return levelUpRequirements;
-    },
 
     isDeckValid: state => {
       const { deck, moves } = state;
@@ -140,49 +105,10 @@ export default {
       saveProgress(state);
     },
 
-    levelUpMove(state, moveId) {
-      const move = state.moves[moveId];
-      if (!move || move.level >= 5) return;
-      const req = levelUpRequirements[move.level + 1];
-      const branch = allMoves[moveId].branch;
-      state.taps -= req.taps;
-      state.branchExp[branch] -= req.exp;
-      state.moves = {
-        ...state.moves,
-        [moveId]: { ...move, level: move.level + 1 }
-      };
-      saveProgress(state);
-    },
-
-    unlockMove(state, moveId) {
-      const moveData = allMoves[moveId];
-      const branch = moveData.branch;
-      const branchMoves = branches[branch].moves;
-      const moveIndex = branchMoves.indexOf(moveId);
-      const prevMoveId = branchMoves[moveIndex - 1];
-      const prevMove = state.moves[prevMoveId];
-      const req = unlockRequirements[prevMove.level];
-      state.taps -= req.taps;
-      state.branchExp[branch] -= req.exp;
-      state.moves = {
-        ...state.moves,
-        [moveId]: { level: 1, unlocked: true }
-      };
-      saveProgress(state);
-    },
-
     addFreeXP(state, { amount, result }) {
       state.freeXP += amount;
       state.totalFights += 1;
       if (result === 'win') state.totalWins += 1;
-      saveProgress(state);
-    },
-
-    allocateXP(state, { branch, amount }) {
-      if (amount <= 0 || amount > state.freeXP) return;
-      if (!state.branchExp.hasOwnProperty(branch)) return;
-      state.freeXP -= amount;
-      state.branchExp = { ...state.branchExp, [branch]: state.branchExp[branch] + amount };
       saveProgress(state);
     },
 
@@ -248,31 +174,10 @@ export default {
       commit('addTap');
     },
 
-    levelUpMove({ commit, getters, dispatch }, moveId) {
-      if (!getters.canLevelUp(moveId)) return false;
-      commit('levelUpMove', moveId);
-      dispatch('syncProgression');
-      return true;
-    },
-
-    unlockMove({ commit, getters, dispatch }, moveId) {
-      if (!getters.canUnlock(moveId)) return false;
-      commit('unlockMove', moveId);
-      dispatch('syncProgression');
-      return true;
-    },
-
     onFightEnd({ commit, dispatch }, { result }) {
       const amount = result === 'win' ? 10 : result === 'draw' ? 7 : 5;
       commit('addFreeXP', { amount, result });
       dispatch('syncProgression');
-    },
-
-    allocateXP({ commit, state, dispatch }, { branch, amount }) {
-      if (amount <= 0 || amount > state.freeXP) return false;
-      commit('allocateXP', { branch, amount });
-      dispatch('syncProgression');
-      return true;
     },
 
     toggleDeckMove({ commit, dispatch }, moveId) {
