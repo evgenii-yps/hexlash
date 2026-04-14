@@ -23,7 +23,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
   router/index.js          — Routes + auth guards + fight state restore
   views/                   — 19 page-level components (incl. FightClubView, CreateAgentView, AgentDetailView)
   components/              — 75+ reusable components
-  components/club/         — 7 Club Mode components (AgentRoster, AgentCard, ClubLevelBar, MorningReport, RetirementPanel, SkinPicker, ArchetypeSelector)
+  components/club/         — 8 Club Mode components (AgentRoster, AgentCard, ClubLevelBar, MorningReport, RetirementPanel, SkinPicker, ArchetypeSelector, ResearchTree)
   components/clan/         — 1 Clan social component (ClanInviteNotification)
   components/fragments/clan/ — 10 Clan social fragments (ClanPageContent, ClanActivityFeed, ClanEdit, ClanStats, ClanAvatar, ClanOwnerAvatar, ClanWithdraw, ClanConfirmModal, CreateClan, MyClanTab)
   components/ratings/      — AgentLeaderboard
@@ -85,7 +85,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
     services/beltService.js — Belt system (isQualifyingWin, calculateBelt, checkHexmaster, applyWin)
     services/captainService.js — Captain Agent management (setCaptain, atomic swap)
     services/retirementService.js — Fighter retirement + legend buff
-    services/researchGateService.js — Research Gate: agent move learning based on player progression
+    services/researchGateService.js — Research Gate: per-agent research tree (unlock/upgrade moves, lazy migration)
     services/morningReportService.js — Claude AI morning report stats + prompts
     services/metaAnalysisService.js — Global meta statistics for premium reports
     services/nftService.js — NFT minting verification (feature flag off)
@@ -536,7 +536,7 @@ MIGRATION_ENABLED = true           // lazy User→Fighter #1 on /me
 | RainView (Auth) | `RainView.vue` | 3D rain scene + auth forms (Login, Signup, Reset, TelegramLogin). Visual System v1.0 compliant: 3D untouched, submit btns = primary CTA per form, links neutral (white via ButtonText), errors hex-danger, InputField shared fix |
 | PageView | `PageView.vue` | Static help/rules pages via v-html from i18n. Visual System v1.0 compliant: 0 full pink, spans/link-hover use hex-primary-light (PINK_DIM), white underlined links, v-html preserved for trusted i18n |
 | Create Agent | `CreateAgentView.vue` | 2-step wizard: name+skin → confirm+create. Modules configured after creation in AgentDetailView edit modal |
-| Agent Detail | `AgentDetailView.vue` | 4-tab agent management: Overview (stats, deck, XP, train), Moves (Research Gate tree), Tactics (fight mode, aggression, dice, coach, emergency, rest), Fights (history with filter+pagination). Edit modal (name/skin/build), deck editor, delete |
+| Agent Detail | `AgentDetailView.vue` | 4-tab agent management: Overview (stats, deck, XP, train), Moves (per-agent ResearchTree component — unlock/upgrade/allocate XP), Tactics (fight mode, aggression, dice, coach, emergency, rest), Fights (history with filter+pagination). Edit modal (name/skin/build), deck editor, delete |
 
 ---
 
