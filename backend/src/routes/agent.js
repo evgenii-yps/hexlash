@@ -10,6 +10,8 @@ const {
   canAgentLearnMove,
   validateAgentDeck,
   getAvailableMovesForAgent,
+  ensureResearch,
+  executeResearchAction,
 } = require('../services/researchGateService');
 const { runPveTraining } = require('../services/agentFightService');
 const { setCaptain, canDeleteAgent } = require('../services/captainService');
@@ -126,6 +128,12 @@ router.get('/:id', authMiddleware, async (req, res) => {
     }
     if (agent.ownerId !== req.userId) {
       return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // Lazy migration: populate research for captain if empty
+    const migrated = await ensureResearch(agent.id, req.userId);
+    if (migrated) {
+      agent.progression = migrated;
     }
 
     res.json({ agent });
@@ -544,7 +552,10 @@ router.get('/:id/available-moves', authMiddleware, async (req, res) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    const moves = await getAvailableMovesForAgent(req.userId, req.params.id);
+    // Lazy migration: populate research for captain if empty
+    await ensureResearch(agent.id, req.userId);
+
+    const moves = await getAvailableMovesForAgent(req.params.id);
 
     res.json({ moves });
   } catch (err) {
@@ -592,8 +603,8 @@ router.post('/:id/learn-move', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'Can only upgrade one level at a time' });
     }
 
-    // Research Gate check
-    const check = await canAgentLearnMove(req.userId, moveId, targetLevel);
+    // Research Gate check — per-agent research
+    const check = await canAgentLearnMove(agent.id, moveId, targetLevel);
     if (!check.allowed) {
       return res.status(403).json({ error: check.reason });
     }
@@ -672,8 +683,8 @@ router.put('/:id/deck', authMiddleware, async (req, res) => {
       }
     }
 
-    // Validate against Research Gate
-    const validation = await validateAgentDeck(req.userId, deck, agentMoves);
+    // Validate against agent's own research
+    const validation = await validateAgentDeck(req.params.id, deck, agentMoves);
     if (!validation.valid) {
       return res.status(400).json({ error: validation.reasons[0] });
     }
@@ -686,6 +697,122 @@ router.put('/:id/deck', authMiddleware, async (req, res) => {
     res.json({ progression });
   } catch (err) {
     console.error('Update deck error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+const researchLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 60,
+  message: { error: 'Too many research actions, try again later' },
+});
+
+// POST /v1/agent/:id/research — unlock or upgrade a move in agent's research tree
+router.post('/:id/research', authMiddleware, researchLimiter, async (req, res) => {
+  try {
+    const { action, moveId } = req.body;
+
+    if (!action || !moveId) {
+      return res.status(400).json({ error: 'action and moveId are required' });
+    }
+
+    if (action !== 'unlock' && action !== 'upgrade') {
+      return res.status(400).json({ error: 'action must be "unlock" or "upgrade"' });
+    }
+
+    if (!ALL_MOVE_IDS.includes(moveId)) {
+      return res.status(400).json({ error: 'Unknown move' });
+    }
+
+    // Lazy migration for captain
+    await ensureResearch(req.params.id, req.userId);
+
+    const result = await executeResearchAction(req.params.id, req.userId, action, moveId);
+
+    if (!result.success) {
+      return res.status(400).json({ error: result.error });
+    }
+
+    res.json({
+      progression: result.progression,
+      tapsSpent: result.tapsSpent,
+      xpSpent: result.xpSpent,
+    });
+  } catch (err) {
+    console.error('Research action error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /v1/agent/:id/allocate-xp — transfer freeXP from User to agent branch XP
+router.post('/:id/allocate-xp', authMiddleware, async (req, res) => {
+  try {
+    const { branch, amount } = req.body;
+
+    // Validate branch
+    if (!branch || !['speed', 'power', 'technique'].includes(branch)) {
+      return res.status(400).json({ error: 'branch must be "speed", "power", or "technique"' });
+    }
+
+    // Validate amount
+    if (!Number.isInteger(amount) || amount <= 0) {
+      return res.status(400).json({ error: 'amount must be a positive integer' });
+    }
+
+    // Verify agent ownership
+    const agent = await prisma.agent.findUnique({
+      where: { id: req.params.id },
+      select: { ownerId: true },
+    });
+
+    if (!agent) {
+      return res.status(404).json({ error: 'Agent not found' });
+    }
+    if (agent.ownerId !== req.userId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // Check user has enough freeXP
+    const user = await prisma.user.findUnique({
+      where: { id: req.userId },
+      select: { progression: true },
+    });
+
+    if (!user || !user.progression) {
+      return res.status(400).json({ error: 'No progression data' });
+    }
+
+    const freeXP = user.progression.freeXP || 0;
+    if (freeXP < amount) {
+      return res.status(400).json({ error: 'Not enough free XP' });
+    }
+
+    const xpField = BRANCH_XP_FIELD[branch];
+
+    // Transaction: deduct freeXP from User, add to agent branchXp
+    const result = await prisma.$transaction(async (tx) => {
+      // Deduct freeXP from User.progression
+      const updatedProgression = { ...user.progression, freeXP: freeXP - amount };
+      await tx.user.update({
+        where: { id: req.userId },
+        data: { progression: updatedProgression },
+      });
+
+      // Add to agent branch XP
+      const updatedProg = await tx.agentProgression.update({
+        where: { agentId: req.params.id },
+        data: { [xpField]: { increment: amount } },
+      });
+
+      return { userFreeXP: freeXP - amount, agentProgression: updatedProg };
+    });
+
+    res.json({
+      freeXP: result.userFreeXP,
+      progression: result.agentProgression,
+    });
+  } catch (err) {
+    console.error('Allocate XP error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

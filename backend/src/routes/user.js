@@ -302,27 +302,34 @@ router.put('/skin', authMiddleware, async (req, res) => {
 });
 
 // PUT /v1/user/progression
+// NOTE: moves and branchExp are now per-agent (AgentProgression.research).
+// This endpoint only accepts taps, freeXP, totalTaps, deck (legacy).
+// If frontend sends moves or branchExp, they are stripped out.
 router.put('/progression', authMiddleware, async (req, res) => {
   try {
     const { progression, deck } = req.body;
     const data = {};
 
     if (progression !== undefined) {
-      if (progression.moveLevels) {
-        for (const [moveId, level] of Object.entries(progression.moveLevels)) {
-          if (level > 5 || level < 1) {
-            return res.status(400).json({ error: 'Invalid move level' });
-          }
-        }
-      }
-      if (progression.branchXP) {
-        for (const [branch, xp] of Object.entries(progression.branchXP)) {
-          if (xp < 0) {
-            return res.status(400).json({ error: 'Invalid XP value' });
-          }
-        }
-      }
-      data.progression = progression;
+      // Strip research-related fields — now per-agent
+      const { moves, branchExp, moveLevels, branchXP, ...safeProgression } = progression;
+
+      // Merge with existing progression to preserve fields we don't touch
+      const user = await prisma.user.findUnique({
+        where: { id: req.userId },
+        select: { progression: true },
+      });
+      const existing = user?.progression || {};
+
+      // Keep existing moves/branchExp in the blob (legacy, not deleted)
+      // but don't allow frontend to overwrite them
+      data.progression = {
+        ...existing,
+        ...safeProgression,
+        // Preserve legacy fields as-is
+        moves: existing.moves,
+        branchExp: existing.branchExp,
+      };
     }
 
     if (deck !== undefined) {

@@ -23,7 +23,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
   router/index.js          — Routes + auth guards + fight state restore
   views/                   — 19 page-level components (incl. FightClubView, CreateAgentView, AgentDetailView)
   components/              — 75+ reusable components
-  components/club/         — 7 Club Mode components (AgentRoster, AgentCard, ClubLevelBar, MorningReport, RetirementPanel, SkinPicker, ArchetypeSelector)
+  components/club/         — 8 Club Mode components (AgentRoster, AgentCard, ClubLevelBar, MorningReport, RetirementPanel, SkinPicker, ArchetypeSelector, ResearchTree)
   components/clan/         — 1 Clan social component (ClanInviteNotification)
   components/fragments/clan/ — 10 Clan social fragments (ClanPageContent, ClanActivityFeed, ClanEdit, ClanStats, ClanAvatar, ClanOwnerAvatar, ClanWithdraw, ClanConfirmModal, CreateClan, MyClanTab)
   components/ratings/      — AgentLeaderboard
@@ -85,7 +85,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
     services/beltService.js — Belt system (isQualifyingWin, calculateBelt, checkHexmaster, applyWin)
     services/captainService.js — Captain Agent management (setCaptain, atomic swap)
     services/retirementService.js — Fighter retirement + legend buff
-    services/researchGateService.js — Research Gate: agent move learning based on player progression
+    services/researchGateService.js — Research Gate: per-agent research tree (unlock/upgrade moves, lazy migration)
     services/morningReportService.js — Claude AI morning report stats + prompts
     services/metaAnalysisService.js — Global meta statistics for premium reports
     services/nftService.js — NFT minting verification (feature flag off)
@@ -156,8 +156,8 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 | `/arena/club/:agentId` | AgentDetailView | Yes |
 | `/fight` | CardFightView | Yes |
 | `/training` | TrainingView | Yes |
-| `/training/moves` | MoveTreeView | Yes |
-| `/training/deck` | DeckBuilderView | Yes |
+| `/training/moves` | *Deleted* — research moved to AgentDetailView Moves tab | — |
+| `/training/deck` | *Deleted* — deck editing in AgentDetailView | — |
 | `/profile` `/profile/balance` `/profile/wallet` `/profile/account` `/profile/skins` | ProfileView | Yes |
 | `/clan/:id` | ClanView | Yes |
 | `/ratings/:type` | RatingsView | Yes |
@@ -175,7 +175,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 | `masterState` | App init, auth status, info/error messages, language |
 | `userState` | Current user profile, stats, avatar |
 | `cardFightState` | Active fight: rounds, HP, dice, coach, playerModules, localStorage persist |
-| `progressionState` | Moves unlocked/levels, taps, XP per branch, server sync (PUT /user/progression) |
+| `progressionState` | Taps, freeXP, legacy deck/moves, server sync (PUT /user/progression). Research moved per-agent. |
 | `clanState` | Clan info, members, balance, roles (set-role, transfer-ownership, kick). Namespace `clan/`. File: `clanState.js` |
 | `taskState` | Daily + social tasks |
 | `punchState` | Punch/tap rate limiting, cooldown, 2D/3D punch toggle, sound mute toggle |
@@ -522,8 +522,8 @@ MIGRATION_ENABLED = true           // lazy User→Fighter #1 on /me
 | View | File | Notes |
 |------|------|-------|
 | Training | `TrainingView.vue` | 3D punch bag, taps, daily/social tasks, progression bar. Visual System v1.0 compliant: neutral UI overlay, AnonymousBalance for taps/XP numbers, system sans for labels, 3D not touched, XP Allocate = primary CTA |
-| Move Tree | `MoveTreeView.vue` | Branch sidebar (Speed/Power/Tech) + move cards. Sidebar buttons centered with `position:absolute; top:35%; transform:translateY(-50%)`. Visual System v1.0 compliant: neutral cards in tree, Upgrade CTA only in modal, branch active = neutral bg-light, AnonymousBalance for levels/resources |
-| Deck Builder | `DeckBuilderView.vue` | Deck assembly (4-8 moves). Auto-save on toggle. Visual System v1.0 compliant: neutral selected moves (border-strong, no pink), TO ARENA = sole pink CTA, AnonymousBalance for levels/stats |
+| Move Tree | *Deleted* (`MoveTreeView.vue`) | Research moved per-agent to AgentDetailView → Moves tab (ResearchTree.vue) |
+| Deck Builder | *Deleted* (`DeckBuilderView.vue`) | Deck editing via AgentDetailView deck editor modal |
 | Fight | `CardFightView.vue` | Main combat (PvE + PvP), dice, coach advice, HP bars, AI Trainer (PvE results). Loading splash: HEXLASH in Anonymous pixel-font with --hex-primary + glow (matches Logo.vue style, same as index.html pre-app splash). PvP mode: no BottomMenu, no PvP badge, reduced padding. Fully migrated to --hex-* vars: HexButton for results, inline SVGs, dice/coach/victory/defeat/overdrive all use design system vars. Visual System v1.0 compliant: pink only on CTA buttons (dice, Fight Again), VICTORY/DEFEAT/DRAW + OVERDRIVE pixel-font, HP in AnonymousBalance, dice effects in characteristic colors, coach buttons in action-specific colors |
 | Profile | `ProfileView.vue` | Tabs: balance, wallet, account, skins. Visual System v1.0 compliant: AnonymousBalance for numerical values, neutral header (no pink), 0-1 pink accent per tab, toggles green (success), delete btn danger |
 | Ratings (League) | `RatingsView.vue` | 3 tabs: My Club, Clubs (leaderboard), Fighters (leaderboard). Default tab: My Club. URL: `/ratings/:type` (myclub/clubs/fighters). My Club tab: `MyClubTab.vue` component — redesigned clan header (avatar 64px with --hex-primary glow, name in Anonymous font, italic description, LVL badge, member count, level progress bar), stats grid (4 cards: Members/Wins/Losses/Win Rate with colored values), win rate bar, members top-5, role badges owner/deputy, action menus. No-clan state: ⚔ icon hero, CREATE/BROWSE buttons, pending invites banners, suggested clans with stats |
@@ -536,7 +536,7 @@ MIGRATION_ENABLED = true           // lazy User→Fighter #1 on /me
 | RainView (Auth) | `RainView.vue` | 3D rain scene + auth forms (Login, Signup, Reset, TelegramLogin). Visual System v1.0 compliant: 3D untouched, submit btns = primary CTA per form, links neutral (white via ButtonText), errors hex-danger, InputField shared fix |
 | PageView | `PageView.vue` | Static help/rules pages via v-html from i18n. Visual System v1.0 compliant: 0 full pink, spans/link-hover use hex-primary-light (PINK_DIM), white underlined links, v-html preserved for trusted i18n |
 | Create Agent | `CreateAgentView.vue` | 2-step wizard: name+skin → confirm+create. Modules configured after creation in AgentDetailView edit modal |
-| Agent Detail | `AgentDetailView.vue` | 4-tab agent management: Overview (stats, deck, XP, train), Moves (Research Gate tree), Tactics (fight mode, aggression, dice, coach, emergency, rest), Fights (history with filter+pagination). Edit modal (name/skin/build), deck editor, delete |
+| Agent Detail | `AgentDetailView.vue` | 4-tab agent management: Overview (stats, deck, XP, train), Moves (per-agent ResearchTree component — unlock/upgrade/allocate XP), Tactics (fight mode, aggression, dice, coach, emergency, rest), Fights (history with filter+pagination). Edit modal (name/skin/build), deck editor, delete |
 
 ---
 
@@ -577,8 +577,8 @@ MIGRATION_ENABLED = true           // lazy User→Fighter #1 on /me
 - `Info.vue` / `Error.vue` — toast notifications (text interpolation `{{ }}`, NOT v-html — XSS safe). Visual System v1.0 compliant: bg-card neutral, hex-success/hex-danger accent, text via {{ }} (XSS safe)
 - `NewAchievement.vue` — achievement popup. Visual System v1.0 compliant: pixel-font title, hex-bg-card + hex-border-strong via :deep(), VBtn styled as primary. TODO: replace VModal with custom modal for dramatic 600ms animation
 - `Punch3D.vue` — Three.js punching bag
-- `MoveTreeCard.vue` — move row in tree
-- `MoveDetailsModal.vue` — move detail/unlock popup
+- `MoveTreeCard.vue` — *Deleted* (was move row in tree)
+- `MoveDetailsModal.vue` — *Deleted* (was move detail/unlock popup)
 - `SoundToggle.vue` — sound mute/unmute toggle (Profile > Account). Visual System v1.0 compliant: success green on-state, no pink
 - `HPBar.vue` — fight health bar. Visual System v1.0 compliant: status colors (success/warning/danger), AnonymousBalance HP numbers, no pink
 - `ModeSelector.vue` — arena mode selector (PvE/PvP), compact button with dropdown, system sans-serif font. Visual System v1.0 compliant: neutral compact btn (no mode-specific colors), neutral dropdown (no glow), system sans labels, touch-targets ≥44px
@@ -588,7 +588,7 @@ MIGRATION_ENABLED = true           // lazy User→Fighter #1 on /me
 - `ChallengeNotification.vue` — Top-of-screen challenge notification (global, z-index: 9999, 10s timer). Visual System v1.0 compliant: primary border-bottom accent, slide-down 300ms, name via {{ }} (XSS safe)
 - `ClubInviteNotification.vue` — Top-of-screen club invitation notification (global, z-index: 9998, 30s timer, accept/decline via WS)
 - `PlayerSearchResult.vue` — player search result item
-- `XPAllocationModal.vue` — XP allocation modal
+- `XPAllocationModal.vue` — *Deleted* (XP allocation now via ResearchTree +10 XP buttons)
 - `PvPStatsCard.vue` — PvP statistics display (league, rating, progress, wins/losses/winrate). Shown in Fighters tab of RatingsView. Visual System v1.0 compliant: 0 pink, league colors preserved (brand identity), AnonymousBalance for numbers, system sans for labels
 - `AiTrainerAnalysis.vue` — Claude-powered post-fight analysis (PvE + PvP, results screen). Visual System v1.0 compliant: neutral card, system sans, no pink, no Anonymous font
 - `ProfileWallet.vue` — Wallet page: uses @wagmi/vue useAccount(), shows ConnectWallet + GameBalanceCard + HexCard placeholder. BuyTokens removed from render, WalletInfo deleted
@@ -617,7 +617,7 @@ Base: `/v1/`
 | `/stats` | stats.js | player and game statistics |
 | `/friends` | friends.js | friends list, requests, search players |
 | `/ai` | ai.js | AI Trainer fight analysis (POST /analyze-fight), build description (POST /build-description), morning report (POST /morning-report), premium report (POST /premium-report) |
-| `/agent` | agent.js | 16 endpoints: CRUD agents, tactics, fight history, Research Gate (available-moves, learn-move, deck), PvE training (train), auto-fight toggle/status, rankings, fight-club level |
+| `/agent` | agent.js | 18 endpoints: CRUD agents, tactics, fight history, Research Gate (available-moves, learn-move, deck, research, allocate-xp), PvE training (train), auto-fight toggle/status, rankings, fight-club level |
 
 Auth guard: JWT Bearer token via `middleware/auth.js`
 Telegram auth: HMAC-SHA256 signature validation via `validateTelegramPayload()` in auth.js
@@ -1272,32 +1272,52 @@ Extended existing clan level system with agent support. Single unified level sys
 - `backend/src/utils/syncClubLevels.js` — **new** sync script
 - `src/data/clanLevels.js` — maxAgents added
 
-### Research Gate — Agent Move Learning (ТЗ-04) — ✅ COMPLETE
+### Research Gate — Per-Agent Research Tree (ТЗ-04, refactored) — ✅ COMPLETE
 
-Implemented Research Gate: agents can only learn moves the player has researched, up to the player's level.
+Research tree is now per-agent (AgentProgression.research) instead of per-account (User.progression.moves). Each agent has its own research tree that gates what moves it can learn. TAPS and freeXP remain on User. Branch XP is per-agent only (User.progression.branchExp is legacy, no longer written to).
 
-**New service (`services/researchGateService.js`):**
+**AgentProgression.research format:** `{ moveId: { unlocked: bool, level: 1-5 } }`
+
+**Service (`services/researchGateService.js`):**
 - `MOVE_BRANCHES` — backend copy of move→branch mapping (18 moves)
-- `LEVEL_UP_XP_COST` — XP cost per level: Lv1=free, Lv2=50, Lv3=100, Lv4=200, Lv5=350
-- `getPlayerResearch(userId)` — extract unlocked moves from User.progression JSON
-- `canAgentLearnMove(userId, moveId, targetLevel)` — Research Gate check
-- `validateAgentDeck(userId, deck, agentMoves)` — validate entire deck against Research Gate
-- `getAvailableMovesForAgent(userId, agentId)` — list moves agent can learn with current/max levels
+- `BRANCH_MOVES` — ordered moves per branch (for gating: prev move at Lv3+ to unlock next)
+- `LEVEL_UP_REQUIREMENTS` — taps + exp per research level-up: `{2: {taps:100, exp:50}, ...5: {taps:500, exp:350}}`
+- `UNLOCK_REQUIREMENTS` — taps + exp per research unlock (key=prev move level): `{3: {taps:300, exp:150}, ...5: {taps:200, exp:100}}`
+- `LEVEL_UP_XP_COST` — legacy XP-only costs (used by learn-move)
+- `ensureResearch(agentId, userId)` — lazy migration: captain with empty research gets User.progression.moves
+- `getAgentResearch(agentId)` — read agent's research tree
+- `canAgentLearnMove(agentId, moveId, targetLevel)` — gate by agent's own research level
+- `validateAgentDeck(agentId, deck, agentMoves)` — validate deck against agent's research
+- `getAvailableMovesForAgent(agentId)` — all 18 moves with research + learn status + costs
+- `calculateResearchCost(action, moveId, research)` — cost calculator
+- `executeResearchAction(agentId, userId, action, moveId)` — transactional unlock/upgrade (deducts User.totalTaps + Agent branchXp)
 
-**New endpoints in agent.js:**
-- `GET /v1/agent/:id/available-moves` — moves available to agent (maxLevel from player, agentCurrentLevel, canUpgrade, xpCost)
-- `POST /v1/agent/:id/learn-move` — agent learns/upgrades a move (Research Gate + XP deduction from branch)
-- `PUT /v1/agent/:id/deck` — update agent deck (4-8 moves, all learned, no duplicates, Research Gate validated)
+**Endpoints in agent.js:**
+- `GET /v1/agent/:id/available-moves` — per-agent research tree (researchLevel, locked, unlockable, learnedLevel, researchCost, learnXpCost)
+- `POST /v1/agent/:id/learn-move` — agent learns move (gated by agent research, deducts agent branch XP)
+- `PUT /v1/agent/:id/deck` — validate deck against agent's research
+- `POST /v1/agent/:id/research` — **new** unlock/upgrade move in research tree (deducts User.totalTaps + Agent branchXp, $transaction)
+- `POST /v1/agent/:id/allocate-xp` — **new** transfer User.progression.freeXP → Agent branchXp ($transaction)
 
-**Research Gate rules:**
-- Agent can learn move only if player has it unlocked
-- Agent level for a move cannot exceed player's level for that move
-- Level 1 is free, levels 2-5 cost branch XP (same costs as player)
-- Cannot learn or change deck while agent status is 'fighting'
+**Lazy migration:** Captain with empty research → copies User.progression.moves to AgentProgression.research + branchExp to agent xp (if 0). Triggered on GET /agent/:id, GET /available-moves, POST /research.
+
+**PUT /user/progression:** Strips moves/branchExp from incoming data. Legacy values preserved in DB but no longer written to.
+
+**Research Gate rules (per-agent):**
+- First move in branch: free unlock (no prerequisite)
+- Subsequent moves: previous move at Lv3+ required to unlock
+- Unlock cost depends on prerequisite level (higher = cheaper)
+- Research level caps agent's learn level
+- Agent branch XP used for both research and learning
 
 **Files changed:**
-- `backend/src/services/researchGateService.js` — **new** service
-- `backend/src/routes/agent.js` — 3 new endpoints + researchGateService import
+- `backend/prisma/schema.prisma` — `research` Json field on AgentProgression
+- `backend/prisma/migrations/20260414000000_add_agent_research/` — SQL migration
+- `backend/src/services/researchGateService.js` — full rewrite for per-agent
+- `backend/src/routes/agent.js` — 2 new endpoints + modified existing
+- `backend/src/routes/user.js` — PUT /progression strips research data
+- `backend/src/services/userMigrationService.js` — includes research in Fighter #1
+- `backend/src/utils/migrationHelpers.js` — `transformResearch()` helper
 
 ### Agent Combat Engine (ТЗ-05) — ✅ COMPLETE
 

@@ -188,6 +188,22 @@ const actions = {
     }
   },
 
+  async researchAction({ commit, state: s }, { agentId, action, moveId }) {
+    const res = await apiClient.post(`/agent/${agentId}/research`, { action, moveId }, { authRequired: true });
+    if (s.currentAgent && s.currentAgent.id === agentId) {
+      commit('SET_CURRENT_AGENT', { ...s.currentAgent, progression: res.progression });
+    }
+    return res;
+  },
+
+  async allocateXp({ commit, state: s }, { agentId, branch, amount }) {
+    const res = await apiClient.post(`/agent/${agentId}/allocate-xp`, { branch, amount }, { authRequired: true });
+    if (s.currentAgent && s.currentAgent.id === agentId) {
+      commit('SET_CURRENT_AGENT', { ...s.currentAgent, progression: res.progression });
+    }
+    return res;
+  },
+
   async trainAgent({ commit, dispatch }, agentId) {
     commit('SET_TRAIN_LOADING', true);
     commit('SET_TRAIN_RESULT', null);

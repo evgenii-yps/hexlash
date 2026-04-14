@@ -384,6 +384,9 @@ model AgentProgression {
   powerXp          Int      @default(0)
   techniqueXp      Int      @default(0)
 
+  // Research tree: JSON { moveId: { unlocked: bool, level: 1-5 } }
+  research         Json     @default("{}")
+
   // Learned moves: JSON [{moveId: string, level: number}]
   moves            Json     @default("[]")
 

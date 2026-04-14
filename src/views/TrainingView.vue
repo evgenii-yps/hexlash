@@ -52,12 +52,6 @@
           </div>
         </div>
 
-        <!-- Кнопки навигации к приёмам -->
-        <div class="progression-actions">
-          <button class="btn-prog" @click="goToMoves">{{ t.training.lblResearch || 'Research' }}</button>
-          <div class="research-desc">{{ t.training.lblResearchDesc || 'Unlock moves for your agents' }}</div>
-        </div>
-
         <div v-if="loadingPunchInfo" class="loader-container">
           <v-progress-circular
               class="loader"
@@ -106,7 +100,6 @@ import Punch3D from "@/components/fragments/training/Punch3D.vue";
 import {Howl} from "howler";
 import {showTrainingRulesReminder} from "@/core/services/masterService.js";
 import * as amplitude from "@amplitude/analytics-browser";
-import router from "@/router/index.js";
 
 
 
@@ -118,8 +111,6 @@ const countdownText = ref('');
 
 const progressionTaps = computed(() => store.getters['progression/getTaps']);
 const freeXP = computed(() => store.getters['progression/getFreeXP']);
-
-const goToMoves = () => router.push('/training/moves');
 
 const socialTasks = computed(() => store.getters['task/getAllSocialTasks']);
 const dailyTasks = computed(() => store.getters['task/getAllDailyTasks']);
@@ -595,35 +586,5 @@ onUnmounted(() => {
   background: var(--hex-border-default);
 }
 
-.progression-actions {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 16px;
-}
-
-.btn-prog {
-  padding: 8px 20px;
-  background: var(--hex-bg-card);
-  border: 1px solid var(--hex-border-default);
-  border-radius: 4px;
-  color: var(--hex-text-muted);
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-prog:hover {
-  border-color: var(--hex-border-active);
-  color: var(--hex-text-primary);
-}
-
-.research-desc {
-  font-size: 10px;
-  color: var(--hex-text-muted);
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  text-align: center;
-  margin-top: 6px;
-}
 
 </style>
