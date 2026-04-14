@@ -394,8 +394,11 @@ onUnmounted(() => {
 }
 
 .training-punch-container {
+  position: relative;
   width: 100%;
-  height: 100%;
+  height: 340px;
+  flex-shrink: 0;
+  margin-bottom: 20px;
 }
 
 .punch-img {
@@ -594,6 +597,9 @@ onUnmounted(() => {
   .training-content-wrapper {
     max-width: 900px;
     padding: 0 24px;
+  }
+  .training-punch-container {
+    height: 410px;
   }
   .punch-img {
     height: 420px;
