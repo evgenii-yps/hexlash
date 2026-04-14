@@ -9,7 +9,7 @@
 const prisma = require('../lib/prisma');
 const { getOrCreateFightClub } = require('./fightClubService');
 const config = require('../config');
-const { transformMoves, extractModules, calculateBranchXp } = require('../utils/migrationHelpers');
+const { transformMoves, extractModules, calculateBranchXp, transformResearch } = require('../utils/migrationHelpers');
 
 /**
  * Lazy migration: User → Fighter #1.
@@ -42,6 +42,7 @@ async function migrateUserToFighter(userId) {
   const progression = user.progression;
   const modules = extractModules(progression.playerModules);
   const moves = transformMoves(progression.moves);
+  const research = transformResearch(progression.moves);
   const deck = Array.isArray(user.deck) ? user.deck : (Array.isArray(progression.deck) ? progression.deck : []);
   const branchXp = calculateBranchXp(progression);
 
@@ -76,6 +77,7 @@ async function migrateUserToFighter(userId) {
     await tx.agentProgression.create({
       data: {
         agentId: agent.id,
+        research,
         moves,
         deck,
         speedXp: branchXp.speedXp,

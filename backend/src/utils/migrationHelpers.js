@@ -50,4 +50,21 @@ function calculateBranchXp(progression) {
   };
 }
 
-module.exports = { transformMoves, extractModules, calculateBranchXp, DEFAULT_MODULES };
+/**
+ * Transform User.progression.moves (object) → AgentProgression.research (object).
+ * Same format: { moveId: { unlocked: true, level: N } }
+ * @param {Object} movesObj - { moveId: { level, unlocked } }
+ * @returns {Object}
+ */
+function transformResearch(movesObj) {
+  if (!movesObj || typeof movesObj !== 'object') return {};
+  const result = {};
+  for (const [moveId, data] of Object.entries(movesObj)) {
+    if (data && data.unlocked && data.level > 0) {
+      result[moveId] = { unlocked: true, level: data.level };
+    }
+  }
+  return result;
+}
+
+module.exports = { transformMoves, extractModules, calculateBranchXp, transformResearch, DEFAULT_MODULES };
