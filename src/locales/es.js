@@ -652,7 +652,6 @@ export default {
     taskNotice: '- Al hacer clic en "Confirmar," te comprometes. No hay lugar para promesas vacías en este clan. Por ejemplo, si te suscribes a un canal, no hay vuelta atrás. Darse de baja después de la confirmación es un camino directo al baneo. Aquí es serio: rompes tu palabra, enfrentas un baneo eterno.',
     checklistCompleted: '¡Buen trabajo, lista de verificación completada!',
     successCompleteTask: 'Has completado la tarea con éxito y has recibido tu merecida recompensa <a href="/training">Tareas</a>',
-    lblTitle: 'Sala de entrenamiento',
     lblTaps: 'Golpes',
     lblAvailableXP: 'XP disponible',
     lblSpeed: 'Velocidad',

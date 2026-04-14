@@ -650,7 +650,6 @@ export default {
     titleNotice: '通知',
     taskNotice: '- 「確認」をクリックすることで、あなたは約束を守ることを誓います。このクランでは軽い約束は許されません。たとえば、チャンネルに登録する場合、後戻りはできません。確認後に登録を解除すると、即座にBANされます。ここでは真剣です。約束を破れば、永久追放が待っています。',
     successCompleteTask: 'タスクを正常に完了し、正当な報酬を獲得しました <a href="/training">タスク</a>',
-    lblTitle: 'トレーニングルーム',
     lblTaps: 'タップ',
     lblAvailableXP: '利用可能XP',
     lblSpeed: 'スピード',

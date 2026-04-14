@@ -37,22 +37,20 @@
 
         </div>
 
-        <div class="training-title">{{ t.training.lblTitle }}</div>
-
-        <!-- Прогрессия: тапы и опыт -->
-        <div class="progression-bar">
-          <div class="prog-resource">
-            <span class="prog-label">{{ t.training.lblTaps }}</span>
-            <span class="prog-value">{{ progressionTaps }}</span>
+        <!-- TAPS / Free XP -->
+        <div class="stats-bar">
+          <div class="stats-item">
+            <span class="stats-label">{{ t.training.lblTaps }}</span>
+            <span class="stats-value">{{ formattedTaps }}</span>
           </div>
-          <div class="prog-divider"/>
-          <div class="prog-resource">
-            <span class="prog-label">{{ t.training.lblAvailableXP }}</span>
-            <span class="prog-value prog-value-xp">{{ freeXP }} XP</span>
+          <div class="stats-divider"></div>
+          <div class="stats-item">
+            <span class="stats-label">{{ t.training.lblAvailableXP }}</span>
+            <span class="stats-value">{{ formattedFreeXP }}</span>
           </div>
         </div>
 
-        <div v-if="loadingPunchInfo" class="loader-container">
+        <div v-if="loadingPunchInfo" class="loader-container loader-container--block">
           <v-progress-circular
               class="loader"
               size="50"
@@ -111,6 +109,15 @@ const countdownText = ref('');
 
 const progressionTaps = computed(() => store.getters['progression/getTaps']);
 const freeXP = computed(() => store.getters['progression/getFreeXP']);
+
+const formattedTaps = computed(() => {
+  const val = progressionTaps.value || 0;
+  return val.toLocaleString('en-US');
+});
+const formattedFreeXP = computed(() => {
+  const val = freeXP.value || 0;
+  return val.toLocaleString('en-US');
+});
 
 const socialTasks = computed(() => store.getters['task/getAllSocialTasks']);
 const dailyTasks = computed(() => store.getters['task/getAllDailyTasks']);
@@ -343,12 +350,12 @@ onUnmounted(() => {
   background: var(--hex-bg-dark);
   z-index: 2;
   opacity: 1;
-  animation: fadeOut 1s forwards; /* Анимация */
+  animation: bgFadeOut 1s forwards;
   width: 100vw;
   height: 100vh;
 }
 
-@keyframes fadeOut {
+@keyframes bgFadeOut {
   to {
     opacity: 0;
   }
@@ -364,7 +371,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: flex-start;
   color: var(--hex-text-primary);
-  -webkit-overflow-scrolling: auto; /* Отключить резиновый скролл*/
+  -webkit-overflow-scrolling: auto;
   overscroll-behavior-y: none;
 }
 
@@ -377,8 +384,9 @@ onUnmounted(() => {
 .training-content-wrapper {
   width: 100%;
   box-sizing: border-box;
-  max-width: 1024px;
+  max-width: 720px;
   margin-top: 70px;
+  padding: 0 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -388,7 +396,6 @@ onUnmounted(() => {
 .training-punch-container {
   width: 100%;
   height: 100%;
-
 }
 
 .punch-img {
@@ -398,15 +405,6 @@ onUnmounted(() => {
   top: -20px;
   left: 50%;
   transform: translateX(-50%);
-
-}
-
-.training-title {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-weight: bold;
-  font-size: 2rem;
-  z-index: 100;
-  margin-bottom: 210px;
 }
 
 .scroll-gap {
@@ -414,6 +412,44 @@ onUnmounted(() => {
   position: relative;
   height: 50px;
   padding-bottom: 150px;
+}
+
+/* Stats bar (TAPS / Free XP) */
+.stats-bar {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background: var(--hex-bg-light);
+  border: 1px solid var(--hex-border-default);
+  border-radius: 8px;
+  padding: 20px;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto 28px;
+  box-sizing: border-box;
+}
+.stats-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.stats-label {
+  font-size: 11px;
+  color: var(--hex-text-muted);
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+}
+.stats-value {
+  font-size: 28px;
+  color: var(--hex-text-primary);
+  font-weight: 500;
+  line-height: 1;
+}
+.stats-divider {
+  width: 1px;
+  height: 40px;
+  background: var(--hex-border-default);
 }
 
 .circle-container {
@@ -476,7 +512,7 @@ onUnmounted(() => {
 }
 
 .pulsing-circle.clicked .wave-circle {
-  transform: scale(3); /* Максимальный размер волны */
+  transform: scale(3);
   opacity: 0.3;
 }
 
@@ -487,9 +523,8 @@ onUnmounted(() => {
   display: flex;
   flex-wrap: nowrap;
   width: 50px;
-  animation: moveUp 1s ease forwards, fadeOut 1s ease forwards;
+  animation: moveUp 1s ease forwards, numFadeOut 1s ease forwards;
   pointer-events: none;
-
 }
 
 @keyframes moveUp {
@@ -501,7 +536,7 @@ onUnmounted(() => {
   }
 }
 
-@keyframes fadeOut {
+@keyframes numFadeOut {
   0% {
     opacity: 1;
   }
@@ -515,6 +550,16 @@ onUnmounted(() => {
   top: 20%;
   left: 50%;
   transform: translateX(-50%);
+}
+
+.loader-container--block {
+  position: relative;
+  top: auto;
+  left: auto;
+  transform: none;
+  display: flex;
+  justify-content: center;
+  padding: 48px 0;
 }
 
 .timer-punch-container {
@@ -544,47 +589,29 @@ onUnmounted(() => {
   text-align: center;
 }
 
-.progression-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--hex-bg-card);
-  border: 1px solid var(--hex-border-default);
-  border-radius: 4px;
-  padding: 8px 12px;
-  margin-bottom: 10px;
-  flex-wrap: wrap;
-  justify-content: center;
-  width: 90%;
-  max-width: 400px;
-  box-sizing: border-box;
+/* Desktop */
+@media (min-width: 1024px) {
+  .training-content-wrapper {
+    max-width: 900px;
+    padding: 0 24px;
+  }
+  .punch-img {
+    height: 420px;
+    width: 270px;
+  }
+  .stats-bar {
+    max-width: 560px;
+    padding: 24px;
+  }
+  .stats-label {
+    font-size: 13px;
+    letter-spacing: 3px;
+  }
+  .stats-value {
+    font-size: 36px;
+  }
+  .stats-divider {
+    height: 48px;
+  }
 }
-
-.prog-resource {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-
-.prog-label {
-  font-size: 0.65rem;
-  color: var(--hex-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.prog-value {
-  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
-  font-size: 0.9rem;
-  color: var(--hex-text-primary);
-}
-
-.prog-divider {
-  width: 1px;
-  height: 28px;
-  background: var(--hex-border-default);
-}
-
-
 </style>

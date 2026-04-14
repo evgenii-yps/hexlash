@@ -713,7 +713,6 @@ export default {
     taskNotice: '- Mit einem Klick auf "Bestätigen" verpflichtest du dich. Es gibt keinen Platz für leere Versprechen in diesem Clan. Zum Beispiel: Wenn du einem Kanal folgst, gibt es kein Zurück mehr. Ein Abmelden nach der Bestätigung führt direkt zum Bann. Hier ist es ernst: brich dein Wort, und du bekommst einen ewigen Bann.',
     checklistCompleted: 'Großartige Arbeit, Checkliste abgeschlossen!',
     successCompleteTask: 'Sie haben die Aufgabe erfolgreich abgeschlossen und Ihre wohlverdiente Belohnung erhalten <a href="/training">Aufgaben</a>',
-    lblTitle: 'Trainingsraum',
     lblTaps: 'Tippen',
     lblAvailableXP: 'Verfügbare XP',
     lblSpeed: 'Geschwindigkeit',

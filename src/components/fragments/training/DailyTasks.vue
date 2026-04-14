@@ -1,42 +1,38 @@
 <template>
   <div class="daily-tasks-section">
-    <div class="header">
-      <h3>{{ t.training.lblDailyTasks }} ({{ notCompletedTasksCount }})</h3>
-
+    <div class="dt-header">
+      <span class="dt-header-label">{{ t.training.lblDailyTasks }}</span>
+      <span class="dt-header-count">{{ notCompletedTasksCount }}</span>
       <VBtnDark
           v-if="completedTasksCount > 0"
           size="x-small"
-          class="btn-show-hide"
+          class="dt-toggle"
           @click="toggleCompletedTasks">
-        <img :src="showCompletedTasks ? IconHide : IconShow" alt="Show/Hide" class="custom-icon"/>
+        <img :src="showCompletedTasks ? IconHide : IconShow" alt="Show/Hide" class="dt-toggle-icon"/>
       </VBtnDark>
     </div>
 
-    <div v-if="props.loadingDailyTasks" class="loader-container">
-      <v-progress-circular
-          class="loader"
-          size="40"
-          indeterminate
-      />
+    <div v-if="props.loadingDailyTasks" class="dt-loader">
+      <v-progress-circular size="40" indeterminate />
     </div>
 
-    <div v-else-if="!props.hasIncompleteDailyTasks && !showCompletedTasks" class="no-tasks-container">
+    <div v-else-if="!props.hasIncompleteDailyTasks && !showCompletedTasks" class="dt-empty">
       {{ t.training.noTasksAvailable }}
     </div>
 
-    <div v-else class="daily-tasks">
+    <div v-else class="dt-list">
       <div
           v-for="task in sortedTasks"
           :key="task.id"
-          class="task-item"
-          :class="{ completed: task.isCompleted }"
+          class="dt-card"
+          :class="{ 'dt-card--done': task.isCompleted }"
           @click="openTaskDialog(task)"
-          v-ripple
       >
-        <img :src="task.getIcon()" alt="Task Icon" class="task-icon"/>
-        <span class="task-description">{{ task.title }}</span>
-        <span class="task-tokens">0 <span style="color:var(--hex-text-secondary)">$</span> </span>
-
+        <div class="dt-card-icon">
+          <img :src="task.getIcon()" alt="" />
+        </div>
+        <span class="dt-card-text">{{ task.title }}</span>
+        <span class="dt-card-reward">0 <span class="dt-card-currency">$</span></span>
       </div>
     </div>
   </div>
@@ -101,13 +97,9 @@ const sortedTasks = computed(() => {
 });
 
 const completeTask = (id) => {
-  // Находим задачу по ID и отмечаем её как завершённую
   let updatedTask = props.dailyTasks.findLast(task => task.id === id);
   updatedTask.isCompleted = true;
-
-  // Обновляем состояние в store
   store.dispatch("task/updateDailyTask", updatedTask);
-
   selectedTask.value = null;
 };
 
@@ -120,110 +112,127 @@ const openTaskDialog = (task) => {
 </script>
 
 <style scoped>
-
 .daily-tasks-section {
-  width: 100%; /* Растягиваем контейнер на всю доступную ширину */
-  box-sizing: border-box;
-  max-width: 500px;
-  padding: 0 20px;
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 5px;
-}
-
-.daily-tasks-section h3 {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-weight: bold;
-  font-size: 1.5rem;
-}
-
-.btn-show-hide {
-  height: 30px;
-  width: 30px;
-  cursor: pointer;
-}
-
-.btn-show-hide img{
-  height: 15px;
-  width: 15px;
-}
-
-.daily-tasks {
-  list-style-type: none;
-  padding: 0;
-  color: var(--hex-text-primary);
-  background-color: var(--hex-bg-card);
-  display: flex;
-  flex-direction: column;
-  border-radius: 4px;
-}
-
-.task-item {
-  cursor: pointer;
-  padding: 10px 10px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   width: 100%;
   box-sizing: border-box;
-  position: relative;
 }
 
-.task-icon {
-  width: 15px;
-  height: 15px;
-  margin-right: 10px;
+/* Header */
+.dt-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.dt-header-label {
+  font-size: 13px;
+  color: var(--hex-text-secondary);
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+}
+.dt-header-count {
+  font-size: 11px;
+  color: var(--hex-text-muted);
+  letter-spacing: 1.5px;
+}
+.dt-toggle {
+  margin-left: auto;
+  height: 24px;
+  width: 24px;
+  min-width: 24px;
+  cursor: pointer;
+}
+.dt-toggle-icon {
+  height: 14px;
+  width: 14px;
 }
 
-.task-description {
-  flex-grow: 1;
-  white-space: wrap;
+/* List */
+.dt-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Card */
+.dt-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--hex-bg-light);
+  border: 1px solid var(--hex-border-default);
+  border-radius: 8px;
+  padding: 14px 18px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.dt-card:hover {
+  border-color: var(--hex-border-active);
+}
+.dt-card--done {
+  opacity: 0.5;
+  cursor: default;
+}
+.dt-card--done .dt-card-text {
+  text-decoration: line-through;
+}
+
+/* Icon */
+.dt-card-icon {
+  width: 24px;
+  height: 24px;
+  background: var(--hex-bg-medium);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.dt-card-icon img {
+  width: 14px;
+  height: 14px;
+}
+
+/* Text */
+.dt-card-text {
+  flex: 1;
+  font-size: 14px;
+  color: var(--hex-text-primary);
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 0.8rem;
 }
 
-.task-tokens {
-  flex-shrink: 0; /* Не сжиматься */
-  padding-left: 10px;
-  font-size: 0.8rem;
+/* Reward */
+.dt-card-reward {
+  font-size: 13px;
+  color: var(--hex-text-muted);
+  font-weight: 500;
+  flex-shrink: 0;
 }
-
-.task-item.completed {
-  position: relative;
+.dt-card-currency {
   color: var(--hex-text-secondary);
-  opacity: 0.8;
 }
 
-.task-item.completed {
-  cursor: default;
-  text-decoration: line-through; /* Зачёркивание текста */
-  text-decoration-thickness: 1.5px; /* Толщина линии зачёркивания */
-  text-decoration-color: currentColor; /* Цвет линии совпадает с цветом текста */
-}
-
-
-.task-item.completed .task-icon {
-  opacity: 0.5;
-}
-
-.loader-container {
+/* States */
+.dt-loader {
   display: flex;
-  justify-content: center; /* Центрирование по горизонтали */
-  align-items: center; /* Центрирование по вертикали */
-  margin-top: 20px;
+  justify-content: center;
+  padding: 24px 0;
+}
+.dt-empty {
+  text-align: center;
+  color: var(--hex-text-muted);
+  font-size: 13px;
+  padding: 24px 0;
 }
 
-.no-tasks-container{
-  display: flex;
-  justify-content: center; /* Центрирование по горизонтали */
-  align-items: center; /* Центрирование по вертикали */
-  margin-top: 20px;
-  color: var(--hex-text-primary);
+/* Desktop */
+@media (min-width: 1024px) {
+  .dt-header-label { font-size: 14px; }
+  .dt-header-count { font-size: 12px; }
+  .dt-card { padding: 16px 22px; }
+  .dt-card-text { font-size: 16px; }
+  .dt-card-reward { font-size: 14px; }
 }
-
 </style>

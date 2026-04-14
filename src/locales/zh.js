@@ -652,7 +652,6 @@ export default {
     taskNotice: '- 点击"确认"即表示您已做出承诺。在这个战队里没有空话可言。例如，如果您订阅了一个频道，不能回头。确认后取消订阅将导致直接被禁。在这里很严肃：违背诺言，面临永远的禁令。',
     checklistCompleted: '干得好，检查清单已完成！',
     successCompleteTask: '您已成功完成任务，并获得应得的奖励 <a href="/training">任务</a>',
-    lblTitle: '训练室',
     lblTaps: '点击次数',
     lblAvailableXP: '可用XP',
     lblSpeed: '速度',
