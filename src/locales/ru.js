@@ -831,6 +831,16 @@ export default {
     lblDaysAgo: '{days} дн. назад',
     lblToday: 'Сегодня',
   },
+  research: {
+    lblTaps: 'ТАПЫ',
+    lblFreeXp: 'СВОБОДНЫЙ XP',
+    lblBranchLevel: 'Ур {n}',
+    lblAllocateXp: '+ {amount} XP',
+    lblLocked: 'Закрыто',
+    lblUnlock: 'Открыть',
+    lblUpgrade: 'Улучшить',
+    lblMax: 'МАКС',
+  },
   gameData: {
     branches: {
       speed: { name: 'Скорость', description: 'Быстрые атаки, серии ударов, натиск' },

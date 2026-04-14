@@ -759,6 +759,16 @@ export default {
     lblDaysAgo: '{days} days ago',
     lblToday: 'Today',
   },
+  research: {
+    lblTaps: 'TAPS',
+    lblFreeXp: 'FREE XP',
+    lblBranchLevel: 'Lv {n}',
+    lblAllocateXp: '+ {amount} XP',
+    lblLocked: 'Locked',
+    lblUnlock: 'Unlock',
+    lblUpgrade: 'Upgrade',
+    lblMax: 'MAX',
+  },
   gameData: {
     branches: {
       speed: { name: '속도', description: '빠른 공격, 콤보, 압박' },

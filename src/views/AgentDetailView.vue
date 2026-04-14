@@ -99,38 +99,9 @@
           </div>
         </div>
 
-        <!-- Moves Tab -->
+        <!-- Moves Tab (Research Tree) -->
         <div v-if="activeTab === 'moves'" class="tab-content hex-fade-in">
-          <div class="pill-row">
-            <button v-for="b in branchIds" :key="b" :class="['hex-pill', { 'is-active': activeBranch === b }]" @click="activeBranch = b">{{ t.gameData?.branches?.[b]?.name || b }}</button>
-          </div>
-          <div v-if="availableMovesLoading" class="loader-wrap"><v-progress-circular size="24" indeterminate /></div>
-          <div v-else class="moves-list">
-            <div v-for="moveId in branchMoves" :key="moveId" class="move-card" :class="{ 'move-card--locked': !moveAvail(moveId) }">
-              <template v-if="moveAvail(moveId)">
-                <div class="move-top">
-                  <span class="move-name">{{ moveName(moveId) }}</span>
-                  <span class="move-lvl">Lv {{ moveAvail(moveId).agentCurrentLevel }} / {{ moveAvail(moveId).maxLevel }}</span>
-                </div>
-                <HexProgress :value="moveAvail(moveId).agentCurrentLevel" :max="moveAvail(moveId).maxLevel" variant="generic" size="sm" />
-                <div class="move-action">
-                  <template v-if="moveAvail(moveId).agentCurrentLevel >= moveAvail(moveId).maxLevel">
-                    <span class="move-max">{{ t.club.lblMaxLevel || 'MAX' }}</span>
-                  </template>
-                  <template v-else-if="moveAvail(moveId).canUpgrade">
-                    <HexButton variant="secondary" size="sm" @click="onLearnMove(moveId, moveAvail(moveId).agentCurrentLevel + 1)">
-                      {{ moveAvail(moveId).agentCurrentLevel === 0 ? (t.club.lblLearn || 'Learn') : (t.club.lblUpgrade || 'Upgrade') }}
-                      — {{ moveAvail(moveId).xpCost ? `${moveAvail(moveId).xpCost} XP` : (t.club.lblFree || 'Free') }}
-                    </HexButton>
-                  </template>
-                </div>
-              </template>
-              <template v-else>
-                <div class="move-top"><span class="move-name move-name--locked">{{ moveName(moveId) }}</span></div>
-                <div class="move-locked-text">{{ t.club.lblResearchFirst || 'Player must research first' }}</div>
-              </template>
-            </div>
-          </div>
+          <ResearchTree :agent-id="agentId" />
         </div>
 
         <!-- Tactics Tab -->
@@ -270,7 +241,6 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import store from '@/core/state/store.js';
 import { t } from '@/locales/index.js';
-import { branches } from '@/data/branches.js';
 import HexButton from '@/components/ui/HexButton.vue';
 import HexBadge from '@/components/ui/HexBadge.vue';
 import HexProgress from '@/components/ui/HexProgress.vue';
@@ -278,6 +248,7 @@ import BeltBadge from '@/components/ui/BeltBadge.vue';
 import { getBeltDisplay, getNextThreshold, getBeltProgressPercent } from '@/utils/beltDisplay.js';
 import SkinPicker from '@/components/club/SkinPicker.vue';
 import ArchetypeSelector from '@/components/club/ArchetypeSelector.vue';
+import ResearchTree from '@/components/club/ResearchTree.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -289,15 +260,12 @@ const prog = computed(() => agent.value?.progression || { speedXp: 0, powerXp: 0
 const deck = computed(() => Array.isArray(prog.value.deck) ? prog.value.deck : []);
 const trainLoading = computed(() => store.state.agent.trainLoading);
 const trainResult = computed(() => store.state.agent.trainResult);
-const availableMovesLoading = computed(() => store.state.agent.availableMovesLoading);
 const fightHistory = computed(() => store.state.agent.fightHistory);
 const fightHistoryTotal = computed(() => store.state.agent.fightHistoryTotal);
 const fightHistoryLoading = computed(() => store.state.agent.fightHistoryLoading);
 
 const activeTab = ref('overview');
 const tabs = ['overview', 'moves', 'tactics', 'fights'];
-const activeBranch = ref('speed');
-const branchIds = ['speed', 'power', 'technique'];
 const fightFilter = ref(null);
 
 const showEdit = ref(false);
@@ -339,24 +307,6 @@ const shortArch = (n) => n ? n.slice(0, 3).toUpperCase() : '';
 
 const moveName = (id) => {
   return t.value.gameData?.moves?.[id]?.name || id;
-};
-
-// Moves
-const branchMoves = computed(() => branches[activeBranch.value]?.moves || []);
-const availableMoves = computed(() => store.state.agent.availableMoves);
-const moveAvailMap = computed(() => {
-  const map = {};
-  for (const m of availableMoves.value) map[m.moveId] = m;
-  return map;
-});
-const moveAvail = (id) => moveAvailMap.value[id] || null;
-const moveBranch = (id) => {
-  const m = availableMoves.value.find(x => x.moveId === id);
-  return m?.branch || null;
-};
-const moveLevel = (id) => {
-  const m = availableMoves.value.find(x => x.moveId === id);
-  return m?.agentCurrentLevel || 0;
 };
 
 // Tactics form
@@ -417,14 +367,6 @@ const onTrain = async () => {
     await store.dispatch('agent/trainAgent', agentId);
   } catch (err) {
     store.commit('master/setError', { text: err?.response?.data?.error || 'Training failed' });
-  }
-};
-
-const onLearnMove = async (moveId, targetLevel) => {
-  try {
-    await store.dispatch('agent/learnMove', { agentId, moveId, targetLevel });
-  } catch (err) {
-    store.commit('master/setError', { text: err?.response?.data?.error || 'Failed to learn move' });
   }
 };
 
@@ -539,7 +481,6 @@ const relativeTime = (dateStr) => {
 
 // Tab watchers — load data on tab switch
 watch(activeTab, (tab) => {
-  if (tab === 'moves') store.dispatch('agent/fetchAvailableMoves', agentId);
   if (tab === 'fights') store.dispatch('agent/fetchFightHistory', { agentId, mode: fightFilter.value, offset: 0 });
 });
 
@@ -633,18 +574,6 @@ onMounted(() => {
 
 /* Pill row (shared by Moves/Tactics/Fights) */
 .pill-row { display: flex; gap: 4px; margin-bottom: 12px; }
-
-/* Moves */
-.moves-list { display: flex; flex-direction: column; gap: 8px; }
-.move-card { background: var(--hex-bg-medium); border: 1px solid var(--hex-border-default); border-radius: 8px; padding: 10px; }
-.move-card--locked { opacity: 0.4; }
-.move-top { display: flex; justify-content: space-between; margin-bottom: 6px; }
-.move-name { font-size: 13px; color: var(--hex-text-primary); }
-.move-name--locked { color: var(--hex-text-muted); }
-.move-lvl { font-size: 11px; color: var(--hex-text-muted); }
-.move-action { margin-top: 6px; }
-.move-max { font-size: 10px; color: var(--hex-victory); text-transform: uppercase; letter-spacing: 1px; }
-.move-locked-text { font-size: 11px; color: var(--hex-text-muted); margin-top: 4px; }
 
 /* Tactics */
 .auto-fight-section { margin-bottom: 4px; }
@@ -740,11 +669,6 @@ onMounted(() => {
   .deck-chips { gap: 8px; }
   .deck-chip { padding: 5px 12px; font-size: 13px; }
   .train-btn { margin-top: 24px; }
-  /* Moves desktop */
-  .move-name { font-size: 15px; }
-  .move-lvl { font-size: 13px; }
-  .move-max { font-size: 12px; }
-  .move-card { padding: 14px; }
   /* Tactics desktop */
   .tactic-label { font-size: 12px; }
   .auto-fight-desc { font-size: 13px; }
