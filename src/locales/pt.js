@@ -650,7 +650,6 @@ export default {
     titleNotice: 'AVISO',
     taskNotice: '- Ao clicar em "Confirmar", você se compromete. Não há espaço para promessas vazias neste clã. Por exemplo, se você se inscrever em um canal, não há volta. Cancelar a inscrição após a confirmação é um caminho direto para o banimento. Aqui é sério: quebre sua palavra, enfrente um banimento eterno.',
     successCompleteTask: 'Você completou a tarefa com sucesso e recebeu sua merecida recompensa <a href="/training">Tarefas</a>',
-    lblTitle: 'Sala de treinamento',
     lblTaps: 'Toques',
     lblAvailableXP: 'XP disponível',
     lblSpeed: 'Velocidade',

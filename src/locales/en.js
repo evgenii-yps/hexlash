@@ -726,7 +726,6 @@ export default {
     titleNotice: 'NOTICE',
     taskNotice: '- By clicking "Confirm," you commit yourself. There\'s no room for empty promises in this clan. For example, if you subscribe to a channel, there\'s no turning back. Unsubscribing after confirmation is a direct path to a ban. Here, it\'s serious: break your word, face an eternal ban.',
     successCompleteTask: 'You have successfully completed the task and received your well-deserved reward <a href="/training">Tasks</a>',
-    lblTitle: 'Training room',
     lblTaps: 'Taps',
     lblAvailableXP: 'Available XP',
     lblSpeed: 'Speed',

@@ -1,35 +1,30 @@
 <template>
 
   <div class="checklist-section">
-    <h3>{{ t.training.lblChecklist }} ({{ notCompletedCheckListCount }})</h3>
-
-    <div v-if="props.loadingSocialTasks" class="loader-container">
-      <v-progress-circular
-          class="loader"
-          size="40"
-          indeterminate
-      />
+    <div class="cl-header">
+      <span class="cl-header-label">{{ t.training.lblChecklist }}</span>
+      <span class="cl-header-count">{{ notCompletedCheckListCount }}</span>
     </div>
 
-    <div v-else-if="!props.hasIncompleteSocialTasks" class="no-tasks-container">
+    <div v-if="props.loadingSocialTasks" class="cl-loader">
+      <v-progress-circular size="40" indeterminate />
+    </div>
+
+    <div v-else-if="!props.hasIncompleteSocialTasks" class="cl-empty">
       {{ t.training.checklistCompleted }}
     </div>
 
-    <div v-else class="checklist-scroll-container">
-
-      <div class="horizontal-scroll">
-        <div
-            v-ripple
-            v-for="task in sortedTasks"
-            :key="task.id"
-            class="task-item" @click="openSubscribeDialog(task)">
-
-          <div class="cost">0$</div>
-          <v-img :src="task.getIcon()" aspect-ratio="1" class="task-img"/>
-          <div class="desc">{{ task.title }}</div>
-
+    <div v-else class="cl-grid">
+      <div
+          v-for="task in sortedTasks"
+          :key="task.id"
+          class="cl-card"
+          @click="openSubscribeDialog(task)">
+        <div class="cl-card-icon">
+          <v-img :src="task.getIcon()" aspect-ratio="1" class="cl-card-img"/>
         </div>
-
+        <div class="cl-card-reward">0$</div>
+        <div class="cl-card-name">{{ task.title }}</div>
       </div>
     </div>
 
@@ -83,15 +78,10 @@ const sortedTasks = computed(() => {
 });
 
 const completeTask = (id) => {
-  // Находим задачу по ID и отмечаем её как завершённую
   let updatedTask = props.socialTasks.findLast(task => task.id === id);
-
   updatedTask.isCompleted = true;
-
   store.dispatch("task/updateSocialTask", updatedTask);
-
   selectedTask.value = null;
-
 };
 
 const openSubscribeDialog = (task) => {
@@ -104,96 +94,115 @@ const openSubscribeDialog = (task) => {
 </script>
 
 <style scoped>
-
 .checklist-section {
-  margin-top: 20px;
-  max-width: 500px;
+  margin-top: 28px;
   width: 100%;
 }
 
-.horizontal-scroll {
-  margin-top: 5px;
+/* Header */
+.cl-header {
   display: flex;
-  white-space: nowrap;
-  scroll-behavior: smooth;
-  overflow-x: auto;
-  width: 100%;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.cl-header-label {
+  font-size: 13px;
+  color: var(--hex-text-secondary);
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+}
+.cl-header-count {
+  font-size: 11px;
+  color: var(--hex-text-muted);
+  letter-spacing: 1.5px;
 }
 
-.horizontal-scroll::-webkit-scrollbar {
-  display: none;
+/* Grid */
+.cl-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
 }
 
-.horizontal-scroll {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-  padding-left: 10px;
-  display: flex;
-  flex-direction: row;
-}
-
-
-.task-item {
-  box-sizing: border-box;
+/* Card */
+.cl-card {
+  background: var(--hex-bg-light);
   border: 1px solid var(--hex-border-default);
-  cursor: pointer;
-  width: 70px;
-  height: 80px;
-  border-radius: 4px;
-  background-color: var(--hex-bg-card);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  position: relative;
-  flex-shrink: 0;
-}
-
-.task-item {
-  margin: 0 4px;
-  padding-top: 5px;
-  padding-bottom: 5px;
-}
-
-.cost {
+  border-radius: 8px;
+  padding: 14px 8px;
   text-align: center;
-  font-size: 0.8rem;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.cl-card:hover {
+  border-color: var(--hex-border-active);
 }
 
-.task-img {
-  width: 20px;
-  height: 20px;
-  margin: 0;
+/* Icon */
+.cl-card-icon {
+  width: 32px;
+  height: 32px;
+  background: var(--hex-bg-medium);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 8px;
+}
+.cl-card-img {
+  width: 14px;
+  height: 14px;
 }
 
-.desc {
-  color: var(--hex-text-primary);
-  font-size: 0.6rem;
+/* Reward */
+.cl-card-reward {
+  font-size: 11px;
+  color: var(--hex-text-muted);
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+/* Name */
+.cl-card-name {
+  font-size: 9px;
+  color: var(--hex-text-muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 100%;
 }
 
-.checklist-section h3 {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-weight: bold;
-  font-size: 1.5rem;
-  margin-left: 25px;
-}
-
-.loader-container {
+/* States */
+.cl-loader {
   display: flex;
-  justify-content: center; /* Центрирование по горизонтали */
-  align-items: center; /* Центрирование по вертикали */
-  margin-top: 20px;
+  justify-content: center;
+  padding: 24px 0;
+}
+.cl-empty {
+  text-align: center;
+  color: var(--hex-text-muted);
+  font-size: 13px;
+  padding: 24px 0;
 }
 
-.no-tasks-container{
-  display: flex;
-  justify-content: center; /* Центрирование по горизонтали */
-  align-items: center; /* Центрирование по вертикали */
-  margin-top: 20px;
-  color: var(--hex-text-primary);
+/* Desktop: 6 columns */
+@media (min-width: 600px) {
+  .cl-grid {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 14px;
+  }
+  .cl-card {
+    padding: 18px 10px;
+  }
+  .cl-card-reward { font-size: 12px; }
+  .cl-card-name { font-size: 10px; }
+}
+
+@media (min-width: 1024px) {
+  .checklist-section { margin-top: 36px; }
+  .cl-header-label { font-size: 14px; }
+  .cl-header-count { font-size: 12px; }
 }
 </style>

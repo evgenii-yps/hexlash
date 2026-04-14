@@ -652,7 +652,6 @@ export default {
     taskNotice: '- "확인"을 클릭하면 약속을 이행하는 것입니다. 이 클랜에서는 빈 약속은 허용되지 않습니다. 예를 들어, 채널을 구독하면 취소할 수 없습니다. 구독을 취소하면 바로 영구 정지됩니다. 여기서는 진지합니다: 약속을 어기면 영구 정지입니다.',
     checklistCompleted: '훌륭한 작업, 체크리스트 완료!',
     successCompleteTask: '임무를 성공적으로 완료하고 정당한 보상을 받았습니다 <a href="/training">작업</a>',
-    lblTitle: '훈련실',
     lblTaps: '탭',
     lblAvailableXP: '사용 가능 XP',
     lblSpeed: '속도',
