@@ -77,15 +77,6 @@ body {
     }
 }
 
-@font-face {
-    font-family: 'Anonymous';
-    src: url('@/assets/fonts/Anonymous.woff2') format('woff2'),
-         url('@/assets/fonts/Anonymous.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-    font-display: swap;
-}
-
 /* Настройка фона и рамки для тултипа */
 .v-tooltip__content {
     background-color: var(--hex-bg-card) !important; /* Цвет фона тултипа */
