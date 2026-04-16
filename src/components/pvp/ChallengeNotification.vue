@@ -14,7 +14,7 @@
         </div>
         <div class="challenge-info">
           <span class="challenge-title">{{ t.friends.challenge.title }}</span>
-          <span class="challenge-player">{{ challenge.from.username }} <UserCaptainBadge :captain="challenge.from.captain" size="xs" /></span>
+          <span class="challenge-player">{{ challenge.from.username }}</span>
         </div>
         <div class="challenge-timer">{{ timer }}s</div>
       </div>
@@ -35,7 +35,6 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import store from '@/core/state/store.js';
 import { t } from '@/locales/index.js';
-import UserCaptainBadge from '@/components/ui/UserCaptainBadge.vue';
 
 const router = useRouter();
 

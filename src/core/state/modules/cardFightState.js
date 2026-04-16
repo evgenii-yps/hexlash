@@ -176,7 +176,7 @@ const state = {
     fightStats: { totalDamageDealt: 0, totalDamageTaken: 0, dicePickedUp: 0, diceIgnored: 0, criticalHits: 0 },
 
     xpEarned:  null,   // { speed, power, technique } — set when fight ends
-    xpAwarded: false,  // true after XP display (Captain XP awarded via backend, not progressionState)
+    xpAwarded: false,  // true after XP display (agent XP awarded via backend, not progressionState)
 };
 
 // ─── Getters ─────────────────────────────────────────────────────────────────
@@ -304,42 +304,42 @@ const actions = {
 
     /** Start a live fight: generate opponent, init AI, reset state, save to localStorage. */
     async startFight({ commit, state, rootState, rootGetters }) {
-        // Load Captain's data for combat
-        const captain = rootGetters['agent/currentCaptain'];
-        if (!captain) return;
+        // Load active agent data for combat
+        const agent = rootGetters['agent/activeAgent'];
+        if (!agent) return;
 
-        const captainProg = captain.progression || {};
-        const captainDeck = Array.isArray(captainProg.deck) ? captainProg.deck : [];
-        const captainMoves = Array.isArray(captainProg.moves) ? captainProg.moves : [];
-        const captainModules = [captain.primaryModule, captain.secondaryModule, captain.tertiaryModule].filter(Boolean);
-        if (captainModules.length < 3) return; // Need all 3 modules
+        const agentProg = agent.progression || {};
+        const agentDeck = Array.isArray(agentProg.deck) ? agentProg.deck : [];
+        const agentMoves = Array.isArray(agentProg.moves) ? agentProg.moves : [];
+        const agentModules = [agent.primaryModule, agent.secondaryModule, agent.tertiaryModule].filter(Boolean);
+        if (agentModules.length < 3) return; // Need all 3 modules
 
-        // Set modules from Captain
-        commit('setPlayerModules', captainModules);
+        // Set modules from active agent
+        commit('setPlayerModules', agentModules);
 
-        // Build card levels from Captain's move list [{moveId, level}]
+        // Build card levels from agent's move list [{moveId, level}]
         const playerCardLevels = {};
-        for (const m of captainMoves) {
-          if (m.moveId && captainDeck.includes(m.moveId)) {
+        for (const m of agentMoves) {
+          if (m.moveId && agentDeck.includes(m.moveId)) {
             playerCardLevels[m.moveId] = m.level || 1;
           }
         }
 
         // Calculate power for opponent scaling
         const progressionState = rootState.progression;
-        const playerFighter = buildPlayerFighter(progressionState, captainModules);
+        const playerFighter = buildPlayerFighter(progressionState, agentModules);
         const playerPower = calculatePowerRating(playerFighter);
 
         const opponent = OpponentGenerator.generate(state.difficulty, playerPower);
         commit('setOpponent', opponent);
 
-        commit('setPlayerDeck', { deck: captainDeck, cardLevels: playerCardLevels });
+        commit('setPlayerDeck', { deck: agentDeck, cardLevels: playerCardLevels });
         commit('setOpponentDeck', {
             deck: opponent.deck || [],
             cardLevels: opponent.cardLevels || {},
         });
 
-        _ai1 = new ModuleAIStrategy(captainModules);
+        _ai1 = new ModuleAIStrategy(agentModules);
         _ai2 = new ModuleAIStrategy(opponent.modules);
 
         commit('setLiveHP1', MAX_HP);

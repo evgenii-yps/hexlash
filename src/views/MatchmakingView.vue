@@ -64,7 +64,6 @@
               <img :src="`/images/skins/${playerSkin}`" class="player-skin-img" alt=""/>
             </div>
             <div class="player-name">{{ playerName }}</div>
-            <UserCaptainBadge :captain="myCapt" size="sm" />
           </div>
 
           <div class="vs-icon">VS</div>
@@ -110,7 +109,6 @@ import store from '@/core/state/store.js';
 import router from '@/router/index.js';
 import { t } from '@/locales/index.js';
 import { getOnlinePlayersCount } from '@/core/services/statsService.js';
-import UserCaptainBadge from '@/components/ui/UserCaptainBadge.vue';
 
 // State
 const status = ref('searching'); // 'searching', 'found', 'timeout'
@@ -128,23 +126,21 @@ let onlineRefreshInterval = null;
 
 // Computed
 const playerName = computed(() => {
-  const captain = store.getters['agent/currentCaptain'];
-  if (captain?.name) return captain.name;
+  const agent = store.getters['agent/activeAgent'];
+  if (agent?.name) return agent.name;
   const master = store.getters['master/getMaster'];
   return master?.userData?.name || 'Player';
 });
 const playerRating = computed(() => {
-  const captain = store.getters['agent/currentCaptain'];
-  return captain?.elo || store.getters['pvp/getPvpStats'].rating;
+  const agent = store.getters['agent/activeAgent'];
+  return agent?.elo || store.getters['pvp/getPvpStats'].rating;
 });
 const playerSkin = computed(() => {
-  const captain = store.getters['agent/currentCaptain'];
-  if (captain?.skin) return captain.skin;
+  const agent = store.getters['agent/activeAgent'];
+  if (agent?.skin) return agent.skin;
   const master = store.getters['master/getMaster'];
   return master?.userData?.skin || 'skin_m_1.png';
 });
-
-const myCapt = computed(() => store.getters['agent/currentCaptain']);
 
 const formattedTime = computed(() => {
   const minutes = Math.floor(searchTime.value / 60);
@@ -223,15 +219,15 @@ function startSearch() {
   searchTime.value = 0;
   searchRange.value = 100;
 
-  // Send matchmaking start via WS — Captain data (ELO validated server-side)
-  const captain = store.getters['agent/currentCaptain'];
+  // Send matchmaking start via WS — active agent data (ELO validated server-side)
+  const agent = store.getters['agent/activeAgent'];
   const masterData = store.getters['master/getMaster'];
   store.dispatch('webSocket/sendMessage', {
     type: 'MatchmakingStartMsg',
     matchmakingRequest: {
-      username: captain?.name || playerName.value,
-      rating: captain?.elo || playerRating.value,
-      skin: captain?.skin || masterData?.userData?.skin || null,
+      username: agent?.name || playerName.value,
+      rating: agent?.elo || playerRating.value,
+      skin: agent?.skin || masterData?.userData?.skin || null,
       avatarUrl: masterData?.userData?.avatarUrl || null,
     },
   });

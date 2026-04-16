@@ -100,6 +100,30 @@ function getFightXpReward(result, mode) {
   return CLAN_XP_REWARDS[prefix + key] || 0;
 }
 
+/**
+ * Returns the "active agent" for a user — the agent that represents them in combat.
+ * Rule: first agent by createdAt ASC within the user's FightClub.
+ * Rule: first agent by createdAt ASC within the user's FightClub.
+ *
+ * @param {string} userId
+ * @returns {Promise<Object|null>} Agent with tactics + progression, or null if no agents
+ */
+async function getActiveAgent(userId) {
+  const fightClub = await prisma.fightClub.findUnique({
+    where: { ownerId: userId },
+  });
+  if (!fightClub) return null;
+
+  return prisma.agent.findFirst({
+    where: { fightClubId: fightClub.id },
+    orderBy: { createdAt: 'asc' },
+    include: {
+      tactics: true,
+      progression: true,
+    },
+  });
+}
+
 module.exports = {
   getOrCreateFightClub,
   calculateLevel,
@@ -108,4 +132,5 @@ module.exports = {
   addFightClubXp,
   getFightClubLegendBuff,
   getFightXpReward,
+  getActiveAgent,
 };

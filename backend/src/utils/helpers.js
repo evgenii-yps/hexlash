@@ -5,7 +5,7 @@ function generateToken(userId) {
   return jwt.sign({ userId }, JWT_SECRET, { expiresIn: '30d' });
 }
 
-function formatUserResponse(user, options = {}) {
+function formatUserResponse(user) {
   const response = {
     id: user.id,
     inviteId: user.inviteId,
@@ -52,10 +52,6 @@ function formatUserResponse(user, options = {}) {
       ? user.achievements.map((a) => a.achievementId)
       : [],
   };
-  // Attach captain public info if provided via options
-  if (options.captain !== undefined) {
-    response.captain = options.captain;
-  }
   return response;
 }
 

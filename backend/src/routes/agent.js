@@ -14,7 +14,6 @@ const {
   executeResearchAction,
 } = require('../services/researchGateService');
 const { runPveTraining } = require('../services/agentFightService');
-const { setCaptain, canDeleteAgent } = require('../services/captainService');
 
 const router = express.Router();
 
@@ -130,7 +129,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    // Lazy migration: populate research for captain if empty
+    // Lazy migration: populate research if empty
     const migrated = await ensureResearch(agent.id, req.userId);
     if (migrated) {
       agent.progression = migrated;
@@ -300,37 +299,11 @@ router.delete('/:id', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'Cannot delete agent while fighting' });
     }
 
-    // Captain protection: can't delete captain if other agents exist
-    const deleteCheck = await canDeleteAgent(req.params.id);
-    if (!deleteCheck.canDelete) {
-      return res.status(400).json({ error: 'Cannot delete your Captain. Assign another Captain first.', code: deleteCheck.reason });
-    }
-
     await prisma.agent.delete({ where: { id: req.params.id } });
 
     res.json({ success: true });
   } catch (err) {
     console.error('Delete agent error:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// PUT /v1/agent/:id/captain — make this agent the Captain
-router.put('/:id/captain', authMiddleware, async (req, res) => {
-  try {
-    const agent = await prisma.agent.findUnique({
-      where: { id: req.params.id },
-      select: { fightClubId: true, ownerId: true },
-    });
-
-    if (!agent) return res.status(404).json({ error: 'Agent not found' });
-    if (agent.ownerId !== req.userId) return res.status(403).json({ error: 'Access denied' });
-
-    const result = await setCaptain(agent.fightClubId, req.params.id, req.userId);
-    res.json({ success: true, ...result });
-  } catch (err) {
-    if (err.status) return res.status(err.status).json({ error: err.message, code: err.code });
-    console.error('Set captain error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -552,7 +525,7 @@ router.get('/:id/available-moves', authMiddleware, async (req, res) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    // Lazy migration: populate research for captain if empty
+    // Lazy migration: populate research if empty
     await ensureResearch(agent.id, req.userId);
 
     const moves = await getAvailableMovesForAgent(req.params.id);
@@ -724,7 +697,7 @@ router.post('/:id/research', authMiddleware, researchLimiter, async (req, res) =
       return res.status(400).json({ error: 'Unknown move' });
     }
 
-    // Lazy migration for captain
+    // Lazy migration: populate research if empty
     await ensureResearch(req.params.id, req.userId);
 
     const result = await executeResearchAction(req.params.id, req.userId, action, moveId);

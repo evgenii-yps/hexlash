@@ -172,11 +172,6 @@ export default {
       lblFree: 'मुफ़्त',
     },
     lblTrainer: 'Trainer',
-    lblYourCaptain: 'Your Captain',
-    lblNoCaptainTitle: 'No Captain Set',
-    lblNoCaptainDesc: 'Set a Captain in Club Mode to compete',
-    btnSetCaptain: 'Go to Club',
-    btnViewCaptain: 'View Captain →',
   },
   arena: {
     lblTitle: 'फाइटर की तैयारी',
@@ -539,14 +534,6 @@ export default {
     errMintFailed: 'Mint failed',
     errNoWallet: 'Connect wallet first',
     errSoldOut: 'All Agent NFTs minted',
-    // Captain
-    lblCaptain: 'कैप्टन',
-    lblMakeCaptain: 'कैप्टन बनाएं',
-    lblCaptainConfirmTitle: 'कैप्टन बदलें?',
-    lblCaptainConfirmMsg: '{name} आपका नया कैप्टन बनेगा। वर्तमान कैप्टन पद छोड़ देगा।',
-    lblCaptainSet: '{name} अब आपका कैप्टन है',
-    lblCaptainProtected: 'कैप्टन को हटा नहीं सकते। पहले दूसरा कैप्टन नियुक्त करें।',
-    lblAgentFighting: 'यह लड़ाका अभी लड़ रहा है और कैप्टन नहीं बन सकता',
   },
   fight: {
     lblRound: 'राउंड {n}',
@@ -626,9 +613,7 @@ export default {
     overdrive: 'OVERDRIVE',
     extraRound: 'अतिरिक्त {n}',
     overdriveStart: 'ओवरड्राइव! डैमेज x2, बिना डाइस और कोच!',
-    errNoCaptain: 'Set a Captain in Club Mode first',
-    errCaptainFighting: 'Your Captain is currently fighting',
-    errCaptainResting: 'Your Captain is resting',
+    errNoActiveAgent: 'No active agent. Create one in Club Mode.',
     lblPoweredBy: 'Powered by Claude',
     aiLabels: {
       summary: 'Fight Summary',

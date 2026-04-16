@@ -3,12 +3,12 @@ const prisma = require('../lib/prisma');
 const { authMiddleware } = require('../middleware/auth');
 const { awardClanXP } = require('../utils/clanLevel');
 const { createClanEvent } = require('../utils/clanEvents');
-const { getCaptainForCombat } = require('../services/captainService');
+const { getActiveAgent } = require('../services/fightClubService');
 const { applyWin } = require('../services/beltService');
 
 const router = express.Router();
 
-// POST /v1/fight/save — PvE fight result via Captain Agent
+// POST /v1/fight/save — PvE fight result via active agent (first by createdAt)
 router.post('/save', authMiddleware, async (req, res) => {
   try {
     const { isWin, isDraw, roundsPlayed, totalDamageDealt } = req.body;
@@ -17,22 +17,22 @@ router.post('/save', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'isWin and isDraw are required booleans' });
     }
 
-    // Load Captain for this user
-    const captain = await getCaptainForCombat(req.userId);
-    if (!captain) {
-      return res.status(409).json({ error: 'No Captain set. Create a fighter in Club Mode first.', code: 'NO_CAPTAIN_SET' });
+    // Load active agent for this user (first by createdAt)
+    const agent = await getActiveAgent(req.userId);
+    if (!agent) {
+      return res.status(409).json({ error: 'No fighter found. Create a fighter in Club Mode first.', code: 'NO_ACTIVE_AGENT' });
     }
 
-    // Build Captain Agent stats update
+    // Build agent stats update
     const agentStats = { totalFights: { increment: 1 }, lastFightAt: new Date() };
     if (isWin) agentStats.wins = { increment: 1 };
     else if (isDraw) agentStats.draws = { increment: 1 };
     else agentStats.losses = { increment: 1 };
 
-    // Belt progression (PvE bot = null opponent)
+    // Belt progression (PvE bot = null opponent belt)
     let beltUpdate = null;
     if (isWin) {
-      beltUpdate = applyWin(captain, null);
+      beltUpdate = applyWin(agent, null);
       if (beltUpdate.qualified) {
         agentStats.belt = beltUpdate.belt;
         agentStats.qualifiedWins = beltUpdate.qualifiedWins;
@@ -40,8 +40,8 @@ router.post('/save', authMiddleware, async (req, res) => {
       }
     }
 
-    // Update Captain Agent (not User)
-    await prisma.agent.update({ where: { id: captain.id }, data: agentStats });
+    // Update active agent stats (not User)
+    await prisma.agent.update({ where: { id: agent.id }, data: agentStats });
 
     // Clan stats (still uses User's clanId — clan tracks member participation)
     const user = await prisma.user.findUnique({ where: { id: req.userId }, select: { clanId: true } });
