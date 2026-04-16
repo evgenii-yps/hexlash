@@ -924,4 +924,18 @@ export default {
     lblShop: 'Locker · Cosmetics',
     lblViewFighter: 'View Fighter',
   },
+
+  create: {
+    v2: {
+      lblStep1: 'CHOOSE ARCHETYPE',
+      lblStep2: 'NAME YOUR FIGHTER',
+      lblStep3: 'CONFIRM',
+      lblGenerate: '🎲',
+      lblCreate: 'CREATE FIGHTER',
+      lblNext: 'NEXT',
+      lblBack: 'BACK',
+      lblChooseArchetype: 'Choose your fighting style',
+      lblNameHint: '2-20 characters',
+    },
+  },
 }
