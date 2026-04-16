@@ -98,22 +98,22 @@ function parseResearch(research) {
 // ── Lazy migration ──────────────────────────────────────────────────
 
 /**
- * Migrate User.progression.moves → AgentProgression.research for captain.
- * Only runs once: when captain's research is empty ({}).
+ * Migrate User.progression.moves → AgentProgression.research for an agent.
+ * Only runs once: when agent's research is empty ({}).
  * Does NOT touch freeXP. Only copies moves → research and branchExp → xp (if xp == 0).
  *
  * @param {string} agentId
  * @param {string} userId
  * @returns {Object|null} updated AgentProgression or null if no migration needed
  */
-async function migrateResearchForCaptain(agentId, userId) {
+async function migrateAgentResearch(agentId, userId) {
   const [agent, agentProg, user] = await Promise.all([
-    prisma.agent.findUnique({ where: { id: agentId }, select: { isCaptain: true } }),
+    prisma.agent.findUnique({ where: { id: agentId }, select: { id: true } }),
     prisma.agentProgression.findUnique({ where: { agentId } }),
     prisma.user.findUnique({ where: { id: userId }, select: { progression: true } }),
   ]);
 
-  if (!agent || !agent.isCaptain || !agentProg) return null;
+  if (!agent || !agentProg) return null;
 
   // Check if research is empty
   const research = parseResearch(agentProg.research);
@@ -152,16 +152,16 @@ async function migrateResearchForCaptain(agentId, userId) {
     data: updateData,
   });
 
-  console.log(`[research-migration] captain=${agentId} user=${userId} moves=${Object.keys(newResearch).length}`);
+  console.log(`[research-migration] agent=${agentId} user=${userId} moves=${Object.keys(newResearch).length}`);
   return updated;
 }
 
 /**
- * Ensure research is populated for captain. Call before reading research.
- * No-op for non-captains or already-migrated captains.
+ * Ensure research is populated for an agent. Call before reading research.
+ * No-op if research is already populated.
  */
 async function ensureResearch(agentId, userId) {
-  return migrateResearchForCaptain(agentId, userId);
+  return migrateAgentResearch(agentId, userId);
 }
 
 // ── Per-agent research functions ────────────────────────────────────

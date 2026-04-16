@@ -103,7 +103,7 @@ function getFightXpReward(result, mode) {
 /**
  * Returns the "active agent" for a user — the agent that represents them in combat.
  * Rule: first agent by createdAt ASC within the user's FightClub.
- * Replaces captain-based logic (Phase −1 migration).
+ * Rule: first agent by createdAt ASC within the user's FightClub.
  *
  * @param {string} userId
  * @returns {Promise<Object|null>} Agent with tactics + progression, or null if no agents

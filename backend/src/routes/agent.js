@@ -129,7 +129,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    // Lazy migration: populate research for captain if empty
+    // Lazy migration: populate research if empty
     const migrated = await ensureResearch(agent.id, req.userId);
     if (migrated) {
       agent.progression = migrated;
@@ -525,7 +525,7 @@ router.get('/:id/available-moves', authMiddleware, async (req, res) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    // Lazy migration: populate research for captain if empty
+    // Lazy migration: populate research if empty
     await ensureResearch(agent.id, req.userId);
 
     const moves = await getAvailableMovesForAgent(req.params.id);
@@ -697,7 +697,7 @@ router.post('/:id/research', authMiddleware, researchLimiter, async (req, res) =
       return res.status(400).json({ error: 'Unknown move' });
     }
 
-    // Lazy migration for captain
+    // Lazy migration: populate research if empty
     await ensureResearch(req.params.id, req.userId);
 
     const result = await executeResearchAction(req.params.id, req.userId, action, moveId);

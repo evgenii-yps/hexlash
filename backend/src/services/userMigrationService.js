@@ -56,7 +56,6 @@ async function migrateUserToFighter(userId) {
         primaryModule: modules[0] || null,
         secondaryModule: modules[1] || null,
         tertiaryModule: modules[2] || null,
-        isCaptain: true,
         fightClubId: fightClub.id,
         ownerId: userId,
       },
