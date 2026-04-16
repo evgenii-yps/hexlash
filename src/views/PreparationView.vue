@@ -24,7 +24,7 @@
             @select="onModeSelect"
           />
 
-          <div v-if="!hasActiveAgent" class="no-captain-msg">{{ t.fight?.errNoActiveAgent || 'Create a fighter in Club Mode first' }}</div>
+          <div v-if="!hasActiveAgent" class="no-active-agent-msg">{{ t.fight?.errNoActiveAgent || 'Create a fighter in Club Mode first' }}</div>
           <HexButton
               variant="primary"
               size="lg"
@@ -207,7 +207,7 @@ const handleScroll = (event) => {
   width: 100%;
 }
 
-.no-captain-msg {
+.no-active-agent-msg {
   font-size: 12px;
   color: var(--hex-text-muted);
   text-align: center;

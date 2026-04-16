@@ -172,11 +172,6 @@ export default {
       lblFree: '免费',
     },
     lblTrainer: 'Trainer',
-    lblYourCaptain: 'Your Captain',
-    lblNoCaptainTitle: 'No Captain Set',
-    lblNoCaptainDesc: 'Set a Captain in Club Mode to compete',
-    btnSetCaptain: 'Go to Club',
-    btnViewCaptain: 'View Captain →',
   },
   arena: {
     lblTitle: '战士准备',
@@ -539,14 +534,6 @@ export default {
     errMintFailed: 'Mint failed',
     errNoWallet: 'Connect wallet first',
     errSoldOut: 'All Agent NFTs minted',
-    // Captain
-    lblCaptain: '队长',
-    lblMakeCaptain: '设为队长',
-    lblCaptainConfirmTitle: '更换队长？',
-    lblCaptainConfirmMsg: '{name}将成为你的新队长。当前队长将卸任。',
-    lblCaptainSet: '{name}现在是你的队长',
-    lblCaptainProtected: '无法删除队长。请先指定其他队长。',
-    lblAgentFighting: '该战士正在战斗中，无法成为队长',
   },
   fight: {
     lblRound: '第 {n} 回合',
@@ -626,9 +613,7 @@ export default {
     overdrive: 'OVERDRIVE',
     extraRound: '额外 {n}',
     overdriveStart: '超载模式！伤害x2，无骰子和教练！',
-    errNoCaptain: 'Set a Captain in Club Mode first',
-    errCaptainFighting: 'Your Captain is currently fighting',
-    errCaptainResting: 'Your Captain is resting',
+    errNoActiveAgent: 'No active agent. Create one in Club Mode.',
     lblPoweredBy: 'Powered by Claude',
     aiLabels: {
       summary: 'Fight Summary',

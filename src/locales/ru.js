@@ -177,11 +177,6 @@ export default {
       lblFree: 'БЕСПЛАТНО',
     },
     lblTrainer: 'Тренер',
-    lblYourCaptain: 'Твой капитан',
-    lblNoCaptainTitle: 'Капитан не назначен',
-    lblNoCaptainDesc: 'Назначьте капитана в режиме клуба для участия в боях',
-    btnSetCaptain: 'Перейти в клуб',
-    btnViewCaptain: 'Капитан →',
   },
   arena: {
     lblTitle: 'Подготовка бойца',
@@ -548,14 +543,6 @@ export default {
     errMintFailed: 'Ошибка минта',
     errNoWallet: 'Сначала подключите кошелёк',
     errSoldOut: 'Все Agent NFT разобраны',
-    // Captain
-    lblCaptain: 'КАПИТАН',
-    lblMakeCaptain: 'Сделать капитаном',
-    lblCaptainConfirmTitle: 'Сменить капитана?',
-    lblCaptainConfirmMsg: '{name} станет вашим новым капитаном. Текущий капитан сложит полномочия.',
-    lblCaptainSet: '{name} теперь ваш капитан',
-    lblCaptainProtected: 'Нельзя удалить капитана. Сначала назначьте другого капитана.',
-    lblAgentFighting: 'Этот боец сейчас в бою и не может стать капитаном',
   },
   fight: {
     lblRound: 'Раунд {n}',
@@ -642,9 +629,7 @@ export default {
     },
     extraRound: 'ЭКСТРА {n}',
     overdriveStart: 'Режим Overdrive! Урон x2, без dice и coach!',
-    errNoCaptain: 'Сначала назначьте капитана в режиме клуба',
-    errCaptainFighting: 'Ваш капитан сейчас в бою',
-    errCaptainResting: 'Ваш капитан отдыхает',
+    errNoActiveAgent: 'Нет активного бойца. Создай в Club Mode.',
   },
   friends: {
     title: 'ДРУЗЬЯ',

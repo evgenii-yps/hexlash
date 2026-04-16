@@ -172,11 +172,6 @@ export default {
       lblFree: 'GRATIS',
     },
     lblTrainer: 'Trainer',
-    lblYourCaptain: 'Your Captain',
-    lblNoCaptainTitle: 'No Captain Set',
-    lblNoCaptainDesc: 'Set a Captain in Club Mode to compete',
-    btnSetCaptain: 'Go to Club',
-    btnViewCaptain: 'View Captain →',
   },
   arena: {
     lblTitle: 'Preparación del Luchador',
@@ -539,14 +534,6 @@ export default {
     errMintFailed: 'Mint failed',
     errNoWallet: 'Connect wallet first',
     errSoldOut: 'All Agent NFTs minted',
-    // Captain
-    lblCaptain: 'CAPITÁN',
-    lblMakeCaptain: 'Hacer capitán',
-    lblCaptainConfirmTitle: '¿Cambiar capitán?',
-    lblCaptainConfirmMsg: '{name} será tu nuevo capitán. Tu capitán actual dejará el cargo.',
-    lblCaptainSet: '{name} es ahora tu capitán',
-    lblCaptainProtected: 'No puedes eliminar a tu capitán. Asigna otro capitán primero.',
-    lblAgentFighting: 'Este luchador está en combate y no puede ser capitán',
   },
   fight: {
     lblRound: 'Ronda {n}',
@@ -626,9 +613,7 @@ export default {
     overdrive: 'OVERDRIVE',
     extraRound: 'EXTRA {n}',
     overdriveStart: '¡Overdrive! Daño x2, sin dado ni entrenador!',
-    errNoCaptain: 'Set a Captain in Club Mode first',
-    errCaptainFighting: 'Your Captain is currently fighting',
-    errCaptainResting: 'Your Captain is resting',
+    errNoActiveAgent: 'No active agent. Create one in Club Mode.',
     lblPoweredBy: 'Powered by Claude',
     aiLabels: {
       summary: 'Fight Summary',

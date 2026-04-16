@@ -176,13 +176,7 @@ export default {
       lblTitle: 'FIGHTER SKINS',
       lblFree: 'FREE',
     },
-    // Captain layer
     lblTrainer: 'Trainer',
-    lblYourCaptain: 'Your Captain',
-    lblNoCaptainTitle: 'No Captain Set',
-    lblNoCaptainDesc: 'Set a Captain in Club Mode to compete',
-    btnSetCaptain: 'Go to Club',
-    btnViewCaptain: 'View Captain →',
   },
   arena: {
     lblTitle: 'Fighter Preparation',
@@ -550,14 +544,6 @@ export default {
     errMintFailed: 'Mint failed',
     errNoWallet: 'Connect wallet first',
     errSoldOut: 'All Agent NFTs minted',
-    // Captain
-    lblCaptain: 'CAPTAIN',
-    lblMakeCaptain: 'Make Captain',
-    lblCaptainConfirmTitle: 'Change Captain?',
-    lblCaptainConfirmMsg: '{name} will become your new Captain. Your current Captain will step down.',
-    lblCaptainSet: '{name} is now your Captain',
-    lblCaptainProtected: 'Cannot delete your Captain. Assign another Captain first.',
-    lblAgentFighting: 'This agent is currently fighting and cannot be made Captain',
   },
   fight: {
     lblRound: 'Round {n}',
@@ -644,10 +630,7 @@ export default {
     },
     extraRound: 'EXTRA {n}',
     overdriveStart: 'Overdrive! Damage x2, no dice or coach!',
-    // Captain guards
-    errNoCaptain: 'Set a Captain in Club Mode first',
-    errCaptainFighting: 'Your Captain is currently fighting',
-    errCaptainResting: 'Your Captain is resting',
+    errNoActiveAgent: 'No active agent. Create one in Club Mode.',
   },
   friends: {
     title: 'FRIENDS',
