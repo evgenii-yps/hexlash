@@ -110,13 +110,14 @@ description: Дизайн-система "Neon Discipline" проекта Hexlas
 
 ---
 
-## Типографика — три голоса
+## Типографика — три голоса (v23)
 
 | Голос | Шрифт | Где |
 |-------|-------|-----|
-| Бренд/удар | `Anonymous` (pixel) | Лого, START FIGHT, VICTORY/DEFEAT/DRAW, OVERDRIVE. **Один блок на экран.** |
-| Числа | `AnonymousBalance` | HP, баланс, taps, XP, win-score |
-| Спокойная речь | System sans (`-apple-system, ...`) | Всё остальное |
+| Бренд/удар | Archivo Black (`--hex-font-display`) | HEXLASH, START FIGHT, VICTORY/DEFEAT/DRAW, OVERDRIVE. Один блок на экран. |
+| Числа | JetBrains Mono (`--hex-font-mono`) | HP, taps, XP, timers, stats. |
+| Body | Space Grotesk (`--hex-font-body`) | Everything else. |
+| Legacy compact | System sans | ModeSelector, Friends (preserved pattern). |
 
 **Размеры (mobile 360-414px):** Display 32, H1 24, H2 18, H3 14, Body 14, Caption 11, Micro 9.
 
@@ -207,6 +208,20 @@ Max 2 уровня вложенности. Фон не светлее `--hex-bg-
 - Затемнение `::before` overlay #0A0A0A с opacity 0.75-0.85
 - Тёмный центр, vignette по краям
 - Лимит: ≤200KB
+
+---
+
+## Atmosphere Layers (Phase 2)
+
+Global DOM overlays, always rendered by AppShell behind all content:
+
+- `.grain` — SVG noise texture, opacity 0.035, mix-blend overlay (z-index 200)
+- `.vignette` — radial gradient dimming edges (z-index 150)
+- `.scanlines` — CRT horizontal lines (z-index 175) — opt-in per-view, not global
+
+Files: `src/styles/atmosphere.css` (Phase 1), applied in `src/components/shell/AppShell.vue` (Phase 2).
+
+Scanlines can be added per-view via `<div class="scanlines">` inside the view template. Currently recommended only for Fighter Detail per v23.
 
 ---
 

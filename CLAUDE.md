@@ -1824,3 +1824,23 @@ Tokens + fonts + atmosphere migrated to v23 palette.
 - Predator = `--hex-primary` — "one pink source per screen" rule updated: when predator context is active on a screen, primary pink CTA yields the accent
 
 **Not in Phase 1:** view layering, AppShell, screen port, component removal. Those are Phase 2+.
+
+### Phase 2 — AppShell + View Layering — ✅ COMPLETE
+
+Foundation for v23 visual port. Existing views unchanged, infrastructure ready for Phase 3.
+
+**Added:**
+- `src/composables/useActiveView.js` — derives view name from route, syncs `<body class="is-{name}">`
+- `src/components/shell/AppShell.vue` — wraps `<router-view>` with atmosphere layers + view-fade transition (opacity + blur, 400ms)
+- `src/styles/view-layers.css` — HUD pointer-events pattern + canvas fix utility classes
+
+**App.vue updated:** dual `<RouterView>` replaced with `<AppShell />`. Header/BottomMenu/toasts/notifications preserved. `isScrollableComponent` computed removed. Scroll events forwarded via `@scroll` emit.
+
+**Body class mapping** (for scoped styles):
+- `is-pit` (ArenaFightClub), `is-preparation` (ArenaFight), `is-fight` (Fight), `is-detail` (AgentDetail), `is-create` (CreateAgent), `is-profile` (Profile/Balance/Wallet/Account/Skins/UserProfile), `is-training`, `is-mm` (Matchmaking), `is-ratings`, `is-clan`, `is-friends`, `is-spectate`, `is-home`, `is-auth` (Login/Signup/Reset/TelegramLogin), `is-default`
+
+**View transitions:** Approach A (Router-based). Each route change = component unmount + remount with fade-blur. Transition key = `activeView` (not `route.fullPath`) so Profile sub-routes don't remount.
+
+**Scene canvas rule:** All Three.js `<canvas>` elements must use class `.scene-canvas` (position: fixed; inset: 0; w/h 100%; display: block). Enforced in Phase 3 port.
+
+**HUD pattern:** Container class `.hud` + view-specific modifier (e.g. `.pit-hud`) + `> *` pointer-events auto. Off-view children get pointer-events: none via `body:not(.is-pit) .pit-hud > *`. Prevents ghost clicks during fade transitions.
