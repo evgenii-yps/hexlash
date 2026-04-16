@@ -17,7 +17,7 @@
         <!-- Deck slots -->
         <div class="prep-section-label">{{ pv2.lblDeck || 'YOUR DECK' }} <span class="prep-slots-left" v-if="deck.length < 5">{{ interpolate(pv2.lblSlotsLeft || '{n} slots left', { n: 5 - deck.length }) }}</span></div>
         <div class="prep-deck">
-          <div v-for="i in 5" :key="'slot-' + i" :class="['prep-slot', { filled: deck[i - 1], [`branch-${getMoveData(deck[i - 1])?.branch}`]: deck[i - 1] }]" @click="removeFromDeck(i - 1)">
+          <div v-for="i in 5" :key="'slot-' + i" :class="['prep-slot', { filled: deck[i - 1], [`branch-${getMoveData(deck[i - 1])?.branch}`]: deck[i - 1] }]" @click="deck[i - 1] && removeFromDeck(i - 1)">
             <template v-if="deck[i - 1]">
               <span class="prep-slot-name">{{ moveName(deck[i - 1]) }}</span>
               <span class="prep-slot-lvl">Lv{{ getMoveLevel(deck[i - 1]) }}</span>
@@ -191,9 +191,9 @@ export default {
 .prep-slot {
   flex: 1; min-height: 64px; display: flex; flex-direction: column; align-items: center; justify-content: center;
   background: var(--hex-bg-card); border: 1px dashed var(--hex-border-default); border-radius: var(--hex-radius-md);
-  cursor: pointer; transition: all 0.15s; padding: 6px 4px;
+  cursor: default; transition: all 0.15s; padding: 6px 4px;
 }
-.prep-slot.filled { border-style: solid; }
+.prep-slot.filled { border-style: solid; cursor: pointer; }
 .prep-slot.branch-speed { border-color: var(--hex-branch-speed); }
 .prep-slot.branch-power { border-color: var(--hex-branch-power); }
 .prep-slot.branch-technique { border-color: var(--hex-branch-technique); }
@@ -238,7 +238,7 @@ export default {
   background: var(--hex-bg-medium); border: 1px solid var(--hex-border-default);
   color: var(--hex-text-muted); border-radius: var(--hex-radius-sm); cursor: pointer;
 }
-.prep-stake-btn.active { background: var(--hex-primary); color: #fff; border-color: var(--hex-primary); }
+.prep-stake-btn.active { background: var(--hex-bg-card); color: var(--hex-text-primary); border-color: var(--hex-text-primary); }
 
 .prep-start-btn { margin-top: 24px; }
 .scroll-gap { height: 80px; }
