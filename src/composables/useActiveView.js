@@ -13,6 +13,7 @@ const ROUTE_TO_VIEW = {
   ArenaFightClub: 'pit',
   ArenaPit: 'pit',
   ArenaFight: 'preparation',
+  ArenaFightV2: 'preparation',
   Fight: 'fight',
   AgentDetail: 'detail',
   AgentDetailV2: 'detail',

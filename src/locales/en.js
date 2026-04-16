@@ -935,6 +935,24 @@ export default {
     lblViewFighter: 'View Fighter',
   },
 
+  preparation: {
+    v2: {
+      lblTitle: 'PREPARATION',
+      lblDeck: 'YOUR DECK',
+      lblMoves: 'AVAILABLE MOVES',
+      lblStrategy: 'STRATEGY',
+      lblAggressive: 'AGGRESSIVE',
+      lblBalanced: 'BALANCED',
+      lblDefensive: 'DEFENSIVE',
+      lblStake: 'STAKE',
+      lblLow: 'LOW',
+      lblMedium: 'MEDIUM',
+      lblHigh: 'HIGH',
+      lblStartFight: 'START FIGHT',
+      lblSlotsLeft: '{n} slots left',
+    },
+  },
+
   fighter: {
     v2: {
       lblOverview: 'OVERVIEW',

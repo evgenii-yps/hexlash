@@ -934,6 +934,24 @@ export default {
     lblViewFighter: 'Посмотреть бойца',
   },
 
+  preparation: {
+    v2: {
+      lblTitle: 'ПОДГОТОВКА',
+      lblDeck: 'ТВОЯ КОЛОДА',
+      lblMoves: 'ДОСТУПНЫЕ ПРИЁМЫ',
+      lblStrategy: 'СТРАТЕГИЯ',
+      lblAggressive: 'АГРЕССИВНАЯ',
+      lblBalanced: 'СБАЛАНСИРОВАННАЯ',
+      lblDefensive: 'ЗАЩИТНАЯ',
+      lblStake: 'СТАВКА',
+      lblLow: 'НИЗКАЯ',
+      lblMedium: 'СРЕДНЯЯ',
+      lblHigh: 'ВЫСОКАЯ',
+      lblStartFight: 'НАЧАТЬ БОЙ',
+      lblSlotsLeft: 'Осталось {n} слотов',
+    },
+  },
+
   fighter: {
     v2: {
       lblOverview: 'ОБЗОР',
