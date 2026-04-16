@@ -671,6 +671,15 @@ export default {
     lblChecklist: 'CheckList',
     noTasksAvailable: 'No daily tasks available today!',
     checklistCompleted: 'Great work, checklist completed!',
+    v2: {
+      lblTitle: 'TRAINING',
+      lblTaps: 'TAPS',
+      lblEnergy: 'ENERGY',
+      lblCombo: 'COMBO',
+      lblDaily: 'DAILY TASKS',
+      lblBack: 'BACK',
+      lblHint: 'TAP THE BAG',
+    },
   },
   rating: {
     clans: 'Classificação de clãs',
