@@ -36,6 +36,7 @@ const protectedRoutes = [
     {path: '/arena/pit', name: 'ArenaPit', component: () => import("/src/views/new/PitView.vue")},
     {path: '/arena/fight', name: 'ArenaFight', component: () => import("/src/views/PreparationView.vue")},
     {path: '/arena/club', name: 'ArenaFightClub', component: () => import("/src/views/FightClubView.vue")},
+    {path: '/arena/club/create-v2', name: 'CreateAgentV2', component: () => import("/src/views/new/CreateFighterViewV2.vue")},
     {path: '/arena/club/create', name: 'CreateAgent', component: () => import("/src/views/CreateAgentView.vue")},
     {path: '/arena/club/:agentId', name: 'AgentDetail', component: () => import("/src/views/AgentDetailView.vue")},
 

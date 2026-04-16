@@ -933,4 +933,18 @@ export default {
     lblShop: 'Шкафчик · Косметика',
     lblViewFighter: 'Посмотреть бойца',
   },
+
+  create: {
+    v2: {
+      lblStep1: 'ВЫБЕРИ АРХЕТИП',
+      lblStep2: 'ДАЙ ИМЯ БОЙЦУ',
+      lblStep3: 'ПОДТВЕРЖДЕНИЕ',
+      lblGenerate: '🎲',
+      lblCreate: 'СОЗДАТЬ БОЙЦА',
+      lblNext: 'ДАЛЕЕ',
+      lblBack: 'НАЗАД',
+      lblChooseArchetype: 'Выбери стиль боя',
+      lblNameHint: '2-20 символов',
+    },
+  },
 }

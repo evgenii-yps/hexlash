@@ -16,6 +16,7 @@ const ROUTE_TO_VIEW = {
   Fight: 'fight',
   AgentDetail: 'detail',
   CreateAgent: 'create',
+  CreateAgentV2: 'create',
 
   // Profile (all sub-routes → same view name)
   Profile: 'profile',
