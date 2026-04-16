@@ -793,7 +793,7 @@ User, Clan, ClanInvite, ClanEvent, FightClub, Achievement, UserAchievement, Soci
 ## Branch (Git)
 
 Current dev branch: `claude/setup-project-initialization-bu1kK`
-Visual Redesign (Phase 1–3.10): **IN PROGRESS** — not in main. Phase 1 (tokens/fonts/atmosphere ✅), Phase 2 (AppShell + view layering ✅), Phase 3 Screen Port 10 of 10 v2 views ✅ (3.10 CardFightViewV2 — scaffold + HUD, PvE-only, PvP + AI Trainer deferred to 3.10.2b/3.10.4). See "Visual Redesign — Roadmap & Branch State" below.
+Visual Redesign (Phase 1–3): **COMPLETE** (local) — not in main. Phase 1 (tokens/fonts/atmosphere ✅), Phase 2 (AppShell + view layering ✅), Phase 3 Screen Port 10/10 v2 views ✅ including full CardFightViewV2 (PvE + PvP + Result overlay + AI Trainer). Next milestone: Phase 4 (decorative → real-data wiring). See "Visual Redesign — Roadmap & Branch State" below.
 Phase −1 (Captain System Removal): merged separately.
 Club Mode prototype: **IN PROGRESS** — 109 commits ahead of main, ~6000 lines, deepdive complete (#1a-#1i), Phase 1 work starting.
 Road 1 (Neon Discipline visual migration): **COMPLETE**. See `/docs/road1-final-report.md` and `/docs/road2-parking-list.md`.
@@ -1848,9 +1848,9 @@ Captain system completely removed. Active agent for combat = first agent by `cre
 
 Visual rebrand to v23 palette. **Current dev branch:** `claude/setup-project-initialization-bu1kK`. **Not in main.** Captain Removal (Phase −1, above) merged separately.
 
-**Done (local):** Phase −1 (Captain Removal ✅), Phase 1 (Visual Foundation ✅), Phase 2 (AppShell + View Layering ✅), Phase 3.1–3.10 (Screen Port + CardFightViewV2 HUD, PvE-only).
+**Done (local):** Phase −1 (Captain Removal ✅), Phase 1 (Visual Foundation ✅), Phase 2 (AppShell + View Layering ✅), Phase 3 (Screen Port 10/10 + CardFightViewV2 full stack: PvE + PvP + Result overlay + AI Trainer ✅).
 
-**Not done:** Phase 3.10.2b (PvP binding — 12 WS handlers + match-refresh detection), Phase 3.10.4 (Result overlay + AI Trainer), Phase 4 (decorative → real-data wiring: stake, strategy, energy, wagmi wallet), Phase 5 (i18n full pass across 11 locales), Phase 6 (cutover of non-v2 views + cleanup of suffixed routes).
+**Not done:** Phase 4 (decorative → real-data wiring: stake, strategy, energy, wagmi wallet, country rankings, Training sound), Phase 5 (i18n full pass across 11 locales + debt resolution D1/D2/D5/D8), Phase 6 (cutover of non-v2 views + cleanup of suffixed routes + P1-cleanup D7).
 
 See subsections below for details — do not duplicate content here.
 
@@ -1908,7 +1908,7 @@ All v2 views live in `src/views/new/` alongside originals. Legacy views untouche
 | 3.7 | `CreateFighterViewV2.vue` | `/arena/club/create-v2` | `CreateAgentV2` | 3-step wizard: archetype → name → confirm. |
 | 3.8 | `FighterDetailViewV2.vue` | `/arena/club/:agentId/v2` | `AgentDetailV2` | 4 tabs: Overview, Moves, Tactics, Fights. 3D fighter scene. |
 | 3.9 | `PreparationViewV2.vue` | `/arena/fight-v2` | `ArenaFightV2` | Deck builder (5 slots, 3 branches pool) + decorative strategy/stake. After fix: `agent/updateDeck` syncs `state.agents[]`. |
-| 3.10 | `CardFightViewV2.vue` | `/fight-v2` | `FightV2` | 3D fight arena (Three.js) + full HUD: HPBar+BeltBadge top panels, round dots + OVERDRIVE label, camera switcher (Pit/Side/Cinema), dice button with pulse + result popup, modifiers pills (2× ATK / SHIELD / BLIND), event title popup, combat log drawer (last 5 rounds), coach overlay with 15s timer, shake on damage, flash on crit/rage/heal/overdrive. PvE-only. POST /fight/save + XP award inside `watch(fightPhase)`. PvP (3.10.2b) and Result+AI Trainer (3.10.4) deferred. |
+| 3.10 | `CardFightViewV2.vue` | `/fight-v2` | `FightV2` | 3D fight arena (Three.js) + full HUD: HPBar+BeltBadge top panels, round dots + OVERDRIVE label, camera switcher (Pit/Side/Cinema), dice button with pulse + result popup, modifiers pills (2× ATK / SHIELD / BLIND), event title popup, combat log drawer (last 5 rounds), coach overlay with 15s timer, shake on damage, flash on crit/rage/heal/overdrive. Result overlay: VICTORY/DEFEAT/DRAW splash (status-colored) + XP block + AiTrainerAnalysis + detailed log drawer + Fight Again / Change Deck / Exit to Pit buttons. PvP supported: 11 WS handlers (`pvp-*` events), `initPvPFight/cleanupPvP` lifecycle, 10s coach overlay (separate from 15s PvE), Waiting-for-opponent overlay, match-refresh detection → /arena/pit, PvP result server-driven via `pvpResultType`. POST /fight/save + XP award only for PvE (server drives PvP XP via onPvPFightEnd). File: 1797 lines. |
 
 **Decorative elements in V2 views** (no backend support, render-only until Phase 4): Preparation strategy + stake, Training energy bar, Ratings Country/Live tabs, Profile wagmi wallet connect.
 
@@ -1947,8 +1947,9 @@ Scenes are pure JS modules (no Vue). Each scene module exports an `init…Scene(
 | `fighter.v2` | FighterDetailViewV2 | |
 | `create.v2` | CreateFighterViewV2 | |
 | `xpAllocation.v2` | FighterDetailViewV2 | lblFilters, lblSearch |
-| `fight.v2` | CardFightViewV2 | 21 keys: lblFight/Victory/Defeat/Draw/FightAgain/ExitToPit/ConfirmLeave/CoachStub + lblOverdrive/Log/ModShield/ModBlind/CoachTitle/CoachSubtitle/CoachAttack/CoachDefense/CoachPosition/XpEarned/CamPit/CamSide/CamCinema |
+| `fight.v2` | CardFightViewV2 | 24 keys: lblFight/Victory/Defeat/Draw/FightAgain/ExitToPit/ConfirmLeave/CoachStub + lblOverdrive/Log/ModShield/ModBlind/CoachTitle/CoachSubtitle/CoachAttack/CoachDefense/CoachPosition/XpEarned/CamPit/CamSide/CamCinema (3.10.3) + lblShowDetails/HideDetails/ChangeDeck (3.10.4) |
 | `pit` (top-level) | PitView | **Not** a `.v2` subsection — Pit has no legacy counterpart. |
+| `pvp` (existing + 2) | CardFightViewV2 PvP paths | +2 new in 3.10.2b: `fightLostOnRefresh`, `fightStartFailed` (11 locales, EN+RU translated, 9 EN fallback). Existing: `waitingForOpponent`, `opponentDisconnected` (used by PvP waiting overlay), plus fallback-strings `opponentReady` / `matchCancelled` referenced in handlers but absent from locale (falls through `||` defaults — acceptable for handler feedback, parked for Phase 5). |
 
 **No new keys added** (reuse existing): ClanViewV2 uses `t.clan.*` (lblNotFound, lblBrowse, lblJoin, lblClanPrivate, lblClanFull); MatchmakingViewV2 uses `t.pvp.*` (cancel, opponentFound, fightStartsIn, noPlayersFound, tryAgain, backToArena). Same labels as originals, so no `.v2` subsection added.
 
@@ -1973,23 +1974,59 @@ CardFightViewV2 splits cleanly along **3D scene ↔ HUD overlay ↔ Vuex state**
 - Modifiers pills: 2× ATK / SHIELD / BLIND (neutral borders, not archetype colors).
 - Event title popup: reads `fight/getEventTitle|Class|Image` from store.
 - Combat log drawer: last 5 rounds from `fight/getRoundLog`.
-- Coach overlay: 15s timer (PvE), 3 action buttons with action-color accents (attack=red / defense=blue / position=purple left border).
-- Result stub: minimal VICTORY/DEFEAT/DRAW + XP + Fight Again (primary pink) + Exit to Pit. **Full result overlay + AiTrainerAnalysis deferred to 3.10.4.**
+- Coach overlay (PvE): 15s timer, 3 action buttons with action-color accents (attack=red / defense=blue / position=purple left border). Guarded by `v-if="!isPvP && fightPhase === 'coach'"`.
+- Result overlay (Phase 3.10.4): full VICTORY/DEFEAT/DRAW splash (status-colored via `--hex-victory|defeat|draw`) + XP block (mono font) + `AiTrainerAnalysis` component + detailed log drawer (scrollable round-by-round with action/HP, mono font, `--od` marker for overdrive rounds) + 3 buttons: Fight Again (primary pink, single screen accent), Change Deck (→ `/arena/fight-v2`), Exit to Pit.
 - Screen shake on HP decrease; screen flash on dice crit/rage/heal/overdrive-start.
 
 **Vuex bridge (`fight/` namespace, module `cardFightState.js`):**
 - View reads only via getters. Writes only via dispatch.
-- `watch(fightPhase)` is the single owner of phase transitions: starts/stops round timer, coach timer, and on `results` calls `setXpEarned/setXpAwarded` + `POST /v1/fight/save` + `agent/fetchAgents`.
-- `onBeforeUnmount` disposes every watch, every interval, and `sceneCtl.cleanup()`.
+- `watch(fightPhase)` is the single owner of phase transitions: starts/stops round timer, coach timer. On `results` for **PvE only** calls `setXpEarned/setXpAwarded` + `POST /v1/fight/save` + `agent/fetchAgents`. For PvP this is guarded (`!isPvP.value && !getXpAwarded`) — server drives XP via `onPvPFightEnd`.
+- `aiTrainerFightData` computed collects 14 fields from `store.state.fight` (rounds, decks, modules, HP, totalRounds, dice/coach/emergency usage + derivatives). Copied AS-IS from legacy CardFightView. For PvP, `result` field prefers server-driven `pvpResultType`; for PvE, HP-derived. See D9 below.
+- `onBeforeUnmount` disposes every watch, every interval, `sceneCtl.cleanup()`, and `cleanupPvP()` when `isPvP`.
 
-**Pattern for future fight-scene iterations:** the `setCameraMode / triggerAction` controller shape is the stable contract — PvP port (3.10.2b) should consume the same controller, only the round-log source changes (WS vs local engine). Coach timer is the only PvE/PvP divergence (15s PvE vs 10s PvP — both timers must live inside the view, not in the controller).
+**PvP subsystem (Phase 3.10.2b):**
+- 11 WS event handlers (`pvp-fight_start`, `pvp-round_result`, `pvp-dice_available`, `pvp-dice_rolled`, `pvp-dice_error`, `pvp-coach_pause`, `pvp-coach_result`, `pvp-coach_opponent_ready`, `pvp-fight_end`, `pvp-overdrive_start`, `match-cancelled`) registered in `initPvPFight`, torn down in `cleanupPvP`. 11 addEventListener / 11 removeEventListener — symmetric.
+- WS dispatch pattern: `webSocketState.js` re-emits server PvP messages as window custom events with `pvp-` prefix (`match-cancelled` is the one exception without the prefix — AS-IS).
+- `initPvPFight` initializes fight store (HP 100/100, round 0, clear log/dice/modifiers/coach, reset stats, XP null), sets opponent from `pvp/getOpponentInfo`, sends `pvp_ready` WS message with active agent's deck+modules+move levels, registers all 11 listeners, sets 30s timeout (abort → `/arena/pit` if `fight_start` doesn't arrive). **Also calls `maybeInitScene()`** — V2-specific extension, legacy PvP had no 3D scene.
+- Match-refresh detection: in `onMounted` PvP branch, if `pvp/getOpponentInfo` and `pvp/getCurrentMatchId` are both empty on entry with `?mode=pvp&matchId=`, commit `RESET_PVP_FIGHT`, info message (`pvp.fightLostOnRefresh`), redirect to `/arena/pit`. Prevents stale match-context on F5.
+- PvP coach overlay: separate block in template (`v-if="isPvP && showCoachChoice"`), 10s timer via `pvpTimerInterval` (not the PvE `coachTimerInterval`), same visual style as PvE (shared fv2.lblCoach* keys, action-color left borders). `onPvPCoachChoice` sends `coach_choice` via WS, triggers `Waiting for opponent` overlay until `coach_opponent_ready` event.
+- Waiting overlay: `v-if="isPvP && showWaiting"`, neutral spinner (no pink), shows during 30s initial wait AND during "waiting for opponent's coach choice" AND on coach-timeout scenarios. Text from `waitingText` ref, backed by `pvp.waitingForOpponent` / `pvp.opponentDisconnected` keys.
+- Result overlay PvP-aware: `resultState` and `aiTrainerFightData.result` prefer server-driven `pvpResultType` (`'win'|'lose'|'draw'`) over HP-derived; Fight Again button branches internally (`onFightAgain` → `pvpFightAgain()` if `isPvP`, else `dispatch('fight/fightAgain')`). `pvpFightAgain` routes to `/matchmaking-v2` (not legacy `/matchmaking` — V2 universe closure).
+- Dice in PvP: `onRollDice` branches — if `isPvP && pvpMatchId`, dispatches `{type: 'dice_roll'}` via WS and clears local dice state; server responds with `dice_rolled` event, which `onPvPDiceRolled` handler commits to `fightStats` and `diceState`.
+
+**PvE/PvP namespace divergence (by design, see hexlash-combat skill):**
+- PvE runs `combatEngine` client-side, `cardFightState` drives `watch(fightPhase)` timer loop.
+- PvP runs `pvpCombatEngine` server-side, client reacts to WS events; `watch(fightPhase)` is short-circuited with `if (isPvP && pvpMatchId) return` guard at entry.
+- Coach: 15s PvE / 10s PvP — two separate timers, two separate template blocks, **do not unify**.
+- XP: PvE POST /fight/save client-initiated; PvP server handles in `onPvPFightEnd`, client reads `fight/getXpEarned` populated by the handler.
+- 3D scene: shared via the `initFightScene` controller — only the round-log source changes (local engine for PvE, `pvp-round_result` events for PvP). `triggerAction` called the same way from both paths.
+
+**Router targets in PvP flow (all `/arena` → `/arena/pit`, `/matchmaking` → `/matchmaking-v2`, `/fight` → `/fight-v2`):**
+- `onMounted` refresh-fail, `initPvPFight` 30s timeout, `onMatchCancelled` → `/arena/pit`
+- `pvpFightAgain` → `/matchmaking-v2`
+- Existing `onExitToPit` / `onBackClick` → `/arena/pit`
+
+**Pattern for future fight-scene iterations:** the `setCameraMode / triggerAction` controller shape is the stable contract; any new mode (spectator, replay) should consume the same controller and only swap the round-log source.
 
 ### Phase 3 — What's Deferred to Later Phases
 
-- **CardFightViewV2 — PvP binding (Phase 3.10.2b)**: 12 WS handlers (onPvPFightStart, onPvPRoundResult, onPvPDiceAvailable/Rolled/Error, onPvPCoachPause/Choice/OpponentReady/Result, onMatchCancelled, onPvPFightEnd, onPvPOverdriveStart) + `initPvPFight/cleanupPvP` + "Waiting for opponent" overlay + 10s coach timer + match-refresh detection. Currently view redirects PvP users back to Pit.
-- **CardFightViewV2 — Result overlay + AI Trainer (Phase 3.10.4)**: replace the 3.10.3 result stub with full VICTORY/DEFEAT/DRAW splash + `AiTrainerAnalysis` component + `aiTrainerFightData` computed + detailed log toggle + Change Deck button.
+Phase 3.10 is complete (10/10 Screen Port views + PvE + PvP + AI Trainer). Next milestone: Phase 4.
+
 - **Backend wiring** for decorative UI: Preparation stake (currency bet), Preparation strategy (AI behavior override), Training energy system (currently stub 100%), Profile wallet (wagmi connect placeholder) — Phase 4
 - **Live matches feed + country rankings** in RatingsViewV2 — Phase 4
 - **Sound** in TrainingViewV2 (helper `audioEngine.js` exists, not wired) — Phase 4
 - **Full i18n pass** across 11 locales for all `*.v2` subsections + ClanV2/MMV2 reused keys audit — Phase 5
 - **Cutover:** remove `-v2` route suffixes, delete legacy views, delete legacy components — Phase 6
+
+**Known debt parked after Phase 3.10:**
+- **D1**: `pvp.v2.lblFilters`/`lblSearch` path referenced in MatchmakingViewV2 but `pvp.v2` subsection doesn't exist → Phase 5 (add subsection or repoint to `xpAllocation.v2.lblFilters`).
+- **D2**: 9 locales (de/es/fr/pt/ar/hi/ja/ko/zh) inherit EN fallback for all `*.v2` subsections → Phase 5 full pass.
+- **D3**: Phase 3.9/3.10 smoke tests pending a dev environment run → pre-deploy.
+- **D5**: `fight` top-level flat section still exists alongside `fight.v2` (legacy CardFightView uses it); removed during Phase 6 cutover.
+- **D6**: Legacy CardFightView (2174 lines) lives in parallel with CFV2 until Phase 6 cutover (routes `/fight` and `/fight-v2` both active).
+- **D7**: P1-cleanup files (`fightStylePreview.js`, `nftMintService.js`, `HexlashAgents.sol` + ABI) still present — remove pre-Phase 6.
+- **D8**: Captain-era keys may linger in some locales — audit as part of Phase 5 cleanup.
+- **D9**: `aiTrainerFightData.diceEffect` is almost always `null` at `results` phase because `rollDiceManual` clears `diceState.activeItem` after 1.5s setTimeout. Legacy behavior, not a 3.10.4 regression. Backend AI Trainer accepts `null`. Fix (remove setTimeout-clear or add separate `lastDiceEffect` field in `cardFightState`) is a standalone task — requires touching cardFightState.js, affects both legacy and V2.
+- **D10**: `pvp-overdrive_start` is not dispatched by `webSocketState.js` (server message `overdrive_start` falls into `default` branch → `console.warn`). Handler `onPvPOverdriveStart` is registered in CFV2 AS-IS from legacy for future-proofing but will never fire until webSocketState adds the case. Pre-existing bug, park.
+
+**Closed debt:** D4 (branch mismatch CLAUDE.md↔system prompt) resolved in 3.10.3 commit 353c463 — current branch pinned as `bu1kK` in two places.
