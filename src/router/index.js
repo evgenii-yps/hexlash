@@ -47,6 +47,7 @@ const protectedRoutes = [
     {path: '/profile/account', name: 'Account', component: () => import("/src/views/ProfileView.vue")},
     {path: '/profile/skins', name: 'Skins', component: () => import("/src/views/ProfileView.vue")},
 
+    {path: '/clan-v2/:id?', name: 'ClanV2', component: () => import("/src/views/new/ClanViewV2.vue")},
     {path: '/clan/:id', name: 'Clan', component: () => import("/src/views/ClanView.vue")},
     {path: '/club/:id', redirect: to => '/clan/' + to.params.id},
     {path: '/fight-club', redirect: '/arena/club'},

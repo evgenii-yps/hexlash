@@ -33,6 +33,7 @@ const ROUTE_TO_VIEW = {
   Ratings: 'ratings',
   RatingsV2: 'ratings',
   Clan: 'clan',
+  ClanV2: 'clan',
   Friends: 'friends',
   Spectate: 'spectate',
 
