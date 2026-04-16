@@ -22,11 +22,11 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
   main.js                  — Entry: Vue + Vuetify + i18n + Vuex + WagmiPlugin + VueQueryPlugin init
   router/index.js          — Routes + auth guards + fight state restore (incl. v2-suffixed visual redesign routes)
   views/                   — 19 page-level components (incl. FightClubView, CreateAgentView, AgentDetailView)
-  views/new/               — 9 v2 visual-redesign views (PitView, ProfileViewV2, TrainingViewV2, RatingsViewV2, ClanViewV2, MatchmakingViewV2, CreateFighterViewV2, FighterDetailViewV2, PreparationViewV2). CardFightViewV2 pending (Phase 3.10).
+  views/new/               — 10 v2 visual-redesign views (PitView, ProfileViewV2, TrainingViewV2, RatingsViewV2, ClanViewV2, MatchmakingViewV2, CreateFighterViewV2, FighterDetailViewV2, PreparationViewV2, CardFightViewV2).
   composables/             — Vue composables. `useActiveView.js` — derives view name from route.name, syncs `<body class="is-{name}">`.
   three/                   — Three.js modules for v2 visual redesign
-    helpers/               — atmosphereScene, audioEngine, crowdSilhouette, fighterLowPoly, textures (pure JS, reused across scenes)
-    scenes/                — pitScene, pitArena, pitEnvironment, fighterDetailScene (each exports init…Scene(canvas,opts))
+    helpers/               — archetypeColors, atmosphereScene, audioEngine, crowdSilhouette, fighterAnim, fighterLowPoly, textures (pure JS, reused across scenes)
+    scenes/                — pitScene, pitArena, pitEnvironment, fighterDetailScene, fightArena (each exports init…Scene(canvas,opts))
   components/              — 75+ reusable components
   components/shell/        — AppShell.vue (single router-view mount + atmosphere layers + view-fade transition)
   components/club/         — 8 Club Mode components (AgentRoster, AgentCard, ClubLevelBar, MorningReport, RetirementPanel, SkinPicker, ArchetypeSelector, ResearchTree)
@@ -179,6 +179,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 | `/ratings-v2` | RatingsViewV2 | Yes |
 | `/training-v2` | TrainingViewV2 | Yes |
 | `/matchmaking-v2` | MatchmakingViewV2 | Yes |
+| `/fight-v2` | CardFightViewV2 | Yes |
 
 ---
 
@@ -791,12 +792,12 @@ User, Clan, ClanInvite, ClanEvent, FightClub, Achievement, UserAchievement, Soci
 
 ## Branch (Git)
 
-Current dev branch: `claude/setup-project-initialization-KyxUY`
-Visual Redesign (Phase 1–3.9): **IN PROGRESS** — not in main. Phase 1 (tokens/fonts/atmosphere ✅), Phase 2 (AppShell + view layering ✅), Phase 3 Screen Port 9 of 10 v2 views ✅. Phase 3.10 (CardFightViewV2) = next. See "Visual Redesign — Roadmap & Branch State" below.
+Current dev branch: `claude/setup-project-initialization-bu1kK`
+Visual Redesign (Phase 1–3.10): **IN PROGRESS** — not in main. Phase 1 (tokens/fonts/atmosphere ✅), Phase 2 (AppShell + view layering ✅), Phase 3 Screen Port 10 of 10 v2 views ✅ (3.10 CardFightViewV2 — scaffold + HUD, PvE-only, PvP + AI Trainer deferred to 3.10.2b/3.10.4). See "Visual Redesign — Roadmap & Branch State" below.
 Phase −1 (Captain System Removal): merged separately.
 Club Mode prototype: **IN PROGRESS** — 109 commits ahead of main, ~6000 lines, deepdive complete (#1a-#1i), Phase 1 work starting.
 Road 1 (Neon Discipline visual migration): **COMPLETE**. See `/docs/road1-final-report.md` and `/docs/road2-parking-list.md`.
-Previous branches: `claude/hexlash-project-setup-WYkbK`, `claude/hexlash-project-setup-X2K7i` (Road 1), `claude/review-hexlash-guidelines-vxdZD`, `claude/add-club-mode-agents-lmXTI`, `claude/club-mode-navigation-571kx`, `claude/rename-autofight-club-mode-o2bIJ`, `claude/update-claude-md-XVzH6`, `claude/add-pixel-icons-Hk6tn`, `claude/hexlash-full-audit-WvXMd`
+Previous branches: `claude/setup-project-initialization-KyxUY`, `claude/hexlash-project-setup-WYkbK`, `claude/hexlash-project-setup-X2K7i` (Road 1), `claude/review-hexlash-guidelines-vxdZD`, `claude/add-club-mode-agents-lmXTI`, `claude/club-mode-navigation-571kx`, `claude/rename-autofight-club-mode-o2bIJ`, `claude/update-claude-md-XVzH6`, `claude/add-pixel-icons-Hk6tn`, `claude/hexlash-full-audit-WvXMd`
 
 ### PvP System Audit — P0+P1 Fixes — ✅ COMPLETE
 
@@ -1845,11 +1846,11 @@ Captain system completely removed. Active agent for combat = first agent by `cre
 
 ### Visual Redesign — Roadmap & Branch State
 
-Visual rebrand to v23 palette. **Current dev branch:** `claude/setup-project-initialization-KyxUY`. **Not in main.** Captain Removal (Phase −1, above) merged separately.
+Visual rebrand to v23 palette. **Current dev branch:** `claude/setup-project-initialization-bu1kK`. **Not in main.** Captain Removal (Phase −1, above) merged separately.
 
-**Done (local):** Phase −1 (Captain Removal ✅), Phase 1 (Visual Foundation ✅), Phase 2 (AppShell + View Layering ✅), Phase 3.1–3.9 (Screen Port, 9 of 10 v2 views landed).
+**Done (local):** Phase −1 (Captain Removal ✅), Phase 1 (Visual Foundation ✅), Phase 2 (AppShell + View Layering ✅), Phase 3.1–3.10 (Screen Port + CardFightViewV2 HUD, PvE-only).
 
-**Not done:** Phase 3.10 (CardFightViewV2), Phase 4 (decorative → real-data wiring: stake, strategy, energy, wagmi wallet), Phase 5 (i18n full pass across 11 locales), Phase 6 (cutover of non-v2 views + cleanup of suffixed routes).
+**Not done:** Phase 3.10.2b (PvP binding — 12 WS handlers + match-refresh detection), Phase 3.10.4 (Result overlay + AI Trainer), Phase 4 (decorative → real-data wiring: stake, strategy, energy, wagmi wallet), Phase 5 (i18n full pass across 11 locales), Phase 6 (cutover of non-v2 views + cleanup of suffixed routes).
 
 See subsections below for details — do not duplicate content here.
 
@@ -1892,7 +1893,7 @@ Foundation for v23 visual port. Existing views unchanged, infrastructure ready f
 
 **HUD pattern:** Container class `.hud` + view-specific modifier (e.g. `.pit-hud`) + `> *` pointer-events auto. Off-view children get pointer-events: none via `body:not(.is-pit) .pit-hud > *`. Prevents ghost clicks during fade transitions.
 
-### Phase 3 — Screen Port (9 of 10 done)
+### Phase 3 — Screen Port (10 of 10 done)
 
 All v2 views live in `src/views/new/` alongside originals. Legacy views untouched — routes use `-v2` suffix for A/B coexistence until Phase 6 cutover.
 
@@ -1907,7 +1908,7 @@ All v2 views live in `src/views/new/` alongside originals. Legacy views untouche
 | 3.7 | `CreateFighterViewV2.vue` | `/arena/club/create-v2` | `CreateAgentV2` | 3-step wizard: archetype → name → confirm. |
 | 3.8 | `FighterDetailViewV2.vue` | `/arena/club/:agentId/v2` | `AgentDetailV2` | 4 tabs: Overview, Moves, Tactics, Fights. 3D fighter scene. |
 | 3.9 | `PreparationViewV2.vue` | `/arena/fight-v2` | `ArenaFightV2` | Deck builder (5 slots, 3 branches pool) + decorative strategy/stake. After fix: `agent/updateDeck` syncs `state.agents[]`. |
-| 3.10 | CardFightViewV2 | NOT YET | NOT YET | TODO — next sub-ТЗ (3D fight scene). |
+| 3.10 | `CardFightViewV2.vue` | `/fight-v2` | `FightV2` | 3D fight arena (Three.js) + full HUD: HPBar+BeltBadge top panels, round dots + OVERDRIVE label, camera switcher (Pit/Side/Cinema), dice button with pulse + result popup, modifiers pills (2× ATK / SHIELD / BLIND), event title popup, combat log drawer (last 5 rounds), coach overlay with 15s timer, shake on damage, flash on crit/rage/heal/overdrive. PvE-only. POST /fight/save + XP award inside `watch(fightPhase)`. PvP (3.10.2b) and Result+AI Trainer (3.10.4) deferred. |
 
 **Decorative elements in V2 views** (no backend support, render-only until Phase 4): Preparation strategy + stake, Training energy bar, Ratings Country/Live tabs, Profile wagmi wallet connect.
 
@@ -1916,23 +1917,26 @@ All v2 views live in `src/views/new/` alongside originals. Legacy views untouche
 ```
 src/three/
   helpers/
+    archetypeColors.js     — ARCHETYPE_HEX map + archColor(archId) helper (6 archetypes)
     atmosphereScene.js     — shared sky/fog/light atmosphere setup
     audioEngine.js         — audio playback helper (not wired to any view yet)
     crowdSilhouette.js     — background crowd silhouettes
-    fighterLowPoly.js      — low-poly fighter mesh generator
+    fighterAnim.js         — animation helpers: getFighterParts, snapshotParts, returnToIdle, applyIdleBob, startAttack, startDefend, startHitReact
+    fighterLowPoly.js      — low-poly fighter mesh generator (15 userData.bodyPart tags, fighterVersion = 1)
     textures.js            — shared texture loaders/caches
   scenes/
     pitScene.js            — aggregator for PitView 3D scene
     pitArena.js            — arena ring geometry
     pitEnvironment.js      — environment lights/props
-    fighterDetailScene.js  — scene for FighterDetailViewV2
+    fighterDetailScene.js  — scene for FighterDetailViewV2 (uses archColor)
+    fightArena.js          — CardFightViewV2 scene. Exports initFightScene(canvas, opts) → { cleanup, setCameraMode('pit'|'side'|'cinema'), triggerAction(side, action), renderer, scene, camera }
 ```
 
-Scenes are pure JS modules (no Vue). Each scene module exports an `init…Scene(canvas, opts)` that mounts the scene to a canvas and returns `{ scene, camera, renderer, cleanup }`. Helpers reused across scenes.
+Scenes are pure JS modules (no Vue). Each scene module exports an `init…Scene(canvas, opts)` that mounts the scene to a canvas and returns `{ scene, camera, renderer, cleanup }`. Helpers reused across scenes. `fightArena.triggerAction(side, action)` where side ∈ {'left','right'}, action ∈ {'attack','defend','hit'} is the bridge between Vuex round events and 3D animations.
 
 ### Phase 3 — i18n Status
 
-7 `*.v2` subsections exist in `en.js` + 1 new top-level section:
+8 `*.v2` subsections exist in `en.js` + 1 new top-level section:
 
 | i18n path | Used by | Note |
 |-----------|---------|------|
@@ -1943,6 +1947,7 @@ Scenes are pure JS modules (no Vue). Each scene module exports an `init…Scene(
 | `fighter.v2` | FighterDetailViewV2 | |
 | `create.v2` | CreateFighterViewV2 | |
 | `xpAllocation.v2` | FighterDetailViewV2 | lblFilters, lblSearch |
+| `fight.v2` | CardFightViewV2 | 21 keys: lblFight/Victory/Defeat/Draw/FightAgain/ExitToPit/ConfirmLeave/CoachStub + lblOverdrive/Log/ModShield/ModBlind/CoachTitle/CoachSubtitle/CoachAttack/CoachDefense/CoachPosition/XpEarned/CamPit/CamSide/CamCinema |
 | `pit` (top-level) | PitView | **Not** a `.v2` subsection — Pit has no legacy counterpart. |
 
 **No new keys added** (reuse existing): ClanViewV2 uses `t.clan.*` (lblNotFound, lblBrowse, lblJoin, lblClanPrivate, lblClanFull); MatchmakingViewV2 uses `t.pvp.*` (cancel, opponentFound, fightStartsIn, noPlayersFound, tryAgain, backToArena). Same labels as originals, so no `.v2` subsection added.
@@ -1951,9 +1956,38 @@ Scenes are pure JS modules (no Vue). Each scene module exports an `init…Scene(
 
 Phase 1 i18n policy applies: en + ru are source of truth; 9 other locales inherit EN fallback for v2 subsections until Phase 5.
 
+### Phase 3.10 — Fight Scene Architecture
+
+CardFightViewV2 splits cleanly along **3D scene ↔ HUD overlay ↔ Vuex state** lines:
+
+**3D layer (`src/three/scenes/fightArena.js`, `src/three/helpers/fighterAnim.js`):**
+- `initFightScene(canvas, { leftFighter, rightFighter })` mounts the scene and returns a controller.
+- `controller.setCameraMode('pit'|'side'|'cinema')` — swappable camera rigs.
+- `controller.triggerAction('left'|'right', 'attack'|'defend'|'hit')` — fires bone-level animations via `fighterAnim.js` helpers. No Vue imports inside three/.
+
+**HUD layer (`CardFightViewV2.vue`, `<script>` Options API + Composition `setup`):**
+- Top bar: back + camera switcher (3 cam-btn tabs).
+- Fighter panels: name + BeltBadge + HPBar (reused components).
+- Center: round dots (R1..R10) OR OVERDRIVE label (exclusive).
+- Dice area: pulse-glowing primary button (the screen's single pink CTA during `fighting`) → result popup on `diceState.activeItem`.
+- Modifiers pills: 2× ATK / SHIELD / BLIND (neutral borders, not archetype colors).
+- Event title popup: reads `fight/getEventTitle|Class|Image` from store.
+- Combat log drawer: last 5 rounds from `fight/getRoundLog`.
+- Coach overlay: 15s timer (PvE), 3 action buttons with action-color accents (attack=red / defense=blue / position=purple left border).
+- Result stub: minimal VICTORY/DEFEAT/DRAW + XP + Fight Again (primary pink) + Exit to Pit. **Full result overlay + AiTrainerAnalysis deferred to 3.10.4.**
+- Screen shake on HP decrease; screen flash on dice crit/rage/heal/overdrive-start.
+
+**Vuex bridge (`fight/` namespace, module `cardFightState.js`):**
+- View reads only via getters. Writes only via dispatch.
+- `watch(fightPhase)` is the single owner of phase transitions: starts/stops round timer, coach timer, and on `results` calls `setXpEarned/setXpAwarded` + `POST /v1/fight/save` + `agent/fetchAgents`.
+- `onBeforeUnmount` disposes every watch, every interval, and `sceneCtl.cleanup()`.
+
+**Pattern for future fight-scene iterations:** the `setCameraMode / triggerAction` controller shape is the stable contract — PvP port (3.10.2b) should consume the same controller, only the round-log source changes (WS vs local engine). Coach timer is the only PvE/PvP divergence (15s PvE vs 10s PvP — both timers must live inside the view, not in the controller).
+
 ### Phase 3 — What's Deferred to Later Phases
 
-- **CardFightViewV2** — Phase 3.10 (next)
+- **CardFightViewV2 — PvP binding (Phase 3.10.2b)**: 12 WS handlers (onPvPFightStart, onPvPRoundResult, onPvPDiceAvailable/Rolled/Error, onPvPCoachPause/Choice/OpponentReady/Result, onMatchCancelled, onPvPFightEnd, onPvPOverdriveStart) + `initPvPFight/cleanupPvP` + "Waiting for opponent" overlay + 10s coach timer + match-refresh detection. Currently view redirects PvP users back to Pit.
+- **CardFightViewV2 — Result overlay + AI Trainer (Phase 3.10.4)**: replace the 3.10.3 result stub with full VICTORY/DEFEAT/DRAW splash + `AiTrainerAnalysis` component + `aiTrainerFightData` computed + detailed log toggle + Change Deck button.
 - **Backend wiring** for decorative UI: Preparation stake (currency bet), Preparation strategy (AI behavior override), Training energy system (currently stub 100%), Profile wallet (wagmi connect placeholder) — Phase 4
 - **Live matches feed + country rankings** in RatingsViewV2 — Phase 4
 - **Sound** in TrainingViewV2 (helper `audioEngine.js` exists, not wired) — Phase 4
