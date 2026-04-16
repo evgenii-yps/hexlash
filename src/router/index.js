@@ -53,6 +53,7 @@ const protectedRoutes = [
     {path: '/club/agent/create', redirect: '/arena/club/create'},
     {path: '/club/agent/:agentId', redirect: to => `/arena/club/${to.params.agentId}`},
 
+    {path: '/ratings-v2', name: 'RatingsV2', component: () => import("/src/views/new/RatingsViewV2.vue")},
     {path: '/ratings/:type', name: 'Ratings', component: () => import("/src/views/RatingsView.vue"), props: true},
     {path: '/ratings', redirect: '/ratings/myclan'},
 
