@@ -15,7 +15,7 @@
       <div class="tr-bag-area" @pointerdown="onTap">
         <Punch3D v-if="!is2DPunch" class="tr-bag-canvas" :width="bagWidth" :height="bagHeight" />
         <div v-else class="tr-bag-2d">
-          <img src="@/assets/images/punch_bag.webp" class="bag-2d-img" alt="" />
+          <img src="@/assets/images/punch.png" class="bag-2d-img" alt="" />
         </div>
 
         <!-- Floating +N numbers -->
