@@ -92,10 +92,11 @@ const isAuth = computed(() => {
 
 const route = useRoute();
 
-// Hide BottomMenu during PvP: matchmaking, spectate, or fight with mode=pvp
+// Hide BottomMenu during PvP or immersive screens
 const isPvPScreen = computed(() => {
   return route.path === '/matchmaking' ||
       route.path.startsWith('/spectate') ||
+      route.path === '/arena/pit' ||
       (route.path === '/fight' && route.query.mode === 'pvp');
 });
 

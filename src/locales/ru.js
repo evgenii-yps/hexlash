@@ -865,4 +865,20 @@ export default {
     lblPromoted: 'Повышение до',
     lblMaxBelt: 'Максимальный пояс достигнут',
   },
+
+  pit: {
+    lblTitle: 'ЯМА',
+    lblBottomHint: 'КЛИКАЙ ПО ОБЪЕКТАМ',
+    msgShopSoon: 'Магазин скоро',
+    msgNotifSoon: 'Уведомления скоро',
+    msgNoClan: 'Вступи в клан через Рейтинги',
+    msgSiegeSoon: 'Осада — скоро',
+    lblTraining: 'Тренировка · Груша',
+    lblMatchmaking: 'Матчмейкинг · Терминал',
+    lblCreateFighter: 'Создать бойца',
+    lblLeaderboard: 'Таблица лидеров',
+    lblClan: 'Клан',
+    lblShop: 'Шкафчик · Косметика',
+    lblViewFighter: 'Посмотреть бойца',
+  },
 }

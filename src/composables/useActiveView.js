@@ -11,6 +11,7 @@ import { useRoute } from 'vue-router';
 const ROUTE_TO_VIEW = {
   // Arena / Club Mode
   ArenaFightClub: 'pit',
+  ArenaPit: 'pit',
   ArenaFight: 'preparation',
   Fight: 'fight',
   AgentDetail: 'detail',

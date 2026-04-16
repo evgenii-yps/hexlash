@@ -866,4 +866,20 @@ export default {
     lblPromoted: 'Promoted to',
     lblMaxBelt: 'Max belt reached',
   },
+
+  pit: {
+    lblTitle: 'THE PIT',
+    lblBottomHint: 'CLICK OBJECTS TO INTERACT',
+    msgShopSoon: 'Shop coming soon',
+    msgNotifSoon: 'Notifications coming soon',
+    msgNoClan: 'Join a clan from Ratings',
+    msgSiegeSoon: 'Siege — coming soon',
+    lblTraining: 'Training · Heavy Bag',
+    lblMatchmaking: 'Matchmaking · Terminal',
+    lblCreateFighter: 'Create New Fighter',
+    lblLeaderboard: 'Leaderboard',
+    lblClan: 'Clan',
+    lblShop: 'Locker · Cosmetics',
+    lblViewFighter: 'View Fighter',
+  },
 }

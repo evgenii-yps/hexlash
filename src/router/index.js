@@ -33,6 +33,7 @@ const protectedRoutes = [
     {path: '/', name: 'Home', component: RainView},
     {path: '/help', name: 'Help', component: () => import("/src/views/PageView.vue")},
     {path: '/arena', redirect: '/arena/club'},
+    {path: '/arena/pit', name: 'ArenaPit', component: () => import("/src/views/new/PitView.vue")},
     {path: '/arena/fight', name: 'ArenaFight', component: () => import("/src/views/PreparationView.vue")},
     {path: '/arena/club', name: 'ArenaFightClub', component: () => import("/src/views/FightClubView.vue")},
     {path: '/arena/club/create', name: 'CreateAgent', component: () => import("/src/views/CreateAgentView.vue")},
