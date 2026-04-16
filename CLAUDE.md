@@ -231,7 +231,7 @@ unlockRequirements:  { 3: {taps:300, exp:150}, 4: {taps:250, exp:120}, 5: {taps:
 **Status:** v1.0 — Visual System established.
 **Full visual guide:** Hexlash_Visual_System.pdf v1.0 (file not in repo — source of truth is hexlash-design/SKILL.md)
 **Operational reference:** /skills/hexlash-design/SKILL.md
-**Key rules:** 1) one pink accent per screen, 2) pixel-font (Anonymous) only for titles/impact moments (exception: splash screens use two pixel-font blocks — HEXLASH + NEVER GIVE UP), 3) archetype colors only in fighter icons/active context, 4) backgrounds = atmosphere (stylized underground), UI = function.
+**Key rules:** 1) one pink accent per screen, 2) display font (Archivo Black via `--hex-font-display`) only for titles/impact moments, 3) archetype colors only in fighter icons/active context, 4) backgrounds = atmosphere (stylized underground), UI = function.
 
 ### UI Components (`/src/components/ui/`)
 
@@ -304,10 +304,13 @@ Internally uses `--_arch-color` CSS custom property for scoped styling.
 --primary-color: var(--pink)
 ```
 
-**Fonts:**
-- `Anonymous` — special UI elements, titles
-- `AnonymousBalance` — numeric values (taps, XP, balance)
-- System sans-serif (`-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, ...`) — compact arena buttons (Mode, Friends)
+**Fonts:** (Phase 1, v23)
+- `--hex-font-display` → **Archivo Black** (Google Fonts) — titles, impact moments (HEXLASH, START FIGHT, VICTORY, OVERDRIVE)
+- `--hex-font-body` → **Space Grotesk** (Google Fonts) — body text, labels
+- `--hex-font-mono` → **JetBrains Mono** (Google Fonts) — numbers (HP, taps, XP), stats, timers
+- System sans-serif (`-apple-system, ...`) — compact arena buttons (ModeSelector, Friends) — legacy pattern, preserved
+
+**Removed in Phase 1:** Anonymous, AnonymousBalance, Inter, Impact, Roboto @font-face declarations. Font files in `src/assets/fonts/` preserved until cleanup.
 
 **Design language:** Dark theme, neon pink accents, semi-transparent backgrounds, thin gray borders.
 
@@ -559,7 +562,7 @@ MIGRATION_ENABLED = true           // lazy User→Fighter #1 on /me
 - `BeltBadge.vue` — SVG belt badge for 33 grades + Hexmaster. Line-style: rect body, buckle, stripes. 3 sizes: sm (16×6), md (40×14), lg (120×40). Hexmaster pulse glow md/lg, static glow sm. Props: grade (0-32), isHexmaster, size. CSS vars: `--hex-belt-*`. Stripes hidden on sm. White/black enhanced outlines.
 
 **Navigation & Layout:**
-- `Logo.vue` — header logo (Anonymous font, --hex-primary color + glow). Visual System v1.0 compliant: pixel-font for brand, subtle glow, --hex-text-primary
+- `Logo.vue` — header logo (Archivo Black via --hex-font-display, --hex-primary color + glow). Visual System v1.0 compliant: display font for brand, subtle glow, --hex-text-primary
 - `BottomMenu.vue` — bottom nav (Arena, Training, Ratings, Profile). Uses SVG background-image icons with filter-based active state. Semi-transparent bg with backdrop-blur. Hidden on PvP screens via `isPvPScreen` computed in App.vue. Visual System v1.0 compliant: line-icons, system sans for labels, active tab = single pink accent in zone
 - `App.vue` header — scroll-dependent gradient uses `--hex-bg-dark`, balance in AnonymousBalance font with `--hex-text-primary`. Visual System v1.0 compliant: --hex-bg-dark, AnonymousBalance for balance, no decorative gradients
 
@@ -1802,3 +1805,22 @@ Captain system completely removed. Active agent for combat = first agent by `cre
 **i18n:** 15 captain keys removed × 11 locales = 165 deletions. 1 new key `fight.errNoActiveAgent` in all 11 locales.
 
 **Rationale:** Captain concept added complexity without clear UX benefit. First-by-createdAt rule is deterministic, requires no UI for user action, and matches actual behavior (Fighter #1 was always the default captain anyway).
+
+### Phase 1 — Visual Rebrand Foundation — ✅ COMPLETE
+
+Tokens + fonts + atmosphere migrated to v23 palette.
+
+**Backgrounds:** `--hex-bg-deep: #070811`, `--hex-bg-card: rgba(14, 16, 28, 0.85)`.
+
+**Archetypes repalette:** all 6 archetypes to v23 values (predator #FF066F, sentinel #2ee07f, ghost #A855F7, analyst #4dd9ff, maverick #FFA133, juggernaut #D4A843). New `--hex-arch-warden` alias = juggernaut.
+
+**Fonts:** Anonymous/AnonymousBalance/Inter/Impact/Roboto removed. Google Fonts: Archivo Black (display), Space Grotesk (body), JetBrains Mono (mono).
+
+**Atmosphere:** new `src/styles/atmosphere.css` with `.grain`, `.vignette`, `.scanlines` classes. Not yet applied to any view — Phase 2 (AppShell) will wire them.
+
+**Known risks (to verify in Phase 3 smoke):**
+- Sentinel (green) visually close to `--hex-success` — possible conflict on screens with both
+- Analyst (cyan) visually close to `--hex-branch-speed` — possible conflict on Fighter Detail
+- Predator = `--hex-primary` — "one pink source per screen" rule updated: when predator context is active on a screen, primary pink CTA yields the accent
+
+**Not in Phase 1:** view layering, AppShell, screen port, component removal. Those are Phase 2+.

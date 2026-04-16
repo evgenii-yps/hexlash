@@ -77,8 +77,14 @@ description: Дизайн-система "Neon Discipline" проекта Hexlas
 - Radius: `--hex-radius-sm(4)/md(8)/lg(12)/xl(16)/round(50%)`
 - Transitions: `--hex-transition-fast` (0.15s), `--hex-transition-normal` (0.25s), `--hex-transition-slow` (0.4s)
 
-### Шрифтовые алиасы — ВНИМАНИЕ
-В CSS: `--hex-font-display` (Impact), `--hex-font-body` (Inter), `--hex-font-mono` (JetBrains Mono). Компоненты **используют напрямую**: `'Anonymous'`, `'AnonymousBalance'`, system sans. **Две параллельные системы.** Не подменять одну другой.
+### Типографика — три голоса
+
+| Голос | Шрифт | Где |
+|-------|-------|-----|
+| Бренд/удар | Archivo Black (`--hex-font-display`) | HEXLASH, START FIGHT, VICTORY/DEFEAT/DRAW, OVERDRIVE. Один блок на экран. |
+| Числа | JetBrains Mono (`--hex-font-mono`) | HP, taps, XP, timers, stats. |
+| Body | Space Grotesk (`--hex-font-body`) | Everything else. |
+| Legacy compact | System sans | ModeSelector, Friends (preserved pattern). |
 
 ---
 
@@ -86,12 +92,13 @@ description: Дизайн-система "Neon Discipline" проекта Hexlas
 
 | Архетип | Токен | Идея |
 |---------|-------|------|
-| Predator | `--hex-arch-predator` (#FF2D2D) | Агрессия |
-| Sentinel | `--hex-arch-sentinel` (#4DA6FF) | Защита |
-| Ghost | `--hex-arch-ghost` (#B44DFF) | Уклонение |
-| Analyst | `--hex-arch-analyst` (#00FF88) | Анализ |
-| Maverick | `--hex-arch-maverick` (#FFB800) | Хаос |
-| Juggernaut | `--hex-arch-juggernaut` (#FF6B1A) | Давление |
+| Predator | `--hex-arch-predator` (#FF066F) | Агрессия (= primary pink) |
+| Sentinel | `--hex-arch-sentinel` (#2ee07f) | Защита (emerald) |
+| Ghost | `--hex-arch-ghost` (#A855F7) | Уклонение (violet) |
+| Analyst | `--hex-arch-analyst` (#4dd9ff) | Анализ (cyan) |
+| Maverick | `--hex-arch-maverick` (#FFA133) | Хаос (amber) |
+| Juggernaut | `--hex-arch-juggernaut` (#D4A843) | Давление (gold) |
+| Warden | `--hex-arch-warden` (= juggernaut) | Лор-алиас |
 
 Каждый с `-dark`, `-light`, `-bg`, `-glow`.
 
