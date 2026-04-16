@@ -16,11 +16,11 @@
   --hex-primary-glow: rgba(255, 6, 111, 0.5);
 
   /* Background — near-black surfaces */
-  --hex-bg-deep: #050507;
+  --hex-bg-deep: #070811;
   --hex-bg-dark: #090909;
   --hex-bg-medium: #111111;
   --hex-bg-light: #1A1A1A;
-  --hex-bg-card: rgba(17, 17, 17, 0.85);
+  --hex-bg-card: rgba(14, 16, 28, 0.85);
 
   /* Text — white with opacity levels */
   --hex-text-primary: #FFFFFF;
