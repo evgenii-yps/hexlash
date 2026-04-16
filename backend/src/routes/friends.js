@@ -3,7 +3,6 @@ const router = express.Router();
 const prisma = require('../lib/prisma');
 const { authMiddleware } = require('../middleware/auth');
 const { clients } = require('../websocket/handler');
-const { getCaptainsForUsers } = require('../services/captainService');
 
 // ── Send friend request ────────────────────────────────────────────────────
 router.post('/request', authMiddleware, async (req, res) => {
@@ -219,9 +218,6 @@ router.get('/list', authMiddleware, async (req, res) => {
       },
     });
 
-    const friendUsers = friendships.map(f => f.user1Id === userId ? f.user2 : f.user1);
-    const captainMap = await getCaptainsForUsers(friendUsers.map(u => u.id));
-
     const friends = friendships.map(f => {
       const friend = f.user1Id === userId ? f.user2 : f.user1;
       const isOnline = clients.has(friend.id);
@@ -234,7 +230,6 @@ router.get('/list', authMiddleware, async (req, res) => {
         skin: friend.skin,
         status: isOnline ? 'online' : 'offline',
         addedAt: f.createdAt.getTime(),
-        captain: captainMap.get(friend.id) || null,
       };
     });
 

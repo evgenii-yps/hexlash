@@ -5,7 +5,6 @@ const { authMiddleware } = require('../middleware/auth');
 const { upload } = require('../middleware/upload');
 const { formatUserResponse } = require('../utils/helpers');
 const { migrateUserToFighter } = require('../services/userMigrationService');
-const { getCaptainPublicInfo, getCaptainsForUsers } = require('../services/captainService');
 
 const router = express.Router();
 
@@ -32,8 +31,7 @@ router.get('/me', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const captain = await getCaptainPublicInfo(req.userId);
-    res.json({ data: formatUserResponse(user, { captain }) });
+    res.json({ data: formatUserResponse(user) });
   } catch (err) {
     console.error('Get me error:', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -200,8 +198,7 @@ router.get('/login/:login', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const captain = await getCaptainPublicInfo(user.id);
-    res.json({ data: formatUserResponse(user, { captain }) });
+    res.json({ data: formatUserResponse(user) });
   } catch (err) {
     console.error('Get user by login error:', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -220,8 +217,7 @@ router.get('/id/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const captain = await getCaptainPublicInfo(user.id);
-    res.json({ data: formatUserResponse(user, { captain }) });
+    res.json({ data: formatUserResponse(user) });
   } catch (err) {
     console.error('Get user by id error:', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -270,8 +266,7 @@ router.get('/search', authMiddleware, async (req, res) => {
       take: pageSize,
     });
 
-    const captainMap = await getCaptainsForUsers(users.map(u => u.id));
-    res.json({ data: users.map(u => formatUserResponse(u, { captain: captainMap.get(u.id) || null })) });
+    res.json({ data: users.map(u => formatUserResponse(u)) });
   } catch (err) {
     console.error('Search users error:', err);
     res.status(500).json({ error: 'Internal server error' });
