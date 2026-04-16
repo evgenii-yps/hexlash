@@ -322,7 +322,7 @@ onBeforeUnmount(() => {
 /* Round badge */
 .round-badge {
   text-align: center;
-  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
+  font-family: var(--hex-font-mono);
   font-size: 14px;
   color: var(--hex-text-muted);
   text-transform: uppercase;
@@ -393,14 +393,14 @@ onBeforeUnmount(() => {
 }
 
 .hp-text {
-  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
+  font-family: var(--hex-font-mono);
   font-size: 12px;
   color: var(--hex-text-secondary);
   text-align: right;
 }
 
 .vs-divider {
-  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
+  font-family: var(--hex-font-mono);
   font-size: 16px;
   color: var(--hex-warning);
   font-weight: bold;
@@ -460,7 +460,7 @@ onBeforeUnmount(() => {
 }
 
 .log-round {
-  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
+  font-family: var(--hex-font-mono);
   font-size: 11px;
   color: var(--hex-text-secondary);
   min-width: 22px;
@@ -486,7 +486,7 @@ onBeforeUnmount(() => {
 }
 
 .log-damage {
-  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
+  font-family: var(--hex-font-mono);
   color: var(--hex-defeat);
   font-weight: 600;
   min-width: 28px;

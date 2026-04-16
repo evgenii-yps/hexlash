@@ -611,8 +611,8 @@ onMounted(() => {
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9000; display: flex; align-items: flex-start; justify-content: center; padding: 40px 16px; overflow-y: auto; }
 .modal-content { background: var(--hex-bg-dark); border: 1px solid var(--hex-border-default); border-radius: 12px; padding: 16px; width: 100%; max-width: 420px; }
 .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-.modal-title { font-family: 'Anonymous', monospace; font-size: 14px; color: var(--hex-text-primary); }
-.name-input { width: 100%; padding: 8px 10px; font-family: 'Anonymous', monospace; font-size: 13px; color: var(--hex-text-primary); background: var(--hex-bg-medium); border: 1px solid var(--hex-border-default); border-radius: 6px; outline: none; margin-bottom: 12px; }
+.modal-title { font-family: var(--hex-font-display); font-size: 14px; color: var(--hex-text-primary); }
+.name-input { width: 100%; padding: 8px 10px; font-family: var(--hex-font-display); font-size: 13px; color: var(--hex-text-primary); background: var(--hex-bg-medium); border: 1px solid var(--hex-border-default); border-radius: 6px; outline: none; margin-bottom: 12px; }
 .name-input:focus { border-color: var(--hex-primary); }
 .field { margin-bottom: 8px; }
 

@@ -139,7 +139,7 @@ onUnmounted(() => {
 /* Header */
 .pit-header { text-align: center; margin-bottom: 6px; }
 .pit-title {
-  font-family: 'Anonymous', monospace;
+  font-family: var(--hex-font-display);
   font-size: 32px;
   letter-spacing: 6px;
   color: var(--hex-primary);

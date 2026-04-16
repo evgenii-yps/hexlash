@@ -1226,7 +1226,7 @@ const flashStyle = computed(() => ({
   letter-spacing: 14px;
   text-transform: uppercase;
   user-select: none;
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: var(--hex-font-display);
   text-shadow: 0 0 8px var(--hex-primary-glow);
   white-space: nowrap;
 }
@@ -1285,7 +1285,7 @@ const flashStyle = computed(() => ({
   font-size: 4em;
   color: var(--hex-text-primary);
   z-index: 100;
-  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
+  font-family: var(--hex-font-mono);
 }
 .fade-scale-enter-active, .fade-scale-leave-active { transition: opacity 0.5s ease, transform 0.5s ease; }
 .fade-scale-leave-to  { opacity: 0; transform: scale(3.5); }
@@ -1345,7 +1345,7 @@ const flashStyle = computed(() => ({
 .vs-center > span {
   font-size: 1.6rem;
   font-weight: 900;
-  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
+  font-family: var(--hex-font-mono);
   color: var(--hex-text-secondary);
   letter-spacing: 3px;
 }
@@ -1581,7 +1581,7 @@ const flashStyle = computed(() => ({
   100% { opacity: 1; }
 }
 .result-label {
-  font-size: 2.5em; font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-size: 2.5em; font-family: var(--hex-font-display);
   margin-bottom: 16px; letter-spacing: 2px;
   text-align: center;
   animation: resultLabelPop 0.6s ease-out forwards;
@@ -1695,7 +1695,7 @@ const flashStyle = computed(() => ({
 
 .advice-timer__number {
   display: inline-block;
-  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
+  font-family: var(--hex-font-mono);
   font-size: 3rem;
   font-weight: bold;
   color: var(--hex-text-primary);
@@ -1910,7 +1910,7 @@ const flashStyle = computed(() => ({
 }
 
 .xp-earned-total {
-  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
+  font-family: var(--hex-font-mono);
   font-size: 1.4rem;
   color: var(--hex-success);
   font-weight: bold;
@@ -1971,7 +1971,7 @@ const flashStyle = computed(() => ({
   font-size: 2rem;
   font-weight: 900;
   color: var(--hex-text-primary);
-  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
+  font-family: var(--hex-font-mono);
   margin: 8px 0 16px;
 }
 
@@ -2071,7 +2071,7 @@ const flashStyle = computed(() => ({
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: 4px;
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: var(--hex-font-display);
 }
 
 .pvp-result-text.result-win {
@@ -2136,7 +2136,7 @@ const flashStyle = computed(() => ({
   margin-top: 6px;
   font-size: 0.65rem;
   font-weight: 900;
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: var(--hex-font-display);
   color: var(--hex-warning);
   text-transform: uppercase;
   letter-spacing: 2px;

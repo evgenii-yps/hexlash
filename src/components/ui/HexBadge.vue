@@ -151,7 +151,7 @@ export default {
   align-items: center;
   gap: 4px;
   border-radius: 20px;
-  font-family: 'Anonymous', monospace;
+  font-family: var(--hex-font-display);
   letter-spacing: 0.5px;
   white-space: nowrap;
   line-height: 1;
@@ -175,7 +175,7 @@ export default {
 /* — Counter — */
 
 .hex-badge--counter {
-  font-family: 'AnonymousBalance', monospace;
+  font-family: var(--hex-font-mono);
   justify-content: center;
   padding: 0;
 }

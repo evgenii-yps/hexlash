@@ -10,8 +10,7 @@
     </header>
 
     <main class="content">
-      <RouterView v-if="isScrollableComponent" @scroll="handleChildScroll"/>
-      <RouterView v-else/>
+      <AppShell @scroll="handleChildScroll" />
     </main>
 
     <!-- FindFight removed: card-based combat uses client-side simulation -->
@@ -43,7 +42,7 @@
 </template>
 
 <script setup>
-import {RouterView, useRoute, useRouter} from 'vue-router'
+import {useRoute, useRouter} from 'vue-router'
 import {computed, onBeforeUnmount, onMounted, ref, watch} from "vue";
 import BottomMenu from "@/components/menu/BottomMenu.vue";
 import Logo from "@/components/Logo.vue";
@@ -54,6 +53,7 @@ import Error from "@/components/Error.vue";
 import NewAchievement from "@/components/NewAchievement.vue";
 import ChallengeNotification from "@/components/pvp/ChallengeNotification.vue";
 import ClanInviteNotification from "@/components/clan/ClanInviteNotification.vue";
+import AppShell from "@/components/shell/AppShell.vue";
 import { t } from "@/locales/index.js";
 import * as amplitude from "@amplitude/analytics-browser";
 
@@ -92,20 +92,13 @@ const isAuth = computed(() => {
 
 const route = useRoute();
 
-// Hide BottomMenu during PvP: matchmaking, spectate, or fight with mode=pvp
+// Hide BottomMenu during PvP or immersive screens
 const isPvPScreen = computed(() => {
   return route.path === '/matchmaking' ||
+      route.path === '/matchmaking-v2' ||
       route.path.startsWith('/spectate') ||
+      route.path === '/arena/pit' ||
       (route.path === '/fight' && route.query.mode === 'pvp');
-});
-
-const isScrollableComponent = computed(() => {
-  const scrollablePrefixes = ['/profile', '/ratings', '/fight', '/training/']; // Префиксы маршрутов с дочерними маршрутами
-  const scrollableRoutes = ['/training', '/arena', '/arena/fight', '/arena/club', '/404', '/verify-email', '/friends', '/matchmaking']; // Точные маршруты
-
-  // Проверка на точный маршрут или маршрут, начинающийся с одного из префиксов
-  return scrollableRoutes.includes(route.path) ||
-      scrollablePrefixes.some(prefix => route.path.startsWith(prefix));
 });
 
 const scrollTop = ref(0);
@@ -214,15 +207,6 @@ onBeforeUnmount(() => {
 
 <style scoped>
 
-@font-face {
-  font-family: 'AnonymousBalance';
-  src: url('@/assets/fonts/AnonymousBalance.woff2') format('woff2'),
-       url('@/assets/fonts/AnonymousBalance.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-
 /*.content {
   position: relative;
   overflow-y: auto;
@@ -252,7 +236,7 @@ onBeforeUnmount(() => {
 .balance {
   font-size: 2.5em;
   color: var(--hex-text-primary);
-  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
+  font-family: var(--hex-font-mono);
   position: absolute;
   top: 0;
   right: 20px;

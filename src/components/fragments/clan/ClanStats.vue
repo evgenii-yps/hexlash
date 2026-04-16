@@ -73,7 +73,7 @@ const winRate = computed(() => {
 .stat-value {
   font-size: 18px;
   font-weight: bold;
-  font-family: 'AnonymousBalance', 'Courier New', monospace;
+  font-family: var(--hex-font-mono);
   color: var(--hex-text-primary);
 }
 

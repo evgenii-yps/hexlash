@@ -206,7 +206,7 @@ onUnmounted(() => {
 }
 
 .connected-address {
-  font-family: 'AnonymousBalance', monospace;
+  font-family: var(--hex-font-mono);
   font-size: 0.9rem;
   color: var(--hex-text-primary);
 }

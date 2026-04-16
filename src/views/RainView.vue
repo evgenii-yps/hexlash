@@ -1171,7 +1171,7 @@ watch(isAuthenticated, (newValue) => {
 }
 
 .timer-overlay {
-  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
+  font-family: var(--hex-font-mono);
   color: var(--hex-text-primary);
   text-align: center;
   font-size: 4rem;

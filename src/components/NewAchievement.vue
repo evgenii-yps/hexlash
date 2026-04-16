@@ -52,7 +52,7 @@ const hide = () => {
 }
 
 .title {
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: var(--hex-font-display);
   font-size: 1.5rem;
   text-transform: uppercase;
   letter-spacing: 1px;

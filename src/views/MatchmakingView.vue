@@ -389,7 +389,7 @@ function cleanup() {
 }
 
 .search-timer {
-  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
+  font-family: var(--hex-font-mono);
   font-size: 48px;
   font-weight: 700;
   color: var(--hex-text-primary);
@@ -489,7 +489,7 @@ function cleanup() {
 }
 
 .found-title {
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: var(--hex-font-display);
   font-size: 32px;
   color: var(--hex-victory);
   text-transform: uppercase;
@@ -539,18 +539,18 @@ function cleanup() {
 .player-rating {
   font-size: 16px;
   color: var(--hex-text-secondary);
-  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
+  font-family: var(--hex-font-mono);
 }
 
 .vs-icon {
-  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
+  font-family: var(--hex-font-mono);
   font-size: 32px;
   font-weight: bold;
   color: var(--hex-text-secondary);
 }
 
 .fight-countdown {
-  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
+  font-family: var(--hex-font-mono);
   font-size: 22px;
   color: var(--hex-warning);
   text-transform: uppercase;

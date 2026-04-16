@@ -659,7 +659,7 @@ watch(() => props.clanData, () => {
   color: var(--hex-text-primary);
   font-size: 10px;
   font-weight: bold;
-  font-family: 'AnonymousBalance', 'Courier New', monospace;
+  font-family: var(--hex-font-mono);
   border-radius: var(--hex-radius-sm);
   letter-spacing: 0.5px;
   border: 1px solid var(--hex-border-default);
@@ -691,14 +691,14 @@ watch(() => props.clanData, () => {
 
 .level-current {
   font-size: 10px;
-  font-family: 'AnonymousBalance', 'Courier New', monospace;
+  font-family: var(--hex-font-mono);
   color: var(--hex-success);
   letter-spacing: 0.5px;
 }
 
 .level-xp {
   font-size: 10px;
-  font-family: 'AnonymousBalance', 'Courier New', monospace;
+  font-family: var(--hex-font-mono);
   color: var(--hex-text-muted);
 }
 
@@ -764,7 +764,7 @@ watch(() => props.clanData, () => {
   background: transparent;
   color: var(--hex-text-muted);
   font-size: 9px;
-  font-family: 'AnonymousBalance', 'Courier New', monospace;
+  font-family: var(--hex-font-mono);
   border-radius: 8px;
   vertical-align: middle;
 }
@@ -1034,7 +1034,7 @@ watch(() => props.clanData, () => {
 }
 
 .value-balance {
-  font-family: 'AnonymousBalance', 'Courier New', monospace;
+  font-family: var(--hex-font-mono);
   color: var(--hex-draw);
   font-size: 16px;
 }

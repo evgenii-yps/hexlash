@@ -95,6 +95,24 @@ Server sync: progression — debounced PUT через action в `progressionStat
 
 ---
 
+## View Layering System (Phase 2)
+
+AppShell wraps router-view with atmosphere layers and fade-blur transitions.
+
+**Files:**
+- `src/composables/useActiveView.js` — body class sync (`is-pit`, `is-fight`, etc.)
+- `src/components/shell/AppShell.vue` — atmosphere + `<router-view>` with `<transition name="view-fade">`
+- `src/styles/view-layers.css` — `.hud`/`.scene-canvas` utility classes
+
+**Body class mapping:** see CLAUDE.md → Phase 2 section.
+
+**When writing new views:**
+- HUD overlays: wrap in `<div class="hud {viewname}-hud">`. Direct children get clicks, container doesn't.
+- Three.js canvases: add class `.scene-canvas`. Default canvas is 300x150 and breaks raycasting.
+- Don't fight the transition: keep scene mount in `onMounted`, cleanup in `onBeforeUnmount`. Router drives lifecycle.
+
+---
+
 ## i18n — критически важно
 
 **НЕ используем vue-i18n.** Кастомный реактивный i18n.

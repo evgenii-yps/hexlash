@@ -138,7 +138,7 @@ export default {
 /* — Label — */
 
 .hex-progress__label {
-  font-family: 'Anonymous', monospace;
+  font-family: var(--hex-font-display);
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -150,7 +150,7 @@ export default {
 /* — Value — */
 
 .hex-progress__value {
-  font-family: 'AnonymousBalance', monospace;
+  font-family: var(--hex-font-mono);
   color: var(--hex-text-secondary);
   min-width: 40px;
   text-align: right;
