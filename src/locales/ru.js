@@ -655,6 +655,16 @@ export default {
     extraRound: 'ЭКСТРА {n}',
     overdriveStart: 'Режим Overdrive! Урон x2, без dice и coach!',
     errNoActiveAgent: 'Нет активного бойца. Создай в Club Mode.',
+    v2: {
+      lblFight: 'БОЙ',
+      lblVictory: 'ПОБЕДА',
+      lblDefeat: 'ПОРАЖЕНИЕ',
+      lblDraw: 'НИЧЬЯ',
+      lblFightAgain: 'РЕВАНШ',
+      lblExitToPit: 'ВЫЙТИ В КЛУБ',
+      lblConfirmLeave: 'Покинуть бой? Прогресс будет потерян.',
+      lblCoachStub: 'Пауза тренера — выбери совет',
+    },
   },
   friends: {
     title: 'ДРУЗЬЯ',

@@ -656,6 +656,16 @@ export default {
     extraRound: 'EXTRA {n}',
     overdriveStart: 'Overdrive! Damage x2, no dice or coach!',
     errNoActiveAgent: 'No active agent. Create one in Club Mode.',
+    v2: {
+      lblFight: 'FIGHT',
+      lblVictory: 'VICTORY',
+      lblDefeat: 'DEFEAT',
+      lblDraw: 'DRAW',
+      lblFightAgain: 'FIGHT AGAIN',
+      lblExitToPit: 'EXIT TO PIT',
+      lblConfirmLeave: 'Leave the fight? Progress will be lost.',
+      lblCoachStub: 'Coach pause — pick advice',
+    },
   },
   friends: {
     title: 'FRIENDS',

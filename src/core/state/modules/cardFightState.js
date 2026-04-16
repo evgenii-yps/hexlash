@@ -303,7 +303,7 @@ const actions = {
     },
 
     /** Start a live fight: generate opponent, init AI, reset state, save to localStorage. */
-    async startFight({ commit, state, rootState, rootGetters }) {
+    async startFight({ commit, state, rootState, rootGetters }, options = {}) {
         // Load active agent data for combat
         const agent = rootGetters['agent/activeAgent'];
         if (!agent) return;
@@ -359,7 +359,7 @@ const actions = {
         _fightLastUpdateAt = Date.now();
         saveFightState(state);
 
-        await router.push('/fight');
+        await router.push(options.targetRoute || '/fight');
     },
 
     /**
@@ -622,8 +622,8 @@ const actions = {
         await router.push('/arena');
     },
 
-    async fightAgain({ dispatch }) {
-        await dispatch('startFight');
+    async fightAgain({ dispatch }, options = {}) {
+        await dispatch('startFight', options);
     },
 
 };

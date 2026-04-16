@@ -639,6 +639,16 @@ export default {
     extraRound: '엑스트라 {n}',
     overdriveStart: '오버드라이브! 데미지 x2, 주사위와 코치 없음!',
     errNoActiveAgent: 'No active agent. Create one in Club Mode.',
+    v2: {
+      lblFight: 'FIGHT',
+      lblVictory: 'VICTORY',
+      lblDefeat: 'DEFEAT',
+      lblDraw: 'DRAW',
+      lblFightAgain: 'FIGHT AGAIN',
+      lblExitToPit: 'EXIT TO PIT',
+      lblConfirmLeave: 'Leave the fight? Progress will be lost.',
+      lblCoachStub: 'Coach pause — pick advice',
+    },
     lblPoweredBy: 'Powered by Claude',
     aiLabels: {
       summary: 'Fight Summary',
