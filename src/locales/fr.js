@@ -914,6 +914,17 @@ export default {
     lblViewFighter: 'View Fighter',
   },
 
+  fighter: {
+    v2: {
+      lblOverview: 'OVERVIEW',
+      lblMoves: 'MOVES',
+      lblTactics: 'TACTICS',
+      lblFights: 'FIGHTS',
+      lblBranch: 'BRANCH',
+      lblLevelUp: 'LEVEL UP',
+    },
+  },
+
   create: {
     v2: {
       lblStep1: 'CHOOSE ARCHETYPE',
