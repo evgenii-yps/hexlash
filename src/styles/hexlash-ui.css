@@ -39,49 +39,56 @@
   --hex-border-strong: rgba(255, 255, 255, 0.25);
   --hex-border-hi: #4A4A50;
 
-  /* --- ARCHETYPES (6) --- */
+  /* --- ARCHETYPES (6 + 1 alias) --- */
 
-  /* Predator — blood red, aggression */
-  --hex-arch-predator: #FF2D2D;
-  --hex-arch-predator-dark: #CC1A1A;
-  --hex-arch-predator-light: #FF6B6B;
-  --hex-arch-predator-bg: #330808;
-  --hex-arch-predator-glow: rgba(255, 45, 45, 0.5);
+  /* Predator — neon pink, aggression (= primary) */
+  --hex-arch-predator: #FF066F;
+  --hex-arch-predator-dark: #A50344;
+  --hex-arch-predator-light: #FF3D8E;
+  --hex-arch-predator-bg: rgba(255, 6, 111, 0.1);
+  --hex-arch-predator-glow: rgba(255, 6, 111, 0.5);
 
-  /* Sentinel — steel blue, defense */
-  --hex-arch-sentinel: #4DA6FF;
-  --hex-arch-sentinel-dark: #2B7ACC;
-  --hex-arch-sentinel-light: #8CC8FF;
-  --hex-arch-sentinel-bg: #081833;
-  --hex-arch-sentinel-glow: rgba(77, 166, 255, 0.5);
+  /* Sentinel — emerald green, defense */
+  --hex-arch-sentinel: #2ee07f;
+  --hex-arch-sentinel-dark: #1fa35c;
+  --hex-arch-sentinel-light: #5ce89a;
+  --hex-arch-sentinel-bg: rgba(46, 224, 127, 0.1);
+  --hex-arch-sentinel-glow: rgba(46, 224, 127, 0.5);
 
   /* Ghost — phantom violet, evasion */
-  --hex-arch-ghost: #B44DFF;
-  --hex-arch-ghost-dark: #8A2BE2;
-  --hex-arch-ghost-light: #D199FF;
-  --hex-arch-ghost-bg: #1A0833;
-  --hex-arch-ghost-glow: rgba(180, 77, 255, 0.5);
+  --hex-arch-ghost: #A855F7;
+  --hex-arch-ghost-dark: #7C3AED;
+  --hex-arch-ghost-light: #C084F7;
+  --hex-arch-ghost-bg: rgba(168, 85, 247, 0.1);
+  --hex-arch-ghost-glow: rgba(168, 85, 247, 0.5);
 
-  /* Analyst — matrix green, data */
-  --hex-arch-analyst: #00FF88;
-  --hex-arch-analyst-dark: #00CC6A;
-  --hex-arch-analyst-light: #66FFBB;
-  --hex-arch-analyst-bg: #083320;
-  --hex-arch-analyst-glow: rgba(0, 255, 136, 0.5);
+  /* Analyst — ice cyan, data */
+  --hex-arch-analyst: #4dd9ff;
+  --hex-arch-analyst-dark: #0ea5bf;
+  --hex-arch-analyst-light: #7deaff;
+  --hex-arch-analyst-bg: rgba(77, 217, 255, 0.1);
+  --hex-arch-analyst-glow: rgba(77, 217, 255, 0.5);
 
   /* Maverick — electric amber, chaos */
-  --hex-arch-maverick: #FFB800;
-  --hex-arch-maverick-dark: #CC9200;
-  --hex-arch-maverick-light: #FFD466;
-  --hex-arch-maverick-bg: #332508;
-  --hex-arch-maverick-glow: rgba(255, 184, 0, 0.5);
+  --hex-arch-maverick: #FFA133;
+  --hex-arch-maverick-dark: #cc7a1f;
+  --hex-arch-maverick-light: #FFB866;
+  --hex-arch-maverick-bg: rgba(255, 161, 51, 0.1);
+  --hex-arch-maverick-glow: rgba(255, 161, 51, 0.5);
 
-  /* Juggernaut — molten orange, unstoppable */
-  --hex-arch-juggernaut: #FF6B1A;
-  --hex-arch-juggernaut-dark: #CC5514;
-  --hex-arch-juggernaut-light: #FF9F66;
-  --hex-arch-juggernaut-bg: #331508;
-  --hex-arch-juggernaut-glow: rgba(255, 107, 26, 0.5);
+  /* Juggernaut — burnished gold, unstoppable */
+  --hex-arch-juggernaut: #D4A843;
+  --hex-arch-juggernaut-dark: #a08431;
+  --hex-arch-juggernaut-light: #E5C566;
+  --hex-arch-juggernaut-bg: rgba(212, 168, 67, 0.1);
+  --hex-arch-juggernaut-glow: rgba(212, 168, 67, 0.5);
+
+  /* Warden — lore name for Juggernaut-archetype fighter; same color */
+  --hex-arch-warden: var(--hex-arch-juggernaut);
+  --hex-arch-warden-dark: var(--hex-arch-juggernaut-dark);
+  --hex-arch-warden-light: var(--hex-arch-juggernaut-light);
+  --hex-arch-warden-bg: var(--hex-arch-juggernaut-bg);
+  --hex-arch-warden-glow: var(--hex-arch-juggernaut-glow);
 
   /* --- BRANCHES (3) --- */
 
