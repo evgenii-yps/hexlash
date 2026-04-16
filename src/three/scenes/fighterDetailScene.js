@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { createAtmosphereRenderer } from '@/three/helpers/atmosphereScene.js';
 import { makeConcreteTexture, makeMetalTexture } from '@/three/helpers/textures.js';
 import { makeFighterLowPoly, addArchetypeGlow } from '@/three/helpers/fighterLowPoly.js';
+import { archColor } from '@/three/helpers/archetypeColors.js';
 
 const BRANCH_COLORS = {
   speed: 0x00E5FF,
@@ -76,8 +77,7 @@ export function initFighterDetailScene(canvas, options) {
   const fighter = makeFighterLowPoly();
   fighterContainer.add(fighter);
   if (agent?.primaryModule) {
-    const archColor = { predator: 0xFF066F, sentinel: 0x2ee07f, ghost: 0xA855F7, analyst: 0x4dd9ff, maverick: 0xFFA133, juggernaut: 0xD4A843 };
-    addArchetypeGlow(fighterContainer, archColor[agent.primaryModule] || 0xFF066F);
+    addArchetypeGlow(fighterContainer, archColor(agent.primaryModule));
   }
 
   // Branch columns

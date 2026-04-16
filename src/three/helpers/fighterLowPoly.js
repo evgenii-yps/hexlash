@@ -39,6 +39,8 @@ export function makeFighterLowPoly() {
   legL.position.set(-0.13, 0.51, 0); legL.castShadow = true;
   const legR = new THREE.Mesh(legGeo, matPants);
   legR.position.set( 0.13, 0.51, 0); legR.castShadow = true;
+  legL.userData.bodyPart = 'legL';
+  legR.userData.bodyPart = 'legR';
   g.add(legL, legR);
 
   // ---- SNEAKERS (low boxy)
@@ -47,6 +49,8 @@ export function makeFighterLowPoly() {
   shoeL.position.set(-0.13, 0.04, 0.05); shoeL.castShadow = true;
   const shoeR = new THREE.Mesh(shoeGeo, matSneaker);
   shoeR.position.set( 0.13, 0.04, 0.05); shoeR.castShadow = true;
+  shoeL.userData.bodyPart = 'shoeL';
+  shoeR.userData.bodyPart = 'shoeR';
   g.add(shoeL, shoeR);
 
   // ---- TORSO (hoodie — wider box, slightly bevelled feel via low-segment cylinder)
@@ -54,6 +58,7 @@ export function makeFighterLowPoly() {
   const torsoGeo = new THREE.CylinderGeometry(0.34, 0.38, 0.78, 8);
   const torso = new THREE.Mesh(torsoGeo, matHoodie);
   torso.position.y = 1.20; torso.castShadow = true;
+  torso.userData.bodyPart = 'torso';
   g.add(torso);
 
   // hoodie hood lump on the back of neck (cone-like shape, draped)
@@ -64,6 +69,7 @@ export function makeFighterLowPoly() {
   hoodLump.position.set(0, 1.65, -0.18);
   hoodLump.scale.set(1, 0.7, 0.8);
   hoodLump.castShadow = true;
+  hoodLump.userData.bodyPart = 'hoodLump';
   g.add(hoodLump);
 
   // ---- ARMS (in guard, bent, hands UP at face — match reference)
@@ -77,6 +83,8 @@ export function makeFighterLowPoly() {
   upperR.position.set( 0.40, 1.40, 0.05);
   upperR.rotation.z = -0.3;
   upperR.castShadow = true;
+  upperL.userData.bodyPart = 'upperL';
+  upperR.userData.bodyPart = 'upperR';
   g.add(upperL, upperR);
 
   // Forearm — ANGLED UP, bringing fists to face
@@ -89,6 +97,8 @@ export function makeFighterLowPoly() {
   foreR.position.set( 0.34, 1.65, 0.18);
   foreR.rotation.x = -0.9;
   foreR.castShadow = true;
+  foreL.userData.bodyPart = 'foreL';
+  foreR.userData.bodyPart = 'foreR';
   g.add(foreL, foreR);
 
   // Fists (low-poly icospheres / boxes)
@@ -97,6 +107,8 @@ export function makeFighterLowPoly() {
   fistL.position.set(-0.32, 1.90, 0.36); fistL.castShadow = true;
   const fistR = new THREE.Mesh(fistGeo, matGloves);
   fistR.position.set( 0.32, 1.90, 0.36); fistR.castShadow = true;
+  fistL.userData.bodyPart = 'fistL';
+  fistR.userData.bodyPart = 'fistR';
   g.add(fistL, fistR);
 
   // ---- NECK
@@ -106,12 +118,14 @@ export function makeFighterLowPoly() {
   );
   neck.position.y = 1.65;
   neck.castShadow = true;
+  neck.userData.bodyPart = 'neck';
   g.add(neck);
 
   // ---- HEAD (boxy octagonal)
   const headGeo = new THREE.CylinderGeometry(0.16, 0.18, 0.30, 8);
   const head = new THREE.Mesh(headGeo, matSkin);
   head.position.y = 1.85; head.castShadow = true;
+  head.userData.bodyPart = 'head';
   g.add(head);
 
   // hair (flat low cap on top)
@@ -121,10 +135,12 @@ export function makeFighterLowPoly() {
   );
   hair.position.y = 2.02;
   hair.castShadow = true;
+  hair.userData.bodyPart = 'hair';
   g.add(hair);
 
   // small tag for collision/find later
   g.userData.style = 'lowpoly';
+  g.userData.fighterVersion = 1;
   return g;
 }
 
