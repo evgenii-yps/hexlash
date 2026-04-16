@@ -19,6 +19,7 @@ const ROUTE_TO_VIEW = {
 
   // Profile (all sub-routes → same view name)
   Profile: 'profile',
+  ProfileV2: 'profile',
   Balance: 'profile',
   Wallet: 'profile',
   Account: 'profile',

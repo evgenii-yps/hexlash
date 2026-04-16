@@ -39,6 +39,7 @@ const protectedRoutes = [
     {path: '/arena/club/create', name: 'CreateAgent', component: () => import("/src/views/CreateAgentView.vue")},
     {path: '/arena/club/:agentId', name: 'AgentDetail', component: () => import("/src/views/AgentDetailView.vue")},
 
+    {path: '/profile-v2', name: 'ProfileV2', component: () => import("/src/views/new/ProfileViewV2.vue")},
     {path: '/user/:userLogin', name: 'UserProfile', component: () => import("/src/views/ProfileView.vue")},
     {path: '/profile', name: 'Profile', component: () => import("/src/views/ProfileView.vue")},
     {path: '/profile/balance', name: 'Balance', component: () => import("/src/views/ProfileView.vue")},
