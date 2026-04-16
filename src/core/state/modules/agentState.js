@@ -141,6 +141,8 @@ const actions = {
     if (s.currentAgent && s.currentAgent.id === id) {
       commit('SET_CURRENT_AGENT', { ...s.currentAgent, tactics: res.tactics });
     }
+    // Sync state.agents[] so getters like activeAgent see fresh tactics
+    commit('UPDATE_AGENT', { id, tactics: res.tactics });
     return res.tactics;
   },
 
@@ -161,6 +163,8 @@ const actions = {
     if (s.currentAgent && s.currentAgent.id === agentId) {
       commit('SET_CURRENT_AGENT', { ...s.currentAgent, progression: res.progression });
     }
+    // Sync state.agents[] so getters like activeAgent see fresh progression
+    commit('UPDATE_AGENT', { id: agentId, progression: res.progression });
     await dispatch('fetchAvailableMoves', agentId);
     return res;
   },
@@ -170,6 +174,9 @@ const actions = {
     if (s.currentAgent && s.currentAgent.id === agentId) {
       commit('SET_CURRENT_AGENT', { ...s.currentAgent, progression: res.progression });
     }
+    // Sync state.agents[] so getters like activeAgent see fresh progression
+    // (fight/startFight reads agent.progression.deck via activeAgent)
+    commit('UPDATE_AGENT', { id: agentId, progression: res.progression });
     return res;
   },
 
@@ -192,6 +199,8 @@ const actions = {
     if (s.currentAgent && s.currentAgent.id === agentId) {
       commit('SET_CURRENT_AGENT', { ...s.currentAgent, progression: res.progression });
     }
+    // Sync state.agents[] so getters like activeAgent see fresh progression
+    commit('UPDATE_AGENT', { id: agentId, progression: res.progression });
     return res;
   },
 
@@ -200,6 +209,8 @@ const actions = {
     if (s.currentAgent && s.currentAgent.id === agentId) {
       commit('SET_CURRENT_AGENT', { ...s.currentAgent, progression: res.progression });
     }
+    // Sync state.agents[] so getters like activeAgent see fresh progression
+    commit('UPDATE_AGENT', { id: agentId, progression: res.progression });
     return res;
   },
 

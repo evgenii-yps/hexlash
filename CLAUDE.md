@@ -18,11 +18,17 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 
 ```
 /src
-  App.vue                  — Root: header (Logo), router-view, BottomMenu (hidden on PvP screens), Info/Error toasts, ChallengeNotification
+  App.vue                  — Root: header (Logo), <AppShell /> mount, BottomMenu (hidden on PvP/Pit screens), Info/Error toasts, ChallengeNotification
   main.js                  — Entry: Vue + Vuetify + i18n + Vuex + WagmiPlugin + VueQueryPlugin init
-  router/index.js          — Routes + auth guards + fight state restore
+  router/index.js          — Routes + auth guards + fight state restore (incl. v2-suffixed visual redesign routes)
   views/                   — 19 page-level components (incl. FightClubView, CreateAgentView, AgentDetailView)
+  views/new/               — 9 v2 visual-redesign views (PitView, ProfileViewV2, TrainingViewV2, RatingsViewV2, ClanViewV2, MatchmakingViewV2, CreateFighterViewV2, FighterDetailViewV2, PreparationViewV2). CardFightViewV2 pending (Phase 3.10).
+  composables/             — Vue composables. `useActiveView.js` — derives view name from route.name, syncs `<body class="is-{name}">`.
+  three/                   — Three.js modules for v2 visual redesign
+    helpers/               — atmosphereScene, audioEngine, crowdSilhouette, fighterLowPoly, textures (pure JS, reused across scenes)
+    scenes/                — pitScene, pitArena, pitEnvironment, fighterDetailScene (each exports init…Scene(canvas,opts))
   components/              — 75+ reusable components
+  components/shell/        — AppShell.vue (single router-view mount + atmosphere layers + view-fade transition)
   components/club/         — 8 Club Mode components (AgentRoster, AgentCard, ClubLevelBar, MorningReport, RetirementPanel, SkinPicker, ArchetypeSelector, ResearchTree)
   components/clan/         — 1 Clan social component (ClanInviteNotification)
   components/fragments/clan/ — 10 Clan social fragments (ClanPageContent, ClanActivityFeed, ClanEdit, ClanStats, ClanAvatar, ClanOwnerAvatar, ClanWithdraw, ClanConfirmModal, CreateClan, MyClanTab)
@@ -52,6 +58,8 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
     fightStylePreview.js   — Template-based fight style description (DEAD CODE — not imported)
   styles/
     hexlash-ui.css         — Design system: CSS variables, component classes, animations
+    atmosphere.css         — Global atmosphere layers: .grain (noise, z-200), .vignette (radial dim, z-150), .scanlines (CRT, z-175, opt-in)
+    view-layers.css        — HUD pointer-events pattern (`.hud` + `.{view}-hud > *`) + `.scene-canvas` utility for Three.js canvases
   assets/
     main.css               — Global styles
     colors.css             — CSS variables
@@ -161,6 +169,16 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 | `/friends` | FriendsView | Yes |
 | `/matchmaking` | MatchmakingView | Yes |
 | `/spectate/:odId` | SpectateView | Yes |
+| — | **Visual Redesign v2 routes (Phase 3, not in main)** | — |
+| `/arena/pit` | PitView | Yes |
+| `/arena/fight-v2` | PreparationViewV2 | Yes |
+| `/arena/club/create-v2` | CreateFighterViewV2 | Yes |
+| `/arena/club/:agentId/v2` | FighterDetailViewV2 | Yes |
+| `/profile-v2` | ProfileViewV2 | Yes |
+| `/clan-v2/:id?` | ClanViewV2 | Yes |
+| `/ratings-v2` | RatingsViewV2 | Yes |
+| `/training-v2` | TrainingViewV2 | Yes |
+| `/matchmaking-v2` | MatchmakingViewV2 | Yes |
 
 ---
 
@@ -266,7 +284,24 @@ Optimal weight: 40–70 filled pixels (15–27%). Exception: `online` dot = 32px
 
 All components use `--hex-*` variables exclusively. Legacy `--pink`, `--dark`, `--gray*` in `colors.css` only referenced by PrivacyView (auto-generated legal HTML).
 
-Key variable groups: `--hex-primary`, `--hex-bg-{dark,medium,light}`, `--hex-text-{primary,secondary,muted}`, `--hex-border-{default,active,strong}`, `--hex-arch-{name}` (6 archetypes × 5 variants each), `--hex-branch-{name}`, `--hex-dice-{effect}`, `--hex-mode-{type}`, `--hex-victory/defeat/draw` + `-bg`.
+Key variable groups: `--hex-primary`, `--hex-bg-{deep,dark,medium,light,card}`, `--hex-text-{primary,secondary,muted}`, `--hex-border-{default,active,strong}`, `--hex-arch-{name}` (6 archetypes × 5 variants each + warden alias), `--hex-branch-{name}`, `--hex-dice-{effect}`, `--hex-mode-{type}`, `--hex-victory/defeat/draw` + `-bg`.
+
+**v23 palette overrides (applied by Visual Redesign Phase 1):**
+
+| Token | Value | Notes |
+|-------|-------|-------|
+| `--hex-bg-deep` | `#070811` | Deepest surface (body bg) — new in v23 |
+| `--hex-bg-card` | `rgba(14,16,28,0.85)` | Translucent card surface over 3D scenes |
+| `--hex-arch-predator` | `#FF066F` | = `--hex-primary` (shared source) |
+| `--hex-arch-sentinel` | `#2ee07f` | Emerald green |
+| `--hex-arch-ghost` | `#A855F7` | Violet |
+| `--hex-arch-analyst` | `#4dd9ff` | Cyan |
+| `--hex-arch-maverick` | `#FFA133` | Amber |
+| `--hex-arch-juggernaut` | `#D4A843` | Burnished gold |
+| `--hex-arch-warden` | `var(--hex-arch-juggernaut)` | Lore alias — same color as juggernaut |
+| `--hex-font-display` | `'Archivo Black'` (Google Fonts) | — |
+| `--hex-font-body` | `'Space Grotesk'` (Google Fonts) | — |
+| `--hex-font-mono` | `'JetBrains Mono'` (Google Fonts) | — |
 
 ### Archetype color → CSS var usage pattern
 
@@ -756,10 +791,12 @@ User, Clan, ClanInvite, ClanEvent, FightClub, Achievement, UserAchievement, Soci
 
 ## Branch (Git)
 
-Development branch: `claude/hexlash-project-setup-WYkbK`
+Current dev branch: `claude/setup-project-initialization-KyxUY`
+Visual Redesign (Phase 1–3.9): **IN PROGRESS** — not in main. Phase 1 (tokens/fonts/atmosphere ✅), Phase 2 (AppShell + view layering ✅), Phase 3 Screen Port 9 of 10 v2 views ✅. Phase 3.10 (CardFightViewV2) = next. See "Visual Redesign — Roadmap & Branch State" below.
+Phase −1 (Captain System Removal): merged separately.
 Club Mode prototype: **IN PROGRESS** — 109 commits ahead of main, ~6000 lines, deepdive complete (#1a-#1i), Phase 1 work starting.
 Road 1 (Neon Discipline visual migration): **COMPLETE**. See `/docs/road1-final-report.md` and `/docs/road2-parking-list.md`.
-Previous branches: `claude/hexlash-project-setup-X2K7i` (Road 1), `claude/review-hexlash-guidelines-vxdZD`, `claude/add-club-mode-agents-lmXTI`, `claude/club-mode-navigation-571kx`, `claude/rename-autofight-club-mode-o2bIJ`, `claude/update-claude-md-XVzH6`, `claude/add-pixel-icons-Hk6tn`, `claude/hexlash-full-audit-WvXMd`
+Previous branches: `claude/hexlash-project-setup-WYkbK`, `claude/hexlash-project-setup-X2K7i` (Road 1), `claude/review-hexlash-guidelines-vxdZD`, `claude/add-club-mode-agents-lmXTI`, `claude/club-mode-navigation-571kx`, `claude/rename-autofight-club-mode-o2bIJ`, `claude/update-claude-md-XVzH6`, `claude/add-pixel-icons-Hk6tn`, `claude/hexlash-full-audit-WvXMd`
 
 ### PvP System Audit — P0+P1 Fixes — ✅ COMPLETE
 
@@ -1806,6 +1843,16 @@ Captain system completely removed. Active agent for combat = first agent by `cre
 
 **Rationale:** Captain concept added complexity without clear UX benefit. First-by-createdAt rule is deterministic, requires no UI for user action, and matches actual behavior (Fighter #1 was always the default captain anyway).
 
+### Visual Redesign — Roadmap & Branch State
+
+Visual rebrand to v23 palette. **Current dev branch:** `claude/setup-project-initialization-KyxUY`. **Not in main.** Captain Removal (Phase −1, above) merged separately.
+
+**Done (local):** Phase −1 (Captain Removal ✅), Phase 1 (Visual Foundation ✅), Phase 2 (AppShell + View Layering ✅), Phase 3.1–3.9 (Screen Port, 9 of 10 v2 views landed).
+
+**Not done:** Phase 3.10 (CardFightViewV2), Phase 4 (decorative → real-data wiring: stake, strategy, energy, wagmi wallet), Phase 5 (i18n full pass across 11 locales), Phase 6 (cutover of non-v2 views + cleanup of suffixed routes).
+
+See subsections below for details — do not duplicate content here.
+
 ### Phase 1 — Visual Rebrand Foundation — ✅ COMPLETE
 
 Tokens + fonts + atmosphere migrated to v23 palette.
@@ -1844,3 +1891,71 @@ Foundation for v23 visual port. Existing views unchanged, infrastructure ready f
 **Scene canvas rule:** All Three.js `<canvas>` elements must use class `.scene-canvas` (position: fixed; inset: 0; w/h 100%; display: block). Enforced in Phase 3 port.
 
 **HUD pattern:** Container class `.hud` + view-specific modifier (e.g. `.pit-hud`) + `> *` pointer-events auto. Off-view children get pointer-events: none via `body:not(.is-pit) .pit-hud > *`. Prevents ghost clicks during fade transitions.
+
+### Phase 3 — Screen Port (9 of 10 done)
+
+All v2 views live in `src/views/new/` alongside originals. Legacy views untouched — routes use `-v2` suffix for A/B coexistence until Phase 6 cutover.
+
+| # | View file | Route | Route name | Notes |
+|---|-----------|-------|------------|-------|
+| 3.1 | `PitView.vue` | `/arena/pit` | `ArenaPit` | 3D pit scene (Three.js) + HUD overlays. Entry hub to Club Mode. BottomMenu hidden (immersive). |
+| 3.2 | `ProfileViewV2.vue` | `/profile-v2` | `ProfileV2` | Tabs: Identity, Performance, Friends, Settings. Wagmi wallet placeholder. |
+| 3.3 | `TrainingViewV2.vue` | `/training-v2` | `TrainingV2` | Heavy-bag (3D), taps, daily. Energy bar is decorative (stub 100%). |
+| 3.4 | `RatingsViewV2.vue` | `/ratings-v2` | `RatingsV2` | Tabs: Global, Friends, Clan, Country, Live. Country/Live = "coming soon". |
+| 3.5 | `ClanViewV2.vue` | `/clan-v2/:id?` | `ClanV2` | Separate route (own view file), not a sub-component of ClanView. |
+| 3.6 | `MatchmakingViewV2.vue` | `/matchmaking-v2` | `MatchmakingV2` | PvP queue + Opponent Found card. BottomMenu hidden. |
+| 3.7 | `CreateFighterViewV2.vue` | `/arena/club/create-v2` | `CreateAgentV2` | 3-step wizard: archetype → name → confirm. |
+| 3.8 | `FighterDetailViewV2.vue` | `/arena/club/:agentId/v2` | `AgentDetailV2` | 4 tabs: Overview, Moves, Tactics, Fights. 3D fighter scene. |
+| 3.9 | `PreparationViewV2.vue` | `/arena/fight-v2` | `ArenaFightV2` | Deck builder (5 slots, 3 branches pool) + decorative strategy/stake. After fix: `agent/updateDeck` syncs `state.agents[]`. |
+| 3.10 | CardFightViewV2 | NOT YET | NOT YET | TODO — next sub-ТЗ (3D fight scene). |
+
+**Decorative elements in V2 views** (no backend support, render-only until Phase 4): Preparation strategy + stake, Training energy bar, Ratings Country/Live tabs, Profile wagmi wallet connect.
+
+### Phase 3 — Three.js Structure (`src/three/`)
+
+```
+src/three/
+  helpers/
+    atmosphereScene.js     — shared sky/fog/light atmosphere setup
+    audioEngine.js         — audio playback helper (not wired to any view yet)
+    crowdSilhouette.js     — background crowd silhouettes
+    fighterLowPoly.js      — low-poly fighter mesh generator
+    textures.js            — shared texture loaders/caches
+  scenes/
+    pitScene.js            — aggregator for PitView 3D scene
+    pitArena.js            — arena ring geometry
+    pitEnvironment.js      — environment lights/props
+    fighterDetailScene.js  — scene for FighterDetailViewV2
+```
+
+Scenes are pure JS modules (no Vue). Each scene module exports an `init…Scene(canvas, opts)` that mounts the scene to a canvas and returns `{ scene, camera, renderer, cleanup }`. Helpers reused across scenes.
+
+### Phase 3 — i18n Status
+
+7 `*.v2` subsections exist in `en.js` + 1 new top-level section:
+
+| i18n path | Used by | Note |
+|-----------|---------|------|
+| `profile.v2` | ProfileViewV2 | |
+| `training.v2` | TrainingViewV2 | |
+| `rating.v2` | RatingsViewV2 | tabGlobal/Friends/Clan/Country/Live + lblSearch |
+| `preparation.v2` | PreparationViewV2 | |
+| `fighter.v2` | FighterDetailViewV2 | |
+| `create.v2` | CreateFighterViewV2 | |
+| `xpAllocation.v2` | FighterDetailViewV2 | lblFilters, lblSearch |
+| `pit` (top-level) | PitView | **Not** a `.v2` subsection — Pit has no legacy counterpart. |
+
+**No new keys added** (reuse existing): ClanViewV2 uses `t.clan.*` (lblNotFound, lblBrowse, lblJoin, lblClanPrivate, lblClanFull); MatchmakingViewV2 uses `t.pvp.*` (cancel, opponentFound, fightStartsIn, noPlayersFound, tryAgain, backToArena). Same labels as originals, so no `.v2` subsection added.
+
+**Known i18n debt:** MatchmakingViewV2 also references `t.pvp.v2.lblFilters` / `t.pvp.v2.lblSearch` (lines 26, 41), but `pvp.v2` subsection does not exist in `en.js` — fallback to inline strings "FILTERS" / "SEARCH" works, but key path is dead. Park: either add `pvp.v2` or re-point to `xpAllocation.v2.lblFilters`.
+
+Phase 1 i18n policy applies: en + ru are source of truth; 9 other locales inherit EN fallback for v2 subsections until Phase 5.
+
+### Phase 3 — What's Deferred to Later Phases
+
+- **CardFightViewV2** — Phase 3.10 (next)
+- **Backend wiring** for decorative UI: Preparation stake (currency bet), Preparation strategy (AI behavior override), Training energy system (currently stub 100%), Profile wallet (wagmi connect placeholder) — Phase 4
+- **Live matches feed + country rankings** in RatingsViewV2 — Phase 4
+- **Sound** in TrainingViewV2 (helper `audioEngine.js` exists, not wired) — Phase 4
+- **Full i18n pass** across 11 locales for all `*.v2` subsections + ClanV2/MMV2 reused keys audit — Phase 5
+- **Cutover:** remove `-v2` route suffixes, delete legacy views, delete legacy components — Phase 6
