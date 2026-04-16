@@ -677,6 +677,9 @@ export default {
       lblCamPit: 'ЯМА',
       lblCamSide: 'СБОКУ',
       lblCamCinema: 'КИНО',
+      lblShowDetails: 'ПОДРОБНЕЕ',
+      lblHideDetails: 'СВЕРНУТЬ',
+      lblChangeDeck: 'СМЕНИТЬ КОЛОДУ',
     },
   },
   friends: {

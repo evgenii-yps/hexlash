@@ -661,6 +661,9 @@ export default {
       lblCamPit: 'PIT',
       lblCamSide: 'SIDE',
       lblCamCinema: 'CINEMA',
+      lblShowDetails: 'SHOW DETAILS',
+      lblHideDetails: 'HIDE DETAILS',
+      lblChangeDeck: 'CHANGE DECK',
     },
     lblPoweredBy: 'Powered by Claude',
     aiLabels: {

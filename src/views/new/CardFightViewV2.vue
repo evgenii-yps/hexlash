@@ -161,20 +161,52 @@
         </div>
       </div>
 
-      <!-- ── RESULTS STUB (replaced by full overlay in 3.10.4) ───────── -->
+      <!-- ── RESULT OVERLAY (3.10.4: full splash + AI Trainer + log) ──── -->
       <div v-if="fightPhase === 'results'" class="cfv2-result-stub">
-        <div class="cfv2-result-title" :class="'cfv2-result-title--' + resultState">{{ resultTitle }}</div>
-        <div class="cfv2-result-xp" v-if="xpEarned">
-          <div class="cfv2-result-xp-label">{{ fv2.lblXpEarned || 'XP EARNED' }}</div>
-          <div class="cfv2-result-xp-value">+{{ xpEarned }} XP</div>
-        </div>
-        <div class="cfv2-result-actions">
-          <button class="cfv2-result-btn cfv2-result-btn--primary" @click="onFightAgain">
-            {{ fv2.lblFightAgain || 'FIGHT AGAIN' }}
+        <div class="cfv2-result-inner">
+          <div class="cfv2-result-title" :class="'cfv2-result-title--' + resultState">{{ resultTitle }}</div>
+
+          <div class="cfv2-result-xp" v-if="xpEarned">
+            <div class="cfv2-result-xp-label">{{ fv2.lblXpEarned || 'XP EARNED' }}</div>
+            <div class="cfv2-result-xp-value">+{{ xpEarned }} XP</div>
+          </div>
+
+          <!-- AI Trainer (Claude API) — self-manages loading/error -->
+          <div class="cfv2-ai-trainer-wrap">
+            <AiTrainerAnalysis
+              :fight-data="aiTrainerFightData"
+              :locale="locale"
+            />
+          </div>
+
+          <!-- Detailed log toggle -->
+          <button class="cfv2-result-log-toggle" @click="showDetailedLog = !showDetailedLog">
+            {{ showDetailedLog ? (fv2.lblHideDetails || 'HIDE DETAILS') : (fv2.lblShowDetails || 'SHOW DETAILS') }}
+            {{ showDetailedLog ? '▲' : '▼' }}
           </button>
-          <button class="cfv2-result-btn" @click="onExitToPit">
-            {{ fv2.lblExitToPit || 'EXIT TO PIT' }}
-          </button>
+          <div v-if="showDetailedLog" class="cfv2-result-log">
+            <div v-for="r in roundLog" :key="r.roundNum" class="cfv2-result-log-row">
+              <span class="cfv2-result-log-r" :class="{ 'cfv2-result-log-r--od': r.roundNum > MAX_ROUNDS }">
+                {{ r.roundNum > MAX_ROUNDS ? 'E' + (r.roundNum - MAX_ROUNDS) : 'R' + r.roundNum }}
+              </span>
+              <span class="cfv2-result-log-actions">
+                {{ r.action1 }} vs {{ r.action2 }}
+              </span>
+              <span class="cfv2-result-log-hp">{{ r.hp1After }} / {{ r.hp2After }}</span>
+            </div>
+          </div>
+
+          <div class="cfv2-result-actions">
+            <button class="cfv2-result-btn cfv2-result-btn--primary" @click="onFightAgain">
+              {{ fv2.lblFightAgain || 'FIGHT AGAIN' }}
+            </button>
+            <button class="cfv2-result-btn" @click="changeBuild">
+              {{ fv2.lblChangeDeck || 'CHANGE DECK' }}
+            </button>
+            <button class="cfv2-result-btn" @click="onExitToPit">
+              {{ fv2.lblExitToPit || 'EXIT TO PIT' }}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -186,11 +218,12 @@ import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import store from '@/core/state/store.js';
 import apiClient from '@/core/api/apiClient.js';
-import { t } from '@/locales/index.js';
+import { t, getLanguage } from '@/locales/index.js';
 import { initFightScene } from '@/three/scenes/fightArena.js';
 import { COUNTDOWN, ROUND_ANIMATION_MS, MAX_HP, MAX_ROUNDS } from '@/core/constants.js';
 import HPBar from '@/components/fragments/fight/HPBar.vue';
 import BeltBadge from '@/components/ui/BeltBadge.vue';
+import AiTrainerAnalysis from '@/components/AiTrainerAnalysis.vue';
 import iconDice from '@/assets/images/icons/dice.svg';
 
 const CAM_MODES = [
@@ -201,7 +234,7 @@ const CAM_MODES = [
 
 export default {
   name: 'FightV2',
-  components: { HPBar, BeltBadge },
+  components: { HPBar, BeltBadge, AiTrainerAnalysis },
   setup() {
     const route = useRoute();
     const router = useRouter();
@@ -273,6 +306,37 @@ export default {
       const log = roundLog.value;
       if (!Array.isArray(log)) return [];
       return log.slice(-5);
+    });
+
+    // ── Result overlay state (3.10.4) ──
+    const showDetailedLog = ref(false);
+    const locale = computed(() => getLanguage());
+
+    // ── AI Trainer payload (copied AS-IS from legacy CardFightView:409-432) ──
+    // KNOWN LIMITATION (D9): diceEffect ≈ null at results phase because
+    // rollDiceManual clears activeItem after 1.5s. Not fixed in this scope —
+    // legacy behavior, backend accepts null.
+    const aiTrainerFightData = computed(() => {
+      const s = store.state.fight;
+      let result = 'draw';
+      if (s.liveHP1 > s.liveHP2) result = 'win';
+      else if (s.liveHP1 < s.liveHP2) result = 'loss';
+      return {
+        rounds: s.roundLog || [],
+        playerDeck: s.playerDeck || [],
+        playerModules: store.getters['fight/getPlayerModules'] || [],
+        opponentDeck: s.opponentDeck || [],
+        result,
+        playerHP: s.liveHP1,
+        opponentHP: s.liveHP2,
+        totalRounds: s.roundNum || 0,
+        diceUsed: s.fightStats?.dicePickedUp > 0,
+        diceEffect: s.diceState?.activeItem?.effect || null,
+        coachUsed: s.coachAdvice?.used || false,
+        coachChoice: s.coachAdvice?.action || null,
+        emergencyUsed: s.emergencyProtocol?.used || false,
+        emergencyType: s.emergencyProtocol?.type || null,
+      };
     });
 
     // ── Fighter panel visibility (hide during full-screen overlays) ──
@@ -490,6 +554,7 @@ export default {
     }
 
     function onFightAgain() {
+      showDetailedLog.value = false;
       stopRoundTimer();
       clearInterval(countdownTimer);
       store.dispatch('fight/fightAgain', { targetRoute: '/fight-v2' });
@@ -497,6 +562,12 @@ export default {
 
     function onExitToPit() {
       store.dispatch('fight/resetToPreparation');
+    }
+
+    function changeBuild() {
+      stopRoundTimer();
+      clearInterval(countdownTimer);
+      router.push('/arena/fight-v2');
     }
 
     function onBackClick() {
@@ -575,7 +646,7 @@ export default {
       // refs
       sceneCanvas,
       // i18n
-      t, fv2,
+      t, fv2, locale,
       // getters
       fightPhase, liveHP1, liveHP2, roundNum, roundLog,
       opponent, activeAgent, agentName, isOverdrive,
@@ -584,15 +655,18 @@ export default {
       // ui state
       showCountdown, countdownValue,
       showFighterPanels, logOpen, lastLog,
+      showDetailedLog,
       adviceTimer, cameraMode, shakeLeft, shakeRight,
       flashActive, flashStyle,
       resultState, resultTitle,
+      // AI Trainer payload (3.10.4)
+      aiTrainerFightData,
       // static
       MAX_ROUNDS, CAM_MODES,
       iconDice,
       // handlers
       onRollDice, onCoachChoice, onFightAgain, onExitToPit, onBackClick,
-      setCamera,
+      setCamera, changeBuild,
     };
   },
 };
@@ -1001,19 +1075,32 @@ export default {
 .cfv2-pop-enter-from { opacity: 0; transform: translateY(10px) scale(0.9); }
 .cfv2-pop-leave-to   { opacity: 0; }
 
-/* ── RESULT STUB ────────────────────────────────────────────────── */
+/* ── RESULT OVERLAY (3.10.4) ─────────────────────────────────────── */
 .cfv2-result-stub {
   position: absolute; inset: 0;
-  background: rgba(7, 8, 17, 0.9);
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: rgba(7, 8, 17, 0.92);
   z-index: 60;
-  padding: 20px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 24px 16px 40px;
+}
+.cfv2-result-inner {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
 }
 .cfv2-result-title {
   font-family: var(--hex-font-display);
   font-size: 56px;
   letter-spacing: 6px;
-  margin-bottom: 16px;
+  margin: 8px 0 4px;
+  text-align: center;
 }
 .cfv2-result-title--win  { color: var(--hex-victory); text-shadow: 0 0 24px var(--hex-victory); }
 .cfv2-result-title--lose { color: var(--hex-defeat);  text-shadow: 0 0 24px var(--hex-defeat); }
@@ -1021,7 +1108,6 @@ export default {
 
 .cfv2-result-xp {
   display: flex; flex-direction: column; align-items: center; gap: 4px;
-  margin-bottom: 24px;
 }
 .cfv2-result-xp-label {
   font-family: var(--hex-font-body);
@@ -1036,9 +1122,78 @@ export default {
   font-weight: 700;
 }
 
+/* AI Trainer wrap — constrain to overlay max-width */
+.cfv2-ai-trainer-wrap {
+  width: 100%;
+  max-width: 480px;
+}
+
+/* Detailed log toggle */
+.cfv2-result-log-toggle {
+  background: none;
+  border: 1px solid var(--hex-border-default);
+  color: var(--hex-text-secondary);
+  font-family: var(--hex-font-body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  padding: 8px 14px;
+  border-radius: var(--hex-radius-md);
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+.cfv2-result-log-toggle:hover {
+  color: var(--hex-text-primary);
+  border-color: var(--hex-border-active);
+}
+
+/* Detailed log list */
+.cfv2-result-log {
+  width: 100%;
+  max-width: 480px;
+  max-height: 300px;
+  overflow-y: auto;
+  background: var(--hex-bg-card);
+  border: 1px solid var(--hex-border-default);
+  border-radius: var(--hex-radius-md);
+  padding: 8px 12px;
+}
+.cfv2-result-log-row {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  font-family: var(--hex-font-mono);
+  font-size: 11px;
+  padding: 4px 0;
+  border-bottom: 1px dashed var(--hex-border-default);
+}
+.cfv2-result-log-row:last-child { border-bottom: none; }
+.cfv2-result-log-r {
+  font-family: var(--hex-font-mono);
+  font-weight: 600;
+  color: var(--hex-text-muted);
+}
+.cfv2-result-log-r--od {
+  color: var(--hex-text-primary);
+}
+.cfv2-result-log-actions {
+  color: var(--hex-text-secondary);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cfv2-result-log-hp {
+  color: var(--hex-text-primary);
+  font-weight: 700;
+}
+
 .cfv2-result-actions {
   display: flex; flex-direction: column; gap: 10px;
   width: 100%; max-width: 320px;
+  margin-top: 8px;
 }
 .cfv2-result-btn {
   background: var(--hex-bg-card);
