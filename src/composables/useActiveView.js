@@ -28,6 +28,7 @@ const ROUTE_TO_VIEW = {
 
   // Core screens
   Training: 'training',
+  TrainingV2: 'training',
   Matchmaking: 'mm',
   Ratings: 'ratings',
   Clan: 'clan',

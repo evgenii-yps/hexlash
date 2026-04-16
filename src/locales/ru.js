@@ -744,6 +744,15 @@ export default {
     lblChecklist: 'Чеклист',
     noTasksAvailable: 'Задания на сегодня закончились!',
     checklistCompleted: 'Отличная работа, чеклист выполнен!',
+    v2: {
+      lblTitle: 'ТРЕНИРОВКА',
+      lblTaps: 'ТАПЫ',
+      lblEnergy: 'ЭНЕРГИЯ',
+      lblCombo: 'КОМБО',
+      lblDaily: 'ЕЖЕДНЕВНЫЕ ЗАДАНИЯ',
+      lblBack: 'НАЗАД',
+      lblHint: 'ТАПАЙ ПО ГРУШЕ',
+    },
   },
   rating: {
     clans: 'Рейтинг кланов',

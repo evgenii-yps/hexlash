@@ -56,6 +56,7 @@ const protectedRoutes = [
     {path: '/ratings/:type', name: 'Ratings', component: () => import("/src/views/RatingsView.vue"), props: true},
     {path: '/ratings', redirect: '/ratings/myclan'},
 
+    {path: '/training-v2', name: 'TrainingV2', component: () => import("/src/views/new/TrainingViewV2.vue")},
     {path: '/training', name: 'Training', component: () => import("/src/views/TrainingView.vue")},
     {path: '/fight', name: 'Fight', component: () => import("/src/views/CardFightView.vue")},
     {path: '/friends', name: 'Friends', component: () => import("/src/views/FriendsView.vue")},
