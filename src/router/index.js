@@ -38,6 +38,7 @@ const protectedRoutes = [
     {path: '/arena/club', name: 'ArenaFightClub', component: () => import("/src/views/FightClubView.vue")},
     {path: '/arena/club/create-v2', name: 'CreateAgentV2', component: () => import("/src/views/new/CreateFighterViewV2.vue")},
     {path: '/arena/club/create', name: 'CreateAgent', component: () => import("/src/views/CreateAgentView.vue")},
+    {path: '/arena/club/:agentId/v2', name: 'AgentDetailV2', component: () => import("/src/views/new/FighterDetailViewV2.vue")},
     {path: '/arena/club/:agentId', name: 'AgentDetail', component: () => import("/src/views/AgentDetailView.vue")},
 
     {path: '/profile-v2', name: 'ProfileV2', component: () => import("/src/views/new/ProfileViewV2.vue")},

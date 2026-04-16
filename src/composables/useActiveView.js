@@ -15,6 +15,7 @@ const ROUTE_TO_VIEW = {
   ArenaFight: 'preparation',
   Fight: 'fight',
   AgentDetail: 'detail',
+  AgentDetailV2: 'detail',
   CreateAgent: 'create',
   CreateAgentV2: 'create',
 

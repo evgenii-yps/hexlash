@@ -934,6 +934,17 @@ export default {
     lblViewFighter: 'Посмотреть бойца',
   },
 
+  fighter: {
+    v2: {
+      lblOverview: 'ОБЗОР',
+      lblMoves: 'ПРИЁМЫ',
+      lblTactics: 'ТАКТИКА',
+      lblFights: 'БОИ',
+      lblBranch: 'ВЕТКА',
+      lblLevelUp: 'ПОВЫСИТЬ',
+    },
+  },
+
   create: {
     v2: {
       lblStep1: 'ВЫБЕРИ АРХЕТИП',
