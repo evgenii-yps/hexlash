@@ -170,8 +170,8 @@
   /* === FONTS === */
 
   /* Font families */
-  --hex-font-display: 'Impact', 'Anton', 'Bebas Neue', sans-serif;
-  --hex-font-body: 'Inter', 'Roboto', 'SF Pro', -apple-system, sans-serif;
+  --hex-font-display: 'Archivo Black', system-ui, sans-serif;
+  --hex-font-body: 'Space Grotesk', system-ui, sans-serif;
   --hex-font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
   /* Font sizes */
