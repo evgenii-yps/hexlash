@@ -94,7 +94,7 @@ import ClanPageContent from '@/components/fragments/clan/ClanPageContent.vue';
 import MyClanTab from '@/components/fragments/clan/MyClanTab.vue';
 import ClanStats from '@/components/fragments/clan/ClanStats.vue';
 import HexButton from '@/components/ui/HexButton.vue';
-import userService from '@/core/services/userService.js';
+import { searchParticipants } from '@/core/services/userService.js';
 
 export default {
   name: 'ClanViewV2',
@@ -132,7 +132,7 @@ export default {
         const result = await store.dispatch('clan/loadClanById', clanId.value);
         if (!result) notFound.value = true;
         if (!isMyClan.value && result) {
-          const res = await userService.searchParticipants({ clanId: clanId.value, page: 0, size: 5 });
+          const res = await searchParticipants({ clanId: clanId.value, page: 0, size: 5 });
           visitorMembers.value = res || [];
           totalMembers.value = clanData.value?.members || visitorMembers.value.length;
         }
