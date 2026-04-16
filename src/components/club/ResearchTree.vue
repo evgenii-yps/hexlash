@@ -5,7 +5,6 @@
       <div class="rt-header-left">
         <img :src="`/images/skins/${agentSkin}`" class="rt-skin" />
         <div class="rt-identity">
-          <div v-if="agent?.isCaptain" class="rt-captain-label">{{ t.club?.lblCaptain || 'CAPTAIN' }}</div>
           <div class="rt-name">{{ agent?.name || '' }}</div>
         </div>
       </div>
@@ -278,13 +277,6 @@ const onAllocateXp = async (branch) => {
 }
 .rt-identity {
   min-width: 0;
-}
-.rt-captain-label {
-  font-size: 9px;
-  color: var(--hex-primary);
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  margin-bottom: 2px;
 }
 .rt-name {
   font-size: 16px;

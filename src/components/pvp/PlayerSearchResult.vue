@@ -3,7 +3,6 @@
     <div class="player-avatar"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="var(--hex-text-secondary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M3 21c0-5 4-9 9-9s9 4 9 9"/></svg></div>
     <div class="player-info">
       <span class="player-name">{{ player.username }}</span>
-      <UserCaptainBadge :captain="player.captain" size="sm" />
     </div>
     <span v-if="isPending" class="pending-badge">{{ pendingText }}</span>
     <button v-else class="add-btn" @click.stop="$emit('add', player)">+ {{ addText }}</button>
@@ -13,7 +12,6 @@
 <script setup>
 import { computed } from 'vue';
 import store from '@/core/state/store.js';
-import UserCaptainBadge from '@/components/ui/UserCaptainBadge.vue';
 
 const props = defineProps({
   player: { type: Object, required: true },
