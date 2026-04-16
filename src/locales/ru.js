@@ -677,6 +677,9 @@ export default {
       lblCamPit: 'ЯМА',
       lblCamSide: 'СБОКУ',
       lblCamCinema: 'КИНО',
+      lblShowDetails: 'ПОДРОБНЕЕ',
+      lblHideDetails: 'СВЕРНУТЬ',
+      lblChangeDeck: 'СМЕНИТЬ КОЛОДУ',
     },
   },
   friends: {
@@ -730,6 +733,8 @@ export default {
     waitingForOpponent: 'Ожидание соперника...',
     lblVs: 'против',
     opponentDisconnected: 'Соперник отключился',
+    fightLostOnRefresh: 'Бой потерян из-за перезагрузки страницы',
+    fightStartFailed: 'Не удалось начать бой',
   },
   spectate: {
     title: 'НАБЛЮДЕНИЕ',

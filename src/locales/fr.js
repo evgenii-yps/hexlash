@@ -661,6 +661,9 @@ export default {
       lblCamPit: 'PIT',
       lblCamSide: 'SIDE',
       lblCamCinema: 'CINEMA',
+      lblShowDetails: 'SHOW DETAILS',
+      lblHideDetails: 'HIDE DETAILS',
+      lblChangeDeck: 'CHANGE DECK',
     },
     lblPoweredBy: 'Powered by Claude',
     aiLabels: {
@@ -885,6 +888,8 @@ export default {
     waitingForOpponent: "En attente de l'adversaire...",
     lblVs: 'vs',
     opponentDisconnected: 'Adversaire déconnecté',
+    fightLostOnRefresh: 'Fight lost due to page reload',
+    fightStartFailed: 'Failed to start fight',
     v2: {
       lblFilters: 'FILTERS',
       lblSearch: 'SEARCH',

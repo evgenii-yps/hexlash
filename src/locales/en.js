@@ -678,6 +678,9 @@ export default {
       lblCamPit: 'PIT',
       lblCamSide: 'SIDE',
       lblCamCinema: 'CINEMA',
+      lblShowDetails: 'SHOW DETAILS',
+      lblHideDetails: 'HIDE DETAILS',
+      lblChangeDeck: 'CHANGE DECK',
     },
   },
   friends: {
@@ -731,6 +734,8 @@ export default {
     waitingForOpponent: 'Waiting for opponent...',
     lblVs: 'vs',
     opponentDisconnected: 'Opponent disconnected',
+    fightLostOnRefresh: 'Fight lost due to page reload',
+    fightStartFailed: 'Failed to start fight',
   },
   spectate: {
     title: 'SPECTATING',
