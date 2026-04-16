@@ -138,8 +138,8 @@ export default {
       if (selectedMode.value === 'pvp') {
         router.push('/matchmaking-v2');
       } else {
-        // PvE: dispatch fight/startFight which reads active agent, sets up state, navigates to /fight
-        await store.dispatch('fight/startFight');
+        // PvE: dispatch fight/startFight which reads active agent, sets up state, navigates to /fight-v2
+        await store.dispatch('fight/startFight', { targetRoute: '/fight-v2' });
       }
     }
 
