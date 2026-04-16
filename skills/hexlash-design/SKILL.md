@@ -128,7 +128,6 @@ description: Дизайн-система "Neon Discipline" проекта Hexlas
 | `HexProgress` | hp, branch, generic × 3 size |
 | `HexBadge` | archetype, branch, status, counter, custom |
 | `BeltBadge` | grade 0-32, isHexmaster, sm/md/lg |
-| `UserCaptainBadge` | xs/sm/md |
 | `PixelIcon` | **Не используется**, preserved |
 
 ---

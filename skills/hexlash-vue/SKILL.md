@@ -27,7 +27,7 @@ description: Фронтенд-конвенции проекта Hexlash. Три�
   router/index.js       — routes, auth guards, fight state restore
   views/                — page-level (20 view, суффикс View)
   components/           — 75+ компонентов
-    ui/                 — дизайн-система (Hex* префикс): HexButton, HexCard, HexProgress, HexBadge, BeltBadge, UserCaptainBadge, PixelIcon
+    ui/                 — дизайн-система (Hex* префикс): HexButton, HexCard, HexProgress, HexBadge, BeltBadge, PixelIcon
     club/               — 7 Club Mode компонентов
     clan/               — 1 Clan социальный компонент
     fragments/clan/     — 10 Clan фрагментов
@@ -123,7 +123,7 @@ Server sync: progression — debounced PUT через action в `progressionStat
 - Никаких легаси `--pink, --dark, --gray*` (исключение — PrivacyView)
 - Для UI правил, цветов, шрифтов — грузить `hexlash-design`
 - Готовые UI компоненты в `/src/components/ui/`: **сначала проверить, есть ли подходящий**, потом писать новый
-- Готовые: `HexButton`, `HexCard`, `HexProgress`, `HexBadge`, `BeltBadge`, `UserCaptainBadge`, `PixelIcon` (последний preserved но не используется)
+- Готовые: `HexButton`, `HexCard`, `HexProgress`, `HexBadge`, `BeltBadge`, `PixelIcon` (последний preserved но не используется)
 - `<style scoped>` обязателен в новых компонентах
 
 ---

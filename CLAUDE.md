@@ -83,7 +83,6 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
     services/rankedMatchmaker.js — Ranked + free arena matchmaking (ELO range ±200, rematch cooldown)
     services/fightClubService.js — Personal FightClub management (getOrCreate, addXp, getLegendBuff)
     services/beltService.js — Belt system (isQualifyingWin, calculateBelt, checkHexmaster, applyWin)
-    services/captainService.js — Captain Agent management (setCaptain, atomic swap)
     services/retirementService.js — Fighter retirement + legend buff
     services/researchGateService.js — Research Gate: per-agent research tree (unlock/upgrade moves, lazy migration)
     services/morningReportService.js — Claude AI morning report stats + prompts
@@ -100,15 +99,12 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
     data/moves.js          — Move definitions (backend copy)
   scripts/
     backfill-belts.js      — Recalculate belts for all agents
-    backfill-captains.js   — Set isCaptain for first agents
     calibrate-belts.js     — Belt calibration utility
     cleanup-agents.js      — Agent data cleanup
     migrate-all-users.js   — Batch User→Fighter migration
   tests/
     userMigrationService.test.js — User→Fighter migration tests (14 tests)
     beltService.test.js    — Belt system: qualifying wins, belt calc, hexmaster
-    captainService.test.js — Captain: setCaptain, atomic swap
-    captainArenaFlow.test.js — Captain in arena: PvE/PvP flow
   prisma/
     schema.prisma          — 19 models: User, Clan, ClanInvite, ClanEvent, FightClub, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask, UserDailyTask, Fight, PunchInfo, FriendRequest, Friendship, Agent, AgentTactics, AgentProgression, AgentFightLog
     seed.js
@@ -184,7 +180,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 | `webSocketState` | WS connection, real-time messages |
 | `pvpState` | Real-time PvP matchmaking and fights |
 | `friendsState` | Friends list, friend requests, challenges (WebSocket-based) |
-| `agentState` | Agent roster: CRUD, auto-fight toggle, Fight Club level, 30s auto-refresh. `agentsList` sorted by isCaptain → isHexmaster → belt → qualifiedWins. Getter `currentCaptain`. Action `setCaptain`. |
+| `agentState` | Agent roster: CRUD, auto-fight toggle, Fight Club level, 30s auto-refresh. `agentsList` sorted by isHexmaster → belt → qualifiedWins. Getter `activeAgent` (first by `createdAt` ASC). |
 
 ---
 
@@ -224,13 +220,9 @@ unlockRequirements:  { 3: {taps:300, exp:150}, 4: {taps:250, exp:120}, 5: {taps:
 
 **Backend:** `beltService.js` (isQualifyingWin, calculateBelt, checkHexmaster, applyWin). Belt updated atomically in same $transaction as fight stats.
 
-**Agent fields:** `belt` (Int, 0-32), `qualifiedWins` (Int), `isHexmaster` (Boolean), `isCaptain` (Boolean). Backfill scripts: `backend/scripts/backfill-belts.js`, `backend/scripts/backfill-captains.js`.
+**Agent fields:** `belt` (Int, 0-32), `qualifiedWins` (Int), `isHexmaster` (Boolean). Backfill scripts: `backend/scripts/backfill-belts.js`.
 
-**Captain:** One Agent per FightClub with `isCaptain=true`. PvP representative. Atomic swap via `captainService.setCaptain()`. Cannot delete captain if other agents exist. `PUT /v1/agent/:id/captain` endpoint. Migration creates Fighter #1 as captain.
-
-**Captain in Arena:** After #P1-captain-2, PvE and PvP fights use Captain Agent data (deck, moves, modules, skin, ELO). User stats (pveWins, pvpWins, rating) are frozen legacy — no longer updated. Belt progression applies to Captain Agent. `progressionState` is trainer-only (TrainingView, MoveTree, DeckBuilder).
-
-**Captain in Public UI:** After #P1-captain-3, all public views show `UserCaptainBadge` (BeltBadge + captain name) instead of User.rating. API responses include `captain` sub-object via `getCaptainPublicInfo`/`getCaptainsForUsers` (bulk, no N+1). ProfileView has two layers: Trainer (User) + Captain (Agent).
+**Active agent in arena:** PvE/PvP fights use the first agent (by `createdAt` ASC) via `fightClubService.getActiveAgent()`. User stats (pveWins, pvpWins, rating) are frozen legacy — no longer updated. Belt progression applies to active agent. `progressionState` is trainer-only (TrainingView, MoveTree, DeckBuilder).
 
 ---
 
@@ -251,7 +243,6 @@ unlockRequirements:  { 3: {taps:300, exp:150}, 4: {taps:250, exp:120}, 5: {taps:
 | `HexProgress` | `HexProgress.vue` | Progress bar. 3 variants: hp (auto green/yellow/red by %), branch (speed/power/technique colors), generic. 3 sizes. Props: label, showValue, showPercent. |
 | `HexBadge` | `HexBadge.vue` | Pill badge. 5 variants: archetype, branch, status (victory/defeat/draw/info), counter (circle/pill auto), custom. Props: icon (PixelIcon), pulse animation. |
 | `BeltBadge` | `BeltBadge.vue` | SVG belt badge for 33 grades + Hexmaster. Line-style: rect body, buckle, stripes. 3 sizes: sm (16×6), md (40×14), lg (120×40). Props: grade (0-32), isHexmaster, size. |
-| `UserCaptainBadge` | `UserCaptainBadge.vue` | Composite badge: BeltBadge + optional captain name. Sizes xs/sm/md. Shows "—" when no captain. |
 
 ### Pixel Icons (`/src/data/pixelIcons.js`)
 
@@ -527,7 +518,7 @@ MIGRATION_ENABLED = true           // lazy User→Fighter #1 on /me
 | Fight | `CardFightView.vue` | Main combat (PvE + PvP), dice, coach advice, HP bars, AI Trainer (PvE results). Loading splash: HEXLASH in Anonymous pixel-font with --hex-primary + glow (matches Logo.vue style, same as index.html pre-app splash). PvP mode: no BottomMenu, no PvP badge, reduced padding. Fully migrated to --hex-* vars: HexButton for results, inline SVGs, dice/coach/victory/defeat/overdrive all use design system vars. Visual System v1.0 compliant: pink only on CTA buttons (dice, Fight Again), VICTORY/DEFEAT/DRAW + OVERDRIVE pixel-font, HP in AnonymousBalance, dice effects in characteristic colors, coach buttons in action-specific colors |
 | Profile | `ProfileView.vue` | Tabs: balance, wallet, account, skins. Visual System v1.0 compliant: AnonymousBalance for numerical values, neutral header (no pink), 0-1 pink accent per tab, toggles green (success), delete btn danger |
 | Ratings (League) | `RatingsView.vue` | 3 tabs: My Club, Clubs (leaderboard), Fighters (leaderboard). Default tab: My Club. URL: `/ratings/:type` (myclub/clubs/fighters). My Club tab: `MyClubTab.vue` component — redesigned clan header (avatar 64px with --hex-primary glow, name in Anonymous font, italic description, LVL badge, member count, level progress bar), stats grid (4 cards: Members/Wins/Losses/Win Rate with colored values), win rate bar, members top-5, role badges owner/deputy, action menus. No-clan state: ⚔ icon hero, CREATE/BROWSE buttons, pending invites banners, suggested clans with stats |
-| Fight Club | `FightClubView.vue` | `/arena/club` (also reachable via `/arena` redirect). Agent roster, Club Level bar, Morning Report, Retirement Panel. "← Arena" switch button in header. Captain's AgentCard has primary FIGHT button (navigates to PreparationView, disabled when fighting/resting). Background: `background_arena.webp` with gradient overlay (shared visual identity with PreparationView) |
+| Fight Club | `FightClubView.vue` | `/arena/club` (also reachable via `/arena` redirect). Agent roster, Club Level bar, Morning Report, Retirement Panel. "← Arena" switch button in header. Active agent's AgentCard has primary FIGHT button (navigates to PreparationView, disabled when fighting/resting). Background: `background_arena.webp` with gradient overlay (shared visual identity with PreparationView) |
 | Preparation | `PreparationView.vue` | `/arena/fight`: action row (Mode + START FIGHT + Friends buttons). Friends button is text-only (no online indicator). "← Arena" switch button in header. Visual System v1.0 compliant: single pink accent (START FIGHT), ModeSelector neutral, AnonymousBalance where needed |
 | Friends | `FriendsView.vue` | Friends list, friend requests, search players. Visual System v1.0 compliant: neutral cards, online indicator hex-success, Accept=green/Decline=danger, Add friend=primary CTA, system sans |
 | Matchmaking | `MatchmakingView.vue` | Real-time PvP matchmaking queue. Opponent Found shows actual fighter skins (from `/images/skins/`). No colored borders. 100dvh support. Visual System v1.0 compliant: neutral spinner in search, OPPONENT FOUND pixel-font (impact), AnonymousBalance for timer/rating/countdown, retry btn = sole pink CTA in timeout |
@@ -566,7 +557,6 @@ MIGRATION_ENABLED = true           // lazy User→Fighter #1 on /me
 - `HexProgress.vue` — Progress bar with 3 variants: hp (auto green>60%/yellow>30%/red), branch (speed/power/technique colors), generic. Props: label, showValue, showPercent. 3 sizes.
 - `HexBadge.vue` — Pill badge with 5 variants: archetype, branch, status (victory/defeat/draw/info), counter (auto circle<10/pill≥10), custom. Props: icon (PixelIcon), pulse animation.
 - `BeltBadge.vue` — SVG belt badge for 33 grades + Hexmaster. Line-style: rect body, buckle, stripes. 3 sizes: sm (16×6), md (40×14), lg (120×40). Hexmaster pulse glow md/lg, static glow sm. Props: grade (0-32), isHexmaster, size. CSS vars: `--hex-belt-*`. Stripes hidden on sm. White/black enhanced outlines.
-- `UserCaptainBadge.vue` — Composite badge: BeltBadge + optional captain name. Sizes xs/sm/md. Shows "—" when no captain. Used in FriendCard, PlayerSearchResult, ChallengeNotification, RatingsView Players tab, MatchmakingView.
 
 **Navigation & Layout:**
 - `Logo.vue` — header logo (Anonymous font, --hex-primary color + glow). Visual System v1.0 compliant: pixel-font for brand, subtle glow, --hex-text-primary
@@ -1284,7 +1274,7 @@ Research tree is now per-agent (AgentProgression.research) instead of per-accoun
 - `LEVEL_UP_REQUIREMENTS` — taps + exp per research level-up: `{2: {taps:100, exp:50}, ...5: {taps:500, exp:350}}`
 - `UNLOCK_REQUIREMENTS` — taps + exp per research unlock (key=prev move level): `{3: {taps:300, exp:150}, ...5: {taps:200, exp:100}}`
 - `LEVEL_UP_XP_COST` — legacy XP-only costs (used by learn-move)
-- `ensureResearch(agentId, userId)` — lazy migration: captain with empty research gets User.progression.moves
+- `ensureResearch(agentId, userId)` — lazy migration: agent with empty research gets User.progression.moves
 - `getAgentResearch(agentId)` — read agent's research tree
 - `canAgentLearnMove(agentId, moveId, targetLevel)` — gate by agent's own research level
 - `validateAgentDeck(agentId, deck, agentMoves)` — validate deck against agent's research
@@ -1299,7 +1289,7 @@ Research tree is now per-agent (AgentProgression.research) instead of per-accoun
 - `POST /v1/agent/:id/research` — **new** unlock/upgrade move in research tree (deducts User.totalTaps + Agent branchXp, $transaction)
 - `POST /v1/agent/:id/allocate-xp` — **new** transfer User.progression.freeXP → Agent branchXp ($transaction)
 
-**Lazy migration:** Captain with empty research → copies User.progression.moves to AgentProgression.research + branchExp to agent xp (if 0). Triggered on GET /agent/:id, GET /available-moves, POST /research.
+**Lazy migration:** Agent with empty research → copies User.progression.moves to AgentProgression.research + branchExp to agent xp (if 0). Triggered on GET /agent/:id, GET /available-moves, POST /research.
 
 **PUT /user/progression:** Strips moves/branchExp from incoming data. Legacy values preserved in DB but no longer written to.
 
@@ -1465,7 +1455,7 @@ Free Arena: agent vs agent, random matchmaking, no ELO change, 80% XP. For testi
 Frontend for Club Mode agents. See Views table for details.
 
 - `src/core/state/modules/agentState.js` — Vuex module (14th): agents CRUD, Fight Club level (`fightClubLevel`, `SET_FIGHT_CLUB_LEVEL`, `fetchFightClubLevel`), detail actions (fetch/update/train/moves/deck/tactics/fights)
-- `src/components/club/` — AgentCard (captain has FIGHT button → PreparationView, disabled when fighting/resting), ClubLevelBar, AgentRoster, MorningReport, SkinPicker, ArchetypeSelector
+- `src/components/club/` — AgentCard (active agent has FIGHT button → PreparationView, disabled when fighting/resting), ClubLevelBar, AgentRoster, MorningReport, SkinPicker, ArchetypeSelector
 - `src/views/CreateAgentView.vue` — 3-step wizard (name+skin → build → confirm)
 - `src/views/AgentDetailView.vue` — 4-tab management (overview, moves, tactics, fights) + edit/deck/delete modals
 - `src/utils/fightStylePreview.js` — template-based fight style description generator
@@ -1679,7 +1669,7 @@ Prototype Club Mode — система автономных бойцов (аге
 | Социальная клановая система | Club → Clan (after rename) | Clan | Объединение игроков (существующая система) |
 | Команда бойцов одного игрока | FightClub (остаётся) | Club | Ядро Phase 1 — персональный контейнер |
 | Один боец | Agent | Fighter | Сущность которая дерётся |
-| Лицо клуба для PvP | Agent.isCaptain (новое) | Captain | Один Agent с флагом, идёт в PvP |
+| Активный боец для PvP | First Agent by createdAt | Active Agent | Определяется автоматически, не через UI |
 
 ### Архитектура
 
@@ -1725,7 +1715,7 @@ Feature flag `X402_ENABLED=false` на проде. On-chain verification = TODO 
 1. **freeXP миграция:** `User.freeXP` делится поровну на 3 ветки Agent при миграции в Fighter №1. `floor()` округление, остаток теряется (max 2 XP).
 2. **Deck size unification:** min deck = 3 для всех систем (User, Agent, PvP). Backend: `MIN_AGENT_DECK_SIZE` 4→3. Закрывает несоответствие трёх разных policies.
 3. **FightClub naming:** FightClub остаётся FightClub в коде. В UI и i18n — "Club". Только Prisma `Club → Clan` rename для социальной системы. Phase 2 может сделать FightClub→Club отдельно.
-4. **Captain real-time:** polling в AgentDetailView каждые 15 сек, с pause при `document.hidden` (Page Visibility API). WebSocket push отложен на Phase 2.
+4. ~~**Captain real-time:**~~ *REMOVED in Phase −1.* Captain system deleted entirely. Active agent = first by createdAt ASC.
 5. **Belt System семантика:** count-based с фильтром качества. Победы над равным или выше поясом копятся на нашивку. 10 поясов × 3 нашивки + Hexmaster = 31 ступень. Поражения не штрафуют. Точные числа добиваются в #P1-belt-1.
 
 ### Карта ТЗ Phase 1
@@ -1749,9 +1739,9 @@ Feature flag `X402_ENABLED=false` на проде. On-chain verification = TODO 
 | P1-belt-4a | Замена ELO→Belt в AI services (механическая) | | После belt-2 |
 | P1-belt-4b | Redesign AI prompts под Belt semantics | | После belt-4a |
 | P1-migration | Миграция User.progression → Fighter №1 + hide retirement UI | ✅ DONE | После belt-1 |
-| P1-captain-1 | Captain как поле + базовая логика + создание из Fighter №1 | ✅ DONE | После migration |
-| P1-captain-2 | Adapt Arena flow под Captain | ✅ DONE | После captain-1 |
-| P1-captain-3 | Adapt Profile/Ratings под Captain | ✅ DONE | Параллельно с captain-2 |
+| P1-captain-1 | Captain как поле + базовая логика + создание из Fighter №1 | REVERTED (Phase −1) | После migration |
+| P1-captain-2 | Adapt Arena flow под Captain | REVERTED (Phase −1) | После captain-1 |
+| P1-captain-3 | Adapt Profile/Ratings под Captain | REVERTED (Phase −1) | Параллельно с captain-2 |
 
 ### P1-migration — User → Fighter #1 — ✅ COMPLETE
 
@@ -1787,3 +1777,28 @@ Lazy per-user migration on `GET /v1/user/me`. Creates Agent "Fighter #1" from Us
 ### Парковочный список
 
 52 пункта долгов в `docs/phase1-parking-list.md`. 11 фиксятся в Phase 1, 41 — в Дороге 2 после deploy.
+
+### Phase −1 — Captain System Removal — ✅ COMPLETE
+
+Captain system completely removed. Active agent for combat = first agent by `createdAt` ASC via `fightClubService.getActiveAgent()`.
+
+**Backend changes:**
+- Helper `getActiveAgent(userId)` in `fightClubService.js` — replaces `getCaptainForCombat`
+- `Agent.isCaptain` field dropped (migration `20260416000000_remove_is_captain_from_agent`)
+- Deleted: `captainService.js`, `PUT /v1/agent/:id/captain` endpoint, `captainService.test.js`, `captainArenaFlow.test.js`, `backfill-captains.js`
+- API responses: `captain` sub-object removed from `/v1/user/me`, `/v1/user/login/:login`, `/v1/user/id/:id`, `/v1/user/search`, `/v1/friends/list`
+- `researchGateService.migrateResearchForCaptain` → `migrateAgentResearch` (no longer gated by captain flag)
+
+**Frontend changes:**
+- Deleted `UserCaptainBadge.vue`, all 5 usages replaced
+- `agentState`: `currentCaptain` getter → `activeAgent`, `setCaptain` action removed, sort no longer uses `isCaptain`
+- `ProfileView`: Captain Layer section removed
+- `AgentDetailView`: "Make Captain" button + confirm dialog removed
+- `AgentCard`: `isCaptain` prop → `isActive`, FIGHT button now on active agent
+- `PreparationView`: `currentCaptain` → `activeAgent`, error key `errNoCaptain` → `errNoActiveAgent`
+- `CardFightView`, `cardFightState`: captain vars renamed to agent vars
+- `MatchmakingView`, `FriendCard`, `PlayerSearchResult`, `ChallengeNotification`, `RatingsView`: removed UserCaptainBadge
+
+**i18n:** 15 captain keys removed × 11 locales = 165 deletions. 1 new key `fight.errNoActiveAgent` in all 11 locales.
+
+**Rationale:** Captain concept added complexity without clear UX benefit. First-by-createdAt rule is deterministic, requires no UI for user action, and matches actual behavior (Fighter #1 was always the default captain anyway).

@@ -19,8 +19,6 @@ description: Тестирование, QA и регрессия Hexlash. Три�
 |------|--------------|
 | `tests/userMigrationService.test.js` | User→Fighter #1 миграция (14 тестов) |
 | `tests/beltService.test.js` | Belt system: qualifying wins, belt calc, hexmaster |
-| `tests/captainService.test.js` | Captain: setCaptain, atomic swap |
-| `tests/captainArenaFlow.test.js` | Captain in arena: PvE/PvP flow |
 
 **Frontend:** автотестов нет.
 

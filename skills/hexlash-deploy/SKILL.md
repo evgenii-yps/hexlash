@@ -1,6 +1,6 @@
 ---
 name: hexlash-deploy
-description: Deploy, infrastructure, env vars, CI/CD, and rollout procedures for Hexlash. Use when deploying to test or prod, configuring environment variables, debugging build/runtime issues, planning database migrations, or running rollout scripts (migrate-all-users, backfill-captains).
+description: Deploy, infrastructure, env vars, CI/CD, and rollout procedures for Hexlash. Use when deploying to test or prod, configuring environment variables, debugging build/runtime issues, planning database migrations, or running rollout scripts (migrate-all-users).
 ---
 
 # Hexlash Deployment
@@ -155,9 +155,9 @@ Adding new subdomain requires editing `allowedOrigins` array in `backend/src/ind
 5. Smoke test: open site → login → main screen → check WebSocket connects → check no errors in browser console
 6. Watch backend logs first 5 minutes for unexpected ERROR lines
 
-### Migration rollout (Captain series and similar schema/data changes)
+### Migration rollout (schema/data changes)
 **Pre-flight (CRITICAL):**
-0. **Check current state of target DB** before assuming "fresh start": open `prisma studio` against target `DATABASE_URL`. Check if `Agent` table has any rows with `isCaptain=true` (lazy migration already ran). Check if `User` table has rows where corresponding Agent #1 exists (partial migration state). If state is mixed: STOP. Decide whether to clean up, continue from where lazy left off, or rebuild test DB from prod snapshot.
+0. **Check current state of target DB** before assuming "fresh start": open `prisma studio` against target `DATABASE_URL`. Check if `Agent` table has any rows (lazy migration already ran). Check if `User` table has rows where corresponding Agent #1 exists (partial migration state). If state is mixed: STOP. Decide whether to clean up, continue from where lazy left off, or rebuild test DB from prod snapshot.
 1. Confirm `DATABASE_URL` points to TEST DB (not prod) — triple check
 2. Confirm DB backup exists (last 24h)
 3. Confirm `MIGRATION_ENABLED=false` BEFORE deploy (prevents lazy migration race with batch script)
@@ -169,11 +169,9 @@ Adding new subdomain requires editing `allowedOrigins` array in `backend/src/ind
 3. Run `npx prisma migrate deploy` if schema changes (NOTE: `npm start` already runs this, but explicit run is safer for verification)
 4. Run `node backend/scripts/migrate-all-users.js` — idempotent, skips already migrated users, logs `[migration]` tag. Forces `MIGRATION_ENABLED=true` internally.
 5. Spot-check 3-5 users via `npx prisma studio`: Fighter #1 exists, fields populated
-6. Run `node backend/scripts/backfill-captains.js` — idempotent, skips clubs with existing captain, promotes oldest agent. Logs `[backfill]` tag.
-7. Spot-check same users: isCaptain=true on one agent per FightClub
-8. Set `MIGRATION_ENABLED=true` and restart (enables lazy migration for any users created after batch ran)
-9. Manual QA: PvE fight → Captain.wins+1 (NOT User.pveWins). PvP matchmaking → opponent skin = Captain skin. ProfileView shows two layers (Trainer + Captain).
-10. Monitor logs for `[migration]` and `[backfill]` tags for 24h
+6. Set `MIGRATION_ENABLED=true` and restart (enables lazy migration for any users created after batch ran)
+7. Manual QA: PvE fight → Agent.wins+1 (NOT User.pveWins). PvP matchmaking → opponent skin = Agent skin. ProfileView loads correctly.
+8. Monitor logs for `[migration]` tags for 24h
 
 ### Kill switch
 - `MIGRATION_ENABLED=false` + restart backend → lazy migration off, existing migrated users keep working, new users not migrated
