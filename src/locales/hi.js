@@ -884,6 +884,8 @@ export default {
     waitingForOpponent: 'प्रतिद्वंद्वी की प्रतीक्षा...',
     lblVs: 'vs',
     opponentDisconnected: 'प्रतिद्वंद्वी डिस्कनेक्ट हो गया',
+    fightLostOnRefresh: 'Fight lost due to page reload',
+    fightStartFailed: 'Failed to start fight',
     v2: {
       lblFilters: 'FILTERS',
       lblSearch: 'SEARCH',

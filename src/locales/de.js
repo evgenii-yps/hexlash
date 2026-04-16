@@ -722,6 +722,8 @@ export default {
     waitingForOpponent: 'Warte auf Gegner...',
     lblVs: 'vs',
     opponentDisconnected: 'Gegner getrennt',
+    fightLostOnRefresh: 'Fight lost due to page reload',
+    fightStartFailed: 'Failed to start fight',
     v2: {
       lblFilters: 'FILTERS',
       lblSearch: 'SEARCH',

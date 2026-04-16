@@ -884,6 +884,8 @@ export default {
     waitingForOpponent: 'في انتظار الخصم...',
     lblVs: 'vs',
     opponentDisconnected: 'انقطع اتصال الخصم',
+    fightLostOnRefresh: 'Fight lost due to page reload',
+    fightStartFailed: 'Failed to start fight',
     v2: {
       lblFilters: 'FILTERS',
       lblSearch: 'SEARCH',

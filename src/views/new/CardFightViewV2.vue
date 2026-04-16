@@ -140,7 +140,7 @@
       </transition-group>
 
       <!-- ── COACH OVERLAY (PvE, 15s timer) ──────────────────────────── -->
-      <div v-if="fightPhase === 'coach'" class="cfv2-coach-overlay">
+      <div v-if="!isPvP && fightPhase === 'coach'" class="cfv2-coach-overlay">
         <div class="cfv2-coach-panel">
           <div class="cfv2-coach-timer" :class="{ 'cfv2-coach-timer--urgent': adviceTimer <= 3 }">
             <span :key="adviceTimer">{{ adviceTimer }}</span>
@@ -159,6 +159,34 @@
             </button>
           </div>
         </div>
+      </div>
+
+      <!-- ── PvP COACH OVERLAY (10s timer, server-synced) ──────────────── -->
+      <div v-if="isPvP && showCoachChoice" class="cfv2-coach-overlay">
+        <div class="cfv2-coach-panel">
+          <div class="cfv2-coach-timer" :class="{ 'cfv2-coach-timer--urgent': coachTimerPvP <= 3 }">
+            <span :key="coachTimerPvP">{{ coachTimerPvP }}</span>
+          </div>
+          <div class="cfv2-coach-title">{{ fv2.lblCoachTitle || 'COACH' }}</div>
+          <div class="cfv2-coach-subtitle">{{ fv2.lblCoachSubtitle || 'Choose your next move' }}</div>
+          <div class="cfv2-coach-buttons">
+            <button class="cfv2-coach-btn cfv2-coach-btn--attack" @click="onPvPCoachChoice('attack')">
+              {{ fv2.lblCoachAttack || 'ATTACK' }}
+            </button>
+            <button class="cfv2-coach-btn cfv2-coach-btn--defense" @click="onPvPCoachChoice('defense')">
+              {{ fv2.lblCoachDefense || 'DEFENSE' }}
+            </button>
+            <button class="cfv2-coach-btn cfv2-coach-btn--position" @click="onPvPCoachChoice('position')">
+              {{ fv2.lblCoachPosition || 'POSITION' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PvP WAITING-FOR-OPPONENT OVERLAY ─────────────────────────── -->
+      <div v-if="isPvP && showWaiting" class="cfv2-pvp-waiting">
+        <div class="cfv2-pvp-waiting-spinner" aria-hidden="true"></div>
+        <div class="cfv2-pvp-waiting-text">{{ waitingText }}</div>
       </div>
 
       <!-- ── RESULT OVERLAY (3.10.4: full splash + AI Trainer + log) ──── -->
@@ -225,6 +253,9 @@ import HPBar from '@/components/fragments/fight/HPBar.vue';
 import BeltBadge from '@/components/ui/BeltBadge.vue';
 import AiTrainerAnalysis from '@/components/AiTrainerAnalysis.vue';
 import iconDice from '@/assets/images/icons/dice.svg';
+import iconAdrenaline from '@/assets/images/icons/adrenaline.svg';
+import iconShield from '@/assets/images/icons/shield.svg';
+import iconBlind from '@/assets/images/icons/blind.svg';
 
 const CAM_MODES = [
   { id: 'pit',    labelKey: 'lblCamPit',    fallback: 'PIT' },
@@ -243,8 +274,21 @@ export default {
     const sceneCanvas = ref(null);
     let sceneCtl = null;
 
-    // ── PvP guard (PvE-only in this sub-ТЗ) ──
-    const isPvP = computed(() => route.query.mode === 'pvp');
+    // ── PvP mode detection ──
+    const isPvP       = computed(() => route.query.mode === 'pvp');
+    const pvpMatchId  = computed(() => route.query.matchId);
+    const pvpFight    = computed(() => store.getters['pvp/getCurrentPvPFight']);
+
+    // ── PvP state (server-driven fight) ──
+    const pvpStatus        = ref('waiting');   // waiting | countdown | fighting | paused_coach | finished
+    const showCoachChoice  = ref(false);
+    const coachTimerPvP    = ref(10);
+    const showWaiting      = ref(false);
+    const waitingText      = ref('');
+    const pvpResultType    = ref('');          // win | lose | draw
+    const pvpResultReason  = ref('');          // disconnect | normal
+    let   pvpTimerInterval = null;
+    let   fightStartTimeout = null;
 
     // ── Locale ──
     const fv2 = computed(() => t.value.fight?.v2 || {});
@@ -319,8 +363,15 @@ export default {
     const aiTrainerFightData = computed(() => {
       const s = store.state.fight;
       let result = 'draw';
-      if (s.liveHP1 > s.liveHP2) result = 'win';
-      else if (s.liveHP1 < s.liveHP2) result = 'loss';
+      // PvP: prefer server-driven result (handles opponent_disconnected)
+      if (isPvP.value && pvpResultType.value) {
+        if (pvpResultType.value === 'win')       result = 'win';
+        else if (pvpResultType.value === 'lose') result = 'loss';
+        else                                     result = 'draw';
+      } else {
+        if (s.liveHP1 > s.liveHP2) result = 'win';
+        else if (s.liveHP1 < s.liveHP2) result = 'loss';
+      }
       return {
         rounds: s.roundLog || [],
         playerDeck: s.playerDeck || [],
@@ -369,6 +420,9 @@ export default {
     // ── Result classification ──
     const resultState = computed(() => {
       if (fightPhase.value !== 'results') return '';
+      // PvP: server-driven, prefer pvpResultType when set (handles opponent_disconnected case)
+      if (isPvP.value && pvpResultType.value) return pvpResultType.value;
+      // PvE: HP-derived
       const draw = liveHP1.value <= 0 && liveHP2.value <= 0;
       if (draw) return 'draw';
       if (liveHP1.value <= 0) return 'lose';
@@ -503,6 +557,12 @@ export default {
 
     // Phase transitions
     const stopPhaseWatch = watch(fightPhase, (val, oldVal) => {
+      // PvP: server drives the fight — skip local round/coach timers (handled by PvP handlers)
+      const isServerPvP = isPvP.value && pvpMatchId.value;
+      if (isServerPvP) {
+        if (val === 'results') stopRoundTimer();
+        return;
+      }
       // Coach enter / leave
       if (val === 'coach') {
         stopRoundTimer();
@@ -545,7 +605,13 @@ export default {
 
     // ── Actions ──
     function onRollDice() {
-      store.dispatch('fight/rollDiceManual');
+      if (isPvP.value && pvpMatchId.value) {
+        // PvP: send dice_roll to server (instant, no pause)
+        store.dispatch('webSocket/sendMessage', { type: 'dice_roll' });
+        store.commit('fight/setDiceState', { activeItem: null, cooldownLeft: 0, ready: false });
+      } else {
+        store.dispatch('fight/rollDiceManual');
+      }
     }
 
     function onCoachChoice(action) {
@@ -557,7 +623,11 @@ export default {
       showDetailedLog.value = false;
       stopRoundTimer();
       clearInterval(countdownTimer);
-      store.dispatch('fight/fightAgain', { targetRoute: '/fight-v2' });
+      if (isPvP.value) {
+        pvpFightAgain();
+      } else {
+        store.dispatch('fight/fightAgain', { targetRoute: '/fight-v2' });
+      }
     }
 
     function onExitToPit() {
@@ -579,6 +649,432 @@ export default {
       router.push('/arena/pit');
     }
 
+    // ──────────────────────────────────────────────────────────────────────
+    //  PvP — server-driven fight (11 WS handlers + lifecycle)
+    //  Ported from legacy CardFightView.vue:708-1157 AS-IS per ТЗ.
+    //  Router targets adapted: /arena → /arena/pit, /matchmaking → /matchmaking-v2.
+    // ──────────────────────────────────────────────────────────────────────
+
+    function getMyOdId() {
+      return store.getters['master/getMaster']?.userData?.id;
+    }
+
+    function startPvPTimer(type) {
+      clearPvPTimer();
+      pvpTimerInterval = setInterval(() => {
+        if (type === 'coach') {
+          coachTimerPvP.value--;
+          if (coachTimerPvP.value <= 0) {
+            clearPvPTimer();
+            if (showCoachChoice.value) onPvPCoachChoice(null);
+          }
+        }
+      }, 1000);
+    }
+
+    function clearPvPTimer() {
+      if (pvpTimerInterval) {
+        clearInterval(pvpTimerInterval);
+        pvpTimerInterval = null;
+      }
+    }
+
+    function pvpFightAgain() {
+      cleanupPvP();
+      router.push('/matchmaking-v2');
+    }
+
+    function initPvPFight() {
+      pvpStatus.value = 'waiting';
+      showCountdown.value = false;
+
+      // Initialize fight store for PvP display
+      store.commit('fight/setLiveHP1', MAX_HP);
+      store.commit('fight/setLiveHP2', MAX_HP);
+      store.commit('fight/setRoundNum', 0);
+      store.commit('fight/clearRoundLog');
+      store.commit('fight/resetPlayerModifiers');
+      store.commit('fight/clearDice');
+      store.commit('fight/clearEventTitle');
+      store.commit('fight/resetCoachAdvice');
+      store.commit('fight/resetStats');
+      store.commit('fight/setXpEarned', null);
+      store.commit('fight/setXpAwarded', false);
+
+      // Set opponent from pvpState for display
+      const pvpOpp = store.getters['pvp/getOpponentInfo'];
+      if (pvpOpp) {
+        store.commit('fight/setOpponent', {
+          name: pvpOpp.username || 'Opponent',
+          skin: pvpOpp.skin || null,
+          avatarUrl: pvpOpp.avatarUrl || null,
+          modules: [],
+        });
+      }
+
+      // Send ready + active agent deck/modules to server
+      const agent = store.getters['agent/activeAgent'];
+      const agentProg = agent?.progression || {};
+      const agentDeck = Array.isArray(agentProg.deck) ? agentProg.deck : [];
+      const agentMoves = Array.isArray(agentProg.moves) ? agentProg.moves : [];
+      const agentModules = [agent?.primaryModule, agent?.secondaryModule, agent?.tertiaryModule].filter(Boolean);
+      const moveLevelMap = {};
+      for (const m of agentMoves) { if (m.moveId) moveLevelMap[m.moveId] = m.level || 1; }
+      store.dispatch('webSocket/sendMessage', {
+        type: 'pvp_ready',
+        matchId: pvpMatchId.value,
+        deck: agentDeck.map(id => ({ id, level: moveLevelMap[id] || 1 })),
+        modules: agentModules,
+      });
+
+      // Listen for PvP events
+      window.addEventListener('pvp-fight_start',          onPvPFightStart);
+      window.addEventListener('pvp-round_result',         onPvPRoundResult);
+      window.addEventListener('pvp-dice_available',       onPvPDiceAvailable);
+      window.addEventListener('pvp-dice_rolled',          onPvPDiceRolled);
+      window.addEventListener('pvp-dice_error',           onPvPDiceError);
+      window.addEventListener('pvp-coach_pause',          onPvPCoachPause);
+      window.addEventListener('pvp-coach_result',         onPvPCoachResult);
+      window.addEventListener('pvp-coach_opponent_ready', onPvPCoachOpponentReady);
+      window.addEventListener('pvp-fight_end',            onPvPFightEnd);
+      window.addEventListener('pvp-overdrive_start',      onPvPOverdriveStart);
+      window.addEventListener('match-cancelled',          onMatchCancelled);
+
+      // Timeout: if fight_start doesn't arrive within 30s, abort
+      fightStartTimeout = setTimeout(() => {
+        if (pvpStatus.value === 'waiting') {
+          cleanupPvP();
+          store.commit('master/setInfoMessage', {
+            text: t.value.pvp.fightStartFailed || 'Failed to start fight',
+            timeout: 3000,
+          });
+          router.push('/arena/pit');
+        }
+      }, 30000);
+    }
+
+    function cleanupPvP() {
+      clearPvPTimer();
+      if (fightStartTimeout) {
+        clearTimeout(fightStartTimeout);
+        fightStartTimeout = null;
+      }
+      window.removeEventListener('pvp-fight_start',          onPvPFightStart);
+      window.removeEventListener('pvp-round_result',         onPvPRoundResult);
+      window.removeEventListener('pvp-dice_available',       onPvPDiceAvailable);
+      window.removeEventListener('pvp-dice_rolled',          onPvPDiceRolled);
+      window.removeEventListener('pvp-dice_error',           onPvPDiceError);
+      window.removeEventListener('pvp-coach_pause',          onPvPCoachPause);
+      window.removeEventListener('pvp-coach_result',         onPvPCoachResult);
+      window.removeEventListener('pvp-coach_opponent_ready', onPvPCoachOpponentReady);
+      window.removeEventListener('pvp-fight_end',            onPvPFightEnd);
+      window.removeEventListener('pvp-overdrive_start',      onPvPOverdriveStart);
+      window.removeEventListener('match-cancelled',          onMatchCancelled);
+    }
+
+    function onPvPFightStart(e) {
+      const data = e.detail;
+      if (fightStartTimeout) {
+        clearTimeout(fightStartTimeout);
+        fightStartTimeout = null;
+      }
+      pvpStatus.value = 'countdown';
+
+      const myId = getMyOdId();
+      const isP1 = data.player1?.odId === myId;
+      const oppData = isP1 ? data.player2 : data.player1;
+
+      store.commit('pvp/SET_PVP_MATCH', {
+        matchId: data.matchId,
+        opponent: oppData,
+        isPlayer1: isP1,
+      });
+
+      // Set opponent in fight store for display (preserve existing skin as fallback)
+      const existingOpponent = store.state.fight?.opponent;
+      store.commit('fight/setOpponent', {
+        name: oppData?.username || 'Opponent',
+        skin: oppData?.skin || existingOpponent?.skin || null,
+        avatarUrl: oppData?.avatarUrl || existingOpponent?.avatarUrl || null,
+        modules: [],
+      });
+
+      store.commit('fight/setFightPhase', 'fighting');
+
+      // Reuse existing countdown animation
+      showCountdown.value = true;
+      countdownValue.value = 3;
+      clearInterval(countdownTimer);
+      countdownTimer = setInterval(() => {
+        if (countdownValue.value > 1) {
+          countdownValue.value -= 1;
+        } else {
+          countdownValue.value = t.value.fight.lblFight;
+          clearInterval(countdownTimer);
+          setTimeout(() => {
+            countdownValue.value = 0;
+            showCountdown.value = false;
+            pvpStatus.value = 'fighting';
+          }, 600);
+        }
+      }, 800);
+    }
+
+    function onPvPRoundResult(e) {
+      const data = e.detail;
+      const isP1 = store.getters['pvp/getIsPlayer1'];
+
+      const myData  = isP1 ? data.player1 : data.player2;
+      const oppData = isP1 ? data.player2 : data.player1;
+      const myHp    = myData.hp;
+      const oppHp   = oppData.hp;
+      const myDmg   = myData.damage;
+      const oppDmg  = oppData.damage;
+
+      store.commit('fight/setLiveHP1', myHp);
+      store.commit('fight/setLiveHP2', oppHp);
+      store.commit('fight/setRoundNum', data.round);
+
+      // Map branch to action type for card styling
+      const branchToAction = (branch) => {
+        if (branch === 'speed')     return 'attack';
+        if (branch === 'power')     return 'attack';
+        if (branch === 'technique') return 'defense';
+        return 'attack';
+      };
+
+      const myAction  = branchToAction(myData.module?.branch);
+      const oppAction = branchToAction(oppData.module?.branch);
+
+      // Build events array
+      const events = [];
+      for (const eff of (myData.effects  || [])) events.push({ fighter: 1, type: eff.type, value: 0 });
+      for (const eff of (oppData.effects || [])) events.push({ fighter: 2, type: eff.type, value: 0 });
+
+      store.commit('fight/addRoundToLog', {
+        roundNum: data.round,
+        action1:  myAction,
+        action2:  oppAction,
+        damage1:  oppDmg,
+        damage2:  myDmg,
+        hp1After: myHp,
+        hp2After: oppHp,
+        events,
+      });
+      store.commit('fight/addStats', {
+        totalDamageDealt: myDmg,
+        totalDamageTaken: oppDmg,
+      });
+
+      // Clear dice result display after round (preserve ready state)
+      if (diceState.value.activeItem) {
+        store.commit('fight/setDiceState', { activeItem: null });
+      }
+
+      // Tick coach boost rounds down
+      const cv = store.getters['fight/getCoachAdvice'];
+      if (cv?.active && cv.roundsLeft > 0) {
+        const newLeft = cv.roundsLeft - 1;
+        if (newLeft <= 0) {
+          store.commit('fight/setCoachAdvice', { active: false, roundsLeft: 0, action: null });
+        } else {
+          store.commit('fight/setCoachAdvice', { roundsLeft: newLeft });
+        }
+      }
+
+      // Dodge/crit event titles for PvP archetype mechanics
+      const myDodged   = myData.dodged;
+      const oppDodged  = oppData.dodged;
+      const myCritted  = myData.critted;
+      const oppCritted = oppData.critted;
+
+      if (myDodged) {
+        store.commit('fight/setEventTitle', { title: t.value.fight.lblDodged, cls: 'event-dodge' });
+        setTimeout(() => store.commit('fight/clearEventTitle'), 1200);
+      } else if (oppCritted) {
+        store.commit('fight/setEventTitle', { title: t.value.fight.lblCrit, cls: 'event-crit' });
+        setTimeout(() => store.commit('fight/clearEventTitle'), 1200);
+      } else if (oppDodged) {
+        store.commit('fight/setEventTitle', { title: t.value.fight.lblDodged, cls: 'event-dodge' });
+        setTimeout(() => store.commit('fight/clearEventTitle'), 1200);
+      } else if (myCritted) {
+        store.commit('fight/setEventTitle', { title: t.value.fight.lblCrit, cls: 'event-crit' });
+        setTimeout(() => store.commit('fight/clearEventTitle'), 1200);
+      }
+
+      // Shake animations
+      if (oppDmg > 0) {
+        triggerShake('left');
+        triggerFlash('rgba(255, 51, 51, 0.25)');
+      }
+      if (myDmg > 0) {
+        triggerShake('right');
+      }
+    }
+
+    function onPvPDiceAvailable() {
+      store.commit('fight/setDiceState', { activeItem: null, cooldownLeft: 0, ready: true });
+    }
+
+    function onPvPDiceRolled(e) {
+      const data = e.detail;
+      if (!data?.effect) return;
+      triggerFlash(
+        data.effect.type === 'crit'  ? 'rgba(255, 230, 0, 0.35)' :
+        data.effect.type === 'rage'  ? 'rgba(255, 51, 51, 0.35)' :
+        data.effect.type === 'heal'  ? 'rgba(0, 255, 136, 0.25)' :
+        'rgba(255, 255, 255, 0.2)'
+      );
+
+      const DICE_EFFECTS = {
+        heal:       { id: 'heal',       image: iconDice },
+        adrenaline: { id: 'adrenaline', image: iconAdrenaline },
+        shield:     { id: 'shield',     image: iconShield },
+        blind:      { id: 'blind',      image: iconBlind },
+        rage:       { id: 'rage',       image: iconDice },
+        crit:       { id: 'crit',       image: iconDice },
+      };
+      const diceItem = DICE_EFFECTS[data.effect.type] || { id: data.effect.type, image: iconDice };
+      store.commit('fight/setDiceState', { activeItem: diceItem, cooldownLeft: 3, ready: false });
+
+      if (data.hp !== undefined) {
+        store.commit('fight/setLiveHP1', data.hp);
+      }
+      if (data.oppHp !== undefined) {
+        store.commit('fight/setLiveHP2', data.oppHp);
+        store.commit('fight/addStats', {
+          totalDamageDealt: data.effect.type === 'rage' ? 20 : 30,
+        });
+        const label = data.effect.type === 'rage'
+          ? t.value.fight.lblEventRage
+          : t.value.fight.lblEventCritical;
+        store.commit('fight/setEventTitle', { title: label, cls: 'event-' + data.effect.type });
+        setTimeout(() => store.commit('fight/clearEventTitle'), 1200);
+        triggerShake('right');
+      }
+    }
+
+    function onPvPDiceError() {
+      store.commit('fight/setEventTitle', {
+        title: t.value.fight.lblDiceUnavailable || 'Dice unavailable',
+        cls: 'event-info',
+      });
+      setTimeout(() => store.commit('fight/clearEventTitle'), 1500);
+      store.commit('fight/setDiceState', { activeItem: null, cooldownLeft: 0, ready: false });
+      // Re-enable after 2s debounce
+      setTimeout(() => {
+        if (pvpStatus.value === 'fighting') {
+          store.commit('fight/setDiceState', { activeItem: null, cooldownLeft: 0, ready: true });
+        }
+      }, 2000);
+    }
+
+    function onPvPCoachPause() {
+      pvpStatus.value = 'paused_coach';
+      showWaiting.value = false;
+      showCoachChoice.value = true;
+      coachTimerPvP.value = 10;
+      startPvPTimer('coach');
+    }
+
+    function onPvPCoachChoice(action) {
+      store.dispatch('webSocket/sendMessage', {
+        type: 'coach_choice',
+        choice: { action },
+      });
+      showCoachChoice.value = false;
+      showWaiting.value = true;
+      waitingText.value = t.value.pvp.waitingForOpponent;
+    }
+
+    function onPvPCoachOpponentReady() {
+      if (showWaiting.value) {
+        waitingText.value = t.value.pvp.opponentReady || t.value.pvp.waitingForOpponent;
+      }
+    }
+
+    function onMatchCancelled() {
+      cleanupPvP();
+      store.commit('master/setInfoMessage', {
+        text: t.value.pvp.matchCancelled || 'Match cancelled',
+        timeout: 3000,
+      });
+      router.push('/arena/pit');
+    }
+
+    function onPvPCoachResult(e) {
+      const data = e.detail;
+      pvpStatus.value = 'fighting';
+      showWaiting.value = false;
+      showCoachChoice.value = false;
+      clearPvPTimer();
+
+      const isP1 = store.getters['pvp/getIsPlayer1'];
+      const myResult = isP1 ? data.player1 : data.player2;
+      if (myResult?.action) {
+        store.commit('fight/setCoachAdvice', {
+          used: true, active: true, action: myResult.action, roundsLeft: 4,
+        });
+      }
+    }
+
+    function onPvPFightEnd(e) {
+      const data = e.detail;
+      pvpStatus.value = 'finished';
+      clearPvPTimer();
+      showWaiting.value = false;
+      showCoachChoice.value = false;
+
+      const myId = getMyOdId();
+
+      if (data.reason === 'opponent_disconnected') {
+        pvpResultType.value = 'win';
+        pvpResultReason.value = 'disconnect';
+      } else if (data.winner === 'draw') {
+        pvpResultType.value = 'draw';
+      } else if (data.winner === myId) {
+        pvpResultType.value = 'win';
+      } else {
+        pvpResultType.value = 'lose';
+      }
+
+      // Set final HPs from server data
+      const isP1 = store.getters['pvp/getIsPlayer1'];
+      if (data.player1 && data.player2) {
+        store.commit('fight/setLiveHP1', isP1 ? data.player1.finalHp : data.player2.finalHp);
+        store.commit('fight/setLiveHP2', isP1 ? data.player2.finalHp : data.player1.finalHp);
+      }
+
+      // Award XP for PvP fight
+      if (!store.getters['fight/getXpAwarded']) {
+        const xpFromServer = data.xp;
+        let expGain;
+        if (xpFromServer) {
+          expGain = isP1 ? xpFromServer.player1 : xpFromServer.player2;
+        } else {
+          expGain = pvpResultType.value === 'win'
+            ? 10 : pvpResultType.value === 'draw' ? 7 : 5;
+        }
+        store.commit('fight/setXpEarned', expGain);
+        store.commit('fight/setXpAwarded', true);
+      }
+
+      store.commit('fight/setFightPhase', 'results');
+      store.dispatch('fight/clearSavedFight');
+      store.dispatch('pvp/finishPvPFight', pvpResultType.value);
+    }
+
+    function onPvPOverdriveStart() {
+      // NOTE (D10): webSocketState does not currently dispatch 'pvp-overdrive_start'.
+      // Listener registered per legacy AS-IS for future-proofing.
+      triggerFlash('rgba(255, 6, 111, 0.4)');
+      store.commit('fight/setEventTitle', {
+        title: fv2.value.lblOverdrive || 'OVERDRIVE',
+        cls: 'event-overdrive',
+      });
+      setTimeout(() => store.commit('fight/clearEventTitle'), 2000);
+    }
+
     // ── Prevent accidental reload during fight ──
     function handleBeforeUnload(e) {
       if (fightPhase.value === 'fighting' || fightPhase.value === 'coach') {
@@ -589,12 +1085,49 @@ export default {
 
     // ── Lifecycle ──
     onMounted(async () => {
-      if (isPvP.value) {
-        store.commit('master/setInfoMessage', { text: 'PvP not yet supported in V2 fight view', timeout: 3000 });
-        await router.replace('/arena/pit');
+      // ── PvP server-driven path ──
+      if (isPvP.value && pvpMatchId.value) {
+        // Refresh detection: if store has no opponent info, the match is lost
+        const hasMatchContext =
+          store.getters['pvp/getOpponentInfo'] ||
+          store.getters['pvp/getCurrentMatchId'];
+        if (!hasMatchContext) {
+          store.commit('pvp/RESET_PVP_FIGHT');
+          store.commit('master/setInfoMessage', {
+            text: t.value.pvp.fightLostOnRefresh || 'Fight lost due to page reload',
+            timeout: 3000,
+          });
+          await router.replace('/arena/pit');
+          return;
+        }
+        prevHP1 = MAX_HP;
+        prevHP2 = MAX_HP;
+        initPvPFight();
+        maybeInitScene();
+        window.addEventListener('beforeunload', handleBeforeUnload);
         return;
       }
 
+      // ── Legacy PvP path (pvpFight in store, no matchId in route) ──
+      if (isPvP.value && pvpFight.value) {
+        await store.dispatch('fight/initFromStorage');
+        prevHP1 = liveHP1.value ?? MAX_HP;
+        prevHP2 = liveHP2.value ?? MAX_HP;
+        maybeInitScene();
+        if (fightPhase.value === 'fighting') {
+          if (roundNum.value === 0) startCountdown();
+          else { showCountdown.value = false; startRoundTimer(); }
+        } else if (fightPhase.value === 'results') {
+          showCountdown.value = false;
+        } else {
+          await router.replace('/arena/pit');
+          return;
+        }
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return;
+      }
+
+      // ── PvE path (unchanged from 3.10.4) ──
       await store.dispatch('fight/initFromStorage');
 
       if (fightPhase.value === 'idle' || fightPhase.value === 'preparation') {
@@ -636,6 +1169,8 @@ export default {
       stopDiceWatch();
       stopOverdriveWatch();
       window.removeEventListener('beforeunload', handleBeforeUnload);
+      // PvP-specific cleanup: WS listeners + timers
+      if (isPvP.value) cleanupPvP();
       if (sceneCtl) {
         sceneCtl.cleanup();
         sceneCtl = null;
@@ -661,12 +1196,18 @@ export default {
       resultState, resultTitle,
       // AI Trainer payload (3.10.4)
       aiTrainerFightData,
+      // PvP state (3.10.2b)
+      isPvP, pvpMatchId, pvpStatus,
+      showCoachChoice, coachTimerPvP,
+      showWaiting, waitingText,
       // static
       MAX_ROUNDS, CAM_MODES,
       iconDice,
       // handlers
       onRollDice, onCoachChoice, onFightAgain, onExitToPit, onBackClick,
       setCamera, changeBuild,
+      // PvP handlers (3.10.2b)
+      onPvPCoachChoice, pvpFightAgain,
     };
   },
 };
@@ -1218,5 +1759,39 @@ export default {
 .cfv2-result-btn--primary:hover {
   background: var(--hex-primary-light, var(--hex-primary));
   border-color: var(--hex-primary-light, var(--hex-primary));
+}
+
+/* ── PvP WAITING OVERLAY (3.10.2b) ───────────────────────────────── */
+.cfv2-pvp-waiting {
+  position: absolute; inset: 0;
+  background: rgba(7, 8, 17, 0.85);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  z-index: 65;
+  pointer-events: auto;
+}
+.cfv2-pvp-waiting-spinner {
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--hex-border-default);
+  border-top-color: var(--hex-text-primary);
+  border-radius: 50%;
+  animation: cfv2-pvp-spin 600ms linear infinite;
+}
+@keyframes cfv2-pvp-spin {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.cfv2-pvp-waiting-text {
+  font-family: var(--hex-font-body);
+  color: var(--hex-text-secondary);
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  text-align: center;
+  max-width: 280px;
 }
 </style>
