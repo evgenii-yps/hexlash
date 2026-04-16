@@ -30,6 +30,7 @@ const ROUTE_TO_VIEW = {
   Training: 'training',
   TrainingV2: 'training',
   Matchmaking: 'mm',
+  MatchmakingV2: 'mm',
   Ratings: 'ratings',
   RatingsV2: 'ratings',
   Clan: 'clan',

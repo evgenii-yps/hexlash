@@ -724,6 +724,10 @@ export default {
     allocateTo: 'ВЛОЖИТЬ В',
     allocate: 'УСИЛИТЬ',
     cancel: 'Отмена',
+    v2: {
+      lblFilters: 'ФИЛЬТРЫ',
+      lblSearch: 'ИСКАТЬ',
+    },
   },
   cards: {
   },

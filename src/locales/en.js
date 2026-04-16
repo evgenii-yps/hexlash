@@ -725,6 +725,10 @@ export default {
     allocateTo: 'INVEST IN',
     allocate: 'POWER UP',
     cancel: 'Cancel',
+    v2: {
+      lblFilters: 'FILTERS',
+      lblSearch: 'SEARCH',
+    },
   },
   cards: {
   },
