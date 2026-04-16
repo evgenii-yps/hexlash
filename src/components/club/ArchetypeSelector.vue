@@ -49,7 +49,7 @@ export default {
 
 <style scoped>
 .selector-label {
-  font-family: 'Anonymous', monospace;
+  font-family: var(--hex-font-display);
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -82,7 +82,7 @@ export default {
 }
 
 .arch-name {
-  font-family: 'Anonymous', monospace;
+  font-family: var(--hex-font-display);
   font-size: 12px;
   color: var(--hex-text-primary);
   margin-bottom: 3px;

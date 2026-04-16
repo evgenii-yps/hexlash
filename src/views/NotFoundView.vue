@@ -22,14 +22,14 @@ import {t} from '@/locales/index.js';
 }
 
 h1 {
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: var(--hex-font-display);
   font-size: 3rem;
   margin-bottom: 1rem;
   color: var(--hex-text-primary);
 }
 
 p {
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: var(--hex-font-display);
   font-size: 5rem;
   color: var(--hex-text-primary);
 }

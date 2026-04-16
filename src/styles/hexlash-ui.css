@@ -296,7 +296,7 @@
 
 /* Numbers (HP, XP, damage) */
 .hex-number {
-  font-family: 'AnonymousBalance', 'Courier New', monospace;
+  font-family: var(--hex-font-mono);
   font-weight: 700;
 }
 
@@ -794,7 +794,7 @@
 /* --- Font utilities --- */
 
 .hex-title {
-  font-family: 'Anonymous', 'Courier New', monospace;
+  font-family: var(--hex-font-display);
   text-transform: uppercase;
   letter-spacing: 1px;
 }

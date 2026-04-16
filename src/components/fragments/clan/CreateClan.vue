@@ -201,7 +201,7 @@ const saveChanges = async () => {
   color: var(--hex-text-primary);
   font-size: 0.9rem;
   font-weight: bold;
-  font-family: 'AnonymousBalance', monospace;
+  font-family: var(--hex-font-mono);
 }
 
 .cost-insufficient {

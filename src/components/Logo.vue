@@ -23,7 +23,7 @@ const goToHome = () => {
 }
 
 .logo-text {
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: var(--hex-font-display);
   font-size: 1.6em;
   color: var(--hex-primary);
   letter-spacing: 3px;

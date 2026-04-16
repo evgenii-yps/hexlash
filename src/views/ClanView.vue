@@ -414,7 +414,7 @@ const onClanDeleted = () => {
   color: var(--hex-text-primary);
   font-size: 10px;
   font-weight: bold;
-  font-family: 'AnonymousBalance', 'Courier New', monospace;
+  font-family: var(--hex-font-mono);
   border-radius: var(--hex-radius-sm);
   letter-spacing: 0.5px;
   border: 1px solid var(--hex-border-default);
@@ -425,8 +425,8 @@ const onClanDeleted = () => {
 
 .level-progress { position: relative; z-index: 1; margin-top: 10px; }
 .level-labels { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
-.level-current { font-size: 10px; font-family: 'AnonymousBalance', 'Courier New', monospace; color: var(--hex-success); letter-spacing: 0.5px; }
-.level-xp { font-size: 10px; font-family: 'AnonymousBalance', 'Courier New', monospace; color: var(--hex-text-muted); }
+.level-current { font-size: 10px; font-family: var(--hex-font-mono); color: var(--hex-success); letter-spacing: 0.5px; }
+.level-xp { font-size: 10px; font-family: var(--hex-font-mono); color: var(--hex-text-muted); }
 .level-bar { height: 6px; background: var(--hex-bg-dark); border-radius: 3px; overflow: hidden; }
 .level-bar-fill { height: 100%; background: linear-gradient(90deg, var(--hex-success), #33CC77); border-radius: 3px; box-shadow: 0 0 8px rgba(0, 255, 136, 0.3); transition: width 0.4s ease; }
 
@@ -441,7 +441,7 @@ const onClanDeleted = () => {
 }
 .member-row:hover { background: color-mix(in srgb, var(--hex-bg-light) 50%, transparent); }
 
-.member-rank { width: 24px; text-align: center; font-family: 'AnonymousBalance', 'Courier New', monospace; font-size: 14px; color: var(--hex-text-muted); flex-shrink: 0; }
+.member-rank { width: 24px; text-align: center; font-family: var(--hex-font-mono); font-size: 14px; color: var(--hex-text-muted); flex-shrink: 0; }
 .rank-top { color: var(--hex-draw); }
 
 .member-avatar {

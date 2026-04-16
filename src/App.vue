@@ -214,15 +214,6 @@ onBeforeUnmount(() => {
 
 <style scoped>
 
-@font-face {
-  font-family: 'AnonymousBalance';
-  src: url('@/assets/fonts/AnonymousBalance.woff2') format('woff2'),
-       url('@/assets/fonts/AnonymousBalance.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-
 /*.content {
   position: relative;
   overflow-y: auto;
@@ -252,7 +243,7 @@ onBeforeUnmount(() => {
 .balance {
   font-size: 2.5em;
   color: var(--hex-text-primary);
-  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
+  font-family: var(--hex-font-mono);
   position: absolute;
   top: 0;
   right: 20px;

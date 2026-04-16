@@ -273,7 +273,7 @@ watch(calculatedAmount, (newValue) => {
   text-align: center;
   font-size: 1.5rem;
   color: var(--hex-text-primary);
-  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
+  font-family: var(--hex-font-mono);
   margin-top: 12px;
 }
 

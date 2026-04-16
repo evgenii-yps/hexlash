@@ -298,7 +298,7 @@ const onAllocateXp = async (branch) => {
 .rt-resource-val {
   font-size: 16px;
   color: var(--hex-text-primary);
-  font-family: 'AnonymousBalance', monospace;
+  font-family: var(--hex-font-mono);
 }
 .rt-resource-label {
   font-size: 9px;

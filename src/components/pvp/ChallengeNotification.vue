@@ -180,7 +180,7 @@ function declineChallenge() {
 
 .challenge-title {
   color: var(--hex-primary);
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: var(--hex-font-display);
   font-size: 12px;
   text-transform: uppercase;
 }
@@ -194,7 +194,7 @@ function declineChallenge() {
 }
 
 .challenge-timer {
-  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
+  font-family: var(--hex-font-mono);
   font-size: 24px;
   color: var(--hex-primary);
 }

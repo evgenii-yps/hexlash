@@ -469,7 +469,7 @@ watch(() => props.active, (val) => {
   background: var(--hex-bg-light);
   color: var(--hex-text-primary);
   border-radius: 3px;
-  font-family: 'AnonymousBalance', 'Courier New', monospace;
+  font-family: var(--hex-font-mono);
   font-weight: bold;
   white-space: nowrap;
 }
