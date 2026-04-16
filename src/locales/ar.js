@@ -858,6 +858,10 @@ export default {
     waitingForOpponent: 'في انتظار الخصم...',
     lblVs: 'vs',
     opponentDisconnected: 'انقطع اتصال الخصم',
+    v2: {
+      lblFilters: 'FILTERS',
+      lblSearch: 'SEARCH',
+    },
   },
   verify: {
     title: 'Email verification',

@@ -862,6 +862,10 @@ export default {
     waitingForOpponent: 'Esperando al oponente...',
     lblVs: 'vs',
     opponentDisconnected: 'Oponente desconectado',
+    v2: {
+      lblFilters: 'FILTERS',
+      lblSearch: 'SEARCH',
+    },
   },
   verify: {
     title: 'Email verification',

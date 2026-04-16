@@ -858,6 +858,10 @@ export default {
     waitingForOpponent: '対戦相手を待っています...',
     lblVs: 'vs',
     opponentDisconnected: '対戦相手が切断されました',
+    v2: {
+      lblFilters: 'FILTERS',
+      lblSearch: 'SEARCH',
+    },
   },
   verify: {
     title: 'Email verification',

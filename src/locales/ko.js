@@ -859,6 +859,10 @@ export default {
     waitingForOpponent: '상대를 기다리는 중...',
     lblVs: 'vs',
     opponentDisconnected: '상대가 연결 해제됨',
+    v2: {
+      lblFilters: 'FILTERS',
+      lblSearch: 'SEARCH',
+    },
   },
   verify: {
     title: 'Email verification',

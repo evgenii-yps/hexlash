@@ -859,6 +859,10 @@ export default {
     waitingForOpponent: '等待对手...',
     lblVs: 'vs',
     opponentDisconnected: '对手已断开连接',
+    v2: {
+      lblFilters: 'FILTERS',
+      lblSearch: 'SEARCH',
+    },
   },
   verify: {
     title: 'Email verification',
