@@ -1,10 +1,10 @@
 import * as THREE from 'three';
 import { createAtmosphereRenderer } from '@/three/helpers/atmosphereScene.js';
 import { makeFighterLowPoly, addArchetypeGlow } from '@/three/helpers/fighterLowPoly.js';
+import { archColor } from '@/three/helpers/archetypeColors.js';
 import { buildArena, RING_HEIGHT } from './pitArena.js';
 import { buildEnvironment, buildInteractiveObjects } from './pitEnvironment.js';
 
-const ARCHETYPE_COLORS = { warden: 0xD4A843, predator: 0xFF066F };
 const ZOOM_DEFAULT = Math.sqrt(11 * 11 + 16 * 16);
 const ZOOM_MIN = 7;
 const ZOOM_MAX = 32;
@@ -44,11 +44,11 @@ export function initPitScene(canvas, options) {
   if (hasAgents) {
     const w = makeFighterLowPoly();
     wardenContainer.add(w);
-    addArchetypeGlow(wardenContainer, ARCHETYPE_COLORS.warden);
+    addArchetypeGlow(wardenContainer, archColor('warden'));
     if (agents.length >= 2) {
       const p = makeFighterLowPoly();
       predatorContainer.add(p);
-      addArchetypeGlow(predatorContainer, ARCHETYPE_COLORS.predator);
+      addArchetypeGlow(predatorContainer, archColor('predator'));
     }
   }
 
