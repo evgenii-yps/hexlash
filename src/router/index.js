@@ -32,7 +32,7 @@ const publicRoutes = [
 const protectedRoutes = [
     {path: '/', name: 'Home', component: RainView},
     {path: '/help', name: 'Help', component: () => import("/src/views/PageView.vue")},
-    {path: '/arena', redirect: '/arena/club'},
+    {path: '/arena', redirect: '/arena/pit'},
     {path: '/arena/pit', name: 'ArenaPit', component: () => import("/src/views/new/PitView.vue")},
     {path: '/arena/fight-v2', name: 'ArenaFightV2', component: () => import("/src/views/new/PreparationViewV2.vue")},
     {path: '/arena/fight', name: 'ArenaFight', component: () => import("/src/views/PreparationView.vue")},
@@ -59,7 +59,7 @@ const protectedRoutes = [
 
     {path: '/ratings-v2', name: 'RatingsV2', component: () => import("/src/views/new/RatingsViewV2.vue")},
     {path: '/ratings/:type', name: 'Ratings', component: () => import("/src/views/RatingsView.vue"), props: true},
-    {path: '/ratings', redirect: '/ratings/myclan'},
+    {path: '/ratings', redirect: '/ratings-v2'},
 
     {path: '/training-v2', name: 'TrainingV2', component: () => import("/src/views/new/TrainingViewV2.vue")},
     {path: '/training', name: 'Training', component: () => import("/src/views/TrainingView.vue")},
