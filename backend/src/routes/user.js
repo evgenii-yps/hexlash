@@ -375,6 +375,29 @@ router.put('/settings', authMiddleware, async (req, res) => {
   }
 });
 
+// PUT /v1/user/country — set user country (Phase 4.6)
+// Body: { country: string|null } — ISO 3166-1 alpha-2 code or null to unset
+router.put('/country', authMiddleware, async (req, res) => {
+  try {
+    const { country } = req.body || {};
+
+    if (country !== null && (typeof country !== 'string' || !/^[A-Z]{2}$/.test(country))) {
+      return res.status(400).json({ error: 'Invalid country code (expected ISO 3166-1 alpha-2 or null)' });
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: req.userId },
+      data: { country: country },
+      select: { country: true },
+    });
+
+    return res.json({ data: { country: updated.country } });
+  } catch (err) {
+    console.error('Set country error:', err);
+    return res.status(500).json({ error: 'Failed to set country' });
+  }
+});
+
 // GET /v1/user/referrals
 router.get('/referrals', authMiddleware, async (req, res) => {
   try {
