@@ -960,6 +960,10 @@ export default {
       lblFightStartError: 'Failed to start fight',
       lblStartFight: 'START FIGHT',
       lblSlotsLeft: '{n} slots left',
+      lblCost: 'COST',
+      lblBalance: 'BALANCE',
+      lblInsufficientBalance: 'Insufficient balance',
+      lblFightStartError: 'Failed to start fight',
     },
   },
 

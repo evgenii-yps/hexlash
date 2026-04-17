@@ -29,6 +29,26 @@ router.post('/start', authMiddleware, async (req, res) => {
     }
 
     const stakeAmount = STAKE_AMOUNTS[stake];
+ claude/setup-project-initialization-buyXe
+
+    // Atomic conditional decrement — prevents race when two concurrent requests
+    // pass the balance check before either commits. updateMany with the balance
+    // gate ensures at most one of N concurrent requests succeeds when
+    // balance < N * stakeAmount.
+    const result = await prisma.user.updateMany({
+      where: { id: req.userId, balance: { gte: stakeAmount } },
+      data: { balance: { decrement: stakeAmount } },
+    });
+
+    if (result.count === 0) {
+      const user = await prisma.user.findUnique({
+        where: { id: req.userId },
+        select: { balance: true },
+      });
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
     const user = await prisma.user.findUnique({
       where: { id: req.userId },
       select: { balance: true },
@@ -37,12 +57,21 @@ router.post('/start', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
     if (user.balance < stakeAmount) {
+ main
       return res.status(400).json({
         error: 'Insufficient balance',
         required: stakeAmount,
         current: user.balance,
       });
     }
+
+claude/setup-project-initialization-buyXe
+    const updated = await prisma.user.findUnique({
+      where: { id: req.userId },
+      select: { balance: true },
+    });
+
+    return res.json({
 
     // Deduct stake. Race condition between findUnique and update is acceptable for MVP
     // (parked — migrate to prisma.$transaction if observed in prod).
@@ -53,6 +82,7 @@ router.post('/start', authMiddleware, async (req, res) => {
     });
 
     res.json({
+ main
       data: {
         stakeApplied: true,
         stakeAmount,
@@ -61,7 +91,11 @@ router.post('/start', authMiddleware, async (req, res) => {
     });
   } catch (err) {
     console.error('Fight start (stake) error:', err);
+ claude/setup-project-initialization-buyXe
+    return res.status(500).json({ error: 'Failed to start fight' });
+
     res.status(500).json({ error: 'Failed to start fight' });
+ main
   }
 });
 
@@ -130,6 +164,19 @@ router.post('/save', authMiddleware, async (req, res) => {
       },
     });
 
+ claude/setup-project-initialization-buyXe
+    // Phase 4.3: Stake payout. Deduction already happened on /fight/start;
+    // here we only credit payout based on result.
+    let newBalance;
+    if (stake && Object.prototype.hasOwnProperty.call(STAKE_AMOUNTS, stake)) {
+      const stakeAmount = STAKE_AMOUNTS[stake];
+      let multiplier;
+      if (isWin) multiplier = STAKE_PAYOUT_MULTIPLIER;       // 2
+      else if (isDraw) multiplier = STAKE_DRAW_RETURN;       // 1
+      else multiplier = STAKE_LOSE_RETURN;                   // 0
+
+      const payout = stakeAmount * multiplier;
+
     // Stake payout (Phase 4.3, PvE only) — backwards-compat: stake missing → no-op.
     // Deduction already happened on /fight/start; here we only credit payout.
     let newBalance;
@@ -139,6 +186,7 @@ router.post('/save', authMiddleware, async (req, res) => {
                  : isDraw ? STAKE_DRAW_RETURN
                  : STAKE_LOSE_RETURN;
       const payout = stakeAmount * mult;
+ main
       if (payout > 0) {
         const updated = await prisma.user.update({
           where: { id: req.userId },
@@ -147,12 +195,20 @@ router.post('/save', authMiddleware, async (req, res) => {
         });
         newBalance = updated.balance;
       } else {
+ claude/setup-project-initialization-buyXe
+        const user = await prisma.user.findUnique({
+          where: { id: req.userId },
+          select: { balance: true },
+        });
+        newBalance = user.balance;
+
         // Loss — no credit, but still return current balance so UI syncs
         const cur = await prisma.user.findUnique({
           where: { id: req.userId },
           select: { balance: true },
         });
         newBalance = cur?.balance;
+ main
       }
     }
 
@@ -160,7 +216,11 @@ router.post('/save', authMiddleware, async (req, res) => {
       data: {
         success: true,
         beltUpdate: beltUpdate || undefined,
+ claude/setup-project-initialization-buyXe
+        ...(newBalance !== undefined && { newBalance }),
+
         newBalance,
+ main
       },
     });
   } catch (err) {

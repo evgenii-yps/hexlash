@@ -51,7 +51,10 @@
           </button>
         </div>
 
+ claude/setup-project-initialization-buyXe
+        <!-- Stake -->
         <!-- Stake (PvE only — backend-wired in Phase 4.3) -->
+ main
         <div class="prep-section-label">{{ pv2.lblStake || 'STAKE' }}</div>
         <div class="prep-stake">
           <button v-for="s in stakes" :key="s.id" :class="['prep-stake-btn', { active: stake === s.id }]" @click="stake = s.id">{{ s.label }}</button>
@@ -59,6 +62,13 @@
         <div class="prep-stake-meta" v-if="selectedMode === 'pve'">
           <span class="prep-stake-cost">{{ pv2.lblCost || 'COST' }}: {{ stakeAmount }}</span>
           <span class="prep-stake-balance" :class="{ 'prep-stake-balance--low': !canAffordStake }">
+            {{ pv2.lblBalance || 'BALANCE' }}: {{ balance }}
+          </span>
+        </div>
+
+        <div class="prep-stake-meta" v-if="selectedMode === 'pve' && stake">
+          <span class="prep-stake-cost">{{ pv2.lblCost || 'COST' }}: {{ stakeAmount }}</span>
+          <span class="prep-stake-balance" :class="{ '--low': !canAffordStake }">
             {{ pv2.lblBalance || 'BALANCE' }}: {{ balance }}
           </span>
         </div>
@@ -86,8 +96,13 @@ import HexButton from '@/components/ui/HexButton.vue';
 import ModeSelector from '@/components/arena/ModeSelector.vue';
 import apiClient from '@/core/api/apiClient.js';
 
+ claude/setup-project-initialization-buyXe
+// MUST match backend STAKE_AMOUNTS in backend/src/config.js
+// (D11 — pending sub-ТЗ for unification via GET /v1/config).
+
 // Stake amounts — MUST match backend STAKE_AMOUNTS in backend/src/config.js.
 // D-note: duplicated from backend for MVP. Park: single source via GET /v1/config.
+ main
 const STAKE_AMOUNTS = { low: 100, medium: 500, high: 1000 };
 
 export default {
@@ -111,7 +126,10 @@ export default {
       { id: 'high', label: pv2.value.lblHigh || 'HIGH' },
     ]);
 
+ claude/setup-project-initialization-buyXe
+
     // Balance + stake cost (Phase 4.3)
+ main
     const balance = computed(() => store.getters['master/getMaster']?.userData?.balance || 0);
     const stakeAmount = computed(() => STAKE_AMOUNTS[stake.value] || 0);
     const canAffordStake = computed(() => balance.value >= stakeAmount.value);
@@ -165,6 +183,37 @@ export default {
         return;
       }
 
+ claude/setup-project-initialization-buyXe
+      // PvE stake gate (Phase 4.3): atomic deduct before entering fight.
+      if (stake.value) {
+        try {
+          const res = await apiClient.post('/fight/start', { stake: stake.value }, { authRequired: true });
+          if (res?.data?.newBalance !== undefined) {
+            store.commit('master/setBalance', res.data.newBalance);
+          }
+        } catch (err) {
+          const status = err?.response?.status;
+          const data = err?.response?.data;
+          if (status === 400 && data?.error === 'Insufficient balance') {
+            console.warn('Insufficient balance for stake:', data);
+            store.commit('master/setInfoMessage', {
+              text: pv2.value.lblInsufficientBalance || 'Insufficient balance',
+              timeout: 3000,
+            });
+            return;
+          }
+          console.error('Fight start failed:', err);
+          store.commit('master/setInfoMessage', {
+            text: pv2.value.lblFightStartError || 'Failed to start fight',
+            timeout: 3000,
+          });
+          return;
+        }
+        store.commit('fight/setStakeLevel', stake.value);
+      }
+
+      // PvE: dispatch fight/startFight which reads active agent, sets up state, navigates to /fight-v2
+
       // PvE: deduct stake on server before transitioning to fight
       try {
         const res = await apiClient.post('/fight/start', { stake: stake.value }, { authRequired: true });
@@ -183,6 +232,7 @@ export default {
       // Store stake for /fight/save to include (persisted across refresh in cardFightState)
       store.commit('fight/setStakeLevel', stake.value);
 
+ main
       await store.dispatch('fight/startFight', { targetRoute: '/fight-v2' });
     }
 
@@ -201,7 +251,10 @@ export default {
       selectedMode, onlineCount, branches, moveName, branchName,
       getMoveData, getMoveLevel, addToDeck, removeFromDeck,
       onModeSelect, startFight,
+ claude/setup-project-initialization-buyXe
+
       // Stake (Phase 4.3)
+ main
       balance, stakeAmount, canAffordStake,
     };
   },
@@ -288,6 +341,14 @@ export default {
 .prep-stake-meta {
   display: flex;
   justify-content: space-between;
+ claude/setup-project-initialization-buyXe
+  font-family: var(--hex-font-mono);
+  color: var(--hex-text-primary);
+  font-size: 0.875rem;
+  margin: 0.5rem 0;
+}
+.prep-stake-balance.--low { color: var(--hex-danger); }
+
   align-items: center;
   margin-top: 8px;
   padding: 0 4px;
@@ -299,6 +360,7 @@ export default {
 .prep-stake-cost { color: var(--hex-text-secondary); }
 .prep-stake-balance { color: var(--hex-text-primary); font-weight: 600; }
 .prep-stake-balance--low { color: var(--hex-danger); }
+ main
 
 .prep-start-btn { margin-top: 24px; }
 .scroll-gap { height: 80px; }

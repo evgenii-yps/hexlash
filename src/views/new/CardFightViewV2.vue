@@ -596,6 +596,15 @@ export default {
             isDraw,
             roundsPlayed: roundNum.value,
             totalDamageDealt: fightStats.value?.totalDamageDealt || 0,
+ claude/setup-project-initialization-buyXe
+            stake: store.getters['fight/getStakeLevel'],  // Phase 4.3 — null = no payout
+          }, { authRequired: true })
+            .then((res) => {
+              if (res?.data?.newBalance !== undefined) {
+                store.commit('master/setBalance', res.data.newBalance);
+              }
+              return store.dispatch('agent/fetchAgents');
+
             // Stake payout (Phase 4.3) — backend credits payout based on stake level + result
             stake: store.getters['fight/getStakeLevel'] || null,
           }, { authRequired: true })
@@ -604,6 +613,7 @@ export default {
                 store.commit('master/setBalance', res.data.newBalance);
               }
               store.dispatch('agent/fetchAgents');
+ main
             })
             .catch(() => { /* graceful */ });
         }

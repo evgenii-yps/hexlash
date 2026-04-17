@@ -983,6 +983,10 @@ export default {
       lblFightStartError: 'Не удалось начать бой',
       lblStartFight: 'НАЧАТЬ БОЙ',
       lblSlotsLeft: 'Осталось {n} слотов',
+      lblCost: 'СТАВКА',
+      lblBalance: 'БАЛАНС',
+      lblInsufficientBalance: 'Недостаточно средств',
+      lblFightStartError: 'Не удалось начать бой',
     },
   },
 
