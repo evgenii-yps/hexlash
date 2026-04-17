@@ -1,36 +1,32 @@
 <template>
-  <div class="pit-view">
-    <canvas ref="sceneCanvas" class="scene-canvas" id="scene"></canvas>
+  <div class="pit-root">
+    <canvas ref="canvasRef" class="pit-canvas" id="pit-scene-canvas"></canvas>
 
-    <!-- HUD overlay -->
-    <div class="hud pit-hud">
-      <!-- Top bar -->
-      <div class="top-bar">
-        <div class="top-bar-left">
-          <div class="resources-chip">
-            <span class="taps">{{ userTaps }}</span>
-            <span class="separator">/</span>
-            <span class="xp">{{ userXP }}</span>
+    <!-- Phase 4.7-FIN debug marker — visible green badge confirms new PitView mounted. Remove after confirmation. -->
+    <div class="pit-debug-marker">PIT-NEW-RENDERED-{{ markerVersion }}</div>
+
+    <div class="pit-hud pit-hud-root">
+      <div class="pit-hud-top">
+        <div class="pit-hud-left">
+          <div class="pit-resources">
+            <span class="pit-taps">{{ userTaps }}</span>
+            <span class="pit-sep">/</span>
+            <span class="pit-xp">{{ userXP }}</span>
           </div>
         </div>
-
-        <div class="top-bar-center">{{ t.pit?.lblTitle || 'THE PIT' }}</div>
-
-        <div class="top-bar-right">
-          <button class="icon-btn bell-btn" aria-label="Notifications" @click="onNotifications">🔔</button>
-          <button class="icon-btn avatar-btn" aria-label="Profile" @click="goProfile">👤</button>
+        <div class="pit-hud-center">{{ t.pit?.lblTitle || 'THE PIT' }}</div>
+        <div class="pit-hud-right">
+          <button class="pit-icon-btn" aria-label="Notifications" @click="onNotifications">🔔</button>
+          <button class="pit-icon-btn" aria-label="Profile" @click="goProfile">👤</button>
         </div>
       </div>
 
-      <!-- Fighter badges (positioned via JS over 3D fighters) -->
-      <div ref="badgeWarden" class="fighter-badge badge-warden"></div>
-      <div ref="badgePredator" class="fighter-badge badge-predator"></div>
+      <div ref="badgeWardenRef" class="pit-fighter-badge pit-badge-warden"></div>
+      <div ref="badgePredatorRef" class="pit-fighter-badge pit-badge-predator"></div>
 
-      <!-- World hover hint -->
-      <div ref="worldHint" class="world-hint"></div>
+      <div ref="worldHintRef" class="pit-world-hint"></div>
 
-      <!-- Bottom hint -->
-      <div class="bottom-hint">
+      <div class="pit-hud-bottom">
         <span>{{ t.pit?.lblBottomHint || 'CLICK OBJECTS TO INTERACT' }}</span>
       </div>
     </div>
@@ -38,45 +34,40 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import store from '@/core/state/store.js';
 import { t } from '@/locales/index.js';
 import { initPitScene } from '@/three/scenes/pitScene.js';
 
 export default {
-  name: 'PitView',
+  name: 'PitViewNew',
   setup() {
-    console.log('[PIT-DEBUG-VIEW] setup() called');
-    const router = useRouter();
-    const sceneCanvas = ref(null);
-    const badgeWarden = ref(null);
-    const badgePredator = ref(null);
-    const worldHint = ref(null);
+    console.log('[PIT-NEW] setup called');
 
-    // Store data
+    const router = useRouter();
+    const canvasRef = ref(null);
+    const badgeWardenRef = ref(null);
+    const badgePredatorRef = ref(null);
+    const worldHintRef = ref(null);
+
+    const markerVersion = ref(Date.now());
+
     const master = computed(() => store.getters['master/getMaster']);
     const userTaps = computed(() => master.value?.userData?.totalTaps || 0);
     const userXP = computed(() => master.value?.userData?.progression?.freeXP || 0);
     const agents = computed(() => store.state.agent?.agents || []);
     const myClanId = computed(() => master.value?.userData?.clanId || null);
 
-    let sceneCleanup = null;
+    let cleanup = null;
 
     function handleNavigation(target) {
+      console.log('[PIT-NEW] navigate:', target);
       switch (target) {
-        case 'training':
-          router.push('/training');
-          break;
-        case 'matchmaking':
-          router.push('/matchmaking');
-          break;
-        case 'ratings':
-          router.push('/ratings');
-          break;
-        case 'create':
-          router.push('/arena/club/create');
-          break;
+        case 'training': router.push('/training'); break;
+        case 'matchmaking': router.push('/matchmaking'); break;
+        case 'ratings': router.push('/ratings'); break;
+        case 'create': router.push('/arena/club/create'); break;
         case 'shop':
           store.commit('master/setInfoMessage', { text: t.value.pit?.msgShopSoon || 'Shop coming soon', timeout: 2000 });
           break;
@@ -92,44 +83,42 @@ export default {
           const sorted = [...agents.value].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
           const idx = target === 'warden' ? 0 : 1;
           const agent = sorted[idx];
-          if (agent) {
-            router.push(`/arena/club/${agent.id}`);
-          }
+          if (agent) router.push(`/arena/club/${agent.id}`);
           break;
         }
       }
     }
 
-    function goProfile() {
-      router.push('/profile');
-    }
+    function goProfile() { router.push('/profile'); }
 
     function onNotifications() {
       store.commit('master/setInfoMessage', { text: t.value.pit?.msgNotifSoon || 'Notifications coming soon', timeout: 2000 });
     }
 
-    console.log('[PIT-DEBUG-VIEW] registering onMounted hook');
-    onMounted(() => {
-      console.log('[PIT-DEBUG-VIEW] onMounted FIRED');
-      console.log('[PIT-DEBUG-VIEW] sceneCanvas.value:', sceneCanvas.value);
-      console.log('[PIT-DEBUG-VIEW] sceneCanvas type:', typeof sceneCanvas.value);
-      console.log('[PIT-DEBUG-VIEW] initPitScene type:', typeof initPitScene);
-      console.log('[PIT-DEBUG-VIEW] agents.value:', agents.value, 'length:', agents.value?.length);
+    console.log('[PIT-NEW] registering onMounted hook');
+    onMounted(async () => {
+      console.log('[PIT-NEW] onMounted fired');
+      await nextTick();
+      console.log('[PIT-NEW] canvasRef after nextTick:', canvasRef.value);
+      console.log('[PIT-NEW] initPitScene type:', typeof initPitScene);
 
-      // Fetch agents if not loaded
+      if (!canvasRef.value) {
+        console.error('[PIT-NEW] canvas ref is null after nextTick — abort');
+        return;
+      }
+
       if (!agents.value.length) {
-        console.log('[PIT-DEBUG-VIEW] dispatching fetchAgents');
+        console.log('[PIT-NEW] dispatching fetchAgents');
         store.dispatch('agent/fetchAgents');
       }
 
-      if (sceneCanvas.value) {
-        console.log('[PIT-DEBUG-VIEW] calling initPitScene...');
-        const result = initPitScene(sceneCanvas.value, {
+      try {
+        const result = initPitScene(canvasRef.value, {
           onObjectClick: handleNavigation,
           agents: agents.value,
-          badgeWarden: badgeWarden.value,
-          badgePredator: badgePredator.value,
-          worldHint: worldHint.value,
+          badgeWarden: badgeWardenRef.value,
+          badgePredator: badgePredatorRef.value,
+          worldHint: worldHintRef.value,
           hoverLabels: {
             training: t.value.pit?.lblTraining || 'Training · Heavy Bag',
             matchmaking: t.value.pit?.lblMatchmaking || 'Matchmaking · Terminal',
@@ -139,141 +128,159 @@ export default {
             shop: t.value.pit?.lblShop || 'Locker · Cosmetics',
           },
         });
-        sceneCleanup = result.cleanup;
-        console.log('[PIT-DEBUG-VIEW] initPitScene returned, cleanup set');
-      } else {
-        console.error('[PIT-DEBUG-VIEW] sceneCanvas.value is FALSY in onMounted, init skipped');
+        cleanup = result?.cleanup;
+        console.log('[PIT-NEW] initPitScene OK, cleanup set:', typeof cleanup);
+      } catch (err) {
+        console.error('[PIT-NEW] initPitScene threw:', err);
       }
     });
 
     onBeforeUnmount(() => {
-      if (sceneCleanup) {
-        sceneCleanup();
-        sceneCleanup = null;
-      }
+      console.log('[PIT-NEW] onBeforeUnmount');
+      if (cleanup) { cleanup(); cleanup = null; }
     });
 
     return {
-      t,
-      sceneCanvas,
-      badgeWarden,
-      badgePredator,
-      worldHint,
-      userTaps,
-      userXP,
-      goProfile,
-      onNotifications,
+      t, canvasRef, badgeWardenRef, badgePredatorRef, worldHintRef,
+      userTaps, userXP, markerVersion,
+      goProfile, onNotifications,
     };
   },
 };
 </script>
 
 <style scoped>
-.pit-view {
-  position: relative;
+.pit-root {
+  position: fixed;
+  inset: 0;
   width: 100%;
   height: 100vh;
   overflow: hidden;
   background: var(--hex-bg-deep);
 }
-
 @supports (height: 100dvh) {
-  .pit-view { height: 100dvh; }
+  .pit-root { height: 100dvh; }
 }
 
-/* Top bar */
-.top-bar {
+.pit-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Phase 4.7-FIN debug marker */
+.pit-debug-marker {
+  position: fixed;
+  top: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: lime;
+  color: black;
+  padding: 10px;
+  z-index: 99999;
+  font-family: monospace;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  pointer-events: none;
+}
+
+.pit-hud-root {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+.pit-hud-root > * { pointer-events: auto; }
+.pit-hud-root .pit-fighter-badge,
+.pit-hud-root .pit-world-hint { pointer-events: none; }
+
+.pit-hud-top {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  padding: 16px;
-  z-index: 10;
+  align-items: center;
+  padding: 16px 20px;
 }
-
-.top-bar-left,
-.top-bar-right {
+.pit-hud-left,
+.pit-hud-right {
   display: flex;
   align-items: center;
   gap: 8px;
 }
-
-.top-bar-center {
+.pit-hud-center {
   font-family: var(--hex-font-display);
-  font-size: 20px;
+  font-size: 14px;
+  letter-spacing: 4px;
   color: var(--hex-text-primary);
-  letter-spacing: 3px;
-  text-shadow: 0 0 12px var(--hex-primary-glow);
   text-transform: uppercase;
 }
 
-.resources-chip {
-  font-family: var(--hex-font-mono);
-  font-size: 13px;
-  color: var(--hex-text-primary);
-  background: var(--hex-bg-card);
+.pit-resources {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   padding: 6px 12px;
-  border-radius: var(--hex-radius-md);
-  border: 1px solid var(--hex-border-default);
-  display: flex;
-  gap: 4px;
-  align-items: center;
-}
-.resources-chip .taps { color: #FFD262; }
-.resources-chip .separator { color: var(--hex-text-muted); }
-.resources-chip .xp { color: #6EE7FF; }
-
-.icon-btn {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   background: var(--hex-bg-card);
   border: 1px solid var(--hex-border-default);
-  border-radius: var(--hex-radius-md);
-  cursor: pointer;
+  border-radius: var(--hex-radius-sm);
+  font-family: var(--hex-font-mono);
+  font-size: 12px;
+}
+.pit-taps { color: var(--hex-text-primary); }
+.pit-sep { color: var(--hex-text-muted); }
+.pit-xp { color: var(--hex-primary); }
+
+.pit-icon-btn {
+  background: var(--hex-bg-card);
+  border: 1px solid var(--hex-border-default);
+  border-radius: var(--hex-radius-sm);
   font-size: 16px;
-  transition: border-color 0.2s;
+  padding: 6px 10px;
+  cursor: pointer;
+  color: var(--hex-text-primary);
 }
-.icon-btn:hover { border-color: var(--hex-border-active); }
+.pit-icon-btn:hover { border-color: var(--hex-border-active); }
 
-/* Fighter badges — positioned by JS */
-.fighter-badge {
-  position: fixed;
-  transform: translate(-50%, -100%);
-  pointer-events: none;
-  z-index: 10;
+.pit-fighter-badge {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  padding: 4px 8px;
+  background: var(--hex-bg-card);
+  border: 1px solid var(--hex-border-default);
+  border-radius: var(--hex-radius-sm);
+  font-family: var(--hex-font-mono);
+  font-size: 10px;
+  color: var(--hex-text-primary);
   opacity: 0;
-  transition: opacity 0.3s;
+  transition: opacity 0.2s;
 }
 
-/* World hover hint */
-.world-hint {
-  position: fixed;
-  pointer-events: none;
-  z-index: 20;
+.pit-world-hint {
+  position: absolute;
+  transform: translate(-50%, calc(-100% - 12px));
+  padding: 4px 10px;
+  background: var(--hex-bg-card);
+  border: 1px solid var(--hex-border-active);
+  border-radius: var(--hex-radius-sm);
   font-family: var(--hex-font-mono);
   font-size: 11px;
   color: var(--hex-text-primary);
-  background: var(--hex-bg-card);
-  padding: 4px 10px;
-  border-radius: var(--hex-radius-sm);
-  border: 1px solid var(--hex-border-default);
+  pointer-events: none;
   opacity: 0;
-  transform: translate(12px, -50%);
   transition: opacity 0.15s;
   white-space: nowrap;
 }
-.world-hint.show { opacity: 1; }
+.pit-world-hint.show { opacity: 1; }
 
-/* Bottom hint */
-.bottom-hint {
+.pit-hud-bottom {
   position: absolute;
-  bottom: 32px;
+  bottom: 20px;
   left: 0;
   right: 0;
   text-align: center;
@@ -281,6 +288,5 @@ export default {
   font-size: 11px;
   color: var(--hex-text-muted);
   letter-spacing: 2px;
-  z-index: 10;
 }
 </style>
