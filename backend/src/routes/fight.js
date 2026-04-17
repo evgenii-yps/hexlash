@@ -5,13 +5,77 @@ const { awardClanXP } = require('../utils/clanLevel');
 const { createClanEvent } = require('../utils/clanEvents');
 const { getActiveAgent } = require('../services/fightClubService');
 const { applyWin } = require('../services/beltService');
+const {
+  STAKE_AMOUNTS,
+  STAKE_PAYOUT_MULTIPLIER,
+  STAKE_DRAW_RETURN,
+  STAKE_LOSE_RETURN,
+} = require('../config');
 
 const router = express.Router();
+
+// POST /v1/fight/start — optional stake deduction before PvE fight (Phase 4.3, PvE only)
+// Body: { stake: 'low' | 'medium' | 'high' | null }
+// Returns: { data: { stakeApplied, stakeAmount?, newBalance? } }
+// Backwards-compat: stake=null/missing → no-op, stakeApplied=false.
+router.post('/start', authMiddleware, async (req, res) => {
+  try {
+    const { stake } = req.body || {};
+    if (!stake) {
+      return res.json({ data: { stakeApplied: false } });
+    }
+    if (!Object.prototype.hasOwnProperty.call(STAKE_AMOUNTS, stake)) {
+      return res.status(400).json({ error: 'Invalid stake level' });
+    }
+
+    const stakeAmount = STAKE_AMOUNTS[stake];
+
+    // Atomic conditional decrement — prevents race when two concurrent requests
+    // pass the balance check before either commits. updateMany with the balance
+    // gate ensures at most one of N concurrent requests succeeds when
+    // balance < N * stakeAmount.
+    const result = await prisma.user.updateMany({
+      where: { id: req.userId, balance: { gte: stakeAmount } },
+      data: { balance: { decrement: stakeAmount } },
+    });
+
+    if (result.count === 0) {
+      const user = await prisma.user.findUnique({
+        where: { id: req.userId },
+        select: { balance: true },
+      });
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      return res.status(400).json({
+        error: 'Insufficient balance',
+        required: stakeAmount,
+        current: user.balance,
+      });
+    }
+
+    const updated = await prisma.user.findUnique({
+      where: { id: req.userId },
+      select: { balance: true },
+    });
+
+    return res.json({
+      data: {
+        stakeApplied: true,
+        stakeAmount,
+        newBalance: updated.balance,
+      },
+    });
+  } catch (err) {
+    console.error('Fight start (stake) error:', err);
+    return res.status(500).json({ error: 'Failed to start fight' });
+  }
+});
 
 // POST /v1/fight/save — PvE fight result via active agent (first by createdAt)
 router.post('/save', authMiddleware, async (req, res) => {
   try {
-    const { isWin, isDraw, roundsPlayed, totalDamageDealt } = req.body;
+    const { isWin, isDraw, roundsPlayed, totalDamageDealt, stake } = req.body;
 
     if (typeof isWin !== 'boolean' || typeof isDraw !== 'boolean') {
       return res.status(400).json({ error: 'isWin and isDraw are required booleans' });
@@ -73,7 +137,40 @@ router.post('/save', authMiddleware, async (req, res) => {
       },
     });
 
-    res.json({ data: { success: true, beltUpdate: beltUpdate || undefined } });
+    // Phase 4.3: Stake payout. Deduction already happened on /fight/start;
+    // here we only credit payout based on result.
+    let newBalance;
+    if (stake && Object.prototype.hasOwnProperty.call(STAKE_AMOUNTS, stake)) {
+      const stakeAmount = STAKE_AMOUNTS[stake];
+      let multiplier;
+      if (isWin) multiplier = STAKE_PAYOUT_MULTIPLIER;       // 2
+      else if (isDraw) multiplier = STAKE_DRAW_RETURN;       // 1
+      else multiplier = STAKE_LOSE_RETURN;                   // 0
+
+      const payout = stakeAmount * multiplier;
+      if (payout > 0) {
+        const updated = await prisma.user.update({
+          where: { id: req.userId },
+          data: { balance: { increment: payout } },
+          select: { balance: true },
+        });
+        newBalance = updated.balance;
+      } else {
+        const user = await prisma.user.findUnique({
+          where: { id: req.userId },
+          select: { balance: true },
+        });
+        newBalance = user.balance;
+      }
+    }
+
+    res.json({
+      data: {
+        success: true,
+        beltUpdate: beltUpdate || undefined,
+        ...(newBalance !== undefined && { newBalance }),
+      },
+    });
   } catch (err) {
     console.error('Save fight error:', err);
     res.status(500).json({ error: 'Internal server error' });
