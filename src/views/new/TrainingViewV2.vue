@@ -52,11 +52,14 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
+import { Howl } from 'howler';
 import store from '@/core/state/store.js';
 import { t } from '@/locales/index.js';
 import { COST_PER_CLICK } from '@/core/constants.js';
 import Punch3D from '@/components/fragments/training/Punch3D.vue';
+import { buildAudioEngine, setAudioMuted, destroyAudioEngine } from '@/three/helpers/audioEngine.js';
+import clickSound from '@/assets/sound/punch_hit.mp3';
 
 export default {
   name: 'TrainingViewV2',
@@ -97,7 +100,24 @@ export default {
       }, 800);
     }
 
+    // ── Sound: punch SFX (Howler) + ambient drone (WebAudio) ──
+    const isMuted = computed(() => store.getters['punch/isMuted']);
+    let audioEngine = null;
+    let stopMuteWatch = null;
+
+    function playPunchSFX() {
+      if (isMuted.value) return;
+      const sound = new Howl({ src: [clickSound], volume: 0.6 });
+      sound.play();
+    }
+
     function onTap(event) {
+      // Resume suspended AudioContext on first user gesture (Safari/iOS autoplay policy)
+      if (audioEngine?.ctx && audioEngine.ctx.state === 'suspended') {
+        audioEngine.ctx.resume().catch(() => {});
+      }
+      playPunchSFX();
+
       // Combo tracking
       comboCount.value++;
       clearTimeout(comboTimer);
@@ -125,11 +145,33 @@ export default {
     onMounted(() => {
       store.dispatch('punch/synchronizePunchInfo').catch(() => {});
       store.dispatch('punch/startPunchTimer').catch(() => {});
+
+      // Ambient drone: build (may fail in old browsers / SSR — graceful)
+      try {
+        audioEngine = buildAudioEngine();
+        if (audioEngine) {
+          // NOTE: master.gain starts at 0.0; setAudioMuted(false) ramps to 0.5.
+          // Must be called even when !isMuted, otherwise drone is inaudible.
+          setAudioMuted(audioEngine, isMuted.value);
+        }
+      } catch (e) {
+        audioEngine = null;
+      }
+
+      // React to mute toggle
+      stopMuteWatch = watch(isMuted, (muted) => {
+        if (audioEngine) setAudioMuted(audioEngine, muted);
+      });
     });
 
     onBeforeUnmount(() => {
       store.dispatch('punch/stopPunchTimer').catch(() => {});
       clearTimeout(comboTimer);
+      if (stopMuteWatch) { stopMuteWatch(); stopMuteWatch = null; }
+      if (audioEngine) {
+        destroyAudioEngine(audioEngine);
+        audioEngine = null;
+      }
     });
 
     return {
