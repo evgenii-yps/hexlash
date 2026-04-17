@@ -55,6 +55,7 @@ function saveFightState(state) {
             difficulty:        state.difficulty,
             xpEarned:          state.xpEarned,
             xpAwarded:         state.xpAwarded,
+            stakeLevel:        state.stakeLevel,
             lastUpdateAt:      _fightLastUpdateAt || Date.now(),
         }));
     } catch(e) { /* ignore */ }
@@ -177,6 +178,8 @@ const state = {
 
     xpEarned:  null,   // { speed, power, technique } — set when fight ends
     xpAwarded: false,  // true after XP display (agent XP awarded via backend, not progressionState)
+
+    stakeLevel: null,  // Phase 4.3: 'low' | 'medium' | 'high' | null — PvE stake applied to this fight
 };
 
 // ─── Getters ─────────────────────────────────────────────────────────────────
@@ -203,6 +206,8 @@ const getters = {
     getEmergencyProtocol: (s) => s.emergencyProtocol,
     getXpEarned:          (s) => s.xpEarned,
     getXpAwarded:         (s) => s.xpAwarded,
+
+    getStakeLevel:        (s) => s.stakeLevel,
 
     getBuildDescription: (s) => {
         const names = s.playerModules
@@ -273,6 +278,8 @@ const mutations = {
 
     setXpEarned(s, v)  { s.xpEarned  = v; },
     setXpAwarded(s, v) { s.xpAwarded = v; },
+
+    setStakeLevel(s, v) { s.stakeLevel = v; },
 };
 
 // ─── Actions ─────────────────────────────────────────────────────────────────
@@ -542,6 +549,7 @@ const actions = {
         commit('setDifficulty', saved.difficulty);
         commit('setXpEarned', saved.xpEarned || null);
         commit('setXpAwarded', saved.xpAwarded || false);
+        commit('setStakeLevel', saved.stakeLevel || null);
 
         // Results phase: just restore UI, no need to recreate AI
         if (saved.fightPhase === 'results') {
@@ -618,6 +626,7 @@ const actions = {
         commit('setOpponent', null);
         commit('setXpEarned', null);
         commit('setXpAwarded', false);
+        commit('setStakeLevel', null);
         commit('setFightPhase', 'preparation');
         await router.push('/arena');
     },
