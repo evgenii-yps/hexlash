@@ -179,13 +179,7 @@ const state = {
     xpEarned:  null,   // { speed, power, technique } — set when fight ends
     xpAwarded: false,  // true after XP display (agent XP awarded via backend, not progressionState)
 
- claude/setup-project-initialization-buyXe
     stakeLevel: null,  // Phase 4.3: 'low' | 'medium' | 'high' | null — PvE stake applied to this fight
-
-    // Stake (Phase 4.3) — set on PreparationViewV2 before startFight, cleared on resetToPreparation.
-    // Must survive refresh during fight so /fight/save can include it for server-side payout.
-    stakeLevel: null,  // 'low' | 'medium' | 'high' | null
- main
 };
 
 // ─── Getters ─────────────────────────────────────────────────────────────────
@@ -212,7 +206,6 @@ const getters = {
     getEmergencyProtocol: (s) => s.emergencyProtocol,
     getXpEarned:          (s) => s.xpEarned,
     getXpAwarded:         (s) => s.xpAwarded,
-    getStakeLevel:        (s) => s.stakeLevel,
 
     getStakeLevel:        (s) => s.stakeLevel,
 
@@ -285,12 +278,8 @@ const mutations = {
 
     setXpEarned(s, v)  { s.xpEarned  = v; },
     setXpAwarded(s, v) { s.xpAwarded = v; },
- claude/setup-project-initialization-buyXe
 
     setStakeLevel(s, v) { s.stakeLevel = v; },
-
-    setStakeLevel(s, v){ s.stakeLevel = v; },
- main
 };
 
 // ─── Actions ─────────────────────────────────────────────────────────────────
