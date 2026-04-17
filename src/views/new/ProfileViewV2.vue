@@ -15,9 +15,11 @@
             </div>
           </div>
           <div class="id-fields">
-            <div class="id-field" @click="copyWallet">
+            <div class="id-field id-field--wallet">
               <span class="id-field-label">{{ pv2.lblWallet || 'Wallet' }}</span>
-              <span class="id-field-value wallet-val">{{ walletDisplay }}</span>
+              <div class="wallet-wrap">
+                <ConnectWallet />
+              </div>
             </div>
             <div class="id-field">
               <span class="id-field-label">{{ pv2.lblEmail || 'Email' }}</span>
@@ -134,10 +136,11 @@ import store from '@/core/state/store.js';
 import { t, setLanguage } from '@/locales/index.js';
 import { getBeltDisplay } from '@/utils/beltDisplay.js';
 import HexButton from '@/components/ui/HexButton.vue';
+import ConnectWallet from '@/components/fragments/profile/wallet/ConnectWallet.vue';
 
 export default {
   name: 'ProfileViewV2',
-  components: { HexButton },
+  components: { HexButton, ConnectWallet },
   setup() {
     const router = useRouter();
     const master = computed(() => store.getters['master/getMaster']);
@@ -166,20 +169,6 @@ export default {
       return d.color || 'White';
     });
 
-    const walletDisplay = computed(() => {
-      const addr = ud.value?.walletAddress;
-      if (!addr) return pv2.value?.lblConnectWallet || 'Connect Wallet';
-      return addr.slice(0, 6) + '...' + addr.slice(-4);
-    });
-
-    function copyWallet() {
-      const addr = ud.value?.walletAddress;
-      if (!addr) return;
-      navigator.clipboard.writeText(addr).then(() => {
-        store.commit('master/setInfoMessage', { text: pv2.value?.lblWalletCopied || 'Copied!', timeout: 1500 });
-      }).catch(() => {});
-    }
-
     function switchLang(lang) {
       setLanguage(lang);
       store.dispatch('master/setLanguage', lang).catch(() => {});
@@ -203,7 +192,7 @@ export default {
       }
     });
 
-    return { t, pv2, master, ud, activeAgent, balance, friends, friendsLoading, isMuted, currentLang, langs, appVersion, winRate, beltDisplay, walletDisplay, copyWallet, switchLang, toggleMute, doLogout };
+    return { t, pv2, master, ud, activeAgent, balance, friends, friendsLoading, isMuted, currentLang, langs, appVersion, winRate, beltDisplay, switchLang, toggleMute, doLogout };
   },
 };
 </script>
@@ -271,8 +260,21 @@ export default {
 .id-field { display: flex; justify-content: space-between; font-size: 12px; padding: 6px 0; border-top: 1px solid var(--hex-border-default); }
 .id-field-label { color: var(--hex-text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-size: 10px; }
 .id-field-value { color: var(--hex-text-primary); font-family: var(--hex-font-mono); font-size: 12px; }
-.wallet-val { cursor: pointer; }
-.wallet-val:hover { color: var(--hex-primary); }
+/* Wallet field — full-width variant (Phase 4.5) */
+.id-field--wallet {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+.wallet-wrap :deep(.connect-wallet) {
+  max-width: 100%;
+  margin: 0;
+}
+.wallet-wrap :deep(.connected-info),
+.wallet-wrap :deep(.button-container) {
+  margin-top: 0;
+  margin-bottom: 0;
+}
 .verified { color: var(--hex-success); margin-left: 4px; }
 .not-verified { color: var(--hex-text-muted); margin-left: 4px; }
 
