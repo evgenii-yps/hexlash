@@ -621,7 +621,7 @@ MIGRATION_ENABLED = true           // lazy User→Fighter #1 on /me
 - `PvPStatsCard.vue` — PvP statistics display (league, rating, progress, wins/losses/winrate). Shown in Fighters tab of RatingsView. Visual System v1.0 compliant: 0 pink, league colors preserved (brand identity), AnonymousBalance for numbers, system sans for labels
 - `AiTrainerAnalysis.vue` — Claude-powered post-fight analysis (PvE + PvP, results screen). Visual System v1.0 compliant: neutral card, system sans, no pink, no Anonymous font
 - `ProfileWallet.vue` — Wallet page: uses @wagmi/vue useAccount(), shows ConnectWallet + GameBalanceCard + HexCard placeholder. BuyTokens removed from render, WalletInfo deleted
-- `ConnectWallet.vue` — Full wallet modal: Teleport modal with connector list (icons, dedup, rename Injected→Browser Wallet), connecting spinner, connected state (short address + chain + disconnect). Uses @wagmi/vue useConnect/useDisconnect/useConnectors. z-index 9000, Escape/overlay close, hex-fade/hex-slide-up transitions. 360px responsive
+- `ConnectWallet.vue` — Full wallet modal: Teleport modal with connector list (icons, dedup, rename Injected→Browser Wallet), connecting spinner, connected state (short address + chain + disconnect). Uses @wagmi/vue useConnect/useDisconnect/useConnectors. z-index 9000, Escape/overlay close, hex-fade/hex-slide-up transitions. 360px responsive. **Shared between legacy `/profile/wallet` and v2 `/profile-v2` (Phase 4.5)** — when Phase 6 cuts legacy, this stays as canonical wallet UI. Missing click-to-copy on connected address (D15).
 - `WalletInfo.vue` — **Deleted** (Дорога 1 ТЗ #18b) — functionality moved into ConnectWallet connected state
 - `BuyTokens.vue` — Token purchase modal. **Temporarily disabled** — not rendered in ProfileWallet, file preserved for Phase 2 (Base contract)
 - `GameBalanceCard.vue` — Game balance display with withdraw button (shows "after listing" message)
@@ -793,7 +793,7 @@ User, Clan, ClanInvite, ClanEvent, FightClub, Achievement, UserAchievement, Soci
 ## Branch (Git)
 
 Current dev branch: `claude/setup-project-initialization-buyXe`
-Visual Redesign (Phase 1–3): **COMPLETE**, in main. Phase 4 in progress: 4.1 (Training sound, commit `7aa6e86`) ✅, 4.2 (Training energy, commit `e005bec`) ✅, 4.3 (PvE stake loop) ✅, 4.4 (PvE strategy — frontend) ✅. Remaining Phase 4: wagmi wallet, country rankings. See "Visual Redesign — Roadmap & Branch State" below.
+Visual Redesign (Phase 1–3): **COMPLETE**, in main. Phase 4 in progress: 4.1 (Training sound, commit `7aa6e86`) ✅, 4.2 (Training energy, commit `e005bec`) ✅, 4.3 (PvE stake loop) ✅, 4.4 (PvE strategy — frontend) ✅, 4.5 (Wagmi wallet in ProfileViewV2) ✅. Remaining Phase 4: country rankings. See "Visual Redesign — Roadmap & Branch State" below.
 Phase −1 (Captain System Removal): merged separately.
 Club Mode prototype: **IN PROGRESS** — 109 commits ahead of main, ~6000 lines, deepdive complete (#1a-#1i), Phase 1 work starting.
 Road 1 (Neon Discipline visual migration): **COMPLETE**. See `/docs/road1-final-report.md` and `/docs/road2-parking-list.md`.
@@ -1848,9 +1848,9 @@ Captain system completely removed. Active agent for combat = first agent by `cre
 
 Visual rebrand to v23 palette. **Current dev branch:** `claude/setup-project-initialization-buyXe`. **Not in main.** Captain Removal (Phase −1, above) merged separately.
 
-**Done:** Phase −1 (Captain Removal ✅), Phase 1 (Visual Foundation ✅), Phase 2 (AppShell + View Layering ✅), Phase 3 (Screen Port 10/10 + CardFightViewV2 full stack: PvE + PvP + Result overlay + AI Trainer ✅), Phase 4.1 (Training sound — audioEngine + Howler punch SFX, commit `7aa6e86`) ✅, Phase 4.2 (Training energy bar wired to PunchInfo, commit `e005bec`) ✅, Phase 4.3 (PvE stake loop — backend `/fight/start` atomic deduction + payout in `/fight/save` + Vuex `setBalance` + Preparation/CardFight/Profile UI + 5 i18n keys × 11 locales) ✅, Phase 4.4 (PvE strategy — player AI behavior override: hp/damage/crit/dodge/moduleWeights via `src/data/strategy.js`. Pure buffs design — no penalties. PvP and auto-fight unaffected.) ✅.
+**Done:** Phase −1 (Captain Removal ✅), Phase 1 (Visual Foundation ✅), Phase 2 (AppShell + View Layering ✅), Phase 3 (Screen Port 10/10 + CardFightViewV2 full stack: PvE + PvP + Result overlay + AI Trainer ✅), Phase 4.1 (Training sound — audioEngine + Howler punch SFX, commit `7aa6e86`) ✅, Phase 4.2 (Training energy bar wired to PunchInfo, commit `e005bec`) ✅, Phase 4.3 (PvE stake loop — backend `/fight/start` atomic deduction + payout in `/fight/save` + Vuex `setBalance` + Preparation/CardFight/Profile UI + 5 i18n keys × 11 locales) ✅, Phase 4.4 (PvE strategy — player AI behavior override: hp/damage/crit/dodge/moduleWeights via `src/data/strategy.js`. Pure buffs design — no penalties. PvP and auto-fight unaffected.) ✅, Phase 4.5 (Wagmi wallet — ProfileViewV2 reuses existing `ConnectWallet` component, Base mainnet, 3 connectors via injected/WalletConnect/Coinbase. No wagmi code duplication, no new i18n — full reuse of legacy `profile.wallet.*` namespace.) ✅.
 
-**Not done:** Phase 4 remainder (wagmi wallet, country rankings), Phase 5 (i18n full pass across 11 locales + debt resolution D1/D2/D5/D8), Phase 6 (cutover of non-v2 views + cleanup of suffixed routes + P1-cleanup D7).
+**Not done:** Phase 4 remainder (country rankings), Phase 5 (i18n full pass across 11 locales + debt resolution D1/D2/D5/D8), Phase 6 (cutover of non-v2 views + cleanup of suffixed routes + P1-cleanup D7).
 
 See subsections below for details — do not duplicate content here.
 
@@ -2016,8 +2016,8 @@ Phase 3.10 is complete (10/10 Screen Port views + PvE + PvP + AI Trainer). Phase
 - **4.2 ✅** Training energy bar wired to PunchInfo (commit `e005bec`).
 - **4.3 ✅** Preparation stake loop — backend + frontend + i18n (PvE only; PvP out of scope).
 - **4.4 ✅** PvE strategy — player AI behavior override via `src/data/strategy.js` (frontend-only, backend not in PvE combat path). aggressive/balanced/defensive applied to player hp/damage/crit/dodge/moduleWeights. Existing i18n keys reused (no new strings).
+- **4.5 ✅** Wagmi wallet — ProfileViewV2 reuses existing `ConnectWallet.vue` component (shared with legacy `/profile/wallet`). Modal connector picker, Base mainnet, 3 connectors (injected/WalletConnect/Coinbase). Zero wagmi code duplication, zero new i18n keys.
 - **4.x remaining:**
-  - Profile **wallet** — wagmi connect/disconnect UI in ProfileViewV2
   - **Live matches feed + country rankings** in RatingsViewV2 — backend aggregation + WS
 
 Later phases:
@@ -2038,5 +2038,6 @@ Later phases:
 - **D12**: PvE stake fight result screen (CardFightViewV2) does not visually show balance delta on the result overlay — user only sees new balance after navigating to Profile. UX gap, not a bug. Park: separate sub-ТЗ if UX prioritises on-result balance reveal.
 - **D13**: `audioEngine.js — not wired to any view yet` line in Project Structure section is stale (wired in TrainingViewV2.vue:70-208 since commit `7aa6e86`). Fix in next docs sync.
 - **D14**: Preparation stake selector defaults to `medium` and has no "off" state — every PvE fight in V2 deducts at least 100 from balance. Product decision: should stake be opt-in (default 'none' / explicit toggle) or stay opt-out? Park: separate sub-ТЗ if product confirms stake should be skippable.
+- **D15**: `ConnectWallet.vue` does not implement click-to-copy on connected wallet address despite existing i18n key `profile.wallet.msgWalletAddressCopied`. Pre-existing legacy gap, surfaced when reused in v2 ProfileViewV2 (Phase 4.5). Resolution: add copy handler inside ConnectWallet `.connected-row` — touches legacy component shared by `/profile/wallet` and `/profile-v2`, separate sub-ТЗ.
 
 **Closed debt:** D4 (branch mismatch CLAUDE.md↔system prompt) resolved in 3.10.3 commit 353c463.
