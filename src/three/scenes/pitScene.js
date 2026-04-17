@@ -90,7 +90,9 @@ export function initPitScene(canvas, options) {
   rimR.target.position.set(0, 1.5, 0);
   scene.add(rimR, rimR.target);
 
-  scene.add(Object.assign(new THREE.PointLight(0x202838, 0.6, 18, 2), { position: new THREE.Vector3(0, 2, 8) }));
+  const fillLight = new THREE.PointLight(0x202838, 0.6, 18, 2);
+  fillLight.position.set(0, 2, 8);
+  scene.add(fillLight);
 
   // Light shafts
   function makeLightShaft(x, z, color, opacity) {
