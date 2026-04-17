@@ -2,8 +2,16 @@
   <div class="pit-root">
     <canvas ref="canvasRef" class="pit-canvas" id="pit-scene-canvas"></canvas>
 
-    <!-- Phase 4.7-FIN debug marker — visible green badge confirms new PitView mounted. Remove after confirmation. -->
-    <div class="pit-debug-marker">PIT-NEW-RENDERED-{{ markerVersion }}</div>
+    <!-- Phase 4.7-FIN-A debug stack — visible UI logs (Terser strips console.*). Remove after diagnosis. -->
+    <div class="pit-debug-stack">
+      <div class="pit-debug-stack-title">PIT-DEBUG (build: {{ buildId }})</div>
+      <div v-for="(line, idx) in debugLog" :key="idx" class="pit-debug-stack-line">
+        {{ idx + 1 }}. {{ line }}
+      </div>
+      <div v-if="debugLog.length === 0" class="pit-debug-stack-empty">
+        EMPTY — setup() did not push anything
+      </div>
+    </div>
 
     <div class="pit-hud pit-hud-root">
       <div class="pit-hud-top">
@@ -43,15 +51,28 @@ import { initPitScene } from '@/three/scenes/pitScene.js';
 export default {
   name: 'PitViewNew',
   setup() {
-    console.log('[PIT-NEW] setup called');
-
     const router = useRouter();
     const canvasRef = ref(null);
     const badgeWardenRef = ref(null);
     const badgePredatorRef = ref(null);
     const worldHintRef = ref(null);
 
-    const markerVersion = ref(Date.now());
+    const debugLog = ref([]);
+    const buildId = Date.now();
+    function dbg(msg, data) {
+      const ts = ((Date.now() % 100000) / 1000).toFixed(2);
+      let text;
+      try {
+        text = data !== undefined
+          ? `[${ts}s] ${msg}: ${JSON.stringify(data).slice(0, 80)}`
+          : `[${ts}s] ${msg}`;
+      } catch (e) {
+        text = `[${ts}s] ${msg}: <unserializable>`;
+      }
+      debugLog.value.push(text);
+      console.log('[PIT-NEW]', msg, data);
+    }
+    dbg('setup called');
 
     const master = computed(() => store.getters['master/getMaster']);
     const userTaps = computed(() => master.value?.userData?.totalTaps || 0);
@@ -95,24 +116,31 @@ export default {
       store.commit('master/setInfoMessage', { text: t.value.pit?.msgNotifSoon || 'Notifications coming soon', timeout: 2000 });
     }
 
-    console.log('[PIT-NEW] registering onMounted hook');
+    dbg('registering onMounted hook');
     onMounted(async () => {
-      console.log('[PIT-NEW] onMounted fired');
+      dbg('onMounted fired');
       await nextTick();
-      console.log('[PIT-NEW] canvasRef after nextTick:', canvasRef.value);
-      console.log('[PIT-NEW] initPitScene type:', typeof initPitScene);
+      dbg('canvasRef after nextTick', {
+        isNull: canvasRef.value === null,
+        tag: canvasRef.value?.tagName,
+        w: canvasRef.value?.width,
+        h: canvasRef.value?.height,
+      });
+      dbg('initPitScene type', { type: typeof initPitScene });
 
       if (!canvasRef.value) {
-        console.error('[PIT-NEW] canvas ref is null after nextTick — abort');
+        dbg('ABORT canvas null');
         return;
       }
 
+      dbg('agents check', { length: agents.value?.length });
       if (!agents.value.length) {
-        console.log('[PIT-NEW] dispatching fetchAgents');
+        dbg('dispatching fetchAgents');
         store.dispatch('agent/fetchAgents');
       }
 
       try {
+        dbg('calling initPitScene');
         const result = initPitScene(canvasRef.value, {
           onObjectClick: handleNavigation,
           agents: agents.value,
@@ -129,20 +157,21 @@ export default {
           },
         });
         cleanup = result?.cleanup;
-        console.log('[PIT-NEW] initPitScene OK, cleanup set:', typeof cleanup);
+        dbg('initPitScene returned', { hasResult: !!result, hasCleanup: !!cleanup });
       } catch (err) {
-        console.error('[PIT-NEW] initPitScene threw:', err);
+        dbg('initPitScene THREW', { msg: err?.message?.slice(0, 100) });
       }
     });
 
     onBeforeUnmount(() => {
-      console.log('[PIT-NEW] onBeforeUnmount');
+      dbg('onBeforeUnmount');
       if (cleanup) { cleanup(); cleanup = null; }
     });
 
     return {
       t, canvasRef, badgeWardenRef, badgePredatorRef, worldHintRef,
-      userTaps, userXP, markerVersion,
+      userTaps, userXP,
+      debugLog, buildId,
       goProfile, onNotifications,
     };
   },
@@ -170,21 +199,32 @@ export default {
   display: block;
 }
 
-/* Phase 4.7-FIN debug marker */
-.pit-debug-marker {
+/* Phase 4.7-FIN-A debug stack */
+.pit-debug-stack {
   position: fixed;
   top: 50px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: lime;
-  color: black;
-  padding: 10px;
+  left: 10px;
   z-index: 99999;
   font-family: monospace;
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 1px;
+  font-size: 11px;
+  max-width: 500px;
+  background: rgba(0, 0, 0, 0.85);
+  color: lime;
+  padding: 8px;
+  border: 2px solid lime;
   pointer-events: none;
+}
+.pit-debug-stack-title {
+  color: yellow;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.pit-debug-stack-line {
+  white-space: pre-wrap;
+  line-height: 1.3;
+}
+.pit-debug-stack-empty {
+  color: red;
 }
 
 .pit-hud-root {
