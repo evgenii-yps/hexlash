@@ -5,13 +5,70 @@ const { awardClanXP } = require('../utils/clanLevel');
 const { createClanEvent } = require('../utils/clanEvents');
 const { getActiveAgent } = require('../services/fightClubService');
 const { applyWin } = require('../services/beltService');
+const {
+  STAKE_AMOUNTS,
+  STAKE_PAYOUT_MULTIPLIER,
+  STAKE_DRAW_RETURN,
+  STAKE_LOSE_RETURN,
+} = require('../config');
 
 const router = express.Router();
+
+// POST /v1/fight/start — optional stake deduction before PvE fight (Phase 4.3, PvE only)
+// Body: { stake: 'low' | 'medium' | 'high' | null }
+// Returns: { data: { stakeApplied, stakeAmount?, newBalance? } }
+// Backwards-compat: stake=null/missing → no-op, stakeApplied=false.
+router.post('/start', authMiddleware, async (req, res) => {
+  try {
+    const { stake } = req.body || {};
+    if (!stake) {
+      return res.json({ data: { stakeApplied: false } });
+    }
+    if (!Object.prototype.hasOwnProperty.call(STAKE_AMOUNTS, stake)) {
+      return res.status(400).json({ error: 'Invalid stake level' });
+    }
+
+    const stakeAmount = STAKE_AMOUNTS[stake];
+    const user = await prisma.user.findUnique({
+      where: { id: req.userId },
+      select: { balance: true },
+    });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    if (user.balance < stakeAmount) {
+      return res.status(400).json({
+        error: 'Insufficient balance',
+        required: stakeAmount,
+        current: user.balance,
+      });
+    }
+
+    // Deduct stake. Race condition between findUnique and update is acceptable for MVP
+    // (parked — migrate to prisma.$transaction if observed in prod).
+    const updated = await prisma.user.update({
+      where: { id: req.userId },
+      data: { balance: { decrement: stakeAmount } },
+      select: { balance: true },
+    });
+
+    res.json({
+      data: {
+        stakeApplied: true,
+        stakeAmount,
+        newBalance: updated.balance,
+      },
+    });
+  } catch (err) {
+    console.error('Fight start (stake) error:', err);
+    res.status(500).json({ error: 'Failed to start fight' });
+  }
+});
 
 // POST /v1/fight/save — PvE fight result via active agent (first by createdAt)
 router.post('/save', authMiddleware, async (req, res) => {
   try {
-    const { isWin, isDraw, roundsPlayed, totalDamageDealt } = req.body;
+    const { isWin, isDraw, roundsPlayed, totalDamageDealt, stake } = req.body;
 
     if (typeof isWin !== 'boolean' || typeof isDraw !== 'boolean') {
       return res.status(400).json({ error: 'isWin and isDraw are required booleans' });
@@ -73,7 +130,39 @@ router.post('/save', authMiddleware, async (req, res) => {
       },
     });
 
-    res.json({ data: { success: true, beltUpdate: beltUpdate || undefined } });
+    // Stake payout (Phase 4.3, PvE only) — backwards-compat: stake missing → no-op.
+    // Deduction already happened on /fight/start; here we only credit payout.
+    let newBalance;
+    if (stake && Object.prototype.hasOwnProperty.call(STAKE_AMOUNTS, stake)) {
+      const stakeAmount = STAKE_AMOUNTS[stake];
+      const mult = isWin ? STAKE_PAYOUT_MULTIPLIER
+                 : isDraw ? STAKE_DRAW_RETURN
+                 : STAKE_LOSE_RETURN;
+      const payout = stakeAmount * mult;
+      if (payout > 0) {
+        const updated = await prisma.user.update({
+          where: { id: req.userId },
+          data: { balance: { increment: payout } },
+          select: { balance: true },
+        });
+        newBalance = updated.balance;
+      } else {
+        // Loss — no credit, but still return current balance so UI syncs
+        const cur = await prisma.user.findUnique({
+          where: { id: req.userId },
+          select: { balance: true },
+        });
+        newBalance = cur?.balance;
+      }
+    }
+
+    res.json({
+      data: {
+        success: true,
+        beltUpdate: beltUpdate || undefined,
+        newBalance,
+      },
+    });
   } catch (err) {
     console.error('Save fight error:', err);
     res.status(500).json({ error: 'Internal server error' });
