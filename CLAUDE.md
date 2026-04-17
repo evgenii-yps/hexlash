@@ -793,7 +793,7 @@ User, Clan, ClanInvite, ClanEvent, FightClub, Achievement, UserAchievement, Soci
 ## Branch (Git)
 
 Current dev branch: `claude/setup-project-initialization-buyXe`
-Visual Redesign (Phase 1–3): **COMPLETE**, in main. Phase 4 in progress: 4.1 (Training sound, commit `7aa6e86`) ✅, 4.2 (Training energy, commit `e005bec`) ✅, 4.3 (PvE stake loop) ✅. Remaining Phase 4: strategy backend, wagmi wallet, country rankings. See "Visual Redesign — Roadmap & Branch State" below.
+Visual Redesign (Phase 1–3): **COMPLETE**, in main. Phase 4 in progress: 4.1 (Training sound, commit `7aa6e86`) ✅, 4.2 (Training energy, commit `e005bec`) ✅, 4.3 (PvE stake loop) ✅, 4.4 (PvE strategy — frontend) ✅. Remaining Phase 4: wagmi wallet, country rankings. See "Visual Redesign — Roadmap & Branch State" below.
 Phase −1 (Captain System Removal): merged separately.
 Club Mode prototype: **IN PROGRESS** — 109 commits ahead of main, ~6000 lines, deepdive complete (#1a-#1i), Phase 1 work starting.
 Road 1 (Neon Discipline visual migration): **COMPLETE**. See `/docs/road1-final-report.md` and `/docs/road2-parking-list.md`.
@@ -1848,9 +1848,9 @@ Captain system completely removed. Active agent for combat = first agent by `cre
 
 Visual rebrand to v23 palette. **Current dev branch:** `claude/setup-project-initialization-buyXe`. **Not in main.** Captain Removal (Phase −1, above) merged separately.
 
-**Done:** Phase −1 (Captain Removal ✅), Phase 1 (Visual Foundation ✅), Phase 2 (AppShell + View Layering ✅), Phase 3 (Screen Port 10/10 + CardFightViewV2 full stack: PvE + PvP + Result overlay + AI Trainer ✅), Phase 4.1 (Training sound — audioEngine + Howler punch SFX, commit `7aa6e86`) ✅, Phase 4.2 (Training energy bar wired to PunchInfo, commit `e005bec`) ✅, Phase 4.3 (PvE stake loop — backend `/fight/start` atomic deduction + payout in `/fight/save` + Vuex `setBalance` + Preparation/CardFight/Profile UI + 5 i18n keys × 11 locales) ✅.
+**Done:** Phase −1 (Captain Removal ✅), Phase 1 (Visual Foundation ✅), Phase 2 (AppShell + View Layering ✅), Phase 3 (Screen Port 10/10 + CardFightViewV2 full stack: PvE + PvP + Result overlay + AI Trainer ✅), Phase 4.1 (Training sound — audioEngine + Howler punch SFX, commit `7aa6e86`) ✅, Phase 4.2 (Training energy bar wired to PunchInfo, commit `e005bec`) ✅, Phase 4.3 (PvE stake loop — backend `/fight/start` atomic deduction + payout in `/fight/save` + Vuex `setBalance` + Preparation/CardFight/Profile UI + 5 i18n keys × 11 locales) ✅, Phase 4.4 (PvE strategy — player AI behavior override: hp/damage/crit/dodge/moduleWeights via `src/data/strategy.js`. Pure buffs design — no penalties. PvP and auto-fight unaffected.) ✅.
 
-**Not done:** Phase 4 remainder (stake, strategy backend, wagmi wallet, country rankings), Phase 5 (i18n full pass across 11 locales + debt resolution D1/D2/D5/D8), Phase 6 (cutover of non-v2 views + cleanup of suffixed routes + P1-cleanup D7).
+**Not done:** Phase 4 remainder (wagmi wallet, country rankings), Phase 5 (i18n full pass across 11 locales + debt resolution D1/D2/D5/D8), Phase 6 (cutover of non-v2 views + cleanup of suffixed routes + P1-cleanup D7).
 
 See subsections below for details — do not duplicate content here.
 
@@ -2015,8 +2015,8 @@ Phase 3.10 is complete (10/10 Screen Port views + PvE + PvP + AI Trainer). Phase
 - **4.1 ✅** Training sound — audioEngine ambient + Howler punch SFX wired in TrainingViewV2 (commit `7aa6e86`).
 - **4.2 ✅** Training energy bar wired to PunchInfo (commit `e005bec`).
 - **4.3 ✅** Preparation stake loop — backend + frontend + i18n (PvE only; PvP out of scope).
+- **4.4 ✅** PvE strategy — player AI behavior override via `src/data/strategy.js` (frontend-only, backend not in PvE combat path). aggressive/balanced/defensive applied to player hp/damage/crit/dodge/moduleWeights. Existing i18n keys reused (no new strings).
 - **4.x remaining:**
-  - Preparation **strategy** (AI behavior override) — backend wire to combatEngine + frontend hook
   - Profile **wallet** — wagmi connect/disconnect UI in ProfileViewV2
   - **Live matches feed + country rankings** in RatingsViewV2 — backend aggregation + WS
 
