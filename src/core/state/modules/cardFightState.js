@@ -12,6 +12,7 @@ import iconShield from '@/assets/images/icons/shield.svg';
 import iconBlind from '@/assets/images/icons/blind.svg';
 import iconRage from '@/assets/images/icons/rage.svg';
 import iconCrit from '@/assets/images/icons/crit.svg';
+import { getStrategyModifiers } from '@/data/strategy.js';
 
 const MODULES_STORAGE_KEY = 'hexlash_player_modules';
 const FIGHT_STORAGE_KEY   = 'hexlash_current_fight';
@@ -56,6 +57,7 @@ function saveFightState(state) {
             xpEarned:          state.xpEarned,
             xpAwarded:         state.xpAwarded,
             stakeLevel:        state.stakeLevel,
+            strategyLevel:     state.strategyLevel,
             lastUpdateAt:      _fightLastUpdateAt || Date.now(),
         }));
     } catch(e) { /* ignore */ }
@@ -95,7 +97,11 @@ function _simulateOneRound(state, commit) {
 
     const isOverdrive = nextRound > MAX_ROUNDS;
 
-    const action1 = _ai1.selectAction(state.liveHP1, MAX_HP, isOverdrive);
+    // Phase 4.4: strategy modifiers (player AI behavior). Same instance used
+    // for action selection (moduleWeights) and round resolution (damage/crit/dodge).
+    const strategyMods = getStrategyModifiers(state.strategyLevel || 'balanced');
+
+    const action1 = _ai1.selectAction(state.liveHP1, MAX_HP, isOverdrive, strategyMods.moduleWeights);
     const action2 = _ai2.selectAction(state.liveHP2, MAX_HP, isOverdrive);
 
     const moveInfo = CombatEngine.getMoveInfo(
@@ -116,6 +122,7 @@ function _simulateOneRound(state, commit) {
         nextRound,
         modsToUse,
         moveInfo,
+        state.strategyLevel || 'balanced',
     );
 
     commit('setLiveHP1', result.hp1After);
@@ -180,6 +187,7 @@ const state = {
     xpAwarded: false,  // true after XP display (agent XP awarded via backend, not progressionState)
 
     stakeLevel: null,  // Phase 4.3: 'low' | 'medium' | 'high' | null — PvE stake applied to this fight
+    strategyLevel: 'balanced',  // Phase 4.4: 'aggressive' | 'balanced' | 'defensive' — PvE player AI behavior
 };
 
 // ─── Getters ─────────────────────────────────────────────────────────────────
@@ -208,6 +216,7 @@ const getters = {
     getXpAwarded:         (s) => s.xpAwarded,
 
     getStakeLevel:        (s) => s.stakeLevel,
+    getStrategyLevel:     (s) => s.strategyLevel,
 
     getBuildDescription: (s) => {
         const names = s.playerModules
@@ -280,6 +289,7 @@ const mutations = {
     setXpAwarded(s, v) { s.xpAwarded = v; },
 
     setStakeLevel(s, v) { s.stakeLevel = v; },
+    setStrategyLevel(s, v) { s.strategyLevel = v; },
 };
 
 // ─── Actions ─────────────────────────────────────────────────────────────────
@@ -349,7 +359,9 @@ const actions = {
         _ai1 = new ModuleAIStrategy(agentModules);
         _ai2 = new ModuleAIStrategy(opponent.modules);
 
-        commit('setLiveHP1', MAX_HP);
+        // Phase 4.4: apply strategy hpMultiplier to player only
+        const strategyMods = getStrategyModifiers(state.strategyLevel || 'balanced');
+        commit('setLiveHP1', Math.round(MAX_HP * strategyMods.hpMultiplier));
         commit('setLiveHP2', MAX_HP);
         commit('setRoundNum', 0);
         commit('clearRoundLog');
@@ -550,6 +562,7 @@ const actions = {
         commit('setXpEarned', saved.xpEarned || null);
         commit('setXpAwarded', saved.xpAwarded || false);
         commit('setStakeLevel', saved.stakeLevel || null);
+        commit('setStrategyLevel', saved.strategyLevel || 'balanced');
 
         // Results phase: just restore UI, no need to recreate AI
         if (saved.fightPhase === 'results') {
@@ -627,6 +640,7 @@ const actions = {
         commit('setXpEarned', null);
         commit('setXpAwarded', false);
         commit('setStakeLevel', null);
+        commit('setStrategyLevel', 'balanced');
         commit('setFightPhase', 'preparation');
         await router.push('/arena');
     },
