@@ -43,10 +43,10 @@ const playSound = () => {
 }
 
 const menuItems = computed(() => [
-  {icon: 'icon-arena', text: t.value.menu.arena, route: '/arena'},
-  {icon: 'icon-trainings', text: t.value.menu.trainings, route: '/training'},
-  {icon: 'icon-ratings', text: t.value.menu.ratings, route: '/ratings/clubs'},
-  {icon: 'icon-profile', text: t.value.menu.profile, route: '/profile'},
+  {icon: 'icon-arena', text: t.value.menu.arena, route: '/arena/pit'},
+  {icon: 'icon-trainings', text: t.value.menu.trainings, route: '/training-v2'},
+  {icon: 'icon-ratings', text: t.value.menu.ratings, route: '/ratings-v2'},
+  {icon: 'icon-profile', text: t.value.menu.profile, route: '/profile-v2'},
 ])
 
 const route = useRoute()
