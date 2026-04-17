@@ -48,12 +48,53 @@
 
       <!-- Country Tab -->
       <div v-if="activeTab === 'country'" class="tab-content">
-        <div class="tab-placeholder">{{ rv2.lblCountrySoon || 'Country rankings coming soon' }}</div>
+        <div v-if="!userCountry" class="tab-placeholder tab-placeholder--cta">
+          <p>{{ rv2.lblNoCountrySet || 'Select your country in Profile to see country rankings' }}</p>
+          <button class="cta-btn" @click="$router.push('/profile-v2')">
+            {{ rv2.lblGoToProfile || 'Go to Profile' }}
+          </button>
+        </div>
+        <div v-else-if="countryLoading" class="tab-placeholder">
+          {{ rv2.lblLoading || 'Loading…' }}
+        </div>
+        <div v-else-if="countryLeaderboard.length === 0" class="tab-placeholder">
+          {{ rv2.lblNoCountryRanks || 'No ranked players in your country yet' }}
+        </div>
+        <div v-else class="rt-list">
+          <div v-for="(entry, i) in countryLeaderboard" :key="entry.userId" class="rt-row">
+            <span class="rt-rank" :class="{ 'rank-1': i === 0, 'rank-2': i === 1, 'rank-3': i === 2 }">{{ i + 1 }}</span>
+            <span class="rt-flag">{{ codeToFlag(entry.country) }}</span>
+            <img :src="`/images/skins/${entry.agent.skin || 'skin_m_1.png'}`" class="rt-avatar" alt="" />
+            <span class="rt-name">{{ entry.agent.name || entry.login }}</span>
+            <span class="rt-elo">{{ entry.agent.elo }}</span>
+          </div>
+        </div>
       </div>
 
       <!-- Live Tab -->
       <div v-if="activeTab === 'live'" class="tab-content">
-        <div class="tab-placeholder">{{ rv2.lblLiveSoon || 'Live matches coming soon' }}</div>
+        <div v-if="liveLoading && liveMatches.length === 0" class="tab-placeholder">
+          {{ rv2.lblLoading || 'Loading…' }}
+        </div>
+        <div v-else-if="liveMatches.length === 0" class="tab-placeholder">
+          {{ rv2.lblNoLiveMatches || 'No recent matches' }}
+        </div>
+        <div v-else class="rt-list">
+          <div v-for="m in liveMatches" :key="m.id" class="live-row">
+            <div class="live-side" :class="{ '--winner': m.winnerId === m.player1?.id }">
+              <span v-if="m.player1?.country" class="live-flag">{{ codeToFlag(m.player1.country) }}</span>
+              <span class="live-name">{{ m.player1?.login || '???' }}</span>
+              <span class="live-hp">{{ m.player1Hp }}</span>
+            </div>
+            <span class="live-vs">vs</span>
+            <div class="live-side" :class="{ '--winner': m.winnerId === m.player2?.id }">
+              <span class="live-hp">{{ m.player2Hp }}</span>
+              <span class="live-name">{{ m.player2?.login || '???' }}</span>
+              <span v-if="m.player2?.country" class="live-flag">{{ codeToFlag(m.player2.country) }}</span>
+            </div>
+            <span class="live-time">{{ formatTimeAgo(m.createdAt) }}</span>
+          </div>
+        </div>
       </div>
 
       <!-- YOUR row (sticky bottom) -->
@@ -74,10 +115,12 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import store from '@/core/state/store.js';
 import { t, interpolate } from '@/locales/index.js';
 import { getNextThreshold } from '@/utils/beltDisplay.js';
+import { codeToFlag } from '@/data/countries.js';
+import apiClient from '@/core/api/apiClient.js';
 import AgentLeaderboard from '@/components/ratings/AgentLeaderboard.vue';
 import BeltBadge from '@/components/ui/BeltBadge.vue';
 
@@ -118,13 +161,94 @@ export default {
       return info.remaining;
     });
 
+    // Phase 4.6 — Country tab + Live tab data
+    const userCountry = computed(() => master.value?.userData?.country || null);
+    const countryLeaderboard = ref([]);
+    const countryLoading = ref(false);
+    const liveMatches = ref([]);
+    const liveLoading = ref(false);
+    let livePollInterval = null;
+
+    async function fetchCountryLeaderboard() {
+      if (!userCountry.value) return;
+      countryLoading.value = true;
+      try {
+        const res = await apiClient.get(
+          `/stats/leaderboard/country?country=${userCountry.value}&limit=50`,
+          { authRequired: true },
+        );
+        countryLeaderboard.value = res?.data?.leaderboard || [];
+      } catch (err) {
+        console.error('Country leaderboard fetch error:', err);
+      } finally {
+        countryLoading.value = false;
+      }
+    }
+
+    async function fetchLiveMatches() {
+      try {
+        const res = await apiClient.get('/stats/live-matches?limit=20', { authRequired: true });
+        liveMatches.value = res?.data?.matches || [];
+      } catch (err) {
+        console.error('Live matches fetch error:', err);
+      } finally {
+        liveLoading.value = false;
+      }
+    }
+
+    function formatTimeAgo(iso) {
+      const sec = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 1000));
+      if (sec < 60) return `${sec}s ago`;
+      if (sec < 3600) return `${Math.round(sec / 60)}m ago`;
+      if (sec < 86400) return `${Math.round(sec / 3600)}h ago`;
+      return `${Math.round(sec / 86400)}d ago`;
+    }
+
+    // Lazy fetch on tab switch; polling only while Live tab is active.
+    watch(activeTab, (tab) => {
+      if (tab === 'country' && userCountry.value && countryLeaderboard.value.length === 0) {
+        fetchCountryLeaderboard();
+      }
+      if (tab === 'live') {
+        liveLoading.value = true;
+        fetchLiveMatches();
+        if (!livePollInterval) {
+          livePollInterval = setInterval(fetchLiveMatches, 30000);
+        }
+      } else if (livePollInterval) {
+        clearInterval(livePollInterval);
+        livePollInterval = null;
+      }
+    });
+
+    // Refetch country leaderboard when user picks a new country.
+    watch(userCountry, (newCountry) => {
+      if (activeTab.value === 'country') {
+        countryLeaderboard.value = [];
+        if (newCountry) fetchCountryLeaderboard();
+      }
+    });
+
     onMounted(() => {
       if (!friends.value.length) store.dispatch('friends/loadFriends').catch(() => {});
       if (!store.state.agent?.agents?.length) store.dispatch('agent/fetchAgents').catch(() => {});
       if (myClanId.value) store.dispatch('clan/loadClanById', myClanId.value).catch(() => {});
     });
 
-    return { t, interpolate, rv2, activeTab, searchQuery, tabs, myClanId, activeAgent, friends, clanData, clanMembers, nextRankInfo };
+    onBeforeUnmount(() => {
+      if (livePollInterval) {
+        clearInterval(livePollInterval);
+        livePollInterval = null;
+      }
+    });
+
+    return {
+      t, interpolate, rv2, activeTab, searchQuery, tabs,
+      myClanId, activeAgent, friends, clanData, clanMembers, nextRankInfo,
+      userCountry, countryLeaderboard, countryLoading,
+      liveMatches, liveLoading,
+      codeToFlag, formatTimeAgo,
+    };
   },
 };
 </script>
@@ -254,6 +378,46 @@ export default {
 .rt-dot.online { background: var(--hex-victory); box-shadow: 0 0 6px var(--hex-victory); }
 .rt-name { flex: 1; color: var(--hex-text-primary); font-size: 14px; }
 .rt-wins { font-family: var(--hex-font-mono); font-size: 12px; color: var(--hex-victory); }
+.rt-flag { font-size: 18px; flex-shrink: 0; }
+.rt-elo { font-family: var(--hex-font-mono); font-size: 12px; color: var(--hex-text-primary); }
+
+/* Country CTA */
+.tab-placeholder--cta {
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+}
+.cta-btn {
+  font-family: var(--hex-font-mono);
+  font-size: 11px;
+  padding: 8px 16px;
+  background: var(--hex-bg-deep);
+  color: var(--hex-text-primary);
+  border: 1px solid var(--hex-primary);
+  border-radius: var(--hex-radius-sm);
+  cursor: pointer;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.cta-btn:hover { background: var(--hex-primary); color: var(--hex-bg-deep); }
+
+/* Live feed row */
+.live-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px;
+  background: var(--hex-bg-card);
+  border: 1px solid var(--hex-border-default);
+  border-radius: var(--hex-radius-md);
+  font-family: var(--hex-font-mono);
+  font-size: 12px;
+}
+.live-side { display: flex; align-items: center; gap: 6px; flex: 1; }
+.live-side.--winner .live-name { color: var(--hex-primary); font-weight: 500; }
+.live-flag { font-size: 14px; }
+.live-name { color: var(--hex-text-primary); }
+.live-hp { color: var(--hex-text-primary); min-width: 24px; text-align: center; font-weight: 500; }
+.live-vs { color: var(--hex-text-muted); font-size: 10px; padding: 0 4px; }
+.live-time { color: var(--hex-text-muted); font-size: 10px; min-width: 54px; text-align: right; }
 
 /* YOUR row */
 .rt-your-row {

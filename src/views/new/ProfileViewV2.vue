@@ -103,6 +103,11 @@
           </div>
 
           <div class="settings-block">
+            <div class="settings-label">{{ pv2.lblCountry || 'Country' }}</div>
+            <CountryPicker v-model="userCountry" />
+          </div>
+
+          <div class="settings-block">
             <div class="toggle-row">
               <span>{{ pv2.lblSound || 'Ambient' }}</span>
               <button :class="['toggle-pip', { on: !isMuted }]" @click="toggleMute">
@@ -137,10 +142,12 @@ import { t, setLanguage } from '@/locales/index.js';
 import { getBeltDisplay } from '@/utils/beltDisplay.js';
 import HexButton from '@/components/ui/HexButton.vue';
 import ConnectWallet from '@/components/fragments/profile/wallet/ConnectWallet.vue';
+import CountryPicker from '@/components/profile/CountryPicker.vue';
+import apiClient from '@/core/api/apiClient.js';
 
 export default {
   name: 'ProfileViewV2',
-  components: { HexButton, ConnectWallet },
+  components: { HexButton, ConnectWallet, CountryPicker },
   setup() {
     const router = useRouter();
     const master = computed(() => store.getters['master/getMaster']);
@@ -174,6 +181,32 @@ export default {
       store.dispatch('master/setLanguage', lang).catch(() => {});
     }
 
+    // Phase 4.6 — country selector wired via existing updateMaster action
+    // (handles state merge + IndexedDB persist)
+    const userCountry = computed({
+      get: () => master.value?.userData?.country || null,
+      set: (code) => saveCountry(code),
+    });
+
+    async function saveCountry(code) {
+      try {
+        const res = await apiClient.put('/user/country', { country: code }, { authRequired: true });
+        if (res?.data?.country !== undefined) {
+          await store.dispatch('master/updateMaster', { country: res.data.country });
+          store.commit('master/setInfoMessage', {
+            text: pv2.value.lblCountrySaved || 'Country saved',
+            timeout: 2000,
+          });
+        }
+      } catch (err) {
+        console.error('Save country error:', err);
+        store.commit('master/setInfoMessage', {
+          text: pv2.value.lblCountrySaveError || 'Failed to save country',
+          timeout: 3000,
+        });
+      }
+    }
+
     function toggleMute() {
       store.commit('punch/setMuted', !isMuted.value);
     }
@@ -192,7 +225,7 @@ export default {
       }
     });
 
-    return { t, pv2, master, ud, activeAgent, balance, friends, friendsLoading, isMuted, currentLang, langs, appVersion, winRate, beltDisplay, switchLang, toggleMute, doLogout };
+    return { t, pv2, master, ud, activeAgent, balance, friends, friendsLoading, isMuted, currentLang, langs, appVersion, winRate, beltDisplay, userCountry, switchLang, toggleMute, doLogout };
   },
 };
 </script>
