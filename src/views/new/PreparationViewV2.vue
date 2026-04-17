@@ -184,6 +184,9 @@ export default {
         store.commit('fight/setStakeLevel', stake.value);
       }
 
+      // Phase 4.4: commit selected strategy before fight starts
+      store.commit('fight/setStrategyLevel', strategy.value);
+
       // PvE: dispatch fight/startFight which reads active agent, sets up state, navigates to /fight-v2
       await store.dispatch('fight/startFight', { targetRoute: '/fight-v2' });
     }
