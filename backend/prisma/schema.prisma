@@ -15,6 +15,7 @@ model User {
   emailVerified   Boolean  @default(false)
   initialVerified Boolean  @default(true)
   language        String   @default("en")
+  country         String?  // ISO 3166-1 alpha-2 — Phase 4.6
   name            String   @default("Anonymous")
   avatarUrl       String   @default("")
   isBlocked       Boolean  @default(false)
@@ -88,6 +89,8 @@ model User {
   receivedClanInvites    ClanInvite[]    @relation("ReceivedClanInvites")
   agents                 Agent[]
   fightClub              FightClub?
+
+  @@index([country])
 }
 
 model Clan {
