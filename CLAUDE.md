@@ -793,7 +793,7 @@ User, Clan, ClanInvite, ClanEvent, FightClub, Achievement, UserAchievement, Soci
 ## Branch (Git)
 
 Current dev branch: `claude/setup-project-initialization-buyXe`
-Visual Redesign (Phase 1–3): **COMPLETE** (local) — not in main. Phase 1 (tokens/fonts/atmosphere ✅), Phase 2 (AppShell + view layering ✅), Phase 3 Screen Port 10/10 v2 views ✅ including full CardFightViewV2 (PvE + PvP + Result overlay + AI Trainer). Next milestone: Phase 4 (decorative → real-data wiring). See "Visual Redesign — Roadmap & Branch State" below.
+Visual Redesign (Phase 1–3): **COMPLETE**, in main. Phase 4 in progress: 4.1 (Training sound, commit `7aa6e86`) ✅, 4.2 (Training energy, commit `e005bec`) ✅. Remaining Phase 4: stake, strategy backend, wagmi wallet, country rankings. See "Visual Redesign — Roadmap & Branch State" below.
 Phase −1 (Captain System Removal): merged separately.
 Club Mode prototype: **IN PROGRESS** — 109 commits ahead of main, ~6000 lines, deepdive complete (#1a-#1i), Phase 1 work starting.
 Road 1 (Neon Discipline visual migration): **COMPLETE**. See `/docs/road1-final-report.md` and `/docs/road2-parking-list.md`.
@@ -1848,9 +1848,9 @@ Captain system completely removed. Active agent for combat = first agent by `cre
 
 Visual rebrand to v23 palette. **Current dev branch:** `claude/setup-project-initialization-buyXe`. **Not in main.** Captain Removal (Phase −1, above) merged separately.
 
-**Done (local):** Phase −1 (Captain Removal ✅), Phase 1 (Visual Foundation ✅), Phase 2 (AppShell + View Layering ✅), Phase 3 (Screen Port 10/10 + CardFightViewV2 full stack: PvE + PvP + Result overlay + AI Trainer ✅).
+**Done:** Phase −1 (Captain Removal ✅), Phase 1 (Visual Foundation ✅), Phase 2 (AppShell + View Layering ✅), Phase 3 (Screen Port 10/10 + CardFightViewV2 full stack: PvE + PvP + Result overlay + AI Trainer ✅), Phase 4.1 (Training sound — audioEngine + Howler punch SFX, commit `7aa6e86`) ✅, Phase 4.2 (Training energy bar wired to PunchInfo, commit `e005bec`) ✅.
 
-**Not done:** Phase 4 (decorative → real-data wiring: stake, strategy, energy, wagmi wallet, country rankings, Training sound), Phase 5 (i18n full pass across 11 locales + debt resolution D1/D2/D5/D8), Phase 6 (cutover of non-v2 views + cleanup of suffixed routes + P1-cleanup D7).
+**Not done:** Phase 4 remainder (stake, strategy backend, wagmi wallet, country rankings), Phase 5 (i18n full pass across 11 locales + debt resolution D1/D2/D5/D8), Phase 6 (cutover of non-v2 views + cleanup of suffixed routes + P1-cleanup D7).
 
 See subsections below for details — do not duplicate content here.
 
@@ -2010,11 +2010,17 @@ CardFightViewV2 splits cleanly along **3D scene ↔ HUD overlay ↔ Vuex state**
 
 ### Phase 3 — What's Deferred to Later Phases
 
-Phase 3.10 is complete (10/10 Screen Port views + PvE + PvP + AI Trainer). Next milestone: Phase 4.
+Phase 3.10 is complete (10/10 Screen Port views + PvE + PvP + AI Trainer). Phase 4 in progress:
 
-- **Backend wiring** for decorative UI: Preparation stake (currency bet), Preparation strategy (AI behavior override), Training energy system (currently stub 100%), Profile wallet (wagmi connect placeholder) — Phase 4
-- **Live matches feed + country rankings** in RatingsViewV2 — Phase 4
-- **Sound** in TrainingViewV2 (helper `audioEngine.js` exists, not wired) — Phase 4
+- **4.1 ✅** Training sound — audioEngine ambient + Howler punch SFX wired in TrainingViewV2 (commit `7aa6e86`).
+- **4.2 ✅** Training energy bar wired to PunchInfo (commit `e005bec`).
+- **4.x remaining:**
+  - Preparation **stake** (currency bet) — backend `/fight/start` + payout in `/fight/save` + Vuex state + 3 views + i18n
+  - Preparation **strategy** (AI behavior override) — backend wire to combatEngine + frontend hook
+  - Profile **wallet** — wagmi connect/disconnect UI in ProfileViewV2
+  - **Live matches feed + country rankings** in RatingsViewV2 — backend aggregation + WS
+
+Later phases:
 - **Full i18n pass** across 11 locales for all `*.v2` subsections + ClanV2/MMV2 reused keys audit — Phase 5
 - **Cutover:** remove `-v2` route suffixes, delete legacy views, delete legacy components — Phase 6
 
