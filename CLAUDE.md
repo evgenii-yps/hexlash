@@ -792,7 +792,7 @@ User, Clan, ClanInvite, ClanEvent, FightClub, Achievement, UserAchievement, Soci
 
 ## Branch (Git)
 
-Current dev branch: `claude/setup-project-initialization-bu1kK`
+Current dev branch: `claude/setup-project-initialization-buyXe`
 Visual Redesign (Phase 1–3): **COMPLETE** (local) — not in main. Phase 1 (tokens/fonts/atmosphere ✅), Phase 2 (AppShell + view layering ✅), Phase 3 Screen Port 10/10 v2 views ✅ including full CardFightViewV2 (PvE + PvP + Result overlay + AI Trainer). Next milestone: Phase 4 (decorative → real-data wiring). See "Visual Redesign — Roadmap & Branch State" below.
 Phase −1 (Captain System Removal): merged separately.
 Club Mode prototype: **IN PROGRESS** — 109 commits ahead of main, ~6000 lines, deepdive complete (#1a-#1i), Phase 1 work starting.
@@ -1846,7 +1846,7 @@ Captain system completely removed. Active agent for combat = first agent by `cre
 
 ### Visual Redesign — Roadmap & Branch State
 
-Visual rebrand to v23 palette. **Current dev branch:** `claude/setup-project-initialization-bu1kK`. **Not in main.** Captain Removal (Phase −1, above) merged separately.
+Visual rebrand to v23 palette. **Current dev branch:** `claude/setup-project-initialization-buyXe`. **Not in main.** Captain Removal (Phase −1, above) merged separately.
 
 **Done (local):** Phase −1 (Captain Removal ✅), Phase 1 (Visual Foundation ✅), Phase 2 (AppShell + View Layering ✅), Phase 3 (Screen Port 10/10 + CardFightViewV2 full stack: PvE + PvP + Result overlay + AI Trainer ✅).
 
@@ -2029,4 +2029,4 @@ Phase 3.10 is complete (10/10 Screen Port views + PvE + PvP + AI Trainer). Next 
 - **D9**: `aiTrainerFightData.diceEffect` is almost always `null` at `results` phase because `rollDiceManual` clears `diceState.activeItem` after 1.5s setTimeout. Legacy behavior, not a 3.10.4 regression. Backend AI Trainer accepts `null`. Fix (remove setTimeout-clear or add separate `lastDiceEffect` field in `cardFightState`) is a standalone task — requires touching cardFightState.js, affects both legacy and V2.
 - **D10**: `pvp-overdrive_start` is not dispatched by `webSocketState.js` (server message `overdrive_start` falls into `default` branch → `console.warn`). Handler `onPvPOverdriveStart` is registered in CFV2 AS-IS from legacy for future-proofing but will never fire until webSocketState adds the case. Pre-existing bug, park.
 
-**Closed debt:** D4 (branch mismatch CLAUDE.md↔system prompt) resolved in 3.10.3 commit 353c463 — current branch pinned as `bu1kK` in two places.
+**Closed debt:** D4 (branch mismatch CLAUDE.md↔system prompt) resolved in 3.10.3 commit 353c463.
