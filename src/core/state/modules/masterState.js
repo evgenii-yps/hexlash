@@ -73,6 +73,13 @@ const mutations = {
             state.master.userData.balance -= sub;
         }
     },
+    // Absolute set (Phase 4.3) — used to sync balance from /fight/start + /fight/save responses.
+    // Absolute avoids drift that delta-based inc/dec accumulate on concurrent updates.
+    setBalance(state, value) {
+        if (state.master && state.master.userData && typeof value === 'number') {
+            state.master.userData.balance = value;
+        }
+    },
     setLoginState: (state, authState) => {
         state.loginState = authState;
     },

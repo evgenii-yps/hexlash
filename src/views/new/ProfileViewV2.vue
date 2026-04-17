@@ -35,6 +35,10 @@
               <span class="id-field-label">{{ pv2.lblClan || 'Clan' }}</span>
               <span class="id-field-value">{{ master?.userData?.clanId ? 'In Clan' : '—' }}</span>
             </div>
+            <div class="id-field">
+              <span class="id-field-label">{{ pv2.lblBalance || 'Balance' }}</span>
+              <span class="id-field-value balance-val">{{ balance }}</span>
+            </div>
           </div>
         </div>
 
@@ -161,6 +165,9 @@ export default {
       return d.color || 'White';
     });
 
+    // Balance (Phase 4.3) — reactive display, updated by /fight/start + /fight/save responses
+    const balance = computed(() => ud.value?.balance || 0);
+
     const walletDisplay = computed(() => {
       const addr = ud.value?.walletAddress;
       if (!addr) return pv2.value?.lblConnectWallet || 'Connect Wallet';
@@ -198,7 +205,7 @@ export default {
       }
     });
 
-    return { t, pv2, master, ud, activeAgent, friends, friendsLoading, isMuted, currentLang, langs, appVersion, winRate, beltDisplay, walletDisplay, copyWallet, switchLang, toggleMute, doLogout };
+    return { t, pv2, master, ud, activeAgent, friends, friendsLoading, isMuted, currentLang, langs, appVersion, winRate, beltDisplay, balance, walletDisplay, copyWallet, switchLang, toggleMute, doLogout };
   },
 };
 </script>

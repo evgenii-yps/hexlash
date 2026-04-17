@@ -201,6 +201,7 @@ export default {
       lblWinrate: 'Винрейт',
       lblSound: 'Эмбиент',
       lblLanguage: 'Язык',
+      lblBalance: 'БАЛАНС',
     },
   },
   arena: {
@@ -976,6 +977,10 @@ export default {
       lblLow: 'НИЗКАЯ',
       lblMedium: 'СРЕДНЯЯ',
       lblHigh: 'ВЫСОКАЯ',
+      lblCost: 'СТАВКА',
+      lblBalance: 'БАЛАНС',
+      lblInsufficientBalance: 'Недостаточно средств',
+      lblFightStartError: 'Не удалось начать бой',
       lblStartFight: 'НАЧАТЬ БОЙ',
       lblSlotsLeft: 'Осталось {n} слотов',
     },
