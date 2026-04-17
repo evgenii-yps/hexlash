@@ -773,6 +773,7 @@ export default {
       lblDaily: 'DAILY TASKS',
       lblBack: 'BACK',
       lblHint: 'TAP THE BAG',
+      lblEnergyLow: 'ENERGY LOW',
     },
   },
   rating: {
