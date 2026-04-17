@@ -64,7 +64,7 @@ export default defineConfig(({mode}) => {
                 stringArray: false,
                 stringArrayThreshold: 0.75,
                 debugProtection: false,
-                exclude: ['src/router/**', 'node_modules/**'],
+                exclude: ['src/router/**', 'node_modules/**', 'src/three/**', 'src/views/new/PitView.vue'],
             }),
             viteImagemin({
                 plugins: {
