@@ -47,6 +47,7 @@ import { initPitScene } from '@/three/scenes/pitScene.js';
 export default {
   name: 'PitView',
   setup() {
+    console.log('[PIT-DEBUG-VIEW] setup() called');
     const router = useRouter();
     const sceneCanvas = ref(null);
     const badgeWarden = ref(null);
@@ -107,13 +108,22 @@ export default {
       store.commit('master/setInfoMessage', { text: t.value.pit?.msgNotifSoon || 'Notifications coming soon', timeout: 2000 });
     }
 
+    console.log('[PIT-DEBUG-VIEW] registering onMounted hook');
     onMounted(() => {
+      console.log('[PIT-DEBUG-VIEW] onMounted FIRED');
+      console.log('[PIT-DEBUG-VIEW] sceneCanvas.value:', sceneCanvas.value);
+      console.log('[PIT-DEBUG-VIEW] sceneCanvas type:', typeof sceneCanvas.value);
+      console.log('[PIT-DEBUG-VIEW] initPitScene type:', typeof initPitScene);
+      console.log('[PIT-DEBUG-VIEW] agents.value:', agents.value, 'length:', agents.value?.length);
+
       // Fetch agents if not loaded
       if (!agents.value.length) {
+        console.log('[PIT-DEBUG-VIEW] dispatching fetchAgents');
         store.dispatch('agent/fetchAgents');
       }
 
       if (sceneCanvas.value) {
+        console.log('[PIT-DEBUG-VIEW] calling initPitScene...');
         const result = initPitScene(sceneCanvas.value, {
           onObjectClick: handleNavigation,
           agents: agents.value,
@@ -130,6 +140,9 @@ export default {
           },
         });
         sceneCleanup = result.cleanup;
+        console.log('[PIT-DEBUG-VIEW] initPitScene returned, cleanup set');
+      } else {
+        console.error('[PIT-DEBUG-VIEW] sceneCanvas.value is FALSY in onMounted, init skipped');
       }
     });
 
