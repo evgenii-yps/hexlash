@@ -784,6 +784,7 @@ export default {
       lblDaily: 'ЕЖЕДНЕВНЫЕ ЗАДАНИЯ',
       lblBack: 'НАЗАД',
       lblHint: 'ТАПАЙ ПО ГРУШЕ',
+      lblEnergyLow: 'НЕТ СИЛ',
     },
   },
   rating: {

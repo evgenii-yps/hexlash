@@ -12,7 +12,11 @@
       </div>
 
       <!-- 3D Bag area -->
-      <div class="tr-bag-area" @pointerdown="onTap">
+      <div
+        class="tr-bag-area"
+        :class="{ 'tr-bag-area--exhausted': isEnergyExhausted }"
+        @pointerdown="onTap"
+      >
         <Punch3D v-if="!is2DPunch" class="tr-bag-canvas" :width="bagWidth" :height="bagHeight" />
         <div v-else class="tr-bag-2d">
           <img src="@/assets/images/punch.png" class="bag-2d-img" alt="" />
@@ -38,13 +42,18 @@
         <div class="tr-stat-row">
           <span class="tr-stat-label">{{ tv2.lblEnergy || 'ENERGY' }}</span>
           <div class="tr-energy-bar">
-            <div class="tr-energy-fill" :style="{ width: energyPercent + '%' }"></div>
+            <div
+              class="tr-energy-fill"
+              :class="energyLevelClass"
+              :style="{ width: energyPercent + '%' }"
+            ></div>
           </div>
         </div>
       </div>
 
       <!-- Hint -->
-      <div class="tr-hint">{{ tv2.lblHint || 'TAP THE BAG' }}</div>
+      <div class="tr-hint" v-if="!isEnergyExhausted">{{ tv2.lblHint || 'TAP THE BAG' }}</div>
+      <div class="tr-hint tr-hint--low" v-else>{{ tv2.lblEnergyLow || 'ENERGY LOW' }}</div>
 
       <div class="scroll-gap"></div>
     </div>
@@ -52,11 +61,14 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
+import { Howl } from 'howler';
 import store from '@/core/state/store.js';
 import { t } from '@/locales/index.js';
 import { COST_PER_CLICK } from '@/core/constants.js';
 import Punch3D from '@/components/fragments/training/Punch3D.vue';
+import { buildAudioEngine, setAudioMuted, destroyAudioEngine } from '@/three/helpers/audioEngine.js';
+import clickSound from '@/assets/sound/punch_hit.mp3';
 
 export default {
   name: 'TrainingViewV2',
@@ -78,8 +90,31 @@ export default {
     const floatingNums = ref([]);
     let numIdCounter = 0;
 
-    // Energy (stub — v23 concept, not in current store)
-    const energyPercent = ref(100);
+    // Energy (derived from PunchInfo — same backend field used by legacy TrainingView)
+    // NOTE: handlePunch does NOT commit punchInfo per-tap — it only pushes to
+    // state.batchHitPunchAmount, flushed every BATCH_SEND_INTERVAL_MS (11s).
+    // We include the pending batch sum so UI reacts per-tap, not per-flush.
+    const punchInfo = computed(() => store.getters['punch/getPunchInfo']);
+    const pendingTaps = computed(() => {
+      const arr = store.state.punch?.batchHitPunchAmount;
+      if (!Array.isArray(arr)) return 0;
+      return arr.reduce((sum, v) => sum + v, 0);
+    });
+    const energyPercent = computed(() => {
+      const info = punchInfo.value;
+      if (!info) return 100; // pre-load default
+      const max = info.punchAmountMaxPerInterval || 10000;
+      const spent = (info.punchAmount || 0) + pendingTaps.value;
+      const remaining = Math.max(0, max - spent);
+      return Math.round((remaining / max) * 100);
+    });
+    const isEnergyExhausted = computed(() => energyPercent.value <= 0);
+    const energyLevelClass = computed(() => {
+      const p = energyPercent.value;
+      if (p > 50) return 'tr-energy-fill--ok';
+      if (p > 25) return 'tr-energy-fill--mid';
+      return 'tr-energy-fill--low';
+    });
 
     function updateCombo() {
       const c = comboCount.value;
@@ -97,7 +132,29 @@ export default {
       }, 800);
     }
 
+    // ── Sound: punch SFX (Howler) + ambient drone (WebAudio) ──
+    const isMuted = computed(() => store.getters['punch/isMuted']);
+    let audioEngine = null;
+    let stopMuteWatch = null;
+
+    function playPunchSFX() {
+      if (isMuted.value) return;
+      const sound = new Howl({ src: [clickSound], volume: 0.6 });
+      sound.play();
+    }
+
     function onTap(event) {
+      // Resume suspended AudioContext on first user gesture (Safari/iOS autoplay policy).
+      // Kept BEFORE the energy check — a gesture is a gesture even when no tap registers.
+      if (audioEngine?.ctx && audioEngine.ctx.state === 'suspended') {
+        audioEngine.ctx.resume().catch(() => {});
+      }
+
+      // Energy check — no tap when exhausted (no SFX, no haptic, no dispatch, no combo)
+      if (isEnergyExhausted.value) return;
+
+      playPunchSFX();
+
       // Combo tracking
       comboCount.value++;
       clearTimeout(comboTimer);
@@ -125,16 +182,39 @@ export default {
     onMounted(() => {
       store.dispatch('punch/synchronizePunchInfo').catch(() => {});
       store.dispatch('punch/startPunchTimer').catch(() => {});
+
+      // Ambient drone: build (may fail in old browsers / SSR — graceful)
+      try {
+        audioEngine = buildAudioEngine();
+        if (audioEngine) {
+          // NOTE: master.gain starts at 0.0; setAudioMuted(false) ramps to 0.5.
+          // Must be called even when !isMuted, otherwise drone is inaudible.
+          setAudioMuted(audioEngine, isMuted.value);
+        }
+      } catch (e) {
+        audioEngine = null;
+      }
+
+      // React to mute toggle
+      stopMuteWatch = watch(isMuted, (muted) => {
+        if (audioEngine) setAudioMuted(audioEngine, muted);
+      });
     });
 
     onBeforeUnmount(() => {
       store.dispatch('punch/stopPunchTimer').catch(() => {});
       clearTimeout(comboTimer);
+      if (stopMuteWatch) { stopMuteWatch(); stopMuteWatch = null; }
+      if (audioEngine) {
+        destroyAudioEngine(audioEngine);
+        audioEngine = null;
+      }
     });
 
     return {
       t, tv2, is2DPunch, formattedTaps, bagWidth, bagHeight,
-      comboCount, comboMultiplier, floatingNums, energyPercent,
+      comboCount, comboMultiplier, floatingNums,
+      energyPercent, isEnergyExhausted, energyLevelClass,
       onTap,
     };
   },
@@ -274,9 +354,17 @@ export default {
 }
 .tr-energy-fill {
   height: 100%;
-  background: var(--hex-branch-speed);
   border-radius: 3px;
-  transition: width 0.3s;
+  transition: width 0.3s, background 0.3s;
+}
+.tr-energy-fill--ok  { background: var(--hex-success); }
+.tr-energy-fill--mid { background: var(--hex-warning); }
+.tr-energy-fill--low { background: var(--hex-danger); }
+
+/* Exhausted bag-area state (energy = 0) */
+.tr-bag-area--exhausted {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 /* Hint */
@@ -286,6 +374,9 @@ export default {
   color: var(--hex-text-muted);
   letter-spacing: 2px;
   margin-top: 12px;
+}
+.tr-hint--low {
+  color: var(--hex-danger);
 }
 
 .scroll-gap { height: 120px; flex-shrink: 0; }
