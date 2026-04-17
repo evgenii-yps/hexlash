@@ -55,17 +55,18 @@ export default defineConfig(({mode}) => {
                     }
                 ]
             }),
-            obfuscator({
-                compact: true,
-                controlFlowFlattening: true,
-                controlFlowFlatteningThreshold: 0.75,
-                deadCodeInjection: true,
-                deadCodeInjectionThreshold: 0.4,
-                stringArray: false,
-                stringArrayThreshold: 0.75,
-                debugProtection: false,
-                exclude: ['src/router/**', 'node_modules/**', 'src/three/**', 'src/views/new/PitView.vue'],
-            }),
+            // TEMPORARILY DISABLED for Phase 4.7 diagnosis
+            // obfuscator({
+            //     compact: true,
+            //     controlFlowFlattening: true,
+            //     controlFlowFlatteningThreshold: 0.75,
+            //     deadCodeInjection: true,
+            //     deadCodeInjectionThreshold: 0.4,
+            //     stringArray: false,
+            //     stringArrayThreshold: 0.75,
+            //     debugProtection: false,
+            //     exclude: ['src/router/**', 'node_modules/**', 'src/three/**', 'src/views/new/PitView.vue'],
+            // }),
             viteImagemin({
                 plugins: {
                     jpg: imageminMozjpeg(),
