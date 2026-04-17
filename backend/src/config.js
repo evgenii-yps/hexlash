@@ -13,16 +13,6 @@ module.exports = {
   DECIMALS: 6,
   COST_PER_CLICK: 2,
   COST_CREATE_CLUB: 10000,
-
-  // Stake (PvE only, Phase 4.3) — raw currency units
-  STAKE_AMOUNTS: {
-    low: 100,
-    medium: 500,
-    high: 1000,
-  },
-  STAKE_PAYOUT_MULTIPLIER: 2, // win pays stake * 2
-  STAKE_DRAW_RETURN: 1,       // draw refunds stake * 1
-  STAKE_LOSE_RETURN: 0,       // loss returns 0
   PUNCH_MAX_PER_INTERVAL: 10000,
   PUNCH_MAX_PER_BATCH: 10000,
   PUNCH_INTERVAL_MS: 3600000, // 1 hour
