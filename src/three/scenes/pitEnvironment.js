@@ -174,7 +174,10 @@ export function buildInteractiveObjects() {
   // Terminal
   const terminal = new THREE.Group();
   const standMat = new THREE.MeshStandardMaterial({ color: 0x141418, roughness: 0.8, metalness: 0.3 });
-  terminal.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.0, 0.7), standMat), { position: new THREE.Vector3(0, 0.5, 0), castShadow: true }));
+  const terminalStand = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.0, 0.7), standMat);
+  terminalStand.position.set(0, 0.5, 0);
+  terminalStand.castShadow = true;
+  terminal.add(terminalStand);
   const crtBody = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.7, 0.85), new THREE.MeshStandardMaterial({ color: 0x18181c, roughness: 0.6, metalness: 0.3 }));
   crtBody.position.y = 1.35; crtBody.castShadow = true;
   terminal.add(crtBody);
