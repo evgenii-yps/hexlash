@@ -196,6 +196,7 @@ export default {
       lblWinrate: 'Winrate',
       lblSound: 'Ambient',
       lblLanguage: 'Language',
+      lblBalance: 'BALANCE',
     },
   },
   arena: {
@@ -969,6 +970,10 @@ export default {
       lblHigh: 'HIGH',
       lblStartFight: 'START FIGHT',
       lblSlotsLeft: '{n} slots left',
+      lblCost: 'COST',
+      lblBalance: 'BALANCE',
+      lblInsufficientBalance: 'Insufficient balance',
+      lblFightStartError: 'Failed to start fight',
     },
   },
 
