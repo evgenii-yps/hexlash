@@ -596,8 +596,14 @@ export default {
             isDraw,
             roundsPlayed: roundNum.value,
             totalDamageDealt: fightStats.value?.totalDamageDealt || 0,
+            stake: store.getters['fight/getStakeLevel'],  // Phase 4.3 — null = no payout
           }, { authRequired: true })
-            .then(() => store.dispatch('agent/fetchAgents'))
+            .then((res) => {
+              if (res?.data?.newBalance !== undefined) {
+                store.commit('master/setBalance', res.data.newBalance);
+              }
+              return store.dispatch('agent/fetchAgents');
+            })
             .catch(() => { /* graceful */ });
         }
       }

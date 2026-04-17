@@ -51,10 +51,17 @@
           </button>
         </div>
 
-        <!-- Stake (decorative) -->
+        <!-- Stake -->
         <div class="prep-section-label">{{ pv2.lblStake || 'STAKE' }}</div>
         <div class="prep-stake">
           <button v-for="s in stakes" :key="s.id" :class="['prep-stake-btn', { active: stake === s.id }]" @click="stake = s.id">{{ s.label }}</button>
+        </div>
+
+        <div class="prep-stake-meta" v-if="selectedMode === 'pve' && stake">
+          <span class="prep-stake-cost">{{ pv2.lblCost || 'COST' }}: {{ stakeAmount }}</span>
+          <span class="prep-stake-balance" :class="{ '--low': !canAffordStake }">
+            {{ pv2.lblBalance || 'BALANCE' }}: {{ balance }}
+          </span>
         </div>
 
         <!-- START FIGHT -->
@@ -78,6 +85,11 @@ import { branches as branchData } from '@/data/branches.js';
 import { getOnlinePlayersCount } from '@/core/services/statsService.js';
 import HexButton from '@/components/ui/HexButton.vue';
 import ModeSelector from '@/components/arena/ModeSelector.vue';
+import apiClient from '@/core/api/apiClient.js';
+
+// MUST match backend STAKE_AMOUNTS in backend/src/config.js
+// (D11 — pending sub-ТЗ for unification via GET /v1/config).
+const STAKE_AMOUNTS = { low: 100, medium: 500, high: 1000 };
 
 export default {
   name: 'PreparationViewV2',
@@ -99,6 +111,10 @@ export default {
       { id: 'medium', label: pv2.value.lblMedium || 'MEDIUM' },
       { id: 'high', label: pv2.value.lblHigh || 'HIGH' },
     ]);
+
+    const balance = computed(() => store.getters['master/getMaster']?.userData?.balance || 0);
+    const stakeAmount = computed(() => STAKE_AMOUNTS[stake.value] || 0);
+    const canAffordStake = computed(() => balance.value >= stakeAmount.value);
 
     // Build branch → moves from agent's unlocked moves
     const agentMoves = computed(() => Array.isArray(prog.value.moves) ? prog.value.moves : []);
@@ -137,10 +153,39 @@ export default {
 
       if (selectedMode.value === 'pvp') {
         router.push('/matchmaking-v2');
-      } else {
-        // PvE: dispatch fight/startFight which reads active agent, sets up state, navigates to /fight-v2
-        await store.dispatch('fight/startFight', { targetRoute: '/fight-v2' });
+        return;
       }
+
+      // PvE stake gate (Phase 4.3): atomic deduct before entering fight.
+      if (stake.value) {
+        try {
+          const res = await apiClient.post('/fight/start', { stake: stake.value }, { authRequired: true });
+          if (res?.data?.newBalance !== undefined) {
+            store.commit('master/setBalance', res.data.newBalance);
+          }
+        } catch (err) {
+          const status = err?.response?.status;
+          const data = err?.response?.data;
+          if (status === 400 && data?.error === 'Insufficient balance') {
+            console.warn('Insufficient balance for stake:', data);
+            store.commit('master/setInfoMessage', {
+              text: pv2.value.lblInsufficientBalance || 'Insufficient balance',
+              timeout: 3000,
+            });
+            return;
+          }
+          console.error('Fight start failed:', err);
+          store.commit('master/setInfoMessage', {
+            text: pv2.value.lblFightStartError || 'Failed to start fight',
+            timeout: 3000,
+          });
+          return;
+        }
+        store.commit('fight/setStakeLevel', stake.value);
+      }
+
+      // PvE: dispatch fight/startFight which reads active agent, sets up state, navigates to /fight-v2
+      await store.dispatch('fight/startFight', { targetRoute: '/fight-v2' });
     }
 
     onMounted(async () => {
@@ -158,6 +203,7 @@ export default {
       selectedMode, onlineCount, branches, moveName, branchName,
       getMoveData, getMoveLevel, addToDeck, removeFromDeck,
       onModeSelect, startFight,
+      balance, stakeAmount, canAffordStake,
     };
   },
 };
@@ -239,6 +285,16 @@ export default {
   color: var(--hex-text-muted); border-radius: var(--hex-radius-sm); cursor: pointer;
 }
 .prep-stake-btn.active { background: var(--hex-bg-card); color: var(--hex-text-primary); border-color: var(--hex-text-primary); }
+
+.prep-stake-meta {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--hex-font-mono);
+  color: var(--hex-text-primary);
+  font-size: 0.875rem;
+  margin: 0.5rem 0;
+}
+.prep-stake-balance.--low { color: var(--hex-danger); }
 
 .prep-start-btn { margin-top: 24px; }
 .scroll-gap { height: 80px; }

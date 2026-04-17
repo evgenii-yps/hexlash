@@ -35,6 +35,10 @@
               <span class="id-field-label">{{ pv2.lblClan || 'Clan' }}</span>
               <span class="id-field-value">{{ master?.userData?.clanId ? 'In Clan' : '—' }}</span>
             </div>
+            <div class="id-field">
+              <span class="id-field-label">{{ pv2.lblBalance || 'BALANCE' }}</span>
+              <span class="id-field-value balance-val">{{ balance }}</span>
+            </div>
           </div>
         </div>
 
@@ -140,6 +144,7 @@ export default {
     const ud = computed(() => master.value?.userData);
     const pv2 = computed(() => t.value.profile?.v2 || {});
     const activeAgent = computed(() => store.getters['agent/activeAgent']);
+    const balance = computed(() => master.value?.userData?.balance || 0);
     const friends = computed(() => store.getters['friends/getFriends'] || []);
     const friendsLoading = computed(() => false);
     const isMuted = computed(() => store.getters['punch/isMuted']);
@@ -198,7 +203,7 @@ export default {
       }
     });
 
-    return { t, pv2, master, ud, activeAgent, friends, friendsLoading, isMuted, currentLang, langs, appVersion, winRate, beltDisplay, walletDisplay, copyWallet, switchLang, toggleMute, doLogout };
+    return { t, pv2, master, ud, activeAgent, balance, friends, friendsLoading, isMuted, currentLang, langs, appVersion, winRate, beltDisplay, walletDisplay, copyWallet, switchLang, toggleMute, doLogout };
   },
 };
 </script>
