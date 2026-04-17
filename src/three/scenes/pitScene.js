@@ -12,53 +12,19 @@ const ZOOM_MAX = 32;
 export function initPitScene(canvas, options) {
   const { onObjectClick, agents, badgeWarden, badgePredator, worldHint, hoverLabels } = options;
 
-  console.log('[PIT-DEBUG] initPitScene start, canvas:', canvas?.tagName, canvas?.width, 'x', canvas?.height, 'agents:', agents?.length);
-
-  let renderer, scene, camera;
-  try {
-    const result = createAtmosphereRenderer(canvas);
-    renderer = result.renderer;
-    scene = result.scene;
-    camera = result.camera;
-    console.log('[PIT-DEBUG] atmosphere OK, scene children:', scene.children.length);
-  } catch (err) {
-    console.error('[PIT-DEBUG] atmosphere FAILED:', err);
-    throw err;
-  }
+  // Renderer + scene + camera
+  const { renderer, scene, camera } = createAtmosphereRenderer(canvas);
 
   // Arena (octagon, posts, ropes, cage)
-  try {
-    const arena = buildArena();
-    console.log('[PIT-DEBUG] buildArena OK, children:', arena?.children?.length, 'type:', arena?.type);
-    scene.add(arena);
-    console.log('[PIT-DEBUG] arena added, scene children now:', scene.children.length);
-  } catch (err) {
-    console.error('[PIT-DEBUG] buildArena FAILED:', err);
-  }
+  scene.add(buildArena());
 
   // Environment (walls, ceiling, beams, lamps, crowd)
-  let crowdGroup;
-  try {
-    const envResult = buildEnvironment();
-    crowdGroup = envResult.crowdGroup;
-    console.log('[PIT-DEBUG] buildEnvironment OK, env children:', envResult.env?.children?.length, 'crowd:', crowdGroup?.children?.length);
-    scene.add(envResult.env);
-    console.log('[PIT-DEBUG] environment added, scene children now:', scene.children.length);
-  } catch (err) {
-    console.error('[PIT-DEBUG] buildEnvironment FAILED:', err);
-  }
+  const { env: envGroup, crowdGroup } = buildEnvironment();
+  scene.add(envGroup);
 
   // Interactive objects
-  let objects;
-  try {
-    const objResult = buildInteractiveObjects();
-    objects = objResult.objects;
-    console.log('[PIT-DEBUG] buildInteractiveObjects OK, env children:', objResult.env?.children?.length, 'objects:', Object.keys(objects || {}));
-    scene.add(objResult.env);
-    console.log('[PIT-DEBUG] interactive added, scene children now:', scene.children.length);
-  } catch (err) {
-    console.error('[PIT-DEBUG] buildInteractiveObjects FAILED:', err);
-  }
+  const { env: objGroup, objects } = buildInteractiveObjects();
+  scene.add(objGroup);
 
   // Fighters
   const wardenContainer = new THREE.Group();
@@ -271,12 +237,7 @@ export function initPitScene(canvas, options) {
   const wardenBaseRotY = wardenContainer.rotation.y;
   const predatorBaseRotY = predatorContainer.rotation.y;
 
-  let _frameCount = 0;
   function tick() {
-    if (_frameCount < 3) {
-      console.log('[PIT-DEBUG] tick frame', _frameCount, 'rendering scene with', scene.children.length, 'children');
-      _frameCount++;
-    }
     const t = (performance.now() - t0) / 1000;
     camAngle += (camTarget - camAngle) * 0.06;
     if (!isDragging) camTarget += Math.sin(t * 0.15) * 0.0008;
@@ -350,14 +311,7 @@ export function initPitScene(canvas, options) {
     renderer.render(scene, camera);
     animFrame = requestAnimationFrame(tick);
   }
-  console.log('[PIT-DEBUG] all setup done, scene total children:', scene.children.length, 'camera pos:', camera.position.x.toFixed(2), camera.position.y.toFixed(2), camera.position.z.toFixed(2));
-  console.log('[PIT-DEBUG] starting tick()...');
-  try {
-    tick();
-    console.log('[PIT-DEBUG] tick() returned (animation loop should be running)');
-  } catch (err) {
-    console.error('[PIT-DEBUG] tick() FAILED on first call:', err);
-  }
+  tick();
 
   // Cleanup
   function cleanup() {
