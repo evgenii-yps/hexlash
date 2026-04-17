@@ -32,6 +32,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
   components/club/         — 8 Club Mode components (AgentRoster, AgentCard, ClubLevelBar, MorningReport, RetirementPanel, SkinPicker, ArchetypeSelector, ResearchTree)
   components/clan/         — 1 Clan social component (ClanInviteNotification)
   components/fragments/clan/ — 10 Clan social fragments (ClanPageContent, ClanActivityFeed, ClanEdit, ClanStats, ClanAvatar, ClanOwnerAvatar, ClanWithdraw, ClanConfirmModal, CreateClan, MyClanTab)
+  components/profile/      — CountryPicker (Phase 4.6 searchable country modal)
   components/ratings/      — AgentLeaderboard
   core/
     state/store.js         — Vuex store
@@ -51,7 +52,9 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
     requirements.js        — Tap/XP costs for unlock/levelup
     cardPower.js           — Card/module power balance data
     clanLevels.js          — Clan level config (10 levels, XP thresholds, member limits, XP bonuses) + getClanLevelProgress()
+    countries.js           — ISO 3166-1 alpha-2 list (249 entries, English names) + codeToFlag(code) runtime flag emoji + findCountry(code)
     pixelIcons.js          — 45 pixel icons (16×16 grid, flat array 256 values)
+    strategy.js            — STRATEGY_MODIFIERS (aggressive/balanced/defensive) + getStrategyModifiers(level) for PvE player AI behavior override (Phase 4.4)
   utils/
     powerRating.js         — Power rating calculations
     beltDisplay.js         — Belt display helpers (BELT_THRESHOLDS, getBeltDisplay, getNextThreshold, getBeltProgressPercent)
@@ -793,7 +796,7 @@ User, Clan, ClanInvite, ClanEvent, FightClub, Achievement, UserAchievement, Soci
 ## Branch (Git)
 
 Current dev branch: `claude/setup-project-initialization-buyXe`
-Visual Redesign (Phase 1–3): **COMPLETE**, in main. Phase 4 in progress: 4.1 (Training sound, commit `7aa6e86`) ✅, 4.2 (Training energy, commit `e005bec`) ✅, 4.3 (PvE stake loop) ✅, 4.4 (PvE strategy — frontend) ✅, 4.5 (Wagmi wallet in ProfileViewV2) ✅. Remaining Phase 4: country rankings. See "Visual Redesign — Roadmap & Branch State" below.
+Visual Redesign (Phase 1–3): **COMPLETE**, in main. Phase 4: 4.1 (Training sound, commit `7aa6e86`) ✅, 4.2 (Training energy, commit `e005bec`) ✅, 4.3 (PvE stake loop) ✅, 4.4 (PvE strategy — frontend) ✅, 4.5 (Wagmi wallet in ProfileViewV2) ✅, 4.6 (Country rankings + Live matches) ✅. **Phase 4 COMPLETE.** See "Visual Redesign — Roadmap & Branch State" below.
 Phase −1 (Captain System Removal): merged separately.
 Club Mode prototype: **IN PROGRESS** — 109 commits ahead of main, ~6000 lines, deepdive complete (#1a-#1i), Phase 1 work starting.
 Road 1 (Neon Discipline visual migration): **COMPLETE**. See `/docs/road1-final-report.md` and `/docs/road2-parking-list.md`.
@@ -1848,9 +1851,9 @@ Captain system completely removed. Active agent for combat = first agent by `cre
 
 Visual rebrand to v23 palette. **Current dev branch:** `claude/setup-project-initialization-buyXe`. **Not in main.** Captain Removal (Phase −1, above) merged separately.
 
-**Done:** Phase −1 (Captain Removal ✅), Phase 1 (Visual Foundation ✅), Phase 2 (AppShell + View Layering ✅), Phase 3 (Screen Port 10/10 + CardFightViewV2 full stack: PvE + PvP + Result overlay + AI Trainer ✅), Phase 4.1 (Training sound — audioEngine + Howler punch SFX, commit `7aa6e86`) ✅, Phase 4.2 (Training energy bar wired to PunchInfo, commit `e005bec`) ✅, Phase 4.3 (PvE stake loop — backend `/fight/start` atomic deduction + payout in `/fight/save` + Vuex `setBalance` + Preparation/CardFight/Profile UI + 5 i18n keys × 11 locales) ✅, Phase 4.4 (PvE strategy — player AI behavior override: hp/damage/crit/dodge/moduleWeights via `src/data/strategy.js`. Pure buffs design — no penalties. PvP and auto-fight unaffected.) ✅, Phase 4.5 (Wagmi wallet — ProfileViewV2 reuses existing `ConnectWallet` component, Base mainnet, 3 connectors via injected/WalletConnect/Coinbase. No wagmi code duplication, no new i18n — full reuse of legacy `profile.wallet.*` namespace.) ✅.
+**Done:** Phase −1 (Captain Removal ✅), Phase 1 (Visual Foundation ✅), Phase 2 (AppShell + View Layering ✅), Phase 3 (Screen Port 10/10 + CardFightViewV2 full stack: PvE + PvP + Result overlay + AI Trainer ✅), Phase 4.1 (Training sound — audioEngine + Howler punch SFX, commit `7aa6e86`) ✅, Phase 4.2 (Training energy bar wired to PunchInfo, commit `e005bec`) ✅, Phase 4.3 (PvE stake loop — backend `/fight/start` atomic deduction + payout in `/fight/save` + Vuex `setBalance` + Preparation/CardFight/Profile UI + 5 i18n keys × 11 locales) ✅, Phase 4.4 (PvE strategy — player AI behavior override: hp/damage/crit/dodge/moduleWeights via `src/data/strategy.js`. Pure buffs design — no penalties. PvP and auto-fight unaffected.) ✅, Phase 4.5 (Wagmi wallet — ProfileViewV2 reuses existing `ConnectWallet` component, Base mainnet, 3 connectors via injected/WalletConnect/Coinbase. No wagmi code duplication, no new i18n — full reuse of legacy `profile.wallet.*` namespace.) ✅, Phase 4.6 (Country rankings + Live matches — `User.country` migration, `src/data/countries.js` ISO 3166-1 (249 entries) + runtime `codeToFlag`, `CountryPicker.vue` searchable modal in ProfileViewV2 Settings, Country tab + Live tab in RatingsViewV2 with 30s polling + cleanup, 3 new backend endpoints, 10 new i18n keys × 11 locales.) ✅. **Phase 4 COMPLETE.**
 
-**Not done:** Phase 4 remainder (country rankings), Phase 5 (i18n full pass across 11 locales + debt resolution D1/D2/D5/D8), Phase 6 (cutover of non-v2 views + cleanup of suffixed routes + P1-cleanup D7).
+**Not done:** Phase 5 (i18n full pass across 11 locales + debt resolution D1/D2/D5/D8), Phase 6 (cutover of non-v2 views + cleanup of suffixed routes + P1-cleanup D7).
 
 See subsections below for details — do not duplicate content here.
 
@@ -2017,8 +2020,9 @@ Phase 3.10 is complete (10/10 Screen Port views + PvE + PvP + AI Trainer). Phase
 - **4.3 ✅** Preparation stake loop — backend + frontend + i18n (PvE only; PvP out of scope).
 - **4.4 ✅** PvE strategy — player AI behavior override via `src/data/strategy.js` (frontend-only, backend not in PvE combat path). aggressive/balanced/defensive applied to player hp/damage/crit/dodge/moduleWeights. Existing i18n keys reused (no new strings).
 - **4.5 ✅** Wagmi wallet — ProfileViewV2 reuses existing `ConnectWallet.vue` component (shared with legacy `/profile/wallet`). Modal connector picker, Base mainnet, 3 connectors (injected/WalletConnect/Coinbase). Zero wagmi code duplication, zero new i18n keys.
-- **4.x remaining:**
-  - **Live matches feed + country rankings** in RatingsViewV2 — backend aggregation + WS
+- **4.6 ✅** Country rankings + Live matches — `User.country` Prisma migration (`add_user_country`) with `@@index([country])`, `src/data/countries.js` static ISO 3166-1 alpha-2 list (249 entries) + runtime `codeToFlag(code)` via Regional Indicator Symbols, `src/components/profile/CountryPicker.vue` searchable Teleport modal. ProfileViewV2 Settings: `userCountry` computed wired to `PUT /v1/user/country` → `master/updateMaster` action (IndexedDB persist). RatingsViewV2: Country tab (CTA when no country set, leaderboard when set) + Live tab (last 20 finished PvP matches, 30s polling activated only while tab is active, cleanup in `onBeforeUnmount`). Three new backend endpoints: `PUT /v1/user/country`, `GET /v1/stats/leaderboard/country`, `GET /v1/stats/live-matches`. 10 new i18n keys × 11 locales (EN + RU translated, 9 locales EN fallback).
+
+**Phase 4 COMPLETE** — all six sub-phases merged. Next milestone: Phase 5 i18n full pass or Phase 6 cutover.
 
 Later phases:
 - **Full i18n pass** across 11 locales for all `*.v2` subsections + ClanV2/MMV2 reused keys audit — Phase 5
@@ -2039,5 +2043,7 @@ Later phases:
 - **D13**: `audioEngine.js — not wired to any view yet` line in Project Structure section is stale (wired in TrainingViewV2.vue:70-208 since commit `7aa6e86`). Fix in next docs sync.
 - **D14**: Preparation stake selector defaults to `medium` and has no "off" state — every PvE fight in V2 deducts at least 100 from balance. Product decision: should stake be opt-in (default 'none' / explicit toggle) or stay opt-out? Park: separate sub-ТЗ if product confirms stake should be skippable.
 - **D15**: `ConnectWallet.vue` does not implement click-to-copy on connected wallet address despite existing i18n key `profile.wallet.msgWalletAddressCopied`. Pre-existing legacy gap, surfaced when reused in v2 ProfileViewV2 (Phase 4.5). Resolution: add copy handler inside ConnectWallet `.connected-row` — touches legacy component shared by `/profile/wallet` and `/profile-v2`, separate sub-ТЗ.
+- **D16**: Country names in `src/data/countries.js` hardcoded English. Per-locale translation of 249 names is a separate sub-ТЗ — either inline in each locale file (large diff) or external via `i18n-iso-countries` (+dep). Acceptable in MVP because search in `CountryPicker.vue` matches both name and ISO code, so non-English users can still find their country by code.
+- **D17**: Deprecated `rating.v2.lblCountrySoon` and `rating.v2.lblLiveSoon` remain in 11 locales after Phase 4.6. Kept for old-build safety (stale clients won't crash). Removal blocked on Phase 5/6 i18n cleanup pass.
 
 **Closed debt:** D4 (branch mismatch CLAUDE.md↔system prompt) resolved in 3.10.3 commit 353c463.
