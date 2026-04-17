@@ -15,10 +15,10 @@ export function createAtmosphereRenderer(canvas) {
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.05;
+  renderer.toneMappingExposure = 2.5;  // Phase 4.7 fix — была 1.05, сцена была неразличимо тёмная
 
   const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x070811, 0.028);
+  scene.fog = new THREE.FogExp2(0x070811, 0.005);  // Phase 4.7 fix — была 0.028, fog скрывал всё на дистанции
 
   const camera = new THREE.PerspectiveCamera(
     45, (canvas.clientWidth || window.innerWidth) / (canvas.clientHeight || window.innerHeight), 0.1, 200
