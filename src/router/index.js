@@ -68,7 +68,7 @@ const v2Routes = [
     {
         path: '/v2',
         name: 'V2Root',
-        component: () => import('/src/AppV2.vue'),
+        component: () => import('@/AppV2.vue'),
         children: [
             // index + вложенные v2-роуты регистрируются в следующих шагах Эпика 1
         ],
