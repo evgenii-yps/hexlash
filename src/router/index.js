@@ -32,17 +32,12 @@ const publicRoutes = [
 const protectedRoutes = [
     {path: '/', name: 'Home', component: RainView},
     {path: '/help', name: 'Help', component: () => import("/src/views/PageView.vue")},
-    {path: '/arena', redirect: '/arena/pit'},
-    {path: '/arena/pit', name: 'ArenaPit', component: () => import("/src/views/new/PitView.vue")},
-    {path: '/arena/fight-v2', name: 'ArenaFightV2', component: () => import("/src/views/new/PreparationViewV2.vue")},
+    {path: '/arena', redirect: '/arena/club'},
     {path: '/arena/fight', name: 'ArenaFight', component: () => import("/src/views/PreparationView.vue")},
     {path: '/arena/club', name: 'ArenaFightClub', component: () => import("/src/views/FightClubView.vue")},
-    {path: '/arena/club/create-v2', name: 'CreateAgentV2', component: () => import("/src/views/new/CreateFighterViewV2.vue")},
     {path: '/arena/club/create', name: 'CreateAgent', component: () => import("/src/views/CreateAgentView.vue")},
-    {path: '/arena/club/:agentId/v2', name: 'AgentDetailV2', component: () => import("/src/views/new/FighterDetailViewV2.vue")},
     {path: '/arena/club/:agentId', name: 'AgentDetail', component: () => import("/src/views/AgentDetailView.vue")},
 
-    {path: '/profile-v2', name: 'ProfileV2', component: () => import("/src/views/new/ProfileViewV2.vue")},
     {path: '/user/:userLogin', name: 'UserProfile', component: () => import("/src/views/ProfileView.vue")},
     {path: '/profile', name: 'Profile', component: () => import("/src/views/ProfileView.vue")},
     {path: '/profile/balance', name: 'Balance', component: () => import("/src/views/ProfileView.vue")},
@@ -50,23 +45,18 @@ const protectedRoutes = [
     {path: '/profile/account', name: 'Account', component: () => import("/src/views/ProfileView.vue")},
     {path: '/profile/skins', name: 'Skins', component: () => import("/src/views/ProfileView.vue")},
 
-    {path: '/clan-v2/:id?', name: 'ClanV2', component: () => import("/src/views/new/ClanViewV2.vue")},
     {path: '/clan/:id', name: 'Clan', component: () => import("/src/views/ClanView.vue")},
     {path: '/club/:id', redirect: to => '/clan/' + to.params.id},
     {path: '/fight-club', redirect: '/arena/club'},
     {path: '/club/agent/create', redirect: '/arena/club/create'},
     {path: '/club/agent/:agentId', redirect: to => `/arena/club/${to.params.agentId}`},
 
-    {path: '/ratings-v2', name: 'RatingsV2', component: () => import("/src/views/new/RatingsViewV2.vue")},
     {path: '/ratings/:type', name: 'Ratings', component: () => import("/src/views/RatingsView.vue"), props: true},
-    {path: '/ratings', redirect: '/ratings-v2'},
+    {path: '/ratings', redirect: '/ratings/myclan'},
 
-    {path: '/training-v2', name: 'TrainingV2', component: () => import("/src/views/new/TrainingViewV2.vue")},
     {path: '/training', name: 'Training', component: () => import("/src/views/TrainingView.vue")},
     {path: '/fight', name: 'Fight', component: () => import("/src/views/CardFightView.vue")},
-    {path: '/fight-v2', name: 'FightV2', component: () => import("/src/views/new/CardFightViewV2.vue")},
     {path: '/friends', name: 'Friends', component: () => import("/src/views/FriendsView.vue")},
-    {path: '/matchmaking-v2', name: 'MatchmakingV2', component: () => import("/src/views/new/MatchmakingViewV2.vue")},
     {path: '/matchmaking', name: 'Matchmaking', component: () => import("/src/views/MatchmakingView.vue")},
     {path: '/spectate/:odId', name: 'Spectate', component: () => import("/src/views/SpectateView.vue")},
 

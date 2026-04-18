@@ -175,7 +175,7 @@ const progressPercent = computed(() => {
 }
 
 .rating-value {
-  font-family: var(--hex-font-mono);
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 32px;
   font-weight: 700;
   color: var(--hex-text-primary);
@@ -225,7 +225,7 @@ const progressPercent = computed(() => {
 }
 
 .stat-value {
-  font-family: var(--hex-font-mono);
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 24px;
   font-weight: 700;
   margin-bottom: 4px;

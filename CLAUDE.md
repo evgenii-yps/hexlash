@@ -18,21 +18,14 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 
 ```
 /src
-  App.vue                  — Root: header (Logo), <AppShell /> mount, BottomMenu (hidden on PvP/Pit screens), Info/Error toasts, ChallengeNotification
+  App.vue                  — Root: header (Logo), router-view, BottomMenu (hidden on PvP screens), Info/Error toasts, ChallengeNotification
   main.js                  — Entry: Vue + Vuetify + i18n + Vuex + WagmiPlugin + VueQueryPlugin init
-  router/index.js          — Routes + auth guards + fight state restore (incl. v2-suffixed visual redesign routes)
+  router/index.js          — Routes + auth guards + fight state restore
   views/                   — 19 page-level components (incl. FightClubView, CreateAgentView, AgentDetailView)
-  views/new/               — 10 v2 visual-redesign views (PitView, ProfileViewV2, TrainingViewV2, RatingsViewV2, ClanViewV2, MatchmakingViewV2, CreateFighterViewV2, FighterDetailViewV2, PreparationViewV2, CardFightViewV2).
-  composables/             — Vue composables. `useActiveView.js` — derives view name from route.name, syncs `<body class="is-{name}">`.
-  three/                   — Three.js modules for v2 visual redesign
-    helpers/               — archetypeColors, atmosphereScene, audioEngine, crowdSilhouette, fighterAnim, fighterLowPoly, textures (pure JS, reused across scenes)
-    scenes/                — pitScene, pitArena, pitEnvironment, fighterDetailScene, fightArena (each exports init…Scene(canvas,opts))
   components/              — 75+ reusable components
-  components/shell/        — AppShell.vue (single router-view mount + atmosphere layers + view-fade transition)
   components/club/         — 8 Club Mode components (AgentRoster, AgentCard, ClubLevelBar, MorningReport, RetirementPanel, SkinPicker, ArchetypeSelector, ResearchTree)
   components/clan/         — 1 Clan social component (ClanInviteNotification)
   components/fragments/clan/ — 10 Clan social fragments (ClanPageContent, ClanActivityFeed, ClanEdit, ClanStats, ClanAvatar, ClanOwnerAvatar, ClanWithdraw, ClanConfirmModal, CreateClan, MyClanTab)
-  components/profile/      — CountryPicker (Phase 4.6 searchable country modal)
   components/ratings/      — AgentLeaderboard
   core/
     state/store.js         — Vuex store
@@ -52,17 +45,13 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
     requirements.js        — Tap/XP costs for unlock/levelup
     cardPower.js           — Card/module power balance data
     clanLevels.js          — Clan level config (10 levels, XP thresholds, member limits, XP bonuses) + getClanLevelProgress()
-    countries.js           — ISO 3166-1 alpha-2 list (249 entries, English names) + codeToFlag(code) runtime flag emoji + findCountry(code)
     pixelIcons.js          — 45 pixel icons (16×16 grid, flat array 256 values)
-    strategy.js            — STRATEGY_MODIFIERS (aggressive/balanced/defensive) + getStrategyModifiers(level) for PvE player AI behavior override (Phase 4.4)
   utils/
     powerRating.js         — Power rating calculations
     beltDisplay.js         — Belt display helpers (BELT_THRESHOLDS, getBeltDisplay, getNextThreshold, getBeltProgressPercent)
     fightStylePreview.js   — Template-based fight style description (DEAD CODE — not imported)
   styles/
     hexlash-ui.css         — Design system: CSS variables, component classes, animations
-    atmosphere.css         — Global atmosphere layers: .grain (noise, z-200), .vignette (radial dim, z-150), .scanlines (CRT, z-175, opt-in)
-    view-layers.css        — HUD pointer-events pattern (`.hud` + `.{view}-hud > *`) + `.scene-canvas` utility for Three.js canvases
   assets/
     main.css               — Global styles
     colors.css             — CSS variables
@@ -94,6 +83,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
     services/rankedMatchmaker.js — Ranked + free arena matchmaking (ELO range ±200, rematch cooldown)
     services/fightClubService.js — Personal FightClub management (getOrCreate, addXp, getLegendBuff)
     services/beltService.js — Belt system (isQualifyingWin, calculateBelt, checkHexmaster, applyWin)
+    services/captainService.js — Captain Agent management (setCaptain, atomic swap)
     services/retirementService.js — Fighter retirement + legend buff
     services/researchGateService.js — Research Gate: per-agent research tree (unlock/upgrade moves, lazy migration)
     services/morningReportService.js — Claude AI morning report stats + prompts
@@ -110,12 +100,15 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
     data/moves.js          — Move definitions (backend copy)
   scripts/
     backfill-belts.js      — Recalculate belts for all agents
+    backfill-captains.js   — Set isCaptain for first agents
     calibrate-belts.js     — Belt calibration utility
     cleanup-agents.js      — Agent data cleanup
     migrate-all-users.js   — Batch User→Fighter migration
   tests/
     userMigrationService.test.js — User→Fighter migration tests (14 tests)
     beltService.test.js    — Belt system: qualifying wins, belt calc, hexmaster
+    captainService.test.js — Captain: setCaptain, atomic swap
+    captainArenaFlow.test.js — Captain in arena: PvE/PvP flow
   prisma/
     schema.prisma          — 19 models: User, Clan, ClanInvite, ClanEvent, FightClub, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask, UserDailyTask, Fight, PunchInfo, FriendRequest, Friendship, Agent, AgentTactics, AgentProgression, AgentFightLog
     seed.js
@@ -172,17 +165,6 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 | `/friends` | FriendsView | Yes |
 | `/matchmaking` | MatchmakingView | Yes |
 | `/spectate/:odId` | SpectateView | Yes |
-| — | **Visual Redesign v2 routes (Phase 3, not in main)** | — |
-| `/arena/pit` | PitView | Yes |
-| `/arena/fight-v2` | PreparationViewV2 | Yes |
-| `/arena/club/create-v2` | CreateFighterViewV2 | Yes |
-| `/arena/club/:agentId/v2` | FighterDetailViewV2 | Yes |
-| `/profile-v2` | ProfileViewV2 | Yes |
-| `/clan-v2/:id?` | ClanViewV2 | Yes |
-| `/ratings-v2` | RatingsViewV2 | Yes |
-| `/training-v2` | TrainingViewV2 | Yes |
-| `/matchmaking-v2` | MatchmakingViewV2 | Yes |
-| `/fight-v2` | CardFightViewV2 | Yes |
 
 ---
 
@@ -202,7 +184,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 | `webSocketState` | WS connection, real-time messages |
 | `pvpState` | Real-time PvP matchmaking and fights |
 | `friendsState` | Friends list, friend requests, challenges (WebSocket-based) |
-| `agentState` | Agent roster: CRUD, auto-fight toggle, Fight Club level, 30s auto-refresh. `agentsList` sorted by isHexmaster → belt → qualifiedWins. Getter `activeAgent` (first by `createdAt` ASC). |
+| `agentState` | Agent roster: CRUD, auto-fight toggle, Fight Club level, 30s auto-refresh. `agentsList` sorted by isCaptain → isHexmaster → belt → qualifiedWins. Getter `currentCaptain`. Action `setCaptain`. |
 
 ---
 
@@ -242,20 +224,22 @@ unlockRequirements:  { 3: {taps:300, exp:150}, 4: {taps:250, exp:120}, 5: {taps:
 
 **Backend:** `beltService.js` (isQualifyingWin, calculateBelt, checkHexmaster, applyWin). Belt updated atomically in same $transaction as fight stats.
 
-**Agent fields:** `belt` (Int, 0-32), `qualifiedWins` (Int), `isHexmaster` (Boolean). Backfill scripts: `backend/scripts/backfill-belts.js`.
+**Agent fields:** `belt` (Int, 0-32), `qualifiedWins` (Int), `isHexmaster` (Boolean), `isCaptain` (Boolean). Backfill scripts: `backend/scripts/backfill-belts.js`, `backend/scripts/backfill-captains.js`.
 
-**Active agent in arena:** PvE/PvP fights use the first agent (by `createdAt` ASC) via `fightClubService.getActiveAgent()`. User stats (pveWins, pvpWins, rating) are frozen legacy — no longer updated. Belt progression applies to active agent. `progressionState` is trainer-only (TrainingView, MoveTree, DeckBuilder).
+**Captain:** One Agent per FightClub with `isCaptain=true`. PvP representative. Atomic swap via `captainService.setCaptain()`. Cannot delete captain if other agents exist. `PUT /v1/agent/:id/captain` endpoint. Migration creates Fighter #1 as captain.
+
+**Captain in Arena:** After #P1-captain-2, PvE and PvP fights use Captain Agent data (deck, moves, modules, skin, ELO). User stats (pveWins, pvpWins, rating) are frozen legacy — no longer updated. Belt progression applies to Captain Agent. `progressionState` is trainer-only (TrainingView, MoveTree, DeckBuilder).
+
+**Captain in Public UI:** After #P1-captain-3, all public views show `UserCaptainBadge` (BeltBadge + captain name) instead of User.rating. API responses include `captain` sub-object via `getCaptainPublicInfo`/`getCaptainsForUsers` (bulk, no N+1). ProfileView has two layers: Trainer (User) + Captain (Agent).
 
 ---
 
 ## Design System — "Neon Discipline"
 
-> **Status (Apr 2026):** Neon Discipline v1.0 — SUPERSEDED. Editorial Refresh v24 is the new foundation (Phase 7+). Operational reference: `skills/hexlash-design/SKILL.md` §Editorial Refresh v24. This section describes legacy Neon system, still active in non-rewritten code until Phase 7.6 cleanup.
-
 **Status:** v1.0 — Visual System established.
 **Full visual guide:** Hexlash_Visual_System.pdf v1.0 (file not in repo — source of truth is hexlash-design/SKILL.md)
 **Operational reference:** /skills/hexlash-design/SKILL.md
-**Key rules:** 1) one pink accent per screen, 2) display font (Archivo Black via `--hex-font-display`) only for titles/impact moments, 3) archetype colors only in fighter icons/active context, 4) backgrounds = atmosphere (stylized underground), UI = function.
+**Key rules:** 1) one pink accent per screen, 2) pixel-font (Anonymous) only for titles/impact moments (exception: splash screens use two pixel-font blocks — HEXLASH + NEVER GIVE UP), 3) archetype colors only in fighter icons/active context, 4) backgrounds = atmosphere (stylized underground), UI = function.
 
 ### UI Components (`/src/components/ui/`)
 
@@ -267,6 +251,7 @@ unlockRequirements:  { 3: {taps:300, exp:150}, 4: {taps:250, exp:120}, 5: {taps:
 | `HexProgress` | `HexProgress.vue` | Progress bar. 3 variants: hp (auto green/yellow/red by %), branch (speed/power/technique colors), generic. 3 sizes. Props: label, showValue, showPercent. |
 | `HexBadge` | `HexBadge.vue` | Pill badge. 5 variants: archetype, branch, status (victory/defeat/draw/info), counter (circle/pill auto), custom. Props: icon (PixelIcon), pulse animation. |
 | `BeltBadge` | `BeltBadge.vue` | SVG belt badge for 33 grades + Hexmaster. Line-style: rect body, buckle, stripes. 3 sizes: sm (16×6), md (40×14), lg (120×40). Props: grade (0-32), isHexmaster, size. |
+| `UserCaptainBadge` | `UserCaptainBadge.vue` | Composite badge: BeltBadge + optional captain name. Sizes xs/sm/md. Shows "—" when no captain. |
 
 ### Pixel Icons (`/src/data/pixelIcons.js`)
 
@@ -290,24 +275,7 @@ Optimal weight: 40–70 filled pixels (15–27%). Exception: `online` dot = 32px
 
 All components use `--hex-*` variables exclusively. Legacy `--pink`, `--dark`, `--gray*` in `colors.css` only referenced by PrivacyView (auto-generated legal HTML).
 
-Key variable groups: `--hex-primary`, `--hex-bg-{deep,dark,medium,light,card}`, `--hex-text-{primary,secondary,muted}`, `--hex-border-{default,active,strong}`, `--hex-arch-{name}` (6 archetypes × 5 variants each + warden alias), `--hex-branch-{name}`, `--hex-dice-{effect}`, `--hex-mode-{type}`, `--hex-victory/defeat/draw` + `-bg`.
-
-**v23 palette overrides (applied by Visual Redesign Phase 1):**
-
-| Token | Value | Notes |
-|-------|-------|-------|
-| `--hex-bg-deep` | `#070811` | Deepest surface (body bg) — new in v23 |
-| `--hex-bg-card` | `rgba(14,16,28,0.85)` | Translucent card surface over 3D scenes |
-| `--hex-arch-predator` | `#FF066F` | = `--hex-primary` (shared source) |
-| `--hex-arch-sentinel` | `#2ee07f` | Emerald green |
-| `--hex-arch-ghost` | `#A855F7` | Violet |
-| `--hex-arch-analyst` | `#4dd9ff` | Cyan |
-| `--hex-arch-maverick` | `#FFA133` | Amber |
-| `--hex-arch-juggernaut` | `#D4A843` | Burnished gold |
-| `--hex-arch-warden` | `var(--hex-arch-juggernaut)` | Lore alias — same color as juggernaut |
-| `--hex-font-display` | `'Archivo Black'` (Google Fonts) | — |
-| `--hex-font-body` | `'Space Grotesk'` (Google Fonts) | — |
-| `--hex-font-mono` | `'JetBrains Mono'` (Google Fonts) | — |
+Key variable groups: `--hex-primary`, `--hex-bg-{dark,medium,light}`, `--hex-text-{primary,secondary,muted}`, `--hex-border-{default,active,strong}`, `--hex-arch-{name}` (6 archetypes × 5 variants each), `--hex-branch-{name}`, `--hex-dice-{effect}`, `--hex-mode-{type}`, `--hex-victory/defeat/draw` + `-bg`.
 
 ### Archetype color → CSS var usage pattern
 
@@ -345,13 +313,10 @@ Internally uses `--_arch-color` CSS custom property for scoped styling.
 --primary-color: var(--pink)
 ```
 
-**Fonts:** (Phase 1, v23)
-- `--hex-font-display` → **Archivo Black** (Google Fonts) — titles, impact moments (HEXLASH, START FIGHT, VICTORY, OVERDRIVE)
-- `--hex-font-body` → **Space Grotesk** (Google Fonts) — body text, labels
-- `--hex-font-mono` → **JetBrains Mono** (Google Fonts) — numbers (HP, taps, XP), stats, timers
-- System sans-serif (`-apple-system, ...`) — compact arena buttons (ModeSelector, Friends) — legacy pattern, preserved
-
-**Removed in Phase 1:** Anonymous, AnonymousBalance, Inter, Impact, Roboto @font-face declarations. Font files in `src/assets/fonts/` preserved until cleanup.
+**Fonts:**
+- `Anonymous` — special UI elements, titles
+- `AnonymousBalance` — numeric values (taps, XP, balance)
+- System sans-serif (`-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, ...`) — compact arena buttons (Mode, Friends)
 
 **Design language:** Dark theme, neon pink accents, semi-transparent backgrounds, thin gray borders.
 
@@ -562,7 +527,7 @@ MIGRATION_ENABLED = true           // lazy User→Fighter #1 on /me
 | Fight | `CardFightView.vue` | Main combat (PvE + PvP), dice, coach advice, HP bars, AI Trainer (PvE results). Loading splash: HEXLASH in Anonymous pixel-font with --hex-primary + glow (matches Logo.vue style, same as index.html pre-app splash). PvP mode: no BottomMenu, no PvP badge, reduced padding. Fully migrated to --hex-* vars: HexButton for results, inline SVGs, dice/coach/victory/defeat/overdrive all use design system vars. Visual System v1.0 compliant: pink only on CTA buttons (dice, Fight Again), VICTORY/DEFEAT/DRAW + OVERDRIVE pixel-font, HP in AnonymousBalance, dice effects in characteristic colors, coach buttons in action-specific colors |
 | Profile | `ProfileView.vue` | Tabs: balance, wallet, account, skins. Visual System v1.0 compliant: AnonymousBalance for numerical values, neutral header (no pink), 0-1 pink accent per tab, toggles green (success), delete btn danger |
 | Ratings (League) | `RatingsView.vue` | 3 tabs: My Club, Clubs (leaderboard), Fighters (leaderboard). Default tab: My Club. URL: `/ratings/:type` (myclub/clubs/fighters). My Club tab: `MyClubTab.vue` component — redesigned clan header (avatar 64px with --hex-primary glow, name in Anonymous font, italic description, LVL badge, member count, level progress bar), stats grid (4 cards: Members/Wins/Losses/Win Rate with colored values), win rate bar, members top-5, role badges owner/deputy, action menus. No-clan state: ⚔ icon hero, CREATE/BROWSE buttons, pending invites banners, suggested clans with stats |
-| Fight Club | `FightClubView.vue` | `/arena/club` (also reachable via `/arena` redirect). Agent roster, Club Level bar, Morning Report, Retirement Panel. "← Arena" switch button in header. Active agent's AgentCard has primary FIGHT button (navigates to PreparationView, disabled when fighting/resting). Background: `background_arena.webp` with gradient overlay (shared visual identity with PreparationView) |
+| Fight Club | `FightClubView.vue` | `/arena/club` (also reachable via `/arena` redirect). Agent roster, Club Level bar, Morning Report, Retirement Panel. "← Arena" switch button in header. Captain's AgentCard has primary FIGHT button (navigates to PreparationView, disabled when fighting/resting). Background: `background_arena.webp` with gradient overlay (shared visual identity with PreparationView) |
 | Preparation | `PreparationView.vue` | `/arena/fight`: action row (Mode + START FIGHT + Friends buttons). Friends button is text-only (no online indicator). "← Arena" switch button in header. Visual System v1.0 compliant: single pink accent (START FIGHT), ModeSelector neutral, AnonymousBalance where needed |
 | Friends | `FriendsView.vue` | Friends list, friend requests, search players. Visual System v1.0 compliant: neutral cards, online indicator hex-success, Accept=green/Decline=danger, Add friend=primary CTA, system sans |
 | Matchmaking | `MatchmakingView.vue` | Real-time PvP matchmaking queue. Opponent Found shows actual fighter skins (from `/images/skins/`). No colored borders. 100dvh support. Visual System v1.0 compliant: neutral spinner in search, OPPONENT FOUND pixel-font (impact), AnonymousBalance for timer/rating/countdown, retry btn = sole pink CTA in timeout |
@@ -601,9 +566,10 @@ MIGRATION_ENABLED = true           // lazy User→Fighter #1 on /me
 - `HexProgress.vue` — Progress bar with 3 variants: hp (auto green>60%/yellow>30%/red), branch (speed/power/technique colors), generic. Props: label, showValue, showPercent. 3 sizes.
 - `HexBadge.vue` — Pill badge with 5 variants: archetype, branch, status (victory/defeat/draw/info), counter (auto circle<10/pill≥10), custom. Props: icon (PixelIcon), pulse animation.
 - `BeltBadge.vue` — SVG belt badge for 33 grades + Hexmaster. Line-style: rect body, buckle, stripes. 3 sizes: sm (16×6), md (40×14), lg (120×40). Hexmaster pulse glow md/lg, static glow sm. Props: grade (0-32), isHexmaster, size. CSS vars: `--hex-belt-*`. Stripes hidden on sm. White/black enhanced outlines.
+- `UserCaptainBadge.vue` — Composite badge: BeltBadge + optional captain name. Sizes xs/sm/md. Shows "—" when no captain. Used in FriendCard, PlayerSearchResult, ChallengeNotification, RatingsView Players tab, MatchmakingView.
 
 **Navigation & Layout:**
-- `Logo.vue` — header logo (Archivo Black via --hex-font-display, --hex-primary color + glow). Visual System v1.0 compliant: display font for brand, subtle glow, --hex-text-primary
+- `Logo.vue` — header logo (Anonymous font, --hex-primary color + glow). Visual System v1.0 compliant: pixel-font for brand, subtle glow, --hex-text-primary
 - `BottomMenu.vue` — bottom nav (Arena, Training, Ratings, Profile). Uses SVG background-image icons with filter-based active state. Semi-transparent bg with backdrop-blur. Hidden on PvP screens via `isPvPScreen` computed in App.vue. Visual System v1.0 compliant: line-icons, system sans for labels, active tab = single pink accent in zone
 - `App.vue` header — scroll-dependent gradient uses `--hex-bg-dark`, balance in AnonymousBalance font with `--hex-text-primary`. Visual System v1.0 compliant: --hex-bg-dark, AnonymousBalance for balance, no decorative gradients
 
@@ -626,7 +592,7 @@ MIGRATION_ENABLED = true           // lazy User→Fighter #1 on /me
 - `PvPStatsCard.vue` — PvP statistics display (league, rating, progress, wins/losses/winrate). Shown in Fighters tab of RatingsView. Visual System v1.0 compliant: 0 pink, league colors preserved (brand identity), AnonymousBalance for numbers, system sans for labels
 - `AiTrainerAnalysis.vue` — Claude-powered post-fight analysis (PvE + PvP, results screen). Visual System v1.0 compliant: neutral card, system sans, no pink, no Anonymous font
 - `ProfileWallet.vue` — Wallet page: uses @wagmi/vue useAccount(), shows ConnectWallet + GameBalanceCard + HexCard placeholder. BuyTokens removed from render, WalletInfo deleted
-- `ConnectWallet.vue` — Full wallet modal: Teleport modal with connector list (icons, dedup, rename Injected→Browser Wallet), connecting spinner, connected state (short address + chain + disconnect). Uses @wagmi/vue useConnect/useDisconnect/useConnectors. z-index 9000, Escape/overlay close, hex-fade/hex-slide-up transitions. 360px responsive. **Shared between legacy `/profile/wallet` and v2 `/profile-v2` (Phase 4.5)** — when Phase 6 cuts legacy, this stays as canonical wallet UI. Missing click-to-copy on connected address (D15).
+- `ConnectWallet.vue` — Full wallet modal: Teleport modal with connector list (icons, dedup, rename Injected→Browser Wallet), connecting spinner, connected state (short address + chain + disconnect). Uses @wagmi/vue useConnect/useDisconnect/useConnectors. z-index 9000, Escape/overlay close, hex-fade/hex-slide-up transitions. 360px responsive
 - `WalletInfo.vue` — **Deleted** (Дорога 1 ТЗ #18b) — functionality moved into ConnectWallet connected state
 - `BuyTokens.vue` — Token purchase modal. **Temporarily disabled** — not rendered in ProfileWallet, file preserved for Phase 2 (Base contract)
 - `GameBalanceCard.vue` — Game balance display with withdraw button (shows "after listing" message)
@@ -797,12 +763,10 @@ User, Clan, ClanInvite, ClanEvent, FightClub, Achievement, UserAchievement, Soci
 
 ## Branch (Git)
 
-Current dev branch: `claude/setup-project-initialization-buyXe`
-Visual Redesign (Phase 1–3): **COMPLETE**, in main. Phase 4: 4.1 (Training sound, commit `7aa6e86`) ✅, 4.2 (Training energy, commit `e005bec`) ✅, 4.3 (PvE stake loop) ✅, 4.4 (PvE strategy — frontend) ✅, 4.5 (Wagmi wallet in ProfileViewV2) ✅, 4.6 (Country rankings + Live matches) ✅, 4.7 (PitView Three.js render fix — Object.assign Vector3 anti-pattern) ✅. **Phase 4 COMPLETE.** See "Visual Redesign — Roadmap & Branch State" below.
-Phase −1 (Captain System Removal): merged separately.
+Development branch: `claude/hexlash-project-setup-WYkbK`
 Club Mode prototype: **IN PROGRESS** — 109 commits ahead of main, ~6000 lines, deepdive complete (#1a-#1i), Phase 1 work starting.
 Road 1 (Neon Discipline visual migration): **COMPLETE**. See `/docs/road1-final-report.md` and `/docs/road2-parking-list.md`.
-Previous branches: `claude/setup-project-initialization-KyxUY`, `claude/hexlash-project-setup-WYkbK`, `claude/hexlash-project-setup-X2K7i` (Road 1), `claude/review-hexlash-guidelines-vxdZD`, `claude/add-club-mode-agents-lmXTI`, `claude/club-mode-navigation-571kx`, `claude/rename-autofight-club-mode-o2bIJ`, `claude/update-claude-md-XVzH6`, `claude/add-pixel-icons-Hk6tn`, `claude/hexlash-full-audit-WvXMd`
+Previous branches: `claude/hexlash-project-setup-X2K7i` (Road 1), `claude/review-hexlash-guidelines-vxdZD`, `claude/add-club-mode-agents-lmXTI`, `claude/club-mode-navigation-571kx`, `claude/rename-autofight-club-mode-o2bIJ`, `claude/update-claude-md-XVzH6`, `claude/add-pixel-icons-Hk6tn`, `claude/hexlash-full-audit-WvXMd`
 
 ### PvP System Audit — P0+P1 Fixes — ✅ COMPLETE
 
@@ -1320,7 +1284,7 @@ Research tree is now per-agent (AgentProgression.research) instead of per-accoun
 - `LEVEL_UP_REQUIREMENTS` — taps + exp per research level-up: `{2: {taps:100, exp:50}, ...5: {taps:500, exp:350}}`
 - `UNLOCK_REQUIREMENTS` — taps + exp per research unlock (key=prev move level): `{3: {taps:300, exp:150}, ...5: {taps:200, exp:100}}`
 - `LEVEL_UP_XP_COST` — legacy XP-only costs (used by learn-move)
-- `ensureResearch(agentId, userId)` — lazy migration: agent with empty research gets User.progression.moves
+- `ensureResearch(agentId, userId)` — lazy migration: captain with empty research gets User.progression.moves
 - `getAgentResearch(agentId)` — read agent's research tree
 - `canAgentLearnMove(agentId, moveId, targetLevel)` — gate by agent's own research level
 - `validateAgentDeck(agentId, deck, agentMoves)` — validate deck against agent's research
@@ -1335,7 +1299,7 @@ Research tree is now per-agent (AgentProgression.research) instead of per-accoun
 - `POST /v1/agent/:id/research` — **new** unlock/upgrade move in research tree (deducts User.totalTaps + Agent branchXp, $transaction)
 - `POST /v1/agent/:id/allocate-xp` — **new** transfer User.progression.freeXP → Agent branchXp ($transaction)
 
-**Lazy migration:** Agent with empty research → copies User.progression.moves to AgentProgression.research + branchExp to agent xp (if 0). Triggered on GET /agent/:id, GET /available-moves, POST /research.
+**Lazy migration:** Captain with empty research → copies User.progression.moves to AgentProgression.research + branchExp to agent xp (if 0). Triggered on GET /agent/:id, GET /available-moves, POST /research.
 
 **PUT /user/progression:** Strips moves/branchExp from incoming data. Legacy values preserved in DB but no longer written to.
 
@@ -1501,7 +1465,7 @@ Free Arena: agent vs agent, random matchmaking, no ELO change, 80% XP. For testi
 Frontend for Club Mode agents. See Views table for details.
 
 - `src/core/state/modules/agentState.js` — Vuex module (14th): agents CRUD, Fight Club level (`fightClubLevel`, `SET_FIGHT_CLUB_LEVEL`, `fetchFightClubLevel`), detail actions (fetch/update/train/moves/deck/tactics/fights)
-- `src/components/club/` — AgentCard (active agent has FIGHT button → PreparationView, disabled when fighting/resting), ClubLevelBar, AgentRoster, MorningReport, SkinPicker, ArchetypeSelector
+- `src/components/club/` — AgentCard (captain has FIGHT button → PreparationView, disabled when fighting/resting), ClubLevelBar, AgentRoster, MorningReport, SkinPicker, ArchetypeSelector
 - `src/views/CreateAgentView.vue` — 3-step wizard (name+skin → build → confirm)
 - `src/views/AgentDetailView.vue` — 4-tab management (overview, moves, tactics, fights) + edit/deck/delete modals
 - `src/utils/fightStylePreview.js` — template-based fight style description generator
@@ -1715,7 +1679,7 @@ Prototype Club Mode — система автономных бойцов (аге
 | Социальная клановая система | Club → Clan (after rename) | Clan | Объединение игроков (существующая система) |
 | Команда бойцов одного игрока | FightClub (остаётся) | Club | Ядро Phase 1 — персональный контейнер |
 | Один боец | Agent | Fighter | Сущность которая дерётся |
-| Активный боец для PvP | First Agent by createdAt | Active Agent | Определяется автоматически, не через UI |
+| Лицо клуба для PvP | Agent.isCaptain (новое) | Captain | Один Agent с флагом, идёт в PvP |
 
 ### Архитектура
 
@@ -1761,7 +1725,7 @@ Feature flag `X402_ENABLED=false` на проде. On-chain verification = TODO 
 1. **freeXP миграция:** `User.freeXP` делится поровну на 3 ветки Agent при миграции в Fighter №1. `floor()` округление, остаток теряется (max 2 XP).
 2. **Deck size unification:** min deck = 3 для всех систем (User, Agent, PvP). Backend: `MIN_AGENT_DECK_SIZE` 4→3. Закрывает несоответствие трёх разных policies.
 3. **FightClub naming:** FightClub остаётся FightClub в коде. В UI и i18n — "Club". Только Prisma `Club → Clan` rename для социальной системы. Phase 2 может сделать FightClub→Club отдельно.
-4. ~~**Captain real-time:**~~ *REMOVED in Phase −1.* Captain system deleted entirely. Active agent = first by createdAt ASC.
+4. **Captain real-time:** polling в AgentDetailView каждые 15 сек, с pause при `document.hidden` (Page Visibility API). WebSocket push отложен на Phase 2.
 5. **Belt System семантика:** count-based с фильтром качества. Победы над равным или выше поясом копятся на нашивку. 10 поясов × 3 нашивки + Hexmaster = 31 ступень. Поражения не штрафуют. Точные числа добиваются в #P1-belt-1.
 
 ### Карта ТЗ Phase 1
@@ -1785,9 +1749,9 @@ Feature flag `X402_ENABLED=false` на проде. On-chain verification = TODO 
 | P1-belt-4a | Замена ELO→Belt в AI services (механическая) | | После belt-2 |
 | P1-belt-4b | Redesign AI prompts под Belt semantics | | После belt-4a |
 | P1-migration | Миграция User.progression → Fighter №1 + hide retirement UI | ✅ DONE | После belt-1 |
-| P1-captain-1 | Captain как поле + базовая логика + создание из Fighter №1 | REVERTED (Phase −1) | После migration |
-| P1-captain-2 | Adapt Arena flow под Captain | REVERTED (Phase −1) | После captain-1 |
-| P1-captain-3 | Adapt Profile/Ratings под Captain | REVERTED (Phase −1) | Параллельно с captain-2 |
+| P1-captain-1 | Captain как поле + базовая логика + создание из Fighter №1 | ✅ DONE | После migration |
+| P1-captain-2 | Adapt Arena flow под Captain | ✅ DONE | После captain-1 |
+| P1-captain-3 | Adapt Profile/Ratings под Captain | ✅ DONE | Параллельно с captain-2 |
 
 ### P1-migration — User → Fighter #1 — ✅ COMPLETE
 
@@ -1823,242 +1787,3 @@ Lazy per-user migration on `GET /v1/user/me`. Creates Agent "Fighter #1" from Us
 ### Парковочный список
 
 52 пункта долгов в `docs/phase1-parking-list.md`. 11 фиксятся в Phase 1, 41 — в Дороге 2 после deploy.
-
-### Phase −1 — Captain System Removal — ✅ COMPLETE
-
-Captain system completely removed. Active agent for combat = first agent by `createdAt` ASC via `fightClubService.getActiveAgent()`.
-
-**Backend changes:**
-- Helper `getActiveAgent(userId)` in `fightClubService.js` — replaces `getCaptainForCombat`
-- `Agent.isCaptain` field dropped (migration `20260416000000_remove_is_captain_from_agent`)
-- Deleted: `captainService.js`, `PUT /v1/agent/:id/captain` endpoint, `captainService.test.js`, `captainArenaFlow.test.js`, `backfill-captains.js`
-- API responses: `captain` sub-object removed from `/v1/user/me`, `/v1/user/login/:login`, `/v1/user/id/:id`, `/v1/user/search`, `/v1/friends/list`
-- `researchGateService.migrateResearchForCaptain` → `migrateAgentResearch` (no longer gated by captain flag)
-
-**Frontend changes:**
-- Deleted `UserCaptainBadge.vue`, all 5 usages replaced
-- `agentState`: `currentCaptain` getter → `activeAgent`, `setCaptain` action removed, sort no longer uses `isCaptain`
-- `ProfileView`: Captain Layer section removed
-- `AgentDetailView`: "Make Captain" button + confirm dialog removed
-- `AgentCard`: `isCaptain` prop → `isActive`, FIGHT button now on active agent
-- `PreparationView`: `currentCaptain` → `activeAgent`, error key `errNoCaptain` → `errNoActiveAgent`
-- `CardFightView`, `cardFightState`: captain vars renamed to agent vars
-- `MatchmakingView`, `FriendCard`, `PlayerSearchResult`, `ChallengeNotification`, `RatingsView`: removed UserCaptainBadge
-
-**i18n:** 15 captain keys removed × 11 locales = 165 deletions. 1 new key `fight.errNoActiveAgent` in all 11 locales.
-
-**Rationale:** Captain concept added complexity without clear UX benefit. First-by-createdAt rule is deterministic, requires no UI for user action, and matches actual behavior (Fighter #1 was always the default captain anyway).
-
-### Visual Redesign — Roadmap & Branch State
-
-Visual rebrand to v23 palette. **Current dev branch:** `claude/setup-project-initialization-buyXe`. **Not in main.** Captain Removal (Phase −1, above) merged separately.
-
-**Done:** Phase −1 (Captain Removal ✅), Phase 1 (Visual Foundation ✅), Phase 2 (AppShell + View Layering ✅), Phase 3 (Screen Port 10/10 + CardFightViewV2 full stack: PvE + PvP + Result overlay + AI Trainer ✅), Phase 4.1 (Training sound — audioEngine + Howler punch SFX, commit `7aa6e86`) ✅, Phase 4.2 (Training energy bar wired to PunchInfo, commit `e005bec`) ✅, Phase 4.3 (PvE stake loop — backend `/fight/start` atomic deduction + payout in `/fight/save` + Vuex `setBalance` + Preparation/CardFight/Profile UI + 5 i18n keys × 11 locales) ✅, Phase 4.4 (PvE strategy — player AI behavior override: hp/damage/crit/dodge/moduleWeights via `src/data/strategy.js`. Pure buffs design — no penalties. PvP and auto-fight unaffected.) ✅, Phase 4.5 (Wagmi wallet — ProfileViewV2 reuses existing `ConnectWallet` component, Base mainnet, 3 connectors via injected/WalletConnect/Coinbase. No wagmi code duplication, no new i18n — full reuse of legacy `profile.wallet.*` namespace.) ✅, Phase 4.6 (Country rankings + Live matches — `User.country` migration, `src/data/countries.js` ISO 3166-1 (249 entries) + runtime `codeToFlag`, `CountryPicker.vue` searchable modal in ProfileViewV2 Settings, Country tab + Live tab in RatingsViewV2 with 30s polling + cleanup, 3 new backend endpoints, 10 new i18n keys × 11 locales.) ✅, Phase 4.7 (PitView render fix — two `Object.assign(threeObj, { position: new Vector3(...) })` anti-patterns incompatible with Three.js r167 read-only `Object3D.position`. Fixed in `pitScene.js:93` + `pitEnvironment.js:177`. Also Phase 4.7 atmosphere tweak: `toneMappingExposure 1.05→2.5`, `FogExp2 density 0.028→0.005` in `atmosphereScene.js`.) ✅. **Phase 4 COMPLETE.**
-
-**Not done:** Phase 5 (i18n full pass across 11 locales + debt resolution D1/D2/D5/D8), Phase 6 (cutover of non-v2 views + cleanup of suffixed routes + P1-cleanup D7).
-
-See subsections below for details — do not duplicate content here.
-
-### Phase 1 — Visual Rebrand Foundation — ✅ COMPLETE
-
-Tokens + fonts + atmosphere migrated to v23 palette.
-
-**Backgrounds:** `--hex-bg-deep: #070811`, `--hex-bg-card: rgba(14, 16, 28, 0.85)`.
-
-**Archetypes repalette:** all 6 archetypes to v23 values (predator #FF066F, sentinel #2ee07f, ghost #A855F7, analyst #4dd9ff, maverick #FFA133, juggernaut #D4A843). New `--hex-arch-warden` alias = juggernaut.
-
-**Fonts:** Anonymous/AnonymousBalance/Inter/Impact/Roboto removed. Google Fonts: Archivo Black (display), Space Grotesk (body), JetBrains Mono (mono).
-
-**Atmosphere:** new `src/styles/atmosphere.css` with `.grain`, `.vignette`, `.scanlines` classes. Not yet applied to any view — Phase 2 (AppShell) will wire them.
-
-**Known risks (to verify in Phase 3 smoke):**
-- Sentinel (green) visually close to `--hex-success` — possible conflict on screens with both
-- Analyst (cyan) visually close to `--hex-branch-speed` — possible conflict on Fighter Detail
-- Predator = `--hex-primary` — "one pink source per screen" rule updated: when predator context is active on a screen, primary pink CTA yields the accent
-
-**Not in Phase 1:** view layering, AppShell, screen port, component removal. Those are Phase 2+.
-
-### Phase 2 — AppShell + View Layering — ✅ COMPLETE
-
-Foundation for v23 visual port. Existing views unchanged, infrastructure ready for Phase 3.
-
-**Added:**
-- `src/composables/useActiveView.js` — derives view name from route, syncs `<body class="is-{name}">`
-- `src/components/shell/AppShell.vue` — wraps `<router-view>` with atmosphere layers + view-fade transition (opacity + blur, 400ms)
-- `src/styles/view-layers.css` — HUD pointer-events pattern + canvas fix utility classes
-
-**App.vue updated:** dual `<RouterView>` replaced with `<AppShell />`. Header/BottomMenu/toasts/notifications preserved. `isScrollableComponent` computed removed. Scroll events forwarded via `@scroll` emit.
-
-**Body class mapping** (for scoped styles):
-- `is-pit` (ArenaFightClub), `is-preparation` (ArenaFight), `is-fight` (Fight), `is-detail` (AgentDetail), `is-create` (CreateAgent), `is-profile` (Profile/Balance/Wallet/Account/Skins/UserProfile), `is-training`, `is-mm` (Matchmaking), `is-ratings`, `is-clan`, `is-friends`, `is-spectate`, `is-home`, `is-auth` (Login/Signup/Reset/TelegramLogin), `is-default`
-
-**View transitions:** Approach A (Router-based). Each route change = component unmount + remount with fade-blur. Transition key = `activeView` (not `route.fullPath`) so Profile sub-routes don't remount.
-
-**Scene canvas rule:** All Three.js `<canvas>` elements must use class `.scene-canvas` (position: fixed; inset: 0; w/h 100%; display: block). Enforced in Phase 3 port.
-
-**HUD pattern:** Container class `.hud` + view-specific modifier (e.g. `.pit-hud`) + `> *` pointer-events auto. Off-view children get pointer-events: none via `body:not(.is-pit) .pit-hud > *`. Prevents ghost clicks during fade transitions.
-
-### Phase 3 — Screen Port (10 of 10 done)
-
-All v2 views live in `src/views/new/` alongside originals. Legacy views untouched — routes use `-v2` suffix for A/B coexistence until Phase 6 cutover.
-
-| # | View file | Route | Route name | Notes |
-|---|-----------|-------|------------|-------|
-| 3.1 | `PitView.vue` | `/arena/pit` | `ArenaPit` | 3D pit scene (Three.js) + HUD overlays. Entry hub to Club Mode. BottomMenu hidden (immersive). |
-| 3.2 | `ProfileViewV2.vue` | `/profile-v2` | `ProfileV2` | Tabs: Identity, Performance, Friends, Settings. Wagmi wallet placeholder. |
-| 3.3 | `TrainingViewV2.vue` | `/training-v2` | `TrainingV2` | Heavy-bag (3D), taps, daily. Energy bar is decorative (stub 100%). |
-| 3.4 | `RatingsViewV2.vue` | `/ratings-v2` | `RatingsV2` | Tabs: Global, Friends, Clan, Country, Live. Country/Live = "coming soon". |
-| 3.5 | `ClanViewV2.vue` | `/clan-v2/:id?` | `ClanV2` | Separate route (own view file), not a sub-component of ClanView. |
-| 3.6 | `MatchmakingViewV2.vue` | `/matchmaking-v2` | `MatchmakingV2` | PvP queue + Opponent Found card. BottomMenu hidden. |
-| 3.7 | `CreateFighterViewV2.vue` | `/arena/club/create-v2` | `CreateAgentV2` | 3-step wizard: archetype → name → confirm. |
-| 3.8 | `FighterDetailViewV2.vue` | `/arena/club/:agentId/v2` | `AgentDetailV2` | 4 tabs: Overview, Moves, Tactics, Fights. 3D fighter scene. |
-| 3.9 | `PreparationViewV2.vue` | `/arena/fight-v2` | `ArenaFightV2` | Deck builder (5 slots, 3 branches pool) + decorative strategy/stake. After fix: `agent/updateDeck` syncs `state.agents[]`. |
-| 3.10 | `CardFightViewV2.vue` | `/fight-v2` | `FightV2` | 3D fight arena (Three.js) + full HUD: HPBar+BeltBadge top panels, round dots + OVERDRIVE label, camera switcher (Pit/Side/Cinema), dice button with pulse + result popup, modifiers pills (2× ATK / SHIELD / BLIND), event title popup, combat log drawer (last 5 rounds), coach overlay with 15s timer, shake on damage, flash on crit/rage/heal/overdrive. Result overlay: VICTORY/DEFEAT/DRAW splash (status-colored) + XP block + AiTrainerAnalysis + detailed log drawer + Fight Again / Change Deck / Exit to Pit buttons. PvP supported: 11 WS handlers (`pvp-*` events), `initPvPFight/cleanupPvP` lifecycle, 10s coach overlay (separate from 15s PvE), Waiting-for-opponent overlay, match-refresh detection → /arena/pit, PvP result server-driven via `pvpResultType`. POST /fight/save + XP award only for PvE (server drives PvP XP via onPvPFightEnd). File: 1797 lines. |
-
-**Decorative elements in V2 views** (no backend support, render-only until Phase 4): Preparation strategy + stake, Training energy bar, Ratings Country/Live tabs, Profile wagmi wallet connect.
-
-### Phase 3 — Three.js Structure (`src/three/`)
-
-```
-src/three/
-  helpers/
-    archetypeColors.js     — ARCHETYPE_HEX map + archColor(archId) helper (6 archetypes)
-    atmosphereScene.js     — shared sky/fog/light atmosphere setup
-    audioEngine.js         — audio playback helper (not wired to any view yet)
-    crowdSilhouette.js     — background crowd silhouettes
-    fighterAnim.js         — animation helpers: getFighterParts, snapshotParts, returnToIdle, applyIdleBob, startAttack, startDefend, startHitReact
-    fighterLowPoly.js      — low-poly fighter mesh generator (15 userData.bodyPart tags, fighterVersion = 1)
-    textures.js            — shared texture loaders/caches
-  scenes/
-    pitScene.js            — aggregator for PitView 3D scene
-    pitArena.js            — arena ring geometry
-    pitEnvironment.js      — environment lights/props
-    fighterDetailScene.js  — scene for FighterDetailViewV2 (uses archColor)
-    fightArena.js          — CardFightViewV2 scene. Exports initFightScene(canvas, opts) → { cleanup, setCameraMode('pit'|'side'|'cinema'), triggerAction(side, action), renderer, scene, camera }
-```
-
-Scenes are pure JS modules (no Vue). Each scene module exports an `init…Scene(canvas, opts)` that mounts the scene to a canvas and returns `{ scene, camera, renderer, cleanup }`. Helpers reused across scenes. `fightArena.triggerAction(side, action)` where side ∈ {'left','right'}, action ∈ {'attack','defend','hit'} is the bridge between Vuex round events and 3D animations.
-
-### Phase 3 — i18n Status
-
-8 `*.v2` subsections exist in `en.js` + 1 new top-level section:
-
-| i18n path | Used by | Note |
-|-----------|---------|------|
-| `profile.v2` | ProfileViewV2 | |
-| `training.v2` | TrainingViewV2 | |
-| `rating.v2` | RatingsViewV2 | tabGlobal/Friends/Clan/Country/Live + lblSearch |
-| `preparation.v2` | PreparationViewV2 | |
-| `fighter.v2` | FighterDetailViewV2 | |
-| `create.v2` | CreateFighterViewV2 | |
-| `xpAllocation.v2` | FighterDetailViewV2 | lblFilters, lblSearch |
-| `fight.v2` | CardFightViewV2 | 24 keys: lblFight/Victory/Defeat/Draw/FightAgain/ExitToPit/ConfirmLeave/CoachStub + lblOverdrive/Log/ModShield/ModBlind/CoachTitle/CoachSubtitle/CoachAttack/CoachDefense/CoachPosition/XpEarned/CamPit/CamSide/CamCinema (3.10.3) + lblShowDetails/HideDetails/ChangeDeck (3.10.4) |
-| `pit` (top-level) | PitView | **Not** a `.v2` subsection — Pit has no legacy counterpart. |
-| `pvp` (existing + 2) | CardFightViewV2 PvP paths | +2 new in 3.10.2b: `fightLostOnRefresh`, `fightStartFailed` (11 locales, EN+RU translated, 9 EN fallback). Existing: `waitingForOpponent`, `opponentDisconnected` (used by PvP waiting overlay), plus fallback-strings `opponentReady` / `matchCancelled` referenced in handlers but absent from locale (falls through `||` defaults — acceptable for handler feedback, parked for Phase 5). |
-
-**No new keys added** (reuse existing): ClanViewV2 uses `t.clan.*` (lblNotFound, lblBrowse, lblJoin, lblClanPrivate, lblClanFull); MatchmakingViewV2 uses `t.pvp.*` (cancel, opponentFound, fightStartsIn, noPlayersFound, tryAgain, backToArena). Same labels as originals, so no `.v2` subsection added.
-
-**Known i18n debt:** MatchmakingViewV2 also references `t.pvp.v2.lblFilters` / `t.pvp.v2.lblSearch` (lines 26, 41), but `pvp.v2` subsection does not exist in `en.js` — fallback to inline strings "FILTERS" / "SEARCH" works, but key path is dead. Park: either add `pvp.v2` or re-point to `xpAllocation.v2.lblFilters`.
-
-Phase 1 i18n policy applies: en + ru are source of truth; 9 other locales inherit EN fallback for v2 subsections until Phase 5.
-
-### Phase 3.10 — Fight Scene Architecture
-
-CardFightViewV2 splits cleanly along **3D scene ↔ HUD overlay ↔ Vuex state** lines:
-
-**3D layer (`src/three/scenes/fightArena.js`, `src/three/helpers/fighterAnim.js`):**
-- `initFightScene(canvas, { leftFighter, rightFighter })` mounts the scene and returns a controller.
-- `controller.setCameraMode('pit'|'side'|'cinema')` — swappable camera rigs.
-- `controller.triggerAction('left'|'right', 'attack'|'defend'|'hit')` — fires bone-level animations via `fighterAnim.js` helpers. No Vue imports inside three/.
-
-**HUD layer (`CardFightViewV2.vue`, `<script>` Options API + Composition `setup`):**
-- Top bar: back + camera switcher (3 cam-btn tabs).
-- Fighter panels: name + BeltBadge + HPBar (reused components).
-- Center: round dots (R1..R10) OR OVERDRIVE label (exclusive).
-- Dice area: pulse-glowing primary button (the screen's single pink CTA during `fighting`) → result popup on `diceState.activeItem`.
-- Modifiers pills: 2× ATK / SHIELD / BLIND (neutral borders, not archetype colors).
-- Event title popup: reads `fight/getEventTitle|Class|Image` from store.
-- Combat log drawer: last 5 rounds from `fight/getRoundLog`.
-- Coach overlay (PvE): 15s timer, 3 action buttons with action-color accents (attack=red / defense=blue / position=purple left border). Guarded by `v-if="!isPvP && fightPhase === 'coach'"`.
-- Result overlay (Phase 3.10.4): full VICTORY/DEFEAT/DRAW splash (status-colored via `--hex-victory|defeat|draw`) + XP block (mono font) + `AiTrainerAnalysis` component + detailed log drawer (scrollable round-by-round with action/HP, mono font, `--od` marker for overdrive rounds) + 3 buttons: Fight Again (primary pink, single screen accent), Change Deck (→ `/arena/fight-v2`), Exit to Pit.
-- Screen shake on HP decrease; screen flash on dice crit/rage/heal/overdrive-start.
-
-**Vuex bridge (`fight/` namespace, module `cardFightState.js`):**
-- View reads only via getters. Writes only via dispatch.
-- `watch(fightPhase)` is the single owner of phase transitions: starts/stops round timer, coach timer. On `results` for **PvE only** calls `setXpEarned/setXpAwarded` + `POST /v1/fight/save` + `agent/fetchAgents`. For PvP this is guarded (`!isPvP.value && !getXpAwarded`) — server drives XP via `onPvPFightEnd`.
-- `aiTrainerFightData` computed collects 14 fields from `store.state.fight` (rounds, decks, modules, HP, totalRounds, dice/coach/emergency usage + derivatives). Copied AS-IS from legacy CardFightView. For PvP, `result` field prefers server-driven `pvpResultType`; for PvE, HP-derived. See D9 below.
-- `onBeforeUnmount` disposes every watch, every interval, `sceneCtl.cleanup()`, and `cleanupPvP()` when `isPvP`.
-
-**PvP subsystem (Phase 3.10.2b):**
-- 11 WS event handlers (`pvp-fight_start`, `pvp-round_result`, `pvp-dice_available`, `pvp-dice_rolled`, `pvp-dice_error`, `pvp-coach_pause`, `pvp-coach_result`, `pvp-coach_opponent_ready`, `pvp-fight_end`, `pvp-overdrive_start`, `match-cancelled`) registered in `initPvPFight`, torn down in `cleanupPvP`. 11 addEventListener / 11 removeEventListener — symmetric.
-- WS dispatch pattern: `webSocketState.js` re-emits server PvP messages as window custom events with `pvp-` prefix (`match-cancelled` is the one exception without the prefix — AS-IS).
-- `initPvPFight` initializes fight store (HP 100/100, round 0, clear log/dice/modifiers/coach, reset stats, XP null), sets opponent from `pvp/getOpponentInfo`, sends `pvp_ready` WS message with active agent's deck+modules+move levels, registers all 11 listeners, sets 30s timeout (abort → `/arena/pit` if `fight_start` doesn't arrive). **Also calls `maybeInitScene()`** — V2-specific extension, legacy PvP had no 3D scene.
-- Match-refresh detection: in `onMounted` PvP branch, if `pvp/getOpponentInfo` and `pvp/getCurrentMatchId` are both empty on entry with `?mode=pvp&matchId=`, commit `RESET_PVP_FIGHT`, info message (`pvp.fightLostOnRefresh`), redirect to `/arena/pit`. Prevents stale match-context on F5.
-- PvP coach overlay: separate block in template (`v-if="isPvP && showCoachChoice"`), 10s timer via `pvpTimerInterval` (not the PvE `coachTimerInterval`), same visual style as PvE (shared fv2.lblCoach* keys, action-color left borders). `onPvPCoachChoice` sends `coach_choice` via WS, triggers `Waiting for opponent` overlay until `coach_opponent_ready` event.
-- Waiting overlay: `v-if="isPvP && showWaiting"`, neutral spinner (no pink), shows during 30s initial wait AND during "waiting for opponent's coach choice" AND on coach-timeout scenarios. Text from `waitingText` ref, backed by `pvp.waitingForOpponent` / `pvp.opponentDisconnected` keys.
-- Result overlay PvP-aware: `resultState` and `aiTrainerFightData.result` prefer server-driven `pvpResultType` (`'win'|'lose'|'draw'`) over HP-derived; Fight Again button branches internally (`onFightAgain` → `pvpFightAgain()` if `isPvP`, else `dispatch('fight/fightAgain')`). `pvpFightAgain` routes to `/matchmaking-v2` (not legacy `/matchmaking` — V2 universe closure).
-- Dice in PvP: `onRollDice` branches — if `isPvP && pvpMatchId`, dispatches `{type: 'dice_roll'}` via WS and clears local dice state; server responds with `dice_rolled` event, which `onPvPDiceRolled` handler commits to `fightStats` and `diceState`.
-
-**PvE/PvP namespace divergence (by design, see hexlash-combat skill):**
-- PvE runs `combatEngine` client-side, `cardFightState` drives `watch(fightPhase)` timer loop.
-- PvP runs `pvpCombatEngine` server-side, client reacts to WS events; `watch(fightPhase)` is short-circuited with `if (isPvP && pvpMatchId) return` guard at entry.
-- Coach: 15s PvE / 10s PvP — two separate timers, two separate template blocks, **do not unify**.
-- XP: PvE POST /fight/save client-initiated; PvP server handles in `onPvPFightEnd`, client reads `fight/getXpEarned` populated by the handler.
-- 3D scene: shared via the `initFightScene` controller — only the round-log source changes (local engine for PvE, `pvp-round_result` events for PvP). `triggerAction` called the same way from both paths.
-
-**Router targets in PvP flow (all `/arena` → `/arena/pit`, `/matchmaking` → `/matchmaking-v2`, `/fight` → `/fight-v2`):**
-- `onMounted` refresh-fail, `initPvPFight` 30s timeout, `onMatchCancelled` → `/arena/pit`
-- `pvpFightAgain` → `/matchmaking-v2`
-- Existing `onExitToPit` / `onBackClick` → `/arena/pit`
-
-**Pattern for future fight-scene iterations:** the `setCameraMode / triggerAction` controller shape is the stable contract; any new mode (spectator, replay) should consume the same controller and only swap the round-log source.
-
-### Phase 3 — What's Deferred to Later Phases
-
-Phase 3.10 is complete (10/10 Screen Port views + PvE + PvP + AI Trainer). Phase 4 in progress:
-
-- **4.1 ✅** Training sound — audioEngine ambient + Howler punch SFX wired in TrainingViewV2 (commit `7aa6e86`).
-- **4.2 ✅** Training energy bar wired to PunchInfo (commit `e005bec`).
-- **4.3 ✅** Preparation stake loop — backend + frontend + i18n (PvE only; PvP out of scope).
-- **4.4 ✅** PvE strategy — player AI behavior override via `src/data/strategy.js` (frontend-only, backend not in PvE combat path). aggressive/balanced/defensive applied to player hp/damage/crit/dodge/moduleWeights. Existing i18n keys reused (no new strings).
-- **4.5 ✅** Wagmi wallet — ProfileViewV2 reuses existing `ConnectWallet.vue` component (shared with legacy `/profile/wallet`). Modal connector picker, Base mainnet, 3 connectors (injected/WalletConnect/Coinbase). Zero wagmi code duplication, zero new i18n keys.
-- **4.6 ✅** Country rankings + Live matches — `User.country` Prisma migration (`add_user_country`) with `@@index([country])`, `src/data/countries.js` static ISO 3166-1 alpha-2 list (249 entries) + runtime `codeToFlag(code)` via Regional Indicator Symbols, `src/components/profile/CountryPicker.vue` searchable Teleport modal. ProfileViewV2 Settings: `userCountry` computed wired to `PUT /v1/user/country` → `master/updateMaster` action (IndexedDB persist). RatingsViewV2: Country tab (CTA when no country set, leaderboard when set) + Live tab (last 20 finished PvP matches, 30s polling activated only while tab is active, cleanup in `onBeforeUnmount`). Three new backend endpoints: `PUT /v1/user/country`, `GET /v1/stats/leaderboard/country`, `GET /v1/stats/live-matches`. 10 new i18n keys × 11 locales (EN + RU translated, 9 locales EN fallback).
-- **4.7 ✅** PitView render fix — root cause was two `Object.assign(threeObj, { position: new Vector3() })` anti-patterns (pitScene.js:93, pitEnvironment.js:177). Three.js r150+ makes `Object3D.position` read-only via `defineProperty`, so the whole-object assign silently throws. Error masked by `vite.config.js` `terserOptions.drop_console=true` (D18). Atmosphere helper also tweaked (exposure 1.05→2.5, fog 0.028→0.005). `rollup-plugin-obfuscator.exclude` extended with `src/three/**` and `src/views/new/PitView.vue` as precaution.
-
-**Phase 4 COMPLETE** — all seven sub-phases merged. Phase 6 cutover in progress:
-- **6.1 ✅** BottomMenu cutover — 4 menu routes flipped to v2 (Arena → `/arena/pit`, Trainings → `/training-v2`, Ratings → `/ratings-v2`, Profile → `/profile-v2`); router redirects `/arena` → `/arena/pit`, `/ratings` → `/ratings-v2`. Legacy routes preserved for rollback via direct URL.
-- **6.2a ✅** Scene state infrastructure (flag off, commit `d946950`) — `sceneState` Vuex module (14th), `useScene` composable, `__USE_STATE_MACHINE__` compile-time flag (false), BottomMenu + App.vue `isPvPScreen` dual-path. `isImmersive` aligned with legacy: pit, mm, fight-pvp (via `pvp/getCurrentMatchId`). URL routing untouched — hash history dropped (would break external deep-links).
-- **6.2b ✅** PitView shell with 8 HUD placeholders (flag-gated, commit `78d2918`) — dual-template (legacy | state-machine), `HUDPlaceholder.vue` generic component in `src/views/new/hud/` (title prop, back emit). Three.js init/cleanup bound to `scene === 'pit'` via watch. Deep-link `?scene=X&params` with VALID_SCENE_QUERY gate. Shop kept as toast (not a scene). BottomMenu flag-on: `router.push('/arena/pit')` before `setScene` when not already on pit. Options API preserved in PitView (no script-setup conversion).
-
-**Next: Phase 7 — Editorial Refresh v24** — new visual foundation (brutal editorial, paper-on-ink, hard-offset shadows). Neon Discipline v1.0 → SUPERSEDED. See `/skills/hexlash-design/SKILL.md` §Editorial Refresh v24.
-
-Later phases:
-- **Full i18n pass** across 11 locales for all `*.v2` subsections + ClanV2/MMV2 reused keys audit — Phase 5
-- **Cutover:** remove `-v2` route suffixes, delete legacy views, delete legacy components — Phase 6
-
-**Known debt parked after Phase 3.10:**
-- **D1**: `pvp.v2.lblFilters`/`lblSearch` path referenced in MatchmakingViewV2 but `pvp.v2` subsection doesn't exist → Phase 5 (add subsection or repoint to `xpAllocation.v2.lblFilters`).
-- **D2**: 9 locales (de/es/fr/pt/ar/hi/ja/ko/zh) inherit EN fallback for all `*.v2` subsections → Phase 5 full pass.
-- **D3**: Phase 3.9/3.10 smoke tests pending a dev environment run → pre-deploy.
-- **D5**: `fight` top-level flat section still exists alongside `fight.v2` (legacy CardFightView uses it); removed during Phase 6 cutover.
-- **D6**: Legacy CardFightView (2174 lines) lives in parallel with CFV2 until Phase 6 cutover (routes `/fight` and `/fight-v2` both active).
-- **D7**: P1-cleanup files (`fightStylePreview.js`, `nftMintService.js`, `HexlashAgents.sol` + ABI) still present — remove pre-Phase 6.
-- **D8**: Captain-era keys may linger in some locales — audit as part of Phase 5 cleanup.
-- **D9**: `aiTrainerFightData.diceEffect` is almost always `null` at `results` phase because `rollDiceManual` clears `diceState.activeItem` after 1.5s setTimeout. Legacy behavior, not a 3.10.4 regression. Backend AI Trainer accepts `null`. Fix (remove setTimeout-clear or add separate `lastDiceEffect` field in `cardFightState`) is a standalone task — requires touching cardFightState.js, affects both legacy and V2.
-- **D10**: `pvp-overdrive_start` is not dispatched by `webSocketState.js` (server message `overdrive_start` falls into `default` branch → `console.warn`). Handler `onPvPOverdriveStart` is registered in CFV2 AS-IS from legacy for future-proofing but will never fire until webSocketState adds the case. Pre-existing bug, park.
-- **D11**: `STAKE_AMOUNTS` duplicated between `backend/src/config.js` and `src/views/new/PreparationViewV2.vue`. Frontend has comment "MUST match backend" — runtime hazard if values drift. Resolution: expose via `GET /v1/config` endpoint, frontend fetches on app init. Park: separate sub-ТЗ.
-- **D12**: PvE stake fight result screen (CardFightViewV2) does not visually show balance delta on the result overlay — user only sees new balance after navigating to Profile. UX gap, not a bug. Park: separate sub-ТЗ if UX prioritises on-result balance reveal.
-- **D13**: `audioEngine.js — not wired to any view yet` line in Project Structure section is stale (wired in TrainingViewV2.vue:70-208 since commit `7aa6e86`). Fix in next docs sync.
-- **D14**: Preparation stake selector defaults to `medium` and has no "off" state — every PvE fight in V2 deducts at least 100 from balance. Product decision: should stake be opt-in (default 'none' / explicit toggle) or stay opt-out? Park: separate sub-ТЗ if product confirms stake should be skippable.
-- **D15**: `ConnectWallet.vue` does not implement click-to-copy on connected wallet address despite existing i18n key `profile.wallet.msgWalletAddressCopied`. Pre-existing legacy gap, surfaced when reused in v2 ProfileViewV2 (Phase 4.5). Resolution: add copy handler inside ConnectWallet `.connected-row` — touches legacy component shared by `/profile/wallet` and `/profile-v2`, separate sub-ТЗ.
-- **D16**: Country names in `src/data/countries.js` hardcoded English. Per-locale translation of 249 names is a separate sub-ТЗ — either inline in each locale file (large diff) or external via `i18n-iso-countries` (+dep). Acceptable in MVP because search in `CountryPicker.vue` matches both name and ISO code, so non-English users can still find their country by code.
-- **D17**: Deprecated `rating.v2.lblCountrySoon` and `rating.v2.lblLiveSoon` remain in 11 locales after Phase 4.6. Kept for old-build safety (stale clients won't crash). Removal blocked on Phase 5/6 i18n cleanup pass.
-- **D18**: `vite.config.js` has `terserOptions.drop_console=true` which silently strips ALL `console.log`/`console.error` in production bundles. Masked the real Three.js error during Phase 4.7 Pit diagnosis — logs physically absent from bundle, had to rebuild debug as reactive UI overlay. Consider keeping `console.error` via `pure_funcs: ['console.log', 'console.info']` so production errors remain visible.
-- **D19**: Pattern `Object.assign(threeObject, { position: new THREE.Vector3(...) })` breaks on Three.js r150+ because `Object3D.position` is read-only via defineProperty. Two instances fixed in Phase 4.7 (pitScene.js:93, pitEnvironment.js:177). Add lint rule or grep pre-commit hook (e.g. ESLint custom `no-restricted-syntax` for `Object.assign` with `position` key) to prevent recurrence.
-- **D20**: Fight-in-progress guard in `src/router/index.js` `beforeEach` redirects to legacy `/fight` when a saved fight is detected on `/arena` or `/arena/fight` entry. After Phase 6.1 menu cutover (Arena → `/arena/pit`) guard no longer matches the new entry path, and fight state has no `fightVersion` marker to decide v1 vs v2 resume target. Acceptable short-term (user can navigate into fight manually from pit). Park until Phase 6.2 or dedicated fix — extend guard to catch `/arena/pit` and add `fightVersion` to `cardFightState` save payload.
-- **D21**: MatchmakingView `isPlayer1` flag reversed — legacy commits `false` (legacy line 263), v2 commits `true` (v2 line 214). Possible match-state bug if server expects consistent value. Verify server contract first; park until Phase 6.2l cutover.
-- **D22**: Browser back/forward not synced with `scene.history` when `__USE_STATE_MACHINE__` flag is on. Options: `pushState` without URL change, query-param `?scene=X`, or accept v23 UX (back exits Pit). Park until Phase 6.2l.
-- **D23**: `--hex-*` tokens + Hex* legacy components (HexButton, HexCard, HexProgress, HexBadge, BeltBadge) coexist with new `--ed-*` Editorial Refresh v24 tokens in parallel. Cleanup after all views migrated — Phase 7.6.
-- **D24**: Feature flag `__USE_STATE_MACHINE__` remains false through Phase 7.1 (Editorial foundation) and Phase 7.2-7.3 (Ed-components, i18n). Scheduled activation — Phase 7.4+ when Pit HUD is rewritten in Editorial.
-
-**Closed debt:** D4 (branch mismatch CLAUDE.md↔system prompt) resolved in 3.10.3 commit 353c463.

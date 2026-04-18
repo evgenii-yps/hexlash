@@ -5,6 +5,7 @@ const { authMiddleware } = require('../middleware/auth');
 const { upload } = require('../middleware/upload');
 const { formatUserResponse } = require('../utils/helpers');
 const { migrateUserToFighter } = require('../services/userMigrationService');
+const { getCaptainPublicInfo, getCaptainsForUsers } = require('../services/captainService');
 
 const router = express.Router();
 
@@ -31,7 +32,8 @@ router.get('/me', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    res.json({ data: formatUserResponse(user) });
+    const captain = await getCaptainPublicInfo(req.userId);
+    res.json({ data: formatUserResponse(user, { captain }) });
   } catch (err) {
     console.error('Get me error:', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -198,7 +200,8 @@ router.get('/login/:login', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    res.json({ data: formatUserResponse(user) });
+    const captain = await getCaptainPublicInfo(user.id);
+    res.json({ data: formatUserResponse(user, { captain }) });
   } catch (err) {
     console.error('Get user by login error:', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -217,7 +220,8 @@ router.get('/id/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    res.json({ data: formatUserResponse(user) });
+    const captain = await getCaptainPublicInfo(user.id);
+    res.json({ data: formatUserResponse(user, { captain }) });
   } catch (err) {
     console.error('Get user by id error:', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -266,7 +270,8 @@ router.get('/search', authMiddleware, async (req, res) => {
       take: pageSize,
     });
 
-    res.json({ data: users.map(u => formatUserResponse(u)) });
+    const captainMap = await getCaptainsForUsers(users.map(u => u.id));
+    res.json({ data: users.map(u => formatUserResponse(u, { captain: captainMap.get(u.id) || null })) });
   } catch (err) {
     console.error('Search users error:', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -372,29 +377,6 @@ router.put('/settings', authMiddleware, async (req, res) => {
   } catch (err) {
     console.error('[USER] Settings error:', err);
     res.status(500).json({ error: 'Failed to save settings' });
-  }
-});
-
-// PUT /v1/user/country — set user country (Phase 4.6)
-// Body: { country: string|null } — ISO 3166-1 alpha-2 code or null to unset
-router.put('/country', authMiddleware, async (req, res) => {
-  try {
-    const { country } = req.body || {};
-
-    if (country !== null && (typeof country !== 'string' || !/^[A-Z]{2}$/.test(country))) {
-      return res.status(400).json({ error: 'Invalid country code (expected ISO 3166-1 alpha-2 or null)' });
-    }
-
-    const updated = await prisma.user.update({
-      where: { id: req.userId },
-      data: { country: country },
-      select: { country: true },
-    });
-
-    return res.json({ data: { country: updated.country } });
-  } catch (err) {
-    console.error('Set country error:', err);
-    return res.status(500).json({ error: 'Failed to set country' });
   }
 });
 

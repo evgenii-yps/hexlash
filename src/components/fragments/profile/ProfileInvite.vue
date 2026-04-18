@@ -110,7 +110,7 @@ const goToUrl = () => {
 
 .invite-code {
   font-size: 2.5rem;
-  font-family: var(--hex-font-mono);
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   color: var(--hex-text-primary);
   margin: 0;
   cursor: pointer;

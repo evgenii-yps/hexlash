@@ -2,7 +2,6 @@ import { ModuleAIStrategy } from '@/core/engine/aiStrategy.js';
 import { RoundResult, CombatResultModel } from '@/core/models/combatResultModel.js';
 import { MAX_HP, MAX_ROUNDS, TOTAL_ROUNDS, EXTRA_ROUND_DAMAGE_MULTIPLIER, BASE_DAMAGE, POSITION_BONUS } from '@/core/constants.js';
 import { allMoves } from '@/data/moves.js';
-import { getStrategyModifiers } from '@/data/strategy.js';
 
 const DODGE_CHANCE = 0.12;
 const CRIT_CHANCE  = 0.10;
@@ -38,14 +37,12 @@ export class CombatEngine {
      * @param {object}            [moveInfo.move2] - { id, damage, speed, branch }
      * @returns {RoundResult}
      */
-    static resolveRoundLive(action1, action2, hp1, hp2, ai1, ai2, roundNum, playerMods = {}, moveInfo = null, strategy = 'balanced') {
+    static resolveRoundLive(action1, action2, hp1, hp2, ai1, ai2, roundNum, playerMods = {}, moveInfo = null) {
         const {
             attackMultiplier = 1,
             shieldActive     = false,
             blindActive      = false,
         } = playerMods;
-
-        const strategyMods = getStrategyModifiers(strategy);
 
         // Overdrive: rounds > MAX_ROUNDS get damage multiplied
         const isOverdrive = roundNum > MAX_ROUNDS;
@@ -67,7 +64,7 @@ export class CombatEngine {
 
         // ── Calculate potential damages ──
 
-        const calcAttackDamage = (baseDmg, attackerAi, mult, defenderAction, dodgeChanceBonus, critChanceBonus = 0) => {
+        const calcAttackDamage = (baseDmg, attackerAi, mult, defenderAction, dodgeChanceBonus) => {
             if (defenderAction === 'defense') {
                 const dmg = (baseDmg + attackerAi.consumeAttackBoost()) * mult;
                 const blocked = Math.floor(dmg * 0.6);
@@ -78,28 +75,21 @@ export class CombatEngine {
                     return { damage: 0, event: { type: 'dodge', value: 0 }, extraEvent: null };
                 }
                 const dmg = (baseDmg + attackerAi.consumeAttackBoost()) * mult;
-                const isCrit = Math.random() < CRIT_CHANCE + critChanceBonus;
+                const isCrit = Math.random() < CRIT_CHANCE;
                 const finalDmg = isCrit ? Math.floor(dmg * CRIT_MULT) : dmg;
                 return { damage: finalDmg, event: { type: isCrit ? 'crit' : 'damage', value: finalDmg }, extraEvent: null };
             } else {
                 // Both attacking or attacker vs non-attack
                 const dmg = (baseDmg + attackerAi.consumeAttackBoost()) * mult;
-                const isCrit = Math.random() < CRIT_CHANCE + critChanceBonus;
+                const isCrit = Math.random() < CRIT_CHANCE;
                 const finalDmg = isCrit ? Math.floor(dmg * CRIT_MULT) : dmg;
                 return { damage: finalDmg, event: { type: isCrit ? 'crit' : 'damage', value: finalDmg }, extraEvent: null };
             }
         };
 
-        // ── Fighter 1 (player) attacks ──
+        // ── Fighter 1 attacks ──
         if (action1 === 'attack') {
-            const result = calcAttackDamage(
-                moveDmg1 * strategyMods.damageMultiplier,
-                ai1,
-                attackMultiplier,
-                action2,
-                0.1,                       // opponent dodge — global, no strategy bonus
-                strategyMods.critBonus,    // player crit bonus
-            );
+            const result = calcAttackDamage(moveDmg1, ai1, attackMultiplier, action2, 0.1);
             damage2 = result.damage;
             events.push({ fighter: 2, ...result.event });
             if (result.extraEvent) events.push({ fighter: 2, ...result.extraEvent });
@@ -116,14 +106,7 @@ export class CombatEngine {
             } else if (shieldActive) {
                 events.push({ fighter: 1, type: 'shield', value: 0 });
             } else {
-                const result = calcAttackDamage(
-                    moveDmg2,
-                    ai2,
-                    1,
-                    action1,
-                    0.1 + strategyMods.dodgeBonus,  // player dodge — applied when defending
-                    0,                               // opponent crit — no strategy bonus
-                );
+                const result = calcAttackDamage(moveDmg2, ai2, 1, action1, 0.1);
                 damage1 = result.damage;
                 events.push({ fighter: 1, ...result.event });
                 if (result.extraEvent) events.push({ fighter: 1, ...result.extraEvent });

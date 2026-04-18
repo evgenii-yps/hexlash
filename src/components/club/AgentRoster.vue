@@ -9,7 +9,6 @@
         v-for="agent in agents"
         :key="agent.id"
         :agent="agent"
-        :isActive="agent.id === activeAgentId"
         class="hex-fade-in"
         @click="$emit('agent-click', $event)"
       />
@@ -38,7 +37,6 @@ export default {
   components: { AgentCard },
   props: {
     agents: { type: Array, default: () => [] },
-    activeAgentId: { type: String, default: null },
     maxAgents: { type: Number, default: 2 },
     loading: { type: Boolean, default: false },
   },

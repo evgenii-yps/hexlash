@@ -20,12 +20,6 @@ module.exports = {
   // Referral
   REFERRAL_REWARD_TAPS: 500,
 
-  // Stake (Phase 4.3) — PvE only
-  STAKE_AMOUNTS: { low: 100, medium: 500, high: 1000 },
-  STAKE_PAYOUT_MULTIPLIER: 2,  // win
-  STAKE_DRAW_RETURN: 1,         // draw returns stake
-  STAKE_LOSE_RETURN: 0,         // lose burns stake
-
   // PvP Combat
   MAX_HP: 100,
   MAX_ROUNDS: 10,

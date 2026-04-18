@@ -36,6 +36,29 @@
 
             <ProfileStats :userData="userData"/>
 
+            <!-- Captain Layer -->
+            <div class="captain-layer">
+              <div class="captain-layer-title">{{ t.profile?.lblYourCaptain || 'Your Captain' }}</div>
+              <div v-if="captainInfo" class="captain-display">
+                <img :src="`/images/skins/${captainInfo.skin || 'skin_m_1.png'}`" class="captain-skin" alt="" />
+                <div class="captain-details">
+                  <div class="captain-name-row">
+                    <span class="captain-name">{{ captainInfo.name }}</span>
+                    <BeltBadge :grade="captainInfo.belt || 0" :is-hexmaster="captainInfo.isHexmaster || false" size="md" />
+                  </div>
+                  <router-link v-if="isOwner && captainInfo.id" :to="`/arena/club/${captainInfo.id}`" class="captain-link">
+                    {{ t.profile?.btnViewCaptain || 'View Captain →' }}
+                  </router-link>
+                </div>
+              </div>
+              <div v-else class="captain-empty">
+                <div class="captain-empty-icon">⚔</div>
+                <div class="captain-empty-title">{{ t.profile?.lblNoCaptainTitle || 'No Captain Set' }}</div>
+                <div class="captain-empty-desc">{{ t.profile?.lblNoCaptainDesc || 'Set a Captain in Club Mode to compete' }}</div>
+                <router-link v-if="isOwner" to="/arena/club" class="captain-empty-btn">{{ t.profile?.btnSetCaptain || 'Go to Club' }}</router-link>
+              </div>
+            </div>
+
             <ProfileAchievements :userData="userData"/>
 
             <div v-if="isOwner">
@@ -72,7 +95,7 @@ import ProfileSkins from "@/components/fragments/profile/skins/ProfileSkins.vue"
 import UserName from "@/components/fragments/profile/UserName.vue";
 import UserAvatar from "@/components/fragments/profile/UserAvatar.vue";
 import ReferralModal from "@/components/fragments/profile/ReferralModal.vue";
-
+import BeltBadge from "@/components/ui/BeltBadge.vue";
 import * as amplitude from "@amplitude/analytics-browser";
 
 const version = __APP_VERSION__;
@@ -86,6 +109,7 @@ const userData = ref(null);
 const isOwner = ref(false);
 const loading = ref(true);
 const showReferralModal = ref(false);
+const captainInfo = computed(() => userData.value?.captain || null);
 
 const loadUser = async () => {
 
@@ -232,4 +256,59 @@ onMounted(() => {
   width:150px;
 }
 
+/* Captain Layer */
+.captain-layer {
+  margin: 16px 0;
+  background: var(--hex-bg-medium);
+  border: 1px solid var(--hex-border-default);
+  border-radius: 10px;
+  padding: 16px;
+}
+.captain-layer-title {
+  font-family: 'Anonymous', monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--hex-text-muted);
+  margin-bottom: 12px;
+}
+.captain-display {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.captain-skin {
+  width: 64px;
+  height: 64px;
+  border-radius: 10px;
+  object-fit: cover;
+  object-position: top;
+  border: 1px solid var(--hex-border-default);
+  flex-shrink: 0;
+}
+.captain-details { flex: 1; min-width: 0; }
+.captain-name-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.captain-name { font-family: 'Anonymous', monospace; font-size: 16px; color: var(--hex-text-primary); }
+.captain-link {
+  font-size: 12px;
+  color: var(--hex-primary);
+  text-decoration: none;
+}
+.captain-link:hover { text-decoration: underline; }
+
+.captain-empty { text-align: center; padding: 12px 0; }
+.captain-empty-icon { font-size: 32px; opacity: 0.6; margin-bottom: 8px; }
+.captain-empty-title { font-family: 'Anonymous', monospace; font-size: 14px; color: var(--hex-text-primary); margin-bottom: 4px; }
+.captain-empty-desc { font-size: 12px; color: var(--hex-text-muted); margin-bottom: 12px; }
+.captain-empty-btn {
+  display: inline-block;
+  padding: 8px 20px;
+  background: var(--hex-primary);
+  color: var(--hex-text-primary);
+  border-radius: 8px;
+  font-size: 13px;
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
 </style>

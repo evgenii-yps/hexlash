@@ -1,8 +1,6 @@
 import './assets/colors.css'
 import './assets/main.css'
 import './styles/hexlash-ui.css'
-import './styles/atmosphere.css'
-import './styles/view-layers.css'
 
 import {createApp} from 'vue'
 import {createVuetify} from 'vuetify'

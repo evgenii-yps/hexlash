@@ -21,9 +21,8 @@ export class ModuleAIStrategy {
 
     /**
      * Calculate combined action priorities from 3 modules.
-     * @param {object} [moduleWeights] - per-action multipliers from strategy ({attack, defense})
      */
-    calculatePriorities(currentHP, maxHP, moduleWeights = { attack: 1, defense: 1 }) {
+    calculatePriorities(currentHP, maxHP) {
         const hpPercent = (currentHP / maxHP) * 100;
         const hpState = hpPercent > 70 ? 'high' : 'low';
 
@@ -45,8 +44,8 @@ export class ModuleAIStrategy {
                 }
             }
 
-            combined.attack   += priorities.attack   * weights[index] * moduleWeights.attack;
-            combined.defense  += priorities.defense  * weights[index] * moduleWeights.defense;
+            combined.attack   += priorities.attack   * weights[index];
+            combined.defense  += priorities.defense  * weights[index];
             combined.position += priorities.position * weights[index];
         });
 
@@ -61,11 +60,10 @@ export class ModuleAIStrategy {
     /**
      * Select an action based on weighted priorities.
      * @param {boolean} [isOverdrive=false] - In Overdrive, AI skews heavily toward attack
-     * @param {object}  [moduleWeights]     - per-action multipliers from strategy
      * @returns {'attack' | 'defense' | 'position'}
      */
-    selectAction(currentHP, maxHP, isOverdrive = false, moduleWeights = { attack: 1, defense: 1 }) {
-        const priorities = this.calculatePriorities(currentHP, maxHP, moduleWeights);
+    selectAction(currentHP, maxHP, isOverdrive = false) {
+        const priorities = this.calculatePriorities(currentHP, maxHP);
 
         // Overdrive: aggressive bias — boost attack, reduce position
         if (isOverdrive) {

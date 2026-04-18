@@ -24,12 +24,12 @@
             @select="onModeSelect"
           />
 
-          <div v-if="!hasActiveAgent" class="no-active-agent-msg">{{ t.fight?.errNoActiveAgent || 'Create a fighter in Club Mode first' }}</div>
+          <div v-if="!hasCaptain" class="no-captain-msg">{{ t.fight?.errNoCaptain || 'Set a Captain in Club Mode first' }}</div>
           <HexButton
               variant="primary"
               size="lg"
               class="fight-btn hex-glow-pulse"
-              :disabled="!hasActiveAgent"
+              :disabled="!hasCaptain"
               @click="startFight"
           >
             {{ t.arena.lblStartFight }}
@@ -68,8 +68,8 @@ import {getOnlinePlayersCount} from "@/core/services/statsService.js";
 
 const master = computed(() => store.getters['master/getMaster']);
 const isBuildValid = computed(() => store.getters['fight/isBuildValid']);
-const activeAgent = computed(() => store.getters['agent/activeAgent']);
-const hasActiveAgent = computed(() => !!activeAgent.value);
+const currentCaptain = computed(() => store.getters['agent/currentCaptain']);
+const hasCaptain = computed(() => !!currentCaptain.value);
 
 // PvP data
 const onlineFriendsCount = computed(() => store.getters['friends/onlineFriendsCount']);
@@ -207,7 +207,7 @@ const handleScroll = (event) => {
   width: 100%;
 }
 
-.no-active-agent-msg {
+.no-captain-msg {
   font-size: 12px;
   color: var(--hex-text-muted);
   text-align: center;

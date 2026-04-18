@@ -124,7 +124,7 @@ export default {
 
 .legend-header, .retirement-header { margin-bottom: 10px; }
 .legend-title, .retirement-title {
-  font-family: var(--hex-font-display);
+  font-family: 'Anonymous', monospace;
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -136,11 +136,11 @@ export default {
   width: 64px; height: 64px; border-radius: 10px; object-fit: cover;
   border: 2px solid var(--hex-draw); box-shadow: 0 0 12px rgba(255, 215, 0, 0.3);
 }
-.legend-archetype { font-family: var(--hex-font-display); font-size: 13px; color: var(--hex-text-primary); }
+.legend-archetype { font-family: 'Anonymous', monospace; font-size: 13px; color: var(--hex-text-primary); }
 .legend-buffs { margin-top: 4px; }
 
 .progress-bar-wrap { margin-bottom: 10px; }
-.progress-label { font-family: var(--hex-font-mono); font-size: 12px; color: var(--hex-text-muted); margin-bottom: 4px; text-align: right; }
+.progress-label { font-family: 'AnonymousBalance', monospace; font-size: 12px; color: var(--hex-text-muted); margin-bottom: 4px; text-align: right; }
 .progress-track { height: 6px; background: var(--hex-bg-dark); border-radius: 3px; overflow: hidden; }
 .progress-fill { height: 100%; background: linear-gradient(90deg, var(--hex-primary), #FF3399); border-radius: 3px; transition: width 0.3s; }
 
@@ -150,7 +150,7 @@ export default {
 
 .buff-preview { background: var(--hex-bg-dark); border-radius: 8px; padding: 10px; margin-bottom: 8px; }
 .buff-preview-title { font-size: 10px; text-transform: uppercase; color: var(--hex-text-muted); margin-bottom: 4px; }
-.buff-line { font-family: var(--hex-font-mono); font-size: 12px; }
+.buff-line { font-family: 'AnonymousBalance', monospace; font-size: 12px; }
 .buff-xp { color: var(--hex-victory); }
 .buff-dmg { color: var(--hex-primary); }
 

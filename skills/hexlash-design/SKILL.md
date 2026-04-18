@@ -5,8 +5,6 @@ description: Дизайн-система "Neon Discipline" проекта Hexlas
 
 # hexlash-design — Neon Discipline
 
-> **Status (Apr 2026):** Neon Discipline v1.0 — SUPERSEDED. Editorial Refresh v24 is the new foundation (Phase 7+). См. секцию §Editorial Refresh v24 внизу. `--hex-*` и Neon-components остаются функциональными в legacy-коде до Phase 7.6 cleanup.
-
 ## Главное правило
 
 - **Источник правды — `/src/styles/hexlash-ui.css`.** При расхождениях с PDF и SKILL.md прав код.
@@ -79,14 +77,8 @@ description: Дизайн-система "Neon Discipline" проекта Hexlas
 - Radius: `--hex-radius-sm(4)/md(8)/lg(12)/xl(16)/round(50%)`
 - Transitions: `--hex-transition-fast` (0.15s), `--hex-transition-normal` (0.25s), `--hex-transition-slow` (0.4s)
 
-### Типографика — три голоса
-
-| Голос | Шрифт | Где |
-|-------|-------|-----|
-| Бренд/удар | Archivo Black (`--hex-font-display`) | HEXLASH, START FIGHT, VICTORY/DEFEAT/DRAW, OVERDRIVE. Один блок на экран. |
-| Числа | JetBrains Mono (`--hex-font-mono`) | HP, taps, XP, timers, stats. |
-| Body | Space Grotesk (`--hex-font-body`) | Everything else. |
-| Legacy compact | System sans | ModeSelector, Friends (preserved pattern). |
+### Шрифтовые алиасы — ВНИМАНИЕ
+В CSS: `--hex-font-display` (Impact), `--hex-font-body` (Inter), `--hex-font-mono` (JetBrains Mono). Компоненты **используют напрямую**: `'Anonymous'`, `'AnonymousBalance'`, system sans. **Две параллельные системы.** Не подменять одну другой.
 
 ---
 
@@ -94,13 +86,12 @@ description: Дизайн-система "Neon Discipline" проекта Hexlas
 
 | Архетип | Токен | Идея |
 |---------|-------|------|
-| Predator | `--hex-arch-predator` (#FF066F) | Агрессия (= primary pink) |
-| Sentinel | `--hex-arch-sentinel` (#2ee07f) | Защита (emerald) |
-| Ghost | `--hex-arch-ghost` (#A855F7) | Уклонение (violet) |
-| Analyst | `--hex-arch-analyst` (#4dd9ff) | Анализ (cyan) |
-| Maverick | `--hex-arch-maverick` (#FFA133) | Хаос (amber) |
-| Juggernaut | `--hex-arch-juggernaut` (#D4A843) | Давление (gold) |
-| Warden | `--hex-arch-warden` (= juggernaut) | Лор-алиас |
+| Predator | `--hex-arch-predator` (#FF2D2D) | Агрессия |
+| Sentinel | `--hex-arch-sentinel` (#4DA6FF) | Защита |
+| Ghost | `--hex-arch-ghost` (#B44DFF) | Уклонение |
+| Analyst | `--hex-arch-analyst` (#00FF88) | Анализ |
+| Maverick | `--hex-arch-maverick` (#FFB800) | Хаос |
+| Juggernaut | `--hex-arch-juggernaut` (#FF6B1A) | Давление |
 
 Каждый с `-dark`, `-light`, `-bg`, `-glow`.
 
@@ -112,14 +103,13 @@ description: Дизайн-система "Neon Discipline" проекта Hexlas
 
 ---
 
-## Типографика — три голоса (v23)
+## Типографика — три голоса
 
 | Голос | Шрифт | Где |
 |-------|-------|-----|
-| Бренд/удар | Archivo Black (`--hex-font-display`) | HEXLASH, START FIGHT, VICTORY/DEFEAT/DRAW, OVERDRIVE. Один блок на экран. |
-| Числа | JetBrains Mono (`--hex-font-mono`) | HP, taps, XP, timers, stats. |
-| Body | Space Grotesk (`--hex-font-body`) | Everything else. |
-| Legacy compact | System sans | ModeSelector, Friends (preserved pattern). |
+| Бренд/удар | `Anonymous` (pixel) | Лого, START FIGHT, VICTORY/DEFEAT/DRAW, OVERDRIVE. **Один блок на экран.** |
+| Числа | `AnonymousBalance` | HP, баланс, taps, XP, win-score |
+| Спокойная речь | System sans (`-apple-system, ...`) | Всё остальное |
 
 **Размеры (mobile 360-414px):** Display 32, H1 24, H2 18, H3 14, Body 14, Caption 11, Micro 9.
 
@@ -138,6 +128,7 @@ description: Дизайн-система "Neon Discipline" проекта Hexlas
 | `HexProgress` | hp, branch, generic × 3 size |
 | `HexBadge` | archetype, branch, status, counter, custom |
 | `BeltBadge` | grade 0-32, isHexmaster, sm/md/lg |
+| `UserCaptainBadge` | xs/sm/md |
 | `PixelIcon` | **Не используется**, preserved |
 
 ---
@@ -213,20 +204,6 @@ Max 2 уровня вложенности. Фон не светлее `--hex-bg-
 
 ---
 
-## Atmosphere Layers (Phase 2)
-
-Global DOM overlays, always rendered by AppShell behind all content:
-
-- `.grain` — SVG noise texture, opacity 0.035, mix-blend overlay (z-index 200)
-- `.vignette` — radial gradient dimming edges (z-index 150)
-- `.scanlines` — CRT horizontal lines (z-index 175) — opt-in per-view, not global
-
-Files: `src/styles/atmosphere.css` (Phase 1), applied in `src/components/shell/AppShell.vue` (Phase 2).
-
-Scanlines can be added per-view via `<div class="scanlines">` inside the view template. Currently recommended only for Fighter Detail per v23.
-
----
-
 ## Состояния
 
 - **Loading:** skeleton (pulse opacity). Нет "Loading..." текста.
@@ -274,68 +251,6 @@ Scanlines can be added per-view via `<div class="scanlines">` inside the view te
 ## Расширенный контекст
 
 `Hexlash_Visual_System.pdf` — **не в репо**. Этот SKILL.md является полным операционным источником правды по визуалу. Если PDF появится — обновить ссылки.
-
----
-
-## Editorial Refresh v24 — Foundation (Phase 7.1)
-
-**Status:** Neon Discipline v1.0 — SUPERSEDED. Editorial Refresh v24 — новая основа.
-
-**Эстетика:** brutal editorial, тёмный спортивный журнал. Paper-fill карточки на тёмной 3D-сцене, hard-offset shadows, крупные display-заголовки на Archivo Black, italic accents на Instrument Serif.
-
-**Anti-patterns:** no glow, no blur, no gradient (кроме vignette), no radius > 2px, no neon-pink accents, no emoji, no scanlines.
-
-### Параллельное существование
-
-В Phase 7.1 обе палитры живут рядом в `src/styles/hexlash-ui.css`:
-
-- `--hex-*` — **легаси**, используется всем существующим кодом (Pit 6.2b shell, HexButton/HexCard и т.д.). Не трогаем.
-- `--ed-*` — **новое**, для Ed-компонентов (Phase 7.2+) и новых view-rewrites (Phase 7.5+).
-
-**Не смешивать `--hex-*` и `--ed-*` в одном элементе.** В новом Ed-коде — только `--ed-*`. В существующем Neon-коде — только `--hex-*`.
-
-### Палитра `--ed-*`
-
-- **Ink** (surfaces): `--ed-ink` (#0A0907), `--ed-ink-2`, `--ed-ink-3`
-- **Paper** (cards over dark): `--ed-paper` (#F1E9D6), `--ed-paper-2`, `--ed-paper-dim`
-- **Rules** (separators): `--ed-rule` (14% paper), `--ed-rule-2` (28% paper), `--ed-rule-ink` (18% ink)
-- **Accents:** `--ed-press` (#D93A2F) единственный акцент на экран, `--ed-gold` (#C9A14C), `--ed-sage` (#6A7A5A), `--ed-slate` (#3A3A36)
-
-### Типографика — четыре голоса
-
-| Голос | Токен | Где |
-|-------|-------|-----|
-| Display | `--ed-font-display` (Archivo Black) | HEXLASH, VICTORY, section mastheads |
-| Serif | `--ed-font-serif` (Instrument Serif italic) | Editorial accents, pull quotes, coach text |
-| Body | `--ed-font-body` (Work Sans) | Всё остальное (заменил Space Grotesk в v24) |
-| Mono | `--ed-font-mono` (JetBrains Mono) | Числа, kicker, meta |
-
-### Правила
-
-1. **Один `--ed-press` акцент на экран** (как одна розовая точка в Neon — но красная).
-2. **Hard-offset shadows:** `box-shadow: 3px 3px 0 var(--ed-ink);` — не размытые, смещённые.
-3. **Paper cards:** `background: var(--ed-paper); color: var(--ed-ink);` — инверсия фон/текст на тёмной сцене.
-4. **Border-radius ≤ 2px** (в Neon было до 16px).
-5. **Никаких градиентов**, кроме vignette.
-6. **:lang(ru) letter-spacing:** кириллица на Archivo Black нуждается в уменьшенном letter-spacing — правила добавятся в Phase 7.3.
-
-### Из чего собрано
-
-- Мокап `hexlash_standalone.html` (v24 bundler, ~1.1 MB, 495K chars template)
-- State-machine через body class (`is-pit`, `is-profile`, `is-training`, `is-ratings`, `is-clan`, `is-detail`, `is-fight`, `is-mm`, `is-shop`) — совпадает с VALID_SCENES в sceneState
-- 9 scenes идентичны Phase 6.2b PitView shell
-
-### Phase 7 roadmap
-
-| Sub-phase | Scope |
-|-----------|-------|
-| 7.1 ← **СЕЙЧАС** | Foundation: токены + шрифты + atmosphere + декларация |
-| 7.2 | Ed-components (EdButton, EdCard, EdKicker, EdHeadline) |
-| 7.3 | i18n wordlist + `:lang(ru)` letter-spacing |
-| 7.4 | Pit HUD в Editorial |
-| 7.5 | 9 v2 views rewrite |
-| 7.6 | Cleanup `--hex-*` и Hex* legacy |
-| 7.7 | Docs rewrite (SKILL + PDF + CLAUDE.md) |
 
 ---
 

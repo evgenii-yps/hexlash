@@ -163,7 +163,7 @@ const rightEvents = computed(() => {
 .event-position { color: var(--hex-action-position); }
 
 .vs-label {
-  font-family: var(--hex-font-mono);
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 0.8rem; color: var(--hex-text-secondary);
   font-weight: 900; letter-spacing: 1px;
 }
