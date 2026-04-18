@@ -250,6 +250,8 @@ unlockRequirements:  { 3: {taps:300, exp:150}, 4: {taps:250, exp:120}, 5: {taps:
 
 ## Design System — "Neon Discipline"
 
+> **Status (Apr 2026):** Neon Discipline v1.0 — SUPERSEDED. Editorial Refresh v24 is the new foundation (Phase 7+). Operational reference: `skills/hexlash-design/SKILL.md` §Editorial Refresh v24. This section describes legacy Neon system, still active in non-rewritten code until Phase 7.6 cleanup.
+
 **Status:** v1.0 — Visual System established.
 **Full visual guide:** Hexlash_Visual_System.pdf v1.0 (file not in repo — source of truth is hexlash-design/SKILL.md)
 **Operational reference:** /skills/hexlash-design/SKILL.md
@@ -2025,6 +2027,10 @@ Phase 3.10 is complete (10/10 Screen Port views + PvE + PvP + AI Trainer). Phase
 
 **Phase 4 COMPLETE** — all seven sub-phases merged. Phase 6 cutover in progress:
 - **6.1 ✅** BottomMenu cutover — 4 menu routes flipped to v2 (Arena → `/arena/pit`, Trainings → `/training-v2`, Ratings → `/ratings-v2`, Profile → `/profile-v2`); router redirects `/arena` → `/arena/pit`, `/ratings` → `/ratings-v2`. Legacy routes preserved for rollback via direct URL.
+- **6.2a ✅** Scene state infrastructure (flag off, commit `d946950`) — `sceneState` Vuex module (14th), `useScene` composable, `__USE_STATE_MACHINE__` compile-time flag (false), BottomMenu + App.vue `isPvPScreen` dual-path. `isImmersive` aligned with legacy: pit, mm, fight-pvp (via `pvp/getCurrentMatchId`). URL routing untouched — hash history dropped (would break external deep-links).
+- **6.2b ✅** PitView shell with 8 HUD placeholders (flag-gated, commit `78d2918`) — dual-template (legacy | state-machine), `HUDPlaceholder.vue` generic component in `src/views/new/hud/` (title prop, back emit). Three.js init/cleanup bound to `scene === 'pit'` via watch. Deep-link `?scene=X&params` with VALID_SCENE_QUERY gate. Shop kept as toast (not a scene). BottomMenu flag-on: `router.push('/arena/pit')` before `setScene` when not already on pit. Options API preserved in PitView (no script-setup conversion).
+
+**Next: Phase 7 — Editorial Refresh v24** — new visual foundation (brutal editorial, paper-on-ink, hard-offset shadows). Neon Discipline v1.0 → SUPERSEDED. See `/skills/hexlash-design/SKILL.md` §Editorial Refresh v24.
 
 Later phases:
 - **Full i18n pass** across 11 locales for all `*.v2` subsections + ClanV2/MMV2 reused keys audit — Phase 5
@@ -2050,5 +2056,9 @@ Later phases:
 - **D18**: `vite.config.js` has `terserOptions.drop_console=true` which silently strips ALL `console.log`/`console.error` in production bundles. Masked the real Three.js error during Phase 4.7 Pit diagnosis — logs physically absent from bundle, had to rebuild debug as reactive UI overlay. Consider keeping `console.error` via `pure_funcs: ['console.log', 'console.info']` so production errors remain visible.
 - **D19**: Pattern `Object.assign(threeObject, { position: new THREE.Vector3(...) })` breaks on Three.js r150+ because `Object3D.position` is read-only via defineProperty. Two instances fixed in Phase 4.7 (pitScene.js:93, pitEnvironment.js:177). Add lint rule or grep pre-commit hook (e.g. ESLint custom `no-restricted-syntax` for `Object.assign` with `position` key) to prevent recurrence.
 - **D20**: Fight-in-progress guard in `src/router/index.js` `beforeEach` redirects to legacy `/fight` when a saved fight is detected on `/arena` or `/arena/fight` entry. After Phase 6.1 menu cutover (Arena → `/arena/pit`) guard no longer matches the new entry path, and fight state has no `fightVersion` marker to decide v1 vs v2 resume target. Acceptable short-term (user can navigate into fight manually from pit). Park until Phase 6.2 or dedicated fix — extend guard to catch `/arena/pit` and add `fightVersion` to `cardFightState` save payload.
+- **D21**: MatchmakingView `isPlayer1` flag reversed — legacy commits `false` (legacy line 263), v2 commits `true` (v2 line 214). Possible match-state bug if server expects consistent value. Verify server contract first; park until Phase 6.2l cutover.
+- **D22**: Browser back/forward not synced with `scene.history` when `__USE_STATE_MACHINE__` flag is on. Options: `pushState` without URL change, query-param `?scene=X`, or accept v23 UX (back exits Pit). Park until Phase 6.2l.
+- **D23**: `--hex-*` tokens + Hex* legacy components (HexButton, HexCard, HexProgress, HexBadge, BeltBadge) coexist with new `--ed-*` Editorial Refresh v24 tokens in parallel. Cleanup after all views migrated — Phase 7.6.
+- **D24**: Feature flag `__USE_STATE_MACHINE__` remains false through Phase 7.1 (Editorial foundation) and Phase 7.2-7.3 (Ed-components, i18n). Scheduled activation — Phase 7.4+ when Pit HUD is rewritten in Editorial.
 
 **Closed debt:** D4 (branch mismatch CLAUDE.md↔system prompt) resolved in 3.10.3 commit 353c463.
