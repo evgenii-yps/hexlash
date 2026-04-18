@@ -252,7 +252,7 @@ async function loadPendingInvites() {
 }
 
 .invite-timer {
-  font-family: var(--hex-font-mono);
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 24px;
   color: var(--hex-victory);
 }

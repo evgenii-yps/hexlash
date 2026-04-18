@@ -36,7 +36,7 @@ const props = defineProps({
 .game-card p {
   margin: 0;
   color: var(--hex-text-primary);
-  font-family: var(--hex-font-mono);
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 2rem;
 
 }

@@ -14,7 +14,7 @@
         </div>
         <div class="challenge-info">
           <span class="challenge-title">{{ t.friends.challenge.title }}</span>
-          <span class="challenge-player">{{ challenge.from.username }}</span>
+          <span class="challenge-player">{{ challenge.from.username }} <UserCaptainBadge :captain="challenge.from.captain" size="xs" /></span>
         </div>
         <div class="challenge-timer">{{ timer }}s</div>
       </div>
@@ -35,6 +35,7 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import store from '@/core/state/store.js';
 import { t } from '@/locales/index.js';
+import UserCaptainBadge from '@/components/ui/UserCaptainBadge.vue';
 
 const router = useRouter();
 
@@ -180,7 +181,7 @@ function declineChallenge() {
 
 .challenge-title {
   color: var(--hex-primary);
-  font-family: var(--hex-font-display);
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 12px;
   text-transform: uppercase;
 }
@@ -194,7 +195,7 @@ function declineChallenge() {
 }
 
 .challenge-timer {
-  font-family: var(--hex-font-mono);
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 24px;
   color: var(--hex-primary);
 }

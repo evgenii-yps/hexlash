@@ -6,6 +6,7 @@
         <div class="card-header-left">
           <img class="card-skin" :src="`/images/skins/${agent.skin}`" :alt="agent.name" />
           <div class="card-identity">
+            <div v-if="agent.isCaptain" class="card-captain-label">{{ t.club.lblCaptain || 'CAPTAIN' }}</div>
             <div class="card-name">{{ agent.name }}</div>
             <div class="card-meta">
               {{ beltName }} · {{ agent.wins }}-{{ agent.losses }}-{{ agent.draws }}
@@ -26,8 +27,8 @@
       </div>
       <div v-else class="card-no-modules">{{ t.club.lblNoModules || 'No modules set' }}</div>
 
-      <!-- Fight button (active agent only) -->
-      <template v-if="isActive">
+      <!-- Fight button (captain only) -->
+      <template v-if="agent.isCaptain">
         <div class="card-divider"></div>
         <div class="card-fight" @click.stop>
           <HexButton variant="primary" block :disabled="agent.status !== 'idle'" @click="goToFight" class="fight-btn">
@@ -52,7 +53,6 @@ export default {
   components: { HexCard, HexButton },
   props: {
     agent: { type: Object, required: true },
-    isActive: { type: Boolean, default: false },
   },
   emits: ['click'],
   setup(props) {
@@ -101,6 +101,15 @@ export default {
 }
 
 .card-identity { min-width: 0; }
+
+.card-captain-label {
+  font-size: 10px;
+  color: var(--hex-primary);
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
 
 .card-name {
   font-size: 18px;
@@ -151,6 +160,7 @@ export default {
 @media (min-width: 1024px) {
   .card-header-left { gap: 16px; }
   .card-skin { width: 72px; height: 72px; }
+  .card-captain-label { font-size: 11px; letter-spacing: 3px; }
   .card-name { font-size: 22px; }
   .card-meta { font-size: 12px; letter-spacing: 1.5px; }
   .card-status { font-size: 11px; letter-spacing: 2px; }

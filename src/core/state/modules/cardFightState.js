@@ -12,7 +12,6 @@ import iconShield from '@/assets/images/icons/shield.svg';
 import iconBlind from '@/assets/images/icons/blind.svg';
 import iconRage from '@/assets/images/icons/rage.svg';
 import iconCrit from '@/assets/images/icons/crit.svg';
-import { getStrategyModifiers } from '@/data/strategy.js';
 
 const MODULES_STORAGE_KEY = 'hexlash_player_modules';
 const FIGHT_STORAGE_KEY   = 'hexlash_current_fight';
@@ -56,8 +55,6 @@ function saveFightState(state) {
             difficulty:        state.difficulty,
             xpEarned:          state.xpEarned,
             xpAwarded:         state.xpAwarded,
-            stakeLevel:        state.stakeLevel,
-            strategyLevel:     state.strategyLevel,
             lastUpdateAt:      _fightLastUpdateAt || Date.now(),
         }));
     } catch(e) { /* ignore */ }
@@ -97,11 +94,7 @@ function _simulateOneRound(state, commit) {
 
     const isOverdrive = nextRound > MAX_ROUNDS;
 
-    // Phase 4.4: strategy modifiers (player AI behavior). Same instance used
-    // for action selection (moduleWeights) and round resolution (damage/crit/dodge).
-    const strategyMods = getStrategyModifiers(state.strategyLevel || 'balanced');
-
-    const action1 = _ai1.selectAction(state.liveHP1, MAX_HP, isOverdrive, strategyMods.moduleWeights);
+    const action1 = _ai1.selectAction(state.liveHP1, MAX_HP, isOverdrive);
     const action2 = _ai2.selectAction(state.liveHP2, MAX_HP, isOverdrive);
 
     const moveInfo = CombatEngine.getMoveInfo(
@@ -122,7 +115,6 @@ function _simulateOneRound(state, commit) {
         nextRound,
         modsToUse,
         moveInfo,
-        state.strategyLevel || 'balanced',
     );
 
     commit('setLiveHP1', result.hp1After);
@@ -184,10 +176,7 @@ const state = {
     fightStats: { totalDamageDealt: 0, totalDamageTaken: 0, dicePickedUp: 0, diceIgnored: 0, criticalHits: 0 },
 
     xpEarned:  null,   // { speed, power, technique } — set when fight ends
-    xpAwarded: false,  // true after XP display (agent XP awarded via backend, not progressionState)
-
-    stakeLevel: null,  // Phase 4.3: 'low' | 'medium' | 'high' | null — PvE stake applied to this fight
-    strategyLevel: 'balanced',  // Phase 4.4: 'aggressive' | 'balanced' | 'defensive' — PvE player AI behavior
+    xpAwarded: false,  // true after XP display (Captain XP awarded via backend, not progressionState)
 };
 
 // ─── Getters ─────────────────────────────────────────────────────────────────
@@ -214,9 +203,6 @@ const getters = {
     getEmergencyProtocol: (s) => s.emergencyProtocol,
     getXpEarned:          (s) => s.xpEarned,
     getXpAwarded:         (s) => s.xpAwarded,
-
-    getStakeLevel:        (s) => s.stakeLevel,
-    getStrategyLevel:     (s) => s.strategyLevel,
 
     getBuildDescription: (s) => {
         const names = s.playerModules
@@ -287,9 +273,6 @@ const mutations = {
 
     setXpEarned(s, v)  { s.xpEarned  = v; },
     setXpAwarded(s, v) { s.xpAwarded = v; },
-
-    setStakeLevel(s, v) { s.stakeLevel = v; },
-    setStrategyLevel(s, v) { s.strategyLevel = v; },
 };
 
 // ─── Actions ─────────────────────────────────────────────────────────────────
@@ -320,48 +303,46 @@ const actions = {
     },
 
     /** Start a live fight: generate opponent, init AI, reset state, save to localStorage. */
-    async startFight({ commit, state, rootState, rootGetters }, options = {}) {
-        // Load active agent data for combat
-        const agent = rootGetters['agent/activeAgent'];
-        if (!agent) return;
+    async startFight({ commit, state, rootState, rootGetters }) {
+        // Load Captain's data for combat
+        const captain = rootGetters['agent/currentCaptain'];
+        if (!captain) return;
 
-        const agentProg = agent.progression || {};
-        const agentDeck = Array.isArray(agentProg.deck) ? agentProg.deck : [];
-        const agentMoves = Array.isArray(agentProg.moves) ? agentProg.moves : [];
-        const agentModules = [agent.primaryModule, agent.secondaryModule, agent.tertiaryModule].filter(Boolean);
-        if (agentModules.length < 3) return; // Need all 3 modules
+        const captainProg = captain.progression || {};
+        const captainDeck = Array.isArray(captainProg.deck) ? captainProg.deck : [];
+        const captainMoves = Array.isArray(captainProg.moves) ? captainProg.moves : [];
+        const captainModules = [captain.primaryModule, captain.secondaryModule, captain.tertiaryModule].filter(Boolean);
+        if (captainModules.length < 3) return; // Need all 3 modules
 
-        // Set modules from active agent
-        commit('setPlayerModules', agentModules);
+        // Set modules from Captain
+        commit('setPlayerModules', captainModules);
 
-        // Build card levels from agent's move list [{moveId, level}]
+        // Build card levels from Captain's move list [{moveId, level}]
         const playerCardLevels = {};
-        for (const m of agentMoves) {
-          if (m.moveId && agentDeck.includes(m.moveId)) {
+        for (const m of captainMoves) {
+          if (m.moveId && captainDeck.includes(m.moveId)) {
             playerCardLevels[m.moveId] = m.level || 1;
           }
         }
 
         // Calculate power for opponent scaling
         const progressionState = rootState.progression;
-        const playerFighter = buildPlayerFighter(progressionState, agentModules);
+        const playerFighter = buildPlayerFighter(progressionState, captainModules);
         const playerPower = calculatePowerRating(playerFighter);
 
         const opponent = OpponentGenerator.generate(state.difficulty, playerPower);
         commit('setOpponent', opponent);
 
-        commit('setPlayerDeck', { deck: agentDeck, cardLevels: playerCardLevels });
+        commit('setPlayerDeck', { deck: captainDeck, cardLevels: playerCardLevels });
         commit('setOpponentDeck', {
             deck: opponent.deck || [],
             cardLevels: opponent.cardLevels || {},
         });
 
-        _ai1 = new ModuleAIStrategy(agentModules);
+        _ai1 = new ModuleAIStrategy(captainModules);
         _ai2 = new ModuleAIStrategy(opponent.modules);
 
-        // Phase 4.4: apply strategy hpMultiplier to player only
-        const strategyMods = getStrategyModifiers(state.strategyLevel || 'balanced');
-        commit('setLiveHP1', Math.round(MAX_HP * strategyMods.hpMultiplier));
+        commit('setLiveHP1', MAX_HP);
         commit('setLiveHP2', MAX_HP);
         commit('setRoundNum', 0);
         commit('clearRoundLog');
@@ -378,7 +359,7 @@ const actions = {
         _fightLastUpdateAt = Date.now();
         saveFightState(state);
 
-        await router.push(options.targetRoute || '/fight');
+        await router.push('/fight');
     },
 
     /**
@@ -561,8 +542,6 @@ const actions = {
         commit('setDifficulty', saved.difficulty);
         commit('setXpEarned', saved.xpEarned || null);
         commit('setXpAwarded', saved.xpAwarded || false);
-        commit('setStakeLevel', saved.stakeLevel || null);
-        commit('setStrategyLevel', saved.strategyLevel || 'balanced');
 
         // Results phase: just restore UI, no need to recreate AI
         if (saved.fightPhase === 'results') {
@@ -639,14 +618,12 @@ const actions = {
         commit('setOpponent', null);
         commit('setXpEarned', null);
         commit('setXpAwarded', false);
-        commit('setStakeLevel', null);
-        commit('setStrategyLevel', 'balanced');
         commit('setFightPhase', 'preparation');
         await router.push('/arena');
     },
 
-    async fightAgain({ dispatch }, options = {}) {
-        await dispatch('startFight', options);
+    async fightAgain({ dispatch }) {
+        await dispatch('startFight');
     },
 
 };

@@ -20,17 +20,13 @@ const state = {
 
 const getters = {
   agentsList: (state) => [...state.agents].sort((a, b) => {
+    if (a.isCaptain !== b.isCaptain) return a.isCaptain ? -1 : 1;
     if (a.isHexmaster !== b.isHexmaster) return a.isHexmaster ? -1 : 1;
     if (b.belt !== a.belt) return b.belt - a.belt;
     return (b.qualifiedWins || 0) - (a.qualifiedWins || 0);
   }),
   agentById: (state) => (id) => state.agents.find(a => a.id === id),
-  activeAgent: (state) => {
-    if (!state.agents || state.agents.length === 0) return null;
-    return [...state.agents].sort((a, b) =>
-      new Date(a.createdAt) - new Date(b.createdAt)
-    )[0];
-  },
+  currentCaptain: (state) => state.agents.find(a => a.isCaptain) || null,
   canCreateAgent: (state) => {
     if (!state.fightClubLevel) return false;
     return state.fightClubLevel.currentAgents < state.fightClubLevel.maxAgents;
@@ -111,6 +107,11 @@ const actions = {
     commit('UPDATE_AGENT', { id, autoFight: res.agent.autoFight, status: res.agent.status, nextFightAt: res.agent.nextFightAt });
   },
 
+  async setCaptain({ dispatch }, agentId) {
+    await apiClient.put(`/agent/${agentId}/captain`, {}, { authRequired: true });
+    await dispatch('fetchAgents');
+  },
+
   async refreshAgentStatus({ commit }, id) {
     const res = await apiClient.get(`/agent/${id}/auto-fight-status`, { authRequired: true });
     commit('UPDATE_AGENT', { id, autoFight: res.autoFight, status: res.status, nextFightAt: res.nextFightAt });
@@ -141,8 +142,6 @@ const actions = {
     if (s.currentAgent && s.currentAgent.id === id) {
       commit('SET_CURRENT_AGENT', { ...s.currentAgent, tactics: res.tactics });
     }
-    // Sync state.agents[] so getters like activeAgent see fresh tactics
-    commit('UPDATE_AGENT', { id, tactics: res.tactics });
     return res.tactics;
   },
 
@@ -163,8 +162,6 @@ const actions = {
     if (s.currentAgent && s.currentAgent.id === agentId) {
       commit('SET_CURRENT_AGENT', { ...s.currentAgent, progression: res.progression });
     }
-    // Sync state.agents[] so getters like activeAgent see fresh progression
-    commit('UPDATE_AGENT', { id: agentId, progression: res.progression });
     await dispatch('fetchAvailableMoves', agentId);
     return res;
   },
@@ -174,9 +171,6 @@ const actions = {
     if (s.currentAgent && s.currentAgent.id === agentId) {
       commit('SET_CURRENT_AGENT', { ...s.currentAgent, progression: res.progression });
     }
-    // Sync state.agents[] so getters like activeAgent see fresh progression
-    // (fight/startFight reads agent.progression.deck via activeAgent)
-    commit('UPDATE_AGENT', { id: agentId, progression: res.progression });
     return res;
   },
 
@@ -199,8 +193,6 @@ const actions = {
     if (s.currentAgent && s.currentAgent.id === agentId) {
       commit('SET_CURRENT_AGENT', { ...s.currentAgent, progression: res.progression });
     }
-    // Sync state.agents[] so getters like activeAgent see fresh progression
-    commit('UPDATE_AGENT', { id: agentId, progression: res.progression });
     return res;
   },
 
@@ -209,8 +201,6 @@ const actions = {
     if (s.currentAgent && s.currentAgent.id === agentId) {
       commit('SET_CURRENT_AGENT', { ...s.currentAgent, progression: res.progression });
     }
-    // Sync state.agents[] so getters like activeAgent see fresh progression
-    commit('UPDATE_AGENT', { id: agentId, progression: res.progression });
     return res;
   },
 

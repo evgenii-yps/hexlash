@@ -16,11 +16,11 @@
   --hex-primary-glow: rgba(255, 6, 111, 0.5);
 
   /* Background — near-black surfaces */
-  --hex-bg-deep: #070811;
+  --hex-bg-deep: #050507;
   --hex-bg-dark: #090909;
   --hex-bg-medium: #111111;
   --hex-bg-light: #1A1A1A;
-  --hex-bg-card: rgba(14, 16, 28, 0.85);
+  --hex-bg-card: rgba(17, 17, 17, 0.85);
 
   /* Text — white with opacity levels */
   --hex-text-primary: #FFFFFF;
@@ -39,56 +39,49 @@
   --hex-border-strong: rgba(255, 255, 255, 0.25);
   --hex-border-hi: #4A4A50;
 
-  /* --- ARCHETYPES (6 + 1 alias) --- */
+  /* --- ARCHETYPES (6) --- */
 
-  /* Predator — neon pink, aggression (= primary) */
-  --hex-arch-predator: #FF066F;
-  --hex-arch-predator-dark: #A50344;
-  --hex-arch-predator-light: #FF3D8E;
-  --hex-arch-predator-bg: rgba(255, 6, 111, 0.1);
-  --hex-arch-predator-glow: rgba(255, 6, 111, 0.5);
+  /* Predator — blood red, aggression */
+  --hex-arch-predator: #FF2D2D;
+  --hex-arch-predator-dark: #CC1A1A;
+  --hex-arch-predator-light: #FF6B6B;
+  --hex-arch-predator-bg: #330808;
+  --hex-arch-predator-glow: rgba(255, 45, 45, 0.5);
 
-  /* Sentinel — emerald green, defense */
-  --hex-arch-sentinel: #2ee07f;
-  --hex-arch-sentinel-dark: #1fa35c;
-  --hex-arch-sentinel-light: #5ce89a;
-  --hex-arch-sentinel-bg: rgba(46, 224, 127, 0.1);
-  --hex-arch-sentinel-glow: rgba(46, 224, 127, 0.5);
+  /* Sentinel — steel blue, defense */
+  --hex-arch-sentinel: #4DA6FF;
+  --hex-arch-sentinel-dark: #2B7ACC;
+  --hex-arch-sentinel-light: #8CC8FF;
+  --hex-arch-sentinel-bg: #081833;
+  --hex-arch-sentinel-glow: rgba(77, 166, 255, 0.5);
 
   /* Ghost — phantom violet, evasion */
-  --hex-arch-ghost: #A855F7;
-  --hex-arch-ghost-dark: #7C3AED;
-  --hex-arch-ghost-light: #C084F7;
-  --hex-arch-ghost-bg: rgba(168, 85, 247, 0.1);
-  --hex-arch-ghost-glow: rgba(168, 85, 247, 0.5);
+  --hex-arch-ghost: #B44DFF;
+  --hex-arch-ghost-dark: #8A2BE2;
+  --hex-arch-ghost-light: #D199FF;
+  --hex-arch-ghost-bg: #1A0833;
+  --hex-arch-ghost-glow: rgba(180, 77, 255, 0.5);
 
-  /* Analyst — ice cyan, data */
-  --hex-arch-analyst: #4dd9ff;
-  --hex-arch-analyst-dark: #0ea5bf;
-  --hex-arch-analyst-light: #7deaff;
-  --hex-arch-analyst-bg: rgba(77, 217, 255, 0.1);
-  --hex-arch-analyst-glow: rgba(77, 217, 255, 0.5);
+  /* Analyst — matrix green, data */
+  --hex-arch-analyst: #00FF88;
+  --hex-arch-analyst-dark: #00CC6A;
+  --hex-arch-analyst-light: #66FFBB;
+  --hex-arch-analyst-bg: #083320;
+  --hex-arch-analyst-glow: rgba(0, 255, 136, 0.5);
 
   /* Maverick — electric amber, chaos */
-  --hex-arch-maverick: #FFA133;
-  --hex-arch-maverick-dark: #cc7a1f;
-  --hex-arch-maverick-light: #FFB866;
-  --hex-arch-maverick-bg: rgba(255, 161, 51, 0.1);
-  --hex-arch-maverick-glow: rgba(255, 161, 51, 0.5);
+  --hex-arch-maverick: #FFB800;
+  --hex-arch-maverick-dark: #CC9200;
+  --hex-arch-maverick-light: #FFD466;
+  --hex-arch-maverick-bg: #332508;
+  --hex-arch-maverick-glow: rgba(255, 184, 0, 0.5);
 
-  /* Juggernaut — burnished gold, unstoppable */
-  --hex-arch-juggernaut: #D4A843;
-  --hex-arch-juggernaut-dark: #a08431;
-  --hex-arch-juggernaut-light: #E5C566;
-  --hex-arch-juggernaut-bg: rgba(212, 168, 67, 0.1);
-  --hex-arch-juggernaut-glow: rgba(212, 168, 67, 0.5);
-
-  /* Warden — lore name for Juggernaut-archetype fighter; same color */
-  --hex-arch-warden: var(--hex-arch-juggernaut);
-  --hex-arch-warden-dark: var(--hex-arch-juggernaut-dark);
-  --hex-arch-warden-light: var(--hex-arch-juggernaut-light);
-  --hex-arch-warden-bg: var(--hex-arch-juggernaut-bg);
-  --hex-arch-warden-glow: var(--hex-arch-juggernaut-glow);
+  /* Juggernaut — molten orange, unstoppable */
+  --hex-arch-juggernaut: #FF6B1A;
+  --hex-arch-juggernaut-dark: #CC5514;
+  --hex-arch-juggernaut-light: #FF9F66;
+  --hex-arch-juggernaut-bg: #331508;
+  --hex-arch-juggernaut-glow: rgba(255, 107, 26, 0.5);
 
   /* --- BRANCHES (3) --- */
 
@@ -170,8 +163,8 @@
   /* === FONTS === */
 
   /* Font families */
-  --hex-font-display: 'Archivo Black', system-ui, sans-serif;
-  --hex-font-body: 'Space Grotesk', system-ui, sans-serif;
+  --hex-font-display: 'Impact', 'Anton', 'Bebas Neue', sans-serif;
+  --hex-font-body: 'Inter', 'Roboto', 'SF Pro', -apple-system, sans-serif;
   --hex-font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
   /* Font sizes */
@@ -227,41 +220,6 @@
   --hex-transition-fast: 0.15s ease;
   --hex-transition-normal: 0.25s ease;
   --hex-transition-slow: 0.4s ease;
-
-  /* ============================================
-     EDITORIAL REFRESH v24 — FOUNDATION (Phase 7.1)
-     Parallel palette. Does NOT replace --hex-*.
-     Used by Ed* components (Phase 7.2+) and view rewrite (Phase 7.5+).
-     See skills/hexlash-design/SKILL.md §Editorial Refresh v24.
-     ============================================ */
-
-  /* Ink — deep dark tones for surfaces */
-  --ed-ink: #0A0907;
-  --ed-ink-2: #13110E;
-  --ed-ink-3: #1C1A15;
-
-  /* Paper — cream editorial surfaces (inverted cards over dark scenes) */
-  --ed-paper: #F1E9D6;
-  --ed-paper-2: #E6DCC4;
-  --ed-paper-dim: #C9BFA3;
-
-  /* Rules — thin separators (for editorial "masthead" feel) */
-  --ed-rule: rgba(241, 233, 214, 0.14);
-  --ed-rule-2: rgba(241, 233, 214, 0.28);
-  --ed-rule-ink: rgba(10, 9, 7, 0.18);
-
-  /* Accents */
-  --ed-press: #D93A2F;       /* press/plakat red — single accent per screen */
-  --ed-press-ink: #B5271B;   /* hover/pressed state for --ed-press */
-  --ed-gold: #C9A14C;        /* secondary accent — headlines, awards */
-  --ed-sage: #6A7A5A;        /* tertiary accent — success/calm states */
-  --ed-slate: #3A3A36;       /* neutral-warm */
-
-  /* Typography — four voices */
-  --ed-font-display: 'Archivo Black', 'Helvetica Neue Black', Impact, sans-serif;
-  --ed-font-serif: 'Instrument Serif', 'Times New Roman', Georgia, serif;
-  --ed-font-body: 'Work Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  --ed-font-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
 }
 
 /* --------------------------------------------
@@ -331,7 +289,7 @@
 
 /* Numbers (HP, XP, damage) */
 .hex-number {
-  font-family: var(--hex-font-mono);
+  font-family: 'AnonymousBalance', 'Courier New', monospace;
   font-weight: 700;
 }
 
@@ -829,7 +787,7 @@
 /* --- Font utilities --- */
 
 .hex-title {
-  font-family: var(--hex-font-display);
+  font-family: 'Anonymous', 'Courier New', monospace;
   text-transform: uppercase;
   letter-spacing: 1px;
 }

@@ -23,10 +23,10 @@
         <div class="fighters-section">
           <div class="fighter-side" :class="{ 'fighter-shake': shakeLeft }">
             <div class="fighter-info">
-              <UserAvatar :avatarUrl="agentSkin ? '' : master?.userData?.avatarUrl" width="40px" height="40px"/>
-              <UserName :userName="agentName || master?.userData?.name || 'You'" style="width: auto !important;"/>
+              <UserAvatar :avatarUrl="captainSkin ? '' : master?.userData?.avatarUrl" width="40px" height="40px"/>
+              <UserName :userName="captainName || master?.userData?.name || 'You'" style="width: auto !important;"/>
             </div>
-            <v-img :src="`/images/skins/${agentSkin || master?.userData?.skin || 'skin_m_1.png'}`" class="fighter-skin" aspect-ratio="1"/>
+            <v-img :src="`/images/skins/${captainSkin || master?.userData?.skin || 'skin_m_1.png'}`" class="fighter-skin" aspect-ratio="1"/>
             <HPBar :currentHP="liveHP1" :name="t.fight.lblHP"/>
             <div v-if="statusLeft" class="status-fighter">{{ statusLeft }}</div>
           </div>
@@ -318,9 +318,9 @@ const roundLog         = computed(() => store.getters['fight/getRoundLog']);
 const currentRound     = computed(() => store.getters['fight/getCurrentRound']);
 const opponent         = computed(() => store.getters['fight/getOpponent']);
 const master           = computed(() => store.getters['master/getMaster']);
-const activeAgent      = computed(() => store.getters['agent/activeAgent']);
-const agentSkin        = computed(() => activeAgent.value?.skin);
-const agentName        = computed(() => activeAgent.value?.name);
+const currentCaptain   = computed(() => store.getters['agent/currentCaptain']);
+const captainSkin      = computed(() => currentCaptain.value?.skin);
+const captainName      = computed(() => currentCaptain.value?.name);
 const diceState        = computed(() => store.getters['fight/getDiceState']);
 const playerModifiers  = computed(() => store.getters['fight/getPlayerModifiers']);
 const fightStats       = computed(() => store.getters['fight/getFightStats']);
@@ -629,7 +629,7 @@ watch(fightPhase, (val, oldVal) => {
       const expGain = result === 'win' ? 10 : 5;
       store.commit('fight/setXpEarned', expGain);
       store.commit('fight/setXpAwarded', true);
-      // Active agent earns XP via backend — User progression no longer updated from PvE
+      // Captain Agent earns XP via backend — User progression no longer updated from PvE
 
       const isWin  = resultState.value === 'win';
       const isDraw = resultState.value === 'draw';
@@ -749,19 +749,19 @@ function initPvPFight() {
     });
   }
 
-  // Send ready + active agent deck/modules to server
-  const agent = store.getters['agent/activeAgent'];
-  const agentProg = agent?.progression || {};
-  const agentDeck = Array.isArray(agentProg.deck) ? agentProg.deck : [];
-  const agentMoves = Array.isArray(agentProg.moves) ? agentProg.moves : [];
-  const agentModules = [agent?.primaryModule, agent?.secondaryModule, agent?.tertiaryModule].filter(Boolean);
+  // Send ready + Captain deck/modules to server
+  const captain = store.getters['agent/currentCaptain'];
+  const captainProg = captain?.progression || {};
+  const captainDeck = Array.isArray(captainProg.deck) ? captainProg.deck : [];
+  const captainMoves = Array.isArray(captainProg.moves) ? captainProg.moves : [];
+  const captainModules = [captain?.primaryModule, captain?.secondaryModule, captain?.tertiaryModule].filter(Boolean);
   const moveLevelMap = {};
-  for (const m of agentMoves) { if (m.moveId) moveLevelMap[m.moveId] = m.level || 1; }
+  for (const m of captainMoves) { if (m.moveId) moveLevelMap[m.moveId] = m.level || 1; }
   store.dispatch('webSocket/sendMessage', {
     type: 'pvp_ready',
     matchId: pvpMatchId.value,
-    deck: agentDeck.map(id => ({ id, level: moveLevelMap[id] || 1 })),
-    modules: agentModules,
+    deck: captainDeck.map(id => ({ id, level: moveLevelMap[id] || 1 })),
+    modules: captainModules,
   });
 
   // Listen for PvP events
@@ -1117,7 +1117,7 @@ function onPvPFightEnd(e) {
     }
     store.commit('fight/setXpEarned', expGain);
     store.commit('fight/setXpAwarded', true);
-    // Active agent earns XP via backend — User progression no longer updated from PvP
+    // Captain Agent earns XP via backend — User progression no longer updated from PvP
   }
 
   // Transition fight store to results so the result screen displays
@@ -1226,7 +1226,7 @@ const flashStyle = computed(() => ({
   letter-spacing: 14px;
   text-transform: uppercase;
   user-select: none;
-  font-family: var(--hex-font-display);
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   text-shadow: 0 0 8px var(--hex-primary-glow);
   white-space: nowrap;
 }
@@ -1285,7 +1285,7 @@ const flashStyle = computed(() => ({
   font-size: 4em;
   color: var(--hex-text-primary);
   z-index: 100;
-  font-family: var(--hex-font-mono);
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
 }
 .fade-scale-enter-active, .fade-scale-leave-active { transition: opacity 0.5s ease, transform 0.5s ease; }
 .fade-scale-leave-to  { opacity: 0; transform: scale(3.5); }
@@ -1345,7 +1345,7 @@ const flashStyle = computed(() => ({
 .vs-center > span {
   font-size: 1.6rem;
   font-weight: 900;
-  font-family: var(--hex-font-mono);
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   color: var(--hex-text-secondary);
   letter-spacing: 3px;
 }
@@ -1581,7 +1581,7 @@ const flashStyle = computed(() => ({
   100% { opacity: 1; }
 }
 .result-label {
-  font-size: 2.5em; font-family: var(--hex-font-display);
+  font-size: 2.5em; font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   margin-bottom: 16px; letter-spacing: 2px;
   text-align: center;
   animation: resultLabelPop 0.6s ease-out forwards;
@@ -1695,7 +1695,7 @@ const flashStyle = computed(() => ({
 
 .advice-timer__number {
   display: inline-block;
-  font-family: var(--hex-font-mono);
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 3rem;
   font-weight: bold;
   color: var(--hex-text-primary);
@@ -1910,7 +1910,7 @@ const flashStyle = computed(() => ({
 }
 
 .xp-earned-total {
-  font-family: var(--hex-font-mono);
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 1.4rem;
   color: var(--hex-success);
   font-weight: bold;
@@ -1971,7 +1971,7 @@ const flashStyle = computed(() => ({
   font-size: 2rem;
   font-weight: 900;
   color: var(--hex-text-primary);
-  font-family: var(--hex-font-mono);
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   margin: 8px 0 16px;
 }
 
@@ -2071,7 +2071,7 @@ const flashStyle = computed(() => ({
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: 4px;
-  font-family: var(--hex-font-display);
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
 }
 
 .pvp-result-text.result-win {
@@ -2136,7 +2136,7 @@ const flashStyle = computed(() => ({
   margin-top: 6px;
   font-size: 0.65rem;
   font-weight: 900;
-  font-family: var(--hex-font-display);
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   color: var(--hex-warning);
   text-transform: uppercase;
   letter-spacing: 2px;

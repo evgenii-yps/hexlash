@@ -43,22 +43,19 @@ const playSound = () => {
 }
 
 const menuItems = computed(() => [
-  {icon: 'icon-arena', text: t.value.menu.arena, route: '/arena/pit', scene: 'pit'},
-  {icon: 'icon-trainings', text: t.value.menu.trainings, route: '/training-v2', scene: 'training'},
-  {icon: 'icon-ratings', text: t.value.menu.ratings, route: '/ratings-v2', scene: 'ratings'},
-  {icon: 'icon-profile', text: t.value.menu.profile, route: '/profile-v2', scene: 'profile'},
+  {icon: 'icon-arena', text: t.value.menu.arena, route: '/arena'},
+  {icon: 'icon-trainings', text: t.value.menu.trainings, route: '/training'},
+  {icon: 'icon-ratings', text: t.value.menu.ratings, route: '/ratings/clubs'},
+  {icon: 'icon-profile', text: t.value.menu.profile, route: '/profile'},
 ])
 
 const route = useRoute()
 
 const isActive = (item) => {
-  if (__USE_STATE_MACHINE__ && item.scene) {
-    return store.getters['scene/current'] === item.scene;
-  }
   if (item.icon === 'icon-ratings') {
     return route.path.includes('ratings');
   }
-  if (item.route === '/arena/pit') {
+  if (item.route === '/arena') {
     return route.path === '/' || route.path.startsWith('/arena');
   }
   return route.path === item.route || route.path.startsWith(item.route + '/');
@@ -70,23 +67,9 @@ const handleMenuClick = (index, item) => {
   playSound();
   loadingStates.value[index] = true;
 
-  if (__USE_STATE_MACHINE__ && item.scene) {
-    // Ensure we're on /arena/pit where PitView shell lives
-    if (route.path !== '/arena/pit') {
-      router.push('/arena/pit').then(() => {
-        store.dispatch('scene/setScene', item.scene);
-      }).finally(() => {
-        loadingStates.value[index] = false;
-      });
-    } else {
-      store.dispatch('scene/setScene', item.scene);
-      loadingStates.value[index] = false;
-    }
-  } else {
-    router.push(item.route).finally(() => {
-      loadingStates.value[index] = false;
-    });
-  }
+  router.push(item.route).finally(() => {
+    loadingStates.value[index] = false;
+  });
 }
 
 </script>

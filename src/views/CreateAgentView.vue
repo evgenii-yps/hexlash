@@ -259,7 +259,7 @@ const onCreate = async () => {
 }
 .confirm-name {
   margin-top: 8px;
-  font-family: var(--hex-font-display);
+  font-family: 'Anonymous', monospace;
   font-size: 18px;
   color: var(--hex-text-primary);
 }
@@ -272,7 +272,7 @@ const onCreate = async () => {
   margin-bottom: 10px;
 }
 .confirm-card-title {
-  font-family: var(--hex-font-display);
+  font-family: 'Anonymous', monospace;
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -281,7 +281,7 @@ const onCreate = async () => {
 }
 
 .confirm-stat {
-  font-family: var(--hex-font-mono);
+  font-family: 'AnonymousBalance', monospace;
   font-size: 14px;
   color: var(--hex-text-primary);
 }

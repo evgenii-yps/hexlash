@@ -113,7 +113,7 @@ Views with zero Hex components: ArenaHubView, DeckBuilderView, FightClubView, Fr
 | DeckBuilderView | 395 | none | 3 | 0 | 1 | Zero Hex. All custom buttons. |
 | FightClubView | 106 | none | 1 | 2 | 1 | Thin wrapper. Uses ClubLevelBar but no Hex UI. |
 | FriendsView | 356 | none | 1 | 0 | 1 | Zero Hex. Custom cards. |
-| MatchmakingView | 645 | — | 3 | 5 | 2 | Some Hex but heavy custom + pixel-font. |
+| MatchmakingView | 645 | UserCaptainBadge | 3 | 5 | 2 | Some Hex but heavy custom + pixel-font. |
 | MoveTreeView | 403 | none | 3 | 2 | 1 | Zero Hex. Custom sidebar buttons. |
 | NotFoundView | 36 | none | 0 | 2 | 1 | Tiny. Pixel-font for 404 title — acceptable for impact. |
 | PageView | 107 | none | 0 | 0 | 1 | Static HTML from i18n. No interactive elements. |
@@ -121,7 +121,7 @@ Views with zero Hex components: ArenaHubView, DeckBuilderView, FightClubView, Fr
 | PrivacyView | 2648 | none | 0 | 0 | 1 | Auto-generated legal. Documented exception. |
 | ProfileView | 314 | BeltBadge | 0 | 3 | 2 | BeltBadge only. Custom tab/card patterns. |
 | RainView | 1212 | none | 0 | 1 | 1 | Auth forms. No scoped style. 3D scene. |
-| RatingsView | 687 | HexButton | 0 | 0 | 4 | Good adoption. Clean from Hex perspective. |
+| RatingsView | 687 | HexButton, UserCaptainBadge | 0 | 0 | 4 | Good adoption. Clean from Hex perspective. |
 | SpectateView | 566 | none | 1 | 5 | 1 | Zero Hex. Heavy pixel-font. |
 | TrainingView | 622 | none | 2 | 1 | 1 | Zero Hex. 3D scene + custom UI. |
 | VerifyEmailView | 98 | none | 0 | 1 | 1 | Small utility page. |

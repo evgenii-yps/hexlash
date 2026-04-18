@@ -142,7 +142,7 @@ export default {
 }
 .onboarding-icon { font-size: 36px; margin-bottom: 8px; }
 .onboarding-title {
-  font-family: var(--hex-font-display);
+  font-family: 'Anonymous', monospace;
   font-size: 16px;
   text-transform: uppercase;
   letter-spacing: 2px;
@@ -163,7 +163,7 @@ export default {
 }
 
 .section-label {
-  font-family: var(--hex-font-display);
+  font-family: 'Anonymous', monospace;
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -196,7 +196,7 @@ export default {
 .rank-row--top { border-left: 2px solid var(--hex-draw); }
 
 .rank-num {
-  font-family: var(--hex-font-mono);
+  font-family: 'AnonymousBalance', monospace;
   font-size: 14px;
   color: var(--hex-text-muted);
   width: 28px;
@@ -217,7 +217,7 @@ export default {
 
 .rank-info { flex: 1; min-width: 0; }
 .rank-name {
-  font-family: var(--hex-font-display);
+  font-family: 'Anonymous', monospace;
   font-size: 12px;
   color: var(--hex-text-primary);
   white-space: nowrap;
@@ -229,7 +229,7 @@ export default {
 .rank-build { font-size: 9px; color: var(--hex-text-muted); }
 
 .rank-wl {
-  font-family: var(--hex-font-mono);
+  font-family: 'AnonymousBalance', monospace;
   font-size: 11px;
   flex-shrink: 0;
   min-width: 36px;

@@ -24,7 +24,6 @@
       <!-- Roster -->
       <AgentRoster
         :agents="agents"
-        :activeAgentId="activeAgent?.id"
         :maxAgents="fightClubLevel?.maxAgents || 2"
         :loading="loading"
         @create="$router.push('/arena/club/create')"
@@ -45,7 +44,6 @@ import MorningReport from '@/components/club/MorningReport.vue';
 import AgentRoster from '@/components/club/AgentRoster.vue';
 
 const agents = computed(() => store.getters['agent/agentsList']);
-const activeAgent = computed(() => store.getters['agent/activeAgent']);
 const loading = computed(() => store.state.agent.agentsLoading);
 const fightClubLevel = computed(() => store.state.agent.fightClubLevel);
 
@@ -139,7 +137,7 @@ onUnmounted(() => {
 /* Header */
 .pit-header { text-align: center; margin-bottom: 6px; }
 .pit-title {
-  font-family: var(--hex-font-display);
+  font-family: 'Anonymous', monospace;
   font-size: 32px;
   letter-spacing: 6px;
   color: var(--hex-primary);

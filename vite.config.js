@@ -64,7 +64,7 @@ export default defineConfig(({mode}) => {
                 stringArray: false,
                 stringArrayThreshold: 0.75,
                 debugProtection: false,
-                exclude: ['src/router/**', 'node_modules/**', 'src/three/**', 'src/views/new/PitView.vue'],
+                exclude: ['src/router/**', 'node_modules/**'],
             }),
             viteImagemin({
                 plugins: {
@@ -85,7 +85,6 @@ export default defineConfig(({mode}) => {
                 __WEB_SOCKET_URL__: JSON.stringify(wsServer),
                 __IS_PROD__: JSON.stringify(isProd),
                 __MOCK_MODE__: JSON.stringify(isMock),
-                __USE_STATE_MACHINE__: false,
             },
         assetsInclude: ['**/*.glb', '**/*.gltf', '**/*.bin', '**/*.wasm'],
         resolve:

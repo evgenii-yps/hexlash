@@ -51,6 +51,7 @@
 | 31 | **generatePveBot масштабируется по ELO.** Пороги 900/1100 хардкодом. При Belt System нужна замена шкалы. | #1b | **[Phase 1]** убирается с ELO→Belt |
 | 32 | **MANUAL_FIGHT_COOLDOWN_MS не в config.** Определён в `agentFightService.js` строка 27, единственная константа боя не в config.js. | #1c | Дорога 2 |
 | 33 | **XP_MULTIPLIERS и BASE_FIGHT_XP не в config.** Определены в `agentFightService.js`, при этом CLAN_XP_REWARDS — в config. Два набора XP-констант в разных местах. | #1c | Дорога 2 |
+| 34 | **Нет frontend auto-refresh в AgentDetailView.** FightClubView имеет 30s polling, AgentDetailView — нет. Юзер не видит результаты auto-fight в real-time. | #1c | **[Phase 1]** #P1-captain polling |
 | 35 | **freeXP отсутствует в Agent системе.** User: двухэтапный XP flow (freeXP → allocate → branchExp). Agent: автоматическое распределение по ветвям. Концепция "свободного XP" не существует. | #1d | Архитектурное (by design) |
 | 36 | **Дублирование Prisma запроса в gatherClubStats.** `morningReportService.js` строки 37-47: два одинаковых запроса, первый результат не используется. | #1e | Дорога 2 |
 | 37 | **Club name хардкод "Fight Club".** `ai.js` строки 425, 542: `buildMorningReportPrompt('Fight Club', ...)`. FightClub модель не имеет поля name. | #1e | **[Phase 1]** #P1-club-name |

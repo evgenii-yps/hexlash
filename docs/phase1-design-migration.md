@@ -1,10 +1,10 @@
-# Phase 1 — Дизайн-документ: Migration, Belt System
+# Phase 1 — Дизайн-документ: Migration, Belt System, Captain
 
 **Дата:** 9 апреля 2026
 **Версия:** 1.0
 **Связанные документы:** CLAUDE.md (секции "Club Mode", "Phase 1"), `docs/phase1-parking-list.md`
 
-Источник правды для всех ТЗ Phase 1. Фиксирует архитектурные решения (зафиксированы 9 апреля 2026) в детальной форме: миграция User → Fighter №1, Belt System, deck unification, i18n политика.
+Источник правды для всех ТЗ Phase 1. Фиксирует 5 архитектурных решений (зафиксированы 9 апреля 2026) в детальной форме: миграция User → Fighter №1, Belt System, Captain, deck unification, i18n политика.
 
 ---
 
@@ -13,6 +13,7 @@
 - [1. Словарь и базовые сущности](#1-словарь-и-базовые-сущности)
 - [2. Migration Flow](#2-migration-flow)
 - [3. Belt System спецификация](#3-belt-system-спецификация)
+- [4. Captain спецификация](#4-captain-спецификация)
 - [5. Deck size unification](#5-deck-size-unification)
 - [6. i18n политика Phase 1](#6-i18n-политика-phase-1)
 - [7. Definition of Done](#7-definition-of-done)
@@ -29,13 +30,15 @@
 | Социальная клановая система | Club → Clan (after rename) | Clan | Объединение игроков (существующая система) |
 | Команда бойцов одного игрока | FightClub (остаётся в коде) | Club | Ядро Phase 1 — персональный контейнер |
 | Один боец | Agent | Fighter | Сущность которая дерётся |
+| Лицо клуба для PvP | Agent.isCaptain (новое поле) | Captain | Один Agent с флагом, идёт в PvP |
 
 ### Правила использования терминов в ТЗ Phase 1
 
 - При первом упоминании "Club" в новом ТЗ — писать "Club (в коде FightClub)"
 - Далее по контексту — Club или FightClub
 - "Fighter" в i18n значениях и UI, "Agent" в коде Prisma/backend/frontend
-- **3 концепции. Не путать.**
+- "Captain" — всегда Captain, не "main agent" или "primary agent"
+- **4 концепции. Не путать.**
 
 ---
 
@@ -53,8 +56,8 @@
 ### 2.2. Migration trigger
 
 - **Где:** backend, при `GET /v1/user/me` после Phase 1 deploy
-- **Условие:** User не имеет ни одного Agent в своём FightClub
-- **Идемпотентность:** если миграция уже прошла (есть Agent) — не повторяется
+- **Условие:** User не имеет ни одного Agent с `isCaptain=true` в своём FightClub
+- **Идемпотентность:** если миграция уже прошла (есть Captain) — не повторяется
 
 ### 2.3. Migration steps (внутри $transaction)
 
@@ -78,6 +81,7 @@ Agent {
   stripe: 0
   winsCurrentStripe: 0
   hexmasterProgress: 0
+  isCaptain: true
   fightClubId: FightClub.id
   ownerId: User.id
 }
@@ -121,24 +125,24 @@ User.progression.freeXP = 0
 
 - `User.progression` сохраняется с moves, deck, branchExp — **не трогаем**
 - Это важно для Research Gate: User остаётся "школой", Agent — "учеником"
-- Fighter №1 готов к бою, дека валидна (если у User была валидная)
+- Captain (Fighter №1) готов к бою, дека валидна (если у User была валидная)
 - freeXP = 0 у User, распределён по веткам Agent'а
 
 ### 2.5. Edge cases
 
 | Случай | Решение |
 |--------|---------|
-| User уже имеет Agent (повторный deploy) | Миграция skip — идемпотентность |
+| User уже имеет Captain (повторный deploy) | Миграция skip — идемпотентность |
 | `User.progression.playerModules` пустой или < 3 | Fallback модулей: `['predator', 'sentinel', 'analyst']` |
-| `User.deck` пустой | Agent.deck тоже пустой, но PvP блокирован до сборки деки. Показать onboarding hint |
+| `User.deck` пустой | Agent.deck тоже пустой, isCaptain=true, но PvP блокирован до сборки деки. Показать onboarding hint |
 | `User.skin` null | Fallback `"skin_m_1.png"` |
-| `User.progression` null целиком | Создать минимального Agent: пустые moves/deck, default modules. Starter moves (jab, straight, block_strike) добавить автоматически |
-| FightClub существует, уже есть агенты | Создать ещё одного Agent (Fighter №1). Существующие агенты не трогаются |
+| `User.progression` null целиком | Создать минимального Agent: пустые moves/deck, default modules, isCaptain=true. Starter moves (jab, straight, block_strike) добавить автоматически |
+| FightClub существует, уже есть агенты | Создать ещё одного Agent (Fighter №1) с isCaptain=true. Существующие агенты не трогаются |
 
 ### 2.6. Rollback план
 
 - Миграция в одной `$transaction` → atomic rollback при ошибке
-- Если упала на одном пользователе — он остаётся без Agent до следующего GET /user/me
+- Если упала на одном пользователе — он остаётся без Captain до следующего GET /user/me
 - Логирование: `console.error('[Migration]', userId, error)` для пост-мортема
 - Массовый rollback не нужен: миграция per-user, lazy, идемпотентная
 
@@ -230,8 +234,10 @@ belt                Int       @default(1)
 stripe              Int       @default(0)
 hexmasterProgress   Int       @default(0)
 winsCurrentStripe   Int       @default(0)
+isCaptain           Boolean   @default(false)
 
 @@index([belt, stripe])
+@@index([fightClubId, isCaptain])
 ```
 
 **На модели Agent — удалить:**
@@ -254,6 +260,7 @@ stripeChanged       Boolean   @default(false)
 ### 3.7. UI индикация
 
 - **BeltBadge компонент:** цветной квадрат пояса + 3 точки stripes (заполненные/пустые)
+- **Captain:** особая рамка `border in --hex-arch-{primaryModule}`
 - **Hexmaster:** пульсирующий розовый glow (`--hex-primary`)
 - **Прогресс:** "8/8 wins to next stripe" в AgentDetailView Overview tab
 - **Belt up:** анимация при обнаружении через polling (beltChanged/stripeChanged флаги)
@@ -262,7 +269,63 @@ stripeChanged       Boolean   @default(false)
 
 ## 4. Captain спецификация
 
-> **REMOVED in Phase −1.** Captain system was fully removed. Active agent for combat is determined by `createdAt` ASC via `fightClubService.getActiveAgent()`. See CLAUDE.md Phase −1 section for details.
+### 4.1. Концепция
+
+- Captain = один Agent в FightClub с `isCaptain=true`
+- Captain — лицо клуба в PvP и лидерборде
+- У FightClub в каждый момент **ровно один** Captain (или ноль если ещё не назначен)
+
+### 4.2. Назначение Captain
+
+- **При миграции** (Секция 2) — Fighter №1 автоматически становится Captain
+- **Смена через UI:** игрок может сменить Captain на Club Dashboard (FightClubView)
+- **Atomic swap:** старый `Agent.isCaptain=false`, новый `Agent.isCaptain=true` в одной transaction
+
+### 4.3. Constraint: один Captain на FightClub
+
+Реализация через atomic update в `$transaction`:
+1. `UPDATE Agent SET isCaptain=false WHERE fightClubId=X AND isCaptain=true`
+2. `UPDATE Agent SET isCaptain=true WHERE id=newCaptainId`
+
+Если Prisma поддерживает partial unique index — добавить `@@unique([fightClubId], where: { isCaptain: true })`. Если нет — application-level check в transaction (вариант выше).
+
+### 4.4. Captain в Arena flow
+
+| Аспект | Сейчас (до Phase 1) | После Phase 1 |
+|--------|---------------------|---------------|
+| Скин в Arena | User.skin | Captain.skin |
+| Дека в Arena | User.deck | Captain progression.deck |
+| Модули в Arena | User.progression.playerModules | Captain primaryModule/secondaryModule/tertiaryModule |
+| PvP matchmaking | User data | Captain data |
+| Нет Captain'а | N/A | Fallback: User progression (legacy) ИЛИ блокировка PvP с подсказкой |
+
+### 4.5. Captain в PvP flow
+
+- PvP matchmaking message включает Captain.skin, Captain.modules, Captain.deck
+- PvP combat engine получает Captain как fighter, не User
+- `fight_start` сообщение включает Captain skin/modules
+
+### 4.6. Captain в Profile / Ratings
+
+- **Profile:** User остаётся профилем тренера. Дополнительная секция "Your Captain" показывает Captain'а
+- **Ratings:** PvP рейтинг привязан к Captain → FightClub
+- **Leaderboard:** имя клуба + имя Captain'а + Captain belt + BeltBadge
+
+### 4.7. Real-time updates
+
+- Polling в AgentDetailView: каждые 15 сек, с pause при `document.hidden` (Page Visibility API)
+- Polling в FightClubView: как сейчас, 30 сек
+- WebSocket push: **отложен на Phase 2**
+
+### 4.8. Edge cases
+
+| Случай | Решение |
+|--------|---------|
+| User удаляет Captain | Error 400: "Cannot delete Captain. Assign new Captain first" |
+| Captain в status='fighting' | Нельзя менять Captain пока бой не закончится |
+| Captain retire'ится (Phase 2) | Снимается isCaptain, FightClub без Captain → PvP заблокирован до назначения нового |
+| FightClub без Captain (новый юзер) | PvP заблокирован, показать onboarding: "Create your first Fighter to enter Arena" |
+| Только 1 Agent в FightClub | Он же Captain, кнопка "Change Captain" скрыта |
 
 ---
 
@@ -343,6 +406,8 @@ Min deck size = 3 для всех систем.
 | Вопрос | Когда решать |
 |--------|-------------|
 | **Promotion fights:** добавить promo-матчи как опциональную механику для belt up (вместо простого counter)? | Phase 2 |
-| **Belt decay:** сбрасывается ли belt если agent неактивен N дней? | Phase 2 |
+| **Multiple captains:** возможно ли несколько Captain'ов от одного клуба для разных game modes (PvP captain, Auto-fight captain)? | Phase 3 |
+| **Belt decay:** сбрасывается ли belt если Captain неактивен N дней? | Phase 2 |
 | **Hexmaster honor system:** что делать с игроком, который достиг Hexmaster? Специальные привилегии? Другая лига? | Phase 2 |
 | **PvE bot belt scaling:** заменить `generatePveBot(agentElo)` на `generatePveBot(agentBelt, agentStripe)` — как именно масштабировать? | #P1-belt-2 |
+| **Retirement + Captain:** если retired fighter стал Captain'ом (Phase 2) — как это работает? | Phase 2 |

@@ -109,7 +109,7 @@ Express 4, Prisma 5 (PostgreSQL), JWT, bcryptjs, ws (shared HTTP), Multer, expre
 | `stats.js` | `/v1/stats` | player + game statistics |
 | `friends.js` | `/v1/friends` | list, requests, search |
 | `ai.js` | `/v1/ai` | analyze-fight, morning-report, premium-report, build-description |
-| `agent.js` | `/v1/agent` | CRUD, tactics, fights, Research Gate, train, auto-fight, rankings, fight-club level |
+| `agent.js` | `/v1/agent` | CRUD, tactics, fights, Research Gate, train, auto-fight, rankings, fight-club level, captain |
 
 ---
 

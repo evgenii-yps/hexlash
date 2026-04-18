@@ -93,7 +93,7 @@ export default {
 
 <style scoped>
 .hex-button {
-  font-family: var(--hex-font-display);
+  font-family: 'Anonymous', 'Courier New', monospace;
   text-transform: uppercase;
   letter-spacing: 1px;
   border-radius: 8px;

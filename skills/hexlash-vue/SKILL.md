@@ -27,7 +27,7 @@ description: Фронтенд-конвенции проекта Hexlash. Три�
   router/index.js       — routes, auth guards, fight state restore
   views/                — page-level (20 view, суффикс View)
   components/           — 75+ компонентов
-    ui/                 — дизайн-система (Hex* префикс): HexButton, HexCard, HexProgress, HexBadge, BeltBadge, PixelIcon
+    ui/                 — дизайн-система (Hex* префикс): HexButton, HexCard, HexProgress, HexBadge, BeltBadge, UserCaptainBadge, PixelIcon
     club/               — 7 Club Mode компонентов
     clan/               — 1 Clan социальный компонент
     fragments/clan/     — 10 Clan фрагментов
@@ -95,24 +95,6 @@ Server sync: progression — debounced PUT через action в `progressionStat
 
 ---
 
-## View Layering System (Phase 2)
-
-AppShell wraps router-view with atmosphere layers and fade-blur transitions.
-
-**Files:**
-- `src/composables/useActiveView.js` — body class sync (`is-pit`, `is-fight`, etc.)
-- `src/components/shell/AppShell.vue` — atmosphere + `<router-view>` with `<transition name="view-fade">`
-- `src/styles/view-layers.css` — `.hud`/`.scene-canvas` utility classes
-
-**Body class mapping:** see CLAUDE.md → Phase 2 section.
-
-**When writing new views:**
-- HUD overlays: wrap in `<div class="hud {viewname}-hud">`. Direct children get clicks, container doesn't.
-- Three.js canvases: add class `.scene-canvas`. Default canvas is 300x150 and breaks raycasting.
-- Don't fight the transition: keep scene mount in `onMounted`, cleanup in `onBeforeUnmount`. Router drives lifecycle.
-
----
-
 ## i18n — критически важно
 
 **НЕ используем vue-i18n.** Кастомный реактивный i18n.
@@ -141,7 +123,7 @@ AppShell wraps router-view with atmosphere layers and fade-blur transitions.
 - Никаких легаси `--pink, --dark, --gray*` (исключение — PrivacyView)
 - Для UI правил, цветов, шрифтов — грузить `hexlash-design`
 - Готовые UI компоненты в `/src/components/ui/`: **сначала проверить, есть ли подходящий**, потом писать новый
-- Готовые: `HexButton`, `HexCard`, `HexProgress`, `HexBadge`, `BeltBadge`, `PixelIcon` (последний preserved но не используется)
+- Готовые: `HexButton`, `HexCard`, `HexProgress`, `HexBadge`, `BeltBadge`, `UserCaptainBadge`, `PixelIcon` (последний preserved но не используется)
 - `<style scoped>` обязателен в новых компонентах
 
 ---

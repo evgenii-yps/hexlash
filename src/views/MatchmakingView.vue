@@ -64,6 +64,7 @@
               <img :src="`/images/skins/${playerSkin}`" class="player-skin-img" alt=""/>
             </div>
             <div class="player-name">{{ playerName }}</div>
+            <UserCaptainBadge :captain="myCapt" size="sm" />
           </div>
 
           <div class="vs-icon">VS</div>
@@ -109,6 +110,7 @@ import store from '@/core/state/store.js';
 import router from '@/router/index.js';
 import { t } from '@/locales/index.js';
 import { getOnlinePlayersCount } from '@/core/services/statsService.js';
+import UserCaptainBadge from '@/components/ui/UserCaptainBadge.vue';
 
 // State
 const status = ref('searching'); // 'searching', 'found', 'timeout'
@@ -126,21 +128,23 @@ let onlineRefreshInterval = null;
 
 // Computed
 const playerName = computed(() => {
-  const agent = store.getters['agent/activeAgent'];
-  if (agent?.name) return agent.name;
+  const captain = store.getters['agent/currentCaptain'];
+  if (captain?.name) return captain.name;
   const master = store.getters['master/getMaster'];
   return master?.userData?.name || 'Player';
 });
 const playerRating = computed(() => {
-  const agent = store.getters['agent/activeAgent'];
-  return agent?.elo || store.getters['pvp/getPvpStats'].rating;
+  const captain = store.getters['agent/currentCaptain'];
+  return captain?.elo || store.getters['pvp/getPvpStats'].rating;
 });
 const playerSkin = computed(() => {
-  const agent = store.getters['agent/activeAgent'];
-  if (agent?.skin) return agent.skin;
+  const captain = store.getters['agent/currentCaptain'];
+  if (captain?.skin) return captain.skin;
   const master = store.getters['master/getMaster'];
   return master?.userData?.skin || 'skin_m_1.png';
 });
+
+const myCapt = computed(() => store.getters['agent/currentCaptain']);
 
 const formattedTime = computed(() => {
   const minutes = Math.floor(searchTime.value / 60);
@@ -219,15 +223,15 @@ function startSearch() {
   searchTime.value = 0;
   searchRange.value = 100;
 
-  // Send matchmaking start via WS — active agent data (ELO validated server-side)
-  const agent = store.getters['agent/activeAgent'];
+  // Send matchmaking start via WS — Captain data (ELO validated server-side)
+  const captain = store.getters['agent/currentCaptain'];
   const masterData = store.getters['master/getMaster'];
   store.dispatch('webSocket/sendMessage', {
     type: 'MatchmakingStartMsg',
     matchmakingRequest: {
-      username: agent?.name || playerName.value,
-      rating: agent?.elo || playerRating.value,
-      skin: agent?.skin || masterData?.userData?.skin || null,
+      username: captain?.name || playerName.value,
+      rating: captain?.elo || playerRating.value,
+      skin: captain?.skin || masterData?.userData?.skin || null,
       avatarUrl: masterData?.userData?.avatarUrl || null,
     },
   });
@@ -389,7 +393,7 @@ function cleanup() {
 }
 
 .search-timer {
-  font-family: var(--hex-font-mono);
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 48px;
   font-weight: 700;
   color: var(--hex-text-primary);
@@ -489,7 +493,7 @@ function cleanup() {
 }
 
 .found-title {
-  font-family: var(--hex-font-display);
+  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
   font-size: 32px;
   color: var(--hex-victory);
   text-transform: uppercase;
@@ -539,18 +543,18 @@ function cleanup() {
 .player-rating {
   font-size: 16px;
   color: var(--hex-text-secondary);
-  font-family: var(--hex-font-mono);
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
 }
 
 .vs-icon {
-  font-family: var(--hex-font-mono);
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 32px;
   font-weight: bold;
   color: var(--hex-text-secondary);
 }
 
 .fight-countdown {
-  font-family: var(--hex-font-mono);
+  font-family: 'AnonymousBalance', 'Courier New', Consolas, monospace;
   font-size: 22px;
   color: var(--hex-warning);
   text-transform: uppercase;

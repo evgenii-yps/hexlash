@@ -204,7 +204,7 @@ function formatDate(dateStr) {
 }
 
 .link-text {
-  font-family: var(--hex-font-mono);
+  font-family: 'AnonymousBalance', monospace;
   color: var(--hex-text-primary);
   font-size: 0.85rem;
   margin-bottom: 12px;
@@ -241,7 +241,7 @@ function formatDate(dateStr) {
 
 .stat-value {
   color: var(--hex-text-primary);
-  font-family: var(--hex-font-mono);
+  font-family: 'AnonymousBalance', monospace;
   font-size: 1rem;
 }
 
