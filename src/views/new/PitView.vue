@@ -1,50 +1,74 @@
 <template>
   <div class="pit-root">
-    <canvas ref="canvasRef" class="pit-canvas" id="pit-scene-canvas"></canvas>
+    <!-- Pit 3D + HUD: visible under flag-off, or flag-on + scene === 'pit' -->
+    <template v-if="!useSceneMachine || scene === 'pit'">
+      <canvas ref="canvasRef" class="pit-canvas" id="pit-scene-canvas"></canvas>
 
-    <div class="pit-hud pit-hud-root">
-      <div class="pit-hud-top">
-        <div class="pit-hud-left">
-          <div class="pit-resources">
-            <span class="pit-taps">{{ userTaps }}</span>
-            <span class="pit-sep">/</span>
-            <span class="pit-xp">{{ userXP }}</span>
+      <div class="pit-hud pit-hud-root">
+        <div class="pit-hud-top">
+          <div class="pit-hud-left">
+            <div class="pit-resources">
+              <span class="pit-taps">{{ userTaps }}</span>
+              <span class="pit-sep">/</span>
+              <span class="pit-xp">{{ userXP }}</span>
+            </div>
+          </div>
+          <div class="pit-hud-center">{{ t.pit?.lblTitle || 'THE PIT' }}</div>
+          <div class="pit-hud-right">
+            <button class="pit-icon-btn" aria-label="Notifications" @click="onNotifications">🔔</button>
+            <button class="pit-icon-btn" aria-label="Profile" @click="goProfile">👤</button>
           </div>
         </div>
-        <div class="pit-hud-center">{{ t.pit?.lblTitle || 'THE PIT' }}</div>
-        <div class="pit-hud-right">
-          <button class="pit-icon-btn" aria-label="Notifications" @click="onNotifications">🔔</button>
-          <button class="pit-icon-btn" aria-label="Profile" @click="goProfile">👤</button>
+
+        <div ref="badgeWardenRef" class="pit-fighter-badge pit-badge-warden"></div>
+        <div ref="badgePredatorRef" class="pit-fighter-badge pit-badge-predator"></div>
+
+        <div ref="worldHintRef" class="pit-world-hint"></div>
+
+        <div class="pit-hud-bottom">
+          <span>{{ t.pit?.lblBottomHint || 'CLICK OBJECTS TO INTERACT' }}</span>
         </div>
       </div>
+    </template>
 
-      <div ref="badgeWardenRef" class="pit-fighter-badge pit-badge-warden"></div>
-      <div ref="badgePredatorRef" class="pit-fighter-badge pit-badge-predator"></div>
-
-      <div ref="worldHintRef" class="pit-world-hint"></div>
-
-      <div class="pit-hud-bottom">
-        <span>{{ t.pit?.lblBottomHint || 'CLICK OBJECTS TO INTERACT' }}</span>
-      </div>
-    </div>
+    <!-- HUD slots: flag-on + scene !== 'pit'. Shop intentionally omitted (kept as toast). -->
+    <template v-else>
+      <HUDPlaceholder v-if="scene === 'profile'"       title="PROFILE"         @back="back" />
+      <HUDPlaceholder v-else-if="scene === 'training'" title="TRAINING"        @back="back" />
+      <HUDPlaceholder v-else-if="scene === 'ratings'"  title="RATINGS"         @back="back" />
+      <HUDPlaceholder v-else-if="scene === 'clan'"     title="CLAN"            @back="back" />
+      <HUDPlaceholder v-else-if="scene === 'mm'"       title="MATCHMAKING"     @back="back" />
+      <HUDPlaceholder v-else-if="scene === 'detail'"   title="FIGHTER DETAIL"  @back="back" />
+      <HUDPlaceholder v-else-if="scene === 'fight'"    title="FIGHT"           @back="back" />
+      <HUDPlaceholder v-else-if="scene === 'create'"   title="CREATE FIGHTER"  @back="back" />
+    </template>
   </div>
 </template>
 
 <script>
-import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import store from '@/core/state/store.js';
 import { t } from '@/locales/index.js';
 import { initPitScene } from '@/three/scenes/pitScene.js';
+import { useScene } from '@/composables/useScene.js';
+import HUDPlaceholder from '@/views/new/hud/HUDPlaceholder.vue';
+
+const VALID_SCENE_QUERY = ['pit', 'profile', 'training', 'ratings', 'clan', 'mm', 'shop', 'detail', 'fight', 'create'];
 
 export default {
   name: 'PitView',
+  components: { HUDPlaceholder },
   setup() {
     const router = useRouter();
+    const route = useRoute();
     const canvasRef = ref(null);
     const badgeWardenRef = ref(null);
     const badgePredatorRef = ref(null);
     const worldHintRef = ref(null);
+
+    const useSceneMachine = __USE_STATE_MACHINE__;
+    const { scene, setScene, back } = useScene();
 
     const master = computed(() => store.getters['master/getMaster']);
     const userTaps = computed(() => master.value?.userData?.totalTaps || 0);
@@ -55,6 +79,34 @@ export default {
     let cleanup = null;
 
     function handleNavigation(target) {
+      if (useSceneMachine) {
+        switch (target) {
+          case 'training':    setScene('training'); break;
+          case 'matchmaking': setScene('mm'); break;
+          case 'ratings':     setScene('ratings'); break;
+          case 'create':      setScene('create'); break;
+          case 'shop':
+            store.commit('master/setInfoMessage', { text: t.value.pit?.msgShopSoon || 'Shop coming soon', timeout: 2000 });
+            break;
+          case 'clan':
+            if (myClanId.value) {
+              setScene({ scene: 'clan', params: { clanId: myClanId.value } });
+            } else {
+              store.commit('master/setInfoMessage', { text: t.value.pit?.msgNoClan || 'Join a clan from Ratings', timeout: 2000 });
+            }
+            break;
+          case 'warden':
+          case 'predator': {
+            const sorted = [...agents.value].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+            const idx = target === 'warden' ? 0 : 1;
+            const agent = sorted[idx];
+            if (agent) setScene({ scene: 'detail', params: { agentId: agent.id, fighterKey: target } });
+            break;
+          }
+        }
+        return;
+      }
+      // LEGACY BRANCH — unchanged
       switch (target) {
         case 'training': router.push('/training'); break;
         case 'matchmaking': router.push('/matchmaking'); break;
@@ -81,20 +133,20 @@ export default {
       }
     }
 
-    function goProfile() { router.push('/profile'); }
+    function goProfile() {
+      if (useSceneMachine) setScene('profile');
+      else router.push('/profile');
+    }
 
     function onNotifications() {
       store.commit('master/setInfoMessage', { text: t.value.pit?.msgNotifSoon || 'Notifications coming soon', timeout: 2000 });
     }
 
-    onMounted(async () => {
-      await nextTick();
+    function initPitSceneLocal() {
       if (!canvasRef.value) return;
-
       if (!agents.value.length) {
         store.dispatch('agent/fetchAgents');
       }
-
       const result = initPitScene(canvasRef.value, {
         onObjectClick: handleNavigation,
         agents: agents.value,
@@ -111,16 +163,54 @@ export default {
         },
       });
       cleanup = result?.cleanup;
+    }
+
+    onMounted(async () => {
+      await nextTick();
+
+      // Deep-link initial scene from query (only under flag-on)
+      if (useSceneMachine) {
+        const querySceneRaw = route.query.scene;
+        if (typeof querySceneRaw === 'string' && VALID_SCENE_QUERY.includes(querySceneRaw)) {
+          const queryParams = {};
+          ['matchId', 'agentId', 'clanId', 'fighterKey'].forEach(k => {
+            if (route.query[k]) queryParams[k] = route.query[k];
+          });
+          setScene({ scene: querySceneRaw, params: queryParams });
+        }
+      }
+
+      // Init Three.js scene only when pit is active
+      const shouldInitPit = useSceneMachine ? scene.value === 'pit' : true;
+      if (shouldInitPit && canvasRef.value) {
+        initPitSceneLocal();
+      }
     });
+
+    // Under flag-on: watch scene transitions to mount/unmount Three.js scene
+    if (useSceneMachine) {
+      watch(scene, async (newScene, oldScene) => {
+        if (newScene === 'pit' && oldScene !== 'pit') {
+          await nextTick();
+          if (canvasRef.value && !cleanup) {
+            initPitSceneLocal();
+          }
+        } else if (oldScene === 'pit' && newScene !== 'pit') {
+          if (cleanup) { cleanup(); cleanup = null; }
+        }
+      });
+    }
 
     onBeforeUnmount(() => {
       if (cleanup) { cleanup(); cleanup = null; }
     });
 
     return {
-      t, canvasRef, badgeWardenRef, badgePredatorRef, worldHintRef,
+      t,
+      canvasRef, badgeWardenRef, badgePredatorRef, worldHintRef,
       userTaps, userXP,
       goProfile, onNotifications,
+      useSceneMachine, scene, back,
     };
   },
 };
