@@ -85,6 +85,7 @@ export default defineConfig(({mode}) => {
                 __WEB_SOCKET_URL__: JSON.stringify(wsServer),
                 __IS_PROD__: JSON.stringify(isProd),
                 __MOCK_MODE__: JSON.stringify(isMock),
+                __USE_STATE_MACHINE__: false,
             },
         assetsInclude: ['**/*.glb', '**/*.gltf', '**/*.bin', '**/*.wasm'],
         resolve:

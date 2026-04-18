@@ -94,9 +94,13 @@ const route = useRoute();
 
 // Hide BottomMenu during PvP or immersive screens
 const isPvPScreen = computed(() => {
+  const isSpectate = route.path.startsWith('/spectate');
+  if (__USE_STATE_MACHINE__) {
+    return store.getters['scene/isImmersive'] || isSpectate;
+  }
   return route.path === '/matchmaking' ||
       route.path === '/matchmaking-v2' ||
-      route.path.startsWith('/spectate') ||
+      isSpectate ||
       route.path === '/arena/pit' ||
       (route.path === '/fight' && route.query.mode === 'pvp');
 });
