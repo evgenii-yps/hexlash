@@ -71,8 +71,17 @@ const handleMenuClick = (index, item) => {
   loadingStates.value[index] = true;
 
   if (__USE_STATE_MACHINE__ && item.scene) {
-    store.dispatch('scene/setScene', item.scene);
-    loadingStates.value[index] = false;
+    // Ensure we're on /arena/pit where PitView shell lives
+    if (route.path !== '/arena/pit') {
+      router.push('/arena/pit').then(() => {
+        store.dispatch('scene/setScene', item.scene);
+      }).finally(() => {
+        loadingStates.value[index] = false;
+      });
+    } else {
+      store.dispatch('scene/setScene', item.scene);
+      loadingStates.value[index] = false;
+    }
   } else {
     router.push(item.route).finally(() => {
       loadingStates.value[index] = false;
