@@ -1,13 +1,16 @@
 /* Atmosphere overlay layers — global, used across 3D scene views */
 
+/* Phase 7.1: softened for Editorial Refresh v24 aesthetic (crisp, not CRT).
+   Scanlines disabled globally — preserved in markup for potential per-view opt-in. */
+
 /* Film grain — noise texture, subtle */
 .grain {
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 200;
-  opacity: 0.035;
-  mix-blend-mode: overlay;
+  opacity: 0.018;
+  mix-blend-mode: multiply;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
 }
 
@@ -26,7 +29,8 @@
   );
 }
 
-/* Scanlines — CRT-like horizontal lines, used on Fighter Detail */
+/* Scanlines — CRT-like horizontal lines. Disabled globally in Phase 7.1 for
+   Editorial Refresh v24. Class preserved in markup for potential per-view opt-in. */
 .scanlines {
   position: fixed;
   inset: 0;
@@ -40,4 +44,5 @@
     rgba(255, 255, 255, 0.15) 2px,
     rgba(255, 255, 255, 0.15) 3px
   );
+  display: none;
 }
