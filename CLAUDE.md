@@ -1787,3 +1787,13 @@ Lazy per-user migration on `GET /v1/user/me`. Creates Agent "Fighter #1" from Us
 ### Парковочный список
 
 52 пункта долгов в `docs/phase1-parking-list.md`. 11 фиксятся в Phase 1, 41 — в Дороге 2 после deploy.
+
+---
+
+## v2 Migration
+
+Визуальная миграция на концепцию прототипа `docs/visual-migration/hexlash_v24.html`. Живёт параллельно старому визуалу через feature flag `/v2`. Источник правды по миграции — `docs/visual-migration/HANDOFF_VISUAL_MIGRATION.md`.
+
+### Three.js
+
+Project Three.js version: r167 (from `package.json` — `three: ^0.167.1`). Прототип написан под r128 (CDN). Разрыв 39 версий зафиксирован как риск на Эпик 2+ (makeFighterLowPoly, геометрии ринга). В Эпике 1 используется только базовый API — несовместимостей не ожидается.
