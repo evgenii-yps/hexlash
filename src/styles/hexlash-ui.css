@@ -227,6 +227,41 @@
   --hex-transition-fast: 0.15s ease;
   --hex-transition-normal: 0.25s ease;
   --hex-transition-slow: 0.4s ease;
+
+  /* ============================================
+     EDITORIAL REFRESH v24 — FOUNDATION (Phase 7.1)
+     Parallel palette. Does NOT replace --hex-*.
+     Used by Ed* components (Phase 7.2+) and view rewrite (Phase 7.5+).
+     See skills/hexlash-design/SKILL.md §Editorial Refresh v24.
+     ============================================ */
+
+  /* Ink — deep dark tones for surfaces */
+  --ed-ink: #0A0907;
+  --ed-ink-2: #13110E;
+  --ed-ink-3: #1C1A15;
+
+  /* Paper — cream editorial surfaces (inverted cards over dark scenes) */
+  --ed-paper: #F1E9D6;
+  --ed-paper-2: #E6DCC4;
+  --ed-paper-dim: #C9BFA3;
+
+  /* Rules — thin separators (for editorial "masthead" feel) */
+  --ed-rule: rgba(241, 233, 214, 0.14);
+  --ed-rule-2: rgba(241, 233, 214, 0.28);
+  --ed-rule-ink: rgba(10, 9, 7, 0.18);
+
+  /* Accents */
+  --ed-press: #D93A2F;       /* press/plakat red — single accent per screen */
+  --ed-press-ink: #B5271B;   /* hover/pressed state for --ed-press */
+  --ed-gold: #C9A14C;        /* secondary accent — headlines, awards */
+  --ed-sage: #6A7A5A;        /* tertiary accent — success/calm states */
+  --ed-slate: #3A3A36;       /* neutral-warm */
+
+  /* Typography — four voices */
+  --ed-font-display: 'Archivo Black', 'Helvetica Neue Black', Impact, sans-serif;
+  --ed-font-serif: 'Instrument Serif', 'Times New Roman', Georgia, serif;
+  --ed-font-body: 'Work Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --ed-font-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
 }
 
 /* --------------------------------------------
