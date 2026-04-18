@@ -62,10 +62,24 @@ const protectedRoutes = [
 
 ];
 
+// v2 Migration — feature flag через URL-префикс /v2. Живёт параллельно старому визуалу.
+// Источник правды: docs/visual-migration/HANDOFF_VISUAL_MIGRATION.md
+const v2Routes = [
+    {
+        path: '/v2',
+        name: 'V2Root',
+        component: () => import('/src/AppV2.vue'),
+        children: [
+            // index + вложенные v2-роуты регистрируются в следующих шагах Эпика 1
+        ],
+    },
+];
+
 const routes = [
     ...authRoutes,
     ...publicRoutes,
     ...protectedRoutes,
+    ...v2Routes,
     {path: '/:pathMatch(.*)*', name: 'NotFound', component: () => import("/src/views/NotFoundView.vue")},
 ];
 
