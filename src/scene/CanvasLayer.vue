@@ -5,6 +5,8 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import * as THREE from 'three';
+import { registerScene, activateScene } from './sceneRegistry.js';
+import { startRenderLoop, stopRenderLoop } from './renderLoop.js';
 
 const canvasEl = ref(null);
 
@@ -72,8 +74,11 @@ onMounted(() => {
 
   setupScene();
 
-  // Временный render loop — в Шаге 7 заменится на sceneRegistry + renderLoop.
-  renderer.setAnimationLoop(() => renderer.render(scene, camera));
+  // Регистрируем пустую комнату как сцену 'empty' и активируем её.
+  // В будущих эпиках — больше сцен, переключение по смене роута.
+  registerScene('empty', { scene, camera });
+  activateScene('empty');
+  startRenderLoop(renderer, THREE);
 
   onResize = () => {
     const w = window.innerWidth;
@@ -87,8 +92,8 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   if (onResize) window.removeEventListener('resize', onResize);
+  stopRenderLoop();
   if (renderer) {
-    renderer.setAnimationLoop(null);
     renderer.dispose();
     const ctx = renderer.getContext && renderer.getContext();
     if (ctx && renderer.forceContextLoss) renderer.forceContextLoss();
