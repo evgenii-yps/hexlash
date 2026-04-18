@@ -5,6 +5,8 @@ description: Дизайн-система "Neon Discipline" проекта Hexlas
 
 # hexlash-design — Neon Discipline
 
+> **Status (Apr 2026):** Neon Discipline v1.0 — SUPERSEDED. Editorial Refresh v24 is the new foundation (Phase 7+). См. секцию §Editorial Refresh v24 внизу. `--hex-*` и Neon-components остаются функциональными в legacy-коде до Phase 7.6 cleanup.
+
 ## Главное правило
 
 - **Источник правды — `/src/styles/hexlash-ui.css`.** При расхождениях с PDF и SKILL.md прав код.
@@ -272,6 +274,68 @@ Scanlines can be added per-view via `<div class="scanlines">` inside the view te
 ## Расширенный контекст
 
 `Hexlash_Visual_System.pdf` — **не в репо**. Этот SKILL.md является полным операционным источником правды по визуалу. Если PDF появится — обновить ссылки.
+
+---
+
+## Editorial Refresh v24 — Foundation (Phase 7.1)
+
+**Status:** Neon Discipline v1.0 — SUPERSEDED. Editorial Refresh v24 — новая основа.
+
+**Эстетика:** brutal editorial, тёмный спортивный журнал. Paper-fill карточки на тёмной 3D-сцене, hard-offset shadows, крупные display-заголовки на Archivo Black, italic accents на Instrument Serif.
+
+**Anti-patterns:** no glow, no blur, no gradient (кроме vignette), no radius > 2px, no neon-pink accents, no emoji, no scanlines.
+
+### Параллельное существование
+
+В Phase 7.1 обе палитры живут рядом в `src/styles/hexlash-ui.css`:
+
+- `--hex-*` — **легаси**, используется всем существующим кодом (Pit 6.2b shell, HexButton/HexCard и т.д.). Не трогаем.
+- `--ed-*` — **новое**, для Ed-компонентов (Phase 7.2+) и новых view-rewrites (Phase 7.5+).
+
+**Не смешивать `--hex-*` и `--ed-*` в одном элементе.** В новом Ed-коде — только `--ed-*`. В существующем Neon-коде — только `--hex-*`.
+
+### Палитра `--ed-*`
+
+- **Ink** (surfaces): `--ed-ink` (#0A0907), `--ed-ink-2`, `--ed-ink-3`
+- **Paper** (cards over dark): `--ed-paper` (#F1E9D6), `--ed-paper-2`, `--ed-paper-dim`
+- **Rules** (separators): `--ed-rule` (14% paper), `--ed-rule-2` (28% paper), `--ed-rule-ink` (18% ink)
+- **Accents:** `--ed-press` (#D93A2F) единственный акцент на экран, `--ed-gold` (#C9A14C), `--ed-sage` (#6A7A5A), `--ed-slate` (#3A3A36)
+
+### Типографика — четыре голоса
+
+| Голос | Токен | Где |
+|-------|-------|-----|
+| Display | `--ed-font-display` (Archivo Black) | HEXLASH, VICTORY, section mastheads |
+| Serif | `--ed-font-serif` (Instrument Serif italic) | Editorial accents, pull quotes, coach text |
+| Body | `--ed-font-body` (Work Sans) | Всё остальное (заменил Space Grotesk в v24) |
+| Mono | `--ed-font-mono` (JetBrains Mono) | Числа, kicker, meta |
+
+### Правила
+
+1. **Один `--ed-press` акцент на экран** (как одна розовая точка в Neon — но красная).
+2. **Hard-offset shadows:** `box-shadow: 3px 3px 0 var(--ed-ink);` — не размытые, смещённые.
+3. **Paper cards:** `background: var(--ed-paper); color: var(--ed-ink);` — инверсия фон/текст на тёмной сцене.
+4. **Border-radius ≤ 2px** (в Neon было до 16px).
+5. **Никаких градиентов**, кроме vignette.
+6. **:lang(ru) letter-spacing:** кириллица на Archivo Black нуждается в уменьшенном letter-spacing — правила добавятся в Phase 7.3.
+
+### Из чего собрано
+
+- Мокап `hexlash_standalone.html` (v24 bundler, ~1.1 MB, 495K chars template)
+- State-machine через body class (`is-pit`, `is-profile`, `is-training`, `is-ratings`, `is-clan`, `is-detail`, `is-fight`, `is-mm`, `is-shop`) — совпадает с VALID_SCENES в sceneState
+- 9 scenes идентичны Phase 6.2b PitView shell
+
+### Phase 7 roadmap
+
+| Sub-phase | Scope |
+|-----------|-------|
+| 7.1 ← **СЕЙЧАС** | Foundation: токены + шрифты + atmosphere + декларация |
+| 7.2 | Ed-components (EdButton, EdCard, EdKicker, EdHeadline) |
+| 7.3 | i18n wordlist + `:lang(ru)` letter-spacing |
+| 7.4 | Pit HUD в Editorial |
+| 7.5 | 9 v2 views rewrite |
+| 7.6 | Cleanup `--hex-*` и Hex* legacy |
+| 7.7 | Docs rewrite (SKILL + PDF + CLAUDE.md) |
 
 ---
 

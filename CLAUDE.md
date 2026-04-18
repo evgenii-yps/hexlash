@@ -250,6 +250,8 @@ unlockRequirements:  { 3: {taps:300, exp:150}, 4: {taps:250, exp:120}, 5: {taps:
 
 ## Design System — "Neon Discipline"
 
+> **Status (Apr 2026):** Neon Discipline v1.0 — SUPERSEDED. Editorial Refresh v24 is the new foundation (Phase 7+). Operational reference: `skills/hexlash-design/SKILL.md` §Editorial Refresh v24. This section describes legacy Neon system, still active in non-rewritten code until Phase 7.6 cleanup.
+
 **Status:** v1.0 — Visual System established.
 **Full visual guide:** Hexlash_Visual_System.pdf v1.0 (file not in repo — source of truth is hexlash-design/SKILL.md)
 **Operational reference:** /skills/hexlash-design/SKILL.md
