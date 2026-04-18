@@ -1,2 +1,6 @@
-/* v2 Migration — design tokens + effects for /v2 routes.
-   Filled in step 5 of Epic 1. Imported only in AppV2.vue. */
+/* v2 Migration — entry point для дизайн-системы v24.
+   Импортируется ТОЛЬКО в src/AppV2.vue, не в main.js.
+   Стили scoped под .app-v2 — не утекают в старый визуал. */
+
+@import './v24/tokens.css';
+@import './v24/effects.css';
