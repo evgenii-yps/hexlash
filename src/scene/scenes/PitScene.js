@@ -231,9 +231,6 @@ export function buildPitScene(THREE, aspect) {
 
     // Terminal CRT cursor blink — prototype 7271-7282.
     terminal.tickScreen(t);
-
-    // Plinth light shaft — slow rotation around vertical axis.
-    plinth.shaft.rotation.y = t * 0.05;
   }
 
   return {
