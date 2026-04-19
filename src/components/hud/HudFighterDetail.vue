@@ -56,13 +56,22 @@
       <div class="bl-name">Technique</div>
       <div class="bl-lvl">Lv {{ levels.technique }}</div>
     </div>
+
+    <BranchPanel
+      ref="branchPanel"
+      :data="panelData"
+      :cost="panelCost"
+      @close="closeBranchPanel"
+    />
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted, onBeforeUnmount } from 'vue';
+import { computed, onMounted, onBeforeUnmount, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { fdLabels } from '@/scene/interaction/useFdLabels.js';
+import BranchPanel from './common/BranchPanel.vue';
+import { FD_BRANCH_DATA } from './common/fdBranchData.js';
 
 const props = defineProps({
   keyProp: { type: String, default: 'warden' },
@@ -86,6 +95,10 @@ const stats = [
 const resources = { taps: 880, xp: 300 };
 const levels = { speed: 6, power: 10, technique: 4 };
 
+const branchPanel = ref(null);
+const panelData = ref(null);
+const panelCost = ref(null);
+
 const kicker = computed(() => KICKER[props.keyProp] || KICKER.warden);
 const name   = computed(() => NAME[props.keyProp]   || NAME.warden);
 const meta   = computed(() => META[props.keyProp]   || META.warden);
@@ -104,10 +117,27 @@ function labelStyle(id) {
 function onBack() { router.push('/v2'); }
 function onFight() { router.push('/v2/fight'); }
 
-// Step 8a — placeholder. Real BranchPanel integration arrives in Step 8b.
+// Step 8b — open BranchPanel with mocked branch data + derived cost.
+// Cost formula from prototype 7739-7742 (branchUpgradeCost).
 function openBranchPanel(branchId) {
-  // eslint-disable-next-line no-console
-  console.log('[FD] openBranchPanel:', branchId);
+  const level = levels[branchId];
+  const d = FD_BRANCH_DATA[branchId];
+  if (level == null || !d) return;
+  panelData.value = {
+    kicker: d.kicker,
+    title:  d.title,
+    level,
+    moves:  d.moves,
+  };
+  panelCost.value = {
+    taps: 100 + level * 100,
+    xp:   25  + level * 25,
+  };
+  branchPanel.value?.open(branchId);
+}
+
+function closeBranchPanel() {
+  branchPanel.value?.close();
 }
 
 // Esc closes FD — prototype 7977-7981.
