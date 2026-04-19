@@ -205,6 +205,21 @@ export function buildPitScene(THREE, aspect) {
   const shopLocker = buildShopLocker(THREE, metalTex);
   scene.add(shopLocker);
 
+  // --- CLICKABLE TARGETS (Step 16) ---
+  // 8 interactables for raycaster picking. Order matches prototype 6860.
+  // Each entry is a root Group (containers, not meshes) so the picker can
+  // walk up from any child mesh to its registered root.
+  const clickableTargets = [
+    heavyBag,
+    terminal.group,
+    wardenContainer,
+    predatorContainer,
+    plinth.group,
+    scoreboard,
+    clanBanner,
+    shopLocker,
+  ];
+
   // tick — Шаг 5: crowd breathing, dust drift, rim pulse.
   // Source: prototype 7240-7250 (dust drift + rim pulse) + TZ Step 5 (crowd breathing formula).
   // PATCH_EPIC2_STEPS_5_8.md — dust reset to 0.3 once it crosses 7.5.
@@ -249,6 +264,16 @@ export function buildPitScene(THREE, aspect) {
 
     // Terminal CRT cursor blink — prototype 7271-7282.
     terminal.tickScreen(t);
+
+    // Hover-scale lerp for all clickable targets — prototype 7251-7257.
+    // CanvasLayer sets userData.hoverScale (1.0 idle, 1.04 on hover).
+    for (let i = 0; i < clickableTargets.length; i++) {
+      const g = clickableTargets[i];
+      const target = g.userData.hoverScale || 1.0;
+      const cur = g.scale.x;
+      const next = cur + (target - cur) * 0.15;
+      g.scale.set(next, next, next);
+    }
   }
 
   return {
@@ -260,7 +285,7 @@ export function buildPitScene(THREE, aspect) {
     metalTex,
     roomHeight: ROOM_WALL_HEIGHT,
     roomRadius: ROOM_RADIUS,
-    clickableTargets: [],
+    clickableTargets,
   };
 }
 

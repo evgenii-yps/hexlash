@@ -9,13 +9,32 @@ import { registerScene, activateScene } from './sceneRegistry.js';
 import { startRenderLoop, stopRenderLoop } from './renderLoop.js';
 import { buildPitScene } from './scenes/PitScene.js';
 import { attachOrbit } from './interaction/cameraController.js';
+import { createPicker } from './interaction/raycaster.js';
+import { useHoverState } from './interaction/useHoverState.js';
+
+// Labels shown in the WorldHint under the pointer. Key = userData.id
+// seeded on each clickable root in PitScene. Source: prototype 6887-6899.
+const LABELS = {
+  training:    'Training \u00b7 Heavy Bag',
+  matchmaking: 'Matchmaking \u00b7 Terminal',
+  create:      'Create New Fighter',
+  ratings:     'Leaderboard',
+  clan:        'Clan',
+  shop:        'Locker \u00b7 Cosmetics',
+  warden:      'View Warden',
+  predator:    'View Predator',
+};
 
 const canvasEl = ref(null);
+const hoverState = useHoverState();
 
 let renderer = null;
 let pit = null;
 let orbit = null;
+let picker = null;
+let hoveredObj = null;
 let onResize = null;
+let onPointerMove = null;
 
 onMounted(() => {
   renderer = new THREE.WebGLRenderer({
@@ -55,6 +74,35 @@ onMounted(() => {
     renderer.setSize(w, h);
   };
   window.addEventListener('resize', onResize);
+
+  // --- HOVER (Step 16) ---
+  // Raycaster over clickable roots. Skipped while orbit drag is active so
+  // the user can sweep past objects without flicker. Prototype 6859-6913.
+  picker = createPicker(pit.camera, pit.clickableTargets, THREE);
+
+  onPointerMove = (e) => {
+    if (orbit.getIsDragging()) return;
+    const hit = picker.pickAt(e.clientX, e.clientY);
+    if (hit !== hoveredObj) {
+      if (hoveredObj) hoveredObj.userData.hoverScale = 1.0;
+      hoveredObj = hit;
+      if (hit) {
+        hit.userData.hoverScale = 1.04;
+        document.body.style.cursor = 'pointer';
+        hoverState.text = LABELS[hit.userData.id] || '';
+        hoverState.visible = hoverState.text !== '';
+      } else {
+        document.body.style.cursor = '';
+        hoverState.visible = false;
+      }
+    }
+    // Keep the hint pinned to the pointer while hovered.
+    if (hoveredObj && hoverState.visible) {
+      hoverState.x = e.clientX;
+      hoverState.y = e.clientY;
+    }
+  };
+  canvasEl.value.addEventListener('pointermove', onPointerMove);
 });
 
 function disposeScene(scene) {
@@ -74,6 +122,13 @@ function disposeScene(scene) {
 
 onBeforeUnmount(() => {
   if (onResize) window.removeEventListener('resize', onResize);
+  if (onPointerMove && canvasEl.value) {
+    canvasEl.value.removeEventListener('pointermove', onPointerMove);
+  }
+  // Reset body cursor + clear hover hint in case we're unmounted while hovering.
+  document.body.style.cursor = '';
+  hoverState.visible = false;
+  hoverState.text = '';
   if (orbit) orbit.detach();
   stopRenderLoop();
   if (pit) {
@@ -90,7 +145,10 @@ onBeforeUnmount(() => {
   renderer = null;
   pit = null;
   orbit = null;
+  picker = null;
+  hoveredObj = null;
   onResize = null;
+  onPointerMove = null;
 });
 </script>
 

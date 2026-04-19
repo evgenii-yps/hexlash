@@ -1,11 +1,23 @@
 <template>
   <div class="hud-pit-v2">
     <h1 class="hud-marker">/v2 works</h1>
+    <WorldHint
+      :text="hover.text"
+      :x="hover.x"
+      :y="hover.y"
+      :visible="hover.visible"
+    />
   </div>
 </template>
 
 <script setup>
-// Тестовый HUD-заглушка для /v2 в Эпике 1. В Эпике 2 заменится реальным HUD Pit.
+// Step 16: reads shared hover state written by CanvasLayer and renders the
+// WorldHint. CanvasLayer and this view are siblings in AppV2, so we use a
+// module-scoped reactive store (useHoverState) instead of emit/props.
+import WorldHint from '@/components/hud/common/WorldHint.vue';
+import { useHoverState } from '@/scene/interaction/useHoverState.js';
+
+const hover = useHoverState();
 </script>
 
 <style scoped>
