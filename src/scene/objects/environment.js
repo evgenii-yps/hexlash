@@ -1,13 +1,15 @@
-// Epic 2 — pit-view hub. Step 4.
-// Beams (4), hanging lamps (3), drain grate (32 slots).
+// Epic 2 — pit-view hub. Steps 4-5.
+// Beams (4), hanging lamps (3), drain grate (32 slots),
+// crowd silhouettes (18 figures), ground fog (80 points).
 // Sources:
 //   - lines 5365-5394 (beams + makeBeam)
 //   - lines 5396-5459 (makeHangingLamp + 3 lamps)
 //   - lines 5461-5477 (drain grate)
+//   - lines 5481-5521 (crowd: makeCrowdFigure + 18 anchors)
+//   - lines 6016-6031 (ground fog) — see PATCH_EPIC2_STEPS_5_8.md
 //
-// Crowd silhouettes + ground fog приедут в Шаге 5 — пока возвращаем заглушки в этих полях.
 // Решение по структуре: создаём внутреннюю group `env` (как в прототипе),
-// добавляем её в scene. Балки/лампы/решётка — внутри env (порядок dispose сохраняется).
+// добавляем её в scene. Балки/лампы/решётка/толпа/пыль — внутри env.
 
 const ROOM_WALL_HEIGHT = 9;
 const ROOM_RADIUS = 18;
@@ -149,6 +151,69 @@ export function buildEnvironment(scene, THREE) {
     env.add(slot);
   }
 
-  // crowdGroup + dustGeom — заполнятся в Шаге 5.
-  return { env, crowdGroup: null, dustGeom: null };
+  // ---- CROWD SILHOUETTES (18 figures, loose semicircle behind ring)
+  const crowdAnchors = [
+    { ang: -2.6, r: 8.5 }, { ang: -2.3, r: 9.0 }, { ang: -2.0, r: 8.2 },
+    { ang: -1.7, r: 9.3 }, { ang: -1.4, r: 8.6 }, { ang: -1.1, r: 8.9 },
+    { ang: -0.8, r: 9.1 }, { ang: -0.4, r: 8.4 }, { ang: 0.0,  r: 9.2 },
+    { ang: 0.4,  r: 8.7 }, { ang: 0.8,  r: 9.0 }, { ang: 1.1,  r: 8.5 },
+    { ang: 1.4,  r: 8.8 }, { ang: 1.7,  r: 9.4 }, { ang: 2.0,  r: 8.3 },
+    { ang: 2.3,  r: 9.1 }, { ang: 2.6,  r: 8.6 }, { ang: 3.0,  r: 9.0 },
+  ];
+  const crowdGroup = new THREE.Group();
+  crowdAnchors.forEach((p) => {
+    const x = Math.cos(p.ang) * p.r + (Math.random() - 0.5) * 0.6;
+    const z = Math.sin(p.ang) * p.r + (Math.random() - 0.5) * 0.6;
+    const scale = 0.9 + Math.random() * 0.25;
+    crowdGroup.add(makeCrowdFigure(THREE, x, z, scale));
+  });
+  env.add(crowdGroup);
+
+  // ---- GROUND FOG (80 points, low stratum)
+  // PATCH_EPIC2_STEPS_5_8.md — explicit params.
+  const groundFogCount = 80;
+  const dustGeom = new THREE.BufferGeometry();
+  const gfPos = new Float32Array(groundFogCount * 3);
+  for (let i = 0; i < groundFogCount; i++) {
+    gfPos[i * 3] = (Math.random() - 0.5) * 22;
+    gfPos[i * 3 + 1] = Math.random() * 0.6;
+    gfPos[i * 3 + 2] = (Math.random() - 0.5) * 22;
+  }
+  dustGeom.setAttribute('position', new THREE.BufferAttribute(gfPos, 3));
+  const gfMat = new THREE.PointsMaterial({
+    color: 0x665570,
+    size: 0.25,
+    transparent: true,
+    opacity: 0.35,
+    depthWrite: false,
+    blending: THREE.NormalBlending,
+  });
+  const groundFog = new THREE.Points(dustGeom, gfMat);
+  env.add(groundFog);
+
+  return { env, crowdGroup, dustGeom };
+}
+
+function makeCrowdFigure(THREE, x, z, scale) {
+  const crowd = new THREE.Group();
+  const mat = new THREE.MeshBasicMaterial({
+    color: 0x000000,
+    transparent: true,
+    opacity: 0.85,
+  });
+  const body = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.28 * scale, 0.32 * scale, 1.4 * scale, 8),
+    mat,
+  );
+  body.position.y = 0.7 * scale;
+  crowd.add(body);
+  const head = new THREE.Mesh(
+    new THREE.SphereGeometry(0.18 * scale, 10, 8),
+    mat,
+  );
+  head.position.y = 1.55 * scale;
+  crowd.add(head);
+  crowd.position.set(x, 0, z);
+  crowd.lookAt(0, 0.7 * scale, 0);
+  return crowd;
 }

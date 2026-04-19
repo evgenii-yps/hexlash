@@ -119,12 +119,35 @@ export function buildPitScene(THREE, aspect) {
   ceiling.position.y = ROOM_WALL_HEIGHT;
   scene.add(ceiling);
 
-  // --- ENVIRONMENT (beams + lamps + drain grate) ---
-  const env = buildEnvironment(scene, THREE);
+  // --- ENVIRONMENT (beams + lamps + drain grate + crowd + ground fog) ---
+  const { crowdGroup, dustGeom } = buildEnvironment(scene, THREE);
 
-  // tick — пустой в Шаге 3. Шаг 5 добавит crowd breathing / dust drift / rim pulse.
-  function tick(_t) {
-    // filled in later steps
+  // tick — Шаг 5: crowd breathing, dust drift, rim pulse.
+  // Source: prototype 7240-7250 (dust drift + rim pulse) + TZ Step 5 (crowd breathing formula).
+  // PATCH_EPIC2_STEPS_5_8.md — dust reset to 0.3 once it crosses 7.5.
+  function tick(t) {
+    // Crowd breathing — TZ Step 5 explicit formula.
+    if (crowdGroup) {
+      const figs = crowdGroup.children;
+      for (let i = 0; i < figs.length; i++) {
+        figs[i].position.y = Math.sin(t * 0.8 + i * 0.37) * 0.025;
+        figs[i].rotation.z = Math.sin(t * 0.5 + i * 0.37 * 1.3) * 0.02;
+      }
+    }
+
+    // Ground fog drift (PATCH spec).
+    if (dustGeom) {
+      const positions = dustGeom.attributes.position.array;
+      const count = positions.length / 3;
+      for (let i = 0; i < count; i++) {
+        positions[i * 3 + 1] += 0.003 + Math.sin(t + i) * 0.001;
+        if (positions[i * 3 + 1] > 7.5) positions[i * 3 + 1] = 0.3;
+      }
+      dustGeom.attributes.position.needsUpdate = true;
+    }
+
+    // Pink rim subtle pulse.
+    rimL.intensity = 1.0 + Math.sin(t * 1.1) * 0.15;
   }
 
   return {
@@ -136,7 +159,6 @@ export function buildPitScene(THREE, aspect) {
     roomHeight: ROOM_WALL_HEIGHT,
     roomRadius: ROOM_RADIUS,
     clickableTargets: [],
-    env,
   };
 }
 
