@@ -8,11 +8,13 @@ import * as THREE from 'three';
 import { registerScene, activateScene } from './sceneRegistry.js';
 import { startRenderLoop, stopRenderLoop } from './renderLoop.js';
 import { buildPitScene } from './scenes/PitScene.js';
+import { attachOrbit } from './interaction/cameraController.js';
 
 const canvasEl = ref(null);
 
 let renderer = null;
 let pit = null;
+let orbit = null;
 let onResize = null;
 
 onMounted(() => {
@@ -30,7 +32,18 @@ onMounted(() => {
   const aspect = window.innerWidth / window.innerHeight;
   pit = buildPitScene(THREE, aspect);
 
-  registerScene('pit', { scene: pit.scene, camera: pit.camera, tick: pit.tick });
+  // Orbit camera (Step 7) — drives camera.position/lookAt every frame.
+  // tick(t) here MUST run before pit.tick / renderer.render — composed below.
+  orbit = attachOrbit(pit.camera, canvasEl.value);
+
+  registerScene('pit', {
+    scene: pit.scene,
+    camera: pit.camera,
+    tick: (t) => {
+      orbit.tick(t);
+      pit.tick(t);
+    },
+  });
   activateScene('pit');
   startRenderLoop(renderer, THREE);
 
@@ -61,6 +74,7 @@ function disposeScene(scene) {
 
 onBeforeUnmount(() => {
   if (onResize) window.removeEventListener('resize', onResize);
+  if (orbit) orbit.detach();
   stopRenderLoop();
   if (pit) {
     disposeScene(pit.scene);
@@ -75,6 +89,7 @@ onBeforeUnmount(() => {
   }
   renderer = null;
   pit = null;
+  orbit = null;
   onResize = null;
 });
 </script>
