@@ -16,6 +16,7 @@ import {
   unregisterIdleFighter,
   tickIdleAnimations,
 } from '../objects/fighterModel.js';
+import { createAnimationSystem } from '../objects/fightAnimations.js';
 
 const FT_RING_R = 3.6;
 const FT_RING_H = 0.5;
@@ -246,16 +247,33 @@ export function buildFightScene(THREE, aspect) {
   const ftLeftBase   = snapshotParts(ftLeftParts);
   const ftRightBase  = snapshotParts(ftRightParts);
 
-  function tick(t) {
-    // Step 13 — updateFightCamera(t) here (pit/side/cinema modes).
-    // Step 12 — tickAnims() + guarded idle: idle runs only when no combat
-    // anim is active. On Step 11 there is no anim queue yet, so idle is
-    // unconditional — fighters breathe.
-    tickIdleAnimations(t);
+  // Step 12 — animation queue + applyAnim lives in objects/fightAnimations.js.
+  // Bind it to this scene's fighter part refs + base snapshots.
+  const animSystem = createAnimationSystem(
+    ftLeftParts, ftRightParts, ftLeftBase, ftRightBase
+  );
+
+  // Step 12 debug hook — lets the user validate the 6 animation types from
+  // DevTools console (e.g. `_playMove('left', 'jab')`). Removed in Step 18.
+  if (typeof window !== 'undefined') {
+    window._playMove = animSystem.playMove;
   }
 
+  function tick(t) {
+    // Step 13 — updateFightCamera(t) here (pit/side/cinema modes).
+    // Combat animation drives parts; idle runs ONLY when the queue is empty —
+    // otherwise tickIdleAnimations resets parts to snapshot mid-combat.
+    // Prototype 8838-8846.
+    animSystem.tickAnims();
+    if (animSystem.getAnims().length === 0) {
+      tickIdleAnimations(t);
+    }
+  }
+
+  function playMove(side, type) {
+    animSystem.playMove(side, type);
+  }
   // Stubs — filled in later steps.
-  function playMove(/* side, type */) {}
   function setCamMode(/* mode */) {}
   function getState() { return null; }
   function resetFight() {}
