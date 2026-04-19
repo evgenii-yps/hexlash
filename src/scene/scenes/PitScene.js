@@ -27,6 +27,7 @@ import { buildHeavyBag } from '../objects/heavyBag.js';
 import { buildTerminal } from '../objects/terminal.js';
 import { buildPlinth } from '../objects/plinth.js';
 import { buildScoreboard } from '../objects/scoreboard.js';
+import { buildClanBanner } from '../objects/clanBanner.js';
 
 const ROOM_RADIUS = 18;
 const ROOM_WALL_HEIGHT = 9;
@@ -192,6 +193,11 @@ export function buildPitScene(THREE, aspect) {
   // Source: prototype 5711-5808. Static — no tick callback.
   const scoreboard = buildScoreboard(THREE);
   scene.add(scoreboard);
+
+  // --- CLAN BANNER (clan interactable, beside the plinth) ---
+  // Source: prototype 5810-5907. Reuses `platformTex` per PATCH. Static.
+  const clanBanner = buildClanBanner(THREE, platformTex);
+  scene.add(clanBanner);
 
   // tick — Шаг 5: crowd breathing, dust drift, rim pulse.
   // Source: prototype 7240-7250 (dust drift + rim pulse) + TZ Step 5 (crowd breathing formula).
