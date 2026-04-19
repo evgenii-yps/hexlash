@@ -55,7 +55,9 @@ export function buildArena(scene, THREE, { platformTex, floorTex, metalTex }) {
     new THREE.CircleGeometry(20, 64),
     new THREE.MeshStandardMaterial({
       map: floorTex,
-      color: 0x2c2c34,
+      // Lightened from prototype 0x2c2c34 to 0x4a4a56 for visual
+      // parity on target hardware. Revisit in Epic 5 polish.
+      color: 0x4a4a56,
       roughness: 0.95,
       metalness: 0.02,
     }),
