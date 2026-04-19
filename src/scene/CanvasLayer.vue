@@ -63,7 +63,10 @@ onMounted(() => {
   // display (and eventually the matchmaking screen in Epic 3B+). All other
   // emissive/additive materials go through ACES, matching the prototype.
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.05;
+  // Exposure raised from prototype 1.05 to 1.7 for visual parity
+  // on target hardware. See Epic 3A hot-fix, coherent across all
+  // v2 scenes (pit, FD, fight). Revisit in Epic 5 polish.
+  renderer.toneMappingExposure = 1.7;
 
   const aspect = window.innerWidth / window.innerHeight;
   pit = buildPitScene(THREE, aspect);
