@@ -28,6 +28,7 @@ import { buildTerminal } from '../objects/terminal.js';
 import { buildPlinth } from '../objects/plinth.js';
 import { buildScoreboard } from '../objects/scoreboard.js';
 import { buildClanBanner } from '../objects/clanBanner.js';
+import { buildShopLocker } from '../objects/shopLocker.js';
 
 const ROOM_RADIUS = 18;
 const ROOM_WALL_HEIGHT = 9;
@@ -198,6 +199,11 @@ export function buildPitScene(THREE, aspect) {
   // Source: prototype 5810-5907. Reuses `platformTex` per PATCH. Static.
   const clanBanner = buildClanBanner(THREE, platformTex);
   scene.add(clanBanner);
+
+  // --- SHOP LOCKER (shop interactable, near clanBanner) ---
+  // Source: prototype 5910-6014. Reuses the shared metalTex. Static.
+  const shopLocker = buildShopLocker(THREE, metalTex);
+  scene.add(shopLocker);
 
   // tick — Шаг 5: crowd breathing, dust drift, rim pulse.
   // Source: prototype 7240-7250 (dust drift + rim pulse) + TZ Step 5 (crowd breathing formula).
