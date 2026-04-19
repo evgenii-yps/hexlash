@@ -16,7 +16,13 @@
 import { makeConcreteTexture } from '../materials/concrete.js';
 import { makeMetalTexture } from '../materials/metal.js';
 import { buildEnvironment } from '../objects/environment.js';
-import { buildArena } from '../objects/arena.js';
+import { buildArena, RING_HEIGHT } from '../objects/arena.js';
+import {
+  makeFighterLowPoly,
+  registerIdleFighter,
+  tickIdleAnimations,
+  addArchetypeGlow,
+} from '../objects/fighterModel.js';
 
 const ROOM_RADIUS = 18;
 const ROOM_WALL_HEIGHT = 9;
@@ -114,10 +120,47 @@ export function buildPitScene(THREE, aspect) {
   scene.add(ceiling);
 
   // --- ARENA (octagonal ring: platform + outer floor + posts + ropes + cage) ---
-  buildArena(scene, THREE, { platformTex, floorTex, metalTex });
+  const { arena } = buildArena(scene, THREE, { platformTex, floorTex, metalTex });
 
   // --- ENVIRONMENT (beams + lamps + drain grate + crowd + ground fog) ---
   const { crowdGroup, dustGeom } = buildEnvironment(scene, THREE);
+
+  // --- FIGHTERS (two containers in the ring, facing each other) ---
+  // Source: prototype lines 6673-6713. Added to `arena` group (not scene) for clean
+  // dispose ordering, matching prototype 6682/6687.
+  //
+  // Child order within each container (contract for idle + future hover):
+  //   [0] inner fighter group (22 parts, from makeFighterLowPoly)
+  //   [1] archetype glow disc (added by addArchetypeGlow, userData.isArchGlow=true)
+  // registerIdleFighter reads container.children[0] — must be fighter, not disc.
+  //
+  // isClickable / id — pre-seeded now for Steps 16 (raycaster) and 17 (clicks).
+  const ARCHETYPE_COLORS = { warden: 0xD4A843, predator: 0xFF066F };
+
+  const wardenBaseRotY = Math.atan2(1.8 - (-1.8), -0.6 - 0.6);
+  const predatorBaseRotY = Math.atan2(-1.8 - 1.8, 0.6 - (-0.6));
+
+  const wardenContainer = new THREE.Group();
+  wardenContainer.position.set(-1.8, RING_HEIGHT, 0.6);
+  wardenContainer.rotation.y = wardenBaseRotY;
+  wardenContainer.userData.isClickable = true;
+  wardenContainer.userData.id = 'warden';
+  arena.add(wardenContainer);
+
+  const predatorContainer = new THREE.Group();
+  predatorContainer.position.set(1.8, RING_HEIGHT, -0.6);
+  predatorContainer.rotation.y = predatorBaseRotY;
+  predatorContainer.userData.isClickable = true;
+  predatorContainer.userData.id = 'predator';
+  arena.add(predatorContainer);
+
+  wardenContainer.add(makeFighterLowPoly(THREE, 'warden'));
+  addArchetypeGlow(wardenContainer, THREE, ARCHETYPE_COLORS.warden);
+  registerIdleFighter(wardenContainer, 0);
+
+  predatorContainer.add(makeFighterLowPoly(THREE, 'predator'));
+  addArchetypeGlow(predatorContainer, THREE, ARCHETYPE_COLORS.predator);
+  registerIdleFighter(predatorContainer, 2.1); // phase offset — de-sync the two
 
   // tick — Шаг 5: crowd breathing, dust drift, rim pulse.
   // Source: prototype 7240-7250 (dust drift + rim pulse) + TZ Step 5 (crowd breathing formula).
@@ -145,6 +188,17 @@ export function buildPitScene(THREE, aspect) {
 
     // Pink rim subtle pulse.
     rimL.intensity = 1.0 + Math.sin(t * 1.1) * 0.15;
+
+    // Idle animations for both fighters (inner sway/breathing/fist bob).
+    tickIdleAnimations(t);
+
+    // Outer container bob + subtle rotation — prototype 7231-7235.
+    // Without this, the fighters' silhouettes stand rigid even while their
+    // limbs animate. This adds a whole-body bounce and micro-rotation.
+    wardenContainer.position.y = RING_HEIGHT + Math.sin(t * 1.2) * 0.015;
+    predatorContainer.position.y = RING_HEIGHT + Math.sin(t * 1.2 + 1.5) * 0.015;
+    wardenContainer.rotation.y = wardenBaseRotY + Math.sin(t * 0.6) * 0.04;
+    predatorContainer.rotation.y = predatorBaseRotY + Math.sin(t * 0.6 + 2) * 0.04;
   }
 
   return {
