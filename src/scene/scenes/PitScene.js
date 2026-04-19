@@ -14,7 +14,9 @@
 //   - Пол/стены/потолок здесь временные. Шаг 6 заменит пол на более качественный из arena.js.
 
 import { makeConcreteTexture } from '../materials/concrete.js';
+import { makeMetalTexture } from '../materials/metal.js';
 import { buildEnvironment } from '../objects/environment.js';
+import { buildArena } from '../objects/arena.js';
 
 const ROOM_RADIUS = 18;
 const ROOM_WALL_HEIGHT = 9;
@@ -60,25 +62,17 @@ export function buildPitScene(THREE, aspect) {
   fill.position.set(0, 2, 8);
   scene.add(fill);
 
-  // --- CONCRETE TEXTURES (reused by floor + env + arena later) ---
-  const concreteTex = makeConcreteTexture(THREE);
-  concreteTex.repeat.set(1, 1);
-
-  // --- TEMPORARY FLOOR (Step 6 заменит из arena.js) ---
+  // --- CONCRETE TEXTURES ---
+  // PATCH_EPIC2_STEPS_5_8.md: two SEPARATE textures, NOT one with .repeat changed.
+  // platformTex stays as `concreteTex` (returned to caller for plinth/clanBanner reuse).
+  const platformTex = makeConcreteTexture(THREE);
+  platformTex.repeat.set(1, 1);
   const floorTex = makeConcreteTexture(THREE);
   floorTex.repeat.set(6, 6);
-  const floor = new THREE.Mesh(
-    new THREE.CircleGeometry(20, 64),
-    new THREE.MeshStandardMaterial({
-      map: floorTex,
-      color: 0x2c2c34,
-      roughness: 0.95,
-      metalness: 0.02,
-    }),
-  );
-  floor.rotation.x = -Math.PI / 2;
-  floor.receiveShadow = true;
-  scene.add(floor);
+  const concreteTex = platformTex; // alias for downstream consumers (plinth, clanBanner)
+
+  // --- METAL TEXTURE (arena posts; reused by shopLocker in Step 15) ---
+  const metalTex = makeMetalTexture(THREE);
 
   // --- OCTAGONAL WALLS ---
   const wallMat = new THREE.MeshStandardMaterial({
@@ -119,6 +113,9 @@ export function buildPitScene(THREE, aspect) {
   ceiling.position.y = ROOM_WALL_HEIGHT;
   scene.add(ceiling);
 
+  // --- ARENA (octagonal ring: platform + outer floor + posts + ropes + cage) ---
+  buildArena(scene, THREE, { platformTex, floorTex, metalTex });
+
   // --- ENVIRONMENT (beams + lamps + drain grate + crowd + ground fog) ---
   const { crowdGroup, dustGeom } = buildEnvironment(scene, THREE);
 
@@ -156,6 +153,7 @@ export function buildPitScene(THREE, aspect) {
     tick,
     rimL,
     concreteTex,
+    metalTex,
     roomHeight: ROOM_WALL_HEIGHT,
     roomRadius: ROOM_RADIUS,
     clickableTargets: [],

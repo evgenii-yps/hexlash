@@ -64,7 +64,10 @@ onBeforeUnmount(() => {
   stopRenderLoop();
   if (pit) {
     disposeScene(pit.scene);
+    // Textures held by reference at PitScene level — dispose explicitly in case
+    // they aren't reachable through scene.traverse (e.g. shared/aliased instances).
     if (pit.concreteTex) pit.concreteTex.dispose();
+    if (pit.metalTex) pit.metalTex.dispose();
   }
   if (renderer) {
     renderer.dispose();
