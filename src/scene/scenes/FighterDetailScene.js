@@ -86,9 +86,70 @@ export function buildFighterDetailScene(THREE, aspect) {
   podium.position.z = 1.0; // bring fighter forward of future columns
   scene.add(podium);
 
+  // --- LIGHTING (Step 3) ---
+  // Source: prototype 7546-7565.
+  scene.add(new THREE.AmbientLight(0x1a1a28, 0.4));
+  scene.add(new THREE.HemisphereLight(0x2a2638, 0x0a0a12, 0.4));
+
+  // Key spot — overhead, on fighter. renderer.shadowMap.enabled is set in
+  // CanvasLayer (Epic 2 Step 3 hot-fix).
+  const key = new THREE.SpotLight(0xfff0e8, 2.4, 14, Math.PI * 0.22, 0.6, 1.4);
+  key.position.set(0, 7.5, 0);
+  key.target.position.set(0, 1.2, 0);
+  key.castShadow = true;
+  key.shadow.mapSize.width = 1024;
+  key.shadow.mapSize.height = 1024;
+  scene.add(key);
+  scene.add(key.target);
+
+  // Front fill — soft cyan rim from camera side.
+  const front = new THREE.SpotLight(0x4dd9ff, 0.5, 12, Math.PI * 0.5, 0.9, 1.4);
+  front.position.set(0, 2.5, 7);
+  front.target.position.set(0, 1.4, 0);
+  scene.add(front);
+  scene.add(front.target);
+
+  // --- LIGHT SHAFT (volumetric fake, Step 3) ---
+  // Source: prototype 7567-7577.
+  const shaft = new THREE.Mesh(
+    new THREE.ConeGeometry(1.6, 7, 24, 1, true),
+    new THREE.MeshBasicMaterial({
+      color: 0xfff0e8, transparent: true, opacity: 0.05,
+      side: THREE.DoubleSide, depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    })
+  );
+  shaft.position.set(0, 3.5, 0);
+  scene.add(shaft);
+
+  // --- DUST (Step 3) ---
+  // Source: prototype 7579-7592. 80 particles, upward drift in tick.
+  const dustCount = 80;
+  const dustGeom = new THREE.BufferGeometry();
+  const dustPos = new Float32Array(dustCount * 3);
+  for (let i = 0; i < dustCount; i++) {
+    dustPos[i * 3]     = (Math.random() - 0.5) * 10;
+    dustPos[i * 3 + 1] = Math.random() * 4 + 0.3;
+    dustPos[i * 3 + 2] = (Math.random() - 0.5) * 8 - 1;
+  }
+  dustGeom.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
+  const dust = new THREE.Points(dustGeom, new THREE.PointsMaterial({
+    color: 0xffd9c8, size: 0.025, transparent: true, opacity: 0.45,
+    depthWrite: false, blending: THREE.AdditiveBlending,
+  }));
+  scene.add(dust);
+
   function tick(t) {
-    // Empty — camera lerp added in Step 6, idle fighter in Step 4,
-    // dust drift / emissive pulse in Steps 3/5.
+    // Dust drift — prototype 8040-8046. Linear upward, reset at y>4.
+    const p = dustGeom.attributes.position.array;
+    for (let i = 0; i < dustCount; i++) {
+      p[i * 3 + 1] += 0.002;
+      if (p[i * 3 + 1] > 4) p[i * 3 + 1] = 0.3;
+    }
+    dustGeom.attributes.position.needsUpdate = true;
+
+    // Camera lerp (Step 6), idle fighter + body sway (Step 4),
+    // column emissive pulse (Step 5), hover scale (Step 7) — later.
   }
 
   function setKey(key) {
