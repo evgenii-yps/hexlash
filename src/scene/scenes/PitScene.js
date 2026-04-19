@@ -23,6 +23,7 @@ import {
   tickIdleAnimations,
   addArchetypeGlow,
 } from '../objects/fighterModel.js';
+import { buildHeavyBag } from '../objects/heavyBag.js';
 
 const ROOM_RADIUS = 18;
 const ROOM_WALL_HEIGHT = 9;
@@ -162,6 +163,17 @@ export function buildPitScene(THREE, aspect) {
   addArchetypeGlow(predatorContainer, THREE, ARCHETYPE_COLORS.predator);
   registerIdleFighter(predatorContainer, 2.1); // phase offset — de-sync the two
 
+  // --- HEAVY BAG (training interactable, far left) ---
+  // Source: prototype 5526-5581 (geometry + dedicated spotlight).
+  const heavyBag = buildHeavyBag(THREE);
+  scene.add(heavyBag);
+
+  const bagLight = new THREE.SpotLight(0xfff5e8, 1.0, 7, Math.PI * 0.35, 0.6, 1.2);
+  bagLight.position.set(-8, 5.5, 3);
+  bagLight.target.position.set(-8, 1.5, 3);
+  scene.add(bagLight);
+  scene.add(bagLight.target);
+
   // tick — Шаг 5: crowd breathing, dust drift, rim pulse.
   // Source: prototype 7240-7250 (dust drift + rim pulse) + TZ Step 5 (crowd breathing formula).
   // PATCH_EPIC2_STEPS_5_8.md — dust reset to 0.3 once it crosses 7.5.
@@ -199,6 +211,10 @@ export function buildPitScene(THREE, aspect) {
     predatorContainer.position.y = RING_HEIGHT + Math.sin(t * 1.2 + 1.5) * 0.015;
     wardenContainer.rotation.y = wardenBaseRotY + Math.sin(t * 0.6) * 0.04;
     predatorContainer.rotation.y = predatorBaseRotY + Math.sin(t * 0.6 + 2) * 0.04;
+
+    // Heavy bag idle sway — prototype 7267-7269.
+    heavyBag.rotation.x = Math.sin(t * 0.7) * 0.025;
+    heavyBag.rotation.z = Math.cos(t * 0.55) * 0.018;
   }
 
   return {
