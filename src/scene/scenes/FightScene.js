@@ -60,11 +60,9 @@ export function buildFightScene(THREE, aspect) {
   scene.background = new THREE.Color(0x070811);
   scene.fog = new THREE.FogExp2(0x070811, 0.030);
 
-  // Camera position is driven by updateFightCamera from Step 13 (pit/side/
-  // cinema modes). Until then this default keeps the empty ring framed.
+  // Camera — updateFightCamera(t) sets position and lookAt per frame based
+  // on camMode. Initial pose is irrelevant since tick runs before render.
   const camera = new THREE.PerspectiveCamera(42, aspect, 0.1, 200);
-  camera.position.set(0, 4, 9);
-  camera.lookAt(0, 1, 0);
 
   // --- RING VERTICES ---
   // Shared with posts (Step 10) + rope segments (Step 10) — kept in closure
@@ -259,8 +257,62 @@ export function buildFightScene(THREE, aspect) {
     window._playMove = animSystem.playMove;
   }
 
+  // --- CAMERA MODES (Step 13, prototype 8389-8429) ---
+  let camMode = 'pit';
+  const CAM_MODES = ['pit', 'side', 'cinema'];
+  const _cinemaLookAt = new THREE.Vector3();
+
+  function setCamMode(mode) {
+    if (CAM_MODES.includes(mode)) camMode = mode;
+  }
+
+  function updateFightCamera(t) {
+    if (camMode === 'pit') {
+      // Spectator from one corner of the ring, slow auto-orbit.
+      const orbit = Math.sin(t * 0.05) * 0.4;
+      const r = 8.5;
+      camera.position.set(
+        Math.sin(orbit + 0.5) * r,
+        4.0,
+        Math.cos(orbit + 0.5) * r,
+      );
+      camera.lookAt(0, 1.4, 0);
+    } else if (camMode === 'side') {
+      // Boxing match in profile — locked side view.
+      camera.position.set(0, 1.7, 7.5);
+      camera.lookAt(0, 1.5, 0);
+    } else if (camMode === 'cinema') {
+      // Tracks the active attacker (ignores block/dodge/hit). Camera circles
+      // closer, rises and falls slightly for cinematic feel.
+      const anim = animSystem.getAnims().find(
+        (a) => a.type !== 'block' && a.type !== 'dodge' && a.type !== 'hit',
+      );
+      _cinemaLookAt.set(0, 1.5, 0);
+      if (anim) {
+        const target = (anim.side === 'left') ? ftRight : ftLeft;
+        _cinemaLookAt.copy(target.position);
+        _cinemaLookAt.y = 1.5;
+      }
+      const orbit = t * 0.25;
+      const r = 5.5 + Math.sin(t * 0.3) * 0.5;
+      camera.position.set(
+        Math.sin(orbit) * r,
+        2.2 + Math.sin(t * 0.4) * 0.4,
+        Math.cos(orbit) * r,
+      );
+      camera.lookAt(_cinemaLookAt);
+    }
+  }
+
+  // Step 13 debug hook — lets the user cycle cam modes from DevTools console
+  // (e.g. `_setCamMode('side')`). Removed in Step 18.
+  if (typeof window !== 'undefined') {
+    window._setCamMode = setCamMode;
+  }
+
   function tick(t) {
-    // Step 13 — updateFightCamera(t) here (pit/side/cinema modes).
+    // Camera first — updateFightCamera writes position + lookAt every frame.
+    updateFightCamera(t);
     // Combat animation drives parts; idle runs ONLY when the queue is empty —
     // otherwise tickIdleAnimations resets parts to snapshot mid-combat.
     // Prototype 8838-8846.
@@ -274,7 +326,6 @@ export function buildFightScene(THREE, aspect) {
     animSystem.playMove(side, type);
   }
   // Stubs — filled in later steps.
-  function setCamMode(/* mode */) {}
   function getState() { return null; }
   function resetFight() {}
 
