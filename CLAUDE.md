@@ -763,10 +763,9 @@ User, Clan, ClanInvite, ClanEvent, FightClub, Achievement, UserAchievement, Soci
 
 ## Branch (Git)
 
-Development branch: `claude/hexlash-project-setup-WYkbK`
-Club Mode prototype: **IN PROGRESS** — 109 commits ahead of main, ~6000 lines, deepdive complete (#1a-#1i), Phase 1 work starting.
+Development branch: `visual-v2` (от `main`) — визуальная миграция v24, см. секцию `## v2 Migration`.
+Club Mode + Phase 1 (Captain, Belt System, User→Fighter migration, Morning Report, Retirement, Ranked, Free Arena, NFT Agents): **COMPLETE** — залито в `main`.
 Road 1 (Neon Discipline visual migration): **COMPLETE**. See `/docs/road1-final-report.md` and `/docs/road2-parking-list.md`.
-Previous branches: `claude/hexlash-project-setup-X2K7i` (Road 1), `claude/review-hexlash-guidelines-vxdZD`, `claude/add-club-mode-agents-lmXTI`, `claude/club-mode-navigation-571kx`, `claude/rename-autofight-club-mode-o2bIJ`, `claude/update-claude-md-XVzH6`, `claude/add-pixel-icons-Hk6tn`, `claude/hexlash-full-audit-WvXMd`
 
 ### PvP System Audit — P0+P1 Fixes — ✅ COMPLETE
 
@@ -1792,8 +1791,53 @@ Lazy per-user migration on `GET /v1/user/me`. Creates Agent "Fighter #1" from Us
 
 ## v2 Migration
 
-Визуальная миграция на концепцию прототипа `docs/visual-migration/hexlash_v24.html`. Живёт параллельно старому визуалу через feature flag `/v2`. Источник правды по миграции — `docs/visual-migration/HANDOFF_VISUAL_MIGRATION.md`.
+Визуальная миграция на концепцию прототипа `docs/visual-migration/hexlash_v24.html`. Живёт параллельно старому визуалу через feature flag `/v2`. Источник правды по миграции — `docs/visual-migration/HANDOFF_VISUAL_MIGRATION.md`. Ветка разработки — `visual-v2` от `main`.
+
+### Эпик 1 — Foundation (✅ COMPLETE)
+
+Каркас второй версии визуала. Пользователь открывает `/v2` → пустая 3D-комната с туманом + film grain / scanlines / vignette + маркер «/v2 works». Старый `/` продолжает работать без изменений. Ничего из старого кода не удалено.
 
 ### Three.js
 
-Project Three.js version: r167 (from `package.json` — `three: ^0.167.1`). Прототип написан под r128 (CDN). Разрыв 39 версий зафиксирован как риск на Эпик 2+ (makeFighterLowPoly, геометрии ринга). В Эпике 1 используется только базовый API — несовместимостей не ожидается.
+Project Three.js version: r167 (from `package.json` — `three: ^0.167.1`). Прототип написан под r128 (CDN). Разрыв 39 версий зафиксирован как риск на Эпик 2+ (makeFighterLowPoly, геометрии ринга). В Эпике 1 используется только базовый API (WebGLRenderer, Scene, Fog, PerspectiveCamera, AmbientLight, HemisphereLight, BoxGeometry, PlaneGeometry, MeshStandardMaterial, setAnimationLoop) — несовместимостей не выявлено.
+
+### Feature flag /v2
+
+- В `src/router/index.js` добавлен массив `v2Routes`: родитель `/v2` → `AppV2.vue`, дочерний index-роут `''` → `PitViewV2.vue`. Все будущие v2-роуты — дети `/v2/*`.
+- В `src/App.vue` добавлен computed `isV2Route` (`route.path.startsWith('/v2')`). Под `v-if="!isV2Route"` скрыты 9 блоков старого UI: `<header>` (Logo + balance), `<Info>`, `<Error>`, `<NoConnection>`, `<NewAchievement>`, `<ChallengeNotification>`, `<ClanInviteNotification>`, `<footer>` (BottomMenu).
+- `<main class="content">` не трогается — через него `<RouterView>` монтирует `AppV2`. `.app-v2` сам `position: fixed; inset: 0` — не зависит от `<main>`.
+- Auth-guard v2-роутов не трогает (не в `protectedRoutes`).
+
+### Структура
+
+```
+/src
+  AppV2.vue                         — root для /v2/*. Монтирует CanvasLayer + <router-view> + GlobalOverlays.
+                                      Импортирует hexlash-v24.css (только здесь).
+  scene/                            — 3D-слой, единый для всех будущих сцен
+    CanvasLayer.vue                 — Three.js canvas + renderer + resize/cleanup.
+                                      В Эпике 1 регистрирует сцену 'empty' (пол + 4 стены + свет + fog).
+    sceneRegistry.js                — Map<sceneId, {scene, camera, onEnter?, onLeave?, tick?}>.
+                                      API: registerScene, activateScene, getActiveScene, tickAll.
+    renderLoop.js                   — единый tick через THREE.Clock + setAnimationLoop.
+                                      API: startRenderLoop(renderer, THREE), stopRenderLoop.
+  views-v2/
+    PitViewV2.vue                   — тестовый HUD с маркером «/v2 works». В Эпике 2 заменится реальным HUD Pit.
+  components/hud/common/
+    GlobalOverlays.vue              — три div'а: .grain / .scanlines / .vignette
+  styles/
+    hexlash-v24.css                 — entry point, импортирует v24/tokens.css и v24/effects.css
+    v24/
+      tokens.css                    — @import Google Fonts (Archivo Black, Space Grotesk, JetBrains Mono) +
+                                      CSS-переменные (--hex-primary, --bg-deep, --bg-panel, --text-dim,
+                                      --text-mid, --font-display, --font-body, --font-mono) scoped под .app-v2
+      effects.css                   — .app-v2 .grain (SVG fractal noise, z-index 200) /
+                                      .scanlines (z-index 160) / .vignette (z-index 150).
+                                      Все — pointer-events: none, клики проходят сквозь.
+```
+
+### Известные расхождения с ТЗ (зафиксированы в Эпике 1)
+
+- **Z-index порядок.** ТЗ предписывал `grain < scanlines < vignette < UI`, прототип реально использует `grain (200) > scanlines (160) > vignette (150) > HUD (50)`. Решение подтверждено пользователем: следуем прототипу.
+- **Скрытие старого UI на /v2.** ТЗ Шаг 3 упоминал 7 блоков. По факту скрыто 9 (добавлены `NoConnection` и `NewAchievement` — они глобальные overlay'ы, пересекаются с новым HUD). Подтверждено пользователем.
+- **Prod-билд vs dev.** Между Шагами 3–5 prod-сборка падала: (а) `import('/src/AppV2.vue')` в роутере — Rollup не резолвит абсолютный слэш-путь, заменено на `@/AppV2.vue`; (б) `defineAsyncComponent(() => import('@/scene/CanvasLayer.vue'))` в `AppV2.vue` — Rollup статически разбирает граф динамических импортов, потребовал файл на момент билда. Временный пустой стаб создан отдельным коммитом (`epic1: fix — stub CanvasLayer to unblock prod build`), заменён полноценным renderer-ом в Шаге 6. Правило на остаток миграции: `npm run build` локально перед каждым коммитом.

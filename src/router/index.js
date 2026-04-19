@@ -70,7 +70,11 @@ const v2Routes = [
         name: 'V2Root',
         component: () => import('@/AppV2.vue'),
         children: [
-            // index + вложенные v2-роуты регистрируются в следующих шагах Эпика 1
+            {
+                path: '',
+                name: 'V2Pit',
+                component: () => import('@/views-v2/PitViewV2.vue'),
+            },
         ],
     },
 ];
