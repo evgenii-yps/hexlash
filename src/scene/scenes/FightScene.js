@@ -9,6 +9,13 @@
 
 import { makeConcreteTexture } from '../materials/concrete.js';
 import { makeMetalTexture } from '../materials/metal.js';
+import {
+  makeFighterLowPoly,
+  addArchetypeGlow,
+  registerIdleFighter,
+  unregisterIdleFighter,
+  tickIdleAnimations,
+} from '../objects/fighterModel.js';
 
 const FT_RING_R = 3.6;
 const FT_RING_H = 0.5;
@@ -16,6 +23,36 @@ const FT_POST_H = 2.3;
 const FT_ROOM_R = 14;
 const FT_ROOM_H = 8;
 const FT_ROPE_HS = [0.55, 1.15, 1.75];
+
+// Fighter part indices inside makeFighterLowPoly's 22-child contract.
+// Source: fighterModel.js JSDoc + prototype 8263-8270.
+// 0:head 1:neck 2:torso 3:shoulderL 4:shoulderR 5:upperL 6:upperR
+// 7:elbowL 8:elbowR 9:foreL 10:foreR 11:fistL 12:fistR
+// 13:hipJoint 14:thighL 15:thighR 16:kneeL 17:kneeR
+// 18:shinL 19:shinR 20:footL 21:footR
+function getFighterParts(group) {
+  const inner = group.children[0];
+  const parts = { head: null, torso: null, foreL: null, foreR: null, fistL: null, fistR: null };
+  if (inner && inner.children && inner.children.length >= 22) {
+    parts.head  = inner.children[0];
+    parts.torso = inner.children[2];
+    parts.foreL = inner.children[9];
+    parts.foreR = inner.children[10];
+    parts.fistL = inner.children[11];
+    parts.fistR = inner.children[12];
+  }
+  return parts;
+}
+
+function snapshotParts(parts) {
+  const snap = {};
+  for (const k in parts) {
+    const p = parts[k];
+    if (!p) continue;
+    snap[k] = { pos: p.position.clone(), rot: p.rotation.clone() };
+  }
+  return snap;
+}
 
 export function buildFightScene(THREE, aspect) {
   const scene = new THREE.Scene();
@@ -181,10 +218,40 @@ export function buildFightScene(THREE, aspect) {
   shaft.position.set(0, 4, 0);
   scene.add(shaft);
 
-  function tick(/* t */) {
+  // --- TWO FIGHTERS (prototype 8234-8250) ---
+  // Facing each other across the ring. addArchetypeGlow places a disc under
+  // each fighter; registerIdleFighter hooks them into the global idle loop.
+  const ftLeft = new THREE.Group();
+  ftLeft.position.set(-1.2, FT_RING_H, 0);
+  ftLeft.rotation.y = Math.PI / 2; // face right
+  ftLeft.add(makeFighterLowPoly(THREE, 'warden'));
+  addArchetypeGlow(ftLeft, THREE, 0xD4A843);
+  registerIdleFighter(ftLeft, 0);
+  scene.add(ftLeft);
+
+  const ftRight = new THREE.Group();
+  ftRight.position.set(1.2, FT_RING_H, 0);
+  ftRight.rotation.y = -Math.PI / 2; // face left
+  ftRight.add(makeFighterLowPoly(THREE, 'predator'));
+  addArchetypeGlow(ftRight, THREE, 0xFF066F);
+  registerIdleFighter(ftRight, 1.5);
+  scene.add(ftRight);
+
+  // --- PART REFS + BASE SNAPSHOT (prototype 8256-8293) ---
+  // Step 12 will animate torso/fists/forearms/head during combat moves.
+  // Refs are cached now so playMove can set positions as `base + offset`
+  // without re-traversing the group each frame.
+  const ftLeftParts  = getFighterParts(ftLeft);
+  const ftRightParts = getFighterParts(ftRight);
+  const ftLeftBase   = snapshotParts(ftLeftParts);
+  const ftRightBase  = snapshotParts(ftRightParts);
+
+  function tick(t) {
     // Step 13 — updateFightCamera(t) here (pit/side/cinema modes).
-    // Step 12 — tickAnims(); idle fallback via tickIdleAnimations when idle.
-    // Step 11 — fighters added; register idle via fighterModel.
+    // Step 12 — tickAnims() + guarded idle: idle runs only when no combat
+    // anim is active. On Step 11 there is no anim queue yet, so idle is
+    // unconditional — fighters breathe.
+    tickIdleAnimations(t);
   }
 
   // Stubs — filled in later steps.
@@ -194,6 +261,10 @@ export function buildFightScene(THREE, aspect) {
   function resetFight() {}
 
   function dispose() {
+    // Unregister idle BEFORE disposing so fighterModel's global registry
+    // doesn't keep references to disposed Groups across Fight re-entries.
+    unregisterIdleFighter(ftLeft);
+    unregisterIdleFighter(ftRight);
     scene.traverse((obj) => {
       if (obj.geometry) obj.geometry.dispose();
       const m = obj.material;
