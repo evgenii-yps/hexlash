@@ -26,6 +26,7 @@ import {
 import { buildHeavyBag } from '../objects/heavyBag.js';
 import { buildTerminal } from '../objects/terminal.js';
 import { buildPlinth } from '../objects/plinth.js';
+import { buildScoreboard } from '../objects/scoreboard.js';
 
 const ROOM_RADIUS = 18;
 const ROOM_WALL_HEIGHT = 9;
@@ -183,9 +184,14 @@ export function buildPitScene(THREE, aspect) {
 
   // --- PLINTH «+» (create-fighter interactable) ---
   // Source: prototype 5647-5709. Reuses `platformTex` (concrete, repeat 1,1)
-  // per PATCH_EPIC2_STEPS_5_8.md. Shaft is rotated slowly in tick.
+  // per PATCH_EPIC2_STEPS_5_8.md.
   const plinth = buildPlinth(THREE, platformTex);
   scene.add(plinth.group);
+
+  // --- SCOREBOARD (ratings interactable, right wall) ---
+  // Source: prototype 5711-5808. Static — no tick callback.
+  const scoreboard = buildScoreboard(THREE);
+  scene.add(scoreboard);
 
   // tick — Шаг 5: crowd breathing, dust drift, rim pulse.
   // Source: prototype 7240-7250 (dust drift + rim pulse) + TZ Step 5 (crowd breathing formula).
