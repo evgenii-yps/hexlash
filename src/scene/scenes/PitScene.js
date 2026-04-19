@@ -24,6 +24,7 @@ import {
   addArchetypeGlow,
 } from '../objects/fighterModel.js';
 import { buildHeavyBag } from '../objects/heavyBag.js';
+import { buildTerminal } from '../objects/terminal.js';
 
 const ROOM_RADIUS = 18;
 const ROOM_WALL_HEIGHT = 9;
@@ -174,6 +175,11 @@ export function buildPitScene(THREE, aspect) {
   scene.add(bagLight);
   scene.add(bagLight.target);
 
+  // --- TERMINAL (matchmaking interactable, far right) ---
+  // Source: prototype 5583-5644. tickScreen redraws the blinking cursor.
+  const terminal = buildTerminal(THREE);
+  scene.add(terminal.group);
+
   // tick — Шаг 5: crowd breathing, dust drift, rim pulse.
   // Source: prototype 7240-7250 (dust drift + rim pulse) + TZ Step 5 (crowd breathing formula).
   // PATCH_EPIC2_STEPS_5_8.md — dust reset to 0.3 once it crosses 7.5.
@@ -215,6 +221,9 @@ export function buildPitScene(THREE, aspect) {
     // Heavy bag idle sway — prototype 7267-7269.
     heavyBag.rotation.x = Math.sin(t * 0.7) * 0.025;
     heavyBag.rotation.z = Math.cos(t * 0.55) * 0.018;
+
+    // Terminal CRT cursor blink — prototype 7271-7282.
+    terminal.tickScreen(t);
   }
 
   return {
