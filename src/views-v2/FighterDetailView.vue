@@ -56,6 +56,8 @@ onMounted(() => {
     tick: fd.tick,
   });
   activateScene('fd');
+  // Step 4 — load the fighter model for this route key.
+  fd.setKey(validatedKey.value);
   onResize = handleResize;
   window.addEventListener('resize', onResize);
 });
@@ -74,5 +76,9 @@ onBeforeUnmount(() => {
   }
 });
 
-watch(() => route.params.key, guard);
+// Route-key swap without full unmount (warden ↔ predator direct navigation).
+watch(() => route.params.key, (k) => {
+  guard(k);
+  if (fd && VALID_KEYS.includes(k)) fd.setKey(k);
+});
 </script>

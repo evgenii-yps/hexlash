@@ -11,9 +11,22 @@
 //   - Step 7: picker for columns.
 
 import { makeConcreteTexture } from '../materials/concrete.js';
+import {
+  makeFighterLowPoly,
+  registerIdleFighter,
+  unregisterIdleFighter,
+  tickIdleAnimations,
+  addArchetypeGlow,
+} from '../objects/fighterModel.js';
 
 const FD_ROOM_R = 14;
 const FD_ROOM_H = 8;
+
+// Archetype glow colors under fighter's feet.
+const GLOW_COLOR = {
+  warden:   0xD4A843, // gold
+  predator: 0xFF066F, // neon pink
+};
 
 export function buildFighterDetailScene(THREE, aspect) {
   const scene = new THREE.Scene();
@@ -139,6 +152,57 @@ export function buildFighterDetailScene(THREE, aspect) {
   }));
   scene.add(dust);
 
+  // Step 4 — fighter swap state. Tracked in closure so tick() and setKey()
+  // share a single source of truth; dispose() clears the idle registry entry.
+  let currentFighter = null;
+  let currentGlow = null;
+
+  function disposeObject3D(obj) {
+    obj.traverse((o) => {
+      if (o.geometry) o.geometry.dispose();
+      const m = o.material;
+      if (m) {
+        const mats = Array.isArray(m) ? m : [m];
+        for (const mat of mats) {
+          if (mat.map) mat.map.dispose();
+          if (mat.dispose) mat.dispose();
+        }
+      }
+    });
+  }
+
+  function setKey(key) {
+    // Tear down previous fighter + glow (ТЗ Step 4).
+    // unregisterIdleFighter must run BEFORE dispose so fighterModel's global
+    // idle registry doesn't hold a reference to a disposed Group.
+    if (currentFighter) {
+      unregisterIdleFighter(podium);
+      podium.remove(currentFighter);
+      disposeObject3D(currentFighter);
+      currentFighter = null;
+    }
+    if (currentGlow) {
+      podium.remove(currentGlow);
+      disposeObject3D(currentGlow);
+      currentGlow = null;
+    }
+
+    // Build new fighter + glow.
+    // Source: prototype 7441-7448.
+    const fighter = makeFighterLowPoly(THREE, key);
+    fighter.position.y = 0.30;
+    podium.add(fighter);
+    registerIdleFighter(podium, 0.7);
+
+    const color = GLOW_COLOR[key] ?? GLOW_COLOR.warden;
+    addArchetypeGlow(podium, THREE, color);
+
+    currentFighter = fighter;
+    // addArchetypeGlow tags the disc with userData.isArchGlow — find it to
+    // keep a dispose handle for the next swap.
+    currentGlow = podium.children.find((c) => c.userData && c.userData.isArchGlow) || null;
+  }
+
   function tick(t) {
     // Dust drift — prototype 8040-8046. Linear upward, reset at y>4.
     const p = dustGeom.attributes.position.array;
@@ -148,15 +212,31 @@ export function buildFighterDetailScene(THREE, aspect) {
     }
     dustGeom.attributes.position.needsUpdate = true;
 
-    // Camera lerp (Step 6), idle fighter + body sway (Step 4),
-    // column emissive pulse (Step 5), hover scale (Step 7) — later.
-  }
+    // Outer fighter sway — prototype 8017-8021. Whole-body sway applied on
+    // top of any per-part idle. Per-part idle is a no-op for the FD podium
+    // wrapper (podium.children[0] is podiumDisc, not a fighter group), so the
+    // prototype effectively relies on this outer sway as the sole motion.
+    if (currentFighter) {
+      currentFighter.position.y = 0.30 + Math.sin(t * 1.2) * 0.012;
+      currentFighter.rotation.y = Math.sin(t * 0.5) * 0.06;
+    }
 
-  function setKey(key) {
-    // Step 4 will build/swap the fighter here.
+    // Advance the global idle registry. Harmless even when pit scene is
+    // inactive — pit fighters' transforms update off-screen but don't render.
+    tickIdleAnimations(t);
+
+    // Camera lerp (Step 6), column emissive pulse (Step 5),
+    // hover scale on columns (Step 7) — later.
   }
 
   function dispose() {
+    // Release idle registry entry for podium so fighterModel doesn't keep
+    // the disposed Group alive across FD re-entries.
+    if (currentFighter) {
+      unregisterIdleFighter(podium);
+      currentFighter = null;
+      currentGlow = null;
+    }
     scene.traverse((obj) => {
       if (obj.geometry) obj.geometry.dispose();
       const m = obj.material;
