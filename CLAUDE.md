@@ -1841,3 +1841,106 @@ Project Three.js version: r167 (from `package.json` — `three: ^0.167.1`). Пр
 - **Z-index порядок.** ТЗ предписывал `grain < scanlines < vignette < UI`, прототип реально использует `grain (200) > scanlines (160) > vignette (150) > HUD (50)`. Решение подтверждено пользователем: следуем прототипу.
 - **Скрытие старого UI на /v2.** ТЗ Шаг 3 упоминал 7 блоков. По факту скрыто 9 (добавлены `NoConnection` и `NewAchievement` — они глобальные overlay'ы, пересекаются с новым HUD). Подтверждено пользователем.
 - **Prod-билд vs dev.** Между Шагами 3–5 prod-сборка падала: (а) `import('/src/AppV2.vue')` в роутере — Rollup не резолвит абсолютный слэш-путь, заменено на `@/AppV2.vue`; (б) `defineAsyncComponent(() => import('@/scene/CanvasLayer.vue'))` в `AppV2.vue` — Rollup статически разбирает граф динамических импортов, потребовал файл на момент билда. Временный пустой стаб создан отдельным коммитом (`epic1: fix — stub CanvasLayer to unblock prod build`), заменён полноценным renderer-ом в Шаге 6. Правило на остаток миграции: `npm run build` локально перед каждым коммитом.
+
+---
+
+### Эпик 2 — Pit Hub Scene (✅ COMPLETE)
+
+Завершён 2026-04-19. Визуально подтверждён пользователем на Vercel preview. Полный отчёт — `docs/visual-migration/EPIC2_FINAL_REPORT.md`.
+
+**Что видит пользователь на `/v2`:**
+- Октагональная бетонная комната с лучами, лампами, толпой, ground fog.
+- В центре — восьмиугольный ринг (платформа + 8 стоек + 3 уровня канатов + клетка).
+- Два бойца в ринге: Warden (коренастый, золотой glow) и Predator (жилистый, розовый glow), idle-анимация (дыхание / sway / fist bob) без drift.
+- Вокруг ринга 6 интерактивных объектов: heavy bag, CRT terminal с блинкающим курсором, «+» plinth, scoreboard, clan banner, shop locker.
+- Orbit-камера: drag по горизонтали, wheel zoom, idle auto-drift, высота и lookY зависят от zoom.
+- Hover на любой из 8 кликабельных целей → scale 1.04 + cursor pointer + WorldHint ярлык под курсором.
+- Click (drag < 5px) → PhModal «coming soon» с kicker/title/desc из словаря.
+- TopBar: Gold / Energy / ELO карточки слева, «THE PIT» центр, аватар `YV` справа (кликабелен).
+- Film grain / scanlines / vignette из Эпика 1 поверх всего.
+
+### Структура (после Эпика 2)
+
+```
+/src
+  AppV2.vue                         — root для /v2/*. Монтирует CanvasLayer + <router-view> + GlobalOverlays.
+  scene/
+    CanvasLayer.vue                 — Three.js renderer + resize/cleanup. Создаёт picker, pointermove/down/up
+                                      listeners, пишет в useHoverState / pickClick при валидном клике.
+    sceneRegistry.js                — Map<sceneId, {scene, camera, onEnter?, onLeave?, tick?}>. API: registerScene,
+                                      activateScene, getActiveScene, tickAll.
+    renderLoop.js                   — startRenderLoop(renderer, THREE) / stopRenderLoop.
+    materials/
+      concrete.js                   — makeConcreteTexture(THREE) — procedural noise, применяется с разным repeat
+                                      для платформы (1×1) и пола (6×6). ВНИМАНИЕ: repeat — глобальное состояние,
+                                      две текстуры создаются отдельно, не `.clone()`.
+      metal.js                      — makeMetalTexture(THREE) — brushed steel, для стоек ринга и shop locker.
+      noise.js                      — общий helper для texture-генераторов.
+    objects/
+      fighterModel.js               — makeFighterLowPoly / registerIdleFighter / tickIdleAnimations /
+                                      unregisterIdleFighter / addArchetypeGlow.
+      arena.js                      — buildArena(scene, THREE, { platformTex, floorTex, metalTex }) → { arena, vertices }.
+                                      Константы RING_RADIUS, RING_HEIGHT, POST_HEIGHT, ROPE_HEIGHTS.
+      environment.js                — buildEnvironment(scene, THREE) → { crowdGroup, dustGeom }. Стены / балки /
+                                      лампы / решётки / толпа силуэтов / ground fog particles.
+      heavyBag.js                   — buildHeavyBag(THREE) → Group. Training interactable, userData.id='training'.
+      terminal.js                   — buildTerminal(THREE) → { group, tickScreen(t) }. Matchmaking, blinking cursor.
+      plinth.js                     — buildPlinth(THREE, concreteTex) → { group, shaft }. Create, static cone.
+      scoreboard.js                 — buildScoreboard(THREE) → Group. Ratings, top-5 leaderboard на canvas.
+      clanBanner.js                 — buildClanBanner(THREE, concreteTex) → Group. Clan, вертикальный canvas-баннер.
+      shopLocker.js                 — buildShopLocker(THREE, metalTex) → Group. Shop, 2×3 grid cosmetic slots,
+                                      toneMapped:false на дисплее.
+    scenes/
+      PitScene.js                   — buildPitScene(THREE, aspect). Сборщик hub-сцены. ROOM_RADIUS=18, ROOM_WALL_HEIGHT=9.
+    interaction/
+      cameraController.js           — attachOrbit(camera, canvas) → { tick, detach, getIsDragging }. Drag-absolute
+                                      formula от dragStartAngle, wheel normalization через Math.sign, zoom lerp 0.10.
+                                      Listeners: mousedown на canvas, mousemove/mouseup на window (иначе drag ломается
+                                      за границей viewport'а).
+      raycaster.js                  — createPicker(camera, targets, THREE) → { pickAt(x, y) }. Walk-up parent chain
+                                      до registered root.
+      useHoverState.js              — module-scoped reactive { text, x, y, visible }. CanvasLayer пишет, PitViewV2
+                                      читает. Composable для siblings-топологии (вместо emit через AppV2).
+      useClickState.js              — module-scoped reactive { id, seq }. pickClick(id) инкрементирует seq, чтобы
+                                      watch срабатывал на повторный клик по тому же объекту.
+  views-v2/
+    PitViewV2.vue                   — рендерит <HudPit ref>, watch на click.seq → hud.openPhModal(click.id).
+  components/hud/
+    HudPit.vue                      — композиция TopBar + WorldHint + PhModal. MODAL_CONTENT словарь (8 id + avatar),
+                                      defineExpose({ openPhModal }).
+    common/
+      TopBar.vue                    — три зоны (resources / title / avatar). pointer-events: none на контейнере,
+                                      auto на кликабельных. emit('avatar-click').
+      PhModal.vue                   — Teleport в body, backdrop + modal, close через × / backdrop / Escape.
+                                      Стили не-scoped (Teleport выносит из SFC).
+      WorldHint.vue                 — floating pointer-anchored ярлык, fixed + translate(-50%, -100%).
+      GlobalOverlays.vue            — .grain / .scanlines / .vignette (из Эпика 1).
+      FighterBadge.vue              — stub, заполнится в Эпике 3 (Fighter Detail scene).
+  styles/
+    hexlash-v24.css + v24/          — из Эпика 1, не менялось.
+```
+
+### Публичные контракты (Эпик 2)
+
+- **`buildPitScene(THREE, aspect)`** → `{ scene, camera, tick, rimL, concreteTex, metalTex, roomHeight, roomRadius, clickableTargets }`. `clickableTargets` — массив из 8 корневых Group'ов в порядке прототипа (heavyBag, terminal.group, wardenContainer, predatorContainer, plinth.group, scoreboard, clanBanner, shopLocker). `tick(t)` анимирует crowd / dust / rim pulse / fighter idle / container bob / heavy bag sway / terminal cursor / hover-scale lerp.
+- **`makeFighterLowPoly(THREE, variant?)`** → `THREE.Group` с **22 прямыми детьми в фиксированном порядке** (индексы 0-21). Контракт задокументирован в JSDoc файла. Аксессуары (belt/tail/wraps) идут после индекса 21 и хранятся в `g.userData.accessories` (`visible=false`). variant: `'warden'` (default) / `'predator'`.
+- **`registerIdleFighter(group, phaseOffset)`** — регистрирует wrapper-group, где `children[0]` = результат `makeFighterLowPoly`. phaseOffset в секундах десинхронизирует нескольких бойцов.
+- **`tickIdleAnimations(t)`** — вызывать раз за кадр. Snapshot `entry.base` делается при первом тике, все дальнейшие обновления — **set** от base + offset, не `+=` (иначе кулаки дрейфуют).
+- **`unregisterIdleFighter(group)`** — splice по ссылке. No-op если не найдено.
+- **`addArchetypeGlow(fighterGroup, THREE, hexColor)`** — canvas-gradient диск (`PlaneGeometry 0.85×0.85`, `AdditiveBlending`), добавляется в переданный wrapper как `children[1]` (при условии, что fighter уже добавлен `children[0]`). Помечен `userData.isArchGlow=true`.
+- **`createPicker(camera, targets, THREE)`** → `{ pickAt(clientX, clientY) }`. Raycaster + walk-up parent chain до одного из targets. Null если промах.
+- **`attachOrbit(camera, canvas)`** → `{ tick, detach, getIsDragging }`. Константы `ZOOM_DEFAULT = √(11²+16²) ≈ 19.42`, `ZOOM_MIN = 7`, `ZOOM_MAX = 32`. Formula drag: `camTarget = dragStartAngle + (dx / innerWidth) * π * 0.6`. lookY динамический: `1.6 + heightRatio * 0.6`.
+- **`useHoverState()`** → shared reactive `{ text, x, y, visible }`. CanvasLayer пишет, PitViewV2 читает через `<WorldHint :text :x :y :visible>`.
+- **`useClickState()`** → shared reactive `{ id, seq }`. `pickClick(id)` инкрементирует seq. Consumer: `watch(() => click.seq, () => hud.openPhModal(click.id))`.
+
+### Известные расхождения с ТЗ (Эпик 2, архитектурные решения)
+
+- **Composables вместо emit для siblings.** CanvasLayer и PitViewV2 — siblings внутри AppV2, не parent-child. `emit/props` не подключает их напрямую. Вместо цепочки через AppV2 используем module-scoped reactive (`useHoverState` / `useClickState`) — стандартный Vue 3 паттерн для transient cross-sibling state.
+- **pointermove/down/up на canvas, не window.** Orbit drag уже использует `window.mousemove/up` чтобы не ломаться за границей viewport. Hover и click — на canvas, поскольку вне canvas в пределах `/v2` только overlays с `pointer-events: none`.
+- **Interactables в `scene`, не в `arena` group.** Heavy bag, terminal, plinth, scoreboard, clan banner, shop locker — добавлены прямо в `scene`, а не в `arena`-Group. Они вне ринга концептуально. Бойцы — в `arena.add(...)` (по прототипу 6682/6687, в зоне ринга). PATCH документирует это как «на выбор, визуально эквивалентно».
+- **`MODAL_CONTENT` расширен на `avatar`.** В прототипе клик по аватару открывал Profile scene (сейчас её нет). Добавлена 9-я запись `avatar` с описанием «YOUR PROFILE / Coming soon» — PhModal реюзается.
+- **Hot-fixes после неточностей ТЗ.** (1) Шаг 3: `FOV 45°` не `50°`, `FogExp2` не линейный `Fog`, `renderer.shadowMap.enabled=true` — все три правки внесены отдельным fix-коммитом после аудита прототипа. (2) Шаг 12: plinth light shaft не вращается — спутано с volumetric light shaft'ами (прототип 6759-6778), конус plinth статичен. Откачено в отдельном коммите.
+- **Шаг 8 закоммичен пользователем через GitHub UI.** `fighterModel.js` — 585 строк, перенос 1-в-1 из прототипа. Claude Code уходил в Stream timeout при записи файла такого размера через Write. Решение: пользователь приложил готовый файл, Claude Code запустил сборку + push.
+- **Prod-билд обязателен перед каждым коммитом.** Унаследовано из Эпика 1, подтверждено на 22 коммитах — ни одного падения на Vercel за весь Эпик 2.
+
+**Следующий эпик:** Эпик 3 — вторая сцена (Fighter Detail / Training / ...). План в `docs/visual-migration/HANDOFF_VISUAL_MIGRATION.md` §8.
