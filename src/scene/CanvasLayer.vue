@@ -55,6 +55,14 @@ onMounted(() => {
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  // Epic 3A hot-fix — prototype enables ACES Filmic on all 5 renderers
+  // (pit 5050, FD 7367, Fight 8091, Create 8872, Profile 9344). Missed in
+  // Epic 2 scaffold. Without this, highlights clip and midtones compress —
+  // the v2 pit visually diverges from the prototype reference.
+  // Emissive canvas-textures (displays, glow discs) set toneMapped:false to
+  // preserve brightness under the tone mapper.
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.05;
 
   const aspect = window.innerWidth / window.innerHeight;
   pit = buildPitScene(THREE, aspect);

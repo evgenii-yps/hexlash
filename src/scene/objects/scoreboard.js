@@ -81,7 +81,8 @@ export function buildScoreboard(THREE) {
   const screenTex = new THREE.CanvasTexture(cv);
   const screen = new THREE.Mesh(
     new THREE.PlaneGeometry(1.45, 0.88),
-    new THREE.MeshBasicMaterial({ map: screenTex }),
+    // toneMapped:false preserves the bright leaderboard under ACES.
+    new THREE.MeshBasicMaterial({ map: screenTex, toneMapped: false }),
   );
   screen.position.z = 0.045;
   group.add(screen);
@@ -106,6 +107,7 @@ export function buildScoreboard(THREE) {
       depthWrite: false,
       blending: THREE.AdditiveBlending,
       side: THREE.DoubleSide,
+      toneMapped: false,
     }),
   );
   disc.rotation.x = -Math.PI / 2;

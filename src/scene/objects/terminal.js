@@ -63,7 +63,8 @@ export function buildTerminal(THREE) {
   const screenTex = new THREE.CanvasTexture(screenCanvas);
   const screen = new THREE.Mesh(
     new THREE.PlaneGeometry(0.65, 0.55),
-    new THREE.MeshBasicMaterial({ map: screenTex }),
+    // toneMapped:false preserves the bright CRT readout under ACES.
+    new THREE.MeshBasicMaterial({ map: screenTex, toneMapped: false }),
   );
   screen.position.set(0, 1.35, 0.43);
   group.add(screen);
