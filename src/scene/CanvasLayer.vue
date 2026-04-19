@@ -5,7 +5,7 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import * as THREE from 'three';
-import { registerScene, activateScene } from './sceneRegistry.js';
+import { registerScene, activateScene, getActiveScene } from './sceneRegistry.js';
 import { startRenderLoop, stopRenderLoop } from './renderLoop.js';
 import { buildPitScene } from './scenes/PitScene.js';
 import { attachOrbit } from './interaction/cameraController.js';
@@ -63,6 +63,13 @@ onMounted(() => {
   // tick(t) here MUST run before pit.tick / renderer.render — composed below.
   orbit = attachOrbit(pit.camera, canvasEl.value);
 
+  // Epic 3A Step 7 — pointer handlers are generalized over the active scene.
+  // Each scene registers its own picker + drag predicate + hover scale +
+  // labels, and CanvasLayer simply forwards pointer events through whatever
+  // the active entry declares. Pit exposes its own picker here; FD registers
+  // its picker inside FighterDetailView.
+  picker = createPicker(pit.camera, pit.clickableTargets, THREE);
+
   registerScene('pit', {
     scene: pit.scene,
     camera: pit.camera,
@@ -70,6 +77,10 @@ onMounted(() => {
       orbit.tick(t);
       pit.tick(t);
     },
+    picker,
+    getIsDragging: () => orbit.getIsDragging(),
+    hoverScale: 1.04,
+    labels: LABELS,
   });
   activateScene('pit');
   startRenderLoop(renderer, THREE);
@@ -83,28 +94,29 @@ onMounted(() => {
   };
   window.addEventListener('resize', onResize);
 
-  // --- HOVER (Step 16) ---
-  // Raycaster over clickable roots. Skipped while orbit drag is active so
-  // the user can sweep past objects without flicker. Prototype 6859-6913.
-  picker = createPicker(pit.camera, pit.clickableTargets, THREE);
-
+  // --- HOVER (Epic 2 Step 16; generalized in Epic 3A Step 7) ---
+  // Uses whatever picker + drag predicate the ACTIVE scene registered. Hover
+  // hints only show for scenes that provide a `labels` map. Prototype 6859-
+  // 6913 (pit) + 7616-7629 (fd) — the paths are identical across scenes.
   onPointerMove = (e) => {
-    if (orbit.getIsDragging()) return;
-    const hit = picker.pickAt(e.clientX, e.clientY);
+    const active = getActiveScene();
+    if (!active || !active.picker) return;
+    if (active.getIsDragging && active.getIsDragging()) return;
+    const hit = active.picker.pickAt(e.clientX, e.clientY);
     if (hit !== hoveredObj) {
       if (hoveredObj) hoveredObj.userData.hoverScale = 1.0;
       hoveredObj = hit;
       if (hit) {
-        hit.userData.hoverScale = 1.04;
+        hit.userData.hoverScale = active.hoverScale || 1.04;
         document.body.style.cursor = 'pointer';
-        hoverState.text = LABELS[hit.userData.id] || '';
-        hoverState.visible = hoverState.text !== '';
+        const label = active.labels ? active.labels[hit.userData.id] : '';
+        hoverState.text = label || '';
+        hoverState.visible = !!label;
       } else {
         document.body.style.cursor = '';
         hoverState.visible = false;
       }
     }
-    // Keep the hint pinned to the pointer while hovered.
     if (hoveredObj && hoverState.visible) {
       hoverState.x = e.clientX;
       hoverState.y = e.clientY;
@@ -112,10 +124,9 @@ onMounted(() => {
   };
   canvasEl.value.addEventListener('pointermove', onPointerMove);
 
-  // --- CLICK (Step 17) ---
-  // A click is a pointerdown+pointerup pair with < 5px movement. Anything
-  // larger is treated as orbit drag and ignored. Prototype uses the same
-  // dragMoved=false heuristic (cameraController tracks its own dragMoved).
+  // --- CLICK (Epic 2 Step 17; generalized in Epic 3A Step 7) ---
+  // Click = pointerdown+pointerup pair with < 5px movement. Routes through
+  // the active scene's picker and dispatches via useClickState.
   let downX = 0;
   let downY = 0;
   onPointerDown = (e) => {
@@ -126,7 +137,9 @@ onMounted(() => {
     const dx = e.clientX - downX;
     const dy = e.clientY - downY;
     if (Math.hypot(dx, dy) >= 5) return; // drag, not click
-    const hit = picker.pickAt(e.clientX, e.clientY);
+    const active = getActiveScene();
+    if (!active || !active.picker) return;
+    const hit = active.picker.pickAt(e.clientX, e.clientY);
     if (hit && hit.userData.id) pickClick(hit.userData.id);
   };
   canvasEl.value.addEventListener('pointerdown', onPointerDown);

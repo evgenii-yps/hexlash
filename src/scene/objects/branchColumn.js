@@ -16,7 +16,10 @@ export function buildBranchColumn(THREE, branch, opts) {
 
   const g = new THREE.Group();
   g.position.set(branch.x, 0, branch.z);
-  g.userData.branchId = branch.id;
+  // userData.id matches the convention used by pit interactables — CanvasLayer
+  // pointer handlers read `.id` from the picked target and forward it through
+  // useClickState. Step 7.
+  g.userData.id = branch.id;
 
   const h = COL_BASE_H + branch.level * COL_PER_LVL;
 

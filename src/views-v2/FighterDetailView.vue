@@ -1,5 +1,5 @@
 <template>
-  <HudFighterDetail :key-prop="validatedKey" />
+  <HudFighterDetail ref="hudRef" :key-prop="validatedKey" />
 </template>
 
 <script setup>
@@ -13,7 +13,7 @@
 // Rationale: matches scene lifecycle to View lifecycle, avoids stale GL context
 // across AppV2 remount cycles, keeps CanvasLayer dumb.
 
-import { computed, onMounted, onBeforeUnmount, watch } from 'vue';
+import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import * as THREE from 'three';
 import HudFighterDetail from '@/components/hud/HudFighterDetail.vue';
@@ -21,8 +21,13 @@ import { buildFighterDetailScene } from '@/scene/scenes/FighterDetailScene.js';
 import { registerScene, activateScene } from '@/scene/sceneRegistry.js';
 import { attachFdOrbit } from '@/scene/interaction/fdCameraController.js';
 import { getCanvasRef } from '@/scene/interaction/useCanvasRef.js';
+import { useClickState } from '@/scene/interaction/useClickState.js';
 
 const VALID_KEYS = ['warden', 'predator'];
+const BRANCH_IDS = ['speed', 'power', 'technique'];
+
+const hudRef = ref(null);
+const click = useClickState();
 
 const route = useRoute();
 const router = useRouter();
@@ -59,6 +64,9 @@ onMounted(() => {
   // downstream camera consumers).
   const canvas = getCanvasRef();
   if (canvas) fdOrbit = attachFdOrbit(fd.camera, canvas);
+  // Step 7 — scene entry advertises picker + drag predicate + hover scale to
+  // CanvasLayer's generic pointer handlers. FD has no label hints, so the
+  // `labels` field is intentionally omitted.
   registerScene('fd', {
     scene: fd.scene,
     camera: fd.camera,
@@ -66,6 +74,9 @@ onMounted(() => {
       if (fdOrbit) fdOrbit.tick(t);
       fd.tick(t);
     },
+    picker: fd.picker,
+    getIsDragging: () => (fdOrbit ? fdOrbit.getIsDragging() : false),
+    hoverScale: 1.06,
   });
   activateScene('fd');
   // Step 4 — load the fighter model for this route key.
@@ -96,5 +107,14 @@ onBeforeUnmount(() => {
 watch(() => route.params.key, (k) => {
   guard(k);
   if (fd && VALID_KEYS.includes(k)) fd.setKey(k);
+});
+
+// Step 7 — column clicks arrive through the global useClickState composable.
+// Pit ids (warden/predator/training/...) can't be produced while FD is active
+// (pit's picker is inactive) so a simple branch-id filter is enough.
+watch(() => click.seq, () => {
+  if (!click.id) return;
+  if (!BRANCH_IDS.includes(click.id)) return;
+  if (hudRef.value) hudRef.value.openBranchPanel(click.id);
 });
 </script>

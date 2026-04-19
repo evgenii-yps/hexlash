@@ -21,6 +21,14 @@ const router = useRouter();
 function onBack() {
   router.push('/v2');
 }
+
+// Step 7 — placeholder. Real BranchPanel integration arrives in Step 8.
+function openBranchPanel(branchId) {
+  // eslint-disable-next-line no-console
+  console.log('[FD] openBranchPanel:', branchId);
+}
+
+defineExpose({ openBranchPanel });
 </script>
 
 <style scoped>

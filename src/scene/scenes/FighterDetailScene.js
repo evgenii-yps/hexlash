@@ -19,6 +19,7 @@ import {
   addArchetypeGlow,
 } from '../objects/fighterModel.js';
 import { buildBranchColumn } from '../objects/branchColumn.js';
+import { createPicker } from '../interaction/raycaster.js';
 
 const FD_ROOM_R = 14;
 const FD_ROOM_H = 8;
@@ -120,6 +121,9 @@ export function buildFighterDetailScene(THREE, aspect) {
     scene.add(col.group);
     fdBranchColumns.push({ group: col.group, branch: b, height: col.height });
   }
+  const clickableTargets = fdBranchColumns.map((c) => c.group);
+  // Step 7 — picker lives with the scene; CanvasLayer uses it via registry.
+  const picker = createPicker(camera, clickableTargets, THREE);
 
   // --- LIGHTING (Step 3) ---
   // Source: prototype 7546-7565.
@@ -243,11 +247,8 @@ export function buildFighterDetailScene(THREE, aspect) {
       currentFighter.rotation.y = Math.sin(t * 0.5) * 0.06;
     }
 
-    // Column emissive pulse — prototype 8030-8037. Each column phase-shifted
-    // by 1.7 rad so they breathe out of sync. MeshBasicMaterial (cap/accent/
-    // disc) has no emissive — guard filters them out. MeshStandardMaterial of
-    // the base block has default emissive=0x000000, so the 0.10 sine amplitude
-    // multiplies to zero — only the shaft (emissive=branch.color) visibly pulses.
+    // Column emissive pulse — prototype 8030-8037. Only shafts visibly pulse
+    // (other materials have no emissive or emissive=0).
     for (let i = 0; i < fdBranchColumns.length; i++) {
       const children = fdBranchColumns[i].group.children;
       for (const ch of children) {
@@ -258,11 +259,18 @@ export function buildFighterDetailScene(THREE, aspect) {
       }
     }
 
+    // Column hover-scale lerp — prototype 8023-8029. CanvasLayer writes
+    // userData.hoverScale (1.0 idle, 1.06 on hover), this lerps toward it.
+    for (const c of fdBranchColumns) {
+      const target = c.group.userData.hoverScale || 1.0;
+      const cur = c.group.scale.x;
+      const next = cur + (target - cur) * 0.15;
+      c.group.scale.set(next, next, next);
+    }
+
     // Advance the global idle registry. Harmless even when pit scene is
     // inactive — pit fighters' transforms update off-screen but don't render.
     tickIdleAnimations(t);
-
-    // Camera lerp (Step 6), hover scale on columns (Step 7) — later.
   }
 
   function dispose() {
@@ -292,7 +300,8 @@ export function buildFighterDetailScene(THREE, aspect) {
     tick,
     setKey,
     dispose,
-    clickableTargets: fdBranchColumns.map((c) => c.group),
+    picker,
+    clickableTargets,
   };
 }
 
