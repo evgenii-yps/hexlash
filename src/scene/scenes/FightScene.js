@@ -8,12 +8,14 @@
 // floor), 8181-8198 (walls).
 
 import { makeConcreteTexture } from '../materials/concrete.js';
+import { makeMetalTexture } from '../materials/metal.js';
 
 const FT_RING_R = 3.6;
 const FT_RING_H = 0.5;
 const FT_POST_H = 2.3;
 const FT_ROOM_R = 14;
 const FT_ROOM_H = 8;
+const FT_ROPE_HS = [0.55, 1.15, 1.75];
 
 export function buildFightScene(THREE, aspect) {
   const scene = new THREE.Scene();
@@ -94,6 +96,90 @@ export function buildFightScene(THREE, aspect) {
     wall.lookAt(0, FT_ROOM_H / 2, 0);
     scene.add(wall);
   }
+
+  // --- POSTS + CAPS (prototype 8142-8162) ---
+  // Cap material is matte — metal (post) picks up pink rim which looked wrong
+  // on the spherical cap, so it gets its own non-metallic material.
+  const postMat = new THREE.MeshStandardMaterial({
+    color: 0x4a4d58, roughness: 0.4, metalness: 0.85,
+    map: makeMetalTexture(THREE),
+  });
+  const capMat = new THREE.MeshStandardMaterial({
+    color: 0x1a1a22, roughness: 0.95, metalness: 0.0,
+  });
+  for (const v of ftVerts) {
+    const post = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.07, 0.09, FT_POST_H, 16),
+      postMat
+    );
+    post.position.set(v.x, FT_RING_H + FT_POST_H / 2, v.y);
+    post.castShadow = true;
+    scene.add(post);
+
+    const cap = new THREE.Mesh(
+      new THREE.SphereGeometry(0.10, 16, 12),
+      capMat
+    );
+    cap.position.set(v.x, FT_RING_H + FT_POST_H, v.y);
+    scene.add(cap);
+  }
+
+  // --- ROPES (3 levels × 8 sides = 24 segments, prototype 8163-8179) ---
+  const ropeMat = new THREE.MeshStandardMaterial({
+    color: 0x1a1a22, roughness: 0.6, metalness: 0.3,
+  });
+  for (let i = 0; i < 8; i++) {
+    const a = ftVerts[i];
+    const b = ftVerts[(i + 1) % 8];
+    const len = Math.hypot(b.x - a.x, b.y - a.y);
+    for (const h of FT_ROPE_HS) {
+      const rope = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.035, 0.035, len, 8),
+        ropeMat
+      );
+      rope.position.set((a.x + b.x) / 2, FT_RING_H + h, (a.y + b.y) / 2);
+      rope.lookAt(b.x, FT_RING_H + h, b.y);
+      rope.rotateX(Math.PI / 2);
+      scene.add(rope);
+    }
+  }
+
+  // --- LIGHTING (prototype 8200-8220) ---
+  scene.add(new THREE.AmbientLight(0x1a1a28, 0.40));
+  scene.add(new THREE.HemisphereLight(0x2a2638, 0x0a0a12, 0.4));
+
+  const key = new THREE.SpotLight(0xfff0e8, 2.4, 16, Math.PI * 0.25, 0.55, 1.4);
+  key.position.set(0, 8, 0);
+  key.target.position.set(0, 1.2, 0);
+  key.castShadow = true;
+  key.shadow.mapSize.width = 1024;
+  key.shadow.mapSize.height = 1024;
+  scene.add(key);
+  scene.add(key.target);
+
+  const rimL = new THREE.SpotLight(0xff066f, 0.9, 14, Math.PI * 0.4, 0.8, 1.6);
+  rimL.position.set(-7, 3, -2);
+  rimL.target.position.set(0, 1.5, 0);
+  scene.add(rimL);
+  scene.add(rimL.target);
+
+  const rimR = new THREE.SpotLight(0xD4A843, 0.6, 14, Math.PI * 0.4, 0.8, 1.6);
+  rimR.position.set(7, 3, 2);
+  rimR.target.position.set(0, 1.5, 0);
+  scene.add(rimR);
+  scene.add(rimR.target);
+
+  // --- LIGHT SHAFT (volumetric fake, prototype 8223-8232) ---
+  const shaft = new THREE.Mesh(
+    new THREE.ConeGeometry(2.5, 8, 24, 1, true),
+    new THREE.MeshBasicMaterial({
+      color: 0xfff0e8, transparent: true, opacity: 0.05,
+      side: THREE.DoubleSide, depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    })
+  );
+  shaft.position.set(0, 4, 0);
+  scene.add(shaft);
 
   function tick(/* t */) {
     // Step 13 — updateFightCamera(t) here (pit/side/cinema modes).
