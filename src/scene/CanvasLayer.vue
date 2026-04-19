@@ -95,7 +95,13 @@ onMounted(() => {
     hoverScale: 1.04,
     labels: LABELS,
   });
-  activateScene('pit');
+  // Guard: only activate 'pit' if no other scene has already been
+  // activated. Protects against mount race — when entering /v2/fd/*
+  // or /v2/fight directly, async View may activate its scene before
+  // CanvasLayer mounts. Without guard CanvasLayer would overwrite it.
+  // Alt: move activateScene('pit') out of CanvasLayer into PitViewV2
+  // (Epic 5 polish — cleaner separation). Noted as deferred refactor.
+  if (!getActiveScene()) activateScene('pit');
   startRenderLoop(renderer, THREE);
 
   onResize = () => {
