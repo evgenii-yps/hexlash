@@ -23,10 +23,6 @@ function clamp(v, lo, hi) {
 }
 
 export function attachOrbit(camera, canvas) {
-  // DEBUG Step 7 — listeners diagnostics
-  // eslint-disable-next-line no-console
-  console.log('[orbit] attach, canvas:', canvas);
-
   let camAngle = 0;
   let camTarget = 0;
   let zoomDist = ZOOM_DEFAULT;
@@ -36,11 +32,8 @@ export function attachOrbit(camera, canvas) {
   let dragStartY = 0;
   let dragStartAngle = 0;
   let dragMoved = false;
-  let _tickLogged = false;
 
   function onMouseDown(e) {
-    // eslint-disable-next-line no-console
-    console.log('[orbit] mousedown', e.clientX, e.clientY);
     isDragging = true;
     dragStartX = e.clientX;
     dragStartY = e.clientY;
@@ -63,8 +56,6 @@ export function attachOrbit(camera, canvas) {
   }
 
   function onWheel(e) {
-    // eslint-disable-next-line no-console
-    console.log('[orbit] wheel', e.deltaY);
     e.preventDefault();
     // PATCH правка #5 — нормализация
     const dir = Math.sign(e.deltaY);
@@ -79,12 +70,6 @@ export function attachOrbit(camera, canvas) {
   canvas.addEventListener('wheel', onWheel, { passive: false });
 
   function tick(t) {
-    // DEBUG Step 7 — log once around t=1s to confirm tick is running
-    if (!_tickLogged && t > 1 && t < 1.1) {
-      _tickLogged = true;
-      // eslint-disable-next-line no-console
-      console.log('[orbit] tick running, angle:', camAngle, 'zoom:', zoomDist, 'isDragging:', isDragging);
-    }
     // smooth angle lerp
     camAngle += (camTarget - camAngle) * 0.06;
     // idle auto-drift when not dragging
