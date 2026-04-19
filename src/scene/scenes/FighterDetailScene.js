@@ -158,7 +158,6 @@ export function buildFighterDetailScene(THREE, aspect) {
       color: 0xfff0e8, transparent: true, opacity: 0.05,
       side: THREE.DoubleSide, depthWrite: false,
       blending: THREE.AdditiveBlending,
-      toneMapped: false,
     })
   );
   shaft.position.set(0, 3.5, 0);

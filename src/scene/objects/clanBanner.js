@@ -112,7 +112,6 @@ export function buildClanBanner(THREE, concreteTex) {
       depthWrite: false,
       blending: THREE.AdditiveBlending,
       side: THREE.DoubleSide,
-      toneMapped: false,
     }),
   );
   disc.rotation.x = -Math.PI / 2;

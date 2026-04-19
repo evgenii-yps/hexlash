@@ -86,7 +86,6 @@ export function buildBranchColumn(THREE, branch, opts) {
     new THREE.MeshBasicMaterial({
       map: tex, transparent: true, depthWrite: false,
       blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
-      toneMapped: false,
     })
   );
   disc.rotation.x = -Math.PI / 2;

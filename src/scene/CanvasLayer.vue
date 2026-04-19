@@ -59,8 +59,9 @@ onMounted(() => {
   // (pit 5050, FD 7367, Fight 8091, Create 8872, Profile 9344). Missed in
   // Epic 2 scaffold. Without this, highlights clip and midtones compress —
   // the v2 pit visually diverges from the prototype reference.
-  // Emissive canvas-textures (displays, glow discs) set toneMapped:false to
-  // preserve brightness under the tone mapper.
+  // Per prototype parity, `toneMapped: false` is set only on the shopLocker
+  // display (and eventually the matchmaking screen in Epic 3B+). All other
+  // emissive/additive materials go through ACES, matching the prototype.
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
 

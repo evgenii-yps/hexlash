@@ -575,7 +575,6 @@ export function addArchetypeGlow(fighterGroup, THREE, hexColor) {
     depthWrite: false,
     blending: THREE.AdditiveBlending,
     side: THREE.DoubleSide,
-    toneMapped: false,
   });
   // Disc sized to a fighter's footprint, not half the ring
   const disc = new THREE.Mesh(new THREE.PlaneGeometry(0.85, 0.85), discMat);
