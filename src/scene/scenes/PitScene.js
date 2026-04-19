@@ -14,6 +14,7 @@
 //   - Пол/стены/потолок здесь временные. Шаг 6 заменит пол на более качественный из arena.js.
 
 import { makeConcreteTexture } from '../materials/concrete.js';
+import { buildEnvironment } from '../objects/environment.js';
 
 const ROOM_RADIUS = 18;
 const ROOM_WALL_HEIGHT = 9;
@@ -118,6 +119,9 @@ export function buildPitScene(THREE, aspect) {
   ceiling.position.y = ROOM_WALL_HEIGHT;
   scene.add(ceiling);
 
+  // --- ENVIRONMENT (beams + lamps + drain grate) ---
+  const env = buildEnvironment(scene, THREE);
+
   // tick — пустой в Шаге 3. Шаг 5 добавит crowd breathing / dust drift / rim pulse.
   function tick(_t) {
     // filled in later steps
@@ -132,6 +136,7 @@ export function buildPitScene(THREE, aspect) {
     roomHeight: ROOM_WALL_HEIGHT,
     roomRadius: ROOM_RADIUS,
     clickableTargets: [],
+    env,
   };
 }
 
