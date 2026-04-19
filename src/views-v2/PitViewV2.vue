@@ -1,42 +1,19 @@
 <template>
-  <div class="hud-pit-v2">
-    <h1 class="hud-marker">/v2 works</h1>
-    <WorldHint
-      :text="hover.text"
-      :x="hover.x"
-      :y="hover.y"
-      :visible="hover.visible"
-    />
-  </div>
+  <HudPit ref="hudRef" />
 </template>
 
 <script setup>
-// Step 16: reads shared hover state written by CanvasLayer and renders the
-// WorldHint. CanvasLayer and this view are siblings in AppV2, so we use a
-// module-scoped reactive store (useHoverState) instead of emit/props.
-import WorldHint from '@/components/hud/common/WorldHint.vue';
-import { useHoverState } from '@/scene/interaction/useHoverState.js';
+// Step 17: full pit HUD. Watches useClickState().seq → calls
+// hud.openPhModal(id). CanvasLayer (sibling in AppV2) writes click/hover via
+// shared reactive stores, avoiding a cross-sibling emit chain.
+import { ref, watch } from 'vue';
+import HudPit from '@/components/hud/HudPit.vue';
+import { useClickState } from '@/scene/interaction/useClickState.js';
 
-const hover = useHoverState();
+const hudRef = ref(null);
+const click = useClickState();
+
+watch(() => click.seq, () => {
+  if (hudRef.value && click.id) hudRef.value.openPhModal(click.id);
+});
 </script>
-
-<style scoped>
-.hud-pit-v2 {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.hud-marker {
-  position: absolute;
-  top: 2rem;
-  left: 2rem;
-  z-index: 10;
-  color: #fff;
-  font-family: var(--font-display);
-  font-weight: 400;
-  font-size: 1.75rem;
-  letter-spacing: 0.05em;
-  pointer-events: auto;
-}
-</style>

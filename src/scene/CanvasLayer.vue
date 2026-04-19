@@ -11,6 +11,7 @@ import { buildPitScene } from './scenes/PitScene.js';
 import { attachOrbit } from './interaction/cameraController.js';
 import { createPicker } from './interaction/raycaster.js';
 import { useHoverState } from './interaction/useHoverState.js';
+import { pickClick } from './interaction/useClickState.js';
 
 // Labels shown in the WorldHint under the pointer. Key = userData.id
 // seeded on each clickable root in PitScene. Source: prototype 6887-6899.
@@ -35,6 +36,8 @@ let picker = null;
 let hoveredObj = null;
 let onResize = null;
 let onPointerMove = null;
+let onPointerDown = null;
+let onPointerUp = null;
 
 onMounted(() => {
   renderer = new THREE.WebGLRenderer({
@@ -103,6 +106,26 @@ onMounted(() => {
     }
   };
   canvasEl.value.addEventListener('pointermove', onPointerMove);
+
+  // --- CLICK (Step 17) ---
+  // A click is a pointerdown+pointerup pair with < 5px movement. Anything
+  // larger is treated as orbit drag and ignored. Prototype uses the same
+  // dragMoved=false heuristic (cameraController tracks its own dragMoved).
+  let downX = 0;
+  let downY = 0;
+  onPointerDown = (e) => {
+    downX = e.clientX;
+    downY = e.clientY;
+  };
+  onPointerUp = (e) => {
+    const dx = e.clientX - downX;
+    const dy = e.clientY - downY;
+    if (Math.hypot(dx, dy) >= 5) return; // drag, not click
+    const hit = picker.pickAt(e.clientX, e.clientY);
+    if (hit && hit.userData.id) pickClick(hit.userData.id);
+  };
+  canvasEl.value.addEventListener('pointerdown', onPointerDown);
+  canvasEl.value.addEventListener('pointerup', onPointerUp);
 });
 
 function disposeScene(scene) {
@@ -122,8 +145,10 @@ function disposeScene(scene) {
 
 onBeforeUnmount(() => {
   if (onResize) window.removeEventListener('resize', onResize);
-  if (onPointerMove && canvasEl.value) {
-    canvasEl.value.removeEventListener('pointermove', onPointerMove);
+  if (canvasEl.value) {
+    if (onPointerMove) canvasEl.value.removeEventListener('pointermove', onPointerMove);
+    if (onPointerDown) canvasEl.value.removeEventListener('pointerdown', onPointerDown);
+    if (onPointerUp) canvasEl.value.removeEventListener('pointerup', onPointerUp);
   }
   // Reset body cursor + clear hover hint in case we're unmounted while hovering.
   document.body.style.cursor = '';
@@ -149,6 +174,8 @@ onBeforeUnmount(() => {
   hoveredObj = null;
   onResize = null;
   onPointerMove = null;
+  onPointerDown = null;
+  onPointerUp = null;
 });
 </script>
 
