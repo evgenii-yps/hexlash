@@ -25,6 +25,7 @@ import {
 } from '../objects/fighterModel.js';
 import { buildHeavyBag } from '../objects/heavyBag.js';
 import { buildTerminal } from '../objects/terminal.js';
+import { buildPlinth } from '../objects/plinth.js';
 
 const ROOM_RADIUS = 18;
 const ROOM_WALL_HEIGHT = 9;
@@ -180,6 +181,12 @@ export function buildPitScene(THREE, aspect) {
   const terminal = buildTerminal(THREE);
   scene.add(terminal.group);
 
+  // --- PLINTH «+» (create-fighter interactable) ---
+  // Source: prototype 5647-5709. Reuses `platformTex` (concrete, repeat 1,1)
+  // per PATCH_EPIC2_STEPS_5_8.md. Shaft is rotated slowly in tick.
+  const plinth = buildPlinth(THREE, platformTex);
+  scene.add(plinth.group);
+
   // tick — Шаг 5: crowd breathing, dust drift, rim pulse.
   // Source: prototype 7240-7250 (dust drift + rim pulse) + TZ Step 5 (crowd breathing formula).
   // PATCH_EPIC2_STEPS_5_8.md — dust reset to 0.3 once it crosses 7.5.
@@ -224,6 +231,9 @@ export function buildPitScene(THREE, aspect) {
 
     // Terminal CRT cursor blink — prototype 7271-7282.
     terminal.tickScreen(t);
+
+    // Plinth light shaft — slow rotation around vertical axis.
+    plinth.shaft.rotation.y = t * 0.05;
   }
 
   return {
