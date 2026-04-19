@@ -12,6 +12,7 @@ import { attachOrbit } from './interaction/cameraController.js';
 import { createPicker } from './interaction/raycaster.js';
 import { useHoverState } from './interaction/useHoverState.js';
 import { pickClick } from './interaction/useClickState.js';
+import { setCanvasRef } from './interaction/useCanvasRef.js';
 
 // Labels shown in the WorldHint under the pointer. Key = userData.id
 // seeded on each clickable root in PitScene. Source: prototype 6887-6899.
@@ -40,6 +41,10 @@ let onPointerDown = null;
 let onPointerUp = null;
 
 onMounted(() => {
+  // Publish the canvas element so lazy scenes (FD, Fight) can attach their
+  // own orbit/picker handlers without prop drilling. Epic 3A Step 6.
+  setCanvasRef(canvasEl.value);
+
   renderer = new THREE.WebGLRenderer({
     canvas: canvasEl.value,
     antialias: true,
@@ -176,6 +181,9 @@ onBeforeUnmount(() => {
   onPointerMove = null;
   onPointerDown = null;
   onPointerUp = null;
+  // Clear the published canvas reference so lazy scenes don't keep a stale
+  // pointer across AppV2 remounts.
+  setCanvasRef(null);
 });
 </script>
 

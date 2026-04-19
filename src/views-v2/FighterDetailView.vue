@@ -19,6 +19,8 @@ import * as THREE from 'three';
 import HudFighterDetail from '@/components/hud/HudFighterDetail.vue';
 import { buildFighterDetailScene } from '@/scene/scenes/FighterDetailScene.js';
 import { registerScene, activateScene } from '@/scene/sceneRegistry.js';
+import { attachFdOrbit } from '@/scene/interaction/fdCameraController.js';
+import { getCanvasRef } from '@/scene/interaction/useCanvasRef.js';
 
 const VALID_KEYS = ['warden', 'predator'];
 
@@ -35,6 +37,7 @@ function guard(key) {
 }
 
 let fd = null;
+let fdOrbit = null;
 let onResize = null;
 
 function handleResize() {
@@ -50,10 +53,19 @@ onMounted(() => {
   }
   const aspect = window.innerWidth / window.innerHeight;
   fd = buildFighterDetailScene(THREE, aspect);
+  // Step 6 — drag-to-rotate orbit owned by the View (canvas is published by
+  // CanvasLayer via useCanvasRef). Attached before registerScene so tick is
+  // composed as orbit.tick → scene.tick (orbit must write camera BEFORE any
+  // downstream camera consumers).
+  const canvas = getCanvasRef();
+  if (canvas) fdOrbit = attachFdOrbit(fd.camera, canvas);
   registerScene('fd', {
     scene: fd.scene,
     camera: fd.camera,
-    tick: fd.tick,
+    tick: (t) => {
+      if (fdOrbit) fdOrbit.tick(t);
+      fd.tick(t);
+    },
   });
   activateScene('fd');
   // Step 4 — load the fighter model for this route key.
@@ -70,6 +82,10 @@ onBeforeUnmount(() => {
   // Switch back to pit BEFORE disposing, so renderLoop doesn't touch a
   // freed scene on its next tick.
   activateScene('pit');
+  if (fdOrbit) {
+    fdOrbit.detach();
+    fdOrbit = null;
+  }
   if (fd) {
     fd.dispose();
     fd = null;
