@@ -18,6 +18,7 @@ import {
   tickIdleAnimations,
   addArchetypeGlow,
 } from '../objects/fighterModel.js';
+import { buildBranchColumn } from '../objects/branchColumn.js';
 
 const FD_ROOM_R = 14;
 const FD_ROOM_H = 8;
@@ -27,6 +28,15 @@ const GLOW_COLOR = {
   warden:   0xD4A843, // gold
   predator: 0xFF066F, // neon pink
 };
+
+// Branch pillars behind the podium. Fighter at z=+1.0, columns at z∈[-2.4,-1.6].
+// Source: prototype 7462-7471.
+const FD_BRANCHES = [
+  { id: 'speed',     name: 'Speed',     color: 0x00E5FF, level: 6,  x: -3.0, z: -1.6 },
+  { id: 'power',     name: 'Power',     color: 0xFF066F, level: 10, x:  0.0, z: -2.4 },
+  { id: 'technique', name: 'Technique', color: 0xA855F7, level: 4,  x:  3.0, z: -1.6 },
+];
+const COL = { COL_R: 0.32, COL_BASE_H: 0.5, COL_PER_LVL: 0.18 };
 
 export function buildFighterDetailScene(THREE, aspect) {
   const scene = new THREE.Scene();
@@ -98,6 +108,18 @@ export function buildFighterDetailScene(THREE, aspect) {
 
   podium.position.z = 1.0; // bring fighter forward of future columns
   scene.add(podium);
+
+  // --- BRANCH COLUMNS (Step 5) ---
+  // Source: prototype 7472-7543. Fighter is at z=+1.0; columns sit BEHIND him
+  // at z∈[-2.4, -1.6]. From camera POV (z=+7) fighter is foreground, columns
+  // mid-ground. Each column is a self-contained Group; its root carries
+  // userData.branchId so the picker (Step 7) can resolve a click.
+  const fdBranchColumns = [];
+  for (const b of FD_BRANCHES) {
+    const col = buildBranchColumn(THREE, b, COL);
+    scene.add(col.group);
+    fdBranchColumns.push({ group: col.group, branch: b, height: col.height });
+  }
 
   // --- LIGHTING (Step 3) ---
   // Source: prototype 7546-7565.
@@ -221,12 +243,26 @@ export function buildFighterDetailScene(THREE, aspect) {
       currentFighter.rotation.y = Math.sin(t * 0.5) * 0.06;
     }
 
+    // Column emissive pulse — prototype 8030-8037. Each column phase-shifted
+    // by 1.7 rad so they breathe out of sync. MeshBasicMaterial (cap/accent/
+    // disc) has no emissive — guard filters them out. MeshStandardMaterial of
+    // the base block has default emissive=0x000000, so the 0.10 sine amplitude
+    // multiplies to zero — only the shaft (emissive=branch.color) visibly pulses.
+    for (let i = 0; i < fdBranchColumns.length; i++) {
+      const children = fdBranchColumns[i].group.children;
+      for (const ch of children) {
+        const m = ch.material;
+        if (m && m.emissive !== undefined && m.emissiveIntensity !== undefined) {
+          m.emissiveIntensity = 0.40 + Math.sin(t * 1.2 + i * 1.7) * 0.10;
+        }
+      }
+    }
+
     // Advance the global idle registry. Harmless even when pit scene is
     // inactive — pit fighters' transforms update off-screen but don't render.
     tickIdleAnimations(t);
 
-    // Camera lerp (Step 6), column emissive pulse (Step 5),
-    // hover scale on columns (Step 7) — later.
+    // Camera lerp (Step 6), hover scale on columns (Step 7) — later.
   }
 
   function dispose() {
@@ -256,7 +292,7 @@ export function buildFighterDetailScene(THREE, aspect) {
     tick,
     setKey,
     dispose,
-    clickableTargets: [],
+    clickableTargets: fdBranchColumns.map((c) => c.group),
   };
 }
 
