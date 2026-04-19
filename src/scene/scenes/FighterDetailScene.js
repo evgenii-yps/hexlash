@@ -20,6 +20,8 @@ import {
 } from '../objects/fighterModel.js';
 import { buildBranchColumn } from '../objects/branchColumn.js';
 import { createPicker } from '../interaction/raycaster.js';
+import { fdProjectToScreen } from '../interaction/fdProjectToScreen.js';
+import { updateFdLabel } from '../interaction/useFdLabels.js';
 
 const FD_ROOM_R = 14;
 const FD_ROOM_H = 8;
@@ -271,6 +273,13 @@ export function buildFighterDetailScene(THREE, aspect) {
     // Advance the global idle registry. Harmless even when pit scene is
     // inactive — pit fighters' transforms update off-screen but don't render.
     tickIdleAnimations(t);
+
+    // Branch-label tracking — prototype 8048-8056. Project cap-top to screen,
+    // hand off to the reactive composable. Y offset puts the label above the cap.
+    for (const c of fdBranchColumns) {
+      const pos = fdProjectToScreen(c.group, 0.10 + c.height + 0.4, camera, THREE);
+      updateFdLabel(c.branch.id, pos);
+    }
   }
 
   function dispose() {
