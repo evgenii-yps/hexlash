@@ -75,6 +75,16 @@ const v2Routes = [
                 name: 'V2Pit',
                 component: () => import('@/views-v2/PitViewV2.vue'),
             },
+            {
+                path: 'fd/:key',
+                name: 'V2FighterDetail',
+                component: () => import('@/views-v2/FighterDetailView.vue'),
+            },
+            {
+                path: 'fight',
+                name: 'V2Fight',
+                component: () => import('@/views-v2/FightView.vue'),
+            },
         ],
     },
 ];
