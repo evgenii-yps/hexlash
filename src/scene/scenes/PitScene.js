@@ -6,9 +6,8 @@
 //   - lines 6718-6758 (lighting)
 //
 // Step 3 notes:
-//   - ТЗ использует THREE.Fog (linear near=5, far=25), прототип — FogExp2(0.028).
-//     Следуем ТЗ — совпадает с Эпиком 1.
-//   - ТЗ FOV=50, прототип FOV=45. Следуем ТЗ.
+//   - Fog: FogExp2(0x070811, 0.028) — по прототипу (5054). Hot-fix после Шага 3.
+//   - FOV: 45° — по прототипу (5056). Hot-fix после Шага 3.
 //   - ТЗ lookAt(0, 1, 0), прототип lookAt(0, 1.8, 0). Следуем ТЗ (Шаг 7 заменит на 1.5 через orbit tick).
 //   - shadowMap на renderer НЕ включаем (Шаг 3 ТЗ не требует). Тени на Key spotlight выставлены
 //     на будущее — начнут рендериться когда renderer.shadowMap.enabled=true будет выставлен.
@@ -22,9 +21,9 @@ const ROOM_WALL_HEIGHT = 9;
 export function buildPitScene(THREE, aspect) {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x070811);
-  scene.fog = new THREE.Fog(0x070811, 5, 25);
+  scene.fog = new THREE.FogExp2(0x070811, 0.028);
 
-  const camera = new THREE.PerspectiveCamera(50, aspect, 0.1, 100);
+  const camera = new THREE.PerspectiveCamera(45, aspect, 0.1, 100);
   camera.position.set(11, 5.5, 16);
   camera.lookAt(0, 1, 0);
 

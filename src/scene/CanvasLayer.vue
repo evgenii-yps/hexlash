@@ -24,6 +24,8 @@ onMounted(() => {
   });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
   const aspect = window.innerWidth / window.innerHeight;
   pit = buildPitScene(THREE, aspect);
