@@ -1,0 +1,268 @@
+/* v2 Migration — Fight overlay styles (prep/result/coach-pause).
+   Shared between PrepOverlay.vue, ResultOverlay.vue and CoachPause.vue — those
+   components are thin (template + script), the CSS lives here so there is no
+   per-component duplication of the same selectors. Scoped to .app-v2 for
+   parity with tokens.css / effects.css.
+
+   Source: hexlash_v24.html — prep 987-1149, pc-footer 1185-1201,
+   phase-overlay 1203-1285, coach-pause 1288-1335. */
+
+/* Phase overlay — shared by PrepOverlay and ResultOverlay */
+.app-v2 .phase-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(7, 8, 17, 0.6);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+  z-index: 80;
+}
+.app-v2 .phase-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.app-v2 .phase-card {
+  background: var(--bg-deep);
+  border: 1px solid rgba(255, 6, 111, 0.3);
+  border-radius: 8px;
+  padding: 28px 32px;
+  width: min(90vw, 420px);
+  text-align: center;
+  box-shadow: 0 0 60px rgba(255, 6, 111, 0.18), 0 20px 40px rgba(0, 0, 0, 0.5);
+  color: #fff;
+}
+.app-v2 .phase-card .pc-kicker {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 4px;
+  color: var(--hex-primary);
+  text-transform: uppercase;
+}
+.app-v2 .phase-card .pc-title {
+  font-family: var(--font-display);
+  font-size: 28px;
+  letter-spacing: 5px;
+  margin-top: 8px;
+}
+.app-v2 .phase-card .pc-sub {
+  font-size: 12px;
+  color: var(--text-mid);
+  margin-top: 12px;
+  line-height: 1.5;
+}
+.app-v2 .phase-card .pc-vs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin: 22px 0 18px;
+}
+.app-v2 .phase-card .pc-side {
+  flex: 1;
+  text-align: center;
+}
+.app-v2 .phase-card .pc-side .pcs-name {
+  font-family: var(--font-display);
+  font-size: 14px;
+  letter-spacing: 2px;
+}
+.app-v2 .phase-card .pc-side .pcs-arch {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-top: 3px;
+}
+.app-v2 .phase-card .pc-side.left  .pcs-arch { color: #D4A843; }
+.app-v2 .phase-card .pc-side.right .pcs-arch { color: var(--hex-primary); }
+.app-v2 .phase-card .pc-vs-sep {
+  font-family: var(--font-display);
+  font-size: 18px;
+  letter-spacing: 3px;
+  color: var(--text-dim);
+}
+.app-v2 .phase-card .pc-btn {
+  margin-top: 10px;
+  padding: 12px 28px;
+  background: transparent;
+  border: 1px solid var(--hex-primary);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+.app-v2 .phase-card .pc-btn:hover {
+  background: rgba(255, 6, 111, 0.15);
+  box-shadow: 0 0 18px rgba(255, 6, 111, 0.3);
+}
+.app-v2 .phase-card .pc-btn-secondary {
+  margin-left: 8px;
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--text-mid);
+}
+.app-v2 .phase-card .pc-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: none;
+}
+.app-v2 .phase-card.victory {
+  border-color: #2ee07f;
+  box-shadow: 0 0 60px rgba(46, 224, 127, 0.18), 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+.app-v2 .phase-card.victory .pc-kicker { color: #2ee07f; }
+.app-v2 .phase-card.defeat {
+  border-color: #ff4444;
+  box-shadow: 0 0 60px rgba(255, 68, 68, 0.18), 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+.app-v2 .phase-card.defeat .pc-kicker { color: #ff4444; }
+
+/* Prep overlay — widened card with side-by-side layout */
+.app-v2 .phase-card.prep-card {
+  width: min(95vw, 680px);
+  text-align: left;
+  padding: 22px 26px;
+}
+.app-v2 .phase-card.prep-card .pc-title {
+  text-align: center;
+  margin-bottom: 4px;
+}
+.app-v2 .phase-card.prep-card .pc-kicker {
+  text-align: center;
+}
+.app-v2 .phase-card.prep-card .pc-vs {
+  margin: 16px 0 10px;
+}
+.app-v2 .prep-section {
+  margin-top: 16px;
+}
+.app-v2 .prep-section-title {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.app-v2 .prep-strategies {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.app-v2 .strat-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+.app-v2 .strat-card:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.app-v2 .strat-card.selected {
+  background: rgba(255, 6, 111, 0.06);
+  border-color: var(--hex-primary);
+}
+.app-v2 .strat-card .sc-name {
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 1px;
+  margin-bottom: 3px;
+  color: #fff;
+}
+.app-v2 .strat-card .sc-eff {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-dim);
+  letter-spacing: 0.5px;
+  line-height: 1.3;
+}
+.app-v2 .strat-card .sc-eff .ef-plus  { color: #2ee07f; }
+.app-v2 .strat-card .sc-eff .ef-minus { color: #ff8888; }
+
+.app-v2 .phase-card.prep-card .pc-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.app-v2 .pc-footer-actions {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+/* Coach pause — slide-up drawer above the log */
+.app-v2 .coach-pause {
+  position: fixed;
+  bottom: 30vh;
+  left: 50%;
+  background: var(--bg-deep);
+  border: 1px solid rgba(255, 6, 111, 0.4);
+  border-left: 3px solid var(--hex-primary);
+  border-radius: 6px;
+  padding: 14px 18px;
+  width: min(90vw, 380px);
+  z-index: 75;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  transform: translate(-50%, 20px);
+  color: #fff;
+}
+.app-v2 .coach-pause.show {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, 0);
+}
+.app-v2 .coach-pause .cp-kicker {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: var(--hex-primary);
+  text-transform: uppercase;
+}
+.app-v2 .coach-pause .cp-text {
+  font-size: 13px;
+  color: #fff;
+  margin-top: 6px;
+  line-height: 1.4;
+}
+.app-v2 .coach-pause .cp-actions {
+  margin-top: 12px;
+  display: flex;
+  gap: 6px;
+}
+.app-v2 .coach-pause .cp-action {
+  flex: 1;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--text-mid);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 8px 6px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all 0.12s ease;
+}
+.app-v2 .coach-pause .cp-action:hover {
+  background: rgba(255, 6, 111, 0.1);
+  border-color: var(--hex-primary);
+  color: #fff;
+}

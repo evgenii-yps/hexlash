@@ -15,6 +15,10 @@ import * as THREE from 'three';
 import HudFight from '@/components/hud/HudFight.vue';
 import { buildFightScene } from '@/scene/scenes/FightScene.js';
 import { registerScene, activateScene } from '@/scene/sceneRegistry.js';
+import {
+  fightState,
+  resetFight,
+} from '@/components/hud/common/useFightSimulation.js';
 
 let fight = null;
 let onResize = null;
@@ -37,6 +41,11 @@ onMounted(() => {
     tick: fight.tick,
   });
   activateScene('fight');
+  // Step 16 — module-scoped fightState survives across View re-entries.
+  // Reset clears pending timers + log + HP, then park at prep so the
+  // overlay opens on first paint.
+  resetFight();
+  fightState.phase = 'prep';
   onResize = handleResize;
   window.addEventListener('resize', onResize);
 });
@@ -46,6 +55,9 @@ onBeforeUnmount(() => {
     window.removeEventListener('resize', onResize);
     onResize = null;
   }
+  // Cancel any pending simulation timers BEFORE scene teardown so a late
+  // doExchange callback doesn't touch a disposed scene.
+  resetFight();
   activateScene('pit');
   if (fight) {
     fight.dispose();

@@ -9,29 +9,29 @@
 
     <div class="fight-top">
       <div class="fight-fighter left">
-        <div class="ff-name">{{ state.leftName }}</div>
-        <div class="ff-arch">{{ state.leftArch }}</div>
+        <div class="ff-name">{{ fightState.leftName }}</div>
+        <div class="ff-arch">{{ fightState.leftArch }}</div>
         <div class="ff-hp">
           <div class="ff-hp-fill" :style="{ width: leftHpPct + '%' }"></div>
         </div>
         <div class="ff-hp-num">
-          {{ Math.round(state.leftHp) }} / {{ state.leftMaxHp }}
+          {{ Math.round(fightState.leftHp) }} / {{ fightState.leftMaxHp }}
         </div>
       </div>
 
       <div class="fight-round">
         <div class="fr-kicker">Round</div>
-        <div class="fr-num">{{ state.round }} / {{ state.totalRounds }}</div>
+        <div class="fr-num">{{ fightState.round }} / {{ fightState.totalRounds }}</div>
       </div>
 
       <div class="fight-fighter right">
-        <div class="ff-name">{{ state.rightName }}</div>
-        <div class="ff-arch">{{ state.rightArch }}</div>
+        <div class="ff-name">{{ fightState.rightName }}</div>
+        <div class="ff-arch">{{ fightState.rightArch }}</div>
         <div class="ff-hp">
           <div class="ff-hp-fill" :style="{ width: rightHpPct + '%' }"></div>
         </div>
         <div class="ff-hp-num">
-          {{ Math.round(state.rightHp) }} / {{ state.rightMaxHp }}
+          {{ Math.round(fightState.rightHp) }} / {{ fightState.rightMaxHp }}
         </div>
       </div>
     </div>
@@ -55,6 +55,30 @@
 
     <!-- White flash on hit (Step 15). -->
     <div class="hit-flash" :class="{ flash: flashing }"></div>
+
+    <!-- Phase overlays + coach pause (Step 16). Styles live in
+         src/styles/v24/fight-overlays.css (shared across overlays). -->
+    <PrepOverlay
+      :open="fightState.phase === 'prep'"
+      :left-name="fightState.leftName"
+      :left-arch="fightState.leftArch"
+      :right-name="fightState.rightName"
+      :right-arch="fightState.rightArch"
+      @cancel="onBack"
+      @start="onStartFight"
+    />
+    <CoachPause
+      :open="fightState.coachPauseOpen"
+      :text="fightState.coachPauseText"
+      @select="setCoachStrategy"
+    />
+    <ResultOverlay
+      :open="fightState.phase === 'result'"
+      :won="fightState.resultWon"
+      :summary="fightState.resultSummary"
+      @rematch="onRematch"
+      @exit="onExit"
+    />
   </div>
 </template>
 
@@ -64,31 +88,28 @@ import { useRouter } from 'vue-router';
 import { fightSceneApi } from '@/scene/scenes/useFightSceneApi.js';
 import { fightLog } from './common/useFightLog.js';
 import { flashing } from './common/useFlashHit.js';
+import PrepOverlay from './common/PrepOverlay.vue';
+import ResultOverlay from './common/ResultOverlay.vue';
+import CoachPause from './common/CoachPause.vue';
+import {
+  fightState,
+  startFight,
+  resetFight,
+  setCoachStrategy,
+} from './common/useFightSimulation.js';
 
 const router = useRouter();
 
-// Step 14 mocks — Step 16 replaces with reactive fightState driven by
-// useFightSimulation. Values match the prototype's starting state.
-const state = ref({
-  round:       1,
-  totalRounds: 5,
-  leftName:    'FIGHTER #1',
-  leftArch:    'Captain \u00b7 Warden',
-  leftHp:      100,
-  leftMaxHp:   100,
-  rightName:   'FIGHTER #2',
-  rightArch:   'Predator',
-  rightHp:     100,
-  rightMaxHp:  100,
-});
-
+// Step 16 — HP bars bind directly to fightState from useFightSimulation.
+// No local `state` ref anymore; prep/fight/result transitions and round
+// state are all driven by the shared reactive store.
 const camMode = ref('pit');
 
 const leftHpPct = computed(() =>
-  Math.max(0, Math.round(100 * state.value.leftHp  / state.value.leftMaxHp)),
+  Math.max(0, Math.round(100 * fightState.leftHp  / fightState.leftMaxHp)),
 );
 const rightHpPct = computed(() =>
-  Math.max(0, Math.round(100 * state.value.rightHp / state.value.rightMaxHp)),
+  Math.max(0, Math.round(100 * fightState.rightHp / fightState.rightMaxHp)),
 );
 
 function selectCam(mode) {
@@ -99,6 +120,21 @@ function selectCam(mode) {
 function onBack() {
   router.push('/v2/fd/warden');
 }
+
+function onStartFight(strat) {
+  startFight(strat);
+}
+
+function onRematch() {
+  resetFight();
+}
+
+function onExit() {
+  router.push('/v2/fd/warden');
+}
+
+// Re-export for the template (setCoachStrategy is bound to CoachPause @select).
+// Nothing extra needed — direct import suffices.
 
 // Auto-scroll log to newest line on every append.
 const fightLogEl = ref(null);
