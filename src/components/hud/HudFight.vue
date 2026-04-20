@@ -41,13 +41,29 @@
       <button :class="{ active: camMode === 'side' }"   @click="selectCam('side')">Side</button>
       <button :class="{ active: camMode === 'cinema' }" @click="selectCam('cinema')">Cinema</button>
     </div>
+
+    <!-- Combat log (Step 15, populated by useFightSimulation in Step 16). -->
+    <div class="fight-log" ref="fightLogEl">
+      <div
+        v-for="(line, idx) in fightLog.lines"
+        :key="idx"
+        class="log-line"
+        :class="line.cls"
+        v-html="line.html"
+      ></div>
+    </div>
+
+    <!-- White flash on hit (Step 15). -->
+    <div class="hit-flash" :class="{ flash: flashing }"></div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, nextTick, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { fightSceneApi } from '@/scene/scenes/useFightSceneApi.js';
+import { fightLog } from './common/useFightLog.js';
+import { flashing } from './common/useFlashHit.js';
 
 const router = useRouter();
 
@@ -83,6 +99,16 @@ function selectCam(mode) {
 function onBack() {
   router.push('/v2/fd/warden');
 }
+
+// Auto-scroll log to newest line on every append.
+const fightLogEl = ref(null);
+watch(() => fightLog.lines.length, () => {
+  nextTick(() => {
+    if (fightLogEl.value) {
+      fightLogEl.value.scrollTop = fightLogEl.value.scrollHeight;
+    }
+  });
+});
 </script>
 
 <style scoped>
@@ -283,5 +309,67 @@ function onBack() {
 @keyframes livePulse {
   0%, 100% { opacity: 1; }
   50%      { opacity: 0.5; }
+}
+
+/* fight-log (prototype 932-966) */
+.fight-log {
+  position: fixed;
+  bottom: 14px;
+  left: 14px;
+  right: 14px;
+  max-height: 22vh;
+  background: var(--bg-panel);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 10px 14px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  overflow-y: auto;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.5;
+  pointer-events: auto;
+  z-index: 55;
+}
+.fight-log::-webkit-scrollbar { width: 4px; }
+.fight-log::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.12); }
+
+.log-line {
+  color: var(--text-mid);
+  margin-bottom: 2px;
+  opacity: 0;
+  transform: translateY(4px);
+  animation: logIn 0.3s ease forwards;
+}
+@keyframes logIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+.log-line :deep(.lt) {
+  color: var(--text-dim);
+  font-size: 9px;
+  margin-right: 6px;
+  letter-spacing: 1px;
+}
+.log-line.actor-warden  :deep(.ln) { color: #D4A843; }
+.log-line.actor-predator :deep(.ln) { color: var(--hex-primary); }
+.log-line.miss  { color: var(--text-dim); }
+.log-line.crit  { color: #ff4488; font-weight: 500; }
+.log-line.round { color: #fff; margin-top: 6px; letter-spacing: 1.5px; }
+
+/* hit-flash (prototype 1337-1351) */
+.hit-flash {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: rgba(255, 255, 255, 0);
+  z-index: 70;
+}
+.hit-flash.flash {
+  background: rgba(255, 255, 255, 0.18);
+  animation: hitflash 0.18s ease-out;
+}
+@keyframes hitflash {
+  0%   { background: rgba(255, 255, 255, 0.3); }
+  100% { background: rgba(255, 255, 255, 0); }
 }
 </style>
