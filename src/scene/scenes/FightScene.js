@@ -17,6 +17,7 @@ import {
   tickIdleAnimations,
 } from '../objects/fighterModel.js';
 import { createAnimationSystem } from '../objects/fightAnimations.js';
+import { bindFightSceneApi, unbindFightSceneApi } from './useFightSceneApi.js';
 
 const FT_RING_R = 3.6;
 const FT_RING_H = 0.5;
@@ -329,7 +330,16 @@ export function buildFightScene(THREE, aspect) {
   function getState() { return null; }
   function resetFight() {}
 
+  // Step 14 — expose setCamMode/playMove/getState/resetFight to the HUD
+  // through a shared reactive composable. HUD imports `fightSceneApi` and
+  // calls methods directly; dispose() unbinds so a stale HUD event after
+  // unmount doesn't touch freed closures.
+  bindFightSceneApi({ setCamMode, playMove, getState, resetFight });
+
   function dispose() {
+    // Unbind HUD bridge FIRST — prevents HUD clicks during teardown from
+    // reaching into disposed closures.
+    unbindFightSceneApi();
     // Unregister idle BEFORE disposing so fighterModel's global registry
     // doesn't keep references to disposed Groups across Fight re-entries.
     unregisterIdleFighter(ftLeft);
