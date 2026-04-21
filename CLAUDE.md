@@ -2076,3 +2076,73 @@ src/styles/v24/
 - fd-resources возврат на `right: 14px`.
 
 **Следующий эпик:** Эпик 3B — Matchmaking + Training + Create сцены. План в `docs/visual-migration/HANDOFF_VISUAL_MIGRATION.md` §8.
+
+### Эпик 3Ba — Training (✅ COMPLETE)
+
+Завершён 2026-04-21. Первая sub-scene Эпика 3B. Клик по heavy bag в hub → `/v2/training`.
+
+**Что видит пользователь:**
+- Октагональная комната (TR_ROOM_R=14, H=8) с тяжёлым мешком в центре, подвешенным на 6-звенной цепи.
+- Click по мешку → pendulum swing (spring 0.06, damping 0.94, impulse 0.025), earns taps, procedural hit sound (WebAudio noise burst, lowpass filter 1200+mult·250 Hz).
+- Быстрые клики → combo multiplier ×2/×3/×5 (5/12/25 подряд в пределах 700мс; expire 800мс после последнего).
+- HUD: back-кнопка, counter taps + session time, energy bar (42/60 init, auto-regen 0.4/sec), 2 daily tasks (Hit 100 / Land 5 combos ×3+), combo indicator (bottom-center, розовый glow ≥×3), hint внизу.
+- Energy=0 → красный flash overlay, клик ignored.
+- 6 additive spark particles на каждый hit (life decay 0.04, fade + GC).
+- Tap-pop floating `+N` DOM (crit = pink, больший размер).
+- Back / Esc → `/v2`.
+
+**Дерево новых файлов:**
+```
+src/views-v2/TrainingView.vue                     — 129 строк — orchestrate: build scene + register + activate + click-to-hit bind + Esc/Back
+src/scene/scenes/TrainingScene.js                 — 210 — fog + camera + floor + walls + lighting + shaft + dust + bag + physics + hitParticles + tick
+src/scene/objects/trainingBag.js                  — 72  — 6-chain + body cylinder + top/bot hemispheres + 2 straps
+src/scene/objects/trainingBagPhysics.js           — 42  — 2-axis spring+damping pendulum; applyTick + applyImpulse
+src/scene/objects/trainingHitParticles.js         — 59  — 6 additive sphere particles per hit + fade + GC
+src/scene/interaction/useTrainingState.js         — 71  — reactive trState + reset + startTrainingSession + multiplierForCombo
+src/scene/interaction/useClickToHit.js            — 115 — canvas mousedown → raycast → impulse + combo + gain/tasks + tap-pop + particles + sound
+src/scene/interaction/useHitSound.js              — 69  — lazy WebAudio context + playHitSound (noise burst + lowpass + envelope)
+src/components/hud/HudTraining.vue                — 95  — back + counter + energy + 2 tasks + combo + hint (tighter than estimate 250)
+src/styles/v24/training.css                       — 254 — 13 HUD classes + .tap-pop + @keyframes tapPopAnim, scoped .app-v2
+```
+
+**Изменены:**
+- `src/router/index.js` — route `V2Training` (`/v2/training`).
+- `src/views-v2/PitViewV2.vue` — click watcher: `id === 'training'` → `/v2/training`.
+- `src/components/hud/HudPit.vue` — MODAL_CONTENT.training убран (9 → 8 ключей).
+- `src/scene/sceneRegistry.js` — добавлена `unregisterScene(id)` (lazy sub-scenes требуют).
+- `src/styles/hexlash-v24.css` — `@import './v24/training.css'`.
+
+**Паттерны:**
+- `heavyBag.js` (hub, малый, side-position) vs `trainingBag.js` (большой, центральный, visible chain) — **один объект = один модуль.** Не параметризуем. Ссылочно для 3Bb Matchmaking terminal и 3Bc Create podium — если их training-версия отличается, создавать отдельные модули.
+- Все пороги/timings как именованные константы (ENERGY_INITIAL/MAX/REGEN, COMBO_WINDOW_MS/COMBO_SHOW_MS, CRIT_MULT_THRESHOLD, SPARKS_PER_HIT, LIFE_DECAY) — в начале модуля. Паттерн Эпика 2/3A.
+- Pre-allocated `raycaster/pointer/localDir` в closure `useClickToHit` — no per-click allocations.
+- `spawnTapPop` — module-level pure function (no state → no closure).
+- `useTrainingState` следует паттерну `useFightSimulation` 3A (reactive store + named exports, не `ref`, не provide/inject).
+
+**Расхождения с прототипом (осознанные):**
+- Touch events (`touchstart`) — не перенесено, Epic 5 mobile.
+- Task rewards — декоративный текст без привязки к профилю (Epic 4).
+- CSS `position: absolute → fixed` на 13 HUD-классах — Claude Code унифицировал на `.app-v2` container. Визуально эквивалентно, пересмотреть в Epic 5 polish.
+- `_state` экспонирован в return `createBagPhysics` — debug-only, не используется.
+
+**Deferred:**
+- Epic 4: task rewards profile binding.
+- Epic 5: global audio infrastructure (rumble + mute toggle + volume slider), touch support, CSS fixed→absolute pass.
+
+**Шаги и коммиты (10 + Step 8 closed-empty + Step 10 no-commit):**
+| # | Commit | Что |
+|---|--------|-----|
+| 1 | `13894f6` | stubs + route + redirect heavy bag |
+| 2 | `7aea6b1` | scaffold (fog+camera+floor+walls) + unregisterScene API |
+| 3 | `6c4f4b3` | lighting + shaft + dust |
+| 4 | `4e2ffe1` | training bag mesh |
+| 5 | `b38ca7a` | bag physics |
+| 6 | `aa3ae6c` | HudTraining + trState + training.css |
+| 7a | `be58000` | click-to-hit raycaster + impulse + energy |
+| 7b | `d3a0361` | combo + tasks + tap-pop + hit particles |
+| 8 | — | closed empty (merged into 7b) |
+| 9 | `e7d019a` | procedural hit sound |
+| 10 | — | regression test passed, no commit |
+| 11 | this | CLAUDE.md + handoff 3Bb + final report |
+
+**Следующий суб-эпик:** 3Bb — Matchmaking. См. `docs/visual-migration/HANDOFF_EPIC3Bb_CHAT_HANDOFF.md`.
