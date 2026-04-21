@@ -25,8 +25,30 @@ export function getEloRange() {
   return (MY_ELO - mmState.eloDelta) + ' — ' + (MY_ELO + mmState.eloDelta);
 }
 
-// Reset + phase transitions are stubs for Step 7. Step 5 only needs the
-// shape to exist so refreshScreen can read fields.
-export function resetMmState() {}
-export function enterSearchPhase() {}
-export function enterResultsPhase() {}
+// Reset + phase transitions (Step 7). resetMmState seeds mount +
+// onBeforeUnmount; enterSearchPhase re-initialises search fields for
+// fresh rescans; enterResultsPhase flips the UI to the candidate grid
+// (candidates themselves land from generateCandidates in Step 8).
+export function resetMmState() {
+  mmState.phase = 'search';
+  mmState.eloDelta = 100;
+  mmState.archFilter = 'any';
+  mmState.beltFilter = 'any';
+  mmState.candidates = [];
+  mmState.selected = null;
+  mmState.searchProgress = 0;
+  mmState.searchLog = [];
+}
+
+export function enterSearchPhase() {
+  mmState.phase = 'search';
+  mmState.candidates = [];
+  mmState.selected = null;
+  mmState.searchProgress = 0;
+  mmState.searchLog = [];
+}
+
+export function enterResultsPhase() {
+  mmState.phase = 'results';
+  // candidates populated by generateCandidates in Step 8 before this call.
+}

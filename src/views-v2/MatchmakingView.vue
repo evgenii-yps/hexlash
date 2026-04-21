@@ -14,7 +14,7 @@
 </template>
 
 <script setup>
-import { onMounted, onBeforeUnmount } from 'vue';
+import { onMounted, onBeforeUnmount, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import * as THREE from 'three';
 import {
@@ -27,6 +27,11 @@ import {
   refreshScreen,
   startSearchLogAnimation,
 } from '@/scene/interaction/useMatchmakingScreen.js';
+import {
+  mmState,
+  resetMmState,
+  enterSearchPhase,
+} from '@/scene/interaction/useMatchmakingState.js';
 import HudMatchmaking from '@/components/hud/HudMatchmaking.vue';
 
 const router = useRouter();
@@ -45,26 +50,58 @@ function onBack() {
   router.push('/v2');
 }
 
-// Step 6 placeholders — real wiring in Steps 7-9.
+// Step 7 — search lifecycle. startSearch() is reused by onMounted and
+// onRescan, so cancel + enterSearchPhase + new animation all happen in
+// one place.
+function startSearch() {
+  if (!sceneApi) return;
+  if (animHandle) animHandle.cancel();
+  enterSearchPhase();
+  animHandle = startSearchLogAnimation(
+    sceneApi.screenCtx,
+    sceneApi.screenTex,
+    () => {
+      // Step 8 replaces with generateCandidates + enterResultsPhase.
+      // eslint-disable-next-line no-console
+      console.log('[MM] typeLog complete — Step 8 will transition to results');
+    },
+  );
+}
+
 function onCancel() {
+  if (animHandle) {
+    animHandle.cancel();
+    animHandle = null;
+  }
   router.push('/v2');
 }
-// eslint-disable-next-line no-unused-vars
+
 function onRescan() {
-  // Step 7 — enterSearchPhase + restart typeLog.
+  startSearch();
 }
+
 // eslint-disable-next-line no-unused-vars
 function onFight() {
   // Step 9 — setFightSetup + router.push('/v2/fight').
 }
-// eslint-disable-next-line no-unused-vars
+
 function onEloChange(value) {
-  // Step 7 — mmState.eloDelta = value + refreshScreen via watcher.
+  mmState.eloDelta = value;
+  // Watcher below picks it up and repaints the CRT filters line.
 }
 
 function onKeydown(e) {
   if (e.key === 'Escape') onBack();
 }
+
+// Step 7 — refreshScreen whenever any filter changes so the CRT line
+// stays in sync with the HUD. Primitive fields, no deep watch needed.
+watch(
+  () => [mmState.eloDelta, mmState.archFilter, mmState.beltFilter],
+  () => {
+    if (sceneApi) refreshScreen(sceneApi.screenCtx, sceneApi.screenTex);
+  },
+);
 
 onMounted(() => {
   const aspect = window.innerWidth / window.innerHeight;
@@ -75,17 +112,10 @@ onMounted(() => {
     tick: sceneApi.tick,
   });
   activateScene('matchmaking');
-  // Step 5 — draw CRT once with empty state, then start typeLog animation.
+  // Step 7 — session enters with a clean slate + first typeLog pass.
+  resetMmState();
   refreshScreen(sceneApi.screenCtx, sceneApi.screenTex);
-  animHandle = startSearchLogAnimation(
-    sceneApi.screenCtx,
-    sceneApi.screenTex,
-    () => {
-      // Step 8 will replace this with generateCandidates + enterResultsPhase.
-      // eslint-disable-next-line no-console
-      console.log('[MM] typeLog complete — Step 8 will transition to results');
-    },
-  );
+  startSearch();
   onResize = handleResize;
   window.addEventListener('resize', onResize);
   window.addEventListener('keydown', onKeydown);
@@ -103,6 +133,9 @@ onBeforeUnmount(() => {
     animHandle.cancel();
     animHandle = null;
   }
+  // Reset shared reactive state so a re-entry starts clean (matches
+  // Training's resetTrainingState pattern).
+  resetMmState();
   // Switch back to pit BEFORE disposing, so renderLoop doesn't touch a
   // freed scene on its next tick.
   activateScene('pit');
