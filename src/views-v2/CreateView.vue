@@ -23,6 +23,7 @@ import {
   activateScene,
 } from '@/scene/sceneRegistry.js';
 import { buildCreateScene } from '@/scene/scenes/CreateScene.js';
+import { resetCreateState } from '@/scene/interaction/useCreateState.js';
 import HudCreate from '@/components/hud/HudCreate.vue';
 
 const router = useRouter();
@@ -56,6 +57,16 @@ function onKeydown(e) {
 }
 
 onMounted(() => {
+  // Step 9 hot-fix — createState is a module-scoped reactive singleton
+  // (useCreateState.js Step 1). It survives CreateView mount/unmount,
+  // so a previous session's archetypeId/name/step would persist into
+  // the next /v2/create entry — user lands on whatever step they left
+  // on, with old data filled in. Prototype 9266-9269 (`openCreate`)
+  // resets the state on each open; this is the v2 equivalent.
+  // Order: reset BEFORE buildCreateScene so the scene's initial
+  // glow.setColor(grey) lines up with archetypeId=null in state.
+  resetCreateState();
+
   const aspect = window.innerWidth / window.innerHeight;
   sceneApi = buildCreateScene(THREE, aspect);
   // Step 1 registered a plain empty scene under 'create'. Step 2
