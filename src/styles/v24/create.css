@@ -2,3 +2,9 @@
    Full port of prototype 1354-1562 (+ 2560-2565 arch-tag colours) lands in
    Step 7. All rules scope under .app-v2 (pattern 3Ba training.css /
    3Bb matchmaking.css). */
+
+/* Step 1 hot-fix — root .create-view inherits pointer-events: none from
+   the view scaffold; back-button needs auto so the click doesn't fall
+   through to the canvas (orbit camera). Step 7 full CSS includes this
+   rule again — duplication is intentional and harmless. */
+.app-v2 .create-back { pointer-events: auto; }
