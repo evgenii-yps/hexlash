@@ -49,10 +49,66 @@ export function buildMatchmakingScene(THREE, aspect) {
     scene.add(wall);
   }
 
-  function tick(/* t */) {
-    // Step 3 — slow camera breath + dust drift.
-    // Step 4 — terminal added.
-    // Step 5 — screen texture needsUpdate on content change.
+  // --- LIGHTING (Step 3, prototype 10499-10512) ---
+  // Note: key is CYAN, not warm — terminal/monitor-glow aesthetic.
+  // No shaft here (prototype has none). No castShadow on key (prototype
+  // doesn't set it either — do not copy from Training).
+  scene.add(new THREE.AmbientLight(0x141420, 0.4));
+
+  const key = new THREE.SpotLight(0x00E5C8, 1.8, 10, Math.PI * 0.35, 0.7, 1.4);
+  key.position.set(0, 4, 2.5);
+  key.target.position.set(0, 1.5, 0);
+  scene.add(key);
+  scene.add(key.target);
+
+  const rimL = new THREE.SpotLight(0xff066f, 0.45, 10, Math.PI * 0.4, 0.8, 1.6);
+  rimL.position.set(-4, 2, 0);
+  rimL.target.position.set(0, 1.4, 0);
+  scene.add(rimL);
+  scene.add(rimL.target);
+
+  const rimR = new THREE.SpotLight(0xD4A843, 0.35, 10, Math.PI * 0.4, 0.8, 1.6);
+  rimR.position.set(4, 2, 0);
+  rimR.target.position.set(0, 1.4, 0);
+  scene.add(rimR);
+  scene.add(rimR.target);
+
+  // --- DUST (prototype 10514-10528) ---
+  // 40 cyan particles (half of training's 80), 8×6 distribution, z shifted
+  // back by 1. Slower drift than Training (0.0015 vs 0.002), reset at y>3.5.
+  const dustCount = 40;
+  const dustGeom = new THREE.BufferGeometry();
+  const dustPos = new Float32Array(dustCount * 3);
+  for (let i = 0; i < dustCount; i++) {
+    dustPos[i * 3]     = (Math.random() - 0.5) * 8;
+    dustPos[i * 3 + 1] = Math.random() * 3 + 0.3;
+    dustPos[i * 3 + 2] = (Math.random() - 0.5) * 6 - 1;
+  }
+  dustGeom.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
+  const dust = new THREE.Points(dustGeom, new THREE.PointsMaterial({
+    color: 0x00E5C8, size: 0.025, transparent: true, opacity: 0.35,
+    depthWrite: false, blending: THREE.AdditiveBlending,
+  }));
+  scene.add(dust);
+
+  function tick(t) {
+    // Slow camera breath — prototype 10835-10838. Tiny sin-based drift so
+    // the terminal feels alive without an orbit.
+    camera.position.x = Math.sin(t * 0.1) * 0.15;
+    camera.position.y = 1.7 + Math.sin(t * 0.2) * 0.03;
+    camera.position.z = 4.4 + Math.sin(t * 0.08) * 0.15;
+    camera.lookAt(0, 1.5, 0);
+
+    // Dust drift — prototype 10841-10846. Linear upward, reset at y>3.5.
+    const p = dustGeom.attributes.position.array;
+    for (let i = 0; i < dustCount; i++) {
+      p[i * 3 + 1] += 0.0015;
+      if (p[i * 3 + 1] > 3.5) p[i * 3 + 1] = 0.3;
+    }
+    dustGeom.attributes.position.needsUpdate = true;
+
+    // Step 4 — terminal (no per-frame work beyond dust+breath).
+    // Step 5 — screen texture needsUpdate handled in state watchers.
   }
 
   function dispose() {
