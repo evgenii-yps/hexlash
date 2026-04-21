@@ -5,6 +5,7 @@
 
 import { makeConcreteTexture } from '../materials/concrete.js';
 import { buildTrainingBag } from '../objects/trainingBag.js';
+import { createBagPhysics } from '../objects/trainingBagPhysics.js';
 
 const TR_ROOM_R = 14;
 const TR_ROOM_H = 8;
@@ -113,9 +114,13 @@ export function buildTrainingScene(THREE, aspect) {
   scene.add(dust);
 
   // --- HEAVY BAG (Step 4) ---
-  // Exposed in the return — Step 5 wires bagPhysics against this Group.
   const bag = buildTrainingBag(THREE);
   scene.add(bag);
+
+  // --- BAG PHYSICS (Step 5) ---
+  // Impulse surfaces through the scene API so Step 7a's click-to-hit can
+  // push the bag without reaching into physics internals directly.
+  const bagPhysics = createBagPhysics(bag);
 
   function tick(/* t */) {
     // Dust drift — prototype 10036-10042. Linear upward, reset at y>4.
@@ -126,7 +131,9 @@ export function buildTrainingScene(THREE, aspect) {
     }
     dustGeom.attributes.position.needsUpdate = true;
 
-    // Step 5 — bagPhysics.applyTick.
+    // Bag pendulum sim — runs every frame, no-op until an impulse lands.
+    bagPhysics.applyTick();
+
     // Step 7a — energy regen.
     // Step 7b — combo timeout + hud sync + hitParticles.tick.
   }
@@ -145,7 +152,11 @@ export function buildTrainingScene(THREE, aspect) {
     });
   }
 
-  return { scene, camera, tick, dispose, bag };
+  return {
+    scene, camera, tick, dispose,
+    bag,
+    applyImpulse: bagPhysics.applyImpulse,
+  };
 }
 
 export { TR_ROOM_R, TR_ROOM_H };
