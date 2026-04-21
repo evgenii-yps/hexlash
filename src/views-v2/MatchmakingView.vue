@@ -15,10 +15,15 @@ import {
   activateScene,
 } from '@/scene/sceneRegistry.js';
 import { buildMatchmakingScene } from '@/scene/scenes/MatchmakingScene.js';
+import {
+  refreshScreen,
+  startSearchLogAnimation,
+} from '@/scene/interaction/useMatchmakingScreen.js';
 
 const router = useRouter();
 
 let sceneApi = null;
+let animHandle = null;
 let onResize = null;
 
 function handleResize() {
@@ -44,6 +49,17 @@ onMounted(() => {
     tick: sceneApi.tick,
   });
   activateScene('matchmaking');
+  // Step 5 — draw CRT once with empty state, then start typeLog animation.
+  refreshScreen(sceneApi.screenCtx, sceneApi.screenTex);
+  animHandle = startSearchLogAnimation(
+    sceneApi.screenCtx,
+    sceneApi.screenTex,
+    () => {
+      // Step 8 will replace this with generateCandidates + enterResultsPhase.
+      // eslint-disable-next-line no-console
+      console.log('[MM] typeLog complete — Step 8 will transition to results');
+    },
+  );
   onResize = handleResize;
   window.addEventListener('resize', onResize);
   window.addEventListener('keydown', onKeydown);
@@ -54,6 +70,12 @@ onBeforeUnmount(() => {
   if (onResize) {
     window.removeEventListener('resize', onResize);
     onResize = null;
+  }
+  // Cancel pending typeLog timers first — otherwise they mutate mmState
+  // / push to screenCtx after scene teardown.
+  if (animHandle) {
+    animHandle.cancel();
+    animHandle = null;
   }
   // Switch back to pit BEFORE disposing, so renderLoop doesn't touch a
   // freed scene on its next tick.
