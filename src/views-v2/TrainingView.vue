@@ -22,12 +22,14 @@ import {
   startTrainingSession,
   resetTrainingState,
 } from '@/scene/interaction/useTrainingState.js';
+import { attachClickToHit } from '@/scene/interaction/useClickToHit.js';
 import HudTraining from '@/components/hud/HudTraining.vue';
 
 const router = useRouter();
 const energyFlashing = ref(false);
 
 let sceneApi = null;
+let clickHandle = null;
 let onResize = null;
 
 function handleResize() {
@@ -44,8 +46,9 @@ function onKeydown(e) {
   if (e.key === 'Escape') onBack();
 }
 
-// Placeholder — invoked by Step 7a's click-to-hit when energy is 0.
-// eslint-disable-next-line no-unused-vars
+// Fired by click-to-hit when the user swings with energy=0. Double-toggle
+// matches the CSS animation restart trick from the prototype (remove +
+// forced reflow + re-add) — reactive flip here does the same job.
 function triggerEnergyFlash() {
   energyFlashing.value = false;
   requestAnimationFrame(() => { energyFlashing.value = true; });
@@ -62,6 +65,15 @@ onMounted(() => {
   });
   activateScene('training');
   startTrainingSession();
+  // Step 7a — wire click-to-hit after the scene is active so CanvasLayer
+  // has already published the canvas via useCanvasRef.
+  clickHandle = attachClickToHit(
+    THREE,
+    sceneApi.camera,
+    sceneApi.bag,
+    sceneApi.applyImpulse,
+    triggerEnergyFlash,
+  );
   onResize = handleResize;
   window.addEventListener('resize', onResize);
   window.addEventListener('keydown', onKeydown);
@@ -72,6 +84,12 @@ onBeforeUnmount(() => {
   if (onResize) {
     window.removeEventListener('resize', onResize);
     onResize = null;
+  }
+  // Detach click handler first — a late mousedown must not try to hit a
+  // disposed bag/apply impulse through freed closures.
+  if (clickHandle) {
+    clickHandle.detach();
+    clickHandle = null;
   }
   resetTrainingState();
   // Switch back to pit BEFORE disposing, so renderLoop doesn't touch a

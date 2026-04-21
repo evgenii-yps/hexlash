@@ -6,6 +6,7 @@
 import { makeConcreteTexture } from '../materials/concrete.js';
 import { buildTrainingBag } from '../objects/trainingBag.js';
 import { createBagPhysics } from '../objects/trainingBagPhysics.js';
+import { trState } from '../interaction/useTrainingState.js';
 
 const TR_ROOM_R = 14;
 const TR_ROOM_H = 8;
@@ -123,6 +124,20 @@ export function buildTrainingScene(THREE, aspect) {
   const bagPhysics = createBagPhysics(bag);
 
   function tick(/* t */) {
+    const now = performance.now();
+
+    // Energy regen — prototype 10009-10016. `lastEnergyTick` lives in
+    // trState so reset/start can seed it; we always update it to keep dt
+    // correct even when `active` is false between session restarts.
+    const dt = (now - trState.lastEnergyTick) / 1000;
+    trState.lastEnergyTick = now;
+    if (trState.active && trState.energy < trState.energyMax) {
+      trState.energy = Math.min(
+        trState.energyMax,
+        trState.energy + trState.energyRegen * dt,
+      );
+    }
+
     // Dust drift — prototype 10036-10042. Linear upward, reset at y>4.
     const p = dustGeom.attributes.position.array;
     for (let i = 0; i < dustCount; i++) {
@@ -134,7 +149,6 @@ export function buildTrainingScene(THREE, aspect) {
     // Bag pendulum sim — runs every frame, no-op until an impulse lands.
     bagPhysics.applyTick();
 
-    // Step 7a — energy regen.
     // Step 7b — combo timeout + hud sync + hitParticles.tick.
   }
 

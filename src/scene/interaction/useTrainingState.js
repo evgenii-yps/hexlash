@@ -18,6 +18,7 @@ export const trState = reactive({
   energy: ENERGY_INITIAL,
   energyMax: ENERGY_MAX,
   energyRegen: ENERGY_REGEN,
+  lastEnergyTick: 0,
 
   lastHitAt: 0,
   comboCount: 0,
@@ -41,6 +42,7 @@ export function resetTrainingState() {
   trState.startedAt = 0;
   trState.tapsEarned = 0;
   trState.energy = ENERGY_INITIAL;
+  trState.lastEnergyTick = 0;
   trState.lastHitAt = 0;
   trState.comboCount = 0;
   trState.comboTimerExpiresAt = 0;
@@ -57,6 +59,7 @@ export function startTrainingSession() {
   resetTrainingState();
   trState.active = true;
   trState.startedAt = performance.now();
+  trState.lastEnergyTick = performance.now();
 }
 
 // Source: prototype 9754-9759.
