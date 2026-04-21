@@ -7,7 +7,10 @@
   <div class="create-view">
     <HudCreate
       :on-archetype-color="handleArchetypeColor"
+      :get-holo-fighter="getHoloFighter"
+      :get-flash-el="getFlashEl"
       @back="onBack"
+      @materialize-start="onMaterializeStart"
     />
     <div ref="flashRef" class="materialize-flash"></div>
   </div>
@@ -31,6 +34,12 @@ const flashRef = ref(null);
 
 let sceneApi = null;
 let onResize = null;
+// Materialize animation handle owned here (CreateView), reported up from
+// HudCreate via @materialize-start. Cancelled on unmount so Esc/Back
+// mid-lerp can't trigger onDone's router.push after the view is gone.
+// Pattern 3Bb animHandle — handle lives with the orchestrator that owns
+// the lifecycle, not the HUD that fires it.
+let matHandle = null;
 
 function handleResize() {
   if (!sceneApi) return;
@@ -50,6 +59,22 @@ function handleArchetypeColor(hex) {
   if (sceneApi && sceneApi.setArchetypeColor) {
     sceneApi.setArchetypeColor(hex);
   }
+}
+
+// Getters passed as props — invoked at click time (not mount time), so
+// null-at-mount is fine. `sceneApi._holoFighter` is the warden Group
+// mutated via setHologram during materialize. `flashRef.value` is the
+// .materialize-flash DOM node that drives the pink pulse via CSS class.
+function getHoloFighter() {
+  return sceneApi ? sceneApi._holoFighter : null;
+}
+
+function getFlashEl() {
+  return flashRef.value;
+}
+
+function onMaterializeStart(handle) {
+  matHandle = handle;
 }
 
 function onKeydown(e) {
@@ -84,6 +109,14 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+  // Cancel materialize FIRST — a late rAF tick or the 700ms pause
+  // setTimeout could otherwise call onDone → emit('back') → router.push
+  // after the view is already unmounting. Pattern 3Bb (animHandle cancel
+  // before scene dispose).
+  if (matHandle) {
+    matHandle.cancel();
+    matHandle = null;
+  }
   window.removeEventListener('keydown', onKeydown);
   if (onResize) {
     window.removeEventListener('resize', onResize);
