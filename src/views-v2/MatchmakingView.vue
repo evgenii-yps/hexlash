@@ -2,7 +2,15 @@
      Lazy scene registration pattern from Epic 3A/3Ba. HUD + filter wiring
      + typeLog + results phase arrive in Steps 5-9. -->
 <template>
-  <div class="matchmaking-view"></div>
+  <div class="matchmaking-view">
+    <HudMatchmaking
+      @back="onBack"
+      @cancel="onCancel"
+      @rescan="onRescan"
+      @fight="onFight"
+      @elo-change="onEloChange"
+    />
+  </div>
 </template>
 
 <script setup>
@@ -19,6 +27,7 @@ import {
   refreshScreen,
   startSearchLogAnimation,
 } from '@/scene/interaction/useMatchmakingScreen.js';
+import HudMatchmaking from '@/components/hud/HudMatchmaking.vue';
 
 const router = useRouter();
 
@@ -34,6 +43,23 @@ function handleResize() {
 
 function onBack() {
   router.push('/v2');
+}
+
+// Step 6 placeholders — real wiring in Steps 7-9.
+function onCancel() {
+  router.push('/v2');
+}
+// eslint-disable-next-line no-unused-vars
+function onRescan() {
+  // Step 7 — enterSearchPhase + restart typeLog.
+}
+// eslint-disable-next-line no-unused-vars
+function onFight() {
+  // Step 9 — setFightSetup + router.push('/v2/fight').
+}
+// eslint-disable-next-line no-unused-vars
+function onEloChange(value) {
+  // Step 7 — mmState.eloDelta = value + refreshScreen via watcher.
 }
 
 function onKeydown(e) {
