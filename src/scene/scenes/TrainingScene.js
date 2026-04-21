@@ -52,8 +52,74 @@ export function buildTrainingScene(THREE, aspect) {
     scene.add(wall);
   }
 
+  // --- LIGHTING (Step 3, prototype 9688-9708) ---
+  scene.add(new THREE.AmbientLight(0x1a1a28, 0.45));
+  scene.add(new THREE.HemisphereLight(0x2a2638, 0x0a0a12, 0.4));
+
+  // Key spot — overhead onto bag position. renderer.shadowMap.enabled is
+  // already set in CanvasLayer (Epic 2 Step 3 hot-fix).
+  const key = new THREE.SpotLight(0xfff0e8, 2.6, 14, Math.PI * 0.22, 0.55, 1.4);
+  key.position.set(0, 7.5, 0);
+  key.target.position.set(0, 1.8, 0);
+  key.castShadow = true;
+  key.shadow.mapSize.width = 1024;
+  key.shadow.mapSize.height = 1024;
+  scene.add(key);
+  scene.add(key.target);
+
+  // Pink rim from the left.
+  const rimL = new THREE.SpotLight(0xff066f, 0.7, 14, Math.PI * 0.4, 0.8, 1.6);
+  rimL.position.set(-6, 3, 1);
+  rimL.target.position.set(0, 1.5, 0);
+  scene.add(rimL);
+  scene.add(rimL.target);
+
+  // Cyan rim from the right.
+  const rimR = new THREE.SpotLight(0x4dd9ff, 0.4, 14, Math.PI * 0.4, 0.8, 1.6);
+  rimR.position.set(6, 3, 1);
+  rimR.target.position.set(0, 1.5, 0);
+  scene.add(rimR);
+  scene.add(rimR.target);
+
+  // --- LIGHT SHAFT (volumetric fake, prototype 9710-9720) ---
+  const shaft = new THREE.Mesh(
+    new THREE.ConeGeometry(1.5, 7, 24, 1, true),
+    new THREE.MeshBasicMaterial({
+      color: 0xfff0e8, transparent: true, opacity: 0.05,
+      side: THREE.DoubleSide, depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    })
+  );
+  shaft.position.set(0, 3.5, 0);
+  scene.add(shaft);
+
+  // --- DUST (prototype 9722-9736) ---
+  // Training-specific distribution (10×10 square, small warm particles) —
+  // distinct from pit/environment.js settings (22×22, cool larger particles).
+  const dustCount = 80;
+  const dustGeom = new THREE.BufferGeometry();
+  const dustPos = new Float32Array(dustCount * 3);
+  for (let i = 0; i < dustCount; i++) {
+    dustPos[i * 3]     = (Math.random() - 0.5) * 10;
+    dustPos[i * 3 + 1] = Math.random() * 4 + 0.3;
+    dustPos[i * 3 + 2] = (Math.random() - 0.5) * 10;
+  }
+  dustGeom.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
+  const dust = new THREE.Points(dustGeom, new THREE.PointsMaterial({
+    color: 0xffd9c8, size: 0.03, transparent: true, opacity: 0.45,
+    depthWrite: false, blending: THREE.AdditiveBlending,
+  }));
+  scene.add(dust);
+
   function tick(/* t */) {
-    // Step 3 — dust drift here.
+    // Dust drift — prototype 10036-10042. Linear upward, reset at y>4.
+    const p = dustGeom.attributes.position.array;
+    for (let i = 0; i < dustCount; i++) {
+      p[i * 3 + 1] += 0.002;
+      if (p[i * 3 + 1] > 4) p[i * 3 + 1] = 0.3;
+    }
+    dustGeom.attributes.position.needsUpdate = true;
+
     // Step 5 — bagPhysics.applyTick.
     // Step 7a — energy regen.
     // Step 7b — combo timeout + hud sync + hitParticles.tick.
