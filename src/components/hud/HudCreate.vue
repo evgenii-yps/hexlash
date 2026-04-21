@@ -89,18 +89,61 @@
         </div>
       </div>
 
-      <!-- Step 9 — Name input + roll + chips. -->
+      <!-- ===== Step 2 — Name (prototype 9149-9175) ===== -->
+      <div v-else-if="createState.step === 2">
+        <div class="cp-step-title">Name Your Fighter</div>
+        <div class="cp-step-sub">A handle the arena will remember</div>
+        <div class="name-input-wrap">
+          <input
+            class="name-input"
+            maxlength="16"
+            v-model="createState.name"
+            placeholder="Type a name..."
+          />
+          <button
+            class="name-roll"
+            @click="onRoll"
+            title="Roll random"
+          >&#127922;</button>
+        </div>
+        <div
+          class="cp-step-sub"
+          style="margin-top: 0; margin-bottom: 6px"
+        >Suggestions</div>
+        <div class="name-suggestions">
+          <div
+            v-for="s in suggestions"
+            :key="s"
+            class="name-chip"
+            @click="onChip(s)"
+          >{{ s }}</div>
+        </div>
+        <div class="create-nav">
+          <button class="cn-btn" @click="goToStep(1)">Back</button>
+          <button
+            class="cn-btn primary"
+            :disabled="!createState.name.trim()"
+            @click="goToStep(3)"
+          >Next</button>
+        </div>
+      </div>
+
       <!-- Step 10 — Confirm summary + Create Fighter. -->
     </div>
   </div>
 </template>
 
 <script setup>
+import { ref, watch, onMounted } from 'vue';
 import {
   createState,
   ARCHETYPES,
   onArchetypeChange,
 } from '@/scene/interaction/useCreateState.js';
+import {
+  randomName,
+  generateSuggestions,
+} from '@/scene/interaction/useCreateNames.js';
 
 const props = defineProps({
   // Callback into CreateView that proxies to sceneApi.setArchetypeColor.
@@ -138,5 +181,34 @@ function selectArchetype(id) {
 
 function goToStep(n) {
   createState.step = n;
+}
+
+// ===== Step 2 — Name (prototype 9149-9175) =====
+// Suggestions regenerate on every entry into step 2 — prototype 9150
+// calls Array.from({length:5}, () => randomName()) inside renderNameStep,
+// which is invoked on each panel mount. Back → step 1 → Next → step 2
+// therefore produces a fresh roll. Stable while the user types (no
+// re-generation on v-model changes since watcher keys on step only).
+const suggestions = ref([]);
+
+watch(() => createState.step, (newStep) => {
+  if (newStep === 2) suggestions.value = generateSuggestions(5);
+});
+
+onMounted(() => {
+  // Edge case: direct URL entry while createState.step === 2 (e.g. HMR
+  // preserves state across reload). Initial watcher doesn't fire on
+  // mount, so seed suggestions explicitly.
+  if (createState.step === 2 && suggestions.value.length === 0) {
+    suggestions.value = generateSuggestions(5);
+  }
+});
+
+function onRoll() {
+  createState.name = randomName();
+}
+
+function onChip(s) {
+  createState.name = s;
 }
 </script>
