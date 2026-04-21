@@ -34,11 +34,8 @@ import { useHoverState } from '@/scene/interaction/useHoverState.js';
 const MODAL_CONTENT = {
   // 'training' removed in Epic 3Ba Step 1 — heavy bag clicks now route to
   // /v2/training instead of opening a PhModal.
-  matchmaking: {
-    kicker: 'PvP Matchmaking',
-    title: 'TERMINAL',
-    desc: 'Search for a real opponent in your ELO range. Real-time WebSocket combat. ±100 by default, expands over time.',
-  },
+  // 'matchmaking' removed in Epic 3Bb Step 1 — terminal clicks now route
+  // to /v2/matchmaking instead of opening a PhModal.
   create: {
     kicker: 'Create Fighter',
     title: 'NEW FIGHTER',

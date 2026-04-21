@@ -90,6 +90,11 @@ const v2Routes = [
                 name: 'V2Training',
                 component: () => import('@/views-v2/TrainingView.vue'),
             },
+            {
+                path: 'matchmaking',
+                name: 'V2Matchmaking',
+                component: () => import('@/views-v2/MatchmakingView.vue'),
+            },
         ],
     },
 ];
