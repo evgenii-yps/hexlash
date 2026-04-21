@@ -1,13 +1,69 @@
-<!-- Epic 3Bb Step 1 — stub. Filled out in Steps 2-9.
-     Route /v2/matchmaking mounts this view. -->
+<!-- Epic 3Bb Step 2 — Matchmaking view orchestrator.
+     Lazy scene registration pattern from Epic 3A/3Ba. HUD + filter wiring
+     + typeLog + results phase arrive in Steps 5-9. -->
 <template>
-  <div class="matchmaking-view">
-    <div class="matchmaking-stub">Matchmaking (stub &mdash; Epic 3Bb Step 1)</div>
-  </div>
+  <div class="matchmaking-view"></div>
 </template>
 
 <script setup>
-// Stub — scene registration + HUD arrive in Steps 2 / 6.
+import { onMounted, onBeforeUnmount } from 'vue';
+import { useRouter } from 'vue-router';
+import * as THREE from 'three';
+import {
+  registerScene,
+  unregisterScene,
+  activateScene,
+} from '@/scene/sceneRegistry.js';
+import { buildMatchmakingScene } from '@/scene/scenes/MatchmakingScene.js';
+
+const router = useRouter();
+
+let sceneApi = null;
+let onResize = null;
+
+function handleResize() {
+  if (!sceneApi) return;
+  sceneApi.camera.aspect = window.innerWidth / window.innerHeight;
+  sceneApi.camera.updateProjectionMatrix();
+}
+
+function onBack() {
+  router.push('/v2');
+}
+
+function onKeydown(e) {
+  if (e.key === 'Escape') onBack();
+}
+
+onMounted(() => {
+  const aspect = window.innerWidth / window.innerHeight;
+  sceneApi = buildMatchmakingScene(THREE, aspect);
+  registerScene('matchmaking', {
+    scene: sceneApi.scene,
+    camera: sceneApi.camera,
+    tick: sceneApi.tick,
+  });
+  activateScene('matchmaking');
+  onResize = handleResize;
+  window.addEventListener('resize', onResize);
+  window.addEventListener('keydown', onKeydown);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', onKeydown);
+  if (onResize) {
+    window.removeEventListener('resize', onResize);
+    onResize = null;
+  }
+  // Switch back to pit BEFORE disposing, so renderLoop doesn't touch a
+  // freed scene on its next tick.
+  activateScene('pit');
+  unregisterScene('matchmaking');
+  if (sceneApi) {
+    sceneApi.dispose();
+    sceneApi = null;
+  }
+});
 </script>
 
 <style scoped>
@@ -16,15 +72,5 @@
   inset: 0;
   pointer-events: none;
   z-index: 50;
-}
-.matchmaking-stub {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: var(--text-mid);
-  font-family: var(--font-body);
-  font-size: 14px;
-  letter-spacing: 1px;
 }
 </style>
