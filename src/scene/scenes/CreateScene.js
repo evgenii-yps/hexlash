@@ -9,6 +9,7 @@
 
 import { makeConcreteTexture } from '../materials/concrete.js';
 import { createPodium } from '../objects/createPodium.js';
+import { makeHoloFighter } from '../objects/createHologram.js';
 
 const CR_ROOM_R = 14;
 const CR_ROOM_H = 8;
@@ -63,6 +64,17 @@ const CR_SHAFT_HEIGHT = 7;
 const CR_SHAFT_SEGMENTS = 24;
 const CR_SHAFT_OPACITY = 0.05;
 const CR_SHAFT_POS = { x: 0, y: 3.5, z: 0 };
+
+// --- HOLO FIGHTER (prototype 8935-8947 + tick 9303-9306) ---
+// y=0.30 = top plane of the podium disc (disc is y=0.15, half-height 0.15).
+// Prototype does NOT call registerIdleFighter for the Create scene — the
+// breathing + sway below is a manual tick-driven effect, NOT the shared
+// 3A idle-animation pipeline. Contract: wrapper group not needed.
+const HOLO_BASE_Y = 0.30;
+const HOLO_BREATHING_FREQ = 1.2;
+const HOLO_BREATHING_AMP = 0.02;
+const HOLO_SWAY_FREQ = 0.4;
+const HOLO_SWAY_AMP = 0.15;
 
 // --- DUST (prototype 9013-9027, tick 9309-9314) ---
 const CR_DUST_COUNT = 80;
@@ -179,6 +191,16 @@ export function buildCreateScene(THREE, aspect) {
   const podium = createPodium(THREE);
   scene.add(podium);
 
+  // --- HOLO FIGHTER (prototype 8935-8947) ---
+  // Parented to podium — fighter rides along if podium ever animates
+  // (it doesn't in 3Bc, but prototype 8947 does `crPodium.add(crFighter)`).
+  // Opacity 0.35 already applied inside makeHoloFighter via setHologram.
+  // All 22 meshes of the warden variant go through traverse; accessories
+  // (belt/tail/wraps) are skipped by the Array<material> guard.
+  const holoFighter = makeHoloFighter(THREE);
+  holoFighter.position.y = HOLO_BASE_Y;
+  podium.add(holoFighter);
+
   // --- DUST (prototype 9013-9027) ---
   const dustGeom = new THREE.BufferGeometry();
   const dustPos = new Float32Array(CR_DUST_COUNT * 3);
@@ -198,10 +220,16 @@ export function buildCreateScene(THREE, aspect) {
   }));
   scene.add(dust);
 
-  // Step 3 tick — dust drift (prototype 9309-9314). Linear upward drift,
-  // reset to base Y when a particle exits the ceiling. X/Z preserved so
-  // the column of motes stays visually consistent within the shaft beam.
-  function tick(/* t */) {
+  // Tick — dust drift + holo fighter idle (prototype 9303-9314).
+  //   Dust (Step 3): linear upward drift, reset to base Y at the ceiling.
+  //   X/Z preserved so the column of motes stays consistent in the shaft.
+  //   Holo fighter (Step 5): sin-breathing on Y + slow Y-rotation sway.
+  //   Manual effect, NOT the 3A registerIdleFighter pipeline.
+  function tick(t) {
+    holoFighter.position.y = HOLO_BASE_Y
+      + Math.sin(t * HOLO_BREATHING_FREQ) * HOLO_BREATHING_AMP;
+    holoFighter.rotation.y = Math.sin(t * HOLO_SWAY_FREQ) * HOLO_SWAY_AMP;
+
     const p = dustGeom.attributes.position.array;
     for (let i = 0; i < CR_DUST_COUNT; i++) {
       p[i * 3 + 1] += CR_DUST_DRIFT;
@@ -240,11 +268,12 @@ export function buildCreateScene(THREE, aspect) {
     camera,
     tick,
     dispose,
-    // Exposed for Steps 5-6: holo fighter parents to podium, archetype
-    // glow disc + PointLight attach under it. Underscore prefix keeps
-    // the public surface (scene/camera/tick/dispose) distinct from
-    // internal refs.
+    // Exposed for Steps 5-10: fighter parent (Step 5), archetype glow
+    // attachment (Step 6), materialize opacity lerp target (Step 10).
+    // Underscore prefix keeps the public surface (scene/camera/tick/
+    // dispose) distinct from internal refs.
     _podium: podium,
+    _holoFighter: holoFighter,
   };
 }
 
