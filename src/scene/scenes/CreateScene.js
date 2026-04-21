@@ -10,6 +10,7 @@
 import { makeConcreteTexture } from '../materials/concrete.js';
 import { createPodium } from '../objects/createPodium.js';
 import { makeHoloFighter } from '../objects/createHologram.js';
+import { createArchetypeGlow } from '../objects/createArchetypeGlow.js';
 
 const CR_ROOM_R = 14;
 const CR_ROOM_H = 8;
@@ -64,6 +65,12 @@ const CR_SHAFT_HEIGHT = 7;
 const CR_SHAFT_SEGMENTS = 24;
 const CR_SHAFT_OPACITY = 0.05;
 const CR_SHAFT_POS = { x: 0, y: 3.5, z: 0 };
+
+// --- ARCHETYPE GLOW (prototype 9271 — initial call before any archetype
+// is selected). Neutral grey mirrors the "no archetype yet" state; Step 8
+// will call setArchetypeColor on carousel click to swap to the archetype
+// colour from ARCHETYPES.
+const CR_INITIAL_GLOW_COLOR = 0x6e6e7a;
 
 // --- HOLO FIGHTER (prototype 8935-8947 + tick 9303-9306) ---
 // y=0.30 = top plane of the podium disc (disc is y=0.15, half-height 0.15).
@@ -201,6 +208,14 @@ export function buildCreateScene(THREE, aspect) {
   holoFighter.position.y = HOLO_BASE_Y;
   podium.add(holoFighter);
 
+  // --- ARCHETYPE GLOW (prototype 8950-8983 + initial 9271) ---
+  // Factory returns { setColor, dispose }. Initial grey reflects the
+  // "no archetype chosen yet" state — Step 8 wires HudCreate click
+  // handlers to invoke onArchetypeChange({ setGlow: setArchetypeColor })
+  // which swaps the glow to the archetype colour.
+  const glow = createArchetypeGlow(THREE, podium);
+  glow.setColor(CR_INITIAL_GLOW_COLOR);
+
   // --- DUST (prototype 9013-9027) ---
   const dustGeom = new THREE.BufferGeometry();
   const dustPos = new Float32Array(CR_DUST_COUNT * 3);
@@ -239,6 +254,11 @@ export function buildCreateScene(THREE, aspect) {
   }
 
   function dispose() {
+    // Glow first — canvas texture lives inside podium subtree but
+    // traverse doesn't know about private closure refs (disc/light
+    // can be null between rebuild calls). disposeCurrent() handles
+    // both refs + dedicated map.dispose for the CanvasTexture.
+    glow.dispose();
     // Traverse-based disposal — pattern 3Ba/3Bb. Covers walls, floor,
     // shaft (Mesh), dust (Points — also has geometry+material). Explicit
     // extras below for defensive clarity (symmetric to 3Bb screenTex).
@@ -268,10 +288,14 @@ export function buildCreateScene(THREE, aspect) {
     camera,
     tick,
     dispose,
+    // Public API — HUD carousel (Step 8) calls this through
+    // onArchetypeChange({ setGlow: sceneApi.setArchetypeColor }). No
+    // underscore because it's part of the intended surface: HUD wiring
+    // is deliberate cross-module contact.
+    setArchetypeColor: glow.setColor,
     // Exposed for Steps 5-10: fighter parent (Step 5), archetype glow
     // attachment (Step 6), materialize opacity lerp target (Step 10).
-    // Underscore prefix keeps the public surface (scene/camera/tick/
-    // dispose) distinct from internal refs.
+    // Underscore prefix keeps internal refs distinct from public API.
     _podium: podium,
     _holoFighter: holoFighter,
   };
