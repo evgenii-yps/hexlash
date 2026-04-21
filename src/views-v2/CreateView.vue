@@ -5,7 +5,10 @@
      HUD wiring, name panel, confirm, materialize. -->
 <template>
   <div class="create-view">
-    <HudCreate @back="onBack" />
+    <HudCreate
+      :on-archetype-color="handleArchetypeColor"
+      @back="onBack"
+    />
     <div ref="flashRef" class="materialize-flash"></div>
   </div>
 </template>
@@ -36,6 +39,16 @@ function handleResize() {
 
 function onBack() {
   router.push('/v2');
+}
+
+// Callback handed to HudCreate (Step 8). Closure captures the `sceneApi`
+// let-binding, so by the time user clicks an archetype card the real
+// scene API is already assigned. No reactivity needed — HudCreate's
+// onArchetypeChange guard handles the null-window between mount phases.
+function handleArchetypeColor(hex) {
+  if (sceneApi && sceneApi.setArchetypeColor) {
+    sceneApi.setArchetypeColor(hex);
+  }
 }
 
 function onKeydown(e) {
