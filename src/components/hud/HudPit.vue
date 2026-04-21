@@ -32,11 +32,8 @@ import { useHoverState } from '@/scene/interaction/useHoverState.js';
 // real scene (Training / Matchmaking / ...); we surface a "coming soon" card
 // with a short description until Epic 3 wires real flows.
 const MODAL_CONTENT = {
-  training: {
-    kicker: 'Training Room',
-    title: 'HEAVY BAG',
-    desc: "Spend taps and free XP to upgrade your fighter's branches. Tap repeatedly to gain currency between matches.",
-  },
+  // 'training' removed in Epic 3Ba Step 1 — heavy bag clicks now route to
+  // /v2/training instead of opening a PhModal.
   matchmaking: {
     kicker: 'PvP Matchmaking',
     title: 'TERMINAL',

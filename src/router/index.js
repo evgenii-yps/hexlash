@@ -85,6 +85,11 @@ const v2Routes = [
                 name: 'V2Fight',
                 component: () => import('@/views-v2/FightView.vue'),
             },
+            {
+                path: 'training',
+                name: 'V2Training',
+                component: () => import('@/views-v2/TrainingView.vue'),
+            },
         ],
     },
 ];
