@@ -19,7 +19,7 @@ import {
   fightState,
   resetFight,
 } from '@/components/hud/common/useFightSimulation.js';
-import { getFightSetup } from '@/scene/interaction/useFightSetup.js';
+import { getFightSetup, clearFightSetup } from '@/scene/interaction/useFightSetup.js';
 
 let fight = null;
 let onResize = null;
@@ -51,7 +51,14 @@ onMounted(() => {
   // when entering directly via FD's FIGHT button / fresh URL). resetFight
   // intentionally does NOT touch leftName/leftArch/rightName/rightArch,
   // so we write them after reset without a field-clash.
+  //
+  // Epic 3Bb Step 10 fix — one-shot consumption. clearFightSetup() right
+  // after read so a later direct FD → FIGHT entry doesn't inherit the
+  // previous Matchmaking opponent. Rematch on this FightView mount still
+  // works because setup already applied to fightState; resetFight leaves
+  // name/arch untouched on subsequent round resets.
   const setup = getFightSetup();
+  clearFightSetup();
   fightState.leftName  = setup.leftName;
   fightState.leftArch  = setup.leftArch;
   fightState.rightName = setup.rightName;
