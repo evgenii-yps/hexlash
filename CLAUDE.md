@@ -2146,3 +2146,82 @@ src/styles/v24/training.css                       — 254 — 13 HUD classes + .
 | 11 | this | CLAUDE.md + handoff 3Bb + final report |
 
 **Следующий суб-эпик:** 3Bb — Matchmaking. См. `docs/visual-migration/HANDOFF_EPIC3Bb_CHAT_HANDOFF.md`.
+
+### Эпик 3Bb — Matchmaking (✅ COMPLETE)
+
+Завершён 2026-04-21. Вторая sub-scene Эпика 3B. Клик по CRT terminal в hub → `/v2/matchmaking`.
+
+**Что видит пользователь:**
+- Октагональная тёмная комната (MM_ROOM_R=14, H=8, цвет пола 0x1a1a20, стен 0x0a0a12) — cyan-mood, без волюметрического shaft'а.
+- В центре — напольный стенд (base + pole + top) с CRT-терминалом (1.6×1.2×1.0), фронтальный экран рисуется через canvas texture (512×320).
+- Освещение: cyan key spot (0x00E5C8), pink rimL (0xff066f), gold rimR (0xD4A843). 40 cyan dust particles (половина от Training), медленный drift 0.0015/frame.
+- Камера статичная с медленным breath (sin-based drift по x/y/z, не orbit — drag отсутствует).
+- На CRT анимируется typeLog (setTimeout-driven, 6 канонических строк: init matchmaker → pinging arena nodes [...] → querying eligibility → filtering by elo_range → filtering by archetype → collecting candidates → summary "> N candidates matched. ready."). Анимированные точки в "pinging" шаге. Каждый step имеет 35% шанс инкрементировать searchProgress.
+- HUD `search` phase (слева): кнопка ← Back, заголовок "Matchmaking / FIND OPPONENT", filters panel (ELO slider ±25..±400 step 25, Archetype chips Any + 6 архетипов, Belt chips Any + 4 пояса), Cancel button.
+- По завершении typeLog (~6 шагов × 340мс + финальная pause 600мс) → генерируется 3-6 candidates (deterministic seeded RNG от Date.now() & 0xffffff, mulberry32), HUD флипается в `results` phase.
+- HUD `results` phase: grid карточек кандидатов (name/initials/archetype color/belt/ELO/W-L/WR%/streak/Difficulty badge Easier|Even|Harder), кнопка Rescan, кнопка Start Fight (активна при выборе).
+- Изменения фильтров → watcher репейнтит CRT filters-line (без перезапуска typeLog).
+- Start Fight → сохраняем `{ leftName, leftArch, rightName, rightArch }` в `useFightSetup` → `router.push('/v2/fight')` → FightView считывает setup на mount через `getFightSetup()` + сразу `clearFightSetup()` (one-shot consumption).
+- Cancel / ← Back / Esc → `/v2`.
+
+**Дерево новых файлов:**
+```
+src/views-v2/MatchmakingView.vue                  — 199 строк — orchestrate: build scene + register + activate + lifecycle (startSearch/onSearchComplete/onCancel/onRescan/onFight) + resize + Esc + filter watcher
+src/scene/scenes/MatchmakingScene.js              — 147  — fog + camera + floor + 8 walls + lighting (ambient + cyan key + pink rim + gold rim) + 40 cyan dust + terminal mount + camera breath tick + dispose
+src/scene/objects/matchmakingTerminal.js          — 88   — stand (base + pole + top) + CRT body + canvas texture screen plane (512×320, toneMapped:false)
+src/scene/interaction/useMatchmakingState.js      — 54   — reactive mmState { phase, eloDelta, archFilter, beltFilter, candidates, selected, searchProgress, searchLog } + resetMmState + enterSearchPhase + enterResultsPhase + getEloRange + MY_ELO=1247
+src/scene/interaction/useMatchmakingScreen.js     — 127  — refreshScreen(ctx, tex) = BG + scan lines + title + filters summary + up to 14 log lines + tex.needsUpdate; startSearchLogAnimation(ctx, tex, onComplete) = setTimeout-driven typeLog, returns cancel handle
+src/scene/interaction/mmCandidatesMock.js         — 102  — generateCandidates(mmState) = mulberry32 seeded RNG, 3-6 cards, unique names, obeys filters, Difficulty thresholds ±50, sorted DESC by ELO. MM_POOL_NAMES (30), MM_ARCHS (6), MM_BELTS (4)
+src/scene/interaction/useFightSetup.js            — 40   — module-scoped reactive { current } + setFightSetup / getFightSetup / clearFightSetup. Defaults fallback (Captain Warden vs Predator). Semantic: one-shot consumption
+src/components/hud/HudMatchmaking.vue             — 173  — Back + title + filters panel (ELO slider + archetype chips + belt chips) + Cancel + results grid (candidate cards) + Rescan + Start Fight. v-if on mmState.phase
+src/styles/v24/matchmaking.css                    — 391  — 40+ HUD classes (.mm-back, .mm-title, .mm-filters, .mmf-slider, .mmf-chip, .mm-results, .mmr-card, .mm-diff-badge, phase transitions), scoped .app-v2
+```
+
+**Изменены:**
+- `src/router/index.js` — добавлен route `V2Matchmaking` (`/v2/matchmaking`), child of `/v2`.
+- `src/views-v2/PitViewV2.vue` — click watcher: `id === 'matchmaking'` → `router.push('/v2/matchmaking')`.
+- `src/components/hud/HudPit.vue` — `MODAL_CONTENT.matchmaking` удалён (8 → 7 ключей для PhModal, только create/ratings/clan/shop + avatar остаются на PhModal до 3Bc + Epic 4).
+- `src/styles/hexlash-v24.css` — `@import './v24/matchmaking.css'`.
+- `src/views-v2/FightView.vue` — на mount: `const setup = getFightSetup(); clearFightSetup(); fightState.leftName/leftArch/rightName/rightArch = setup.*`. `resetFight()` намеренно не трогает эти 4 поля, поэтому setup применяется после reset без field-clash. Step 10 hot-fix (`c644f1b`) добавил `clearFightSetup()` после read — one-shot consumption.
+
+**Паттерны:**
+- **One-shot consumption shared state.** `useFightSetup` — новый composable для cross-sub-scene параметров. Pipeline: producer (Matchmaking) вызывает `setFightSetup(...)` перед `router.push`; consumer (FightView) на mount делает `getFightSetup() + clearFightSetup() + apply`. Clear сразу после read — гарантирует, что следующий прямой заход (например, FD → временная FIGHT-кнопка) не унаследует предыдущего противника. Rematch работает потому что setup уже применён в `fightState`, а `resetFight()` на последующих round-reset'ах не трогает name/arch поля. Refresh на `/v2/fight` → defaults (acceptable, Epic 4 заменит на real match state).
+- **Один объект = один модуль.** `matchmakingTerminal.js` — отдельный модуль, НЕ параметрический вариант hub'ового `terminal.js`. Другие размеры, позиция, screen pipeline (canvas texture с dynamic drawing против procedural CRT blink). Прецедент из 3Ba (trainingBag vs heavyBag), подтверждён дважды. Применять тот же принцип в 3Bc для Create podium.
+- **TypeLog через canvas texture, не DOM.** Строки рисуются на 512×320 canvas, который используется как `THREE.CanvasTexture` на фронтальной плоскости CRT — часть 3D-сцены, а не HUD overlay. `tex.needsUpdate = true` после каждого draw. Плюс: совпадает с прототипом 1-в-1, не нужен отдельный DOM-слой, не ломается при `transform`/zoom камеры. `toneMapped: false` на screen plane — второй и последний легитимный случай в v2 codebase после shopLocker display (white-list rule).
+- **Module-scoped reactive как shared state.** `mmState` (useMatchmakingState) и `useFightSetup` следуют паттерну 3A/3Ba (useFightSimulation, useTrainingState) — reactive store + named exports, не `ref`, не `provide/inject`.
+- **Seeded RNG для candidates.** `mmSeed(Date.now() & 0xffffff)` + mulberry32 → rescans в пределах одной миллисекунды возвращают идентичные picks. Прототип-parity, не баг. Real backend API заменит в Epic 4.
+- **Cancel handle от `startSearchLogAnimation`.** Возвращает `{ cancel() }`. View обязан вызвать на unmount + при onCancel + при onRescan — иначе stale setTimeout мутирует mmState / рисует в disposed ctx. Параллельно хранится `resultsTimer` (600мс между CRT summary и phase flip) — освобождается в тех же трёх местах.
+
+**Расхождения с прототипом / ТЗ (осознанные):**
+- **Drag/orbit камера** — не перенесено. Matchmaking-сцена статичная с breath-drift'ом (по прототипу). FD orbit / hub orbit остаются своим режимом.
+- **Touch events** — отсутствуют. Epic 5 mobile.
+- **Real backend API** для candidates / filters — mock с seeded RNG. Epic 4.
+- **Captain data статична** — всегда `{ leftName: 'YURII.VARVAROV', leftArch: 'Captain · Warden' }` в `onFight`. Epic 4 прочитает реального captain'а из profile store.
+- **Refresh на `/v2/fight`** теряет `useFightSetup.current` — применяются DEFAULT_SETUP. Задокументировано в хедере файла, acceptable для 3Bb.
+- **FIGHT-кнопка в FD** — временная, до сих пор существует. Удаление вынесено в финал Эпика 3Bc (после Create — весь Эпик 3B закроется этим шагом).
+
+**Critical fix history (Step 10 hot-fix `c644f1b`):**
+Stale-state bug был **предсказан статически** в 3Ba Шаге 10 и передан в handoff 3Bb как открытый вопрос §5.5. Воспроизведён визуально в 3Bb regression test (Matchmaking → Fight → Rematch → Back → FD → FIGHT → старый opponent наследовался). Починен fix-вариантом 1: `clearFightSetup()` вызывается в `FightView.onMounted` сразу после `getFightSetup()`. Rematch продолжает работать потому что setup уже записан в `fightState.rightName/rightArch` к моменту clear'а; `resetFight()` эти поля не трогает. Прецедент подтвердил что критические риски через §5 handoff передаются корректно.
+
+**Deferred:**
+- Epic 3Bc: удаление временной FIGHT-кнопки из FD, возврат fd-resources `right: 14px`.
+- Epic 4: real backend matchmaking API (replace mmCandidatesMock), real captain data в onFight, match state persistence через refresh (replace useFightSetup fallback).
+- Epic 5: touch events, mobile polish.
+
+**Шаги и коммиты (10 + Step 10 hot-fix + final):**
+| # | Commit | Что |
+|---|--------|-----|
+| 1 | `95b326e` | stubs + route `/v2/matchmaking` + redirect terminal click |
+| 2 | `9832f6a` | MatchmakingScene scaffold (floor, walls, camera) |
+| 3 | `99aafea` | lighting + dust + camera breath |
+| 4 | `6c5ba06` | matchmakingTerminal (stand + CRT + canvas screen) |
+| 5 | `21e3afb` | screen texture rendering + typeLog animation |
+| 6 | `a8aa12b` | HudMatchmaking skeleton + matchmaking.css + state minimum |
+| 7 | `59f144e` | filters wiring + phase transitions + cancel |
+| 8 | `6cc4cb3` | candidates mock + enterResults + rescan |
+| 9 | `4ac5ace` | useFightSetup + FightView integration + Start Fight wiring |
+| 10 | — | regression test → stale-state bug обнаружен (no commit) |
+| 10 fix | `c644f1b` | stale fight setup via clearFightSetup on mount |
+| 11 | this | CLAUDE.md + final report + handoff 3Bc |
+
+**Следующий суб-эпик:** 3Bc — Create Fighter. См. `docs/visual-migration/HANDOFF_EPIC3Bc_CHAT_HANDOFF.md`.
