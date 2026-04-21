@@ -9,6 +9,14 @@ export function registerScene(id, entry) {
   scenes.set(id, entry);
 }
 
+// Epic 3Ba — lazy sub-scenes (Training, Matchmaking, Create) register on
+// View.onMounted and must clear the entry on unmount so a late
+// re-registration with a fresh scene doesn't alias to the disposed one.
+export function unregisterScene(id) {
+  if (activeId === id) activeId = null;
+  scenes.delete(id);
+}
+
 export function activateScene(id) {
   const prev = scenes.get(activeId);
   if (prev?.onLeave) prev.onLeave();
