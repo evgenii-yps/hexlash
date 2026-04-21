@@ -27,6 +27,53 @@ const CR_FLOOR_COLOR = 0x2c2c34;
 
 const CR_WALL_COLOR = 0x14141c;
 
+// --- LIGHTING (prototype 8986-8999) ---
+const CR_AMBIENT_COLOR = 0x1a1a28;
+const CR_AMBIENT_INTENSITY = 0.4;
+const CR_HEMI_SKY = 0x2a2638;
+const CR_HEMI_GROUND = 0x0a0a12;
+const CR_HEMI_INTENSITY = 0.4;
+// Key — overhead warm spot, casts shadows onto podium.
+const CR_KEY_COLOR = 0xfff0e8;
+const CR_KEY_INTENSITY = 2.2;
+const CR_KEY_DISTANCE = 14;
+const CR_KEY_ANGLE = Math.PI * 0.22;
+const CR_KEY_PENUMBRA = 0.55;
+const CR_KEY_DECAY = 1.4;
+const CR_KEY_POS = { x: 0, y: 7.5, z: 0 };
+const CR_KEY_TARGET = { x: 0, y: 1.2, z: 0 };
+const CR_KEY_SHADOW_SIZE = 1024;
+// Front — cyan fill from camera side, rounds out the fighter front face.
+const CR_FRONT_COLOR = 0x4dd9ff;
+const CR_FRONT_INTENSITY = 0.4;
+const CR_FRONT_DISTANCE = 12;
+const CR_FRONT_ANGLE = Math.PI * 0.5;
+const CR_FRONT_PENUMBRA = 0.9;
+const CR_FRONT_DECAY = 1.4;
+const CR_FRONT_POS = { x: 0, y: 2.5, z: 7 };
+const CR_FRONT_TARGET = { x: 0, y: 1.4, z: 0 };
+// NOTE: prototype 8986-8999 has NO rim-right spot. Unlike Training (which
+// adds pink rimL + cyan rimR) Create uses Key+Front only. Confirmed by
+// direct grep — no additional SpotLight between crFront and crShaft.
+
+// --- SHAFT (volumetric fake, prototype 9001-9011) ---
+const CR_SHAFT_RADIUS = 1.5;
+const CR_SHAFT_HEIGHT = 7;
+const CR_SHAFT_SEGMENTS = 24;
+const CR_SHAFT_OPACITY = 0.05;
+const CR_SHAFT_POS = { x: 0, y: 3.5, z: 0 };
+
+// --- DUST (prototype 9013-9027, tick 9309-9314) ---
+const CR_DUST_COUNT = 80;
+const CR_DUST_XZ_BOUND = 10;    // (rand-0.5) * 10 → ±5 spread
+const CR_DUST_Y_RANGE = 4;      // rand * 4 + 0.3
+const CR_DUST_Y_BASE = 0.3;
+const CR_DUST_Y_CEIL = 4;       // reset threshold
+const CR_DUST_COLOR = 0xffd9c8;
+const CR_DUST_SIZE = 0.03;
+const CR_DUST_OPACITY = 0.45;
+const CR_DUST_DRIFT = 0.002;
+
 export function buildCreateScene(THREE, aspect) {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(CR_FOG_COLOR);
@@ -78,15 +125,87 @@ export function buildCreateScene(THREE, aspect) {
     scene.add(wall);
   }
 
-  // Step 2 tick = no-op. Step 3 adds dust drift; Step 5 adds holo fighter
-  // breathing + sway. Signature kept stable so sceneRegistry.tickAll can
-  // call it without conditional guards.
-  function tick(/* t */) {}
+  // --- LIGHTING (prototype 8986-8999) ---
+  scene.add(new THREE.AmbientLight(CR_AMBIENT_COLOR, CR_AMBIENT_INTENSITY));
+  scene.add(new THREE.HemisphereLight(
+    CR_HEMI_SKY, CR_HEMI_GROUND, CR_HEMI_INTENSITY,
+  ));
+
+  const key = new THREE.SpotLight(
+    CR_KEY_COLOR, CR_KEY_INTENSITY, CR_KEY_DISTANCE,
+    CR_KEY_ANGLE, CR_KEY_PENUMBRA, CR_KEY_DECAY,
+  );
+  key.position.set(CR_KEY_POS.x, CR_KEY_POS.y, CR_KEY_POS.z);
+  key.target.position.set(CR_KEY_TARGET.x, CR_KEY_TARGET.y, CR_KEY_TARGET.z);
+  key.castShadow = true;
+  key.shadow.mapSize.width = CR_KEY_SHADOW_SIZE;
+  key.shadow.mapSize.height = CR_KEY_SHADOW_SIZE;
+  scene.add(key);
+  scene.add(key.target);
+
+  const front = new THREE.SpotLight(
+    CR_FRONT_COLOR, CR_FRONT_INTENSITY, CR_FRONT_DISTANCE,
+    CR_FRONT_ANGLE, CR_FRONT_PENUMBRA, CR_FRONT_DECAY,
+  );
+  front.position.set(CR_FRONT_POS.x, CR_FRONT_POS.y, CR_FRONT_POS.z);
+  front.target.position.set(
+    CR_FRONT_TARGET.x, CR_FRONT_TARGET.y, CR_FRONT_TARGET.z,
+  );
+  scene.add(front);
+  scene.add(front.target);
+
+  // --- SHAFT (volumetric fake, prototype 9001-9011) ---
+  const shaft = new THREE.Mesh(
+    new THREE.ConeGeometry(
+      CR_SHAFT_RADIUS, CR_SHAFT_HEIGHT, CR_SHAFT_SEGMENTS, 1, true,
+    ),
+    new THREE.MeshBasicMaterial({
+      color: CR_KEY_COLOR,
+      transparent: true,
+      opacity: CR_SHAFT_OPACITY,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    }),
+  );
+  shaft.position.set(CR_SHAFT_POS.x, CR_SHAFT_POS.y, CR_SHAFT_POS.z);
+  scene.add(shaft);
+
+  // --- DUST (prototype 9013-9027) ---
+  const dustGeom = new THREE.BufferGeometry();
+  const dustPos = new Float32Array(CR_DUST_COUNT * 3);
+  for (let i = 0; i < CR_DUST_COUNT; i++) {
+    dustPos[i * 3]     = (Math.random() - 0.5) * CR_DUST_XZ_BOUND;
+    dustPos[i * 3 + 1] = Math.random() * CR_DUST_Y_RANGE + CR_DUST_Y_BASE;
+    dustPos[i * 3 + 2] = (Math.random() - 0.5) * CR_DUST_XZ_BOUND;
+  }
+  dustGeom.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
+  const dust = new THREE.Points(dustGeom, new THREE.PointsMaterial({
+    color: CR_DUST_COLOR,
+    size: CR_DUST_SIZE,
+    transparent: true,
+    opacity: CR_DUST_OPACITY,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+  }));
+  scene.add(dust);
+
+  // Step 3 tick — dust drift (prototype 9309-9314). Linear upward drift,
+  // reset to base Y when a particle exits the ceiling. X/Z preserved so
+  // the column of motes stays visually consistent within the shaft beam.
+  function tick(/* t */) {
+    const p = dustGeom.attributes.position.array;
+    for (let i = 0; i < CR_DUST_COUNT; i++) {
+      p[i * 3 + 1] += CR_DUST_DRIFT;
+      if (p[i * 3 + 1] > CR_DUST_Y_CEIL) p[i * 3 + 1] = CR_DUST_Y_BASE;
+    }
+    dustGeom.attributes.position.needsUpdate = true;
+  }
 
   function dispose() {
-    // Traverse-based disposal — pattern 3Ba/3Bb. Floor texture disposed
-    // explicitly because CanvasTexture isn't always caught by mat.map
-    // path (safer to keep the separate call).
+    // Traverse-based disposal — pattern 3Ba/3Bb. Covers walls, floor,
+    // shaft (Mesh), dust (Points — also has geometry+material). Explicit
+    // extras below for defensive clarity (symmetric to 3Bb screenTex).
     scene.traverse((obj) => {
       if (obj.geometry) obj.geometry.dispose();
       const m = obj.material;
@@ -98,7 +217,14 @@ export function buildCreateScene(THREE, aspect) {
         }
       }
     });
+    // Floor texture (CanvasTexture shared via mat.map) — traverse already
+    // handles it via `if (mat.map)`, but kept explicit since concrete is
+    // a procedurally generated canvas that can drift off the mesh path.
     if (floorTex && floorTex.dispose) floorTex.dispose();
+    // Dust geometry/material — already disposed by traverse (Points has
+    // both), listed here so future edits to tick/materialize can't leak.
+    if (dustGeom && dustGeom.dispose) dustGeom.dispose();
+    if (dust && dust.material && dust.material.dispose) dust.material.dispose();
   }
 
   return { scene, camera, tick, dispose };
