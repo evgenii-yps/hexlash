@@ -36,11 +36,8 @@ const MODAL_CONTENT = {
   // /v2/training instead of opening a PhModal.
   // 'matchmaking' removed in Epic 3Bb Step 1 — terminal clicks now route
   // to /v2/matchmaking instead of opening a PhModal.
-  create: {
-    kicker: 'Create Fighter',
-    title: 'NEW FIGHTER',
-    desc: 'Design a new fighter archetype. Spin up stats and colours.',
-  },
+  // 'create' removed in Epic 3Bc Step 1 — plus-plinth clicks now route to
+  // /v2/create instead of opening a PhModal.
   ratings: {
     kicker: 'Leaderboard',
     title: 'RATINGS',

@@ -95,6 +95,11 @@ const v2Routes = [
                 name: 'V2Matchmaking',
                 component: () => import('@/views-v2/MatchmakingView.vue'),
             },
+            {
+                path: 'create',
+                name: 'V2Create',
+                component: () => import('@/views-v2/CreateView.vue'),
+            },
         ],
     },
 ];

@@ -9,8 +9,9 @@
 // Epic 3A Step 1: warden/predator clicks now route to /v2/fd/:key instead of
 // opening a PhModal. Other ids (6 interactables + avatar) stay on PhModal.
 // Epic 3Ba Step 1: 'training' now routes to /v2/training.
-// Epic 3Bb Step 1: 'matchmaking' now routes to /v2/matchmaking. Remaining
-// 4 interactables (create/ratings/clan/shop) keep PhModal until 3Bc + Epic 4+.
+// Epic 3Bb Step 1: 'matchmaking' now routes to /v2/matchmaking.
+// Epic 3Bc Step 1: 'create' now routes to /v2/create. Remaining 3
+// interactables (ratings/clan/shop) keep PhModal until Epic 4+.
 import { ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import HudPit from '@/components/hud/HudPit.vue';
@@ -34,6 +35,10 @@ watch(() => click.seq, () => {
   }
   if (click.id === 'matchmaking') {
     router.push('/v2/matchmaking');
+    return;
+  }
+  if (click.id === 'create') {
+    router.push('/v2/create');
     return;
   }
   if (hudRef.value) hudRef.value.openPhModal(click.id);
