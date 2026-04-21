@@ -4,6 +4,7 @@
 // Source: prototype hexlash_v24.html lines 10385-10426.
 
 import { makeConcreteTexture } from '../materials/concrete.js';
+import { buildMatchmakingTerminal } from '../objects/matchmakingTerminal.js';
 
 const MM_ROOM_R = 14;
 const MM_ROOM_H = 8;
@@ -91,6 +92,12 @@ export function buildMatchmakingScene(THREE, aspect) {
   }));
   scene.add(dust);
 
+  // --- TERMINAL (Step 4) ---
+  // Exposes screenCanvas/screenCtx/screenTex so Step 5's useMatchmakingScreen
+  // can draw the typeLog animation into the CRT surface.
+  const terminal = buildMatchmakingTerminal(THREE);
+  scene.add(terminal.group);
+
   function tick(t) {
     // Slow camera breath — prototype 10835-10838. Tiny sin-based drift so
     // the terminal feels alive without an orbit.
@@ -112,6 +119,10 @@ export function buildMatchmakingScene(THREE, aspect) {
   }
 
   function dispose() {
+    // CanvasTexture isn't always caught by scene.traverse (shared across
+    // materials, rebuilt lazily). Dispose explicitly first — pattern
+    // symmetric to Training.dispose with hitParticles.dispose().
+    if (terminal.screenTex) terminal.screenTex.dispose();
     scene.traverse((obj) => {
       if (obj.geometry) obj.geometry.dispose();
       const m = obj.material;
@@ -125,7 +136,12 @@ export function buildMatchmakingScene(THREE, aspect) {
     });
   }
 
-  return { scene, camera, tick, dispose };
+  return {
+    scene, camera, tick, dispose,
+    screenCanvas: terminal.screenCanvas,
+    screenCtx: terminal.screenCtx,
+    screenTex: terminal.screenTex,
+  };
 }
 
 export { MM_ROOM_R, MM_ROOM_H };
