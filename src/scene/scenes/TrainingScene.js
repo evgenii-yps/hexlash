@@ -4,6 +4,7 @@
 // Source: prototype hexlash_v24.html lines 9565-9614.
 
 import { makeConcreteTexture } from '../materials/concrete.js';
+import { buildTrainingBag } from '../objects/trainingBag.js';
 
 const TR_ROOM_R = 14;
 const TR_ROOM_H = 8;
@@ -111,6 +112,11 @@ export function buildTrainingScene(THREE, aspect) {
   }));
   scene.add(dust);
 
+  // --- HEAVY BAG (Step 4) ---
+  // Exposed in the return — Step 5 wires bagPhysics against this Group.
+  const bag = buildTrainingBag(THREE);
+  scene.add(bag);
+
   function tick(/* t */) {
     // Dust drift — prototype 10036-10042. Linear upward, reset at y>4.
     const p = dustGeom.attributes.position.array;
@@ -139,7 +145,7 @@ export function buildTrainingScene(THREE, aspect) {
     });
   }
 
-  return { scene, camera, tick, dispose };
+  return { scene, camera, tick, dispose, bag };
 }
 
 export { TR_ROOM_R, TR_ROOM_H };
