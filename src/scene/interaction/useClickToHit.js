@@ -13,6 +13,7 @@ import {
   trState,
   multiplierForCombo,
 } from '@/scene/interaction/useTrainingState.js';
+import { playHitSound } from '@/scene/interaction/useHitSound.js';
 
 const COMBO_WINDOW_MS = 700;      // repeat within 700ms grows combo
 const COMBO_SHOW_MS = 800;        // combo indicator life after last hit
@@ -95,7 +96,9 @@ export function attachClickToHit(
     spawnTapPop(clientX, clientY, gain, trState.multiplier >= CRIT_MULT_THRESHOLD);
     if (spawnHitParticles) spawnHitParticles(hitPoint);
 
-    // Step 9 will add: playHitSound(trState.multiplier).
+    // --- Sound (Step 9) ---
+    // Order matches prototype 9825 (between particles and syncHud).
+    playHitSound(trState.multiplier);
   }
 
   function onMouseDown(e) {
