@@ -34,6 +34,7 @@ import {
   enterResultsPhase,
 } from '@/scene/interaction/useMatchmakingState.js';
 import { generateCandidates } from '@/scene/interaction/mmCandidatesMock.js';
+import { setFightSetup } from '@/scene/interaction/useFightSetup.js';
 import HudMatchmaking from '@/components/hud/HudMatchmaking.vue';
 
 const router = useRouter();
@@ -106,9 +107,19 @@ function onRescan() {
   startSearch();
 }
 
-// eslint-disable-next-line no-unused-vars
 function onFight() {
-  // Step 9 — setFightSetup + router.push('/v2/fight').
+  if (mmState.selected === null) return;
+  const c = mmState.candidates[mmState.selected];
+  if (!c) return;
+  // Captain data is static for now — FD's current captain is always warden.
+  // Epic 4 will read the real captain from the profile store.
+  setFightSetup({
+    leftName:  'YURII.VARVAROV',
+    leftArch:  'Captain · Warden',
+    rightName: c.name.toUpperCase(),
+    rightArch: c.arch.name,
+  });
+  router.push('/v2/fight');
 }
 
 function onEloChange(value) {

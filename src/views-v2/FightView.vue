@@ -19,6 +19,7 @@ import {
   fightState,
   resetFight,
 } from '@/components/hud/common/useFightSimulation.js';
+import { getFightSetup } from '@/scene/interaction/useFightSetup.js';
 
 let fight = null;
 let onResize = null;
@@ -46,6 +47,15 @@ onMounted(() => {
   // overlay opens on first paint.
   resetFight();
   fightState.phase = 'prep';
+  // Epic 3Bb Step 9 — apply opponent setup from Matchmaking (or defaults
+  // when entering directly via FD's FIGHT button / fresh URL). resetFight
+  // intentionally does NOT touch leftName/leftArch/rightName/rightArch,
+  // so we write them after reset without a field-clash.
+  const setup = getFightSetup();
+  fightState.leftName  = setup.leftName;
+  fightState.leftArch  = setup.leftArch;
+  fightState.rightName = setup.rightName;
+  fightState.rightArch = setup.rightArch;
   onResize = handleResize;
   window.addEventListener('resize', onResize);
 });
