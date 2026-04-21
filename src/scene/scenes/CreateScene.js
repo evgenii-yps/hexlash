@@ -8,6 +8,7 @@
 // dispose traversal ordering.
 
 import { makeConcreteTexture } from '../materials/concrete.js';
+import { createPodium } from '../objects/createPodium.js';
 
 const CR_ROOM_R = 14;
 const CR_ROOM_H = 8;
@@ -171,6 +172,13 @@ export function buildCreateScene(THREE, aspect) {
   shaft.position.set(CR_SHAFT_POS.x, CR_SHAFT_POS.y, CR_SHAFT_POS.z);
   scene.add(shaft);
 
+  // --- PODIUM (prototype 8912-8931) ---
+  // Solid concrete-textured disc + brushed metal ring. Kept in closure so
+  // Step 5 can parent the holo fighter to it and Step 6 can attach the
+  // archetype glow disc + PointLight under it.
+  const podium = createPodium(THREE);
+  scene.add(podium);
+
   // --- DUST (prototype 9013-9027) ---
   const dustGeom = new THREE.BufferGeometry();
   const dustPos = new Float32Array(CR_DUST_COUNT * 3);
@@ -227,7 +235,17 @@ export function buildCreateScene(THREE, aspect) {
     if (dust && dust.material && dust.material.dispose) dust.material.dispose();
   }
 
-  return { scene, camera, tick, dispose };
+  return {
+    scene,
+    camera,
+    tick,
+    dispose,
+    // Exposed for Steps 5-6: holo fighter parents to podium, archetype
+    // glow disc + PointLight attach under it. Underscore prefix keeps
+    // the public surface (scene/camera/tick/dispose) distinct from
+    // internal refs.
+    _podium: podium,
+  };
 }
 
 export { CR_ROOM_R, CR_ROOM_H };
