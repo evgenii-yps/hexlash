@@ -1943,4 +1943,136 @@ Project Three.js version: r167 (from `package.json` — `three: ^0.167.1`). Пр
 - **Шаг 8 закоммичен пользователем через GitHub UI.** `fighterModel.js` — 585 строк, перенос 1-в-1 из прототипа. Claude Code уходил в Stream timeout при записи файла такого размера через Write. Решение: пользователь приложил готовый файл, Claude Code запустил сборку + push.
 - **Prod-билд обязателен перед каждым коммитом.** Унаследовано из Эпика 1, подтверждено на 22 коммитах — ни одного падения на Vercel за весь Эпик 2.
 
-**Следующий эпик:** Эпик 3 — вторая сцена (Fighter Detail / Training / ...). План в `docs/visual-migration/HANDOFF_VISUAL_MIGRATION.md` §8.
+### Эпик 3A — Fighter Detail + Fight (✅ COMPLETE)
+
+Завершён 2026-04-21. Вторая и третья сцены миграции. Клик по warden/predator в Pit переключает на FD, временная кнопка FIGHT в FD переключает на Fight.
+
+**Что видит пользователь:**
+
+- `/v2/fd/:key` (key=warden|predator) — FD сцена:
+  - Октагональная комната (FD_ROOM_R=14, H=8) с подиумом в центре, боец стоит на подиуме, 3 branch columns сзади (speed cyan `0x00E5FF` / power pink `0xFF066F` / technique violet `0xA855F7`).
+  - Drag-to-rotate камера (CAM_R=7.0, CAM_Y=2.4, LOOK_Y=1.6), клампинг ±π/3.
+  - 3 DOM branch-labels трекаются над колоннами через fdProjectToScreen.
+  - Hover на колонку → scale 1.06, click → BranchPanel (slide-in справа) с kicker/title/level/5 moves.
+  - Upgrade кнопки (`.bp-move-up +`, `.bp-upgrade Level Up Branch`) **всегда disabled** с title "Upgrade — Epic 4".
+  - Шапка: kicker ("Captain · Warden" / "Predator"), name, meta (Belt · W-L-D · ELO). fd-resources (Taps/XP), fd-stats (4 карточки). Временная розовая кнопка FIGHT → (top-right).
+  - Back (← или Esc) → `/v2`.
+
+- `/v2/fight` — Fight сцена:
+  - Октагональный ринг (FT_RING_R=3.6, FT_RING_H=0.5), 8 post+cap, 24 rope segments (3 уровня × 8 сторон), свет (Ambient/Hemisphere/Key/RimL-pink/RimR-gold) + light shaft.
+  - 2 бойца: warden (x=-1.2, золотой glow), predator (x=+1.2, розовый glow), idle-breathing.
+  - 3 camera modes: pit (slow auto-orbit), side (static profile), cinema (tracks active attacker).
+  - Fight HUD: 2 fighter-карточки (name/arch/HP bar/HP num), round counter, cam-switcher, Back, Spectate-badge (pulse).
+  - Simulation: prep → fight → result.
+    - PrepOverlay: VS block + 3 strategy cards (aggressive/balanced/defensive) + Start/Cancel. **Без deck builder и stakes — упрощение от прототипа (Epic 4+).**
+    - runRound: 3-5 exchanges alternating attackers, mid-round coach pause.
+    - CoachPause: contextual text по HP diff (3 ветки), 3 strategy buttons (Push Pace / Defend / Counter).
+    - doExchange: hit chance с strategy modifier, crit 12% (×1.6), 220ms delay для синка с playMove анимацией, white flash на hit.
+    - ResultOverlay: VICTORY (green border) / DEFEAT (red border) + summary, Rematch → reset/prep, Exit → `/v2/fd/warden`.
+  - fight-log: HTML rows с actor colors, 50-lines auto-trim, auto-scroll.
+  - hit-flash overlay: 0.18s белая вспышка.
+  - Back → `/v2/fd/warden`.
+
+### Структура новых файлов Эпика 3A
+
+```
+src/scene/
+  scenes/
+    FighterDetailScene.js      — FD сцена: floor + walls + podium + lights + shaft + dust + fighter (setKey) + 3 branch columns + picker + label tracking в tick
+    FightScene.js              — Fight сцена: ring platform + floor + walls + posts+ropes + lights + shaft + 2 fighters + part refs + animSystem binding + 3 camera modes
+    useFightSceneApi.js        — reactive { setCamMode, playMove, getState, resetFight } + bind/unbind
+
+  interaction/
+    fdCameraController.js      — attachFdOrbit(camera, canvas) → { tick, detach, getIsDragging }; mouse-only drag clamp ±π/3
+    fdProjectToScreen.js       — fdProjectToScreen(obj3d, addY, camera, THREE) → { x, y, visible }
+    useFdLabels.js             — fdLabels reactive { speed, power, technique: {x,y,visible} } + updateFdLabel(id, pos)
+    useCanvasRef.js            — set/getCanvasRef singleton (CanvasLayer publishes, lazy Views read)
+
+  objects/
+    branchColumn.js            — buildBranchColumn(THREE, branch, opts) → { group, height }: base + shaft + cap + accent + disc + point light
+    fightAnimations.js         — createAnimationSystem(leftParts, rightParts, leftBase, rightBase) → { playMove, tickAnims, getAnims }; 6 types (jab/cross/hook/block/dodge/hit)
+
+src/views-v2/
+  FighterDetailView.vue        — заполнен: onMounted buildFD + registerScene + activateScene + orbit attach + setKey; resize listener; click watcher → openBranchPanel
+  FightView.vue                — заполнен: onMounted buildFight + registerScene + activateScene + resetFight + phase='prep'; resize; onBeforeUnmount resetFight→dispose
+
+src/components/hud/
+  HudFighterDetail.vue         — back, FIGHT btn, fd-top (kicker/name/meta), fd-resources, fd-stats (4), 3 branch-labels, BranchPanel
+  HudFight.vue                 — back, spectate-badge, fight-top (2 fighter cards + round), cam-switcher (3 btns), fight-log (auto-scroll), hit-flash, PrepOverlay + CoachPause + ResultOverlay
+  common/
+    BranchPanel.vue            — slide-in panel, kicker/title/level/moves + disabled upgrade btns
+    fdBranchData.js            — FD_BRANCH_DATA (3 branches × 5 moves)
+    PrepOverlay.vue            — VS block + 3 strategy cards + Start/Cancel (no CSS, uses v24/fight-overlays.css)
+    ResultOverlay.vue          — VICTORY/DEFEAT + summary + Rematch/Exit
+    CoachPause.vue             — coach text + 3 strategy btns
+    useFightLog.js             — fightLog reactive + logFight/clearFightLog (auto-trim 50)
+    useFlashHit.js             — flashing ref + triggerFlash (180ms CSS animation, reflow-restart)
+    useFightSimulation.js      — fightState reactive + startFight/resetFight/setCoachStrategy; MOVES + rng/pick; runRound/doExchange/showCoachPause/endFight with phase guards
+
+src/styles/v24/
+  fight-overlays.css           — shared .phase-overlay/.phase-card/.pc-*/.prep-*/.strat-*/.sc-*/.ef-*/.pc-footer/.pc-btn/.coach-pause/.cp-* scoped to .app-v2
+```
+
+### Изменённые файлы Эпика 3A
+
+- `src/router/index.js` — routes `V2FighterDetail` (`/v2/fd/:key`) и `V2Fight` (`/v2/fight`) как дети `/v2`.
+- `src/views-v2/PitViewV2.vue` — click watcher для warden/predator → `router.push('/v2/fd/:key')`, остальные id как в Эпике 2 (PhModal).
+- `src/scene/CanvasLayer.vue` — `setCanvasRef` publish на mount, `renderer.toneMapping = ACESFilmicToneMapping`, `toneMappingExposure = 2.3`, `getActiveScene` guard для `activateScene('pit')` (защита от mount race), generalized pointer-handlers через active-scene picker/getIsDragging/hoverScale/labels.
+- `src/scene/objects/arena.js` — pit floor color `0x2c2c34` → `0x6e6e7a` (прототип-deviation для target hardware, только pit; FD/Fight unchanged).
+- `src/scene/objects/{terminal,scoreboard,clanBanner,plinth,shopLocker,branchColumn,fighterModel}.js` — **trans toneMapped:false added and reverted** (see «Расхождения»).
+- `src/styles/hexlash-v24.css` — `@import './v24/fight-overlays.css'`.
+- `CLAUDE.md` — эта секция.
+
+### Публичные контракты API
+
+- **`buildFighterDetailScene(THREE, aspect)`** → `{ scene, camera, tick, clickableTargets, dispose, setKey, picker }`. `setKey(key)` swap'ит fighter + glow; `tick(t)` включает dust drift, outer sway, emissive pulse, hover lerp, tickIdleAnimations, label tracking.
+- **`buildFightScene(THREE, aspect)`** → `{ scene, camera, tick, playMove, setCamMode, getState, resetFight, dispose, ftVerts }`. `tick(t)` включает updateFightCamera, tickAnims, guarded tickIdleAnimations.
+- **`attachFdOrbit(camera, canvas)`** → `{ tick, detach, getIsDragging }`. Константы: CAM_R=7.0, CAM_Y=2.4, LOOK_Y=1.6, ROT_CLAMP=π/3. mousedown на canvas, mousemove/mouseup на window.
+- **`fdProjectToScreen(obj3d, addY, camera, THREE)`** → `{ x, y, visible }`. Переиспользуемый `_v = new THREE.Vector3()`.
+- **Composables** (module-scoped reactive): `useCanvasRef` (set/get), `useFdLabels` (fdLabels + updateFdLabel), `useFightSceneApi` (fightSceneApi + bind/unbindFightSceneApi), `useFightLog` (fightLog + logFight/clearFightLog), `useFlashHit` (flashing + triggerFlash), `useFightSimulation` (fightState + startFight/resetFight/setCoachStrategy).
+- **`createAnimationSystem(leftParts, rightParts, leftBase, rightBase)`** → `{ playMove(side,type), tickAnims(), getAnims() }`. Types: jab/cross/hook/block/dodge/hit. Duration: 400ms (block/dodge) или 500ms (остальные).
+- **`buildBranchColumn(THREE, branch, opts)`** → `{ group, height }`. branch = `{ id, name, color, level, x, z }`, opts = `{ COL_R, COL_BASE_H, COL_PER_LVL }`.
+
+### Известные расхождения с прототипом / ТЗ (осознанные)
+
+- **Branch-panel upgrade buttons** — disabled, title="Upgrade — Epic 4". Логика апгрейда = Эпик 4 (taps/xp spend, rebuildColumnHeight, spawnShockwave).
+- **PrepOverlay упрощённый** — только VS + 3 strategy cards + Start/Cancel. Без deck builder (5 moves) и stakes. Полный prep = Эпик 4+.
+- **Touch events в FD camera** — нет. Эпик 5 (mobile).
+- **Punch-zoom и blur/fade транзишны** между сценами — нет. Эпик 5 polish.
+- **Fighter badges** в Pit (DOM над 3D бойцами) — stub `FighterBadge.vue` не заполнен. Эпик 3 поздние фазы / Эпик 4.
+- **FD per-part idle не работает.** Подиум wrapper имеет `children[0] = podiumDisc` (Cylinder), а не fighter. `tickIdleAnimations` early-return'ит на контракте `children.length >= 22`. Прототип-parity — outer body sway в FD.tick единственная анимация. Исправление = Эпик 5 polish (переделать структуру wrapper).
+- **renderer.toneMapping = ACESFilmicToneMapping** с `toneMappingExposure = 2.3`. Прототип использует `1.05`. Подобрано итеративно против Vercel preview на target hardware. Revisit в Эпике 5 polish.
+- **Pit floor color `0x6e6e7a`** — прототип `0x2c2c34`. Только pit floor; FD/Fight floor остались прототип-parity. Revisit в Эпике 5.
+- **spectate-badge всегда видим** в HudFight. Прототип gating через `body.fight-readonly`. Условие появится в Эпике 4 (own match vs spectate режим).
+- **Shared CSS `fight-overlays.css`** вместо per-component scoped (ТЗ описывал scoped). Причина: 60%+ классов общие у Prep/Result; pattern parity с `tokens.css`/`effects.css` Эпика 1.
+- **HP clamp to 0** при damage display в `useFightSimulation.doExchange` (`Math.max(0, ...)`). Прототип не clamp'ит (HP может уйти в `-3 / 100`). Минорное улучшение, не меняет `endFight` comparison.
+- **fd-resources `right: 150px`** вместо прототипа `right: 14px`. Временно — чтобы не пересекаться с FIGHT-кнопкой. В Эпике 3B при удалении FIGHT-кнопки — вернуть 14px.
+- **`HudFight.vue` 411 строк** (над soft-300). Splitting на HudFight + HudFightOverlays wrapper возможно в Эпик 5 polish.
+
+### Исторические hot-fixes Эпика 3A
+
+- **Activation race (Step 11-12).** При hard-refresh `/v2/fd/*` или `/v2/fight` CanvasLayer (async) мог смонтироваться ПОСЛЕ View (async) и перезаписать `activeId`. Fix: `if (!getActiveScene()) activateScene('pit')` в CanvasLayer.onMounted.
+- **toneMapping (Step 9).** Прототип включает ACES на всех renderer'ах, Эпик 2 scaffold пропустил. Exposure тюнинг 1.05 → 1.7 → 2.3 итеративно.
+- **toneMapped:false на 9 материалах.** Изначально добавлено, потом отка́чено к прототип-parity (только shopLocker display сохраняет `toneMapped:false`).
+- **Pit floor color** 0x2c2c34 → 0x4a4a56 → 0x6e6e7a итеративно.
+
+### Step 17 (coach-pause) — closed as EMPTY
+
+Функциональность coach-pause полностью реализована в Step 16 (CoachPause.vue + useFightSimulation.showCoachPause + setCoachStrategy). Отдельный коммит для Step 17 не создавался. Step 18 → `epic3a: final`.
+
+### Deferred to Epic 5 (polish)
+
+- Punch-zoom transition hub → sub-scene.
+- Blur + fade transitions между сценами.
+- Touch events support (FD camera drag, mobile в целом).
+- Exposure / floor color тюнинг (final visual parity).
+- Per-part idle в FD (переделка podium структуры).
+- HudFight.vue splitting (~410 → 2-3 файла).
+- spectate-badge gating (own vs spectate).
+
+### Deferred to Epic 3B
+
+- FIGHT-кнопка в FD убирается — Matchmaking становится входом в Fight.
+- fd-resources возврат на `right: 14px`.
+
+**Следующий эпик:** Эпик 3B — Matchmaking + Training + Create сцены. План в `docs/visual-migration/HANDOFF_VISUAL_MIGRATION.md` §8.

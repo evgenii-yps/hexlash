@@ -252,12 +252,6 @@ export function buildFightScene(THREE, aspect) {
     ftLeftParts, ftRightParts, ftLeftBase, ftRightBase
   );
 
-  // Step 12 debug hook — lets the user validate the 6 animation types from
-  // DevTools console (e.g. `_playMove('left', 'jab')`). Removed in Step 18.
-  if (typeof window !== 'undefined') {
-    window._playMove = animSystem.playMove;
-  }
-
   // --- CAMERA MODES (Step 13, prototype 8389-8429) ---
   let camMode = 'pit';
   const CAM_MODES = ['pit', 'side', 'cinema'];
@@ -303,12 +297,6 @@ export function buildFightScene(THREE, aspect) {
       );
       camera.lookAt(_cinemaLookAt);
     }
-  }
-
-  // Step 13 debug hook — lets the user cycle cam modes from DevTools console
-  // (e.g. `_setCamMode('side')`). Removed in Step 18.
-  if (typeof window !== 'undefined') {
-    window._setCamMode = setCamMode;
   }
 
   function tick(t) {
