@@ -1,10 +1,366 @@
-/* Epic 3Bc Create HUD styles.
-   Full port of prototype 1354-1562 (+ 2560-2565 arch-tag colours) lands in
-   Step 7. All rules scope under .app-v2 (pattern 3Ba training.css /
-   3Bb matchmaking.css). */
+/* v2 Migration — Create HUD styles.
+   Scoped to .app-v2 (parity with tokens.css / training.css / matchmaking.css).
+   1-to-1 port of prototype 1354-1562 + 2559-2565 (archetype tag colours).
 
-/* Step 1 hot-fix — root .create-view inherits pointer-events: none from
-   the view scaffold; back-button needs auto so the click doesn't fall
-   through to the canvas (orbit camera). Step 7 full CSS includes this
-   rule again — duplication is intentional and harmless. */
-.app-v2 .create-back { pointer-events: auto; }
+   Deviations from prototype (deliberate, v2 architecture):
+   - position: absolute → position: fixed. Prototype used absolute inside
+     an `inset: 0` container; v2 HUD lives under `.app-v2` which has the
+     same behaviour but via fixed positioning. Symmetrical to 3Ba/3Bb.
+   - pointer-events: auto explicitly on interactable classes. `.create-view`
+     sets pointer-events: none on its root (v2 pattern — canvas below must
+     accept orbit/raycast clicks); interactables re-enable it. Prototype
+     had no such scope so no pointer-events rules.
+   - z-index values added for stacking above canvas (z-index: 0 on the
+     WebGL canvas, 50 on view containers, 60 on floating HUD). */
+
+/* ===== BACK BUTTON (prototype 1354-1371) ===== */
+.app-v2 .create-back {
+  position: fixed;
+  top: 14px; left: 14px;
+  background: var(--bg-panel);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  padding: 8px 14px 8px 10px;
+  color: var(--text-mid);
+  cursor: pointer;
+  pointer-events: auto;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  transition: all 0.15s ease;
+  z-index: 60;
+}
+.app-v2 .create-back:hover {
+  color: #fff;
+  border-color: rgba(255, 6, 111, 0.4);
+  background: rgba(255, 6, 111, 0.08);
+}
+
+/* ===== STEPPER (prototype 1373-1401) ===== */
+.app-v2 .create-stepper {
+  position: fixed;
+  top: 14px; left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-panel);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  padding: 6px 14px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 60;
+}
+.app-v2 .step {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  transition: color 0.2s ease;
+}
+.app-v2 .step.active { color: #fff; }
+.app-v2 .step.done   { color: var(--hex-primary); }
+.app-v2 .step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 10px;
+}
+.app-v2 .step.active .step-num {
+  border-color: var(--hex-primary);
+  color: #fff;
+}
+.app-v2 .step.done .step-num {
+  border-color: var(--hex-primary);
+  background: var(--hex-primary);
+  color: #000;
+}
+.app-v2 .step-sep {
+  width: 14px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* ===== PANEL (prototype 1403-1415) =====
+   Right-side container for per-step content (Steps 8-10 populate). */
+.app-v2 .create-panel {
+  position: fixed;
+  top: 70px; right: 14px;
+  width: 320px;
+  background: var(--bg-deep);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 18px 20px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  max-height: calc(100vh - 90px);
+  overflow-y: auto;
+  pointer-events: auto;
+  z-index: 60;
+}
+.app-v2 .create-panel::-webkit-scrollbar { width: 4px; }
+.app-v2 .create-panel::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* ===== PANEL HEADER COPY (prototype 1417-1425) ===== */
+.app-v2 .cp-step-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  letter-spacing: 3px;
+  margin-bottom: 4px;
+}
+.app-v2 .cp-step-sub {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+/* ===== ARCHETYPE CARDS (prototype 1427-1462, Step 8 wires data) ===== */
+.app-v2 .arch-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.app-v2 .arch-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-left: 2px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.app-v2 .arch-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+.app-v2 .arch-item.selected {
+  background: rgba(255, 6, 111, 0.06);
+}
+.app-v2 .arch-icon {
+  width: 32px; height: 32px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 12px;
+  letter-spacing: 1px;
+  flex-shrink: 0;
+}
+.app-v2 .arch-info {
+  flex: 1;
+  min-width: 0;
+}
+.app-v2 .arch-name {
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 1.5px;
+}
+.app-v2 .arch-tagline {
+  font-size: 11px;
+  color: var(--text-mid);
+  margin-top: 2px;
+  line-height: 1.3;
+}
+.app-v2 .arch-stats {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+}
+.app-v2 .arch-stat { flex: 1; }
+.app-v2 .arch-stat-label {
+  font-family: var(--font-mono);
+  font-size: 7px;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+.app-v2 .arch-stat-bar {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 2px;
+}
+.app-v2 .arch-stat-fill {
+  height: 100%;
+  background: var(--text-mid);
+  transition: width 0.3s ease;
+}
+
+/* ===== NAME INPUT + ROLL + CHIPS (prototype 1464-1507, Step 9) ===== */
+.app-v2 .name-input-wrap {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.app-v2 .name-input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  padding: 10px 12px;
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 14px;
+  letter-spacing: 2px;
+  outline: none;
+  pointer-events: auto;
+}
+.app-v2 .name-input:focus {
+  border-color: var(--hex-primary);
+  box-shadow: 0 0 0 2px rgba(255, 6, 111, 0.15);
+}
+.app-v2 .name-roll {
+  width: 38px; height: 38px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  color: var(--text-mid);
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+.app-v2 .name-roll:hover {
+  background: rgba(255, 6, 111, 0.1);
+  border-color: var(--hex-primary);
+  color: #fff;
+}
+.app-v2 .name-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+}
+.app-v2 .name-chip {
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--text-mid);
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+.app-v2 .name-chip:hover {
+  color: #fff;
+  border-color: var(--hex-primary);
+}
+
+/* ===== CONFIRM SUMMARY (prototype 1509-1524, Step 10) ===== */
+.app-v2 .confirm-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.app-v2 .confirm-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 4px;
+}
+.app-v2 .confirm-row .cf-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+.app-v2 .confirm-row .cf-value {
+  font-family: var(--font-display);
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: #fff;
+}
+
+/* ===== NAV BUTTONS (prototype 1526-1549) ===== */
+.app-v2 .create-nav {
+  display: flex;
+  gap: 6px;
+  margin-top: 16px;
+}
+.app-v2 .cn-btn {
+  flex: 1;
+  padding: 12px 0;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  color: var(--text-mid);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.app-v2 .cn-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.04);
+}
+.app-v2 .cn-btn.primary {
+  border-color: var(--hex-primary);
+  color: #fff;
+}
+.app-v2 .cn-btn.primary:hover {
+  background: rgba(255, 6, 111, 0.15);
+  box-shadow: 0 0 18px rgba(255, 6, 111, 0.25);
+}
+.app-v2 .cn-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.app-v2 .cn-btn:disabled:hover {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* ===== MATERIALIZE FLASH (prototype 1551-1562, Step 10) =====
+   Pink pulse overlay triggered on Confirm → Create. pointer-events:none
+   matches prototype 1553 — flash never blocks clicks. */
+.app-v2 .materialize-flash {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: rgba(255, 255, 255, 0);
+  z-index: 6;
+}
+.app-v2 .materialize-flash.flash {
+  animation: matflash 1.2s ease-out;
+}
+@keyframes matflash {
+  0%   { background: rgba(255, 255, 255, 0); }
+  20%  { background: rgba(255, 6, 111, 0.5); }
+  100% { background: rgba(255, 255, 255, 0); }
+}
+
+/* ===== ARCHETYPE COLOUR HELPERS (prototype 2559-2565) =====
+   Used for .cf-value colouring in Step 10 confirm step. */
+.app-v2 .arch-tag-pre { color: var(--hex-primary); }
+.app-v2 .arch-tag-ana { color: #4dd9ff; }
+.app-v2 .arch-tag-gho { color: #A855F7; }
+.app-v2 .arch-tag-sen { color: #2ee07f; }
+.app-v2 .arch-tag-mav { color: #FFA133; }
+.app-v2 .arch-tag-jug { color: #D4A843; }
