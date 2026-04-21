@@ -73,6 +73,7 @@ onMounted(() => {
     sceneApi.bag,
     sceneApi.applyImpulse,
     triggerEnergyFlash,
+    sceneApi.spawnHitParticles,
   );
   onResize = handleResize;
   window.addEventListener('resize', onResize);

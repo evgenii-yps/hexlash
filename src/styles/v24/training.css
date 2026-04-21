@@ -228,3 +228,27 @@
   margin: 0 3px;
   color: var(--text-mid);
 }
+
+/* +N floating numbers on hit (prototype 2289-2309). DOM-created by
+   useClickToHit.spawnTapPop, appended into .app-v2 so these selectors match. */
+.app-v2 .tap-pop {
+  position: absolute;
+  font-family: var(--font-display);
+  font-size: 24px;
+  color: #FFD262;
+  letter-spacing: 2px;
+  pointer-events: none;
+  text-shadow: 0 0 12px rgba(255, 210, 98, 0.7);
+  animation: tapPopAnim 0.9s ease-out forwards;
+  z-index: 5;
+}
+.app-v2 .tap-pop.crit {
+  color: var(--hex-primary);
+  text-shadow: 0 0 16px rgba(255, 6, 111, 0.8);
+  font-size: 30px;
+}
+@keyframes tapPopAnim {
+  0%   { opacity: 0; transform: translate(-50%, 0) scale(0.6); }
+  20%  { opacity: 1; transform: translate(-50%, -10px) scale(1.1); }
+  100% { opacity: 0; transform: translate(-50%, -80px) scale(1); }
+}

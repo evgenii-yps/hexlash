@@ -6,7 +6,10 @@
 import { makeConcreteTexture } from '../materials/concrete.js';
 import { buildTrainingBag } from '../objects/trainingBag.js';
 import { createBagPhysics } from '../objects/trainingBagPhysics.js';
+import { createHitParticles } from '../objects/trainingHitParticles.js';
 import { trState } from '../interaction/useTrainingState.js';
+
+const HUD_SYNC_INTERVAL_MS = 100; // ~10 Hz, prototype 10024-10028
 
 const TR_ROOM_R = 14;
 const TR_ROOM_H = 8;
@@ -123,6 +126,11 @@ export function buildTrainingScene(THREE, aspect) {
   // push the bag without reaching into physics internals directly.
   const bagPhysics = createBagPhysics(bag);
 
+  // --- HIT PARTICLES (Step 7b) ---
+  const hitParticles = createHitParticles(scene, THREE);
+
+  let lastHudSync = 0;
+
   function tick(/* t */) {
     const now = performance.now();
 
@@ -138,6 +146,26 @@ export function buildTrainingScene(THREE, aspect) {
       );
     }
 
+    // Combo timeout — prototype 10018-10022. If the combo window lapsed,
+    // reset multiplier and hide the indicator.
+    if (trState.multiplier > 1 && now > trState.comboTimerExpiresAt) {
+      trState.multiplier = 1;
+      trState.comboCount = 0;
+      trState.comboVisible = false;
+    }
+
+    // HUD elapsed time sync throttled to ~10 Hz. Reactive re-renders of a
+    // once-per-frame clock string would be wasteful.
+    if (now - lastHudSync > HUD_SYNC_INTERVAL_MS) {
+      lastHudSync = now;
+      if (trState.active) {
+        const elapsed = Math.floor((now - trState.startedAt) / 1000);
+        const mm = String(Math.floor(elapsed / 60)).padStart(2, '0');
+        const ss = String(elapsed % 60).padStart(2, '0');
+        trState.elapsedStr = mm + ':' + ss;
+      }
+    }
+
     // Dust drift — prototype 10036-10042. Linear upward, reset at y>4.
     const p = dustGeom.attributes.position.array;
     for (let i = 0; i < dustCount; i++) {
@@ -149,10 +177,15 @@ export function buildTrainingScene(THREE, aspect) {
     // Bag pendulum sim — runs every frame, no-op until an impulse lands.
     bagPhysics.applyTick();
 
-    // Step 7b — combo timeout + hud sync + hitParticles.tick.
+    // 3D spark particles — fades + reaps in place.
+    hitParticles.tick();
   }
 
   function dispose() {
+    // Tear down active particles first — they're added to the scene but
+    // also tracked in a separate array; traverse alone wouldn't clear the
+    // array reference, which would leak on re-entry.
+    hitParticles.dispose();
     scene.traverse((obj) => {
       if (obj.geometry) obj.geometry.dispose();
       const m = obj.material;
@@ -170,6 +203,7 @@ export function buildTrainingScene(THREE, aspect) {
     scene, camera, tick, dispose,
     bag,
     applyImpulse: bagPhysics.applyImpulse,
+    spawnHitParticles: hitParticles.spawn,
   };
 }
 
