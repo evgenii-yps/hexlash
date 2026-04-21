@@ -31,13 +31,16 @@ import {
   mmState,
   resetMmState,
   enterSearchPhase,
+  enterResultsPhase,
 } from '@/scene/interaction/useMatchmakingState.js';
+import { generateCandidates } from '@/scene/interaction/mmCandidatesMock.js';
 import HudMatchmaking from '@/components/hud/HudMatchmaking.vue';
 
 const router = useRouter();
 
 let sceneApi = null;
 let animHandle = null;
+let resultsTimer = null;
 let onResize = null;
 
 function handleResize() {
@@ -56,22 +59,45 @@ function onBack() {
 function startSearch() {
   if (!sceneApi) return;
   if (animHandle) animHandle.cancel();
+  if (resultsTimer) {
+    clearTimeout(resultsTimer);
+    resultsTimer = null;
+  }
   enterSearchPhase();
   animHandle = startSearchLogAnimation(
     sceneApi.screenCtx,
     sceneApi.screenTex,
-    () => {
-      // Step 8 replaces with generateCandidates + enterResultsPhase.
-      // eslint-disable-next-line no-console
-      console.log('[MM] typeLog complete — Step 8 will transition to results');
-    },
+    onSearchComplete,
   );
+}
+
+// Step 8 — typeLog completes → generate candidates, paint summary line
+// on the CRT, pause 600ms so the user reads it, then flip the HUD to
+// the results phase. Matches prototype 10727-10731 ordering.
+function onSearchComplete() {
+  if (!sceneApi) return;
+  if (mmState.phase !== 'search') return;
+  const candidates = generateCandidates(mmState);
+  mmState.candidates = candidates;
+  mmState.searchLog.unshift(
+    '> ' + candidates.length + ' candidates matched. ready.',
+  );
+  refreshScreen(sceneApi.screenCtx, sceneApi.screenTex);
+  resultsTimer = setTimeout(() => {
+    resultsTimer = null;
+    if (mmState.phase !== 'search') return;
+    enterResultsPhase();
+  }, 600);
 }
 
 function onCancel() {
   if (animHandle) {
     animHandle.cancel();
     animHandle = null;
+  }
+  if (resultsTimer) {
+    clearTimeout(resultsTimer);
+    resultsTimer = null;
   }
   router.push('/v2');
 }
@@ -128,10 +154,15 @@ onBeforeUnmount(() => {
     onResize = null;
   }
   // Cancel pending typeLog timers first — otherwise they mutate mmState
-  // / push to screenCtx after scene teardown.
+  // / push to screenCtx after scene teardown. resultsTimer is the 600ms
+  // between CRT summary and phase flip; also freed here.
   if (animHandle) {
     animHandle.cancel();
     animHandle = null;
+  }
+  if (resultsTimer) {
+    clearTimeout(resultsTimer);
+    resultsTimer = null;
   }
   // Reset shared reactive state so a re-entry starts clean (matches
   // Training's resetTrainingState pattern).

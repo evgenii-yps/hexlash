@@ -102,15 +102,14 @@ export function startSearchLogAnimation(ctx, tex, onComplete) {
 
       timer = setTimeout(tick, 340);
     } else {
-      // Final line placeholder — Step 8 replaces with actual candidate count
-      // once generateCandidates lands.
-      mmState.searchLog.unshift('> ready. awaiting results...');
-      refreshScreen(ctx, tex);
-      timer = setTimeout(() => {
-        if (cancelled) return;
-        if (mmState.phase !== 'search') return;
-        if (onComplete) onComplete();
-      }, 600);
+      // Final log line + the 600ms pause before flipping to results are
+      // the caller's responsibility (Step 8 onSearchComplete). Prototype
+      // 10727-10731 writes the summary line THEN waits — we mirror that
+      // ordering in the View so the final count is visible on the CRT
+      // before the HUD switches phases.
+      if (cancelled) return;
+      if (mmState.phase !== 'search') return;
+      if (onComplete) onComplete();
     }
   }
 
