@@ -2225,3 +2225,82 @@ Stale-state bug был **предсказан статически** в 3Ba Ша
 | 11 | this | CLAUDE.md + final report + handoff 3Bc |
 
 **Следующий суб-эпик:** 3Bc — Create Fighter. См. `docs/visual-migration/HANDOFF_EPIC3Bc_CHAT_HANDOFF.md`.
+
+### Эпик 3Bc — Create Fighter (✅ COMPLETE)
+
+Завершён 2026-04-21. Третья и последняя sub-scene Эпика 3B. Клик «+» plinth в hub → `/v2/create`. **С 3Bc Эпик 3B закрыт полностью** (все 3 sub-эпика + FD FIGHT button cleanup).
+
+**Commit range:** `b6bd5af` (Step 1) → `e7d79ea` (Step 10) + 2 hot-fix'а (`809c63f` scene activation, `cbc074a` state reset) + `88618b4` (Step 11 FD cleanup) + 3 финальных коммита (13.1/13.2/13.3).
+
+**Что видит пользователь:**
+- Октагональная комната (CR_ROOM_R=14, H=8) с concrete-textured подиумом в центре.
+- На подиуме — полупрозрачный warden (opacity 0.35), лёгкое breathing + sway.
+- Под ногами — серый glow disc + PointLight (initial grey `0x6e6e7a`).
+- Volumetric shaft сверху, 80 dust particles медленно поднимаются.
+- Камера статична под углом (-1.5, 2.4, 7.0), без orbit.
+- HUD: Back button (top-left), 3-step stepper (top-center), Create panel (right, 320px).
+- **Step 1 Archetype:** 6 карточек (predator/analyst/ghost/sentinel/maverick/juggernaut) с colored icon (tinted bg/text/border), name, tagline, 3 stat bars (AGG/PAT/RIS). Click → glow меняет цвет + `.selected` border-left + Next enabled.
+- **Step 2 Name:** text input maxlength=16 + 🎲 roll button + 5 suggestion chips (regenerate on entry). Pool 16×10=160 комбинаций. Next enabled на non-empty trim.
+- **Step 3 Confirm:** 4 rows — Name / Archetype (colored) / Belt (White Belt) / Starting ELO (1000) + Create Fighter button.
+- **Materialize:** click → DOM flash pink pulse (1.2s CSS) + fighter opacity lerp 0.35→1.0 за 1.2s → 700ms pause → `router.push('/v2')`.
+- Back между шагами работает, state persists в сессии; Back в hub / Esc → full state reset on re-entry.
+
+**Дерево новых файлов:**
+```
+src/views-v2/CreateView.vue                       — 134 строки — orchestrator: resetCreateState + buildCreateScene + register/activate + HudCreate prop wiring + matHandle cancel on unmount
+src/scene/scenes/CreateScene.js                   — 300  — fog + camera + floor + 8 walls + lighting (Ambient+Hemi+Key+Front, NO rim right) + shaft + 80 dust + podium + holoFighter + archetypeGlow + tick + dispose
+src/scene/objects/createPodium.js                 — 82   — CylinderGeometry(1.4,1.5,0.30,32) concrete disc + TorusGeometry(1.42,0.022,8,64) metal ring
+src/scene/objects/createHologram.js               — 88   — setHologram (transparent+opacity ONLY, array material guard) + makeHoloFighter (warden default) + startMaterializeAnimation (rAF lerp + cancel handle)
+src/scene/objects/createArchetypeGlow.js          — 116  — createArchetypeGlow(THREE, podium) → { setColor, dispose }. CanvasTexture radial gradient + PlaneGeometry disc + PointLight, rebuild on setColor
+src/scene/interaction/useCreateState.js           — 71   — reactive createState + ARCHETYPES (6 archetypes 1-to-1 prototype 9030-9067) + resetCreateState + onArchetypeChange с DI
+src/scene/interaction/useCreateNames.js           — 24   — NAME_PARTS_A×16 + NAME_PARTS_B×10 + randomName + generateSuggestions (own pool, not MM_POOL_NAMES)
+src/components/hud/HudCreate.vue                  — 294  — Back + 3-step stepper + 3 panel templates (archetype cards / name input+roll+chips / confirm summary) + Create materialize wiring
+src/styles/v24/create.css                         — 380  — 10 blocks: back/stepper/panel/headers/archetype/name/chips/confirm/nav/flash + 6 arch-tag colours. Scoped .app-v2
+```
+
+**Изменены (6):**
+- `src/router/index.js` — добавлен `V2Create` route (`/v2/create`) в `v2Routes.children`.
+- `src/views-v2/PitViewV2.vue` — click watcher: `click.id === 'create'` → `/v2/create`.
+- `src/components/hud/HudPit.vue` — `MODAL_CONTENT.create` убран (7 → 6 ключей; warden/predator dead entries остались — см. EPIC3Bc_FINAL_REPORT §5.6 Epic 5 candidate).
+- `src/styles/hexlash-v24.css` — `@import './v24/create.css'`.
+- `src/components/hud/HudFighterDetail.vue` (Step 11) — удалены `.fd-fight-btn` template + handler + CSS block (26 строк). `.fd-resources right: 150px → 14px` (прототип-parity).
+- `src/scene/sceneRegistry.js` — **НЕ изменён** (unregisterScene уже добавлена в 3Ba Step 2).
+
+**Ключевые паттерны:**
+- **Holo material = `transparent + opacity` ONLY** (прототип 8937-8945). NO emissive / fresnel / rim-shader. Handoff §5.4 был ошибочен — зафиксирован correction в EPIC3Bb_FINAL_REPORT §5.2. Array material check (`!Array.isArray`) обязателен — accessories (belt/tail/wraps) несут `Array<material>`, traverse упал бы на `transparent` assignment.
+- **Archetype glow = canvas-texture rebuild.** Factory `createArchetypeGlow(THREE, podium)` → `{ setColor, dispose }`. setColor каждый call: `disposeCurrent()` → canvas 256×256 radial gradient 3 stops → CanvasTexture + PlaneGeometry disc (y=0.31 выше ring'а) + PointLight. Idempotent dispose. Защита от CanvasTexture leaks при rapid carousel clicks.
+- **Materialize animation = rAF lerp + linear easing + cancel handle.** `startMaterializeAnimation(group, from, to, durationMs, {onDone})` → `{ cancel() }`. Прототип 9242 `0.35 + (1.0 - 0.35) * t` (NOT ease-in-out). 700ms pause перед onDone (прототип 9247). Cancel idempotent (rAF + setTimeout оба). Паттерн 3Bb `startSearchLogAnimation`.
+- **One object = one module.** `createPodium.js` отдельный модуль, НЕ variant hub `plinth.js`. Hub plinth — стеклянная плита с «+»; Create podium — concrete disc + metal ring. Прецедент 3Ba (`trainingBag` vs `heavyBag`) + 3Bb (`matchmakingTerminal` vs hub `terminal`) подтверждён трижды.
+- **State reset on mount.** `createState` — module-scoped reactive singleton (паттерн 3A `fightState` / 3Ba `trState` / 3Bb `mmState`). Persists через Vue unmount. Прототип 9266-9269 (`openCreate`) сбрасывает state на каждое открытие; v2 эквивалент — `resetCreateState()` **первой строкой** в `CreateView.onMounted` (hot-fix `cbc074a`). Без этого user попадает на последний step с persisted данными.
+- **Wiring HUD↔Scene — Variant A (prop-drilling).** `CreateView` передаёт `handleArchetypeColor` + `getHoloFighter` + `getFlashEl` callbacks в `HudCreate` через props. HUD emit'ит `materialize-start` с cancel handle; `CreateView` owns matHandle lifecycle. Симметрично 3Ba/3Bb. Альтернатива (module-scoped composable) отвергнута — extra module state без выгод.
+- **Teardown ordering:** `matHandle.cancel()` → `removeEventListener` → `activateScene('pit')` → `unregisterScene('create')` → `sceneApi.dispose()`. `matHandle.cancel` первой строкой — late rAF/setTimeout не должен вызвать `onDone → emit('back') → router.push` после unmount view.
+- **6 archetypes в UI, 1 visual variant (warden default).** `makeFighterLowPoly` поддерживает только warden/predator visual variants; archetypeId влияет ТОЛЬКО на `setArchetypeGlow(color)`. Дорисовка недостающих 4 variants (analyst/ghost/sentinel/maverick/juggernaut) — Epic 4. Расширение point: `onArchetypeChange(id, { setGlow })` — добавить `setVariant` в DI объект без изменения сигнатуры.
+
+**Step 11 — FD FIGHT button removal (Epic 3A deferred closed):**
+Временная `.fd-fight-btn` в `HudFighterDetail.vue` удалена (прямой вход `/v2/fight` из FD в обход Matchmaking). `.fd-resources right: 150px → 14px` (прототип 648 parity). Единственный путь в Fight теперь: hub → click terminal → `/v2/matchmaking` → typeLog → select candidate → Start Fight → `/v2/fight` с opponent setup через `useFightSetup` one-shot consumption. Закрывает `EPIC3A_FINAL_REPORT §Deferred`.
+
+**Шаги и коммиты:**
+| # | Commit | Что |
+|---|--------|-----|
+| 1 | `b6bd5af` | stubs + route `/v2/create` + plinth redirect |
+| 1 hot-fix | `809c63f` | pointer-events on back + activate scene on create view |
+| 2 | `a56a693` | CreateScene scaffold (fog/camera/floor/walls) |
+| 3 | `7c81dbe` | lighting + shaft + dust |
+| 4 | `04492f0` | create podium |
+| 5 | `d4e60f7` | holo fighter + setHologram |
+| 6 | `8a6068e` | archetype glow + useCreateState wiring |
+| 7 | `78ea542` | HUD scaffold + create.css |
+| 8 | `019b957` | step 1 archetype cards |
+| 9 | `ee5fc9e` | step 2 name + useCreateNames |
+| 9 hot-fix | `cbc074a` | reset createState on CreateView mount |
+| 10 | `e7d79ea` | step 3 confirm + materialize |
+| 11 | `88618b4` | FD cleanup (remove temp fight button) |
+| 12 | — | regression test no-commit (static trace 16 пунктов + user visual verify) |
+| 13 | this | CLAUDE.md + final report + handoff Epic 4 |
+
+**Эпик 3B — CLOSED.** Все 3 sub-эпика завершены:
+- **3Ba Training** (`/v2/training`) — heavy bag, physics, combo, tasks, procedural sound.
+- **3Bb Matchmaking** (`/v2/matchmaking`) — CRT typeLog, filters, candidate grid, Start Fight → opponent setup.
+- **3Bc Create Fighter** (`/v2/create`) — archetype cards → name → confirm → materialize → hub. FD FIGHT button cleanup в финале.
+
+Переход к **Эпику 4 — Backend Integration**. План в `docs/visual-migration/HANDOFF_EPIC4_CHAT_HANDOFF.md`.
