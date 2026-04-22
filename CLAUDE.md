@@ -2304,3 +2304,106 @@ src/styles/v24/create.css                         — 380  — 10 blocks: back/s
 - **3Bc Create Fighter** (`/v2/create`) — archetype cards → name → confirm → materialize → hub. FD FIGHT button cleanup в финале.
 
 Переход к **Эпику 4 — Backend Integration**. План в `docs/visual-migration/HANDOFF_EPIC4_CHAT_HANDOFF.md`.
+
+### Эпик 4 — Captain Bind + Create Persistence + Dynamic FD (✅ COMPLETE)
+
+Завершён 2026-04-22. Привязка hub к реальным Vuex `agentState`, persist'анс Create → backend → navigation в FD нового бойца, динамический FD для любого agent id. Скоуп был зафиксирован как три цели (Captain Bind / Create Persistence / Dynamic FD); в середине эпика обнаружен критический bug (hub fighters не обновлялись in-session из-за CanvasLayer singleton) — добавлен Step 5.5 расширением скоупа.
+
+**Commit range:** `e20bb36` (Step 1) → `09a9112` (Step 6) + `4c31592` (Step 5.5 extension) + 3 финальных коммита (8.1/8.2/8.3).
+
+**Что видит пользователь:**
+- Hub slot 1 (левый ring-pos) → `agent/currentCaptain` (real backend), glow по `captain.primaryModule` (6 backend archetypes). Fallback legacy warden mock если captain=null.
+- Hub slot 2 → `agentsList[1]` (первый non-captain из sorted list) либо **полностью пусто** если у captain'а нет peer'ов. Full-mock fallback (predator) только при captain=null.
+- `+` plinth → `/v2/create`. Name + archetype (6) + Confirm → click Create Fighter → loading `'Creating…'` → backend persist → materialize animation → `router.push('/v2/fd/:newId)`.
+- Sad path create (roster full / validation fail): inline pink `.cp-error` под кнопкой, button re-enabled, form preserved (archetype + name) для retry без data loss.
+- `/v2/fd/:key` accept: legacy `'warden' | 'predator'` (mocks) OR real agent UUID. Dynamic path: сначала `useCreatedFighter` cache (one-shot), затем `fetchAgent`, при failure — redirect `/v2`.
+- Hub auto-refresh при любой мутации `agentsList` (Create success, delete, setCaptain, etc.) — без full-page reload.
+
+**Дерево новых файлов (2):**
+
+```
+src/scene/interaction/useCreatedFighter.js    — 32 строки — cross-view setup для just-created агента. Producer
+                                                (CreateView после backend success) вызывает setCreatedFighter;
+                                                consumer (FighterDetailView.onMounted) делает getCreatedFighter +
+                                                clearCreatedFighter (one-shot). Паттерн 3Bb useFightSetup.
+src/scene/objects/archetypeColors.js          — 26 — shared pickFighterColor(archetypeId) + LEGACY_ARCHETYPE_COLORS.
+                                                Resolution: legacy warden/predator → 6 backend archetypes из
+                                                ARCHETYPES (useCreateState) → warden gold fallback. Reuse в
+                                                PitScene (captain glow) + FighterDetailScene (FD podium glow).
+```
+
+**Изменены (9):**
+
+- `src/scene/scenes/PitScene.js` — `buildPitScene(THREE, aspect, opts)` 3-й параметр `{ captain, secondAgent }`. `firstContainer`/`secondContainer` → `let` для swap. Helpers `disposeContainerInPlace(c)` + `applyFighters(cap, second)` — single source of truth для slot rules. Mutable `clickableTargets` + `rebuildClickableTargets()`. Public `refreshFighters({captain, secondAgent})` с no-op short-circuit на `(oldId1, oldId2) === (newId1, newId2)`.
+- `src/scene/CanvasLayer.vue` — `onMounted` теперь async: `await dispatch('agent/fetchAgents')` → captain + secondAgent → передача в buildPitScene. `watch(() => store.getters['agent/agentsList'])` после build → `pit.refreshFighters` на каждый mutation. Handle stopped в `onBeforeUnmount`. Hover handler поддерживает `userData.labelOverride` для динамических UUID.
+- `src/views-v2/PitViewV2.vue` — click watcher reorganised: `PH_MODAL_IDS = ['ratings','clan','shop','avatar']` whitelist → PhModal; training/matchmaking/create → sub-scene routes; **всё остальное** (legacy warden/predator + real UUID) → `/v2/fd/:id` default.
+- `src/views-v2/FighterDetailView.vue` — `resolveFighter(key)` async helper с тремя ветками (legacy mock / `useCreatedFighter` cache one-shot / `fetchAgent` state-check). `agentData` ref реактивно передаётся в HUD. `hudKeyProp` computed для legacy fallback. `watch(route.params.key)` async — route swap без remount.
+- `src/components/hud/HudFighterDetail.vue` — prop `agent: Object`. Computeds `kicker`/`name`/`meta`/`stats`/`resources`/`levels` branch на agent presence. `beltLabel(grade)` helper через `getBeltDisplay` из `beltDisplay.js`. Real agents → levels зафиксированы `{speed:0, power:0, technique:0}` до real progression wiring.
+- `src/scene/scenes/FighterDetailScene.js` — `setKey(key)` → `setFighter({key, archetype})`. Glow через `pickFighterColor(archetype)` shared helper. Удалён local `GLOW_COLOR` table.
+- `src/scene/interaction/useCreateState.js` — добавлены `creating: false`, `error: null` в state; оба сбрасываются в `resetCreateState`.
+- `src/views-v2/CreateView.vue` — `onCreatePersist(payload)` async handler: creating=true → await dispatch → setCreatedFighter → materialize → navigate. Materialize-логика (DOM flash + `startMaterializeAnimation`) переехала из HudCreate сюда (orchestrator уже владел sceneApi + flashRef + matHandle).
+- `src/components/hud/HudCreate.vue` — pure-presentation. `onCreate` собирает payload и emit'ит `create-persist`. Удалены props `getHoloFighter`/`getFlashEl` и emit `materialize-start`. Button disabled на `creating || materializing`, label `'Creating…'` на `creating`. Inline `<.cp-error>` под кнопкой при `createState.error`.
+- `src/styles/v24/create.css` — добавлены 7 правил `.app-v2 .cp-error` (pink-tinted bg/border, mono font, ~12px).
+
+**Ключевые паттерны:**
+
+- **Cross-view state через module-scoped reactive + one-shot consumption.** `useCreatedFighter` повторяет 3Bb `useFightSetup`: producer (CreateView) вызывает setter, consumer (FighterDetailView.onMounted) читает + **сразу clear'ит**. Clear гарантирует: второй визит на `/v2/fd/:sameId` через клик в hub пойдёт через `fetchAgent` (cache empty), а не вернёт stale synthetic.
+- **`agentsList` getter spread-sort как reactivity trigger.** `(state) => [...state.agents].sort(...)` возвращает новый array reference на каждый recompute → shallow watch в CanvasLayer срабатывает без `deep: true`. Сортировка и reactivity — один и тот же механизм, не hack.
+- **`refreshFighters` atomic rebuild + no-op short-circuit.** Сравнение `(oldFirstId, oldSecondId) === (newFirstId, newSecondId)` отсекает spurious fires (Vuex getter recomputes на любой mutation state.agents, даже когда slot identity не изменился). При реальном diff — dispose обоих + applyFighters заново. Per-slot granularity — deferred в Epic 5 polish.
+- **Default skin hardcoded, не picker.** `'skin_m_1.png'` satisfies backend `SKIN_REGEX = /^(skin_(m|w)_\d{1,3}|vip_(k|t)\d{1,2})\.png$/`. Совпадает с Prisma `User.skin` default. Real skin picker (UI + validation) — Epic 5 scope.
+- **Backend `VALID_ARCHETYPES` 1-в-1 с v2 `ARCHETYPES`.** Step 0 pre-flight check верифицировал 6 ids (predator/sentinel/ghost/analyst/maverick/juggernaut). Payload в `agent/createAgent` отправляет `createState.archetypeId` напрямую как `primaryModule` — без mapping helper.
+- **FD `setFighter({ key, archetype })` contract.** `key` управляет 3D mesh variant (warden | predator) — все 6 backend archetypes пока mapped на warden mesh (predator mesh для legacy). `archetype` управляет glow color через `pickFighterColor` и принимает любой из 6 ids OR legacy key. Per-archetype 3D variants — Epic 5+ (см. `HANDOFF_FIGHTER_MODEL.md`).
+- **`pickFighterColor` shared helper.** Extracted в `archetypeColors.js` — reuse в PitScene (captain + secondAgent glow) + FighterDetailScene (FD podium glow). Без хакерских local duplicates.
+- **HUD↔orchestrator boundary (ownership shift).** Materialize-логика в Epic 4 переехала HudCreate → CreateView, симметрично паттерну 3Bb HudMatchmaking / MatchmakingView. HUD становится pure-presentation; orchestrator владеет scene + animation cancel handle. Pattern: HUD шлёт payload event, orchestrator решает side-effects.
+- **`fetchAgent` state-check вместо throw.** Action глушит ошибки (`catch` без re-throw) — legacy AgentDetailView и trainAgent полагаются на этот контракт. Dynamic FD после await проверяет `store.state.agent.currentAgent?.id === key`; mismatch → redirect. Zero risk для legacy consumers.
+
+**Расхождения с прототипом / ТЗ (осознанные):**
+
+- **Step 5.5 добавлен за пределами initial ТЗ.** CanvasLayer строит PitScene один раз на AppV2 mount; `/v2/fd/:id` — child route, возврат не перестраивает сцену. Без Step 5.5 Create flow ломался на step «возврат в hub» — новый агент невидим до hard refresh. Static trace в Step 7 обнаружил баг; добавлен `refreshFighters` public API + watcher в CanvasLayer. Прецедент 3Ba Step 2 (тоже добавляли `unregisterScene` API вне initial ТЗ).
+- **HudPit captain name bind — skipped.** ТЗ Step 2 §6 ссылался на `<span class="hp-name">YURII.VARVAROV</span>` в HudPit, в реальности этого элемента нет (v2 TopBar = Resources / PIT title / avatar). UI slot под captain name в hub требует design решения; отложен в Epic 5 polish.
+- **`fetchAgents` в CanvasLayer, не PitViewV2.** ТЗ предполагал dispatch в PitViewV2, но scene строится в CanvasLayer; PitViewV2 держит только HUD. Перемещение правильнее семантически + CanvasLayer уже зависит от cross-sibling state через `useCanvasRef`/`useHoverState`.
+- **`refreshFighters` atomic rebuild обоих slots.** Per-slot diff откладывается на Epic 5 polish. В текущей реализации captain disposes+rebuilds даже когда меняется только slot 2 — minor visual hiccup (idle phase reset). Refresh происходит пока pit невидим (user в CreateView/FD), так что пользователь hiccup не видит.
+- **Duplicate name не enforce на backend.** Prisma schema не имеет `@@unique([ownerId, name])`. Step 3 sad path verify через roster overflow (достижимый 400). Name uniqueness — backend concern, carry-over в Epic 5.
+- **Auto-promote first agent to captain.** Backend `POST /agent/create` не делает auto-captain (`captainService.setCaptain` вызывается только из `PUT /agent/:id/captain`). User Migration (`userMigrationService.js`) создаёт Fighter #1 с captain=true (lazy на `/me`) — покрывает реальных пользователей. Hypothetical 0-agent accounts остаются в edge case: новый агент не показывается в slot 2 (gate `captain ? agentsList[1] : null`). Fallback: legacy AgentDetail → Set as Captain → watcher → hub refresh.
+
+**Deferred:**
+
+- **4 недостающих fighter 3D variants** (analyst / ghost / sentinel / maverick / juggernaut). Все 6 archetype ids отображаются как warden mesh + meta-дифференциация через glow color. Per-variant proportions (shoulders / reach / stance / skin tone) — Epic 5+. Extension point в `makeFighterLowPoly(THREE, variantId)` + `onArchetypeChange` DI объект подготовлены.
+- **Matchmaking real API filters.** Backend `matchmaking.js` не передаёт archetype/belt в очередях — только ELO rating. 3 фильтра в v2 HudMatchmaking (ELO delta / archetype / belt chips) не доедают до сервера. Требует backend changes, не v2-миграции.
+- **Club Mode 1-6 agents вокруг ринга.** Прототип hardcode'ит 2 fighters; в Club Mode нужна новая абстракция на несколько containers + позиционирование. Не прототипировано.
+- **Auto-promote first agent to captain для 0-agent accounts.** См. расхождение выше.
+- **Branch columns real progression.** Dynamic agents сейчас рендерят mock level 0. Требует `agentProgression` endpoint audit + wiring в `HudFighterDetail.levels` computed.
+- **Training task rewards persistence.** Сейчас декоративный текст без привязки к профилю (carry-over Epic 3Ba).
+- **i18n для v2 HUD'ов.** `HudCreate`, `HudMatchmaking`, `HudTraining`, `HudFighterDetail` — английский inline без `t.*`. Пропашка на 11 локалей — Epic 5.
+- **DRY рефакторы.** `buildOctagonalRoom(THREE, opts)` helper (Training/Matchmaking/Create scenes дублируют ~40 строк каждая), `createDustField()`, shared lighting setup.
+- **Per-slot `refreshFighters` diff** (atomic rebuild smoothing). Сейчас оба slots rebuild'ятся при любом изменении.
+- **HudPit captain name UI slot** + cleanup dead `MODAL_CONTENT.warden/predator` entries.
+
+**Шаги и коммиты:**
+
+| # | Commit | Что |
+|---|--------|-----|
+| 0 | — | pre-flight check (read-only) — verified backend VALID_ARCHETYPES 1-в-1 с v2 |
+| 1 | `e20bb36` | useCreatedFighter composable stub |
+| 2 | `3ca870a` | hub captain bind (slot 1) |
+| 3 | `1e92456` | hub second agent slot |
+| 4 | — | createAgent action verification (read-only, no commit) |
+| 5 | `942641f` | create persistence + inline error |
+| 5.5 | `4c31592` | hub fighters refresh on agentsList change (scope extension — Step 7 trace обнаружил критический bug) |
+| 6 | `09a9112` | dynamic FD for any agent id |
+| 7 | — | E2E regression (static trace, no commit) |
+| 8 | this | CLAUDE.md + final report + handoff Epic 5 |
+
+**Эпик 4 — CLOSED.** Route table `/v2` дополнена dynamic FD:
+
+| Route | Epic | Статус |
+|-------|------|--------|
+| `/v2` | 2 + 4 | ✅ hub — real captain + secondAgent + auto-refresh on mutations |
+| `/v2/fd/warden` / `/v2/fd/predator` | 3A | ✅ legacy mocks сохранены |
+| `/v2/fd/:uuid` | **4** | ✅ dynamic — cache one-shot OR fetchAgent with state-check |
+| `/v2/fight` | 3A + 3Bb | ✅ via Matchmaking only |
+| `/v2/training` | 3Ba | ✅ unchanged |
+| `/v2/matchmaking` | 3Bb | ✅ filters still client-side mock (backend не поддерживает) |
+| `/v2/create` | 3Bc + **4** | ✅ backend persist + inline error + navigation в new FD |
+
+**Следующий эпик:** Epic 5 — план в `docs/visual-migration/HANDOFF_EPIC5_CHAT_HANDOFF.md`. Карта вариантов: polish (DRY + i18n + 4 fighter variants + UX edge fixes) / missing screens (Profile / Ratings / Clan / Shop на `/v2/*`) / matchmaking backend integration.
