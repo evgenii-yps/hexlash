@@ -54,14 +54,19 @@ function pickFighterColor(archetypeId) {
  * @param {number} aspect
  * @param {{ captain?: object|null, secondAgent?: object|null }} [opts]
  *   captain     — Agent (Vuex agentState.currentCaptain), if logged in & has agents
- *   secondAgent — second agent from agentsList (Step 3, ignored in Step 2)
- *   When captain is null, slot 1 falls back to the legacy warden mock.
- *   When secondAgent is null, slot 2 stays on the legacy predator mock (Step 2);
- *   Step 3 will collapse the slot to empty instead.
+ *   secondAgent — next agent after captain in agentsList (sorted captain-first)
+ *
+ * Slot rules (Epic 4 Step 3):
+ *   captain=null                     → both slots fall back to legacy mocks
+ *                                      (warden + predator) — pre-Epic-4 look.
+ *   captain≠null, secondAgent=null   → slot 1 = captain, slot 2 EMPTY (no
+ *                                      container created, no clickable target).
+ *   captain≠null, secondAgent≠null   → slot 1 = captain, slot 2 = secondAgent.
  */
 export function buildPitScene(THREE, aspect, opts) {
   opts = opts || {};
   const captain = opts.captain || null;
+  const secondAgent = opts.secondAgent || null;
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x070811);
   scene.fog = new THREE.FogExp2(0x070811, 0.028);
@@ -169,7 +174,8 @@ export function buildPitScene(THREE, aspect, opts) {
   // registerIdleFighter reads container.children[0] — must be fighter, not disc.
   //
   // Slot 1 (firstContainer) — captain when present, legacy 'warden' mock otherwise.
-  // Slot 2 (secondContainer) — legacy 'predator' mock until Step 3 wires secondAgent.
+  // Slot 2 (secondContainer) — three-way: real secondAgent / legacy predator
+  // mock (full fallback) / null (captain alone). See branch below.
   // Local refs replace the old wardenContainer/predatorContainer hardcodes so the
   // tick block, dispose path, and hover-scale loop stay agnostic to the source.
   const firstBaseRotY = Math.atan2(1.8 - (-1.8), -0.6 - 0.6);
@@ -193,13 +199,6 @@ export function buildPitScene(THREE, aspect, opts) {
   }
   arena.add(firstContainer);
 
-  const secondContainer = new THREE.Group();
-  secondContainer.position.set(1.8, RING_HEIGHT, -0.6);
-  secondContainer.rotation.y = predatorBaseRotY;
-  secondContainer.userData.isClickable = true;
-  secondContainer.userData.id = 'predator';
-  arena.add(secondContainer);
-
   // First slot: captain (variant warden, glow from primaryModule) OR legacy warden mock.
   const firstVariant = 'warden';
   const firstGlowColor = captain
@@ -209,9 +208,35 @@ export function buildPitScene(THREE, aspect, opts) {
   addArchetypeGlow(firstContainer, THREE, firstGlowColor);
   registerIdleFighter(firstContainer, 0);
 
-  secondContainer.add(makeFighterLowPoly(THREE, 'predator'));
-  addArchetypeGlow(secondContainer, THREE, LEGACY_ARCHETYPE_COLORS.predator);
-  registerIdleFighter(secondContainer, 2.1); // phase offset — de-sync the two
+  // SLOT 2 — three-way branch (Step 3):
+  //   - captain & secondAgent → real second agent (variant warden, glow from primaryModule).
+  //   - !captain              → legacy predator mock (full fallback, both slots mocked).
+  //   - captain & !secondAgent → secondContainer stays null, slot is empty.
+  // tick + clickableTargets + dispose all guard on `secondContainer`.
+  let secondContainer = null;
+  if (captain && secondAgent) {
+    secondContainer = new THREE.Group();
+    secondContainer.position.set(1.8, RING_HEIGHT, -0.6);
+    secondContainer.rotation.y = predatorBaseRotY;
+    secondContainer.userData.isClickable = true;
+    secondContainer.userData.id = secondAgent.id;
+    secondContainer.userData.labelOverride = 'View ' + (secondAgent.name || 'Fighter');
+    arena.add(secondContainer);
+    secondContainer.add(makeFighterLowPoly(THREE, 'warden'));
+    addArchetypeGlow(secondContainer, THREE, pickFighterColor(secondAgent.primaryModule));
+    registerIdleFighter(secondContainer, 2.1);
+  } else if (!captain) {
+    secondContainer = new THREE.Group();
+    secondContainer.position.set(1.8, RING_HEIGHT, -0.6);
+    secondContainer.rotation.y = predatorBaseRotY;
+    secondContainer.userData.isClickable = true;
+    secondContainer.userData.id = 'predator';
+    arena.add(secondContainer);
+    secondContainer.add(makeFighterLowPoly(THREE, 'predator'));
+    addArchetypeGlow(secondContainer, THREE, LEGACY_ARCHETYPE_COLORS.predator);
+    registerIdleFighter(secondContainer, 2.1); // phase offset — de-sync the two
+  }
+  // captain && !secondAgent → secondContainer stays null (empty slot).
 
   // --- HEAVY BAG (training interactable, far left) ---
   // Source: prototype 5526-5581 (geometry + dedicated spotlight).
@@ -254,6 +279,9 @@ export function buildPitScene(THREE, aspect, opts) {
   // 8 interactables for raycaster picking. Order matches prototype 6860.
   // Each entry is a root Group (containers, not meshes) so the picker can
   // walk up from any child mesh to its registered root.
+  // secondContainer may be null when captain has no peer in agentsList — slot
+  // 2 stays empty in that case. .filter(Boolean) drops the null without
+  // disturbing the prototype 6860 ordering for the remaining 7 entries.
   const clickableTargets = [
     heavyBag,
     terminal.group,
@@ -263,7 +291,7 @@ export function buildPitScene(THREE, aspect, opts) {
     scoreboard,
     clanBanner,
     shopLocker,
-  ];
+  ].filter(Boolean);
 
   // tick — Шаг 5: crowd breathing, dust drift, rim pulse.
   // Source: prototype 7240-7250 (dust drift + rim pulse) + TZ Step 5 (crowd breathing formula).
@@ -299,9 +327,11 @@ export function buildPitScene(THREE, aspect, opts) {
     // Without this, the fighters' silhouettes stand rigid even while their
     // limbs animate. This adds a whole-body bounce and micro-rotation.
     firstContainer.position.y = RING_HEIGHT + Math.sin(t * 1.2) * 0.015;
-    secondContainer.position.y = RING_HEIGHT + Math.sin(t * 1.2 + 1.5) * 0.015;
     firstContainer.rotation.y = firstBaseRotY + Math.sin(t * 0.6) * 0.04;
-    secondContainer.rotation.y = predatorBaseRotY + Math.sin(t * 0.6 + 2) * 0.04;
+    if (secondContainer) {
+      secondContainer.position.y = RING_HEIGHT + Math.sin(t * 1.2 + 1.5) * 0.015;
+      secondContainer.rotation.y = predatorBaseRotY + Math.sin(t * 0.6 + 2) * 0.04;
+    }
 
     // Heavy bag idle sway — prototype 7267-7269.
     heavyBag.rotation.x = Math.sin(t * 0.7) * 0.025;

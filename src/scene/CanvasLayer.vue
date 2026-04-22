@@ -46,16 +46,26 @@ onMounted(async () => {
   // own orbit/picker handlers without prop drilling. Epic 3A Step 6.
   setCanvasRef(canvasEl.value);
 
-  // Epic 4 Step 2 — fetch agents BEFORE buildPitScene so slot 1 can render
-  // the real captain. Failure is non-fatal (no auth, offline, fresh install)
-  // — buildPitScene falls back to the legacy warden mock when captain is null.
-  // Slot 2 stays on the predator mock until Step 3 wires secondAgent.
+  // Epic 4 Step 2/3 — fetch agents BEFORE buildPitScene so slots 1+2 can
+  // render the real captain + next agent. Failure is non-fatal (no auth,
+  // offline, fresh install) — buildPitScene falls back to the legacy
+  // warden+predator mocks when captain is null.
+  //
+  // Step 3 second-slot rule: secondAgent only fills when a real captain
+  // exists. Without a captain the hub stays in full mock mode (both slots).
+  // With captain + 0 other agents, slot 2 is intentionally empty — no
+  // legacy predator mock alongside a real captain (looks dissonant).
   try {
     await store.dispatch('agent/fetchAgents');
   } catch (e) {
     console.warn('[CanvasLayer] agent/fetchAgents failed; falling back to mock fighters', e);
   }
   const captain = store.getters['agent/currentCaptain'] || null;
+  const agentsList = store.getters['agent/agentsList'] || [];
+  // agentsList is sorted captain-first (see agentState getters); the next
+  // entry is the natural slot-2 candidate. Guarded to null when captain is
+  // missing so the full-mock fallback path stays clean.
+  const secondAgent = captain ? (agentsList[1] || null) : null;
 
   renderer = new THREE.WebGLRenderer({
     canvas: canvasEl.value,
@@ -82,7 +92,7 @@ onMounted(async () => {
   renderer.toneMappingExposure = 2.3;
 
   const aspect = window.innerWidth / window.innerHeight;
-  pit = buildPitScene(THREE, aspect, { captain, secondAgent: null });
+  pit = buildPitScene(THREE, aspect, { captain, secondAgent });
 
   // Orbit camera (Step 7) — drives camera.position/lookAt every frame.
   // tick(t) here MUST run before pit.tick / renderer.render — composed below.
