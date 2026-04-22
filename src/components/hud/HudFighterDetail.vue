@@ -5,11 +5,6 @@
 <template>
   <div class="hud detail-hud">
     <button class="back-btn" @click="onBack">&larr; Back</button>
-    <button
-      class="fd-fight-btn"
-      title="Temporary — moves to Matchmaking in Epic 3B"
-      @click="onFight"
-    >FIGHT &rarr;</button>
 
     <div class="fd-top">
       <div class="fd-kicker">{{ kicker }}</div>
@@ -115,7 +110,6 @@ function labelStyle(id) {
 }
 
 function onBack() { router.push('/v2'); }
-function onFight() { router.push('/v2/fight'); }
 
 // Step 8b — open BranchPanel with mocked branch data + derived cost.
 // Cost formula from prototype 7739-7742 (branchUpgradeCost).
@@ -192,21 +186,6 @@ defineExpose({ openBranchPanel });
   background: rgba(255,6,111,0.08);
 }
 
-/* Temporary FIGHT button (ТЗ Step 8 spec; replaced by Matchmaking in 3B). */
-.fd-fight-btn {
-  position: fixed;
-  top: 20px; right: 20px;
-  z-index: 60;
-  padding: 10px 20px;
-  font-family: var(--font-display);
-  background: var(--hex-primary);
-  color: #fff;
-  border: none;
-  cursor: pointer;
-  pointer-events: auto;
-  letter-spacing: 0.1em;
-}
-
 /* Top header (prototype 627-644). */
 .fd-top {
   position: fixed;
@@ -234,10 +213,12 @@ defineExpose({ openBranchPanel });
   margin-top: 5px;
 }
 
-/* Resource tiles (prototype 648-652 + .res 81-100). */
+/* Resource tiles (prototype 648-652 + .res 81-100).
+   right: 14px restored to prototype-parity in Step 11 — the temporary
+   fd-fight-btn that caused the 150px offset in 3A is gone. */
 .fd-resources {
   position: fixed;
-  top: 14px; right: 150px;
+  top: 14px; right: 14px;
   display: flex;
   gap: 6px;
   pointer-events: none;
