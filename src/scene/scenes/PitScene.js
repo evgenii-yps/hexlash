@@ -29,25 +29,10 @@ import { buildPlinth } from '../objects/plinth.js';
 import { buildScoreboard } from '../objects/scoreboard.js';
 import { buildClanBanner } from '../objects/clanBanner.js';
 import { buildShopLocker } from '../objects/shopLocker.js';
-import { ARCHETYPES } from '../interaction/useCreateState.js';
+import { pickFighterColor, LEGACY_ARCHETYPE_COLORS } from '../objects/archetypeColors.js';
 
 const ROOM_RADIUS = 18;
 const ROOM_WALL_HEIGHT = 9;
-
-// Legacy mock colours (used when opts.captain is null — pre-Epic-4 fallback).
-// Real captains pull their colour from ARCHETYPES via captain.primaryModule.
-const LEGACY_ARCHETYPE_COLORS = { warden: 0xD4A843, predator: 0xFF066F };
-
-// Resolve glow colour: legacy 'warden'/'predator' first, then 6 backend
-// archetypes from useCreateState. Falls back to warden gold for unknown /
-// null primaryModule (agent created without modules picked).
-function pickFighterColor(archetypeId) {
-  if (LEGACY_ARCHETYPE_COLORS[archetypeId] !== undefined) {
-    return LEGACY_ARCHETYPE_COLORS[archetypeId];
-  }
-  const a = ARCHETYPES.find((x) => x.id === archetypeId);
-  return a ? a.color : LEGACY_ARCHETYPE_COLORS.warden;
-}
 
 /**
  * @param {*} THREE

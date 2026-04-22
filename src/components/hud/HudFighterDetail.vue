@@ -65,38 +65,113 @@
 import { computed, onMounted, onBeforeUnmount, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { fdLabels } from '@/scene/interaction/useFdLabels.js';
+import { getBeltDisplay } from '@/utils/beltDisplay.js';
 import BranchPanel from './common/BranchPanel.vue';
 import { FD_BRANCH_DATA } from './common/fdBranchData.js';
 
 const props = defineProps({
+  // Legacy mock route key — only meaningful when `agent` is null. Drives
+  // the static KICKER/NAME/META mocks below for the legacy
+  // /v2/fd/warden|predator paths.
   keyProp: { type: String, default: 'warden' },
+  // Epic 4 Step 6 — when set, HUD renders real backend data instead of
+  // mocks. View resolves either createdFighter cache OR fetchAgent and
+  // hands the resulting Vuex agent down. null preserves legacy behaviour.
+  agent: { type: Object, default: null },
 });
 
 const router = useRouter();
 
 // Mocks (prototype 7681-7744 + openFighterDetail 7958-7970).
+// Used only when agent prop is null (legacy /v2/fd/warden|predator).
 const KICKER = { warden: 'Captain \u00b7 Warden', predator: 'Predator' };
 const NAME   = { warden: 'FIGHTER #1',            predator: 'FIGHTER #2' };
 const META   = {
   warden:   'White Belt \u00b7 3W-1L-0D \u00b7 ELO 1247',
   predator: 'White Belt \u00b7 1W-0L-0D \u00b7 ELO 1043',
 };
-const stats = [
+const LEGACY_STATS = [
   { val: '4',     label: 'Fights'    },
   { val: '75%',   label: 'Winrate'   },
   { val: '1,247', label: 'ELO'       },
   { val: '62%',   label: 'To Yellow' },
 ];
-const resources = { taps: 880, xp: 300 };
-const levels = { speed: 6, power: 10, technique: 4 };
+const LEGACY_RESOURCES = { taps: 880, xp: 300 };
+const LEGACY_LEVELS = { speed: 6, power: 10, technique: 4 };
+
+// Branch levels for any real agent (Epic 4 scope) — all zeroed. Real
+// progression numbers wire in a later epic alongside the upgrade flow;
+// upgrade buttons in BranchPanel are already disabled with the "Epic 4"
+// title attribute.
+const REAL_AGENT_LEVELS = { speed: 0, power: 0, technique: 0 };
 
 const branchPanel = ref(null);
 const panelData = ref(null);
 const panelCost = ref(null);
 
-const kicker = computed(() => KICKER[props.keyProp] || KICKER.warden);
-const name   = computed(() => NAME[props.keyProp]   || NAME.warden);
-const meta   = computed(() => META[props.keyProp]   || META.warden);
+// Capitalise an archetype id for display ('predator' -> 'Predator').
+function capArch(s) {
+  if (!s || typeof s !== 'string') return 'Fighter';
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+// Format Belt grade as a label for the meta line (e.g. "Yellow Belt").
+// Falls back to "White Belt" for grade 0 / unknown via getBeltDisplay.
+function beltLabel(grade) {
+  const g = typeof grade === 'number' ? grade : 0;
+  const c = getBeltDisplay(g).color || 'white';
+  return c.charAt(0).toUpperCase() + c.slice(1) + ' Belt';
+}
+
+const kicker = computed(() => {
+  if (props.agent) return 'Captain · ' + capArch(props.agent.primaryModule);
+  return KICKER[props.keyProp] || KICKER.warden;
+});
+const name = computed(() => {
+  if (props.agent) return props.agent.name || 'Fighter';
+  return NAME[props.keyProp] || NAME.warden;
+});
+const meta = computed(() => {
+  if (props.agent) {
+    const a = props.agent;
+    const wins   = a.wins   != null ? a.wins   : 0;
+    const losses = a.losses != null ? a.losses : 0;
+    const draws  = a.draws  != null ? a.draws  : 0;
+    const elo    = a.elo    != null ? a.elo    : 1000;
+    return `${beltLabel(a.belt)} · ${wins}W-${losses}L-${draws}D · ELO ${elo}`;
+  }
+  return META[props.keyProp] || META.warden;
+});
+
+const stats = computed(() => {
+  if (!props.agent) return LEGACY_STATS;
+  const a = props.agent;
+  const fights = a.totalFights != null
+    ? a.totalFights
+    : (a.wins || 0) + (a.losses || 0) + (a.draws || 0);
+  const winrate = fights > 0
+    ? Math.round(((a.wins || 0) / fights) * 100) + '%'
+    : '—';
+  return [
+    { val: String(fights),                                  label: 'Fights'    },
+    { val: winrate,                                         label: 'Winrate'   },
+    { val: (a.elo != null ? a.elo : 1000).toLocaleString(), label: 'ELO'       },
+    { val: '—',                                        label: 'To Yellow' },
+  ];
+});
+
+// Resources block (Taps / Free XP) — these are User-level fields, not
+// per-agent. Real wiring is out of scope for Epic 4; default to zeros for
+// real agents so the layout stays balanced.
+const resources = computed(() =>
+  props.agent ? { taps: 0, xp: 0 } : LEGACY_RESOURCES,
+);
+
+// Branch column levels — mocks for legacy keys, zeros for any real agent
+// per ТЗ Step 6. Drives the "Lv N" tag in branch labels + BranchPanel level.
+const levels = computed(() =>
+  props.agent ? REAL_AGENT_LEVELS : LEGACY_LEVELS,
+);
 
 function fmt(n) { return n.toLocaleString(); }
 
@@ -113,8 +188,10 @@ function onBack() { router.push('/v2'); }
 
 // Step 8b — open BranchPanel with mocked branch data + derived cost.
 // Cost formula from prototype 7739-7742 (branchUpgradeCost).
+// `levels` became a computed in Epic 4 Step 6 — unwrap with .value here in
+// <script> (template auto-unwrap doesn't apply outside the render context).
 function openBranchPanel(branchId) {
-  const level = levels[branchId];
+  const level = levels.value[branchId];
   const d = FD_BRANCH_DATA[branchId];
   if (level == null || !d) return;
   panelData.value = {

@@ -5,7 +5,7 @@
 // Populated across:
 //   - Step 2: scaffold (this file).
 //   - Step 3: lighting, dust, light shaft.
-//   - Step 4: fighter on podium (setKey).
+//   - Step 4: fighter on podium (setFighter — renamed from setKey in Epic 4 Step 6).
 //   - Step 5: branch columns + floor discs.
 //   - Step 6: orbit camera tick.
 //   - Step 7: picker for columns.
@@ -19,18 +19,13 @@ import {
   addArchetypeGlow,
 } from '../objects/fighterModel.js';
 import { buildBranchColumn } from '../objects/branchColumn.js';
+import { pickFighterColor } from '../objects/archetypeColors.js';
 import { createPicker } from '../interaction/raycaster.js';
 import { fdProjectToScreen } from '../interaction/fdProjectToScreen.js';
 import { updateFdLabel } from '../interaction/useFdLabels.js';
 
 const FD_ROOM_R = 14;
 const FD_ROOM_H = 8;
-
-// Archetype glow colors under fighter's feet.
-const GLOW_COLOR = {
-  warden:   0xD4A843, // gold
-  predator: 0xFF066F, // neon pink
-};
 
 // Branch pillars behind the podium. Fighter at z=+1.0, columns at z∈[-2.4,-1.6].
 // Source: prototype 7462-7471.
@@ -180,7 +175,7 @@ export function buildFighterDetailScene(THREE, aspect) {
   }));
   scene.add(dust);
 
-  // Step 4 — fighter swap state. Tracked in closure so tick() and setKey()
+  // Step 4 — fighter swap state. Tracked in closure so tick() and setFighter()
   // share a single source of truth; dispose() clears the idle registry entry.
   let currentFighter = null;
   let currentGlow = null;
@@ -199,7 +194,26 @@ export function buildFighterDetailScene(THREE, aspect) {
     });
   }
 
-  function setKey(key) {
+  /**
+   * Swap fighter mesh + glow. Used by FighterDetailView on mount + on
+   * route.params.key change.
+   *
+   * @param {object} args
+   * @param {'warden'|'predator'} args.key
+   *   3D mesh variant — drives makeFighterLowPoly's proportion profile.
+   *   Real archetypes (predator/sentinel/ghost/analyst/maverick/juggernaut)
+   *   currently all share the warden mesh (variants are Epic 5+); only
+   *   the legacy 'predator' route uses the predator mesh proportions.
+   * @param {string|null} [args.archetype]
+   *   Backend primaryModule id OR a legacy mock key. Drives glow colour
+   *   only — passes through pickFighterColor (legacy + 6 backend archs +
+   *   warden-gold fallback). Defaults to `key` when omitted, so legacy
+   *   warden/predator routes still get the right colour.
+   */
+  function setFighter(args) {
+    const key = (args && args.key) || 'warden';
+    const archetype = (args && 'archetype' in args) ? args.archetype : key;
+
     // Tear down previous fighter + glow (ТЗ Step 4).
     // unregisterIdleFighter must run BEFORE dispose so fighterModel's global
     // idle registry doesn't hold a reference to a disposed Group.
@@ -222,8 +236,7 @@ export function buildFighterDetailScene(THREE, aspect) {
     podium.add(fighter);
     registerIdleFighter(podium, 0.7);
 
-    const color = GLOW_COLOR[key] ?? GLOW_COLOR.warden;
-    addArchetypeGlow(podium, THREE, color);
+    addArchetypeGlow(podium, THREE, pickFighterColor(archetype));
 
     currentFighter = fighter;
     // addArchetypeGlow tags the disc with userData.isArchGlow — find it to
@@ -307,7 +320,7 @@ export function buildFighterDetailScene(THREE, aspect) {
     scene,
     camera,
     tick,
-    setKey,
+    setFighter,
     dispose,
     picker,
     clickableTargets,
