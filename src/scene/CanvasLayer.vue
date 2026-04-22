@@ -3,7 +3,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
 import * as THREE from 'three';
 import store from '@/core/state/store.js';
 import { registerScene, activateScene, getActiveScene } from './sceneRegistry.js';
@@ -40,6 +40,8 @@ let onResize = null;
 let onPointerMove = null;
 let onPointerDown = null;
 let onPointerUp = null;
+// Step 5.5 — handle to the agentsList watcher so unmount can stop it.
+let stopAgentsWatch = null;
 
 onMounted(async () => {
   // Publish the canvas element so lazy scenes (FD, Fight) can attach their
@@ -93,6 +95,24 @@ onMounted(async () => {
 
   const aspect = window.innerWidth / window.innerHeight;
   pit = buildPitScene(THREE, aspect, { captain, secondAgent });
+
+  // Epic 4 Step 5.5 — keep the hub fighters in sync with Vuex agentsList
+  // for the lifetime of AppV2. Triggered on Create success, setCaptain,
+  // delete, etc. — any mutation to state.agents recomputes the getter
+  // (it returns a fresh sorted array, so identity changes), which fires
+  // this watcher. PitScene.refreshFighters is itself a no-op when the
+  // (slot-1 id, slot-2 id) tuple hasn't changed, so a cheap watch is fine.
+  stopAgentsWatch = watch(
+    () => store.getters['agent/agentsList'],
+    (newList) => {
+      if (!pit || !pit.refreshFighters) return;
+      const cap = newList.find((a) => a.isCaptain) || null;
+      // secondAgent only when a real captain exists — without one we stay
+      // in the full-mock fallback (warden + predator). See PitScene JSDoc.
+      const second = cap ? (newList.find((a) => !a.isCaptain) || null) : null;
+      pit.refreshFighters({ captain: cap, secondAgent: second });
+    },
+  );
 
   // Orbit camera (Step 7) — drives camera.position/lookAt every frame.
   // tick(t) here MUST run before pit.tick / renderer.render — composed below.
@@ -208,6 +228,10 @@ function disposeScene(scene) {
 }
 
 onBeforeUnmount(() => {
+  if (stopAgentsWatch) {
+    stopAgentsWatch();
+    stopAgentsWatch = null;
+  }
   if (onResize) window.removeEventListener('resize', onResize);
   if (canvasEl.value) {
     if (onPointerMove) canvasEl.value.removeEventListener('pointermove', onPointerMove);

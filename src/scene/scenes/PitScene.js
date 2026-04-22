@@ -20,6 +20,7 @@ import { buildArena, RING_HEIGHT } from '../objects/arena.js';
 import {
   makeFighterLowPoly,
   registerIdleFighter,
+  unregisterIdleFighter,
   tickIdleAnimations,
   addArchetypeGlow,
 } from '../objects/fighterModel.js';
@@ -160,68 +161,96 @@ export function buildPitScene(THREE, aspect, opts) {
   //
   // Slot 1 (firstContainer) — captain when present, legacy 'warden' mock otherwise.
   // Slot 2 (secondContainer) — three-way: real secondAgent / legacy predator
-  // mock (full fallback) / null (captain alone). See branch below.
+  // mock (full fallback) / null (captain alone). See applyFighters() below.
   // Local refs replace the old wardenContainer/predatorContainer hardcodes so the
   // tick block, dispose path, and hover-scale loop stay agnostic to the source.
+  // Step 5.5 — `let` (was `const`) so refreshFighters() can swap them in place.
   const firstBaseRotY = Math.atan2(1.8 - (-1.8), -0.6 - 0.6);
   const predatorBaseRotY = Math.atan2(-1.8 - 1.8, 0.6 - (-0.6));
 
-  // SLOT 1 — captain bind (Step 2). Variant stays 'warden' across all real
-  // archetypes until per-archetype 3D variants land (Epic 5+, see deferred).
-  // Glow colour is the only differentiation right now — pulled from the
-  // ARCHETYPES table so a 'predator' captain glows pink, 'sentinel' green, etc.
-  const firstContainer = new THREE.Group();
-  firstContainer.position.set(-1.8, RING_HEIGHT, 0.6);
-  firstContainer.rotation.y = firstBaseRotY;
-  firstContainer.userData.isClickable = true;
-  if (captain && captain.id) {
-    firstContainer.userData.id = captain.id;
-    // labelOverride drives the WorldHint hint (CanvasLayer falls back to
-    // active.labels[id] when this is absent — see Epic 4 Step 2 patch).
-    firstContainer.userData.labelOverride = 'View ' + (captain.name || 'Captain');
-  } else {
-    firstContainer.userData.id = 'warden';
-  }
-  arena.add(firstContainer);
-
-  // First slot: captain (variant warden, glow from primaryModule) OR legacy warden mock.
-  const firstVariant = 'warden';
-  const firstGlowColor = captain
-    ? pickFighterColor(captain.primaryModule)
-    : LEGACY_ARCHETYPE_COLORS.warden;
-  firstContainer.add(makeFighterLowPoly(THREE, firstVariant));
-  addArchetypeGlow(firstContainer, THREE, firstGlowColor);
-  registerIdleFighter(firstContainer, 0);
-
-  // SLOT 2 — three-way branch (Step 3):
-  //   - captain & secondAgent → real second agent (variant warden, glow from primaryModule).
-  //   - !captain              → legacy predator mock (full fallback, both slots mocked).
-  //   - captain & !secondAgent → secondContainer stays null, slot is empty.
-  // tick + clickableTargets + dispose all guard on `secondContainer`.
+  let firstContainer = null;
   let secondContainer = null;
-  if (captain && secondAgent) {
-    secondContainer = new THREE.Group();
-    secondContainer.position.set(1.8, RING_HEIGHT, -0.6);
-    secondContainer.rotation.y = predatorBaseRotY;
-    secondContainer.userData.isClickable = true;
-    secondContainer.userData.id = secondAgent.id;
-    secondContainer.userData.labelOverride = 'View ' + (secondAgent.name || 'Fighter');
-    arena.add(secondContainer);
-    secondContainer.add(makeFighterLowPoly(THREE, 'warden'));
-    addArchetypeGlow(secondContainer, THREE, pickFighterColor(secondAgent.primaryModule));
-    registerIdleFighter(secondContainer, 2.1);
-  } else if (!captain) {
-    secondContainer = new THREE.Group();
-    secondContainer.position.set(1.8, RING_HEIGHT, -0.6);
-    secondContainer.rotation.y = predatorBaseRotY;
-    secondContainer.userData.isClickable = true;
-    secondContainer.userData.id = 'predator';
-    arena.add(secondContainer);
-    secondContainer.add(makeFighterLowPoly(THREE, 'predator'));
-    addArchetypeGlow(secondContainer, THREE, LEGACY_ARCHETYPE_COLORS.predator);
-    registerIdleFighter(secondContainer, 2.1); // phase offset — de-sync the two
+
+  // Tear down a single fighter container in place — used by both dispose()
+  // and refreshFighters(). unregisterIdleFighter MUST run before traverse so
+  // fighterModel's global registry doesn't outlive the disposed Group.
+  function disposeContainerInPlace(container) {
+    if (!container) return;
+    unregisterIdleFighter(container);
+    if (container.parent) container.parent.remove(container);
+    container.traverse((o) => {
+      if (o.geometry) o.geometry.dispose();
+      const m = o.material;
+      if (m) {
+        const mats = Array.isArray(m) ? m : [m];
+        for (const mat of mats) {
+          if (mat.map) mat.map.dispose();
+          if (mat.dispose) mat.dispose();
+        }
+      }
+    });
   }
-  // captain && !secondAgent → secondContainer stays null (empty slot).
+
+  // Build slot 1 + slot 2 from a (captain, secondAgent) snapshot. Used both
+  // for the initial scene assembly and for refreshFighters() — keeping a
+  // single source of truth so the rules in JSDoc above never drift between
+  // the two paths. Disposes any pre-existing containers first; idempotent.
+  function applyFighters(cap, second) {
+    disposeContainerInPlace(firstContainer);
+    disposeContainerInPlace(secondContainer);
+    firstContainer = null;
+    secondContainer = null;
+
+    // SLOT 1 — captain when present, else legacy warden mock. Variant stays
+    // 'warden' across all 6 backend archetypes (per-archetype 3D variants
+    // are deferred to Epic 5+); only the glow colour swaps via pickFighterColor.
+    firstContainer = new THREE.Group();
+    firstContainer.position.set(-1.8, RING_HEIGHT, 0.6);
+    firstContainer.rotation.y = firstBaseRotY;
+    firstContainer.userData.isClickable = true;
+    if (cap && cap.id) {
+      firstContainer.userData.id = cap.id;
+      // labelOverride drives the WorldHint hint (CanvasLayer falls back to
+      // active.labels[id] when this is absent — see Epic 4 Step 2 patch).
+      firstContainer.userData.labelOverride = 'View ' + (cap.name || 'Captain');
+    } else {
+      firstContainer.userData.id = 'warden';
+    }
+    arena.add(firstContainer);
+    firstContainer.add(makeFighterLowPoly(THREE, 'warden'));
+    addArchetypeGlow(
+      firstContainer, THREE,
+      cap ? pickFighterColor(cap.primaryModule) : LEGACY_ARCHETYPE_COLORS.warden,
+    );
+    registerIdleFighter(firstContainer, 0);
+
+    // SLOT 2 — three-way (see JSDoc above). captain && !secondAgent leaves
+    // secondContainer at null intentionally (empty slot).
+    if (cap && second) {
+      secondContainer = new THREE.Group();
+      secondContainer.position.set(1.8, RING_HEIGHT, -0.6);
+      secondContainer.rotation.y = predatorBaseRotY;
+      secondContainer.userData.isClickable = true;
+      secondContainer.userData.id = second.id;
+      secondContainer.userData.labelOverride = 'View ' + (second.name || 'Fighter');
+      arena.add(secondContainer);
+      secondContainer.add(makeFighterLowPoly(THREE, 'warden'));
+      addArchetypeGlow(secondContainer, THREE, pickFighterColor(second.primaryModule));
+      registerIdleFighter(secondContainer, 2.1);
+    } else if (!cap) {
+      secondContainer = new THREE.Group();
+      secondContainer.position.set(1.8, RING_HEIGHT, -0.6);
+      secondContainer.rotation.y = predatorBaseRotY;
+      secondContainer.userData.isClickable = true;
+      secondContainer.userData.id = 'predator';
+      arena.add(secondContainer);
+      secondContainer.add(makeFighterLowPoly(THREE, 'predator'));
+      addArchetypeGlow(secondContainer, THREE, LEGACY_ARCHETYPE_COLORS.predator);
+      registerIdleFighter(secondContainer, 2.1);
+    }
+  }
+
+  applyFighters(captain, secondAgent);
 
   // --- HEAVY BAG (training interactable, far left) ---
   // Source: prototype 5526-5581 (geometry + dedicated spotlight).
@@ -267,16 +296,24 @@ export function buildPitScene(THREE, aspect, opts) {
   // secondContainer may be null when captain has no peer in agentsList — slot
   // 2 stays empty in that case. .filter(Boolean) drops the null without
   // disturbing the prototype 6860 ordering for the remaining 7 entries.
-  const clickableTargets = [
-    heavyBag,
-    terminal.group,
-    firstContainer,
-    secondContainer,
-    plinth.group,
-    scoreboard,
-    clanBanner,
-    shopLocker,
-  ].filter(Boolean);
+  // Step 5.5 — array is mutated in place by rebuildClickableTargets() so
+  // the picker (which captures `targets` by lexical reference) sees the
+  // refreshed fighter containers without needing a re-registration.
+  const clickableTargets = [];
+  function rebuildClickableTargets() {
+    clickableTargets.length = 0;
+    [
+      heavyBag,
+      terminal.group,
+      firstContainer,
+      secondContainer,
+      plinth.group,
+      scoreboard,
+      clanBanner,
+      shopLocker,
+    ].forEach((t) => { if (t) clickableTargets.push(t); });
+  }
+  rebuildClickableTargets();
 
   // tick — Шаг 5: crowd breathing, dust drift, rim pulse.
   // Source: prototype 7240-7250 (dust drift + rim pulse) + TZ Step 5 (crowd breathing formula).
@@ -336,6 +373,27 @@ export function buildPitScene(THREE, aspect, opts) {
     }
   }
 
+  /**
+   * Step 5.5 — Re-render slot 1 + slot 2 from a fresh (captain, secondAgent)
+   * snapshot. Called by CanvasLayer's watcher on agentsList change.
+   *
+   * No-op when the (id-1, id-2) tuple is unchanged — Vuex getter recomputes
+   * on any state.agents mutation, which would otherwise re-dispose+rebuild
+   * the same fighters every time. Identity check is by userData.id only;
+   * other fields (name/primaryModule) drift through the normal Vuex flow
+   * and aren't observed at this level.
+   */
+  function refreshFighters({ captain: cap, secondAgent: second }) {
+    const newFirstId = cap ? cap.id : 'warden';
+    const newSecondId = (cap && second) ? second.id : (!cap ? 'predator' : null);
+    const oldFirstId = firstContainer ? firstContainer.userData.id : null;
+    const oldSecondId = secondContainer ? secondContainer.userData.id : null;
+    if (oldFirstId === newFirstId && oldSecondId === newSecondId) return;
+
+    applyFighters(cap, second);
+    rebuildClickableTargets();
+  }
+
   return {
     scene,
     camera,
@@ -346,6 +404,7 @@ export function buildPitScene(THREE, aspect, opts) {
     roomHeight: ROOM_WALL_HEIGHT,
     roomRadius: ROOM_RADIUS,
     clickableTargets,
+    refreshFighters,
   };
 }
 
