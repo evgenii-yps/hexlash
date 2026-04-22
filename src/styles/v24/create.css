@@ -356,6 +356,19 @@
   100% { background: rgba(255, 255, 255, 0); }
 }
 
+/* ===== INLINE ERROR (Epic 4 Step 5) =====
+   Rendered under Create Fighter when backend rejects (validation, roster
+   full, server error). Form state stays intact so user can retry. */
+.app-v2 .cp-error {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: rgba(255, 6, 111, 0.15);
+  border: 1px solid rgba(255, 6, 111, 0.4);
+  color: #ff4d8c;
+  font-size: 12px;
+  font-family: var(--font-mono);
+}
+
 /* ===== ARCHETYPE COLOUR HELPERS (prototype 2559-2565) =====
    Used for .cf-value colouring in Step 10 confirm step. */
 .app-v2 .arch-tag-pre { color: var(--hex-primary); }

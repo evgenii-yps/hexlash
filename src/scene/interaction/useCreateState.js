@@ -52,14 +52,28 @@ export const createState = reactive({
   step: 1,               // 1 archetype | 2 name | 3 confirm
   archetypeId: null,     // 'predator' | ... | null
   name: '',
-  materializing: false,  // true during 1.2s opacity lerp
+  // creating — Epic 4 Step 5. True from Create-Fighter click until the
+  // backend POST /v1/agent/create resolves. Disables the button + shows
+  // the "Creating…" label so a slow round-trip can't be re-fired.
+  creating: false,
+  // materializing — true during the 1.2s opacity lerp that follows a
+  // successful create (and the 700 ms pause before navigation). Distinct
+  // from `creating` because the visual phases serialise: backend → animate.
+  materializing: false,
+  // error — Epic 4 Step 5. Inline message rendered under Create Fighter
+  // when the backend rejects (validation, roster full, server error, etc).
+  // Form state is preserved so the user can edit + retry without losing
+  // their archetype/name picks.
+  error: null,
 });
 
 export function resetCreateState() {
   createState.step = 1;
   createState.archetypeId = null;
   createState.name = '';
+  createState.creating = false;
   createState.materializing = false;
+  createState.error = null;
 }
 
 // Handler wired from HudCreate in Step 8. scene api is injected via deps

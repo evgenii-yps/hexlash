@@ -7,10 +7,8 @@
   <div class="create-view">
     <HudCreate
       :on-archetype-color="handleArchetypeColor"
-      :get-holo-fighter="getHoloFighter"
-      :get-flash-el="getFlashEl"
       @back="onBack"
-      @materialize-start="onMaterializeStart"
+      @create-persist="onCreatePersist"
     />
     <div ref="flashRef" class="materialize-flash"></div>
   </div>
@@ -20,13 +18,24 @@
 import { onMounted, onBeforeUnmount, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import * as THREE from 'three';
+import store from '@/core/state/store.js';
 import {
   registerScene,
   unregisterScene,
   activateScene,
 } from '@/scene/sceneRegistry.js';
 import { buildCreateScene } from '@/scene/scenes/CreateScene.js';
-import { resetCreateState } from '@/scene/interaction/useCreateState.js';
+import {
+  createState,
+  resetCreateState,
+} from '@/scene/interaction/useCreateState.js';
+import { setCreatedFighter } from '@/scene/interaction/useCreatedFighter.js';
+import {
+  startMaterializeAnimation,
+  MATERIALIZE_FROM,
+  MATERIALIZE_TO,
+  MATERIALIZE_DURATION_MS,
+} from '@/scene/objects/createHologram.js';
 import HudCreate from '@/components/hud/HudCreate.vue';
 
 const router = useRouter();
@@ -34,11 +43,11 @@ const flashRef = ref(null);
 
 let sceneApi = null;
 let onResize = null;
-// Materialize animation handle owned here (CreateView), reported up from
-// HudCreate via @materialize-start. Cancelled on unmount so Esc/Back
-// mid-lerp can't trigger onDone's router.push after the view is gone.
-// Pattern 3Bb animHandle — handle lives with the orchestrator that owns
-// the lifecycle, not the HUD that fires it.
+// Materialize animation handle owned here (CreateView). Set inside
+// onCreatePersist after the backend resolves, cancelled on unmount so
+// Esc/Back mid-lerp can't trigger onDone's router.push after the view is
+// gone. Pattern 3Bb animHandle — handle lives with the orchestrator that
+// owns the lifecycle, not the HUD that fires it.
 let matHandle = null;
 
 function handleResize() {
@@ -61,20 +70,83 @@ function handleArchetypeColor(hex) {
   }
 }
 
-// Getters passed as props — invoked at click time (not mount time), so
-// null-at-mount is fine. `sceneApi._holoFighter` is the warden Group
-// mutated via setHologram during materialize. `flashRef.value` is the
-// .materialize-flash DOM node that drives the pink pulse via CSS class.
-function getHoloFighter() {
-  return sceneApi ? sceneApi._holoFighter : null;
-}
+// Epic 4 Step 5 — Create persistence happy + sad paths.
+// Sequential phases (per ТЗ — backend FIRST, then animate):
+//   1. createState.creating = true → button disabled + 'Creating…' label.
+//   2. await dispatch('agent/createAgent', payload). 401 self-handles
+//      via apiClient interceptor (master/logout); we only catch business
+//      errors (400 validation, 403 NFT, 500, etc).
+//   3. setCreatedFighter caches { id, name, archetype } so FighterDetailView
+//      (Step 6) can hydrate without an extra fetchAgent round-trip.
+//   4. creating → false, materializing → true. Run DOM flash + opacity lerp.
+//   5. onDone → router.push('/v2/fd/' + agent.id). matHandle.cancel() is
+//      idempotent if unmount races the animation.
+// Sad path: catch → createState.error = {message}, creating = false. Form
+// state intact (name + archetype preserved) — user can edit and retry.
+async function onCreatePersist(payload) {
+  if (createState.creating || createState.materializing) return;
 
-function getFlashEl() {
-  return flashRef.value;
-}
+  createState.creating = true;
+  createState.error = null;
 
-function onMaterializeStart(handle) {
-  matHandle = handle;
+  let agent;
+  try {
+    agent = await store.dispatch('agent/createAgent', payload);
+  } catch (e) {
+    const msg =
+      (e && e.response && e.response.data && e.response.data.error) ||
+      (e && e.message) ||
+      'Failed to create fighter';
+    createState.error = msg;
+    createState.creating = false;
+    return;
+  }
+
+  // setCreatedFighter is one-shot — FighterDetailView consumes + clears
+  // on mount (Step 6). Refresh on /v2/fd/:id falls back to fetchAgent.
+  setCreatedFighter({
+    id: agent.id,
+    name: agent.name,
+    archetype: agent.primaryModule,
+  });
+
+  // Phase swap — backend done, animation begins. materializing stays true
+  // until unmount so any stray render between onDone and teardown can't
+  // re-enable the Create button. resetCreateState (called on next mount)
+  // zeroes both flags.
+  createState.creating = false;
+  createState.materializing = true;
+
+  // DOM flash — prototype 9233-9236. Remove + forced reflow + add so the
+  // CSS animation restarts cleanly even if user clicks Create multiple
+  // times across sessions (cached frame could otherwise skip the 0→20% ramp).
+  const flash = flashRef.value;
+  if (flash) {
+    flash.classList.remove('flash');
+    /* eslint-disable-next-line no-unused-expressions */
+    flash.offsetWidth; // force reflow
+    flash.classList.add('flash');
+  }
+
+  const fighter = sceneApi ? sceneApi._holoFighter : null;
+  if (!fighter) {
+    // Defensive — shouldn't happen after onMounted. If we somehow have no
+    // scene, skip the animation and navigate directly.
+    router.push('/v2/fd/' + agent.id);
+    return;
+  }
+
+  matHandle = startMaterializeAnimation(
+    fighter,
+    MATERIALIZE_FROM,
+    MATERIALIZE_TO,
+    MATERIALIZE_DURATION_MS,
+    {
+      onDone: () => {
+        router.push('/v2/fd/' + agent.id);
+      },
+    },
+  );
 }
 
 function onKeydown(e) {

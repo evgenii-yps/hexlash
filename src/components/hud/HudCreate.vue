@@ -128,7 +128,8 @@
         </div>
       </div>
 
-      <!-- Step 10 — Confirm summary + Create Fighter. -->
+      <!-- Step 10 — Confirm summary + Create Fighter (Epic 4 Step 5: backend
+           persistence + inline error). -->
       <div v-else-if="createState.step === 3">
         <div class="cp-step-title">Confirm</div>
         <div class="cp-step-sub">Last check before they hit the pit</div>
@@ -154,13 +155,18 @@
           </div>
         </div>
         <div class="create-nav">
-          <button class="cn-btn" @click="goToStep(2)">Back</button>
+          <button
+            class="cn-btn"
+            :disabled="createState.creating || createState.materializing"
+            @click="goToStep(2)"
+          >Back</button>
           <button
             class="cn-btn primary"
-            :disabled="createState.materializing"
+            :disabled="createState.creating || createState.materializing"
             @click="onCreate"
-          >Create Fighter</button>
+          >{{ createState.creating ? 'Creating…' : 'Create Fighter' }}</button>
         </div>
+        <div v-if="createState.error" class="cp-error">{{ createState.error }}</div>
       </div>
     </div>
   </div>
@@ -177,12 +183,13 @@ import {
   randomName,
   generateSuggestions,
 } from '@/scene/interaction/useCreateNames.js';
-import {
-  startMaterializeAnimation,
-  MATERIALIZE_FROM,
-  MATERIALIZE_TO,
-  MATERIALIZE_DURATION_MS,
-} from '@/scene/objects/createHologram.js';
+
+// Default skin sent to backend when creating an agent. Validated against
+// SKIN_REGEX (backend/src/routes/agent.js:30) — `skin_m_1.png` matches the
+// `skin_(m|w)_\d{1,3}\.png` branch and is the same default used by the
+// User.skin Prisma column (CLAUDE.md Skins section). Real skin picker is
+// part of a later epic.
+const DEFAULT_SKIN = 'skin_m_1.png';
 
 const props = defineProps({
   // Callback into CreateView that proxies to sceneApi.setArchetypeColor.
@@ -192,17 +199,14 @@ const props = defineProps({
   // concrete glow.setColor under it. onArchetypeChange itself guards on
   // truthy setGlow, so a stray click before mount is a no-op.
   onArchetypeColor: { type: Function, default: null },
-  // Getter for the holo fighter root — sceneApi._holoFighter. Invoked at
-  // click time (not mount time), so null-at-mount is fine.
-  getHoloFighter: { type: Function, default: null },
-  // Getter for the .materialize-flash DOM element (CreateView ref).
-  getFlashEl: { type: Function, default: null },
 });
 
-// 'materialize-start' emitted with { cancel() } handle so CreateView can
-// cancel the animation on unmount/Esc without HudCreate owning scene
-// lifecycle. Pattern symmetric to 3Bb animHandle cancel on unmount.
-const emit = defineEmits(['back', 'materialize-start']);
+// 'create-persist' carries the agent payload to CreateView, which dispatches
+// to Vuex agent/createAgent and then runs materialize on success.
+// Epic 4 Step 5 — HUD no longer owns the materialize animation; CreateView
+// holds sceneApi + flashRef and the cancel handle, so co-locating that side
+// of the lifecycle there is cleaner (HUD becomes pure-presentation).
+const emit = defineEmits(['back', 'create-persist']);
 
 const STAT_KEYS = ['aggression', 'patience', 'risk'];
 
@@ -242,54 +246,24 @@ const archetypeColor = computed(() => {
   return a ? colorHex(a.color) : '#ffffff';
 });
 
-// onCreate — triggers DOM flash overlay, starts opacity lerp on the holo
-// fighter, emits 'materialize-start' so CreateView can cancel on unmount.
-// Guard on createState.materializing — rapid double-clicks are no-op.
+// onCreate — collects payload + delegates to CreateView via 'create-persist'.
+// Epic 4 Step 5: backend POST happens first, then materialize, then nav.
+// Guard on creating/materializing — rapid double-clicks are no-op.
+// Archetype id maps 1-to-1 onto backend VALID_ARCHETYPES (Step 0 verified),
+// so we send the v2 id straight as primaryModule. secondary/tertiary are
+// echoed for now — Epic 5+ will add a real module picker on the panel.
 function onCreate() {
-  if (createState.materializing) return;
-  const fighter = props.getHoloFighter?.();
-  if (!fighter) return; // safety — shouldn't happen after onMounted
+  if (createState.creating || createState.materializing) return;
+  if (!createState.archetypeId || !createState.name.trim()) return;
 
-  createState.materializing = true;
-
-  // DOM flash — prototype 9233-9236. Remove + forced reflow + add so the
-  // CSS animation restarts cleanly even if user clicks Create multiple
-  // times across sessions (cached frame could otherwise skip the
-  // 0→20% ramp).
-  const flash = props.getFlashEl?.();
-  if (flash) {
-    flash.classList.remove('flash');
-    /* eslint-disable-next-line no-unused-expressions */
-    flash.offsetWidth; // force reflow
-    flash.classList.add('flash');
-  }
-
-  const handle = startMaterializeAnimation(
-    fighter,
-    MATERIALIZE_FROM,
-    MATERIALIZE_TO,
-    MATERIALIZE_DURATION_MS,
-    {
-      onDone: () => {
-        // Prototype 9249-9254 closes the panel + resets state + restores
-        // hologram opacity. In v2 the router.push disposes the scene
-        // entirely via CreateView.onBeforeUnmount, and CreateView
-        // .onMounted calls resetCreateState on the next entry (hot-fix
-        // cbc074a). All prototype cleanup happens naturally — nothing
-        // to do here beyond navigating out.
-        //
-        // materializing stays true until unmount so any stray render
-        // between onDone and teardown can't re-enable Create button.
-        // resetCreateState inside onMounted zeroes it on re-entry.
-        //
-        // Reuse the same 'back' event CreateView wires to router.push —
-        // single navigation path, no router import in HUD.
-        emit('back');
-      },
-    },
-  );
-
-  emit('materialize-start', handle);
+  createState.error = null;
+  emit('create-persist', {
+    name: createState.name.trim(),
+    skin: DEFAULT_SKIN,
+    primaryModule:   createState.archetypeId,
+    secondaryModule: createState.archetypeId,
+    tertiaryModule:  createState.archetypeId,
+  });
 }
 
 // ===== Step 2 — Name (prototype 9149-9175) =====
