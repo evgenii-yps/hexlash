@@ -5,6 +5,7 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import * as THREE from 'three';
+import store from '@/core/state/store.js';
 import { registerScene, activateScene, getActiveScene } from './sceneRegistry.js';
 import { startRenderLoop, stopRenderLoop } from './renderLoop.js';
 import { buildPitScene } from './scenes/PitScene.js';
@@ -40,10 +41,21 @@ let onPointerMove = null;
 let onPointerDown = null;
 let onPointerUp = null;
 
-onMounted(() => {
+onMounted(async () => {
   // Publish the canvas element so lazy scenes (FD, Fight) can attach their
   // own orbit/picker handlers without prop drilling. Epic 3A Step 6.
   setCanvasRef(canvasEl.value);
+
+  // Epic 4 Step 2 — fetch agents BEFORE buildPitScene so slot 1 can render
+  // the real captain. Failure is non-fatal (no auth, offline, fresh install)
+  // — buildPitScene falls back to the legacy warden mock when captain is null.
+  // Slot 2 stays on the predator mock until Step 3 wires secondAgent.
+  try {
+    await store.dispatch('agent/fetchAgents');
+  } catch (e) {
+    console.warn('[CanvasLayer] agent/fetchAgents failed; falling back to mock fighters', e);
+  }
+  const captain = store.getters['agent/currentCaptain'] || null;
 
   renderer = new THREE.WebGLRenderer({
     canvas: canvasEl.value,
@@ -70,7 +82,7 @@ onMounted(() => {
   renderer.toneMappingExposure = 2.3;
 
   const aspect = window.innerWidth / window.innerHeight;
-  pit = buildPitScene(THREE, aspect);
+  pit = buildPitScene(THREE, aspect, { captain, secondAgent: null });
 
   // Orbit camera (Step 7) — drives camera.position/lookAt every frame.
   // tick(t) here MUST run before pit.tick / renderer.render — composed below.
@@ -128,8 +140,13 @@ onMounted(() => {
       if (hit) {
         hit.userData.hoverScale = active.hoverScale || 1.04;
         document.body.style.cursor = 'pointer';
-        const label = active.labels ? active.labels[hit.userData.id] : '';
-        hoverState.text = label || '';
+        // Epic 4 Step 2 — labelOverride wins over the static labels map so
+        // dynamic IDs (real agent UUIDs) can carry per-instance hint text.
+        const label =
+          hit.userData.labelOverride ||
+          (active.labels ? active.labels[hit.userData.id] : '') ||
+          '';
+        hoverState.text = label;
         hoverState.visible = !!label;
       } else {
         document.body.style.cursor = '';

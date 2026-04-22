@@ -29,11 +29,39 @@ import { buildPlinth } from '../objects/plinth.js';
 import { buildScoreboard } from '../objects/scoreboard.js';
 import { buildClanBanner } from '../objects/clanBanner.js';
 import { buildShopLocker } from '../objects/shopLocker.js';
+import { ARCHETYPES } from '../interaction/useCreateState.js';
 
 const ROOM_RADIUS = 18;
 const ROOM_WALL_HEIGHT = 9;
 
-export function buildPitScene(THREE, aspect) {
+// Legacy mock colours (used when opts.captain is null — pre-Epic-4 fallback).
+// Real captains pull their colour from ARCHETYPES via captain.primaryModule.
+const LEGACY_ARCHETYPE_COLORS = { warden: 0xD4A843, predator: 0xFF066F };
+
+// Resolve glow colour: legacy 'warden'/'predator' first, then 6 backend
+// archetypes from useCreateState. Falls back to warden gold for unknown /
+// null primaryModule (agent created without modules picked).
+function pickFighterColor(archetypeId) {
+  if (LEGACY_ARCHETYPE_COLORS[archetypeId] !== undefined) {
+    return LEGACY_ARCHETYPE_COLORS[archetypeId];
+  }
+  const a = ARCHETYPES.find((x) => x.id === archetypeId);
+  return a ? a.color : LEGACY_ARCHETYPE_COLORS.warden;
+}
+
+/**
+ * @param {*} THREE
+ * @param {number} aspect
+ * @param {{ captain?: object|null, secondAgent?: object|null }} [opts]
+ *   captain     — Agent (Vuex agentState.currentCaptain), if logged in & has agents
+ *   secondAgent — second agent from agentsList (Step 3, ignored in Step 2)
+ *   When captain is null, slot 1 falls back to the legacy warden mock.
+ *   When secondAgent is null, slot 2 stays on the legacy predator mock (Step 2);
+ *   Step 3 will collapse the slot to empty instead.
+ */
+export function buildPitScene(THREE, aspect, opts) {
+  opts = opts || {};
+  const captain = opts.captain || null;
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x070811);
   scene.fog = new THREE.FogExp2(0x070811, 0.028);
@@ -140,33 +168,50 @@ export function buildPitScene(THREE, aspect) {
   //   [1] archetype glow disc (added by addArchetypeGlow, userData.isArchGlow=true)
   // registerIdleFighter reads container.children[0] — must be fighter, not disc.
   //
-  // isClickable / id — pre-seeded now for Steps 16 (raycaster) and 17 (clicks).
-  const ARCHETYPE_COLORS = { warden: 0xD4A843, predator: 0xFF066F };
-
-  const wardenBaseRotY = Math.atan2(1.8 - (-1.8), -0.6 - 0.6);
+  // Slot 1 (firstContainer) — captain when present, legacy 'warden' mock otherwise.
+  // Slot 2 (secondContainer) — legacy 'predator' mock until Step 3 wires secondAgent.
+  // Local refs replace the old wardenContainer/predatorContainer hardcodes so the
+  // tick block, dispose path, and hover-scale loop stay agnostic to the source.
+  const firstBaseRotY = Math.atan2(1.8 - (-1.8), -0.6 - 0.6);
   const predatorBaseRotY = Math.atan2(-1.8 - 1.8, 0.6 - (-0.6));
 
-  const wardenContainer = new THREE.Group();
-  wardenContainer.position.set(-1.8, RING_HEIGHT, 0.6);
-  wardenContainer.rotation.y = wardenBaseRotY;
-  wardenContainer.userData.isClickable = true;
-  wardenContainer.userData.id = 'warden';
-  arena.add(wardenContainer);
+  // SLOT 1 — captain bind (Step 2). Variant stays 'warden' across all real
+  // archetypes until per-archetype 3D variants land (Epic 5+, see deferred).
+  // Glow colour is the only differentiation right now — pulled from the
+  // ARCHETYPES table so a 'predator' captain glows pink, 'sentinel' green, etc.
+  const firstContainer = new THREE.Group();
+  firstContainer.position.set(-1.8, RING_HEIGHT, 0.6);
+  firstContainer.rotation.y = firstBaseRotY;
+  firstContainer.userData.isClickable = true;
+  if (captain && captain.id) {
+    firstContainer.userData.id = captain.id;
+    // labelOverride drives the WorldHint hint (CanvasLayer falls back to
+    // active.labels[id] when this is absent — see Epic 4 Step 2 patch).
+    firstContainer.userData.labelOverride = 'View ' + (captain.name || 'Captain');
+  } else {
+    firstContainer.userData.id = 'warden';
+  }
+  arena.add(firstContainer);
 
-  const predatorContainer = new THREE.Group();
-  predatorContainer.position.set(1.8, RING_HEIGHT, -0.6);
-  predatorContainer.rotation.y = predatorBaseRotY;
-  predatorContainer.userData.isClickable = true;
-  predatorContainer.userData.id = 'predator';
-  arena.add(predatorContainer);
+  const secondContainer = new THREE.Group();
+  secondContainer.position.set(1.8, RING_HEIGHT, -0.6);
+  secondContainer.rotation.y = predatorBaseRotY;
+  secondContainer.userData.isClickable = true;
+  secondContainer.userData.id = 'predator';
+  arena.add(secondContainer);
 
-  wardenContainer.add(makeFighterLowPoly(THREE, 'warden'));
-  addArchetypeGlow(wardenContainer, THREE, ARCHETYPE_COLORS.warden);
-  registerIdleFighter(wardenContainer, 0);
+  // First slot: captain (variant warden, glow from primaryModule) OR legacy warden mock.
+  const firstVariant = 'warden';
+  const firstGlowColor = captain
+    ? pickFighterColor(captain.primaryModule)
+    : LEGACY_ARCHETYPE_COLORS.warden;
+  firstContainer.add(makeFighterLowPoly(THREE, firstVariant));
+  addArchetypeGlow(firstContainer, THREE, firstGlowColor);
+  registerIdleFighter(firstContainer, 0);
 
-  predatorContainer.add(makeFighterLowPoly(THREE, 'predator'));
-  addArchetypeGlow(predatorContainer, THREE, ARCHETYPE_COLORS.predator);
-  registerIdleFighter(predatorContainer, 2.1); // phase offset — de-sync the two
+  secondContainer.add(makeFighterLowPoly(THREE, 'predator'));
+  addArchetypeGlow(secondContainer, THREE, LEGACY_ARCHETYPE_COLORS.predator);
+  registerIdleFighter(secondContainer, 2.1); // phase offset — de-sync the two
 
   // --- HEAVY BAG (training interactable, far left) ---
   // Source: prototype 5526-5581 (geometry + dedicated spotlight).
@@ -212,8 +257,8 @@ export function buildPitScene(THREE, aspect) {
   const clickableTargets = [
     heavyBag,
     terminal.group,
-    wardenContainer,
-    predatorContainer,
+    firstContainer,
+    secondContainer,
     plinth.group,
     scoreboard,
     clanBanner,
@@ -253,10 +298,10 @@ export function buildPitScene(THREE, aspect) {
     // Outer container bob + subtle rotation — prototype 7231-7235.
     // Without this, the fighters' silhouettes stand rigid even while their
     // limbs animate. This adds a whole-body bounce and micro-rotation.
-    wardenContainer.position.y = RING_HEIGHT + Math.sin(t * 1.2) * 0.015;
-    predatorContainer.position.y = RING_HEIGHT + Math.sin(t * 1.2 + 1.5) * 0.015;
-    wardenContainer.rotation.y = wardenBaseRotY + Math.sin(t * 0.6) * 0.04;
-    predatorContainer.rotation.y = predatorBaseRotY + Math.sin(t * 0.6 + 2) * 0.04;
+    firstContainer.position.y = RING_HEIGHT + Math.sin(t * 1.2) * 0.015;
+    secondContainer.position.y = RING_HEIGHT + Math.sin(t * 1.2 + 1.5) * 0.015;
+    firstContainer.rotation.y = firstBaseRotY + Math.sin(t * 0.6) * 0.04;
+    secondContainer.rotation.y = predatorBaseRotY + Math.sin(t * 0.6 + 2) * 0.04;
 
     // Heavy bag idle sway — prototype 7267-7269.
     heavyBag.rotation.x = Math.sin(t * 0.7) * 0.025;
