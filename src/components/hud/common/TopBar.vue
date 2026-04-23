@@ -3,7 +3,9 @@
      title (HEXLASH kicker + "THE PIT" name + LVL/XP meta), avatar button on
      the right. Values are static placeholders — real data wiring is Epic 3.
      Source: prototype 4303-4344. All classes prefixed .v2- to avoid collision
-     with legacy CSS. -->
+     with legacy CSS.
+     Sub-Epic 5B hot-fix 10.2: avatar initials bound to master.userData.login
+     (was hardcoded 'YV' — Epic 2 era placeholder). -->
 <template>
   <div class="v2-topbar">
     <div class="v2-topbar__left">
@@ -28,13 +30,21 @@
     </div>
 
     <button class="v2-avatar-btn" @click="$emit('avatar-click')">
-      <span>YV</span>
+      <span>{{ avatarInitials }}</span>
     </button>
   </div>
 </template>
 
 <script setup>
+import { computed } from 'vue';
+import store from '@/core/state/store.js';
+
 defineEmits(['avatar-click']);
+
+const avatarInitials = computed(() => {
+  const login = store.getters['master/getMaster']?.userData?.login || '';
+  return login.slice(0, 2).toUpperCase() || '??';
+});
 </script>
 
 <style scoped>

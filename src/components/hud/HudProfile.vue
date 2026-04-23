@@ -206,7 +206,6 @@ import { getBeltDisplay } from '@/utils/beltDisplay.js';
 import {
   availableLanguages,
   getLanguage,
-  setLanguage,
   t,
 } from '@/locales/index.js';
 
@@ -569,14 +568,24 @@ onBeforeUnmount(() => {
 });
 
 // --- Settings: Language ---
-// locales/index.js exposes setLanguage/getLanguage + the reactive `t` computed.
-// `currentLanguage` isn't exported, so we mirror it into a local ref and
-// watch `t` to stay in sync with any external setLanguage calls. `setLanguage`
-// also persists to localStorage — no extra store wiring needed.
+// locales/index.js exposes getLanguage + the reactive `t` computed. We mirror
+// currentLanguage into a local ref via watch(t) for active-state highlighting.
+//
+// Switching goes through master/setLanguage Vuex action (same as legacy
+// ChangeLanguage.vue), which internally:
+//   1. calls setLanguage() from locales/index.js (updates currentLanguage ref
+//      + localStorage → triggers `t` recompute → any template reading t.*.*
+//      re-renders),
+//   2. commits updateMaster({ language }) → master.language Vuex synced,
+//   3. writes through to local DB,
+//   4. syncs to backend silently via masterService.changeProfile.
+// Sub-Epic 5B hot-fix 10.2: direct setLanguage() call missed steps 2-4, so
+// Vuex-derived `master/getLanguage` stayed stale — legacy templates reading
+// it didn't update until logout/login re-initialized from localStorage.
 const currentLang = ref(getLanguage());
 watch(t, () => { currentLang.value = getLanguage(); });
 function changeLanguage(code) {
-  setLanguage(code);
+  store.dispatch('master/setLanguage', code);
 }
 
 // --- Settings: Sound ---
