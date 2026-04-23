@@ -1,9 +1,10 @@
-<!-- Epic 5 — Sub-Epic 5B Step 9.
-     Steps 6-8 filled Identity / Performance / Friends cards. Step 9 fills
-     Settings card — 11-button language picker, Sound toggle, Build version,
-     Logout. Uses i18n setLanguage/getLanguage, punch/setMuted, master/logout.
-     Styles live in src/styles/v24/profile.css (scoped .app-v2).
-     Source: prototype hexlash_v24.html lines 4682-4714. -->
+<!-- Epic 5 — Sub-Epic 5B Step 10.
+     Steps 6-9 wired Identity/Performance/Friends/Settings. Step 10 upgrades
+     the disconnected Wallet id-field to open the full ConnectWallet modal
+     (lazy-loaded, reused verbatim from legacy via defineExpose({ openModal })).
+     Connected-state copy-to-clipboard from Step 6 stays unchanged.
+     Source: prototype hexlash_v24.html lines 4614-4618 (wallet field only —
+     prototype never had a real Connect flow). -->
 <template>
   <div class="hud-profile">
     <button class="profile-back" @click="$emit('back')">&larr; Back</button>
@@ -154,6 +155,14 @@
         </div>
       </div>
 
+      <!-- ConnectWallet host (Step 10) — hidden source; modal teleports to body. -->
+      <component
+        v-if="cwMounted && CWComp"
+        :is="CWComp"
+        ref="cwRef"
+        style="display: none;"
+      />
+
       <!-- SETTINGS -->
       <div class="profile-card settings-card">
         <div class="settings-block">
@@ -189,7 +198,8 @@
 </template>
 
 <script setup>
-import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue';
+import { computed, ref, shallowRef, markRaw, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
+import { useAccount } from '@wagmi/vue';
 import store from '@/core/state/store.js';
 import BeltBadge from '@/components/ui/BeltBadge.vue';
 import { getBeltDisplay } from '@/utils/beltDisplay.js';
@@ -242,17 +252,70 @@ watch(
   { immediate: true },
 );
 async function onWalletClick() {
-  if (!walletClickable.value) return;
-  try {
-    await navigator.clipboard.writeText(walletAddress.value);
-    const orig = walletText.value;
-    walletText.value = 'Copied!';
-    setTimeout(() => { walletText.value = orig; }, 1200);
-  } catch {
-    // Clipboard API unavailable (non-HTTPS, insecure context) — silent per
-    // prototype 9490 (`try { ... } catch {}`).
+  if (walletClickable.value) {
+    // Connected → copy to clipboard (Step 6 behavior, unchanged).
+    try {
+      await navigator.clipboard.writeText(walletAddress.value);
+      const orig = walletText.value;
+      walletText.value = 'Copied!';
+      setTimeout(() => { walletText.value = orig; }, 1200);
+    } catch {
+      // Clipboard API unavailable (non-HTTPS, insecure context) — silent per
+      // prototype 9490 (`try { ... } catch {}`).
+    }
+    return;
   }
+  // Disconnected → lazy-load ConnectWallet and open its modal.
+  await openWalletModal();
 }
+
+// --- ConnectWallet modal integration (Step 10) ---
+// ConnectWallet is reused verbatim from legacy (same component ProfileWallet
+// mounts). We add `defineExpose({ openModal })` there so this HUD can trigger
+// the modal without rendering the inline "Connect Wallet" button — and
+// lazy-load via dynamic import so Profile bundle stays lean for users who
+// never open it. The source layout is rendered with display:none; the modal
+// itself teleports to body and is unaffected.
+const CWComp = shallowRef(null);
+const cwMounted = ref(false);
+const cwRef = ref(null);
+
+async function loadCW() {
+  if (CWComp.value) return;
+  const mod = await import('@/components/fragments/profile/wallet/ConnectWallet.vue');
+  // markRaw — component objects should never be deeply reactive.
+  CWComp.value = markRaw(mod.default);
+}
+
+async function openWalletModal() {
+  await loadCW();
+  cwMounted.value = true;
+  // Two ticks cover: (1) v-if mount of <component :is>, (2) child setup
+  // completion in ConnectWallet. defineExpose is populated by the end of
+  // setup, so ref is always valid after.
+  await nextTick();
+  await nextTick();
+  cwRef.value?.openModal?.();
+}
+
+// --- Wallet address sync (Step 10) ---
+// Legacy ProfileWallet.vue keeps master.userData.walletAddress in sync with
+// Wagmi's useAccount(address) via dispatch('master/updateMaster'). That
+// component only mounts on /profile/wallet — v2 users who connect from
+// /v2/profile would otherwise be stranded with a stale walletAddress. This
+// watcher covers the v2 case with the same pattern.
+const { address: wagmiAddress } = useAccount();
+watch(wagmiAddress, async (newAddress) => {
+  const current = userData.value?.walletAddress || '';
+  const next = newAddress || '';
+  if (current === next) return;
+  try {
+    await store.dispatch('master/updateMaster', { walletAddress: next });
+  } catch {
+    // Network hiccup — wagmi state remains authoritative, next watcher
+    // fire or legacy page visit will re-sync.
+  }
+});
 
 // --- Belt ---
 // Per CLAUDE.md "Captain in Public UI": all public views show the captain's

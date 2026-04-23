@@ -169,6 +169,12 @@ onMounted(() => {
 onUnmounted(() => {
   document.removeEventListener('keydown', onKeydown)
 })
+
+// Expose openModal so external callers (e.g. v2 HudProfile Identity card)
+// can trigger the modal directly without rendering the inline "Connect
+// Wallet" button. Epic 5 Sub-Epic 5B Step 10. Additive — does not affect
+// legacy consumers (ProfileWallet.vue) which use the component as-is.
+defineExpose({ openModal })
 </script>
 
 <style scoped>
