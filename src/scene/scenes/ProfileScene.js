@@ -1,7 +1,8 @@
-// Epic 5 — Sub-Epic 5B Step 3.
-// Profile scene — Step 1 camera, Step 2 fog + octagonal room, Step 3 adds
-// lighting (ambient/hemi/key/rim) + pink volumetric shaft + pink floor disc
-// + dust field. Step 4 adds the empty podium.
+// Epic 5 — Sub-Epic 5B Step 4.
+// Profile scene — Steps 1-3 scaffold / fog / lighting / shaft / disc / dust.
+// Step 4 adds the empty podium at centre (no fighter — different from the
+// hub or FD podium). After Step 4 the 3D layer is visually complete; HUD
+// cards are added in Steps 5-9.
 // Source: prototype hexlash_v24.html lines 9335-9458 (sceneProfile).
 
 import { makeConcreteTexture } from '../materials/concrete.js';
@@ -63,6 +64,25 @@ export function buildProfileScene(THREE, aspect) {
   rim.target.position.set(0, 1, 0);
   scene.add(rim);
   scene.add(rim.target);
+
+  // --- EMPTY PODIUM (prototype 9381-9391) ---
+  // Slightly tapered concrete disc at centre. Intentionally empty — no
+  // fighter, no hologram. The scene frames the HUD cards rather than a
+  // character, matching the "dedicated Profile room" read of the prototype.
+  // Separate concrete-texture instance from the floor (both mutate the
+  // shared `repeat` field — see materials/concrete.js note). Podium uses
+  // the default repeat (1,1) so the stains read at close range.
+  const podium = new THREE.Mesh(
+    new THREE.CylinderGeometry(1.0, 1.1, 0.20, 32),
+    new THREE.MeshStandardMaterial({
+      map: makeConcreteTexture(THREE), color: 0x8a8a92,
+      roughness: 0.9, metalness: 0.05,
+    })
+  );
+  podium.position.y = 0.10;
+  podium.receiveShadow = true;
+  podium.castShadow = true;
+  scene.add(podium);
 
   // --- PINK VOLUMETRIC SHAFT (prototype 9393-9403) ---
   // Fake volumetrics via an additive-blended open cone over the podium.
