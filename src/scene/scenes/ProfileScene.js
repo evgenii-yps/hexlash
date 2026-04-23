@@ -1,8 +1,12 @@
-// Epic 5 — Sub-Epic 5B Step 1.
-// Profile scene stub — Step 1 ships an empty scene with a camera only so the
-// route can be wired + registered without dangling imports. Steps 2-4 fill in
-// the octagonal room, lighting/shaft/dust, and empty podium.
-// Source: prototype hexlash_v24.html lines 9335-9458 (sceneProfile).
+// Epic 5 — Sub-Epic 5B Step 2.
+// Profile scene — Step 1 added camera, Step 2 adds fog + octagonal room via
+// the 5A shared helper. Steps 3-4 fill in lighting/shaft/dust and the empty
+// podium.
+// Source: prototype hexlash_v24.html lines 9335-9379 (sceneProfile fog +
+// floor + walls).
+
+import { makeConcreteTexture } from '../materials/concrete.js';
+import { buildOctagonalRoom } from '../objects/octagonalRoom.js';
 
 const PR_ROOM_R = 14;
 const PR_ROOM_H = 8;
@@ -17,8 +21,29 @@ export function buildProfileScene(THREE, aspect) {
   camera.position.set(0, 2.6, 8);
   camera.lookAt(0, 1.4, 0);
 
+  // --- FLOOR + WALLS + FOG via shared 5A helper ---
+  // Profile uses denser fog (0.045) than Training/Create (0.035) and lighter
+  // than Matchmaking (0.06) — prototype 9348. Floor color 0x2c2c34 matches
+  // Training/Matchmaking/Create; wall color 0x14141c also shared. Concrete
+  // texture repeat(5,5) per prototype 9355-9356. Each scene must own its
+  // texture instance — `repeat` is shared state on the Texture object.
+  const floorTex = makeConcreteTexture(THREE);
+  floorTex.repeat.set(5, 5);
+  const floorMaterial = new THREE.MeshStandardMaterial({
+    map: floorTex, color: 0x2c2c34, roughness: 0.95, metalness: 0.02,
+  });
+  const wallMaterial = new THREE.MeshStandardMaterial({
+    color: 0x14141c, roughness: 0.95,
+  });
+  buildOctagonalRoom(THREE, scene, {
+    R: PR_ROOM_R, H: PR_ROOM_H,
+    floorRadius: 20,
+    floorMaterial, wallMaterial,
+    fogDensity: 0.045,
+  });
+
   function tick(/* t */) {
-    // no-op in stub; Steps 3-4 add dust drift and (optionally) shaft pulse.
+    // no-op until Step 3 adds dust drift.
   }
 
   function dispose() {
