@@ -100,6 +100,11 @@ const v2Routes = [
                 name: 'V2Create',
                 component: () => import('@/views-v2/CreateView.vue'),
             },
+            {
+                path: 'profile',
+                name: 'V2Profile',
+                component: () => import('@/views-v2/ProfileView.vue'),
+            },
         ],
     },
 ];

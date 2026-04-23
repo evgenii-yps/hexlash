@@ -38,6 +38,8 @@ const MODAL_CONTENT = {
   // to /v2/matchmaking instead of opening a PhModal.
   // 'create' removed in Epic 3Bc Step 1 — plus-plinth clicks now route to
   // /v2/create instead of opening a PhModal.
+  // 'avatar' removed in Epic 5 Sub-Epic 5B Step 1 — avatar btn clicks now
+  // route to /v2/profile instead of opening a PhModal.
   ratings: {
     kicker: 'Leaderboard',
     title: 'RATINGS',
@@ -62,11 +64,6 @@ const MODAL_CONTENT = {
     kicker: 'Predator',
     title: 'FIGHTER #2',
     desc: 'White Belt · 1W-0L-0D · ELO 1043. Aggressive archetype.',
-  },
-  avatar: {
-    kicker: 'Profile',
-    title: 'YOUR PROFILE',
-    desc: 'Account, wallet, skins, progression. Coming soon.',
   },
 };
 
