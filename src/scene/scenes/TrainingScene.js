@@ -7,6 +7,7 @@ import { makeConcreteTexture } from '../materials/concrete.js';
 import { buildTrainingBag } from '../objects/trainingBag.js';
 import { createBagPhysics } from '../objects/trainingBagPhysics.js';
 import { createHitParticles } from '../objects/trainingHitParticles.js';
+import { buildOctagonalRoom } from '../objects/octagonalRoom.js';
 import { trState } from '../interaction/useTrainingState.js';
 
 const HUD_SYNC_INTERVAL_MS = 100; // ~10 Hz, prototype 10024-10028
@@ -17,7 +18,6 @@ const TR_ROOM_H = 8;
 export function buildTrainingScene(THREE, aspect) {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x070811);
-  scene.fog = new THREE.FogExp2(0x070811, 0.035);
 
   // Camera — slight off-centre angle so bag (Step 4) reads dimensional.
   // Prototype 9585-9587.
@@ -25,38 +25,23 @@ export function buildTrainingScene(THREE, aspect) {
   camera.position.set(2.5, 2.0, 5.5);
   camera.lookAt(0, 1.7, 0);
 
-  // --- FLOOR (large concrete) ---
+  // --- FLOOR + WALLS + FOG via shared helper (Sub-Epic 5A Step 1) ---
+  // Scene owns material creation so concrete-texture repeat state stays
+  // scoped to this scene (see materials/concrete.js note).
   const floorTex = makeConcreteTexture(THREE);
   floorTex.repeat.set(5, 5);
-  const floor = new THREE.Mesh(
-    new THREE.CircleGeometry(20, 64),
-    new THREE.MeshStandardMaterial({
-      map: floorTex, color: 0x2c2c34, roughness: 0.95, metalness: 0.02,
-    })
-  );
-  floor.rotation.x = -Math.PI / 2;
-  floor.receiveShadow = true;
-  scene.add(floor);
-
-  // --- 8 OCTAGONAL WALLS ---
-  // Shared material — 8 meshes reuse one MeshStandardMaterial.
-  const wallMat = new THREE.MeshStandardMaterial({
+  const floorMaterial = new THREE.MeshStandardMaterial({
+    map: floorTex, color: 0x2c2c34, roughness: 0.95, metalness: 0.02,
+  });
+  const wallMaterial = new THREE.MeshStandardMaterial({
     color: 0x14141c, roughness: 0.95,
   });
-  for (let i = 0; i < 8; i++) {
-    const a1 = (i / 8) * Math.PI * 2;
-    const a2 = ((i + 1) / 8) * Math.PI * 2;
-    const x1 = Math.cos(a1) * TR_ROOM_R, z1 = Math.sin(a1) * TR_ROOM_R;
-    const x2 = Math.cos(a2) * TR_ROOM_R, z2 = Math.sin(a2) * TR_ROOM_R;
-    const wallLen = Math.hypot(x2 - x1, z2 - z1);
-    const wall = new THREE.Mesh(
-      new THREE.PlaneGeometry(wallLen, TR_ROOM_H),
-      wallMat,
-    );
-    wall.position.set((x1 + x2) / 2, TR_ROOM_H / 2, (z1 + z2) / 2);
-    wall.lookAt(0, TR_ROOM_H / 2, 0);
-    scene.add(wall);
-  }
+  buildOctagonalRoom(THREE, scene, {
+    R: TR_ROOM_R, H: TR_ROOM_H,
+    floorRadius: 20,
+    floorMaterial, wallMaterial,
+    fogDensity: 0.035,
+  });
 
   // --- LIGHTING (Step 3, prototype 9688-9708) ---
   scene.add(new THREE.AmbientLight(0x1a1a28, 0.45));
