@@ -12,6 +12,7 @@ import { createPodium } from '../objects/createPodium.js';
 import { makeHoloFighter } from '../objects/createHologram.js';
 import { createArchetypeGlow } from '../objects/createArchetypeGlow.js';
 import { buildOctagonalRoom } from '../objects/octagonalRoom.js';
+import { createDustField } from '../objects/dustField.js';
 
 const CR_ROOM_R = 14;
 const CR_ROOM_H = 8;
@@ -81,17 +82,6 @@ const HOLO_BREATHING_FREQ = 1.2;
 const HOLO_BREATHING_AMP = 0.02;
 const HOLO_SWAY_FREQ = 0.4;
 const HOLO_SWAY_AMP = 0.15;
-
-// --- DUST (prototype 9013-9027, tick 9309-9314) ---
-const CR_DUST_COUNT = 80;
-const CR_DUST_XZ_BOUND = 10;    // (rand-0.5) * 10 → ±5 spread
-const CR_DUST_Y_RANGE = 4;      // rand * 4 + 0.3
-const CR_DUST_Y_BASE = 0.3;
-const CR_DUST_Y_CEIL = 4;       // reset threshold
-const CR_DUST_COLOR = 0xffd9c8;
-const CR_DUST_SIZE = 0.03;
-const CR_DUST_OPACITY = 0.45;
-const CR_DUST_DRIFT = 0.002;
 
 export function buildCreateScene(THREE, aspect) {
   const scene = new THREE.Scene();
@@ -199,24 +189,18 @@ export function buildCreateScene(THREE, aspect) {
   const glow = createArchetypeGlow(THREE, podium);
   glow.setColor(CR_INITIAL_GLOW_COLOR);
 
-  // --- DUST (prototype 9013-9027) ---
-  const dustGeom = new THREE.BufferGeometry();
-  const dustPos = new Float32Array(CR_DUST_COUNT * 3);
-  for (let i = 0; i < CR_DUST_COUNT; i++) {
-    dustPos[i * 3]     = (Math.random() - 0.5) * CR_DUST_XZ_BOUND;
-    dustPos[i * 3 + 1] = Math.random() * CR_DUST_Y_RANGE + CR_DUST_Y_BASE;
-    dustPos[i * 3 + 2] = (Math.random() - 0.5) * CR_DUST_XZ_BOUND;
-  }
-  dustGeom.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
-  const dust = new THREE.Points(dustGeom, new THREE.PointsMaterial({
-    color: CR_DUST_COLOR,
-    size: CR_DUST_SIZE,
-    transparent: true,
-    opacity: CR_DUST_OPACITY,
-    depthWrite: false,
-    blending: THREE.AdditiveBlending,
-  }));
-  scene.add(dust);
+  // --- DUST via shared helper (Sub-Epic 5A Step 6) ---
+  // Default-path case matching Training (symmetric 10×10, warm particles).
+  // yInitSpread defaults to yMax-yMin=3.7 (was 4 pre-migration); init
+  // transient only, converges after ~2.5s — accepted per Step 4 decision.
+  const dust = createDustField(THREE, {
+    count: 80,
+    xRadius: 5,
+    yMax: 4,
+    driftSpeed: 0.002,
+    color: 0xffd9c8,
+  });
+  scene.add(dust.group);
 
   // Tick — dust drift + holo fighter idle (prototype 9303-9314).
   //   Dust (Step 3): linear upward drift, reset to base Y at the ceiling.
@@ -228,12 +212,7 @@ export function buildCreateScene(THREE, aspect) {
       + Math.sin(t * HOLO_BREATHING_FREQ) * HOLO_BREATHING_AMP;
     holoFighter.rotation.y = Math.sin(t * HOLO_SWAY_FREQ) * HOLO_SWAY_AMP;
 
-    const p = dustGeom.attributes.position.array;
-    for (let i = 0; i < CR_DUST_COUNT; i++) {
-      p[i * 3 + 1] += CR_DUST_DRIFT;
-      if (p[i * 3 + 1] > CR_DUST_Y_CEIL) p[i * 3 + 1] = CR_DUST_Y_BASE;
-    }
-    dustGeom.attributes.position.needsUpdate = true;
+    dust.tick();
   }
 
   function dispose() {
@@ -260,10 +239,10 @@ export function buildCreateScene(THREE, aspect) {
     // handles it via `if (mat.map)`, but kept explicit since concrete is
     // a procedurally generated canvas that can drift off the mesh path.
     if (floorTex && floorTex.dispose) floorTex.dispose();
-    // Dust geometry/material — already disposed by traverse (Points has
-    // both), listed here so future edits to tick/materialize can't leak.
-    if (dustGeom && dustGeom.dispose) dustGeom.dispose();
-    if (dust && dust.material && dust.material.dispose) dust.material.dispose();
+    // Dust geom+material are disposed by scene.traverse above (dust.group
+    // is a THREE.Points → traverse hits both). Removed the explicit extras
+    // here when migrating to createDustField in Sub-Epic 5A Step 6 —
+    // matches the traverse-only pattern used by Training/MM.
   }
 
   return {
