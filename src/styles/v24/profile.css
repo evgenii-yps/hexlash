@@ -1,0 +1,511 @@
+/* v2 Migration — Profile HUD styles.
+   Scoped to .app-v2 (parity with training.css / matchmaking.css / create.css).
+   1-to-1 port of prototype 1667-2105:
+     1667-1819  Friends card (.friends-card, .fc-*) — used by Step 8.
+     1820-2105  Profile layout + Identity/Stats/Achievements/Settings + mobile.
+   Prototype's `body.is-profile .profile-grid` override (1823-1826) is merged
+   into the base `.profile-grid` rule — v2 doesn't toggle body classes, so the
+   Profile HUD is the only consumer and uses the 3-row template directly. */
+
+/* ===== BACK BUTTON (prototype 1830-1847) ===== */
+.app-v2 .profile-back {
+  position: fixed;
+  top: 14px; left: 14px;
+  background: var(--bg-panel);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  padding: 8px 14px 8px 10px;
+  color: var(--text-mid);
+  cursor: pointer;
+  pointer-events: auto;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  transition: all 0.15s ease;
+  z-index: 60;
+}
+.app-v2 .profile-back:hover {
+  color: #fff;
+  border-color: rgba(255, 6, 111, 0.4);
+  background: rgba(255, 6, 111, 0.08);
+}
+
+/* ===== TITLE (prototype 1850-1863) ===== */
+.app-v2 .profile-title {
+  position: fixed;
+  top: 14px; left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  pointer-events: none;
+  z-index: 60;
+}
+.app-v2 .profile-title .pt-kicker {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 4px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+.app-v2 .profile-title .pt-name {
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: 4px;
+  color: #fff;
+}
+
+/* ===== GRID (prototype 1865-1876 + 1823-1826) =====
+   3-row template baked in: Identity | Performance, Friends spans, Settings
+   spans. Prototype's body-class override is flattened here since v2 doesn't
+   toggle body classes. */
+.app-v2 .profile-grid {
+  position: fixed;
+  top: 70px;
+  left: 14px;
+  right: 14px;
+  bottom: 14px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1.2fr) auto;
+  gap: 12px;
+  pointer-events: auto;
+  z-index: 55;
+}
+
+/* ===== CARD (prototype 1878-1893) ===== */
+.app-v2 .profile-card {
+  background: var(--bg-panel);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 16px 18px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  overflow-y: auto;
+}
+.app-v2 .profile-card::-webkit-scrollbar { width: 4px; }
+.app-v2 .profile-card::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.12); }
+
+.app-v2 .profile-card-title {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+/* ===== IDENTITY CARD (prototype 1895-1943) ===== */
+.app-v2 .id-row {
+  display: flex; gap: 12px; align-items: center;
+  margin-bottom: 14px;
+}
+.app-v2 .id-avatar {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background: rgba(255, 6, 111, 0.12);
+  border: 1px solid rgba(255, 6, 111, 0.4);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: 1px;
+  color: var(--hex-primary);
+  flex-shrink: 0;
+}
+.app-v2 .id-info { flex: 1; min-width: 0; }
+.app-v2 .id-handle {
+  font-family: var(--font-display);
+  font-size: 18px;
+  letter-spacing: 2px;
+  line-height: 1;
+  color: #fff;
+}
+.app-v2 .id-meta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: var(--text-mid);
+  margin-top: 6px;
+}
+.app-v2 .id-fields {
+  display: flex; flex-direction: column; gap: 8px;
+  margin-top: 10px;
+}
+.app-v2 .id-field {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 4px;
+}
+.app-v2 .id-field .ifk {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+.app-v2 .id-field .ifv {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #fff;
+  max-width: 60%;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.app-v2 .id-field .ifv.wallet { color: var(--hex-primary); cursor: pointer; }
+.app-v2 .id-field .ifv.wallet:hover { text-decoration: underline; }
+
+/* ===== PERFORMANCE CARD — stats grid (prototype 1945-1966) ===== */
+.app-v2 .stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.app-v2 .stat-cell {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 4px;
+  padding: 10px 8px;
+  text-align: center;
+}
+.app-v2 .stat-cell .sc-val {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  color: #fff;
+  font-weight: 500;
+}
+.app-v2 .stat-cell .sc-label {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  margin-top: 3px;
+}
+
+/* ===== PERFORMANCE CARD — achievements (prototype 1968-1998) ===== */
+.app-v2 .ach-title {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  margin: 10px 0 8px;
+}
+.app-v2 .ach-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+.app-v2 .ach-item {
+  aspect-ratio: 1;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  color: var(--text-dim);
+  cursor: default;
+  transition: all 0.15s ease;
+}
+.app-v2 .ach-item.unlocked {
+  background: rgba(255, 6, 111, 0.08);
+  border-color: rgba(255, 6, 111, 0.4);
+  color: var(--hex-primary);
+}
+.app-v2 .ach-item.unlocked:hover {
+  box-shadow: 0 0 12px rgba(255, 6, 111, 0.2);
+}
+
+/* ===== FRIENDS CARD (prototype 1667-1819) =====
+   Spans both columns in row 2 of the grid. Scrollable list body. */
+.app-v2 .friends-card {
+  grid-column: 1 / -1;
+  grid-row: 2 / 3;
+  display: flex; flex-direction: column;
+  min-height: 0;
+}
+.app-v2 .fc-head {
+  display: flex; gap: 10px;
+  margin-bottom: 10px;
+  flex-shrink: 0;
+}
+.app-v2 .fc-search {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  padding: 7px 10px;
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  outline: none;
+}
+.app-v2 .fc-search:focus {
+  border-color: var(--hex-primary);
+  box-shadow: 0 0 0 2px rgba(255, 6, 111, 0.12);
+}
+.app-v2 .fc-add-btn {
+  background: transparent;
+  border: 1px solid var(--hex-primary);
+  border-radius: 4px;
+  color: #fff;
+  padding: 7px 14px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+.app-v2 .fc-add-btn:hover {
+  background: rgba(255, 6, 111, 0.12);
+}
+.app-v2 .fc-tabs {
+  display: flex; gap: 4px;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+}
+.app-v2 .fc-tab {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+  color: var(--text-dim);
+  padding: 4px 10px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+.app-v2 .fc-tab:hover { color: var(--text-mid); }
+.app-v2 .fc-tab.active {
+  background: rgba(255, 6, 111, 0.12);
+  border-color: var(--hex-primary);
+  color: #fff;
+}
+.app-v2 .fc-tab .fc-tab-count {
+  color: var(--hex-primary);
+  margin-left: 4px;
+}
+.app-v2 .fc-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex; flex-direction: column; gap: 4px;
+  padding-right: 2px;
+}
+.app-v2 .fc-list::-webkit-scrollbar { width: 4px; }
+.app-v2 .fc-list::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.12); }
+
+.app-v2 .fc-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  transition: background 0.12s ease;
+}
+.app-v2 .fc-row:hover { background: rgba(255, 255, 255, 0.04); }
+.app-v2 .fc-avatar {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display);
+  font-size: 11px;
+  color: #fff;
+  flex-shrink: 0;
+  position: relative;
+}
+.app-v2 .fc-status-dot {
+  position: absolute;
+  bottom: -1px; right: -1px;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid var(--bg-deep);
+}
+.app-v2 .fc-status-dot.online   { background: #2ee07f; box-shadow: 0 0 6px rgba(46, 224, 127, 0.6); }
+.app-v2 .fc-status-dot.in-fight { background: var(--hex-primary); box-shadow: 0 0 6px rgba(255, 6, 111, 0.6); }
+.app-v2 .fc-status-dot.offline  { background: #555; }
+.app-v2 .fc-info { flex: 1; min-width: 0; }
+.app-v2 .fc-handle {
+  font-family: var(--font-display);
+  font-size: 12px;
+  letter-spacing: 1px;
+  line-height: 1.2;
+  color: #fff;
+}
+.app-v2 .fc-meta {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+.app-v2 .fc-meta .fcm-elo { color: #FFD262; }
+.app-v2 .fc-meta .fcm-status.online   { color: #2ee07f; }
+.app-v2 .fc-meta .fcm-status.in-fight { color: var(--hex-primary); }
+.app-v2 .fc-meta .fcm-status.offline  { color: var(--text-dim); }
+.app-v2 .fc-actions { display: flex; gap: 4px; flex-shrink: 0; }
+.app-v2 .fc-action-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+  color: var(--text-mid);
+  padding: 4px 8px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+.app-v2 .fc-action-btn:hover { color: #fff; border-color: rgba(255, 255, 255, 0.3); }
+.app-v2 .fc-action-btn.primary {
+  border-color: var(--hex-primary);
+  color: #fff;
+}
+.app-v2 .fc-action-btn.primary:hover {
+  background: rgba(255, 6, 111, 0.1);
+}
+.app-v2 .fc-action-btn.danger:hover {
+  border-color: rgba(255, 68, 68, 0.5);
+  color: #ff8888;
+}
+.app-v2 .fc-empty {
+  padding: 30px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+/* ===== SETTINGS CARD (prototype 2000-2091) =====
+   Bottom row, spans both columns. 4 blocks: Language | Sound | Build | Logout. */
+.app-v2 .settings-card {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 12px;
+  align-items: center;
+}
+.app-v2 .settings-block {
+  display: flex; flex-direction: column; gap: 4px;
+}
+.app-v2 .settings-block .sb-label {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+.app-v2 .lang-picker {
+  display: flex; gap: 4px; flex-wrap: wrap;
+}
+.app-v2 .lang-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 3px;
+  color: var(--text-mid);
+  padding: 4px 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+.app-v2 .lang-btn:hover {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+.app-v2 .lang-btn.active {
+  background: rgba(255, 6, 111, 0.15);
+  border-color: var(--hex-primary);
+  color: #fff;
+}
+.app-v2 .toggle-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+.app-v2 .toggle-row:hover { background: rgba(255, 255, 255, 0.05); }
+.app-v2 .toggle-row .tr-label {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--text-mid);
+  text-transform: uppercase;
+}
+.app-v2 .toggle-pip {
+  width: 28px; height: 14px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 7px;
+  position: relative;
+  transition: background 0.15s ease;
+  flex-shrink: 0;
+}
+.app-v2 .toggle-pip::after {
+  content: ''; position: absolute;
+  width: 10px; height: 10px;
+  background: #fff;
+  border-radius: 50%;
+  top: 2px; left: 2px;
+  transition: left 0.15s ease;
+}
+.app-v2 .toggle-row.on .toggle-pip { background: var(--hex-primary); }
+.app-v2 .toggle-row.on .toggle-pip::after { left: 16px; }
+
+.app-v2 .version-text {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+}
+.app-v2 .logout-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 68, 68, 0.4);
+  border-radius: 3px;
+  color: #ff4444;
+  padding: 8px 12px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+.app-v2 .logout-btn:hover {
+  background: rgba(255, 68, 68, 0.1);
+  color: #ff6666;
+}
+
+/* ===== MOBILE STACK (prototype 2093-2105) =====
+   Single column at narrow widths; Settings card also stacks its 4 blocks. */
+@media (max-width: 720px) {
+  .app-v2 .profile-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto auto;
+    bottom: 14px;
+    overflow-y: auto;
+  }
+  .app-v2 .friends-card {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
+  .app-v2 .settings-card {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}

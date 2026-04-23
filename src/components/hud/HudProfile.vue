@@ -1,14 +1,39 @@
-<!-- Epic 5 — Sub-Epic 5B Step 1.
-     Profile HUD stub — back button + placeholder title only. Step 5 adds the
-     .profile-grid with 4 card placeholders; Steps 6-10 fill in Identity /
-     Performance / Friends / Settings + wallet modal wiring.
+<!-- Epic 5 — Sub-Epic 5B Step 5.
+     Profile HUD skeleton — back + title + 4 .profile-card stubs (Identity /
+     Performance / Friends / Settings) with titles only. Step 1 inline styles
+     have moved to src/styles/v24/profile.css (scoped .app-v2), parity with
+     training.css / matchmaking.css / create.css.
+     Card content fills in Steps 6-9.
      Source: prototype hexlash_v24.html lines 4595-4715. -->
 <template>
   <div class="hud-profile">
     <button class="profile-back" @click="$emit('back')">&larr; Back</button>
+
     <div class="profile-title">
       <div class="pt-kicker">Player</div>
       <div class="pt-name">PROFILE</div>
+    </div>
+
+    <div class="profile-grid">
+      <!-- IDENTITY — Step 6 -->
+      <div class="profile-card">
+        <div class="profile-card-title">Identity</div>
+      </div>
+
+      <!-- PERFORMANCE — Step 7 -->
+      <div class="profile-card">
+        <div class="profile-card-title">Performance</div>
+      </div>
+
+      <!-- FRIENDS — Step 8 -->
+      <div class="profile-card friends-card">
+        <div class="profile-card-title">Friends</div>
+      </div>
+
+      <!-- SETTINGS — Step 9 -->
+      <div class="profile-card settings-card">
+        <div class="profile-card-title">Settings</div>
+      </div>
     </div>
   </div>
 </template>
@@ -18,6 +43,9 @@ defineEmits(['back']);
 </script>
 
 <style scoped>
+/* Wrapper-only positioning. All .profile-* / .id-* / .stat-* / .ach-* /
+   .fc-* / .settings-* / .lang-* / .toggle-* / .logout-* styles live in
+   src/styles/v24/profile.css (scoped to .app-v2). */
 .hud-profile {
   position: absolute;
   inset: 0;
@@ -25,52 +53,5 @@ defineEmits(['back']);
 }
 .hud-profile > * {
   pointer-events: auto;
-}
-
-/* Temporary scaffold styling — Step 5 moves these into
-   src/styles/v24/profile.css as scoped .app-v2 rules per the prototype. */
-.profile-back {
-  position: absolute;
-  top: 14px;
-  left: 14px;
-  background: rgba(14, 16, 28, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 6px;
-  padding: 8px 14px 8px 10px;
-  color: var(--text-mid, #a8a8b3);
-  cursor: pointer;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  font-family: var(--font-mono, monospace);
-  font-size: 11px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  transition: all 0.15s ease;
-}
-.profile-back:hover {
-  color: #fff;
-  border-color: rgba(255, 6, 111, 0.4);
-  background: rgba(255, 6, 111, 0.08);
-}
-.profile-title {
-  position: absolute;
-  top: 14px;
-  left: 50%;
-  transform: translateX(-50%);
-  text-align: center;
-}
-.pt-kicker {
-  font-family: var(--font-mono, monospace);
-  font-size: 9px;
-  letter-spacing: 4px;
-  color: var(--text-dim, #6e6e7a);
-  text-transform: uppercase;
-  margin-bottom: 3px;
-}
-.pt-name {
-  font-family: var(--font-display, 'Archivo Black', sans-serif);
-  font-size: 22px;
-  letter-spacing: 4px;
-  color: #fff;
 }
 </style>
