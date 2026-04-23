@@ -225,9 +225,15 @@ const initials = computed(() => {
   return login.slice(0, 2).toUpperCase() || '??';
 });
 const joinedText = computed(() => {
-  const d = userData.value?.createdAt;
-  if (!d) return '—';
-  // UserModel constructor already wraps createdAt as new Date(string).
+  const raw = userData.value?.createdAt;
+  if (!raw) return '—';
+  // masterModel.fromJSON assigns userData directly without going through
+  // UserModel, so createdAt arrives as an ISO string from /me — NOT a Date
+  // instance (Step 6's assumption was wrong). String.toLocaleString ignores
+  // locale options and returns the raw string. Wrap explicitly + NaN guard.
+  // Sub-Epic 5B hot-fix 10.1.
+  const d = raw instanceof Date ? raw : new Date(raw);
+  if (isNaN(d.getTime())) return '—';
   return d.toLocaleString('en-US', { month: 'short', year: 'numeric' });
 });
 const metaText = computed(() => {

@@ -4,7 +4,7 @@
      Source: prototype 6946-6998 (openModal dispatch). -->
 <template>
   <div class="hud-pit">
-    <TopBar @avatar-click="openPhModal('avatar')" />
+    <TopBar @avatar-click="onAvatarClick" />
     <WorldHint
       :text="hover.text"
       :x="hover.x"
@@ -23,6 +23,7 @@
 
 <script setup>
 import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 import TopBar from './common/TopBar.vue';
 import WorldHint from './common/WorldHint.vue';
 import PhModal from './common/PhModal.vue';
@@ -84,6 +85,16 @@ function openPhModal(id) {
 
 function closeModal() {
   modalOpen.value = false;
+}
+
+// Avatar-btn is a DOM HUD element (not a 3D-raycastable target), so its click
+// never reaches PitViewV2's useClickState watcher. Step 1 removed
+// MODAL_CONTENT.avatar but the TopBar binding still pointed at openPhModal,
+// which no-op'd on the missing entry — click was silently swallowed. Route
+// directly from here instead. (Sub-Epic 5B hot-fix 10.1.)
+const router = useRouter();
+function onAvatarClick() {
+  router.push('/v2/profile');
 }
 
 defineExpose({ openPhModal });
