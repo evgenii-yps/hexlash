@@ -398,6 +398,26 @@
   border-color: rgba(255, 68, 68, 0.5);
   color: #ff8888;
 }
+.app-v2 .fc-action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.app-v2 .fc-action-btn:disabled:hover {
+  color: var(--text-mid);
+  border-color: rgba(255, 255, 255, 0.15);
+  background: transparent;
+}
+/* Ephemeral "+ Add" stub notice — Step 8, replaced by full search in 5G. */
+.app-v2 .fc-add-notice {
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  background: rgba(255, 6, 111, 0.06);
+  border: 1px solid rgba(255, 6, 111, 0.25);
+  color: #fff;
+  text-transform: none;
+  letter-spacing: 0.5px;
+  font-size: 10px;
+}
 .app-v2 .fc-empty {
   padding: 30px;
   text-align: center;

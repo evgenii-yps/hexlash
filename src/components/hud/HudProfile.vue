@@ -1,8 +1,10 @@
-<!-- Epic 5 — Sub-Epic 5B Step 7.
-     Step 6 filled Identity card. Step 7 fills Performance card — 6-cell
-     stats-grid + 16-tile achievement grid with 3-letter abbreviations.
+<!-- Epic 5 — Sub-Epic 5B Step 8.
+     Step 6: Identity. Step 7: Performance. Step 8: Friends card — full
+     integration with friends/* Vuex + WebSocket challenges.
+     Search filters across own friends list (case-insensitive handle match).
+     Add btn = stub until Sub-Epic 5G player-search UI.
      Styles live in src/styles/v24/profile.css (scoped .app-v2).
-     Source: prototype hexlash_v24.html lines 4604-4663. -->
+     Source: prototype hexlash_v24.html lines 4666-4679 + 12839-12924. -->
 <template>
   <div class="hud-profile">
     <button class="profile-back" @click="$emit('back')">&larr; Back</button>
@@ -92,9 +94,65 @@
         </div>
       </div>
 
-      <!-- FRIENDS — Step 8 -->
+      <!-- FRIENDS -->
       <div class="profile-card friends-card">
         <div class="profile-card-title">Friends</div>
+        <div class="fc-head">
+          <input
+            v-model="friendsSearch"
+            class="fc-search"
+            type="text"
+            placeholder="Search friends..."
+          />
+          <button class="fc-add-btn" @click="onAddClick">+ Add</button>
+        </div>
+        <div v-if="showAddNotice" class="fc-empty fc-add-notice">
+          Full player search lands in Sub-Epic 5G.
+        </div>
+        <div class="fc-tabs">
+          <button
+            v-for="tab in friendsTabs"
+            :key="tab.id"
+            class="fc-tab"
+            :class="{ active: activeTab === tab.id }"
+            @click="activeTab = tab.id"
+          >{{ tab.label }} <span class="fc-tab-count">{{ tab.count }}</span></button>
+        </div>
+        <div class="fc-list">
+          <div v-if="filteredFriends.length === 0" class="fc-empty">
+            {{ friendsEmptyMsg }}
+          </div>
+          <div v-else v-for="f in filteredFriends" :key="f.id || f.requestId" class="fc-row">
+            <div class="fc-avatar">
+              {{ friendInitials(f) }}
+              <span class="fc-status-dot" :class="friendStatusClass(f)"></span>
+            </div>
+            <div class="fc-info">
+              <div class="fc-handle">{{ friendName(f) }}</div>
+              <div class="fc-meta">
+                <span class="fcm-elo">ELO {{ f.rating || 1000 }}</span>
+                <template v-if="activeTab !== 'pending'">
+                  <span> · </span>
+                  <span class="fcm-status" :class="friendStatusClass(f)">{{ friendStatusLabel(f) }}</span>
+                </template>
+              </div>
+            </div>
+            <div class="fc-actions">
+              <template v-if="activeTab === 'pending'">
+                <button class="fc-action-btn primary" @click="onAccept(f)">Accept</button>
+                <button class="fc-action-btn danger" @click="onDecline(f)">Decline</button>
+              </template>
+              <template v-else>
+                <button
+                  class="fc-action-btn primary"
+                  :disabled="!canChallenge(f)"
+                  @click="onChallenge(f)"
+                >Challenge</button>
+                <button class="fc-action-btn danger" @click="onRemove(f)">Remove</button>
+              </template>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- SETTINGS — Step 9 -->
@@ -106,7 +164,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue';
+import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue';
 import store from '@/core/state/store.js';
 import BeltBadge from '@/components/ui/BeltBadge.vue';
 import { getBeltDisplay } from '@/utils/beltDisplay.js';
@@ -271,6 +329,144 @@ const achievementTiles = computed(() =>
   })),
 );
 const unlockedCount = computed(() => unlockedTypes.value.size);
+
+// --- Friends ---
+// Full reuse of `friends/*` Vuex module (same actions the legacy FriendsView
+// dispatches). WS challenge goes through webSocket/sendMessage — infrastructure
+// is live in AppV2 context because App.vue (root) auto-connects WS on auth.
+//
+// Known gaps deferred to Sub-Epic 5D/5G:
+//   - ChallengeNotification widget is hidden on /v2/* (App.vue v-if), so v2
+//     users don't see incoming challenge toasts. Step 8 only sends.
+//   - challenge_start server event navigates to legacy /fight in the WS
+//     handler — a v2 sender lands on legacy Fight view. Cross-wiring for
+//     /v2/fight is a separate PvP-integration sub-epic.
+const friendsList = computed(() => store.getters['friends/getFriends'] || []);
+const incomingRequests = computed(() => store.getters['friends/getIncomingRequests'] || []);
+const onlineFriendsCount = computed(
+  () => store.getters['friends/onlineFriendsCount'] || 0,
+);
+
+const friendsSearch = ref('');
+const activeTab = ref('all');
+const showAddNotice = ref(false);
+let addNoticeTimer = null;
+
+const friendsTabs = computed(() => [
+  { id: 'all',     label: 'All',     count: friendsList.value.length },
+  { id: 'online',  label: 'Online',  count: onlineFriendsCount.value },
+  { id: 'pending', label: 'Pending', count: incomingRequests.value.length },
+]);
+
+const filteredFriends = computed(() => {
+  const q = friendsSearch.value.trim().toLowerCase();
+  let pool = [];
+  if (activeTab.value === 'pending') {
+    pool = incomingRequests.value;
+  } else if (activeTab.value === 'online') {
+    // Prototype collapses online + in_fight into the "Online" tab (12854).
+    pool = friendsList.value.filter(
+      (f) => f.status === 'online' || f.status === 'in_fight',
+    );
+  } else {
+    // Sort: online → in_fight → offline (legacy FriendsView parity).
+    const order = { online: 0, in_fight: 1, offline: 2 };
+    pool = [...friendsList.value].sort(
+      (a, b) => (order[a.status] ?? 3) - (order[b.status] ?? 3),
+    );
+  }
+  if (!q) return pool;
+  return pool.filter((f) => {
+    const name = (f.username || f.login || '').toLowerCase();
+    return name.includes(q);
+  });
+});
+
+const friendsEmptyMsg = computed(() => {
+  if (friendsSearch.value.trim()) return 'No matches';
+  if (activeTab.value === 'pending') return 'No pending requests';
+  if (activeTab.value === 'online') return 'No friends online';
+  return 'No friends yet';
+});
+
+function friendName(f) {
+  return f?.username || f?.login || 'Player';
+}
+function friendInitials(f) {
+  const name = friendName(f);
+  return name.replace(/[^a-zA-Z0-9]/g, '').slice(0, 2).toUpperCase() || '??';
+}
+function friendStatusClass(f) {
+  // Backend uses 'in_fight' (underscore); prototype CSS uses 'in-fight' (dash).
+  if (f?.status === 'in_fight') return 'in-fight';
+  return f?.status || 'offline';
+}
+function friendStatusLabel(f) {
+  if (f?.status === 'in_fight') return 'In Fight';
+  if (f?.status === 'online')   return 'Online';
+  return 'Offline';
+}
+
+// --- Friend actions ---
+// sendChallenge guards internally: refuses offline targets and existing
+// outgoing. hasPendingChallenge getter reflects the 10s WS cooldown so the
+// button stays disabled until expiry or challenge_start arrives.
+const hasPendingChallenge = (id) => store.getters['friends/hasPendingChallenge'](id);
+function canChallenge(f) {
+  return f?.status === 'online' && !hasPendingChallenge(f.id);
+}
+function onChallenge(f) {
+  if (!canChallenge(f)) return;
+  store.dispatch('friends/sendChallenge', f);
+}
+function onAccept(req) {
+  store.dispatch('friends/acceptFriendRequest', req);
+}
+function onDecline(req) {
+  store.dispatch('friends/declineFriendRequest', req.id);
+}
+function onRemove(f) {
+  // Window.confirm is sufficient for v2 parity — legacy FriendsView uses
+  // no confirm at all, so adding one here is already stricter. Custom modal
+  // can land in 5G polish alongside full search UI.
+  const name = friendName(f);
+  if (!confirm(`Remove ${name} from friends?`)) return;
+  store.dispatch('friends/removeFriend', f.id);
+}
+function onAddClick() {
+  // Stub — ephemeral inline notice, auto-dismiss after 3s. Full search UI
+  // deferred to Sub-Epic 5G.
+  showAddNotice.value = true;
+  if (addNoticeTimer) clearTimeout(addNoticeTimer);
+  addNoticeTimer = setTimeout(() => {
+    showAddNotice.value = false;
+    addNoticeTimer = null;
+  }, 3000);
+}
+
+// --- Lifecycle ---
+// init() fetches friends + both request directions in parallel. The refresh
+// poll mirrors legacy FriendsView (1s there) but eased to 5s: WS pushes
+// friend_status in realtime, so the poll is mostly a safety net for missed
+// events + catching newly-accepted requests.
+let friendsRefreshTimer = null;
+onMounted(() => {
+  store.dispatch('friends/init');
+  friendsRefreshTimer = setInterval(() => {
+    store.dispatch('friends/loadFriends');
+    store.dispatch('friends/loadIncomingRequests');
+  }, 5000);
+});
+onBeforeUnmount(() => {
+  if (friendsRefreshTimer) {
+    clearInterval(friendsRefreshTimer);
+    friendsRefreshTimer = null;
+  }
+  if (addNoticeTimer) {
+    clearTimeout(addNoticeTimer);
+    addNoticeTimer = null;
+  }
+});
 </script>
 
 <style scoped>
