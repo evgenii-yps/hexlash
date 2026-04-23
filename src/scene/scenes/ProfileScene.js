@@ -1,12 +1,12 @@
-// Epic 5 — Sub-Epic 5B Step 2.
-// Profile scene — Step 1 added camera, Step 2 adds fog + octagonal room via
-// the 5A shared helper. Steps 3-4 fill in lighting/shaft/dust and the empty
-// podium.
-// Source: prototype hexlash_v24.html lines 9335-9379 (sceneProfile fog +
-// floor + walls).
+// Epic 5 — Sub-Epic 5B Step 3.
+// Profile scene — Step 1 camera, Step 2 fog + octagonal room, Step 3 adds
+// lighting (ambient/hemi/key/rim) + pink volumetric shaft + pink floor disc
+// + dust field. Step 4 adds the empty podium.
+// Source: prototype hexlash_v24.html lines 9335-9458 (sceneProfile).
 
 import { makeConcreteTexture } from '../materials/concrete.js';
 import { buildOctagonalRoom } from '../objects/octagonalRoom.js';
+import { createDustField } from '../objects/dustField.js';
 
 const PR_ROOM_R = 14;
 const PR_ROOM_H = 8;
@@ -42,8 +42,86 @@ export function buildProfileScene(THREE, aspect) {
     fogDensity: 0.045,
   });
 
+  // --- LIGHTING (prototype 9427-9442) ---
+  scene.add(new THREE.AmbientLight(0x1a1a28, 0.45));
+  scene.add(new THREE.HemisphereLight(0x2a2638, 0x0a0a12, 0.4));
+
+  // Warm key spot overhead, casts shadow onto the podium (Step 4).
+  // renderer.shadowMap is enabled in CanvasLayer (Epic 2 Step 3 hot-fix).
+  const key = new THREE.SpotLight(0xfff0e8, 1.6, 14, Math.PI * 0.28, 0.55, 1.4);
+  key.position.set(0, 7.5, 0);
+  key.target.position.set(0, 0.5, 0);
+  key.castShadow = true;
+  key.shadow.mapSize.width = 1024;
+  key.shadow.mapSize.height = 1024;
+  scene.add(key);
+  scene.add(key.target);
+
+  // Pink rim from the left — picks out the edge of the podium + shaft.
+  const rim = new THREE.SpotLight(0xff066f, 0.5, 14, Math.PI * 0.4, 0.8, 1.6);
+  rim.position.set(-7, 3, 0);
+  rim.target.position.set(0, 1, 0);
+  scene.add(rim);
+  scene.add(rim.target);
+
+  // --- PINK VOLUMETRIC SHAFT (prototype 9393-9403) ---
+  // Fake volumetrics via an additive-blended open cone over the podium.
+  // Not a real light — purely decorative, ACES tone-maps with everything
+  // else (no `toneMapped: false` override).
+  const shaft = new THREE.Mesh(
+    new THREE.ConeGeometry(1.4, 7, 24, 1, true),
+    new THREE.MeshBasicMaterial({
+      color: 0xff066f, transparent: true, opacity: 0.06,
+      side: THREE.DoubleSide, depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    })
+  );
+  shaft.position.set(0, 3.5, 0);
+  scene.add(shaft);
+
+  // --- PINK FLOOR DISC under the podium (prototype 9405-9425) ---
+  // CanvasTexture radial gradient → PlaneGeometry flat on the floor.
+  // This is a separate mesh from the podium itself (Step 4) — sits at
+  // y=0.005 so it doesn't z-fight with the main floor.
+  const discCv = document.createElement('canvas');
+  discCv.width = discCv.height = 256;
+  const discCtx = discCv.getContext('2d');
+  const discGrad = discCtx.createRadialGradient(128, 128, 5, 128, 128, 128);
+  discGrad.addColorStop(0, 'rgba(255,6,111,0.6)');
+  discGrad.addColorStop(0.5, 'rgba(255,6,111,0.2)');
+  discGrad.addColorStop(1, 'rgba(255,6,111,0)');
+  discCtx.fillStyle = discGrad;
+  discCtx.fillRect(0, 0, 256, 256);
+  const disc = new THREE.Mesh(
+    new THREE.PlaneGeometry(2.6, 2.6),
+    new THREE.MeshBasicMaterial({
+      map: new THREE.CanvasTexture(discCv),
+      transparent: true, depthWrite: false,
+      blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+    })
+  );
+  disc.rotation.x = -Math.PI / 2;
+  disc.position.y = 0.005;
+  scene.add(disc);
+
+  // --- DUST via shared 5A helper (prototype 9444-9458 + drift 9547) ---
+  // 70 warm particles, symmetric 10×10 spread, drift 0.002/frame upward,
+  // opacity 0.4 overrides default 0.45. Matches prototype 1-to-1.
+  // 4th consumer of createDustField (Training/Matchmaking/Create/Profile).
+  const dust = createDustField(THREE, {
+    count: 70,
+    xRadius: 5,
+    yMax: 4,
+    driftSpeed: 0.002,
+    color: 0xffd9c8,
+    opacity: 0.4,
+  });
+  scene.add(dust.group);
+
   function tick(/* t */) {
-    // no-op until Step 3 adds dust drift.
+    // User-confirmed: no camera orbit or breath-drift — prototype has a
+    // slow auto-orbit (9537-9542), v2 keeps it static for readable HUD.
+    dust.tick();
   }
 
   function dispose() {
