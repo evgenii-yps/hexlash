@@ -1,9 +1,8 @@
-<!-- Epic 5 — Sub-Epic 5B Step 6.
-     Step 5 added the 4-card grid skeleton. Step 6 fills in Identity card —
-     avatar-initials, handle, meta, and 4 id-fields (Wallet / Belt / Clan /
-     Email). Wallet click-to-copy only; full ConnectWallet modal arrives in
-     Step 10. Styles live in src/styles/v24/profile.css (scoped .app-v2).
-     Source: prototype hexlash_v24.html lines 4604-4632. -->
+<!-- Epic 5 — Sub-Epic 5B Step 7.
+     Step 6 filled Identity card. Step 7 fills Performance card — 6-cell
+     stats-grid + 16-tile achievement grid with 3-letter abbreviations.
+     Styles live in src/styles/v24/profile.css (scoped .app-v2).
+     Source: prototype hexlash_v24.html lines 4604-4663. -->
 <template>
   <div class="hud-profile">
     <button class="profile-back" @click="$emit('back')">&larr; Back</button>
@@ -52,9 +51,45 @@
         </div>
       </div>
 
-      <!-- PERFORMANCE — Step 7 -->
+      <!-- PERFORMANCE -->
       <div class="profile-card">
         <div class="profile-card-title">Performance</div>
+        <div class="stats-grid">
+          <div class="stat-cell">
+            <div class="sc-val">{{ statFights }}</div>
+            <div class="sc-label">Fights</div>
+          </div>
+          <div class="stat-cell">
+            <div class="sc-val">{{ statWins }}</div>
+            <div class="sc-label">Wins</div>
+          </div>
+          <div class="stat-cell">
+            <div class="sc-val">{{ statWinrate }}</div>
+            <div class="sc-label">Winrate</div>
+          </div>
+          <div class="stat-cell">
+            <div class="sc-val">{{ statRating }}</div>
+            <div class="sc-label">ELO</div>
+          </div>
+          <div class="stat-cell">
+            <div class="sc-val">{{ statPeak }}</div>
+            <div class="sc-label">Peak</div>
+          </div>
+          <div class="stat-cell">
+            <div class="sc-val">{{ statStreak }}</div>
+            <div class="sc-label">Streak</div>
+          </div>
+        </div>
+        <div class="ach-title">Achievements · {{ unlockedCount }} / 16</div>
+        <div class="ach-grid">
+          <div
+            v-for="tile in achievementTiles"
+            :key="tile.type"
+            class="ach-item"
+            :class="{ unlocked: tile.unlocked }"
+            :title="tile.title"
+          >{{ tile.abbr }}</div>
+        </div>
       </div>
 
       <!-- FRIENDS — Step 8 -->
@@ -170,6 +205,72 @@ const clanText = computed(() => {
 
 // --- Email ---
 const emailText = computed(() => master.value?.email || '—');
+
+// --- Performance stats ---
+// UserModel exposes: rating, totalFights, wins, losses, draws (see schema +
+// userModel.js). Prisma User has no peakRating / winStreak fields — those
+// fall back to 0 per Step 7 instruction ("honest picture, no padding").
+//
+// Note on ELO: per CLAUDE.md "Captain in Arena", User.rating is frozen legacy
+// (no longer updated post #P1-captain-2) — belt progression moved to the
+// captain Agent. We still surface userData.rating here because Step 7 spec
+// said "Source: userData"; swapping to captain.elo is a polish deferral.
+function fmt(n) {
+  return (n ?? 0).toLocaleString('en-US');
+}
+const statFights = computed(() => fmt(userData.value?.totalFights));
+const statWins = computed(() => fmt(userData.value?.wins));
+const statWinrate = computed(() => {
+  const w = userData.value?.wins || 0;
+  const t = userData.value?.totalFights || 0;
+  if (t === 0) return '0%';
+  return Math.round((w / t) * 100) + '%';
+});
+const statRating = computed(() => fmt(userData.value?.rating));
+const statPeak = computed(() => fmt(0));   // not tracked on User
+const statStreak = computed(() => fmt(0)); // not tracked on User
+
+// --- Achievements ---
+// `allAchievements` is seeded at app init (main.js:113 → initAllAchievements).
+// `userData.achievements` holds the per-user completion records with
+// { type, isCompleted, obtainedAt }. Legacy ProfileAchievements.vue matches
+// by `type` — we do the same, 1-to-1 parity.
+//
+// The 16 tiles come from the prototype (4647-4662) with fixed visual order
+// + 3-letter abbreviations. Tile `type` matches the backend seed (CLAUDE.md).
+const ACHIEVEMENT_TILES = [
+  { type: 'NEWBIE',              abbr: 'NEW',  title: 'Newbie' },
+  { type: 'CONNECTED_FIGHTER',   abbr: 'CON',  title: 'Connected' },
+  { type: 'REGULAR_FIGHTER',     abbr: 'REG',  title: 'Regular' },
+  { type: 'BATTLE_VETERAN',      abbr: 'VET',  title: 'Veteran' },
+  { type: 'COACH',               abbr: 'COA',  title: 'Coach' },
+  { type: 'FIGHT_MASTER',        abbr: 'MST',  title: 'Master' },
+  { type: 'RECRUITER',           abbr: 'REC',  title: 'Recruiter' },
+  { type: 'PROJECT_MAYHEM',      abbr: 'MAY',  title: 'Mayhem' },
+  { type: 'MEATLOAF',            abbr: 'MTL',  title: 'Meatloaf' },
+  { type: 'TYLER',               abbr: 'TYL',  title: 'Tyler' },
+  { type: 'EXPERT',              abbr: 'EXP',  title: 'Expert' },
+  { type: 'LUCKY_ONE',           abbr: 'LCK',  title: 'Lucky' },
+  { type: 'BOB',                 abbr: 'BOB',  title: 'Bob' },
+  { type: 'PAPER_STREET',        abbr: 'PPS',  title: 'Paper Street' },
+  { type: 'MEETING_PARTICIPANT', abbr: 'MEET', title: 'Meeting' },
+  { type: 'GOLDEN_RULE',         abbr: 'GRL',  title: 'Golden Rule' },
+];
+const unlockedTypes = computed(() => {
+  const list = userData.value?.achievements || [];
+  const set = new Set();
+  for (const a of list) {
+    if (a?.isCompleted && a.type) set.add(a.type);
+  }
+  return set;
+});
+const achievementTiles = computed(() =>
+  ACHIEVEMENT_TILES.map((tile) => ({
+    ...tile,
+    unlocked: unlockedTypes.value.has(tile.type),
+  })),
+);
+const unlockedCount = computed(() => unlockedTypes.value.size);
 </script>
 
 <style scoped>
