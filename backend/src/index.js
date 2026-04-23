@@ -42,11 +42,22 @@ if (FRONTEND_URL && !allowedOrigins.includes(FRONTEND_URL)) {
   allowedOrigins.push(FRONTEND_URL);
 }
 
+// Per-commit Vercel preview URLs for this project (format:
+// testhexlash-<hash>-<team>.vercel.app). Matches production vercel alias
+// and all git/branch previews. Anchored ^https:// and \.vercel\.app$ so
+// no arbitrary host like testhexlash.evil.com or http:// variants slip
+// through. Project-specific prefix "testhexlash" prevents generic
+// *.vercel.app wildcard exposure.
+const VERCEL_PREVIEW_RE = /^https:\/\/testhexlash(-[\w-]+)?\.vercel\.app$/;
+
 const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (mobile apps, curl, etc.)
     if (!origin) return callback(null, true);
     if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    if (VERCEL_PREVIEW_RE.test(origin)) {
       return callback(null, true);
     }
     callback(new Error('Not allowed by CORS'));
