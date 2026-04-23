@@ -2407,3 +2407,132 @@ src/scene/objects/archetypeColors.js          — 26 — shared pickFighterColor
 | `/v2/create` | 3Bc + **4** | ✅ backend persist + inline error + navigation в new FD |
 
 **Следующий эпик:** Epic 5 — план в `docs/visual-migration/HANDOFF_EPIC5_CHAT_HANDOFF.md`. Карта вариантов: polish (DRY + i18n + 4 fighter variants + UX edge fixes) / missing screens (Profile / Ratings / Clan / Shop на `/v2/*`) / matchmaking backend integration.
+
+### Эпик 5 — Sub-Epic 5B — Profile (✅ COMPLETE)
+
+Завершён 2026-04-23. Первая views-миграция Эпика 5 после 5A (DRY helpers). Клик по avatar-btn в hub TopBar → `/v2/profile` с 4-card HUD (Identity / Performance / Friends / Settings) поверх минимальной ProfileScene. Визуальный паритет с прототипом 4595-4715 (HUD) + 9335-9458 (3D scene). 10 функциональных + 2 hot-fix + 3 финальных коммита.
+
+**Commit range:** `9d69473` (Step 1) → `ee977cb` (hot-fix 10.2).
+
+**Что видит пользователь:**
+- Click по avatar-btn в hub top-bar (правый верхний угол) → навигация на `/v2/profile`. Initials аватара — реальные `login.slice(0,2).toUpperCase()` из `master.userData` (hot-fix 10.2 убрал hardcoded 'YV').
+- Октагональная тёмная комната (R=14, H=8) с пустым бетонным подиумом в центре, розовой волюметрической шахтой сверху, розовым additive-glow диском у основания, 70 тёплыми пылевыми частицами. Камера статичная (0, 2.6, 8) → (0, 1.4, 0) (без auto-orbit из прототипа 9537-9542 — user-confirmed).
+- HUD: back btn + "Player / PROFILE" title + 2×3 grid 4 карточек:
+  - **Identity** (top-left): avatar-initials 64px pink circle (2 chars из login), handle, meta "Joined MMM YYYY · N fights" из userData, 4 id-fields — Wallet (click: connected → copy в clipboard + "Copied!" 1.2s feedback, disconnected → ConnectWallet modal), Belt (BeltBadge sm + "{Color} Belt" / "Hexmaster"), Clan (name из `clan/getClanById` или "No Clan" / "In Clan" fallback), Email (master.email).
+  - **Performance** (top-right): 6-cell stats-grid (Fights / Wins / Winrate% / ELO / Peak / Streak — последние два = 0 т.к. не трекаются) + "Achievements · N / 16" + 4×4 grid 16 achievement tiles с 3-letter abbrev (NEW/CON/REG/VET/COA/MST/REC/MAY/MTL/TYL/EXP/LCK/BOB/PPS/MEET/GRL), unlocked → pink-tint + pink border + hover glow.
+  - **Friends** (row 2, spans both): search по handle + "+ Add" btn (stub до 5G) + 3 tabs (All / Online / Pending с live counts). Rows: avatar-initials + status-dot (online=green / in_fight=pink / offline=gray) + handle + "ELO N · Status" + actions. Pending → Accept/Decline; All/Online → Challenge (WS `challenge_send`, 10s cooldown, disabled if offline или pending) + Remove (confirm).
+  - **Settings** (row 3, spans both): 11-lang picker (EN/RU/DE/ES/FR/PT/AR/HI/JA/KO/ZH) → `master/setLanguage` dispatch (4-step Vuex action per hot-fix 10.2); Sound toggle ↔ `punch/isMuted` commit; Build version через `__APP_VERSION__` / `__IS_PROD__`; Logout → `master/logout` (auto-disconnect WS + auth clear + router.push).
+- Wallet modal: disconnected click → lazy-load ConnectWallet (8.7kb shared chunk, dynamic import) → `openModal()` via defineExpose → Teleport backdrop + connector list. После успешного connect → `useAccount(address)` watch → `master/updateMaster({ walletAddress })` → Wallet id-field flip'ается на short-address (clickable для copy).
+- Mobile (`@media max-width: 720px`): 1-column stack, Settings blocks тоже стекаются.
+- Back / Esc → `/v2`.
+
+**Дерево новых файлов (4):**
+
+```
+src/views-v2/ProfileView.vue                     —  82 строки — orchestrator: lazy registerScene('profile') + activateScene + Back/Esc + resize. Teardown order: activateScene('pit') → unregisterScene → dispose (3Ba/3Bb/3Bc parity).
+src/scene/scenes/ProfileScene.js                 — 164  — минимальная сцена: buildOctagonalRoom (5A helper, R=14 H=8 fogDensity=0.045) + lighting (Ambient + Hemi + warm key spot с castShadow + pink rim spot) + pink shaft (ConeGeometry 1.4×7 additive) + canvas-radial-gradient floor disc (PlaneGeometry 2.6×2.6 additive) + concrete podium (CylinderGeometry 1.0/1.1/0.20/32 castShadow) + createDustField (5A helper, 70 warm particles).
+src/components/hud/HudProfile.vue                — 615 — 4-card HUD: Identity / Performance / Friends (с полной WS challenge интеграцией) / Settings. Бóльшая часть логики живёт здесь (store bindings, friends polling, lazy ConnectWallet mount, wagmi watch). **Candidate для splitting** в 5G polish (над soft-300 limit).
+src/styles/v24/profile.css                       — 552 — 1-to-1 port прототипа 1667-2105, scoped `.app-v2`. 80+ правил: layout / Identity / Stats / Achievements / Friends (включая 1667-1819 диапазон для `.fc-*`) / Settings / mobile-stack. Hot-fix добавил `.fc-action-btn:disabled` + `.fc-add-notice` + `.ifv.wallet.disabled` + `.ifv.belt-value`.
+```
+
+**Изменены (3):**
+
+- `src/router/index.js` — route `V2Profile` (`/v2/profile`) добавлен в `v2Routes.children`.
+- `src/views-v2/PitViewV2.vue` — `click.id === 'avatar'` → `/v2/profile` (defensive, реально avatar-click через TopBar→HudPit не через useClickState).
+- `src/components/hud/HudPit.vue` — (a) Step 1 убрал `MODAL_CONTENT.avatar`, (b) hot-fix 10.1 переключил `<TopBar @avatar-click>` с `openPhModal('avatar')` (no-op после удаления контента) на прямой `router.push('/v2/profile')`.
+- `src/components/hud/common/TopBar.vue` — hot-fix 10.2 заменил hardcoded `<span>YV</span>` на реактивный `{{ avatarInitials }}` из `master.userData.login`.
+- `src/components/fragments/profile/wallet/ConnectWallet.vue` — **+1 line** `defineExpose({ openModal })`. Additive augmentation — legacy ProfileWallet.vue consumers не затронуты (они не используют ref-доступ).
+- `src/styles/hexlash-v24.css` — `@import './v24/profile.css'` после create.css.
+
+**Ключевые паттерны:**
+
+- **Lazy sub-scene** симметрично Training / Matchmaking / Create: CanvasLayer singleton построен в AppV2 mount; `/v2/profile` входит — `buildProfileScene` + `registerScene('profile')` + `activateScene('profile')`. Unmount — `activateScene('pit')` ДО dispose, затем `unregisterScene` + `dispose`. Без этого порядка renderLoop тронет freed scene.
+- **5A helper reuse — 4-й consumer** для обоих `buildOctagonalRoom` и `createDustField`. Profile — первая миграция после 5A CLOSED, валидирует что helpers работают с новыми параметрами (`fogDensity: 0.045`, `count: 70`, `color: 0xffd9c8`, `opacity: 0.4` override). Vite объединил оба helper'а в один 2.71kb shared chunk для 4 consumer'ов.
+- **Captain belt public UI** — Identity card читает `userData.captain.belt` + `userData.captain.isHexmaster` (per CLAUDE.md §Captain in Public UI). Fallback `0` / `false` если captain отсутствует. Совместимо с существующим `getCaptainPublicInfo` / `getCaptainsForUsers` bulk API.
+- **i18n через Vuex action `master/setLanguage`** (hot-fix 10.2, legacy `ChangeLanguage.vue` parity). Action делает 4 шага: `setLocaleLanguage` (currentLanguage ref + localStorage) + `commit('updateMaster', { language })` + `updateMasterToLocalDB` + `masterService.changeProfile` (backend sync). Direct `setLanguage()` call обновлял только шаг 1, оставляя Vuex-derived getters stale. Bug проявлялся как "language switch требует logout/login".
+- **Wagmi `useAccount()` watch** для master.walletAddress sync. Легаси `ProfileWallet.vue:41-47` делает это, но mounted только на `/profile/wallet`. V2 user connecting из `/v2/profile` без этого watcher'а остался бы с stale walletAddress. Паттерн: `watch(wagmiAddress, () => dispatch('master/updateMaster', { walletAddress }))` с `current === next` guard против no-op dispatches.
+- **Lazy modal reuse verbatim** — `ConnectWallet.vue` загружается через dynamic `import()` + `shallowRef` + `markRaw`. `defineExpose({ openModal })` в ConnectWallet (1-line augmentation) экспонирует метод модалки. Source layout рендерится с `style="display: none"` — модалка через Teleport в `body` работает как задумано. Bundle benefit: Legacy ProfileView chunk **−11.21kb** (ConnectWallet extracted в shared 8.7kb chunk, shared с v2).
+- **Realtime friend status poll** — 5s интервал (легаси делал 1s, ослабил). Опирается на WS push `friend_status` как primary source, poll как safety net.
+- **Hardcoded 16 ACHIEVEMENT_TILES** с маппингом `type → abbr` per прототип 4647-4662. Не использую `store.getters['achievement/getAllAchievements']` для display — только для unlocked-state mapping через `userData.achievements` (проще чем legacy ProfileAchievements.vue с его carousel/v-tooltip/sort logic).
+
+**Store reuse (17 paths, 0 new Vuex actions):**
+
+| Feature | Store path | Mechanism |
+|---|---|---|
+| Current user | `master/getMaster` | computed ref |
+| Email | `master.email` (top-level, не userData) | masterModel.fromJSON peels это из /me response |
+| Wallet sync | `master/updateMaster` | action, legacy ProfileWallet parity |
+| Language switch | `master/setLanguage` | 4-step action (hot-fix 10.2) |
+| Logout | `master/logout` | WS disconnect + clearAuth + router.push |
+| Clan name lookup | `clan/getClanById(id)` | cached lookup с API fallback |
+| Friends list | `friends/getFriends`, `friends/onlineFriendsCount` | getters |
+| Friend requests | `friends/getIncomingRequests` | getter |
+| Init / polling | `friends/init`, `friends/loadFriends`, `friends/loadIncomingRequests` | REST actions |
+| Accept/Decline | `friends/acceptFriendRequest`, `friends/declineFriendRequest` | REST actions |
+| Remove friend | `friends/removeFriend` | REST action |
+| Challenge send | `friends/sendChallenge` | WS `challenge_send` через `webSocket/sendMessage` |
+| Challenge cooldown | `friends/hasPendingChallenge` | getter (10s timeout guard) |
+| Sound toggle | `punch/isMuted` getter + `punch/setMuted` mutation | direct commit |
+| Achievement unlock state | `userData.achievements[].isCompleted` (inline из /me) | set-based lookup |
+
+**Deferred (carry-over items, не закрываются в 5B):**
+
+| # | Item | Target | Severity |
+|---|---|---|---|
+| 1 | **ChallengeNotification widget скрыт на `/v2/*`** (App.vue line 35 `v-if="!isV2Route"`). V2 users не видят incoming challenge toast. Step 8 только **sends** challenges. | Отдельный **PvP-integration sub-epic** (НЕ 5G polish) — cross-wire legacy global notifications в v2 HUD | Functional |
+| 2 | **`challenge_start` routing** → legacy `/fight?mode=pvp` в `pvpHandler`. V2 sender после accept приземляется на legacy Fight view. | Тот же PvP-integration sub-epic | Functional |
+| 3 | **Disconnect UI не в v2** — ConnectWallet в v2 показывает только modal с connector list (disconnected state). Для disconnect юзер идёт в legacy `/profile/wallet`. | 5G polish либо Step 10.5 follow-up | UX |
+| 4 | **ELO source** = `userData.rating` (frozen legacy per CLAUDE.md §Captain in Arena). Правильнее `userData.captain.elo` (актуальное). | 5G polish | Data accuracy |
+| 5 | **"+ Add" full player-search UI** — сейчас stub с ephemeral notice "Full player search lands in Sub-Epic 5G" 3s. | 5G polish | UX |
+| 6 | **Referral shortcut** (share-иконка в Identity card) — pre-deferred Step 6. | 5G polish | UX |
+| 7 | **Skins tab** в Profile — отсутствует в прототипе. | Sub-Epic 5E `/v2/shop` | Feature |
+| 8 | **Account management** (email / password / login change, delete account) — отсутствует в прототипе. | Skip permanently | Scope |
+| 9 | **Guest profile** `/v2/profile/:login` — только own profile в v2, legacy `/user/:login` остаётся для чужих. | Polish if needed | Scope |
+| 10 | **i18n для v2 HUD** — inline EN строки в HudProfile / HudPit / HudTraining / HudMatchmaking / HudCreate / HudFighterDetail / HudFight. Language switch НЕ влияет на v2 визуально до 5F. | **Sub-Epic 5F** (documented Step 0 correction) | Feature |
+| 11 | **HudProfile.vue 615 строк** (над soft-300). Candidate для splitting в 4 sub-components (ProfileIdentity / ProfilePerformance / ProfileFriends / ProfileSettings). | 5G polish | Code quality |
+
+**Bugs fixed in hot-fixes 10.1 + 10.2:**
+
+- **10.1-1** Avatar click → `/v2/profile` не работал. Step 1 удалил `MODAL_CONTENT.avatar` но оставил TopBar binding на `openPhModal('avatar')` → no-op early-return. Fix: `<TopBar @avatar-click="onAvatarClick" />` → `router.push('/v2/profile')` в HudPit напрямую. PitViewV2 click watcher остался как defensive fallthrough (не триггерится — avatar не 3D-pickable).
+- **10.1-2** Joined date rendered as raw ISO string. `masterModel.fromJSON` не оборачивает userData через UserModel constructor (`createdAt = new Date(...)`), `master.userData.createdAt` — raw string. `String.prototype.toLocaleString(locale, opts)` игнорирует opts. Fix: explicit `new Date(raw)` + NaN guard в `joinedText` computed.
+- **10.2-1** Hub avatar hardcoded "YV". Epic 2 era placeholder в TopBar.vue. Fix: `avatarInitials` computed из `master.userData.login` — симметрично Identity card Step 6 initials logic.
+- **10.2-2** Language switch требовал logout/login. Legacy `ChangeLanguage.vue:29-30` диспатчит Vuex `master/setLanguage` (4-step atomic action). Step 9 v2 код вызывал `setLanguage()` direct — обновлял только `currentLanguage` ref + localStorage (шаг 1 из 4). Vuex-derived `master/getLanguage` getter оставался stale, backend не уведомлён. Fix: `store.dispatch('master/setLanguage', code)` — все 4 шага через action. `setLanguage` direct-import удалён из HudProfile.
+
+**Шаги и коммиты:**
+
+| # | Commit | Что |
+|---|---|---|
+| 1 | `9d69473` | stubs + route /v2/profile + avatar redirect |
+| 2 | `2143540` | ProfileScene scaffold (fog/room via 5A helper) |
+| 3 | `30fdc0e` | lighting + pink shaft + disc + dust field |
+| 4 | `806e00b` | empty podium (3D layer complete) |
+| 5 | `bbc9f5b` | HudProfile skeleton + profile.css (512 lines) |
+| 6 | `133deb3` | Identity card (avatar + handle + meta + 4 id-fields) |
+| 7 | `e6436dc` | Performance card + 16 achievements grid |
+| 8 | `2a81f00` | Friends card with WS challenge integration |
+| 9 | `1e9e65f` | Settings card (lang / sound / build / logout) |
+| 10 | `3813738` | ConnectWallet modal integration (lazy + wagmi sync) |
+| hot-fix 10.1 | `d17fc9e` | avatar click routing + joined date format |
+| hot-fix 10.2 | `ee977cb` | hub avatar initials + language switch Vuex action |
+| 11 | — | regression test (no commit) |
+| 12 | this | CLAUDE.md Sub-Epic 5B section |
+| 13 | next | EPIC5_5B_FINAL_REPORT.md |
+| 14 | next | HANDOFF_EPIC5_5C_CHAT_HANDOFF.md |
+
+**Sub-Epic 5B — CLOSED.** Route table `/v2/*` обновлена:
+
+| Route | Epic / Sub-Epic | Статус |
+|---|---|---|
+| `/v2` | 2 + 4 | ✅ hub — real captain + secondAgent + auto-refresh on mutations |
+| `/v2/fd/warden` / `/v2/fd/predator` | 3A | ✅ legacy mocks сохранены |
+| `/v2/fd/:uuid` | 4 | ✅ dynamic — cache one-shot OR fetchAgent with state-check |
+| `/v2/fight` | 3A + 3Bb | ✅ via Matchmaking only |
+| `/v2/training` | 3Ba | ✅ (5A migrated to `buildOctagonalRoom` + `createDustField`) |
+| `/v2/matchmaking` | 3Bb | ✅ filters still client-side mock (5A migrated) |
+| `/v2/create` | 3Bc + 4 | ✅ backend persist + inline error (5A migrated) |
+| `/v2/profile` | **5B** | ✅ 4-card HUD + lazy ConnectWallet + WS friend challenges |
+
+**Bundle bonus** (positive side-effect, не scope): Legacy `ProfileView.js` chunk **−11.21kb** (69.60 → 58.39kb) — ConnectWallet extracted в shared lazy chunk (8.70kb), работает для обоих `/profile/wallet` (legacy) и `/v2/profile` (new). Infrastructure cleanup без намеренной работы.
+
+**Следующий sub-epic:** 5C — `/v2/ratings` (per HANDOFF_EPIC5 §4 Вариант B list: Profile → Ratings → Clan → Shop). Pre-flight готов в handoff: ~693 строк legacy `RatingsView.vue`, 4 таба (MyClub/Clubs/Fighters/Agents).
+
