@@ -155,6 +155,27 @@
 }
 .app-v2 .id-field .ifv.wallet { color: var(--hex-primary); cursor: pointer; }
 .app-v2 .id-field .ifv.wallet:hover { text-decoration: underline; }
+/* Disconnected state — show muted text + regular cursor, no hover underline. */
+.app-v2 .id-field .ifv.wallet.disabled {
+  color: var(--text-dim);
+  cursor: default;
+}
+.app-v2 .id-field .ifv.wallet.disabled:hover { text-decoration: none; }
+
+/* Belt id-field value carries both the SVG BeltBadge and the text label.
+   Flex override `max-width: 60%` + ellipsis from .ifv for a row that must
+   fit two elements side-by-side. */
+.app-v2 .id-field .ifv.belt-value {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+}
+.app-v2 .id-field .ifv.belt-value .belt-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 /* ===== PERFORMANCE CARD — stats grid (prototype 1945-1966) ===== */
 .app-v2 .stats-grid {
