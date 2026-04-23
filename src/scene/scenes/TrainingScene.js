@@ -8,6 +8,7 @@ import { buildTrainingBag } from '../objects/trainingBag.js';
 import { createBagPhysics } from '../objects/trainingBagPhysics.js';
 import { createHitParticles } from '../objects/trainingHitParticles.js';
 import { buildOctagonalRoom } from '../objects/octagonalRoom.js';
+import { createDustField } from '../objects/dustField.js';
 import { trState } from '../interaction/useTrainingState.js';
 
 const HUD_SYNC_INTERVAL_MS = 100; // ~10 Hz, prototype 10024-10028
@@ -84,23 +85,17 @@ export function buildTrainingScene(THREE, aspect) {
   shaft.position.set(0, 3.5, 0);
   scene.add(shaft);
 
-  // --- DUST (prototype 9722-9736) ---
-  // Training-specific distribution (10×10 square, small warm particles) —
-  // distinct from pit/environment.js settings (22×22, cool larger particles).
-  const dustCount = 80;
-  const dustGeom = new THREE.BufferGeometry();
-  const dustPos = new Float32Array(dustCount * 3);
-  for (let i = 0; i < dustCount; i++) {
-    dustPos[i * 3]     = (Math.random() - 0.5) * 10;
-    dustPos[i * 3 + 1] = Math.random() * 4 + 0.3;
-    dustPos[i * 3 + 2] = (Math.random() - 0.5) * 10;
-  }
-  dustGeom.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
-  const dust = new THREE.Points(dustGeom, new THREE.PointsMaterial({
-    color: 0xffd9c8, size: 0.03, transparent: true, opacity: 0.45,
-    depthWrite: false, blending: THREE.AdditiveBlending,
-  }));
-  scene.add(dust);
+  // --- DUST via shared helper (Sub-Epic 5A Step 4) ---
+  // Training-specific distribution (10×10 square, warm particles) —
+  // distinct from pit/environment.js settings (22×22, cool larger).
+  const dust = createDustField(THREE, {
+    count: 80,
+    xRadius: 5,
+    yMax: 4,
+    driftSpeed: 0.002,
+    color: 0xffd9c8,
+  });
+  scene.add(dust.group);
 
   // --- HEAVY BAG (Step 4) ---
   const bag = buildTrainingBag(THREE);
@@ -151,13 +146,8 @@ export function buildTrainingScene(THREE, aspect) {
       }
     }
 
-    // Dust drift — prototype 10036-10042. Linear upward, reset at y>4.
-    const p = dustGeom.attributes.position.array;
-    for (let i = 0; i < dustCount; i++) {
-      p[i * 3 + 1] += 0.002;
-      if (p[i * 3 + 1] > 4) p[i * 3 + 1] = 0.3;
-    }
-    dustGeom.attributes.position.needsUpdate = true;
+    // Dust drift — delegated to helper (prototype 10036-10042 equivalent).
+    dust.tick();
 
     // Bag pendulum sim — runs every frame, no-op until an impulse lands.
     bagPhysics.applyTick();
