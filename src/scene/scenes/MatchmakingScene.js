@@ -6,6 +6,7 @@
 import { makeConcreteTexture } from '../materials/concrete.js';
 import { buildMatchmakingTerminal } from '../objects/matchmakingTerminal.js';
 import { buildOctagonalRoom } from '../objects/octagonalRoom.js';
+import { createDustField } from '../objects/dustField.js';
 
 const MM_ROOM_R = 14;
 const MM_ROOM_H = 8;
@@ -62,23 +63,25 @@ export function buildMatchmakingScene(THREE, aspect) {
   scene.add(rimR);
   scene.add(rimR.target);
 
-  // --- DUST (prototype 10514-10528) ---
-  // 40 cyan particles (half of training's 80), 8×6 distribution, z shifted
-  // back by 1. Slower drift than Training (0.0015 vs 0.002), reset at y>3.5.
-  const dustCount = 40;
-  const dustGeom = new THREE.BufferGeometry();
-  const dustPos = new Float32Array(dustCount * 3);
-  for (let i = 0; i < dustCount; i++) {
-    dustPos[i * 3]     = (Math.random() - 0.5) * 8;
-    dustPos[i * 3 + 1] = Math.random() * 3 + 0.3;
-    dustPos[i * 3 + 2] = (Math.random() - 0.5) * 6 - 1;
-  }
-  dustGeom.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
-  const dust = new THREE.Points(dustGeom, new THREE.PointsMaterial({
-    color: 0x00E5C8, size: 0.025, transparent: true, opacity: 0.35,
-    depthWrite: false, blending: THREE.AdditiveBlending,
-  }));
-  scene.add(dust);
+  // --- DUST via shared helper (Sub-Epic 5A Step 5) ---
+  // 40 cyan particles (half of Training's 80), asymmetric 8×6 distribution
+  // (xRadius=4 / zRadius=3) with z shifted back by 1 to live behind the
+  // CRT terminal. Slower drift than Training (0.0015 vs 0.002), reset at
+  // y>3.5. yInitSpread=3 preserved explicitly (default yMax-yMin=3.2
+  // would cost 0.2 units of initial Y range).
+  const dust = createDustField(THREE, {
+    count: 40,
+    xRadius: 4,
+    zRadius: 3,
+    zOffset: -1,
+    yMax: 3.5,
+    yInitSpread: 3,
+    driftSpeed: 0.0015,
+    color: 0x00E5C8,
+    size: 0.025,
+    opacity: 0.35,
+  });
+  scene.add(dust.group);
 
   // --- TERMINAL (Step 4) ---
   // Exposes screenCanvas/screenCtx/screenTex so Step 5's useMatchmakingScreen
@@ -94,13 +97,8 @@ export function buildMatchmakingScene(THREE, aspect) {
     camera.position.z = 4.4 + Math.sin(t * 0.08) * 0.15;
     camera.lookAt(0, 1.5, 0);
 
-    // Dust drift — prototype 10841-10846. Linear upward, reset at y>3.5.
-    const p = dustGeom.attributes.position.array;
-    for (let i = 0; i < dustCount; i++) {
-      p[i * 3 + 1] += 0.0015;
-      if (p[i * 3 + 1] > 3.5) p[i * 3 + 1] = 0.3;
-    }
-    dustGeom.attributes.position.needsUpdate = true;
+    // Dust drift — delegated to helper (prototype 10841-10846 equivalent).
+    dust.tick();
 
     // Step 4 — terminal (no per-frame work beyond dust+breath).
     // Step 5 — screen texture needsUpdate handled in state watchers.
