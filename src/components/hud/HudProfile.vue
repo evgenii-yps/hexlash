@@ -1,10 +1,9 @@
-<!-- Epic 5 — Sub-Epic 5B Step 8.
-     Step 6: Identity. Step 7: Performance. Step 8: Friends card — full
-     integration with friends/* Vuex + WebSocket challenges.
-     Search filters across own friends list (case-insensitive handle match).
-     Add btn = stub until Sub-Epic 5G player-search UI.
+<!-- Epic 5 — Sub-Epic 5B Step 9.
+     Steps 6-8 filled Identity / Performance / Friends cards. Step 9 fills
+     Settings card — 11-button language picker, Sound toggle, Build version,
+     Logout. Uses i18n setLanguage/getLanguage, punch/setMuted, master/logout.
      Styles live in src/styles/v24/profile.css (scoped .app-v2).
-     Source: prototype hexlash_v24.html lines 4666-4679 + 12839-12924. -->
+     Source: prototype hexlash_v24.html lines 4682-4714. -->
 <template>
   <div class="hud-profile">
     <button class="profile-back" @click="$emit('back')">&larr; Back</button>
@@ -155,9 +154,35 @@
         </div>
       </div>
 
-      <!-- SETTINGS — Step 9 -->
+      <!-- SETTINGS -->
       <div class="profile-card settings-card">
-        <div class="profile-card-title">Settings</div>
+        <div class="settings-block">
+          <div class="sb-label">Language</div>
+          <div class="lang-picker">
+            <button
+              v-for="lang in availableLanguages"
+              :key="lang.code"
+              class="lang-btn"
+              :class="{ active: currentLang === lang.code }"
+              @click="changeLanguage(lang.code)"
+            >{{ lang.code.toUpperCase() }}</button>
+          </div>
+        </div>
+        <div class="settings-block">
+          <div class="sb-label">Sound</div>
+          <div class="toggle-row" :class="{ on: soundOn }" @click="toggleSound">
+            <span class="tr-label">Ambient</span>
+            <span class="toggle-pip"></span>
+          </div>
+        </div>
+        <div class="settings-block">
+          <div class="sb-label">Build</div>
+          <div class="version-text">{{ buildText }}</div>
+        </div>
+        <div class="settings-block">
+          <div class="sb-label">Session</div>
+          <button class="logout-btn" @click="onLogout">Logout</button>
+        </div>
       </div>
     </div>
   </div>
@@ -168,6 +193,12 @@ import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue';
 import store from '@/core/state/store.js';
 import BeltBadge from '@/components/ui/BeltBadge.vue';
 import { getBeltDisplay } from '@/utils/beltDisplay.js';
+import {
+  availableLanguages,
+  getLanguage,
+  setLanguage,
+  t,
+} from '@/locales/index.js';
 
 defineEmits(['back']);
 
@@ -467,6 +498,43 @@ onBeforeUnmount(() => {
     addNoticeTimer = null;
   }
 });
+
+// --- Settings: Language ---
+// locales/index.js exposes setLanguage/getLanguage + the reactive `t` computed.
+// `currentLanguage` isn't exported, so we mirror it into a local ref and
+// watch `t` to stay in sync with any external setLanguage calls. `setLanguage`
+// also persists to localStorage — no extra store wiring needed.
+const currentLang = ref(getLanguage());
+watch(t, () => { currentLang.value = getLanguage(); });
+function changeLanguage(code) {
+  setLanguage(code);
+}
+
+// --- Settings: Sound ---
+// punch/isMuted holds the mute flag (persisted via setMuted → localStorage).
+// Prototype's `.toggle-row.on` = pip on the right = sound ON = NOT muted.
+const soundOn = computed(() => !store.getters['punch/isMuted']);
+function toggleSound() {
+  store.commit('punch/setMuted', soundOn.value);
+}
+
+// --- Settings: Build ---
+// __APP_VERSION__ / __IS_PROD__ are compile-time defines from vite.config
+// (see CLAUDE.md Build section). Legacy ProfileView.vue:101-102 reads the
+// same way. Format mirrors prototype 4708: "v0.13.0 · prod".
+const buildText = computed(() => {
+  const env = __IS_PROD__ ? 'prod' : 'test';
+  return `v${__APP_VERSION__} · ${env}`;
+});
+
+// --- Settings: Logout ---
+// master/logout internally disconnects WS, clears auth data, and router-pushes
+// to `/`. The nav guard then redirects unauthenticated users to `/auth/login`,
+// so no explicit push from here (would double-fire). Legacy ProfileButtons
+// uses the same single-dispatch pattern. No confirm per prototype.
+function onLogout() {
+  store.dispatch('master/logout');
+}
 </script>
 
 <style scoped>
