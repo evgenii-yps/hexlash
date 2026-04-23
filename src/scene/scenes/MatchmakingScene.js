@@ -5,6 +5,7 @@
 
 import { makeConcreteTexture } from '../materials/concrete.js';
 import { buildMatchmakingTerminal } from '../objects/matchmakingTerminal.js';
+import { buildOctagonalRoom } from '../objects/octagonalRoom.js';
 
 const MM_ROOM_R = 14;
 const MM_ROOM_H = 8;
@@ -12,43 +13,30 @@ const MM_ROOM_H = 8;
 export function buildMatchmakingScene(THREE, aspect) {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x070811);
-  scene.fog = new THREE.FogExp2(0x070811, 0.06);
 
   // Camera — close-up to the terminal. Step 3 adds slow breath tick.
   const camera = new THREE.PerspectiveCamera(42, aspect, 0.1, 200);
   camera.position.set(0, 1.8, 4.5);
   camera.lookAt(0, 1.5, 0);
 
-  // --- FLOOR (darker than Training/FD — prototype color 0x1a1a20) ---
+  // --- FLOOR + WALLS + FOG via shared helper (Sub-Epic 5A Step 2) ---
+  // Darker than Training/FD (floor 0x1a1a20, walls 0x0a0a12) and thicker
+  // fog (0.06 vs 0.035) for the cyber-terminal mood. Scene-owned materials:
+  // concrete-texture repeat is shared state per materials/concrete.js note.
   const floorTex = makeConcreteTexture(THREE);
   floorTex.repeat.set(4, 4);
-  const floor = new THREE.Mesh(
-    new THREE.CircleGeometry(18, 64),
-    new THREE.MeshStandardMaterial({
-      map: floorTex, color: 0x1a1a20, roughness: 0.95, metalness: 0.02,
-    })
-  );
-  floor.rotation.x = -Math.PI / 2;
-  scene.add(floor);
-
-  // --- 8 OCTAGONAL WALLS (darker than other sub-scenes — 0x0a0a12) ---
-  const wallMat = new THREE.MeshStandardMaterial({
+  const floorMaterial = new THREE.MeshStandardMaterial({
+    map: floorTex, color: 0x1a1a20, roughness: 0.95, metalness: 0.02,
+  });
+  const wallMaterial = new THREE.MeshStandardMaterial({
     color: 0x0a0a12, roughness: 0.95,
   });
-  for (let i = 0; i < 8; i++) {
-    const a1 = (i / 8) * Math.PI * 2;
-    const a2 = ((i + 1) / 8) * Math.PI * 2;
-    const x1 = Math.cos(a1) * MM_ROOM_R, z1 = Math.sin(a1) * MM_ROOM_R;
-    const x2 = Math.cos(a2) * MM_ROOM_R, z2 = Math.sin(a2) * MM_ROOM_R;
-    const wallLen = Math.hypot(x2 - x1, z2 - z1);
-    const wall = new THREE.Mesh(
-      new THREE.PlaneGeometry(wallLen, MM_ROOM_H),
-      wallMat,
-    );
-    wall.position.set((x1 + x2) / 2, MM_ROOM_H / 2, (z1 + z2) / 2);
-    wall.lookAt(0, MM_ROOM_H / 2, 0);
-    scene.add(wall);
-  }
+  buildOctagonalRoom(THREE, scene, {
+    R: MM_ROOM_R, H: MM_ROOM_H,
+    floorRadius: 18,
+    floorMaterial, wallMaterial,
+    fogDensity: 0.06,
+  });
 
   // --- LIGHTING (Step 3, prototype 10499-10512) ---
   // Note: key is CYAN, not warm — terminal/monitor-glow aesthetic.
