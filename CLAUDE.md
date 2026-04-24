@@ -2408,6 +2408,56 @@ src/scene/objects/archetypeColors.js          — 26 — shared pickFighterColor
 
 **Следующий эпик:** Epic 5 — план в `docs/visual-migration/HANDOFF_EPIC5_CHAT_HANDOFF.md`. Карта вариантов: polish (DRY + i18n + 4 fighter variants + UX edge fixes) / missing screens (Profile / Ratings / Clan / Shop на `/v2/*`) / matchmaking backend integration.
 
+### Эпик 5 — Sub-Epic 5A — DRY helpers (✅ COMPLETE)
+
+Завершён 2026-04-23. Первый sub-эпик Epic 5, база для 5B-5E. Extracted дублирующуюся логику из TrainingScene / MatchmakingScene / CreateScene в 2 shared helpers. 6 functional commits + 1 CORS infra commit + 1 backfill commit (final report + эта секция, created 2026-04-24 после 5B close — 5A изначально закрылся без final commits).
+
+**Commit range:** `8e739ae` (Step 1) → `748b6ad` (Step 6) + `c8aba35` (CORS infra) + backfill commit (this).
+
+**Что migrated:**
+- `src/scene/objects/octagonalRoom.js` (54 строки) — `buildOctagonalRoom(THREE, scene, opts)` → `{ floor, walls }`. Floor disc + 8 planar walls + optional FogExp2. Scene owns material creation (concrete-texture `repeat` — shared Texture state). Params: `R=14, H=8, floorRadius, floorMaterial, wallMaterial, wallSegments=8, fogColor=0x070811, fogDensity, receiveShadow=true`.
+- `src/scene/objects/dustField.js` (60 строк) — `createDustField(THREE, opts)` → `{ group, tick() }`. Zero per-tick allocations (positions Float32Array reused, только Y channel мутируется). Params: `count, xRadius, zRadius=xRadius, xOffset=0, zOffset=0, yMin=0.3, yMax, yInitSpread=yMax-yMin, driftSpeed, color, size=0.03, opacity=0.45`.
+
+**Signature evolution:** original 5A plan имел scalar `xzRadius`. Step 4 surfaced Matchmaking asymmetric pattern (`xRadius=4 / zRadius=3` + `zOffset=-1` behind-terminal) + decoupled `yInitSpread`. Extended signature accepted в Step 4 с backward-compat defaults.
+
+**Consumer inventory (4 sub-scenes):**
+
+| Consumer | buildOctagonalRoom? | createDustField? | Источник |
+|----------|---------------------|-------------------|----------|
+| TrainingScene | ✅ Step 1 | ✅ Step 4 | 5A |
+| MatchmakingScene | ✅ Step 2 | ✅ Step 5 (full extended signature) | 5A |
+| CreateScene | ✅ Step 3 | ✅ Step 6 | 5A |
+| ProfileScene | ✅ | ✅ | 5B (4-й consumer, подтвердил reuse ROI) |
+
+PitScene — **permanent out-of-scope.** Ceiling + volumetric shafts + cage columns не соответствуют current helper contract.
+
+**CORS infra (`c8aba35`):** `VERCEL_PREVIEW_RE = /^https:\/\/testhexlash-[a-z0-9]+-[a-z0-9-]+\.vercel\.app$/` regex check в CORS origin callback. Unblock'ил 5A visual verify (preview URL'ы раньше не были в whitelist). Anchored + project-specific prefix — не generic wildcard. Применимо для всех Epic 5+ sub-эпиков.
+
+**Bundle impact:** оба helper'а в shared ~2.71kb gzipped chunk, lazy-loaded для всех 4 consumers. Zero duplicate code, zero extra requests.
+
+**Шаги и коммиты:**
+
+| # | Commit | Что |
+|---|--------|-----|
+| 1 | `8e739ae` | add buildOctagonalRoom + migrate TrainingScene |
+| 2 | `5d259b5` | migrate MatchmakingScene to buildOctagonalRoom |
+| 3 | `ded72f2` | migrate CreateScene to buildOctagonalRoom |
+| 4 | `c71903f` | add createDustField + migrate TrainingScene |
+| 5 | `8333dc7` | migrate MatchmakingScene to createDustField |
+| 6 | `748b6ad` | migrate CreateScene to createDustField |
+| infra | `c8aba35` | CORS regex allowlist для Vercel previews |
+| backfill | this | EPIC5_5A_FINAL_REPORT.md + CLAUDE.md section |
+
+**Files changed:**
+- `src/scene/objects/octagonalRoom.js` — **new** (54 строки)
+- `src/scene/objects/dustField.js` — **new** (60 строк)
+- `src/scene/scenes/TrainingScene.js` — −34 lines net (fog/floor/walls/dust inline blocks replaced)
+- `src/scene/scenes/MatchmakingScene.js` — migrated (asymmetric params validation)
+- `src/scene/scenes/CreateScene.js` — migrated (default-path parity)
+- `backend/src/index.js` — VERCEL_PREVIEW_RE regex check (infra)
+
+**Детали:** `docs/visual-migration/EPIC5_5A_FINAL_REPORT.md` (8 секций, включая §3 Technical details с full helper signatures + params matrices).
+
 ### Эпик 5 — Sub-Epic 5B — Profile (✅ COMPLETE)
 
 Завершён 2026-04-23. Первая views-миграция Эпика 5 после 5A (DRY helpers). Клик по avatar-btn в hub TopBar → `/v2/profile` с 4-card HUD (Identity / Performance / Friends / Settings) поверх минимальной ProfileScene. Визуальный паритет с прототипом 4595-4715 (HUD) + 9335-9458 (3D scene). 10 функциональных + 2 hot-fix + 3 финальных коммита.
