@@ -5,17 +5,62 @@
      Step 9 polishes season toggle. Step 10 mobile responsive.
      Source: prototype hexlash_v24.html lines 4767-4819 (HUD markup). -->
 <script setup>
-// Step 6 ships only markup. Step 7 adds:
-//   - scope/season/search reactive refs
-//   - RATINGS_DATA import from @/data/ratingsMock.js
-//   - computed filtered rows + v-for rendering
-//   - rowRankClass / wrClass / streakClass / streakStr helpers
-//   - setScope / setSeason / onSearchInput handlers
-// Step 8 adds:
-//   - useStore + yourRow computed from master.userData.captain
-//   - archetypeIdShort (full-name → short-id) + archetypeName helpers
-//   - myRank + nextRankHint computed
+// Step 7: scope/season/search reactive state + v-for rendering + handlers.
+// Step 8 (upcoming) adds sticky your-row binding to master.userData.captain.
+import { ref, computed } from 'vue';
+import { RATINGS_DATA } from '@/data/ratingsMock.js';
+
 defineEmits(['back']);
+
+// ===== Reactive state =====
+const scope = ref('global');  // global | friends | clan | country | live
+const season = ref('s1');     // s1 | all
+const search = ref('');       // debounced (200ms) from searchInput
+
+// Debounce search — input drives searchInput immediately for visual feedback,
+// search commits after 200ms so v-for re-render doesn't fire per keystroke.
+const searchInput = ref('');
+let searchTimeout = null;
+function onSearchInput(e) {
+  searchInput.value = e.target.value;
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    search.value = searchInput.value;
+  }, 200);
+}
+
+// ===== Computed filtered rows =====
+const rows = computed(() => {
+  const key = `${scope.value}|${season.value}`;
+  const all = RATINGS_DATA[key] || [];
+  const q = search.value.trim().toLowerCase();
+  if (!q) return all;
+  return all.filter((r) => r.handle.toLowerCase().includes(q));
+});
+
+// ===== Row class helpers =====
+function rowRankClass(row) {
+  return row.rank <= 3 ? `rank-${row.rank}` : '';
+}
+function wrClass(wr) {
+  if (wr >= 60) return 'good';
+  if (wr < 45) return 'bad';
+  return '';
+}
+function streakStr(streak) {
+  return streak.n > 0 ? `${streak.n}${streak.kind}` : '—';
+}
+function streakClass(streak) {
+  return streak.n >= 5 && streak.kind === 'W' ? 'hot' : '';
+}
+
+// ===== Tab / season handlers =====
+function setScope(next) {
+  scope.value = next;
+}
+function setSeason(next) {
+  season.value = next;
+}
 </script>
 
 <template>
@@ -30,10 +75,15 @@ defineEmits(['back']);
     </div>
 
     <!-- ===== Season chips (top-right) ===== -->
-    <!-- Step 7 binds :class="{ active: season === 's1' }" + @click. -->
     <div class="ratings-season">
-      <button class="active" data-season="s1">Season 1</button>
-      <button data-season="all">All Time</button>
+      <button
+        :class="{ active: season === 's1' }"
+        @click="setSeason('s1')"
+      >Season 1</button>
+      <button
+        :class="{ active: season === 'all' }"
+        @click="setSeason('all')"
+      >All Time</button>
     </div>
 
     <!-- ===== Main panel: toolbar + thead + tbody ===== -->
@@ -43,15 +93,27 @@ defineEmits(['back']);
     <div class="ratings-panel">
       <div class="ratings-toolbar">
         <div class="ratings-tabs">
-          <button class="rt-tab active" data-filter="global">Global</button>
-          <button class="rt-tab" data-filter="friends">Friends</button>
-          <button class="rt-tab" data-filter="clan">Clan</button>
-          <button class="rt-tab" data-filter="country">Country</button>
-          <button class="rt-tab" data-filter="live">
+          <button
+            v-for="s in ['global', 'friends', 'clan', 'country']"
+            :key="s"
+            class="rt-tab"
+            :class="{ active: scope === s }"
+            @click="setScope(s)"
+          >{{ s[0].toUpperCase() + s.slice(1) }}</button>
+          <button
+            class="rt-tab"
+            :class="{ active: scope === 'live' }"
+            @click="setScope('live')"
+          >
             Live <span style="color: var(--hex-primary); margin-left: 3px">●</span>
           </button>
         </div>
-        <input class="ratings-search" placeholder="Search by handle..." />
+        <input
+          class="ratings-search"
+          placeholder="Search by handle..."
+          :value="searchInput"
+          @input="onSearchInput"
+        />
       </div>
 
       <div class="ratings-thead">
@@ -66,7 +128,24 @@ defineEmits(['back']);
       </div>
 
       <div class="ratings-tbody">
-        <!-- Step 7: v-for mock rows. Step 7 also handles empty state. -->
+        <div v-if="rows.length === 0" class="rt-empty">No results</div>
+        <div
+          v-for="row in rows"
+          :key="`${scope}|${season}|${row.rank}|${row.handle}`"
+          class="rt-row"
+          :class="rowRankClass(row)"
+        >
+          <div class="rt-rank"><span class="rnk-num">#{{ row.rank }}</span></div>
+          <div class="rt-handle">{{ row.handle }}</div>
+          <div class="rt-arch col-arch" :class="`arch-tag-${row.arch.id}`">{{ row.arch.name }}</div>
+          <div class="rt-belt col-belt">{{ row.belt }}</div>
+          <div class="num rt-elo">{{ row.elo.toLocaleString() }}</div>
+          <div class="num rt-wl col-wl">{{ row.wins }} / {{ row.losses }}</div>
+          <div class="num rt-wr" :class="wrClass(row.wr)">{{ row.wr }}%</div>
+          <div class="num rt-streak col-streak" :class="streakClass(row.streak)">
+            {{ streakStr(row.streak) }}
+          </div>
+        </div>
       </div>
     </div>
 
