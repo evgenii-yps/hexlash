@@ -63,7 +63,7 @@ export function buildRatingsScene(THREE, aspect) {
   // Pink rim from the left — the one allowed pink accent per the Neon
   // Discipline rule (one pink accent per screen; HUD your-row is the other
   // but that sits in DOM, not 3D). Targets the same deep-frame point.
-  const raRim = new THREE.SpotLight(0xff066f, 0.6, 14, Math.PI * 0.4, 0.8, 1.6);
+  const raRim = new THREE.SpotLight(0xff066f, 1.2, 14, Math.PI * 0.4, 0.8, 1.6);
   raRim.position.set(-6, 3, 0);
   raRim.target.position.set(0, 1.5, -3);
   scene.add(raRim);
@@ -71,7 +71,7 @@ export function buildRatingsScene(THREE, aspect) {
 
   // Gold rim from the right — balances the pink rim; mirrors Matchmaking
   // and FD lighting rigs for visual rhythm across v2.
-  const raRimR = new THREE.SpotLight(0xD4A843, 0.45, 14, Math.PI * 0.4, 0.8, 1.6);
+  const raRimR = new THREE.SpotLight(0xD4A843, 0.9, 14, Math.PI * 0.4, 0.8, 1.6);
   raRimR.position.set(6, 3, 0);
   raRimR.target.position.set(0, 1.5, -3);
   scene.add(raRimR);
