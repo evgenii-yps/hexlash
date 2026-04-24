@@ -8,6 +8,7 @@
 import { makeConcreteTexture } from '../materials/concrete.js';
 import { buildOctagonalRoom } from '../objects/octagonalRoom.js';
 import { createDustField } from '../objects/dustField.js';
+import { makeClanFlag } from '../objects/clanFlag.js';
 
 const CL_ROOM_R = 14;
 const CL_ROOM_H = 9;
@@ -97,7 +98,14 @@ export function buildClanScene(THREE, aspect) {
   });
   scene.add(dust.group);
 
-  // Flag totems — Step 4.
+  // --- FLAG TOTEMS (prototype 10964-10966) ---
+  // 3 clan banners framing the room centre: PRED pink at x=-3.5, IRW gold
+  // centre, ANA cyan at x=3.5. Each is a pole + concrete base + canvas-
+  // texture cloth with accent stripe + emblem + 3-letter label. Factory
+  // lives in src/scene/objects/clanFlag.js per "one object = one module".
+  scene.add(makeClanFlag(THREE, '#ff066f', -3.5, 'PRED'));
+  scene.add(makeClanFlag(THREE, '#D4A843', 0,    'IRW'));
+  scene.add(makeClanFlag(THREE, '#4dd9ff', 3.5,  'ANA'));
 
   // Orbit tick — prototype 10880/scene loop equivalent: gentle camera sway
   // so the static composition breathes. Radius 7.5 matches initial position.
