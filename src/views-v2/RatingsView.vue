@@ -7,12 +7,20 @@ import { useRouter } from 'vue-router';
 
 const router = useRouter();
 
+function handleKeydown(e) {
+  if (e.key === 'Escape') {
+    router.push('/v2');
+  }
+}
+
 onMounted(() => {
+  window.addEventListener('keydown', handleKeydown);
   // TODO Step 5: buildRatingsScene + registerScene + activateScene
-  // TODO Step 5: resize + keydown listeners
+  // TODO Step 5: resize listener
 });
 
 onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleKeydown);
   // TODO Step 5: activateScene('pit') → unregisterScene → dispose
 });
 
