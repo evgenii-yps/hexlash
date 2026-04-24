@@ -25,18 +25,26 @@ export function buildClanScene(THREE, aspect) {
   camera.lookAt(0, 1.6, 0);
 
   // --- FLOOR + WALLS + FOG via shared 5A helper ---
-  // Prototype 10879 FogExp2(0x070811, 0.05). Floor 0x20202a + concrete texture
-  // repeat(5,5) matches Profile/Training/MM/Create pattern. Walls 0x0e0e18
-  // a touch bluer than Profile (0x14141c) — reads as the "clan hall" mood.
+  // Prototype 10879 FogExp2(0x070811, 0.05). Concrete texture repeat(5,5)
+  // matches Profile/Training/MM/Create pattern.
+  //
+  // Floor 0x24242e + walls 0x16161e — brightened from prototype 0x20202a /
+  // 0x0e0e18 as a Step 5 follow-up after visual verify. Prototype values
+  // crush to black against fog 0.05 + ACES exposure 2.3 on target hardware
+  // (only dust particles + flag accents read through). Bump keeps the
+  // "clan hall" identity (still darker than Profile 0x2c2c34 / 0x14141c)
+  // while restoring structural readability. Unplanned divergence — see
+  // EPIC5_5D_FINAL_REPORT §5.
+  //
   // Each scene owns its texture instance — `repeat` is shared state on the
   // Texture object (see materials/concrete.js note).
   const floorTex = makeConcreteTexture(THREE);
   floorTex.repeat.set(5, 5);
   const floorMaterial = new THREE.MeshStandardMaterial({
-    map: floorTex, color: 0x20202a, roughness: 0.95, metalness: 0.02,
+    map: floorTex, color: 0x24242e, roughness: 0.95, metalness: 0.02,
   });
   const wallMaterial = new THREE.MeshStandardMaterial({
-    color: 0x0e0e18, roughness: 0.95,
+    color: 0x16161e, roughness: 0.95,
   });
   buildOctagonalRoom(THREE, scene, {
     R: CL_ROOM_R,
@@ -65,17 +73,19 @@ export function buildClanScene(THREE, aspect) {
   scene.add(keyLight, keyLight.target);
 
   // Rim lights — pink L / gold R — frame the totems from each side. Prototype
-  // intensities 0.5 / 0.4 are set here; bump to ~1.0 / ~0.8 is expected as a
-  // Step 5 follow-up after user visual verify (lesson #13, 4th precedent).
+  // intensities 0.5 / 0.4 read as unlit on target hardware against the dark
+  // wall/fog combo (fog 0.05 + ACES exposure 2.3 crush dim pixels). Bumped
+  // to 1.0 / 0.8 per Step 5 follow-up — 4th precedent of lesson #13 after
+  // Training / Matchmaking / Ratings all applied identical retune.
   const rimL = new THREE.SpotLight(
-    0xff066f, 0.5, 14, Math.PI * 0.4, 0.8, 1.6,
+    0xff066f, 1.0, 14, Math.PI * 0.4, 0.8, 1.6,
   );
   rimL.position.set(-6, 3, 0);
   rimL.target.position.set(0, 1.8, 0);
   scene.add(rimL, rimL.target);
 
   const rimR = new THREE.SpotLight(
-    0xD4A843, 0.4, 14, Math.PI * 0.4, 0.8, 1.6,
+    0xD4A843, 0.8, 14, Math.PI * 0.4, 0.8, 1.6,
   );
   rimR.position.set(6, 3, 0);
   rimR.target.position.set(0, 1.8, 0);
