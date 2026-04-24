@@ -10,20 +10,21 @@
 // opening a PhModal. Other ids (6 interactables + avatar) stay on PhModal.
 // Epic 3Ba Step 1: 'training' now routes to /v2/training.
 // Epic 3Bb Step 1: 'matchmaking' now routes to /v2/matchmaking.
-// Epic 3Bc Step 1: 'create' now routes to /v2/create. Remaining 3
-// interactables (ratings/clan/shop) keep PhModal until Epic 4+.
+// Epic 3Bc Step 1: 'create' now routes to /v2/create.
 // Epic 4 Step 2: slot 1 (captain) carries a real agent UUID. Click flow:
-//   - Fixed interactables → PhModal (ratings/clan/shop) or sub-scene route.
+//   - Fixed interactables → PhModal (clan/shop) or sub-scene route.
 //   - Legacy 'warden'/'predator' (no captain → mock) → /v2/fd/:legacyKey.
 //   - Anything else (real agent UUID) → /v2/fd/:agentId.
 // Epic 5 Sub-Epic 5B Step 1: 'avatar' now routes to /v2/profile instead of
-// opening a PhModal. Remaining 3 PhModal ids: ratings/clan/shop.
+// opening a PhModal.
+// Epic 5 Sub-Epic 5C Step 1: 'ratings' now routes to /v2/ratings instead of
+// opening a PhModal. Remaining 2 PhModal ids: clan/shop.
 import { ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import HudPit from '@/components/hud/HudPit.vue';
 import { useClickState } from '@/scene/interaction/useClickState.js';
 
-const PH_MODAL_IDS = ['ratings', 'clan', 'shop'];
+const PH_MODAL_IDS = ['clan', 'shop'];
 
 const hudRef = ref(null);
 const click = useClickState();
@@ -45,6 +46,10 @@ watch(() => click.seq, () => {
   }
   if (click.id === 'avatar') {
     router.push('/v2/profile');
+    return;
+  }
+  if (click.id === 'ratings') {
+    router.push('/v2/ratings');
     return;
   }
   if (PH_MODAL_IDS.includes(click.id)) {

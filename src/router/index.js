@@ -105,6 +105,11 @@ const v2Routes = [
                 name: 'V2Profile',
                 component: () => import('@/views-v2/ProfileView.vue'),
             },
+            {
+                path: 'ratings',
+                name: 'V2Ratings',
+                component: () => import('@/views-v2/RatingsView.vue'),
+            },
         ],
     },
 ];

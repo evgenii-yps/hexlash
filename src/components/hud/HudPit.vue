@@ -41,11 +41,8 @@ const MODAL_CONTENT = {
   // /v2/create instead of opening a PhModal.
   // 'avatar' removed in Epic 5 Sub-Epic 5B Step 1 — avatar btn clicks now
   // route to /v2/profile instead of opening a PhModal.
-  ratings: {
-    kicker: 'Leaderboard',
-    title: 'RATINGS',
-    desc: 'Top clubs and fighters of the season.',
-  },
+  // 'ratings' removed in Epic 5 Sub-Epic 5C Step 1 — ratings plinth clicks now
+  // route to /v2/ratings instead of opening a PhModal.
   clan: {
     kicker: 'Your Clan',
     title: 'CLAN',

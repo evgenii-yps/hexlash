@@ -1,0 +1,5 @@
+/* Sub-Epic 5C Step 1 stub.
+ * Full port of prototype hexlash_v24.html lines 2326-2590 lands in Step 6.
+ * Scoped via .app-v2 prefix (5B profile.css precedent).
+ * Note: .arch-tag-{pre,ana,gho,sen,mav,jug} already live in create.css app-wide.
+ * Do NOT re-declare here — reuse. */
