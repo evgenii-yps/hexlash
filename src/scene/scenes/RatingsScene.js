@@ -115,7 +115,60 @@ export function buildRatingsScene(THREE, aspect) {
   });
   scene.add(raDust.group);
 
-  // --- RING SILHOUETTE + 8 POSTS (Step 4) ---
+  // --- DISTANT RING SILHOUETTE (prototype 10107-10126) ---
+  // ExtrudeGeometry from an 8-vertex Shape — suggests "the arena" without
+  // rendering the full pit. raR=2.5 (smaller than hub's 3.6) so the ring
+  // reads as distant. Bevel on edges catches the rim lights. Inline here
+  // rather than a helper — specific to Ratings, no reuse surface (Create/
+  // MM/Training don't have rings).
+  const raRingShape = new THREE.Shape();
+  const raR = 2.5;
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2 + Math.PI / 8;
+    const x = Math.cos(a) * raR;
+    const y = Math.sin(a) * raR;
+    i === 0 ? raRingShape.moveTo(x, y) : raRingShape.lineTo(x, y);
+  }
+  raRingShape.closePath();
+
+  const raRingGeo = new THREE.ExtrudeGeometry(raRingShape, {
+    depth: 0.25,
+    bevelEnabled: true,
+    bevelThickness: 0.04,
+    bevelSize: 0.04,
+    bevelSegments: 2,
+  });
+  raRingGeo.rotateX(-Math.PI / 2);
+
+  const raRingMat = new THREE.MeshStandardMaterial({
+    color: 0x3a3a40,
+    roughness: 0.9,
+    metalness: 0.1,
+  });
+
+  const raRingPlatform = new THREE.Mesh(raRingGeo, raRingMat);
+  raRingPlatform.position.z = -3;
+  scene.add(raRingPlatform);
+
+  // --- 8 RING POSTS (prototype 10127-10139) ---
+  // Brushed-steel cylinders at each octagon vertex. Share a single geometry
+  // + material — 8 Meshes, zero duplicate GPU buffers. Post height 1.6
+  // centred at y=1.05 sits atop the 0.25-thick platform (y=0 to y=0.25).
+  const raPostMat = new THREE.MeshStandardMaterial({
+    color: 0x3a3d48,
+    roughness: 0.4,
+    metalness: 0.85,
+  });
+  const raPostGeo = new THREE.CylinderGeometry(0.05, 0.06, 1.6, 12);
+
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2 + Math.PI / 8;
+    const x = Math.cos(a) * raR;
+    const z = Math.sin(a) * raR;
+    const post = new THREE.Mesh(raPostGeo, raPostMat);
+    post.position.set(x, 0.25 + 0.8, z - 3);
+    scene.add(post);
+  }
 
   function tick(/* t */) {
     raDust.tick();
@@ -138,4 +191,3 @@ export function buildRatingsScene(THREE, aspect) {
   return { scene, camera, tick, dispose };
 }
 
-export { RA_ROOM_R, RA_ROOM_H };
