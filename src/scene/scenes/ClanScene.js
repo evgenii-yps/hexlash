@@ -7,7 +7,7 @@
 
 import { makeConcreteTexture } from '../materials/concrete.js';
 import { buildOctagonalRoom } from '../objects/octagonalRoom.js';
-// createDustField import reserved for Step 3.
+import { createDustField } from '../objects/dustField.js';
 
 const CL_ROOM_R = 14;
 const CL_ROOM_H = 9;
@@ -49,7 +49,55 @@ export function buildClanScene(THREE, aspect) {
     receiveShadow: true,
   });
 
-  // lighting + dust — Step 3. Flag totems — Step 4.
+  // --- LIGHTING (prototype 10969-10982) ---
+  // Ambient + Hemi base fill slightly warmer-bluer than Profile — reads as
+  // "the hall where clans gather" rather than a solo podium room.
+  scene.add(new THREE.AmbientLight(0x16161e, 0.4));
+  scene.add(new THREE.HemisphereLight(0x1c1820, 0x06060c, 0.35));
+
+  // Warm key spot overhead — draws the eye down onto the flag totems (Step 4).
+  const keyLight = new THREE.SpotLight(
+    0xfff0e8, 1.6, 14, Math.PI * 0.25, 0.7, 1.4,
+  );
+  keyLight.position.set(0, 7, 2);
+  keyLight.target.position.set(0, 2.5, 0);
+  scene.add(keyLight, keyLight.target);
+
+  // Rim lights — pink L / gold R — frame the totems from each side. Prototype
+  // intensities 0.5 / 0.4 are set here; bump to ~1.0 / ~0.8 is expected as a
+  // Step 5 follow-up after user visual verify (lesson #13, 4th precedent).
+  const rimL = new THREE.SpotLight(
+    0xff066f, 0.5, 14, Math.PI * 0.4, 0.8, 1.6,
+  );
+  rimL.position.set(-6, 3, 0);
+  rimL.target.position.set(0, 1.8, 0);
+  scene.add(rimL, rimL.target);
+
+  const rimR = new THREE.SpotLight(
+    0xD4A843, 0.4, 14, Math.PI * 0.4, 0.8, 1.6,
+  );
+  rimR.position.set(6, 3, 0);
+  rimR.target.position.set(0, 1.8, 0);
+  scene.add(rimR, rimR.target);
+
+  // --- DUST via shared 5A helper (prototype 10957-10963) ---
+  // 6th consumer of createDustField (Training / MM / Create / Profile /
+  // Ratings / Clan). opacity=0.3 overrides helper default 0.45 — prototype
+  // keeps the cloud subtle so the flag totems read clean.
+  const dust = createDustField(THREE, {
+    count: 60,
+    xRadius: 5,
+    zRadius: 4,
+    yMin: 0.3,
+    yMax: 4.3,
+    driftSpeed: 0.0018,
+    color: 0xffd9c8,
+    size: 0.03,
+    opacity: 0.3,
+  });
+  scene.add(dust.group);
+
+  // Flag totems — Step 4.
 
   // Orbit tick — prototype 10880/scene loop equivalent: gentle camera sway
   // so the static composition breathes. Radius 7.5 matches initial position.
@@ -59,7 +107,7 @@ export function buildClanScene(THREE, aspect) {
     camera.position.z = Math.cos(a) * 7.5;
     camera.position.y = 2.6 + Math.sin(t * 0.2) * 0.05;
     camera.lookAt(0, 2.0, 0);
-    // dust.tick(t) wired in Step 3.
+    dust.tick();
   }
 
   function dispose() {
