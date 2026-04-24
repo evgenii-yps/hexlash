@@ -43,11 +43,8 @@ const MODAL_CONTENT = {
   // route to /v2/profile instead of opening a PhModal.
   // 'ratings' removed in Epic 5 Sub-Epic 5C Step 1 — ratings plinth clicks now
   // route to /v2/ratings instead of opening a PhModal.
-  clan: {
-    kicker: 'Your Clan',
-    title: 'CLAN',
-    desc: 'Manage your clan, agents, and shared resources.',
-  },
+  // 'clan' removed in Epic 5 Sub-Epic 5D Step 1 — clan plinth clicks now route
+  // to /v2/clan instead of opening a PhModal.
   shop: {
     kicker: 'Cosmetics',
     title: 'LOCKER',

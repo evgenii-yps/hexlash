@@ -110,6 +110,11 @@ const v2Routes = [
                 name: 'V2Ratings',
                 component: () => import('@/views-v2/RatingsView.vue'),
             },
+            {
+                path: 'clan',
+                name: 'V2Clan',
+                component: () => import('@/views-v2/ClanView.vue'),
+            },
         ],
     },
 ];

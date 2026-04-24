@@ -18,13 +18,15 @@
 // Epic 5 Sub-Epic 5B Step 1: 'avatar' now routes to /v2/profile instead of
 // opening a PhModal.
 // Epic 5 Sub-Epic 5C Step 1: 'ratings' now routes to /v2/ratings instead of
-// opening a PhModal. Remaining 2 PhModal ids: clan/shop.
+// opening a PhModal.
+// Epic 5 Sub-Epic 5D Step 1: 'clan' now routes to /v2/clan instead of opening
+// a PhModal. Remaining 1 PhModal id: shop.
 import { ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import HudPit from '@/components/hud/HudPit.vue';
 import { useClickState } from '@/scene/interaction/useClickState.js';
 
-const PH_MODAL_IDS = ['clan', 'shop'];
+const PH_MODAL_IDS = ['shop'];
 
 const hudRef = ref(null);
 const click = useClickState();
@@ -50,6 +52,10 @@ watch(() => click.seq, () => {
   }
   if (click.id === 'ratings') {
     router.push('/v2/ratings');
+    return;
+  }
+  if (click.id === 'clan') {
+    router.push('/v2/clan');
     return;
   }
   if (PH_MODAL_IDS.includes(click.id)) {
