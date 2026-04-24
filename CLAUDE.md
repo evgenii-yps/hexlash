@@ -2586,3 +2586,127 @@ src/styles/v24/profile.css                       — 552 — 1-to-1 port про�
 
 **Следующий sub-epic:** 5C — `/v2/ratings` (per HANDOFF_EPIC5 §4 Вариант B list: Profile → Ratings → Clan → Shop). Pre-flight готов в handoff: ~693 строк legacy `RatingsView.vue`, 4 таба (MyClub/Clubs/Fighters/Agents).
 
+### Эпик 5 — Sub-Epic 5C — Ratings (✅ COMPLETE)
+
+Завершён 2026-04-24. Вторая views-миграция Эпика 5. Клик по ratings plinth в hub → `/v2/ratings` с unified leaderboard HUD (5 scope tabs + season toggle + search + sticky your-row) поверх lazy RatingsScene. Визуальный паритет с прототипом 4767-4819 (HUD) + 10060-10200 (3D scene). 10 functional + 2 follow-up + 1 hot-fix + 2 skipped (no-op) + 3 финальных коммита.
+
+**Commit range:** `8d25c14` (Step 1) → `e8ab71c` (hot-fix 10.1). Designated branch `claude/implement-ratings-endpoint-4BPEk` (run-local). Predecessor — ветка `claude/hexlash-visual-migration-epic5-DV1oX` (5A+5B run). Merge target — `visual-v2` (в конце Epic 5).
+
+**Что видит пользователь:**
+- Click на ratings plinth в hub → navigate `/v2/ratings`.
+- Октагональная тёмная комната (R=16, H=9, fogDensity=0.055, floor 0x1c1c24, walls 0x0e0e16) — темнее Profile ("tomb of rankings" mood). В глубине на z=-3 octagonal ring silhouette (ExtrudeGeometry 8-vertex shape, raR=2.5, depth 0.25, bevel 0.04) с 8 brushed-steel posts (CylinderGeometry 0.05/0.06/1.6) по вершинам.
+- 3 spotlights (warm key 1.4, pink rim left 1.2, gold rim right 0.9 — rims удвоены от prototype per user visual verify), volumetric shaft (ConeGeometry 2.0×6 additive opacity 0.045), 60 dust particles (warm 0xffd9c8, opacity 0.3, zOffset -2 toward ring). Camera static (0,3,9) → (0,1.6,0), no auto-orbit (5B parity).
+- HUD: back btn + title "Hexlash / LEADERBOARD" + season tabs Season 1 / All Time (top-right) + central panel:
+  - Toolbar: 5 scope tabs (Global / Friends / Clan / Country / Live) с active pink border + search input (debounced 200ms).
+  - Table: thead (8 cols: # / Handle / Archetype / Belt / ELO / W/L / WR / Streak) + tbody rows.
+  - Rows: rank с gold/silver/bronze для #1-3, archetype colored per `arch-tag-{shortId}` (reuse из create.css), belt name, ELO с toLocaleString, W/L, WR good (≥60 green) / bad (<45 red), Streak hot (≥5W pink glow) / dash.
+- Sticky your-row pre-footer: captain data из `master.userData.captain.{elo,belt,primaryModule}` + `userData.login` + flat `userData.wins`/`losses`. Null-safe: hidden если captain отсутствует. Streak всегда `—` (не трекается в UserModel).
+- "Next rank: +N ELO to reach top M" computed. Если myRank ≤ 10 — "Top 10 reached". Structured `{ kind, eloDiff, targetRank }` вместо regex-string split.
+- Scope/season/search — client-side mock (10 datasets = 5 scopes × 2 seasons, Mulberry32 seedable RNG).
+- Mobile (`@media max-width: 720px`): drop cols arch/belt/wl/streak, toolbar column-stack.
+- Back / Esc → `/v2`.
+
+**Дерево новых файлов (4):**
+
+```
+src/views-v2/RatingsView.vue            —  83 строки — orchestrator: lazy scene + listeners + strict teardown (5B parity). Identical structure + size to 5B ProfileView.
+src/scene/scenes/RatingsScene.js        — 193 — octagonal room (R=16 H=9 via 5A buildOctagonalRoom — 5th consumer) + 3 spotlights + shaft + ring silhouette (ExtrudeGeometry) + 8 posts + 60 dust particles (via 5A createDustField — 5th consumer). Local consts RA_ROOM_R=16 / RA_ROOM_H=9 (internal only, re-exports removed Step 4 cleanup).
+src/components/hud/HudRatings.vue       — 300 — HUD + 5 scope tabs + 2 season tabs + debounced search (200ms) + v-for rows + sticky your-row bound to master.userData.captain. Includes archetypeIdShort + archetypeName + beltLabelShort helpers inline. Scoped `<style>` block added in hot-fix 10.1.
+src/styles/v24/ratings.css              — 386 — 1-to-1 port прототипа 2326-2590 scoped `.app-v2`, 12 sections. `.arch-tag-{id}` skipped — reuse из create.css (Correction 3 from Step 0 pre-flight).
+src/data/ratingsMock.js                 —  91 — Mulberry32 seedable RNG + 10 datasets (5 scopes × 2 seasons × generateLeaderboard). Client-side mock до PvP-integration sub-epic.
+```
+
+**Изменены (4):**
+
+- `src/router/index.js` — `V2Ratings` route (`/v2/ratings`) в `v2Routes.children`.
+- `src/views-v2/PitViewV2.vue` — `PH_MODAL_IDS` стал `['clan', 'shop']`; explicit branch `click.id === 'ratings' → router.push('/v2/ratings')` добавлен в click watcher (перед PhModal fallback, после training/matchmaking/create/avatar).
+- `src/components/hud/HudPit.vue` — `MODAL_CONTENT.ratings` entry удалён. Остались entries: `clan`, `shop`, `warden`, `predator` (последние два — legacy mock fallthrough, status unclear — deferred #10 для 5G).
+- `src/styles/hexlash-v24.css` — `@import './v24/ratings.css'` после `./v24/profile.css`.
+
+**Store reuse (0 new Vuex modules, 0 new actions):**
+
+| Feature | Store path | Mechanism |
+|---|---|---|
+| Current user | `master/getMaster` | computed ref |
+| Captain data | `master.userData.captain.*` | direct (belt, isHexmaster, elo, primaryModule) per §Captain in Public UI |
+| Handle | `master.userData.login` | direct |
+| W/L totals | `master.userData.wins` / `master.userData.losses` | **flat** (not `.stats` — ТЗ §11.3 shape error, see §5 Расхождения) |
+| Belt display | `getBeltDisplay(grade)` from `@/utils/beltDisplay.js` | utility reuse (5B precedent) |
+
+**Ключевые паттерны:**
+
+- **Lazy sub-scene симметрично 5B Profile.** `buildRatingsScene` + `registerScene('ratings')` + `activateScene('ratings')` в `onMounted`. Teardown — `activateScene('pit')` → `unregisterScene` → `dispose` (строгий порядок). RatingsView.vue 83 lines identical size to 5B ProfileView.vue.
+- **5A helpers — 5-й consumer** для обоих `buildOctagonalRoom` и `createDustField`. Validate reuse pattern за пределами 4 consumer'ов 5A+5B. Helpers stable.
+- **Path A (prototype-first).** Legacy RatingsView табовая структура (MyClub/Clubs/Fighters/Agents) НЕ переносится в v2. Новая ментальная модель — unified leaderboard + 5 scope filters per prototype 4767-4819. Legacy `/ratings/*` route остаётся параллельно (693 строк, не тронут).
+- **Client-side mock data (Mulberry32).** `src/data/ratingsMock.js` — seedable RNG + 10 pre-generated datasets. Prototype 10218-10272 verbatim port. Real API wiring → PvP-integration sub-epic. Rationale: 5C scope — визуал, API wiring отвлекает.
+- **Short-ID vs full-name archetype bridge.** Mock data hardcodes short IDs (`'pre'`, `'ana'`, ...) matching `arch-tag-{id}` CSS classes в create.css (Correction 3 reuse). Real `master.userData.captain.primaryModule` — full name (`'predator'`). `archetypeIdShort()` / `archetypeName()` helpers inline в HudRatings.vue (Correction 4 from Step 0) bridge обе directions.
+- **Null-safe your-row.** `v-if="yourRow"` — hide entirely если `master.userData.captain` отсутствует (0-agent accounts / lazy User→Fighter migration not yet run). 99% accounts имеют captain через Fighter #1 migration. 0-agent UX не broken — leaderboard сверху остаётся.
+- **DOM MODAL_CONTENT vs 3D raycast — оба path обработаны** (урок 5B #2 применён). Step 0 pre-flight grep'нул оба. Step 1 edit'ы закрыли оба path одним коммитом.
+- **Structured `nextRankHint`.** Original ТЗ §11.3 использовал `{ text: string }` + regex split в template (`String.match(/\+(\d+)/)?.[1]`) — уродливо. Финал: structured `{ kind: 'top10' | 'climb', eloDiff, targetRank }`, template branch по `kind`. Clean Vue idiom.
+
+**Расхождения — осознанные:**
+
+- **5.1 Path A decision** — legacy табовая структура не переносится, новая модель. Legacy `/ratings/*` остаётся параллельно.
+- **5.2 Client-side mock** — real API wiring отложен в PvP-integration. 10 datasets (5 scopes × 2 seasons) Mulberry32 seeded.
+- **5.3 Rim intensity bump от prototype.** Prototype 10142-10158 использует pink 0.6 + gold 0.45 — на target hardware на Vercel preview они почти не читаются на dark backdrop (wall `0x0e0e16` + fog 0.055 + low intensity × wide beam angle). Удвоены до 1.2 / 0.9 по user visual verify (Step 5 follow-up `0d237a8`). Аналогично precedent'у Epic 3A toneMapping tuning — prototype values откалиброваны под другую scene density, target hardware требует adjustment.
+- **5.4 ТЗ §11.3 shape error.** Prompt spec'ал `master.userData.stats.{wins, losses, streak}` — factual UserModel shape: flat `userData.wins` / `userData.losses` (no nested `.stats`, no `.streak` tracking). Pre-verified через grep HudProfile 5B pattern + UserModel. Null streak → `—` display fallback. Real streak tracking → PvP-integration sub-epic.
+- **5.5 Streak inconsistency mock vs real.** Leaderboard rows содержат streak (Mulberry32 генерит 0-8W/L), your-row всегда `—`. Subtle visual inconsistency ("у всех есть, у меня нет") — не bug, honest UI state: UserModel не трекает streak. Correction → PvP-integration.
+- **5.6 Hot-fix 10.1 — HUD pointer-events missing.** HudRatings.vue shipped без `<style scoped>` block (Step 6 markup port skipped it — not in TZ §9.3 spec). All clicks broken + sticky row mis-anchored к `.ratings-view`. Fix: 2-rule scoped block (`.ratings-hud { position: absolute; inset: 0; pointer-events: none; } > * { pointer-events: auto }`) — identical к 5B HudProfile line 618 pattern. Single commit `e8ab71c`. See also: HANDOFF 5D urok #12.
+- **5.7 Steps 9 + 10 skipped — no-op.** Step 9 (season polish): Step 7 уже реализовал reactive season toggle корректно, verify'фильтр прошёл без code changes. Step 10 (mobile + polish): Step 6 CSS port уже включил `@media max-width: 720px` block + rank-1/2/3 highlights + WR good/bad + streak hot + rt-empty — все edge cases prototype-correct. Traceable step numbering сохраняется.
+- **5.8 Local `npm install` в Step 1.** node_modules отсутствовали в designated branch initial state. Package-lock.json не менялся, новых зависимостей не добавлено. Environmental concern, не scope — будущий 5D run на новой ветке, возможно, потребует повторить.
+
+**Bugs fixed (hot-fix 10.1):** HudRatings.vue `<style scoped>` pointer-events block + root positioning. Single commit. Verified через grep + user visual verify → клики + sticky row восстановлены.
+
+**Deferred (carry-over, не закрываются в 5C):**
+
+| # | Item | Target | Severity |
+|---|---|---|---|
+| 1 | Real ratings API wiring (5 scope filters, season data, backend search) — сейчас client-side mock | PvP-integration sub-epic (после 5G) | Functional |
+| 2 | `AgentLeaderboard.vue` dead code cleanup (Step 0 подтвердил только docs refs + one src file unused в current flow) + stale CLAUDE.md "Agent Rankings + Leagues (ТЗ-26)" секция | 5G polish | Cleanup |
+| 3 | Live tab realtime indicator (pulsing dot) — если WS push `ratings_live` доступен | PvP-integration или 5G | UX |
+| 4 | "Next rank" logic beyond decile (current: naive "top M threshold - my ELO") — real tier progression (Bronze/Silver/.../Champion) | 5G polish | UX |
+| 5 | HudRatings.vue 300 lines > soft-300 — splitting candidate (script/template/style split или component extract) | 5G polish | Code quality |
+| 6 | LocalStorage persist season/scope choice между навигациями | 5G polish | UX |
+| 7 | i18n inline EN strings (scope tab labels, season labels, "Next rank", placeholders) | 5F i18n pass | Feature |
+| 8 | MyClubTab.vue — нет src-ссылок (только docs/handoff) — подозрение на dead code; подтвердить extended grep в 5G | 5G polish | Cleanup |
+| 9 | Unused const re-exports в ProfileScene.js (`PR_ROOM_R` / `PR_ROOM_H`) — dead surface inherited from 5B | 5G polish | Cleanup |
+| 10 | `MODAL_CONTENT.warden` + `.predator` в HudPit — status unclear. Found during Step 11 regression. Если stale (Epic 2-3 artifacts) — cleanup candidate. Если active (hub показывает PhModal на plinth click) — не трогать | 5G polish | Cleanup candidate |
+| 11 | Real streak tracking (UserModel не имеет `.streak` — your-row всегда `—`) | PvP-integration | Feature |
+
+**Шаги и коммиты (10 functional + 2 follow-up + 1 hot-fix + 2 skipped + 3 final):**
+
+| # | Commit | Что |
+|---|---|---|
+| 1 | `8d25c14` | route + entry switch + stubs |
+| 1 follow-up | `5008af3` | Esc listener in RatingsView stub (UX gap Steps 1-5) |
+| 2 | `fcdfe4f` | RatingsScene scaffold (5A buildOctagonalRoom — 5th consumer) |
+| 3 | `69a317a` | lighting + shaft + dust (5A createDustField — 5th consumer) |
+| 4 | `fd082bc` | distant ring silhouette + 8 posts + cleanup RA_ROOM_R/H re-exports |
+| 5 | `4dd4bc9` | view orchestrator with lazy scene lifecycle |
+| 5 follow-up | `0d237a8` | bump rim intensities (pink 0.6→1.2, gold 0.45→0.9) |
+| 6 | `39d1d6e` | HUD skeleton + ratings.css port (386 lines, `.arch-tag-*` reuse from create.css) |
+| 7 | `f06f7e4` | scope tabs + search + mock leaderboard (ratingsMock.js + reactive state) |
+| 8 | `57d77ca` | sticky your-row bound to captain data (null-safe, shape corrections applied) |
+| 9 | — skipped | season polish no-op (verified post-Step 7, no code change) |
+| 10 | — skipped | mobile + polish no-op (all edge cases ported in Step 6) |
+| hot-fix 10.1 | `e8ab71c` | HUD pointer-events + root positioning (missing `<style scoped>` block) |
+| 13 | this | CLAUDE.md Sub-Epic 5C section |
+| 14 | next | EPIC5_5C_FINAL_REPORT.md |
+| 15 | next | HANDOFF_EPIC5_5D_CHAT_HANDOFF.md |
+
+**Sub-Epic 5C — CLOSED.** Route table `/v2/*` обновлена:
+
+| Route | Epic / Sub-Epic | Статус |
+|---|---|---|
+| `/v2` | 2 + 4 | ✅ hub — real captain + secondAgent + auto-refresh |
+| `/v2/fd/warden` / `/v2/fd/predator` / `/v2/fd/:uuid` | 3A + 4 | ✅ FD (legacy mocks + dynamic) |
+| `/v2/fight` | 3A + 3Bb | ✅ via Matchmaking only |
+| `/v2/training` | 3Ba | ✅ (5A migrated) |
+| `/v2/matchmaking` | 3Bb | ✅ (5A migrated) |
+| `/v2/create` | 3Bc + 4 | ✅ backend persist |
+| `/v2/profile` | 5B | ✅ 4-card HUD + lazy ConnectWallet + WS friends |
+| `/v2/ratings` | **5C** | ✅ unified leaderboard (5 scope × 2 season mocks) + sticky your-row + lazy RatingsScene + 5A 5-й consumer both helpers |
+
+**Следующий sub-epic:** 5D — `/v2/clan/:id` (per TZ §5). Pre-flight starts в `docs/visual-migration/HANDOFF_EPIC5_5D_CHAT_HANDOFF.md` (Step 15).
+
+
