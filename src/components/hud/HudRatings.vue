@@ -277,3 +277,23 @@ const nextRankHint = computed(() => {
     </div>
   </div>
 </template>
+
+<!-- Hot-fix 10.1: Step 6 markup was ported without a `<style scoped>` block.
+     Parent RatingsView.vue sets `.ratings-view { pointer-events: none }` to
+     let CanvasLayer receive 3D drag events — every v2 HUD component is
+     expected to re-enable pointer-events on its own root (5B HudProfile.vue
+     line 618 establishes this pattern). Without the reset, scope tabs /
+     season chips / search input inherited `none` → nothing was clickable.
+     `position: absolute; inset: 0` also anchors positioned descendants
+     (back / title / season / panel / sticky your-row) to the HUD box
+     rather than the parent `.ratings-view`, matching 5B layout. -->
+<style scoped>
+.ratings-hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.ratings-hud > * {
+  pointer-events: auto;
+}
+</style>
