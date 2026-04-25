@@ -58,53 +58,31 @@ export function buildClanScene(THREE, aspect) {
     receiveShadow: true,
   });
 
-  // --- LIGHTING (prototype 10969-10982) ---
-  // Ambient + Hemi base fill matched 1:1 to 5B Profile (lines 47-48). Earlier
-  // dimmer values (0x16161e/0.4 + 0x1c1820/0.35) were treated as creative
-  // tuning but turned out to be part of Profile's readability formula —
-  // without them the floor reads near-black even with key light fixed.
-  // Step 5 hot-fix #2 — see EPIC5_5D_FINAL_REPORT §5.13.
+  // Lighting — Profile clone (Step 5 hot-fix #3, "abandon prototype intent" mode).
+  // 4 предыдущих attempts (follow-up + 2 hot-fixes) не дали readability.
+  // Replacing с literal copy ProfileScene.js:46-66 lighting block —
+  // proven working precedent. Identity-divergence (clan flags + camera tilt)
+  // сохраняется; lighting baseline = Profile.
+  // Gold rim accent (clan identity) отложен до baseline verify — отдельный
+  // mini-commit добавит обратно поверх рабочего baseline.
+  // See EPIC5_5D_FINAL_REPORT §5.14 + lesson #16 final-final form.
   scene.add(new THREE.AmbientLight(0x1a1a28, 0.45));
-  scene.add(new THREE.HemisphereLight(0x2a2638, 0x06060c, 0.4));
+  scene.add(new THREE.HemisphereLight(0x2a2638, 0x0a0a12, 0.4));
 
-  // Warm key spot overhead — illuminates the floor at origin so the
-  // concrete disc + central area read clean. Target y=0.5 matches the
-  // 5B Profile precedent (line 54). Earlier value y=2.5 aimed the cone
-  // at flag mid-height instead of the floor — Step 5 hot-fix per
-  // Step 5 follow-up visual verify.
-  const keyLight = new THREE.SpotLight(
-    0xfff0e8, 1.6, 14, Math.PI * 0.25, 0.7, 1.4,
-  );
-  keyLight.position.set(0, 7, 2);
-  keyLight.target.position.set(0, 0.5, 0);
-  scene.add(keyLight, keyLight.target);
+  const key = new THREE.SpotLight(0xfff0e8, 1.6, 14, Math.PI * 0.28, 0.55, 1.4);
+  key.position.set(0, 7.5, 0);
+  key.target.position.set(0, 0.5, 0);
+  key.castShadow = true;
+  key.shadow.mapSize.width = 1024;
+  key.shadow.mapSize.height = 1024;
+  scene.add(key);
+  scene.add(key.target);
 
-  // Rim lights — pink L / gold R — frame the totems from each side. Prototype
-  // intensities 0.5 / 0.4 read as unlit on target hardware against the dark
-  // wall/fog combo (fog 0.05 + ACES exposure 2.3 crush dim pixels). Step 5
-  // follow-up bumped to 1.0 / 0.8 (4th precedent of lesson #13). Step 5
-  // hot-fix retargeted from y=1.8 to y=1 (Profile precedent line 64).
-  //
-  // Step 5 hot-fix #2 — final readability pass:
-  // - Intensities re-bumped 1.0/0.8 -> 1.5/1.2 — our R=14 octagon is larger
-  //   than Profile + materials darker, baseline rim intensity insufficient.
-  // - Distance 14 -> 18 — walls sit at exact R=14, prototype distance 14
-  //   placed light cone cutoff right at the wall plane (edge case, dim).
-  //   18 lets the cone hit walls with margin so rim pools read clean.
-  // See EPIC5_5D_FINAL_REPORT §5.13.
-  const rimL = new THREE.SpotLight(
-    0xff066f, 1.5, 18, Math.PI * 0.4, 0.8, 1.6,
-  );
-  rimL.position.set(-6, 3, 0);
-  rimL.target.position.set(0, 1, 0);
-  scene.add(rimL, rimL.target);
-
-  const rimR = new THREE.SpotLight(
-    0xD4A843, 1.2, 18, Math.PI * 0.4, 0.8, 1.6,
-  );
-  rimR.position.set(6, 3, 0);
-  rimR.target.position.set(0, 1, 0);
-  scene.add(rimR, rimR.target);
+  const rim = new THREE.SpotLight(0xff066f, 0.5, 14, Math.PI * 0.4, 0.8, 1.6);
+  rim.position.set(-7, 3, 0);
+  rim.target.position.set(0, 1, 0);
+  scene.add(rim);
+  scene.add(rim.target);
 
   // --- DUST via shared 5A helper (prototype 10957-10963) ---
   // 6th consumer of createDustField (Training / MM / Create / Profile /
