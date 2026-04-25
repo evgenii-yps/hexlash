@@ -112,6 +112,82 @@ export function buildClanScene(THREE, aspect) {
   scene.add(makeClanFlag(THREE, '#D4A843', 0,    'IRW'));
   scene.add(makeClanFlag(THREE, '#4dd9ff', 3.5,  'ANA'));
 
+  // --- EMISSIVE ACCENTS (Step 5 hot-fix #5 — H1 fix). ---
+  // Diagnostic debug/5d-h1-emissive (commit dd05fbe) confirmed H1: scene
+  // rendered dark because camera lookAt(0, 1.4, 0) framed empty air between
+  // the 3 flag totems — pixel = scene.background through ACES = [1,1,2,255].
+  // 4 prior hot-fix series tuned lighting / materials / camera tilt; all
+  // missed the actual cause. Profile reads bright not from lighting but from
+  // its emissive shaft + disc + bright concrete podium in centre-frame.
+  //
+  // Fix: add emissive geometry centred at lookAt point. Stylistically
+  // Clan-not-Profile: 3-color floor disc (clan crest motif blend pink/gold/
+  // cyan), 3 vertical accent shafts per flag, gold ring focal under IRW.
+  // All MeshBasicMaterial + AdditiveBlending — lighting/fog independent.
+  // See EPIC5_5D_FINAL_REPORT §5.16 + lessons #19/#20.
+
+  // Centre floor disc — 3-color radial gradient (warm centre / gold / pink fade).
+  const cdCv = document.createElement('canvas');
+  cdCv.width = cdCv.height = 256;
+  const cdCtx = cdCv.getContext('2d');
+  const cdGrad = cdCtx.createRadialGradient(128, 128, 5, 128, 128, 128);
+  cdGrad.addColorStop(0,    'rgba(255, 230, 210, 0.55)');
+  cdGrad.addColorStop(0.35, 'rgba(212, 168, 67, 0.30)');
+  cdGrad.addColorStop(0.70, 'rgba(255, 6, 111, 0.15)');
+  cdGrad.addColorStop(1,    'rgba(0, 0, 0, 0)');
+  cdCtx.fillStyle = cdGrad;
+  cdCtx.fillRect(0, 0, 256, 256);
+  const centerDisc = new THREE.Mesh(
+    new THREE.PlaneGeometry(4, 4),
+    new THREE.MeshBasicMaterial({
+      map: new THREE.CanvasTexture(cdCv),
+      transparent: true, depthWrite: false,
+      blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+    }),
+  );
+  centerDisc.rotation.x = -Math.PI / 2;
+  centerDisc.position.y = 0.005;
+  scene.add(centerDisc);
+
+  // Three vertical accent shafts — one per flag, color matches flag accent.
+  function makeShaft(THREE, accentHex, posX) {
+    const shaft = new THREE.Mesh(
+      new THREE.ConeGeometry(0.8, 6, 24, 1, true),
+      new THREE.MeshBasicMaterial({
+        color: accentHex, transparent: true, opacity: 0.05,
+        side: THREE.DoubleSide, depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      }),
+    );
+    shaft.position.set(posX, 3, 0);
+    return shaft;
+  }
+  scene.add(makeShaft(THREE, 0xff066f, -3.5));
+  scene.add(makeShaft(THREE, 0xD4A843, 0));
+  scene.add(makeShaft(THREE, 0x4dd9ff, 3.5));
+
+  // Gold ring focal under IRW flag — visual anchor at composition centre.
+  const ringCv = document.createElement('canvas');
+  ringCv.width = ringCv.height = 128;
+  const ringCtx = ringCv.getContext('2d');
+  ringCtx.strokeStyle = 'rgba(212, 168, 67, 0.9)';
+  ringCtx.lineWidth = 6;
+  ringCtx.beginPath();
+  ringCtx.arc(64, 64, 50, 0, Math.PI * 2);
+  ringCtx.stroke();
+  const ring = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.2, 1.2),
+    new THREE.MeshBasicMaterial({
+      map: new THREE.CanvasTexture(ringCv),
+      transparent: true, opacity: 0.5,
+      depthWrite: false, blending: THREE.AdditiveBlending,
+      side: THREE.DoubleSide,
+    }),
+  );
+  ring.rotation.x = -Math.PI / 2;
+  ring.position.set(0, 0.006, 0);
+  scene.add(ring);
+
   // Orbit tick — prototype 10880/scene loop equivalent: gentle camera sway
   // so the static composition breathes. Radius 7.5 matches initial position.
   // lookAt y=1.4 matches Profile precedent — Step 5 hot-fix #4 reverts
