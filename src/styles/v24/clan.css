@@ -1,1 +1,139 @@
-/* Clan v24 styles — populated Step 6 (port prototype 2899-3392). */
+/* Clan v24 styles — port of prototype hexlash_v24.html lines 2899-3392.
+   Scoped under .app-v2 so v2 paths don't leak into legacy.
+   Step 6 ships in 3 parts (edit-split per lesson #9):
+     Part 1 (this commit): 2899-3060 — back / title / noclan / hero / browse.
+     Part 2 (next):        3060-3200 — clan-card / clan-ingrid / header / crest.
+     Part 3 (next):        3200-3392 — side / roster / meta / @media 820px.
+   .clan-demo-toggle + .cdt-label skipped — prototype demo-only state switch,
+   v2 derives state from userData.clanId. */
+
+/* ===== CLAN HUD ===== */
+
+.app-v2 .clan-back {
+  position: absolute; top: 14px; left: 14px;
+  background: var(--bg-panel);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 6px;
+  padding: 8px 14px 8px 10px;
+  color: var(--text-mid);
+  cursor: pointer;
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  font-family: var(--font-mono); font-size: 11px;
+  letter-spacing: 2px; text-transform: uppercase;
+  transition: all 0.15s ease;
+}
+.app-v2 .clan-back:hover {
+  color: #fff;
+  border-color: rgba(255,6,111,0.4);
+  background: rgba(255,6,111,0.08);
+}
+
+.app-v2 .clan-title {
+  position: absolute; top: 14px; left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+}
+.app-v2 .clan-title .ct-kicker {
+  font-family: var(--font-mono); font-size: 9px;
+  letter-spacing: 4px; color: var(--text-dim);
+  text-transform: uppercase; margin-bottom: 3px;
+}
+.app-v2 .clan-title .ct-name {
+  font-family: var(--font-display); font-size: 22px;
+  letter-spacing: 4px;
+}
+
+/* ======================================================= */
+/* STATE 1: NO CLAN — Browse and Create                     */
+/* ======================================================= */
+
+.app-v2 .clan-noclan {
+  position: absolute; top: 70px; left: 14px; right: 14px; bottom: 14px;
+  display: flex; flex-direction: column;
+  gap: 14px;
+}
+
+.app-v2 .nc-hero {
+  background: var(--bg-panel);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  padding: 26px 28px;
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 20px;
+  flex-shrink: 0;
+}
+.app-v2 .nc-hero-info { flex: 1; }
+.app-v2 .nc-hero .nc-eyebrow {
+  font-family: var(--font-mono); font-size: 10px;
+  letter-spacing: 3px; color: var(--hex-primary);
+  text-transform: uppercase; margin-bottom: 6px;
+}
+.app-v2 .nc-hero .nc-title {
+  font-family: var(--font-display); font-size: 24px;
+  letter-spacing: 3px; margin-bottom: 6px;
+}
+.app-v2 .nc-hero .nc-subtitle {
+  font-size: 13px; color: var(--text-mid);
+  line-height: 1.5; max-width: 520px;
+}
+.app-v2 .nc-hero-cta {
+  flex-shrink: 0;
+}
+.app-v2 .nc-create-btn {
+  padding: 12px 22px;
+  background: transparent;
+  border: 1px solid var(--hex-primary);
+  border-radius: 4px;
+  color: #fff;
+  font-family: var(--font-mono); font-size: 11px;
+  letter-spacing: 3px; text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.app-v2 .nc-create-btn:hover {
+  background: rgba(255,6,111,0.15);
+  box-shadow: 0 0 18px rgba(255,6,111,0.25);
+}
+
+.app-v2 .nc-browse {
+  flex: 1;
+  display: flex; flex-direction: column;
+  min-height: 0;
+}
+.app-v2 .nc-browse-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
+}
+.app-v2 .nc-browse-title {
+  font-family: var(--font-mono); font-size: 10px;
+  letter-spacing: 3px; color: var(--text-dim);
+  text-transform: uppercase;
+}
+.app-v2 .nc-search {
+  max-width: 240px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 4px;
+  padding: 6px 10px;
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  outline: none;
+}
+.app-v2 .nc-search:focus {
+  border-color: var(--hex-primary);
+  box-shadow: 0 0 0 2px rgba(255,6,111,0.12);
+}
+
+.app-v2 .nc-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 10px;
+  overflow-y: auto;
+  padding: 2px;
+  align-content: start;
+}
+.app-v2 .nc-grid::-webkit-scrollbar { width: 4px; }
+.app-v2 .nc-grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); }
