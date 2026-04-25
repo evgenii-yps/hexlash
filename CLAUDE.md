@@ -2707,6 +2707,83 @@ src/data/ratingsMock.js                 —  91 — Mulberry32 seedable RNG + 10
 | `/v2/profile` | 5B | ✅ 4-card HUD + lazy ConnectWallet + WS friends |
 | `/v2/ratings` | **5C** | ✅ unified leaderboard (5 scope × 2 season mocks) + sticky your-row + lazy RatingsScene + 5A 5-й consumer both helpers |
 
-**Следующий sub-epic:** 5D — `/v2/clan/:id` (per TZ §5). Pre-flight starts в `docs/visual-migration/HANDOFF_EPIC5_5D_CHAT_HANDOFF.md` (Step 15).
+**Следующий sub-epic:** 5D — CLOSED (см. ниже).
+
+### Эпик 5 — Sub-Epic 5D — Clan View (✅ COMPLETE)
+
+Завершён 2026-04-25. Третья views-миграция Эпика 5 после 5B (Profile) + 5C (Ratings). Клик по clan plinth в hub → `/v2/clan` с 2-state HUD (no-clan browse + Create CTA / in-clan header + roster + actions) поверх lazy ClanScene. Визуальный паритет с прототипом 4887-4981 (HUD) + 10860-10998 (3D scene). Step 5 потребовал 5 hot-fix attempts на ложной траектории (lighting tuning) перед prototype port + exposure 2.3 retune фикс на правильной; финальный Step 5 hot-fix #5 emissive accents revert via `git checkout e287a3f -- file` (atomic single-file checkout вместо sequential `git revert × 6` который сломался на overlapping conflicts).
+
+**Commit range:** `ecedd20` (Step 1) → `4b5e105` (Step 8). Plus 11 mid-epic hot-fix / augmentation commits задокументированы в `docs/visual-migration/EPIC5_5D_FINAL_REPORT.md`.
+
+**Routes:** `/v2/clan` (HudClan + ClanScene). Legacy `/clan/:id` retained — fragments reused without duplication.
+
+**Files (new):**
+- `src/views-v2/ClanView.vue` — 80 строк orchestrator (lazy scene + HudClan, 5B/5C parity).
+- `src/components/hud/HudClan.vue` — ~410 строк, 2-state HUD (no-clan / in-clan).
+- `src/scene/scenes/ClanScene.js` — 145 строк, 3D scene (octagonal hall, 3 flag totems, dust).
+- `src/scene/objects/clanFlag.js` — 86 строк, flag totem factory (pole + cloth canvas texture, no colorSpace override per codebase convention).
+- `src/styles/v24/clan.css` — 473 строки, scoped `.app-v2`, port prototype 2899-3392 в 3 commits.
+- `src/data/clanMock.js` — 36 строк, BROWSABLE_CLANS (6) + MY_CLAN_MEMBERS (14) — port prototype 11001-11024 verbatim.
+
+**Reused legacy (augmented, не duplicated):**
+- `src/components/fragments/clan/CreateClan.vue` — `defineExpose({ openModal })` + v2-aware navigation (`path !== '/v2/clan'` conditional перед `router.push('/clan/:id')`).
+- `src/components/fragments/clan/ClanEdit.vue` — same pattern + dissolve flow v2-aware.
+- `src/components/fragments/clan/ClanConfirmModal.vue` — used as-is (controlled-props, defineExpose не нужен).
+
+**Vuex:** namespaced `clan/` module — getters `getClanById`, `getClanRatingsList`; actions `getClanById`, `createClan`, `leaveClan` (no args — uses current user's clan), `deleteClan` (no args).
+
+**Camera + lighting (5D specific, prototype port + exposure 2.3 compensation):**
+- FOV **42** (prototype-first per Q1, diverges Profile FOV 40 / Ratings FOV 44), pos `(0, 2.6, 7.5)`, `lookAt(0, 1.6, 0)`, orbit sin sway в tick.
+- Floor `0x20202a`, walls `0x0e0e18`, fog 0.05 — все verbatim prototype.
+- Key spot `0xfff0e8 × 1.2` (retuned from prototype 1.6 для exposure 2.3) at `(0, 7, 2)` → target `(0, 2.5, 0)`; cone **π*0.35** (widened from prototype π*0.25 для outer flag readability — lesson #21).
+- **2 rim spots** — pink left (`0xff066f × 0.25`) + gold right (`0xD4A843 × 0.2`). Clan identity = 2 rims, не 1 как Profile.
+- Dust 60 particles, xRadius 5, zRadius 4, yMax 4.3, color `0xffd9c8`, opacity 0.3.
+- 3 flag totems via `makeClanFlag` factory: PRED pink `#ff066f` @ x=-3.5 / IRW gold `#D4A843` @ x=0 / ANA cyan `#4dd9ff` @ x=+3.5.
+
+**Step 5 hot-fix narrative (false trail → correct port):**
+Visual readability в Step 5 потребовал 5 sequential hot-fix attempts (`f68846c` follow-up → `4ba9ee0` ambient/hemi/rim → `b424c2b` light targets → `824198c` Profile-clone lighting → `032f74e` camera tilt + floor/wall colors → `be0e563` emissive accents) — all chased wrong target (lighting / material / camera tuning). Diagnostic `debug/5d-h1-emissive` (commit `dd05fbe`, branch since deleted) confirmed H1: composition issue, не lighting. После atomic revert (`51c3752` via `git checkout e287a3f -- file` — sequential `git revert --no-commit × 6` failed на overlapping conflicts), correct port применён (`f26d53f`): prototype values verbatim, intensities ~50% retune для exposure 2.3 compensation. Plus `f88fbf7` fine-tune key cone π*0.25 → π*0.35 + intensity 0.8 → 1.2 + ambient 0.3 → 0.4 для outer flag readability.
+
+**Hot-fixes Step 7+8:**
+- `702b341` — display:none gotcha на lazy CreateClan host. Vuetify VModal Teleport visibility cascade блокируется ancestor display:none **despite** markup teleporting к body. Lesson #23.
+- `1255898` — CreateClan v2-aware navigation conditional (`router.push('/clan/:id')` теперь skip'ится когда `currentRoute.path === '/v2/clan'`). Lesson #24.
+- `21949f8` — ClanEdit prep — defineExpose + v2-aware dissolve conditional (`router.push('/ratings/clans')` same skip).
+- `4b5e105` — in-clan body (header + side + roster) + ClanEdit lazy reuse + Leave confirm via ClanConfirmModal + MY_CLAN_MEMBERS.
+
+**Lessons added (#19-24):**
+
+- **#19** Exposure compensation FIRST. При port'е prototype scenes в v2 — сравнить `renderer.toneMappingExposure` prototype vs v2 (1.05 vs 2.3 в нашем случае) перед любой lighting tune. Prototype values verbatim + exposure compensation = single source of truth, не "Profile parity tune". Frankenstein-mode (Step 5 hot-fix series) cost 5 commits + 5 visual verifies до того как корректный port был обнаружен.
+- **#20** Renderer settings delta как primary diagnostic. Exposure / tonemapping / colorspace mismatches accountfor major fraction of "не выглядит как prototype" issues. При visual readability ambiguity — first compare prototype renderer vs v2 CanvasLayer settings, не tune lighting blindly.
+- **#21** Cone-angle adjustments belong в exposure compensation toolkit вместе с intensity scaling. Exposure boost изменяет light falloff geometry для off-axis geometry (multiple posts / fighters / pillars away from origin) — cone width должна следовать boost иначе off-cone geometry падает в ambient-only lighting.
+- **#22** Pre-commit grep для HUD scoped style должен включать **literal selector ↔ template root class match check**, не только `<style scoped>` block existence. Sample bash:
+  ```
+  root_class=$(grep -oP 'class="hud \K[^"]+' src/components/hud/HudX.vue)
+  grep "\.${root_class} {" src/components/hud/HudX.vue || echo "MISMATCH"
+  ```
+  Step 1 stub `ecedd20` shipped scoped target `.hud-clan` ≠ template `.clan-hud` (typo) — formally passed "block exists" check, functionally broken (pointer-events never applied). Caught Part 4 pre-commit gate.
+- **#23** 5B ConnectWallet `display: none` на lazy `<component :is>` host pattern требует legacy template having inline trigger button to hide. Pure-modal legacy (только VModal в template) doesn't need it. Vuetify VModal Teleport visibility cascade блокируется ancestor display:none **despite** markup teleporting к body. Pre-copy verify: read legacy template — has inline btn or pure modal?
+- **#24** При reuse legacy components в v2 через augmentation (defineExpose / ConnectWallet pattern), **обязательный** pre-augmentation grep `router\.push|this\.\$router` внутри legacy file. Conditional на `router.currentRoute.value.path` = minimal additive fix:
+  ```js
+  const currentPath = router.currentRoute.value.path;
+  if (currentPath !== '/v2/<area>') {
+    router.push('/<legacy-path>');
+  }
+  ```
+  Confirmed twice (CreateClan + ClanEdit). Full v2-flow refactor — separate scope (deferred §7).
+
+**Sub-Epic 5D — CLOSED.** Route table `/v2/*` обновлена:
+
+| Route | Epic / Sub-Epic | Статус |
+|---|---|---|
+| `/v2` | 2 + 4 | ✅ hub — real captain + secondAgent + auto-refresh on mutations |
+| `/v2/fd/warden` / `/v2/fd/predator` / `/v2/fd/:uuid` | 3A + 4 | ✅ FD (legacy mocks + dynamic) |
+| `/v2/fight` | 3A + 3Bb | ✅ via Matchmaking only |
+| `/v2/training` | 3Ba | ✅ (5A migrated) |
+| `/v2/matchmaking` | 3Bb | ✅ (5A migrated) |
+| `/v2/create` | 3Bc + 4 | ✅ backend persist |
+| `/v2/profile` | 5B | ✅ 4-card HUD + lazy ConnectWallet + WS friends |
+| `/v2/ratings` | 5C | ✅ unified leaderboard (5 scope × 2 season mocks) |
+| `/v2/clan` | **5D** | ✅ 2-state HUD (no-clan browse / in-clan body) + lazy CreateClan/ClanEdit reuse + 6th 5A consumer both helpers |
+
+**Следующий sub-epic:** 5E — TBD (Settings или Shop per VISUAL_MIGRATION plan). Pre-flight в `docs/visual-migration/HANDOFF_EPIC5_5E_CHAT_HANDOFF.md` (Step 15).
 
 
