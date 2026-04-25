@@ -59,10 +59,13 @@ export function buildClanScene(THREE, aspect) {
   });
 
   // --- LIGHTING (prototype 10969-10982) ---
-  // Ambient + Hemi base fill slightly warmer-bluer than Profile — reads as
-  // "the hall where clans gather" rather than a solo podium room.
-  scene.add(new THREE.AmbientLight(0x16161e, 0.4));
-  scene.add(new THREE.HemisphereLight(0x1c1820, 0x06060c, 0.35));
+  // Ambient + Hemi base fill matched 1:1 to 5B Profile (lines 47-48). Earlier
+  // dimmer values (0x16161e/0.4 + 0x1c1820/0.35) were treated as creative
+  // tuning but turned out to be part of Profile's readability formula —
+  // without them the floor reads near-black even with key light fixed.
+  // Step 5 hot-fix #2 — see EPIC5_5D_FINAL_REPORT §5.13.
+  scene.add(new THREE.AmbientLight(0x1a1a28, 0.45));
+  scene.add(new THREE.HemisphereLight(0x2a2638, 0x06060c, 0.4));
 
   // Warm key spot overhead — illuminates the floor at origin so the
   // concrete disc + central area read clean. Target y=0.5 matches the
@@ -78,22 +81,26 @@ export function buildClanScene(THREE, aspect) {
 
   // Rim lights — pink L / gold R — frame the totems from each side. Prototype
   // intensities 0.5 / 0.4 read as unlit on target hardware against the dark
-  // wall/fog combo (fog 0.05 + ACES exposure 2.3 crush dim pixels). Bumped
-  // to 1.0 / 0.8 per Step 5 follow-up — 4th precedent of lesson #13 after
-  // Training / Matchmaking / Ratings all applied identical retune.
+  // wall/fog combo (fog 0.05 + ACES exposure 2.3 crush dim pixels). Step 5
+  // follow-up bumped to 1.0 / 0.8 (4th precedent of lesson #13). Step 5
+  // hot-fix retargeted from y=1.8 to y=1 (Profile precedent line 64).
   //
-  // Targets bumped from y=1.8 (mid-flag) to y=1 — Step 5 hot-fix. Matches
-  // 5B Profile precedent (line 64). Earlier y=1.8 aimed cones into open
-  // air between the flags; new y=1 lands rim pools on the far walls.
+  // Step 5 hot-fix #2 — final readability pass:
+  // - Intensities re-bumped 1.0/0.8 -> 1.5/1.2 — our R=14 octagon is larger
+  //   than Profile + materials darker, baseline rim intensity insufficient.
+  // - Distance 14 -> 18 — walls sit at exact R=14, prototype distance 14
+  //   placed light cone cutoff right at the wall plane (edge case, dim).
+  //   18 lets the cone hit walls with margin so rim pools read clean.
+  // See EPIC5_5D_FINAL_REPORT §5.13.
   const rimL = new THREE.SpotLight(
-    0xff066f, 1.0, 14, Math.PI * 0.4, 0.8, 1.6,
+    0xff066f, 1.5, 18, Math.PI * 0.4, 0.8, 1.6,
   );
   rimL.position.set(-6, 3, 0);
   rimL.target.position.set(0, 1, 0);
   scene.add(rimL, rimL.target);
 
   const rimR = new THREE.SpotLight(
-    0xD4A843, 0.8, 14, Math.PI * 0.4, 0.8, 1.6,
+    0xD4A843, 1.2, 18, Math.PI * 0.4, 0.8, 1.6,
   );
   rimR.position.set(6, 3, 0);
   rimR.target.position.set(0, 1, 0);
