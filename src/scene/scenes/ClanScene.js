@@ -19,32 +19,34 @@ export function buildClanScene(THREE, aspect) {
 
   // Camera FOV 42 — prototype-first per Q1 (diverges from Profile FOV 40 /
   // Ratings FOV 44). Prototype line 10881. Orbit tick added below draws
-  // sin(t*0.08)*0.2 sway around radius 7.5.
+  // sin(t*0.08)*0.2 sway around radius 7.5. lookAt y=1.4 matches Profile
+  // (line 23) for the same downward tilt — earlier y=1.6/2.0 framed the
+  // flag mid-height instead of the floor + walls combined view.
   const camera = new THREE.PerspectiveCamera(42, aspect, 0.1, 200);
   camera.position.set(0, 2.6, 7.5);
-  camera.lookAt(0, 1.6, 0);
+  camera.lookAt(0, 1.4, 0);
 
   // --- FLOOR + WALLS + FOG via shared 5A helper ---
   // Prototype 10879 FogExp2(0x070811, 0.05). Concrete texture repeat(5,5)
   // matches Profile/Training/MM/Create pattern.
   //
-  // Floor 0x24242e + walls 0x16161e — brightened from prototype 0x20202a /
-  // 0x0e0e18 as a Step 5 follow-up after visual verify. Prototype values
-  // crush to black against fog 0.05 + ACES exposure 2.3 on target hardware
-  // (only dust particles + flag accents read through). Bump keeps the
-  // "clan hall" identity (still darker than Profile 0x2c2c34 / 0x14141c)
-  // while restoring structural readability. Unplanned divergence — see
-  // EPIC5_5D_FINAL_REPORT §5.
+  // Floor 0x2c2c34 + walls 0x14141c — Step 5 hot-fix #4 reverts Step 5
+  // follow-up's "clan-hall mood" tint (0x24242e / 0x16161e) to literal
+  // Profile baseline (lines 34/37). After 4 hot-fix iterations, divergences
+  // from Profile across multiple dimensions (lighting, materials, camera)
+  // were the readability blocker — full Profile parity for floor/walls
+  // here, identity preserved only via flag totems + FOV 42 + slight orbit.
+  // See EPIC5_5D_FINAL_REPORT §5.15.
   //
   // Each scene owns its texture instance — `repeat` is shared state on the
   // Texture object (see materials/concrete.js note).
   const floorTex = makeConcreteTexture(THREE);
   floorTex.repeat.set(5, 5);
   const floorMaterial = new THREE.MeshStandardMaterial({
-    map: floorTex, color: 0x24242e, roughness: 0.95, metalness: 0.02,
+    map: floorTex, color: 0x2c2c34, roughness: 0.95, metalness: 0.02,
   });
   const wallMaterial = new THREE.MeshStandardMaterial({
-    color: 0x16161e, roughness: 0.95,
+    color: 0x14141c, roughness: 0.95,
   });
   buildOctagonalRoom(THREE, scene, {
     R: CL_ROOM_R,
@@ -112,12 +114,14 @@ export function buildClanScene(THREE, aspect) {
 
   // Orbit tick — prototype 10880/scene loop equivalent: gentle camera sway
   // so the static composition breathes. Radius 7.5 matches initial position.
+  // lookAt y=1.4 matches Profile precedent — Step 5 hot-fix #4 reverts
+  // earlier y=2.0 (which framed the flag mid-height instead of floor+walls).
   function tick(t) {
     const a = Math.sin(t * 0.08) * 0.2;
     camera.position.x = Math.sin(a) * 7.5;
     camera.position.z = Math.cos(a) * 7.5;
     camera.position.y = 2.6 + Math.sin(t * 0.2) * 0.05;
-    camera.lookAt(0, 2.0, 0);
+    camera.lookAt(0, 1.4, 0);
     dust.tick();
   }
 
