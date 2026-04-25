@@ -64,12 +64,16 @@ export function buildClanScene(THREE, aspect) {
   scene.add(new THREE.AmbientLight(0x16161e, 0.4));
   scene.add(new THREE.HemisphereLight(0x1c1820, 0x06060c, 0.35));
 
-  // Warm key spot overhead — draws the eye down onto the flag totems (Step 4).
+  // Warm key spot overhead — illuminates the floor at origin so the
+  // concrete disc + central area read clean. Target y=0.5 matches the
+  // 5B Profile precedent (line 54). Earlier value y=2.5 aimed the cone
+  // at flag mid-height instead of the floor — Step 5 hot-fix per
+  // Step 5 follow-up visual verify.
   const keyLight = new THREE.SpotLight(
     0xfff0e8, 1.6, 14, Math.PI * 0.25, 0.7, 1.4,
   );
   keyLight.position.set(0, 7, 2);
-  keyLight.target.position.set(0, 2.5, 0);
+  keyLight.target.position.set(0, 0.5, 0);
   scene.add(keyLight, keyLight.target);
 
   // Rim lights — pink L / gold R — frame the totems from each side. Prototype
@@ -77,18 +81,22 @@ export function buildClanScene(THREE, aspect) {
   // wall/fog combo (fog 0.05 + ACES exposure 2.3 crush dim pixels). Bumped
   // to 1.0 / 0.8 per Step 5 follow-up — 4th precedent of lesson #13 after
   // Training / Matchmaking / Ratings all applied identical retune.
+  //
+  // Targets bumped from y=1.8 (mid-flag) to y=1 — Step 5 hot-fix. Matches
+  // 5B Profile precedent (line 64). Earlier y=1.8 aimed cones into open
+  // air between the flags; new y=1 lands rim pools on the far walls.
   const rimL = new THREE.SpotLight(
     0xff066f, 1.0, 14, Math.PI * 0.4, 0.8, 1.6,
   );
   rimL.position.set(-6, 3, 0);
-  rimL.target.position.set(0, 1.8, 0);
+  rimL.target.position.set(0, 1, 0);
   scene.add(rimL, rimL.target);
 
   const rimR = new THREE.SpotLight(
     0xD4A843, 0.8, 14, Math.PI * 0.4, 0.8, 1.6,
   );
   rimR.position.set(6, 3, 0);
-  rimR.target.position.set(0, 1.8, 0);
+  rimR.target.position.set(0, 1, 0);
   scene.add(rimR, rimR.target);
 
   // --- DUST via shared 5A helper (prototype 10957-10963) ---
