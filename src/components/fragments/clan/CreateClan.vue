@@ -138,7 +138,18 @@ const saveChanges = async () => {
     );
     hide();
     if(clan){
-      await router.push({path: `/clan/${clan.id}`});
+      // Epic 5 — Sub-Epic 5D Step 7 augmentation — v2-aware navigation.
+      // Invoked from /v2/clan (HudClan lazy-mount) → stay on /v2/clan; the
+      // HudClan template flips to in-clan branch reactively once
+      // userData.clanId updates. Legacy MyClanTab consumers (path !==
+      // '/v2/clan') keep original redirect to /clan/:id. Additive change —
+      // does not break legacy flow.
+      // TODO: full v2 clan management migration → revisit this conditional
+      // (post Sub-Epic 5G polish; tracked in FINAL §7 deferred list).
+      const currentPath = router.currentRoute.value.path;
+      if (currentPath !== '/v2/clan') {
+        await router.push({path: `/clan/${clan.id}`});
+      }
     }
   } catch (error) {
     resultMessage.value = t.value.clan.errorCreate;
