@@ -157,7 +157,17 @@ const confirmDissolve = async () => {
   try {
     await store.dispatch('clan/deleteClan');
     store.commit('master/setInfoMessage', {text: t.value.clan.lblDissolved, timeout: 3000, showButton: false});
-    router.push('/ratings/clans');
+    // Epic 5 — Sub-Epic 5D Step 8 augmentation — v2-aware navigation
+    // (lesson #24 / Step 7 CreateClan precedent commit 1255898). Legacy
+    // MyClanTab callers (path !== '/v2/clan') keep original redirect to
+    // /ratings/clans; v2 HudClan callers stay on /v2/clan and rely on
+    // reactive flip via userData.clanId (now null) — HudClan switches to
+    // no-clan branch automatically. Tracked in FINAL §7 deferred for full
+    // 5G v2-flow polish revisit.
+    const currentPath = router.currentRoute.value.path;
+    if (currentPath !== '/v2/clan') {
+      router.push('/ratings/clans');
+    }
   } catch (error) {
     store.commit('master/setErrorMessage', {text: error.message, timeout: 3000, showButton: false});
   }
@@ -183,6 +193,16 @@ const saveChanges = async () => {
   }
 };
 
+// Epic 5 — Sub-Epic 5D Step 8 prep — defineExpose({ openModal }) augmentation.
+// Lets v2 HudClan trigger this legacy modal via shallowRef + dynamic import +
+// markRaw + double nextTick + ref?.openModal?.() pattern (5B ConnectWallet
+// precedent / Step 7 prep 6060c00 CreateClan precedent). Additive — legacy
+// MyClanTab inline mount keeps working unchanged (its own VBtnDark click
+// flips dialogEdit through v-model); v2 HudClan flips it through
+// openModal() ref call.
+defineExpose({
+  openModal: () => { dialogEdit.value = true; },
+});
 
 </script>
 
