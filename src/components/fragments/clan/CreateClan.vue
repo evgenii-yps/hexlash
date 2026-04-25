@@ -147,7 +147,14 @@ const saveChanges = async () => {
   }
 };
 
-
+// Epic 5 — Sub-Epic 5D Step 7 prep — defineExpose({ openModal }) augmentation.
+// Lets v2 HudClan trigger this legacy modal via shallowRef + dynamic import +
+// markRaw + nextTick pattern (5B ConnectWallet precedent, HudProfile.vue
+// lines 277-304). Additive — legacy callers (MyClanTab inline mount) keep
+// working unchanged; ref-based openers go through openModal().
+defineExpose({
+  openModal: () => { showDialog.value = true; },
+});
 </script>
 
 <style scoped>
