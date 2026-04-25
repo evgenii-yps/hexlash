@@ -50,32 +50,41 @@ export function buildClanScene(THREE, aspect) {
     receiveShadow: true,
   });
 
-  // --- LIGHTING (prototype 10969-10982) ---
-  // Ambient + Hemi base fill slightly warmer-bluer than Profile — reads as
-  // "the hall where clans gather" rather than a solo podium room.
-  scene.add(new THREE.AmbientLight(0x16161e, 0.4));
-  scene.add(new THREE.HemisphereLight(0x1c1820, 0x06060c, 0.35));
+  // --- LIGHTING — port of prototype 10968-10982 (CLAN VIEW). ---
+  // Targets / positions / colors VERBATIM from prototype (key → flag mid-
+  // height y=2.5; rim×2 — pink L + gold R — for clan identity).
+  // Intensities reduced ~50% from prototype to compensate for shared
+  // CanvasLayer renderer exposure 2.3 vs prototype's 1.05:
+  //   key   1.6 → 0.8
+  //   rim L 0.5 → 0.25
+  //   rim R 0.4 → 0.2
+  //   amb   0.4 → 0.3
+  //   hemi  0.35 → 0.25
+  // ACES tonemapping is non-linear so the ratio isn't pure 1.05/2.3, but
+  // ~halving lands in a visual parity zone confirmed against prototype
+  // render. See EPIC5_5D_FINAL_REPORT §5.16 (replace) + lessons #19/#20.
+  scene.add(new THREE.AmbientLight(0x16161e, 0.3));
+  scene.add(new THREE.HemisphereLight(0x1c1820, 0x06060c, 0.25));
 
-  // Warm key spot overhead — draws the eye down onto the flag totems (Step 4).
+  // Warm key spot — aimed at flag mid-height (y=2.5) per prototype intent.
   const keyLight = new THREE.SpotLight(
-    0xfff0e8, 1.6, 14, Math.PI * 0.25, 0.7, 1.4,
+    0xfff0e8, 0.8, 14, Math.PI * 0.25, 0.7, 1.4,
   );
   keyLight.position.set(0, 7, 2);
   keyLight.target.position.set(0, 2.5, 0);
   scene.add(keyLight, keyLight.target);
 
-  // Rim lights — pink L / gold R — frame the totems from each side. Prototype
-  // intensities 0.5 / 0.4 are set here; bump to ~1.0 / ~0.8 is expected as a
-  // Step 5 follow-up after user visual verify (lesson #13, 4th precedent).
+  // Rim L pink — picks out left flag edges + walls.
   const rimL = new THREE.SpotLight(
-    0xff066f, 0.5, 14, Math.PI * 0.4, 0.8, 1.6,
+    0xff066f, 0.25, 14, Math.PI * 0.4, 0.8, 1.6,
   );
   rimL.position.set(-6, 3, 0);
   rimL.target.position.set(0, 1.8, 0);
   scene.add(rimL, rimL.target);
 
+  // Rim R gold — picks out right flag edges + walls. Clan identity = 2 rims.
   const rimR = new THREE.SpotLight(
-    0xD4A843, 0.4, 14, Math.PI * 0.4, 0.8, 1.6,
+    0xD4A843, 0.2, 14, Math.PI * 0.4, 0.8, 1.6,
   );
   rimR.position.set(6, 3, 0);
   rimR.target.position.set(0, 1.8, 0);
@@ -109,12 +118,13 @@ export function buildClanScene(THREE, aspect) {
 
   // Orbit tick — prototype 10880/scene loop equivalent: gentle camera sway
   // so the static composition breathes. Radius 7.5 matches initial position.
+  // lookAt y=1.6 matches prototype line 10883 (and initial lookAt above).
   function tick(t) {
     const a = Math.sin(t * 0.08) * 0.2;
     camera.position.x = Math.sin(a) * 7.5;
     camera.position.z = Math.cos(a) * 7.5;
     camera.position.y = 2.6 + Math.sin(t * 0.2) * 0.05;
-    camera.lookAt(0, 2.0, 0);
+    camera.lookAt(0, 1.6, 0);
     dust.tick();
   }
 
