@@ -76,13 +76,17 @@
         </div>
       </div>
 
-      <!-- Lazy CreateClan host — modal Teleports to body, source layout
-           hidden so the inline VBtnDark trigger doesn't render in HUD. -->
+      <!-- Lazy CreateClan host. Modal teleports to body via Vuetify VModal;
+           host element itself is empty in DOM (the VModal renders nothing
+           inline — only the teleported overlay + form). No display:none
+           here: Vuetify VModal teleport activation is short-circuited when
+           any ancestor has display:none, so the overlay would render
+           offscreen / invisible despite v-overlay__content existing in the
+           DOM tree (Step 7 hot-fix recovery — see FINAL §5.x). -->
       <component
         v-if="createClanMounted && CreateClanComp"
         :is="CreateClanComp"
         ref="createClanRef"
-        style="display: none;"
       />
     </div>
 
