@@ -91,7 +91,98 @@
     </div>
 
     <div v-else class="clan-ingrid">
-      <!-- populated Step 8 -->
+      <!-- ===== Header (full width) ===== -->
+      <div class="ic-header">
+        <div class="ic-crest" :style="{ background: crestBgColor, color: crestColor }">{{ crestInitials }}</div>
+        <div class="ic-title-block">
+          <div class="ic-clan-name">{{ clanName || '—' }}</div>
+          <div class="ic-clan-tag">[{{ clanTag || '—' }}] · Founded {{ foundedStr }} · {{ memberCount }} / {{ memberCap }} members</div>
+          <div class="ic-level-wrap">
+            <div class="ic-level-label">Clan Level <strong>{{ clanLevel }}</strong></div>
+            <div class="ic-xp-bar"><div class="ic-xp-fill" :style="{ width: xpPct + '%' }"></div></div>
+            <div class="ic-level-label">{{ clanXp.toLocaleString() }} / {{ nextLevelXp.toLocaleString() }} XP</div>
+          </div>
+        </div>
+        <div class="ic-header-stats">
+          <div class="ic-hstat"><div class="ic-hstat-val">{{ memberCount }}</div><div class="ic-hstat-label">Members</div></div>
+          <div class="ic-hstat"><div class="ic-hstat-val">{{ totalWins }}</div><div class="ic-hstat-label">Total Wins</div></div>
+          <div class="ic-hstat"><div class="ic-hstat-val gold">#{{ clanRank }}</div><div class="ic-hstat-label">Clan Rank</div></div>
+          <div class="ic-hstat"><div class="ic-hstat-val pink">+{{ weeklyXp }}</div><div class="ic-hstat-label">Weekly XP</div></div>
+        </div>
+      </div>
+
+      <!-- ===== Left side: About + Info + Actions ===== -->
+      <div class="ic-side">
+        <div class="ic-side-title">About</div>
+        <div class="ic-desc">{{ clanDescription || '—' }}</div>
+
+        <div class="ic-side-title">Info</div>
+        <div class="ic-meta-list">
+          <div class="ic-meta-row"><span class="imk">Leader</span><span class="imv">{{ leaderHandle || '—' }}</span></div>
+          <div class="ic-meta-row"><span class="imk">Region</span><span class="imv">{{ region || '—' }}</span></div>
+          <div class="ic-meta-row"><span class="imk">Privacy</span><span class="imv">{{ privacy || '—' }}</span></div>
+          <div class="ic-meta-row"><span class="imk">Your Role</span><span class="imv">{{ clanRoleLabel }}</span></div>
+        </div>
+
+        <div class="ic-action-btns">
+          <button class="ic-abtn primary" @click="onInvite">+ Invite Member</button>
+          <button class="ic-abtn" @click="openClanEdit">Clan Settings</button>
+          <button class="ic-abtn danger" @click="openLeaveConfirm">Leave Clan</button>
+        </div>
+      </div>
+
+      <!-- ===== Right side: Roster ===== -->
+      <div class="ic-roster">
+        <div class="ic-roster-head">
+          <div class="ic-roster-title">Roster · {{ memberCount }} / {{ memberCap }}</div>
+          <button class="ic-roster-sort" @click="toggleSort">Sort: {{ sortLabel }}</button>
+        </div>
+        <div class="ic-roster-thead">
+          <div>Role</div>
+          <div>Handle</div>
+          <div class="num">ELO</div>
+          <div class="num col-wl">W/L</div>
+          <div class="num">WR</div>
+          <div class="col-last">Last Seen</div>
+        </div>
+        <div class="ic-roster-body">
+          <div
+            v-for="m in sortedRoster"
+            :key="m.handle"
+            class="member-row"
+          >
+            <div class="mr-role" :class="(m.role || '').toLowerCase()">{{ m.role }}</div>
+            <div class="mr-handle" :class="{ self: m.self }">{{ m.handle }}{{ m.self ? ' (you)' : '' }}</div>
+            <div class="num mr-elo">{{ m.elo.toLocaleString() }}</div>
+            <div class="num col-wl">{{ m.wins }}/{{ m.losses }}</div>
+            <div class="num" :style="wrStyle(m.wr)">{{ m.wr }}%</div>
+            <div class="mr-lastseen col-last" :class="{ online: m.lastSeen === 'online' }">{{ m.lastSeen }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lazy ClanEdit host. Modal teleports to body via Vuetify VModal;
+           NO display:none — ancestor display:none breaks teleport visibility
+           cascade despite teleport (Step 7 hot-fix 702b341, lesson #23). -->
+      <component
+        v-if="clanEditMounted && ClanEditComp"
+        :is="ClanEditComp"
+        ref="clanEditRef"
+      />
+
+      <!-- Leave-clan confirm. ClanConfirmModal is controlled-props (Step 0 S4
+           verify) — no defineExpose augmentation needed; show flips via
+           reactive ref bound to :show. -->
+      <ClanConfirmModal
+        :show="leaveConfirmOpen"
+        :title="t.clan?.lblLeaveTitle || 'Leave Clan?'"
+        :description="t.clan?.lblLeaveDesc || 'You will lose access to clan XP pool and shared achievements.'"
+        :confirm-text="t.modal?.btnConfirm || 'Leave'"
+        :cancel-text="t.modal?.btnCancel || 'Cancel'"
+        :confirm-danger="true"
+        @confirm="onLeaveConfirmed"
+        @cancel="leaveConfirmOpen = false"
+      />
     </div>
   </div>
 </template>
@@ -105,11 +196,15 @@
 // Step 7 wires the no-clan branch: BROWSABLE_CLANS mock + reactive search +
 // per-card join-request state + lazy CreateClan modal (5B ConnectWallet
 // pattern via the Step 7 prep defineExpose augmentation in CreateClan.vue).
-// onBeforeUnmount + ClanEdit lazy reserved for Step 8.
+// Step 8 wires the in-clan branch: header / side / roster bindings (null-safe
+// per урок #11) + foundedStr Date coercion (урок #3) + lazy ClanEdit modal
+// (Step 8.0 prep 21949f8) + Leave confirm via controlled ClanConfirmModal.
 import { computed, ref, shallowRef, markRaw, nextTick, onMounted, onBeforeUnmount } from 'vue';
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
-import { BROWSABLE_CLANS } from '@/data/clanMock.js';
+import { BROWSABLE_CLANS, MY_CLAN_MEMBERS } from '@/data/clanMock.js';
+import ClanConfirmModal from '@/components/fragments/clan/ClanConfirmModal.vue';
+import { t } from '@/locales/index.js';
 
 const store = useStore();
 const router = useRouter();
@@ -177,6 +272,126 @@ async function openCreateClan() {
   await nextTick();
   await nextTick();
   createClanRef.value?.openModal?.();
+}
+
+// --- Step 8: in-clan bindings ---
+// All computed null-safe per урок #11 (clan object may be null mid-fetch).
+const clanDescription = computed(() => clan.value?.description || '');
+const clanLevel = computed(() => clan.value?.level ?? 1);
+const clanXp = computed(() => clan.value?.xp ?? 0);
+const nextLevelXp = computed(() => clan.value?.nextLevelXp ?? 10000);
+const xpPct = computed(() => {
+  const total = nextLevelXp.value || 1;
+  return Math.min(100, Math.round((clanXp.value / total) * 100));
+});
+const memberCount = computed(() => clan.value?.members?.length ?? MY_CLAN_MEMBERS.length);
+const memberCap = computed(() => clan.value?.memberCap ?? 20);
+const totalWins = computed(() => clan.value?.totalWins ?? 0);
+const clanRank = computed(() => clan.value?.rank ?? '—');
+const weeklyXp = computed(() => clan.value?.weeklyXp ?? 0);
+const leaderHandle = computed(() => clan.value?.leader?.handle || '');
+const region = computed(() => clan.value?.region || '');
+const privacy = computed(() => clan.value?.privacy || '');
+const clanRoleLabel = computed(() => {
+  const r = clanRole.value;
+  if (!r) return '—';
+  return r.charAt(0).toUpperCase() + r.slice(1);
+});
+
+// Date coercion per урок #3 — clan.createdAt may be raw ISO string
+// (clanModel does not always wrap with new Date). Guard against Invalid Date.
+const foundedStr = computed(() => {
+  const raw = clan.value?.createdAt;
+  if (!raw) return '—';
+  const d = new Date(raw);
+  if (isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+});
+
+// Crest derived from tag (or name fallback) — first 2 chars uppercase.
+const crestInitials = computed(() => {
+  const t = clanTag.value || clanName.value || '?';
+  return t.slice(0, 2).toUpperCase();
+});
+const crestColor = computed(() => clan.value?.crestColor || '#FF066F');
+const crestBgColor = computed(() => {
+  const c = clan.value?.crestColor;
+  return c ? c + '1a' : 'rgba(255,6,111,0.1)';
+});
+
+// Roster — clan.value?.members backend shape unknown for v2-clan flow yet;
+// fallback to MY_CLAN_MEMBERS prototype mock (carry-over to PvP-integration
+// sub-epic alongside BROWSABLE_CLANS).
+const roster = computed(() => {
+  const m = clan.value?.members;
+  return Array.isArray(m) && m.length ? m : MY_CLAN_MEMBERS;
+});
+
+const sortField = ref('elo');
+const SORT_LABELS = { elo: 'ELO', wins: 'Wins', wr: 'WR' };
+const SORT_ORDER = ['elo', 'wins', 'wr'];
+const sortLabel = computed(() => SORT_LABELS[sortField.value] || 'ELO');
+function toggleSort() {
+  const i = SORT_ORDER.indexOf(sortField.value);
+  sortField.value = SORT_ORDER[(i + 1) % SORT_ORDER.length];
+}
+
+// Sort: rank order (Leader / Officer / Member) first, then by sortKey desc
+// — matches prototype 11086-11090.
+const ROLE_RANK = { Leader: 0, Officer: 1, Member: 2 };
+const sortedRoster = computed(() => {
+  const list = [...roster.value];
+  list.sort((a, b) => (b[sortField.value] ?? 0) - (a[sortField.value] ?? 0));
+  list.sort((a, b) => (ROLE_RANK[a.role] ?? 99) - (ROLE_RANK[b.role] ?? 99));
+  return list;
+});
+
+// Inline WR colour — prototype 11095 (>=60% green / <50% red / else default).
+function wrStyle(wr) {
+  if (wr >= 60) return { color: '#2ee07f' };
+  if (wr < 50) return { color: '#ff8888' };
+  return {};
+}
+
+// --- Lazy ClanEdit modal (Step 8.0 prep 21949f8 + lesson #23 no display:none) ---
+const ClanEditComp = shallowRef(null);
+const clanEditMounted = ref(false);
+const clanEditRef = ref(null);
+
+async function loadClanEdit() {
+  if (ClanEditComp.value) return;
+  const mod = await import('@/components/fragments/clan/ClanEdit.vue');
+  ClanEditComp.value = markRaw(mod.default);
+}
+
+async function openClanEdit() {
+  await loadClanEdit();
+  clanEditMounted.value = true;
+  await nextTick();
+  await nextTick();
+  clanEditRef.value?.openModal?.();
+}
+
+// --- Leave confirm via ClanConfirmModal (controlled-props, no augmentation) ---
+const leaveConfirmOpen = ref(false);
+function openLeaveConfirm() { leaveConfirmOpen.value = true; }
+async function onLeaveConfirmed() {
+  leaveConfirmOpen.value = false;
+  try {
+    // clan/leaveClan signature: ({commit}) — no clanId arg. Backend uses
+    // current user's clan from session. Verified line 127 of clanState.js.
+    await store.dispatch('clan/leaveClan');
+    // No router.push — userData.clanId mutates null in store side-effect,
+    // HudClan reactively flips to no-clan branch. Same v2-aware pattern as
+    // Step 7 augmentation 1255898 (CreateClan) + Step 8.0 21949f8 (dissolve).
+  } catch (err) {
+    console.error('[HudClan] leave clan failed:', err);
+  }
+}
+
+// --- Invite stub — full flow deferred to 5G (no legacy invite modal ready). ---
+function onInvite() {
+  console.info('[HudClan] Invite flow deferred to Sub-Epic 5G');
 }
 
 function onBack() {

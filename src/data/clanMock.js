@@ -17,5 +17,18 @@ export const BROWSABLE_CLANS = [
 ];
 
 export const MY_CLAN_MEMBERS = [
-  // populated Step 8 — port prototype 11010-11024.
+  { handle: 'LordNoctis',     role: 'Leader',  elo: 2041, wins: 186, losses: 74, wr: 72, lastSeen: 'online' },
+  { handle: 'yurii.varvarov', role: 'Officer', elo: 1247, wins: 10,  losses: 4,  wr: 71, lastSeen: 'online', self: true },
+  { handle: 'Crowhaven',      role: 'Officer', elo: 1962, wins: 124, losses: 58, wr: 68, lastSeen: '12m ago' },
+  { handle: 'Kestrel.7',      role: 'Member',  elo: 1994, wins: 142, losses: 49, wr: 74, lastSeen: '1h ago' },
+  { handle: 'SablePrey',      role: 'Member',  elo: 1918, wins: 108, losses: 62, wr: 64, lastSeen: '2h ago' },
+  { handle: 'RuinPact',       role: 'Member',  elo: 1877, wins: 96,  losses: 55, wr: 64, lastSeen: '3h ago' },
+  { handle: 'Vex.01',         role: 'Member',  elo: 1801, wins: 84,  losses: 48, wr: 64, lastSeen: '5h ago' },
+  { handle: 'HaloRune',       role: 'Member',  elo: 1743, wins: 72,  losses: 41, wr: 64, lastSeen: '8h ago' },
+  { handle: 'SlateWolf',      role: 'Member',  elo: 1689, wins: 61,  losses: 39, wr: 61, lastSeen: '1d ago' },
+  { handle: 'Frost.X',        role: 'Member',  elo: 1621, wins: 58,  losses: 42, wr: 58, lastSeen: '1d ago' },
+  { handle: 'EchoVein',       role: 'Member',  elo: 1540, wins: 44,  losses: 38, wr: 54, lastSeen: '2d ago' },
+  { handle: 'NobleRust',      role: 'Member',  elo: 1488, wins: 40,  losses: 36, wr: 53, lastSeen: '3d ago' },
+  { handle: 'WraithMk2',      role: 'Member',  elo: 1422, wins: 34,  losses: 34, wr: 50, lastSeen: '4d ago' },
+  { handle: 'EmberGrit',      role: 'Member',  elo: 1376, wins: 28,  losses: 30, wr: 48, lastSeen: '1w ago' },
 ];
