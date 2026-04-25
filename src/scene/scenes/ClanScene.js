@@ -54,21 +54,25 @@ export function buildClanScene(THREE, aspect) {
   // Targets / positions / colors VERBATIM from prototype (key → flag mid-
   // height y=2.5; rim×2 — pink L + gold R — for clan identity).
   // Intensities reduced ~50% from prototype to compensate for shared
-  // CanvasLayer renderer exposure 2.3 vs prototype's 1.05:
-  //   key   1.6 → 0.8
-  //   rim L 0.5 → 0.25
-  //   rim R 0.4 → 0.2
-  //   amb   0.4 → 0.3
-  //   hemi  0.35 → 0.25
-  // ACES tonemapping is non-linear so the ratio isn't pure 1.05/2.3, but
-  // ~halving lands in a visual parity zone confirmed against prototype
-  // render. See EPIC5_5D_FINAL_REPORT §5.16 (replace) + lessons #19/#20.
-  scene.add(new THREE.AmbientLight(0x16161e, 0.3));
+  // CanvasLayer renderer exposure 2.3 vs prototype's 1.05 (key 1.6→0.8,
+  // rim L 0.5→0.25, rim R 0.4→0.2, amb 0.4→0.3, hemi 0.35→0.25).
+  //
+  // Step 5 fine-tune (FINAL §5.18) — outer flags (PRED -3.5 / ANA +3.5)
+  // sat outside the key cone after the initial port: π*0.25 ≈ 22.5° half-
+  // angle on ~5m drop = ~2m radius at flag height, missing both outer
+  // posts. Adjustments stack on the exposure-2.3 baseline:
+  //   key intensity 0.8 → 1.2  (additional ×1.5 boost)
+  //   key cone angle π*0.25 → π*0.35  (~62° half-angle, captures all 3 flags)
+  //   ambient 0.3 → 0.4  (general fill so silhouettes read off-key-axis)
+  // Rim L / Rim R intensities NOT bumped — they were already reading
+  // (subtle pink stripe on PRED visible in user verify).
+  scene.add(new THREE.AmbientLight(0x16161e, 0.4));
   scene.add(new THREE.HemisphereLight(0x1c1820, 0x06060c, 0.25));
 
   // Warm key spot — aimed at flag mid-height (y=2.5) per prototype intent.
+  // Cone widened to π*0.35 to cover all 3 flag posts (-3.5/0/+3.5).
   const keyLight = new THREE.SpotLight(
-    0xfff0e8, 0.8, 14, Math.PI * 0.25, 0.7, 1.4,
+    0xfff0e8, 1.2, 14, Math.PI * 0.35, 0.7, 1.4,
   );
   keyLight.position.set(0, 7, 2);
   keyLight.target.position.set(0, 2.5, 0);
