@@ -2,6 +2,7 @@
   <div class="app-v2">
     <CanvasLayer />
     <router-view />
+    <VerifyEmailBanner />
     <GlobalOverlays />
   </div>
 </template>
@@ -9,6 +10,7 @@
 <script setup>
 import { defineAsyncComponent } from 'vue';
 import GlobalOverlays from '@/components/hud/common/GlobalOverlays.vue';
+import VerifyEmailBanner from '@/components/hud/VerifyEmailBanner.vue';
 import '@/styles/hexlash-v24.css';
 
 // CanvasLayer грузится лениво — сам файл появится в Шаге 6.
