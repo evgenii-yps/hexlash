@@ -2786,4 +2786,91 @@ Visual readability в Step 5 потребовал 5 sequential hot-fix attempts 
 
 **Следующий sub-epic:** 5E — TBD (Settings или Shop per VISUAL_MIGRATION plan). Pre-flight в `docs/visual-migration/HANDOFF_EPIC5_5E_CHAT_HANDOFF.md` (Step 15).
 
+### Эпик 5 — Sub-Epic 5E — Shop (✅ COMPLETE)
+
+Завершён 2026-04-27. Четвёртая views-миграция Эпика 5 после 5B (Profile) + 5C (Ratings) + 5D (Clan). Клик по shop locker plinth в hub → `/v2/shop` с cosmetics catalog HUD (6 tabs / 18 items / 4 rarities / mock purchase flow) поверх lazy ShopScene. Визуальный паритет с прототипом 3643-4013 (HUD CSS) + 12379-12530 (3D scene) + 12534-12772 (catalog + handlers). 5 functional + 0 hot-fix + 3 финальных коммита.
+
+**Commit range:** `f5aeacc` (Step 1) → `<step 11>` (Step 11 HANDOFF). Branch `claude/setup-5e-shop-mode-a-khIAi`. Predecessor 5D tip `5f246eb`.
+
+**Что видит пользователь:**
+- Click на shop locker plinth в hub → navigate `/v2/shop`.
+- Октагональная тёмная комната (R=14, H=9, fogDensity=0.05, floor 0x1e1e26, walls 0x0e0e18) с центральным concrete podium (CylinderGeometry 1.2/1.3 × 0.28, makeConcreteTexture map, color 0x8c8c96) и floating gloved hand silhouette (Group: warm gold semi-transparent BoxGeometry stack — main 0.7×0.55×0.9 + thumb 0.3×0.3×0.35 offset (0.3, 0.25, 0.55) + wrist strap 0.72×0.15×0.92, all opacity 0.6 transparent), warm gold light shaft (ConeGeometry 1.3×6 additive opacity 0.05) + floor disc (canvas radial gradient, PlaneGeometry 2.6×2.6 additive), 60 dust particles (5A `createDustField` 7-й consumer, count 60, xRadius 5, zRadius 4, yMin 0.3, yMax 4, color 0xffd9c8). Camera slow orbit (period ~63s) + Y bob.
+- HUD: back btn + title "Hexlash / LOCKER" + 3-chip balance bar (Taps 12,480 / XP 340 / Base 0.128Ξ) + 6 category tabs + 2-col grid (item grid + detail panel).
+- Items: 5 skins / 3 gloves / 4 boosts / 3 titles / 3 banners. 4 rarities (common gray / rare cyan / epic purple / legendary gold) с distinct colors. 'Bandage Wraps' + 'Newborn' pre-owned для demo.
+- Selection → detail panel с big preview + name + desc + effect + price + Purchase btn.
+- Purchase: insufficient → button disabled + 350ms shake (`fail` class); sufficient → 900ms gold flash (`flash` class) + balance deduct + ownedSet update via `new Set([...])` re-create + 'OWNED' badge + detail flips к "Owned" green.
+- Mobile (`@media max-width: 820px`): tabs scroll, detail panel `display: none` by default, click item → `mobileShowDetail = true` → grid hidden + detail visible + `← Items` mobile back btn (5E addition vs prototype) → click back → grid restored.
+- Back / Esc → `/v2`.
+
+**Дерево новых файлов (5):**
+
+```
+src/views-v2/ShopView.vue            —  41 строки — orchestrator (lazy registerScene + activateScene + Esc + strict teardown). 5B/5C/5D parity.
+src/scene/scenes/ShopScene.js        — 222 — octagonal room (5A buildOctagonalRoom 7-й consumer) + key+rim spotlights + warm shaft + floor disc + concrete podium + floating gloved hand (Group, 3 Box parts) + 60 dust particles (5A createDustField 7-й consumer). All intensities ~50-67% retuned + cones ~1.4x widened для exposure 2.3 compensation (lessons #19-21 absorbed FIRST).
+src/components/hud/HudShop.vue       — 220 — full HUD: title / balance chips / 6 tabs / 18-item grid / detail panel / mobile show-detail toggle / purchase flow с reactivity-correct Set re-create. Conditional spans для price (no v-html — safer). Scoped style с pointer-events reset (`.shop-hud` root).
+src/styles/v24/shop.css              — 419 — 1-to-1 port prototype 3643-4013 scoped `.app-v2` (68 prefixed rules, 2 keyframes, 1 @media block). Includes `.empty-cat` + `.sd-mobile-back` additions (5E specific).
+src/data/shopMock.js                 —  39 — SHOP_ITEMS (18) + SHOP_OWNED_INIT + INITIAL_BALANCE. Verbatim port prototype 12534-12572.
+```
+
+**Изменены (4):**
+
+- `src/router/index.js` — `V2Shop` route (`/v2/shop`) в `v2Routes.children`. Без `:id` per 5C/5D precedent.
+- `src/views-v2/PitViewV2.vue` — `'shop'` убран из `PH_MODAL_IDS` (теперь `[]`); explicit branch `click.id === 'shop' → router.push('/v2/shop')` после `clan` branch, перед PhModal fallback.
+- `src/components/hud/HudPit.vue` — `MODAL_CONTENT.shop` entry удалён (replaced с comment marker).
+- `src/styles/hexlash-v24.css` — `@import './v24/shop.css'` после `./v24/clan.css`.
+
+**Store reuse (0 new Vuex modules, 0 new actions):**
+
+| Feature | Source | Rationale |
+|---|---|---|
+| Balance | local `INITIAL_BALANCE` constant | Q3 mock-only, real source deferred к backend purchase sub-epic |
+| Owned | local `SHOP_OWNED_INIT` Set | Same |
+| Catalog | static `SHOP_ITEMS` array | Same |
+| `master/changeSkin` | **НЕ used** в 5E | Q4 Variant A — taxonomy mismatch с legacy `skin_m_N.png` numeric, hybrid mapping creates accidental coupling |
+
+**Ключевые паттерны:**
+- Lazy sub-scene 5B/5C/5D parity. ShopView 41 lines minimal orchestrator.
+- 5A helpers — 7-й consumer обоих (`buildOctagonalRoom` + `createDustField`). Validate stable reuse beyond 6 prior consumers.
+- Path A pure (4-й precedent в Epic 5 после 5B/5C/5D). Никаких legacy reuse.
+- Mock-only purchase flow (Q3). Real backend `POST /v1/shop/buy` deferred.
+- Pure cosmetic catalog (Q4 A). No coupling с `master/changeSkin` — taxonomy mismatch с legacy skin_m_N.png.
+- **Exposure compensation full apply из 5D lessons #19/20/21** — prototype intensities × ~0.55 + cone angles × ~1.4 (key cone π×0.25 → π×0.35; rim cone π×0.4 → π×0.45). **Pre-tuned в ТЗ §2 table до Step 2 write — НЕ потребовалось visual hot-fix series как в 5D Step 5.**
+- Conditional spans для price вместо v-html — safer (no XSS surface), idiomatic Vue 3.
+- Vue 3 reactivity на Set: `ownedSet.value = new Set([...ownedSet.value, id])` re-create требует, иначе grid не обновляется после purchase.
+- Sentinel-marker split-write pattern (`@@PART2@@` etc) — 5E-introduced practice для split-write больших SFC и CSS файлов (per урок #9). Используется для shop.css (4 chunks) и HudShop.vue (5 chunks); incremental verify possibility (если chunk N сломал бы что-то, видно сразу).
+
+**Расхождения — осознанные:**
+1. Path A pure (Q2). Legacy BuyTokens.vue disabled с Phase 1, не reused.
+2. Mock-only purchase flow (Q3). Real backend `POST /v1/shop/buy` + Prisma `UserCosmetic` deferred.
+3. No coupling с master/changeSkin (Q4 A). Catalog taxonomy mismatch.
+4. Intensities ~55-67% + cones ~1.4x retuned per exposure 2.3 compensation (lessons #19-21).
+5. Vue 3 Set reactivity workaround — `new Set([...])` re-create.
+6. Conditional spans вместо v-html для price rendering (safer).
+7. `.sd-mobile-back` btn addition vs prototype (UX gap fill — prototype полагается на browser back).
+8. Floor concrete texture dropped — 5A `buildOctagonalRoom` floorMat color-only (no map). Prototype 12403 имел texture с repeat(5,5). Symmetric с 5D ClanScene helper usage. Visually equivalent под fog 0.05 + exposure 2.3.
+9. Dust yMax 4 vs prototype 4.3 — 5A helper signature bound. Minor visual delta.
+10. Hemi retune × 0.30 (vs prototype × 0.40) — 75% factor (less aggressive than key/rim ~55%) для fill light, side-face readability.
+11. Sentinel-marker split-write pattern для shop.css + HudShop.vue — 5E-introduced approach beyond simple Edit appends (см. Ключевые паттерны).
+
+**Lessons added:** none new. 5E successfully **applied** lessons #19/20/21 — НЕ потребовалось visual hot-fix series как в 5D Step 5. Hot-fix metric: **0 attempts на ложной траектории** (compare 5D Step 5: 5 attempts).
+
+**Sub-Epic 5E — CLOSED.** Route table `/v2/*` обновлена:
+
+| Route | Epic / Sub-Epic | Статус |
+|---|---|---|
+| `/v2` | 2 + 4 | ✅ hub — real captain + secondAgent + auto-refresh |
+| `/v2/fd/warden` / `/v2/fd/predator` / `/v2/fd/:uuid` | 3A + 4 | ✅ FD |
+| `/v2/fight` | 3A + 3Bb | ✅ via Matchmaking only |
+| `/v2/training` | 3Ba | ✅ (5A migrated) |
+| `/v2/matchmaking` | 3Bb | ✅ (5A migrated) |
+| `/v2/create` | 3Bc + 4 | ✅ backend persist |
+| `/v2/profile` | 5B | ✅ 4-card HUD + lazy ConnectWallet + WS friends |
+| `/v2/ratings` | 5C | ✅ unified leaderboard (5 scope × 2 season mocks) |
+| `/v2/clan` | 5D | ✅ 2-state HUD + lazy CreateClan/ClanEdit reuse |
+| `/v2/shop` | **5E** | ✅ 6-tab cosmetics catalog (18 items × 4 rarities) + mock purchase flow + lazy ShopScene |
+
+**Bundle impact:** ShopView lazy chunk 14.32kB (gzip 5.78kB / brotli 4.95kB). shop.css inlined в main index.css chunk (~10kB raw, через `@import` Vite не chunk-splits). HudShop scoped style 0.26kB. Net 5E addition: ~25kB raw / ~6kB gzip к user-fetched payload при первом visit `/v2/shop`.
+
+**Следующий sub-epic:** 5F (i18n pass) или 5G (polish) per VISUAL_MIGRATION plan. Pre-flight в `docs/visual-migration/HANDOFF_EPIC5_5F_CHAT_HANDOFF.md` (Step 11).
+
 
