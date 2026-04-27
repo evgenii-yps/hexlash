@@ -1,36 +1,31 @@
 <template>
-  <HudPit ref="hudRef" />
+  <HudPit />
 </template>
 
 <script setup>
-// Step 17: full pit HUD. Watches useClickState().seq → calls
-// hud.openPhModal(id). CanvasLayer (sibling in AppV2) writes click/hover via
-// shared reactive stores, avoiding a cross-sibling emit chain.
-// Epic 3A Step 1: warden/predator clicks now route to /v2/fd/:key instead of
-// opening a PhModal. Other ids (6 interactables + avatar) stay on PhModal.
-// Epic 3Ba Step 1: 'training' now routes to /v2/training.
-// Epic 3Bb Step 1: 'matchmaking' now routes to /v2/matchmaking.
-// Epic 3Bc Step 1: 'create' now routes to /v2/create.
-// Epic 4 Step 2: slot 1 (captain) carries a real agent UUID. Click flow:
-//   - Fixed interactables → PhModal (clan/shop) or sub-scene route.
-//   - Legacy 'warden'/'predator' (no captain → mock) → /v2/fd/:legacyKey.
-//   - Anything else (real agent UUID) → /v2/fd/:agentId.
-// Epic 5 Sub-Epic 5B Step 1: 'avatar' now routes to /v2/profile instead of
-// opening a PhModal.
-// Epic 5 Sub-Epic 5C Step 1: 'ratings' now routes to /v2/ratings instead of
-// opening a PhModal.
-// Epic 5 Sub-Epic 5D Step 1: 'clan' now routes to /v2/clan instead of opening
-// a PhModal.
-// Epic 5 Sub-Epic 5E Step 1: 'shop' now routes to /v2/shop instead of opening
-// a PhModal. PH_MODAL_IDS is now empty — fallback branch never fires.
-import { ref, watch } from 'vue';
+// Epic 2 Step 17 origin — pit hub click watcher.
+// Watches useClickState().seq → routes to sub-scene or /v2/fd/:id.
+// CanvasLayer (sibling in AppV2) writes click via shared reactive store,
+// avoiding a cross-sibling emit chain.
+//
+// Click branches (current state):
+//   - 'training' → /v2/training (Epic 3Ba)
+//   - 'matchmaking' → /v2/matchmaking (Epic 3Bb)
+//   - 'create' → /v2/create (Epic 3Bc)
+//   - 'avatar' → /v2/profile (5B Step 1)
+//   - 'ratings' → /v2/ratings (5C Step 1)
+//   - 'clan' → /v2/clan (5D Step 1)
+//   - 'shop' → /v2/shop (5E Step 1)
+//   - anything else (legacy 'warden'/'predator' mocks OR real agent UUID)
+//     → /v2/fd/:id (Epic 4 Step 6 dynamic FD)
+//
+// 5F Step 1: PH_MODAL_IDS + hudRef + MODAL fallback branch removed —
+// MODAL system fully retired (HudPit no longer exposes openPhModal).
+import { watch } from 'vue';
 import { useRouter } from 'vue-router';
 import HudPit from '@/components/hud/HudPit.vue';
 import { useClickState } from '@/scene/interaction/useClickState.js';
 
-const PH_MODAL_IDS = [];
-
-const hudRef = ref(null);
 const click = useClickState();
 const router = useRouter();
 
@@ -62,10 +57,6 @@ watch(() => click.seq, () => {
   }
   if (click.id === 'shop') {
     router.push('/v2/shop');
-    return;
-  }
-  if (PH_MODAL_IDS.includes(click.id)) {
-    if (hudRef.value) hudRef.value.openPhModal(click.id);
     return;
   }
   // Anything else — legacy mock keys ('warden'/'predator') or real agent
