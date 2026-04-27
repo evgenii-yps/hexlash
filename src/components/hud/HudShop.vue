@@ -74,6 +74,10 @@
       </div>
 
       <div class="shop-detail">
+        <button
+          class="sd-mobile-back"
+          @click="mobileShowDetail = false"
+        >← Items</button>
         <div v-if="!selected" class="sd-empty">Select an item<br>to see details</div>
         <template v-else>
           <div class="sd-big-preview" :style="bigPreviewStyle(selected)">

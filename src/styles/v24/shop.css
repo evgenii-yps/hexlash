@@ -359,6 +359,24 @@
   letter-spacing: 3px; text-transform: uppercase;
 }
 
+/* 5E-specific: mobile-only "← Items" back button inside detail panel.
+   Hidden on desktop; @media block below flips display. Closes UX gap where
+   prototype relied on browser back to return from detail to grid. */
+.app-v2 .sd-mobile-back {
+  display: none;
+  background: var(--bg-panel);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 6px;
+  padding: 8px 14px 8px 10px;
+  color: var(--text-mid);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  margin-bottom: 12px;
+}
+
 /* Purchase flash */
 .app-v2 .purchase-flash {
   position: absolute; inset: 0;
@@ -384,6 +402,7 @@
   .app-v2 .shop-main.show-detail .shop-grid-wrap { display: none; }
   .app-v2 .shop-main.show-detail .shop-detail { display: flex; }
   .app-v2 .shop-balance { flex-wrap: wrap; max-width: 60%; }
+  .app-v2 .sd-mobile-back { display: block; }
 }
 
 /* 5E-specific: empty category fallback. Replaces prototype 12597 inline-style
