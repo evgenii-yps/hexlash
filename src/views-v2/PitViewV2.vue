@@ -20,13 +20,15 @@
 // Epic 5 Sub-Epic 5C Step 1: 'ratings' now routes to /v2/ratings instead of
 // opening a PhModal.
 // Epic 5 Sub-Epic 5D Step 1: 'clan' now routes to /v2/clan instead of opening
-// a PhModal. Remaining 1 PhModal id: shop.
+// a PhModal.
+// Epic 5 Sub-Epic 5E Step 1: 'shop' now routes to /v2/shop instead of opening
+// a PhModal. PH_MODAL_IDS is now empty — fallback branch never fires.
 import { ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import HudPit from '@/components/hud/HudPit.vue';
 import { useClickState } from '@/scene/interaction/useClickState.js';
 
-const PH_MODAL_IDS = ['shop'];
+const PH_MODAL_IDS = [];
 
 const hudRef = ref(null);
 const click = useClickState();
@@ -56,6 +58,10 @@ watch(() => click.seq, () => {
   }
   if (click.id === 'clan') {
     router.push('/v2/clan');
+    return;
+  }
+  if (click.id === 'shop') {
+    router.push('/v2/shop');
     return;
   }
   if (PH_MODAL_IDS.includes(click.id)) {

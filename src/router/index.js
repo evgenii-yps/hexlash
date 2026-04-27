@@ -115,6 +115,11 @@ const v2Routes = [
                 name: 'V2Clan',
                 component: () => import('@/views-v2/ClanView.vue'),
             },
+            {
+                path: 'shop',
+                name: 'V2Shop',
+                component: () => import('@/views-v2/ShopView.vue'),
+            },
         ],
     },
 ];
