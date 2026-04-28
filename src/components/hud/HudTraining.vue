@@ -69,6 +69,13 @@
       </div>
     </div>
 
+    <!-- 5I — Social tasks (legacy SocialTasks.vue inline reuse, 0-line touch). -->
+    <SocialTasks
+      :socialTasks="socialTasks"
+      :loadingSocialTasks="loadingSocialTasks"
+      :hasIncompleteSocialTasks="hasIncompleteSocialTasks"
+    />
+
     <div
       class="training-combo"
       :class="{
@@ -88,8 +95,26 @@
 </template>
 
 <script setup>
+import { computed, onMounted } from 'vue';
+import { useStore } from 'vuex';
 import { trState } from '@/scene/interaction/useTrainingState.js';
+import SocialTasks from '@/components/fragments/training/SocialTasks.vue';
 
 const emit = defineEmits(['back']);
 function onBack() { emit('back'); }
+
+// 5I — Social tasks inline reuse (legacy SocialTasks.vue, 0-line touch).
+// Mirror TrainingView reactive bindings exactly. Idempotency guard prevents
+// duplicate fetch on re-mount (HudTraining can mount/unmount multiple times
+// per session as user navigates /v2/training in/out).
+const store = useStore();
+const socialTasks = computed(() => store.getters['task/getAllSocialTasks']);
+const loadingSocialTasks = computed(() => store.state.task.isLoadingSocialTasks);
+const hasIncompleteSocialTasks = computed(() => store.getters['task/hasIncompleteSocialTasks']);
+
+onMounted(() => {
+  if (!loadingSocialTasks.value && !socialTasks.value?.length) {
+    store.dispatch('task/fetchAllSocialTasks');
+  }
+});
 </script>
