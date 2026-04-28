@@ -3021,4 +3021,74 @@ src/components/hud/HudFighterDetail.vue       — modified +102/-1 — kicker fi
 
 **Следующий sub-epic:** 5H TBD per HANDOFF — single feature pick (AutoFight toggle / Spectate flag / Social tasks / AI Trainer / Challenges / Referral QR) либо polish batch (HudClan split + ClanActivityFeed + carry-overs).
 
+### Эпик 5 — Sub-Epic 5H — Referral QR (✅ COMPLETE)
+
+Завершён 2026-04-28. Eighth sub-epic в Эпике 5. Augmentation pattern для legacy `ReferralModal.vue` — derived from 5B ConnectWallet precedent но **simplified per Correction A** (mount-on-demand vs long-lived component lifecycle).
+
+**Commit range:** `7933105` (Step 2 — only functional commit) → `<step 7>` (Step 7 HANDOFF).
+**Branch:** continued `claude/setup-5e-shop-mode-a-khIAi` (5E/5F/5G/5H stack).
+**Predecessor:** 5G ✅ CLOSED (`e58f2be`).
+
+**Что делает 5H:**
+1. **Identity card 5th row "Referral"** — link text `hexlash.com/r/{login}` (truncated to 24 chars + `…`), pink color + cursor pointer + hover underline. Mirrors `.ifv.wallet` clickable pattern.
+2. **Lazy ReferralModal mount-on-demand** — `<component v-if="referralMounted" :is="ReferralComp" @close="...">` host. Click row → `loadReferralModal()` (dynamic import + markRaw) → `referralMounted = true` → modal mounts → contents visible immediately (no ref method call needed).
+3. **CSS mirror** — `.ifv.referral` rule добавлена в `src/styles/v24/profile.css` рядом с `.ifv.wallet` (consistency через file location vs scoped block).
+4. **Legacy ReferralModal untouched** — file zero modifications. Mount-on-demand pattern uses `<Teleport to="body">` already present + `emit('close')` API as-is.
+
+**Что видит пользователь:**
+- Open `/v2/profile` → Identity card has 5 rows: Wallet / Belt / Clan / Email / **Referral**
+- Referral row text: `hexlash.com/r/<login>` truncated to 24 chars (long logins get `…`)
+- Hover row → text underline appears
+- Click row → ~100-200ms lazy chunk fetch (first time) → modal pops в (Teleport to body) с QR code (200×200 transparent bg) + referral link + Copy/Share btns + invited friends list
+- Close (× / backdrop click) → modal unmounts (`referralMounted = false`)
+- Reopen → fresh fetch (`apiClient.getReferrals()`) + fresh QR generation (mount-on-demand)
+
+**Дерево (2 modified, 0 new):**
+
+```
+src/components/hud/HudProfile.vue   — modified +40 — lazy host (script + template) + Identity 5th row + onReferralClick + referralLinkText computed
+src/styles/v24/profile.css          — modified +6  — .ifv.referral base + :hover (mirror .ifv.wallet pattern)
+```
+
+5H = **smallest sub-epic в Эпике 5** (4 commits total: Step 2 functional + Steps 5/6/7 closing).
+
+**Reused as-is (4):**
+- `apiClient.getReferrals()` endpoint (`src/core/api/apiClient.js` — GET /user/referrals)
+- `qrcode` library (^1.5.4 в package.json, used inside modal)
+- `navigator.clipboard` / `navigator.share` API patterns (used inside modal)
+- ReferralModal full body (288 lines) — **zero augmentation** per Correction A
+
+**Ключевые паттерны:**
+- **5B augmentation pattern — semantic reuse не mechanical mirror** — lazy import + dynamic component host + markRaw — **core principle preserved**. Dropped: defineExpose ceremony + `await nextTick × 2 → ref.openModal()` chain — **not needed для mount-on-demand lifecycle**. Pattern adapted to semantic intent.
+- **Mount-on-demand vs long-lived modal lifecycle** — ConnectWallet caches state across opens (wallet connector list), needs internal show/hide flag. ReferralModal fetches data fresh per open (QR + referrals API), mount = visible = correct. No internal state needed.
+- **Lazy chunk delivery** — DevTools Network confirms ReferralModal-*.js fetched only on first click; subsequent opens reuse cached module via Vue's module cache.
+- **shallowRef для component instance refs** — Vue 3 best practice (avoid deep reactivity overhead on Component objects). Self-applied vs ТЗ-spec, validates 5B precedent matches (CWComp also uses shallowRef).
+- **Closes 5B-deferred item** — symmetric с 5F's MODAL_CONTENT closure (3-sub-epic carry-over closing pattern).
+
+**Расхождения — осознанные:**
+1. Vuetify `<v-progress-circular>` сохранён в legacy modal (Q3 augmentation reuse rule — don't touch unless visual breaks).
+2. Hardcoded `https://hexlash.com/r/{login}` URL в legacy modal (Q4 — out of 5H scope; env-var refactor separate concern).
+3. Truncate logic для long logins (24 chars + `…`) — UX consistency с Wallet row (long addresses already truncate similarly via parent layout).
+4. **ReferralModal `defineExpose` skip** (vs ТЗ §Step 1 augmentation plan) — Pre-flight Correction A. Mount-on-demand pattern (data fetched fresh per open) ≠ ConnectWallet long-lived pattern. Validates lesson: 5B precedent применять **semantically** (lazy import + lazy mount), не **mechanically** (defineExpose-must-be-there). 5H-introduced refinement.
+5. **CSS rule в `src/styles/v24/profile.css`** (vs ТЗ assumed scoped style block в HudProfile.vue) — Pre-flight Correction B. `.ifv.wallet` rule found в profile.css, mirror там же per consistency. ТЗ self-correction via lesson #11 reflex.
+6. **`shallowRef` для `ReferralComp`** (vs `ref` в ТЗ template) — Vue 3 best practice для component instance refs, избегает deep reactivity overhead. Self-applied as improvement matching 5B (`CWComp = shallowRef(null)`), не divergence — alignment with precedent.
+
+**Lessons applied:**
+- **#11 verify shape с реальным data** — Pre-flight Step 0 caught 2 ТЗ corrections (defineExpose unnecessary + CSS file location). Step 4 validated clean state — first sub-epic в running tally **без** false-positive recovery (means lesson works as preventive, not just reactive).
+- **#22 HUD scoped selector match** — `.ifv.referral` scoped через `.app-v2 .id-field` ancestor chain в profile.css (not Vue scoped block — global file but namespaced).
+- **5B augmentation pattern semantic reuse** — 1st application of pattern adaptation across precedent.
+
+**Lessons added (1 new — #30):**
+- **#30 Pattern reuse — semantic vs mechanical** — when reusing precedent pattern (e.g., 5B ConnectWallet → 5H ReferralModal), distinguish core principle (lazy import + lazy mount) from ceremonial details (defineExpose + nextTick × 2 + ref method). Adapt to target component's actual lifecycle. Mechanical mirror leads к dead code (e.g., no-op `openModal` just for symmetry); semantic adaptation respects component's real needs. Lesson #11 specialization для cross-sub-epic pattern reuse.
+
+**Hot-fix metric:** **0 hot-fix attempts на ложной траектории.** Continues 5E/5F/5G precedent — **4-streak** (5E + 5F + 5G + 5H all 0 hot-fix). Pre-flight Step 0 caught 2 corrections at zero-commit cost; Step 4 verify clean. Pattern reflex stable across 4 consecutive sub-epics.
+
+**Эпик 5 §4.2 progress:** **11/22 done** (+1 from 5H: Referral QR #8). Remaining: 5/22 partial + 6/22 missing.
+
+**Sub-Epic 5H — CLOSED.** ✅ Route table `/v2/*` остаётся unchanged (5H modifies HudProfile in-place; no new routes).
+
+**Bundle impact:** ReferralModal lazy chunk (~5-8kB raw / ~2kB gzip post-minification) fetched on-demand. HudProfile chunk grows ~1kB raw from added imports + handler code.
+
+**Следующий sub-epic:** 5I TBD per HANDOFF — single feature pick (AutoFight / Spectate / Social tasks / AI Trainer / Challenges / FightClub level / Retirement) либо polish batch.
+
 
