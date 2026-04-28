@@ -63,6 +63,17 @@ const completeTask = () => {
   amplitude.track('CompleteSubscribeTask', props.task.category);
 };
 
+// 5I Phase 2 — defineExpose augmentation (Option B Q1 β).
+// Allows v2 HudSocialTasks lazy-mount pattern (5B ConnectWallet precedent)
+// to trigger modal opening from outside. Legacy ProfileView/SocialTasks
+// reuse remains unchanged (they don't call openModal — internal `dialog`
+// ref still defaults to false on legacy mount, but legacy path uses
+// alternate trigger via parent v-model).
+function openModal() {
+  dialog.value = true;
+}
+defineExpose({ openModal });
+
 </script>
 
 <style scoped>

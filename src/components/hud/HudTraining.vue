@@ -84,11 +84,15 @@
     <div class="training-hint">
       <span class="key">CLICK</span> the bag &middot; keep rhythm for combo
     </div>
+
+    <!-- 5I Phase 2 — Social Tasks (v2-native panel, Option B re-implementation). -->
+    <HudSocialTasks />
   </div>
 </template>
 
 <script setup>
 import { trState } from '@/scene/interaction/useTrainingState.js';
+import HudSocialTasks from './HudSocialTasks.vue';
 
 const emit = defineEmits(['back']);
 function onBack() { emit('back'); }
