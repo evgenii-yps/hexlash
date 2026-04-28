@@ -2873,4 +2873,80 @@ src/data/shopMock.js                 —  39 — SHOP_ITEMS (18) + SHOP_OWNED_IN
 
 **Следующий sub-epic:** 5F (i18n pass) или 5G (polish) per VISUAL_MIGRATION plan. Pre-flight в `docs/visual-migration/HANDOFF_EPIC5_5F_CHAT_HANDOFF.md` (Step 11).
 
+### Эпик 5 — Sub-Epic 5F — Triple Small Batch (✅ COMPLETE)
+
+Завершён 2026-04-28. Six-th sub-epic в Эпике 5 — 3 isolated small features в одном run для cleanup + missing features delivery.
+
+**Commit range:** `a4808d4` (Step 1) → `<step 10>` (Step 10 HANDOFF).
+**Branch:** `claude/setup-5e-shop-mode-a-khIAi` (continued from 5E — same harness slug, single PR target к visual-v2 closes 5E + 5F + later sub-epics).
+**Predecessor:** 5E ✅ CLOSED (`929986d`).
+
+**Что делает 5F:**
+1. **MODAL_CONTENT cleanup** (XS) — closes 3-sub-epic carry-over (5C/5D §14, 5E §9). Удалил `warden:` + `predator:` entries из HudPit MODAL_CONTENT, плюс кaskade dead code: PhModal import + 4 refs (modalOpen/Kicker/Title/Desc) + openPhModal/closeModal + defineExpose + PH_MODAL_IDS array + hudRef в PitViewV2. Net −66 lines. Подтверждено что в prototype самом это dead code (line 6948 — early return на openFighterDetail).
+2. **VerifyEmailBanner** (S) — port prototype 3395-3445 (CSS) + 12790-12810 (JS handlers, adapted to Vue). Self-positioned `position: fixed` сверху, conditional на `master.userData.emailVerified === false`. "Verify Now" btn → `router.push('/verify-email')` (legacy route reuse). Push HUD top-bar 12px → 48px (preserves prototype +36px delta) через `body.verify-shown` class.
+3. **HelpModal** (S) — **новый pattern** (prototype не имеет dedicated help — only Onboarding). "?" icon в HudPit top-bar (44px circle, paired со styling avatar btn) → modal с 6 sections inline EN rules text. Teleport-to-body для z-index escape (PhModal precedent), backdrop blur, Esc/×/backdrop close.
+
+**Что видит пользователь:**
+- (banner) Если `emailVerified === false`: top of screen — orange→gold gradient banner "Verify your email...". "Verify Now" btn → /verify-email. Dismiss × → banner slides up out (state local, refresh restores). HUD top-bar push'нут 36px вниз. Banner persistent across all `/v2/*` routes (mounted в AppV2.vue, не per-view).
+- (help) "?" icon в TopBar right cluster (рядом с avatar, paired styling). Click → backdrop blur + modal pop-in c 6 sections (basics / hub navigation / training / pvp / clans / shop). Esc / × / backdrop close → modal unmounts (lazy `v-if`).
+- (cleanup) Никаких visible изменений — fighter clicks still → /v2/fd/* (была dead code path never reached).
+
+**Дерево новых файлов (3):**
+
+```
+src/components/hud/VerifyEmailBanner.vue  — 71 lines — banner + Vue Transition slide + body.verify-shown class sync
+src/components/hud/HelpModal.vue           — 73 lines — Teleport-to-body modal с 6 sections + Esc handler + backdrop close
+src/styles/v24/help.css                    — 151 lines — `.app-v2 .tb-help-btn` (scoped) + `.help-*` global (Teleported) + @keyframes helpFadeIn + mobile @820px
+```
+
+**Изменены (5):**
+
+- `src/components/hud/HudPit.vue` (−75 / +20) — MODAL_CONTENT + PhModal infrastructure removal + helpOpen ref + HelpModal lazy mount + TopBar @help-click binding
+- `src/views-v2/PitViewV2.vue` (−45 / +9) — PH_MODAL_IDS array + hudRef + dead branch removal
+- `src/AppV2.vue` (+2) — VerifyEmailBanner mount (global для всех /v2/*)
+- `src/components/hud/common/TopBar.vue` (+10 / −3) — `.v2-topbar__right` flex wrapper + `?` btn + `help-click` emit
+- `src/styles/v24/verify.css` (+73, new) — port prototype 3395-3445 + body push-down rule
+- `src/styles/hexlash-v24.css` (+2) — `@import './v24/verify.css'` + `@import './v24/help.css'`
+
+**Reused (1):**
+- `master.userData.emailVerified` field (existing) — used for banner conditional
+
+**Ключевые паттерны:**
+- **Lesson #11 as reflex** — 5 false-positive grep recoveries в run (MODAL_CONTENT × 2 в Step 1 + 7, PhModal в Step 1, остальные в pre-flight). Pattern: при unexpected grep hit — first verify где именно matched (comment / code / string), не just count.
+- **TZ self-correction via pre-flight** — original ТЗ had 2 assumption errors (`verified` → `emailVerified` field rename; `master/sendVerifyEmail` действие — это submit-code, не resend-link). Pre-flight Step 0 caught both, ТЗ adjusted before Step 2 write.
+- **Teleport-to-body для overlays** (PhModal precedent) — global non-scoped CSS для Teleported elements, scoped CSS для in-DOM trigger button.
+- **Vue Transition вместо CSS class toggle** — VerifyEmailBanner uses Vue 3 `<Transition>` для slide-in/out (idiomatic Vue 3, equivalent visual prototype CSS class).
+- **Wrapper-based button cluster** — TopBar `.v2-topbar__right` flex group для right-side cluster (avatar + help). Future-extensible (e.g. notif btn).
+- **Delta preservation для adaptation** — banner push-down 12px → 48px preserves prototype +36px delta поверх codebase baseline 12px (vs prototype baseline 0px). Pattern для intent-preservation при adaptation.
+
+**Расхождения — осознанные:**
+1. HelpModal не из prototype — created с нуля per plan §4.2 #3 recommendation (prototype only имеет Onboarding).
+2. Help content — inline EN strings (i18n defer last per plan §R8).
+3. Banner dismiss state — НЕ persisted (refresh показывает снова). Persist в 5G polish если decided.
+4. Banner btn label "Verify Now" (router.push '/verify-email') vs prototype "Resend Link" (toast confirm). Reason: no `resendVerifyEmail` Vuex action existed — reuse existing legacy verify flow вместо создания нового endpoint. Real `resend` endpoint deferred к backend sub-epic.
+5. Banner mounted в AppV2.vue (global) vs original ТЗ §Step 2 (PitViewV2.vue per-view). ТЗ §Visual verify expectation specified "persists across views" — resolved per stated intent (global). Documented в FINAL §5.
+6. `emailVerified` field (codebase) vs original ТЗ `verified` (assumed name). TZ self-correction via pre-flight Step 0.
+7. `master/sendVerifyEmail` — это submit-code action, не resend-link. TZ assumption corrected — banner Verify Now btn navigates to legacy `/verify-email` view вместо dispatch'а несуществующего resend.
+8. Selector scope split в help.css — `.tb-help-btn` scoped с `.app-v2`, `.help-*` global (Teleport-aware). Document в CSS header comment + FINAL §5.
+9. `.top-bar` (prototype) → `.v2-topbar` (codebase namespace) для CSS rules.
+10. `.notif-panel` push-down rule dropped — нет v2 NotificationPanel (audit confirmed missing, defer к PvP-integration).
+11. Banner default visible (no initial `translateY(-100%)`); Vue Transition handles enter/leave вместо prototype CSS class toggle.
+
+**Lessons applied (validated):**
+- #5 strict teardown order — VerifyEmailBanner `onBeforeUnmount` removes body class
+- #9 split-write — N/A для 5F (все файлы <200 lines, single write OK)
+- #11 verify shape с реальным data — applied 5+ times в run
+- #12 pointer-events — N/A для Teleported HelpModal (PhModal precedent)
+- #18 STOP tuning + START structural inspection — N/A (run had no visual mismatches)
+- #22 HUD scoped selector match — `.shop-hud` parity holds для VerifyEmailBanner (`.verify-banner` root) + `.tb-help-btn` (in-DOM trigger). HelpModal Teleport — exception explicitly documented.
+- Path A для banner; new pattern для HelpModal (documented).
+
+**Hot-fix metric:** **0 hot-fix attempts на ложной траектории.** Continues 5E precedent. 6 functional commits + 3 closing = 9 commits total. Compare 5D: 5 hot-fix attempts Step 5 alone.
+
+**Sub-Epic 5F — CLOSED.** ✅ Route table `/v2/*` остаётся unchanged (5F не добавляет new routes — global features overlay существующие).
+
+**Bundle impact:** TBD из Step 8 build report.
+
+**Следующий sub-epic:** 5G TBD per HANDOFF — single medium feature (Captain switch / AutoFight / Spectate / Social tasks / AI Trainer / Challenges) либо polish batch (HudClan split + ClanScene mood + ClanActivityFeed).
+
 
