@@ -33,7 +33,9 @@ export function buildClanScene(THREE, aspect) {
   const floorTex = makeConcreteTexture(THREE);
   floorTex.repeat.set(5, 5);
   const floorMaterial = new THREE.MeshStandardMaterial({
-    map: floorTex, color: 0x20202a, roughness: 0.95, metalness: 0.02,
+    // 5L Phase 5 tweak 2 — floor color -5% lightness (0x20202a -> 0x1d1d27).
+    // Slight darkening, preserves cool tint, reads as deeper "tomb" mood.
+    map: floorTex, color: 0x1d1d27, roughness: 0.95, metalness: 0.02,
   });
   const wallMaterial = new THREE.MeshStandardMaterial({
     color: 0x0e0e18, roughness: 0.95,
@@ -79,8 +81,10 @@ export function buildClanScene(THREE, aspect) {
   scene.add(keyLight, keyLight.target);
 
   // Rim L pink — picks out left flag edges + walls.
+  // 5L Phase 5 tweak 1 — pink saturation +15% (0xff066f -> 0xff1a7d).
+  // (255,6,111) -> (255,26,125): brightness/saturation boost, preserves hue.
   const rimL = new THREE.SpotLight(
-    0xff066f, 0.25, 14, Math.PI * 0.4, 0.8, 1.6,
+    0xff1a7d, 0.25, 14, Math.PI * 0.4, 0.8, 1.6,
   );
   rimL.position.set(-6, 3, 0);
   rimL.target.position.set(0, 1.8, 0);
@@ -116,9 +120,12 @@ export function buildClanScene(THREE, aspect) {
   // centre, ANA cyan at x=3.5. Each is a pole + concrete base + canvas-
   // texture cloth with accent stripe + emblem + 3-letter label. Factory
   // lives in src/scene/objects/clanFlag.js per "one object = one module".
-  scene.add(makeClanFlag(THREE, '#ff066f', -3.5, 'PRED'));
-  scene.add(makeClanFlag(THREE, '#D4A843', 0,    'IRW'));
-  scene.add(makeClanFlag(THREE, '#4dd9ff', 3.5,  'ANA'));
+  // 5L Phase 5 tweak 3 — save totem refs for sin-wave sway in tick.
+  const flagPred = makeClanFlag(THREE, '#ff066f', -3.5, 'PRED');
+  const flagIrw  = makeClanFlag(THREE, '#D4A843', 0,    'IRW');
+  const flagAna  = makeClanFlag(THREE, '#4dd9ff', 3.5,  'ANA');
+  scene.add(flagPred, flagIrw, flagAna);
+  const flagTotems = [flagPred, flagIrw, flagAna];
 
   // Orbit tick — prototype 10880/scene loop equivalent: gentle camera sway
   // so the static composition breathes. Radius 7.5 matches initial position.
@@ -130,6 +137,12 @@ export function buildClanScene(THREE, aspect) {
     camera.position.y = 2.6 + Math.sin(t * 0.2) * 0.05;
     camera.lookAt(0, 1.6, 0);
     dust.tick();
+    // 5L Phase 5 tweak 3 — flag totem subtle wave (±0.02 rad ≈ ±1.15°).
+    // Three totems out of phase (2π/3 offset each) so they don't sway in sync.
+    for (let i = 0; i < flagTotems.length; i++) {
+      const phaseOffset = i * (Math.PI * 2 / 3);
+      flagTotems[i].rotation.z = Math.sin(t * 0.5 + phaseOffset) * 0.02;
+    }
   }
 
   function dispose() {
