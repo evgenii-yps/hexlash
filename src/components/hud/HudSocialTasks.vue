@@ -128,8 +128,19 @@ function onTaskComplete(taskId) {
 </script>
 
 <style scoped>
-/* ===== Panel — mirror .training-tasks visual style + Choose Archetype layout ===== */
+/* ===== Panel — 5J Path D invert default: natural card shape =====
+   Default: pure layout container. Container styles (bg/border/padding/etc) come
+   from parent (.profile-card in Profile context). The .is-overlay modifier
+   below restores the original fixed-position HUD overlay shape — currently
+   unused (HudTraining mount removed in 5J Step 4) but preserved future-proof. */
 .training-social-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Optional overlay modifier for fixed-position HUD contexts (defensive future-proof). */
+.training-social-panel.is-overlay {
   position: fixed;
   top: 200px;
   right: 14px;
@@ -249,9 +260,9 @@ function onTaskComplete(taskId) {
   flex-shrink: 0;
 }
 
-/* Mobile — bottom-anchored compact, full width minus margins */
+/* Mobile — bottom-anchored compact for overlay context only (5J scope: was global). */
 @media (max-width: 820px) {
-  .training-social-panel {
+  .training-social-panel.is-overlay {
     top: auto;
     bottom: 80px;
     right: 14px;
