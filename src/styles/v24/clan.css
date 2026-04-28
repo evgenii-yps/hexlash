@@ -222,8 +222,24 @@
   position: absolute; top: 70px; left: 14px; right: 14px; bottom: 14px;
   display: grid;
   grid-template-columns: 1fr 2fr;
-  grid-template-rows: auto 1fr;
+  /* 5L Phase 4: row 3 added for ClanActivityFeed (full-width below side+roster) */
+  grid-template-rows: auto 1fr auto;
   gap: 12px;
+}
+
+/* 5L Phase 4 — ClanActivityFeed grid slot (full-width row 3). */
+.app-v2 .ic-activity {
+  grid-column: 1 / -1;
+  background: var(--bg-panel);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  padding: 12px 16px;
+  max-height: 200px;
+  overflow-y: auto;
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+}
+.app-v2 .ic-activity .activity-feed {
+  padding: 0;
 }
 
 /* Clan header (full width) */
@@ -461,7 +477,8 @@
 @media (max-width: 820px) {
   .app-v2 .clan-ingrid {
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto 1fr;
+    /* 5L Phase 4: row 4 added for ClanActivityFeed on mobile stack */
+    grid-template-rows: auto auto 1fr auto;
   }
   .app-v2 .ic-header { flex-direction: column; align-items: flex-start; }
   .app-v2 .ic-header-stats { width: 100%; }

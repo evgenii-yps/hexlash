@@ -128,6 +128,16 @@
         :member-cap="memberCap"
       />
 
+      <!-- Sub-Epic 5L Phase 4 — ClanActivityFeed integration.
+           Self-fetches via onMounted (commit resetClanEvents + dispatch
+           fetchClanEvents). Wrapper grants grid placement (full-width row 3).
+           Component is conditionally rendered: needs valid clan.id, otherwise
+           the prop validator (required: true) throws on null. -->
+      <div v-if="clan?.id" class="ic-activity">
+        <div class="ic-side-title">Recent Activity</div>
+        <ClanActivityFeed :clanId="clan.id" />
+      </div>
+
       <!-- Lazy ClanEdit host. Modal teleports to body via Vuetify VModal;
            NO display:none — ancestor display:none breaks teleport visibility
            cascade despite teleport (Step 7 hot-fix 702b341, lesson #23). -->
@@ -174,6 +184,7 @@ import ClanConfirmModal from '@/components/fragments/clan/ClanConfirmModal.vue';
 import HudClanHeader from '@/components/hud/HudClanHeader.vue';
 import HudClanInfo from '@/components/hud/HudClanInfo.vue';
 import HudClanRoster from '@/components/hud/HudClanRoster.vue';
+import ClanActivityFeed from '@/components/fragments/clan/ClanActivityFeed.vue';
 import { t } from '@/locales/index.js';
 
 const store = useStore();
