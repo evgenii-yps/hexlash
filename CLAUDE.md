@@ -2949,4 +2949,76 @@ src/styles/v24/help.css                    — 151 lines — `.app-v2 .tb-help-b
 
 **Следующий sub-epic:** 5G TBD per HANDOFF — single medium feature (Captain switch / AutoFight / Spectate / Social tasks / AI Trainer / Challenges) либо polish batch (HudClan split + ClanScene mood + ClanActivityFeed).
 
+### Эпик 5 — Sub-Epic 5G — Captain Switch UI (✅ COMPLETE)
+
+Завершён 2026-04-28. Seventh sub-epic в Эпике 5. Closes captain-system gap (audit §4.2 #18 🟡 Partial → ✅ Done) plus 1-line kicker bug fix bundled.
+
+**Commit range:** `d0bcbed` (Step 1) → `<step 7>` (Step 7 HANDOFF).
+**Branch:** `claude/setup-5e-shop-mode-a-khIAi` (continued from 5E/5F).
+**Predecessor:** 5F ✅ CLOSED (`fb3b370`).
+
+**Что делает 5G:**
+1. **Kicker bug fix** — `HudFighterDetail.vue` kicker computed респектил `isCaptain` flag, до 5G каждый real agent showed "Captain · ..." regardless. 1-line conditional fix bundled с 5G scope (investigation found, не deferred к polish).
+2. **Set-as-Captain btn** — sibling `.back-btn` (direct child `.detail-hud`), positioned `fixed top:14px right:14px z-index:60` (mirrors back-btn convention exactly). Styled matching v2 design (dark bg + white border, hover pink, active scale(0.97), busy state opacity 0.6). Click → `agent/setCaptain` dispatch → hub auto-refreshes via CanvasLayer watcher (Epic 4 Step 5.5).
+3. **Captain badge** — replaces btn for already-captain agent. Pink-tinted "✓ Captain" non-clickable indicator (rgba(255,6,111,0.12) bg + pink border + `--hex-primary` text + `user-select: none`).
+4. **Legacy mocks excluded** — template `v-if="props.agent"` hides both btn и badge для warden/predator inline mocks (no real id для dispatch).
+
+**Что видит пользователь:**
+- Open `/v2/fd/<real-agent-uuid>`:
+  - If captain → "✓ Captain" pink badge top-right + kicker "Captain · <Archetype>"
+  - If not captain → "Set as Captain" btn top-right (dark bg, white border) + kicker "<Archetype>" only
+  - Click btn → opacity drops to 0.6 (busy state) → ~300-500ms dispatch → btn replaces с pink badge
+  - Back to /v2 → hub captain swapped (3D scene fighters re-render via CanvasLayer watcher)
+- `/v2/fd/warden` / `/v2/fd/predator` (legacy mocks, agent === null) — никакой btn ни badge
+
+**Дерево (1 modified):**
+
+```
+src/components/hud/HudFighterDetail.vue       — modified +102/-1 — kicker fix + btn/badge template + onSetCaptain handler + scoped CSS rules
+```
+
+5G не создаёт новых файлов — feature implementation в existing HudFighterDetail.vue полностью (template + script + scoped style block).
+
+**Reused as-is (3):**
+- `agent/setCaptain` Vuex action — `apiClient.put('/agent/:id/captain')` + auto-refetch (no service file abstraction; direct apiClient call в action body)
+- CanvasLayer watcher (Epic 4 Step 5.5) — `watch(() => store.getters['agent/agentsList'], (newList) => pit.refreshFighters(...))` auto-fires on dispatch cascade
+- `agentData` prop binding (FighterDetailView line 5) — already exposes `isCaptain` flag through real agent data
+
+**Ключевые паттерны:**
+- **Bug-bundle pattern** — investigation выявил kicker bug → bundle с 5G scope (1-line fix), не deferred к polish run отдельным commit'ом. Pattern: when investigation finds adjacent bug в same file/scope, bundle if low-risk single-line.
+- **Template `v-if` guard для legacy mocks** — `v-if="props.agent"` presence-check без assumption на data shape. Closes Q3 decision cleanly.
+- **Non-clickable status badge vs disabled btn** — UX preference (Q2 decision) для already-captain state. Badge передаёт state visually + semantically (pink-tinted = primary brand) vs disabled-ugly btn.
+- **Direct dispatch без ConfirmModal** — reversible action (Q4 decision), distinguishes от destructive 5D ClanLeave precedent. ConfirmModal reserved для irreversible operations.
+- **Cascade Epic 4 reuse** — Epic 4 Step 5.5 wired hub auto-refresh via CanvasLayer watcher. 5G dispatches и эта infra picks up automatically. No manual refreshFighters call.
+- **Mirror existing convention** — `.set-captain-btn` + `.captain-badge` styled `position: fixed; top:14px; z-index:60` (mirror `.back-btn` opposite corner). Pattern: when adding new HUD element, mirror existing pattern verbatim для visual consistency.
+
+**Расхождения — осознанные:**
+1. Kicker bug fix bundled (not separate sub-epic) — single-line, scope-related (HudFighterDetail.vue same file as 5G feature). Bug-bundle pattern.
+2. No ConfirmModal — Q4 direct dispatch (vs 5D destructive precedent).
+3. No optimistic UI — Q7 await before badge change (simpler, polish optional later).
+4. No toast notification on success — no toast system в v2 (audit confirmed).
+5. No spinner during dispatch — opacity 0.6 fade (~300-500ms call too short для spinner UX).
+6. Legacy mocks (warden/predator) не support set-captain — no real id для dispatch endpoint.
+7. CSS positioning `position: fixed` (not `absolute` как было в ТЗ §Step 2 reminder) — pre-edit grep показал `.back-btn` использует `fixed`, mirror real convention. Lesson #11 reflex applied — verify shape вместо follow user phrasing literally.
+8. ТЗ §Step 1 (b) markup assumed `<div class="fd-top-bar">` wrapper — pre-flight grep показал no such wrapper. `.back-btn` is direct child `.detail-hud` (positioned `fixed`). 5G btn/badge added as same-level sibling. ТЗ self-correction via pre-flight Step 0 (lesson #11 reflex).
+9. ТЗ §Step 2 referenced `src/styles/v24/fighterDetail.css` — pre-flight verify: no such file. CSS lives inline в HudFighterDetail.vue scoped style block (where `.back-btn` already styled). 5G rules added к scoped block. Drop hexlash-v24.css `@import` (not needed). ТЗ self-correction.
+
+**Lessons applied:**
+- **#11 verify shape с реальным data** — investigation pre-write caught kicker bug + setCaptain signature; pre-flight Step 0 caught 2 ТЗ assumption errors (`.fd-top-bar` wrapper / fd CSS file). 9th false-positive recovery в 5E+5F+5G run (1 в 5G на Step 4 grep).
+- **#22 HUD scoped selector match** — `.set-captain-btn` + `.captain-badge` scoped в HudFighterDetail.vue style block (file-scoped style, applies через `.app-v2` parent in DOM hierarchy). Validated.
+
+**Lessons added:**
+- **Bug-bundle in scope** — investigation findings (e.g. kicker bug в case 5G) могут быть scope-extended если изначальный focus area touches the file. Single-line fix bundled с 5G — не deferred к polish run отдельным commit'ом. Pattern для future investigation-driven sub-epics.
+- **Mirror real convention** — when ТЗ phrasing differs from codebase reality (e.g. ТЗ said `absolute`, codebase uses `fixed`), pre-edit grep wins. Verify shape реальной реализации, не trust ТЗ verbatim. Lesson #11 specialization для CSS/markup conventions.
+
+**Hot-fix metric:** **0 hot-fix attempts на ложной траектории.** Continues 5E/5F precedent — third consecutive sub-epic в Epic 5 без unplanned hot-fixes. Pre-flight Step 0 caught 2 ТЗ assumption errors at zero-commit cost.
+
+**Эпик 5 §4.2 progress:** **10/22 done** (+1 from 5G: Captain switch #18). Remaining: 5/22 partial + 7/22 missing.
+
+**Sub-Epic 5G — CLOSED.** ✅ Route table `/v2/*` остаётся unchanged (5G modifies HudFighterDetail in-place; no new routes).
+
+**Bundle impact:** TBD из Step 7 build report (only HudFighterDetail.vue affected, expected delta minimal — ~3-4kB to FighterDetailView lazy chunk).
+
+**Следующий sub-epic:** 5H TBD per HANDOFF — single feature pick (AutoFight toggle / Spectate flag / Social tasks / AI Trainer / Challenges / Referral QR) либо polish batch (HudClan split + ClanActivityFeed + carry-overs).
+
 
