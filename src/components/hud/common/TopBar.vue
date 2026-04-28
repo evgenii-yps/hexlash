@@ -29,9 +29,12 @@
       <div class="v2-pit-title__meta">LVL 1 · 250 / 1000 XP</div>
     </div>
 
-    <button class="v2-avatar-btn" @click="$emit('avatar-click')">
-      <span>{{ avatarInitials }}</span>
-    </button>
+    <div class="v2-topbar__right">
+      <button class="tb-help-btn" @click="$emit('help-click')" aria-label="Help">?</button>
+      <button class="v2-avatar-btn" @click="$emit('avatar-click')">
+        <span>{{ avatarInitials }}</span>
+      </button>
+    </div>
   </div>
 </template>
 
@@ -39,7 +42,7 @@
 import { computed } from 'vue';
 import store from '@/core/state/store.js';
 
-defineEmits(['avatar-click']);
+defineEmits(['avatar-click', 'help-click']);
 
 const avatarInitials = computed(() => {
   const login = store.getters['master/getMaster']?.userData?.login || '';

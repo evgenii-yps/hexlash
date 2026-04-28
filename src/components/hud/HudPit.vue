@@ -7,23 +7,27 @@
      deferred lists, closed in 5F. -->
 <template>
   <div class="hud-pit">
-    <TopBar @avatar-click="onAvatarClick" />
+    <TopBar @avatar-click="onAvatarClick" @help-click="helpOpen = true" />
     <WorldHint
       :text="hover.text"
       :x="hover.x"
       :y="hover.y"
       :visible="hover.visible"
     />
+    <HelpModal v-if="helpOpen" @close="helpOpen = false" />
   </div>
 </template>
 
 <script setup>
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import TopBar from './common/TopBar.vue';
 import WorldHint from './common/WorldHint.vue';
+import HelpModal from './HelpModal.vue';
 import { useHoverState } from '@/scene/interaction/useHoverState.js';
 
 const hover = useHoverState();
+const helpOpen = ref(false);
 
 // Avatar-btn is a DOM HUD element (not a 3D-raycastable target), so its click
 // never reaches PitViewV2's useClickState watcher. TopBar emits @avatar-click
