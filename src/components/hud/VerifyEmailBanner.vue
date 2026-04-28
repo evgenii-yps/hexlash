@@ -33,7 +33,22 @@ const router = useRouter();
 const dismissed = ref(false);
 
 const emailVerified = computed(() => !!store.state.master?.userData?.emailVerified);
+const userLogin = computed(() => store.state.master?.userData?.login || 'guest');
 const visible = computed(() => !emailVerified.value && !dismissed.value);
+
+// Sub-Epic 5L Phase 1 — per-user dismiss persistence via localStorage.
+// Key scoped to login so different accounts on same device don't leak state.
+function storageKey(login) {
+  return `hexlash_verify_banner_dismissed_${login}`;
+}
+
+function loadDismissedState(login) {
+  try {
+    return localStorage.getItem(storageKey(login)) === 'true';
+  } catch (e) {
+    return false;
+  }
+}
 
 function onVerifyNow() {
   router.push('/verify-email');
@@ -41,6 +56,11 @@ function onVerifyNow() {
 
 function onDismiss() {
   dismissed.value = true;
+  try {
+    localStorage.setItem(storageKey(userLogin.value), 'true');
+  } catch (e) {
+    // localStorage unavailable (private mode etc) — degrade to session-scoped
+  }
 }
 
 // Push HUD top-bar down via body class (per prototype 3444 push-down rule —
@@ -50,11 +70,19 @@ function syncBodyClass() {
   else document.body.classList.remove('verify-shown');
 }
 
-onMounted(syncBodyClass);
+onMounted(() => {
+  dismissed.value = loadDismissedState(userLogin.value);
+  syncBodyClass();
+});
 onBeforeUnmount(() => {
   document.body.classList.remove('verify-shown');
 });
 watch(visible, syncBodyClass);
+
+// Re-init dismissed state when login changes (logout/login flow).
+watch(userLogin, (login) => {
+  dismissed.value = loadDismissedState(login);
+});
 </script>
 
 <style scoped>
