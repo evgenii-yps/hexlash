@@ -9,6 +9,7 @@ const fs = require('fs');
 const { PORT, FRONTEND_URL, UPLOAD_DIR } = require('./config');
 const { setupWebSocket } = require('./websocket/handler');
 const { startScheduler, stopScheduler } = require('./services/agentScheduler');
+const { startDailyTaskCron, stopDailyTaskCron } = require('./services/dailyTaskCron');
 
 // Routes
 const authRoutes = require('./routes/auth');
@@ -119,11 +120,13 @@ server.listen(port, '0.0.0.0', () => {
   console.log(`WebSocket available on ws://0.0.0.0:${port}`);
   console.log(`Health check: http://0.0.0.0:${port}/health`);
   startScheduler();
+  startDailyTaskCron();
 });
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
   stopScheduler();
+  stopDailyTaskCron();
   server.close();
 });
 process.on('SIGINT', () => {
