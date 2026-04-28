@@ -3177,4 +3177,76 @@ src/components/fragments/training/SubscribeModal.vue — modified +11 (2 real co
 
 **Следующий sub-epic:** 5J — backend Daily Tasks system (decision deferred between Path 1 backend cron + persistent tracking vs Path 2 Profile placement move). Pre-flight в `docs/visual-migration/HANDOFF_EPIC5_5J_CHAT_HANDOFF.md` (Step 7).
 
+### Эпик 5 — Sub-Epic 5J — Profile Move (Path 2) (✅ COMPLETE)
+
+Завершён 2026-04-28. Tenth sub-epic в Эпике 5. Relocates HudSocialTasks с `/v2/training` на `/v2/profile`, applying lesson #30 + Path D invert default pattern. Smallest sub-epic в Эпике 5 (4 functional commits + 0 hot-fixes), но methodologically значимый — first run **with no false-positive recoveries в Step 6 verify checklist** (recovery shifted-left to Step 1 functional commit via tight awk between-braces verify).
+
+**Commit range:** `42e7b7b` (Step 1) → `<step 9>` (Step 9 HANDOFF).
+**Branch:** continued `claude/setup-5e-shop-mode-a-khIAi` (5E + 5F + 5G + 5H + 5I + 5J stack).
+**Predecessor:** 5I ✅ CLOSED (`fd4b575`).
+
+**Что делает 5J:**
+1. **HudSocialTasks Path D invert** — drop fixed-position default. Container becomes pure layout (`display: flex; flex-direction: column; gap: 10px`). Future `.is-overlay` modifier preserved для overlay reuse (defensive future-proof — currently zero consumers).
+2. **HudProfile 5-я card** — `.profile-card.social-tasks-card` after Settings card, spans 2 cols, max-height 360px (internal `.tsp-list` scrolls).
+3. **profile.css grid extend** — desktop 3 → 4 rows, mobile 4 → 5 rows. `.social-tasks-card` rule добавлен с `grid-column: 1 / -1` + max-height cap.
+4. **HudTraining clean** — `<HudSocialTasks />` mount + import + 5I Phase 2 comment removed.
+5. **0-line touch на main legacy logic preserved** — HudSocialTasks inner `.tsp-*` rules (header / list / cards / spinner / states) untouched. Only container repositioned. Vuex bindings, lazy SubscribeModal mount, all 5I logic preserved verbatim.
+
+**Что видит пользователь:**
+- `/v2/profile` → 5 cards: Identity / Performance / Friends / Settings / **Social Tasks** (new, spans 2 cols, scrollable list, count badge in `.tsp-header` serves as title).
+- `/v2/training` → clean (Daily Tasks panel + heavy bag, no Social Tasks panel).
+- Click task в Profile Social Tasks → SubscribeModal opens (5I lazy mount preserved through relocation).
+- Mobile @720px → 5 stacked single-column cards including Social Tasks at end.
+
+**Дерево (4 modified, 0 new):**
+
+```
+src/components/hud/HudSocialTasks.vue   — modified +14/-3 — drop fixed-pos default + add .is-overlay modifier + scope mobile @820px к .is-overlay
+src/components/hud/HudProfile.vue       — modified +8/-0  — import + 5th card mount (no wrapper title — preserves count badge UX)
+src/components/hud/HudTraining.vue      — modified +0/-4  — remove embed + import + comment
+src/styles/v24/profile.css              — modified +13/-2 — grid extend (3→4 desktop, 4→5 mobile) + .social-tasks-card rule + 3 5J markers
+```
+
+5J = **0 new files** — pure refactor + relocation.
+
+**Reused as-is (3+):**
+- `task/*` Vuex module (full machinery — `fetchAllSocialTasks`, `updateSocialTask`, `getAllSocialTasks`, `hasIncompleteSocialTasks`, `isLoadingSocialTasks`)
+- `SubscribeModal.vue` 5I 2-line `defineExpose({ openModal })` augmentation preserved
+- `.profile-card` base CSS pattern (HudProfile 5J card inherits full visual language — bg/border/padding/blur/scrollbar)
+
+**Ключевые паттерны:**
+- **Path D invert default (lesson #30 toolkit growth)** — natural card shape preferred over forced overlay re-positioning. Default = card-friendly pure layout container; opt-in `.is-overlay` modifier для fixed-position overlay context. Lesson #30 toolkit extended: when component visited multiple contexts, default to most-natural shape; opt-in modifier для special contexts.
+- **Investigation-driven structural decisions** — Block 6/7/8 of pre-flight investigation enabled choosing Path D vs A/B/C (semantic vs mechanical reuse). 80% token alignment validated upfront (`.tsp-*` ≈ `.profile-card`: same `--bg-panel`, `--font-mono`, `--text-dim`, `--text-mid`, `--hex-primary` vocabulary).
+- **Pre-flight Step 0 catches branch mismatch (Blocker A)** — harness slug `claude/profile-move-migration-lgqnb` (system directive) vs ТЗ branch `claude/setup-5e-shop-mode-a-khIAi` (shared stack continuation). Reported at zero-commit cost; user explicit permission required перед switch. First sub-epic с **branch-mismatch blocker** в Эпике 5 — pattern: harness fresh-slug per session, ТЗ requires stack continuity, mismatch surfaces in pre-flight via `git branch --show-current` + file existence checks.
+- **Shifted-left recovery** — Step 1 false-positive caught на functional commit (awk between-braces verify revealed `position: fixed` count truly = 0; raw grep `-A8` had context-bled into adjacent `.is-overlay` block). Lesson #11 reflex applied early. **Step 6 verify checklist clean 9/9** — first run без recovery в Step 6.
+- **0-line touch на main legacy logic** — symmetric с 5H Referral 0-line precedent. Container CSS repositioned, but inner template + script + Vuex + lazy modal logic preserved verbatim. Augmentation pattern semantic reuse (lesson #30 refinement from 5H/5I).
+
+**Расхождения — осознанные:**
+1. **Drop wrapper `.profile-card-title`** в Profile mount (variant α refined per ТЗ Q4) — HudSocialTasks own `.tsp-header` (with count badge) serves as card title. Avoiding double-title (`.profile-card-title` + `.tsp-title` = duplicate). Visual language already aligned (mono 9px uppercase --text-dim).
+2. **`.is-overlay` modifier added defensively** — no current consumers (HudTraining mount removed Step 4). Cheap insurance для potential future overlay reuse без re-refactor of base rule. Future-proof принцип extension.
+3. **Mobile @820px in HudSocialTasks scoped к `.is-overlay`** — was global, now overlay-only. Otherwise mobile would re-anchor `position: fixed; bottom: 80px` over Profile card and break grid layout.
+4. **Path 2 chose over Path 1 (Daily Tasks Backend)** — small wins first per user decision A→B order. 5J = relocation (S sub-epic), 5K candidate = backend cron daily reset (L sub-epic, ~10-13 commits, biggest scope в Эпике 5).
+5. **Branch switch after pre-flight Blocker A** — harness override per user explicit permission ("Approved Option B switch"). System directive `claude/profile-move-migration-lgqnb` overridden in favor of shared stack continuity (single PR target к `visual-v2`). Documented for transparency.
+6. **`max-height: 360px` cap on `.social-tasks-card`** — aesthetic decision (cards don't grow unbounded if user has many subscription tasks). `.training-social-panel` uses `display: flex; gap: 10px` без explicit `max-height` — relies on parent card's `overflow-y: auto` to scroll list when overflow.
+
+**Lessons applied:**
+- **#11 verify shape — 11th cumulative false-positive recovery** (Step 1 awk between-braces verify). Recovery shifted-left to functional commit, не на verify checklist.
+- **#18 STOP at structural mismatch** — applied at pre-flight Blocker A (branch mismatch). No blind `git checkout / reset / cherry-pick` without explicit user authorization. Reported, waited, executed only after `Option B approved`.
+- **#22 HUD scoped selector match** — N/A для 5J (no new HUD root selectors). Existing `.training-social-panel` selector works in both contexts (default = card-flex, `.is-overlay` = fixed-position).
+- **#30 Pattern reuse — semantic vs mechanical (TOOLKIT GROWTH)** — Path D invert default = new sub-pattern в lesson #30 toolkit. When component reused across contexts, default to most-natural shape (Profile card here), opt-in modifier for special context (overlay HUD). Pattern reuse refines: choose default по dominant-context + future-extension friendliness.
+
+**Lessons added:** none new — extension существующего lesson #30 toolkit (Path D invert default sub-pattern).
+
+**Cumulative lesson tally:** **30** (no change after 5J).
+
+**Hot-fix metric:** **0 hot-fix attempts на ложной траектории.** Continues 5E/5F/5G/5H/5I precedent — **6-streak** (5E + 5F + 5G + 5H + 5I + 5J all 0 hot-fix). Half of all sub-epics в Эпике 5 в clean run.
+
+**Эпик 5 §4.2 progress:** **12/22 done (55%) — UNCHANGED.** 5J reorganizes existing feature (Social Tasks #11 already counted в 5I), не adds new audit item. Next 5K candidate = Path 1 Daily Tasks backend (≈10-13 commits, L sub-epic, biggest scope yet в Эпике 5).
+
+**Sub-Epic 5J — CLOSED.** ✅ Route table `/v2/*` остаётся unchanged (5J relocates HudSocialTasks между existing routes; no new routes added).
+
+**Bundle impact:** minimal — net deltas across 4 modified files = +33 / −12 lines. profile.css adds ~13 lines (grid template + 1 rule). HudSocialTasks net +11 lines (overlay modifier extracted). HudTraining net −4 lines. CSS bundle (index-*.css) compressed size unchanged within rounding (22.53kb gzip).
+
+**Следующий sub-epic:** 5K — TBD per HANDOFF. Recommended: Path 1 (Daily Tasks backend cron + persistent UserDailyTask reset). Investigation findings preserved в Step 9 HANDOFF document.
+
 
