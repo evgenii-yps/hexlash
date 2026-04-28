@@ -77,4 +77,4 @@ function stopDailyTaskCron() {
   }
 }
 
-module.exports = { startDailyTaskCron, stopDailyTaskCron, resetDailyTrainingTasks };
+module.exports = { startDailyTaskCron, stopDailyTaskCron, resetDailyTrainingTasks, calculateMsToNextMidnightUTC };
