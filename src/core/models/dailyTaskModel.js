@@ -28,7 +28,10 @@ export class DailyTaskModel {
                     isCompleted = false,
                     link = '',
                     category = '',
-                    value = null
+                    value = null,
+                    progress = 0,         // 5K — current progress toward goal
+                    goal = null,          // 5K — alias for value (backend sends both)
+                    scope = 'general'     // 5K — 'general' | 'training'
                 } = {}) {
         this.id = id;
         this.title = title;
@@ -38,6 +41,9 @@ export class DailyTaskModel {
         this.link = link;
         this.category = category;
         this.value = value;
+        this.progress = progress;
+        this.goal = goal;
+        this.scope = scope;
     }
 
     getIcon() {
@@ -48,7 +54,7 @@ export class DailyTaskModel {
     // Статический метод для создания модели из JSON строки
     static fromJSON(data) {
         try {
-            const {id, title, description, tokens, isCompleted, link, category, value} = data;
+            const {id, title, description, tokens, isCompleted, link, category, value, progress, goal, scope} = data;
 
             return new DailyTaskModel({
                 id,
@@ -58,7 +64,10 @@ export class DailyTaskModel {
                 isCompleted,
                 link,
                 category,
-                value
+                value,
+                progress,
+                goal,
+                scope
             });
 
         } catch (error) {

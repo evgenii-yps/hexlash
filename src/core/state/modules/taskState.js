@@ -58,6 +58,14 @@ const mutations = {
     setDailyTasks(state, tasks) {
         state.dailyTasks = tasks;
     },
+    // 5K — partial update for daily task progress (training scope live increments via POST /daily/:id/progress)
+    updateDailyTaskProgress(state, { taskId, progress, isCompleted }) {
+        const task = state.dailyTasks.find(t => t.id === taskId);
+        if (task) {
+            task.progress = progress;
+            if (isCompleted) task.isCompleted = true;
+        }
+    },
 };
 
 const actions = {
@@ -128,6 +136,45 @@ const actions = {
 
         } catch (error) {
             console.error('Error updating daily tasks:', error);
+        }
+    },
+    // 5K — increment training-scope daily task progress (called from useClickToHit + session timer)
+    // kind ∈ { 'tap', 'combo', 'energy_full', 'session_time', 'earn_taps_threshold' }
+    // Silent fail per Q6 — backend down does NOT break UI (HudTraining falls back to trState)
+    async incrementDailyProgress({commit, state}, { kind, amount = 1 }) {
+        const categoryByKind = {
+            tap: 'HIT_BAG_X_TIMES',
+            combo: 'LAND_X_COMBOS',
+            energy_full: 'SPEND_FULL_ENERGY',
+            session_time: 'TRAIN_X_MINUTES',
+            earn_taps_threshold: 'EARN_X_TAPS',
+        };
+        const category = categoryByKind[kind];
+        if (!category) return;
+
+        const task = state.dailyTasks.find(
+            t => t.category === category && t.scope === 'training' && !t.isCompleted
+        );
+        if (!task) return; // task missing (not loaded yet, already completed today, or scope filter)
+
+        try {
+            const result = await taskService.incrementDailyProgress(task.id, amount);
+            if (!result) return; // mock mode returns null
+
+            commit('updateDailyTaskProgress', {
+                taskId: task.id,
+                progress: result.progress,
+                isCompleted: result.isCompleted,
+            });
+
+            if (result.isCompleted && result.rewardGranted > 0) {
+                store.commit('master/increaseBalance', { add: result.rewardGranted });
+                const info = InfoMessageModel.withTimeout(t.value.training.successCompleteTask, 5000);
+                store.commit('master/setInfoMessage', info);
+            }
+        } catch (error) {
+            console.error('[task/incrementDailyProgress] failed:', error);
+            // Silent — UI continues с trState fallback (Q6)
         }
     },
 
