@@ -91,75 +91,42 @@
     </div>
 
     <div v-else class="clan-ingrid">
-      <!-- ===== Header (full width) ===== -->
-      <div class="ic-header">
-        <div class="ic-crest" :style="{ background: crestBgColor, color: crestColor }">{{ crestInitials }}</div>
-        <div class="ic-title-block">
-          <div class="ic-clan-name">{{ clanName || '—' }}</div>
-          <div class="ic-clan-tag">[{{ clanTag || '—' }}] · Founded {{ foundedStr }} · {{ memberCount }} / {{ memberCap }} members</div>
-          <div class="ic-level-wrap">
-            <div class="ic-level-label">Clan Level <strong>{{ clanLevel }}</strong></div>
-            <div class="ic-xp-bar"><div class="ic-xp-fill" :style="{ width: xpPct + '%' }"></div></div>
-            <div class="ic-level-label">{{ clanXp.toLocaleString() }} / {{ nextLevelXp.toLocaleString() }} XP</div>
-          </div>
-        </div>
-        <div class="ic-header-stats">
-          <div class="ic-hstat"><div class="ic-hstat-val">{{ memberCount }}</div><div class="ic-hstat-label">Members</div></div>
-          <div class="ic-hstat"><div class="ic-hstat-val">{{ totalWins }}</div><div class="ic-hstat-label">Total Wins</div></div>
-          <div class="ic-hstat"><div class="ic-hstat-val gold">#{{ clanRank }}</div><div class="ic-hstat-label">Clan Rank</div></div>
-          <div class="ic-hstat"><div class="ic-hstat-val pink">+{{ weeklyXp }}</div><div class="ic-hstat-label">Weekly XP</div></div>
-        </div>
-      </div>
+      <!-- Sub-Epic 5L Phase 3 — split into 3 presentational children.
+           Parent retains lift Vuex + lazy modal hosts + 2-state branch logic. -->
+      <HudClanHeader
+        :crest-initials="crestInitials"
+        :crest-color="crestColor"
+        :crest-bg-color="crestBgColor"
+        :clan-name="clanName"
+        :clan-tag="clanTag"
+        :founded-str="foundedStr"
+        :member-count="memberCount"
+        :member-cap="memberCap"
+        :clan-level="clanLevel"
+        :clan-xp="clanXp"
+        :next-level-xp="nextLevelXp"
+        :xp-pct="xpPct"
+        :total-wins="totalWins"
+        :clan-rank="clanRank"
+        :weekly-xp="weeklyXp"
+      />
 
-      <!-- ===== Left side: About + Info + Actions ===== -->
-      <div class="ic-side">
-        <div class="ic-side-title">About</div>
-        <div class="ic-desc">{{ clanDescription || '—' }}</div>
+      <HudClanInfo
+        :description="clanDescription"
+        :leader-handle="leaderHandle"
+        :region="region"
+        :privacy="privacy"
+        :clan-role-label="clanRoleLabel"
+        @invite="onInvite"
+        @edit="openClanEdit"
+        @leave="openLeaveConfirm"
+      />
 
-        <div class="ic-side-title">Info</div>
-        <div class="ic-meta-list">
-          <div class="ic-meta-row"><span class="imk">Leader</span><span class="imv">{{ leaderHandle || '—' }}</span></div>
-          <div class="ic-meta-row"><span class="imk">Region</span><span class="imv">{{ region || '—' }}</span></div>
-          <div class="ic-meta-row"><span class="imk">Privacy</span><span class="imv">{{ privacy || '—' }}</span></div>
-          <div class="ic-meta-row"><span class="imk">Your Role</span><span class="imv">{{ clanRoleLabel }}</span></div>
-        </div>
-
-        <div class="ic-action-btns">
-          <button class="ic-abtn primary" @click="onInvite">+ Invite Member</button>
-          <button class="ic-abtn" @click="openClanEdit">Clan Settings</button>
-          <button class="ic-abtn danger" @click="openLeaveConfirm">Leave Clan</button>
-        </div>
-      </div>
-
-      <!-- ===== Right side: Roster ===== -->
-      <div class="ic-roster">
-        <div class="ic-roster-head">
-          <div class="ic-roster-title">Roster · {{ memberCount }} / {{ memberCap }}</div>
-          <button class="ic-roster-sort" @click="toggleSort">Sort: {{ sortLabel }}</button>
-        </div>
-        <div class="ic-roster-thead">
-          <div>Role</div>
-          <div>Handle</div>
-          <div class="num">ELO</div>
-          <div class="num col-wl">W/L</div>
-          <div class="num">WR</div>
-          <div class="col-last">Last Seen</div>
-        </div>
-        <div class="ic-roster-body">
-          <div
-            v-for="m in sortedRoster"
-            :key="m.handle"
-            class="member-row"
-          >
-            <div class="mr-role" :class="(m.role || '').toLowerCase()">{{ m.role }}</div>
-            <div class="mr-handle" :class="{ self: m.self }">{{ m.handle }}{{ m.self ? ' (you)' : '' }}</div>
-            <div class="num mr-elo">{{ m.elo.toLocaleString() }}</div>
-            <div class="num col-wl">{{ m.wins }}/{{ m.losses }}</div>
-            <div class="num" :style="wrStyle(m.wr)">{{ m.wr }}%</div>
-            <div class="mr-lastseen col-last" :class="{ online: m.lastSeen === 'online' }">{{ m.lastSeen }}</div>
-          </div>
-        </div>
-      </div>
+      <HudClanRoster
+        :members="roster"
+        :member-count="memberCount"
+        :member-cap="memberCap"
+      />
 
       <!-- Lazy ClanEdit host. Modal teleports to body via Vuetify VModal;
            NO display:none — ancestor display:none breaks teleport visibility
@@ -204,6 +171,9 @@ import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
 import { BROWSABLE_CLANS, MY_CLAN_MEMBERS } from '@/data/clanMock.js';
 import ClanConfirmModal from '@/components/fragments/clan/ClanConfirmModal.vue';
+import HudClanHeader from '@/components/hud/HudClanHeader.vue';
+import HudClanInfo from '@/components/hud/HudClanInfo.vue';
+import HudClanRoster from '@/components/hud/HudClanRoster.vue';
 import { t } from '@/locales/index.js';
 
 const store = useStore();
@@ -327,31 +297,8 @@ const roster = computed(() => {
   return Array.isArray(m) && m.length ? m : MY_CLAN_MEMBERS;
 });
 
-const sortField = ref('elo');
-const SORT_LABELS = { elo: 'ELO', wins: 'Wins', wr: 'WR' };
-const SORT_ORDER = ['elo', 'wins', 'wr'];
-const sortLabel = computed(() => SORT_LABELS[sortField.value] || 'ELO');
-function toggleSort() {
-  const i = SORT_ORDER.indexOf(sortField.value);
-  sortField.value = SORT_ORDER[(i + 1) % SORT_ORDER.length];
-}
-
-// Sort: rank order (Leader / Officer / Member) first, then by sortKey desc
-// — matches prototype 11086-11090.
-const ROLE_RANK = { Leader: 0, Officer: 1, Member: 2 };
-const sortedRoster = computed(() => {
-  const list = [...roster.value];
-  list.sort((a, b) => (b[sortField.value] ?? 0) - (a[sortField.value] ?? 0));
-  list.sort((a, b) => (ROLE_RANK[a.role] ?? 99) - (ROLE_RANK[b.role] ?? 99));
-  return list;
-});
-
-// Inline WR colour — prototype 11095 (>=60% green / <50% red / else default).
-function wrStyle(wr) {
-  if (wr >= 60) return { color: '#2ee07f' };
-  if (wr < 50) return { color: '#ff8888' };
-  return {};
-}
+// Sort state moved to HudClanRoster.vue (5L Phase 3 — UI-only state stays
+// in presentational child; not lifted to parent because no Vuex coupling).
 
 // --- Lazy ClanEdit modal (Step 8.0 prep 21949f8 + lesson #23 no display:none) ---
 const ClanEditComp = shallowRef(null);
