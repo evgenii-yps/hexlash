@@ -3249,4 +3249,115 @@ src/styles/v24/profile.css              — modified +13/-2 — grid extend (3�
 
 **Следующий sub-epic:** 5K — TBD per HANDOFF. Recommended: Path 1 (Daily Tasks backend cron + persistent UserDailyTask reset). Investigation findings preserved в Step 9 HANDOFF document.
 
+### Эпик 5 — Sub-Epic 5K — Daily Tasks Backend (Path 1) (✅ COMPLETE)
+
+Завершён 2026-04-28. Eleventh sub-epic в Эпике 5. Backend Daily Tasks system + frontend integration. **Largest sub-epic 5K-era** — combines Prisma migration + 2 endpoints + cron service + tests + Vuex actions + dispatch insertions + UI expand into one coherent run.
+
+**Commit range:** `2b0b5a2` (Phase 1) → `<phase 14>` (HANDOFF_5L).
+**Branch:** continued `claude/setup-5e-shop-mode-a-khIAi` (5E-5K stack).
+**Predecessor:** 5J ✅ CLOSED (`a75a06c`).
+**Audit ref:** §4.2 #10 (🟡 Partial → ✅ Done after 5K).
+
+**Что делает 5K:**
+1. **Backend Prisma migration** — `scope` field на DailyTask, `progress` + `assignedDate` на UserDailyTask. `@@unique([userId, taskId, assignedDate])` enables daily cycling. Manual SQL migration (sandbox без DB precedent).
+2. **Seed extension** — 4 new training task categories × 2 lang = 8 rows + scope on existing 4 (FIGHT/WIN/INVITE = 'general', HIT_BAG = 'training'). Seed-loop scope-sync handler для existing prod rows.
+3. **Endpoints** — `GET /daily/:language?scope=training` scope-aware filter + return progress/goal/scope shape. `POST /daily/:id/progress` idempotent с `$transaction` atomic progress + balance update + lazy UserDailyTask allocation.
+4. **Cron service** `dailyTaskCron.js` — setInterval reuse pattern (agentScheduler precedent), midnight UTC alignment via `calculateMsToNextMidnightUTC`, deletes expired training UserDailyTask rows. scope='general' preserved (D5).
+5. **Backend tests** `dailyTaskService.test.js` — 21 unit tests / pattern simulations using **`node:test` API** (NOT Jest — convention discovered Phase 6). Math invariants + idempotency + reset filter semantics + amount validation.
+6. **Vuex actions** — `incrementDailyProgress` (kind→category map + commit + balance/toast on completion) + mutation `updateDailyTaskProgress`. Silent fail catch (Q6 fallback).
+7. **Frontend dispatch** — 4 insertions в useClickToHit (combo / tap / earn_taps / energy_full) + session timer hook в useTrainingState (`startSessionTimer`/`stopSessionTimer`).
+8. **HudTraining expand** — 2 → 5 tasks reactive с trState fallback (Q6 — keep 1 sub-epic).
+
+**Что видит пользователь:**
+- /v2/training → 5 daily tasks instead of 2 (after backend deploy)
+- Hitting bag → real progress (persists через page reload)
+- Все 5 завершены = 80,000 tokens reward total (20k+15k+10k+15k+20k)
+- Daily reset midnight UTC — fresh tasks следующий день
+- **Q6 fallback active** при backend down/lagging → 2 trState tasks visible (НЕ broken UI)
+- Branch preview shows fallback (Lesson #33 — backend deploy gated на test/main push)
+
+**Дерево (file matrix — 14 files):**
+
+```
+backend/prisma/schema.prisma                               — modified +9/-5 — scope + progress + assignedDate
+backend/prisma/migrations/20260428000000_add_daily_*/      — new — manual SQL migration
+backend/prisma/seed.js                                     — modified +28/-9 — 4 new categories + scope sync
+backend/src/routes/task.js                                 — modified +131/-15 — GET filter + POST progress + /complete regression fix
+backend/src/services/dailyTaskCron.js                      — new (80 lines) — setInterval midnight UTC
+backend/src/index.js                                       — modified +3 — bootstrap startDailyTaskCron
+backend/tests/dailyTaskService.test.js                     — new (220 lines) — 21 unit tests
+src/core/state/modules/taskState.js                        — modified +47 — action + mutation
+src/core/services/taskService.js                           — modified +18 — API wrapper
+src/core/models/dailyTaskModel.js                          — modified +12/-3 — progress/goal/scope fields
+src/scene/interaction/useClickToHit.js                     — modified +12 — 4 dispatch insertions
+src/scene/interaction/useTrainingState.js                  — modified +41 — session timer hooks + flags
+src/components/hud/HudTraining.vue                         — modified +63/-27 — 5-task display + fallback
+src/styles/v24/training.css                                — modified +4/-1 — max-height + pointer-events
+```
+
+**Reused as-is (7+):**
+- `task/*` Vuex module (full machinery)
+- agentScheduler.js setInterval pattern (precedent)
+- task.js authMiddleware + Prisma query patterns
+- `node:test` service-level test patterns (captainService.test.js precedent)
+- apiClient.post wrapper pattern
+- `lib/prisma` Prisma singleton (9+ services precedent)
+- `master/increaseBalance` mutation (existing reward credit pattern)
+
+**Ключевые паттерны:**
+- **Strategy A migration** — preserved audit trail (vs Strategy B delete-on-reset)
+- **Lazy allocation** (D4-α) — UserDailyTask row created on first progress event, scales linearly с active users
+- **Scope-aware reset** (D5-b) — training scope only, general preserves legacy "complete-once" semantic
+- **Idempotent POST progress** — `$transaction` ensures atomic progress + balance update
+- **trState fallback** (Q6) — backend reliability buffer для 1 sub-epic
+- **Frontend ES modules / Backend CommonJS split** — convention discovered Phase 7
+- **Component store pattern split** — `useStore()` (5 HUDs) vs direct import (2 HUDs) — mirror closest analog (Phase 9 mirrored HudSocialTasks)
+- **`node:test`, NOT Jest** — backend test convention discovered Phase 6 (prevented entire wrong impl)
+- **Manual migration SQL** — no-DB-sandbox precedent (mirror existing migration files)
+
+**Расхождения — 16 items (осознанные):**
+
+1. **Manual SQL migration** (no DB sandbox) — mirrored existing migration file format (`20260330000000_add_clan_level_xp` precedent)
+2. **Seed-loop scope-sync handler** — handles existing prod rows scope flip (HIT_BAG_X_TIMES → training) on re-seed
+3. **Response envelope `{ data: result }`** preserved (NOT raw array per ТЗ assumption)
+4. **Both `value` AND `goal` fields** в GET response — backward compat для DailyTaskModel destructure + ТЗ Phase 9 spec compliance
+5. **UTC date computation NOT extracted к helper** — inline в both endpoints (no scope creep refactor)
+6. **POST /complete daily-branch regression fix bundled в Phase 4** — closing Phase 1 fallout (compound key change broke `findUnique({userId_taskId})`)
+7. **Singleton Prisma client via `lib/prisma`** (NOT `new PrismaClient()` per ТЗ pseudo-code) — matches 9+ existing services
+8. **No NODE_ENV cron guard needed** — tests don't import index.js, cron only via `server.listen()` callback
+9. **Phase 6 tests use `node:test` API + pure unit/pattern simulations** (NOT Jest + DB integration per ТЗ) — matches captainService.test.js precedent
+10. **claimDailyTask action skipped** — Phase 4 endpoint auto-completes when progress >= goal, separate /claim is dead surface
+11. **DailyTaskModel update bundled в Phase 7** (originally Phase 9 scope) — fromJSON destructure required new fields для coherence
+12. **Reward UX additions:** `master/increaseBalance` + `master/setInfoMessage` toast — mirror receivedDailyTask precedent (NOT in ТЗ)
+13. **Combo dispatch per-tap** (NOT per-chain per ТЗ chain-flag spec) — matches trState fallback semantic для UI consistency
+14. **`.training-tasks` pointer-events flipped none → auto** — для scroll usability при 5 tasks (top-right corner click trade-off)
+15. **Defensive HudTraining onMounted dispatch** + TrainingView precedent dispatch — idempotent loading guard prevents double-fetch
+16. **Visual sign-off Phase 10 deferred** — backend GitOps gates deploy на test/main push; branch preview shows Q6 fallback не actual backend integration
+
+**Lessons applied + ADDED:**
+
+**Validated working patterns:**
+- **#11 verify shape** — 22-23 cumulative recoveries в 5K alone (50%+ of all-time tally)
+- **#18 STOP at structural mismatch** — applied во всех phases (especially Phase 6 architectural redirect от Jest к node:test)
+- **#30 Pattern reuse — semantic vs mechanical** — toolkit growth от 5J Path D
+- **#32 Convention discovery reflex** — applied везде в frontend phases (Phase 7-9)
+
+**Lessons ADDED — 5K introduced 3 new entries:**
+
+- **Lesson #31** — "Schema migrations affecting unique keys must trigger search for `findUnique` callers using those keys." Phase 4 catch: `findUnique({where: {userId_taskId: ...}})` regression discovered после Phase 1 `@@unique` change. Pattern: при schema unique constraint change → mandatory grep `findUnique.*<old_key>` across codebase + audit each caller. Without DB testing в sandbox — bug проходит unnoticed.
+
+- **Lesson #32** — "Convention discovery reflex — when adding new file in existing folder, read 1+ existing files first для convention discovery. Mirror conventions, don't import external assumptions." Phase 6 prevented entire wrong implementation (Jest assumption vs `node:test` reality), Phase 7-9 prevented 14 catches (path / module syntax / mutation namespacing / component store pattern / etc).
+
+- **Lesson #33** — "Deploy-environment awareness for full-stack changes. Vercel preview deploys frontend per-branch automatically. Backend deploys gated на `test`/`main` push (GitOps workflow). For sub-epics с backend changes — visual verify требует test/main merge OR manual backend deploy. Branch preview shows fallback behavior (Q6 buffer), NOT actual backend integration."
+
+**Cumulative lesson tally:** 30 → **33** (+3 от 5K).
+
+**Hot-fix metric:** **0 — 7-streak** (5E + 5F + 5G + 5H + 5I + 5J + 5K all clean).
+- Phase 4 POST /complete regression fix = conscious bundled fix (Lesson #18 framework — intentional decision, не hot-fix recovery)
+- 22-23 cumulative shifted-left recoveries via Lesson #11 + #32 reflex prevented hot-fix accumulation
+
+**Эпик 5 §4.2 progress:** **13/22 done (59%)** (+1 от 5K — Daily Tasks #10 ✅).
+
+**Sub-Epic 5K — CLOSED.** ✅ Reset baseline для 5L.
+
 
