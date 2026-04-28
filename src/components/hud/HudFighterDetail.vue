@@ -44,6 +44,25 @@
       </div>
     </div>
 
+    <!-- 5M Auto-fight toggle — only for real backend agents (legacy mocks
+         /v2/fd/warden|predator have agent === null and skip this block). -->
+    <div v-if="props.agent" class="autofight-row">
+      <button
+        class="auto-switch"
+        :class="{ 'auto-switch--on': props.agent.autoFight }"
+        :disabled="togglingAutoFight"
+        :aria-pressed="!!props.agent.autoFight"
+        type="button"
+        @click="onToggleAutoFight"
+      >
+        <span class="auto-switch-knob"></span>
+      </button>
+      <div class="autofight-info">
+        <div class="autofight-label">Auto-fight</div>
+        <div class="autofight-desc">Fighter automatically enters battles when ready</div>
+      </div>
+    </div>
+
     <div
       class="branch-label speed"
       :style="labelStyle('speed')"
@@ -119,6 +138,30 @@ async function onSetCaptain() {
     // Toast surfaced from action (master/setErrorMessage commit).
   } finally {
     settingCaptain.value = false;
+  }
+}
+
+// 5M Auto-fight toggle — mirrors settingCaptain pattern. UI flips
+// autoFight immediately via OPTIMISTIC_TOGGLE_AUTO_FIGHT mutation in the
+// action; on backend error the action commits ROLLBACK_AUTO_FIGHT and
+// surfaces master/setErrorMessage toast (5L Phase 2 precedent applied to
+// per-fighter setting). togglingAutoFight is re-entrancy guard preventing
+// double-clicks during the dispatch round-trip.
+const togglingAutoFight = ref(false);
+
+async function onToggleAutoFight() {
+  if (!props.agent || togglingAutoFight.value) return;
+  togglingAutoFight.value = true;
+  try {
+    await store.dispatch('agent/toggleAutoFight', {
+      id: props.agent.id,
+      enabled: !props.agent.autoFight,
+    });
+  } catch (err) {
+    console.error('[HudFighterDetail] toggleAutoFight failed', err);
+    // Toast surfaced from action (master/setErrorMessage commit).
+  } finally {
+    togglingAutoFight.value = false;
   }
 }
 
@@ -487,5 +530,72 @@ defineExpose({ openBranchPanel });
     font-size: 10px;
     letter-spacing: 1px;
   }
+}
+
+/* 5M Auto-fight toggle row — placed inline below fd-stats. Mirrors legacy
+   .auto-switch knob style (src/views/AgentDetailView.vue:582-604) but uses
+   v2 design tokens (--bg-panel, --hex-primary, --text-mid, --text-dim) and
+   font-mono label per HUD convention. */
+.autofight-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 10px 14px;
+  background: var(--bg-panel);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+}
+.auto-switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 28px;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.12);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s ease;
+}
+.auto-switch--on {
+  background: rgba(255, 6, 111, 0.45);
+}
+.auto-switch:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.auto-switch-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  background: var(--text-mid);
+  border-radius: 50%;
+  transition: left 0.15s ease, background 0.15s ease;
+}
+.auto-switch--on .auto-switch-knob {
+  left: 14px;
+  background: var(--hex-primary);
+}
+.autofight-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+.autofight-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-mid);
+}
+.autofight-desc {
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--text-dim);
 }
 </style>
