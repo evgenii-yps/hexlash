@@ -39,26 +39,50 @@ router.get('/social/:language', authMiddleware, async (req, res) => {
 router.get('/daily/:language', authMiddleware, async (req, res) => {
   try {
     const { language } = req.params;
+    const { scope } = req.query; // 5K — optional ?scope=training filter
+
+    // 5K — today's UTC date range for training-scope daily-cycle filter (D4-α lazy allocation)
+    const todayStart = new Date();
+    todayStart.setUTCHours(0, 0, 0, 0);
+    const todayEnd = new Date(todayStart);
+    todayEnd.setUTCDate(todayEnd.getUTCDate() + 1);
+
+    const whereClause = { language };
+    if (scope) whereClause.scope = scope;
 
     const tasks = await prisma.dailyTask.findMany({
-      where: { language },
+      where: whereClause,
       include: {
         users: {
-          where: { userId: req.userId },
+          where: {
+            userId: req.userId,
+            // 5K — training tasks: filter to today only (daily-cycle); general tasks: any row (legacy semantic)
+            ...(scope === 'training' && {
+              assignedDate: { gte: todayStart, lt: todayEnd },
+            }),
+          },
+          orderBy: { assignedDate: 'desc' },
+          take: 1,
         },
       },
     });
 
-    const result = tasks.map((task) => ({
-      id: task.id,
-      title: task.title,
-      description: task.description,
-      tokens: task.tokens,
-      isCompleted: task.users.length > 0,
-      link: task.link,
-      category: task.category,
-      value: task.value,
-    }));
+    const result = tasks.map((task) => {
+      const userTask = task.users[0];
+      return {
+        id: task.id,
+        title: task.title,
+        description: task.description,
+        tokens: task.tokens,
+        isCompleted: userTask ? !!userTask.completedAt : false,
+        progress: userTask ? userTask.progress : 0,
+        goal: task.value,    // 5K — explicit goal alias
+        value: task.value,   // backward compat (DailyTaskModel reads this)
+        link: task.link,
+        category: task.category,
+        scope: task.scope,   // 5K — new field
+      };
+    });
 
     res.json({ data: result });
   } catch (err) {
