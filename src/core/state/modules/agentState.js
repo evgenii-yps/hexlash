@@ -1,4 +1,5 @@
 import apiClient from '@/core/api/apiClient.js';
+import { ErrorMessageModel } from '@/core/models/internal/errorMessageModel.js';
 
 const state = {
   agents: [],
@@ -47,6 +48,17 @@ const mutations = {
   UPDATE_AGENT(state, updated) {
     const idx = state.agents.findIndex(a => a.id === updated.id);
     if (idx !== -1) state.agents.splice(idx, 1, { ...state.agents[idx], ...updated });
+  },
+  // Sub-Epic 5L Phase 2 — optimistic captain swap.
+  OPTIMISTIC_SET_CAPTAIN(state, agentId) {
+    state.agents = state.agents.map(a => ({ ...a, isCaptain: a.id === agentId }));
+    if (state.currentAgent) {
+      state.currentAgent = { ...state.currentAgent, isCaptain: state.currentAgent.id === agentId };
+    }
+  },
+  ROLLBACK_AGENTS(state, snapshot) {
+    state.agents = snapshot.agents;
+    state.currentAgent = snapshot.currentAgent;
   },
   SET_FIGHT_CLUB_LEVEL(state, data) { state.fightClubLevel = data; },
   SET_FIGHT_CLUB_LEVEL_LOADING(state, val) { state.fightClubLevelLoading = val; },
@@ -107,9 +119,28 @@ const actions = {
     commit('UPDATE_AGENT', { id, autoFight: res.agent.autoFight, status: res.agent.status, nextFightAt: res.agent.nextFightAt });
   },
 
-  async setCaptain({ dispatch }, agentId) {
-    await apiClient.put(`/agent/${agentId}/captain`, {}, { authRequired: true });
-    await dispatch('fetchAgents');
+  // Sub-Epic 5L Phase 2 — optimistic update + rollback toast on error.
+  // UI flips immediately via OPTIMISTIC_SET_CAPTAIN; fetchAgents syncs
+  // server-truth on success. On error, ROLLBACK_AGENTS restores snapshot
+  // and master/setErrorMessage surfaces a toast.
+  async setCaptain({ commit, dispatch, state }, agentId) {
+    const snapshot = {
+      agents: state.agents.map(a => ({ ...a })),
+      currentAgent: state.currentAgent ? { ...state.currentAgent } : null,
+    };
+    commit('OPTIMISTIC_SET_CAPTAIN', agentId);
+    try {
+      await apiClient.put(`/agent/${agentId}/captain`, {}, { authRequired: true });
+      await dispatch('fetchAgents');
+    } catch (err) {
+      commit('ROLLBACK_AGENTS', snapshot);
+      commit(
+        'master/setErrorMessage',
+        ErrorMessageModel.withText('Failed to set captain'),
+        { root: true }
+      );
+      throw err;
+    }
   },
 
   async refreshAgentStatus({ commit }, id) {

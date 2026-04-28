@@ -98,9 +98,12 @@ const props = defineProps({
 const router = useRouter();
 const store = useStore();
 
-// 5G — Captain switch dispatch state. Awaited (not optimistic) so the
-// agent prop reactively flips isCaptain via the FighterDetailView →
-// agent/fetchAgent cascade triggered by setCaptain action.
+// 5G + 5L Phase 2 — Captain switch with optimistic update + rollback toast.
+// UI flips isCaptain immediately via OPTIMISTIC_SET_CAPTAIN mutation
+// (currentAgent + agents array). On success, fetchAgents syncs server-truth
+// in background. On error, ROLLBACK_AGENTS restores snapshot and the action
+// commits master/setErrorMessage toast. settingCaptain is re-entrancy guard
+// preventing double-clicks during the dispatch round-trip.
 const settingCaptain = ref(false);
 
 async function onSetCaptain() {
@@ -109,10 +112,11 @@ async function onSetCaptain() {
   try {
     await store.dispatch('agent/setCaptain', props.agent.id);
     // Hub auto-refreshes via CanvasLayer watcher (Epic 4 Step 5.5):
-    // setCaptain → fetchAgents → agentsList getter recomputes →
+    // optimistic mutation → agentsList getter recomputes →
     // watcher fires → pit.refreshFighters({captain, secondAgent}).
   } catch (err) {
     console.error('[HudFighterDetail] setCaptain failed', err);
+    // Toast surfaced from action (master/setErrorMessage commit).
   } finally {
     settingCaptain.value = false;
   }
