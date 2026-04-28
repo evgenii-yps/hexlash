@@ -162,6 +162,12 @@
 }
 .app-v2 .id-field .ifv.wallet.disabled:hover { text-decoration: none; }
 
+/* 5H — Referral id-field. Mirrors .ifv.wallet clickable pattern (pink color
+   + pointer cursor + hover underline). Always clickable: login is always
+   present once authenticated, so no `.disabled` variant needed. */
+.app-v2 .id-field .ifv.referral { color: var(--hex-primary); cursor: pointer; }
+.app-v2 .id-field .ifv.referral:hover { text-decoration: underline; }
+
 /* Belt id-field value carries both the SVG BeltBadge and the text label.
    Flex override `max-width: 60%` + ellipsis from .ifv for a row that must
    fit two elements side-by-side. */

@@ -50,6 +50,10 @@
             <span class="ifk">Email</span>
             <span class="ifv">{{ emailText }}</span>
           </div>
+          <div class="id-field">
+            <span class="ifk">Referral</span>
+            <span class="ifv referral" @click="onReferralClick">{{ referralLinkText }}</span>
+          </div>
         </div>
       </div>
 
@@ -160,6 +164,14 @@
         v-if="cwMounted && CWComp"
         :is="CWComp"
         ref="cwRef"
+        style="display: none;"
+      />
+
+      <!-- ReferralModal host (5H) — lazy mount-on-demand; modal teleports to body. -->
+      <component
+        v-if="referralMounted && ReferralComp"
+        :is="ReferralComp"
+        @close="referralMounted = false"
         style="display: none;"
       />
 
@@ -302,6 +314,34 @@ async function openWalletModal() {
   await nextTick();
   cwRef.value?.openModal?.();
 }
+
+// --- ReferralModal lazy mount (Sub-Epic 5H) ---
+// Symmetric с ConnectWallet (5B) integration ABOVE — same lazy import +
+// markRaw + dynamic <component :is> host pattern. Differs in lifecycle:
+// ReferralModal is **mount-on-demand** (data fetched fresh per open via
+// apiClient.getReferrals + QRCode.toDataURL on mount). No internal isOpen
+// state, no defineExpose — `v-if` mount toggle suffices. See 5H §5
+// "Augmentation pattern simplified vs 5B" divergence.
+const ReferralComp = shallowRef(null);
+const referralMounted = ref(false);
+
+async function loadReferralModal() {
+  if (ReferralComp.value) return;
+  const mod = await import('@/components/fragments/profile/ReferralModal.vue');
+  ReferralComp.value = markRaw(mod.default);
+}
+
+async function onReferralClick() {
+  await loadReferralModal();
+  referralMounted.value = true;
+}
+
+const referralLinkText = computed(() => {
+  const login = userData.value?.login || '';
+  if (!login) return 'hexlash.com/r/...';
+  const text = `hexlash.com/r/${login}`;
+  return text.length > 24 ? text.slice(0, 22) + '…' : text;
+});
 
 // --- Wallet address sync (Step 10) ---
 // Legacy ProfileWallet.vue keeps master.userData.walletAddress in sync with
