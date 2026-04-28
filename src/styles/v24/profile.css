@@ -69,7 +69,8 @@
   bottom: 14px;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  grid-template-rows: minmax(0, 1fr) minmax(0, 1.2fr) auto;
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1.2fr) auto auto;
+  /* 5J — added 4th row for .social-tasks-card */
   gap: 12px;
   pointer-events: auto;
   z-index: 55;
@@ -538,12 +539,22 @@
   color: #ff6666;
 }
 
+/* ===== SOCIAL TASKS CARD (5J — relocated from HudTraining) =====
+   Row 4, spans both columns (matches Settings span). Cap height — internal
+   .tsp-list scrolls when many tasks. HudSocialTasks own .tsp-header serves
+   as the card title (no .profile-card-title wrapper to avoid double-title). */
+.app-v2 .social-tasks-card {
+  grid-column: 1 / -1;
+  max-height: 360px;
+}
+
 /* ===== MOBILE STACK (prototype 2093-2105) =====
    Single column at narrow widths; Settings card also stacks its 4 blocks. */
 @media (max-width: 720px) {
   .app-v2 .profile-grid {
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto auto;
+    grid-template-rows: auto auto auto auto auto;
+    /* 5J — added 5th row for .social-tasks-card */
     bottom: 14px;
     overflow-y: auto;
   }
