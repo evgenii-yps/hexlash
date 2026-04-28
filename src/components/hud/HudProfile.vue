@@ -205,6 +205,13 @@
           <button class="logout-btn" @click="onLogout">Logout</button>
         </div>
       </div>
+
+      <!-- 5J — Social Tasks card (relocated from HudTraining). HudSocialTasks
+           own .tsp-header serves as card title (count badge UX preserved);
+           no wrapper .profile-card-title to avoid double-title. -->
+      <div class="profile-card social-tasks-card">
+        <HudSocialTasks />
+      </div>
     </div>
   </div>
 </template>
@@ -214,6 +221,7 @@ import { computed, ref, shallowRef, markRaw, watch, onMounted, onBeforeUnmount, 
 import { useAccount } from '@wagmi/vue';
 import store from '@/core/state/store.js';
 import BeltBadge from '@/components/ui/BeltBadge.vue';
+import HudSocialTasks from './HudSocialTasks.vue';
 import { getBeltDisplay } from '@/utils/beltDisplay.js';
 import {
   availableLanguages,
