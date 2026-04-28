@@ -537,14 +537,17 @@ defineExpose({ openBranchPanel });
    v2 design tokens (--bg-panel, --hex-primary, --text-mid, --text-dim) and
    font-mono label per HUD convention. */
 .autofight-row {
+  position: fixed;
+  bottom: 16px;
+  left: 14px;
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-top: 14px;
   padding: 10px 14px;
   background: var(--bg-panel);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 8px;
+  pointer-events: auto;
 }
 .auto-switch {
   position: relative;
