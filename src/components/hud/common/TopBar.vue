@@ -69,6 +69,16 @@ const avatarInitials = computed(() => {
   pointer-events: auto;
 }
 
+/* Right-side cluster: ? help button + avatar button (5F Step 4 added).
+   pointer-events: auto so children can be clicked through .v2-topbar's
+   default pointer-events: none. */
+.v2-topbar__right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: auto;
+}
+
 .v2-res {
   padding: 6px 12px;
   background: rgba(14, 16, 28, 0.72);
