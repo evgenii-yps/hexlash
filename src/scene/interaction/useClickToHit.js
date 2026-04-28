@@ -14,6 +14,7 @@ import {
   multiplierForCombo,
 } from '@/scene/interaction/useTrainingState.js';
 import { playHitSound } from '@/scene/interaction/useHitSound.js';
+import store from '@/core/state/store.js';
 
 const COMBO_WINDOW_MS = 700;      // repeat within 700ms grows combo
 const COMBO_SHOW_MS = 800;        // combo indicator life after last hit
@@ -90,6 +91,20 @@ export function attachClickToHit(
       if (trState.taskCombos >= trState.taskCombosGoal) {
         trState.taskCombosDone = true;
       }
+    }
+
+    // --- 5K backend dispatch (silent fail, trState fallback continues если backend down) ---
+    // Tap progress: HIT_BAG_X_TIMES (1 per tap) + EARN_X_TAPS (gain per tap, multiplier-aware)
+    store.dispatch('task/incrementDailyProgress', { kind: 'tap', amount: 1 });
+    store.dispatch('task/incrementDailyProgress', { kind: 'earn_taps_threshold', amount: gain });
+    // Combo progress: per-tap при multiplier ≥ 3 (matches trState taskCombos semantic, не chain-counted)
+    if (trState.multiplier >= CRIT_MULT_THRESHOLD) {
+      store.dispatch('task/incrementDailyProgress', { kind: 'combo', amount: 1 });
+    }
+    // Energy depletion: fire once per session (flag prevents re-fire after regen+drain cycles)
+    if (trState.energy === 0 && !trState.energyDepletedDispatched) {
+      trState.energyDepletedDispatched = true;
+      store.dispatch('task/incrementDailyProgress', { kind: 'energy_full', amount: 60 });
     }
 
     // --- Visuals (Step 7b) ---
