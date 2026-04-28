@@ -60,6 +60,26 @@ const mutations = {
     state.agents = snapshot.agents;
     state.currentAgent = snapshot.currentAgent;
   },
+  // Sub-Epic 5M Phase 1 — optimistic auto-fight toggle (mirror 5L Phase 2 pattern).
+  // Flips both state.agents AND state.currentAgent when the open detail view
+  // matches. ROLLBACK_AUTO_FIGHT restores prevEnabled per-agent (lighter than
+  // full ROLLBACK_AGENTS snapshot — single boolean revert).
+  OPTIMISTIC_TOGGLE_AUTO_FIGHT(state, { agentId, enabled }) {
+    state.agents = state.agents.map(a =>
+      a.id === agentId ? { ...a, autoFight: enabled } : a
+    );
+    if (state.currentAgent && state.currentAgent.id === agentId) {
+      state.currentAgent = { ...state.currentAgent, autoFight: enabled };
+    }
+  },
+  ROLLBACK_AUTO_FIGHT(state, { agentId, prevEnabled }) {
+    state.agents = state.agents.map(a =>
+      a.id === agentId ? { ...a, autoFight: prevEnabled } : a
+    );
+    if (state.currentAgent && state.currentAgent.id === agentId) {
+      state.currentAgent = { ...state.currentAgent, autoFight: prevEnabled };
+    }
+  },
   SET_FIGHT_CLUB_LEVEL(state, data) { state.fightClubLevel = data; },
   SET_FIGHT_CLUB_LEVEL_LOADING(state, val) { state.fightClubLevelLoading = val; },
   // Detail
@@ -114,9 +134,32 @@ const actions = {
     commit('REMOVE_AGENT', id);
   },
 
-  async toggleAutoFight({ commit }, { id, enabled }) {
-    const res = await apiClient.put(`/agent/${id}/auto-fight`, { enabled }, { authRequired: true });
-    commit('UPDATE_AGENT', { id, autoFight: res.agent.autoFight, status: res.agent.status, nextFightAt: res.agent.nextFightAt });
+  // Sub-Epic 5M Phase 1 — optimistic UI + rollback toast on error.
+  // UI flips immediately via OPTIMISTIC_TOGGLE_AUTO_FIGHT; on success
+  // UPDATE_AGENT syncs server-computed fields (status, nextFightAt) without
+  // overwriting the already-flipped autoFight. On error, ROLLBACK_AUTO_FIGHT
+  // reverts the optimistic flip and master/setErrorMessage surfaces a toast.
+  async toggleAutoFight({ commit, state }, { id, enabled }) {
+    const agent = state.agents.find(a => a.id === id);
+    const prevEnabled = agent ? agent.autoFight : false;
+    commit('OPTIMISTIC_TOGGLE_AUTO_FIGHT', { agentId: id, enabled });
+    try {
+      const res = await apiClient.put(`/agent/${id}/auto-fight`, { enabled }, { authRequired: true });
+      commit('UPDATE_AGENT', {
+        id,
+        autoFight: res.agent.autoFight,
+        status: res.agent.status,
+        nextFightAt: res.agent.nextFightAt,
+      });
+    } catch (err) {
+      commit('ROLLBACK_AUTO_FIGHT', { agentId: id, prevEnabled });
+      commit(
+        'master/setErrorMessage',
+        ErrorMessageModel.withText('Failed to toggle auto-fight'),
+        { root: true }
+      );
+      throw err;
+    }
   },
 
   // Sub-Epic 5L Phase 2 — optimistic update + rollback toast on error.
