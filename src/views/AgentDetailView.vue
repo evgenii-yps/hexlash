@@ -358,7 +358,11 @@ const onToggleAuto = async () => {
     await store.dispatch('agent/toggleAutoFight', { id: agentId, enabled: !agent.value.autoFight });
     await store.dispatch('agent/fetchAgent', agentId);
   } catch (err) {
-    store.commit('master/setError', { text: err?.response?.data?.error || 'Failed to toggle auto fight' });
+    // 5M Phase 3 — toast surfaced from action via master/setErrorMessage
+    // (5L Phase 2 precedent). Previously this catch called master/setError
+    // which is a phantom mutation (no-op), so toggle errors were silent.
+    // Action now provides the only working error UX path.
+    console.error('[AgentDetailView] toggleAutoFight failed', err);
   }
 };
 
