@@ -122,7 +122,10 @@
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   width: 240px;
-  pointer-events: none;
+  /* 5K — 5 tasks (vs original 2) may overflow; cap height with internal scroll */
+  max-height: calc(100vh - 28px);
+  overflow-y: auto;
+  pointer-events: auto;
 }
 .app-v2 .tt-title {
   font-family: var(--font-mono);

@@ -34,38 +34,26 @@
     <div class="training-tasks">
       <div class="tt-title">Daily Tasks</div>
 
-      <div class="task" :class="{ done: trState.taskHitsDone }">
+      <div
+        v-for="task in displayedTasks"
+        :key="task.id"
+        class="task"
+        :class="{ done: task.isCompleted }"
+      >
         <div class="task-head">
-          <span class="task-name">Hit the bag</span>
+          <span class="task-name">{{ task.title }}</span>
           <span class="task-progress-text">
-            {{ Math.min(trState.taskHits, trState.taskHitsGoal) }}
-            / {{ trState.taskHitsGoal }}
+            {{ Math.min(task.progress || 0, taskGoal(task)) }}
+            / {{ taskGoal(task) }}
           </span>
         </div>
         <div class="task-bar">
           <div
             class="task-bar-fill"
-            :style="{ width: Math.min(100, 100 * trState.taskHits / trState.taskHitsGoal) + '%' }"
+            :style="{ width: taskProgressWidth(task) + '%' }"
           ></div>
         </div>
-        <div class="task-reward">Reward: 200 Taps + 50 XP</div>
-      </div>
-
-      <div class="task" :class="{ done: trState.taskCombosDone }">
-        <div class="task-head">
-          <span class="task-name">Land 5 combos (&times;3+)</span>
-          <span class="task-progress-text">
-            {{ Math.min(trState.taskCombos, trState.taskCombosGoal) }}
-            / {{ trState.taskCombosGoal }}
-          </span>
-        </div>
-        <div class="task-bar">
-          <div
-            class="task-bar-fill"
-            :style="{ width: Math.min(100, 100 * trState.taskCombos / trState.taskCombosGoal) + '%' }"
-          ></div>
-        </div>
-        <div class="task-reward">Reward: 100 XP</div>
+        <div v-if="task.tokens" class="task-reward">Reward: {{ task.tokens.toLocaleString() }} Taps</div>
       </div>
     </div>
 
@@ -88,8 +76,62 @@
 </template>
 
 <script setup>
-import { trState } from '@/scene/interaction/useTrainingState.js';
+import { computed, onMounted, onUnmounted } from 'vue';
+import { trState, startSessionTimer, stopSessionTimer } from '@/scene/interaction/useTrainingState.js';
+import store from '@/core/state/store.js';
 
 const emit = defineEmits(['back']);
 function onBack() { emit('back'); }
+
+// 5K — Vuex bindings (mirror HudSocialTasks 5I pattern: direct store import)
+const dailyTasks = computed(() => store.getters['task/getAllDailyTasks'] || []);
+const dailyTrainingTasks = computed(() =>
+  dailyTasks.value.filter((t) => t.scope === 'training')
+);
+
+// Q6 fallback — show legacy session-tracked trState когда backend tasks not loaded (down/mock/initial)
+const fallbackTasks = computed(() => [
+  {
+    id: 'fb_hit_bag',
+    title: 'Hit the bag',
+    progress: trState.taskHits,
+    goal: trState.taskHitsGoal,
+    isCompleted: trState.taskHitsDone,
+  },
+  {
+    id: 'fb_combos',
+    title: 'Land 5 combos (×3+)',
+    progress: trState.taskCombos,
+    goal: trState.taskCombosGoal,
+    isCompleted: trState.taskCombosDone,
+  },
+]);
+
+const displayedTasks = computed(() =>
+  dailyTrainingTasks.value.length > 0 ? dailyTrainingTasks.value : fallbackTasks.value
+);
+
+// Backend task uses goal field; fallback task also exposes goal. Backward compat: value field.
+function taskGoal(task) {
+  return task.goal || task.value || 1;
+}
+
+function taskProgressWidth(task) {
+  const goal = taskGoal(task);
+  const progress = task.progress || 0;
+  return Math.min(100, (100 * progress) / goal);
+}
+
+onMounted(() => {
+  // Defensive fetch — TrainingView.vue already dispatches на mount but HudTraining
+  // can be mounted independently; loading guard в taskState prevents double-fetch.
+  if (!store.state.task.isLoadingDailyTasks && dailyTasks.value.length === 0) {
+    store.dispatch('task/fetchAllDailyTasks');
+  }
+  startSessionTimer();
+});
+
+onUnmounted(() => {
+  stopSessionTimer();
+});
 </script>
