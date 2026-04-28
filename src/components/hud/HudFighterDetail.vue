@@ -6,6 +6,20 @@
   <div class="hud detail-hud">
     <button class="back-btn" @click="onBack">&larr; Back</button>
 
+    <!-- 5G Captain switch — only for real backend agents. Legacy mock
+         routes (/v2/fd/warden|predator) have agent === null, so neither
+         button nor badge render. -->
+    <template v-if="props.agent">
+      <div v-if="props.agent.isCaptain" class="captain-badge">&check; Captain</div>
+      <button
+        v-else
+        class="set-captain-btn"
+        :class="{ busy: settingCaptain }"
+        :disabled="settingCaptain"
+        @click="onSetCaptain"
+      >Set as Captain</button>
+    </template>
+
     <div class="fd-top">
       <div class="fd-kicker">{{ kicker }}</div>
       <div class="fd-name">{{ name }}</div>
@@ -64,6 +78,7 @@
 <script setup>
 import { computed, onMounted, onBeforeUnmount, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { useStore } from 'vuex';
 import { fdLabels } from '@/scene/interaction/useFdLabels.js';
 import { getBeltDisplay } from '@/utils/beltDisplay.js';
 import BranchPanel from './common/BranchPanel.vue';
@@ -81,6 +96,27 @@ const props = defineProps({
 });
 
 const router = useRouter();
+const store = useStore();
+
+// 5G — Captain switch dispatch state. Awaited (not optimistic) so the
+// agent prop reactively flips isCaptain via the FighterDetailView →
+// agent/fetchAgent cascade triggered by setCaptain action.
+const settingCaptain = ref(false);
+
+async function onSetCaptain() {
+  if (!props.agent || props.agent.isCaptain || settingCaptain.value) return;
+  settingCaptain.value = true;
+  try {
+    await store.dispatch('agent/setCaptain', props.agent.id);
+    // Hub auto-refreshes via CanvasLayer watcher (Epic 4 Step 5.5):
+    // setCaptain → fetchAgents → agentsList getter recomputes →
+    // watcher fires → pit.refreshFighters({captain, secondAgent}).
+  } catch (err) {
+    console.error('[HudFighterDetail] setCaptain failed', err);
+  } finally {
+    settingCaptain.value = false;
+  }
+}
 
 // Mocks (prototype 7681-7744 + openFighterDetail 7958-7970).
 // Used only when agent prop is null (legacy /v2/fd/warden|predator).
@@ -124,7 +160,13 @@ function beltLabel(grade) {
 }
 
 const kicker = computed(() => {
-  if (props.agent) return 'Captain · ' + capArch(props.agent.primaryModule);
+  if (props.agent) {
+    // 5G — kicker bug fix: respect isCaptain flag. Pre-5G every real agent
+    // showed "Captain · ..." prefix regardless of captain status.
+    return props.agent.isCaptain
+      ? 'Captain · ' + capArch(props.agent.primaryModule)
+      : capArch(props.agent.primaryModule);
+  }
   return KICKER[props.keyProp] || KICKER.warden;
 });
 const name = computed(() => {
