@@ -425,4 +425,63 @@ defineExpose({ openBranchPanel });
   font-size: 11px; color: #fff;
   margin-top: 1px;
 }
+/* ===== 5G — Set-as-Captain button + Captain badge =====
+   Mirrors .back-btn placement (position: fixed, top:14px, z-index 60) on
+   the right edge. Style language matches existing v2 buttons: dark bg
+   + white border, hover→pink (--hex-primary), active scale(0.97), busy
+   state via opacity 0.6. Badge is non-clickable status indicator with
+   pink-tinted bg/border/text — semantic "captain" highlight. */
+.set-captain-btn,
+.captain-badge {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  z-index: 60;
+  pointer-events: auto;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  border-radius: 6px;
+}
+
+.set-captain-btn {
+  background: var(--bg-panel);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--text-mid);
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.set-captain-btn:hover:not(:disabled) {
+  border-color: rgba(255, 6, 111, 0.45);
+  color: #fff;
+  background: rgba(255, 6, 111, 0.08);
+}
+.set-captain-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+.set-captain-btn.busy,
+.set-captain-btn:disabled {
+  opacity: 0.6;
+  pointer-events: none;
+  cursor: default;
+}
+
+.captain-badge {
+  background: rgba(255, 6, 111, 0.12);
+  border: 1px solid rgba(255, 6, 111, 0.45);
+  color: var(--hex-primary);
+  padding: 8px 14px;
+  user-select: none;
+}
+
+@media (max-width: 820px) {
+  .set-captain-btn,
+  .captain-badge {
+    padding: 6px 10px;
+    font-size: 10px;
+    letter-spacing: 1px;
+  }
+}
 </style>
