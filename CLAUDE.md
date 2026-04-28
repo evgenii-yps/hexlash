@@ -3360,4 +3360,85 @@ src/styles/v24/training.css                                — modified +4/-1 �
 
 **Sub-Epic 5K — CLOSED.** ✅ Reset baseline для 5L.
 
+### Эпик 5 — Sub-Epic 5L — Polish Batch (Option α) (✅ COMPLETE)
+
+Завершён 2026-04-28. Twelfth sub-epic в Эпике 5. 5 polish items без backend changes — frontend-only run closing accumulated debt от 5D/5F/5G.
+
+**Commit range:** `914a9a2` (Phase 1) → Phase 10 final (3 closing commits).
+**Branch:** continued `claude/setup-5e-shop-mode-a-khIAi` (5E-5L stack).
+**Predecessor:** 5K ✅ CLOSED (`0e8ec88`).
+**Audit ref:** §4.2 carry-overs from 5D #11/#4/#19 + 5G/5F polish.
+
+**Что делает 5L:**
+1. **VerifyEmailBanner per-user persistence** — localStorage-backed dismiss state с per-login key (`hexlash_verify_banner_dismissed_<login>`). Survives page reload, isolated per account.
+2. **Captain switch optimistic UI** — instant `isCaptain` flip via `OPTIMISTIC_SET_CAPTAIN` mutation (both `state.agents` + `state.currentAgent`); rollback on API error via `ROLLBACK_AGENTS` + `master/setErrorMessage` toast.
+3. **HudClan splitting** — 430-line monolith → parent (388 lines) + 3 presentational children (HudClanHeader 45 / HudClanInfo 37 / HudClanRoster 77). Lift Vuex to parent + prop-drill.
+4. **ClanActivityFeed integration** — mount as 4th grid item (full-width row 3) under side+roster. Component self-fetches; parent only provides `clanId` + grid placement.
+5. **ClanScene mood polish** — 3 specific tweaks (rim pink saturation +15%, floor -5% lightness, flag totem subtle wave). Lessons #19-21 applied as preventive — pre-edit verified all 4 ТЗ assumptions before any edit.
+
+**Что видит пользователь:**
+- /v2/profile → dismiss banner → reload → still dismissed (persisted per-user).
+- /v2/fd/:id → click "Set as Captain" → instant pink badge swap (no spinner wait); on API error → toast "Failed to set captain" + UI reverts.
+- /v2/clan → identical visual layout to pre-5L, plus new "Recent Activity" section under side+roster (full-width, scrollable, 200px max-height).
+- /v2/clan 3D scene → subtle changes: pink rim slightly brighter accent, floor slightly darker tomb mood, 3 flag totems gently sway out-of-phase.
+
+**Дерево (3 new + 6 modified):**
+
+```
+src/components/hud/HudClanHeader.vue       — new 45 lines — crest + level XP + stats grid
+src/components/hud/HudClanInfo.vue         — new 37 lines — about + meta + action buttons (emits invite/edit/leave)
+src/components/hud/HudClanRoster.vue       — new 77 lines — roster table + internal sort state (UI-only, не Vuex)
+src/components/hud/VerifyEmailBanner.vue   — modified +29/-1 — localStorage per-user persistence
+src/core/state/modules/agentState.js       — modified +33/-3 — OPTIMISTIC_SET_CAPTAIN + ROLLBACK_AGENTS + ErrorMessageModel import
+src/components/hud/HudFighterDetail.vue    — modified +9/-4  — comment update reflecting 5L override of 5G policy
+src/components/hud/HudClan.vue             — modified — split (430→388) + ClanActivityFeed mount + 3 child mounts
+src/styles/v24/clan.css                    — modified +20/-2 — grid extension + .ic-activity rule
+src/scene/scenes/ClanScene.js              — modified +18/-5 — 3 specific tweaks (rim color / floor color / flag wave loop)
+```
+
+**Reused as-is (4):**
+- `master.userData.login` namespace (Phase 1 banner key scope)
+- `ErrorMessageModel.withText()` payload pattern (Phase 2 toast)
+- `ClanActivityFeed` self-fetch onMounted (Phase 4 — no parent dispatch)
+- 5A `buildOctagonalRoom` + `createDustField` helpers (Phase 5 ClanScene unchanged baseline)
+
+**Ключевые паттерны:**
+- **Per-user localStorage scoping** — key prefix `hexlash_verify_banner_dismissed_<login>` prevents cross-account leak. `'guest'` fallback при auth pending. Watcher re-инициализирует state on login change. **5L-introduced practice** для banner-style features.
+- **Optimistic mutation + rollback snapshot** — captures `{ agents: [...], currentAgent: {...} }` snapshot before optimistic flip; on error commits `ROLLBACK_AGENTS` + toast; on success awaits `fetchAgents` for server-truth sync. Pattern reuse target для future write-actions.
+- **Split with lift Vuex + UI-state stays in child** — refinement of "purely presentational": data state (Vuex bindings) lifted to parent; UI-only state (sort field) stays where rendered. Lesson #30 toolkit growth.
+- **CSS namespace inheritance for splits** — `.ic-*` styles живут globally в `src/styles/v24/clan.css` под `.app-v2` namespace. Children inherit through namespace, no scoped CSS distribution needed. **Saves scope creep** при splits внутри namespaced CSS architecture.
+- **Grid extension for new sections** — adding 4th child to `.clan-ingrid` (was `2 cols × 2 rows`) required `grid-template-rows: auto 1fr auto` + `.ic-activity { grid-column: 1 / -1; max-height: 200px }`. Mobile media query also extended (row 4).
+- **Lessons #19-21 applied as preventive** — Phase 5 verified 4 ТЗ assumptions BEFORE any edit (rim color, floor color, exposure baseline, totem ref availability). Each tweak independently revertible. **Distinct from 5D Step 5 false-trail pattern**; 5L Phase 5 had 0 hot-fix attempts.
+
+**Расхождения — осознанные:**
+1. **Banner path corrected** — ТЗ assumed `src/components/fragments/VerifyEmailBanner.vue`, реальность `src/components/hud/VerifyEmailBanner.vue`. Pre-edit grep caught.
+2. **`master/setErrorMessage` (NOT setInfoMessage)** — codebase has separate mutation для errors with `ErrorMessageModel` payload. ТЗ pseudo-code был simplistic. Verified via Phase 2 pre-edit grep.
+3. **`currentAgent` extension в OPTIMISTIC_SET_CAPTAIN** — ТЗ template only flipped `state.agents`. Без `currentAgent` flip FighterDetailView prop binding не обновлялся бы → silent UI bug. Conscious extension.
+4. **HudClan parent 388 lines vs ТЗ ≤220** — parent retains no-clan branch (~75 lines), lazy modal hosts (~25 lines), full Vuex script logic (~190 lines). Boundaries clean at component level; ТЗ size estimate optimistic.
+5. **Sort state stays в HudClanRoster** — ТЗ "purely presentational" implied stateless. Reality: UI-only sort state без Vuex coupling — lifting к parent создал бы unnecessary 2-way emit. Conscious refinement.
+6. **No parent dispatch для ClanActivityFeed** — child self-fetches via onMounted. Pre-edit grep #1 caught.
+7. **`.ic-activity` wrapper для grid placement** — ТЗ assumed `<ClanActivityFeed>` directly mountable. Reality: needed div wrapper для `grid-column: 1 / -1` placement.
+8. **`v-if="clan?.id"` guard** — ClanActivityFeed prop validator `clanId: required: true` throws if null mid-fetch. Defensive guard added.
+9. **Inner padding override** — `.app-v2 .ic-activity .activity-feed { padding: 0 }` prevents double-padding с parent's `padding: 12px 16px`.
+10. **PRED flag accent CSS string `'#ff066f'` untouched** — Phase 5 Tweak 1 specifically targets rim spotlight color, не flag canvas accent stripe. Touching it would be scope creep.
+
+**Lessons applied (validated):**
+- **#11 verify shape** — running tally **44+ cumulative recoveries** (10 в 5L). Reflex stable across 5E-5L.
+- **#18 STOP at structural mismatch** — N/A в 5L (no false-trail patterns). Phase 5 specifically engineered to NOT repeat 5D Step 5.
+- **#19-21 (exposure-aware tuning)** — applied as preventive в Phase 5.
+- **#22 HUD scoped selector match** — N/A для 5L (HudClan scoped block только `.clan-hud`, children inherit `.app-v2` namespace через global clan.css).
+- **#30 Pattern reuse — semantic vs mechanical** — toolkit growth: "purely presentational" refinement (data state lift, UI state stays in child).
+- **#32 Convention discovery reflex** — applied во всех 5 phases.
+- **#33 Deploy-environment awareness** — N/A в 5L (frontend-only).
+
+**Lessons added:** none new. 5L **applied** lessons preventively, не recovered после mistakes.
+
+**Cumulative lesson tally:** **33** (no change after 5L).
+
+**Hot-fix metric:** **0** continues 5E precedent — **8-streak achieved** (5E + 5F + 5G + 5H + 5I + 5J + 5K + 5L all clean). Phase 5 specifically engineered to NOT repeat 5D Step 5 false-trail.
+
+**Эпик 5 §4.2 progress:** **13/22 done (59%) — UNCHANGED.** 5L closes carry-overs from previously-counted items (5D #11/#4/#19 + 5G/5F polish), не adds new audit items.
+
+**Sub-Epic 5L — CLOSED.** ✅ Route table `/v2/*` остаётся unchanged (5L modifies existing components/scenes; no new routes).
+
 
