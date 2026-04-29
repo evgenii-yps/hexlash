@@ -3841,3 +3841,17 @@ User decision required в 5Q startup.
 **Atypical sentinel split documentation (P4+P5+P6):**
 5 stream idle timeouts (P4×2, P5×1, P6×2) — Anthropic API infrastructure pattern в 5Q docs phases. Default-split strategy adopted preventively. **NOT 5P file-size threshold violation** — infrastructure-driven recovery per 5P clarification (sentinel split = process discipline для multi-step construction). Future sub-epics: try single-write first, split only on confirmed timeout pattern.
 
+**Cumulative lesson tally:** 35 → **35** (UNCHANGED). Recovery #57 documented refinement-time Lesson #30 mis-classification — scope error caught by Lesson #18 STOP, NOT new lesson. #30 sub-pattern second test deferred — η Onboarding + θ MoveTree flagged як future candidates if their UI surfaces local-state self-containment shape.
+
+**Hot-fix metric:** **0 — 13-streak achieved** (5E + 5F + 5G + 5H + 5I + 5J + 5K + 5L + 5M + 5N + 5O + 5P + 5Q all clean). P4+P5+P6 atypical splits = planned infrastructure recovery (Anthropic API stream idle timeouts × 5), NOT hot-fix recovery — default-split strategy adopted preventively, all conscious decisions.
+
+**Cumulative recoveries:**
+- **5Q closure (FINAL_REPORT_5Q + HANDOFF_5R already committed at 57):** 55 → **57** (+2: #56 Q1 prototype assumption opposed at Lesson #18 STOP; #57 refinement-time Lesson #30 mis-classification).
+- **Entering 5R (CLAUDE.md = current source of truth):** **58** (+1: #58 design-Claude over-correction during P6 retry — single-write 6A attempt despite 3-timeout pattern already established (P4×2 + P5×1), 4th timeout result. Pattern: don't deviate from established mitigation strategy без data-driven justification. Counted в entering-5R ledger; retroactive update of 5Q closure docs would create cross-document drift worse than count discrepancy).
+
+**Эпик 5 §4.2 progress:** **18/22 done (82%)** (+1 от 5Q — Retirement #16 ✅). **Four-fifths milestone reached.**
+
+**Sub-Epic 5Q — CLOSED.** ✅ Route table `/v2/*` UNCHANGED — 5Q adds HudRetirement card to existing `/v2/profile` route, no new routes.
+
+**Следующий sub-epic:** 5R per HANDOFF_EPIC5_5R_CHAT_HANDOFF.md. Q1 4th-defer decision required first (backend `/v1/agent/list` 500 — Strategy A/B/C/D framework documented в HANDOFF), then option X/Y/Z choice.
+
