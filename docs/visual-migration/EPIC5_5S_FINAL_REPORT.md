@@ -97,3 +97,125 @@ Pre-investigation 5S scope listed 5 candidate items. P0.5 Q1.1-Q1.5 matrix refin
 **#36 candidate (incomplete rollback drift):** N/A in 5S (no DB changes). Mitigation prototyping deferred per pre-decision.
 
 **#37/#38 candidates:** N/A in 5S (no diagnostic strategy with sandbox capability assumptions).
+
+## Section 5 — Lessons new (candidates)
+
+**No new lesson candidates from 5S.** Session was streak-preserving by design — 5 recoveries all adaptation-tier per existing #35 framework. Pattern stabilization observed:
+
+**Atypical sentinel split — preventive variant 3rd application (now stabilized):**
+
+- 5R Phase 7 FINAL_REPORT: 1st preventive split after 1 timeout (long-form deliverable)
+- 5S P0 STARTUP file: 2nd preventive split after 1 timeout (long-form deliverable)
+- 5S P3a FINAL_REPORT: 3rd preventive split after 1 timeout (long-form deliverable)
+- Pattern fully stabilized: long-form docs deliverable + 1 timeout = preventive split adopted, not 5-timeout reactive threshold per 5Q framework
+- Status: minor variation now standard practice as "long-form-default" sub-pattern of single-write framework. NOT a new lesson — extension of 5Q infrastructure-driven framework with 5R variation now confirmed as reusable default.
+
+**Investigation-refines-ТЗ — quadruple precedent:**
+
+- 5O Q2 (5→7 scope adjustment)
+- 5Q (4 ТЗ assumptions refined)
+- 5R (4+ pivots during root cause analysis)
+- 5S (5 scope items → 1 actual work item via P0.5 matrix)
+- Status: pattern firmly established. Pre-investigation ТЗ continues to be treated as draft, investigation always refines. NOT a new lesson — confirmation of existing principle.
+
+## Section 6 — Cumulative metrics
+
+| Metric | Before 5S | After 5S |
+|---|---|---|
+| Sub-epics | 19/22 (86%) | **20/22 (91%)** ✓ |
+| Hot-fix streak | 14 | **15** ✓ (5E + 5F + 5G + 5H + 5I + 5J + 5K + 5L + 5M + 5N + 5O + 5P + 5Q + 5R + 5S all clean) |
+| Lessons promoted | 35 | 35 (no promotion — no new lessons surfaced, candidates #36/#37/#38 unchanged) |
+| Lesson candidates | 3 active (#36/#37/#38) | 3 active (unchanged — no advancement, no new candidates) |
+| Recoveries cumulative | 66+ | **71+** (+5: #67 branch divergence / #68 P0 split / #69 Punch3D assumption / #70 HudProfile grep over-count / #71 P3a split) |
+| Carry-overs | 7 (entering 5S) | 5 (leaving 5S — see §8) |
+
+**15-streak achieved.** Major milestone — first sub-epic with explicit streak-preservation mandate as primary goal. Investigation-driven scope reduction was key mechanism (5 candidate items → 1 actual work item).
+
+## Section 7 — Recovery log (5S session detail)
+
+**Recovery #67 — Pre-flight branch divergence (Claude Code surfaced + design-Claude resolved):**
+
+- Pre-flight verify on harness fresh slug `claude/investigate-p0-issues-4Is8v` (local only) instead of expected continue stack `claude/setup-5e-shop-mode-a-khIAi` (remote, same SHA `70a310d`)
+- Tension: harness directive ("never push to different branch without permission") vs project convention (9-decision continue stack precedent + ТЗ explicit instruction to switch)
+- Resolution: design-Claude confirmed ТЗ = explicit permission per harness framework. Switched via fetch + checkout. Both branches at same SHA, no work lost.
+- Significance: 10th continue stack decision (extending 5J-5R precedent). Adaptation-tier per Lesson #35.
+
+**Recovery #68 — Preventive split adoption (1st timeout on P0 monolithic write):**
+
+- Stream idle timeout on STARTUP_5S_CLEANUP_[BATCH.md](http://BATCH.md) monolithic write (~287 lines target)
+- Resolution: split into P0a (sections 1-4, 120 lines) + P0b (sections 5-8 append, 167 lines). 2 commits instead of 1.
+- Significance: 2nd application of preventive split framework. Pattern stabilizing. Adaptation-tier — infrastructure-driven, not code-side issue.
+
+**Recovery #69 — Punch3D assumption falsified (P0.5 Q1.2):**
+
+- Pre-investigation scope listed Punch3D as "likely orphan check" candidate
+- Investigation: `grep -rn "Punch3D" src/` revealed live import in `src/views/TrainingView.vue:97` + template usage line 19. RainView also confirmed live (auth/home view per [CLAUDE.md](http://CLAUDE.md)).
+- Resolution: scope item #2 dropped entirely. No removal candidates surfaced from this question.
+- Significance: Lesson #11 verify shape reflex caught assumption-reality gap before destructive delete. Investigation-refines-ТЗ pattern (quadruple precedent now). Adaptation-tier.
+
+**Recovery #70 — HudProfile broad grep over-count (P0.5 Q1.3):**
+
+- Initial grep `<[A-Z][a-zA-Z]+ |class="profile-card|profile-card-row` returned 12 hits
+- Cross-reference with [CLAUDE.md](http://CLAUDE.md) 5B/5J/5Q audit trail: real card count = 6 (4 original 5B Identity/Performance/Friends/Settings + 1 5J Social Tasks + 1 5Q Retirement)
+- Resolution: 6 < 7 threshold → monitor only, no refactor in 5S
+- Significance: Lesson #11 self-correction via cross-reference with documented architecture. Broad grep is approximate; audit trail is authoritative. Adaptation-tier.
+
+**Recovery #71 — Preventive split adoption (1st timeout on P3a FINAL_REPORT monolithic write):**
+
+- Stream idle timeout on EPIC5_5S_FINAL_[REPORT.md](http://REPORT.md) monolithic write attempt
+- Resolution: split into P3a1 (sections 1-4) + P3a2 (sections 5-8 append). 2 commits instead of 1.
+- Significance: 3rd application of preventive split framework. Pattern fully stabilized — long-form FINAL_REPORT writes default to split-from-the-start strategy in future sub-epics. Adaptation-tier — infrastructure-driven.
+
+**P1 pre-edit re-verify CLEAN — no Recovery beyond P0.5:**
+
+- Pre-edit grep (immediately before delete) confirmed 3 expected hits + 0 dynamic imports + 0 router refs — exactly matching P0.5 Q1.1 finding
+- Significance: P0.5-to-P1 window (intra-session, no concurrent edits) had no drift. Pre-edit reflex validated assumption rather than catching gap. Both equally valuable per Lesson #11.
+
+## Section 8 — Closing note + acceptance checklist + carry-overs
+
+**Acceptance:**
+
+- [x] P0a + P0b: STARTUP_5S_CLEANUP_[BATCH.md](http://BATCH.md) retroactive handoff package (287 lines total)
+- [x] P0.5: Investigation matrix Q1.1-Q1.5 read-only (no commits)
+- [x] P0.6: Build baseline capture authorized + executed (no commit)
+- [x] P1: RetirementPanel.vue removed + HudRetirement doc-comments updated (commit `058ebeb`)
+- [x] P3a1 + P3a2: FINAL_REPORT_5S (this file, split applied)
+- [ ] P3b: HANDOFF_EPIC5_5T_CHAT_[HANDOFF.md](http://HANDOFF.md) (next)
+- [ ] P3c: [CLAUDE.md](http://CLAUDE.md) update Sub-Epic 5S section (next)
+
+**Hot-fix streak decision:**
+
+5S = 5 recoveries, all adaptation-tier per Lesson #35. Recovery #67 (branch divergence) caught at pre-flight before any commit attempted = pre-flight reflex success. Recoveries #68/#71 (preventive split adoption) = infrastructure-driven, NOT code-side patches. Recoveries #69/#70 (P0.5 investigation findings) = read-only matrix outputs, refined scope before any code action. No commit needed rebase, no follow-up patch landed.
+
+**15-streak preserved.** All 15 sub-epics 5E-5S clean. Major milestone — first explicit streak-preservation-as-primary-goal sub-epic, validated approach (investigation-driven scope reduction + adaptation-tier discipline).
+
+**Carry-overs forward to 5T (5 items):**
+
+| # | Item | Source | Status |
+|---|---|---|---|
+| 1 | Animation для retirement | 5Q drop | CARRY-OVER (frontend animation pass, deferred) |
+| 2 | Achievement badge для retirement | 5Q drop | CARRY-OVER (requires backend extension) |
+| 3 | HudProfile card-creep monitor | 5L+ → 5S Q1.3 | MONITOR-FORWARD (6/7 threshold; trigger refactor if 7th card added in 5T-5V) |
+| 4 | i18n cross-section reuse — formal M-size task | 5O+ → 5S Q1.4 PROMOTED | 45 dupes documented; sized M; candidate sub-epic for 5T+ |
+| 5 | Lesson #36 validation track | 5R | CARRY-OVER (await 2nd occurrence of incomplete rollback drift for promotion + mitigation prototyping) |
+
+**Closed in 5S:**
+
+- ~~RetirementPanel.vue orphan cleanup~~ ✅ (P1)
+- ~~Branch strategy formalization~~ ✅ (already closed in 5R Phase 9 — confirmed in 5S as no-action)
+
+**Net ledger:** 7 entering → 5 leaving. Goal was 3-4. Slight miss (5 vs 4) is acceptable given investigation findings — i18n promoted from "vague note" to "sized formal task" represents real progress even if count doesn't drop. Forward inventory is more accurate than entering, even if numerically larger.
+
+**Recommended next sub-epic (5T):**
+
+5T HANDOFF will detail option matrix. Pre-decision candidates:
+
+- **γ AI Trainer (M-size feature):** deferred from 5R + 5S; 15-streak now achieved → feature work tier appropriate
+- **i18n consolidation (M-size, formalized in 5S Q1.4):** clean refactor, low-risk if scoped per locale-section
+- ε FightClub / η Onboarding / θ MoveTree: continue anti-rec until forced by Epic 5 closure pressure
+
+**Closing:**
+
+Sub-Epic 5S closes Z Cleanup batch with optimal streak-preserving outcome — investigation-driven scope reduction transformed S-size sub-epic into XS-size functional work, plus 2 docs phases (P0 retroactive + P3 finals). 15-streak achieved. 20/22 (91%) milestone reached. Two more sub-epics to Epic 5 closure.
+
+Investigation-refines-ТЗ pattern now quadruple-precedented (5O / 5Q / 5R / 5S). Adaptation-tier discipline (Lesson #35) operationalizes streak preservation cleanly. Cleanup batch sub-epic profile validated as reliable streak-protection mechanism.
