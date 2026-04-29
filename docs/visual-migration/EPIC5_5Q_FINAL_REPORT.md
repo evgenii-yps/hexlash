@@ -154,3 +154,70 @@
 - **#35 reflex catch tiering** — P1 bug-bundle-tier (masterState extension + HudRetirement component pair = same architectural class). Fits Phase 1 без scope-boundary STOP (different from 5O P3 setError → 5P P2 setInfo phantom mutation case which crossed model class boundary).
 
 ---
+
+## 5. Lessons new
+
+**No formal lesson promotion.**
+
+**Lesson #30 sub-pattern second test deferred.** Refinement-time mis-classification (recovery #57) documented как teachable moment:
+
+- **5P P3 HudClanEmpty** = local UI state ownership без API calls (sort/scroll state, no parent Vuex coupling). Self-containment scope: **UI-state**.
+- **5Q P1 candidate (HudRetirement)** = data-fetch self-containment via direct apiClient. Self-containment scope: **API/data-fetch**.
+- **Different pattern scope** → invalid as second test. Pre-formal #30 continues, awaits real second UI-state instance (future candidate must match precise scope of 5P P3 HudClanEmpty: local UI state ownership без external API coupling).
+
+**Meta-observation (NOT formal lesson):** ТЗ refinement step itself может introduce false-positives. Design-Claude refinement написан на base investigation matrix, но matrix interpretation требует verification от Claude Code в pre-edit grep. **Pre-edit Lesson #18 STOP saved 5Q from establishing wrong convention** (HUD-v2 + apiClient direct precedent would have polluted future sub-epic conventions). Value of pre-edit verification reflex empirically demonstrated — Lesson #11 + #18 reflex pair as preventive infrastructure, not just reactive recovery tools.
+
+**Possible future formalization:** "ТЗ refinement may introduce false-positives — pre-edit verification reflex applies to refinement assumptions, not just original ТЗ assumptions." Awaits second instance before promotion to formal lesson entry. Document как open question для future design-Claude.
+
+---
+
+## 6. Cumulative metrics
+
+- **Sub-epics:** 17/22 → **18/22 (82%)** — **four-fifths milestone reached** ✅ (+1 от 5Q — Retirement #16 ✅).
+- **Streak:** 12 → **13** ✅ pending P5+P6 clean. P4 split = planned recovery (infrastructure-driven), explicitly NOT counted as hot-fix per design-Claude prep.
+- **Lessons:** **35** (no promotions in 5Q).
+- **Recoveries:** 55 → **57** (+2 architectural):
+  - **#56** — Q1 prototype assumption empirically opposed (no retirement scene в prototype, design fresh per Hexlash design tokens).
+  - **#57** — refinement-time Lesson #30 sub-pattern mis-classification (escalated by Claude Code Lesson #18 STOP, Option B confirmed by design-Claude).
+  - **NOT counted as separate architectural recoveries** (tactical refinements, classified per recovery transparency principle):
+    - Vuetify grep false-positive в P1 (comment text containing "Vuetify" matched literal grep — tightened verify, не assumption failure).
+    - P1 i18n key count imprecision (9 vs 10) caught в P3 re-grep — count refinement, conclusion preserved (still 0 gaps), не architectural recovery.
+  - **Reasoning transparency note:** counted only assumption-level corrections (architectural — convention precedent, framework misapplication), не tactical grep refinements (count imprecision, false-positive matches). Future design-Claude может revise judgment если другая classification более полезна — open question documented for future audit.
+
+---
+
+## 7. Carry-overs forward к 5R
+
+| # | Item | Source | Priority | Type |
+|---|---|---|---|---|
+| 1 | Backend `/v1/agent/list` 500 fix | 5M P4 → 5O Q1 → 5P Q1 → **5Q Q1 (4th consecutive defer)** | **HIGH — explicit decision required** | Strategy A/B/C/D framework transferred verbatim from HANDOFF_5Q `1a7a820`. Recommended action в HANDOFF_5R: tackle dedicated. NOT "TBD per user preference" — 4th defer warrants explicit decision in 5R startup. |
+| 2 | Animation для retirement confirmation | 5Q dropped (was Phase 5/6 pre-investigation scope) | Low | UX polish. Candidate 5R+ standalone or bundled with similar polish items. |
+| 3 | Achievement badge для first retirement | 5Q dropped (was Phase 5/6 pre-investigation scope) | Low | Requires backend extension first (new achievement type entry). Pre-investigation needed. Candidate 5R+ with backend pre-flight. |
+| 4 | Legacy `RetirementPanel.vue` orphan cleanup | 5Q legacy preservation (5L precedent applied) | Low | Explicit removal candidate 5R+. File untouched в 5Q per legacy preservation pattern. |
+| 5 | HudProfile card-creep observation | 5Q P2 surfaced | Architectural concern | 6 cards now (Identity/Performance/Friends/Settings/Retirement/SocialTasks). Future architecture concern (section grouping? subdivision?). NOT a blocker. Document для 5R+ awareness. |
+| 6 | i18n cross-section key reuse | 5Q P3 surfaced | Minor finding | `t.clan.lblHasClan` reused в retirement context. Possible future i18n architecture decision (cross-section reuse vs duplication). Minor finding, not actionable in 5R startup. |
+
+**Master state phantom mutation family — CLOSED in 5P** (Lesson #35 scope-boundary proactive check confirmed: `master/setWarning|Notification|Alert|Message` all 0 hits). No 4th-defer expected from this line.
+
+---
+
+## 8. Closing note + acceptance checklist
+
+**5Q acceptance criteria (refined ТЗ §10):**
+
+- [x] All mandatory functional commits landed (P1 `04aca63` + P2 `94bc82e`; P3 skip-and-documented per Mode A discipline)
+- [x] HudRetirement integrated в HudProfile, working end-to-end (loading → progress → retire button → success/error toast pattern)
+- [x] FINAL_REPORT_5Q.md committed (this doc — 2 commits 4A `345bbb1` + 4B post-this-commit due to API stream timeout recovery split)
+- [ ] HANDOFF_EPIC5_5R_CHAT_HANDOFF.md committed (P5 task — pending)
+- [ ] CLAUDE.md updated 18/22 / 13-streak / lessons 35 / recoveries 57 (P6 task — pending)
+- [x] User confirmed each Phase (Mode A strict)
+- [x] No hot-fix events (P4 split = planned infrastructure-driven recovery, explicitly NOT counted as hot-fix per design-Claude prep)
+- [x] Lesson #30 sub-pattern second test documented (NOT materialized, recovery #57 reasoning preserved для future second-test validity gate)
+
+**Closing summary:**
+
+Sub-Epic 5Q ζ Retirement closed clean. **Four-fifths milestone reached** (18/22, 82%). **13-streak preserved** pending P5+P6 clean execution. Lesson #18 STOP application в P1 prevented architectural drift (HUD-v2 + apiClient direct precedent would have polluted future sub-epic conventions). Recovery #57 documented as teachable moment about refinement-time false-positives — value of pre-edit verification reflex empirically demonstrated as preventive infrastructure, not just reactive tool.
+
+P4 atypical split documented prominently (header note + §2 phase log + this checklist) to prevent future misreading as 5P file-size threshold violation precedent. Infrastructure-driven recovery, framework-pure.
+
+Sub-Epic 5Q Phase 4 of 6 (commit B of 2) — FINAL_REPORT closed. Next: P5 HANDOFF_5R, P6 CLAUDE.md sync.
