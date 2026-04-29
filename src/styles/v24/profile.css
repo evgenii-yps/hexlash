@@ -69,8 +69,9 @@
   bottom: 14px;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  grid-template-rows: minmax(0, 1fr) minmax(0, 1.2fr) auto auto;
-  /* 5J — added 4th row for .social-tasks-card */
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1.2fr) auto auto auto;
+  /* 5J — added 4th row for .social-tasks-card. 5Q — added 5th row for
+     .retirement-card (between settings-card and social-tasks-card). */
   gap: 12px;
   pointer-events: auto;
   z-index: 55;
@@ -559,13 +560,24 @@
   max-height: 360px;
 }
 
+/* ===== RETIREMENT CARD (5Q — Settings-adjacent) =====
+   Row 4 desktop (between settings-card row 3 and social-tasks-card row 5),
+   spans both columns. Cap height matches social-tasks-card. HudRetirement
+   owns .hr-header / .hr-legend-header — no .profile-card-title wrapper
+   (5J precedent). */
+.app-v2 .retirement-card {
+  grid-column: 1 / -1;
+  max-height: 360px;
+}
+
 /* ===== MOBILE STACK (prototype 2093-2105) =====
    Single column at narrow widths; Settings card also stacks its 4 blocks. */
 @media (max-width: 720px) {
   .app-v2 .profile-grid {
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto auto auto;
-    /* 5J — added 5th row for .social-tasks-card */
+    grid-template-rows: auto auto auto auto auto auto;
+    /* 5J — added 5th row for .social-tasks-card.
+       5Q — added 6th row for .retirement-card. */
     bottom: 14px;
     overflow-y: auto;
   }

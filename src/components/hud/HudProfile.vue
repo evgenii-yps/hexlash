@@ -212,6 +212,14 @@
         </div>
       </div>
 
+      <!-- 5Q — Retirement card (Settings-adjacent: irreversible/destructive
+           action lineage, mirrors Logout placement intent). HudRetirement
+           owns its own .hr-header / .hr-legend-header titles — no
+           .profile-card-title wrapper (5J precedent). -->
+      <div class="profile-card retirement-card">
+        <HudRetirement />
+      </div>
+
       <!-- 5J — Social Tasks card (relocated from HudTraining). HudSocialTasks
            own .tsp-header serves as card title (count badge UX preserved);
            no wrapper .profile-card-title to avoid double-title. -->
@@ -229,6 +237,7 @@ import { useAccount } from '@wagmi/vue';
 import store from '@/core/state/store.js';
 import BeltBadge from '@/components/ui/BeltBadge.vue';
 import HudSocialTasks from './HudSocialTasks.vue';
+import HudRetirement from './HudRetirement.vue';
 import { getBeltDisplay } from '@/utils/beltDisplay.js';
 import {
   availableLanguages,
