@@ -148,6 +148,12 @@
               </template>
               <template v-else>
                 <button
+                  v-if="f.status === 'in_fight'"
+                  class="fc-action-btn watch"
+                  aria-label="Watch live fight"
+                  @click="onWatch(f)"
+                >Watch</button>
+                <button
                   class="fc-action-btn primary"
                   :disabled="!canChallenge(f)"
                   @click="onChallenge(f)"
@@ -218,6 +224,7 @@
 
 <script setup>
 import { computed, ref, shallowRef, markRaw, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
+import { useRouter } from 'vue-router';
 import { useAccount } from '@wagmi/vue';
 import store from '@/core/state/store.js';
 import BeltBadge from '@/components/ui/BeltBadge.vue';
@@ -230,6 +237,9 @@ import {
 } from '@/locales/index.js';
 
 defineEmits(['back']);
+
+// 5N — router for Watch button (in_fight friends → /v2/spectate/:fightId).
+const router = useRouter();
 
 // --- Master data ---
 // Email lives on master.email (top-level), not on userData — see masterModel.js
@@ -565,6 +575,13 @@ function canChallenge(f) {
 function onChallenge(f) {
   if (!canChallenge(f)) return;
   store.dispatch('friends/sendChallenge', f);
+}
+// 5N — Watch live fight (Path α mock port). currentFight is defined on the
+// friend object but never populated by the current backend, so f.id is the
+// always-used fallback today; the optional chain protects future wiring.
+function onWatch(f) {
+  const fightId = f.currentFight?.id || f.id;
+  router.push(`/v2/spectate/${fightId}`);
 }
 function onAccept(req) {
   store.dispatch('friends/acceptFriendRequest', req);

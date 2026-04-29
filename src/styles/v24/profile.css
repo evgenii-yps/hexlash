@@ -405,6 +405,17 @@
   border-color: rgba(255, 68, 68, 0.5);
   color: #ff8888;
 }
+/* 5N — Watch variant for in_fight friends (live spectate entry). Pink accent
+   distinguishes from primary Challenge (also pink) via softer tinted bg. */
+.app-v2 .fc-action-btn.watch {
+  background: rgba(255, 6, 111, 0.15);
+  border-color: var(--hex-primary);
+  color: var(--hex-primary);
+}
+.app-v2 .fc-action-btn.watch:hover {
+  background: rgba(255, 6, 111, 0.25);
+  color: #fff;
+}
 .app-v2 .fc-action-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
