@@ -7,7 +7,7 @@
   §Decision). Mirrors HudSocialTasks pattern (5I precedent): useStore +
   onMounted dispatch + button click → dispatch.
 
-  3 template branches per RetirementPanel (legacy components/club/):
+  3 template branches per RetirementPanel (legacy components/club/, removed in 5S):
     - loading        (initial fetch in flight)
     - data?.legend   (already retired — show legend display)
     - data           (retirement progress + requirements + buff preview)
@@ -15,7 +15,7 @@
   Visual: Hexlash tokens (--hex-primary, --font-mono, --bg-panel),
   native <button>, .hr-spinner CSS keyframes (per .tsp-spinner / .mm-spinner
   convention). NO Vuetify (replaces v-progress-circular + HexButton from
-  legacy RetirementPanel).
+  legacy RetirementPanel, removed in 5S).
 
   i18n: 5 existing retirement keys (lblRetirement, lblReadyToRetire,
   lblRetireFighter, lblRetireWarning, lblRetireSuccess) + supporting
