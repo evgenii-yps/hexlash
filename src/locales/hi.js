@@ -637,6 +637,17 @@ export default {
       advice: 'Advice',
     },
   },
+  spectate: {
+    title: 'SPECTATING',
+    spectators: 'watching',
+    round: 'Round',
+    fightLog: 'FIGHT LOG',
+    uses: 'uses',
+    damage: 'damage',
+    critical: 'CRIT',
+    wins: 'wins',
+    leave: 'Leave',
+  },
   xpAllocation: {
     freeXP: 'उपलब्ध',
     allocateTo: 'में निवेश करें',
