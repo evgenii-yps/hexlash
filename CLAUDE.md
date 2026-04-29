@@ -3897,3 +3897,79 @@ User decision required в 5Q startup.
 
 **Следующий sub-epic:** 5S per `HANDOFF_EPIC5_5S_CHAT_HANDOFF.md`. Option matrix: **γ** AI Trainer (M, medium streak risk) OR **Z** Cleanup batch (S, low streak risk). Anti-recs (ε FightClub feature / η Onboarding / θ MoveTree) preserved.
 
+
+### Sub-Epic 5S — Z Cleanup batch (Feature work — orphan removal)
+
+**Status:** CLOSED clean
+**Type:** Z Cleanup batch (Option Z, S-size → XS-size after investigation, streak-preserving)
+**Phases:** 8 commits (P0a/P0b STARTUP retroactive split → P0.5/P0.6 investigation+baseline read-only → P1 functional → P3a1/P3a2 FINAL_REPORT split → P3b1/P3b2 HANDOFF_5T split → P3c CLAUDE.md update — this commit)
+**Functional commits:** 1 (`058ebeb` Phase 1 RetirementPanel.vue removal + HudRetirement doc-comments update)
+**Branch:** continue stack `claude/setup-5e-shop-mode-a-khIAi` (10th decision precedent — extends 5J-5R 9-decision stack)
+**HEAD before:** `70a310d` (5R Phase 9)
+**HEAD after Phase 1:** `058ebeb`
+**HEAD after Phase 3c:** `[fill in current HEAD here]` (this commit)
+
+**What 5S did:**
+
+Pre-investigation 5S scope listed 5 candidate items. P0.5 Q1.1-Q1.5 investigation matrix refined scope to **item #1 only** — quadruple-precedent confirmation of investigation-refines-ТЗ pattern (5O / 5Q / 5R / 5S). S-size sub-epic became XS-size functional work (1 commit instead of 3-5 estimated).
+
+**Item #1 — RetirementPanel.vue orphan removal:** `src/components/club/RetirementPanel.vue` (160 lines) confirmed orphan via grep (0 live imports, 3 expected hits — 1 self-name + 2 doc-comments in HudRetirement.vue). Pre-edit re-verify clean, immediate delete via `git rm`. Post-delete build verification: gzip −4.11 kB confirmed file was contributing redundant patterns to bundle pre-tree-shake (end-to-end orphan validation). HudRetirement.vue (live, 5Q) doc-comments updated to historical refs ("replaces legacy RetirementPanel removed in 5S").
+
+**Investigation findings dropped/promoted:**
+
+- Item #2 (Punch3D / RainView orphan check) → falsified, both LIVE — Recovery #69
+- Item #3 (HudProfile card-creep) → 6/7 threshold, monitor-forward only — Recovery #70 (broad grep over-count vs CLAUDE.md audit trail)
+- Item #4 (i18n cross-section reuse) → 45 cross-section dupes confirmed, M-size scope overflow — PROMOTED from "vague note" to formal sized task for 5T+ (Option ι candidate)
+- Item #5 (small TODOs/carry-overs) → all 5 TODOs are deferred-feature placeholders, none absorbable
+
+**Key decisions:**
+
+- **Investigation-driven scope reduction:** P0.5 matrix transformed sub-epic profile. 5 items → 1 item is the sharpest reduction in 5L-5S history. Streak preservation prioritized over scope volume.
+- **Build baseline + delta verification:** P0.6 `npm install` + build baseline captured pre-delete; post-delete delta (gzip −4.11 kB) confirmed end-to-end orphan, not just static orphan. Standard practice for future cleanup deletes.
+- **Preventive split framework fully stabilized:** 4 applications in 5R-5S (5R P7 / 5S P0 / 5S P3a / 5S P3b). Pattern: long-form docs deliverables default to preventive split from start. NOT new lesson — extension of 5Q infrastructure-driven framework.
+- **HANDOFF_TO_NEW_CHAT_5S.md skipped** as repo-copy: design-Claude already in new chat context per old design-Claude handoff letter, repo copy redundant. Single-purpose conversation transcript adequate.
+
+**Recovery log (5 catches in 5S session):**
+
+- **Recovery #67 — Pre-flight branch divergence:** Harness fresh slug `claude/investigate-p0-issues-4Is8v` (local) vs continue stack `claude/setup-5e-shop-mode-a-khIAi` (remote, same SHA `70a310d`). Resolved via ТЗ explicit-permission framework + 9-decision precedent → switched to continue stack. 10th continue stack decision.
+- **Recovery #68 — P0 monolithic write 1st timeout:** Stream idle timeout on STARTUP_5S_CLEANUP_BATCH.md → preventive split P0a (sections 1-4, 120 lines) + P0b (sections 5-8 append, 167 lines). 287 lines total. 2nd application of preventive split framework.
+- **Recovery #69 — Punch3D assumption falsified (P0.5 Q1.2):** Pre-investigation listed Punch3D as orphan candidate; investigation revealed live import in `src/views/TrainingView.vue:97` + template usage. Item #2 dropped from scope.
+- **Recovery #70 — HudProfile broad grep over-count (P0.5 Q1.3):** Initial grep returned 12 hits; cross-reference with CLAUDE.md 5B/5J/5Q audit trail revealed real card count = 6. Lesson #11 self-correction via documented architecture.
+- **Recovery #71 — P3a FINAL_REPORT 1st timeout:** Stream idle timeout on monolithic FINAL_REPORT write → preventive split P3a1 (sections 1-4, 99 lines) + P3a2 (sections 5-8 append, 122 lines). 221 lines total. 3rd application of preventive split framework — pattern fully stabilized.
+
+P3b HANDOFF_5T applied preventive split from start (4th application, no timeout needed to trigger) — established practice now, not catch.
+
+P1 pre-edit re-verify CLEAN (no Recovery beyond P0.5) — P0.5-to-P1 intra-session window had no drift, validation reflex equally valuable as catch reflex per Lesson #11.
+
+**Cumulative lesson tally:** 35 → **35** (UNCHANGED). No new lessons surfaced. 3 candidates from 5R unchanged:
+
+- #36 candidate (PROMOTE pending 2nd test) — Incomplete rollback drift detection (N/A in 5S — no DB changes)
+- #37 candidate (pre-formal) — Sandbox capability empirical verification (N/A in 5S)
+- #38 candidate (pre-formal, sub-pattern of #33) — Multi-layer deploy environment awareness extension (N/A in 5S)
+
+**Hot-fix metric:** **0 — 15-streak achieved** (5E + 5F + 5G + 5H + 5I + 5J + 5K + 5L + 5M + 5N + 5O + 5P + 5Q + 5R + 5S all clean). All 5 recoveries adaptation-tier per Lesson #35. Preventive splits = infrastructure-driven, NOT hot-fixes. Investigation matrix outputs = read-only refinement, NOT hot-fixes. Pre-flight branch divergence = caught before any commit attempted, NOT hot-fix. **Major milestone — first explicit streak-preservation-as-primary-goal sub-epic, validated approach (investigation-driven scope reduction + adaptation-tier discipline + preventive split framework).**
+
+**Cumulative recoveries:**
+
+- **Entering 5S:** 66+ (8 catches in 5R session per 5R FINAL §7).
+- **5S closure (FINAL_REPORT_5S + HANDOFF_5T + this CLAUDE.md update):** 66+ → **71+** (+5: #67 branch divergence, #68 P0 split, #69 Punch3D assumption, #70 HudProfile grep over-count, #71 P3a split).
+
+**Эпик 5 §4.2 progress:** **20/22 done (91%)** (+1 от 5S — Item #16 RetirementPanel orphan cleanup ✅ closes 5Q drop carry-over, Item #7 branch strategy ✅ confirmed already-closed in 5R Phase 9). **Two sub-epics remaining to Epic 5 closure.**
+
+**Sub-Epic 5S — CLOSED.** ✅ Route table `/v2/*` UNCHANGED — 5S removes orphan legacy `/src/components/club/RetirementPanel.vue`, no v2 routes touched. Frontend bundle delta: gzip −4.11 kB (orphan was contributing redundant patterns pre-tree-shake).
+
+**Carry-overs forward to 5T (5 items):**
+
+| # | Item | Source | Status |
+|---|---|---|---|
+| 1 | Animation для retirement | 5Q drop | CARRY-OVER (frontend animation pass, deferred) |
+| 2 | Achievement badge для retirement | 5Q drop | CARRY-OVER (requires backend extension) |
+| 3 | HudProfile card-creep monitor | 5L+ → 5S Q1.3 | MONITOR-FORWARD (6/7 threshold; trigger refactor if 7th card added in 5T-5V) |
+| 4 | i18n cross-section reuse — formal M-size task | 5O+ → 5S Q1.4 PROMOTED | 45 dupes documented; sized M; candidate for 5T or 5U as Option ι |
+| 5 | Lesson #36 validation track | 5R | CARRY-OVER (await 2nd occurrence of incomplete rollback drift for promotion + mitigation prototyping) |
+
+**Net 5S → 5T:** 7 entering 5S → 5 leaving (RetirementPanel orphan closed, branch strategy confirmed already-closed). Goal was 3-4; slight miss acceptable given investigation findings — i18n promoted from "vague note" to "sized formal task" represents real progress even if count doesn't drop.
+
+**Следующий sub-epic:** 5T per `HANDOFF_EPIC5_5T_CHAT_HANDOFF.md`. Option matrix: **γ** AI Trainer (M, medium streak risk) OR **ι** i18n consolidation (M, low-medium streak risk). Anti-recs (ε FightClub feature / η Onboarding / θ MoveTree) preserved.
+
+**Recommended ordering:** 5T = γ AI Trainer (feature work appropriate now that 15-streak achieved) → 5U = ι i18n consolidation (final cleanup before Epic 5 close). Alternative ordering 5T = ι, 5U = γ valid if user prefers ending Epic 5 on feature work rather than refactor.
