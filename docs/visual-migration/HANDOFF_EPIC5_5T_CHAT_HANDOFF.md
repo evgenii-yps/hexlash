@@ -170,3 +170,93 @@ done
 - Per-section batch (one section at a time, 11 locales each commit) — lowest risk, ~10 commits
 - Common-keys-first (introduce `t.common.*` namespace, migrate dupes, then refactor remaining) — fewer commits, higher per-commit surface
 - Hybrid (common namespace + 2-3 high-traffic sections) — middle ground
+
+---
+
+## 5. Carry-overs forward to 5T (5 items)
+
+Inherited from 5L-5R + new from 5S:
+
+| # | Item | Source | Status |
+|---|---|---|---|
+| 1 | Animation для retirement | 5Q drop | CARRY-OVER (frontend animation pass, deferred) |
+| 2 | Achievement badge для retirement | 5Q drop | CARRY-OVER (requires backend extension — Achievement entity DB schema work) |
+| 3 | HudProfile card-creep monitor | 5L+ → 5S Q1.3 | MONITOR-FORWARD (6/7 threshold; trigger refactor if 7th card added in 5T-5V) |
+| 4 | i18n cross-section reuse — formal M-size task | 5O+ → 5S Q1.4 PROMOTED | 45 dupes documented; sized M; candidate for 5T or 5U as Option ι |
+| 5 | Lesson #36 validation track | 5R | CARRY-OVER (await 2nd occurrence of incomplete rollback drift for promotion + mitigation prototyping) |
+
+**Net 5S → 5T:** 7 entering 5S → 5 leaving (RetirementPanel orphan closed, branch strategy confirmed already-closed). Goal was 3-4; slight miss acceptable given investigation findings — i18n promoted from "vague note" to "sized formal task" represents real progress even if count doesn't drop.
+
+**Closed in 5S:**
+
+- ~~RetirementPanel.vue orphan cleanup~~ ✅ (P1)
+- ~~Branch strategy formalization~~ ✅ (already closed in 5R Phase 9 — confirmed in 5S as no-action)
+
+---
+
+## 6. Active disciplines reminder
+
+**Mode A strict** — 1 commit per Phase, push, status report, wait ok.
+
+**Branch:** continue stack `claude/setup-5e-shop-mode-a-khIAi` for visual migration work (10th continue stack decision after 5S — extends to 11th if 5T continues). Backend fixes (if Option γ surfaces them) — separate branch from main + PR per Recovery #63 lesson formalized in [CLAUDE.md](http://CLAUDE.md) `## Branch (Git)`.
+
+**Sentinel split — fully stabilized framework:**
+
+- Single-write default per 5P clarification for short deliverables (code commits, single-Phase work)
+- Long-form docs (handoff, FINAL_REPORT) default to **preventive split from start** — 4-application precedent (5R P7 / 5S P0 / 5S P3a / 5S P3b)
+- Reactive variant (5Q 5-timeout threshold) preserved as fallback for unexpected length surprises
+- Both valid; preventive-from-start now standard for handoff-class deliverables
+
+**Convention discovery reflex (Lesson #32):** mirror existing patterns, не invent. Backend conventions ≠ frontend conventions. AI Trainer (Option γ) work needs particular care — Anthropic SDK pattern in backend, frontend modal pattern via existing HUD-v2 conventions.
+
+**Pre-edit verification reflex (Lesson #11):** running tally 71+ recoveries entering 5T. Reflex valuable across both Claude Code and design-Claude sides. Validation-not-just-catch principle (5S P1 pre-edit re-verify clean — assumption held — was equally valuable as a catch).
+
+**STOP triggers (Lesson #18):** any structural mismatch — escalate, не auto-fix. Especially for Option γ feature work — backend route additions, model schema additions, AI prompt template — convention discovery first, code action after.
+
+**Investigation refines ТЗ:** quadruple precedent now (5O / 5Q / 5R / 5S). Pre-investigation ТЗ ALWAYS treated as draft. Investigation matrix → ТЗ refinement → execution.
+
+**Reflex catch tiering (Lesson #35):**
+
+- Adaptation-tier (TZ assumption mismatch) — fix within Phase, no Lesson #18 trigger, no hot-fix
+- Bug-bundle-tier (same-class additional callsites) — fix within Phase as expansion
+- Scope-boundary-tier (different class, different model) — STOP, document carry-over, Lesson #18 IS triggered
+
+---
+
+## 7. Files for 5T start
+
+When user starts 5T, design-Claude должен read:
+
+1. **[CLAUDE.md](http://CLAUDE.md)** — full source of truth (after Phase 9 update of 5S)
+2. **`docs/visual-migration/EPIC5_5S_FINAL_[REPORT.md](http://REPORT.md)`** — closure detail (P3a1+P3a2 split, 5 recoveries, 15-streak achievement)
+3. **`docs/visual-migration/HANDOFF_EPIC5_5T_CHAT_[HANDOFF.md](http://HANDOFF.md)`** — this file
+4. **`docs/visual-migration/EPIC5_5R_FINAL_[REPORT.md](http://REPORT.md)`** — predecessor closure (recovery #59-66 framing, 8-recovery session pattern, branch strategy formalization origin)
+5. **`docs/visual-migration/VISUAL_MIGRATION_[PLAN.md](http://PLAN.md)`** — overall plan
+
+---
+
+## 8. Recommended workflow для start of 5T
+
+1. User attaches this HANDOFF + 5S FINAL_REPORT + [CLAUDE.md](http://CLAUDE.md) to fresh design-Claude chat
+2. Design-Claude reads file list per §7
+3. Design-Claude presents 5T option matrix (γ vs ι) с user-side decision request
+4. User picks γ or ι (or one of anti-recs if pressure forces)
+5. Design-Claude prepares pre-flight Q-templates per chosen option (templates in §4)
+6. Claude Code runs investigation (read-only)
+7. Investigation matrix → ТЗ refinement → Phase-by-Phase execution
+
+---
+
+## 9. Closing
+
+5S closes Z Cleanup batch with optimal streak-preserving outcome. 20/22 milestone reached. **Two sub-epics remaining for Epic 5 closure** (5T + 5U). 15-streak preserved.
+
+After Epic 5 closure (22/22) → **Epic 6 cutover** (final): `/v2/*` becomes default, continue stack merges to main, legacy `/src` components removed, parking list (52 items in `/docs/[phase1-parking-list.md](http://phase1-parking-list.md)`) addressed.
+
+Trajectory:
+
+- After 5T: 21/22 (95%)
+- After 5U: 22/22 (100%) — Epic 5 CLOSED ✅
+- Epic 6: cutover + legacy delete + parking list resolution
+
+Ready for 5T start when user is.
