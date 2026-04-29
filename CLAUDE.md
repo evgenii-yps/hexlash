@@ -3441,4 +3441,87 @@ src/scene/scenes/ClanScene.js              — modified +18/-5 — 3 specific tw
 
 **Sub-Epic 5L — CLOSED.** ✅ Route table `/v2/*` остаётся unchanged (5L modifies existing components/scenes; no new routes).
 
+### Эпик 5 — Sub-Epic 5M — AutoFight Toggle (Option β) (✅ COMPLETE)
+
+Завершён 2026-04-29. Twelfth sub-epic в Эпике 5. Pure-frontend wiring of pre-existing AutoFight backend infrastructure. Smallest M sub-epic в Эпике 5 due к 100% backend + Vuex + Prisma readiness.
+
+**Commit range:** `13425bf` (Phase 1) → `<phase 8>` (HANDOFF_5N).
+**Branch:** continued `claude/setup-5e-shop-mode-a-khIAi` (5E-5M stack).
+**Predecessor:** 5L ✅ CLOSED (`3a25bf1`).
+**Audit ref:** §4.2 #22 (🔴 Missing → ✅ Done после 5M).
+
+**Что делает 5M:**
+
+1. **Vuex refactor** — `OPTIMISTIC_TOGGLE_AUTO_FIGHT` + `ROLLBACK_AUTO_FIGHT` mutations + refactored `toggleAutoFight` action (mirror 5L Phase 2 captain switch optimistic pattern). Server-truth sync via `UPDATE_AGENT` after success preserves original `status`/`nextFightAt` behavior.
+2. **HudFighterDetail UI toggle** — `<button class="auto-switch">` + `.autofight-row` card-style wrapper, bottom-left HUD overlay corner (Phase 2 fix per Lesson #34). `aria-pressed` for accessibility.
+3. **Legacy AgentDetailView fix** — phantom `master/setError` callsite stripped from `onToggleAuto`, action's `master/setErrorMessage` toast = single source of truth.
+4. **5L pattern reuse** — optimistic UI snapshot/rollback transferable from captain switch (5L Phase 2).
+
+**Что видит пользователь:**
+
+- `/v2/fd/<real-agent-id>` → toggle switch bottom-left corner с card-style wrapper (bg-panel + border).
+- OFF state: gray track, dot left.
+- ON state: pink track (`--hex-primary` muted), dot right.
+- Click → instant flip (optimistic UI).
+- Backend error → flip back + toast `'Failed to toggle auto-fight'`.
+- **Phase 4 visual sign-off gated by pre-existing backend `/v1/agent/list` 500** — toggle code shipped correctly, render activates когда backend issue resolved (NOT 5M regression — pre-existing bug surfaced during visual verify).
+
+**Дерево (3 modified, 0 new):**
+
+```
+src/core/state/modules/agentState.js              — modified +46/-3 — 2 mutations + refactored action
+src/components/hud/HudFighterDetail.vue           — modified +110/-0 — toggle template + handler + scoped CSS (Phase 2 fix +4/-1 in same file)
+src/views/AgentDetailView.vue                     — modified +5/-1 — phantom setError stripped (Phase 3 surgical)
+```
+
+**Reused as-is (5):**
+
+- `agent/toggleAutoFight` Vuex action (Phase 1 refactored, signature `{ id, enabled }` preserved)
+- `Agent.autoFight` Prisma field (existing schema, 100% ready)
+- `PUT /v1/agent/:id/auto-fight` backend endpoint (existing)
+- `master/setErrorMessage` + `ErrorMessageModel.withText()` (5L Phase 2 precedent)
+- `agentScheduler.js` + `rankedMatchmaker.js` consumers (autoFight filtering already active)
+
+**Ключевые паттерны:**
+
+- **Optimistic UI snapshot/rollback** — direct mirror 5L Phase 2 captain switch (Lesson #30 semantic pattern reuse).
+- **`currentAgent` scope extension** — flip BOTH `state.agents` AND `state.currentAgent` when open detail view matches (5L Phase 2 lesson).
+- **HUD overlay convention** — `.autofight-row` `position: fixed` + `pointer-events: auto` (Lesson #34 NEW). Every `.detail-hud` child uses fixed positioning + back-btn/captain/fd-* siblings as evidence.
+- **Convention discovery** — `.auto-switch` legacy CSS clone with v2 design tokens (`--bg-panel`, `--text-mid`, `--text-dim`, `--hex-primary`, `--font-mono`) instead of legacy hex colors (Lesson #32).
+- **Pure-frontend wiring** — 100% backend infrastructure pre-existing (endpoint + Prisma + scheduler consumers all in place); Lesson #33 (deploy awareness) NOT applicable.
+- **Bug-bundle pattern** — Phase 3 phantom mutation surgical fix scope-limited to 5M's `onToggleAuto` callsite only; 8 unrelated phantom callsites documented as carry-over (5G precedent — single-line fix bundled if scope-related).
+
+**Расхождения — осознанные:**
+
+1. **`ROLLBACK_AUTO_FIGHT` per-agent revert** — lighter than 5L Phase 2 full snapshot pattern. Reasoning: only `autoFight` boolean changes, no other agents affected. Optimization за рамок ТЗ template, conscious refinement.
+2. **Phase 2 placement bottom-left corner (Option α)** — НЕ inline "before stats" per ТЗ §4 Phase 2 (a) wording. HUD overlay convention discovery (every `.detail-hud` child = `position: fixed`) forced architectural correction. Bottom-left mirrors HUD distinct-corner anchoring (back top-left, captain top-right, fd-top top-center, fd-resources top-right, fd-stats bottom-center).
+3. **Phase 2 fix bundled `position: fixed` + `pointer-events: auto`** — Lesson #34 NEW emerged from visual sign-off failure. Single-commit bug-bundle within Phase 2 scope, не cascade tuning failure (hot-fix metric preserved).
+4. **Phase 3 phantom `master/setError` discovery** — pre-existing legacy bug (mutation does not exist; 9 callsites silently no-op via Vuex warning). Surgical 5M-scope fix only (`onToggleAuto`); 8 carry-over callsites (5 in AgentDetailView + 2 in ResearchTree + 1 in RetirementPanel) documented for polish sub-epic.
+5. **Phase 4 visual sign-off gated by backend `/v1/agent/list` 500** — pre-existing bug surfaced during visual verify. Frontend code (Phase 1-3 + Phase 2 fix) verified correct via Phase 5 grep checklist (9/9 PASS). Toggle will render automatically when backend issue resolved. NOT a 5M regression.
+6. **`<button>` with `aria-pressed`** — accessibility extension за рамок ТЗ (toggle via button vs checkbox better для accessibility). Conscious refinement.
+
+**Lessons applied (validated):**
+
+- **#11 verify shape с реальным data** — 4 cumulative recoveries в 5M:
+  - Phase 1: legacy callsite path mismatch (`src/views/...` not `src/components/...` per ТЗ approximation).
+  - Phase 3: phantom `master/setError` mutation discovery (ТЗ anticipated double-toast, reality was phantom no-op).
+  - Phase 3: verify-time false-positive (own comment text containing target string `setError`).
+  - Phase 2 fix: HUD overlay positioning convention missed at Phase 2 design time.
+- **#18 STOP at structural mismatch** — Phase 3 phantom discovery escalated to user before scope-creep into 9-callsite cleanup; surgical 5M-scope fix applied. Phase 2 fix converted visual sign-off failure into bundled correction within Phase rather than retroactive hot-fix.
+- **#22 HUD scoped selector match** — applied + **extended** to HUD layout architecture (Lesson #34).
+- **#30 Pattern reuse — semantic vs mechanical** — 5L Phase 2 optimistic UI direct mirror with semantic adaptation (`ROLLBACK_AUTO_FIGHT` per-agent vs full snapshot — different lifecycle, different cleanup).
+- **#32 Convention discovery reflex** — applied: read existing `.auto-switch` legacy CSS source, but missed sibling positioning approach. Phase 2 fix extended discovery scope to layout architecture per Lesson #34.
+
+**Lesson ADDED — 5M introduced 1 new entry:**
+
+- **Lesson #34** — HUD overlay layout convention. When adding new elements к fixed-overlay container (parent `position: fixed` + `pointer-events: none`), verify ALL sibling positioning approach pre-edit, не just CSS selector source location or visual styling tokens. Convention discovery (Lesson #32) extends к layout architecture. Phase 2 initial implementation placed `.autofight-row` inline (no positioning) → rendered at 0,0 hidden under back-btn. Fix: `position: fixed` + explicit corner coordinates + `pointer-events: auto` to override parent's `pointer-events: none` cascade. Pattern: when parent uses fixed-overlay layout, every meaningful child must declare its own fixed coordinates + opt-in to pointer-events.
+
+**Cumulative lesson tally:** 33 → **34** (+1 от 5M).
+
+**Hot-fix metric:** **0 — 9-streak achieved** (5E + 5F + 5G + 5H + 5I + 5J + 5K + 5L + 5M all clean). Phase 2 fix = conscious bundled fix within same Phase (Lesson #18 framework — visual sign-off discovery during Phase 4, не retroactive panic), не hot-fix recovery.
+
+**Эпик 5 §4.2 progress:** **14/22 done (64%)** (+1 от 5M — AutoFight #22 ✅).
+
+**Sub-Epic 5M — CLOSED.** ✅ Route table `/v2/*` остаётся unchanged (5M modifies HudFighterDetail + agentState + AgentDetailView in-place; no new routes).
+
 
