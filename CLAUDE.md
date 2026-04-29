@@ -3728,3 +3728,96 @@ src/components/club/ResearchTree.vue               — modified +1 import / 2 ca
 
 **Следующий sub-epic:** 5P — TBD per HANDOFF_5P assessment. Recommended: Option A (ψ-2 carry-overs cleanup — items 2+3+4) preserves 11-streak via mechanical batch. Alternative: Option B (Q1 backend `/v1/agent/list` 500) если backend log access available.
 
+### Эпик 5 — Sub-Epic 5P — Carry-overs Cleanup ψ-2 (Option A) (✅ COMPLETE)
+
+Завершён 2026-04-29. Fifteenth sub-epic в Эпике 5. Mechanical-batch sub-epic continuing 5O carry-overs cleanup. Pure-frontend run, no backend touch — preserved 12-streak via low-risk-first phase ordering. **Drastic carry-over reduction: 4 entering → 1 leaving.**
+
+**Commit range:** `ff2f463` (Phase 1) → `1a7a820` (Phase 5 HANDOFF_5Q).
+**Branch:** continued `claude/setup-5e-shop-mode-a-khIAi` (5E-5P stack).
+**Predecessor:** 5O ✅ CLOSED (`85eec77`).
+**Audit ref:** §4.2 closes carry-overs from 5L (HudClan splitting completion) + 5O (P1 aria-label deferred + P3 setInfo phantom surfaced); не adds new audit items.
+
+**Что делает 5P:**
+
+1. **Phase 1 — aria-label i18n new sub-key + HudProfile binding** (commit `ff2f463`) — 11 locales получили `watchLive:` sub-key в existing `spectate:` block (en `'Watch live fight'`, ru `'Смотреть прямой бой'`, 9 fallback English per 5N convention). HudProfile.vue:153 swap static `aria-label="Watch live fight"` к Vue 3 binding `:aria-label="t.spectate.watchLive"`. **First aria-label i18n binding в HUD — sets precedent для future descriptive accessibility strings.**
+2. **Phase 2 — `master/setInfo` phantom mutation × 7** (commit `2f6ff46`) — replaced 7 callsites с `master/setInfoMessage` + `InfoMessageModel.withText()` factory pattern. AgentDetailView (×4) + CreateAgentView (×2) + RetirementPanel (×1). Imports added в all 3 target files (parallel к 5O P3 setError). **Lesson #35 bug-bundle-tier second empirical test — prediction held empirically.**
+3. **Phase 3 — HudClanEmpty.vue extract from HudClan.vue no-clan branch** (commit `1064c3f`) — extracted no-clan UI (hero + search + browsable clans grid + lazy CreateClan modal) to dedicated `HudClanEmpty.vue` (140 lines). Parent HudClan.vue: 388 → **271 lines**. **Lesson #30 toolkit growth path D invert default applied** — child shape derives from natural use, NOT forced parallel symmetry с siblings (HudClanHeader/Info/Roster).
+
+**Что видит пользователь:**
+- v2 Profile Friends tab Watch button — `aria-label` localized в 11 languages (was English-only static)
+- Legacy AgentDetailView / CreateAgentView / RetirementPanel info toasts now actually surface (was silent no-op due to phantom `master/setInfo` mutation)
+- /v2/clan no-clan branch UX preserved (search + browse + create) — structural decomposition only, no visual change
+
+**Дерево (15 modified, 1 new):**
+
+```
+src/locales/{en,ru,de,es,fr,pt,ar,hi,ja,ko,zh}.js  — modified +1 line each — watchLive: key inserted
+src/components/hud/HudProfile.vue                  — modified — :aria-label binding (Vue 3 syntax)
+src/views/AgentDetailView.vue                      — modified +1 import / 4 callsites — InfoMessageModel
+src/views/CreateAgentView.vue                      — modified +1 import / 2 callsites — InfoMessageModel
+src/components/club/RetirementPanel.vue            — modified +1 import / 1 callsite — InfoMessageModel
+src/components/hud/HudClan.vue                     — modified — 388 → 271 lines (no-clan branch extracted)
+src/components/hud/HudClanEmpty.vue                — NEW (140 lines) — self-contained child component
+```
+
+**Reused as-is (5):**
+- `t` reactive ref + 11-locale infrastructure (5N + 5O convention)
+- `master/setInfoMessage` mutation (masterState.js:87) + `InfoMessageModel.withText()` factory (parallel к 5O P3 ErrorMessageModel)
+- 5L Phase 3 component decomposition precedent (HudClanHeader/Info/Roster pattern)
+- External CSS in `src/styles/v24/clan.css` (.app-v2 namespace) — children inherit through global namespace
+- Vue binding `:title=` precedent в HudProfile (lines 34, 96) — `:aria-label` follows same convention
+
+**Ключевые паттерны:**
+- **Low-risk-first phase ordering** (P1 i18n → P2 mechanical → P3 structural) — biggest surface area Phase last, recoveries compounded rather than hot-fixed.
+- **Lesson #35 second empirical validation** — bug-bundle-tier prediction held для setInfo. Toolkit empirically robust across two test scenarios (5O setError × 9 + 5P setInfo × 7). Same model family / factory shape / callsite pattern.
+- **Lesson #30 sub-pattern surfaced (pre-formal)** — when extracting component to mirror sibling decomposition, don't force prop/emit symmetry if child's data ownership model differs. Sibling shapes that lift state to parent (props-from-Vuex pattern) ≠ universal child shape — depends on whether child **consumes upstream data** (lift to parent, child = pure-presentational) OR **owns local state** (self-contained child, no parent state to lift).
+- **Master state phantom mutation family CLOSED** — proactive scope-boundary check (`master/setWarning|Notification|Alert|Message` all 0 hits) confirms family exhausted after 5O setError + 5P setInfo. No 4th-defer expected from this line.
+- **Sentinel split rule clarification (5P observation)** — sentinel split applies к multi-step incremental construction, not file-size threshold. Single-pass docs (FINAL_REPORTs / HANDOFFs typically) → single-write commit independent of length. Precedent: 5N HANDOFF (311 lines), 5O HANDOFF (332), 5P HANDOFF (263) — all single-write. Refinement of existing rule based on observed practice.
+
+**Расхождения — осознанные (5P):**
+
+1. **Phase 1 aria-label scope decision** — kept `aria-label` as descriptive English, не reuse `spectate.watch` (action verb scope). Different semantic scope warrants different i18n key — created new `watchLive:` sub-key. Lesson #32 reflex.
+2. **Phase 2 expanded scope 5 → 7 callsites** — 5O P3 grep scope узкий (only AgentDetailView + RetirementPanel). 5P investigation surfaced CreateAgentView lines 116/129 missed. Recovery #55 counted в matrix discovery, не functional Phase. Lesson #11 reflex.
+3. **Phase 3 self-contained child shape** (vs forced sibling symmetry) — Lesson #30 path D invert default. HudClanEmpty owns local UI state (no Vuex coupling), не lifts to parent like HudClanHeader/Info/Roster (which display has-clan data from Vuex). Different ownership model = different child shape.
+4. **Phase 3 line count 140 (target 80-120)** — slightly over but acceptable per ТЗ ±30 implicit. Vue file boilerplate + comment headers inherent overhead.
+5. **Phase 3 CSS not migrated к child** — external file `src/styles/v24/clan.css` already namespaced via `.app-v2`. Children inherit through global namespace per 5L precedent. No scoped CSS in HudClanEmpty (matches HudClanHeader/Info/Roster).
+6. **Q1 backend dropped 3rd time** — same reasoning as 5O Q1 + 5M P4. No runtime access surfaced в 5P pre-flight. Lesson #33 deploy-environment risk persists. Forward-deferred к 5Q with explicit Strategy A/B/C/D framework (passive / instrumentation / local repro / blind fix).
+
+**Lessons applied (validated):**
+
+- **#11 verify shape** — running tally **+1 cumulative recovery в 5P** (investigation matrix surfaced setInfo 5→7 via CreateAgentView discovery — recovery #55). Phase 2/3 functional commits surfaced no new false-positives (matrix accurate going in).
+- **#18 STOP at structural mismatch** — Phase 3 explicitly verified all 3 triggers absent pre-edit (deep Vuex / shared CSS / lifecycle hooks). Conservative scope-boundary discipline preserved.
+- **#22 HUD scoped selector match** — Phase 3 parent `.clan-hud` scoped block preserved; children rely on `.app-v2` global namespace per 5L precedent.
+- **#30 toolkit growth — Path D invert default** — Phase 3 concrete sub-pattern application. Documented commentary в 5P FINAL_REPORT §4.
+- **#32 convention discovery reflex** — Phase 1 Vue 3 binding precedent (`:aria-label`, NOT interpolation), Phase 2 semicolon style per file, Phase 3 5L precedent reuse for component decomposition + external CSS pattern.
+- **#33 deploy-environment awareness** — Q1 dropped 3rd time specifically because backend touch + visual verify chain elevates risk без runtime access.
+- **#35 reflex catch tiering — second empirical test** — Phase 2 bug-bundle-tier prediction held. Scope-boundary check proactive (`master/setWarning|Notification|Alert|Message` returned 0) closed phantom mutation family.
+
+**Lessons new — 0 formal entries.** Two refinements documented commentary:
+- **Lesson #30 sub-pattern** (P3 path D invert default) — pre-formal, single instance. Promote к **Lesson #36** if second instance surfaces (η Onboarding / θ MoveTree extracts likely candidates).
+- **Lesson #35 second empirical validation** strengthens existing entry without adding new — bug-bundle-tier toolkit empirically robust across two test scenarios.
+
+**Cumulative lesson tally:** 35 → **35** (UNCHANGED).
+
+**Hot-fix metric:** **0 — 12-streak achieved** (5E + 5F + 5G + 5H + 5I + 5J + 5K + 5L + 5M + 5N + 5O + 5P all clean). All conscious decisions documented в commit messages + status reports.
+
+**Cumulative recoveries:** 54 → **55** (+1 в 5P via Lesson #11 reflex investigation matrix discovery).
+
+**Эпик 5 §4.2 progress:** **17/22 done (77%)** — past three-quarters milestone reached (77.27%). 5P closes carry-overs from existing items (5L HudClan splitting completion + 5O P1 aria-label + 5O P3 setInfo phantom), не adds new audit items.
+
+**Carry-overs forward → HANDOFF_5Q (1 item — clean state):**
+
+| # | Item | Source | Priority |
+|---|---|---|---|
+| 1 | Backend `/v1/agent/list` 500 fix | 5M P4 → 5O Q1 → **5P Q1 (3rd defer)** | **HIGH** — gated на runtime access strategy decision (A/B/C/D framework в HANDOFF_5Q §4) |
+
+**Master state phantom mutation family — CLOSED.** Lesson #35 scope-boundary proactive check confirmed.
+
+**Sub-Epic 5P — CLOSED.** ✅ Route table `/v2/*` UNCHANGED — 5P closes carry-overs from existing routes, не adds new routes.
+
+**Следующий sub-epic:** 5Q — TBD per HANDOFF_5Q assessment. Two strong candidates:
+- **ζ Retirement** (M, feature work, backend ready, streak-friendly)
+- **Q1 Strategy C** (close 3rd-defer carry-over via local docker-compose repro)
+
+User decision required в 5Q startup.
+
