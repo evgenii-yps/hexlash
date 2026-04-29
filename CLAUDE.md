@@ -767,6 +767,8 @@ Development branch: `visual-v2` (от `main`) — визуальная мигр�
 Club Mode + Phase 1 (Captain, Belt System, User→Fighter migration, Morning Report, Retirement, Ranked, Free Arena, NFT Agents): **COMPLETE** — залито в `main`.
 Road 1 (Neon Discipline visual migration): **COMPLETE**. See `/docs/road1-final-report.md` and `/docs/road2-parking-list.md`.
 
+**Backend fixes during visual migration epic (5R-formalized convention):** backend code fixes (database, API, services) require separate branch path from visual migration continue stack. Continue stack `claude/setup-5e-shop-mode-a-khIAi` is frontend visual migration work, merges to main only at Epic 6 closure. Backend fixes that need to reach production should: (1) be developed on continue stack first for visual-migration epic record-keeping, (2) be cherry-picked to a new branch from main HEAD (`fix/<short-description>`), (3) PR'd to main → merged → backend auto-deploy via testhexlash service webhook. Pattern established after 5R Recovery #63 (initial Phase 1 commit on continue stack didn't reach prod — Q1 closure required cherry-pick PR #353).
+
 ### PvP System Audit — P0+P1 Fixes — ✅ COMPLETE
 
 Full audit of PvP chain (matchmaking → ready → rounds → dice/coach → fight end). Found and fixed critical issues:
@@ -3854,4 +3856,44 @@ User decision required в 5Q startup.
 **Sub-Epic 5Q — CLOSED.** ✅ Route table `/v2/*` UNCHANGED — 5Q adds HudRetirement card to existing `/v2/profile` route, no new routes.
 
 **Следующий sub-epic:** 5R per HANDOFF_EPIC5_5R_CHAT_HANDOFF.md. Q1 4th-defer decision required first (backend `/v1/agent/list` 500 — Strategy A/B/C/D framework documented в HANDOFF), then option X/Y/Z choice.
+
+### Sub-Epic 5R — Q1 Backend `/v1/agent/list` 500 dedicated debug
+
+**Status:** CLOSED clean
+**Type:** Q1 carry-over closure (4-defer history 5N/5O/5P/5Q terminated structurally)
+**Phases:** 9 (P1 setup → P2 reproduction → P3 root cause → P4 fix → P7 FINAL → P8 HANDOFF → P9 CLAUDE.md). P5/P6 conditional dropped (P5 regression test inappropriate for data-level root cause; P6 bug-bundle skipped — single-cause issue).
+**Functional commits:** 1 (`3f6e8dd` Phase 1 forward migration on continue stack, cherry-picked to main as `1257fe6` via PR #353, merged as `8ae36f0`, deploy triggered by empty commit `da01369`)
+**Branches involved (atypical):** continue stack `claude/setup-5e-shop-mode-a-khIAi` (record-keeping) + `fix/restore-agent-iscaptain-column` (cherry-pick path) + `main` (production deploy target via empty trigger commit)
+
+**Root cause:** **Incomplete rollback drift.** PR #350 rolled back code to 2026-04-14 snapshot but did NOT revert already-applied DB migration `20260416_remove_is_captain_from_agent`. Code described captain feature alive, prod DB described captain feature dropped. Frontend graceful fallback (`userData?.captain || null`) masked bug as "No Captain Set" empty state — invisible to users for 13 days (2026-04-16 → 2026-04-29).
+
+**Fix:** Forward migration `20260429000000_restore_is_captain_to_agent` with `ADD COLUMN IF NOT EXISTS` + `CREATE INDEX IF NOT EXISTS` guards. Idempotent — prod restored column, test/dev no-op. No schema.prisma changes (already described correct state). No code changes (all 13 isCaptain references work as written once column exists).
+
+**Key decisions:**
+- **Option C over Option A** — Recovery #62 surfaced contradiction: design-Claude proposed Option A (delete isCaptain code references), Claude Code surfaced 5G/5L/5M working captain feature in CLAUDE.md → forced Option C (restore column, no code regression). Smaller delta, no feature rollback dressed as bug fix.
+- **Cherry-pick to main, not push from continue stack** — Recovery #63 caught branch strategy assumption: backend fixes during visual migration epic must reach main via separate PR, not accumulate on continue stack. Convention now formalized (see `## Branch (Git)` section above).
+- **Empty trigger commit for Railway redeploy** — Recovery #65/#66 caught Railway queue incident where "Redeploy on active" preserved old commit hash. `da01369` empty commit on main forced fresh webhook → fresh deploy → migration applied.
+
+**Recovery #59-66 (8 catches):** Detail in `EPIC5_5R_FINAL_REPORT.md` §7. Notable: #62 (Option C vs A surface), #64 (incomplete rollback discovery via main history grep), #65/#66 (Railway queue incident workaround).
+
+**Atypical sentinel split (Phase 7 FINAL_REPORT):** Split into 7A (sections 1-3) / 7B (sections 4-5) / 7C (sections 6-8). **Preventive variation** — applied after 1 stream idle timeout on monolithic Phase 7 attempt (vs 5Q reactive variation after 5 timeouts). Both valid per infrastructure-driven framework. NOT counted as hot-fix.
+
+**Cumulative lesson tally:** 35 → **35** (UNCHANGED). 3 lesson candidates surfaced:
+- **#36 candidate (PROMOTE pending 2nd test) — "Incomplete rollback drift detection":** code rollback without DB rollback creates schema drift guaranteed; bug invisible if frontend has graceful fallback. Mitigation candidates: CI healthcheck `prisma migrate status` post-deploy, rollback procedure runbook with explicit DB-side step, periodic prod `_prisma_migrations` dump comparison.
+- **#37 candidate (pre-formal) — "Sandbox capability empirical verification":** pre-flight should include explicit capability checks (TCP egress, Docker, tool presence) before designing diagnostic strategy. 5R sandbox no TCP egress empirically falsified Strategy C/D assumption.
+- **#38 candidate (pre-formal, sub-pattern of #33) — "Multi-layer deploy environment awareness extension":** each runtime layer (sandbox / dev machine / Railway internal / Railway proxy / prod) has distinct network/auth/capability profile. "Local repro" can mean sandbox-local OR dev-machine-local with very different capabilities.
+
+**Hot-fix metric:** **0 — 14-streak achieved** (5E + 5F + 5G + 5H + 5I + 5J + 5K + 5L + 5M + 5N + 5O + 5P + 5Q + 5R all clean). Phase 7 atypical split = planned infrastructure recovery (preventive after 1 timeout), NOT hot-fix. Phase 2 user-side deploy phase = Strategy D framework execution, NOT hot-fix.
+
+**Cumulative recoveries:**
+- **Entering 5R:** 58.
+- **5R closure (FINAL_REPORT_5R + HANDOFF_5S + this CLAUDE.md update):** 58 → **66+** (+8: #59 Step 1 enumeration gap self-catch; #60 design-Claude hallucinated dump STOP; #61 sandbox TCP egress empirical; #62 Option C vs A surface; #63 branch strategy assumption; #64 incomplete rollback discovery; #65 Railway queue incident; #66 build cache stale).
+
+**Эпик 5 §4.2 progress:** **19/22 done (86%)** (+1 от 5R — Q1 backend debug closure). **Three sub-epics remaining to Epic 5 closure.**
+
+**Sub-Epic 5R — CLOSED.** ✅ Backend production state: `isCaptain` column restored, captain feature operational again (all rows start `isCaptain=false`, captain selection happens via existing 5G "Set as Captain" UI per user). Visual verified: agent created in The Pit, AgentScheduler errors stopped.
+
+**Carry-overs forward to 5S (7 items):** (1) animation для retirement (5Q drop), (2) achievement badge для retirement (5Q drop, requires backend extension), (3) legacy RetirementPanel.vue orphan cleanup, (4) HudProfile card-creep observation, (5) i18n cross-section reuse note, (6) **NEW:** Lesson #36 validation track (await 2nd occurrence for promotion + mitigation prototyping), (7) **NEW:** branch strategy formalization (now in `## Branch (Git)` section above).
+
+**Следующий sub-epic:** 5S per `HANDOFF_EPIC5_5S_CHAT_HANDOFF.md`. Option matrix: **γ** AI Trainer (M, medium streak risk) OR **Z** Cleanup batch (S, low streak risk). Anti-recs (ε FightClub feature / η Onboarding / θ MoveTree) preserved.
 
