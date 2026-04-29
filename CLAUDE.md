@@ -3821,3 +3821,23 @@ src/components/hud/HudClanEmpty.vue                — NEW (140 lines) — self-
 
 User decision required в 5Q startup.
 
+### Sub-Epic 5Q — ζ Retirement (Feature work)
+
+**Status:** CLOSED clean
+**Commits (functional):** P1 04aca63 (HudRetirement.vue + masterState retirement actions) / P2 94bc82e (HudProfile integration)
+**Commits (docs, atypical splits):** P4 345bbb1+8cfb0c4 (FINAL_REPORT) / P5 825a5fd+b5a8c5c (HANDOFF_5R) / P6 [TBD]+[TBD] (this update)
+**Skipped:** P3 i18n (0 gaps, 10 keys × 11 locales covered all UI strings)
+**Dropped:** Animation, Achievement badge (5R+ candidates)
+
+**Key decisions:**
+- **Option B Vuex convention** — pre-edit Lesson #18 STOP triggered. Original ТЗ recommended self-contained direct apiClient (mirroring legacy RetirementPanel). Pre-edit verification surfaced HUD-v2 + apiClient direct = NO precedent (7+ HUD components action-based). Switched к Vuex action wrappers + pure-presentational HUD per HUD-v2 mainstream convention.
+- **HudProfile integration** via 5J Social Tasks card pattern (full-width row, NOT merge into existing card). Settings-adjacent placement для destructive-action lineage semantic match.
+- **Vuetify removal** — `v-progress-circular` → CSS spinner per `.tsp-spinner`/`.mm-spinner` precedent. Native `<button>` styled per Hexlash tokens.
+- **Empty-body POST** — backend resolves primaryModule from user.progression (ТЗ §2.1 minor correction).
+
+**Recovery #57 — refinement-time Lesson #30 mis-classification:**
+ТЗ refinement step labeled HudRetirement self-containment as Lesson #30 sub-pattern second test candidate. Investigation revealed scope error: 5P P3 HudClanEmpty = UI-state self-containment (sort/scroll local state, NO API), 5Q P1 candidate = data-fetch self-containment (different pattern). Pre-edit Lesson #18 STOP saved establishing wrong convention. #30 sub-pattern second test deferred — η Onboarding + θ MoveTree flagged as future candidates if their UI surfaces local-state self-containment shape.
+
+**Atypical sentinel split documentation (P4+P5+P6):**
+5 stream idle timeouts (P4×2, P5×1, P6×2) — Anthropic API infrastructure pattern в 5Q docs phases. Default-split strategy adopted preventively. **NOT 5P file-size threshold violation** — infrastructure-driven recovery per 5P clarification (sentinel split = process discipline для multi-step construction). Future sub-epics: try single-write first, split only on confirmed timeout pattern.
+
