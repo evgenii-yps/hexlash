@@ -242,6 +242,7 @@ import { useRoute, useRouter } from 'vue-router';
 import store from '@/core/state/store.js';
 import { t } from '@/locales/index.js';
 import { ErrorMessageModel } from '@/core/models/internal/errorMessageModel.js';
+import { InfoMessageModel } from '@/core/models/internal/infoMessageModel.js';
 import HexButton from '@/components/ui/HexButton.vue';
 import HexBadge from '@/components/ui/HexBadge.vue';
 import HexProgress from '@/components/ui/HexProgress.vue';
@@ -379,7 +380,7 @@ const onSaveTactics = async () => {
   savingTactics.value = true;
   try {
     await store.dispatch('agent/updateTactics', { id: agentId, ...tacticsForm.value });
-    store.commit('master/setInfo', { text: t.value.club?.lblTacticsSaved || 'Tactics saved' });
+    store.commit('master/setInfoMessage', InfoMessageModel.withText(t.value.club?.lblTacticsSaved || 'Tactics saved'));
   } catch (err) {
     store.commit('master/setErrorMessage', ErrorMessageModel.withText(err?.response?.data?.error || 'Failed'));
   } finally {
@@ -392,7 +393,7 @@ const onSaveEdit = async () => {
   try {
     await store.dispatch('agent/updateAgent', { id: agentId, ...editForm.value });
     showEdit.value = false;
-    store.commit('master/setInfo', { text: 'Agent updated' });
+    store.commit('master/setInfoMessage', InfoMessageModel.withText('Agent updated'));
   } catch (err) {
     store.commit('master/setErrorMessage', ErrorMessageModel.withText(err?.response?.data?.error || 'Failed'));
   } finally {
@@ -405,7 +406,7 @@ const onSaveDeck = async () => {
   try {
     await store.dispatch('agent/updateDeck', { agentId, deck: deckEditForm.value });
     showDeckEdit.value = false;
-    store.commit('master/setInfo', { text: t.value.club?.lblDeckSaved || 'Deck saved' });
+    store.commit('master/setInfoMessage', InfoMessageModel.withText(t.value.club?.lblDeckSaved || 'Deck saved'));
   } catch (err) {
     store.commit('master/setErrorMessage', ErrorMessageModel.withText(err?.response?.data?.error || 'Failed'));
   } finally {
@@ -430,7 +431,7 @@ const confirmSetCaptain = async () => {
   try {
     await store.dispatch('agent/setCaptain', agentId);
     await store.dispatch('agent/fetchAgent', agentId);
-    store.commit('master/setInfo', { text: (t.value.club?.lblCaptainSet || '{name} is now your Captain').replace('{name}', name) });
+    store.commit('master/setInfoMessage', InfoMessageModel.withText((t.value.club?.lblCaptainSet || '{name} is now your Captain').replace('{name}', name)));
   } catch (err) {
     store.commit('master/setErrorMessage', ErrorMessageModel.withText(err?.response?.data?.error || 'Failed to set captain'));
   }

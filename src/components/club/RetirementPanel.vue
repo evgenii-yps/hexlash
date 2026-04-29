@@ -72,6 +72,7 @@ import { t } from '@/locales/index.js'
 import apiClient from '@/core/api/apiClient.js'
 import store from '@/core/state/store.js'
 import { ErrorMessageModel } from '@/core/models/internal/errorMessageModel.js'
+import { InfoMessageModel } from '@/core/models/internal/infoMessageModel.js'
 import HexButton from '@/components/ui/HexButton.vue'
 
 export default {
@@ -99,7 +100,7 @@ export default {
       retiring.value = true;
       try {
         const { data: res } = await apiClient.post('/user/retire', {}, { authRequired: true });
-        store.commit('master/setInfo', { text: res.message || t.value.club?.lblRetireSuccess || 'Retired!' });
+        store.commit('master/setInfoMessage', InfoMessageModel.withText(res.message || t.value.club?.lblRetireSuccess || 'Retired!'));
         await load();
       } catch (err) {
         store.commit('master/setErrorMessage', ErrorMessageModel.withText(err?.response?.data?.error || 'Retirement failed'));

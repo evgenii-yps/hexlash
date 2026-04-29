@@ -75,6 +75,7 @@ import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import store from '@/core/state/store.js';
 import { t } from '@/locales/index.js';
+import { InfoMessageModel } from '@/core/models/internal/infoMessageModel.js';
 import HexButton from '@/components/ui/HexButton.vue';
 import SkinPicker from '@/components/club/SkinPicker.vue';
 
@@ -113,7 +114,7 @@ const onBack = () => {
 const onMint = async () => {
   minting.value = true;
   try {
-    store.commit('master/setInfo', { text: 'NFT minting not yet enabled' });
+    store.commit('master/setInfoMessage', InfoMessageModel.withText('NFT minting not yet enabled'));
   } finally { minting.value = false; }
 };
 
@@ -126,7 +127,7 @@ const onCreate = async () => {
       name: form.value.name.trim(),
       skin: form.value.skin,
     });
-    store.commit('master/setInfo', { text: t.value.club?.msgAgentCreated || 'Agent created!' });
+    store.commit('master/setInfoMessage', InfoMessageModel.withText(t.value.club?.msgAgentCreated || 'Agent created!'));
     router.push(`/arena/club/${agent.id}`);
   } catch (err) {
     createError.value = err?.response?.data?.error || t.value.club?.errCreateAgent || 'Failed to create agent';
