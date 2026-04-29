@@ -530,6 +530,14 @@ defineExpose({ openBranchPanel });
     font-size: 10px;
     letter-spacing: 1px;
   }
+  /* 5O Phase 2: tighten autofight-row on narrow viewports. Position
+     (bottom: 16px; left: 14px) preserved — no overlap with .fd-stats
+     (bottom-center) or .fd-resources (top-right). Label/desc font-sizes
+     untouched (already at 10px/11px). */
+  .autofight-row {
+    padding: 8px 10px;
+    gap: 8px;
+  }
 }
 
 /* 5M Auto-fight toggle row — placed inline below fd-stats. Mirrors legacy
