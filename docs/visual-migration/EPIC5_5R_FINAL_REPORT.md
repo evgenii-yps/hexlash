@@ -54,3 +54,64 @@
 - Empty trigger commit `da01369` pushed to main → Railway webhook → fresh deployment `fb8ed855` → Build phase loaded 21 migrations → `prisma migrate deploy` applied `20260429000000_restore_is_captain_to_agent` → `ADD COLUMN` executed → backend operational
 
 **Visual verify:** agent created successfully in The Pit. Backend `/v1/agent/list` returns 200, AgentScheduler tick errors stopped (previously spammed every 30s with `column Agent.isCaptain does not exist`).
+
+## Section 4 — Lessons applied
+
+**#11 verify shape (running tally critical):** Approximately 8 reflex catches during 5R session. Each caught a divergence between asserted and verified state. Cumulative recoveries entering 5R: 58. Estimated entering 5S: 66 (+8 catches in this session, full log in §7). Reflex remained valuable across both Claude Code and design-Claude sides.
+
+**#18 STOP at structural mismatch:** Triggered multiple times by Claude Code:
+
+- Pre-flight branch divergence detection (continue stack vs harness slug) — switched only after zero-divergence verification
+- Schema drift verification before Option A vs C decision — refused to proceed with destructive Option A on unverified premise
+- Sandbox TCP egress failure — pivoted Strategy C → user-side execution rather than fabricating workaround
+- Phase 1 destructive proposal STOP — design-Claude initially proposed full code deletion, Claude Code surfaced contradiction with 5G/5L/5M working captain feature → forced Option C (restore) decision
+
+Each STOP saved a destructive action on incomplete information.
+
+**#33 deploy-environment awareness (KEY for 5R):** Validated again across multiple environment layers. Lesson now formally extends to multi-layer awareness:
+
+- Sandbox (Claude Code execution context) — no TCP egress, no Docker
+- Developer machine — has Docker, has psql, has TCP egress
+- Railway internal network — `*.railway.internal` resolvable only from inside same project
+- Railway proxy (TCP) — `*.proxy.rlwy.net:<port>` reachable externally with credentials
+- Production runtime — different from test environment (test env DB never had orphan migration)
+
+Each layer has distinct network/auth/capability profile. Investigation strategy must match the available layer.
+
+**#32 convention discovery reflex:** Backend deploy convention is via main branch through GitHub auto-deploy webhook (testhexlash service). Visual migration continue stack `claude/setup-5e-shop-mode-a-khIAi` is frontend work, never reaches backend deploy. Phase 1 commit on continue stack was correct for visual-migration epic record-keeping but did not deliver fix to production. Cherry-pick PR to main was the structurally correct path for backend code reaching prod.
+
+**#35 reflex catch tiering:** Per-Phase tier predictions held: P1 setup-tier (greenfield invention), P2 reproduction-tier (user-side query), P3 root-cause-tier (data-level not code-level — surprise), P4 fix-tier (single migration file). P3 surprise (incomplete rollback vs simple orphan migration) consistent with investigation-refines-ТЗ pattern (5O / 5Q / 5R now triple precedent).
+
+## Section 5 — Lessons new (candidates)
+
+**Lesson #36 candidate (PROMOTE pending 2nd test) — "Incomplete rollback drift detection":**
+
+- **Definition:** Code rollback without corresponding DB rollback creates schema drift guaranteed. Code describes state X (post-rollback), DB stays in state Y (post-applied-migration that triggered rollback). The drift is invisible if frontend has graceful fallback for the missing data.
+- **Symptom in 5R:** Frontend `userData?.captain || null` rendered "No Captain Set" empty state instead of error UI. Bug invisible to end users for 13 days (2026-04-16 → 2026-04-29). Backend errors logged silently, no user-facing alert.
+- **Mitigation candidates:**
+  - CI healthcheck running `prisma migrate status` on prod after each deploy, alert on drift
+  - Rollback procedure runbook explicitly requiring DB-side revert step (or explicit acknowledgement that DB stays forward, with documented schema-vs-DB diff)
+  - Periodic prod `_prisma_migrations` dump comparison with repo `migrations/` directory
+- **Validation history:** 5R single occurrence. Pre-formal until 2nd similar pattern surfaces.
+
+**Lesson #37 candidate (pre-formal) — "Sandbox capability empirical verification":**
+
+- **Definition:** Pre-investigation ТЗ assumed Strategy C (docker-compose local repro from sandbox) executable without verification. Empirical test (TCP egress to Railway proxy) failed across the board including generic public hosts. Strategy C/D both required user-side execution — sandbox was not a viable execution context for prod-touching diagnostics.
+- **Mitigation:** Pre-flight phase should include explicit capability checks for the planned strategy:
+  - TCP egress test (`nc -zw5 <generic-host> 443`)
+  - Docker availability test (`docker --version` AND `docker run hello-world`)
+  - Required tool presence (psql, prisma CLI, etc.)
+- **Cost:** ~5 seconds at start of investigation, prevents extended pivot mid-Phase
+- **Pre-formal until 2nd test.**
+
+**Lesson #38 candidate (pre-formal) — "Multi-layer deploy environment awareness extension":**
+
+- Sub-pattern of #33. Specifically: each runtime layer (sandbox / dev machine / Railway internal / Railway proxy / prod) has distinct network/auth/capability profile.
+- Articulation: when Strategy mentions "local repro" or "production diagnostic", be explicit which **layer** is doing the work. "Local" can mean sandbox-local OR developer-machine-local with very different capabilities.
+- Pre-formal until 2nd articulation.
+
+**Atypical sentinel split framework — minor variation:**
+
+- 5Q established framework: split adopted after 5 stream idle timeouts (reactive).
+- 5R variation: split adopted after 1 timeout (preventive) for Phase 7 FINAL_REPORT.
+- Document as minor variation, not new framework. Reactive vs preventive both valid depending on deliverable size and timeout count. Default remains single-write per 5P clarification, escalate to split on 2-3 timeout confirmation OR proactively on long-form deliverable post-first-timeout.
