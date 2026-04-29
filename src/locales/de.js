@@ -698,6 +698,7 @@ export default {
     wins: 'wins',
     leave: 'Leave',
     watch: 'Watch',
+    watchLive: 'Watch live fight',
   },
   xpAllocation: {
     freeXP: 'Verfügbar',

@@ -150,7 +150,7 @@
                 <button
                   v-if="f.status === 'in_fight'"
                   class="fc-action-btn watch"
-                  aria-label="Watch live fight"
+                  :aria-label="t.spectate.watchLive"
                   @click="onWatch(f)"
                 >{{ t.spectate.watch }}</button>
                 <button

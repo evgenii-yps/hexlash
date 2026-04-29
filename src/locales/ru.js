@@ -709,6 +709,7 @@ export default {
     wins: 'побеждает',
     leave: 'Уйти',
     watch: 'Смотреть',
+    watchLive: 'Смотреть прямой бой',
   },
   xpAllocation: {
     freeXP: 'Свободно',
