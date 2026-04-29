@@ -120,6 +120,11 @@ const v2Routes = [
                 name: 'V2Shop',
                 component: () => import('@/views-v2/ShopView.vue'),
             },
+            {
+                path: 'spectate/:fightId',
+                name: 'V2Spectate',
+                component: () => import('@/views-v2/SpectateView.vue'),
+            },
         ],
     },
 ];
