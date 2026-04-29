@@ -241,6 +241,7 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import store from '@/core/state/store.js';
 import { t } from '@/locales/index.js';
+import { ErrorMessageModel } from '@/core/models/internal/errorMessageModel.js';
 import HexButton from '@/components/ui/HexButton.vue';
 import HexBadge from '@/components/ui/HexBadge.vue';
 import HexProgress from '@/components/ui/HexProgress.vue';
@@ -370,7 +371,7 @@ const onTrain = async () => {
   try {
     await store.dispatch('agent/trainAgent', agentId);
   } catch (err) {
-    store.commit('master/setError', { text: err?.response?.data?.error || 'Training failed' });
+    store.commit('master/setErrorMessage', ErrorMessageModel.withText(err?.response?.data?.error || 'Training failed'));
   }
 };
 
@@ -380,7 +381,7 @@ const onSaveTactics = async () => {
     await store.dispatch('agent/updateTactics', { id: agentId, ...tacticsForm.value });
     store.commit('master/setInfo', { text: t.value.club?.lblTacticsSaved || 'Tactics saved' });
   } catch (err) {
-    store.commit('master/setError', { text: err?.response?.data?.error || 'Failed' });
+    store.commit('master/setErrorMessage', ErrorMessageModel.withText(err?.response?.data?.error || 'Failed'));
   } finally {
     savingTactics.value = false;
   }
@@ -393,7 +394,7 @@ const onSaveEdit = async () => {
     showEdit.value = false;
     store.commit('master/setInfo', { text: 'Agent updated' });
   } catch (err) {
-    store.commit('master/setError', { text: err?.response?.data?.error || 'Failed' });
+    store.commit('master/setErrorMessage', ErrorMessageModel.withText(err?.response?.data?.error || 'Failed'));
   } finally {
     savingEdit.value = false;
   }
@@ -406,7 +407,7 @@ const onSaveDeck = async () => {
     showDeckEdit.value = false;
     store.commit('master/setInfo', { text: t.value.club?.lblDeckSaved || 'Deck saved' });
   } catch (err) {
-    store.commit('master/setError', { text: err?.response?.data?.error || 'Failed' });
+    store.commit('master/setErrorMessage', ErrorMessageModel.withText(err?.response?.data?.error || 'Failed'));
   } finally {
     savingDeck.value = false;
   }
@@ -418,7 +419,7 @@ const confirmDelete = async () => {
     await store.dispatch('agent/deleteAgent', agentId);
     router.push('/arena/club');
   } catch (err) {
-    store.commit('master/setError', { text: err?.response?.data?.error || 'Failed' });
+    store.commit('master/setErrorMessage', ErrorMessageModel.withText(err?.response?.data?.error || 'Failed'));
   }
 };
 
@@ -431,7 +432,7 @@ const confirmSetCaptain = async () => {
     await store.dispatch('agent/fetchAgent', agentId);
     store.commit('master/setInfo', { text: (t.value.club?.lblCaptainSet || '{name} is now your Captain').replace('{name}', name) });
   } catch (err) {
-    store.commit('master/setError', { text: err?.response?.data?.error || 'Failed to set captain' });
+    store.commit('master/setErrorMessage', ErrorMessageModel.withText(err?.response?.data?.error || 'Failed to set captain'));
   }
 };
 

@@ -71,6 +71,7 @@ import { ref, onMounted } from 'vue'
 import { t } from '@/locales/index.js'
 import apiClient from '@/core/api/apiClient.js'
 import store from '@/core/state/store.js'
+import { ErrorMessageModel } from '@/core/models/internal/errorMessageModel.js'
 import HexButton from '@/components/ui/HexButton.vue'
 
 export default {
@@ -101,7 +102,7 @@ export default {
         store.commit('master/setInfo', { text: res.message || t.value.club?.lblRetireSuccess || 'Retired!' });
         await load();
       } catch (err) {
-        store.commit('master/setError', { text: err?.response?.data?.error || 'Retirement failed' });
+        store.commit('master/setErrorMessage', ErrorMessageModel.withText(err?.response?.data?.error || 'Retirement failed'));
       } finally { retiring.value = false; }
     };
 
