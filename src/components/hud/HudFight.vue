@@ -5,7 +5,7 @@
 <template>
   <div class="hud fight-hud">
     <button class="fight-back" @click="onBack">&larr; Back</button>
-    <div class="spectate-badge"><span class="sb-dot"></span>Spectating</div>
+    <div v-if="isSpectating" class="spectate-badge"><span class="sb-dot"></span>Spectating</div>
 
     <div class="fight-top">
       <div class="fight-fighter left">
@@ -84,7 +84,7 @@
 
 <script setup>
 import { ref, computed, nextTick, watch } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { fightSceneApi } from '@/scene/scenes/useFightSceneApi.js';
 import { fightLog } from './common/useFightLog.js';
 import { flashing } from './common/useFlashHit.js';
@@ -99,6 +99,14 @@ import {
 } from './common/useFightSimulation.js';
 
 const router = useRouter();
+const route = useRoute();
+
+// 5N — gate .spectate-badge on actual spectate route. Epic 3A shipped it
+// always-visible (prototype 1645-1667 has it gated on body.fight-readonly,
+// which v2 doesn't use). Bundled fix: visible only at /v2/spectate/:fightId.
+const isSpectating = computed(() =>
+  route.name === 'V2Spectate' || route.path.startsWith('/v2/spectate'),
+);
 
 // Step 16 — HP bars bind directly to fightState from useFightSimulation.
 // No local `state` ref anymore; prep/fight/result transitions and round
@@ -314,8 +322,9 @@ watch(() => fightLog.lines.length, () => {
   background: rgba(255, 6, 111, 0.08);
 }
 
-/* spectate-badge (prototype 1645-1667). Always visible in our spectate-by-
-   default HUD; prototype gated on body.fight-readonly which we don't use. */
+/* spectate-badge (prototype 1645-1667). 5N gated on V2Spectate route name
+   / path prefix (replacing always-visible Epic 3A behavior). Prototype's
+   body.fight-readonly equivalent in v2 = active /v2/spectate/:fightId. */
 .spectate-badge {
   position: fixed;
   top: 90px;
