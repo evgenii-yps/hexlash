@@ -3524,4 +3524,110 @@ src/views/AgentDetailView.vue                     — modified +5/-1 — phantom
 
 **Sub-Epic 5M — CLOSED.** ✅ Route table `/v2/*` остаётся unchanged (5M modifies HudFighterDetail + agentState + AgentDetailView in-place; no new routes).
 
+### Эпик 5 — Sub-Epic 5N — Spectate Flag (Option δ, Path α Mock Port) (✅ COMPLETE)
+
+Завершён 2026-04-29. Thirteenth sub-epic в Эпике 5. Pure-frontend mock port of legacy SpectateView к v2 architecture. Backend integration deferred к dedicated PvP-integration sub-epic (4th time mentioned в CLAUDE.md — 5C item #1, 5C item #11, 5J/5K HANDOFF, 5N Path α discipline).
+
+**Commit range:** `5a78676` (Phase 1) → `<phase 9>` (HANDOFF_5O).
+**Branch:** continued `claude/setup-5e-shop-mode-a-khIAi` (5E-5N stack).
+**Predecessor:** 5M ✅ CLOSED (`e8858ab`).
+**Audit ref:** §4.2 #4 (🔴 Missing → ✅ Done после 5N).
+
+**Что делает 5N:**
+
+1. **HudSpectate v2 port** — `src/components/hud/HudSpectate.vue` + `src/views-v2/SpectateView.vue` orchestrator. Mock simulation logic ported from legacy SpectateView (setInterval 2s, random damage 8-22, 15% crit, 10 max rounds, 10-name move pool).
+2. **Route `/v2/spectate/:fightId`** — V2Spectate registered as 11th child of `/v2`. Lazy-loaded chunk (4.14kb / 1.55kb brotli).
+3. **HudProfile Watch button** — Friends tab conditional render `v-if="f.status === 'in_fight'"` + `onWatch(f)` handler with `currentFight?.id || f.id` fallback chain (currentFight never populated by current backend — optional chain protects future PvP-integration wiring).
+4. **HudFight `.spectate-badge` mode-gated (bundled fix)** — Epic 3A always-visible bug fixed. `isSpectating` computed via defensive route name + path double-check (`route.name === 'V2Spectate' || route.path.startsWith('/v2/spectate')`).
+5. **i18n keys port (Phase 4 Case B)** — 8 of 11 locales had missing `spectate` block (would throw `t.spectate.title undefined` since `t` fallback is language-level not key-level). English fallback values copied per CLAUDE.md convention (mirror `de.js` precedent — German file with literal English values).
+
+**Что видит пользователь:**
+
+- `/v2/profile` → Friends tab → friend with `in_fight` status shows "Watch" button (pink-tinted bg, before Challenge button per legacy parity).
+- Click Watch → navigates к `/v2/spectate/<id>`.
+- HUD overlay visible: SPECTATING title + spectator count, round badge, 2 fighter HP cards (friend left green / opponent right red), fight log с auto-scroll, leave button.
+- Mock simulation: HP decreases every 2s, rounds increment (max 10), log updates with move/damage/crit, fight ends with VICTORY/DEFEAT result banner.
+- Leave button (← Leave) → `router.push('/v2')`. Esc keyboard equivalent (synthesizes click on .sp-back).
+- HudFight `.spectate-badge` only visible на `/v2/spectate/*` routes (Phase 3 mode-gated fix).
+- 11 locales work without runtime errors (Phase 4 i18n port).
+
+**Дерево (2 new + 6 modified):**
+
+```
+src/components/hud/HudSpectate.vue                — new (~395 lines) — HUD overlay + mock simulation
+src/views-v2/SpectateView.vue                     — new (~37 lines) — route orchestrator (no 3D scene per Path α discipline)
+src/router/index.js                               — modified +5 — V2Spectate route
+src/components/hud/HudProfile.vue                 — modified +11 — Friends tab Watch button + onWatch handler + useRouter import
+src/styles/v24/profile.css                        — modified +11 — .fc-action-btn.watch variant (mirror primary/danger pattern)
+src/components/hud/HudFight.vue                   — modified +13/-4 — isSpectating gate + useRoute import
+src/locales/{es,fr,pt,ar,hi,ja,ko,zh}.js          — modified +88 total (8 files × +11 lines) — spectate i18n keys English fallback
+```
+
+**Reused as-is (7):**
+
+- Legacy SpectateView mock simulation logic (port структуру 1:1)
+- Existing 11-locale i18n infrastructure (3 had keys, 8 added per English fallback convention)
+- `pixelIcons.js` spectate icon (defined, not yet rendered in 5N — UI uses inline emoji-free design)
+- HudProfile Friends tab `in_fight` status detection (existing line 514-552)
+- `.fc-action-btn.primary/.danger` variant pattern в profile.css (mirror precedent for `.watch`)
+- Vue Router `useRoute` (already used в other HUD components — HudFight just needed sibling import beside useRouter)
+- `de.js` "English fallback" convention (literal English values в non-English locales, no auto-fallback mechanism)
+
+**Ключевые паттерны:**
+
+- **Lesson #34 preventive application** — first real test of HUD overlay convention since 5M. `.spectate-hud` container `position: absolute; inset: 0; pointer-events: none` + interactive children `position: fixed; pointer-events: auto`. Pre-edit verified, NOT 5M Phase 2 mistake repeated. 16 hits position/pointer-events = comprehensive layout architecture.
+- **Mock port discipline (Path α)** — explicit boundary: NO backend calls, NO new Vuex, prior active scene stays as backdrop (no 3D scene registration). SpectateView orchestrator deliberately minimal (37 lines vs ShopView 41 lines с scene registration).
+- **Defensive route detection** — single boolean OR with both `route.name` + `route.path` checks covers metadata mismatch / hash routing edge cases. ТЗ recommended pattern.
+- **English fallback convention discovery** — `de.js` precedent showed German file with literal English `'SPECTATING'`/`'watching'` values. Copied к 8 missing locales (NOT real translations — i18n carry-over к 5U).
+- **Bug-bundle pattern** — Phase 3 `.spectate-badge` same-file fix (5G/5M precedent — bug-bundle is intentional decision-maker, not hot-fix recovery). Phase 4 Case B i18n fix anticipated в ТЗ §4 decision tree.
+- **Pre-edit re-verification of prior status claims** — Phase 4 caught Phase 1 status report false-positive ("11 locales have spectate" — actually only 3). Pattern: status reports CAN contain false-positives, re-grep prior claims mandatory before action.
+
+**Расхождения — осознанные:**
+
+1. **SpectateView v2 orchestrator NOT register 3D scene** — Path α discipline preserved, prior active scene stays backdrop (vs typical v2 view pattern с scene registration like ShopView/ProfileView/etc). Conscious decision for mock-port.
+2. **Inline EN "Watch" string** — `spectate.watch` key absent в всех 11 locales, per v2 HUD inline-EN convention (5K-5M precedent), i18n key carry-over к 5U.
+3. **CSS lives в global profile.css** (`.fc-action-btn.watch`) — mirrors `.fc-action-btn.primary/.danger` pattern at lines 397-407, NOT scoped block (convention discovery via Lesson #32 pre-edit grep).
+4. **Phase 3 defensive double-check route detection** — single boolean OR with both `name === 'V2Spectate'` + `path.startsWith('/v2/spectate')` checks. ТЗ §4 Phase 3 (a) recommended pattern, preserved.
+5. **Phase 4 Case B handled per ТЗ flow** — "11 locales" Phase 1 status false-positive caught в pre-edit re-grep, anticipated single-fix commit (NOT hot-fix recovery, NOT scope creep). i18n English fallback pattern documented.
+6. **`currentFight?.id || f.id` fallback chain** — backend never populates `currentFight`, but optional chain protects future PvP-integration wiring (forward-compatible coding).
+7. **CSS comment update в HudFight.vue** — same-file scope, descriptive accuracy maintenance documenting 5N change for future readers (replaced "Always visible in our spectate-by-default HUD" with "5N gated on V2Spectate route name / path prefix").
+8. **Esc handler synthesizes click on back button** — `document.querySelector('.spectate-hud .sp-back')?.click()` — accessibility extension за рамок ТЗ. Conscious refinement for keyboard nav.
+
+**Lessons applied (validated):**
+
+- **#11 verify shape** — 1 catch в 5N (Phase 4 self-correction of Phase 1 false-positive "11 locales spectate"). Running tally cumulative recoveries: 49 → **50** (+1 от 5N Phase 4). Pattern: status reports CAN contain false-positives.
+- **#18 STOP at structural mismatch** — Phase 4 Case A → Case B escalation per ТЗ flow, NOT scope creep. Anticipated decision-tree branch.
+- **#22 HUD scoped selector match** — `.spectate-hud` template root matches scoped style root selector (Phase 1). N/A for Phase 2/3 (global CSS / template-only edits).
+- **#30 Pattern reuse — semantic vs mechanical** — `de.js` "English fallback" convention extended к 8 locales semantically (literal English values, NOT mechanical empty strings or `null`).
+- **#32 Convention discovery reflex** — applied во всех phases (`src/views-v2/` directory pattern, `.fc-action-btn` CSS file location, `useRoute` import sibling pattern, route name `V2Spectate` re-verify).
+- **#34 (NEW от 5M) HUD overlay layout convention** — first real test passed. HudSpectate `.spectate-hud` overlay convention applied **preventively** pre-edit (16 hits position/pointer-events). NOT 5M Phase 2 mistake repeated.
+
+**5N-introduced practice (transferable):**
+
+- **Pre-edit re-verification of prior status claims** — running tally caught Phase 1 false-positive в Phase 4. Add к Lesson #11 toolkit refinement: "re-grep prior claims при new dependent operation, не trust status as ground truth". Specialization #11 для multi-phase runs.
+- **Mock port discipline pattern (Path α)** — explicit boundary (no backend, no new Vuex, no 3D scene registration). Transferable к future deferred-integration scenarios.
+- **English fallback convention для i18n** — literal English values copied к non-English locales until dedicated localization pass. Mirror `de.js` precedent.
+
+**Anti-patterns avoided:**
+
+- 0 hot-fix attempts (Phase 4 Case B = anticipated ТЗ flow, NOT recovery)
+- 0 scope creep (Phase 3 same-file bundled fix only)
+- 0 fabricated solutions (i18n English fallback follows `de.js` precedent verbatim)
+- 0 missed pre-edit reverification (Phase 4 caught Phase 1 false-positive)
+
+**Lessons added:** 0 new. **Cumulative lesson tally: 34 (UNCHANGED).** 5N applied existing lessons (#11/#18/#22/#30/#32/#34) preventively + reactively. Lesson #34 first real test confirmed transferability.
+
+**Hot-fix metric:** **0 — 10-streak achieved** (5E + 5F + 5G + 5H + 5I + 5J + 5K + 5L + 5M + 5N all clean).
+- Phase 3 `.spectate-badge` fix = bug-bundle pattern (same-file scope, 5G/5M precedent — intentional decision-maker)
+- Phase 4 i18n Case B = anticipated ТЗ Case A/B/C decision tree absorbing reality, NOT retroactive recovery
+
+**Эпик 5 §4.2 progress:** **15/22 done (68%)** (+1 от 5N — Spectate #4 ✅). Past two-thirds milestone achieved.
+
+**Sub-Epic 5N — CLOSED.** ✅ Route table `/v2/*` обновлена:
+
+| Route | Epic / Sub-Epic | Статус |
+|---|---|---|
+| `/v2/spectate/:fightId` | **5N** | ✅ HUD-only mock simulation (Path α) + Friends tab Watch entry + HudFight badge gating |
+
+All other routes остаются unchanged (5N adds 1 new route, modifies HudProfile + HudFight in-place + 8 locale files).
 
