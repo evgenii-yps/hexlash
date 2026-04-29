@@ -708,6 +708,7 @@ export default {
     critical: 'КРИТ',
     wins: 'побеждает',
     leave: 'Уйти',
+    watch: 'Смотреть',
   },
   xpAllocation: {
     freeXP: 'Свободно',

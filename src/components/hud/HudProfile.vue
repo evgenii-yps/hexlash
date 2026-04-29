@@ -152,7 +152,7 @@
                   class="fc-action-btn watch"
                   aria-label="Watch live fight"
                   @click="onWatch(f)"
-                >Watch</button>
+                >{{ t.spectate.watch }}</button>
                 <button
                   class="fc-action-btn primary"
                   :disabled="!canChallenge(f)"

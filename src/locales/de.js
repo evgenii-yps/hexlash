@@ -697,6 +697,7 @@ export default {
     critical: 'CRIT',
     wins: 'wins',
     leave: 'Leave',
+    watch: 'Watch',
   },
   xpAllocation: {
     freeXP: 'Verfügbar',
