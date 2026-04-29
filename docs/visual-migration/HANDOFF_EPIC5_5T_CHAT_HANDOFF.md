@@ -1,0 +1,172 @@
+# HANDOFF — Sub-Epic 5S closed → 5T start
+
+**Date:** 2026-04-30
+**From:** Sub-Epic 5S Z Cleanup batch closure
+**To:** Sub-Epic 5T start (option pending user decision)
+**Branch:** `claude/setup-5e-shop-mode-a-khIAi` (continue stack — 10th decision precedent maintained from 5J)
+**HEAD:** `[fill in P3c HEAD here when known — currently 2dc99b4 after P3a2]`
+
+---
+
+## 1. Where we are
+
+**Sub-Epic 5S CLOSED.** Z Cleanup batch executed with optimal streak-preserving outcome. Investigation-driven scope reduction transformed S-size sub-epic into XS-size functional work (5 candidate items → 1 actual work item via P0.5 matrix).
+
+**Progress: 20/22 (91%).** Two sub-epics remaining to Epic 5 closure.
+
+**Hot-fix streak: 15 achieved** (5E-5S clean — first explicit streak-preservation-as-primary-goal sub-epic, validated approach).
+
+**Cumulative metrics:**
+
+- Lessons promoted: 35 (no promotion in 5S)
+- Lesson candidates: 3 active (unchanged from 5R — no advancement, no new candidates)
+  - #36 — Incomplete rollback drift detection (PROMOTE pending 2nd test)
+  - #37 — Sandbox capability empirical verification (pre-formal)
+  - #38 — Multi-layer deploy environment awareness extension (pre-formal, sub-pattern of #33)
+- Cumulative recoveries: 71+ (5 catches in 5S session, see EPIC5_5S_FINAL_[REPORT.md](http://REPORT.md) §7)
+
+---
+
+## 2. What 5S closed
+
+**Item #1 — RetirementPanel.vue orphan removal** (P1 commit `058ebeb`):
+
+- File `src/components/club/RetirementPanel.vue` (160 lines) removed via `git rm`
+- 2 doc-comments in `src/components/hud/HudRetirement.vue` updated to historical refs ("replaces legacy RetirementPanel removed in 5S")
+- Build delta: gzip −4.11 kB confirmed orphan was contributing redundant patterns to bundle pre-tree-shake (end-to-end orphan validation, not just static orphan)
+
+**Item #7 — Branch strategy formalization** (already closed in 5R Phase 9):
+
+- Confirmed during 5S as no-action (already in [CLAUDE.md](http://CLAUDE.md) `## Branch (Git)` section)
+- Documented in 5S as ledger-clear, not work commit
+
+**Investigation-refines-ТЗ pattern — quadruple precedent:**
+
+- 5O Q2 (5→7 scope adjustment)
+- 5Q (4 ТЗ assumptions refined)
+- 5R (4+ pivots during root cause analysis)
+- 5S (5 scope items → 1 actual work item via P0.5 matrix)
+- Status: pattern firmly established. Pre-investigation ТЗ continues to be treated as draft.
+
+**Preventive split framework — fully stabilized (3rd application):**
+
+- 5R Phase 7 FINAL_REPORT (1st preventive split, after 1 timeout)
+- 5S P0 STARTUP file (2nd preventive split, after 1 timeout)
+- 5S P3a FINAL_REPORT (3rd preventive split, after 1 timeout)
+- 5S P3b HANDOFF_5T (4th application — preventive from start, no timeout needed to trigger)
+- Long-form handoff/FINAL deliverables now default to split-from-start strategy
+
+---
+
+## 3. 5T option matrix
+
+| Option | Sub-epic candidate | Size | Streak risk | Notes |
+|---|---|---|---|---|
+| **γ** | AI Trainer | M | Medium | Feature work, deferred from 5R + 5S. 15-streak resilient enough for M-size feature now. Real product value. |
+| **ι** | i18n consolidation | M | Low-medium | Promoted from "vague note" to formal task in 5S Q1.4. 45 cross-section duplicates documented. Clean refactor pattern. |
+| ε | FightClub feature | M-L | High | Anti-rec from 5Q (scope ambiguity AI Lv1/2/3 tiering) |
+| η | Onboarding | M | High | Anti-rec (design ambiguity) |
+| θ | MoveTree | L | High | Anti-rec (size, less streak-friendly) |
+
+**Recommended: γ AI Trainer (5T) → ι i18n consolidation (5U) → Epic 5 closure.**
+
+Decision framework:
+
+- **5T = γ:** feature work appropriate now that 15-streak achieved. Real product value (AI Trainer post-fight analysis, deferred two sub-epics). Anthropic SDK already in backend deps (per [CLAUDE.md](http://CLAUDE.md) line 13).
+- **5U = ι:** i18n consolidation as final cleanup before Epic 5 close. Sized M but mostly mechanical (locale section restructure + ~100 callsite renames × 11 locales). Streak-friendly via per-locale phase ordering.
+- **Anti-recs:** ε/η/θ remain anti-rec — defer to Epic 6 cutover phase or Epic 7+ feature work post-migration
+
+**Alternative ordering (5T = ι, 5U = γ)** valid if user prefers ending Epic 5 on feature work rather than refactor. Refactor-first ordering recommended because i18n touch surface lower (no architectural decisions), feature work rewards the streak completion.
+
+---
+
+## 4. Pre-flight Q-templates per option
+
+### Option γ (AI Trainer) Q-templates
+
+**Q1.** Backend `agentAITrainer` route/service location:
+
+```bash
+grep -rn "trainer\|aiTrainer\|train.*agent" backend/src/routes/ backend/src/services/
+ls backend/src/routes/ai*
+ls backend/src/services/ | grep -iE "ai|trainer|claude"
+```
+
+**Q2.** Anthropic SDK usage in backend (existing patterns):
+
+```bash
+grep -rn "anthropic\|@anthropic-ai" backend/src/ backend/package.json
+cat backend/package.json | grep -A2 anthropic
+```
+
+**Q3.** Frontend AI Trainer modal/view existing scaffolding:
+
+```bash
+grep -rn "AITrainer\|aiTrainer\|ai-trainer" src/views/ src/components/
+ls src/components/ | grep -iE "ai|trainer"
+```
+
+**Q4.** Result-overlay integration point (where AI Trainer surfaces):
+
+```bash
+grep -rn "result.*overlay\|ResultOverlay\|HudResult" src/views/ src/components/
+ls src/components/hud/ | grep -i result
+```
+
+**Q5.** API contract from prototype:
+
+- Look in `hexlash_v24.html` for AI Trainer dialogue UI markers (`ai-trainer`, `trainer-`, etc.)
+- Match against current `agentAITrainer` (if exists) for gap analysis
+- Document expected request/response shape
+
+### Option ι (i18n consolidation) Q-templates
+
+**Q1.** Confirm 45 dupes still current (drift check from 5S Q1.4):
+
+```bash
+node -e "
+const data = require('./src/locales/en.js').default || require('./src/locales/en.js');
+const keys = [];
+function walk(o, prefix='') {
+  if (typeof o !== 'object' || o === null) return;
+  Object.entries(o).forEach(([k,v]) => {
+    if (typeof v === 'object' && v !== null) walk(v, prefix+k+'.');
+    else if (typeof v === 'string') keys.push({path: prefix+k, value: v});
+  });
+}
+walk(data);
+const dupes = {};
+keys.forEach(k => { if(!dupes[k.value]) dupes[k.value] = []; dupes[k.value].push(k.path); });
+const significant = Object.entries(dupes).filter(([_,v]) => v.length > 1 && v[0].split('.')[0] !== v[1].split('.')[0]);
+console.log('Cross-section dupes:', significant.length);
+"
+```
+
+**Q2.** Common namespace candidates (frequency analysis):
+
+```bash
+# Top dupe clusters by occurrence count
+grep -rEh "t\.(modal|common|btn|action)\." src/ --include="*.vue" 2>/dev/null | head -20
+```
+
+**Q3.** i18n key call-site scope:
+
+```bash
+grep -rEn "\bt\.[a-z]+\.[a-z]+" src/ --include="*.vue" --include="*.js" | wc -l
+# Total i18n call-site count для refactor surface estimation
+```
+
+**Q4.** Locale file structure consistency check:
+
+```bash
+for locale in src/locales/{en,ru,de,es,fr,hi,ja,ko,pt,zh,ar}.js; do
+  echo "=== $locale ==="
+  wc -l "$locale"
+done
+```
+
+**Q5.** Migration strategy candidates:
+
+- Per-section batch (one section at a time, 11 locales each commit) — lowest risk, ~10 commits
+- Common-keys-first (introduce `t.common.*` namespace, migrate dupes, then refactor remaining) — fewer commits, higher per-commit surface
+- Hybrid (common namespace + 2-3 high-traffic sections) — middle ground
