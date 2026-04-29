@@ -6,7 +6,7 @@
 - **Branch (continue stack):** `claude/setup-5e-shop-mode-a-khIAi` (10th continue stack decision — extends 5J-5R 9-decision precedent)
 - **HEAD before 5S:** `70a310d` (5R Phase 9 [CLAUDE.md](http://CLAUDE.md) update)
 - **HEAD after Phase 1:** `058ebeb` (P1 RetirementPanel.vue removal)
-- **HEAD after Phase 3:** `[fill in P3c HEAD when known]`
+- **HEAD after Phase 3:** `85bd545` (P3c — 5S CLOSURE)
 - **Predecessor:** Sub-Epic 5R Q1 backend dedicated debug
 - **Type:** Z Cleanup batch (Option Z, S-size, streak-preserving)
 - **Branches involved:** continue stack only — frontend-only cleanup, no backend touch (per 5R Recovery #63 lesson PR-to-main path remained unused)

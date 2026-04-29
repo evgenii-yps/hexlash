@@ -4,7 +4,7 @@
 **From:** Sub-Epic 5S Z Cleanup batch closure
 **To:** Sub-Epic 5T start (option pending user decision)
 **Branch:** `claude/setup-5e-shop-mode-a-khIAi` (continue stack — 10th decision precedent maintained from 5J)
-**HEAD:** `[fill in P3c HEAD here when known — currently 2dc99b4 after P3a2]`
+**HEAD:** `85bd545` (P3c — 5S CLOSURE)
 
 ---
 
