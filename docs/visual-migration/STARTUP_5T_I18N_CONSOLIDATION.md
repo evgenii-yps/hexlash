@@ -223,3 +223,84 @@ After P0c2 commit + push + status:
 ---
 
 **Поехали.**
+
+---
+
+## ⚠️ Scope amendment (P0d) — Recovery #75 + Path D ultra-strict
+
+**Triggered:** Phase 1 Step 1 reconnaissance revealed value-equivalence methodology gap in Q1.6 audit.
+
+### Recovery #75 candidate
+
+Q1.6 locale audit checked PRESENCE of keys across 11 locales but did not verify VALUE EQUIVALENCE across cross-section "dupe" claims. Cross-source value comparison in Phase 1 Step 1 revealed:
+
+- **All 8 Track B keys have cross-locale value divergence**
+- **2 of 3 Track A keys have cross-locale value divergence** (Confirm + Next)
+- **Only Cancel** is truly identical across all 11 locales
+
+**Pattern discovered:** majority of "duplicate values" are hardcoded English placeholders in non-EN locales (`club.lblBack: "Back"`, `club.lblConfirmStep: "Confirm"`, `clan.tabMembers: "Members"`, etc.) — localization debt artifacts, NOT genuine duplication.
+
+**Adaptation-tier per Lesson #35.** Refines premise, doesn't block execution.
+
+**Lesson #11 sub-pattern surfaced:** value-equivalence verification specialization. Future i18n investigations must run cross-locale value comparison alongside presence check. Documented in FINAL_REPORT methodology section.
+
+### Path D ultra-strict — scope reduction
+
+**Track A revised:**
+
+| Source paths | Target | Status |
+|---|---|---|
+| `clan.lblCancel`, `xpAllocation.cancel` | `modal.btnCancel` | ✅ all 11 locales value-identical |
+| ~~`club.lblConfirmStep` → `modal.btnConfirm`~~ | DROPPED | 10 locales divergent |
+| ~~`club.lblNext` → `modal.btnNext`~~ | DROPPED | 9 locales divergent |
+
+**Track B revised: ELIMINATED ENTIRELY.** All 8 candidates have cross-locale value divergence.
+
+### Scope after amendment
+
+**1 dupe group eliminated cleanly** (down from 11 planned). 5T ι converted from M → XS sub-epic.
+
+**Carry-forward for future i18n parity sub-epic:**
+- 8+ broken English placeholders in non-EN locales (`club.*`, `pvp.*`, `clan.tabMembers`, `clan.lblTotalFights`, `fight.lblAiRetry`)
+- Genuine context-divergent translations (`name`, `retry`, `wins`, `losses`)
+- 31 × 2x-only dupes (originally excluded)
+- 3 cross-locale-fragmented keys (today/yesterday/login)
+- Pre-existing locale gaps (`profile.invite.btnLogin` × 9 locales, `club.lblToday`/`club.lblYesterday` × 10 locales)
+
+### Rationale for Path D ultra-strict (not B/C)
+
+- **Path A (drop ι entirely):** rejected — 2nd pivot in same sub-epic = pathological scope thrashing
+- **Path B (Cancel-only minimal):** functionally converges with D
+- **Path C (consolidate + fix English placeholders):** rejected — scope explosion, translation quality concerns (design-Claude can't QA 11-language translations), wrong sub-epic for localization debt fix
+- **Path D ultra-strict:** preserves streak, ships clean migration, honest scope, real methodology contribution via Recovery #75
+
+### Refined Phase plan post-amendment
+
+| Phase | Status | Commits |
+|---|---|---|
+| P0 / P0c1 / P0c2 | ✅ done | 3 |
+| **P0d** | **THIS amendment** | 1 |
+| P1 | Cancel migration | 1 |
+| P2 | Old keys cleanup (`clan.lblCancel`, `xpAllocation.cancel` × 11 locales) | 1 |
+| P3 | Build verify | 0-1 |
+| P4a/P4b | FINAL_REPORT split | 2 |
+| P5a/P5b | HANDOFF_5U split | 2 |
+| P6 | CLAUDE.md update | 1 |
+
+**Total estimated: 8-10 commits.**
+
+### 5T running totals after P0d
+
+- Commits: 4 (P0 γ + P0c1 + P0c2 + P0d)
+- Recovery candidates: 4 (#72/#73/#74/#75) — all adaptation-tier
+- Streak: 15 preserved
+- Pivot count: 1 major (γ → ι) + 1 scope amendment (ι full → ι ultra-strict)
+- Methodology contributions: en-centric measurement avoidance (5T) + value-equivalence verification (Recovery #75)
+
+### Self-correction note
+
+P0c1 line ~22 stated locale files use CommonJS `module.exports`. **Correction:** they use ESM `export default`. Minor factual error, no functional impact (P1 will write correct ESM-compatible code regardless). Documented in FINAL_REPORT errata.
+
+---
+
+**P0d amendment complete. Awaiting ok → P1 (Cancel migration).**
