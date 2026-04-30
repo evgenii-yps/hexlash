@@ -135,3 +135,172 @@ Documented in 5T FINAL_REPORT §8 as future scope, **NOT 5U scope** (per Path D 
 - club:184 / clan:126 internal restructuring (out-of-scope, Strategy 3 hybrid)
 
 These accumulate as **future i18n parity sub-epic** candidates — Epic 6+ or post-Epic-5 dedicated localization work, not 5U.
+
+---
+
+## 5. Pre-flight Q-templates per option
+
+Q-templates for verifying-investigation by new design-Claude before commit to 5U scope. Reference: predecessor HANDOFF_5T §4 structural pattern.
+
+### 5.1 — κ Path A (Retirement animation) Q-templates [PRIMARY RECOMMENDED]
+
+```bash
+# Q1. Existing retirement UI surface area
+grep -rn "Retirement\|retirement" src/components/ src/views/ --include="*.vue"
+# Expected: HudRetirement.vue (live, 5Q), retirement-related components
+
+# Q2. Animation conventions in codebase — reference patterns
+grep -rEn "@keyframes|transition:|animation:" src/styles/hexlash-ui.css | head -20
+# Document existing animation primitives (hex-fade / hex-slide-up / pulse / etc.)
+
+# Q3. HudRetirement.vue current state — what's already animated, what's static
+cat src/components/hud/HudRetirement.vue | head -80
+
+# Q4. Retirement-trigger backend endpoint + frontend handler
+grep -rn "retirement\|retire" backend/src/services/ backend/src/routes/ src/core/services/ src/core/state/modules/
+
+# Q5. Visual System v1.0 compliance — animation timing convention
+# NewAchievement.vue 600ms precedent (per CLAUDE.md line 578)
+```
+
+### 5.2 — κ Path B (Retirement animation + badge) Q-templates [If double closure]
+
+In addition to §5.1:
+
+```bash
+# Q6. Achievement entity backend — does it exist?
+grep -rn "Achievement\|achievement" backend/prisma/schema.prisma backend/src/services/
+
+# Q7. awardAchievement helper present?
+grep -n "awardAchievement" backend/src/utils/helpers.js
+# Helper exists per CLAUDE.md line 93 — verify signature + DB persistence path
+
+# Q8. Existing achievement triggers — pattern for new "First Retirement" achievement
+grep -rn "awardAchievement" backend/src/
+
+# Q9. Lesson #33 PR-to-main chain readiness check
+# Backend extensions = continue stack development → cherry-pick to fix/<branch> → PR to main → deploy via webhook
+# Per CLAUDE.md ## Branch (Git) section
+```
+
+### 5.3 — γ AI Trainer Q-templates [Alternative if user picks feature work]
+
+Per HANDOFF_5T §4 Option γ Q-templates (Q1–Q5). Recovery #73 caveat:
+
+```bash
+# Q-pre. v2 mock fightState verification — Recovery #73 status
+grep -rn "fightState\|mockFightState\|fight.*mock" src/views/ src/components/v2/ 2>/dev/null
+# Confirm Epic 3A mock state still in place OR if subsequent work wired real PvE/PvP
+# If still mock → γ requires either Path α (degraded UX adapter) or Path γ (backend extension)
+# Both raise streak risk — anti-rec for closer slot per HANDOFF_5T option matrix
+```
+
+### 5.4 — ν Lesson-candidate validation Q-templates [Streak-safe defensive option]
+
+```bash
+# Q1. Document each candidate's promotion criteria
+# - #36: 2nd test occurrence (incomplete rollback) — likely never in 5U frontend-only
+# - #37: pre-formal sandbox capability — N/A operational since 5R
+# - #38: pre-formal multi-layer environment — N/A operational since 5R
+# - #39: 2nd application (i18n callsite enumeration / generic-word scoping)
+# - #40: 2nd occurrence (locale section-ordering variance)
+
+# Q2. Cross-reference all 5T recoveries against existing 35 lessons for missed promotion opportunities
+# Read EPIC5_5T_FINAL_REPORT.md §6 Lessons applied detail
+# Verify no latent lesson promotions hiding in "applied without promotion" list
+
+# Q3. CLAUDE.md lessons section consistency check
+grep -nE "^### Lesson #[0-9]+" CLAUDE.md  # If lessons section exists, verify count matches reported tally
+```
+
+### 5.5 — λ i18n parity Q-templates [Anti-rec, included for completeness]
+
+5T FINAL_REPORT §8 already documented carry-forward scope. λ as 5U closer = anti-rec (translation correctness ambiguity + scope explosion risk).
+
+If user overrides anti-rec:
+
+```bash
+# Q1. Translation correctness verification feasibility — design-Claude can't QA 11 languages
+# Q2. Scope cap proposal (e.g., "fix English placeholders in non-EN locales only, not touch genuine translations")
+# Q3. Per-locale sequential commit safety per Option I sequential safety pattern (5T precedent)
+```
+
+---
+
+## 6. Active disciplines reminder
+
+**Mode A strict** — 1 commit per Phase, push, status report, wait ok.
+
+**Branch:** continue stack `claude/setup-5e-shop-mode-a-khIAi` for visual migration work (12th continue stack decision if 5U continues — extends 5J-5T 11-decision stack). Backend fixes (κ Path B if achievement badge selected) — separate branch from main + PR per Recovery #63 lesson formalized in CLAUDE.md `## Branch (Git)`.
+
+**Sentinel split — fully matured framework:**
+
+- Single-write default for short deliverables (code commits, single-Phase work)
+- Long-form docs (HANDOFF, FINAL_REPORT) default to **preventive split from start** — 7-application precedent (5R P7 / 5S P0 / 5S P3a / 5S P3b / 5T P0c / 5T P4a / 5T P5a)
+- Reactive variant (5Q 5-timeout threshold OR 5T P4b 1-timeout) preserved as fallback
+- Both valid; preventive-from-start standard for handoff-class deliverables
+
+**Convention discovery reflex (Lesson #32):** mirror existing patterns, do not invent. Animation timing conventions for κ Path A — check `hexlash-ui.css` for `@keyframes` + transition durations. NewAchievement.vue 600ms precedent (per CLAUDE.md line 578).
+
+**Pre-edit verification reflex (Lesson #11):** running tally ~77 recoveries entering 5U. **5T validated #11 utility 4 times in single sub-epic** — most-applied lesson in 5T. Validation-not-just-catch principle (5T P2 Step 2 orphan re-verify held — assumption confirmed — equally valuable as catch).
+
+**STOP triggers (Lesson #18):** any structural mismatch — escalate, do not auto-fix. κ Path A frontend-only animation = low #18 trigger surface area. κ Path B backend Achievement entity creation = medium surface (DB schema + service + endpoint + helper integration — convention discovery first per #32).
+
+**Investigation refines ТЗ:** quintuple-precedent now (5O / 5Q / 5R / 5S / 5T). Pre-investigation ТЗ ALWAYS treated as draft. 5T extended pattern with intra-sub-epic re-pivot validity rule (3-condition test per FINAL_REPORT §7).
+
+**Reflex catch tiering (Lesson #35):**
+
+- Adaptation-tier (TZ assumption mismatch) — fix within Phase
+- Bug-bundle-tier (same-class additional callsites) — fix within Phase as expansion
+- Scope-boundary-tier (different class, different model) — STOP, document carry-over, Lesson #18 IS triggered
+
+**5T-derived reflexes (for 5U inheritance if i18n-adjacent):**
+
+- 3-layer i18n validation framework (presence → value-equivalence → callsite-presence) — Lesson #39 candidate
+- Section-ordering-variance awareness for locale files — Lesson #40 candidate
+- Generic-word collision pre-check pattern (sed scoping via predecessor-line idiom)
+- Pivot reasoning preservation principle (failed paths preserved in repo, not silently overwritten)
+
+---
+
+## 7. Files for 5U start
+
+When user starts 5U, design-Claude must read:
+
+1. **CLAUDE.md** — full source of truth (~3976 lines + Sub-Epic 5T section after P6 update)
+2. **`docs/visual-migration/EPIC5_5T_FINAL_REPORT.md`** — closure detail (350 lines, P4a + P4b1 + P4b2 split, 6 recoveries #72–#77, methodology contributions, dual-pivot trajectory)
+3. **`docs/visual-migration/HANDOFF_EPIC5_5U_CHAT_HANDOFF.md`** — this file (when complete after P5b)
+4. **`docs/visual-migration/EPIC5_5S_FINAL_REPORT.md`** — predecessor-predecessor closure (15-streak achievement, Z Cleanup batch shape)
+5. **`docs/visual-migration/STARTUP_5T_I18N_CONSOLIDATION.md`** — 5T pivot reasoning record (commits `dcd7362` + `333bc12` + `cd286c1`) — useful if 5U revisits i18n parity carry-forward
+6. **`docs/visual-migration/VISUAL_MIGRATION_PLAN.md`** — overall plan
+
+---
+
+## 8. Recommended workflow for start of 5U
+
+1. User attaches HANDOFF_5U + 5T FINAL_REPORT + CLAUDE.md to fresh design-Claude chat
+2. Design-Claude reads file list per §7
+3. Design-Claude presents 5U option matrix decision request (κ Path A primary recommended; κ Path B / γ / ν alternatives)
+4. User picks κ A / κ B / γ / ν (or λ if overrides anti-rec)
+5. Design-Claude prepares pre-flight Q-templates per chosen option (templates in §5)
+6. Claude Code runs investigation (read-only)
+7. Investigation matrix → ТЗ refinement → Phase-by-Phase execution
+
+**Special note for closer status:** 5U is the **last** sub-epic before Epic 5 closure. P-final commit must update CLAUDE.md Sub-Epic 5U section + **Эпик 5 §4.2 progress bumped to 22/22 (100%)** + closure state declared. Epic 5 → Epic 6 transition handoff (HANDOFF_EPIC6_CUTOVER) optional, or main-merge protocol document — design-Claude decision at 5U closure.
+
+---
+
+## 9. Closing
+
+5T closes methodology-heavy sub-epic with 22-deletion functional + 6 recoveries + 4 methodology contributions + 2 lesson candidates. **21/22 milestone reached.** **One sub-epic remaining (5U) for Epic 5 closure.**
+
+After Epic 5 closure (22/22) → **Epic 6 cutover** (final): `/v2/*` becomes default, continue stack merges to main, legacy `/src` components removed, parking list (52 items in `/docs/phase1-parking-list.md`) addressed.
+
+Trajectory:
+
+- After 5U: 22/22 (100%) — **Epic 5 CLOSED ✅**
+- Epic 6: cutover + legacy delete + parking list resolution
+
+**Streak goal entering 5U:** 16-streak (5E–5T = 16 sub-epics if 5T closes clean). 5U closure clean → 17-streak + Epic 5 historic milestone.
+
+Ready for 5U start when user is.
