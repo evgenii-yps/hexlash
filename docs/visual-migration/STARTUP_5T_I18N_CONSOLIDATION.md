@@ -99,3 +99,127 @@ Hexlash — PvP fighting game. Vue 3 + Vuex + Three.js + Vite frontend, Express 
 - club:184 / clan:126 internal restructuring (out-of-scope, would be Strategy 3 hybrid)
 - 3 cross-locale-fragmented keys (today/yesterday/login) — defer to future i18n parity sub-epic
 - Pre-existing locale gaps (`profile.invite.btnLogin` missing 9 locales, `club.lblToday`/`club.lblYesterday` missing 10 locales) — pre-existing, separate concern
+
+---
+
+## 📋 Phase plan
+
+| Phase | Что | Commits | Branch | Notes |
+|---|---|---|---|---|
+| ✅ P0 | STARTUP_5T_AI_TRAINER.md (γ scope, historical) | 1 done | continue stack | aac35a3 |
+| ✅ P0.5 | γ investigation matrix → Recovery #72/#73 → pivot decision | 0 | — | Read-only |
+| ✅ P0b | ι investigation matrix Q1.1-Q1.5 + Q1.6 locale Δ audit → Recovery #74 → Track B = 8 keys | 0 | — | Read-only |
+| **P0c** | **THIS commit (split P0c1+P0c2) — STARTUP_5T_I18N_CONSOLIDATION.md** | **2** | continue stack | Preventive split (5th application) |
+| P1 | Add `t.common.*` block to all 11 locales (8 keys × 11 = 88 entries). Old source paths PRESERVED for backward compat. | 1 | continue stack | Sequential safety per Option I |
+| P2 | Track A migration — `modal.btn{Cancel,Confirm,Next}` call-site rewrites (~10-15 callsites) | 1 | continue stack | Frontend only, no locale touch |
+| P3 | Track B migration — `t.common.*` call-site rewrites (~30-40 callsites for 8 keys). Possibly split per dupe-cluster if timeout. | 1-2 | continue stack | Per-key safe rollout if split needed |
+| P4 | Build verify + visual smoke test — sections render strings correctly across 11 locales (spot-check 3-4 key locales: en, ru, ja, ar [RTL]) | 0-1 | continue stack | Commit only if fix needed |
+| P5 | Old keys cleanup — remove migrated source paths from locale files (8 Track B keys × ~3 paths × 11 locales = ~264 deletions; 3 Track A source paths × 11 locales = ~33 deletions). Total ~297 deletions. | 1 | continue stack | Per Option I — last after migration complete |
+| P6a + P6b | FINAL_REPORT preventive split (4-application precedent) | 2 | continue stack | Adaptation-infrastructure |
+| P7a + P7b | HANDOFF_5U_CHAT_HANDOFF.md preventive split | 2 | continue stack | Same |
+| P8 | CLAUDE.md update — 5T section, recoveries #72-74, pivot reasoning, sextuple-precedent investigation-refines-ТЗ, scope discipline note, hybrid-2 framework | 1 | continue stack | |
+
+**Total estimated: 12-14 commits** (within M-size envelope; +1 from P0c split).
+
+**P1+P5 ordering rationale (Option I — sequential safety):**
+- P1 adds new `t.common.*` keys, old source paths remain available
+- P2/P3 migrate callsites — system has both old and new keys live during migration
+- P5 deletes old keys only after all callsites migrated and verified
+- If any phase interrupted, system remains functional (no half-migrated breakage)
+
+---
+
+## ❓ Phase 1 prep — Pre-flight checklist
+
+Before starting P1 functional work:
+
+1. ✅ HEAD `aac35a3` confirmed (will be updated after P0c1+P0c2)
+2. ✅ Branch clean
+3. ✅ STARTUP file committed (this Phase 0c)
+4. **Read CLAUDE.md `## i18n System` section** for locale file structure conventions
+5. **Spot-check `src/locales/en.js` structure** — confirm top-level keys list (29 sections per Q1.4) — decide where to insert `common:` block (alphabetical? after `modal:`? user preference)
+6. **Decide insertion point:** recommend after `modal:` block (semantic clustering — both are common namespaces). Confirm with design-Claude before P1.
+
+---
+
+## 🛠 Mandatory pre-flight reading
+
+1. `CLAUDE.md` — full source of truth (3975 lines)
+2. `docs/visual-migration/STARTUP_5T_AI_TRAINER.md` — γ historical scope (commit aac35a3)
+3. `docs/visual-migration/HANDOFF_EPIC5_5T_CHAT_HANDOFF.md` — original 5T handoff (option matrix γ vs ι, Q-templates §4)
+4. `docs/visual-migration/EPIC5_5S_FINAL_REPORT.md` — 5S closure (5 recoveries, 15-streak, i18n promotion in Q1.4)
+5. `docs/visual-migration/EPIC5_5R_FINAL_REPORT.md` — 5R (8 recoveries, branch strategy formalization)
+6. `docs/visual-migration/VISUAL_MIGRATION_PLAN.md` — overall plan
+
+---
+
+## 🧠 Critical lessons applied (5R-5S inheritance + 5T learnings)
+
+- **#11 verify shape** — running tally **74+ recoveries** entering P1. Pre-edit grep before edits. Cross-locale audit precedent (Q1.6) — don't measure single-locale.
+- **#18 STOP at structural mismatch** — locale file structure conventions matter. If non-en locales differ structurally from en (different nesting depth, missing sections), STOP and document.
+- **#32 convention discovery reflex** — i18n locale file convention: CommonJS export (`module.exports`), nested object structure, English-fallback runtime convention NOT codebase fill convention.
+- **#33 deploy-environment awareness** — ι is frontend-only refactor, no backend touch, no PR-to-main path. Continue stack throughout.
+- **#35 reflex catch tiering** — adaptation-tier dominant in 5T (3 candidates all adaptation). Bug-bundle-tier may apply if missed callsite surfaces in P4 verify (extend in-Phase if same-class). Scope-boundary-tier triggers if non-i18n issue surfaces (Lesson #18 STOP).
+
+### 5T-specific reflexes
+
+- **En-centric measurement avoidance** — Q1.6 lesson. Always cross-locale audit для i18n work.
+- **Sequential safety** (Option I P1+P5 ordering) — old keys preserved until migration verified.
+- **Per-cluster split readiness** — P3 may need split per dupe-cluster if 30-40 callsite rewrites cause timeout. Adaptation-infrastructure, not recovery.
+
+---
+
+## 🎯 Hot-fix streak
+
+**15-streak** entering P1 (5E-5S all clean + 5T P0/P0c record-keeping commits not functional). Goal: **16-streak** by 5T closure.
+
+---
+
+## 🚀 Workflow Step 0 (post-P0c commit)
+
+After P0c2 commit + push + status:
+
+1. Wait for design-Claude **ok**
+2. Pre-flight P1 — read `## i18n System` section in CLAUDE.md
+3. Inspect `src/locales/en.js` head — confirm top-level structure, locate insertion point for `common:` block
+4. Report insertion-point recommendation (suggested: after `modal:` block) for design-Claude confirm
+5. Execute P1 — single commit adding `common:` block to all 11 locales
+
+---
+
+## 📋 5T running totals
+
+- **Commits:** 1 (P0 γ STARTUP, historical) + 2 P0c1+P0c2 = 3 after this phase
+- **Recovery candidates:** 3 (#72 greenfield falsified, #73 v2 mock gap → drove pivot, #74 Yesterday symmetry false)
+- **Streak:** 15 preserved
+- **Pivot:** γ → ι (documented in this file + future FINAL_REPORT)
+- **Sextuple-precedent investigation-refines-ТЗ:** 5 sub-epic precedent (5O/5Q/5R/5S/5T) + 3 intra-5T refinements
+- **Preventive split applications:** 5 (5R P7 / 5S P0 / 5S P3a / 5S P3b / 5T P0c)
+
+---
+
+## 🚀 Действия после P0c2 commit
+
+1. **WAIT for ok**
+2. Pre-flight P1 reading + insertion point reconnaissance
+3. P1 — add `common:` block to 11 locales (single commit)
+4. WAIT for ok
+5. P2 — Track A migrate (single commit)
+6. WAIT for ok
+7. P3 — Track B migrate (1-2 commits, possibly split)
+8. WAIT for ok
+9. P4 — verify (0-1 commits)
+10. WAIT for ok
+11. P5 — old keys cleanup (single commit)
+12. WAIT for ok
+13. P6a/P6b — FINAL split
+14. WAIT for ok
+15. P7a/P7b — HANDOFF_5U split
+16. WAIT for ok
+17. P8 — CLAUDE.md update (closes 5T)
+
+**Mode A strict throughout. No phase-jumping. Wait ok between each.**
+
+---
+
+**Поехали.**
