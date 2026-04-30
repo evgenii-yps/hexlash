@@ -3973,3 +3973,100 @@ P1 pre-edit re-verify CLEAN (no Recovery beyond P0.5) — P0.5-to-P1 intra-sessi
 **Следующий sub-epic:** 5T per `HANDOFF_EPIC5_5T_CHAT_HANDOFF.md`. Option matrix: **γ** AI Trainer (M, medium streak risk) OR **ι** i18n consolidation (M, low-medium streak risk). Anti-recs (ε FightClub feature / η Onboarding / θ MoveTree) preserved.
 
 **Recommended ordering:** 5T = γ AI Trainer (feature work appropriate now that 15-streak achieved) → 5U = ι i18n consolidation (final cleanup before Epic 5 close). Alternative ordering 5T = ι, 5U = γ valid if user prefers ending Epic 5 on feature work rather than refactor.
+
+### Sub-Epic 5T — ι i18n Consolidation (Path D ultra-strict)
+
+**Status:** CLOSED clean
+**Type:** Methodology-heavy sub-epic, dual-pivot trajectory (γ → ι → Path D)
+**Phases:** 11 commits (P0 γ STARTUP historical / P0c1+P0c2 ι STARTUP preventive split 5th application / P0d Path D amendment / P2 functional / P3 NO-OP build verify / P4a+P4b1+P4b2 FINAL_REPORT split — 6th preventive + 1st reactive / P5a+P5b HANDOFF_5U preventive split 7th application / P6 this commit)
+**Functional commits:** 1 (`141e814` Phase 2 — orphan locale cleanup, 22 deletions across 11 locales)
+**Branch:** continue stack `claude/setup-5e-shop-mode-a-khIAi` (11th decision precedent — extends 5J-5S 10-decision stack)
+**HEAD before:** `1a9497d` (5S P3d backfill)
+**HEAD after Phase 2:** `141e814`
+**HEAD after Phase 6 (this):** `<NEW_HASH>` — 5T CLOSURE
+
+**What 5T did:**
+
+5T started as **γ AI Trainer (M-size feature)** — deferred from 5R + 5S, intended as the first feature-shipping sub-epic post 15-streak achievement. Investigation revealed two blocking issues triggering pivot to **ι i18n consolidation (M-size refactor)**. Subsequent investigation revealed third blocking issue triggering scope amendment to **Path D ultra-strict** — keeping ι direction but radically narrowing scope to a single dupe group cleanup. Pre-edit enumeration in P1 surfaced fourth issue, collapsing P1 to NO-OP and consolidating remaining work into P2 direct cleanup (22 orphan locale entries deleted).
+
+5T closure shape: methodology-heavy sub-epic. Value-add inventory = 6 recovery candidates + 4 methodology contributions + 2 lesson candidates + 22 functional deletions. Some sub-epics ship institutional knowledge over LoC; 5T fits that profile.
+
+**Investigation findings dropped/promoted:**
+
+- Item γ AI Trainer (M-feature) → falsified (Recovery #72 greenfield + #73 v2 mock fightState gap) — pivoted to ι
+- Item ι Hybrid-2 scope (8 Track B + 3 Track A = 11 dupe groups) → reduced via Recovery #75 value-equivalence gap → Path D ultra-strict (1 dupe group, Cancel-only)
+- Item P1 functional (callsite migration) → collapsed via Recovery #76 (orphan source paths, 0 callsites) → P1 NO-OP, P2 = direct cleanup
+- Future i18n parity sub-epic candidates documented (8+ broken EN placeholders, 31 × 2x dupes, 3 cross-locale-fragmented keys, locale gaps) — PROMOTED carry-forward to Epic 6+ or dedicated localization sub-epic
+
+**Key decisions:**
+
+- **Dual-pivot Mode A discipline:** γ → ι strategic pivot (Recovery #72/#73) + ι full → Path D scope amendment (Recovery #75). Both documented in repo (γ STARTUP `aac35a3` preserved + ι P0c1/P0c2/P0d sequence preserved). **Pivot reasoning preservation principle:** failed paths preserved, not silently overwritten. Future sub-epics inherit institutional memory — guards against repeating same investigation work.
+- **Quintuple-precedent investigation-refines-ТЗ extended** (5O / 5Q / 5R / 5S / 5T) with intra-sub-epic re-pivot validity rule (3-condition test per FINAL_REPORT §7). Pattern now supports strategic shifts during execution, not just initial scope refinement.
+- **Path D ultra-strict scope discipline:** translation correctness concerns (design-Claude can't QA 11 languages) + scope explosion risk → minimal-surface approach. 22 deletions only, no expansion attempts. Honest scope.
+- **3-layer i18n validation framework operationalized:** presence (Q1.1) → value-equivalence (Q1.6 refined) → callsite-presence (Q1.7 P1 Step 1). All 3 mandatory before destructive edit. Layer 3 surfaced #76 NO-OP case before P1 functional commit attempt.
+- **Generic-word collision pre-check pattern:** sed scoping via predecessor-line idiom (`/^    <unique_predecessor>:/{n;/^    <target>:/d}`) handled section-ordering variance across locales (xpAllocation precedes/follows matchmaking depending on locale). Recovery #77 averted destructive edit via Lesson #11 reflex.
+
+**Recovery log (6 catches in 5T session):**
+
+| # | Title | Phase | Outcome |
+|---|---|---|---|
+| #72 | γ greenfield assumption falsified | P0.5 | drove γ → ι pivot |
+| #73 | v2 mock fightState gap | P0.5 | contributed γ → ι |
+| #74 | Yesterday symmetry false | P0b Q1.6 | contributed Path D scope |
+| #75 | Value-equivalence methodology gap | P0d trigger | drove ι full → Path D |
+| #76 | Orphan source paths | P1 Step 1 | drove P1 → NO-OP collapse |
+| #77 | Generic-word section collision | P2 Step 4 pre-edit | averted destructive sed |
+
+- **#72** — γ assumed greenfield M-feature. P0.5 found `AiTrainerAnalysis.vue` (229 lines, v1) + `/v1/ai/analyze-fight` endpoint already shipped. Greenfield premise falsified.
+- **#73** — v2 fight architecture is mock per Epic 3A intent (no Vuex, no real combat data). AI Trainer integration via v1 endpoint requires either degraded UX (Path α) or backend extension (Path γ). Both rejected.
+- **#74** — Q1.6 audit assumed Today/Yesterday key symmetry. Cross-locale revealed `club.lblYesterday` exists in 2 locales while `club.lblToday` in 1. Asymmetry; drove Track B scope reduction.
+- **#75** — Q1.6 checked PRESENCE only, not VALUE EQUIVALENCE. P1 Step 1 cross-source comparison revealed majority of "duplicates" were hardcoded English placeholders in non-EN locales (localization debt), not genuine duplicates. 8/8 Track B + 2/3 Track A had cross-locale divergence.
+- **#76** — Both source paths (`clan.lblCancel`, `xpAllocation.cancel`) had 0 callsites in `src/`. Target `modal.btnCancel` had 15 callsites (alive). P1 functional collapsed to NO-OP.
+- **#77** — `^    cancel:` matched 2 lines per locale (xpAllocation block + matchmaking block). Unscoped sed would have broken matchmaking UI. Predecessor-line scoping idiom averted. Section-ordering variance across locales handled transparently.
+
+**Cumulative lesson tally:** 35 → **35** (UNCHANGED). 2 new candidates added:
+
+- **#39 candidate (pre-formal until 2nd application) — "Pre-migration callsite enumeration / generic-word scoping (Lesson #11 specialization for i18n)"**
+- **#40 candidate (pre-formal until 2nd occurrence) — "Locale section-ordering variance (sub-pattern of #11)"**
+
+3 carry-over candidates from 5R unchanged (all N/A in 5T frontend-only):
+- #36 PROMOTE pending 2nd test (incomplete rollback drift detection)
+- #37 pre-formal sandbox capability empirical verification
+- #38 pre-formal multi-layer deploy environment awareness extension
+
+**Hot-fix metric:** **0 — 16-streak achieved** (5E + 5F + 5G + 5H + 5I + 5J + 5K + 5L + 5M + 5N + 5O + 5P + 5Q + 5R + 5S + 5T all clean). All 6 recoveries adaptation-tier per Lesson #35. Preventive splits = infrastructure-driven (7 applications in 5T alone), NOT hot-fixes. Reactive split (P4b → P4b1+P4b2) = 5Q infrastructure-driven framework reactive variant, NOT hot-fix. Pivot decisions (γ → ι, ι full → Path D, P1 → NO-OP) = investigation-driven scope refinement, NOT hot-fixes.
+
+**Cumulative recoveries:**
+
+- **Entering 5T:** 71+ (5S closure tally)
+- **5T closure:** 71+ → **77+** (+6: #72 greenfield falsified, #73 v2 mock gap, #74 Yesterday symmetry false, #75 value-equivalence gap, #76 orphan source paths, #77 generic-word collision averted)
+
+**Эпик 5 §4.2 progress:** **21/22 done (95%)** (+1 от 5T — i18n cross-section reuse closed via Path D ultra-strict scope reduction; 22 orphan entries deleted, methodology toolkit grown). **One sub-epic remaining to Epic 5 closure.**
+
+**Sub-Epic 5T — CLOSED.** ✅ Route table `/v2/*` UNCHANGED — 5T removes orphan locale entries without functional impact. Frontend bundle delta: main `index.js` raw −0.51 kB (consistent with 22 short-string removal); gzip +2.46 kB (build-system noise — content-hash + minification variance); brotli −0.63 kB. Asset count + dist/ total unchanged. End-to-end orphan validation confirmed (zero functional regression).
+
+**Methodology contributions (4):**
+
+- 3-layer i18n validation framework (presence → value-equivalence → callsite-presence)
+- Section-ordering-variance awareness (locale files don't share key ordering across translations)
+- Generic-word collision pre-check pattern (predecessor-line scoping idiom)
+- Dual-pivot precedent + pivot reasoning preservation principle
+
+**Carry-overs forward to 5U (4 items):**
+
+| # | Item | Source | Status |
+|---|---|---|---|
+| 1 | Animation для retirement | 5Q drop | CARRY-OVER (κ Path A primary 5U candidate) |
+| 2 | Achievement badge для retirement | 5Q drop | CARRY-OVER (κ Path B if double closure attempted; backend Achievement entity required) |
+| 3 | HudProfile card-creep monitor | 5L+ → 5S Q1.3 | MONITOR-FORWARD (6/7 threshold; trigger refactor only if 7th card added in 5U or Epic 6) |
+| 4 | Lesson #36 validation track | 5R | CARRY-OVER (await 2nd occurrence; N/A in 5T frontend-only) |
+
+**Net 5S → 5T:** 5 entering 5T → 4 leaving (i18n cross-section reuse closed via Path D scope reduction; future i18n parity candidates documented as separate sub-epic candidates, not carry-overs).
+
+**Closed in 5T:**
+
+- ~~i18n cross-section reuse — formal M-size task (5S Q1.4 PROMOTED)~~ ✅ (Path D ultra-strict, 22 deletions)
+
+**Следующий sub-epic:** 5U per `HANDOFF_EPIC5_5U_CHAT_HANDOFF.md`. Option matrix: **κ Path A** Retirement animation (S, frontend-only, primary recommended for closer slot) OR **κ Path B** animation + achievement badge (M, includes backend extension with Lesson #33 chain) OR **γ** AI Trainer (M, Recovery #73 v2 mock fightState gap remains blocker) OR **ν** Lesson-candidate validation pass (XS-S, defensive streak-safe). Anti-rec for closer slot: λ i18n parity carry-forward (translation correctness concerns + scope ambiguity), ε FightClub feature, η Onboarding, θ MoveTree.
+
+**5U is the closer.** Successful 5U closure → Эпик 5 §4.2 reaches 22/22 (100%) → **Эпик 5 CLOSED ✅** → Эпик 6 cutover initiates (`/v2/*` default + main merge + legacy `/src` delete + 52-item parking list).
