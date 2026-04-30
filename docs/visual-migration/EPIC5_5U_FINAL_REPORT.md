@@ -125,4 +125,163 @@ Pattern continues at quintuple-precedent (5O / 5Q / 5R / 5S / 5T per CLAUDE.md).
 
 ---
 
-<!-- Sections 5-8 forthcoming в Phase 2a2: Recoveries log + Lessons applied + Methodology + Closure metrics + carry-overs + acceptance checklist -->
+## Section 5 — Recoveries log (5U session)
+
+**1 recovery candidate** в 5U session, adaptation-tier per Lesson #35.
+
+| # | Title | Phase | Tier | Outcome |
+|---|---|---|---|---|
+| #78 | Phase 0 Q1 line-count metadata mis-statement | Phase 1 Step 1 pre-edit | adaptation | self-correction, no scope impact |
+
+### Detail
+
+**#78 — Phase 0 Q1 line-count metadata mis-statement.** Phase 0 Q1 reported HudRetirement.vue 177 lines; actual at Phase 1 pre-edit 376 lines (408 post-edit). Surfaced via Lesson #11 reflex during Step 1 file re-read. **Critical observation:** structural baseline (Q3 description — 3 branches, scoped block, hr-spin precedent, .hr-req items, .hr-buff-preview nested) matched Phase 1 file verbatim — only line-count metadata field был wrong. Adaptation-tier (TZ assumption mismatch, не bug-bundle, не scope-boundary). Counter goes 77+ → **78+**.
+
+**Process insight:** Phase 0 metadata fields (line counts, file sizes) less reliable than structural descriptions. Future Phase 0 templates should de-emphasize quantitative metadata in favor of qualitative structural descriptions (which proved verbatim-accurate в 5U case).
+
+---
+
+## Section 6 — Lessons applied + new candidates
+
+### Existing 35 lessons applied in 5U
+
+- **#11 (pre-edit verification reflex)** — applied 3 times. Caught Recovery #78 metadata correction. Confirmed 3 keyframe name uniqueness pre-edit. Validated structural baseline match.
+- **#18 (STOP triggers)** — not triggered. All 6 Phase 1 STOP conditions clean.
+- **#32 (convention discovery reflex)** — applied to Vue Transition mainstream identification (9+ codebase instances) + scoped @keyframes precedent (`hr-spin` in same file) + animation timing precedent citation (shipped `hex-float-up 0.8s`, NOT TODO 600ms).
+- **#33 (deploy-environment awareness)** — frontend-only animation refactor, no PR-to-main chain. Continue stack throughout. No new application beyond avoidance.
+- **#35 (reflex catch tiering)** — Recovery #78 adaptation-tier, validating framework. Single recovery, single tier.
+
+### Cumulative lesson tally
+
+**35 → 35 (UNCHANGED).** No promotions in 5U.
+
+### Carry-over candidates from 5R-5T — status check
+
+- **#36 (Incomplete rollback drift detection)** — N/A in 5U (frontend-only, no DB). PROMOTE pending 2nd test, deferred to Эпик 6 cutover or post-migration.
+- **#37 (Sandbox capability empirical verification)** — N/A in 5U. Pre-formal, deferred forward.
+- **#38 (Multi-layer deploy environment awareness extension)** — N/A in 5U. Pre-formal, sub-pattern of #33, deferred forward.
+- **#39 (Pre-migration callsite enumeration / generic-word scoping)** — N/A in 5U (no i18n work). PROMOTE pending 2nd application.
+- **#40 (Locale section-ordering variance)** — N/A in 5U. PROMOTE pending 2nd occurrence.
+
+### New lesson candidates from 5U
+
+**0 new candidates.** 5U trajectory linear, no new methodology emerged. Recovery #78 = process refinement (metadata fields less reliable than structural descriptions) but не rises to lesson-candidate threshold — это nuance of existing #11 pattern, не new principle.
+
+---
+
+## Section 7 — Methodology contributions
+
+**0 new methodology contributions.** 5U applied existing methodology cleanly:
+
+- Quintuple-precedent investigation-refines-ТЗ (5O/5Q/5R/5S/5T pattern) — applied through Phase 0 → Phase 1 ТЗ refinement (3 SCs surfaced, ТЗ refined, no re-pivot needed)
+- 7-application preventive split precedent — applied to Phase 2 docs phases (FINAL_REPORT reactive split per 5T P4b precedent; HANDOFF_EPIC6_CUTOVER preventive split-from-start likely)
+- Convention discovery reflex — Vue Transition mainstream + scoped @keyframes + shipped timing precedents
+- Closer-slot scope discipline — strict MUST3 maintained, #2/#3 deferred
+
+5U closure shape: **closer slot, linear trajectory, methodology-applied (not methodology-contributing).** Some sub-epics ship institutional knowledge (5T); others ship clean execution applying prior methodology (5U).
+
+---
+
+## Section 8 — Closure metrics + carry-overs + acceptance
+
+### 5U closure metrics
+
+| Metric | Value |
+|---|---|
+| Total commits (estimate at Phase 2c closure) | 5 (P1 functional + P2a1 FINAL_REPORT sections 1-4 + P2a2 FINAL_REPORT sections 5-8 + P2b HANDOFF_EPIC6_CUTOVER + P2c CLAUDE.md update) |
+| Functional commits | 1 (`a03270d` Phase 1) |
+| Recovery candidates | 1 (#78, adaptation-tier) |
+| Hot-fixes | 0 — **17-streak achieved** if Phase 2 closes clean |
+| Strategic pivots | 0 (linear trajectory) |
+| Pre-flight rejections | 4 paths (κ Path B / γ / ν / λ rejected при option matrix decision) |
+| Methodology contributions | 0 (applied prior methodology cleanly) |
+| New lesson candidates | 0 |
+| Preventive split applications | 1 expected (Phase 2b HANDOFF_EPIC6_CUTOVER likely split-from-start) |
+| Reactive split applications | 1 (Phase 2a → Phase 2a1 + Phase 2a2 — stream idle timeout fallback per 5T P4b precedent) |
+
+### Эпик 5 §4.2 progress
+
+**22/22 done (100%) — Эпик 5 CLOSED ✅** (+1 from 5U closing carry-over #1 Animation для retirement, 5Q drop).
+
+**Эпик 5 historic milestone reached.** All 22 sub-epic candidates from §4.2 plan addressed. Эпик 6 cutover initiates per HANDOFF_EPIC6_CUTOVER (Phase 2b deliverable).
+
+### Bundle impact recap
+
+- 1 file modified (HudRetirement.vue +108/-76 net +32 lines)
+- 0 source-code logic changes (pure CSS + Vue Transition wrapper)
+- 3 animations shipped (component-internal scoped block only)
+- Bundle absolute sizes consistent with 5T closure (precise delta not computable per 5C §5.8 sandbox limitation)
+- 0 functional regression (visual verification by user confirmed)
+
+### Carry-overs forward to Эпик 6 (3 items — was 4 entering 5U)
+
+| # | Item | Source | Status |
+|---|---|---|---|
+| 1 | ~~Animation для retirement~~ | 5Q drop | ✅ **CLOSED in 5U** (κ Path A MUST3 — 3 animations shipped) |
+| 2 | Achievement badge для retirement | 5Q drop | CARRY-OVER to Эпик 6 (κ Path B was alternative — backend Achievement entity required, Lesson #33 PR-to-main chain) |
+| 3 | HudProfile card-creep monitor | 5L+ → 5S Q1.3 | MONITOR-FORWARD to Эпик 6 (6/7 threshold; trigger refactor only if 7th card added; 5U did NOT add new card to HudProfile, threshold unchanged) |
+| 4 | Lesson #36 validation track | 5R | CARRY-OVER to Эпик 6 (await 2nd occurrence of incomplete rollback drift; N/A in 5U frontend-only) |
+
+### Future i18n parity sub-epic candidates (carry from 5T)
+
+Documented в 5T FINAL_REPORT §8 — NOT 5U scope, NOT auto-Эпик 6 scope. Эпик 6 OR dedicated post-migration localization sub-epic candidates:
+
+- 8+ broken English placeholders в non-EN locales
+- 31 × 2x-only dupes
+- 3 cross-locale-fragmented keys (today/yesterday/login)
+- Pre-existing locale gaps (`profile.invite.btnLogin` × 9 locales, `club.lblToday`/`club.lblYesterday` × 10 locales)
+- gameData.branches.{speed,power,technique}.name semantic separation
+- club:184 / clan:126 internal restructuring
+
+These remain available for Эпик 7+ dedicated localization work or in-scope Эпик 6 if cutover surface'ит cleanup opportunity.
+
+### Closed in 5U
+
+- ~~Animation для retirement~~ ✅ closed via κ Path A MUST3 (3 animations shipped)
+
+### Net 5T → 5U accounting
+
+4 entering 5U → 3 leaving (Animation retirement closed; badge / card-creep monitor / Lesson #36 forward to Эпик 6).
+
+### 5U closure shape
+
+**Closer slot, linear trajectory, methodology-applied.** Value-add inventory:
+
+- 1 recovery candidate (#78)
+- 0 methodology contributions (applied prior, не contributed)
+- 0 lesson candidates
+- 3 animations shipped (visible UX improvement closing carry-over)
+- 1 functional commit
+- 0 source-code logic changes
+
+Some sub-epics ship institutional knowledge over LoC (5T). Others ship clean visible UX over methodology (5U). Both honest closure shapes for the work delivered.
+
+### Эпик 5 CLOSED — historic context
+
+**Эпик 5 §4.2 trajectory:**
+
+- 5E starting (rebase to v24 baseline) → 5T (i18n consolidation Path D ultra-strict) → **5U (κ Path A retirement animation closer)**
+- **17-streak total** (5E + 5F + 5G + 5H + 5I + 5J + 5K + 5L + 5M + 5N + 5O + 5P + 5Q + 5R + 5S + 5T + 5U all clean)
+- **78+ cumulative recoveries** (entering 5U 77+, plus #78)
+- **35 lessons promoted, 5 candidates active** (#36/#37/#38/#39/#40)
+- **22 sub-epics closed of 22 planned** in §4.2
+
+**Next epic:** Эпик 6 cutover. `/v2/*` becomes default route. Continue stack merges to main. Legacy `/src` components removed. 52-item parking list addressed.
+
+**Handoff:** `HANDOFF_EPIC6_CUTOVER.md` (Phase 2b deliverable, Z-honest scope — full handoff with investigation guides supporting fresh chat audit kickoff for Эпик 6).
+
+### Acceptance checklist
+
+- [x] 3 animations shipped (Phase 1 — `a03270d`)
+- [x] Build clean (Phase 1 — `npm run build` pass)
+- [x] Visual verification by user (Vercel preview confirmed)
+- [x] FINAL_REPORT_5U sections 1-4 (Phase 2a1 — `e865eb1`)
+- [x] FINAL_REPORT_5U sections 5-8 (Phase 2a2 — this commit)
+- [ ] HANDOFF_EPIC6_CUTOVER preventive split likely (Phase 2b)
+- [ ] CLAUDE.md update Эпик 5 §4.2 22/22 + closure declared (Phase 2c)
+- [ ] Streak verified — 17 if all phases clean
+- [x] Designated branch decision recorded (12th continue-stack precedent break — first since 5J — under user authorization)
+
+### Sub-Epic 5U — CLOSED ✅
+
+**(pending Phase 2b/2c phases.)** **Эпик 5 §4.2 22/22 reached. Эпик 5 CLOSED ✅. Эпик 6 cutover initiates per Phase 2b handoff.**
