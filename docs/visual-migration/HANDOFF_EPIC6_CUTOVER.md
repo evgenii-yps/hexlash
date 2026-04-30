@@ -59,4 +59,60 @@ Known risk surfaces identified by 5U design-Claude based on 5E-5T accumulated co
 | R11 | Mobile / Telegram WebApp regression | v2 viewport tested на desktop. Cutover making /v2 default = mobile/Telegram WebApp users get v2 first time. Visual System v1.0 mobile compliance unverified at scale | **Q-Mobile-1:** existing mobile QA baseline для v2? Telegram WebApp viewport testing precedent (Эпик 0 §8 R1 risk)? Pre-cutover smoke test plan |
 | R12 | Auth flow under cutover | `/v2/auth/*` → `/auth/*` route change. Auth guards в router-level. JWT / session preservation through cutover | **Q-Auth-1:** auth guard logic в `src/router/index.js`. Session persistence across route schema change. Re-login force vs session preservation policy decision |
 
-<!-- Sections 4-9 forthcoming в subsequent phases -->
+---
+
+## Section 4 — Carry-overs catalog (3 from 5U + 5 lesson candidates)
+
+### 5U → Эпик 6 carry-overs (3 items)
+
+| # | Item | Source | Status entering Эпик 6 |
+|---|---|---|---|
+| 1 | Achievement badge для retirement | 5Q drop, κ Path B alternative | CARRY-OVER. Backend Achievement entity extension required (Prisma schema + service + endpoint + helper integration). Lesson #33 PR-to-main chain triggers. **Investigation:** Q-Achievement-1 (R6) |
+| 2 | HudProfile card-creep monitor | 5L+ → 5S Q1.3 monitor | MONITOR-FORWARD. 6/7 threshold; refactor triggers if 7th card added. **Investigation:** Q-CardCreep-1 (R7) |
+| 3 | Lesson #36 validation track | 5R | CARRY-OVER. Await 2nd occurrence of incomplete rollback drift. **Investigation:** Q-Lesson36-1 (R8) |
+
+### Lesson candidates active (5)
+
+| # | Title | Source | Promotion criteria | Эпик 6 N/A or applicable |
+|---|---|---|---|---|
+| #36 | Incomplete rollback drift detection | 5R | 2nd test occurrence (DB rollback without code rollback or vice versa) | Applicable if Эпик 6 includes DB migrations |
+| #37 | Sandbox capability empirical verification | 5R | pre-formal → 2nd application | Applicable if Эпик 6 surface'ит new sandbox-capability questions |
+| #38 | Multi-layer deploy environment awareness extension | 5R | pre-formal → 2nd application | Applicable to cutover (Vercel preview / production / Telegram WebApp distinct environments) |
+| #39 | Pre-migration callsite enumeration / generic-word scoping | 5T | 2nd i18n-class application | N/A in cutover unless i18n parity in-scope |
+| #40 | Locale section-ordering variance | 5T | 2nd occurrence | N/A in cutover unless i18n parity in-scope |
+
+---
+
+## Section 5 — Future i18n parity catalog (carry from 5T, NOT auto-Эпик 6)
+
+5T FINAL_REPORT §8 documented these as future scope, NOT 5U scope. Эпик 6 may opt-in if cutover surface'ит cleanup opportunity, otherwise dedicated post-Эпик 6 i18n parity sub-epic candidate.
+
+**Translation correctness debt (8+ items):**
+
+- `club.lblBack` — broken EN placeholder в non-EN locales
+- `pvp.wins` — broken EN placeholder
+- `clan.tabMembers` — broken EN placeholder
+- `clan.lblTotalFights` — broken EN placeholder
+- `pvp.losses` — broken EN placeholder
+- `club.lblMoves` — broken EN placeholder
+- `fight.lblAiRetry` — broken EN placeholder
+- `club.lblConfirmStep` — broken EN placeholder
+- `club.lblNext` — broken EN placeholder
+
+**Genuine context-divergent translations:**
+
+- `name` — clan-entity vs person semantics
+- `retry` — verbose vs short forms
+- `wins` / `losses` — PvP-context shorter form vs general
+
+**Structural debt:**
+
+- 31 × 2x-only dupes (originally excluded from 5T per Path D scope discipline)
+- 3 cross-locale-fragmented keys (today / yesterday / login)
+- Pre-existing locale gaps (`profile.invite.btnLogin` × 9 locales, `club.lblToday` / `club.lblYesterday` × 10 locales)
+- gameData.branches.{speed,power,technique}.name (semantic separation from UI labels — Lesson #32 boundary)
+- club:184 / clan:126 internal restructuring (out-of-scope, Strategy 3 hybrid)
+
+**Decision rule for Эпик 6:** opt-in i18n parity scope ONLY if cutover work natural-fits cleanup (e.g. cutover banner новые strings → discipline applies). Standalone i18n parity = post-Эпик 6 dedicated sub-epic per 5T λ anti-rec preserved.
+
+<!-- Sections 6-9 forthcoming в Phase 2b2 -->
