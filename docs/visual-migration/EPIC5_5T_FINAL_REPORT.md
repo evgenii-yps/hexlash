@@ -121,3 +121,87 @@
 - No semantic regression — orphan status fully validated end-to-end (deletion produced no functional change because there were never any consumers)
 
 **Build duration:** 87s. Locale-specific warnings: 0.
+
+## Section 5 — Recoveries log (5T session)
+
+6 recovery candidates surfaced during 5T, all classified adaptation-tier per Lesson #35. Each refined premise without blocking execution.
+
+| # | Title | Phase | Tier | Outcome |
+|---|---|---|---|---|
+| #72 | γ greenfield assumption falsified | P0.5 (γ investigation) | adaptation | drove γ → ι pivot |
+| #73 | v2 mock fightState gap | P0.5 (γ investigation) | adaptation | contributed γ → ι |
+| #74 | Yesterday symmetry false | P0b (Q1.6 locale audit) | adaptation | contributed Path D scope |
+| #75 | Value-equivalence methodology gap | P0d (amendment trigger) | adaptation | drove ι full → Path D |
+| #76 | Orphan source paths | P1 Step 1 enumeration | adaptation | drove P1 → NO-OP collapse |
+| #77 | Generic-word section collision | P2 Step 4 pre-edit | adaptation | averted destructive sed |
+
+### Detail per recovery
+
+**#72 — γ greenfield assumption falsified.** Pre-investigation premise treated AI Trainer as M-feature greenfield work. P0.5 investigation revealed full v1 implementation already exists: `AiTrainerAnalysis.vue` (229 lines, src/components/) wired into `CardFightView.vue`, backed by `/v1/ai/analyze-fight` endpoint, 5 i18n keys present in all 11 locales. Greenfield premise falsified. Drove pivot reasoning to ι.
+
+**#73 — v2 mock fightState gap.** v2 fight architecture per Epic 3A intent uses mock fightState (no Vuex coupling, no real combat data — visual-only). AI Trainer integration via existing v1 endpoint requires either degraded output (Path α: limited prompt context) or backend extension triggering Lesson #33 PR-to-main chain (Path γ). Both rejected — Path α ships negative product UX; Path γ inflates scope and streak risk. Contributed γ → ι pivot.
+
+**#74 — Yesterday symmetry false.** Q1.6 audit assumed today/yesterday i18n key symmetry across locale files based on en.js. Cross-locale verification revealed `club.lblYesterday` exists in only 2 locales while `club.lblToday` in 1. Asymmetry. Drove Track B "today/yesterday" drop pre-Path-D.
+
+**#75 — Value-equivalence methodology gap.** Q1.6 audit checked PRESENCE of keys but not VALUE EQUIVALENCE across locales. Phase 1 Step 1 cross-source value comparison revealed majority of "duplicates" were hardcoded English placeholders in non-EN locales (localization debt artifacts), not genuine duplicates. 8/8 Track B + 2/3 Track A keys had cross-locale divergence. Only `Cancel` truly identical across all 11 locales. Drove ι full → Path D ultra-strict scope reduction (11 dupe groups → 1).
+
+**#76 — Orphan source paths.** P1 Step 1 callsite enumeration revealed both source paths (`clan.lblCancel`, `xpAllocation.cancel`) are orphan (0 callsites in `src/`). Target `modal.btnCancel` has 15 active callsites (alive). P1 functional commit collapsed to NO-OP. Sub-epic ships only P2 orphan locale cleanup. **Methodology insight:** 3-layer i18n validation framework — presence (Q1.1) → value-equivalence (Q1.6) → callsite-presence (Q1.7). Layer 3 uniquely surfaces "no consumers" cases before destructive edit attempts.
+
+**#77 — Generic-word section collision.** P2 Step 4 pre-edit uniqueness check revealed `^    cancel:` matches 2 lines per locale, not 1 — second `cancel:` in matchmaking section (`searchingForOpponent / cancel / opponentFound` cluster). Unscoped sed deletion would have wrongly removed the matchmaking cancel button across all 11 locales, breaking PvP UI. Pattern-based scoping via predecessor-line idiom (`/^    allocate:/{n;/^    cancel:/d}` for xpAllocation, `/^    lblNotice:/{n;/^    lblCancel:/d}` for clan) ensured correct match. Section ordering varies across locales (xpAllocation precedes matchmaking in `ar.js`, follows in `en.js`/`ru.js`) — pattern-based scoping handled both transparently. Lesson #11 reflex catch averted destructive edit pre-commit.
+
+### Reify rationale for #76 + #77
+
+Both surfaced post-P0d (orphan finding in P1 Step 1, collision in P2 Step 4 pre-edit). Neither was in repo until P2 commit message + this FINAL_REPORT § 5. Adaptation-tier per Lesson #35 — natural location for documentation is P2 commit body + FINAL_REPORT, no P0e amendment triggered.
+
+## Section 6 — Lessons applied + new candidates
+
+### Existing 35 lessons applied in 5T
+
+- **#11 (pre-edit verification reflex)** — applied 4 times in 5T:
+  1. P1 Step 1 callsite enumeration (caught #76 orphan source paths)
+  2. P2 Step 2 orphan re-verify (held — assumption from P1 Step 1 stable)
+  3. P2 Step 3 presence verification (all 22 entries confirmed pre-deletion)
+  4. P2 Step 4 uniqueness check (caught #77 critical collision pre-edit)
+
+  **Most-applied lesson in 5T.** Validates ongoing utility — every reflex catch averted destructive action or refined scope.
+
+- **#18 (STOP triggers)** — not triggered in 5T. All 6 recoveries adaptation-tier per #35; no structural mismatch surfaced. Pattern: when investigation refines premise without blocking execution, #18 stays dormant.
+
+- **#32 (convention discovery reflex)** — applied to locale file format inspection (ESM `export default` confirmed in P0 prep, P0d self-correction documented in repo).
+
+- **#33 (deploy-environment awareness)** — i18n is frontend-only refactor, no PR-to-main chain. Continue stack throughout. No new application beyond avoidance acknowledgment.
+
+- **#35 (reflex catch tiering)** — all 6 recoveries adaptation-tier, validating framework. None bug-bundle (no missed callsites surfaced post-P2 build verify). None scope-boundary (no non-i18n issues triggered Lesson #18). Tiering framework operationalizes cleanly.
+
+### Cumulative lesson tally
+
+**35 → 35 (UNCHANGED).** No promotions in 5T.
+
+### 3 carry-over candidates from 5R — status check
+
+- **#36 (Incomplete rollback drift detection)** — N/A in 5T (frontend-only, no DB). PROMOTE pending 2nd test, deferred forward.
+- **#37 (Sandbox capability empirical verification)** — N/A in 5T. Pre-formal, deferred forward.
+- **#38 (Multi-layer deploy environment awareness extension)** — N/A in 5T. Pre-formal, sub-pattern of #33, deferred forward.
+
+### New lesson candidates from 5T (2 candidates, both pre-formal)
+
+**#39 candidate — "Pre-migration callsite enumeration as final scope gatekeeper":**
+
+Originated in P1 Step 1 (Recovery #76 — orphan source paths discovered). Combined with P2 Step 4 (Recovery #77 — generic-word collision averted) into broader formulation: **"Pre-edit uniqueness scoping for generic key names — Lesson #11 specialization for i18n work."**
+
+Operationalizes 3-layer i18n validation framework:
+1. Presence layer — does the duplicate exist in multiple section paths? (Q1.1)
+2. Value-equivalence layer — same key value identical across locales? (Q1.6)
+3. Callsite-presence layer — are there consumers? (Q1.7)
+
+Layer 3 uniquely surfaces "no consumers" cases (NO-OP migrations) before destructive edit attempts. Pre-5T i18n investigations only ran layer 1 — caught en.js-side dupe shape but missed cross-locale divergence (#75) and orphan status (#76).
+
+**Status:** PROMOTE pending 2nd application. Likely 5U if i18n parity work continues, or future i18n parity sub-epic.
+
+**#40 candidate — "Locale section-ordering variance":**
+
+Surfaced in Recovery #77. Locale files do NOT share section ordering across translations. Example: `xpAllocation` block precedes `matchmaking` section in `ar.js`, but follows it in `en.js`/`ru.js`. Implication: line-number-based edits unsafe for cross-locale work; pattern-based scoping via predecessor-line idiom required.
+
+Sub-pattern of #11 (pre-edit verification reflex) — specialization for cross-locale work.
+
+**Status:** PROMOTE pending 2nd occurrence. Filed alongside #39 as i18n-toolkit candidates.
