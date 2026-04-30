@@ -255,7 +255,6 @@ export default {
     lblCalculationResult: '您将获得',
     lblFCTokens: 'HXL代币',
     lblNotice: '代币将在24小时内转入指定钱包。交易手续费为3%。',
-    lblCancel: '取消',
     lblWithdraw: '提取',
     modalTitle: '创建新战队',
     inputName: '名称',
@@ -654,7 +653,6 @@ export default {
     freeXP: '可用',
     allocateTo: '投资于',
     allocate: '强化',
-    cancel: '取消',
   },
   cards: {
   },

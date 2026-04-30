@@ -255,7 +255,6 @@ export default {
     lblCalculationResult: 'Recibirás',
     lblFCTokens: 'tokens HXL',
     lblNotice: 'Los tokens se acreditarán a la billetera especificada dentro de las 24 horas. La comisión por transacción es del 3%.',
-    lblCancel: 'Cancelar',
     lblWithdraw: 'Retirar',
     modalTitle: 'Crear Nuevo Clan',
     inputName: 'Nombre',
@@ -654,7 +653,6 @@ export default {
     freeXP: 'Disponible',
     allocateTo: 'INVERTIR EN',
     allocate: 'POTENCIAR',
-    cancel: 'Cancelar',
   },
   cards: {
   },

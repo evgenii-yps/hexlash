@@ -255,7 +255,6 @@ export default {
     lblCalculationResult: '받을 금액',
     lblFCTokens: 'HXL 토큰',
     lblNotice: '토큰은 지정된 지갑에 24시간 이내에 입금됩니다. 수수료는 3%입니다.',
-    lblCancel: '취소',
     lblWithdraw: '인출',
     modalTitle: '새 클랜 생성',
     inputName: '이름',
@@ -654,7 +653,6 @@ export default {
     freeXP: '사용 가능',
     allocateTo: '투자 대상',
     allocate: '강화하기',
-    cancel: '취소',
   },
   cards: {
   },

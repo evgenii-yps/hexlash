@@ -255,7 +255,6 @@ export default {
     lblCalculationResult: 'Vous recevrez',
     lblFCTokens: 'tokens HXL',
     lblNotice: 'Les tokens seront crédités au portefeuille spécifié dans un délai de 24 heures. Les frais de transaction sont de 3%.',
-    lblCancel: 'Annuler',
     lblWithdraw: 'Retirer',
     modalTitle: 'Créer un nouveau clan',
     inputName: 'Nom',
@@ -654,7 +653,6 @@ export default {
     freeXP: 'Disponible',
     allocateTo: 'INVESTIR DANS',
     allocate: 'RENFORCER',
-    cancel: 'Annuler',
   },
   cards: {
   },

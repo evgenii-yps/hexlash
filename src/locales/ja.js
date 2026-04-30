@@ -255,7 +255,6 @@ export default {
     lblCalculationResult: '取得予定',
     lblFCTokens: 'HXLトークン',
     lblNotice: 'トークンは指定されたウォレットに24時間以内に送信されます。取引手数料は3％です。',
-    lblCancel: 'キャンセル',
     lblWithdraw: '引き出し',
     modalTitle: '新しいクランを作成',
     inputName: '名前',
@@ -654,7 +653,6 @@ export default {
     freeXP: '利用可能',
     allocateTo: '投資先',
     allocate: '強化する',
-    cancel: 'キャンセル',
   },
   cards: {},
   training: {

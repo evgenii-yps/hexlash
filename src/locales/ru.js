@@ -264,7 +264,6 @@ export default {
     lblCalculationResult: 'Вы получите',
     lblFCTokens: 'HXL токены',
     lblNotice: 'Токены будут зачислены на указанный кошелек в течение 24 часов. Комиссия за транзакцию составляет 3%.',
-    lblCancel: 'Отмена',
     lblWithdraw: 'Вывести',
     modalTitle: 'Создать новый клан',
     inputName: 'Название',
@@ -715,7 +714,6 @@ export default {
     freeXP: 'Свободно',
     allocateTo: 'ВЛОЖИТЬ В',
     allocate: 'УСИЛИТЬ',
-    cancel: 'Отмена',
   },
   cards: {
   },

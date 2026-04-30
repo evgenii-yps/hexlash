@@ -255,7 +255,6 @@ export default {
     lblCalculationResult: 'Você receberá',
     lblFCTokens: 'tokens HXL',
     lblNotice: 'Os tokens serão creditados na carteira especificada em até 24 horas. A taxa de transação é de 3%.',
-    lblCancel: 'Cancelar',
     lblWithdraw: 'Sacar',
     modalTitle: 'Criar Novo Clã',
     inputName: 'Nome',
@@ -654,7 +653,6 @@ export default {
     freeXP: 'Disponível',
     allocateTo: 'INVESTIR EM',
     allocate: 'FORTALECER',
-    cancel: 'Cancelar',
   },
   cards: {},
   training: {

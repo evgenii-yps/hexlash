@@ -255,7 +255,6 @@ export default {
     lblCalculationResult: 'आपको मिलेगा',
     lblFCTokens: 'HXL टोकन',
     lblNotice: 'टोकन निर्दिष्ट वॉलेट में 24 घंटे के भीतर जमा हो जाएंगे। लेन-देन शुल्क 3% है।',
-    lblCancel: 'रद्द करें',
     lblWithdraw: 'निकालें',
     modalTitle: 'नया क्लैन बनाएं',
     inputName: 'नाम',
@@ -654,7 +653,6 @@ export default {
     freeXP: 'उपलब्ध',
     allocateTo: 'में निवेश करें',
     allocate: 'मजबूत करें',
-    cancel: 'रद्द करें',
   },
   cards: {},
   training: {

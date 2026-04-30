@@ -255,7 +255,6 @@ export default {
     lblCalculationResult: 'ستحصل على',
     lblFCTokens: 'رموز HXL',
     lblNotice: 'ستتم إضافة الرموز إلى المحفظة المحددة خلال 24 ساعة. رسوم المعاملة هي 3٪.',
-    lblCancel: 'إلغاء',
     lblWithdraw: 'سحب',
     modalTitle: 'إنشاء عشيرة جديدة',
     inputName: 'الاسم',
@@ -654,7 +653,6 @@ export default {
     freeXP: 'متاح',
     allocateTo: 'استثمر في',
     allocate: 'تعزيز',
-    cancel: 'إلغاء',
   },
   cards: {},
   training: {
