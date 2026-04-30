@@ -205,3 +205,146 @@ Surfaced in Recovery #77. Locale files do NOT share section ordering across tran
 Sub-pattern of #11 (pre-edit verification reflex) — specialization for cross-locale work.
 
 **Status:** PROMOTE pending 2nd occurrence. Filed alongside #39 as i18n-toolkit candidates.
+
+## Section 7 — Methodology contributions
+
+### 3-layer i18n validation framework
+
+Synthesis of Recovery #75 (value-equivalence) + Recovery #76 (orphan source paths). Pre-5T i18n investigations only ran layer 1 — caught en.js-side dupe shape but missed cross-locale divergence and orphan status. 5T contributes layers 2 + 3, both mandatory before destructive edits:
+
+1. **Presence layer (Q1.1 — does the duplicate exist in multiple section paths?)** — en.js-side scan via dupe-detection script. Identifies candidate dupe groups in source-of-truth locale.
+2. **Value-equivalence layer (Q1.6 refined — same key value identical across all locales?)** — cross-source value comparison across 11 locales. Guards against hardcoded English placeholders in non-EN locales (localization-debt artifacts that masquerade as duplicates in en.js).
+3. **Callsite-presence layer (Q1.7 P1 Step 1 — are there consumers?)** — pre-edit grep for source paths in `src/`. Guards against NO-OP migrations (orphan source paths with 0 callsites).
+
+Each layer caught a distinct failure mode in 5T. Skip any layer → premise gaps surface during edits or post-commit, with destructive consequences.
+
+### Section-ordering-variance awareness
+
+Surfaced in Recovery #77 catch. Locale files do NOT share section ordering across translations. Concrete example from 5T:
+
+| Locale | xpAllocation block position | matchmaking block position |
+|---|---|---|
+| `ar.js` | Top (line ~1-7) | Bottom (line ~820+) |
+| `en.js` | Mid-bottom (line ~720) | Mid (line ~685) |
+| `ru.js` | Mid-bottom (line ~718) | Mid (line ~685) |
+
+Implication: line-number-based edits are unsafe across locales. **Required pattern:** scoped sed via predecessor-line idiom (`/^    <unique_predecessor_key>:/{n;/^    <target_key>:/d}`).
+
+### Generic-word collision pre-check pattern
+
+Generic words like "cancel", "ok", "back" appear in multiple locale sections (modal block + matchmaking block + clan block). Pre-edit uniqueness check on pattern-only basis is insufficient — must scope to section context.
+
+**Verification command:**
+
+```bash
+grep -nE "^    <key>:" <locale_file>  # Should return 1 match per intended target
+```
+
+If returns >1 match → pattern-based scoping mandatory (predecessor-line idiom or other scoping mechanism). If returns 1 match → simple pattern delete safe.
+
+### Dual-pivot precedent (γ → ι → Path D)
+
+5T extends investigation-refines-ТЗ pattern (5O / 5Q / 5R / 5S / 5T) to support **intra-sub-epic re-pivots**. Pre-investigation ТЗ now treated as draft for entire sub-epic duration, not just initial scope refinement.
+
+Strategic shifts during execution (Path D scope reduction post-P0c) are valid Mode A operations when:
+1. Investigation surfaces new constraints (Recovery candidate emerges)
+2. Each pivot is documented (P0d amendment appended, not back-edited over P0c)
+3. Design-Claude ratifies before next functional commit
+
+5T = first sub-epic to apply 2 strategic shifts plus 1 collapse within single execution. Demonstrated tractability. Future sub-epics can adopt similar discipline when premise issues surface mid-execution.
+
+### Pivot reasoning preservation principle
+
+Failed strategic paths preserved in repo as historical record (γ STARTUP at `aac35a3` not deleted post-pivot; ι Hybrid-2 scope in `dcd7362`+`333bc12` preserved alongside Path D scope in `cd286c1`). **Transparency over revisionism.**
+
+Future sub-epics inherit institutional memory of why γ failed (greenfield falsified, v2 mock gap), why Hybrid-2 didn't ship (value-equivalence methodology gap) — guards against repeating same investigation work in subsequent i18n / AI-Trainer-related sub-epics.
+
+This principle generalizes beyond pivots: erratum subsections (Section 8 below) follow same logic — append corrections rather than back-edit prior sections.
+
+## Section 8 — Closure metrics + carry-overs + erratum + acceptance
+
+### 5T closure metrics
+
+| Metric | Value |
+|---|---|
+| Total commits (final estimate) | 11 (P0 + P0c1 + P0c2 + P0d + P2 + P4a + P4b1 + P4b2 + P5a + P5b + P6) |
+| Functional commits | 1 (P2 — `141e814`) |
+| Recovery candidates | 6 (#72-#77, all adaptation-tier) |
+| Hot-fixes | 0 — **16-streak** if P5/P6 clean |
+| Strategic pivots | 2 (γ → ι, ι full → Path D) + 1 collapse (P1 → NO-OP) |
+| Pre-flight rejections | 3 paths (α/β/γ for AI Trainer) + 4 paths (A/B/C/D for ι scope) |
+| Methodology contributions | 4 (3-layer validation, section-ordering variance, generic-word collision, dual-pivot precedent) |
+| New lesson candidates | 2 (#39 callsite enumeration / generic-word scoping; #40 locale section-ordering variance) |
+| Preventive split applications | 6 (P0c1, P0c2, P4a, P4b1 reactive split, P4b2, plus future P5a/P5b) |
+| Reactive split applications | 1 (P4b → P4b1+P4b2 stream-idle-timeout response) |
+
+### Эпик 5 §4.2 progress
+
+**21/22 done (95%)** (+1 from 5T — i18n consolidation orphan cleanup closes 5O+ → 5S Q1.4 PROMOTED carry-over). **One sub-epic (5U) remaining for Epic 5 closure.**
+
+### Bundle impact recap
+
+- 22 locale entries removed (11 files × 2 lines)
+- 0 source-code changes
+- Main `index.js` raw: −0.51 kB
+- Main `index.js` brotli: −0.63 kb
+- Main `index.js` gzip: +2.46 kB (build-system noise)
+- `dist/` total: 21M unchanged
+- Asset count: 233 unchanged
+- 0 functional regression (end-to-end orphan validation confirmed)
+
+### Carry-overs forward to 5U (4 items)
+
+| # | Item | Source | Status |
+|---|---|---|---|
+| 1 | Animation для retirement | 5Q drop | CARRY-OVER (frontend animation pass, deferred) |
+| 2 | Achievement badge для retirement | 5Q drop | CARRY-OVER (requires backend extension) |
+| 3 | HudProfile card-creep monitor | 5L+ → 5S Q1.3 | MONITOR-FORWARD (6/7 threshold) |
+| 4 | Lesson #36 validation track | 5R | CARRY-OVER (await 2nd occurrence) |
+
+**Future i18n parity sub-epic candidates** (NOT 5U scope):
+- 31 × 2x-only dupes (lower pain, defer)
+- 3 cross-locale-fragmented keys (today/yesterday/login)
+- Pre-existing locale gaps (`profile.invite.btnLogin` × 9 locales, `club.lblToday`/`club.lblYesterday` × 10 locales)
+- Hardcoded English placeholders in non-EN locales (`club.lblBack`, `pvp.wins`, `clan.tabMembers`, `clan.lblTotalFights`, `pvp.losses`, `club.lblMoves`)
+- gameData.branches.{speed,power,technique}.name (semantic separation from UI labels)
+- club:184 / clan:126 internal restructuring
+
+### Closed in 5T
+
+- ~~i18n cross-section reuse — formal M-size task~~ ✅ closed via Path D ultra-strict (22 deletions = methodology + 1 dupe group elimination, full M-scope deferred to future i18n parity sub-epic)
+
+### Net 5S → 5T accounting
+
+5 entering 5T → 4 leaving (i18n closed via Path D scope reduction).
+
+### 5T closure shape
+
+Methodology-heavy sub-epic. Value-add inventory:
+
+- 6 recovery candidates (#72-#77)
+- 4 methodology contributions (3-layer validation, section-ordering, generic-word, dual-pivot)
+- 2 lesson candidates (#39, #40)
+- 22 functional deletions
+- 0 source-code changes
+- 0 bundle regression
+
+Some sub-epics ship institutional knowledge over LoC. 5T fits that profile — Path D ultra-strict was the honest scope, and the institutional contribution dwarfs the functional commit.
+
+### Erratum
+
+**Section 3 off-by-one count correction:** P4a Section 3 used "sextuple-precedent" for investigation-refines-ТЗ pattern. Actual count is **quintuple** (5O / 5Q / 5R / 5S / 5T = 5 sub-epics). Append-only constraint applied (no back-edit Section 3) — documented here per pivot reasoning preservation principle (Section 7). Future references to this pattern in HANDOFF_5U / CLAUDE.md update should use "quintuple" or "5-precedent".
+
+### Acceptance checklist
+
+- [x] 22 orphan locale entries removed (P2 — `141e814`)
+- [x] Build clean, end-to-end orphan validation (P3 — NO-OP, inline status)
+- [x] FINAL_REPORT split-and-ship (P4a `69e7e66` + P4b1 `ff05c07` + P4b2 — this commit; total 3 commits due to reactive split)
+- [ ] HANDOFF_5U preventive split (P5a + P5b)
+- [ ] CLAUDE.md update (P6) — Sub-Epic 5T section, recoveries #72-77, methodology, dual-pivot precedent, quintuple-precedent (corrected)
+- [ ] Streak verified — 16 if all phases clean
+- [x] Continue stack 11th decision recorded
+
+### Sub-Epic 5T — CLOSED
+
+**(pending P5/P6 phases.)** One sub-epic (5U) remaining for Epic 5 closure.
