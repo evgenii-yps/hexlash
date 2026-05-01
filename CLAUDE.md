@@ -4360,6 +4360,86 @@ Phase 0 surfaced 3 STOP conditions (card-creep at 6/7, port required, Shop overl
 
 ---
 
+### Sub-Epic 6B-3a-backend — Privacy Fix (Code Complete + Deferred Verify)
+
+**Status:** **CODE COMPLETE clean ✅, deploy verify DEFERRED** к pre-6B-3 step
+**Type:** Backend privacy fix, S-M size, **backend-only**
+**Phases:** 7 commits (5 functional + Phase 2a FINAL_REPORT + Phase 2b this commit)
+**Functional commits:** 5 (`6510ff5` helper + `d4da52a` /login + `f7014f0` /id + `054bf0b` /search + `aa1ad73` tests)
+**Branch:** `claude/investigate-retirement-animation-zQeg4`
+**HEAD before:** `a9c35d8` (6B-2 closure)
+**HEAD after Phase 1:** `aa1ad73`
+**HEAD after Phase 2a:** `3701398`
+**HEAD after Phase 2b (this):** `<NEW_HASH>` — 6B-3a-backend CODE COMPLETE
+
+**What 6B-3a-backend did:**
+
+First **backend-only** sub-epic в Эпике 6. Closes critical privacy leak — backend `/v1/user/*` guest endpoints возвращали full user data including `email`, `balance`, `walletAddress`, `wonTokens`, `freeTokens`, `progression`, `deck`, `settings`. Affected 3 endpoints: `/login/:login`, `/id/:id`, `/search` (last is list endpoint — biggest leak).
+
+Created `formatUserPublicResponse` helper в `backend/src/utils/helpers.js` exposing only 25 public-by-design fields. Switched 3 guest endpoints. `formatUserResponse` (existing) preserved untouched for own contexts (`/me`, `/edit`, WS handler).
+
+**Path 2 (backend safety first)** chosen via user input over Path 1 (frontend filter only). This split sub-epic chain — added 6B-3a-backend as dedicated sub-epic before 6B-3.
+
+**Closure shape (NEW METHODOLOGY):** **Code-complete + deferred-verify** — first sub-epic в Эпике 6 closing с deferred deploy verify. Production backend deploy gated through main branch merge (per branch strategy). 6B-3a-backend code на designated branch не auto-deploys. Deploy verify deferred к mandatory pre-condition before 6B-3 Phase 1.
+
+**Public fields exposed (25):** id, login, name, avatarUrl, skin, isBlocked, clanId, clanRole, rating, totalFights, wins/losses/draws (incl. pve/pvp variants — 8 fields), luckPercentage, invitedUsers, createdAt, achievements (mapped via achievementId), captain (optional).
+
+**Private fields excluded (17):** email, emailVerified, initialVerified, inviteId, balance, walletAddress, wonTokens, freeTokens, lostTokens, progression, deck, settings, noSkipDays, totalTaps, language, referredBy, updatedAt.
+
+**Recovery log (1 catch in 6B-3a-backend session):**
+
+- **Recovery #80** — JWT_SECRET environmental issue в test setup (helpers.js transitively requires config.js which throws at module-load time). Caught pre-commit во время first `npm test` run после Commit 5 file creation. Fix: single line `process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret'` в начале test file. **adaptation-tier per Lesson #35** (4-criterion check passed: not hot-fix, not bug-bundle, not scope-boundary, environmental expectation mismatch). **Streak preserved.**
+
+**Cumulative lesson tally:** 35 → 35 (UNCHANGED). 0 new candidates.
+
+**Hot-fix metric:** **0 — streak preserved at 20**, will transition к **21 ONLY после deploy verify completes pre-6B-3.**
+
+**Cumulative recoveries:** 79+ entering → **80+** exiting (+1 Recovery #80, adaptation-tier).
+
+**Эпик 6 progress:** **4/13 sub-epics done (31%)** — roadmap expanded к 13 due к 6B-3a + 6B-3b split.
+
+**Tests:** 71 → 77 (+6 new tests in helpers.test.js, all pass; new test file uses `describe/it` + `node:assert/strict` mirroring existing convention per Lesson #32).
+
+**Sub-Epic 6B-3a-backend — CODE COMPLETE clean ✅, deploy verify DEFERRED.**
+
+**Methodology applied + 1 NEW contribution:**
+
+- Quintuple-precedent investigation-refines-ТЗ — Phase 0 STOP → Path 2 user input → Phase 1 ТЗ refined
+- Mode A strict per-commit discipline — 5 functional commits с pre-edit + 2 re-investigation steps (Commit 3 `/id/:id`, Commit 4 `/search`)
+- Convention discovery (Lesson #32) — applied **twice**: test framework (`describe/it` + `node:assert/strict` per existing 5 test files, NOT `test()` direct API per ТЗ template) + achievement mapping (`a.achievementId` per existing `formatUserResponse`, NOT `a.id` per ТЗ template)
+- Lesson #33 (deploy-environment awareness) — deploy mechanism investigation (Pre-Phase-1 + apitest unreachable mini-task) + Variant C closure decision
+- **NEW: Code-complete + deferred-verify closure shape** — 3rd closure pattern в Эпике 6 toolkit (after "linear closure" 6A + "deprecation-via-redirect" 6B-2). Sub-epic ships code through deploy chain separately from designated branch; final acceptance gate (production deploy verify) gated on user-side action external к designated branch; streak math reflects gating honestly (preserved, NOT incremented until verify completes)
+
+**Carry-overs forward (entering 6B-3a-backend: 6, exiting: 8):**
+
+| # | Item | Source | Status |
+|---|---|---|---|
+| 1 | Achievement badge для retirement | 5Q drop, κ Path B | CARRY-OVER |
+| 2 | HudProfile card-creep monitor | 5L+ → 5S Q1.3 | MONITOR-FORWARD (still 6/7, **6B-3a-backend NOT triggered** ✓ — no HUD touched) |
+| 3 | Lesson #36 validation track | 5R | CARRY-OVER (await 2nd occurrence) |
+| 4 | Auth + Wallet visual redesign | 6A user request | CARRY-OVER (sub-epic 6B-10) |
+| 5 | `/rules` → v2 port | 6B-1 Phase 0 | CARRY-OVER (6C cleanup или 6B-1b candidate) |
+| 6 | 3D models + devices system | 6B-2 user direction | CARRY-OVER (post-migration / Эпик 7+) |
+| 7 | **NEW: Locale cleanup (10 → English-only)** | 6B-3a user direction | NEW CARRY-OVER (Эпик 7+ scope) |
+| 8 | **NEW: `/user/search` `sortBy=balance` query param** | 6B-3a Phase 1 finding (Commit 4 re-investigation) | NEW CARRY-OVER (secondary leak vector — sort by private financial field позволяет inference relative balances even через filtered response; out of 6B-3a-backend scope) |
+
+**Net 6B-2 → 6B-3a-backend accounting:** 6 entering → 8 leaving (6 carried forward unchanged + 2 new from session findings).
+
+**⚠ MANDATORY PRE-CONDITION для 6B-3:**
+
+Before 6B-3 Phase 1 starts, deploy verify MUST complete:
+1. Cherry-pick 5 commits (`6510ff5..aa1ad73`) onto new branch from main HEAD (suggested name: `fix/user-public-response`)
+2. PR → main → merge → Railway auto-deploy на `api.hexlash.com`
+3. Authenticated curl probe `/v1/user/login/:someone` → verify response shape (public fields present, private fields absent)
+4. After verify success → 6B-3a-backend streak transitions **20 → 21**
+5. 6B-3 Phase 1 ТЗ unblocked
+
+Until verify completes, **6B-3 Phase 1 ТЗ MUST NOT be executed** even if all other pre-conditions met.
+
+**Следующий step:** Pre-6B-3 deploy verify task (mandatory, separate ТЗ when user ready) → потом 6B-3 Phase 0 (`/user/:userLogin` guest profile UI).
+
+---
+
 ## 🎉 ЭПИК 5 §4.2 — CLOSED ✅
 
 **Эпик 5 §4.2 historic milestone:** 22/22 sub-epic candidates closed (100%).
@@ -4391,28 +4471,37 @@ Phase 0 surfaced 3 STOP conditions (card-creep at 6/7, port required, Shop overl
 
 ## Эпик 6 — Cutover (in progress)
 
-Последний эпик миграции. Roadmap: 11 sub-epics (6A + 6B-1...6B-9 + 6C). Strategy: гибрид B+C — постепенное закрытие coverage gaps + route-by-route cutover + финальный cleanup.
+Последний эпик миграции. Roadmap: **13 sub-epics** (was 11; expanded к 13 due к 6B-3a-backend + 6B-3b split — backend privacy fix dedicated + entry-points wiring split from 6B-3 frontend). Strategy: гибрид B+C — постепенное закрытие coverage gaps + route-by-route cutover + финальный cleanup.
 
-**Эпик 6 progress:** 3/11 done (27%) — 6B-2 CLOSED.
+**Эпик 6 progress:** 4/13 done (31%) — 6B-3a-backend CODE COMPLETE.
+
+> **⚠ ACTIVE PRE-CONDITION FOR 6B-3:** Deploy verify of 6B-3a-backend code (commits `6510ff5..aa1ad73`) MUST complete before 6B-3 Phase 1 starts.
+> Cherry-pick → PR → merge к main → Railway auto-deploy на `api.hexlash.com` → authenticated curl verify response shape (public fields present, private fields absent).
+> Until verify success, 6B-3 Phase 1 blocked. **Streak 20 transitions к 21 only after verify.**
 
 Roadmap document: `docs/visual-migration/EPIC6_ROADMAP.md` (TBD — может быть создан как separate sub-epic либо in-place в этой секции).
 
 **Cumulative metrics entering Эпик 6 / current state:**
-- **20-streak** (5E → 5U + 6A + 6B-1 + 6B-2 all clean)
-- 79+ cumulative recoveries
+- **20-streak (PRESERVED, NOT 21)** — gated на pre-6B-3 deploy verify; transitions к 21 после verify completes (5E → 5U + 6A + 6B-1 + 6B-2 + 6B-3a-backend code complete)
+- **80+ cumulative recoveries** (+1 Recovery #80 в 6B-3a-backend, adaptation-tier per Lesson #35)
 - 35 lessons promoted, 5 candidates active (#36/#37/#38/#39/#40)
 
 **Sub-epics closed in Эпик 6:**
 - **6A** — Лёгкий cutover (4 FULL coverage routes на чистые URL'ы) ✅
 - **6B-1** — `/help` страница (first coverage gap closed: GAP → FULL — port-and-replace) ✅
 - **6B-2** — `/profile/skins` (second coverage gap closed: GAP → DEPRECATED — deprecation-via-redirect) ✅
+- **6B-3a-backend** — Privacy fix (3 guest endpoints — code complete, deploy verify deferred — code-complete + deferred-verify pattern) ⚠ pending verify
 
-**Carry-overs into Эпик 6 (6 items — was 5 entering 6B-2):**
+**6B-3a-backend code complete на designated branch. Deploy verify mandatory pre-condition к 6B-3.**
+
+**Carry-overs into Эпик 6 (8 items — was 6 entering 6B-3a-backend):**
 1. Achievement badge для retirement (5Q drop, κ Path B)
-2. HudProfile card-creep monitor (6/7 threshold; **6B-2 NOT triggered** ✓ — Variant B scope discipline)
+2. HudProfile card-creep monitor (6/7 threshold; **6B-3a-backend NOT triggered** ✓ — backend-only sub-epic, no HUD touched)
 3. Lesson #36 validation track (await 2nd occurrence)
 4. Auth + Wallet visual redesign (NEW per 6A user request — sub-epic 6B-10)
 5. `/rules` → v2 port (6B-1 Phase 0 surface — PageView multi-purpose) — 6C cleanup или 6B-1b candidate
-6. **NEW: 3D models + devices system** (6B-2 user direction — replaces legacy skins concept, post-migration / Эпик 7+ scope)
+6. 3D models + devices system (6B-2 user direction — replaces legacy skins concept, post-migration / Эпик 7+ scope)
+7. **NEW: Locale cleanup (10 → English-only)** (6B-3a user direction — Эпик 7+ scope)
+8. **NEW: `/user/search` `sortBy=balance` query param** (6B-3a Phase 1 finding — secondary leak vector through sort capability over private financial field; out of 6B-3a-backend scope; follow-up sub-epic candidate)
 
-**Следующий sub-epic:** 6B-3 — `/user/:userLogin` (Чужие профили, M size). Phase 0 focuses на guest mode UI states, permissions, backend reuse.
+**Следующий step:** Pre-6B-3 deploy verify task (mandatory, separate ТЗ when user ready) → потом 6B-3 Phase 0 (`/user/:userLogin` guest profile UI).
