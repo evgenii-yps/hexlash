@@ -4290,6 +4290,76 @@ Linear trajectory, 0 recoveries. Phase 0 surface'ил multi-purpose PageView (ST
 
 ---
 
+### Sub-Epic 6B-2 — `/profile/skins` (Coverage Gap Closure через Deprecation)
+
+**Status:** CLOSED clean ✅
+**Type:** Routing redirect + UI button removal, S-size, frontend-only
+**Phases:** 4 commits (2 functional + Phase 2a FINAL_REPORT + Phase 2b this commit)
+**Functional commits:** 2 (`39fd8ce` /profile/skins redirect + `1fccfa0` Fight Skins button removal)
+**Branch:** `claude/investigate-retirement-animation-zQeg4` (продолжение)
+**HEAD before:** `29fd5c4` (6B-1 closure)
+**HEAD after Phase 1:** `1fccfa0`
+**HEAD after Phase 2a:** `da073e8`
+**HEAD after Phase 2b (this):** `<NEW_HASH>` — 6B-2 CLOSURE
+
+**What 6B-2 did:**
+
+Closes second coverage gap из 9 identified в Wave 2 audit. **Variant B (scope simplification through user direction)** — старая skins концепция (147 character sprites) deprecated, не portирована в v2. Будущая система — 3D models + devices, post-migration scope.
+
+`/profile/skins` → redirect к `/v2/profile` (name `'Skins'` preserved для zero-risk transition). "Fight Skins" кнопка удалена из v1 `ProfileButtons.vue` (-10 lines net). v1 `ProfileSkins.vue`, backend `PUT /v1/user/skin`, captain skin rendering, locale keys — preserved (6C cleanup territory).
+
+Phase 0 surfaced 3 STOP conditions (card-creep at 6/7, port required, Shop overlap). User-direction scope simplification turned S-M card-creep-risk sub-epic в clean S **без trigger card-creep monitor**.
+
+**Key decisions:**
+
+- **Scope: Variant B** — deprecate старую skins concept, redirect к main profile, button removal
+- **No new v2 view** (no HelpView-style port)
+- **No HudProfile changes** — **card-creep monitor 6/7 NOT triggered** ✓
+- **Backend preserved** — existing user data (saved skins) continues работать
+- **Shop skins (5 items, 5E) explicitly out of scope** — две divergent skin системы остаются (Эпик 7+ unification)
+
+**Recovery log:** 0 catches in 6B-2 session.
+
+**Cumulative lesson tally:** 35 → 35 (UNCHANGED). 0 new candidates.
+
+5 carry-over candidates from 5R-5U unchanged status (all N/A в 6B-2 frontend-only).
+
+**Hot-fix metric:** **0 — 20-streak achieved** ✅ (5E + 5F + 5G + 5H + 5I + 5J + 5K + 5L + 5M + 5N + 5O + 5P + 5Q + 5R + 5S + 5T + 5U + 6A + 6B-1 + 6B-2 all clean).
+
+**Cumulative recoveries:** 79+ entering 6B-2 → 79+ exiting (no recoveries, linear trajectory).
+
+**Эпик 6 progress:** 3/11 sub-epics done (27%).
+
+**Bundle delta:** main brotli -0.36 kB (dead-code elim of `navigateTo('Skins')` reference). Main raw unchanged. dist/ total unchanged 20M.
+
+**Sub-Epic 6B-2 — CLOSED ✅.** Routing + UI button removal — 2 files edited, 0 new files. Closure shape: **deprecation-via-redirect** (alternative к 6B-1's port-and-replace pattern).
+
+**Methodology applied (no new contributions):**
+
+- Quintuple-precedent investigation-refines-ТЗ pattern — Phase 0 → user direction → Phase 1 ТЗ refined
+- Mode A strict per-commit discipline — 2 functional commits
+- Re-investigation step before Commit 2 (button structure analysis per ТЗ instruction)
+- Scope simplification через user input — turning S-M card-creep risk → clean S без monitor trigger
+
+**Closure-shape variant established:** "deprecation-via-redirect" — valid alternative к "port-and-replace" (6B-1 pattern). Used когда underlying фича концептуально changes between v1 baseline и v2 future state. Future 6B-* sub-epics могут apply either pattern depending on whether legacy фича has v2 equivalent or is being conceptually retired.
+
+**Carry-overs forward (entering 6B-2: 5 items, exiting: 6 items):**
+
+| # | Item | Source | Status |
+|---|---|---|---|
+| 1 | Achievement badge для retirement | 5Q drop, κ Path B | CARRY-OVER |
+| 2 | HudProfile card-creep monitor | 5L+ → 5S Q1.3 | MONITOR-FORWARD (still 6/7, **6B-2 NOT triggered** ✓) |
+| 3 | Lesson #36 validation track | 5R | CARRY-OVER (await 2nd occurrence) |
+| 4 | Auth + Wallet visual redesign | 6A user request | CARRY-OVER (sub-epic 6B-10) |
+| 5 | `/rules` → v2 port | 6B-1 Phase 0 (PageView multi-purpose) | CARRY-OVER (6C cleanup или 6B-1b candidate) |
+| 6 | **NEW: 3D models + devices system** | 6B-2 user direction | NEW CARRY-OVER (post-migration, replaces legacy skins concept; may interact с 6B-10 if NFT/blockchain — Эпик 7+ scope) |
+
+**Net 6B-1 → 6B-2 accounting:** 5 entering → 6 leaving (5 carried forward unchanged + 1 new from user direction).
+
+**Следующий sub-epic:** 6B-3 — `/user/:userLogin` (Чужие профили, M size). Phase 0 focuses на guest mode UI states, permissions, backend reuse.
+
+---
+
 ## 🎉 ЭПИК 5 §4.2 — CLOSED ✅
 
 **Эпик 5 §4.2 historic milestone:** 22/22 sub-epic candidates closed (100%).
@@ -4323,24 +4393,26 @@ Linear trajectory, 0 recoveries. Phase 0 surface'ил multi-purpose PageView (ST
 
 Последний эпик миграции. Roadmap: 11 sub-epics (6A + 6B-1...6B-9 + 6C). Strategy: гибрид B+C — постепенное закрытие coverage gaps + route-by-route cutover + финальный cleanup.
 
-**Эпик 6 progress:** 2/11 done (18%) — 6B-1 CLOSED.
+**Эпик 6 progress:** 3/11 done (27%) — 6B-2 CLOSED.
 
 Roadmap document: `docs/visual-migration/EPIC6_ROADMAP.md` (TBD — может быть создан как separate sub-epic либо in-place в этой секции).
 
 **Cumulative metrics entering Эпик 6 / current state:**
-- **19-streak** (5E → 5U + 6A + 6B-1 all clean)
+- **20-streak** (5E → 5U + 6A + 6B-1 + 6B-2 all clean)
 - 79+ cumulative recoveries
 - 35 lessons promoted, 5 candidates active (#36/#37/#38/#39/#40)
 
 **Sub-epics closed in Эпик 6:**
 - **6A** — Лёгкий cutover (4 FULL coverage routes на чистые URL'ы) ✅
-- **6B-1** — `/help` страница (first coverage gap closed: GAP → FULL) ✅
+- **6B-1** — `/help` страница (first coverage gap closed: GAP → FULL — port-and-replace) ✅
+- **6B-2** — `/profile/skins` (second coverage gap closed: GAP → DEPRECATED — deprecation-via-redirect) ✅
 
-**Carry-overs into Эпик 6 (5 items — was 4 entering 6B-1):**
+**Carry-overs into Эпик 6 (6 items — was 5 entering 6B-2):**
 1. Achievement badge для retirement (5Q drop, κ Path B)
-2. HudProfile card-creep monitor (6/7 threshold; 6B-2 skins может trigger)
+2. HudProfile card-creep monitor (6/7 threshold; **6B-2 NOT triggered** ✓ — Variant B scope discipline)
 3. Lesson #36 validation track (await 2nd occurrence)
 4. Auth + Wallet visual redesign (NEW per 6A user request — sub-epic 6B-10)
-5. **NEW: `/rules` → v2 port** (6B-1 Phase 0 surface — PageView multi-purpose) — 6C cleanup или 6B-1b candidate
+5. `/rules` → v2 port (6B-1 Phase 0 surface — PageView multi-purpose) — 6C cleanup или 6B-1b candidate
+6. **NEW: 3D models + devices system** (6B-2 user direction — replaces legacy skins concept, post-migration / Эпик 7+ scope)
 
-**Следующий sub-epic:** 6B-2 — `/profile/skins` (S-M size). Card-creep monitor может trigger.
+**Следующий sub-epic:** 6B-3 — `/user/:userLogin` (Чужие профили, M size). Phase 0 focuses на guest mode UI states, permissions, backend reuse.
