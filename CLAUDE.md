@@ -4362,7 +4362,7 @@ Phase 0 surfaced 3 STOP conditions (card-creep at 6/7, port required, Shop overl
 
 ### Sub-Epic 6B-3a-backend — Privacy Fix (Code Complete + Deferred Verify)
 
-**Status:** **CODE COMPLETE clean ✅, deploy verify DEFERRED** к pre-6B-3 step
+**Status:** **CLOSED clean ✅** (deploy verified post-closure — see Эпик 6 overview success annotation)
 **Type:** Backend privacy fix, S-M size, **backend-only**
 **Phases:** 7 commits (5 functional + Phase 2a FINAL_REPORT + Phase 2b this commit)
 **Functional commits:** 5 (`6510ff5` helper + `d4da52a` /login + `f7014f0` /id + `054bf0b` /search + `aa1ad73` tests)
@@ -4392,7 +4392,7 @@ Created `formatUserPublicResponse` helper в `backend/src/utils/helpers.js` expo
 
 **Cumulative lesson tally:** 35 → 35 (UNCHANGED). 0 new candidates.
 
-**Hot-fix metric:** **0 — streak preserved at 20**, will transition к **21 ONLY после deploy verify completes pre-6B-3.**
+**Hot-fix metric:** **0 — streak transitioned 20 → 21** ✅ (deferred-verify pattern completed; deploy verified on `api.hexlash.com` post-closure via PR `fix/user-public-response` → main → Railway).
 
 **Cumulative recoveries:** 79+ entering → **80+** exiting (+1 Recovery #80, adaptation-tier).
 
@@ -4400,7 +4400,7 @@ Created `formatUserPublicResponse` helper в `backend/src/utils/helpers.js` expo
 
 **Tests:** 71 → 77 (+6 new tests in helpers.test.js, all pass; new test file uses `describe/it` + `node:assert/strict` mirroring existing convention per Lesson #32).
 
-**Sub-Epic 6B-3a-backend — CODE COMPLETE clean ✅, deploy verify DEFERRED.**
+**Sub-Epic 6B-3a-backend — CLOSED clean ✅** (deploy verified post-closure).
 
 **Methodology applied + 1 NEW contribution:**
 
@@ -4425,18 +4425,9 @@ Created `formatUserPublicResponse` helper в `backend/src/utils/helpers.js` expo
 
 **Net 6B-2 → 6B-3a-backend accounting:** 6 entering → 8 leaving (6 carried forward unchanged + 2 new from session findings).
 
-**⚠ MANDATORY PRE-CONDITION для 6B-3:**
+**Deploy verify completed post-closure** (PR `fix/user-public-response` → main → Railway). Authenticated guest probe (`test_jen_1` viewing `onotole`) confirmed response shape: public fields present, 15 private fields absent. Streak transitioned 20 → 21. See deploy verify confirmation in Эпик 6 overview success annotation block.
 
-Before 6B-3 Phase 1 starts, deploy verify MUST complete:
-1. Cherry-pick 5 commits (`6510ff5..aa1ad73`) onto new branch from main HEAD (suggested name: `fix/user-public-response`)
-2. PR → main → merge → Railway auto-deploy на `api.hexlash.com`
-3. Authenticated curl probe `/v1/user/login/:someone` → verify response shape (public fields present, private fields absent)
-4. After verify success → 6B-3a-backend streak transitions **20 → 21**
-5. 6B-3 Phase 1 ТЗ unblocked
-
-Until verify completes, **6B-3 Phase 1 ТЗ MUST NOT be executed** even if all other pre-conditions met.
-
-**Следующий step:** Pre-6B-3 deploy verify task (mandatory, separate ТЗ when user ready) → потом 6B-3 Phase 0 (`/user/:userLogin` guest profile UI).
+**Следующий sub-epic:** 6B-3 Phase 0 (`/user/:userLogin` guest profile UI) — unblocked.
 
 ---
 
@@ -4473,16 +4464,14 @@ Until verify completes, **6B-3 Phase 1 ТЗ MUST NOT be executed** even if all o
 
 Последний эпик миграции. Roadmap: **13 sub-epics** (was 11; expanded к 13 due к 6B-3a-backend + 6B-3b split — backend privacy fix dedicated + entry-points wiring split from 6B-3 frontend). Strategy: гибрид B+C — постепенное закрытие coverage gaps + route-by-route cutover + финальный cleanup.
 
-**Эпик 6 progress:** 4/13 done (31%) — 6B-3a-backend CODE COMPLETE.
+**Эпик 6 progress:** 4/13 done (31%) — 6B-3a-backend CLOSED ✅ (deploy verified).
 
-> **⚠ ACTIVE PRE-CONDITION FOR 6B-3:** Deploy verify of 6B-3a-backend code (commits `6510ff5..aa1ad73`) MUST complete before 6B-3 Phase 1 starts.
-> Cherry-pick → PR → merge к main → Railway auto-deploy на `api.hexlash.com` → authenticated curl verify response shape (public fields present, private fields absent).
-> Until verify success, 6B-3 Phase 1 blocked. **Streak 20 transitions к 21 only after verify.**
+> **✅ DEPLOY VERIFY COMPLETE:** 6B-3a-backend deploy verified on `api.hexlash.com` (PR `fix/user-public-response` merged to main, Railway auto-deployed). Authenticated guest profile probe (`test_jen_1` viewing `onotole`) returned ONLY public fields, 0 private leaks (15 sensitive fields verified absent: email/balance/walletAddress/financial tokens/progression/deck/settings/language/updatedAt/etc). **Streak 20 → 21 transitioned successfully.** 6B-3 Phase 1 unblocked.
 
 Roadmap document: `docs/visual-migration/EPIC6_ROADMAP.md` (TBD — может быть создан как separate sub-epic либо in-place в этой секции).
 
 **Cumulative metrics entering Эпик 6 / current state:**
-- **20-streak (PRESERVED, NOT 21)** — gated на pre-6B-3 deploy verify; transitions к 21 после verify completes (5E → 5U + 6A + 6B-1 + 6B-2 + 6B-3a-backend code complete)
+- **21-streak** (5E → 5U + 6A + 6B-1 + 6B-2 + 6B-3a-backend all clean, deferred-verify pattern completed successfully)
 - **80+ cumulative recoveries** (+1 Recovery #80 в 6B-3a-backend, adaptation-tier per Lesson #35)
 - 35 lessons promoted, 5 candidates active (#36/#37/#38/#39/#40)
 
