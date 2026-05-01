@@ -713,6 +713,11 @@ export default {
     watch: 'Watch',
     watchLive: 'Watch live fight',
   },
+  userProfile: {
+    notFound: 'User not found',
+    banned: 'This account has been suspended',
+    error: 'Failed to load profile',
+  },
   xpAllocation: {
     freeXP: 'Available',
     allocateTo: 'INVEST IN',
