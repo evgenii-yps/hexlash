@@ -59,6 +59,66 @@ function formatUserResponse(user, options = {}) {
   return response;
 }
 
+/**
+ * Returns user data safe for public/guest exposure.
+ * Excludes: email, walletAddress, balance, financial tokens (won/free/lost),
+ *           progression, deck, settings, language, inviteId, referredBy,
+ *           noSkipDays, totalTaps, updatedAt.
+ *
+ * Used by guest endpoints: /user/login/:login, /user/id/:id, /user/search.
+ *
+ * @param {Object} user - Prisma User record (with achievements relation if needed)
+ * @param {Object} options
+ * @param {Object|null} options.captain - public captain info via getCaptainPublicInfo
+ * @returns {Object} public-safe user response
+ */
+function formatUserPublicResponse(user, options = {}) {
+  const response = {
+    // Identity (public)
+    id: user.id,
+    login: user.login,
+    name: user.name,
+    avatarUrl: user.avatarUrl,
+    skin: user.skin,
+    isBlocked: user.isBlocked,
+
+    // Clan affiliation (public)
+    clanId: user.clanId,
+    clanRole: user.clanRole,
+
+    // Game state — public
+    rating: user.rating,
+    totalFights: user.totalFights,
+    wins: user.wins,
+    losses: user.losses,
+    draws: user.draws,
+    pveWins: user.pveWins,
+    pveLosses: user.pveLosses,
+    pveDraws: user.pveDraws,
+    pveTotalFights: user.pveTotalFights,
+    pvpWins: user.pvpWins,
+    pvpLosses: user.pvpLosses,
+    pvpDraws: user.pvpDraws,
+    pvpTotalFights: user.pvpTotalFights,
+    luckPercentage: user.luckPercentage,
+    invitedUsers: user.invitedUsers,
+
+    // Timestamp (public — join date only)
+    createdAt: user.createdAt,
+
+    // Achievements — public showcase (preserve existing array-of-IDs format)
+    achievements: user.achievements
+      ? user.achievements.map((a) => a.achievementId)
+      : [],
+  };
+
+  if (options.captain !== undefined) {
+    response.captain = options.captain;
+  }
+
+  return response;
+}
+
 function formatClanResponse(clan) {
   return {
     id: clan.id,
@@ -104,4 +164,4 @@ async function awardAchievement(prismaClient, userId, achievementType) {
   return achievementType;
 }
 
-module.exports = { generateToken, formatUserResponse, formatClanResponse, awardAchievement };
+module.exports = { generateToken, formatUserResponse, formatUserPublicResponse, formatClanResponse, awardAchievement };
