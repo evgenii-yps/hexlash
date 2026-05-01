@@ -4225,6 +4225,71 @@ Linear trajectory, no pivots, 0 recoveries. Investigation refined ТЗ Commit 3 
 
 ---
 
+### Sub-Epic 6B-1 — `/help` страница (Coverage Gap Closure)
+
+**Status:** CLOSED clean ✅
+**Type:** New v2 view + routing redirect, S-size, frontend-only
+**Phases:** 5 commits (3 functional + Phase 2a FINAL_REPORT + Phase 2b this commit)
+**Functional commits:** 3 (`5ca1ee7` create HelpView + `87a744c` register /v2/help + `36c801a` /help redirect)
+**Branch:** `claude/investigate-retirement-animation-zQeg4` (продолжение)
+**HEAD before:** `f2cd8ec` (6A closure)
+**HEAD after Phase 1:** `36c801a`
+**HEAD after Phase 2a:** `4aa81fb`
+**HEAD after Phase 2b (this):** `<NEW_HASH>` — 6B-1 CLOSURE
+
+**What 6B-1 did:**
+
+Closes first coverage gap из 9 identified в Wave 2 audit. Создан `src/views-v2/HelpView.vue` (139 lines, HUD-only Pattern B per 5N SpectateView precedent) — long-form HTML content с custom scrollable container, без 3D scene registration. Контент reused из existing `src/locales/pages/help/{en,ru}.json` через `v-html` (trusted i18n source). Top-level `/help` → redirect к `/v2/help`. v1 `PageView.vue` preserved для `/rules` use (Option A scope: `/rules` v2 port — new carry-over к 6C).
+
+Linear trajectory, 0 recoveries. Phase 0 surface'ил multi-purpose PageView (STOP-condition #1) — design-Claude refined ТЗ Phase 1 к Option A (narrow scope).
+
+**Key decisions:**
+
+- **Scope: Option A** — only `/help`, `/rules` carry-over к 6C
+- **Pattern: B (HUD-only)** — no 3D scene, follows 5N precedent для long-form content
+- **Render: `v-html`** — preserve v1 mechanism, trusted i18n
+- **Style: v2-native** — CSS vars из `tokens.css` scoped к `.app-v2`. Visual может быть подкручен отдельным commit'ом позже (per user direction)
+- **Auth: `/help` в protectedRoutes** — matches v1 baseline + 6A Option C precedent
+
+**Recovery log:** 0 catches in 6B-1 session. Phase 0 STOP for multi-purpose PageView correctly invoked → ТЗ-refined → no recovery counted.
+
+**Cumulative lesson tally:** 35 → 35 (UNCHANGED). 0 new candidates.
+
+5 carry-over candidates from 5R-5U unchanged status (all N/A в 6B-1 frontend-only routing + new view).
+
+**Hot-fix metric:** **0 — 19-streak achieved** ✅ (5E + 5F + 5G + 5H + 5I + 5J + 5K + 5L + 5M + 5N + 5O + 5P + 5Q + 5R + 5S + 5T + 5U + 6A + 6B-1 all clean).
+
+**Cumulative recoveries:** 79+ entering 6B-1 → 79+ exiting (no recoveries, linear trajectory).
+
+**Эпик 6 progress:** 2/11 sub-epics done (18%) — first coverage gap closed.
+
+**Bundle delta:** main +1.77 kB raw / +1.00 kB brotli (route + lazy import metadata). HelpView chunk: 623 B JS + 531 B brotli CSS. dist/ total unchanged 20M.
+
+**Sub-Epic 6B-1 — CLOSED ✅.** New v2 view (HUD-only Pattern B) + 1 router file edited across 3 commits. v1 PageView.vue preserved on disk (used by `/rules`).
+
+**Methodology applied (no new contributions):**
+
+- Quintuple-precedent investigation-refines-ТЗ pattern — Phase 0 STOP → Phase 1 Option A refinement (multi-purpose PageView surfaced)
+- Mode A strict per-commit discipline — 3 functional commits, по одному change
+- HUD-only Pattern B reuse (5N SpectateView precedent) — semantic reuse for long-form content use case
+- Scope discipline (S-size preservation) — отказались от Option B (`/rules` inclusion), narrow path closes named gap only
+
+**Carry-overs forward (entering 6B-1: 4 items, exiting: 5 items):**
+
+| # | Item | Source | Status |
+|---|---|---|---|
+| 1 | Achievement badge для retirement | 5Q drop, κ Path B | CARRY-OVER |
+| 2 | HudProfile card-creep monitor | 5L+ → 5S Q1.3 | MONITOR-FORWARD (6/7 threshold; **6B-2 skins может trigger**) |
+| 3 | Lesson #36 validation track | 5R | CARRY-OVER |
+| 4 | Auth + Wallet visual redesign | 6A user request | CARRY-OVER (sub-epic 6B-10) |
+| 5 | **NEW: `/rules` → v2 port** | 6B-1 Phase 0 (PageView multi-purpose) | NEW CARRY-OVER (6C cleanup или 6B-1b candidate) |
+
+**Net 6A → 6B-1 accounting:** 4 entering → 5 leaving (4 carried forward unchanged + 1 new from Phase 0 surface).
+
+**Следующий sub-epic:** 6B-2 — `/profile/skins` (S-M size). Card-creep monitor может trigger (HudProfile 6th card consideration).
+
+---
+
 ## 🎉 ЭПИК 5 §4.2 — CLOSED ✅
 
 **Эпик 5 §4.2 historic milestone:** 22/22 sub-epic candidates closed (100%).
@@ -4258,22 +4323,24 @@ Linear trajectory, no pivots, 0 recoveries. Investigation refined ТЗ Commit 3 
 
 Последний эпик миграции. Roadmap: 11 sub-epics (6A + 6B-1...6B-9 + 6C). Strategy: гибрид B+C — постепенное закрытие coverage gaps + route-by-route cutover + финальный cleanup.
 
-**Эпик 6 progress:** 1/11 done (9%) — 6A CLOSED.
+**Эпик 6 progress:** 2/11 done (18%) — 6B-1 CLOSED.
 
 Roadmap document: `docs/visual-migration/EPIC6_ROADMAP.md` (TBD — может быть создан как separate sub-epic либо in-place в этой секции).
 
 **Cumulative metrics entering Эпик 6 / current state:**
-- **18-streak** (5E → 5U + 6A all clean)
+- **19-streak** (5E → 5U + 6A + 6B-1 all clean)
 - 79+ cumulative recoveries
 - 35 lessons promoted, 5 candidates active (#36/#37/#38/#39/#40)
 
 **Sub-epics closed in Эпик 6:**
 - **6A** — Лёгкий cutover (4 FULL coverage routes на чистые URL'ы) ✅
+- **6B-1** — `/help` страница (first coverage gap closed: GAP → FULL) ✅
 
-**Carry-overs into Эпик 6 (4 items):**
+**Carry-overs into Эпик 6 (5 items — was 4 entering 6B-1):**
 1. Achievement badge для retirement (5Q drop, κ Path B)
-2. HudProfile card-creep monitor (6/7 threshold)
+2. HudProfile card-creep monitor (6/7 threshold; 6B-2 skins может trigger)
 3. Lesson #36 validation track (await 2nd occurrence)
 4. Auth + Wallet visual redesign (NEW per 6A user request — sub-epic 6B-10)
+5. **NEW: `/rules` → v2 port** (6B-1 Phase 0 surface — PageView multi-purpose) — 6C cleanup или 6B-1b candidate
 
-**Следующий sub-epic:** 6B-1 — `/help` страница (S size, lowest-risk gap closure).
+**Следующий sub-epic:** 6B-2 — `/profile/skins` (S-M size). Card-creep monitor может trigger.
