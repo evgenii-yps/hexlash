@@ -41,7 +41,7 @@ const protectedRoutes = [
     {path: '/arena/club/:agentId', name: 'AgentDetail', component: () => import("/src/views/AgentDetailView.vue")},
 
     {path: '/user/:userLogin', name: 'UserProfile', component: () => import("/src/views/ProfileView.vue")},
-    {path: '/profile', name: 'Profile', component: () => import("/src/views/ProfileView.vue")},
+    {path: '/profile', redirect: '/v2/profile'},
     {path: '/profile/balance', name: 'Balance', component: () => import("/src/views/ProfileView.vue")},
     {path: '/profile/wallet', name: 'Wallet', component: () => import("/src/views/ProfileView.vue")},
     {path: '/profile/account', name: 'Account', component: () => import("/src/views/ProfileView.vue")},
