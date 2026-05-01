@@ -36,6 +36,7 @@ const protectedRoutes = [
     {path: '/arena/fight', name: 'ArenaFight', component: () => import("/src/views/PreparationView.vue")},
     {path: '/arena/club', name: 'ArenaFightClub', component: () => import("/src/views/FightClubView.vue")},
     {path: '/create-fighter', redirect: '/v2/create'},
+    {path: '/fighter/:key', redirect: to => `/v2/fd/${to.params.key}`},
     {path: '/arena/club/create', name: 'CreateAgent', component: () => import("/src/views/CreateAgentView.vue")},
     {path: '/arena/club/:agentId', name: 'AgentDetail', component: () => import("/src/views/AgentDetailView.vue")},
 
