@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const prisma = require('../lib/prisma');
 const { authMiddleware } = require('../middleware/auth');
 const { upload } = require('../middleware/upload');
-const { formatUserResponse } = require('../utils/helpers');
+const { formatUserResponse, formatUserPublicResponse } = require('../utils/helpers');
 const { migrateUserToFighter } = require('../services/userMigrationService');
 const { getCaptainPublicInfo, getCaptainsForUsers } = require('../services/captainService');
 
@@ -201,7 +201,7 @@ router.get('/login/:login', authMiddleware, async (req, res) => {
     }
 
     const captain = await getCaptainPublicInfo(user.id);
-    res.json({ data: formatUserResponse(user, { captain }) });
+    res.json({ data: formatUserPublicResponse(user, { captain }) });
   } catch (err) {
     console.error('Get user by login error:', err);
     res.status(500).json({ error: 'Internal server error' });
