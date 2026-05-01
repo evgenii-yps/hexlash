@@ -271,7 +271,7 @@ router.get('/search', authMiddleware, async (req, res) => {
     });
 
     const captainMap = await getCaptainsForUsers(users.map(u => u.id));
-    res.json({ data: users.map(u => formatUserResponse(u, { captain: captainMap.get(u.id) || null })) });
+    res.json({ data: users.map(u => formatUserPublicResponse(u, { captain: captainMap.get(u.id) || null })) });
   } catch (err) {
     console.error('Search users error:', err);
     res.status(500).json({ error: 'Internal server error' });
