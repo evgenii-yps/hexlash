@@ -127,6 +127,11 @@ const v2Routes = [
                 name: 'V2Spectate',
                 component: () => import('@/views-v2/SpectateView.vue'),
             },
+            {
+                path: 'help',
+                name: 'V2Help',
+                component: () => import('@/views-v2/HelpView.vue'),
+            },
         ],
     },
 ];
