@@ -4165,6 +4165,66 @@ Phase 1 single functional commit shipped MUST3 spec exactly. Pre-edit verificati
 
 ---
 
+### Sub-Epic 6A — Лёгкий cutover (4 готовых routes)
+
+**Status:** CLOSED clean ✅
+**Type:** Routing change, S-size, frontend-only
+**Phases:** 7 commits (5 functional + Phase 2a FINAL_REPORT + Phase 2b this commit)
+**Functional commits:** 5 (`df4be35` /create-fighter + `1710556` /fighter/:key + `8d60041` /profile + `d5e0ca6` /training + `061a757` legacy redirects)
+**Branch:** `claude/investigate-retirement-animation-zQeg4` (продолжение 5U designated)
+**HEAD before:** `d0da359` (5U Phase 2c closure)
+**HEAD after Phase 1:** `061a757`
+**HEAD after Phase 2a:** `332a160`
+**HEAD after Phase 2b (this):** `<NEW_HASH>` — 6A CLOSURE
+
+**What 6A did:**
+
+6A opener slot Эпика 6 — переключил 4 FULL coverage routes (`/create-fighter`, `/fighter/:key`, `/profile`, `/training`) на чистые URL'ы. Mechanism — redirect-based (новые top-level routes → redirect к `/v2/*` children, AppV2.vue layout preserved). Auth policy: новые routes в `protectedRoutes` (Option C, matches v1 baseline). Sub-routes `/profile/balance|wallet|account|skins` preserved on v1 ProfileView (deferred к 6B-6).
+
+Linear trajectory, no pivots, 0 recoveries. Investigation refined ТЗ Commit 3 inline (Option X chosen post-finding sub-routes independent, не nested children).
+
+**Key decisions:**
+
+- **Cutover shape: redirect-based** (Option 1) — preserved v2 layout без переписывания. Top-level routes Mode A через `redirect:` field в route definitions
+- **Auth: Option C** — новые routes требуют auth (matches v1, fixes v2 inconsistency где `/v2/*` были effectively public)
+- **Sub-routes Option X** (Commit 3) — только `/profile` line swap, sub-routes нетронуты. Deep links на v1 ProfileView preserved для bookmark survival
+- **Legacy redirects Option A** (Commit 5) — `/arena/club/*` + `/club/agent/*` обновлены к новым URL'ам для post-6A consistency
+
+**Recovery log:** 0 catches in 6A session. Linear trajectory, no STOP triggers, no metadata mis-statements.
+
+**Cumulative lesson tally:** 35 → 35 (UNCHANGED). 0 new candidates.
+
+5 carry-over candidates from 5R-5U unchanged status (all N/A в 6A frontend-only routing).
+
+**Hot-fix metric:** **0 — 18-streak achieved** ✅ (5E + 5F + 5G + 5H + 5I + 5J + 5K + 5L + 5M + 5N + 5O + 5P + 5Q + 5R + 5S + 5T + 5U + 6A all clean).
+
+**Cumulative recoveries:** 79+ entering 6A → 79+ exiting (no recoveries, linear trajectory).
+
+**Эпик 6 progress:** 1/11 sub-epics done (9%) — 6A opens cutover trajectory.
+
+**Sub-Epic 6A — CLOSED ✅.** Routing changes only — bundle marginal delta (−4.76 kB raw / −0.90 kB brotli main, 21M → 20M dist total). 0 source code logic changes, 0 backend touches, 1 file changed (`src/router/index.js`).
+
+**Methodology applied (no new contributions):**
+
+- Quintuple-precedent investigation-refines-ТЗ pattern — applied через Commit 3 re-investigation (sub-routes structure surfacing → Option X refinement без pivot)
+- Mode A strict per-commit discipline — 5 functional commits, по одному change
+- Closer-slot scope discipline — отказались от Option Y/Z в Commit 3, отказались от v1 file deletion (deferred к 6C)
+
+**Carry-overs forward to 6B-* (4 items — was 3 entering 6A; +1 added per user request):**
+
+| # | Item | Source | Status |
+|---|---|---|---|
+| 1 | Achievement badge для retirement | 5Q drop, κ Path B | CARRY-OVER (6B-* TBD or 6C if cheap) |
+| 2 | HudProfile card-creep monitor | 5L+ → 5S Q1.3 | MONITOR-FORWARD (6/7 threshold; 6B-2 skins может trigger) |
+| 3 | Lesson #36 validation track | 5R | CARRY-OVER (await 2nd occurrence) |
+| 4 | Auth + Wallet visual redesign | 6A user request | NEW CARRY-OVER (sub-epic 6B-10 в roadmap) |
+
+**Net 5U → 6A accounting:** 3 entering 6A → 4 leaving (3 carried forward unchanged + 1 added per user surface).
+
+**Следующий sub-epic:** 6B-1 — `/help` страница (S size, lowest-risk gap closure, статичная страница).
+
+---
+
 ## 🎉 ЭПИК 5 §4.2 — CLOSED ✅
 
 **Эпик 5 §4.2 historic milestone:** 22/22 sub-epic candidates closed (100%).
@@ -4191,3 +4251,29 @@ Phase 1 single functional commit shipped MUST3 spec exactly. Pre-edit verificati
 **Следующий эпик:** **Эпик 6 cutover** — финальный эпик миграции. `/v2/*` becomes default route. Continue stack + designated branch reconciled to main. Legacy `/src` v1 components removed. 52-item parking list addressed. Cutover handoff: `HANDOFF_EPIC6_CUTOVER.md` (Phase 2b deliverable).
 
 **Эпик 5 — CLOSED ✅.**
+
+---
+
+## Эпик 6 — Cutover (in progress)
+
+Последний эпик миграции. Roadmap: 11 sub-epics (6A + 6B-1...6B-9 + 6C). Strategy: гибрид B+C — постепенное закрытие coverage gaps + route-by-route cutover + финальный cleanup.
+
+**Эпик 6 progress:** 1/11 done (9%) — 6A CLOSED.
+
+Roadmap document: `docs/visual-migration/EPIC6_ROADMAP.md` (TBD — может быть создан как separate sub-epic либо in-place в этой секции).
+
+**Cumulative metrics entering Эпик 6 / current state:**
+- **18-streak** (5E → 5U + 6A all clean)
+- 79+ cumulative recoveries
+- 35 lessons promoted, 5 candidates active (#36/#37/#38/#39/#40)
+
+**Sub-epics closed in Эпик 6:**
+- **6A** — Лёгкий cutover (4 FULL coverage routes на чистые URL'ы) ✅
+
+**Carry-overs into Эпик 6 (4 items):**
+1. Achievement badge для retirement (5Q drop, κ Path B)
+2. HudProfile card-creep monitor (6/7 threshold)
+3. Lesson #36 validation track (await 2nd occurrence)
+4. Auth + Wallet visual redesign (NEW per 6A user request — sub-epic 6B-10)
+
+**Следующий sub-epic:** 6B-1 — `/help` страница (S size, lowest-risk gap closure).
