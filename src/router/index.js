@@ -37,8 +37,8 @@ const protectedRoutes = [
     {path: '/arena/club', name: 'ArenaFightClub', component: () => import("/src/views/FightClubView.vue")},
     {path: '/create-fighter', redirect: '/v2/create'},
     {path: '/fighter/:key', redirect: to => `/v2/fd/${to.params.key}`},
-    {path: '/arena/club/create', name: 'CreateAgent', component: () => import("/src/views/CreateAgentView.vue")},
-    {path: '/arena/club/:agentId', name: 'AgentDetail', component: () => import("/src/views/AgentDetailView.vue")},
+    {path: '/arena/club/create', redirect: '/create-fighter'},
+    {path: '/arena/club/:agentId', redirect: to => `/fighter/${to.params.agentId}`},
 
     {path: '/user/:userLogin', name: 'UserProfile', component: () => import("/src/views/ProfileView.vue")},
     {path: '/profile', redirect: '/v2/profile'},
@@ -50,8 +50,8 @@ const protectedRoutes = [
     {path: '/clan/:id', name: 'Clan', component: () => import("/src/views/ClanView.vue")},
     {path: '/club/:id', redirect: to => '/clan/' + to.params.id},
     {path: '/fight-club', redirect: '/arena/club'},
-    {path: '/club/agent/create', redirect: '/arena/club/create'},
-    {path: '/club/agent/:agentId', redirect: to => `/arena/club/${to.params.agentId}`},
+    {path: '/club/agent/create', redirect: '/create-fighter'},
+    {path: '/club/agent/:agentId', redirect: to => `/fighter/${to.params.agentId}`},
 
     {path: '/ratings/:type', name: 'Ratings', component: () => import("/src/views/RatingsView.vue"), props: true},
     {path: '/ratings', redirect: '/ratings/myclan'},
