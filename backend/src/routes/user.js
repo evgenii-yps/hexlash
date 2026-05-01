@@ -221,7 +221,7 @@ router.get('/id/:id', authMiddleware, async (req, res) => {
     }
 
     const captain = await getCaptainPublicInfo(user.id);
-    res.json({ data: formatUserResponse(user, { captain }) });
+    res.json({ data: formatUserPublicResponse(user, { captain }) });
   } catch (err) {
     console.error('Get user by id error:', err);
     res.status(500).json({ error: 'Internal server error' });
