@@ -31,7 +31,7 @@ const publicRoutes = [
 
 const protectedRoutes = [
     {path: '/', name: 'Home', component: RainView},
-    {path: '/help', name: 'Help', component: () => import("/src/views/PageView.vue")},
+    {path: '/help', redirect: '/v2/help'},
     {path: '/arena', redirect: '/arena/club'},
     {path: '/arena/fight', name: 'ArenaFight', component: () => import("/src/views/PreparationView.vue")},
     {path: '/arena/club', name: 'ArenaFightClub', component: () => import("/src/views/FightClubView.vue")},
