@@ -134,7 +134,7 @@
 
       <!-- Achievements card (only if any unlocked) -->
       <div class="up-card up-achievements" v-if="guestUser.achievements && guestUser.achievements.length">
-        <div class="up-card-title">{{ t.profile?.achievements || 'Achievements' }}</div>
+        <div class="up-card-title">{{ t.profile?.achievements?.lblAchievements || 'Achievements' }}</div>
         <div class="up-achievement-list">
           <span
             v-for="aid in guestUser.achievements"
