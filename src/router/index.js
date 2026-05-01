@@ -132,6 +132,11 @@ const v2Routes = [
                 name: 'V2Help',
                 component: () => import('@/views-v2/HelpView.vue'),
             },
+            {
+                path: 'user/:userLogin',
+                name: 'V2UserProfile',
+                component: () => import('@/views-v2/UserProfileView.vue'),
+            },
         ],
     },
 ];
