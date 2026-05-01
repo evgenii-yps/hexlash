@@ -40,7 +40,10 @@ const protectedRoutes = [
     {path: '/arena/club/create', redirect: '/create-fighter'},
     {path: '/arena/club/:agentId', redirect: to => `/fighter/${to.params.agentId}`},
 
-    {path: '/user/:userLogin', name: 'UserProfile', component: () => import("/src/views/ProfileView.vue")},
+    {
+        path: '/user/:userLogin',
+        redirect: to => ({ name: 'V2UserProfile', params: { userLogin: to.params.userLogin } }),
+    },
     {path: '/profile', redirect: '/v2/profile'},
     {path: '/profile/balance', name: 'Balance', component: () => import("/src/views/ProfileView.vue")},
     {path: '/profile/wallet', name: 'Wallet', component: () => import("/src/views/ProfileView.vue")},
