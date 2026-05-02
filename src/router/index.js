@@ -50,7 +50,10 @@ const protectedRoutes = [
     {path: '/profile/account', name: 'Account', component: () => import("/src/views/ProfileView.vue")},
     {path: '/profile/skins', name: 'Skins', redirect: '/v2/profile'},
 
-    {path: '/clan/:id', name: 'Clan', component: () => import("/src/views/ClanView.vue")},
+    {
+        path: '/clan/:id',
+        redirect: to => ({ name: 'V2GuestClan', params: { id: to.params.id } }),
+    },
     {path: '/club/:id', redirect: to => '/clan/' + to.params.id},
     {path: '/fight-club', redirect: '/arena/club'},
     {path: '/club/agent/create', redirect: '/create-fighter'},
