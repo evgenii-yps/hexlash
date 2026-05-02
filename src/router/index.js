@@ -47,7 +47,7 @@ const protectedRoutes = [
     {path: '/profile', redirect: '/v2/profile'},
     {path: '/profile/balance', name: 'Balance', component: () => import("/src/views/ProfileView.vue")},
     {path: '/profile/wallet', redirect: '/v2/wallet'},
-    {path: '/profile/account', name: 'Account', component: () => import("/src/views/ProfileView.vue")},
+    {path: '/profile/account', redirect: '/v2/account'},
     {path: '/profile/skins', name: 'Skins', redirect: '/v2/profile'},
 
     {
@@ -152,6 +152,11 @@ const v2Routes = [
                 path: 'wallet',
                 name: 'V2Wallet',
                 component: () => import('@/views-v2/WalletView.vue'),
+            },
+            {
+                path: 'account',
+                name: 'V2Account',
+                component: () => import('@/views-v2/AccountView.vue'),
             },
         ],
     },
