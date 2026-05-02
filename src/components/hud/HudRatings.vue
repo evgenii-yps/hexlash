@@ -324,7 +324,7 @@ const nextRankHint = computed(() => {
            Both branches navigate to /v2/clan on action.
            Inline EN per Q-tactical-3. -->
       <template v-if="activeTab === 'myclan'">
-        <div v-if="myClanLoading" class="rt-empty">{{ t.rating.lblLoading || 'Loading…' }}</div>
+        <div v-if="myClanLoading" class="rt-empty">{{ 'Loading…' }}</div>
         <div v-else-if="myClanError" class="rt-empty">{{ t.rating.error }}</div>
         <div v-else-if="!hasOwnClan" class="myclan-empty">
           <div class="myclan-empty-msg">You're not in a clan</div>
@@ -379,7 +379,7 @@ const nextRankHint = computed(() => {
         </div>
 
         <div class="ratings-tbody">
-          <div v-if="clansLoading" class="rt-empty">{{ t.rating.lblLoading || 'Loading…' }}</div>
+          <div v-if="clansLoading" class="rt-empty">{{ 'Loading…' }}</div>
           <div v-else-if="clansError" class="rt-empty">{{ t.rating.error }}</div>
           <div v-else-if="clansRows.length === 0" class="rt-empty">{{ t.rating.noResults }}</div>
           <div
@@ -412,7 +412,7 @@ const nextRankHint = computed(() => {
         </div>
 
         <div class="ratings-tbody">
-          <div v-if="agentsLoading" class="rt-empty">{{ t.rating.lblLoading || 'Loading…' }}</div>
+          <div v-if="agentsLoading" class="rt-empty">{{ 'Loading…' }}</div>
           <div v-else-if="agentsError" class="rt-empty">{{ t.rating.error }}</div>
           <div v-else-if="agentsRows.length === 0" class="rt-empty">{{ t.rating.lblNoRankedAgents }}</div>
           <div
@@ -457,7 +457,7 @@ const nextRankHint = computed(() => {
         </div>
 
         <div class="ratings-tbody">
-          <div v-if="fightersLoading" class="rt-empty">{{ t.rating.lblLoading || 'Loading…' }}</div>
+          <div v-if="fightersLoading" class="rt-empty">{{ 'Loading…' }}</div>
           <div v-else-if="fightersError" class="rt-empty">{{ t.rating.error }}</div>
           <div v-else-if="fightersRows.length === 0" class="rt-empty">{{ t.rating.noResults }}</div>
           <div
