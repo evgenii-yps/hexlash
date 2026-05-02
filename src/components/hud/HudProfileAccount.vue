@@ -16,7 +16,8 @@
 
     <div class="profile-account-content">
       <ConfirmEmail />
-      <!-- TODO Commit 6: ChangeLogin + ChangePassword -->
+      <ChangeLogin />
+      <ChangePassword />
       <!-- TODO Commit 7: DeleteAccount -->
     </div>
   </div>
@@ -25,6 +26,8 @@
 <script setup>
 import { useStore } from 'vuex';
 import ConfirmEmail from '@/components/fragments/profile/account/ConfirmEmail.vue';
+import ChangeLogin from '@/components/fragments/profile/account/ChangeLogin.vue';
+import ChangePassword from '@/components/fragments/profile/account/ChangePassword.vue';
 
 defineEmits(['back']);
 
