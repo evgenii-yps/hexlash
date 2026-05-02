@@ -12,18 +12,26 @@
     </div>
 
     <div class="profile-wallet-content">
-      <!-- TODO Commit 2: GameBalanceCard -->
+      <div class="balance-card-wrapper">
+        <GameBalanceCard :balance="balanceDisplay" />
+      </div>
       <!-- TODO Commit 3: withdraw button + ConnectWallet entry -->
     </div>
   </div>
 </template>
 
 <script setup>
+import { computed } from 'vue';
 import { useStore } from 'vuex';
+import GameBalanceCard from '@/components/fragments/profile/wallet/GameBalanceCard.vue';
 
 defineEmits(['back']);
 
 const store = useStore();
+const master = computed(() => store.getters['master/getMaster']);
+// master.getBalance() formats userData.balance / 10^DECIMALS toFixed(2).
+// Null-safe optional chaining — view может рендериться briefly до master loaded.
+const balanceDisplay = computed(() => master.value?.getBalance?.() ?? '0');
 </script>
 
 <style scoped>
@@ -87,5 +95,13 @@ const store = useStore();
   bottom: 14px;
   overflow-y: auto;
   padding: 16px;
+}
+
+/* Balance card centered horizontally — GameBalanceCard has fixed 180px width
+   and own centering для contents. Wrapper provides flex centering only. */
+.balance-card-wrapper {
+  display: flex;
+  justify-content: center;
+  margin: 12px 0;
 }
 </style>
