@@ -361,7 +361,7 @@
 .app-v2 .fc-status-dot.online   { background: #2ee07f; box-shadow: 0 0 6px rgba(46, 224, 127, 0.6); }
 .app-v2 .fc-status-dot.in-fight { background: var(--hex-primary); box-shadow: 0 0 6px rgba(255, 6, 111, 0.6); }
 .app-v2 .fc-status-dot.offline  { background: #555; }
-.app-v2 .fc-info { flex: 1; min-width: 0; }
+.app-v2 .fc-info { flex: 1; min-width: 0; cursor: pointer; }
 .app-v2 .fc-handle {
   font-family: var(--font-display);
   font-size: 12px;

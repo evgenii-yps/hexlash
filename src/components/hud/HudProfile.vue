@@ -131,7 +131,7 @@
               {{ friendInitials(f) }}
               <span class="fc-status-dot" :class="friendStatusClass(f)"></span>
             </div>
-            <div class="fc-info">
+            <div class="fc-info" @click="openUserProfile(f)">
               <div class="fc-handle">{{ friendName(f) }}</div>
               <div class="fc-meta">
                 <span class="fcm-elo">ELO {{ f.rating || 1000 }}</span>
@@ -143,22 +143,22 @@
             </div>
             <div class="fc-actions">
               <template v-if="activeTab === 'pending'">
-                <button class="fc-action-btn primary" @click="onAccept(f)">Accept</button>
-                <button class="fc-action-btn danger" @click="onDecline(f)">Decline</button>
+                <button class="fc-action-btn primary" @click.stop="onAccept(f)">Accept</button>
+                <button class="fc-action-btn danger" @click.stop="onDecline(f)">Decline</button>
               </template>
               <template v-else>
                 <button
                   v-if="f.status === 'in_fight'"
                   class="fc-action-btn watch"
                   :aria-label="t.spectate.watchLive"
-                  @click="onWatch(f)"
+                  @click.stop="onWatch(f)"
                 >{{ t.spectate.watch }}</button>
                 <button
                   class="fc-action-btn primary"
                   :disabled="!canChallenge(f)"
-                  @click="onChallenge(f)"
+                  @click.stop="onChallenge(f)"
                 >Challenge</button>
-                <button class="fc-action-btn danger" @click="onRemove(f)">Remove</button>
+                <button class="fc-action-btn danger" @click.stop="onRemove(f)">Remove</button>
               </template>
             </div>
           </div>
@@ -591,6 +591,15 @@ function onChallenge(f) {
 function onWatch(f) {
   const fightId = f.currentFight?.id || f.id;
   router.push(`/v2/spectate/${fightId}`);
+}
+// 6B-3b — open guest profile view. Friend object exposes login OR username
+// (helper friendName uses same fallback). Edge guard: no-op if neither
+// available. UserProfileView watcher self-redirects к /v2/profile if login
+// matches current user.
+function openUserProfile(friend) {
+  const login = friend?.login || friend?.username;
+  if (!login) return;
+  router.push(`/v2/user/${login}`);
 }
 function onAccept(req) {
   store.dispatch('friends/acceptFriendRequest', req);
