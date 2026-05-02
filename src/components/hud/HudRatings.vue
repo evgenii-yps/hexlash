@@ -88,6 +88,8 @@ watch(activeTab, (next) => {
     loadFighters();
   } else if (next === 'clans' && clansRows.value.length === 0) {
     loadClans();
+  } else if (next === 'agents' && agentsRows.value.length === 0) {
+    loadAgents();
   }
 });
 
@@ -146,6 +148,27 @@ function clanLosses(c) {
 function clanWr(c) {
   const b = c.battles ?? 0;
   return b > 0 ? Math.round(((c.wins ?? 0) / b) * 100) : 0;
+}
+
+// ===== AGENTS tab state (Commit 6) =====
+// Backend response /v1/agent/rankings → { rankings: [{rank, agent, owner}], total }.
+// agentState REPLACE semantics (Commit 1) → NO F3 reset needed.
+// Filter: totalFights >= 5 enforced backend (RANKED_MIN_FIGHTS_FOR_RANKING).
+// NO search input — endpoint doesn't support search param.
+const agentsRows = computed(() => store.getters['agent/getAgentRankings'] || []);
+const agentsLoading = ref(false);
+const agentsError = ref(null);
+
+async function loadAgents() {
+  agentsLoading.value = true;
+  agentsError.value = null;
+  try {
+    await store.dispatch('agent/loadAgentRankings', { offset: 0, limit: 20 });
+  } catch (err) {
+    agentsError.value = err?.message || 'Failed to load agents';
+  } finally {
+    agentsLoading.value = false;
+  }
 }
 
 // ===== Sticky your-row — bound to master.userData (Step 8) =====
@@ -306,8 +329,40 @@ const nextRankHint = computed(() => {
         </div>
       </template>
 
-      <!-- ===== AGENTS tab placeholder (Commit 6) ===== -->
-      <div v-else-if="activeTab === 'agents'" data-tab="agents"></div>
+      <!-- ===== AGENTS tab — wired to agent/loadAgentRankings (Commit 6) ===== -->
+      <template v-else-if="activeTab === 'agents'">
+        <div class="ratings-thead">
+          <div>#</div>
+          <div>Agent</div>
+          <div>Owner</div>
+          <div>Belt</div>
+          <div class="num">Q. Wins</div>
+          <div class="num">ELO</div>
+        </div>
+
+        <div class="ratings-tbody">
+          <div v-if="agentsLoading" class="rt-empty">{{ t.rating.lblLoading || 'Loading…' }}</div>
+          <div v-else-if="agentsError" class="rt-empty">{{ t.rating.error }}</div>
+          <div v-else-if="agentsRows.length === 0" class="rt-empty">{{ t.rating.lblNoRankedAgents }}</div>
+          <div
+            v-else
+            v-for="row in agentsRows"
+            :key="`agents|${row.agent.id}`"
+            class="rt-row clickable"
+            :class="rowRankClass({ rank: row.rank })"
+            @click="$router.push('/v2/fd/' + row.agent.id)"
+          >
+            <div class="rt-rank"><span class="rnk-num">#{{ row.rank }}</span></div>
+            <div class="rt-handle">
+              {{ row.agent.name }}<span v-if="row.agent.isHexmaster" class="hexmaster-badge" title="Hexmaster"> 👑</span>
+            </div>
+            <div class="rt-handle">{{ row.owner?.login || '—' }}</div>
+            <div class="rt-belt">{{ row.agent.isHexmaster ? 'Hexmaster' : beltLabelShort(row.agent.belt) }}</div>
+            <div class="num">{{ row.agent.qualifiedWins ?? 0 }}</div>
+            <div class="num rt-elo">{{ row.agent.elo != null ? row.agent.elo.toLocaleString() : '—' }}</div>
+          </div>
+        </div>
+      </template>
 
       <!-- ===== FIGHTERS tab — wired to user/loadParticipantRatings (Commit 4) ===== -->
       <template v-else-if="activeTab === 'fighters'">
