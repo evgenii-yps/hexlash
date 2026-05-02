@@ -81,10 +81,13 @@ function onFightersSearch(e) {
   fightersTimeout = setTimeout(() => loadFighters(), 200);
 }
 
-// Initial load on first activation. Other tabs add their own watchers in 5-7.
+// Initial load on first activation per tab.
+// Each tab triggers its own loader when first activated AND its rows empty.
 watch(activeTab, (next) => {
   if (next === 'fighters' && fightersRows.value.length === 0) {
     loadFighters();
+  } else if (next === 'clans' && clansRows.value.length === 0) {
+    loadClans();
   }
 });
 
@@ -101,6 +104,48 @@ function wrClass(wr) {
 function rowWr(u) {
   const total = (u.wins ?? 0) + (u.losses ?? 0);
   return total > 0 ? Math.round(((u.wins ?? 0) / total) * 100) : 0;
+}
+
+// ===== CLANS tab state (Commit 5) =====
+// Backend response /v1/clan/search → ClanModel[] with .id/.name/.members
+// (number, not array)/.wins/.battles/.level/.xp. NO `losses` field —
+// computed as `battles - wins`. F3 mitigation: reset BEFORE load.
+const clansRows = computed(() => store.getters['clan/getClanRatingsList'] || []);
+const clansSearch = ref('');
+const clansLoading = ref(false);
+const clansError = ref(null);
+let clansTimeout = null;
+
+async function loadClans() {
+  clansLoading.value = true;
+  clansError.value = null;
+  try {
+    store.commit('clan/resetClanRatings');
+    await store.dispatch('clan/loadClanRatings', {
+      search: clansSearch.value,
+      sortBy: 'battles',
+      page: 0,
+    });
+  } catch (err) {
+    clansError.value = err?.message || 'Failed to load clans';
+  } finally {
+    clansLoading.value = false;
+  }
+}
+
+function onClansSearch(e) {
+  clansSearch.value = e.target.value;
+  clearTimeout(clansTimeout);
+  clansTimeout = setTimeout(() => loadClans(), 200);
+}
+
+// Clan row helpers — battles/wins flat, losses derived.
+function clanLosses(c) {
+  return Math.max(0, (c.battles ?? 0) - (c.wins ?? 0));
+}
+function clanWr(c) {
+  const b = c.battles ?? 0;
+  return b > 0 ? Math.round(((c.wins ?? 0) / b) * 100) : 0;
 }
 
 // ===== Sticky your-row — bound to master.userData (Step 8) =====
@@ -219,8 +264,47 @@ const nextRankHint = computed(() => {
       <!-- ===== MY_CLAN tab placeholder (Commit 7) ===== -->
       <div v-if="activeTab === 'myclan'" data-tab="myclan"></div>
 
-      <!-- ===== CLANS tab placeholder (Commit 5) ===== -->
-      <div v-else-if="activeTab === 'clans'" data-tab="clans"></div>
+      <!-- ===== CLANS tab — wired to clan/loadClanRatings (Commit 5) ===== -->
+      <template v-else-if="activeTab === 'clans'">
+        <div class="ratings-search-row">
+          <input
+            class="ratings-search"
+            :placeholder="t.rating.clanPlaceholder"
+            :value="clansSearch"
+            @input="onClansSearch"
+          />
+        </div>
+
+        <div class="ratings-thead">
+          <div>#</div>
+          <div>Clan</div>
+          <div class="num">Members</div>
+          <div class="num">Wins</div>
+          <div class="num">Losses</div>
+          <div class="num">WR</div>
+        </div>
+
+        <div class="ratings-tbody">
+          <div v-if="clansLoading" class="rt-empty">{{ t.rating.lblLoading || 'Loading…' }}</div>
+          <div v-else-if="clansError" class="rt-empty">{{ t.rating.error }}</div>
+          <div v-else-if="clansRows.length === 0" class="rt-empty">{{ t.rating.noResults }}</div>
+          <div
+            v-else
+            v-for="(row, idx) in clansRows"
+            :key="`clans|${row.id}`"
+            class="rt-row clickable"
+            :class="rowRankClass({ rank: idx + 1 })"
+            @click="$router.push('/v2/clan/' + row.id)"
+          >
+            <div class="rt-rank"><span class="rnk-num">#{{ idx + 1 }}</span></div>
+            <div class="rt-handle">{{ row.name }}</div>
+            <div class="num">{{ row.members ?? 0 }}</div>
+            <div class="num">{{ row.wins ?? 0 }}</div>
+            <div class="num">{{ clanLosses(row) }}</div>
+            <div class="num rt-wr" :class="wrClass(clanWr(row))">{{ clanWr(row) }}%</div>
+          </div>
+        </div>
+      </template>
 
       <!-- ===== AGENTS tab placeholder (Commit 6) ===== -->
       <div v-else-if="activeTab === 'agents'" data-tab="agents"></div>
