@@ -4566,12 +4566,106 @@ Wires Friends row click в HudProfile к 6B-3 guest profile view (`/v2/user/:log
 | 8 | `/user/search sortBy=balance` query param | 6B-3a Phase 1 finding | CARRY-OVER |
 
 **Deferrals (NOT carry-overs — integrated inline в downstream sub-epics):**
-- HudClanRoster click wiring → integrated в Sub-epic 1 (was 6B-4 чужие кланы)
+- HudClanRoster click wiring → infrastructure ready (Sub-epic 1 closed), end-to-end verify deferred к Clan data integration audit carry-over
 - HudRatings click wiring → integrated в Sub-epic 2 (was 6B-5 real ratings backend)
 
 **Net 6B-3 → 6B-3b accounting:** 8 entering → 8 leaving (no new, no closures).
 
-**Следующий sub-epic:** Sub-epic 1 — `/clan/:id` чужие кланы (was 6B-4, M size). Phase 0 should focus на guest mode для clan view (similar к 6B-3 pattern), backend endpoint compatibility, и потенциальный wiring HudClanRoster click к moment of real clan member data.
+**Следующий sub-epic:** Sub-epic 2 — Полные ratings (was 6B-5, M size).
+
+---
+
+### Sub-Epic 1 (was 6B-4) — Guest Clan View `/v2/clan/:id` ✅ CLOSED
+
+**Status:** CLOSED clean ✅
+**Type:** Frontend new view + routing redirect + Vuex extension, M-size
+**Phases:** 9 commits (7 functional + Phase 2 Commit 1 FINAL_REPORT + Phase 2 Commit 2 CLAUDE.md)
+**Closure shape:** Standard linear (no reactive split, no recoveries)
+**Branch:** `claude/investigate-retirement-animation-zQeg4`
+**HEAD before:** `46cb1bf` (6B-3b closure)
+**HEAD at functional closure:** `f824b19`
+**Final report:** `docs/visual-migration/EPIC6B4_FINAL_REPORT.md`
+**Closure date:** 2026-05-02
+
+**What 6B-4 / Sub-epic 1 did:**
+
+Closes 4th coverage gap из Wave 2 audit — guest clan view `/v2/clan/:id` ported к v2, parallel structure к 6B-3 `/v2/user/:userLogin`. Pattern A scene-shared 'clan' (5D precedent), Path C Vuex extension (`getGuestClanById` alongside existing `getClanById`).
+
+**7 functional commits:**
+1. `7e7efa8` — clanState extension Path C (getGuestClanById action + loading/error state, +45)
+2. `88a6ee1` — fetchClanData error preservation (preemptive 6B-3 Bug 2 Path 1 fix, +4/-1)
+3. `4db28ff` — `views-v2/GuestClanView.vue` (Pattern A scene-shared, self-redirect logic, 109 lines NEW)
+4. `687153e` — `components/hud/HudGuestClan.vue` (5 UI states / 5 public sections / frontend balance filter, 542 lines NEW)
+5. `ec0d465` — 6 `t.guestClan.*` keys в `en.js` only (English-only convention)
+6. `41439d4` — register `/v2/clan/:id` route as child of `/v2` (V2GuestClan name)
+7. `f824b19` — `/clan/:id` top-level redirect to V2GuestClan (function-form param transform, legacy ClanView orphaned)
+
+**Files:**
+- Created: `src/views-v2/GuestClanView.vue` (109), `src/components/hud/HudGuestClan.vue` (542)
+- Modified: `src/core/state/modules/clanState.js` (+45), `src/core/services/clanService.js` (+4/-1), `src/router/index.js` (+9/-1 net), `src/locales/en.js` (+8)
+- Orphaned (deletion deferred к Sub-epic 8): `src/views/ClanView.vue`
+
+**Architectural decisions:**
+
+- **Path C Vuex extension** (precedent 6B-3) — drift-safe pattern, existing action / state untouched
+- **Pattern A scene-shared 'clan'** (precedent 5D) — reuses existing v2 ClanScene 3D backdrop
+- **Preemptive 6B-3 Bug 2 fix (Commit 2)** — `fetchClanData` preserves `wrapped.status` + `wrapped.response`. **Result:** zero reactive splits, 7-commit closure instead of 8. **Lessons compound forward через explicit pre-emption.**
+- **Frontend balance filter (Option 2)** — backend privacy fix отложен (parallel pattern 6B-3a-backend → carry-over)
+- **Self-redirect для own clan** — `route.params.id === user.clanId` → `router.replace('/v2/clan')`
+- **Auth posture (Path A decision)** — `V2GuestClan` НЕ в `protectedRoutes`, uniform с 12+ existing `V2*` routes. Lesson surfaced: "Option C" framing в 6A был imprecise (auth via legacy entry, not via v2 child). Carry-over registered.
+
+**Visual verify gate:**
+
+- ✅ "Clan not found" state корректно рендерится для invalid IDs (тест `/v2/clan/sdfsdf`)
+- ✅ Build pass на всех 7 commits
+- ⚠️ End-to-end happy path с валидным clan ID **не подтверждён вручную** (user не нашёл реальный ID — отложено к Clan data integration audit carry-over)
+- ⚠️ Pre-existing bugs surfaced (NOT regression): mock data в own 5D clan view, clan search broken в browser
+
+**Recovery log:** 0 catches in Sub-epic 1 session.
+
+**Cumulative lesson tally:** 35 → 35 (UNCHANGED). 2 new candidates added:
+
+- **Lesson candidate #41 — "Visual verify gate ≠ end-to-end test"** — visual click-through tests find pre-existing bugs but не validate sub-epic happy path; для backend integration sub-epics provide test IDs upfront в Phase 0 setup или accept "code-complete + deferred-verify" closure shape (precedent 6B-3a-backend). Promotion criteria: await 2nd occurrence.
+- **Lesson candidate #42 — "Pre-existing bugs surface during visual verify"** — net positive for backlog; closure decision must distinguish "regression от sub-epic" vs "pre-existing surface" — последнее идёт в carry-overs, не блокирует closure. Promotion criteria: await 2nd occurrence.
+
+**Hot-fix metric:** **0 — 24-streak achieved** ✅ (5E → 5U + 6A + 6B-1 + 6B-2 + 6B-3a-backend + 6B-3 + 6B-3b + 6B-4 all clean).
+
+**Cumulative recoveries:** 80+ entering → 80+ exiting (no recoveries, linear trajectory).
+
+**Эпик 6 progress:** 6/14 → **7/14 done (50%)** ✅ — half-way milestone reached.
+
+**Sub-Epic 6B-4 (Sub-epic 1) — CLOSED ✅.**
+
+**Methodology applied (no new contributions):**
+
+- Septuple-precedent investigation-refines-ТЗ pattern — was sextuple at 6B-3b, now 7 applications в Эпике 5+6 чейне (5O / 5Q / 5R / 5S / 5T / 6B-3 / 6B-4 — note: 6B-3a-backend / 6B-3b applied pattern but didn't refine ТЗ shape mid-execution)
+- Mode A strict per-commit discipline — 7 functional commits с pre-edit + post-edit + build verification × 7
+- Convention discovery (Lesson #32) — multiple applications: Pattern A scene-shared reuse (5D), Path C Vuex extension (6B-3), preemptive 6B-3 Bug 2 fix
+- HUD overlay convention (Lesson #34) — applied к HudGuestClan
+- **Standard linear closure shape** — 4th application в Эпике 6 (6A + 6B-1 + 6B-3 inline + 6B-4)
+
+**Carry-overs forward (entering 6B-4: 8 items, exiting: 10 items):**
+
+| # | Item | Source | Status |
+|---|---|---|---|
+| 1 | Achievement badge для retirement | 5Q drop, κ Path B | CARRY-OVER |
+| 2 | HudProfile card-creep monitor | 5L+ → 5S Q1.3 | MONITOR-FORWARD (still 6/7, **Sub-epic 1 NOT triggered** ✓) |
+| 3 | Lesson #36 validation track | 5R | CARRY-OVER |
+| 4 | Auth + Wallet visual redesign | 6A user request | CARRY-OVER (Sub-epic 7 per new naming) |
+| 5 | `/rules` → v2 port | 6B-1 Phase 0 | CARRY-OVER |
+| 6 | 3D models + devices system | 6B-2 user direction | CARRY-OVER (post-migration / Эпик 7+) |
+| 7 | Locale cleanup (10 → English-only) | 6B-3a user direction | CARRY-OVER (Эпик 7+) |
+| 8 | `/user/search sortBy=balance` query param | 6B-3a Phase 1 finding | CARRY-OVER |
+| 9 | **NEW: Clan data integration audit** | Sub-epic 1 visual verify surface | NEW CARRY-OVER (M-L size, 4 concerns: replace 5D mock data + fix clan search + e2e guest verify + optional backend privacy fix + entry points wiring verify) |
+| 10 | **NEW: v2 cutover auth posture audit** | Sub-epic 1 Path A decision investigation | NEW CARRY-OVER (post-Эпик 6 / Sub-epic 8 — group-level guard на v2Routes parent vs per-route protectedRoutes entries) |
+
+**Net 6B-3b → Sub-epic 1 accounting:** 8 entering → 10 leaving (8 carried forward unchanged + 2 new from session findings).
+
+**Closed in Sub-epic 1:**
+- ✅ `/clan/:id` GAP → FULL coverage. New v2 GuestClanView at `/v2/clan/:id`. Top-level `/clan/:id` redirects (function-form param transform). v1 ClanView.vue file orphaned (deletion deferred к Sub-epic 8 cutover).
+- ⚠️ Visual verify deferred — happy path с валидным clan ID не подтверждён руками (carry-over к Clan data integration audit).
+
+**Следующий sub-epic:** Sub-epic 2 — Полные ratings (was 6B-5, M size). Phase 0 should focus на 4 ratings table reconciliation (myclub / clubs / fighters / agents per CLAUDE.md 5C), backend endpoint integration (replacing client-side mock per CLAUDE.md `ratingsMock.js`), и HudRatings click wiring к `/v2/user/:login` + `/v2/clan/:id` (deferred from 6B-3b per scope-deferral-к-downstream pattern).
 
 ---
 
@@ -4608,16 +4702,16 @@ Wires Friends row click в HudProfile к 6B-3 guest profile view (`/v2/user/:log
 
 Последний эпик миграции. Roadmap: **14 sub-epics** (was 11; expanded к 13 due к 6B-3a-backend + 6B-3b split, then к 14 due к explicit 6B-10 Auth+Wallet accounting per 6A user-request carry-over). Strategy: гибрид B+C — постепенное закрытие coverage gaps + route-by-route cutover + финальный cleanup.
 
-**Эпик 6 progress:** 6/14 done (43%) — 6B-3b CLOSED ✅ (smallest sub-epic, 1 NEW methodology pattern: scope-deferral-к-downstream).
+**Эпик 6 progress:** **7/14 done (50%)** ✅ — Sub-epic 1 (was 6B-4) CLOSED, half-way milestone reached. Standard linear closure (4th application: 6A + 6B-1 + 6B-3 + 6B-4).
 
 > **✅ DEPLOY VERIFY COMPLETE:** 6B-3a-backend deploy verified on `api.hexlash.com` (PR `fix/user-public-response` merged to main, Railway auto-deployed). Authenticated guest profile probe (`test_jen_1` viewing `onotole`) returned ONLY public fields, 0 private leaks (15 sensitive fields verified absent: email/balance/walletAddress/financial tokens/progression/deck/settings/language/updatedAt/etc). **Streak 20 → 21 transitioned successfully.** 6B-3 Phase 1 unblocked.
 
 Roadmap document: `docs/visual-migration/EPIC6_ROADMAP.md` (TBD — может быть создан как separate sub-epic либо in-place в этой секции).
 
 **Cumulative metrics entering Эпик 6 / current state:**
-- **23-streak** (5E → 5U + 6A + 6B-1 + 6B-2 + 6B-3a-backend + 6B-3 + 6B-3b all clean)
-- **80+ cumulative recoveries** (+1 Recovery #80 в 6B-3a-backend, adaptation-tier per Lesson #35)
-- 35 lessons promoted, 5 candidates active (#36/#37/#38/#39/#40)
+- **24-streak** (5E → 5U + 6A + 6B-1 + 6B-2 + 6B-3a-backend + 6B-3 + 6B-3b + 6B-4 all clean)
+- **80+ cumulative recoveries** (+1 Recovery #80 в 6B-3a-backend, adaptation-tier per Lesson #35; Sub-epic 1 had 0 recoveries)
+- 35 lessons promoted, **7 candidates active** (#36/#37/#38/#39/#40/#41/#42)
 
 **Sub-epics closed in Эпик 6:**
 - **6A** — Лёгкий cutover (4 FULL coverage routes на чистые URL'ы) ✅
@@ -4626,10 +4720,11 @@ Roadmap document: `docs/visual-migration/EPIC6_ROADMAP.md` (TBD — может �
 - **6B-3a-backend** — Privacy fix (3 guest endpoints — code complete + deferred-verify pattern, deploy verified post-closure via PR `fix/user-public-response`) ✅
 - **6B-3** — `/user/:userLogin` guest profile (third coverage gap closed: GAP → FULL — first M-size, reactive split applied 7a + 7b) ✅
 - **6B-3b** — Friends entry point wiring (smallest sub-epic в Эпике 6, 1 NEW methodology pattern: scope-deferral-к-downstream) ✅
+- **Sub-epic 1 (was 6B-4)** — Guest Clan View `/v2/clan/:id` (4th coverage gap closed: GAP → FULL — standard linear, 7 functional commits, 0 reactive splits, 2 NEW lesson candidates #41 + #42) ✅
 
 > **📝 Naming convention update (after 6B-3b):** Remaining sub-epics renumbered к simple ordinals (Sub-epic 1, 2, ..., 8) для clarity. Historical sub-epics (6A / 6B-1 / 6B-2 / 6B-3a-backend / 6B-3 / 6B-3b) retain original names в documentation. New mapping:
 >
-> - **Sub-epic 1** — `/clan/:id` чужие кланы (was 6B-4) — M
+> - **Sub-epic 1** — `/clan/:id` чужие кланы (was 6B-4) — M ✅ **CLOSED**
 > - **Sub-epic 2** — Полные ratings (was 6B-5) — M
 > - **Sub-epic 3** — Profile sub-routes deep links (was 6B-6) — S-M
 > - **Sub-epic 4** — PvP в v2 (was 6B-7) — L
@@ -4638,16 +4733,18 @@ Roadmap document: `docs/visual-migration/EPIC6_ROADMAP.md` (TBD — может �
 > - **Sub-epic 7** — Auth + Wallet redesign (was 6B-10) — M-L
 > - **Sub-epic 8** — Финальный cutover (was 6C) — M
 >
-> Total: 14 sub-epics в Эпике 6 (6 closed, 8 remaining).
+> Total: 14 sub-epics в Эпике 6 (**7 closed, 7 remaining**).
 
-**Carry-overs into Эпик 6 (8 items — unchanged after 6B-3 / 6B-3b):**
+**Carry-overs into Эпик 6 (10 items — +2 from Sub-epic 1 surface):**
 1. Achievement badge для retirement (5Q drop, κ Path B)
-2. HudProfile card-creep monitor (6/7 threshold; **6B-3a-backend NOT triggered** ✓ — backend-only sub-epic, no HUD touched)
+2. HudProfile card-creep monitor (6/7 threshold; **Sub-epic 1 NOT triggered** ✓ — separate HudGuestClan component pattern preserves monitor)
 3. Lesson #36 validation track (await 2nd occurrence)
-4. Auth + Wallet visual redesign (NEW per 6A user request — sub-epic 6B-10)
-5. `/rules` → v2 port (6B-1 Phase 0 surface — PageView multi-purpose) — 6C cleanup или 6B-1b candidate
+4. Auth + Wallet visual redesign (NEW per 6A user request — Sub-epic 7 per new naming)
+5. `/rules` → v2 port (6B-1 Phase 0 surface — PageView multi-purpose) — Sub-epic 8 cleanup или 6B-1b candidate
 6. 3D models + devices system (6B-2 user direction — replaces legacy skins concept, post-migration / Эпик 7+ scope)
-7. **NEW: Locale cleanup (10 → English-only)** (6B-3a user direction — Эпик 7+ scope)
-8. **NEW: `/user/search` `sortBy=balance` query param** (6B-3a Phase 1 finding — secondary leak vector through sort capability over private financial field; out of 6B-3a-backend scope; follow-up sub-epic candidate)
+7. Locale cleanup (10 → English-only) (6B-3a user direction — Эпик 7+ scope)
+8. `/user/search` `sortBy=balance` query param (6B-3a Phase 1 finding — secondary leak vector through sort capability over private financial field; out of 6B-3a-backend scope; follow-up sub-epic candidate)
+9. **NEW: Clan data integration audit** (Sub-epic 1 visual verify surface — M-L size; replace 5D mock data + fix clan search + e2e guest verify + optional backend privacy fix + entry points wiring verify; желательно перед Sub-epic 8 final cutover)
+10. **NEW: v2 cutover auth posture audit** (Sub-epic 1 Path A decision investigation — post-Эпик 6 / Sub-epic 8; "Option C" framing в 6A был imprecise — actual pattern "auth via legacy entry, not via v2 child"; group-level guard на `v2Routes` parent vs per-route `protectedRoutes` entries decision)
 
-**Следующий sub-epic:** Sub-epic 1 — `/clan/:id` чужие кланы (was 6B-4, M size).
+**Следующий sub-epic:** Sub-epic 2 — Полные ratings (was 6B-5, M size).
