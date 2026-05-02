@@ -26,7 +26,6 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
   components/club/         — 8 Club Mode components (AgentRoster, AgentCard, ClubLevelBar, MorningReport, RetirementPanel, SkinPicker, ArchetypeSelector, ResearchTree)
   components/clan/         — 1 Clan social component (ClanInviteNotification)
   components/fragments/clan/ — 10 Clan social fragments (ClanPageContent, ClanActivityFeed, ClanEdit, ClanStats, ClanAvatar, ClanOwnerAvatar, ClanWithdraw, ClanConfirmModal, CreateClan, MyClanTab)
-  components/ratings/      — AgentLeaderboard
   core/
     state/store.js         — Vuex store
     state/modules/         — 13 Vuex modules (incl. agentState for Fight Club, clanState for social clans)
@@ -526,7 +525,7 @@ MIGRATION_ENABLED = true           // lazy User→Fighter #1 on /me
 | Deck Builder | *Deleted* (`DeckBuilderView.vue`) | Deck editing via AgentDetailView deck editor modal |
 | Fight | `CardFightView.vue` | Main combat (PvE + PvP), dice, coach advice, HP bars, AI Trainer (PvE results). Loading splash: HEXLASH in Anonymous pixel-font with --hex-primary + glow (matches Logo.vue style, same as index.html pre-app splash). PvP mode: no BottomMenu, no PvP badge, reduced padding. Fully migrated to --hex-* vars: HexButton for results, inline SVGs, dice/coach/victory/defeat/overdrive all use design system vars. Visual System v1.0 compliant: pink only on CTA buttons (dice, Fight Again), VICTORY/DEFEAT/DRAW + OVERDRIVE pixel-font, HP in AnonymousBalance, dice effects in characteristic colors, coach buttons in action-specific colors |
 | Profile | `ProfileView.vue` | Tabs: balance, wallet, account, skins. Visual System v1.0 compliant: AnonymousBalance for numerical values, neutral header (no pink), 0-1 pink accent per tab, toggles green (success), delete btn danger |
-| Ratings (League) | `RatingsView.vue` | 3 tabs: My Club, Clubs (leaderboard), Fighters (leaderboard). Default tab: My Club. URL: `/ratings/:type` (myclub/clubs/fighters). My Club tab: `MyClubTab.vue` component — redesigned clan header (avatar 64px with --hex-primary glow, name in Anonymous font, italic description, LVL badge, member count, level progress bar), stats grid (4 cards: Members/Wins/Losses/Win Rate with colored values), win rate bar, members top-5, role badges owner/deputy, action menus. No-clan state: ⚔ icon hero, CREATE/BROWSE buttons, pending invites banners, suggested clans with stats |
+| Ratings (League) | `RatingsView.vue` | 3 tabs: My Club, Clubs (leaderboard), Fighters (leaderboard). Default tab: My Club. URL: `/ratings/:type` (myclub/clubs/fighters). My Club tab: `MyClubTab.vue` component — redesigned clan header (avatar 64px with --hex-primary glow, name in Anonymous font, italic description, LVL badge, member count, level progress bar), stats grid (4 cards: Members/Wins/Losses/Win Rate with colored values), win rate bar, members top-5, role badges owner/deputy, action menus. No-clan state: ⚔ icon hero, CREATE/BROWSE buttons, pending invites banners, suggested clans with stats. **Note:** v2 path uses 4-tab Path D (My Clan / Clans / Fighters / Agents) per Sub-epic 2, reversing 5C Path A unified-leaderboard decision. v1 RatingsView retained для legacy `/ratings/*` route (cleanup в Sub-epic 8 final cutover). |
 | Fight Club | `FightClubView.vue` | `/arena/club` (also reachable via `/arena` redirect). Agent roster, Club Level bar, Morning Report, Retirement Panel. "← Arena" switch button in header. Captain's AgentCard has primary FIGHT button (navigates to PreparationView, disabled when fighting/resting). Background: `background_arena.webp` with gradient overlay (shared visual identity with PreparationView) |
 | Preparation | `PreparationView.vue` | `/arena/fight`: action row (Mode + START FIGHT + Friends buttons). Friends button is text-only (no online indicator). "← Arena" switch button in header. Visual System v1.0 compliant: single pink accent (START FIGHT), ModeSelector neutral, AnonymousBalance where needed |
 | Friends | `FriendsView.vue` | Friends list, friend requests, search players. Visual System v1.0 compliant: neutral cards, online indicator hex-success, Accept=green/Decline=danger, Add friend=primary CTA, system sans |
@@ -1576,6 +1575,10 @@ Fighter retirement: fully trained fighter becomes a Legend, grants passive buffs
 - `src/components/fragments/club/ClanPageContent.vue` — integrated RetirementPanel
 
 ### Agent Rankings + Leagues (ТЗ-26) — ✅ COMPLETE
+
+> **⚠️ DEPRECATED — Sub-epic 2 closure:** `AgentLeaderboard.vue` removed (Commit 9, 5G dead code closed). Agent rankings now wired в `HudRatings.vue` AGENTS tab directly (Path D Hybrid). Section preserved for historical context.
+
+
 
 Agent leaderboard with 6 league tiers, integrated into RatingsView as 4th tab.
 
@@ -2641,7 +2644,7 @@ src/data/ratingsMock.js                 —  91 — Mulberry32 seedable RNG + 10
 
 - **Lazy sub-scene симметрично 5B Profile.** `buildRatingsScene` + `registerScene('ratings')` + `activateScene('ratings')` в `onMounted`. Teardown — `activateScene('pit')` → `unregisterScene` → `dispose` (строгий порядок). RatingsView.vue 83 lines identical size to 5B ProfileView.vue.
 - **5A helpers — 5-й consumer** для обоих `buildOctagonalRoom` и `createDustField`. Validate reuse pattern за пределами 4 consumer'ов 5A+5B. Helpers stable.
-- **Path A (prototype-first).** Legacy RatingsView табовая структура (MyClub/Clubs/Fighters/Agents) НЕ переносится в v2. Новая ментальная модель — unified leaderboard + 5 scope filters per prototype 4767-4819. Legacy `/ratings/*` route остаётся параллельно (693 строк, не тронут).
+- **Path A (prototype-first).** Legacy RatingsView табовая структура (MyClub/Clubs/Fighters/Agents) НЕ переносится в v2. Новая ментальная модель — unified leaderboard + 5 scope filters per prototype 4767-4819. Legacy `/ratings/*` route остаётся параллельно (693 строк, не тронут). **⚠️ Path A REVERSED in Sub-epic 2 — see closure section below. /v2/ratings now uses 4-tab Path D с real backend wiring.**
 - **Client-side mock data (Mulberry32).** `src/data/ratingsMock.js` — seedable RNG + 10 pre-generated datasets. Prototype 10218-10272 verbatim port. Real API wiring → PvP-integration sub-epic. Rationale: 5C scope — визуал, API wiring отвлекает.
 - **Short-ID vs full-name archetype bridge.** Mock data hardcodes short IDs (`'pre'`, `'ana'`, ...) matching `arch-tag-{id}` CSS classes в create.css (Correction 3 reuse). Real `master.userData.captain.primaryModule` — full name (`'predator'`). `archetypeIdShort()` / `archetypeName()` helpers inline в HudRatings.vue (Correction 4 from Step 0) bridge обе directions.
 - **Null-safe your-row.** `v-if="yourRow"` — hide entirely если `master.userData.captain` отсутствует (0-agent accounts / lazy User→Fighter migration not yet run). 99% accounts имеют captain через Fighter #1 migration. 0-agent UX не broken — leaderboard сверху остаётся.
@@ -4669,6 +4672,79 @@ Closes 4th coverage gap из Wave 2 audit — guest clan view `/v2/clan/:id` por
 
 ---
 
+### Sub-Epic 2 (was 6B-5) — Ratings Reconciliation ✅ CLOSED
+
+Закрыт 2026-05-03. Пятая coverage gap из Wave 2 audit closed — `/v2/ratings` reconciled от unified-leaderboard mock (5C Path A) к 4-tab v1-style real-data structure (Path D Hybrid). Standard linear closure (5th application в Эпике 6: 6A + 6B-1 + 6B-3 + Sub-epic 1 + Sub-epic 2). 11 functional commits + 1 audit-skip (Commit 8) + 3 closure commits.
+
+**Commit range:** `4546b8e` (Commit 1) → `21c36ea` (Commit 11) + closure (13/14/15). Branch: `claude/investigate-retirement-animation-zQeg4` (continue stack from Sub-epic 1, HEAD `bd2189f` baseline).
+
+**Final report:** `docs/visual-migration/EPIC6_SUBEPIC_2_FINAL_REPORT.md` (Commit 14).
+**Handoff:** `docs/visual-migration/HANDOFF_EPIC6_SUBEPIC_3_CHAT_HANDOFF.md` (Commit 15).
+
+**Что видит пользователь:**
+- `/v2/ratings` opens с **My Clan tab default**.
+- **MY_CLAN tab:** has-clan branch — compact summary card (avatar + name + Lv N · M members + Wins/Battles), click → `/v2/clan`. No-clan branch — "You're not in a clan" + CTA "Create or browse clans" → `/v2/clan`.
+- **CLANS tab:** 200ms debounce search + leaderboard от `/v1/clan/search`. 6 cols (# / Clan / Members / Wins / Losses / WR). Click row → `/v2/clan/:id` (Sub-epic 1 GuestClanView).
+- **FIGHTERS tab:** 200ms debounce search + leaderboard от `/v1/user/search`. 7 cols (# / Handle / Archetype / Belt / ELO / W/L / WR — Streak dropped). Sticky your-row visible (Fighters-only) с captain ELO + myRank computed. Click row → `/v2/user/:login` (6B-3 GuestProfileView).
+- **AGENTS tab:** leaderboard от `/v1/agent/rankings` (totalFights ≥ 5 backend filter). 6 cols (# / Agent / Owner / Belt / Q. Wins / ELO). NO search (endpoint doesn't support). Hexmaster agents show 👑 emoji + "Hexmaster" badge. Click row → `/v2/fd/:agentId` (Epic 4 V2FighterDetail dynamic UUID accept).
+- **All data REAL** — `ratingsMock.js` deleted. No more seeded RNG.
+- **Streak column dropped** полностью (backend doesn't track).
+
+**Files changed (3):**
+- `src/components/hud/HudRatings.vue` — refactor 5-scope/2-season → 4-tab + per-tab data wiring (cumulative ~+260 / −150 across Commits 2-7).
+- `src/core/state/modules/agentState.js` — +36 lines (`loadAgentRankings` action, mirrors agent module direct-apiClient convention per Recovery #81).
+- `src/core/models/userModel.js` — +13 lines (additive `captain` + `rating` extraction at constructor + fromJSON destructure + assignment + new UserModel pass — symmetric 4-point extension per Recovery #83).
+
+**Files cleaned:**
+- `src/styles/v24/ratings.css` — −38 lines (dead 5C scope/season/streak CSS rules removed Commit 11).
+
+**Files deleted (2):**
+- `src/data/ratingsMock.js` — 91 lines (Mulberry32 client-side mock, replaced by real backend, Commit 2).
+- `src/components/ratings/AgentLeaderboard.vue` — 244 lines (dead code from ТЗ-26 era, never wired в v1 RatingsView, closes 5G dead code carry-over, Commit 9).
+
+**Vuex (Path A extension — reuse + extend):**
+- `agent/loadAgentRankings` — **NEW** (offset/limit pagination, REPLACE semantics deliberate — preempts F3-style stale-rows for own action).
+- `user/loadParticipantRatings` — **REUSED** existing action. F3 mitigation enforced: `commit('user/resetParticipantRatings')` BEFORE `dispatch` (APPEND semantics confirmed Commit 4 pre-edit).
+- `clan/loadClanRatings` — **REUSED** existing action. F3 mitigation identical pattern (APPEND semantics confirmed Commit 5 pre-edit).
+- `clan/getClanById` — **REUSED** sync getter + async dispatch для MY_CLAN tab (Option B: `onMounted` initial fetch + watch defensive re-fetch, idempotent guard).
+
+**Click wiring (closes 6B-3b deferral):**
+- FIGHTERS row → `/v2/user/:login` (6B-3 GuestProfileView).
+- CLANS row → `/v2/clan/:id` (Sub-epic 1 GuestClanView).
+- AGENTS row → `/v2/fd/:agentId` (Epic 4 V2FighterDetail).
+- MY_CLAN summary → `/v2/clan` (5D ClanView own-clan).
+
+**3 NEW recoveries (all adaptation-tier per Lesson #35, streak preserved):**
+
+- **Recovery #81 — agent module convention discovery** (Commit 1). ТЗ assumed cross-module service-layer convention (`agentService.js` parallel к `clanService.js`/`userService.js`); codebase reality has agent module on direct-apiClient pattern (14 existing actions, no service file). Lesson #32 reflex applied — Option B chosen (single-file edit к `agentState.js`, mirror `fetchFightHistory` shape line 256). Adaptation-tier resolution. Mirror local convention wins over ТЗ literal.
+
+- **Recovery #82 — branch divergence on bootstrap** (Commit 1). Harness bootstrapped fresh-slug `claude/review-documentation-MPIjj`; ТЗ explicitly required continue stack `claude/investigate-retirement-animation-zQeg4 @ bd2189f`. Same SHA = zero work loss risk. User-authorized switch (`git checkout`) + fast-forward (4 missing commits, none touched `agentState.js`). Mirror of Recovery #79 (5U bridge session pattern). Adaptation-tier per Lesson #35 — environment/harness configuration discrepancy, не code bug.
+
+- **Recovery #83 — UserModel shape mismatch** (Commit 4). ТЗ assumed `UserModel.fromJSON` includes `captain` + `rating`; codebase reality drops these fields at fromJSON destructure step (constructor + fromJSON have identical extraction set, 23 fields, both excluding captain/rating/belt/isHexmaster/primaryModule). Backend `/v1/user/search` response post-6B-3a-backend includes `captain` (optional) + `rating` per CLAUDE.md "Captain in Public UI" pattern. Option A — additive extension (constructor params + this.X assignments + fromJSON destructure + new UserModel pass — 4 symmetric points). Co-scoped within Commit 4 (5G/6B-3 bug-bundle precedent — same-sub-epic structural prerequisite). Pre-edit verify confirmed 5 callsites all через userService, additive extension safe (existing reads access named fields, extras ignored).
+
+**Carry-overs (2 closed, 3 NEW):**
+
+- ✅ **5G dead code** (`AgentLeaderboard.vue` + stale CLAUDE.md "Agent Rankings + Leagues" section) — CLOSED Commit 9 (file deleted + section marked DEPRECATED).
+- ✅ **6B-3b HudRatings click wiring deferral** — CLOSED через Commits 4/5/6 (FIGHTERS/CLANS/AGENTS row click navigation wired).
+- ⚪ **NEW #11 — friendsState.searchPlayers captain field drop.** Manual reshape в `friendsState.js:133-141` drops `captain` field → `PlayerSearchResult.vue :captain="player.captain"` always undefined → `UserCaptainBadge` always renders "—" no-captain dash. Pre-existing silent bug, surfaced в Commit 4 pre-edit verify (Q-A3 captain consumer audit). NOT created by Sub-epic 2. Polish round candidate / friends sub-epic candidate.
+- ⚪ **NEW #12 — HudRatings 8-col CSS grid mismatch.** `.ratings-thead` + `.rt-row` `grid-template-columns` hardcoded к 8 cols (50px 2fr 90px 80px 70px 70px 70px 70px from 5C era). FIGHTERS uses 7 cells (1 trailing empty), CLANS/AGENTS use 6 cells (2 trailing empty). Cosmetic only — all tabs functional, just visual trailing whitespace. Deferred per design-Claude direction Commit 11 (defer guidance). Per-tab grid modifier classes (Option a) — polish round candidate.
+- ⚪ **NEW #13 — HudRatings keyboard accessibility.** Tab buttons lack `role="tab"` / `aria-selected` / `aria-controls`. Row click divs lack `tabindex` / `role="button"` / Enter-key handlers. Pre-existing 5C inheritance, applies к 4-tab structure. NOT regression. Polish round candidate.
+
+**Closure shape:** Standard linear (5th application в Эпике 6). 0 reactive splits, 0 hot-fixes, 3 adaptation-tier recoveries (Lesson #35 streak-preserving tier).
+
+**Methodology applied:**
+- Mode A strict per-commit discipline — 11 functional commits + 1 audit-skip (Commit 8) + 3 closure commits, build pass per commit, status report + push + STOP-and-confirm gates.
+- Lesson #11 reflex — pre-edit + post-edit grep on every edit (Commit 2 false-positive Mulberry32-style discrimination, Commit 4 captain consumer audit Q-A1..A4, Commit 9 zero-callsite verify).
+- Lesson #32 convention discovery — multiple applications: agent module direct-apiClient (#81), `res` variable naming, div-grid pattern reuse, `.rt-*` CSS class consistency, `master.userData?.clanId` path mirror (HudClan/HudGuestClan/MyClanTab triple-precedent), scoped CSS instead of clan.css for myclan styling.
+- Lesson #35 adaptation-tier × 3 — all 3 recoveries (#81/#82/#83) preserved streak per environment/convention discrepancy classification.
+- Lesson #36 HudProfile card-creep monitor — NOT triggered (HudRatings standalone HUD). Monitor remains 6/7.
+- Pre-emptive F3 mitigation pattern (reset → load atomic) для clan + user ratings APPEND mutations — discovered Commit 1 pre-edit verify, designed Commit 4 forward, applied Commits 4/5 verbatim, identical к 6B-3 / 5G mitigation pattern principle.
+- Mental-model reversal acknowledged explicitly — Path D reverses 5C Path A unified-leaderboard decision. Documented via deprecation note в 5C section + deprecation note в v1 RatingsView description. Not classified as pivot — это refinement based на post-5C surface findings (mock data dishonesty, backend reality 3 endpoints, 6B-3b deferral closure pressure).
+
+**Next sub-epic:** Sub-epic 3 — Profile sub-routes deep links (was 6B-6, S-M size, ~6-8 commits estimated).
+
+---
+
 ## 🎉 ЭПИК 5 §4.2 — CLOSED ✅
 
 **Эпик 5 §4.2 historic milestone:** 22/22 sub-epic candidates closed (100%).
@@ -4702,15 +4778,15 @@ Closes 4th coverage gap из Wave 2 audit — guest clan view `/v2/clan/:id` por
 
 Последний эпик миграции. Roadmap: **14 sub-epics** (was 11; expanded к 13 due к 6B-3a-backend + 6B-3b split, then к 14 due к explicit 6B-10 Auth+Wallet accounting per 6A user-request carry-over). Strategy: гибрид B+C — постепенное закрытие coverage gaps + route-by-route cutover + финальный cleanup.
 
-**Эпик 6 progress:** **7/14 done (50%)** ✅ — Sub-epic 1 (was 6B-4) CLOSED, half-way milestone reached. Standard linear closure (4th application: 6A + 6B-1 + 6B-3 + 6B-4).
+**Эпик 6 progress:** **8/14 done (57%)** ✅ — Sub-epic 2 (was 6B-5) CLOSED, past half-way mark. Standard linear closure (5th application: 6A + 6B-1 + 6B-3 + 6B-4 + 6B-5).
 
 > **✅ DEPLOY VERIFY COMPLETE:** 6B-3a-backend deploy verified on `api.hexlash.com` (PR `fix/user-public-response` merged to main, Railway auto-deployed). Authenticated guest profile probe (`test_jen_1` viewing `onotole`) returned ONLY public fields, 0 private leaks (15 sensitive fields verified absent: email/balance/walletAddress/financial tokens/progression/deck/settings/language/updatedAt/etc). **Streak 20 → 21 transitioned successfully.** 6B-3 Phase 1 unblocked.
 
 Roadmap document: `docs/visual-migration/EPIC6_ROADMAP.md` (TBD — может быть создан как separate sub-epic либо in-place в этой секции).
 
 **Cumulative metrics entering Эпик 6 / current state:**
-- **24-streak** (5E → 5U + 6A + 6B-1 + 6B-2 + 6B-3a-backend + 6B-3 + 6B-3b + 6B-4 all clean)
-- **80+ cumulative recoveries** (+1 Recovery #80 в 6B-3a-backend, adaptation-tier per Lesson #35; Sub-epic 1 had 0 recoveries)
+- **25-streak** (5E → 5U + 6A + 6B-1 + 6B-2 + 6B-3a-backend + 6B-3 + 6B-3b + 6B-4 + Sub-epic 2 all clean)
+- **83+ cumulative recoveries** (+3 Recoveries #81/#82/#83 в Sub-epic 2, all adaptation-tier per Lesson #35; Sub-epic 1 had 0 recoveries)
 - 35 lessons promoted, **7 candidates active** (#36/#37/#38/#39/#40/#41/#42)
 
 **Sub-epics closed in Эпик 6:**
@@ -4721,11 +4797,12 @@ Roadmap document: `docs/visual-migration/EPIC6_ROADMAP.md` (TBD — может �
 - **6B-3** — `/user/:userLogin` guest profile (third coverage gap closed: GAP → FULL — first M-size, reactive split applied 7a + 7b) ✅
 - **6B-3b** — Friends entry point wiring (smallest sub-epic в Эпике 6, 1 NEW methodology pattern: scope-deferral-к-downstream) ✅
 - **Sub-epic 1 (was 6B-4)** — Guest Clan View `/v2/clan/:id` (4th coverage gap closed: GAP → FULL — standard linear, 7 functional commits, 0 reactive splits, 2 NEW lesson candidates #41 + #42) ✅
+- **Sub-epic 2 (was 6B-5)** — Ratings reconciliation `/v2/ratings` (5th coverage gap closed: Path A → Path D reversal — standard linear, 11 functional commits + 1 audit-skip, 0 reactive splits, 3 adaptation-tier recoveries #81/#82/#83) ✅
 
 > **📝 Naming convention update (after 6B-3b):** Remaining sub-epics renumbered к simple ordinals (Sub-epic 1, 2, ..., 8) для clarity. Historical sub-epics (6A / 6B-1 / 6B-2 / 6B-3a-backend / 6B-3 / 6B-3b) retain original names в documentation. New mapping:
 >
 > - **Sub-epic 1** — `/clan/:id` чужие кланы (was 6B-4) — M ✅ **CLOSED**
-> - **Sub-epic 2** — Полные ratings (was 6B-5) — M
+> - **Sub-epic 2** — Полные ratings (was 6B-5) — M ✅ **CLOSED**
 > - **Sub-epic 3** — Profile sub-routes deep links (was 6B-6) — S-M
 > - **Sub-epic 4** — PvP в v2 (was 6B-7) — L
 > - **Sub-epic 5** — Реальный matchmaking (was 6B-8) — L
@@ -4733,18 +4810,21 @@ Roadmap document: `docs/visual-migration/EPIC6_ROADMAP.md` (TBD — может �
 > - **Sub-epic 7** — Auth + Wallet redesign (was 6B-10) — M-L
 > - **Sub-epic 8** — Финальный cutover (was 6C) — M
 >
-> Total: 14 sub-epics в Эпике 6 (**7 closed, 7 remaining**).
+> Total: 14 sub-epics в Эпике 6 (**8 closed, 6 remaining**).
 
-**Carry-overs into Эпик 6 (10 items — +2 from Sub-epic 1 surface):**
+**Carry-overs into Эпик 6 (13 items — +3 from Sub-epic 2 surface; 5G dead code + 6B-3b deferral CLOSED in Sub-epic 2):**
 1. Achievement badge для retirement (5Q drop, κ Path B)
-2. HudProfile card-creep monitor (6/7 threshold; **Sub-epic 1 NOT triggered** ✓ — separate HudGuestClan component pattern preserves monitor)
+2. HudProfile card-creep monitor (6/7 threshold; **Sub-epic 1 NOT triggered** ✓; **Sub-epic 2 NOT triggered** ✓ — HudRatings standalone HUD)
 3. Lesson #36 validation track (await 2nd occurrence)
 4. Auth + Wallet visual redesign (NEW per 6A user request — Sub-epic 7 per new naming)
 5. `/rules` → v2 port (6B-1 Phase 0 surface — PageView multi-purpose) — Sub-epic 8 cleanup или 6B-1b candidate
 6. 3D models + devices system (6B-2 user direction — replaces legacy skins concept, post-migration / Эпик 7+ scope)
 7. Locale cleanup (10 → English-only) (6B-3a user direction — Эпик 7+ scope)
 8. `/user/search` `sortBy=balance` query param (6B-3a Phase 1 finding — secondary leak vector through sort capability over private financial field; out of 6B-3a-backend scope; follow-up sub-epic candidate)
-9. **NEW: Clan data integration audit** (Sub-epic 1 visual verify surface — M-L size; replace 5D mock data + fix clan search + e2e guest verify + optional backend privacy fix + entry points wiring verify; желательно перед Sub-epic 8 final cutover)
-10. **NEW: v2 cutover auth posture audit** (Sub-epic 1 Path A decision investigation — post-Эпик 6 / Sub-epic 8; "Option C" framing в 6A был imprecise — actual pattern "auth via legacy entry, not via v2 child"; group-level guard на `v2Routes` parent vs per-route `protectedRoutes` entries decision)
+9. Clan data integration audit (Sub-epic 1 visual verify surface — M-L size; replace 5D mock data + fix clan search + e2e guest verify + optional backend privacy fix + entry points wiring verify; желательно перед Sub-epic 8 final cutover)
+10. v2 cutover auth posture audit (Sub-epic 1 Path A decision investigation — post-Эпик 6 / Sub-epic 8; "Option C" framing в 6A был imprecise — actual pattern "auth via legacy entry, not via v2 child"; group-level guard на `v2Routes` parent vs per-route `protectedRoutes` entries decision)
+11. **NEW: friendsState.searchPlayers captain field drop** (Sub-epic 2 Commit 4 pre-edit Q-A3 surface — manual reshape `friendsState.js:133-141` drops `captain` field → `PlayerSearchResult.vue` `:captain="player.captain"` always undefined → `UserCaptainBadge` renders "—" always. Pre-existing silent bug, NOT created by Sub-epic 2. Polish round candidate / friends sub-epic candidate)
+12. **NEW: HudRatings 8-col CSS grid mismatch** (Sub-epic 2 Commit 5 surface — `.ratings-thead` + `.rt-row` `grid-template-columns` hardcoded 8 cols from 5C; FIGHTERS uses 7 cells, CLANS/AGENTS use 6 cells — visual trailing whitespace. Cosmetic only, deferred per Commit 11 defer guidance. Per-tab grid modifier classes — polish round candidate)
+13. **NEW: HudRatings keyboard accessibility** (Sub-epic 2 Commit 8 audit surface — tab buttons lack `role="tab"` / `aria-selected` / `aria-controls`; row click divs lack `tabindex` / `role="button"` / Enter-key handlers. Pre-existing 5C inheritance, NOT regression. Polish round candidate)
 
-**Следующий sub-epic:** Sub-epic 2 — Полные ratings (was 6B-5, M size).
+**Следующий sub-epic:** Sub-epic 3 — Profile sub-routes deep links (was 6B-6, S-M size, ~6-8 commits estimated). Phase 0 should focus на existing `/profile/balance|wallet|account` sub-routes preservation strategy (deep link survival per 6A Option X) и v2-equivalent sub-route mapping.
