@@ -4431,6 +4431,82 @@ Created `formatUserPublicResponse` helper в `backend/src/utils/helpers.js` expo
 
 ---
 
+### Sub-Epic 6B-3 — `/user/:userLogin` Guest Profile View (M Size)
+
+**Status:** CLOSED clean ✅
+**Type:** Frontend new view + routing + backend integration, **M size (first M-size sub-epic в Эпике 6)**
+**Phases:** 10 commits (6 base functional + 2 reactive split + Phase 2a FINAL_REPORT + Phase 2b this commit)
+**Functional commits:** 8 (`7035052` userState ext + `2df7150` UserProfileView + `33ebb2e` HudUserProfile + `61c629d` i18n + `c23d842` route reg + `4db9307` redirect + `a2dbe96` 7a achievements fix + `c8745a6` 7b error preservation)
+**Branch:** `claude/investigate-retirement-animation-zQeg4`
+**HEAD before:** `6df400e` (post-streak-21-declaration of 6B-3a-backend)
+**HEAD after Phase 1:** `c8745a6`
+**HEAD after Phase 2a:** `7e304a4`
+**HEAD after Phase 2b (this):** `<NEW_HASH>` — 6B-3 CLOSURE
+
+**What 6B-3 did:**
+
+Closes 3rd functional gap из Wave 2 audit — guest profile view (`/user/:userLogin`) ported к v2. **First M-size frontend sub-epic в Эпике 6** + first sub-epic relying на verified privacy-fixed backend (6B-3a-backend deploy verified pre-condition).
+
+Created `views-v2/UserProfileView.vue` (Pattern A scene-shared, self-redirect logic) + `components/hud/HudUserProfile.vue` (4 cards + 6 UI states). Vuex extension Path C — new `getGuestUserByLogin` action + loading/error state. Existing v1 `getUserByLogin` action preserved untouched (4 callsites unaffected).
+
+Backend integration: uses 6B-3a-backend's `formatUserPublicResponse` — frontend doesn't duplicate filtering, trusts response shape (single source of truth для public field whitelist).
+
+**Reactive split (5T precedent, 2nd application):** visual verification round 1 surfaced 2 bugs:
+- **Bug 1** — Achievements card rendering raw i18n object (root: `t.profile.achievements` is nested object, optional chain returned object, `||` short-circuited)
+- **Bug 2** — 404 case showing "Failed to load profile" (root: `fetchUserByLogin` discards `error.response.status` в catch, replaces с brand new generic Error)
+
+Investigation INV-1..INV-5 identified root causes. Commit 7 split на 7a (i18n shape correction — Scenario A reuses existing nested key `lblAchievements`) + 7b (service-layer Path 1 — preserve `.status` + `.response` properties via wrapped Error). Drift safety verified per INV-3 caller analysis (4 callers, none read these properties currently). Visual verification round 2 confirmed both fixes.
+
+**Card-creep monitor preserved at 6/7** — HudUserProfile is separate component (parallel к HudProfile own profile), не adds к own profile cards. Lesson #34 HUD overlay convention applied.
+
+**Recovery log:** 0 catches in 6B-3 session.
+
+**Reactive split classification (Lesson #35 framework):** Commits 7a + 7b are **NOT recoveries** — bugs caught pre-Phase-2 via visual verify gate, fix-within-Phase via planned splits before docs commit. Recovery would be: bug discovered post-Phase-2 / post-deploy → fix forward → breaks streak. System working as designed: visual verification gate before Phase 2 caught both bugs, reactive split methodology (5T precedent) applied.
+
+**Cumulative lesson tally:** 35 → 35 (UNCHANGED). 0 new candidates.
+
+**Hot-fix metric:** **0 — 22-streak achieved** ✅ (5E + 5F + 5G + 5H + 5I + 5J + 5K + 5L + 5M + 5N + 5O + 5P + 5Q + 5R + 5S + 5T + 5U + 6A + 6B-1 + 6B-2 + 6B-3a-backend + 6B-3 all clean).
+
+**Cumulative recoveries:** 80+ entering → 80+ exiting (no recoveries, reactive split is fix-within-Phase, not recovery).
+
+**Эпик 6 progress:** **5/13 sub-epics done (38%)** — past third milestone reached.
+
+**Bundle delta:** UserProfileView chunk emitted 8 KB raw / 2.3 KB brotli (JS) + 6.86 KB raw / 1.2 KB brotli (CSS). HudUserProfile bundled into UserProfileView chunk via Vite static-import collapse. Main bundle raw -0.57 kB / brotli +0.83 kB. dist/ unchanged 20M.
+
+**Sub-Epic 6B-3 — CLOSED clean ✅.** First M-size frontend sub-epic в Эпике 6, reactive-split-applied, methodology-applied (not contributing).
+
+**Methodology applied (no new contributions):**
+
+- **Sextuple-precedent extension of investigation-refines-ТЗ pattern** — was quintuple at 6B-2 / 6B-3a-backend, now sextuple через 6B-3 multi-round investigation chain (Phase 0 → user direction Path 2 → Phase 1 ТЗ → MV-1..MV-6 mini-verify → Path C decision → Phase 1 commits → INV-1..INV-5 → reactive split 7a + 7b refined fixes)
+- Mode A strict per-commit discipline — 8 functional commits с pre-edit + post-edit + build verification × 8
+- Convention discovery (Lesson #32) — multiple applications: i18n syntax (`t.section?.key` not `$t()`), `useRoute()` placement в setup, HudProfile own pattern (Achievements hardcoded informed Bug 1 fix decision), service-layer error wrap pattern preservation (Path 1 minimal touch)
+- HUD overlay convention (Lesson #34) — root `pointer-events: none`, opt-in children
+- **Reactive split (5T precedent, 2nd application в running streak)** — first был 5T itself (i18n consolidation Path D ultra-strict). 6B-3 second application post Phase 0/Phase 1/MV/INV chain. Pattern continues established methodology.
+- Backend trust convention — frontend doesn't duplicate backend privacy filtering (relies on `formatUserPublicResponse` shape per 6B-3a-backend deploy verify)
+
+**Carry-overs forward (entering 6B-3: 8 items, exiting: 8 items — net zero):**
+
+| # | Item | Source | Status |
+|---|---|---|---|
+| 1 | Achievement badge для retirement | 5Q drop, κ Path B | CARRY-OVER |
+| 2 | HudProfile card-creep monitor | 5L+ → 5S Q1.3 | MONITOR-FORWARD (still 6/7, **6B-3 NOT triggered** ✓ — separate HudUserProfile component pattern preserves monitor) |
+| 3 | Lesson #36 validation track | 5R | CARRY-OVER (await 2nd occurrence) |
+| 4 | Auth + Wallet visual redesign | 6A user request | CARRY-OVER (sub-epic 6B-10) |
+| 5 | `/rules` → v2 port | 6B-1 Phase 0 | CARRY-OVER (6C cleanup или 6B-1b candidate) |
+| 6 | 3D models + devices system | 6B-2 user direction | CARRY-OVER (post-migration / Эпик 7+) |
+| 7 | Locale cleanup (10 → English-only) | 6B-3a user direction | CARRY-OVER (Эпик 7+ scope) |
+| 8 | `/user/search sortBy=balance` query param leak | 6B-3a Phase 1 finding | CARRY-OVER (secondary leak vector — out of 6B-3 scope) |
+
+**Net 6B-3a-backend → 6B-3 accounting:** 8 entering → 8 leaving (0 new, 0 closures).
+
+**Closed in 6B-3:**
+- ✅ `/user/:userLogin` GAP → FULL coverage. New v2 UserProfileView at `/v2/user/:userLogin`. Top-level `/user/:userLogin` redirects (function-form param transform). v1 ProfileView.vue file preserved для `/profile/balance|wallet|account` deep-links.
+- ✅ Backend integration verified — uses 6B-3a-backend's privacy-safe response shape
+
+**Следующий sub-epic:** 6B-3b — wire up entry points (HudClanRoster + HudRatings + HudProfile.Friends — make user names clickable → `/v2/user/:login`). S-size, expected straightforward после 6B-3 view exists.
+
+---
+
 ## 🎉 ЭПИК 5 §4.2 — CLOSED ✅
 
 **Эпик 5 §4.2 historic milestone:** 22/22 sub-epic candidates closed (100%).
@@ -4464,14 +4540,14 @@ Created `formatUserPublicResponse` helper в `backend/src/utils/helpers.js` expo
 
 Последний эпик миграции. Roadmap: **13 sub-epics** (was 11; expanded к 13 due к 6B-3a-backend + 6B-3b split — backend privacy fix dedicated + entry-points wiring split from 6B-3 frontend). Strategy: гибрид B+C — постепенное закрытие coverage gaps + route-by-route cutover + финальный cleanup.
 
-**Эпик 6 progress:** 4/13 done (31%) — 6B-3a-backend CLOSED ✅ (deploy verified).
+**Эпик 6 progress:** 5/13 done (38%) — 6B-3 CLOSED ✅ (first M-size, reactive split applied).
 
 > **✅ DEPLOY VERIFY COMPLETE:** 6B-3a-backend deploy verified on `api.hexlash.com` (PR `fix/user-public-response` merged to main, Railway auto-deployed). Authenticated guest profile probe (`test_jen_1` viewing `onotole`) returned ONLY public fields, 0 private leaks (15 sensitive fields verified absent: email/balance/walletAddress/financial tokens/progression/deck/settings/language/updatedAt/etc). **Streak 20 → 21 transitioned successfully.** 6B-3 Phase 1 unblocked.
 
 Roadmap document: `docs/visual-migration/EPIC6_ROADMAP.md` (TBD — может быть создан как separate sub-epic либо in-place в этой секции).
 
 **Cumulative metrics entering Эпик 6 / current state:**
-- **21-streak** (5E → 5U + 6A + 6B-1 + 6B-2 + 6B-3a-backend all clean, deferred-verify pattern completed successfully)
+- **22-streak** (5E → 5U + 6A + 6B-1 + 6B-2 + 6B-3a-backend + 6B-3 all clean)
 - **80+ cumulative recoveries** (+1 Recovery #80 в 6B-3a-backend, adaptation-tier per Lesson #35)
 - 35 lessons promoted, 5 candidates active (#36/#37/#38/#39/#40)
 
@@ -4479,9 +4555,8 @@ Roadmap document: `docs/visual-migration/EPIC6_ROADMAP.md` (TBD — может �
 - **6A** — Лёгкий cutover (4 FULL coverage routes на чистые URL'ы) ✅
 - **6B-1** — `/help` страница (first coverage gap closed: GAP → FULL — port-and-replace) ✅
 - **6B-2** — `/profile/skins` (second coverage gap closed: GAP → DEPRECATED — deprecation-via-redirect) ✅
-- **6B-3a-backend** — Privacy fix (3 guest endpoints — code complete, deploy verify deferred — code-complete + deferred-verify pattern) ⚠ pending verify
-
-**6B-3a-backend code complete на designated branch. Deploy verify mandatory pre-condition к 6B-3.**
+- **6B-3a-backend** — Privacy fix (3 guest endpoints — code complete + deferred-verify pattern, deploy verified post-closure via PR `fix/user-public-response`) ✅
+- **6B-3** — `/user/:userLogin` guest profile (third coverage gap closed: GAP → FULL — first M-size, reactive split applied 7a + 7b) ✅
 
 **Carry-overs into Эпик 6 (8 items — was 6 entering 6B-3a-backend):**
 1. Achievement badge для retirement (5Q drop, κ Path B)
@@ -4493,4 +4568,4 @@ Roadmap document: `docs/visual-migration/EPIC6_ROADMAP.md` (TBD — может �
 7. **NEW: Locale cleanup (10 → English-only)** (6B-3a user direction — Эпик 7+ scope)
 8. **NEW: `/user/search` `sortBy=balance` query param** (6B-3a Phase 1 finding — secondary leak vector through sort capability over private financial field; out of 6B-3a-backend scope; follow-up sub-epic candidate)
 
-**Следующий step:** Pre-6B-3 deploy verify task (mandatory, separate ТЗ when user ready) → потом 6B-3 Phase 0 (`/user/:userLogin` guest profile UI).
+**Следующий sub-epic:** 6B-3b — wire up entry points (HudClanRoster + HudRatings + HudProfile.Friends → `/v2/user/:login`). S-size, expected straightforward после 6B-3 view exists.
