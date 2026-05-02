@@ -8,7 +8,7 @@
 // Step 7: scope/season/search reactive state + v-for rendering + handlers.
 // Step 8: sticky your-row bound to master.userData.captain (+ login + flat
 // wins/losses). Null-safe — entire row hidden if captain missing.
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useStore } from 'vuex';
 import { t } from '@/locales/index.js';
 import { getBeltDisplay } from '@/utils/beltDisplay.js';
@@ -46,13 +46,49 @@ function setActiveTab(next) {
   activeTab.value = next;
 }
 
-// ===== Computed filtered rows =====
-// Sub-epic 2 Commit 2: ratingsMock.js removed. Returns [] until per-tab
-// data wiring lands in Commits 4-7 (FIGHTERS / CLANS / AGENTS / MY_CLAN).
-// Template v-for + sticky-row myRank/nextRankHint computeds tolerate empty.
-const rows = computed(() => []);
+// ===== FIGHTERS tab state (Commit 4) =====
+// Backend response shape per /v1/user/search (post-6B-3a-backend):
+//   data: [{ ...UserModel public fields, captain: {belt, isHexmaster, elo, primaryModule, ...} | null }]
+// UserModel.fromJSON now extracts captain (Commit 4 extension).
+// Vuex append semantics handled via reset-before-load (F3 mitigation).
+const fightersRows = computed(() => store.getters['user/getParticipantRatingsList'] || []);
+const fightersSearch = ref('');
+const fightersLoading = ref(false);
+const fightersError = ref(null);
+let fightersTimeout = null;
 
-// ===== Row class helpers =====
+async function loadFighters() {
+  fightersLoading.value = true;
+  fightersError.value = null;
+  try {
+    store.commit('user/resetParticipantRatings');
+    await store.dispatch('user/loadParticipantRatings', {
+      search: fightersSearch.value,
+      sortBy: 'battles',
+      page: 0,
+      clanId: null,
+    });
+  } catch (err) {
+    fightersError.value = err?.message || 'Failed to load fighters';
+  } finally {
+    fightersLoading.value = false;
+  }
+}
+
+function onFightersSearch(e) {
+  fightersSearch.value = e.target.value;
+  clearTimeout(fightersTimeout);
+  fightersTimeout = setTimeout(() => loadFighters(), 200);
+}
+
+// Initial load on first activation. Other tabs add their own watchers in 5-7.
+watch(activeTab, (next) => {
+  if (next === 'fighters' && fightersRows.value.length === 0) {
+    loadFighters();
+  }
+});
+
+// ===== Row class / formatter helpers =====
 function rowRankClass(row) {
   return row.rank <= 3 ? `rank-${row.rank}` : '';
 }
@@ -61,11 +97,10 @@ function wrClass(wr) {
   if (wr < 45) return 'bad';
   return '';
 }
-function streakStr(streak) {
-  return streak.n > 0 ? `${streak.n}${streak.kind}` : '—';
-}
-function streakClass(streak) {
-  return streak.n >= 5 && streak.kind === 'W' ? 'hot' : '';
+// WR computed inline — flat user.wins / user.losses (CLAUDE.md 5C §5.4).
+function rowWr(u) {
+  const total = (u.wins ?? 0) + (u.losses ?? 0);
+  return total > 0 ? Math.round(((u.wins ?? 0) / total) * 100) : 0;
 }
 
 // ===== Sticky your-row — bound to master.userData (Step 8) =====
@@ -109,34 +144,33 @@ const yourRow = computed(() => {
   };
 });
 
-// ===== myRank / nextRankHint (position within current view) =====
-// myRank: insert my ELO into current sorted view — first row where
-// myElo >= r.elo wins me that rank. If no row fits, I'm at rows.length + 1.
+// ===== myRank / nextRankHint (position within FIGHTERS view) =====
+// Sub-epic 2 Commit 4: fightersRows = UserModel[] from /v1/user/search.
+// ELO comparison via row.captain?.elo (sub-object access — UserModel does
+// not store rating/elo top-level on user; captain holds elo for fighter).
+// Sticky shows only on activeTab === 'fighters' so this scope is safe.
 const myRank = computed(() => {
   if (!yourRow.value) return null;
   const myElo = yourRow.value.elo;
-  const rowsArr = rows.value;
+  const rowsArr = fightersRows.value;
   if (rowsArr.length === 0) return null;
   let rank = 1;
   for (const r of rowsArr) {
-    if (myElo >= r.elo) break;
+    if (myElo >= (r.captain?.elo ?? 0)) break;
     rank++;
   }
   return rank;
 });
 
-// nextRankHint: if top-10 → 'Top 10 reached'. Otherwise compute ELO needed
-// to reach previous decile (rank 42 → target rank 40, diff = rows[39].elo -
-// myElo + 1). Structured return lets template split cleanly on .kind.
 const nextRankHint = computed(() => {
-  if (!yourRow.value || !rows.value.length) return null;
+  if (!yourRow.value || !fightersRows.value.length) return null;
   const mr = myRank.value;
   if (!mr) return null;
   if (mr <= 10) return { kind: 'top10' };
   const targetRank = Math.max(1, Math.floor((mr - 1) / 10) * 10);
-  const targetRow = rows.value[targetRank - 1];
+  const targetRow = fightersRows.value[targetRank - 1];
   if (!targetRow) return null;
-  const diff = targetRow.elo - yourRow.value.elo + 1;
+  const diff = (targetRow.captain?.elo ?? 0) - yourRow.value.elo + 1;
   return { kind: 'climb', eloDiff: diff, targetRank };
 });
 </script>
@@ -191,40 +225,51 @@ const nextRankHint = computed(() => {
       <!-- ===== AGENTS tab placeholder (Commit 6) ===== -->
       <div v-else-if="activeTab === 'agents'" data-tab="agents"></div>
 
-      <!-- ===== FIGHTERS tab — preserved thead/tbody shell (Commit 4 wires data) ===== -->
+      <!-- ===== FIGHTERS tab — wired to user/loadParticipantRatings (Commit 4) ===== -->
       <template v-else-if="activeTab === 'fighters'">
+        <div class="ratings-search-row">
+          <input
+            class="ratings-search"
+            :placeholder="t.rating.participantPlaceholder"
+            :value="fightersSearch"
+            @input="onFightersSearch"
+          />
+        </div>
 
-      <div class="ratings-thead">
-        <div>#</div>
-        <div>Handle</div>
-        <div class="col-arch">Archetype</div>
-        <div class="col-belt">Belt</div>
-        <div class="num">ELO</div>
-        <div class="num col-wl">W/L</div>
-        <div class="num">WR</div>
-        <div class="num col-streak">Streak</div>
-      </div>
+        <div class="ratings-thead">
+          <div>#</div>
+          <div>Handle</div>
+          <div class="col-arch">Archetype</div>
+          <div class="col-belt">Belt</div>
+          <div class="num">ELO</div>
+          <div class="num col-wl">W/L</div>
+          <div class="num">WR</div>
+        </div>
 
-      <div class="ratings-tbody">
-        <div v-if="rows.length === 0" class="rt-empty">No results</div>
-        <div
-          v-for="row in rows"
-          :key="`fighters|${row.rank}|${row.handle}`"
-          class="rt-row"
-          :class="rowRankClass(row)"
-        >
-          <div class="rt-rank"><span class="rnk-num">#{{ row.rank }}</span></div>
-          <div class="rt-handle">{{ row.handle }}</div>
-          <div class="rt-arch col-arch" :class="`arch-tag-${row.arch.id}`">{{ row.arch.name }}</div>
-          <div class="rt-belt col-belt">{{ row.belt }}</div>
-          <div class="num rt-elo">{{ row.elo.toLocaleString() }}</div>
-          <div class="num rt-wl col-wl">{{ row.wins }} / {{ row.losses }}</div>
-          <div class="num rt-wr" :class="wrClass(row.wr)">{{ row.wr }}%</div>
-          <div class="num rt-streak col-streak" :class="streakClass(row.streak)">
-            {{ streakStr(row.streak) }}
+        <div class="ratings-tbody">
+          <div v-if="fightersLoading" class="rt-empty">{{ t.rating.lblLoading || 'Loading…' }}</div>
+          <div v-else-if="fightersError" class="rt-empty">{{ t.rating.error }}</div>
+          <div v-else-if="fightersRows.length === 0" class="rt-empty">{{ t.rating.noResults }}</div>
+          <div
+            v-else
+            v-for="(row, idx) in fightersRows"
+            :key="`fighters|${row.id || row.login}`"
+            class="rt-row clickable"
+            :class="rowRankClass({ rank: idx + 1 })"
+            @click="$router.push('/v2/user/' + row.login)"
+          >
+            <div class="rt-rank"><span class="rnk-num">#{{ idx + 1 }}</span></div>
+            <div class="rt-handle">{{ row.login }}</div>
+            <div
+              class="rt-arch col-arch"
+              :class="row.captain ? `arch-tag-${archetypeIdShort(row.captain.primaryModule)}` : ''"
+            >{{ row.captain ? archetypeName(row.captain.primaryModule) : '—' }}</div>
+            <div class="rt-belt col-belt">{{ row.captain?.isHexmaster ? 'Hexmaster' : (row.captain ? beltLabelShort(row.captain.belt) : '—') }}</div>
+            <div class="num rt-elo">{{ row.captain?.elo != null ? row.captain.elo.toLocaleString() : '—' }}</div>
+            <div class="num rt-wl col-wl">{{ row.wins ?? 0 }} / {{ row.losses ?? 0 }}</div>
+            <div class="num rt-wr" :class="wrClass(rowWr(row))">{{ rowWr(row) }}%</div>
           </div>
         </div>
-      </div>
       </template>
     </div>
 
@@ -246,9 +291,6 @@ const nextRankHint = computed(() => {
         <div class="num rt-elo">{{ yourRow.elo.toLocaleString() }}</div>
         <div class="num rt-wl col-wl">{{ yourRow.wins }} / {{ yourRow.losses }}</div>
         <div class="num rt-wr" :class="wrClass(yourRow.wr)">{{ yourRow.wr }}%</div>
-        <div class="num rt-streak col-streak" :class="yourRow.streak ? streakClass(yourRow.streak) : ''">
-          {{ yourRow.streak ? streakStr(yourRow.streak) : '—' }}
-        </div>
       </div>
       <div v-if="nextRankHint" class="rt-next-rank">
         <template v-if="nextRankHint.kind === 'top10'">Top 10 reached</template>
