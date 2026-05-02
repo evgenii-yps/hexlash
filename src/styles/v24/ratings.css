@@ -50,38 +50,9 @@
   letter-spacing: 4px;
 }
 
-/* ===== 3. Season chip (top right) ===== */
-.app-v2 .ratings-season {
-  position: absolute;
-  top: 18px;
-  right: 14px;
-  display: flex;
-  gap: 4px;
-  background: var(--bg-panel);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 6px;
-  padding: 4px;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
-.app-v2 .ratings-season button {
-  background: transparent;
-  border: none;
-  font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  padding: 5px 10px;
-  color: var(--text-dim);
-  cursor: pointer;
-  border-radius: 3px;
-  transition: all 0.12s ease;
-}
-.app-v2 .ratings-season button.active {
-  background: rgba(255, 6, 111, 0.15);
-  color: #fff;
-  box-shadow: inset 0 0 0 1px rgba(255, 6, 111, 0.4);
-}
+/* ===== 3. (Removed) Season chip block — Sub-epic 2 Commit 11.
+   5C 2-season UI (.ratings-season + buttons) replaced by 4-tab structure
+   in Commit 3. Dead-class cleanup. ===== */
 
 /* ===== 4. Main table panel ===== */
 .app-v2 .ratings-panel {
@@ -258,14 +229,7 @@
 .app-v2 .rt-wr.bad {
   color: #ff8888;
 }
-.app-v2 .rt-streak {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--text-mid);
-}
-.app-v2 .rt-streak.hot {
-  color: var(--hex-primary);
-}
+/* (Removed .rt-streak + .rt-streak.hot — Streak column dropped in Commit 4.) */
 
 /* ===== 9. Top-3 rank highlights (gold / silver / bronze) ===== */
 .app-v2 .rt-row.rank-1 .rnk-num {
@@ -367,11 +331,9 @@
   .app-v2 .ratings-thead .col-arch,
   .app-v2 .ratings-thead .col-belt,
   .app-v2 .ratings-thead .col-wl,
-  .app-v2 .ratings-thead .col-streak,
   .app-v2 .rt-arch,
   .app-v2 .rt-belt,
-  .app-v2 .rt-wl,
-  .app-v2 .rt-streak {
+  .app-v2 .rt-wl {
     display: none;
   }
   .app-v2 .ratings-toolbar {
