@@ -35,7 +35,10 @@ export const fetchClanData = async (clanId) => {
         const response = await apiClient.get(`/clan/id/${clanId}`, {authRequired: true});
         return ClanModel.fromJSON(response.data);
     } catch (error) {
-        throw new Error('Failed to fetch clan data from server');
+        const wrapped = new Error('Failed to fetch clan data from server');
+        wrapped.status = error?.response?.status;
+        wrapped.response = error?.response;
+        throw wrapped;
     }
 };
 
