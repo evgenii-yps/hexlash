@@ -18,7 +18,10 @@
       <ConfirmEmail />
       <ChangeLogin />
       <ChangePassword />
-      <!-- TODO Commit 7: DeleteAccount -->
+
+      <div class="destructive-section">
+        <DeleteAccount />
+      </div>
     </div>
   </div>
 </template>
@@ -28,6 +31,7 @@ import { useStore } from 'vuex';
 import ConfirmEmail from '@/components/fragments/profile/account/ConfirmEmail.vue';
 import ChangeLogin from '@/components/fragments/profile/account/ChangeLogin.vue';
 import ChangePassword from '@/components/fragments/profile/account/ChangePassword.vue';
+import DeleteAccount from '@/components/fragments/profile/account/DeleteAccount.vue';
 
 defineEmits(['back']);
 
@@ -95,5 +99,11 @@ const store = useStore();
   bottom: 14px;
   overflow-y: auto;
   padding: 16px;
+}
+
+/* Destructive action visual separation — DeleteAccount last в list per UX
+   convention. Extra top margin signals separation from edit-actions group. */
+.destructive-section {
+  margin-top: 24px;
 }
 </style>
