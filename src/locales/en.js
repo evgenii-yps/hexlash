@@ -375,6 +375,14 @@ export default {
     lblPendingInvites: 'PENDING INVITES',
     lblClanNotFound: 'Clan not found',
   },
+  guestClan: {
+    error: 'Failed to load clan',
+    level: 'Level',
+    founded: 'Founded',
+    description: 'About',
+    stats: 'Stats',
+    battles: 'Battles',
+  },
   club: {
     lblThePit: 'THE PIT',
     lblLevelAgents: 'Level {level} · {current} / {max} agents',
