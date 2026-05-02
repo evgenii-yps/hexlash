@@ -18,6 +18,11 @@ const state = {
     clanEvents: [],
     clanEventsLoading: false,
     clanEventsHasMore: true,
+    // Guest clan state — used by /v2/clan/:id (Sub-epic 1).
+    // Tracks loading/error around getGuestClanById action; the fetched
+    // clan itself is stored in `clans` cache via setClan (existing path).
+    loadingGuest: false,
+    errorGuest: null,
 };
 
 const getters = {
@@ -79,6 +84,12 @@ const mutations = {
         state.clanEvents = [];
         state.clanEventsHasMore = true;
     },
+    setLoadingGuest(state, loading) {
+        state.loadingGuest = loading;
+    },
+    setErrorGuest(state, error) {
+        state.errorGuest = error;
+    },
 };
 
 
@@ -98,6 +109,40 @@ const actions = {
         } catch (error) {
             console.error('Error fetching clan:', error);
             throw error;
+        }
+    },
+    /**
+     * Fetch clan by id for guest clan view (Sub-epic 1).
+     * Wraps existing service path with explicit loading/error state tracking.
+     * Result cached via setClan (existing `clans` array); read in component
+     * via getters.getClanById(clanId).
+     *
+     * Existing getClanById + loadClanById actions remain untouched for legacy
+     * v1 callsites (CreateClan after creation, MyClanTab suggested clans,
+     * v1 ClanView, HudClan own-clan flow).
+     */
+    async getGuestClanById({commit}, clanId) {
+        commit('setLoadingGuest', true);
+        commit('setErrorGuest', null);
+        try {
+            // Try local-first then network refresh (returns cached if present);
+            // fall back to direct fetch if cache miss.
+            let clan = await getClanByIdFromLocalAndAPI(clanId);
+            if (!clan) {
+                clan = await fetchClanData(clanId);
+            }
+            if (clan) {
+                commit('setClan', clan);
+            }
+            commit('setLoadingGuest', false);
+            return clan;
+        } catch (error) {
+            const status = error?.response?.status || error?.status || 0;
+            const message = error?.response?.data?.error || error?.message || 'Failed to fetch clan';
+            commit('setErrorGuest', { status, message });
+            commit('setLoadingGuest', false);
+            console.error('[clan/getGuestClanById]', clanId, status, message);
+            return null;
         }
     },
     async loadClanById({commit, getters}, clanId) {
