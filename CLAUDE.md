@@ -158,6 +158,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 | `/training/moves` | *Deleted* — research moved to AgentDetailView Moves tab | — |
 | `/training/deck` | *Deleted* — deck editing in AgentDetailView | — |
 | `/profile` `/profile/balance` `/profile/wallet` `/profile/account` `/profile/skins` | ProfileView | Yes |
+| `/v2/wallet` `/v2/account` | WalletView/AccountView (Sub-epic 3) | Yes (effective via redirect entries on legacy `/profile/*`) |
 | `/clan/:id` | ClanView | Yes |
 | `/ratings/:type` | RatingsView | Yes |
 | `/user/:userLogin` | ProfileView | Yes |
@@ -4745,6 +4746,103 @@ Closes 4th coverage gap из Wave 2 audit — guest clan view `/v2/clan/:id` por
 
 ---
 
+### Sub-Epic 3 (was 6B-6) — Profile Sub-Routes Deep Links ✅ CLOSED
+
+Закрыт 2026-05-03. Шестая coverage gap из Wave 2 audit closed — own-profile sub-routes (`/profile/balance|wallet|account`) ported к v2 standalone views via Path A (per-sub-route v2 ports). Standard linear closure (6th application в Эпике 6: 6A + 6B-1 + 6B-3 + Sub-epic 1 + Sub-epic 2 + Sub-epic 3). 8 functional commits + 1 visual verify gate + 3 closure commits.
+
+**Commit range:** `8e3d8ce` (Commit 1) → `5353e42` (Commit 8) + closure (10/11/12). Branch: `claude/investigate-retirement-animation-zQeg4` (continue stack from Sub-epic 2, HEAD `3f0740d` baseline).
+
+**Final report:** `docs/visual-migration/EPIC6_SUBEPIC_3_FINAL_REPORT.md` (Commit 11).
+**Handoff:** `docs/visual-migration/HANDOFF_EPIC6_SUBEPIC_4_CHAT_HANDOFF.md` (Commit 12).
+
+**Что видит пользователь:**
+
+- **`/v2/wallet`** (NEW) — ProfileScene background + "WALLET" title + GameBalanceCard (master.getBalance() with DECIMALS) + withdraw click → toast (`info.withdrawAfterListing`, 3s) + "Connect Wallet" CTA button → local-mount lazy ConnectWallet modal (mirror HudProfile pattern verbatim).
+- **`/v2/account`** (NEW) — ProfileScene background + "ACCOUNT SETTINGS" title + 4 ported components flat-list (ConfirmEmail / ChangeLogin / ChangePassword / DeleteAccount with 24px visual separation).
+- **Redirects (3):** `/profile/wallet` → `/v2/wallet`, `/profile/account` → `/v2/account`, `/profile/balance` → `/v2/profile` (no-op route resolved).
+- All 3 v1 profile sub-routes covered with v2 paths.
+- Pattern A scene-shared 'profile' (mirror UserProfileView 6B-3 + 5B ProfileView). Scene now shared by 4 routes.
+
+**Files NEW (4):**
+- `src/views-v2/WalletView.vue` — orchestrator (89 lines), Pattern A scene-shared 'profile', mirror UserProfileView lifecycle.
+- `src/views-v2/AccountView.vue` — orchestrator (89 lines), mirror WalletView verbatim.
+- `src/components/hud/HudProfileWallet.vue` — Wallet HUD (~167 lines after Commits 1-3): GameBalanceCard mount + withdraw handler + ConnectWallet local mount + scoped style block.
+- `src/components/hud/HudProfileAccount.vue` — Account HUD (~110 lines after Commits 4-7): 4 components stacked + scoped style block + destructive-section margin.
+
+**Files MODIFIED (1):**
+- `src/router/index.js` — +12 / −3 net: 2 new V2 routes (V2Wallet + V2Account, NOT in protectedRoutes per Q-V8 adaptation), 3 redirect transformations (/profile/wallet|account|balance, kept inside protectedRoutes preserving v1 URL auth).
+
+**Files DELETED:** None (v1 ProfileView.vue retained for Sub-epic 8 final cutover cleanup).
+
+**Backend:** Untouched. All flows через existing `/v1/user/*` endpoints (no new endpoints needed).
+
+**Vuex:** Reuse only. Zero new actions.
+- `master/getMaster` (existing)
+- `master/getBalance` method on UserModel (existing)
+- `master/updateMaster` (existing — used by 4 account components for email/login/password edits)
+- `master/setInfoMessage` + `InfoMessageModel.withTimeout` (existing — used by withdraw toast + component feedback)
+- `master/sendCheckLoginAvailable` (existing — ChangeLogin debounce check)
+- `master/deleteAccount` (existing — internal auth state cleanup + `router.push('/')` cascade)
+
+**Click wiring:**
+- Wallet view back → `/v2/profile`
+- Account view back → `/v2/profile`
+- Balance card click (within /v2/wallet) → withdraw toast
+- Connect Wallet CTA (within /v2/wallet) → local lazy-mount ConnectWallet modal
+- DeleteAccount confirm → `master/deleteAccount` → `clearAuthData` → `router.push('/')` → guard cascades к `/auth/login`
+
+**Recoveries log:** ZERO recoveries в Sub-epic 3. All Commit 0 verify findings resolved as ТЗ refinements (A1-A8 adjustments applied pre-edit), not classified as recoveries per Sub-epic 2 precedent (verify-gate refinements = expected workflow). Streak preserved cleanly через 8 functional commits.
+
+**Adjustments applied during Phase 1 (verify-gate refinements, not recoveries):**
+
+- **A1** — Pattern A scene-shared 'profile' (Q-V5 verified UserProfileView precedent overrides ТЗ Commit 1 wording "Pattern B unless...").
+- **A2/A6** — V2Wallet + V2Account NOT in protectedRoutes (Q-V8 verified existing v2 routes effectively public; carry-over #10 systematic fix territory).
+- **A3** — `master.getBalance()` method (NOT `master.userData.balance` direct).
+- **A4** — `store.commit('master/setInfoMessage', InfoMessageModel.withTimeout(...))` (NOT `dispatch('info/showToast')` per ТЗ literal).
+- **A5** — ConnectWallet local mount mirror HudProfile lazy-load pattern verbatim (~30 lines: shallowRef + cwMounted + cwRef + loadCW + openConnectWallet + nextTick × 2).
+- **A7** — All 4 account components ported AS-IS (Vuetify VBtnDark + VModal + VCard + InputField preserved; visual inconsistency in HUD overlay context = acceptable trade-off per Q-tactical-Phase1-3).
+- **A8** — DeleteAccount post-delete handled internally by `master/deleteAccount` action; guard cascade to `/auth/login` confirmed safe.
+- **InfoMessageModel path correction** — `@/core/models/internal/infoMessageModel.js` (named export, not ТЗ literal).
+- **GameBalanceCard path correction** — `src/components/fragments/profile/wallet/GameBalanceCard.vue` (per Phase 0 Q-V2 finding).
+
+**Carry-overs (0 closed, 2 NEW):**
+
+- ⚪ **NEW #14 — Switcher3DPunch SKIP** (per Q-tactical-1 Sub-epic 3 scope decision). v1 ProfileAccount component for 3D punch view toggle. Niche feature, not in v2 yet. Polish round candidate or absorbable into Sub-epic 7 (Auth + Wallet redesign) if it fits naturally.
+
+- ⚪ **NEW #15 — Account/Wallet components Vuetify → v2 design system port** (per Q-tactical-Phase1-3 + Q-tactical-Phase1-5 Sub-epic 3 trade-off). 4 account components (ConfirmEmail / ChangeLogin / ChangePassword / DeleteAccount) + GameBalanceCard ported AS-IS preserving Vuetify (VBtnDark / VModal / VCard / InputField). Visual inconsistency vs surrounding v2 HUD aesthetic acceptable for streak preservation. Polish round candidate or absorbable into Sub-epic 7.
+
+- ℹ️ **NEW pre-cutover gate (forward to Sub-epic 8):** Full /v2 visual + functional sweep across все routes (profile / wallet / account / ratings / clan / user / fight / training / etc.) before final cutover. Comprehensive acceptance checklist covering все sub-epics 6A-6B-3b + Sub-epic 1-3 deliverables. User-driven manual ratification gate. Documents в Sub-epic 4 handoff.
+
+**Inherited carry-overs (untouched):** Items #1-13 unchanged from Sub-epic 2 closure exit state.
+
+**Closure shape:** Standard linear (6th application в Эпике 6). 0 reactive splits, 0 hot-fixes, 0 recoveries.
+
+**Methodology applied:**
+
+- Mode A strict per-commit discipline — 8 functional commits + 1 visual verify gate (Commit 9, no edits) + 3 closure commits, build pass per commit, status report + push + STOP-and-confirm gates.
+
+- Lesson #11 reflex — pre-edit + post-edit grep на every edit. Examples: Commit 0 8-query verify gate (Q-V1..Q-V8), Commit 4 cross-component VModal teleport-to-body verification, Commit 7 post-delete redirect chain end-to-end verification.
+
+- Lesson #32 convention discovery — multiple applications:
+  - Pattern A scene-shared 'profile' (mirror UserProfileView 6B-3, NOT Pattern B per ТЗ literal)
+  - InfoMessageModel path + named export (NOT ТЗ literal)
+  - `master.getBalance()` method (NOT `userData.balance` direct)
+  - `store.commit` + InfoMessageModel.withTimeout (NOT `dispatch('info/showToast')`)
+  - ConnectWallet local mount lazy-load pattern verbatim mirror HudProfile (NOT navigation indirection)
+  - Click wrapper div для VCard event capture (defensive Lesson #11 reflex)
+
+- Lesson #35 streak preservation — Phase 0.2 verify-gate adjustments applied pre-edit, not classified as recoveries (workflow design intentional per Sub-epic 2 precedent).
+
+- Lesson #36 HudProfile card-creep monitor — NOT triggered (Path A separates wallet + account into standalone views, no HudProfile cards added). Monitor remains 6/7. Path B (unified own-profile с internal tabs) explicitly disqualified during path selection per Lesson #36 anti-recommendation.
+
+- Lesson #34 HUD overlay convention applied к HudProfileWallet + HudProfileAccount (scoped style block с `pointer-events: none` root + `auto` children, namespaced classes `.hud-profile-wallet` / `.hud-profile-account`).
+
+- Q-V8 carry-over consistency — V2Wallet + V2Account follow existing v2 unprotected pattern (NOT added к protectedRoutes). Auth posture systematic fix deferred к carry-over #10 (Sub-epic 8 territory: group-level guard на v2Routes parent vs per-route protectedRoutes entries decision).
+
+**Next sub-epic:** Sub-epic 4 — PvP в v2 + real backend WS (was 6B-7, L size, may split into 4a/4b).
+
+---
+
 ## 🎉 ЭПИК 5 §4.2 — CLOSED ✅
 
 **Эпик 5 §4.2 historic milestone:** 22/22 sub-epic candidates closed (100%).
@@ -4778,15 +4876,15 @@ Closes 4th coverage gap из Wave 2 audit — guest clan view `/v2/clan/:id` por
 
 Последний эпик миграции. Roadmap: **14 sub-epics** (was 11; expanded к 13 due к 6B-3a-backend + 6B-3b split, then к 14 due к explicit 6B-10 Auth+Wallet accounting per 6A user-request carry-over). Strategy: гибрид B+C — постепенное закрытие coverage gaps + route-by-route cutover + финальный cleanup.
 
-**Эпик 6 progress:** **8/14 done (57%)** ✅ — Sub-epic 2 (was 6B-5) CLOSED, past half-way mark. Standard linear closure (5th application: 6A + 6B-1 + 6B-3 + 6B-4 + 6B-5).
+**Эпик 6 progress:** **9/14 done (64%)** ✅ — Sub-epic 3 (was 6B-6) CLOSED, past two-thirds milestone. Standard linear closure (6th application: 6A + 6B-1 + 6B-3 + 6B-4 + 6B-5 + 6B-6).
 
 > **✅ DEPLOY VERIFY COMPLETE:** 6B-3a-backend deploy verified on `api.hexlash.com` (PR `fix/user-public-response` merged to main, Railway auto-deployed). Authenticated guest profile probe (`test_jen_1` viewing `onotole`) returned ONLY public fields, 0 private leaks (15 sensitive fields verified absent: email/balance/walletAddress/financial tokens/progression/deck/settings/language/updatedAt/etc). **Streak 20 → 21 transitioned successfully.** 6B-3 Phase 1 unblocked.
 
 Roadmap document: `docs/visual-migration/EPIC6_ROADMAP.md` (TBD — может быть создан как separate sub-epic либо in-place в этой секции).
 
 **Cumulative metrics entering Эпик 6 / current state:**
-- **25-streak** (5E → 5U + 6A + 6B-1 + 6B-2 + 6B-3a-backend + 6B-3 + 6B-3b + 6B-4 + Sub-epic 2 all clean)
-- **83+ cumulative recoveries** (+3 Recoveries #81/#82/#83 в Sub-epic 2, all adaptation-tier per Lesson #35; Sub-epic 1 had 0 recoveries)
+- **26-streak** (5E → 5U + 6A + 6B-1 + 6B-2 + 6B-3a-backend + 6B-3 + 6B-3b + 6B-4 + Sub-epic 2 + Sub-epic 3 all clean)
+- **83+ cumulative recoveries** (Sub-epic 3 added 0 — verify-gate workflow design preserved streak без recovery events; +3 Recoveries #81/#82/#83 в Sub-epic 2, all adaptation-tier per Lesson #35; Sub-epic 1 had 0 recoveries)
 - 35 lessons promoted, **7 candidates active** (#36/#37/#38/#39/#40/#41/#42)
 
 **Sub-epics closed in Эпик 6:**
@@ -4798,23 +4896,24 @@ Roadmap document: `docs/visual-migration/EPIC6_ROADMAP.md` (TBD — может �
 - **6B-3b** — Friends entry point wiring (smallest sub-epic в Эпике 6, 1 NEW methodology pattern: scope-deferral-к-downstream) ✅
 - **Sub-epic 1 (was 6B-4)** — Guest Clan View `/v2/clan/:id` (4th coverage gap closed: GAP → FULL — standard linear, 7 functional commits, 0 reactive splits, 2 NEW lesson candidates #41 + #42) ✅
 - **Sub-epic 2 (was 6B-5)** — Ratings reconciliation `/v2/ratings` (5th coverage gap closed: Path A → Path D reversal — standard linear, 11 functional commits + 1 audit-skip, 0 reactive splits, 3 adaptation-tier recoveries #81/#82/#83) ✅
+- **Sub-epic 3 (was 6B-6)** — Profile sub-routes deep links `/v2/wallet` + `/v2/account` (6th coverage gap closed: Path A per-sub-route v2 ports — standard linear, 8 functional commits + 1 visual verify gate, 0 reactive splits, 0 recoveries clean execution; +2 NEW carry-overs #14 Switcher3DPunch SKIP / #15 Vuetify→v2 design system port) ✅
 
 > **📝 Naming convention update (after 6B-3b):** Remaining sub-epics renumbered к simple ordinals (Sub-epic 1, 2, ..., 8) для clarity. Historical sub-epics (6A / 6B-1 / 6B-2 / 6B-3a-backend / 6B-3 / 6B-3b) retain original names в documentation. New mapping:
 >
 > - **Sub-epic 1** — `/clan/:id` чужие кланы (was 6B-4) — M ✅ **CLOSED**
 > - **Sub-epic 2** — Полные ratings (was 6B-5) — M ✅ **CLOSED**
-> - **Sub-epic 3** — Profile sub-routes deep links (was 6B-6) — S-M
+> - **Sub-epic 3** — Profile sub-routes deep links (was 6B-6) — S-M ✅ **CLOSED**
 > - **Sub-epic 4** — PvP в v2 (was 6B-7) — L
 > - **Sub-epic 5** — Реальный matchmaking (was 6B-8) — L
 > - **Sub-epic 6** — Реальный spectate (was 6B-9) — M-L
 > - **Sub-epic 7** — Auth + Wallet redesign (was 6B-10) — M-L
 > - **Sub-epic 8** — Финальный cutover (was 6C) — M
 >
-> Total: 14 sub-epics в Эпике 6 (**8 closed, 6 remaining**).
+> Total: 14 sub-epics в Эпике 6 (**9 closed, 5 remaining**).
 
-**Carry-overs into Эпик 6 (13 items — +3 from Sub-epic 2 surface; 5G dead code + 6B-3b deferral CLOSED in Sub-epic 2):**
+**Carry-overs into Эпик 6 (15 items — +2 from Sub-epic 3 surface; 0 closed in Sub-epic 3):**
 1. Achievement badge для retirement (5Q drop, κ Path B)
-2. HudProfile card-creep monitor (6/7 threshold; **Sub-epic 1 NOT triggered** ✓; **Sub-epic 2 NOT triggered** ✓ — HudRatings standalone HUD)
+2. HudProfile card-creep monitor (6/7 threshold; **Sub-epic 1 NOT triggered** ✓; **Sub-epic 2 NOT triggered** ✓; **Sub-epic 3 NOT triggered** ✓ — Path A separate views, no HudProfile cards added)
 3. Lesson #36 validation track (await 2nd occurrence)
 4. Auth + Wallet visual redesign (NEW per 6A user request — Sub-epic 7 per new naming)
 5. `/rules` → v2 port (6B-1 Phase 0 surface — PageView multi-purpose) — Sub-epic 8 cleanup или 6B-1b candidate
@@ -4823,8 +4922,12 @@ Roadmap document: `docs/visual-migration/EPIC6_ROADMAP.md` (TBD — может �
 8. `/user/search` `sortBy=balance` query param (6B-3a Phase 1 finding — secondary leak vector through sort capability over private financial field; out of 6B-3a-backend scope; follow-up sub-epic candidate)
 9. Clan data integration audit (Sub-epic 1 visual verify surface — M-L size; replace 5D mock data + fix clan search + e2e guest verify + optional backend privacy fix + entry points wiring verify; желательно перед Sub-epic 8 final cutover)
 10. v2 cutover auth posture audit (Sub-epic 1 Path A decision investigation — post-Эпик 6 / Sub-epic 8; "Option C" framing в 6A был imprecise — actual pattern "auth via legacy entry, not via v2 child"; group-level guard на `v2Routes` parent vs per-route `protectedRoutes` entries decision)
-11. **NEW: friendsState.searchPlayers captain field drop** (Sub-epic 2 Commit 4 pre-edit Q-A3 surface — manual reshape `friendsState.js:133-141` drops `captain` field → `PlayerSearchResult.vue` `:captain="player.captain"` always undefined → `UserCaptainBadge` renders "—" always. Pre-existing silent bug, NOT created by Sub-epic 2. Polish round candidate / friends sub-epic candidate)
-12. **NEW: HudRatings 8-col CSS grid mismatch** (Sub-epic 2 Commit 5 surface — `.ratings-thead` + `.rt-row` `grid-template-columns` hardcoded 8 cols from 5C; FIGHTERS uses 7 cells, CLANS/AGENTS use 6 cells — visual trailing whitespace. Cosmetic only, deferred per Commit 11 defer guidance. Per-tab grid modifier classes — polish round candidate)
-13. **NEW: HudRatings keyboard accessibility** (Sub-epic 2 Commit 8 audit surface — tab buttons lack `role="tab"` / `aria-selected` / `aria-controls`; row click divs lack `tabindex` / `role="button"` / Enter-key handlers. Pre-existing 5C inheritance, NOT regression. Polish round candidate)
+11. friendsState.searchPlayers captain field drop (Sub-epic 2 Commit 4 pre-edit Q-A3 surface — manual reshape `friendsState.js:133-141` drops `captain` field → `PlayerSearchResult.vue` `:captain="player.captain"` always undefined → `UserCaptainBadge` renders "—" always. Pre-existing silent bug, NOT created by Sub-epic 2. Polish round candidate / friends sub-epic candidate)
+12. HudRatings 8-col CSS grid mismatch (Sub-epic 2 Commit 5 surface — `.ratings-thead` + `.rt-row` `grid-template-columns` hardcoded 8 cols from 5C; FIGHTERS uses 7 cells, CLANS/AGENTS use 6 cells — visual trailing whitespace. Cosmetic only, deferred per Commit 11 defer guidance. Per-tab grid modifier classes — polish round candidate)
+13. HudRatings keyboard accessibility (Sub-epic 2 Commit 8 audit surface — tab buttons lack `role="tab"` / `aria-selected` / `aria-controls`; row click divs lack `tabindex` / `role="button"` / Enter-key handlers. Pre-existing 5C inheritance, NOT regression. Polish round candidate)
+14. **NEW: Switcher3DPunch SKIP** (Sub-epic 3 Q-tactical-1 — v1 ProfileAccount component for 3D punch view toggle; niche feature, not migrated к v2. Polish round candidate or absorbable into Sub-epic 7 Auth+Wallet redesign)
+15. **NEW: Account/Wallet components Vuetify → v2 design system port** (Sub-epic 3 Q-tactical-Phase1-3/5 — 4 account components (ConfirmEmail/ChangeLogin/ChangePassword/DeleteAccount) + GameBalanceCard ported AS-IS preserving Vuetify (VBtnDark/VModal/VCard/InputField). Visual inconsistency vs surrounding v2 HUD aesthetic. Polish round candidate or absorbable into Sub-epic 7)
 
-**Следующий sub-epic:** Sub-epic 3 — Profile sub-routes deep links (was 6B-6, S-M size, ~6-8 commits estimated). Phase 0 should focus на existing `/profile/balance|wallet|account` sub-routes preservation strategy (deep link survival per 6A Option X) и v2-equivalent sub-route mapping.
+**Pre-cutover acceptance gate (forward note для Sub-epic 8):** Full /v2 visual + functional sweep across все routes (profile / wallet / account / ratings / clan / user / fight / training / etc.) before final cutover. Comprehensive acceptance checklist covering все sub-epics 6A-6B-3b + Sub-epic 1-3 deliverables. User-driven manual ratification gate. Documents в Sub-epic 4 handoff.
+
+**Следующий sub-epic:** Sub-epic 4 — PvP в v2 + real backend WS (was 6B-7, L size, may split into 4a/4b). Phase 0 should focus на v1 PvP file inventory, backend WS handlers (`pvpHandler.js` + `pvpMatchManager.js` + `pvpCombatEngine.js`), v2 PvP scenes current state (CardFightView / MatchmakingView / FighterDetailView), match lifecycle wiring + edge cases (disconnect / reconnect / timeout / surrender), and architectural overlap с Sub-epic 5 (matchmaking) + Sub-epic 6 (spectate).
