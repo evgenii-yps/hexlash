@@ -10,7 +10,6 @@
 // wins/losses). Null-safe — entire row hidden if captain missing.
 import { ref, computed } from 'vue';
 import { useStore } from 'vuex';
-import { RATINGS_DATA } from '@/data/ratingsMock.js';
 import { getBeltDisplay } from '@/utils/beltDisplay.js';
 
 defineEmits(['back']);
@@ -55,13 +54,10 @@ function onSearchInput(e) {
 }
 
 // ===== Computed filtered rows =====
-const rows = computed(() => {
-  const key = `${scope.value}|${season.value}`;
-  const all = RATINGS_DATA[key] || [];
-  const q = search.value.trim().toLowerCase();
-  if (!q) return all;
-  return all.filter((r) => r.handle.toLowerCase().includes(q));
-});
+// Sub-epic 2 Commit 2: ratingsMock.js removed. Returns [] until per-tab
+// data wiring lands in Commits 4-7 (FIGHTERS / CLANS / AGENTS / MY_CLAN).
+// Template v-for + sticky-row myRank/nextRankHint computeds tolerate empty.
+const rows = computed(() => []);
 
 // ===== Row class helpers =====
 function rowRankClass(row) {
