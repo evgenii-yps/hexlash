@@ -10,6 +10,7 @@
 // wins/losses). Null-safe — entire row hidden if captain missing.
 import { ref, computed } from 'vue';
 import { useStore } from 'vuex';
+import { t } from '@/locales/index.js';
 import { getBeltDisplay } from '@/utils/beltDisplay.js';
 
 defineEmits(['back']);
@@ -37,20 +38,12 @@ function archetypeName(fullName) {
 }
 
 // ===== Reactive state =====
-const scope = ref('global');  // global | friends | clan | country | live
-const season = ref('s1');     // s1 | all
-const search = ref('');       // debounced (200ms) from searchInput
-
-// Debounce search — input drives searchInput immediately for visual feedback,
-// search commits after 200ms so v-for re-render doesn't fire per keystroke.
-const searchInput = ref('');
-let searchTimeout = null;
-function onSearchInput(e) {
-  searchInput.value = e.target.value;
-  clearTimeout(searchTimeout);
-  searchTimeout = setTimeout(() => {
-    search.value = searchInput.value;
-  }, 200);
+// Sub-epic 2 Commit 3: 5-scope×2-season replaced with 4-tab navigation.
+// Per-tab data + search wiring lands in Commits 4-7
+// (FIGHTERS / CLANS / AGENTS / MY_CLAN).
+const activeTab = ref('myclan'); // myclan | clans | fighters | agents
+function setActiveTab(next) {
+  activeTab.value = next;
 }
 
 // ===== Computed filtered rows =====
@@ -73,14 +66,6 @@ function streakStr(streak) {
 }
 function streakClass(streak) {
   return streak.n >= 5 && streak.kind === 'W' ? 'hot' : '';
-}
-
-// ===== Tab / season handlers =====
-function setScope(next) {
-  scope.value = next;
-}
-function setSeason(next) {
-  season.value = next;
 }
 
 // ===== Sticky your-row — bound to master.userData (Step 8) =====
@@ -167,47 +152,47 @@ const nextRankHint = computed(() => {
       <div class="rt-name">LEADERBOARD</div>
     </div>
 
-    <!-- ===== Season chips (top-right) ===== -->
-    <div class="ratings-season">
-      <button
-        :class="{ active: season === 's1' }"
-        @click="setSeason('s1')"
-      >Season 1</button>
-      <button
-        :class="{ active: season === 'all' }"
-        @click="setSeason('all')"
-      >All Time</button>
-    </div>
-
-    <!-- ===== Main panel: toolbar + thead + tbody ===== -->
-    <!-- Step 7 wires: reactive `scope` ref + click handlers + active bind.
-         Step 7 replaces static tabs with v-for over ['global','friends',
-         'clan','country','live'] + debounced search via @input. -->
+    <!-- ===== Main panel: 4-tab toolbar + per-tab content ===== -->
+    <!-- Sub-epic 2 Commit 3: 5-scope/2-season → 4-tab structure.
+         Per-tab content panels are placeholders until Commits 4-7 wire data
+         (FIGHTERS / CLANS / AGENTS / MY_CLAN). Search input moved per-tab. -->
     <div class="ratings-panel">
       <div class="ratings-toolbar">
         <div class="ratings-tabs">
           <button
-            v-for="s in ['global', 'friends', 'clan', 'country']"
-            :key="s"
             class="rt-tab"
-            :class="{ active: scope === s }"
-            @click="setScope(s)"
-          >{{ s[0].toUpperCase() + s.slice(1) }}</button>
+            :class="{ active: activeTab === 'myclan' }"
+            @click="setActiveTab('myclan')"
+          >{{ t.rating.lblMyClan }}</button>
           <button
             class="rt-tab"
-            :class="{ active: scope === 'live' }"
-            @click="setScope('live')"
-          >
-            Live <span style="color: var(--hex-primary); margin-left: 3px">●</span>
-          </button>
+            :class="{ active: activeTab === 'clans' }"
+            @click="setActiveTab('clans')"
+          >{{ t.rating.lblClans }}</button>
+          <button
+            class="rt-tab"
+            :class="{ active: activeTab === 'fighters' }"
+            @click="setActiveTab('fighters')"
+          >{{ t.rating.lblFighters }}</button>
+          <button
+            class="rt-tab"
+            :class="{ active: activeTab === 'agents' }"
+            @click="setActiveTab('agents')"
+          >{{ t.rating.lblAgents }}</button>
         </div>
-        <input
-          class="ratings-search"
-          placeholder="Search by handle..."
-          :value="searchInput"
-          @input="onSearchInput"
-        />
       </div>
+
+      <!-- ===== MY_CLAN tab placeholder (Commit 7) ===== -->
+      <div v-if="activeTab === 'myclan'" data-tab="myclan"></div>
+
+      <!-- ===== CLANS tab placeholder (Commit 5) ===== -->
+      <div v-else-if="activeTab === 'clans'" data-tab="clans"></div>
+
+      <!-- ===== AGENTS tab placeholder (Commit 6) ===== -->
+      <div v-else-if="activeTab === 'agents'" data-tab="agents"></div>
+
+      <!-- ===== FIGHTERS tab — preserved thead/tbody shell (Commit 4 wires data) ===== -->
+      <template v-else-if="activeTab === 'fighters'">
 
       <div class="ratings-thead">
         <div>#</div>
@@ -224,7 +209,7 @@ const nextRankHint = computed(() => {
         <div v-if="rows.length === 0" class="rt-empty">No results</div>
         <div
           v-for="row in rows"
-          :key="`${scope}|${season}|${row.rank}|${row.handle}`"
+          :key="`fighters|${row.rank}|${row.handle}`"
           class="rt-row"
           :class="rowRankClass(row)"
         >
@@ -240,12 +225,14 @@ const nextRankHint = computed(() => {
           </div>
         </div>
       </div>
+      </template>
     </div>
 
     <!-- ===== Sticky your-row (bottom footer) ===== -->
-    <!-- Null-safe: hidden entirely when captain is missing (0-agent accounts
-         or lazy User→Fighter migration hasn't run yet). -->
-    <div v-if="yourRow" class="rt-your-row">
+    <!-- Sub-epic 2 Commit 3: visible only on FIGHTERS tab (captain is a
+         fighter-level entity). Other 3 tabs hide sticky row.
+         Null-safe: hidden entirely when captain is missing. -->
+    <div v-if="yourRow && activeTab === 'fighters'" class="rt-your-row">
       <div class="rt-your-label">You</div>
       <div class="rt-row">
         <div class="rt-rank">
