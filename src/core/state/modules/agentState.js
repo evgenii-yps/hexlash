@@ -17,6 +17,15 @@ const state = {
   fightHistoryLoading: false,
   trainResult: null,
   trainLoading: false,
+  // Sub-epic 2 — Ratings tab AGENTS data (Path A Vuex extension).
+  // REPLACE semantics on setAgentRankings (preempts F3 stale-rows risk).
+  // Mirrors clanRatings/participantRatings shape but with replace, not append.
+  agentRankings: {
+    items: [],
+    total: 0,
+    limitReached: false,
+    pageSize: 20,
+  },
 };
 
 const getters = {
@@ -37,6 +46,7 @@ const getters = {
   fightingAgents: (state) => state.agents.filter(a => a.status === 'fighting'),
   restingAgents: (state) => state.agents.filter(a => a.status === 'resting'),
   fightClubProgress: (state) => state.fightClubLevel,
+  getAgentRankings: (state) => state.agentRankings.items,
 };
 
 const mutations = {
@@ -95,6 +105,18 @@ const mutations = {
   SET_FIGHT_HISTORY_LOADING(state, val) { state.fightHistoryLoading = val; },
   SET_TRAIN_RESULT(state, val) { state.trainResult = val; },
   SET_TRAIN_LOADING(state, val) { state.trainLoading = val; },
+  // Sub-epic 2 — AGENTS rankings. REPLACE (not append, unlike clanState
+  // setClanRatings / userState setParticipantRatings — deliberate, preempts
+  // F3 stale-rows risk for AGENTS tab refetch idempotency).
+  setAgentRankings(state, { items, total }) {
+    state.agentRankings.items = items;
+    state.agentRankings.total = total;
+  },
+  updateAgentRankingsState(state, { field, value }) {
+    if (Object.prototype.hasOwnProperty.call(state.agentRankings, field)) {
+      state.agentRankings[field] = value;
+    }
+  },
 };
 
 const actions = {
@@ -291,6 +313,20 @@ const actions = {
     } finally {
       commit('SET_TRAIN_LOADING', false);
     }
+  },
+
+  // Sub-epic 2 — AGENTS tab data fetch.
+  // Direct apiClient (no service layer — mirrors agent module convention,
+  // not service-layer convention used by clanState/userState).
+  // Offset-based pagination per /v1/agent/rankings backend (Q11).
+  async loadAgentRankings({ commit, state }, { offset = 0, limit = state.agentRankings.pageSize } = {}) {
+    const res = await apiClient.get('/agent/rankings', {
+      params: { offset, limit },
+      authRequired: true,
+    });
+    const items = res.rankings || [];
+    commit('setAgentRankings', { items, total: res.total || 0 });
+    commit('updateAgentRankingsState', { field: 'limitReached', value: items.length < limit });
   },
 };
 
