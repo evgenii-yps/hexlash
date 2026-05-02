@@ -8,7 +8,7 @@
 // Step 7: scope/season/search reactive state + v-for rendering + handlers.
 // Step 8: sticky your-row bound to master.userData.captain (+ login + flat
 // wins/losses). Null-safe — entire row hidden if captain missing.
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { useStore } from 'vuex';
 import { t } from '@/locales/index.js';
 import { getBeltDisplay } from '@/utils/beltDisplay.js';
@@ -90,6 +90,8 @@ watch(activeTab, (next) => {
     loadClans();
   } else if (next === 'agents' && agentsRows.value.length === 0) {
     loadAgents();
+  } else if (next === 'myclan' && hasOwnClan.value && !myClanData.value) {
+    loadMyClan();
   }
 });
 
@@ -170,6 +172,39 @@ async function loadAgents() {
     agentsLoading.value = false;
   }
 }
+
+// ===== MY_CLAN tab state (Commit 7) — default tab =====
+// Two branches:
+//   - no-clan (clanId null) → CTA → /v2/clan
+//   - has-clan → compact summary card → click → /v2/clan
+// Pattern mirrors HudClan.vue:125+242 (clanId computed + onMounted dispatch
+// when clanId && !cached). Uses sync getter `clan/getClanById(id)` after
+// async dispatch fills cache.
+const myClanId = computed(() => userData.value?.clanId ?? null);
+const hasOwnClan = computed(() => !!myClanId.value);
+const myClanData = computed(() =>
+  myClanId.value ? store.getters['clan/getClanById'](myClanId.value) : null
+);
+const myClanLoading = ref(false);
+const myClanError = ref(null);
+
+async function loadMyClan() {
+  if (!myClanId.value || myClanData.value) return;  // no-op if no clan or cache hit
+  myClanLoading.value = true;
+  myClanError.value = null;
+  try {
+    await store.dispatch('clan/getClanById', myClanId.value);
+  } catch (err) {
+    myClanError.value = err?.message || 'Failed to load clan';
+  } finally {
+    myClanLoading.value = false;
+  }
+}
+
+// Initial fetch on mount — myclan is default tab, watch won't trigger.
+onMounted(() => {
+  loadMyClan();
+});
 
 // ===== Sticky your-row — bound to master.userData (Step 8) =====
 // Source:
@@ -284,8 +319,44 @@ const nextRankHint = computed(() => {
         </div>
       </div>
 
-      <!-- ===== MY_CLAN tab placeholder (Commit 7) ===== -->
-      <div v-if="activeTab === 'myclan'" data-tab="myclan"></div>
+      <!-- ===== MY_CLAN tab — default tab (Commit 7) ===== -->
+      <!-- Dual-branch: no-clan CTA OR has-clan compact summary card.
+           Both branches navigate to /v2/clan on action.
+           Inline EN per Q-tactical-3. -->
+      <template v-if="activeTab === 'myclan'">
+        <div v-if="myClanLoading" class="rt-empty">{{ t.rating.lblLoading || 'Loading…' }}</div>
+        <div v-else-if="myClanError" class="rt-empty">{{ t.rating.error }}</div>
+        <div v-else-if="!hasOwnClan" class="myclan-empty">
+          <div class="myclan-empty-msg">You're not in a clan</div>
+          <button class="myclan-cta" @click="$router.push('/v2/clan')">
+            Create or browse clans
+          </button>
+        </div>
+        <div
+          v-else
+          class="myclan-summary clickable"
+          @click="$router.push('/v2/clan')"
+        >
+          <div class="myclan-row">
+            <img
+              v-if="myClanData?.avatarUrl"
+              :src="myClanData.avatarUrl"
+              class="myclan-avatar"
+              alt=""
+            />
+            <div class="myclan-info">
+              <div class="myclan-name">{{ myClanData?.name ?? '—' }}</div>
+              <div class="myclan-meta">
+                Lv {{ myClanData?.level ?? 1 }} · {{ myClanData?.members ?? 0 }} members
+              </div>
+            </div>
+          </div>
+          <div class="myclan-stats">
+            <div>Wins: {{ myClanData?.wins ?? 0 }}</div>
+            <div>Battles: {{ myClanData?.battles ?? 0 }}</div>
+          </div>
+        </div>
+      </template>
 
       <!-- ===== CLANS tab — wired to clan/loadClanRatings (Commit 5) ===== -->
       <template v-else-if="activeTab === 'clans'">
@@ -459,5 +530,74 @@ const nextRankHint = computed(() => {
 }
 .ratings-hud > * {
   pointer-events: auto;
+}
+
+/* Sub-epic 2 Commit 7 — MY_CLAN tab minimal styling.
+   Compact summary card (NOT full v1 MyClubTab port per default 1). */
+.myclan-empty {
+  text-align: center;
+  padding: 24px 16px;
+}
+.myclan-empty-msg {
+  color: var(--text-mid);
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+.myclan-cta {
+  background: var(--hex-primary);
+  color: #fff;
+  border: 0;
+  padding: 8px 18px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.myclan-cta:hover {
+  filter: brightness(1.1);
+}
+.myclan-summary {
+  padding: 12px 14px;
+  border: 1px solid var(--bg-panel-border, #2a2a3a);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+}
+.myclan-summary.clickable {
+  cursor: pointer;
+}
+.myclan-summary.clickable:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+.myclan-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.myclan-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.myclan-info {
+  flex: 1;
+  min-width: 0;
+}
+.myclan-name {
+  font-size: 14px;
+  color: var(--text-strong, #fff);
+  font-weight: 600;
+}
+.myclan-meta {
+  font-size: 11px;
+  color: var(--text-mid);
+}
+.myclan-stats {
+  display: flex;
+  gap: 18px;
+  font-size: 12px;
+  color: var(--text-mid);
+  font-family: 'AnonymousBalance', monospace;
 }
 </style>
