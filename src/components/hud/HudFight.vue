@@ -70,7 +70,7 @@
     <CoachPause
       :open="fightState.coachPauseOpen"
       :text="fightState.coachPauseText"
-      @select="setCoachStrategy"
+      @select="onCoachSelect"
     />
     <ResultOverlay
       :open="fightState.phase === 'result'"
@@ -84,6 +84,7 @@
 
 <script setup>
 import { ref, computed, nextTick, watch } from 'vue';
+import { useStore } from 'vuex';
 import { useRouter, useRoute } from 'vue-router';
 import { fightSceneApi } from '@/scene/scenes/useFightSceneApi.js';
 import { fightLog } from './common/useFightLog.js';
@@ -100,6 +101,29 @@ import {
 
 const router = useRouter();
 const route = useRoute();
+const store = useStore();
+
+// Sub-epic 4a Commit 8a — PvP-aware coach select. CoachPause emits mock
+// vocabulary ('aggressive' | 'defensive' | 'counter'); BE expects action
+// vocabulary ('attack' | 'defense' | 'position'). ACTION_MAP translates
+// when matchActive; falls back к existing setCoachStrategy mock callback
+// when not (PvE / unauthenticated path).
+const matchActive = computed(() => store.getters['pvp/getCurrentMatchId'] !== null);
+const ACTION_MAP = { aggressive: 'attack', defensive: 'defense', counter: 'position' };
+
+function onCoachSelect(strat) {
+  if (matchActive.value) {
+    const action = ACTION_MAP[strat];
+    if (!action) return;
+    store.dispatch('webSocket/sendMessage', {
+      type: 'coach_choice',
+      choice: { action },
+    });
+    fightState.coachPauseText = 'Waiting for opponent...';
+  } else {
+    setCoachStrategy(strat);
+  }
+}
 
 // 5N — gate .spectate-badge on actual spectate route. Epic 3A shipped it
 // always-visible (prototype 1645-1667 has it gated on body.fight-readonly,

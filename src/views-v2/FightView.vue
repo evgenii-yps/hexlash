@@ -136,16 +136,23 @@ const onPvPDiceError = (e) => {
   // TODO Commit 8 — wire к UI error feedback (rate-limit / cooldown / no_match)
 };
 const onPvPCoachPause = (e) => {
-  console.log('[v2 PvP] coach_pause received', e.detail);
-  // TODO Commit 8 — wire к cardFightState coach pause UI
+  fightState.coachPauseOpen = true;
+  fightState.coachPauseText = 'Coach pause — pick your advice (10s)';
 };
 const onPvPCoachResult = (e) => {
-  console.log('[v2 PvP] coach_result received', e.detail);
-  // TODO Commit 8 — wire к cardFightState coach effect application
+  const data = e.detail;
+  const isP1 = store.getters['pvp/getIsPlayer1'];
+  const myResult = isP1 ? data.player1 : data.player2;
+  fightState.coachPauseOpen = false;
+  fightState.coachPauseText = '';
+  if (myResult?.action) {
+    logFight('Coach: <strong>' + myResult.action + '</strong>.', 'round');
+  }
 };
 const onPvPCoachOpponentReady = (e) => {
-  console.log('[v2 PvP] coach_opponent_ready received', e.detail);
-  // TODO Commit 8 — wire к "waiting for opponent" UI feedback
+  if (fightState.coachPauseOpen) {
+    fightState.coachPauseText = 'Opponent ready. Waiting...';
+  }
 };
 const onPvPFightEnd = (e) => {
   console.log('[v2 PvP] fight_end received', e.detail);
