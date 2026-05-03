@@ -62,10 +62,16 @@ function onChallengeStart(event) {
     isPlayer1: false,
   });
 
-  router.push({
-    path: '/fight',
-    query: { mode: 'pvp', matchId: data.matchId },
-  });
+  // Sub-epic 4a — v2-aware routing (Path A precedent: Sub-epic 1
+  // CreateClan/ClanEdit augmentation pattern)
+  if (router.currentRoute.value.path.startsWith('/v2')) {
+    router.push('/v2/fight');
+  } else {
+    router.push({
+      path: '/fight',
+      query: { mode: 'pvp', matchId: data.matchId },
+    });
+  }
 }
 
 function onChallengeSent() {
