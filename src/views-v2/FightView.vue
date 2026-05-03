@@ -20,6 +20,8 @@ import {
   fightState,
   resetFight,
 } from '@/components/hud/common/useFightSimulation.js';
+import { logFight } from '@/components/hud/common/useFightLog.js';
+import { triggerFlash } from '@/components/hud/common/useFlashHit.js';
 import { getFightSetup, clearFightSetup } from '@/scene/interaction/useFightSetup.js';
 
 const store = useStore();
@@ -76,8 +78,50 @@ const onPvPFightStart = (e) => {
   fightState.rightHp  = 100;
 };
 const onPvPRoundResult = (e) => {
-  console.log('[v2 PvP] round_result received', e.detail);
-  // TODO Commit 7 — wire к cardFightState round transition
+  const data = e.detail;
+  const isP1 = store.getters['pvp/getIsPlayer1'];
+
+  // Map server data к my perspective (left = self, right = opponent)
+  const myData  = isP1 ? data.player1 : data.player2;
+  const oppData = isP1 ? data.player2 : data.player1;
+
+  // BE-authoritative HP + round (module-scoped per Commit 6b precedent)
+  fightState.leftHp  = myData.hp;
+  fightState.rightHp = oppData.hp;
+  fightState.round   = data.round;
+
+  // Hit-flash if any damage
+  if (myData.damage > 0 || oppData.damage > 0) {
+    triggerFlash();
+  }
+
+  // Self attack — actor-warden colored (position-based per HudFight CSS taxonomy)
+  if (myData.damage > 0) {
+    logFight(
+      '<span class="lt">R' + data.round + '</span> dealt <strong>' + myData.damage + '</strong> dmg',
+      'actor-warden' + (myData.critted ? ' crit' : '')
+    );
+  }
+  // Opponent attack — actor-predator colored
+  if (oppData.damage > 0) {
+    logFight(
+      '<span class="lt">R' + data.round + '</span> took <strong>' + oppData.damage + '</strong> dmg',
+      'actor-predator' + (oppData.critted ? ' crit' : '')
+    );
+  }
+  // Dodges — miss class on attacker side (mirrors mock pattern)
+  if (oppData.dodged) {
+    logFight(
+      '<span class="lt">R' + data.round + '</span> attack — opponent slipped',
+      'actor-warden miss'
+    );
+  }
+  if (myData.dodged) {
+    logFight(
+      '<span class="lt">R' + data.round + '</span> opponent attack — you slipped',
+      'actor-predator miss'
+    );
+  }
 };
 const onPvPDiceAvailable = (e) => {
   console.log('[v2 PvP] dice_available received', e.detail);
