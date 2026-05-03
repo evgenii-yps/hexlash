@@ -35,6 +35,14 @@ const displayOpponent = computed(() =>
 );
 const pvpFightStatus = computed(() => store.getters['pvp/getPvpFightStatus']);
 
+// Sub-epic 4a Commit 6a — captain + self-name bindings.
+// Captain source for pvp_ready emit (deck + modules) per v1 canonical
+// pattern (Lesson #32 mirror). userLogin replaces 'You' placeholder
+// from Commit 4 — accessed via master/getMaster.userData.login (no
+// dedicated master/userData getter in masterState — see Q-V finding).
+const captain = computed(() => store.getters['agent/currentCaptain']);
+const userLogin = computed(() => store.getters['master/getMaster']?.userData?.login);
+
 let fight = null;
 let onResize = null;
 
@@ -126,12 +134,33 @@ onMounted(() => {
   // pvpState (currentMatchId === null) → existing fightSetup behavior.
   if (matchActive.value) {
     const opp = store.getters['pvp/getOpponentInfo'];
-    // Player 1 vs Player 2 disambiguation finalizes в Commit 6.
-    // Self-name source (master.userData.login) wired в Commit 6.
-    fightState.leftName  = 'You';
+    // Sub-epic 4a Commit 6a — userLogin replaces 'You' placeholder.
+    // Player 1 vs Player 2 isP1 disambiguation lives в pvp/SET_PVP_MATCH
+    // commits (ChallengeNotification + Commit 6b onPvPFightStart).
+    fightState.leftName  = userLogin.value || 'You';
     fightState.leftArch  = '';
     fightState.rightName = opp?.username || 'Opponent';
     fightState.rightArch = opp?.archetype || '';
+
+    // Sub-epic 4a Commit 6a — emit pvp_ready (mirror v1 CardFightView
+    // pvp_ready pattern verbatim per Lesson #32). BE pvpHandler awaits
+    // both sides ready → match.start() → fight_start broadcast (Commit 6b
+    // wires onPvPFightStart handler).
+    const cap = captain.value;
+    if (cap) {
+      const captainProg = cap.progression || {};
+      const captainDeck = Array.isArray(captainProg.deck) ? captainProg.deck : [];
+      const captainMoves = Array.isArray(captainProg.moves) ? captainProg.moves : [];
+      const captainModules = [cap.primaryModule, cap.secondaryModule, cap.tertiaryModule].filter(Boolean);
+      const moveLevelMap = {};
+      for (const m of captainMoves) { if (m.moveId) moveLevelMap[m.moveId] = m.level || 1; }
+      store.dispatch('webSocket/sendMessage', {
+        type: 'pvp_ready',
+        matchId: store.getters['pvp/getCurrentMatchId'],
+        deck: captainDeck.map(id => ({ id, level: moveLevelMap[id] || 1 })),
+        modules: captainModules,
+      });
+    }
   } else {
     const setup = getFightSetup();
     clearFightSetup();
