@@ -70,6 +70,12 @@ const protectedRoutes = [
 
 ];
 
+// v2 PvP routes protected by name marker (Sub-epic 4a P1 fix per Phase 0 Q12).
+// v2Routes defined separately below — these names mark them as auth-protected
+// without duplicating route registration. Carry-over #10 (systematic v2 cutover
+// auth audit, Sub-epic 8 territory) may migrate this to meta.requiresAuth pattern.
+const v2ProtectedNames = ['V2Fight', 'V2Matchmaking', 'V2Spectate'];
+
 // v2 Migration — feature flag через URL-префикс /v2. Живёт параллельно старому визуалу.
 // Источник правды: docs/visual-migration/HANDOFF_VISUAL_MIGRATION.md
 const v2Routes = [
@@ -214,7 +220,9 @@ router.beforeEach(async (to, from, next) => {
     }
 
     const isAuthenticated = store.getters["master/getLoginState"]?.isAuthenticated || false;
-    const isProtectedRoute = protectedRoutes.some(route => route.name === to.name || route.path === to.path);
+    const isProtectedRoute =
+        protectedRoutes.some(route => route.name === to.name || route.path === to.path) ||
+        v2ProtectedNames.includes(to.name);
 
     // Проверяем, если маршрут не является авторизационным и защищённым
     if (isProtectedRoute) {
