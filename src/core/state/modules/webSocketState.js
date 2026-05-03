@@ -185,6 +185,7 @@ const actions = {
             case 'coach_result':
             case 'coach_opponent_ready':
             case 'fight_end':
+            case 'overdrive_start':
                 window.dispatchEvent(new CustomEvent('pvp-' + messageType, { detail: message }));
                 break;
             // ─── Challenge messages ─────────────────────────────────────

@@ -12,6 +12,7 @@
 
 import { onMounted, onBeforeUnmount, computed } from 'vue';
 import { useStore } from 'vuex';
+import { useRouter } from 'vue-router';
 import * as THREE from 'three';
 import HudFight from '@/components/hud/HudFight.vue';
 import { buildFightScene } from '@/scene/scenes/FightScene.js';
@@ -25,6 +26,7 @@ import { triggerFlash } from '@/components/hud/common/useFlashHit.js';
 import { getFightSetup, clearFightSetup } from '@/scene/interaction/useFightSetup.js';
 
 const store = useStore();
+const router = useRouter();
 
 // Sub-epic 4a — pvpState match-meta bindings (Commit 4).
 // Round-level state (HP / dice / coach / round log) пока через useFightSimulation.
@@ -169,16 +171,48 @@ const onPvPCoachOpponentReady = (e) => {
   }
 };
 const onPvPFightEnd = (e) => {
-  console.log('[v2 PvP] fight_end received', e.detail);
-  // TODO Commit 9 — wire к cardFightState finalize + finalists screen
+  const data = e.detail;
+  const myId = store.getters['master/getMaster']?.userData?.id;
+  const isP1 = store.getters['pvp/getIsPlayer1'];
+
+  // BE-authoritative final HPs
+  if (data.player1 && data.player2) {
+    fightState.leftHp  = isP1 ? data.player1.finalHp : data.player2.finalHp;
+    fightState.rightHp = isP1 ? data.player2.finalHp : data.player1.finalHp;
+  }
+
+  // Result type derivation (mirror v1 logic)
+  let resultType;
+  if (data.reason === 'opponent_disconnected') {
+    resultType = 'win';
+  } else if (data.winner === 'draw') {
+    resultType = 'draw';
+  } else if (data.winner === myId) {
+    resultType = 'win';
+  } else {
+    resultType = 'lose';
+  }
+
+  // ResultOverlay binding (existing component reuse — Lesson #32 minimal touch)
+  fightState.resultWon = (resultType === 'win');
+  fightState.resultSummary = resultType === 'win'
+    ? (data.reason === 'opponent_disconnected' ? 'Opponent disconnected.' : 'Victory!')
+    : resultType === 'draw'
+      ? 'Match drawn.'
+      : 'Defeated.';
+  fightState.phase = 'result';
+
+  // Update pvp Vuex stats (existing action)
+  store.dispatch('pvp/finishPvPFight', resultType);
 };
 const onPvPOverdriveStart = (e) => {
-  console.log('[v2 PvP] overdrive_start received', e.detail);
-  // TODO Commit 7 — wire к UI overdrive transition
+  triggerFlash();
+  logFight('<strong>OVERDRIVE</strong>', 'round');
 };
 const onMatchCancelled = (e) => {
-  console.log('[v2 PvP] match-cancelled received', e.detail);
-  // TODO Commit 5/9 — wire к ready_timeout UX (navigate to /v2/profile or /v2)
+  store.commit('pvp/RESET_PVP_FIGHT');
+  store.commit('master/setInfoMessage', { text: 'Match cancelled', timeout: 3000 });
+  router.push('/v2');
 };
 
 onMounted(() => {
