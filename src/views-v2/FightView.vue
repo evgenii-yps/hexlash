@@ -56,8 +56,24 @@ function handleResize() {
 // Handlers wired в Commits 5-9 (entry → match start → rounds → coach/dice → fight end).
 // Mirrors v1 CardFightView pattern (Phase 0 Q-V5 reference, 11 listeners).
 const onPvPFightStart = (e) => {
-  console.log('[v2 PvP] fight_start received', e.detail);
-  // TODO Commit 6 — wire к cardFightState/initFight + populate pvpState
+  const data = e.detail;
+  // Derive isP1 — corrects ChallengeNotification's hardcoded false (carry-over #16
+  // dead-write, addressed via overwrite cascade per audit Finding 3).
+  const myId = store.getters['master/getMaster']?.userData?.id;
+  const isP1 = data.player1?.odId === myId;
+  const oppData = isP1 ? data.player2 : data.player1;
+  store.commit('pvp/SET_PVP_MATCH', {
+    matchId: data.matchId,
+    opponent: oppData,
+    isPlayer1: isP1,
+  });
+  // v2 visual transition: PrepOverlay dismisses, fight screen shows.
+  // Module-scoped fightState (HUD bindings, NOT Vuex cardFightState which is
+  // PvE-only per audit Finding 1). Round 1 HP hydrates via pvp-round_result
+  // (Commit 7).
+  fightState.phase    = 'fight';
+  fightState.leftHp   = 100;
+  fightState.rightHp  = 100;
 };
 const onPvPRoundResult = (e) => {
   console.log('[v2 PvP] round_result received', e.detail);
