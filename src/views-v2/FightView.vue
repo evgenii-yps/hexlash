@@ -10,7 +10,8 @@
 // renderer, scene is bound through sceneRegistry. Fight scene has no orbit
 // in Step 9 — camera is static (pit-mode lerp lands in Step 13).
 
-import { onMounted, onBeforeUnmount } from 'vue';
+import { onMounted, onBeforeUnmount, computed } from 'vue';
+import { useStore } from 'vuex';
 import * as THREE from 'three';
 import HudFight from '@/components/hud/HudFight.vue';
 import { buildFightScene } from '@/scene/scenes/FightScene.js';
@@ -20,6 +21,19 @@ import {
   resetFight,
 } from '@/components/hud/common/useFightSimulation.js';
 import { getFightSetup, clearFightSetup } from '@/scene/interaction/useFightSetup.js';
+
+const store = useStore();
+
+// Sub-epic 4a — pvpState match-meta bindings (Commit 4).
+// Round-level state (HP / dice / coach / round log) пока через useFightSimulation.
+// Migration к cardFightState bindings — Commit 6 (match start handler).
+const matchActive = computed(() => store.getters['pvp/getCurrentMatchId'] !== null);
+const displayOpponent = computed(() =>
+  matchActive.value
+    ? store.getters['pvp/getOpponentInfo']
+    : null
+);
+const pvpFightStatus = computed(() => store.getters['pvp/getPvpFightStatus']);
 
 let fight = null;
 let onResize = null;
@@ -105,12 +119,27 @@ onMounted(() => {
   // previous Matchmaking opponent. Rematch on this FightView mount still
   // works because setup already applied to fightState; resetFight leaves
   // name/arch untouched on subsequent round resets.
-  const setup = getFightSetup();
-  clearFightSetup();
-  fightState.leftName  = setup.leftName;
-  fightState.leftArch  = setup.leftArch;
-  fightState.rightName = setup.rightName;
-  fightState.rightArch = setup.rightArch;
+  //
+  // Sub-epic 4a (Commit 4) — branch на pvpState. Live PvP path: read
+  // opponentInfo from Vuex pvpState (populated в Commit 5/6 via
+  // friend-challenge flow). Mock fallback path remains intact: empty
+  // pvpState (currentMatchId === null) → existing fightSetup behavior.
+  if (matchActive.value) {
+    const opp = store.getters['pvp/getOpponentInfo'];
+    // Player 1 vs Player 2 disambiguation finalizes в Commit 6.
+    // Self-name source (master.userData.login) wired в Commit 6.
+    fightState.leftName  = 'You';
+    fightState.leftArch  = '';
+    fightState.rightName = opp?.username || 'Opponent';
+    fightState.rightArch = opp?.archetype || '';
+  } else {
+    const setup = getFightSetup();
+    clearFightSetup();
+    fightState.leftName  = setup.leftName;
+    fightState.leftArch  = setup.leftArch;
+    fightState.rightName = setup.rightName;
+    fightState.rightArch = setup.rightArch;
+  }
   onResize = handleResize;
   window.addEventListener('resize', onResize);
   // Sub-epic 4a — register 11 PvP WS event listeners (handlers wired Commits 5-9)
