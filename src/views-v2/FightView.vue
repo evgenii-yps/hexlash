@@ -30,6 +30,54 @@ function handleResize() {
   fight.camera.updateProjectionMatrix();
 }
 
+// Sub-epic 4a — WS listener scaffold (Commit 3).
+// Handlers wired в Commits 5-9 (entry → match start → rounds → coach/dice → fight end).
+// Mirrors v1 CardFightView pattern (Phase 0 Q-V5 reference, 11 listeners).
+const onPvPFightStart = (e) => {
+  console.log('[v2 PvP] fight_start received', e.detail);
+  // TODO Commit 6 — wire к cardFightState/initFight + populate pvpState
+};
+const onPvPRoundResult = (e) => {
+  console.log('[v2 PvP] round_result received', e.detail);
+  // TODO Commit 7 — wire к cardFightState round transition
+};
+const onPvPDiceAvailable = (e) => {
+  console.log('[v2 PvP] dice_available received', e.detail);
+  // TODO Commit 8 — wire к cardFightState diceState.ready
+};
+const onPvPDiceRolled = (e) => {
+  console.log('[v2 PvP] dice_rolled received', e.detail);
+  // TODO Commit 8 — wire к cardFightState dice effect application
+};
+const onPvPDiceError = (e) => {
+  console.log('[v2 PvP] dice_error received', e.detail);
+  // TODO Commit 8 — wire к UI error feedback (rate-limit / cooldown / no_match)
+};
+const onPvPCoachPause = (e) => {
+  console.log('[v2 PvP] coach_pause received', e.detail);
+  // TODO Commit 8 — wire к cardFightState coach pause UI
+};
+const onPvPCoachResult = (e) => {
+  console.log('[v2 PvP] coach_result received', e.detail);
+  // TODO Commit 8 — wire к cardFightState coach effect application
+};
+const onPvPCoachOpponentReady = (e) => {
+  console.log('[v2 PvP] coach_opponent_ready received', e.detail);
+  // TODO Commit 8 — wire к "waiting for opponent" UI feedback
+};
+const onPvPFightEnd = (e) => {
+  console.log('[v2 PvP] fight_end received', e.detail);
+  // TODO Commit 9 — wire к cardFightState finalize + finalists screen
+};
+const onPvPOverdriveStart = (e) => {
+  console.log('[v2 PvP] overdrive_start received', e.detail);
+  // TODO Commit 7 — wire к UI overdrive transition
+};
+const onMatchCancelled = (e) => {
+  console.log('[v2 PvP] match-cancelled received', e.detail);
+  // TODO Commit 5/9 — wire к ready_timeout UX (navigate to /v2/profile or /v2)
+};
+
 onMounted(() => {
   const aspect = window.innerWidth / window.innerHeight;
   fight = buildFightScene(THREE, aspect);
@@ -65,6 +113,18 @@ onMounted(() => {
   fightState.rightArch = setup.rightArch;
   onResize = handleResize;
   window.addEventListener('resize', onResize);
+  // Sub-epic 4a — register 11 PvP WS event listeners (handlers wired Commits 5-9)
+  window.addEventListener('pvp-fight_start',          onPvPFightStart);
+  window.addEventListener('pvp-round_result',         onPvPRoundResult);
+  window.addEventListener('pvp-dice_available',       onPvPDiceAvailable);
+  window.addEventListener('pvp-dice_rolled',          onPvPDiceRolled);
+  window.addEventListener('pvp-dice_error',           onPvPDiceError);
+  window.addEventListener('pvp-coach_pause',          onPvPCoachPause);
+  window.addEventListener('pvp-coach_result',         onPvPCoachResult);
+  window.addEventListener('pvp-coach_opponent_ready', onPvPCoachOpponentReady);
+  window.addEventListener('pvp-fight_end',            onPvPFightEnd);
+  window.addEventListener('pvp-overdrive_start',      onPvPOverdriveStart);
+  window.addEventListener('match-cancelled',          onMatchCancelled);
 });
 
 onBeforeUnmount(() => {
@@ -72,6 +132,18 @@ onBeforeUnmount(() => {
     window.removeEventListener('resize', onResize);
     onResize = null;
   }
+  // Sub-epic 4a — symmetric cleanup of 11 PvP WS listeners
+  window.removeEventListener('pvp-fight_start',          onPvPFightStart);
+  window.removeEventListener('pvp-round_result',         onPvPRoundResult);
+  window.removeEventListener('pvp-dice_available',       onPvPDiceAvailable);
+  window.removeEventListener('pvp-dice_rolled',          onPvPDiceRolled);
+  window.removeEventListener('pvp-dice_error',           onPvPDiceError);
+  window.removeEventListener('pvp-coach_pause',          onPvPCoachPause);
+  window.removeEventListener('pvp-coach_result',         onPvPCoachResult);
+  window.removeEventListener('pvp-coach_opponent_ready', onPvPCoachOpponentReady);
+  window.removeEventListener('pvp-fight_end',            onPvPFightEnd);
+  window.removeEventListener('pvp-overdrive_start',      onPvPOverdriveStart);
+  window.removeEventListener('match-cancelled',          onMatchCancelled);
   // Cancel any pending simulation timers BEFORE scene teardown so a late
   // doExchange callback doesn't touch a disposed scene.
   resetFight();
