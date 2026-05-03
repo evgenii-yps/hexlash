@@ -4843,6 +4843,145 @@ Closes 4th coverage gap из Wave 2 audit — guest clan view `/v2/clan/:id` por
 
 ---
 
+### Sub-Epic 4a (was 6B-7 partial) — PvP в v2 + Real Backend WS — Happy Path End-to-End ✅ CLOSED
+
+Закрыт 2026-05-03. Седьмой coverage gap closure (Path C split — 4a happy path / 4b edge cases + safety). Standard linear closure (7th application в Эпике 6). 11 functional commits + 1 housekeeping + 1 visual verify gate (audit-skip per Path C — final acceptance gate в Sub-epic 8) + 3 closure commits.
+
+**Commit range:** `9e3307b` (Commit 1 housekeeping) → `9b2705a` (Commit 9 final functional). Branch: `claude/investigate-retirement-animation-zQeg4` (continue stack, HEAD `cb84e9d` baseline).
+
+**Final report:** `docs/visual-migration/EPIC6_SUBEPIC_4A_FINAL_REPORT.md` (Commit 12).
+**Handoff:** `docs/visual-migration/HANDOFF_EPIC6_SUBEPIC_4B_CHAT_HANDOFF.md` (Commit 13).
+**Phase 0 findings:** `docs/visual-migration/EPIC6_SUBEPIC_4_PHASE_0_FINDINGS.md` (committed Commit 1).
+
+**Что видит пользователь:**
+
+- **`/v2/fight`** real PvP — friend-challenge accept → `/v2/fight` (v2-aware routing replaces v1 `/fight` for /v2/* contexts)
+- Match start: PrepOverlay dismisses, fight screen renders с self-name (master.userData.login) + opponent meta (BE-emitted) + initial HP 100/100
+- Round flow: BE-authoritative HP updates, fight log entries (actor-warden / actor-predator colored), hit-flash, dodge/crit indicators в log
+- Coach pause (round 6+): CoachPause overlay opens с 3 strategy buttons → click emits `coach_choice` (ACTION_MAP translates aggressive/defensive/counter → attack/defense/position) → "Waiting for opponent..." text → coach_result closes overlay + log entry
+- Dice (after round 3 cooldown): "🎲 ROLL" button appears bottom-center → click emits `dice_roll` → BE applies effect + emits dice_rolled → button disappears, active type pill shows (HEAL / RAGE / etc), HP updates
+- Overdrive (round 11+): "OVERDRIVE" log entry + flash signal
+- Fight end: ResultOverlay opens с Victory!/Defeated./Match drawn. summary, CTA Exit → `/v2` hub
+- Match cancelled (ready_timeout etc): info toast + navigation `/v2` hub
+
+**v2 PvP routes auth-protected:** V2Fight / V2Matchmaking / V2Spectate added к router via `v2ProtectedNames` marker array (Commit 2 — Option α minimal additive fix). Carry-over #10 (systematic v2 cutover auth posture audit) remains Sub-epic 8 territory.
+
+**Files NEW (1):**
+- `docs/visual-migration/EPIC6_SUBEPIC_4_PHASE_0_FINDINGS.md` — Phase 0 audit (~600 lines, committed Commit 1)
+
+**Files MODIFIED (7):**
+- `src/router/index.js` — `v2ProtectedNames` marker array + guard extension (Commit 2)
+- `src/views-v2/FightView.vue` — 11 PvP handlers + pvp_ready emit + match-active branching + 12 listeners (Commits 3/4/6a/6b/7/9)
+- `src/components/hud/HudFight.vue` — useStore + matchActive + ACTION_MAP + onCoachSelect + onDiceClick + .dice-area template + scoped CSS (Commits 8a/8b)
+- `src/components/hud/common/useFightSimulation.js` — diceReady + diceActiveType flat fields (Commit 8b)
+- `src/components/pvp/ChallengeNotification.vue` — v2-aware routing branch (Commit 5)
+- `src/AppV2.vue` — ChallengeNotification mount в v2 layout (Commit 5a)
+- `src/core/state/modules/webSocketState.js` — overdrive_start case (Commit 9 bug-bundle-tier)
+
+**Files DELETED:** None (v1 CardFightView.vue retained — Sub-epic 8 cutover cleanup territory).
+
+**Backend:** Untouched per Path C frontend-only scope. BE WS already production-ready per Phase 0 Q3. Bug-bundle-tier overdrive_start fix is FE webSocketState routing only (Lesson #35 same-class).
+
+**Vuex (reuse only — zero new actions/mutations):**
+- `pvp/SET_PVP_MATCH`, `pvp/RESET_PVP_FIGHT`, `pvp/finishPvPFight`
+- `pvp/getCurrentMatchId`, `pvp/getOpponentInfo`, `pvp/getIsPlayer1`, `pvp/getPvpFightStatus`
+- `master/getMaster`, `master/setInfoMessage`
+- `agent/currentCaptain`
+- `webSocket/sendMessage`
+
+**Click wiring:**
+- Friend-challenge accept (ChallengeNotification) → emit challenge_accepted → BE creates match → challenge_start broadcast → both clients route к /v2/fight (v2-aware)
+- Coach choice button (CoachPause) → emit coach_choice via ACTION_MAP translation
+- Dice button (.dice-button "🎲 ROLL") → emit dice_roll → BE rolls + applies + responds
+- ResultOverlay Exit → /v2 hub
+- match-cancelled handler → /v2 hub
+
+**Recoveries log:** ZERO recoveries в Sub-epic 4a. **10 verify-gate refinements applied pre-edit** (Sub-epic 2/3 precedent extended dramatically — 10 occurrences в single sub-epic methodology pattern reinforced).
+
+**Lesson #11 catches (10 pre-edit, all adapted in scope):**
+1. Commit 2 — protectedRoutes shape (objects vs string markers)
+2. Commit 5 — ChallengeNotification existing handler routes к /fight (legacy)
+3. Commit 6 — cardFightState/startFight is PvE-only (audit Finding 1)
+4. Commit 6a — `master/userData` getter doesn't exist (use `master/getMaster`)
+5. Commit 6b — `userData.odId` field is `userData.id`; v2 fightState.phase enum differs from v1
+6. Commit 7 — `pvp_move` doesn't exist в either v1 frontend или BE (auto-deck-cycle)
+7. Commit 7 — CSS class taxonomy mismatch (proposed classes don't exist; real: actor-warden/predator/crit/miss/round)
+8. Commit 8 — v2 lacks dice infrastructure entirely (UI/state/emit) → split decision (8a coach / 8b dice)
+9. Commit 8b — multiple visual subsystems gaps (4 carry-overs surfaced)
+10. Commit 9 — overdrive_start bridge missing в webSocketState (bug-bundle-tier)
+
+**Carry-overs (1 closed, 13 NEW — all decoration/polish/non-functional):**
+
+- **CLOSED #1** — ChallengeNotification на v2 routes (Commit 5a Option β mount в AppV2.vue)
+
+- **NEW #16** — `isPlayer1: false` hardcoded в ChallengeNotification.vue:62 — addressed via overwrite cascade (onPvPFightStart Commit 6b correctly derives + commits SET_PVP_MATCH с overwrite). Dead-write code-clarity, не functional bug. Polish.
+- **NEW #17** — v2 countdown UI parity gap (v1 had 3-2-1 countdown overlay). Visual difference. Polish.
+- **NEW #18** — Dodge/crit overlay title mechanism gap (v1 setEventTitle 1200ms overlay; v2 merged into log entries). Decoration-only. Polish.
+- **NEW #19** — Shake animation gap (v1 shakeLeft/shakeRight 400ms на damage). Decoration-only. Polish.
+- **NEW #20** — Cumulative damage stats absent (v1 fight/addStats). Stats-display only. Polish.
+- **NEW #21** — Log actor colors hardcoded к warden/predator slots (HudFight CSS supports 2 colors only; existing v2 design constraint, не new regression). Polish.
+- **NEW #22** — v2 coach active boost UI absent (v1 fight/setCoachAdvice + 4-round visible bar). BE applies effect; UI only gap. Polish.
+- **NEW #23** — v2 single overlay vs v1 dual showCoachPause + showWaiting (workaround via reactive coachPauseText mutation). Polish.
+- **NEW #24** — Per-type flash color mapping (v1 triggerFlash(effect.type) → CSS variable; v2 bare triggerFlash() white only). Polish.
+- **NEW #25** — Dice icon assets (v1 imports iconHeal/Adrenaline/Shield/Blind/Dice; v2 uses text "🎲 ROLL"). Polish.
+- **NEW #26** — Modifiers bar UI (v1 displays adrenaline/shield/blind active effect badges row; v2 single pill). Polish.
+- **NEW #27** — Dice cooldown countdown display (v1 shows cooldownLeft remaining rounds; v2 binary ready/not-ready). Polish.
+- **NEW #28** — XP earned display absent в v2 finalists (v1 fight/setXpEarned for local display; backend persists actual XP per CLAUDE.md "Captain Agent earns XP via backend"). Stats-display only. Polish.
+
+**Inherited carry-overs (untouched):** Items #2-15 unchanged from Sub-epic 3 closure exit state.
+
+**Closure shape:** Standard linear с extended pre-edit verify-gate refinements (10 catches в single sub-epic — methodology pattern reinforced). 0 reactive splits, 0 hot-fixes, 0 recoveries. 1 split decision (Commit 8 → 8a coach + 8b dice) per scope discipline.
+
+**Methodology applied:**
+
+- Mode A strict per-commit discipline — 11 functional commits + 1 housekeeping + 1 verify gate (audit-skip) + 3 closure commits, build pass per commit, status report + push + STOP-and-confirm gates.
+
+- Lesson #11 reflex (10 catches pre-edit, 0 fix-forward post-commit). Verify-gate workflow precedent extended from Sub-epic 2/3 (single-digit catches) к Sub-epic 4a (10 catches). Pattern fully validated.
+
+- Lesson #32 convention discovery — multiple applications:
+  - Direct module-scoped fightState writes (NOT Vuex cardFightState commits — PvE-only path per audit Finding 1)
+  - Flat fightState fields (diceReady / diceActiveType, NOT v1 nested diceState)
+  - ACTION_MAP vocabulary translation (mock aggressive/defensive/counter ↔ BE attack/defense/position)
+  - Position-based actor classes (actor-warden left / actor-predator right, NOT archetype-based)
+  - ResultOverlay reuse (existing component drives via fightState binding, NO new scaffold)
+  - logFight HTML format (NOT Vuex addRoundToLog structured)
+  - Bare triggerFlash() (v1 type-coded skip — carry-over #24)
+  - Path A v2-aware navigation (router.path.startsWith('/v2') branch, mirror Sub-epic 1 P3 precedent)
+
+- Lesson #33 deploy environment awareness — Sub-epic 4a frontend-only по design (Path C scope discipline). Single bug-bundle-tier WS routing fix qualifies as same-class adjacent — bundled per Lesson #35 framework. Full BE chain (surrender handler, reconnect-replay protocol) deferred к Sub-epic 4b где Lesson #33 applies fully.
+
+- Lesson #34 HUD overlay convention applied к .dice-area (scoped CSS, pointer-events: none on parent .fight-hud, auto on interactive .dice-button child).
+
+- Lesson #35 streak preservation:
+  - 10 verify-gate refinements applied pre-edit, NOT classified as recoveries (Sub-epic 2/3 precedent)
+  - 1 bug-bundle-tier fix bundled (overdrive_start same-source-file class)
+  - 1 split decision (8 → 8a/8b) per scope discipline
+
+- Lesson #36 HudProfile card-creep monitor — NOT triggered (Sub-epic 4a touched FightView/HudFight, не HudProfile). Monitor remains 6/7. Path A precedent preserved.
+
+- Lesson #43 candidate (3rd occurrence bootstrap branch divergence) — caught + mitigated via `git fetch && git status -uno` first step. **Pattern validated** (3 occurrences в 5U/Sub-epic 2/Sub-epic 4a Phase 0). Promotion decision pending.
+
+**Cumulative metrics:**
+- Streak: 26 → **27** ✅
+- Recoveries: 83+ stable (no new в 4a — all caught pre-edit)
+- Эпик 6 progress: 9/14 → **10/14 (71%)** — past two-thirds + into third-quarter zone
+- Sub-epics closed в Эпик 6: 9 → **10**
+- Carry-overs total: 15 → **27** (+13 NEW polish items, -1 closed)
+- Lessons promoted: 35 (unchanged)
+- Lesson candidates active: 7 + #43 (validated, awaiting promotion decision)
+
+**Phase 0 enhancement candidates (5 patterns) consolidated для Sub-epic 4b handoff:**
+
+1. **API contract verification** — explicit signatures, getter paths, v1/v2 architecture deltas, constants imports, exact field names (id vs odId), enum values (phase strings)
+2. **Negative-space verification** — what DOESN'T exist that ТЗ might assume (pvp_move precedent: backend auto-cycles deck deterministically)
+3. **Real CSS class taxonomy dump** для visual concerns (actor-warden/predator/crit/miss/round)
+4. **UI infrastructure dependencies** — for each handler, button → state field → handler chain requires upfront verify (dice UI absent в v2 surfaced Commit 8 split decision)
+5. **Vocabulary alignment audit** — mock taxonomy ↔ BE taxonomy (CoachPause emits aggressive/defensive/counter; BE expects attack/defense/position → ACTION_MAP layer)
+
+**Next sub-epic:** Sub-epic 4b — PvP edge cases + safety + BE deploy chain. Stages 15-18 (disconnect / reconnect / surrender / timeout) + carry-overs #17-28 polish если bundled.
+
+---
+
 ## 🎉 ЭПИК 5 §4.2 — CLOSED ✅
 
 **Эпик 5 §4.2 historic milestone:** 22/22 sub-epic candidates closed (100%).
@@ -4876,16 +5015,16 @@ Closes 4th coverage gap из Wave 2 audit — guest clan view `/v2/clan/:id` por
 
 Последний эпик миграции. Roadmap: **14 sub-epics** (was 11; expanded к 13 due к 6B-3a-backend + 6B-3b split, then к 14 due к explicit 6B-10 Auth+Wallet accounting per 6A user-request carry-over). Strategy: гибрид B+C — постепенное закрытие coverage gaps + route-by-route cutover + финальный cleanup.
 
-**Эпик 6 progress:** **9/14 done (64%)** ✅ — Sub-epic 3 (was 6B-6) CLOSED, past two-thirds milestone. Standard linear closure (6th application: 6A + 6B-1 + 6B-3 + 6B-4 + 6B-5 + 6B-6).
+**Эпик 6 progress:** **10/14 done (71%)** ✅ — Sub-epic 4a CLOSED, past two-thirds + into third-quarter zone. Standard linear closure (7th application: 6A + 6B-1 + 6B-3 + 6B-4 + 6B-5 + 6B-6 + 4a). Sub-epic 4 split into 4a (happy path, closed) + 4b (edge cases + safety, pending) per Path C decision.
 
 > **✅ DEPLOY VERIFY COMPLETE:** 6B-3a-backend deploy verified on `api.hexlash.com` (PR `fix/user-public-response` merged to main, Railway auto-deployed). Authenticated guest profile probe (`test_jen_1` viewing `onotole`) returned ONLY public fields, 0 private leaks (15 sensitive fields verified absent: email/balance/walletAddress/financial tokens/progression/deck/settings/language/updatedAt/etc). **Streak 20 → 21 transitioned successfully.** 6B-3 Phase 1 unblocked.
 
 Roadmap document: `docs/visual-migration/EPIC6_ROADMAP.md` (TBD — может быть создан как separate sub-epic либо in-place в этой секции).
 
 **Cumulative metrics entering Эпик 6 / current state:**
-- **26-streak** (5E → 5U + 6A + 6B-1 + 6B-2 + 6B-3a-backend + 6B-3 + 6B-3b + 6B-4 + Sub-epic 2 + Sub-epic 3 all clean)
-- **83+ cumulative recoveries** (Sub-epic 3 added 0 — verify-gate workflow design preserved streak без recovery events; +3 Recoveries #81/#82/#83 в Sub-epic 2, all adaptation-tier per Lesson #35; Sub-epic 1 had 0 recoveries)
-- 35 lessons promoted, **7 candidates active** (#36/#37/#38/#39/#40/#41/#42)
+- **27-streak** (5E → 5U + 6A + 6B-1 + 6B-2 + 6B-3a-backend + 6B-3 + 6B-3b + 6B-4 + Sub-epic 2 + Sub-epic 3 + Sub-epic 4a all clean)
+- **83+ cumulative recoveries** (Sub-epic 4a added 0 — 10 verify-gate refinements pre-edit, all adapted in scope per Lesson #11/#35; Sub-epic 3 added 0; Sub-epic 2 added 3 #81/#82/#83 adaptation-tier)
+- 35 lessons promoted, **7 candidates active** (#36/#37/#38/#39/#40/#41/#42) + **#43 candidate validated** (3rd occurrence bootstrap branch divergence, awaiting promotion decision)
 
 **Sub-epics closed in Эпик 6:**
 - **6A** — Лёгкий cutover (4 FULL coverage routes на чистые URL'ы) ✅
@@ -4897,21 +5036,23 @@ Roadmap document: `docs/visual-migration/EPIC6_ROADMAP.md` (TBD — может �
 - **Sub-epic 1 (was 6B-4)** — Guest Clan View `/v2/clan/:id` (4th coverage gap closed: GAP → FULL — standard linear, 7 functional commits, 0 reactive splits, 2 NEW lesson candidates #41 + #42) ✅
 - **Sub-epic 2 (was 6B-5)** — Ratings reconciliation `/v2/ratings` (5th coverage gap closed: Path A → Path D reversal — standard linear, 11 functional commits + 1 audit-skip, 0 reactive splits, 3 adaptation-tier recoveries #81/#82/#83) ✅
 - **Sub-epic 3 (was 6B-6)** — Profile sub-routes deep links `/v2/wallet` + `/v2/account` (6th coverage gap closed: Path A per-sub-route v2 ports — standard linear, 8 functional commits + 1 visual verify gate, 0 reactive splits, 0 recoveries clean execution; +2 NEW carry-overs #14 Switcher3DPunch SKIP / #15 Vuetify→v2 design system port) ✅
+- **Sub-epic 4a (was 6B-7 partial)** — PvP в v2 + Real Backend WS — Happy Path End-to-End (7th coverage gap, 7th application standard linear; 11 functional commits + 1 housekeeping + audit-skip verify gate; Path C split decision (4a happy path / 4b edge cases); 0 recoveries, 0 reactive splits, 1 split decision (Commit 8 → 8a/8b); **10 Lesson #11 catches pre-edit** — methodology pattern reinforced; +13 NEW carry-overs #16-#28 polish/decoration; -1 closed (#1 ChallengeNotification на v2)) ✅
 
 > **📝 Naming convention update (after 6B-3b):** Remaining sub-epics renumbered к simple ordinals (Sub-epic 1, 2, ..., 8) для clarity. Historical sub-epics (6A / 6B-1 / 6B-2 / 6B-3a-backend / 6B-3 / 6B-3b) retain original names в documentation. New mapping:
 >
 > - **Sub-epic 1** — `/clan/:id` чужие кланы (was 6B-4) — M ✅ **CLOSED**
 > - **Sub-epic 2** — Полные ratings (was 6B-5) — M ✅ **CLOSED**
 > - **Sub-epic 3** — Profile sub-routes deep links (was 6B-6) — S-M ✅ **CLOSED**
-> - **Sub-epic 4** — PvP в v2 (was 6B-7) — L
+> - **Sub-epic 4a** — PvP в v2 happy path (was 6B-7 partial) — L ✅ **CLOSED**
+> - **Sub-epic 4b** — PvP edge cases + safety + BE deploy chain (was 6B-7 partial) — M-L
 > - **Sub-epic 5** — Реальный matchmaking (was 6B-8) — L
 > - **Sub-epic 6** — Реальный spectate (was 6B-9) — M-L
 > - **Sub-epic 7** — Auth + Wallet redesign (was 6B-10) — M-L
 > - **Sub-epic 8** — Финальный cutover (was 6C) — M
 >
-> Total: 14 sub-epics в Эпике 6 (**9 closed, 5 remaining**).
+> Total: 14 sub-epics в Эпике 6 (Sub-epic 4 split into 4a + 4b — counted as 1 slot per Path C precedent; effective tracking 15 narratives across 14 budgeted slots). **10 closed, 5 remaining (4b/5/6/7/8)**.
 
-**Carry-overs into Эпик 6 (15 items — +2 from Sub-epic 3 surface; 0 closed in Sub-epic 3):**
+**Carry-overs into Эпик 6 (27 items — +13 from Sub-epic 4a polish surface; -1 closed (#1 ChallengeNotification на v2 in Commit 5a); +2 from Sub-epic 3 surface):**
 1. Achievement badge для retirement (5Q drop, κ Path B)
 2. HudProfile card-creep monitor (6/7 threshold; **Sub-epic 1 NOT triggered** ✓; **Sub-epic 2 NOT triggered** ✓; **Sub-epic 3 NOT triggered** ✓ — Path A separate views, no HudProfile cards added)
 3. Lesson #36 validation track (await 2nd occurrence)
@@ -4928,6 +5069,22 @@ Roadmap document: `docs/visual-migration/EPIC6_ROADMAP.md` (TBD — может �
 14. **NEW: Switcher3DPunch SKIP** (Sub-epic 3 Q-tactical-1 — v1 ProfileAccount component for 3D punch view toggle; niche feature, not migrated к v2. Polish round candidate or absorbable into Sub-epic 7 Auth+Wallet redesign)
 15. **NEW: Account/Wallet components Vuetify → v2 design system port** (Sub-epic 3 Q-tactical-Phase1-3/5 — 4 account components (ConfirmEmail/ChangeLogin/ChangePassword/DeleteAccount) + GameBalanceCard ported AS-IS preserving Vuetify (VBtnDark/VModal/VCard/InputField). Visual inconsistency vs surrounding v2 HUD aesthetic. Polish round candidate or absorbable into Sub-epic 7)
 
+**Sub-epic 4a polish carry-overs (NEW #16-#28 — all decoration/polish/non-functional):**
+
+16. `isPlayer1: false` hardcoded в ChallengeNotification.vue:62 — addressed via overwrite cascade (onPvPFightStart Commit 6b correctly derives + commits SET_PVP_MATCH с overwrite). Dead-write code-clarity, не functional bug.
+17. v2 countdown UI parity gap (v1 had 3-2-1 countdown overlay before fight). Visual difference.
+18. Dodge/crit overlay title mechanism gap (v1 setEventTitle 1200ms; v2 merged into log entries). Decoration-only.
+19. Shake animation gap (v1 shakeLeft/shakeRight 400ms на damage). Decoration-only.
+20. Cumulative damage stats absent (v1 fight/addStats). Stats-display only.
+21. Log actor colors hardcoded к warden/predator slots (HudFight CSS supports 2 colors only; existing v2 design constraint). Не new regression.
+22. v2 coach active boost UI absent (v1 fight/setCoachAdvice + 4-round visible bar). BE applies effect; UI only gap.
+23. v2 single coach overlay vs v1 dual showCoachPause + showWaiting (workaround via reactive coachPauseText mutation).
+24. Per-type flash color mapping (v1 triggerFlash(effect.type) → CSS variable; v2 bare triggerFlash() white only).
+25. Dice icon assets (v1 imports iconHeal/Adrenaline/Shield/Blind/Dice; v2 uses text "🎲 ROLL").
+26. Modifiers bar UI (v1 displays adrenaline/shield/blind active effect badges; v2 single pill).
+27. Dice cooldown countdown display (v1 shows cooldownLeft remaining rounds; v2 binary ready/not-ready).
+28. XP earned display absent в v2 finalists (v1 fight/setXpEarned for local display; backend persists actual XP per CLAUDE.md). Stats-display only.
+
 **Pre-cutover acceptance gate (forward note для Sub-epic 8):** Full /v2 visual + functional sweep across все routes (profile / wallet / account / ratings / clan / user / fight / training / etc.) before final cutover. Comprehensive acceptance checklist covering все sub-epics 6A-6B-3b + Sub-epic 1-3 deliverables. User-driven manual ratification gate. Documents в Sub-epic 4 handoff.
 
-**Следующий sub-epic:** Sub-epic 4 — PvP в v2 + real backend WS (was 6B-7, L size, may split into 4a/4b). Phase 0 should focus на v1 PvP file inventory, backend WS handlers (`pvpHandler.js` + `pvpMatchManager.js` + `pvpCombatEngine.js`), v2 PvP scenes current state (CardFightView / MatchmakingView / FighterDetailView), match lifecycle wiring + edge cases (disconnect / reconnect / timeout / surrender), and architectural overlap с Sub-epic 5 (matchmaking) + Sub-epic 6 (spectate).
+**Следующий sub-epic:** Sub-epic 4b — PvP edge cases + safety + BE deploy chain. Stages 15-18 lifecycle (disconnect / reconnect / surrender / timeout) + carry-overs #17-28 polish если bundled. Phase 0 should leverage 5 enhancement candidates from Sub-epic 4a methodology (API contract verification, negative-space verification, real CSS class taxonomy, UI infrastructure dependencies, vocabulary alignment audit). Note Lesson #33 deploy environment awareness — Sub-epic 4b touches BE (surrender handler + reconnect-replay protocol); cherry-pick → main → Railway PR flow per branch strategy.
