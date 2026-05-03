@@ -34,6 +34,10 @@ export const fightState = reactive({
   coachPauseText: '',
   resultWon: false,
   resultSummary: '',
+  // Sub-epic 4a Commit 8b — dice scaffold (PvP-only writes; mock skips).
+  // Flat fields per v2 convention (vs v1 nested diceState object).
+  diceReady: false,
+  diceActiveType: null,
 });
 
 const MOVES = [

@@ -124,16 +124,30 @@ const onPvPRoundResult = (e) => {
   }
 };
 const onPvPDiceAvailable = (e) => {
-  console.log('[v2 PvP] dice_available received', e.detail);
-  // TODO Commit 8 — wire к cardFightState diceState.ready
+  fightState.diceReady = true;
+  fightState.diceActiveType = null;
 };
 const onPvPDiceRolled = (e) => {
-  console.log('[v2 PvP] dice_rolled received', e.detail);
-  // TODO Commit 8 — wire к cardFightState dice effect application
+  const data = e.detail;
+  if (!data?.effect) return;
+  fightState.diceReady = false;
+  fightState.diceActiveType = data.effect.type;
+  // BE-authoritative HP updates (instant heal / rage / crit)
+  if (typeof data.hp === 'number') fightState.leftHp = data.hp;
+  if (typeof data.oppHp === 'number') fightState.rightHp = data.oppHp;
+  triggerFlash();
+  logFight('Dice: <strong>' + data.effect.type.toUpperCase() + '</strong>', 'round');
 };
 const onPvPDiceError = (e) => {
-  console.log('[v2 PvP] dice_error received', e.detail);
-  // TODO Commit 8 — wire к UI error feedback (rate-limit / cooldown / no_match)
+  const msg = e.detail?.message || 'dice_on_cooldown';
+  logFight('Dice unavailable (' + msg + ')', 'actor-predator miss');
+  fightState.diceReady = false;
+  // Mirror v1 — re-enable after 2s grace period
+  setTimeout(() => {
+    if (store.getters['pvp/getCurrentMatchId']) {
+      fightState.diceReady = true;
+    }
+  }, 2000);
 };
 const onPvPCoachPause = (e) => {
   fightState.coachPauseOpen = true;

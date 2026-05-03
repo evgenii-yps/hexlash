@@ -42,6 +42,17 @@
       <button :class="{ active: camMode === 'cinema' }" @click="selectCam('cinema')">Cinema</button>
     </div>
 
+    <!-- Sub-epic 4a Commit 8b — dice scaffold. PvP-only render guard
+         on matchActive; mock fallback path skips entirely. -->
+    <div v-if="matchActive && (fightState.diceReady || fightState.diceActiveType)" class="dice-area">
+      <button v-if="fightState.diceReady && !fightState.diceActiveType"
+              class="dice-button dice-ready"
+              @click="onDiceClick">🎲 ROLL</button>
+      <div v-if="fightState.diceActiveType" class="dice-active-pill">
+        {{ fightState.diceActiveType.toUpperCase() }}
+      </div>
+    </div>
+
     <!-- Combat log (Step 15, populated by useFightSimulation in Step 16). -->
     <div class="fight-log" ref="fightLogEl">
       <div
@@ -123,6 +134,15 @@ function onCoachSelect(strat) {
   } else {
     setCoachStrategy(strat);
   }
+}
+
+// Sub-epic 4a Commit 8b — dice click handler. Bare {type: 'dice_roll'}
+// payload mirrors v1 verbatim (Lesson #32). BE drives cooldown — FE clears
+// diceReady immediately; dice_available re-enables на следующий tick.
+function onDiceClick() {
+  if (!matchActive.value || !fightState.diceReady) return;
+  store.dispatch('webSocket/sendMessage', { type: 'dice_roll' });
+  fightState.diceReady = false;
 }
 
 // 5N — gate .spectate-badge on actual spectate route. Epic 3A shipped it
@@ -440,5 +460,52 @@ watch(() => fightLog.lines.length, () => {
 @keyframes hitflash {
   0%   { background: rgba(255, 255, 255, 0.3); }
   100% { background: rgba(255, 255, 255, 0); }
+}
+
+/* Sub-epic 4a Commit 8b — dice scaffold (PvP-only). HUD overlay
+   convention (Lesson #34): pointer-events: auto on interactive button,
+   inherits none from parent .fight-hud. */
+.dice-area {
+  position: fixed;
+  bottom: 220px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  z-index: 60;
+  pointer-events: none;
+}
+.dice-button {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 2px solid var(--hex-primary);
+  background: rgba(255, 6, 111, 0.15);
+  color: var(--hex-primary);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: transform 0.12s ease, background 0.18s ease;
+  animation: dicePulse 1.4s ease-in-out infinite;
+}
+.dice-button:hover { transform: scale(1.06); }
+.dice-button:active { transform: scale(0.96); }
+.dice-active-pill {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: rgba(255, 6, 111, 0.18);
+  color: var(--hex-primary);
+  border: 1px solid rgba(255, 6, 111, 0.4);
+}
+@keyframes dicePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 6, 111, 0.4); }
+  50%      { box-shadow: 0 0 0 8px rgba(255, 6, 111, 0); }
 }
 </style>
