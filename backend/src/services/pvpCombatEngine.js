@@ -18,6 +18,9 @@ const {
   ARCHETYPE_MODIFIERS,
 } = config;
 
+// Sub-epic 6 C2 — Spectator socket lookup callback (wired by handler.js at init in C4)
+let _getSocketByUserId = null;
+
 /**
  * Calculate passive archetype modifiers from 3 module slots.
  * Weights: slot1=50%, slot2=30%, slot3=20%.
@@ -901,7 +904,25 @@ class PvPCombatEngine {
       player.socket?.send(JSON.stringify({ type, ...data }));
     } catch (_) { /* socket closed */ }
   }
+
+  // Sub-epic 6 C2 — broadcast to all spectators of this match.
+  // Sockets resolved via lookup callback (set by handler.js setSocketLookup).
+  // Mirrors sendToPlayer convention: try/catch + optional chaining (no readyState check).
+  sendToSpectators(type, data) {
+    if (this.spectators.size === 0) return;
+    if (!_getSocketByUserId) return; // not wired yet
+    const message = JSON.stringify({ type, ...data });
+    for (const userId of this.spectators) {
+      const socket = _getSocketByUserId(userId);
+      try { socket?.send(message); } catch (_) { /* socket closed */ }
+    }
+  }
 }
+
+// Sub-epic 6 C2 — handler.js wires (userId) => clients.get(userId) at WebSocket init (C4 territory).
+PvPCombatEngine.setSocketLookup = (fn) => {
+  _getSocketByUserId = fn;
+};
 
 PvPCombatEngine.calculateArchetypeModifiers = calculateArchetypeModifiers;
 module.exports = PvPCombatEngine;
