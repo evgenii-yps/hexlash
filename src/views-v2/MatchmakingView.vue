@@ -5,8 +5,8 @@
      C6 ✓ match-found handler → pvp/SET_PVP_MATCH → phase='found'
      C7 ✓ timeout handler + retry/back wiring + DRY startMatchmakingSearch helper
      C8 ✓ 3-second countdown post-match-found + VS display + navigate /v2/fight (carry-over #17)
-     C9 — search timer + queue size display
-     C10 — online players REST poll
+     C9 ✓ search timer + queue size display
+     C10 ✓ online players count REST fetch + display
      C11 — double-queue FE redirect guard
      C12 — race Q8.1 cancel-during-pair handling
 -->
@@ -39,6 +39,7 @@ import {
   enterTimeoutPhase,
 } from '@/scene/interaction/useMatchmakingState.js';
 import { InfoMessageModel } from '@/core/models/internal/infoMessageModel.js';
+import { getOnlinePlayersCount } from '@/core/services/statsService.js';
 import HudMatchmaking from '@/components/hud/HudMatchmaking.vue';
 
 const router = useRouter();
@@ -255,6 +256,14 @@ onMounted(() => {
   window.addEventListener('matchmaking-match-found',  onMatchFound);
   window.addEventListener('matchmaking-cancelled',    onMatchmakingCancelled);
   window.addEventListener('matchmaking-timeout',      onMatchmakingTimeout);
+
+  // Sub-epic 5 C10 — online players count REST fetch (single mount fetch,
+  // public endpoint /v1/stats/online per Phase 0 Q4.4). Fire-and-forget
+  // Promise pattern: doesn't block dispatch path; resolves to mmState
+  // reactive update whenever response arrives. v1 polled every 10s; v2
+  // single-fetch on mount per ТЗ scope. Cross-phase persistence (preserved
+  // by enterSearchPhase per C1 design) — onRetry path doesn't refetch.
+  getOnlinePlayersCount().then(n => { mmState.onlineCount = n; });
 
   // Sub-epic 5 C4+C7 — start search via shared helper (captain pre-check
   // guard + MatchmakingStartMsg dispatch + searchTime timer). Helper is

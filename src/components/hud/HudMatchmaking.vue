@@ -73,7 +73,9 @@
              never changes — filter hidden via v-if=false in C3, BE actually
              auto-expands range from 300→1000 separately per Phase 0 Q2.3). -->
         <div class="mms-status">{{ formattedSearchTime }}</div>
-        <div class="mms-progress-text">{{ mmState.queueSize }} in queue</div>
+        <div class="mms-progress-text">
+          {{ mmState.queueSize }} in queue &middot; {{ mmState.onlineCount }} online
+        </div>
         <button class="mms-cancel" @click="onCancel">Cancel Search</button>
       </div>
 
