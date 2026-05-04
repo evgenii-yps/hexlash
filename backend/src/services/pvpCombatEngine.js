@@ -175,7 +175,9 @@ class PvPCombatEngine {
 
     // Notify Overdrive start
     if (this.currentRound === MAX_ROUNDS + 1) {
-      this.emit('overdrive_start', { round: this.currentRound });
+      const overdrivePayload = { round: this.currentRound };
+      this.emit('overdrive_start', overdrivePayload);
+      this.sendToSpectators('overdrive_start', overdrivePayload);
     }
 
     // Dice and coach disabled in Overdrive
@@ -186,9 +188,11 @@ class PvPCombatEngine {
 
       if (p1Dice) {
         this.sendToPlayer(this.player1, 'dice_available', { round: this.currentRound });
+        this.sendToSpectators('dice_available', { round: this.currentRound, playerOdId: this.player1.odId });
       }
       if (p2Dice) {
         this.sendToPlayer(this.player2, 'dice_available', { round: this.currentRound });
+        this.sendToSpectators('dice_available', { round: this.currentRound, playerOdId: this.player2.odId });
       }
 
       // Check coach — after COACH_MIN_ROUND, once per fight
@@ -332,6 +336,7 @@ class PvPCombatEngine {
 
     this.roundResults.push(result);
     this.emit('round_result', result);
+    this.sendToSpectators('round_result', result);
 
     this.roundTimer = setTimeout(() => {
       this.nextRound();
@@ -444,12 +449,17 @@ class PvPCombatEngine {
 
     // Notify the rolling player of their result
     const isInstantDamage = effect.type === 'rage' || effect.type === 'crit';
-    this.sendToPlayer(player, 'dice_rolled', {
+    const dicePayload = {
       effect,
       hp: player.hp,
       oppHp: isInstantDamage ? opponent.hp : undefined,
       killed: isInstantDamage && opponent.hp <= 0,
-    });
+    };
+    this.sendToPlayer(player, 'dice_rolled', dicePayload);
+    // Spectator broadcast: append rollerId field for FE-side disambiguation
+    // (Phase 0 vocabulary alignment + 6th subsection #2 occurrence — spectator
+    // can't infer roller from `hp` field alone; rollerId disambiguates).
+    this.sendToSpectators('dice_rolled', { ...dicePayload, rollerId: player.odId });
 
     // If instant damage killed opponent — end fight immediately
     if (isInstantDamage && opponent.hp <= 0) {
@@ -464,15 +474,13 @@ class PvPCombatEngine {
     this.pendingChoices = { player1: null, player2: null };
 
     // Send same 3 options as PvE: attack, defense, position
-    this.sendToPlayer(this.player1, 'coach_pause', {
+    const coachPayload = {
       round: this.currentRound,
       timeLimit: COACH_PAUSE_TIMEOUT_MS,
-    });
-
-    this.sendToPlayer(this.player2, 'coach_pause', {
-      round: this.currentRound,
-      timeLimit: COACH_PAUSE_TIMEOUT_MS,
-    });
+    };
+    this.sendToPlayer(this.player1, 'coach_pause', coachPayload);
+    this.sendToPlayer(this.player2, 'coach_pause', coachPayload);
+    this.sendToSpectators('coach_pause', coachPayload);
 
     this.pauseTimer = setTimeout(() => {
       if (this.pendingChoices.player1 === null) this.pendingChoices.player1 = { action: null };
@@ -513,10 +521,12 @@ class PvPCombatEngine {
     this.player1.coachTriggered = true;
     this.player2.coachTriggered = true;
 
-    this.emit('coach_result', {
+    const coachResultPayload = {
       player1: { action: p1Action || null },
       player2: { action: p2Action || null },
-    });
+    };
+    this.emit('coach_result', coachResultPayload);
+    this.sendToSpectators('coach_result', coachResultPayload);
 
     // Coach pause consumed the current round — simulate it now
     // (currentRound was already incremented in nextRound() before pauseForCoach())
@@ -570,6 +580,7 @@ class PvPCombatEngine {
     };
 
     this.emit('fight_end', result);
+    this.sendToSpectators('fight_end', result);
     this.saveFightResult(result);
     return result;
   }
@@ -599,6 +610,10 @@ class PvPCombatEngine {
       ...result,
       reason: 'opponent_disconnected',
     });
+    // Spectator broadcast: neutral form using underlying result (reason='disconnect',
+    // NOT winner's perspective 'opponent_disconnected'). 6th subsection #2 — spectator
+    // is third-party, not winner-anchored.
+    this.sendToSpectators('fight_end', result);
 
     this.saveFightResult(result);
     return result;
@@ -641,6 +656,9 @@ class PvPCombatEngine {
       ...result,
       reason: 'opponent_surrendered',
     });
+    // Spectator broadcast: neutral form (reason='surrender' from result, NOT
+    // surrenderer/winner perspective). 6th subsection #2 — third-party view.
+    this.sendToSpectators('fight_end', result);
 
     this.saveFightResult(result);
     return result;
@@ -682,6 +700,7 @@ class PvPCombatEngine {
     };
 
     this.emit('fight_end', result);
+    this.sendToSpectators('fight_end', result);
     this.saveFightResult(result);
     return result;
   }
