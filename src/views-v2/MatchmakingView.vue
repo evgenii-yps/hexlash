@@ -1,20 +1,27 @@
-<!-- Epic 3Bb Step 2 — Matchmaking view orchestrator.
-     Lazy scene registration pattern from Epic 3A/3Ba. HUD + filter wiring
-     + typeLog + results phase arrive in Steps 5-9. -->
+<!-- Sub-epic 5 C2 — Matchmaking view orchestrator (mock-flow gutted).
+     Mock files (mmCandidatesMock + useMatchmakingScreen) deleted; CRT typeLog
+     animation + candidate generation removed. Real BE wiring lands в C4-C12:
+     C4 — MatchmakingStartMsg dispatch + searchTime timer
+     C5 — 4 window event listeners (match-found / queue-update / cancelled / timeout)
+     C6 — match-found handler → pvp/SET_PVP_MATCH → phase='found'
+     C7 — timeout handler + retry/back wiring
+     C8 — 3-second countdown post-match-found
+     C9 — search timer + queue size display
+     C10 — online players REST poll
+     C11 — double-queue FE redirect guard
+     C12 — race Q8.1 cancel-during-pair handling
+-->
 <template>
   <div class="matchmaking-view">
     <HudMatchmaking
       @back="onBack"
       @cancel="onCancel"
-      @rescan="onRescan"
-      @fight="onFight"
-      @elo-change="onEloChange"
     />
   </div>
 </template>
 
 <script setup>
-import { onMounted, onBeforeUnmount, watch } from 'vue';
+import { onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import * as THREE from 'three';
 import {
@@ -24,24 +31,13 @@ import {
 } from '@/scene/sceneRegistry.js';
 import { buildMatchmakingScene } from '@/scene/scenes/MatchmakingScene.js';
 import {
-  refreshScreen,
-  startSearchLogAnimation,
-} from '@/scene/interaction/useMatchmakingScreen.js';
-import {
-  mmState,
   resetMmState,
-  enterSearchPhase,
-  enterResultsPhase,
 } from '@/scene/interaction/useMatchmakingState.js';
-import { generateCandidates } from '@/scene/interaction/mmCandidatesMock.js';
-import { setFightSetup } from '@/scene/interaction/useFightSetup.js';
 import HudMatchmaking from '@/components/hud/HudMatchmaking.vue';
 
 const router = useRouter();
 
 let sceneApi = null;
-let animHandle = null;
-let resultsTimer = null;
 let onResize = null;
 
 function handleResize() {
@@ -54,91 +50,15 @@ function onBack() {
   router.push('/v2');
 }
 
-// Step 7 — search lifecycle. startSearch() is reused by onMounted and
-// onRescan, so cancel + enterSearchPhase + new animation all happen in
-// one place.
-function startSearch() {
-  if (!sceneApi) return;
-  if (animHandle) animHandle.cancel();
-  if (resultsTimer) {
-    clearTimeout(resultsTimer);
-    resultsTimer = null;
-  }
-  enterSearchPhase();
-  animHandle = startSearchLogAnimation(
-    sceneApi.screenCtx,
-    sceneApi.screenTex,
-    onSearchComplete,
-  );
-}
-
-// Step 8 — typeLog completes → generate candidates, paint summary line
-// on the CRT, pause 600ms so the user reads it, then flip the HUD to
-// the results phase. Matches prototype 10727-10731 ordering.
-function onSearchComplete() {
-  if (!sceneApi) return;
-  if (mmState.phase !== 'search') return;
-  const candidates = generateCandidates(mmState);
-  mmState.candidates = candidates;
-  mmState.searchLog.unshift(
-    '> ' + candidates.length + ' candidates matched. ready.',
-  );
-  refreshScreen(sceneApi.screenCtx, sceneApi.screenTex);
-  resultsTimer = setTimeout(() => {
-    resultsTimer = null;
-    if (mmState.phase !== 'search') return;
-    enterResultsPhase();
-  }, 600);
-}
-
 function onCancel() {
-  if (animHandle) {
-    animHandle.cancel();
-    animHandle = null;
-  }
-  if (resultsTimer) {
-    clearTimeout(resultsTimer);
-    resultsTimer = null;
-  }
+  // Sub-epic 5 C2 — stub. C4 will dispatch MatchmakingCancelMsg via WS,
+  // C12 will add localCancelPending flag for race Q8.1 handling.
   router.push('/v2');
-}
-
-function onRescan() {
-  startSearch();
-}
-
-function onFight() {
-  if (mmState.selected === null) return;
-  const c = mmState.candidates[mmState.selected];
-  if (!c) return;
-  // Captain data is static for now — FD's current captain is always warden.
-  // Epic 4 will read the real captain from the profile store.
-  setFightSetup({
-    leftName:  'YURII.VARVAROV',
-    leftArch:  'Captain · Warden',
-    rightName: c.name.toUpperCase(),
-    rightArch: c.arch.name,
-  });
-  router.push('/v2/fight');
-}
-
-function onEloChange(value) {
-  mmState.eloDelta = value;
-  // Watcher below picks it up and repaints the CRT filters line.
 }
 
 function onKeydown(e) {
   if (e.key === 'Escape') onBack();
 }
-
-// Step 7 — refreshScreen whenever any filter changes so the CRT line
-// stays in sync with the HUD. Primitive fields, no deep watch needed.
-watch(
-  () => [mmState.eloDelta, mmState.archFilter, mmState.beltFilter],
-  () => {
-    if (sceneApi) refreshScreen(sceneApi.screenCtx, sceneApi.screenTex);
-  },
-);
 
 onMounted(() => {
   const aspect = window.innerWidth / window.innerHeight;
@@ -149,10 +69,11 @@ onMounted(() => {
     tick: sceneApi.tick,
   });
   activateScene('matchmaking');
-  // Step 7 — session enters with a clean slate + first typeLog pass.
   resetMmState();
-  refreshScreen(sceneApi.screenCtx, sceneApi.screenTex);
-  startSearch();
+  // C4 will add: MatchmakingStartMsg dispatch + searchTime setInterval
+  // C5 will add: 4 window event listeners (matchmaking-*)
+  // C10 will add: getOnlinePlayersCount REST fetch + repoll
+  // C11 will add: pvp/getCurrentMatchId double-queue guard
   onResize = handleResize;
   window.addEventListener('resize', onResize);
   window.addEventListener('keydown', onKeydown);
@@ -164,17 +85,8 @@ onBeforeUnmount(() => {
     window.removeEventListener('resize', onResize);
     onResize = null;
   }
-  // Cancel pending typeLog timers first — otherwise they mutate mmState
-  // / push to screenCtx after scene teardown. resultsTimer is the 600ms
-  // between CRT summary and phase flip; also freed here.
-  if (animHandle) {
-    animHandle.cancel();
-    animHandle = null;
-  }
-  if (resultsTimer) {
-    clearTimeout(resultsTimer);
-    resultsTimer = null;
-  }
+  // C4 will add: clearInterval(searchTimer) + dispatch MatchmakingCancelMsg
+  // C5 will add: remove 4 window event listeners
   // Reset shared reactive state so a re-entry starts clean (matches
   // Training's resetTrainingState pattern).
   resetMmState();
