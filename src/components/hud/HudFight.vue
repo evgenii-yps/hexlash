@@ -5,6 +5,12 @@
 <template>
   <div class="hud fight-hud">
     <button class="fight-back" @click="onBack">&larr; Back</button>
+    <!-- Sub-epic 4b — surrender button. Visible only during own active fight
+         phase. Mutually exclusive с .spectate-badge (same top-right position;
+         spectate gated на V2Spectate route, surrender gated на matchActive).
+         Browser confirm() dialog acceptable per ТЗ (custom modal deferred). -->
+    <button v-if="matchActive && fightState.phase === 'fight'"
+            class="surrender-btn" @click="onSurrender" type="button">Surrender</button>
     <div v-if="isSpectating" class="spectate-badge"><span class="sb-dot"></span>Spectating</div>
 
     <div class="fight-top">
@@ -143,6 +149,16 @@ function onDiceClick() {
   if (!matchActive.value || !fightState.diceReady) return;
   store.dispatch('webSocket/sendMessage', { type: 'dice_roll' });
   fightState.diceReady = false;
+}
+
+// Sub-epic 4b — surrender handler. Browser confirm() dialog (custom modal
+// deferred). Bare {type: 'pvp_surrender'} payload mirrors dice_roll convention
+// (Lesson #32) — BE C3 handler resolves match via getMatchByPlayer(user.odId),
+// no need to send matchId. Defensive matchActive guard mirrors onDiceClick.
+function onSurrender() {
+  if (!matchActive.value) return;
+  if (!confirm('Surrender this match? You will lose this fight.')) return;
+  store.dispatch('webSocket/sendMessage', { type: 'pvp_surrender' });
 }
 
 // 5N — gate .spectate-badge on actual spectate route. Epic 3A shipped it
@@ -364,6 +380,37 @@ watch(() => fightLog.lines.length, () => {
   color: #fff;
   border-color: rgba(255, 6, 111, 0.4);
   background: rgba(255, 6, 111, 0.08);
+}
+
+/* Sub-epic 4b — surrender-btn. Top-right mirror of .fight-back baseline
+   (top:90px). Mutually exclusive с .spectate-badge (same coords; spectate
+   gated on V2Spectate route, surrender gated on matchActive). Destructive
+   red palette per fight-overlays.css .phase-card.defeat precedent (#ff4444).
+   pointer-events: auto required — .fight-hud parent has pointer-events: none. */
+.surrender-btn {
+  position: fixed;
+  top: 90px;
+  right: 14px;
+  background: rgba(255, 68, 68, 0.08);
+  border: 1px solid rgba(255, 68, 68, 0.4);
+  border-radius: 6px;
+  padding: 6px 12px;
+  color: #ff8888;
+  cursor: pointer;
+  pointer-events: auto;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  transition: all 0.15s ease;
+  z-index: 60;
+}
+.surrender-btn:hover {
+  color: #ffaaaa;
+  border-color: rgba(255, 68, 68, 0.7);
+  background: rgba(255, 68, 68, 0.16);
 }
 
 /* spectate-badge (prototype 1645-1667). 5N gated on V2Spectate route name
