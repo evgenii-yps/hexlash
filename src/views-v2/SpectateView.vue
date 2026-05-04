@@ -21,7 +21,7 @@
 <script setup>
 import { onMounted, onBeforeUnmount } from 'vue';
 import { useStore } from 'vuex';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import HudSpectate from '@/components/hud/HudSpectate.vue';
 import {
   resetSpectateState,
@@ -38,6 +38,7 @@ import {
 
 const store = useStore();
 const route = useRoute();
+const router = useRouter();
 
 // 5N Esc handler — preserved verbatim
 function onKeyDown(e) {
@@ -61,7 +62,30 @@ function onSpectateOverdriveStart(e)    { onSpectateOverdriveStartMutation(e.det
 function onSpectateFightStateResume(e)  { onSpectateFightStateResumeMutation(e.detail); }
 function onSpectatorListUpdate(e)       { onSpectatorListUpdateMutation(e.detail); }
 
+// Sub-epic 6 C11 — defensive match-cancelled handler (Q8.2 race guard).
+// Mirrors FightView onMatchCancelled pattern (FightView.vue:334-338) — if
+// active match cancelled while spectating (mid-spectate disconnect race,
+// timeout, etc), redirect spectator к /v2 hub с info toast.
+//
+// 6th subsection #2 occurrence — no self-anchored derivation, neutral
+// 'Match ended' message regardless of spectator perspective.
+function onMatchCancelled(_e) {
+  store.commit('master/setInfoMessage', { text: 'Match ended', timeout: 3000 });
+  router.push('/v2');
+}
+
 onMounted(() => {
+  // Sub-epic 6 C11 — fightId validation guard. Defensive: undefined/empty
+  // route.params.fightId means malformed URL — toast + redirect /v2 immediately.
+  // Without this guard, spectator stuck on placeholder UI без feedback (C7
+  // had `if (fightId)` guard но silently no-op on missing param).
+  const fightId = route.params.fightId;
+  if (!fightId || typeof fightId !== 'string') {
+    store.commit('master/setInfoMessage', { text: 'Invalid spectate URL', timeout: 3000 });
+    router.push('/v2');
+    return;
+  }
+
   // Sub-epic 6 C9 — fresh spectate session: reset shared composable state
   // (mirror Sub-epic 5 MatchmakingView / resetMmState pattern). Prevents
   // cross-session leakage on remount.
@@ -82,16 +106,14 @@ onMounted(() => {
   window.addEventListener('pvp-overdrive_start',    onSpectateOverdriveStart);
   window.addEventListener('pvp-fight_state_resume', onSpectateFightStateResume);
   window.addEventListener('spectator-list-update',  onSpectatorListUpdate);
+  window.addEventListener('match-cancelled',        onMatchCancelled); // Sub-epic 6 C11
 
   // Sub-epic 6 C7 — dispatch SpectateJoinMsg. matchId from route param (deterministic,
   // 6th subsection #2 occurrence — no self-anchored derivation для spectator-as-third-party).
   // BE handler (C4) will respond с initial fight_state_resume snapshot + SpectatorListMsg
   // broadcast. Auth failures emit ErrorMsg (carry-over #31 awareness — FE parser shape
-  // mismatch deferred к Sub-epic 7).
-  const fightId = route.params.fightId;
-  if (fightId) {
-    store.dispatch('webSocket/sendMessage', { type: 'SpectateJoinMsg', matchId: fightId });
-  }
+  // mismatch deferred к Sub-epic 7). C11 fightId validation guard above ensures non-empty.
+  store.dispatch('webSocket/sendMessage', { type: 'SpectateJoinMsg', matchId: fightId });
 });
 
 onBeforeUnmount(() => {
@@ -109,6 +131,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('pvp-overdrive_start',    onSpectateOverdriveStart);
   window.removeEventListener('pvp-fight_state_resume', onSpectateFightStateResume);
   window.removeEventListener('spectator-list-update',  onSpectatorListUpdate);
+  window.removeEventListener('match-cancelled',        onMatchCancelled); // Sub-epic 6 C11
 
   // Sub-epic 6 C7 — dispatch SpectateLeaveMsg. NO matchId payload (BE resolves via
   // session state per C4 — mirror MatchmakingCancelMsg server-state derivation pattern).
