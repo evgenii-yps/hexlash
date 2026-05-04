@@ -5,6 +5,7 @@
     <VerifyEmailBanner />
     <ChallengeNotification />
     <GlobalOverlays />
+    <NoConnection />
   </div>
 </template>
 
@@ -13,6 +14,7 @@ import { defineAsyncComponent } from 'vue';
 import GlobalOverlays from '@/components/hud/common/GlobalOverlays.vue';
 import VerifyEmailBanner from '@/components/hud/VerifyEmailBanner.vue';
 import ChallengeNotification from '@/components/pvp/ChallengeNotification.vue';
+import NoConnection from '@/components/ui/NoConnection.vue';
 import '@/styles/hexlash-v24.css';
 
 // CanvasLayer грузится лениво — сам файл появится в Шаге 6.
