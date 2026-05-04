@@ -8,7 +8,7 @@
      C9 ✓ search timer + queue size display
      C10 ✓ online players count REST fetch + display
      C11 ✓ double-queue FE redirect guard
-     C12 — race Q8.1 cancel-during-pair handling
+     C12 ✓ race Q8.1 cancel-during-pair handling
 -->
 <template>
   <div class="matchmaking-view">
@@ -55,6 +55,13 @@ let countdownTimer = null;
 // dispatched, so onBeforeUnmount only sends Cancel if we're still in queue.
 // (Pre-check failure path returns before dispatch — no Cancel needed.)
 let queueDispatched = false;
+// Sub-epic 5 C12 — race Q8.1 mitigation flag (cancel-during-pair).
+// Set true в onCancel/onBack before dispatch; if MatchFoundMsg arrives during
+// race window (BE periodic snapshot ↔ createMatch/notifyMatch lag), guard в
+// onMatchFound aborts state changes + redirects /v2. Reset в
+// startMatchmakingSearch (mount + retry entry points). Plain `let` (NOT ref)
+// per module-scope flag convention parity (queueDispatched precedent).
+let localCancelPending = false;
 
 function handleResize() {
   if (!sceneApi) return;
@@ -93,6 +100,10 @@ function resetPvpState() {
 }
 
 function onBack() {
+  // Sub-epic 5 C12 — race Q8.1 flag set BEFORE dispatch (covers race window
+  // before MatchmakingCancelMsg reaches BE; if MatchFoundMsg arrives during
+  // window, onMatchFound guard fires).
+  localCancelPending = true;
   dispatchMatchmakingCancel();
   stopSearchTimer();
   stopCountdownTimer();
@@ -101,7 +112,8 @@ function onBack() {
 }
 
 function onCancel() {
-  // C12 will add localCancelPending flag for race Q8.1 handling.
+  // Sub-epic 5 C12 — race Q8.1 flag set BEFORE dispatch (symmetric с onBack).
+  localCancelPending = true;
   dispatchMatchmakingCancel();
   stopSearchTimer();
   stopCountdownTimer();
@@ -119,6 +131,12 @@ function onKeydown(e) {
 // BE NO_CAPTAIN_SET error path). Returns false on pre-check fail (caller
 // already redirected via router.replace + toast); true on dispatch success.
 function startMatchmakingSearch() {
+  // Sub-epic 5 C12 — reset race Q8.1 flag для fresh entry. Module-scope vars
+  // persist across component remounts (Vue 3 SFC module lifetime = browser
+  // tab); reset critical on each fresh search. Mount path: initial false
+  // (no-op). Retry path: clears stale flag from previous cancelled session.
+  localCancelPending = false;
+
   const captain = store.getters['agent/currentCaptain'];
   if (!captain) {
     store.commit(
@@ -176,9 +194,23 @@ function onQueueUpdate(e) {
 function onMatchFound(e) {
   // BE→FE MatchFoundMsg → { matchId, opponent: { odId, username, rating, skin, avatarUrl } }
   // C5 stashes raw data + stops searchTimer. C6 commits pvp/SET_PVP_MATCH +
-  // transitions phase к 'found'. C8 will initialise countdown timer +
-  // navigate to /v2/fight on countdown=0.
+  // transitions phase к 'found'. C8 initialises countdown timer + navigate
+  // to /v2/fight on countdown=0.
   if (!e.detail) return;
+
+  // Sub-epic 5 C12 — race Q8.1 guard (Phase 0 Q8.1).
+  // BE periodic interval (3s) finds match between snapshot and createMatch:
+  // user clicks Cancel during that window → MatchmakingCancelledMsg AND
+  // MatchFoundMsg both arrive at FE. Without guard: FE processes match-found
+  // → user thrown into fight despite cancel. With guard: clean abort, no
+  // state changes, navigate /v2. BE-side orphan match auto-times-out via
+  // 4b MATCH_TIMEOUT_MS backstop (10 min wall-clock).
+  if (localCancelPending) {
+    console.warn('[Matchmaking] MatchFoundMsg received after local cancel — race Q8.1 mitigated');
+    router.replace('/v2');
+    return;
+  }
+
   mmState.matchData = {
     matchId: e.detail.matchId,
     opponent: e.detail.opponent,
