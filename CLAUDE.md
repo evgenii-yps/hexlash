@@ -5236,7 +5236,186 @@ Watch maintained explicitly through all 12 commits. C6 pvp/SET_PVP_MATCH commit 
 
 **Hot-fix metric:** **0 — 29-streak achieved** ✅ (5E → 5U + 6A + 6B-1 + 6B-2 + 6B-3a-backend + 6B-3 + 6B-3b + 6B-4 + Sub-epic 2 + Sub-epic 3 + Sub-epic 4a + Sub-epic 4b + Sub-epic 5 all clean).
 
-**Next sub-epic:** Sub-epic 6 — Real spectate (M-L size). Replaces 5N HUD-only mock spectate с real BE WebSocket integration (live fight observation, real player rosters). Branch reconciliation decision required at start (continue stack vs harness fresh-slug per Lesson #43 routine).
+---
+
+### Sub-Epic 6 — Real Spectate ✅ CLOSED
+
+Закрыт 2026-05-04. Десятая coverage closure (Path B-min + D combined — BE minimal extension + friends-only auth + direct URL access). **NEW CLOSURE SHAPE — Code-complete + deferred-deploy** (5th distinct closure shape в Эпике 6: standard linear / deprecation-via-redirect / code-complete + deferred-verify / scope-deferral-к-downstream / **code-complete + deferred-deploy NEW**). 13 functional commits + 1 cherry-pick PR (production hotfix only) + 3 closure commits.
+
+**Commit range:** `ffc8166` (C1) → `c488192` (C12) — functional. Branch: continue stack `claude/investigate-matchmaking-2JlwO-WfdV0` (Recovery #86 adaptation-tier per Lesson #43 6th occurrence — same SHA `b56bdfc` as Sub-epic 5 closure CL2, harness fresh-slug carry-over).
+
+**Final report:** `docs/visual-migration/EPIC6_SUBEPIC_6_FINAL_REPORT.md` (CL2).
+**Handoff:** `docs/visual-migration/HANDOFF_EPIC6_SUBEPIC_7_CHAT_HANDOFF.md` (CL3).
+**Phase 0 report:** committed early Phase 1 (combined с C0 docs commit).
+
+**TL;DR — Path B-min + D combo outcome (3 clusters):**
+1. ✅ **Cluster A — BE Foundation (7 commits):** match.spectators Set field + sendToSpectators helper (callback injection via setSocketLookup setter — Option β mirror matchmaking.setSendToUser precedent) + emit chain spectator broadcast (11 sites, 7 events) + SpectateJoin/Leave handlers + auth (friends-only) + cleanup discipline + getStateSnapshot extension с player meta для late-join
+2. ✅ **Cluster B — FE Wiring (4 commits):** webSocketState routing для SpectatorListMsg + SpectateView lifecycle (subscribe/unsubscribe at mount/unmount) + HudSpectate mock simulation gut + real BE state binding (composable extracted)
+3. ✅ **Cluster C — Lifecycle/Race/Cleanup (3 commits):** late-join state hydration via fight_state_resume reuse + race guards (Q8.1-Q8.4) + cleanup discipline + leave handlers (auto-scroll restored)
+
+**Production hotfix (out-of-scope catch):**
+- ✅ **C4.5 (`31028ef`)** — pvp_surrender routing fix в `handler.js handleMessage` switch. Caught during C4 audit (touched same switch для SpectateJoin/Leave handlers — surfaced missing case via Lesson #11 reflex). Sub-epic 4b PR #355 added downstream `case 'pvp_surrender':` в pvpHandler.js + engine.surrender(odId) but missed upstream dispatch routing в handler.js. Production surrender broken since 4b deploy. Cherry-pick PR #356 (`fix/pvp-surrender-routing` from main HEAD `b34ab5e`) — single-commit production hotfix, merged `d52d2cb`. Spectate BE infrastructure (C1, C2, C3, C4, C5, C9.5) **остаётся на continue stack** для Sub-epic 8 cutover per branch strategy (~line 770).
+
+**Что видит пользователь (post Sub-epic 8 cutover):**
+- **Spectate live fight:** через Friends list "Watch" button (на friend who's currently in_fight) OR direct URL `/v2/spectate/:fightId` с auth check (must be friend of player1 OR player2)
+- **Live HUD:** real-time HP bars + round counter + fight log (round_result events) + dice indicators + coach pause display (read-only) + fight result overlay
+- **Late-join:** mid-fight join shows current state via fight_state_resume snapshot (round/HP/active effects/pause state/round log)
+- **Self-spectate guard:** ENABLED — player can't spectate own match (redirect к /v2/fight)
+- **Leave:** auto-cleanup on unmount + explicit Leave button + auto-disconnect on match end
+
+**Production state:**
+- **Backend:** Surrender routing fix LIVE (PR #356 merged 2026-05-04). Spectate BE infrastructure (C1-C5, C9.5) на continue stack — НЕ deployed к production main (waits Sub-epic 8 cutover).
+- **Frontend:** Spectate UI live на visual-v2 preview deployments (continue stack `claude/investigate-matchmaking-2JlwO-WfdV0`). Production main main UI имеет old v1 spectate (HUD-only mock per 5N).
+- **End-to-end live spectate в production:** доступен после Sub-epic 8 cutover (visual-v2 → main final merge).
+
+**Commit chain (13 functional + 1 cherry-pick + 3 closure):**
+
+| # | SHA | Description |
+|---|---|---|
+| C1 | `ffc8166` | feat(spectate): match.spectators Set field |
+| C2 | `5d3f8f1` | feat(spectate): sendToSpectators helper + setSocketLookup setter |
+| C3 | `a382546` | feat(spectate): broadcast 7 PvP events to match.spectators |
+| C4 | `fb476eb` | feat(spectate): SpectateJoin/SpectateLeave WS handlers + auth |
+| **C4.5** | `31028ef` | **fix(pvp): route pvp_surrender to pvpHandler (Sub-epic 4b post-fix)** |
+| C5 | `349e574` | feat(spectate): cleanup on match end + spectator disconnect |
+| C6 | `69603b2` | feat(spectate): webSocketState routing для SpectatorListMsg |
+| C7 | `cd852df` | feat(spectate): SpectateView.vue subscribe/unsubscribe lifecycle |
+| C8 | `7371553` | feat(spectate): gut HudSpectate.vue mock simulation |
+| C9 | `e392aec` | feat(spectate): wire HudSpectate to real BE state via WS events |
+| C9.5 | `0d90bcd` | feat(spectate): extend getStateSnapshot с player meta (Sub-epic 6 BE bundle) |
+| C10 | `e672a45` | feat(spectate): late-join state hydration via fight_state_resume reuse |
+| C11 | `996d40f` | feat(spectate): race guards (Q8.1-Q8.3) |
+| C12 | `c488192` | feat(spectate): cleanup discipline + leave handlers |
+| **C4.5 PR** | **#356** | **cherry-pick C4.5 → fix/pvp-surrender-routing → main (production hotfix)** |
+| CL1 | this | docs(6): CLAUDE.md update |
+| CL2 | next | docs(6): final report |
+| CL3 | next | docs(6): Sub-epic 7 handoff |
+
+**Cherry-pick branch SHA:**
+- C4.5 `31028ef` → `25d43fd` (re-authored на `fix/pvp-surrender-routing`)
+
+**Files (modified, 5; new, 1; new docs, 3):**
+
+Backend (modified, 2):
+- `backend/src/services/pvpCombatEngine.js` — match.spectators Set + sendToSpectators helper + setSocketLookup static setter + spectator broadcast across 11 emit sites (7 events) + cleanup on match end + getStateSnapshot player meta extension (~+150 lines net)
+- `backend/src/websocket/handler.js` — SpectateJoin/SpectateLeave handlers + auth (friends check) + setSocketLookup wire + **case 'pvp_surrender' routing fix (C4.5)** (~+90 lines net)
+
+Frontend (new, 1):
+- `src/scene/interaction/useSpectateState.js` (283 lines composable — mirror Sub-epic 5 useMatchmakingState.js pattern)
+
+Frontend (modified, 3):
+- `src/views-v2/SpectateView.vue` — subscribe/unsubscribe lifecycle (44 → 102 lines)
+- `src/components/hud/HudSpectate.vue` — mock simulation gut + real BE state binding (494 → 437 lines, mock logic removed)
+- `src/core/state/modules/webSocketState.js` — SpectatorListMsg routing (single case add)
+
+Documentation (new, 3):
+- `docs/visual-migration/EPIC6_SUBEPIC_6_PHASE_0_REPORT.md` (Phase 0 investigation, committed early)
+- `docs/visual-migration/EPIC6_SUBEPIC_6_FINAL_REPORT.md` (CL2)
+- `docs/visual-migration/HANDOFF_EPIC6_SUBEPIC_7_CHAT_HANDOFF.md` (CL3)
+
+**Backend touches summary:**
+- New WS message types: `SpectateJoin` (FE→BE), `SpectateLeave` (FE→BE), `SpectatorListMsg` (BE→FE), differentiated spectator broadcasts (existing event types fan-out)
+- New engine fields: `match.spectators: Set<userId>`
+- New engine helpers: `sendToSpectators(matchId, payload)`, `setSocketLookup(callback)` (static setter)
+- 7 events broadcast к spectators: round_result, dice_rolled, dice_available, coach_pause, coach_result, fight_end, overdrive_start, fight_state_resume (8 actually — fight_state_resume reused для late-join hydration)
+- Production hotfix bundled (C4.5): `case 'pvp_surrender':` route к pvpHandler.handlePvPMessage
+- DB schema unchanged (no migration)
+
+**Frontend additions summary:**
+- New composable `useSpectateState.js` (mirror Sub-epic 5 useMatchmakingState pattern — module-scoped reactive state + 3 clusters of helpers)
+- HudSpectate gutted: ~250 lines mock simulation (setInterval + Math.random) replaced с real BE state binding via composable
+- SpectateView lifecycle hooks (mount → SpectateJoin dispatch → event listeners → unmount → SpectateLeave + cleanup)
+- Single WS routing case add (webSocketState.js)
+- Race guards (Q8.1 join during round transition, Q8.2 match-end-during-mount, Q8.3 multi-tab same user)
+
+**Vuex / state additions:** NONE (composable extraction precedent per Sub-epic 5; module-scoped reactive — no new actions/mutations к store).
+
+**Closure shape:** **NEW — Code-complete + deferred-deploy** (5th distinct shape). Distinguished от code-complete + deferred-verify (3 prior applications: 6B-3a-backend / Sub-epic 1 / Sub-epic 4b) — those expected post-merge verify of cherry-pick PRs. Sub-epic 6 differs: spectate BE infrastructure (C1-C5, C9.5) and FE (all 4 commits) **NOT cherry-picked at all** — feature work waits Sub-epic 8 cutover per branch strategy. Only C4.5 production hotfix went separately. Pattern: continue stack feature commits accumulate без production deploy until Эпик cutover.
+
+**Lesson #11 catches: 50 cumulative pre-edit catches across 13 commits** — 3.85/commit average. **Below Sub-epic 5's 61-catch ceiling (~18% lower)** consistent с Phase 0 prediction (40-70 range). Feature mature scope (vs Sub-epic 5 new architectural area) yields slightly fewer catches.
+
+| Commit | Catches | Tier dominant |
+|---|---|---|
+| C1 | 3 | adaptation (Set vs Array, Map sentinel, init position) |
+| C2 | 4 | adaptation (callback injection vs direct import, lookup signature, error handling) |
+| C3 | 5 | adaptation (per-event differentiation analysis, payload spread vs verbatim, broadcast loop placement, getMatch vs match var, context-aware variants) |
+| C4 | 5 | **adaptation (5) + bug catch (1 — C4.5 surrender routing miss)** |
+| C4.5 | — | (hotfix commit, no audit catches counted — separate from spectate scope) |
+| C5 | 4 | adaptation (cleanup ordering, set deletion vs clear, disconnect callback chain, finished status guard) |
+| C6 | 2 | alignment (fall-through chain extension, message detail propagation) |
+| C7 | 4 | adaptation (mount lifecycle ordering, dispatch before subscribe, Vue3 onUnmounted, navigation guards) |
+| C8 | 3 | adaptation (mock removal scope boundary — 250 lines, leave shell intact, no setInterval cleanup needed since gutted entirely) |
+| C9 | 5 | adaptation (composable extraction shape, deriveSideFromOdId helper, perspective normalization, label vs internal, watcher cleanup) |
+| C9.5 | 4 | adaptation (player meta consistent с fight_start, snapshot field naming, late-join window) |
+| C10 | 5 | adaptation (fight_state_resume reuse vs separate event, hp/round/log replay ordering, snapshot freshness, scroll restore, log-clear-then-replay) |
+| C11 | 3 | adaptation (race guard placement, Q8.1 round transition lock, Q8.3 user-scoped Set semantics) |
+| C12 | 3 | adaptation (cleanup invariants, scroll-restore timing, leave handler idempotency) |
+
+**Cumulative: 50 catches.** All adaptation-tier OR alignment-tier. **0 hot-fixes (Sub-epic 6 itself), 0 reactive splits, 0 STOP-tier.** Plus 1 production bug catch (C4.5 surrender routing) — Lesson #11 reflex working retroactively against PR #355 review gap.
+
+**Recoveries log (2 catches in Sub-epic 6):**
+
+- **Recovery #86 — Phase 0 STEP 0 bootstrap branch verification (6th occurrence Lesson #43):** Same SHA `b56bdfc` as Sub-epic 5 closure CL2 — harness fresh-slug carry-over `claude/investigate-matchmaking-2JlwO-WfdV0` continued. Zero work-loss risk. Lesson #43 6-occurrence chain validated.
+
+- **Recovery #87 — CL1 boundary bootstrap branch divergence (7th occurrence Lesson #43):** Harness re-assigned `claude/fix-surrender-bug-S7LfH` for CL1 closure phase (semantic carry-over from PR #356 surrender review task), но CL1 scope = Sub-epic 6 documentation closure. Same SHA `c488192` as continue stack — zero work-loss risk. User-authorized switch back к continue stack `claude/investigate-matchmaking-2JlwO-WfdV0` per Recoveries #82/#85/#86 precedent. Branch `claude/fix-surrender-bug-S7LfH` abandoned (no commits made). Lesson #43 7-occurrence chain — pattern fully stable. No candidate promotion (already PROMOTED in 4b).
+
+**Methodology applied:**
+
+- **Mode A strict per-commit discipline** — 13 functional commits + STOP-and-confirm gate after C1 + audit-only mode C2 onward. Build pass per commit. Lesson #11 reflex pre-edit + post-edit on every edit.
+- **Lesson #11 reflex** — 50 cumulative catches pre-edit + 1 retroactive production bug catch (C4.5). All adaptation-tier per Lesson #35.
+- **Lesson #18 STOP** — applied during C4.5 cherry-pick PR creation phase (sanity re-verify of production gap surfaced wider scope: entire Sub-epic 4b PR #355 absent от main pre-merge → STRICT STOP → user merged PR #355 manually → state restored → resume cherry-pick). Pattern: don't blind-execute ТЗ when underlying assumption invalidated mid-flow.
+- **Lesson #32 convention discovery** — multiple applications: callback injection vs direct import (setSocketLookup setter mirror matchmaking.setSendToUser), composable extraction pattern (mirror useMatchmakingState), perspective normalization (deriveSideFromOdId helper deterministic via player1Hp/player2Hp BE-truth fields).
+- **Lesson #33 deploy environment awareness** — **5th application** (C4.5 cherry-pick → main → Railway). Prior 4: 6B-3a-backend / Sub-epic 1 / Sub-epic 4b PR #355 / **PR #356 (Sub-epic 6)**.
+- **Lesson #34 HUD overlay convention** — applied к HudSpectate template (existing 5N pattern preserved).
+- **Lesson #35 reflex catch tiering** — 50 catches all adaptation-tier. 2 recoveries (#86 Phase 0 + #87 CL1 boundary) both adaptation-tier. 0 bug-bundle-tier surface scope expansion. 0 STOP-tier на main flow (1 STOP-tier on cherry-pick branch — pre-PR #355 sanity catch).
+- **Lesson #43 STEP 0 bootstrap branch verification** — applied at Phase 0 + each commit + CL1 boundary. **7-occurrence chain validated** (5U / Sub-epic 2 / 4a / 4b / Sub-epic 5 / Sub-epic 6 Phase 0 / Sub-epic 6 CL1 boundary). No promotion since already PROMOTED in 4b.
+
+**6th Phase 0 subsection — PROMOTED к mandatory:**
+
+**Semantic invariant + flow direction verification.** 1st occurrence 4b C10. **Occurrence #2 detected в Sub-epic 6** through formal application across multiple commits:
+- C3 — perspective normalization для 4 differentiated events (rollerId/playerOdId disambiguation)
+- C9 — state field rename `player1Hp/player2Hp` (BE-truth deterministic) + `deriveSideFromOdId` helper
+- C9.5 — getStateSnapshot extension consistent с fight_start payload shape
+- C10 — winner derivation HP-based (no `isPlayer1` self-anchored derivation)
+- C11 — race guards no self-anchored derivation patterns
+
+Promotion: 6th mandatory Phase 0 subsection (alongside 5 prior — API contract / Negative-space / CSS taxonomy / UI infrastructure / Vocabulary alignment). Future Phase 0 reports (Sub-epic 7+) include 6 mandatory subsections.
+
+**Lesson candidate #44 — NEW (PROMOTED):**
+
+**Re-anchor scope after strategy revision.** Surfaced during Sub-epic 6 closure phase (mid-execution handoff revision episode). Initial Phase 1 ТЗ assumed 7-commit cherry-pick PR (C1-C5 + C4.5 + C9.5 — mirror Sub-epic 4b PR #355 pattern). After user pushback on branch strategy ("зачем нам мержить все в main у нас же еще несколько саб эпиков"), strategy revised to minimal cherry-pick (C4.5 only — production bug fix only). However, design-Claude carried old "7-commit cherry-pick" mental model в later audit reminder blocks (C5/C9.5/C12 audits referenced bundled scope inconsistent с revised plan). Caught by fresh design-Claude session at handoff review.
+
+**Lesson:** Design-Claude must explicitly re-anchor cherry-pick scope (and other strategic decisions) после каждой strategy revision. Old reminder text должен быть updated, не carry-over implicitly через subsequent reminder blocks. Mid-execution handoff revisions need re-propagation through all downstream artefacts (audit reminders, ТЗ templates, handoff packages).
+
+**Promotion:** Lesson #44 PROMOTED first-occurrence with explicit catch evidence (handoff review caught inconsistency before bad ТЗ generation). Tally: 36 → 37 lessons promoted.
+
+**Carry-overs (4 NEW from Sub-epic 6, 0 closed):**
+
+- ⚪ **#34 NEW** — Coach pause read-only overlay UI (HudSpectate template no element). Spectate UI gap — current implementation hides pause display. Polish round candidate (Sub-epic 7).
+- ⚪ **#35 NEW** — activeEffects display badges (HudSpectate template no element). Spectate UI gap — active effects не visualized. Polish round candidate (Sub-epic 7).
+- ⚪ **#36 NEW** — "joined late" visual indicator (distinct log styling для replayed events vs live events). UX polish — late-joiners can distinguish replayed from live. Polish round candidate (Sub-epic 7).
+- ⚪ **#37 NEW** — `--draw` CSS class для resultClass (may not exist — base fallback acceptable). Cosmetic gap surfaced C10. Polish round candidate (Sub-epic 7).
+
+**Carry-over #31 (ErrorMsg shape mismatch BE→FE) STILL DEFERRED** — Sub-epic 6 expected к bundle but no surface during Path B-min execution (no ErrorMsg consumers touched). Bundle candidate Sub-epic 7 OR Sub-epic 8 cutover hardening.
+
+**Cumulative metrics:**
+- Streak: 29 → **30** ✅
+- Recoveries: 85+ → **87+** (+2: #86 Phase 0 + #87 CL1 boundary, both Lesson #43 same-SHA adaptation)
+- Эпик 6 progress: 12/14 → **13/14 (93%)** — past 13/14 milestone reached
+- Sub-epics closed в Эпик 6: 12 → **13**
+- Lessons promoted: 36 → **37** (+1: #44 re-anchor scope after strategy revision)
+- Lesson candidates active: 7 (#36/#37/#38/#39/#40/#41/#42) — UNCHANGED
+- 6th Phase 0 subsection: occurrence #1 (4b C10) + occurrence #2 (Sub-epic 6 multi-commit application) → **PROMOTED к mandatory**
+
+**Hot-fix metric (Sub-epic 6 main flow):** **0 — 30-streak achieved** ✅ (5E → 5U + 6A + 6B-1 + 6B-2 + 6B-3a-backend + 6B-3 + 6B-3b + 6B-4 + Sub-epic 2 + Sub-epic 3 + Sub-epic 4a + Sub-epic 4b + Sub-epic 5 + Sub-epic 6 all clean).
+
+**Production hotfix (PR #356):** Cherry-pick scope revision episode handled correctly (initial 7-commit assumption → revised к C4.5 only after user pushback on branch strategy, restored к valid scope after PR #355 manual merge during cherry-pick flow). Lesson #18 STOP applied + recovered cleanly. No streak break (catch + recover, not hot-fix).
+
+**Strategic notes:**
+- **Branch strategy reinforced:** Continue stack frontend visual migration работа merges to main only at Эпик cutover (Sub-epic 8). Backend production bug fixes (C4.5 type) cherry-pick separately к main с minimal scope (single commit per fix). Per CLAUDE.md ~line 770 + 5R Recovery #63 precedent.
+- **Sub-epic 4b PR #355 retroactive merge:** PR opened earlier as part of Sub-epic 4b closure (code-complete + deferred-verify shape). Discovered NOT-merged during Sub-epic 6 cherry-pick flow (post-PR creation grep on main showed entire 4b absent). User merged manually mid-Sub-epic-6 closure. CLAUDE.md Sub-epic 4b section pre-existing claim ("PR #355 merged" implicit through closure shape) was assumption — actual merge happened post-Sub-epic 5 closure during Sub-epic 6 closure phase. Documentation-truth restored.
+
+**Next sub-epic:** Sub-epic 7 — Visual polish round + Auth+Wallet redesign (M-L size). Batch closes carry-overs #18-#28 (Sub-epic 4a polish) + #29-#33 (Sub-epic 5 polish) + **#34-#37 (Sub-epic 6 polish)** + v2 NoConnection restyle + dice icons + modifiers bar + Auth+Wallet redesign per 6A user request + Vuetify→v2 design system port (#14-#15). Branch reconciliation decision required at start (continue stack vs harness fresh-slug per Lesson #43 routine — pattern stable).
 
 ---
 
@@ -5298,6 +5477,7 @@ Roadmap document: `docs/visual-migration/EPIC6_ROADMAP.md` (TBD — может �
 - **Sub-epic 4a (was 6B-7 partial)** — PvP в v2 + Real Backend WS — Happy Path End-to-End (7th coverage gap, 7th application standard linear; 11 functional commits + 1 housekeeping + audit-skip verify gate; Path C split decision (4a happy path / 4b edge cases); 0 recoveries, 0 reactive splits, 1 split decision (Commit 8 → 8a/8b); **10 Lesson #11 catches pre-edit** — methodology pattern reinforced; +13 NEW carry-overs #16-#28 polish/decoration; -1 closed (#1 ChallengeNotification на v2)) ✅
 - **Sub-epic 4b (was 6B-7 partial)** — PvP edge cases + safety + BE deploy chain (8th coverage closure, 8th application standard linear; Path D combined slim — surrender + reconnect-replay + match timeout + connection-lost UI; 10 functional commits + 1 STOP-skipped C10 + 1 cherry-pick PR #355; 1 recovery #84 adaptation-tier; **38 cumulative Lesson #11 catches pre-edit** — 4a 10-catch ceiling exceeded 3.8x; Lesson #43 PROMOTED; 6th Phase 0 subsection candidate surfaced; -1 closed via reclassification (#16 carry-over verified semantically correct, NOT source-fixed)) ✅
 - **Sub-epic 5 (was 6B-8)** — Real matchmaking `/v2/matchmaking` (9th coverage closure, 9th application standard linear; Path A pure FE wiring leveraging BE 100% complete per Phase 0; 12 functional commits + 3 closure; 1 recovery #85 adaptation-tier Lesson #43 5th occurrence; **61 cumulative Lesson #11 catches pre-edit** — 4b 38-catch ceiling exceeded 60% (consistent с Phase 0 prediction для L size + new architectural area); 6th Phase 0 subsection candidate occurrence #2 NOT detected through all 12 commits — tracking continues; -1 closed (#17 3-2-1 countdown UI parity gap closed C8) +5 NEW carry-overs #29-#33) ✅
+- **Sub-epic 6 (was 6B-9)** — Real spectate `/v2/spectate/:fightId` (10th coverage closure, **NEW closure shape — code-complete + deferred-deploy** [5th distinct]; Path B-min + D combo — BE minimal extension + friends-only auth + direct URL access; 13 functional commits + 1 cherry-pick PR (production hotfix C4.5 only) + 3 closure; 2 recoveries #86/#87 adaptation-tier Lesson #43 6th/7th occurrences; **50 cumulative Lesson #11 catches pre-edit** — within Phase 0 prediction (40-70 range) + 1 retroactive production bug catch C4.5; **6th Phase 0 subsection PROMOTED** к mandatory (semantic invariant + flow direction verification — occurrence #2 multi-commit application); **Lesson #44 PROMOTED** (re-anchor scope after strategy revision — handoff review catch); +4 NEW carry-overs #34-#37 (spectate UI polish); production hotfix PR #356 surrender routing closed Sub-epic 4b post-fix gap) ✅
 
 > **📝 Naming convention update (after 6B-3b):** Remaining sub-epics renumbered к simple ordinals (Sub-epic 1, 2, ..., 8) для clarity. Historical sub-epics (6A / 6B-1 / 6B-2 / 6B-3a-backend / 6B-3 / 6B-3b) retain original names в documentation. New mapping:
 >
@@ -5307,13 +5487,13 @@ Roadmap document: `docs/visual-migration/EPIC6_ROADMAP.md` (TBD — может �
 > - **Sub-epic 4a** — PvP в v2 happy path (was 6B-7 partial) — L ✅ **CLOSED**
 > - **Sub-epic 4b** — PvP edge cases + safety + BE deploy chain (was 6B-7 partial) — M-L ✅ **CLOSED**
 > - **Sub-epic 5** — Реальный matchmaking (was 6B-8) — L ✅ **CLOSED**
-> - **Sub-epic 6** — Реальный spectate (was 6B-9) — M-L
-> - **Sub-epic 7** — Auth + Wallet redesign (was 6B-10) — M-L
+> - **Sub-epic 6** — Реальный spectate (was 6B-9) — M-L ✅ **CLOSED**
+> - **Sub-epic 7** — Visual polish round + Auth + Wallet redesign (was 6B-10) — M-L
 > - **Sub-epic 8** — Финальный cutover (was 6C) — M
 >
-> Total: 14 sub-epics в Эпике 6 (Sub-epic 4 split into 4a + 4b — counted as 1 slot per Path C precedent; effective tracking 15 narratives across 14 budgeted slots). **12 closed, 3 remaining (6/7/8)**.
+> Total: 14 sub-epics в Эпике 6 (Sub-epic 4 split into 4a + 4b — counted as 1 slot per Path C precedent; effective tracking 15 narratives across 14 budgeted slots). **13 closed, 2 remaining (7/8)**.
 
-**Carry-overs into Эпик 6 (31 items — Sub-epic 5 closed #17 + added #29-#33; -1 closed (#17 3-2-1 countdown gap C8) +5 NEW (#29 filter chips BE / #30 ELO duplication / #31 ErrorMsg shape / #32 .mm-main filter gap / #33 captain vs opponent field asymmetry); cumulative: -1 closed (#1 ChallengeNotification на v2 in Sub-epic 4a Commit 5a) -1 closed (#17 Sub-epic 5 C8) +13 from Sub-epic 4a polish surface +2 from Sub-epic 3 surface +5 from Sub-epic 5 surface):**
+**Carry-overs into Эпик 6 (35 items — Sub-epic 6 added #34-#37; cumulative: -1 closed #1 (ChallengeNotification Sub-epic 4a C5a) -1 closed #17 (Sub-epic 5 C8) +13 from Sub-epic 4a polish surface +2 from Sub-epic 3 surface +5 from Sub-epic 5 surface +4 from Sub-epic 6 surface):**
 1. Achievement badge для retirement (5Q drop, κ Path B)
 2. HudProfile card-creep monitor (6/7 threshold; **Sub-epic 1 NOT triggered** ✓; **Sub-epic 2 NOT triggered** ✓; **Sub-epic 3 NOT triggered** ✓ — Path A separate views, no HudProfile cards added)
 3. Lesson #36 validation track (await 2nd occurrence)
@@ -5354,6 +5534,13 @@ Roadmap document: `docs/visual-migration/EPIC6_ROADMAP.md` (TBD — может �
 32. **NEW (Sub-epic 5 C7 audit surface)** — `.mm-main left:270px` filters-hidden layout gap. C3 hid filter sidebar via `v-if="false"`; CSS `.mm-main` rule still reserves 270px space (was filter sidebar width). Cosmetic spacing offset on left side of mm-main panel. Polish round candidate (1-line CSS adjustment + comment marker для filter revival path).
 33. **NEW (Sub-epic 5 C8 surface)** — Captain vs opponent payload field name asymmetry. `master.userData.captain.{name, elo}` vs MatchFoundMsg `opponent.{username, rating}` — same semantic fields different names. C8 normalized FE-side via 6 computed wrappers (HudMatchmaking VS display). BE-side consolidation (CAPTAIN_PUBLIC_SELECT field naming alignment с MatchFoundMsg.opponent) candidate. Polish/Sub-epic 7.
 
-**Pre-cutover acceptance gate (forward note для Sub-epic 8):** Full /v2 visual + functional sweep across все routes (profile / wallet / account / ratings / clan / user / fight / training / matchmaking / etc.) before final cutover. Comprehensive acceptance checklist covering все sub-epics 6A-6B-3b + Sub-epic 1-5 deliverables. User-driven manual ratification gate. Documents в Sub-epic 4/5 handoff.
+**Sub-epic 6 carry-overs (NEW #34-#37 — all spectate UI polish, non-functional):**
 
-**Следующий sub-epic:** Sub-epic 6 — Real spectate (M-L size). Replaces 5N HUD-only mock spectate с real BE WebSocket integration (live fight observation via existing pvpCombatEngine event chain — round_result, dice_rolled, coach_pause, fight_end). Phase 0 should focus на: spectate-mode WS subscription mechanism (per-match ID watchers), live HUD reuse vs mock-port refactor decision, FightView mode-gate logic (currently route-based per Sub-epic 4a — `route.name === 'V2Spectate'`), Friends entry point wiring closure (carry-over deferred 6B-3b). Branch reconciliation decision required at start (continue stack vs harness fresh-slug per Lesson #43 5-occurrence chain — pattern stable).
+34. **NEW (Sub-epic 6 surface)** — Coach pause read-only overlay UI absent в HudSpectate template. Spectate users currently не видят когда player активирует coach pause (BE event broadcasted, FE receives, но template не рендерит для spectate mode). Decoration-only gap. Polish round candidate (Sub-epic 7).
+35. **NEW (Sub-epic 6 surface)** — activeEffects display badges absent в HudSpectate template. Spectate users не видят active effects (adrenaline/shield/blind etc.) — BE provides данные, FE composable parses, но template не renders. Decoration-only gap. Polish round candidate (Sub-epic 7).
+36. **NEW (Sub-epic 6 C10 surface)** — "joined late" visual indicator absent. Late-joiners receive replayed events via fight_state_resume snapshot, но replay events styled identically к live events. UX polish — distinct log styling (italic / dim / "[REPLAY]" prefix) would help users orient. Polish round candidate (Sub-epic 7).
+37. **NEW (Sub-epic 6 C10 surface)** — `--draw` CSS class для resultClass may not exist в hexlash-v24.css (HudSpectate result overlay sets `class="result-${resultClass}"` где resultClass может быть `'win'/'loss'/'draw'`). C10 verified `--win` and `--loss` exist; `--draw` not surfaced (acceptable fallback к base styling). Polish round candidate — verify + add if missing (Sub-epic 7).
+
+**Pre-cutover acceptance gate (forward note для Sub-epic 8):** Full /v2 visual + functional sweep across все routes (profile / wallet / account / ratings / clan / user / fight / training / matchmaking / **spectate** / etc.) before final cutover. Comprehensive acceptance checklist covering все sub-epics 6A-6B-3b + Sub-epic 1-6 deliverables. User-driven manual ratification gate. Documents в Sub-epic 4/5/6 handoffs.
+
+**Следующий sub-epic:** Sub-epic 7 — Visual polish round + Auth + Wallet redesign (M-L size). Batch closes carry-overs #18-#28 (Sub-epic 4a polish) + #29-#33 (Sub-epic 5 polish) + **#34-#37 (Sub-epic 6 polish)** + v2 NoConnection restyle + dice icons + modifiers bar + Auth + Wallet redesign per 6A user request + Vuetify→v2 design system port (#14-#15). Phase 0 should focus на: carry-over batch organization (which can bundle, which standalone), Auth+Wallet scope clarification (full redesign vs Vuetify port only), 5N dice icon assets sourcing strategy. Branch reconciliation decision required at start (continue stack vs harness fresh-slug per Lesson #43 7-occurrence chain — pattern stable).
