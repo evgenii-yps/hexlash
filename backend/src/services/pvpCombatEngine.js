@@ -896,6 +896,13 @@ class PvPCombatEngine {
       maxRounds: this.maxRounds,
       player1: {
         odId: this.player1.odId,
+        // Sub-epic 6 C9.5 — player meta для spectator UI (username/skin/avatarUrl).
+        // Mirrors fight_start payload shape (line 138). Player FE reconnect path
+        // ignores these fields gracefully (existing onFightStateResume handler
+        // в FightView only reads odId/hp/activeEffects/diceUsedRound/coachTriggered).
+        username: this.player1.username,
+        skin: this.player1.skin || null,
+        avatarUrl: this.player1.avatarUrl || null,
         hp: this.player1.hp,
         activeEffects: this.player1.activeEffects || [],
         diceUsedRound: this.player1.diceUsedRound,
@@ -903,6 +910,10 @@ class PvPCombatEngine {
       },
       player2: {
         odId: this.player2.odId,
+        // Sub-epic 6 C9.5 — same as player1 above.
+        username: this.player2.username,
+        skin: this.player2.skin || null,
+        avatarUrl: this.player2.avatarUrl || null,
         hp: this.player2.hp,
         activeEffects: this.player2.activeEffects || [],
         diceUsedRound: this.player2.diceUsedRound,

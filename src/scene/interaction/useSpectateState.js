@@ -213,10 +213,12 @@ export function onSpectateFightStateResume(detail) {
   // (race window — fight_end could arrive before snapshot)
   if (spectateState.fightOver) return;
 
-  // Hydrate identities (only odId available на snapshot — username comes via
-  // fight_end OR C9.5 BE extension)
+  // Hydrate identities — odId stable identity + username/skin populated по C9.5
+  // BE extension (getStateSnapshot returns username/skin/avatarUrl on player1/player2).
   if (detail.player1?.odId) spectateState.player1OdId = detail.player1.odId;
   if (detail.player2?.odId) spectateState.player2OdId = detail.player2.odId;
+  if (detail.player1?.username) spectateState.player1Name = detail.player1.username;
+  if (detail.player2?.username) spectateState.player2Name = detail.player2.username;
 
   // Hydrate fight progress
   if (typeof detail.currentRound === 'number') spectateState.currentRound = detail.currentRound;
