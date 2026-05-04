@@ -464,3 +464,106 @@
   background: rgba(255, 6, 111, 0.12);
   box-shadow: 0 0 16px rgba(255, 6, 111, 0.3);
 }
+
+/* ── Sub-epic 5 C8 — Found phase (VS display + 3s countdown) ─────────────── */
+/* Carry-over #17 closure (3-2-1 countdown UI parity gap). Mirror .mm-search
+   visual card structure (flex column big card inside .mm-main slot).
+   Naming: .mm-found-* full prefix avoiding clash с .mmf-* filter sidebar
+   classes (Lesson #11 catch — pre-edit grep confirmed 8+ filter classes
+   under .mmf-* prefix). */
+.app-v2 .mm-found {
+  flex: 1;
+  background: var(--bg-panel);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 30px 24px;
+  gap: 22px;
+  pointer-events: auto;
+}
+.app-v2 .mm-found-kicker {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 4px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+.app-v2 .mm-found-vs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+}
+.app-v2 .mm-found-fighter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 130px;
+}
+.app-v2 .mm-found-avatar {
+  width: 88px;
+  height: 88px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.app-v2 .mm-found-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.app-v2 .mm-found-name {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: #fff;
+  text-transform: uppercase;
+}
+.app-v2 .mm-found-elo {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #FFD262;
+}
+.app-v2 .mm-found-divider {
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: 4px;
+  color: var(--text-dim);
+}
+.app-v2 .mm-found-countdown {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+.app-v2 .mm-found-countdown-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+.app-v2 .mm-found-countdown-value {
+  font-family: var(--font-display);
+  font-size: 56px;
+  letter-spacing: 4px;
+  color: var(--hex-primary);
+  animation: mmCountdownPulse 1s ease-in-out infinite;
+}
+@keyframes mmCountdownPulse {
+  0%, 100% { transform: scale(1);    opacity: 1; }
+  50%      { transform: scale(1.15); opacity: 0.85; }
+}

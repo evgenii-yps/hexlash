@@ -4,7 +4,7 @@
      C5 ✓ 4 window event listeners (match-found / queue-update / cancelled / timeout)
      C6 ✓ match-found handler → pvp/SET_PVP_MATCH → phase='found'
      C7 ✓ timeout handler + retry/back wiring + DRY startMatchmakingSearch helper
-     C8 — 3-second countdown post-match-found
+     C8 ✓ 3-second countdown post-match-found + VS display + navigate /v2/fight (carry-over #17)
      C9 — search timer + queue size display
      C10 — online players REST poll
      C11 — double-queue FE redirect guard
@@ -47,6 +47,9 @@ const store = useStore();
 let sceneApi = null;
 let onResize = null;
 let searchTimer = null;
+// Sub-epic 5 C8 — countdown timer (3-2-1) post-match-found, navigates к
+// /v2/fight on countdown=0. Module-scope mirror searchTimer pattern.
+let countdownTimer = null;
 // Sub-epic 5 C4 — track whether MatchmakingStartMsg was successfully
 // dispatched, so onBeforeUnmount only sends Cancel if we're still in queue.
 // (Pre-check failure path returns before dispatch — no Cancel needed.)
@@ -71,9 +74,28 @@ function stopSearchTimer() {
   }
 }
 
+// Sub-epic 5 C8 — countdown timer cleanup (countdown=0 navigate path uses
+// it inline; cancel/back/unmount paths use this helper для idempotent stop).
+function stopCountdownTimer() {
+  if (countdownTimer) {
+    clearInterval(countdownTimer);
+    countdownTimer = null;
+  }
+}
+
+// Sub-epic 5 C8 — cancel-during-countdown defensive cleanup. Resets pvp Vuex
+// state committed by C6 onMatchFound. NOT called on countdown=0 path (FightView
+// reads pvp/getCurrentMatchId !== null to enter PvP mode per Phase 0 Q9.3 —
+// resetting pre-navigate would break matchActive computed).
+function resetPvpState() {
+  store.commit('pvp/RESET_PVP_FIGHT');
+}
+
 function onBack() {
   dispatchMatchmakingCancel();
   stopSearchTimer();
+  stopCountdownTimer();
+  resetPvpState();
   router.push('/v2');
 }
 
@@ -81,6 +103,8 @@ function onCancel() {
   // C12 will add localCancelPending flag for race Q8.1 handling.
   dispatchMatchmakingCancel();
   stopSearchTimer();
+  stopCountdownTimer();
+  resetPvpState();
   router.push('/v2');
 }
 
@@ -174,6 +198,21 @@ function onMatchFound(e) {
     isPlayer1: false,
   });
   enterFoundPhase();
+
+  // Sub-epic 5 C8 — 3-second countdown (carry-over #17 closure). 3 → 0 ticks
+  // 1Hz; on 0 navigate to /v2/fight where matchActive (pvp/getCurrentMatchId
+  // !== null per Phase 0 Q9.3) gates PvP mode. Phase 0 S5 chose 3s over v1's
+  // 5s for tighter UX + visual parity с BE COUNTDOWN_MS=3000 (pvpCombatEngine
+  // start delay between fight_start emit and round 1).
+  mmState.countdown = 3;
+  countdownTimer = setInterval(() => {
+    mmState.countdown -= 1;
+    if (mmState.countdown <= 0) {
+      stopCountdownTimer();
+      router.push('/v2/fight');
+    }
+  }, 1000);
+
   // queueDispatched stays true до C12 manages flag для race Q8.1. Cancel
   // still safely no-op'able during pre-pvp_ready window (BE removed user
   // from queue at match creation per matchmaking.js:115-116; Cancel msg
@@ -234,10 +273,14 @@ onBeforeUnmount(() => {
     window.removeEventListener('resize', onResize);
     onResize = null;
   }
-  // Sub-epic 5 C4 — defensive cleanup: if user navigates away без onCancel
-  // (e.g. Esc → onBack already cleaned), these are no-ops.
+  // Sub-epic 5 C4+C8 — defensive cleanup: if user navigates away без onCancel
+  // (e.g. Esc → onBack already cleaned), these are no-ops. Countdown timer
+  // must clear here too (countdown=0 path navigates → unmount → idempotent
+  // clear). NO pvp/RESET_PVP_FIGHT here — countdown=0 navigates к /v2/fight
+  // и FightView needs matchId persisted (Phase 0 Q9.3).
   dispatchMatchmakingCancel();
   stopSearchTimer();
+  stopCountdownTimer();
   // Reset shared reactive state so a re-entry starts clean.
   resetMmState();
   // Switch back to pit BEFORE disposing, so renderLoop doesn't touch a

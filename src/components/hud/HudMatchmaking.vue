@@ -76,9 +76,30 @@
         <button class="mms-cancel" @click="onCancel">Cancel Search</button>
       </div>
 
-      <!-- Phase: found — Sub-epic 5 C8 fills VS display + countdown -->
+      <!-- Phase: found — VS display + 3-second countdown (carry-over #17 closure) -->
       <div v-if="mmState.phase === 'found'" class="mm-found">
-        <!-- C8 — VS block (own captain + opponent + countdown) -->
+        <div class="mm-found-kicker">Opponent matched</div>
+        <div class="mm-found-vs">
+          <div class="mm-found-fighter">
+            <div class="mm-found-avatar">
+              <img :src="captainSkinUrl" :alt="captainName"/>
+            </div>
+            <div class="mm-found-name">{{ captainName }}</div>
+            <div class="mm-found-elo">{{ formatElo(captainElo) }}</div>
+          </div>
+          <div class="mm-found-divider">VS</div>
+          <div class="mm-found-fighter">
+            <div class="mm-found-avatar">
+              <img :src="opponentSkinUrl" :alt="opponentName"/>
+            </div>
+            <div class="mm-found-name">{{ opponentName }}</div>
+            <div class="mm-found-elo">{{ formatElo(opponentElo) }}</div>
+          </div>
+        </div>
+        <div class="mm-found-countdown">
+          <span class="mm-found-countdown-label">Fight starts in</span>
+          <span class="mm-found-countdown-value">{{ mmState.countdown }}</span>
+        </div>
       </div>
 
       <!-- Phase: timeout — "No players found" + retry/back actions -->
@@ -99,7 +120,11 @@
 </template>
 
 <script setup>
+import { computed } from 'vue';
+import { useStore } from 'vuex';
 import { mmState, myElo } from '@/scene/interaction/useMatchmakingState.js';
+
+const store = useStore();
 
 const emit = defineEmits(['back', 'cancel', 'retry']);
 
@@ -123,7 +148,27 @@ const beltOptions = [
   { id: 'Green',  label: 'Green' },
 ];
 
-function formatElo(n) { return n.toLocaleString(); }
+function formatElo(n) { return Number(n || 0).toLocaleString(); }
+
+// Sub-epic 5 C8 — VS display computed bindings. master.userData.captain is
+// a sub-object {id, name, skin, belt, qualifiedWins, isHexmaster, elo} per
+// CLAUDE.md "Captain in Public UI" + CAPTAIN_PUBLIC_SELECT.
+// MatchFoundMsg.opponent shape: {odId, username, rating, skin, avatarUrl}.
+// Field name asymmetry (captain.name vs opponent.username, captain.elo vs
+// opponent.rating) — normalised here for template simplicity.
+const userData = computed(() => store.getters['master/getMaster']?.userData);
+const captainName = computed(() => userData.value?.captain?.name || userData.value?.name || 'You');
+const captainElo  = computed(() => userData.value?.captain?.elo || 1000);
+const captainSkinUrl = computed(() => {
+  const skin = userData.value?.captain?.skin || userData.value?.skin || 'skin_m_1.png';
+  return `/images/skins/${skin}`;
+});
+const opponentName = computed(() => mmState.matchData?.opponent?.username || 'Opponent');
+const opponentElo  = computed(() => mmState.matchData?.opponent?.rating || 1000);
+const opponentSkinUrl = computed(() => {
+  const skin = mmState.matchData?.opponent?.skin || 'skin_m_1.png';
+  return `/images/skins/${skin}`;
+});
 
 function onBack()   { emit('back'); }
 function onCancel() { emit('cancel'); }
