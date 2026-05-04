@@ -2,7 +2,7 @@
      C4-C12:
      C4 ✓ MatchmakingStartMsg dispatch + searchTime timer + captain pre-check
      C5 ✓ 4 window event listeners (match-found / queue-update / cancelled / timeout)
-     C6 — match-found handler → pvp/SET_PVP_MATCH → phase='found'
+     C6 ✓ match-found handler → pvp/SET_PVP_MATCH → phase='found'
      C7 — timeout handler + retry/back wiring
      C8 — 3-second countdown post-match-found
      C9 — search timer + queue size display
@@ -33,6 +33,7 @@ import { buildMatchmakingScene } from '@/scene/scenes/MatchmakingScene.js';
 import {
   mmState,
   resetMmState,
+  enterFoundPhase,
   enterTimeoutPhase,
 } from '@/scene/interaction/useMatchmakingState.js';
 import { InfoMessageModel } from '@/core/models/internal/infoMessageModel.js';
@@ -95,18 +96,34 @@ function onQueueUpdate(e) {
 
 function onMatchFound(e) {
   // BE→FE MatchFoundMsg → { matchId, opponent: { odId, username, rating, skin, avatarUrl } }
-  // C5 stashes raw data + stops searchTimer. C6 will commit pvp/SET_PVP_MATCH +
-  // call enterFoundPhase + initialise countdown timer (C8 wiring).
+  // C5 stashes raw data + stops searchTimer. C6 commits pvp/SET_PVP_MATCH +
+  // transitions phase к 'found'. C8 will initialise countdown timer +
+  // navigate to /v2/fight on countdown=0.
   if (!e.detail) return;
   mmState.matchData = {
     matchId: e.detail.matchId,
     opponent: e.detail.opponent,
   };
   stopSearchTimer();
-  // queueDispatched stays true до C6 commits pvp state — Cancel still
-  // safely no-op'able if user navigates back during pre-pvp_ready window.
-  // (BE removed user from queue at match creation per matchmaking.js:115-116;
-  // Cancel msg is harmless redundancy.)
+  // Sub-epic 5 C6 — pvp/SET_PVP_MATCH commit. isPlayer1: false placeholder
+  // per Phase 0 Subsection 6 + carry-over #16 reclassification: MatchFoundMsg
+  // payload contains ONLY opponent data, NOT both player1/player2 odIds —
+  // cannot derive isP1 here. BE pvp-fight_start emit (later, after both
+  // players send pvp_ready) carries authoritative player1.odId / player2.odId;
+  // FightView.vue:64-67 (onPvPFightStart, Sub-epic 4a) derives isP1 from
+  // there + re-commits via overwrite cascade. DO NOT replace placeholder
+  // с derivation logic — symmetric pairing means we cannot tell from
+  // MatchFoundMsg alone if we're p1 or p2.
+  store.commit('pvp/SET_PVP_MATCH', {
+    matchId: e.detail.matchId,
+    opponent: e.detail.opponent,
+    isPlayer1: false,
+  });
+  enterFoundPhase();
+  // queueDispatched stays true до C12 manages flag для race Q8.1. Cancel
+  // still safely no-op'able during pre-pvp_ready window (BE removed user
+  // from queue at match creation per matchmaking.js:115-116; Cancel msg
+  // is harmless redundancy).
 }
 
 function onMatchmakingCancelled() {
