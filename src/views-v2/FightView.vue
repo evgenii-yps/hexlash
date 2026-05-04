@@ -21,9 +21,10 @@ import {
   fightState,
   resetFight,
 } from '@/components/hud/common/useFightSimulation.js';
-import { logFight } from '@/components/hud/common/useFightLog.js';
+import { logFight, clearFightLog } from '@/components/hud/common/useFightLog.js';
 import { triggerFlash } from '@/components/hud/common/useFlashHit.js';
 import { getFightSetup, clearFightSetup } from '@/scene/interaction/useFightSetup.js';
+import { DICE_COOLDOWN_ROUNDS } from '@/core/constants.js';
 
 const store = useStore();
 const router = useRouter();
@@ -181,7 +182,9 @@ const onPvPFightEnd = (e) => {
     fightState.rightHp = isP1 ? data.player2.finalHp : data.player1.finalHp;
   }
 
-  // Result type derivation (mirror v1 logic)
+  // Result type derivation (mirror v1 logic). Sub-epic 4b: existing winner+myId
+  // logic correctly handles surrender (loser sees winner=opponent.odId → 'lose';
+  // winner sees winner=myId → 'win') and match_timeout (winner='draw' → 'draw').
   let resultType;
   if (data.reason === 'opponent_disconnected') {
     resultType = 'win';
@@ -193,13 +196,25 @@ const onPvPFightEnd = (e) => {
     resultType = 'lose';
   }
 
+  // Sub-epic 4b — extended summary text branches per reason. Refactored from
+  // nested ternary к if/else for clarity (3+ reasons per result type now).
+  // English-only per 6B-3a/5N convention (i18n deferred).
+  let resultSummary;
+  if (resultType === 'win') {
+    if (data.reason === 'opponent_disconnected') resultSummary = 'Opponent disconnected.';
+    else if (data.reason === 'opponent_surrendered') resultSummary = 'Opponent surrendered.';
+    else resultSummary = 'Victory!';
+  } else if (resultType === 'lose') {
+    if (data.reason === 'surrender') resultSummary = 'You surrendered.';
+    else resultSummary = 'Defeated.';
+  } else {
+    if (data.reason === 'match_timeout') resultSummary = 'Match ended (time limit).';
+    else resultSummary = 'Match drawn.';
+  }
+
   // ResultOverlay binding (existing component reuse — Lesson #32 minimal touch)
   fightState.resultWon = (resultType === 'win');
-  fightState.resultSummary = resultType === 'win'
-    ? (data.reason === 'opponent_disconnected' ? 'Opponent disconnected.' : 'Victory!')
-    : resultType === 'draw'
-      ? 'Match drawn.'
-      : 'Defeated.';
+  fightState.resultSummary = resultSummary;
   fightState.phase = 'result';
 
   // Update pvp Vuex stats (existing action)
@@ -208,6 +223,113 @@ const onPvPFightEnd = (e) => {
 const onPvPOverdriveStart = (e) => {
   triggerFlash();
   logFight('<strong>OVERDRIVE</strong>', 'round');
+};
+// Sub-epic 4b — handler for fight_state_resume event emitted by BE on reconnect.
+// Hydrates module-scoped fightState from in-memory snapshot (Option α minimal —
+// no DB persistence). Snapshot fields per C4 enumeration: maxRounds (NOT
+// totalRounds), no maxHp (FE constant), diceUsedRound (raw — derive cooldown),
+// status='paused_coach' indicates pause (NOT separate pausedFor field),
+// pendingChoices object tracks coach-pause-internal state.
+const onFightStateResume = (e) => {
+  const snapshot = e.detail;
+  if (!snapshot) return;
+
+  // Defensive: don't hydrate finished match (FE already received fight_end)
+  if (snapshot.status === 'finished') return;
+
+  // Defensive: don't go backwards from result phase
+  if (fightState.phase === 'result') return;
+
+  // Defensive race guard: stale snapshot (lower currentRound than fightState
+  // already reached) — could happen if pvp-round_result arrived before
+  // fight_state_resume during reconnect window. Don't overwrite newer state.
+  if (typeof snapshot.currentRound === 'number' && snapshot.currentRound < fightState.round) return;
+
+  const isP1 = store.getters['pvp/getIsPlayer1'];
+  const myPlayer  = isP1 ? snapshot.player1 : snapshot.player2;
+  const oppPlayer = isP1 ? snapshot.player2 : snapshot.player1;
+
+  // BE-authoritative HP hydration. leftMaxHp/rightMaxHp persist (MAX_HP global
+  // constant doesn't change mid-fight).
+  if (myPlayer && typeof myPlayer.hp === 'number') fightState.leftHp = myPlayer.hp;
+  if (oppPlayer && typeof oppPlayer.hp === 'number') fightState.rightHp = oppPlayer.hp;
+
+  // Round counter
+  if (typeof snapshot.currentRound === 'number') fightState.round = snapshot.currentRound;
+  if (typeof snapshot.maxRounds === 'number') fightState.totalRounds = snapshot.maxRounds;
+
+  // Dice cooldown derivation (BE doesn't ship diceCooldownRemaining — C4 catch).
+  // diceUsedRound initialized к -DICE_COOLDOWN_ROUNDS so dice available round 1.
+  // Available если (currentRound - diceUsedRound) >= DICE_COOLDOWN_ROUNDS.
+  if (myPlayer && typeof myPlayer.diceUsedRound === 'number') {
+    fightState.diceReady = (snapshot.currentRound - myPlayer.diceUsedRound) >= DICE_COOLDOWN_ROUNDS;
+  }
+  // Active dice effect type is transient (set via dice_rolled, not stored in
+  // engine state) — clear on reconnect. If effect still active, FE waits для
+  // next round_result для re-render.
+  fightState.diceActiveType = null;
+
+  // Phase recovery
+  if (snapshot.status === 'paused_coach') {
+    if (fightState.phase === 'prep') fightState.phase = 'fight';
+    fightState.coachPauseOpen = true;
+    // Coach pause text: derive from pendingChoices state (mirror existing
+    // onPvPCoachPause / onPvPCoachOpponentReady text values).
+    const myChoice  = isP1 ? snapshot.pendingChoices?.player1 : snapshot.pendingChoices?.player2;
+    const oppChoice = isP1 ? snapshot.pendingChoices?.player2 : snapshot.pendingChoices?.player1;
+    if (myChoice?.action) {
+      fightState.coachPauseText = 'Waiting for opponent...';
+    } else if (oppChoice?.action) {
+      fightState.coachPauseText = 'Opponent ready. Waiting...';
+    } else {
+      fightState.coachPauseText = 'Coach pause — pick your advice (10s)';
+    }
+  } else {
+    // 'running' state (or 'waiting' edge case)
+    if (fightState.phase === 'prep') fightState.phase = 'fight';
+    fightState.coachPauseOpen = false;
+    fightState.coachPauseText = '';
+  }
+
+  // Round log replay — mirror onPvPRoundResult per-round logFight pattern
+  // (lines 100-127). Clear current log первым, then replay each round entry.
+  if (Array.isArray(snapshot.roundResults) && snapshot.roundResults.length > 0) {
+    clearFightLog();
+    for (const round of snapshot.roundResults) {
+      // Skip rounds with errors (e.g. invalid_move per pvpCombatEngine.js:221)
+      if (round.error) continue;
+      const myData  = isP1 ? round.player1 : round.player2;
+      const oppData = isP1 ? round.player2 : round.player1;
+
+      // Self attack — actor-warden colored
+      if (myData?.damage > 0) {
+        logFight(
+          '<span class="lt">R' + round.round + '</span> dealt <strong>' + myData.damage + '</strong> dmg',
+          'actor-warden' + (myData.critted ? ' crit' : '')
+        );
+      }
+      // Opponent attack — actor-predator colored
+      if (oppData?.damage > 0) {
+        logFight(
+          '<span class="lt">R' + round.round + '</span> took <strong>' + oppData.damage + '</strong> dmg',
+          'actor-predator' + (oppData.critted ? ' crit' : '')
+        );
+      }
+      // Dodges
+      if (oppData?.dodged) {
+        logFight(
+          '<span class="lt">R' + round.round + '</span> attack — opponent slipped',
+          'actor-warden miss'
+        );
+      }
+      if (myData?.dodged) {
+        logFight(
+          '<span class="lt">R' + round.round + '</span> opponent attack — you slipped',
+          'actor-predator miss'
+        );
+      }
+    }
+  }
 };
 const onMatchCancelled = (e) => {
   store.commit('pvp/RESET_PVP_FIGHT');
@@ -297,6 +419,7 @@ onMounted(() => {
   window.addEventListener('pvp-coach_opponent_ready', onPvPCoachOpponentReady);
   window.addEventListener('pvp-fight_end',            onPvPFightEnd);
   window.addEventListener('pvp-overdrive_start',      onPvPOverdriveStart);
+  window.addEventListener('pvp-fight_state_resume',   onFightStateResume);
   window.addEventListener('match-cancelled',          onMatchCancelled);
 });
 
@@ -316,6 +439,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('pvp-coach_opponent_ready', onPvPCoachOpponentReady);
   window.removeEventListener('pvp-fight_end',            onPvPFightEnd);
   window.removeEventListener('pvp-overdrive_start',      onPvPOverdriveStart);
+  window.removeEventListener('pvp-fight_state_resume',   onFightStateResume);
   window.removeEventListener('match-cancelled',          onMatchCancelled);
   // Cancel any pending simulation timers BEFORE scene teardown so a late
   // doExchange callback doesn't touch a disposed scene.
