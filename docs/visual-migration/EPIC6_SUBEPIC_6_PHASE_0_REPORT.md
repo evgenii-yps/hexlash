@@ -792,3 +792,732 @@ grep -rn "live\|/matches/live" backend/src/routes/ --include="*.js"
 **Continuing к Part 2:** Q6 (Authorization) / Q7 (Lifecycle) / Q8 (Race conditions) / Q9 (Match handoff) + 5 mandatory subsections.
 
 **Pre-edit catches in Part 1:** **1 catch** (HudSpectate.vue line count discrepancy — agent's 223 vs actual 494, caught pre-write via `wc -l` verification).
+
+---
+
+## Q6 — Authorization / Access Control
+
+### Q6.1 — Public matches vs friend-only
+
+**Friendship lookup precedents в BE:**
+
+**Pattern 1 — `findUnique`:**
+- File: `backend/src/routes/friends.js` line 38
+```javascript
+const friendship = await prisma.friendship.findUnique({
+  where: { user1Id_user2Id: { user1Id: id1, user2Id: id2 } },
+});
+```
+- Convention: User IDs normalized с `user1Id < user2Id`
+
+**Pattern 2 — `findMany`:**
+- Line 212: get all friendships for user
+- Line 254: `deleteMany()` (remove friendship)
+
+**Pattern 3 — `findFirst` with OR:**
+- File: `backend/src/routes/clan.js` line 468
+```javascript
+const friendship = await prisma.friendship.findFirst({
+  where: { OR: [...] }
+});
+```
+
+**Document:** Friendship lookup pattern established. Spectator authorization decision basis:
+
+**Path D (friends-only) authorization rule:**
+- On `SpectateJoinMsg`, BE checks if requester is friend of `match.player1.userId` OR `match.player2.userId`
+- If neither → emit ErrorMsg `'unauthorized_spectate'`
+- Pseudocode:
+```javascript
+const isFriend = await prisma.friendship.findFirst({
+  where: {
+    OR: [
+      { user1Id: spectator.id, user2Id: { in: [p1Id, p2Id] }},
+      { user2Id: spectator.id, user1Id: { in: [p1Id, p2Id] }},
+    ]
+  }
+});
+if (!isFriend) return emitError('unauthorized_spectate');
+```
+
+**Path B (public) — no auth check.** Anyone with valid matchId can spectate.
+
+---
+
+### Q6.2 — Privacy concerns
+
+**Spectator visibility:** Spectator sees both player names, skins, ELOs, HPs, moves, dice rolls.
+
+**Privacy parity:** Same data both players themselves see during fight. No new privacy surface.
+
+**Field naming convention:**
+- DB: `user.name` field (display name) и `user.login` field
+- API response: `username: friend.name || friend.login` (fallback pattern)
+- Sub-epic 5 carry-over #33 (captain vs opponent payload field name asymmetry — `name`/`elo` vs `username`/`rating`) — same pattern likely applies to spectator player meta delivery
+
+**Document:** Privacy parity acceptable. Field naming: dual-field convention с fallback. Sub-epic 6 must follow same `username || login` pattern если delivers player meta к spectators.
+
+---
+
+### Q6.3 — Authorization scope decision basis
+
+**Recommendation factor matrix:**
+
+| Path | Scope size | Authorization complexity | Friend extension required? | Carry-over closure |
+|---|---|---|---|---|
+| Path D (friends-only) | Smaller | Friendship lookup на Join | YES (Q5.1/Q5.2 surface) | Closes 5N entry point gap |
+| Path B (public) + Path D combo | Medium | None initially | NO | Defers wider feed |
+| Path B (full public + live feed) | L scope | Match listing + privacy filter | NO | Out of Sub-epic 6 closure scope |
+
+**Document:** Path D friends-only first = scope-discipline winner. Wider feed deferred к Эпик 7+. Even friends-only requires Q5.1/Q5.2 BE extension — bundling those into Sub-epic 6 likely required.
+
+---
+
+## Q7 — Lifecycle & Cleanup
+
+### Q7.1 — Match end handling
+
+**File:** `backend/src/services/pvpMatchManager.js` lines 38-44
+
+**`removeMatch(matchId)` cleanup:**
+
+```javascript
+removeMatch(matchId) {
+  const engine = this.activeMatches.get(matchId);
+  if (engine && engine._readyTimeout) {
+    clearTimeout(engine._readyTimeout);
+  }
+  this.activeMatches.delete(matchId);
+}
+```
+
+**Called from:**
+- `handler.js` line 116 — `handlePvPDisconnect()` when player disconnects
+- `pvpHandler.js` line 146 — same disconnect chain (also clears rate limit Maps)
+
+**Spectator cleanup integration:**
+- On `removeMatch`, спектаторы Map/Set should also be cleared (or logged for audit)
+- Decision: silently drop or send `fight_end` first?
+- **Per Q3.2 finding:** `fight_end` already broadcast via emit (lines 568, 680) — спектаторы receive normally if Path α (extend emit). Path β requires explicit broadcast.
+
+**Document:** Match cleanup function exists; spectator cleanup integrates trivially (clear `match.spectators` Map after match removal).
+
+---
+
+### Q7.2 — User disconnect mid-spectate
+
+**File:** `backend/src/websocket/handler.js` lines 111-118
+
+**WS close handler:**
+
+```javascript
+ws.on('close', () => {
+  if (ws._replaced) return;
+  clients.delete(userId);
+  matchmaking.removeFromQueue(userId);
+  handlePvPDisconnect(userId);
+  console.log(`WebSocket: user ${userId} disconnected. Total: ${clients.size}`);
+});
+```
+
+**Existing flow:**
+1. Skip if `_replaced` flag set (Sub-epic 4a P0-3 reconnect protection)
+2. Delete from `clients` Map
+3. Remove from matchmaking queue
+4. Call `handlePvPDisconnect()` → cleanup rate limits + match (pvpHandler.js line 136)
+
+**Spectator removal integration:**
+
+**Option α (per-match iteration):**
+- On `handlePvPDisconnect(userId)`, iterate all `pvpMatchManager.activeMatches` and remove userId from each `match.spectators` Map.
+- O(N matches) — acceptable for small N (typical concurrent matches < 50).
+
+**Option β (reverse index):**
+- Maintain `userId → Set<matchId>` reverse map for O(1) lookup
+- More memory but faster cleanup
+- Premature optimization at current scale
+
+**Reconnect handling:**
+- If user reconnects within reconnect window AND was spectating, re-subscribe automatically? OR require fresh `SpectateJoinMsg`?
+- Sub-epic 4b reconnect chain handles player rebind via `_replaced` flag — spectator equivalent unclear
+- **Decision factor для design-Claude:** Option α (require fresh SpectateJoinMsg on reconnect) — simpler, avoids stale subscription tracking through reconnect window
+
+**Document:** Spectator removal on disconnect — extend `handlePvPDisconnect`. Reconnect re-subscribe: fresh dispatch from FE preferred (simpler).
+
+---
+
+### Q7.3 — Late-join — replay events from match start
+
+**KEY DESIGN DECISION для Path B vs C.**
+
+**Sub-epic 4b `fight_state_resume` reuse — investigation:**
+
+#### `getStateSnapshot()` method
+
+**File:** `backend/src/services/pvpCombatEngine.js` lines 864-888
+
+**Return shape (verified):**
+
+```javascript
+{
+  matchId,
+  status,              // waiting | running | paused_coach | finished
+  currentRound,
+  maxRounds,
+  player1: {
+    odId,
+    hp,
+    activeEffects,
+    diceUsedRound,
+    coachTriggered
+  },
+  player2: { /* same */ },
+  roundResults,        // Array of round outcomes
+  pendingChoices,      // Coach choice tracking
+  timestamp
+}
+```
+
+#### `fight_state_resume` emit
+
+**File:** `backend/src/websocket/handler.js` lines 89-94
+
+```javascript
+ws.send(JSON.stringify({
+  type: 'fight_state_resume',
+  ...snapshot
+}));
+```
+
+**Trigger condition:** Only on player reconnect during active match. Status `'finished'` excluded.
+
+#### `onFightStateResume` FE handler
+
+**File:** `src/views-v2/FightView.vue` lines 233-278
+
+**Hydration logic with 3 defensive guards:**
+- Line 238: don't hydrate finished match
+- Line 241: don't go backwards from result phase
+- Line 246: race guard (don't overwrite newer state if snapshot is stale)
+- Lines 248-256: HP hydration from `snapshot.player1/2.hp`
+- Line 258: round counter update
+- Line 259: totalRounds update
+
+**Spectator late-join reuse decision:**
+
+**Option α (Path B — minimal):**
+- BE on `SpectateJoinMsg`:
+  1. Validate `match.activeMatches.has(matchId)` (Q5.4)
+  2. Authorize (Path D friends-only check OR public)
+  3. Add spectator to `match.spectators` Map
+  4. Call `match.getStateSnapshot()` and emit `fight_state_resume` to spectator socket directly
+  5. Subsequent events (round_result, dice_rolled, coach_pause, fight_end) broadcast via `sendToSpectators` extension
+- **Reuses Sub-epic 4b infrastructure verbatim.** No new replay mechanism.
+- **FE side:** Spectator's HudSpectate wires same `onFightStateResume` handler logic — initializes round/HP/effects state from snapshot, then continues with live events.
+- **Trade-off:** Late-joiner sees current state forward only. No round-by-round replay (no animation of past rounds).
+
+**Option β (Path C — comprehensive):**
+- BE replays ALL past `round_result` events from `match.roundResults` array
+- Plus snapshot for coach pause / dice cooldown state
+- Higher BE complexity (event log iteration on join)
+- FE animation visible — late-joiner watches "catch-up replay"
+- **Trade-off:** Better UX but L-scope expansion. Round_result replays may overload mobile clients on long matches.
+
+**Document:** **Option α viable and infrastructure-ready.** `getStateSnapshot()` method already exists, FE handler `onFightStateResume` already exists. Sub-epic 6 leveraging Sub-epic 4b infrastructure — Lesson #30 semantic pattern reuse precedent. Recommendation factual basis: Option α likely best fit for closure scope; Option β over-engineering.
+
+---
+
+## Q8 — Race Conditions
+
+### Q8.1 — Spectator joins mid-fight transition (between rounds)
+
+**Status enum (pvpCombatEngine.js line 114):**
+
+```javascript
+this.status = 'waiting'; // waiting, running, paused_coach, finished
+```
+
+**4 enum states:**
+- `waiting` — initial, after construction, before `start()`
+- `running` — after `start()`, between rounds
+- `paused_coach` — during coach pause (line 459)
+- `finished` — after `endFight()` (lines 534, 578, 614, 656)
+
+**Subscribe ordering on join:**
+1. SpectateJoin received
+2. BE adds to `match.spectators`
+3. Call `getStateSnapshot()` (snapshot of current state)
+4. Emit `fight_state_resume` to spectator socket
+5. Subsequent events broadcast via `sendToSpectators`
+
+**Race window:**
+- Between snapshot capture (step 3) and first live event delivery (step 5), match may transition (round_result emits)
+- Snapshot captures `currentRound = N`, but next emitted event is `round_result { round: N+1 }`
+- Spectator UI receives `N` snapshot first, then `N+1` round_result — natural progression, no gap
+
+**Defensive guard:**
+- Existing FE handler `onFightStateResume` line 246 has race guard ("don't overwrite newer state if snapshot is stale")
+- Reused для spectator path — already protects against late snapshot delivery overlap
+
+**Document:** Race window minimal — snapshot delivery + live event chain naturally sequential. FE race guard already in place via Sub-epic 4b reuse.
+
+---
+
+### Q8.2 — Match ends just as user joins
+
+**Defensive guards inventory:**
+
+**pvpHandler.js:**
+- Line 24: `if (!match)` before proceeding (pvp_ready)
+- Line 92: `if (match.status !== 'running')` (dice_roll)
+- Line 105: `if (!match)` (pvp_surrender)
+- Line 117: `if (match.status !== 'paused_coach')` (coach_choice)
+
+**pvpCombatEngine.js:**
+- Line 155: `if (status === 'finished') return` (nextRound)
+- Line 416: `if (status === 'finished') return` (onDiceRoll)
+- Line 481: `if (status !== 'paused_coach') return` (onCoachChoice)
+- Line 533: `if (status === 'finished') return` (endFight guard against double-end)
+
+**SpectateJoin defensive guard pattern (proposed):**
+
+```javascript
+// Pseudocode
+const match = pvpMatchManager.getMatch(matchId);
+if (!match) {
+  // Match doesn't exist (expired) — emit error or fight_end with reason 'not_found'
+  return emitError('match_not_found');
+}
+if (match.status === 'finished') {
+  // Match just ended — emit fight_end immediately so FE shows result overlay
+  return emit('fight_end', match.lastResult);
+}
+if (match.status === 'waiting') {
+  // Match created but not started yet — defer or reject?
+  // Decision: subscribe but defer state_resume until status === 'running'
+  match.spectators.set(userId, socket);
+  return;
+}
+// Normal join — running or paused_coach
+match.spectators.set(userId, socket);
+const snapshot = match.getStateSnapshot();
+sendToPlayer({ socket }, 'fight_state_resume', snapshot);
+```
+
+**Document:** Defensive guards pattern established in pvpHandler. Spectate-side guards follow same pattern. `'waiting'` status edge case требует design decision (reject vs defer-subscribe).
+
+---
+
+### Q8.3 — Multiple tabs / spectator instances per user
+
+**Convention в codebase:**
+- `clients` Map (handler.js) keyed by `userId` (single socket per user)
+- On reconnect, old socket marked `_replaced` (Sub-epic 4a P0-3 protection) — new socket replaces в clients Map
+- **Per-userId tracking** (NOT per-socket)
+
+**Spectator multi-tab edge case:**
+- Same user opens 2 tabs spectating same match
+- Tab 1 SpectateJoin → match.spectators[userId] = socket1
+- Tab 2 SpectateJoin → match.spectators[userId] = socket2 (overwrites)
+- Tab 1 socket becomes stale (no longer in spectators Map but still receiving via direct WS connection — except socket replaced via clients Map already)
+
+**Decision factor:**
+- Following clients Map convention (per-userId) is consistent
+- Stale-tab broadcast doesn't happen because `socket?.send()` on closed socket is no-op
+- Multi-tab: latest tab "wins"; older tab still shows last received state but stops updating
+- **Acceptable trade-off** for typical UX (one tab per match per user)
+
+**Document:** Per-userId convention established. Multi-tab edge: latest wins via natural overwrite. No additional handling needed.
+
+---
+
+## Q9 — Match Handoff к /v2/spectate
+
+### Q9.1 — WS subscribe ordering on mount
+
+**Proposed sequence (mirror Sub-epic 5 MatchmakingView ordering discipline):**
+
+```
+SpectateView.vue / HudSpectate.vue onMounted:
+1. Read route.params.fightId (already exposed via useRoute)
+2. Captain pre-check (optional — block guest spectate if no captain? probably not needed for spectate)
+3. Setup window event listeners:
+   - matchmaking-spectate-state-resume (or unified pvp event chain)
+   - matchmaking-round-result (existing — но need to filter by matchId? — see below)
+   - matchmaking-fight-end
+   - matchmaking-dice-rolled
+   - matchmaking-coach-pause
+   - matchmaking-coach-result
+   - matchmaking-overdrive-start
+   - matchmaking-spectate-leave (cleanup confirmation)
+   - matchmaking-spectate-error
+4. Dispatch SpectateJoinMsg { matchId: route.params.fightId }
+5. Wait for events → populate UI
+```
+
+**Event listener naming convention:**
+
+Sub-epic 5 used `matchmaking-*` prefix для CustomEvent names dispatched from `webSocketState.js`. Sub-epic 4a/4b used `pvp-*` prefix? — verify by grep.
+
+**Verification needed (deferred к Phase 1 ТЗ):** Document existing CustomEvent dispatch convention в webSocketState.js (line 164-191). Likely:
+- `pvp-fight-start`, `pvp-round-result`, `pvp-fight-end`, `pvp-dice-rolled`, etc.
+- Spectator FE listens to same events с matchId filter (since BE broadcasts to all spectators of given match)
+
+**MatchId filter requirement:**
+
+If FE has multiple match contexts active (player в match A, spectating match B), event handler must filter by matchId. Current PvP FE assumes single-match context (player only spectates own match) — no filter needed.
+
+**Spectator multi-match concern:** Edge case (user spectating two matches simultaneously) — out of typical UX. Single-match-spectate assumed default.
+
+---
+
+### Q9.2 — SpectatorListMsg для count display
+
+**BE existence check:** Grep for `SpectatorListMsg`, `SpectatorCountMsg`, similar broadcast events:
+
+**Result:** **ZERO matches** в `backend/src/`.
+
+**Proposed addition (Sub-epic 6 scope):**
+
+**Message shape:**
+```javascript
+{
+  type: 'SpectatorListMsg',
+  matchId,
+  count       // size of match.spectators Map
+}
+```
+
+**Emit triggers:**
+- On every SpectateJoin: emit к match.spectators (broadcast updated count)
+- On every SpectateLeave / disconnect: emit к match.spectators
+
+**FE binding:** Replace mock `spectatorCount` ref в HudSpectate with WS-driven reactive update. Listener filters by matchId.
+
+**Optional optimization:** Throttle count broadcasts (e.g., max 1/sec) to prevent burst on join/leave bursts.
+
+---
+
+### Q9.3 — Hand-off /v2/spectate → /v2 cleanup
+
+**Mirror Sub-epic 5 MatchmakingView discipline:**
+
+**MatchmakingView cleanup functions (lines 78-120):**
+
+```javascript
+// Line 78 — stop search timer
+function stopSearchTimer() {
+  if (searchTimer.value) {
+    clearInterval(searchTimer.value);
+    searchTimer.value = null;
+  }
+}
+
+// Line 87 — stop countdown timer
+function stopCountdownTimer() {
+  if (countdownTimer.value) {
+    clearInterval(countdownTimer.value);
+    countdownTimer.value = null;
+  }
+}
+```
+
+**Cleanup call sites (5 stopSearchTimer + 4 stopCountdownTimer):**
+- onCancel
+- onMatchFound
+- onTimeout
+- onError
+- onBeforeUnmount
+
+**SpectateView.vue cleanup (proposed):**
+
+```javascript
+onBeforeUnmount:
+1. dispatch SpectateLeaveMsg { matchId }
+2. Remove all window event listeners (CustomEvent unsubscribe)
+3. Clear local reactive state (HudSpectate state reset — fresh refs on remount)
+4. Race guard: if dispatch SpectateLeave fails (WS already closed), no error toast (silent)
+```
+
+**Mirror discipline:** Sub-epic 4b/5 patterns (event handler cleanup + race guards + silent dispatch failure handling).
+
+---
+
+## 5 Mandatory Phase 0 Subsections
+
+### 1. API Contract Verification
+
+**Per Sub-epic 4a/4b/5 precedent — 10/38/61 catches validated. Sub-epic 6 contract verification:**
+
+#### Existing PvP WS message shapes (Sub-epic 4a/4b/5 baseline)
+
+**Verified present (via Q3.1 grep):**
+
+| Message | Direction | Shape (top-level keys) | Source line |
+|---|---|---|---|
+| `MatchmakingStartMsg` | FE→BE | `{ type, matchmakingRequest: { username, skin, avatarUrl } }` | handler.js:605 |
+| `MatchFoundMsg` | BE→FE | `{ type, matchId, opponent: { odId, username, rating, skin, avatarUrl } }` | handler.js:647-671 |
+| `MatchmakingCancelMsg` | FE→BE | `{ type }` | handler.js:171 |
+| `MatchmakingTimeoutMsg` | BE→FE | `{ type, message }` | (Sub-epic 5 verified) |
+| `challenge_send` | FE→BE | `{ type, targetUserId, username, rating, challengerSkin, challengerAvatarUrl }` | handler.js:481 |
+| `challenge_received` | BE→FE | `{ type, from }` | handler.js:499 |
+| `challenge_accepted` | FE→BE | `{ type, challengerId }` | handler.js:185 |
+| `challenge_start` | BE→FE | `{ type, matchId, opponent }` | (Sub-epic 4a verified) |
+| `pvp_ready` | FE→BE | `{ type, deck }` | pvpHandler.js:20 |
+| `fight_start` | BE→FE | `{ type, matchId, player1, player2, maxRounds, overdriveStartRound }` | pvpCombatEngine.js:132 |
+| `round_result` | BE→FE | `{ type, round, isOverdrive, firstAttacker, player1, player2 }` | pvpCombatEngine.js:330 |
+| `dice_roll` | FE→BE | `{ type }` (auth via socket→userId) | pvpHandler.js:77 |
+| `dice_rolled` | BE→FE | `{ type, effect, hp, oppHp?, killed? }` | pvpCombatEngine.js:443 |
+| `dice_available` | BE→FE | `{ type, round }` | pvpCombatEngine.js:184/187 |
+| `coach_choice` | FE→BE | `{ type, action }` | pvpHandler.js:114 |
+| `coach_pause` | BE→FE | `{ type, round, timeLimit }` | pvpCombatEngine.js:463/468 |
+| `coach_result` | BE→FE | `{ type, player1, player2 }` | pvpCombatEngine.js:512 |
+| `coach_opponent_ready` | BE→FE | `{ type }` | pvpCombatEngine.js:488 |
+| `fight_end` (normal) | BE→FE | `{ type, matchId, winner, rounds, xp, player1, player2, roundLog }` | pvpCombatEngine.js:568 |
+| `fight_end` (surrender) | BE→FE | `{ type, ..., reason: 'surrender' \| 'opponent_surrendered' }` | pvpCombatEngine.js:594/633/636 |
+| `fight_end` (timeout) | BE→FE | `{ type, reason: 'match_timeout', winner: 'draw' }` | pvpCombatEngine.js:680 |
+| `match_cancelled` | BE→FE | `{ type, reason }` | (Sub-epic 4a verified) |
+| `overdrive_start` | BE→FE | `{ type }` (minimal) | pvpCombatEngine.js:174 |
+| `fight_state_resume` | BE→FE | `{ type, ...snapshot }` (matchId, status, currentRound, maxRounds, player1, player2, roundResults, pendingChoices, timestamp) | handler.js:89-94 |
+| `pvp_surrender` | FE→BE | `{ type }` (auth via socket→userId) | pvpHandler.js:100 |
+| `dice_error` | BE→FE | `{ type, message }` | pvpCombatEngine.js:433 |
+| `ErrorMsg` | BE→FE | `{ type, error, code }` (per Sub-epic 5 carry-over #31 finding) | webSocketState.js:142-144 |
+
+#### Field naming conventions (relevant к spectate)
+
+**`userData.id` vs `odId`:**
+- FE state: `master/getMaster` returns master object with `userData` (verified: getMaster getter at line 25 of masterState.js). `userData.id` per Sub-epic 4a Catch #5 — correct field for FE-side identity reads
+- BE accepts: `user.odId` per Sub-epic 4b Catch #3 — pvpHandler delegate signatures use `user.odId` (lines 47, 52, 105 etc)
+- **Both correct в их contexts** — FE reads userData.id, BE handler params use user.odId (different layers, different conventions)
+
+**`master/getMaster` getter verification:**
+- File: `src/core/state/modules/masterState.js` line 25
+```javascript
+getMaster: (state) => state.master,
+```
+- Confirmed exists. Sub-epic 4a Catch #4 ("master/userData doesn't exist, use master/getMaster") still applies.
+
+**Vuex getters for spectator path:**
+- `master/getMaster` (line 25) — current user (для optional captain pre-check)
+- `master/getLoginState` (line 27) — auth state
+- `webSocket/sendMessage` action — WS dispatcher (Sub-epic 5 baseline)
+- (Possibly NEW Vuex module `spectate/`?) — design-Claude decision.
+
+**Match shape — `match` IS engine vs `match.engine`:**
+- Confirmed via Q2.2: `pvpMatchManager.activeMatches: Map<matchId, engine>` — match object stored in Map IS the engine instance
+- Per CLAUDE.md: "match IS engine, no .engine property — 3x BE confirmation"
+- handler.js line 89 calls `activeMatch.getStateSnapshot()` directly (treats match as engine)
+- **CONFIRMED — no `.engine` property access.**
+
+**Flat WS spread `{type, ...data}`:**
+- Per Sub-epic 4b Catch #6 — payload shape is **flat** (top-level keys), NOT nested `{type, data: {...}}`
+- All emit/sendToPlayer calls в pvpCombatEngine spread data: `JSON.stringify({ type, ...data })`
+- Spectator broadcast must follow same pattern.
+
+#### Phase enum values
+
+- `pvpCombatEngine.status` enum: `'waiting' | 'running' | 'paused_coach' | 'finished'` (line 114)
+- HudSpectate has no phase enum (uses `fightOver: boolean` flag instead — ref line 106) — simpler binary state
+- Sub-epic 6 may need to extend HudSpectate state с phase enum mirror BE engine status (для late-join handling — see Q7.3)
+
+#### Constants imports
+
+- `DICE_COOLDOWN_ROUNDS` (per Sub-epic 4b Catch #7 exists — 3 rounds per CLAUDE.md)
+- `MAX_ROUNDS = 10` (config.js)
+- `MATCH_TIMEOUT_MS = 600000` (Sub-epic 4b C1 backstop)
+- `EXTRA_ROUNDS = 2` (overdrive)
+
+**Spectator FE constants likely needed:**
+- Reuse same constants from config (OR existing HudSpectate.vue lines 83-85: `MAX_HP`, `MAX_ROUNDS`, `TICK_MS` — TICK_MS gets gutted with mock simulation)
+
+---
+
+### 2. Negative-Space Verification
+
+**Confirmed ABSENT (via grep — empty results in each case):**
+
+| # | Item | Verification | Location for Phase 1 addition |
+|---|---|---|---|
+| 1 | `match.spectators` Set/Map field | pvpCombatEngine.js constructor (lines 75-119) — no spectators field | pvpCombatEngine.js line 119+ (constructor extension) |
+| 2 | `SpectateJoinMsg` BE handler | `grep -n "SpectateJoinMsg" backend/src/` empty | handler.js line 196 (pre-default) OR new spectateHandler.js |
+| 3 | `SpectateLeaveMsg` BE handler | Same grep empty | Same as #2 |
+| 4 | `SpectatorListMsg` BE handler | Same grep empty | Q9.2 — emit on join/leave |
+| 5 | `webSocketState.js` spectate routing case | Lines 133-191 inventory shows no spectate | webSocketState.js line ~191 (pre-default) |
+| 6 | `spectator.js`/`spectatorService.js` BE service | `grep -rn "spectator" backend/src/` empty | New file `backend/src/services/spectatorService.js` (optional) |
+| 7 | pvpCombatEngine `sendToSpectators` helper | Lines 892-902 inventory shows only emit + sendToPlayer | pvpCombatEngine.js line 902+ (after sendToPlayer) |
+| 8 | Friends list `currentFight` field в API response | friends.js lines 225-239 inventory shows no field | friends.js — extend response object |
+| 9 | Friends `'in_fight'` status value | Status only `'online' \| 'offline'` (line 233) | friends.js — extend status determination logic |
+| 10 | Live matches feed endpoint (`GET /v1/matches/live`) | Grep empty | Out of Sub-epic 6 closure scope (Эпик 7+) |
+| 11 | HudSpectate spectator count BE binding | Mock `Math.random` line 108/184 | Replace ref binding с WS event handler |
+| 12 | `pixelIcons.js` spectate icon usage | Defined at line 984-1006 but no grep hits для render references | Optional cosmetic integration в HudSpectate header |
+
+**Negative-space density: 12 items confirmed absent** — high greenfield surface.
+
+**Sub-epic 6 prediction (per handoff §SUB-EPIC 6 SCOPE):** "likely surfaces ~30-50 catches" — Phase 0 confirms greenfield depth. Likely catch count Phase 1 in 50-80 range due to multi-layer coordination (BE Prisma extension + BE handler chain + FE Vuex extension + FE WS routing + FE UI rebind).
+
+---
+
+### 3. Real CSS Class Taxonomy Dump
+
+**`.sp-*` namespace inventory (Q4.3 verified):**
+
+**Scoped в HudSpectate.vue `<style>` (lines 225-494):**
+
+```
+.spectate-hud         (228) — root container
+.sp-back              (237) — back button
+.sp-header            (260) — title cluster
+.sp-kicker            (268) — title kicker
+.sp-spec-count        (276) — spectator count display
+.sp-spec-dot          (285) — animated pulse
+.sp-round-badge       (298) — round counter
+.sp-fighters          (312) — fighters row
+.sp-fighter           (323) — fighter card
+.sp-fighter--friend   (331) — modifier (left)
+.sp-fighter--opponent (332) — modifier (right)
+.sp-fname             (334) — fighter name
+.sp-hp-bar            (341) — HP bar
+.sp-hp-fill           (348) — fill
+.sp-hp-fill--friend   (353) — green fill
+.sp-hp-fill--opponent (357) — red fill
+.sp-hp-num            (361) — HP numeric
+.sp-vs                (369) — VS divider
+.sp-log               (376) — log container
+.sp-log-header        (390) — log header
+.sp-log-list          (398) — log entries list
+.sp-log-entry         (411) — log entry
+.sp-log-round         (421) — round cell
+.sp-log-actor         (426) — actor cell
+.sp-actor--friend     (427) — modifier
+.sp-actor--opp        (428) — modifier
+.sp-log-action        (430) — action cell
+.sp-log-damage        (432) — damage cell
+.sp-log-crit-badge    (437) — crit indicator
+.sp-log-crit          (447) — modifier
+.sp-log-empty         (405) — empty state
+.sp-result            (449) — result overlay
+.sp-result-text       (466) — result text
+.sp-result--win       (475) — green
+.sp-result--loss      (481) — red
+```
+
+**Total: 35 classes scoped в HudSpectate.vue.**
+
+**External `src/styles/v24/`:** **ZERO references.** No `spectate.css`. Self-contained.
+
+**Phase 1 considerations:**
+- Spectator perspective relabel concern (Q4.4) — may require renaming `--friend`/`--opponent` modifiers к `--player1`/`--player2` (neutral naming)
+- BUT: Sub-epic 6 closure scope can keep current naming (semantic inversion: "friend" = `match.player1` deterministically) and defer relabel к polish. **Decision factor для design-Claude.**
+- Reusable patterns:
+  - `.sp-fighter--friend`/`.sp-fighter--opponent` modifier convention (mirror Sub-epic 4a `actor-warden`/`actor-predator` pattern)
+  - `.sp-log-entry` row-based log structure (mirror Sub-epic 4a HudFight `.log-entry` precedent)
+
+**Late-join indicator class (NEW for Path B α):**
+- Phase 1 may need `.sp-replay-marker` или `.sp-rejoined` class для visual indicator that user joined mid-fight
+- Suggested: gold/cyan accent stripe on log entries displayed via state_resume vs live events
+- **Decision deferrable** к design-Claude или skip for closure (polish round)
+
+---
+
+### 4. UI Infrastructure Dependencies
+
+**For each new Sub-epic 6 handler — verify full chain:**
+
+#### A. SpectateJoin dispatch on mount
+
+- **Mount hook:** `onMounted` exists в SpectateView.vue (lines 29-31, currently only Esc listener) — extend OR move к HudSpectate
+- **WS dispatcher:** `webSocket/sendMessage` action (Sub-epic 5 baseline) — reused
+- **Route param accessor:** `useRoute().params.fightId` — HudSpectate currently reads via `useRoute` (verified — line 93)
+- **State field "is subscribed":** Per Sub-epic 4b precedent — `subscribed = ref(false)` boolean flag pattern. Reset on mount, flip true post-dispatch ack.
+
+#### B. SpectateLeave dispatch on unmount
+
+- **Unmount hook:** `onBeforeUnmount` exists в SpectateView.vue (lines 33-35) — extend
+- **Cleanup discipline:** Mirror MatchmakingView (Sub-epic 5) — 3-5 cleanup function call sites
+  - `dispatchSpectateLeave()` (silent fail если WS closed)
+  - `removeAllListeners()` (window event handlers)
+  - `resetHudSpectateState()` (clear refs, mock leftover protection)
+- **Idempotency:** Listener registration пре-defensive cleanup before add (mirror Sub-epic 5 `addEventListener`/`removeEventListener` pattern)
+
+#### C. WS event listeners (round_result / dice_rolled / coach_pause / fight_end)
+
+- **window CustomEvent listener pattern existing:** YES — Sub-epic 4a/5 baseline (4 listeners в MatchmakingView, ~6+ in FightView)
+- **Cleanup on unmount:** required (memory leak prevention)
+- **Listener idempotency:** required (component remount edge — register once, cleanup on unmount)
+- **MatchId filter:** spectator may need filter on `data.matchId === route.params.fightId` if multi-match capable. Single-match assumed default — no filter needed initially.
+
+#### D. Spectator count display
+
+- **Reactive state field:** `spectatorCount` already exists в HudSpectate (ref Number, line 108)
+- **Template binding:** already `{{ spectatorCount }}` (line 21)
+- **SpectatorListMsg routing → state update chain:**
+  - webSocketState.js: add case `SpectatorListMsg` → window CustomEvent dispatch
+  - HudSpectate: window listener updates `spectatorCount.value = data.count`
+- **Throttling:** optional (broadcast on every join/leave может burst) — defer к design-Claude
+
+#### E. Late-join state hydration (если fight_state_resume reuse)
+
+- **Existing onFightStateResume handler в FightView (Sub-epic 4b C7):** verified at lines 233-278
+- **Adaptable к HudSpectate:** YES — semantic equivalent (HP refs + round counter + active effects)
+- **State snapshot shape compatibility (HudSpectate fields ↔ snapshot fields):**
+  - `friendHp ↔ snapshot.player1.hp`
+  - `opponentHp ↔ snapshot.player2.hp`
+  - `currentRound ↔ snapshot.currentRound`
+  - `fightLog ↔ snapshot.roundResults` (need transform — roundResults format vs HudSpectate log entry format)
+  - **Transformation layer needed** для roundResults → log entries (similar к Sub-epic 4b log replay pattern)
+
+**Each handler chain — verified file:line references collected.**
+
+---
+
+### 5. Vocabulary Alignment Audit
+
+**Mock taxonomy (5N HudSpectate) ↔ BE taxonomy mapping:**
+
+| 5N mock element | Real BE source | Mapping notes |
+|---|---|---|
+| `setInterval(2000)` round tick | `round_result` event broadcast | Direct rebind — listener replaces interval |
+| `Math.random() < 0.15` crit | `round_result.player1/2.critted` boolean | Direct field read |
+| 10-name move pool | `round_result.player1/2.module` (move ID + name lookup) | Need move name from `move.name` (verified field per CLAUDE.md combat) |
+| HP decreases manually | `round_result.player1/2.hp` authoritative | Direct rebind |
+| "VICTORY"/"DEFEAT" result strings | `fight_end.winner` field | **Spectator perspective issue** (see below) |
+| Mock spectator count drift | `SpectatorListMsg.count` (NEW) | Direct rebind |
+
+**Spectator-as-third-party perspective concern:**
+
+**Player FE convention:**
+- "left fighter" = self (myself)
+- "right fighter" = opponent
+- Result string derivation: `winner === myself ? 'VICTORY' : 'DEFEAT'`
+- Derived via `getIsPlayer1` getter
+
+**Spectator FE convention (NEW):**
+- Spectator is NOT player1 NOR player2
+- "left fighter" = ??? (no inherent self-context)
+- "right fighter" = ???
+- Result string derivation: ???
+
+**Possible options:**
+
+| Option | Layout rule | Result string | Pros | Cons |
+|---|---|---|---|---|
+| α (deterministic) | `match.player1` left, `match.player2` right | "Player1 wins" / "Player2 wins" / "Draw" | Simplest, BE-truth | Loses "friend" semantic в UI |
+| β (friendship-context) | Friend on left, other on right | "Friend wins" / "Friend defeated" | Preserves friend semantic | Requires friendship resolution at FE per match (extra API call OR pre-fetch) |
+| γ (favorite — higher ELO) | Higher-ELO left | "Favorite wins" / "Underdog upsets" | Skill-based ordering | Arbitrary per actual user perspective |
+| δ (user toggle) | Spectator preference switch | Configurable | User control | UX complexity, state mgmt |
+
+**Recommendation factual basis (NOT recommendation — design-Claude decides):**
+
+- Option α (deterministic player1/player2 ordering) — minimum-touch closure scope. Relabel `.sp-fighter--friend` / `.sp-fighter--opponent` modifiers к neutral `.sp-fighter--p1` / `.sp-fighter--p2` (visual color stays — left blue/green, right red/orange).
+- Result strings: rebind to `{ winner: 'p1' | 'p2' | 'draw' }` and use neutral `"P1 wins" / "P2 wins" / "Match draw."`. OR display by username: `"Wisp wins!"` / `"Onotole wins!"` (most readable).
+- Option β (friendship-context) — defer к polish round. Requires friends list pre-fetch on mount → match.player1/2 lookup → relabel. Higher latency, more state.
+
+**6th Phase 0 subsection candidate trigger:** This vocabulary gap surfaces "semantic invariant + flow direction verification" 2nd occurrence. See Part 3 dedicated analysis.
+
+---
+
+### Part 2 of 3 — END
+
+**Continuing к Part 3:** 6th candidate tracking + Path candidates basis + Risks & dependencies + Carry-overs awareness + Pre-edit catch tally.
+
+**Pre-edit catches in Part 2:** **0** (Q6-Q9 + 5 mandatory subsections content derived from agent investigation + Q1-Q5 baseline; no new file-content discrepancies surfaced).
