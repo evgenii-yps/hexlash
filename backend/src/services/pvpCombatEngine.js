@@ -13,6 +13,7 @@ const {
   COACH_MIN_ROUND,
   COACH_BOOST_ROUNDS,
   COACH_PAUSE_TIMEOUT_MS,
+  MATCH_TIMEOUT_MS,
   SLOT_WEIGHTS,
   ARCHETYPE_MODIFIERS,
 } = config;
@@ -139,6 +140,13 @@ class PvPCombatEngine {
     this.roundTimer = setTimeout(() => {
       this.nextRound();
     }, COUNTDOWN_MS);
+
+    // Sub-epic 4b — wall-clock match timeout backstop (defense vs stuck matches
+    // not caught by heartbeat / disconnect path). Cleared in endFight() +
+    // onPlayerDisconnect(). Fires onMatchTimeout() with reason='match_timeout'.
+    this.matchTimeout = setTimeout(() => {
+      this.onMatchTimeout();
+    }, MATCH_TIMEOUT_MS);
   }
 
   // ── ROUND FLOW ─────────────────────────────────────────────────────────
@@ -526,6 +534,7 @@ class PvPCombatEngine {
     this.status = 'finished';
     clearTimeout(this.pauseTimer);
     clearTimeout(this.roundTimer);
+    clearTimeout(this.matchTimeout);
 
     let winner = null;
     if (this.player1.hp <= 0 && this.player2.hp <= 0) winner = 'draw';
@@ -569,6 +578,7 @@ class PvPCombatEngine {
     this.status = 'finished';
     clearTimeout(this.pauseTimer);
     clearTimeout(this.roundTimer);
+    clearTimeout(this.matchTimeout);
 
     const winner = odId === this.player1.odId ? this.player2 : this.player1;
 
@@ -586,6 +596,88 @@ class PvPCombatEngine {
       reason: 'opponent_disconnected',
     });
 
+    this.saveFightResult(result);
+    return result;
+  }
+
+  // ── SURRENDER ──────────────────────────────────────────────────────────
+
+  // Sub-epic 4b — voluntary forfeit. Both players alive → mirror disconnect
+  // pattern (asymmetric dual sendToPlayer with differentiated reason), NOT
+  // emit (which would override per-player reason). Surrenderer receives
+  // reason='surrender'; winner receives reason='opponent_surrendered'.
+  // saveFightResult once with match-POV reason='surrender'. calculateXP
+  // returns {player1, player2} object — each player picks own XP by odId
+  // on FE side.
+  surrender(odId) {
+    if (this.status === 'finished') return;
+    this.status = 'finished';
+    clearTimeout(this.pauseTimer);
+    clearTimeout(this.roundTimer);
+    clearTimeout(this.matchTimeout);
+
+    const surrenderer = odId === this.player1.odId ? this.player1 : this.player2;
+    const winner = odId === this.player1.odId ? this.player2 : this.player1;
+
+    const result = {
+      matchId: this.matchId,
+      winner: winner.odId,
+      reason: 'surrender',
+      rounds: this.currentRound,
+      xp: this.calculateXP(winner.odId),
+      player1: { odId: this.player1.odId, finalHp: this.player1.hp },
+      player2: { odId: this.player2.odId, finalHp: this.player2.hp },
+    };
+
+    // Surrenderer sees own action: reason='surrender' (default from result)
+    this.sendToPlayer(surrenderer, 'fight_end', { ...result });
+
+    // Winner sees opponent's action: reason override to 'opponent_surrendered'
+    this.sendToPlayer(winner, 'fight_end', {
+      ...result,
+      reason: 'opponent_surrendered',
+    });
+
+    this.saveFightResult(result);
+    return result;
+  }
+
+  // ── MATCH TIMEOUT ──────────────────────────────────────────────────────
+
+  // Sub-epic 4b — wall-clock backstop. Fires after MATCH_TIMEOUT_MS if match
+  // not ended via normal endFight/disconnect path. Both players notified via
+  // emit('fight_end') with reason='match_timeout', winner='draw'. Mirrors
+  // endFight result shape (player1/player2 nested objects with odId,
+  // username, finalHp) per saveFightResult contract (line 605-610 reads
+  // result.player1.odId / result.player1.finalHp). Lesson #32: codebase
+  // convention winner='draw' string, NOT null per ТЗ pseudocode.
+  onMatchTimeout() {
+    if (this.status === 'finished') return;
+    this.status = 'finished';
+    clearTimeout(this.pauseTimer);
+    clearTimeout(this.roundTimer);
+    clearTimeout(this.matchTimeout);
+
+    const result = {
+      matchId: this.matchId,
+      winner: 'draw',
+      reason: 'match_timeout',
+      rounds: this.currentRound,
+      xp: this.calculateXP('draw'),
+      player1: {
+        odId: this.player1.odId,
+        username: this.player1.username,
+        finalHp: this.player1.hp,
+      },
+      player2: {
+        odId: this.player2.odId,
+        username: this.player2.username,
+        finalHp: this.player2.hp,
+      },
+      roundLog: this.roundResults,
+    };
+
+    this.emit('fight_end', result);
     this.saveFightResult(result);
     return result;
   }
@@ -754,6 +846,44 @@ class PvPCombatEngine {
     return {
       winnerNew: Math.round(winnerRating + K * (1 - expected)),
       loserNew: Math.round(loserRating + K * (0 - (1 - expected))),
+    };
+  }
+
+  // ── STATE SNAPSHOT ─────────────────────────────────────────────────────
+
+  // Sub-epic 4b — read-only accessor для FE state-replay on reconnect.
+  // Plain JSON-serializable shape (sockets/timers/functions excluded). Idempotent
+  // (no side effects). Pre-edit field enumeration confirmed real engine state:
+  //   - Engine: matchId, status, currentRound, maxRounds, roundResults,
+  //     pendingChoices (coach pause state — populated when status='paused_coach')
+  //   - Player: odId, hp, activeEffects, diceUsedRound, coachTriggered
+  // OMITTED (don't exist в engine state — would be Option β scope creep):
+  //   - totalRounds (use maxRounds), maxHp (config constant), diceCooldownRemaining
+  //     (FE derives via DICE_COOLDOWN_ROUNDS - (currentRound - diceUsedRound)),
+  //     pausedFor (status='paused_coach' is the indicator)
+  getStateSnapshot() {
+    return {
+      matchId: this.matchId,
+      status: this.status,
+      currentRound: this.currentRound,
+      maxRounds: this.maxRounds,
+      player1: {
+        odId: this.player1.odId,
+        hp: this.player1.hp,
+        activeEffects: this.player1.activeEffects || [],
+        diceUsedRound: this.player1.diceUsedRound,
+        coachTriggered: this.player1.coachTriggered || false,
+      },
+      player2: {
+        odId: this.player2.odId,
+        hp: this.player2.hp,
+        activeEffects: this.player2.activeEffects || [],
+        diceUsedRound: this.player2.diceUsedRound,
+        coachTriggered: this.player2.coachTriggered || false,
+      },
+      roundResults: this.roundResults || [],
+      pendingChoices: this.pendingChoices || null,
+      timestamp: Date.now(),
     };
   }
 
