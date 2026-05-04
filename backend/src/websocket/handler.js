@@ -175,6 +175,7 @@ async function handleMessage(ws, userId, msg) {
     case 'pvp_ready':
     case 'dice_roll':
     case 'coach_choice':
+    case 'pvp_surrender': // Sub-epic 4b post-fix — case missed in PR #355 (was added к pvpHandler.js switch but not handler.js routing)
       handlePvPMessage(ws, msg, { odId: userId });
       break;
 
