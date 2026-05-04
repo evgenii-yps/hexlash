@@ -129,7 +129,7 @@
 </template>
 
 <script setup>
-import { mmState, MY_ELO as myElo } from '@/scene/interaction/useMatchmakingState.js';
+import { mmState, myElo } from '@/scene/interaction/useMatchmakingState.js';
 
 const emit = defineEmits(['back', 'cancel', 'rescan', 'fight', 'elo-change']);
 
