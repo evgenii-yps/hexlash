@@ -582,6 +582,7 @@ class PvPCombatEngine {
     this.emit('fight_end', result);
     this.sendToSpectators('fight_end', result);
     this.saveFightResult(result);
+    this.spectators.clear(); // Sub-epic 6 C5 — match-end cleanup (after final broadcast)
     return result;
   }
 
@@ -616,6 +617,7 @@ class PvPCombatEngine {
     this.sendToSpectators('fight_end', result);
 
     this.saveFightResult(result);
+    this.spectators.clear(); // Sub-epic 6 C5 — match-end cleanup (disconnect path)
     return result;
   }
 
@@ -661,6 +663,7 @@ class PvPCombatEngine {
     this.sendToSpectators('fight_end', result);
 
     this.saveFightResult(result);
+    this.spectators.clear(); // Sub-epic 6 C5 — match-end cleanup (surrender path)
     return result;
   }
 
@@ -702,6 +705,7 @@ class PvPCombatEngine {
     this.emit('fight_end', result);
     this.sendToSpectators('fight_end', result);
     this.saveFightResult(result);
+    this.spectators.clear(); // Sub-epic 6 C5 — match-end cleanup (timeout path)
     return result;
   }
 

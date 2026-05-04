@@ -119,6 +119,7 @@ function setupWebSocket(server) {
       clients.delete(userId);
       matchmaking.removeFromQueue(userId);
       handlePvPDisconnect(userId);
+      handleSpectateLeave(ws, userId); // Sub-epic 6 C5 — silent no-op if not spectating
       console.log(`WebSocket: user ${userId} disconnected. Total: ${clients.size}`);
     });
 
@@ -128,6 +129,7 @@ function setupWebSocket(server) {
       clients.delete(userId);
       matchmaking.removeFromQueue(userId);
       handlePvPDisconnect(userId);
+      handleSpectateLeave(ws, userId); // Sub-epic 6 C5 — silent no-op if not spectating
     });
   });
 
