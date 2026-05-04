@@ -1,8 +1,12 @@
-<!-- Epic 3Bb Step 6 — Matchmaking HUD.
-     1-to-1 port of prototype HTML 4822-4884. Reactive bindings against
-     mmState; styles in src/styles/v24/matchmaking.css (shared, no scoped
-     CSS). Phase wiring, filter watchers and candidate rendering arrive in
-     Steps 7-9. -->
+<!-- Sub-epic 5 — Matchmaking HUD.
+     Phase enum: 'searching' | 'found' | 'timeout' (C1 migration).
+     Filter sidebar (.mm-filters) v-if="false" — preserved markup + CSS для
+     future BE work (carry-over #29 — BE doesn't accept archetype/belt/eloDelta
+     queue params; revival = remove v-if="false").
+     `.mm-found` placeholder C8 (countdown UI lands там).
+     `.mm-timeout` placeholder C7 (retry/back UI lands там).
+     Real timer / queue size / online count displays land в C9/C10.
+     Styles в src/styles/v24/matchmaking.css (shared, not scoped). -->
 <template>
   <div class="matchmaking-hud">
     <button class="mm-back" @click="onBack">&larr; Back</button>
@@ -12,7 +16,9 @@
       <div class="mmt-name">FIND OPPONENT</div>
     </div>
 
-    <div class="mm-filters">
+    <!-- Filter sidebar hidden in Sub-epic 5 — BE doesn't accept these as queue
+         params (carry-over #29). Markup + CSS preserved для future revival. -->
+    <div class="mm-filters" v-if="false">
       <div class="mmf-title">Filters</div>
 
       <div class="mmf-block">
@@ -26,7 +32,6 @@
           class="mmf-slider"
           min="25" max="400" step="25"
           :value="mmState.eloDelta"
-          @input="onEloChange"
         />
       </div>
 
@@ -59,7 +64,7 @@
 
     <div class="mm-main">
       <!-- Phase: searching -->
-      <div v-if="mmState.phase === 'search'" class="mm-search">
+      <div v-if="mmState.phase === 'searching'" class="mm-search">
         <div class="mms-kicker">Scanning the grid</div>
         <div class="mms-title">SEARCHING</div>
         <div class="mm-spinner"></div>
@@ -67,63 +72,19 @@
           Scanning opponents in ELO
           <strong>{{ formatElo(myElo - mmState.eloDelta) }} &mdash; {{ formatElo(myElo + mmState.eloDelta) }}</strong>
         </div>
-        <div class="mms-progress-text">{{ mmState.searchProgress }} candidates found</div>
+        <!-- Sub-epic 5 C9 will add: search timer (mm:ss) + queue size display -->
         <button class="mms-cancel" @click="onCancel">Cancel Search</button>
       </div>
 
-      <!-- Phase: results -->
-      <template v-if="mmState.phase === 'results'">
-        <div class="mm-candidates-header">
-          <strong>{{ mmState.candidates.length }}</strong> opponents matched &middot; click a card to challenge
-        </div>
-        <div class="mm-candidates">
-          <div
-            v-for="(c, idx) in mmState.candidates"
-            :key="idx"
-            class="mm-card"
-            :class="{ selected: mmState.selected === idx }"
-            @click="mmState.selected = idx"
-          >
-            <div class="mmc-head">
-              <div
-                class="mmc-avatar"
-                :style="{ borderColor: c.arch.colorHex + '55', color: c.arch.colorHex }"
-              >{{ c.initials }}</div>
-              <div class="mmc-info">
-                <div class="mmc-name">{{ c.name }}</div>
-                <div class="mmc-arch" :style="{ color: c.arch.colorHex }">{{ c.arch.name }}</div>
-              </div>
-              <div class="mmc-diff" :class="c.diffClass">{{ c.diffLabel }}</div>
-            </div>
-            <div class="mmc-stats">
-              <div class="mmc-stat">
-                <div class="mmc-stat-val gold">{{ c.elo.toLocaleString() }}</div>
-                <div class="mmc-stat-label">ELO</div>
-              </div>
-              <div class="mmc-stat">
-                <div class="mmc-stat-val">{{ c.wins }}/{{ c.losses }}</div>
-                <div class="mmc-stat-label">W/L</div>
-              </div>
-              <div class="mmc-stat">
-                <div class="mmc-stat-val">{{ c.wr }}%</div>
-                <div class="mmc-stat-label">WR</div>
-              </div>
-              <div class="mmc-stat">
-                <div class="mmc-stat-val">{{ c.streak.n }}{{ c.streak.kind }}</div>
-                <div class="mmc-stat-label">Strk</div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="mm-actions">
-          <button class="mma-btn" @click="onRescan">Rescan</button>
-          <button
-            class="mma-btn primary"
-            :disabled="mmState.selected === null"
-            @click="onFight"
-          >Start Fight</button>
-        </div>
-      </template>
+      <!-- Phase: found — Sub-epic 5 C8 fills VS display + countdown -->
+      <div v-if="mmState.phase === 'found'" class="mm-found">
+        <!-- C8 — VS block (own captain + opponent + countdown) -->
+      </div>
+
+      <!-- Phase: timeout — Sub-epic 5 C7 fills "No players found" + retry/back -->
+      <div v-if="mmState.phase === 'timeout'" class="mm-timeout">
+        <!-- C7 — timeout UI + retry/back buttons -->
+      </div>
     </div>
   </div>
 </template>
@@ -131,10 +92,10 @@
 <script setup>
 import { mmState, myElo } from '@/scene/interaction/useMatchmakingState.js';
 
-const emit = defineEmits(['back', 'cancel', 'rescan', 'fight', 'elo-change']);
+const emit = defineEmits(['back', 'cancel']);
 
-// Filter options — static. Ids match mmState.archFilter/beltFilter values
-// the search screen expects; 'any' is the default wildcard.
+// Filter options preserved для future BE work (carry-over #29) — markup
+// hidden via v-if="false" until BE supports archetype/belt/eloDelta queue params.
 const archOptions = [
   { id: 'any', label: 'Any' },
   { id: 'pre', label: 'Predator' },
@@ -157,9 +118,6 @@ function formatElo(n) { return n.toLocaleString(); }
 
 function onBack()   { emit('back'); }
 function onCancel() { emit('cancel'); }
-function onRescan() { emit('rescan'); }
-function onFight()  { emit('fight'); }
-function onEloChange(e) { emit('elo-change', parseInt(e.target.value, 10)); }
 </script>
 
 <style scoped>

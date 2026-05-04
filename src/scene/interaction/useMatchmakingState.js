@@ -28,13 +28,6 @@ export const mmState = reactive({
   onlineCount: 0,         // total online players (REST poll, C10)
   countdown: 0,           // match-found countdown seconds (3 → 0, C8)
   matchData: null,        // { matchId, opponent } from MatchFoundMsg
-  // ── Mock-flow fields preserved до C3 (HudMatchmaking template still
-  // binds к mmState.candidates / .selected в phase==='results' branch;
-  // C3 drops the branch + these fields together).
-  candidates: [],
-  selected: null,
-  searchProgress: 0,
-  searchLog: [],
 });
 
 // Reset + phase transitions. resetMmState seeds mount + onBeforeUnmount;
@@ -50,10 +43,6 @@ export function resetMmState() {
   mmState.onlineCount = 0;
   mmState.countdown = 0;
   mmState.matchData = null;
-  mmState.candidates = [];
-  mmState.selected = null;
-  mmState.searchProgress = 0;
-  mmState.searchLog = [];
 }
 
 export function enterSearchPhase() {
@@ -62,10 +51,6 @@ export function enterSearchPhase() {
   mmState.queueSize = 0;
   mmState.countdown = 0;
   mmState.matchData = null;
-  mmState.candidates = [];
-  mmState.selected = null;
-  mmState.searchProgress = 0;
-  mmState.searchLog = [];
   // onlineCount preserved cross-phase (REST-polled value, не reset on rescan)
 }
 
