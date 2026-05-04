@@ -116,6 +116,7 @@ class PvPCombatEngine {
     this.pauseTimer = null;
     this.roundTimer = null;
     this.pendingChoices = {};
+    this.spectators = new Set(); // Sub-epic 6 C1 — Set<userId>; cleanup in C5
   }
 
   // ── START ──────────────────────────────────────────────────────────────
