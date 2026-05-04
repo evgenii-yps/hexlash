@@ -227,9 +227,20 @@ export function onSpectateFightStateResume(detail) {
   if (typeof detail.player2?.hp === 'number') spectateState.player2Hp = detail.player2.hp;
 
   // If snapshot status === 'finished' (race: match ended before snapshot delivery),
-  // mark fightOver and skip log replay (fight_end will arrive separately if not received).
+  // mark fightOver + derive winner from final HPs (snapshot doesn't include winner
+  // field — Sub-epic 6 C10 refinement of C9 behavior). Mirror engine.js endFight
+  // winner derivation lines 540-545. Without this, result overlay renders blank
+  // (resultText computed returns '' when winner === null).
   if (detail.status === 'finished') {
     spectateState.fightOver = true;
+    const p1Hp = detail.player1?.hp ?? 0;
+    const p2Hp = detail.player2?.hp ?? 0;
+    if (p1Hp <= 0 && p2Hp <= 0) spectateState.winner = 'draw';
+    else if (p1Hp <= 0) spectateState.winner = 'player2';
+    else if (p2Hp <= 0) spectateState.winner = 'player1';
+    else if (p1Hp > p2Hp) spectateState.winner = 'player1';
+    else if (p2Hp > p1Hp) spectateState.winner = 'player2';
+    else spectateState.winner = 'draw';
     return;
   }
 
@@ -258,6 +269,20 @@ export function onSpectateFightStateResume(detail) {
         });
       }
     }
+  }
+
+  // Sub-epic 6 C10 — if currently paused_coach (joined mid-pause), append log
+  // entry indicating pause state. HudSpectate template has no coach overlay UI
+  // (polish carry-over для Sub-epic 7) — log entry serves as minimal indicator.
+  if (detail.status === 'paused_coach') {
+    appendLog({
+      round: spectateState.currentRound,
+      side: 'system',
+      actor: 'Coach',
+      move: 'Pause active (joined mid-pause)',
+      damage: 0,
+      critical: false,
+    });
   }
 }
 
