@@ -97,6 +97,20 @@ function handlePvPMessage(ws, message, user) {
       break;
     }
 
+    case 'pvp_surrender': {
+      // Sub-epic 4b — voluntary forfeit. Resolve match by player odId (don't
+      // trust client matchId — security). Allow during running OR paused_coach
+      // (any non-finished state). Engine's surrender() also guards status —
+      // double-protection. match IS the engine instance (no .engine property).
+      const match = pvpMatchManager.getMatchByPlayer(user.odId);
+      if (!match) break;
+      if (match.status === 'finished') break;
+      // Ownership implicit via getMatchByPlayer (only returns matches where
+      // user.odId is participant). No additional ownership check needed.
+      match.surrender(user.odId);
+      break;
+    }
+
     case 'coach_choice': {
       const match = pvpMatchManager.getMatchByPlayer(user.odId);
       if (!match) break;
