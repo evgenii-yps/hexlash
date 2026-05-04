@@ -4982,6 +4982,145 @@ Closes 4th coverage gap из Wave 2 audit — guest clan view `/v2/clan/:id` por
 
 ---
 
+### Sub-Epic 4b (was 6B-7 partial) — PvP Edge Cases + Safety + BE Deploy Chain ✅ CLOSED
+
+Закрыт 2026-05-04. Восьмой coverage closure (Path D combined slim — surrender + reconnect-replay + match timeout + connection-lost UI). Standard linear closure (8th application в Эпике 6: 6A + 6B-1 + 6B-3 + Sub-epic 1 + Sub-epic 2 + Sub-epic 3 + Sub-epic 4a + Sub-epic 4b). 10 functional commits + 1 STOP-skipped (C10) + 1 cherry-pick PR (C11) + 3 closure commits.
+
+**Commit range:** `cf154d4` (C0) → `c90743f` (C9) — functional. Cherry-pick PR `fix/pvp-edge-cases-4b` → main (PR [#355](https://github.com/evgenii-yps/testhexlash/pull/355)). Branch: continue stack `claude/investigate-retirement-animation-zQeg4`.
+
+**Final report:** `docs/visual-migration/EPIC6_SUBEPIC_4B_FINAL_REPORT.md` (CL2).
+**Handoff:** `docs/visual-migration/HANDOFF_EPIC6_SUBEPIC_5_CHAT_HANDOFF.md` (CL3).
+**Phase 0 report:** `docs/visual-migration/EPIC6_SUBEPIC_4B_PHASE_0_REPORT.md` (committed C0).
+
+**TL;DR — Path D combined slim outcome:**
+1. ✅ Surrender flow (BE handler + FE button + WS routing + reason branching)
+2. ✅ Reconnect state-replay (BE getStateSnapshot + emit + FE hydration handler — Option α minimal, no DB persistence)
+3. ✅ Match timeout backstop (BE 10-min wall-clock — FE handles via existing fight_end reason branching)
+4. ✅ Connection-lost UI (NoConnection mounted в AppV2 — closes Phase 0 Q4 v2 gap)
+5. ✅ Carry-over #16 reclassified (NOT fixed — investigation revealed semantically correct)
+
+**Что видит пользователь:**
+- **Surrender button:** во время active PvP fight, top-right corner (`Surrender` red text). Click → confirm dialog → BE ends match с дифференцированными reason для surrenderer (`'surrender'`) и winner (`'opponent_surrendered'`). Result: "You surrendered." / "Opponent surrendered." overlay.
+- **Reconnect snapshot replay:** при возвращении WS connection во время active match, BE отправляет `fight_state_resume` snapshot с current round/HP/active effects/coach pause state/round log. FE clears local log + replays per-round entries → re-render fight UI consistent с BE-authoritative state.
+- **Match timeout (defensive):** если match exceeds 10 minutes (stuck state, не caught by heartbeat), BE auto-ends с `reason: 'match_timeout'`, `winner: 'draw'`. Result: "Match ended (time limit)." overlay.
+- **Connection-lost banner на /v2/*:** если WS disconnects > 5 seconds, "No connection to server. Please check your internet connection." banner появляется в bottom-area. Hides on reconnect. Reuses v1 NoConnection.vue verbatim (polish-tier v2 restyle deferred).
+
+**Commit chain (12 functional + 3 closure):**
+
+| # | SHA | Description |
+|---|---|---|
+| C0 | `cf154d4` | docs(4b): Phase 0 investigation report (housekeeping) |
+| C1 | `c6f3054` | feat(pvp): wall-clock match timeout backstop |
+| C2 | `acb3f5d` | feat(pvp): engine.surrender(odId) method |
+| C3 | `03d3135` | feat(pvp): pvp_surrender WS handler routing |
+| C4 | `f31fed2` | feat(pvp): engine.getStateSnapshot() method |
+| C5 | `4d10883` | feat(pvp): fight_state_resume emit on reconnect |
+| C6 | `c42f125` | feat(pvp): WS routing case fight_state_resume (FE) |
+| C7 | `82a8e7d` | feat(pvp): FightView reason branching + onFightStateResume |
+| C8 | `07ff348` | feat(pvp): HudFight surrender button + handler + CSS |
+| C9 | `c90743f` | feat(pvp): NoConnection mount в AppV2 |
+| C10 | — SKIPPED — | (carry-over #16 reclassified per Lesson #18 STOP — no commit) |
+| C11 | PR #355 | cherry-pick C1-C5 → fix/pvp-edge-cases-4b → main |
+| CL1 | this | docs(4b): CLAUDE.md update |
+| CL2 | next | docs(4b): final report |
+| CL3 | next | docs(4b): Sub-epic 5 handoff |
+
+**Cherry-pick branch SHAs (re-authored timestamps на `fix/pvp-edge-cases-4b`):**
+- C1 `c6f3054` → `7665d7a`
+- C2 `acb3f5d` → `253aff6`
+- C3 `03d3135` → `2cf4a2e`
+- C4 `f31fed2` → `1973198`
+- C5 `4d10883` → `77aa44d`
+
+**Files (modified, 8; new docs, 3):**
+
+Backend (modified, 4):
+- `backend/src/config.js` — `MATCH_TIMEOUT_MS` constant (+1 line)
+- `backend/src/services/pvpCombatEngine.js` — surrender/getStateSnapshot/onMatchTimeout methods + matchTimeout timer integration (+130 lines net)
+- `backend/src/websocket/pvpHandler.js` — `case 'pvp_surrender':` switch block (+14 lines)
+- `backend/src/websocket/handler.js` — extend reconnect block с fight_state_resume emit (+12 lines)
+
+Frontend (modified, 4):
+- `src/core/state/modules/webSocketState.js` — `case 'fight_state_resume':` к PvP fall-through chain (+1 line)
+- `src/views-v2/FightView.vue` — reason branching extension + onFightStateResume handler + listener registration/cleanup (+131 lines, -7)
+- `src/components/hud/HudFight.vue` — surrender button + handler + scoped CSS (+47 lines)
+- `src/AppV2.vue` — NoConnection mount + import (+2 lines)
+
+Documentation (new, 3):
+- `docs/visual-migration/EPIC6_SUBEPIC_4B_PHASE_0_REPORT.md` (615 lines, C0)
+- `docs/visual-migration/EPIC6_SUBEPIC_4B_FINAL_REPORT.md` (CL2)
+- `docs/visual-migration/HANDOFF_EPIC6_SUBEPIC_5_CHAT_HANDOFF.md` (CL3)
+
+**Backend touches summary:**
+- New WS message types added: `pvp_surrender` (FE→BE), `fight_state_resume` (BE→FE)
+- New `fight_end` reason flags: `surrender`, `opponent_surrendered`, `match_timeout`
+- New constant: `MATCH_TIMEOUT_MS = 600000` (10 min defensive backstop)
+- 3 new engine methods: `surrender(odId)`, `getStateSnapshot()`, `onMatchTimeout()`
+- Extension к existing reconnect block: snapshot emit after socket rebind
+- DB schema unchanged (Fight.reason String accepts arbitrary values; no migration)
+
+**Frontend additions summary:**
+- New WS routing case (1-line add к fall-through chain)
+- New event handler `onFightStateResume` (state hydration с 3 defensive guards)
+- New `onSurrender` click handler (confirm dialog + bare WS dispatch)
+- 4 new `resultSummary` reason branches (surrender/opponent_surrendered/match_timeout per perspective)
+- New scoped CSS `.surrender-btn` + `:hover` (red palette mirror `.fight-back` baseline)
+- 1 import addition к AppV2 (NoConnection mount)
+
+**Vuex / state additions:** NONE. All state extensions через module-scoped `fightState` reactive (mirror 4a precedent — flat field convention, NOT nested objects).
+
+**Closure shape:** Code-complete + deferred-verify (3rd application after 6B-3a-backend и Sub-epic 1). PR #355 created — backend deploy verify deferred к post-merge (mirrors 6B-3a-backend pattern). Frontend changes ship together at Эпик 6 closure (visual-v2 → main merge).
+
+**Recoveries log (1 catch in 4b session):**
+
+- **Recovery #84 (Phase 0 STEP 0 bootstrap, adaptation-tier per Lesson #35)** — Harness assigned fresh slug `claude/investigate-pvp-safety-mDJjV` instead of continue stack `claude/investigate-retirement-animation-zQeg4`. Same SHA `978b7ff` (Sub-epic 4b handoff commit) — zero work-loss risk. User-authorized Option A switch via `git checkout` (Recovery #82 mirror). Lesson #43 4th occurrence — promotion-ready.
+
+**Lesson #11 catches surfaced pre-edit (cumulative C1-C9 + C10 STOP):**
+
+| Commit | Catches | Tier |
+|---|---|---|
+| C1 | 4 | adaptation (clearAllTimers absent, p1Hp/p2Hp shape, winner='draw' string, 2 status='finished' sites) |
+| C2 | 3 | adaptation (calculateXP signature, player shape inconsistency, emit-vs-sendToPlayer pattern) |
+| C3 | 5 | adaptation (match.engine missing, inline-vs-function, user.odId param, status guard semantics, getMatchByPlayer ownership) |
+| C4 | 5 | adaptation (totalRounds/maxRounds, maxHp absent, diceCooldownRemaining derived, pausedFor absent, JSON-safety) |
+| C5 | 3 | adaptation (match.engine, flat WS shape, status guard reuse) |
+| C6 | 3 | alignment (fall-through chain, detail full message, CustomEvent template) |
+| C7 | 5 | adaptation (DICE_COOLDOWN_ROUNDS exists, clearFightLog import, reason branching architecture, coach pause text states, race guard) |
+| C8 | 5 | adaptation (no matchId in payload, top:90px placement, mutual exclusion с spectate, pointer-events: auto, CSS conventions) |
+| C9 | 4 | alignment (import path, no v-if guard, no z-index, no duplicate) |
+| C10 | 1 | **STOP-tier** (semantic invariant: ТЗ derivation broken, hardcode actually correct) |
+
+**Cumulative: 38 catches surfaced pre-edit.** All adaptation-tier OR alignment-tier OR STOP-tier. **0 hot-fixes. 0 reactive splits.** 4a's 10-catch ceiling exceeded **3.8x**. Pattern fully validated: Mode A discipline + Phase 0 5 mandatory subsections + per-commit STOP-and-confirm sustains catch density без streak break.
+
+**Methodology applied:**
+
+- **Lesson #11 reflex** — pre-edit grep on every edit (38 catches). Surface assumption gaps before commit, не fix-forward.
+- **Lesson #18 STOP at structural mismatch** — applied at C10 (carry-over #16 semantic contradiction). 1 commit skipped, не attempted, не reverted. Closure by reclassification per Option A.
+- **Lesson #32 convention discovery** — universally applied. Highlights: `match` IS engine (no `.engine` property — 3x BE confirmation), flat WS spread `{type, ...data}` (NOT nested `{type, data}`), `user.odId` param convention, position-based actor classes (`actor-warden`/`actor-predator`).
+- **Lesson #33 deploy-environment awareness** — 3rd application (mirror 6B-3a-backend / Sub-epic 1 cherry-pick → main → Railway). PR #355 created с code-complete + deferred-verify shape.
+- **Lesson #34 HUD overlay convention** — applied к `.surrender-btn` (`pointer-events: auto` mandatory due к `.fight-hud` parent's `pointer-events: none`).
+- **Lesson #35 reflex catch tiering** — all 38 catches classified (adaptation × 35, alignment × 12 [overlap with adaptation в multi-tier catches], STOP × 1). Streak preserved.
+- **Lesson #43 PROMOTED** — bootstrap branch divergence reflex (4th occurrence: 5U / Sub-epic 2 / 4a / 4b). Promotion criteria met (4-occurrence chain validated). Mandatory Phase 0 STEP 0 going forward.
+
+**6th Phase 0 subsection candidate (track, not yet promoted):**
+
+**Semantic invariant + flow direction verification** — surfaced 4b C10 STOP. Beyond API contracts (subsection 1), verify BE conventions about player ordering / role assignment / flow side that FE code derivations depend on. ChallengeNotification source-fix attempted в C10 surfaced this gap — derivation logic looked correct field-wise but semantically inverted because acceptor's relation к player1/player2 not verified против BE invariant. Candidate (1st occurrence) — track for future surfaces before promoting к mandatory.
+
+**Cumulative metrics:**
+- Streak: 27 → **28** ✅
+- Recoveries: 83+ → **84+** (+1: #84 bootstrap branch divergence adaptation-tier)
+- Эпик 6 progress: 10/14 → **11/14 (78%)** — past 3/4 milestone reached
+- Sub-epics closed в Эпик 6: 10 → **11**
+- Lessons promoted: 35 → **36** (+1: #43 bootstrap branch divergence reflex)
+- Lesson candidates active: 7 (#36/#37/#38/#39/#40/#41/#42) — #43 promoted
+- 6th Phase 0 subsection candidate surfaced (semantic invariant + flow direction verification)
+
+**Hot-fix metric:** **0 — 28-streak achieved** ✅ (5E → 5U + 6A + 6B-1 + 6B-2 + 6B-3a-backend + 6B-3 + 6B-3b + 6B-4 + Sub-epic 2 + Sub-epic 3 + Sub-epic 4a + Sub-epic 4b all clean).
+
+**Next sub-epic:** Sub-epic 5 — Real matchmaking (L size, ~12-15 commits estimated). Replaces client-side `matchmakingMock.js` (per Phase 0 5C) с real backend `matchmaking.js` integration. Continue stack continues `claude/investigate-retirement-animation-zQeg4`.
+
+---
+
 ## 🎉 ЭПИК 5 §4.2 — CLOSED ✅
 
 **Эпик 5 §4.2 historic milestone:** 22/22 sub-epic candidates closed (100%).
@@ -5015,16 +5154,17 @@ Closes 4th coverage gap из Wave 2 audit — guest clan view `/v2/clan/:id` por
 
 Последний эпик миграции. Roadmap: **14 sub-epics** (was 11; expanded к 13 due к 6B-3a-backend + 6B-3b split, then к 14 due к explicit 6B-10 Auth+Wallet accounting per 6A user-request carry-over). Strategy: гибрид B+C — постепенное закрытие coverage gaps + route-by-route cutover + финальный cleanup.
 
-**Эпик 6 progress:** **10/14 done (71%)** ✅ — Sub-epic 4a CLOSED, past two-thirds + into third-quarter zone. Standard linear closure (7th application: 6A + 6B-1 + 6B-3 + 6B-4 + 6B-5 + 6B-6 + 4a). Sub-epic 4 split into 4a (happy path, closed) + 4b (edge cases + safety, pending) per Path C decision.
+**Эпик 6 progress:** **11/14 done (78%)** ✅ — Sub-epic 4b CLOSED, past three-quarters milestone. Standard linear closure (8th application: 6A + 6B-1 + 6B-3 + 6B-4 + 6B-5 + 6B-6 + 4a + 4b). Sub-epic 4 split into 4a (happy path, closed) + 4b (edge cases + safety, closed) per Path C decision — both done.
 
 > **✅ DEPLOY VERIFY COMPLETE:** 6B-3a-backend deploy verified on `api.hexlash.com` (PR `fix/user-public-response` merged to main, Railway auto-deployed). Authenticated guest profile probe (`test_jen_1` viewing `onotole`) returned ONLY public fields, 0 private leaks (15 sensitive fields verified absent: email/balance/walletAddress/financial tokens/progression/deck/settings/language/updatedAt/etc). **Streak 20 → 21 transitioned successfully.** 6B-3 Phase 1 unblocked.
 
 Roadmap document: `docs/visual-migration/EPIC6_ROADMAP.md` (TBD — может быть создан как separate sub-epic либо in-place в этой секции).
 
 **Cumulative metrics entering Эпик 6 / current state:**
-- **27-streak** (5E → 5U + 6A + 6B-1 + 6B-2 + 6B-3a-backend + 6B-3 + 6B-3b + 6B-4 + Sub-epic 2 + Sub-epic 3 + Sub-epic 4a all clean)
-- **83+ cumulative recoveries** (Sub-epic 4a added 0 — 10 verify-gate refinements pre-edit, all adapted in scope per Lesson #11/#35; Sub-epic 3 added 0; Sub-epic 2 added 3 #81/#82/#83 adaptation-tier)
-- 35 lessons promoted, **7 candidates active** (#36/#37/#38/#39/#40/#41/#42) + **#43 candidate validated** (3rd occurrence bootstrap branch divergence, awaiting promotion decision)
+- **28-streak** (5E → 5U + 6A + 6B-1 + 6B-2 + 6B-3a-backend + 6B-3 + 6B-3b + 6B-4 + Sub-epic 2 + Sub-epic 3 + Sub-epic 4a + Sub-epic 4b all clean)
+- **84+ cumulative recoveries** (Sub-epic 4b added 1 — Recovery #84 bootstrap branch divergence adaptation-tier; Sub-epic 4a added 0; Sub-epic 3 added 0; Sub-epic 2 added 3 #81/#82/#83 adaptation-tier)
+- **36 lessons promoted** (Lesson #43 promoted in 4b — bootstrap branch divergence reflex, 4-occurrence chain validated 5U/Sub-epic 2/4a/4b), **7 candidates active** (#36/#37/#38/#39/#40/#41/#42)
+- **6th Phase 0 subsection candidate surfaced** (4b C10 STOP — semantic invariant + flow direction verification, 1st occurrence, tracking)
 
 **Sub-epics closed in Эпик 6:**
 - **6A** — Лёгкий cutover (4 FULL coverage routes на чистые URL'ы) ✅
@@ -5037,6 +5177,7 @@ Roadmap document: `docs/visual-migration/EPIC6_ROADMAP.md` (TBD — может �
 - **Sub-epic 2 (was 6B-5)** — Ratings reconciliation `/v2/ratings` (5th coverage gap closed: Path A → Path D reversal — standard linear, 11 functional commits + 1 audit-skip, 0 reactive splits, 3 adaptation-tier recoveries #81/#82/#83) ✅
 - **Sub-epic 3 (was 6B-6)** — Profile sub-routes deep links `/v2/wallet` + `/v2/account` (6th coverage gap closed: Path A per-sub-route v2 ports — standard linear, 8 functional commits + 1 visual verify gate, 0 reactive splits, 0 recoveries clean execution; +2 NEW carry-overs #14 Switcher3DPunch SKIP / #15 Vuetify→v2 design system port) ✅
 - **Sub-epic 4a (was 6B-7 partial)** — PvP в v2 + Real Backend WS — Happy Path End-to-End (7th coverage gap, 7th application standard linear; 11 functional commits + 1 housekeeping + audit-skip verify gate; Path C split decision (4a happy path / 4b edge cases); 0 recoveries, 0 reactive splits, 1 split decision (Commit 8 → 8a/8b); **10 Lesson #11 catches pre-edit** — methodology pattern reinforced; +13 NEW carry-overs #16-#28 polish/decoration; -1 closed (#1 ChallengeNotification на v2)) ✅
+- **Sub-epic 4b (was 6B-7 partial)** — PvP edge cases + safety + BE deploy chain (8th coverage closure, 8th application standard linear; Path D combined slim — surrender + reconnect-replay + match timeout + connection-lost UI; 10 functional commits + 1 STOP-skipped C10 + 1 cherry-pick PR #355; 1 recovery #84 adaptation-tier; **38 cumulative Lesson #11 catches pre-edit** — 4a 10-catch ceiling exceeded 3.8x; Lesson #43 PROMOTED; 6th Phase 0 subsection candidate surfaced; -1 closed via reclassification (#16 carry-over verified semantically correct, NOT source-fixed)) ✅
 
 > **📝 Naming convention update (after 6B-3b):** Remaining sub-epics renumbered к simple ordinals (Sub-epic 1, 2, ..., 8) для clarity. Historical sub-epics (6A / 6B-1 / 6B-2 / 6B-3a-backend / 6B-3 / 6B-3b) retain original names в documentation. New mapping:
 >
@@ -5044,13 +5185,13 @@ Roadmap document: `docs/visual-migration/EPIC6_ROADMAP.md` (TBD — может �
 > - **Sub-epic 2** — Полные ratings (was 6B-5) — M ✅ **CLOSED**
 > - **Sub-epic 3** — Profile sub-routes deep links (was 6B-6) — S-M ✅ **CLOSED**
 > - **Sub-epic 4a** — PvP в v2 happy path (was 6B-7 partial) — L ✅ **CLOSED**
-> - **Sub-epic 4b** — PvP edge cases + safety + BE deploy chain (was 6B-7 partial) — M-L
+> - **Sub-epic 4b** — PvP edge cases + safety + BE deploy chain (was 6B-7 partial) — M-L ✅ **CLOSED**
 > - **Sub-epic 5** — Реальный matchmaking (was 6B-8) — L
 > - **Sub-epic 6** — Реальный spectate (was 6B-9) — M-L
 > - **Sub-epic 7** — Auth + Wallet redesign (was 6B-10) — M-L
 > - **Sub-epic 8** — Финальный cutover (was 6C) — M
 >
-> Total: 14 sub-epics в Эпике 6 (Sub-epic 4 split into 4a + 4b — counted as 1 slot per Path C precedent; effective tracking 15 narratives across 14 budgeted slots). **10 closed, 5 remaining (4b/5/6/7/8)**.
+> Total: 14 sub-epics в Эпике 6 (Sub-epic 4 split into 4a + 4b — counted as 1 slot per Path C precedent; effective tracking 15 narratives across 14 budgeted slots). **11 closed, 4 remaining (5/6/7/8)**.
 
 **Carry-overs into Эпик 6 (27 items — +13 from Sub-epic 4a polish surface; -1 closed (#1 ChallengeNotification на v2 in Commit 5a); +2 from Sub-epic 3 surface):**
 1. Achievement badge для retirement (5Q drop, κ Path B)
@@ -5071,7 +5212,7 @@ Roadmap document: `docs/visual-migration/EPIC6_ROADMAP.md` (TBD — может �
 
 **Sub-epic 4a polish carry-overs (NEW #16-#28 — all decoration/polish/non-functional):**
 
-16. `isPlayer1: false` hardcoded в ChallengeNotification.vue:62 — addressed via overwrite cascade (onPvPFightStart Commit 6b correctly derives + commits SET_PVP_MATCH с overwrite). Dead-write code-clarity, не functional bug.
+16. **[RECLASSIFIED 4b C10 STOP — verified semantically correct, NOT source-fixed]** `isPlayer1: false` hardcode в ChallengeNotification.vue:62. Investigation в C10 pre-edit verify revealed semantic correctness per BE invariant: `pvpMatchManager.createMatch(matchId, {challenger as player1}, {acceptor as player2})` — `handleChallengeAccepted` runs on acceptor side, who IS player2 by convention. Original 4a classification "dead-write addressed via overwrite cascade" inverted actual semantics: overwrite cascade в FightView `onPvPFightStart` is **defensive redundancy**, не corrective. ТЗ proposed derivation `data.opponent?.odId !== userData.id` would always evaluate `true` (opponent ≠ self) → would set `isPlayer1: true` on acceptor → **inverted from correct value**. Closure: investigation conclusion, не code change. Future Claude: do NOT "fix" к computed expression — would invert correct value.
 17. v2 countdown UI parity gap (v1 had 3-2-1 countdown overlay before fight). Visual difference.
 18. Dodge/crit overlay title mechanism gap (v1 setEventTitle 1200ms; v2 merged into log entries). Decoration-only.
 19. Shake animation gap (v1 shakeLeft/shakeRight 400ms на damage). Decoration-only.
