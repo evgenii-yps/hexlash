@@ -81,9 +81,18 @@
         <!-- C8 — VS block (own captain + opponent + countdown) -->
       </div>
 
-      <!-- Phase: timeout — Sub-epic 5 C7 fills "No players found" + retry/back -->
+      <!-- Phase: timeout — "No players found" + retry/back actions -->
       <div v-if="mmState.phase === 'timeout'" class="mm-timeout">
-        <!-- C7 — timeout UI + retry/back buttons -->
+        <div class="mm-timeout-kicker">Search timeout</div>
+        <div class="mm-timeout-title">NO PLAYERS FOUND</div>
+        <div class="mm-timeout-status">
+          No opponents matched within the search window. Retry to expand search OR
+          return to the hub.
+        </div>
+        <div class="mm-timeout-actions">
+          <button class="mm-timeout-btn" @click="onBack">Back to Hub</button>
+          <button class="mm-timeout-btn primary" @click="onRetry">Retry Search</button>
+        </div>
       </div>
     </div>
   </div>
@@ -92,7 +101,7 @@
 <script setup>
 import { mmState, myElo } from '@/scene/interaction/useMatchmakingState.js';
 
-const emit = defineEmits(['back', 'cancel']);
+const emit = defineEmits(['back', 'cancel', 'retry']);
 
 // Filter options preserved для future BE work (carry-over #29) — markup
 // hidden via v-if="false" until BE supports archetype/belt/eloDelta queue params.
@@ -118,6 +127,7 @@ function formatElo(n) { return n.toLocaleString(); }
 
 function onBack()   { emit('back'); }
 function onCancel() { emit('cancel'); }
+function onRetry()  { emit('retry'); }
 </script>
 
 <style scoped>

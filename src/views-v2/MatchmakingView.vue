@@ -3,7 +3,7 @@
      C4 ✓ MatchmakingStartMsg dispatch + searchTime timer + captain pre-check
      C5 ✓ 4 window event listeners (match-found / queue-update / cancelled / timeout)
      C6 ✓ match-found handler → pvp/SET_PVP_MATCH → phase='found'
-     C7 — timeout handler + retry/back wiring
+     C7 ✓ timeout handler + retry/back wiring + DRY startMatchmakingSearch helper
      C8 — 3-second countdown post-match-found
      C9 — search timer + queue size display
      C10 — online players REST poll
@@ -15,6 +15,7 @@
     <HudMatchmaking
       @back="onBack"
       @cancel="onCancel"
+      @retry="onRetry"
     />
   </div>
 </template>
@@ -33,6 +34,7 @@ import { buildMatchmakingScene } from '@/scene/scenes/MatchmakingScene.js';
 import {
   mmState,
   resetMmState,
+  enterSearchPhase,
   enterFoundPhase,
   enterTimeoutPhase,
 } from '@/scene/interaction/useMatchmakingState.js';
@@ -84,6 +86,58 @@ function onCancel() {
 
 function onKeydown(e) {
   if (e.key === 'Escape') onBack();
+}
+
+// Sub-epic 5 C7 — DRY helper extraction. Used by onMounted (initial entry) +
+// onRetry (timeout-phase retry button). Captain pre-check guard mirrors C4
+// audit decision (carry-over #5 option c — minimal local fix, avoids trip к
+// BE NO_CAPTAIN_SET error path). Returns false on pre-check fail (caller
+// already redirected via router.replace + toast); true on dispatch success.
+function startMatchmakingSearch() {
+  const captain = store.getters['agent/currentCaptain'];
+  if (!captain) {
+    store.commit(
+      'master/setInfoMessage',
+      InfoMessageModel.withTimeout('No Captain set. Create a fighter first.', 3000),
+    );
+    router.replace('/v2');
+    return false;
+  }
+
+  // MatchmakingStartMsg dispatch — mirror v1 pattern (MatchmakingView.vue:226-237)
+  // с captain-authoritative ELO + skin (BE ignores client rating per Phase 0
+  // Q3.2 — uses captain.elo). Field name `username` matches BE handler
+  // expectation (handler.js:618). FE-side getter is userData.name (UserModel
+  // field, NOT 'username' per Lesson #11 catch).
+  const masterData = store.getters['master/getMaster'];
+  store.dispatch('webSocket/sendMessage', {
+    type: 'MatchmakingStartMsg',
+    matchmakingRequest: {
+      username: captain.name || masterData?.userData?.name || 'Player',
+      rating: captain.elo,
+      skin: captain.skin || masterData?.userData?.skin || null,
+      avatarUrl: masterData?.userData?.avatarUrl || null,
+    },
+  });
+  queueDispatched = true;
+
+  // searchTime timer (1s tick). Stopped on cancel/unmount/match-found/timeout
+  // (5 stopSearchTimer call sites). Idempotent — safe to call after onRetry
+  // even if previous searchTimer cleared.
+  searchTimer = setInterval(() => {
+    mmState.searchTime += 1;
+  }, 1000);
+  return true;
+}
+
+// Sub-epic 5 C7 — retry handler from .mm-timeout retry button.
+// Re-dispatches MatchmakingStartMsg + transitions phase к 'searching' + restarts
+// timer. Defensive stopSearchTimer call (C5 onMatchmakingTimeout already cleared
+// — idempotent re-clear safe).
+function onRetry() {
+  stopSearchTimer();
+  enterSearchPhase();
+  startMatchmakingSearch();
 }
 
 // Sub-epic 5 C5 — WS event listeners (named refs for proper removeEventListener).
@@ -163,42 +217,10 @@ onMounted(() => {
   window.addEventListener('matchmaking-cancelled',    onMatchmakingCancelled);
   window.addEventListener('matchmaking-timeout',      onMatchmakingTimeout);
 
-  // Sub-epic 5 C4 — captain pre-check guard (audit decision per carry-over #5
-  // option c: minimal local fix, не affects ErrorMsg flow elsewhere).
-  // Avoids trip к BE NO_CAPTAIN_SET path entirely.
-  const captain = store.getters['agent/currentCaptain'];
-  if (!captain) {
-    store.commit(
-      'master/setInfoMessage',
-      InfoMessageModel.withTimeout('No Captain set. Create a fighter first.', 3000),
-    );
-    router.replace('/v2');
-    return;
-  }
-
-  // Sub-epic 5 C4 — MatchmakingStartMsg dispatch.
-  // Mirror v1 pattern (MatchmakingView.vue:226-237) с captain-authoritative
-  // ELO + skin (BE ignores client rating per Phase 0 Q3.2 — uses captain.elo).
-  // Field name `username` matches BE handler field expectation
-  // (handler.js:618: `username: captain.name || username || 'Player'`).
-  // FE-side getter is userData.name (UserModel field, not 'username').
-  const masterData = store.getters['master/getMaster'];
-  store.dispatch('webSocket/sendMessage', {
-    type: 'MatchmakingStartMsg',
-    matchmakingRequest: {
-      username: captain.name || masterData?.userData?.name || 'Player',
-      rating: captain.elo,
-      skin: captain.skin || masterData?.userData?.skin || null,
-      avatarUrl: masterData?.userData?.avatarUrl || null,
-    },
-  });
-  queueDispatched = true;
-
-  // Sub-epic 5 C4 — searchTime timer (1s tick). C6/C7 will stop on phase
-  // transition к 'found'/'timeout'; this commit only stops on cancel/unmount.
-  searchTimer = setInterval(() => {
-    mmState.searchTime += 1;
-  }, 1000);
+  // Sub-epic 5 C4+C7 — start search via shared helper (captain pre-check
+  // guard + MatchmakingStartMsg dispatch + searchTime timer). Helper is
+  // also called from onRetry (timeout retry path).
+  startMatchmakingSearch();
 });
 
 onBeforeUnmount(() => {
