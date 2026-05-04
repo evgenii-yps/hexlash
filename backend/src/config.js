@@ -44,6 +44,7 @@ module.exports = {
   WS_PING_INTERVAL_MS: 30000,    // server ping every 30s
   WS_PONG_TIMEOUT_MS: 10000,     // kill connection if no pong in 10s
   PVP_READY_TIMEOUT_MS: 15000,   // cancel match if player not ready in 15s
+  MATCH_TIMEOUT_MS: 600000,      // 10 min wall-clock match backstop (Sub-epic 4b)
 
   // PvP Archetype Modifiers (passive bonuses per archetype)
   SLOT_WEIGHTS: [0.5, 0.3, 0.2],

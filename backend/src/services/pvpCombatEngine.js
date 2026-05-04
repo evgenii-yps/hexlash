@@ -13,6 +13,7 @@ const {
   COACH_MIN_ROUND,
   COACH_BOOST_ROUNDS,
   COACH_PAUSE_TIMEOUT_MS,
+  MATCH_TIMEOUT_MS,
   SLOT_WEIGHTS,
   ARCHETYPE_MODIFIERS,
 } = config;
@@ -139,6 +140,13 @@ class PvPCombatEngine {
     this.roundTimer = setTimeout(() => {
       this.nextRound();
     }, COUNTDOWN_MS);
+
+    // Sub-epic 4b — wall-clock match timeout backstop (defense vs stuck matches
+    // not caught by heartbeat / disconnect path). Cleared in endFight() +
+    // onPlayerDisconnect(). Fires onMatchTimeout() with reason='match_timeout'.
+    this.matchTimeout = setTimeout(() => {
+      this.onMatchTimeout();
+    }, MATCH_TIMEOUT_MS);
   }
 
   // ── ROUND FLOW ─────────────────────────────────────────────────────────
@@ -526,6 +534,7 @@ class PvPCombatEngine {
     this.status = 'finished';
     clearTimeout(this.pauseTimer);
     clearTimeout(this.roundTimer);
+    clearTimeout(this.matchTimeout);
 
     let winner = null;
     if (this.player1.hp <= 0 && this.player2.hp <= 0) winner = 'draw';
@@ -569,6 +578,7 @@ class PvPCombatEngine {
     this.status = 'finished';
     clearTimeout(this.pauseTimer);
     clearTimeout(this.roundTimer);
+    clearTimeout(this.matchTimeout);
 
     const winner = odId === this.player1.odId ? this.player2 : this.player1;
 
@@ -586,6 +596,46 @@ class PvPCombatEngine {
       reason: 'opponent_disconnected',
     });
 
+    this.saveFightResult(result);
+    return result;
+  }
+
+  // ── MATCH TIMEOUT ──────────────────────────────────────────────────────
+
+  // Sub-epic 4b — wall-clock backstop. Fires after MATCH_TIMEOUT_MS if match
+  // not ended via normal endFight/disconnect path. Both players notified via
+  // emit('fight_end') with reason='match_timeout', winner='draw'. Mirrors
+  // endFight result shape (player1/player2 nested objects with odId,
+  // username, finalHp) per saveFightResult contract (line 605-610 reads
+  // result.player1.odId / result.player1.finalHp). Lesson #32: codebase
+  // convention winner='draw' string, NOT null per ТЗ pseudocode.
+  onMatchTimeout() {
+    if (this.status === 'finished') return;
+    this.status = 'finished';
+    clearTimeout(this.pauseTimer);
+    clearTimeout(this.roundTimer);
+    clearTimeout(this.matchTimeout);
+
+    const result = {
+      matchId: this.matchId,
+      winner: 'draw',
+      reason: 'match_timeout',
+      rounds: this.currentRound,
+      xp: this.calculateXP('draw'),
+      player1: {
+        odId: this.player1.odId,
+        username: this.player1.username,
+        finalHp: this.player1.hp,
+      },
+      player2: {
+        odId: this.player2.odId,
+        username: this.player2.username,
+        finalHp: this.player2.hp,
+      },
+      roundLog: this.roundResults,
+    };
+
+    this.emit('fight_end', result);
     this.saveFightResult(result);
     return result;
   }
