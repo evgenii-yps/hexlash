@@ -80,6 +80,18 @@ function setupWebSocket(server) {
         } else if (activeMatch.player2.odId === userId) {
           activeMatch.player2.socket = ws;
         }
+        // Sub-epic 4b — emit state snapshot for FE state-replay (Option α minimal).
+        // match IS engine instance (no .engine property — C3/C4 precedent).
+        // Status guard above ensures no emit for finished matches (FE already
+        // received fight_end). Snapshot includes pendingChoices so FE can
+        // re-render coach pause overlay if reconnect during paused_coach state.
+        // Flat WS shape per engine.emit / sendToPlayer convention.
+        const snapshot = activeMatch.getStateSnapshot();
+        try {
+          ws.send(JSON.stringify({ type: 'fight_state_resume', ...snapshot }));
+        } catch (e) {
+          console.error('[PVP] Failed to send fight_state_resume:', e.message);
+        }
         console.log(`[PVP] Reconnected player ${userId} to match ${activeMatch.matchId}`);
       }
     }
