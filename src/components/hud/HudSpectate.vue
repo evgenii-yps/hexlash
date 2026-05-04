@@ -75,14 +75,16 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue';
+import { ref, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useStore } from 'vuex';
 import { t } from '@/locales/index.js';
 
+// Sub-epic 6 C8 — mock simulation gut. Real BE state binding wired в C9.
+// Imports nextTick / onMounted / onBeforeUnmount removed (only used by deleted
+// mock simulation code). C9 will re-add lifecycle hooks для state binding init.
 const MAX_HP = 100;
 const MAX_ROUNDS = 10;
-const TICK_MS = 2000;
 
 const route = useRoute();
 const router = useRouter();
@@ -105,17 +107,12 @@ const currentRound = ref(0);
 const fightLog = ref([]);
 const fightOver = ref(false);
 const winner = ref(null);
-const spectatorCount = ref(Math.floor(Math.random() * 8) + 2);
+const spectatorCount = ref(0); // Sub-epic 6 C8 — reset from mock random; C9 wires SpectatorListMsg binding
 
 const friendHpPct = computed(() => Math.max(0, (friendHp.value / MAX_HP) * 100));
 const opponentHpPct = computed(() => Math.max(0, (opponentHp.value / MAX_HP) * 100));
 
 const logListRef = ref(null);
-
-const MOVE_NAMES = [
-  'Jab', 'Hook', 'Uppercut', 'Cross', 'Straight',
-  'Combo', 'Counter', 'Block Strike', 'Feint', 'Rapid Fire',
-];
 
 const resultClass = computed(() => {
   if (!winner.value) return '';
@@ -128,98 +125,27 @@ const resultText = computed(() => {
   return `${winnerName} ${t.value.spectate.wins}!`;
 });
 
-let simInterval = null;
-
-function pickMove() { return MOVE_NAMES[Math.floor(Math.random() * MOVE_NAMES.length)]; }
-function rollDamage() { return 8 + Math.floor(Math.random() * 15); }
-function rollCrit() { return Math.random() < 0.15; }
-
-function applyExchange(side) {
-  const move = pickMove();
-  const dmg = rollDamage();
-  const critical = rollCrit();
-  const actualDmg = critical ? Math.round(dmg * 1.5) : dmg;
-
-  if (side === 'friend') {
-    opponentHp.value = Math.max(0, opponentHp.value - actualDmg);
-  } else {
-    friendHp.value = Math.max(0, friendHp.value - actualDmg);
-  }
-
-  fightLog.value.push({
-    round: currentRound.value,
-    side,
-    actor: side === 'friend' ? friendName.value : opponentName.value,
-    move,
-    damage: actualDmg,
-    critical,
-  });
-}
-
-function simulateRound() {
-  if (fightOver.value || currentRound.value >= MAX_ROUNDS) {
-    endFight();
-    return;
-  }
-
-  currentRound.value++;
-
-  applyExchange('friend');
-  if (opponentHp.value <= 0) { endFight(); return; }
-
-  applyExchange('opponent');
-  if (friendHp.value <= 0) { endFight(); return; }
-
-  if (currentRound.value >= MAX_ROUNDS) { endFight(); return; }
-
-  // Auto-scroll fight log to latest.
-  nextTick(() => {
-    if (logListRef.value) {
-      logListRef.value.scrollTop = logListRef.value.scrollHeight;
-    }
-  });
-
-  // Mock spectator drift.
-  if (Math.random() < 0.3) {
-    spectatorCount.value = Math.max(1, spectatorCount.value + (Math.random() > 0.5 ? 1 : -1));
-  }
-}
-
-function endFight() {
-  fightOver.value = true;
-  if (simInterval) { clearInterval(simInterval); simInterval = null; }
-
-  if (friendHp.value <= 0 && opponentHp.value <= 0) {
-    winner.value = 'friend';
-  } else if (opponentHp.value <= 0) {
-    winner.value = 'friend';
-  } else if (friendHp.value <= 0) {
-    winner.value = 'opponent';
-  } else {
-    winner.value = friendHp.value >= opponentHp.value ? 'friend' : 'opponent';
-  }
-
-  nextTick(() => {
-    if (logListRef.value) {
-      logListRef.value.scrollTop = logListRef.value.scrollHeight;
-    }
-  });
-}
+// Sub-epic 6 C8 — mock simulation logic gutted. Removed:
+// - pickMove / rollDamage / rollCrit (mock helpers)
+// - applyExchange (mock damage calc)
+// - simulateRound (mock setInterval round loop)
+// - endFight (mock fight termination — distinct from BE fight_end event handler
+//   which will be wired в C9 onSpectateFightEnd from SpectateView listener chain)
+// - simInterval variable + setInterval/clearInterval lifecycle
+// - MOVE_NAMES constant + TICK_MS constant
+// - onMounted / onBeforeUnmount hooks (mock-only — C9 re-adds for state binding init)
+//
+// KEPT: template structure, all reactive state refs (HP/rounds/log/result/spectatorCount),
+// computed values (friendName/opponentName/friendHpPct/opponentHpPct/resultClass/resultText),
+// logListRef, onLeave (used by .sp-back template binding), all .sp-* CSS classes.
+//
+// C9 will wire real BE state binding via shared composable (likely useSpectateState)
+// mirror Sub-epic 5 MatchmakingView/mmState pattern. SpectateView listener stubs
+// (per C7) will be replaced с composable mutations.
 
 function onLeave() {
   router.push('/v2');
 }
-
-onMounted(() => {
-  // 1s grace before kick-off (visual settling).
-  setTimeout(() => {
-    simInterval = setInterval(simulateRound, TICK_MS);
-  }, 1000);
-});
-
-onBeforeUnmount(() => {
-  if (simInterval) { clearInterval(simInterval); simInterval = null; }
-});
 </script>
 
 <style scoped>
