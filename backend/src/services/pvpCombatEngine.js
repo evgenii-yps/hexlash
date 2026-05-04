@@ -849,6 +849,44 @@ class PvPCombatEngine {
     };
   }
 
+  // ── STATE SNAPSHOT ─────────────────────────────────────────────────────
+
+  // Sub-epic 4b — read-only accessor для FE state-replay on reconnect.
+  // Plain JSON-serializable shape (sockets/timers/functions excluded). Idempotent
+  // (no side effects). Pre-edit field enumeration confirmed real engine state:
+  //   - Engine: matchId, status, currentRound, maxRounds, roundResults,
+  //     pendingChoices (coach pause state — populated when status='paused_coach')
+  //   - Player: odId, hp, activeEffects, diceUsedRound, coachTriggered
+  // OMITTED (don't exist в engine state — would be Option β scope creep):
+  //   - totalRounds (use maxRounds), maxHp (config constant), diceCooldownRemaining
+  //     (FE derives via DICE_COOLDOWN_ROUNDS - (currentRound - diceUsedRound)),
+  //     pausedFor (status='paused_coach' is the indicator)
+  getStateSnapshot() {
+    return {
+      matchId: this.matchId,
+      status: this.status,
+      currentRound: this.currentRound,
+      maxRounds: this.maxRounds,
+      player1: {
+        odId: this.player1.odId,
+        hp: this.player1.hp,
+        activeEffects: this.player1.activeEffects || [],
+        diceUsedRound: this.player1.diceUsedRound,
+        coachTriggered: this.player1.coachTriggered || false,
+      },
+      player2: {
+        odId: this.player2.odId,
+        hp: this.player2.hp,
+        activeEffects: this.player2.activeEffects || [],
+        diceUsedRound: this.player2.diceUsedRound,
+        coachTriggered: this.player2.coachTriggered || false,
+      },
+      roundResults: this.roundResults || [],
+      pendingChoices: this.pendingChoices || null,
+      timestamp: Date.now(),
+    };
+  }
+
   // ── UTILITIES ──────────────────────────────────────────────────────────
 
   emit(type, data) {
