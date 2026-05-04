@@ -600,6 +600,48 @@ class PvPCombatEngine {
     return result;
   }
 
+  // ── SURRENDER ──────────────────────────────────────────────────────────
+
+  // Sub-epic 4b — voluntary forfeit. Both players alive → mirror disconnect
+  // pattern (asymmetric dual sendToPlayer with differentiated reason), NOT
+  // emit (which would override per-player reason). Surrenderer receives
+  // reason='surrender'; winner receives reason='opponent_surrendered'.
+  // saveFightResult once with match-POV reason='surrender'. calculateXP
+  // returns {player1, player2} object — each player picks own XP by odId
+  // on FE side.
+  surrender(odId) {
+    if (this.status === 'finished') return;
+    this.status = 'finished';
+    clearTimeout(this.pauseTimer);
+    clearTimeout(this.roundTimer);
+    clearTimeout(this.matchTimeout);
+
+    const surrenderer = odId === this.player1.odId ? this.player1 : this.player2;
+    const winner = odId === this.player1.odId ? this.player2 : this.player1;
+
+    const result = {
+      matchId: this.matchId,
+      winner: winner.odId,
+      reason: 'surrender',
+      rounds: this.currentRound,
+      xp: this.calculateXP(winner.odId),
+      player1: { odId: this.player1.odId, finalHp: this.player1.hp },
+      player2: { odId: this.player2.odId, finalHp: this.player2.hp },
+    };
+
+    // Surrenderer sees own action: reason='surrender' (default from result)
+    this.sendToPlayer(surrenderer, 'fight_end', { ...result });
+
+    // Winner sees opponent's action: reason override to 'opponent_surrendered'
+    this.sendToPlayer(winner, 'fight_end', {
+      ...result,
+      reason: 'opponent_surrendered',
+    });
+
+    this.saveFightResult(result);
+    return result;
+  }
+
   // ── MATCH TIMEOUT ──────────────────────────────────────────────────────
 
   // Sub-epic 4b — wall-clock backstop. Fires after MATCH_TIMEOUT_MS if match
