@@ -7,7 +7,7 @@
      C8 ✓ 3-second countdown post-match-found + VS display + navigate /v2/fight (carry-over #17)
      C9 ✓ search timer + queue size display
      C10 ✓ online players count REST fetch + display
-     C11 — double-queue FE redirect guard
+     C11 ✓ double-queue FE redirect guard
      C12 — race Q8.1 cancel-during-pair handling
 -->
 <template>
@@ -237,6 +237,21 @@ function onMatchmakingTimeout() {
 }
 
 onMounted(() => {
+  // Sub-epic 5 C11 — double-queue FE redirect guard (Phase 0 Q8.3).
+  // If user already в active PvP match (e.g. opens new tab/window during
+  // fight), skip matchmaking entry entirely + redirect к /v2/fight where
+  // existing FightView matchActive computed gates PvP mode. router.replace
+  // (NOT push) prevents back-button returning to matchmaking.
+  // Guard placed BEFORE scene setup — cheaper если redirect fires (no
+  // buildMatchmakingScene allocation, no scene/listener registration).
+  // onBeforeUnmount cleanup safe on uninitialized state — all ops no-op
+  // на null sceneApi/searchTimer/countdownTimer/onResize, browser-tolerant
+  // на never-added removeEventListener calls.
+  if (store.getters['pvp/getCurrentMatchId'] !== null) {
+    router.replace('/v2/fight');
+    return;
+  }
+
   const aspect = window.innerWidth / window.innerHeight;
   sceneApi = buildMatchmakingScene(THREE, aspect);
   registerScene('matchmaking', {
