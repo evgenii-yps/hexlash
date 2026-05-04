@@ -189,6 +189,10 @@ const actions = {
             case 'fight_state_resume':
                 window.dispatchEvent(new CustomEvent('pvp-' + messageType, { detail: message }));
                 break;
+            // ─── Sub-epic 6 — Spectator metadata ───────────────────────
+            case 'SpectatorListMsg':
+                window.dispatchEvent(new CustomEvent('spectator-list-update', { detail: message }));
+                break;
             // ─── Challenge messages ─────────────────────────────────────
             case 'challenge_received':
                 store.commit('friends/setIncomingChallenge', message.from);
