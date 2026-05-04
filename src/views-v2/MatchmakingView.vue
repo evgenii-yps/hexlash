@@ -1,7 +1,7 @@
 <!-- Sub-epic 5 — Matchmaking view orchestrator. Real BE wiring landing across
      C4-C12:
      C4 ✓ MatchmakingStartMsg dispatch + searchTime timer + captain pre-check
-     C5 — 4 window event listeners (match-found / queue-update / cancelled / timeout)
+     C5 ✓ 4 window event listeners (match-found / queue-update / cancelled / timeout)
      C6 — match-found handler → pvp/SET_PVP_MATCH → phase='found'
      C7 — timeout handler + retry/back wiring
      C8 — 3-second countdown post-match-found
@@ -33,6 +33,7 @@ import { buildMatchmakingScene } from '@/scene/scenes/MatchmakingScene.js';
 import {
   mmState,
   resetMmState,
+  enterTimeoutPhase,
 } from '@/scene/interaction/useMatchmakingState.js';
 import { InfoMessageModel } from '@/core/models/internal/infoMessageModel.js';
 import HudMatchmaking from '@/components/hud/HudMatchmaking.vue';
@@ -84,6 +85,46 @@ function onKeydown(e) {
   if (e.key === 'Escape') onBack();
 }
 
+// Sub-epic 5 C5 — WS event listeners (named refs for proper removeEventListener).
+// Event names verbatim from webSocketState.js:164-175 routing chain (Phase 0 Q1.1).
+
+function onQueueUpdate(e) {
+  // BE→FE MatchmakingQueueMsg → { queueSize: number }
+  mmState.queueSize = e.detail?.queueSize || 0;
+}
+
+function onMatchFound(e) {
+  // BE→FE MatchFoundMsg → { matchId, opponent: { odId, username, rating, skin, avatarUrl } }
+  // C5 stashes raw data + stops searchTimer. C6 will commit pvp/SET_PVP_MATCH +
+  // call enterFoundPhase + initialise countdown timer (C8 wiring).
+  if (!e.detail) return;
+  mmState.matchData = {
+    matchId: e.detail.matchId,
+    opponent: e.detail.opponent,
+  };
+  stopSearchTimer();
+  // queueDispatched stays true до C6 commits pvp state — Cancel still
+  // safely no-op'able if user navigates back during pre-pvp_ready window.
+  // (BE removed user from queue at match creation per matchmaking.js:115-116;
+  // Cancel msg is harmless redundancy.)
+}
+
+function onMatchmakingCancelled() {
+  // BE→FE MatchmakingCancelledMsg ack — local cleanup already done by
+  // dispatchMatchmakingCancel call site (onCancel/onBack/onBeforeUnmount).
+  // C12 may extend для race Q8.1 handling.
+  queueDispatched = false;
+}
+
+function onMatchmakingTimeout() {
+  // BE→FE matchmaking_timeout → { reason: 'search_timeout' }. BE has already
+  // removed user from queue (matchmaking.js:60). Stop local timer + transition
+  // phase. C7 fills .mm-timeout template content (retry/back UI).
+  stopSearchTimer();
+  queueDispatched = false;
+  enterTimeoutPhase();
+}
+
 onMounted(() => {
   const aspect = window.innerWidth / window.innerHeight;
   sceneApi = buildMatchmakingScene(THREE, aspect);
@@ -97,6 +138,13 @@ onMounted(() => {
   onResize = handleResize;
   window.addEventListener('resize', onResize);
   window.addEventListener('keydown', onKeydown);
+
+  // Sub-epic 5 C5 — register 4 BE matchmaking event listeners. Named function
+  // refs (NOT anonymous arrows) for proper removeEventListener в onBeforeUnmount.
+  window.addEventListener('matchmaking-queue-update', onQueueUpdate);
+  window.addEventListener('matchmaking-match-found',  onMatchFound);
+  window.addEventListener('matchmaking-cancelled',    onMatchmakingCancelled);
+  window.addEventListener('matchmaking-timeout',      onMatchmakingTimeout);
 
   // Sub-epic 5 C4 — captain pre-check guard (audit decision per carry-over #5
   // option c: minimal local fix, не affects ErrorMsg flow elsewhere).
@@ -138,6 +186,11 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', onKeydown);
+  // Sub-epic 5 C5 — unregister BE matchmaking listeners (mirror onMounted).
+  window.removeEventListener('matchmaking-queue-update', onQueueUpdate);
+  window.removeEventListener('matchmaking-match-found',  onMatchFound);
+  window.removeEventListener('matchmaking-cancelled',    onMatchmakingCancelled);
+  window.removeEventListener('matchmaking-timeout',      onMatchmakingTimeout);
   if (onResize) {
     window.removeEventListener('resize', onResize);
     onResize = null;
