@@ -23,6 +23,18 @@ import { onMounted, onBeforeUnmount } from 'vue';
 import { useStore } from 'vuex';
 import { useRoute } from 'vue-router';
 import HudSpectate from '@/components/hud/HudSpectate.vue';
+import {
+  resetSpectateState,
+  onSpectateRoundResult       as onSpectateRoundResultMutation,
+  onSpectateDiceRolled        as onSpectateDiceRolledMutation,
+  onSpectateDiceAvailable     as onSpectateDiceAvailableMutation,
+  onSpectateCoachPause        as onSpectateCoachPauseMutation,
+  onSpectateCoachResult       as onSpectateCoachResultMutation,
+  onSpectateFightEnd          as onSpectateFightEndMutation,
+  onSpectateOverdriveStart    as onSpectateOverdriveStartMutation,
+  onSpectateFightStateResume  as onSpectateFightStateResumeMutation,
+  onSpectatorListUpdate       as onSpectatorListUpdateMutation,
+} from '@/scene/interaction/useSpectateState.js';
 
 const store = useStore();
 const route = useRoute();
@@ -35,21 +47,26 @@ function onKeyDown(e) {
   }
 }
 
-// Sub-epic 6 C7 — stub WS event handlers. Bodies replaced с real state binding
-// в C9 (HudSpectate state hydration via shared composable, mirror FightView /
-// useFightSimulation pattern). Stubs preserved for traceability + listener
-// idempotency verification.
-function onSpectateRoundResult(e)       { console.debug('[SPECTATE] round_result',       e.detail); /* TODO C9 */ }
-function onSpectateDiceRolled(e)        { console.debug('[SPECTATE] dice_rolled',        e.detail); /* TODO C9 */ }
-function onSpectateDiceAvailable(e)     { console.debug('[SPECTATE] dice_available',     e.detail); /* TODO C9 */ }
-function onSpectateCoachPause(e)        { console.debug('[SPECTATE] coach_pause',        e.detail); /* TODO C9 */ }
-function onSpectateCoachResult(e)       { console.debug('[SPECTATE] coach_result',       e.detail); /* TODO C9 */ }
-function onSpectateFightEnd(e)          { console.debug('[SPECTATE] fight_end',          e.detail); /* TODO C9 */ }
-function onSpectateOverdriveStart(e)    { console.debug('[SPECTATE] overdrive_start',    e.detail); /* TODO C9 */ }
-function onSpectateFightStateResume(e)  { console.debug('[SPECTATE] fight_state_resume', e.detail); /* TODO C9 (reuse 4b pattern) */ }
-function onSpectatorListUpdate(e)       { console.debug('[SPECTATE] spectator-list-update', e.detail); /* TODO C9 */ }
+// Sub-epic 6 C9 — WS event handlers. Each unwraps CustomEvent.detail and
+// delegates к useSpectateState composable mutation function (mirror Sub-epic 5
+// MatchmakingView / useMatchmakingState pattern). HudSpectate template binds
+// reactive state from composable.
+function onSpectateRoundResult(e)       { onSpectateRoundResultMutation(e.detail); }
+function onSpectateDiceRolled(e)        { onSpectateDiceRolledMutation(e.detail); }
+function onSpectateDiceAvailable(e)     { onSpectateDiceAvailableMutation(e.detail); }
+function onSpectateCoachPause(e)        { onSpectateCoachPauseMutation(e.detail); }
+function onSpectateCoachResult(e)       { onSpectateCoachResultMutation(e.detail); }
+function onSpectateFightEnd(e)          { onSpectateFightEndMutation(e.detail); }
+function onSpectateOverdriveStart(e)    { onSpectateOverdriveStartMutation(e.detail); }
+function onSpectateFightStateResume(e)  { onSpectateFightStateResumeMutation(e.detail); }
+function onSpectatorListUpdate(e)       { onSpectatorListUpdateMutation(e.detail); }
 
 onMounted(() => {
+  // Sub-epic 6 C9 — fresh spectate session: reset shared composable state
+  // (mirror Sub-epic 5 MatchmakingView / resetMmState pattern). Prevents
+  // cross-session leakage on remount.
+  resetSpectateState();
+
   // 5N Esc handler
   window.addEventListener('keydown', onKeyDown);
 

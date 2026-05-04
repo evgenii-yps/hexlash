@@ -18,31 +18,36 @@
       <div class="sp-kicker">{{ t.spectate.title }}</div>
       <div class="sp-spec-count">
         <span class="sp-spec-dot"></span>
-        {{ spectatorCount }} {{ t.spectate.spectators }}
+        {{ spectateState.spectatorCount }} {{ t.spectate.spectators }}
       </div>
     </div>
 
     <div class="sp-round-badge">
-      {{ t.spectate.round }} {{ currentRound }} / {{ MAX_ROUNDS }}
+      {{ t.spectate.round }} {{ spectateState.currentRound }} / {{ spectateState.maxRounds }}
     </div>
 
     <div class="sp-fighters">
+      <!-- Visual position: LEFT = player1 (BE-truth deterministic).
+           CSS modifier --friend KEPT as visual color label (green) — does
+           NOT imply spectator-friend semantics post-C9 rename. -->
       <div class="sp-fighter sp-fighter--friend">
-        <div class="sp-fname">{{ friendName }}</div>
+        <div class="sp-fname">{{ spectateState.player1Name }}</div>
         <div class="sp-hp-bar">
-          <div class="sp-hp-fill sp-hp-fill--friend" :style="{ width: friendHpPct + '%' }"></div>
+          <div class="sp-hp-fill sp-hp-fill--friend" :style="{ width: player1HpPct + '%' }"></div>
         </div>
-        <div class="sp-hp-num">{{ friendHp }} / {{ MAX_HP }}</div>
+        <div class="sp-hp-num">{{ spectateState.player1Hp }} / {{ spectateState.maxHp }}</div>
       </div>
 
       <div class="sp-vs">VS</div>
 
+      <!-- Visual position: RIGHT = player2 (BE-truth deterministic).
+           CSS modifier --opponent KEPT as visual color label (red). -->
       <div class="sp-fighter sp-fighter--opponent">
-        <div class="sp-fname">{{ opponentName }}</div>
+        <div class="sp-fname">{{ spectateState.player2Name }}</div>
         <div class="sp-hp-bar">
-          <div class="sp-hp-fill sp-hp-fill--opponent" :style="{ width: opponentHpPct + '%' }"></div>
+          <div class="sp-hp-fill sp-hp-fill--opponent" :style="{ width: player2HpPct + '%' }"></div>
         </div>
-        <div class="sp-hp-num">{{ opponentHp }} / {{ MAX_HP }}</div>
+        <div class="sp-hp-num">{{ spectateState.player2Hp }} / {{ spectateState.maxHp }}</div>
       </div>
     </div>
 
@@ -50,25 +55,31 @@
       <div class="sp-log-header">{{ t.spectate.fightLog }}</div>
       <div class="sp-log-list" ref="logListRef">
         <div
-          v-for="(entry, i) in fightLog"
+          v-for="(entry, i) in spectateState.fightLog"
           :key="i"
           class="sp-log-entry"
           :class="{ 'sp-log-crit': entry.critical }"
         >
           <span class="sp-log-round">R{{ entry.round }}</span>
+          <!-- Sub-epic 6 C9 — log entry side coloring object syntax handles
+               'player1' / 'player2' / 'system' (overdrive, coach metadata).
+               System entries fall back к base .sp-log-actor color (no modifier). -->
           <span
             class="sp-log-actor"
-            :class="entry.side === 'friend' ? 'sp-actor--friend' : 'sp-actor--opp'"
+            :class="{
+              'sp-actor--friend': entry.side === 'player1',
+              'sp-actor--opp': entry.side === 'player2',
+            }"
           >{{ entry.actor }}</span>
           <span class="sp-log-action">{{ t.spectate.uses }} {{ entry.move }}</span>
-          <span class="sp-log-damage">-{{ entry.damage }}</span>
+          <span v-if="entry.damage > 0" class="sp-log-damage">-{{ entry.damage }}</span>
           <span v-if="entry.critical" class="sp-log-crit-badge">{{ t.spectate.critical }}</span>
         </div>
-        <div v-if="fightLog.length === 0" class="sp-log-empty">...</div>
+        <div v-if="spectateState.fightLog.length === 0" class="sp-log-empty">...</div>
       </div>
     </div>
 
-    <div v-if="fightOver" class="sp-result" :class="resultClass">
+    <div v-if="spectateState.fightOver" class="sp-result" :class="resultClass">
       <div class="sp-result-text">{{ resultText }}</div>
     </div>
   </div>
@@ -76,72 +87,48 @@
 
 <script setup>
 import { ref, computed } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { useStore } from 'vuex';
+import { useRouter } from 'vue-router';
 import { t } from '@/locales/index.js';
+import {
+  spectateState,
+  player1HpPct,
+  player2HpPct,
+} from '@/scene/interaction/useSpectateState.js';
 
-// Sub-epic 6 C8 — mock simulation gut. Real BE state binding wired в C9.
-// Imports nextTick / onMounted / onBeforeUnmount removed (only used by deleted
-// mock simulation code). C9 will re-add lifecycle hooks для state binding init.
-const MAX_HP = 100;
-const MAX_ROUNDS = 10;
+// Sub-epic 6 C9 — Real BE state binding via useSpectateState composable
+// (mirror Sub-epic 5 useMatchmakingState pattern). State mutations live в
+// composable; SpectateView listeners delegate WS event handlers к composable.
+// HudSpectate is presentational — reads spectateState reactive fields.
+//
+// 6th subsection #2 occurrence formal application:
+// - State field naming player1*/player2* (BE-truth deterministic, NOT
+//   self-anchored friendHp/opponentHp 5N mock convention)
+// - Result derivation 'player1' | 'player2' | 'draw' (no VICTORY/DEFEAT —
+//   spectator is third-party, no self-perspective)
+// - CSS visual labels .sp-fighter--friend / --opponent KEPT (visual position
+//   labels: player1 = LEFT, player2 = RIGHT — visual semantics preserved
+//   while state semantics fixed к BE-truth)
 
-const route = useRoute();
 const router = useRouter();
-const store = useStore();
-
-// Mock fighter identity — friend lookup if route.params.fightId matches a friend id.
-// Falls back to generic name otherwise (direct URL access).
-const fightId = computed(() => route.params.fightId);
-const friend = computed(() => {
-  const friends = store.getters['friends/getFriends'] || [];
-  return friends.find((f) => f.id === fightId.value);
-});
-const friendName = computed(() => friend.value?.username || 'Fighter');
-const opponentName = ref(route.query.odName || 'Opponent');
-
-// Fight state.
-const friendHp = ref(MAX_HP);
-const opponentHp = ref(MAX_HP);
-const currentRound = ref(0);
-const fightLog = ref([]);
-const fightOver = ref(false);
-const winner = ref(null);
-const spectatorCount = ref(0); // Sub-epic 6 C8 — reset from mock random; C9 wires SpectatorListMsg binding
-
-const friendHpPct = computed(() => Math.max(0, (friendHp.value / MAX_HP) * 100));
-const opponentHpPct = computed(() => Math.max(0, (opponentHp.value / MAX_HP) * 100));
 
 const logListRef = ref(null);
 
 const resultClass = computed(() => {
-  if (!winner.value) return '';
-  return winner.value === 'friend' ? 'sp-result--win' : 'sp-result--loss';
+  if (!spectateState.winner) return '';
+  if (spectateState.winner === 'draw') return 'sp-result--draw';
+  // Visual: player1 win = green ('--win' class via friend visual color)
+  // Visual: player2 win = red ('--loss' via opponent visual color)
+  return spectateState.winner === 'player1' ? 'sp-result--win' : 'sp-result--loss';
 });
 
 const resultText = computed(() => {
-  if (!winner.value) return '';
-  const winnerName = winner.value === 'friend' ? friendName.value : opponentName.value;
+  if (!spectateState.winner) return '';
+  if (spectateState.winner === 'draw') return t.value.spectate.draw || 'Draw';
+  const winnerName = spectateState.winner === 'player1'
+    ? spectateState.player1Name
+    : spectateState.player2Name;
   return `${winnerName} ${t.value.spectate.wins}!`;
 });
-
-// Sub-epic 6 C8 — mock simulation logic gutted. Removed:
-// - pickMove / rollDamage / rollCrit (mock helpers)
-// - applyExchange (mock damage calc)
-// - simulateRound (mock setInterval round loop)
-// - endFight (mock fight termination — distinct from BE fight_end event handler
-//   which will be wired в C9 onSpectateFightEnd from SpectateView listener chain)
-// - simInterval variable + setInterval/clearInterval lifecycle
-// - MOVE_NAMES constant + TICK_MS constant
-// - onMounted / onBeforeUnmount hooks (mock-only — C9 re-adds for state binding init)
-//
-// KEPT: template structure, all reactive state refs (HP/rounds/log/result/spectatorCount),
-// computed values (friendName/opponentName/friendHpPct/opponentHpPct/resultClass/resultText),
-// logListRef, onLeave (used by .sp-back template binding), all .sp-* CSS classes.
-//
-// C9 will wire real BE state binding via shared composable (likely useSpectateState)
-// mirror Sub-epic 5 MatchmakingView/mmState pattern. SpectateView listener stubs
-// (per C7) will be replaced с composable mutations.
 
 function onLeave() {
   router.push('/v2');
