@@ -86,7 +86,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { t } from '@/locales/index.js';
 import {
@@ -133,6 +133,23 @@ const resultText = computed(() => {
 function onLeave() {
   router.push('/v2');
 }
+
+// Sub-epic 6 C12 — auto-scroll fight log to latest entry on append.
+// 5N had this behavior inline в simulateRound + endFight; C8 mock gut
+// removed it (along с nextTick import) — functional bug fixed в C12.
+// Watches fightLog.length (cheaper than deep watch on log array) + nextTick
+// for DOM update before scroll. Race-tolerant: no-op if logListRef unmounted
+// (e.g., navigation race).
+watch(
+  () => spectateState.fightLog.length,
+  () => {
+    nextTick(() => {
+      if (logListRef.value) {
+        logListRef.value.scrollTop = logListRef.value.scrollHeight;
+      }
+    });
+  }
+);
 </script>
 
 <style scoped>
