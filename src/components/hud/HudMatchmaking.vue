@@ -68,11 +68,12 @@
         <div class="mms-kicker">Scanning the grid</div>
         <div class="mms-title">SEARCHING</div>
         <div class="mm-spinner"></div>
-        <div class="mms-status">
-          Scanning opponents in ELO
-          <strong>{{ formatElo(myElo - mmState.eloDelta) }} &mdash; {{ formatElo(myElo + mmState.eloDelta) }}</strong>
-        </div>
-        <!-- Sub-epic 5 C9 will add: search timer (mm:ss) + queue size display -->
+        <!-- Sub-epic 5 C9 — search timer (mm:ss) + queue size display.
+             Holistic rework: dropped static ELO range line (mmState.eloDelta
+             never changes — filter hidden via v-if=false in C3, BE actually
+             auto-expands range from 300→1000 separately per Phase 0 Q2.3). -->
+        <div class="mms-status">{{ formattedSearchTime }}</div>
+        <div class="mms-progress-text">{{ mmState.queueSize }} in queue</div>
         <button class="mms-cancel" @click="onCancel">Cancel Search</button>
       </div>
 
@@ -122,7 +123,10 @@
 <script setup>
 import { computed } from 'vue';
 import { useStore } from 'vuex';
-import { mmState, myElo } from '@/scene/interaction/useMatchmakingState.js';
+// Sub-epic 5 C9 — myElo import dropped (orphan after ELO range display
+// removal в .mm-search rework). Re-import on filter sidebar revival per
+// carry-over #29 (BE doesn't accept eloDelta queue param yet).
+import { mmState } from '@/scene/interaction/useMatchmakingState.js';
 
 const store = useStore();
 
@@ -149,6 +153,17 @@ const beltOptions = [
 ];
 
 function formatElo(n) { return Number(n || 0).toLocaleString(); }
+
+// Sub-epic 5 C9 — search time mm:ss display. Mirror v1 formattedTime
+// pattern (MatchmakingView.vue:149-153) — padStart(2, '0') zero-padded
+// minutes + seconds. Reads mmState.searchTime (incremented 1Hz by C4
+// searchTimer, stopped on match-found/timeout/cancel/unmount).
+const formattedSearchTime = computed(() => {
+  const total = mmState.searchTime || 0;
+  const minutes = Math.floor(total / 60);
+  const seconds = total % 60;
+  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+});
 
 // Sub-epic 5 C8 — VS display computed bindings. master.userData.captain is
 // a sub-object {id, name, skin, belt, qualifiedWins, isHexmaster, elo} per
