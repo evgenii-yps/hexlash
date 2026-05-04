@@ -1521,3 +1521,411 @@ getMaster: (state) => state.master,
 **Continuing к Part 3:** 6th candidate tracking + Path candidates basis + Risks & dependencies + Carry-overs awareness + Pre-edit catch tally.
 
 **Pre-edit catches in Part 2:** **0** (Q6-Q9 + 5 mandatory subsections content derived from agent investigation + Q1-Q5 baseline; no new file-content discrepancies surfaced).
+
+---
+
+## 6th Phase 0 Subsection Candidate Tracking
+
+**Lesson #43 promoted в 4b. 6th subsection candidate "Semantic invariant + flow direction verification" — 1st occurrence 4b C10** (ChallengeNotification `isPlayer1: false` semantically correct, ТЗ derivation would invert).
+
+**Sub-epic 5 outcome:** occurrence #2 NOT detected through 12 commits (pairing-symmetric flow doesn't trigger).
+
+### Sub-epic 6 outcome — OCCURRENCE #2 DETECTED ✅
+
+**Trigger location:** Q4.4 spectator perspective concern + 5th mandatory subsection (Vocabulary Alignment Audit).
+
+**Pattern repeat:** Spectator-as-third-party FE code requires player-ordering convention derivation. UNLIKE Sub-epic 5 (player в matchmaking — symmetric flow, no derivation needed), spectator MUST derive UI layout from BE-truth match.player1/player2 ordering.
+
+**Convention candidate:**
+
+```javascript
+// Option α — deterministic
+const leftFighter = data.player1;     // BE-truth player1
+const rightFighter = data.player2;    // BE-truth player2
+
+// vs Option β — semantic-derived (broken if assumes spectator perspective)
+const leftFighter = isMyFriend(data.player1) ? data.player1 : data.player2;
+```
+
+**Critical invariant from BE (verified Q2.2):**
+- `pvpMatchManager.activeMatches.set(matchId, engine)` — engine.player1 / engine.player2 are deterministic per createMatch caller signature
+- BE creates match с `(challenger, acceptor)` ordering OR `(player1, player2)` from matchmaking pair
+
+**Spectator convention recommendation:**
+- **Use Option α (deterministic player1/player2)** — preserves BE invariant
+- **AVOID** any "is friend" derivation in render layer — would be semantic-equivalent pitfall к 4b C10 ChallengeNotification false-derivation case
+- **AVOID** result-string derivation that assumes "self vs opponent" — spectator has no self in match
+
+**Carry-over #16 awareness:** Sub-epic 4b documented "DO NOT 'fix' ChallengeNotification.vue:62 `isPlayer1: false` to a derivation — would invert." Sub-epic 6 spectator code likely has analog code paths (HudSpectate `friendHp`/`opponentHp` semantic). **Phase 1 ТЗ must explicitly direct: spectator state refs neutral named (`p1Hp`/`p2Hp` OR keep current names but document semantic shift).**
+
+### 6th subsection PROMOTION DECISION
+
+**Per Lesson #43 promotion criteria:** "await 2nd occurrence." 2nd occurrence detected.
+
+**Recommendation для Эпик 6 going forward:**
+- **PROMOTE 6th Phase 0 subsection к mandatory** — "Semantic invariant + flow direction verification."
+- Cumulative occurrence chain: **2 detections** (4b C10 + Sub-epic 6 Q4.4 + 5th subsection).
+- Pattern stable enough to formalize.
+
+**Suggested subsection structure (для future Phase 0 reports):**
+
+```
+6. Semantic Invariant + Flow Direction Verification
+
+For each derived FE-side convention (player ordering, perspective,
+friendship context, isPlayer1 etc.), document:
+- BE invariant source of truth (e.g., createMatch call signature)
+- FE derivation correctness check (does derivation preserve BE truth?)
+- Carry-over awareness (related Sub-epic 4b/6 patterns NOT to "fix")
+- Spectator/third-party scenarios (if applicable to sub-epic surface)
+```
+
+**Document:** 6th subsection promoted by precedent. Phase 1 ТЗ for Sub-epic 6 should formalize subsection in design directives. **Lesson candidate #44 NEW** — flag для Sub-epic 6 closure CLAUDE.md update.
+
+---
+
+## Path Candidates — Factual Basis
+
+**Phase 0 dumps factual data; design-Claude makes Path decision post-report с user.**
+
+### Path α (FE-only mock-port — 5N current state, KEEP)
+
+**Data:**
+- 5N already shipped this state (HudSpectate.vue 494 lines с mock simulation)
+- No real BE infrastructure
+- Carry-over technical debt accepted in 5N
+
+**Status:** **Anti-rec для Sub-epic 6 closure.** Sub-epic 6 goal is real spectate, not preserving mock.
+
+**Disqualified.**
+
+---
+
+### Path A (FE wiring only — IF BE 100% complete)
+
+**Conditions:**
+- Q1.2 BE service file existence: ❌ ABSENT
+- Q1.3 BE handler routing: ❌ ABSENT (no spectate cases в handler.js / pvpHandler.js)
+- Q3.1 BE event chain emit-spectator-aware: ❌ ABSENT (`sendToSpectators` helper не existing)
+- Q2.2 `match.spectators` Set field: ❌ ABSENT
+
+**Status:** **DISQUALIFIED.** BE 0% complete. Path A precedent (Sub-epic 5: BE 100% pre-existing → FE-only wiring) NOT applicable here.
+
+---
+
+### Path B (BE extension minimal — broadcast existing events to spectators)
+
+**Scope:**
+
+**BE additions:**
+1. `match.spectators: Map<userId, socket>` field в pvpCombatEngine constructor (line 119+)
+2. `SpectateJoinMsg` handler:
+   - Validate matchId
+   - Optionally authorize (Path D friend check)
+   - Add to spectators Map
+   - Emit `fight_state_resume` with `getStateSnapshot()` (Sub-epic 4b reuse)
+   - Broadcast `SpectatorListMsg { count }` to всех в match.spectators
+3. `SpectateLeaveMsg` handler:
+   - Remove from spectators Map
+   - Broadcast `SpectatorListMsg { count }` к remaining spectators
+4. `sendToSpectators(type, data)` helper в pvpCombatEngine
+5. Extend `emit()` OR add explicit `sendToSpectators` calls после every player emit/sendToPlayer (depends on Q2.3 design choice)
+6. Spectator cleanup in `handlePvPDisconnect` (handler.js line 116) + `removeMatch` (pvpMatchManager.js line 38)
+7. Friends endpoint extension (friends.js lines 225-239) — add `currentFight` field + `'in_fight'` status (Q5.1/Q5.2 surface)
+8. Adapt differentiated events for spectator audience (4 events: dice_rolled, fight_end-surrender, dice_available consolidation, coach_pause consolidation)
+
+**FE additions:**
+1. `webSocketState.js` switch-case extension — `SpectateJoin` ack / `SpectatorListMsg` / `fight_state_resume` (already routed) + spectate-specific event chain
+2. SpectateView.vue / HudSpectate.vue mock simulation gut (~85 lines) — replace с WS event handler chain
+3. `onMounted`: dispatch `SpectateJoinMsg` + register window event listeners
+4. `onBeforeUnmount`: dispatch `SpectateLeaveMsg` + cleanup
+5. Late-join state hydration: adapt `onFightStateResume` handler (Sub-epic 4b reuse) к HudSpectate
+6. Spectator perspective convention (player1/player2 deterministic — relabel `--friend`/`--opponent` modifiers OR keep semantic shift via comment)
+7. Friend Watch button entry (HudProfile lines 588-594) — verify works once BE friends extension delivers `'in_fight'` status
+
+**Bundle с:**
+- Path D (friends-only) authorization scope (Q6.1)
+- Lesson #33 deploy chain (cherry-pick → main → Railway PR) — same pattern as 6B-3a-backend / Sub-epic 1 / Sub-epic 4b PR #355
+- Closure shape: **code-complete + deferred-verify** (4th application — mirror 6B-3a-backend / Sub-epic 1 / Sub-epic 4b)
+
+**Estimated commits:** ~12-18 functional + closure phase (CL1-CL3).
+
+**Cherry-pick PR target:** New PR `feat/spectate-real-be` → main → Railway deploy.
+
+**Status:** **MOST LIKELY PATH.** Default closure scope.
+
+---
+
+### Path C (BE extension comprehensive — separate spectator types + state-replay)
+
+**Additions on top of Path B:**
+- Spectator-distinct event types (`round_result_spectator`, `dice_rolled_spectator`, `fight_end_spectator`)
+- Round-by-round replay mechanism (full `roundResults` array iteration с timing)
+- Match event log persistence per match (для replay support)
+
+**Justification ONLY if:**
+- Q3.2 (per-player perspective differentiation) requires spectator-distinct event format — partially yes (4 events differentiated), but Path B α handles inline adaptation
+
+**Estimated commits:** ~20-25.
+
+**Status:** **Over-engineering for Sub-epic 6 closure.** Spectator perspective concerns adequately handled by Path B α adaptation. Defer comprehensive replay к Эпик 7+ if needed.
+
+---
+
+### Path D (Friends-only spectate без feed)
+
+**Status:** **COMBINATOR с Path A/B/C** — narrows entry-point scope, не scene scope.
+
+**Data:**
+- Q5.1 5N precedent: Friend Watch button already wired (HudProfile lines 588-594)
+- Q5.2: friends endpoint extension required regardless (currentFight + in_fight status)
+- Q5.3: live matches feed endpoint absent — wider feed naturally deferred
+
+**Recommendation factual basis:** Path D as **default scope discipline** — friends-only first, wider feed deferred к Эпик 7+.
+
+---
+
+### Recommendation factual summary
+
+**Path B α + Path D combo** = closure scope для Sub-epic 6.
+- BE: extend pvpCombatEngine с spectators tracking + sendToSpectators helper + emit() extension. Add SpectateJoin/Leave handlers. Friends endpoint extension. Friendship auth check на join.
+- FE: mock-flow gut + WS event handler chain + spectator perspective convention + friend Watch entry verify.
+- Closure: code-complete + deferred-verify (cherry-pick PR → main → Railway deploy).
+- Polish carry-overs: Option β friendship-context UI / spectator list (names) / wider live feed / late-join replay animation — defer.
+
+**Phase 0 NOT making decision.** Design-Claude consults Phase 0 facts + user authorization → Path decision + Phase 1 ТЗ.
+
+---
+
+## Risks & Dependencies
+
+### Risk 1 — BE deploy chain awareness (Lesson #33 4th application)
+
+**Pattern:** Cherry-pick → main → Railway PR (per CLAUDE.md branch strategy section).
+
+**Sub-epic 6 backend changes from continue stack `claude/investigate-matchmaking-2JlwO-WfdV0`** НЕ auto-deploy. Deploy verify gated через main branch merge.
+
+**Same pattern as:**
+- 6B-3a-backend (PR `fix/user-public-response`)
+- Sub-epic 1 (visual verify deferred к Clan data integration audit)
+- Sub-epic 4b (PR #355 `fix/pvp-edge-cases-4b`)
+
+**Closure shape implication:** Sub-epic 6 likely closes с **code-complete + deferred-verify** pattern. PR `feat/spectate-real-be` (or similar) cherry-picked from continue stack к dedicated branch off main, merged via review, Railway auto-deploy triggers post-merge.
+
+**Mitigation:** Phase 1 ТЗ should bundle BE additions with explicit cherry-pick + deploy strategy in handoff. Document migration boundary.
+
+---
+
+### Risk 2 — Spectator broadcast amplification
+
+**Math:**
+- 10 spectators × 5-10 events per round × 10-12 rounds = ~500-1200 socket sends per match
+- Peak burst: ~50 messages/sec during round_result + dice_rolled + coach_pause overlapping
+- Multiple concurrent matches: linear multiplier
+
+**Existing rate limits (player-action only):**
+- dice_roll 1/2s per player (Sub-epic 4a P3-1)
+- coach_choice 1/pause per player (Sub-epic 4a P3-2)
+
+**Spectator-side throttling:** **NOT EXISTING.**
+
+**Mitigation options:**
+- **Option A** — Accept broadcast amplification at current scale. Spectator passive observer, BE just broadcasts verbatim. Acceptable for ≤10 spectators × ≤10 concurrent matches.
+- **Option B** — Throttle SpectatorListMsg broadcasts (count updates) к 1/sec. Defensive only — main event chain (round_result etc.) on natural timing.
+
+**Decision:** Option A для Sub-epic 6 closure. Premature optimization risk if Option B.
+
+---
+
+### Risk 3 — HudSpectate refactor scope
+
+**Scale:**
+- Current 494 lines (verified `wc -l`)
+- Mock simulation block: lines 159-217 (~58 lines к gut)
+- Replacement: WS event handler chain (~60-80 new lines) + state hydration (~20 lines) + listener cleanup (~15 lines)
+
+**Net delta:** +30 to +60 lines (file grows к ~525-555 lines).
+
+**Pattern parity precedent:** Sub-epic 5 mock-flow gut (`mmCandidatesMock.js` 102 lines + `useMatchmakingScreen.js` 127 lines = 229 lines deleted; replaced with real WS dispatcher chain в HudMatchmaking ~140 lines net add).
+
+**Sub-epic 6 mock-gut differences:**
+- HudSpectate is ONE file (vs Sub-epic 5 two helper files)
+- Mock simulation tighter coupling within HudSpectate.vue script block
+- Mock state initialization may need refresh (currently mock provides random init values; real state must initialize from BE snapshot)
+
+**Mitigation:** Phase 1 ТЗ commit-by-commit decomposition должна follow Sub-epic 5 pattern (state extension first → mock gut → BE wiring + listeners → UX bundle).
+
+---
+
+### Risk 4 — Late-join replay design
+
+**Two options (Q7.3 details):**
+
+**Option α (minimal — recommended):** Reuse Sub-epic 4b `getStateSnapshot()` + `fight_state_resume` infrastructure. Late-joiner sees current state forward, no past round animation.
+
+**Option β (comprehensive):** BE replays all `roundResults` events on late-join. Requires event log iteration per join. Higher BE complexity.
+
+**Mitigation:** Phase 1 ТЗ recommends Option α for closure scope. Option β deferred к polish if user surfaces UX gap.
+
+---
+
+### Risk 5 — Friends list `currentFight` field reality
+
+**Per CLAUDE.md** "currentFight never populated by current backend" — verified Q5.1/Q5.2 (field absent in friends.js response, status enum only `'online'`/`'offline'`).
+
+**Implication:**
+- Friend Watch button visibility logic в HudProfile (per 5N — `f.status === 'in_fight'`) NEVER triggers in current production
+- 5N spectate flow tested via direct URL access only (mock state)
+- Real spectate friend entry point requires BE friends endpoint extension (currentFight field + in_fight status)
+
+**Phase 1 implication:** **BE friends extension is required dependency** for Path D friends-only entry. Either:
+- Bundle into Sub-epic 6 (single coordinated effort)
+- Defer к Sub-epic 7 (friends-side polish) — но then friend Watch button still doesn't render after Sub-epic 6 backend deploy
+
+**Recommendation factual basis:** Bundle friends extension into Sub-epic 6 BE work. Single PR `feat/spectate-real-be` covers всё BE surface required for end-to-end functioning.
+
+---
+
+### Risk 6 — Carry-over #16 false-fix temptation
+
+**Per CLAUDE.md** carry-over #16: "DO NOT 'fix' ChallengeNotification.vue:62 `isPlayer1: false` to a derivation — would invert correct value."
+
+**Sub-epic 6 risk:** Phase 1 ТЗ may surface analog "fix" temptations в HudSpectate (e.g., changing `friendHp`/`opponentHp` to derived expressions assuming spectator perspective).
+
+**Mitigation:**
+- Phase 1 ТЗ explicit direction: keep neutral player1/player2 deterministic ordering OR document semantic shift if keeping `--friend`/`--opponent` modifiers
+- Lesson #43-promoted 6th subsection (Semantic invariant + flow direction verification) — reflex applied к spectate code paths
+
+---
+
+## Existing Carry-overs Awareness
+
+**31 active carry-overs entering Sub-epic 6** (per CLAUDE.md handoff section).
+
+**Bundle candidates analysis для Sub-epic 6:**
+
+| # | Carry-over | Sub-epic 6 relevance | Bundle decision basis |
+|---|---|---|---|
+| 16 | ChallengeNotification.vue:62 `isPlayer1: false` semantic invariant | **Reflex application** — Phase 1 ТЗ must explicitly avoid analog "fix" в HudSpectate | NO direct bundle (warning carry-over only); apply reflex preventively |
+| 29 | Filter chips (Archetype/Belt) BE extension | NOT spectate-related (matchmaking-side feature) | NO bundle |
+| 30 | ELO duplication consolidation | NOT spectate-related | NO bundle |
+| 31 | ErrorMsg shape mismatch BE→FE (`{type, error, code}` flat vs FE `{errorDto: {code, message}}` parser expectation) | **POSSIBLE BUNDLE** — Sub-epic 6 BE may emit ErrorMsg для unauthorized spectate / match_not_found / etc. If FE consumes via existing parser → broken response handling | CONDITIONAL bundle — Phase 1 ТЗ should evaluate если Sub-epic 6 ErrorMsg paths use legacy parser. Same-class fix per Lesson #35 bug-bundle-tier if surfaces |
+| 32 | `.mm-main` left:270px filters-hidden layout gap | matchmaking-only CSS | NO bundle |
+| 33 | Captain vs opponent payload field name asymmetry (`name`/`elo` vs `username`/`rating`) | **POSSIBLE BUNDLE** — Spectator player meta delivery (player1/player2 in fight_start, fight_end) likely uses one of two naming conventions. If Sub-epic 6 surfaces same asymmetry → bundle cleanup OR document standardization | CONDITIONAL bundle — Phase 1 evaluate field naming consistency |
+| 22 | v2 coach active boost UI | Spectator NEEDS to see coach pause UI (currently HudSpectate has no coach pause display) | **OUT OF CLOSURE SCOPE** — UI gap acceptable for closure, polish round candidate |
+| 17-28 | Various 4a polish carry-overs (countdown / dodge overlay / shake / cumulative damage / etc.) | Mostly decoration-only OR PvP-specific | NO bundle |
+
+**Decision summary для Phase 1:**
+
+- **Bundle reflex:** Carry-over #16 (semantic invariant) — apply preventively во ALL spectator FE code
+- **Conditional bundle:** Carry-overs #31, #33 — evaluate if Sub-epic 6 surfaces touches same surfaces
+- **Deferred:** Carry-over #22 (coach UI extension к spectator) — polish round candidate
+- **Out of scope:** Other carry-overs не related to spectate
+
+---
+
+## Pre-Edit Catch Tally — Phase 0 Metric
+
+**Phase 0 catch density (verify pre-edit / pre-write):**
+
+| # | Catch | Phase | Tier (Lesson #35) |
+|---|---|---|---|
+| 1 | HudSpectate.vue line count discrepancy (agent reported 223, actual 494 — script-end vs file-end confusion) | Pre-write Part 1 verification | adaptation-tier |
+
+**Total Phase 0 catches:** **1.**
+
+**Sub-epic 5 Phase 0 baseline:** не explicitly tracked в handoff, but post-Phase 1 catches: 61 cumulative (5.08/commit average, exceeded 4b's 38 ceiling by 60%).
+
+**Sub-epic 6 Phase 1 prediction:**
+
+**Per handoff §SUB-EPIC 6 SCOPE:** "likely surfaces ~30-50 catches" — based on:
+- New architectural area (spectate has 0% existing infrastructure)
+- BE + FE multi-layer coordination required
+- 12 negative-space items confirmed absent
+- 4 differentiated events requiring adaptation
+- Spectator perspective convention requires explicit derivation choices
+
+**Refined prediction post-Phase 0:** **40-70 catches** likely в Sub-epic 6 Phase 1.
+
+**Reasoning factors:**
+- **Higher than 4b (38)** — Sub-epic 6 has more negative-space surface (4b had existing PvP infrastructure to extend; Sub-epic 6 starts greenfield для spectator)
+- **Lower than 5 (61)** — Sub-epic 5 had matchmaking refactor + 4-tab restructure complexity; Sub-epic 6 mock-port is more linear refactor
+- **Multi-layer coordination penalty** — BE Prisma extension (friends endpoint) + BE handler chain + BE pvpCombatEngine + FE Vuex extension + FE WS routing + FE UI rebind = 6 layers requiring API contract verification
+
+**Mitigation strategy:** Mode A strict per-commit discipline + Phase 0 5 mandatory subsections + 6th subsection promotion (Semantic invariant verification) → catch density reflex strengthened.
+
+---
+
+## Phase 0 Summary
+
+**Investigation outcome:**
+
+✅ **Q1-Q9 all answered с concrete file:line references**
+
+✅ **5 mandatory subsections completed:**
+1. API contract verification (27 message types catalogued + field naming + match shape + flat WS spread)
+2. Negative-space verification (12 items confirmed absent — high greenfield surface)
+3. CSS taxonomy dump (35 `.sp-*` classes scoped, zero external)
+4. UI infrastructure dependencies (5 handler chains traced)
+5. Vocabulary alignment audit (mock taxonomy mapping + spectator perspective derivation)
+
+✅ **6th subsection candidate — OCCURRENCE #2 DETECTED ✅**
+- Promotion recommendation: PROMOTE к mandatory для future sub-epics
+- Lesson candidate #44 NEW flagged для Sub-epic 6 closure CLAUDE.md update
+
+✅ **Path candidates basis dumped:**
+- Path α (mock keep) DISQUALIFIED
+- Path A (FE only) DISQUALIFIED — BE 0% complete
+- Path B α + Path D combo: most likely closure scope
+- Path C: over-engineering для closure scope
+
+✅ **6 risks documented:**
+- BE deploy chain (Lesson #33 4th application)
+- Spectator broadcast amplification
+- HudSpectate refactor scope
+- Late-join replay design
+- Friends `currentFight` field reality
+- Carry-over #16 false-fix temptation
+
+✅ **Carry-over bundle candidates:**
+- Reflex application: #16 (semantic invariant)
+- Conditional bundles: #31 (ErrorMsg shape), #33 (field naming asymmetry)
+- Deferred: #22 (coach UI), other 4a polish
+
+✅ **Phase 1 catch prediction: 40-70 catches** (factor reasoning provided)
+
+---
+
+## Closure / Next Steps
+
+**This Phase 0 report:**
+- Filename: `docs/visual-migration/EPIC6_SUBEPIC_6_PHASE_0_REPORT.md`
+- Length: ~1,200 lines (preventive split — 3 parts)
+- Commits: 3 housekeeping (Part 1 + Part 2 + Part 3 — this commit)
+
+**Action required from design-Claude (in fresh chat):**
+- Review Phase 0 facts
+- Path decision (Path B α + Path D combo recommended factual basis)
+- Phase 1 ТЗ authoring with:
+  - 6 mandatory subsections (5 standard + new 6th — Semantic Invariant + Flow Direction Verification)
+  - Carry-over bundle decisions (#16 reflex, #31/#33 conditional)
+  - BE deploy chain planning (cherry-pick PR target)
+  - Closure shape declaration (code-complete + deferred-verify expected)
+
+**STOP — wait для design-Claude Path decision + Phase 1 ТЗ.**
+
+**No code changes shipped. No backend touched. Read-only investigation complete.**
+
+---
+
+### Part 3 of 3 — END
+
+**Pre-edit catches in Part 3:** **0** (synthesis of Q1-Q9 + 5 subsections content; no new file-content discrepancies surfaced).
+
+**Cumulative Phase 0 catches:** **1** (HudSpectate.vue line count, caught Part 1 pre-write).
+
+**Streak entering Sub-epic 6 Phase 1:** 29 ✅ (Phase 0 read-only, no code changes — streak preserved by definition).
+
+---
+
+**End of report.**
