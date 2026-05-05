@@ -1,14 +1,17 @@
 <template>
-  <VCard class="game-card">
+  <!-- B-AW2 (#4): VCard → HexCard wrapper swap. Visual override via scoped .game-card class
+       (border: none + width 180px + center text — preserves existing visual character). -->
+  <HexCard class="game-card">
     <h3>  {{ t.profile.wallet.lblGameBalance }}</h3>
     <p>{{ balance }}</p>
     <img src="@/assets/images/icon_money_out.svg" alt="withdraw"/>
     <div class="desc">{{ t.profile.wallet.lblWithdrawToWallet }}</div>
-  </VCard>
+  </HexCard>
 </template>
 
 <script setup>
 import {t} from "@/locales/index.js";
+import HexCard from '@/components/ui/HexCard.vue';
 
 const props = defineProps({
   balance: {
