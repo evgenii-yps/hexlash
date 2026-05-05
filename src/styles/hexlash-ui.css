@@ -535,6 +535,43 @@
   to { transform: rotate(360deg); }
 }
 
+/* B5 (#35): active effect badges — extracted from HudFight (Sub-epic 7 C6
+   modifiers bar) для cross-component reuse. DRY win mirror C9 .hex-modal-*
+   taxonomy expansion pattern. Positioning provided by per-component .modifiers-bar
+   /.sp-modifiers-bar rules; .mod-badge* are appearance-only canonical primitives. */
+
+.mod-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--hex-radius-md);
+  border: 2px solid currentColor;
+  background: rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+}
+
+.mod-badge-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.mod-badge--adrenaline {
+  color: var(--hex-dice-adrenaline);
+  box-shadow: 0 0 8px var(--hex-dice-adrenaline);
+}
+
+.mod-badge--shield {
+  color: var(--hex-dice-shield);
+  box-shadow: 0 0 8px var(--hex-dice-shield);
+}
+
+.mod-badge--blind {
+  color: var(--hex-dice-blind);
+  box-shadow: 0 0 8px var(--hex-dice-blind);
+}
+
 /* --------------------------------------------
    INPUTS
    -------------------------------------------- */

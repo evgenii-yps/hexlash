@@ -621,6 +621,8 @@ watch(() => fightLog.lines.length, () => {
    Positioned below dice-area; pointer-events:none (informational only).
    Lesson #34 HUD overlay convention: parent .fight-hud is pointer-events:none —
    no override needed since badges are non-interactive. */
+/* B5 (#35) cleanup: .mod-badge* rules extracted к hexlash-ui.css (canonical taxonomy).
+   Only .modifiers-bar positioning preserved scoped (HudFight-specific bottom-center). */
 .modifiers-bar {
   position: fixed;
   bottom: 170px;
@@ -631,32 +633,5 @@ watch(() => fightLog.lines.length, () => {
   align-items: center;
   pointer-events: none;
   z-index: 60;
-}
-.mod-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--hex-radius-md);
-  border: 2px solid currentColor;
-  background: rgba(0, 0, 0, 0.4);
-  pointer-events: none;
-}
-.mod-badge-icon {
-  width: 18px;
-  height: 18px;
-}
-.mod-badge--adrenaline {
-  color: var(--hex-dice-adrenaline);
-  box-shadow: 0 0 8px var(--hex-dice-adrenaline);
-}
-.mod-badge--shield {
-  color: var(--hex-dice-shield);
-  box-shadow: 0 0 8px var(--hex-dice-shield);
-}
-.mod-badge--blind {
-  color: var(--hex-dice-blind);
-  box-shadow: 0 0 8px var(--hex-dice-blind);
 }
 </style>

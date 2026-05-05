@@ -61,6 +61,22 @@ export const spectateState = reactive({
   coachPauseOpen: false,
   coachPauseRound: 0,
   coachPauseTimeLimit: 0,
+
+  // B5 (#35): active effects badges per fighter — populated from BE round_result
+  // events (effects: [{type, roundsLeft}, ...] per pvpCombatEngine.js:323/331).
+  // Spectator sees BOTH players side-by-side (player1 LEFT, player2 RIGHT visual).
+  // Field naming player1/player2 BE-truth deterministic (Sub-epic 6 6th subsection
+  // invariant — NOT self-anchored friend/opponent).
+  player1ActiveEffects: {
+    adrenaline: false,
+    shield: false,
+    blind: false,
+  },
+  player2ActiveEffects: {
+    adrenaline: false,
+    shield: false,
+    blind: false,
+  },
 });
 
 export const player1HpPct = computed(() => Math.max(0, (spectateState.player1Hp / MAX_HP) * 100));
@@ -98,6 +114,15 @@ export function onSpectateRoundResult(detail) {
       damage: detail.player1.damage || 0,
       critical: detail.player1.critted || false,
     });
+    // B5 (#35): derive active effects from BE-truth effects array (per pvpCombatEngine.js:323).
+    // Mirror C6 HudFight pattern (3 sustained types displayed; heal/rage/crit/overdrive
+    // remain per-hit triggers handled by FLASH_COLORS).
+    if (Array.isArray(detail.player1.effects)) {
+      const types = detail.player1.effects.map(e => e.type);
+      spectateState.player1ActiveEffects.adrenaline = types.includes('adrenaline');
+      spectateState.player1ActiveEffects.shield = types.includes('shield');
+      spectateState.player1ActiveEffects.blind = types.includes('blind');
+    }
   }
   if (detail.player2) {
     if (typeof detail.player2.hp === 'number') spectateState.player2Hp = detail.player2.hp;
@@ -109,6 +134,13 @@ export function onSpectateRoundResult(detail) {
       damage: detail.player2.damage || 0,
       critical: detail.player2.critted || false,
     });
+    // B5 (#35): derive active effects from BE-truth effects array (per pvpCombatEngine.js:331).
+    if (Array.isArray(detail.player2.effects)) {
+      const types = detail.player2.effects.map(e => e.type);
+      spectateState.player2ActiveEffects.adrenaline = types.includes('adrenaline');
+      spectateState.player2ActiveEffects.shield = types.includes('shield');
+      spectateState.player2ActiveEffects.blind = types.includes('blind');
+    }
   }
 }
 
@@ -329,4 +361,11 @@ export function resetSpectateState() {
   spectateState.coachPauseOpen = false;
   spectateState.coachPauseRound = 0;
   spectateState.coachPauseTimeLimit = 0;
+  // B5 (#35): clear active effects badges per fighter
+  spectateState.player1ActiveEffects.adrenaline = false;
+  spectateState.player1ActiveEffects.shield = false;
+  spectateState.player1ActiveEffects.blind = false;
+  spectateState.player2ActiveEffects.adrenaline = false;
+  spectateState.player2ActiveEffects.shield = false;
+  spectateState.player2ActiveEffects.blind = false;
 }

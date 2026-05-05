@@ -36,6 +36,19 @@
           <div class="sp-hp-fill sp-hp-fill--friend" :style="{ width: player1HpPct + '%' }"></div>
         </div>
         <div class="sp-hp-num">{{ spectateState.player1Hp }} / {{ spectateState.maxHp }}</div>
+        <!-- B5 (#35): player1 active effects badges (canonical .mod-badge* taxonomy
+             post-C15 hexlash-ui.css extraction). Read-only — BE-truth driven. -->
+        <div v-if="anyPlayer1ActiveEffect" class="sp-modifiers-bar">
+          <div v-if="spectateState.player1ActiveEffects.adrenaline" class="mod-badge mod-badge--adrenaline">
+            <img :src="iconAdrenaline" class="mod-badge-icon" alt="" />
+          </div>
+          <div v-if="spectateState.player1ActiveEffects.shield" class="mod-badge mod-badge--shield">
+            <img :src="iconShield" class="mod-badge-icon" alt="" />
+          </div>
+          <div v-if="spectateState.player1ActiveEffects.blind" class="mod-badge mod-badge--blind">
+            <img :src="iconBlind" class="mod-badge-icon" alt="" />
+          </div>
+        </div>
       </div>
 
       <div class="sp-vs">VS</div>
@@ -48,6 +61,18 @@
           <div class="sp-hp-fill sp-hp-fill--opponent" :style="{ width: player2HpPct + '%' }"></div>
         </div>
         <div class="sp-hp-num">{{ spectateState.player2Hp }} / {{ spectateState.maxHp }}</div>
+        <!-- B5 (#35): player2 active effects badges (mirror player1 above) -->
+        <div v-if="anyPlayer2ActiveEffect" class="sp-modifiers-bar">
+          <div v-if="spectateState.player2ActiveEffects.adrenaline" class="mod-badge mod-badge--adrenaline">
+            <img :src="iconAdrenaline" class="mod-badge-icon" alt="" />
+          </div>
+          <div v-if="spectateState.player2ActiveEffects.shield" class="mod-badge mod-badge--shield">
+            <img :src="iconShield" class="mod-badge-icon" alt="" />
+          </div>
+          <div v-if="spectateState.player2ActiveEffects.blind" class="mod-badge mod-badge--blind">
+            <img :src="iconBlind" class="mod-badge-icon" alt="" />
+          </div>
+        </div>
       </div>
     </div>
 
@@ -121,6 +146,10 @@ import {
   player1HpPct,
   player2HpPct,
 } from '@/scene/interaction/useSpectateState.js';
+// B5 (#35): active effect icons (mirror HudFight C6 imports — same canonical assets)
+import iconAdrenaline from '@/assets/images/icons/adrenaline.svg';
+import iconShield from '@/assets/images/icons/shield.svg';
+import iconBlind from '@/assets/images/icons/blind.svg';
 
 // Sub-epic 6 C9 — Real BE state binding via useSpectateState composable
 // (mirror Sub-epic 5 useMatchmakingState pattern). State mutations live в
@@ -139,6 +168,18 @@ import {
 const router = useRouter();
 
 const logListRef = ref(null);
+
+// B5 (#35): aggregate flags для modifier bar visibility (per-fighter)
+const anyPlayer1ActiveEffect = computed(() =>
+  spectateState.player1ActiveEffects.adrenaline ||
+  spectateState.player1ActiveEffects.shield ||
+  spectateState.player1ActiveEffects.blind,
+);
+const anyPlayer2ActiveEffect = computed(() =>
+  spectateState.player2ActiveEffects.adrenaline ||
+  spectateState.player2ActiveEffects.shield ||
+  spectateState.player2ActiveEffects.blind,
+);
 
 const resultClass = computed(() => {
   if (!spectateState.winner) return '';
@@ -498,5 +539,17 @@ watch(
   color: var(--hex-text-secondary);
   font-weight: 400;
   margin-left: var(--hex-spacing-xs);
+}
+
+/* B5 (#35): per-fighter modifiers bar positioning (canonical .mod-badge* taxonomy
+   from hexlash-ui.css C15 extraction). Bar mounts inside .sp-fighter card,
+   below HP num — natural flow position (not absolute). */
+.sp-modifiers-bar {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  margin-top: var(--hex-spacing-sm);
+  pointer-events: none;
 }
 </style>
