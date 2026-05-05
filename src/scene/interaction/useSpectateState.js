@@ -52,6 +52,15 @@ export const spectateState = reactive({
 
   // Spectator metadata
   spectatorCount: 0,
+
+  // B4 (#34): coach pause read-only overlay state. BE-truth driven via
+  // coach_pause / coach_result events (sendToSpectators in pvpCombatEngine.js
+  // lines 483, 529). Read-only — spectator cannot interact, BE controls dismissal.
+  // Payload coach_pause: { round, timeLimit }; no strategy text (coach_result
+  // delivers actions via existing log append).
+  coachPauseOpen: false,
+  coachPauseRound: 0,
+  coachPauseTimeLimit: 0,
 });
 
 export const player1HpPct = computed(() => Math.max(0, (spectateState.player1Hp / MAX_HP) * 100));
@@ -133,10 +142,14 @@ export function onSpectateDiceRolled(detail) {
 // C9.5+ polish candidate — could add dice indicator UI.
 export function onSpectateDiceAvailable(_detail) { /* no-op для C9 closure scope */ }
 
-// pvp-coach_pause payload: { round, timeLimit }. Spectator UI: log entry only
-// (no read-only overlay в HudSpectate template — defer к polish).
+// pvp-coach_pause payload: { round, timeLimit }. Spectator UI: log entry +
+// B4 (#34) read-only overlay (added Sub-epic 7 C10 — was "defer к polish").
 export function onSpectateCoachPause(detail) {
   if (!detail) return;
+  // B4 (#34): trigger read-only overlay (closed by coach_result event)
+  spectateState.coachPauseOpen = true;
+  spectateState.coachPauseRound = detail.round || spectateState.currentRound;
+  spectateState.coachPauseTimeLimit = detail.timeLimit || 0;
   appendLog({
     round: detail.round || spectateState.currentRound,
     side: 'system',
@@ -150,6 +163,8 @@ export function onSpectateCoachPause(detail) {
 // pvp-coach_result payload: { player1: {action}, player2: {action} }
 export function onSpectateCoachResult(detail) {
   if (!detail) return;
+  // B4 (#34): close read-only overlay — fight resumes
+  spectateState.coachPauseOpen = false;
   const p1Action = detail.player1?.action || 'none';
   const p2Action = detail.player2?.action || 'none';
   appendLog({
@@ -310,4 +325,8 @@ export function resetSpectateState() {
   spectateState.fightOver = false;
   spectateState.winner = null;
   spectateState.spectatorCount = 0;
+  // B4 (#34): clear coach pause overlay state
+  spectateState.coachPauseOpen = false;
+  spectateState.coachPauseRound = 0;
+  spectateState.coachPauseTimeLimit = 0;
 }

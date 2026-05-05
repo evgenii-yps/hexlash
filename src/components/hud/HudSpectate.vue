@@ -82,6 +82,33 @@
     <div v-if="spectateState.fightOver" class="sp-result" :class="resultClass">
       <div class="sp-result-text">{{ resultText }}</div>
     </div>
+
+    <!-- B4 (#34): coach pause read-only overlay для spectator.
+         BE-truth driven (coach_pause / coach_result events sendToSpectators).
+         No interaction — spectator can't dismiss; BE controls when fight resumes.
+         Uses canonical .hex-modal-* taxonomy (Sub-epic 7 C9 expansion). -->
+    <Teleport to="body">
+      <div
+        v-if="spectateState.coachPauseOpen"
+        class="hex-modal-overlay sp-coach-overlay"
+      >
+        <div class="hex-modal sp-coach-modal">
+          <h2 class="hex-modal-title">{{ t.spectate.coachPause || 'Coach Pause' }}</h2>
+          <div class="hex-modal-body">
+            <p class="sp-coach-status">
+              {{ t.spectate.coachPauseStatus || 'Fighters consulting their coaches...' }}
+            </p>
+            <p class="sp-coach-meta">
+              {{ t.spectate.round }} {{ spectateState.coachPauseRound }}
+              <span v-if="spectateState.coachPauseTimeLimit" class="sp-coach-timer">
+                · {{ Math.ceil(spectateState.coachPauseTimeLimit / 1000) }}s
+              </span>
+            </p>
+          </div>
+          <!-- Read-only — no actions row (Sub-epic 7 #34 spec) -->
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -434,5 +461,42 @@ watch(
   .sp-fighter--friend { border-left: none; border-top: 3px solid #4ade80; }
   .sp-fighter--opponent { border-right: none; border-top: 3px solid #ef4444; }
   .sp-log { max-height: 30vh; }
+}
+
+/* B4 (#34): coach pause read-only overlay (spectator) — modifier classes
+   for canonical .hex-modal-* taxonomy. cursor: default explicit (no
+   interaction; spectator cannot dismiss — BE controls when fight resumes). */
+.sp-coach-overlay {
+  cursor: default;
+}
+
+.sp-coach-modal {
+  max-width: 480px;
+  text-align: center;
+}
+
+.sp-coach-status {
+  font-size: 14px;
+  color: var(--hex-text-secondary);
+  margin: 0 0 var(--hex-spacing-sm);
+  line-height: 1.4;
+}
+
+.sp-coach-meta {
+  font-size: 13px;
+  color: var(--hex-text-primary);
+  font-weight: 600;
+  margin: var(--hex-spacing-sm) 0 0;
+  padding: var(--hex-spacing-sm) var(--hex-spacing-md);
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--hex-radius-sm);
+  border-left: 3px solid var(--hex-primary);
+  display: inline-block;
+}
+
+.sp-coach-timer {
+  color: var(--hex-text-secondary);
+  font-weight: 400;
+  margin-left: var(--hex-spacing-xs);
 }
 </style>
