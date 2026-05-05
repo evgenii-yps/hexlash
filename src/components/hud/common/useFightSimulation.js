@@ -175,7 +175,8 @@ function doExchange(attackerSide) {
       if (isLeft) fightState.rightHp = Math.max(0, fightState.rightHp - dmg);
       else        fightState.leftHp  = Math.max(0, fightState.leftHp  - dmg);
       fightSceneApi.playMove(defenderSide, 'hit');
-      triggerFlash();
+      // B2 (#24): per-type flash — 'crit' for critical hits, 'damage' for regular
+      triggerFlash(isCrit ? 'crit' : 'damage');
       // B2 (#18, #19): crit event title + victim shake (regular hits get shake but no title)
       triggerShake(defenderSide);
       if (isCrit) {

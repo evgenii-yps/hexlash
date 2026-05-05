@@ -76,8 +76,12 @@
       ></div>
     </div>
 
-    <!-- White flash on hit (Step 15). -->
-    <div class="hit-flash" :class="{ flash: flashing }"></div>
+    <!-- White flash on hit (Step 15). B2 (#24) — per-type color via CSS custom property. -->
+    <div
+      class="hit-flash"
+      :class="{ flash: flashing }"
+      :style="{ '--flash-color': flashColor }"
+    ></div>
 
     <!-- B2 (#18): event title overlay — dodge/crit feedback (1200ms auto-clear). -->
     <transition name="event-title">
@@ -122,7 +126,7 @@ import { useStore } from 'vuex';
 import { useRouter, useRoute } from 'vue-router';
 import { fightSceneApi } from '@/scene/scenes/useFightSceneApi.js';
 import { fightLog } from './common/useFightLog.js';
-import { flashing } from './common/useFlashHit.js';
+import { flashing, flashColor } from './common/useFlashHit.js';
 import PrepOverlay from './common/PrepOverlay.vue';
 import ResultOverlay from './common/ResultOverlay.vue';
 import CoachPause from './common/CoachPause.vue';
@@ -518,7 +522,9 @@ watch(() => fightLog.lines.length, () => {
   z-index: 70;
 }
 .hit-flash.flash {
-  background: rgba(255, 255, 255, 0.18);
+  /* B2 (#24): consume --flash-color set inline by HudFight (per-type via useFlashHit).
+     Fallback к legacy white preserves bare triggerFlash() callsite behavior. */
+  background: var(--flash-color, rgba(255, 255, 255, 0.18));
   animation: hitflash 0.18s ease-out;
 }
 @keyframes hitflash {
