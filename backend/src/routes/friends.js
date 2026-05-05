@@ -4,6 +4,25 @@ const prisma = require('../lib/prisma');
 const { authMiddleware } = require('../middleware/auth');
 const { clients } = require('../websocket/handler');
 const { getCaptainsForUsers } = require('../services/captainService');
+const pvpMatchManager = require('../services/pvpMatchManager');
+
+/**
+ * Find active match where userId is participant.
+ * Returns { id, opponent } if friend is currently in a watchable fight, null otherwise.
+ * Filters by engine status: only 'running' or 'paused_coach' matches are watchable.
+ */
+function findCurrentFight(userId) {
+  for (const [matchId, engine] of pvpMatchManager.activeMatches.entries()) {
+    if (engine.status !== 'running' && engine.status !== 'paused_coach') continue;
+    if (engine.player1.odId === userId) {
+      return { id: matchId, opponent: engine.player2.username || 'Opponent' };
+    }
+    if (engine.player2.odId === userId) {
+      return { id: matchId, opponent: engine.player1.username || 'Opponent' };
+    }
+  }
+  return null;
+}
 
 // ── Send friend request ────────────────────────────────────────────────────
 router.post('/request', authMiddleware, async (req, res) => {
@@ -225,6 +244,7 @@ router.get('/list', authMiddleware, async (req, res) => {
     const friends = friendships.map(f => {
       const friend = f.user1Id === userId ? f.user2 : f.user1;
       const isOnline = clients.has(friend.id);
+      const currentFight = isOnline ? findCurrentFight(friend.id) : null;
       return {
         id: friend.id,
         username: friend.name || friend.login,
@@ -232,9 +252,10 @@ router.get('/list', authMiddleware, async (req, res) => {
         rating: friend.rating,
         avatarUrl: friend.avatarUrl,
         skin: friend.skin,
-        status: isOnline ? 'online' : 'offline',
+        status: currentFight ? 'in_fight' : (isOnline ? 'online' : 'offline'),
         addedAt: f.createdAt.getTime(),
         captain: captainMap.get(friend.id) || null,
+        currentFight,
       };
     });
 
