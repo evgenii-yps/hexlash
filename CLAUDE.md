@@ -21,7 +21,8 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
   App.vue                  — Root: header (Logo), router-view, BottomMenu (hidden on PvP screens), Info/Error toasts, ChallengeNotification
   main.js                  — Entry: Vue + Vuetify + i18n + Vuex + WagmiPlugin + VueQueryPlugin init
   router/index.js          — Routes + auth guards + fight state restore
-  views/                   — 19 page-level components (incl. FightClubView, CreateAgentView, AgentDetailView)
+  views/                   — 7 page-level components post-Эпик 6 cutover (RainView, PrivacyView, NotFoundView, PageView, VerifyEmailView, PreparationView, FightClubView). 10 v1 views deleted Sub-epic 8 C8/C9.
+  views-v2/                — 16 v2 page components (PitViewV2 + FighterDetailView + FightView + TrainingView + MatchmakingView + CreateView + ProfileView + RatingsView + ClanView + GuestClanView + ShopView + SpectateView + HelpView + UserProfileView + WalletView + AccountView)
   components/              — 75+ reusable components
   components/club/         — 8 Club Mode components (AgentRoster, AgentCard, ClubLevelBar, MorningReport, RetirementPanel, SkinPicker, ArchetypeSelector, ResearchTree)
   components/clan/         — 1 Clan social component (ClanInviteNotification)
@@ -151,20 +152,22 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 | `/arena` | Redirect → `/arena/club` | Yes |
 | `/arena/fight` | PreparationView | Yes |
 | `/arena/club` | FightClubView | Yes |
-| `/arena/club/create` | CreateAgentView | Yes |
-| `/arena/club/:agentId` | AgentDetailView | Yes |
-| `/fight` | CardFightView | Yes |
-| `/training` | TrainingView | Yes |
+| `/arena/club/create` | redirect → `/v2/create` (Sub-epic 1) | Yes |
+| `/arena/club/:agentId` | redirect → `/v2/fd/:agentId` (Sub-epic 1) | Yes |
+| `/fight` | redirect → `/v2/fight` (Sub-epic 8 C3) | Yes (via v2ProtectedNames) |
+| `/training` | redirect → `/v2/training` (Sub-epic 5L) | Yes |
 | `/training/moves` | *Deleted* — research moved to AgentDetailView Moves tab | — |
 | `/training/deck` | *Deleted* — deck editing in AgentDetailView | — |
-| `/profile` `/profile/balance` `/profile/wallet` `/profile/account` `/profile/skins` | ProfileView | Yes |
+| `/profile` `/profile/balance` `/profile/skins` | redirect → `/v2/profile` (Sub-epic 5B) | Yes |
+| `/profile/wallet` | redirect → `/v2/wallet` (Sub-epic 3) | Yes |
+| `/profile/account` | redirect → `/v2/account` (Sub-epic 3) | Yes |
 | `/v2/wallet` `/v2/account` | WalletView/AccountView (Sub-epic 3) | Yes (effective via redirect entries on legacy `/profile/*`) |
-| `/clan/:id` | ClanView | Yes |
-| `/ratings/:type` | RatingsView | Yes |
-| `/user/:userLogin` | ProfileView | Yes |
-| `/friends` | FriendsView | Yes |
-| `/matchmaking` | MatchmakingView | Yes |
-| `/spectate/:odId` | SpectateView | Yes |
+| `/clan/:id` | redirect → `/v2/clan/:id` (Sub-epic 1) | Yes |
+| `/ratings/:type` `/ratings` | redirect → `/v2/ratings` (Sub-epic 8 C1) | Yes (legacy via redirect cascade) |
+| `/user/:userLogin` | redirect → `/v2/user/:userLogin` (6B-3) | Yes |
+| `/friends` | redirect → `/v2/profile` (Sub-epic 8 C5, page→tab) | Yes (legacy via redirect cascade) |
+| `/matchmaking` | redirect → `/v2/matchmaking` (Sub-epic 8 C2) | Yes (via v2ProtectedNames) |
+| `/spectate/:odId` | redirect → `/v2/spectate/:fightId` (Sub-epic 8 C4, param rename) | Yes (via v2ProtectedNames) |
 
 ---
 
@@ -5648,4 +5651,154 @@ Layered approach preserves DRY benefits + visual character. Reusable pattern д�
 
 ---
 
-**Следующий sub-epic:** Sub-epic 8 — Финальный cutover (M size). Pre-cutover acceptance gate (full /v2 sweep) → main merge → legacy `/src` v1 cleanup → Эпик 6 closure. Carry-overs forward к Sub-epic 8: visual smoke-test all /v2 routes, optional bundle of remaining minor carry-overs (#9 Clan data integration audit, #10 v2 cutover auth posture audit), confirm wagmi/Telegram/RainView preservation post-cutover, Sub-epic 7 visual verification gate (no functional regressions in auth/wallet flows under live testing).
+### Sub-epic 8 — Pre-cutover gate + v1→v2 cutover + Эпик 6 closure ✅ CLOSED
+
+Закрыт 2026-05-05. Final Эпик 6 sub-epic (15/15). Path β FIXED (Phased per-feature redirects).
+9 functional commits + 3 closure commits. Cherry-pick PR #357 (Lesson #33 6th application).
+
+**Commit range:** `0b9dc45` (C1) → `76e4e2b` (C9) functional. Branch: continue stack
+`claude/investigate-cutover-gate-RpOyg` (Recovery #91 — Lesson #18 surface + Lesson #44 re-anchor —
+structural divergence resolved Option E switch к ТЗ-specified branch).
+
+**Final report:** `docs/visual-migration/EPIC6_SUBEPIC_8_FINAL_REPORT.md` (CL2 closure pending).
+**Эпик 6 final report:** `docs/visual-migration/EPIC_6_FINAL_REPORT.md` (CL3 closure pending —
+comprehensive 15-sub-epic retrospective).
+**Phase 0 report:** `docs/visual-migration/EPIC6_SUBEPIC_8_PHASE_0_REPORT_PART1/2A/2B.md`
+(3-part split per stream timeout fallback, 8th application preventive split framework).
+**Acceptance gate report:** `docs/visual-migration/EPIC6_SUBEPIC_8_ACCEPTANCE_GATE_PREFLIGHT.md`.
+
+**Что закрыто:**
+
+5 cutover redirects + 1 i18n + 1 BE + 2 cleanup = 9 functional + cherry-pick PR:
+- C1 redirect /ratings/:type → /v2/ratings (function-form param drop + bare /ratings)
+- C2 redirect /matchmaking → /v2/matchmaking (string-form)
+- C3 redirect /fight → /v2/fight (string-form)
+- C4 redirect /spectate/:odId → /v2/spectate/:fightId (function-form param rename, backtick template)
+- C5 redirect /friends → /v2/profile (string-form, page→tab semantic)
+- C6 i18n add spectate.coachPause + spectate.coachPauseStatus × 11 locales (22 lines)
+- C7 BE add currentFight field к /v1/friends/list (closes Q6-A — Friends Watch Live live)
+- C8 chore Phase A orphan deletes (5 v1 views, 2,439 lines)
+- C9 chore Phase B cutover-dependent deletes (5 v1 views, 4,446 lines)
+- Cherry-pick PR #357 — fix/friends-watch-live-be → main → Railway auto-deploy
+
+**Главное достижение:** Эпик 6 visual migration **COMPLETE 15/15 (100%)**. v1 → v2 cutover landed clean,
+all critical surfaces ratified. 6,885 lines v1 cleanup. BE deploy chain coordinated через cherry-pick PR
+(Lesson #33 6th application).
+
+**Streak entering 8:** 31. **Streak exiting 8:** **32** ✅ — preserved через 2 adaptation-tier recoveries
+(#89 + #91) + 4 Lesson #45 catches resolved adaptation-tier (no STOP triggered C7 BE bundle).
+
+**Cumulative metrics:**
+- Recoveries: 88+ → **90+** (+2: #89 Lesson #43 9th occurrence harness fresh-slug + #91 structural
+  branch divergence Option E re-anchor — both adaptation-tier per Lesson #35)
+- Lessons promoted: 38 → **38** (no new promotions — Lesson #45 12-occurrence chain stable)
+- Lesson candidates active: **7** (#36-#42 unchanged)
+- Lesson #45 catches Sub-epic 8: **4 cumulative** (C7 BE bundle — pvpMatchManager.activeMatches +
+  engine.player1.odId + engine.player1.username + Map values = engine instances)
+- Lesson #11 catches Sub-epic 8: **8 cumulative** pre-edit (within Phase 0 prediction 25-50 lower-bound)
+
+**Hot-fix metric:** **0 — 32-streak achieved** ✅ (5E → 5U + Эпик 6 all 15 sub-epics clean).
+
+**Эпик 6 progress:** 14/14 → **15/15 (100%)** ✅ — **ЭПИК 6 CLOSED.**
+
+**Sub-epic 8 — CLOSED ✅. Эпик 6 — CLOSED ✅.**
+
+#### Architectural achievements (Sub-epic 8)
+
+**5 cutover redirects mechanism (per Q2.2 + Vue Router 4):**
+- 4 string-form (`/matchmaking`, `/fight`, `/friends`, bare `/ratings`)
+- 2 function-form (`/ratings/:type` param drop, `/spectate/:odId` param rename via backtick template)
+- Auth posture preserved через redirect cascade (v1 protected → v2 inheriting v2ProtectedNames OR public)
+- Bookmark survival semantically clean (param transforms preserve UUID, drops only inappropriate params)
+
+**10 v1 view atomic cleanup pattern:**
+- Phase A 5 orphans (no router refs, safe atomic) + Phase B 5 cutover-dependent (post-redirect orphans)
+- Phase C deferred per user Q8 decision (PreparationView + FightClubView, kept v1, defer Эпик 7+)
+- Vuetify cascade reduction 5+ → 1 (only PreparationView v1 Vuetify consumer remains)
+
+**BE-truth invariant preservation (Sub-epic 7 4-cluster + Sub-epic 8 BE addition):**
+- Wagmi composables verbatim (Sub-epic 7 AW2 carry-forward)
+- Telegram WebApp API verbatim
+- Vuex auth chains verbatim
+- Active effects derivation BE round_result payload
+- **NEW Sub-epic 8: pvpMatchManager.activeMatches probe pattern** — engine.player1.odId / engine.player2.odId
+  (legacy "odessa" historic naming, verified `odId === userId` per matchmaking.js:16, handler.js:83/700-701)
+  для currentFight detection в /v1/friends/list response
+
+**Convention discovery: legacy `odId` field naming** — historically "одессы id" сохранилось across
+pvpCombatEngine + matchmaking + handler + spectate route param. Confirmed semantic equivalence
+к userId. NOT renamed в Sub-epic 8 cutover scope (route param renamed `:odId` → `:fightId` C4, но
+engine internal field stays `odId`). Эпик 7+ refactor candidate если consolidation desired.
+
+**RainView 3D rain (`src/views/RainView.vue`, 1212 lines) — UNTOUCHED across all Эпик 6** ✅
+
+**Carry-over forward к Эпик 7+ (NEW Sub-epic 8):** ~9 items (#38-#46 — see §"Carry-overs forward")
+
+#### Lesson #18 + #44 + #45 application Sub-epic 8
+
+**Recovery #91 — Structural branch divergence (Lesson #18 STOP surface + Lesson #44 re-anchor):**
+- Harness designated fresh slug `claude/cutover-acceptance-gate-YGJKA` from main HEAD `d52d2cb`
+- Designated had **different HEAD SHA** (NOT same-SHA fresh slug pattern of prior 5 recoveries) —
+  structural divergence
+- Lesson #18 STOP triggered surface conditions strict — divergent branch state
+- User-authorized re-anchor Option E switch к ТЗ-specified branch (Lesson #44 explicit decision)
+- Adaptation-tier per Lesson #35 (environmental, not code bug)
+
+**Lesson #45 catches Sub-epic 8 (4 cumulative — C7 BE bundle concentrated):**
+1. `pvpMatchManager.matches` (Phase 0 stale) → actual `pvpMatchManager.activeMatches`
+2. `match.player1Id` (Phase 0 stale) → actual `engine.player1.odId` (legacy naming)
+3. `match.player1Name` (Phase 0 stale) → actual `engine.player1.username`
+4. Map values plain objects (Phase 0 implication) → actual `PvPCombatEngine` instances
+
+All 4 caught pre-edit, adapted, no STOP triggered. Pattern correlates с novelty (BE first-touch C7 —
+high error rate; pattern-reuse cutover commits C1-C5 + cleanup C8-C9 — zero new catches).
+
+#### Closure shape: Standard linear (11th application в Эпике 6)
+
+11 standard linear closures: 6A + 6B-1 + 6B-3 + Sub-epic 1 + Sub-epic 2 + Sub-epic 3 + Sub-epic 4a +
+Sub-epic 4b + Sub-epic 5 + Sub-epic 7 + **Sub-epic 8**.
+Sub-epic 6 used Code-complete + deferred-deploy NEW shape (5th distinct closure shape).
+
+**Эпик 6 closure shape distribution:**
+- Standard linear: 11 sub-epics
+- Code-complete + deferred-verify: 3 sub-epics (6B-3a-backend, Sub-epic 1, Sub-epic 4b)
+- Deprecation-via-redirect: 1 sub-epic (6B-2)
+- Scope-deferral-к-downstream: 1 sub-epic (6B-3b)
+- Code-complete + deferred-deploy: 1 sub-epic (Sub-epic 6)
+
+5 distinct closure shapes validated через 15-sub-epic Эпик 6.
+
+#### Carry-overs forward Sub-epic 8 → Эпик 7+
+
+| # | Item | Source | Disposition |
+|---|---|---|---|
+| #38 | ChallengeNotification routing branch simplification | C3 | Drop v1 branch, push directly /v2/fight (eliminates query param drop on string redirect) |
+| #39 | App.vue:100 path check redundancy | C4 | Cosmetic — drop /spectate branch post-cutover |
+| #40 | App.vue:110 scrollableRoutes /friends literal | C5 | Dead-list entry post-cutover |
+| #41 | PreparationView.vue:97 router.push('/friends') | C5 | Cascade through redirect (functional). Phase C scope. |
+| #42 | v1 SpectateView:230 router.push('/friends') | C5 | RESOLVED via C9 (file deleted) |
+| #43 | HudSpectate inline fallbacks dead code | C6 | Drop \|\| fallback strings post-i18n |
+| #44 | Engine status enum defensive (4-state allow-list) | C7 | Already correct posture, monitoring forward |
+| #45 | findCurrentFight O(N×M) optimization | C7 | Indexed reverse Map (userId → matchId) maintained by pvpMatchManager. Эпик 7+ optimization. |
+| #46 | Stale doc comments referencing deleted v1 views | C8/C9 | ~25-30 doc comment cleanup pass |
+
+---
+
+## ЭПИК 6 — CLOSED ✅
+
+Закрыт 2026-05-05 через Sub-epic 8 cutover + closure. **15/15 (100%) sub-epics closed clean.**
+
+Final state:
+- Streak: **32** ✅ (entering Эпик 6: 17 — exiting: 32, +15 sub-epic chain)
+- Recoveries cumulative: 79 → **90+** (+11 across Эпик 6)
+- Lessons promoted: 35 → **38** (+3: #43 #44 #45)
+- 5 distinct closure shapes established
+- 5 cherry-pick PRs cumulative (PR #353/#354/#355/#356/#357)
+- 6 mandatory Phase 0 enhancement subsections (5 prior + 6th PROMOTED Sub-epic 6)
+- Comprehensive cumulative retrospective: `docs/visual-migration/EPIC_6_FINAL_REPORT.md` (CL3)
+
+**Эпик 7+ scope:** post-migration features, refactors, deferred carry-overs (~30+ items including
+#16/#27 architectural-divergence reclassifications + #38-#46 Sub-epic 8 forward + prior carry-overs).
+Separate planning phase.
+
+**Следующий: Эпик 7+ planning** — separate session, blank-slate scope determination.
