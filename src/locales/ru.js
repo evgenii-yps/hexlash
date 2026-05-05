@@ -709,6 +709,8 @@ export default {
     leave: 'Уйти',
     watch: 'Смотреть',
     watchLive: 'Смотреть прямой бой',
+    coachPause: 'Тайм-аут тренеров',
+    coachPauseStatus: 'Бойцы советуются с тренерами...',
   },
   xpAllocation: {
     freeXP: 'Свободно',

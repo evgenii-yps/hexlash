@@ -720,6 +720,8 @@ export default {
     leave: 'Leave',
     watch: 'Watch',
     watchLive: 'Watch live fight',
+    coachPause: 'Coach Pause',
+    coachPauseStatus: 'Fighters consulting their coaches...',
   },
   userProfile: {
     notFound: 'User not found',
