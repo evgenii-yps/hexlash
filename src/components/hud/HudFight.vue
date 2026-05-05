@@ -59,9 +59,26 @@
     <div v-if="matchActive && (fightState.diceReady || fightState.diceActiveType)" class="dice-area">
       <button v-if="fightState.diceReady && !fightState.diceActiveType"
               class="dice-button dice-ready"
-              @click="onDiceClick">🎲 ROLL</button>
+              @click="onDiceClick">
+        <img :src="iconDice" class="dice-icon-asset" alt="" />
+        <span>ROLL</span>
+      </button>
       <div v-if="fightState.diceActiveType" class="dice-active-pill">
         {{ fightState.diceActiveType.toUpperCase() }}
+      </div>
+    </div>
+
+    <!-- B3 (#26): active effects modifiers bar (port v1 CardFightView.vue:94-98).
+         Visible only when at least one effect active (FE-truth from round_result). -->
+    <div v-if="anyActiveEffect" class="modifiers-bar">
+      <div v-if="fightState.activeEffects.adrenaline" class="mod-badge mod-badge--adrenaline">
+        <img :src="iconAdrenaline" class="mod-badge-icon" alt="" />
+      </div>
+      <div v-if="fightState.activeEffects.shield" class="mod-badge mod-badge--shield">
+        <img :src="iconShield" class="mod-badge-icon" alt="" />
+      </div>
+      <div v-if="fightState.activeEffects.blind" class="mod-badge mod-badge--blind">
+        <img :src="iconBlind" class="mod-badge-icon" alt="" />
       </div>
     </div>
 
@@ -127,6 +144,12 @@ import { useRouter, useRoute } from 'vue-router';
 import { fightSceneApi } from '@/scene/scenes/useFightSceneApi.js';
 import { fightLog } from './common/useFightLog.js';
 import { flashing, flashColor } from './common/useFlashHit.js';
+// B3 (#25, #26): dice + modifier effect icons (port v1 CardFightView.vue:250-256)
+import iconDice from '@/assets/images/icons/dice.svg';
+import iconAdrenaline from '@/assets/images/icons/adrenaline.svg';
+import iconShield from '@/assets/images/icons/shield.svg';
+import iconBlind from '@/assets/images/icons/blind.svg';
+import iconHeal from '@/assets/images/icons/heal.svg';
 import PrepOverlay from './common/PrepOverlay.vue';
 import ResultOverlay from './common/ResultOverlay.vue';
 import CoachPause from './common/CoachPause.vue';
@@ -199,6 +222,13 @@ const leftHpPct = computed(() =>
 );
 const rightHpPct = computed(() =>
   Math.max(0, Math.round(100 * fightState.rightHp / fightState.rightMaxHp)),
+);
+
+// B3 (#26): aggregate flag для modifiers-bar visibility (3-effect OR)
+const anyActiveEffect = computed(() =>
+  fightState.activeEffects.adrenaline ||
+  fightState.activeEffects.shield ||
+  fightState.activeEffects.blind,
 );
 
 function selectCam(mode) {
@@ -577,5 +607,56 @@ watch(() => fightLog.lines.length, () => {
 @keyframes dicePulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(255, 6, 111, 0.4); }
   50%      { box-shadow: 0 0 0 8px rgba(255, 6, 111, 0); }
+}
+
+/* B3 (#25): dice icon sizing inside dice-button (replaces emoji 🎲) */
+.dice-icon-asset {
+  width: 24px;
+  height: 24px;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+/* B3 (#26): modifiers bar — active effect badges (port v1 CardFightView.vue:94-98).
+   Positioned below dice-area; pointer-events:none (informational only).
+   Lesson #34 HUD overlay convention: parent .fight-hud is pointer-events:none —
+   no override needed since badges are non-interactive. */
+.modifiers-bar {
+  position: fixed;
+  bottom: 170px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  pointer-events: none;
+  z-index: 60;
+}
+.mod-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--hex-radius-md);
+  border: 2px solid currentColor;
+  background: rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+}
+.mod-badge-icon {
+  width: 18px;
+  height: 18px;
+}
+.mod-badge--adrenaline {
+  color: var(--hex-dice-adrenaline);
+  box-shadow: 0 0 8px var(--hex-dice-adrenaline);
+}
+.mod-badge--shield {
+  color: var(--hex-dice-shield);
+  box-shadow: 0 0 8px var(--hex-dice-shield);
+}
+.mod-badge--blind {
+  color: var(--hex-dice-blind);
+  box-shadow: 0 0 8px var(--hex-dice-blind);
 }
 </style>

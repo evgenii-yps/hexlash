@@ -93,6 +93,15 @@ const onPvPRoundResult = (e) => {
   fightState.rightHp = oppData.hp;
   fightState.round   = data.round;
 
+  // B3 (#26): active effect badges — populate from BE-truth myData.effects array.
+  // Effect shape: { type: 'adrenaline'|'shield'|'blind'|..., roundsLeft: N }
+  // (per pvpCombatEngine.js:388/410). Display only adrenaline/shield/blind in v2;
+  // heal/rage/crit/overdrive are per-hit triggers (handled by FLASH_COLORS map).
+  const myEffectTypes = (myData.effects || []).map(e => e.type);
+  fightState.activeEffects.adrenaline = myEffectTypes.includes('adrenaline');
+  fightState.activeEffects.shield = myEffectTypes.includes('shield');
+  fightState.activeEffects.blind = myEffectTypes.includes('blind');
+
   // Hit-flash if any damage
   if (myData.damage > 0 || oppData.damage > 0) {
     triggerFlash();

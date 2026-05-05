@@ -44,6 +44,14 @@ export const fightState = reactive({
   eventTitleClass: '',         // 'event-dodge' | 'event-crit' | 'event-damage' | ''
   shakeLeftActive: false,      // left fighter shake animation flag
   shakeRightActive: false,     // right fighter shake animation flag
+  // B3 (#26): active effect badges for player's own buffs/debuffs.
+  // BE-truth: populated from round_result.{player1|player2}.effects (per
+  // pvpCombatEngine.js:323/331). Mock fights leave all false (no dice flow).
+  activeEffects: {
+    adrenaline: false,
+    shield: false,
+    blind: false,
+  },
 });
 
 const MOVES = [
@@ -245,5 +253,9 @@ export function resetFight() {
   fightState.eventTitleClass = '';
   fightState.shakeLeftActive = false;
   fightState.shakeRightActive = false;
+  // B3 (#26): clear active effect badges on reset
+  fightState.activeEffects.adrenaline = false;
+  fightState.activeEffects.shield = false;
+  fightState.activeEffects.blind = false;
   clearFightLog();
 }
