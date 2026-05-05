@@ -5488,59 +5488,164 @@ Roadmap document: `docs/visual-migration/EPIC6_ROADMAP.md` (TBD — может �
 > - **Sub-epic 4b** — PvP edge cases + safety + BE deploy chain (was 6B-7 partial) — M-L ✅ **CLOSED**
 > - **Sub-epic 5** — Реальный matchmaking (was 6B-8) — L ✅ **CLOSED**
 > - **Sub-epic 6** — Реальный spectate (was 6B-9) — M-L ✅ **CLOSED**
-> - **Sub-epic 7** — Visual polish round + Auth + Wallet redesign (was 6B-10) — M-L
+> - **Sub-epic 7** — Visual polish round + Auth + Wallet redesign (was 6B-10) — M-L ✅ **CLOSED**
 > - **Sub-epic 8** — Финальный cutover (was 6C) — M
 >
-> Total: 14 sub-epics в Эпике 6 (Sub-epic 4 split into 4a + 4b — counted as 1 slot per Path C precedent; effective tracking 15 narratives across 14 budgeted slots). **13 closed, 2 remaining (7/8)**.
+> Total: 14 sub-epics в Эпике 6 (Sub-epic 4 split into 4a + 4b — counted as 1 slot per Path C precedent; effective tracking 15 narratives across 14 budgeted slots). **14 closed, 1 remaining (8)**.
 
 **Carry-overs into Эпик 6 (35 items — Sub-epic 6 added #34-#37; cumulative: -1 closed #1 (ChallengeNotification Sub-epic 4a C5a) -1 closed #17 (Sub-epic 5 C8) +13 from Sub-epic 4a polish surface +2 from Sub-epic 3 surface +5 from Sub-epic 5 surface +4 from Sub-epic 6 surface):**
 1. Achievement badge для retirement (5Q drop, κ Path B)
 2. HudProfile card-creep monitor (6/7 threshold; **Sub-epic 1 NOT triggered** ✓; **Sub-epic 2 NOT triggered** ✓; **Sub-epic 3 NOT triggered** ✓ — Path A separate views, no HudProfile cards added)
 3. Lesson #36 validation track (await 2nd occurrence)
-4. Auth + Wallet visual redesign (NEW per 6A user request — Sub-epic 7 per new naming)
+4. ✅ **CLOSED (Sub-epic 7 C11+C12+C13+C14)** — Auth + Wallet visual redesign (main user request from 6A). Wallet: ConnectWallet `.wallet-modal-*` → canonical `.hex-modal-*` + GameBalanceCard VCard→HexCard. Auth: 4 fragments (Login/Signup/Reset/TelegramLogin) Vuetify→HexButton + canonical `.hex-spinner`. RainView 3D rain (1212 lines) UNTOUCHED per user decision. Wagmi composables + Telegram WebApp API preserved verbatim.
 5. `/rules` → v2 port (6B-1 Phase 0 surface — PageView multi-purpose) — Sub-epic 8 cleanup или 6B-1b candidate
 6. 3D models + devices system (6B-2 user direction — replaces legacy skins concept, post-migration / Эпик 7+ scope)
 7. Locale cleanup (10 → English-only) (6B-3a user direction — Эпик 7+ scope)
 8. `/user/search` `sortBy=balance` query param (6B-3a Phase 1 finding — secondary leak vector through sort capability over private financial field; out of 6B-3a-backend scope; follow-up sub-epic candidate)
 9. Clan data integration audit (Sub-epic 1 visual verify surface — M-L size; replace 5D mock data + fix clan search + e2e guest verify + optional backend privacy fix + entry points wiring verify; желательно перед Sub-epic 8 final cutover)
 10. v2 cutover auth posture audit (Sub-epic 1 Path A decision investigation — post-Эпик 6 / Sub-epic 8; "Option C" framing в 6A был imprecise — actual pattern "auth via legacy entry, not via v2 child"; group-level guard на `v2Routes` parent vs per-route `protectedRoutes` entries decision)
-11. friendsState.searchPlayers captain field drop (Sub-epic 2 Commit 4 pre-edit Q-A3 surface — manual reshape `friendsState.js:133-141` drops `captain` field → `PlayerSearchResult.vue` `:captain="player.captain"` always undefined → `UserCaptainBadge` renders "—" always. Pre-existing silent bug, NOT created by Sub-epic 2. Polish round candidate / friends sub-epic candidate)
-12. HudRatings 8-col CSS grid mismatch (Sub-epic 2 Commit 5 surface — `.ratings-thead` + `.rt-row` `grid-template-columns` hardcoded 8 cols from 5C; FIGHTERS uses 7 cells, CLANS/AGENTS use 6 cells — visual trailing whitespace. Cosmetic only, deferred per Commit 11 defer guidance. Per-tab grid modifier classes — polish round candidate)
-13. HudRatings keyboard accessibility (Sub-epic 2 Commit 8 audit surface — tab buttons lack `role="tab"` / `aria-selected` / `aria-controls`; row click divs lack `tabindex` / `role="button"` / Enter-key handlers. Pre-existing 5C inheritance, NOT regression. Polish round candidate)
-14. **NEW: Switcher3DPunch SKIP** (Sub-epic 3 Q-tactical-1 — v1 ProfileAccount component for 3D punch view toggle; niche feature, not migrated к v2. Polish round candidate or absorbable into Sub-epic 7 Auth+Wallet redesign)
-15. **NEW: Account/Wallet components Vuetify → v2 design system port** (Sub-epic 3 Q-tactical-Phase1-3/5 — 4 account components (ConfirmEmail/ChangeLogin/ChangePassword/DeleteAccount) + GameBalanceCard ported AS-IS preserving Vuetify (VBtnDark/VModal/VCard/InputField). Visual inconsistency vs surrounding v2 HUD aesthetic. Polish round candidate or absorbable into Sub-epic 7)
+11. ✅ **CLOSED (Sub-epic 7 C2)** — friendsState.searchPlayers captain field drop. Added `captain: u.captain || null` к map output (`friendsState.js:141`).
+12. ✅ **CLOSED (Sub-epic 7 C1)** — HudRatings 8-col CSS grid mismatch. Per-tab grid modifier classes added (`.ratings-thead--clans/agents/fighters` × tbody) eliminating trailing whitespace.
+13. ✅ **CLOSED (Sub-epic 7 C2)** — HudRatings keyboard a11y. Added role="tab"/role="tabpanel"/role="tablist"/role="button" + aria-selected + tabindex + keydown.enter/keydown.space handlers across 4 tabs + 3 row containers.
+14. Switcher3DPunch SKIP (Sub-epic 3 Q-tactical-1) — PRESERVED per user decision Sub-epic 7 (NOT touched). Deferred к Эпик 7+ если 3D punch toggle revisit needed.
+15. ✅ **CLOSED (Sub-epic 7 C7+C8+C9)** — Account/Wallet Vuetify→v2 port (4/4 components: ConfirmEmail + ChangeLogin + ChangePassword + DeleteAccount). HexButton swap + canonical `.hex-modal-*` taxonomy (post-C9 expansion: body/actions/close + .hex-spinner). InputField preserved verbatim.
 
 **Sub-epic 4a polish carry-overs (NEW #16-#28 — all decoration/polish/non-functional):**
 
 16. **[RECLASSIFIED 4b C10 STOP — verified semantically correct, NOT source-fixed]** `isPlayer1: false` hardcode в ChallengeNotification.vue:62. Investigation в C10 pre-edit verify revealed semantic correctness per BE invariant: `pvpMatchManager.createMatch(matchId, {challenger as player1}, {acceptor as player2})` — `handleChallengeAccepted` runs on acceptor side, who IS player2 by convention. Original 4a classification "dead-write addressed via overwrite cascade" inverted actual semantics: overwrite cascade в FightView `onPvPFightStart` is **defensive redundancy**, не corrective. ТЗ proposed derivation `data.opponent?.odId !== userData.id` would always evaluate `true` (opponent ≠ self) → would set `isPlayer1: true` on acceptor → **inverted from correct value**. Closure: investigation conclusion, не code change. Future Claude: do NOT "fix" к computed expression — would invert correct value.
 17. ✅ **CLOSED (Sub-epic 5 C8)** — v2 countdown UI parity gap closed via matchmaking-side post-MatchFoundMsg 3-second countdown (3→0 navigate /v2/fight). Pulsing animation + VS display covers full prep transition.
-18. Dodge/crit overlay title mechanism gap (v1 setEventTitle 1200ms; v2 merged into log entries). Decoration-only.
-19. Shake animation gap (v1 shakeLeft/shakeRight 400ms на damage). Decoration-only.
-20. Cumulative damage stats absent (v1 fight/addStats). Stats-display only.
-21. Log actor colors hardcoded к warden/predator slots (HudFight CSS supports 2 colors only; existing v2 design constraint). Не new regression.
-22. v2 coach active boost UI absent (v1 fight/setCoachAdvice + 4-round visible bar). BE applies effect; UI only gap.
-23. v2 single coach overlay vs v1 dual showCoachPause + showWaiting (workaround via reactive coachPauseText mutation).
-24. Per-type flash color mapping (v1 triggerFlash(effect.type) → CSS variable; v2 bare triggerFlash() white only).
-25. Dice icon assets (v1 imports iconHeal/Adrenaline/Shield/Blind/Dice; v2 uses text "🎲 ROLL").
-26. Modifiers bar UI (v1 displays adrenaline/shield/blind active effect badges; v2 single pill).
-27. Dice cooldown countdown display (v1 shows cooldownLeft remaining rounds; v2 binary ready/not-ready).
-28. XP earned display absent в v2 finalists (v1 fight/setXpEarned for local display; backend persists actual XP per CLAUDE.md). Stats-display only.
+18. ✅ **CLOSED (Sub-epic 7 C4)** — Dodge/crit overlay title mechanism. setEventTitle helper + 1200ms timeout + .event-title CSS overlay (Vue Transition).
+19. ✅ **CLOSED (Sub-epic 7 C4)** — Shake animation. triggerShake helper + 400ms timeout + @keyframes shake (port v1 verbatim).
+20. Cumulative damage stats absent (v1 fight/addStats). Stats-display only — DEFERRED Эпик 7+ (per Phase 0 user decision).
+21. Log actor colors hardcoded к warden/predator slots — out of scope (existing v2 design constraint, не new regression).
+22. v2 coach active boost UI absent — DEFERRED Эпик 7+ (BE-truth integration concern; coachActive state would need BE broadcast).
+23. v2 single coach overlay vs v1 dual — DEFERRED (HudFight uses CoachPause SFC, intentional architecture per Sub-epic 4a precedent).
+24. ✅ **CLOSED (Sub-epic 7 C5 revised)** — Per-type flash color mapping. 8-color FLASH_COLORS map via color-mix(--hex-dice-* tokens) + flashColor ref + type=null default param (backwards compat). HudFight :style="{'--flash-color': flashColor}" CSS custom property bridge.
+25. ✅ **CLOSED (Sub-epic 7 C6)** — Dice icon assets. 5 SVG imports (dice/adrenaline/shield/blind/heal); replace 🎲 emoji с iconDice + ROLL text.
+26. ✅ **CLOSED (Sub-epic 7 C6)** — Modifiers bar UI. 3 effect badges (adrenaline/shield/blind) + anyActiveEffect computed + activeEffects state + BE-truth populate from round_result. Later C15 extracted .mod-badge* taxonomy globally к hexlash-ui.css (DRY win).
+27. **RECLASSIFIED (Sub-epic 7 C5)** — Dice cooldown countdown. v1 FE round-counter architecture not portable к v2 BE-truth dice model. v2 binary `diceReady` flag intentional (Sub-epic 4a-6 BE-truth migration). Future BE protocol extension required (cooldownRemaining field в dice_unavailable event). Mirror precedent: #16 ChallengeNotification reclassification (Sub-epic 4b).
+28. XP earned display absent — DEFERRED Эпик 7+ (per Phase 0 user decision; backend persists actual XP, FE display only).
 
 **Sub-epic 5 carry-overs (NEW #29-#33 — all polish/non-functional):**
 
 29. **NEW (Sub-epic 5 C3)** — Filter chips (Archetype/Belt) BE extension. UI markup + matchmaking.css preserved hidden via `v-if="false"` in HudMatchmaking.vue; revival = remove v-if when BE supports archetype/belt/eloDelta queue params. BE matchmaking.js currently only ELO-proximity FCFS.
 30. **NEW (Sub-epic 5 Phase 0 finding)** — ELO duplication consolidation. `eloService.calculateElo` (asymmetric `{changeA, changeB, newRatingA, newRatingB}`) used by agentFightService.js (agent ranked); inline `pvpCombatEngine.calculateElo` (symmetric `{winnerNew, loserNew}`) used for PvP fight ELO updates. Math equivalent K=32 — different APIs. Polish/refactor candidate.
-31. **NEW (Sub-epic 5 C1 surface)** — ErrorMsg shape mismatch BE→FE. BE `handleMatchmakingStart` sends `{type: 'ErrorMsg', error, code}` flat; FE `webSocketState.js:142-144` parser reads `message.errorDto` (different shape). Pre-existing bug, NOT created by Sub-epic 5. Captain pre-check (C4 audit decision option c) obviated specific NO_CAPTAIN_SET path; other ErrorMsg consumers still affected. Lesson #33 deploy chain candidate (BE shape correction OR FE parser tolerance).
-32. **NEW (Sub-epic 5 C7 audit surface)** — `.mm-main left:270px` filters-hidden layout gap. C3 hid filter sidebar via `v-if="false"`; CSS `.mm-main` rule still reserves 270px space (was filter sidebar width). Cosmetic spacing offset on left side of mm-main panel. Polish round candidate (1-line CSS adjustment + comment marker для filter revival path).
+31. ✅ **CLOSED (Sub-epic 7 C3)** — ErrorMsg shape mismatch BE→FE (FE tolerant parser per Q4 Option B). webSocketState.js:142-144 accepts both nested `{errorDto:{code,message}}` AND flat `{error, code}` shapes via `errorPayload = message.errorDto || { code: message.code, message: message.error }`. **Bonus silent BE bug fix:** `fromJSON(undefined)` was throwing TypeError on flat-shape messages — tolerant parser eliminates throw. BE consolidation deferred к Эпик 7+ (5 callsites bypass sendError helper).
+32. ✅ **CLOSED (Sub-epic 7 C1)** — `.mm-main left:270px` filter sidebar gap. Changed к `left: 14px` + comment marker preserving filter revival path (revert when carry-over #29 BE filter chips supported).
 33. **NEW (Sub-epic 5 C8 surface)** — Captain vs opponent payload field name asymmetry. `master.userData.captain.{name, elo}` vs MatchFoundMsg `opponent.{username, rating}` — same semantic fields different names. C8 normalized FE-side via 6 computed wrappers (HudMatchmaking VS display). BE-side consolidation (CAPTAIN_PUBLIC_SELECT field naming alignment с MatchFoundMsg.opponent) candidate. Polish/Sub-epic 7.
 
 **Sub-epic 6 carry-overs (NEW #34-#37 — all spectate UI polish, non-functional):**
 
-34. **NEW (Sub-epic 6 surface)** — Coach pause read-only overlay UI absent в HudSpectate template. Spectate users currently не видят когда player активирует coach pause (BE event broadcasted, FE receives, но template не рендерит для spectate mode). Decoration-only gap. Polish round candidate (Sub-epic 7).
-35. **NEW (Sub-epic 6 surface)** — activeEffects display badges absent в HudSpectate template. Spectate users не видят active effects (adrenaline/shield/blind etc.) — BE provides данные, FE composable parses, но template не renders. Decoration-only gap. Polish round candidate (Sub-epic 7).
-36. **NEW (Sub-epic 6 C10 surface)** — "joined late" visual indicator absent. Late-joiners receive replayed events via fight_state_resume snapshot, но replay events styled identically к live events. UX polish — distinct log styling (italic / dim / "[REPLAY]" prefix) would help users orient. Polish round candidate (Sub-epic 7).
-37. **NEW (Sub-epic 6 C10 surface)** — `--draw` CSS class для resultClass may not exist в hexlash-v24.css (HudSpectate result overlay sets `class="result-${resultClass}"` где resultClass может быть `'win'/'loss'/'draw'`). C10 verified `--win` and `--loss` exist; `--draw` not surfaced (acceptable fallback к base styling). Polish round candidate — verify + add if missing (Sub-epic 7).
+34. ✅ **CLOSED (Sub-epic 7 C10)** — Coach pause read-only overlay (HudSpectate). 3 spectateState fields (coachPauseOpen/Round/TimeLimit) populated from BE coach_pause/coach_result events. Inline Teleport modal с canonical .hex-modal-* taxonomy + scoped .sp-coach-* modifiers. Read-only (no buttons; spectator cannot dismiss).
+35. ✅ **CLOSED (Sub-epic 7 C15 — final functional)** — activeEffects badges (HudSpectate). 6 spectateState fields (player1ActiveEffects + player2ActiveEffects × 3 effects) populated from BE round_result `detail.player{1,2}.effects` array. 2 modifier bars (per fighter side) с canonical `.mod-badge*` taxonomy (extracted globally C15 mirror C9 .hex-modal-* pattern).
+36. ✅ **CLOSED (Sub-epic 7 C2)** — "joined late" visual indicator. `replayed: true` flag added к onSpectateFightStateResume appendLog calls (3 sites) + .sp-log-replayed scoped CSS (opacity 0.6 + border-left).
+37. ✅ **CLOSED (Sub-epic 7 C1)** — `.sp-result--draw` CSS class. Added scoped rule с warm gold palette (rgba(212, 168, 67, 0.15) bg + var(--hex-warning) border + color).
 
 **Pre-cutover acceptance gate (forward note для Sub-epic 8):** Full /v2 visual + functional sweep across все routes (profile / wallet / account / ratings / clan / user / fight / training / matchmaking / **spectate** / etc.) before final cutover. Comprehensive acceptance checklist covering все sub-epics 6A-6B-3b + Sub-epic 1-6 deliverables. User-driven manual ratification gate. Documents в Sub-epic 4/5/6 handoffs.
 
-**Следующий sub-epic:** Sub-epic 7 — Visual polish round + Auth + Wallet redesign (M-L size). Batch closes carry-overs #18-#28 (Sub-epic 4a polish) + #29-#33 (Sub-epic 5 polish) + **#34-#37 (Sub-epic 6 polish)** + v2 NoConnection restyle + dice icons + modifiers bar + Auth + Wallet redesign per 6A user request + Vuetify→v2 design system port (#14-#15). Phase 0 should focus на: carry-over batch organization (which can bundle, which standalone), Auth+Wallet scope clarification (full redesign vs Vuetify port only), 5N dice icon assets sourcing strategy. Branch reconciliation decision required at start (continue stack vs harness fresh-slug per Lesson #43 7-occurrence chain — pattern stable).
+### Sub-epic 7 — Visual polish round + Auth + Wallet redesign ✅ CLOSED
+
+Закрыт 2026-05-XX. Fourteenth sub-epic в Эпике 6 (14/15 narratives done; only Sub-epic 8 cutover remaining). Path γ FIXED — mixed batch with explicit milestones (alternating polish + Auth/Wallet clusters). 15 functional commits + 1 STOP recovered (C5 + C11 first attempts) + 3 closure commits.
+
+**Commit range:** `9343eaf` (C1) → `0f59fe2` (C15) functional. Branch: continue stack `claude/visual-polish-auth-wallet-6xe6m` (Recovery #88 — Lesson #43 8th occurrence; harness fresh-slug, same SHA `d27bcbe` as `claude/investigate-matchmaking-2JlwO-WfdV0`, adaptation-tier proceed).
+
+**Final report:** `docs/visual-migration/EPIC6_SUBEPIC_7_FINAL_REPORT.md` (C17 closure pending).
+**Handoff:** `docs/visual-migration/HANDOFF_EPIC6_SUBEPIC_8_CHAT_HANDOFF.md` (C18 closure pending).
+**Phase 0 report:** `docs/visual-migration/EPIC6_SUBEPIC_7_PHASE_0_REPORT_PART1/2/3A/3B.md` (4-part split per stream timeout fallback).
+
+**Что закрыто:**
+
+17 carry-overs closed + 1 reclassified (#27):
+- B-bundle phase (C1-C6): #11/#12/#13/#18/#19/#24/#25/#26/#31/#32/#36/#37 — polish quick wins + HudFight visual polish + dice icons/modifiers bar
+- AW3 phase (C7-C9): #15 (4/4 components) — Account Vuetify→v2 port + canonical `.hex-modal-*` taxonomy expansion
+- B4 (C10): #34 — Coach pause read-only overlay для HudSpectate
+- AW2 phase (C11): #4 wallet portion — ConnectWallet canonical migration + GameBalanceCard
+- AW1 phase (C12-C14): #4 auth portion (3/3 fragments) — Login + Signup + Reset + TelegramLogin
+- B5 (C15): #35 + .mod-badge* taxonomy extraction (DRY win)
+
+**Главное достижение:** carry-over #4 (Auth+Wallet redesign — main user request from 6A) closed fully across C11+C12+C13+C14.
+
+**Streak entering 7:** 30. **Streak exiting 7:** 30 ✅ preserved.
+
+**Cumulative metrics:**
+- Recoveries: 87+ → **88+** (+1: #88 bootstrap branch divergence Lesson #43 8th occurrence adaptation-tier)
+- Lessons promoted: 37 → **38** (+1: **#45 PROMOTED** — Phase 0 metadata error pattern, validated через 11 occurrences cumulative across Sub-epic 7)
+- Lesson candidates active: **7** (#36/#37/#38/#39/#40/#41/#42 — UNCHANGED)
+- Lesson #11 catches: **30 cumulative** Sub-epic 7 (25 Lesson #11 + 5 Lesson #32 convention discovery — pattern: catches concentrate в pattern-establishment commits C7-C11; decrease в pattern-reuse commits C12-C15)
+
+**Hot-fix metric:** **0 — 31-streak achieved** ✅ (5E → 5U + 6A + 6B-1 + 6B-2 + 6B-3a-backend + 6B-3 + 6B-3b + Sub-epic 1 + Sub-epic 2 + Sub-epic 3 + Sub-epic 4a + Sub-epic 4b + Sub-epic 5 + Sub-epic 6 + Sub-epic 7 all clean). 2 STOPs (C5 + C11 first attempts) recovered cleanly via revised ТЗ — not classified as recoveries (Mode A discipline working as designed).
+
+**Эпик 6 progress:** 13/14 → **14/14 (100%)** ✅ — Sub-epic 7 CLOSED. Only Sub-epic 8 cutover remaining (separate post-Эпик 6 work to merge `visual-v2` → main + legacy cleanup).
+
+**Sub-epic 7 — CLOSED ✅.**
+
+#### Architectural achievements (Sub-epic 7)
+
+**3 successful CSS taxonomy extractions (DRY pattern):**
+
+1. **`.hex-modal-*` taxonomy expansion (C9):** added `.hex-modal-body` + `.hex-modal-actions` + `.hex-modal-close` (+ :hover) к hexlash-ui.css. Used by 5+ components Sub-epic 7 (ConfirmEmail/ChangeLogin/ChangePassword/DeleteAccount/HudSpectate coach pause overlay/ConnectWallet hybrid).
+2. **`.hex-spinner` + `hex-spin` keyframes (C9):** canonical CSS spinner replaces v-progress-circular across all auth/wallet/account flows. Per-consumer size override pattern (`.cl-spinner` → C8 ChangeLogin / `.cp-loader` → C9 ChangePassword / `.auth-loader` → C12-C14 auth fragments / `.cw-spinner-lg` → C11 wallet 40px).
+3. **`.mod-badge*` taxonomy extraction (C15):** moved 5 .mod-badge / .mod-badge-icon / .mod-badge--{adrenaline,shield,blind} rules from HudFight scoped CSS к global hexlash-ui.css. Shared with HudSpectate. Mirror C9 expansion pattern.
+
+**Pattern: extract к hexlash-ui.css когда 2+ components share visual character.**
+
+**Hybrid canonical-modifier pattern (C11 ConnectWallet precedent):**
+Когда component has divergent visual character from canonical, use:
+- Canonical base class (`.hex-modal`)
+- Component-prefix modifier (`.cw-modal-overlay/.cw-modal-content` overrides z-index 9000, max-width 400px, lighter 1px border)
+Layered approach preserves DRY benefits + visual character. Reusable pattern для AW1/B5 contexts.
+
+**BE-truth preservation invariant (4-cluster confirmation):**
+- **Wagmi composables** (useAccount/useConnect/useDisconnect/useConnectors) — verbatim across AW2 (ConnectWallet, ProfileWallet, HudProfile)
+- **Telegram WebApp API** (window.Telegram.WebApp + initData/initDataUnsafe) — verbatim across AW1 (TelegramLogin)
+- **All Vuex auth chains** (master/login/register/resetPassword/saveTelegramFlag/telegram + getResetState/clearResetState) — verbatim
+- **Active effects derivation** strictly from BE round_result payload `effects: [{type, roundsLeft}]` (HudFight C6 + HudSpectate C15)
+
+**RainView 3D rain (`src/views/RainView.vue`, 1212 lines Three.js + Kokomi + custom shaders) — UNTOUCHED** across all 4 AW1 commits per user decision.
+
+**Carry-over reclassification precedent extended:**
+#27 dice cooldown joins #16 (Sub-epic 4b ChallengeNotification) as architectural-divergence reclassifications. Pattern: when v1 mechanism not portable к v2 architecture, reclassify rather than fix-forward.
+
+#### Lesson #45 PROMOTED (Sub-epic 7 — 11 occurrences validated)
+
+**Phase 0 hypothesis может ошибочно extrapolate v1 mechanism / file structure / API shape / SFC architecture к v2 без investigating actual current code.**
+
+**Mitigation:** pre-edit verification step count scales с commit complexity:
+- 3 steps for trivial CSS
+- 5-7 steps for component changes
+- 8-9 steps для modal/auth/wallet swaps
+
+**Verify pre-edit BEFORE writing edit code:**
+- File existence + actual paths (Phase 0 may use legacy paths — see catches C4/C12/C15)
+- Actual primitive counts via grep (Phase 0 systematically undercounts — see C8/C9 catches)
+- BE event payload shapes (don't assume Phase 0 derivation — see C5/C10/C15)
+- Taxonomy availability в global CSS (verify before assuming — see C8 .hex-modal taxonomy minimal)
+- Vuex action names (don't trust Phase 0 — grep verify — see C13)
+- Vuetify primitives architecture (VBtnDark = Vuetify alias not SFC file — see C7)
+
+**NEVER assume Phase 0 evidence == current code reality without grep verification.**
+
+**Pattern:** catches concentrate в pattern-establishment commits (high error rate); decrease в pattern-reuse commits (low error). C12-C15 had near-zero new catches due к C7-C11 pattern discoveries already documented.
+
+**Origin: Sub-epic 7 occurrences (11 cumulative):**
+1. C4 file location (`src/components/hud/common/useFightSimulation.js` not `src/scene/interaction/`)
+2. C5 dice mechanic v1→v2 architectural divergence (FE round-counter vs BE-truth)
+3. C5 CSS conflict (.hit-flash bg override risk via inline style)
+4. C7 VBtnDark architecture (Vuetify global alias, not SFC file)
+5. C8 Vuetify primitive count undercount (5 primitives vs ТЗ 2)
+6. C8 .hex-modal taxonomy minimal (only 3 classes vs 7 assumed)
+7. C8 VModal API simpler than ТЗ assumed (`v-model` not `v-model:show`)
+8. C8 ConnectWallet precedent uses different taxonomy (`.wallet-modal-*` not `.hex-modal-*`)
+9. C9 token reference missing (`--hex-border-subtle` not in codebase)
+10. C12 path metadata (RainView at `src/views/` not `src/views-v2/auth/`)
+11. C15 spectator path metadata (`src/scene/interaction/useSpectateState.js` confirmed via C10 prior catch)
+
+#### Closure shape: Standard linear (10th application в Эпике 6)
+
+10 standard linear closures: 6A + 6B-1 + 6B-3 + Sub-epic 1 + Sub-epic 2 + Sub-epic 3 + Sub-epic 4a + Sub-epic 4b + Sub-epic 5 + **Sub-epic 7**. Sub-epic 6 used Code-complete + deferred-deploy NEW shape (5th distinct).
+
+**Sub-epic 7 specifics:** 2 STOPs absorbed cleanly via revised ТЗ workflow (C5 first attempt — dice cooldown reclassification; C11 first attempt — wallet scope mismatch). Both STOPs recovered к clean execution с zero functional regressions. STOP discipline framework working as designed (Lesson #18 STOP-tier classification).
+
+---
+
+**Следующий sub-epic:** Sub-epic 8 — Финальный cutover (M size). Pre-cutover acceptance gate (full /v2 sweep) → main merge → legacy `/src` v1 cleanup → Эпик 6 closure. Carry-overs forward к Sub-epic 8: visual smoke-test all /v2 routes, optional bundle of remaining minor carry-overs (#9 Clan data integration audit, #10 v2 cutover auth posture audit), confirm wagmi/Telegram/RainView preservation post-cutover, Sub-epic 7 visual verification gate (no functional regressions in auth/wallet flows under live testing).
