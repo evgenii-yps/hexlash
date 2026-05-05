@@ -58,7 +58,7 @@
           v-for="(entry, i) in spectateState.fightLog"
           :key="i"
           class="sp-log-entry"
-          :class="{ 'sp-log-crit': entry.critical }"
+          :class="{ 'sp-log-crit': entry.critical, 'sp-log-replayed': entry.replayed }"
         >
           <span class="sp-log-round">R{{ entry.round }}</span>
           <!-- Sub-epic 6 C9 — log entry side coloring object syntax handles
@@ -375,6 +375,13 @@ watch(
 }
 
 .sp-log-crit { background: rgba(255, 6, 111, 0.06); }
+
+/* B1b (#36): replayed (joined-late) entries — dimmed с border marker */
+.sp-log-replayed {
+  opacity: 0.6;
+  border-left: 2px solid var(--hex-text-muted);
+  padding-left: 8px;
+}
 
 .sp-result {
   position: fixed;

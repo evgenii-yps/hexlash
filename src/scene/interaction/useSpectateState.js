@@ -256,6 +256,7 @@ export function onSpectateFightStateResume(detail) {
           move: round.player1.module?.name || 'Attack',
           damage: round.player1.damage || 0,
           critical: round.player1.critted || false,
+          replayed: true,  // B1b (#36): mark as replayed event for visual differentiation
         });
       }
       if (round.player2) {
@@ -266,6 +267,7 @@ export function onSpectateFightStateResume(detail) {
           move: round.player2.module?.name || 'Attack',
           damage: round.player2.damage || 0,
           critical: round.player2.critted || false,
+          replayed: true,  // B1b (#36): mark as replayed event for visual differentiation
         });
       }
     }
@@ -282,6 +284,7 @@ export function onSpectateFightStateResume(detail) {
       move: 'Pause active (joined mid-pause)',
       damage: 0,
       critical: false,
+      replayed: true,  // B1b (#36): late-join paused-coach indicator is replay artifact
     });
   }
 }

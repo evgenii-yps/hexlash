@@ -138,6 +138,7 @@ const actions = {
                     status: 'offline',
                     skin: u.skin,
                     avatarUrl: u.avatarUrl,
+                    captain: u.captain || null,  // B1b (#11): preserve captain field for UserCaptainBadge
                 }));
         } catch (err) {
             console.error('Search players error:', err);

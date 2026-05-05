@@ -295,26 +295,41 @@ const nextRankHint = computed(() => {
          (FIGHTERS / CLANS / AGENTS / MY_CLAN). Search input moved per-tab. -->
     <div class="ratings-panel">
       <div class="ratings-toolbar">
-        <div class="ratings-tabs">
+        <div class="ratings-tabs" role="tablist">
           <button
             class="rt-tab"
             :class="{ active: activeTab === 'myclan' }"
             @click="setActiveTab('myclan')"
+            id="ratings-tab-myclan"
+            role="tab"
+            :aria-selected="activeTab === 'myclan'"
           >{{ t.rating.lblMyClan }}</button>
           <button
             class="rt-tab"
             :class="{ active: activeTab === 'clans' }"
             @click="setActiveTab('clans')"
+            id="ratings-tab-clans"
+            role="tab"
+            :aria-selected="activeTab === 'clans'"
+            aria-controls="ratings-panel-clans"
           >{{ t.rating.lblClans }}</button>
           <button
             class="rt-tab"
             :class="{ active: activeTab === 'fighters' }"
             @click="setActiveTab('fighters')"
+            id="ratings-tab-fighters"
+            role="tab"
+            :aria-selected="activeTab === 'fighters'"
+            aria-controls="ratings-panel-fighters"
           >{{ t.rating.lblFighters }}</button>
           <button
             class="rt-tab"
             :class="{ active: activeTab === 'agents' }"
             @click="setActiveTab('agents')"
+            id="ratings-tab-agents"
+            role="tab"
+            :aria-selected="activeTab === 'agents'"
+            aria-controls="ratings-panel-agents"
           >{{ t.rating.lblAgents }}</button>
         </div>
       </div>
@@ -378,7 +393,12 @@ const nextRankHint = computed(() => {
           <div class="num">WR</div>
         </div>
 
-        <div class="ratings-tbody">
+        <div
+          class="ratings-tbody"
+          id="ratings-panel-clans"
+          role="tabpanel"
+          aria-labelledby="ratings-tab-clans"
+        >
           <div v-if="clansLoading" class="rt-empty">{{ 'Loading…' }}</div>
           <div v-else-if="clansError" class="rt-empty">{{ t.rating.error }}</div>
           <div v-else-if="clansRows.length === 0" class="rt-empty">{{ t.rating.noResults }}</div>
@@ -389,6 +409,10 @@ const nextRankHint = computed(() => {
             class="rt-row rt-row--clans clickable"
             :class="rowRankClass({ rank: idx + 1 })"
             @click="$router.push('/v2/clan/' + row.id)"
+            @keydown.enter="$router.push('/v2/clan/' + row.id)"
+            @keydown.space.prevent="$router.push('/v2/clan/' + row.id)"
+            tabindex="0"
+            role="button"
           >
             <div class="rt-rank"><span class="rnk-num">#{{ idx + 1 }}</span></div>
             <div class="rt-handle">{{ row.name }}</div>
@@ -411,7 +435,12 @@ const nextRankHint = computed(() => {
           <div class="num">ELO</div>
         </div>
 
-        <div class="ratings-tbody">
+        <div
+          class="ratings-tbody"
+          id="ratings-panel-agents"
+          role="tabpanel"
+          aria-labelledby="ratings-tab-agents"
+        >
           <div v-if="agentsLoading" class="rt-empty">{{ 'Loading…' }}</div>
           <div v-else-if="agentsError" class="rt-empty">{{ t.rating.error }}</div>
           <div v-else-if="agentsRows.length === 0" class="rt-empty">{{ t.rating.lblNoRankedAgents }}</div>
@@ -422,6 +451,10 @@ const nextRankHint = computed(() => {
             class="rt-row rt-row--agents clickable"
             :class="rowRankClass({ rank: row.rank })"
             @click="$router.push('/v2/fd/' + row.agent.id)"
+            @keydown.enter="$router.push('/v2/fd/' + row.agent.id)"
+            @keydown.space.prevent="$router.push('/v2/fd/' + row.agent.id)"
+            tabindex="0"
+            role="button"
           >
             <div class="rt-rank"><span class="rnk-num">#{{ row.rank }}</span></div>
             <div class="rt-handle">
@@ -456,7 +489,12 @@ const nextRankHint = computed(() => {
           <div class="num">WR</div>
         </div>
 
-        <div class="ratings-tbody">
+        <div
+          class="ratings-tbody"
+          id="ratings-panel-fighters"
+          role="tabpanel"
+          aria-labelledby="ratings-tab-fighters"
+        >
           <div v-if="fightersLoading" class="rt-empty">{{ 'Loading…' }}</div>
           <div v-else-if="fightersError" class="rt-empty">{{ t.rating.error }}</div>
           <div v-else-if="fightersRows.length === 0" class="rt-empty">{{ t.rating.noResults }}</div>
@@ -467,6 +505,10 @@ const nextRankHint = computed(() => {
             class="rt-row rt-row--fighters clickable"
             :class="rowRankClass({ rank: idx + 1 })"
             @click="$router.push('/v2/user/' + row.login)"
+            @keydown.enter="$router.push('/v2/user/' + row.login)"
+            @keydown.space.prevent="$router.push('/v2/user/' + row.login)"
+            tabindex="0"
+            role="button"
           >
             <div class="rt-rank"><span class="rnk-num">#{{ idx + 1 }}</span></div>
             <div class="rt-handle">{{ row.login }}</div>
