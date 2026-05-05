@@ -64,7 +64,7 @@ const protectedRoutes = [
 
     {path: '/training', redirect: '/v2/training'},
     {path: '/fight', redirect: '/v2/fight'},
-    {path: '/friends', name: 'Friends', component: () => import("/src/views/FriendsView.vue")},
+    {path: '/friends', redirect: '/v2/profile'},
     {path: '/matchmaking', redirect: '/v2/matchmaking'},
     {path: '/spectate/:odId', redirect: to => `/v2/spectate/${to.params.odId}`},
 
