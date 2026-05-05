@@ -59,8 +59,8 @@ const protectedRoutes = [
     {path: '/club/agent/create', redirect: '/create-fighter'},
     {path: '/club/agent/:agentId', redirect: to => `/fighter/${to.params.agentId}`},
 
-    {path: '/ratings/:type', name: 'Ratings', component: () => import("/src/views/RatingsView.vue"), props: true},
-    {path: '/ratings', redirect: '/ratings/myclan'},
+    {path: '/ratings/:type', redirect: to => '/v2/ratings'},
+    {path: '/ratings', redirect: '/v2/ratings'},
 
     {path: '/training', redirect: '/v2/training'},
     {path: '/fight', name: 'Fight', component: () => import("/src/views/CardFightView.vue")},
