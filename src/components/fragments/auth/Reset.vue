@@ -16,16 +16,20 @@
       <div v-if="resetState.errorMessage" class="error-message">{{ resetState.errorMessage }}</div>
       <div v-if="resetState.successMessage" class="success-message">{{ resetState.successMessage }}</div>
 
-      <v-progress-circular
-          v-if="resetState.loading"
-          class="loader"
-          size="40"
-          indeterminate
-      />
+      <!-- B-AW1 (#4): v-progress-circular → canonical .hex-spinner; VBtn → HexButton.
+           v-if pattern preserved (button hides during loading or after success). -->
+      <div v-if="resetState.loading" class="hex-spinner auth-loader" aria-label="Loading"></div>
 
-      <VBtn v-if="!resetState.loading && !resetState.successMessage" class="auth-btn" @click="handleResetSubmit">
+      <HexButton
+          v-if="!resetState.loading && !resetState.successMessage"
+          variant="primary"
+          size="lg"
+          block
+          class="auth-btn"
+          @click="handleResetSubmit"
+      >
         {{ t.auth.reset.btnReset }}
-      </VBtn>
+      </HexButton>
     </div>
 
     <div class="login" v-if="!resetState.loading">
@@ -42,6 +46,7 @@
 import {ref, computed, onMounted} from 'vue';
 import InputField from "@/components/ui/InputField.vue";
 import ButtonText from "@/components/ui/ButtonText.vue";
+import HexButton from "@/components/ui/HexButton.vue";
 import {useRouter} from 'vue-router';
 import {t} from "@/locales/index.js";
 import store from "@/core/state/store.js";
@@ -104,16 +109,17 @@ onMounted(() => {
   margin-bottom: 0.5rem;
 }
 
+/* B-AW1 (#4): HexButton variant=primary size=lg block provides bg/color/sizing/font.
+   Auth-specific glow shadow preserved (canonical --hex-primary-glow token). */
 .auth-btn {
-  background-color: var(--hex-primary) !important;
-  color: var(--hex-text-primary) !important;
-  width: 100%;
-  height: 50px !important;
-  min-height: 48px;
-  cursor: pointer;
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  box-shadow: 0 0 8px rgba(255, 6, 111, 0.5) /* glow from --hex-primary */;
+  box-shadow: 0 0 8px var(--hex-primary-glow);
+}
+
+/* B-AW1 (#4): center .hex-spinner during reset submit (canonical post-C9). */
+.auth-loader {
+  margin: 12px auto;
+  width: 32px;
+  height: 32px;
+  border-width: 3px;
 }
 </style>
