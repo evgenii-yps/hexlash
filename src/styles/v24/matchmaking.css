@@ -154,7 +154,10 @@
 .app-v2 .mm-main {
   position: fixed;
   top: 70px;
-  left: 270px;
+  /* B1a (#32): Sub-epic 5 C3 hid filter sidebar via v-if="false" (HudMatchmaking.vue:21).
+     Restoring left:14px until carry-over #29 BE filter chips supported.
+     Revert to left:270px when filters revived. */
+  left: 14px;
   right: 14px;
   bottom: 14px;
   display: flex;

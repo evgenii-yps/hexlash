@@ -172,6 +172,24 @@
   cursor: pointer;
   transition: background 0.12s ease;
 }
+
+/* B1a (#12): per-tab grid modifiers — replaces hardcoded 8-col (Sub-epic 5C inheritance).
+   CLANS=6 cells, AGENTS=6 cells, FIGHTERS=7 cells. Default 8-col rule above remains as
+   fallback when modifier class is absent. Mobile @media (≤720px) below overrides all. */
+.app-v2 .ratings-thead--clans,
+.app-v2 .rt-row--clans {
+  grid-template-columns: 50px 2fr 90px 80px 70px 70px;
+}
+
+.app-v2 .ratings-thead--agents,
+.app-v2 .rt-row--agents {
+  grid-template-columns: 50px 1.5fr 1fr 90px 80px 70px;
+}
+
+.app-v2 .ratings-thead--fighters,
+.app-v2 .rt-row--fighters {
+  grid-template-columns: 50px 2fr 80px 80px 70px 70px 70px;
+}
 .app-v2 .rt-row:hover {
   background: rgba(255, 255, 255, 0.03);
 }

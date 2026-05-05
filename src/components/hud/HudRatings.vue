@@ -369,7 +369,7 @@ const nextRankHint = computed(() => {
           />
         </div>
 
-        <div class="ratings-thead">
+        <div class="ratings-thead ratings-thead--clans">
           <div>#</div>
           <div>Clan</div>
           <div class="num">Members</div>
@@ -386,7 +386,7 @@ const nextRankHint = computed(() => {
             v-else
             v-for="(row, idx) in clansRows"
             :key="`clans|${row.id}`"
-            class="rt-row clickable"
+            class="rt-row rt-row--clans clickable"
             :class="rowRankClass({ rank: idx + 1 })"
             @click="$router.push('/v2/clan/' + row.id)"
           >
@@ -402,7 +402,7 @@ const nextRankHint = computed(() => {
 
       <!-- ===== AGENTS tab — wired to agent/loadAgentRankings (Commit 6) ===== -->
       <template v-else-if="activeTab === 'agents'">
-        <div class="ratings-thead">
+        <div class="ratings-thead ratings-thead--agents">
           <div>#</div>
           <div>Agent</div>
           <div>Owner</div>
@@ -419,7 +419,7 @@ const nextRankHint = computed(() => {
             v-else
             v-for="row in agentsRows"
             :key="`agents|${row.agent.id}`"
-            class="rt-row clickable"
+            class="rt-row rt-row--agents clickable"
             :class="rowRankClass({ rank: row.rank })"
             @click="$router.push('/v2/fd/' + row.agent.id)"
           >
@@ -446,7 +446,7 @@ const nextRankHint = computed(() => {
           />
         </div>
 
-        <div class="ratings-thead">
+        <div class="ratings-thead ratings-thead--fighters">
           <div>#</div>
           <div>Handle</div>
           <div class="col-arch">Archetype</div>
@@ -464,7 +464,7 @@ const nextRankHint = computed(() => {
             v-else
             v-for="(row, idx) in fightersRows"
             :key="`fighters|${row.id || row.login}`"
-            class="rt-row clickable"
+            class="rt-row rt-row--fighters clickable"
             :class="rowRankClass({ rank: idx + 1 })"
             @click="$router.push('/v2/user/' + row.login)"
           >

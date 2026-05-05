@@ -414,6 +414,13 @@ watch(
   color: #ef4444;
 }
 
+/* B1a (#37): draw result variant — warm gold palette */
+.sp-result--draw .sp-result-text {
+  background: rgba(212, 168, 67, 0.15);
+  border: 2px solid var(--hex-warning);
+  color: var(--hex-warning);
+}
+
 @media (max-width: 720px) {
   .sp-fighters { flex-direction: column; gap: 10px; top: 110px; }
   .sp-vs { font-size: 11px; }
