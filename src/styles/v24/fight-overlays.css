@@ -266,3 +266,58 @@
   border-color: var(--hex-primary);
   color: #fff;
 }
+
+/* B2 (#18): event title overlay — dodge/crit/damage feedback.
+   Port from CardFightView.vue:1411-1434 + 67-70.
+   Top-center positioned, pointer-events: none (Lesson #34 HUD overlay), token-based colors. */
+.app-v2 .event-title {
+  position: fixed;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--hex-font-display);
+  font-size: var(--hex-font-size-huge);
+  text-transform: uppercase;
+  font-weight: 900;
+  letter-spacing: 4px;
+  pointer-events: none;
+  z-index: 100;
+  animation: titlePop 0.3s ease;
+}
+.app-v2 .event-title.event-dodge {
+  color: var(--hex-success);
+  text-shadow: 0 0 16px var(--hex-success);
+}
+.app-v2 .event-title.event-crit {
+  color: var(--hex-danger);
+  text-shadow: 0 0 20px var(--hex-danger);
+}
+.app-v2 .event-title.event-damage {
+  color: var(--hex-warning);
+  text-shadow: 0 0 14px var(--hex-warning);
+}
+/* Vue <transition name="event-title"> leave hooks */
+.app-v2 .event-title-leave-active {
+  transition: opacity 0.3s ease;
+}
+.app-v2 .event-title-leave-to {
+  opacity: 0;
+}
+@keyframes titlePop {
+  0%   { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+  50%  { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1);   opacity: 1; }
+}
+
+/* B2 (#19): shake animation — fighter took damage.
+   Port from CardFightView.vue:1320-1327 + 24-51 binding pattern. */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%      { transform: translateX(-8px); }
+  40%      { transform: translateX(8px); }
+  60%      { transform: translateX(-6px); }
+  80%      { transform: translateX(6px); }
+}
+.app-v2 .fight-fighter.shake {
+  animation: shake 0.35s ease;
+}

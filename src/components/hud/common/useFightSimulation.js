@@ -38,6 +38,12 @@ export const fightState = reactive({
   // Flat fields per v2 convention (vs v1 nested diceState object).
   diceReady: false,
   diceActiveType: null,
+  // B2 (#18, #19): event title overlay + per-side shake animation state.
+  // Port from CardFightView.vue: setEventTitle 940-950, shake 458-459 + 1320-1327.
+  eventTitle: null,           // dodge/crit overlay text — null when inactive
+  eventTitleClass: '',         // 'event-dodge' | 'event-crit' | 'event-damage' | ''
+  shakeLeftActive: false,      // left fighter shake animation flag
+  shakeRightActive: false,     // right fighter shake animation flag
 });
 
 const MOVES = [
@@ -55,6 +61,32 @@ function labelForStrat(s) {
 
 function setTimer(fn, ms) {
   fightState.timer = setTimeout(fn, ms);
+}
+
+// B2 (#18): event title overlay 1200ms timeout (port from CardFightView.vue:940-950).
+// Race guard: only clear if title still equals the value we set (avoids
+// older clear stomping a newer title when titles overlap quickly).
+function setEventTitle(text, modifierClass) {
+  fightState.eventTitle = text;
+  fightState.eventTitleClass = modifierClass;
+  setTimeout(() => {
+    if (fightState.eventTitle === text) {
+      fightState.eventTitle = null;
+      fightState.eventTitleClass = '';
+    }
+  }, 1200);
+}
+
+// B2 (#19): per-side shake 400ms (port from CardFightView.vue:458-459).
+// `side` matches existing doExchange naming convention ('left' | 'right').
+function triggerShake(side) {
+  if (side === 'left') {
+    fightState.shakeLeftActive = true;
+    setTimeout(() => { fightState.shakeLeftActive = false; }, 400);
+  } else if (side === 'right') {
+    fightState.shakeRightActive = true;
+    setTimeout(() => { fightState.shakeRightActive = false; }, 400);
+  }
 }
 
 export function startFight(strategy) {
@@ -125,6 +157,10 @@ function doExchange(attackerSide) {
     if (!hit) {
       const defenseType = Math.random() < 0.5 ? 'dodge' : 'block';
       fightSceneApi.playMove(defenderSide, defenseType);
+      // B2 (#18): dodge event title (block does NOT trigger title \u2014 v1 parity)
+      if (defenseType === 'dodge') {
+        setEventTitle('DODGE', 'event-dodge');
+      }
       logFight(
         '<span class="lt">R' + fightState.round + '</span>'
         + '<span class="ln">' + attackerLabel + '</span> threw a '
@@ -140,6 +176,11 @@ function doExchange(attackerSide) {
       else        fightState.leftHp  = Math.max(0, fightState.leftHp  - dmg);
       fightSceneApi.playMove(defenderSide, 'hit');
       triggerFlash();
+      // B2 (#18, #19): crit event title + victim shake (regular hits get shake but no title)
+      triggerShake(defenderSide);
+      if (isCrit) {
+        setEventTitle('CRITICAL!', 'event-crit');
+      }
       const dmgTxt = '<strong>' + Math.round(dmg) + '</strong> dmg';
       logFight(
         '<span class="lt">R' + fightState.round + '</span>'
@@ -198,5 +239,10 @@ export function resetFight() {
   fightState.coachPauseText = '';
   fightState.resultWon = false;
   fightState.resultSummary = '';
+  // B2 (#18, #19): clear event-title + shake state on reset
+  fightState.eventTitle = null;
+  fightState.eventTitleClass = '';
+  fightState.shakeLeftActive = false;
+  fightState.shakeRightActive = false;
   clearFightLog();
 }

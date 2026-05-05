@@ -14,7 +14,10 @@
     <div v-if="isSpectating" class="spectate-badge"><span class="sb-dot"></span>Spectating</div>
 
     <div class="fight-top">
-      <div class="fight-fighter left">
+      <div
+        class="fight-fighter left"
+        :class="{ shake: fightState.shakeLeftActive }"
+      >
         <div class="ff-name">{{ fightState.leftName }}</div>
         <div class="ff-arch">{{ fightState.leftArch }}</div>
         <div class="ff-hp">
@@ -30,7 +33,10 @@
         <div class="fr-num">{{ fightState.round }} / {{ fightState.totalRounds }}</div>
       </div>
 
-      <div class="fight-fighter right">
+      <div
+        class="fight-fighter right"
+        :class="{ shake: fightState.shakeRightActive }"
+      >
         <div class="ff-name">{{ fightState.rightName }}</div>
         <div class="ff-arch">{{ fightState.rightArch }}</div>
         <div class="ff-hp">
@@ -72,6 +78,17 @@
 
     <!-- White flash on hit (Step 15). -->
     <div class="hit-flash" :class="{ flash: flashing }"></div>
+
+    <!-- B2 (#18): event title overlay — dodge/crit feedback (1200ms auto-clear). -->
+    <transition name="event-title">
+      <div
+        v-if="fightState.eventTitle"
+        class="event-title"
+        :class="fightState.eventTitleClass"
+      >
+        {{ fightState.eventTitle }}
+      </div>
+    </transition>
 
     <!-- Phase overlays + coach pause (Step 16). Styles live in
          src/styles/v24/fight-overlays.css (shared across overlays). -->
