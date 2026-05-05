@@ -20,7 +20,7 @@
               <div v-if="loginAvailable && loginChanged && !errorMessage" class="success-message">
                 {{ t.profile.account.lblAvailableLogin }}
               </div>
-              <v-progress-circular v-if="loading" color="var(--hex-text-secondary)" indeterminate :size="20"/>
+              <div v-if="loading" class="cl-spinner" aria-label="Loading"></div>
               <img v-if="!loading && loginAvailable && loginChanged" src="@/assets/images/icon_pencil.svg"
                    @click="confirmChange"
                    alt="change login" class="btn-change-login"/>
@@ -32,25 +32,38 @@
 
     <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
 
-    <VModal v-model="dialog" max-width="500">
-      <VCard>
-        <v-card-title class="headline"> {{ t.profile.account.lblConfirmChange }}</v-card-title>
-        <v-card-text>
-          {{ interpolate(t.profile.account.msgConfirmChange, {newLogin: login}) }}
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn @click="dialog = false" class="cancel-btn"> {{ t.modal.btnCancel }}</v-btn>
-          <v-btn @click="handleLoginSubmit" class="confirm-btn"> {{ t.modal.btnConfirm }}</v-btn>
-        </v-card-actions>
-      </VCard>
-    </VModal>
+    <!-- C8: VModal/VCard/v-card-* → inline Teleport + .hex-modal-* (Phase 0 Q5.2 Option a).
+         .hex-modal-overlay/.hex-modal/.hex-modal-title from src/styles/hexlash-ui.css:440-478;
+         body/actions use scoped .cl-modal-* (taxonomy doesn't define those yet). -->
+    <Teleport to="body">
+      <div
+        v-if="dialog"
+        class="hex-modal-overlay"
+        @click.self="dialog = false"
+      >
+        <div class="hex-modal" @click.stop>
+          <h2 class="hex-modal-title">{{ t.profile.account.lblConfirmChange }}</h2>
+          <div class="cl-modal-body">
+            {{ interpolate(t.profile.account.msgConfirmChange, {newLogin: login}) }}
+          </div>
+          <div class="cl-modal-actions">
+            <HexButton variant="secondary" size="md" @click="dialog = false">
+              {{ t.modal.btnCancel }}
+            </HexButton>
+            <HexButton variant="primary" size="md" @click="handleLoginSubmit">
+              {{ t.modal.btnConfirm }}
+            </HexButton>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
 <script setup>
 import {computed, ref, watch} from 'vue';
 import InputField from '@/components/ui/InputField.vue';
+import HexButton from '@/components/ui/HexButton.vue';
 import store from "@/core/state/store.js";
 import debounce from "debounce";
 import {t, interpolate} from "@/locales/index.js";
@@ -197,5 +210,35 @@ form {
   color: var(--hex-danger);
   font-size: 0.8rem;
   text-align: center;
+}
+
+/* C8: modal body/actions — Phase 0 Q5.2 found .hex-modal-* taxonomy
+   only defines overlay/modal/title; component-specific layout below. */
+.cl-modal-body {
+  color: var(--hex-text-primary);
+  font-size: 0.9rem;
+  text-align: center;
+  margin-bottom: var(--hex-spacing-lg);
+  line-height: 1.5;
+}
+
+.cl-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--hex-spacing-sm);
+  margin-top: var(--hex-spacing-md);
+}
+
+/* C8: CSS spinner replaces v-progress-circular (mirror Sub-epic 5/5I .mm-spinner pattern). */
+.cl-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-top-color: var(--hex-text-secondary);
+  border-radius: 50%;
+  animation: cl-spin 0.8s linear infinite;
+}
+@keyframes cl-spin {
+  to { transform: rotate(360deg); }
 }
 </style>
