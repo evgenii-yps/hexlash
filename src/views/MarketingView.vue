@@ -87,9 +87,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useDocumentMeta } from '@/composables/useDocumentMeta';
+import { useScrollFadeIn } from '@/composables/useScrollFadeIn';
 import logoSrc from '@/assets/images/hexlash-logo.jpg';
 import iconTelega from '@/assets/images/icon_telega.svg';
 import iconX from '@/assets/images/icon_x.svg';
@@ -102,39 +103,14 @@ const router = useRouter();
 const heroRef = ref(null);
 const aboutRef = ref(null);
 const footerRef = ref(null);
-const aboutVisible = ref(false);
 
-let aboutObserver = null;
-
-onMounted(() => {
-  // C3 — IntersectionObserver fade-in trigger for About section.
-  // Per ТЗ decision: native API (not @vueuse/core composable). Threshold 0.3.
-  if (aboutRef.value && 'IntersectionObserver' in window) {
-    aboutObserver = new IntersectionObserver(
-      entries => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            aboutVisible.value = true;
-            aboutObserver.disconnect();
-            aboutObserver = null;
-          }
-        });
-      },
-      { threshold: 0.3 }
-    );
-    aboutObserver.observe(aboutRef.value);
-  } else {
-    // Fallback for environments without IntersectionObserver — show immediately.
-    aboutVisible.value = true;
-  }
-});
-
-onBeforeUnmount(() => {
-  if (aboutObserver) {
-    aboutObserver.disconnect();
-    aboutObserver = null;
-  }
-});
+// 8c C1 — IntersectionObserver fade-in via composable (refactored from
+// 8b inline pattern). Threshold 0.3 matches 8b verbatim. Native API,
+// one-shot disconnect, fallback to immediate visibility for environments
+// without IntersectionObserver. Future 8c sections (Gameplay/Token/
+// Roadmap/Partners/Subscribe) will reuse the same composable to avoid
+// 5x duplication of ~28-line inline observer setup.
+const { visible: aboutVisible } = useScrollFadeIn(aboutRef);
 
 useDocumentMeta({
   title: 'Hexlash',
