@@ -97,6 +97,13 @@
       </div>
     </section>
 
+    <section class="marketing-partners" ref="partnersRef">
+      <div class="marketing-partners__inner" :class="{ 'is-visible': partnersVisible }">
+        <h2 class="marketing-partners__heading">COMING SOON</h2>
+        <p class="marketing-partners__subtitle">Strategic partnerships TBA</p>
+      </div>
+    </section>
+
     <footer class="marketing-footer" ref="footerRef">
       <ul class="marketing-footer__socials" aria-label="Social media">
         <li>
@@ -155,6 +162,7 @@ const aboutRef = ref(null);
 const gameplayRef = ref(null);
 const tokenRef = ref(null);
 const roadmapRef = ref(null);
+const partnersRef = ref(null);
 const footerRef = ref(null);
 
 // 8c C1 — IntersectionObserver fade-in via composable (refactored from
@@ -167,6 +175,7 @@ const { visible: aboutVisible } = useScrollFadeIn(aboutRef);
 const { visible: gameplayVisible } = useScrollFadeIn(gameplayRef);
 const { visible: tokenVisible } = useScrollFadeIn(tokenRef);
 const { visible: roadmapVisible } = useScrollFadeIn(roadmapRef);
+const { visible: partnersVisible } = useScrollFadeIn(partnersRef);
 
 useDocumentMeta({
   title: 'Hexlash',
@@ -194,6 +203,7 @@ function onPlayClick() {
 .marketing-gameplay,
 .marketing-token,
 .marketing-roadmap,
+.marketing-partners,
 .marketing-footer {
   position: relative;
   width: 100%;
@@ -493,6 +503,51 @@ function onPlayClick() {
   }
   .marketing-roadmap__heading {
     margin-bottom: 40px;
+  }
+}
+
+/* === PARTNERS === */
+.marketing-partners {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--hex-bg-dark);
+  padding: 100px 24px;
+}
+
+.marketing-partners__inner {
+  text-align: center;
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.marketing-partners__inner.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.marketing-partners__heading {
+  margin: 0 0 16px;
+  font-size: clamp(40px, 7vw, 80px);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--hex-text-primary);
+  text-transform: uppercase;
+  line-height: 1.1;
+}
+
+.marketing-partners__subtitle {
+  margin: 0;
+  font-size: clamp(16px, 2vw, 22px);
+  color: var(--hex-text-muted);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 480px) {
+  .marketing-partners {
+    padding: 80px 16px;
   }
 }
 
