@@ -40,14 +40,6 @@ export default {
       errorPasswordsMismatch: 'Las contraseñas no coinciden',
       errorGeneral: 'Error de registro. Inténtelo de nuevo.',
     },
-    reset: {
-      lblEmail: 'Correo electrónico',
-      btnReset: 'Restablecer contraseña',
-      success: 'Se ha enviado un enlace de restablecimiento a tu correo electrónico.',
-      error: 'Dirección de correo electrónico no válida.',
-      errorEmpty: 'El correo no puede estar vacío.',
-      errorInvalidFormat: 'Formato de correo no válido.',
-    },
   },
   profile: {
     back: 'Atrás',

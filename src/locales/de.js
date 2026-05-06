@@ -40,14 +40,6 @@ export default {
       errorPasswordsMismatch: 'Passwörter stimmen nicht überein',
       errorGeneral: 'Registrierung fehlgeschlagen. Bitte versuchen Sie es erneut.',
     },
-    reset: {
-      lblEmail: 'E-Mail',
-      btnReset: 'Passwort zurücksetzen',
-      success: 'Ein Zurücksetzungslink wurde an Ihre E-Mail gesendet.',
-      error: 'Ungültige E-Mail-Adresse.',
-      errorEmpty: 'E-Mail darf nicht leer sein.',
-      errorInvalidFormat: 'Ungültiges E-Mail-Format.',
-    },
   },
   profile: {
     back: 'Zurück',

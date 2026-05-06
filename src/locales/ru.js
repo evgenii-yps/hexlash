@@ -40,14 +40,6 @@ export default {
       errorPasswordsMismatch: 'Пароли не совпадают',
       errorGeneral: 'Ошибка регистрации. Попробуйте снова.',
     },
-    reset: {
-      lblEmail: 'Эл. почта',
-      btnReset: 'Сбросить пароль',
-      success: 'Ссылка для сброса пароля отправлена вам на электронную почту.',
-      error: 'Неверный адрес эл. почты.',
-      errorEmpty: 'Эл. почта не может быть пустым.',
-      errorInvalidFormat: 'Недопустимый формат эл. почты.',
-    },
   },
   profile: {
     back: 'Назад',

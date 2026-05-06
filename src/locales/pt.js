@@ -40,14 +40,6 @@ export default {
       errorPasswordsMismatch: 'As senhas não coincidem',
       errorGeneral: 'Falha no cadastro. Tente novamente.',
     },
-    reset: {
-      lblEmail: 'Email',
-      btnReset: 'Redefinir Senha',
-      success: 'Um link de redefinição foi enviado para seu email.',
-      error: 'Endereço de email inválido.',
-      errorEmpty: 'O email não pode estar vazio.',
-      errorInvalidFormat: 'Formato de email inválido.',
-    },
   },
   profile: {
     back: 'Voltar',

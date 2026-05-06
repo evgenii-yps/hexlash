@@ -40,14 +40,6 @@ export default {
       errorPasswordsMismatch: 'पासवर्ड मेल नहीं खाते',
       errorGeneral: 'पंजीकरण विफल रहा। कृपया पुन: प्रयास करें।',
     },
-    reset: {
-      lblEmail: 'ईमेल',
-      btnReset: 'पासवर्ड रीसेट करें',
-      success: 'पासवर्ड रीसेट लिंक आपके ईमेल पर भेजा गया है।',
-      error: 'अमान्य ईमेल पता।',
-      errorEmpty: 'ईमेल खाली नहीं हो सकता।',
-      errorInvalidFormat: 'अमान्य ईमेल प्रारूप।',
-    },
   },
   profile: {
     back: 'वापस',

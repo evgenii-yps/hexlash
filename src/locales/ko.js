@@ -40,14 +40,6 @@ export default {
       errorPasswordsMismatch: '비밀번호가 일치하지 않습니다',
       errorGeneral: '등록에 실패했습니다. 다시 시도해주세요.',
     },
-    reset: {
-      lblEmail: '이메일',
-      btnReset: '비밀번호 재설정',
-      success: '이메일로 재설정 링크가 전송되었습니다.',
-      error: '잘못된 이메일 주소입니다.',
-      errorEmpty: '이메일을 입력해야 합니다.',
-      errorInvalidFormat: '잘못된 이메일 형식입니다.',
-    },
   },
   profile: {
     back: '뒤로',
