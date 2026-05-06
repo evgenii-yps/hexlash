@@ -1,6 +1,6 @@
 <template>
   <div class="app-container">
-    <header v-if="!isV2Route" :style="headerStyle" class="header">
+    <header v-if="!isV2Route && !isLandingRoute" :style="headerStyle" class="header">
       <div class="header-content">
         <Logo/>
         <div v-if="balance !== null && isAuth" class="balance">
@@ -104,6 +104,9 @@ const isPvPScreen = computed(() => {
 // v2 Migration — feature flag /v2. На v2-роутах старая шапка/меню/тосты скрываются,
 // AppV2.vue рендерится через <RouterView> внутри <main>.
 const isV2Route = computed(() => route.path.startsWith('/v2'));
+
+// Sub-epic 1a: landing at / has its own centered logo — hide App.vue header chrome.
+const isLandingRoute = computed(() => route.path === '/');
 
 const isScrollableComponent = computed(() => {
   const scrollablePrefixes = ['/profile', '/ratings', '/fight', '/training/']; // Префиксы маршрутов с дочерними маршрутами

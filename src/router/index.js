@@ -14,6 +14,21 @@ export const authRoutes = [
 ];
 
 const publicRoutes = [
+    {
+        path: '/',
+        name: 'Home',
+        component: () => import("/src/views/LandingView.vue"),
+        beforeEnter: (to, from, next) => {
+            // Authed users skip landing — go straight to /v2 hub.
+            // Anonymous users see LandingView (Sub-epic 1a).
+            const isAuthenticated = store.getters["master/getLoginState"]?.isAuthenticated || false;
+            if (isAuthenticated) {
+                next('/v2');
+            } else {
+                next();
+            }
+        },
+    },
     {path: '/privacy', name: 'Privacy', component: () => import("/src/views/PrivacyView.vue")},
     {path: '/404', name: 'NotFound', component: () => import("/src/views/NotFoundView.vue")},
     {path: '/rules', name: 'Rules', component: () => import("/src/views/PageView.vue")},
@@ -30,7 +45,6 @@ const publicRoutes = [
 ];
 
 const protectedRoutes = [
-    {path: '/', name: 'Home', component: RainView},
     {path: '/help', redirect: '/v2/help'},
     {path: '/arena', redirect: '/arena/club'},
     {path: '/arena/fight', name: 'ArenaFight', component: () => import("/src/views/PreparationView.vue")},
@@ -227,11 +241,11 @@ router.beforeEach(async (to, from, next) => {
     // Проверяем, если маршрут не является авторизационным и защищённым
     if (isProtectedRoute) {
         if (!isAuthenticated) {
-
-            if (to.name !== 'Home') {
-                const customMessage = InfoMessageModel.withTimeout("Access denied. You need to log in first", 2000);
-                store.commit('master/setInfoMessage', customMessage);
-            }
+            // Sub-epic 1a: Home (/) moved to publicRoutes — exemption wrapper
+            // (`if (to.name !== 'Home')`) removed as unreachable. Toast now
+            // unconditional within the unauth-protected-route branch.
+            const customMessage = InfoMessageModel.withTimeout("Access denied. You need to log in first", 2000);
+            store.commit('master/setInfoMessage', customMessage);
 
             next({name: 'Login'});
         } else {
