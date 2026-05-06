@@ -38,10 +38,10 @@ const publicRoutes = [
     {
         path: '/',
         name: 'Home',
-        component: () => import("/src/views/LandingView.vue"),
+        component: () => import("/src/views/MarketingView.vue"),
         beforeEnter: (to, from, next) => {
-            // Authed users skip landing — go straight to /play hub.
-            // Anonymous users see LandingView (Sub-epic 1a).
+            // Authed users skip marketing site — go straight to /play hub.
+            // Anonymous users see MarketingView (Sub-epic 8b — replaces 1a LandingView).
             const isAuthenticated = store.getters["master/getLoginState"]?.isAuthenticated || false;
             if (isAuthenticated) {
                 next('/play');
