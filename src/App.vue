@@ -203,6 +203,12 @@ onMounted(() => {
   if (window.Telegram && window.Telegram.WebApp) {
     window.Telegram.WebApp.expand(); // Развернуть на весь экран
     window.Telegram.WebApp.disableVerticalSwipes();
+    // Sub-epic 1b interrupt fix: re-wire isTelegram adaptive UI flag setter
+    // from auth-side (TelegramLogin.vue, deleted in C6) to app-init-side.
+    // Decision #2: KEEP isTelegram adaptive flag (ProfileButtons.vue uses it
+    // to hide Wallet button in TG webview per TG store rules).
+    // saveTelegramFlag → masterService.setTelegram() → localStorage 'isTelegramMiniApp'.
+    store.dispatch('master/saveTelegramFlag');
   }
 
   document.addEventListener('visibilitychange', handleVisibilityChange);
