@@ -38,7 +38,17 @@ body {
     font-family: 'Arial', sans-serif;
     font-weight: 400;
     background-color: #101010;
-    overflow: hidden;
+    /* Sub-epic 8b hot-fix: removed `overflow: hidden` — was blocking document
+       scroll on / route post-MarketingView deploy (long-form content needs
+       scroll). Each major surface wrapper manages its own overflow:
+       - .app-v2 (game routes /play/*) — position:fixed + overflow:hidden
+       - .background (v1 views per "Scrollable View Pattern") — position:fixed
+         + overflow:hidden
+       - .auth-layout (auth routes /auth/*) — overflow:hidden in scoped style
+       - .marketing (/ route) — NO overflow rule, natural document scroll
+       Pre-1b/8b assumption (1a Landing fit in 100vh) was load-bearing but
+       fragile — removing the global default makes layout responsibility
+       explicit per-surface. */
 }
 
 /* Стили для Webkit-браузеров (Chrome, Safari) */
