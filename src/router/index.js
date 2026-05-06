@@ -31,41 +31,148 @@ const publicRoutes = [
 
 const protectedRoutes = [
     {path: '/', name: 'Home', component: RainView},
-    {path: '/help', name: 'Help', component: () => import("/src/views/PageView.vue")},
+    {path: '/help', redirect: '/v2/help'},
     {path: '/arena', redirect: '/arena/club'},
     {path: '/arena/fight', name: 'ArenaFight', component: () => import("/src/views/PreparationView.vue")},
     {path: '/arena/club', name: 'ArenaFightClub', component: () => import("/src/views/FightClubView.vue")},
-    {path: '/arena/club/create', name: 'CreateAgent', component: () => import("/src/views/CreateAgentView.vue")},
-    {path: '/arena/club/:agentId', name: 'AgentDetail', component: () => import("/src/views/AgentDetailView.vue")},
+    {path: '/create-fighter', redirect: '/v2/create'},
+    {path: '/fighter/:key', redirect: to => `/v2/fd/${to.params.key}`},
+    {path: '/arena/club/create', redirect: '/create-fighter'},
+    {path: '/arena/club/:agentId', redirect: to => `/fighter/${to.params.agentId}`},
 
-    {path: '/user/:userLogin', name: 'UserProfile', component: () => import("/src/views/ProfileView.vue")},
-    {path: '/profile', name: 'Profile', component: () => import("/src/views/ProfileView.vue")},
-    {path: '/profile/balance', name: 'Balance', component: () => import("/src/views/ProfileView.vue")},
-    {path: '/profile/wallet', name: 'Wallet', component: () => import("/src/views/ProfileView.vue")},
-    {path: '/profile/account', name: 'Account', component: () => import("/src/views/ProfileView.vue")},
-    {path: '/profile/skins', name: 'Skins', component: () => import("/src/views/ProfileView.vue")},
+    {
+        path: '/user/:userLogin',
+        redirect: to => ({ name: 'V2UserProfile', params: { userLogin: to.params.userLogin } }),
+    },
+    {path: '/profile', redirect: '/v2/profile'},
+    {path: '/profile/balance', redirect: '/v2/profile'},
+    {path: '/profile/wallet', redirect: '/v2/wallet'},
+    {path: '/profile/account', redirect: '/v2/account'},
+    {path: '/profile/skins', name: 'Skins', redirect: '/v2/profile'},
 
-    {path: '/clan/:id', name: 'Clan', component: () => import("/src/views/ClanView.vue")},
+    {
+        path: '/clan/:id',
+        redirect: to => ({ name: 'V2GuestClan', params: { id: to.params.id } }),
+    },
     {path: '/club/:id', redirect: to => '/clan/' + to.params.id},
     {path: '/fight-club', redirect: '/arena/club'},
-    {path: '/club/agent/create', redirect: '/arena/club/create'},
-    {path: '/club/agent/:agentId', redirect: to => `/arena/club/${to.params.agentId}`},
+    {path: '/club/agent/create', redirect: '/create-fighter'},
+    {path: '/club/agent/:agentId', redirect: to => `/fighter/${to.params.agentId}`},
 
-    {path: '/ratings/:type', name: 'Ratings', component: () => import("/src/views/RatingsView.vue"), props: true},
-    {path: '/ratings', redirect: '/ratings/myclan'},
+    {path: '/ratings/:type', redirect: to => '/v2/ratings'},
+    {path: '/ratings', redirect: '/v2/ratings'},
 
-    {path: '/training', name: 'Training', component: () => import("/src/views/TrainingView.vue")},
-    {path: '/fight', name: 'Fight', component: () => import("/src/views/CardFightView.vue")},
-    {path: '/friends', name: 'Friends', component: () => import("/src/views/FriendsView.vue")},
-    {path: '/matchmaking', name: 'Matchmaking', component: () => import("/src/views/MatchmakingView.vue")},
-    {path: '/spectate/:odId', name: 'Spectate', component: () => import("/src/views/SpectateView.vue")},
+    {path: '/training', redirect: '/v2/training'},
+    {path: '/fight', redirect: '/v2/fight'},
+    {path: '/friends', redirect: '/v2/profile'},
+    {path: '/matchmaking', redirect: '/v2/matchmaking'},
+    {path: '/spectate/:odId', redirect: to => `/v2/spectate/${to.params.odId}`},
 
+];
+
+// v2 PvP routes protected by name marker (Sub-epic 4a P1 fix per Phase 0 Q12).
+// v2Routes defined separately below — these names mark them as auth-protected
+// without duplicating route registration. Carry-over #10 (systematic v2 cutover
+// auth audit, Sub-epic 8 territory) may migrate this to meta.requiresAuth pattern.
+const v2ProtectedNames = ['V2Fight', 'V2Matchmaking', 'V2Spectate'];
+
+// v2 Migration — feature flag через URL-префикс /v2. Живёт параллельно старому визуалу.
+// Источник правды: docs/visual-migration/HANDOFF_VISUAL_MIGRATION.md
+const v2Routes = [
+    {
+        path: '/v2',
+        name: 'V2Root',
+        component: () => import('@/AppV2.vue'),
+        children: [
+            {
+                path: '',
+                name: 'V2Pit',
+                component: () => import('@/views-v2/PitViewV2.vue'),
+            },
+            {
+                path: 'fd/:key',
+                name: 'V2FighterDetail',
+                component: () => import('@/views-v2/FighterDetailView.vue'),
+            },
+            {
+                path: 'fight',
+                name: 'V2Fight',
+                component: () => import('@/views-v2/FightView.vue'),
+            },
+            {
+                path: 'training',
+                name: 'V2Training',
+                component: () => import('@/views-v2/TrainingView.vue'),
+            },
+            {
+                path: 'matchmaking',
+                name: 'V2Matchmaking',
+                component: () => import('@/views-v2/MatchmakingView.vue'),
+            },
+            {
+                path: 'create',
+                name: 'V2Create',
+                component: () => import('@/views-v2/CreateView.vue'),
+            },
+            {
+                path: 'profile',
+                name: 'V2Profile',
+                component: () => import('@/views-v2/ProfileView.vue'),
+            },
+            {
+                path: 'ratings',
+                name: 'V2Ratings',
+                component: () => import('@/views-v2/RatingsView.vue'),
+            },
+            {
+                path: 'clan',
+                name: 'V2Clan',
+                component: () => import('@/views-v2/ClanView.vue'),
+            },
+            {
+                path: 'clan/:id',
+                name: 'V2GuestClan',
+                component: () => import('@/views-v2/GuestClanView.vue'),
+            },
+            {
+                path: 'shop',
+                name: 'V2Shop',
+                component: () => import('@/views-v2/ShopView.vue'),
+            },
+            {
+                path: 'spectate/:fightId',
+                name: 'V2Spectate',
+                component: () => import('@/views-v2/SpectateView.vue'),
+            },
+            {
+                path: 'help',
+                name: 'V2Help',
+                component: () => import('@/views-v2/HelpView.vue'),
+            },
+            {
+                path: 'user/:userLogin',
+                name: 'V2UserProfile',
+                component: () => import('@/views-v2/UserProfileView.vue'),
+            },
+            {
+                path: 'wallet',
+                name: 'V2Wallet',
+                component: () => import('@/views-v2/WalletView.vue'),
+            },
+            {
+                path: 'account',
+                name: 'V2Account',
+                component: () => import('@/views-v2/AccountView.vue'),
+            },
+        ],
+    },
 ];
 
 const routes = [
     ...authRoutes,
     ...publicRoutes,
     ...protectedRoutes,
+    ...v2Routes,
     {path: '/:pathMatch(.*)*', name: 'NotFound', component: () => import("/src/views/NotFoundView.vue")},
 ];
 
@@ -113,7 +220,9 @@ router.beforeEach(async (to, from, next) => {
     }
 
     const isAuthenticated = store.getters["master/getLoginState"]?.isAuthenticated || false;
-    const isProtectedRoute = protectedRoutes.some(route => route.name === to.name || route.path === to.path);
+    const isProtectedRoute =
+        protectedRoutes.some(route => route.name === to.name || route.path === to.path) ||
+        v2ProtectedNames.includes(to.name);
 
     // Проверяем, если маршрут не является авторизационным и защищённым
     if (isProtectedRoute) {

@@ -1,0 +1,185 @@
+// Epic 3Ba — Training scene.
+// Step 2: scaffold — fog + camera + floor + 8 octagonal walls.
+// No bag, physics, lighting, particles yet (Steps 3-9 populate).
+// Source: prototype hexlash_v24.html lines 9565-9614.
+
+import { makeConcreteTexture } from '../materials/concrete.js';
+import { buildTrainingBag } from '../objects/trainingBag.js';
+import { createBagPhysics } from '../objects/trainingBagPhysics.js';
+import { createHitParticles } from '../objects/trainingHitParticles.js';
+import { buildOctagonalRoom } from '../objects/octagonalRoom.js';
+import { createDustField } from '../objects/dustField.js';
+import { trState } from '../interaction/useTrainingState.js';
+
+const HUD_SYNC_INTERVAL_MS = 100; // ~10 Hz, prototype 10024-10028
+
+const TR_ROOM_R = 14;
+const TR_ROOM_H = 8;
+
+export function buildTrainingScene(THREE, aspect) {
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x070811);
+
+  // Camera — slight off-centre angle so bag (Step 4) reads dimensional.
+  // Prototype 9585-9587.
+  const camera = new THREE.PerspectiveCamera(40, aspect, 0.1, 200);
+  camera.position.set(2.5, 2.0, 5.5);
+  camera.lookAt(0, 1.7, 0);
+
+  // --- FLOOR + WALLS + FOG via shared helper (Sub-Epic 5A Step 1) ---
+  // Scene owns material creation so concrete-texture repeat state stays
+  // scoped to this scene (see materials/concrete.js note).
+  const floorTex = makeConcreteTexture(THREE);
+  floorTex.repeat.set(5, 5);
+  const floorMaterial = new THREE.MeshStandardMaterial({
+    map: floorTex, color: 0x2c2c34, roughness: 0.95, metalness: 0.02,
+  });
+  const wallMaterial = new THREE.MeshStandardMaterial({
+    color: 0x14141c, roughness: 0.95,
+  });
+  buildOctagonalRoom(THREE, scene, {
+    R: TR_ROOM_R, H: TR_ROOM_H,
+    floorRadius: 20,
+    floorMaterial, wallMaterial,
+    fogDensity: 0.035,
+  });
+
+  // --- LIGHTING (Step 3, prototype 9688-9708) ---
+  scene.add(new THREE.AmbientLight(0x1a1a28, 0.45));
+  scene.add(new THREE.HemisphereLight(0x2a2638, 0x0a0a12, 0.4));
+
+  // Key spot — overhead onto bag position. renderer.shadowMap.enabled is
+  // already set in CanvasLayer (Epic 2 Step 3 hot-fix).
+  const key = new THREE.SpotLight(0xfff0e8, 2.6, 14, Math.PI * 0.22, 0.55, 1.4);
+  key.position.set(0, 7.5, 0);
+  key.target.position.set(0, 1.8, 0);
+  key.castShadow = true;
+  key.shadow.mapSize.width = 1024;
+  key.shadow.mapSize.height = 1024;
+  scene.add(key);
+  scene.add(key.target);
+
+  // Pink rim from the left.
+  const rimL = new THREE.SpotLight(0xff066f, 0.7, 14, Math.PI * 0.4, 0.8, 1.6);
+  rimL.position.set(-6, 3, 1);
+  rimL.target.position.set(0, 1.5, 0);
+  scene.add(rimL);
+  scene.add(rimL.target);
+
+  // Cyan rim from the right.
+  const rimR = new THREE.SpotLight(0x4dd9ff, 0.4, 14, Math.PI * 0.4, 0.8, 1.6);
+  rimR.position.set(6, 3, 1);
+  rimR.target.position.set(0, 1.5, 0);
+  scene.add(rimR);
+  scene.add(rimR.target);
+
+  // --- LIGHT SHAFT (volumetric fake, prototype 9710-9720) ---
+  const shaft = new THREE.Mesh(
+    new THREE.ConeGeometry(1.5, 7, 24, 1, true),
+    new THREE.MeshBasicMaterial({
+      color: 0xfff0e8, transparent: true, opacity: 0.05,
+      side: THREE.DoubleSide, depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    })
+  );
+  shaft.position.set(0, 3.5, 0);
+  scene.add(shaft);
+
+  // --- DUST via shared helper (Sub-Epic 5A Step 4) ---
+  // Training-specific distribution (10×10 square, warm particles) —
+  // distinct from pit/environment.js settings (22×22, cool larger).
+  const dust = createDustField(THREE, {
+    count: 80,
+    xRadius: 5,
+    yMax: 4,
+    driftSpeed: 0.002,
+    color: 0xffd9c8,
+  });
+  scene.add(dust.group);
+
+  // --- HEAVY BAG (Step 4) ---
+  const bag = buildTrainingBag(THREE);
+  scene.add(bag);
+
+  // --- BAG PHYSICS (Step 5) ---
+  // Impulse surfaces through the scene API so Step 7a's click-to-hit can
+  // push the bag without reaching into physics internals directly.
+  const bagPhysics = createBagPhysics(bag);
+
+  // --- HIT PARTICLES (Step 7b) ---
+  const hitParticles = createHitParticles(scene, THREE);
+
+  let lastHudSync = 0;
+
+  function tick(/* t */) {
+    const now = performance.now();
+
+    // Energy regen — prototype 10009-10016. `lastEnergyTick` lives in
+    // trState so reset/start can seed it; we always update it to keep dt
+    // correct even when `active` is false between session restarts.
+    const dt = (now - trState.lastEnergyTick) / 1000;
+    trState.lastEnergyTick = now;
+    if (trState.active && trState.energy < trState.energyMax) {
+      trState.energy = Math.min(
+        trState.energyMax,
+        trState.energy + trState.energyRegen * dt,
+      );
+    }
+
+    // Combo timeout — prototype 10018-10022. If the combo window lapsed,
+    // reset multiplier and hide the indicator.
+    if (trState.multiplier > 1 && now > trState.comboTimerExpiresAt) {
+      trState.multiplier = 1;
+      trState.comboCount = 0;
+      trState.comboVisible = false;
+    }
+
+    // HUD elapsed time sync throttled to ~10 Hz. Reactive re-renders of a
+    // once-per-frame clock string would be wasteful.
+    if (now - lastHudSync > HUD_SYNC_INTERVAL_MS) {
+      lastHudSync = now;
+      if (trState.active) {
+        const elapsed = Math.floor((now - trState.startedAt) / 1000);
+        const mm = String(Math.floor(elapsed / 60)).padStart(2, '0');
+        const ss = String(elapsed % 60).padStart(2, '0');
+        trState.elapsedStr = mm + ':' + ss;
+      }
+    }
+
+    // Dust drift — delegated to helper (prototype 10036-10042 equivalent).
+    dust.tick();
+
+    // Bag pendulum sim — runs every frame, no-op until an impulse lands.
+    bagPhysics.applyTick();
+
+    // 3D spark particles — fades + reaps in place.
+    hitParticles.tick();
+  }
+
+  function dispose() {
+    // Tear down active particles first — they're added to the scene but
+    // also tracked in a separate array; traverse alone wouldn't clear the
+    // array reference, which would leak on re-entry.
+    hitParticles.dispose();
+    scene.traverse((obj) => {
+      if (obj.geometry) obj.geometry.dispose();
+      const m = obj.material;
+      if (m) {
+        const mats = Array.isArray(m) ? m : [m];
+        for (const mat of mats) {
+          if (mat.map) mat.map.dispose();
+          if (mat.dispose) mat.dispose();
+        }
+      }
+    });
+  }
+
+  return {
+    scene, camera, tick, dispose,
+    bag,
+    applyImpulse: bagPhysics.applyImpulse,
+    spawnHitParticles: hitParticles.spawn,
+  };
+}
+
+export { TR_ROOM_R, TR_ROOM_H };

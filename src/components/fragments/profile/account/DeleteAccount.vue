@@ -1,30 +1,46 @@
 <template>
   <div class="delete-account-container">
-    <VBtnDark
+    <HexButton
+        variant="secondary"
+        size="md"
+        block
         class="delete-btn"
         @click="confirmDelete">
       {{ t.profile.account.lblDeleteAccount }}
-      <template #append>
-        <img src="@/assets/images/icon_close.svg" alt="Close" class="custom-icon"/>
-      </template>
-    </VBtnDark>
+      <img src="@/assets/images/icon_close.svg" alt="Close" class="custom-icon"/>
+    </HexButton>
 
-    <VModal v-model="dialog" max-width="500">
-      <VCard>
-        <v-card-title class="headline"> {{ t.profile.account.lblConfirmDeletion }}</v-card-title>
-        <v-card-text>{{ t.profile.account.msgConfirmDelete }}</v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <VBtnDark @click="dialog = false" class="cancel-btn">{{ t.modal.btnCancel }}</VBtnDark>
-          <VBtn @click="handleDelete" class="confirm-delete-btn">{{ t.modal.btnConfirm }}</VBtn>
-        </v-card-actions>
-      </VCard>
-    </VModal>
+    <!-- C9: VModal/VCard/v-card-*/v-spacer → inline Teleport + canonical .hex-modal-*.
+         Confirm uses HexButton variant=danger (destructive flow). -->
+    <Teleport to="body">
+      <div
+          v-if="dialog"
+          class="hex-modal-overlay"
+          @click.self="dialog = false"
+      >
+        <div class="hex-modal" @click.stop>
+          <h2 class="hex-modal-title">{{ t.profile.account.lblConfirmDeletion }}</h2>
+          <button class="hex-modal-close" @click="dialog = false" aria-label="Close">×</button>
+          <div class="hex-modal-body">
+            {{ t.profile.account.msgConfirmDelete }}
+          </div>
+          <div class="hex-modal-actions">
+            <HexButton variant="secondary" size="md" @click="dialog = false">
+              {{ t.modal.btnCancel }}
+            </HexButton>
+            <HexButton variant="danger" size="md" @click="handleDelete">
+              {{ t.modal.btnConfirm }}
+            </HexButton>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
 <script setup>
 import {ref} from 'vue';
+import HexButton from '@/components/ui/HexButton.vue';
 import store from "@/core/state/store.js";
 import router from "@/router/index.js";
 import {t} from "@/locales/index.js";

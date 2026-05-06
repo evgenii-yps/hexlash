@@ -65,6 +65,12 @@ export default class UserModel {
                     // Выбранный скин
                     skin = "skin_m_1.png",
 
+                    // Sub-epic 2 Commit 4 — extension for ratings/captain consumers.
+                    // Backend public responses (post-6B-3a-backend) include `rating` +
+                    // `captain` (optional sub-object). Keep additive — existing 5
+                    // UserModel callsites tolerate extra fields silently.
+                    rating = 0,
+                    captain = null,
                 }) {
         // Базовые
         this.id = id;
@@ -101,6 +107,9 @@ export default class UserModel {
 
         this.skin = skin;
 
+        // Sub-epic 2 Commit 4 — ratings/captain extension.
+        this.rating = rating;
+        this.captain = captain;
     }
 
 
@@ -131,6 +140,8 @@ export default class UserModel {
                 noSkipDays = 0,
                 achievements = [],
                 skin = "skin_m_1.png",
+                rating = 0,
+                captain = null,
             } = json;
 
             // Возвращаем новый экземпляр UserModel
@@ -158,6 +169,8 @@ export default class UserModel {
                 noSkipDays,
                 achievements,
                 skin,
+                rating,
+                captain,
             });
         } catch (error) {
             console.error('Error parsing JSON to UserModel:', error);

@@ -123,6 +123,24 @@ export const localUpdateDailyTask = async (updatedTask) => {
     }
 };
 
+// 5K — POST /v1/task/daily/:id/progress wrapper. Returns { id, progress, goal, isCompleted, rewardGranted } or null in mock.
+export const incrementDailyProgress = async (taskId, amount = 1) => {
+    if (isMockMode()) {
+        return null;
+    }
+
+    try {
+        const response = await apiClient.post(
+            `/task/daily/${taskId}/progress`,
+            { amount },
+            { authRequired: true }
+        );
+        return response.data; // axios interceptor unwraps to body, response.data = inner { progress, isCompleted, ... }
+    } catch (error) {
+        throw new Error('Failed to increment daily task progress');
+    }
+};
+
 const completeTaskApiCall = async (taskId) => {
     if (isMockMode()) {
         return true;

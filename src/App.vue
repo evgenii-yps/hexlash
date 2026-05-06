@@ -1,6 +1,6 @@
 <template>
   <div class="app-container">
-    <header :style="headerStyle" class="header">
+    <header v-if="!isV2Route" :style="headerStyle" class="header">
       <div class="header-content">
         <Logo/>
         <div v-if="balance !== null && isAuth" class="balance">
@@ -16,29 +16,31 @@
 
     <!-- FindFight removed: card-based combat uses client-side simulation -->
 
-    <Info :text="infoMessage.text"
-          :timeout="infoMessage.timeout"
-          :showButton="infoMessage.showButton"
-    />
+    <template v-if="!isV2Route">
+      <Info :text="infoMessage.text"
+            :timeout="infoMessage.timeout"
+            :showButton="infoMessage.showButton"
+      />
 
-    <Error :text="errorMessage.text"
-          :timeout="errorMessage.timeout"
-          :showButton="errorMessage.showButton"
-    />
+      <Error :text="errorMessage.text"
+            :timeout="errorMessage.timeout"
+            :showButton="errorMessage.showButton"
+      />
 
-    <NoConnection v-if="isAuth" />
+      <NoConnection v-if="isAuth" />
 
-    <NewAchievement v-if="isAuth"/>
+      <NewAchievement v-if="isAuth"/>
 
-    <!-- Global challenge notification (top of screen) -->
-    <ChallengeNotification v-if="isAuth" />
-    <ClanInviteNotification v-if="isAuth" />
+      <!-- Global challenge notification (top of screen) -->
+      <ChallengeNotification v-if="isAuth" />
+      <ClanInviteNotification v-if="isAuth" />
 
-    <footer class="footer">
-      <transition name="slide-up-down">
-        <BottomMenu v-if="isAuth && scrollDirection !== 'down' && !isPvPScreen"/>
-      </transition>
-    </footer>
+      <footer class="footer">
+        <transition name="slide-up-down">
+          <BottomMenu v-if="isAuth && scrollDirection !== 'down' && !isPvPScreen"/>
+        </transition>
+      </footer>
+    </template>
   </div>
 </template>
 
@@ -98,6 +100,10 @@ const isPvPScreen = computed(() => {
       route.path.startsWith('/spectate') ||
       (route.path === '/fight' && route.query.mode === 'pvp');
 });
+
+// v2 Migration — feature flag /v2. На v2-роутах старая шапка/меню/тосты скрываются,
+// AppV2.vue рендерится через <RouterView> внутри <main>.
+const isV2Route = computed(() => route.path.startsWith('/v2'));
 
 const isScrollableComponent = computed(() => {
   const scrollablePrefixes = ['/profile', '/ratings', '/fight', '/training/']; // Префиксы маршрутов с дочерними маршрутами

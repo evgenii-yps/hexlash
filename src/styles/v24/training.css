@@ -1,0 +1,257 @@
+/* v2 Migration — Training HUD styles.
+   Scoped to .app-v2 (parity with tokens.css / effects.css / fight-overlays.css).
+   1-to-1 port of prototype 2109-2286.
+   Excluded:
+     .tap-pop + @keyframes tapPopAnim — added in Step 7b (DOM-based floating +N).
+     .energy-flash + @keyframes energyFlash — scoped inside TrainingView.vue. */
+
+/* back button (prototype 2109-2126) */
+.app-v2 .training-back {
+  position: fixed;
+  top: 14px; left: 14px;
+  background: var(--bg-panel);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  padding: 8px 14px 8px 10px;
+  color: var(--text-mid);
+  cursor: pointer;
+  pointer-events: auto;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  transition: all 0.15s ease;
+  z-index: 60;
+}
+.app-v2 .training-back:hover {
+  color: #fff;
+  border-color: rgba(255, 6, 111, 0.4);
+  background: rgba(255, 6, 111, 0.08);
+}
+
+/* big Taps counter top center (prototype 2129-2156) */
+.app-v2 .training-counter {
+  position: fixed;
+  top: 14px; left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  background: var(--bg-panel);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  padding: 8px 22px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  min-width: 180px;
+  pointer-events: none;
+}
+.app-v2 .tc-kicker {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+.app-v2 .tc-value {
+  font-family: var(--font-display);
+  font-size: 28px;
+  letter-spacing: 4px;
+  color: #FFD262;
+  margin-top: 2px;
+  line-height: 1;
+}
+.app-v2 .tc-meta {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+
+/* energy bar (prototype 2159-2190) */
+.app-v2 .training-energy {
+  position: fixed;
+  top: 60px; left: 14px;
+  background: var(--bg-panel);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  padding: 8px 12px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  width: 200px;
+  pointer-events: none;
+}
+.app-v2 .te-row { display: flex; justify-content: space-between; align-items: center; }
+.app-v2 .te-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+.app-v2 .te-value {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #6EE7FF;
+}
+.app-v2 .te-bar {
+  height: 4px;
+  margin-top: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.app-v2 .te-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6EE7FF, #6EE7FF);
+  transition: width 0.3s ease;
+}
+.app-v2 .te-fill.empty {
+  background: linear-gradient(90deg, #ff4444, #ff4444);
+}
+
+/* daily tasks (prototype 2193-2243) */
+.app-v2 .training-tasks {
+  position: fixed;
+  top: 14px; right: 14px;
+  background: var(--bg-panel);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  padding: 12px 14px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  width: 240px;
+  /* 5K — 5 tasks (vs original 2) may overflow; cap height with internal scroll */
+  max-height: calc(100vh - 28px);
+  overflow-y: auto;
+  pointer-events: auto;
+}
+.app-v2 .tt-title {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.app-v2 .task { margin-bottom: 8px; }
+.app-v2 .task:last-child { margin-bottom: 0; }
+.app-v2 .task-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.app-v2 .task-name {
+  font-size: 11px;
+  color: var(--text-mid);
+  font-family: var(--font-mono);
+  letter-spacing: 1px;
+}
+.app-v2 .task-progress-text {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+}
+.app-v2 .task.done .task-name { color: #2ee07f; }
+.app-v2 .task.done .task-progress-text { color: #2ee07f; }
+.app-v2 .task-bar {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.app-v2 .task-bar-fill {
+  height: 100%;
+  background: var(--hex-primary);
+  transition: width 0.3s ease;
+}
+.app-v2 .task.done .task-bar-fill { background: #2ee07f; }
+.app-v2 .task-reward {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: #FFD262;
+  margin-top: 2px;
+  letter-spacing: 1px;
+}
+
+/* combo indicator (prototype 2246-2272) */
+.app-v2 .training-combo {
+  position: fixed;
+  bottom: 80px; left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 55;
+}
+.app-v2 .training-combo.show { opacity: 1; }
+.app-v2 .tc-combo-mult {
+  font-family: var(--font-display);
+  font-size: 42px;
+  letter-spacing: 4px;
+  color: #FFD262;
+  text-shadow: 0 0 20px rgba(255, 210, 98, 0.6);
+  line-height: 1;
+}
+.app-v2 .tc-combo-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--text-mid);
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+.app-v2 .training-combo.x3 .tc-combo-mult,
+.app-v2 .training-combo.x5 .tc-combo-mult {
+  color: var(--hex-primary);
+  text-shadow: 0 0 24px rgba(255, 6, 111, 0.7);
+}
+
+/* hint at bottom (prototype 2275-2286) */
+.app-v2 .training-hint {
+  position: fixed;
+  bottom: 18px; left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  pointer-events: none;
+}
+.app-v2 .training-hint .key {
+  display: inline-block;
+  padding: 2px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  margin: 0 3px;
+  color: var(--text-mid);
+}
+
+/* +N floating numbers on hit (prototype 2289-2309). DOM-created by
+   useClickToHit.spawnTapPop, appended into .app-v2 so these selectors match. */
+.app-v2 .tap-pop {
+  position: absolute;
+  font-family: var(--font-display);
+  font-size: 24px;
+  color: #FFD262;
+  letter-spacing: 2px;
+  pointer-events: none;
+  text-shadow: 0 0 12px rgba(255, 210, 98, 0.7);
+  animation: tapPopAnim 0.9s ease-out forwards;
+  z-index: 5;
+}
+.app-v2 .tap-pop.crit {
+  color: var(--hex-primary);
+  text-shadow: 0 0 16px rgba(255, 6, 111, 0.8);
+  font-size: 30px;
+}
+@keyframes tapPopAnim {
+  0%   { opacity: 0; transform: translate(-50%, 0) scale(0.6); }
+  20%  { opacity: 1; transform: translate(-50%, -10px) scale(1.1); }
+  100% { opacity: 0; transform: translate(-50%, -80px) scale(1); }
+}

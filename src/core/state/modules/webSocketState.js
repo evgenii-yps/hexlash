@@ -139,10 +139,15 @@ const actions = {
                 const fightInfoModel = FightModel.fromJSON(message.fightInfo)
                 await fightService.receiveFightInfo(fightInfoModel);
                 break;
-            case ErrorSocketResponse.TYPE_NAME:
-                const errorSocketModel = ErrorSocketResponse.fromJSON(message.errorDto)
+            case ErrorSocketResponse.TYPE_NAME: {
+                // B1c (#31): tolerant parser — accept nested {errorDto:{code,message}} + flat {error,code}
+                // BE inconsistency: handler.js:482 sendError() helper uses nested; 5 callsites
+                // (628/683/689/695/715) emit flat. BE consolidation deferred к Эпик 7+.
+                const errorPayload = message.errorDto || { code: message.code, message: message.error };
+                const errorSocketModel = ErrorSocketResponse.fromJSON(errorPayload);
                 await store.dispatch('webSocket/handleInternalError', errorSocketModel);
                 break;
+            }
             case MasterModel.TYPE_NAME:
                 const masterModel = MasterModel.fromJSON(message.userResponse)
                 await store.dispatch('master/updateMasterFromSocket', masterModel);
@@ -185,7 +190,13 @@ const actions = {
             case 'coach_result':
             case 'coach_opponent_ready':
             case 'fight_end':
+            case 'overdrive_start':
+            case 'fight_state_resume':
                 window.dispatchEvent(new CustomEvent('pvp-' + messageType, { detail: message }));
+                break;
+            // ─── Sub-epic 6 — Spectator metadata ───────────────────────
+            case 'SpectatorListMsg':
+                window.dispatchEvent(new CustomEvent('spectator-list-update', { detail: message }));
                 break;
             // ─── Challenge messages ─────────────────────────────────────
             case 'challenge_received':

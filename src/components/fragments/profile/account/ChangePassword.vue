@@ -1,77 +1,86 @@
 <template>
   <div class="change-password-container">
-    <VBtnDark
+    <HexButton
+        variant="secondary"
+        size="md"
+        block
         class="change-password-btn"
         @click="dialog = true"
     >
-      <template #append>
-        <img src="@/assets/images/icon_pencil.svg" alt="" class="custom-icon"/>
-      </template>
       {{ t.profile.account.lblChangePassword }}
-    </VBtnDark>
+      <img src="@/assets/images/icon_pencil.svg" alt="" class="custom-icon"/>
+    </HexButton>
 
-    <VModal v-model="dialog" max-width="500">
-      <VCard>
-        <v-card-title class="headline">{{ t.profile.account.lblChangePassword }}</v-card-title>
-        <v-card-text style="margin-bottom: 0">
-          <form @submit.prevent="handleSubmit">
-            <InputField
-                :label="t.profile.account.lblCurrentPassword"
-                type="password"
-                v-model="currentPassword"
-                labelColor="var(--hex-text-primary)"
-                inputBgColor="var(--hex-bg-card)"
-                inputBorderColor="var(--hex-border-default)"
-                inputTextColor="var(--hex-text-primary)"
-                height="40px"
-                marginBottom="1rem"
-            />
-            <InputField
-                :label="t.profile.account.lblNewPassword"
-                type="password"
-                v-model="newPassword"
-                labelColor="var(--hex-text-primary)"
-                inputBgColor="var(--hex-bg-card)"
-                inputBorderColor="var(--hex-border-default)"
-                inputTextColor="var(--hex-text-primary)"
-                height="40px"
-                marginBottom="1rem"
-            />
-            <InputField
-                :label="t.profile.account.lblConfirmNewPassword"
-                type="password"
-                v-model="confirmNewPassword"
-                labelColor="var(--hex-text-primary)"
-                inputBgColor="var(--hex-bg-card)"
-                inputBorderColor="var(--hex-border-default)"
-                inputTextColor="var(--hex-text-primary)"
-                height="40px"
-                marginBottom="1rem"
-            />
+    <!-- C9: VModal/VCard/v-card-* → inline Teleport + canonical .hex-modal-* taxonomy
+         (body/actions/close added в hexlash-ui.css C9 Edit 1, replacing C8 .cl-* classes). -->
+    <Teleport to="body">
+      <div
+          v-if="dialog"
+          class="hex-modal-overlay"
+          @click.self="cancel"
+      >
+        <div class="hex-modal" @click.stop>
+          <h2 class="hex-modal-title">{{ t.profile.account.lblChangePassword }}</h2>
+          <button class="hex-modal-close" @click="cancel" aria-label="Close">×</button>
+          <div class="hex-modal-body">
+            <form @submit.prevent="handleSubmit">
+              <InputField
+                  :label="t.profile.account.lblCurrentPassword"
+                  type="password"
+                  v-model="currentPassword"
+                  labelColor="var(--hex-text-primary)"
+                  inputBgColor="var(--hex-bg-card)"
+                  inputBorderColor="var(--hex-border-default)"
+                  inputTextColor="var(--hex-text-primary)"
+                  height="40px"
+                  marginBottom="1rem"
+              />
+              <InputField
+                  :label="t.profile.account.lblNewPassword"
+                  type="password"
+                  v-model="newPassword"
+                  labelColor="var(--hex-text-primary)"
+                  inputBgColor="var(--hex-bg-card)"
+                  inputBorderColor="var(--hex-border-default)"
+                  inputTextColor="var(--hex-text-primary)"
+                  height="40px"
+                  marginBottom="1rem"
+              />
+              <InputField
+                  :label="t.profile.account.lblConfirmNewPassword"
+                  type="password"
+                  v-model="confirmNewPassword"
+                  labelColor="var(--hex-text-primary)"
+                  inputBgColor="var(--hex-bg-card)"
+                  inputBorderColor="var(--hex-border-default)"
+                  inputTextColor="var(--hex-text-primary)"
+                  height="40px"
+                  marginBottom="1rem"
+              />
 
-            <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
+              <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
 
-            <v-progress-circular
-                v-if="loading"
-                class="loader"
-                size="40"
-                indeterminate
-            />
-
-          </form>
-        </v-card-text>
-        <v-card-actions style="padding-top: 0">
-          <VBtnDark class="cancel-btn" @click="cancel">{{ t.modal.btnCancel }}</VBtnDark>
-          <VBtn class="confirm-btn" @click="handleSubmit">{{ t.modal.btnConfirm }}</VBtn>
-        </v-card-actions>
-      </VCard>
-    </VModal>
+              <div v-if="loading" class="hex-spinner cp-loader" aria-label="Loading"></div>
+            </form>
+          </div>
+          <div class="hex-modal-actions">
+            <HexButton variant="secondary" size="md" @click="cancel" :disabled="loading">
+              {{ t.modal.btnCancel }}
+            </HexButton>
+            <HexButton variant="primary" size="md" @click="handleSubmit" :disabled="loading">
+              {{ t.modal.btnConfirm }}
+            </HexButton>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
 <script setup>
 import {computed, ref} from 'vue';
 import InputField from '@/components/ui/InputField.vue';
+import HexButton from '@/components/ui/HexButton.vue';
 import store from "@/core/state/store.js";
 import {t} from "@/locales/index.js";
 import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
@@ -157,5 +166,8 @@ form {
   margin-left: 10px;
 }
 
-
+/* C9: spinner positioning inside form (margin-only — base .hex-spinner global) */
+.cp-loader {
+  margin: 12px auto 0;
+}
 </style>

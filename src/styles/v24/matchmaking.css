@@ -1,0 +1,572 @@
+/* v2 Migration — Matchmaking HUD styles.
+   Scoped to .app-v2 (parity with tokens.css / effects.css / fight-overlays.css
+   / training.css). 1-to-1 port of prototype 2591-2885.
+   Excluded:
+     @media max-width 820px (2887-2897) — added in Step 11 final.
+     .mm-hud body-class opacity contract (593-595) — we use v-if instead. */
+
+/* back button */
+.app-v2 .mm-back {
+  position: fixed;
+  top: 14px; left: 14px;
+  background: var(--bg-panel);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  padding: 8px 14px 8px 10px;
+  color: var(--text-mid);
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  transition: all 0.15s ease;
+  pointer-events: auto;
+  z-index: 60;
+}
+.app-v2 .mm-back:hover {
+  color: #fff;
+  border-color: rgba(255, 6, 111, 0.4);
+  background: rgba(255, 6, 111, 0.08);
+}
+
+/* title top-center */
+.app-v2 .mm-title {
+  position: fixed;
+  top: 14px; left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  pointer-events: none;
+}
+.app-v2 .mm-title .mmt-kicker {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 4px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+.app-v2 .mm-title .mmt-name {
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: 4px;
+  color: #fff;
+}
+
+/* Filters sidebar (left) */
+.app-v2 .mm-filters {
+  position: fixed;
+  top: 70px; left: 14px;
+  width: 240px;
+  background: var(--bg-panel);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 16px 18px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  pointer-events: auto;
+  z-index: 55;
+}
+.app-v2 .mmf-title {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.app-v2 .mmf-block { margin-bottom: 14px; }
+.app-v2 .mmf-block:last-child { margin-bottom: 0; }
+.app-v2 .mmf-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.app-v2 .mmf-range-values {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #FFD262;
+  margin-bottom: 4px;
+}
+.app-v2 .mmf-slider {
+  width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  outline: none;
+}
+.app-v2 .mmf-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--hex-primary);
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(255, 6, 111, 0.4);
+}
+.app-v2 .mmf-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--hex-primary);
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(255, 6, 111, 0.4);
+}
+.app-v2 .mmf-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.app-v2 .mmf-chip {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 3px;
+  color: var(--text-mid);
+  padding: 4px 8px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+.app-v2 .mmf-chip:hover {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.28);
+}
+.app-v2 .mmf-chip.active {
+  background: rgba(255, 6, 111, 0.12);
+  border-color: var(--hex-primary);
+  color: #fff;
+}
+
+/* Main central panel */
+.app-v2 .mm-main {
+  position: fixed;
+  top: 70px;
+  /* B1a (#32): Sub-epic 5 C3 hid filter sidebar via v-if="false" (HudMatchmaking.vue:21).
+     Restoring left:14px until carry-over #29 BE filter chips supported.
+     Revert to left:270px when filters revived. */
+  left: 14px;
+  right: 14px;
+  bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none;
+}
+
+/* Search phase — big pulsing card */
+.app-v2 .mm-search {
+  flex: 1;
+  background: var(--bg-panel);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  gap: 16px;
+  pointer-events: auto;
+}
+.app-v2 .mm-search .mms-kicker {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+.app-v2 .mm-search .mms-title {
+  font-family: var(--font-display);
+  font-size: 26px;
+  letter-spacing: 4px;
+  color: #fff;
+}
+.app-v2 .mm-spinner {
+  width: 64px;
+  height: 64px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-top-color: var(--hex-primary);
+  border-radius: 50%;
+  animation: mmspin 1s linear infinite;
+  margin: 10px 0;
+}
+@keyframes mmspin { to { transform: rotate(360deg); } }
+.app-v2 .mms-status {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-mid);
+  letter-spacing: 1px;
+  text-align: center;
+  max-width: 500px;
+}
+.app-v2 .mms-status strong { color: #FFD262; font-weight: normal; }
+.app-v2 .mms-progress-text {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+.app-v2 .mms-cancel {
+  margin-top: 14px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  color: var(--text-mid);
+  padding: 10px 22px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.app-v2 .mms-cancel:hover {
+  color: #fff;
+  border-color: rgba(255, 68, 68, 0.5);
+  background: rgba(255, 68, 68, 0.08);
+}
+
+/* Candidates grid */
+.app-v2 .mm-candidates {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px;
+  flex: 1;
+  overflow-y: auto;
+  padding: 2px;
+  pointer-events: auto;
+}
+.app-v2 .mm-candidates::-webkit-scrollbar { width: 4px; }
+.app-v2 .mm-candidates::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.12); }
+.app-v2 .mm-card {
+  background: var(--bg-panel);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 14px 16px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.app-v2 .mm-card:hover {
+  border-color: var(--hex-primary);
+  box-shadow: 0 0 16px rgba(255, 6, 111, 0.15);
+  transform: translateY(-1px);
+}
+.app-v2 .mm-card.selected {
+  border-color: var(--hex-primary);
+  background: rgba(255, 6, 111, 0.04);
+  box-shadow: 0 0 20px rgba(255, 6, 111, 0.2);
+}
+.app-v2 .mmc-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.app-v2 .mmc-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 1px;
+  color: var(--text-mid);
+  flex-shrink: 0;
+}
+.app-v2 .mmc-info { flex: 1; min-width: 0; }
+.app-v2 .mmc-name {
+  font-family: var(--font-display);
+  font-size: 14px;
+  letter-spacing: 1.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.app-v2 .mmc-arch {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+.app-v2 .mmc-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+.app-v2 .mmc-stat {
+  text-align: center;
+  padding: 4px 2px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 3px;
+}
+.app-v2 .mmc-stat-val {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #fff;
+}
+.app-v2 .mmc-stat-val.gold { color: #FFD262; }
+.app-v2 .mmc-stat-label {
+  font-family: var(--font-mono);
+  font-size: 7px;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  margin-top: 1px;
+}
+.app-v2 .mmc-diff {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  padding: 4px 8px;
+  border-radius: 3px;
+  text-align: center;
+}
+.app-v2 .mmc-diff.easy { background: rgba(46, 224, 127, 0.1); color: #2ee07f; }
+.app-v2 .mmc-diff.even { background: rgba(255, 255, 255, 0.05); color: var(--text-mid); }
+.app-v2 .mmc-diff.hard { background: rgba(255, 68, 68, 0.1); color: #ff8888; }
+
+.app-v2 .mm-candidates-header {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  padding: 0 4px;
+  pointer-events: none;
+}
+.app-v2 .mm-candidates-header strong { color: #fff; font-weight: normal; }
+
+/* Action bar bottom */
+.app-v2 .mm-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  pointer-events: auto;
+}
+.app-v2 .mma-btn {
+  padding: 12px 24px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  color: var(--text-mid);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.app-v2 .mma-btn:hover { color: #fff; background: rgba(255, 255, 255, 0.04); }
+.app-v2 .mma-btn.primary {
+  border-color: var(--hex-primary);
+  color: #fff;
+}
+.app-v2 .mma-btn.primary:hover {
+  background: rgba(255, 6, 111, 0.15);
+  box-shadow: 0 0 18px rgba(255, 6, 111, 0.25);
+}
+.app-v2 .mma-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.app-v2 .mma-btn:disabled:hover { background: transparent; box-shadow: none; }
+
+/* ── Sub-epic 5 C7 — Timeout phase ───────────────────────────────────────── */
+/* Mirror .mm-search visual card structure (flex column big card inside
+   .mm-main slot). Lesson #34: pointer-events: auto on actions for clickability
+   over .matchmaking-hud parent (pointer-events: none). */
+.app-v2 .mm-timeout {
+  flex: 1;
+  background: var(--bg-panel);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 30px 24px;
+  gap: 14px;
+  pointer-events: auto;
+}
+.app-v2 .mm-timeout-kicker {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+.app-v2 .mm-timeout-title {
+  font-family: var(--font-display);
+  font-size: 26px;
+  letter-spacing: 4px;
+  color: #fff;
+  margin: 4px 0;
+}
+.app-v2 .mm-timeout-status {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-mid);
+  letter-spacing: 1px;
+  max-width: 480px;
+  line-height: 1.5;
+}
+.app-v2 .mm-timeout-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 18px;
+}
+.app-v2 .mm-timeout-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  color: var(--text-mid);
+  padding: 11px 24px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.app-v2 .mm-timeout-btn:hover {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.04);
+}
+.app-v2 .mm-timeout-btn.primary {
+  border-color: var(--hex-primary);
+  color: var(--hex-primary);
+}
+.app-v2 .mm-timeout-btn.primary:hover {
+  color: #fff;
+  background: rgba(255, 6, 111, 0.12);
+  box-shadow: 0 0 16px rgba(255, 6, 111, 0.3);
+}
+
+/* ── Sub-epic 5 C8 — Found phase (VS display + 3s countdown) ─────────────── */
+/* Carry-over #17 closure (3-2-1 countdown UI parity gap). Mirror .mm-search
+   visual card structure (flex column big card inside .mm-main slot).
+   Naming: .mm-found-* full prefix avoiding clash с .mmf-* filter sidebar
+   classes (Lesson #11 catch — pre-edit grep confirmed 8+ filter classes
+   under .mmf-* prefix). */
+.app-v2 .mm-found {
+  flex: 1;
+  background: var(--bg-panel);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 30px 24px;
+  gap: 22px;
+  pointer-events: auto;
+}
+.app-v2 .mm-found-kicker {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 4px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+.app-v2 .mm-found-vs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+}
+.app-v2 .mm-found-fighter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 130px;
+}
+.app-v2 .mm-found-avatar {
+  width: 88px;
+  height: 88px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.app-v2 .mm-found-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.app-v2 .mm-found-name {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: #fff;
+  text-transform: uppercase;
+}
+.app-v2 .mm-found-elo {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #FFD262;
+}
+.app-v2 .mm-found-divider {
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: 4px;
+  color: var(--text-dim);
+}
+.app-v2 .mm-found-countdown {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+.app-v2 .mm-found-countdown-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+.app-v2 .mm-found-countdown-value {
+  font-family: var(--font-display);
+  font-size: 56px;
+  letter-spacing: 4px;
+  color: var(--hex-primary);
+  animation: mmCountdownPulse 1s ease-in-out infinite;
+}
+@keyframes mmCountdownPulse {
+  0%, 100% { transform: scale(1);    opacity: 1; }
+  50%      { transform: scale(1.15); opacity: 0.85; }
+}

@@ -126,6 +126,7 @@
 import { ref, computed } from 'vue';
 import store from '@/core/state/store.js';
 import { t, interpolate } from '@/locales/index.js';
+import { ErrorMessageModel } from '@/core/models/internal/errorMessageModel.js';
 import { branches } from '@/data/branches.js';
 
 const props = defineProps({
@@ -222,7 +223,7 @@ const onResearch = async (action, moveId) => {
       store.commit('master/updateMaster', { totalTaps: userData.value.totalTaps - res.tapsSpent });
     }
   } catch (err) {
-    store.commit('master/setError', { text: err?.response?.data?.error || 'Research failed' });
+    store.commit('master/setErrorMessage', ErrorMessageModel.withText(err?.response?.data?.error || 'Research failed'));
   } finally {
     researching.value = false;
   }
@@ -238,7 +239,7 @@ const onAllocateXp = async (branch) => {
       store.commit('master/updateMaster', { progression: updated });
     }
   } catch (err) {
-    store.commit('master/setError', { text: err?.response?.data?.error || 'Allocation failed' });
+    store.commit('master/setErrorMessage', ErrorMessageModel.withText(err?.response?.data?.error || 'Allocation failed'));
   } finally {
     allocating.value = false;
   }

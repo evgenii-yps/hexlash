@@ -75,16 +75,20 @@
 
       <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
 
-      <v-progress-circular
-          v-if="loading"
-          class="loader"
-          size="40"
-          indeterminate
-      />
+      <!-- B-AW1 (#4): v-progress-circular → canonical .hex-spinner; VBtn → HexButton.
+           v-if pattern preserved (button hides during loading, spinner replaces). -->
+      <div v-if="loading" class="hex-spinner auth-loader" aria-label="Loading"></div>
 
-      <VBtn v-if="!loading" class="auth-btn" @click="handleSubmit">
+      <HexButton
+          v-if="!loading"
+          variant="primary"
+          size="lg"
+          block
+          class="auth-btn"
+          @click="handleSubmit"
+      >
         {{ t.auth.signup.btnSignup }}
-      </VBtn>
+      </HexButton>
     </form>
 
     <div class="login" v-if="!loading">
@@ -101,6 +105,7 @@
 import {ref} from 'vue';
 import InputField from "@/components/ui/InputField.vue";
 import ButtonText from "@/components/ui/ButtonText.vue";
+import HexButton from "@/components/ui/HexButton.vue";
 import {useRouter} from 'vue-router';
 import {t} from "@/locales/index.js";
 import store from "@/core/state/store.js";
@@ -185,17 +190,18 @@ form {
   text-align: center;
 }
 
+/* B-AW1 (#4): HexButton variant=primary size=lg block provides bg/color/sizing/font.
+   Auth-specific glow shadow preserved (canonical --hex-primary-glow token). */
 .auth-btn {
-  background-color: var(--hex-primary) !important;
-  color: var(--hex-text-primary) !important;
-  width: 100%;
-  height: 50px !important;
-  min-height: 48px;
-  cursor: pointer;
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  box-shadow: 0 0 8px rgba(255, 6, 111, 0.5) /* glow from --hex-primary */;
+  box-shadow: 0 0 8px var(--hex-primary-glow);
+}
+
+/* B-AW1 (#4): center .hex-spinner during signup submit (canonical post-C9). */
+.auth-loader {
+  margin: 12px auto;
+  width: 32px;
+  height: 32px;
+  border-width: 3px;
 }
 
 .eye-btn {

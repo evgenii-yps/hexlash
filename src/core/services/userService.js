@@ -55,7 +55,10 @@ export const fetchUserByLogin = async (login) => {
         const response = await apiClient.get(`/user/login/${login}`, {authRequired: true});
         return UserModel.fromJSON(response.data);
     } catch (error) {
-        throw new Error('Failed to fetch club data from server');
+        const wrapped = new Error('Failed to fetch user from server');
+        wrapped.status = error?.response?.status;
+        wrapped.response = error?.response;
+        throw wrapped;
     }
 };
 

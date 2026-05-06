@@ -1,0 +1,419 @@
+/* shop.css — Sub-Epic 5E Step 3.
+   1-to-1 port of prototype hexlash_v24.html lines 3643-4013, scoped under
+   .app-v2 wrapper. Cut-off confirmed at line 4013 (closing `}` of @media block);
+   prototype line 4015 begins .loader (generic, not Shop scope).
+
+   Conventions:
+   - All top-level selectors prefixed with `.app-v2 ` (also inside @media).
+   - @keyframes blocks NOT scoped — only their percentages are internal, no
+     selector hits. Keyframe collision check: 0 hits for sdShake / purchaseFlash
+     in src/styles/v24/* (verified pre-Step 3).
+   - @media (max-width: 820px) itself NOT scoped — rules inside it ARE.
+   - .empty-cat rule (last block) is a 5E-specific addition for Vue v-if=""
+     filteredItems.length === 0 fallback in HudShop.vue (Step 4). Replaces
+     prototype 12597 inline-style usage. */
+
+/* ===== SHOP HUD ===== */
+
+.app-v2 .shop-back {
+  position: absolute; top: 14px; left: 14px;
+  background: var(--bg-panel);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 6px;
+  padding: 8px 14px 8px 10px;
+  color: var(--text-mid);
+  cursor: pointer;
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  font-family: var(--font-mono); font-size: 11px;
+  letter-spacing: 2px; text-transform: uppercase;
+  transition: all 0.15s ease;
+}
+.app-v2 .shop-back:hover {
+  color: #fff;
+  border-color: rgba(255,6,111,0.4);
+  background: rgba(255,6,111,0.08);
+}
+
+.app-v2 .shop-title {
+  position: absolute; top: 14px; left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+}
+.app-v2 .shop-title .st-kicker {
+  font-family: var(--font-mono); font-size: 9px;
+  letter-spacing: 4px; color: var(--text-dim);
+  text-transform: uppercase; margin-bottom: 3px;
+}
+.app-v2 .shop-title .st-name {
+  font-family: var(--font-display); font-size: 22px;
+  letter-spacing: 4px;
+}
+
+/* Balance bar top right */
+.app-v2 .shop-balance {
+  position: absolute; top: 14px; right: 14px;
+  display: flex; gap: 8px;
+}
+.app-v2 .balance-chip {
+  background: var(--bg-panel);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 6px;
+  padding: 6px 12px;
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  display: flex; align-items: center; gap: 6px;
+}
+.app-v2 .balance-chip .bc-kicker {
+  font-family: var(--font-mono); font-size: 8px;
+  letter-spacing: 1.5px; color: var(--text-dim);
+  text-transform: uppercase;
+}
+.app-v2 .balance-chip .bc-val {
+  font-family: var(--font-mono); font-size: 12px;
+  letter-spacing: 1px;
+}
+.app-v2 .balance-chip.taps .bc-val { color: #FFD262; }
+.app-v2 .balance-chip.xp   .bc-val { color: #6EE7FF; }
+.app-v2 .balance-chip.eth  .bc-val { color: #fff; }
+.app-v2 .balance-chip.eth { border-color: rgba(255,6,111,0.35); }
+
+/* Main layout: tabs top, grid left, detail right */
+.app-v2 .shop-main {
+  position: absolute;
+  top: 70px;
+  left: 14px;
+  right: 14px;
+  bottom: 14px;
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  grid-template-rows: auto 1fr;
+  gap: 12px;
+}
+
+.app-v2 .shop-tabs {
+  grid-column: 1 / -1;
+  display: flex; gap: 4px;
+  background: var(--bg-panel);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  padding: 6px;
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  overflow-x: auto;
+}
+.app-v2 .shop-tabs::-webkit-scrollbar { height: 3px; }
+.app-v2 .shop-tab {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 4px;
+  color: var(--text-dim);
+  padding: 8px 14px;
+  font-family: var(--font-mono); font-size: 10px;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.12s ease;
+}
+.app-v2 .shop-tab:hover { color: var(--text-mid); }
+.app-v2 .shop-tab.active {
+  background: rgba(255,6,111,0.12);
+  border-color: var(--hex-primary);
+  color: #fff;
+}
+
+/* Item grid */
+.app-v2 .shop-grid-wrap {
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+.app-v2 .shop-grid-wrap::-webkit-scrollbar { width: 4px; }
+.app-v2 .shop-grid-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); }
+
+.app-v2 .shop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 8px;
+  padding: 2px;
+}
+.app-v2 .shop-item {
+  background: var(--bg-panel);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-left: 3px solid transparent;
+  border-radius: 6px;
+  padding: 10px;
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.app-v2 .shop-item:hover {
+  background: rgba(255,255,255,0.04);
+  border-left-color: var(--hex-primary);
+  transform: translateY(-1px);
+}
+.app-v2 .shop-item.selected {
+  background: rgba(255,6,111,0.06);
+  border-color: var(--hex-primary);
+  border-left-color: var(--hex-primary);
+}
+.app-v2 .shop-item.owned {
+  opacity: 0.6;
+}
+.app-v2 .shop-item.owned::after {
+  content: 'OWNED';
+  font-family: var(--font-mono); font-size: 8px;
+  letter-spacing: 1.5px;
+  color: #2ee07f;
+  text-align: center;
+  padding: 4px;
+  border: 1px solid rgba(46,224,127,0.4);
+  border-radius: 3px;
+  margin-top: 2px;
+}
+
+.app-v2 .si-preview {
+  aspect-ratio: 1;
+  border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display);
+  font-size: 24px;
+  letter-spacing: 2px;
+  background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(255,255,255,0.06);
+  position: relative;
+  overflow: hidden;
+}
+.app-v2 .si-preview::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.08), transparent 60%);
+}
+.app-v2 .si-name {
+  font-family: var(--font-display);
+  font-size: 12px;
+  letter-spacing: 1px;
+  line-height: 1.2;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.app-v2 .si-rarity {
+  font-family: var(--font-mono); font-size: 8px;
+  letter-spacing: 1.5px; text-transform: uppercase;
+}
+.app-v2 .si-rarity.common    { color: #b0b0bc; }
+.app-v2 .si-rarity.rare      { color: #4dd9ff; }
+.app-v2 .si-rarity.epic      { color: #A855F7; }
+.app-v2 .si-rarity.legendary { color: #FFD262; }
+.app-v2 .si-price {
+  display: flex; justify-content: space-between; align-items: center;
+  font-family: var(--font-mono); font-size: 11px;
+  margin-top: auto;
+}
+.app-v2 .si-price .sip-val { color: #fff; }
+.app-v2 .si-price .sip-val.taps { color: #FFD262; }
+.app-v2 .si-price .sip-val.xp   { color: #6EE7FF; }
+.app-v2 .si-price .sip-val.eth  { color: var(--hex-primary); }
+.app-v2 .si-onchain {
+  font-family: var(--font-mono); font-size: 7px;
+  letter-spacing: 1.5px;
+  background: rgba(255,6,111,0.12);
+  color: var(--hex-primary);
+  padding: 2px 5px;
+  border-radius: 2px;
+  border: 1px solid rgba(255,6,111,0.3);
+  text-transform: uppercase;
+}
+
+/* Detail panel */
+.app-v2 .shop-detail {
+  background: var(--bg-deep);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  padding: 16px 18px;
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  display: flex; flex-direction: column;
+  overflow-y: auto;
+}
+.app-v2 .shop-detail::-webkit-scrollbar { width: 4px; }
+.app-v2 .shop-detail::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); }
+
+.app-v2 .sd-empty {
+  flex: 1;
+  display: flex; align-items: center; justify-content: center;
+  text-align: center;
+  font-family: var(--font-mono); font-size: 11px;
+  letter-spacing: 1.5px; color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+.app-v2 .sd-big-preview {
+  aspect-ratio: 1;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display);
+  font-size: 40px;
+  letter-spacing: 3px;
+  background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(255,255,255,0.06);
+  margin-bottom: 14px;
+  position: relative;
+  overflow: hidden;
+}
+.app-v2 .sd-big-preview::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.1), transparent 70%);
+}
+.app-v2 .sd-rarity-chip {
+  position: absolute; top: 10px; right: 10px;
+  font-family: var(--font-mono); font-size: 9px;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 3px;
+  border: 1px solid;
+}
+.app-v2 .sd-name {
+  font-family: var(--font-display); font-size: 18px;
+  letter-spacing: 2px;
+  margin-bottom: 4px;
+}
+.app-v2 .sd-kicker {
+  font-family: var(--font-mono); font-size: 9px;
+  letter-spacing: 2px; color: var(--text-dim);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.app-v2 .sd-desc {
+  font-size: 12px; color: var(--text-mid);
+  line-height: 1.5;
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.02);
+  border-left: 2px solid rgba(255,255,255,0.1);
+  border-radius: 2px;
+}
+.app-v2 .sd-effect {
+  margin-bottom: 14px;
+}
+.app-v2 .sd-effect-label {
+  font-family: var(--font-mono); font-size: 9px;
+  letter-spacing: 2px; color: var(--text-dim);
+  text-transform: uppercase; margin-bottom: 6px;
+}
+.app-v2 .sd-effect-val {
+  font-family: var(--font-mono); font-size: 12px;
+  color: #FFD262;
+}
+
+.app-v2 .sd-price-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+.app-v2 .sd-price-row .sdpr-label {
+  font-family: var(--font-mono); font-size: 9px;
+  letter-spacing: 1.5px; color: var(--text-dim);
+  text-transform: uppercase;
+}
+.app-v2 .sd-price-row .sdpr-val {
+  font-family: var(--font-mono); font-size: 14px;
+}
+
+.app-v2 .sd-purchase {
+  padding: 12px;
+  background: transparent;
+  border: 1px solid var(--hex-primary);
+  border-radius: 4px;
+  color: #fff;
+  font-family: var(--font-mono); font-size: 11px;
+  letter-spacing: 3px; text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.app-v2 .sd-purchase:hover {
+  background: rgba(255,6,111,0.15);
+  box-shadow: 0 0 18px rgba(255,6,111,0.25);
+}
+.app-v2 .sd-purchase:disabled {
+  opacity: 0.4; cursor: not-allowed;
+}
+.app-v2 .sd-purchase:disabled:hover { background: transparent; box-shadow: none; }
+.app-v2 .sd-purchase.fail {
+  animation: sdShake 0.35s ease;
+  border-color: #ff4444 !important;
+  color: #ff4444 !important;
+}
+@keyframes sdShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+.app-v2 .sd-owned {
+  padding: 12px;
+  text-align: center;
+  background: rgba(46,224,127,0.08);
+  border: 1px solid rgba(46,224,127,0.4);
+  border-radius: 4px;
+  color: #2ee07f;
+  font-family: var(--font-mono); font-size: 11px;
+  letter-spacing: 3px; text-transform: uppercase;
+}
+
+/* 5E-specific: mobile-only "← Items" back button inside detail panel.
+   Hidden on desktop; @media block below flips display. Closes UX gap where
+   prototype relied on browser back to return from detail to grid. */
+.app-v2 .sd-mobile-back {
+  display: none;
+  background: var(--bg-panel);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 6px;
+  padding: 8px 14px 8px 10px;
+  color: var(--text-mid);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  margin-bottom: 12px;
+}
+
+/* Purchase flash */
+.app-v2 .purchase-flash {
+  position: absolute; inset: 0;
+  pointer-events: none;
+  background: rgba(255,210,98,0);
+  z-index: 5;
+}
+.app-v2 .purchase-flash.flash { animation: purchaseFlash 0.9s ease-out; }
+@keyframes purchaseFlash {
+  0%   { background: rgba(255,210,98,0); }
+  20%  { background: rgba(255,210,98,0.35); }
+  100% { background: rgba(255,210,98,0); }
+}
+
+@media (max-width: 820px) {
+  .app-v2 .shop-main {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto 1fr;
+  }
+  .app-v2 .shop-detail {
+    display: none;
+  }
+  .app-v2 .shop-main.show-detail .shop-grid-wrap { display: none; }
+  .app-v2 .shop-main.show-detail .shop-detail { display: flex; }
+  .app-v2 .shop-balance { flex-wrap: wrap; max-width: 60%; }
+  .app-v2 .sd-mobile-back { display: block; }
+}
+
+/* 5E-specific: empty category fallback. Replaces prototype 12597 inline-style
+   on the `<div>` shown when filteredItems.length === 0 in HudShop.vue. */
+.app-v2 .empty-cat {
+  grid-column: 1 / -1;
+  padding: 40px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}

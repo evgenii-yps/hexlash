@@ -6,6 +6,7 @@ const { JWT_SECRET, COST_PER_CLICK, DECIMALS, PUNCH_MAX_PER_INTERVAL, PUNCH_MAX_
 const clients = new Map(); // userId -> ws
 const matchmaking = require('../services/matchmaking');
 const pvpMatchManager = require('../services/pvpMatchManager');
+const PvPCombatEngine = require('../services/pvpCombatEngine');
 const { handlePvPMessage, handlePvPDisconnect } = require('./pvpHandler');
 
 function setupWebSocket(server) {
@@ -13,6 +14,10 @@ function setupWebSocket(server) {
 
   // Register sendToUser callback in matchmaking to avoid circular dependency
   matchmaking.setSendToUser(sendToUser);
+
+  // Sub-epic 6 C4 — wire spectator socket lookup for pvpCombatEngine.sendToSpectators (C2 helper).
+  // Mirrors matchmaking.setSendToUser pattern above. Avoids engine→handler.js circular dep.
+  PvPCombatEngine.setSocketLookup((userId) => clients.get(userId));
 
   wss.on('connection', async (ws, req) => {
     // Extract token from protocol
@@ -114,6 +119,7 @@ function setupWebSocket(server) {
       clients.delete(userId);
       matchmaking.removeFromQueue(userId);
       handlePvPDisconnect(userId);
+      handleSpectateLeave(ws, userId); // Sub-epic 6 C5 — silent no-op if not spectating
       console.log(`WebSocket: user ${userId} disconnected. Total: ${clients.size}`);
     });
 
@@ -123,6 +129,7 @@ function setupWebSocket(server) {
       clients.delete(userId);
       matchmaking.removeFromQueue(userId);
       handlePvPDisconnect(userId);
+      handleSpectateLeave(ws, userId); // Sub-epic 6 C5 — silent no-op if not spectating
     });
   });
 
@@ -189,6 +196,14 @@ async function handleMessage(ws, userId, msg) {
 
     case 'challenge_declined':
       handleChallengeDeclined(ws, userId, msg);
+      break;
+
+    case 'SpectateJoinMsg':
+      await handleSpectateJoin(ws, userId, msg);
+      break;
+
+    case 'SpectateLeaveMsg':
+      handleSpectateLeave(ws, userId);
       break;
 
     default:
@@ -637,6 +652,121 @@ function handleMatchmakingCancel(ws, userId) {
   sendMessage(ws, {
     type: 'MatchmakingCancelledMsg',
   });
+}
+
+// ── SUB-EPIC 6 — SPECTATE HANDLERS ────────────────────────────────────────
+
+/**
+ * SpectateJoinMsg handler — Path B-min + D combo.
+ *
+ * Validates matchId + auth + self-spectate guard, adds spectator userId
+ * to match.spectators (C1 field), emits initial fight_state_resume snapshot
+ * (Sub-epic 4b reuse — Option α late-join), and broadcasts SpectatorListMsg
+ * to entire audience.
+ *
+ * Auth: friendship-based (Path D). Spectator must be friend of player1
+ * OR player2. Friendship lookup via prisma findFirst with normalized
+ * user1Id/user2Id pairs (existing convention per friends.js:38).
+ *
+ * ErrorMsg shape: BE flat {type, error, code} per Sub-epic 5 carry-over
+ * #31 finding (FE parser is the broken side — fix deferred к Sub-epic 7).
+ *
+ * Self-spectate guard: player can't spectate own match (defensive — would
+ * conflict with player WS routing for own match events).
+ *
+ * 6th subsection #2 occurrence application: spectators stored as Set<userId>
+ * (NOT socket refs — sockets replace on reconnect; userId is stable identity).
+ */
+async function handleSpectateJoin(ws, userId, msg) {
+  const { matchId } = msg;
+  if (!matchId || typeof matchId !== 'string') {
+    ws.send(JSON.stringify({ type: 'ErrorMsg', error: 'INVALID_MATCH_ID', code: 400 }));
+    return;
+  }
+
+  const match = pvpMatchManager.getMatch(matchId);
+  if (!match) {
+    ws.send(JSON.stringify({ type: 'ErrorMsg', error: 'MATCH_NOT_FOUND', code: 404 }));
+    return;
+  }
+
+  // Self-spectate guard
+  if (userId === match.player1.odId || userId === match.player2.odId) {
+    ws.send(JSON.stringify({ type: 'ErrorMsg', error: 'CANNOT_SPECTATE_OWN_MATCH', code: 403 }));
+    return;
+  }
+
+  // Friendship check (Path D — friends-only spectate)
+  const p1Id = match.player1.odId;
+  const p2Id = match.player2.odId;
+  const [u1a, u2a] = userId < p1Id ? [userId, p1Id] : [p1Id, userId];
+  const [u1b, u2b] = userId < p2Id ? [userId, p2Id] : [p2Id, userId];
+
+  const isFriend = await prisma.friendship.findFirst({
+    where: {
+      OR: [
+        { user1Id: u1a, user2Id: u2a },
+        { user1Id: u1b, user2Id: u2b },
+      ],
+    },
+  });
+
+  if (!isFriend) {
+    ws.send(JSON.stringify({ type: 'ErrorMsg', error: 'NOT_AUTHORIZED', code: 403 }));
+    return;
+  }
+
+  // Add to spectators Set (C1 field)
+  match.spectators.add(userId);
+
+  // Emit initial fight_state_resume snapshot (Sub-epic 4b reuse — Option α late-join).
+  // Spectator FE hydrates HudSpectate state from snapshot, then receives live events
+  // via C3 sendToSpectators broadcast chain.
+  try {
+    const snapshot = match.getStateSnapshot();
+    ws.send(JSON.stringify({ type: 'fight_state_resume', ...snapshot }));
+  } catch (e) {
+    console.error('[SPECTATE] Failed to send fight_state_resume:', e.message);
+  }
+
+  // Broadcast SpectatorListMsg to entire audience (player1, player2, all spectators
+  // including new). Uses engine.emit (players) + engine.sendToSpectators (spectators).
+  const listPayload = { matchId, count: match.spectators.size };
+  match.emit('SpectatorListMsg', listPayload);
+  match.sendToSpectators('SpectatorListMsg', listPayload);
+
+  console.log(`[SPECTATE] User ${userId} joined match ${matchId}. Spectators: ${match.spectators.size}`);
+}
+
+/**
+ * SpectateLeaveMsg handler.
+ *
+ * No matchId in payload (mirrors MatchmakingCancelMsg pattern — server-state
+ * derivation). Iterates active matches finding userId in spectators. Direct
+ * iteration acceptable for typical scale (matches < 50). Encapsulation method
+ * (getMatchBySpectator) deferrable к C5 if cleaner.
+ *
+ * On miss (user not spectating any match): silent no-op — likely stale unmount
+ * after match already cleaned up.
+ */
+function handleSpectateLeave(ws, userId) {
+  let foundMatch = null;
+  for (const match of pvpMatchManager.activeMatches.values()) {
+    if (match.spectators.has(userId)) {
+      foundMatch = match;
+      break;
+    }
+  }
+
+  if (!foundMatch) return; // silent no-op — not spectating any match
+
+  foundMatch.spectators.delete(userId);
+
+  const listPayload = { matchId: foundMatch.matchId, count: foundMatch.spectators.size };
+  foundMatch.emit('SpectatorListMsg', listPayload);
+  foundMatch.sendToSpectators('SpectatorListMsg', listPayload);
+
+  console.log(`[SPECTATE] User ${userId} left match ${foundMatch.matchId}. Spectators: ${foundMatch.spectators.size}`);
 }
 
 /** Notify both players that a match was found. */

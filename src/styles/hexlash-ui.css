@@ -477,6 +477,101 @@
   text-shadow: 0 0 10px var(--hex-primary-glow);
 }
 
+/* B-AW3 (#15): taxonomy expansion — body/actions/close + .hex-spinner.
+   Added Sub-epic 7 C9 to canonicalize patterns established by C8 .cl-modal-*. */
+
+.hex-modal-body {
+  flex: 1;
+  padding: var(--hex-spacing-md) 0;
+  color: var(--hex-text-primary);
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+.hex-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--hex-spacing-sm);
+  padding-top: var(--hex-spacing-md);
+  border-top: 1px solid var(--hex-border-default);
+}
+
+.hex-modal-close {
+  position: absolute;
+  top: var(--hex-spacing-sm);
+  right: var(--hex-spacing-sm);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--hex-text-secondary);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: var(--hex-radius-sm);
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.hex-modal-close:hover {
+  color: var(--hex-text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* B-AW3 (#15): canonical CSS spinner — replaces v-progress-circular usage.
+   Mirror pattern established C8 .cl-spinner; promoted to global taxonomy C9. */
+.hex-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-top-color: var(--hex-primary);
+  border-radius: 50%;
+  animation: hex-spin 0.8s linear infinite;
+}
+
+@keyframes hex-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* B5 (#35): active effect badges — extracted from HudFight (Sub-epic 7 C6
+   modifiers bar) для cross-component reuse. DRY win mirror C9 .hex-modal-*
+   taxonomy expansion pattern. Positioning provided by per-component .modifiers-bar
+   /.sp-modifiers-bar rules; .mod-badge* are appearance-only canonical primitives. */
+
+.mod-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--hex-radius-md);
+  border: 2px solid currentColor;
+  background: rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+}
+
+.mod-badge-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.mod-badge--adrenaline {
+  color: var(--hex-dice-adrenaline);
+  box-shadow: 0 0 8px var(--hex-dice-adrenaline);
+}
+
+.mod-badge--shield {
+  color: var(--hex-dice-shield);
+  box-shadow: 0 0 8px var(--hex-dice-shield);
+}
+
+.mod-badge--blind {
+  color: var(--hex-dice-blind);
+  box-shadow: 0 0 8px var(--hex-dice-blind);
+}
+
 /* --------------------------------------------
    INPUTS
    -------------------------------------------- */

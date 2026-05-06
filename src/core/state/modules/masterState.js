@@ -301,6 +301,30 @@ const actions = {
             commit('setInfoMessage', InfoMessageModel.withText(error.message));
         }
     },
+    // 5Q Phase 1 — Retirement actions. Backend (POST /user/retire) resolves
+    // primaryModule server-side from user.progression — frontend posts empty
+    // body. Per ТЗ §Decision: no caching state, no optimistic UI (retirement
+    // irreversible). HUD-v2 convention via Vuex action wrappers (Lesson #32),
+    // mirrors masterState factory pattern lineage from 5O P3 / 5P P2.
+    async fetchRetirementStatus({commit}) {
+        try {
+            const {data: res} = await apiClient.get('/user/retirement-status', {authRequired: true});
+            return res;
+        } catch (error) {
+            commit('setErrorMessage', ErrorMessageModel.withText(error?.response?.data?.error || error.message || 'Failed to load retirement status'));
+            return null;
+        }
+    },
+    async retire({commit}) {
+        try {
+            const {data: res} = await apiClient.post('/user/retire', {}, {authRequired: true});
+            commit('setInfoMessage', InfoMessageModel.withText(res.message || t.value.club?.lblRetireSuccess || 'Retired!'));
+            return true;
+        } catch (error) {
+            commit('setErrorMessage', ErrorMessageModel.withText(error?.response?.data?.error || error.message || 'Retirement failed'));
+            return false;
+        }
+    },
     async sendShare({commit, state}) {
         try {
             const inviteId = state.master.inviteId;

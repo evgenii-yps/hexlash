@@ -16,16 +16,20 @@
 
       <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
 
-      <v-progress-circular
-          v-if="loading"
-          class="loader"
-          size="40"
-          indeterminate
-      />
+      <!-- B-AW1 (#4 closes): v-progress-circular → canonical .hex-spinner; VBtn → HexButton.
+           v-if pattern preserved (button hides during loading, spinner replaces). -->
+      <div v-if="loading" class="hex-spinner auth-loader" aria-label="Loading"></div>
 
-      <VBtn v-if="!loading" class="auth-btn" @click="handleSubmit">
+      <HexButton
+          v-if="!loading"
+          variant="primary"
+          size="lg"
+          block
+          class="auth-btn"
+          @click="handleSubmit"
+      >
         {{ t.auth.telegram.retry }}
-      </VBtn>
+      </HexButton>
     </form>
   </div>
 </template>
@@ -33,6 +37,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import InputField from "@/components/ui/InputField.vue";
+import HexButton from "@/components/ui/HexButton.vue";
 import {t} from "@/locales/index.js";
 import store from "@/core/state/store.js";
 
@@ -117,19 +122,15 @@ form {
   margin-bottom: 0.5rem;
 }
 
-.auth-btn {
-  background-color: var(--hex-primary) !important;
-  color: var(--hex-text-primary) !important;
-  width: 100%;
-  height: 44px !important;
-  min-height: 44px;
-  cursor: pointer;
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
+/* B-AW1 (#4 closes): HexButton variant=primary size=lg block provides bg/color/sizing/font.
+   Telegram-specific styling absent (no glow shadow per pre-edit verbatim, mirror C12/C13
+   pattern but with auth-glow opt-out preserved). */
 
-.loader {
-  margin: 20px 0;
+/* B-AW1 (#4 closes): center .hex-spinner during Telegram auth (canonical post-C9). */
+.auth-loader {
+  margin: 20px auto;
+  width: 32px;
+  height: 32px;
+  border-width: 3px;
 }
 </style>

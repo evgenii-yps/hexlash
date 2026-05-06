@@ -191,18 +191,21 @@ model DailyTask {
   link        String  @default("")
   value       Int?
   language    String  @default("en")
+  scope       String  @default("general") // 5K — "general" | "training"
   users       UserDailyTask[]
 }
 
 model UserDailyTask {
-  id          Int       @id @default(autoincrement())
-  userId      String
-  taskId      String
-  completedAt DateTime  @default(now())
-  user        User      @relation(fields: [userId], references: [id])
-  task        DailyTask @relation(fields: [taskId], references: [id])
+  id           Int       @id @default(autoincrement())
+  userId       String
+  taskId       String
+  progress     Int       @default(0)        // 5K — current progress toward goal
+  assignedDate DateTime  @default(now())    // 5K — for daily-cycle filtering
+  completedAt  DateTime?                    // 5K — nullable, set when progress >= goal
+  user         User      @relation(fields: [userId], references: [id])
+  task         DailyTask @relation(fields: [taskId], references: [id])
 
-  @@unique([userId, taskId])
+  @@unique([userId, taskId, assignedDate])  // 5K — allow same task different days
 }
 
 model Fight {

@@ -1,0 +1,22 @@
+/* v2 Migration — design tokens.
+   Scoped под .app-v2, чтобы не утекало в старый сайт.
+   Источник: hexlash_v24.html, строки 11–20. */
+
+@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+.app-v2 {
+  --hex-primary: #FF066F;
+  --bg-deep: #070811;
+  --bg-panel: rgba(14, 16, 28, 0.85);
+  --text-dim: rgba(255, 255, 255, 0.5);
+  --text-mid: rgba(255, 255, 255, 0.75);
+
+  --font-display: 'Archivo Black', system-ui, sans-serif;
+  --font-body: 'Space Grotesk', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  background: var(--bg-deep);
+  color: #fff;
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}

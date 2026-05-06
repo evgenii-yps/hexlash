@@ -17,9 +17,9 @@
       >
         <!-- Можно вставить любую кнопку, лоадер или любой другой элемент -->
         <template v-slot>
-          <VBtnDark size="small" @click="handleEmailSubmit" class="input-button">
+          <HexButton variant="secondary" size="sm" @click="handleEmailSubmit" class="input-button">
             {{ t.profile.account.btnSendConfirm }}
-          </VBtnDark>
+          </HexButton>
         </template>
 
       </InputField>
@@ -31,6 +31,7 @@
 <script setup>
 import {computed, onMounted, ref, watch} from 'vue';
 import InputField from '@/components/ui/InputField.vue';
+import HexButton from '@/components/ui/HexButton.vue';
 import store from "@/core/state/store.js";
 import {t} from "@/locales/index.js";
 import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";

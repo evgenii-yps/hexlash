@@ -1,4 +1,5 @@
 import apiClient from '@/core/api/apiClient.js';
+import { ErrorMessageModel } from '@/core/models/internal/errorMessageModel.js';
 
 const state = {
   agents: [],
@@ -16,6 +17,15 @@ const state = {
   fightHistoryLoading: false,
   trainResult: null,
   trainLoading: false,
+  // Sub-epic 2 — Ratings tab AGENTS data (Path A Vuex extension).
+  // REPLACE semantics on setAgentRankings (preempts F3 stale-rows risk).
+  // Mirrors clanRatings/participantRatings shape but with replace, not append.
+  agentRankings: {
+    items: [],
+    total: 0,
+    limitReached: false,
+    pageSize: 20,
+  },
 };
 
 const getters = {
@@ -36,6 +46,7 @@ const getters = {
   fightingAgents: (state) => state.agents.filter(a => a.status === 'fighting'),
   restingAgents: (state) => state.agents.filter(a => a.status === 'resting'),
   fightClubProgress: (state) => state.fightClubLevel,
+  getAgentRankings: (state) => state.agentRankings.items,
 };
 
 const mutations = {
@@ -47,6 +58,37 @@ const mutations = {
   UPDATE_AGENT(state, updated) {
     const idx = state.agents.findIndex(a => a.id === updated.id);
     if (idx !== -1) state.agents.splice(idx, 1, { ...state.agents[idx], ...updated });
+  },
+  // Sub-Epic 5L Phase 2 — optimistic captain swap.
+  OPTIMISTIC_SET_CAPTAIN(state, agentId) {
+    state.agents = state.agents.map(a => ({ ...a, isCaptain: a.id === agentId }));
+    if (state.currentAgent) {
+      state.currentAgent = { ...state.currentAgent, isCaptain: state.currentAgent.id === agentId };
+    }
+  },
+  ROLLBACK_AGENTS(state, snapshot) {
+    state.agents = snapshot.agents;
+    state.currentAgent = snapshot.currentAgent;
+  },
+  // Sub-Epic 5M Phase 1 — optimistic auto-fight toggle (mirror 5L Phase 2 pattern).
+  // Flips both state.agents AND state.currentAgent when the open detail view
+  // matches. ROLLBACK_AUTO_FIGHT restores prevEnabled per-agent (lighter than
+  // full ROLLBACK_AGENTS snapshot — single boolean revert).
+  OPTIMISTIC_TOGGLE_AUTO_FIGHT(state, { agentId, enabled }) {
+    state.agents = state.agents.map(a =>
+      a.id === agentId ? { ...a, autoFight: enabled } : a
+    );
+    if (state.currentAgent && state.currentAgent.id === agentId) {
+      state.currentAgent = { ...state.currentAgent, autoFight: enabled };
+    }
+  },
+  ROLLBACK_AUTO_FIGHT(state, { agentId, prevEnabled }) {
+    state.agents = state.agents.map(a =>
+      a.id === agentId ? { ...a, autoFight: prevEnabled } : a
+    );
+    if (state.currentAgent && state.currentAgent.id === agentId) {
+      state.currentAgent = { ...state.currentAgent, autoFight: prevEnabled };
+    }
   },
   SET_FIGHT_CLUB_LEVEL(state, data) { state.fightClubLevel = data; },
   SET_FIGHT_CLUB_LEVEL_LOADING(state, val) { state.fightClubLevelLoading = val; },
@@ -63,6 +105,18 @@ const mutations = {
   SET_FIGHT_HISTORY_LOADING(state, val) { state.fightHistoryLoading = val; },
   SET_TRAIN_RESULT(state, val) { state.trainResult = val; },
   SET_TRAIN_LOADING(state, val) { state.trainLoading = val; },
+  // Sub-epic 2 — AGENTS rankings. REPLACE (not append, unlike clanState
+  // setClanRatings / userState setParticipantRatings — deliberate, preempts
+  // F3 stale-rows risk for AGENTS tab refetch idempotency).
+  setAgentRankings(state, { items, total }) {
+    state.agentRankings.items = items;
+    state.agentRankings.total = total;
+  },
+  updateAgentRankingsState(state, { field, value }) {
+    if (Object.prototype.hasOwnProperty.call(state.agentRankings, field)) {
+      state.agentRankings[field] = value;
+    }
+  },
 };
 
 const actions = {
@@ -102,14 +156,56 @@ const actions = {
     commit('REMOVE_AGENT', id);
   },
 
-  async toggleAutoFight({ commit }, { id, enabled }) {
-    const res = await apiClient.put(`/agent/${id}/auto-fight`, { enabled }, { authRequired: true });
-    commit('UPDATE_AGENT', { id, autoFight: res.agent.autoFight, status: res.agent.status, nextFightAt: res.agent.nextFightAt });
+  // Sub-Epic 5M Phase 1 — optimistic UI + rollback toast on error.
+  // UI flips immediately via OPTIMISTIC_TOGGLE_AUTO_FIGHT; on success
+  // UPDATE_AGENT syncs server-computed fields (status, nextFightAt) without
+  // overwriting the already-flipped autoFight. On error, ROLLBACK_AUTO_FIGHT
+  // reverts the optimistic flip and master/setErrorMessage surfaces a toast.
+  async toggleAutoFight({ commit, state }, { id, enabled }) {
+    const agent = state.agents.find(a => a.id === id);
+    const prevEnabled = agent ? agent.autoFight : false;
+    commit('OPTIMISTIC_TOGGLE_AUTO_FIGHT', { agentId: id, enabled });
+    try {
+      const res = await apiClient.put(`/agent/${id}/auto-fight`, { enabled }, { authRequired: true });
+      commit('UPDATE_AGENT', {
+        id,
+        autoFight: res.agent.autoFight,
+        status: res.agent.status,
+        nextFightAt: res.agent.nextFightAt,
+      });
+    } catch (err) {
+      commit('ROLLBACK_AUTO_FIGHT', { agentId: id, prevEnabled });
+      commit(
+        'master/setErrorMessage',
+        ErrorMessageModel.withText('Failed to toggle auto-fight'),
+        { root: true }
+      );
+      throw err;
+    }
   },
 
-  async setCaptain({ dispatch }, agentId) {
-    await apiClient.put(`/agent/${agentId}/captain`, {}, { authRequired: true });
-    await dispatch('fetchAgents');
+  // Sub-Epic 5L Phase 2 — optimistic update + rollback toast on error.
+  // UI flips immediately via OPTIMISTIC_SET_CAPTAIN; fetchAgents syncs
+  // server-truth on success. On error, ROLLBACK_AGENTS restores snapshot
+  // and master/setErrorMessage surfaces a toast.
+  async setCaptain({ commit, dispatch, state }, agentId) {
+    const snapshot = {
+      agents: state.agents.map(a => ({ ...a })),
+      currentAgent: state.currentAgent ? { ...state.currentAgent } : null,
+    };
+    commit('OPTIMISTIC_SET_CAPTAIN', agentId);
+    try {
+      await apiClient.put(`/agent/${agentId}/captain`, {}, { authRequired: true });
+      await dispatch('fetchAgents');
+    } catch (err) {
+      commit('ROLLBACK_AGENTS', snapshot);
+      commit(
+        'master/setErrorMessage',
+        ErrorMessageModel.withText('Failed to set captain'),
+        { root: true }
+      );
+      throw err;
+    }
   },
 
   async refreshAgentStatus({ commit }, id) {
@@ -217,6 +313,20 @@ const actions = {
     } finally {
       commit('SET_TRAIN_LOADING', false);
     }
+  },
+
+  // Sub-epic 2 — AGENTS tab data fetch.
+  // Direct apiClient (no service layer — mirrors agent module convention,
+  // not service-layer convention used by clanState/userState).
+  // Offset-based pagination per /v1/agent/rankings backend (Q11).
+  async loadAgentRankings({ commit, state }, { offset = 0, limit = state.agentRankings.pageSize } = {}) {
+    const res = await apiClient.get('/agent/rankings', {
+      params: { offset, limit },
+      authRequired: true,
+    });
+    const items = res.rankings || [];
+    commit('setAgentRankings', { items, total: res.total || 0 });
+    commit('updateAgentRankingsState', { field: 'limitReached', value: items.length < limit });
   },
 };
 

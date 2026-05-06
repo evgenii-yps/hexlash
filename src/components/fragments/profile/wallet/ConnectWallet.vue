@@ -24,14 +24,15 @@
       </div>
     </template>
 
-    <!-- Modal overlay -->
+    <!-- Modal overlay — B-AW2 (#4): canonical .hex-modal-* taxonomy с .cw-* modifier overrides
+         (z-index 9000 для wallet-priority, narrower max-width, lighter border). -->
     <Teleport to="body">
       <Transition name="hex-fade">
-        <div v-if="showModal" class="wallet-modal-overlay" @click.self="closeModal">
+        <div v-if="showModal" class="hex-modal-overlay cw-modal-overlay" @click.self="closeModal">
           <Transition name="hex-slide-up">
-            <div v-if="showModal" class="wallet-modal">
+            <div v-if="showModal" class="hex-modal cw-modal-content">
               <!-- Close button -->
-              <button class="modal-close" @click="closeModal">&times;</button>
+              <button class="hex-modal-close" @click="closeModal">&times;</button>
 
               <!-- Connecting state -->
               <template v-if="pendingConnector">
@@ -39,7 +40,7 @@
                   <h3 class="modal-title">{{ t.profile.wallet.lblConnecting }}</h3>
                 </div>
                 <div class="modal-connecting">
-                  <div class="connecting-spinner"></div>
+                  <div class="hex-spinner cw-spinner-lg"></div>
                   <HexButton variant="ghost" size="sm" @click="cancelConnect">
                     {{ t.nav?.lblBack || 'Cancel' }}
                   </HexButton>
@@ -169,6 +170,12 @@ onMounted(() => {
 onUnmounted(() => {
   document.removeEventListener('keydown', onKeydown)
 })
+
+// Expose openModal so external callers (e.g. v2 HudProfile Identity card)
+// can trigger the modal directly without rendering the inline "Connect
+// Wallet" button. Epic 5 Sub-Epic 5B Step 10. Additive — does not affect
+// legacy consumers (ProfileWallet.vue) which use the component as-is.
+defineExpose({ openModal })
 </script>
 
 <style scoped>
@@ -216,45 +223,23 @@ onUnmounted(() => {
   color: var(--hex-victory);
 }
 
-/* Modal overlay */
-.wallet-modal-overlay {
-  position: fixed;
-  inset: 0;
+/* B-AW2 (#4): canonical .hex-modal-* taxonomy applied (overlay/modal/close from
+   src/styles/hexlash-ui.css). Modifier overrides below preserve wallet visual
+   character (z-index 9000 для wallet-priority, narrower 400px max-width,
+   subtle 1px border instead of canonical 2px primary). */
+.cw-modal-overlay {
   z-index: 9000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   background: rgba(0, 0, 0, 0.75);
   padding: 20px;
 }
 
-/* Modal card */
-.wallet-modal {
-  position: relative;
+.cw-modal-content {
   width: 100%;
   max-width: 400px;
-  background: var(--hex-bg-medium);
   border: 1px solid var(--hex-border-default);
   border-radius: 16px;
   padding: 28px 24px;
-}
-
-.modal-close {
-  position: absolute;
-  top: 12px;
-  right: 16px;
-  background: none;
-  border: none;
-  color: var(--hex-text-muted);
-  font-size: 1.5rem;
-  cursor: pointer;
-  line-height: 1;
-  padding: 4px;
-  transition: color 0.2s;
-}
-
-.modal-close:hover {
-  color: var(--hex-text-primary);
+  position: relative;
 }
 
 /* Modal header */
@@ -340,22 +325,17 @@ onUnmounted(() => {
   padding: 20px 0;
 }
 
-.connecting-spinner {
+/* B-AW2 (#4): .hex-spinner canonical (post-C9) + .cw-spinner-lg size override
+   (40px wallet-specific vs canonical 20px). hex-spin keyframes provided globally. */
+.cw-spinner-lg {
   width: 40px;
   height: 40px;
-  border: 3px solid var(--hex-border-default);
-  border-top-color: var(--hex-text-secondary);
-  border-radius: 50%;
-  animation: wallet-spin 0.8s linear infinite;
-}
-
-@keyframes wallet-spin {
-  to { transform: rotate(360deg); }
+  border-width: 3px;
 }
 
 /* Mobile */
 @media (max-width: 360px) {
-  .wallet-modal {
+  .cw-modal-content {
     padding: 20px 16px;
   }
 

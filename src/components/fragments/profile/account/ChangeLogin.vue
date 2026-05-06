@@ -20,7 +20,7 @@
               <div v-if="loginAvailable && loginChanged && !errorMessage" class="success-message">
                 {{ t.profile.account.lblAvailableLogin }}
               </div>
-              <v-progress-circular v-if="loading" color="var(--hex-text-secondary)" indeterminate :size="20"/>
+              <div v-if="loading" class="hex-spinner" aria-label="Loading"></div>
               <img v-if="!loading && loginAvailable && loginChanged" src="@/assets/images/icon_pencil.svg"
                    @click="confirmChange"
                    alt="change login" class="btn-change-login"/>
@@ -32,25 +32,37 @@
 
     <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
 
-    <VModal v-model="dialog" max-width="500">
-      <VCard>
-        <v-card-title class="headline"> {{ t.profile.account.lblConfirmChange }}</v-card-title>
-        <v-card-text>
-          {{ interpolate(t.profile.account.msgConfirmChange, {newLogin: login}) }}
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn @click="dialog = false" class="cancel-btn"> {{ t.modal.btnCancel }}</v-btn>
-          <v-btn @click="handleLoginSubmit" class="confirm-btn"> {{ t.modal.btnConfirm }}</v-btn>
-        </v-card-actions>
-      </VCard>
-    </VModal>
+    <!-- C8/C9: VModal/VCard/v-card-* → inline Teleport + canonical .hex-modal-* taxonomy
+         (overlay/modal/title/body/actions/close all from src/styles/hexlash-ui.css). -->
+    <Teleport to="body">
+      <div
+        v-if="dialog"
+        class="hex-modal-overlay"
+        @click.self="dialog = false"
+      >
+        <div class="hex-modal" @click.stop>
+          <h2 class="hex-modal-title">{{ t.profile.account.lblConfirmChange }}</h2>
+          <div class="hex-modal-body">
+            {{ interpolate(t.profile.account.msgConfirmChange, {newLogin: login}) }}
+          </div>
+          <div class="hex-modal-actions">
+            <HexButton variant="secondary" size="md" @click="dialog = false">
+              {{ t.modal.btnCancel }}
+            </HexButton>
+            <HexButton variant="primary" size="md" @click="handleLoginSubmit">
+              {{ t.modal.btnConfirm }}
+            </HexButton>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
 <script setup>
 import {computed, ref, watch} from 'vue';
 import InputField from '@/components/ui/InputField.vue';
+import HexButton from '@/components/ui/HexButton.vue';
 import store from "@/core/state/store.js";
 import debounce from "debounce";
 import {t, interpolate} from "@/locales/index.js";
@@ -198,4 +210,5 @@ form {
   font-size: 0.8rem;
   text-align: center;
 }
+
 </style>
