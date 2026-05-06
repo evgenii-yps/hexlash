@@ -57,7 +57,7 @@ function handleResize() {
 }
 
 function onBack() {
-  router.push('/v2');
+  router.push('/play');
 }
 
 // Callback handed to HudCreate (Step 8). Closure captures the `sceneApi`
@@ -79,7 +79,7 @@ function handleArchetypeColor(hex) {
 //   3. setCreatedFighter caches { id, name, archetype } so FighterDetailView
 //      (Step 6) can hydrate without an extra fetchAgent round-trip.
 //   4. creating → false, materializing → true. Run DOM flash + opacity lerp.
-//   5. onDone → router.push('/v2/fd/' + agent.id). matHandle.cancel() is
+//   5. onDone → router.push('/play/fd/' + agent.id). matHandle.cancel() is
 //      idempotent if unmount races the animation.
 // Sad path: catch → createState.error = {message}, creating = false. Form
 // state intact (name + archetype preserved) — user can edit and retry.
@@ -132,7 +132,7 @@ async function onCreatePersist(payload) {
   if (!fighter) {
     // Defensive — shouldn't happen after onMounted. If we somehow have no
     // scene, skip the animation and navigate directly.
-    router.push('/v2/fd/' + agent.id);
+    router.push('/play/fd/' + agent.id);
     return;
   }
 
@@ -143,7 +143,7 @@ async function onCreatePersist(payload) {
     MATERIALIZE_DURATION_MS,
     {
       onDone: () => {
-        router.push('/v2/fd/' + agent.id);
+        router.push('/play/fd/' + agent.id);
       },
     },
   );

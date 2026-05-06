@@ -32,35 +32,35 @@ const router = useRouter();
 watch(() => click.seq, () => {
   if (!click.id) return;
   if (click.id === 'training') {
-    router.push('/v2/training');
+    router.push('/play/training');
     return;
   }
   if (click.id === 'matchmaking') {
-    router.push('/v2/matchmaking');
+    router.push('/play/matchmaking');
     return;
   }
   if (click.id === 'create') {
-    router.push('/v2/create');
+    router.push('/play/create');
     return;
   }
   if (click.id === 'avatar') {
-    router.push('/v2/profile');
+    router.push('/play/profile');
     return;
   }
   if (click.id === 'ratings') {
-    router.push('/v2/ratings');
+    router.push('/play/ratings');
     return;
   }
   if (click.id === 'clan') {
-    router.push('/v2/clan');
+    router.push('/play/clan');
     return;
   }
   if (click.id === 'shop') {
-    router.push('/v2/shop');
+    router.push('/play/shop');
     return;
   }
   // Anything else — legacy mock keys ('warden'/'predator') or real agent
   // UUIDs — both go to FD with the id as :key.
-  router.push('/v2/fd/' + click.id);
+  router.push('/play/fd/' + click.id);
 });
 </script>

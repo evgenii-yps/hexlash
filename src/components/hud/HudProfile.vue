@@ -590,7 +590,7 @@ function onChallenge(f) {
 // always-used fallback today; the optional chain protects future wiring.
 function onWatch(f) {
   const fightId = f.currentFight?.id || f.id;
-  router.push(`/v2/spectate/${fightId}`);
+  router.push(`/play/spectate/${fightId}`);
 }
 // 6B-3b — open guest profile view. Friend object exposes login OR username
 // (helper friendName uses same fallback). Edge guard: no-op if neither
@@ -599,7 +599,7 @@ function onWatch(f) {
 function openUserProfile(friend) {
   const login = friend?.login || friend?.username;
   if (!login) return;
-  router.push(`/v2/user/${login}`);
+  router.push(`/play/user/${login}`);
 }
 function onAccept(req) {
   store.dispatch('friends/acceptFriendRequest', req);

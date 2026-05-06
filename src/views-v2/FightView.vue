@@ -343,7 +343,7 @@ const onFightStateResume = (e) => {
 const onMatchCancelled = (e) => {
   store.commit('pvp/RESET_PVP_FIGHT');
   store.commit('master/setInfoMessage', { text: 'Match cancelled', timeout: 3000 });
-  router.push('/v2');
+  router.push('/play');
 };
 
 onMounted(() => {

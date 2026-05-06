@@ -343,14 +343,14 @@ const nextRankHint = computed(() => {
         <div v-else-if="myClanError" class="rt-empty">{{ t.rating.error }}</div>
         <div v-else-if="!hasOwnClan" class="myclan-empty">
           <div class="myclan-empty-msg">You're not in a clan</div>
-          <button class="myclan-cta" @click="$router.push('/v2/clan')">
+          <button class="myclan-cta" @click="$router.push('/play/clan')">
             Create or browse clans
           </button>
         </div>
         <div
           v-else
           class="myclan-summary clickable"
-          @click="$router.push('/v2/clan')"
+          @click="$router.push('/play/clan')"
         >
           <div class="myclan-row">
             <img
@@ -408,9 +408,9 @@ const nextRankHint = computed(() => {
             :key="`clans|${row.id}`"
             class="rt-row rt-row--clans clickable"
             :class="rowRankClass({ rank: idx + 1 })"
-            @click="$router.push('/v2/clan/' + row.id)"
-            @keydown.enter="$router.push('/v2/clan/' + row.id)"
-            @keydown.space.prevent="$router.push('/v2/clan/' + row.id)"
+            @click="$router.push('/play/clan/' + row.id)"
+            @keydown.enter="$router.push('/play/clan/' + row.id)"
+            @keydown.space.prevent="$router.push('/play/clan/' + row.id)"
             tabindex="0"
             role="button"
           >
@@ -450,9 +450,9 @@ const nextRankHint = computed(() => {
             :key="`agents|${row.agent.id}`"
             class="rt-row rt-row--agents clickable"
             :class="rowRankClass({ rank: row.rank })"
-            @click="$router.push('/v2/fd/' + row.agent.id)"
-            @keydown.enter="$router.push('/v2/fd/' + row.agent.id)"
-            @keydown.space.prevent="$router.push('/v2/fd/' + row.agent.id)"
+            @click="$router.push('/play/fd/' + row.agent.id)"
+            @keydown.enter="$router.push('/play/fd/' + row.agent.id)"
+            @keydown.space.prevent="$router.push('/play/fd/' + row.agent.id)"
             tabindex="0"
             role="button"
           >
@@ -504,9 +504,9 @@ const nextRankHint = computed(() => {
             :key="`fighters|${row.id || row.login}`"
             class="rt-row rt-row--fighters clickable"
             :class="rowRankClass({ rank: idx + 1 })"
-            @click="$router.push('/v2/user/' + row.login)"
-            @keydown.enter="$router.push('/v2/user/' + row.login)"
-            @keydown.space.prevent="$router.push('/v2/user/' + row.login)"
+            @click="$router.push('/play/user/' + row.login)"
+            @keydown.enter="$router.push('/play/user/' + row.login)"
+            @keydown.space.prevent="$router.push('/play/user/' + row.login)"
             tabindex="0"
             role="button"
           >

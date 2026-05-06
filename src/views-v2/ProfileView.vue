@@ -34,7 +34,7 @@ function handleResize() {
 }
 
 function onBack() {
-  router.push('/v2');
+  router.push('/play');
 }
 
 function onKeydown(e) {

@@ -71,7 +71,7 @@ function onSpectatorListUpdate(e)       { onSpectatorListUpdateMutation(e.detail
 // 'Match ended' message regardless of spectator perspective.
 function onMatchCancelled(_e) {
   store.commit('master/setInfoMessage', { text: 'Match ended', timeout: 3000 });
-  router.push('/v2');
+  router.push('/play');
 }
 
 onMounted(() => {
@@ -82,7 +82,7 @@ onMounted(() => {
   const fightId = route.params.fightId;
   if (!fightId || typeof fightId !== 'string') {
     store.commit('master/setInfoMessage', { text: 'Invalid spectate URL', timeout: 3000 });
-    router.push('/v2');
+    router.push('/play');
     return;
   }
 

@@ -8,7 +8,7 @@
        — onMounted: build scene → register('profile') → activate('profile')
        — onBeforeUnmount: activateScene('pit') → unregisterScene → dispose
          (strict teardown order — renderLoop must not touch freed scene)
-       — Escape key + back button → router.push('/v2/profile') -->
+       — Escape key + back button → router.push('/play/profile') -->
 <template>
   <div class="account-view">
     <HudProfileAccount @back="onBack" />
@@ -39,7 +39,7 @@ function handleResize() {
 }
 
 function onBack() {
-  router.push('/v2/profile');
+  router.push('/play/profile');
 }
 
 function onKeydown(e) {

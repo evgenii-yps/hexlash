@@ -273,7 +273,7 @@ function labelStyle(id) {
   };
 }
 
-function onBack() { router.push('/v2'); }
+function onBack() { router.push('/play'); }
 
 // Step 8b — open BranchPanel with mocked branch data + derived cost.
 // Cost formula from prototype 7739-7742 (branchUpgradeCost).
@@ -302,7 +302,7 @@ function closeBranchPanel() {
 
 // Esc closes FD — prototype 7977-7981.
 function onKeyDown(e) {
-  if (e.key === 'Escape') router.push('/v2');
+  if (e.key === 'Escape') router.push('/play');
 }
 
 onMounted(() => {

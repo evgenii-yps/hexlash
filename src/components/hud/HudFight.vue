@@ -209,7 +209,7 @@ function onSurrender() {
 // always-visible (prototype 1645-1667 has it gated on body.fight-readonly,
 // which v2 doesn't use). Bundled fix: visible only at /v2/spectate/:fightId.
 const isSpectating = computed(() =>
-  route.name === 'V2Spectate' || route.path.startsWith('/v2/spectate'),
+  route.name === 'V2Spectate' || route.path.startsWith('/play/spectate'),
 );
 
 // Step 16 — HP bars bind directly to fightState from useFightSimulation.
@@ -237,7 +237,7 @@ function selectCam(mode) {
 }
 
 function onBack() {
-  router.push('/v2/fd/warden');
+  router.push('/play/fd/warden');
 }
 
 function onStartFight(strat) {
@@ -249,7 +249,7 @@ function onRematch() {
 }
 
 function onExit() {
-  router.push('/v2/fd/warden');
+  router.push('/play/fd/warden');
 }
 
 // Re-export for the template (setCoachStrategy is bound to CoachPause @select).

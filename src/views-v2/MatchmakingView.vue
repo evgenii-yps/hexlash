@@ -108,7 +108,7 @@ function onBack() {
   stopSearchTimer();
   stopCountdownTimer();
   resetPvpState();
-  router.push('/v2');
+  router.push('/play');
 }
 
 function onCancel() {
@@ -118,7 +118,7 @@ function onCancel() {
   stopSearchTimer();
   stopCountdownTimer();
   resetPvpState();
-  router.push('/v2');
+  router.push('/play');
 }
 
 function onKeydown(e) {
@@ -143,7 +143,7 @@ function startMatchmakingSearch() {
       'master/setInfoMessage',
       InfoMessageModel.withTimeout('No Captain set. Create a fighter first.', 3000),
     );
-    router.replace('/v2');
+    router.replace('/play');
     return false;
   }
 
@@ -207,7 +207,7 @@ function onMatchFound(e) {
   // 4b MATCH_TIMEOUT_MS backstop (10 min wall-clock).
   if (localCancelPending) {
     console.warn('[Matchmaking] MatchFoundMsg received after local cancel — race Q8.1 mitigated');
-    router.replace('/v2');
+    router.replace('/play');
     return;
   }
 
@@ -242,7 +242,7 @@ function onMatchFound(e) {
     mmState.countdown -= 1;
     if (mmState.countdown <= 0) {
       stopCountdownTimer();
-      router.push('/v2/fight');
+      router.push('/play/fight');
     }
   }, 1000);
 
@@ -280,7 +280,7 @@ onMounted(() => {
   // на null sceneApi/searchTimer/countdownTimer/onResize, browser-tolerant
   // на never-added removeEventListener calls.
   if (store.getters['pvp/getCurrentMatchId'] !== null) {
-    router.replace('/v2/fight');
+    router.replace('/play/fight');
     return;
   }
 

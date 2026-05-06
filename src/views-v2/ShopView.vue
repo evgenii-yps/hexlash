@@ -15,7 +15,7 @@ import { buildShopScene } from '@/scene/scenes/ShopScene.js';
 const router = useRouter();
 let sceneObj = null;
 
-function goBack() { router.push('/v2'); }
+function goBack() { router.push('/play'); }
 function onKeyDown(e) { if (e.key === 'Escape') goBack(); }
 
 onMounted(() => {

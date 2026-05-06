@@ -199,7 +199,7 @@ const resultText = computed(() => {
 });
 
 function onLeave() {
-  router.push('/v2');
+  router.push('/play');
 }
 
 // Sub-epic 6 C12 — auto-scroll fight log to latest entry on append.
