@@ -116,60 +116,8 @@ export const login = async (credentials) => {
     }
 };
 
-export const telegram = async (payload) => {
-    if (isMockMode()) {
-        const mockMaster = createMockMaster();
-        store.commit('master/setMaster', mockMaster);
-        store.commit('master/setJwtToken', MOCK_JWT_TOKEN);
-        store.commit('master/setLoginState', {isAuthenticated: true});
-        return;
-    }
-
-    try {
-        const referralCode = localStorage.getItem('hexlash_referral_code');
-        if (referralCode) {
-            payload.referralCode = referralCode;
-        }
-        const response = await apiClient.post('/auth/telegram', payload);
-        localStorage.removeItem('hexlash_referral_code');
-        const {jwtToken, tempPassword, name} = response.data;
-
-        if(name && tempPassword) {
-            // Сначала полностью очистить всю базу с компьютера
-            await resetClient();
-
-            // Записываем временный пароль, который мы рекомендуем ему поставить
-            store.commit('master/setSignupState', {
-                generatedPassword: tempPassword,
-                name: name,
-            });
-        }
-
-        updateJwtToken(jwtToken);
-
-        // Получите данные текущего пользователя
-        const masterModel = await fetchMasterData();
-
-        // Проверяем пользователя в базе данных
-        const existingUser = await getMasterFromLocalDB();
-
-        if (existingUser && existingUser.getUuid() !== masterModel.getUuid()) {
-            // Удаляем данные старого пользователя, если он отличается от текущего
-            await clearDatabase();
-        }
-
-        // Сохраняем данные пользователя в локальную базу данных
-        await saveMasterToLocalDB(masterModel);
-
-        store.commit('master/setMaster', masterModel);
-        store.commit('master/setLoginState', {isAuthenticated: true});
-        restoreProgressionFromServer(masterModel.userData);
-
-    } catch (error) {
-        const errorStr = error.response?.data?.error || error.message || 'Failed to login';
-        throw new Error(errorStr);
-    }
-};
+// Sub-epic 1b C6: telegram() function DELETED (decision #2 — Telegram-as-auth
+// excised). setTelegram/getTelegram below preserved for adaptive UI flag.
 
 export const sendCheckLoginAvailable = async (login) => {
     if (isMockMode()) {

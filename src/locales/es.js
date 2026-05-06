@@ -40,10 +40,6 @@ export default {
       errorPasswordsMismatch: 'Las contraseñas no coinciden',
       errorGeneral: 'Error de registro. Inténtelo de nuevo.',
     },
-    telegram: {
-      lblAuth: 'Autorización a través de Telegram...',
-      retry: 'Reintentar',
-    },
     reset: {
       lblEmail: 'Correo electrónico',
       btnReset: 'Restablecer contraseña',

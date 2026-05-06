@@ -1,6 +1,6 @@
 <template>
   <div class="app-container">
-    <header v-if="!isV2Route && !isLandingRoute" :style="headerStyle" class="header">
+    <header v-if="!isV2Route && !isMarketingRoute" :style="headerStyle" class="header">
       <div class="header-content">
         <Logo/>
         <div v-if="balance !== null && isAuth" class="balance">
@@ -106,7 +106,11 @@ const isPvPScreen = computed(() => {
 const isV2Route = computed(() => route.path.startsWith('/v2'));
 
 // Sub-epic 1a: landing at / has its own centered logo — hide App.vue header chrome.
-const isLandingRoute = computed(() => route.path === '/');
+// Sub-epic 1b interrupt fix: extend to /auth/* — auth views have own logo via
+// AuthLayoutView header, App.vue text Logo would duplicate in top-left corner.
+const isMarketingRoute = computed(() =>
+  route.path === '/' || route.path.startsWith('/auth')
+);
 
 const isScrollableComponent = computed(() => {
   const scrollablePrefixes = ['/profile', '/ratings', '/fight', '/training/']; // Префиксы маршрутов с дочерними маршрутами
@@ -199,6 +203,12 @@ onMounted(() => {
   if (window.Telegram && window.Telegram.WebApp) {
     window.Telegram.WebApp.expand(); // Развернуть на весь экран
     window.Telegram.WebApp.disableVerticalSwipes();
+    // Sub-epic 1b interrupt fix: re-wire isTelegram adaptive UI flag setter
+    // from auth-side (TelegramLogin.vue, deleted in C6) to app-init-side.
+    // Decision #2: KEEP isTelegram adaptive flag (ProfileButtons.vue uses it
+    // to hide Wallet button in TG webview per TG store rules).
+    // saveTelegramFlag → masterService.setTelegram() → localStorage 'isTelegramMiniApp'.
+    store.dispatch('master/saveTelegramFlag');
   }
 
   document.addEventListener('visibilitychange', handleVisibilityChange);

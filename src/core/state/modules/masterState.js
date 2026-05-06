@@ -124,18 +124,9 @@ const actions = {
             commit('setLoginState', {isAuthenticated: false, authError: error.message});
         }
     },
-    async telegram({commit}, payload) {
-        try {
-            await masterService.telegram(payload);
-
-            await this.dispatch('master/initGetStarted');
-
-            await router.push('/');
-
-        } catch (error) {
-            commit('setErrorMessage', ErrorMessageModel.withText(error.message));
-        }
-    },
+    // Sub-epic 1b C6: master/telegram action DELETED (decision #2 — Telegram-as-auth
+    // excised). saveTelegramFlag below preserved for adaptive UI flag setter
+    // (re-wired to App.vue init-time TG webview detection).
     async saveTelegramFlag({}) {
         masterService.setTelegram();
     },

@@ -40,10 +40,6 @@ export default {
       errorPasswordsMismatch: '비밀번호가 일치하지 않습니다',
       errorGeneral: '등록에 실패했습니다. 다시 시도해주세요.',
     },
-    telegram: {
-      lblAuth: '텔레그램을 통한 인증 중...',
-      retry: '재시도',
-    },
     reset: {
       lblEmail: '이메일',
       btnReset: '비밀번호 재설정',
