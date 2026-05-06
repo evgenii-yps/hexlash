@@ -21,7 +21,8 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
   App.vue                  — Root: header (Logo), router-view, BottomMenu (hidden on PvP screens), Info/Error toasts, ChallengeNotification
   main.js                  — Entry: Vue + Vuetify + i18n + Vuex + WagmiPlugin + VueQueryPlugin init
   router/index.js          — Routes + auth guards + fight state restore
-  views/                   — 8 page-level components post-Эпик 7 1b (LandingView, AuthLayoutView, PrivacyView, NotFoundView, PageView, VerifyEmailView, PreparationView, FightClubView). LandingView added 1a, AuthLayoutView added 1b, RainView (1212 lines) deleted 1b C9. 10 v1 views deleted Sub-epic 8 C8/C9.
+  views/                   — 8 page-level components post-Эпик 7 1b (LandingView, AuthLayoutView, PrivacyView, NotFoundView, PageView, VerifyEmailView, PreparationView, FightClubView). 1a/1b/8a history: LandingView added 1a, AuthLayoutView added 1b, RainView (1212 lines) deleted 1b C9. Sub-epic 8b: LandingView (1a MVP) deleted, MarketingView (8b long-form) added. 10 v1 views deleted Sub-epic 8 C8/C9.
+  composables/             — Reusable composables. `useDocumentMeta.js` (added 8b C1) — manual SEO meta tag manipulation (title, meta description, og:*, twitter:*) with restore-on-unmount.
   views/auth/              — 2 nested route children for AuthLayoutView (LoginView, SignupView) — Sub-epic 1b C2/C3/C4.
   views-v2/                — 16 v2 page components (PitViewV2 + FighterDetailView + FightView + TrainingView + MatchmakingView + CreateView + ProfileView + RatingsView + ClanView + GuestClanView + ShopView + SpectateView + HelpView + UserProfileView + WalletView + AccountView)
   components/              — 75+ reusable components
@@ -150,7 +151,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 | `/auth/reset` `/auth/telegram` | *Deleted* (Sub-epic 1b C5/C6 — Reset 501 cosmetic, Telegram-as-auth excised) | — |
 | `/r/:username` | Referral redirect → `/auth/signup` (function-form redirect post 1b C9, preserves localStorage code) | No |
 | `/privacy` `/404` `/rules` `/verify-email` | Static | No |
-| `/` | LandingView (anonymous) / redirect to `/play` (authed via beforeEnter) — Sub-epic 1a + 8a | Public |
+| `/` | MarketingView (anonymous, long-form marketing site) / redirect to `/play` (authed via beforeEnter) — Sub-epic 1a + 8a + 8b | Public |
 | `/help` | PageView | Yes |
 | `/arena` | Redirect → `/arena/club` | Yes |
 | `/arena/fight` | PreparationView | Yes |
@@ -541,7 +542,7 @@ MIGRATION_ENABLED = true           // lazy User→Fighter #1 on /me
 | Matchmaking | `MatchmakingView.vue` | Real-time PvP matchmaking queue. Opponent Found shows actual fighter skins (from `/images/skins/`). No colored borders. 100dvh support. Visual System v1.0 compliant: neutral spinner in search, OPPONENT FOUND pixel-font (impact), AnonymousBalance for timer/rating/countdown, retry btn = sole pink CTA in timeout |
 | Clan | `ClanView.vue` | Redesigned clan page: header with avatar (64px, --hex-primary border + glow, 12px radius), name (Anonymous font), italic description, meta row (LVL badge, member count), level progress bar (6px gradient fill), stats grid via `ClanStats.vue` (4 cards + win rate bar), owner controls. Visitor view: top-5 members (no action menu), "+ N more members", JOIN/private/full action bar. Route: `/clan/:id` (redirect from `/club/:id`). Visual System v1.0 compliant. |
 | Spectate | `SpectateView.vue` | Watch live PvP fights. Visual System v1.0 compliant: 0 pink, friend side=hex-victory (green), opponent=hex-action-defense (blue), LIVE dot=hex-defeat (red) with pulse, AnonymousBalance for numbers, system sans for all text |
-| Landing | `LandingView.vue` | Anonymous-only landing page (Sub-epic 1a). Centered hero (logo + tagline + pink CTA "Start Fighting" → `/auth/signup`) + 5 social links + footer (Privacy/Rules/Help). Authed users redirect to `/play` via beforeEnter (target updated 8a). Legacy `--hex-*` tokens, no `.app-v2` namespace. |
+| Marketing | `MarketingView.vue` | Anonymous-only long-form marketing site (Sub-epic 8b — replaces 1a LandingView). 3 sections inline: Hero (logo + Play CTA + animated CSS-SVG hex pattern + pink glow), About ("NEVER GIVE UP" + "Train. Fight. Rise." with IntersectionObserver fade-in), Footer (5 social placeholder icons + Privacy/Rules/Help). Authed users redirect to `/play` via beforeEnter. SEO meta tags via `useDocumentMeta` composable (title, og:*, twitter:*). Legacy `--hex-*` tokens, no `.app-v2` namespace. `.marketing-*` BEM scoped classes. |
 | Auth Layout | `AuthLayoutView.vue` | Wrapper for `/auth/login` + `/auth/signup` child routes (Sub-epic 1b). Logo header (links home as escape hatch) + pink glow background + `<router-view>` slot with fade transition. Mirrors Landing aesthetic. |
 | Auth Forms | `auth/LoginView.vue`, `auth/SignupView.vue` | Card layout forms (Sub-epic 1b C3/C4). ENTER THE PIT sub-headline + handle/password inputs + sign in/up CTA + OR divider + Connect Wallet button (Coming soon toast — decision #5, BE SIWE deferred to Stream 6) + switch link to other form. `.auth-form-*` BEM-light scoped classes. |
 | PageView | `PageView.vue` | Static help/rules pages via v-html from i18n. Visual System v1.0 compliant: 0 full pink, spans/link-hover use hex-primary-light (PINK_DIM), white underlined links, v-html preserved for trusted i18n |
@@ -5974,3 +5975,99 @@ URL refactor preparing for Эпик 8 Marketing Site (8b/8c). After 8a: marketin
   - **Lesson #43 STEP 0 formalization** — recurring 10-occurrence pattern; formalize as automatic bootstrap procedure ("При начале нового sub-epic → Step 0 проверка branch. Если на closed continue stack → auto-switch на fresh from main без surfacing").
 
 **Streak:** 2 → 3 (continued clean from 1a + 1b — zero hot-fixes, all G gates approved on first pass).
+
+### Sub-Epic 8b — Marketing Site Cluster A (✅ CLOSED)
+
+Replaces 1a LandingView (minimal MVP) with long-form marketing site Cluster A (Hero + About + Footer + scaffold). Cluster B (Gameplay/Token/Roadmap/Partners/Subscribe sections) deferred to Sub-epic 8c.
+
+**What changed:**
+- NEW `src/views/MarketingView.vue` (~470 lines, inline single-file 3 sections + styles + animations)
+- NEW `src/composables/useDocumentMeta.js` (~70 lines, manual SEO meta tag manipulation with restore-on-unmount)
+- DELETED `src/views/LandingView.vue` (1a MVP, 238 lines)
+- MODIFIED `src/router/index.js` (single-line component swap on `/` route + comment refresh)
+
+**Hero section:**
+- Logo center (clamp 220-380px, drop-shadow pink glow)
+- Play CTA → `/auth/signup` (preserves 1a beforeEnter cascade pattern — Option A per Phase 0 §1.4)
+- Pure CSS-SVG hex pattern animated background (60s slow drift, decision #4 atmospheric tempo, 0.5 opacity, GPU-accelerated transform-only)
+- Pink radial glow with 8s pulse (clamp 400-900px, 3-stop radial gradient)
+- NO scroll hint arrow (removed via interrupt fix during G2 review — natural scroll sufficient)
+
+**About section:**
+- "NEVER GIVE UP" big heading (clamp 40-80px, weight 800, uppercase, 0.05em letter-spacing)
+- "Train. Fight. Rise." subtitle (clamp 16-22px, --hex-text-muted, 0.15em letter-spacing, uppercase)
+- Fade-in + slide-up animation on scroll-into-view (native IntersectionObserver, 30% threshold, 0.8s transition)
+- One-shot trigger (observer disconnects after first intersection, no re-trigger on scroll up/down)
+- Cleanup on unmount + fallback for environments without IntersectionObserver
+
+**Footer section:**
+- 5 social placeholder icons (Telegram/X/YouTube/Discord/Instagram, `href="#"` URLs per decision #4 — real URLs deferred to user)
+- Privacy / Rules / Help router-link nav (cascade through Эпик 6 redirects)
+- Native `<img>` tags with target="_blank" + rel="noopener" + aria-label
+
+**SEO meta tags (managed by useDocumentMeta composable):**
+- title: "Hexlash"
+- description: "Hexlash — Web3 fighting game. Train your AI agent. Fight in the underground octagon." (~98 chars, under 155 char limit)
+- Open Graph: og:title, og:description, og:image (logo placeholder per decision #2 — proper 1200×630 banner deferred to Stream 4 polish), og:type=website
+- Twitter card: twitter:card=summary_large_image, twitter:title, twitter:description, twitter:image
+- onMount sets all tags + saves prev document.title; onBeforeUnmount restores prev title + removes added tags (no leak when navigating away)
+
+**KEPT unchanged (decoupled per locked decisions):**
+- 1a beforeEnter cascade pattern (`/` authed → `/play`)
+- Route name `Home` (component swap only, name preserved)
+- Existing 6 image assets reused (logo + 5 social icons)
+
+**Decisions locked (12):**
+1. Component name: `MarketingView.vue`
+2. og:image: `hexlash-logo.jpg` placeholder (1024² square)
+3. og:description: "Hexlash — Web3 fighting game. Train your AI agent. Fight in the underground octagon."
+4. Hex pattern animation tempo: slow 60s loop (atmospheric, not distracting)
+5. Help anonymous UX: preserve 1a behavior (defer fix to Stream 1 if blocking)
+6. Hero scaffold depth: logo + Play CTA only (interrupt fix removed scroll hint arrow)
+7. Cluster ordering: A → B → C → D → E (5 clusters), STOP gates G1 deferred to G2
+8. Hex pattern technology: pure CSS animated SVG (no Three.js, no JS animation lib)
+9. Section component pattern: inline single-file (no separated section components for 8b)
+10. SEO meta library: manual `useDocumentMeta` composable (no new dep)
+11. Play CTA strategy: Option A — preserve 1a pattern (single push to `/auth/signup`, no in-component auth check)
+12. LandingView fate: DELETED in C5 (after MarketingView replaces)
+
+**Files changed (4 unique files):**
+- NEW: `src/views/MarketingView.vue` (~470 lines), `src/composables/useDocumentMeta.js` (~70 lines)
+- MODIFIED: `src/router/index.js` (single-line component swap + 1 comment refresh)
+- DELETED: `src/views/LandingView.vue` (238 lines)
+
+**Bundle impact:** ~neutral. MarketingView lazy chunk emitted (small, ~5kb gzip). LandingView chunk removed. Net delta ~+200 lines source code (510+70 NEW − 238 DELETED).
+
+**Commit chain (5 functional + 1 interrupt fix + 3 closure):**
+- Phase 0 (`b81145c`): docs(8b): Phase 0 investigation report
+- C1 (`c24cda1`): feat(marketing): MarketingView scaffold + useDocumentMeta composable
+- C2 (`5b3fbc4`): feat(marketing): Hero section with logo + Play CTA + animated hex pattern
+- C3 (`e81bf46`): feat(marketing): About section with NEVER GIVE UP + fade-in
+- C4 (`a14d711`): feat(marketing): Footer + SEO meta tags
+- C5 (`292aab5`): feat(routing): swap / route to MarketingView + DELETE LandingView.vue
+- Interrupt fix (`35ab94c`): fix(marketing): remove scroll hint arrow from Hero (G2 user feedback)
+- CL1 (this commit): docs(8b): CLAUDE.md sync
+- CL2 (next): docs(8b): final report
+- CL3 (next): docs(8b): handoff to Sub-epic 8c
+
+**Carry-overs forward:**
+
+| Stream | Item | Source |
+|---|---|---|
+| Sub-epic 8c | Cluster B — 5 remaining sections (Gameplay + Token + Roadmap + Partners + Subscribe). Required user inputs: gameplay screenshots, ring screenshot decision (Hero replace?), Roadmap content (Coming soon vs real), Subscribe email infrastructure (Mailchimp/SendGrid/none) | 8b scope split from 8c per ТЗ |
+| Stream 4 Visual Polish | Proper og:image banner (1200×630 dimensions per Open Graph best practice — currently 1024² square logo placeholder) | Decision #2 + Phase 0 §6.5 |
+| Stream 4 Visual Polish | Hero hex pattern tempo / opacity tuning if user feedback during 8c | Decision #4 acceptance |
+| Stream 1 cleanup | Help anonymous-access UX caveat (`/help` cascades through `/play/help` which may auth-gate anonymous users — defer fix per decision #5) | Phase 0 §6.4 |
+| Stream 1 cleanup | Lesson #43 STEP 0 formalization (11 occurrences cumulative — recurring pattern, formalize as automatic bootstrap procedure in CLAUDE.md methodology section) | 1b/8a/8b carry-over |
+
+**Lessons applied:**
+- **#11 pre-edit + post-edit grep** on every commit (5+ catches across C1-C5 + interrupt fix). Notable:
+  - C2: keyframe naming collision avoidance — global `hex-glow-pulse` would collide; renamed to `marketing-glow-pulse`. Adaptation-tier per Lesson #35
+  - C5: orphan grep after LandingView delete returned 1 match = own comment marker narrating history (false-positive)
+  - Interrupt fix: 5 distinct sites identified (template div + closing + scrollToAbout function + 2 CSS classes + keyframe), all removed cleanly
+- **#18 STOP gates** — G1 deferred to G2 per user direction. G2 manual smoke + interrupt fix cycle completed before approval.
+- **#32 convention discovery** — `.marketing-*` BEM prefix mirrors `.landing__*` pattern from 1a (Lesson #32 pattern reuse). `marketing-glow-pulse` keyframe prefix mirrors namespace-isolation pattern.
+- **#43 STEP 0 bootstrap branch verify** — 11th occurrence resolved via user-authorized Option A switch. Stream 1 formalization deferred per scope discipline.
+- **#45 metadata triple-verify** — Phase 0 inventory cross-checked twice during execution; no false-positive inventory issues.
+
+**Streak:** 3 → 4 (continued clean from 1a + 1b + 8a — zero hot-fixes, all gates approved on first pass; interrupt fix during G2 was scope refinement, not regression).
