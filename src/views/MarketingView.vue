@@ -61,6 +61,14 @@
       </div>
     </section>
 
+    <section class="marketing-token" ref="tokenRef">
+      <div class="marketing-token__inner" :class="{ 'is-visible': tokenVisible }">
+        <h2 class="marketing-token__symbol">$HEX</h2>
+        <p class="marketing-token__status">Coming Soon</p>
+        <p class="marketing-token__network">Launching on Base</p>
+      </div>
+    </section>
+
     <footer class="marketing-footer" ref="footerRef">
       <ul class="marketing-footer__socials" aria-label="Social media">
         <li>
@@ -117,6 +125,7 @@ const router = useRouter();
 const heroRef = ref(null);
 const aboutRef = ref(null);
 const gameplayRef = ref(null);
+const tokenRef = ref(null);
 const footerRef = ref(null);
 
 // 8c C1 — IntersectionObserver fade-in via composable (refactored from
@@ -127,6 +136,7 @@ const footerRef = ref(null);
 // 5x duplication of ~28-line inline observer setup.
 const { visible: aboutVisible } = useScrollFadeIn(aboutRef);
 const { visible: gameplayVisible } = useScrollFadeIn(gameplayRef);
+const { visible: tokenVisible } = useScrollFadeIn(tokenRef);
 
 useDocumentMeta({
   title: 'Hexlash',
@@ -152,6 +162,7 @@ function onPlayClick() {
 .marketing-hero,
 .marketing-about,
 .marketing-gameplay,
+.marketing-token,
 .marketing-footer {
   position: relative;
   width: 100%;
@@ -281,6 +292,76 @@ function onPlayClick() {
   }
   .marketing-gameplay__heading {
     margin-bottom: 24px;
+  }
+}
+
+/* === TOKEN === */
+.marketing-token {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--hex-bg-dark);
+  padding: 100px 24px;
+  overflow: hidden;
+}
+
+.marketing-token::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(255, 6, 111, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.marketing-token__inner {
+  position: relative;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+  z-index: 1;
+}
+
+.marketing-token__inner.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.marketing-token__symbol {
+  margin: 0 0 16px;
+  font-family: var(--hex-font-display, 'Impact', sans-serif);
+  font-size: clamp(72px, 14vw, 180px);
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  color: var(--hex-text-primary);
+  line-height: 1;
+  text-shadow: 0 0 48px rgba(255, 6, 111, 0.4);
+}
+
+.marketing-token__status {
+  margin: 0 0 12px;
+  font-size: clamp(20px, 2.5vw, 28px);
+  font-weight: 600;
+  color: var(--hex-primary);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.marketing-token__network {
+  margin: 0;
+  font-size: clamp(14px, 1.5vw, 16px);
+  color: var(--hex-text-muted);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 480px) {
+  .marketing-token {
+    padding: 80px 16px;
   }
 }
 
