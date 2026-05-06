@@ -40,14 +40,6 @@ export default {
       errorPasswordsMismatch: 'Les mots de passe ne correspondent pas',
       errorGeneral: "Échec de l'inscription. Veuillez réessayer.",
     },
-    reset: {
-      lblEmail: 'E-mail',
-      btnReset: 'Réinitialiser le mot de passe',
-      success: 'Un lien de réinitialisation a été envoyé à votre adresse e-mail.',
-      error: 'Adresse e-mail invalide.',
-      errorEmpty: "L'e-mail ne peut pas être vide.",
-      errorInvalidFormat: "Format d'e-mail invalide.",
-    },
   },
   profile: {
     back: 'Retour',

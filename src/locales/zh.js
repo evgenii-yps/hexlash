@@ -40,14 +40,6 @@ export default {
       errorPasswordsMismatch: '密码不匹配',
       errorGeneral: '注册失败。请重试。',
     },
-    reset: {
-      lblEmail: '电子邮件',
-      btnReset: '重置密码',
-      success: '重置链接已发送到您的电子邮件。',
-      error: '电子邮件地址无效。',
-      errorEmpty: '电子邮件不能为空。',
-      errorInvalidFormat: '电子邮件格式无效。',
-    },
   },
   profile: {
     back: '返回',

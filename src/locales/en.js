@@ -40,14 +40,6 @@ export default {
       errorPasswordsMismatch: 'Passwords do not match',
       errorGeneral: 'Registration failed. Please try again.',
     },
-    reset: {
-      lblEmail: 'Email',
-      btnReset: 'Reset Password',
-      success: 'A reset link has been sent to your email.',
-      error: 'Invalid email address.',
-      errorEmpty: 'Email cannot be empty.',
-      errorInvalidFormat: 'Invalid email format.',
-    },
   },
   profile: {
     back: 'Back',

@@ -40,14 +40,6 @@ export default {
       errorPasswordsMismatch: 'パスワードが一致しません',
       errorGeneral: '登録に失敗しました。もう一度お試しください。',
     },
-    reset: {
-      lblEmail: 'メール',
-      btnReset: 'パスワードをリセット',
-      success: 'リセットリンクがメールに送信されました。',
-      error: '無効なメールアドレスです。',
-      errorEmpty: 'メールアドレスは空にできません。',
-      errorInvalidFormat: '無効なメール形式です。',
-    },
   },
   profile: {
     back: '戻る',
