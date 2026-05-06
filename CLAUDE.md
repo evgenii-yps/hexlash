@@ -21,7 +21,8 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
   App.vue                  — Root: header (Logo), router-view, BottomMenu (hidden on PvP screens), Info/Error toasts, ChallengeNotification
   main.js                  — Entry: Vue + Vuetify + i18n + Vuex + WagmiPlugin + VueQueryPlugin init
   router/index.js          — Routes + auth guards + fight state restore
-  views/                   — 7 page-level components post-Эпик 6 cutover (RainView, PrivacyView, NotFoundView, PageView, VerifyEmailView, PreparationView, FightClubView). 10 v1 views deleted Sub-epic 8 C8/C9.
+  views/                   — 8 page-level components post-Эпик 7 1b (LandingView, AuthLayoutView, PrivacyView, NotFoundView, PageView, VerifyEmailView, PreparationView, FightClubView). LandingView added 1a, AuthLayoutView added 1b, RainView (1212 lines) deleted 1b C9. 10 v1 views deleted Sub-epic 8 C8/C9.
+  views/auth/              — 2 nested route children for AuthLayoutView (LoginView, SignupView) — Sub-epic 1b C2/C3/C4.
   views-v2/                — 16 v2 page components (PitViewV2 + FighterDetailView + FightView + TrainingView + MatchmakingView + CreateView + ProfileView + RatingsView + ClanView + GuestClanView + ShopView + SpectateView + HelpView + UserProfileView + WalletView + AccountView)
   components/              — 75+ reusable components
   components/club/         — 8 Club Mode components (AgentRoster, AgentCard, ClubLevelBar, MorningReport, RetirementPanel, SkinPicker, ArchetypeSelector, ResearchTree)
@@ -144,10 +145,12 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 
 | Path | View | Auth |
 |------|------|------|
-| `/auth/login` `/auth/signup` `/auth/reset` `/auth/telegram` | RainView | No |
-| `/r/:username` | Referral redirect → `/auth/signup` | No |
+| `/auth/login` `/auth/signup` | AuthLayoutView > LoginView/SignupView (Sub-epic 1b) | No |
+| `/auth` (bare) | redirect → `/auth/login` (Sub-epic 1b C2) | No |
+| `/auth/reset` `/auth/telegram` | *Deleted* (Sub-epic 1b C5/C6 — Reset 501 cosmetic, Telegram-as-auth excised) | — |
+| `/r/:username` | Referral redirect → `/auth/signup` (function-form redirect post 1b C9, preserves localStorage code) | No |
 | `/privacy` `/404` `/rules` `/verify-email` | Static | No |
-| `/` | RainView (home) | Yes |
+| `/` | LandingView (anonymous) / redirect to `/v2` (authed via beforeEnter) — Sub-epic 1a | Public |
 | `/help` | PageView | Yes |
 | `/arena` | Redirect → `/arena/club` | Yes |
 | `/arena/fight` | PreparationView | Yes |
@@ -473,7 +476,7 @@ MIGRATION_ENABLED = true           // lazy User→Fighter #1 on /me
 
 **Club Mode (Agents):** Backend-driven via `agentScheduler.js` (30s tick). Agents fight PvE bots or each other (ranked/free arena) automatically based on `AgentTactics.restPeriod`. No frontend localStorage — all state in Prisma (Agent, AgentTactics, AgentProgression, AgentFightLog). Fight results saved atomically in $transaction. Daily limit: 50 fights/agent/day. Three modes: `pve_training` (70% XP, no ELO), `ranked` (100% XP, ELO change), `free_arena` (80% XP, no ELO). XP distributed per branch proportionally to moves used.
 
-**Sound:** Howler.js for punch sounds (BottomMenu, TrainingView) and rain ambience (RainView). Mute toggle in Profile > Account (`SoundToggle.vue`), persisted in localStorage (`isMuted`), checked via `store.getters['punch/isMuted']`
+**Sound:** Howler.js for punch sounds (BottomMenu, TrainingView). Rain ambience removed Sub-epic 1b C9 (RainView deleted). Mute toggle in Profile > Account (`SoundToggle.vue`), persisted in localStorage (`isMuted`), checked via `store.getters['punch/isMuted']`
 
 **PvP:** Real-time matchmaking via WebSocket → friend challenges (WebSocket-based, 10s timer) → spectate mode → backend matchmaking service. BottomMenu hidden on all PvP screens (matchmaking, fight, spectate). Opponent Found screen shows actual fighter skins (from `/images/skins/`).
 
@@ -536,7 +539,9 @@ MIGRATION_ENABLED = true           // lazy User→Fighter #1 on /me
 | Matchmaking | `MatchmakingView.vue` | Real-time PvP matchmaking queue. Opponent Found shows actual fighter skins (from `/images/skins/`). No colored borders. 100dvh support. Visual System v1.0 compliant: neutral spinner in search, OPPONENT FOUND pixel-font (impact), AnonymousBalance for timer/rating/countdown, retry btn = sole pink CTA in timeout |
 | Clan | `ClanView.vue` | Redesigned clan page: header with avatar (64px, --hex-primary border + glow, 12px radius), name (Anonymous font), italic description, meta row (LVL badge, member count), level progress bar (6px gradient fill), stats grid via `ClanStats.vue` (4 cards + win rate bar), owner controls. Visitor view: top-5 members (no action menu), "+ N more members", JOIN/private/full action bar. Route: `/clan/:id` (redirect from `/club/:id`). Visual System v1.0 compliant. |
 | Spectate | `SpectateView.vue` | Watch live PvP fights. Visual System v1.0 compliant: 0 pink, friend side=hex-victory (green), opponent=hex-action-defense (blue), LIVE dot=hex-defeat (red) with pulse, AnonymousBalance for numbers, system sans for all text |
-| RainView (Auth) | `RainView.vue` | 3D rain scene + auth forms (Login, Signup, Reset, TelegramLogin). Visual System v1.0 compliant: 3D untouched, submit btns = primary CTA per form, links neutral (white via ButtonText), errors hex-danger, InputField shared fix |
+| Landing | `LandingView.vue` | Anonymous-only landing page (Sub-epic 1a). Centered hero (logo + tagline + pink CTA "Start Fighting" → `/auth/signup`) + 5 social links + footer (Privacy/Rules/Help). Authed users redirect to `/v2` via beforeEnter. Legacy `--hex-*` tokens, no `.app-v2` namespace. |
+| Auth Layout | `AuthLayoutView.vue` | Wrapper for `/auth/login` + `/auth/signup` child routes (Sub-epic 1b). Logo header (links home as escape hatch) + pink glow background + `<router-view>` slot with fade transition. Mirrors Landing aesthetic. |
+| Auth Forms | `auth/LoginView.vue`, `auth/SignupView.vue` | Card layout forms (Sub-epic 1b C3/C4). ENTER THE PIT sub-headline + handle/password inputs + sign in/up CTA + OR divider + Connect Wallet button (Coming soon toast — decision #5, BE SIWE deferred to Stream 6) + switch link to other form. `.auth-form-*` BEM-light scoped classes. |
 | PageView | `PageView.vue` | Static help/rules pages via v-html from i18n. Visual System v1.0 compliant: 0 full pink, spans/link-hover use hex-primary-light (PINK_DIM), white underlined links, v-html preserved for trusted i18n |
 | Create Agent | `CreateAgentView.vue` | 2-step wizard: name+skin → confirm+create. Modules configured after creation in AgentDetailView edit modal |
 | Agent Detail | `AgentDetailView.vue` | 4-tab agent management: Overview (stats, deck, XP, train), Moves (per-agent ResearchTree component — unlock/upgrade/allocate XP), Tactics (fight mode, aggression, dice, coach, emergency, rest), Fights (history with filter+pagination). Edit modal (name/skin/build), deck editor, delete |
@@ -5802,3 +5807,92 @@ Final state:
 Separate planning phase.
 
 **Следующий: Эпик 7+ planning** — separate session, blank-slate scope determination.
+
+---
+
+## ЭПИК 7+ — In Progress
+
+Post-Эпик-6 work. Stream-organised parallel tracks. First two streams executed sequentially as bootstrap (Sub-epic 1a Landing → 1b Auth + Telegram excision). Subsequent sub-epics may interleave streams based on user priority.
+
+**Sub-epic 1a** ✅ CLOSED — Landing page (anonymous-only `/` route), small marketing card MVP. Merged via PR #360 (commit `7aaf9be`). Streak target: 0 → 1 achieved.
+
+### Sub-Epic 1b — Auth Views Redesign + RainView Removal + Telegram Excision (✅ CLOSED)
+
+Closes Эпик 6 carry-over (Auth views still on RainView 3D rain) + Эпик 5/6/7 carry-over (Telegram-as-auth) + 1a follow-up (RainView removal blocked on auth migration).
+
+**What changed:**
+- New `src/views/AuthLayoutView.vue` (auth wrapper, replaces RainView functionally — logo header + pink glow + `<router-view>` slot)
+- New `src/views/auth/LoginView.vue` (card layout, ENTER THE PIT sub-headline, Connect Wallet button + Coming soon toast, `.auth-form-*` BEM scoped classes)
+- New `src/views/auth/SignupView.vue` (matching shell, signup-specific fields, validation: required/min8/match)
+- DELETED `src/views/RainView.vue` (1212 lines Three.js + Kokomi + custom shaders + GLSL)
+- DELETED `src/components/fragments/auth/Login.vue` + `Signup.vue` + `Reset.vue` + `TelegramLogin.vue` (legacy fragments — RainView-only consumers)
+- DELETED `/auth/reset` route + Reset.vue (decision #4 — backend `/user/reset` returns 501, FE form was cosmetic)
+- DELETED `/auth/telegram` route + TelegramAuthView + Vuex `master/telegram` action + `masterService.telegram()` (decision #2)
+- DELETED backend `POST /v1/auth/telegram` route + `validateTelegramPayload` HMAC-SHA256 helper + `telegramLimiter` rate limiter + `TELEGRAM_BOT_TOKEN`/`TELEGRAM_AUTH_MAX_AGE_SEC` config (cherry-pick PR pattern abandoned mid-cluster — incremental continue stack merges replaced Lesson #33 cherry-pick chain)
+- DELETED RainView-only assets: `sound/rain.mp3`, `models/scene.glb`, `textures/brick-normal2.jpg`, `textures/rain-normal.png`, `textures/asphalt-pbr01/` (3 files), `textures/door/` (8 files)
+- DELETED `App.vue` text Logo on `/` and `/auth/*` routes (interrupt fix during G2 — `isLandingRoute` renamed → `isMarketingRoute`, scope extended)
+- npm packages removed: `kokomi.js`, `postprocessing`, `gsap` (RainView-only consumers per Lesson #11 broader-than-ТЗ pre-edit grep)
+- Locale keys removed: `t.auth.telegram.*` (44 lines × 11 locales) + `t.auth.reset.*` (88 lines × 11 locales)
+
+**PRESERVED (decisions #2, #14, #15):**
+- `App.vue:203-211` `window.Telegram.WebApp` adaptive UI detection — re-wired in interrupt fix to dispatch `master/saveTelegramFlag` from app-init-side (was only set from auth flow before C6)
+- `master/saveTelegramFlag` Vuex action + `masterService.setTelegram/getTelegram` (Stream 1 carry-over per decision #3)
+- `ProfileButtons.vue` `isTelegram` flag (Wallet button hide in TG webview per TG store rules)
+- `LandingView.vue` Telegram social link icon (community footer)
+- `socialTaskModel.js` `SUBSCRIBE_TELEGRAM` task icon
+- `clan.confirmInviteFriend` locale string (Telegram-share UX, NOT auth)
+
+**DB:** zero schema changes (no `telegramId` column existed; `tg_<id>` login convention only — 0 prod TG-only users per Phase 0 §6.4 audit, per user — Telegram excision proceeded without migration strategy).
+
+**Risk audit:** TG-only user lockout risk surfaced in Phase 0 → resolved by user audit (0 affected users) → safe excision.
+
+**Files (3 new + 1 modified router + 11 locales + various edits, 4 deleted, 11+ assets deleted, 3 npm deps removed):**
+- NEW: `src/views/AuthLayoutView.vue`, `src/views/auth/LoginView.vue`, `src/views/auth/SignupView.vue`
+- MODIFIED: `src/router/index.js`, `src/App.vue`, `src/core/state/modules/masterState.js`, `src/core/services/masterService.js`, `src/views/RainView.vue` (transient — fully deleted in C9), `src/locales/*.js` (11 files — both auth.telegram + auth.reset blocks), `backend/src/routes/auth.js`, `backend/src/config.js`
+- DELETED: `src/views/RainView.vue`, `src/components/fragments/auth/Login.vue` + `Signup.vue` + `Reset.vue` + `TelegramLogin.vue`, all RainView assets
+
+**Bundle impact:** main bundle ~3.35MB → ~1.82MB raw (~45% reduction), brotli ~829KB → ~479KB (~42% reduction). Largest single-sub-epic bundle reduction across project history.
+
+**Commit chain (10 functional + 2 interrupt fixes + 3 closure):**
+1. `965d3c2` — docs(1b): Phase 0 investigation report
+2. `34b96ef` — feat(auth): add AuthLayoutView wrapper (C1)
+3. `a4e4969` — feat(auth): wire /auth/* routes to AuthLayoutView (C2, **G1 STOP gate**)
+4. `ab9a805` — feat(auth): migrate Login form to new design (C3)
+5. `b67c9a9` — feat(auth): migrate Signup form to new design (C4)
+6. `e65ecfc` — feat(auth): remove /auth/reset route and Reset form (C5, **G2 STOP gate**)
+7. `547e6ff` — fix(landing): hide App.vue Logo on /auth/* routes (interrupt fix from G2 visual review)
+8. `316fd7b` — refactor(adaptive-ui): re-wire isTelegram flag setter to App.vue (Lesson #18 STOP-tier interrupt fix during C6 pre-edit)
+9. `c3eee1b` — feat(auth): remove Telegram login route and views FE (C6)
+10. `0c77ce9` — feat(i18n): remove Telegram auth locale keys (C7)
+11. `b76aa07` — feat(backend): remove Telegram auth endpoints and helpers (C8, **G3 STOP gate**)
+12. `00daa63` — feat(auth): delete RainView.vue and unused packages (C9)
+13. `bcbf6a8` — chore(auth): remove orphan locale keys + final cleanup sweep (C10, **G4 STOP gate**)
+14. CL1 (this commit) — CLAUDE.md sync
+15. CL2 (next) — final report
+16. CL3 (next) — Эпик 8 Marketing Site handoff
+
+**Merge timeline (incremental continue stack pattern, NOT cherry-pick):**
+- PR #361: C1-C5 merged mid-session at G2 approval (commit `59179e6` on main)
+- PR #362: interrupt fixes + C6+C7+C8 merged at G3 approval (after BE Railway smoke test)
+- Final continue stack PR (TBD): C9+C10+CL1/CL2/CL3 — small-scope closure merge
+
+**Carry-overs forward:**
+
+| Stream | Item | Source |
+|---|---|---|
+| Эпик 8 Marketing Site (NEW) | Long-form landing site replacing current LandingView (8-10 sections — Hero, About, Token, Gameplay, Roadmap, Partners, Subscribe, Footer). User product-pivot post-1b. CL3 handoff documents scope | User direction post-1b |
+| Stream 1 cleanup | `master/resetPassword` Vuex action + `masterService.resetPassword()` + `getResetState`/`clearResetState`/`setResetState` mutations + `state.resetState` + `PasswordResetStateModel` — orphan chain after C5/C10 (function unreachable, ref broken locale keys but never called) | C5 + C10 deferral |
+| Stream 1 cleanup | `master/saveTelegramFlag` action + `setIsTelegram` phantom mutation (silent no-op + Vuex warning, localStorage is actual source of truth via `masterService.setTelegram`) — Phase 0 §7.1 finding | Phase 0 + decision #3 |
+| Stream 3 (BE features) | Password reset full backend implementation (email-based — needs SendGrid/Postmark/SMTP decision). Currently `POST /user/reset` returns 501 | Decision #4 |
+| Stream 6 (Web3) | Connect Wallet auth — actual SIWE backend integration. Currently FE button shows "Coming soon" toast | Decision #5 |
+| Stream 4 Visual Polish | Auth refinement — match concept screenshot (background blur fighters image, layout proportions tighter, possible red CTA color variant) | User feedback during G2 visual review |
+
+**Lessons applied:**
+- **#11 pre-edit + post-edit grep** on every commit (38+ catches across 1b — all adaptation-tier per Lesson #35)
+- **#18 STOP-tier** triggered twice mid-cluster: (a) `saveTelegramFlag` orphan after TelegramLogin.vue delete → re-wire interrupt fix `316fd7b`; (b) cherry-pick strategy mismatch with user's incremental merge workflow at G3 → abandoned cherry-pick PR, switched to Option C (atomic continue stack merge)
+- **#32 convention discovery**: `.auth-form-*` mirrors `.landing-*` BEM pattern (1a precedent), Vuex action pattern adapted from existing `fragments/auth/Login.vue` (read authError from getter, not local try/catch), `useStore()` composable for new components, function-form `redirect:` for `/r/:username` (existing precedent in same file)
+- **#33 cherry-pick chain ABANDONED** mid-Эпик — user workflow merges continue stack incrementally, making cherry-pick PR redundant. Lesson #33 doctrine remains valid but applies only when continue stack stays detached from main until sub-epic closure
+- **#43 STEP 0 bootstrap branch verify** — applied at Phase 0 start, branch was correct
+- **#45 Phase 0 metadata triple-verify** — file paths + line numbers + function signatures cross-checked twice during Phase 0; Subsection 7 Telegram inventory re-verified at C6/C8 fresh greps before delete (2 false-positive surfaces — Phase 0 said `backend/src/services/telegramAuth.js` standalone helper exists, reality was inline in `auth.js`; Phase 0 said TG-only user lockout HIGH risk, user audit revealed 0 affected users)
+
+**Streak:** 1 → 2 (continued clean from 1a — zero hot-fixes, all surfaces resolved via STOP gates).
