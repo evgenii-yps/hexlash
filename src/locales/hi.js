@@ -40,10 +40,6 @@ export default {
       errorPasswordsMismatch: 'पासवर्ड मेल नहीं खाते',
       errorGeneral: 'पंजीकरण विफल रहा। कृपया पुन: प्रयास करें।',
     },
-    telegram: {
-      lblAuth: 'टेलीग्राम के माध्यम से प्रमाणीकरण...',
-      retry: 'पुनः प्रयास करें',
-    },
     reset: {
       lblEmail: 'ईमेल',
       btnReset: 'पासवर्ड रीसेट करें',

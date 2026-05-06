@@ -40,10 +40,6 @@ export default {
       errorPasswordsMismatch: 'كلمات المرور غير متطابقة',
       errorGeneral: 'فشل التسجيل. يرجى المحاولة مرة أخرى.',
     },
-    telegram: {
-      lblAuth: 'التفويض عبر تيليجرام...',
-      retry: 'إعادة المحاولة',
-    },
     reset: {
       lblEmail: 'البريد الإلكتروني',
       btnReset: 'إعادة تعيين كلمة المرور',

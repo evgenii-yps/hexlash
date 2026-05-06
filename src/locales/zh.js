@@ -40,10 +40,6 @@ export default {
       errorPasswordsMismatch: '密码不匹配',
       errorGeneral: '注册失败。请重试。',
     },
-    telegram: {
-      lblAuth: '通过Telegram授权...',
-      retry: '重试',
-    },
     reset: {
       lblEmail: '电子邮件',
       btnReset: '重置密码',

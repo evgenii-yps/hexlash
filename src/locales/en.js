@@ -40,10 +40,6 @@ export default {
       errorPasswordsMismatch: 'Passwords do not match',
       errorGeneral: 'Registration failed. Please try again.',
     },
-    telegram: {
-      lblAuth: 'Authorization via Telegram...',
-      retry: 'Retry',
-    },
     reset: {
       lblEmail: 'Email',
       btnReset: 'Reset Password',

@@ -40,10 +40,6 @@ export default {
       errorPasswordsMismatch: 'Les mots de passe ne correspondent pas',
       errorGeneral: "Échec de l'inscription. Veuillez réessayer.",
     },
-    telegram: {
-      lblAuth: 'Autorisation via Telegram...',
-      retry: 'Réessayer',
-    },
     reset: {
       lblEmail: 'E-mail',
       btnReset: 'Réinitialiser le mot de passe',

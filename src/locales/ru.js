@@ -40,10 +40,6 @@ export default {
       errorPasswordsMismatch: 'Пароли не совпадают',
       errorGeneral: 'Ошибка регистрации. Попробуйте снова.',
     },
-    telegram: {
-      lblAuth: 'Авторизация через телеграмм...',
-      retry: 'Повторить',
-    },
     reset: {
       lblEmail: 'Эл. почта',
       btnReset: 'Сбросить пароль',

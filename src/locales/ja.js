@@ -40,10 +40,6 @@ export default {
       errorPasswordsMismatch: 'パスワードが一致しません',
       errorGeneral: '登録に失敗しました。もう一度お試しください。',
     },
-    telegram: {
-      lblAuth: 'Telegramによる認証中...',
-      retry: '再試行',
-    },
     reset: {
       lblEmail: 'メール',
       btnReset: 'パスワードをリセット',
