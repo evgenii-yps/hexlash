@@ -52,7 +52,40 @@
     </section>
 
     <footer class="marketing-footer" ref="footerRef">
-      <!-- Footer content — C4 -->
+      <ul class="marketing-footer__socials" aria-label="Social media">
+        <li>
+          <a href="#" target="_blank" rel="noopener" aria-label="Telegram">
+            <img :src="iconTelega" alt="" class="marketing-footer__social-icon" />
+          </a>
+        </li>
+        <li>
+          <a href="#" target="_blank" rel="noopener" aria-label="X (Twitter)">
+            <img :src="iconX" alt="" class="marketing-footer__social-icon" />
+          </a>
+        </li>
+        <li>
+          <a href="#" target="_blank" rel="noopener" aria-label="YouTube">
+            <img :src="iconYout" alt="" class="marketing-footer__social-icon" />
+          </a>
+        </li>
+        <li>
+          <a href="#" target="_blank" rel="noopener" aria-label="Discord">
+            <img :src="iconDisc" alt="" class="marketing-footer__social-icon" />
+          </a>
+        </li>
+        <li>
+          <a href="#" target="_blank" rel="noopener" aria-label="Instagram">
+            <img :src="iconInsta" alt="" class="marketing-footer__social-icon" />
+          </a>
+        </li>
+      </ul>
+      <nav class="marketing-footer__links">
+        <router-link to="/privacy" class="marketing-footer__link">Privacy</router-link>
+        <span class="marketing-footer__sep" aria-hidden="true">·</span>
+        <router-link to="/rules" class="marketing-footer__link">Rules</router-link>
+        <span class="marketing-footer__sep" aria-hidden="true">·</span>
+        <router-link to="/help" class="marketing-footer__link">Help</router-link>
+      </nav>
     </footer>
   </div>
 </template>
@@ -62,6 +95,11 @@ import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { useDocumentMeta } from '@/composables/useDocumentMeta';
 import logoSrc from '@/assets/images/hexlash-logo.jpg';
+import iconTelega from '@/assets/images/icon_telega.svg';
+import iconX from '@/assets/images/icon_x.svg';
+import iconYout from '@/assets/images/icon_yout.svg';
+import iconDisc from '@/assets/images/icon_disc.svg';
+import iconInsta from '@/assets/images/icon_insta.svg';
 
 const router = useRouter();
 
@@ -191,6 +229,75 @@ function scrollToAbout() {
 .marketing-footer {
   padding: 40px 24px 24px;
   border-top: 1px solid var(--hex-border-default, rgba(255, 255, 255, 0.06));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  background: var(--hex-bg-dark);
+}
+
+/* === FOOTER === */
+.marketing-footer__socials {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+
+.marketing-footer__socials a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  opacity: 0.6;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.marketing-footer__socials a:hover {
+  opacity: 1;
+  transform: translateY(-2px);
+}
+
+.marketing-footer__social-icon {
+  width: 22px;
+  height: 22px;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.marketing-footer__links {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 13px;
+  color: var(--hex-text-muted);
+}
+
+.marketing-footer__link {
+  color: var(--hex-text-muted);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.marketing-footer__link:hover {
+  color: var(--hex-text-primary);
+}
+
+.marketing-footer__sep {
+  opacity: 0.5;
+}
+
+@media (max-width: 480px) {
+  .marketing-footer {
+    padding: 32px 16px 24px;
+  }
+  .marketing-footer__socials {
+    gap: 16px;
+  }
 }
 
 /* === HERO === */
