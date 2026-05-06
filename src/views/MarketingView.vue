@@ -38,10 +38,6 @@
         </button>
       </div>
 
-      <!-- Scroll hint -->
-      <div class="marketing-hero__scroll-hint" aria-hidden="true" @click="scrollToAbout">
-        <span class="marketing-hero__scroll-arrow">↓</span>
-      </div>
     </section>
 
     <section class="marketing-about" ref="aboutRef">
@@ -151,12 +147,6 @@ function onPlayClick() {
   // / route handles authed → /play; anonymous never reach this CTA via cascade,
   // but if they do click while anonymous, push to signup directly.
   router.push('/auth/signup');
-}
-
-function scrollToAbout() {
-  if (aboutRef.value) {
-    aboutRef.value.scrollIntoView({ behavior: 'smooth' });
-  }
 }
 </script>
 
@@ -389,28 +379,6 @@ function scrollToAbout() {
   box-shadow: 0 0 24px rgba(255, 6, 111, 0.4);
 }
 
-.marketing-hero__scroll-hint {
-  position: absolute;
-  bottom: 32px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 2;
-  cursor: pointer;
-  animation: marketing-scroll-bounce 2.5s ease-in-out infinite;
-  user-select: none;
-}
-
-.marketing-hero__scroll-arrow {
-  font-size: 32px;
-  color: var(--hex-text-muted);
-  display: block;
-  transition: color 0.15s ease;
-}
-
-.marketing-hero__scroll-hint:hover .marketing-hero__scroll-arrow {
-  color: var(--hex-primary);
-}
-
 /* Hero animations (scoped — prefixed to avoid global @keyframes collisions) */
 @keyframes hex-drift {
   0% { transform: translate(0, 0); }
@@ -420,11 +388,6 @@ function scrollToAbout() {
 @keyframes marketing-glow-pulse {
   0%, 100% { opacity: 0.7; }
   50% { opacity: 1; }
-}
-
-@keyframes marketing-scroll-bounce {
-  0%, 100% { transform: translateX(-50%) translateY(0); opacity: 0.6; }
-  50% { transform: translateX(-50%) translateY(8px); opacity: 1; }
 }
 
 /* Mobile */
