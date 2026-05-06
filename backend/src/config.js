@@ -101,9 +101,10 @@ module.exports = {
   RANKED_MIN_FIGHTS_FOR_RANKING: 5,
   FREE_ARENA_MAX_PAIRS_PER_TICK: 5,
 
-  // Telegram
-  TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN || '',
-  TELEGRAM_AUTH_MAX_AGE_SEC: 300, // 5 minutes
+  // Sub-epic 1b C8: Telegram constants (TELEGRAM_BOT_TOKEN, TELEGRAM_AUTH_MAX_AGE_SEC)
+  // DELETED (decision #2 — Telegram-as-auth excised).
+  // Production env vars TELEGRAM_BOT_TOKEN should be removed from Railway/Vercel
+  // env config (post-deploy manual cleanup).
 
   // AI Trainer
   ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || '',
