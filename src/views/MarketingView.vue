@@ -47,6 +47,20 @@
       </div>
     </section>
 
+    <section class="marketing-gameplay" ref="gameplayRef">
+      <div class="marketing-gameplay__inner" :class="{ 'is-visible': gameplayVisible }">
+        <h2 class="marketing-gameplay__heading">GAMEPLAY</h2>
+        <div class="marketing-gameplay__video">
+          <div class="marketing-gameplay__video-placeholder">
+            <span class="marketing-gameplay__video-text">Video coming soon</span>
+          </div>
+        </div>
+        <p class="marketing-gameplay__caption">
+          Watch fighters battle in the underground octagon.
+        </p>
+      </div>
+    </section>
+
     <footer class="marketing-footer" ref="footerRef">
       <ul class="marketing-footer__socials" aria-label="Social media">
         <li>
@@ -102,6 +116,7 @@ const router = useRouter();
 
 const heroRef = ref(null);
 const aboutRef = ref(null);
+const gameplayRef = ref(null);
 const footerRef = ref(null);
 
 // 8c C1 — IntersectionObserver fade-in via composable (refactored from
@@ -111,6 +126,7 @@ const footerRef = ref(null);
 // Roadmap/Partners/Subscribe) will reuse the same composable to avoid
 // 5x duplication of ~28-line inline observer setup.
 const { visible: aboutVisible } = useScrollFadeIn(aboutRef);
+const { visible: gameplayVisible } = useScrollFadeIn(gameplayRef);
 
 useDocumentMeta({
   title: 'Hexlash',
@@ -135,6 +151,7 @@ function onPlayClick() {
 
 .marketing-hero,
 .marketing-about,
+.marketing-gameplay,
 .marketing-footer {
   position: relative;
   width: 100%;
@@ -189,6 +206,81 @@ function onPlayClick() {
 @media (max-width: 480px) {
   .marketing-about {
     padding: 60px 20px;
+  }
+}
+
+/* === GAMEPLAY === */
+.marketing-gameplay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--hex-bg-dark);
+  padding: 80px 24px;
+}
+
+.marketing-gameplay__inner {
+  width: 100%;
+  max-width: 1100px;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.marketing-gameplay__inner.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.marketing-gameplay__heading {
+  margin: 0 0 32px;
+  font-size: clamp(32px, 5vw, 56px);
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: var(--hex-text-primary);
+  text-transform: uppercase;
+}
+
+.marketing-gameplay__video {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--hex-border-default, rgba(255, 255, 255, 0.08));
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 0 64px rgba(255, 6, 111, 0.1);
+}
+
+.marketing-gameplay__video-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(20, 20, 20, 1) 0%, rgba(40, 10, 30, 1) 100%);
+}
+
+.marketing-gameplay__video-text {
+  font-size: clamp(14px, 1.5vw, 18px);
+  color: var(--hex-text-muted);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.marketing-gameplay__caption {
+  margin: 24px 0 0;
+  font-size: clamp(14px, 1.5vw, 16px);
+  color: var(--hex-text-muted);
+  letter-spacing: 0.05em;
+}
+
+@media (max-width: 480px) {
+  .marketing-gameplay {
+    padding: 60px 16px;
+  }
+  .marketing-gameplay__heading {
+    margin-bottom: 24px;
   }
 }
 
