@@ -19,7 +19,7 @@
 //      Skips the fetchAgent round-trip immediately after Create persistence.
 //   3. agent/fetchAgent action → on success, currentAgent.id matches key.
 //      The action SWALLOWS errors (only console.error), so we treat
-//      "currentAgent.id != key" after await as failure → router.push('/v2').
+//      "currentAgent.id != key" after await as failure → router.push('/play').
 
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -158,7 +158,7 @@ onMounted(async () => {
   // Resolve fighter (legacy mock OR createdFighter cache OR fetchAgent).
   // Failure → redirect to /v2 instead of leaving a half-empty FD.
   const ok = await resolveFighter(route.params.key);
-  if (!ok) router.push('/v2');
+  if (!ok) router.push('/play');
 });
 
 onBeforeUnmount(() => {
@@ -183,7 +183,7 @@ onBeforeUnmount(() => {
 // (warden ↔ predator) and dynamic (UUID ↔ UUID) and any cross-mix.
 watch(() => route.params.key, async (k) => {
   const ok = await resolveFighter(k);
-  if (!ok) router.push('/v2');
+  if (!ok) router.push('/play');
 });
 
 // Step 7 — column clicks arrive through the global useClickState composable.

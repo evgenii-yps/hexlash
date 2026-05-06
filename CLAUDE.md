@@ -150,27 +150,29 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 | `/auth/reset` `/auth/telegram` | *Deleted* (Sub-epic 1b C5/C6 — Reset 501 cosmetic, Telegram-as-auth excised) | — |
 | `/r/:username` | Referral redirect → `/auth/signup` (function-form redirect post 1b C9, preserves localStorage code) | No |
 | `/privacy` `/404` `/rules` `/verify-email` | Static | No |
-| `/` | LandingView (anonymous) / redirect to `/v2` (authed via beforeEnter) — Sub-epic 1a | Public |
+| `/` | LandingView (anonymous) / redirect to `/play` (authed via beforeEnter) — Sub-epic 1a + 8a | Public |
 | `/help` | PageView | Yes |
 | `/arena` | Redirect → `/arena/club` | Yes |
 | `/arena/fight` | PreparationView | Yes |
 | `/arena/club` | FightClubView | Yes |
-| `/arena/club/create` | redirect → `/v2/create` (Sub-epic 1) | Yes |
-| `/arena/club/:agentId` | redirect → `/v2/fd/:agentId` (Sub-epic 1) | Yes |
-| `/fight` | redirect → `/v2/fight` (Sub-epic 8 C3) | Yes (via v2ProtectedNames) |
-| `/training` | redirect → `/v2/training` (Sub-epic 5L) | Yes |
+| `/arena/club/create` | redirect → `/play/create` (Sub-epic 1 + 8a) | Yes |
+| `/arena/club/:agentId` | redirect → `/play/fd/:agentId` (Sub-epic 1 + 8a) | Yes |
+| `/fight` | redirect → `/play/fight` (Sub-epic 8 C3 + 8a) | Yes (via v2ProtectedNames) |
+| `/training` | redirect → `/play/training` (Sub-epic 5L + 8a) | Yes |
 | `/training/moves` | *Deleted* — research moved to AgentDetailView Moves tab | — |
 | `/training/deck` | *Deleted* — deck editing in AgentDetailView | — |
-| `/profile` `/profile/balance` `/profile/skins` | redirect → `/v2/profile` (Sub-epic 5B) | Yes |
-| `/profile/wallet` | redirect → `/v2/wallet` (Sub-epic 3) | Yes |
-| `/profile/account` | redirect → `/v2/account` (Sub-epic 3) | Yes |
-| `/v2/wallet` `/v2/account` | WalletView/AccountView (Sub-epic 3) | Yes (effective via redirect entries on legacy `/profile/*`) |
-| `/clan/:id` | redirect → `/v2/clan/:id` (Sub-epic 1) | Yes |
-| `/ratings/:type` `/ratings` | redirect → `/v2/ratings` (Sub-epic 8 C1) | Yes (legacy via redirect cascade) |
-| `/user/:userLogin` | redirect → `/v2/user/:userLogin` (6B-3) | Yes |
-| `/friends` | redirect → `/v2/profile` (Sub-epic 8 C5, page→tab) | Yes (legacy via redirect cascade) |
-| `/matchmaking` | redirect → `/v2/matchmaking` (Sub-epic 8 C2) | Yes (via v2ProtectedNames) |
-| `/spectate/:odId` | redirect → `/v2/spectate/:fightId` (Sub-epic 8 C4, param rename) | Yes (via v2ProtectedNames) |
+| `/profile` `/profile/balance` `/profile/skins` | redirect → `/play/profile` (Sub-epic 5B + 8a) | Yes |
+| `/profile/wallet` | redirect → `/play/wallet` (Sub-epic 3 + 8a) | Yes |
+| `/profile/account` | redirect → `/play/account` (Sub-epic 3 + 8a) | Yes |
+| `/play/wallet` `/play/account` | WalletView/AccountView (Sub-epic 3, renamed from `/v2/*` in 8a) | Yes (effective via redirect entries on legacy `/profile/*`) |
+| `/clan/:id` | redirect → V2GuestClan named-route (Sub-epic 1, name preserved 8a) | Yes |
+| `/ratings/:type` `/ratings` | redirect → `/play/ratings` (Sub-epic 8 C1 + 8a) | Yes (legacy via redirect cascade) |
+| `/user/:userLogin` | redirect → V2UserProfile named-route (6B-3, name preserved 8a) | Yes |
+| `/friends` | redirect → `/play/profile` (Sub-epic 8 C5, page→tab + 8a) | Yes (legacy via redirect cascade) |
+| `/matchmaking` | redirect → `/play/matchmaking` (Sub-epic 8 C2 + 8a) | Yes (via v2ProtectedNames) |
+| `/spectate/:odId` | redirect → `/play/spectate/:fightId` (Sub-epic 8 C4, param rename + 8a) | Yes (via v2ProtectedNames) |
+| `/v2` `/v2/*` | cascade redirect → `/play` `/play/*` (Sub-epic 8a backward compat — preserves bookmarks + shared friend-Watch links) | (cascades through original auth posture) |
+| `/play` `/play/fd/:key` `/play/fight` `/play/training` `/play/matchmaking` `/play/create` `/play/profile` `/play/ratings` `/play/clan` `/play/clan/:id` `/play/shop` `/play/spectate/:fightId` `/play/help` `/play/user/:userLogin` `/play/wallet` `/play/account` | AppV2 + 16 child views (paths renamed from `/v2/*` Sub-epic 8a; route names V2Root/V2Pit/V2*/etc. preserved) | Yes (V2Fight/V2Matchmaking/V2Spectate via v2ProtectedNames) |
 
 ---
 
@@ -539,7 +541,7 @@ MIGRATION_ENABLED = true           // lazy User→Fighter #1 on /me
 | Matchmaking | `MatchmakingView.vue` | Real-time PvP matchmaking queue. Opponent Found shows actual fighter skins (from `/images/skins/`). No colored borders. 100dvh support. Visual System v1.0 compliant: neutral spinner in search, OPPONENT FOUND pixel-font (impact), AnonymousBalance for timer/rating/countdown, retry btn = sole pink CTA in timeout |
 | Clan | `ClanView.vue` | Redesigned clan page: header with avatar (64px, --hex-primary border + glow, 12px radius), name (Anonymous font), italic description, meta row (LVL badge, member count), level progress bar (6px gradient fill), stats grid via `ClanStats.vue` (4 cards + win rate bar), owner controls. Visitor view: top-5 members (no action menu), "+ N more members", JOIN/private/full action bar. Route: `/clan/:id` (redirect from `/club/:id`). Visual System v1.0 compliant. |
 | Spectate | `SpectateView.vue` | Watch live PvP fights. Visual System v1.0 compliant: 0 pink, friend side=hex-victory (green), opponent=hex-action-defense (blue), LIVE dot=hex-defeat (red) with pulse, AnonymousBalance for numbers, system sans for all text |
-| Landing | `LandingView.vue` | Anonymous-only landing page (Sub-epic 1a). Centered hero (logo + tagline + pink CTA "Start Fighting" → `/auth/signup`) + 5 social links + footer (Privacy/Rules/Help). Authed users redirect to `/v2` via beforeEnter. Legacy `--hex-*` tokens, no `.app-v2` namespace. |
+| Landing | `LandingView.vue` | Anonymous-only landing page (Sub-epic 1a). Centered hero (logo + tagline + pink CTA "Start Fighting" → `/auth/signup`) + 5 social links + footer (Privacy/Rules/Help). Authed users redirect to `/play` via beforeEnter (target updated 8a). Legacy `--hex-*` tokens, no `.app-v2` namespace. |
 | Auth Layout | `AuthLayoutView.vue` | Wrapper for `/auth/login` + `/auth/signup` child routes (Sub-epic 1b). Logo header (links home as escape hatch) + pink glow background + `<router-view>` slot with fade transition. Mirrors Landing aesthetic. |
 | Auth Forms | `auth/LoginView.vue`, `auth/SignupView.vue` | Card layout forms (Sub-epic 1b C3/C4). ENTER THE PIT sub-headline + handle/password inputs + sign in/up CTA + OR divider + Connect Wallet button (Coming soon toast — decision #5, BE SIWE deferred to Stream 6) + switch link to other form. `.auth-form-*` BEM-light scoped classes. |
 | PageView | `PageView.vue` | Static help/rules pages via v-html from i18n. Visual System v1.0 compliant: 0 full pink, spans/link-hover use hex-primary-light (PINK_DIM), white underlined links, v-html preserved for trusted i18n |
@@ -5896,3 +5898,79 @@ Closes Эпик 6 carry-over (Auth views still on RainView 3D rain) + Эпик 5
 - **#45 Phase 0 metadata triple-verify** — file paths + line numbers + function signatures cross-checked twice during Phase 0; Subsection 7 Telegram inventory re-verified at C6/C8 fresh greps before delete (2 false-positive surfaces — Phase 0 said `backend/src/services/telegramAuth.js` standalone helper exists, reality was inline in `auth.js`; Phase 0 said TG-only user lockout HIGH risk, user audit revealed 0 affected users)
 
 **Streak:** 1 → 2 (continued clean from 1a — zero hot-fixes, all surfaces resolved via STOP gates).
+
+### Sub-Epic 8a — Migration `/v2` → `/play` (✅ CLOSED)
+
+URL refactor preparing for Эпик 8 Marketing Site (8b/8c). After 8a: marketing site lives at `/`, game at `/play/*`.
+
+**What changed:**
+- 17 routes: `/v2/*` paths → `/play/*` (parent path literal updated; 16 children inherit via relative paths)
+- 15 protectedRoutes Эпик 6 cutover redirects: target updated to `/play/*` (single-hop, no chain through cascade)
+- 2 named-route redirects (V2UserProfile, V2GuestClan) UNCHANGED — names preserved per decision #3 survive automatically
+- Sub-epic 1a `/` Home `beforeEnter` cascade target: `next('/v2')` → `next('/play')`
+- NEW `legacyV2Redirects` array — backward compat cascade for old bookmarks:
+  - `{ path: '/v2', redirect: '/play' }`
+  - `{ path: '/v2/:pathMatch(.*)*', redirect: to => /play/{tail} }` (Vue Router 4 array/string defensive handling)
+- App.vue: `isV2Route` computed → `isPlayRoute` (mirrors 1b `isLandingRoute` → `isMarketingRoute` precedent)
+- ~58 internal push sites across 25 files: `router.push('/v2/...')` → `router.push('/play/...')` (incl. backtick template literals in HudProfile.vue surfaced via Lesson #11 broader-than-initial-grep)
+
+**KEPT unchanged (decoupled from URL per locked decisions):**
+- `.app-v2` CSS namespace (547+ rule prefixes across 12 CSS files in `src/styles/v24/*.css` + 1 JS query selector in `useClickToHit.js:27`) — architecture identity, NOT URL-coupled
+- `src/views-v2/` directory (16 files) — implementation name
+- `src/AppV2.vue` filename — implementation name
+- `src/styles/v24/` subdirectory — implementation name
+- Route names: `V2Root`, `V2Pit`, `V2FighterDetail`, `V2Fight`, `V2Training`, `V2Matchmaking`, `V2Create`, `V2Profile`, `V2Ratings`, `V2Clan`, `V2GuestClan`, `V2Shop`, `V2Spectate`, `V2Help`, `V2UserProfile`, `V2Wallet`, `V2Account` (16 names — `getPreviousRoute()` fallback compatibility)
+- `v2Routes`, `v2ProtectedNames` arrays in router (internal terminology)
+- Backend: 0 references to `/v2` (clean separation verified Phase 0 §1.4)
+
+**URL ↔ implementation decoupling (architectural pattern):**
+
+| Layer | Identifier | Coupled to URL? |
+|---|---|---|
+| URL path | `/play/*` | YES (user-facing) |
+| Vue file/dir paths | `views-v2/`, `AppV2.vue`, `styles/v24/` | NO (implementation, decoupled) |
+| CSS class namespace | `.app-v2` | NO (architecture identity, decoupled) |
+| Route names | `V2Root`, `V2Pit`, etc. | NO (internal API, decoupled) |
+| JS DOM query | `document.querySelector('.app-v2')` | NO (couples to CSS class, not URL) |
+| Backend API | `/v1/*` (no `/v2` references) | NO (clean separation) |
+
+**Backward compat (Lesson #18 STOP-tier risk mitigation):**
+- All `hexlash.com/v2/*` URLs cascade-redirect to `/play/*`
+- User bookmarks preserved
+- Shared friend-Watch links cascade
+- Telegram-share clan invite URLs cascade
+- Эпик 6 cutover legacy paths (`/profile`, `/ratings/:type`, etc.) updated DIRECTLY to `/play/*` — single-hop avoids double-redirect chain through cascade
+
+**Files changed (~27 unique files):**
+- MODIFIED: `src/router/index.js`, `src/App.vue`, ~25 component/view files (15 views-v2 + 8 HUD components + 2 clan fragments)
+- NEW: 0 (refactor only)
+- DELETED: 0
+- CSS files: 0 (`.app-v2` decoupled per decision #1)
+
+**Commit chain (3 functional + 3 closure):**
+- Phase 0 (`662bc1a`): docs(8a): Phase 0 investigation report
+- C1 (`9f3ecc9`): feat(routing): rename /v2/* paths to /play/* + cascade redirect [G1 STOP]
+- C2 (`30c618f`): refactor(app): rename isV2Route computed to isPlayRoute [G2 STOP]
+- C3 (`f26bf1b`): refactor(routing): update internal /v2 push sites to /play [G3 STOP — manual smoke test passed]
+- CL1 (this commit): docs(8a): CLAUDE.md sync
+- CL2 (next): docs(8a): final report
+- CL3 (next): docs(8a): handoff to Sub-epic 8b
+
+**Lessons applied:**
+- **#11 pre-edit + post-edit grep** — every commit. Catches:
+  - C1: Phase 0 said 14 cutover redirects; fresh grep found 15 (`/profile/skins` redirect missed in inventory). All 15 updated.
+  - C2: Phase 0 said 2 use sites; fresh grep found 3 in App.vue (definition + 2 template bindings). All 3 updated via `replace_all=true`.
+  - C3: Initial grep `'/v2|"/v2` found 60 candidates; broader grep with backtick pattern surfaced 2 more sites in HudProfile.vue (template literals). Both added to sweep.
+- **#18 STOP-tier** — applied at all 3 G gates (G1 cascade smoke, G2 quick verify, G3 manual smoke test). All gates passed clean.
+- **#32 convention discovery** — `isV2Route` → `isPlayRoute` rename mirrors 1b `isLandingRoute` → `isMarketingRoute` pattern. `.app-v2` KEEP decision mirrors existing v2 terminology lock (architecture identity vs URL).
+- **#43 STEP 0 bootstrap branch verify** — 10th occurrence (5U / 5S / Sub-epic 2 / 4a / 4b / Sub-epic 5 / 6 / 7 / Sub-epic 1b / 8a). Surfaced as recurring pattern (carry-over: formalize as automatic bootstrap procedure in Stream 1 cleanup).
+- **#45 metadata triple-verify** — Phase 0 line numbers + counts re-verified at every Cluster pre-edit (caught 3 minor discrepancies as adaptation-tier per Lesson #35).
+
+**Carry-overs:**
+- **Эпик 8b/8c** — Marketing site (long-form) replaces 1a LandingView at `/`. CL3 handoff documents scope + required user inputs.
+- **Stream 1 cleanup**:
+  - `src/AppV2.vue:24` stale comment ("App.vue v1 mount gated via `!isV2Route` block") — decision #5 skip
+  - `src/views-v2/CreateView.vue`, `WalletView.vue`, `AccountView.vue`, `FighterDetailView.vue`, `CreateClan.vue`, `ClanEdit.vue` — collateral comment correction during C3 sed sweep documented (no debt left, but flag if user wants strict revert)
+  - **Lesson #43 STEP 0 formalization** — recurring 10-occurrence pattern; formalize as automatic bootstrap procedure ("При начале нового sub-epic → Step 0 проверка branch. Если на closed continue stack → auto-switch на fresh from main без surfacing").
+
+**Streak:** 2 → 3 (continued clean from 1a + 1b — zero hot-fixes, all G gates approved on first pass).

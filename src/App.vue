@@ -1,6 +1,6 @@
 <template>
   <div class="app-container">
-    <header v-if="!isV2Route && !isMarketingRoute" :style="headerStyle" class="header">
+    <header v-if="!isPlayRoute && !isMarketingRoute" :style="headerStyle" class="header">
       <div class="header-content">
         <Logo/>
         <div v-if="balance !== null && isAuth" class="balance">
@@ -16,7 +16,7 @@
 
     <!-- FindFight removed: card-based combat uses client-side simulation -->
 
-    <template v-if="!isV2Route">
+    <template v-if="!isPlayRoute">
       <Info :text="infoMessage.text"
             :timeout="infoMessage.timeout"
             :showButton="infoMessage.showButton"
@@ -101,9 +101,11 @@ const isPvPScreen = computed(() => {
       (route.path === '/fight' && route.query.mode === 'pvp');
 });
 
-// v2 Migration — feature flag /v2. На v2-роутах старая шапка/меню/тосты скрываются,
-// AppV2.vue рендерится через <RouterView> внутри <main>.
-const isV2Route = computed(() => route.path.startsWith('/v2'));
+// v2 Migration — feature flag через URL-префикс /play (renamed from /v2 in
+// Sub-epic 8a — see router/index.js legacyV2Redirects for backward compat).
+// На play-роутах старая шапка/меню/тосты скрываются, AppV2.vue рендерится
+// через <RouterView> внутри <main>.
+const isPlayRoute = computed(() => route.path.startsWith('/play'));
 
 // Sub-epic 1a: landing at / has its own centered logo — hide App.vue header chrome.
 // Sub-epic 1b interrupt fix: extend to /auth/* — auth views have own logo via

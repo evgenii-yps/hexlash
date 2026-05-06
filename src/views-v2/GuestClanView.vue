@@ -60,7 +60,7 @@ watch(
   (id) => {
     if (!id) return;
     if (currentClanId.value && currentClanId.value === id) {
-      router.replace('/v2/clan');
+      router.replace('/play/clan');
       return;
     }
     store.dispatch('clan/getGuestClanById', id);

@@ -60,7 +60,7 @@ watch(
   (userLogin) => {
     if (!userLogin) return;
     if (currentUserLogin.value && currentUserLogin.value === userLogin) {
-      router.replace('/v2/profile');
+      router.replace('/play/profile');
       return;
     }
     store.dispatch('user/getGuestUserByLogin', userLogin);

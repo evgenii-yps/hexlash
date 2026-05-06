@@ -64,8 +64,8 @@ function onChallengeStart(event) {
 
   // Sub-epic 4a — v2-aware routing (Path A precedent: Sub-epic 1
   // CreateClan/ClanEdit augmentation pattern)
-  if (router.currentRoute.value.path.startsWith('/v2')) {
-    router.push('/v2/fight');
+  if (router.currentRoute.value.path.startsWith('/play')) {
+    router.push('/play/fight');
   } else {
     router.push({
       path: '/fight',

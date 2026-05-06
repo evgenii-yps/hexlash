@@ -40,11 +40,11 @@ const publicRoutes = [
         name: 'Home',
         component: () => import("/src/views/LandingView.vue"),
         beforeEnter: (to, from, next) => {
-            // Authed users skip landing — go straight to /v2 hub.
+            // Authed users skip landing — go straight to /play hub.
             // Anonymous users see LandingView (Sub-epic 1a).
             const isAuthenticated = store.getters["master/getLoginState"]?.isAuthenticated || false;
             if (isAuthenticated) {
-                next('/v2');
+                next('/play');
             } else {
                 next();
             }
@@ -68,12 +68,12 @@ const publicRoutes = [
 ];
 
 const protectedRoutes = [
-    {path: '/help', redirect: '/v2/help'},
+    {path: '/help', redirect: '/play/help'},
     {path: '/arena', redirect: '/arena/club'},
     {path: '/arena/fight', name: 'ArenaFight', component: () => import("/src/views/PreparationView.vue")},
     {path: '/arena/club', name: 'ArenaFightClub', component: () => import("/src/views/FightClubView.vue")},
-    {path: '/create-fighter', redirect: '/v2/create'},
-    {path: '/fighter/:key', redirect: to => `/v2/fd/${to.params.key}`},
+    {path: '/create-fighter', redirect: '/play/create'},
+    {path: '/fighter/:key', redirect: to => `/play/fd/${to.params.key}`},
     {path: '/arena/club/create', redirect: '/create-fighter'},
     {path: '/arena/club/:agentId', redirect: to => `/fighter/${to.params.agentId}`},
 
@@ -81,11 +81,11 @@ const protectedRoutes = [
         path: '/user/:userLogin',
         redirect: to => ({ name: 'V2UserProfile', params: { userLogin: to.params.userLogin } }),
     },
-    {path: '/profile', redirect: '/v2/profile'},
-    {path: '/profile/balance', redirect: '/v2/profile'},
-    {path: '/profile/wallet', redirect: '/v2/wallet'},
-    {path: '/profile/account', redirect: '/v2/account'},
-    {path: '/profile/skins', name: 'Skins', redirect: '/v2/profile'},
+    {path: '/profile', redirect: '/play/profile'},
+    {path: '/profile/balance', redirect: '/play/profile'},
+    {path: '/profile/wallet', redirect: '/play/wallet'},
+    {path: '/profile/account', redirect: '/play/account'},
+    {path: '/profile/skins', name: 'Skins', redirect: '/play/profile'},
 
     {
         path: '/clan/:id',
@@ -96,14 +96,14 @@ const protectedRoutes = [
     {path: '/club/agent/create', redirect: '/create-fighter'},
     {path: '/club/agent/:agentId', redirect: to => `/fighter/${to.params.agentId}`},
 
-    {path: '/ratings/:type', redirect: to => '/v2/ratings'},
-    {path: '/ratings', redirect: '/v2/ratings'},
+    {path: '/ratings/:type', redirect: to => '/play/ratings'},
+    {path: '/ratings', redirect: '/play/ratings'},
 
-    {path: '/training', redirect: '/v2/training'},
-    {path: '/fight', redirect: '/v2/fight'},
-    {path: '/friends', redirect: '/v2/profile'},
-    {path: '/matchmaking', redirect: '/v2/matchmaking'},
-    {path: '/spectate/:odId', redirect: to => `/v2/spectate/${to.params.odId}`},
+    {path: '/training', redirect: '/play/training'},
+    {path: '/fight', redirect: '/play/fight'},
+    {path: '/friends', redirect: '/play/profile'},
+    {path: '/matchmaking', redirect: '/play/matchmaking'},
+    {path: '/spectate/:odId', redirect: to => `/play/spectate/${to.params.odId}`},
 
 ];
 
@@ -113,11 +113,15 @@ const protectedRoutes = [
 // auth audit, Sub-epic 8 territory) may migrate this to meta.requiresAuth pattern.
 const v2ProtectedNames = ['V2Fight', 'V2Matchmaking', 'V2Spectate'];
 
-// v2 Migration — feature flag через URL-префикс /v2. Живёт параллельно старому визуалу.
+// v2 Migration — feature flag через URL-префикс. Sub-epic 8a renamed URL prefix
+// /v2 → /play (user-facing). Internal architecture identifiers (v2Routes name,
+// V2Root/V2Pit/etc. route names, .app-v2 CSS namespace, src/views-v2/ directory,
+// AppV2.vue file) PRESERVED — decoupled from URL per Phase 0 §4.2 + §5.3 locks.
+// Backward compat: /v2 + /v2/:pathMatch(.*)* cascade-redirect to /play/*.
 // Источник правды: docs/visual-migration/HANDOFF_VISUAL_MIGRATION.md
 const v2Routes = [
     {
-        path: '/v2',
+        path: '/play',
         name: 'V2Root',
         component: () => import('@/AppV2.vue'),
         children: [
@@ -205,11 +209,30 @@ const v2Routes = [
     },
 ];
 
+// Sub-epic 8a — backward compat cascade redirect for legacy /v2/* URLs.
+// User bookmarks, shared friend-Watch links, Telegram-share URLs preserved.
+// Order: must come AFTER v2Routes (so /play/* takes precedence) but BEFORE
+// the global 404 catch-all (so /v2/* still matches before falling through).
+// Vue Router 4 (.*)* matcher returns pathMatch as string OR array — handle both.
+const legacyV2Redirects = [
+    {path: '/v2', redirect: '/play'},
+    {
+        path: '/v2/:pathMatch(.*)*',
+        redirect: to => {
+            const tail = Array.isArray(to.params.pathMatch)
+                ? to.params.pathMatch.join('/')
+                : (to.params.pathMatch || '');
+            return tail ? `/play/${tail}` : '/play';
+        },
+    },
+];
+
 const routes = [
     ...authRoutes,
     ...publicRoutes,
     ...protectedRoutes,
     ...v2Routes,
+    ...legacyV2Redirects,
     {path: '/:pathMatch(.*)*', name: 'NotFound', component: () => import("/src/views/NotFoundView.vue")},
 ];
 

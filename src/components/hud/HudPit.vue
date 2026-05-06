@@ -34,7 +34,7 @@ const helpOpen = ref(false);
 // → route to /v2/profile directly. (Sub-Epic 5B hot-fix 10.1.)
 const router = useRouter();
 function onAvatarClick() {
-  router.push('/v2/profile');
+  router.push('/play/profile');
 }
 </script>
 

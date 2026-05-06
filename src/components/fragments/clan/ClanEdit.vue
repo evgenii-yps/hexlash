@@ -159,13 +159,13 @@ const confirmDissolve = async () => {
     store.commit('master/setInfoMessage', {text: t.value.clan.lblDissolved, timeout: 3000, showButton: false});
     // Epic 5 — Sub-Epic 5D Step 8 augmentation — v2-aware navigation
     // (lesson #24 / Step 7 CreateClan precedent commit 1255898). Legacy
-    // MyClanTab callers (path !== '/v2/clan') keep original redirect to
+    // MyClanTab callers (path !== '/play/clan') keep original redirect to
     // /ratings/clans; v2 HudClan callers stay on /v2/clan and rely on
     // reactive flip via userData.clanId (now null) — HudClan switches to
     // no-clan branch automatically. Tracked in FINAL §7 deferred for full
     // 5G v2-flow polish revisit.
     const currentPath = router.currentRoute.value.path;
-    if (currentPath !== '/v2/clan') {
+    if (currentPath !== '/play/clan') {
       router.push('/ratings/clans');
     }
   } catch (error) {
