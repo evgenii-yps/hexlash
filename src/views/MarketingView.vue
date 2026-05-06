@@ -104,6 +104,30 @@
       </div>
     </section>
 
+    <section class="marketing-subscribe" ref="subscribeRef">
+      <div class="marketing-subscribe__inner" :class="{ 'is-visible': subscribeVisible }">
+        <h2 class="marketing-subscribe__heading">STAY UPDATED</h2>
+        <form class="marketing-subscribe__form" @submit.prevent="onSubscribeSubmit">
+          <input
+            v-model="email"
+            type="email"
+            required
+            placeholder="Enter your email"
+            class="marketing-subscribe__input"
+            :disabled="isSubmitting"
+            autocomplete="email"
+          />
+          <button
+            type="submit"
+            class="marketing-subscribe__button"
+            :disabled="isSubmitting"
+          >
+            Subscribe
+          </button>
+        </form>
+      </div>
+    </section>
+
     <footer class="marketing-footer" ref="footerRef">
       <ul class="marketing-footer__socials" aria-label="Social media">
         <li>
@@ -146,6 +170,7 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { useStore } from 'vuex';
 import { useDocumentMeta } from '@/composables/useDocumentMeta';
 import { useScrollFadeIn } from '@/composables/useScrollFadeIn';
 import logoSrc from '@/assets/images/hexlash-logo.jpg';
@@ -156,6 +181,7 @@ import iconDisc from '@/assets/images/icon_disc.svg';
 import iconInsta from '@/assets/images/icon_insta.svg';
 
 const router = useRouter();
+const store = useStore();
 
 const heroRef = ref(null);
 const aboutRef = ref(null);
@@ -163,6 +189,7 @@ const gameplayRef = ref(null);
 const tokenRef = ref(null);
 const roadmapRef = ref(null);
 const partnersRef = ref(null);
+const subscribeRef = ref(null);
 const footerRef = ref(null);
 
 // 8c C1 — IntersectionObserver fade-in via composable (refactored from
@@ -176,6 +203,36 @@ const { visible: gameplayVisible } = useScrollFadeIn(gameplayRef);
 const { visible: tokenVisible } = useScrollFadeIn(tokenRef);
 const { visible: roadmapVisible } = useScrollFadeIn(roadmapRef);
 const { visible: partnersVisible } = useScrollFadeIn(partnersRef);
+const { visible: subscribeVisible } = useScrollFadeIn(subscribeRef);
+
+// Subscribe form state
+const email = ref('');
+const isSubmitting = ref(false);
+
+function onSubscribeSubmit() {
+  if (isSubmitting.value || !email.value) return;
+
+  isSubmitting.value = true;
+
+  // Reuse existing global toast via Vuex mutation (Phase 0 §S1.4 verified —
+  // `<Info>` component renders on / route via App.vue:19 `!isPlayRoute` block).
+  // Lesson #11 catch: setInfoMessage is MUTATION not ACTION — use commit.
+  // Lesson #11 catch: plain object literal pattern (mirrors ChallengeNotification
+  // precedent) — InfoMessageModel.withText also works but adds import.
+  store.commit('master/setInfoMessage', {
+    text: 'Coming soon — stay tuned!',
+    timeout: 3000,
+    showButton: false,
+  });
+
+  // Clear field after submit (signals success per decision #8)
+  email.value = '';
+
+  // Re-enable button after debounce window (per decision #9, ~600ms)
+  setTimeout(() => {
+    isSubmitting.value = false;
+  }, 600);
+}
 
 useDocumentMeta({
   title: 'Hexlash',
@@ -204,6 +261,7 @@ function onPlayClick() {
 .marketing-token,
 .marketing-roadmap,
 .marketing-partners,
+.marketing-subscribe,
 .marketing-footer {
   position: relative;
   width: 100%;
@@ -548,6 +606,125 @@ function onPlayClick() {
 @media (max-width: 480px) {
   .marketing-partners {
     padding: 80px 16px;
+  }
+}
+
+/* === SUBSCRIBE === */
+.marketing-subscribe {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--hex-bg-dark);
+  padding: 100px 24px;
+}
+
+.marketing-subscribe__inner {
+  text-align: center;
+  width: 100%;
+  max-width: 600px;
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.marketing-subscribe__inner.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.marketing-subscribe__heading {
+  margin: 0 0 32px;
+  font-size: clamp(28px, 4vw, 44px);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--hex-text-primary);
+  text-transform: uppercase;
+}
+
+.marketing-subscribe__form {
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.marketing-subscribe__input {
+  flex: 1;
+  font-family: inherit;
+  font-size: 14px;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--hex-border-default, rgba(255, 255, 255, 0.08));
+  border-radius: 4px;
+  color: var(--hex-text-primary);
+  transition: border-color 0.15s ease, background 0.15s ease;
+  min-width: 0; /* allow flex shrink */
+}
+
+.marketing-subscribe__input::placeholder {
+  color: var(--hex-text-muted);
+}
+
+.marketing-subscribe__input:focus {
+  outline: none;
+  border-color: var(--hex-primary);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.marketing-subscribe__input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Subscribe CTA — mirrors 8b Hero CTA aesthetic (custom scoped per
+   Phase 0 §S3.3 + Lesson #11 catch: .hex-button does NOT exist,
+   global classes are .hex-btn / .hex-btn-primary). 8b Hero CTA
+   precedent: scoped custom for fine-grained marketing-specific control. */
+.marketing-subscribe__button {
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 12px 32px;
+  background: var(--hex-primary);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 0 24px rgba(255, 6, 111, 0.4);
+  white-space: nowrap;
+}
+
+.marketing-subscribe__button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 0 32px rgba(255, 6, 111, 0.6);
+}
+
+.marketing-subscribe__button:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 0 16px rgba(255, 6, 111, 0.3);
+}
+
+.marketing-subscribe__button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Mobile: stack form vertically */
+@media (max-width: 480px) {
+  .marketing-subscribe {
+    padding: 80px 16px;
+  }
+  .marketing-subscribe__form {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .marketing-subscribe__heading {
+    margin-bottom: 24px;
   }
 }
 
