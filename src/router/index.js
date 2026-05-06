@@ -7,8 +7,30 @@ const routeHistory = [];
 
 
 export const authRoutes = [
-    {path: '/auth/login', name: 'Login', component: RainView},
-    {path: '/auth/signup', name: 'Signup', component: RainView},
+    // Sub-epic 1b C2: /auth/login + /auth/signup migrated to AuthLayoutView shell.
+    // Route names preserved verbatim ('Login', 'Signup') — router.beforeEach guard
+    // line ~250 uses next({name: 'Login'}) for unauth redirect.
+    {
+        path: '/auth',
+        component: () => import('@/views/AuthLayoutView.vue'),
+        children: [
+            {
+                path: 'login',
+                name: 'Login',
+                component: () => import('@/views/auth/LoginView.vue'),
+            },
+            {
+                path: 'signup',
+                name: 'Signup',
+                component: () => import('@/views/auth/SignupView.vue'),
+            },
+            // Bare /auth → redirect to /auth/login
+            {path: '', redirect: '/auth/login'},
+        ],
+    },
+    // TEMPORARY — these routes still mount RainView, removed in C5/C6 (Cluster B/C).
+    // Vue Router 4 falls through to these after parent /auth children fail to match
+    // 'reset' / 'telegram' path segments.
     {path: '/auth/reset', name: 'Reset', component: RainView},
     {path: '/auth/telegram', name: 'TelegramLogin', component: RainView}
 ];
