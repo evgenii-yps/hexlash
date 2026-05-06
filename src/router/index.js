@@ -1,6 +1,5 @@
 import {createRouter, createWebHistory} from "vue-router";
 import store from "@/core/state/store.js";
-import RainView from "@/views/RainView.vue";
 import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
 
 const routeHistory = [];
@@ -56,13 +55,15 @@ const publicRoutes = [
     {path: '/rules', name: 'Rules', component: () => import("/src/views/PageView.vue")},
     {path: '/verify-email', name: 'VerifyEmail', component: () => import("/src/views/VerifyEmailView.vue")},
     {
+        // Sub-epic 1b C9: function-form redirect preserves localStorage side-effect
+        // (referral code capture) without requiring a component (RainView deleted).
+        // Phase 0 §"Bonus findings #2" recommended pattern. Vue Router 4 native.
         path: '/r/:username',
         name: 'Referral',
-        beforeEnter: (to, from, next) => {
+        redirect: to => {
             localStorage.setItem('hexlash_referral_code', to.params.username);
-            next('/auth/signup');
+            return '/auth/signup';
         },
-        component: RainView,
     },
 ];
 
