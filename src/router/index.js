@@ -28,10 +28,11 @@ export const authRoutes = [
             {path: '', redirect: '/auth/login'},
         ],
     },
-    // TEMPORARY — these routes still mount RainView, removed in C5/C6 (Cluster B/C).
-    // Vue Router 4 falls through to these after parent /auth children fail to match
-    // 'reset' / 'telegram' path segments.
-    {path: '/auth/reset', name: 'Reset', component: RainView},
+    // TEMPORARY — /auth/telegram still mounts RainView, removed in C6 (Cluster C).
+    // Vue Router 4 falls through to this after parent /auth children fail to match
+    // 'telegram' path segment.
+    // Sub-epic 1b C5: /auth/reset route DELETED (decision #4 — backend /user/reset
+    // returns 501, FE form was cosmetic).
     {path: '/auth/telegram', name: 'TelegramLogin', component: RainView}
 ];
 
