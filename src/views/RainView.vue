@@ -29,7 +29,6 @@
 import {useRoute} from "vue-router";
 import Login from "@/components/fragments/auth/Login.vue";
 import Signup from "@/components/fragments/auth/Signup.vue";
-import TelegramLogin from "@/components/fragments/auth/TelegramLogin.vue";
 
 
 const isAuthenticated = computed(() => store.getters["master/getLoginState"].isAuthenticated);
@@ -43,8 +42,6 @@ const setCurrentComponent = () => {
     currentComponent.value = Login;
   } else if (route.path === '/auth/signup') {
     currentComponent.value = Signup;
-  } else if (route.path === '/auth/telegram') {
-    currentComponent.value = TelegramLogin;
   }
   currentComponentKey.value = route.path;
 };

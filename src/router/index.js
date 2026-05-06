@@ -28,12 +28,11 @@ export const authRoutes = [
             {path: '', redirect: '/auth/login'},
         ],
     },
-    // TEMPORARY — /auth/telegram still mounts RainView, removed in C6 (Cluster C).
-    // Vue Router 4 falls through to this after parent /auth children fail to match
-    // 'telegram' path segment.
-    // Sub-epic 1b C5: /auth/reset route DELETED (decision #4 — backend /user/reset
-    // returns 501, FE form was cosmetic).
-    {path: '/auth/telegram', name: 'TelegramLogin', component: RainView}
+    // Sub-epic 1b:
+    //   C5: /auth/reset route DELETED (decision #4 — backend /user/reset returns 501).
+    //   C6: /auth/telegram route DELETED (decision #2 — Telegram-as-auth excised).
+    // Adaptive UI isTelegram flag (App.vue + ProfileButtons.vue) preserved per
+    // decision #2 — flag setter re-wired to App.vue init-time TG webview detection.
 ];
 
 const publicRoutes = [
