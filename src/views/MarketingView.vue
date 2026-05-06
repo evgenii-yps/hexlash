@@ -45,7 +45,10 @@
     </section>
 
     <section class="marketing-about" ref="aboutRef">
-      <!-- About content — C3 -->
+      <div class="marketing-about__content" :class="{ 'is-visible': aboutVisible }">
+        <h2 class="marketing-about__heading">NEVER GIVE UP</h2>
+        <p class="marketing-about__subtitle">Train. Fight. Rise.</p>
+      </div>
     </section>
 
     <footer class="marketing-footer" ref="footerRef">
@@ -55,7 +58,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { useDocumentMeta } from '@/composables/useDocumentMeta';
 import logoSrc from '@/assets/images/hexlash-logo.jpg';
@@ -65,6 +68,39 @@ const router = useRouter();
 const heroRef = ref(null);
 const aboutRef = ref(null);
 const footerRef = ref(null);
+const aboutVisible = ref(false);
+
+let aboutObserver = null;
+
+onMounted(() => {
+  // C3 — IntersectionObserver fade-in trigger for About section.
+  // Per ТЗ decision: native API (not @vueuse/core composable). Threshold 0.3.
+  if (aboutRef.value && 'IntersectionObserver' in window) {
+    aboutObserver = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            aboutVisible.value = true;
+            aboutObserver.disconnect();
+            aboutObserver = null;
+          }
+        });
+      },
+      { threshold: 0.3 }
+    );
+    aboutObserver.observe(aboutRef.value);
+  } else {
+    // Fallback for environments without IntersectionObserver — show immediately.
+    aboutVisible.value = true;
+  }
+});
+
+onBeforeUnmount(() => {
+  if (aboutObserver) {
+    aboutObserver.disconnect();
+    aboutObserver = null;
+  }
+});
 
 useDocumentMeta({
   title: 'Hexlash',
@@ -108,6 +144,48 @@ function scrollToAbout() {
 .marketing-about {
   min-height: 60vh;
   padding: 80px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--hex-bg-dark);
+}
+
+/* === ABOUT === */
+.marketing-about__content {
+  text-align: center;
+  max-width: 800px;
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.marketing-about__content.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.marketing-about__heading {
+  margin: 0 0 16px;
+  font-size: clamp(40px, 7vw, 80px);
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: var(--hex-text-primary);
+  text-transform: uppercase;
+  line-height: 1.1;
+}
+
+.marketing-about__subtitle {
+  margin: 0;
+  font-size: clamp(16px, 2vw, 22px);
+  color: var(--hex-text-muted);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 480px) {
+  .marketing-about {
+    padding: 60px 20px;
+  }
 }
 
 .marketing-footer {
