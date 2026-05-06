@@ -22,7 +22,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
   main.js                  — Entry: Vue + Vuetify + i18n + Vuex + WagmiPlugin + VueQueryPlugin init
   router/index.js          — Routes + auth guards + fight state restore
   views/                   — 8 page-level components post-Эпик 7 1b (LandingView, AuthLayoutView, PrivacyView, NotFoundView, PageView, VerifyEmailView, PreparationView, FightClubView). 1a/1b/8a history: LandingView added 1a, AuthLayoutView added 1b, RainView (1212 lines) deleted 1b C9. Sub-epic 8b: LandingView (1a MVP) deleted, MarketingView (8b long-form) added. 10 v1 views deleted Sub-epic 8 C8/C9.
-  composables/             — Reusable composables. `useDocumentMeta.js` (added 8b C1) — manual SEO meta tag manipulation (title, meta description, og:*, twitter:*) with restore-on-unmount.
+  composables/             — Reusable composables. `useDocumentMeta.js` (added 8b C1) — manual SEO meta tag manipulation (title, meta description, og:*, twitter:*) with restore-on-unmount. `useScrollFadeIn.js` (added 8c C1) — IntersectionObserver-driven `visible` ref, one-shot disconnect after first intersection, threshold 0.3 default, falls back to immediate visibility for environments without IntersectionObserver API.
   views/auth/              — 2 nested route children for AuthLayoutView (LoginView, SignupView) — Sub-epic 1b C2/C3/C4.
   views-v2/                — 16 v2 page components (PitViewV2 + FighterDetailView + FightView + TrainingView + MatchmakingView + CreateView + ProfileView + RatingsView + ClanView + GuestClanView + ShopView + SpectateView + HelpView + UserProfileView + WalletView + AccountView)
   components/              — 75+ reusable components
@@ -542,7 +542,7 @@ MIGRATION_ENABLED = true           // lazy User→Fighter #1 on /me
 | Matchmaking | `MatchmakingView.vue` | Real-time PvP matchmaking queue. Opponent Found shows actual fighter skins (from `/images/skins/`). No colored borders. 100dvh support. Visual System v1.0 compliant: neutral spinner in search, OPPONENT FOUND pixel-font (impact), AnonymousBalance for timer/rating/countdown, retry btn = sole pink CTA in timeout |
 | Clan | `ClanView.vue` | Redesigned clan page: header with avatar (64px, --hex-primary border + glow, 12px radius), name (Anonymous font), italic description, meta row (LVL badge, member count), level progress bar (6px gradient fill), stats grid via `ClanStats.vue` (4 cards + win rate bar), owner controls. Visitor view: top-5 members (no action menu), "+ N more members", JOIN/private/full action bar. Route: `/clan/:id` (redirect from `/club/:id`). Visual System v1.0 compliant. |
 | Spectate | `SpectateView.vue` | Watch live PvP fights. Visual System v1.0 compliant: 0 pink, friend side=hex-victory (green), opponent=hex-action-defense (blue), LIVE dot=hex-defeat (red) with pulse, AnonymousBalance for numbers, system sans for all text |
-| Marketing | `MarketingView.vue` | Anonymous-only long-form marketing site (Sub-epic 8b — replaces 1a LandingView). 3 sections inline: Hero (logo + Play CTA + animated CSS-SVG hex pattern + pink glow), About ("NEVER GIVE UP" + "Train. Fight. Rise." with IntersectionObserver fade-in), Footer (5 social placeholder icons + Privacy/Rules/Help). Authed users redirect to `/play` via beforeEnter. SEO meta tags via `useDocumentMeta` composable (title, og:*, twitter:*). Legacy `--hex-*` tokens, no `.app-v2` namespace. `.marketing-*` BEM scoped classes. |
+| Marketing | `MarketingView.vue` | Anonymous-only long-form marketing site (Sub-epic 8b Cluster A + 8c Cluster B — replaces 1a LandingView). 8 sections inline: Hero (logo + Play CTA + animated CSS-SVG hex pattern + pink glow) → About ("NEVER GIVE UP" + "Train. Fight. Rise." fade-in) → Gameplay (16:9 placeholder + descriptive copy) → Token ($HEX placeholder + Base chain reference) → Roadmap (4 phase cards, 4→2→1 responsive grid) → Partners (COMING SOON placeholder) → Subscribe (email form + Vuex toast on submit) → Footer (5 social placeholder icons + Privacy/Rules/Help). Authed users redirect to `/play` via beforeEnter. SEO meta tags via `useDocumentMeta` composable (title, og:*, twitter:*). Scroll fade-in across 7 sections via `useScrollFadeIn` composable (IntersectionObserver, threshold 0.3, one-shot). Legacy `--hex-*` tokens, no `.app-v2` namespace. `.marketing-*` BEM scoped classes. ~915 lines (under 1500-line split threshold). |
 | Auth Layout | `AuthLayoutView.vue` | Wrapper for `/auth/login` + `/auth/signup` child routes (Sub-epic 1b). Logo header (links home as escape hatch) + pink glow background + `<router-view>` slot with fade transition. Mirrors Landing aesthetic. |
 | Auth Forms | `auth/LoginView.vue`, `auth/SignupView.vue` | Card layout forms (Sub-epic 1b C3/C4). ENTER THE PIT sub-headline + handle/password inputs + sign in/up CTA + OR divider + Connect Wallet button (Coming soon toast — decision #5, BE SIWE deferred to Stream 6) + switch link to other form. `.auth-form-*` BEM-light scoped classes. |
 | PageView | `PageView.vue` | Static help/rules pages via v-html from i18n. Visual System v1.0 compliant: 0 full pink, spans/link-hover use hex-primary-light (PINK_DIM), white underlined links, v-html preserved for trusted i18n |
@@ -6070,4 +6070,141 @@ Replaces 1a LandingView (minimal MVP) with long-form marketing site Cluster A (H
 - **#43 STEP 0 bootstrap branch verify** — 11th occurrence resolved via user-authorized Option A switch. Stream 1 formalization deferred per scope discipline.
 - **#45 metadata triple-verify** — Phase 0 inventory cross-checked twice during execution; no false-positive inventory issues.
 
-**Streak:** 3 → 4 (continued clean from 1a + 1b + 8a — zero hot-fixes, all gates approved on first pass; interrupt fix during G2 was scope refinement, not regression).
+**Streak:** 3 → 4 at closure (continued clean from 1a + 1b + 8a — zero hot-fixes within the sub-epic; interrupt fix during G2 was scope refinement, not regression).
+
+**8b Hot-fix #1 — body overflow regression (post-deploy, retroactive doc):**
+
+Streak 4 → **0** (broken). Single post-merge production hot-fix discovered after CL3 push.
+
+- **Symptom:** `hexlash.com/` (MarketingView) had no document scroll. User reported "скролл вообще не работает" on production.
+- **Root cause:** `src/assets/main.css:41` had global `body { overflow: hidden }` rule (pre-existing since pre-1a era). 1a LandingView fit in 100vh viewport (no scroll need) — masked the bug. MarketingView's 3 sections (Hero + About + Footer) all measured >100vh combined, exposing the global overflow lock.
+- **Why Phase 0 didn't catch it:** investigation focused on view-level CSS (LandingView, AppV2 namespace, route-level overflow). `body` in `assets/main.css` is application-wide root layer — not scoped to any route. Never appeared in route-coupled or component-coupled inventories.
+- **Fix:** removed `body { overflow: hidden }` global rule; replaced with a comment block documenting per-surface overflow ownership (`.app-v2` for `/play/*`, `.background` for legacy v1 views per "Scrollable View Pattern", `.auth-layout` for `/auth/*`, `.marketing` for `/` — natural document scroll, no override). Each surface manages its own overflow explicitly.
+- **Hot-fix commit:** `80dbd59` (`fix(layout): allow document scroll on marketing route`).
+- **Lesson #46 PROMOTED** as direct outcome (see Sub-Epic 8c CLOSED entry below).
+
+This hot-fix retroactively breaks the 4-sub-epic streak (1a → 1b → 8a → 8b CLOSED) at the post-deploy gate. Streak resets to 0; 8c rebuilds from 0 → 1.
+
+### Sub-Epic 8c — Marketing Site Cluster B (✅ CLOSED)
+
+Closes Эпик 8 (final marketing site sub-epic). Extends MarketingView with 5 new sections (Gameplay + Token + Roadmap + Partners + Subscribe) between 8b's About and Footer. Preserves Hero + About + Footer verbatim from 8b. Composable extraction (`useScrollFadeIn`) consolidates IntersectionObserver fade-in pattern shared across 7 sections.
+
+**What changed:**
+- NEW `src/composables/useScrollFadeIn.js` (~60 lines, IntersectionObserver one-shot fade-in trigger, threshold 0.3 default, fallback for environments without API)
+- MODIFIED `src/views/MarketingView.vue` (extended ~470 → ~915 lines, 5 new section blocks + 6 useScrollFadeIn destructures + scoped styles + media queries)
+- Hot-fix `80dbd59` from 8b post-deploy retroactively documented above (no further code touch in 8c)
+
+**5 new sections (between 8b About and Footer):**
+
+- **Gameplay (C2):** "ENTER THE OCTAGON" heading + 16:9 aspect-ratio placeholder card + descriptive copy ("Train. Strategize. Fight."). Placeholder ready for video/screenshot via Stream 4 polish.
+- **Token (C3):** "$HEX TOKEN" + ticker placeholder + "Powered by Base" reference. Coming-soon framing per decision #2 — no live token data, no DEX integration. Stream 5 sub-epic territory for full tokenomics.
+- **Roadmap (C4):** 4 phase cards (Q1/Q2/Q3/Q4 placeholders + descriptive bullets). CSS Grid responsive: 4 cols (≥1024px) → 2 cols (≥640px) → 1 col (mobile). Per-phase fade-in via composable.
+- **Partners (C5):** "PARTNERSHIPS" + "COMING SOON" centered placeholder. Empty state explicitly framed as coming soon (no fake logos, no placeholder grid).
+- **Subscribe (C6):** "STAY UPDATED" + email input form (HTML5 type=email + required) + Subscribe button. Submit handler → Vuex `master/setInfoMessage` MUTATION (NOT action — Lesson #11 catch documented in adaptation-tier section below). Toast displays "Coming soon — stay tuned!" 3s auto-dismiss. Email field clears + button disabled 600ms post-submit (debounce against rapid resubmit).
+
+**KEPT unchanged (decoupled per locked decisions):**
+- 8b Hero / About / Footer sections — 8c does not touch these
+- 1a beforeEnter cascade pattern (`/` authed → `/play`)
+- `useDocumentMeta` SEO meta from 8b — works unchanged for extended sections
+- Route name `Home`, route path `/`
+
+**Decisions locked (8c-specific, 8 items):**
+1. Composable extraction first (C1) — extract `useScrollFadeIn` BEFORE adding 5 new sections to avoid 5x duplication of IntersectionObserver inline logic
+2. Section ordering: Gameplay → Token → Roadmap → Partners → Subscribe → (8b Footer)
+3. Token section framing: $HEX placeholder + Base chain mention (no live ticker, no DEX widget)
+4. Roadmap content: 4 generic phase cards (Q1/Q2/Q3/Q4 placeholders) — real roadmap deferred to user content pass
+5. Partners section: COMING SOON placeholder (no fake logos)
+6. Subscribe infrastructure: Vuex toast only — no email collection backend (Mailchimp/SendGrid deferred to Stream 3)
+7. Single-file pattern preserved (no per-section component split — file size 915 lines under 1500-line split threshold)
+8. STOP gates: G1 deferred to G2 per Phase 0 ТЗ — single G2 covers all 6 functional commits
+
+**Files changed (2 unique files):**
+- NEW: `src/composables/useScrollFadeIn.js` (~60 lines)
+- MODIFIED: `src/views/MarketingView.vue` (~470 → ~915 lines, +445 net)
+
+**Bundle impact:** MarketingView lazy chunk grew proportionally (~+8kb gzip). No new npm deps. No new global CSS. No backend touch.
+
+**Commit chain (6 functional + 3 closure):**
+- Phase 0 (`ace3733`): docs(8c): Phase 0 investigation report
+- C1 (`08e3823`): feat(marketing): extract useScrollFadeIn composable + refactor About to use it
+- C2 (`4c39c68`): feat(marketing): add Gameplay section with 16:9 video placeholder
+- C3 (`8fc666b`): feat(marketing): add Token section with $HEX placeholder + Base reference
+- C4 (`f9dd125`): feat(marketing): add Roadmap section with 4 phase cards
+- C5 (`140df60`): feat(marketing): add Partners section with COMING SOON placeholder
+- C6 (`cb794a7`): feat(marketing): add Subscribe section with email form + toast
+- CL1 (this commit): docs(8c): CLAUDE.md sync — 8c closure + 8b hot-fix doc + Lesson #46 formalization
+- CL2 (next): docs(8c): final report (Эпик 8 closure milestone)
+- CL3 (next): docs(8c): handoff to Эпик 9 / Stream 1 cleanup
+
+**Lessons applied:**
+
+- **#11 pre-edit + post-edit grep** — every commit. C6 surfaced 2 ТЗ template errors as adaptation-tier per Lesson #35:
+  - **Catch #1:** ТЗ template said `store.dispatch('master/setInfoMessage', '...')`. Fresh-grep verified all consumers use `store.commit('master/setInfoMessage', {...})` — `setInfoMessage` is a MUTATION (defined in `mutations: {}` block of `masterState.js`), not an action. Adaptation: switched to `store.commit` with plain object literal `{ text, timeout, showButton }` mirroring ChallengeNotification precedent. Would have caused silent toast failure (Vuex emits warning, no UI feedback).
+  - **Catch #2:** ТЗ template said `class="hex-button marketing-subscribe__button"`. Pre-edit grep confirmed `.hex-button` does NOT exist — global utility classes are `.hex-btn` + `.hex-btn-primary`. Adaptation: scoped custom `.marketing-subscribe__button` mirroring 8b Hero CTA aesthetic (custom `.marketing-hero__cta`, scoped). CSS comment block documents the divergence.
+  - C1 (composable extraction): false-positive grep for `IntersectionObserver` returned 2 hits — both inside own comment block narrating refactor history. False-positive recognition mature (1b/8a/8b/8c repeating pattern).
+
+- **#18 STOP gates** — G1 deferred to G2 per Phase 0 ТЗ direction. G2 manual smoke covered all 6 functional commits in single approval pass. G2 approved on faith for composable structural identity (C1) plus visual review for 5 new sections.
+
+- **#32 convention discovery** — `.marketing-*` BEM prefix continues 8b precedent. `useScrollFadeIn` composable signature `(elementRef, { threshold = 0.3 } = {}) → { visible }` mirrors `useDocumentMeta` minimal-API ergonomic. Subscribe form Vuex toast invocation mirrors ChallengeNotification + InfoMessage existing consumers (commit pattern, not dispatch).
+
+- **#33 cherry-pick chain** — N/A. 8c is FE-only, no backend touch. Continue stack incremental merge pattern (per 1b precedent abandoning Lesson #33 cherry-pick) continues.
+
+- **#43 STEP 0 bootstrap branch verify** — **12th cumulative occurrence**. Sub-epic 8c bootstrapped on harness fresh-slug `claude/investigate-marketing-site-rIC7v`; ТЗ specified switch to fresh `claude/investigate-marketing-cluster-b-xX4a9` from main HEAD `c5c913a` (post-8b CL3 + hot-fix merge). User-authorized Option A switch. Recurring pattern across 12 sub-epics — Stream 1 cleanup carry-over: formalize as automatic bootstrap procedure in CLAUDE.md methodology section (currently surfaced manually each time as Recovery #N).
+
+- **#45 Phase 0 metadata triple-verify** — Phase 0 inventory (consumer counts, file paths, function signatures, Vuex action vs mutation distinctions) triple-verified pre-edit. Caught Lesson #11 catch #1 (mutation vs action) at C6 pre-edit before write — Phase 0 had not flagged the dispatch-vs-commit distinction explicitly, ТЗ template inherited the imprecision.
+
+- **#46 NEW PROMOTED** — Document-level CSS reflex (formalized below).
+
+#### Lesson #46 PROMOTED — Document-level CSS reflex
+
+**Statement:** When investigating a route-level visual or layout regression, expand inventory scope from view-coupled / component-coupled CSS to **application-wide root layers** (`html`, `body`, root containers in `assets/main.css` or equivalent global entry sheets) **before** declaring root cause located. Document-level rules (`overflow`, `height`, `background-color`, `font-size`, `margin: 0` resets, `box-sizing` defaults) propagate to every route invisibly and are easy to overlook when grepping by route name, view name, or component name.
+
+**Mitigation procedure (mandatory Phase 0 subsection candidate, pending occurrence #2 promotion to mandatory):**
+
+For any sub-epic touching layout, scroll, viewport, or page-level visual character:
+
+1. **Inventory `body { ... }` rules** across `src/assets/main.css`, `src/styles/*.css`, and any global entry sheets imported in `main.js`. Grep for `^body\s*{`, `^html\s*{`, `^:root\s*{`, `^\*\s*{` (universal selector resets).
+2. **Inventory document-level positioning / overflow / height** rules — `position: fixed` on root containers (`.app-v2`, `.background`, `.auth-layout`), `height: 100vh` / `100dvh` declarations, `overflow: hidden` cascades.
+3. **For each route under sub-epic scope**, identify which surface wrapper (`.app-v2` / `.background` / `.auth-layout` / `.marketing` / etc.) the route mounts into, and verify that wrapper's overflow + height policy matches the route's content shape.
+4. **Diff against prior view assumptions** — if a route swap replaces a viewport-fitting view (no scroll) with a scrolling view, document-level overflow locks become load-bearing surprises.
+
+**Origin (Sub-epic 8b post-deploy hot-fix):** `body { overflow: hidden }` global in `src/assets/main.css:41` was load-bearing for 1a LandingView (fit in 100vh). 8b MarketingView's 3 sections summed >100vh and required document scroll. Phase 0 + C1-C5 + G2 visual review all missed it because investigation focused on view + component + route layers — the global `body` rule never appeared in any inventory grep keyed by `Marketing`, `LandingView`, `route`, `MarketingView.vue`, or `assets/`.
+
+**Origin commit (hot-fix):** `80dbd59` (`fix(layout): allow document scroll on marketing route`).
+
+**Streak impact:** retroactively broke the 4-sub-epic streak (1a → 1b → 8a → 8b) at post-deploy gate; 8c rebuilds from 0.
+
+**Promotion criterion:** PROMOTED first-occurrence with explicit hot-fix evidence + retroactive streak break documented. Mandatory Phase 0 subsection criterion (Lesson #45 sibling pattern) — promote to **6th-tier mandatory Phase 0 subsection** ("Document-level CSS audit") on occurrence #2. Tracking forward as candidate-tier for Эпик 9+ until 2nd occurrence empirically reinforces.
+
+**Tally:** 38 → **39** lessons promoted.
+
+**Carry-overs forward (cumulative 5 sub-epics: 1a + 1b + 8a + 8b + 8c):**
+
+| Stream | Item | Source |
+|---|---|---|
+| Эпик 9 / Stream 1 cleanup | Lesson #43 STEP 0 formalization (12 cumulative occurrences across 5U/5S/Sub-epic 2/4a/4b/5/6/7/1b/8a/8b/8c) — formalize as automatic bootstrap procedure in CLAUDE.md methodology section instead of surfacing manually each sub-epic as Recovery #N | 1b/8a/8b/8c carry-over |
+| Эпик 9 / Stream 1 cleanup | `master/resetPassword` Vuex action + `masterService.resetPassword()` + `state.resetState` + `PasswordResetStateModel` orphan chain (function unreachable post-1b C5) | 1b C5 + C10 |
+| Эпик 9 / Stream 1 cleanup | `master/saveTelegramFlag` action + `setIsTelegram` phantom mutation (silent no-op + Vuex warning, localStorage actual source via `masterService.setTelegram`) | 1b Phase 0 §7.1 |
+| Эпик 9 / Stream 1 cleanup | Help anonymous-access UX caveat (`/help` cascades through `/play/help` which may auth-gate anonymous users) | 8b Phase 0 §6.4 |
+| Эпик 9 / Stream 1 cleanup | Stale doc comments referencing deleted v1 views (~25-30 comment cleanup pass post-Эпик 6 cutover) | 6 Sub-epic 8 forward |
+| Stream 3 (BE features) | Password reset full backend (email-based — needs SendGrid/Postmark/SMTP decision). Currently `POST /user/reset` returns 501 | 1b decision #4 |
+| Stream 3 (BE features) | Subscribe email collection backend (Mailchimp/SendGrid/in-house — currently FE-only Vuex toast "Coming soon — stay tuned!") | 8c decision #6 |
+| Stream 4 Visual Polish | Auth refinement — match concept screenshot (background blur fighters image, layout proportions tighter, possible red CTA color variant) | 1b G2 user feedback |
+| Stream 4 Visual Polish | Proper og:image banner (1200×630 dimensions per Open Graph best practice — currently 1024² square logo placeholder) | 8b decision #2 + Phase 0 §6.5 |
+| Stream 4 Visual Polish | Hero hex pattern tempo / opacity tuning if user feedback during 8c live review | 8b decision #4 acceptance |
+| Stream 4 Visual Polish | Gameplay section 16:9 placeholder → real video / screenshot asset | 8c decision #2 |
+| Stream 4 Visual Polish | Roadmap content from generic Q1-Q4 placeholders → real product roadmap once user supplies content | 8c decision #4 |
+| Stream 4 Visual Polish | Partners section COMING SOON → real partner logos when partnerships sign | 8c decision #5 |
+| Stream 5 (Token launch) | $HEX Token section live ticker + DEX widget + tokenomics page (currently placeholder + Base chain reference only) | 8c decision #3 |
+| Stream 6 (Web3) | Connect Wallet auth — actual SIWE backend integration. Currently FE button shows "Coming soon" toast | 1b decision #5 |
+| Эпик 6 deferred | Carry-overs #38-#46 (Эпик 6 Sub-epic 8 forward — see Sub-epic 8 closure entry above) | Эпик 6 Sub-epic 8 |
+
+**Эпик 8 closure milestone — all 3 sub-epics CLOSED:**
+- Sub-epic 8a — `/v2` → `/play` URL refactor ✅
+- Sub-epic 8b — Marketing Site Cluster A (Hero + About + Footer + scaffold) ✅ (hot-fix `80dbd59` retroactively breaks streak 4 → 0)
+- Sub-epic 8c — Marketing Site Cluster B (Gameplay + Token + Roadmap + Partners + Subscribe) ✅
+
+Final report (CL2): `docs/visual-migration/EPIC8_SUBEPIC_8C_FINAL_REPORT.md` covers Эпик 8 closure milestone retrospective.
+Handoff (CL3): `docs/visual-migration/HANDOFF_EPIC9_OR_STREAM_1_CHAT_HANDOFF.md` covers next-direction options (recommended: Stream 1 cleanup batch).
+
+**Streak:** 0 → **1** ✅ (8c rebuilds clean from post-8b hot-fix break — zero hot-fixes in 8c, zero recoveries, zero reactive splits, zero STOP escalations within sub-epic; G2 single-pass approval; visual sign-off on Vercel preview pending; 2 ТЗ template errors caught by Lesson #11 reflex resolved adaptation-tier per Lesson #35).
