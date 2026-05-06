@@ -69,6 +69,34 @@
       </div>
     </section>
 
+    <section class="marketing-roadmap" ref="roadmapRef">
+      <div class="marketing-roadmap__inner" :class="{ 'is-visible': roadmapVisible }">
+        <h2 class="marketing-roadmap__heading">ROADMAP</h2>
+        <div class="marketing-roadmap__grid">
+          <div class="marketing-roadmap__card">
+            <span class="marketing-roadmap__card-num">01</span>
+            <h3 class="marketing-roadmap__card-title">Phase 1</h3>
+            <p class="marketing-roadmap__card-text">Coming soon</p>
+          </div>
+          <div class="marketing-roadmap__card">
+            <span class="marketing-roadmap__card-num">02</span>
+            <h3 class="marketing-roadmap__card-title">Phase 2</h3>
+            <p class="marketing-roadmap__card-text">Coming soon</p>
+          </div>
+          <div class="marketing-roadmap__card">
+            <span class="marketing-roadmap__card-num">03</span>
+            <h3 class="marketing-roadmap__card-title">Phase 3</h3>
+            <p class="marketing-roadmap__card-text">Coming soon</p>
+          </div>
+          <div class="marketing-roadmap__card">
+            <span class="marketing-roadmap__card-num">04</span>
+            <h3 class="marketing-roadmap__card-title">Phase 4</h3>
+            <p class="marketing-roadmap__card-text">Coming soon</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <footer class="marketing-footer" ref="footerRef">
       <ul class="marketing-footer__socials" aria-label="Social media">
         <li>
@@ -126,6 +154,7 @@ const heroRef = ref(null);
 const aboutRef = ref(null);
 const gameplayRef = ref(null);
 const tokenRef = ref(null);
+const roadmapRef = ref(null);
 const footerRef = ref(null);
 
 // 8c C1 — IntersectionObserver fade-in via composable (refactored from
@@ -137,6 +166,7 @@ const footerRef = ref(null);
 const { visible: aboutVisible } = useScrollFadeIn(aboutRef);
 const { visible: gameplayVisible } = useScrollFadeIn(gameplayRef);
 const { visible: tokenVisible } = useScrollFadeIn(tokenRef);
+const { visible: roadmapVisible } = useScrollFadeIn(roadmapRef);
 
 useDocumentMeta({
   title: 'Hexlash',
@@ -163,6 +193,7 @@ function onPlayClick() {
 .marketing-about,
 .marketing-gameplay,
 .marketing-token,
+.marketing-roadmap,
 .marketing-footer {
   position: relative;
   width: 100%;
@@ -362,6 +393,106 @@ function onPlayClick() {
 @media (max-width: 480px) {
   .marketing-token {
     padding: 80px 16px;
+  }
+}
+
+/* === ROADMAP === */
+.marketing-roadmap {
+  background: var(--hex-bg-dark);
+  padding: 100px 24px;
+}
+
+.marketing-roadmap__inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.marketing-roadmap__inner.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.marketing-roadmap__heading {
+  margin: 0 0 56px;
+  text-align: center;
+  font-size: clamp(32px, 5vw, 56px);
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: var(--hex-text-primary);
+  text-transform: uppercase;
+}
+
+.marketing-roadmap__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+
+.marketing-roadmap__card {
+  padding: 32px 24px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--hex-border-default, rgba(255, 255, 255, 0.08));
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.marketing-roadmap__card:hover {
+  border-color: rgba(255, 6, 111, 0.3);
+  transform: translateY(-4px);
+}
+
+.marketing-roadmap__card-num {
+  font-family: var(--hex-font-display, 'Impact', sans-serif);
+  font-size: 48px;
+  font-weight: 900;
+  color: var(--hex-primary);
+  opacity: 0.5;
+  line-height: 1;
+  margin-bottom: 16px;
+}
+
+.marketing-roadmap__card-title {
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--hex-text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.marketing-roadmap__card-text {
+  margin: 0;
+  font-size: 14px;
+  color: var(--hex-text-muted);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Tablet: 4 → 2 cards per row */
+@media (max-width: 900px) {
+  .marketing-roadmap__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Mobile: 2 → 1 card per row */
+@media (max-width: 480px) {
+  .marketing-roadmap {
+    padding: 80px 16px;
+  }
+  .marketing-roadmap__grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .marketing-roadmap__heading {
+    margin-bottom: 40px;
   }
 }
 
