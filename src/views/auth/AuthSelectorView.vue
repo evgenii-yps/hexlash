@@ -44,59 +44,89 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import AuthTabs from '@/components/auth/AuthTabs.vue';
 import ProviderSelector from '@/components/auth/ProviderSelector.vue';
 import MoreOptions from '@/components/auth/MoreOptions.vue';
 import EmailForm from '@/components/auth/EmailForm.vue';
 import ReferralOverlay from '@/components/auth/ReferralOverlay.vue';
 
-// Phase 1: skeleton — state defined but transitions are stubbed.
-// Phase 2 wires screen transitions, mode-from-route, router.replace.
-// Phase 3 wires Vuex submits, toasts, localStorage referral.
+// Phase 2: state machine wired (screen transitions + mode-from-route + router.replace).
+// Phase 3 will wire Vuex submits, toasts, localStorage referral.
 
+const route = useRoute();
+const router = useRouter();
+
+// Initial mode derived from current path. /auth/login → 'login', /auth/signup → 'signup'.
 const screen = ref('provider'); // 'provider' | 'more' | 'email'
-const mode = ref('login');       // 'login' | 'signup'
+const mode = ref(route.path === '/auth/signup' ? 'signup' : 'login');
 const referralOpen = ref(false);
 const loading = ref(false);
 const serverError = ref('');
 
-// --- stubs (Phase 2/3 will implement) ---
+// Watch route → keep mode in sync. Handles browser back/forward + manual URL paste
+// + redirect from /auth (bare) → /auth/login. Guard prevents infinite loop with onTabChange.
+watch(() => route.path, (newPath) => {
+  const targetMode = newPath === '/auth/signup' ? 'signup' : 'login';
+  if (targetMode !== mode.value) {
+    mode.value = targetMode;
+  }
+  // Note: screen state preserved across mode change (per TZ §3).
+});
 
-function onTabChange(_newMode) {
-  // Phase 2: switch mode + router.replace
+// --- handlers ---
+
+function onTabChange(newMode) {
+  if (newMode === mode.value) return; // no-op guard
+  mode.value = newMode;
+  router.replace(newMode === 'login' ? '/auth/login' : '/auth/signup');
+  // serverError clears when switching modes — stale errors from old mode shouldn't bleed.
+  serverError.value = '';
 }
 
-function onProviderSelect(_provider) {
-  // Phase 2/3: 'google'/'x'/'web3' → toast; 'more' → screen='more'
+function onProviderSelect(provider) {
+  if (provider === 'more') {
+    screen.value = 'more';
+    return;
+  }
+  // 'google' | 'x' | 'web3' — Phase 3 will emit "coming soon" toast.
 }
 
-function onMoreSelect(_provider) {
-  // Phase 2/3: 'email' → screen='email'; 'farcaster'/'discord' → toast
+function onMoreSelect(provider) {
+  if (provider === 'email') {
+    screen.value = 'email';
+    serverError.value = ''; // fresh form
+    return;
+  }
+  // 'farcaster' | 'discord' — Phase 3 will emit "coming soon" toast.
 }
 
 function onBackToProviders() {
-  // Phase 2: screen='provider'
+  screen.value = 'provider';
 }
 
 function onBackToMore() {
-  // Phase 2: screen='more'
+  screen.value = 'more';
+  serverError.value = ''; // clear form-level error on back
 }
 
 function onReferralOpen() {
-  // Phase 2: referralOpen=true
+  referralOpen.value = true;
 }
 
 function onReferralClose() {
-  // Phase 2: referralOpen=false
+  referralOpen.value = false;
 }
 
 function onReferralApply(_code) {
-  // Phase 3: localStorage write + close
+  // Phase 3: localStorage.setItem('hexlash_referral_code', _code) + close.
+  // Phase 2 stub: just close so UX flows.
+  referralOpen.value = false;
 }
 
 function onEmailSubmit(_payload) {
-  // Phase 3: dispatch master/login or master/register
+  // Phase 3: dispatch master/login or master/register.
 }
 </script>
 
