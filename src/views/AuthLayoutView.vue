@@ -15,7 +15,7 @@
       </router-link>
     </header>
 
-    <!-- Form slot via router-view (LoginView / SignupView mount here) -->
+    <!-- Form slot via router-view (AuthSelectorView mounts here for both /auth/login and /auth/signup) -->
     <main class="auth-layout__main">
       <router-view v-slot="{ Component }">
         <transition name="auth-fade" mode="out-in">
