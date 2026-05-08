@@ -6208,3 +6208,42 @@ Final report (CL2): `docs/visual-migration/EPIC8_SUBEPIC_8C_FINAL_REPORT.md` cov
 Handoff (CL3): `docs/visual-migration/HANDOFF_EPIC9_OR_STREAM_1_CHAT_HANDOFF.md` covers next-direction options (recommended: Stream 1 cleanup batch).
 
 **Streak:** 0 → **1** ✅ (8c rebuilds clean from post-8b hot-fix break — zero hot-fixes in 8c, zero recoveries, zero reactive splits, zero STOP escalations within sub-epic; G2 single-pass approval; visual sign-off on Vercel preview pending; 2 ТЗ template errors caught by Lesson #11 reflex resolved adaptation-tier per Lesson #35).
+
+---
+
+#### Lesson #43 FORMALIZED — STEP 0 bootstrap branch verification (α + β sub-variants)
+
+**Statement:** Every sub-epic Phase 0 begins with explicit branch + SHA verification against expected continue-stack handoff. Three outcomes: same-content adaptation-tier proceed, real divergence STOP, or new clean fresh-branch start.
+
+**Mitigation procedure (mandatory at Phase 0 STEP 0):**
+
+1. Run:
+   ```
+   git fetch origin
+   git status -uno
+   git branch --show-current
+   git log -1 --format="%H %s"
+   git rev-parse origin/main
+   git diff origin/main..HEAD --stat   # or vs expected SHA
+   ```
+
+2. Classify outcome by variant:
+   - **α — harness slug variance (12 occurrences as of Stream 1):** harness assigned fresh slug X, expected continue-stack slug Y. SHA + content identical → adaptation-tier proceed. Log briefly without Recovery counter.
+   - **β — post-merge label drift (1 occurrence as of Stream 1, this Phase 0):** predecessor session work merged via PR; current branch becomes `main - N merge commits`; content-identical to origin/main. SHA differs by merge commit only, `git diff` empty → adaptation-tier proceed.
+   - **γ — real divergence:** SHA differs AND `git diff` non-empty → STOP, surface STEP 0 result block to user, await decision (switch / proceed / cancel).
+
+3. Output STEP 0 result block in Phase 0 report (always, regardless of variant):
+   ```
+   STEP 0 result:
+   - Branch: <name>
+   - HEAD SHA: <hash>
+   - Content diff: <empty | N files>
+   - Variant: <α | β | γ>
+   - Decision: <proceed | switch | stop>
+   ```
+
+**Origin (cumulative):** 12 α occurrences (5U / 5S / Sub-epic 2 / 4a / 4b / 5 / 6 Phase 0 / 6 CL1 / 7 / 1b / 8a / 8b / 8c) + 1 β occurrence (Stream 1 Phase 0 — predecessor auth-redesign series merged via PR #369 between sub-epic boundaries, target branch became `c6ca2cc - 1`).
+
+**Recovery counter retirement:** previously each α/β occurrence was logged as "Recovery #N" in the lesson tally. Going forward, only γ-tier divergence counts as a Recovery (real STOP event). α/β = silent adaptation, mentioned briefly in STEP 0 result block, no counter increment.
+
+**Tally:** 39 lessons promoted (no change — #43 was already promoted in 4b; this is canonical formalization, not new promotion).
