@@ -174,9 +174,11 @@ function onSubmit() {
 
 .email-form__back {
   position: absolute;
-  top: -8px;
-  left: -4px;
-  padding: 6px 8px;
+  top: -14px;
+  left: -10px;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 12px 14px;
   background: transparent;
   border: none;
   color: var(--hex-text-muted);

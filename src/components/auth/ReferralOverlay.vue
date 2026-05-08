@@ -110,14 +110,17 @@ onBeforeUnmount(() => {
 
 .referral-overlay__close {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 32px;
-  height: 32px;
+  top: 4px;
+  right: 4px;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: transparent;
   border: none;
   color: var(--hex-text-muted);
-  font-size: 22px;
+  font-size: 24px;
   line-height: 1;
   cursor: pointer;
   transition: color 0.15s ease;

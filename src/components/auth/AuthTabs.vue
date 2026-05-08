@@ -48,7 +48,8 @@ defineEmits(['change']);
 
 .auth-tabs__tab {
   position: relative;
-  padding: 10px 4px;
+  min-height: 44px;
+  padding: 12px 16px;
   background: transparent;
   border: none;
   color: var(--hex-text-muted);
