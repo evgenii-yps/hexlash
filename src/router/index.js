@@ -13,15 +13,19 @@ export const authRoutes = [
         path: '/auth',
         component: () => import('@/views/AuthLayoutView.vue'),
         children: [
+            // Эпик 9 auth-redesign: /auth/login + /auth/signup share single
+            // AuthSelectorView (provider-selector with state machine: provider/more/email).
+            // Route names 'Login' and 'Signup' preserved — router.beforeEach line ~296
+            // uses next({name: 'Login'}) for unauth redirect.
             {
                 path: 'login',
                 name: 'Login',
-                component: () => import('@/views/auth/LoginView.vue'),
+                component: () => import('@/views/auth/AuthSelectorView.vue'),
             },
             {
                 path: 'signup',
                 name: 'Signup',
-                component: () => import('@/views/auth/SignupView.vue'),
+                component: () => import('@/views/auth/AuthSelectorView.vue'),
             },
             // Bare /auth → redirect to /auth/login
             {path: '', redirect: '/auth/login'},
