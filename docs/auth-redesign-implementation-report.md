@@ -320,3 +320,75 @@ src/
 | 5 | (this commit) | docs(auth): add implementation report |
 
 All pushed to `claude/auth-ui-redesign-GnjpC`. PR ready.
+
+---
+
+## Follow-ups / Tech debt
+
+Track these as separate backlog items / issues — **NOT introduced by this PR**, but surfaced or left open in scope-disciplined fashion. Owner: project maintainer (post-merge).
+
+### 1. `TODO(auth-email)` — extend BE register payload to accept email
+
+**Where:** `EmailForm.vue:69` (HTML comment) + `EmailForm.vue:163` + `AuthSelectorView.vue:59,171` (cross-references).
+
+**What:** Backend `POST /v1/auth/register` does not currently accept `email` field. Email is collected in signup UI (3-field form: handle / email / password) but only `{login, password}` is sent. Triple-layer defense (EmailForm emit destructure → dispatch destructure → `masterService.register` field destructure) ensures email never leaks to BE.
+
+**Resolution path:**
+1. Backend: extend `POST /auth/register` to accept optional `email` field + validate format + persist to `User.email` (existing column).
+2. Frontend: uncomment `email: form.email` in `EmailForm.vue:163`.
+3. Frontend: extend `onEmailSubmit` dispatch in `AuthSelectorView.vue:175` — add `email: payload.email`.
+4. Frontend: extend `masterService.register` destructure (line 147-151).
+5. Remove all 3 `TODO(auth-email)` comments.
+
+**Until then:** email is UI-only collection (potential future tech debt if BE never extends). Suggested priority: **medium** — email collection is part of TZ §2 D (signup mode 3 fields).
+
+### 2. 5 proposed semantic tokens in `hexlash-ui.css`
+
+Components currently use temp fallbacks. Adding these tokens centralises the contract and lets `--hex-*` grep stay clean.
+
+| Token | Current fallback | Use |
+|---|---|---|
+| `--hex-bg-elev` | `--hex-bg-light` (#1A1A1A) | Surface above card (provider buttons, inputs) |
+| `--hex-bg-elev-hover` | inline `rgba(255,255,255,0.06)` | Hover state for elevated surfaces |
+| `--hex-focus-ring` | `--hex-primary-glow` (rgba 0.5, saturated) | Semantic focus ring (typically rgba 0.30-0.35) |
+| `--hex-danger-soft` | inline `rgba(255,51,51,0.10)` | Soft danger background tint |
+| `--hex-text-on-primary` | `#fff` hardcode (3 sites) | White text on pink CTA — closes 1 ⚠️ in TZ §14 checklist |
+
+**Resolution path:** add 5 tokens to `hexlash-ui.css` `:root`; refactor 7 auth files (+ any future consumers) to reference tokens; remove 3 `#fff` hardcodes. Suggested priority: **low** — current behaviour correct, only design-system hygiene.
+
+### 3. Referral storage persistence edge case
+
+**Where:** `localStorage['hexlash_referral_code']` lifecycle.
+
+**What:** If user enters referral in overlay → Apply → leaves /auth without registering → key remains until next register attempt (potentially by a different person on shared device). Same behaviour exists in `/r/:username` redirect (router.js:64). NOT introduced by this PR — `masterService.register:152` only clears on successful POST.
+
+**Possible mitigations (all out of scope for this PR):**
+- Add TTL: store as `{code, expiresAt}` JSON, expire after 24h on read
+- Clear on logout / Login screen mount (overlay close-without-register intent unclear)
+- Move to sessionStorage instead of localStorage (persists per-tab only — strong fix but breaks `/r/:username` redirect-then-close-tab flow)
+
+Suggested priority: **low** — security/UX edge case, not a regression.
+
+### 4. Pre-merge checklist
+
+For maintainer before merging this PR:
+
+- [ ] CI build green on PR (Vercel preview deploy)
+- [ ] Smoke test on staging (if exists): roundtrip `login → /play`, `signup → /play`, `signup with handle taken → server error in alert`, `referral roundtrip with network tab → referralCode in payload + localStorage cleared post-success`
+- [ ] `router.beforeEach` line ~296 unauth redirect via `next({name: 'Login'})` still works (route name preserved Phase 4 — verified statically)
+- [ ] Rollback plan ready: `git revert b46eee6 7754fdb 76f42b6 b9b9666 ec25731 fb1c43e` (6 commits in reverse) → `git push`. Restores legacy LoginView/SignupView from working tree, AuthLayoutView comment, router children.
+
+### Suggested PR description block
+
+For copy-paste into GitHub PR description:
+
+```markdown
+## Follow-ups / Tech debt
+
+Backlog items surfaced during this PR — NOT regressions, NOT in scope for this merge.
+
+1. **TODO(auth-email):** extend BE `POST /v1/auth/register` to accept `email`; uncomment 1 line in `EmailForm.vue:163` + 2 destructure expansions. See `docs/auth-redesign-implementation-report.md` §Follow-ups #1.
+2. **5 semantic tokens** to add to `hexlash-ui.css`: `--hex-bg-elev`, `--hex-bg-elev-hover`, `--hex-focus-ring`, `--hex-danger-soft`, `--hex-text-on-primary`. Eliminates 3× `#fff` hardcode + inline rgba in 7 auth files. See report §"Proposed additions".
+3. **Referral persistence edge case:** `localStorage['hexlash_referral_code']` cleared only on successful register. Pre-existing project behaviour (also in `/r/:username` redirect). Possible mitigation: TTL or clear-on-logout. See report §"Known existing behavior".
+4. **Pre-merge checklist** in report §"Pre-merge checklist".
+```
