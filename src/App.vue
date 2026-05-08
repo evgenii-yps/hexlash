@@ -50,6 +50,7 @@ import {computed, onBeforeUnmount, onMounted, ref, watch} from "vue";
 import BottomMenu from "@/components/menu/BottomMenu.vue";
 import Logo from "@/components/Logo.vue";
 import store from "@/core/state/store.js";
+import {setTelegram} from "@/core/services/masterService.js";
 import Info from "@/components/Info.vue";
 import NoConnection from "@/components/ui/NoConnection.vue";
 import Error from "@/components/Error.vue";
@@ -209,8 +210,9 @@ onMounted(() => {
     // from auth-side (TelegramLogin.vue, deleted in C6) to app-init-side.
     // Decision #2: KEEP isTelegram adaptive flag (ProfileButtons.vue uses it
     // to hide Wallet button in TG webview per TG store rules).
-    // saveTelegramFlag → masterService.setTelegram() → localStorage 'isTelegramMiniApp'.
-    store.dispatch('master/saveTelegramFlag');
+    // Stream 1 C3: dispatch wrapper removed — direct service call writes
+    // localStorage 'isTelegramMiniApp' (read by ProfileButtons via getTelegram()).
+    setTelegram();
   }
 
   document.addEventListener('visibilitychange', handleVisibilityChange);
