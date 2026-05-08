@@ -46,17 +46,35 @@
 <script setup>
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useStore } from 'vuex';
+import { InfoMessageModel } from '@/core/models/internal/infoMessageModel.js';
 import AuthTabs from '@/components/auth/AuthTabs.vue';
 import ProviderSelector from '@/components/auth/ProviderSelector.vue';
 import MoreOptions from '@/components/auth/MoreOptions.vue';
 import EmailForm from '@/components/auth/EmailForm.vue';
 import ReferralOverlay from '@/components/auth/ReferralOverlay.vue';
 
-// Phase 2: state machine wired (screen transitions + mode-from-route + router.replace).
-// Phase 3 will wire Vuex submits, toasts, localStorage referral.
+// Phase 3: Vuex integration — provider toasts, email submit (login/register),
+// referral localStorage write. Email field still UI-only (BE doesn't accept yet —
+// see TODO in EmailForm.vue). Referral overwrite is intentional per TZ.
 
 const route = useRoute();
 const router = useRouter();
+const store = useStore();
+
+const PROVIDER_LABELS = {
+  google: 'Google',
+  x: 'X',
+  web3: 'Web3 wallet',
+  farcaster: 'Farcaster',
+  discord: 'Discord',
+};
+
+function showComingSoon(provider) {
+  const label = PROVIDER_LABELS[provider] || provider;
+  const msg = InfoMessageModel.withoutButton(`${label} login is coming soon.`, 4000);
+  store.commit('master/setInfoMessage', msg);
+}
 
 // Initial mode derived from current path. /auth/login → 'login', /auth/signup → 'signup'.
 const screen = ref('provider'); // 'provider' | 'more' | 'email'
@@ -90,7 +108,8 @@ function onProviderSelect(provider) {
     screen.value = 'more';
     return;
   }
-  // 'google' | 'x' | 'web3' — Phase 3 will emit "coming soon" toast.
+  // 'google' | 'x' | 'web3' — backend pending, show "coming soon" toast.
+  showComingSoon(provider);
 }
 
 function onMoreSelect(provider) {
@@ -99,7 +118,8 @@ function onMoreSelect(provider) {
     serverError.value = ''; // fresh form
     return;
   }
-  // 'farcaster' | 'discord' — Phase 3 will emit "coming soon" toast.
+  // 'farcaster' | 'discord' — backend pending, show "coming soon" toast.
+  showComingSoon(provider);
 }
 
 function onBackToProviders() {
@@ -119,14 +139,48 @@ function onReferralClose() {
   referralOpen.value = false;
 }
 
-function onReferralApply(_code) {
-  // Phase 3: localStorage.setItem('hexlash_referral_code', _code) + close.
-  // Phase 2 stub: just close so UX flows.
+function onReferralApply(code) {
+  // Overwrite intentional — manual entry in overlay supersedes any pre-existing
+  // value from /r/:username redirect (router.js:64). masterService.register
+  // (line 146) reads this key automatically and clears it after successful register.
+  if (code) {
+    localStorage.setItem('hexlash_referral_code', code);
+  }
   referralOpen.value = false;
 }
 
-function onEmailSubmit(_payload) {
-  // Phase 3: dispatch master/login or master/register.
+async function onEmailSubmit(payload) {
+  loading.value = true;
+  serverError.value = '';
+  try {
+    if (payload.mode === 'login') {
+      // master/login does NOT throw on failure — sets state.loginState.authError
+      // via setLoginState mutation (masterState.js:124). Read after await.
+      // On success, action calls router.push('/') itself.
+      await store.dispatch('master/login', {
+        login: payload.login,
+        password: payload.password,
+      });
+      const authError = store.getters['master/getLoginState']?.authError;
+      if (authError) {
+        serverError.value = authError;
+      }
+    } else {
+      // master/register THROWS on failure (masterState.js:152). Catch below.
+      // On success, action calls router.push('/').
+      // NOTE: email NOT in payload — BE pending. See TODO in EmailForm.vue.
+      // masterService.register reads localStorage['hexlash_referral_code']
+      // automatically and clears it after success.
+      await store.dispatch('master/register', {
+        login: payload.login,
+        password: payload.password,
+      });
+    }
+  } catch (e) {
+    serverError.value = e?.message || 'Something went wrong. Please try again.';
+  } finally {
+    loading.value = false;
+  }
 }
 </script>
 
