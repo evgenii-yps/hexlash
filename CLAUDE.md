@@ -5970,9 +5970,9 @@ URL refactor preparing for Эпик 8 Marketing Site (8b/8c). After 8a: marketin
 **Carry-overs:**
 - **Эпик 8b/8c** — Marketing site (long-form) replaces 1a LandingView at `/`. CL3 handoff documents scope + required user inputs.
 - **Stream 1 cleanup**:
-  - `src/AppV2.vue:24` stale comment ("App.vue v1 mount gated via `!isV2Route` block") — decision #5 skip
+  - ~~`src/AppV2.vue:24` stale comment ("App.vue v1 mount gated via `!isV2Route` block") — decision #5 skip~~ ✅ RESOLVED in Stream 1 C2
   - `src/views-v2/CreateView.vue`, `WalletView.vue`, `AccountView.vue`, `FighterDetailView.vue`, `CreateClan.vue`, `ClanEdit.vue` — collateral comment correction during C3 sed sweep documented (no debt left, but flag if user wants strict revert)
-  - **Lesson #43 STEP 0 formalization** — recurring 10-occurrence pattern; formalize as automatic bootstrap procedure ("При начале нового sub-epic → Step 0 проверка branch. Если на closed continue stack → auto-switch на fresh from main без surfacing").
+  - ~~**Lesson #43 STEP 0 formalization** — recurring 10-occurrence pattern; formalize as automatic bootstrap procedure~~ ✅ RESOLVED in Stream 1 C1 (α/β/γ taxonomy formalized)
 
 **Streak:** 2 → 3 (continued clean from 1a + 1b — zero hot-fixes, all G gates approved on first pass).
 
@@ -6182,11 +6182,8 @@ For any sub-epic touching layout, scroll, viewport, or page-level visual charact
 
 | Stream | Item | Source |
 |---|---|---|
-| Эпик 9 / Stream 1 cleanup | Lesson #43 STEP 0 formalization (12 cumulative occurrences across 5U/5S/Sub-epic 2/4a/4b/5/6/7/1b/8a/8b/8c) — formalize as automatic bootstrap procedure in CLAUDE.md methodology section instead of surfacing manually each sub-epic as Recovery #N | 1b/8a/8b/8c carry-over |
-| Эпик 9 / Stream 1 cleanup | `master/resetPassword` Vuex action + `masterService.resetPassword()` + `state.resetState` + `PasswordResetStateModel` orphan chain (function unreachable post-1b C5) | 1b C5 + C10 |
-| Эпик 9 / Stream 1 cleanup | `master/saveTelegramFlag` action + `setIsTelegram` phantom mutation (silent no-op + Vuex warning, localStorage actual source via `masterService.setTelegram`) | 1b Phase 0 §7.1 |
-| Эпик 9 / Stream 1 cleanup | Help anonymous-access UX caveat (`/help` cascades through `/play/help` which may auth-gate anonymous users) | 8b Phase 0 §6.4 |
-| Эпик 9 / Stream 1 cleanup | Stale doc comments referencing deleted v1 views (~25-30 comment cleanup pass post-Эпик 6 cutover) | 6 Sub-epic 8 forward |
+| Stream 3 (BE features) deferred | Help anonymous-access UX caveat (`/help` cascades through `/play/help` which may auth-gate anonymous users) | 8b Phase 0 §6.4 |
+| Permanent skip | Stale doc comments referencing deleted v1 views (~25-30 comment cleanup pass post-Эпик 6 cutover) — comments rot, low-value drift | 6 Sub-epic 8 forward |
 | Stream 3 (BE features) | Password reset full backend (email-based — needs SendGrid/Postmark/SMTP decision). Currently `POST /user/reset` returns 501 | 1b decision #4 |
 | Stream 3 (BE features) | Subscribe email collection backend (Mailchimp/SendGrid/in-house — currently FE-only Vuex toast "Coming soon — stay tuned!") | 8c decision #6 |
 | Stream 4 Visual Polish | Auth refinement — match concept screenshot (background blur fighters image, layout proportions tighter, possible red CTA color variant) | 1b G2 user feedback |
@@ -6208,3 +6205,109 @@ Final report (CL2): `docs/visual-migration/EPIC8_SUBEPIC_8C_FINAL_REPORT.md` cov
 Handoff (CL3): `docs/visual-migration/HANDOFF_EPIC9_OR_STREAM_1_CHAT_HANDOFF.md` covers next-direction options (recommended: Stream 1 cleanup batch).
 
 **Streak:** 0 → **1** ✅ (8c rebuilds clean from post-8b hot-fix break — zero hot-fixes in 8c, zero recoveries, zero reactive splits, zero STOP escalations within sub-epic; G2 single-pass approval; visual sign-off on Vercel preview pending; 2 ТЗ template errors caught by Lesson #11 reflex resolved adaptation-tier per Lesson #35).
+
+---
+
+#### Lesson #43 FORMALIZED — STEP 0 bootstrap branch verification (α + β sub-variants)
+
+**Statement:** Every sub-epic Phase 0 begins with explicit branch + SHA verification against expected continue-stack handoff. Three outcomes: same-content adaptation-tier proceed, real divergence STOP, or new clean fresh-branch start.
+
+**Mitigation procedure (mandatory at Phase 0 STEP 0):**
+
+1. Run:
+   ```
+   git fetch origin
+   git status -uno
+   git branch --show-current
+   git log -1 --format="%H %s"
+   git rev-parse origin/main
+   git diff origin/main..HEAD --stat   # or vs expected SHA
+   ```
+
+2. Classify outcome by variant:
+   - **α — harness slug variance (12 occurrences as of Stream 1):** harness assigned fresh slug X, expected continue-stack slug Y. SHA + content identical → adaptation-tier proceed. Log briefly without Recovery counter.
+   - **β — post-merge label drift (1 occurrence as of Stream 1, this Phase 0):** predecessor session work merged via PR; current branch becomes `main - N merge commits`; content-identical to origin/main. SHA differs by merge commit only, `git diff` empty → adaptation-tier proceed.
+   - **γ — real divergence:** SHA differs AND `git diff` non-empty → STOP, surface STEP 0 result block to user, await decision (switch / proceed / cancel).
+
+3. Output STEP 0 result block in Phase 0 report (always, regardless of variant):
+   ```
+   STEP 0 result:
+   - Branch: <name>
+   - HEAD SHA: <hash>
+   - Content diff: <empty | N files>
+   - Variant: <α | β | γ>
+   - Decision: <proceed | switch | stop>
+   ```
+
+**Origin (cumulative):** 12 α occurrences (5U / 5S / Sub-epic 2 / 4a / 4b / 5 / 6 Phase 0 / 6 CL1 / 7 / 1b / 8a / 8b / 8c) + 1 β occurrence (Stream 1 Phase 0 — predecessor auth-redesign series merged via PR #369 between sub-epic boundaries, target branch became `c6ca2cc - 1`).
+
+**Recovery counter retirement:** previously each α/β occurrence was logged as "Recovery #N" in the lesson tally. Going forward, only γ-tier divergence counts as a Recovery (real STOP event). α/β = silent adaptation, mentioned briefly in STEP 0 result block, no counter increment.
+
+**Tally:** 39 lessons promoted (no change — #43 was already promoted in 4b; this is canonical formalization, not new promotion).
+
+---
+
+### Stream 1 Cleanup Batch (✅ CLOSED)
+
+Closes 4 carry-overs accumulated через 1b/8a/8b/8c sub-epic chain. Pure cleanup, zero feature work, zero behavior change на user-facing surfaces.
+
+**What changed:**
+
+- **C1** — Lesson #43 FORMALIZED canonical entry в methodology section (α/β/γ taxonomy, 13-occurrence pattern resolution: 12 α + 1 β as of Stream 1 Phase 0)
+- **C2** — `AppV2.vue:24` stale comment refreshed `isV2Route` → `isPlayRoute` (8a rename leftover)
+- **C3** — Vuex orphan chain atomic delete:
+  - `master/resetPassword` action (10 lines) + `masterService.resetPassword()` function (~25 lines, 4× dead `t.value.auth.reset.*` references) + 2 mutations (`setResetState`/`clearResetState`) + getter `getResetState` + state field `resetState` + `PasswordResetStateModel` import + model file `passwordResetStateModel.js` (31 lines)
+  - `master/saveTelegramFlag` action wrapper (3 lines, pure passthrough) + comment block + `App.vue:213` dispatch rewire к direct `setTelegram()` call from masterService named import
+  - `setIsTelegram` phantom commit at `masterService.js:397` (silent no-op + Vuex console warning)
+  - `setTelegram` named import in `masterState.js:10` (became unused after action delete)
+
+**PRESERVED:**
+
+- `masterService.setTelegram()` localStorage write (sans phantom commit) — actual write path для adaptive UI flag
+- `masterService.getTelegram()` — actual reader (used by `ProfileButtons.vue:74,85`)
+- `App.vue:203-216` `window.Telegram.WebApp` adaptive UI detection — re-pointed к direct service call (Phase 0 §2 Option a)
+- BE `POST /v1/user/reset` endpoint (501 response) — Stream 3 carry-over, FE/BE decoupled
+
+**Files (3 modified + 1 deleted):**
+
+- MODIFIED: `CLAUDE.md` (C1 + this CL1 sync), `src/AppV2.vue` (C2 comment), `src/core/state/modules/masterState.js` + `src/core/services/masterService.js` + `src/App.vue` (C3 chain delete + rewire)
+- DELETED: `src/core/models/internal/passwordResetStateModel.js`
+
+**Bundle impact:** main brotli **477.24 kB → 475.75 kB** (-1.49 kB net от dead-code removal, post-G1 drift +0.87 kB confirmed by G2 measurement).
+
+**Commit chain (3 functional + 3 closure):**
+
+1. `7a39d61` — docs(methodology): formalize Lesson #43 with α/β/γ taxonomy
+2. `01ddb42` — refactor(app-v2): refresh stale comment isV2Route → isPlayRoute (**G1 STOP gate**)
+3. `65ef4ee` — feat(cleanup): remove orphan resetPassword + saveTelegramFlag chains (**G2 STOP gate**)
+4. CL1 — docs(stream-1): CLAUDE.md sync (this commit)
+5. CL2 — docs(stream-1): final report
+6. CL3 — docs(stream-1): handoff to next direction
+
+**Carry-overs RESOLVED (4 of 4):**
+
+- ✅ Lesson #43 STEP 0 formalization (12 cumulative α occurrences) — C1
+- ✅ `master/resetPassword` Vuex action + chain — C3
+- ✅ `master/saveTelegramFlag` action + `setIsTelegram` phantom — C3
+- ✅ `AppV2.vue:24` stale comment — C2
+
+**Carry-overs DEFERRED (preserved for future streams):**
+
+- Help anonymous-access UX caveat → Stream 3 (feature work; out of Stream 1 scope per "по рекомендациям b/b/a" decision)
+- Stale doc comments referencing deleted v1 views (~25-30 instances) → permanent skip (low-value drift, comments rot)
+- Manual cleanups → user manual checklist (см. CL2 final report) — GitHub stale branch `fix/remove-telegram-auth-be` + Railway env var `TELEGRAM_BOT_TOKEN`
+
+**Carry-overs surfaced in C3 (DEFERRED — out of Stream 1 scope per Lesson #18):**
+
+- `updateJwtToken` pre-existing dead import at `src/core/state/modules/masterState.js:10` (unused, predates Stream 1, would be ~1 line cleanup в next cleanup batch)
+
+**Lessons applied:**
+
+- **#11 pre-edit + post-edit grep** на каждом commit — multi-set pre-edit (3 sets × C3) + per-file re-grep между sequential edits в `masterState.js` (6 sites bottom-to-top order) + post-edit per-file ZERO-match verification + final cross-codebase ZERO-match сweep. Zero false-positives this run.
+- **#18 STOP-tier scope discipline** — caught `updateJwtToken` dead import in C3 pre-edit grep, deferred forward as separate carry-over rather than fix-on-the-go (different orphan, different scope, different sub-epic).
+- **#32 convention discovery** — App.vue State B (masterService not yet imported); add new named import matching existing double-quoted style `import {x} from "@/path"`.
+- **#43 STEP 0 bootstrap** — 13th occurrence, **1st β-variant** (post-merge label drift via PR #369 merge of auth-redesign series). Resolved Option A switch к fresh `claude/cleanup-stream-1-phase0` from `origin/main` @ `c6ca2cc`. Formalized в C1 with α/β/γ taxonomy.
+- **#45 Phase 0 metadata triple-verify** — 1 catch in §2 (phantom mutation location: handoff hypothesized action body, reality `masterService.js:397` inside `setTelegram()` body). Adaptation-tier resolution, scope unchanged.
+- **#46 Document-level CSS audit** — verified zero CSS impact в Phase 0 §5, no occurrence reinforcement (Stream 1 не touches DOM/CSS).
+
+**Streak:** 1 → **2** ✅ (continued clean от 8c — zero hot-fixes, zero γ-tier recoveries, zero STOP escalations beyond planned G1/G2 gates which both passed first-attempt).

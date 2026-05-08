@@ -2,12 +2,11 @@ import router from "@/router/index.js";
 import {updateMasterToLocalDB} from "@/core/database/masterRepository.js";
 import {LoginStateModel} from "@/core/models/internal/loginStateModel.js";
 import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
-import {PasswordResetStateModel} from "@/core/models/internal/passwordResetStateModel.js";
 import {SignupStateModel} from "@/core/models/internal/signupStateModel.js";
 import {t, setLanguage as setLocaleLanguage} from '@/locales/index.js';
 import * as masterService from "@/core/services/masterService.js";
 import {ErrorMessageModel} from "@/core/models/internal/errorMessageModel.js";
-import {setTelegram, updateJwtToken} from "@/core/services/masterService.js";
+import {updateJwtToken} from "@/core/services/masterService.js";
 import apiClient from "@/core/api/apiClient.js";
 
 
@@ -16,7 +15,6 @@ const state = {
     jwtToken: masterService.getJwtToken(),
     loginState: new LoginStateModel(),
     signupState: new SignupStateModel(),
-    resetState: new PasswordResetStateModel(),
     infoMessage: new InfoMessageModel(),
     errorMessage: new ErrorMessageModel()
 };
@@ -26,7 +24,6 @@ const getters = {
     getJwtToken: (state) => state.jwtToken,
     getLoginState: (state) => state.loginState,
     getSignupState: (state) => state.signupState,
-    getResetState: (state) => state.resetState,
     getLanguage: (state) => state.master?.language,
     getInfoMessage(state) {
         return state.infoMessage;
@@ -95,12 +92,6 @@ const mutations = {
     },
     clearErrorMessage(state) {
         state.errorMessage = new ErrorMessageModel();
-    },
-    setResetState: (state, resetState) => {
-        state.resetState = resetState;
-    },
-    clearResetState: (state) => {
-        state.resetState = PasswordResetStateModel.Reset();
     }
 };
 
@@ -123,12 +114,6 @@ const actions = {
         } catch (error) {
             commit('setLoginState', {isAuthenticated: false, authError: error.message});
         }
-    },
-    // Sub-epic 1b C6: master/telegram action DELETED (decision #2 — Telegram-as-auth
-    // excised). saveTelegramFlag below preserved for adaptive UI flag setter
-    // (re-wired to App.vue init-time TG webview detection).
-    async saveTelegramFlag({}) {
-        masterService.setTelegram();
     },
     async logout({commit}) {
 
@@ -265,15 +250,6 @@ const actions = {
         } catch (error) {
             commit('setErrorMessage', ErrorMessageModel.withText('Failed to upload avatar:', error.message));
 
-        }
-    },
-    async resetPassword({commit}, email) {
-        commit('setResetState', PasswordResetStateModel.Loading(true));
-        try {
-            const response = await masterService.resetPassword(email);
-            commit('setResetState', PasswordResetStateModel.Success(response.message));
-        } catch (error) {
-            commit('setResetState', PasswordResetStateModel.Error(error.message));
         }
     },
     async deleteAccount({commit, state}) {

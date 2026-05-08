@@ -174,33 +174,6 @@ export const register = async (credentials) => {
     }
 };
 
-export const resetPassword = async (email) => {
-    if (isMockMode()) {
-        return {success: true, message: 'Mock: password reset email sent'};
-    }
-
-    // Проверка на пустой email
-    if (!email) {
-        throw new Error(t.value.auth.reset.errorEmpty);
-    }
-
-    // Проверка на правильный формат email
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailPattern.test(email)) {
-        throw new Error(t.value.auth.reset.errorInvalidFormat);
-    }
-
-    const response = await apiClient.post('/user/reset', { email });
-
-    // Проверяем ответ
-    if (response.data) {
-        return { success: true, message: t.value.auth.reset.success };
-    } else {
-        throw new Error(t.value.auth.reset.error);
-    }
-};
-
-
 // Функция для получения данных текущего пользователя
 const fetchMasterData = async () => {
     if (isMockMode()) {
@@ -394,7 +367,6 @@ export const getTelegram = () => {
 };
 
 export const setTelegram = () => {
-    store.commit('master/setIsTelegram', true);
     const KEY = 'isTelegramMiniApp';
     localStorage.setItem(KEY, true);
 };

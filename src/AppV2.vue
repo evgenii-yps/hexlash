@@ -21,7 +21,7 @@ import '@/styles/hexlash-v24.css';
 const CanvasLayer = defineAsyncComponent(() => import('@/scene/CanvasLayer.vue'));
 
 // Sub-epic 4a Commit 5a — ChallengeNotification mounted в v2 layout per
-// D1 decision (Option β). App.vue v1 mount gated via `!isV2Route` block,
+// D1 decision (Option β). App.vue v1 mount gated via `!isPlayRoute` block,
 // so v1 + v2 mounts are mutually exclusive — no double-toast risk.
 // Component self-guards via internal `challenge` ref (only renders когда
 // `challenge-received` WS event fires). Closes carry-over #1 (5B deferred).
