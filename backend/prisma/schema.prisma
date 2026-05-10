@@ -11,9 +11,20 @@ model User {
   id              String   @id @default(uuid())
   login           String   @unique
   password        String
-  email           String   @default("")
+  email           String?  @unique
   emailVerified   Boolean  @default(false)
   initialVerified Boolean  @default(true)
+
+  // Email auth flow tokens — Email Auth Phase 1 (migrations 20260508*)
+  // verifyToken: 24h TTL, generated at register/edit/resend-verification
+  // resetToken:  1h TTL, generated at forgot-password
+  // App-side lowercase normalization on email lookup (login, forgot-password)
+  // since @unique is CASE-SENSITIVE per PostgreSQL default.
+  verifyToken            String?   @unique
+  verifyTokenExpiresAt   DateTime?
+  resetToken             String?   @unique
+  resetTokenExpiresAt    DateTime?
+
   language        String   @default("en")
   name            String   @default("Anonymous")
   avatarUrl       String   @default("")
