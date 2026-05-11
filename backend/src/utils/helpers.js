@@ -1,8 +1,22 @@
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const { JWT_SECRET } = require('../config');
 
 function generateToken(userId) {
   return jwt.sign({ userId }, JWT_SECRET, { expiresIn: '30d' });
+}
+
+/**
+ * Cryptographically secure random token for email-auth flows
+ * (verifyToken / resetToken). 32 random bytes → 64 hex chars.
+ * crypto.randomBytes throws if entropy unavailable — let it propagate
+ * so we don't accidentally generate weak tokens (preferable к failing
+ * the request over silently degrading security).
+ *
+ * Email Auth Phase 3.
+ */
+function generateRandomToken() {
+  return crypto.randomBytes(32).toString('hex');
 }
 
 function formatUserResponse(user, options = {}) {
@@ -164,4 +178,4 @@ async function awardAchievement(prismaClient, userId, achievementType) {
   return achievementType;
 }
 
-module.exports = { generateToken, formatUserResponse, formatUserPublicResponse, formatClanResponse, awardAchievement };
+module.exports = { generateToken, generateRandomToken, formatUserResponse, formatUserPublicResponse, formatClanResponse, awardAchievement };
