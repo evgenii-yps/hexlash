@@ -31,6 +31,16 @@
         :server-error="serverError"
         @submit="onEmailSubmit"
         @back="onBackToMore"
+        @forgot="onForgotClick"
+      />
+
+      <!-- Screen E: Forgot password (Email Auth Phase 5) -->
+      <ForgotPasswordScreen
+        v-else-if="screen === 'forgot'"
+        ref="forgotScreenRef"
+        :loading="loading"
+        @submit="onForgotSubmit"
+        @back="onBackFromForgot"
       />
     </div>
 
@@ -53,6 +63,7 @@ import ProviderSelector from '@/components/auth/ProviderSelector.vue';
 import MoreOptions from '@/components/auth/MoreOptions.vue';
 import EmailForm from '@/components/auth/EmailForm.vue';
 import ReferralOverlay from '@/components/auth/ReferralOverlay.vue';
+import ForgotPasswordScreen from '@/components/auth/ForgotPasswordScreen.vue';
 
 // Phase 3: Vuex integration — provider toasts, email submit (login/register),
 // referral localStorage write. Email field still UI-only (BE doesn't accept yet —
@@ -77,7 +88,9 @@ function showComingSoon(provider) {
 }
 
 // Initial mode derived from current path. /auth/login → 'login', /auth/signup → 'signup'.
-const screen = ref('provider'); // 'provider' | 'more' | 'email'
+const screen = ref('provider'); // 'provider' | 'more' | 'email' | 'forgot'
+// Email Auth Phase 5 — ref to ForgotPasswordScreen для calling showSuccess() post-dispatch
+const forgotScreenRef = ref(null);
 const mode = ref(route.path === '/auth/signup' ? 'signup' : 'login');
 const referralOpen = ref(false);
 const loading = ref(false);
@@ -168,16 +181,63 @@ async function onEmailSubmit(payload) {
     } else {
       // master/register THROWS on failure (masterState.js:152). Catch below.
       // On success, action calls router.push('/').
-      // NOTE: email NOT in payload — BE pending. See TODO in EmailForm.vue.
+      // Email Auth Phase 5 — email now in payload (Phase 1-4 BE chain accepts).
       // masterService.register reads localStorage['hexlash_referral_code']
       // automatically and clears it after success.
       await store.dispatch('master/register', {
         login: payload.login,
         password: payload.password,
+        ...(payload.email ? { email: payload.email } : {}),
       });
     }
   } catch (e) {
     serverError.value = e?.message || 'Something went wrong. Please try again.';
+  } finally {
+    loading.value = false;
+  }
+}
+
+// ── Email Auth Phase 5 — Forgot password flow ─────────────────────────────
+
+function onForgotClick() {
+  // Click "Forgot password?" link in EmailForm (login mode) → switch screen
+  screen.value = 'forgot';
+  serverError.value = '';
+}
+
+function onBackFromForgot() {
+  // Back from forgot screen → return к email screen (login form)
+  screen.value = 'email';
+  serverError.value = '';
+}
+
+async function onForgotSubmit(payload) {
+  loading.value = true;
+  try {
+    // master/requestPasswordReset always resolves к { ok: boolean } —
+    // backend returns 200 generic regardless of email existence/verified
+    // state. forgotScreenRef.value.showSuccess() flips screen к "Check
+    // your inbox" message либо on ok=true либо on ok=false (both display
+    // same generic message to caller — only 400 format error is distinct,
+    // surfaced via masterService.forgotPassword returning {ok:false}).
+    const result = await store.dispatch('master/requestPasswordReset', payload.email);
+    if (result.ok) {
+      // Flip к success state in child component
+      forgotScreenRef.value?.showSuccess();
+    } else {
+      // Format error — surface to user via toast
+      store.commit('master/setInfoMessage', InfoMessageModel.withoutButton(
+        result.error || 'Invalid email format',
+        4000
+      ));
+    }
+  } catch (e) {
+    // Should not happen — action handles errors internally, but defensive
+    console.error('Forgot password unexpected error:', e);
+    store.commit('master/setInfoMessage', InfoMessageModel.withoutButton(
+      'Something went wrong. Please try again.',
+      4000
+    ));
   } finally {
     loading.value = false;
   }

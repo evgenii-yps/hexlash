@@ -17,7 +17,9 @@
       <div class="vb-text">
         <strong>Verify your email</strong> to unlock Clans, Ratings, and on-chain features.
       </div>
-      <button class="vb-btn" @click="onVerifyNow">Verify Now</button>
+      <button class="vb-btn" :disabled="resending" @click="onVerifyNow">
+        {{ resending ? 'Sending...' : 'Resend verification' }}
+      </button>
       <button class="vb-dismiss" title="Dismiss" @click="onDismiss">×</button>
     </div>
   </Transition>
@@ -27,14 +29,22 @@
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
+import { InfoMessageModel } from '@/core/models/internal/infoMessageModel.js';
 
 const store = useStore();
 const router = useRouter();
 const dismissed = ref(false);
 
+// Email Auth Phase 5 — banner condition now requires email !== null.
+// Wallet-only users (email=null) won't see this banner — they have no
+// email to verify in the first place.
+const userEmail = computed(() => store.state.master?.userData?.email || null);
 const emailVerified = computed(() => !!store.state.master?.userData?.emailVerified);
 const userLogin = computed(() => store.state.master?.userData?.login || 'guest');
-const visible = computed(() => !emailVerified.value && !dismissed.value);
+const visible = computed(() =>
+  userEmail.value !== null && !emailVerified.value && !dismissed.value
+);
+const resending = ref(false);
 
 // Sub-Epic 5L Phase 1 — per-user dismiss persistence via localStorage.
 // Key scoped to login so different accounts on same device don't leak state.
@@ -50,8 +60,26 @@ function loadDismissedState(login) {
   }
 }
 
-function onVerifyNow() {
-  router.push('/verify-email');
+// Email Auth Phase 5 — rewire from router.push('/verify-email') (which
+// expected user to have already clicked verify link from email) к direct
+// dispatch resendVerification action. Triggers backend POST к
+// /v1/user/resend-verification — sends fresh verify email.
+async function onVerifyNow() {
+  if (resending.value) return;
+  resending.value = true;
+  try {
+    const result = await store.dispatch('master/resendVerification');
+    if (result.ok) {
+      store.commit('master/setInfoMessage', InfoMessageModel.withoutButton(
+        'Verification email sent — check your inbox',
+        4000
+      ));
+    }
+    // Failure case: action sets ErrorMessageModel internally (visible via
+    // global Error.vue toast on /play/*) — no further handling needed here
+  } finally {
+    resending.value = false;
+  }
 }
 
 function onDismiss() {
