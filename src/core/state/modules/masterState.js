@@ -163,24 +163,57 @@ const actions = {
             });
         }
     },
-    async sendVerifyEmail({commit, state}, code) {
+    // Email Auth Phase 5 — verify email by token from email link.
+    // Renamed from sendVerifyEmail (1b artifact). New shape: receives
+    // { token } object (was: raw code). Backend POST /v1/user/verify-email
+    // accepts { token } and is public (no JWT).
+    async verifyEmail({commit, state}, { token }) {
         try {
-            // Отправка обновленных данных на сервер
-            const isVerifyEmail = await masterService.sendVerifyEmail(code);
-
-            if (isVerifyEmail) {
+            const ok = await masterService.verifyEmail(token);
+            if (ok) {
                 if (state.master != null) {
-                    commit('updateMaster', {emailVerified: true})
+                    commit('updateMaster', { emailVerified: true });
                 }
                 return;
             }
-
         } catch (error) {
             commit('setErrorMessage', ErrorMessageModel.withText('Failed to verify email:', error.message));
         }
-
-        throw new Error("Failed to verify email");
+        throw new Error('Failed to verify email');
     },
+
+    // Email Auth Phase 5 — request password reset email.
+    // Always returns { ok: true } unless format error (400) — backend's
+    // generic-200 design prevents email enumeration; caller displays
+    // generic success message regardless of actual outcome.
+    async requestPasswordReset({commit}, email) {
+        return await masterService.forgotPassword(email);
+    },
+
+    // Email Auth Phase 5 — complete password reset + auto-login.
+    // Service performs JWT save + master data fetch + auth state commits
+    // (mirrors login action's post-success flow). Returns { ok: true } on
+    // success, throws on failure (expired/invalid token).
+    async confirmPasswordReset({commit}, { token, newPassword }) {
+        try {
+            return await masterService.resetPassword(token, newPassword);
+        } catch (error) {
+            commit('setErrorMessage', ErrorMessageModel.withText(error.message));
+            throw error;
+        }
+    },
+
+    // Email Auth Phase 5 — request a fresh verify email.
+    // Used by VerifyEmailBanner "Resend" button. Auth-required (apiClient
+    // adds JWT). Backend throttles 1/5min per user.
+    async resendVerification({commit}) {
+        const result = await masterService.resendVerification();
+        if (!result.ok) {
+            commit('setErrorMessage', ErrorMessageModel.withText(result.error || 'Failed to send verification email'));
+        }
+        return result;
+    },
+
     async updateMaster({commit, state}, updatedData) {
         try {
 

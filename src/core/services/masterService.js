@@ -147,6 +147,8 @@ export const register = async (credentials) => {
         const response = await apiClient.post('/auth/register', {
             login: credentials.login,
             password: credentials.password,
+            // Email Auth Phase 5 — optional email at signup
+            ...(credentials.email ? { email: credentials.email } : {}),
             ...(referralCode ? { referralCode } : {}),
         });
         localStorage.removeItem('hexlash_referral_code');
@@ -239,23 +241,91 @@ export const deleteAccount = async () => {
     }
 };
 
-// Отправить запрос на верификацию почты
-export const sendVerifyEmail = async (code) => {
+// Email Auth Phase 5 — verify email by token from email link.
+// Renamed from sendVerifyEmail (1b artifact) per ТЗ §9. Body shape changed
+// from `code` к `{ token }` to match Phase 4 backend rewrite. Endpoint is
+// public (token in body IS auth) — no JWT header attached.
+export const verifyEmail = async (token) => {
     if (isMockMode()) {
         return true;
     }
 
     try {
-        const response = await apiClient.post('/user/verify-email', code, {authRequired: false});
-
-        if (response.data) {
-            return true;
-        }
-
-        return false;
-
+        const response = await apiClient.post('/user/verify-email', { token });
+        return !!response.data;
     } catch (error) {
-        throw new Error('Failed verify email');
+        const errorStr = error.response?.data?.error || error.message || 'Failed to verify email';
+        throw new Error(errorStr);
+    }
+};
+
+// Email Auth Phase 5 — request password reset.
+// Returns generic success regardless of backend outcome (forgot-password
+// endpoint returns 200 in all cases to prevent email enumeration).
+export const forgotPassword = async (email) => {
+    if (isMockMode()) {
+        return { ok: true };
+    }
+
+    try {
+        await apiClient.post('/auth/forgot-password', { email });
+        return { ok: true };
+    } catch (error) {
+        // Backend returns 200 even on internal errors. Real 4xx (bad email
+        // format) is also normalized to ok:true для UX consistency — caller
+        // displays generic success message regardless.
+        if (error.response?.status === 400) {
+            return { ok: false, error: error.response.data?.error || 'Invalid email format' };
+        }
+        return { ok: true };
+    }
+};
+
+// Email Auth Phase 5 — complete password reset.
+// On success: returns JWT + sets up logged-in state (mirror login flow).
+export const resetPassword = async (token, newPassword) => {
+    if (isMockMode()) {
+        const mockMaster = createMockMaster();
+        store.commit('master/setMaster', mockMaster);
+        store.commit('master/setJwtToken', MOCK_JWT_TOKEN);
+        store.commit('master/setLoginState', {isAuthenticated: true});
+        return { ok: true };
+    }
+
+    try {
+        const response = await apiClient.post('/auth/reset-password', { token, newPassword });
+        const { jwtToken } = response.data;
+
+        updateJwtToken(jwtToken);
+
+        // Fetch master data after auto-login
+        const masterModel = await fetchMasterData();
+        await saveMasterToLocalDB(masterModel);
+
+        store.commit('master/setMaster', masterModel);
+        store.commit('master/setLoginState', { isAuthenticated: true });
+        restoreProgressionFromServer(masterModel.userData);
+
+        return { ok: true };
+    } catch (error) {
+        const errorStr = error.response?.data?.error || error.message || 'Failed to reset password';
+        throw new Error(errorStr);
+    }
+};
+
+// Email Auth Phase 5 — request a fresh verify email.
+// Auth required (JWT — apiClient interceptor adds Bearer token).
+export const resendVerification = async () => {
+    if (isMockMode()) {
+        return { ok: true };
+    }
+
+    try {
+        await apiClient.post('/user/resend-verification', {});
+        return { ok: true };
+    } catch (error) {
+        const errorStr = error.response?.data?.error || error.message || 'Failed to send verification email';
+        return { ok: false, error: errorStr };
     }
 };
 

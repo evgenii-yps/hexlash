@@ -35,11 +35,22 @@ const success = ref(false);
 const error = ref(false);
 
 const verifyEmail = async () => {
-  let code = route.query.code;
-  code = decodeURIComponent(code);
+  // Email Auth Phase 5 — accept ?token=... query param (was ?code=... pre-1b).
+  // Backend POST /v1/user/verify-email now expects { token } body per Phase 4
+  // rewrite. Action master/verifyEmail (renamed from sendVerifyEmail) dispatches
+  // к new endpoint shape.
+  // Backward compat: if ?code=... still in URL (old emails в transit during
+  // deploy window), try it as token — backend will 400 on stale/invalid
+  // tokens regardless.
+  const rawToken = route.query.token || route.query.code;
+  if (!rawToken || typeof rawToken !== 'string') {
+    loading.value = false;
+    error.value = true;
+    return;
+  }
+  const token = decodeURIComponent(rawToken);
 
-
-  if (!code || code.length < 5) {
+  if (!token || token.length < 5) {
     loading.value = false;
     error.value = true;
     return;
@@ -47,7 +58,7 @@ const verifyEmail = async () => {
 
   loading.value = true;
   try {
-    await store.dispatch('master/sendVerifyEmail', {code});
+    await store.dispatch('master/verifyEmail', { token });
 
     // Amplitude
     amplitude.track('VerifyEmail');

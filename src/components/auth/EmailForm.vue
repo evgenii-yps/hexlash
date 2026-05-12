@@ -66,10 +66,17 @@
         <span>{{ serverError }}</span>
       </div>
 
-      <!-- TODO(auth-email): BE payload пока не принимает email.
-           Поле собирается в UI, но не отправляется. Дописать когда BE
-           расширит master/register payload до {login, email, password}.
-           См. ТЗ TZ_auth_implementation.md §12 + Phase 0 mismatch caught. -->
+      <!-- Forgot password? — login mode only (Email Auth Phase 5) -->
+      <button
+        v-if="mode === 'login'"
+        type="button"
+        class="email-form__forgot-link"
+        :disabled="loading"
+        @click="$emit('forgot')"
+      >
+        Forgot password?
+      </button>
+
       <button
         type="submit"
         class="email-form__submit"
@@ -98,7 +105,8 @@ const props = defineProps({
   serverError: { type: String, default: '' },
 });
 
-const emit = defineEmits(['submit', 'back']);
+// Email Auth Phase 5 — 'forgot' emit added for login mode "Forgot password?" link
+const emit = defineEmits(['submit', 'back', 'forgot']);
 
 const form = reactive({
   handle: '',
@@ -154,13 +162,13 @@ function validate() {
 
 function onSubmit() {
   if (!validate()) return;
-  // Phase 1: stub — Phase 3 wires Vuex submit.
-  // Email collected in form.email but NOT included in payload (BE doesn't accept yet).
+  // Email Auth Phase 5 — email IS sent in signup payload (Phase 1-4 backend
+  // chain now accepts {login, password, email?} on /v1/auth/register).
   emit('submit', {
     mode: props.mode,
     login: form.handle,
     password: form.password,
-    // email: form.email,  // intentionally omitted from BE payload — see TODO above
+    ...(props.mode === 'signup' && form.email ? { email: form.email } : {}),
   });
 }
 </script>
@@ -350,5 +358,41 @@ function onSubmit() {
 
 @keyframes email-form-spin {
   to { transform: rotate(360deg); }
+}
+
+/* Email Auth Phase 5 — Forgot password? link (login mode only) */
+.email-form__forgot-link {
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 8px 0;
+  min-height: 44px;
+  background: transparent;
+  border: none;
+  color: var(--hex-text-muted);
+  font-family: 'Anonymous', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  transition: color 0.15s ease;
+  outline: none;
+}
+
+.email-form__forgot-link:hover:not(:disabled) {
+  color: var(--hex-primary);
+}
+
+.email-form__forgot-link:focus-visible {
+  color: var(--hex-primary);
+  box-shadow: 0 0 0 2px var(--hex-primary-glow);
+  border-radius: 2px;
+}
+
+.email-form__forgot-link:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 </style>

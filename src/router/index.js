@@ -58,6 +58,9 @@ const publicRoutes = [
     {path: '/404', name: 'NotFound', component: () => import("/src/views/NotFoundView.vue")},
     {path: '/rules', name: 'Rules', component: () => import("/src/views/PageView.vue")},
     {path: '/verify-email', name: 'VerifyEmail', component: () => import("/src/views/VerifyEmailView.vue")},
+    // Email Auth Phase 5 — reset-password public route (Vercel auto-deploy
+    // on merge). User lands here from email link с ?token=... query param.
+    {path: '/reset-password', name: 'ResetPassword', component: () => import("/src/views/ResetPasswordView.vue")},
     {
         // Sub-epic 1b C9: function-form redirect preserves localStorage side-effect
         // (referral code capture) without requiring a component (RainView deleted).
