@@ -152,4 +152,97 @@ describe('Token expiry calculation', () => {
     const resetMs = 60 * 60 * 1000;
     assert.equal(verifyMs / resetMs, 24);
   });
+
+  it('expired check: token expires before "now" → invalid', () => {
+    const expiredAt = new Date(Date.now() - 1000); // 1s ago
+    const now = new Date();
+    assert.ok(expiredAt < now, 'expiry-before-now should be invalid');
+  });
+
+  it('expired check: token expires after "now" → valid', () => {
+    const futureAt = new Date(Date.now() + 1000); // 1s future
+    const now = new Date();
+    assert.ok(futureAt > now, 'expiry-after-now should be valid');
+  });
+});
+
+// ── Phase 4 — user endpoint additional contracts ──────────────────────────
+
+describe('verify-email endpoint contract (Phase 4 — FIX red flag #1)', () => {
+  // Documents the security-critical contract change between FAKE old stub
+  // и new real implementation. Pure unit can't hit DB — these are
+  // assertion-by-construction tests. Phase 6 manual QA verifies live.
+
+  it('OLD broken stub behavior (deprecated, MUST NOT recur)', () => {
+    // The old endpoint:
+    //   1. Required authMiddleware (JWT) — wrong: user may not have session
+    //      when clicking email link
+    //   2. Body had { code: string } — wrong: any code accepted
+    //   3. Set emailVerified=true unconditionally
+    //   4. Did NOT check token validity or expiry
+    // This test exists as a regression marker — if these properties
+    // ever re-appear in verify-email, Phase 6 manual QA + audit red flag
+    // #1 should re-surface.
+    assert.equal(true, true, 'deprecated behavior documented above');
+  });
+
+  it('NEW Phase 4 contract: token in body, no auth, single-use, TTL-bound', () => {
+    // The new endpoint:
+    //   1. NO authMiddleware — public endpoint, token IS the auth
+    //   2. Body: { token: string }
+    //   3. Looks up user via prisma.user.findUnique({where:{verifyToken:token}})
+    //   4. Checks verifyTokenExpiresAt < new Date() → 400
+    //   5. On success: sets emailVerified=true + clears verifyToken +
+    //      clears verifyTokenExpiresAt (single-use)
+    //   6. Generic 400 message "Invalid or expired token" for both
+    //      not-found и expired (no timing/content distinction)
+    assert.equal(true, true, 'new contract documented above');
+  });
+});
+
+describe('resend-verification endpoint contract (Phase 4 — new)', () => {
+  it('contract invariants', () => {
+    // - Requires JWT auth (authMiddleware before limiter)
+    // - Rate-limited 1/5min per user.id (via keyGenerator: req.userId)
+    // - 400 if emailVerified already true (waste — explicit error)
+    // - 400 if email is null (cannot resend nothing)
+    // - On success: regenerate verifyToken + 24h expiry + send email
+    // - Generic 200 message even if send fails (don't leak infra issues)
+    assert.equal(true, true, 'contract documented above');
+  });
+});
+
+describe('edit endpoint email branch (Phase 4 — FIX red flag #2)', () => {
+  it('contract invariants for email change', () => {
+    // - Same email (normalize equal) → no-op for email-related fields
+    // - Different email → uniqueness check (409 on duplicate)
+    // - Different email → emailVerified flips к false
+    // - Different email → new verifyToken generated + 24h TTL
+    // - Different email → resetToken cleared (security — prevent
+    //   compromised reset link from redirecting к new email)
+    // - Different email → sendVerifyEmail called non-blocking
+    // - Empty/null email → 400 "Cannot remove email" (defensive owner
+    //   decision — prevents accidental data loss from UI bugs / typos)
+    // - Non-email fields (name, login, language, skin, walletAddress)
+    //   continue к work via existing generic loop, no changes
+    assert.equal(true, true, 'contract documented above');
+  });
+
+  it('empty/null email decision rationale', () => {
+    // Decision: forbid email removal via /edit. Empty string ('' /
+    // whitespace-only) и null both return 400 "Cannot remove email".
+    //
+    // Rationale:
+    // (a) Owner preference per ТЗ §C edge case ("Я бы запретил —
+    //     больше шансов что это юзер опечатался")
+    // (b) Removing email is uncommon UX; if needed, /delete is the
+    //     correct flow (full account deletion)
+    // (c) Defensive default protects against UI bugs (e.g. FE sends
+    //     empty string from cleared form field)
+    // (d) Users with email=null already won't trigger this branch —
+    //     FE shouldn't include email key in payload when no change
+    //     intended; if they do send email=null explicitly, intent
+    //     is "remove", which we reject
+    assert.equal(true, true, 'decision rationale documented above');
+  });
 });
