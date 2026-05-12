@@ -131,7 +131,13 @@ const actions = {
 
             await this.dispatch('master/initGetStarted');
 
-            await router.push('/');
+            // Email Auth Phase 5.5 — signup-with-email shows "Check your inbox"
+            // success screen instead of immediate redirect. Caller passes
+            // skipRedirect: true to opt out of auto-redirect; default behavior
+            // (no email signup, telegram-auth callsite, etc.) preserved.
+            if (!credentials.skipRedirect) {
+                await router.push('/');
+            }
 
         } catch (error) {
             throw error;

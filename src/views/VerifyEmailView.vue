@@ -24,12 +24,14 @@
 
 <script setup>
 import {ref, onBeforeMount, onMounted} from 'vue';
-import {useRoute} from 'vue-router';
+import {useRoute, useRouter} from 'vue-router';
 import store from '@/core/state/store.js';
 import {t} from '@/locales/index.js';
+import {InfoMessageModel} from '@/core/models/internal/infoMessageModel.js';
 import * as amplitude from "@amplitude/analytics-browser";
 
 const route = useRoute();
+const router = useRouter();
 const loading = ref(true);
 const success = ref(false);
 const error = ref(false);
@@ -64,7 +66,22 @@ const verifyEmail = async () => {
     amplitude.track('VerifyEmail');
 
     success.value = true;
+
+    // Email Auth Phase 5.5 — UX fix: show success message briefly, then
+    // redirect к /play hub with toast confirmation. Without this, user
+    // sees verify view embedded в /play shell (header + bottom menu)
+    // and may not realize they should proceed back к game. 2s gives time
+    // to read "verified ✓" before navigation.
+    setTimeout(() => {
+      store.commit(
+        'master/setInfoMessage',
+        InfoMessageModel.withoutButton('Email verified successfully ✓', 4000)
+      );
+      router.push('/play');
+    }, 2000);
   } catch (err) {
+    // Failure (expired/invalid token) — NO redirect; user stays on page
+    // с error message + can request new link via Resend.
     error.value = true;
   } finally {
     loading.value = false;
