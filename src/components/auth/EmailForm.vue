@@ -9,7 +9,7 @@
     <form class="email-form__form" novalidate @submit.prevent="onSubmit">
       <!-- Handle (always) -->
       <div class="email-form__field">
-        <label class="email-form__label" for="auth-handle">Handle{{ mode === 'login' ? ' or email' : '' }}</label>
+        <label class="email-form__label" for="auth-handle">{{ mode === 'login' ? 'Email or username' : 'Username' }}</label>
         <input
           id="auth-handle"
           v-model.trim="form.handle"
@@ -360,29 +360,31 @@ function onSubmit() {
   to { transform: rotate(360deg); }
 }
 
-/* Email Auth Phase 5 — Forgot password? link (login mode only) */
+/* Email Auth Phase 5.5 — Forgot password? link restyle.
+   Phase 5 used 11px Anonymous mono с --hex-text-muted — too low contrast
+   per QA feedback. Now: 14px inherit font, --hex-primary brand accent,
+   clear underline. Touch target ≥44px preserved. Hover brightens. */
 .email-form__forgot-link {
-  align-self: flex-start;
-  margin-top: 4px;
-  padding: 8px 0;
+  align-self: center;
+  margin-top: 8px;
+  padding: 10px 8px;
   min-height: 44px;
   background: transparent;
   border: none;
-  color: var(--hex-text-muted);
-  font-family: 'Anonymous', monospace;
-  font-size: 11px;
+  color: var(--hex-primary);
+  font-family: inherit;
+  font-size: 14px;
   font-weight: 500;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
   text-decoration: underline;
   text-underline-offset: 3px;
   cursor: pointer;
-  transition: color 0.15s ease;
+  transition: filter 0.15s ease, color 0.15s ease;
   outline: none;
 }
 
 .email-form__forgot-link:hover:not(:disabled) {
-  color: var(--hex-primary);
+  filter: brightness(1.15);
 }
 
 .email-form__forgot-link:focus-visible {

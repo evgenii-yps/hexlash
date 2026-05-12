@@ -42,6 +42,13 @@
         @submit="onForgotSubmit"
         @back="onBackFromForgot"
       />
+
+      <!-- Screen F: Signup success ("Check your inbox") (Email Auth Phase 5.5) -->
+      <SignupSuccessScreen
+        v-else-if="screen === 'signup-success'"
+        :email="signupSuccessEmail"
+        @continue="onSignupSuccessContinue"
+      />
     </div>
 
     <!-- Screen C: Referral overlay (Teleport-to-body) -->
@@ -64,6 +71,7 @@ import MoreOptions from '@/components/auth/MoreOptions.vue';
 import EmailForm from '@/components/auth/EmailForm.vue';
 import ReferralOverlay from '@/components/auth/ReferralOverlay.vue';
 import ForgotPasswordScreen from '@/components/auth/ForgotPasswordScreen.vue';
+import SignupSuccessScreen from '@/components/auth/SignupSuccessScreen.vue';
 
 // Phase 3: Vuex integration — provider toasts, email submit (login/register),
 // referral localStorage write. Email field still UI-only (BE doesn't accept yet —
@@ -88,9 +96,11 @@ function showComingSoon(provider) {
 }
 
 // Initial mode derived from current path. /auth/login → 'login', /auth/signup → 'signup'.
-const screen = ref('provider'); // 'provider' | 'more' | 'email' | 'forgot'
+const screen = ref('provider'); // 'provider' | 'more' | 'email' | 'forgot' | 'signup-success'
 // Email Auth Phase 5 — ref to ForgotPasswordScreen для calling showSuccess() post-dispatch
 const forgotScreenRef = ref(null);
+// Email Auth Phase 5.5 — captured email для display on signup-success screen
+const signupSuccessEmail = ref('');
 const mode = ref(route.path === '/auth/signup' ? 'signup' : 'login');
 const referralOpen = ref(false);
 const loading = ref(false);
@@ -180,15 +190,20 @@ async function onEmailSubmit(payload) {
       }
     } else {
       // master/register THROWS on failure (masterState.js:152). Catch below.
-      // On success, action calls router.push('/').
-      // Email Auth Phase 5 — email now in payload (Phase 1-4 BE chain accepts).
-      // masterService.register reads localStorage['hexlash_referral_code']
-      // automatically and clears it after success.
+      // Email Auth Phase 5.5 — when email provided, suppress auto-redirect
+      // via skipRedirect flag и show "Check your inbox" success screen instead.
+      // When NO email, default flow (register → router.push('/') в action).
+      const hasEmail = !!payload.email;
       await store.dispatch('master/register', {
         login: payload.login,
         password: payload.password,
-        ...(payload.email ? { email: payload.email } : {}),
+        ...(hasEmail ? { email: payload.email, skipRedirect: true } : {}),
       });
+      if (hasEmail) {
+        signupSuccessEmail.value = payload.email;
+        screen.value = 'signup-success';
+      }
+      // else: action already pushed к '/'
     }
   } catch (e) {
     serverError.value = e?.message || 'Something went wrong. Please try again.';
@@ -209,6 +224,14 @@ function onBackFromForgot() {
   // Back from forgot screen → return к email screen (login form)
   screen.value = 'email';
   serverError.value = '';
+}
+
+// Email Auth Phase 5.5 — Continue button on signup-success screen
+function onSignupSuccessContinue() {
+  // User is already authenticated (register completed with skipRedirect=true).
+  // Route к /play (hub). beforeEnter on '/' would cascade authed users к /play
+  // anyway, but direct push avoids redundant hop.
+  router.push('/play');
 }
 
 async function onForgotSubmit(payload) {
