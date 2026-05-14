@@ -1,6 +1,5 @@
 import {MASTER_TAG} from "@/core/database/masterRepository.js";
 import {DECIMALS} from "@/core/constants.js";
-import {getLanguage} from "@/locales/index.js";
 
 
 export class MasterModel {
@@ -11,7 +10,10 @@ export class MasterModel {
                     inviteId = null,
                     email = '',
                     emailVerified = false,
-                    language = getLanguage(),
+                    // Phase 1.5c — English-only. Default preserved для backward
+                    // compatibility of any persisted MasterModel records; BE
+                    // User.language field stays но FE no longer reads/writes it.
+                    language = 'en',
                     initialVerified = false,
                     userData = {}
                 } = {}) {

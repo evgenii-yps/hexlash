@@ -3,7 +3,7 @@ import {updateMasterToLocalDB} from "@/core/database/masterRepository.js";
 import {LoginStateModel} from "@/core/models/internal/loginStateModel.js";
 import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
 import {SignupStateModel} from "@/core/models/internal/signupStateModel.js";
-import {t, setLanguage as setLocaleLanguage} from '@/locales/index.js';
+import {t} from '@/locales/index.js';
 import * as masterService from "@/core/services/masterService.js";
 import {ErrorMessageModel} from "@/core/models/internal/errorMessageModel.js";
 import {updateJwtToken} from "@/core/services/masterService.js";
@@ -24,7 +24,6 @@ const getters = {
     getJwtToken: (state) => state.jwtToken,
     getLoginState: (state) => state.loginState,
     getSignupState: (state) => state.signupState,
-    getLanguage: (state) => state.master?.language,
     getInfoMessage(state) {
         return state.infoMessage;
     },
@@ -267,17 +266,9 @@ const actions = {
             commit('setErrorMessage', ErrorMessageModel.withText(error.message));
         }
     },
-    async setLanguage({commit, state}, language) {
-        setLocaleLanguage(language);
-        commit('updateMaster', { language });
-        await updateMasterToLocalDB({ language });
-        // Sync to backend silently — language is already saved locally
-        try {
-            await masterService.changeProfile({ language });
-        } catch {
-            // Ignore backend errors for language sync — locally already persisted
-        }
-    },
+    // Phase 1.5c — setLanguage action removed (English-only). Backend
+    // User.language field is preserved per scope discipline but FE no longer
+    // reads/writes it.
     async uploadMasterAvatar({commit}, {formData, onUploadProgress}) {
         try {
             const avatarUrl = await masterService.uploadAvatar(formData, onUploadProgress);

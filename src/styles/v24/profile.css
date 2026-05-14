@@ -508,31 +508,8 @@
   color: var(--text-dim);
   text-transform: uppercase;
 }
-.app-v2 .lang-picker {
-  display: flex; gap: 4px; flex-wrap: wrap;
-}
-.app-v2 .lang-btn {
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 3px;
-  color: var(--text-mid);
-  padding: 4px 8px;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: all 0.12s ease;
-}
-.app-v2 .lang-btn:hover {
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.3);
-}
-.app-v2 .lang-btn.active {
-  background: rgba(255, 6, 111, 0.15);
-  border-color: var(--hex-primary);
-  color: #fff;
-}
+/* Phase 1.5c — .lang-picker / .lang-btn rules removed (English-only). */
+
 .app-v2 .toggle-row {
   display: flex; align-items: center; gap: 8px;
   padding: 6px 10px;

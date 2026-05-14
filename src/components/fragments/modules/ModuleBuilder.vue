@@ -127,9 +127,10 @@ let aiDebounce = null;
 let aiLastKey = '';
 let aiAbortController = null;
 
-const language = computed(() => store.getters['master/getLanguage'] || 'en');
+// Phase 1.5c — English-only: language pinned 'en' (was reactive via Vuex getter)
+const language = 'en';
 
-watch([selectedModules, language], () => {
+watch([selectedModules], () => {
   if (!isComplete.value) {
     aiDescription.value = '';
     return;
