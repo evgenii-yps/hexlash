@@ -164,11 +164,53 @@
 }
 .app-v2 .id-field .ifv.wallet.disabled:hover { text-decoration: none; }
 
-/* 5H — Referral id-field. Mirrors .ifv.wallet clickable pattern (pink color
-   + pointer cursor + hover underline). Always clickable: login is always
-   present once authenticated, so no `.disabled` variant needed. */
-.app-v2 .id-field .ifv.referral { color: var(--hex-primary); cursor: pointer; }
-.app-v2 .id-field .ifv.referral:hover { text-decoration: underline; }
+/* C6: Referral row was promoted к action button (.id-referral-btn below);
+   .ifv.referral rules removed (5H legacy — id-field variant). */
+
+/* C6: Identity card referral button — ghost-style pink-outlined CTA. Reads
+   as "invite friends" action below the label/value id-fields. Pink-outline
+   variant (not filled) keeps pink accent subtle in shared card with
+   .ifv.wallet pink text (when wallet connected). On hover fills slightly
+   to reinforce affordance. */
+.app-v2 .id-referral-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: transparent;
+  border: 1px solid var(--hex-primary);
+  border-radius: 4px;
+  color: var(--hex-primary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.app-v2 .id-referral-btn:hover {
+  background: rgba(255, 6, 111, 0.08);
+  box-shadow: 0 0 12px rgba(255, 6, 111, 0.25);
+}
+
+.app-v2 .id-referral-btn:active {
+  transform: translateY(1px);
+}
+
+.app-v2 .id-referral-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--hex-primary-glow);
+}
+
+.app-v2 .id-referral-btn__icon {
+  font-size: 14px;
+  line-height: 1;
+}
 
 /* Belt id-field value carries both the SVG BeltBadge and the text label.
    Flex override `max-width: 60%` + ellipsis from .ifv for a row that must

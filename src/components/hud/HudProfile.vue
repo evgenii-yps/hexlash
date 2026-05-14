@@ -50,11 +50,18 @@
             <span class="ifk">Email</span>
             <span class="ifv">{{ emailText }}</span>
           </div>
-          <div class="id-field">
-            <span class="ifk">Referral</span>
-            <span class="ifv referral" @click="onReferralClick">{{ referralLinkText }}</span>
-          </div>
         </div>
+        <!-- C6: Referral row promoted к action button — "invite friends"
+             reads as action, not a label+value data row. Click opens lazy
+             ReferralModal (same handler as the prior row). -->
+        <button
+          type="button"
+          class="id-referral-btn"
+          @click="onReferralClick"
+        >
+          <span class="id-referral-btn__icon" aria-hidden="true">⚐</span>
+          <span class="id-referral-btn__label">{{ t.referral.lblReferralButton }}</span>
+        </button>
       </div>
 
       <!-- PERFORMANCE -->
@@ -362,16 +369,6 @@ async function onReferralClick() {
   await loadReferralModal();
   referralMounted.value = true;
 }
-
-const referralLinkText = computed(() => {
-  const login = userData.value?.login || '';
-  // C3: env-portable host derived from window.location.origin. Strip scheme
-  // for compact display (e.g. "hexlash.com/r/foo" vs "https://hexlash.com/r/foo").
-  const host = (typeof window !== 'undefined' && window.location?.host) || 'hexlash.com';
-  if (!login) return `${host}/r/...`;
-  const text = `${host}/r/${login}`;
-  return text.length > 24 ? text.slice(0, 22) + '…' : text;
-});
 
 // --- Wallet address sync (Step 10) ---
 // Legacy ProfileWallet.vue keeps master.userData.walletAddress in sync with
