@@ -99,19 +99,6 @@ export default {
   },
 
   mutations: {
-    addTap(state) {
-      state.taps += 1;
-      state.totalTaps += 1;
-      saveProgress(state);
-    },
-
-    addFreeXP(state, { amount, result }) {
-      state.freeXP += amount;
-      state.totalFights += 1;
-      if (result === 'win') state.totalWins += 1;
-      saveProgress(state);
-    },
-
     restoreProgression(state, data) {
       if (data.moves) state.moves = { ...state.moves, ...data.moves };
       if (data.branchExp) state.branchExp = { ...state.branchExp, ...data.branchExp };
@@ -128,21 +115,6 @@ export default {
         state.deck = deck;
         saveProgress(state);
       }
-    },
-
-    toggleDeckMove(state, moveId) {
-      const deck = [...state.deck];
-      const idx = deck.indexOf(moveId);
-      if (idx !== -1) {
-        // Always allow removal — button validation handles minimum
-        deck.splice(idx, 1);
-      } else {
-        if (deck.length < 5) {
-          deck.push(moveId);
-        }
-      }
-      state.deck = deck;
-      saveProgress(state);
     }
   },
 
@@ -168,21 +140,6 @@ export default {
           console.error('[SYNC] Failed to save progression:', error);
         }
       }, 3000);
-    },
-
-    addTap({ commit }) {
-      commit('addTap');
-    },
-
-    onFightEnd({ commit, dispatch }, { result }) {
-      const amount = result === 'win' ? 10 : result === 'draw' ? 7 : 5;
-      commit('addFreeXP', { amount, result });
-      dispatch('syncProgression');
-    },
-
-    toggleDeckMove({ commit, dispatch }, moveId) {
-      commit('toggleDeckMove', moveId);
-      dispatch('syncProgression');
     }
   }
 };

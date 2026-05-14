@@ -54,7 +54,6 @@ const mutations = {
   SET_AGENTS_LOADING(state, val) { state.agentsLoading = val; },
   SET_AGENT_ERROR(state, val) { state.agentError = val; },
   ADD_AGENT(state, agent) { state.agents.push(agent); },
-  REMOVE_AGENT(state, id) { state.agents = state.agents.filter(a => a.id !== id); },
   UPDATE_AGENT(state, updated) {
     const idx = state.agents.findIndex(a => a.id === updated.id);
     if (idx !== -1) state.agents.splice(idx, 1, { ...state.agents[idx], ...updated });
@@ -97,14 +96,6 @@ const mutations = {
   SET_CURRENT_AGENT_LOADING(state, val) { state.currentAgentLoading = val; },
   SET_AVAILABLE_MOVES(state, moves) { state.availableMoves = moves; },
   SET_AVAILABLE_MOVES_LOADING(state, val) { state.availableMovesLoading = val; },
-  SET_FIGHT_HISTORY(state, { fights, total, append }) {
-    if (append) state.fightHistory.push(...fights);
-    else state.fightHistory = fights;
-    state.fightHistoryTotal = total;
-  },
-  SET_FIGHT_HISTORY_LOADING(state, val) { state.fightHistoryLoading = val; },
-  SET_TRAIN_RESULT(state, val) { state.trainResult = val; },
-  SET_TRAIN_LOADING(state, val) { state.trainLoading = val; },
   // Sub-epic 2 — AGENTS rankings. REPLACE (not append, unlike clanState
   // setClanRatings / userState setParticipantRatings — deliberate, preempts
   // F3 stale-rows risk for AGENTS tab refetch idempotency).
@@ -149,11 +140,6 @@ const actions = {
     const res = await apiClient.post('/agent/create', agentData, { authRequired: true });
     commit('ADD_AGENT', res.agent);
     return res.agent;
-  },
-
-  async deleteAgent({ commit }, id) {
-    await apiClient.delete(`/agent/${id}`, { authRequired: true });
-    commit('REMOVE_AGENT', id);
   },
 
   // Sub-Epic 5M Phase 1 — optimistic UI + rollback toast on error.
@@ -208,11 +194,6 @@ const actions = {
     }
   },
 
-  async refreshAgentStatus({ commit }, id) {
-    const res = await apiClient.get(`/agent/${id}/auto-fight-status`, { authRequired: true });
-    commit('UPDATE_AGENT', { id, autoFight: res.autoFight, status: res.status, nextFightAt: res.nextFightAt });
-  },
-
   // Detail view actions
   async fetchAgent({ commit }, agentId) {
     commit('SET_CURRENT_AGENT_LOADING', true);
@@ -226,21 +207,6 @@ const actions = {
     }
   },
 
-  async updateAgent({ commit }, { id, ...payload }) {
-    const res = await apiClient.put(`/agent/${id}`, payload, { authRequired: true });
-    commit('SET_CURRENT_AGENT', res.agent);
-    commit('UPDATE_AGENT', res.agent);
-    return res.agent;
-  },
-
-  async updateTactics({ commit, state: s }, { id, ...payload }) {
-    const res = await apiClient.put(`/agent/${id}/tactics`, payload, { authRequired: true });
-    if (s.currentAgent && s.currentAgent.id === id) {
-      commit('SET_CURRENT_AGENT', { ...s.currentAgent, tactics: res.tactics });
-    }
-    return res.tactics;
-  },
-
   async fetchAvailableMoves({ commit }, agentId) {
     commit('SET_AVAILABLE_MOVES_LOADING', true);
     try {
@@ -250,37 +216,6 @@ const actions = {
       console.error('Failed to fetch available moves:', err);
     } finally {
       commit('SET_AVAILABLE_MOVES_LOADING', false);
-    }
-  },
-
-  async learnMove({ commit, dispatch, state: s }, { agentId, moveId, targetLevel }) {
-    const res = await apiClient.post(`/agent/${agentId}/learn-move`, { moveId, targetLevel }, { authRequired: true });
-    if (s.currentAgent && s.currentAgent.id === agentId) {
-      commit('SET_CURRENT_AGENT', { ...s.currentAgent, progression: res.progression });
-    }
-    await dispatch('fetchAvailableMoves', agentId);
-    return res;
-  },
-
-  async updateDeck({ commit, state: s }, { agentId, deck }) {
-    const res = await apiClient.put(`/agent/${agentId}/deck`, { deck }, { authRequired: true });
-    if (s.currentAgent && s.currentAgent.id === agentId) {
-      commit('SET_CURRENT_AGENT', { ...s.currentAgent, progression: res.progression });
-    }
-    return res;
-  },
-
-  async fetchFightHistory({ commit }, { agentId, mode, limit = 20, offset = 0, append = false }) {
-    commit('SET_FIGHT_HISTORY_LOADING', true);
-    try {
-      const params = { limit, offset };
-      if (mode) params.mode = mode;
-      const res = await apiClient.get(`/agent/${agentId}/fights`, { params, authRequired: true });
-      commit('SET_FIGHT_HISTORY', { fights: res.fights || [], total: res.total || 0, append });
-    } catch (err) {
-      console.error('Failed to fetch fight history:', err);
-    } finally {
-      commit('SET_FIGHT_HISTORY_LOADING', false);
     }
   },
 
@@ -298,21 +233,6 @@ const actions = {
       commit('SET_CURRENT_AGENT', { ...s.currentAgent, progression: res.progression });
     }
     return res;
-  },
-
-  async trainAgent({ commit, dispatch }, agentId) {
-    commit('SET_TRAIN_LOADING', true);
-    commit('SET_TRAIN_RESULT', null);
-    try {
-      const res = await apiClient.post(`/agent/${agentId}/train`, {}, { authRequired: true });
-      commit('SET_TRAIN_RESULT', res);
-      await dispatch('fetchAgent', agentId);
-      return res;
-    } catch (err) {
-      throw err;
-    } finally {
-      commit('SET_TRAIN_LOADING', false);
-    }
   },
 
   // Sub-epic 2 — AGENTS tab data fetch.

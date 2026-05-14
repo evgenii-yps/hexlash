@@ -61,48 +61,6 @@ const mutations = {
 };
 
 const actions = {
-    async getUserByLogin({commit, getters}, userLogin) {
-        let user = getters.getUserByLogin(userLogin);
-
-        try {
-            user = await userService.getUserByLoginFromLocalAndAPI(userLogin);
-            if (user) {
-                commit('setUser', user);
-            }else{
-                // Пользователя нет совсем, нужно загрузить и подождать
-                user = await userService.fetchUserByLogin(userLogin);
-            }
-            return user;
-        } catch (error) {
-            console.error('Error fetching user:', error);
-            //throw error;
-        }
-
-        if (user) {
-            return user;
-        }
-    },
-    async getUserById({commit, getters}, userId) {
-        let user = getters.getUserById(userId);
-
-        try {
-            user = await userService.getUserByIdFromLocalAndAPI(userId);
-            if (user) {
-                commit('setUser', user);
-            }else{
-                // Пользователя нет совсем, нужно загрузить и подождать
-                user = await userService.fetchUserById(userId);
-            }
-            return user;
-        } catch (error) {
-            console.error('Error fetching user:', error);
-            //throw error;
-        }
-
-        if (user) {
-            return user;
-        }
-    },
     async updateUser({commit}, user) {
         commit('setUser', user);
     },
@@ -111,9 +69,6 @@ const actions = {
      * Wraps existing service path with explicit loading/error state tracking.
      * Result cached via setUser (existing `users` array); read in component
      * via getters.getUserByLogin(login).
-     *
-     * Existing getUserByLogin action remains untouched for legacy v1 callsites
-     * (ClanPageContent / ClanView / RatingsView / v1 ProfileView).
      */
     async getGuestUserByLogin({commit}, userLogin) {
         commit('setLoadingGuest', true);

@@ -145,18 +145,6 @@ const actions = {
             return null;
         }
     },
-    async loadClanById({commit, getters}, clanId) {
-        try {
-            const clan = await getClanByIdFromLocalAndAPI(clanId);
-            if (clan) {
-                commit('setClan', clan);
-            }
-            return clan;
-        } catch (error) {
-            console.error('Error fetching clan:', error);
-            throw error;
-        }
-    },
     async updateClanData({commit}, updatedClanData) {
         try {
             await updateClanDataOnAPI(updatedClanData);
@@ -175,18 +163,6 @@ const actions = {
             store.commit('master/updateMaster', {clanId: null, clanRole: null});
         } catch (error) {
             console.error('Failed to leave clan:', error);
-            throw error;
-        }
-    },
-    async changeClan({commit}, clanId) {
-        try {
-            const newClanModel = await clanService.changeClan(clanId);
-            store.commit('master/updateMaster', {clanId: newClanModel.id, clanRole: 'member'});
-
-            await store.dispatch('clan/loadClanById', newClanModel.id);
-
-        } catch (error) {
-            console.error('Failed to change clan data:', error);
             throw error;
         }
     },

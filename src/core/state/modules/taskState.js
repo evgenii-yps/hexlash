@@ -101,15 +101,6 @@ const actions = {
             console.error('Error updating social task:', error);
         }
     },
-    async updateDailyTask({commit}, task) {
-        try {
-            await taskService.sendUpdateDailyTask(task);
-            commit('addDailyTask', task);
-
-        } catch (error) {
-            console.error('Error updating daily tasks:', error);
-        }
-    },
     async receivedSocialTask({commit}, task) {
         try {
             await taskService.localUpdateSocialTask(task);

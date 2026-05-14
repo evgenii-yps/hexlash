@@ -18,24 +18,6 @@ function loadFromStorage() {
     return null;
 }
 
-// ─── Opponent fighter generation (mock) ─────────────────────────────────────
-function generateOpponentFighter(opponent) {
-    const modules = ['Predator', 'Guardian', 'Ghost', 'Analyst', 'Chaos', 'Tank'];
-    const shuffled = [...modules].sort(() => Math.random() - 0.5);
-
-    return {
-        name: opponent.username,
-        hp: 100,
-        maxHp: 100,
-        modules: [shuffled[0], shuffled[1], shuffled[2]],
-        deck: [
-            { id: 'jab', name: 'Jab', damage: 8, speed: 9 },
-            { id: 'cross', name: 'Cross', damage: 12, speed: 6 },
-            { id: 'hook', name: 'Hook', damage: 15, speed: 5 },
-        ],
-    };
-}
-
 // ─── Rating calculation ─────────────────────────────────────────────────────
 function calculateRatingChange(myRating, opponentRating, result) {
     const diff = opponentRating - myRating;
@@ -102,9 +84,6 @@ const mutations = {
     setCurrentPvPFight(s, fight) {
         s.currentPvPFight = fight;
     },
-    clearCurrentPvPFight(s) {
-        s.currentPvPFight = null;
-    },
     setStatus(s, status) {
         s.status = status;
     },
@@ -168,34 +147,6 @@ const actions = {
         saveToStorage(s);
     },
 
-    createPvPFight({ commit, state: s }, { opponent, isRanked = false }) {
-        const fight = {
-            id: 'pvp_' + Date.now(),
-            type: isRanked ? 'pvp_ranked' : 'pvp_friendly',
-            status: 'ready',
-
-            opponent: {
-                id: opponent.odId || opponent.id,
-                username: opponent.username,
-                rating: opponent.rating,
-                fighter: generateOpponentFighter(opponent),
-            },
-
-            result: null,
-            ratingChange: null,
-
-            createdAt: Date.now(),
-            startedAt: null,
-            finishedAt: null,
-        };
-
-        commit('setCurrentPvPFight', fight);
-        commit('setStatus', 'in_fight');
-        saveToStorage(s);
-
-        return fight;
-    },
-
     finishPvPFight({ commit, state: s }, result) {
         if (!s.currentPvPFight) return;
 
@@ -225,12 +176,6 @@ const actions = {
         }
 
         commit('setStatus', 'finished');
-        saveToStorage(s);
-    },
-
-    clearCurrentFight({ commit, state: s }) {
-        commit('clearCurrentPvPFight');
-        commit('setStatus', 'idle');
         saveToStorage(s);
     },
 };
