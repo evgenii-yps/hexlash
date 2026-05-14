@@ -365,8 +365,11 @@ async function onReferralClick() {
 
 const referralLinkText = computed(() => {
   const login = userData.value?.login || '';
-  if (!login) return 'hexlash.com/r/...';
-  const text = `hexlash.com/r/${login}`;
+  // C3: env-portable host derived from window.location.origin. Strip scheme
+  // for compact display (e.g. "hexlash.com/r/foo" vs "https://hexlash.com/r/foo").
+  const host = (typeof window !== 'undefined' && window.location?.host) || 'hexlash.com';
+  if (!login) return `${host}/r/...`;
+  const text = `${host}/r/${login}`;
   return text.length > 24 ? text.slice(0, 22) + '…' : text;
 });
 

@@ -11,7 +11,7 @@
           <!-- QR Code -->
           <div class="qr-section">
             <img v-if="qrDataUrl" :src="qrDataUrl" alt="QR Code" class="qr-image"/>
-            <v-progress-circular v-else size="40" indeterminate/>
+            <div v-else class="hex-spinner" aria-label="Loading QR"></div>
           </div>
 
           <!-- Referral Link -->
@@ -73,7 +73,9 @@ const loading = ref(true);
 const copied = ref(false);
 
 const userLogin = computed(() => store.getters['master/getMaster']?.userData?.login || '');
-const referralLink = computed(() => `https://hexlash.com/r/${userLogin.value}`);
+// C3: env-portable origin (dev/test/prod/preview deployments) instead of
+// hardcoded https://hexlash.com. /r/:username redirect lives at app root.
+const referralLink = computed(() => `${window.location.origin}/r/${userLogin.value}`);
 const copyLabel = computed(() => copied.value ? t.value.referral.lblCopied : t.value.referral.lblCopyLink);
 
 onMounted(async () => {
