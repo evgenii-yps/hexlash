@@ -138,7 +138,8 @@ export default {
 /* — Label — */
 
 .hex-progress__label {
-  font-family: 'Anonymous', monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 600;
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.5px;

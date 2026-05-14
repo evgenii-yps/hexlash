@@ -93,7 +93,8 @@ export default {
 
 <style scoped>
 .hex-button {
-  font-family: 'Anonymous', 'Courier New', monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 1px;
   border-radius: 8px;

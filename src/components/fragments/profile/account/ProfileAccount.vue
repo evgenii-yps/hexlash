@@ -4,7 +4,7 @@
 
     <ConfirmEmail/>
     <ChangeLogin/>
-    <ChangeLanguage/>
+    <!-- Phase 1.5c — ChangeLanguage removed (English-only) -->
     <Switcher3DPunch/>
     <SoundToggle/>
     <ChangePassword/>
@@ -21,7 +21,6 @@ import ChangePassword from "@/components/fragments/profile/account/ChangePasswor
 import ConfirmEmail from "@/components/fragments/profile/account/ConfirmEmail.vue";
 import ChangeLogin from "@/components/fragments/profile/account/ChangeLogin.vue";
 import DeleteAccount from "@/components/fragments/profile/account/DeleteAccount.vue";
-import ChangeLanguage from "@/components/fragments/profile/account/ChangeLanguage.vue";
 import Switcher3DPunch from "@/components/fragments/profile/account/Switcher3DPunch.vue";
 import SoundToggle from "@/components/fragments/profile/account/SoundToggle.vue";
 import {onMounted} from "vue";

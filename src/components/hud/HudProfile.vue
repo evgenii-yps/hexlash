@@ -50,11 +50,18 @@
             <span class="ifk">Email</span>
             <span class="ifv">{{ emailText }}</span>
           </div>
-          <div class="id-field">
-            <span class="ifk">Referral</span>
-            <span class="ifv referral" @click="onReferralClick">{{ referralLinkText }}</span>
-          </div>
         </div>
+        <!-- C6: Referral row promoted к action button — "invite friends"
+             reads as action, not a label+value data row. Click opens lazy
+             ReferralModal (same handler as the prior row). -->
+        <button
+          type="button"
+          class="id-referral-btn"
+          @click="onReferralClick"
+        >
+          <span class="id-referral-btn__icon" aria-hidden="true">⚐</span>
+          <span class="id-referral-btn__label">{{ t.referral.lblReferralButton }}</span>
+        </button>
       </div>
 
       <!-- PERFORMANCE -->
@@ -183,18 +190,7 @@
 
       <!-- SETTINGS -->
       <div class="profile-card settings-card">
-        <div class="settings-block">
-          <div class="sb-label">Language</div>
-          <div class="lang-picker">
-            <button
-              v-for="lang in availableLanguages"
-              :key="lang.code"
-              class="lang-btn"
-              :class="{ active: currentLang === lang.code }"
-              @click="changeLanguage(lang.code)"
-            >{{ lang.code.toUpperCase() }}</button>
-          </div>
-        </div>
+        <!-- Phase 1.5c — Language picker block removed (English-only) -->
         <div class="settings-block">
           <div class="sb-label">Sound</div>
           <div class="toggle-row" :class="{ on: soundOn }" @click="toggleSound">
@@ -239,11 +235,7 @@ import BeltBadge from '@/components/ui/BeltBadge.vue';
 import HudSocialTasks from './HudSocialTasks.vue';
 import HudRetirement from './HudRetirement.vue';
 import { getBeltDisplay } from '@/utils/beltDisplay.js';
-import {
-  availableLanguages,
-  getLanguage,
-  t,
-} from '@/locales/index.js';
+import { t } from '@/locales/index.js';
 
 defineEmits(['back']);
 
@@ -362,13 +354,6 @@ async function onReferralClick() {
   await loadReferralModal();
   referralMounted.value = true;
 }
-
-const referralLinkText = computed(() => {
-  const login = userData.value?.login || '';
-  if (!login) return 'hexlash.com/r/...';
-  const text = `hexlash.com/r/${login}`;
-  return text.length > 24 ? text.slice(0, 22) + '…' : text;
-});
 
 // --- Wallet address sync (Step 10) ---
 // Legacy ProfileWallet.vue keeps master.userData.walletAddress in sync with
@@ -650,26 +635,8 @@ onBeforeUnmount(() => {
   }
 });
 
-// --- Settings: Language ---
-// locales/index.js exposes getLanguage + the reactive `t` computed. We mirror
-// currentLanguage into a local ref via watch(t) for active-state highlighting.
-//
-// Switching goes through master/setLanguage Vuex action (same as legacy
-// ChangeLanguage.vue), which internally:
-//   1. calls setLanguage() from locales/index.js (updates currentLanguage ref
-//      + localStorage → triggers `t` recompute → any template reading t.*.*
-//      re-renders),
-//   2. commits updateMaster({ language }) → master.language Vuex synced,
-//   3. writes through to local DB,
-//   4. syncs to backend silently via masterService.changeProfile.
-// Sub-Epic 5B hot-fix 10.2: direct setLanguage() call missed steps 2-4, so
-// Vuex-derived `master/getLanguage` stayed stale — legacy templates reading
-// it didn't update until logout/login re-initialized from localStorage.
-const currentLang = ref(getLanguage());
-watch(t, () => { currentLang.value = getLanguage(); });
-function changeLanguage(code) {
-  store.dispatch('master/setLanguage', code);
-}
+// Phase 1.5c — Language picker logic removed (English-only project).
+// Settings: Language block was deleted from template above.
 
 // --- Settings: Sound ---
 // punch/isMuted holds the mute flag (persisted via setMuted → localStorage).

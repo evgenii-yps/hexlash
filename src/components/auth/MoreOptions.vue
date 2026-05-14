@@ -64,7 +64,7 @@ defineEmits(['select', 'back']);
   background: transparent;
   border: none;
   color: var(--hex-text-muted);
-  font-family: 'Anonymous', monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.15em;
@@ -97,7 +97,7 @@ defineEmits(['select', 'back']);
 .more-options__hint {
   margin: 0 0 24px;
   text-align: center;
-  font-family: 'Anonymous', monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 11px;
   letter-spacing: 0.15em;
   text-transform: uppercase;

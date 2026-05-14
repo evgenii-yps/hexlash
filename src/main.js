@@ -40,7 +40,7 @@ import { WagmiPlugin } from '@wagmi/vue'
 import { VueQueryPlugin } from '@tanstack/vue-query'
 import { config as wagmiConfig } from '@/core/web3/wagmiConfig.js'
 import App from "@/App.vue";
-import {t, setLanguage, getLanguage} from "@/locales/index.js";
+import {t} from "@/locales/index.js";
 import {initAllAchievements} from "@/core/models/achievementModel.js";
 
 
@@ -102,14 +102,8 @@ const vuetify = createVuetify({
 
 async function initializeApp() {
     await store.dispatch('master/initializeMasterData');
-    const savedLanguage = localStorage.getItem('hexlash-language') || localStorage.getItem('preferredLanguage');
-    if (savedLanguage) {
-        setLanguage(savedLanguage);
-    } else {
-        const storeLang = store.getters['master/getLanguage'];
-        if (storeLang) setLanguage(storeLang);
-    }
-
+    // Phase 1.5c — English-only: locale boot/restore logic removed
+    // (was setLanguage from localStorage/store on app start).
     store.commit('achievement/setAllAchievements', initAllAchievements(t))
 }
 

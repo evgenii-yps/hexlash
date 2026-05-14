@@ -5,7 +5,7 @@ import {MasterModel} from "@/core/models/masterModel.js";
 import store from "@/core/state/store.js";
 import {jwtDecode} from "jwt-decode";
 import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
-import {t, setLanguage as setLocaleLanguage} from "@/locales/index.js";
+import {t} from "@/locales/index.js";
 import {isMockMode, createMockMaster, MOCK_JWT_TOKEN} from "@/core/mock/mockData.js";
 
 /**
@@ -61,14 +61,11 @@ export const initializeMasterData = async () => {
 export const getMasterFromAPI = () => {
     // Асинхронно обновляем данные из API
     fetchMasterData().then(async (apiUserModel) => {
-        // Приоритет: localStorage > сервер для языка
-        const savedLang = localStorage.getItem('hexlash-language') || localStorage.getItem('preferredLanguage');
-        if (savedLang) {
-            apiUserModel.language = savedLang;
-        }
+        // Phase 1.5c — language restore from server / setLocaleLanguage call
+        // removed (English-only). BE may still send apiUserModel.language
+        // — FE just ignores it.
         await updateMasterToLocalDB(apiUserModel);
         store.commit('master/setMaster', apiUserModel);
-        setLocaleLanguage(apiUserModel.language);
 
         // Restore progression and deck from server data
         restoreProgressionFromServer(apiUserModel.userData);
@@ -398,10 +395,9 @@ export const isShowPrivacyInfo = (text) => {
 };
 
 export const resetClient = async () => {
-    const lang = localStorage.getItem('hexlash-language') || localStorage.getItem('preferredLanguage');
+    // Phase 1.5c — English-only: hexlash-language localStorage round-trip removed.
     await deleteDB();
     localStorage.clear();
-    if (lang) localStorage.setItem('hexlash-language', lang);
 }
 
 export const validateJwtToken = (jwtToken) => {

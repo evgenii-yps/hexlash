@@ -47,14 +47,33 @@
       </ProviderButton>
     </div>
 
-    <button type="button" class="provider-selector__referral" @click="$emit('referral')">
-      I have referral code
+    <button
+      type="button"
+      class="provider-selector__referral"
+      :class="{ 'provider-selector__referral--applied': appliedCode }"
+      @click="$emit('referral')"
+    >
+      <template v-if="appliedCode">
+        <span class="provider-selector__referral-check" aria-hidden="true">✓</span>
+        <span>{{ t.referral.lblCodeApplied }}: {{ appliedCode }}</span>
+      </template>
+      <template v-else>
+        {{ t.referral.lblHaveCode }}
+      </template>
     </button>
   </div>
 </template>
 
 <script setup>
 import ProviderButton from './ProviderButton.vue';
+import { t } from '@/locales/index.js';
+
+defineProps({
+  // Currently applied referral code (from localStorage). Empty string when none.
+  // Parent owns the source of truth; reactivity flows top-down via this prop so
+  // mid-session updates (after ReferralOverlay Apply) reflect immediately.
+  appliedCode: { type: String, default: '' },
+});
 
 defineEmits(['select', 'referral']);
 </script>
@@ -78,7 +97,7 @@ defineEmits(['select', 'referral']);
 .provider-selector__hint {
   margin: 0 0 24px;
   text-align: center;
-  font-family: 'Anonymous', monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 11px;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -99,7 +118,7 @@ defineEmits(['select', 'referral']);
   border: 1px solid var(--hex-border-default);
   border-radius: 6px;
   color: var(--hex-text-secondary);
-  font-family: 'Anonymous', monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.15em;
@@ -118,5 +137,38 @@ defineEmits(['select', 'referral']);
 .provider-selector__referral:focus-visible {
   border-color: var(--hex-primary);
   box-shadow: 0 0 0 3px var(--hex-primary-glow);
+}
+
+/* Applied state — code already captured (from /r/:username redirect OR prior
+   manual Apply). Indicator stays clickable so user can re-apply / change code;
+   ReferralOverlay Apply overwrites existing localStorage entry. */
+.provider-selector__referral--applied {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--hex-text-primary);
+  border-color: var(--hex-border-strong);
+  text-transform: none;
+  letter-spacing: 0.05em;
+}
+
+.provider-selector__referral--applied:hover {
+  border-color: var(--hex-primary);
+  color: var(--hex-text-primary);
+}
+
+.provider-selector__referral-check {
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--hex-primary);
+  color: var(--hex-bg-dark);
+  font-size: 11px;
+  font-weight: 700;
+  flex: 0 0 16px;
 }
 </style>
