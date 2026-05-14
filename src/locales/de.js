@@ -788,6 +788,9 @@ export default {
     lblNoReferrals: 'No referrals yet. Share your link!',
     lblDaysAgo: '{days} days ago',
     lblToday: 'Today',
+    lblHaveCode: 'I have referral code',
+    lblCodeApplied: 'Referral code applied',
+    lblReferralButton: 'Referral',
   },
   research: {
     lblTaps: 'TAPS',

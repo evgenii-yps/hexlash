@@ -797,6 +797,9 @@ export default {
     lblNoReferrals: 'Пока нет рефералов. Поделись ссылкой!',
     lblDaysAgo: '{days} дн. назад',
     lblToday: 'Сегодня',
+    lblHaveCode: 'У меня есть реферальный код',
+    lblCodeApplied: 'Реферальный код применён',
+    lblReferralButton: 'Рефералы',
   },
   research: {
     lblTaps: 'ТАПЫ',

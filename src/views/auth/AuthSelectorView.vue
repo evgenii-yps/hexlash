@@ -12,6 +12,7 @@
       <!-- Screen A: Provider selector -->
       <ProviderSelector
         v-if="screen === 'provider'"
+        :applied-code="appliedReferralCode"
         @select="onProviderSelect"
         @referral="onReferralOpen"
       />
@@ -72,6 +73,7 @@ import EmailForm from '@/components/auth/EmailForm.vue';
 import ReferralOverlay from '@/components/auth/ReferralOverlay.vue';
 import ForgotPasswordScreen from '@/components/auth/ForgotPasswordScreen.vue';
 import SignupSuccessScreen from '@/components/auth/SignupSuccessScreen.vue';
+import { t } from '@/locales/index.js';
 
 // Phase 3: Vuex integration — provider toasts, email submit (login/register),
 // referral localStorage write. Email field still UI-only (BE doesn't accept yet —
@@ -105,6 +107,12 @@ const mode = ref(route.path === '/auth/signup' ? 'signup' : 'login');
 const referralOpen = ref(false);
 const loading = ref(false);
 const serverError = ref('');
+// Reactive mirror of localStorage['hexlash_referral_code']. Initialized on mount
+// (captures /r/:username redirect side-effect from router.js:64-76) and updated
+// after manual Apply in ReferralOverlay. localStorage doesn't fire native Vue
+// reactivity — parent-owned ref + prop drilling to ProviderSelector is the
+// minimal pattern. Read-clear semantics live in masterService.register (line 154).
+const appliedReferralCode = ref(localStorage.getItem('hexlash_referral_code') || '');
 
 // Watch route → keep mode in sync. Handles browser back/forward + manual URL paste
 // + redirect from /auth (bare) → /auth/login. Guard prevents infinite loop with onTabChange.
@@ -168,6 +176,13 @@ function onReferralApply(code) {
   // (line 146) reads this key automatically and clears it after successful register.
   if (code) {
     localStorage.setItem('hexlash_referral_code', code);
+    appliedReferralCode.value = code;
+    // C2: toast confirmation — user gets visible feedback that the silent
+    // localStorage write succeeded. Mirror `showComingSoon` pattern above.
+    store.commit('master/setInfoMessage', InfoMessageModel.withoutButton(
+      t.value.referral.lblCodeApplied,
+      4000
+    ));
   }
   referralOpen.value = false;
 }
