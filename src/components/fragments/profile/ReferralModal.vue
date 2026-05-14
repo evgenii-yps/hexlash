@@ -131,11 +131,15 @@ function formatDate(dateStr) {
 </script>
 
 <style scoped>
-/* C5 Neon Discipline redesign — single pink accent (count badge), Anonymous
-   pixel-font for title + count "ударный момент"; everything else neutral. URL
-   text uses system mono (NOT AnonymousBalance) — AnonymousBalance is a
-   number-only display font and rendered URLs with glitched overlapping
-   glyphs (root cause of pre-redesign visual bug). */
+/* C5 Neon Discipline redesign — single pink accent on the count number.
+   Phase 1.5b font policy: pixel fonts (Anonymous / AnonymousBalance) only
+   on big numeric impact moments. AnonymousBalance retained ONLY на
+   .referral-count__value (pure number, 40px, "ударная цифра"). Title,
+   count label, reward hint, list title/date — all system sans. URL text —
+   system mono. Pre-1.5b assumption that pixel fonts were "missing glyphs"
+   was wrong: TTF cmap parse showed full ASCII + Cyrillic coverage; real
+   cause is pixel-aesthetic bitmap snap-grid producing visual artifacts on
+   small letter-spaced body text. */
 
 .referral-overlay {
   position: fixed;
@@ -202,7 +206,7 @@ function formatDate(dateStr) {
 .referral-title {
   margin: 0 0 18px;
   text-align: center;
-  font-family: 'Anonymous', 'Courier New', monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 15px;
   font-weight: 500;
   letter-spacing: 0.18em;
@@ -221,7 +225,9 @@ function formatDate(dateStr) {
 }
 
 .referral-count__value {
-  font-family: 'Anonymous', 'Courier New', monospace;
+  /* Pure numeric "ударная цифра" — appropriate use of AnonymousBalance per
+     CLAUDE.md design intent. Sized 40px so bitmap-grid renders cleanly. */
+  font-family: 'AnonymousBalance', 'Courier New', monospace;
   font-size: 40px;
   font-weight: 600;
   line-height: 1;
@@ -231,7 +237,7 @@ function formatDate(dateStr) {
 }
 
 .referral-count__label {
-  font-family: 'Anonymous', 'Courier New', monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 10px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -294,7 +300,7 @@ function formatDate(dateStr) {
 .referral-reward {
   margin: 0 0 18px;
   text-align: center;
-  font-family: 'Anonymous', 'Courier New', monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 10px;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -309,7 +315,7 @@ function formatDate(dateStr) {
 
 .referral-list__title {
   margin-bottom: 8px;
-  font-family: 'Anonymous', 'Courier New', monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 10px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -337,7 +343,7 @@ function formatDate(dateStr) {
 .referral-list__date {
   font-size: 11px;
   color: var(--hex-text-muted);
-  font-family: 'Anonymous', 'Courier New', monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   letter-spacing: 0.05em;
 }
 

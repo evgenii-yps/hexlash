@@ -187,7 +187,7 @@ function declineChallenge() {
 
 .challenge-title {
   color: var(--hex-primary);
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 12px;
   text-transform: uppercase;
 }

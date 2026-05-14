@@ -315,7 +315,7 @@ function onRequestNew() {
 .reset-card__hint {
   margin: 0 0 16px;
   text-align: center;
-  font-family: 'Anonymous', monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 11px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -335,7 +335,7 @@ function onRequestNew() {
 .reset-card__field { display: flex; flex-direction: column; gap: 6px; }
 
 .reset-card__label {
-  font-family: 'Anonymous', monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 10px;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -368,7 +368,7 @@ function onRequestNew() {
 .reset-card__input:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .reset-card__error-msg {
-  font-family: 'Anonymous', monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 10px;
   letter-spacing: 0.1em;
   text-transform: uppercase;

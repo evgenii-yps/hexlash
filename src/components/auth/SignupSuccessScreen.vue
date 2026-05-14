@@ -96,7 +96,7 @@ async function onResend() {
 .signup-success__email {
   display: inline-block;
   margin-top: 4px;
-  font-family: 'Anonymous', monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 13px;
   letter-spacing: 0.04em;
   color: var(--hex-primary);

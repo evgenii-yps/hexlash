@@ -97,7 +97,7 @@ defineEmits(['select', 'referral']);
 .provider-selector__hint {
   margin: 0 0 24px;
   text-align: center;
-  font-family: 'Anonymous', monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 11px;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -118,7 +118,7 @@ defineEmits(['select', 'referral']);
   border: 1px solid var(--hex-border-default);
   border-radius: 6px;
   color: var(--hex-text-secondary);
-  font-family: 'Anonymous', monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.15em;

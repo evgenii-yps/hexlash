@@ -190,7 +190,7 @@ function onSubmit() {
   background: transparent;
   border: none;
   color: var(--hex-text-muted);
-  font-family: 'Anonymous', monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.15em;
@@ -233,7 +233,7 @@ function onSubmit() {
 }
 
 .email-form__label {
-  font-family: 'Anonymous', monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 10px;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -277,7 +277,7 @@ function onSubmit() {
 }
 
 .email-form__error-msg {
-  font-family: 'Anonymous', monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 10px;
   letter-spacing: 0.1em;
   text-transform: uppercase;

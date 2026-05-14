@@ -151,7 +151,8 @@ export default {
   align-items: center;
   gap: 4px;
   border-radius: 20px;
-  font-family: 'Anonymous', monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 600;
   letter-spacing: 0.5px;
   white-space: nowrap;
   line-height: 1;

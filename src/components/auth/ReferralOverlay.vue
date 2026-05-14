@@ -163,7 +163,7 @@ onBeforeUnmount(() => {
   border: 1px solid var(--hex-border-default);
   border-radius: 4px;
   color: var(--hex-text-primary);
-  font-family: 'Anonymous', monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 14px;
   letter-spacing: 0.2em;
   text-align: center;

@@ -213,7 +213,9 @@ defineExpose({ openModal })
 }
 
 .connected-address {
-  font-family: 'AnonymousBalance', monospace;
+  /* Wallet hex address — mono content (NOT pure numeric impact). System
+     mono prevents pixel-font glyph artifacts при small 0.9rem display. */
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Courier New', monospace;
   font-size: 0.9rem;
   color: var(--hex-text-primary);
 }
