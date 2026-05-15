@@ -1,0 +1,22 @@
+-- Phase 10 — Drop User.language column (English-only migration finalization)
+--
+-- Frontend stopped reading User.language during Stream 1.5 (1.5c) — entire
+-- locale infrastructure removed, project English-only since referral-серии.
+-- Backend formatUserResponse / PUT /user/edit / PUT /user/settings continued
+-- referencing the column despite zero functional dependency from FE. Phase 10
+-- retires it on backend; frontend masterModel.js already `delete userData.language`
+-- defensively, so removing the column from API response shape is a no-op for FE.
+--
+-- Scope X (decision per PHASE10_STAGE_A_INVENTORY.md): only User.language.
+-- SocialTask.language + DailyTask.language deferred to a follow-up phase due to
+-- seed.js / route-deploy-order / RU-duplicate-data complexity.
+--
+-- Safety:
+--   - No FK / index / unique constraint depends on User.language.
+--   - No triggers / views reference it.
+--   - Default was 'en' — no orphan data to migrate.
+--   - Frontend defensive `delete userData.language` makes response-shape
+--     change zero-impact mid-deploy-window.
+
+-- AlterTable
+ALTER TABLE "User" DROP COLUMN "language";

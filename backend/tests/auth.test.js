@@ -223,8 +223,8 @@ describe('edit endpoint email branch (Phase 4 — FIX red flag #2)', () => {
     // - Different email → sendVerifyEmail called non-blocking
     // - Empty/null email → 400 "Cannot remove email" (defensive owner
     //   decision — prevents accidental data loss from UI bugs / typos)
-    // - Non-email fields (name, login, language, skin, walletAddress)
-    //   continue к work via existing generic loop, no changes
+    // - Non-email fields (name, login, skin, walletAddress) continue к
+    //   work via existing generic loop, no changes
     assert.equal(true, true, 'contract documented above');
   });
 

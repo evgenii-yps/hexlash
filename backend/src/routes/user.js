@@ -162,7 +162,7 @@ router.post('/edit', authMiddleware, async (req, res) => {
     }
 
     // Generic field loop — existing behavior preserved for non-email fields
-    const allowedFields = ['name', 'login', 'language', 'skin', 'walletAddress'];
+    const allowedFields = ['name', 'login', 'skin', 'walletAddress'];
     const updateData = {};
     for (const field of allowedFields) {
       if (profileData[field] !== undefined) {
@@ -563,12 +563,14 @@ router.put('/progression', authMiddleware, async (req, res) => {
 });
 
 // PUT /v1/user/settings
+// Phase 10: `language` accept/return retired (User.language column dropped).
+// Endpoint kept settings-only for backwards-compat; no frontend caller exists,
+// but the route is preserved defensively until a dedicated dead-endpoint pass.
 router.put('/settings', authMiddleware, async (req, res) => {
   try {
-    const { language, settings } = req.body;
+    const { settings } = req.body;
     const data = {};
 
-    if (language !== undefined) data.language = language;
     if (settings !== undefined) data.settings = settings;
 
     if (Object.keys(data).length === 0) {
@@ -580,7 +582,7 @@ router.put('/settings', authMiddleware, async (req, res) => {
       data,
     });
 
-    res.json({ data: { language: updated.language, settings: updated.settings } });
+    res.json({ data: { settings: updated.settings } });
   } catch (err) {
     console.error('[USER] Settings error:', err);
     res.status(500).json({ error: 'Failed to save settings' });
