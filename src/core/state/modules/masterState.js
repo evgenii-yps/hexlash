@@ -237,9 +237,8 @@ const actions = {
             commit('setInfoMessage', InfoMessageModel.withText(error.message));
         }
     },
-    // Phase 1.5c — setLanguage action removed (English-only). Backend
-    // User.language field is preserved per scope discipline but FE no longer
-    // reads/writes it.
+    // Phase 1.5c — setLanguage action removed (English-only).
+    // User.language backend column retired in legacy-cleanup Phase 10 Stage A.
     async uploadMasterAvatar({commit}, {formData, onUploadProgress}) {
         try {
             const avatarUrl = await masterService.uploadAvatar(formData, onUploadProgress);
