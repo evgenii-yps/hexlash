@@ -43,6 +43,11 @@
           <h3>Shop</h3>
           <p>Spend Taps, XP, or Base ETH on cosmetic skins, gloves, boosts, titles, and banners. Cosmetics-only — no pay-to-win.</p>
         </section>
+        <div class="help-full-guide">
+          <button type="button" class="help-full-guide-link" @click="onFullGuide">
+            Want more detail? Full game guide →
+          </button>
+        </div>
       </div>
     </div>
   </Teleport>
@@ -50,14 +55,23 @@
 
 <script setup>
 import { onMounted, onBeforeUnmount } from 'vue';
+import { useRouter } from 'vue-router';
 
 const emit = defineEmits(['close']);
+const router = useRouter();
 
 // Esc handler bound for the lifetime of the mounted component (lazy-mount
 // pattern means component exists only when modal is shown, so we don't need
 // to gate the listener on an `open` prop).
 function onKeyDown(e) {
   if (e.key === 'Escape') emit('close');
+}
+
+// Secondary entry into full HelpView. Close modal first (emit upward — parent
+// HudPit owns helpOpen ref), then navigate. Same-tab navigation per spec.
+function onFullGuide() {
+  emit('close');
+  router.push('/play/help');
 }
 
 onMounted(() => {

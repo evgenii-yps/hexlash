@@ -134,6 +134,35 @@
   margin: 0;
 }
 
+/* Secondary action — link to full /play/help. Separated block (padding-top),
+   neutral token palette (no pink — primary accent is on HUD help button).
+   Slightly larger than body text but no glow / no shouty styling. */
+.help-full-guide {
+  padding-top: 22px;
+  margin-top: 18px;
+  border-top: 1px solid var(--text-dim, rgba(255, 255, 255, 0.12));
+  text-align: center;
+}
+
+.help-full-guide-link {
+  background: none;
+  border: 0;
+  padding: 4px 8px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--text-mid);
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: rgba(255, 255, 255, 0.25);
+  text-underline-offset: 3px;
+  transition: color 0.15s ease, text-decoration-color 0.15s ease;
+}
+
+.help-full-guide-link:hover {
+  color: #fff;
+  text-decoration-color: rgba(255, 255, 255, 0.6);
+}
+
 @keyframes helpFadeIn {
   from { opacity: 0; }
   to   { opacity: 1; }
