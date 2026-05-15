@@ -97,7 +97,7 @@ const protectedRoutes = [
     {path: '/profile/balance', redirect: '/play/profile'},
     {path: '/profile/wallet', redirect: '/play/wallet'},
     {path: '/profile/account', redirect: '/play/account'},
-    {path: '/profile/skins', name: 'Skins', redirect: '/play/profile'},
+    {path: '/profile/skins', redirect: '/play/profile'},
 
     {
         path: '/clan/:id',
