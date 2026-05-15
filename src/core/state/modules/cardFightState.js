@@ -60,10 +60,6 @@ function saveFightState(state) {
     } catch(e) { /* ignore */ }
 }
 
-function clearFightState() {
-    localStorage.removeItem(FIGHT_STORAGE_KEY);
-}
-
 // ─── State ───────────────────────────────────────────────────────────────────
 const state = {
     playerModules: ['predator', 'analyst', 'ghost'],
@@ -209,10 +205,9 @@ const actions = {
         commit('setFightPhase', 'preparation');
     },
 
-    setPlayerModules({ commit, dispatch }, modules) {
+    setPlayerModules({ commit }, modules) {
         commit('setPlayerModules', modules);
         localStorage.setItem(MODULES_STORAGE_KEY, JSON.stringify(modules));
-        dispatch('progressionState/syncProgression', null, { root: true });
     },
 
     setEmergencyProtocol({ commit }, type) {
@@ -242,8 +237,11 @@ const actions = {
           }
         }
 
-        // Calculate power for opponent scaling
-        const progressionState = rootState.progression;
+        // Calculate power for opponent scaling.
+        // Phase 7-pre-2 Part B cascade: progression module retired, so
+        // rootState.progression is undefined. buildPlayerFighter handles
+        // empty {} via its own defaults (.deck || [], .moves || {}).
+        const progressionState = rootState.progression || {};
         const playerFighter = buildPlayerFighter(progressionState, captainModules);
         const playerPower = calculatePowerRating(playerFighter);
 
@@ -317,12 +315,6 @@ const actions = {
             commit('setEmergencyUsed', true);
             commit('setEventTitle', { title: t.value.fight.lblEventEmergency, cls: 'event-emergency', image: PROTOCOL_IMAGES[protocol.type] });
         }
-    },
-
-    // ── Navigation ────────────────────────────────────────────────────────
-
-    clearSavedFight() {
-        clearFightState();
     },
 
 };

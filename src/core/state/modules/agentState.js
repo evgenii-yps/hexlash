@@ -12,11 +12,6 @@ const state = {
   currentAgentLoading: false,
   availableMoves: [],
   availableMovesLoading: false,
-  fightHistory: [],
-  fightHistoryTotal: 0,
-  fightHistoryLoading: false,
-  trainResult: null,
-  trainLoading: false,
   // Sub-epic 2 — Ratings tab AGENTS data (Path A Vuex extension).
   // REPLACE semantics on setAgentRankings (preempts F3 stale-rows risk).
   // Mirrors clanRatings/participantRatings shape but with replace, not append.

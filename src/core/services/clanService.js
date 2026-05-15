@@ -109,22 +109,6 @@ export const deleteClan = async () => {
     }
 };
 
-export const changeClan = async (clanId) => {
-    try {
-
-        const response = await apiClient.post(`/clan/change`, {clanId: clanId}, {authRequired: true});
-
-        const newClanModel = ClanModel.fromJSON(response.data);
-        await updateClanToLocalDB(newClanModel);
-        store.commit('clan/setClan', newClanModel);
-
-        return newClanModel;
-    } catch (error) {
-        throw new Error('Failed to change clan: ' + (error.response?.data?.error || error.message));
-    }
-};
-
-
 export const setMemberRole = async (userId, role) => {
     try {
         const response = await apiClient.post('/clan/set-role', {userId, role}, {authRequired: true});

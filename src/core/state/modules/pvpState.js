@@ -52,27 +52,6 @@ const state = () => ({
 
 // ─── Getters ────────────────────────────────────────────────────────────────
 const getters = {
-    getCurrentPvPFight: (s) => s.currentPvPFight,
-    getPvpStats: (s) => s.pvpStats,
-    getStatus: (s) => s.status,
-
-    winRate: (s) => {
-        const total = s.pvpStats.wins + s.pvpStats.losses;
-        if (total === 0) return 0;
-        return Math.round((s.pvpStats.wins / total) * 100);
-    },
-
-    league: (s) => {
-        const rating = s.pvpStats.rating;
-        if (rating >= 3000) return { name: 'Champion', icon: '👑', color: '#FFD700' };
-        if (rating >= 2500) return { name: 'Diamond', icon: '💠', color: '#00BFFF' };
-        if (rating >= 2000) return { name: 'Platinum', icon: '💎', color: '#00CED1' };
-        if (rating >= 1500) return { name: 'Gold', icon: '🥇', color: '#FFD700' };
-        if (rating >= 1000) return { name: 'Silver', icon: '🥈', color: '#C0C0C0' };
-        return { name: 'Bronze', icon: '🥉', color: '#CD7F32' };
-    },
-
-    isPvPFight: (s) => s.status === 'in_fight',
     getCurrentMatchId: (s) => s.currentMatchId,
     getPvpFightStatus: (s) => s.pvpFightStatus,
     getOpponentInfo: (s) => s.opponentInfo,
