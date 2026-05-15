@@ -56,7 +56,12 @@ const publicRoutes = [
     },
     {path: '/privacy', name: 'Privacy', component: () => import("/src/views/PrivacyView.vue")},
     {path: '/404', name: 'NotFound', component: () => import("/src/views/NotFoundView.vue")},
-    {path: '/rules', name: 'Rules', component: () => import("/src/views/PageView.vue")},
+    // Phase 8 implementation: /rules ported to v2 (RulesView at /play/rules).
+    // Old /rules path preserved as redirect for URL-stability (legal page,
+    // public links from landing/socials/email-templates may reference it).
+    // Cleanup of v1 PageView.vue + BackButton.vue + Card.vue + background_page.webp
+    // is the next phase after smoke-test gate.
+    {path: '/rules', redirect: '/play/rules'},
     {path: '/verify-email', name: 'VerifyEmail', component: () => import("/src/views/VerifyEmailView.vue")},
     // Email Auth Phase 5 — reset-password public route (Vercel auto-deploy
     // on merge). User lands here from email link с ?token=... query param.
@@ -196,6 +201,13 @@ const v2Routes = [
                 path: 'help',
                 name: 'V2Help',
                 component: () => import('@/views-v2/HelpView.vue'),
+            },
+            {
+                // Phase 8 implementation — /rules ported to v2.
+                // Public (NOT in v2ProtectedNames) — legal content stays auth-free.
+                path: 'rules',
+                name: 'V2Rules',
+                component: () => import('@/views-v2/RulesView.vue'),
             },
             {
                 path: 'user/:userLogin',

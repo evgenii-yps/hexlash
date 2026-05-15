@@ -327,8 +327,8 @@ export default {
     lblNoRankedAgents: "No ranked agents yet",
   },
   info: {
-    firstFight: "Before your first fight, we strongly recommend that you familiarize yourself with the <a href=\"/rules?back=arena\">rules</a> of the game.",
-    firstTraining: "Training gets you tokens, but the clock is ticking. Your tasks won't last forever. Make sure you understand the <a href=\"/rules?back=training\">rules</a> before you start.",
+    firstFight: "Before your first fight, we strongly recommend that you familiarize yourself with the <a href=\"/play/rules?back=arena\">rules</a> of the game.",
+    firstTraining: "Training gets you tokens, but the clock is ticking. Your tasks won't last forever. Make sure you understand the <a href=\"/play/rules?back=training\">rules</a> before you start.",
     withdrawAfterListing: "Token withdrawal to your wallet will be available after the listing. Keep an eye on the countdown timer.",
     withdrawClanDisable: "Withdrawal from the clan is temporarily disabled. We apologize for the inconvenience. It will be available shortly.",
   },

@@ -159,7 +159,7 @@
       <nav class="marketing-footer__links">
         <router-link to="/privacy" class="marketing-footer__link">Privacy</router-link>
         <span class="marketing-footer__sep" aria-hidden="true">·</span>
-        <router-link to="/rules" class="marketing-footer__link">Rules</router-link>
+        <router-link to="/play/rules" class="marketing-footer__link">Rules</router-link>
         <span class="marketing-footer__sep" aria-hidden="true">·</span>
         <router-link to="/help" class="marketing-footer__link">Help</router-link>
       </nav>
