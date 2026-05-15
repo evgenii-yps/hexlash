@@ -272,9 +272,10 @@ const metaText = computed(() => {
 });
 
 // --- Wallet ---
-// UserModel.walletAddress is kept in sync by ProfileWallet / ConnectWallet via
-// `master/updateMaster { walletAddress }` on connect/disconnect. Reading it
-// here gives us a stable value without depending on a Wagmi hook.
+// UserModel.walletAddress is kept in sync by ConnectWallet (modal flow) plus
+// the fallback watcher below for wagmi address changes outside the modal
+// (auto-reconnect, account switch). Reading it here gives a stable value
+// without depending on a Wagmi hook directly.
 const walletAddress = computed(() => userData.value?.walletAddress || '');
 const walletClickable = computed(() => !!walletAddress.value);
 const walletText = ref('');
@@ -306,12 +307,12 @@ async function onWalletClick() {
 }
 
 // --- ConnectWallet modal integration (Step 10) ---
-// ConnectWallet is reused verbatim from legacy (same component ProfileWallet
-// mounts). We add `defineExpose({ openModal })` there so this HUD can trigger
-// the modal without rendering the inline "Connect Wallet" button — and
-// lazy-load via dynamic import so Profile bundle stays lean for users who
-// never open it. The source layout is rendered with display:none; the modal
-// itself teleports to body and is unaffected.
+// ConnectWallet (src/components/fragments/profile/wallet/) exposes openModal
+// via defineExpose so this HUD can trigger the modal without rendering the
+// inline "Connect Wallet" button. Lazy-load via dynamic import so Profile
+// bundle stays lean for users who never open it. The source layout is
+// rendered with display:none; the modal itself teleports to body and is
+// unaffected.
 const CWComp = shallowRef(null);
 const cwMounted = ref(false);
 const cwRef = ref(null);
@@ -356,11 +357,10 @@ async function onReferralClick() {
 }
 
 // --- Wallet address sync (Step 10) ---
-// Legacy ProfileWallet.vue keeps master.userData.walletAddress in sync with
-// Wagmi's useAccount(address) via dispatch('master/updateMaster'). That
-// component only mounts on /profile/wallet — v2 users who connect from
-// /v2/profile would otherwise be stranded with a stale walletAddress. This
-// watcher covers the v2 case with the same pattern.
+// ConnectWallet dispatches `master/updateMaster { walletAddress }` from
+// inside its modal on connect / disconnect. This watcher catches address
+// changes that happen outside the modal — auto-reconnect on page load,
+// account switch in the wallet extension — to keep master.userData in sync.
 const { address: wagmiAddress } = useAccount();
 watch(wagmiAddress, async (newAddress) => {
   const current = userData.value?.walletAddress || '';
@@ -442,8 +442,8 @@ const statStreak = computed(() => fmt(0)); // not tracked on User
 // --- Achievements ---
 // `allAchievements` is seeded at app init (main.js:113 → initAllAchievements).
 // `userData.achievements` holds the per-user completion records with
-// { type, isCompleted, obtainedAt }. Legacy ProfileAchievements.vue matches
-// by `type` — we do the same, 1-to-1 parity.
+// { type, isCompleted, obtainedAt }. Match by `type` against the seeded list
+// to determine unlock state per tile.
 //
 // The 16 tiles come from the prototype (4647-4662) with fixed visual order
 // + 3-letter abbreviations. Tile `type` matches the backend seed (CLAUDE.md).
@@ -485,13 +485,8 @@ const unlockedCount = computed(() => unlockedTypes.value.size);
 // Full reuse of `friends/*` Vuex module (same actions the legacy FriendsView
 // dispatches). WS challenge goes through webSocket/sendMessage — infrastructure
 // is live in AppV2 context because App.vue (root) auto-connects WS on auth.
-//
-// Known gaps deferred to Sub-Epic 5D/5G:
-//   - ChallengeNotification widget is hidden on /v2/* (App.vue v-if), so v2
-//     users don't see incoming challenge toasts. Step 8 only sends.
-//   - challenge_start server event navigates to legacy /fight in the WS
-//     handler — a v2 sender lands on legacy Fight view. Cross-wiring for
-//     /v2/fight is a separate PvP-integration sub-epic.
+// ChallengeNotification + challenge_start → /play/fight routing wired in
+// Sub-Epic 4a (PvP-integration closure).
 const friendsList = computed(() => store.getters['friends/getFriends'] || []);
 const incomingRequests = computed(() => store.getters['friends/getIncomingRequests'] || []);
 const onlineFriendsCount = computed(
@@ -648,8 +643,7 @@ function toggleSound() {
 
 // --- Settings: Build ---
 // __APP_VERSION__ / __IS_PROD__ are compile-time defines from vite.config
-// (see CLAUDE.md Build section). Legacy ProfileView.vue:101-102 reads the
-// same way. Format mirrors prototype 4708: "v0.13.0 · prod".
+// (see CLAUDE.md Build section). Format mirrors prototype 4708: "v0.13.0 · prod".
 const buildText = computed(() => {
   const env = __IS_PROD__ ? 'prod' : 'test';
   return `v${__APP_VERSION__} · ${env}`;
@@ -658,8 +652,7 @@ const buildText = computed(() => {
 // --- Settings: Logout ---
 // master/logout internally disconnects WS, clears auth data, and router-pushes
 // to `/`. The nav guard then redirects unauthenticated users to `/auth/login`,
-// so no explicit push from here (would double-fire). Legacy ProfileButtons
-// uses the same single-dispatch pattern. No confirm per prototype.
+// so no explicit push from here (would double-fire). No confirm per prototype.
 function onLogout() {
   store.dispatch('master/logout');
 }

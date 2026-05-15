@@ -1,14 +1,14 @@
 <!-- Sub-Epic 5I Phase 2 — HudSocialTasks v2-native panel.
-     Replaces failed Option A (legacy SocialTasks inline embed — incompatible
-     with HUD layout). v2 design language: mirrors .training-tasks Daily
-     Tasks panel positioning + Choose Archetype card structure (HudCreate.vue
+     v2 design language: mirrors .training-tasks Daily Tasks panel
+     positioning + Choose Archetype card structure (HudCreate.vue
      precedent).
 
      SubscribeModal reused via 1-line defineExpose augmentation (Option B
      Q1 β). Lazy import + markRaw + nextTick × 2 + ref method trigger
-     pattern (5B ConnectWallet precedent). Legacy SocialTasks.vue itself
-     untouched (0-line preserved); only nested SubscribeModal.vue augmented
-     (2 lines: openModal function + defineExpose).
+     pattern (5B ConnectWallet precedent). Legacy SocialTasks.vue retired
+     in legacy-cleanup Phase 6 along with DailyTasks + TaskModal; only the
+     nested SubscribeModal.vue augmentation (2 lines: openModal function
+     + defineExpose) remains in use.
 
      Vuex bindings mirror TrainingView reactive computeds. Idempotency
      guard prevents duplicate fetch on re-mount. -->

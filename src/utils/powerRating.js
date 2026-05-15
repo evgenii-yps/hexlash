@@ -128,7 +128,10 @@ export function calculateTargetPower(playerPower, difficulty) {
 /**
  * Build a player fighter object from progression state for power calculation.
  *
- * @param {Object} progressionState - Vuex progression module state
+ * @param {Object} progressionState - Object with .deck (array of moveIds) and
+ *   .moves (map of moveId → { level, unlocked }). Legacy shape from the
+ *   retired progression Vuex module; callers now pass an empty {} when no
+ *   progression data is available (see cardFightState startFight).
  * @param {string[]} playerModules - Player's 3 selected modules
  * @returns {Object} Fighter object suitable for calculatePowerRating
  */
