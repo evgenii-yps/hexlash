@@ -88,6 +88,28 @@ async function waitSpaReady(page) {
   await page.waitForTimeout(500);
 }
 
+/**
+ * Guard against Vercel Deployment Protection SSO gate.
+ *
+ * When a preview is protected, every request returns HTTP 401 with a Vercel
+ * SSO page (<title>Authentication Required</title>). Without this guard,
+ * tolerant DOM locators may match the SSO page and emit false-positive passes.
+ *
+ * Fail fast with an actionable message — owner needs to provide VERCEL_BYPASS
+ * env var (token from Vercel project settings → Deployment Protection →
+ * Protection Bypass for Automation) before smoke can probe real app.
+ */
+async function failIfVercelSsoGate(page) {
+  const title = await page.title().catch(() => '');
+  if (title.includes('Authentication Required')) {
+    throw new Error(
+      'Vercel Deployment Protection SSO gate intercepted request. ' +
+      'Set VERCEL_BYPASS=<token> (from Vercel project → Deployment Protection → ' +
+      'Protection Bypass for Automation) and re-run.'
+    );
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // A. Public anonymous surfaces
 // ─────────────────────────────────────────────────────────────────────────────
@@ -95,6 +117,7 @@ async function waitSpaReady(page) {
 test('A1 — Marketing landing renders + hero + CTA', async ({ page }) => {
   await page.goto('/');
   await waitSpaReady(page);
+  await failIfVercelSsoGate(page);
 
   // Hero copy from MarketingView §Hero (8b/8c port).
   const heroVisible = await page.locator('.marketing-hero, .marketing__hero').count();
@@ -113,6 +136,7 @@ test('A1 — Marketing landing renders + hero + CTA', async ({ page }) => {
 test('A2 — /play/rules renders RulesView + inline back button', async ({ page }) => {
   await page.goto('/play/rules');
   await waitSpaReady(page);
+  await failIfVercelSsoGate(page);
 
   // RulesView (Phase 8 Path A v2 port). Use a tolerant locator —
   // exact class may evolve, but heading semantics + back-link must exist.
@@ -129,6 +153,7 @@ test('A2 — /play/rules renders RulesView + inline back button', async ({ page 
 test('A3 — /rules redirects to /play/rules + same content', async ({ page }) => {
   await page.goto('/rules');
   await waitSpaReady(page);
+  await failIfVercelSsoGate(page);
 
   expect(page.url(), 'redirect target mismatch').toContain('/play/rules');
 
@@ -141,6 +166,7 @@ test('A3 — /rules redirects to /play/rules + same content', async ({ page }) =
 test('A4 — /play/help renders + cross-link to /play/rules (not /rules)', async ({ page }) => {
   await page.goto('/play/help');
   await waitSpaReady(page);
+  await failIfVercelSsoGate(page);
 
   const bodyText = (await page.locator('body').innerText()).toLowerCase();
   expect(bodyText.length, 'help page empty').toBeGreaterThan(50);
@@ -161,6 +187,7 @@ test('A4 — /play/help renders + cross-link to /play/rules (not /rules)', async
 test('A5 — /auth/signup form loads (no submit)', async ({ page }) => {
   await page.goto('/auth/signup');
   await waitSpaReady(page);
+  await failIfVercelSsoGate(page);
 
   // AuthSelectorView (Эпик 9) — provider-selector with state machine.
   // Form may be behind a provider chip (email path). Tolerant check: page
@@ -176,6 +203,7 @@ test('A5 — /auth/signup form loads (no submit)', async ({ page }) => {
 test('A6 — /auth/login form loads (no submit)', async ({ page }) => {
   await page.goto('/auth/login');
   await waitSpaReady(page);
+  await failIfVercelSsoGate(page);
 
   expect(page.url(), 'navigation did not land on /auth/login').toContain('/auth/login');
 
@@ -188,6 +216,7 @@ test('A6 — /auth/login form loads (no submit)', async ({ page }) => {
 test('A7 — /privacy renders', async ({ page }) => {
   await page.goto('/privacy');
   await waitSpaReady(page);
+  await failIfVercelSsoGate(page);
 
   const bodyText = (await page.locator('body').innerText()).toLowerCase();
   expect(bodyText.length, 'privacy page empty').toBeGreaterThan(50);
@@ -207,6 +236,7 @@ test('B1 — anonymous browse sweep — zero forbidden console signatures', asyn
   for (const url of surfaces) {
     await page.goto(url);
     await waitSpaReady(page);
+  await failIfVercelSsoGate(page);
   }
   const offenders = findForbiddenInConsole();
   if (offenders.length > 0) {

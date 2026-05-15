@@ -34,6 +34,15 @@ module.exports = defineConfig({
     // Playwright's bundled Chromium has its own trust store that doesn't see it).
     // Default off — production / CI runs keep strict TLS validation.
     ignoreHTTPSErrors: process.env.INSECURE === '1',
+    // VERCEL_BYPASS=<token> opt-in for Vercel Deployment Protection bypass.
+    // Token comes from Vercel project settings → Deployment Protection →
+    // Protection Bypass for Automation. Sent as HTTP header per Vercel docs.
+    // Without this, preview deploys behind SSO will redirect every request
+    // to "Authentication Required" page (HTTP 401) and smoke sees the SSO
+    // page instead of the app.
+    extraHTTPHeaders: process.env.VERCEL_BYPASS
+      ? { 'x-vercel-protection-bypass': process.env.VERCEL_BYPASS, 'x-vercel-set-bypass-cookie': 'true' }
+      : undefined,
   },
   projects: [
     {

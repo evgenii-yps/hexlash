@@ -97,6 +97,24 @@ INSECURE=1 BASE_URL=https://... npm run smoke
 
 **Do not** use `INSECURE=1` in production / CI — it disables certificate validation.
 
+### Vercel Deployment Protection (preview deploys)
+
+If the target Vercel project has Deployment Protection enabled, every preview
+URL returns HTTP 401 with a Vercel SSO page (`<title>Authentication Required</title>`).
+The smoke detects this and fails fast with an actionable message.
+
+To run against a protected preview, generate a Protection Bypass for Automation
+token in Vercel project settings (Deployment Protection → Protection Bypass for
+Automation → Generate token) and pass it as env var:
+
+```bash
+VERCEL_BYPASS=<token> BASE_URL=https://testhexlash-git-...vercel.app npm run smoke
+```
+
+The token is sent as `x-vercel-protection-bypass` header on every request.
+Alternative (for one-off ad-hoc browsing): owner can temporarily disable
+Deployment Protection on the project, run smoke, then re-enable.
+
 ### View HTML report after run
 
 ```bash
