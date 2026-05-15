@@ -26,7 +26,6 @@ const mockUser = {
   email: 'secret@example.com',
   emailVerified: true,
   initialVerified: false,
-  language: 'ru',
   name: 'TestPlayer',
   login: 'testplayer',
   avatarUrl: 'https://example.com/a.png',
@@ -137,7 +136,6 @@ describe('formatUserPublicResponse', () => {
     assert.equal(result.totalTaps, undefined);
 
     // UI / referral
-    assert.equal(result.language, undefined);
     assert.equal(result.referredBy, undefined);
 
     // Privacy timestamp (last-seen tracking concern)

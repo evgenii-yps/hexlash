@@ -26,7 +26,6 @@ function formatUserResponse(user, options = {}) {
     email: user.email,
     emailVerified: user.emailVerified,
     initialVerified: user.initialVerified,
-    language: user.language,
     name: user.name,
     login: user.login,
     avatarUrl: user.avatarUrl,
@@ -76,7 +75,7 @@ function formatUserResponse(user, options = {}) {
 /**
  * Returns user data safe for public/guest exposure.
  * Excludes: email, walletAddress, balance, financial tokens (won/free/lost),
- *           progression, deck, settings, language, inviteId, referredBy,
+ *           progression, deck, settings, inviteId, referredBy,
  *           noSkipDays, totalTaps, updatedAt.
  *
  * Used by guest endpoints: /user/login/:login, /user/id/:id, /user/search.
