@@ -6333,3 +6333,168 @@ Closes 4 carry-overs accumulated через 1b/8a/8b/8c sub-epic chain. Pure cle
 - **#46 Document-level CSS audit** — verified zero CSS impact в Phase 0 §5, no occurrence reinforcement (Stream 1 не touches DOM/CSS).
 
 **Streak:** 1 → **2** ✅ (continued clean от 8c — zero hot-fixes, zero γ-tier recoveries, zero STOP escalations beyond planned G1/G2 gates which both passed first-attempt).
+
+---
+
+## Legacy Cleanup Series — CLOSED ✅
+
+Закрыта 2026-05-15 через PR #380 (frontend series merge) + PR #379 (Phase 10 Stage A backend, merged 2026-05-15). 10 phases + wrap-up, 24 commits, cumulative cleanup of L1–L11 backlog plus 6 categories of findings beyond backlog.
+
+### Cumulative impact
+
+| Metric | Delta |
+|---|---|
+| Vue components retired | **14** (Phases 1.A/1.B/1.C: 23 → kept 9 alive; Phase 2: L1; Phase 3: L4; Phase 4: L9; Phase 5: ProfileWallet; Phase 6: 3 v1 training fragments; Phase 8: PageView + BackButton + Card) |
+| Vuex modules retired | **2** (`progressionState` whole; `punchState` partial) |
+| Vuex actions retired | **38** + **22 cascade** items |
+| Service-layer methods retired | **10** |
+| i18n keys retired (`en.js`) | **448** (892 → 465 lines, **−48%**) |
+| Assets retired | **265 KB** (`background_page.webp`) |
+| Bundle size delta | **−44 KB** |
+| Backend column dropped | `User.language` (PR #379, Phase 10 Stage A) |
+| v1 route chains retired | `/rules` (PageView + BackButton + Card + asset + router cascade) |
+
+### Phases
+
+| Phase | Scope | Commit(s) | Artifact |
+|---|---|---|---|
+| 0 | Audit | `e30210d` | [`PHASE0_AUDIT_REPORT.md`](docs/legacy-cleanup/PHASE0_AUDIT_REPORT.md) |
+| 1.A | 23 pure-leaf orphan components — v1 ProfileView leaves | `73b90bd` | — |
+| 1.B | Design-system primitives never adopted | `9f852f2` | — |
+| 1.C | Misc leaf orphans (training/fight/clan/HUD) | `19958a9` | — |
+| 2 | L1 ProfileAccount + chain | `a1d638b` | — |
+| 3 | L4 ProfileSkins | `91b36d9` | — |
+| 4 | L9 ProfileInvite (superseded by ReferralModal) | `0b64835` | — |
+| 5 | ProfileWallet (NEW orphan beyond backlog) | `38ac3d2` | — |
+| 6 | v1 training fragments (DailyTasks/SocialTasks/TaskModal) | `1312bcb` | — |
+| 7-pre A | Vuex audit | `106f8ea` | [`PHASE7_PRE_PART_A_REPORT.md`](docs/legacy-cleanup/PHASE7_PRE_PART_A_REPORT.md) |
+| 7-pre B | 38 actions + 22 cascade retired | `f771d5b` | — |
+| 7-pre-2 A | Module/service audit | `5e4f017` | [`PHASE7_PRE_2_PART_A_REPORT.md`](docs/legacy-cleanup/PHASE7_PRE_2_PART_A_REPORT.md) |
+| 7-pre-2 B | `progressionState` whole-module + `punchState` partial + Group C + 10 service-methods + CLAUDE.md contract-subsystem note + runtime nil-check | `bee213b` | — |
+| 7 A | i18n audit (807 → 466 candidates after dynamic-access save) | `ba891ee` | [`PHASE7_PART_A_REPORT.md`](docs/legacy-cleanup/PHASE7_PART_A_REPORT.md) |
+| 7 B | 448 i18n keys retired, `en.js` −48%, CLAUDE.md i18n architecture notes | `0bfaac4` | — |
+| 8 Phase 0 | `/rules` v2 port discovery | `e161b53` | [`PHASE8_PHASE0_AUDIT_REPORT.md`](docs/legacy-cleanup/PHASE8_PHASE0_AUDIT_REPORT.md) |
+| 8 implementation | RulesView (Path A) + route + redirect + cross-links + Skins orphan-name | `4ef81a1` + `44ee528` | — |
+| 8 cleanup | v1 `/rules` chain retired: PageView + BackButton + Card + 265 KB asset + router cascade | `bb6c600` | — |
+| (out-of-series) | HUD inline help modal — full guide link к `/play/help` (closes Help UX coherence parking) | `569ccea` | — |
+| 9 discovery | L11 stale doc-comments + scope beyond | `794cc42` | [`PHASE9_DISCOVERY.md`](docs/legacy-cleanup/PHASE9_DISCOVERY.md) |
+| 9 refresh | 14 reword edits across 8 files | `d040369` | — |
+| 10 Stage A | Backend `User.language` column drop + helpers/routes/tests | **PR #379** merged (`f6fc38c` + `2101822`) | [`PHASE10_STAGE_A_INVENTORY.md`](docs/legacy-cleanup/PHASE10_STAGE_A_INVENTORY.md) |
+| 10 Stage B | Frontend `masterModel` strip + `taskState` dead reads + mockData cleanup + masterState comment refresh | `34ac25f` | — |
+| Wrap-up | Playwright smoke infrastructure + SSO guard + report | `2b80f21` + `aa5cca3` + `6c656ba` | [`WRAP_UP_SMOKE_REPORT.md`](docs/legacy-cleanup/WRAP_UP_SMOKE_REPORT.md) |
+
+Final wrap-up PR: **PR #380** merged via standard linear closure shape, deferred-verify gate on Vercel preview blocked by Deployment Protection SSO gate — owner-side manual sanity completed before merge per Option C in [`WRAP_UP_SMOKE_REPORT.md`](docs/legacy-cleanup/WRAP_UP_SMOKE_REPORT.md).
+
+### Original backlog (L1–L11) — final disposition
+
+| # | Item | Disposition | Phase | Commit |
+|---|---|---|---|---|
+| L1 | `ProfileAccount.vue` | ✅ **CLOSED** | Phase 2 | `a1d638b` |
+| L2 | `Switcher3DPunch.vue` | ✅ **CLOSED** (via L1 chain) | Phase 2 | `a1d638b` |
+| L3 | `ConfirmEmail`/`ChangeLogin`/`ChangePassword`/`DeleteAccount` | ❌ **NOT LEGACY** — reclassified в Phase 0, alive в v2 `HudProfileAccount` | Phase 0 | — |
+| L4 | `ProfileSkins.vue` | ✅ **CLOSED** | Phase 3 | `91b36d9` |
+| L5 | `BuyTokens.vue` | 🛡 **PRESERVE** — sealed под Base contract phase, contract subsystem зависит | n/a | — |
+| L6 | `lblChangeLanguage` orphan key | ✅ **CLOSED** (part of Phase 7 i18n sweep) | Phase 7 B | `0bfaac4` |
+| L7 | `auth.telegram` / `auth.reset` keys | ✅ **CLOSED** — pre-series (referral migration + 1b Telegram excision) | n/a | — |
+| L8 | `INVITE_DURATION` magic number | ❌ **NOT LEGACY** — tech debt, отдельная микро-задача в parking | n/a | — |
+| L9 | `ProfileInvite.vue` | ✅ **CLOSED** — superseded by ReferralModal | Phase 4 | `0b64835` |
+| L10 | Backend language fields | ⚪ **PARTIALLY CLOSED**: `User.language` ✅ (Phase 10 Stage A, PR #379); `SocialTask.language` + `DailyTask.language` deferred к Phase 11 (parking #11) | Phase 10 Stage A | PR #379 |
+| L11 | Stale doc comments | ✅ **CLOSED** — 14 reword edits across 8 files | Phase 9 | `d040369` |
+
+**Closed:** L1, L2, L4, L6, L7, L9, L11 (7) — fully retired.
+**Reclassified (not legacy):** L3, L8 (2).
+**Preserve:** L5 (1).
+**Partial:** L10 (1) — backend portion landed, task-language deferred.
+
+### Findings beyond backlog (6 categories — not in original L1–L11)
+
+Series discovered substantially more debt than the original audit captured:
+
+1. **ProfileWallet.vue** (Phase 5) — surfaced during Phase 2 chain follow-up
+2. **v1 training fragments** — `DailyTasks` / `SocialTasks` / `TaskModal` (Phase 6) — replaced by v2 HUD
+3. **38 Vuex actions + 22 cascade items** (Phase 7-pre) — dead action chains from earlier sub-epics never wired
+4. **`progressionState` whole-module retired + `punchState` partial + `cardFight` / `pvpState` / `agentState` orphan entries + 10 service-methods** (Phase 7-pre-2)
+5. **448 i18n keys** (Phase 7) — orphan English-only keys after multi-locale → English-only migration
+6. **v1 `/rules` chain** — `PageView` + `BackButton` + `Card` + 265 KB `background_page.webp` asset + router cascade (Phase 8)
+
+Plus **27 orphan components** from Phase 1 atomic batch (1.A/1.B/1.C clusters) that hadn't been individually catalogued in the L-list.
+
+### Active parking list — forward к Эпик 7+ work
+
+#### Preserve / carve-outs (intentional — do not touch without coordinated phase)
+
+1. `uploadMasterAvatar` Vuex action — preserve (live consumer chain)
+2. `webSocket/handleInternalError` Vuex action — preserve (defensive handler)
+3. `nftMintService.js` whole file — preserve (mirror L5 BuyTokens dependency)
+4. **Contract subsystem** — `contract/*` Vuex module + `contractService` + `contractState` + `contractABI`. Sealed под Base contract phase. Documented в `## CSS Design System` / Эпик 7+ scope.
+5. **L5 `BuyTokens.vue`** — preserve under Base contract phase. Root of contract subsystem (sole consumer of items #3-4).
+6. `friends.*` (23 i18n keys) — preserve pending Friends UI regression investigation (parking #7)
+
+#### Open findings (require separate work)
+
+7. **Friends UI regression investigation** — when/why disappeared, was it sanctioned, нужно ли восстанавливать? Vuex tail retired Phase 7-pre, service tail Phase 7-pre-2. Owner flagged "friends should exist". I18n strings (#6) held for re-implementation.
+8. **Product question: progression-restore/sync re-implement** — 3 broken-namespace silent no-op finding в Phase 7-pre-2, функционал не работал на проде неизвестное время.
+9. **Review `startFight` progression dependency** — defensive `rootState.progression || {}` nil-check (Phase 7-pre-2), маскирует семантический вопрос parented к #8.
+10. **Telegram adaptive flag chain preserve-zone broken** — `ProfileButtons.vue` (sole consumer per CLAUDE.md Stream 1 decision #2) удалён в Phase 1.A; flag `isTelegramMiniApp` всё ещё пишется но 0 readers. **Discovered post-series** (Stream 1 carry-over surfaced #10 inconsistency).
+11. **Phase 11 candidate** — `SocialTask.language` + `DailyTask.language` columns + `task.js` route filters + `seed.js` rewrite + RU-duplicate prod data cleanup. Backend extension series.
+12. **Phase 11 sub-decision** — 11 RU-task user-history rows: accept loss vs migrate FKs. Decision needed before Phase 11 executes.
+13. **`ModuleBuilder.vue:131,139,150`** — `.value` on string primitive (pre-existing bug from Phase 1.5c). Surfaced during Phase 7-pre-2 grep, не Phase 7-pre-2 regression.
+
+#### Tech debt / methodology / minor
+
+14. `userRepository.getUserByIdFromDB` — DB-layer orphan
+15. `punchService` structural review (folding into `webSocketState`?)
+16. `restoreProgressionFromServer` rename candidate (semantic mismatch с current contract)
+17. `localStorage['hexlash_progression']` orphan data cleanup at next major migration
+18. PixelIcon / HexButton icon-prop refactor (icon prop never adopted by app)
+19. `test-icons.html` orphan demo file at repo root
+20. Vuetify removal — separate series after legacy-cleanup (still legacy EOL but tightly coupled)
+21. `updateJwtToken` pre-existing dead import at `masterState.js:10` (Stream 1 C3 carry-over)
+
+#### Closed during series (NOT in parking)
+
+- ✅ Help UX coherence — closed by `569ccea` (HUD inline help modal full-guide link)
+
+### Methodology lessons learned (3 cross-cutting)
+
+Surfaced during the 10-phase series, complementing the Эпик 5–6 lesson catalogue (Lessons #1–#46) without adding new numbered entries (these are series-level process insights):
+
+**M1 — Full cross-stack inventory BEFORE ТЗ-writing.**
+Phase 10 ТЗ surfaced 3× scope expansion only after Stage A inventory pass (locales / models / services / migrations / tests / routes — 6 layers). Without upfront inventory, ТЗ underestimated scope by ~3× and Stage A risked spilling into Stage B without explicit gate. Pattern для future cleanup series: Phase 0 must include layered inventory (FE consumers / BE consumers / DB schema / locale duplicates / tests / migrations) before sizing decisions. Mirrors Lesson #45 (Phase 0 metadata triple-verify) but at series scope.
+
+**M2 — Cross-check preserve-zone justifications when retiring components.**
+Phase 1.A retired `ProfileButtons.vue` after grep showed no live wires. Stream 1 post-series Phase 0 discovery: `App.vue:203-216` adaptive-UI Telegram detection chain wrote `isTelegramMiniApp` flag whose SOLE READER was the just-retired `ProfileButtons.vue`. Flag became dead-write (0 readers) silently. Pattern: when retiring components inside or near a documented preserve-zone, grep the preserve-zone's stated dependencies independently — don't assume CLAUDE.md preserve notes are still accurate. Mirrors Lesson #11 broader-than-ТЗ-grep but at chain-link level. Parking item #10 captures the dead-write that resulted.
+
+**M3 — Phase 0 audit checklist additions for future series.**
+
+From cumulative blind spots surfaced across Phases 7-pre, 7-pre-2, 7 Part A:
+
+- **Broken-namespace grep** — `store.dispatch('foo/bar')` где module `foo` doesn't exist → silent no-op + console warning. Phase 7-pre-2 found 3 such call-sites that masked real product gaps for unknown prod duration. Add to Phase 0: enumerate all `dispatch('NAMESPACE/`) calls, verify NAMESPACE exists в module registry.
+- **`rootState.<module>` cross-module grep** — modules that read other modules' state via `rootState.foo.bar` create silent dependencies invisible to single-module greps. Phase 7-pre-2 surfaced `startFight` `rootState.progression || {}` after `progressionState` retirement → defensive nil-check papered over a semantic question (parking #9). Add to Phase 0: grep `rootState\.<module>` across all `*State.js` before declaring module orphan.
+- **i18n dynamic-access patterns** — narrow regex `t\.value\.[a-zA-Z]+\[` misses `?.[`, `[id]` template syntax, chained optional `?.X?.[id]`. Phase 7 Part A caught 6 dynamic patterns, saved 71 keys from false retire (807 → 466 candidates, then 448 retired). Add to Phase 0 i18n audit: extend regex to cover `\?\.\[`, `t\..*\?\.\[` (chained optional), and `[varname]` (template runtime keys).
+- **Asset orphan scan** — images / fonts / audio referenced only by retired components remain in `public/` and `src/assets/`. Phase 8 caught `background_page.webp` (265 KB) only because `bb6c600` reviewer noticed the same author retired its sole consumer in `4ef81a1`. Add to Phase 0: when retiring a component / view, grep its template + scoped CSS for `src=` / `url(` / `import` of `.webp/.png/.jpg/.mp3/.ttf/.woff` and surface assets с sole-consumer linkage as cleanup candidates.
+
+These M1–M3 lessons live as series-level methodology guidance for future cleanup work. They don't get numbered (#47+) because they're aggregated patterns rather than single-occurrence catches like the Lesson catalogue conventions.
+
+### Reports
+
+All series artifacts: [`docs/legacy-cleanup/`](docs/legacy-cleanup/)
+
+- `PHASE0_AUDIT_REPORT.md`
+- `PHASE7_PRE_PART_A_REPORT.md` / `PHASE7_PRE_2_PART_A_REPORT.md`
+- `PHASE7_PART_A_REPORT.md` + `PHASE7_RETIRE_LIST.txt` + `PHASE7_DYNAMIC_PROTECTED.txt`
+- `PHASE8_PHASE0_AUDIT_REPORT.md`
+- `PHASE9_DISCOVERY.md`
+- `PHASE10_STAGE_A_INVENTORY.md`
+- `WRAP_UP_SMOKE_REPORT.md`
+- `SERIES_CLOSED.md` — final summary artifact (this section's standalone counterpart)
+
+### Merged PRs
+
+- **PR #379** — Phase 10 Stage A backend (`User.language` column drop + helpers/routes/tests + 105 backend tests passing)
+- **PR #380** — Legacy Cleanup Series final merge (10 phases + wrap-up, 24 commits)
+
+### Status
+
+Legacy Cleanup Series — **CLOSED ✅**. Next direction is owner's call. Parking items #7–#21 are independent — they're new series candidates or micro-tasks, no longer cleanup work.
+
