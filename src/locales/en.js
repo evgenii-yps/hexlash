@@ -263,22 +263,11 @@ export default {
     },
   },
   friends: {
-    title: "FRIENDS",
-    friendRequests: "FRIEND REQUESTS",
-    searchResults: "SEARCH RESULTS",
-    searchPlaceholder: "Search by username...",
-    noResults: "Player not found",
-    online: "Online",
-    offline: "Offline",
-    inFight: "In Fight",
-    add: "Add",
-    accept: "Accept",
-    decline: "Decline",
-    back: "Back",
-    noFriends: "No friends yet",
-    searchToAdd: "Search to add friends",
-    pending: "Pending",
-    rating: "Rating",
+    // Friends mini-series cleanup: 16 root-level keys retired (orphan after
+    // v1 FriendsView deletion + PR #381 search-restore which hardcoded EN
+    // strings inline). The `challenge.*` sub-namespace remains live — see
+    // ChallengeNotification.vue + ClanInviteNotification.vue (WebSocket
+    // friend-challenge flow).
     challenge: {
       title: "FIGHT CHALLENGE!",
       accept: "ACCEPT",

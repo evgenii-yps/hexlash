@@ -581,7 +581,7 @@ MIGRATION_ENABLED = true           // lazy User→Fighter #1 on /me
 **Future i18n audits — regex must cover:** `?.[`, `[id]` template syntax, chained optional `?.X?.[id]`. A narrow regex `t\.value\.[a-zA-Z]+\[` misses `?.[` and produces false-positive orphan flags on live keys. Reference: Phase 7 Part A (2026-05-14) caught 6 dynamic patterns, saved 71 keys from false retire.
 
 **Preserve namespaces (post-Phase 7 legacy cleanup):**
-- `friends.*` (23 keys including `friends.challenge.*` sub-namespace) — pending Friends UI regression investigation. v1 friends UI components were removed earlier in the project history (pre-legacy-cleanup-series); the Vuex tail was retired in Phase 7-pre, service tail in Phase 7-pre-2. Owner flagged "friends should exist — not sure who deleted them". I18n strings held for re-implementation. See parking list.
+- `friends.*` — **Friends mini-series CLOSED ✅** (see `docs/legacy-cleanup/FRIENDS_INVESTIGATION_REPORT.md`, commit `70b4c4a`). Investigation confirmed the feature is alive in v2 (HudProfile Friends card at `/play/profile`); only the v1 `FriendsView.vue` route page was removed (Эпик 6 Sub-epic 8 C9, commit `76e4e2b`) and 5 v1-only Vuex actions retired (Phase 7-pre Part B, commit `f771d5b`). PR #381 restored the player-search gap. Cleanup PR (this commit) retired 16 root-level orphan keys + 3 zombie components in `src/components/pvp/`. The `friends.challenge.*` sub-namespace (7 keys) remains live — consumed by `ChallengeNotification.vue` + `ClanInviteNotification.vue` (WebSocket friend-challenge flow) — and is no longer "preserved", just regular live i18n. Series total: 3 phases (investigation + restore + cleanup), 3 PRs, 0 hot-fixes.
 - `info.firstFight` + `info.firstTraining` — first-time-UX nudge strings, preserved for future re-wiring (their previous holders `showFightRulesReminder` + `showTrainingRulesReminder` retired in Phase 7-pre-2).
 
 ---
@@ -595,7 +595,7 @@ MIGRATION_ENABLED = true           // lazy User→Fighter #1 on /me
 - `HexProgress.vue` — Progress bar with 3 variants: hp (auto green>60%/yellow>30%/red), branch (speed/power/technique colors), generic. Props: label, showValue, showPercent. 3 sizes.
 - `HexBadge.vue` — Pill badge with 5 variants: archetype, branch, status (victory/defeat/draw/info), counter (auto circle<10/pill≥10), custom. Props: icon (PixelIcon), pulse animation.
 - `BeltBadge.vue` — SVG belt badge for 33 grades + Hexmaster. Line-style: rect body, buckle, stripes. 3 sizes: sm (16×6), md (40×14), lg (120×40). Hexmaster pulse glow md/lg, static glow sm. Props: grade (0-32), isHexmaster, size. CSS vars: `--hex-belt-*`. Stripes hidden on sm. White/black enhanced outlines.
-- `UserCaptainBadge.vue` — Composite badge: BeltBadge + optional captain name. Sizes xs/sm/md. Shows "—" when no captain. Used in FriendCard, PlayerSearchResult, ChallengeNotification, RatingsView Players tab, MatchmakingView.
+- `UserCaptainBadge.vue` — Composite badge: BeltBadge + optional captain name. Sizes xs/sm/md. Shows "—" when no captain. Used in ChallengeNotification, RatingsView Players tab, MatchmakingView.
 
 **Navigation & Layout:**
 - `Logo.vue` — header logo (Anonymous font, --hex-primary color + glow). Visual System v1.0 compliant: pixel-font for brand, subtle glow, --hex-text-primary
@@ -612,11 +612,11 @@ MIGRATION_ENABLED = true           // lazy User→Fighter #1 on /me
 - `HPBar.vue` — fight health bar. Visual System v1.0 compliant: status colors (success/warning/danger), AnonymousBalance HP numbers, no pink
 - `ModeSelector.vue` — arena mode selector (PvE/PvP), compact button with dropdown, system sans-serif font. Visual System v1.0 compliant: neutral compact btn (no mode-specific colors), neutral dropdown (no glow), system sans labels, touch-targets ≥44px
 - `ModuleBuilder.vue` — fighter module slots (3 slots: primary/secondary/tertiary), build preview with AI description, emergency protocol selector, archetype selection modal. Visual System v1.0 compliant: neutral slots (no pink), archetype icons via `<img>` (no dynamic arch colors yet — TODO: inline SVG for var(--hex-arch-*)), system sans, no glow
-- `FriendCard.vue` — friend display card
-- `FriendRequestCard.vue` — incoming friend request
+- `FriendCard.vue` — *Deleted* (Friends mini-series cleanup — zero consumers; v2 HudProfile renders rows inline as `.fc-row`)
+- `FriendRequestCard.vue` — *Deleted* (Friends mini-series cleanup — zero consumers; v2 HudProfile renders rows inline as `.fc-row`)
 - `ChallengeNotification.vue` — Top-of-screen challenge notification (global, z-index: 9999, 10s timer). Visual System v1.0 compliant: primary border-bottom accent, slide-down 300ms, name via {{ }} (XSS safe)
 - `ClubInviteNotification.vue` — Top-of-screen club invitation notification (global, z-index: 9998, 30s timer, accept/decline via WS)
-- `PlayerSearchResult.vue` — player search result item
+- `PlayerSearchResult.vue` — *Deleted* (Friends mini-series cleanup — zero consumers; PR #381 search-restore renders results inline as `.fc-row` in HudProfile)
 - `XPAllocationModal.vue` — *Deleted* (XP allocation now via ResearchTree +10 XP buttons)
 - `PvPStatsCard.vue` — PvP statistics display (league, rating, progress, wins/losses/winrate). Shown in Fighters tab of RatingsView. Visual System v1.0 compliant: 0 pink, league colors preserved (brand identity), AnonymousBalance for numbers, system sans for labels
 - `AiTrainerAnalysis.vue` — Claude-powered post-fight analysis (PvE + PvP, results screen). Visual System v1.0 compliant: neutral card, system sans, no pink, no Anonymous font
@@ -6428,11 +6428,11 @@ Plus **27 orphan components** from Phase 1 atomic batch (1.A/1.B/1.C clusters) t
 3. `nftMintService.js` whole file — preserve (mirror L5 BuyTokens dependency)
 4. **Contract subsystem** — `contract/*` Vuex module + `contractService` + `contractState` + `contractABI`. Sealed под Base contract phase. Documented в `## CSS Design System` / Эпик 7+ scope.
 5. **L5 `BuyTokens.vue`** — preserve under Base contract phase. Root of contract subsystem (sole consumer of items #3-4).
-6. `friends.*` (23 i18n keys) — preserve pending Friends UI regression investigation (parking #7)
+6. ✅ **CLOSED via Friends mini-series cleanup** — was: `friends.*` (23 i18n keys) preserved pending investigation. Final state: 16 root-level keys retired (orphan), 7 `challenge.*` sub-namespace keys remain live (regular consumers `ChallengeNotification.vue` + `ClanInviteNotification.vue`). See `docs/legacy-cleanup/FRIENDS_INVESTIGATION_REPORT.md`.
 
 #### Open findings (require separate work)
 
-7. **Friends UI regression investigation** — when/why disappeared, was it sanctioned, нужно ли восстанавливать? Vuex tail retired Phase 7-pre, service tail Phase 7-pre-2. Owner flagged "friends should exist". I18n strings (#6) held for re-implementation.
+7. ✅ **CLOSED via Friends mini-series** — was: Friends UI regression investigation. Final state (3 phases): (a) Investigation (commit `70b4c4a`, `docs/legacy-cleanup/FRIENDS_INVESTIGATION_REPORT.md`) confirmed feature alive in v2; v1 page `FriendsView.vue` intentionally migrated to a tab inside `/play/profile` (Эпик 6 Sub-epic 8 C5 redirect + C9 file delete); (b) Player-search restore (PR #381, merged) closed the only real UX gap; (c) Cleanup (this commit) retired orphan i18n keys + 3 zombie components. 0 hot-fixes across series.
 8. **Product question: progression-restore/sync re-implement** — 3 broken-namespace silent no-op finding в Phase 7-pre-2, функционал не работал на проде неизвестное время.
 9. **Review `startFight` progression dependency** — defensive `rootState.progression || {}` nil-check (Phase 7-pre-2), маскирует семантический вопрос parented к #8.
 10. **Telegram adaptive flag chain preserve-zone broken** — `ProfileButtons.vue` (sole consumer per CLAUDE.md Stream 1 decision #2) удалён в Phase 1.A; flag `isTelegramMiniApp` всё ещё пишется но 0 readers. **Discovered post-series** (Stream 1 carry-over surfaced #10 inconsistency).
