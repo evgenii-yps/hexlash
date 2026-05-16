@@ -113,12 +113,8 @@
             v-model="friendsSearch"
             class="fc-search"
             type="text"
-            placeholder="Search friends..."
+            placeholder="Search friends or players (3+ chars)..."
           />
-          <button class="fc-add-btn" @click="onAddClick">+ Add</button>
-        </div>
-        <div v-if="showAddNotice" class="fc-empty fc-add-notice">
-          Full player search lands in Sub-Epic 5G.
         </div>
         <div class="fc-tabs">
           <button
@@ -167,6 +163,30 @@
                 >Challenge</button>
                 <button class="fc-action-btn danger" @click.stop="onRemove(f)">Remove</button>
               </template>
+            </div>
+          </div>
+        </div>
+        <!-- Player search results (restored Sub-Epic 5G gap). Lives below the
+             current friends list; visible only when search input has 3+ chars
+             and active tab is not Pending. -->
+        <div v-if="canSearch" class="fc-search-section">
+          <div class="fc-search-header">Add new friends</div>
+          <div v-if="searchLoading" class="fc-empty">Searching...</div>
+          <div v-else-if="searchEmpty" class="fc-empty">No players found</div>
+          <div v-else v-for="p in searchResults" :key="p.id" class="fc-row">
+            <div class="fc-avatar">{{ playerInitials(p) }}</div>
+            <div class="fc-info" @click="openSearchedPlayer(p)">
+              <div class="fc-handle">{{ playerName(p) }}</div>
+              <div class="fc-meta">
+                <span class="fcm-elo">ELO {{ p.rating || 1000 }}</span>
+              </div>
+            </div>
+            <div class="fc-actions">
+              <button
+                class="fc-action-btn primary"
+                :disabled="!canAddPlayer(p)"
+                @click.stop="onAddPlayer(p)"
+              >{{ addButtonLabel(p) }}</button>
             </div>
           </div>
         </div>
@@ -231,6 +251,7 @@ import { computed, ref, shallowRef, markRaw, watch, onMounted, onBeforeUnmount, 
 import { useRouter } from 'vue-router';
 import { useAccount } from '@wagmi/vue';
 import store from '@/core/state/store.js';
+import apiClient from '@/core/api/apiClient.js';
 import BeltBadge from '@/components/ui/BeltBadge.vue';
 import HudSocialTasks from './HudSocialTasks.vue';
 import HudRetirement from './HudRetirement.vue';
@@ -495,8 +516,20 @@ const onlineFriendsCount = computed(
 
 const friendsSearch = ref('');
 const activeTab = ref('all');
-const showAddNotice = ref(false);
-let addNoticeTimer = null;
+
+// --- Player search (restored Sub-Epic 5G gap) ---
+// Direct apiClient call (Phase 7-pre Part B retired `friends/searchPlayers`
+// action; we don't revive it). Search triggers at 3+ chars w/ 300ms debounce.
+// Backend `POST /friends/request` is strict (Already friends → 400, Cannot
+// add yourself → 400), so client-side self+already-friend filtering is UX
+// only — defense in depth, not security.
+const SEARCH_MIN_CHARS = 3;
+const searchResults = ref([]);
+const searchLoading = ref(false);
+const searchEmpty = ref(false);
+const pendingAdds = ref(new Set()); // local — IDs we POSTed this session
+let searchDebounceTimer = null;
+let searchSeq = 0; // last-write-wins guard against out-of-order responses
 
 const friendsTabs = computed(() => [
   { id: 'all',     label: 'All',     count: friendsList.value.length },
@@ -595,16 +628,113 @@ function onRemove(f) {
   if (!confirm(`Remove ${name} from friends?`)) return;
   store.dispatch('friends/removeFriend', f.id);
 }
-function onAddClick() {
-  // Stub — ephemeral inline notice, auto-dismiss after 3s. Full search UI
-  // deferred to Sub-Epic 5G.
-  showAddNotice.value = true;
-  if (addNoticeTimer) clearTimeout(addNoticeTimer);
-  addNoticeTimer = setTimeout(() => {
-    showAddNotice.value = false;
-    addNoticeTimer = null;
-  }, 3000);
+// --- Player search helpers ---
+const canSearch = computed(() => {
+  const q = friendsSearch.value.trim();
+  return q.length >= SEARCH_MIN_CHARS && activeTab.value !== 'pending';
+});
+
+function playerName(p) {
+  return p?.name || p?.login || 'Player';
 }
+function playerInitials(p) {
+  const name = playerName(p);
+  return name.replace(/[^a-zA-Z0-9]/g, '').slice(0, 2).toUpperCase() || '??';
+}
+function isSentPending(p) {
+  return pendingAdds.value.has(p.id) || store.getters['friends/isRequestPending'](p.id);
+}
+function canAddPlayer(p) {
+  return !p?._alreadyFriend && !isSentPending(p);
+}
+function addButtonLabel(p) {
+  if (p?._alreadyFriend) return 'Already friends';
+  if (isSentPending(p)) return 'Sent';
+  return 'Add';
+}
+function openSearchedPlayer(p) {
+  const login = p?.login || p?.name;
+  if (!login) return;
+  router.push(`/play/user/${login}`);
+}
+
+function clearSearchState() {
+  searchResults.value = [];
+  searchEmpty.value = false;
+  searchLoading.value = false;
+}
+
+async function runSearch(query) {
+  const seq = ++searchSeq;
+  searchLoading.value = true;
+  searchEmpty.value = false;
+  try {
+    const response = await apiClient.get('/user/search', {
+      params: { name: query, size: 10 },
+      authRequired: true,
+    });
+    if (seq !== searchSeq) return; // stale — newer search in flight
+    const users = response?.data || [];
+    const meId = userData.value?.id;
+    const friendIds = new Set(friendsList.value.map((f) => f.id));
+    const mapped = users
+      .filter((u) => u.id !== meId)
+      .map((u) => ({ ...u, _alreadyFriend: friendIds.has(u.id) }));
+    searchResults.value = mapped;
+    searchEmpty.value = mapped.length === 0;
+  } catch (err) {
+    if (seq !== searchSeq) return;
+    console.warn('[FRIENDS] Player search failed:', err);
+    searchResults.value = [];
+    searchEmpty.value = false; // silent fail per ТЗ — don't show red UI
+  } finally {
+    if (seq === searchSeq) searchLoading.value = false;
+  }
+}
+
+async function onAddPlayer(p) {
+  if (!canAddPlayer(p)) return;
+  try {
+    await apiClient.post(
+      '/friends/request',
+      { targetId: p.id },
+      { authRequired: true },
+    );
+    // Re-create Set per Vue 3 reactivity rule (CLAUDE.md 5E precedent).
+    pendingAdds.value = new Set([...pendingAdds.value, p.id]);
+    // Refresh outgoing so isRequestPending getter is in sync app-wide.
+    store.dispatch('friends/loadOutgoingRequests');
+  } catch (err) {
+    console.warn('[FRIENDS] Failed to send friend request:', err);
+  }
+}
+
+// Debounced search trigger on input change.
+watch(friendsSearch, (q) => {
+  if (searchDebounceTimer) {
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = null;
+  }
+  const trimmed = (q || '').trim();
+  if (trimmed.length < SEARCH_MIN_CHARS || activeTab.value === 'pending') {
+    searchSeq++; // invalidate any in-flight response
+    clearSearchState();
+    return;
+  }
+  searchDebounceTimer = setTimeout(() => runSearch(trimmed), 300);
+});
+
+// Switching to Pending tab hides search section — flush state.
+watch(activeTab, (t) => {
+  if (t === 'pending') {
+    if (searchDebounceTimer) {
+      clearTimeout(searchDebounceTimer);
+      searchDebounceTimer = null;
+    }
+    searchSeq++;
+    clearSearchState();
+  }
+});
 
 // --- Lifecycle ---
 // init() fetches friends + both request directions in parallel. The refresh
@@ -624,9 +754,9 @@ onBeforeUnmount(() => {
     clearInterval(friendsRefreshTimer);
     friendsRefreshTimer = null;
   }
-  if (addNoticeTimer) {
-    clearTimeout(addNoticeTimer);
-    addNoticeTimer = null;
+  if (searchDebounceTimer) {
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = null;
   }
 });
 
