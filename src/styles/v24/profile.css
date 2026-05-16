@@ -319,21 +319,21 @@
   border-color: var(--hex-primary);
   box-shadow: 0 0 0 2px rgba(255, 6, 111, 0.12);
 }
-.app-v2 .fc-add-btn {
-  background: transparent;
-  border: 1px solid var(--hex-primary);
-  border-radius: 4px;
-  color: #fff;
-  padding: 7px 14px;
+/* Player-search section divider (restored Sub-Epic 5G gap).
+   Rendered below .fc-list when search input has 3+ chars. Reuses .fc-row
+   for individual result entries; only adds a section header + top divider. */
+.app-v2 .fc-search-section {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin-top: 8px;
+  padding-top: 12px;
+}
+.app-v2 .fc-search-header {
   font-family: var(--font-mono);
   font-size: 10px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  cursor: pointer;
-  transition: all 0.12s ease;
-}
-.app-v2 .fc-add-btn:hover {
-  background: rgba(255, 6, 111, 0.12);
+  color: var(--text-dim);
+  margin-bottom: 8px;
 }
 .app-v2 .fc-tabs {
   display: flex; gap: 4px;
@@ -467,17 +467,6 @@
   color: var(--text-mid);
   border-color: rgba(255, 255, 255, 0.15);
   background: transparent;
-}
-/* Ephemeral "+ Add" stub notice — Step 8, replaced by full search in 5G. */
-.app-v2 .fc-add-notice {
-  padding: 10px 12px;
-  margin-bottom: 8px;
-  background: rgba(255, 6, 111, 0.06);
-  border: 1px solid rgba(255, 6, 111, 0.25);
-  color: #fff;
-  text-transform: none;
-  letter-spacing: 0.5px;
-  font-size: 10px;
 }
 .app-v2 .fc-empty {
   padding: 30px;
