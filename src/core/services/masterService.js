@@ -9,23 +9,22 @@ import {t} from "@/locales/index.js";
 import {isMockMode, createMockMaster, MOCK_JWT_TOKEN} from "@/core/mock/mockData.js";
 
 /**
- * Restore progression and deck from server data to progressionState.
+ * Restore player modules and PvP stats from server data.
  * Server data takes priority over localStorage.
+ *
+ * Phase 7-pre-2 Part B: dropped broken-namespace commits to
+ * progressionState/restoreProgression + progressionState/restoreDeck
+ * (namespace did not exist — silent no-ops; module retired).
  */
 function restoreProgressionFromServer(userData) {
     if (!userData) return;
 
     if (userData.progression) {
-        store.commit('progressionState/restoreProgression', userData.progression);
-
         // Restore player modules (fighter archetypes) from server
         if (Array.isArray(userData.progression.playerModules) && userData.progression.playerModules.length === 3) {
             store.commit('fight/setPlayerModules', userData.progression.playerModules);
             localStorage.setItem('hexlash_player_modules', JSON.stringify(userData.progression.playerModules));
         }
-    }
-    if (userData.deck) {
-        store.commit('progressionState/restoreDeck', userData.deck);
     }
 
     // Restore PvP stats (rating, wins, losses, draws) from server
@@ -350,35 +349,6 @@ export const uploadAvatar = async (formData, onUploadProgress) => {
     }
 };
 
-
-export const showFightRulesReminder = (text) => {
-    const MESSAGE_KEY = 'firstFightToolTip';
-    const MAX_SHOW_COUNT = 2;
-
-    let showCount = localStorage.getItem(MESSAGE_KEY) || 0;
-
-    if (showCount < MAX_SHOW_COUNT) {
-        showCount++;
-        localStorage.setItem(MESSAGE_KEY, showCount);
-        const customMessage = InfoMessageModel.withTimeout(text, 15000);
-        store.commit('master/setInfoMessage', customMessage);
-    }
-};
-
-
-export const showTrainingRulesReminder = (text) => {
-    const MESSAGE_KEY = 'firstTrainingToolTip';
-    const MAX_SHOW_COUNT = 1;
-
-    let showCount = localStorage.getItem(MESSAGE_KEY) || 0;
-
-    if (showCount < MAX_SHOW_COUNT) {
-        showCount++;
-        localStorage.setItem(MESSAGE_KEY, showCount);
-        const customMessage = InfoMessageModel.withTimeout(text, 15000);
-        store.commit('master/setInfoMessage', customMessage);
-    }
-};
 
 export const isShowPrivacyInfo = (text) => {
     const MESSAGE_KEY = 'isShowPrivacyInfo';

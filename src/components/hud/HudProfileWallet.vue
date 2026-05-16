@@ -48,7 +48,7 @@ const master = computed(() => store.getters['master/getMaster']);
 const balanceDisplay = computed(() => master.value?.getBalance?.() ?? '0');
 
 // Withdraw — toast as-is per ТЗ A4 (Sub-epic 7 Auth+Wallet redesign territory
-// для real x402 logic). Mirror v1 ProfileWallet:55-58 verbatim.
+// для real x402 logic).
 const withdraw = () => {
   const msg = InfoMessageModel.withTimeout(t.value.info.withdrawAfterListing, 3000);
   store.commit('master/setInfoMessage', msg);

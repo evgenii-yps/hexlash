@@ -32,7 +32,6 @@ export function createMockMaster() {
         inviteId: 'MOCK01',
         email: 'mock@hexlash.dev',
         emailVerified: true,
-        language: null,
         initialVerified: true,
         userData: {...MOCK_USER_DATA},
     });

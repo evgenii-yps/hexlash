@@ -41,12 +41,6 @@ const mutations = {
     setFriendRequests(s, requests) { s.friendRequests = requests; },
     setIncomingRequests(s, requests) { s.friendRequests.incoming = requests; },
     setOutgoingRequests(s, requests) { s.friendRequests.outgoing = requests; },
-    addOutgoingRequest(s, player) {
-        s.friendRequests.outgoing.push({ ...player, sentAt: Date.now() });
-    },
-    removeOutgoingRequest(s, playerId) {
-        s.friendRequests.outgoing = s.friendRequests.outgoing.filter(r => r.id !== playerId);
-    },
     removeIncomingRequest(s, playerId) {
         s.friendRequests.incoming = s.friendRequests.incoming.filter(r => r.id !== playerId);
     },
@@ -113,64 +107,6 @@ const actions = {
             commit('setOutgoingRequests', response.requests || []);
         } catch (err) {
             console.error('[FRIENDS] Failed to load outgoing requests:', err);
-        }
-    },
-
-    async searchPlayers({ state: s }, query) {
-        if (query.length < 3) return [];
-        try {
-            const response = await apiClient.get('/user/search', {
-                params: { name: query, size: 10 },
-                authRequired: true,
-            });
-            // apiClient interceptor unwraps response.data, then server returns { data: [...] }
-            const users = response?.data || [];
-            return users
-                .filter(u => {
-                    const isFriend = s.friends.some(f => f.id === u.id);
-                    return !isFriend;
-                })
-                .map(u => ({
-                    id: u.id,
-                    username: u.name || u.login,
-                    login: u.login,
-                    rating: u.rating || 1000,
-                    status: 'offline',
-                    skin: u.skin,
-                    avatarUrl: u.avatarUrl,
-                    captain: u.captain || null,  // B1b (#11): preserve captain field for UserCaptainBadge
-                }));
-        } catch (err) {
-            console.error('Search players error:', err);
-            return [];
-        }
-    },
-
-    async sendFriendRequest({ commit, dispatch, state: s }, player) {
-        const alreadySent = s.friendRequests.outgoing.some(r => r.id === player.id);
-        if (alreadySent) return false;
-
-        // Optimistically add to outgoing
-        commit('addOutgoingRequest', player);
-
-        try {
-            const response = await apiClient.post('/friends/request',
-                { targetId: player.id },
-                { authRequired: true },
-            );
-
-            if (response.status === 'accepted') {
-                // Mutual request — auto-accepted
-                commit('removeOutgoingRequest', player.id);
-                commit('addFriend', player);
-                commit('removeIncomingRequest', player.id);
-            }
-            return true;
-        } catch (error) {
-            console.error('[FRIENDS] Failed to send request:', error);
-            // Revert optimistic update
-            commit('removeOutgoingRequest', player.id);
-            return false;
         }
     },
 
@@ -263,21 +199,6 @@ const actions = {
         return true;
     },
 
-    cancelChallenge({ commit }) {
-        commit('clearOutgoingChallenge');
-        if (challengeTimeout) { clearTimeout(challengeTimeout); challengeTimeout = null; }
-    },
-
-    acceptIncomingChallenge({ commit, state: s }) {
-        const challenger = s.challenge.incoming;
-        if (!challenger) return null;
-        commit('clearIncomingChallenge');
-        return challenger;
-    },
-
-    declineIncomingChallenge({ commit }) {
-        commit('clearIncomingChallenge');
-    },
 };
 
 export default {

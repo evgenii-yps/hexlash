@@ -97,16 +97,6 @@ export const sendUpdateSocialTask = async (updatedTask) => {
     }
 };
 
-export const sendUpdateDailyTask = async (updatedTask) => {
-    try {
-        await completeTaskApiCall(updatedTask.id);
-
-        await saveDailyTasksToLocalDB([updatedTask]);
-    } catch (error) {
-        console.error('Failed to update daily task:', error);
-    }
-};
-
 export const localUpdateSocialTask = async (updatedTask) => {
     try {
         await saveSocialTasksToLocalDB([updatedTask]);

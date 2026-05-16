@@ -18,24 +18,6 @@ function loadFromStorage() {
     return null;
 }
 
-// ─── Opponent fighter generation (mock) ─────────────────────────────────────
-function generateOpponentFighter(opponent) {
-    const modules = ['Predator', 'Guardian', 'Ghost', 'Analyst', 'Chaos', 'Tank'];
-    const shuffled = [...modules].sort(() => Math.random() - 0.5);
-
-    return {
-        name: opponent.username,
-        hp: 100,
-        maxHp: 100,
-        modules: [shuffled[0], shuffled[1], shuffled[2]],
-        deck: [
-            { id: 'jab', name: 'Jab', damage: 8, speed: 9 },
-            { id: 'cross', name: 'Cross', damage: 12, speed: 6 },
-            { id: 'hook', name: 'Hook', damage: 15, speed: 5 },
-        ],
-    };
-}
-
 // ─── Rating calculation ─────────────────────────────────────────────────────
 function calculateRatingChange(myRating, opponentRating, result) {
     const diff = opponentRating - myRating;
@@ -70,27 +52,6 @@ const state = () => ({
 
 // ─── Getters ────────────────────────────────────────────────────────────────
 const getters = {
-    getCurrentPvPFight: (s) => s.currentPvPFight,
-    getPvpStats: (s) => s.pvpStats,
-    getStatus: (s) => s.status,
-
-    winRate: (s) => {
-        const total = s.pvpStats.wins + s.pvpStats.losses;
-        if (total === 0) return 0;
-        return Math.round((s.pvpStats.wins / total) * 100);
-    },
-
-    league: (s) => {
-        const rating = s.pvpStats.rating;
-        if (rating >= 3000) return { name: 'Champion', icon: '👑', color: '#FFD700' };
-        if (rating >= 2500) return { name: 'Diamond', icon: '💠', color: '#00BFFF' };
-        if (rating >= 2000) return { name: 'Platinum', icon: '💎', color: '#00CED1' };
-        if (rating >= 1500) return { name: 'Gold', icon: '🥇', color: '#FFD700' };
-        if (rating >= 1000) return { name: 'Silver', icon: '🥈', color: '#C0C0C0' };
-        return { name: 'Bronze', icon: '🥉', color: '#CD7F32' };
-    },
-
-    isPvPFight: (s) => s.status === 'in_fight',
     getCurrentMatchId: (s) => s.currentMatchId,
     getPvpFightStatus: (s) => s.pvpFightStatus,
     getOpponentInfo: (s) => s.opponentInfo,
@@ -101,9 +62,6 @@ const getters = {
 const mutations = {
     setCurrentPvPFight(s, fight) {
         s.currentPvPFight = fight;
-    },
-    clearCurrentPvPFight(s) {
-        s.currentPvPFight = null;
     },
     setStatus(s, status) {
         s.status = status;
@@ -168,34 +126,6 @@ const actions = {
         saveToStorage(s);
     },
 
-    createPvPFight({ commit, state: s }, { opponent, isRanked = false }) {
-        const fight = {
-            id: 'pvp_' + Date.now(),
-            type: isRanked ? 'pvp_ranked' : 'pvp_friendly',
-            status: 'ready',
-
-            opponent: {
-                id: opponent.odId || opponent.id,
-                username: opponent.username,
-                rating: opponent.rating,
-                fighter: generateOpponentFighter(opponent),
-            },
-
-            result: null,
-            ratingChange: null,
-
-            createdAt: Date.now(),
-            startedAt: null,
-            finishedAt: null,
-        };
-
-        commit('setCurrentPvPFight', fight);
-        commit('setStatus', 'in_fight');
-        saveToStorage(s);
-
-        return fight;
-    },
-
     finishPvPFight({ commit, state: s }, result) {
         if (!s.currentPvPFight) return;
 
@@ -225,12 +155,6 @@ const actions = {
         }
 
         commit('setStatus', 'finished');
-        saveToStorage(s);
-    },
-
-    clearCurrentFight({ commit, state: s }) {
-        commit('clearCurrentPvPFight');
-        commit('setStatus', 'idle');
         saveToStorage(s);
     },
 };

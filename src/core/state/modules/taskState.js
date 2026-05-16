@@ -69,24 +69,20 @@ const mutations = {
 };
 
 const actions = {
-    async fetchAllSocialTasks({commit, rootGetters}) {
-        const language = rootGetters['master/getMaster'].language;
-
+    async fetchAllSocialTasks({commit}) {
         commit('setIsLoadingSocialTasks', true);
         try {
-            await taskService.getAllSocialTasksFromLocalAndAPI(language);
+            await taskService.getAllSocialTasksFromLocalAndAPI();
         } catch (error) {
             console.error('Error fetching social tasks:', error);
         } finally {
             commit('setIsLoadingSocialTasks', false);
         }
     },
-    async fetchAllDailyTasks({commit, rootGetters}) {
-        const language = rootGetters['master/getMaster'].language;
-
+    async fetchAllDailyTasks({commit}) {
         commit('setIsLoadingDailyTasks', true);
         try {
-            await taskService.getAllDailyTasksFromLocalAndAPI(language);
+            await taskService.getAllDailyTasksFromLocalAndAPI();
         } catch (error) {
             console.error('Error fetching daily tasks:', error);
         } finally {
@@ -99,15 +95,6 @@ const actions = {
             commit('addSocialTask', task);
         } catch (error) {
             console.error('Error updating social task:', error);
-        }
-    },
-    async updateDailyTask({commit}, task) {
-        try {
-            await taskService.sendUpdateDailyTask(task);
-            commit('addDailyTask', task);
-
-        } catch (error) {
-            console.error('Error updating daily tasks:', error);
         }
     },
     async receivedSocialTask({commit}, task) {

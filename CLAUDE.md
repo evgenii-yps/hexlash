@@ -558,18 +558,31 @@ MIGRATION_ENABLED = true           // lazy User→Fighter #1 on /me
 
 ## i18n System
 
-**Custom reactive i18n** (not vue-i18n): `locales/index.js` exports `t` (computed ref), `setLanguage()`, `interpolate()`
+**Custom reactive i18n** (not vue-i18n): `locales/index.js` exports `t` (computed ref), `interpolate()`. **English-only** after referral-series migration — `setLanguage()`, `availableLanguages`, multi-locale support all removed.
 
-**11 locales:** en, ru, de, es, fr, pt, ar, hi, ja, ko, zh
+**Source of truth:** `src/locales/en.js`. Plus `pages.help` + `pages.rules` injected from `src/locales/pages/{help,rules}/en.json` at loader-time.
 
-**Key sections per locale:**
-- UI labels: `menu`, `auth`, `profile`, `arena`, `fight`, `training`, `moves`, `deck`, `cards`, `rating`, `club`, `info`, `nav`, `clubMode`, `friends`, `pvp`, `spectate`, `xpAllocation`, `referral`
-- Game data translations: `gameData.branches[id].{name,description}`, `gameData.moves[id].{name,description}`
-- Page content: `locales/pages/help/{lang}.json`, `locales/pages/rules/{lang}.json`
+**Key sections (post Phase 7 i18n sweep, 2026-05-14):** `menu`, `modal`, `auth`, `profile`, `arena`, `clan`, `guestClan`, `club`, `fight`, `friends` (preserve — see notes), `pvp`, `spectate`, `cards`, `training`, `rating`, `info`, `deck`, `referral`, `research`, `nav`, `verify`, `errors`, `belts`, `gameData.{branches,moves}`. Some narrow leaves remain after sweep; section list is structural, not key-exhaustive.
 
-**Usage in templates:** `{{ t.section.key }}` (auto-unwrapped ref)
-**Usage in script:** `t.value.section.key`
-**Interpolation:** `interpolate(t.value.moves.lblUnlockFirst, { name: '...' })`
+**Usage patterns:**
+- Template (auto-unwrap): `{{ t.section.key }}`, `:attr="t.section.key"`
+- Script: `t.value.section.key`
+- Interpolation: `interpolate(t.value.section.key, { name: '...' })` with `{name}` placeholders
+- **Dynamic bracket-notation** (runtime-key lookup): `t.value.section?.subsection?.[id]`, `t.section[id]` in templates
+
+**Dynamic-access namespaces — be careful at retire-time.** Static `t.section.key` grep returns ZERO consumers for the following, but they are LIVE via runtime-key lookup:
+- `gameData.branches.*` — `t.value.gameData?.branches?.[b]?.name` (ResearchTree.vue)
+- `gameData.moves.*` — `t.value.gameData?.moves?.[id]?.name` (ResearchTree.vue)
+- `belts.{white,yellow,orange,green,blue,purple,brown,red,black,hexmaster}` — `t.value.belts?.[d.color]` (AgentCard.vue)
+- `arena.archetypes.*` + `arena.archetypeDesc.*` — template `[id]` (ModuleBuilder.vue)
+- `arena.protocolName.*` + `arena.protocolTrigger.*` — static-named but dynamically constructed (ModuleBuilder.vue)
+- `arena.buildStyle.*` — accessed as whole object (ModuleBuilder.vue:113)
+
+**Future i18n audits — regex must cover:** `?.[`, `[id]` template syntax, chained optional `?.X?.[id]`. A narrow regex `t\.value\.[a-zA-Z]+\[` misses `?.[` and produces false-positive orphan flags on live keys. Reference: Phase 7 Part A (2026-05-14) caught 6 dynamic patterns, saved 71 keys from false retire.
+
+**Preserve namespaces (post-Phase 7 legacy cleanup):**
+- `friends.*` (23 keys including `friends.challenge.*` sub-namespace) — pending Friends UI regression investigation. v1 friends UI components were removed earlier in the project history (pre-legacy-cleanup-series); the Vuex tail was retired in Phase 7-pre, service tail in Phase 7-pre-2. Owner flagged "friends should exist — not sure who deleted them". I18n strings held for re-implementation. See parking list.
+- `info.firstFight` + `info.firstTraining` — first-time-UX nudge strings, preserved for future re-wiring (their previous holders `showFightRulesReminder` + `showTrainingRulesReminder` retired in Phase 7-pre-2).
 
 ---
 
@@ -610,7 +623,7 @@ MIGRATION_ENABLED = true           // lazy User→Fighter #1 on /me
 - `ProfileWallet.vue` — Wallet page: uses @wagmi/vue useAccount(), shows ConnectWallet + GameBalanceCard + HexCard placeholder. BuyTokens removed from render, WalletInfo deleted
 - `ConnectWallet.vue` — Full wallet modal: Teleport modal with connector list (icons, dedup, rename Injected→Browser Wallet), connecting spinner, connected state (short address + chain + disconnect). Uses @wagmi/vue useConnect/useDisconnect/useConnectors. z-index 9000, Escape/overlay close, hex-fade/hex-slide-up transitions. 360px responsive
 - `WalletInfo.vue` — **Deleted** (Дорога 1 ТЗ #18b) — functionality moved into ConnectWallet connected state
-- `BuyTokens.vue` — Token purchase modal. **Temporarily disabled** — not rendered in ProfileWallet, file preserved for Phase 2 (Base contract)
+- `BuyTokens.vue` — Token purchase modal. **Temporarily disabled** — not rendered in ProfileWallet, file preserved for Phase 2 (Base contract). **⚠️ Root of contract subsystem.** This file is the SOLE consumer of: Vuex module `contract/*` (6 actions + getters), `src/core/services/contractService.js`, `src/core/state/modules/contractState.js`, `src/assets/abi/abi.json`. Plus `nftMintService.js` (parallel preserve). If BuyTokens retires, this whole chain becomes a domino retire — schedule as separate "contract-subsystem-removal" series, not a single-file cleanup. If BuyTokens re-activates for Base contract phase, the subsystem is already wired and ready (Phase 7-pre-2 finding, 2026-05-14).
 - `GameBalanceCard.vue` — Game balance display with withdraw button (shows "after listing" message)
 - `ReferralModal.vue` — Referral program modal: QR code (qrcode lib), copy link (clipboard API), share (Web Share API with fallback), referral stats + list. Opens from ProfileView button
 - `ClanPageContent.vue` — Shared clan page content component (header, stats, tabs Members/Activity/Settings, leaderboard with action menu, confirm modals, invite modal). Used by ClanView (member view) and MyClubTab (has-clan state). Props: clubData, clubId. Events: club-left, club-deleted

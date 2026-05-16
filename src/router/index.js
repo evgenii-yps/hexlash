@@ -2,8 +2,6 @@ import {createRouter, createWebHistory} from "vue-router";
 import store from "@/core/state/store.js";
 import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
 
-const routeHistory = [];
-
 
 export const authRoutes = [
     // Sub-epic 1b C2: /auth/login + /auth/signup migrated to AuthLayoutView shell.
@@ -56,7 +54,10 @@ const publicRoutes = [
     },
     {path: '/privacy', name: 'Privacy', component: () => import("/src/views/PrivacyView.vue")},
     {path: '/404', name: 'NotFound', component: () => import("/src/views/NotFoundView.vue")},
-    {path: '/rules', name: 'Rules', component: () => import("/src/views/PageView.vue")},
+    // /rules ported to v2 (RulesView at /play/rules) in Phase 8. Old path
+    // preserved as redirect for URL-stability (legal page, public links
+    // from landing/socials/email-templates may reference it).
+    {path: '/rules', redirect: '/play/rules'},
     {path: '/verify-email', name: 'VerifyEmail', component: () => import("/src/views/VerifyEmailView.vue")},
     // Email Auth Phase 5 — reset-password public route (Vercel auto-deploy
     // on merge). User lands here from email link с ?token=... query param.
@@ -92,7 +93,7 @@ const protectedRoutes = [
     {path: '/profile/balance', redirect: '/play/profile'},
     {path: '/profile/wallet', redirect: '/play/wallet'},
     {path: '/profile/account', redirect: '/play/account'},
-    {path: '/profile/skins', name: 'Skins', redirect: '/play/profile'},
+    {path: '/profile/skins', redirect: '/play/profile'},
 
     {
         path: '/clan/:id',
@@ -198,6 +199,13 @@ const v2Routes = [
                 component: () => import('@/views-v2/HelpView.vue'),
             },
             {
+                // Phase 8 implementation — /rules ported to v2.
+                // Public (NOT in v2ProtectedNames) — legal content stays auth-free.
+                path: 'rules',
+                name: 'V2Rules',
+                component: () => import('@/views-v2/RulesView.vue'),
+            },
+            {
                 path: 'user/:userLogin',
                 name: 'V2UserProfile',
                 component: () => import('@/views-v2/UserProfileView.vue'),
@@ -248,27 +256,6 @@ const router = createRouter({
     routes
 });
 
-export function getPreviousRoute() {
-    // Проверяем, есть ли хотя бы два маршрута в истории
-    if (routeHistory.length >= 1) {
-        return routeHistory[routeHistory.length - 1].name; // Возвращаем предпоследний маршрут
-    } else {
-        return 'Home';
-    }
-}
-
-export function backRef(route) {
-    const back = route.query.back;
-
-    if (back) {
-        // Если параметр 'ref' есть, возвращаем его
-        return back.charAt(0).toUpperCase() + back.slice(1);
-    } else {
-        // Если параметра 'ref' нет, возвращаем предпоследний маршрут
-        return getPreviousRoute();
-    }
-}
-
 // Helper: load saved fight from localStorage (no store dependency)
 function getSavedFightPhase() {
     try {
@@ -279,13 +266,6 @@ function getSavedFightPhase() {
 
 // Навигационный гвард
 router.beforeEach(async (to, from, next) => {
-    routeHistory.push(from);
-
-    // Ограничиваем историю, например, до последних 10 маршрутов
-    if (routeHistory.length > 10) {
-        routeHistory.shift();
-    }
-
     const isAuthenticated = store.getters["master/getLoginState"]?.isAuthenticated || false;
     const isProtectedRoute =
         protectedRoutes.some(route => route.name === to.name || route.path === to.path) ||

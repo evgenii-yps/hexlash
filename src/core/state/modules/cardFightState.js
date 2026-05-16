@@ -60,90 +60,6 @@ function saveFightState(state) {
     } catch(e) { /* ignore */ }
 }
 
-function clearFightState() {
-    localStorage.removeItem(FIGHT_STORAGE_KEY);
-}
-
-function loadFightState() {
-    try {
-        const s = localStorage.getItem(FIGHT_STORAGE_KEY);
-        return s ? JSON.parse(s) : null;
-    } catch(e) { return null; }
-}
-
-// ─── Internal round simulation (sync, no coach/dice/emergency side-effects) ───
-function _simulateOneRound(state, commit) {
-    if (state.liveHP1 <= 0 || state.liveHP2 <= 0 || state.fightPhase !== 'fighting') {
-        commit('setFightPhase', 'results');
-        return false;
-    }
-    const nextRound = state.roundNum + 1;
-    if (nextRound > TOTAL_ROUNDS) {
-        commit('setFightPhase', 'results');
-        return false;
-    }
-
-    // After MAX_ROUNDS (10), only enter Overdrive if both are alive
-    if (nextRound > MAX_ROUNDS && state.liveHP1 > 0 && state.liveHP2 > 0) {
-        // Overdrive rounds — dice/coach disabled, damage x2 handled by CombatEngine
-    } else if (nextRound > MAX_ROUNDS) {
-        // One is already dead — end fight
-        commit('setFightPhase', 'results');
-        return false;
-    }
-
-    const isOverdrive = nextRound > MAX_ROUNDS;
-
-    const action1 = _ai1.selectAction(state.liveHP1, MAX_HP, isOverdrive);
-    const action2 = _ai2.selectAction(state.liveHP2, MAX_HP, isOverdrive);
-
-    const moveInfo = CombatEngine.getMoveInfo(
-        nextRound,
-        state.playerDeck, state.playerCardLevels,
-        state.opponentDeck, state.opponentCardLevels,
-    );
-
-    // In Overdrive, strip player modifiers (no dice effects carry over)
-    const modsToUse = isOverdrive
-        ? { attackMultiplier: 1, shieldActive: false, blindActive: false }
-        : state.playerModifiers;
-
-    const result = CombatEngine.resolveRoundLive(
-        action1, action2,
-        state.liveHP1, state.liveHP2,
-        _ai1, _ai2,
-        nextRound,
-        modsToUse,
-        moveInfo,
-    );
-
-    commit('setLiveHP1', result.hp1After);
-    commit('setLiveHP2', result.hp2After);
-    commit('setRoundNum', nextRound);
-    commit('addRoundToLog', result);
-    const playerCrits = result.events.filter(e => e.fighter === 2 && e.type === 'crit').length;
-    commit('addStats', { totalDamageDealt: result.damage2, totalDamageTaken: result.damage1, criticalHits: playerCrits });
-    commit('resetPlayerModifiers');
-
-    if (result.hp1After <= 0 || result.hp2After <= 0) {
-        commit('setFightPhase', 'results');
-        return false;
-    }
-    // After all TOTAL_ROUNDS: higher HP wins
-    if (nextRound >= TOTAL_ROUNDS) {
-        if (result.hp1After > result.hp2After) {
-            commit('addStats', { totalDamageDealt: result.hp2After });
-            commit('setLiveHP2', 0);
-        } else if (result.hp2After > result.hp1After) {
-            commit('addStats', { totalDamageTaken: result.hp1After });
-            commit('setLiveHP1', 0);
-        }
-        commit('setFightPhase', 'results');
-        return false;
-    }
-    return true;
-}
-
 // ─── State ───────────────────────────────────────────────────────────────────
 const state = {
     playerModules: ['predator', 'analyst', 'ghost'],
@@ -176,7 +92,7 @@ const state = {
     fightStats: { totalDamageDealt: 0, totalDamageTaken: 0, dicePickedUp: 0, diceIgnored: 0, criticalHits: 0 },
 
     xpEarned:  null,   // { speed, power, technique } — set when fight ends
-    xpAwarded: false,  // true after XP display (Captain XP awarded via backend, not progressionState)
+    xpAwarded: false,  // true after XP display (Captain XP persisted by backend)
 };
 
 // ─── Getters ─────────────────────────────────────────────────────────────────
@@ -213,7 +129,6 @@ const getters = {
 
     isOverdrive:    (s) => s.roundNum > MAX_ROUNDS,
     isBuildValid:   (s) => s.playerModules.every(m => m !== null),
-    hasSavedFight:  ()  => !!loadFightState(),
 };
 
 // ─── Mutations ────────────────────────────────────────────────────────────────
@@ -223,7 +138,6 @@ const mutations = {
     setPlayerDeck(s, { deck, cardLevels }) { s.playerDeck = deck; s.playerCardLevels = cardLevels; },
     setOpponentDeck(s, { deck, cardLevels }) { s.opponentDeck = deck; s.opponentCardLevels = cardLevels; },
     setFightPhase(s, v)          { s.fightPhase = v; },
-    setDifficulty(s, v)          { s.difficulty = v; },
 
     setLiveHP1(s, v)    { s.liveHP1  = Math.max(0, Math.min(MAX_HP, v)); },
     setLiveHP2(s, v)    { s.liveHP2  = Math.max(0, Math.min(MAX_HP, v)); },
@@ -238,7 +152,6 @@ const mutations = {
         s.playerModifiers = { attackMultiplier: 1, shieldActive: false, blindActive: false };
     },
 
-    setDiceState(s, v) { s.diceState = { ...s.diceState, ...v }; },
     clearDice(s)       { s.diceState = { activeItem: null, cooldownLeft: 0, ready: true }; },
 
     setEventTitle(s, { title, cls = '', image = null }) {
@@ -292,10 +205,9 @@ const actions = {
         commit('setFightPhase', 'preparation');
     },
 
-    setPlayerModules({ commit, dispatch }, modules) {
+    setPlayerModules({ commit }, modules) {
         commit('setPlayerModules', modules);
         localStorage.setItem(MODULES_STORAGE_KEY, JSON.stringify(modules));
-        dispatch('progressionState/syncProgression', null, { root: true });
     },
 
     setEmergencyProtocol({ commit }, type) {
@@ -325,8 +237,11 @@ const actions = {
           }
         }
 
-        // Calculate power for opponent scaling
-        const progressionState = rootState.progression;
+        // Calculate power for opponent scaling.
+        // Phase 7-pre-2 Part B cascade: progression module retired, so
+        // rootState.progression is undefined. buildPlayerFighter handles
+        // empty {} via its own defaults (.deck || [], .moves || {}).
+        const progressionState = rootState.progression || {};
         const playerFighter = buildPlayerFighter(progressionState, captainModules);
         const playerPower = calculatePowerRating(playerFighter);
 
@@ -360,55 +275,6 @@ const actions = {
         saveFightState(state);
 
         await router.push('/fight');
-    },
-
-    /**
-     * Compute and commit the next round (fully automatic).
-     * AI selects actions for both fighters.
-     */
-    computeNextRound({ commit, state, dispatch }) {
-        const continued = _simulateOneRound(state, commit);
-        if (!continued) {
-            _fightLastUpdateAt = Date.now();
-            saveFightState(state);
-            return;
-        }
-
-        const isOverdrive = state.roundNum > MAX_ROUNDS;
-
-        // In Overdrive: no emergency, no dice, no coach
-        if (!isOverdrive) {
-            // Check Emergency Protocol
-            dispatch('checkEmergencyProtocol');
-
-            // Tick dice cooldown
-            if (state.diceState.cooldownLeft > 0) {
-                const newCd = state.diceState.cooldownLeft - 1;
-                commit('setDiceState', { cooldownLeft: newCd, ready: newCd <= 0 });
-            }
-
-            // Tick coach boost
-            if (state.coachAdvice.active && state.coachAdvice.roundsLeft > 0) {
-                const newLeft = state.coachAdvice.roundsLeft - 1;
-                if (_ai1) _ai1.tickCoachBoost();
-                if (newLeft <= 0) {
-                    commit('setCoachAdvice', { active: false, roundsLeft: 0, action: null });
-                } else {
-                    commit('setCoachAdvice', { roundsLeft: newLeft });
-                }
-            }
-
-            // Check coach advice trigger (once per fight, from round COACH_MIN_ROUND)
-            if (!state.coachAdvice.used && state.roundNum >= COACH_MIN_ROUND && Math.random() < COACH_TRIGGER_CHANCE) {
-                commit('setFightPhase', 'coach');
-                _fightLastUpdateAt = Date.now();
-                saveFightState(state);
-                return;
-            }
-        }
-
-        _fightLastUpdateAt = Date.now();
-        saveFightState(state);
     },
 
     // ── Emergency Protocol ─────────────────────────────────────────────────
@@ -449,181 +315,6 @@ const actions = {
             commit('setEmergencyUsed', true);
             commit('setEventTitle', { title: t.value.fight.lblEventEmergency, cls: 'event-emergency', image: PROTOCOL_IMAGES[protocol.type] });
         }
-    },
-
-    // ── Manual Dice ──────────────────────────────────────────────────────
-    rollDiceManual({ commit, state }) {
-        if (!state.diceState.ready || state.fightPhase !== 'fighting') return;
-        // Dice disabled in Overdrive
-        if (state.roundNum > MAX_ROUNDS) return;
-
-        const item = DICE_ITEMS[Math.floor(Math.random() * DICE_ITEMS.length)];
-        commit('setDiceState', { activeItem: item, ready: false, cooldownLeft: DICE_COOLDOWN_ROUNDS });
-
-        switch (item.effect) {
-            case 'heal':
-                commit('setLiveHP1', Math.min(MAX_HP, state.liveHP1 + 15));
-                break;
-            case 'adrenaline':
-                commit('setPlayerModifiers', { attackMultiplier: 2 });
-                break;
-            case 'shield':
-                commit('setPlayerModifiers', { shieldActive: true });
-                break;
-            case 'blind':
-                commit('setPlayerModifiers', { blindActive: true });
-                break;
-            case 'rage': {
-                const hp2 = state.liveHP2 - 20;
-                commit('setLiveHP2', hp2);
-                commit('addStats', { totalDamageDealt: 20 });
-                if (hp2 <= 0) commit('setFightPhase', 'results');
-                break;
-            }
-            case 'crit': {
-                const hp2 = state.liveHP2 - 30;
-                commit('setLiveHP2', hp2);
-                commit('addStats', { totalDamageDealt: 30 });
-                if (hp2 <= 0) commit('setFightPhase', 'results');
-                break;
-            }
-        }
-
-        commit('addStats', { dicePickedUp: 1 });
-
-        setTimeout(() => {
-            commit('setDiceState', { activeItem: null });
-        }, 1500);
-    },
-
-    // ── Coach Advice ──────────────────────────────────────────────────────
-    applyCoachAdvice({ commit }, action) {
-        if (_ai1) _ai1.setCoachBoost(action, COACH_BOOST_ROUNDS);
-        commit('setCoachAdvice', { used: true, active: true, action, roundsLeft: COACH_BOOST_ROUNDS });
-        commit('setFightPhase', 'fighting');
-    },
-
-    skipCoachAdvice({ commit }) {
-        commit('setCoachAdvice', { used: true, active: false, action: null, roundsLeft: 0 });
-        commit('setFightPhase', 'fighting');
-    },
-
-    // ── Fight persistence ─────────────────────────────────────────────────
-
-    /**
-     * Restore fight from localStorage (called on CardFightView mount).
-     * Dosimulates rounds missed while away. Returns true if fight was restored.
-     */
-    initFromStorage({ commit, state }) {
-        const saved = loadFightState();
-        if (!saved) return false;
-        if (saved.fightPhase === 'idle' || saved.fightPhase === 'preparation') {
-            clearFightState();
-            return false;
-        }
-
-        // Restore all persisted state
-        commit('setPlayerModules', saved.playerModules);
-        commit('setOpponent', saved.opponent);
-        commit('setPlayerDeck', { deck: saved.playerDeck || [], cardLevels: saved.playerCardLevels || {} });
-        commit('setOpponentDeck', { deck: saved.opponentDeck || [], cardLevels: saved.opponentCardLevels || {} });
-        commit('setLiveHP1', saved.liveHP1);
-        commit('setLiveHP2', saved.liveHP2);
-        commit('setRoundNum', saved.roundNum);
-        commit('clearRoundLog');
-        (saved.roundLog || []).forEach(r => commit('addRoundToLog', r));
-        commit('setPlayerModifiers', saved.playerModifiers);
-        commit('setDiceState', saved.diceState);
-        commit('setCoachAdvice', saved.coachAdvice);
-        commit('setEmergencyProtocol', saved.emergencyProtocol.type);
-        commit('setEmergencyUsed', saved.emergencyProtocol.used);
-        commit('resetStats');
-        if (saved.fightStats) commit('addStats', saved.fightStats);
-        commit('setDifficulty', saved.difficulty);
-        commit('setXpEarned', saved.xpEarned || null);
-        commit('setXpAwarded', saved.xpAwarded || false);
-
-        // Results phase: just restore UI, no need to recreate AI
-        if (saved.fightPhase === 'results') {
-            commit('setFightPhase', 'results');
-            return true;
-        }
-
-        // Recreate AI instances
-        _ai1 = new ModuleAIStrategy(saved.playerModules);
-        _ai2 = new ModuleAIStrategy(saved.opponent.modules);
-
-        // Re-apply coach boost if it was active
-        if (saved.coachAdvice?.active && saved.coachAdvice?.action) {
-            _ai1.setCoachBoost(saved.coachAdvice.action, saved.coachAdvice.roundsLeft);
-        }
-
-        // Coach phase: waiting for player input, just restore
-        if (saved.fightPhase === 'coach') {
-            commit('setFightPhase', 'coach');
-            return true;
-        }
-
-        // Fighting phase: dosimulate rounds missed while away
-        commit('setFightPhase', 'fighting');
-        if (saved.lastUpdateAt) {
-            const elapsed      = Date.now() - saved.lastUpdateAt;
-            const missedRounds = Math.min(
-                Math.floor(elapsed / ROUND_ANIMATION_MS),
-                TOTAL_ROUNDS - saved.roundNum,
-            );
-            for (let i = 0; i < missedRounds && state.fightPhase === 'fighting'; i++) {
-                _simulateOneRound(state, commit);
-            }
-        }
-
-        _fightLastUpdateAt = Date.now();
-        saveFightState(state);
-        return true;
-    },
-
-    /**
-     * Dosimulate rounds missed while the tab was backgrounded.
-     * Called from CardFightView on visibilitychange.
-     */
-    resumeMissedRounds({ commit, state }) {
-        if (state.fightPhase !== 'fighting' || !_fightLastUpdateAt || !_ai1 || !_ai2) return;
-
-        const elapsed      = Date.now() - _fightLastUpdateAt;
-        const missedRounds = Math.min(
-            Math.floor(elapsed / ROUND_ANIMATION_MS),
-            TOTAL_ROUNDS - state.roundNum,
-        );
-        if (missedRounds <= 0) return;
-
-        for (let i = 0; i < missedRounds && state.fightPhase === 'fighting'; i++) {
-            _simulateOneRound(state, commit);
-        }
-        _fightLastUpdateAt = Date.now();
-        saveFightState(state);
-    },
-
-    // ── Navigation ────────────────────────────────────────────────────────
-
-    clearSavedFight() {
-        clearFightState();
-    },
-
-    async resetToPreparation({ commit }) {
-        _ai1 = null;
-        _ai2 = null;
-        _fightLastUpdateAt = null;
-        clearFightState();
-        commit('clearRoundLog');
-        commit('setOpponent', null);
-        commit('setXpEarned', null);
-        commit('setXpAwarded', false);
-        commit('setFightPhase', 'preparation');
-        await router.push('/arena');
-    },
-
-    async fightAgain({ dispatch }) {
-        await dispatch('startFight');
     },
 
 };

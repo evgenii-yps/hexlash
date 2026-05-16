@@ -72,9 +72,6 @@ const mutations = {
     setLoginState: (state, authState) => {
         state.loginState = authState;
     },
-    setSignupState: (state, payload) => {
-        Object.assign(state.signupState, payload);
-    },
     clearAuthData: (state) => {
         state.master = null;
         state.loginState = {isAuthenticated: false, authError: null};
@@ -133,7 +130,7 @@ const actions = {
             // Email Auth Phase 5.5 — signup-with-email shows "Check your inbox"
             // success screen instead of immediate redirect. Caller passes
             // skipRedirect: true to opt out of auto-redirect; default behavior
-            // (no email signup, telegram-auth callsite, etc.) preserved.
+            // (no-email signup) preserved.
             if (!credentials.skipRedirect) {
                 await router.push('/');
             }
@@ -156,17 +153,6 @@ const actions = {
         }
 
         return false;
-    },
-    async initGetStarted({commit}) {
-        // Если первый вход в приложение
-        if (state.master && !state.master.initialVerified) {
-            commit('setSignupState', {
-                generatedLogin: state.master.getLogin(),
-                generatedPassword: state.signupState.generatedPassword,
-                loading: false,
-                errorMessage: null
-            });
-        }
     },
     // Email Auth Phase 5 — verify email by token from email link.
     // Renamed from sendVerifyEmail (1b artifact). New shape: receives
@@ -251,24 +237,8 @@ const actions = {
             commit('setInfoMessage', InfoMessageModel.withText(error.message));
         }
     },
-    async changeSkin({commit, state}, skinId) {
-        try {
-            localStorage.setItem('selectedSkin', skinId);
-            commit('updateMaster', {skin: skinId});
-            // Run local DB and server sync in parallel — don't block one on the other
-            const localSave = updateMasterToLocalDB({skin: skinId}).catch(e =>
-                console.error('[SKIN] IndexedDB save failed:', e)
-            );
-            const serverSync = apiClient.put('/user/skin', { skin: skinId }, { authRequired: true })
-                .catch(e => console.error('[SKIN] Server save failed:', e));
-            await Promise.all([localSave, serverSync]);
-        } catch (error) {
-            commit('setErrorMessage', ErrorMessageModel.withText(error.message));
-        }
-    },
-    // Phase 1.5c — setLanguage action removed (English-only). Backend
-    // User.language field is preserved per scope discipline but FE no longer
-    // reads/writes it.
+    // Phase 1.5c — setLanguage action removed (English-only).
+    // User.language backend column retired in legacy-cleanup Phase 10 Stage A.
     async uploadMasterAvatar({commit}, {formData, onUploadProgress}) {
         try {
             const avatarUrl = await masterService.uploadAvatar(formData, onUploadProgress);
@@ -322,19 +292,6 @@ const actions = {
             return false;
         }
     },
-    async sendShare({commit, state}) {
-        try {
-            const inviteId = state.master.inviteId;
-
-            const inviteText = t.value.profile.invite.inviteText;
-
-            const inviteLink = `https://t.me/share/url?url=https://t.me/hexlashbot?start=${inviteId}&text=${encodeURIComponent(inviteText)}`;
-
-            window.open(inviteLink, '_blank');
-        } catch (error) {
-            commit('setInfoMessage', InfoMessageModel.withText(error.message));
-        }
-    }
 };
 
 export default {
