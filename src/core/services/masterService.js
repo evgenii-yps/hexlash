@@ -112,9 +112,6 @@ export const login = async (credentials) => {
     }
 };
 
-// Sub-epic 1b C6: telegram() function DELETED (decision #2 — Telegram-as-auth
-// excised). setTelegram/getTelegram below preserved for adaptive UI flag.
-
 export const sendCheckLoginAvailable = async (login) => {
     if (isMockMode()) {
         return true;
@@ -394,15 +391,4 @@ export const updateJwtToken = (jwtToken) => {
     store.commit('master/setJwtToken', jwtToken);
     const KEY = 'jwtToken';
     localStorage.setItem(KEY, jwtToken);
-};
-
-
-export const getTelegram = () => {
-    const KEY = 'isTelegramMiniApp';
-    return localStorage.getItem(KEY) || false;
-};
-
-export const setTelegram = () => {
-    const KEY = 'isTelegramMiniApp';
-    localStorage.setItem(KEY, true);
 };

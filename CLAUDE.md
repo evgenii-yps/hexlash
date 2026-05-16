@@ -649,7 +649,7 @@ Base: `/v1/`
 | `/agent` | agent.js | 18 endpoints: CRUD agents, tactics, fight history, Research Gate (available-moves, learn-move, deck, research, allocate-xp), PvE training (train), auto-fight toggle/status, rankings, fight-club level |
 
 Auth guard: JWT Bearer token via `middleware/auth.js`
-Telegram auth: REMOVED in Sub-epic 1b C8 (adaptive UI flag preserved via localStorage)
+Telegram auth: REMOVED in Sub-epic 1b C8. Adaptive UI flag (`isTelegramMiniApp` localStorage chain) retired in chore/telegram-flag-retire — Telegram Mini App not planned product-wise.
 Password reset: Email Auth Phase 3 — `/auth/forgot-password` + `/auth/reset-password` (Resend-powered email flow, 1h reset token TTL; replaces 1b 501 cosmetic stub).
 Email verification: Email Auth Phase 4 — `/user/verify-email` (token-based, no JWT; 24h verifyToken TTL; replaces fake 1b stub which accepted any code). `/user/resend-verification` (auth-required, 1/5min throttle per user).
 Email service: Resend SDK (Phase 2) at `services/emailService.js` — verbatim wrapper, never throws (`{ok, error?, id?}` contract). Templates at `services/templates/{verifyEmail,resetPassword}.js` (inline HTML + plain text fallback).
@@ -5860,9 +5860,9 @@ Closes Эпик 6 carry-over (Auth views still on RainView 3D rain) + Эпик 5
 - Locale keys removed: `t.auth.telegram.*` (44 lines × 11 locales) + `t.auth.reset.*` (88 lines × 11 locales)
 
 **PRESERVED (decisions #2, #14, #15):**
-- `App.vue:203-211` `window.Telegram.WebApp` adaptive UI detection — re-wired in interrupt fix to dispatch `master/saveTelegramFlag` from app-init-side (was only set from auth flow before C6)
-- `master/saveTelegramFlag` Vuex action + `masterService.setTelegram/getTelegram` (Stream 1 carry-over per decision #3)
-- `ProfileButtons.vue` `isTelegram` flag (Wallet button hide in TG webview per TG store rules)
+- ~~`App.vue:203-211` `window.Telegram.WebApp` adaptive UI detection~~ — **RETIRED** in chore/telegram-flag-retire (Telegram Mini App not planned; preserve-zone broken after ProfileButtons.vue Phase 1.A delete).
+- ~~`master/saveTelegramFlag` Vuex action + `masterService.setTelegram/getTelegram`~~ — Vuex action wrapper retired in Stream 1 C3 (decision #3); service methods + writer block **RETIRED** in chore/telegram-flag-retire.
+- ~~`ProfileButtons.vue` `isTelegram` flag~~ — moot (component retired in Phase 1.A; adaptive flag chain retired in chore/telegram-flag-retire).
 - `LandingView.vue` Telegram social link icon (community footer)
 - `socialTaskModel.js` `SUBSCRIBE_TELEGRAM` task icon
 - `clan.confirmInviteFriend` locale string (Telegram-share UX, NOT auth)
@@ -6285,9 +6285,9 @@ Closes 4 carry-overs accumulated через 1b/8a/8b/8c sub-epic chain. Pure cle
 
 **PRESERVED:**
 
-- `masterService.setTelegram()` localStorage write (sans phantom commit) — actual write path для adaptive UI flag
-- `masterService.getTelegram()` — actual reader (used by `ProfileButtons.vue:74,85`)
-- `App.vue:203-216` `window.Telegram.WebApp` adaptive UI detection — re-pointed к direct service call (Phase 0 §2 Option a)
+- ~~`masterService.setTelegram()` localStorage write~~ — **RETIRED** in chore/telegram-flag-retire (Stream 1 preserve broken after Phase 1.A ProfileButtons.vue delete; owner decision: Telegram Mini App not planned).
+- ~~`masterService.getTelegram()` — actual reader (used by `ProfileButtons.vue:74,85`)~~ — reader gone with ProfileButtons.vue in Phase 1.A; function **RETIRED** in chore/telegram-flag-retire.
+- ~~`App.vue:203-216` `window.Telegram.WebApp` adaptive UI detection~~ — **RETIRED** in chore/telegram-flag-retire (whole `if (Telegram.WebApp)` block dropped per ТЗ "block целиком").
 - BE `POST /v1/user/reset` endpoint (501 response) — Stream 3 carry-over, FE/BE decoupled
 
 **Files (3 modified + 1 deleted):**
@@ -6435,7 +6435,7 @@ Plus **27 orphan components** from Phase 1 atomic batch (1.A/1.B/1.C clusters) t
 7. ✅ **CLOSED via Friends mini-series** — was: Friends UI regression investigation. Final state (3 phases): (a) Investigation (commit `70b4c4a`, `docs/legacy-cleanup/FRIENDS_INVESTIGATION_REPORT.md`) confirmed feature alive in v2; v1 page `FriendsView.vue` intentionally migrated to a tab inside `/play/profile` (Эпик 6 Sub-epic 8 C5 redirect + C9 file delete); (b) Player-search restore (PR #381, merged) closed the only real UX gap; (c) Cleanup (this commit) retired orphan i18n keys + 3 zombie components. 0 hot-fixes across series.
 8. **Product question: progression-restore/sync re-implement** — 3 broken-namespace silent no-op finding в Phase 7-pre-2, функционал не работал на проде неизвестное время.
 9. **Review `startFight` progression dependency** — defensive `rootState.progression || {}` nil-check (Phase 7-pre-2), маскирует семантический вопрос parented к #8.
-10. **Telegram adaptive flag chain preserve-zone broken** — `ProfileButtons.vue` (sole consumer per CLAUDE.md Stream 1 decision #2) удалён в Phase 1.A; flag `isTelegramMiniApp` всё ещё пишется но 0 readers. **Discovered post-series** (Stream 1 carry-over surfaced #10 inconsistency).
+10. ✅ **CLOSED via chore/telegram-flag-retire** — was: Telegram adaptive flag chain preserve-zone broken. Owner confirmed Telegram Mini App not planned. Final state: `App.vue` writer block + `masterService.{setTelegram,getTelegram}` + flag-related comments in `router/index.js` all retired (single commit). Backend untouched (already cleaned of TG auth code earlier; no DB column for the flag — localStorage-only). Zero hits across `src/` post-retire. Lesson M2 (preserve-zone justifications must be re-verified independently when retiring components) referenced this case and remains valid as a permanent reference.
 11. **Phase 11 candidate** — `SocialTask.language` + `DailyTask.language` columns + `task.js` route filters + `seed.js` rewrite + RU-duplicate prod data cleanup. Backend extension series.
 12. **Phase 11 sub-decision** — 11 RU-task user-history rows: accept loss vs migrate FKs. Decision needed before Phase 11 executes.
 13. **`ModuleBuilder.vue:131,139,150`** — `.value` on string primitive (pre-existing bug from Phase 1.5c). Surfaced during Phase 7-pre-2 grep, не Phase 7-pre-2 regression.
