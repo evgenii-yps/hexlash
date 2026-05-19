@@ -5,12 +5,13 @@ const { authMiddleware } = require('../middleware/auth');
 const router = express.Router();
 
 // GET /v1/task/social/:language
+// Phase 11 (PR #387 audit): SocialTask.language column retired. URL `:language`
+// param preserved for backward compatibility — frontend taskService.js hardcodes
+// 'en' via default arg, so the param is a no-op accepted as cosmetic legacy.
+// Filter removed; all (now English-only) social tasks are returned.
 router.get('/social/:language', authMiddleware, async (req, res) => {
   try {
-    const { language } = req.params;
-
     const tasks = await prisma.socialTask.findMany({
-      where: { language },
       include: {
         users: {
           where: { userId: req.userId },
@@ -36,9 +37,12 @@ router.get('/social/:language', authMiddleware, async (req, res) => {
 });
 
 // GET /v1/task/daily/:language
+// Phase 11 (PR #387 audit): DailyTask.language column retired. URL `:language`
+// param preserved for backward compatibility — frontend taskService.js hardcodes
+// 'en' via default arg, so the param is a no-op accepted as cosmetic legacy.
+// Filter removed; whereClause now only carries 5K scope filter (when ?scope=...).
 router.get('/daily/:language', authMiddleware, async (req, res) => {
   try {
-    const { language } = req.params;
     const { scope } = req.query; // 5K — optional ?scope=training filter
 
     // 5K — today's UTC date range for training-scope daily-cycle filter (D4-α lazy allocation)
@@ -47,7 +51,7 @@ router.get('/daily/:language', authMiddleware, async (req, res) => {
     const todayEnd = new Date(todayStart);
     todayEnd.setUTCDate(todayEnd.getUTCDate() + 1);
 
-    const whereClause = { language };
+    const whereClause = {};
     if (scope) whereClause.scope = scope;
 
     const tasks = await prisma.dailyTask.findMany({
