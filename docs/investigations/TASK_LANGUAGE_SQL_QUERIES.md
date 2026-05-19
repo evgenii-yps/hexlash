@@ -1,6 +1,6 @@
 # Task-language Audit — SQL Queries
 
-**For Gate 2 of `TASK_LANGUAGE_AUDIT_REPORT.md`.** Owner-run only.
+**Status: Gate 2 complete — owner ran all 10 queries on 2026-05-18.** Raw textual results in `TASK_LANGUAGE_AUDIT_REPORT.md` §Appendix A.4. Headline finding: `UserSocialTask` and `UserDailyTask` are **empty (0 rows total)** on prod; no parallel system found per §6 verification. Queries preserved below for re-run reproducibility (e.g., pre-flight check before execution-phase merge per §7 Recommendation step 1).
 
 ## Procedure
 
@@ -41,7 +41,7 @@ ORDER BY language;
 ```
 
 ```
-<!-- RESULT: paste here -->
+<!-- See results below — owner ran 2026-05-18, results in main report Appendix A.4 -->
 ```
 
 ---
@@ -58,7 +58,7 @@ ORDER BY language;
 ```
 
 ```
-<!-- RESULT: paste here -->
+<!-- See results below — owner ran 2026-05-18, results in main report Appendix A.4 -->
 ```
 
 ---
@@ -83,7 +83,7 @@ ORDER BY table_name, language;
 Empty result is a valid answer (= no surprise values).
 
 ```
-<!-- RESULT: paste here -->
+<!-- See results below — owner ran 2026-05-18, results in main report Appendix A.4 -->
 ```
 
 ---
@@ -104,7 +104,7 @@ WHERE st.language = 'ru';
 ```
 
 ```
-<!-- RESULT: paste here -->
+<!-- See results below — owner ran 2026-05-18, results in main report Appendix A.4 -->
 ```
 
 ---
@@ -128,7 +128,7 @@ ORDER BY completions DESC, st.category;
 ```
 
 ```
-<!-- RESULT: paste here -->
+<!-- See results below — owner ran 2026-05-18, results in main report Appendix A.4 -->
 ```
 
 ---
@@ -153,7 +153,7 @@ WHERE dt.language = 'ru';
 ```
 
 ```
-<!-- RESULT: paste here -->
+<!-- See results below — owner ran 2026-05-18, results in main report Appendix A.4 -->
 ```
 
 ---
@@ -180,7 +180,7 @@ ORDER BY total_rows DESC, dt.scope, dt.category;
 ```
 
 ```
-<!-- RESULT: paste here -->
+<!-- See results below — owner ran 2026-05-18, results in main report Appendix A.4 -->
 ```
 
 ---
@@ -201,7 +201,7 @@ ORDER BY month_bucket DESC;
 ```
 
 ```
-<!-- RESULT: paste here -->
+<!-- See results below — owner ran 2026-05-18, results in main report Appendix A.4 -->
 ```
 
 ---
@@ -223,7 +223,7 @@ ORDER BY month_bucket DESC;
 ```
 
 ```
-<!-- RESULT: paste here -->
+<!-- See results below — owner ran 2026-05-18, results in main report Appendix A.4 -->
 ```
 
 ---
@@ -241,7 +241,7 @@ ORDER BY table_name;
 ```
 
 ```
-<!-- RESULT: paste here -->
+<!-- See results below — owner ran 2026-05-18, results in main report Appendix A.4 -->
 ```
 
 ---

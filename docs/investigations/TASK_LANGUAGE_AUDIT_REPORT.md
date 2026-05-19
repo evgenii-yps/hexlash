@@ -10,17 +10,25 @@
 
 ## TL;DR
 
-`SocialTask.language` and `DailyTask.language` columns + filter chain (URL param → Prisma `where` filter → no FE exposure) are **vestigial** — the entire FE consumer chain hardcodes `'en'` via a `= 'en'` default in `taskService.js` and **never passes a real language argument** from any caller. Backend filter mechanically works but receives only `'en'` from production traffic. RU task definitions in seed.js exist as historical English-only-project artefacts.
+`SocialTask.language` + `DailyTask.language` are **fully vestigial at every level**: column data, server-side filter logic, frontend transport chain, and — confirmed at Gate 2 via owner-executed Railway SQL — **production user-task tables are empty**. `UserSocialTask` and `UserDailyTask` hold **0 rows** total on prod (not just the RU subset). No user-history to migrate, no cascade impact to manage, no FK-constraint procedure required. The retire is a clean single-PR operation: drop 14 RU seed entries + drop `language` column + drop `:language` URL param + drop FE service-layer default.
 
-**Critical execution-phase finding (NOT trivial):** FK constraints on `UserSocialTask.taskId` + `UserDailyTask.taskId` use **`ON DELETE RESTRICT`** at SQL level [confirmed by reading `20260312000000_init/migration.sql` lines 188 + 194]. Direct `DELETE FROM SocialTask WHERE language='ru'` will **fail with FK violation** if any UserSocialTask/UserDailyTask references exist. Owner's "DELETE с cascade" decision is achievable through three procedures (each documented in §Recommendation), but is NOT a single trivial DELETE.
+**FK execution finding (downgraded from critical to nice-to-know):** `UserSocialTask.taskId → SocialTask.id` and `UserDailyTask.taskId → DailyTask.id` use **`ON DELETE RESTRICT`** at SQL level (init migration lines 188 + 194). This **would have** required a procedural workaround if user-task tables held data, but Gate 2 confirmed they're empty system-wide [confirmed], so `DELETE FROM "SocialTask" WHERE language = 'ru'` will succeed without FK violation. Owner's "DELETE с cascade" decision is effectively a no-op (nothing to cascade onto).
 
-**Production SQL deferred to Gate 2** — `docs/investigations/TASK_LANGUAGE_SQL_QUERIES.md` shipped with this PR; owner runs queries in Railway dashboard and either pastes results into the file or sends them via chat for §4 + §Cascade impact to be filled. This report is **Gate 1 complete** (§1-3 + SQL queries file). §4-Recommendation will be added once owner returns SQL results.
+**Production database numbers** (Gate 2 — owner-executed Railway SQL, 2026-05-18):
+- `SocialTask`: 12 rows total (6 EN + 6 RU) [confirmed via Q1+Q10]
+- `DailyTask`: 16 rows total (8 EN + 8 RU) [confirmed via Q2+Q10]
+- No surprise `language` values — only `'en'` and `'ru'` [confirmed via Q3]
+- `UserSocialTask`: **0 rows total** (not 0 RU — 0 overall) [confirmed via Q10]
+- `UserDailyTask`: **0 rows total** [confirmed via Q10]
+- All 14 RU task definitions have zero user completions, zero in-progress records [confirmed via Q5+Q7]
 
-**Surfaced bonus findings already at Gate 1:**
-- Seed.js currently writes **28 task definitions** (14 EN + 14 RU) — split equally [confirmed]. Phase 10 estimate of "~28" was accurate.
-- Vuex `task/fetchAllSocialTasks` and `task/fetchAllDailyTasks` actions accept **no language argument** [confirmed]. The 2 frontend callsites (`HudSocialTasks.vue:84`, `HudTraining.vue:129`) both invoke `store.dispatch('task/...')` with zero payload.
-- `formatTaskResponse` (inline `tasks.map(...)` in `task.js:21-29` + `:70-83`) **drops `task.language` from API response** [confirmed]. FE never sees the language field. The language column is purely a server-side filter mechanism.
-- `SocialTaskModel` + `DailyTaskModel` (frontend) have **no `language` constructor field** [confirmed]. Even if backend leaked it, FE model would strip it.
+**Parallel-system check (§6): NO parallel system found.** Three independent grep-based checks (alternative backend writers, alternative FE dispatch sites, recent prod wipe via migrations) all returned negative. `UserSocialTask`/`UserDailyTask` are the only persistent representation of task completion in the code. The empty state on prod is genuine (low-traffic testhexlash environment, or v2 social/daily task system simply pre-adoption) — not the result of a wipe or routing to alternative tables.
+
+**Carry-forward findings from Gate 1:**
+- Seed.js writes **28 task definitions** (14 EN + 14 RU) — verified via `grep -oP "language: '[a-z]+'"` [confirmed].
+- Vuex `task/fetchAllSocialTasks` + `task/fetchAllDailyTasks` actions accept **no `language` argument** [confirmed]. Both v2 callsites (`HudSocialTasks.vue:84`, `HudTraining.vue:129`) dispatch with zero payload.
+- Inline `tasks.map(...)` response shape in `task.js:21-29`/:70-83 **drops `task.language` from API response** [confirmed].
+- `SocialTaskModel` + `DailyTaskModel` have **no `language` constructor field** [confirmed].
 
 ---
 
@@ -300,128 +308,286 @@ This is a clean retire scenario from the FE perspective. `[confirmed]`
 
 ## Production database state
 
-**Status: deferred to Gate 2.**
+[confirmed via owner-executed read-only SELECT queries on Railway dashboard against production database, 2026-05-18; full raw output in Appendix A.4]
 
-SQL queries shipped in `docs/investigations/TASK_LANGUAGE_SQL_QUERIES.md`. Owner runs them in Railway dashboard (read-only SELECT only, no mutations); results returned via chat OR pasted directly into the file. This report's §4 will be filled with real numbers + raw output going into Appendix A.4 once SQL results are returned.
+### Counts table
 
-The minimum 6 questions the SQL set addresses:
+| Table | Total rows | EN rows | RU rows | Notes |
+|---|---|---|---|---|
+| `SocialTask` | **12** | 6 | 6 | Seed entries: 1:1 EN-to-RU pairing per category [confirmed via Q1] |
+| `DailyTask` | **16** | 8 | 8 | Seed entries: 1:1 EN-to-RU pairing per category [confirmed via Q2] |
+| `UserSocialTask` | **0** | 0 | 0 | Empty — no user has ever completed any social task on this prod environment [confirmed via Q4+Q10] |
+| `UserDailyTask` | **0** | 0 | 0 | Empty — no user has any daily-task progress or completion on this prod [confirmed via Q6+Q10] |
 
-1. Counts task definitions per `language` value for `SocialTask`
-2. Counts task definitions per `language` value for `DailyTask`
-3. Any non-{en, ru} `language` values (NULL, other codes, typos)
-4. `UserSocialTask` rows referencing RU `SocialTask` entries — total + unique users
-5. `UserDailyTask` rows referencing RU `DailyTask` entries — total + unique users
-6. Freshness of the user-history rows (using `completedAt` on UserSocialTask + `assignedDate`/`completedAt` on UserDailyTask)
+### Language-value surprise check (Q3)
+
+[confirmed via Q3 returning zero rows]: no task entries exist with `language IS NULL` or `language NOT IN ('en', 'ru')`. The column holds only the two expected values. No typos, no other locale codes, no NULLs.
+
+### Per-task RU breakdown
+
+**SocialTask RU (6 rows)** [confirmed via Q5]: all 6 rows show `completions = 0` and `unique_users = 0`. No user has ever interacted with any RU SocialTask entry. Categories covered: SUBSCRIBE_TELEGRAM, SUBSCRIBE_X, SUBSCRIBE_YOUTUBE, SUBSCRIBE_DISCORD, SUBSCRIBE_INSTAGRAM, TASK_CONFIRM_EMAIL — all mirror the corresponding EN entries.
+
+**DailyTask RU (8 rows)** [confirmed via Q7]: all 8 rows show `total_rows = 0`, `completed_rows = 0`, `in_progress_rows = 0`. Categories: FIGHT_X_BATTLES, WIN_X_BATTLES, INVITE_FRIEND (scope=general) + HIT_BAG_X_TIMES, LAND_X_COMBOS, SPEND_FULL_ENERGY, TRAIN_X_MINUTES, EARN_X_TAPS (scope=training).
+
+### Freshness distribution (Q8 + Q9)
+
+Both freshness queries returned **zero rows**, consistent with `UserSocialTask` and `UserDailyTask` being completely empty. No history to date-bucket [confirmed].
+
+### Key inference
+
+The original Phase 10 Stage A inventory claim of "11 RU-duplicate task rows with FK relations in `UserSocialTask` / `UserDailyTask` (user-history)" is **stale and superseded** by this Gate 2 audit. Whatever the count was at Phase 10 estimation time (≈3 months ago), the current state is **zero user-task rows of any language**. Owner's parking item #12 ("11 RU-task user-history rows — accept loss vs migrate FKs") is **moot** — there are no rows to either accept-loss or migrate.
+
+### Why the tables are empty (working hypothesis, NOT confirmed)
+
+Three plausible explanations, ranked by likelihood:
+
+1. **Low-traffic testhexlash environment** — the production database queried may correspond to the `test.hexlash.com` deployment rather than the user-facing `hexlash.com`. With low organic traffic and v2-system rollout in April 2026, even a populated user base could have left these tables sparse, but zero is still surprising for active production. [unverified — owner can confirm via Railway environment selection or by checking other user-related table row counts]
+2. **V2 task system pre-adoption** — `HudSocialTasks.vue` (Sub-epic 5I, April 2026) and HudTraining's daily-task panel (Sub-epic 5K, April 2026) are recent surface area additions. Users may not have reached the relevant UI flows in volume, or task-completion buttons may have had reliability issues. [unverified]
+3. **Earlier informal data clear** — owner or someone with DB access could have manually truncated the tables at some point (e.g., during 5K deploy migration troubleshooting) without committing a migration. Check C below confirms NO migration-based wipe; ad-hoc DB operations remain possible. [unverified]
+
+None of these affect the retire plan — the table contents are zero regardless of explanation.
 
 ---
 
 ## Cascade impact analysis
 
-**Status: deferred to Gate 2** — full impact requires SQL counts from §4.
+[confirmed via §1 schema reading + §4 prod counts]
 
-Pre-Gate-1 schema-level facts that the impact analysis will build on:
+### Schema-level facts (unchanged from Gate 1)
 
 | Element | onDelete (Prisma schema) | onDelete (SQL constraint) | Implication |
 |---|---|---|---|
-| `UserSocialTask.taskId → SocialTask.id` | NOT specified | `ON DELETE RESTRICT` (init migration line 188) | Direct DELETE on SocialTask **fails if any UserSocialTask references the row** |
-| `UserDailyTask.taskId → DailyTask.id` | NOT specified | `ON DELETE RESTRICT` (init migration line 194) | Same — DELETE on DailyTask **fails if UserDailyTask rows reference it** |
-| `UserSocialTask.userId → User.id` | NOT specified | `ON DELETE RESTRICT` (init migration line 185) | Irrelevant to this audit (no User deletion planned) |
+| `UserSocialTask.taskId → SocialTask.id` | NOT specified | `ON DELETE RESTRICT` (init migration line 188) | Would block DELETE on SocialTask if referenced |
+| `UserDailyTask.taskId → DailyTask.id` | NOT specified | `ON DELETE RESTRICT` (init migration line 194) | Would block DELETE on DailyTask if referenced |
+| `UserSocialTask.userId → User.id` | NOT specified | `ON DELETE RESTRICT` (init migration line 185) | Irrelevant — no User deletion planned |
 | `UserDailyTask.userId → User.id` | NOT specified | `ON DELETE RESTRICT` (init migration line 191) | Irrelevant |
 
-**Critical:** Owner's "DELETE с cascade" decision is **not directly executable** against current schema. The deletion must either:
+### Real impact
 
-**Option A — Two-step DELETE** (no schema change):
-```sql
--- Inside a transaction:
-DELETE FROM "UserSocialTask" WHERE "taskId" IN (SELECT id FROM "SocialTask" WHERE language = 'ru');
-DELETE FROM "UserDailyTask"  WHERE "taskId" IN (SELECT id FROM "DailyTask"  WHERE language = 'ru');
-DELETE FROM "SocialTask" WHERE language = 'ru';
-DELETE FROM "DailyTask"  WHERE language = 'ru';
-```
+Because `UserSocialTask` and `UserDailyTask` are **empty** [confirmed via §4 Q10], the `ON DELETE RESTRICT` constraints will not fire. `DELETE FROM "SocialTask" WHERE language = 'ru'` and `DELETE FROM "DailyTask" WHERE language = 'ru'` will both succeed cleanly, deleting 6 + 8 = 14 rows total.
 
-**Option B — Schema migration to onDelete: Cascade first, then DELETE:** Add `onDelete: Cascade` to both `task` relations in `schema.prisma`, generate migration, deploy, then run two simple DELETEs.
+**No two-step DELETE, no schema migration to Cascade, no raw SQL FK redefinition required.** Owner's "DELETE с cascade" decision is preserved as documented intent for the case of future user-task references appearing between audit and execution (extremely unlikely given current Vuex-action-without-language-arg state, but the safety guard remains): see §7 Recommendation for a defensive pre-DELETE re-check.
 
-**Option C — One-shot with raw SQL CASCADE clause** (PostgreSQL feature): `ALTER TABLE "UserSocialTask" DROP CONSTRAINT "UserSocialTask_taskId_fkey", ADD CONSTRAINT "UserSocialTask_taskId_fkey" FOREIGN KEY ("taskId") REFERENCES "SocialTask"("id") ON DELETE CASCADE ON UPDATE CASCADE;` then DELETE. (Same effect as Option B, just done via raw migration SQL instead of via Prisma schema regeneration.)
+### Rows that will be deleted
 
-The full §Recommendation will weigh trade-offs (deploy-order risk, rollback path, atomicity) after SQL §4 confirms the exact UserSocialTask + UserDailyTask reference counts.
+| Source table | Filter | Row count | Notes |
+|---|---|---|---|
+| `SocialTask` | `WHERE language = 'ru'` | 6 | All have zero user references [confirmed via Q5] |
+| `DailyTask` | `WHERE language = 'ru'` | 8 | All have zero user references [confirmed via Q7] |
+| `UserSocialTask` | (via FK cascade or two-step) | 0 | Empty regardless |
+| `UserDailyTask` | (via FK cascade or two-step) | 0 | Empty regardless |
+| **Total** | — | **14** | Plus implicitly: 14 EN rows survive untouched |
 
 ---
 
 ## Surprise findings
 
-**Status: tentative pre-Gate-2.** A few items have surfaced already during §1-3 audit:
+### SP-1 (Gate 1) — Vuex `task/fetchAllSocialTasks` and `task/fetchAllDailyTasks` accept no language argument
 
-### SP-1 — Vuex `task/fetchAllSocialTasks` and `task/fetchAllDailyTasks` accept no language argument
+Vuex action signature `async fetchAllSocialTasks({commit})` has no `language` slot. Both v2 consumer callsites (`HudSocialTasks.vue:84`, `HudTraining.vue:129`) dispatch without payload. The service-layer `language` parameter chain is **dead from the Vuex layer outward** — `language` is `undefined` until the bottom `fetchAllSocialTasks(language = 'en')` default kicks in. Removing the parameter from the service signatures (along with the backend route param) would be a no-op for callers. [confirmed]
 
-The Vuex action signatures (`async fetchAllSocialTasks({commit})`) have no `language` slot. Both v2 consumer callsites (`HudSocialTasks.vue:84`, `HudTraining.vue:129`) dispatch without payload. The service-layer `language` parameter chain is **dead from the Vuex layer outward** — `language` is `undefined` until the bottom `fetchAllSocialTasks(language = 'en')` default kicks in. Removing the parameter from the service signatures (along with the backend route param) would be a no-op for callers. `[confirmed]`
+### SP-2 (Gate 1) — `formatTaskResponse` is inline and already strips `language`
 
-### SP-2 — `formatTaskResponse` is inline and already strips `language`
+No `formatTaskResponse` helper exists. Both task list endpoints inline `tasks.map((task) => ({ id, title, description, link, tokens, isCompleted, category }))` (and analogous shape for daily tasks). **`language` is already absent from the response body** [confirmed]. Dropping the column on backend won't change API response shape — zero FE breakage on the response side.
 
-There is no `formatTaskResponse` helper. The two task list endpoints inline `tasks.map((task) => ({ id, title, description, link, tokens, isCompleted, category }))` (and analogous shape for daily tasks). **`language` is already absent from the response body** [confirmed]. This means dropping the column on backend won't change API response shape — zero FE breakage on the response side.
+### SP-3 (Gate 1) — RU entries are full alt-rows by `category`, not translation duplicates
 
-### SP-3 — RU entries are not "translation duplicates", they are full alt-rows by `category`
+RU and EN tasks share the same `category` strings (both have `SUBSCRIBE_TELEGRAM`, etc.). Seed idempotency relies on the composite `(category, language)` lookup. There is **no `@@unique([category, language])` constraint** in the schema [confirmed via Prisma schema reading + init migration index list] — only seed-time code enforces uniqueness logically. Fine for retire (drop both `language` column and per-language entries simultaneously), but flag: a future seed run between schema-drop and seed-rewrite could re-create rows under the wrong assumption.
 
-RU and EN tasks share the same `category` strings (e.g., both have `SUBSCRIBE_TELEGRAM`). Seed idempotency relies on the composite `(category, language)` lookup. There is **no `@@unique([category, language])` constraint** in the schema [confirmed via Prisma schema reading + init migration `CREATE UNIQUE INDEX` lines] — only the seed code enforces uniqueness logically. This is fine for retire (drop both `language` column and the per-language entries simultaneously), but worth flagging: a future seed run between schema-drop and seed-rewrite could re-create rows under the wrong assumption.
+### SP-4 (Gate 1) — RU task TITLES/DESCRIPTIONS are visible RU strings, but project is English-only
 
-### SP-4 — RU task TITLES, DESCRIPTIONS are visible RU strings, but project is English-only
+The 14 RU seed entries contain Russian strings in `title`/`description` fields. Since project shipped English-only post-referral-серии and FE always requests `/task/social/en` (per SP-1), these strings have been **dead content** living on prod — never served. Zombie data, not active-but-unused-translations.
 
-The 14 RU seed entries contain Russian strings in `title` and `description` fields (e.g., "Подписаться на Telegram", "Подтвердите ваш email адрес"). Since project shipped English-only post-referral-серии, these strings have been **dead content** living on prod — never served (because FE always requests `/task/social/en` per SP-1). The RU rows are zombie data, not active-but-unused-translations. Confirms vestigial classification at content level, not just schema level.
-
-### SP-5 — No prior migration attempted RU→EN duplicate consolidation
+### SP-5 (Gate 1) — No prior migration attempted RU→EN duplicate consolidation
 
 `grep -l "DailyTask\|SocialTask\|language" backend/prisma/migrations/*` returns only init migration + 5K + Phase 10 [confirmed]. No historical attempts to merge or remap RU entries. Clean slate for execution-phase decision.
 
-### SP-6 — Surfaced ones pending SQL
+### SP-6 (Gate 2 — **THE BIG ONE**) — User-task tables are empty system-wide
 
-Several candidates whose answer depends on prod data:
-- Are there `language` values **other** than 'en'/'ru'? (Q3 in SQL set — must verify NULL, capitalization variants, typos.)
-- Are the 11 RU user-history rows mentioned in original Phase 10 inventory still accurate? Maybe the number is higher, lower, or 0 now (3+ months elapsed).
-- Are the affected users active? `completedAt` / `assignedDate` distribution will tell.
+[confirmed via Q4+Q6+Q10] `UserSocialTask` and `UserDailyTask` hold zero rows in production. Not just the RU subset — the entire tables. This completely changes the execution shape from "carefully migrate or accept-loss of 11 RU user-history rows" (Phase 10 deferral assumption) to "simply DELETE 14 task definition rows; no user-row implications". See §6 parallel-system check below for the verification chain that confirmed this is not the result of routing to alternative tables.
+
+### SP-7 (Gate 2) — Parallel-system check (no parallel system found)
+
+Owner asked at Gate 2 boundary: "could there be a parallel task-completion system writing to tables other than `UserSocialTask`/`UserDailyTask`?" Three independent checks were run:
+
+#### Check A — alternative backend write paths
+
+[confirmed via 4 grep queries against `backend/src/`]
+
+**Result: only `backend/src/routes/task.js` writes to UserSocialTask / UserDailyTask.**
+
+| Site | Operation | Path |
+|---|---|---|
+| `task.js:109` | `prisma.userSocialTask.create` | POST /task/complete/:taskId — social branch |
+| `task.js:134` | `prisma.userDailyTask.create` | POST /task/complete/:taskId — daily branch |
+| `task.js:188` | `prisma.userDailyTask.create` | POST /task/daily/:id/progress — lazy allocation (5K) |
+| `task.js:211/219` | `prisma.userDailyTask.update` + `prisma.user.update` | POST /task/daily/:id/progress — atomic transaction |
+
+`prisma.user.update` calls at `task.js:113, 138, 219` increment `User.balance` after task completion. **NO** task-completion state is stored on `User` itself (no `subscribedToDiscord`, `joinedTelegram`, or similar flag-fields exist anywhere in the schema). The only persistence representation of "user X completed task Y" is a row in `UserSocialTask` or `UserDailyTask`. [confirmed]
+
+**`awardAchievement`/`UserAchievement` are NOT used for social/daily task completion.** Existing `UserAchievement` writes (fight.js, pvpCombatEngine.js, etc.) target unrelated achievement categories (FIGHT_MASTER, PROJECT_MAYHEM, etc.) — not the SUBSCRIBE_* / FIGHT_X_BATTLES / HIT_BAG_X_TIMES task categories. [confirmed via `grep -rn "awardAchievement\|UserAchievement\|achievements\." backend/src/ --include="*.js" | grep -iE "task|social|daily|subscribe"` returning empty]
+
+**Other `User.update` callsites** (clan.js, retirementService.js, handler.js:317 punch batch, user.js misc, auth.js referral) — all unrelated to social/daily task completion [confirmed].
+
+#### Check B — alternative frontend dispatch sites
+
+[confirmed via grep across `src/`]
+
+**Result: all task-completion dispatches funnel through `taskService` and standard `/v1/task/*` endpoints.**
+
+| FE site | Dispatch | Backend endpoint hit |
+|---|---|---|
+| `HudSocialTasks.vue:123` | `task/updateSocialTask` → `taskService.sendUpdateSocialTask` → `completeTaskApiCall(taskId)` | POST `/v1/task/complete/:taskId` |
+| `SubscribeModal.vue:58` (emits `'complete'` to `HudSocialTasks.onTaskComplete`) | Same chain as above | POST `/v1/task/complete/:taskId` |
+| `useClickToHit.js:98,99,102,107` (training tap/combo/energy/earn-taps progress) | `task/incrementDailyProgress` → `taskService.incrementDailyProgress` | POST `/v1/task/daily/:id/progress` |
+| `useTrainingState.js:98` (session-time training progress) | Same | POST `/v1/task/daily/:id/progress` |
+| `webSocketState.js:159,162` (server-push inbound) | `task/receivedSocialTask`, `task/receivedDailyTask` | **NO HTTP write back** — these are WS-inbound merges only, the WS message body is committed to Vuex local state via `addSocialTask`/`addDailyTask` mutation. No bypass route exists. |
+
+**NO `apiClient` direct call bypassing `taskService` in any task-related component** [confirmed]. **NO parallel Vuex module** like `socialState` / `referralState` / `subscriptionState` exists [confirmed via `ls src/core/state/modules/`].
+
+#### Check C — recent prod data wipe via migrations
+
+[confirmed via `ls -lat backend/prisma/migrations/` + `grep -rn "TRUNCATE\|DELETE FROM" backend/prisma/migrations/`]
+
+**Result: NO migration has performed bulk data deletion on `UserSocialTask` or `UserDailyTask`.**
+
+| Migration | Date | Relevant body |
+|---|---|---|
+| `20260312000000_init` | 2026-03-12 | CREATE TABLE for both User-task tables |
+| `20260428000000_add_daily_task_progress_and_scope` | 2026-04-28 | 5K: ADD COLUMN scope/progress/assignedDate to UserDailyTask, DROP/CREATE INDEX. **Did not delete data.** |
+| `20260508000000_email_data_cleanup` | 2026-05-08 | ALTER TABLE User — strictly User-table scope, not task tables |
+| `20260515000000_drop_user_language_field` | 2026-05-15 | Drop User.language column — strictly User-table scope |
+
+**`grep -rn "TRUNCATE\|DELETE FROM" backend/prisma/migrations/` returns empty** [confirmed]. There is no migration-recorded bulk data deletion on User-task tables.
+
+This leaves three possibilities for the empty state:
+- a. Tables have always been empty in this particular environment (low traffic / pre-adoption — most likely)
+- b. Tables were manually wiped via ad-hoc DB operations (not via migrations) — possible but outside the audit's evidence scope
+- c. Tables are being populated and reset by `dailyTaskCron` (`backend/src/services/dailyTaskCron.js:24` calls `prisma.userDailyTask.deleteMany({...})` for training-scope daily reset at midnight UTC) — but the cron only deletes; it never creates, so this would account for daily-task table starting empty each UTC day but does NOT explain `UserSocialTask` being empty (social tasks are not subject to daily reset).
+
+#### Verdict
+
+**No parallel system exists.** `UserSocialTask` + `UserDailyTask` are the only persistent representation of social- and daily-task completion in the entire codebase. The empty state on prod is genuine. Whether the cause is low traffic, pre-adoption, or ad-hoc data clear is unknown but does not affect the retire plan — there is nothing to migrate or cascade onto.
 
 ---
 
 ## Recommendation for execution phase
 
-**Status: deferred to Gate 2** — full recommendation needs §4 numbers + §5 cascade scope.
+[Gate 2 final — based on confirmed §4 + §5 + §6 findings]
 
-Pre-Gate-1 directional notes (subject to revision after SQL results):
+### Shape: single PR
 
-### Likely shape
+**Strongly recommended single-PR.** Phasing offered no benefit given:
+- Zero user-row dependency on RU task entries [§4 confirmed]
+- Zero FE language read sites and a small surface (2 callers, both already passing nothing) [§3 confirmed]
+- Inline backend response shape already drops `language` [SP-2 confirmed]
+- No parallel system implications [§6 confirmed]
 
-**Single-PR is feasible** given that:
-- FE has zero language read sites and a small surface (2 callers, both already passing nothing)
-- Backend route changes are minimal (drop `:language` URL param, drop `where: { language }` clauses)
-- Schema migration is mechanical (drop column + drop FK constraint variant)
-- Seed.js rewrite is moderate (drop 14 RU entries, drop `language` field, adjust idempotency lookup to `category` only — needs `@@unique([category])` or app-level enforcement)
+### Execution sequence (single PR)
 
-**Phased may be preferable if** SQL reveals significantly more `UserSocialTask`/`UserDailyTask` rows than the original 11 (e.g., active users with ongoing daily-task progress), in which case Phase 1 = drop RU data + tighten schema, Phase 2 = drop column + update routes/FE/seed.
+```
+1. Pre-flight verify (mandatory immediately before merge):
+   Re-run the §4 Q4+Q6+Q10 SQL on prod via Railway dashboard.
+   If UserSocialTask or UserDailyTask is no longer 0 (e.g., real user activity
+   occurred between audit and execution), STOP and re-evaluate the cascade
+   procedure. Otherwise proceed.
 
-### Backup procedure (will be finalized in Gate 2)
+2. Backup (procedure below).
 
-Standard Railway/PostgreSQL backup before execution:
+3. Schema migration:
+   - Drop `language` column from SocialTask: ALTER TABLE "SocialTask" DROP COLUMN "language";
+   - Drop `language` column from DailyTask: ALTER TABLE "DailyTask" DROP COLUMN "language";
+   - (Optional, if owner accepts SP-3 carry-over) — Add `@@unique([category])` on
+     SocialTask and `@@unique([category, scope])` on DailyTask to make seed
+     idempotency lookup work after the language pivot drops. WITHOUT this,
+     seed.js must use a different idempotency key (see step 5).
+
+4. Backend route + filter cleanup:
+   - task.js: drop `:language` URL param from both GET endpoints. Routes become
+     `GET /v1/task/social` and `GET /v1/task/daily`.
+   - Drop `const { language } = req.params` (lines 10, 41) and `where: { language }` /
+     `whereClause = { language }` (lines 13, 50). The whereClause for daily simplifies
+     to `{ scope }` (optional).
+
+5. Seed.js cleanup:
+   - Drop all 14 RU entries (lines 44-49, 69-71, 78-82).
+   - Drop `language: 'en'` from remaining 14 EN entries.
+   - Replace idempotency `findFirst({ where: { category, language } })` (lines 54, 87)
+     with `findFirst({ where: { category } })` (or with `where: { category, scope }` for
+     DailyTask, depending on step 3 decision).
+   - Drop the `language` field from the in-memory arrays.
+
+6. Frontend cleanup:
+   - taskService.js: drop the `language` parameter from `fetchAllSocialTasks`,
+     `fetchAllDailyTasks`, `getAllSocialTasksFromLocalAndAPI`,
+     `getAllDailyTasksFromLocalAndAPI`, `getSocialTasksFromAPI`, `getDailyTasksFromAPI`.
+   - URL templates: `\`/task/social/${language}\`` → `'/task/social'`; same for daily.
+
+7. Pre-DELETE cleanup (run after schema migration on prod):
+   - Actually, if the schema migration in step 3 drops the language column,
+     RU rows become indistinguishable from EN rows (they all collapse to
+     unfiltered). At that point the RU rows have duplicate category strings
+     with the EN rows. So DELETE must happen BEFORE the schema migration:
+
+   Revised step order:
+     3a. DELETE FROM "SocialTask" WHERE language = 'ru';
+     3b. DELETE FROM "DailyTask" WHERE language = 'ru';
+     3c. THEN run the column-drop migration.
+
+   This means the migration file must contain the DELETE statements followed by
+   the ALTER TABLE statements, OR the DELETE runs via a separate migration that
+   sequences before the column-drop migration.
+
+8. Deploy order (Railway):
+   - This is a backend+schema change. Per CLAUDE.md branch strategy, the
+     execution branch must be cherry-picked or branched from main with the
+     backend changes, since visual-migration branches don't auto-deploy backend.
+   - Frontend changes can ship on the same PR if it lands directly to main, OR
+     after backend deploys if a deploy-window guarantee is preferred.
+```
+
+### Backup procedure
+
+Owner-side, before merging the execution PR:
 
 ```bash
-# Owner-side, before merging execution PR:
-# 1. Capture pre-migration snapshot (Railway dashboard → Database → Backups → "Create Backup Now")
-#    OR via pg_dump if direct access available:
+# Railway dashboard → your prod DB → "Backups" tab → "Create Backup Now"
+# This produces a Railway-managed point-in-time snapshot that can be restored
+# via the dashboard if needed. Note the backup timestamp.
+```
+
+Optional supplementary pg_dump (if direct DB URL is available):
+
+```bash
+# Schema + task-related data only (small files, fast)
 pg_dump $DATABASE_URL --schema-only --no-owner --no-acl > backup-schema-YYYY-MM-DD.sql
 pg_dump $DATABASE_URL --data-only --no-owner --no-acl \
   --table='"SocialTask"' --table='"DailyTask"' \
   --table='"UserSocialTask"' --table='"UserDailyTask"' \
   > backup-task-data-YYYY-MM-DD.sql
 
-# 2. Verify backup integrity (line count, file size > 0)
-# 3. Store both files in safe location (NOT the repo)
-# 4. Only then proceed with deploy.
+# Verify integrity:
+wc -l backup-task-data-YYYY-MM-DD.sql   # >0 lines expected
+ls -lh backup-task-data-YYYY-MM-DD.sql  # >0 bytes expected
 ```
 
-This procedure also lets you reproduce the exact pre-execution state in case rollback is needed.
+Store backup files outside the repo (e.g., local disk, secure cloud storage). Do not commit to git.
 
-### Open questions for owner (will be expanded after SQL)
+### Defensive edge cases
 
-1. **Cascade procedure choice** — Option A (two-step DELETE, no schema change first), Option B (schema migration to `onDelete: Cascade` first), or Option C (raw SQL FK redefinition)? Each has different deploy-order implications.
-2. **Schema cleanup scope** — drop only the `language` column, or also tighten task-uniqueness via new `@@unique([category])` constraint to replace seed idempotency lookup?
-3. **Seed.js rewrite scope** — same 14 EN entries with `language` field removed, or also consolidate to one entry per category (no language at all in schema)?
+| Risk | Mitigation |
+|---|---|
+| User activity between audit and execution populates `UserSocialTask`/`UserDailyTask` with RU references | Pre-flight Q4+Q6+Q10 re-check immediately before merge (step 1 above). Trivial to run via the existing SQL queries file. |
+| Concurrent seed.js run with stale code re-creates RU entries after the migration | Disable seed during deploy window (likely already done — verify via Railway logs). Confirm post-migration seed.js code drops RU entries entirely. |
+| Frontend deploys with stale `:language` URL param before backend route accepts the new format | Backend route can accept both `/task/social` AND `/task/social/:language` for one deploy window via Express route ordering (`router.get('/social', ...)` then `router.get('/social/:language', ...)`). After FE deploys, remove the legacy route. **OR** ship both in one PR to a single auto-deploy environment. |
+| Schema migration runs but RU rows still in DB (out-of-order in the migration body) | Order matters — DELETE must happen BEFORE the column drop (see step 7). Test on a staging copy if available. |
+
+### Open questions for owner (Gate 2 final)
+
+1. **Schema idempotency choice** (SP-3 + step 3) — drop `language` column only and rely on seed-time logic with `@@unique([category])` enforcement, or drop language without adding any new uniqueness constraint (and rely solely on seed.js `findFirst({ category })` logic)? The former is safer; the latter is less invasive.
+2. **DailyTask uniqueness scope** — should `DailyTask` get `@@unique([category])` or `@@unique([category, scope])`? Both `general` and `training` scopes share some category names (e.g., `INVITE_FRIEND` is general; `HIT_BAG_X_TIMES` is training — no observed cross-scope collision in seed.js). Owner's call.
+3. **Empty user-task tables (SP-6)** — is the prod environment queried in §4 the actual user-facing production, or a staging snapshot? If actual prod with users, the zero-row state may warrant a separate investigation (low-priority but interesting given v2 system has been live since April 2026). Suggested but not required before retire executes.
+4. **Backend deploy chain** — execution PR is FE+BE. Per CLAUDE.md branch strategy convention (Phase 11 series candidate; cherry-pick to `main` from continue stack for backend changes), execute as a single PR directly to `main`, not from any visual-migration continue stack? Owner confirm.
 
 ---
 
@@ -544,8 +710,180 @@ Phase 10 Stage A migration explicitly defers task-language scope (header comment
 
 ### A.4 — Production SQL query results
 
-**To be filled at Gate 2** once owner returns results from `docs/investigations/TASK_LANGUAGE_SQL_QUERIES.md`.
+[confirmed via owner-executed Railway dashboard SQL run on 2026-05-18 against prod database; raw screenshots in chat, textual summary below from owner-provided table; full queries shipped in `docs/investigations/TASK_LANGUAGE_SQL_QUERIES.md`]
+
+**Q1 — SocialTask definitions by language**
+
+```
+ language | rows
+----------+------
+ en       |    6
+ ru       |    6
+(2 rows)
+```
+
+**Q2 — DailyTask definitions by language**
+
+```
+ language | rows
+----------+------
+ en       |    8
+ ru       |    8
+(2 rows)
+```
+
+**Q3 — Any unexpected language values**
+
+```
+ table_name | language | rows
+------------+----------+------
+(0 rows)
+```
+
+**Q4 — UserSocialTask rows tied to RU SocialTask definitions**
+
+```
+ total_user_rows | unique_users | earliest_completed | latest_completed
+-----------------+--------------+--------------------+------------------
+               0 |            0 | NULL               | NULL
+(1 row)
+```
+
+**Q5 — UserSocialTask breakdown per RU task definition**
+
+```
+ task_id | category            | title                  | completions | unique_users
+---------+---------------------+------------------------+-------------+--------------
+ [uuid]  | TASK_CONFIRM_EMAIL  | Подтвердить Email      |           0 |            0
+ [uuid]  | SUBSCRIBE_TELEGRAM  | Подписаться на Telegram|           0 |            0
+ [uuid]  | SUBSCRIBE_X         | Подписаться на X       |           0 |            0
+ [uuid]  | SUBSCRIBE_YOUTUBE   | Подписаться на YouTube |           0 |            0
+ [uuid]  | SUBSCRIBE_DISCORD   | Присоединиться к Discord|          0 |            0
+ [uuid]  | SUBSCRIBE_INSTAGRAM | Подписаться на Instagram|          0 |            0
+(6 rows — all completions = 0, all unique_users = 0)
+```
+
+**Q6 — UserDailyTask rows tied to RU DailyTask definitions**
+
+```
+ total_user_rows | unique_users | completed_rows | in_progress_rows | earliest_assigned | latest_assigned | earliest_completed | latest_completed
+-----------------+--------------+----------------+------------------+-------------------+-----------------+--------------------+------------------
+               0 |            0 |              0 |                0 | NULL              | NULL            | NULL               | NULL
+(1 row)
+```
+
+**Q7 — UserDailyTask breakdown per RU task definition**
+
+```
+ task_id | category          | scope    | title                            | total_rows | completed_rows | in_progress_rows | unique_users
+---------+-------------------+----------+----------------------------------+------------+----------------+------------------+--------------
+ [uuid]  | FIGHT_X_BATTLES   | general  | Проведи 3 боя                    |          0 |              0 |                0 |            0
+ [uuid]  | WIN_X_BATTLES     | general  | Выиграй 2 боя                    |          0 |              0 |                0 |            0
+ [uuid]  | INVITE_FRIEND     | general  | Пригласи друга                   |          0 |              0 |                0 |            0
+ [uuid]  | HIT_BAG_X_TIMES   | training | Ударь грушу 500 раз              |          0 |              0 |                0 |            0
+ [uuid]  | LAND_X_COMBOS     | training | Сделай 5 комбо                   |          0 |              0 |                0 |            0
+ [uuid]  | SPEND_FULL_ENERGY | training | Потрать всю энергию              |          0 |              0 |                0 |            0
+ [uuid]  | TRAIN_X_MINUTES   | training | Тренируйся 5 минут               |          0 |              0 |                0 |            0
+ [uuid]  | EARN_X_TAPS       | training | Заработай 500 тапов за сессию    |          0 |              0 |                0 |            0
+(8 rows — all zero, owner reports page 1 visible showed 5; all 8 confirmed zero per summary)
+```
+
+**Q8 — Freshness distribution (RU UserSocialTask completion dates)**
+
+```
+ month_bucket | completions
+--------------+-------------
+(0 rows — Query returned no rows)
+```
+
+**Q9 — Freshness distribution (RU UserDailyTask assigned dates)**
+
+```
+ month_bucket | total_rows | completed_rows
+--------------+------------+----------------
+(0 rows)
+```
+
+**Q10 — Sanity check: total task tables size**
+
+```
+ table_name     | rows
+----------------+------
+ DailyTask      |   16
+ SocialTask     |   12
+ UserDailyTask  |    0
+ UserSocialTask |    0
+(4 rows)
+```
+
+### A.5 — Gate 2 check raw outputs (parallel-system audit)
+
+**Check A — backend write-path grep (positive results)**
+
+```
+$ grep -rn "awardAchievement\|UserAchievement\|achievements\." backend/src/ --include="*.js" | grep -iE "task|social|daily|subscribe"
+(empty — no hits)
+```
+
+```
+$ grep -rn "completedAt\|isCompleted\|markComplete" backend/src/ --include="*.js"
+backend/src/services/pvpCombatEngine.js:735:          isCompleted: true,     (← fight context, not task)
+backend/src/websocket/handler.js:464:              isCompleted: true,        (← fight context, not task)
+backend/src/routes/task.js:27:      isCompleted: task.users.length > 0,
+backend/src/routes/task.js:77:        isCompleted: userTask ? !!userTask.completedAt : false,
+backend/src/routes/task.js:128:        where: { userId: req.userId, taskId, completedAt: { not: null } },
+backend/src/routes/task.js:135:        data: { userId: req.userId, taskId, completedAt: new Date() },
+backend/src/routes/task.js:194:    if (userTask.completedAt) {
+backend/src/routes/task.js:200:          isCompleted: true,
+backend/src/routes/task.js:215:          completedAt: justCompleted ? new Date() : null,
+backend/src/routes/task.js:232:        isCompleted: !!updated.completedAt,
+backend/src/routes/fight.js:72:        isCompleted: true,                    (← fight context, not task)
+```
+
+All task-related `completedAt`/`isCompleted` hits are in `task.js`. The 3 outliers (`pvpCombatEngine.js`, `handler.js`, `fight.js`) are fight-context, not task-context [confirmed].
+
+```
+$ grep -rn "prisma\.user\.update" backend/src/ --include="*.js"
+[28 hits across clan.js, retirementService.js, handler.js, user.js, auth.js, task.js, routes/clan.js]
+```
+
+Of these 28 `prisma.user.update` callsites, only **3 are task-context** (`task.js:113, 138, 219`) and all of them increment `balance` after task completion in the same transaction as the UserSocialTask/UserDailyTask create. None store task-completion state on `User` itself.
+
+**Check B — frontend dispatch grep**
+
+```
+$ grep -rn "dispatch.*task\|dispatch.*social\|dispatch.*daily" src/ --include="*.js" --include="*.vue"
+src/components/hud/HudSocialTasks.vue:84:    store.dispatch('task/fetchAllSocialTasks');
+src/components/hud/HudSocialTasks.vue:123:    store.dispatch('task/updateSocialTask', updated);
+src/components/hud/HudTraining.vue:129:    store.dispatch('task/fetchAllDailyTasks');
+src/scene/interaction/useTrainingState.js:98:      store.dispatch('task/incrementDailyProgress', { kind: 'session_time', amount: 300 });
+src/scene/interaction/useClickToHit.js:98:    store.dispatch('task/incrementDailyProgress', { kind: 'tap', amount: 1 });
+src/scene/interaction/useClickToHit.js:99:    store.dispatch('task/incrementDailyProgress', { kind: 'earn_taps_threshold', amount: gain });
+src/scene/interaction/useClickToHit.js:102:      store.dispatch('task/incrementDailyProgress', { kind: 'combo', amount: 1 });
+src/scene/interaction/useClickToHit.js:107:      store.dispatch('task/incrementDailyProgress', { kind: 'energy_full', amount: 60 });
+src/core/state/modules/webSocketState.js:159:                    await store.dispatch('task/receivedSocialTask', taskModel);
+src/core/state/modules/webSocketState.js:162:                    await store.dispatch('task/receivedDailyTask', taskModel);
+```
+
+All task dispatches funnel through the `task/*` Vuex namespace. `receivedSocialTask`/`receivedDailyTask` are inbound from WS — they only commit to local state (`addSocialTask`/`addDailyTask` mutations in `taskState.js:35-58`), no HTTP write [confirmed via reading `taskState.js:100-119`].
+
+**Check C — migration history wipe check**
+
+```
+$ ls -lat backend/prisma/migrations/ | head -8
+total 112
+20260429000000_restore_is_captain_to_agent
+20260508000000_email_data_cleanup
+20260508010000_add_email_auth_tokens
+20260515000000_drop_user_language_field
+20260403100000_add_agent_fight_mode
+...
+$ grep -rn "TRUNCATE\|DELETE FROM" backend/prisma/migrations/
+(empty — no hits)
+```
+
+No migration body contains a bulk delete operation on any task table [confirmed]. The `dailyTaskCron.js:24` runtime DELETE is per-day reset for training scope only; it cannot account for `UserSocialTask` being empty (social tasks are not subject to daily reset).
 
 ---
 
-**End of Gate 1 report. Pending: owner SQL run → Gate 2 fill-in of §4 + §5 + §6 surfacing + §Recommendation + Appendix A.4.**
+**End of Gate 2 report. All sections complete. Awaiting PR open + owner review.**
