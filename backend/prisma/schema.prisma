@@ -176,8 +176,7 @@ model SocialTask {
   description String  @default("")
   link        String  @default("")
   tokens      Int     @default(0)
-  category    String
-  language    String  @default("en")
+  category    String  @unique
   users       UserSocialTask[]
 }
 
@@ -197,10 +196,9 @@ model DailyTask {
   title       String
   description String  @default("")
   tokens      Int     @default(0)
-  category    String
+  category    String  @unique
   link        String  @default("")
   value       Int?
-  language    String  @default("en")
   scope       String  @default("general") // 5K — "general" | "training"
   users       UserDailyTask[]
 }
