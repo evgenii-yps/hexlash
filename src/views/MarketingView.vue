@@ -274,12 +274,13 @@ function handleScroll() {
   isHeaderScrolled.value = window.scrollY > 50;
 }
 
-// Anchor scroll with offset to account for the ~64px sticky header
-// (otherwise section heading hides under the bar).
+// Anchor scroll with offset to account for the ~80px sticky header
+// (otherwise section heading hides under the bar). Mobile header is
+// ~64px — 80 over-offsets by ~16px on mobile, which still reads OK.
 function scrollToSection(id) {
   const el = document.getElementById(id);
   if (!el) return;
-  const HEADER_OFFSET = 64;
+  const HEADER_OFFSET = 80;
   const top = el.getBoundingClientRect().top + window.scrollY - HEADER_OFFSET;
   window.scrollTo({ top, behavior: 'smooth' });
 }
@@ -333,7 +334,7 @@ onBeforeUnmount(() => {
 .marketing-header__inner {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 14px 24px;
+  padding: 16px 48px;
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
@@ -348,7 +349,7 @@ onBeforeUnmount(() => {
 }
 
 .marketing-header__logo {
-  height: 32px;
+  height: 48px;
   width: auto;
   display: block;
   user-select: none;
@@ -358,16 +359,16 @@ onBeforeUnmount(() => {
 .marketing-header__nav {
   display: flex;
   justify-content: center;
-  gap: 36px;
+  gap: 44px;
 }
 
 .marketing-header__navlink {
   font-family: var(--hex-font-body);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 16px;
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.85);
   text-decoration: none;
   transition: color 0.15s ease;
   cursor: pointer;
@@ -380,17 +381,17 @@ onBeforeUnmount(() => {
 .marketing-header__socials {
   display: inline-flex;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
 }
 
 .marketing-header__social {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 6px;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.85);
   transition: color 0.15s ease, background-color 0.15s ease;
 }
 
@@ -400,8 +401,8 @@ onBeforeUnmount(() => {
 }
 
 .marketing-header__social img {
-  width: 20px;
-  height: 20px;
+  width: 28px;
+  height: 28px;
   user-select: none;
   -webkit-user-drag: none;
 }
@@ -410,34 +411,34 @@ onBeforeUnmount(() => {
   .marketing-header__inner {
     grid-template-columns: auto 1fr auto;
     gap: 14px;
-    padding: 12px 16px;
+    padding: 14px 20px;
   }
   .marketing-header__nav {
-    gap: 18px;
+    gap: 24px;
   }
   .marketing-header__navlink {
-    font-size: 12px;
+    font-size: 14px;
     letter-spacing: 0.06em;
   }
   .marketing-header__logo {
-    height: 28px;
+    height: 40px;
   }
   .marketing-header__social {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
   }
   .marketing-header__social img {
-    width: 18px;
-    height: 18px;
+    width: 24px;
+    height: 24px;
   }
 }
 
 @media (max-width: 420px) {
   .marketing-header__nav {
-    gap: 12px;
+    gap: 16px;
   }
   .marketing-header__navlink {
-    font-size: 11px;
+    font-size: 12px;
     letter-spacing: 0.04em;
   }
 }
