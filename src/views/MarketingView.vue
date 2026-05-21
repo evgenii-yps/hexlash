@@ -72,12 +72,34 @@
       <div class="marketing-gameplay__inner" :class="{ 'is-visible': gameplayVisible }">
         <h2 class="marketing-gameplay__heading">GAMEPLAY</h2>
         <div class="marketing-gameplay__video">
-          <div class="marketing-gameplay__video-placeholder">
-            <span class="marketing-gameplay__video-text">Video coming soon</span>
+          <!-- Faint hex pattern overlay on the placeholder surface -->
+          <svg class="marketing-gameplay__pattern"
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 400 225"
+               preserveAspectRatio="xMidYMid slice"
+               aria-hidden="true">
+            <defs>
+              <pattern id="gameplay-hex-pattern" x="0" y="0" width="44" height="38" patternUnits="userSpaceOnUse">
+                <polygon points="22,2 42,13 42,35 22,46 2,35 2,13"
+                         fill="none"
+                         stroke="rgba(255, 6, 111, 0.18)"
+                         stroke-width="0.6" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#gameplay-hex-pattern)" />
+          </svg>
+
+          <div class="marketing-gameplay__center">
+            <svg class="marketing-gameplay__play-icon" viewBox="0 0 100 100" aria-hidden="true">
+              <polygon points="50,4 92,28 92,72 50,96 8,72 8,28"
+                       fill="#FF066F" />
+              <polygon points="42,32 70,50 42,68" fill="#fff" />
+            </svg>
+            <p class="marketing-gameplay__placeholder">VIDEO INCOMING</p>
           </div>
         </div>
         <p class="marketing-gameplay__caption">
-          Watch fighters battle in the underground octagon.
+          First match recordings drop with the next release.
         </p>
       </div>
     </section>
@@ -543,34 +565,55 @@ onBeforeUnmount(() => {
   position: relative;
   width: 100%;
   aspect-ratio: 16 / 9;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid var(--hex-border-default, rgba(255, 255, 255, 0.08));
+  background: var(--hex-bg-medium);
+  border: 1px solid rgba(255, 6, 111, 0.4);
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 0 64px rgba(255, 6, 111, 0.1);
 }
 
-.marketing-gameplay__video-placeholder {
+.marketing-gameplay__pattern {
   position: absolute;
   inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, rgba(20, 20, 20, 1) 0%, rgba(40, 10, 30, 1) 100%);
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 
-.marketing-gameplay__video-text {
-  font-size: clamp(14px, 1.5vw, 18px);
-  color: var(--hex-text-muted);
-  letter-spacing: 0.15em;
+.marketing-gameplay__center {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+.marketing-gameplay__play-icon {
+  width: 92px;
+  height: 92px;
+  display: block;
+  filter: drop-shadow(0 0 22px rgba(255, 6, 111, 0.55));
+}
+
+.marketing-gameplay__placeholder {
+  margin: 0;
+  font-family: var(--hex-font-body);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.30em;
   text-transform: uppercase;
+  color: #fff;
 }
 
 .marketing-gameplay__caption {
   margin: 24px 0 0;
-  font-size: clamp(14px, 1.5vw, 16px);
-  color: var(--hex-text-muted);
+  font-size: clamp(13px, 1.4vw, 15px);
+  color: rgba(255, 255, 255, 0.5);
   letter-spacing: 0.05em;
+  text-align: center;
 }
 
 @media (max-width: 480px) {
@@ -579,6 +622,17 @@ onBeforeUnmount(() => {
   }
   .marketing-gameplay__heading {
     margin-bottom: 24px;
+  }
+  .marketing-gameplay__play-icon {
+    width: 72px;
+    height: 72px;
+  }
+  .marketing-gameplay__placeholder {
+    font-size: 12px;
+    letter-spacing: 0.25em;
+  }
+  .marketing-gameplay__center {
+    gap: 16px;
   }
 }
 
