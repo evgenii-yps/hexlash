@@ -61,10 +61,11 @@
 
     </section>
 
-    <section class="marketing-about" ref="aboutRef">
-      <div class="marketing-about__content" :class="{ 'is-visible': aboutVisible }">
-        <h2 class="marketing-about__heading">NEVER GIVE UP</h2>
-        <p class="marketing-about__subtitle">Train. Fight. Rise.</p>
+    <section class="marketing-pitch" ref="pitchRef">
+      <div class="marketing-pitch__inner" :class="{ 'is-visible': pitchVisible }">
+        <p class="marketing-pitch__text">
+          Hexlash is a turn-based fighting game on a hex arena. Pick your fighter, build your loadout, take the <span class="marketing-pitch__accent">belt</span>. Skill decides who wins.
+        </p>
       </div>
     </section>
 
@@ -227,7 +228,7 @@ const router = useRouter();
 const store = useStore();
 
 const heroRef = ref(null);
-const aboutRef = ref(null);
+const pitchRef = ref(null);
 const gameplayRef = ref(null);
 const tokenRef = ref(null);
 const roadmapRef = ref(null);
@@ -241,7 +242,7 @@ const footerRef = ref(null);
 // without IntersectionObserver. Future 8c sections (Gameplay/Token/
 // Roadmap/Partners/Subscribe) will reuse the same composable to avoid
 // 5x duplication of ~28-line inline observer setup.
-const { visible: aboutVisible } = useScrollFadeIn(aboutRef);
+const { visible: pitchVisible } = useScrollFadeIn(pitchRef);
 const { visible: gameplayVisible } = useScrollFadeIn(gameplayRef);
 const { visible: tokenVisible } = useScrollFadeIn(tokenRef);
 const { visible: roadmapVisible } = useScrollFadeIn(roadmapRef);
@@ -466,7 +467,7 @@ onBeforeUnmount(() => {
 }
 
 .marketing-hero,
-.marketing-about,
+.marketing-pitch,
 .marketing-gameplay,
 .marketing-token,
 .marketing-roadmap,
@@ -482,8 +483,8 @@ onBeforeUnmount(() => {
   min-height: 100dvh;
 }
 
-.marketing-about {
-  min-height: 60vh;
+/* === PITCH === */
+.marketing-pitch {
   padding: 80px 24px;
   display: flex;
   align-items: center;
@@ -491,41 +492,41 @@ onBeforeUnmount(() => {
   background: var(--hex-bg-dark);
 }
 
-/* === ABOUT === */
-.marketing-about__content {
+.marketing-pitch__inner {
+  width: 100%;
+  max-width: 760px;
   text-align: center;
-  max-width: 800px;
   opacity: 0;
-  transform: translateY(24px);
+  transform: translateY(20px);
   transition: opacity 0.8s ease, transform 0.8s ease;
 }
 
-.marketing-about__content.is-visible {
+.marketing-pitch__inner.is-visible {
   opacity: 1;
   transform: translateY(0);
 }
 
-.marketing-about__heading {
-  margin: 0 0 16px;
-  font-size: clamp(40px, 7vw, 80px);
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  color: var(--hex-text-primary);
-  text-transform: uppercase;
-  line-height: 1.1;
+.marketing-pitch__text {
+  margin: 0;
+  font-family: var(--hex-font-body);
+  font-size: clamp(20px, 2.4vw, 26px);
+  font-weight: 500;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.9);
+  letter-spacing: 0.01em;
 }
 
-.marketing-about__subtitle {
-  margin: 0;
-  font-size: clamp(16px, 2vw, 22px);
-  color: var(--hex-text-muted);
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
+.marketing-pitch__accent {
+  color: var(--hex-primary);
+  font-weight: 600;
 }
 
 @media (max-width: 480px) {
-  .marketing-about {
+  .marketing-pitch {
     padding: 60px 20px;
+  }
+  .marketing-pitch__text {
+    font-size: 19px;
   }
 }
 
