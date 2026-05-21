@@ -334,7 +334,7 @@ onBeforeUnmount(() => {
 .marketing-header__inner {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 8px 48px;
+  padding: 0 48px;
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
@@ -349,7 +349,7 @@ onBeforeUnmount(() => {
 }
 
 .marketing-header__logo {
-  height: 64px;
+  height: 80px;
   width: auto;
   display: block;
   user-select: none;
@@ -411,7 +411,7 @@ onBeforeUnmount(() => {
   .marketing-header__inner {
     grid-template-columns: auto 1fr auto;
     gap: 14px;
-    padding: 6px 20px;
+    padding: 0 20px;
   }
   .marketing-header__nav {
     gap: 24px;
@@ -421,7 +421,7 @@ onBeforeUnmount(() => {
     letter-spacing: 0.06em;
   }
   .marketing-header__logo {
-    height: 52px;
+    height: 64px;
   }
   .marketing-header__social {
     width: 32px;
