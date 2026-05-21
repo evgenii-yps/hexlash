@@ -16,19 +16,18 @@
                      stroke="rgba(255,255,255,0.35)"
                      stroke-width="1.5" />
           </svg>
-          <span class="m-header__brand-text pixel">HEXLASH</span>
         </a>
 
         <nav class="m-header__nav">
-          <a href="#gameplay" class="m-header__navlink pixel" @click.prevent="scrollTo('gameplay')">{{ t.marketing.nav.gameplay }}</a>
-          <a href="#token" class="m-header__navlink pixel" @click.prevent="scrollTo('token')">{{ t.marketing.nav.token }}</a>
-          <a href="#roadmap" class="m-header__navlink pixel" @click.prevent="scrollTo('roadmap')">{{ t.marketing.nav.roadmap }}</a>
+          <a href="#gameplay" class="m-header__navlink" @click.prevent="scrollTo('gameplay')">{{ t.marketing.nav.gameplay }}</a>
+          <a href="#token" class="m-header__navlink" @click.prevent="scrollTo('token')">{{ t.marketing.nav.token }}</a>
+          <a href="#roadmap" class="m-header__navlink" @click.prevent="scrollTo('roadmap')">{{ t.marketing.nav.roadmap }}</a>
         </nav>
 
         <div class="m-header__right">
           <span class="m-chip">
             <span class="m-chip__dot" aria-hidden="true"></span>
-            <span class="pixel">{{ t.marketing.nav.onBase }}</span>
+            <span>{{ t.marketing.nav.onBase }}</span>
           </span>
           <a href="#" target="_blank" rel="noopener" aria-label="Discord" class="m-header__social">
             <img :src="iconDisc" alt="" />
@@ -76,14 +75,6 @@
           <span>{{ t.marketing.hero.play }}</span>
           <span class="m-hero__cta-arrow" aria-hidden="true">→</span>
         </button>
-
-        <!-- Small preview hex below the CTA (matches prototype) -->
-        <svg class="m-hero__preview" viewBox="0 0 100 100" aria-hidden="true">
-          <polygon points="50,8 88,28 88,72 50,92 12,72 12,28"
-                   fill="rgba(255, 6, 111, 0.06)"
-                   stroke="var(--hex-primary)"
-                   stroke-width="1.5" />
-        </svg>
       </div>
     </section>
 
@@ -529,28 +520,24 @@ onBeforeUnmount(() => {
 }
 
 .m-header__brand-icon {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   filter: drop-shadow(0 0 6px rgba(255, 6, 111, 0.5));
 }
 
-.m-header__brand-text {
-  font-size: 18px;
-  font-weight: 400;
-  letter-spacing: 0.15em;
-  color: var(--hex-text-primary);
-}
-
-/* Nav center */
+/* Nav center — system sans-serif, uppercase, medium weight (NEVER pixel) */
 .m-header__nav {
   display: flex;
   justify-content: center;
-  gap: 40px;
+  gap: 36px;
 }
 
 .m-header__navlink {
+  font-family: var(--hex-font-body);
   font-size: 13px;
-  letter-spacing: 0.15em;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   color: var(--hex-text-secondary);
   text-decoration: none;
   transition: color 0.15s ease;
@@ -573,8 +560,11 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 8px;
   padding: 6px 14px;
+  font-family: var(--hex-font-body);
   font-size: 11px;
+  font-weight: 500;
   letter-spacing: 0.15em;
+  text-transform: uppercase;
   color: var(--hex-text-secondary);
   border: 1px solid var(--hex-border-default);
   border-radius: 999px;
@@ -732,7 +722,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  filter: drop-shadow(0 0 32px rgba(255, 6, 111, 0.45));
+  filter: drop-shadow(0 0 14px rgba(255, 6, 111, 0.25));
 }
 
 .m-hero__logo {
@@ -746,11 +736,19 @@ onBeforeUnmount(() => {
 .m-hero__title {
   margin: 0;
   font-size: clamp(36px, 6.5vw, 72px);
-  font-weight: 400;
+  font-weight: normal;
   line-height: 1.05;
-  color: var(--hex-text-primary);
-  letter-spacing: 0.04em;
-  text-shadow: 0 0 18px rgba(255, 255, 255, 0.15);
+  color: #fff;
+  letter-spacing: 0.02em;
+  background: transparent;
+  /* No text-shadow / background — pixel-font Anonymous rendered clean
+     white on dark. The hero's single allowed glow is the radial bg behind
+     the logo, not on the title characters. */
+}
+
+.m-hero__title :deep(*),
+.m-hero__title span {
+  background: transparent;
 }
 
 .m-hero__cta {
@@ -788,13 +786,6 @@ onBeforeUnmount(() => {
   line-height: 1;
 }
 
-.m-hero__preview {
-  width: 110px;
-  height: 110px;
-  margin-top: 8px;
-  filter: drop-shadow(0 0 14px rgba(255, 6, 111, 0.35));
-}
-
 @media (max-width: 720px) {
   .m-hero {
     padding: 40px 16px 60px;
@@ -806,10 +797,6 @@ onBeforeUnmount(() => {
     padding: 16px 36px;
     font-size: 16px;
     min-width: 180px;
-  }
-  .m-hero__preview {
-    width: 80px;
-    height: 80px;
   }
 }
 
