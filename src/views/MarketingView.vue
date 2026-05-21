@@ -69,9 +69,9 @@
           <img :src="logoSrc" alt="Hexlash" class="m-hero__logo" draggable="false" />
         </div>
 
-        <h1 class="m-hero__title pixel">{{ t.marketing.hero.title }}</h1>
+        <h1 class="m-hero__title">{{ t.marketing.hero.title }}</h1>
 
-        <button type="button" class="m-hero__cta pixel" @click="onPlayClick">
+        <button type="button" class="m-hero__cta" @click="onPlayClick">
           <span>{{ t.marketing.hero.play }}</span>
           <span class="m-hero__cta-arrow" aria-hidden="true">→</span>
         </button>
@@ -84,7 +84,7 @@
     <section id="gameplay" class="m-section m-gameplay">
       <div class="m-section__inner" ref="gameplayRef" :class="{ 'is-visible': gameplayVisible }">
         <p class="m-section__kicker">{{ t.marketing.gameplay.kicker }}</p>
-        <h2 class="m-section__heading pixel">{{ t.marketing.gameplay.heading }}</h2>
+        <h2 class="m-section__heading">{{ t.marketing.gameplay.heading }}</h2>
         <p class="m-section__subtitle">{{ t.marketing.gameplay.subtitle }}</p>
 
         <div class="m-gameplay__video">
@@ -113,7 +113,7 @@
                 <polygon points="42,32 70,50 42,68" fill="#fff" />
               </svg>
             </button>
-            <p class="m-gameplay__placeholder pixel">{{ t.marketing.gameplay.videoLabel }}</p>
+            <p class="m-gameplay__placeholder">{{ t.marketing.gameplay.videoLabel }}</p>
           </div>
         </div>
 
@@ -169,7 +169,7 @@
     <section id="roadmap" class="m-section m-roadmap">
       <div class="m-section__inner" ref="roadmapRef" :class="{ 'is-visible': roadmapVisible }">
         <p class="m-section__kicker">{{ t.marketing.roadmap.kicker }}</p>
-        <h2 class="m-section__heading pixel">{{ t.marketing.roadmap.heading }}</h2>
+        <h2 class="m-section__heading">{{ t.marketing.roadmap.heading }}</h2>
         <p class="m-section__subtitle">{{ t.marketing.roadmap.subtitle }}</p>
 
         <ol class="m-roadmap__track">
@@ -189,8 +189,8 @@
                           stroke-linejoin="round" />
               </svg>
             </div>
-            <span class="m-roadmap__num pixel">01</span>
-            <span class="m-roadmap__name pixel" v-html="formatPhaseName(t.marketing.roadmap.phase1Name)"></span>
+            <span class="m-roadmap__num">01</span>
+            <span class="m-roadmap__name" v-html="formatPhaseName(t.marketing.roadmap.phase1Name)"></span>
             <span class="m-roadmap__status">{{ t.marketing.roadmap.phase1Status }}</span>
           </li>
 
@@ -213,8 +213,8 @@
                          stroke-width="1" />
               </svg>
             </div>
-            <span class="m-roadmap__num pixel">02</span>
-            <span class="m-roadmap__name pixel" v-html="formatPhaseName(t.marketing.roadmap.phase2Name)"></span>
+            <span class="m-roadmap__num">02</span>
+            <span class="m-roadmap__name" v-html="formatPhaseName(t.marketing.roadmap.phase2Name)"></span>
             <span class="m-roadmap__status m-roadmap__status--active">
               <span class="m-roadmap__status-dot" aria-hidden="true"></span>{{ t.marketing.roadmap.phase2Status }}
             </span>
@@ -236,8 +236,8 @@
                          stroke-dasharray="6 4" />
               </svg>
             </div>
-            <span class="m-roadmap__num pixel">03</span>
-            <span class="m-roadmap__name pixel" v-html="formatPhaseName(t.marketing.roadmap.phase3Name)"></span>
+            <span class="m-roadmap__num">03</span>
+            <span class="m-roadmap__name" v-html="formatPhaseName(t.marketing.roadmap.phase3Name)"></span>
             <span class="m-roadmap__status">{{ t.marketing.roadmap.phase3Status }}</span>
           </li>
 
@@ -256,8 +256,8 @@
                          stroke-width="1" />
               </svg>
             </div>
-            <span class="m-roadmap__num pixel">04</span>
-            <span class="m-roadmap__name pixel" v-html="formatPhaseName(t.marketing.roadmap.phase4Name)"></span>
+            <span class="m-roadmap__num">04</span>
+            <span class="m-roadmap__name" v-html="formatPhaseName(t.marketing.roadmap.phase4Name)"></span>
             <span class="m-roadmap__status m-roadmap__status--muted">{{ t.marketing.roadmap.phase4Status }}</span>
           </li>
         </ol>
@@ -285,7 +285,7 @@
           />
           <button
             type="submit"
-            class="m-subscribe__btn pixel"
+            class="m-subscribe__btn"
             :disabled="isSubmitting"
           >
             {{ t.marketing.subscribe.button }}
@@ -308,7 +308,7 @@
                 <polygon points="50,4 92,28 92,72 50,96 8,72 8,28"
                          fill="var(--hex-primary)" />
               </svg>
-              <span class="m-footer__brand-text pixel">HEXLASH</span>
+              <span class="m-footer__brand-text">HEXLASH</span>
             </a>
             <p class="m-footer__tagline">{{ t.marketing.footer.tagline }}</p>
           </div>
@@ -430,8 +430,9 @@ function scrollToTop() {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// Format roadmap phase name: split on space → two lines (matches prototype
-// "CORE / COMBAT" stacked-pixel style). Safe input (i18n key, no user data).
+// Format roadmap phase name: split on last space → two lines (matches the
+// prototype's stacked layout, e.g. "CORE\nCOMBAT"). Safe input — i18n key,
+// no user data.
 function formatPhaseName(name) {
   if (!name) return '';
   const idx = name.lastIndexOf(' ');
@@ -469,15 +470,10 @@ onBeforeUnmount(() => {
   overflow-x: hidden;
 }
 
-/* Pixel-font utility — Anonymous for English/Latin only. Cyrillic/CJK falls
-   back to monospace stack automatically (Anonymous has no glyphs for them).
-   Reserved for impact moments only: brand wordmark, section headings,
-   pixel-label CTAs. NEVER apply to body copy. */
-.pixel {
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
+/* Typography hierarchy uses a single sans-serif (var(--hex-font-body))
+   throughout — size, weight, and letter-spacing carry the visual hierarchy.
+   The Anonymous pixel font is intentionally NOT used on the landing.
+   It remains available globally for other parts of the app. */
 
 /* ============================================
    HEADER (sticky)
@@ -525,7 +521,7 @@ onBeforeUnmount(() => {
   filter: drop-shadow(0 0 6px rgba(255, 6, 111, 0.5));
 }
 
-/* Nav center — system sans-serif, uppercase, medium weight (NEVER pixel) */
+/* Nav center — system sans-serif, uppercase, medium weight */
 .m-header__nav {
   display: flex;
   justify-content: center;
@@ -735,20 +731,13 @@ onBeforeUnmount(() => {
 
 .m-hero__title {
   margin: 0;
-  font-size: clamp(36px, 6.5vw, 72px);
-  font-weight: normal;
-  line-height: 1.05;
+  font-family: var(--hex-font-body);
+  font-size: clamp(40px, 7.5vw, 80px);
+  font-weight: 800;
+  line-height: 0.95;
   color: #fff;
-  letter-spacing: 0.02em;
-  background: transparent;
-  /* No text-shadow / background — pixel-font Anonymous rendered clean
-     white on dark. The hero's single allowed glow is the radial bg behind
-     the logo, not on the title characters. */
-}
-
-.m-hero__title :deep(*),
-.m-hero__title span {
-  background: transparent;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .m-hero__cta {
@@ -758,9 +747,11 @@ onBeforeUnmount(() => {
   gap: 12px;
   min-width: 200px;
   padding: 18px 40px;
-  font-size: 18px;
-  font-weight: 400;
-  letter-spacing: 0.18em;
+  font-family: var(--hex-font-body);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
   color: #fff;
   background: var(--hex-primary);
   border: none;
@@ -834,11 +825,13 @@ onBeforeUnmount(() => {
 
 .m-section__heading {
   margin: 0 0 16px;
-  font-size: clamp(32px, 5vw, 56px);
-  font-weight: 400;
+  font-family: var(--hex-font-body);
+  font-size: clamp(36px, 5.5vw, 60px);
+  font-weight: 700;
   line-height: 1;
   color: var(--hex-text-primary);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .m-section__subtitle {
@@ -939,8 +932,11 @@ onBeforeUnmount(() => {
 
 .m-gameplay__placeholder {
   margin: 0;
-  font-size: 18px;
-  letter-spacing: 0.18em;
+  font-family: var(--hex-font-body);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
   color: var(--hex-text-primary);
 }
 
@@ -1017,16 +1013,18 @@ onBeforeUnmount(() => {
 
 .m-token__hex-symbol {
   fill: var(--hex-primary);
-  font-family: 'Anonymous', 'Courier New', monospace;
-  font-size: 24px;
+  font-family: var(--hex-font-body);
+  font-size: 26px;
+  font-weight: 800;
   letter-spacing: 2px;
 }
 
 .m-token__hex-sub {
   fill: var(--hex-text-muted);
-  font-family: 'Anonymous', 'Courier New', monospace;
+  font-family: var(--hex-font-body);
   font-size: 9px;
-  letter-spacing: 1.5px;
+  font-weight: 500;
+  letter-spacing: 1.8px;
 }
 
 .m-token__copy {
@@ -1183,25 +1181,34 @@ onBeforeUnmount(() => {
 }
 
 .m-roadmap__num {
-  font-size: 12px;
+  margin-top: 8px;
+  font-family: var(--hex-font-body);
+  font-size: 32px;
+  font-weight: 300;
+  font-variant-numeric: tabular-nums;
   color: var(--hex-text-muted);
-  letter-spacing: 0.2em;
-  margin-top: 4px;
+  letter-spacing: 0.08em;
+  line-height: 1;
 }
 
 .m-roadmap__name {
-  font-size: 14px;
-  color: var(--hex-text-primary);
-  letter-spacing: 0.1em;
-  line-height: 1.25;
+  margin-top: 4px;
+  font-family: var(--hex-font-body);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  line-height: 1.3;
+  text-transform: uppercase;
   text-align: center;
+  color: var(--hex-text-primary);
 }
 
 .m-roadmap__status {
-  margin-top: 4px;
-  font-size: 11px;
+  margin-top: 8px;
   font-family: var(--hex-font-body);
-  letter-spacing: 0.15em;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--hex-text-muted);
 }
@@ -1318,9 +1325,11 @@ onBeforeUnmount(() => {
 }
 
 .m-subscribe__btn {
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
-  font-size: 13px;
-  letter-spacing: 0.2em;
+  font-family: var(--hex-font-body);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
   padding: 12px 28px;
   background: var(--hex-primary);
   color: #fff;
@@ -1416,8 +1425,11 @@ onBeforeUnmount(() => {
 }
 
 .m-footer__brand-text {
-  font-size: 15px;
+  font-family: var(--hex-font-body);
+  font-size: 14px;
+  font-weight: 700;
   letter-spacing: 0.18em;
+  text-transform: uppercase;
   color: var(--hex-text-secondary);
 }
 
