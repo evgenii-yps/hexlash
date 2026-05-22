@@ -27,7 +27,7 @@
 </template>
 
 <script setup>
-import logoSrc from '@/assets/images/hexlash-logo.jpg';
+import logoSrc from '@/assets/images/logo-512.png';
 </script>
 
 <style scoped>

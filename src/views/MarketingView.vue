@@ -354,7 +354,7 @@ import { useStore } from 'vuex';
 import { t } from '@/locales/index.js';
 import { useDocumentMeta } from '@/composables/useDocumentMeta';
 import { useScrollFadeIn } from '@/composables/useScrollFadeIn';
-import logoSrc from '@/assets/images/hexlash-logo.jpg';
+import logoSrc from '@/assets/images/logo-512.png';
 import iconTelega from '@/assets/images/icon_telega.svg';
 import iconX from '@/assets/images/icon_x.svg';
 import iconYout from '@/assets/images/icon_yout.svg';
@@ -441,9 +441,17 @@ function formatPhaseName(name) {
 }
 
 useDocumentMeta({
+claude/redesign-hexlash-landing-7uKBy
   title: 'Hexlash',
   description: 'Hexlash — Web3 fighting game on Base. Turn-based combat on a hex arena. Train your AI agent. Fight in the underground octagon.',
   ogImage: logoSrc,
+
+  title: 'Hexlash — Web3 Turn-Based Fighter',
+  description: 'Pick your archetype, build your loadout, dominate the arena. Web3 PvP fighting game on Base.',
+  // Absolute prod URL — matches static og:image in index.html so the JS update
+  // (for in-app SPA navigation) agrees with what crawlers read from static HTML.
+  ogImage: 'https://hexlash.com/og-image.png',
+main
 });
 
 onMounted(() => {
