@@ -107,7 +107,7 @@ import { ref, reactive, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useStore } from 'vuex';
 import { InfoMessageModel } from '@/core/models/internal/infoMessageModel.js';
-import logoSrc from '@/assets/images/hexlash-logo.jpg';
+import logoSrc from '@/assets/images/logo-512.png';
 
 const route = useRoute();
 const router = useRouter();

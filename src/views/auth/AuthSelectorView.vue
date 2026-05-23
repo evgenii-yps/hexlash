@@ -15,6 +15,14 @@
         :applied-code="appliedReferralCode"
         @select="onProviderSelect"
         @referral="onReferralOpen"
+        @guest="onGuestStart"
+      />
+
+      <!-- Screen G: Guest archetype select -->
+      <GuestArchetypeSelect
+        v-else-if="screen === 'guest'"
+        @select="onGuestArchetypeSelect"
+        @back="onBackToProviders"
       />
 
       <!-- Screen B: More options -->
@@ -73,6 +81,7 @@ import EmailForm from '@/components/auth/EmailForm.vue';
 import ReferralOverlay from '@/components/auth/ReferralOverlay.vue';
 import ForgotPasswordScreen from '@/components/auth/ForgotPasswordScreen.vue';
 import SignupSuccessScreen from '@/components/auth/SignupSuccessScreen.vue';
+import GuestArchetypeSelect from '@/components/auth/GuestArchetypeSelect.vue';
 import { t } from '@/locales/index.js';
 
 // Phase 3: Vuex integration — provider toasts, email submit (login/register),
@@ -98,7 +107,8 @@ function showComingSoon(provider) {
 }
 
 // Initial mode derived from current path. /auth/login → 'login', /auth/signup → 'signup'.
-const screen = ref('provider'); // 'provider' | 'more' | 'email' | 'forgot' | 'signup-success'
+// ?guest=1 (from Profile → Change Archetype) opens the guest picker directly.
+const screen = ref(route.query.guest ? 'guest' : 'provider'); // 'provider' | 'more' | 'email' | 'forgot' | 'signup-success' | 'guest'
 // Email Auth Phase 5 — ref to ForgotPasswordScreen для calling showSuccess() post-dispatch
 const forgotScreenRef = ref(null);
 // Email Auth Phase 5.5 — captured email для display on signup-success screen
@@ -155,6 +165,16 @@ function onMoreSelect(provider) {
 
 function onBackToProviders() {
   screen.value = 'provider';
+}
+
+// ── Guest mode ─────────────────────────────────────────────────────────────
+function onGuestStart() {
+  screen.value = 'guest';
+}
+
+function onGuestArchetypeSelect(archetypeId) {
+  // Creates the ephemeral guest session (localStorage) + routes к /play.
+  store.dispatch('master/loginAsGuest', { archetypeId });
 }
 
 function onBackToMore() {

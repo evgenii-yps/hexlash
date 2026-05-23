@@ -14,7 +14,44 @@
       <div class="pt-name">PROFILE</div>
     </div>
 
-    <div class="profile-grid">
+    <!-- Guest profile — no Belt/ELO/rating. Session Wins/Streak + conversion. -->
+    <div v-if="isGuest" class="profile-grid">
+      <div class="profile-card">
+        <div class="profile-card-title">Guest</div>
+        <div class="id-row">
+          <div class="id-avatar">GU</div>
+          <div class="id-info">
+            <div class="id-handle">Guest</div>
+            <div class="id-meta">{{ guestArchetypeName }} · session only</div>
+          </div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-cell">
+            <div class="sc-val">{{ guestWins }}</div>
+            <div class="sc-label">Wins</div>
+          </div>
+          <div class="stat-cell">
+            <div class="sc-val">{{ guestStreak }}</div>
+            <div class="sc-label">Streak</div>
+          </div>
+        </div>
+        <button type="button" class="guest-change-arch-btn" @click="onChangeArchetype">
+          Change Archetype
+        </button>
+      </div>
+
+      <div class="profile-card">
+        <div class="profile-card-title">Account</div>
+        <p class="guest-locked-text">
+          Belt, ELO, ranked stats, PvP, friends and fight history unlock with an account.
+        </p>
+        <button type="button" class="guest-signup-btn" @click="onSignUp">
+          Sign Up to unlock
+        </button>
+      </div>
+    </div>
+
+    <div v-else class="profile-grid">
       <!-- IDENTITY -->
       <div class="profile-card">
         <div class="profile-card-title">Identity</div>
@@ -256,12 +293,31 @@ import BeltBadge from '@/components/ui/BeltBadge.vue';
 import HudSocialTasks from './HudSocialTasks.vue';
 import HudRetirement from './HudRetirement.vue';
 import { getBeltDisplay } from '@/utils/beltDisplay.js';
+import { ARCHETYPES } from '@/scene/interaction/useCreateState.js';
 import { t } from '@/locales/index.js';
 
 defineEmits(['back']);
 
 // 5N — router for Watch button (in_fight friends → /v2/spectate/:fightId).
 const router = useRouter();
+
+// --- Guest mode ---
+const isGuest = computed(() => store.getters['master/getIsGuest']);
+const guestSession = computed(() => store.getters['master/getGuestSession']);
+const guestWins = computed(() => guestSession.value?.wins ?? 0);
+const guestStreak = computed(() => guestSession.value?.streak ?? 0);
+const guestArchetypeName = computed(() => {
+  const id = guestSession.value?.archetypeId;
+  return ARCHETYPES.find((a) => a.id === id)?.name || '—';
+});
+function onSignUp() {
+  router.push('/auth/signup');
+}
+// Change Archetype = reset the whole guest session (archetype + Wins/Streak +
+// prompt flag). Routes back to the guest archetype picker (?guest=1).
+function onChangeArchetype() {
+  router.push('/auth/login?guest=1');
+}
 
 // --- Master data ---
 // Email lives on master.email (top-level), not on userData — see masterModel.js
@@ -799,5 +855,49 @@ function onLogout() {
 }
 .hud-profile > * {
   pointer-events: auto;
+}
+
+/* Guest profile actions. Change Archetype = neutral secondary; Sign Up =
+   single pink accent for this card (conversion CTA). */
+.guest-change-arch-btn {
+  margin-top: 14px;
+  width: 100%;
+  padding: 12px;
+  background: transparent;
+  border: 1px solid var(--hex-border-strong, rgba(255, 255, 255, 0.22));
+  color: var(--hex-text-primary, #fff);
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+  min-height: 44px;
+}
+.guest-change-arch-btn:hover {
+  border-color: var(--hex-primary);
+}
+.guest-locked-text {
+  margin: 4px 0 16px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--hex-text-secondary, #9aa);
+}
+.guest-signup-btn {
+  width: 100%;
+  padding: 13px;
+  background: var(--hex-primary);
+  border: none;
+  color: var(--hex-bg-dark, #090909);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: filter 0.15s;
+  min-height: 44px;
+}
+.guest-signup-btn:hover {
+  filter: brightness(1.08);
 }
 </style>

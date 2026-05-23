@@ -8,6 +8,7 @@ import * as masterService from "@/core/services/masterService.js";
 import {ErrorMessageModel} from "@/core/models/internal/errorMessageModel.js";
 import {updateJwtToken} from "@/core/services/masterService.js";
 import apiClient from "@/core/api/apiClient.js";
+import * as guestService from "@/core/services/guestService.js";
 
 
 const state = {
@@ -16,13 +17,18 @@ const state = {
     loginState: new LoginStateModel(),
     signupState: new SignupStateModel(),
     infoMessage: new InfoMessageModel(),
-    errorMessage: new ErrorMessageModel()
+    errorMessage: new ErrorMessageModel(),
+    // Guest mode — ephemeral, localStorage-only, no DB/JWT. See guestService.js.
+    isGuest: false,
+    guestSession: null,
 };
 
 const getters = {
     getMaster: (state) => state.master,
     getJwtToken: (state) => state.jwtToken,
     getLoginState: (state) => state.loginState,
+    getIsGuest: (state) => state.isGuest,
+    getGuestSession: (state) => state.guestSession,
     getSignupState: (state) => state.signupState,
     getInfoMessage(state) {
         return state.infoMessage;
@@ -88,20 +94,45 @@ const mutations = {
     },
     clearErrorMessage(state) {
         state.errorMessage = new ErrorMessageModel();
+    },
+    // Guest mode mutations.
+    setGuestSession(state, session) {
+        state.guestSession = session;
+        state.isGuest = true;
+        state.master = guestService.buildGuestMaster(session);
+    },
+    updateGuestSession(state, patch) {
+        if (!state.guestSession) return;
+        state.guestSession = {...state.guestSession, ...patch};
+    },
+    // Clears the guest flag/session WITHOUT touching master — used when a guest
+    // converts (login/register sets a real master right after).
+    clearGuestFlag(state) {
+        state.isGuest = false;
+        state.guestSession = null;
     }
 };
 
 const actions = {
-    async initializeMasterData({commit}) {
+    async initializeMasterData({commit, dispatch, state}) {
         try {
             await masterService.initializeMasterData();
         } catch (error) {
             console.error('Failed to fetch user data:', error);
         }
+        // Guest restore — only when no real auth session was established above.
+        // Survives page reload; lost on localStorage clear (ephemeral by design).
+        if (!state.master && !state.loginState?.isAuthenticated) {
+            dispatch('restoreGuestSession');
+        }
     },
     async login({commit}, credentials) {
         try {
             await masterService.login(credentials);
+
+            // Converting from guest — drop the ephemeral guest session.
+            guestService.clearGuestSession();
+            commit('clearGuestFlag');
 
             await this.dispatch('master/initGetStarted');
 
@@ -124,6 +155,10 @@ const actions = {
     async register({commit}, credentials) {
         try {
             await masterService.register(credentials);
+
+            // Converting from guest — drop the ephemeral guest session.
+            guestService.clearGuestSession();
+            commit('clearGuestFlag');
 
             await this.dispatch('master/initGetStarted');
 
@@ -291,6 +326,61 @@ const actions = {
             commit('setErrorMessage', ErrorMessageModel.withText(error?.response?.data?.error || error.message || 'Retirement failed'));
             return false;
         }
+    },
+
+    // ── Guest mode actions ─────────────────────────────────────────────────
+    // Ephemeral, localStorage-only. No backend calls, no DB rows, no JWT.
+    async loginAsGuest({commit}, {archetypeId}) {
+        const session = guestService.createGuestSession(archetypeId);
+        guestService.saveGuestSession(session);
+        commit('setGuestSession', session);
+        await router.push('/play');
+    },
+    // Boot restore (called from initializeMasterData when no real auth present).
+    restoreGuestSession({commit}) {
+        const session = guestService.loadGuestSession();
+        if (session) {
+            commit('setGuestSession', session);
+            return true;
+        }
+        return false;
+    },
+    recordGuestWin({commit, state}) {
+        if (!state.guestSession) return;
+        commit('updateGuestSession', {
+            wins: (state.guestSession.wins || 0) + 1,
+            streak: (state.guestSession.streak || 0) + 1,
+        });
+        guestService.saveGuestSession(state.guestSession);
+    },
+    recordGuestLoss({commit, state}) {
+        if (!state.guestSession) return;
+        commit('updateGuestSession', {streak: 0});
+        guestService.saveGuestSession(state.guestSession);
+    },
+    markGuestSignupPromptShown({commit, state}) {
+        if (!state.guestSession) return;
+        commit('updateGuestSession', {signupPromptShown: true});
+        guestService.saveGuestSession(state.guestSession);
+    },
+    // Change archetype — resets session progress (Wins/Streak) per spec.
+    changeGuestArchetype({commit, state}, archetypeId) {
+        const session = {
+            ...(state.guestSession || guestService.createGuestSession(archetypeId)),
+            archetypeId,
+            wins: 0,
+            streak: 0,
+            signupPromptShown: false,
+        };
+        commit('setGuestSession', session);
+        guestService.saveGuestSession(session);
+    },
+    async endGuestSession({commit}) {
+        this.dispatch('webSocket/disconnectWebSocket');
+        guestService.clearGuestSession();
+        commit('clearGuestFlag');
+        commit('clearAuthData');
+        await router.push('/');
     },
 };
 
