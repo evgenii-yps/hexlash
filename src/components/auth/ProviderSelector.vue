@@ -61,6 +61,15 @@
         {{ t.referral.lblHaveCode }}
       </template>
     </button>
+
+    <!-- Guest mode — subdued secondary entry (no pink accent per Neon Discipline). -->
+    <button
+      type="button"
+      class="provider-selector__guest"
+      @click="$emit('guest')"
+    >
+      Play as Guest
+    </button>
   </div>
 </template>
 
@@ -75,7 +84,7 @@ defineProps({
   appliedCode: { type: String, default: '' },
 });
 
-defineEmits(['select', 'referral']);
+defineEmits(['select', 'referral', 'guest']);
 </script>
 
 <style scoped>
@@ -170,5 +179,32 @@ defineEmits(['select', 'referral']);
   font-size: 11px;
   font-weight: 700;
   flex: 0 0 16px;
+}
+
+/* Guest entry — deliberately understated: ghost/text button, no border accent,
+   no pink. Sits below the referral row as a tertiary option. */
+.provider-selector__guest {
+  margin-top: 12px;
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  color: var(--hex-text-secondary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  transition: color 0.15s ease;
+  outline: none;
+  min-height: 44px;
+}
+
+.provider-selector__guest:hover {
+  color: var(--hex-text-primary);
+}
+
+.provider-selector__guest:focus-visible {
+  color: var(--hex-text-primary);
 }
 </style>
