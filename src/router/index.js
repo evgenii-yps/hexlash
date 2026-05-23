@@ -40,10 +40,11 @@ const publicRoutes = [
         name: 'Home',
         component: () => import("/src/views/MarketingView.vue"),
         beforeEnter: (to, from, next) => {
-            // Authed users skip marketing site — go straight to /play hub.
-            // Anonymous users see MarketingView (Sub-epic 8b — replaces 1a LandingView).
+            // Authed users (and active guest sessions) skip marketing site —
+            // go straight to /play hub. Anonymous users see MarketingView.
             const isAuthenticated = store.getters["master/getLoginState"]?.isAuthenticated || false;
-            if (isAuthenticated) {
+            const isGuest = store.getters["master/getIsGuest"] || false;
+            if (isAuthenticated || isGuest) {
                 next('/play');
             } else {
                 next();
@@ -118,6 +119,11 @@ const protectedRoutes = [
 // without duplicating route registration. Carry-over #10 (systematic v2 cutover
 // auth audit, Sub-epic 8 territory) may migrate this to meta.requiresAuth pattern.
 const v2ProtectedNames = ['V2Fight', 'V2Matchmaking', 'V2Spectate'];
+
+// Protected route names a guest session is allowed to reach. Guest PvE runs
+// fully client-side (useFightSimulation mock), so V2Fight is guest-open.
+// V2Matchmaking / V2Spectate stay account-only until guest PvP backend lands.
+const guestAllowedNames = ['V2Fight'];
 
 // v2 Migration — feature flag через URL-префикс. Sub-epic 8a renamed URL prefix
 // /v2 → /play (user-facing). Internal architecture identifiers (v2Routes name,
@@ -265,13 +271,19 @@ function getSavedFightPhase() {
 // Навигационный гвард
 router.beforeEach(async (to, from, next) => {
     const isAuthenticated = store.getters["master/getLoginState"]?.isAuthenticated || false;
+    const isGuest = store.getters["master/getIsGuest"] || false;
     const isProtectedRoute =
         protectedRoutes.some(route => route.name === to.name || route.path === to.path) ||
         v2ProtectedNames.includes(to.name);
 
+    // Guests are treated as authenticated for the subset of protected routes
+    // they're allowed to reach (guestAllowedNames). Everything else routes them
+    // to login (which doubles as the conversion point).
+    const guestPasses = isGuest && guestAllowedNames.includes(to.name);
+
     // Проверяем, если маршрут не является авторизационным и защищённым
     if (isProtectedRoute) {
-        if (!isAuthenticated) {
+        if (!isAuthenticated && !guestPasses) {
             // Sub-epic 1a: Home (/) moved to publicRoutes — exemption wrapper
             // (`if (to.name !== 'Home')`) removed as unreachable. Toast now
             // unconditional within the unauth-protected-route branch.
