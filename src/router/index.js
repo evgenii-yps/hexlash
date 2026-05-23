@@ -284,6 +284,14 @@ router.beforeEach(async (to, from, next) => {
     // Проверяем, если маршрут не является авторизационным и защищённым
     if (isProtectedRoute) {
         if (!isAuthenticated && !guestPasses) {
+            if (isGuest) {
+                // Guest hit a registered-only zone (PvP etc.) — clear message,
+                // route to Sign Up (not silent, per spec "ведут на Sign Up").
+                store.commit('master/setInfoMessage',
+                    InfoMessageModel.withTimeout("This requires an account. Sign Up to unlock.", 3000));
+                next({name: 'Signup'});
+                return;
+            }
             // Sub-epic 1a: Home (/) moved to publicRoutes — exemption wrapper
             // (`if (to.name !== 'Home')`) removed as unreachable. Toast now
             // unconditional within the unauth-protected-route branch.

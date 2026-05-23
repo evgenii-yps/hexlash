@@ -107,7 +107,8 @@ function showComingSoon(provider) {
 }
 
 // Initial mode derived from current path. /auth/login → 'login', /auth/signup → 'signup'.
-const screen = ref('provider'); // 'provider' | 'more' | 'email' | 'forgot' | 'signup-success' | 'guest'
+// ?guest=1 (from Profile → Change Archetype) opens the guest picker directly.
+const screen = ref(route.query.guest ? 'guest' : 'provider'); // 'provider' | 'more' | 'email' | 'forgot' | 'signup-success' | 'guest'
 // Email Auth Phase 5 — ref to ForgotPasswordScreen для calling showSuccess() post-dispatch
 const forgotScreenRef = ref(null);
 // Email Auth Phase 5.5 — captured email для display on signup-success screen

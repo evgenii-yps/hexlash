@@ -134,6 +134,18 @@
       @rematch="onRematch"
       @exit="onExit"
     />
+
+    <!-- Guest conversion — shown once per session after the first PvE win. -->
+    <div v-if="guestPromptOpen" class="guest-winprompt">
+      <div class="gwp-card">
+        <div class="gwp-title">Like it?</div>
+        <p class="gwp-text">Sign up to keep your progress, climb the Belt, and unlock PvP.</p>
+        <div class="gwp-actions">
+          <button class="gwp-signup" @click="onGuestSignup">Sign Up</button>
+          <button class="gwp-later" @click="guestPromptOpen = false">Maybe later</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -237,6 +249,7 @@ function selectCam(mode) {
 }
 
 function onBack() {
+  guestPromptOpen.value = false;
   router.push('/play/fd/warden');
 }
 
@@ -245,12 +258,40 @@ function onStartFight(strat) {
 }
 
 function onRematch() {
+  guestPromptOpen.value = false;
   resetFight();
 }
 
 function onExit() {
+  guestPromptOpen.value = false;
   router.push('/play/fd/warden');
 }
+
+// ── Guest PvE — session counters + one-time post-first-win Sign Up nudge ──
+const isGuest = computed(() => store.getters['master/getIsGuest']);
+const guestPromptOpen = ref(false);
+
+function onGuestSignup() {
+  guestPromptOpen.value = false;
+  router.push('/auth/signup');
+}
+
+// Record win/loss + streak when a guest PvE fight resolves. PvP (matchActive)
+// is account-only, so this only fires for the client-side mock fight.
+watch(() => fightState.phase, (phase, prev) => {
+  if (phase !== 'result' || prev === 'result') return;
+  if (matchActive.value || !isGuest.value) return;
+  if (fightState.resultWon) {
+    store.dispatch('master/recordGuestWin');
+    const session = store.getters['master/getGuestSession'];
+    if (session && !session.signupPromptShown) {
+      guestPromptOpen.value = true;
+      store.dispatch('master/markGuestSignupPromptShown');
+    }
+  } else {
+    store.dispatch('master/recordGuestLoss');
+  }
+});
 
 // Re-export for the template (setCoachStrategy is bound to CoachPause @select).
 // Nothing extra needed — direct import suffices.
@@ -274,6 +315,66 @@ watch(() => fightLog.lines.length, () => {
   z-index: 50;
   color: #fff;
 }
+
+/* Guest post-first-win Sign Up nudge — sits above the result overlay. */
+.guest-winprompt {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  z-index: 90;
+  pointer-events: auto;
+  width: min(92vw, 420px);
+}
+.gwp-card {
+  background: rgba(14, 16, 28, 0.94);
+  border: 1px solid var(--hex-border-strong, rgba(255, 255, 255, 0.22));
+  border-radius: 8px;
+  padding: 18px 20px;
+  backdrop-filter: blur(8px);
+}
+.gwp-title {
+  font-family: var(--font-mono, monospace);
+  font-size: 14px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #fff;
+}
+.gwp-text {
+  margin: 8px 0 16px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--hex-text-secondary, #9aa);
+}
+.gwp-actions {
+  display: flex;
+  gap: 10px;
+}
+.gwp-signup {
+  flex: 1;
+  padding: 12px;
+  background: var(--hex-primary);
+  border: none;
+  border-radius: 6px;
+  color: var(--hex-bg-dark, #090909);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.gwp-signup:hover { filter: brightness(1.08); }
+.gwp-later {
+  flex: 0 0 auto;
+  padding: 12px 16px;
+  background: transparent;
+  border: 1px solid var(--hex-border-default, rgba(255, 255, 255, 0.15));
+  border-radius: 6px;
+  color: var(--hex-text-secondary, #9aa);
+  font-size: 12px;
+  cursor: pointer;
+}
+.gwp-later:hover { color: #fff; }
 
 /* fight-top (prototype 838-881) */
 .fight-top {

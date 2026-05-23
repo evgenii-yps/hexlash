@@ -23,8 +23,10 @@
 // MODAL system fully retired (HudPit no longer exposes openPhModal).
 import { watch } from 'vue';
 import { useRouter } from 'vue-router';
+import store from '@/core/state/store.js';
 import HudPit from '@/components/hud/HudPit.vue';
 import { useClickState } from '@/scene/interaction/useClickState.js';
+import { InfoMessageModel } from '@/core/models/internal/infoMessageModel.js';
 
 const click = useClickState();
 const router = useRouter();
@@ -36,6 +38,13 @@ watch(() => click.seq, () => {
     return;
   }
   if (click.id === 'matchmaking') {
+    // PvP is account-only. Guests get a clear message + Sign Up (not silent).
+    if (store.getters['master/getIsGuest']) {
+      store.commit('master/setInfoMessage',
+        InfoMessageModel.withTimeout('PvP requires an account. Sign Up to unlock PvP.', 3000));
+      router.push('/auth/signup');
+      return;
+    }
     router.push('/play/matchmaking');
     return;
   }

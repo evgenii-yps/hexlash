@@ -223,6 +223,8 @@ function beltLabelShort(grade) {
 
 const yourRow = computed(() => {
   const u = userData.value;
+  // Guests have no Belt/ELO/rating — never show the sticky your-row.
+  if (store.getters['master/getIsGuest']) return null;
   if (!u?.captain) return null;
 
   const captain = u.captain;

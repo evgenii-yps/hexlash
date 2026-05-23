@@ -6,17 +6,16 @@
 // generation, the localStorage read/write, and building a synthetic MasterModel
 // so the HUD (which reads master.userData.*) doesn't null-crash for guests.
 //
-// The 4 archetypes offered to guests are a subset of the full ARCHETYPES list
-// (useCreateState.js). "Warden" from the original spec is a legacy 3D visual
-// variant, not an archetype — Ghost fills the 4th real slot.
+// Guests pick from all six real archetypes (useCreateState.js). "Warden" is a
+// legacy 3D visual-model name, not an archetype, so it is intentionally absent.
 
 import { MasterModel } from "@/core/models/masterModel.js";
 import UserModel from "@/core/models/userModel.js";
 
 const GUEST_KEY = 'hexlash_guest_session';
 
-// Archetype ids a guest may pick (subset of ARCHETYPES in useCreateState.js).
-export const GUEST_ARCHETYPE_IDS = ['predator', 'sentinel', 'analyst', 'ghost'];
+// All six real archetype ids (mirrors ARCHETYPES order in useCreateState.js).
+export const GUEST_ARCHETYPE_IDS = ['predator', 'sentinel', 'ghost', 'analyst', 'maverick', 'juggernaut'];
 
 export function generateGuestId() {
     if (typeof window !== 'undefined' && window.crypto?.randomUUID) {

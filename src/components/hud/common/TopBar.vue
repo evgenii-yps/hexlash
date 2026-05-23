@@ -17,7 +17,18 @@
         <div class="v2-res__label">Energy</div>
         <div class="v2-res__val">42 / 60</div>
       </div>
-      <div class="v2-res">
+      <!-- Guests have no Belt/ELO/rating — show session Wins/Streak instead. -->
+      <template v-if="isGuest">
+        <div class="v2-res">
+          <div class="v2-res__label">Wins</div>
+          <div class="v2-res__val">{{ guestWins }}</div>
+        </div>
+        <div class="v2-res">
+          <div class="v2-res__label">Streak</div>
+          <div class="v2-res__val">{{ guestStreak }}</div>
+        </div>
+      </template>
+      <div v-else class="v2-res">
         <div class="v2-res__label">ELO</div>
         <div class="v2-res__val">1,247</div>
       </div>
@@ -30,6 +41,9 @@
     </div>
 
     <div class="v2-topbar__right">
+      <!-- Guest: neutral label (no glow) + persistent, understated Sign Up CTA. -->
+      <span v-if="isGuest" class="tb-guest-label">Guest<template v-if="guestArchetypeName"> · {{ guestArchetypeName }}</template></span>
+      <button v-if="isGuest" class="tb-signup-btn" @click="onSignUp">Sign Up</button>
       <button class="tb-help-btn" @click="$emit('help-click')" aria-label="Help">?</button>
       <button class="v2-avatar-btn" @click="$emit('avatar-click')">
         <span>{{ avatarInitials }}</span>
@@ -40,14 +54,31 @@
 
 <script setup>
 import { computed } from 'vue';
+import { useRouter } from 'vue-router';
 import store from '@/core/state/store.js';
+import { ARCHETYPES } from '@/scene/interaction/useCreateState.js';
 
 defineEmits(['avatar-click', 'help-click']);
+
+const router = useRouter();
 
 const avatarInitials = computed(() => {
   const login = store.getters['master/getMaster']?.userData?.login || '';
   return login.slice(0, 2).toUpperCase() || '??';
 });
+
+const isGuest = computed(() => store.getters['master/getIsGuest']);
+const guestSession = computed(() => store.getters['master/getGuestSession']);
+const guestWins = computed(() => guestSession.value?.wins ?? 0);
+const guestStreak = computed(() => guestSession.value?.streak ?? 0);
+const guestArchetypeName = computed(() => {
+  const id = guestSession.value?.archetypeId;
+  return ARCHETYPES.find((a) => a.id === id)?.name || '';
+});
+
+function onSignUp() {
+  router.push('/auth/signup');
+}
 </script>
 
 <style scoped>
@@ -152,5 +183,35 @@ const avatarInitials = computed(() => {
 
 .v2-avatar-btn:active {
   transform: scale(0.97);
+}
+
+/* Guest label — neutral, no glow (per Neon Discipline guest rules). */
+.tb-guest-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--text-mid);
+  white-space: nowrap;
+  align-self: center;
+}
+
+/* Persistent Sign Up — secondary, NOT the pink accent. Subtle bordered chip. */
+.tb-signup-btn {
+  padding: 8px 12px;
+  background: rgba(14, 16, 28, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  min-height: 36px;
+}
+
+.tb-signup-btn:hover {
+  border-color: var(--hex-primary);
+  background: rgba(32, 24, 40, 0.85);
 }
 </style>
