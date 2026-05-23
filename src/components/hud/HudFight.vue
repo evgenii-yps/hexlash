@@ -250,7 +250,9 @@ function selectCam(mode) {
 
 function onBack() {
   guestPromptOpen.value = false;
-  router.push('/play/fd/warden');
+  // Guests have no fighter-detail "home" (no agent/profile) — return to the
+  // Pit. Registered players keep existing behavior (back to fighter detail).
+  router.push(isGuest.value ? '/play' : '/play/fd/warden');
 }
 
 function onStartFight(strat) {
