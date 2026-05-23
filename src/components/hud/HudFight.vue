@@ -265,8 +265,9 @@ function onRematch() {
 }
 
 function onExit() {
+  // "Exit to Pit" — go to the Pit for everyone (label === behavior).
   guestPromptOpen.value = false;
-  router.push('/play/fd/warden');
+  router.push('/play');
 }
 
 // ── Guest PvE — session counters + one-time post-first-win Sign Up nudge ──
