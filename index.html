@@ -55,6 +55,9 @@
             scrollbar-color: var(--scrollbar-bg) transparent;
         }
 
+        /* Base dark background — matches --hex-bg-dark token (#090909).
+           Tokens are inlined as literals because this splash renders before
+           the app stylesheet (hexlash-ui.css) loads. */
         #app-loading {
             position: fixed;
             top: 0;
@@ -64,82 +67,192 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background-color: #000;
+            background-color: #090909;
             z-index: 9999;
             transition: opacity 0.5s ease-out;
             opacity: 1;
-        }
-
-        #loading-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-        }
-
-        .loading-hexlash {
-            position: fixed;
-            top: 22%;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 72px;
-            font-weight: 900;
-            color: #FF066F;
-            letter-spacing: 14px;
-            text-transform: uppercase;
-            user-select: none;
-            font-family: Anonymous, monospace;
-            white-space: nowrap;
-            text-shadow: 0 0 8px rgba(255, 6, 111, 0.5);
-        }
-
-        .loading-never-give-up {
-            font-size: 42px;
-            font-weight: 700;
-            color: #fff;
-            text-transform: uppercase;
-            letter-spacing: 5px;
-            text-align: center;
-            width: 100%;
-            z-index: 1;
-            font-family: Anonymous, monospace;
-            text-shadow:
-                0 0 20px #FF066F,
-                0 0 40px rgba(255, 6, 111, 0.4);
-        }
-
-        .loader-app {
-            margin-top: 32px;
-            border: 4px solid rgba(255, 255, 255, 0.1);
-            border-top: 4px solid #FF066F;
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
-            animation: spin 1s linear infinite;
-            z-index: 1;
-        }
-
-        @keyframes spin {
-            0%   { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            overflow: hidden;
         }
 
         #app-loading.hidden {
             opacity: 0;
             pointer-events: none;
         }
+
+        /* Drifting particle field (motion is pure CSS; JS only spawns nodes) */
+        #loading-particles {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .lp-dot {
+            position: absolute;
+            width: 1.5px;
+            height: 1.5px;
+            background: #fff;
+            border-radius: 50%;
+            opacity: 0.2;
+            will-change: transform;
+            animation-iteration-count: infinite;
+            animation-timing-function: ease-in-out;
+        }
+
+        .lp-line-wrap {
+            position: absolute;
+            will-change: transform;
+            animation-iteration-count: infinite;
+            animation-timing-function: ease-in-out;
+        }
+
+        .lp-line {
+            width: 64px;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.18);
+        }
+
+        @keyframes lpDriftA {
+            0%   { transform: translate(0, 0); }
+            50%  { transform: translate(22px, -28px); }
+            100% { transform: translate(0, 0); }
+        }
+
+        @keyframes lpDriftB {
+            0%   { transform: translate(0, 0); }
+            50%  { transform: translate(-26px, 20px); }
+            100% { transform: translate(0, 0); }
+        }
+
+        @keyframes lpDriftC {
+            0%   { transform: translate(0, 0); }
+            50%  { transform: translate(16px, 26px); }
+            100% { transform: translate(0, 0); }
+        }
+
+        /* Radial vignette — darkens edges so the centre reads clearly */
+        #loading-vignette {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background: radial-gradient(ellipse at center,
+                rgba(9, 9, 9, 0) 38%,
+                rgba(9, 9, 9, 0.7) 100%);
+        }
+
+        #loading-container {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loading-logo {
+            display: block;
+            width: 220px;
+            height: 220px;
+        }
+
+        .loading-progress {
+            position: relative;
+            margin-top: 90px;
+            width: 320px;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 1.5px;
+        }
+
+        .loading-progress-fill {
+            position: relative;
+            height: 100%;
+            width: 0;
+            /* Accent pink — matches --hex-primary token (#FF066F) */
+            background: #FF066F;
+            border-radius: 1.5px;
+            animation: lpFill 2.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        .loading-progress-fill::after {
+            content: '';
+            position: absolute;
+            right: -3.5px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #FF066F;
+        }
+
+        @keyframes lpFill {
+            from { width: 0; }
+            to   { width: 100%; }
+        }
+
+        @media (max-width: 600px) {
+            .loading-logo {
+                width: 160px;
+                height: 160px;
+            }
+
+            .loading-progress {
+                margin-top: 80px;
+                width: 240px;
+            }
+        }
     </style>
 </head>
 <body>
 
 <div id="app-loading">
+    <div id="loading-particles"></div>
+    <div id="loading-vignette"></div>
     <div id="loading-container">
-        <div class="loading-hexlash">HEXLASH</div>
-        <div class="loading-never-give-up">Never give up</div>
-        <div class="loader-app"></div>
+        <img class="loading-logo" src="/src/assets/images/logo-512.png" alt="" />
+        <div class="loading-progress">
+            <div class="loading-progress-fill"></div>
+        </div>
     </div>
 </div>
+<script>
+    // Spawn the drifting particles synchronously during parse.
+    // Motion itself is handled entirely by CSS keyframes (no JS animation loop).
+    (function () {
+        var field = document.getElementById('loading-particles');
+        if (!field) return;
+        var drifts = ['lpDriftA', 'lpDriftB', 'lpDriftC'];
+        var rnd = function (min, max) { return Math.random() * (max - min) + min; };
+        var i;
+        for (i = 0; i < 20; i++) {
+            var dot = document.createElement('div');
+            dot.className = 'lp-dot';
+            dot.style.top = rnd(0, 100) + '%';
+            dot.style.left = rnd(0, 100) + '%';
+            dot.style.opacity = rnd(0.15, 0.25);
+            dot.style.animationName = drifts[i % 3];
+            dot.style.animationDuration = rnd(12, 18) + 's';
+            dot.style.animationDelay = '-' + rnd(0, 18) + 's';
+            field.appendChild(dot);
+        }
+        for (i = 0; i < 8; i++) {
+            var wrap = document.createElement('div');
+            wrap.className = 'lp-line-wrap';
+            wrap.style.top = rnd(5, 95) + '%';
+            wrap.style.left = rnd(5, 95) + '%';
+            wrap.style.animationName = drifts[(i + 1) % 3];
+            wrap.style.animationDuration = rnd(13, 18) + 's';
+            wrap.style.animationDelay = '-' + rnd(0, 18) + 's';
+            var line = document.createElement('div');
+            line.className = 'lp-line';
+            line.style.width = rnd(50, 80) + 'px';
+            line.style.transform = 'rotate(' + rnd(-50, -20) + 'deg)';
+            wrap.appendChild(line);
+            field.appendChild(wrap);
+        }
+    })();
+</script>
 <div id="app"></div>
 <script>
     window.onload = () => {
