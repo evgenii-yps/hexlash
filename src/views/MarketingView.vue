@@ -27,24 +27,8 @@
     </header>
 
     <section class="marketing-hero" ref="heroRef">
-      <!-- Animated hex pattern background -->
-      <div class="marketing-hero__hex-bg" aria-hidden="true">
-        <svg class="marketing-hero__hex-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid slice">
-          <defs>
-            <pattern id="hex-pattern" x="0" y="0" width="40" height="35" patternUnits="userSpaceOnUse">
-              <polygon
-                points="20,2 38,12 38,32 20,42 2,32 2,12"
-                fill="none"
-                stroke="rgba(255, 6, 111, 0.12)"
-                stroke-width="0.5"
-              />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#hex-pattern)" />
-        </svg>
-      </div>
-
-      <!-- Pink radial glow -->
+      <!-- Hero hex grid is now part of the continuous full-page grid
+           (.marketing::before / ::after). Pink radial glow kept for hero punch. -->
       <div class="marketing-hero__glow" aria-hidden="true"></div>
 
       <!-- Hero content -->
@@ -326,9 +310,52 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .marketing {
+  /* ── Tunable hex-grid background (tweak live in DevTools on preview) ──
+     --hex-grid-line-opacity    base grid-line alpha multiplier (0–1)
+     --hex-grid-glow-intensity  pink glow strength multiplier (0–1)
+     --hex-grid-cell-size       hex tile width in px (density control) */
+  --hex-grid-line-opacity: 1;
+  --hex-grid-glow-intensity: 0.45;
+  --hex-grid-cell-size: 60px;
+
+  position: relative;
   background: var(--hex-bg-dark);
   color: var(--hex-text-primary);
   overflow-x: hidden;
+}
+
+/* Full-page hex grid — ONE tiled SVG (Hero Patterns "Hexagons") repeated as
+   a CSS background (no giant inline SVG, no per-frame JS — cheap on mobile).
+   Sits behind all section content; sections are transparent + z-index:1.
+   Base layer = continuous, faint, desaturated/transparent-pink grid that
+   spans hero → footer. */
+.marketing::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: var(--hex-grid-line-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cpath d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9zM0 15l12.98-7.5V0h-2v6.35L0 12.69v2.3zm0 18.5L12.98 41v8h-2v-6.85L0 35.81v-2.3zM15 0v7.5L27.99 15H28v-2.31h-.01L17 6.35V0h-2zm0 49v-8l12.99-7.5H28v2.31h-.01L17 42.15V49h-2z' fill='%23ff066f' fill-opacity='0.12'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: var(--hex-grid-cell-size) auto;
+}
+
+/* Glow layer — same hex tile in saturated pink, vertical visibility
+   "breathes" via a gradient mask: bright in the hero, ~0 around mid-page,
+   rising again toward the footer. Strength = --hex-grid-glow-intensity. */
+.marketing::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: var(--hex-grid-glow-intensity);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cpath d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9zM0 15l12.98-7.5V0h-2v6.35L0 12.69v2.3zm0 18.5L12.98 41v8h-2v-6.85L0 35.81v-2.3zM15 0v7.5L27.99 15H28v-2.31h-.01L17 6.35V0h-2zm0 49v-8l12.99-7.5H28v2.31h-.01L17 42.15V49h-2z' fill='%23ff066f' fill-opacity='0.5'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: var(--hex-grid-cell-size) auto;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 12%, rgba(0,0,0,0) 40%, rgba(0,0,0,0) 60%, #000 90%, #000 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 12%, rgba(0,0,0,0) 40%, rgba(0,0,0,0) 60%, #000 90%, #000 100%);
 }
 
 /* ============================================
@@ -477,6 +504,8 @@ onBeforeUnmount(() => {
 .marketing-footer {
   position: relative;
   width: 100%;
+  /* Above the .marketing::before/::after grid layers (z-index 0). */
+  z-index: 1;
 }
 
 .marketing-hero {
@@ -490,7 +519,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--hex-bg-dark);
+  background: transparent;
 }
 
 /* === ABOUT === */
@@ -536,7 +565,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--hex-bg-dark);
+  background: transparent;
   padding: 80px 24px;
 }
 
@@ -643,7 +672,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--hex-bg-dark);
+  background: transparent;
   padding: 100px 24px;
   overflow: hidden;
 }
@@ -710,7 +739,7 @@ onBeforeUnmount(() => {
 
 /* === ROADMAP === */
 .marketing-roadmap {
-  background: var(--hex-bg-dark);
+  background: transparent;
   padding: 100px 24px;
 }
 
@@ -813,7 +842,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--hex-bg-dark);
+  background: transparent;
   padding: 100px 24px;
 }
 
@@ -858,7 +887,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--hex-bg-dark);
+  background: transparent;
   padding: 100px 24px;
 }
 
@@ -979,7 +1008,7 @@ onBeforeUnmount(() => {
   flex-direction: column;
   align-items: center;
   gap: 24px;
-  background: var(--hex-bg-dark);
+  background: transparent;
 }
 
 /* === FOOTER === */
@@ -1053,23 +1082,8 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background: var(--hex-bg-dark);
-}
-
-.marketing-hero__hex-bg {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  opacity: 0.5;
-  animation: hex-drift 60s linear infinite;
-}
-
-.marketing-hero__hex-svg {
-  width: 120%;
-  height: 120%;
-  position: absolute;
-  top: -10%;
-  left: -10%;
+  /* Transparent so the full-page .marketing grid shows through. */
+  background: transparent;
 }
 
 .marketing-hero__glow {
@@ -1147,11 +1161,6 @@ onBeforeUnmount(() => {
 }
 
 /* Hero animations (scoped — prefixed to avoid global @keyframes collisions) */
-@keyframes hex-drift {
-  0% { transform: translate(0, 0); }
-  100% { transform: translate(-40px, -35px); }
-}
-
 @keyframes marketing-glow-pulse {
   0%, 100% { opacity: 0.7; }
   50% { opacity: 1; }
@@ -1172,7 +1181,6 @@ onBeforeUnmount(() => {
    animations (hex drift + glow pulse). Users who request reduced motion
    see the static composition without any background movement. */
 @media (prefers-reduced-motion: reduce) {
-  .marketing-hero__hex-bg,
   .marketing-hero__glow,
   .marketing-header {
     animation: none !important;
