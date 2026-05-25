@@ -34,12 +34,6 @@
       <!-- Global challenge notification (top of screen) -->
       <ChallengeNotification v-if="isAuth" />
       <ClanInviteNotification v-if="isAuth" />
-
-      <footer class="footer">
-        <transition name="slide-up-down">
-          <BottomMenu v-if="isAuth && scrollDirection !== 'down' && !isPvPScreen"/>
-        </transition>
-      </footer>
     </template>
   </div>
 </template>
@@ -47,7 +41,6 @@
 <script setup>
 import {RouterView, useRoute, useRouter} from 'vue-router'
 import {computed, onBeforeUnmount, onMounted, ref, watch} from "vue";
-import BottomMenu from "@/components/menu/BottomMenu.vue";
 import Logo from "@/components/Logo.vue";
 import store from "@/core/state/store.js";
 import Info from "@/components/Info.vue";
@@ -70,8 +63,6 @@ const balance = computed(() => {
 });
 
 
-const isNotArenaScreen = computed(() => route.name !== 'Arena');
-
 const showInfoMessage = ref(false);
 
 const infoMessage = computed(() => {
@@ -93,13 +84,6 @@ const isAuth = computed(() => {
 });
 
 const route = useRoute();
-
-// Hide BottomMenu during PvP: matchmaking, spectate, or fight with mode=pvp
-const isPvPScreen = computed(() => {
-  return route.path === '/matchmaking' ||
-      route.path.startsWith('/spectate') ||
-      (route.path === '/fight' && route.query.mode === 'pvp');
-});
 
 // v2 Migration — feature flag через URL-префикс /play (renamed from /v2 in
 // Sub-epic 8a — see router/index.js legacyV2Redirects for backward compat).
@@ -267,33 +251,6 @@ onBeforeUnmount(() => {
   top: 0;
   right: 20px;
   margin-top: 20px;
-}
-
-/* Анимация выезжания вверх и вниз */
-.slide-up-down-enter-active, .slide-up-down-leave-active {
-  transition: transform 0.5s ease;
-}
-
-.slide-up-down-enter-from {
-  transform: translateY(100%);
-}
-
-.slide-up-down-enter-to {
-  transform: translateY(0);
-}
-
-.slide-up-down-leave-from {
-  transform: translateY(0);
-}
-
-.slide-up-down-leave-to {
-  transform: translateY(100%);
-}
-
-.footer {
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 
 
