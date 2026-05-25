@@ -2,6 +2,8 @@
 
 Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegram WebApp compatible.
 
+> **Club-Mode v1 removed 25.05.2026** (Pack 3.2): v1 `/arena/*` screens + client-side PvE engine deleted. The Club-Mode product model is retained; new implementation comes on Этапы 1/2 (backend-driven). Foundation kept: Prisma `Agent`/`Captain`/`Belt`, `agent` Vuex module, backend services, `/ai/morning-report` + `/ai/build-description`.
+
 > **RULE: After every task, update this file.** Changed views/components → update descriptions. New components → add to Component Highlights. New data files → add to Project Structure. Changed architecture → update relevant sections. CLAUDE.md is the source of truth.
 
 ---
@@ -21,7 +23,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
   App.vue                  — Root: header (Logo), router-view, BottomMenu (hidden on PvP screens), Info/Error toasts, ChallengeNotification
   main.js                  — Entry: Vue + Vuetify + i18n + Vuex + WagmiPlugin + VueQueryPlugin init
   router/index.js          — Routes + auth guards + fight state restore
-  views/                   — 8 page-level components post-Эпик 7 1b (LandingView, AuthLayoutView, PrivacyView, NotFoundView, PageView, VerifyEmailView, PreparationView, FightClubView). 1a/1b/8a history: LandingView added 1a, AuthLayoutView added 1b, RainView (1212 lines) deleted 1b C9. Sub-epic 8b: LandingView (1a MVP) deleted, MarketingView (8b long-form) added. 10 v1 views deleted Sub-epic 8 C8/C9.
+  views/                   — page-level components (AuthLayoutView, PrivacyView, NotFoundView, PageView, VerifyEmailView, ResetPasswordView, MarketingView). 1a/1b/8a history: LandingView added 1a, AuthLayoutView added 1b, RainView (1212 lines) deleted 1b C9. Sub-epic 8b: LandingView (1a MVP) deleted, MarketingView (8b long-form) added. 10 v1 views deleted Sub-epic 8 C8/C9. PreparationView + FightClubView deleted 25.05.2026 (Club-Mode v1 removal).
   composables/             — Reusable composables. `useDocumentMeta.js` (added 8b C1) — manual SEO meta tag manipulation (title, meta description, og:*, twitter:*) with restore-on-unmount. `useScrollFadeIn.js` (added 8c C1) — IntersectionObserver-driven `visible` ref, one-shot disconnect after first intersection, threshold 0.3 default, falls back to immediate visibility for environments without IntersectionObserver API.
   views/auth/              — 2 nested route children for AuthLayoutView (LoginView, SignupView) — Sub-epic 1b C2/C3/C4.
   views-v2/                — 16 v2 page components (PitViewV2 + FighterDetailView + FightView + TrainingView + MatchmakingView + CreateView + ProfileView + RatingsView + ClanView + GuestClanView + ShopView + SpectateView + HelpView + UserProfileView + WalletView + AccountView)
@@ -49,7 +51,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
     clanLevels.js          — Clan level config (10 levels, XP thresholds, member limits, XP bonuses) + getClanLevelProgress()
     (pixelIcons.js deleted in Pack 1 cleanup — PixelIcon system removed)
   utils/
-    powerRating.js         — Power rating calculations
+    (powerRating.js deleted 25.05.2026 — client-side PvE engine retired with Club-Mode v1)
     beltDisplay.js         — Belt display helpers (BELT_THRESHOLDS, getBeltDisplay, getNextThreshold, getBeltProgressPercent)
     fightStylePreview.js   — Template-based fight style description (DEAD CODE — not imported)
   styles/
@@ -155,11 +157,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 | `/reset-password` | ResetPasswordView (Email Auth Phase 5 — reads `?token=...` from email link, new password form, auto-login JWT on success → redirect к `/`. 400-on-expired flips к "Request new link" failure state) | No |
 | `/` | MarketingView (anonymous, long-form marketing site) / redirect to `/play` (authed via beforeEnter) — Sub-epic 1a + 8a + 8b | Public |
 | `/help` | PageView | Yes |
-| `/arena` | Redirect → `/arena/club` | Yes |
-| `/arena/fight` | PreparationView | Yes |
-| `/arena/club` | FightClubView | Yes |
-| `/arena/club/create` | redirect → `/play/create` (Sub-epic 1 + 8a) | Yes |
-| `/arena/club/:agentId` | redirect → `/play/fd/:agentId` (Sub-epic 1 + 8a) | Yes |
+| `/arena/*` | redirect → `/play` (Club-Mode v1 removed 25.05.2026 — catch-all for legacy bookmarks) | — |
 | `/fight` | redirect → `/play/fight` (Sub-epic 8 C3 + 8a) | Yes (via v2ProtectedNames) |
 | `/training` | redirect → `/play/training` (Sub-epic 5L + 8a) | Yes |
 | `/training/moves` | *Deleted* — research moved to AgentDetailView Moves tab | — |
@@ -185,7 +183,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 |--------|---------|
 | `masterState` | App init, auth status, info/error messages, language |
 | `userState` | Current user profile, stats, avatar |
-| `cardFightState` | Active fight: rounds, HP, dice, coach, playerModules, localStorage persist |
+| `cardFightState` | *Removed 25.05.2026* (Club-Mode v1 removal — client-side PvE engine retired) |
 | `progressionState` | Taps, freeXP, legacy deck/moves, server sync (PUT /user/progression). Research moved per-agent. |
 | `clanState` | Clan info, members, balance, roles (set-role, transfer-ownership, kick). Namespace `clan/`. File: `clanState.js` |
 | `taskState` | Daily + social tasks |
@@ -483,7 +481,7 @@ MIGRATION_ENABLED = true           // lazy User→Fighter #1 on /me
 
 **AI Trainer:** REMOVED (dead-code cleanup Pack 1). The v1 post-fight analysis (`AiTrainerAnalysis.vue` + `POST /v1/ai/analyze-fight`) was orphaned after the v1 CardFightView was deleted — frontend component, backend endpoint, and its helpers (`SYSTEM_PROMPT`, `buildUserPrompt`, `checkRateLimit`) all retired. Planned to be rebuilt on Этап 2. Other AI endpoints (morning-report, premium-report, build-description) remain live.
 
-**AI Club Reports:** Morning Report (`POST /v1/ai/morning-report`) and Premium Report (`POST /v1/ai/premium-report`) provide AI analysis of FightClub stats. Frontend: `MorningReport.vue` in `FightClubView`. Legacy `club-mode-summary` endpoint removed.
+**AI Club Reports:** Morning Report (`POST /v1/ai/morning-report`) and Premium Report (`POST /v1/ai/premium-report`) provide AI analysis of FightClub stats. The v1 frontend consumer (`MorningReport.vue` in `FightClubView`) was removed 25.05.2026 with Club-Mode v1; the **endpoints are kept as Foundation** for the Club-Mode rewrite. Legacy `club-mode-summary` endpoint removed.
 
 **Club Stats:** When a fight result is saved (PvE via `POST /fight/save`, PvP via `pvpCombatEngine.saveFightResult`), if the player has a `clubId`, `Club.battles` is incremented by 1; if the player won, `Club.wins` is also incremented. Club Mode fights go through `/fight/save` so they increment too.
 
@@ -500,10 +498,8 @@ MIGRATION_ENABLED = true           // lazy User→Fighter #1 on /me
 | Dice | All 6 effects unified | Same as PvE (instant Rage/Crit, full Shield/Blind) | Unified |
 
 **Files:**
-- `combatEngine.js` — PvE round simulation (action-based: attack/defense/position, dodge/crit)
-- `aiStrategy.js` — AI decision logic: archetype priorities (slot weights 50/30/20%), coach boost, dice preferences
-- `archetypes.js` — 6 archetypes: Predator, Sentinel, Ghost, Analyst, Maverick, Juggernaut (priorities, dicePreferences)
-- `opponentGenerator.js` — Random opponent creation
+- `combatEngine.js` / `aiStrategy.js` / `opponentGenerator.js` / `utils/powerRating.js` — *Removed 25.05.2026* (client-side PvE engine retired with Club-Mode v1; new Club-Mode is backend-driven)
+- `archetypes.js` — 6 archetypes: Predator, Sentinel, Ghost, Analyst, Maverick, Juggernaut (priorities, dicePreferences). **Still live** — consumed by v2 HUD/scene + backend
 - `pvpCombatEngine.js` — PvP round simulation (no actions/archetypes, pure move damage + speed order), dice effects, coach effects
 - `agentCombatEngine.js` — Agent fight simulation: hybrid PvE (action-based) + PvP (archetype modifiers). Tactics drive decisions. Includes PvE bot generator
 - `backend/src/data/archetypes.js` — Backend copy of archetype priorities + dicePreferences (keep in sync with frontend)
@@ -523,8 +519,8 @@ MIGRATION_ENABLED = true           // lazy User→Fighter #1 on /me
 | Fight | `CardFightView.vue` | Main combat (PvE + PvP), dice, coach advice, HP bars, AI Trainer (PvE results). Loading splash: HEXLASH in Anonymous pixel-font with --hex-primary + glow (matches Logo.vue style, same as index.html pre-app splash). PvP mode: no BottomMenu, no PvP badge, reduced padding. Fully migrated to --hex-* vars: HexButton for results, inline SVGs, dice/coach/victory/defeat/overdrive all use design system vars. Visual System v1.0 compliant: pink only on CTA buttons (dice, Fight Again), VICTORY/DEFEAT/DRAW + OVERDRIVE pixel-font, HP in AnonymousBalance, dice effects in characteristic colors, coach buttons in action-specific colors |
 | Profile | `ProfileView.vue` | Tabs: balance, wallet, account, skins. Visual System v1.0 compliant: AnonymousBalance for numerical values, neutral header (no pink), 0-1 pink accent per tab, toggles green (success), delete btn danger |
 | Ratings (League) | `RatingsView.vue` | 3 tabs: My Club, Clubs (leaderboard), Fighters (leaderboard). Default tab: My Club. URL: `/ratings/:type` (myclub/clubs/fighters). My Club tab: `MyClubTab.vue` component — redesigned clan header (avatar 64px with --hex-primary glow, name in Anonymous font, italic description, LVL badge, member count, level progress bar), stats grid (4 cards: Members/Wins/Losses/Win Rate with colored values), win rate bar, members top-5, role badges owner/deputy, action menus. No-clan state: ⚔ icon hero, CREATE/BROWSE buttons, pending invites banners, suggested clans with stats. **Note:** v2 path uses 4-tab Path D (My Clan / Clans / Fighters / Agents) per Sub-epic 2, reversing 5C Path A unified-leaderboard decision. v1 RatingsView retained для legacy `/ratings/*` route (cleanup в Sub-epic 8 final cutover). |
-| Fight Club | `FightClubView.vue` | `/arena/club` (also reachable via `/arena` redirect). Agent roster, Club Level bar, Morning Report, Retirement Panel. "← Arena" switch button in header. Captain's AgentCard has primary FIGHT button (navigates to PreparationView, disabled when fighting/resting). Background: `background_arena.webp` with gradient overlay (shared visual identity with PreparationView) |
-| Preparation | `PreparationView.vue` | `/arena/fight`: action row (Mode + START FIGHT + Friends buttons). Friends button is text-only (no online indicator). "← Arena" switch button in header. Visual System v1.0 compliant: single pink accent (START FIGHT), ModeSelector neutral, AnonymousBalance where needed |
+| Fight Club | *Removed 25.05.2026* | v1 `FightClubView.vue` (`/arena/club`) deleted with Club-Mode v1. |
+| Preparation | *Removed 25.05.2026* | v1 `PreparationView.vue` (`/arena/fight`) deleted with Club-Mode v1. |
 | Friends | `FriendsView.vue` | Friends list, friend requests, search players. Visual System v1.0 compliant: neutral cards, online indicator hex-success, Accept=green/Decline=danger, Add friend=primary CTA, system sans |
 | Matchmaking | `MatchmakingView.vue` | Real-time PvP matchmaking queue. Opponent Found shows actual fighter skins (from `/images/skins/`). No colored borders. 100dvh support. Visual System v1.0 compliant: neutral spinner in search, OPPONENT FOUND pixel-font (impact), AnonymousBalance for timer/rating/countdown, retry btn = sole pink CTA in timeout |
 | Clan | `ClanView.vue` | Redesigned clan page: header with avatar (64px, --hex-primary border + glow, 12px radius), name (Anonymous font), italic description, meta row (LVL badge, member count), level progress bar (6px gradient fill), stats grid via `ClanStats.vue` (4 cards + win rate bar), owner controls. Visitor view: top-5 members (no action menu), "+ N more members", JOIN/private/full action bar. Route: `/clan/:id` (redirect from `/club/:id`). Visual System v1.0 compliant. |
@@ -584,7 +580,7 @@ MIGRATION_ENABLED = true           // lazy User→Fighter #1 on /me
 
 **Navigation & Layout:**
 - `Logo.vue` — header logo (Anonymous font, --hex-primary color + glow). Visual System v1.0 compliant: pixel-font for brand, subtle glow, --hex-text-primary
-- `BottomMenu.vue` — bottom nav (Arena, Training, Ratings, Profile). Uses SVG background-image icons with filter-based active state. Semi-transparent bg with backdrop-blur. Hidden on PvP screens via `isPvPScreen` computed in App.vue. Visual System v1.0 compliant: line-icons, system sans for labels, active tab = single pink accent in zone
+- `BottomMenu.vue` — *Removed 25.05.2026* (v1 shell nav; deleted with Club-Mode v1. App.vue remains the universal root.)
 - `App.vue` header — scroll-dependent gradient uses `--hex-bg-dark`, balance in AnonymousBalance font with `--hex-text-primary`. Visual System v1.0 compliant: --hex-bg-dark, AnonymousBalance for balance, no decorative gradients
 
 **Game Components:**
@@ -595,8 +591,7 @@ MIGRATION_ENABLED = true           // lazy User→Fighter #1 on /me
 - `MoveDetailsModal.vue` — *Deleted* (was move detail/unlock popup)
 - `SoundToggle.vue` — sound mute/unmute toggle (Profile > Account). Visual System v1.0 compliant: success green on-state, no pink
 - `HPBar.vue` — fight health bar. Visual System v1.0 compliant: status colors (success/warning/danger), AnonymousBalance HP numbers, no pink
-- `ModeSelector.vue` — arena mode selector (PvE/PvP), compact button with dropdown, system sans-serif font. Visual System v1.0 compliant: neutral compact btn (no mode-specific colors), neutral dropdown (no glow), system sans labels, touch-targets ≥44px
-- `ModuleBuilder.vue` — fighter module slots (3 slots: primary/secondary/tertiary), build preview with AI description, emergency protocol selector, archetype selection modal. Visual System v1.0 compliant: neutral slots (no pink), archetype icons via `<img>` (no dynamic arch colors yet — TODO: inline SVG for var(--hex-arch-*)), system sans, no glow
+- `ModeSelector.vue` / `ModuleBuilder.vue` — *Removed 25.05.2026* (v1 Club-Mode UI; `/ai/build-description` endpoint kept as Foundation for the rewrite)
 - `FriendCard.vue` — *Deleted* (Friends mini-series cleanup — zero consumers; v2 HudProfile renders rows inline as `.fc-row`)
 - `FriendRequestCard.vue` — *Deleted* (Friends mini-series cleanup — zero consumers; v2 HudProfile renders rows inline as `.fc-row`)
 - `ChallengeNotification.vue` — Top-of-screen challenge notification (global, z-index: 9999, 10s timer). Visual System v1.0 compliant: primary border-bottom accent, slide-down 300ms, name via {{ }} (XSS safe)
