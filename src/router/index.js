@@ -76,13 +76,11 @@ const publicRoutes = [
 
 const protectedRoutes = [
     {path: '/help', redirect: '/play/help'},
-    {path: '/arena', redirect: '/arena/club'},
-    {path: '/arena/fight', name: 'ArenaFight', component: () => import("/src/views/PreparationView.vue")},
-    {path: '/arena/club', name: 'ArenaFightClub', component: () => import("/src/views/FightClubView.vue")},
     {path: '/create-fighter', redirect: '/play/create'},
     {path: '/fighter/:key', redirect: to => `/play/fd/${to.params.key}`},
-    {path: '/arena/club/create', redirect: '/create-fighter'},
-    {path: '/arena/club/:agentId', redirect: to => `/fighter/${to.params.agentId}`},
+    // Club-Mode v1 removed 25.05.2026 — /arena/* screens deleted; catch-all
+    // redirects any legacy arena bookmark to the /play hub.
+    {path: '/arena/:pathMatch(.*)*', redirect: '/play'},
 
     {
         path: '/user/:userLogin',
@@ -99,7 +97,7 @@ const protectedRoutes = [
         redirect: to => ({ name: 'V2GuestClan', params: { id: to.params.id } }),
     },
     {path: '/club/:id', redirect: to => '/clan/' + to.params.id},
-    {path: '/fight-club', redirect: '/arena/club'},
+    {path: '/fight-club', redirect: '/play'},
     {path: '/club/agent/create', redirect: '/create-fighter'},
     {path: '/club/agent/:agentId', redirect: to => `/fighter/${to.params.agentId}`},
 
@@ -260,14 +258,6 @@ const router = createRouter({
     routes
 });
 
-// Helper: load saved fight from localStorage (no store dependency)
-function getSavedFightPhase() {
-    try {
-        const s = localStorage.getItem('hexlash_current_fight');
-        return s ? JSON.parse(s).fightPhase : null;
-    } catch(e) { return null; }
-}
-
 // Навигационный гвард
 router.beforeEach(async (to, from, next) => {
     const isAuthenticated = store.getters["master/getLoginState"]?.isAuthenticated || false;
@@ -300,15 +290,6 @@ router.beforeEach(async (to, from, next) => {
 
             next({name: 'Login'});
         } else {
-            // If navigating to arena/fight but a fight is already in progress, redirect to fight
-            if (to.path === '/arena/fight' || to.path === '/arena') {
-                const savedPhase = getSavedFightPhase();
-                if (savedPhase === 'fighting' || savedPhase === 'coach' || savedPhase === 'results') {
-                    next('/fight');
-                    return;
-                }
-            }
-
             next();
         }
     } else {
