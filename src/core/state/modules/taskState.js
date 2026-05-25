@@ -20,9 +20,6 @@ const getters = {
     hasIncompleteSocialTasks: (state) => {
         return state.socialTasks.some(task => !task.isCompleted);
     },
-    hasIncompleteDailyTasks: (state) => {
-        return state.dailyTasks.some(task => !task.isCompleted);
-    },
 };
 
 const mutations = {

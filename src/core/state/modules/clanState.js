@@ -32,9 +32,6 @@ const getters = {
     getClanRatingsList: (state) => {
         return state.clanRatings.items;
     },
-    isLimitReached: (state) => {
-        return state.clanRatings.limitReached;
-    },
 };
 
 const mutations = {
