@@ -19,14 +19,6 @@ import {isMockMode, createMockMaster, MOCK_JWT_TOKEN} from "@/core/mock/mockData
 function restoreProgressionFromServer(userData) {
     if (!userData) return;
 
-    if (userData.progression) {
-        // Restore player modules (fighter archetypes) from server
-        if (Array.isArray(userData.progression.playerModules) && userData.progression.playerModules.length === 3) {
-            store.commit('fight/setPlayerModules', userData.progression.playerModules);
-            localStorage.setItem('hexlash_player_modules', JSON.stringify(userData.progression.playerModules));
-        }
-    }
-
     // Restore PvP stats (rating, wins, losses, draws) from server
     store.dispatch('pvp/restoreFromServer', userData);
 }
