@@ -32,3 +32,6 @@ coverage
 # Environment variables
 .env
 .env.*
+
+# IDE module files
+*.iml

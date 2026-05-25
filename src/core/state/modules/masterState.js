@@ -29,7 +29,6 @@ const getters = {
     getLoginState: (state) => state.loginState,
     getIsGuest: (state) => state.isGuest,
     getGuestSession: (state) => state.guestSession,
-    getSignupState: (state) => state.signupState,
     getInfoMessage(state) {
         return state.infoMessage;
     },
@@ -362,25 +361,6 @@ const actions = {
         if (!state.guestSession) return;
         commit('updateGuestSession', {signupPromptShown: true});
         guestService.saveGuestSession(state.guestSession);
-    },
-    // Change archetype — resets session progress (Wins/Streak) per spec.
-    changeGuestArchetype({commit, state}, archetypeId) {
-        const session = {
-            ...(state.guestSession || guestService.createGuestSession(archetypeId)),
-            archetypeId,
-            wins: 0,
-            streak: 0,
-            signupPromptShown: false,
-        };
-        commit('setGuestSession', session);
-        guestService.saveGuestSession(session);
-    },
-    async endGuestSession({commit}) {
-        this.dispatch('webSocket/disconnectWebSocket');
-        guestService.clearGuestSession();
-        commit('clearGuestFlag');
-        commit('clearAuthData');
-        await router.push('/');
     },
 };
 

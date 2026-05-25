@@ -5,7 +5,6 @@ import vue from '@vitejs/plugin-vue'
 import vuetify from "vite-plugin-vuetify";
 import {version} from "./package.json";
 import compression from 'vite-plugin-compression';
-import {viteStaticCopy} from 'vite-plugin-static-copy'
 import obfuscator from 'rollup-plugin-obfuscator';
 import viteImagemin from "@vheemstra/vite-plugin-imagemin";
 
@@ -46,14 +45,6 @@ export default defineConfig(({mode}) => {
             compression({
                 algorithm: 'brotliCompress',
                 ext: '.br',
-            }),
-            viteStaticCopy({
-                targets: [
-                    {
-                        src: 'src/assets/models/punching-bags.bin',
-                        dest: 'assets'
-                    }
-                ]
             }),
             obfuscator({
                 compact: true,

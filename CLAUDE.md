@@ -47,7 +47,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
     requirements.js        — Tap/XP costs for unlock/levelup
     cardPower.js           — Card/module power balance data
     clanLevels.js          — Clan level config (10 levels, XP thresholds, member limits, XP bonuses) + getClanLevelProgress()
-    pixelIcons.js          — 45 pixel icons (16×16 grid, flat array 256 values)
+    (pixelIcons.js deleted in Pack 1 cleanup — PixelIcon system removed)
   utils/
     powerRating.js         — Power rating calculations
     beltDisplay.js         — Belt display helpers (BELT_THRESHOLDS, getBeltDisplay, getNextThreshold, getBeltProgressPercent)
@@ -256,31 +256,17 @@ unlockRequirements:  { 3: {taps:300, exp:150}, 4: {taps:250, exp:120}, 5: {taps:
 
 | Component | File | Purpose |
 |-----------|------|---------|
-| `PixelIcon` | `PixelIcon.vue` | 16×16 canvas-based pixel icons. **Currently unused** — preserved but not referenced by any app file. Props: name, size, color, glow, glowColor, glowSize, disabled. |
-| `HexButton` | `HexButton.vue` | 5 variants: primary, secondary, ghost, danger, archetype. 3 sizes (sm/md/lg). Props: icon (PixelIcon, **unused by app**), loading (CSS spinner), block, disabled, archetypeColor. |
+| `PixelIcon` | *Deleted* | Removed in Pack 1 cleanup (canvas pixel-icon system was never adopted by the app). |
+| `HexButton` | `HexButton.vue` | 5 variants: primary, secondary, ghost, danger, archetype. 3 sizes (sm/md/lg). Props: loading (CSS spinner), block, disabled, archetypeColor. (`icon`/PixelIcon prop removed in Pack 1 cleanup.) |
 | `HexCard` | `HexCard.vue` | 5 variants: default, elevated, archetype (left border), active (tinted bg), result (top border victory/defeat/draw). Slots: header, footer. Padding: none/sm/md/lg. |
 | `HexProgress` | `HexProgress.vue` | Progress bar. 3 variants: hp (auto green/yellow/red by %), branch (speed/power/technique colors), generic. 3 sizes. Props: label, showValue, showPercent. |
 | `HexBadge` | `HexBadge.vue` | Pill badge. 5 variants: archetype, branch, status (victory/defeat/draw/info), counter (circle/pill auto), custom. Props: icon (PixelIcon), pulse animation. |
 | `BeltBadge` | `BeltBadge.vue` | SVG belt badge for 33 grades + Hexmaster. Line-style: rect body, buckle, stripes. 3 sizes: sm (16×6), md (40×14), lg (120×40). Props: grade (0-32), isHexmaster, size. |
 | `UserCaptainBadge` | `UserCaptainBadge.vue` | Composite badge: BeltBadge + optional captain name. Sizes xs/sm/md. Shows "—" when no captain. |
 
-### Pixel Icons (`/src/data/pixelIcons.js`)
+### Pixel Icons — *Removed (Pack 1 cleanup)*
 
-45 icons across 9 categories. Each: 16×16 grid, flat array of 256 (0/1), row-major.
-
-| Category | Icons | Count |
-|----------|-------|-------|
-| archetype | predator, sentinel, ghost, analyst, maverick, juggernaut | 6 |
-| branch | speed, power, technique | 3 |
-| nav | arena, training, ratings, profile | 4 |
-| combat | hp, shield, dice, coach, damage, heal | 6 |
-| dice | dice_heal, dice_adrenaline, dice_shield, dice_blind, dice_rage, dice_crit | 6 |
-| mode | pve, pvp, auto | 3 |
-| social | friends, club, challenge, search, online, spectate | 6 |
-| progression | xp, taps, lock, unlock, star | 5 |
-| ui | close, menu, settings, sound, wallet, back | 6 |
-
-Optimal weight: 40–70 filled pixels (15–27%). Exception: `online` dot = 32px.
+The canvas-based pixel-icon system (`PixelIcon.vue` + `/src/data/pixelIcons.js`, 45 icons) was never adopted by the app (the `icon` prop on HexButton was never used) and was deleted in the Pack 1 dead-code cleanup.
 
 ### CSS Variables (`/src/styles/hexlash-ui.css`)
 
@@ -495,7 +481,7 @@ MIGRATION_ENABLED = true           // lazy User→Fighter #1 on /me
 
 **PvP Coach Advice:** Same UI as PvE (3 options: Attack/Defense/Position) but 10s timer. Fight pauses for both players. Each player picks independently. Backend applies effects: `coach_attack` (+25% dmg), `coach_defense` (-30% incoming), `coach_position` (+15% dmg & -15% incoming) for 4 rounds. After choosing → "Waiting for opponent..." until both decide or timer expires. No boost if player doesn't choose.
 
-**AI Trainer:** Claude-powered post-fight analysis (PvE and PvP). Component `AiTrainerAnalysis.vue` renders on CardFightView results screen. Sends fight data (rounds, decks, result, dice/coach/emergency usage) to `POST /v1/ai/analyze-fight` → backend calls Anthropic Claude API → returns 4-section analysis: Fight Summary, What You Did Well, What Went Wrong, Advice. Feature flag: `AI_TRAINER_ENABLED`. Graceful degradation on error. i18n keys: `fight.lblAiTrainer`, `fight.lblAiLoading`, `fight.lblAiError`.
+**AI Trainer:** REMOVED (dead-code cleanup Pack 1). The v1 post-fight analysis (`AiTrainerAnalysis.vue` + `POST /v1/ai/analyze-fight`) was orphaned after the v1 CardFightView was deleted — frontend component, backend endpoint, and its helpers (`SYSTEM_PROMPT`, `buildUserPrompt`, `checkRateLimit`) all retired. Planned to be rebuilt on Этап 2. Other AI endpoints (morning-report, premium-report, build-description) remain live.
 
 **AI Club Reports:** Morning Report (`POST /v1/ai/morning-report`) and Premium Report (`POST /v1/ai/premium-report`) provide AI analysis of FightClub stats. Frontend: `MorningReport.vue` in `FightClubView`. Legacy `club-mode-summary` endpoint removed.
 
@@ -523,8 +509,7 @@ MIGRATION_ENABLED = true           // lazy User→Fighter #1 on /me
 - `backend/src/data/archetypes.js` — Backend copy of archetype priorities + dicePreferences (keep in sync with frontend)
 - `pvpMatchManager.js` — PvP match lifecycle
 - `pvpHandler.js` — PvP WebSocket message handling (dice_roll, coach_choice)
-- `AiTrainerAnalysis.vue` — AI Trainer post-fight analysis component
-- `backend/src/routes/ai.js` — AI Trainer + Club Mode Summary API endpoints
+- `backend/src/routes/ai.js` — AI Club Mode endpoints (morning-report, premium-report, build-description). The `analyze-fight` AI Trainer endpoint was removed in Pack 1 cleanup.
 
 ---
 
@@ -589,7 +574,7 @@ MIGRATION_ENABLED = true           // lazy User→Fighter #1 on /me
 ## Component Highlights
 
 **Design System (`/src/components/ui/`):**
-- `PixelIcon.vue` — Canvas-based 16×16 pixel icon renderer. **Currently unused** — preserved but no app file imports it. Data in `pixelIcons.js` (45 icons).
+- `PixelIcon.vue` — *Deleted* (Pack 1 cleanup — canvas pixel-icon system never adopted; data file `pixelIcons.js` removed too).
 - `HexButton.vue` — Button with 5 variants (primary/secondary/ghost/danger/archetype), 3 sizes (sm/md/lg). Supports: loading spinner, block width, archetypeColor via `--_arch-color` CSS custom property. Icon prop exists but unused by app.
 - `HexCard.vue` — Card with 5 variants (default/elevated/archetype/active/result). Archetype = left border accent, active = tinted bg + color border, result = top border (victory/defeat/draw). Slots: default, header, footer. Padding: none/sm/md/lg.
 - `HexProgress.vue` — Progress bar with 3 variants: hp (auto green>60%/yellow>30%/red), branch (speed/power/technique colors), generic. Props: label, showValue, showPercent. 3 sizes.
@@ -619,7 +604,7 @@ MIGRATION_ENABLED = true           // lazy User→Fighter #1 on /me
 - `PlayerSearchResult.vue` — *Deleted* (Friends mini-series cleanup — zero consumers; PR #381 search-restore renders results inline as `.fc-row` in HudProfile)
 - `XPAllocationModal.vue` — *Deleted* (XP allocation now via ResearchTree +10 XP buttons)
 - `PvPStatsCard.vue` — PvP statistics display (league, rating, progress, wins/losses/winrate). Shown in Fighters tab of RatingsView. Visual System v1.0 compliant: 0 pink, league colors preserved (brand identity), AnonymousBalance for numbers, system sans for labels
-- `AiTrainerAnalysis.vue` — Claude-powered post-fight analysis (PvE + PvP, results screen). Visual System v1.0 compliant: neutral card, system sans, no pink, no Anonymous font
+- `AiTrainerAnalysis.vue` — *Deleted* (Pack 1 dead-code cleanup — orphaned after v1 CardFightView removed; AI Trainer feature to be rebuilt on Этап 2)
 - `ProfileWallet.vue` — Wallet page: uses @wagmi/vue useAccount(), shows ConnectWallet + GameBalanceCard + HexCard placeholder. BuyTokens removed from render, WalletInfo deleted
 - `ConnectWallet.vue` — Full wallet modal: Teleport modal with connector list (icons, dedup, rename Injected→Browser Wallet), connecting spinner, connected state (short address + chain + disconnect). Uses @wagmi/vue useConnect/useDisconnect/useConnectors. z-index 9000, Escape/overlay close, hex-fade/hex-slide-up transitions. 360px responsive
 - `WalletInfo.vue` — **Deleted** (Дорога 1 ТЗ #18b) — functionality moved into ConnectWallet connected state
@@ -645,7 +630,7 @@ Base: `/v1/`
 | `/fight` | fight.js | fight creation, results, history |
 | `/stats` | stats.js | player and game statistics |
 | `/friends` | friends.js | friends list, requests, search players |
-| `/ai` | ai.js | AI Trainer fight analysis (POST /analyze-fight), build description (POST /build-description), morning report (POST /morning-report), premium report (POST /premium-report) |
+| `/ai` | ai.js | build description (POST /build-description), morning report (POST /morning-report), premium report (POST /premium-report). *AI Trainer `POST /analyze-fight` removed in Pack 1 cleanup.* |
 | `/agent` | agent.js | 18 endpoints: CRUD agents, tactics, fight history, Research Gate (available-moves, learn-move, deck, research, allocate-xp), PvE training (train), auto-fight toggle/status, rankings, fight-club level |
 
 Auth guard: JWT Bearer token via `middleware/auth.js`
@@ -665,8 +650,8 @@ Email service: Resend SDK (Phase 2) at `services/emailService.js` — verbatim w
 | Request Message | Response | Purpose |
 |----------------|----------|---------|
 | `PunchInfoRequestMsg` | `PunchInfoResponseMsg` | Get punch rate limit info |
-| `PunchBatchRequestMsg` | `UserResponseMsg` | Submit batch of punches |
-| `FightTicketMsg` | `FightInfoMsg` | Request new fight ticket |
+| `PunchBatchRequestMsg` | `UserResponseMsg` | Submit batch of punches. *Frontend DTO model class (`ws/req/PunchBatchRequestMsg.js`) + base `WsBase.js` removed in Pack 1 cleanup — they had zero imports (unused). Backend handler retained.* |
+| `FightTicketMsg` | `FightInfoMsg` | Request new fight ticket. *Frontend DTO model class (`ws/req/FightTicketRequest.js`) removed in Pack 1 cleanup — was unused (zero imports).* |
 | `FightActionMsg` | — | Send PvP fight action |
 | `challenge_send` | `challenge_sent` / `challenge_error` | Send PvP challenge to friend |
 | `challenge_accepted` | `challenge_start` | Accept incoming challenge → creates match |
