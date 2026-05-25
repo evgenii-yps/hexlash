@@ -21,18 +21,9 @@ const state = () => ({
 const getters = {
     getFriends: (s) => s.friends,
     getIncomingRequests: (s) => s.friendRequests.incoming,
-    getOutgoingRequests: (s) => s.friendRequests.outgoing,
     onlineFriendsCount: (s) => s.friends.filter(f => f.status === 'online').length,
-    incomingRequestsCount: (s) => s.friendRequests.incoming.length,
-    isFriend: (s) => (playerId) => s.friends.some(f => f.id === playerId),
     isRequestPending: (s) => (playerId) => s.friendRequests.outgoing.some(r => r.id === playerId),
-    getOutgoingChallenge: (s) => s.challenge.outgoing,
-    getIncomingChallenge: (s) => s.challenge.incoming,
     hasPendingChallenge: (s) => (playerId) => s.challenge.outgoing?.odId === playerId,
-    getFriendFight: (s) => (friendId) => {
-        const friend = s.friends.find(f => f.id === friendId);
-        return (friend && friend.status === 'in_fight') ? friend.currentFight : null;
-    },
 };
 
 // ─── Mutations ──────────────────────────────────────────────────────────────
