@@ -18,14 +18,8 @@ const getters = {
     getUserByLogin: (state) => (login) => {
         return state.users.find(user => user.login === login);
     },
-    getUserById: (state) => (userId) => {
-        return state.users.find(user => user.id === userId);
-    },
     getParticipantRatingsList: (state) => {
         return state.participantRatings.items;
-    },
-    isLimitReached: (state) => {
-        return state.participantRatings.limitReached;
     },
 };
 

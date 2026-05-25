@@ -2,7 +2,6 @@ import router from "@/router/index.js";
 import {updateMasterToLocalDB} from "@/core/database/masterRepository.js";
 import {LoginStateModel} from "@/core/models/internal/loginStateModel.js";
 import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
-import {SignupStateModel} from "@/core/models/internal/signupStateModel.js";
 import {t} from '@/locales/index.js';
 import * as masterService from "@/core/services/masterService.js";
 import {ErrorMessageModel} from "@/core/models/internal/errorMessageModel.js";
@@ -15,7 +14,6 @@ const state = {
     master: null,
     jwtToken: masterService.getJwtToken(),
     loginState: new LoginStateModel(),
-    signupState: new SignupStateModel(),
     infoMessage: new InfoMessageModel(),
     errorMessage: new ErrorMessageModel(),
     // Guest mode — ephemeral, localStorage-only, no DB/JWT. See guestService.js.

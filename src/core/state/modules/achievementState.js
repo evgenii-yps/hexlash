@@ -7,7 +7,6 @@ const state = {
 
 const getters = {
     getNewAchievement: (state) => state.newAchievement,
-    getAllAchievements: (state) => state.allAchievements,
 };
 
 const mutations = {

@@ -28,17 +28,7 @@ const getters = {
     if (b.belt !== a.belt) return b.belt - a.belt;
     return (b.qualifiedWins || 0) - (a.qualifiedWins || 0);
   }),
-  agentById: (state) => (id) => state.agents.find(a => a.id === id),
   currentCaptain: (state) => state.agents.find(a => a.isCaptain) || null,
-  canCreateAgent: (state) => {
-    if (!state.fightClubLevel) return false;
-    return state.fightClubLevel.currentAgents < state.fightClubLevel.maxAgents;
-  },
-  activeAgents: (state) => state.agents.filter(a => a.autoFight),
-  idleAgents: (state) => state.agents.filter(a => a.status === 'idle'),
-  fightingAgents: (state) => state.agents.filter(a => a.status === 'fighting'),
-  restingAgents: (state) => state.agents.filter(a => a.status === 'resting'),
-  fightClubProgress: (state) => state.fightClubLevel,
   getAgentRankings: (state) => state.agentRankings.items,
 };
 
