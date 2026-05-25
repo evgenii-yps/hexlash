@@ -4,7 +4,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 
 > **Club-Mode v1 removed 25.05.2026** (Pack 3.2): v1 `/arena/*` screens + client-side PvE engine deleted. The Club-Mode product model is retained; new implementation comes on Этапы 1/2 (backend-driven). Foundation kept: Prisma `Agent`/`Captain`/`Belt`, `agent` Vuex module, backend services, `/ai/morning-report` + `/ai/build-description`.
 
-> **Docs archive removed 25.05.2026** (Pack 3.3): historical Эпик 1-9 + Legacy Cleanup paperwork (handoffs, phase reports, final reports, v24 prototype) deleted from `docs/` (~3 MB). Working docs kept: combat design (`0[1-3]*.md`), `club-mode-concept.md`, active audits, `generate_pdf.py`, `legacy-cleanup/SERIES_CLOSED.md`, `investigations/TASK_LANGUAGE_*`. Everything recoverable via git history.
+> **Docs archive removed 25.05.2026** (Pack 3.3 + 3.3b): historical Эпик 1-9 + Legacy Cleanup paperwork (handoffs, phase reports, final reports, v24 prototype, migration plans, road reports) deleted from `docs/` (~3 MB; 3.3b closed the 16 ambiguous Open Questions). Working docs kept: combat design (`0[1-3]*.md`), `club-mode-concept.md`, `generate_pdf.py`, `legacy-cleanup/SERIES_CLOSED.md`, `investigations/TASK_LANGUAGE_*`. Everything recoverable via git history.
 
 > **RULE: After every task, update this file.** Changed views/components → update descriptions. New components → add to Component Highlights. New data files → add to Project Structure. Changed architecture → update relevant sections. CLAUDE.md is the source of truth.
 
@@ -119,11 +119,6 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
     schema.prisma          — 19 models: User, Clan, ClanInvite, ClanEvent, FightClub, Achievement, UserAchievement, SocialTask, UserSocialTask, DailyTask, UserDailyTask, Fight, PunchInfo, FriendRequest, Friendship, Agent, AgentTactics, AgentProgression, AgentFightLog
     seed.js
     migrations/            — PostgreSQL migrations
-
-/docs
-  phase1-parking-list.md   — 52 technical debts from deepdive #1a-#1i
-  road1-final-report.md    — Road 1 completion report
-  road2-parking-list.md    — Road 2 parking list
 
 /public
   images/skins/            — 145+ fighter skin images (skin_m_1..117.png, skin_w_1..26.png, vip_k1/k2/t1/t2.png)
@@ -780,11 +775,11 @@ User, Clan, ClanInvite, ClanEvent, FightClub, Achievement, UserAchievement, Soci
 
 Development branch: `visual-v2` (от `main`) — визуальная миграция v24, см. секцию `## v2 Migration`.
 Club Mode + Phase 1 (Captain, Belt System, User→Fighter migration, Morning Report, Retirement, Ranked, Free Arena, NFT Agents): **COMPLETE** — залито в `main`.
-Road 1 (Neon Discipline visual migration): **COMPLETE**. See `/docs/road1-final-report.md` and `/docs/road2-parking-list.md`.
+Road 1 (Neon Discipline visual migration): **COMPLETE**.
 
 **Backend fixes during visual migration epic (5R-formalized convention):** backend code fixes (database, API, services) require separate branch path from visual migration continue stack. Continue stack `claude/setup-5e-shop-mode-a-khIAi` is frontend visual migration work, merges to main only at Epic 6 closure. Backend fixes that need to reach production should: (1) be developed on continue stack first for visual-migration epic record-keeping, (2) be cherry-picked to a new branch from main HEAD (`fix/<short-description>`), (3) PR'd to main → merged → backend auto-deploy via testhexlash service webhook. Pattern established after 5R Recovery #63 (initial Phase 1 commit on continue stack didn't reach prod — Q1 closure required cherry-pick PR #353).
 
-**Note (5U closure):** Sub-Epic 5U used designated branch `claude/investigate-retirement-animation-zQeg4` per harness assignment, breaking the 11-decision continue stack precedent (5J-5T) for the closer slot. Both branches (continue stack 5J-5T + designated 5U) ahead of main, reconciliation deferred к Эпик 6 cutover per HANDOFF_EPIC6_CUTOVER §3 R5.
+**Note (5U closure):** Sub-Epic 5U used designated branch `claude/investigate-retirement-animation-zQeg4` per harness assignment, breaking the 11-decision continue stack precedent (5J-5T) for the closer slot. Both branches (continue stack 5J-5T + designated 5U) ahead of main, reconciliation deferred к Эпик 6 cutover.
 
 ### PvP System Audit — P0+P1 Fixes — ✅ COMPLETE
 
@@ -1676,10 +1671,6 @@ Club Mode (agents) now independent from Clan. Personal FightClub per user, auto-
 **Scope:** Визуальная миграция всех экранов к дизайн-системе Neon Discipline.
 **Duration:** 53 коммитов, 2026-03-15 — 2026-04-08
 
-**Финальные документы:**
-- `/docs/road1-final-report.md` — полный отчёт с статистикой
-- `/docs/road2-parking-list.md` — парковочный список для Phase 1
-
 **Инварианты подтверждены:**
 - 0 legacy `--pink`/`--dark` вне PrivacyView (документированное исключение)
 - i18n: 0 изменений в locale файлах от Road 1 коммитов (чисто визуальная миграция)
@@ -1723,7 +1714,7 @@ Scheduler tick (30s) → recoverStuck → wakeResting → getReady → matchmake
 
 ### Две параллельные системы прогрессии
 
-- **User progression** — школа тренера. Vuex `progressionState`, frontend-driven (taps → freeXP → allocate → branchExp → unlock/levelup moves). Сохраняется в `User.progression` Json blob через `PUT /user/progression`. Формат moves: `{ moveId: { level, unlocked } }`. _Note (2026-05-17): `progressionState` Vuex module retired in Phase 7-pre-2 (commit `bee213b`); FE sync chain is largely vestigial — see `docs/investigations/PROGRESSION_INVESTIGATION_REPORT.md` (PR #385) for current state map and gap analysis._
+- **User progression** — школа тренера. Vuex `progressionState`, frontend-driven (taps → freeXP → allocate → branchExp → unlock/levelup moves). Сохраняется в `User.progression` Json blob через `PUT /user/progression`. Формат moves: `{ moveId: { level, unlocked } }`. _Note (2026-05-17): `progressionState` Vuex module retired in Phase 7-pre-2 (commit `bee213b`); FE sync chain is largely vestigial — see PR #385 for current state map and gap analysis._
 - **Agent progression** — ученики. `AgentProgression` Prisma table, backend-validated. Branch XP зарабатывается в боях автоматически (`distributeXpByBranch`). Формат moves: `[{ moveId, level }]`.
 - **Research Gate** соединяет: Agent не может выучить мув, не разлоченный игроком. Max level агента ≤ level мува игрока. Работающая механика с полным циклом (available-moves → learn-move → validate-deck).
 - **НЕ выпиливаем** User progression в Phase 1 — обе системы остаются параллельно.
@@ -1734,7 +1725,7 @@ Feature flag `X402_ENABLED=false` на проде. On-chain verification = TODO 
 
 ### Известные баги
 
-52 пункта в `docs/phase1-parking-list.md`. Критичные: ~~legend buff на обоих бойцах (#1)~~ **FIXED**, race condition scheduler vs train (#2), /user/progression доверяет фронтенду (#3). 11 из 52 фиксятся в Phase 1.
+52 пункта долгов (deepdive #1a-#1i). Критичные: ~~legend buff на обоих бойцах (#1)~~ **FIXED**, race condition scheduler vs train (#2), /user/progression доверяет фронтенду (#3). 11 из 52 фиксятся в Phase 1.
 
 ---
 
@@ -1808,13 +1799,13 @@ Lazy per-user migration on `GET /v1/user/me`. Creates Agent "Fighter #1" from Us
 
 ### Парковочный список
 
-52 пункта долгов в `docs/phase1-parking-list.md`. 11 фиксятся в Phase 1, 41 — в Дороге 2 после deploy.
+52 пункта долгов. 11 фиксятся в Phase 1, 41 — в Дороге 2 после deploy.
 
 ---
 
 ## v2 Migration
 
-Визуальная миграция на концепцию прототипа `docs/visual-migration/hexlash_v24.html`. Живёт параллельно старому визуалу через feature flag `/v2`. Источник правды по миграции — `docs/visual-migration/HANDOFF_VISUAL_MIGRATION.md`. Ветка разработки — `visual-v2` от `main`.
+Визуальная миграция на концепцию v24-прототипа. Жила параллельно старому визуалу через feature flag `/v2`. Ветка разработки — `visual-v2` от `main`. (Завершённый эпик — детали в git history.)
 
 ### Эпик 1 — Foundation (✅ COMPLETE)
 
@@ -2098,7 +2089,7 @@ src/styles/v24/
 - FIGHT-кнопка в FD убирается — Matchmaking становится входом в Fight.
 - fd-resources возврат на `right: 14px`.
 
-**Следующий эпик:** Эпик 3B — Matchmaking + Training + Create сцены. План в `docs/visual-migration/HANDOFF_VISUAL_MIGRATION.md` §8.
+**Следующий эпик:** Эпик 3B — Matchmaking + Training + Create сцены.
 
 ### Эпик 3Ba — Training (✅ COMPLETE)
 
@@ -2375,7 +2366,7 @@ src/scene/objects/archetypeColors.js          — 26 — shared pickFighterColor
 - **`refreshFighters` atomic rebuild + no-op short-circuit.** Сравнение `(oldFirstId, oldSecondId) === (newFirstId, newSecondId)` отсекает spurious fires (Vuex getter recomputes на любой mutation state.agents, даже когда slot identity не изменился). При реальном diff — dispose обоих + applyFighters заново. Per-slot granularity — deferred в Epic 5 polish.
 - **Default skin hardcoded, не picker.** `'skin_m_1.png'` satisfies backend `SKIN_REGEX = /^(skin_(m|w)_\d{1,3}|vip_(k|t)\d{1,2})\.png$/`. Совпадает с Prisma `User.skin` default. Real skin picker (UI + validation) — Epic 5 scope.
 - **Backend `VALID_ARCHETYPES` 1-в-1 с v2 `ARCHETYPES`.** Step 0 pre-flight check верифицировал 6 ids (predator/sentinel/ghost/analyst/maverick/juggernaut). Payload в `agent/createAgent` отправляет `createState.archetypeId` напрямую как `primaryModule` — без mapping helper.
-- **FD `setFighter({ key, archetype })` contract.** `key` управляет 3D mesh variant (warden | predator) — все 6 backend archetypes пока mapped на warden mesh (predator mesh для legacy). `archetype` управляет glow color через `pickFighterColor` и принимает любой из 6 ids OR legacy key. Per-archetype 3D variants — Epic 5+ (см. `HANDOFF_FIGHTER_MODEL.md`).
+- **FD `setFighter({ key, archetype })` contract.** `key` управляет 3D mesh variant (warden | predator) — все 6 backend archetypes пока mapped на warden mesh (predator mesh для legacy). `archetype` управляет glow color через `pickFighterColor` и принимает любой из 6 ids OR legacy key. Per-archetype 3D variants — Epic 5+.
 - **`pickFighterColor` shared helper.** Extracted в `archetypeColors.js` — reuse в PitScene (captain + secondAgent glow) + FighterDetailScene (FD podium glow). Без хакерских local duplicates.
 - **HUD↔orchestrator boundary (ownership shift).** Materialize-логика в Epic 4 переехала HudCreate → CreateView, симметрично паттерну 3Bb HudMatchmaking / MatchmakingView. HUD становится pure-presentation; orchestrator владеет scene + animation cancel handle. Pattern: HUD шлёт payload event, orchestrator решает side-effects.
 - **`fetchAgent` state-check вместо throw.** Action глушит ошибки (`catch` без re-throw) — legacy AgentDetailView и trainAgent полагаются на этот контракт. Dynamic FD после await проверяет `store.state.agent.currentAgent?.id === key`; mismatch → redirect. Zero risk для legacy consumers.
@@ -3953,7 +3944,7 @@ Pre-investigation 5S scope listed 5 candidate items. P0.5 Q1.1-Q1.5 investigatio
 **Recovery log (5 catches in 5S session):**
 
 - **Recovery #67 — Pre-flight branch divergence:** Harness fresh slug `claude/investigate-p0-issues-4Is8v` (local) vs continue stack `claude/setup-5e-shop-mode-a-khIAi` (remote, same SHA `70a310d`). Resolved via ТЗ explicit-permission framework + 9-decision precedent → switched to continue stack. 10th continue stack decision.
-- **Recovery #68 — P0 monolithic write 1st timeout:** Stream idle timeout on STARTUP_5S_CLEANUP_BATCH.md → preventive split P0a (sections 1-4, 120 lines) + P0b (sections 5-8 append, 167 lines). 287 lines total. 2nd application of preventive split framework.
+- **Recovery #68 — P0 monolithic write 1st timeout:** Stream idle timeout on the 5S startup doc → preventive split P0a (sections 1-4, 120 lines) + P0b (sections 5-8 append, 167 lines). 287 lines total. 2nd application of preventive split framework.
 - **Recovery #69 — Punch3D assumption falsified (P0.5 Q1.2):** Pre-investigation listed Punch3D as orphan candidate; investigation revealed live import in `src/views/TrainingView.vue:97` + template usage. Item #2 dropped from scope.
 - **Recovery #70 — HudProfile broad grep over-count (P0.5 Q1.3):** Initial grep returned 12 hits; cross-reference with CLAUDE.md 5B/5J/5Q audit trail revealed real card count = 6. Lesson #11 self-correction via documented architecture.
 - **Recovery #71 — P3a FINAL_REPORT 1st timeout:** Stream idle timeout on monolithic FINAL_REPORT write → preventive split P3a1 (sections 1-4, 99 lines) + P3a2 (sections 5-8 append, 122 lines). 221 lines total. 3rd application of preventive split framework — pattern fully stabilized.
@@ -4098,11 +4089,11 @@ P1 pre-edit re-verify CLEAN (no Recovery beyond P0.5) — P0.5-to-P1 intra-sessi
 **Type:** Closer slot — animation polish, S-size, frontend-only
 **Phases:** 6 commits (P1 functional + P2a1 + P2a2 FINAL_REPORT split + P2b1.1 + P2b1.2 + P2b2 HANDOFF split + this P2c)
 **Functional commits:** 1 (`a03270d` Phase 1 — retirement animation polish, 3 animations on HudRetirement.vue)
-**Branch:** designated `claude/investigate-retirement-animation-zQeg4` — 5U first sub-epic on harness-designated branch since 5J (12-decision continue stack `claude/setup-5e-shop-mode-a-khIAi` exists separately, both ahead of main, reconciliation deferred к Эпик 6 per HANDOFF_EPIC6_CUTOVER §3 R5)
+**Branch:** designated `claude/investigate-retirement-animation-zQeg4` — 5U first sub-epic on harness-designated branch since 5J (12-decision continue stack `claude/setup-5e-shop-mode-a-khIAi` exists separately, both ahead of main, reconciliation deferred к Эпик 6)
 **HEAD before:** `5f936e0` (5T P6 closure)
 **HEAD after Phase 1:** `a03270d`
 **HEAD after Phase 2a:** `cd0ed8f` (FINAL_REPORT_5U complete via P2a1+P2a2 reactive split)
-**HEAD after Phase 2b:** `272e71f` (HANDOFF_EPIC6_CUTOVER complete via P2b1.1+P2b1.2+P2b2)
+**HEAD after Phase 2b:** `272e71f` (cutover handoff complete via P2b1.1+P2b1.2+P2b2)
 **HEAD after Phase 2c (this):** `<NEW_HASH>` — 5U CLOSURE + Эпик 5 CLOSED ✅
 
 **What 5U did:**
@@ -5455,9 +5446,9 @@ Promotion: 6th mandatory Phase 0 subsection (alongside 5 prior — API contract 
 - Pivot reasoning preservation principle (5T contribution)
 - 3-layer i18n validation framework (5T contribution: presence → value-equivalence → callsite-presence)
 
-**Эпик 5 closure record per HANDOFF_EPIC6_CUTOVER.md** — handoff document для свежего design-Claude chat для Эпика 6 audit kickoff. 12 risks documented, 8 Q-templates готовы для investigation, rollback skeleton + acceptance gate defined.
+**Эпик 5 closure record** — cutover handoff document для свежего design-Claude chat для Эпика 6 audit kickoff. 12 risks documented, 8 Q-templates готовы для investigation, rollback skeleton + acceptance gate defined.
 
-**Следующий эпик:** **Эпик 6 cutover** — финальный эпик миграции. `/v2/*` becomes default route. Continue stack + designated branch reconciled to main. Legacy `/src` v1 components removed. 52-item parking list addressed. Cutover handoff: `HANDOFF_EPIC6_CUTOVER.md` (Phase 2b deliverable).
+**Следующий эпик:** **Эпик 6 cutover** — финальный эпик миграции. `/v2/*` becomes default route. Continue stack + designated branch reconciled to main. Legacy `/src` v1 components removed. 52-item parking list addressed.
 
 **Эпик 5 — CLOSED ✅.**
 
@@ -5677,7 +5668,6 @@ structural divergence resolved Option E switch к ТЗ-specified branch).
 comprehensive 15-sub-epic retrospective).
 **Phase 0 report:** `docs/visual-migration/EPIC6_SUBEPIC_8_PHASE_0_REPORT_PART1/2A/2B.md`
 (3-part split per stream timeout fallback, 8th application preventive split framework).
-**Acceptance gate report:** `docs/visual-migration/EPIC6_SUBEPIC_8_ACCEPTANCE_GATE_PREFLIGHT.md`.
 
 **Что закрыто:**
 
@@ -6363,9 +6353,9 @@ Closes 4 carry-overs accumulated через 1b/8a/8b/8c sub-epic chain. Pure cle
 | 9 refresh | 14 reword edits across 8 files | `d040369` | — |
 | 10 Stage A | Backend `User.language` column drop + helpers/routes/tests | **PR #379** merged (`f6fc38c` + `2101822`) | [`PHASE10_STAGE_A_INVENTORY.md`](docs/legacy-cleanup/PHASE10_STAGE_A_INVENTORY.md) |
 | 10 Stage B | Frontend `masterModel` strip + `taskState` dead reads + mockData cleanup + masterState comment refresh | `34ac25f` | — |
-| Wrap-up | Playwright smoke infrastructure + SSO guard + report | `2b80f21` + `aa5cca3` + `6c656ba` | [`WRAP_UP_SMOKE_REPORT.md`](docs/legacy-cleanup/WRAP_UP_SMOKE_REPORT.md) |
+| Wrap-up | Playwright smoke infrastructure + SSO guard + report | `2b80f21` + `aa5cca3` + `6c656ba` | (git history) |
 
-Final wrap-up PR: **PR #380** merged via standard linear closure shape, deferred-verify gate on Vercel preview blocked by Deployment Protection SSO gate — owner-side manual sanity completed before merge per Option C in [`WRAP_UP_SMOKE_REPORT.md`](docs/legacy-cleanup/WRAP_UP_SMOKE_REPORT.md).
+Final wrap-up PR: **PR #380** merged via standard linear closure shape, deferred-verify gate on Vercel preview blocked by Deployment Protection SSO gate — owner-side manual sanity completed before merge per Option C (report in git history).
 
 ### Original backlog (L1–L11) — final disposition
 
@@ -6415,7 +6405,7 @@ Plus **27 orphan components** from Phase 1 atomic batch (1.A/1.B/1.C clusters) t
 #### Open findings (require separate work)
 
 7. ✅ **CLOSED via Friends mini-series** — was: Friends UI regression investigation. Final state (3 phases): (a) Investigation (commit `70b4c4a`, `docs/legacy-cleanup/FRIENDS_INVESTIGATION_REPORT.md`) confirmed feature alive in v2; v1 page `FriendsView.vue` intentionally migrated to a tab inside `/play/profile` (Эпик 6 Sub-epic 8 C5 redirect + C9 file delete); (b) Player-search restore (PR #381, merged) closed the only real UX gap; (c) Cleanup (this commit) retired orphan i18n keys + 3 zombie components. 0 hot-fixes across series.
-8. ✅ **CLOSED as vestigial via investigation PR #385** — was: Product question: progression-restore/sync re-implement (3 broken-namespace silent no-op finding в Phase 7-pre-2, функционал не работал на проде неизвестное время). Investigation: `docs/investigations/PROGRESSION_INVESTIGATION_REPORT.md` (PR #385) confirmed three retired phantom dispatches (`progressionState/restoreProgression`, `restoreDeck`, `syncProgression`) mapped to three intents — Intent A largely covered by scalar fields + per-agent migration, Intent B was already shadow-dead, Intent C had narrow persistence gap (User-level playerModules don't survive logout) but **functionally shadowed** by Captain Agent modules in v2 combat (`cardFightState.startFight` overrides at fight entry). Decision: no code changes — owner deferred broader Captain/agent concept redesign to a separate game-design session; premature retire of ModuleBuilder / PreparationView / User-level module chain would block future concept choices. Surfaced cleanup candidates (deferred until concept redesign clarifies what stays): backend `PUT /v1/user/progression` orphan endpoint (zero FE callers), `User.deck` Json column (zero readers). Related: parking item #9 remains open, linked to the same concept redesign.
+8. ✅ **CLOSED as vestigial via investigation PR #385** — was: Product question: progression-restore/sync re-implement (3 broken-namespace silent no-op finding в Phase 7-pre-2, функционал не работал на проде неизвестное время). Investigation (PR #385) confirmed three retired phantom dispatches (`progressionState/restoreProgression`, `restoreDeck`, `syncProgression`) mapped to three intents — Intent A largely covered by scalar fields + per-agent migration, Intent B was already shadow-dead, Intent C had narrow persistence gap (User-level playerModules don't survive logout) but **functionally shadowed** by Captain Agent modules in v2 combat (`cardFightState.startFight` overrides at fight entry). Decision: no code changes — owner deferred broader Captain/agent concept redesign to a separate game-design session; premature retire of ModuleBuilder / PreparationView / User-level module chain would block future concept choices. Surfaced cleanup candidates (deferred until concept redesign clarifies what stays): backend `PUT /v1/user/progression` orphan endpoint (zero FE callers), `User.deck` Json column (zero readers). Related: parking item #9 remains open, linked to the same concept redesign.
 9. **Review `startFight` progression dependency** — defensive `rootState.progression || {}` nil-check at `cardFightState.js:244` (Phase 7-pre-2). Masks a semantic question about what `buildPlayerFighter` should consume in modern combat. Linked to #8 (now closed as vestigial via investigation PR #385); to be revisited together when owner runs the broader Captain/agent concept redesign session.
 10. ✅ **CLOSED via chore/telegram-flag-retire** — was: Telegram adaptive flag chain preserve-zone broken. Owner confirmed Telegram Mini App not planned. Final state: `App.vue` writer block + `masterService.{setTelegram,getTelegram}` + flag-related comments in `router/index.js` all retired (single commit). Backend untouched (already cleaned of TG auth code earlier; no DB column for the flag — localStorage-only). Zero hits across `src/` post-retire. Lesson M2 (preserve-zone justifications must be re-verified independently when retiring components) referenced this case and remains valid as a permanent reference.
 11. **Phase 11 candidate** — `SocialTask.language` + `DailyTask.language` columns + `task.js` route filters + `seed.js` rewrite + RU-duplicate prod data cleanup. Backend extension series.
@@ -6468,7 +6458,6 @@ All series artifacts: [`docs/legacy-cleanup/`](docs/legacy-cleanup/)
 - `PHASE8_PHASE0_AUDIT_REPORT.md`
 - `PHASE9_DISCOVERY.md`
 - `PHASE10_STAGE_A_INVENTORY.md`
-- `WRAP_UP_SMOKE_REPORT.md`
 - `SERIES_CLOSED.md` — final summary artifact (this section's standalone counterpart)
 
 ### Merged PRs
