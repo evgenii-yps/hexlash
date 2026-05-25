@@ -1,11 +1,9 @@
 import { CombatEngine } from '@/core/engine/combatEngine.js';
 import { ModuleAIStrategy } from '@/core/engine/aiStrategy.js';
 import { OpponentGenerator } from '@/core/engine/opponentGenerator.js';
-import { ARCHETYPES } from '@/core/data/archetypes.js';
 import { calculatePowerRating, buildPlayerFighter } from '@/utils/powerRating.js';
-import { t } from '@/locales/index.js';
 import router from '@/router/index.js';
-import { MAX_HP, MAX_ROUNDS, TOTAL_ROUNDS, DICE_COOLDOWN_ROUNDS, COACH_MIN_ROUND, COACH_TRIGGER_CHANCE, COACH_BOOST_ROUNDS, ROUND_ANIMATION_MS } from '@/core/constants.js';
+import { MAX_HP, TOTAL_ROUNDS, DICE_COOLDOWN_ROUNDS, COACH_MIN_ROUND, COACH_TRIGGER_CHANCE, COACH_BOOST_ROUNDS, ROUND_ANIMATION_MS } from '@/core/constants.js';
 import iconHeal from '@/assets/images/icons/heal.svg';
 import iconAdrenaline from '@/assets/images/icons/adrenaline.svg';
 import iconShield from '@/assets/images/icons/shield.svg';
@@ -97,38 +95,9 @@ const state = {
 
 // ─── Getters ─────────────────────────────────────────────────────────────────
 const getters = {
-    getPlayerModules:    (s) => s.playerModules,
-    getOpponent:         (s) => s.opponent,
-    getFightPhase:       (s) => s.fightPhase,
-    getDifficulty:       (s) => s.difficulty,
-
-    getLiveHP1:          (s) => s.liveHP1,
-    getLiveHP2:          (s) => s.liveHP2,
-    getRoundNum:         (s) => s.roundNum,
-    getRoundLog:         (s) => s.roundLog,
-    getCurrentRound:     (s) => s.roundLog[s.roundLog.length - 1] || null,
-
-    getPlayerModifiers:  (s) => s.playerModifiers,
-    getDiceState:        (s) => s.diceState,
-    getFightStats:       (s) => s.fightStats,
-    getEventTitle:       (s) => s.eventTitle,
-    getEventTitleClass:  (s) => s.eventTitleClass,
-    getEventImage:       (s) => s.eventImage,
-
-    getCoachAdvice:       (s) => s.coachAdvice,
+    getPlayerModules:     (s) => s.playerModules,
     getEmergencyProtocol: (s) => s.emergencyProtocol,
-    getXpEarned:          (s) => s.xpEarned,
-    getXpAwarded:         (s) => s.xpAwarded,
-
-    getBuildDescription: (s) => {
-        const names = s.playerModules
-            .filter(id => id)
-            .map(id => t.value.arena.archetypes[id] || ARCHETYPES[id]?.name || id);
-        return names.join(' + ');
-    },
-
-    isOverdrive:    (s) => s.roundNum > MAX_ROUNDS,
-    isBuildValid:   (s) => s.playerModules.every(m => m !== null),
+    isBuildValid:         (s) => s.playerModules.every(m => m !== null),
 };
 
 // ─── Mutations ────────────────────────────────────────────────────────────────
