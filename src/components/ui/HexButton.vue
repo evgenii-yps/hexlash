@@ -6,26 +6,15 @@
     @click="$emit('click', $event)"
   >
     <span v-if="loading" class="hex-btn-spinner" />
-    <template v-if="!loading">
-      <PixelIcon
-        v-if="icon"
-        :name="icon"
-        :size="iconSize"
-        :glow="iconGlow"
-        :disabled="disabled"
-      />
-      <slot />
-    </template>
+    <slot v-if="!loading" />
   </button>
 </template>
 
 <script>
 import { computed } from 'vue'
-import PixelIcon from './PixelIcon.vue'
 
 export default {
   name: 'HexButton',
-  components: { PixelIcon },
   emits: ['click'],
   props: {
     variant: {
@@ -53,14 +42,6 @@ export default {
     block: {
       type: Boolean,
       default: false
-    },
-    icon: {
-      type: String,
-      default: null
-    },
-    iconGlow: {
-      type: Boolean,
-      default: false
     }
   },
   setup(props) {
@@ -70,8 +51,7 @@ export default {
       `hex-button--${props.size}`,
       {
         'hex-button--block': props.block,
-        'hex-button--loading': props.loading,
-        'hex-button--has-icon': !!props.icon
+        'hex-button--loading': props.loading
       }
     ])
 
@@ -82,11 +62,7 @@ export default {
       }
     })
 
-    const iconSize = computed(() => {
-      return { sm: 16, md: 20, lg: 24 }[props.size]
-    })
-
-    return { classes, rootStyle, iconSize }
+    return { classes, rootStyle }
   }
 }
 </script>
@@ -107,10 +83,6 @@ export default {
   position: relative;
   outline: none;
   -webkit-tap-highlight-color: transparent;
-}
-
-.hex-button--has-icon {
-  gap: 8px;
 }
 
 /* — Sizes — */

@@ -5,7 +5,7 @@ import { ARCHETYPES } from '@/core/data/archetypes.js';
 import { calculatePowerRating, buildPlayerFighter } from '@/utils/powerRating.js';
 import { t } from '@/locales/index.js';
 import router from '@/router/index.js';
-import { MAX_HP, MAX_ROUNDS, TOTAL_ROUNDS, DICE_COOLDOWN_ROUNDS, EMERGENCY_HP_THRESHOLD, COACH_MIN_ROUND, COACH_TRIGGER_CHANCE, COACH_BOOST_ROUNDS, ROUND_ANIMATION_MS } from '@/core/constants.js';
+import { MAX_HP, MAX_ROUNDS, TOTAL_ROUNDS, DICE_COOLDOWN_ROUNDS, COACH_MIN_ROUND, COACH_TRIGGER_CHANCE, COACH_BOOST_ROUNDS, ROUND_ANIMATION_MS } from '@/core/constants.js';
 import iconHeal from '@/assets/images/icons/heal.svg';
 import iconAdrenaline from '@/assets/images/icons/adrenaline.svg';
 import iconShield from '@/assets/images/icons/shield.svg';
@@ -275,46 +275,6 @@ const actions = {
         saveFightState(state);
 
         await router.push('/fight');
-    },
-
-    // ── Emergency Protocol ─────────────────────────────────────────────────
-    checkEmergencyProtocol({ commit, state }) {
-        if (state.emergencyProtocol.used) return;
-
-        const hpPercent = (state.liveHP1 / MAX_HP) * 100;
-        const protocol  = state.emergencyProtocol;
-        let shouldTrigger = false;
-
-        switch (protocol.type) {
-            case 'medkit':
-                shouldTrigger = hpPercent < EMERGENCY_HP_THRESHOLD;
-                break;
-            case 'adrenaline':
-                shouldTrigger = hpPercent < 20 && (state.liveHP2 / MAX_HP) * 100 < 30;
-                break;
-            case 'shield': {
-                const lastRounds = state.roundLog.slice(-3);
-                shouldTrigger = lastRounds.length >= 3 && lastRounds.every(r => r.damage1 > 0);
-                break;
-            }
-        }
-
-        if (shouldTrigger) {
-            switch (protocol.type) {
-                case 'medkit':
-                    commit('setLiveHP1', Math.min(MAX_HP, state.liveHP1 + 25));
-                    break;
-                case 'adrenaline':
-                    commit('setPlayerModifiers', { attackMultiplier: 2 });
-                    break;
-                case 'shield':
-                    commit('setPlayerModifiers', { shieldActive: true });
-                    break;
-            }
-            const PROTOCOL_IMAGES = { medkit: iconHeal, adrenaline: iconAdrenaline, shield: iconShield };
-            commit('setEmergencyUsed', true);
-            commit('setEventTitle', { title: t.value.fight.lblEventEmergency, cls: 'event-emergency', image: PROTOCOL_IMAGES[protocol.type] });
-        }
     },
 
 };

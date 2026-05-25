@@ -10,8 +10,6 @@ const state = {
   // Detail view state
   currentAgent: null,
   currentAgentLoading: false,
-  availableMoves: [],
-  availableMovesLoading: false,
   // Sub-epic 2 — Ratings tab AGENTS data (Path A Vuex extension).
   // REPLACE semantics on setAgentRankings (preempts F3 stale-rows risk).
   // Mirrors clanRatings/participantRatings shape but with replace, not append.
@@ -89,8 +87,6 @@ const mutations = {
   // Detail
   SET_CURRENT_AGENT(state, agent) { state.currentAgent = agent; },
   SET_CURRENT_AGENT_LOADING(state, val) { state.currentAgentLoading = val; },
-  SET_AVAILABLE_MOVES(state, moves) { state.availableMoves = moves; },
-  SET_AVAILABLE_MOVES_LOADING(state, val) { state.availableMovesLoading = val; },
   // Sub-epic 2 — AGENTS rankings. REPLACE (not append, unlike clanState
   // setClanRatings / userState setParticipantRatings — deliberate, preempts
   // F3 stale-rows risk for AGENTS tab refetch idempotency).
@@ -199,18 +195,6 @@ const actions = {
       console.error('Failed to fetch agent:', err);
     } finally {
       commit('SET_CURRENT_AGENT_LOADING', false);
-    }
-  },
-
-  async fetchAvailableMoves({ commit }, agentId) {
-    commit('SET_AVAILABLE_MOVES_LOADING', true);
-    try {
-      const res = await apiClient.get(`/agent/${agentId}/available-moves`, { authRequired: true });
-      commit('SET_AVAILABLE_MOVES', res.moves || []);
-    } catch (err) {
-      console.error('Failed to fetch available moves:', err);
-    } finally {
-      commit('SET_AVAILABLE_MOVES_LOADING', false);
     }
   },
 
