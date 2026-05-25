@@ -4,6 +4,8 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 
 > **Club-Mode v1 removed 25.05.2026** (Pack 3.2): v1 `/arena/*` screens + client-side PvE engine deleted. The Club-Mode product model is retained; new implementation comes on Этапы 1/2 (backend-driven). Foundation kept: Prisma `Agent`/`Captain`/`Belt`, `agent` Vuex module, backend services, `/ai/morning-report` + `/ai/build-description`.
 
+> **Docs archive removed 25.05.2026** (Pack 3.3): historical Эпик 1-9 + Legacy Cleanup paperwork (handoffs, phase reports, final reports, v24 prototype) deleted from `docs/` (~3 MB). Working docs kept: combat design (`0[1-3]*.md`), `club-mode-concept.md`, active audits, `generate_pdf.py`, `legacy-cleanup/SERIES_CLOSED.md`, `investigations/TASK_LANGUAGE_*`. Everything recoverable via git history.
+
 > **RULE: After every task, update this file.** Changed views/components → update descriptions. New components → add to Component Highlights. New data files → add to Project Structure. Changed architecture → update relevant sections. CLAUDE.md is the source of truth.
 
 ---
