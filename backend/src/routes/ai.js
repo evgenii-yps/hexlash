@@ -7,7 +7,6 @@ const { authMiddleware } = require('../middleware/auth');
 // In-memory rate limiter (no external dependencies)
 const rateLimitMap = new Map();
 const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
-const RATE_LIMIT_MAX = 5; // 5 requests per minute
 
 const buildDescRateLimitMap = new Map();
 const BUILD_DESC_RATE_LIMIT_MAX = 10; // 10 requests per minute
