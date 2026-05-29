@@ -10,11 +10,18 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
 
 ---
 
+## Two-Stage Plan (fixed 24.05.2026)
+
+- **Этап 1 — Визуализация:** показать рабочую идею целиком — MVP-каркас, UI-полнота, визуальная различимость всех 6 архетипов в 3D (сейчас 4 из 6 мапятся на одну `warden`-модель — известная дыра, см. Combat / `fighterModel.js`), визуальные заглушки под технические фичи.
+- **Этап 2 — Техническое оснащение:** SIWE-аутентификация, NFT-минт, x402 с on-chain верификацией, AI Trainer через Claude API, инфраструктура.
+
+---
+
 ## Tech Stack
 
-**Frontend:** Vue 3.5 · Vite 7 · Vuex 4 · Vue Router 4 · Vuetify 2 · Three.js · Howler.js · Ethers.js 6 (legacy, wagmi migration planned) · @wagmi/vue · viem · @tanstack/vue-query · Custom i18n (11 locales) · Amplitude
+**Frontend:** Vue 3.5 · Vite 7 · Vuex 4 · Vue Router 4 · Vuetify 3 · Three.js · Howler.js · Web3: ethers.js 6 + @wagmi/vue + @wagmi/core + viem + @reown/appkit (+ @reown/appkit-adapter-wagmi) + @coinbase/wallet-sdk (⚠️ Reown/wagmi wiring needs Web3 verification — no direct `@reown/*` imports yet; Pack 3.4 open tail) · @tanstack/vue-query · Custom i18n (en-only; other locales cut, return on Этап 2+) · Amplitude
 
-**Backend:** Express 4 · Prisma 5 (PostgreSQL) · JWT · WebSocket (ws) · Multer · bcryptjs · express-rate-limit · Anthropic SDK (AI Trainer)
+**Backend:** Express 4 · Prisma 5 (PostgreSQL) · JWT · WebSocket (ws) · Multer · bcryptjs · express-rate-limit · Anthropic SDK (AI Club reports — morning-report / build-description; AI Trainer endpoint removed, rebuild on Этап 2) · Resend (transactional email)
 
 ---
 
@@ -67,9 +74,9 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
     sound/                 — punch_air.mp3, punch_hit.mp3, rain.mp3
     textures/              — Texture files
     abi/                   — Smart contract ABIs
-  locales/                 — i18n: ru, en, de, es, fr, hi, ja, ko, pt, zh, ar
-    pages/rules/           — 11 locale rule pages (JSON)
-    pages/help/            — Help pages (en, ru)
+  locales/                 — i18n: en-only (en.js + index.js); other locales cut, return on Этап 2+
+    pages/rules/           — rule page (en.json only)
+    pages/help/            — help page (en.json only)
 
 /backend
   src/
@@ -135,7 +142,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
   hexlash-testing/SKILL.md    — Testing & QA procedures
   hexlash-web3/SKILL.md       — Web3 integration (NFT, wallet, x402)
   hexlash-ai/SKILL.md         — AI system (Claude API, Trainer)
-  hexlash-i18n/SKILL.md       — Localization (11 languages)
+  hexlash-i18n/SKILL.md       — Localization (en-only; other locales cut, return on Этап 2+)
   hexlash-gamedesign/SKILL.md — Game design & balance
 ```
 
@@ -242,7 +249,9 @@ unlockRequirements:  { 3: {taps:300, exp:150}, 4: {taps:250, exp:120}, 5: {taps:
 
 ## Design System — "Neon Discipline"
 
-**Status:** v1.0 — Visual System established.
+> ⚠️ **Дизайн-система на пересмотре (с 29.05.2026).** Владелец планирует пересобрать визуальную систему на основе брендбука, который будет собран из ревизии лендинга и auth-экранов. До готовности брендбука — новые визуальные решения в неочевидных случаях **НЕ принимать «по правилам Neon Discipline» автоматически.** Если задача требует визуального решения, выходящего за рамки точечной правки существующего экрана — **остановиться и поднять вопрос с владельцем.** Существующие экраны под Neon Discipline трогать без явного запроса не нужно — они работают.
+
+**Status:** v1.0 — Visual System established (⚠️ на пересмотре — см. note выше).
 **Full visual guide:** Hexlash_Visual_System.pdf v1.0 (file not in repo — source of truth is hexlash-design/SKILL.md)
 **Operational reference:** /skills/hexlash-design/SKILL.md
 **Key rules:** 1) one pink accent per screen, 2) pixel-font (Anonymous) only for titles/impact moments (exception: splash screens use two pixel-font blocks — HEXLASH + NEVER GIVE UP), 3) archetype colors only in fighter icons/active context, 4) backgrounds = atmosphere (stylized underground), UI = function.
@@ -285,6 +294,8 @@ Internally uses `--_arch-color` CSS custom property for scoped styling.
 ---
 
 ## CSS Design System (legacy → migrating to --hex-*)
+
+> ⚠️ **Дизайн-система на пересмотре (с 29.05.2026)** — см. note в разделе `## Design System — "Neon Discipline"` выше. Новые визуальные решения за рамками точечных правок — останавливаться и поднимать вопрос с владельцем до сборки брендбука.
 
 > **Visual System v1.0** — operational reference in /skills/hexlash-design/SKILL.md (Hexlash_Visual_System.pdf not in repo). Key rules: one pink accent per screen, pixel-font only for titles/impact, archetype colors only in fighter icons/active context, backgrounds = atmosphere (stylized underground), UI = function.
 
@@ -1799,7 +1810,9 @@ Lazy per-user migration on `GET /v1/user/me`. Creates Agent "Fighter #1" from Us
 
 ### Парковочный список
 
-52 пункта долгов. 11 фиксятся в Phase 1, 41 — в Дороге 2 после deploy.
+> ⚠️ **Требует ревизии (29.05.2026)** — список частично закрыт треком чистки кода 25.05.2026 (Pack 1–3.x, ~9400 строк удалено). Цифры ниже устарели, актуальное число открытых пунктов не пересчитано.
+
+52 пункта долгов (исходный счёт). 11 фиксятся в Phase 1, 41 — в Дороге 2 после deploy.
 
 ---
 
