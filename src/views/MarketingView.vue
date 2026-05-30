@@ -1,8 +1,8 @@
 <template>
   <div class="marketing">
-    <!-- Sticky header (claude/landing-refresh — added 2026-05-21).
+    <!-- Sticky header (chrome, not one of the 5 sections).
          Transparent on hero, gains dark bg + blur after scroll > 50px.
-         Anchors smooth-scroll to existing sections via id targets. -->
+         Nav anchors target the merged section ids. -->
     <header class="marketing-header" :class="{ 'is-scrolled': isHeaderScrolled }">
       <div class="marketing-header__inner">
         <a href="#" class="marketing-header__brand" @click.prevent="scrollToTop" aria-label="Hexlash">
@@ -12,7 +12,6 @@
         <nav class="marketing-header__nav" aria-label="Primary">
           <a href="#gameplay" class="marketing-header__navlink" @click.prevent="scrollToSection('gameplay')">GAMEPLAY</a>
           <a href="#token" class="marketing-header__navlink" @click.prevent="scrollToSection('token')">$HEX</a>
-          <a href="#roadmap" class="marketing-header__navlink" @click.prevent="scrollToSection('roadmap')">ROADMAP</a>
         </nav>
 
         <div class="marketing-header__socials">
@@ -26,185 +25,160 @@
       </div>
     </header>
 
-    <section class="marketing-hero" ref="heroRef">
-      <!-- Animated hex pattern background -->
-      <div class="marketing-hero__hex-bg" aria-hidden="true">
-        <svg class="marketing-hero__hex-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid slice">
+    <!-- ========================================================
+         1. HERO — "playable now", player-first, single PLAY CTA.
+         ======================================================== -->
+    <section class="lp-hero" ref="heroRef">
+      <!-- Hex grid background — pink at ~13% opacity -->
+      <div class="lp-hero__hex" aria-hidden="true">
+        <svg class="lp-hero__hex-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid slice">
           <defs>
-            <pattern id="hex-pattern" x="0" y="0" width="40" height="35" patternUnits="userSpaceOnUse">
-              <polygon
-                points="20,2 38,12 38,32 20,42 2,32 2,12"
-                fill="none"
-                stroke="rgba(255, 6, 111, 0.12)"
-                stroke-width="0.5"
-              />
+            <pattern id="lp-hex-pattern" x="0" y="0" width="40" height="35" patternUnits="userSpaceOnUse">
+              <polygon points="20,2 38,12 38,32 20,42 2,32 2,12" fill="none" stroke="rgba(255, 6, 111, 0.13)" stroke-width="0.5" />
             </pattern>
           </defs>
-          <rect width="100%" height="100%" fill="url(#hex-pattern)" />
+          <rect width="100%" height="100%" fill="url(#lp-hex-pattern)" />
         </svg>
       </div>
 
-      <!-- Pink radial glow -->
-      <div class="marketing-hero__glow" aria-hidden="true"></div>
+      <!-- Single glow source under the centre -->
+      <div class="lp-hero__glow" aria-hidden="true"></div>
 
-      <!-- Hero content -->
-      <div class="marketing-hero__content">
-        <h1 class="marketing-hero__title">BIGGER FIGHTS INCOMING</h1>
-        <button
-          type="button"
-          class="marketing-hero__cta"
-          @click="onPlayClick"
-        >
+      <div class="lp-hero__content">
+        <span class="lp-live">
+          <span class="lp-live__dot" aria-hidden="true"></span>
+          Playable Now
+        </span>
+        <h1 class="lp-hero__title">BIGGER FIGHTS INCOMING</h1>
+        <p class="lp-hero__sub">You're among the first to step into the arena.</p>
+        <button type="button" class="lp-btn lp-btn--primary lp-hero__cta" @click="onPlayClick">
           Play
         </button>
       </div>
-
     </section>
 
-    <section class="marketing-about" ref="aboutRef">
-      <div class="marketing-about__content" :class="{ 'is-visible': aboutVisible }">
-        <h2 class="marketing-about__heading">NEVER GIVE UP</h2>
-        <p class="marketing-about__subtitle">Train. Fight. Rise.</p>
+    <!-- ========================================================
+         2. WHAT YOU DO — three blocks (replaces "NEVER GIVE UP").
+         ======================================================== -->
+    <section class="lp-pillars" ref="pillarsRef">
+      <div class="lp-pillars__inner" :class="{ 'is-visible': pillarsVisible }">
+        <h2 class="lp-pillars__heading">WHAT YOU DO</h2>
+        <div class="lp-pillars__grid">
+          <article class="lp-card">
+            <h3 class="lp-card__title">Your Fighter</h3>
+            <p class="lp-card__text">Who you bring to the arena.</p>
+          </article>
+          <article class="lp-card">
+            <h3 class="lp-card__title">Your Style</h3>
+            <p class="lp-card__text">Tune the build to fit you.</p>
+          </article>
+          <article class="lp-card">
+            <h3 class="lp-card__title">Your Path</h3>
+            <p class="lp-card__text">Fight, win, and grow.</p>
+          </article>
+        </div>
       </div>
     </section>
 
-    <section id="gameplay" class="marketing-gameplay" ref="gameplayRef">
-      <div class="marketing-gameplay__inner" :class="{ 'is-visible': gameplayVisible }">
-        <h2 class="marketing-gameplay__heading">GAMEPLAY</h2>
-        <div class="marketing-gameplay__video">
-          <!-- Faint hex pattern overlay on the placeholder surface -->
-          <svg class="marketing-gameplay__pattern"
-               xmlns="http://www.w3.org/2000/svg"
-               viewBox="0 0 400 225"
-               preserveAspectRatio="xMidYMid slice"
-               aria-hidden="true">
+    <!-- ========================================================
+         3. GAMEPLAY — video frame (kept structurally).
+         ======================================================== -->
+    <section id="gameplay" class="lp-gameplay" ref="gameplayRef">
+      <div class="lp-gameplay__inner" :class="{ 'is-visible': gameplayVisible }">
+        <h2 class="lp-gameplay__heading">GAMEPLAY</h2>
+        <div class="lp-gameplay__frame">
+          <svg class="lp-gameplay__pattern" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 225" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
             <defs>
-              <pattern id="gameplay-hex-pattern" x="0" y="0" width="44" height="38" patternUnits="userSpaceOnUse">
-                <polygon points="22,2 42,13 42,35 22,46 2,35 2,13"
-                         fill="none"
-                         stroke="rgba(255, 6, 111, 0.18)"
-                         stroke-width="0.6" />
+              <pattern id="lp-gameplay-hex" x="0" y="0" width="44" height="38" patternUnits="userSpaceOnUse">
+                <polygon points="22,2 42,13 42,35 22,46 2,35 2,13" fill="none" stroke="rgba(255, 6, 111, 0.13)" stroke-width="0.6" />
               </pattern>
             </defs>
-            <rect width="100%" height="100%" fill="url(#gameplay-hex-pattern)" />
+            <rect width="100%" height="100%" fill="url(#lp-gameplay-hex)" />
           </svg>
-
-          <div class="marketing-gameplay__center">
-            <svg class="marketing-gameplay__play-icon" viewBox="0 0 100 100" aria-hidden="true">
-              <polygon points="50,4 92,28 92,72 50,96 8,72 8,28"
-                       fill="#FF066F" />
+          <div class="lp-gameplay__center">
+            <svg class="lp-gameplay__play" viewBox="0 0 100 100" aria-hidden="true">
+              <polygon points="50,4 92,28 92,72 50,96 8,72 8,28" fill="#FF066F" />
               <polygon points="42,32 70,50 42,68" fill="#fff" />
             </svg>
-            <p class="marketing-gameplay__placeholder">VIDEO INCOMING</p>
+            <p class="lp-gameplay__placeholder">Video Incoming</p>
           </div>
         </div>
-        <p class="marketing-gameplay__caption">
-          First match recordings drop with the next release.
-        </p>
+        <p class="lp-gameplay__caption">First match recordings drop with the next release.</p>
       </div>
     </section>
 
-    <section id="token" class="marketing-token" ref="tokenRef">
-      <div class="marketing-token__inner" :class="{ 'is-visible': tokenVisible }">
-        <h2 class="marketing-token__symbol">$HEX</h2>
-        <p class="marketing-token__status">Coming Soon</p>
-        <p class="marketing-token__network">Launching on Base</p>
+    <!-- ========================================================
+         4. $HEX + ROADMAP — merged (was two sections).
+            Roadmap = horizontal timeline, one phase highlighted.
+         ======================================================== -->
+    <section id="token" class="lp-token" ref="tokenRef">
+      <div class="lp-token__glow" aria-hidden="true"></div>
+      <div class="lp-token__inner" :class="{ 'is-visible': tokenVisible }">
+        <h2 class="lp-token__symbol">$HEX</h2>
+        <p class="lp-token__network">Launching on Base — player first, token second.</p>
+
+        <ol class="lp-timeline" aria-label="Roadmap">
+          <li class="lp-phase is-current">
+            <span class="lp-phase__dot" aria-hidden="true"></span>
+            <span class="lp-phase__num">01</span>
+            <span class="lp-phase__label">Live</span>
+          </li>
+          <li class="lp-phase">
+            <span class="lp-phase__dot" aria-hidden="true"></span>
+            <span class="lp-phase__num">02</span>
+            <span class="lp-phase__label">Next</span>
+          </li>
+          <li class="lp-phase">
+            <span class="lp-phase__dot" aria-hidden="true"></span>
+            <span class="lp-phase__num">03</span>
+            <span class="lp-phase__label">Later</span>
+          </li>
+          <li class="lp-phase">
+            <span class="lp-phase__dot" aria-hidden="true"></span>
+            <span class="lp-phase__num">04</span>
+            <span class="lp-phase__label">Beyond</span>
+          </li>
+        </ol>
       </div>
     </section>
 
-    <section id="roadmap" class="marketing-roadmap" ref="roadmapRef">
-      <div class="marketing-roadmap__inner" :class="{ 'is-visible': roadmapVisible }">
-        <h2 class="marketing-roadmap__heading">ROADMAP</h2>
-        <div class="marketing-roadmap__grid">
-          <div class="marketing-roadmap__card">
-            <span class="marketing-roadmap__card-num">01</span>
-            <h3 class="marketing-roadmap__card-title">Phase 1</h3>
-            <p class="marketing-roadmap__card-text">Coming soon</p>
-          </div>
-          <div class="marketing-roadmap__card">
-            <span class="marketing-roadmap__card-num">02</span>
-            <h3 class="marketing-roadmap__card-title">Phase 2</h3>
-            <p class="marketing-roadmap__card-text">Coming soon</p>
-          </div>
-          <div class="marketing-roadmap__card">
-            <span class="marketing-roadmap__card-num">03</span>
-            <h3 class="marketing-roadmap__card-title">Phase 3</h3>
-            <p class="marketing-roadmap__card-text">Coming soon</p>
-          </div>
-          <div class="marketing-roadmap__card">
-            <span class="marketing-roadmap__card-num">04</span>
-            <h3 class="marketing-roadmap__card-title">Phase 4</h3>
-            <p class="marketing-roadmap__card-text">Coming soon</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="marketing-partners" ref="partnersRef">
-      <div class="marketing-partners__inner" :class="{ 'is-visible': partnersVisible }">
-        <h2 class="marketing-partners__heading">COMING SOON</h2>
-        <p class="marketing-partners__subtitle">Strategic partnerships TBA</p>
-      </div>
-    </section>
-
-    <section class="marketing-subscribe" ref="subscribeRef">
-      <div class="marketing-subscribe__inner" :class="{ 'is-visible': subscribeVisible }">
-        <h2 class="marketing-subscribe__heading">STAY UPDATED</h2>
-        <form class="marketing-subscribe__form" @submit.prevent="onSubscribeSubmit">
+    <!-- ========================================================
+         5. STAY UPDATED + FOOTER — email subscribe + socials.
+         ======================================================== -->
+    <section class="lp-subscribe" ref="subscribeRef">
+      <div class="lp-subscribe__inner" :class="{ 'is-visible': subscribeVisible }">
+        <h2 class="lp-subscribe__heading">STAY UPDATED</h2>
+        <form class="lp-subscribe__form" @submit.prevent="onSubscribeSubmit">
           <input
             v-model="email"
             type="email"
             required
             placeholder="Enter your email"
-            class="marketing-subscribe__input"
+            class="lp-subscribe__input"
             :disabled="isSubmitting"
             autocomplete="email"
           />
-          <button
-            type="submit"
-            class="marketing-subscribe__button"
-            :disabled="isSubmitting"
-          >
+          <button type="submit" class="lp-btn lp-btn--primary lp-subscribe__button" :disabled="isSubmitting">
             Subscribe
           </button>
         </form>
       </div>
     </section>
 
-    <footer class="marketing-footer" ref="footerRef">
-      <ul class="marketing-footer__socials" aria-label="Social media">
-        <li>
-          <a href="#" target="_blank" rel="noopener" aria-label="Telegram">
-            <img :src="iconTelega" alt="" class="marketing-footer__social-icon" />
-          </a>
-        </li>
-        <li>
-          <a href="#" target="_blank" rel="noopener" aria-label="X (Twitter)">
-            <img :src="iconX" alt="" class="marketing-footer__social-icon" />
-          </a>
-        </li>
-        <li>
-          <a href="#" target="_blank" rel="noopener" aria-label="YouTube">
-            <img :src="iconYout" alt="" class="marketing-footer__social-icon" />
-          </a>
-        </li>
-        <li>
-          <a href="#" target="_blank" rel="noopener" aria-label="Discord">
-            <img :src="iconDisc" alt="" class="marketing-footer__social-icon" />
-          </a>
-        </li>
-        <li>
-          <a href="#" target="_blank" rel="noopener" aria-label="Instagram">
-            <img :src="iconInsta" alt="" class="marketing-footer__social-icon" />
-          </a>
-        </li>
+    <footer class="lp-footer">
+      <ul class="lp-footer__socials" aria-label="Social media">
+        <li><a href="#" target="_blank" rel="noopener" aria-label="Telegram"><img :src="iconTelega" alt="" class="lp-footer__icon" /></a></li>
+        <li><a href="#" target="_blank" rel="noopener" aria-label="X (Twitter)"><img :src="iconX" alt="" class="lp-footer__icon" /></a></li>
+        <li><a href="#" target="_blank" rel="noopener" aria-label="YouTube"><img :src="iconYout" alt="" class="lp-footer__icon" /></a></li>
+        <li><a href="#" target="_blank" rel="noopener" aria-label="Discord"><img :src="iconDisc" alt="" class="lp-footer__icon" /></a></li>
+        <li><a href="#" target="_blank" rel="noopener" aria-label="Instagram"><img :src="iconInsta" alt="" class="lp-footer__icon" /></a></li>
       </ul>
-      <nav class="marketing-footer__links">
-        <router-link to="/privacy" class="marketing-footer__link">Privacy</router-link>
-        <span class="marketing-footer__sep" aria-hidden="true">·</span>
-        <router-link to="/play/rules" class="marketing-footer__link">Rules</router-link>
-        <span class="marketing-footer__sep" aria-hidden="true">·</span>
-        <router-link to="/help" class="marketing-footer__link">Help</router-link>
+      <nav class="lp-footer__links">
+        <router-link to="/privacy" class="lp-footer__link">Privacy</router-link>
+        <span class="lp-footer__sep" aria-hidden="true">·</span>
+        <router-link to="/play/rules" class="lp-footer__link">Rules</router-link>
+        <span class="lp-footer__sep" aria-hidden="true">·</span>
+        <router-link to="/help" class="lp-footer__link">Help</router-link>
       </nav>
     </footer>
   </div>
@@ -226,26 +200,18 @@ import iconInsta from '@/assets/images/icon_insta.svg';
 const router = useRouter();
 const store = useStore();
 
+// Section refs for scroll fade-in
 const heroRef = ref(null);
-const aboutRef = ref(null);
+const pillarsRef = ref(null);
 const gameplayRef = ref(null);
 const tokenRef = ref(null);
-const roadmapRef = ref(null);
-const partnersRef = ref(null);
 const subscribeRef = ref(null);
-const footerRef = ref(null);
 
-// 8c C1 — IntersectionObserver fade-in via composable (refactored from
-// 8b inline pattern). Threshold 0.3 matches 8b verbatim. Native API,
-// one-shot disconnect, fallback to immediate visibility for environments
-// without IntersectionObserver. Future 8c sections (Gameplay/Token/
-// Roadmap/Partners/Subscribe) will reuse the same composable to avoid
-// 5x duplication of ~28-line inline observer setup.
-const { visible: aboutVisible } = useScrollFadeIn(aboutRef);
+// IntersectionObserver fade-in via composable (threshold 0.3, one-shot,
+// fallback to immediate visibility where IntersectionObserver is absent).
+const { visible: pillarsVisible } = useScrollFadeIn(pillarsRef);
 const { visible: gameplayVisible } = useScrollFadeIn(gameplayRef);
 const { visible: tokenVisible } = useScrollFadeIn(tokenRef);
-const { visible: roadmapVisible } = useScrollFadeIn(roadmapRef);
-const { visible: partnersVisible } = useScrollFadeIn(partnersRef);
 const { visible: subscribeVisible } = useScrollFadeIn(subscribeRef);
 
 // Subscribe form state
@@ -254,41 +220,28 @@ const isSubmitting = ref(false);
 
 function onSubscribeSubmit() {
   if (isSubmitting.value || !email.value) return;
-
   isSubmitting.value = true;
 
-  // Reuse existing global toast via Vuex mutation (Phase 0 §S1.4 verified —
-  // `<Info>` component renders on / route via App.vue:19 `!isPlayRoute` block).
-  // Lesson #11 catch: setInfoMessage is MUTATION not ACTION — use commit.
-  // Lesson #11 catch: plain object literal pattern (mirrors ChallengeNotification
-  // precedent) — InfoMessageModel.withText also works but adds import.
+  // Reuse the existing global toast (<Info> renders on / via App.vue
+  // !isPlayRoute block). setInfoMessage is a MUTATION — use commit.
   store.commit('master/setInfoMessage', {
     text: 'Coming soon — stay tuned!',
     timeout: 3000,
     showButton: false,
   });
 
-  // Clear field after submit (signals success per decision #8)
   email.value = '';
-
-  // Re-enable button after debounce window (per decision #9, ~600ms)
-  setTimeout(() => {
-    isSubmitting.value = false;
-  }, 600);
+  setTimeout(() => { isSubmitting.value = false; }, 600);
 }
 
 useDocumentMeta({
   title: 'Hexlash — Web3 Turn-Based Fighter',
   description: 'Pick your archetype, build your loadout, dominate the arena. Web3 PvP fighting game on Base.',
-  // Absolute prod URL — matches static og:image in index.html so the JS update
-  // (for in-app SPA navigation) agrees with what crawlers read from static HTML.
   ogImage: 'https://hexlash.com/og-image.png',
 });
 
 function onPlayClick() {
-  // Decision #11 Option A — preserve 1a beforeEnter cascade pattern.
-  // / route handles authed → /play; anonymous never reach this CTA via cascade,
-  // but if they do click while anonymous, push to signup directly.
+  // / route handles authed → /play; anonymous land on signup.
   router.push('/auth/signup');
 }
 
@@ -298,9 +251,6 @@ function handleScroll() {
   isHeaderScrolled.value = window.scrollY > 50;
 }
 
-// Anchor scroll with offset to account for the ~80px sticky header
-// (otherwise section heading hides under the bar). Mobile header is
-// ~64px — 80 over-offsets by ~16px on mobile, which still reads OK.
 function scrollToSection(id) {
   const el = document.getElementById(id);
   if (!el) return;
@@ -315,7 +265,6 @@ function scrollToTop() {
 
 onMounted(() => {
   window.addEventListener('scroll', handleScroll, { passive: true });
-  // Run once in case page loads with restored scroll position
   handleScroll();
 });
 
@@ -325,15 +274,39 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+/* ============================================================
+   LANDING v3 — Hexlash draft brand language (30.05.2026).
+   SCOPE: this file only. Self-contained `--lp-*` tokens — does
+   NOT use or modify the shared Neon Discipline `--hex-*` tokens,
+   so the rest of the product (combat/profile/shop/wallet/guest)
+   is untouched. The pixel `Anonymous` font is the impact face
+   (headings / counters / key numbers); a calm sans is the body
+   face (copy / buttons / nav).
+   ============================================================ */
 .marketing {
-  background: var(--hex-bg-dark);
-  color: var(--hex-text-primary);
+  /* Palette */
+  --lp-bg: #0A0A0C;
+  --lp-surface: #14141A;
+  --lp-hover: #1E1E26;
+  --lp-border: #2A2A32;
+  --lp-text: #F0F0F0;
+  --lp-text-quiet: #8A8A90;
+  --lp-accent: #FF066F;
+  --lp-accent-pressed: #C70557;
+  --lp-accent-light: #FF6BA3;
+
+  /* Type */
+  --lp-font-display: 'Anonymous', 'Courier New', monospace;
+  --lp-font-body: 'Inter', 'Roboto', 'SF Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  background: var(--lp-bg);
+  color: var(--lp-text);
+  font-family: var(--lp-font-body);
   overflow-x: hidden;
 }
 
 /* ============================================
-   HEADER (sticky, transparent on hero)
-   Added 2026-05-21 (claude/landing-refresh).
+   HEADER (sticky chrome)
    ============================================ */
 .marketing-header {
   position: fixed;
@@ -342,17 +315,15 @@ onBeforeUnmount(() => {
   right: 0;
   z-index: 50;
   background: transparent;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
   border-bottom: 1px solid transparent;
   transition: background-color 0.2s ease, backdrop-filter 0.2s ease, border-color 0.2s ease;
 }
 
 .marketing-header.is-scrolled {
-  background: rgba(9, 9, 9, 0.78);
+  background: rgba(10, 10, 12, 0.78);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border-bottom-color: rgba(255, 255, 255, 0.05);
+  border-bottom-color: var(--lp-border);
 }
 
 .marketing-header__inner {
@@ -373,7 +344,7 @@ onBeforeUnmount(() => {
 }
 
 .marketing-header__logo {
-  height: 80px;
+  height: 72px;
   width: auto;
   display: block;
   user-select: none;
@@ -387,19 +358,19 @@ onBeforeUnmount(() => {
 }
 
 .marketing-header__navlink {
-  font-family: var(--hex-font-body);
-  font-size: 16px;
+  font-family: var(--lp-font-body);
+  font-size: 15px;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--lp-text-quiet);
   text-decoration: none;
   transition: color 0.15s ease;
   cursor: pointer;
 }
 
 .marketing-header__navlink:hover {
-  color: var(--hex-primary);
+  color: var(--lp-accent-light);
 }
 
 .marketing-header__socials {
@@ -415,25 +386,632 @@ onBeforeUnmount(() => {
   width: 36px;
   height: 36px;
   border-radius: 6px;
-  color: rgba(255, 255, 255, 0.85);
-  transition: color 0.15s ease, background-color 0.15s ease;
+  transition: background-color 0.15s ease;
 }
 
 .marketing-header__social:hover {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--lp-hover);
 }
 
 .marketing-header__social img {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   user-select: none;
   -webkit-user-drag: none;
 }
 
+/* ============================================
+   Shared buttons
+   ============================================ */
+.lp-btn {
+  font-family: var(--lp-font-body);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.2s ease;
+}
+
+/* Primary — sole filled accent button per screen (#FF066F → #C70557) */
+.lp-btn--primary {
+  background: var(--lp-accent);
+  color: #fff;
+  border: none;
+  box-shadow: 0 0 28px rgba(255, 6, 111, 0.45);
+}
+
+.lp-btn--primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 0 40px rgba(255, 6, 111, 0.6);
+}
+
+.lp-btn--primary:active:not(:disabled) {
+  transform: translateY(0);
+  background: var(--lp-accent-pressed);
+  box-shadow: 0 0 18px rgba(255, 6, 111, 0.35);
+}
+
+.lp-btn--primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ============================================
+   1. HERO
+   ============================================ */
+.lp-hero {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--lp-bg);
+}
+
+.lp-hero__hex {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 1;
+  animation: lp-hex-drift 60s linear infinite;
+}
+
+.lp-hero__hex-svg {
+  width: 120%;
+  height: 120%;
+  position: absolute;
+  top: -10%;
+  left: -10%;
+}
+
+.lp-hero__glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: clamp(400px, 60vw, 900px);
+  height: clamp(400px, 60vw, 900px);
+  background: radial-gradient(circle at center, rgba(255, 6, 111, 0.16) 0%, rgba(255, 6, 111, 0.05) 42%, transparent 70%);
+  pointer-events: none;
+  z-index: 1;
+  animation: lp-glow-pulse 8s ease-in-out infinite;
+}
+
+.lp-hero__content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 24px;
+  text-align: center;
+}
+
+/* Live pill — dot + caps, body font (impact face reserved for headings) */
+.lp-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 16px;
+  border: 1px solid var(--lp-border);
+  border-radius: 999px;
+  background: rgba(255, 6, 111, 0.06);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--lp-accent-light);
+}
+
+.lp-live__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--lp-accent);
+  box-shadow: 0 0 10px var(--lp-accent);
+  animation: lp-live-pulse 2.4s ease-in-out infinite;
+}
+
+.lp-hero__title {
+  margin: 0;
+  font-family: var(--lp-font-display);
+  font-size: clamp(40px, 7vw, 88px);
+  font-weight: 400;
+  line-height: 1.05;
+  color: var(--lp-text);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  text-shadow: 0 0 18px rgba(255, 6, 111, 0.35), 0 0 48px rgba(255, 6, 111, 0.15);
+  max-width: 16ch;
+}
+
+.lp-hero__sub {
+  margin: 0;
+  font-size: clamp(15px, 1.8vw, 19px);
+  color: var(--lp-text-quiet);
+  letter-spacing: 0.02em;
+  max-width: 36ch;
+}
+
+.lp-hero__cta {
+  margin-top: 8px;
+  font-size: clamp(16px, 1.8vw, 18px);
+  padding: 16px 56px;
+  min-width: 200px;
+}
+
+/* ============================================
+   2. WHAT YOU DO (three blocks)
+   ============================================ */
+.lp-pillars {
+  position: relative;
+  background: var(--lp-bg);
+  padding: 100px 24px;
+}
+
+.lp-pillars__inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.lp-pillars__inner.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.lp-pillars__heading {
+  margin: 0 0 48px;
+  text-align: center;
+  font-family: var(--lp-font-display);
+  font-size: clamp(28px, 4.5vw, 48px);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: var(--lp-text);
+  text-transform: uppercase;
+}
+
+.lp-pillars__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+/* Card — surface #14141A, border #2A2A32, radius 10px.
+   Hover lifts to #1E1E26 and warms the border toward the accent. */
+.lp-card {
+  padding: 36px 28px;
+  background: var(--lp-surface);
+  border: 1px solid var(--lp-border);
+  border-radius: 10px;
+  transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
+}
+
+.lp-card:hover {
+  background: var(--lp-hover);
+  border-color: var(--lp-accent);
+  transform: translateY(-4px);
+}
+
+.lp-card__title {
+  margin: 0 0 10px;
+  font-family: var(--lp-font-display);
+  font-size: clamp(20px, 2.4vw, 28px);
+  font-weight: 400;
+  letter-spacing: 0.03em;
+  color: var(--lp-text);
+  text-transform: uppercase;
+}
+
+.lp-card__text {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--lp-text-quiet);
+}
+
+/* ============================================
+   3. GAMEPLAY
+   ============================================ */
+.lp-gameplay {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--lp-bg);
+  padding: 100px 24px;
+}
+
+.lp-gameplay__inner {
+  width: 100%;
+  max-width: 1100px;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.lp-gameplay__inner.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.lp-gameplay__heading {
+  margin: 0 0 32px;
+  font-family: var(--lp-font-display);
+  font-size: clamp(28px, 4.5vw, 48px);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: var(--lp-text);
+  text-transform: uppercase;
+}
+
+.lp-gameplay__frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: var(--lp-surface);
+  border: 1px solid var(--lp-border);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 0 64px rgba(255, 6, 111, 0.08);
+}
+
+.lp-gameplay__pattern {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.lp-gameplay__center {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+}
+
+.lp-gameplay__play {
+  width: 88px;
+  height: 88px;
+  display: block;
+  filter: drop-shadow(0 0 22px rgba(255, 6, 111, 0.5));
+}
+
+.lp-gameplay__placeholder {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--lp-text);
+}
+
+.lp-gameplay__caption {
+  margin: 24px 0 0;
+  font-size: clamp(13px, 1.4vw, 15px);
+  color: var(--lp-text-quiet);
+  letter-spacing: 0.04em;
+}
+
+/* ============================================
+   4. $HEX + ROADMAP (merged) — timeline
+   ============================================ */
+.lp-token {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--lp-bg);
+  padding: 110px 24px;
+  overflow: hidden;
+}
+
+/* Single glow source for the section */
+.lp-token__glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 640px;
+  height: 640px;
+  background: radial-gradient(circle, rgba(255, 6, 111, 0.09) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.lp-token__inner {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 980px;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.lp-token__inner.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.lp-token__symbol {
+  margin: 0 0 14px;
+  font-family: var(--lp-font-display);
+  font-size: clamp(64px, 12vw, 150px);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: var(--lp-text);
+  line-height: 1;
+  text-shadow: 0 0 48px rgba(255, 6, 111, 0.4);
+}
+
+.lp-token__network {
+  margin: 0 0 64px;
+  font-size: clamp(14px, 1.6vw, 17px);
+  color: var(--lp-text-quiet);
+  letter-spacing: 0.04em;
+}
+
+/* Horizontal timeline — connecting line behind evenly spaced phases */
+.lp-timeline {
+  position: relative;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.lp-timeline::before {
+  content: '';
+  position: absolute;
+  top: 7px;
+  left: 12.5%;
+  right: 12.5%;
+  height: 1px;
+  background: var(--lp-border);
+  z-index: 0;
+}
+
+.lp-phase {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.lp-phase__dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--lp-bg);
+  border: 1px solid var(--lp-border);
+  box-shadow: 0 0 0 4px var(--lp-bg);
+}
+
+.lp-phase__num {
+  font-family: var(--lp-font-display);
+  font-size: clamp(28px, 4vw, 40px);
+  font-weight: 400;
+  line-height: 1;
+  color: var(--lp-text-quiet);
+  opacity: 0.5;
+}
+
+.lp-phase__label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--lp-text-quiet);
+}
+
+/* Current phase — the one lit node (accent), everyone else muted */
+.lp-phase.is-current .lp-phase__dot {
+  background: var(--lp-accent);
+  border-color: var(--lp-accent);
+  box-shadow: 0 0 0 4px var(--lp-bg), 0 0 16px rgba(255, 6, 111, 0.7);
+}
+
+.lp-phase.is-current .lp-phase__num {
+  color: var(--lp-accent);
+  opacity: 1;
+}
+
+.lp-phase.is-current .lp-phase__label {
+  color: var(--lp-accent-light);
+}
+
+/* ============================================
+   5. STAY UPDATED + FOOTER
+   ============================================ */
+.lp-subscribe {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--lp-bg);
+  padding: 100px 24px 64px;
+}
+
+.lp-subscribe__inner {
+  width: 100%;
+  max-width: 600px;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.lp-subscribe__inner.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.lp-subscribe__heading {
+  margin: 0 0 32px;
+  font-family: var(--lp-font-display);
+  font-size: clamp(26px, 4vw, 44px);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: var(--lp-text);
+  text-transform: uppercase;
+}
+
+.lp-subscribe__form {
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.lp-subscribe__input {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--lp-font-body);
+  font-size: 14px;
+  padding: 12px 16px;
+  background: var(--lp-surface);
+  border: 1px solid var(--lp-border);
+  border-radius: 6px;
+  color: var(--lp-text);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.lp-subscribe__input::placeholder {
+  color: var(--lp-text-quiet);
+}
+
+.lp-subscribe__input:focus {
+  outline: none;
+  border-color: var(--lp-accent);
+  background: var(--lp-hover);
+}
+
+.lp-subscribe__input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.lp-subscribe__button {
+  font-size: 14px;
+  padding: 12px 32px;
+  white-space: nowrap;
+}
+
+.lp-footer {
+  padding: 40px 24px 28px;
+  border-top: 1px solid var(--lp-border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  background: var(--lp-bg);
+}
+
+.lp-footer__socials {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+
+.lp-footer__socials a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  opacity: 0.6;
+  transition: opacity 0.15s ease, transform 0.15s ease, background-color 0.15s ease;
+}
+
+.lp-footer__socials a:hover {
+  opacity: 1;
+  transform: translateY(-2px);
+  background: var(--lp-hover);
+}
+
+.lp-footer__icon {
+  width: 22px;
+  height: 22px;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.lp-footer__links {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 13px;
+  color: var(--lp-text-quiet);
+}
+
+.lp-footer__link {
+  color: var(--lp-text-quiet);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.lp-footer__link:hover {
+  color: var(--lp-text);
+}
+
+.lp-footer__sep {
+  opacity: 0.5;
+}
+
+/* ============================================
+   Keyframes (prefixed — avoid global collisions)
+   ============================================ */
+@keyframes lp-hex-drift {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(-40px, -35px); }
+}
+
+@keyframes lp-glow-pulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+@keyframes lp-live-pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 10px var(--lp-accent); }
+  50% { opacity: 0.55; box-shadow: 0 0 4px var(--lp-accent); }
+}
+
+/* ============================================
+   Responsive
+   ============================================ */
+@media (max-width: 900px) {
+  .lp-pillars__grid {
+    grid-template-columns: 1fr;
+    max-width: 460px;
+    margin: 0 auto;
+  }
+}
+
 @media (max-width: 720px) {
   .marketing-header__inner {
-    grid-template-columns: auto 1fr auto;
     gap: 14px;
     padding: 0 20px;
   }
@@ -441,11 +1019,11 @@ onBeforeUnmount(() => {
     gap: 24px;
   }
   .marketing-header__navlink {
-    font-size: 14px;
+    font-size: 13px;
     letter-spacing: 0.06em;
   }
   .marketing-header__logo {
-    height: 64px;
+    height: 60px;
   }
   .marketing-header__social {
     width: 32px;
@@ -457,723 +1035,63 @@ onBeforeUnmount(() => {
   }
 }
 
-@media (max-width: 420px) {
-  .marketing-header__nav {
-    gap: 16px;
-  }
-  .marketing-header__navlink {
-    font-size: 12px;
-    letter-spacing: 0.04em;
-  }
-}
-
-.marketing-hero,
-.marketing-about,
-.marketing-gameplay,
-.marketing-token,
-.marketing-roadmap,
-.marketing-partners,
-.marketing-subscribe,
-.marketing-footer {
-  position: relative;
-  width: 100%;
-}
-
-.marketing-hero {
-  min-height: 100vh;
-  min-height: 100dvh;
-}
-
-.marketing-about {
-  min-height: 60vh;
-  padding: 80px 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--hex-bg-dark);
-}
-
-/* === ABOUT === */
-.marketing-about__content {
-  text-align: center;
-  max-width: 800px;
-  opacity: 0;
-  transform: translateY(24px);
-  transition: opacity 0.8s ease, transform 0.8s ease;
-}
-
-.marketing-about__content.is-visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.marketing-about__heading {
-  margin: 0 0 16px;
-  font-size: clamp(40px, 7vw, 80px);
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  color: var(--hex-text-primary);
-  text-transform: uppercase;
-  line-height: 1.1;
-}
-
-.marketing-about__subtitle {
-  margin: 0;
-  font-size: clamp(16px, 2vw, 22px);
-  color: var(--hex-text-muted);
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-}
-
-@media (max-width: 480px) {
-  .marketing-about {
-    padding: 60px 20px;
-  }
-}
-
-/* === GAMEPLAY === */
-.marketing-gameplay {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--hex-bg-dark);
-  padding: 80px 24px;
-}
-
-.marketing-gameplay__inner {
-  width: 100%;
-  max-width: 1100px;
-  text-align: center;
-  opacity: 0;
-  transform: translateY(24px);
-  transition: opacity 0.8s ease, transform 0.8s ease;
-}
-
-.marketing-gameplay__inner.is-visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.marketing-gameplay__heading {
-  margin: 0 0 32px;
-  font-size: clamp(32px, 5vw, 56px);
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  color: var(--hex-text-primary);
-  text-transform: uppercase;
-}
-
-.marketing-gameplay__video {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  background: var(--hex-bg-medium);
-  border: 1px solid rgba(255, 6, 111, 0.4);
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 0 64px rgba(255, 6, 111, 0.1);
-}
-
-.marketing-gameplay__pattern {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-}
-
-.marketing-gameplay__center {
-  position: relative;
-  z-index: 1;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 20px;
-}
-
-.marketing-gameplay__play-icon {
-  width: 92px;
-  height: 92px;
-  display: block;
-  filter: drop-shadow(0 0 22px rgba(255, 6, 111, 0.55));
-}
-
-.marketing-gameplay__placeholder {
-  margin: 0;
-  font-family: var(--hex-font-body);
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.30em;
-  text-transform: uppercase;
-  color: #fff;
-}
-
-.marketing-gameplay__caption {
-  margin: 24px 0 0;
-  font-size: clamp(13px, 1.4vw, 15px);
-  color: rgba(255, 255, 255, 0.5);
-  letter-spacing: 0.05em;
-  text-align: center;
-}
-
-@media (max-width: 480px) {
-  .marketing-gameplay {
-    padding: 60px 16px;
-  }
-  .marketing-gameplay__heading {
-    margin-bottom: 24px;
-  }
-  .marketing-gameplay__play-icon {
-    width: 72px;
-    height: 72px;
-  }
-  .marketing-gameplay__placeholder {
-    font-size: 12px;
-    letter-spacing: 0.25em;
-  }
-  .marketing-gameplay__center {
-    gap: 16px;
-  }
-}
-
-/* === TOKEN === */
-.marketing-token {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--hex-bg-dark);
-  padding: 100px 24px;
-  overflow: hidden;
-}
-
-.marketing-token::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 600px;
-  height: 600px;
-  background: radial-gradient(circle, rgba(255, 6, 111, 0.08) 0%, transparent 70%);
-  pointer-events: none;
-}
-
-.marketing-token__inner {
-  position: relative;
-  text-align: center;
-  opacity: 0;
-  transform: translateY(24px);
-  transition: opacity 0.8s ease, transform 0.8s ease;
-  z-index: 1;
-}
-
-.marketing-token__inner.is-visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.marketing-token__symbol {
-  margin: 0 0 16px;
-  font-family: var(--hex-font-display, 'Impact', sans-serif);
-  font-size: clamp(72px, 14vw, 180px);
-  font-weight: 900;
-  letter-spacing: 0.02em;
-  color: var(--hex-text-primary);
-  line-height: 1;
-  text-shadow: 0 0 48px rgba(255, 6, 111, 0.4);
-}
-
-.marketing-token__status {
-  margin: 0 0 12px;
-  font-size: clamp(20px, 2.5vw, 28px);
-  font-weight: 600;
-  color: var(--hex-primary);
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-}
-
-.marketing-token__network {
-  margin: 0;
-  font-size: clamp(14px, 1.5vw, 16px);
-  color: var(--hex-text-muted);
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-}
-
-@media (max-width: 480px) {
-  .marketing-token {
-    padding: 80px 16px;
-  }
-}
-
-/* === ROADMAP === */
-.marketing-roadmap {
-  background: var(--hex-bg-dark);
-  padding: 100px 24px;
-}
-
-.marketing-roadmap__inner {
-  max-width: 1200px;
-  margin: 0 auto;
-  opacity: 0;
-  transform: translateY(24px);
-  transition: opacity 0.8s ease, transform 0.8s ease;
-}
-
-.marketing-roadmap__inner.is-visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.marketing-roadmap__heading {
-  margin: 0 0 56px;
-  text-align: center;
-  font-size: clamp(32px, 5vw, 56px);
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  color: var(--hex-text-primary);
-  text-transform: uppercase;
-}
-
-.marketing-roadmap__grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 24px;
-}
-
-.marketing-roadmap__card {
-  padding: 32px 24px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid var(--hex-border-default, rgba(255, 255, 255, 0.08));
-  border-radius: 8px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  transition: border-color 0.2s ease, transform 0.2s ease;
-}
-
-.marketing-roadmap__card:hover {
-  border-color: rgba(255, 6, 111, 0.3);
-  transform: translateY(-4px);
-}
-
-.marketing-roadmap__card-num {
-  font-family: var(--hex-font-display, 'Impact', sans-serif);
-  font-size: 48px;
-  font-weight: 900;
-  color: var(--hex-primary);
-  opacity: 0.5;
-  line-height: 1;
-  margin-bottom: 16px;
-}
-
-.marketing-roadmap__card-title {
-  margin: 0 0 8px;
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--hex-text-primary);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-}
-
-.marketing-roadmap__card-text {
-  margin: 0;
-  font-size: 14px;
-  color: var(--hex-text-muted);
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-/* Tablet: 4 → 2 cards per row */
-@media (max-width: 900px) {
-  .marketing-roadmap__grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-/* Mobile: 2 → 1 card per row */
-@media (max-width: 480px) {
-  .marketing-roadmap {
-    padding: 80px 16px;
-  }
-  .marketing-roadmap__grid {
+@media (max-width: 640px) {
+  /* Timeline → vertical stack for readability */
+  .lp-timeline {
     grid-template-columns: 1fr;
+    gap: 24px;
+    max-width: 220px;
+    margin: 0 auto;
+    text-align: left;
+  }
+  .lp-timeline::before {
+    top: 12.5%;
+    bottom: 12.5%;
+    left: 7px;
+    right: auto;
+    width: 1px;
+    height: auto;
+  }
+  .lp-phase {
+    flex-direction: row;
+    align-items: center;
     gap: 16px;
   }
-  .marketing-roadmap__heading {
-    margin-bottom: 40px;
-  }
-}
-
-/* === PARTNERS === */
-.marketing-partners {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--hex-bg-dark);
-  padding: 100px 24px;
-}
-
-.marketing-partners__inner {
-  text-align: center;
-  opacity: 0;
-  transform: translateY(24px);
-  transition: opacity 0.8s ease, transform 0.8s ease;
-}
-
-.marketing-partners__inner.is-visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.marketing-partners__heading {
-  margin: 0 0 16px;
-  font-size: clamp(40px, 7vw, 80px);
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  color: var(--hex-text-primary);
-  text-transform: uppercase;
-  line-height: 1.1;
-}
-
-.marketing-partners__subtitle {
-  margin: 0;
-  font-size: clamp(16px, 2vw, 22px);
-  color: var(--hex-text-muted);
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
 }
 
 @media (max-width: 480px) {
-  .marketing-partners {
+  .lp-pillars,
+  .lp-gameplay,
+  .lp-subscribe {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .lp-pillars,
+  .lp-gameplay {
+    padding-top: 72px;
+    padding-bottom: 72px;
+  }
+  .lp-token {
     padding: 80px 16px;
   }
-}
-
-/* === SUBSCRIBE === */
-.marketing-subscribe {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--hex-bg-dark);
-  padding: 100px 24px;
-}
-
-.marketing-subscribe__inner {
-  text-align: center;
-  width: 100%;
-  max-width: 600px;
-  opacity: 0;
-  transform: translateY(24px);
-  transition: opacity 0.8s ease, transform 0.8s ease;
-}
-
-.marketing-subscribe__inner.is-visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.marketing-subscribe__heading {
-  margin: 0 0 32px;
-  font-size: clamp(28px, 4vw, 44px);
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  color: var(--hex-text-primary);
-  text-transform: uppercase;
-}
-
-.marketing-subscribe__form {
-  display: flex;
-  gap: 12px;
-  align-items: stretch;
-  max-width: 480px;
-  margin: 0 auto;
-}
-
-.marketing-subscribe__input {
-  flex: 1;
-  font-family: inherit;
-  font-size: 14px;
-  padding: 12px 16px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--hex-border-default, rgba(255, 255, 255, 0.08));
-  border-radius: 4px;
-  color: var(--hex-text-primary);
-  transition: border-color 0.15s ease, background 0.15s ease;
-  min-width: 0; /* allow flex shrink */
-}
-
-.marketing-subscribe__input::placeholder {
-  color: var(--hex-text-muted);
-}
-
-.marketing-subscribe__input:focus {
-  outline: none;
-  border-color: var(--hex-primary);
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.marketing-subscribe__input:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Subscribe CTA — mirrors 8b Hero CTA aesthetic (custom scoped per
-   Phase 0 §S3.3 + Lesson #11 catch: .hex-button does NOT exist,
-   global classes are .hex-btn / .hex-btn-primary). 8b Hero CTA
-   precedent: scoped custom for fine-grained marketing-specific control. */
-.marketing-subscribe__button {
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  padding: 12px 32px;
-  background: var(--hex-primary);
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-  box-shadow: 0 0 24px rgba(255, 6, 111, 0.4);
-  white-space: nowrap;
-}
-
-.marketing-subscribe__button:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 0 32px rgba(255, 6, 111, 0.6);
-}
-
-.marketing-subscribe__button:active:not(:disabled) {
-  transform: translateY(0);
-  box-shadow: 0 0 16px rgba(255, 6, 111, 0.3);
-}
-
-.marketing-subscribe__button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-/* Mobile: stack form vertically */
-@media (max-width: 480px) {
-  .marketing-subscribe {
-    padding: 80px 16px;
+  .lp-hero__content {
+    gap: 20px;
   }
-  .marketing-subscribe__form {
+  .lp-hero__cta {
+    padding: 14px 44px;
+    min-width: 170px;
+  }
+  .lp-subscribe__form {
     flex-direction: column;
     gap: 10px;
   }
-  .marketing-subscribe__heading {
-    margin-bottom: 24px;
-  }
 }
 
-.marketing-footer {
-  padding: 40px 24px 24px;
-  border-top: 1px solid var(--hex-border-default, rgba(255, 255, 255, 0.06));
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 24px;
-  background: var(--hex-bg-dark);
-}
-
-/* === FOOTER === */
-.marketing-footer__socials {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  gap: 24px;
-  align-items: center;
-}
-
-.marketing-footer__socials a {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 4px;
-  opacity: 0.6;
-  transition: opacity 0.15s ease, transform 0.15s ease;
-}
-
-.marketing-footer__socials a:hover {
-  opacity: 1;
-  transform: translateY(-2px);
-}
-
-.marketing-footer__social-icon {
-  width: 22px;
-  height: 22px;
-  user-select: none;
-  -webkit-user-drag: none;
-}
-
-.marketing-footer__links {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  font-size: 13px;
-  color: var(--hex-text-muted);
-}
-
-.marketing-footer__link {
-  color: var(--hex-text-muted);
-  text-decoration: none;
-  transition: color 0.15s ease;
-}
-
-.marketing-footer__link:hover {
-  color: var(--hex-text-primary);
-}
-
-.marketing-footer__sep {
-  opacity: 0.5;
-}
-
-@media (max-width: 480px) {
-  .marketing-footer {
-    padding: 32px 16px 24px;
-  }
-  .marketing-footer__socials {
-    gap: 16px;
-  }
-}
-
-/* === HERO === */
-.marketing-hero {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  background: var(--hex-bg-dark);
-}
-
-.marketing-hero__hex-bg {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  opacity: 0.5;
-  animation: hex-drift 60s linear infinite;
-}
-
-.marketing-hero__hex-svg {
-  width: 120%;
-  height: 120%;
-  position: absolute;
-  top: -10%;
-  left: -10%;
-}
-
-.marketing-hero__glow {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: clamp(400px, 60vw, 900px);
-  height: clamp(400px, 60vw, 900px);
-  background: radial-gradient(
-    circle at center,
-    rgba(255, 6, 111, 0.15) 0%,
-    rgba(255, 6, 111, 0.05) 40%,
-    transparent 70%
-  );
-  pointer-events: none;
-  z-index: 1;
-  animation: marketing-glow-pulse 8s ease-in-out infinite;
-}
-
-.marketing-hero__content {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 32px;
-  padding: 24px;
-}
-
-/* Hero centerpiece: large title, single sans-serif, soft pink glow
-   (text-shadow only — NO background on characters, no plaque effect). */
-.marketing-hero__title {
-  margin: 0;
-  font-family: var(--hex-font-body);
-  font-size: clamp(40px, 6.5vw, 80px);
-  font-weight: 800;
-  line-height: 1;
-  color: #fff;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  text-align: center;
-  text-shadow:
-    0 0 18px rgba(255, 6, 111, 0.35),
-    0 0 48px rgba(255, 6, 111, 0.15);
-  background: transparent;
-  max-width: 18ch;
-}
-
-.marketing-hero__cta {
-  font-family: inherit;
-  font-size: clamp(16px, 1.8vw, 18px);
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  padding: 16px 56px;
-  background: var(--hex-primary);
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.2s ease;
-  box-shadow: 0 0 32px rgba(255, 6, 111, 0.5);
-  min-width: 200px;
-}
-
-.marketing-hero__cta:hover {
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 0 48px rgba(255, 6, 111, 0.7);
-}
-
-.marketing-hero__cta:active {
-  transform: translateY(0) scale(1);
-  box-shadow: 0 0 24px rgba(255, 6, 111, 0.4);
-}
-
-/* Hero animations (scoped — prefixed to avoid global @keyframes collisions) */
-@keyframes hex-drift {
-  0% { transform: translate(0, 0); }
-  100% { transform: translate(-40px, -35px); }
-}
-
-@keyframes marketing-glow-pulse {
-  0%, 100% { opacity: 0.7; }
-  50% { opacity: 1; }
-}
-
-/* Mobile */
-@media (max-width: 480px) {
-  .marketing-hero__content {
-    gap: 24px;
-  }
-  .marketing-hero__cta {
-    padding: 14px 40px;
-    min-width: 160px;
-  }
-}
-
-/* Accessibility: respect prefers-reduced-motion for the hero background
-   animations (hex drift + glow pulse). Users who request reduced motion
-   see the static composition without any background movement. */
+/* Accessibility — respect reduced-motion for the background animations */
 @media (prefers-reduced-motion: reduce) {
-  .marketing-hero__hex-bg,
-  .marketing-hero__glow,
+  .lp-hero__hex,
+  .lp-hero__glow,
+  .lp-live__dot,
   .marketing-header {
     animation: none !important;
     transition: none !important;
