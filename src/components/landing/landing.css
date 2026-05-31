@@ -42,25 +42,7 @@
 .lp a { color: inherit; text-decoration: none; }
 
 /* ============ FIXED BACKGROUND ============ */
-.lp .bg-fixed { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
-.lp .bg-base { position: absolute; inset: 0;
-  background: radial-gradient(140% 90% at 50% 30%, #160a11 0%, #0b070a 46%, var(--bg) 80%); }
-.lp .hexgrid-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-.lp .bg-glow { position: absolute; left: 50%; top: 42%; width: min(60vw, 820px); height: min(60vw, 820px);
-  transform: translate(-50%, -50%);
-  background: radial-gradient(circle, rgba(var(--accent-rgb), 0.14) 0%, rgba(var(--accent-rgb), 0.04) 40%, transparent 68%);
-  filter: blur(8px); animation: lpk-breathe 6s ease-in-out infinite; }
-@keyframes lpk-breathe { 0%, 100% { opacity: .55; transform: translate(-50%, -50%) scale(.92); } 50% { opacity: .9; transform: translate(-50%, -50%) scale(1.06); } }
-.lp .vignette { position: absolute; inset: 0;
-  background: radial-gradient(120% 90% at 50% 50%, transparent 50%, rgba(0, 0, 0, .55) 100%);
-  box-shadow: inset 0 0 220px 60px rgba(0, 0, 0, .7); }
-.lp .scanlines { position: absolute; inset: 0; opacity: .5;
-  background: repeating-linear-gradient(to bottom, rgba(255, 255, 255, .018) 0 1px, transparent 1px 3px);
-  mix-blend-mode: overlay; }
-.lp .grain { position: absolute; inset: -50%; opacity: .05;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  animation: lpk-grainShift 1.2s steps(4) infinite; }
-@keyframes lpk-grainShift { 0% { transform: translate(0, 0); } 25% { transform: translate(-6%, 3%); } 50% { transform: translate(4%, -5%); } 75% { transform: translate(-3%, 6%); } 100% { transform: translate(5%, 2%); } }
+/* Moved to LandingBackground.vue (shared with the auth screen). */
 
 /* ============ NAV ============ */
 .lp .nav { position: relative; z-index: 50; height: var(--nav-h);

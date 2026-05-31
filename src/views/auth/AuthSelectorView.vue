@@ -5,7 +5,9 @@
        Provider buttons stay neutral. Email keeps the working password login
        (magic-link / Privy = Этап 2 — see report). -->
   <div class="hx-stage">
-    <div class="hx-motif" :style="motifStyle" aria-hidden="true"></div>
+    <!-- Same background as the landing (pattern + mouse-reaction + ambient glow).
+         Accent = #FF066F (255,6,111) to keep the auth screen internally consistent. -->
+    <LandingBackground :accent="[255, 6, 111]" />
 
     <!-- Global exit → landing. Always present, independent of the in-card
          step "‹ Back" (.hx-back) which only navigates stages within the card. -->
@@ -198,6 +200,7 @@ import { ref, reactive, computed, nextTick, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useStore } from 'vuex';
 import { InfoMessageModel } from '@/core/models/internal/infoMessageModel.js';
+import LandingBackground from '@/components/landing/LandingBackground.vue';
 import ReferralOverlay from '@/components/auth/ReferralOverlay.vue';
 import ForgotPasswordScreen from '@/components/auth/ForgotPasswordScreen.vue';
 import SignupSuccessScreen from '@/components/auth/SignupSuccessScreen.vue';
@@ -212,20 +215,6 @@ import logoSrc from '@/assets/images/logo-512.png';
 const route = useRoute();
 const router = useRouter();
 const store = useStore();
-
-// quiet hex-lattice motif (handoff motifBg) — accent recoloured to #FF066F.
-const ACCENT_RGB = '255,6,111';
-const motifStyle = computed(() => {
-  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='56' height='64' viewBox='0 0 56 64'>` +
-    `<g fill='none' stroke='rgba(${ACCENT_RGB},0.07)' stroke-width='1'>` +
-    `<polygon points='28,2 52,16 52,44 28,58 4,44 4,16'/>` +
-    `<polygon points='28,30 40,37 40,51 28,58 16,51 16,37' stroke='rgba(255,255,255,0.035)'/>` +
-    `</g></svg>`;
-  return {
-    background: `url("data:image/svg+xml;utf8,${encodeURIComponent(svg)}")`,
-    backgroundSize: '56px 64px',
-  };
-});
 
 const PROVIDER_LABELS = {
   google: 'Google', x: 'X', web3: 'Web3 wallet', farcaster: 'Farcaster', discord: 'Discord',
@@ -402,19 +391,11 @@ async function onForgotSubmit(payload) {
   --err: #d6534c;
   --disp: "Saira Condensed", -apple-system, sans-serif;
   --mono: "JetBrains Mono", ui-monospace, monospace;
-  /* Logo size above the card — single knob (mobile override below). */
-  --lp-auth-logo-size: 96px;
+  /* Logo size above the card — matches the landing nav logo (--lp-nav-logo-size).
+     Single knob (mobile override below). */
+  --lp-auth-logo-size: 140px;
+  /* Plain base; LandingBackground (fixed, z-index 0) paints the real backdrop. */
   background: var(--bg);
-  background-image: radial-gradient(120% 78% at 50% -14%, #160a11 0%, #0b070a 44%, var(--bg) 78%);
-}
-
-.hx-motif {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: .5;
-  background-position: center;
-  mix-blend-mode: screen;
 }
 
 /* Global exit → landing (top-left, calm/monochrome, never pink). */
@@ -584,9 +565,9 @@ async function onForgotSubmit(payload) {
 
 /* mobile */
 @media (max-width: 680px) {
-  .hx-stage { --lp-auth-logo-size: 76px; }
+  .hx-stage { --lp-auth-logo-size: 92px; }
   .hx-exit { top: 14px; left: 16px; }
-  .hx-wrap { padding: 56px 18px 104px; }
+  .hx-wrap { padding: 60px 18px 104px; }
   .hx-logo { margin-bottom: 26px; }
   .hx-card { padding: 28px 22px 24px; }
   .hx-card.has-back { padding-top: 46px; }

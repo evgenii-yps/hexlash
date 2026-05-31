@@ -253,3 +253,16 @@ onBeforeUnmount(() => {
   if (cleanup) cleanup();
 });
 </script>
+
+<style scoped>
+/* Canvas positioning (was .lp .hexgrid-canvas in landing.css; moved here so the
+   component is self-contained and usable outside the .lp root, e.g. auth). */
+.hexgrid-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+</style>
+

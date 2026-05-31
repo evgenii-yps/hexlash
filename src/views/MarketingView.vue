@@ -1,15 +1,14 @@
 <template>
   <div class="lp" ref="rootRef">
     <div class="app" :class="{ 'is-in': isIn }">
-      <!-- fixed background -->
-      <div class="bg-fixed">
-        <div class="bg-base"></div>
-        <HexGrid :accent="accentRgb" :intensity="config.intensity" :shape="config.shape" />
-        <div class="bg-glow"></div>
-        <div class="vignette"></div>
-        <div v-if="config.scanlines" class="scanlines"></div>
-        <div v-if="config.grain" class="grain"></div>
-      </div>
+      <!-- fixed background (shared with the auth screen) -->
+      <LandingBackground
+        :accent="accentRgb"
+        :intensity="config.intensity"
+        :shape="config.shape"
+        :scanlines="config.scanlines"
+        :grain="config.grain"
+      />
 
       <LandingNav />
 
@@ -34,7 +33,7 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { useDocumentMeta } from '@/composables/useDocumentMeta';
-import HexGrid from '@/components/landing/HexGrid.vue';
+import LandingBackground from '@/components/landing/LandingBackground.vue';
 import LandingNav from '@/components/landing/LandingNav.vue';
 import LandingHero from '@/components/landing/LandingHero.vue';
 import LandingCode from '@/components/landing/LandingCode.vue';
