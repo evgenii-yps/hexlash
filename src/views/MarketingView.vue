@@ -19,7 +19,6 @@
           :line2="config.line2"
           @play="onPlay"
         />
-        <LandingTicker v-if="config.marquee" :items="tickerItems" />
         <LandingCode />
         <LandingGameplay />
         <LandingToken />
@@ -38,7 +37,6 @@ import { useDocumentMeta } from '@/composables/useDocumentMeta';
 import HexGrid from '@/components/landing/HexGrid.vue';
 import LandingNav from '@/components/landing/LandingNav.vue';
 import LandingHero from '@/components/landing/LandingHero.vue';
-import LandingTicker from '@/components/landing/LandingTicker.vue';
 import LandingCode from '@/components/landing/LandingCode.vue';
 import LandingGameplay from '@/components/landing/LandingGameplay.vue';
 import LandingToken from '@/components/landing/LandingToken.vue';
@@ -60,7 +58,6 @@ const config = {
   line2: 'INCOMING',
   grain: true,
   scanlines: true,
-  marquee: true,
 };
 
 // hexToRgb('#ff0069') → [255, 0, 105] (reference icons.jsx helper).
@@ -69,14 +66,6 @@ function hexToRgb(hex) {
   return [parseInt(m.slice(0, 2), 16), parseInt(m.slice(2, 4), 16), parseInt(m.slice(4, 6), 16)];
 }
 const accentRgb = hexToRgb(config.accent);
-
-// Ticker copy — verbatim from app.jsx tickerItems.
-const tickerItems = [
-  config.line1 + ' ' + config.line2,
-  '$HEX LAUNCHING ON BASE',
-  'NEVER GIVE UP',
-  'TRAIN · FIGHT · RISE',
-];
 
 const isIn = ref(false);
 

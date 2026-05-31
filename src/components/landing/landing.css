@@ -130,16 +130,6 @@
 .lp .scrollcue span { width: 3px; height: 8px; border-radius: 2px; background: var(--accent); box-shadow: 0 0 8px var(--accent); animation: lpk-scrolldot 1.8s ease-in-out infinite; }
 @keyframes lpk-scrolldot { 0% { opacity: 0; transform: translateY(-4px); } 30% { opacity: 1; } 80% { opacity: 0; transform: translateY(12px); } 100% { opacity: 0; } }
 
-/* ============ TICKER ============ */
-.lp .ticker-strip { position: relative; overflow: hidden; padding: 15px 0;
-  border-top: 1px solid rgba(255, 255, 255, .07); border-bottom: 1px solid rgba(255, 255, 255, .07);
-  background: rgba(0, 0, 0, .32); }
-.lp .marquee-track { display: flex; width: max-content; animation: lpk-scroll 26s linear infinite; }
-.lp .marquee-group { display: flex; align-items: center; }
-.lp .m-item { font-family: var(--mono); font-weight: 500; font-size: 13px; letter-spacing: .28em; color: #9c98a2; text-transform: uppercase; padding: 0 26px; white-space: nowrap; }
-.lp .m-sep { color: var(--accent); font-size: 10px; }
-@keyframes lpk-scroll { to { transform: translateX(-50%); } }
-
 /* ============ HERO ENTRANCE ============ */
 .lp .reveal { opacity: 0; transform: translateY(26px); filter: blur(6px); }
 .lp .app.is-in .reveal { opacity: 1; transform: none; filter: blur(0);
@@ -189,7 +179,6 @@
   transition: border-color .35s, transform .35s, background .35s; }
 .lp .pillar:hover { border-color: rgba(var(--accent-rgb), .32); transform: translateY(-5px);
   background: linear-gradient(180deg, rgba(var(--accent-rgb), .05), rgba(255, 255, 255, 0)); }
-.lp .pillar-n { font-family: var(--mono); font-size: 13px; letter-spacing: .3em; color: var(--accent); }
 .lp .pillar-k { font-weight: 800; font-size: clamp(26px, 2.6vw, 40px); text-transform: uppercase; color: #fff; line-height: 1; }
 .lp .pillar-d { font-family: var(--mono); font-size: 13px; line-height: 1.65; color: #8d8992; letter-spacing: .01em; }
 .lp .pillar-bar { position: absolute; left: 0; bottom: 0; height: 2px; width: 100%; transform: scaleX(0); transform-origin: left;
