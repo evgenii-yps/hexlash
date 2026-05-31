@@ -7,9 +7,15 @@
   <div class="hx-stage">
     <div class="hx-motif" :style="motifStyle" aria-hidden="true"></div>
 
+    <!-- Global exit → landing. Always present, independent of the in-card
+         step "‹ Back" (.hx-back) which only navigates stages within the card. -->
+    <router-link to="/" class="hx-exit" aria-label="Back to home">
+      <IconChevron :s="13" dir="left" /> Back
+    </router-link>
+
     <div class="hx-wrap">
       <div class="hx-logo">
-        <img :src="logoSrc" alt="Hexlash" class="hx-logo-img" width="62" height="62" draggable="false" />
+        <img :src="logoSrc" alt="Hexlash" class="hx-logo-img" draggable="false" />
       </div>
 
       <div class="hx-col">
@@ -396,6 +402,8 @@ async function onForgotSubmit(payload) {
   --err: #d6534c;
   --disp: "Saira Condensed", -apple-system, sans-serif;
   --mono: "JetBrains Mono", ui-monospace, monospace;
+  /* Logo size above the card — single knob (mobile override below). */
+  --lp-auth-logo-size: 96px;
   background: var(--bg);
   background-image: radial-gradient(120% 78% at 50% -14%, #160a11 0%, #0b070a 44%, var(--bg) 78%);
 }
@@ -408,6 +416,27 @@ async function onForgotSubmit(payload) {
   background-position: center;
   mix-blend-mode: screen;
 }
+
+/* Global exit → landing (top-left, calm/monochrome, never pink). */
+.hx-exit {
+  position: absolute;
+  top: 18px;
+  left: 24px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--muted);
+  text-decoration: none;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  padding: 6px 8px;
+  border-radius: 6px;
+  transition: color .18s;
+}
+.hx-exit:hover { color: var(--white); }
 
 .hx-wrap {
   position: relative;
@@ -422,7 +451,7 @@ async function onForgotSubmit(payload) {
 }
 
 .hx-logo { margin-bottom: 34px; display: flex; }
-.hx-logo-img { display: block; width: 62px; height: 62px; user-select: none; -webkit-user-drag: none; }
+.hx-logo-img { display: block; width: var(--lp-auth-logo-size); height: var(--lp-auth-logo-size); user-select: none; -webkit-user-drag: none; }
 
 .hx-col { display: flex; flex-direction: column; align-items: stretch; width: 372px; max-width: 100%; }
 
@@ -555,9 +584,10 @@ async function onForgotSubmit(payload) {
 
 /* mobile */
 @media (max-width: 680px) {
-  .hx-wrap { padding: 36px 18px 104px; }
+  .hx-stage { --lp-auth-logo-size: 76px; }
+  .hx-exit { top: 14px; left: 16px; }
+  .hx-wrap { padding: 56px 18px 104px; }
   .hx-logo { margin-bottom: 26px; }
-  .hx-logo-img { width: 54px; height: 54px; }
   .hx-card { padding: 28px 22px 24px; }
   .hx-card.has-back { padding-top: 46px; }
   .hx-title { font-size: 30px; }
