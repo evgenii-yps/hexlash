@@ -90,12 +90,6 @@
 /* ============ HERO ============ */
 .lp .hero { min-height: calc(100vh - var(--nav-h)); display: flex; flex-direction: column; align-items: center; justify-content: center;
   text-align: center; padding: 20px 24px 70px; position: relative; }
-.lp .kicker { display: inline-flex; align-items: center; gap: 11px; padding: 8px 18px; margin-bottom: 30px;
-  border: 1px solid rgba(var(--accent-rgb), .32); border-radius: 2px; background: rgba(var(--accent-rgb), .05); backdrop-filter: blur(4px);
-  font-family: var(--mono); font-size: 12px; letter-spacing: .34em; color: #d8d4da; font-weight: 500; }
-.lp .kicker-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
-  box-shadow: 0 0 0 0 rgba(var(--accent-rgb), .7); animation: lpk-ping 1.8s ease-out infinite; }
-@keyframes lpk-ping { 0% { box-shadow: 0 0 0 0 rgba(var(--accent-rgb), .7); } 70%, 100% { box-shadow: 0 0 0 9px rgba(var(--accent-rgb), 0); } }
 .lp .headline { font-weight: 800; line-height: .86; letter-spacing: .005em; font-size: clamp(52px, 12vw, 176px); text-transform: uppercase; }
 .lp .headline .line { display: block; position: relative; white-space: nowrap; }
 .lp .headline .line:first-child { color: #fff; text-shadow: 0 0 38px rgba(255, 255, 255, .18); }

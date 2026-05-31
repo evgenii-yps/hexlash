@@ -15,7 +15,6 @@
 
       <main class="page">
         <LandingHero
-          :kicker="config.kicker"
           :line1="config.line1"
           :line2="config.line2"
           @play="onPlay"
@@ -59,7 +58,6 @@ const config = {
   shape: 'shard',
   line1: 'BIGGER FIGHTS',
   line2: 'INCOMING',
-  kicker: 'SEASON 0 — TEASER LIVE',
   grain: true,
   scanlines: true,
   marquee: true,
