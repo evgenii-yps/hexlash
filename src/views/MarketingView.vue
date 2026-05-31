@@ -11,12 +11,6 @@
         <div v-if="config.grain" class="grain"></div>
       </div>
 
-      <!-- persistent HUD frame -->
-      <div class="hud-frame" aria-hidden="true">
-        <span class="hud tl"></span><span class="hud tr"></span>
-        <span class="hud bl"></span><span class="hud br"></span>
-      </div>
-
       <LandingNav :scrolled="scrolled" />
 
       <main class="page">
