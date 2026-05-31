@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>hexlash — Brand Book</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --accent:#ff0069; --accent-rgb:255,0,105;
+    --cyan:#00e5ff; --purple:#b026ff; --green:#39ff14;
+    --bg:#08080a; --bg2:#0d0a0d;
+    --white:#f6f4f6; --muted:#6e6a72; --line:rgba(255,255,255,.08);
+    --card:rgba(255,255,255,.03);
+    --disp:"Saira Condensed",-apple-system,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{background:var(--bg);color:var(--white);font-family:var(--disp);-webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(120% 80% at 50% -10%, #160a11 0%, #0b070a 42%, var(--bg) 78%);}
+  ::selection{background:var(--accent);color:#fff;}
+
+  .doc{width:min(1080px,92vw);margin:0 auto;padding:0 0 120px;}
+
+  /* shared */
+  .eyebrow{display:flex;align-items:center;gap:14px;font-family:var(--mono);font-size:12px;font-weight:500;
+    letter-spacing:.34em;color:var(--accent);text-transform:uppercase;margin-bottom:26px;}
+  .eyebrow::before{content:"";width:34px;height:2px;background:var(--accent);box-shadow:0 0 10px var(--accent);}
+  .sec{padding:78px 0;border-top:1px solid var(--line);}
+  .sec-h{font-weight:800;text-transform:uppercase;letter-spacing:.01em;font-size:clamp(34px,5vw,64px);line-height:.92;}
+  .sec-note{font-family:var(--mono);font-size:14px;line-height:1.7;color:#a9a5af;max-width:62ch;margin-top:18px;font-weight:400;}
+  .mono{font-family:var(--mono);}
+
+  /* ===== COVER ===== */
+  .cover{min-height:88vh;display:flex;flex-direction:column;justify-content:center;position:relative;padding:60px 0 40px;}
+  .cover .hud{position:absolute;width:42px;height:42px;border:2px solid rgba(var(--accent-rgb),.5);}
+  .cover .hud.tl{top:24px;left:0;border-right:0;border-bottom:0;}
+  .cover .hud.br{bottom:24px;right:0;border-left:0;border-top:0;}
+  .cover-logo{width:96px;height:96px;color:var(--white);filter:drop-shadow(0 0 18px rgba(var(--accent-rgb),.5));margin-bottom:34px;}
+  .cover-word{font-weight:900;text-transform:uppercase;font-size:clamp(64px,16vw,210px);line-height:.82;letter-spacing:-.01em;
+    text-shadow:0 0 38px rgba(255,255,255,.14);}
+  .cover-word b{color:#fff;text-shadow:0 0 10px rgba(var(--accent-rgb),.6),0 0 42px rgba(var(--accent-rgb),.5);font-weight:900;}
+  .cover-sub{font-family:var(--mono);font-weight:500;letter-spacing:.5em;font-size:clamp(12px,1.3vw,16px);color:#8d8992;margin-top:30px;}
+  .cover-sub i{color:var(--accent);font-style:normal;}
+  .cover-meta{display:flex;gap:34px;margin-top:46px;font-family:var(--mono);font-size:12px;letter-spacing:.18em;color:var(--muted);text-transform:uppercase;flex-wrap:wrap;}
+  .cover-meta b{color:var(--white);font-weight:500;}
+
+  /* ===== LOGO ===== */
+  .logo-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:8px;}
+  @media(max-width:720px){.logo-grid{grid-template-columns:1fr;}}
+  .panel{background:var(--card);border:1px solid var(--line);padding:36px;position:relative;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;min-height:240px;}
+  .panel.light{background:var(--white);}
+  .panel-tag{position:absolute;top:14px;left:16px;font-family:var(--mono);font-size:10px;letter-spacing:.22em;color:var(--muted);text-transform:uppercase;}
+  .panel.light .panel-tag{color:#8a8790;}
+  .lockup{display:flex;align-items:center;gap:18px;}
+  .lockup .lw{font-weight:900;font-size:44px;letter-spacing:-.01em;text-transform:uppercase;}
+  .panel.light .lockup .lw{color:#0c0c0e;}
+  svg.mark{width:60px;height:60px;}
+  .clearspace{position:relative;padding:0;}
+  .cs-box{position:relative;width:130px;height:130px;display:flex;align-items:center;justify-content:center;
+    outline:1px dashed rgba(var(--accent-rgb),.4);outline-offset:18px;}
+  .donts{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:22px;}
+  @media(max-width:720px){.donts{grid-template-columns:1fr;}}
+  .dont{background:var(--card);border:1px solid var(--line);padding:22px;display:flex;flex-direction:column;align-items:center;gap:16px;min-height:150px;justify-content:center;}
+  .dont-x{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:#c64;text-transform:uppercase;}
+  .dont-x::before{content:"✕  ";color:#ff4d4d;}
+
+  /* ===== COLOR ===== */
+  .swatches{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:8px;}
+  @media(max-width:860px){.swatches{grid-template-columns:repeat(2,1fr);}}
+  .sw{border:1px solid var(--line);overflow:hidden;background:var(--card);}
+  .sw-chip{height:130px;display:flex;align-items:flex-end;padding:14px;}
+  .sw-chip .role{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;padding:3px 8px;background:rgba(0,0,0,.45);color:#fff;}
+  .sw-meta{padding:14px 16px 18px;}
+  .sw-name{font-weight:700;font-size:18px;text-transform:uppercase;letter-spacing:.02em;}
+  .sw-hex{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:5px;letter-spacing:.08em;}
+  .alt-row{display:flex;gap:14px;margin-top:18px;flex-wrap:wrap;}
+  .alt{flex:1;min-width:120px;border:1px solid var(--line);padding:14px 16px;display:flex;align-items:center;gap:12px;background:var(--card);}
+  .alt .dot{width:26px;height:26px;border-radius:2px;box-shadow:0 0 14px currentColor;}
+  .alt .al-n{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:#cfccd3;text-transform:uppercase;}
+  .alt .al-h{font-family:var(--mono);font-size:11px;color:var(--muted);}
+
+  /* ===== TYPE ===== */
+  .type-block{border:1px solid var(--line);background:var(--card);padding:30px 32px;margin-top:14px;}
+  .type-head{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:10px;border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:22px;}
+  .type-head .fam{font-weight:800;font-size:26px;text-transform:uppercase;letter-spacing:.02em;}
+  .type-head .use{font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:var(--accent);text-transform:uppercase;}
+  .specimen-xl{font-weight:900;font-size:clamp(48px,9vw,104px);line-height:.86;text-transform:uppercase;}
+  .specimen-mono{font-family:var(--mono);font-size:clamp(22px,3.4vw,38px);font-weight:500;letter-spacing:.04em;}
+  .glyphs{font-family:var(--mono);font-size:14px;color:#a9a5af;letter-spacing:.06em;margin-top:18px;word-spacing:2px;}
+  .weights{display:flex;gap:26px;flex-wrap:wrap;margin-top:20px;}
+  .weights span{text-transform:uppercase;font-size:24px;}
+  .scale-tbl{margin-top:18px;display:flex;flex-direction:column;gap:2px;}
+  .scale-row{display:flex;align-items:baseline;gap:18px;padding:8px 0;border-bottom:1px dashed var(--line);}
+  .scale-row .lbl{font-family:var(--mono);font-size:11px;color:var(--muted);width:120px;letter-spacing:.12em;text-transform:uppercase;flex:none;}
+  .scale-row .ex{text-transform:uppercase;font-weight:800;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+  /* ===== VOICE ===== */
+  .voice-main{font-weight:900;text-transform:uppercase;font-size:clamp(40px,8vw,96px);line-height:.9;letter-spacing:.01em;margin-top:6px;}
+  .voice-main b{color:#fff;text-shadow:0 0 10px rgba(var(--accent-rgb),.55),0 0 40px rgba(var(--accent-rgb),.45);}
+  .voice-cols{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:36px;}
+  @media(max-width:720px){.voice-cols{grid-template-columns:1fr;}}
+  .voice-card{border:1px solid var(--line);background:var(--card);padding:24px;}
+  .vc-h{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;margin-bottom:14px;}
+  .vc-h.is{color:var(--accent);} .vc-h.no{color:var(--muted);}
+  .vc-list{list-style:none;display:flex;flex-direction:column;gap:11px;}
+  .vc-list li{font-family:var(--mono);font-size:13px;line-height:1.5;color:#bdb9c2;padding-left:20px;position:relative;font-weight:400;}
+  .vc-list li::before{content:"▸";position:absolute;left:0;color:var(--accent);}
+  .vc-list.no li::before{content:"–";color:var(--muted);}
+  .lex{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px;}
+  .lex span{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#d8d4da;
+    border:1px solid rgba(var(--accent-rgb),.3);background:rgba(var(--accent-rgb),.05);padding:8px 14px;}
+
+  /* ===== COMPONENTS ===== */
+  .comp-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:14px;}
+  @media(max-width:720px){.comp-grid{grid-template-columns:1fr;}}
+  .comp{border:1px solid var(--line);background:var(--card);padding:30px;position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:16px;justify-content:center;min-height:150px;}
+  .comp .panel-tag{position:static;margin-bottom:4px;}
+
+  .kicker{display:inline-flex;align-items:center;gap:11px;padding:8px 18px;
+    border:1px solid rgba(var(--accent-rgb),.32);background:rgba(var(--accent-rgb),.05);
+    font-family:var(--mono);font-size:12px;letter-spacing:.34em;color:#d8d4da;font-weight:500;}
+  .kicker .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent);}
+  .btn-play{display:inline-flex;align-items:center;gap:14px;padding:16px 38px;font-weight:700;font-size:17px;letter-spacing:.22em;color:#fff;
+    background:var(--accent);clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px);
+    box-shadow:0 0 26px rgba(var(--accent-rgb),.55);}
+  .btn-ghost{display:inline-flex;align-items:center;gap:11px;padding:15px 28px;font-family:var(--mono);font-weight:500;font-size:13px;letter-spacing:.18em;color:#d4d1d8;
+    border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.02);}
+  .chip{border:1px solid var(--line);background:rgba(255,255,255,.02);padding:14px 18px;display:flex;flex-direction:column;gap:5px;min-width:170px;}
+  .chip .ck{font-weight:700;font-size:15px;letter-spacing:.04em;text-transform:uppercase;}
+  .chip .cd{font-family:var(--mono);font-size:11px;color:var(--muted);}
+  .hud-demo{position:relative;width:120px;height:80px;}
+  .hud-demo span{position:absolute;width:24px;height:24px;border:2px solid rgba(var(--accent-rgb),.6);}
+  .hud-demo .tl{top:0;left:0;border-right:0;border-bottom:0;} .hud-demo .tr{top:0;right:0;border-left:0;border-bottom:0;}
+  .hud-demo .bl{bottom:0;left:0;border-right:0;border-top:0;} .hud-demo .br{bottom:0;right:0;border-left:0;border-top:0;}
+
+  /* ===== MOTIF ===== */
+  .motif-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:14px;}
+  @media(max-width:860px){.motif-grid{grid-template-columns:repeat(2,1fr);}}
+  .motif{border:1px solid var(--line);background:var(--bg2);aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;position:relative;overflow:hidden;}
+  .motif svg{width:64px;height:64px;}
+  .motif .mn{font-family:var(--mono);font-size:11px;letter-spacing:.22em;color:#cfccd3;text-transform:uppercase;}
+  .motif .mn b{color:var(--accent);font-weight:500;}
+
+  /* ===== ICONS ===== */
+  .icon-row{display:flex;gap:16px;flex-wrap:wrap;margin-top:14px;}
+  .icon-cell{border:1px solid var(--line);background:var(--card);width:88px;height:88px;display:flex;align-items:center;justify-content:center;color:#cfccd3;}
+  .icon-cell svg{width:30px;height:30px;}
+
+  .foot{padding:54px 0 0;border-top:1px solid var(--line);margin-top:40px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:18px;}
+  .foot .fl{display:flex;align-items:center;gap:14px;}
+  .foot .fw{font-weight:900;font-size:24px;text-transform:uppercase;}
+  .foot svg.mark{width:38px;height:38px;}
+  .foot .ft{font-family:var(--mono);font-size:11px;letter-spacing:.22em;color:var(--muted);text-transform:uppercase;}
+</style>
+</head>
+<body>
+<div class="doc">
+
+  <!-- COVER -->
+  <header class="cover">
+    <span class="hud tl"></span><span class="hud br"></span>
+    <svg class="cover-logo" viewBox="0 0 48 48" aria-hidden="true">
+      <polygon points="24,3 41.5,13 41.5,35 24,45 6.5,35 6.5,13" fill="none" stroke="currentColor" stroke-width="2.4"/>
+      <polygon points="24,13 33,18.5 33,29.5 24,35 15,29.5 15,18.5" fill="none" stroke="currentColor" stroke-width="2.4"/>
+      <path d="M24 13 L24 24 M24 24 L33 18.5 M24 24 L15 29.5" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+    </svg>
+    <h1 class="cover-word">HEX<b>LASH</b></h1>
+    <p class="cover-sub">TRAIN<i>.</i> FIGHT<i>.</i> RISE<i>.</i></p>
+    <div class="cover-meta">
+      <span>DOC <b>BRAND BOOK</b></span>
+      <span>VER <b>1.0</b></span>
+      <span>UPDATED <b>MAY 2026</b></span>
+      <span>SEASON <b>0 — TEASER</b></span>
+    </div>
+  </header>
+
+  <!-- ESSENCE -->
+  <section class="sec">
+    <div class="eyebrow">01 — Essence</div>
+    <h2 class="sec-h">A combat arena<br/>with no surrender.</h2>
+    <p class="sec-note">Hexlash is a fighting-arena game and on-chain ecosystem ($HEX on Base). The brand is built to feel like the moment before the bell: charged, electric, inevitable. Every surface is dark and tactical, cut by a single neon strike of color. The aesthetic borrows from fight-night HUDs, competitive overlays and arcade cabinets — sharp geometry, monospaced telemetry, and one relentless creed: <b style="color:var(--white)">never give up.</b></p>
+  </section>
+
+  <!-- LOGO -->
+  <section class="sec">
+    <div class="eyebrow">02 — The Mark</div>
+    <h2 class="sec-h">Logo</h2>
+    <p class="sec-note">A nested hexagon with an inner Y-strike — the “lash.” Outer cell is the arena; the inner stroke is the fighter inside it. Always reproduce from vector, keep stroke weight even, and never fill the counters.</p>
+    <div class="logo-grid">
+      <div class="panel">
+        <span class="panel-tag">PRIMARY — ON DARK</span>
+        <div class="lockup">
+          <svg class="mark" viewBox="0 0 48 48" style="color:var(--white);filter:drop-shadow(0 0 10px rgba(255,0,105,.45))">
+            <polygon points="24,3 41.5,13 41.5,35 24,45 6.5,35 6.5,13" fill="none" stroke="currentColor" stroke-width="2.4"/>
+            <polygon points="24,13 33,18.5 33,29.5 24,35 15,29.5 15,18.5" fill="none" stroke="currentColor" stroke-width="2.4"/>
+            <path d="M24 13 L24 24 M24 24 L33 18.5 M24 24 L15 29.5" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+          </svg>
+          <span class="lw">HEXLASH</span>
+        </div>
+      </div>
+      <div class="panel light">
+        <span class="panel-tag">MONO — ON LIGHT</span>
+        <div class="lockup">
+          <svg class="mark" viewBox="0 0 48 48" style="color:#0c0c0e">
+            <polygon points="24,3 41.5,13 41.5,35 24,45 6.5,35 6.5,13" fill="none" stroke="currentColor" stroke-width="2.4"/>
+            <polygon points="24,13 33,18.5 33,29.5 24,35 15,29.5 15,18.5" fill="none" stroke="currentColor" stroke-width="2.4"/>
+            <path d="M24 13 L24 24 M24 24 L33 18.5 M24 24 L15 29.5" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+          </svg>
+          <span class="lw">HEXLASH</span>
+        </div>
+      </div>
+      <div class="panel">
+        <span class="panel-tag">MARK ONLY</span>
+        <svg class="mark" viewBox="0 0 48 48" style="width:84px;height:84px;color:var(--accent);filter:drop-shadow(0 0 12px rgba(255,0,105,.6))">
+          <polygon points="24,3 41.5,13 41.5,35 24,45 6.5,35 6.5,13" fill="none" stroke="currentColor" stroke-width="2.4"/>
+          <polygon points="24,13 33,18.5 33,29.5 24,35 15,29.5 15,18.5" fill="none" stroke="currentColor" stroke-width="2.4"/>
+          <path d="M24 13 L24 24 M24 24 L33 18.5 M24 24 L15 29.5" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="panel clearspace">
+        <span class="panel-tag">CLEARSPACE — ½ MARK HEIGHT</span>
+        <div class="cs-box">
+          <svg class="mark" viewBox="0 0 48 48" style="color:var(--white)">
+            <polygon points="24,3 41.5,13 41.5,35 24,45 6.5,35 6.5,13" fill="none" stroke="currentColor" stroke-width="2.4"/>
+            <polygon points="24,13 33,18.5 33,29.5 24,35 15,29.5 15,18.5" fill="none" stroke="currentColor" stroke-width="2.4"/>
+            <path d="M24 13 L24 24 M24 24 L33 18.5 M24 24 L15 29.5" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+    <div class="donts">
+      <div class="dont">
+        <svg class="mark" viewBox="0 0 48 48" style="color:var(--white);transform:rotate(22deg)">
+          <polygon points="24,3 41.5,13 41.5,35 24,45 6.5,35 6.5,13" fill="none" stroke="currentColor" stroke-width="2.4"/>
+          <polygon points="24,13 33,18.5 33,29.5 24,35 15,29.5 15,18.5" fill="none" stroke="currentColor" stroke-width="2.4"/>
+        </svg>
+        <span class="dont-x">Don't rotate</span>
+      </div>
+      <div class="dont">
+        <svg class="mark" viewBox="0 0 48 48" style="color:#ff0069">
+          <polygon points="24,3 41.5,13 41.5,35 24,45 6.5,35 6.5,13" fill="#ff0069" stroke="none"/>
+          <polygon points="24,13 33,18.5 33,29.5 24,35 15,29.5 15,18.5" fill="#0b070a" stroke="none"/>
+        </svg>
+        <span class="dont-x">Don't fill counters</span>
+      </div>
+      <div class="dont">
+        <svg class="mark" viewBox="0 0 48 48" style="color:var(--white);transform:scaleX(1.7)">
+          <polygon points="24,3 41.5,13 41.5,35 24,45 6.5,35 6.5,13" fill="none" stroke="currentColor" stroke-width="2.4"/>
+          <polygon points="24,13 33,18.5 33,29.5 24,35 15,29.5 15,18.5" fill="none" stroke="currentColor" stroke-width="2.4"/>
+        </svg>
+        <span class="dont-x">Don't distort</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- COLOR -->
+  <section class="sec">
+    <div class="eyebrow">03 — Color</div>
+    <h2 class="sec-h">Palette</h2>
+    <p class="sec-note">Near-black tactical surfaces carry one electric accent. <b style="color:var(--white)">Lash Pink</b> is the brand — used sparingly for the single thing that matters on screen (a strike, a CTA, a live signal). Whites are warm, never pure. Alternate accents exist only for seasonal / event re-skins.</p>
+    <div class="swatches">
+      <div class="sw">
+        <div class="sw-chip" style="background:#ff0069"><span class="role">Accent / Lash Pink</span></div>
+        <div class="sw-meta"><div class="sw-name">Lash Pink</div><div class="sw-hex">#FF0069 · rgb 255,0,105</div></div>
+      </div>
+      <div class="sw">
+        <div class="sw-chip" style="background:#08080a;border-bottom:1px solid var(--line)"><span class="role">Base / BG</span></div>
+        <div class="sw-meta"><div class="sw-name">Void</div><div class="sw-hex">#08080A · rgb 8,8,10</div></div>
+      </div>
+      <div class="sw">
+        <div class="sw-chip" style="background:#0d0a0d"><span class="role">Surface</span></div>
+        <div class="sw-meta"><div class="sw-name">Carbon</div><div class="sw-hex">#0D0A0D · rgb 13,10,13</div></div>
+      </div>
+      <div class="sw">
+        <div class="sw-chip" style="background:#f6f4f6"><span class="role" style="color:#0c0c0e;background:rgba(255,255,255,.6)">Text / FG</span></div>
+        <div class="sw-meta"><div class="sw-name">Bone</div><div class="sw-hex">#F6F4F6 · rgb 246,244,246</div></div>
+      </div>
+      <div class="sw">
+        <div class="sw-chip" style="background:#6e6a72"><span class="role">Muted / Meta</span></div>
+        <div class="sw-meta"><div class="sw-name">Ash</div><div class="sw-hex">#6E6A72 · rgb 110,106,114</div></div>
+      </div>
+      <div class="sw">
+        <div class="sw-chip" style="background:#160a11;border-bottom:1px solid var(--line)"><span class="role">Glow Wash</span></div>
+        <div class="sw-meta"><div class="sw-name">Ember</div><div class="sw-hex">#160A11 · radial glow only</div></div>
+      </div>
+      <div class="sw">
+        <div class="sw-chip" style="background:rgba(255,255,255,.03);border-bottom:1px solid var(--line)"><span class="role">Card</span></div>
+        <div class="sw-meta"><div class="sw-name">Panel</div><div class="sw-hex">#FFFFFF @ 3% on Void</div></div>
+      </div>
+      <div class="sw">
+        <div class="sw-chip" style="background:rgba(255,255,255,.08);border-bottom:1px solid var(--line)"><span class="role">Hairline</span></div>
+        <div class="sw-meta"><div class="sw-name">Line</div><div class="sw-hex">#FFFFFF @ 8% on Void</div></div>
+      </div>
+    </div>
+    <p class="sec-note" style="margin-top:30px;color:var(--white);font-weight:500;letter-spacing:.14em;text-transform:uppercase;font-size:12px">Alternate accents — event re-skins only</p>
+    <div class="alt-row">
+      <div class="alt"><span class="dot" style="background:#00e5ff;color:#00e5ff"></span><div><div class="al-n">Volt Cyan</div><div class="al-h">#00E5FF</div></div></div>
+      <div class="alt"><span class="dot" style="background:#b026ff;color:#b026ff"></span><div><div class="al-n">Hex Purple</div><div class="al-h">#B026FF</div></div></div>
+      <div class="alt"><span class="dot" style="background:#39ff14;color:#39ff14"></span><div><div class="al-n">Acid Green</div><div class="al-h">#39FF14</div></div></div>
+    </div>
+  </section>
+
+  <!-- TYPE -->
+  <section class="sec">
+    <div class="eyebrow">04 — Typography</div>
+    <h2 class="sec-h">Type</h2>
+    <p class="sec-note">Two voices. <b style="color:var(--white)">Saira Condensed</b> shouts — condensed, heavy, always uppercase for impact. <b style="color:var(--white)">JetBrains Mono</b> whispers the telemetry — labels, meta, tickers, fine print — always tracked wide.</p>
+
+    <div class="type-block">
+      <div class="type-head"><span class="fam">Saira Condensed</span><span class="use">Display · Headlines · Numerals</span></div>
+      <div class="specimen-xl">NEVER GIVE UP</div>
+      <div class="weights">
+        <span style="font-weight:500">Medium 500</span>
+        <span style="font-weight:700">Bold 700</span>
+        <span style="font-weight:800">Extra 800</span>
+        <span style="font-weight:900">Black 900</span>
+      </div>
+      <div class="scale-tbl">
+        <div class="scale-row"><span class="lbl">Hero · 900</span><span class="ex" style="font-size:40px;font-weight:900">BIGGER FIGHTS</span></div>
+        <div class="scale-row"><span class="lbl">Section · 800</span><span class="ex" style="font-size:30px;font-weight:800">GAMEPLAY</span></div>
+        <div class="scale-row"><span class="lbl">Title · 700</span><span class="ex" style="font-size:22px;font-weight:700">STAY UPDATED</span></div>
+      </div>
+    </div>
+
+    <div class="type-block">
+      <div class="type-head"><span class="fam">JetBrains Mono</span><span class="use">UI · Meta · Tickers · Code</span></div>
+      <div class="specimen-mono">TRAIN<span style="color:var(--accent)">.</span> FIGHT<span style="color:var(--accent)">.</span> RISE<span style="color:var(--accent)">.</span></div>
+      <div class="glyphs">ABCDEFGHIJKLMNOPQRSTUVWXYZ&nbsp; 0123456789 &nbsp;$HEX ◆ • → ✓ # @ %</div>
+      <div class="scale-tbl">
+        <div class="scale-row"><span class="lbl">Kicker · .34em</span><span class="ex" style="font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:.34em;color:#d8d4da">SEASON 0 — TEASER LIVE</span></div>
+        <div class="scale-row"><span class="lbl">Nav · .22em</span><span class="ex" style="font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:.22em;color:#b9b6bd">GAMEPLAY · $HEX · ROADMAP</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VOICE -->
+  <section class="sec">
+    <div class="eyebrow">05 — Voice</div>
+    <h2 class="sec-h">How we talk</h2>
+    <p class="voice-main">NEVER<br/><b>GIVE UP.</b></p>
+    <p class="sec-note">Short. Declarative. Built for the moment before a fight. We speak like a coach in the corner, not a marketer in a deck — every line is a command or a fact, never a paragraph.</p>
+    <div class="voice-cols">
+      <div class="voice-card">
+        <div class="vc-h is">We are</div>
+        <ul class="vc-list">
+          <li>Direct — commands, not pitches. “PLAY.” “Step in.”</li>
+          <li>Tactical — clipped, confident, telemetry-cool.</li>
+          <li>Earned — respect the grind; nothing is handed out.</li>
+          <li>All-caps for impact, lowercase for the player.</li>
+        </ul>
+      </div>
+      <div class="voice-card">
+        <div class="vc-h no">We are not</div>
+        <ul class="vc-list no">
+          <li>Hypey or salesy — no “revolutionary,” no exclamation spam.</li>
+          <li>Wordy — if it needs a paragraph, cut it.</li>
+          <li>Cute — no emoji, no memespeak in core copy.</li>
+          <li>Vague — “COMING SOON,” not “stay tuned for updates.”</li>
+        </ul>
+      </div>
+    </div>
+    <div class="lex">
+      <span>Train. Fight. Rise.</span><span>Never Give Up</span><span>Bigger Fights Incoming</span>
+      <span>See you in the cage</span><span>The Code</span><span>Enter the arena</span>
+    </div>
+  </section>
+
+  <!-- COMPONENTS -->
+  <section class="sec">
+    <div class="eyebrow">06 — Components</div>
+    <h2 class="sec-h">UI Kit</h2>
+    <p class="sec-note">A small, sharp set. Notched primary buttons read as fight-card chevrons; ghost buttons frame with HUD corners on hover; every panel is hairline-bordered carbon. Corner brackets bracket the whole experience.</p>
+    <div class="comp-grid">
+      <div class="comp">
+        <span class="panel-tag">PRIMARY CTA — NOTCHED</span>
+        <a class="btn-play"><span>PLAY</span><span aria-hidden="true">→</span></a>
+      </div>
+      <div class="comp">
+        <span class="panel-tag">GHOST CTA</span>
+        <a class="btn-ghost"><span>JOIN DISCORD</span></a>
+      </div>
+      <div class="comp">
+        <span class="panel-tag">KICKER / LIVE BADGE</span>
+        <span class="kicker"><span class="dot"></span>SEASON 0 — TEASER LIVE</span>
+      </div>
+      <div class="comp">
+        <span class="panel-tag">FACT CHIP</span>
+        <div class="chip"><span class="ck">Built on Base</span><span class="cd">Low fees, fast finality.</span></div>
+      </div>
+      <div class="comp">
+        <span class="panel-tag">HUD CORNER FRAME</span>
+        <div class="hud-demo"><span class="tl"></span><span class="tr"></span><span class="bl"></span><span class="br"></span></div>
+      </div>
+      <div class="comp">
+        <span class="panel-tag">MARQUEE TICKER</span>
+        <div class="mono" style="font-size:13px;letter-spacing:.28em;color:#9c98a2">BIGGER FIGHTS <span style="color:var(--accent);font-size:10px">◆</span> $HEX ON BASE <span style="color:var(--accent);font-size:10px">◆</span> NEVER GIVE UP</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MOTIF -->
+  <section class="sec">
+    <div class="eyebrow">07 — Backdrop Motif</div>
+    <h2 class="sec-h">The Lattice</h2>
+    <p class="sec-note">A living, mouse-reactive lattice sits behind every screen — a spotlight sweeps across it and active nodes pulse. <b style="color:var(--white)">Shards</b> is the default (sharp, combat-coded); the cell can swap to Hexagons, Triangles or Rings for seasonal re-skins. Always low-contrast, accent-stroked, never competing with foreground type.</p>
+    <div class="motif-grid">
+      <div class="motif">
+        <svg viewBox="0 0 60 60" style="color:var(--accent)" aria-hidden="true">
+          <g fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="22" y="22" width="16" height="16" transform="rotate(45 30 30)"/>
+            <rect x="22" y="2" width="16" height="16" transform="rotate(45 30 10)" opacity=".4"/>
+            <rect x="22" y="42" width="16" height="16" transform="rotate(45 30 50)" opacity=".4"/>
+            <rect x="2" y="22" width="16" height="16" transform="rotate(45 10 30)" opacity=".4"/>
+            <rect x="42" y="22" width="16" height="16" transform="rotate(45 50 30)" opacity=".4"/>
+          </g>
+        </svg>
+        <span class="mn"><b>Shards</b> — default</span>
+      </div>
+      <div class="motif">
+        <svg viewBox="0 0 48 48" style="color:#cfccd3" aria-hidden="true">
+          <g fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="24,8 38,16 38,32 24,40 10,32 10,16"/>
+            <polygon points="24,16 31,20 31,28 24,32 17,28 17,20" opacity=".45"/>
+          </g>
+        </svg>
+        <span class="mn">Hexagons</span>
+      </div>
+      <div class="motif">
+        <svg viewBox="0 0 60 56" style="color:#cfccd3" aria-hidden="true">
+          <g fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="30,8 46,40 14,40"/>
+            <polygon points="14,40 30,8 30,40" opacity=".0"/>
+            <polygon points="8,48 24,16 40,48" opacity=".35"/>
+            <polygon points="52,48 36,16 20,48" opacity=".35"/>
+          </g>
+        </svg>
+        <span class="mn">Triangles</span>
+      </div>
+      <div class="motif">
+        <svg viewBox="0 0 60 60" style="color:#cfccd3" aria-hidden="true">
+          <g fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="30" cy="30" r="11"/>
+            <circle cx="10" cy="30" r="11" opacity=".4"/>
+            <circle cx="50" cy="30" r="11" opacity=".4"/>
+            <circle cx="20" cy="48" r="11" opacity=".4"/>
+            <circle cx="40" cy="48" r="11" opacity=".4"/>
+            <circle cx="20" cy="12" r="11" opacity=".4"/>
+            <circle cx="40" cy="12" r="11" opacity=".4"/>
+          </g>
+        </svg>
+        <span class="mn">Rings</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ICONS -->
+  <section class="sec">
+    <div class="eyebrow">08 — Iconography</div>
+    <h2 class="sec-h">Icons</h2>
+    <p class="sec-note">Brand-standard social and utility glyphs. Thin, even strokes; inherit the foreground color and shift to Lash Pink with a glow on hover. No filled badges around them.</p>
+    <div class="icon-row">
+      <div class="icon-cell"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.3 4.5A19 19 0 0 0 15.6 3l-.3.5a14 14 0 0 1 4.2 2 12.6 12.6 0 0 0-15 0 14 14 0 0 1 4.2-2L8.4 3a19 19 0 0 0-4.7 1.5C1 9 .3 13.3.6 17.6A19 19 0 0 0 6.4 20l.7-1.2a12 12 0 0 1-1.9-.9l.5-.4a9 9 0 0 0 7.6 0l.5.4a12 12 0 0 1-1.9.9l.7 1.2a19 19 0 0 0 5.8-2.4c.4-5-.7-9.3-3-13.1ZM8.5 15c-.9 0-1.7-.8-1.7-1.9s.8-1.9 1.7-1.9 1.7.9 1.7 1.9-.8 1.9-1.7 1.9Zm7 0c-.9 0-1.7-.8-1.7-1.9s.8-1.9 1.7-1.9 1.7.9 1.7 1.9-.8 1.9-1.7 1.9Z"/></svg></div>
+      <div class="icon-cell"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.9 2H22l-7.5 8.6L23.3 22h-6.8l-5.3-7-6.1 7H2l8-9.2L1 2h7l4.8 6.4L18.9 2Zm-1.2 18h1.9L7.4 4H5.4l12.3 16Z"/></svg></div>
+      <div class="icon-cell"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.9 4.3 18.6 20c-.2 1-.9 1.3-1.7.8l-4.7-3.5-2.3 2.2c-.3.3-.5.5-1 .5l.3-4.7L17 6.5c.4-.3-.1-.5-.6-.2L6.7 12.5l-4.5-1.4c-1-.3-1-1 .2-1.4L20.6 3c.8-.3 1.5.2 1.3 1.3Z"/></svg></div>
+      <div class="icon-cell"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M23 7.5a3 3 0 0 0-2.1-2.1C19 4.9 12 4.9 12 4.9s-7 0-8.9.5A3 3 0 0 0 1 7.5C.5 9.4.5 12 .5 12s0 2.6.5 4.5a3 3 0 0 0 2.1 2.1c1.9.5 8.9.5 8.9.5s7 0 8.9-.5a3 3 0 0 0 2.1-2.1c.5-1.9.5-4.5.5-4.5s0-2.6-.5-4.5ZM9.8 15.3V8.7l5.7 3.3-5.7 3.3Z"/></svg></div>
+      <div class="icon-cell"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.4" cy="6.6" r="1.2" fill="currentColor" stroke="none"/></svg></div>
+      <div class="icon-cell"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+      <div class="icon-cell"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5L8 5.5Z"/></svg></div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="foot">
+    <div class="fl">
+      <svg class="mark" viewBox="0 0 48 48" style="color:var(--white)">
+        <polygon points="24,3 41.5,13 41.5,35 24,45 6.5,35 6.5,13" fill="none" stroke="currentColor" stroke-width="2.4"/>
+        <polygon points="24,13 33,18.5 33,29.5 24,35 15,29.5 15,18.5" fill="none" stroke="currentColor" stroke-width="2.4"/>
+        <path d="M24 13 L24 24 M24 24 L33 18.5 M24 24 L15 29.5" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+      </svg>
+      <span class="fw">HEXLASH</span>
+    </div>
+    <span class="ft">BRAND BOOK V1.0 · NEVER GIVE UP · © 2026</span>
+  </footer>
+
+</div>
+</body>
+</html>
