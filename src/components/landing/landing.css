@@ -22,7 +22,9 @@
   --bg2: #0d0a0d;
   --white: #f6f4f6;
   --muted: #6e6a72;
-  --nav-h: 84px;
+  /* Landing nav logo height — single knob; nav bar height derives from it. */
+  --lp-nav-logo-size: 160px;
+  --nav-h: calc(var(--lp-nav-logo-size) + 40px);
   --disp: "Saira Condensed", -apple-system, sans-serif;
   --mono: "JetBrains Mono", ui-monospace, monospace;
 
@@ -62,7 +64,7 @@
   display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
   padding: 0 clamp(28px, 5vw, 72px); }
 .lp .nav-logo { justify-self: start; display: flex; align-items: center; }
-.lp .logo-mark { width: 48px; height: 48px; display: block;
+.lp .logo-mark { width: var(--lp-nav-logo-size); height: var(--lp-nav-logo-size); display: block;
   transition: transform .4s cubic-bezier(.2, .8, .2, 1); }
 .lp .nav-logo:hover .logo-mark { transform: scale(1.06); }
 .lp .nav-links { justify-self: center; display: flex; gap: clamp(28px, 3.6vw, 56px); }
@@ -321,7 +323,7 @@
   .lp .timeline-track { display: none; }
 }
 @media (max-width: 680px) {
-  .lp { --nav-h: 70px; }
+  .lp { --lp-nav-logo-size: 104px; }
   .lp .nav-links { gap: 18px; }
   .lp .nav-links a { font-size: 11px; letter-spacing: .16em; }
   .lp .scrollcue { display: none; }
