@@ -23,8 +23,11 @@
   --white: #f6f4f6;
   --muted: #6e6a72;
   /* Landing nav logo height — single knob; nav bar height derives from it. */
-  --lp-nav-logo-size: 160px;
+  --lp-nav-logo-size: 140px;
   --nav-h: calc(var(--lp-nav-logo-size) + 40px);
+  /* Nav link text size + social icon size — independently tunable knobs. */
+  --lp-nav-link-size: 16.5px;
+  --lp-nav-social-size: 24px;
   --disp: "Saira Condensed", -apple-system, sans-serif;
   --mono: "JetBrains Mono", ui-monospace, monospace;
 
@@ -68,7 +71,7 @@
   transition: transform .4s cubic-bezier(.2, .8, .2, 1); }
 .lp .nav-logo:hover .logo-mark { transform: scale(1.06); }
 .lp .nav-links { justify-self: center; display: flex; gap: clamp(28px, 3.6vw, 56px); }
-.lp .nav-links a { font-family: var(--mono); font-weight: 500; font-size: 13px; letter-spacing: .22em;
+.lp .nav-links a { font-family: var(--mono); font-weight: 500; font-size: var(--lp-nav-link-size); letter-spacing: .22em;
   color: #b9b6bd; position: relative; padding: 6px 2px; }
 .lp .nav-links a::after { content: ""; position: absolute; left: 0; bottom: 0; height: 2px; width: 100%;
   background: var(--accent); transform: scaleX(0); transform-origin: right; transition: transform .35s cubic-bezier(.2, .8, .2, 1);
@@ -77,6 +80,7 @@
 .lp .nav-links a:hover::after { transform: scaleX(1); transform-origin: left; }
 .lp .nav-social { justify-self: end; display: flex; gap: 18px; align-items: center; }
 .lp .nav-social a { color: #cfccd3; display: flex; transition: color .25s, transform .25s; }
+.lp .nav-social a svg { width: var(--lp-nav-social-size); height: var(--lp-nav-social-size); }
 .lp .nav-social a:hover { color: var(--accent); transform: translateY(-2px); filter: drop-shadow(0 0 8px rgba(var(--accent-rgb), .6)); }
 
 /* ============ PAGE ============ */
@@ -323,7 +327,7 @@
   .lp .timeline-track { display: none; }
 }
 @media (max-width: 680px) {
-  .lp { --lp-nav-logo-size: 104px; }
+  .lp { --lp-nav-logo-size: 92px; }
   .lp .nav-links { gap: 18px; }
   .lp .nav-links a { font-size: 11px; letter-spacing: .16em; }
   .lp .scrollcue { display: none; }
