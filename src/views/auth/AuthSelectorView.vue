@@ -1,66 +1,184 @@
 <template>
-  <div class="auth-selector-wrap">
-    <div class="auth-selector-card">
-      <!-- Decorative corner-marks (desktop only) -->
-      <span class="auth-corner auth-corner--tl" aria-hidden="true"></span>
-      <span class="auth-corner auth-corner--tr" aria-hidden="true"></span>
-      <span class="auth-corner auth-corner--bl" aria-hidden="true"></span>
-      <span class="auth-corner auth-corner--br" aria-hidden="true"></span>
+  <!-- Hexlash auth screen — single screen, login + signup together (no tabs).
+       Ported from hexlash_auth_handoff/auth_screen.jsx. One pink accent
+       (#FF066F, prod canon) reserved for field focus + the ready Submit.
+       Provider buttons stay neutral. Email keeps the working password login
+       (magic-link / Privy = Этап 2 — see report). -->
+  <div class="hx-stage">
+    <div class="hx-motif" :style="motifStyle" aria-hidden="true"></div>
 
-      <AuthTabs :mode="mode" @change="onTabChange" />
+    <div class="hx-wrap">
+      <div class="hx-logo">
+        <img :src="logoSrc" alt="Hexlash" class="hx-logo-img" width="62" height="62" draggable="false" />
+      </div>
 
-      <!-- Screen A: Provider selector -->
-      <ProviderSelector
-        v-if="screen === 'provider'"
-        :applied-code="appliedReferralCode"
-        @select="onProviderSelect"
-        @referral="onReferralOpen"
-        @guest="onGuestStart"
-      />
+      <div class="hx-col">
+        <div class="hx-card" :class="{ 'has-back': showBack }">
+          <button v-if="showBack" type="button" class="hx-back" @click="onBack">
+            <IconChevron :s="13" dir="left" /> Back
+          </button>
 
-      <!-- Screen G: Guest archetype select -->
-      <GuestArchetypeSelect
-        v-else-if="screen === 'guest'"
-        @select="onGuestArchetypeSelect"
-        @back="onBackToProviders"
-      />
+          <!-- Generic header for the handoff stages (provider / more / email) -->
+          <div v-if="isPrimaryStage" class="hx-head">
+            <div class="hx-title">WELCOME</div>
+            <div class="hx-sub">{{ subtitle }}</div>
+          </div>
 
-      <!-- Screen B: More options -->
-      <MoreOptions
-        v-else-if="screen === 'more'"
-        @select="onMoreSelect"
-        @back="onBackToProviders"
-      />
+          <!-- Stage: provider selector (default) -->
+          <div v-if="screen === 'provider'" class="hx-list">
+            <button type="button" class="hx-btn" @click="onProviderSelect('google')">
+              <span class="hx-ic"><IconGoogle :s="18" /></span><span class="hx-lbl">Google</span>
+            </button>
+            <button type="button" class="hx-btn" @click="onProviderSelect('x')">
+              <span class="hx-ic"><IconX :s="16" /></span><span class="hx-lbl">X</span>
+            </button>
+            <button type="button" class="hx-btn" @click="onProviderSelect('web3')">
+              <span class="hx-ic"><IconWallet :s="19" /></span><span class="hx-lbl">Web3 Wallet</span>
+            </button>
+            <button type="button" class="hx-btn" @click="onProviderSelect('more')">
+              <span class="hx-ic"><IconUser :s="18" /></span>
+              <span class="hx-lbl">More Options</span>
+              <span class="hx-chev"><IconChevron :s="15" /></span>
+            </button>
+          </div>
 
-      <!-- Screen D: Email form -->
-      <EmailForm
-        v-else-if="screen === 'email'"
-        :mode="mode"
-        :loading="loading"
-        :server-error="serverError"
-        @submit="onEmailSubmit"
-        @back="onBackToMore"
-        @forgot="onForgotClick"
-      />
+          <!-- Stage: more options -->
+          <div v-else-if="screen === 'more'" class="hx-list">
+            <button type="button" class="hx-btn" @click="onMoreSelect('email')">
+              <span class="hx-ic"><IconMail :s="19" /></span><span class="hx-lbl">Email</span>
+            </button>
+            <button type="button" class="hx-btn" @click="onMoreSelect('farcaster')">
+              <span class="hx-ic"><IconFarcaster :s="18" /></span><span class="hx-lbl">Farcaster</span>
+            </button>
+            <button type="button" class="hx-btn" @click="onMoreSelect('discord')">
+              <span class="hx-ic"><IconDiscord :s="19" /></span><span class="hx-lbl">Discord</span>
+            </button>
+          </div>
 
-      <!-- Screen E: Forgot password (Email Auth Phase 5) -->
-      <ForgotPasswordScreen
-        v-else-if="screen === 'forgot'"
-        ref="forgotScreenRef"
-        :loading="loading"
-        @submit="onForgotSubmit"
-        @back="onBackFromForgot"
-      />
+          <!-- Stage: email — retains the working handle/password login, restyled. -->
+          <form v-else-if="screen === 'email'" class="hx-form" novalidate @submit.prevent="onFormSubmit">
+            <div class="hx-fieldrow" :class="{ 'is-error': errors.handle }">
+              <span class="hx-mic"><IconMail :s="18" /></span>
+              <input
+                ref="handleRef"
+                v-model.trim="form.handle"
+                class="hx-input"
+                type="text"
+                :placeholder="mode === 'login' ? 'Email or username' : 'Username'"
+                autocomplete="username"
+                autocapitalize="none"
+                spellcheck="false"
+                :disabled="loading"
+              />
+            </div>
 
-      <!-- Screen F: Signup success ("Check your inbox") (Email Auth Phase 5.5) -->
-      <SignupSuccessScreen
-        v-else-if="screen === 'signup-success'"
-        :email="signupSuccessEmail"
-        @continue="onSignupSuccessContinue"
-      />
+            <div v-if="mode === 'signup'" class="hx-fieldrow" :class="{ 'is-error': errors.email }">
+              <span class="hx-mic"><IconMail :s="18" /></span>
+              <input
+                v-model.trim="form.email"
+                class="hx-input"
+                type="email"
+                placeholder="your@email.com"
+                autocomplete="email"
+                autocapitalize="none"
+                spellcheck="false"
+                :disabled="loading"
+              />
+            </div>
+
+            <div class="hx-fieldrow" :class="{ 'is-error': errors.password }">
+              <span class="hx-mic"><IconLock :s="18" /></span>
+              <input
+                v-model="form.password"
+                class="hx-input"
+                type="password"
+                placeholder="Password"
+                :autocomplete="mode === 'login' ? 'current-password' : 'new-password'"
+                :disabled="loading"
+              />
+            </div>
+
+            <div v-if="firstError" class="hx-errline">
+              <IconAlert :s="13" /> {{ firstError }}
+            </div>
+            <div v-else-if="serverError" class="hx-errline">
+              <IconAlert :s="13" /> {{ serverError }}
+            </div>
+
+            <button
+              v-if="mode === 'login'"
+              type="button"
+              class="hx-forgot"
+              :disabled="loading"
+              @click="onForgotClick"
+            >
+              Forgot password?
+            </button>
+
+            <button
+              type="submit"
+              class="hx-submit-full"
+              :class="{ 'is-ready': canSubmit }"
+              :disabled="loading"
+            >
+              <span v-if="!loading">{{ mode === 'login' ? 'Sign In' : 'Sign Up' }}</span>
+              <span v-else class="hx-spin" aria-label="Loading"></span>
+            </button>
+
+            <div class="hx-fine">
+              By continuing you agree to our
+              <router-link to="/rules">Terms</router-link> &amp;
+              <router-link to="/privacy">Privacy Policy</router-link>.
+            </div>
+          </form>
+
+          <!-- Prod-only sub-flows (beyond the handoff states) keep their existing
+               components + behaviour. Этап 1 boundary — see report. -->
+          <ForgotPasswordScreen
+            v-else-if="screen === 'forgot'"
+            ref="forgotScreenRef"
+            :loading="loading"
+            @submit="onForgotSubmit"
+            @back="onBackFromForgot"
+          />
+
+          <SignupSuccessScreen
+            v-else-if="screen === 'signup-success'"
+            :email="signupSuccessEmail"
+            @continue="onSignupSuccessContinue"
+          />
+
+          <GuestArchetypeSelect
+            v-else-if="screen === 'guest'"
+            @select="onGuestArchetypeSelect"
+            @back="onBackToProviders"
+          />
+        </div>
+
+        <template v-if="isPrimaryStage">
+          <button type="button" class="hx-referral" @click="onReferralOpen">
+            <span class="hx-ic"><IconTicket :s="15" /></span> I have a referral code
+          </button>
+
+          <div class="hx-guest">
+            <button type="button" @click="onGuestStart">Play as Guest</button>
+          </div>
+        </template>
+      </div>
     </div>
 
-    <!-- Screen C: Referral overlay (Teleport-to-body) -->
+    <footer class="hx-foot">
+      <div class="hx-foot-l">
+        <router-link to="/privacy">Privacy Policy</router-link>
+        <router-link to="/rules">Terms of Use</router-link>
+      </div>
+      <div class="hx-foot-r">
+        <button type="button" class="hx-soc" aria-label="X" @click="showComingSoon('x')"><IconX :s="14" /></button>
+        <button type="button" class="hx-soc" aria-label="Discord" @click="showComingSoon('discord')"><IconDiscord :s="16" /></button>
+      </div>
+    </footer>
+
+    <!-- Referral overlay (Teleport-to-body) — unchanged functional flow. -->
     <ReferralOverlay
       v-if="referralOpen"
       @apply="onReferralApply"
@@ -70,141 +188,142 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, reactive, computed, nextTick, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useStore } from 'vuex';
 import { InfoMessageModel } from '@/core/models/internal/infoMessageModel.js';
-import AuthTabs from '@/components/auth/AuthTabs.vue';
-import ProviderSelector from '@/components/auth/ProviderSelector.vue';
-import MoreOptions from '@/components/auth/MoreOptions.vue';
-import EmailForm from '@/components/auth/EmailForm.vue';
 import ReferralOverlay from '@/components/auth/ReferralOverlay.vue';
 import ForgotPasswordScreen from '@/components/auth/ForgotPasswordScreen.vue';
 import SignupSuccessScreen from '@/components/auth/SignupSuccessScreen.vue';
 import GuestArchetypeSelect from '@/components/auth/GuestArchetypeSelect.vue';
+import {
+  IconGoogle, IconX, IconWallet, IconFarcaster, IconDiscord,
+  IconMail, IconChevron, IconTicket, IconUser, IconLock, IconAlert,
+} from '@/components/auth/authIcons.js';
 import { t } from '@/locales/index.js';
-
-// Phase 3: Vuex integration — provider toasts, email submit (login/register),
-// referral localStorage write. Email field still UI-only (BE doesn't accept yet —
-// see TODO in EmailForm.vue). Referral overwrite is intentional per TZ.
+import logoSrc from '@/assets/images/logo-512.png';
 
 const route = useRoute();
 const router = useRouter();
 const store = useStore();
 
-const PROVIDER_LABELS = {
-  google: 'Google',
-  x: 'X',
-  web3: 'Web3 wallet',
-  farcaster: 'Farcaster',
-  discord: 'Discord',
-};
+// quiet hex-lattice motif (handoff motifBg) — accent recoloured to #FF066F.
+const ACCENT_RGB = '255,6,111';
+const motifStyle = computed(() => {
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='56' height='64' viewBox='0 0 56 64'>` +
+    `<g fill='none' stroke='rgba(${ACCENT_RGB},0.07)' stroke-width='1'>` +
+    `<polygon points='28,2 52,16 52,44 28,58 4,44 4,16'/>` +
+    `<polygon points='28,30 40,37 40,51 28,58 16,51 16,37' stroke='rgba(255,255,255,0.035)'/>` +
+    `</g></svg>`;
+  return {
+    background: `url("data:image/svg+xml;utf8,${encodeURIComponent(svg)}")`,
+    backgroundSize: '56px 64px',
+  };
+});
 
+const PROVIDER_LABELS = {
+  google: 'Google', x: 'X', web3: 'Web3 wallet', farcaster: 'Farcaster', discord: 'Discord',
+};
 function showComingSoon(provider) {
   const label = PROVIDER_LABELS[provider] || provider;
-  const msg = InfoMessageModel.withoutButton(`${label} login is coming soon.`, 4000);
-  store.commit('master/setInfoMessage', msg);
+  store.commit('master/setInfoMessage', InfoMessageModel.withoutButton(`${label} login is coming soon.`, 4000));
 }
 
-// Initial mode derived from current path. /auth/login → 'login', /auth/signup → 'signup'.
-// ?guest=1 (from Profile → Change Archetype) opens the guest picker directly.
-const screen = ref(route.query.guest ? 'guest' : 'provider'); // 'provider' | 'more' | 'email' | 'forgot' | 'signup-success' | 'guest'
-// Email Auth Phase 5 — ref to ForgotPasswordScreen для calling showSuccess() post-dispatch
+// 'provider' | 'more' | 'email' | 'forgot' | 'signup-success' | 'guest'
+const screen = ref(route.query.guest ? 'guest' : 'provider');
 const forgotScreenRef = ref(null);
-// Email Auth Phase 5.5 — captured email для display on signup-success screen
 const signupSuccessEmail = ref('');
 const mode = ref(route.path === '/auth/signup' ? 'signup' : 'login');
 const referralOpen = ref(false);
 const loading = ref(false);
 const serverError = ref('');
-// Reactive mirror of localStorage['hexlash_referral_code']. Initialized on mount
-// (captures /r/:username redirect side-effect from router.js:64-76) and updated
-// after manual Apply in ReferralOverlay. localStorage doesn't fire native Vue
-// reactivity — parent-owned ref + prop drilling to ProviderSelector is the
-// minimal pattern. Read-clear semantics live in masterService.register (line 154).
-const appliedReferralCode = ref(localStorage.getItem('hexlash_referral_code') || '');
 
-// Watch route → keep mode in sync. Handles browser back/forward + manual URL paste
-// + redirect from /auth (bare) → /auth/login. Guard prevents infinite loop with onTabChange.
-watch(() => route.path, (newPath) => {
-  const targetMode = newPath === '/auth/signup' ? 'signup' : 'login';
-  if (targetMode !== mode.value) {
-    mode.value = targetMode;
-  }
-  // Note: screen state preserved across mode change (per TZ §3).
+const isPrimaryStage = computed(() => ['provider', 'more', 'email'].includes(screen.value));
+const showBack = computed(() => screen.value === 'more' || screen.value === 'email');
+const subtitle = computed(() => {
+  if (screen.value !== 'email') return 'SELECT YOUR PREFERRED LOGIN OPTION';
+  return mode.value === 'login' ? 'SIGN IN TO CONTINUE' : 'CREATE YOUR ACCOUNT';
 });
 
-// --- handlers ---
+// keep mode synced to route (browser back/forward, manual paste, /auth redirect)
+watch(() => route.path, (newPath) => {
+  const targetMode = newPath === '/auth/signup' ? 'signup' : 'login';
+  if (targetMode !== mode.value) mode.value = targetMode;
+});
 
-function onTabChange(newMode) {
-  if (newMode === mode.value) return; // no-op guard
-  mode.value = newMode;
-  router.replace(newMode === 'login' ? '/auth/login' : '/auth/signup');
-  // serverError clears when switching modes — stale errors from old mode shouldn't bleed.
-  serverError.value = '';
-}
+// ── Email form (retains the working username/password login) ────────────────
+const handleRef = ref(null);
+const form = reactive({ handle: '', email: '', password: '' });
+const errors = reactive({ handle: '', email: '', password: '' });
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-function onProviderSelect(provider) {
-  if (provider === 'more') {
-    screen.value = 'more';
-    return;
+const canSubmit = computed(() => {
+  if (!form.handle || !form.password) return false;
+  if (mode.value === 'signup' && !form.email) return false;
+  return true;
+});
+const firstError = computed(() => errors.handle || errors.email || errors.password || '');
+
+function clearErrors() { errors.handle = ''; errors.email = ''; errors.password = ''; }
+
+function validate() {
+  clearErrors();
+  let valid = true;
+  if (!form.handle) { errors.handle = 'Enter your username'; valid = false; }
+  if (mode.value === 'signup') {
+    if (!form.email) { errors.email = 'Enter your email'; valid = false; }
+    else if (!EMAIL_RE.test(form.email)) { errors.email = 'Enter a valid email address'; valid = false; }
   }
-  // 'google' | 'x' | 'web3' — backend pending, show "coming soon" toast.
-  showComingSoon(provider);
+  if (!form.password) { errors.password = 'Enter your password'; valid = false; }
+  else if (mode.value === 'signup' && form.password.length < 8) { errors.password = 'Password must be at least 8 characters'; valid = false; }
+  return valid;
 }
 
+// --- stage navigation ---
+function onProviderSelect(provider) {
+  if (provider === 'more') { screen.value = 'more'; return; }
+  showComingSoon(provider); // google | x | web3 — backend pending
+}
 function onMoreSelect(provider) {
   if (provider === 'email') {
     screen.value = 'email';
-    serverError.value = ''; // fresh form
+    serverError.value = '';
+    clearErrors();
+    nextTick(() => handleRef.value && handleRef.value.focus());
     return;
   }
-  // 'farcaster' | 'discord' — backend pending, show "coming soon" toast.
-  showComingSoon(provider);
+  showComingSoon(provider); // farcaster | discord — backend pending
 }
-
-function onBackToProviders() {
-  screen.value = 'provider';
+function onBack() {
+  if (screen.value === 'email') { screen.value = 'more'; serverError.value = ''; clearErrors(); }
+  else { screen.value = 'provider'; }
 }
+function onBackToProviders() { screen.value = 'provider'; }
 
-// ── Guest mode ─────────────────────────────────────────────────────────────
-function onGuestStart() {
-  screen.value = 'guest';
-}
+// ── Guest mode ──────────────────────────────────────────────────────────────
+function onGuestStart() { screen.value = 'guest'; }
+function onGuestArchetypeSelect(archetypeId) { store.dispatch('master/loginAsGuest', { archetypeId }); }
 
-function onGuestArchetypeSelect(archetypeId) {
-  // Creates the ephemeral guest session (localStorage) + routes к /play.
-  store.dispatch('master/loginAsGuest', { archetypeId });
-}
-
-function onBackToMore() {
-  screen.value = 'more';
-  serverError.value = ''; // clear form-level error on back
-}
-
-function onReferralOpen() {
-  referralOpen.value = true;
-}
-
-function onReferralClose() {
-  referralOpen.value = false;
-}
-
+// ── Referral ─────────────────────────────────────────────────────────────────
+function onReferralOpen() { referralOpen.value = true; }
+function onReferralClose() { referralOpen.value = false; }
 function onReferralApply(code) {
-  // Overwrite intentional — manual entry in overlay supersedes any pre-existing
-  // value from /r/:username redirect (router.js:64). masterService.register
-  // (line 146) reads this key automatically and clears it after successful register.
   if (code) {
     localStorage.setItem('hexlash_referral_code', code);
-    appliedReferralCode.value = code;
-    // C2: toast confirmation — user gets visible feedback that the silent
-    // localStorage write succeeded. Mirror `showComingSoon` pattern above.
-    store.commit('master/setInfoMessage', InfoMessageModel.withoutButton(
-      t.value.referral.lblCodeApplied,
-      4000
-    ));
+    store.commit('master/setInfoMessage', InfoMessageModel.withoutButton(t.value.referral.lblCodeApplied, 4000));
   }
   referralOpen.value = false;
+}
+
+// ── Email submit (unchanged auth logic — login / register) ───────────────────
+function onFormSubmit() {
+  if (!validate()) return;
+  onEmailSubmit({
+    mode: mode.value,
+    login: form.handle,
+    password: form.password,
+    ...(mode.value === 'signup' && form.email ? { email: form.email } : {}),
+  });
 }
 
 async function onEmailSubmit(payload) {
@@ -212,33 +331,17 @@ async function onEmailSubmit(payload) {
   serverError.value = '';
   try {
     if (payload.mode === 'login') {
-      // master/login does NOT throw on failure — sets state.loginState.authError
-      // via setLoginState mutation (masterState.js:124). Read after await.
-      // On success, action calls router.push('/') itself.
-      await store.dispatch('master/login', {
-        login: payload.login,
-        password: payload.password,
-      });
+      await store.dispatch('master/login', { login: payload.login, password: payload.password });
       const authError = store.getters['master/getLoginState']?.authError;
-      if (authError) {
-        serverError.value = authError;
-      }
+      if (authError) serverError.value = authError;
     } else {
-      // master/register THROWS on failure (masterState.js:152). Catch below.
-      // Email Auth Phase 5.5 — when email provided, suppress auto-redirect
-      // via skipRedirect flag и show "Check your inbox" success screen instead.
-      // When NO email, default flow (register → router.push('/') в action).
       const hasEmail = !!payload.email;
       await store.dispatch('master/register', {
         login: payload.login,
         password: payload.password,
         ...(hasEmail ? { email: payload.email, skipRedirect: true } : {}),
       });
-      if (hasEmail) {
-        signupSuccessEmail.value = payload.email;
-        screen.value = 'signup-success';
-      }
-      // else: action already pushed к '/'
+      if (hasEmail) { signupSuccessEmail.value = payload.email; screen.value = 'signup-success'; }
     }
   } catch (e) {
     serverError.value = e?.message || 'Something went wrong. Please try again.';
@@ -247,55 +350,23 @@ async function onEmailSubmit(payload) {
   }
 }
 
-// ── Email Auth Phase 5 — Forgot password flow ─────────────────────────────
-
-function onForgotClick() {
-  // Click "Forgot password?" link in EmailForm (login mode) → switch screen
-  screen.value = 'forgot';
-  serverError.value = '';
-}
-
-function onBackFromForgot() {
-  // Back from forgot screen → return к email screen (login form)
-  screen.value = 'email';
-  serverError.value = '';
-}
-
-// Email Auth Phase 5.5 — Continue button on signup-success screen
-function onSignupSuccessContinue() {
-  // User is already authenticated (register completed with skipRedirect=true).
-  // Route к /play (hub). beforeEnter on '/' would cascade authed users к /play
-  // anyway, but direct push avoids redundant hop.
-  router.push('/play');
-}
+// ── Forgot password (Email Auth Phase 5 flow — unchanged) ────────────────────
+function onForgotClick() { screen.value = 'forgot'; serverError.value = ''; }
+function onBackFromForgot() { screen.value = 'email'; serverError.value = ''; }
+function onSignupSuccessContinue() { router.push('/play'); }
 
 async function onForgotSubmit(payload) {
   loading.value = true;
   try {
-    // master/requestPasswordReset always resolves к { ok: boolean } —
-    // backend returns 200 generic regardless of email existence/verified
-    // state. forgotScreenRef.value.showSuccess() flips screen к "Check
-    // your inbox" message либо on ok=true либо on ok=false (both display
-    // same generic message to caller — only 400 format error is distinct,
-    // surfaced via masterService.forgotPassword returning {ok:false}).
     const result = await store.dispatch('master/requestPasswordReset', payload.email);
     if (result.ok) {
-      // Flip к success state in child component
       forgotScreenRef.value?.showSuccess();
     } else {
-      // Format error — surface to user via toast
-      store.commit('master/setInfoMessage', InfoMessageModel.withoutButton(
-        result.error || 'Invalid email format',
-        4000
-      ));
+      store.commit('master/setInfoMessage', InfoMessageModel.withoutButton(result.error || 'Invalid email format', 4000));
     }
   } catch (e) {
-    // Should not happen — action handles errors internally, but defensive
     console.error('Forgot password unexpected error:', e);
-    store.commit('master/setInfoMessage', InfoMessageModel.withoutButton(
-      'Something went wrong. Please try again.',
-      4000
-    ));
+    store.commit('master/setInfoMessage', InfoMessageModel.withoutButton('Something went wrong. Please try again.', 4000));
   } finally {
     loading.value = false;
   }
@@ -303,76 +374,194 @@ async function onForgotSubmit(payload) {
 </script>
 
 <style scoped>
-.auth-selector-wrap {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  padding: 16px 0;
-}
-
-.auth-selector-card {
+/* Tokens from the design handoff (auth_screen.jsx). Accent recoloured to the
+   prod canon #FF066F (rgb 255,6,111). Scoped to this component — no --hex-*. */
+.hx-stage {
   position: relative;
-  width: 100%;
-  max-width: 420px;
-  padding: 32px 28px 28px;
-  background: var(--hex-bg-card);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid var(--hex-border-default);
-  border-radius: 8px;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
+  font-family: var(--mono);
+  color: var(--white);
+  --accent: #ff066f;
+  --accent-rgb: 255, 6, 111;
+  --bg: #08080a;
+  --white: #f6f4f6;
+  --muted: #6e6a72;
+  --muted2: #48454d;
+  --line: rgba(255, 255, 255, .08);
+  --line2: rgba(255, 255, 255, .14);
+  --card: rgba(255, 255, 255, .022);
+  --field: rgba(255, 255, 255, .03);
+  --err: #d6534c;
+  --disp: "Saira Condensed", -apple-system, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, monospace;
+  background: var(--bg);
+  background-image: radial-gradient(120% 78% at 50% -14%, #160a11 0%, #0b070a 44%, var(--bg) 78%);
 }
 
-/* Corner-marks: 4 line "brackets" 14×14, 1px stroke, opacity 0.7, desktop only */
-.auth-corner {
+.hx-motif {
   position: absolute;
-  width: 14px;
-  height: 14px;
-  border-color: var(--hex-border-strong);
-  opacity: 0.7;
+  inset: 0;
   pointer-events: none;
+  opacity: .5;
+  background-position: center;
+  mix-blend-mode: screen;
 }
 
-.auth-corner--tl {
-  top: -1px;
-  left: -1px;
-  border-top: 1px solid;
-  border-left: 1px solid;
+.hx-wrap {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px 110px;
 }
 
-.auth-corner--tr {
-  top: -1px;
-  right: -1px;
-  border-top: 1px solid;
-  border-right: 1px solid;
+.hx-logo { margin-bottom: 34px; display: flex; }
+.hx-logo-img { display: block; width: 62px; height: 62px; user-select: none; -webkit-user-drag: none; }
+
+.hx-col { display: flex; flex-direction: column; align-items: stretch; width: 372px; max-width: 100%; }
+
+.hx-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 34px 30px 30px;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  position: relative;
+}
+.hx-card.has-back { padding-top: 50px; }
+
+.hx-back {
+  position: absolute; top: 18px; left: 16px;
+  display: inline-flex; align-items: center; gap: 5px;
+  background: none; border: 0; cursor: pointer; color: var(--muted);
+  font-family: var(--mono); font-size: 11px; letter-spacing: .18em; text-transform: uppercase;
+  padding: 6px 8px; border-radius: 6px; transition: color .18s;
+}
+.hx-back:hover { color: var(--white); }
+
+.hx-head { text-align: center; margin-bottom: 24px; }
+.hx-title { font-family: var(--disp); font-weight: 800; text-transform: uppercase; font-size: 34px; line-height: .92; letter-spacing: .02em; }
+.hx-sub { font-family: var(--mono); font-size: 10.5px; letter-spacing: .24em; text-transform: uppercase; color: var(--muted); margin-top: 9px; }
+
+.hx-list { display: flex; flex-direction: column; gap: 11px; }
+.hx-btn {
+  display: flex; align-items: center; gap: 13px; width: 100%; height: 52px; padding: 0 16px;
+  background: var(--field); border: 1px solid var(--line); border-radius: 10px; color: var(--white); cursor: pointer;
+  font-family: var(--mono); font-size: 12.5px; font-weight: 500; letter-spacing: .16em; text-transform: uppercase;
+  transition: border-color .18s, background .18s, transform .12s;
+}
+.hx-btn .hx-ic { display: flex; color: #cfccd3; flex: 0 0 auto; }
+.hx-btn .hx-lbl { flex: 1 1 auto; text-align: left; }
+.hx-btn .hx-chev { color: var(--muted); display: flex; }
+.hx-btn:hover { border-color: var(--line2); background: rgba(255, 255, 255, .05); }
+.hx-btn:active { transform: translateY(1px); }
+
+/* email form — stacked field rows + full-width submit */
+.hx-form { display: flex; flex-direction: column; gap: 11px; }
+.hx-fieldrow {
+  display: flex; align-items: center; gap: 11px; height: 52px; padding: 0 15px;
+  background: var(--field); border: 1px solid var(--line); border-radius: 11px;
+  transition: border-color .2s, box-shadow .25s, background .2s;
+}
+.hx-fieldrow .hx-mic { color: var(--muted); display: flex; flex: 0 0 auto; }
+.hx-input {
+  flex: 1 1 auto; min-width: 0; background: none; border: 0; outline: 0; color: var(--white);
+  font-family: var(--mono); font-size: 13.5px; letter-spacing: .02em; caret-color: var(--accent);
+}
+.hx-input::placeholder { color: var(--muted2); letter-spacing: .02em; }
+.hx-fieldrow:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px rgba(var(--accent-rgb), .55), 0 0 26px -2px rgba(var(--accent-rgb), .5);
+  background: rgba(255, 255, 255, .045);
+}
+.hx-fieldrow.is-error { border-color: var(--err); box-shadow: none; }
+
+.hx-errline {
+  display: flex; align-items: center; gap: 7px; margin-top: 3px;
+  font-family: var(--mono); font-size: 11px; letter-spacing: .04em; color: var(--err);
 }
 
-.auth-corner--bl {
-  bottom: -1px;
-  left: -1px;
-  border-bottom: 1px solid;
-  border-left: 1px solid;
+.hx-forgot {
+  align-self: center; margin-top: 2px; background: none; border: 0; cursor: pointer; color: var(--accent);
+  font-family: var(--mono); font-size: 11px; letter-spacing: .04em;
+  text-decoration: underline; text-underline-offset: 3px; padding: 4px 6px; transition: filter .18s;
 }
+.hx-forgot:hover:not(:disabled) { filter: brightness(1.15); }
+.hx-forgot:disabled { opacity: .5; cursor: not-allowed; }
 
-.auth-corner--br {
-  bottom: -1px;
-  right: -1px;
-  border-bottom: 1px solid;
-  border-right: 1px solid;
+.hx-submit-full {
+  margin-top: 3px; height: 48px; border: 0; border-radius: 9px; cursor: pointer;
+  font-family: var(--mono); font-weight: 700; font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
+  background: rgba(255, 255, 255, .06); color: var(--muted);
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: background .2s, color .2s, box-shadow .2s, filter .15s;
 }
-
-@media (max-width: 480px) {
-  .auth-selector-card {
-    padding: 22px 18px 18px;
-    border-radius: 6px;
-  }
-  .auth-corner {
-    display: none;
-  }
+.hx-submit-full.is-ready { background: var(--accent); color: #fff; box-shadow: 0 0 22px -3px rgba(var(--accent-rgb), .6); }
+.hx-submit-full.is-ready:hover:not(:disabled) { filter: brightness(1.08); }
+.hx-submit-full:disabled { cursor: not-allowed; opacity: .75; }
+.hx-spin {
+  width: 14px; height: 14px; border: 2px solid rgba(255, 255, 255, .3); border-top-color: #fff;
+  border-radius: 50%; animation: hx-spin .6s linear infinite;
 }
+@keyframes hx-spin { to { transform: rotate(360deg); } }
 
-@media (min-width: 768px) and (max-width: 1023px) {
-  .auth-selector-wrap {
-    padding: 16px;
-  }
+.hx-fine {
+  margin-top: 14px; font-family: var(--mono); font-size: 10.5px; line-height: 1.7;
+  letter-spacing: .02em; color: var(--muted); text-align: center;
+}
+.hx-fine a { color: #a9a5af; text-decoration: none; border-bottom: 1px solid rgba(255, 255, 255, .18); }
+
+/* below-card */
+.hx-referral {
+  margin-top: 14px; display: flex; align-items: center; justify-content: center; gap: 9px;
+  height: 46px; width: 100%; background: rgba(255, 255, 255, .015); border: 1px dashed var(--line2);
+  border-radius: 10px; color: #bdb9c2; cursor: pointer; font-family: var(--mono); font-weight: 500;
+  font-size: 11px; letter-spacing: .2em; text-transform: uppercase; transition: border-color .18s, color .18s;
+}
+.hx-referral:hover { border-color: rgba(var(--accent-rgb), .4); color: var(--white); }
+.hx-referral .hx-ic { color: var(--muted); display: flex; }
+
+.hx-guest { margin-top: 18px; text-align: center; }
+.hx-guest button {
+  background: none; border: 0; cursor: pointer; color: var(--muted); font-family: var(--mono);
+  font-size: 11px; letter-spacing: .12em; border-bottom: 1px solid transparent; padding-bottom: 2px;
+  transition: color .18s, border-color .18s;
+}
+.hx-guest button:hover { color: #bdb9c2; border-color: rgba(255, 255, 255, .2); }
+
+/* footer */
+.hx-foot {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 54px;
+  display: flex; align-items: center; justify-content: space-between; padding: 0 30px;
+  border-top: 1px solid var(--line); background: rgba(8, 8, 10, .4); z-index: 1;
+}
+.hx-foot-l { display: flex; gap: 22px; font-family: var(--mono); font-size: 10px; letter-spacing: .18em; text-transform: uppercase; }
+.hx-foot-l a { color: var(--muted); text-decoration: none; transition: color .18s; }
+.hx-foot-l a:hover { color: var(--white); }
+.hx-foot-r { display: flex; gap: 8px; }
+.hx-soc {
+  width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--line); border-radius: 7px; color: var(--muted); cursor: pointer;
+  transition: color .18s, border-color .18s; background: none;
+}
+.hx-soc:hover { color: var(--accent); border-color: rgba(var(--accent-rgb), .4); }
+
+/* mobile */
+@media (max-width: 680px) {
+  .hx-wrap { padding: 36px 18px 104px; }
+  .hx-logo { margin-bottom: 26px; }
+  .hx-logo-img { width: 54px; height: 54px; }
+  .hx-card { padding: 28px 22px 24px; }
+  .hx-card.has-back { padding-top: 46px; }
+  .hx-title { font-size: 30px; }
+  .hx-foot { padding: 0 18px; }
+  .hx-foot-l { gap: 16px; font-size: 9px; }
 }
 </style>
