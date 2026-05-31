@@ -1,5 +1,5 @@
 <template>
-  <header class="nav" :class="{ scrolled }">
+  <header class="nav">
     <a class="nav-logo" href="#top" aria-label="hexlash home"><LogoMark /></a>
     <nav class="nav-links">
       <a href="#gameplay"><span>GAMEPLAY</span></a>
@@ -15,5 +15,4 @@
 
 <script setup>
 import { LogoMark, DiscordIcon, XIcon } from './icons.js';
-defineProps({ scrolled: { type: Boolean, default: false } });
 </script>

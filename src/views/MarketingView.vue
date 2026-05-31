@@ -11,7 +11,7 @@
         <div v-if="config.grain" class="grain"></div>
       </div>
 
-      <LandingNav :scrolled="scrolled" />
+      <LandingNav />
 
       <main class="page">
         <LandingHero
@@ -81,15 +81,10 @@ const tickerItems = [
 ];
 
 const isIn = ref(false);
-const scrolled = ref(false);
 
 let revealObserver = null;
 let revealSafety = null;
 let entranceTimer = null;
-
-function onScroll() {
-  scrolled.value = window.scrollY > 40;
-}
 
 // PLAY → into the game. Anonymous visitors enter via signup (authed users are
 // redirected to /play by the route's beforeEnter, so they never see this CTA).
@@ -97,10 +92,11 @@ function onPlay() {
   router.push('/auth/signup');
 }
 
-// Delegated in-page anchor scrolling — reproduces the reference's native
-// `href="#id"` behaviour with an offset under the fixed nav, without a global
-// `html { scroll-padding-top }` rule. Unknown/placeholder hashes (#play,
-// #discord, #x, social links) are swallowed so the page never jumps to top.
+// Delegated in-page anchor scrolling — reproduces native `href="#id"` smooth
+// scroll without a global `html { scroll-padding-top }` rule. The nav is a
+// normal-flow element that scrolls away, so sections land at their own top (no
+// fixed-header offset). Unknown/placeholder hashes (#play, #discord, #x, social
+// links) are swallowed so the page never jumps to top.
 function onAnchorClick(e) {
   const a = e.target.closest('a[href^="#"]');
   if (!a || !rootRef.value || !rootRef.value.contains(a)) return;
@@ -117,8 +113,7 @@ function onAnchorClick(e) {
   }
   const el = document.getElementById(id);
   if (!el) return; // placeholder hash (social/play) — no-op
-  const navOffset = window.innerWidth <= 680 ? 70 : 84;
-  const top = el.getBoundingClientRect().top + window.scrollY - navOffset;
+  const top = el.getBoundingClientRect().top + window.scrollY;
   window.scrollTo({ top, behavior: 'smooth' });
 }
 
@@ -131,10 +126,6 @@ useDocumentMeta({
 onMounted(() => {
   // hero load entrance (reference: setTimeout 90ms → .is-in)
   entranceTimer = setTimeout(() => { isIn.value = true; }, 90);
-
-  // sticky-nav state
-  window.addEventListener('scroll', onScroll, { passive: true });
-  onScroll();
 
   // in-page anchor smooth-scroll (delegated)
   rootRef.value.addEventListener('click', onAnchorClick);
@@ -168,7 +159,6 @@ onBeforeUnmount(() => {
   if (entranceTimer) clearTimeout(entranceTimer);
   if (revealSafety) clearTimeout(revealSafety);
   if (revealObserver) revealObserver.disconnect();
-  window.removeEventListener('scroll', onScroll);
   if (rootRef.value) rootRef.value.removeEventListener('click', onAnchorClick);
 });
 </script>
