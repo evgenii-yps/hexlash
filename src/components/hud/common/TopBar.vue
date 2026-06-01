@@ -41,6 +41,9 @@
     </div>
 
     <div class="v2-topbar__right">
+      <!-- Guest: understated escape hatch back to the landing site. Session
+           stays in localStorage and is restored on next /play visit. -->
+      <button v-if="isGuest" class="tb-home-btn" @click="onHome">‹ Home</button>
       <!-- Guest: neutral label (no glow) + persistent, understated Sign Up CTA. -->
       <span v-if="isGuest" class="tb-guest-label">Guest<template v-if="guestArchetypeName"> · {{ guestArchetypeName }}</template></span>
       <button v-if="isGuest" class="tb-signup-btn" @click="onSignUp">Sign Up</button>
@@ -78,6 +81,10 @@ const guestArchetypeName = computed(() => {
 
 function onSignUp() {
   router.push('/auth/signup');
+}
+
+function onHome() {
+  router.push('/');
 }
 </script>
 
@@ -183,6 +190,28 @@ function onSignUp() {
 
 .v2-avatar-btn:active {
   transform: scale(0.97);
+}
+
+/* Home — tertiary escape hatch back to the landing site. Text-only, no
+   border/fill so it stays quieter than Sign Up and never competes with the
+   pink accent or the primary FIGHT action. */
+.tb-home-btn {
+  padding: 8px 6px;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s;
+  min-height: 36px;
+}
+
+.tb-home-btn:hover {
+  color: #fff;
 }
 
 /* Guest label — neutral, no glow (per Neon Discipline guest rules). */
