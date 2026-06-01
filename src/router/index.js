@@ -44,7 +44,13 @@ const publicRoutes = [
             // go straight to /play hub. Anonymous users see MarketingView.
             const isAuthenticated = store.getters["master/getLoginState"]?.isAuthenticated || false;
             const isGuest = store.getters["master/getIsGuest"] || false;
-            if (isAuthenticated || isGuest) {
+            // Exception: an explicit in-app navigation FROM a /play screen
+            // (e.g. the ‹ Home button in the PIT header) is a deliberate
+            // "leave the game, show me the landing" intent — let it through.
+            // A cold visit / refresh of the root URL has from = START_LOCATION
+            // ('/'), so it still auto-redirects authed/guest users to /play.
+            const leavingPlay = from.path.startsWith('/play');
+            if ((isAuthenticated || isGuest) && !leavingPlay) {
                 next('/play');
             } else {
                 next();
