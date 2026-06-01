@@ -19,5 +19,5 @@ COPY . .
 
 EXPOSE 3000
 
-# 5. Start: migrate + seed + run server
-CMD ["sh", "-c", "npx prisma migrate deploy && node prisma/seed.js && node src/index.js"]
+# 5. Start: migrate + run server (no seed — gutted project has no startup data)
+CMD ["sh", "-c", "npx prisma migrate deploy && node src/index.js"]
