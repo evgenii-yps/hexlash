@@ -16,10 +16,6 @@
     </router-link>
 
     <div class="hx-wrap">
-      <div class="hx-logo">
-        <img :src="logoSrc" alt="Hexlash" class="hx-logo-img" draggable="false" />
-      </div>
-
       <div class="hx-col">
         <div class="hx-card" :class="{ 'has-back': showBack }">
           <button v-if="showBack" type="button" class="hx-back" @click="onBack">
@@ -210,7 +206,6 @@ import {
   IconMail, IconChevron, IconTicket, IconUser, IconLock, IconAlert,
 } from '@/components/auth/authIcons.js';
 import { t } from '@/locales/index.js';
-import logoSrc from '@/assets/images/logo-512.png';
 
 const route = useRoute();
 const router = useRouter();
@@ -391,9 +386,6 @@ async function onForgotSubmit(payload) {
   --err: #d6534c;
   --disp: "Saira Condensed", -apple-system, sans-serif;
   --mono: "JetBrains Mono", ui-monospace, monospace;
-  /* Logo size above the card — matches the landing nav logo (--lp-nav-logo-size).
-     Single knob (mobile override below). */
-  --lp-auth-logo-size: 140px;
   /* Plain base; LandingBackground (fixed, z-index 0) paints the real backdrop. */
   background: var(--bg);
 }
@@ -430,9 +422,6 @@ async function onForgotSubmit(payload) {
   justify-content: center;
   padding: 48px 24px 110px;
 }
-
-.hx-logo { margin-bottom: 34px; display: flex; }
-.hx-logo-img { display: block; width: var(--lp-auth-logo-size); height: var(--lp-auth-logo-size); user-select: none; -webkit-user-drag: none; }
 
 .hx-col { display: flex; flex-direction: column; align-items: stretch; width: 372px; max-width: 100%; }
 
@@ -565,10 +554,8 @@ async function onForgotSubmit(payload) {
 
 /* mobile */
 @media (max-width: 680px) {
-  .hx-stage { --lp-auth-logo-size: 92px; }
   .hx-exit { top: 14px; left: 16px; }
   .hx-wrap { padding: 60px 18px 104px; }
-  .hx-logo { margin-bottom: 26px; }
   .hx-card { padding: 28px 22px 24px; }
   .hx-card.has-back { padding-top: 46px; }
   .hx-title { font-size: 30px; }

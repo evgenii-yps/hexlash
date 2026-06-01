@@ -695,7 +695,7 @@ User, Clan, ClanInvite, ClanEvent, FightClub, Achievement, UserAchievement, Soci
 
 ## Build & Deploy
 
-> **RULE: Auto-merge to `main` after every completed task.** As soon as a task is finished (changes committed + pushed to the working branch), merge the working branch into `main` and push `main` — do NOT wait for the user's manual merge. This is a standing workflow rule for all sessions. Mechanics: `git checkout main` → `git merge origin/main` (sync) → `git merge --no-ff <working-branch>` → `git push origin main`. Establish this rule for the user's owned repo; it does not override an explicit "don't merge yet" instruction in the moment.
+> **RULE: Do NOT merge to `main`. Owner merges manually.** Claude Code never merges a working branch into `main` and never pushes `main`. When a task is finished: commit + push to the **working branch only**, then stop — stay on the working branch. The owner merges to `main` (and deploys to prod via Vercel) by hand after reviewing the Vercel preview. This supersedes the previous auto-merge rule and also removes the recurring "left on `main` after merge" problem — Claude Code no longer touches `main` at all.
 
 - **Frontend:** Vite 7 + JS obfuscation + Brotli + image optimization (mozjpeg/pngquant/webp) + terser (drops console). Compile-time defines `__API_SERVER_URL__`, `__WEB_SOCKET_URL__`, `__IS_PROD__`, `__MOCK_MODE__`, `__APP_VERSION__` (NOT `import.meta.env`).
 - **Deploy frontend:** Vercel (`vercel.json` SPA rewrites) **or** Docker+Nginx (`Dockerfile` multi-stage Node→Nginx, `nginx.prod.conf`, `nginx.test.conf`). Nginx serves static only (NOT reverse proxy) — backend runs separately at `api.hexlash.com` / `apitest.hexlash.com`.
