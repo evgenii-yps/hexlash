@@ -1,10 +1,5 @@
 <template>
   <section class="hero" id="top">
-    <div class="kicker reveal" data-d="2">
-      <span class="kicker-dot"></span>
-      <span class="kicker-txt">{{ kicker }}</span>
-    </div>
-
     <h1 class="headline">
       <span class="line reveal" data-d="3">{{ line1 }}</span>
       <span class="line accent flicker reveal" data-d="4">
@@ -33,7 +28,6 @@
 <script setup>
 import { DiscordIcon, ArrowIcon } from './icons.js';
 defineProps({
-  kicker: { type: String, default: '' },
   line1: { type: String, default: '' },
   line2: { type: String, default: '' },
 });

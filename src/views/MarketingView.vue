@@ -1,32 +1,23 @@
 <template>
   <div class="lp" ref="rootRef">
     <div class="app" :class="{ 'is-in': isIn }">
-      <!-- fixed background -->
-      <div class="bg-fixed">
-        <div class="bg-base"></div>
-        <HexGrid :accent="accentRgb" :intensity="config.intensity" :shape="config.shape" />
-        <div class="bg-glow"></div>
-        <div class="vignette"></div>
-        <div v-if="config.scanlines" class="scanlines"></div>
-        <div v-if="config.grain" class="grain"></div>
-      </div>
+      <!-- fixed background (shared with the auth screen) -->
+      <LandingBackground
+        :accent="accentRgb"
+        :intensity="config.intensity"
+        :shape="config.shape"
+        :scanlines="config.scanlines"
+        :grain="config.grain"
+      />
 
-      <!-- persistent HUD frame -->
-      <div class="hud-frame" aria-hidden="true">
-        <span class="hud tl"></span><span class="hud tr"></span>
-        <span class="hud bl"></span><span class="hud br"></span>
-      </div>
-
-      <LandingNav :scrolled="scrolled" />
+      <LandingNav />
 
       <main class="page">
         <LandingHero
-          :kicker="config.kicker"
           :line1="config.line1"
           :line2="config.line2"
           @play="onPlay"
         />
-        <LandingTicker v-if="config.marquee" :items="tickerItems" />
         <LandingCode />
         <LandingGameplay />
         <LandingToken />
@@ -42,10 +33,9 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { useDocumentMeta } from '@/composables/useDocumentMeta';
-import HexGrid from '@/components/landing/HexGrid.vue';
+import LandingBackground from '@/components/landing/LandingBackground.vue';
 import LandingNav from '@/components/landing/LandingNav.vue';
 import LandingHero from '@/components/landing/LandingHero.vue';
-import LandingTicker from '@/components/landing/LandingTicker.vue';
 import LandingCode from '@/components/landing/LandingCode.vue';
 import LandingGameplay from '@/components/landing/LandingGameplay.vue';
 import LandingToken from '@/components/landing/LandingToken.vue';
@@ -65,10 +55,8 @@ const config = {
   shape: 'shard',
   line1: 'BIGGER FIGHTS',
   line2: 'INCOMING',
-  kicker: 'SEASON 0 — TEASER LIVE',
   grain: true,
   scanlines: true,
-  marquee: true,
 };
 
 // hexToRgb('#ff0069') → [255, 0, 105] (reference icons.jsx helper).
@@ -78,24 +66,11 @@ function hexToRgb(hex) {
 }
 const accentRgb = hexToRgb(config.accent);
 
-// Ticker copy — verbatim from app.jsx tickerItems.
-const tickerItems = [
-  config.line1 + ' ' + config.line2,
-  '$HEX LAUNCHING ON BASE',
-  'NEVER GIVE UP',
-  'TRAIN · FIGHT · RISE',
-];
-
 const isIn = ref(false);
-const scrolled = ref(false);
 
 let revealObserver = null;
 let revealSafety = null;
 let entranceTimer = null;
-
-function onScroll() {
-  scrolled.value = window.scrollY > 40;
-}
 
 // PLAY → into the game. Anonymous visitors enter via signup (authed users are
 // redirected to /play by the route's beforeEnter, so they never see this CTA).
@@ -103,10 +78,11 @@ function onPlay() {
   router.push('/auth/signup');
 }
 
-// Delegated in-page anchor scrolling — reproduces the reference's native
-// `href="#id"` behaviour with an offset under the fixed nav, without a global
-// `html { scroll-padding-top }` rule. Unknown/placeholder hashes (#play,
-// #discord, #x, social links) are swallowed so the page never jumps to top.
+// Delegated in-page anchor scrolling — reproduces native `href="#id"` smooth
+// scroll without a global `html { scroll-padding-top }` rule. The nav is a
+// normal-flow element that scrolls away, so sections land at their own top (no
+// fixed-header offset). Unknown/placeholder hashes (#play, #discord, #x, social
+// links) are swallowed so the page never jumps to top.
 function onAnchorClick(e) {
   const a = e.target.closest('a[href^="#"]');
   if (!a || !rootRef.value || !rootRef.value.contains(a)) return;
@@ -123,8 +99,7 @@ function onAnchorClick(e) {
   }
   const el = document.getElementById(id);
   if (!el) return; // placeholder hash (social/play) — no-op
-  const navOffset = window.innerWidth <= 680 ? 70 : 84;
-  const top = el.getBoundingClientRect().top + window.scrollY - navOffset;
+  const top = el.getBoundingClientRect().top + window.scrollY;
   window.scrollTo({ top, behavior: 'smooth' });
 }
 
@@ -137,10 +112,6 @@ useDocumentMeta({
 onMounted(() => {
   // hero load entrance (reference: setTimeout 90ms → .is-in)
   entranceTimer = setTimeout(() => { isIn.value = true; }, 90);
-
-  // sticky-nav state
-  window.addEventListener('scroll', onScroll, { passive: true });
-  onScroll();
 
   // in-page anchor smooth-scroll (delegated)
   rootRef.value.addEventListener('click', onAnchorClick);
@@ -174,7 +145,6 @@ onBeforeUnmount(() => {
   if (entranceTimer) clearTimeout(entranceTimer);
   if (revealSafety) clearTimeout(revealSafety);
   if (revealObserver) revealObserver.disconnect();
-  window.removeEventListener('scroll', onScroll);
   if (rootRef.value) rootRef.value.removeEventListener('click', onAnchorClick);
 });
 </script>

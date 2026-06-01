@@ -88,9 +88,17 @@ onMounted(() => {
   }
 
   function resize() {
+    const newW = canvas.clientWidth;
+    const newH = canvas.clientHeight;
+    // Skip no-op resizes. Mobile browsers fire `resize` on every scroll as the
+    // URL bar shows/hides; with the background pinned to 100lvh the canvas client
+    // size doesn't actually change, so re-running resize here (which reseeds
+    // cells + particles) is exactly what made the background visibly jump while
+    // scrolling. Only rebuild on a real size change (genuine resize / rotate).
+    if (canvas.width && newW === W && newH === H) return;
     dpr = Math.min(window.devicePixelRatio || 1, 2);
-    W = canvas.clientWidth;
-    H = canvas.clientHeight;
+    W = newW;
+    H = newH;
     canvas.width = Math.round(W * dpr);
     canvas.height = Math.round(H * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -253,3 +261,16 @@ onBeforeUnmount(() => {
   if (cleanup) cleanup();
 });
 </script>
+
+<style scoped>
+/* Canvas positioning (was .lp .hexgrid-canvas in landing.css; moved here so the
+   component is self-contained and usable outside the .lp root, e.g. auth). */
+.hexgrid-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+</style>
+

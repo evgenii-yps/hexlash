@@ -26,7 +26,7 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
   main.js                  — Entry: Vue + Vuetify + i18n + Vuex + WagmiPlugin + VueQueryPlugin init
   router/index.js          — Routes + auth guards + fight state restore
   views/                   — page-level components (AuthLayoutView, PrivacyView, NotFoundView, PageView, VerifyEmailView, ResetPasswordView, MarketingView). 1a/1b/8a history: LandingView added 1a, AuthLayoutView added 1b, RainView (1212 lines) deleted 1b C9. Sub-epic 8b: LandingView (1a MVP) deleted, MarketingView (8b long-form) added. 10 v1 views deleted Sub-epic 8 C8/C9. PreparationView + FightClubView deleted 25.05.2026 (Club-Mode v1 removal).
-  composables/             — Reusable composables. `useDocumentMeta.js` (added 8b C1) — manual SEO meta tag manipulation (title, meta description, og:*, twitter:*) with restore-on-unmount. `useScrollFadeIn.js` (added 8c C1) — IntersectionObserver-driven `visible` ref, one-shot disconnect after first intersection, threshold 0.3 default, falls back to immediate visibility for environments without IntersectionObserver API.
+  composables/             — Reusable composables. `useDocumentMeta.js` (added 8b C1) — manual SEO meta tag manipulation (title, meta description, og:*, twitter:*) with restore-on-unmount. (`useScrollFadeIn.js` — added 8c, orphaned when PR #408 replaced the long-form MarketingView with the design-port version that uses inline `[data-reveal]`; deleted in the landing/auth-redesign cleanup verification.)
   views/auth/              — 2 nested route children for AuthLayoutView (LoginView, SignupView) — Sub-epic 1b C2/C3/C4.
   views-v2/                — 16 v2 page components (PitViewV2 + FighterDetailView + FightView + TrainingView + MatchmakingView + CreateView + ProfileView + RatingsView + ClanView + GuestClanView + ShopView + SpectateView + HelpView + UserProfileView + WalletView + AccountView)
   components/              — 75+ reusable components
@@ -694,6 +694,8 @@ User, Clan, ClanInvite, ClanEvent, FightClub, Achievement, UserAchievement, Soci
 ---
 
 ## Build & Deploy
+
+> **RULE: Auto-merge to `main` after every completed task.** As soon as a task is finished (changes committed + pushed to the working branch), merge the working branch into `main` and push `main` — do NOT wait for the user's manual merge. This is a standing workflow rule for all sessions. Mechanics: `git checkout main` → `git merge origin/main` (sync) → `git merge --no-ff <working-branch>` → `git push origin main`. Establish this rule for the user's owned repo; it does not override an explicit "don't merge yet" instruction in the moment.
 
 - **Frontend:** Vite 7 + JS obfuscation + Brotli + image optimization (mozjpeg/pngquant/webp) + terser (drops console). Compile-time defines `__API_SERVER_URL__`, `__WEB_SOCKET_URL__`, `__IS_PROD__`, `__MOCK_MODE__`, `__APP_VERSION__` (NOT `import.meta.env`).
 - **Deploy frontend:** Vercel (`vercel.json` SPA rewrites) **or** Docker+Nginx (`Dockerfile` multi-stage Node→Nginx, `nginx.prod.conf`, `nginx.test.conf`). Nginx serves static only (NOT reverse proxy) — backend runs separately at `api.hexlash.com` / `apitest.hexlash.com`.
