@@ -8,20 +8,11 @@ const path = require('path');
 const fs = require('fs');
 const { PORT, FRONTEND_URL, UPLOAD_DIR } = require('./config');
 const { setupWebSocket } = require('./websocket/handler');
-const { startScheduler, stopScheduler } = require('./services/agentScheduler');
-const { startDailyTaskCron, stopDailyTaskCron } = require('./services/dailyTaskCron');
 
-// Routes
+// Routes (game routes removed in the game-cleanup reset — only auth/user/file remain)
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
-const clanRoutes = require('./routes/clan');
-const taskRoutes = require('./routes/task');
 const fileRoutes = require('./routes/file');
-const fightRoutes = require('./routes/fight');
-const statsRoutes = require('./routes/stats');
-const friendsRoutes = require('./routes/friends');
-const aiRoutes = require('./routes/ai');
-const agentRoutes = require('./routes/agent');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -89,14 +80,7 @@ app.get('/health', (req, res) => {
 // API Routes (all under /v1)
 app.use('/v1/auth', authRoutes);
 app.use('/v1/user', userRoutes);
-app.use('/v1/clan', clanRoutes);
-app.use('/v1/task', taskRoutes);
 app.use('/v1/file', fileRoutes);
-app.use('/v1/fight', fightRoutes);
-app.use('/v1/stats', statsRoutes);
-app.use('/v1/friends', friendsRoutes);
-app.use('/v1/ai', aiRoutes);
-app.use('/v1/agent', agentRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -119,17 +103,12 @@ server.listen(port, '0.0.0.0', () => {
   console.log(`Hexlash API server running on port ${port}`);
   console.log(`WebSocket available on ws://0.0.0.0:${port}`);
   console.log(`Health check: http://0.0.0.0:${port}/health`);
-  startScheduler();
-  startDailyTaskCron();
 });
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
-  stopScheduler();
-  stopDailyTaskCron();
   server.close();
 });
 process.on('SIGINT', () => {
-  stopScheduler();
   server.close();
 });

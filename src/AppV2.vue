@@ -1,30 +1,20 @@
 <template>
   <div class="app-v2">
-    <CanvasLayer />
     <router-view />
     <VerifyEmailBanner />
-    <ChallengeNotification />
-    <GlobalOverlays />
     <NoConnection />
   </div>
 </template>
 
 <script setup>
-import { defineAsyncComponent } from 'vue';
-import GlobalOverlays from '@/components/hud/common/GlobalOverlays.vue';
+// Game-cleanup reset: the 3D CanvasLayer, ChallengeNotification and
+// GlobalOverlays (grain/scanlines/vignette) were removed with the game.
+// /play now renders its child views (stub / profile stub / account / wallet)
+// directly. The .app-v2 namespace + hexlash-v24.css are kept so the account/
+// wallet HUD styling tokens (--text-*, --font-*, --hex-*) still resolve.
 import VerifyEmailBanner from '@/components/hud/VerifyEmailBanner.vue';
-import ChallengeNotification from '@/components/pvp/ChallengeNotification.vue';
 import NoConnection from '@/components/ui/NoConnection.vue';
 import '@/styles/hexlash-v24.css';
-
-// CanvasLayer грузится лениво — сам файл появится в Шаге 6.
-const CanvasLayer = defineAsyncComponent(() => import('@/scene/CanvasLayer.vue'));
-
-// Sub-epic 4a Commit 5a — ChallengeNotification mounted в v2 layout per
-// D1 decision (Option β). App.vue v1 mount gated via `!isPlayRoute` block,
-// so v1 + v2 mounts are mutually exclusive — no double-toast risk.
-// Component self-guards via internal `challenge` ref (only renders когда
-// `challenge-received` WS event fires). Closes carry-over #1 (5B deferred).
 </script>
 
 <style scoped>

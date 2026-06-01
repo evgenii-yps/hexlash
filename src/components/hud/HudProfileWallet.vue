@@ -1,7 +1,7 @@
-<!-- Sub-Epic 3 Commit 1 — HudProfileWallet skeleton.
-     Pattern B HUD overlay (mirror HudUserProfile / HudGuestClan style).
-     Title + back button only. GameBalanceCard wires в Commit 2.
-     Withdraw + ConnectWallet wires в Commit 3. -->
+<!-- Wallet HUD — Connect Wallet (web3) only.
+     Game-cleanup reset: GameBalanceCard + in-game balance/withdraw removed
+     (balance was an off-chain game counter, dropped with the game). On-chain
+     wallet connection (ConnectWallet) is preserved. -->
 <template>
   <div class="hud hud-profile-wallet">
     <button class="profile-wallet-back" @click="$emit('back')">← Back</button>
@@ -12,17 +12,13 @@
     </div>
 
     <div class="profile-wallet-content">
-      <div class="balance-card-wrapper" @click="withdraw">
-        <GameBalanceCard :balance="balanceDisplay" />
-      </div>
-
       <button class="connect-wallet-cta" @click="openConnectWallet">
         {{ t.profile.wallet.lblConnectWallet }}
       </button>
     </div>
 
-    <!-- ConnectWallet host (mirror HudProfile lazy-mount pattern). Modal
-         teleports to body — display:none source layout is intentional. -->
+    <!-- ConnectWallet host (lazy-mount). Modal teleports to body —
+         display:none source layout is intentional. -->
     <component
       v-if="cwMounted && CWComp"
       :is="CWComp"
@@ -33,30 +29,14 @@
 </template>
 
 <script setup>
-import { ref, computed, shallowRef, markRaw, nextTick } from 'vue';
-import { useStore } from 'vuex';
+import { ref, shallowRef, markRaw, nextTick } from 'vue';
 import { t } from '@/locales/index.js';
-import { InfoMessageModel } from '@/core/models/internal/infoMessageModel.js';
-import GameBalanceCard from '@/components/fragments/profile/wallet/GameBalanceCard.vue';
 
 defineEmits(['back']);
 
-const store = useStore();
-const master = computed(() => store.getters['master/getMaster']);
-// master.getBalance() formats userData.balance / 10^DECIMALS toFixed(2).
-// Null-safe optional chaining — view может рендериться briefly до master loaded.
-const balanceDisplay = computed(() => master.value?.getBalance?.() ?? '0');
-
-// Withdraw — toast as-is per ТЗ A4 (Sub-epic 7 Auth+Wallet redesign territory
-// для real x402 logic).
-const withdraw = () => {
-  const msg = InfoMessageModel.withTimeout(t.value.info.withdrawAfterListing, 3000);
-  store.commit('master/setInfoMessage', msg);
-};
-
-// ConnectWallet lazy-load mirror (HudProfile precedent — Step 10 / 5B).
-// shallowRef + markRaw — component objects shouldn't be deeply reactive.
-// cwMounted gates v-if host so chunk загружается только on first open.
+// ConnectWallet lazy-load (shallowRef + markRaw — component objects shouldn't
+// be deeply reactive). cwMounted gates v-if host so the chunk loads only on
+// first open.
 const CWComp = shallowRef(null);
 const cwMounted = ref(false);
 const cwRef = ref(null);
@@ -70,8 +50,6 @@ async function loadCW() {
 async function openConnectWallet() {
   await loadCW();
   cwMounted.value = true;
-  // Two ticks cover: (1) v-if mount of <component :is>, (2) child setup
-  // completion in ConnectWallet. defineExpose populated by end of setup.
   await nextTick();
   await nextTick();
   cwRef.value?.openModal?.();
@@ -139,16 +117,6 @@ async function openConnectWallet() {
   bottom: 14px;
   overflow-y: auto;
   padding: 16px;
-}
-
-/* Balance card centered horizontally — GameBalanceCard has fixed 180px width
-   and own centering для contents. Wrapper provides flex centering +
-   cursor pointer (withdraw click target — bubbles через VCard root). */
-.balance-card-wrapper {
-  display: flex;
-  justify-content: center;
-  margin: 12px 0;
-  cursor: pointer;
 }
 
 .connect-wallet-cta {

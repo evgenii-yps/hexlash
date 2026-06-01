@@ -151,12 +151,6 @@
             :email="signupSuccessEmail"
             @continue="onSignupSuccessContinue"
           />
-
-          <GuestArchetypeSelect
-            v-else-if="screen === 'guest'"
-            @select="onGuestArchetypeSelect"
-            @back="onBackToProviders"
-          />
         </div>
 
         <template v-if="isPrimaryStage">
@@ -200,7 +194,6 @@ import LandingBackground from '@/components/landing/LandingBackground.vue';
 import ReferralOverlay from '@/components/auth/ReferralOverlay.vue';
 import ForgotPasswordScreen from '@/components/auth/ForgotPasswordScreen.vue';
 import SignupSuccessScreen from '@/components/auth/SignupSuccessScreen.vue';
-import GuestArchetypeSelect from '@/components/auth/GuestArchetypeSelect.vue';
 import {
   IconGoogle, IconX, IconWallet, IconFarcaster, IconDiscord,
   IconMail, IconChevron, IconTicket, IconUser, IconLock, IconAlert,
@@ -219,8 +212,8 @@ function showComingSoon(provider) {
   store.commit('master/setInfoMessage', InfoMessageModel.withoutButton(`${label} login is coming soon.`, 4000));
 }
 
-// 'provider' | 'more' | 'email' | 'forgot' | 'signup-success' | 'guest'
-const screen = ref(route.query.guest ? 'guest' : 'provider');
+// 'provider' | 'more' | 'email' | 'forgot' | 'signup-success'
+const screen = ref('provider');
 const forgotScreenRef = ref(null);
 const signupSuccessEmail = ref('');
 const mode = ref(route.path === '/auth/signup' ? 'signup' : 'login');
@@ -291,8 +284,9 @@ function onBack() {
 function onBackToProviders() { screen.value = 'provider'; }
 
 // ── Guest mode ──────────────────────────────────────────────────────────────
-function onGuestStart() { screen.value = 'guest'; }
-function onGuestArchetypeSelect(archetypeId) { store.dispatch('master/loginAsGuest', { archetypeId }); }
+// Guest archetype/PvE machinery removed in the game-cleanup reset. The
+// "Play as Guest" button now just enters the /play stub (no session created).
+function onGuestStart() { router.push('/play'); }
 
 // ── Referral ─────────────────────────────────────────────────────────────────
 function onReferralOpen() { referralOpen.value = true; }

@@ -14,9 +14,7 @@
     </div>
     <div class="footer-bottom">
       <nav class="footer-links">
-        <router-link to="/privacy">Privacy</router-link><span>·</span>
-        <router-link to="/play/rules">Rules</router-link><span>·</span>
-        <router-link to="/help">Help</router-link>
+        <router-link to="/privacy">Privacy</router-link>
       </nav>
       <span class="footer-copy">© 2026 HEXLASH — ALL RIGHTS RESERVED</span>
     </div>

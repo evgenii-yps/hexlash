@@ -40,8 +40,6 @@ import { WagmiPlugin } from '@wagmi/vue'
 import { VueQueryPlugin } from '@tanstack/vue-query'
 import { config as wagmiConfig } from '@/core/web3/wagmiConfig.js'
 import App from "@/App.vue";
-import {t} from "@/locales/index.js";
-import {initAllAchievements} from "@/core/models/achievementModel.js";
 
 
 const vuetify = createVuetify({
@@ -102,9 +100,6 @@ const vuetify = createVuetify({
 
 async function initializeApp() {
     await store.dispatch('master/initializeMasterData');
-    // Phase 1.5c — English-only: locale boot/restore logic removed
-    // (was setLanguage from localStorage/store on app start).
-    store.commit('achievement/setAllAchievements', initAllAchievements(t))
 }
 
 initializeApp().then(() => {
