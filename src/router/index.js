@@ -1,6 +1,5 @@
 import {createRouter, createWebHistory} from "vue-router";
 import store from "@/core/state/store.js";
-import {InfoMessageModel} from "@/core/models/internal/infoMessageModel.js";
 
 
 export const authRoutes = [
@@ -8,8 +7,7 @@ export const authRoutes = [
         path: '/auth',
         component: () => import('@/views/AuthLayoutView.vue'),
         children: [
-            // Route names 'Login' and 'Signup' preserved — beforeEach guard
-            // uses next({name: 'Login'}) for unauth redirect.
+            // Route names 'Login' and 'Signup' preserved.
             {
                 path: 'login',
                 name: 'Login',
@@ -62,21 +60,10 @@ const publicRoutes = [
     },
 ];
 
-// Legacy account-route redirects → /play sub-routes. Kept for URL stability
-// (old bookmarks / shared links). Game-route redirects removed with the game.
-const protectedRoutes = [
-    {path: '/profile', redirect: '/play/profile'},
-    {path: '/profile/account', redirect: '/play/account'},
-    {path: '/profile/wallet', redirect: '/play/wallet'},
-];
-
-// /play sub-routes that require auth (account/profile). The bare /play stub is
-// public so the "Play as Guest" button can reach it.
-const v2ProtectedNames = ['V2Profile', 'V2Account', 'V2Wallet'];
-
-// Game screens removed in the game-cleanup reset. /play now hosts a stub hub
-// plus the kept account/wallet surfaces and an empty profile stub. The .app-v2
-// CSS namespace, V2* route names and src/views-v2/ directory are preserved.
+// /play is now a single bare dark screen — the game is being rebuilt from
+// scratch. Profile / account / wallet screens were removed. The .app-v2 CSS
+// namespace, V2* route names and src/views-v2/ directory are preserved for the
+// rebuild. /play is public (reached after login and via "Play as Guest").
 const v2Routes = [
     {
         path: '/play',
@@ -87,21 +74,6 @@ const v2Routes = [
                 path: '',
                 name: 'V2Pit',
                 component: () => import('@/views-v2/PlayStubView.vue'),
-            },
-            {
-                path: 'profile',
-                name: 'V2Profile',
-                component: () => import('@/views-v2/ProfileStubView.vue'),
-            },
-            {
-                path: 'wallet',
-                name: 'V2Wallet',
-                component: () => import('@/views-v2/WalletView.vue'),
-            },
-            {
-                path: 'account',
-                name: 'V2Account',
-                component: () => import('@/views-v2/AccountView.vue'),
             },
         ],
     },
@@ -124,7 +96,6 @@ const legacyV2Redirects = [
 const routes = [
     ...authRoutes,
     ...publicRoutes,
-    ...protectedRoutes,
     ...v2Routes,
     ...legacyV2Redirects,
     {path: '/:pathMatch(.*)*', name: 'NotFound', component: () => import("/src/views/NotFoundView.vue")},
@@ -135,21 +106,9 @@ const router = createRouter({
     routes
 });
 
-// Navigation guard
-router.beforeEach(async (to, from, next) => {
-    const isAuthenticated = store.getters["master/getLoginState"]?.isAuthenticated || false;
-    const isProtectedRoute =
-        protectedRoutes.some(route => route.name === to.name || route.path === to.path) ||
-        v2ProtectedNames.includes(to.name);
-
-    if (isProtectedRoute && !isAuthenticated) {
-        const customMessage = InfoMessageModel.withTimeout("Access denied. You need to log in first", 2000);
-        store.commit('master/setInfoMessage', customMessage);
-        next({name: 'Login'});
-    } else {
-        next();
-    }
-});
+// No protected routes remain after the game-cleanup reset — /play is public.
+// (The auth/account engine stays in the backend + Vuex; it just has no
+// in-app screen entry point until the rebuild.) No navigation guard needed.
 
 
 export default router;

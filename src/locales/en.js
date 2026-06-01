@@ -11,36 +11,9 @@ export default {
     btnNext: "Next",
   },
   profile: {
-    back: "Back",
-    anonymous: "Anonymous",
-    account: {
-      lblChangeEmail: "CHANGE EMAIL",
-      placeholderEmail: "Enter email...",
-      sendEmailSuccess: "The email has been successfully sent to the specified email address.",
-      lblEmailRequired: "Email is required",
-      lblInvalidEmailFormat: "Invalid email format",
-      btnSendConfirm: "Send Confirm",
-      lblChangeLogin: "CHANGE LOGIN",
-      lblAvailableLogin: "available",
-      lblLoginRequired: "Login is required",
-      lblInvalidLoginFormat: "Invalid login format",
-      lblLoginNotAvailable: "Login is not available",
-      lblLoginAlreadyTaken: "Login is already taken",
-      lblFailedToCheckLoginAvailability: "Failed to check login availability",
-      lblConfirmChange: "Confirm Change",
-      msgConfirmChange: "Are you sure you want to change your login to {newLogin}?",
-      lblChangePassword: "Change Password",
-      lblCurrentPassword: "CURRENT PASSWORD",
-      lblNewPassword: "NEW PASSWORD",
-      lblConfirmNewPassword: "CONFIRM NEW PASSWORD",
-      lblAllFieldsRequired: "All fields are required",
-      lblPasswordsDoNotMatch: "Passwords do not match",
-      lblPasswordsChangeSuccessful: "Password has been successfully changed",
-      lblPasswordRequirements: "Password must be at least 8 characters long and include numbers and uppercase letters",
-      lblDeleteAccount: "Delete Account",
-      lblConfirmDeletion: "Confirm Deletion",
-      msgConfirmDelete: "Are you sure you want to delete your account? This action cannot be undone.",
-    },
+    // Only the web3 wallet strings remain — consumed by the (orphaned but
+    // preserved) ConnectWallet / BuyTokens components. Account-screen strings
+    // were removed with the account UI.
     wallet: {
       lblTopUpBalance: "Top Up Balance",
       lblBuyFCTokens: "Buy HXL tokens",
@@ -64,19 +37,6 @@ export default {
       successPurchase: "Your purchase was successful. The tokens will appear in your balance within 15 minutes.",
       checkLimits: "You cannot buy less than 100 HXL or more than 100,000 HXL",
     },
-    achievements: {
-      congratulations: "Congratulations! You've grown stronger. Your new achievement has been added to your collection.",
-    },
-  },
-  info: {
-    firstFight: "Before your first fight, we strongly recommend that you familiarize yourself with the <a href=\"/play/rules?back=arena\">rules</a> of the game.",
-    firstTraining: "Training gets you tokens, but the clock is ticking. Your tasks won't last forever. Make sure you understand the <a href=\"/play/rules?back=training\">rules</a> before you start.",
-    withdrawAfterListing: "Token withdrawal to your wallet will be available after the listing. Keep an eye on the countdown timer.",
-    withdrawClanDisable: "Withdrawal from the clan is temporarily disabled. We apologize for the inconvenience. It will be available shortly.",
-  },
-  getStarted: {
-    errorRequired: "Cannot be empty",
-    errorOnlyLatinAndNumbers: "Login can only contain Latin letters and numbers.",
   },
   referral: {
     lblTitle: "Referral Program",
