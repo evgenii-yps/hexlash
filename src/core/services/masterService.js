@@ -17,10 +17,10 @@ import {isMockMode, createMockMaster, MOCK_JWT_TOKEN} from "@/core/mock/mockData
  * (namespace did not exist — silent no-ops; module retired).
  */
 function restoreProgressionFromServer(userData) {
+    // Game progression/stats restore removed in the game-cleanup reset.
+    // Kept as a no-op so existing call sites stay intact; the new game layer
+    // will wire its own restore.
     if (!userData) return;
-
-    // Restore PvP stats (rating, wins, losses, draws) from server
-    store.dispatch('pvp/restoreFromServer', userData);
 }
 
 export const initializeMasterData = async () => {

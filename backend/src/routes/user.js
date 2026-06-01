@@ -5,8 +5,6 @@ const prisma = require('../lib/prisma');
 const { authMiddleware } = require('../middleware/auth');
 const { upload } = require('../middleware/upload');
 const { formatUserResponse, formatUserPublicResponse, generateRandomToken } = require('../utils/helpers');
-const { migrateUserToFighter } = require('../services/userMigrationService');
-const { getCaptainPublicInfo, getCaptainsForUsers } = require('../services/captainService');
 const { sendVerifyEmail } = require('../services/emailService');
 
 const router = express.Router();
@@ -55,28 +53,15 @@ const resendVerificationLimiter = rateLimit({
 // GET /v1/user/me
 router.get('/me', authMiddleware, async (req, res) => {
   try {
-    // Lazy migration: User → Fighter #1 (idempotent, no-op if already migrated)
-    try {
-      const migration = await migrateUserToFighter(req.userId);
-      if (migration.migrated) {
-        console.log(`[migration] user=${req.userId} → agent=${migration.agentId}`);
-      }
-    } catch (migrationErr) {
-      console.error('[migration] error:', req.userId, migrationErr.message);
-      // Migration failure is non-blocking — user can still use the app
-    }
-
     const user = await prisma.user.findUnique({
       where: { id: req.userId },
-      include: { achievements: true },
     });
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const captain = await getCaptainPublicInfo(req.userId);
-    res.json({ data: formatUserResponse(user, { captain }) });
+    res.json({ data: formatUserResponse(user) });
   } catch (err) {
     console.error('Get me error:', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -161,8 +146,8 @@ router.post('/edit', authMiddleware, async (req, res) => {
       delete profileData.email;
     }
 
-    // Generic field loop — existing behavior preserved for non-email fields
-    const allowedFields = ['name', 'login', 'skin', 'walletAddress'];
+    // Generic field loop — account fields only (game 'skin' removed in reset)
+    const allowedFields = ['name', 'login', 'walletAddress'];
     const updateData = {};
     for (const field of allowedFields) {
       if (profileData[field] !== undefined) {
@@ -186,7 +171,6 @@ router.post('/edit', authMiddleware, async (req, res) => {
     const user = await prisma.user.update({
       where: { id: req.userId },
       data: finalUpdate,
-      include: { achievements: true },
     });
 
     // Send verify email AFTER successful DB update — non-blocking.
@@ -216,56 +200,9 @@ router.post('/edit', authMiddleware, async (req, res) => {
 // POST /v1/user/delete
 router.post('/delete', authMiddleware, async (req, res) => {
   try {
-    await prisma.$transaction(async (tx) => {
-      const userId = req.userId;
-
-      // Remove user from clans they belong to (not owner)
-      await tx.user.update({
-        where: { id: userId },
-        data: { clanId: null },
-      });
-
-      // Transfer or delete owned clans
-      const ownedClans = await tx.clan.findMany({ where: { ownerId: userId } });
-      for (const clan of ownedClans) {
-        // Find another member to transfer ownership
-        const otherMember = await tx.user.findFirst({
-          where: { clanId: clan.id, NOT: { id: userId } },
-        });
-        if (otherMember) {
-          await tx.clan.update({
-            where: { id: clan.id },
-            data: { ownerId: otherMember.id },
-          });
-        } else {
-          // No other members — delete the clan
-          await tx.clan.delete({ where: { id: clan.id } });
-        }
-      }
-
-      // Delete all related records
-      await tx.userAchievement.deleteMany({ where: { userId } });
-      await tx.userSocialTask.deleteMany({ where: { userId } });
-      await tx.userDailyTask.deleteMany({ where: { userId } });
-      await tx.punchInfo.deleteMany({ where: { userId } });
-
-      // Nullify optional fight references (preserve fight history where possible)
-      await tx.fight.updateMany({ where: { fighterTwoId: userId }, data: { fighterTwoId: null } });
-      await tx.fight.updateMany({ where: { winnerId: userId }, data: { winnerId: null } });
-      // Delete fights where user is the required fighterOne (can't nullify required FK)
-      await tx.fight.deleteMany({ where: { fighterOneId: userId } });
-
-      // Delete friend requests and friendships
-      await tx.friendRequest.deleteMany({
-        where: { OR: [{ fromId: userId }, { toId: userId }] },
-      });
-      await tx.friendship.deleteMany({
-        where: { OR: [{ user1Id: userId }, { user2Id: userId }] },
-      });
-
-      // Finally delete the user
-      await tx.user.delete({ where: { id: userId } });
-    });
+    // Game-cleanup reset: all game relation tables were dropped, so the user
+    // record has no remaining dependents to cascade — a plain delete suffices.
+    await prisma.user.delete({ where: { id: req.userId } });
 
     res.json({ data: { success: true } });
   } catch (err) {
@@ -293,7 +230,6 @@ router.post('/verify-email', verifyEmailLimiter, async (req, res) => {
 
     const user = await prisma.user.findUnique({
       where: { verifyToken: token },
-      include: { achievements: true },
     });
 
     // Generic message for both not-found и expired — same shape avoids
@@ -309,7 +245,6 @@ router.post('/verify-email', verifyEmailLimiter, async (req, res) => {
         verifyToken: null,
         verifyTokenExpiresAt: null,
       },
-      include: { achievements: true },
     });
 
     res.json({ data: formatUserResponse(updatedUser) });
@@ -400,15 +335,13 @@ router.get('/login/:login', authMiddleware, async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
       where: { login: req.params.login },
-      include: { achievements: true },
     });
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const captain = await getCaptainPublicInfo(user.id);
-    res.json({ data: formatUserPublicResponse(user, { captain }) });
+    res.json({ data: formatUserPublicResponse(user) });
   } catch (err) {
     console.error('Get user by login error:', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -420,15 +353,13 @@ router.get('/id/:id', authMiddleware, async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.params.id },
-      include: { achievements: true },
     });
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const captain = await getCaptainPublicInfo(user.id);
-    res.json({ data: formatUserPublicResponse(user, { captain }) });
+    res.json({ data: formatUserPublicResponse(user) });
   } catch (err) {
     console.error('Get user by id error:', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -440,23 +371,22 @@ router.get('/search', authMiddleware, async (req, res) => {
   try {
     const {
       name = '',
-      sortBy = 'battles',
-      sortDirection = 'DESC',
+      sortBy = 'name',
+      sortDirection = 'ASC',
       page = '0',
       size = '10',
     } = req.query;
-    // TODO #P1-rename-3: remove clubId alias after frontend rename
-    const clanId = req.query.clanId || req.query.clubId || null;
 
     const pageNum = parseInt(page);
     const pageSize = Math.min(parseInt(size), 50);
 
+    // Game-cleanup reset: game sort fields (battles/wins/balance) removed —
+    // only account fields remain sortable.
     const sortField = {
-      battles: 'totalFights',
-      wins: 'wins',
-      balance: 'balance',
       name: 'name',
-    }[sortBy] || 'totalFights';
+      login: 'login',
+      createdAt: 'createdAt',
+    }[sortBy] || 'name';
 
     const where = {};
     if (name) {
@@ -465,20 +395,15 @@ router.get('/search', authMiddleware, async (req, res) => {
         { login: { contains: name, mode: 'insensitive' } },
       ];
     }
-    if (clanId) {
-      where.clanId = clanId;
-    }
 
     const users = await prisma.user.findMany({
       where,
-      include: { achievements: true },
       orderBy: { [sortField]: sortDirection.toLowerCase() },
       skip: pageNum * pageSize,
       take: pageSize,
     });
 
-    const captainMap = await getCaptainsForUsers(users.map(u => u.id));
-    res.json({ data: users.map(u => formatUserPublicResponse(u, { captain: captainMap.get(u.id) || null })) });
+    res.json({ data: users.map(u => formatUserPublicResponse(u)) });
   } catch (err) {
     console.error('Search users error:', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -514,56 +439,6 @@ router.get('/referrals', authMiddleware, async (req, res) => {
     });
   } catch (err) {
     console.error('Get referrals error:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// ── Retirement ──────────────────────────────────────────────────────
-
-const { checkRetirementEligibility, retireFighter, calculateLegendBuff } = require('../services/retirementService');
-
-router.get('/retirement-status', authMiddleware, async (req, res) => {
-  try {
-    const eligibility = await checkRetirementEligibility(req.userId);
-    const user = await prisma.user.findUnique({ where: { id: req.userId }, select: { progression: true } });
-
-    let legend = null;
-    const fightClub = await prisma.fightClub.findUnique({ where: { ownerId: req.userId }, select: { legendSkin: true, legendArchetype: true, legendBuff: true } });
-    if (fightClub?.legendSkin) legend = { skin: fightClub.legendSkin, archetype: fightClub.legendArchetype, buff: fightClub.legendBuff };
-
-    let buffPreview = null;
-    if (eligibility.canRetire && user?.progression) {
-      const pm = user.progression.playerModules;
-      buffPreview = calculateLegendBuff(user.progression, Array.isArray(pm) ? pm[0] : 'predator');
-    }
-
-    res.json({
-      isRetired: eligibility.isRetired || false,
-      canRetire: eligibility.canRetire,
-      progress: eligibility.progress,
-      requirements: eligibility.requirements,
-      legend,
-      buffPreview,
-    });
-  } catch (err) {
-    console.error('Retirement status error:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-router.post('/retire', authMiddleware, async (req, res) => {
-  try {
-    const user = await prisma.user.findUnique({ where: { id: req.userId }, select: { progression: true } });
-    const pm = user?.progression?.playerModules;
-    const result = await retireFighter(req.userId, Array.isArray(pm) ? pm[0] : 'predator');
-
-    if (!result.success) {
-      return res.status(400).json({ error: 'Not eligible for retirement', reasons: result.reasons });
-    }
-
-    res.json({ success: true, legend: result.legend, message: 'Your fighter has retired as a Legend!' });
-  } catch (err) {
-    console.error('Retire error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

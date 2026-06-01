@@ -2,7 +2,6 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const prisma = require('../lib/prisma');
 const { generateToken, generateRandomToken } = require('../utils/helpers');
-const { REFERRAL_REWARD_TAPS } = require('../config');
 const { sendVerifyEmail, sendResetEmail } = require('../services/emailService');
 
 const rateLimit = require('express-rate-limit');
@@ -80,19 +79,19 @@ async function processReferral(newUser, referralCode) {
     });
     if (!referrer) return;
 
+    // Game-cleanup reset: the +taps referral reward was removed with the game
+    // currency. Referral linking (referredBy / invitedUsers) is preserved.
     await prisma.$transaction([
       prisma.user.update({
         where: { id: newUser.id },
         data: {
           referredBy: referrer.login,
-          totalTaps: { increment: REFERRAL_REWARD_TAPS },
         },
       }),
       prisma.user.update({
         where: { id: referrer.id },
         data: {
           invitedUsers: { increment: 1 },
-          totalTaps: { increment: REFERRAL_REWARD_TAPS },
         },
       }),
     ]);
@@ -212,19 +211,10 @@ router.post('/register', registerLimiter, async (req, res) => {
         emailVerified: false,
         verifyToken,
         verifyTokenExpiresAt,
-        balance: 1000000, // 1.0 token starting balance (DECIMALS=6)
       },
     });
 
-    // Grant NEWBIE achievement
-    const newbieAch = await prisma.achievement.findUnique({ where: { type: 'NEWBIE' } });
-    if (newbieAch) {
-      await prisma.userAchievement.create({
-        data: { userId: user.id, achievementId: newbieAch.id },
-      });
-    }
-
-    // Process referral reward
+    // Process referral linking
     await processReferral(user, referralCode?.trim());
 
     // Email Auth Phase 3 — send verify email iff email provided

@@ -3,9 +3,6 @@
     <header v-if="!isPlayRoute && !isMarketingRoute" :style="headerStyle" class="header">
       <div class="header-content">
         <Logo/>
-        <div v-if="balance !== null && isAuth" class="balance">
-          {{ balance }}$
-        </div>
       </div>
     </header>
 
@@ -28,12 +25,6 @@
       />
 
       <NoConnection v-if="isAuth" />
-
-      <NewAchievement v-if="isAuth"/>
-
-      <!-- Global challenge notification (top of screen) -->
-      <ChallengeNotification v-if="isAuth" />
-      <ClanInviteNotification v-if="isAuth" />
     </template>
   </div>
 </template>
@@ -46,21 +37,9 @@ import store from "@/core/state/store.js";
 import Info from "@/components/Info.vue";
 import NoConnection from "@/components/ui/NoConnection.vue";
 import Error from "@/components/Error.vue";
-import NewAchievement from "@/components/NewAchievement.vue";
-import ChallengeNotification from "@/components/pvp/ChallengeNotification.vue";
-import ClanInviteNotification from "@/components/clan/ClanInviteNotification.vue";
 import { t } from "@/locales/index.js";
 import * as amplitude from "@amplitude/analytics-browser";
 
-
-
-const balance = computed(() => {
-  const master = store.getters['master/getMaster'];
-  if (master && master.userData) {
-    return master.getBalance();
-  }
-  return null;
-});
 
 
 const showInfoMessage = ref(false);
@@ -188,9 +167,6 @@ onMounted(() => {
 
   document.addEventListener('visibilitychange', handleVisibilityChange);
   window.addEventListener('online', handleOnlineStatus);
-
-  // Initialize PvP system
-  store.dispatch('pvp/init');
 
   amplitude.init('b8821737459f00f1058fd8ede71459fe', {"autocapture":true});
 
