@@ -33,7 +33,17 @@ const bgVars = computed(() => ({ '--lp-bg-accent': props.accent.join(', ') }));
 <style scoped>
 .lp-bg {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  /* Pin to the LARGE viewport height (100lvh) rather than inset:0 / 100vh, which
+     resolve against the *dynamic* viewport. On iOS Safari + Android Chrome the
+     URL bar shows/hides during scroll, changing that height and making the
+     background (and its canvas) resize + visibly jump on every scroll. 100lvh is
+     a stable value that ignores the URL bar. 100vh is the fallback for browsers
+     without lvh support. */
+  height: 100vh;
+  height: 100lvh;
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
