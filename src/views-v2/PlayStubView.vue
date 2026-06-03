@@ -1,17 +1,10 @@
-<!-- /play — bare dark screen. The game is being rebuilt from scratch; this is
-     an intentionally empty full-screen dark surface (no content). -->
+<!-- /play — 3D arena scene (Stage 1 visualization). A thick slab platform
+     floating in dark void, orbit-drag + zoom. The foundation for future
+     combat; no fighters or game logic yet. -->
 <template>
-  <div class="play-blank"></div>
+  <ArenaScene />
 </template>
 
 <script setup>
-// Intentionally empty.
+import ArenaScene from '@/scene/ArenaScene.vue';
 </script>
-
-<style scoped>
-.play-blank {
-  position: fixed;
-  inset: 0;
-  background: var(--bg-deep, #070811);
-}
-</style>
