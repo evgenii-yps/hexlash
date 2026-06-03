@@ -1,30 +1,46 @@
-// Procedural CanvasTextures for the arena platform.
-// Kept tiny + procedural (no image assets) so the scene loads instantly on
-// mobile. Each factory returns a THREE.CanvasTexture; callers own .dispose().
+// Procedural CanvasTextures for the arena. Tiny + procedural (no image assets)
+// so the scene loads instantly on mobile. Each factory returns a
+// THREE.CanvasTexture; callers own .dispose().
+//
+// Discipline: monochrome surface texture, the single pink accent lives only in
+// the divider glow textures.
 import * as THREE from 'three';
 
 /**
  * Hex-grid overlay for the platform's top face. Thin muted lines that fade
- * toward the far edge (top of the texture → atmospheric depth). Transparent
- * background so only the lines read over the dark platform material.
+ * toward the far edge (top of canvas) plus a very faint monochrome scanline +
+ * speckle micro-texture so the floor reads as a material, not a flat fill.
+ *
+ * Mipmaps + max anisotropy keep the grid crisp on the far half in perspective.
+ * @param {number} maxAniso renderer.capabilities.getMaxAnisotropy()
  */
-export function makeHexGridTexture() {
-  const W = 768;
-  const H = 512; // 768:512 ≈ 6:4, matches the platform footprint
+export function makeHexGridTexture(maxAniso = 1) {
+  const W = 1024;
+  const H = 683; // ≈ 6:4 platform footprint
   const canvas = document.createElement('canvas');
   canvas.width = W;
   canvas.height = H;
   const ctx = canvas.getContext('2d');
 
   ctx.clearRect(0, 0, W, H);
-  ctx.lineWidth = 1.4;
+
+  // --- Micro surface texture: faint scanlines + speckle (monochrome).
+  ctx.fillStyle = 'rgba(150, 165, 195, 0.022)';
+  for (let y = 0; y < H; y += 3) ctx.fillRect(0, y, W, 1);
+  for (let i = 0; i < 1400; i++) {
+    const x = Math.random() * W;
+    const y = Math.random() * H;
+    ctx.fillStyle = `rgba(170,185,210,${0.015 + Math.random() * 0.03})`;
+    ctx.fillRect(x, y, 1, 1);
+  }
+
+  // --- Hex grid (flat-top), higher contrast than before but still thin.
+  ctx.lineWidth = 1.6;
   ctx.lineJoin = 'round';
+  const size = 40;
+  const hStep = size * 1.5;
+  const vStep = size * Math.sqrt(3);
 
-  const size = 30; // hex radius (center → corner), flat-top
-  const hStep = size * 1.5; // horizontal column spacing
-  const vStep = size * Math.sqrt(3); // vertical row spacing
-
-  // Build one flat-top hexagon path at (cx, cy).
   const hexPath = (cx, cy) => {
     ctx.beginPath();
     for (let i = 0; i < 6; i++) {
@@ -41,10 +57,9 @@ export function makeHexGridTexture() {
   for (let cx = -size; cx <= W + size; cx += hStep, col++) {
     const yOffset = col % 2 ? vStep / 2 : 0;
     for (let cy = -size + yOffset; cy <= H + size; cy += vStep) {
-      // Atmospheric fade: top of canvas (far edge) → lines bleach out.
       const depth = cy / H; // 0 far … 1 near
-      const alpha = 0.05 + 0.22 * depth;
-      ctx.strokeStyle = `rgba(150, 172, 205, ${alpha})`;
+      const alpha = 0.1 + 0.32 * depth; // higher contrast, fades to far edge
+      ctx.strokeStyle = `rgba(160, 182, 218, ${alpha})`;
       hexPath(cx, cy);
       ctx.stroke();
     }
@@ -52,52 +67,57 @@ export function makeHexGridTexture() {
 
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
-  tex.anisotropy = 4;
+  tex.generateMipmaps = true;
+  tex.minFilter = THREE.LinearMipmapLinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  tex.anisotropy = maxAniso;
   return tex;
 }
 
 /**
- * Soft pink glow disc (radial gradient → transparent). Reused for the
- * under-platform float glow and the centre-divider bloom. `tint` is the
- * core colour; edges always fade to fully transparent.
- */
-export function makeGlowTexture(tint = '#FF066F') {
-  const S = 256;
-  const canvas = document.createElement('canvas');
-  canvas.width = S;
-  canvas.height = S;
-  const ctx = canvas.getContext('2d');
-
-  const g = ctx.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
-  g.addColorStop(0, hexToRgba(tint, 0.85));
-  g.addColorStop(0.35, hexToRgba(tint, 0.4));
-  g.addColorStop(1, hexToRgba(tint, 0));
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, S, S);
-
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  return tex;
-}
-
-/**
- * Linear pink strip (bright centre line → transparent at both ends along V).
- * Laid flat across the platform's mid-line to fake bloom around the divider.
+ * Tight divider glow band: a bright thin band centred along V, transparent
+ * everywhere else. Stretched flat across the platform mid-line it reads as a
+ * dense short halo, not a wide soft cloud.
  */
 export function makeDividerGlowTexture(tint = '#FF066F') {
-  const W = 256;
-  const H = 64;
+  const W = 64;
+  const H = 256;
   const canvas = document.createElement('canvas');
   canvas.width = W;
   canvas.height = H;
   const ctx = canvas.getContext('2d');
 
   const g = ctx.createLinearGradient(0, 0, 0, H);
-  g.addColorStop(0, hexToRgba(tint, 0));
-  g.addColorStop(0.5, hexToRgba(tint, 0.7));
-  g.addColorStop(1, hexToRgba(tint, 0));
+  g.addColorStop(0.0, hexToRgba(tint, 0));
+  g.addColorStop(0.4, hexToRgba(tint, 0));
+  g.addColorStop(0.47, hexToRgba(tint, 0.55));
+  g.addColorStop(0.5, hexToRgba(tint, 1));
+  g.addColorStop(0.53, hexToRgba(tint, 0.55));
+  g.addColorStop(0.6, hexToRgba(tint, 0));
+  g.addColorStop(1.0, hexToRgba(tint, 0));
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, W, H);
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+/** Soft radial disc, transparent at the rim. Used for dark contact shadow,
+ *  dust specks, and the variant-C impulse dot. */
+export function makeRadialTexture(coreRgba, midRgba, midStop = 0.4) {
+  const S = 128;
+  const canvas = document.createElement('canvas');
+  canvas.width = S;
+  canvas.height = S;
+  const ctx = canvas.getContext('2d');
+
+  const g = ctx.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
+  g.addColorStop(0, coreRgba);
+  g.addColorStop(midStop, midRgba);
+  g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, S, S);
 
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
