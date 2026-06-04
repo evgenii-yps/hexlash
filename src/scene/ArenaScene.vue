@@ -28,6 +28,7 @@
       <button type="button" class="tgt" @click="onDemo">DEMO</button>
       <button type="button" class="tgt" @click="onAITarget">AI</button>
       <button type="button" class="tgt" @click="onAIBoth">AI×2</button>
+      <button type="button" class="tgt" @click="onFight">FIGHT</button>
     </div>
   </div>
 </template>
@@ -56,6 +57,10 @@ let demoPending = false;
 // stop the loop). Toggled via key A (current target) / the AI buttons.
 let aiPlayer = false;
 let aiOpponent = false;
+// Full self-running fight (key F / FIGHT button). runFight is assigned in
+// onMounted (needs the scene); fightActive gates the win-and-freeze behaviour.
+let fightActive = false;
+let runFight = null;
 
 // idle-drift bookkeeping (variant B)
 let userActive = false;
@@ -114,6 +119,7 @@ function onAIBoth() {
   fighter?.setAI(next);
   opponent?.setAI(next);
 }
+function onFight() { runFight?.(); }
 
 // Damage per clean hit (tunable, slight variance per blow) → ~5-6 hits to OUT.
 const rollDamage = () => 18 + Math.round(Math.random() * 6 - 3);
@@ -175,9 +181,16 @@ onMounted(() => {
   presence.setVariant(variant.value);
 
   // --- Fighters: player on the near half, opponent (flipped, muted) on the far
-  //     half, both facing the rift. A punch impact briefly flares the rift glow.
-  //     On elimination a fighter is removed + freed, then respawned so the dev
-  //     can re-preview.
+  //     half, both facing the rift. A punch impact flares the rift + damages the
+  //     other. Elimination ends a FIGHT (winner idles); outside a fight it
+  //     respawns (dev loop / re-preview).
+  const endFight = () => {
+    fightActive = false;
+    aiPlayer = false;
+    aiOpponent = false;
+    fighter?.setAI(false); // winner stops attacking → settles to idle
+    opponent?.setAI(false);
+  };
   const spawnFighter = () => {
     fighter = buildFighter(pink, {
       side: 'player',
@@ -185,7 +198,9 @@ onMounted(() => {
       onEliminated: () => {
         scene.remove(fighter.group);
         fighter.dispose();
-        spawnFighter();
+        fighter = null;
+        if (fightActive) endFight(); // opponent wins; freeze
+        else spawnFighter(); // dev respawn
       },
     });
     fighter.group.position.set(0, arena.refs.topY, 1.05);
@@ -200,7 +215,9 @@ onMounted(() => {
       onEliminated: () => {
         scene.remove(opponent.group);
         opponent.dispose();
-        spawnOpponent();
+        opponent = null;
+        if (fightActive) endFight(); // player wins; freeze
+        else spawnOpponent(); // dev respawn
       },
     });
     opponent.group.position.set(0, arena.refs.topY, -1.05);
@@ -210,6 +227,18 @@ onMounted(() => {
   };
   spawnFighter();
   spawnOpponent();
+
+  // FIGHT (key F / button): clean re-run — dispose both, respawn fresh at full
+  // HP + neutral, then both fight autonomously until one is eliminated.
+  runFight = () => {
+    if (fighter) { scene.remove(fighter.group); fighter.dispose(); fighter = null; }
+    if (opponent) { scene.remove(opponent.group); opponent.dispose(); opponent = null; }
+    aiPlayer = true;
+    aiOpponent = true;
+    fightActive = true;
+    spawnFighter();
+    spawnOpponent();
+  };
 
   // --- Orbit controls — drag to rotate, wheel / pinch zoom; centred, no pan.
   controls = new OrbitControls(camera, renderer.domElement);
@@ -259,8 +288,8 @@ onMounted(() => {
 
     controls.update();
     presence.update(t);
-    fighter.update(t);
-    opponent.update(t);
+    fighter?.update(t); // may be null after a fight ends, until next FIGHT
+    opponent?.update(t);
 
     // Dev demo exchange — fire scheduled events on loop time (paused with the
     // loop when hidden; skipped under reduced-motion).
@@ -302,6 +331,7 @@ onMounted(() => {
     else if (e.key === 'k') curFighter()?.eliminate();
     else if (e.key === 'g') onDemo();
     else if (e.key === 'a') onAITarget();
+    else if (e.key === 'f') onFight();
   };
   window.addEventListener('keydown', onKeydown);
 
