@@ -78,26 +78,27 @@ function onRun() { curFighter()?.run(); }
 function onHurt() { curFighter()?.hurt(); }
 function onOut() { curFighter()?.eliminate(); }
 
-// Scripted exchange: attacker COMBO (approach + strike at the seam, one impact);
-// the defender plays HURT synced to that impact. The rift flash fires
-// automatically from the attacker's onImpact. A couple of rounds, both ways.
+// Scripted exchange: attackers alternate COMBO (approach + strike at the seam).
+// The clash at the impact resolves itself — the attacker's onImpact damages the
+// defender, which loses HP, recoils (HURT) and flares the rift. A couple of
+// rounds, both ways.
 function buildDemoEvents() {
   const events = [];
   const DUR = 2.0; // COMBO duration
-  const IMPACT = 1.12; // COMBO impact time
   const GAP = 0.25; // beat between attacks
   let t = 0;
   for (let r = 0; r < 2; r++) {
-    events.push({ t, fn: () => fighter?.combo() }); // player attacks
-    events.push({ t: t + IMPACT, fn: () => opponent?.hurt() });
+    events.push({ t, fn: () => fighter?.combo() }); // player attacks opponent
     t += DUR + GAP;
-    events.push({ t, fn: () => opponent?.combo() }); // opponent attacks
-    events.push({ t: t + IMPACT, fn: () => fighter?.hurt() });
+    events.push({ t, fn: () => opponent?.combo() }); // opponent attacks player
     t += DUR + GAP;
   }
   return events;
 }
 function onDemo() { if (!demo) demoPending = true; }
+
+// Damage per clean hit (tunable, slight variance per blow) → ~5-6 hits to OUT.
+const rollDamage = () => 18 + Math.round(Math.random() * 6 - 3);
 
 function normalizeVariant(v) {
   const u = String(v || '').toUpperCase();
@@ -162,7 +163,7 @@ onMounted(() => {
   const spawnFighter = () => {
     fighter = buildFighter(pink, {
       side: 'player',
-      onImpact: () => presence.triggerFlash(0.55),
+      onImpact: () => { presence.triggerFlash(0.55); opponent?.takeDamage(rollDamage()); },
       onEliminated: () => {
         scene.remove(fighter.group);
         fighter.dispose();
@@ -176,7 +177,7 @@ onMounted(() => {
   const spawnOpponent = () => {
     opponent = buildFighter(pink, {
       side: 'opponent',
-      onImpact: () => presence.triggerFlash(0.55),
+      onImpact: () => { presence.triggerFlash(0.55); fighter?.takeDamage(rollDamage()); },
       onEliminated: () => {
         scene.remove(opponent.group);
         opponent.dispose();

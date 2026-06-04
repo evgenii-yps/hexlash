@@ -17,7 +17,7 @@ function pinkRgba(pink, a) {
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
 }
 
-export function buildFighter(pink = '#FF0069', { side = 'player', onImpact, onEliminated } = {}) {
+export function buildFighter(pink = '#FF0069', { side = 'player', maxHp = 100, onImpact, onEliminated } = {}) {
   const group = new THREE.Group();
 
   // Side ('player' near / 'opponent' far). Both face the seam — the opponent is
@@ -120,6 +120,30 @@ export function buildFighter(pink = '#FF0069', { side = 'player', onImpact, onEl
   shadow.rotation.x = -Math.PI / 2;
   shadow.position.y = 0.012;
   group.add(shadow);
+
+  // --- HP bar — thin flat placeholder above the head. Sprites auto-billboard,
+  //     so it stays readable as the camera orbits. Dark track + flat fill, NO
+  //     glow/emissive/bloom (the only glow on the fighter is the core). Same
+  //     treatment for both sides. Drawn on top (depthTest off) so it always reads.
+  let hp = maxHp;
+  const BAR_W = 0.7;
+  const BAR_Y = 2.0;
+  const barTrack = new THREE.Sprite(new THREE.SpriteMaterial({
+    color: 0x0a0c14, transparent: true, opacity: 0.85, depthTest: false, depthWrite: false,
+  }));
+  barTrack.scale.set(BAR_W, 0.09, 1);
+  barTrack.position.set(0, BAR_Y, 0);
+  barTrack.renderOrder = 10;
+  group.add(barTrack);
+  const barFill = new THREE.Sprite(new THREE.SpriteMaterial({
+    color: 0xc6cfe2, transparent: true, opacity: 0.95, depthTest: false, depthWrite: false,
+  }));
+  barFill.center.set(0, 0.5); // left-anchored → shrinks from the right
+  barFill.scale.set(BAR_W, 0.09, 1);
+  barFill.position.set(-BAR_W / 2, BAR_Y, 0);
+  barFill.renderOrder = 11;
+  group.add(barFill);
+  const updateBar = () => { barFill.scale.x = (BAR_W * Math.max(0, hp)) / maxHp; };
 
   // --- Idle + action system. Idle = heavy breathing (hips settle + chest
   //     expand) + quiet core pulse. Actions (approach / punch / combo) play once
@@ -324,11 +348,23 @@ export function buildFighter(pink = '#FF0069', { side = 'player', onImpact, onEl
     if (state !== 'alive') return;
     clip = null;
     loco.active = false;
+    barTrack.visible = false; // bar leaves with the fighter
+    barFill.visible = false;
     if (reduced) { state = 'done'; if (onEliminated) onEliminated(); return; } // no playback
     skin.transparent = true;
     coreMat.transparent = true;
     state = 'dissolving';
     diss = 0;
+  };
+
+  // Hit resolution: lose HP, recoil (HURT), and OUT at zero. The rift flash +
+  // attacker→defender pairing live in ArenaScene (the combat resolver).
+  const takeDamage = (dmg) => {
+    if (state !== 'alive') return;
+    hp = Math.max(0, hp - dmg);
+    updateBar();
+    if (hp <= 0) eliminate(); // → dissolve; onEliminated raised on completion
+    else play(HURT); // weighty recoil + core flash
   };
 
   const update = (t) => {
@@ -429,6 +465,9 @@ export function buildFighter(pink = '#FF0069', { side = 'player', onImpact, onEl
     walk: () => toggleLoco('walk'),
     run: () => toggleLoco('run'),
     eliminate,
+    takeDamage,
+    getHp: () => hp,
+    maxHp,
     joints: { hips, torso, armL, armR, legL, legR },
   };
 }
