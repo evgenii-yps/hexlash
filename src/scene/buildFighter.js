@@ -150,5 +150,10 @@ export function buildFighter(pink = '#FF0069') {
     maps.forEach((m) => m.dispose());
   };
 
+  // --- Scale down to read alongside the arena (and leave room for a full team
+  //     on the half later). Origin is at the feet, so this keeps them planted —
+  //     the placement y in ArenaScene needs no change. ~1.84 → ~1.34 tall.
+  group.scale.setScalar(0.73);
+
   return { group, update, setReducedMotion, dispose, joints: { hips, torso, armL, armR, legL, legR } };
 }
