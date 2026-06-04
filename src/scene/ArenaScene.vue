@@ -1,5 +1,6 @@
 <!-- ArenaScene — Three.js arena, the foundation for future combat. Two slabs
-     split by a wide dark gap (torn-rift pass 1/3), floating in dark void;
+     split by a wide gap with torn jagged inner edges (torn-rift pass 2/3),
+     floating in dark void;
      orbit-drag + zoom, default 3/4 top view. Sharp render (full DPR, mipmapped
      hex) with switchable presence "moods" (?mood=A|B|C or keys 1/2/3) the owner
      picks on preview. No fighters, no HUD, no combat logic (separate stage).
