@@ -268,15 +268,28 @@ export function buildFighter(
   const BZ = bounds.z;
 
   // Navigation tuning (world units, opponent-relative).
-  const RANGE = 1.6; // preferred fighting distance (centre-to-centre)
-  const RANGE_HYST = 0.25; // band around RANGE before re-closing
-  const CONTACT = 0.95; // hard minimum — bodies never interpenetrate
+  const RANGE_HYST = 0.25; // band around the engage distance before re-closing
+  const CONTACT = 0.85; // hard minimum — bodies never interpenetrate
+  const CONTACT_SOFT = 1.05; // soft buffer above CONTACT — ease back here (no grinding)
   const FAR = 3.0; // beyond this, run in
   const STRIKE = 2.0; // a strike connects only if the foe is within this radius at impact
   const TURN_RATE = 5.0; // facing turn speed (rad/s)
 
+  // Per-fighter "character" — independent rolls at build give each construct its
+  // own temperament, so two fighters never move as a mirror or in lock-step:
+  // different preferred range, aggression, circling sense, decision rhythm and
+  // approach arc. Live random, rolled once per fighter.
+  const character = {
+    range: 1.0 + Math.random() * 0.25, // preferred fighting distance — tight, just off contact
+    aggression: 0.3 + Math.random() * 0.45, // press-in vs bait-out bias
+    strafeBias: Math.random() < 0.5 ? -1 : 1, // default circling sense (CW / CCW)
+    decideMin: 0.3 + Math.random() * 0.25, // manoeuvre decision period — min
+    decideJit: 0.35 + Math.random() * 0.5, // + jitter
+    approachArc: 0.4 + Math.random() * 0.55, // lateral arc on the way in (rad)
+  };
+
   const loco = { active: false, type: 'walk' }; // dev WALK/RUN preview toggle
-  const nav = { mode: 'hold', dirSign: 1, until: 0, foe: null }; // AI manoeuvre state
+  const nav = { mode: 'circle', until: 0, foe: null, approachAngle: 0 }; // AI manoeuvre state
 
   // Elimination — dissolve into the fog (~1.4s); core holds and fades last.
   const BG = new THREE.Color(0x070811);
@@ -399,18 +412,25 @@ export function buildFighter(
     return dx * dx + dz * dz <= STRIKE * STRIKE;
   };
 
-  // Free-roam navigation (AI): close the distance, hold at range and manoeuvre,
-  // break contact when too close. Movers animate the gait; "hold" breathes.
-  const maneuver = (t, dt, ux, uz, bs) => {
+  // Manoeuvre at fighting range — character-weighted tactic re-picked on this
+  // fighter's own clock (decideMin + jitter), so the two never act in lock-step:
+  //   circle — orbit the foe (own circling sense, occasionally reversed)
+  //   press  — step in toward contact, force a tight exchange (aggressive)
+  //   bait   — ease out to draw the foe in (cautious)
+  const maneuver = (t, dt, ux, uz, d) => {
     if (t >= nav.until) {
       const r = Math.random();
-      nav.mode = r < 0.45 ? 'strafe' : r < 0.7 ? 'hold' : 'retreat';
-      if (nav.mode === 'strafe') nav.dirSign = Math.random() < 0.5 ? -1 : 1;
-      nav.until = t + 0.4 + Math.random() * 0.8;
+      const ag = character.aggression;
+      if (r < 0.42) nav.mode = 'circle';
+      else if (r < 0.42 + 0.4 * ag) nav.mode = 'press'; // aggressive → press in
+      else if (r < 0.9) nav.mode = 'bait';
+      else nav.mode = 'circle';
+      if (Math.random() < 0.28) character.strafeBias *= -1; // reverse the orbit sometimes
+      nav.until = t + character.decideMin + Math.random() * character.decideJit;
     }
-    if (nav.mode === 'strafe') moveDir(nav.dirSign * -uz, nav.dirSign * ux, WALK, dt); // circle
-    else if (nav.mode === 'retreat') moveDir(-ux, -uz, WALK, dt); // break distance
-    else idlePose(bs); // hold — breathe in place
+    if (nav.mode === 'press') moveDir(ux, uz, WALK, dt, Math.max(0, d - CONTACT_SOFT)); // tighten
+    else if (nav.mode === 'bait') moveDir(-ux, -uz, WALK, dt); // ease out
+    else moveDir(character.strafeBias * -uz, character.strafeBias * ux, WALK, dt); // circle
   };
   const navigate = (t, dt, bs) => {
     const f = getFoePos && getFoePos();
@@ -421,12 +441,31 @@ export function buildFighter(
     const d = Math.hypot(dx, dz) || 1e-4;
     const ux = dx / d;
     const uz = dz / d;
-    if (d < CONTACT) { moveDir(-ux, -uz, WALK, dt); return; } // break interpenetration
-    if (d > RANGE + RANGE_HYST) { // close the distance
-      moveDir(ux, uz, d > FAR ? RUN : WALK, dt, d - RANGE);
+    const engage = character.range;
+
+    if (d > engage + RANGE_HYST) {
+      // Close in — but not straight down the middle: arc in at a per-approach
+      // angle (sign + size from character), straightening as the gap closes.
+      if (nav.mode !== 'approach') {
+        nav.mode = 'approach';
+        nav.approachAngle = (Math.random() < 0.5 ? -1 : 1) * character.approachArc * (0.5 + Math.random() * 0.5);
+      }
+      const closeFrac = THREE.MathUtils.clamp((d - engage) / (FAR - engage), 0, 1);
+      const a = nav.approachAngle * closeFrac;
+      const ca = Math.cos(a);
+      const sa = Math.sin(a);
+      moveDir(ux * ca - uz * sa, ux * sa + uz * ca, d > FAR ? RUN : WALK, dt, d - engage);
       return;
     }
-    maneuver(t, dt, ux, uz, bs); // at range, between strikes
+    if (d < CONTACT_SOFT) {
+      // Too tight — ease back gently within the soft buffer (full step at the
+      // hard floor, near-zero at CONTACT_SOFT) so they settle smoothly, no grind.
+      const push = THREE.MathUtils.clamp((CONTACT_SOFT - d) / (CONTACT_SOFT - CONTACT), 0, 1);
+      moveDir(-ux, -uz, WALK, dt, push * WALK.speed * dt);
+      return;
+    }
+    if (nav.mode === 'approach') nav.until = 0; // just arrived → pick a tactic now
+    maneuver(t, dt, ux, uz, d); // fighting band
   };
 
   // Dev WALK/RUN preview (AI off): approach the foe, then circle; march in place
@@ -442,8 +481,8 @@ export function buildFighter(
     const d = Math.hypot(dx, dz) || 1e-4;
     const ux = dx / d;
     const uz = dz / d;
-    if (d > RANGE + RANGE_HYST) moveDir(ux, uz, cfg, dt, d - RANGE); // approach
-    else moveDir(-uz, ux, cfg, dt); // circle at range
+    if (d > character.range + RANGE_HYST) moveDir(ux, uz, cfg, dt, d - character.range); // approach
+    else moveDir(character.strafeBias * -uz, character.strafeBias * ux, cfg, dt); // circle at range
   };
 
   const toggleLoco = (type) => {
@@ -488,16 +527,17 @@ export function buildFighter(
     if (!f) return false;
     const dx = f.x - group.position.x;
     const dz = f.z - group.position.z;
-    if (Math.hypot(dx, dz) > RANGE + RANGE_HYST) return false; // only commit in range
+    if (Math.hypot(dx, dz) > character.range + RANGE_HYST) return false; // only commit when engaged
     const r = Math.random();
     const atk = r < 0.45 ? PUNCH : r < 0.8 ? DOUBLE : COMBO; // punch / double primary, combo = lunge
     play(atk);
     ai.nextAt = t + atk.dur + 0.3 + Math.random() * 0.8; // pause after the clip
-    // Break off after the strike — reposition (strafe / retreat), never hang in
-    // the foe's face. The window starts as the clip ends.
-    nav.mode = Math.random() < 0.55 ? 'strafe' : 'retreat';
-    if (nav.mode === 'strafe') nav.dirSign = Math.random() < 0.5 ? -1 : 1;
-    nav.until = t + atk.dur + 0.35 + Math.random() * 0.5;
+    // Follow-up after the strike — character-driven. Aggressive fighters often
+    // stay in and press a flurry; cautious ones circle or bait out. Window
+    // starts as the clip ends. (Never just hang motionless in the foe's face.)
+    if (Math.random() < character.aggression * 0.6) nav.mode = 'press';
+    else { nav.mode = Math.random() < 0.5 ? 'circle' : 'bait'; if (nav.mode === 'circle' && Math.random() < 0.5) character.strafeBias *= -1; }
+    nav.until = t + atk.dur + 0.25 + Math.random() * 0.4;
     return true;
   };
   // Under reduced motion the body holds still; resolve the key moment (the hit
@@ -507,7 +547,14 @@ export function buildFighter(
     if (onImpact) onImpact();
     ai.nextAt = t + 0.7 + Math.random() * 0.8;
   };
-  const setAI = (b) => { ai.on = b; if (b) ai.nextAt = lastT + 0.3 + Math.random() * 0.6; };
+  const setAI = (b) => {
+    ai.on = b;
+    if (b) {
+      ai.nextAt = lastT + 0.3 + Math.random() * 0.6;
+      nav.until = lastT + Math.random() * character.decideJit; // desync decision phase
+      nav.mode = Math.random() < 0.5 ? 'circle' : 'approach';
+    }
+  };
 
   const update = (t) => {
     const dt = Math.min(0.05, Math.max(0, t - lastT));

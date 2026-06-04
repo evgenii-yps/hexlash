@@ -214,7 +214,7 @@ onMounted(() => {
         else spawnFighter(); // dev respawn
       },
     });
-    fighter.group.position.set(0, arena.refs.topY, 1.35);
+    fighter.group.position.set(0.45, arena.refs.topY, 1.3); // off-centre, asymmetric to the opponent
     fighter.setReducedMotion(reducedMotion);
     fighter.setAI(aiPlayer); // keep AI on across respawn
     scene.add(fighter.group);
@@ -233,7 +233,7 @@ onMounted(() => {
         else spawnOpponent(); // dev respawn
       },
     });
-    opponent.group.position.set(0, arena.refs.topY, -1.35);
+    opponent.group.position.set(-0.65, arena.refs.topY, -1.4); // off-centre, not a mirror of the player
     opponent.setReducedMotion(reducedMotion);
     opponent.setAI(aiOpponent); // keep AI on across respawn
     scene.add(opponent.group);
