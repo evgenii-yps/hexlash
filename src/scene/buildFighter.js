@@ -17,13 +17,22 @@ function pinkRgba(pink, a) {
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
 }
 
-export function buildFighter(pink = '#FF0069', { onImpact, onEliminated } = {}) {
+export function buildFighter(pink = '#FF0069', { side = 'player', onImpact, onEliminated } = {}) {
   const group = new THREE.Group();
+
+  // Side ('player' near / 'opponent' far). Both face the seam — the opponent is
+  // the same construct flipped 180°. Friend/foe read (same #FF0069, no second
+  // colour): the opponent gets a darker/cooler body + a muted core.
+  const isOpp = side === 'opponent';
+  group.rotation.y = isOpp ? Math.PI : 0;
+  const skinColor = isOpp ? 0x141b2e : 0x1c2233; // opponent darker + cooler
+  const coreDim = isOpp ? 0.7 : 1.0; // darkens the gem, keeps the hue
+  const coreGain = isOpp ? 0.55 : 1.0; // halo brightness — player's is brightest
 
   // Shared faceted "skin" — same workshop as the plates, a touch lighter so the
   // construct reads against them.
   const skin = new THREE.MeshStandardMaterial({
-    color: 0x1c2233,
+    color: skinColor,
     flatShading: true,
     roughness: 0.8,
     metalness: 0.18,
@@ -81,7 +90,7 @@ export function buildFighter(pink = '#FF0069', { onImpact, onEliminated } = {}) 
 
   // --- Core: single faceted #FF0069 gem in the chest front + a soft additive
   //     halo sprite. The fighter's only glow.
-  const coreMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(pink) });
+  const coreMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(pink).multiplyScalar(coreDim) });
   const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.06, 0), coreMat);
   core.position.set(0, 0.4, -0.16); // chest front (-Z)
   torso.add(core);
@@ -93,7 +102,7 @@ export function buildFighter(pink = '#FF0069', { onImpact, onEliminated } = {}) 
     transparent: true,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
-    opacity: 0.8,
+    opacity: 0.8 * coreGain,
   });
   const halo = new THREE.Sprite(haloMat);
   halo.scale.set(0.34, 0.34, 0.34);
@@ -326,7 +335,7 @@ export function buildFighter(pink = '#FF0069', { onImpact, onEliminated } = {}) 
       skin.color.copy(skinBase).lerp(BG, bodyK);
       const coreK = Math.max(0, (k - 0.6) / 0.4); // core holds, then fades last
       coreMat.opacity = 1 - coreK;
-      haloMat.opacity = 0.8 * (1 - coreK);
+      haloMat.opacity = 0.8 * coreGain * (1 - coreK);
       core.scale.setScalar(1 - 0.3 * coreK);
       if (k >= 1) { state = 'done'; if (onEliminated) onEliminated(); }
       return;
@@ -339,7 +348,7 @@ export function buildFighter(pink = '#FF0069', { onImpact, onEliminated } = {}) 
       resetLegs();
       chest.scale.set(1, 1, 1);
       core.scale.setScalar(1);
-      haloMat.opacity = 0.8;
+      haloMat.opacity = 0.8 * coreGain;
       return;
     }
 
@@ -377,7 +386,7 @@ export function buildFighter(pink = '#FF0069', { onImpact, onEliminated } = {}) 
     }
 
     core.scale.setScalar(1 + cpulse * 0.22 + coreBoost * 0.5);
-    haloMat.opacity = THREE.MathUtils.clamp(0.55 + 0.4 * cpulse + coreBoost * 0.6, 0.1, 1.6);
+    haloMat.opacity = THREE.MathUtils.clamp((0.55 + 0.4 * cpulse + coreBoost * 0.6) * coreGain, 0.05, 1.6);
   };
 
   const dispose = () => {

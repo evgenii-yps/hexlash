@@ -40,7 +40,7 @@ const wrap = ref(null);
 const canvasEl = ref(null);
 const variant = ref('A');
 
-let renderer, scene, camera, controls, arena, fighter, presence, resizeObserver, clock;
+let renderer, scene, camera, controls, arena, fighter, opponent, presence, resizeObserver, clock;
 let onVisibility, onKeydown, onControlsStart, onControlsEnd;
 
 // idle-drift bookkeeping (variant B)
@@ -123,11 +123,13 @@ onMounted(() => {
   variant.value = normalizeVariant(new URLSearchParams(window.location.search).get('mood'));
   presence.setVariant(variant.value);
 
-  // --- Fighter: one construct on the near (player) half, facing the rift. Its
-  //     punch impact briefly flares the rift glow (same pink). On elimination it
-  //     is removed + freed, then a fresh one spawns so the dev can re-preview.
+  // --- Fighters: player on the near half, opponent (flipped, muted) on the far
+  //     half, both facing the rift. A punch impact briefly flares the rift glow.
+  //     On elimination a fighter is removed + freed, then respawned so the dev
+  //     can re-preview.
   const spawnFighter = () => {
     fighter = buildFighter(pink, {
+      side: 'player',
       onImpact: () => presence.triggerFlash(0.55),
       onEliminated: () => {
         scene.remove(fighter.group);
@@ -139,7 +141,22 @@ onMounted(() => {
     fighter.setReducedMotion(reducedMotion);
     scene.add(fighter.group);
   };
+  const spawnOpponent = () => {
+    opponent = buildFighter(pink, {
+      side: 'opponent',
+      onImpact: () => presence.triggerFlash(0.55),
+      onEliminated: () => {
+        scene.remove(opponent.group);
+        opponent.dispose();
+        spawnOpponent();
+      },
+    });
+    opponent.group.position.set(0, arena.refs.topY, -1.05);
+    opponent.setReducedMotion(reducedMotion);
+    scene.add(opponent.group);
+  };
   spawnFighter();
+  spawnOpponent();
 
   // --- Orbit controls — drag to rotate, wheel / pinch zoom; centred, no pan.
   controls = new OrbitControls(camera, renderer.domElement);
@@ -190,6 +207,7 @@ onMounted(() => {
     controls.update();
     presence.update(t);
     fighter.update(t);
+    opponent.update(t);
     renderer.render(scene, camera);
   };
   renderer.setAnimationLoop(loop);
@@ -242,6 +260,7 @@ onBeforeUnmount(() => {
   if (controls) controls.dispose();
   if (presence) presence.dispose();
   if (fighter) fighter.dispose();
+  if (opponent) opponent.dispose();
   if (arena) arena.dispose();
   if (renderer) renderer.dispose();
 });
