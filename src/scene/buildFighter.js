@@ -272,6 +272,7 @@ export function buildFighter(
   const RANGE_HYST = 0.25; // band around RANGE before re-closing
   const CONTACT = 0.95; // hard minimum — bodies never interpenetrate
   const FAR = 3.0; // beyond this, run in
+  const STRIKE = 2.0; // a strike connects only if the foe is within this radius at impact
   const TURN_RATE = 5.0; // facing turn speed (rad/s)
 
   const loco = { active: false, type: 'walk' }; // dev WALK/RUN preview toggle
@@ -387,6 +388,17 @@ export function buildFighter(
     group.rotation.y = Math.atan2(-dx, -dz);
   };
 
+  // Distance gate for a landing blow: a strike connects only if the foe is within
+  // STRIKE right now — so a punch lands anywhere on the plate when close enough,
+  // and whiffs if the foe slipped out of reach (no contact = no damage).
+  const foeInStrike = () => {
+    const f = getFoePos && getFoePos();
+    if (!f) return false;
+    const dx = f.x - group.position.x;
+    const dz = f.z - group.position.z;
+    return dx * dx + dz * dz <= STRIKE * STRIKE;
+  };
+
   // Free-roam navigation (AI): close the distance, hold at range and manoeuvre,
   // break contact when too close. Movers animate the gait; "hold" breathes.
   const maneuver = (t, dt, ux, uz, bs) => {
@@ -476,12 +488,16 @@ export function buildFighter(
     if (!f) return false;
     const dx = f.x - group.position.x;
     const dz = f.z - group.position.z;
-    if (Math.hypot(dx, dz) > RANGE + RANGE_HYST) return false; // only strike in range
+    if (Math.hypot(dx, dz) > RANGE + RANGE_HYST) return false; // only commit in range
     const r = Math.random();
-    const atk = r < 0.5 ? COMBO : r < 0.8 ? PUNCH : DOUBLE; // weighted choice
+    const atk = r < 0.45 ? PUNCH : r < 0.8 ? DOUBLE : COMBO; // punch / double primary, combo = lunge
     play(atk);
     ai.nextAt = t + atk.dur + 0.3 + Math.random() * 0.8; // pause after the clip
-    nav.until = 0; // re-pick a manoeuvre once recovered
+    // Break off after the strike — reposition (strafe / retreat), never hang in
+    // the foe's face. The window starts as the clip ends.
+    nav.mode = Math.random() < 0.55 ? 'strafe' : 'retreat';
+    if (nav.mode === 'strafe') nav.dirSign = Math.random() < 0.5 ? -1 : 1;
+    nav.until = t + atk.dur + 0.35 + Math.random() * 0.5;
     return true;
   };
   // Under reduced motion the body holds still; resolve the key moment (the hit
@@ -542,12 +558,12 @@ export function buildFighter(
         for (let i = 0; i < clip.impacts.length; i++) {
           if (!clip.fired[i] && ct >= clip.impacts[i]) {
             clip.fired[i] = true;
-            if (onImpact) onImpact(); // rift glow reacts to each hit
+            if (onImpact && foeInStrike()) onImpact(); // damage only if the foe is in reach
           }
         }
       } else if (!clip.fired && clip.impact >= 0 && ct >= clip.impact) {
         clip.fired = true;
-        if (onImpact) onImpact(); // rift glow reacts to the hit
+        if (onImpact && foeInStrike()) onImpact(); // damage only if the foe is in reach
       }
       if (ct < clip.dur) {
         const v = sample(clip.keys, ct);

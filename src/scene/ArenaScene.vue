@@ -49,8 +49,10 @@ const target = ref('player'); // which fighter the dev triggers act on
 let renderer, scene, camera, controls, arena, fighter, opponent, presence, resizeObserver, clock;
 let onVisibility, onKeydown, onControlsStart, onControlsEnd;
 
-// Dev demo exchange (key G) — a scripted clash so the "two fighters trade blows
-// across the seam" loop reads. Not real combat: no HP / timeline / logic.
+// Dev demo (key G) — a readable open-arena exchange: both fighters go autonomous
+// (approach, trade blows wherever they meet, reposition), then settle back to
+// idle after a few seconds. Not a real bout (no win-freeze) — just a preview of
+// the open model. Runs on a small timed window via the loop.
 let demo = null; // { start, events:[{t, fn, done}] } while running
 let demoPending = false;
 // Autonomous-behaviour intent per side (kept across respawns so a KO doesn't
@@ -89,22 +91,22 @@ function onRun() { curFighter()?.run(); }
 function onHurt() { curFighter()?.hurt(); }
 function onOut() { curFighter()?.eliminate(); }
 
-// Scripted exchange: attackers alternate COMBO (approach + strike at the seam).
-// The clash at the impact resolves itself — the attacker's onImpact damages the
-// defender, which loses HP, recoils (HURT) and flares the rift. A couple of
-// rounds, both ways.
+// Open-arena exchange: turn both fighters autonomous so they close in and trade
+// wherever they meet (the autonomous nav + radius-strike resolves the clash —
+// the attacker's onImpact damages whoever is in reach; the defender recoils +
+// flashes its core). Settle back to idle after a short window.
+const DEMO_DUR = 8; // seconds of autonomous sparring, then idle
+function setBothAI(on) {
+  aiPlayer = on;
+  aiOpponent = on;
+  fighter?.setAI(on);
+  opponent?.setAI(on);
+}
 function buildDemoEvents() {
-  const events = [];
-  const DUR = 2.0; // COMBO duration
-  const GAP = 0.25; // beat between attacks
-  let t = 0;
-  for (let r = 0; r < 2; r++) {
-    events.push({ t, fn: () => fighter?.combo() }); // player attacks opponent
-    t += DUR + GAP;
-    events.push({ t, fn: () => opponent?.combo() }); // opponent attacks player
-    t += DUR + GAP;
-  }
-  return events;
+  return [
+    { t: 0, fn: () => setBothAI(true) }, // approach + trade
+    { t: DEMO_DUR, fn: () => setBothAI(false) }, // settle to idle
+  ];
 }
 function onDemo() { if (!demo) demoPending = true; }
 // Toggle autonomous behaviour: A / AI button = current target; AI×2 = both.
@@ -113,11 +115,7 @@ function onAITarget() {
   else { aiPlayer = !aiPlayer; fighter?.setAI(aiPlayer); }
 }
 function onAIBoth() {
-  const next = !(aiPlayer && aiOpponent);
-  aiPlayer = next;
-  aiOpponent = next;
-  fighter?.setAI(next);
-  opponent?.setAI(next);
+  setBothAI(!(aiPlayer && aiOpponent));
 }
 function onFight() { runFight?.(); }
 
@@ -182,9 +180,11 @@ onMounted(() => {
 
   // --- Fighters: spawned on opposite sides, then free to roam the whole plate —
   //     they navigate toward each other, manoeuvre at range and turn to face the
-  //     moving target (the rift is no longer a barrier). A strike flares the rift
-  //     + damages the other. Elimination ends a FIGHT (winner idles); outside a
-  //     fight it respawns (dev loop / re-preview).
+  //     moving target (the rift is no longer a barrier). A strike connecting in
+  //     range damages the other; the hit signal lives ON the fighters (defender
+  //     recoils + core flash), NOT on the rift — the rift stays ambient, so
+  //     there's only one glow on screen. Elimination ends a FIGHT (winner idles);
+  //     outside a fight it respawns (dev loop / re-preview).
   //
   // Plate bounds for navigation: half-extents minus a margin so feet stay on the
   // slab. The whole plate (both sides) is walkable.
@@ -205,7 +205,7 @@ onMounted(() => {
       side: 'player',
       bounds: navBounds,
       getFoePos: () => (opponent ? opponent.group.position : null),
-      onImpact: () => { presence.triggerFlash(0.55); opponent?.takeDamage(rollDamage()); },
+      onImpact: () => { opponent?.takeDamage(rollDamage()); }, // hit signal is on the foe (recoil + core)
       onEliminated: () => {
         scene.remove(fighter.group);
         fighter.dispose();
@@ -224,7 +224,7 @@ onMounted(() => {
       side: 'opponent',
       bounds: navBounds,
       getFoePos: () => (fighter ? fighter.group.position : null),
-      onImpact: () => { presence.triggerFlash(0.55); fighter?.takeDamage(rollDamage()); },
+      onImpact: () => { fighter?.takeDamage(rollDamage()); }, // hit signal is on the foe (recoil + core)
       onEliminated: () => {
         scene.remove(opponent.group);
         opponent.dispose();
