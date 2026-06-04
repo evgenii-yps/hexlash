@@ -117,7 +117,6 @@ export function buildFighter(pink = '#FF0069', { onImpact } = {}) {
   const hipsBaseY = hips.position.y;
   const wBreath = (Math.PI * 2) / 3.8; // ~3.8s
   const wCore = (Math.PI * 2) / 2.6; // ~2.6s
-  const punchArm = armL; // camera-side arm throws the straight punch
 
   let reduced = false;
   let clip = null;
@@ -129,14 +128,18 @@ export function buildFighter(pink = '#FF0069', { onImpact } = {}) {
   const easeOut = (u) => 1 - Math.pow(1 - u, 3);
   const E = { io: easeInOut, out: easeOut };
 
-  // Keyframe value: hips z/y offsets, torso lean, punch-arm shoulder + elbow
-  // angles. Segment i→i+1 is eased by key[i+1].e.
-  const REST = { hz: 0, hy: 0, tx: 0, sx: 0, ex: 0 };
-  const lerpV = (a, b, e) => ({
-    hz: a.hz + (b.hz - a.hz) * e, hy: a.hy + (b.hy - a.hy) * e,
-    tx: a.tx + (b.tx - a.tx) * e, sx: a.sx + (b.sx - a.sx) * e,
-    ex: a.ex + (b.ex - a.ex) * e,
-  });
+  // Keyframe value: hips z/y offsets, torso lean (tx) + twist (ty), and each
+  // arm's shoulder + elbow angles — left (lsx/lex) and right (rsx/rex). Missing
+  // fields are 0, so a clip only lists what it uses. Segment i→i+1 is eased by
+  // key[i+1].e.
+  const REST = {};
+  const N = (x) => x || 0;
+  const KEYS = ['hz', 'hy', 'tx', 'ty', 'lsx', 'lex', 'rsx', 'rex'];
+  const lerpV = (a, b, e) => {
+    const o = {};
+    for (const k of KEYS) o[k] = N(a[k]) + (N(b[k]) - N(a[k])) * e;
+    return o;
+  };
   const sample = (keys, ct) => {
     if (ct <= keys[0].t) return keys[0].v;
     for (let i = 0; i < keys.length - 1; i++) {
@@ -149,14 +152,15 @@ export function buildFighter(pink = '#FF0069', { onImpact } = {}) {
   };
 
   // Heavy timing throughout: slow windup → fast snap → weighty return. Forward
-  // = -Z (toward the rift); the fist reaches the seam but never crosses it.
+  // = -Z (toward the rift); fists reach the seam but never cross it. The lead
+  // punch uses the left arm (lsx/lex); the cross uses the right (rsx/rex).
   const PUNCH = {
     dur: 1.3, impact: 0.6,
     keys: [
       { t: 0.0, v: REST, e: 'io' },
-      { t: 0.45, v: { hz: 0.02, hy: -0.02, tx: 0.12, sx: 0.15, ex: 2.0 }, e: 'io' }, // coil / chamber
-      { t: 0.6, v: { hz: -0.12, hy: -0.05, tx: -0.18, sx: 1.5, ex: 0.05 }, e: 'out' }, // snap — extend
-      { t: 0.74, v: { hz: -0.08, hy: -0.03, tx: -0.1, sx: 1.35, ex: 0.16 }, e: 'out' }, // recoil
+      { t: 0.45, v: { hz: 0.02, hy: -0.02, tx: 0.12, lsx: 0.15, lex: 2.0 }, e: 'io' }, // coil / chamber
+      { t: 0.6, v: { hz: -0.12, hy: -0.05, tx: -0.18, lsx: 1.5, lex: 0.05 }, e: 'out' }, // snap — extend
+      { t: 0.74, v: { hz: -0.08, hy: -0.03, tx: -0.1, lsx: 1.35, lex: 0.16 }, e: 'out' }, // recoil
       { t: 1.3, v: REST, e: 'io' }, // weighty return
     ],
   };
@@ -164,8 +168,8 @@ export function buildFighter(pink = '#FF0069', { onImpact } = {}) {
     dur: 1.5, impact: -1,
     keys: [
       { t: 0.0, v: REST, e: 'io' },
-      { t: 0.55, v: { hz: -0.35, hy: -0.03, tx: -0.06, sx: 0, ex: 0 }, e: 'out' }, // weighty step in
-      { t: 0.9, v: { hz: -0.35, hy: 0, tx: -0.04, sx: 0, ex: 0 }, e: 'io' }, // settle forward
+      { t: 0.55, v: { hz: -0.35, hy: -0.03, tx: -0.06 }, e: 'out' }, // weighty step in
+      { t: 0.9, v: { hz: -0.35, hy: 0, tx: -0.04 }, e: 'io' }, // settle forward
       { t: 1.5, v: REST, e: 'io' }, // step back
     ],
   };
@@ -173,35 +177,59 @@ export function buildFighter(pink = '#FF0069', { onImpact } = {}) {
     dur: 2.0, impact: 1.12,
     keys: [
       { t: 0.0, v: REST, e: 'io' },
-      { t: 0.45, v: { hz: -0.3, hy: -0.03, tx: -0.05, sx: 0, ex: 0 }, e: 'out' }, // approach
-      { t: 0.95, v: { hz: -0.28, hy: -0.04, tx: 0.08, sx: 0.15, ex: 2.0 }, e: 'io' }, // coil
-      { t: 1.12, v: { hz: -0.44, hy: -0.07, tx: -0.2, sx: 1.5, ex: 0.05 }, e: 'out' }, // snap at the seam
-      { t: 1.28, v: { hz: -0.4, hy: -0.05, tx: -0.12, sx: 1.35, ex: 0.16 }, e: 'out' }, // recoil
+      { t: 0.45, v: { hz: -0.3, hy: -0.03, tx: -0.05 }, e: 'out' }, // approach
+      { t: 0.95, v: { hz: -0.28, hy: -0.04, tx: 0.08, lsx: 0.15, lex: 2.0 }, e: 'io' }, // coil
+      { t: 1.12, v: { hz: -0.44, hy: -0.07, tx: -0.2, lsx: 1.5, lex: 0.05 }, e: 'out' }, // snap at the seam
+      { t: 1.28, v: { hz: -0.4, hy: -0.05, tx: -0.12, lsx: 1.35, lex: 0.16 }, e: 'out' }, // recoil
       { t: 2.0, v: REST, e: 'io' }, // step back + recover
+    ],
+  };
+  // Double (jab–cross): left then right, OVERLAPPED — the right starts before
+  // the left fully recovers. Torso twists (ty) to carry the weight arm to arm;
+  // both fists work through shoulder + elbow. Two impacts (one per fist).
+  const DOUBLE = {
+    dur: 1.45, impacts: [0.32, 0.58],
+    keys: [
+      { t: 0.0, v: REST, e: 'io' },
+      { t: 0.16, v: { hz: -0.06, hy: -0.02, tx: 0.06, ty: -0.06, lsx: 0.2, lex: 1.9 }, e: 'io' }, // L chamber, coil
+      { t: 0.32, v: { hz: -0.3, hy: -0.05, tx: -0.12, ty: 0.16, lsx: 1.5, lex: 0.05, rsx: 0.15, rex: 1.0 }, e: 'out' }, // L impact, R loading
+      { t: 0.44, v: { hz: -0.28, hy: -0.05, tx: -0.06, ty: 0.06, lsx: 1.0, lex: 0.5, rsx: 0.2, rex: 1.9 }, e: 'io' }, // L recovers, R chambered
+      { t: 0.58, v: { hz: -0.38, hy: -0.07, tx: -0.16, ty: -0.18, lsx: 0.5, lex: 0.9, rsx: 1.5, rex: 0.05 }, e: 'out' }, // R impact
+      { t: 0.72, v: { hz: -0.34, hy: -0.06, tx: -0.1, ty: -0.12, lsx: 0.25, lex: 0.45, rsx: 1.3, rex: 0.18 }, e: 'out' }, // R recoil
+      { t: 1.45, v: REST, e: 'io' }, // weighty return
     ],
   };
 
   const play = (c) => {
     if (reduced || clip) return; // one at a time; reduced-motion = no playback
-    clip = { ...c, fired: false };
+    clip = { ...c, fired: c.impacts ? c.impacts.map(() => false) : false };
     clipStart = lastT;
   };
 
   const apply = (v) => {
-    hips.position.z = v.hz;
-    hips.position.y = hipsBaseY + v.hy;
-    torso.rotation.x = v.tx;
-    punchArm.shoulder.rotation.x = v.sx;
-    punchArm.elbow.rotation.x = v.ex;
+    hips.position.z = N(v.hz);
+    hips.position.y = hipsBaseY + N(v.hy);
+    torso.rotation.x = N(v.tx);
+    torso.rotation.y = N(v.ty);
+    armL.shoulder.rotation.x = N(v.lsx);
+    armL.elbow.rotation.x = N(v.lex);
+    armR.shoulder.rotation.x = N(v.rsx);
+    armR.elbow.rotation.x = N(v.rex);
+  };
+
+  const resetArms = () => {
+    torso.rotation.set(0, 0, 0);
+    armL.shoulder.rotation.x = 0;
+    armL.elbow.rotation.x = 0;
+    armR.shoulder.rotation.x = 0;
+    armR.elbow.rotation.x = 0;
   };
 
   const update = (t) => {
     lastT = t;
     if (reduced) {
       hips.position.set(0, hipsBaseY, 0);
-      torso.rotation.x = 0;
-      punchArm.shoulder.rotation.x = 0;
-      punchArm.elbow.rotation.x = 0;
+      resetArms();
       chest.scale.set(1, 1, 1);
       core.scale.setScalar(1);
       haloMat.opacity = 0.8;
@@ -217,7 +245,14 @@ export function buildFighter(pink = '#FF0069', { onImpact } = {}) {
 
     if (clip) {
       const ct = t - clipStart;
-      if (!clip.fired && clip.impact >= 0 && ct >= clip.impact) {
+      if (clip.impacts) {
+        for (let i = 0; i < clip.impacts.length; i++) {
+          if (!clip.fired[i] && ct >= clip.impacts[i]) {
+            clip.fired[i] = true;
+            if (onImpact) onImpact(); // seam glow reacts to each hit
+          }
+        }
+      } else if (!clip.fired && clip.impact >= 0 && ct >= clip.impact) {
         clip.fired = true;
         if (onImpact) onImpact(); // seam glow reacts to the hit
       }
@@ -228,9 +263,7 @@ export function buildFighter(pink = '#FF0069', { onImpact } = {}) {
     // Idle posture.
     hips.position.z = 0;
     hips.position.y = hipsBaseY + bs * 0.012; // settle
-    torso.rotation.x = 0;
-    punchArm.shoulder.rotation.x = 0;
-    punchArm.elbow.rotation.x = 0;
+    resetArms();
   };
 
   const dispose = () => {
@@ -259,6 +292,7 @@ export function buildFighter(pink = '#FF0069', { onImpact } = {}) {
     approach: () => play(APPROACH),
     punch: () => play(PUNCH),
     combo: () => play(COMBO),
+    double: () => play(DOUBLE),
     joints: { hips, torso, armL, armR, legL, legR },
   };
 }

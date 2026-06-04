@@ -19,6 +19,7 @@
       <button type="button" @click="onApproach">APPROACH</button>
       <button type="button" @click="onPunch">PUNCH</button>
       <button type="button" @click="onCombo">COMBO</button>
+      <button type="button" @click="onDouble">DOUBLE</button>
     </div>
   </div>
 </template>
@@ -56,6 +57,7 @@ function lowPowerDevice() {
 function onApproach() { fighter?.approach(); }
 function onPunch() { fighter?.punch(); }
 function onCombo() { fighter?.combo(); }
+function onDouble() { fighter?.double(); }
 
 function normalizeVariant(v) {
   const u = String(v || '').toUpperCase();
@@ -189,6 +191,7 @@ onMounted(() => {
     } else if (e.key === 'z') fighter.approach();
     else if (e.key === 'x') fighter.punch();
     else if (e.key === 'c') fighter.combo();
+    else if (e.key === 'v') fighter.double();
   };
   window.addEventListener('keydown', onKeydown);
 
