@@ -1,25 +1,24 @@
 // Presence layers for the arena — switchable "mood" variants the owner picks
-// on preview. Base sharpness/optimization live in ArenaScene + buildArena;
-// this module only adds the optional life.
+// on preview. Base look/optimization live in ArenaScene + buildArena; this
+// module only adds the optional life.
 //
-//   A "Clean platform" — slow divider breathing only. Static camera.
-//   B "Living scene"    — A + sparse monochrome dust + faint hex-cell pulse
-//                         near the line (camera drift handled in ArenaScene).
-//   C "Energy field"    — A with stronger breathing + a light impulse running
-//                         along the line + surface reaction.
+//   A "Clean platform" — static (just the lit slabs + depth). Manual orbit only.
+//   B "Living scene"    — sparse monochrome dust + faint hex-cell pulse flanking
+//                         the gap (idle camera drift handled in ArenaScene).
+//   C "Energy field"    — same ambient life as B for now; its rift-glow energy
+//                         (stronger pulse + sparks) lands in TORN-RIFT pass 3,
+//                         when the gap gets its glow.
 //
-// Discipline holds across all: one pink accent (#FF066F) on the divider, one
-// glow (the divider). Dust + surface texture are monochrome. Everything stops
-// under prefers-reduced-motion.
+// Discipline: monochrome dust + surface micro-texture only. No pink lives in
+// the scene during passes 1–2 (the rift glow returns in pass 3). Everything
+// here stops under prefers-reduced-motion.
 import * as THREE from 'three';
 import { makeRadialTexture } from './arenaTextures.js';
 
-const PINK = '#FF066F';
-
 export function createArenaPresence(scene, refs) {
-  const { W, D, topY, base } = refs;
+  const { W, gapHalf, topY } = refs;
 
-  // --- Dust: sparse cool-grey specks drifting in the void (variant B). One
+  // --- Dust: sparse cool-grey specks drifting in the void (B/C). One
   //     THREE.Points draw call. Monochrome, normal blend, very faint.
   const dustCount = 70;
   const dustPos = new Float32Array(dustCount * 3);
@@ -43,120 +42,66 @@ export function createArenaPresence(scene, refs) {
   dust.visible = false;
   scene.add(dust);
 
-  // --- Hex-cell pulse near the divider (variant B). Reuses the arena hex
-  //     texture on a narrow centred band; monochrome additive, opacity pulses.
-  const pulseGeo = new THREE.PlaneGeometry(W, 1.0);
-  const pulseMat = new THREE.MeshBasicMaterial({
-    map: refs.hexTexture, // shared — NOT disposed here
-    transparent: true,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-    fog: false,
-    color: 0x9fb0d0,
-    opacity: 0,
-  });
-  const hexPulse = new THREE.Mesh(pulseGeo, pulseMat);
-  hexPulse.rotation.x = -Math.PI / 2;
-  hexPulse.position.y = topY + 0.003;
-  hexPulse.visible = false;
-  scene.add(hexPulse);
-
-  // --- Impulse dot travelling along the line (variant C). Pink additive.
-  const impTex = makeRadialTexture('rgba(255,255,255,0.95)', 'rgba(255,6,111,0.7)', 0.35);
-  const impMat = new THREE.MeshBasicMaterial({
-    map: impTex,
-    transparent: true,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-    fog: false,
-    opacity: 0,
-  });
-  const impGeo = new THREE.PlaneGeometry(0.5, 0.5);
-  const impulse = new THREE.Mesh(impGeo, impMat);
-  impulse.rotation.x = -Math.PI / 2;
-  impulse.position.y = topY + 0.03;
-  impulse.visible = false;
-  scene.add(impulse);
+  // --- Hex-cell pulse flanking the gap (B/C). Two narrow bands on the plate
+  //     tops either side of the chasm; monochrome additive, opacity pulses.
+  //     Reuses the arena hex texture (shared — NOT disposed here).
+  const makePulseBand = (z) => {
+    const geo = new THREE.PlaneGeometry(W, 0.5);
+    const mat = new THREE.MeshBasicMaterial({
+      map: refs.hexTexture,
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      fog: false,
+      color: 0x9fb0d0,
+      opacity: 0,
+    });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.rotation.x = -Math.PI / 2;
+    mesh.position.set(0, topY + 0.003, z);
+    mesh.visible = false;
+    scene.add(mesh);
+    return mesh;
+  };
+  const pulseNear = makePulseBand(gapHalf + 0.28);
+  const pulseFar = makePulseBand(-(gapHalf + 0.28));
 
   let variant = 'A';
   let reduced = false;
 
   const applyVisibility = () => {
-    const motion = !reduced;
-    dust.visible = variant === 'B' && motion;
-    hexPulse.visible = variant === 'B' && motion;
-    impulse.visible = variant === 'C' && motion;
+    const live = variant !== 'A' && !reduced;
+    dust.visible = live;
+    pulseNear.visible = live;
+    pulseFar.visible = live;
   };
 
-  const setVariant = (v) => {
-    variant = v;
-    applyVisibility();
-  };
-  const setReducedMotion = (b) => {
-    reduced = b;
-    applyVisibility();
-  };
-
-  // breathing params per variant
-  const breath = {
-    A: { amp: 0.14, w: (Math.PI * 2) / 6.0 },
-    B: { amp: 0.14, w: (Math.PI * 2) / 6.0 },
-    C: { amp: 0.32, w: (Math.PI * 2) / 3.8 },
-  };
+  const setVariant = (v) => { variant = v; applyVisibility(); };
+  const setReducedMotion = (b) => { reduced = b; applyVisibility(); };
 
   const update = (t) => {
-    // Reduced motion → hold everything at the resting state.
-    if (reduced) {
-      refs.dividerHalo.material.opacity = base.halo;
-      refs.dividerReflection.material.opacity = base.reflection;
-      refs.dividerCore.material.opacity = base.core;
-      return;
-    }
+    if (reduced || variant === 'A') return;
 
-    // --- Divider breathing (all variants).
-    const b = breath[variant] || breath.A;
-    const f = 1 + b.amp * Math.sin(t * b.w);
-    let haloOpacity = base.halo * f;
-    refs.dividerReflection.material.opacity = base.reflection * f;
-    refs.dividerCore.material.opacity = Math.min(1, 0.9 + 0.1 * f);
+    dust.rotation.y = t * 0.012;
+    dust.position.y = Math.sin(t * 0.18) * 0.12;
 
-    // --- Variant B: drifting dust + pulsing hex cells near the line.
-    if (variant === 'B') {
-      dust.rotation.y = t * 0.012;
-      dust.position.y = Math.sin(t * 0.18) * 0.12;
-      hexPulse.material.opacity = 0.04 + 0.07 * (0.5 + 0.5 * Math.sin(t * 1.1));
-    }
-
-    // --- Variant C: impulse sweeping along the line + surface reaction.
-    if (variant === 'C') {
-      const cycle = 4.2;
-      const travel = 1.3;
-      const local = t % cycle;
-      if (local < travel) {
-        const p = local / travel; // 0 → 1 across the line
-        impulse.material.opacity = Math.sin(p * Math.PI);
-        impulse.position.x = THREE.MathUtils.lerp(-W / 2 * 1.02, (W / 2) * 1.02, p);
-        haloOpacity *= 1 + 0.25 * impulse.material.opacity; // line reacts
-      } else {
-        impulse.material.opacity = 0;
-      }
-    }
-
-    refs.dividerHalo.material.opacity = haloOpacity;
+    const p = 0.04 + 0.07 * (0.5 + 0.5 * Math.sin(t * 1.1));
+    pulseNear.material.opacity = p;
+    pulseFar.material.opacity = p;
   };
 
   const dispose = () => {
     scene.remove(dust);
-    scene.remove(hexPulse);
-    scene.remove(impulse);
+    scene.remove(pulseNear);
+    scene.remove(pulseFar);
     dustGeo.dispose();
     dustTex.dispose();
     dustMat.dispose();
-    pulseGeo.dispose();
-    pulseMat.dispose(); // shared hex map owned by buildArena — not disposed here
-    impGeo.dispose();
-    impTex.dispose();
-    impMat.dispose();
+    // shared hex map owned by buildArena — dispose only the materials/geos here
+    pulseNear.geometry.dispose();
+    pulseNear.material.dispose();
+    pulseFar.geometry.dispose();
+    pulseFar.material.dispose();
   };
 
   return { setVariant, setReducedMotion, update, dispose };

@@ -1,106 +1,81 @@
-// Builds the floating arena platform — a thick low-poly block with a hex-grid
-// top, a light top rim, the single glowing pink team-divider, and a soft dark
-// contact shadow underneath (so the slab seats in the void). Pure procedural
-// geometry, no external assets.
+// Builds the floating arena — TORN-RIFT PASS 1 of 3 (geometry only):
+// the field is split into TWO separate plate-blocks (near = player half, far =
+// opponent half) with a wide dark gap between them. Each plate's inner box face
+// is the vertical wall dropping into the void (you look into the chasm, no
+// bottom — the transparent canvas shows the dark void behind the gap).
 //
-// Discipline: the ONLY glow on the scene is the divider; the under-slab pool is
-// a dark contact shadow, not a second glow. The ONLY accent colour is #FF066F.
+// This pass: STRAIGHT gap edges (jagged edges = pass 2), NO rift glow (the old
+// pink divider line is removed; its glow replacement = pass 3). Hex top, plate
+// thickness, sharp edges, light top rim, float, dark contact shadow all kept.
 //
-// Returns { group, dispose, refs }. refs expose the animatable materials for
-// the presence layer. dispose() releases everything created here.
+// Returns { group, dispose, refs }. dispose() releases everything created here.
 import * as THREE from 'three';
-import { makeHexGridTexture, makeDividerGlowTexture, makeRadialTexture } from './arenaTextures.js';
+import { makeHexGridTexture, makeRadialTexture } from './arenaTextures.js';
 
-export const PLATFORM = { width: 6, depth: 4, height: 1 }; // ratio 6 : 4 : 1
-const PINK = 0xff066f;
+// Total footprint stays close to the approved 6 : ~4 : 1 — two plates + gap.
+export const PLATFORM = { width: 6, height: 1, plateDepth: 1.6, gap: 1.2 };
 
 export function buildArena(maxAniso = 1) {
   const group = new THREE.Group();
-  const { width: W, depth: D, height: H } = PLATFORM;
+  const { width: W, height: H, plateDepth: Dp, gap: G } = PLATFORM;
   const topY = H / 2;
+  const gapHalf = G / 2;
+  const totalDepth = Dp * 2 + G;
 
-  // --- Platform block: thick, flat-shaded, sharp edges, very dark blue-grey.
-  const bodyGeo = new THREE.BoxGeometry(W, H, D);
-  const bodyMat = new THREE.MeshStandardMaterial({
-    color: 0x14182a,
-    flatShading: true,
-    roughness: 0.82,
-    metalness: 0.14,
-  });
-  const body = new THREE.Mesh(bodyGeo, bodyMat);
-  group.add(body);
-
-  // --- Hex-grid + micro-texture overlay on the top face (crisp via mipmaps).
+  // Shared hex/micro-texture overlay (crisp via mipmaps + anisotropy).
   const hexTex = makeHexGridTexture(maxAniso);
-  const hexGeo = new THREE.PlaneGeometry(W, D);
-  const hexMat = new THREE.MeshBasicMaterial({
-    map: hexTex,
-    transparent: true,
-    depthWrite: false,
-    opacity: 0.92,
-  });
-  const hex = new THREE.Mesh(hexGeo, hexMat);
-  hex.rotation.x = -Math.PI / 2;
-  hex.position.y = topY + 0.002;
-  group.add(hex);
 
-  // --- Light top rim: thin line loop around the top perimeter (sharp edge).
-  const hx = W / 2;
-  const hz = D / 2;
-  const rimGeo = new THREE.BufferGeometry().setFromPoints([
-    new THREE.Vector3(-hx, 0, -hz),
-    new THREE.Vector3(hx, 0, -hz),
-    new THREE.Vector3(hx, 0, hz),
-    new THREE.Vector3(-hx, 0, hz),
-    new THREE.Vector3(-hx, 0, -hz),
-  ]);
-  const rimMat = new THREE.LineBasicMaterial({ color: 0x7184b0, transparent: true, opacity: 0.85 });
-  const rim = new THREE.Line(rimGeo, rimMat);
-  rim.position.y = topY + 0.004;
-  group.add(rim);
+  // One plate-block: dark flat-shaded body (its inner side face is the chasm
+  // wall), hex top, light top rim. centerZ places it either side of the gap.
+  const makePlate = (centerZ) => {
+    const plate = new THREE.Group();
 
-  // --- Divider: near-white sharp core. The single pink accent's bright heart.
-  const coreGeo = new THREE.BoxGeometry(W, 0.05, 0.045);
-  const coreMat = new THREE.MeshBasicMaterial({ color: 0xffe3f0, transparent: true, opacity: 1, fog: false });
-  const dividerCore = new THREE.Mesh(coreGeo, coreMat);
-  dividerCore.position.y = topY + 0.024;
-  group.add(dividerCore);
+    const bodyGeo = new THREE.BoxGeometry(W, H, Dp);
+    const bodyMat = new THREE.MeshStandardMaterial({
+      color: 0x14182a,
+      flatShading: true,
+      roughness: 0.82,
+      metalness: 0.14,
+    });
+    plate.add(new THREE.Mesh(bodyGeo, bodyMat));
 
-  // --- Divider halo: dense, SHORT pink band hugging the core (no wide cloud).
-  const haloTex = makeDividerGlowTexture('#FF066F');
-  const haloGeo = new THREE.PlaneGeometry(W, 0.24);
-  const haloMat = new THREE.MeshBasicMaterial({
-    map: haloTex,
-    transparent: true,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-    fog: false,
-    opacity: 0.9,
-  });
-  const dividerHalo = new THREE.Mesh(haloGeo, haloMat);
-  dividerHalo.rotation.x = -Math.PI / 2;
-  dividerHalo.position.y = topY + 0.014;
-  group.add(dividerHalo);
+    const hexGeo = new THREE.PlaneGeometry(W, Dp);
+    const hexMat = new THREE.MeshBasicMaterial({
+      map: hexTex,
+      transparent: true,
+      depthWrite: false,
+      opacity: 0.9,
+    });
+    const hex = new THREE.Mesh(hexGeo, hexMat);
+    hex.rotation.x = -Math.PI / 2;
+    hex.position.y = topY + 0.002;
+    plate.add(hex);
 
-  // --- Reflection bleed: very faint, slightly longer smear of the line on the
-  //     polished top face. Reuses the halo texture at low opacity.
-  const reflMat = new THREE.MeshBasicMaterial({
-    map: haloTex,
-    transparent: true,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-    fog: false,
-    opacity: 0.13,
-  });
-  const reflGeo = new THREE.PlaneGeometry(W, 0.85);
-  const dividerReflection = new THREE.Mesh(reflGeo, reflMat);
-  dividerReflection.rotation.x = -Math.PI / 2;
-  dividerReflection.position.y = topY + 0.007;
-  group.add(dividerReflection);
+    const hx = W / 2;
+    const hz = Dp / 2;
+    const rimGeo = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(-hx, 0, -hz),
+      new THREE.Vector3(hx, 0, -hz),
+      new THREE.Vector3(hx, 0, hz),
+      new THREE.Vector3(-hx, 0, hz),
+      new THREE.Vector3(-hx, 0, -hz),
+    ]);
+    const rimMat = new THREE.LineBasicMaterial({ color: 0x7184b0, transparent: true, opacity: 0.85 });
+    const rim = new THREE.Line(rimGeo, rimMat);
+    rim.position.y = topY + 0.004;
+    plate.add(rim);
 
-  // --- Contact shadow: soft dark pool under the slab (seats it, no glow).
+    plate.position.z = centerZ;
+    return plate;
+  };
+
+  const offset = gapHalf + Dp / 2;
+  group.add(makePlate(offset)); // near — player half (toward camera, +z)
+  group.add(makePlate(-offset)); // far — opponent half
+
+  // Dark contact shadow under both plates (seats them, no pink glow).
   const shadowTex = makeRadialTexture('rgba(0,0,0,0.55)', 'rgba(0,0,0,0.28)', 0.45);
-  const shadowGeo = new THREE.PlaneGeometry(W * 1.35, D * 1.35);
+  const shadowGeo = new THREE.PlaneGeometry(W * 1.3, totalDepth * 1.25);
   const shadowMat = new THREE.MeshBasicMaterial({
     map: shadowTex,
     transparent: true,
@@ -108,10 +83,10 @@ export function buildArena(maxAniso = 1) {
     fog: false,
     opacity: 0.7,
   });
-  const contactShadow = new THREE.Mesh(shadowGeo, shadowMat);
-  contactShadow.rotation.x = -Math.PI / 2;
-  contactShadow.position.y = -H / 2 - 0.05;
-  group.add(contactShadow);
+  const shadow = new THREE.Mesh(shadowGeo, shadowMat);
+  shadow.rotation.x = -Math.PI / 2;
+  shadow.position.y = -H / 2 - 0.05;
+  group.add(shadow);
 
   const dispose = () => {
     const maps = new Set();
@@ -123,19 +98,10 @@ export function buildArena(maxAniso = 1) {
         mat.dispose();
       }
     });
-    maps.forEach((m) => m.dispose()); // dedup — halo texture is shared
+    maps.forEach((m) => m.dispose()); // dedup — hex texture shared by both plates
   };
 
-  const refs = {
-    W,
-    D,
-    topY,
-    hexTexture: hexTex,
-    dividerCore,
-    dividerHalo,
-    dividerReflection,
-    base: { core: 1, halo: 0.9, reflection: 0.13 },
-  };
+  const refs = { W, totalDepth, topY, gapHalf, hexTexture: hexTex };
 
   return { group, dispose, refs };
 }

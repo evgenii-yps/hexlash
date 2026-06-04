@@ -1,12 +1,12 @@
-<!-- ArenaScene — Three.js arena platform, the foundation for future combat.
-     A thick slab floating in dark void; orbit-drag + zoom, default 3/4 top
-     view. Sharp render (full DPR, mipmapped hex, tight pink divider glow) with
-     switchable presence "moods" (?mood=A|B|C or keys 1/2/3) the owner picks on
-     preview. No fighters, no HUD, no combat logic (separate stage).
+<!-- ArenaScene — Three.js arena, the foundation for future combat. Two slabs
+     split by a wide dark gap (torn-rift pass 1/3), floating in dark void;
+     orbit-drag + zoom, default 3/4 top view. Sharp render (full DPR, mipmapped
+     hex) with switchable presence "moods" (?mood=A|B|C or keys 1/2/3) the owner
+     picks on preview. No fighters, no HUD, no combat logic (separate stage).
 
-     Discipline: one pink accent (#FF066F) + one glow (the divider). All other
-     texture / motion is monochrome. Throttled when idle/hidden, respects
-     prefers-reduced-motion. -->
+     Discipline: no pink in the scene during rift passes 1–2 (the rift glow —
+     the single accent + single glow — returns in pass 3). All texture / motion
+     is monochrome. Throttled when idle/hidden, respects prefers-reduced-motion. -->
 <template>
   <div ref="wrap" class="arena-wrap">
     <canvas ref="canvasEl" class="arena-canvas" />

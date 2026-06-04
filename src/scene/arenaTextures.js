@@ -2,8 +2,8 @@
 // so the scene loads instantly on mobile. Each factory returns a
 // THREE.CanvasTexture; callers own .dispose().
 //
-// Discipline: monochrome surface texture, the single pink accent lives only in
-// the divider glow textures.
+// Discipline: monochrome surface texture only (the pink rift glow returns in
+// torn-rift pass 3).
 import * as THREE from 'three';
 
 /**
@@ -74,37 +74,8 @@ export function makeHexGridTexture(maxAniso = 1) {
   return tex;
 }
 
-/**
- * Tight divider glow band: a bright thin band centred along V, transparent
- * everywhere else. Stretched flat across the platform mid-line it reads as a
- * dense short halo, not a wide soft cloud.
- */
-export function makeDividerGlowTexture(tint = '#FF066F') {
-  const W = 64;
-  const H = 256;
-  const canvas = document.createElement('canvas');
-  canvas.width = W;
-  canvas.height = H;
-  const ctx = canvas.getContext('2d');
-
-  const g = ctx.createLinearGradient(0, 0, 0, H);
-  g.addColorStop(0.0, hexToRgba(tint, 0));
-  g.addColorStop(0.4, hexToRgba(tint, 0));
-  g.addColorStop(0.47, hexToRgba(tint, 0.55));
-  g.addColorStop(0.5, hexToRgba(tint, 1));
-  g.addColorStop(0.53, hexToRgba(tint, 0.55));
-  g.addColorStop(0.6, hexToRgba(tint, 0));
-  g.addColorStop(1.0, hexToRgba(tint, 0));
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, W, H);
-
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  return tex;
-}
-
-/** Soft radial disc, transparent at the rim. Used for dark contact shadow,
- *  dust specks, and the variant-C impulse dot. */
+/** Soft radial disc, transparent at the rim. Used for the dark contact shadow
+ *  and dust specks. */
 export function makeRadialTexture(coreRgba, midRgba, midStop = 0.4) {
   const S = 128;
   const canvas = document.createElement('canvas');
@@ -122,12 +93,4 @@ export function makeRadialTexture(coreRgba, midRgba, midStop = 0.4) {
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
   return tex;
-}
-
-function hexToRgba(hex, a) {
-  const n = parseInt(hex.replace('#', ''), 16);
-  const r = (n >> 16) & 255;
-  const g = (n >> 8) & 255;
-  const b = n & 255;
-  return `rgba(${r}, ${g}, ${b}, ${a})`;
 }
