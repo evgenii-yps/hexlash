@@ -17,18 +17,24 @@ function pinkRgba(pink, a) {
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
 }
 
-export function buildFighter(pink = '#FF0069', { side = 'player', maxHp = 100, onImpact, onEliminated } = {}) {
+export function buildFighter(
+  pink = '#FF0069',
+  { side = 'player', maxHp = 100, onImpact, onEliminated, getFoePos = null, bounds = { x: 2.5, z: 1.5 } } = {},
+) {
   const group = new THREE.Group();
 
-  // Side ('player' near / 'opponent' far). Both face the seam — the opponent is
-  // the same construct flipped 180°. Friend/foe read (same #FF0069, no second
-  // colour): the opponent gets a darker/cooler body + a muted core.
+  // Side ('player' / 'opponent'). The arena is open — there is no seam barrier;
+  // facing and movement are computed toward the opponent's live position, not a
+  // fixed half. The body is built facing local -Z (forward); the group's
+  // rotation.y is steered toward the foe each frame. Friend/foe read (same
+  // #FF0069, no second colour): the opponent gets a darker/cooler body + a muted
+  // core. Default facing matches the opposite-side spawn so there's no first-
+  // frame flicker before steering takes over.
   const isOpp = side === 'opponent';
   group.rotation.y = isOpp ? Math.PI : 0;
   const skinColor = isOpp ? 0x141b2e : 0x1c2233; // opponent darker + cooler
   const coreDim = isOpp ? 0.7 : 1.0; // darkens the gem, keeps the hue
   const coreGain = isOpp ? 0.55 : 1.0; // halo brightness — player's is brightest
-  const seamSign = isOpp ? -1 : 1; // which half: player +z, opponent -z (toward seam = -seamSign)
 
   // Shared faceted "skin" — same workshop as the plates, a touch lighter so the
   // construct reads against them.
@@ -186,8 +192,9 @@ export function buildFighter(pink = '#FF0069', { side = 'player', maxHp = 100, o
   };
 
   // Heavy timing throughout: slow windup → fast snap → weighty return. Forward
-  // = -Z (toward the rift); fists reach the seam but never cross it. The lead
-  // punch uses the left arm (lsx/lex); the cross uses the right (rsx/rex).
+  // = -Z in local space, and the group is steered to face the opponent, so a
+  // strike extends toward them. The lead punch uses the left arm (lsx/lex); the
+  // cross uses the right (rsx/rex).
   const PUNCH = {
     dur: 1.3, impact: 0.6,
     keys: [
@@ -213,7 +220,7 @@ export function buildFighter(pink = '#FF0069', { side = 'player', maxHp = 100, o
       { t: 0.0, v: REST, e: 'io' },
       { t: 0.45, v: { hz: -0.3, hy: -0.03, tx: -0.05 }, e: 'out' }, // approach
       { t: 0.95, v: { hz: -0.28, hy: -0.04, tx: 0.08, lsx: 0.15, lex: 2.0 }, e: 'io' }, // coil
-      { t: 1.12, v: { hz: -0.44, hy: -0.07, tx: -0.2, lsx: 1.5, lex: 0.05 }, e: 'out' }, // snap at the seam
+      { t: 1.12, v: { hz: -0.44, hy: -0.07, tx: -0.2, lsx: 1.5, lex: 0.05 }, e: 'out' }, // snap at the opponent
       { t: 1.28, v: { hz: -0.4, hy: -0.05, tx: -0.12, lsx: 1.35, lex: 0.16 }, e: 'out' }, // recoil
       { t: 2.0, v: REST, e: 'io' }, // step back + recover
     ],
@@ -233,8 +240,8 @@ export function buildFighter(pink = '#FF0069', { side = 'player', maxHp = 100, o
       { t: 1.45, v: REST, e: 'io' }, // weighty return
     ],
   };
-  // Hurt — sharp weighty recoil backward (+Z, toward own half) + a core flash
-  // (bright → dip), then a heavy settle. The receiver's signal; no impact.
+  // Hurt — sharp weighty recoil backward (+Z = away from the opponent) + a core
+  // flash (bright → dip), then a heavy settle. The receiver's signal; no impact.
   const HURT = {
     dur: 0.95,
     keys: [
@@ -246,21 +253,29 @@ export function buildFighter(pink = '#FF0069', { side = 'player', maxHp = 100, o
     ],
   };
 
-  // Locomotion — looping gait the code translates across the near half. Cadence
-  // scales with speed (run = faster + bigger amplitudes + more forward lean).
+  // Locomotion — a looping gait the code translates across the plate toward a
+  // movement direction (advance / strafe / retreat). Cadence scales with speed
+  // (run = faster + bigger amplitudes + more forward lean).
   const WALK = { speed: 0.9, swing: 0.45, knee: 0.7, arm: 0.4, lean: -0.05, bob: 0.03, twist: 0.05 };
   const RUN = { speed: 2.2, swing: 0.72, knee: 1.0, arm: 0.6, lean: -0.22, bob: 0.05, twist: 0.08 };
   const STRIDE_K = 7; // gait phase (rad) per world unit travelled → cadence ∝ speed
-  // Patrol stays on THIS fighter's own half (mirrored by side) and never crosses
-  // the seam. Toward the seam = -seamSign. The clip joint/hips offsets are
-  // already mirrored, because the body lives inside the flipped group; only this
-  // scene-space translate needs the sign. 0.9 keeps even a front-foot punch from
-  // poking across the seam.
-  const Z_SEAM = seamSign * 0.9; // closest approach to the seam (feet on plate)
-  const Z_BACK = seamSign * 1.85; // back of the half
-  const Z_LO = Math.min(Z_SEAM, Z_BACK);
-  const Z_HI = Math.max(Z_SEAM, Z_BACK);
-  const loco = { active: false, type: 'walk', dir: -seamSign, z: 0, phase: 0 };
+  let gaitPhase = 0;
+
+  // Plate bounds (half-extents) — the fighter stays on the slab, never walks off
+  // the edge. Passed in from the arena; the rift is no longer a barrier, so the
+  // whole plate (both sides) is walkable.
+  const BX = bounds.x;
+  const BZ = bounds.z;
+
+  // Navigation tuning (world units, opponent-relative).
+  const RANGE = 1.6; // preferred fighting distance (centre-to-centre)
+  const RANGE_HYST = 0.25; // band around RANGE before re-closing
+  const CONTACT = 0.95; // hard minimum — bodies never interpenetrate
+  const FAR = 3.0; // beyond this, run in
+  const TURN_RATE = 5.0; // facing turn speed (rad/s)
+
+  const loco = { active: false, type: 'walk' }; // dev WALK/RUN preview toggle
+  const nav = { mode: 'hold', dirSign: 1, until: 0, foe: null }; // AI manoeuvre state
 
   // Elimination — dissolve into the fog (~1.4s); core holds and fades last.
   const BG = new THREE.Color(0x070811);
@@ -308,39 +323,121 @@ export function buildFighter(pink = '#FF0069', { side = 'player', maxHp = 100, o
     resetLegs();
   };
 
-  // Looping gait: translate group.z across [Z_LO, Z_HI] on this fighter's own
-  // half (advance toward the seam, retreat back, always facing it), the cycle
-  // synced to speed.
-  const stepLocomotion = (dt) => {
-    const cfg = loco.type === 'run' ? RUN : WALK;
-    loco.z += loco.dir * cfg.speed * dt;
-    if (loco.z <= Z_LO) { loco.z = Z_LO; loco.dir = 1; }
-    if (loco.z >= Z_HI) { loco.z = Z_HI; loco.dir = -1; }
-    group.position.z = loco.z;
-    loco.phase += dt * cfg.speed * STRIDE_K;
-    const p = loco.phase;
-    // legs alternate; knees fold on the swing-through
+  // Gait animation only — legs alternate, arms counter-swing, body leans + bobs.
+  // Cadence ∝ speed. No translation here; the movers below place the group.
+  const animateGait = (dt, cfg) => {
+    gaitPhase += dt * cfg.speed * STRIDE_K;
+    const p = gaitPhase;
     legL.hip.rotation.x = cfg.swing * Math.sin(p);
     legR.hip.rotation.x = cfg.swing * Math.sin(p + Math.PI);
     legL.knee.rotation.x = -cfg.knee * Math.max(0, Math.sin(p + 0.8));
     legR.knee.rotation.x = -cfg.knee * Math.max(0, Math.sin(p + Math.PI + 0.8));
-    // arms counter-swing the legs, slight elbow bend
     armL.shoulder.rotation.x = cfg.arm * Math.sin(p + Math.PI);
     armR.shoulder.rotation.x = cfg.arm * Math.sin(p);
     armL.elbow.rotation.x = 0.3;
     armR.elbow.rotation.x = 0.3;
-    // body: forward lean + tiny counter-twist + double-bob
     torso.rotation.x = cfg.lean;
     torso.rotation.y = cfg.twist * Math.sin(p);
     hips.position.z = 0;
     hips.position.y = hipsBaseY - cfg.bob * (0.5 - 0.5 * Math.cos(2 * p));
   };
 
+  // Translate the group along a unit world-direction (vx, vz) by speed·dt (capped
+  // at maxDist), clamped to the plate and to a hard minimum separation from the
+  // foe — so two fighters stop on contact and never push through each other.
+  const moveDir = (vx, vz, cfg, dt, maxDist = Infinity) => {
+    const step = Math.min(cfg.speed * dt, maxDist);
+    let nx = THREE.MathUtils.clamp(group.position.x + vx * step, -BX, BX);
+    let nz = THREE.MathUtils.clamp(group.position.z + vz * step, -BZ, BZ);
+    const f = nav.foe;
+    if (f) {
+      const ex = nx - f.x;
+      const ez = nz - f.z;
+      const ed = Math.hypot(ex, ez);
+      if (ed < CONTACT && ed > 1e-4) {
+        nx = THREE.MathUtils.clamp(f.x + (ex / ed) * CONTACT, -BX, BX);
+        nz = THREE.MathUtils.clamp(f.z + (ez / ed) * CONTACT, -BZ, BZ);
+      }
+    }
+    group.position.x = nx;
+    group.position.z = nz;
+    animateGait(dt, cfg);
+  };
+
+  // Steer rotation.y toward the foe (shortest angle, rate-limited) — always turn
+  // to face the moving target. Forward is local -Z, so facing a world direction
+  // (dx, dz) means rotation.y = atan2(-dx, -dz).
+  const faceFoe = (dt) => {
+    const f = getFoePos && getFoePos();
+    if (!f) return;
+    const dx = f.x - group.position.x;
+    const dz = f.z - group.position.z;
+    if (dx * dx + dz * dz < 1e-6) return;
+    let diff = Math.atan2(-dx, -dz) - group.rotation.y;
+    diff = Math.atan2(Math.sin(diff), Math.cos(diff)); // wrap to [-π, π]
+    const max = TURN_RATE * dt;
+    group.rotation.y += THREE.MathUtils.clamp(diff, -max, max);
+  };
+  const faceInstant = () => {
+    const f = getFoePos && getFoePos();
+    if (!f) return;
+    const dx = f.x - group.position.x;
+    const dz = f.z - group.position.z;
+    if (dx * dx + dz * dz < 1e-6) return;
+    group.rotation.y = Math.atan2(-dx, -dz);
+  };
+
+  // Free-roam navigation (AI): close the distance, hold at range and manoeuvre,
+  // break contact when too close. Movers animate the gait; "hold" breathes.
+  const maneuver = (t, dt, ux, uz, bs) => {
+    if (t >= nav.until) {
+      const r = Math.random();
+      nav.mode = r < 0.45 ? 'strafe' : r < 0.7 ? 'hold' : 'retreat';
+      if (nav.mode === 'strafe') nav.dirSign = Math.random() < 0.5 ? -1 : 1;
+      nav.until = t + 0.4 + Math.random() * 0.8;
+    }
+    if (nav.mode === 'strafe') moveDir(nav.dirSign * -uz, nav.dirSign * ux, WALK, dt); // circle
+    else if (nav.mode === 'retreat') moveDir(-ux, -uz, WALK, dt); // break distance
+    else idlePose(bs); // hold — breathe in place
+  };
+  const navigate = (t, dt, bs) => {
+    const f = getFoePos && getFoePos();
+    if (!f) { idlePose(bs); return; } // no foe → idle
+    nav.foe = f;
+    const dx = f.x - group.position.x;
+    const dz = f.z - group.position.z;
+    const d = Math.hypot(dx, dz) || 1e-4;
+    const ux = dx / d;
+    const uz = dz / d;
+    if (d < CONTACT) { moveDir(-ux, -uz, WALK, dt); return; } // break interpenetration
+    if (d > RANGE + RANGE_HYST) { // close the distance
+      moveDir(ux, uz, d > FAR ? RUN : WALK, dt, d - RANGE);
+      return;
+    }
+    maneuver(t, dt, ux, uz, bs); // at range, between strikes
+  };
+
+  // Dev WALK/RUN preview (AI off): approach the foe, then circle; march in place
+  // if there's no foe. Keeps the gait inspectable without the full fight running.
+  const devGait = (dt) => {
+    const cfg = loco.type === 'run' ? RUN : WALK;
+    const f = getFoePos && getFoePos();
+    if (!f) { animateGait(dt, cfg); return; }
+    nav.foe = f;
+    faceFoe(dt);
+    const dx = f.x - group.position.x;
+    const dz = f.z - group.position.z;
+    const d = Math.hypot(dx, dz) || 1e-4;
+    const ux = dx / d;
+    const uz = dz / d;
+    if (d > RANGE + RANGE_HYST) moveDir(ux, uz, cfg, dt, d - RANGE); // approach
+    else moveDir(-uz, ux, cfg, dt); // circle at range
+  };
+
   const toggleLoco = (type) => {
     if (reduced || state !== 'alive') return;
     clip = null; // stop any one-shot
     if (loco.active && loco.type === type) { loco.active = false; return; }
-    if (!loco.active) { loco.z = group.position.z; loco.dir = -seamSign; loco.phase = 0; }
     loco.type = type;
     loco.active = true;
   };
@@ -369,23 +466,30 @@ export function buildFighter(pink = '#FF0069', { side = 'player', maxHp = 100, o
     ai.nextAt = Math.max(ai.nextAt, lastT + HURT.dur + 0.4 + Math.random() * 0.6); // rhythm hitch
   };
 
-  // Autonomous behaviour (dev): when free, pick a weighted attack at the seam
-  // (COMBO approaches+strikes+recovers, PUNCH/DOUBLE in place), then a random
-  // pause; an incoming hit adds a rhythm hitch (above). Live random — no seed.
-  // Runs in both motion modes; under reduced it resolves the key moment (the
-  // hit lands) without the full body motion, so it reads without jitter.
-  const tickAI = (t) => {
-    if (state !== 'alive' || clip || loco.active) return; // only when free
-    if (t < ai.nextAt) return;
-    if (reduced) {
-      if (onImpact) onImpact(); // key moment only — hit lands, no motion
-      ai.nextAt = t + 0.7 + Math.random() * 0.8;
-      return;
-    }
+  // Autonomous combat (AI): strike only when the foe is within range, on a
+  // cadence; the navigation above closes the gap and manoeuvres between strikes.
+  // COMBO/PUNCH/DOUBLE are weighted; an incoming hit adds a rhythm hitch (in
+  // takeDamage). Live random — no seed. Returns true if a strike started.
+  const decideAttack = (t) => {
+    if (clip || t < ai.nextAt) return false;
+    const f = getFoePos && getFoePos();
+    if (!f) return false;
+    const dx = f.x - group.position.x;
+    const dz = f.z - group.position.z;
+    if (Math.hypot(dx, dz) > RANGE + RANGE_HYST) return false; // only strike in range
     const r = Math.random();
     const atk = r < 0.5 ? COMBO : r < 0.8 ? PUNCH : DOUBLE; // weighted choice
     play(atk);
-    ai.nextAt = t + atk.dur + 0.4 + Math.random() * 0.9; // pause after the clip
+    ai.nextAt = t + atk.dur + 0.3 + Math.random() * 0.8; // pause after the clip
+    nav.until = 0; // re-pick a manoeuvre once recovered
+    return true;
+  };
+  // Under reduced motion the body holds still; resolve the key moment (the hit
+  // lands) on cadence so a fight still progresses without any jitter.
+  const reducedAttack = (t) => {
+    if (t < ai.nextAt) return;
+    if (onImpact) onImpact();
+    ai.nextAt = t + 0.7 + Math.random() * 0.8;
   };
   const setAI = (b) => { ai.on = b; if (b) ai.nextAt = lastT + 0.3 + Math.random() * 0.6; };
 
@@ -409,9 +513,10 @@ export function buildFighter(pink = '#FF0069', { side = 'player', maxHp = 100, o
     }
     if (state === 'done') return;
 
-    if (ai.on) tickAI(t); // autonomous behaviour — runs in both motion modes
-
+    // Reduced motion: hold a static pose, face the foe, and resolve strikes as
+    // key moments only — no locomotion, no clip playback (reads without jitter).
     if (reduced) {
+      if (ai.on && !clip && state === 'alive') { faceInstant(); reducedAttack(t); }
       hips.position.set(0, hipsBaseY, 0);
       resetArms();
       resetLegs();
@@ -427,20 +532,22 @@ export function buildFighter(pink = '#FF0069', { side = 'player', maxHp = 100, o
     const cpulse = 0.5 + 0.5 * Math.sin(t * wCore);
     let coreBoost = 0;
 
-    if (loco.active) {
-      stepLocomotion(dt);
-    } else if (clip) {
+    // AI, when free (no clip): turn to face the moving foe, then decide whether
+    // to strike. A strike starts a clip that plays out below this same frame.
+    if (ai.on && !clip) { faceFoe(dt); decideAttack(t); }
+
+    if (clip) {
       const ct = t - clipStart;
       if (clip.impacts) {
         for (let i = 0; i < clip.impacts.length; i++) {
           if (!clip.fired[i] && ct >= clip.impacts[i]) {
             clip.fired[i] = true;
-            if (onImpact) onImpact(); // seam glow reacts to each hit
+            if (onImpact) onImpact(); // rift glow reacts to each hit
           }
         }
       } else if (!clip.fired && clip.impact >= 0 && ct >= clip.impact) {
         clip.fired = true;
-        if (onImpact) onImpact(); // seam glow reacts to the hit
+        if (onImpact) onImpact(); // rift glow reacts to the hit
       }
       if (ct < clip.dur) {
         const v = sample(clip.keys, ct);
@@ -450,6 +557,10 @@ export function buildFighter(pink = '#FF0069', { side = 'player', maxHp = 100, o
         clip = null;
         idlePose(bs);
       }
+    } else if (ai.on) {
+      navigate(t, dt, bs); // free-roam toward / around the foe
+    } else if (loco.active) {
+      devGait(dt); // dev WALK/RUN preview
     } else {
       idlePose(bs);
     }

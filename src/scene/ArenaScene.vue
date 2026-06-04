@@ -180,10 +180,19 @@ onMounted(() => {
   variant.value = normalizeVariant(new URLSearchParams(window.location.search).get('mood'));
   presence.setVariant(variant.value);
 
-  // --- Fighters: player on the near half, opponent (flipped, muted) on the far
-  //     half, both facing the rift. A punch impact flares the rift + damages the
-  //     other. Elimination ends a FIGHT (winner idles); outside a fight it
-  //     respawns (dev loop / re-preview).
+  // --- Fighters: spawned on opposite sides, then free to roam the whole plate —
+  //     they navigate toward each other, manoeuvre at range and turn to face the
+  //     moving target (the rift is no longer a barrier). A strike flares the rift
+  //     + damages the other. Elimination ends a FIGHT (winner idles); outside a
+  //     fight it respawns (dev loop / re-preview).
+  //
+  // Plate bounds for navigation: half-extents minus a margin so feet stay on the
+  // slab. The whole plate (both sides) is walkable.
+  const NAV_MARGIN = 0.5;
+  const navBounds = {
+    x: arena.refs.W / 2 - NAV_MARGIN,
+    z: arena.refs.totalDepth / 2 - NAV_MARGIN,
+  };
   const endFight = () => {
     fightActive = false;
     aiPlayer = false;
@@ -194,6 +203,8 @@ onMounted(() => {
   const spawnFighter = () => {
     fighter = buildFighter(pink, {
       side: 'player',
+      bounds: navBounds,
+      getFoePos: () => (opponent ? opponent.group.position : null),
       onImpact: () => { presence.triggerFlash(0.55); opponent?.takeDamage(rollDamage()); },
       onEliminated: () => {
         scene.remove(fighter.group);
@@ -203,7 +214,7 @@ onMounted(() => {
         else spawnFighter(); // dev respawn
       },
     });
-    fighter.group.position.set(0, arena.refs.topY, 1.05);
+    fighter.group.position.set(0, arena.refs.topY, 1.35);
     fighter.setReducedMotion(reducedMotion);
     fighter.setAI(aiPlayer); // keep AI on across respawn
     scene.add(fighter.group);
@@ -211,6 +222,8 @@ onMounted(() => {
   const spawnOpponent = () => {
     opponent = buildFighter(pink, {
       side: 'opponent',
+      bounds: navBounds,
+      getFoePos: () => (fighter ? fighter.group.position : null),
       onImpact: () => { presence.triggerFlash(0.55); fighter?.takeDamage(rollDamage()); },
       onEliminated: () => {
         scene.remove(opponent.group);
@@ -220,7 +233,7 @@ onMounted(() => {
         else spawnOpponent(); // dev respawn
       },
     });
-    opponent.group.position.set(0, arena.refs.topY, -1.05);
+    opponent.group.position.set(0, arena.refs.topY, -1.35);
     opponent.setReducedMotion(reducedMotion);
     opponent.setAI(aiOpponent); // keep AI on across respawn
     scene.add(opponent.group);
