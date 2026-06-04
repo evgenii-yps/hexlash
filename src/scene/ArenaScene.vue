@@ -25,6 +25,7 @@
       <button type="button" @click="onRun">RUN</button>
       <button type="button" @click="onHurt">HURT</button>
       <button type="button" @click="onOut">OUT</button>
+      <button type="button" class="tgt" @click="onDemo">DEMO</button>
     </div>
   </div>
 </template>
@@ -44,6 +45,11 @@ const target = ref('player'); // which fighter the dev triggers act on
 
 let renderer, scene, camera, controls, arena, fighter, opponent, presence, resizeObserver, clock;
 let onVisibility, onKeydown, onControlsStart, onControlsEnd;
+
+// Dev demo exchange (key G) — a scripted clash so the "two fighters trade blows
+// across the seam" loop reads. Not real combat: no HP / timeline / logic.
+let demo = null; // { start, events:[{t, fn, done}] } while running
+let demoPending = false;
 
 // idle-drift bookkeeping (variant B)
 let userActive = false;
@@ -71,6 +77,27 @@ function onWalk() { curFighter()?.walk(); }
 function onRun() { curFighter()?.run(); }
 function onHurt() { curFighter()?.hurt(); }
 function onOut() { curFighter()?.eliminate(); }
+
+// Scripted exchange: attacker COMBO (approach + strike at the seam, one impact);
+// the defender plays HURT synced to that impact. The rift flash fires
+// automatically from the attacker's onImpact. A couple of rounds, both ways.
+function buildDemoEvents() {
+  const events = [];
+  const DUR = 2.0; // COMBO duration
+  const IMPACT = 1.12; // COMBO impact time
+  const GAP = 0.25; // beat between attacks
+  let t = 0;
+  for (let r = 0; r < 2; r++) {
+    events.push({ t, fn: () => fighter?.combo() }); // player attacks
+    events.push({ t: t + IMPACT, fn: () => opponent?.hurt() });
+    t += DUR + GAP;
+    events.push({ t, fn: () => opponent?.combo() }); // opponent attacks
+    events.push({ t: t + IMPACT, fn: () => fighter?.hurt() });
+    t += DUR + GAP;
+  }
+  return events;
+}
+function onDemo() { if (!demo) demoPending = true; }
 
 function normalizeVariant(v) {
   const u = String(v || '').toUpperCase();
@@ -213,6 +240,19 @@ onMounted(() => {
     presence.update(t);
     fighter.update(t);
     opponent.update(t);
+
+    // Dev demo exchange — fire scheduled events on loop time (paused with the
+    // loop when hidden; skipped under reduced-motion).
+    if (demoPending) {
+      demoPending = false;
+      if (!reducedMotion) demo = { start: t, events: buildDemoEvents() };
+    }
+    if (demo) {
+      const dt = t - demo.start;
+      for (const e of demo.events) { if (!e.done && dt >= e.t) { e.done = true; e.fn(); } }
+      if (demo.events.every((e) => e.done)) demo = null;
+    }
+
     renderer.render(scene, camera);
   };
   renderer.setAnimationLoop(loop);
@@ -239,6 +279,7 @@ onMounted(() => {
     else if (e.key === 'n') curFighter()?.run();
     else if (e.key === 'h') curFighter()?.hurt();
     else if (e.key === 'k') curFighter()?.eliminate();
+    else if (e.key === 'g') onDemo();
   };
   window.addEventListener('keydown', onKeydown);
 
