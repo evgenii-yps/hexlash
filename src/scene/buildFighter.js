@@ -17,7 +17,7 @@ function pinkRgba(pink, a) {
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
 }
 
-export function buildFighter(pink = '#FF0069', { onImpact } = {}) {
+export function buildFighter(pink = '#FF0069', { onImpact, onEliminated } = {}) {
   const group = new THREE.Group();
 
   // Shared faceted "skin" — same workshop as the plates, a touch lighter so the
@@ -134,7 +134,7 @@ export function buildFighter(pink = '#FF0069', { onImpact } = {}) {
   // key[i+1].e.
   const REST = {};
   const N = (x) => x || 0;
-  const KEYS = ['hz', 'hy', 'tx', 'ty', 'lsx', 'lex', 'rsx', 'rex'];
+  const KEYS = ['hz', 'hy', 'tx', 'ty', 'lsx', 'lex', 'rsx', 'rex', 'core'];
   const lerpV = (a, b, e) => {
     const o = {};
     for (const k of KEYS) o[k] = N(a[k]) + (N(b[k]) - N(a[k])) * e;
@@ -199,11 +199,52 @@ export function buildFighter(pink = '#FF0069', { onImpact } = {}) {
       { t: 1.45, v: REST, e: 'io' }, // weighty return
     ],
   };
+  // Hurt — sharp weighty recoil backward (+Z, toward own half) + a core flash
+  // (bright → dip), then a heavy settle. The receiver's signal; no impact.
+  const HURT = {
+    dur: 0.95,
+    keys: [
+      { t: 0.0, v: REST, e: 'io' },
+      { t: 0.08, v: { hz: 0.18, hy: -0.04, tx: 0.18, core: 1.0 }, e: 'out' }, // snap back, core flares
+      { t: 0.2, v: { hz: 0.22, hy: -0.02, tx: 0.13, core: -0.45 }, e: 'out' }, // core dips (proval)
+      { t: 0.45, v: { hz: 0.1, hy: -0.01, tx: 0.05, core: 0 }, e: 'io' },
+      { t: 0.95, v: REST, e: 'io' }, // heavy return
+    ],
+  };
+
+  // Locomotion — looping gait the code translates across the near half. Cadence
+  // scales with speed (run = faster + bigger amplitudes + more forward lean).
+  const WALK = { speed: 0.9, swing: 0.45, knee: 0.7, arm: 0.4, lean: -0.05, bob: 0.03, twist: 0.05 };
+  const RUN = { speed: 2.2, swing: 0.72, knee: 1.0, arm: 0.6, lean: -0.22, bob: 0.05, twist: 0.08 };
+  const STRIDE_K = 7; // gait phase (rad) per world unit travelled → cadence ∝ speed
+  const Z_FRONT = 0.75; // closest to the seam (feet stay on the near plate, no cross)
+  const Z_BACK = 1.85; // back of the near half
+  const loco = { active: false, type: 'walk', dir: -1, z: 0, phase: 0 };
+
+  // Elimination — dissolve into the fog (~1.4s); core holds and fades last.
+  const BG = new THREE.Color(0x070811);
+  const skinBase = skin.color.clone();
+  const DISS_DUR = 1.4;
+  let state = 'alive'; // alive | dissolving | done
+  let diss = 0;
 
   const play = (c) => {
-    if (reduced || clip) return; // one at a time; reduced-motion = no playback
+    if (reduced || clip || state !== 'alive') return; // one one-shot at a time
+    loco.active = false; // a throw / struck pose interrupts walking
     clip = { ...c, fired: c.impacts ? c.impacts.map(() => false) : false };
     clipStart = lastT;
+  };
+
+  const resetLegs = () => {
+    legL.hip.rotation.x = 0; legL.knee.rotation.x = 0;
+    legR.hip.rotation.x = 0; legR.knee.rotation.x = 0;
+  };
+  const resetArms = () => {
+    torso.rotation.set(0, 0, 0);
+    armL.shoulder.rotation.x = 0;
+    armL.elbow.rotation.x = 0;
+    armR.shoulder.rotation.x = 0;
+    armR.elbow.rotation.x = 0;
   };
 
   const apply = (v) => {
@@ -215,35 +256,102 @@ export function buildFighter(pink = '#FF0069', { onImpact } = {}) {
     armL.elbow.rotation.x = N(v.lex);
     armR.shoulder.rotation.x = N(v.rsx);
     armR.elbow.rotation.x = N(v.rex);
+    resetLegs(); // clips are upper-body only
   };
 
-  const resetArms = () => {
-    torso.rotation.set(0, 0, 0);
-    armL.shoulder.rotation.x = 0;
-    armL.elbow.rotation.x = 0;
-    armR.shoulder.rotation.x = 0;
-    armR.elbow.rotation.x = 0;
+  const idlePose = (bs) => {
+    hips.position.z = 0;
+    hips.position.y = hipsBaseY + bs * 0.012; // settle
+    resetArms();
+    resetLegs();
+  };
+
+  // Looping gait: translate group.z across [Z_FRONT, Z_BACK] (advance toward the
+  // seam, retreat back, always facing it), the cycle synced to speed.
+  const stepLocomotion = (dt) => {
+    const cfg = loco.type === 'run' ? RUN : WALK;
+    loco.z += loco.dir * cfg.speed * dt;
+    if (loco.z <= Z_FRONT) { loco.z = Z_FRONT; loco.dir = 1; }
+    if (loco.z >= Z_BACK) { loco.z = Z_BACK; loco.dir = -1; }
+    group.position.z = loco.z;
+    loco.phase += dt * cfg.speed * STRIDE_K;
+    const p = loco.phase;
+    // legs alternate; knees fold on the swing-through
+    legL.hip.rotation.x = cfg.swing * Math.sin(p);
+    legR.hip.rotation.x = cfg.swing * Math.sin(p + Math.PI);
+    legL.knee.rotation.x = -cfg.knee * Math.max(0, Math.sin(p + 0.8));
+    legR.knee.rotation.x = -cfg.knee * Math.max(0, Math.sin(p + Math.PI + 0.8));
+    // arms counter-swing the legs, slight elbow bend
+    armL.shoulder.rotation.x = cfg.arm * Math.sin(p + Math.PI);
+    armR.shoulder.rotation.x = cfg.arm * Math.sin(p);
+    armL.elbow.rotation.x = 0.3;
+    armR.elbow.rotation.x = 0.3;
+    // body: forward lean + tiny counter-twist + double-bob
+    torso.rotation.x = cfg.lean;
+    torso.rotation.y = cfg.twist * Math.sin(p);
+    hips.position.z = 0;
+    hips.position.y = hipsBaseY - cfg.bob * (0.5 - 0.5 * Math.cos(2 * p));
+  };
+
+  const toggleLoco = (type) => {
+    if (reduced || state !== 'alive') return;
+    clip = null; // stop any one-shot
+    if (loco.active && loco.type === type) { loco.active = false; return; }
+    if (!loco.active) { loco.z = group.position.z; loco.dir = -1; loco.phase = 0; }
+    loco.type = type;
+    loco.active = true;
+  };
+
+  const eliminate = () => {
+    if (state !== 'alive') return;
+    clip = null;
+    loco.active = false;
+    if (reduced) { state = 'done'; if (onEliminated) onEliminated(); return; } // no playback
+    skin.transparent = true;
+    coreMat.transparent = true;
+    state = 'dissolving';
+    diss = 0;
   };
 
   const update = (t) => {
+    const dt = Math.min(0.05, Math.max(0, t - lastT));
     lastT = t;
+
+    // Elimination — dissolve the body into the fog; core fades last, then remove.
+    if (state === 'dissolving') {
+      diss += dt / DISS_DUR;
+      const k = Math.min(1, diss);
+      const bodyK = Math.min(1, k / 0.8); // body melts over the first 0.8
+      skin.opacity = 1 - bodyK;
+      skin.color.copy(skinBase).lerp(BG, bodyK);
+      const coreK = Math.max(0, (k - 0.6) / 0.4); // core holds, then fades last
+      coreMat.opacity = 1 - coreK;
+      haloMat.opacity = 0.8 * (1 - coreK);
+      core.scale.setScalar(1 - 0.3 * coreK);
+      if (k >= 1) { state = 'done'; if (onEliminated) onEliminated(); }
+      return;
+    }
+    if (state === 'done') return;
+
     if (reduced) {
       hips.position.set(0, hipsBaseY, 0);
       resetArms();
+      resetLegs();
       chest.scale.set(1, 1, 1);
       core.scale.setScalar(1);
       haloMat.opacity = 0.8;
       return;
     }
 
-    // Breathing + core pulse run always (independent of the action pivots).
+    // Breathing + core pulse run always; core can be boosted by a hurt flash.
     const bs = Math.sin(t * wBreath);
     chest.scale.set(1 + bs * 0.02, 1 + bs * 0.03, 1 + bs * 0.02);
-    const c = 0.5 + 0.5 * Math.sin(t * wCore);
-    core.scale.setScalar(1 + c * 0.22);
-    haloMat.opacity = 0.55 + 0.4 * c;
+    const cpulse = 0.5 + 0.5 * Math.sin(t * wCore);
+    let coreBoost = 0;
 
-    if (clip) {
+    if (loco.active) {
+      stepLocomotion(dt);
+    } else if (clip) {
       const ct = t - clipStart;
       if (clip.impacts) {
         for (let i = 0; i < clip.impacts.length; i++) {
@@ -256,14 +364,20 @@ export function buildFighter(pink = '#FF0069', { onImpact } = {}) {
         clip.fired = true;
         if (onImpact) onImpact(); // seam glow reacts to the hit
       }
-      if (ct < clip.dur) { apply(sample(clip.keys, ct)); return; }
-      clip = null; // ended → fall through to idle
+      if (ct < clip.dur) {
+        const v = sample(clip.keys, ct);
+        apply(v);
+        coreBoost = N(v.core);
+      } else {
+        clip = null;
+        idlePose(bs);
+      }
+    } else {
+      idlePose(bs);
     }
 
-    // Idle posture.
-    hips.position.z = 0;
-    hips.position.y = hipsBaseY + bs * 0.012; // settle
-    resetArms();
+    core.scale.setScalar(1 + cpulse * 0.22 + coreBoost * 0.5);
+    haloMat.opacity = THREE.MathUtils.clamp(0.55 + 0.4 * cpulse + coreBoost * 0.6, 0.1, 1.6);
   };
 
   const dispose = () => {
@@ -293,6 +407,10 @@ export function buildFighter(pink = '#FF0069', { onImpact } = {}) {
     punch: () => play(PUNCH),
     combo: () => play(COMBO),
     double: () => play(DOUBLE),
+    hurt: () => play(HURT),
+    walk: () => toggleLoco('walk'),
+    run: () => toggleLoco('run'),
+    eliminate,
     joints: { hips, torso, armL, armR, legL, legR },
   };
 }

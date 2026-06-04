@@ -20,6 +20,10 @@
       <button type="button" @click="onPunch">PUNCH</button>
       <button type="button" @click="onCombo">COMBO</button>
       <button type="button" @click="onDouble">DOUBLE</button>
+      <button type="button" @click="onWalk">WALK</button>
+      <button type="button" @click="onRun">RUN</button>
+      <button type="button" @click="onHurt">HURT</button>
+      <button type="button" @click="onOut">OUT</button>
     </div>
   </div>
 </template>
@@ -58,6 +62,10 @@ function onApproach() { fighter?.approach(); }
 function onPunch() { fighter?.punch(); }
 function onCombo() { fighter?.combo(); }
 function onDouble() { fighter?.double(); }
+function onWalk() { fighter?.walk(); }
+function onRun() { fighter?.run(); }
+function onHurt() { fighter?.hurt(); }
+function onOut() { fighter?.eliminate(); }
 
 function normalizeVariant(v) {
   const u = String(v || '').toUpperCase();
@@ -116,11 +124,22 @@ onMounted(() => {
   presence.setVariant(variant.value);
 
   // --- Fighter: one construct on the near (player) half, facing the rift. Its
-  //     punch impact briefly flares the rift glow (same pink, no second colour).
-  fighter = buildFighter(pink, { onImpact: () => presence.triggerFlash(0.55) });
-  fighter.group.position.set(0, arena.refs.topY, 1.05);
-  fighter.setReducedMotion(reducedMotion);
-  scene.add(fighter.group);
+  //     punch impact briefly flares the rift glow (same pink). On elimination it
+  //     is removed + freed, then a fresh one spawns so the dev can re-preview.
+  const spawnFighter = () => {
+    fighter = buildFighter(pink, {
+      onImpact: () => presence.triggerFlash(0.55),
+      onEliminated: () => {
+        scene.remove(fighter.group);
+        fighter.dispose();
+        spawnFighter();
+      },
+    });
+    fighter.group.position.set(0, arena.refs.topY, 1.05);
+    fighter.setReducedMotion(reducedMotion);
+    scene.add(fighter.group);
+  };
+  spawnFighter();
 
   // --- Orbit controls — drag to rotate, wheel / pinch zoom; centred, no pan.
   controls = new OrbitControls(camera, renderer.domElement);
@@ -192,6 +211,10 @@ onMounted(() => {
     else if (e.key === 'x') fighter.punch();
     else if (e.key === 'c') fighter.combo();
     else if (e.key === 'v') fighter.double();
+    else if (e.key === 'b') fighter.walk();
+    else if (e.key === 'n') fighter.run();
+    else if (e.key === 'h') fighter.hurt();
+    else if (e.key === 'k') fighter.eliminate();
   };
   window.addEventListener('keydown', onKeydown);
 
@@ -269,7 +292,10 @@ onBeforeUnmount(() => {
   right: 14px;
   bottom: 12px;
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 6px;
+  max-width: 60%;
 }
 .arena-actions button {
   pointer-events: auto;
