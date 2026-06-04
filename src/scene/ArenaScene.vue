@@ -48,6 +48,9 @@ const target = ref('player'); // which fighter the dev triggers act on
 
 let renderer, scene, camera, controls, arena, fighter, opponent, presence, resizeObserver, clock;
 let onVisibility, onKeydown, onControlsStart, onControlsEnd;
+// Pre-load readiness: emit once after the first frame is rendered so the
+// bootstrap splash (#hx-load) can fade out on real arena readiness.
+let firstFrameEmitted = false;
 
 // Dev demo (key G) — a readable open-arena exchange: both fighters go autonomous
 // (approach, trade blows wherever they meet, reposition), then settle back to
@@ -317,6 +320,14 @@ onMounted(() => {
     }
 
     renderer.render(scene, camera);
+
+    // First frame is on screen — signal pre-load readiness once (latch + event
+    // so the bootstrap catches it regardless of listener-attach timing).
+    if (!firstFrameEmitted) {
+      firstFrameEmitted = true;
+      window.__hexArenaReady = true;
+      window.dispatchEvent(new CustomEvent('hexlash:arena-ready'));
+    }
   };
   renderer.setAnimationLoop(loop);
 

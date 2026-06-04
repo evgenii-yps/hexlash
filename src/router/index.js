@@ -73,6 +73,10 @@ const v2Routes = [
             {
                 path: '',
                 name: 'V2Pit',
+                // meta.arena lets the bootstrap (src/main.js) hold the pre-load
+                // splash until the WebGL arena emits its first-frame signal,
+                // instead of hiding on first DOM paint like non-arena routes.
+                meta: { arena: true },
                 component: () => import('@/views-v2/PlayStubView.vue'),
             },
         ],

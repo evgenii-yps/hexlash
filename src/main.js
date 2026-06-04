@@ -98,20 +98,72 @@ const vuetify = createVuetify({
     },
 });
 
+// --- Pre-load splash wiring ---------------------------------------------------
+// The pre-load screen (#hx-load in index.html) exposes window.HexlashLoader:
+//   .set(pct)  — 0..100, driven from real bootstrap milestones
+//   .done()    — force 100% + fade out + self-remove
+// The arena is procedural (no GLTF / heavy assets), so there's almost nothing to
+// fetch — "real progress" tracks bootstrap phases, and done() only fires on a
+// genuine ready signal: the arena's first rendered frame when we land on /play,
+// or the first paint of whatever route loaded otherwise.
+const splash = window.HexlashLoader || null;
+let splashDone = false;
+function splashSet(p) { if (splash) splash.set(p); }
+function splashFinish() {
+    if (splashDone) return;
+    splashDone = true;
+    if (splash) splash.done();
+}
+
+// Milestone 1 — main bundle parsed + executing.
+splashSet(18);
+
 async function initializeApp() {
     await store.dispatch('master/initializeMasterData');
 }
 
 initializeApp().then(() => {
-    createApp(App)
+    splashSet(42); // Milestone 2 — master init data ready.
+
+    const app = createApp(App)
         .provide('AmmoLib', Ammo())
         .use(vuetify)
         .use(store)
         .use(router)
         .use(WagmiPlugin, { config: wagmiConfig })
-        .use(VueQueryPlugin, {})
-        .mount('#app')
+        .use(VueQueryPlugin, {});
+
+    app.mount('#app');
+    splashSet(64); // Milestone 3 — app mounted.
+
+    router.isReady().then(() => {
+        // Milestone 4 — scene build + first frame (only the /play arena route
+        // renders WebGL; meta.arena marks it). On the arena route we hold an
+        // honest stall near 90 and only finish on the real first-frame signal;
+        // other routes hide once the route has painted.
+        const arenaBound = !!router.currentRoute.value.meta?.arena;
+        if (arenaBound) {
+            splashSet(80);
+            let trickle = 80;
+            const trickleTimer = setInterval(() => {
+                trickle = Math.min(92, trickle + 1.5);
+                splashSet(trickle);
+                if (trickle >= 92) clearInterval(trickleTimer);
+            }, 220);
+            const onArenaReady = () => { clearInterval(trickleTimer); splashSet(100); splashFinish(); };
+            // Latch guards the (rare) race where the first frame renders before
+            // this listener attaches.
+            if (window.__hexArenaReady) onArenaReady();
+            else window.addEventListener('hexlash:arena-ready', onArenaReady, { once: true });
+            // Safety net — never hang the splash if the scene fails to signal.
+            setTimeout(() => { clearInterval(trickleTimer); splashFinish(); }, 12000);
+        } else {
+            splashSet(92);
+            requestAnimationFrame(() => requestAnimationFrame(() => splashFinish()));
+        }
+    });
 }).catch((error) => {
+    splashFinish();
     alert("An error occurred while loading Hexlash. The game will now reload. ", error);
     location.reload();
 });

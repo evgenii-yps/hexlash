@@ -51,7 +51,16 @@
          root; the rest of the app keeps Anonymous / Roboto. -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Non-blocking webfont load: render with system fallbacks first (the
+         pre-load splash + landing both declare fallbacks), swap brand faces in
+         when they arrive. `preload as=style` + rel-flip never blocks first paint. -->
+    <link rel="preload" as="style"
+          href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap"
+          onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+        <link rel="stylesheet"
+              href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap">
+    </noscript>
 
     <style>
         * {
@@ -62,215 +71,189 @@
             scrollbar-color: var(--scrollbar-bg) transparent;
         }
 
-        /* Base dark background — matches --hex-bg-dark token (#090909).
-           Tokens are inlined as literals because this splash renders before
-           the app stylesheet (hexlash-ui.css) loads. */
-        #app-loading {
+        /* ════════════════════════════════════════════════════════════════
+           HEXLASH PRE-LOAD — CRITICAL CSS (direction B · "Fight Card").
+           Renders instantly, before the game bundle/stylesheet load. Colours
+           are inlined literals (canon pink #FF0069) because --hex-* tokens
+           aren't loaded yet. Scoped under #hx-load / .hxl-* — no app clash.
+           Reads on system-font fallbacks the moment it paints; the brand
+           faces (Saira Condensed / JetBrains Mono) swap in non-blocking. */
+        #hx-load {
+            --accent: #ff0069;
+            --accent-rgb: 255, 0, 105;
+            --void: #08080a;
+            --bone: #f6f4f6;
+            --ash: #6e6a72;
+            --impact: "Saira Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif;
+            --tele: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: #090909;
-            z-index: 9999;
-            transition: opacity 0.5s ease-out;
-            opacity: 1;
-            overflow: hidden;
-        }
-
-        #app-loading.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        /* Drifting particle field (motion is pure CSS; JS only spawns nodes) */
-        #loading-particles {
-            position: absolute;
             inset: 0;
-            pointer-events: none;
+            z-index: 2147483000;
             overflow: hidden;
+            color: var(--bone);
+            font-family: var(--tele);
+            -webkit-font-smoothing: antialiased;
+            user-select: none;
+            background: radial-gradient(130% 80% at 50% 120%, #1a0010 0%, #0b060a 46%, var(--void) 82%);
+            transition: opacity .6s ease;
+        }
+        #hx-load.hxl-out { opacity: 0; pointer-events: none; }
+        #hx-load * { box-sizing: border-box; margin: 0; }
+
+        /* HUD corner brackets */
+        .hxl-hud i { position: absolute; width: 5vmin; height: 5vmin; border: 0 solid rgba(var(--accent-rgb), .55); }
+        .hxl-hud i.tl { top: 4vmin; left: 4vmin; border-left-width: 1.6px; border-top-width: 1.6px; }
+        .hxl-hud i.tr { top: 4vmin; right: 4vmin; border-right-width: 1.6px; border-top-width: 1.6px; }
+        .hxl-hud i.bl { bottom: 4vmin; left: 4vmin; border-left-width: 1.6px; border-bottom-width: 1.6px; }
+        .hxl-hud i.br { bottom: 4vmin; right: 4vmin; border-right-width: 1.6px; border-bottom-width: 1.6px; }
+
+        /* Top lockup: mark + wordmark */
+        .hxl-top { position: absolute; top: 8vmin; left: 0; right: 0;
+            display: flex; flex-direction: column; align-items: center; gap: 2vmin; }
+        .hxl-lock { display: flex; align-items: center; gap: 2.4vmin; }
+        .hxl-mark { width: 6vmin; height: 6vmin; display: block; color: var(--bone); }
+        .hxl-word { font-family: var(--impact); font-weight: 900; text-transform: uppercase;
+            font-size: 5vmin; letter-spacing: .02em; }
+
+        /* Centerpiece: hero percent + creed */
+        .hxl-mid { position: absolute; inset: 0; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 1vmin; }
+        .hxl-num { font-family: var(--impact); font-weight: 900; line-height: .84;
+            font-size: 38vmin; letter-spacing: -.01em; color: #fff;
+            text-shadow: 0 0 5vmin rgba(var(--accent-rgb), .35); font-variant-numeric: tabular-nums; }
+        .hxl-num sup { font-size: .26em; color: var(--accent); vertical-align: .9em; margin-left: .06em;
+            text-shadow: 0 0 2vmin rgba(var(--accent-rgb), .8); }
+        .hxl-creed { font-family: var(--impact); font-weight: 800; text-transform: uppercase;
+            font-size: 6.4vmin; letter-spacing: .04em; color: var(--bone); white-space: nowrap; }
+        .hxl-creed b { color: #fff; text-shadow: 0 0 1vmin rgba(var(--accent-rgb), .7), 0 0 4vmin rgba(var(--accent-rgb), .6); }
+
+        /* Footer: progress bar + rotating field note */
+        .hxl-foot { position: absolute; left: 0; right: 0; bottom: 8.5vmin;
+            display: flex; flex-direction: column; align-items: center; gap: 3vmin; padding: 0 6vmin; }
+        .hxl-bar { position: relative; width: 54vmin; max-width: 560px; height: 3px; background: rgba(255, 255, 255, .10);
+            clip-path: polygon(2vmin 0, 100% 0, calc(100% - 2vmin) 100%, 0 100%); }
+        .hxl-fill { position: absolute; inset: 0; width: calc(var(--p, 0) * 1%); background: var(--accent);
+            box-shadow: 0 0 9px rgba(var(--accent-rgb), .9); transition: width .35s ease; }
+        .hxl-tip { display: flex; align-items: center; gap: 2.4vmin; max-width: 90vw; text-align: center; }
+        .hxl-tag { flex: none; font-size: 2.3vmin; letter-spacing: .2em; color: var(--accent);
+            border: 1px solid rgba(var(--accent-rgb), .4); padding: .8vmin 1.6vmin; text-transform: uppercase; }
+        .hxl-line { font-size: 2.6vmin; letter-spacing: .12em; color: #bdb9c2; text-transform: uppercase; }
+
+        /* ── Portrait / mobile ─────────────────────────────────────────── */
+        @media (max-aspect-ratio: 1/1) {
+            .hxl-num { font-size: 30vmin; }
+            .hxl-bar { width: 70vmin; }
+            .hxl-hud i { width: 6vmin; height: 6vmin; }
+            .hxl-word { font-size: 6.5vmin; }
+            .hxl-mark { width: 7.5vmin; height: 7.5vmin; }
+            .hxl-creed { font-size: 8vmin; }
+            .hxl-tag { font-size: 3vmin; }
+            .hxl-line { font-size: 3.2vmin; }
         }
 
-        .lp-dot {
-            position: absolute;
-            width: 1.5px;
-            height: 1.5px;
-            background: #fff;
-            border-radius: 50%;
-            opacity: 0.2;
-            will-change: transform;
-            animation-iteration-count: infinite;
-            animation-timing-function: ease-in-out;
-        }
-
-        .lp-line-wrap {
-            position: absolute;
-            will-change: transform;
-            animation-iteration-count: infinite;
-            animation-timing-function: ease-in-out;
-        }
-
-        .lp-line {
-            width: 64px;
-            height: 1px;
-            background: rgba(255, 255, 255, 0.18);
-        }
-
-        @keyframes lpDriftA {
-            0%   { transform: translate(0, 0); }
-            50%  { transform: translate(22px, -28px); }
-            100% { transform: translate(0, 0); }
-        }
-
-        @keyframes lpDriftB {
-            0%   { transform: translate(0, 0); }
-            50%  { transform: translate(-26px, 20px); }
-            100% { transform: translate(0, 0); }
-        }
-
-        @keyframes lpDriftC {
-            0%   { transform: translate(0, 0); }
-            50%  { transform: translate(16px, 26px); }
-            100% { transform: translate(0, 0); }
-        }
-
-        /* Radial vignette — darkens edges so the centre reads clearly */
-        #loading-vignette {
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-            background: radial-gradient(ellipse at center,
-                rgba(9, 9, 9, 0) 38%,
-                rgba(9, 9, 9, 0.7) 100%);
-        }
-
-        #loading-container {
-            position: relative;
-            z-index: 2;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .loading-logo {
-            display: block;
-            width: 220px;
-            height: 220px;
-        }
-
-        .loading-progress {
-            position: relative;
-            margin-top: 90px;
-            width: 320px;
-            height: 3px;
-            background: rgba(255, 255, 255, 0.12);
-            border-radius: 1.5px;
-        }
-
-        .loading-progress-fill {
-            position: relative;
-            height: 100%;
-            width: 0;
-            /* Accent pink — matches --hex-primary token (#FF0069) */
-            background: #FF0069;
-            border-radius: 1.5px;
-            animation: lpFill 2.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-        }
-
-        .loading-progress-fill::after {
-            content: '';
-            position: absolute;
-            right: -3.5px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 7px;
-            height: 7px;
-            border-radius: 50%;
-            background: #FF0069;
-        }
-
-        @keyframes lpFill {
-            from { width: 0; }
-            to   { width: 100%; }
-        }
-
-        @media (max-width: 600px) {
-            .loading-logo {
-                width: 160px;
-                height: 160px;
-            }
-
-            .loading-progress {
-                margin-top: 80px;
-                width: 240px;
-            }
+        /* ── Respect reduced-motion ────────────────────────────────────── */
+        @media (prefers-reduced-motion: reduce) {
+            #hx-load * { animation: none !important; }
+            .hxl-fill { transition: none; }
         }
     </style>
 </head>
 <body>
 
-<div id="app-loading">
-    <div id="loading-particles"></div>
-    <div id="loading-vignette"></div>
-    <div id="loading-container">
-        <img class="loading-logo" src="/src/assets/images/logo-512.png" alt="" />
-        <div class="loading-progress">
-            <div class="loading-progress-fill"></div>
+<!-- ════════════════════════════════════════════════════════════════════════
+     HEXLASH PRE-LOAD (direction B · "Fight Card"). First thing in <body>, runs
+     standalone. Real progress is driven from src/main.js via window.HexlashLoader
+     (.set(pct) on bootstrap milestones, .done() on the arena's first frame). -->
+<div id="hx-load" style="--p:0">
+    <div class="hxl-hud" aria-hidden="true"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i></div>
+
+    <header class="hxl-top">
+        <div class="hxl-lock">
+            <svg class="hxl-mark" viewBox="0 0 48 48" aria-hidden="true">
+                <polygon points="24,3 41.5,13 41.5,35 24,45 6.5,35 6.5,13" fill="none" stroke="currentColor" stroke-width="2.4"/>
+                <polygon points="24,13 33,18.5 33,29.5 24,35 15,29.5 15,18.5" fill="none" stroke="currentColor" stroke-width="2.4"/>
+                <path d="M24 13 L24 24 M24 24 L33 18.5 M24 24 L15 29.5" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+            </svg>
+            <span class="hxl-word">HEXLASH</span>
         </div>
+    </header>
+
+    <div class="hxl-mid">
+        <div class="hxl-num" role="progressbar" aria-label="Loading" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="hxl-num-v">00</span><sup>%</sup></div>
+        <div class="hxl-creed">NEVER <b>GIVE UP.</b></div>
+    </div>
+
+    <div class="hxl-foot">
+        <div class="hxl-bar"><i class="hxl-fill"></i></div>
+        <div class="hxl-tip"><span class="hxl-tag">FIELD NOTE</span><span class="hxl-line">THE BELL IS ABOUT TO RING.</span></div>
     </div>
 </div>
+
 <script>
-    // Spawn the drifting particles synchronously during parse.
-    // Motion itself is handled entirely by CSS keyframes (no JS animation loop).
-    (function () {
-        var field = document.getElementById('loading-particles');
-        if (!field) return;
-        var drifts = ['lpDriftA', 'lpDriftB', 'lpDriftC'];
-        var rnd = function (min, max) { return Math.random() * (max - min) + min; };
-        var i;
-        for (i = 0; i < 20; i++) {
-            var dot = document.createElement('div');
-            dot.className = 'lp-dot';
-            dot.style.top = rnd(0, 100) + '%';
-            dot.style.left = rnd(0, 100) + '%';
-            dot.style.opacity = rnd(0.15, 0.25);
-            dot.style.animationName = drifts[i % 3];
-            dot.style.animationDuration = rnd(12, 18) + 's';
-            dot.style.animationDelay = '-' + rnd(0, 18) + 's';
-            field.appendChild(dot);
-        }
-        for (i = 0; i < 8; i++) {
-            var wrap = document.createElement('div');
-            wrap.className = 'lp-line-wrap';
-            wrap.style.top = rnd(5, 95) + '%';
-            wrap.style.left = rnd(5, 95) + '%';
-            wrap.style.animationName = drifts[(i + 1) % 3];
-            wrap.style.animationDuration = rnd(13, 18) + 's';
-            wrap.style.animationDelay = '-' + rnd(0, 18) + 's';
-            var line = document.createElement('div');
-            line.className = 'lp-line';
-            line.style.width = rnd(50, 80) + 'px';
-            line.style.transform = 'rotate(' + rnd(-50, -20) + 'deg)';
-            wrap.appendChild(line);
-            field.appendChild(wrap);
-        }
-    })();
+/* Hexlash pre-load controller — vanilla, dependency-free.
+   Public API (driven by the real loader in src/main.js):
+     HexlashLoader.set(pct)   // pct 0..100 — call on bootstrap milestones
+     HexlashLoader.done()     // force 100% + fade out + remove from DOM */
+(function () {
+  var el = document.getElementById('hx-load');
+  if (!el) return;
+  var fill  = el.querySelector('.hxl-fill');
+  var numV  = el.querySelector('.hxl-num-v');
+  var bar   = el.querySelector('.hxl-num');
+  var creed = el.querySelector('.hxl-creed');
+  var tag   = el.querySelector('.hxl-tag');
+  var line  = el.querySelector('.hxl-line');
+
+  var TIPS = [
+    'THE BELL IS ABOUT TO RING.',
+    'RESPECT THE GRIND. NOTHING IS HANDED OUT.',
+    'READ YOUR OPPONENT. THEN STRIKE.',
+    'STEP IN. THE ARENA IS WAITING.'
+  ];
+  var ti = 0, tipTimer = null, completed = false;
+  function pad(n){ n = Math.round(n); return n < 10 ? '0' + n : '' + n; }
+  function rotateTip(){ line.textContent = TIPS[ti++ % TIPS.length]; tipTimer = setTimeout(rotateTip, 3200); }
+  function startTips(){ if (!tipTimer) tipTimer = setTimeout(rotateTip, 3200); }
+  function stopTips(){ clearTimeout(tipTimer); tipTimer = null; }
+
+  function complete(){
+    if (completed) return; completed = true; stopTips();
+    creed.innerHTML = 'STEP <b>IN.</b>';
+    tag.textContent = 'ARENA READY';
+    line.textContent = 'PRESS TO ENTER THE CAGE.';
+  }
+  function restoreLoading(){            /* lets the bar recover if progress dips */
+    if (!completed) return; completed = false;
+    creed.innerHTML = 'NEVER <b>GIVE UP.</b>';
+    tag.textContent = 'FIELD NOTE';
+    ti = 0; rotateTip();
+  }
+
+  var Loader = {
+    set: function (p) {
+      p = Math.max(0, Math.min(100, +p || 0));
+      el.style.setProperty('--p', p);
+      numV.textContent = pad(p);
+      bar.setAttribute('aria-valuenow', Math.round(p));
+      if (p >= 100) complete(); else restoreLoading();
+      return p;
+    },
+    done: function () {
+      this.set(100);
+      setTimeout(function () {
+        el.classList.add('hxl-out');
+        setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 650);
+      }, 550);
+    }
+  };
+
+  startTips();
+  window.HexlashLoader = Loader;
+})();
 </script>
+
 <div id="app"></div>
-<script>
-    window.onload = () => {
-        console.log("App loaded");
-        const loadingScreen = document.getElementById('app-loading');
-        loadingScreen.classList.add('hidden');
-        loadingScreen.addEventListener('transitionend', () => {
-            loadingScreen.style.display = 'none';
-        });
-    };
-</script>
 <script src="/telegram-web.js"></script>
 <script src="/ammo.wasm.js"></script>
 <script type="module" src="/src/main.js"></script>
