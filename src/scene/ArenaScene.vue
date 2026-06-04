@@ -2,8 +2,9 @@
      with torn jagged inner edges split by a wide gap, the rift glowing as the
      single light (torn-rift pass 3/3), floating in dark void; orbit-drag + zoom,
      default 3/4 top view. Sharp render (full DPR, mipmapped hex) with switchable
-     presence "moods" (?mood=A|B|C or keys 1/2/3) the owner picks on preview. No
-     fighters, no HUD, no combat logic (separate stage).
+     presence "moods" (?mood=A|B|C or keys 1/2/3) the owner picks on preview.
+     One idle fighter-construct stands on the near (player) half; no combat, no
+     HUD, no controls (separate stages).
 
      Discipline: one pink accent (#FF0069 from --hex-primary) + one glow (the
      rift — pulses as a whole, no running beam); nothing else glows, no pink
@@ -21,13 +22,14 @@ import { onMounted, onBeforeUnmount, ref } from 'vue';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildArena } from './buildArena.js';
+import { buildFighter } from './buildFighter.js';
 import { createArenaPresence } from './arenaPresence.js';
 
 const wrap = ref(null);
 const canvasEl = ref(null);
 const variant = ref('A');
 
-let renderer, scene, camera, controls, arena, presence, resizeObserver, clock;
+let renderer, scene, camera, controls, arena, fighter, presence, resizeObserver, clock;
 let onVisibility, onKeydown, onControlsStart, onControlsEnd;
 
 // idle-drift bookkeeping (variant B)
@@ -100,6 +102,12 @@ onMounted(() => {
   variant.value = normalizeVariant(new URLSearchParams(window.location.search).get('mood'));
   presence.setVariant(variant.value);
 
+  // --- Fighter: one construct on the near (player) half, facing the rift.
+  fighter = buildFighter(pink);
+  fighter.group.position.set(0, arena.refs.topY, 1.05);
+  fighter.setReducedMotion(reducedMotion);
+  scene.add(fighter.group);
+
   // --- Orbit controls — drag to rotate, wheel / pinch zoom; centred, no pan.
   controls = new OrbitControls(camera, renderer.domElement);
   controls.target.set(0, 0.2, 0);
@@ -148,6 +156,7 @@ onMounted(() => {
 
     controls.update();
     presence.update(t);
+    fighter.update(t);
     renderer.render(scene, camera);
   };
   renderer.setAnimationLoop(loop);
@@ -192,6 +201,7 @@ onBeforeUnmount(() => {
   if (renderer) renderer.setAnimationLoop(null);
   if (controls) controls.dispose();
   if (presence) presence.dispose();
+  if (fighter) fighter.dispose();
   if (arena) arena.dispose();
   if (renderer) renderer.dispose();
 });
