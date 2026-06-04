@@ -16,6 +16,7 @@
     <div class="arena-hint">MOOD {{ variant }} · 1 / 2 / 3</div>
     <!-- Temporary dev triggers (preview only) — mirror the keys Z / X / C. -->
     <div class="arena-actions">
+      <button type="button" class="tgt" @click="toggleTarget">TGT: {{ target === 'player' ? 'P1' : 'P2' }}</button>
       <button type="button" @click="onApproach">APPROACH</button>
       <button type="button" @click="onPunch">PUNCH</button>
       <button type="button" @click="onCombo">COMBO</button>
@@ -39,6 +40,7 @@ import { createArenaPresence } from './arenaPresence.js';
 const wrap = ref(null);
 const canvasEl = ref(null);
 const variant = ref('A');
+const target = ref('player'); // which fighter the dev triggers act on
 
 let renderer, scene, camera, controls, arena, fighter, opponent, presence, resizeObserver, clock;
 let onVisibility, onKeydown, onControlsStart, onControlsEnd;
@@ -57,15 +59,18 @@ function lowPowerDevice() {
   return cores <= 4 || mem <= 4;
 }
 
-// Dev action triggers (preview) — fighter ignores these under reduced-motion.
-function onApproach() { fighter?.approach(); }
-function onPunch() { fighter?.punch(); }
-function onCombo() { fighter?.combo(); }
-function onDouble() { fighter?.double(); }
-function onWalk() { fighter?.walk(); }
-function onRun() { fighter?.run(); }
-function onHurt() { fighter?.hurt(); }
-function onOut() { fighter?.eliminate(); }
+// Dev action triggers (preview) — act on the selected fighter; toggle with P /
+// the TGT button. Each fighter ignores triggers under reduced-motion.
+const curFighter = () => (target.value === 'opponent' ? opponent : fighter);
+function toggleTarget() { target.value = target.value === 'player' ? 'opponent' : 'player'; }
+function onApproach() { curFighter()?.approach(); }
+function onPunch() { curFighter()?.punch(); }
+function onCombo() { curFighter()?.combo(); }
+function onDouble() { curFighter()?.double(); }
+function onWalk() { curFighter()?.walk(); }
+function onRun() { curFighter()?.run(); }
+function onHurt() { curFighter()?.hurt(); }
+function onOut() { curFighter()?.eliminate(); }
 
 function normalizeVariant(v) {
   const u = String(v || '').toUpperCase();
@@ -225,14 +230,15 @@ onMounted(() => {
     if (map[e.key]) {
       variant.value = map[e.key];
       presence.setVariant(variant.value);
-    } else if (e.key === 'z') fighter.approach();
-    else if (e.key === 'x') fighter.punch();
-    else if (e.key === 'c') fighter.combo();
-    else if (e.key === 'v') fighter.double();
-    else if (e.key === 'b') fighter.walk();
-    else if (e.key === 'n') fighter.run();
-    else if (e.key === 'h') fighter.hurt();
-    else if (e.key === 'k') fighter.eliminate();
+    } else if (e.key === 'p') toggleTarget();
+    else if (e.key === 'z') curFighter()?.approach();
+    else if (e.key === 'x') curFighter()?.punch();
+    else if (e.key === 'c') curFighter()?.combo();
+    else if (e.key === 'v') curFighter()?.double();
+    else if (e.key === 'b') curFighter()?.walk();
+    else if (e.key === 'n') curFighter()?.run();
+    else if (e.key === 'h') curFighter()?.hurt();
+    else if (e.key === 'k') curFighter()?.eliminate();
   };
   window.addEventListener('keydown', onKeydown);
 
@@ -330,6 +336,10 @@ onBeforeUnmount(() => {
 }
 .arena-actions button:hover {
   color: #fff;
+  border-color: var(--hex-primary, #ff0069);
+}
+.arena-actions button.tgt {
+  color: var(--hex-primary, #ff0069);
   border-color: var(--hex-primary, #ff0069);
 }
 </style>

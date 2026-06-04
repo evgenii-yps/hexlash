@@ -28,6 +28,7 @@ export function buildFighter(pink = '#FF0069', { side = 'player', onImpact, onEl
   const skinColor = isOpp ? 0x141b2e : 0x1c2233; // opponent darker + cooler
   const coreDim = isOpp ? 0.7 : 1.0; // darkens the gem, keeps the hue
   const coreGain = isOpp ? 0.55 : 1.0; // halo brightness — player's is brightest
+  const seamSign = isOpp ? -1 : 1; // which half: player +z, opponent -z (toward seam = -seamSign)
 
   // Shared faceted "skin" — same workshop as the plates, a touch lighter so the
   // construct reads against them.
@@ -226,9 +227,16 @@ export function buildFighter(pink = '#FF0069', { side = 'player', onImpact, onEl
   const WALK = { speed: 0.9, swing: 0.45, knee: 0.7, arm: 0.4, lean: -0.05, bob: 0.03, twist: 0.05 };
   const RUN = { speed: 2.2, swing: 0.72, knee: 1.0, arm: 0.6, lean: -0.22, bob: 0.05, twist: 0.08 };
   const STRIDE_K = 7; // gait phase (rad) per world unit travelled → cadence ∝ speed
-  const Z_FRONT = 0.75; // closest to the seam (feet stay on the near plate, no cross)
-  const Z_BACK = 1.85; // back of the near half
-  const loco = { active: false, type: 'walk', dir: -1, z: 0, phase: 0 };
+  // Patrol stays on THIS fighter's own half (mirrored by side) and never crosses
+  // the seam. Toward the seam = -seamSign. The clip joint/hips offsets are
+  // already mirrored, because the body lives inside the flipped group; only this
+  // scene-space translate needs the sign. 0.9 keeps even a front-foot punch from
+  // poking across the seam.
+  const Z_SEAM = seamSign * 0.9; // closest approach to the seam (feet on plate)
+  const Z_BACK = seamSign * 1.85; // back of the half
+  const Z_LO = Math.min(Z_SEAM, Z_BACK);
+  const Z_HI = Math.max(Z_SEAM, Z_BACK);
+  const loco = { active: false, type: 'walk', dir: -seamSign, z: 0, phase: 0 };
 
   // Elimination — dissolve into the fog (~1.4s); core holds and fades last.
   const BG = new THREE.Color(0x070811);
@@ -275,13 +283,14 @@ export function buildFighter(pink = '#FF0069', { side = 'player', onImpact, onEl
     resetLegs();
   };
 
-  // Looping gait: translate group.z across [Z_FRONT, Z_BACK] (advance toward the
-  // seam, retreat back, always facing it), the cycle synced to speed.
+  // Looping gait: translate group.z across [Z_LO, Z_HI] on this fighter's own
+  // half (advance toward the seam, retreat back, always facing it), the cycle
+  // synced to speed.
   const stepLocomotion = (dt) => {
     const cfg = loco.type === 'run' ? RUN : WALK;
     loco.z += loco.dir * cfg.speed * dt;
-    if (loco.z <= Z_FRONT) { loco.z = Z_FRONT; loco.dir = 1; }
-    if (loco.z >= Z_BACK) { loco.z = Z_BACK; loco.dir = -1; }
+    if (loco.z <= Z_LO) { loco.z = Z_LO; loco.dir = 1; }
+    if (loco.z >= Z_HI) { loco.z = Z_HI; loco.dir = -1; }
     group.position.z = loco.z;
     loco.phase += dt * cfg.speed * STRIDE_K;
     const p = loco.phase;
@@ -306,7 +315,7 @@ export function buildFighter(pink = '#FF0069', { side = 'player', onImpact, onEl
     if (reduced || state !== 'alive') return;
     clip = null; // stop any one-shot
     if (loco.active && loco.type === type) { loco.active = false; return; }
-    if (!loco.active) { loco.z = group.position.z; loco.dir = -1; loco.phase = 0; }
+    if (!loco.active) { loco.z = group.position.z; loco.dir = -seamSign; loco.phase = 0; }
     loco.type = type;
     loco.active = true;
   };
