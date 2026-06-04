@@ -268,6 +268,7 @@ export function buildFighter(pink = '#FF0069', { side = 'player', maxHp = 100, o
   const DISS_DUR = 1.4;
   let state = 'alive'; // alive | dissolving | done
   let diss = 0;
+  const ai = { on: false, nextAt: 0 }; // autonomous-behaviour state (dev)
 
   const play = (c) => {
     if (reduced || clip || state !== 'alive') return; // one one-shot at a time
@@ -363,9 +364,30 @@ export function buildFighter(pink = '#FF0069', { side = 'player', maxHp = 100, o
     if (state !== 'alive') return;
     hp = Math.max(0, hp - dmg);
     updateBar();
-    if (hp <= 0) eliminate(); // → dissolve; onEliminated raised on completion
-    else play(HURT); // weighty recoil + core flash
+    if (hp <= 0) { eliminate(); return; } // → dissolve; onEliminated raised on completion
+    play(HURT); // weighty recoil + core flash
+    ai.nextAt = Math.max(ai.nextAt, lastT + HURT.dur + 0.4 + Math.random() * 0.6); // rhythm hitch
   };
+
+  // Autonomous behaviour (dev): when free, pick a weighted attack at the seam
+  // (COMBO approaches+strikes+recovers, PUNCH/DOUBLE in place), then a random
+  // pause; an incoming hit adds a rhythm hitch (above). Live random — no seed.
+  // Runs in both motion modes; under reduced it resolves the key moment (the
+  // hit lands) without the full body motion, so it reads without jitter.
+  const tickAI = (t) => {
+    if (state !== 'alive' || clip || loco.active) return; // only when free
+    if (t < ai.nextAt) return;
+    if (reduced) {
+      if (onImpact) onImpact(); // key moment only — hit lands, no motion
+      ai.nextAt = t + 0.7 + Math.random() * 0.8;
+      return;
+    }
+    const r = Math.random();
+    const atk = r < 0.5 ? COMBO : r < 0.8 ? PUNCH : DOUBLE; // weighted choice
+    play(atk);
+    ai.nextAt = t + atk.dur + 0.4 + Math.random() * 0.9; // pause after the clip
+  };
+  const setAI = (b) => { ai.on = b; if (b) ai.nextAt = lastT + 0.3 + Math.random() * 0.6; };
 
   const update = (t) => {
     const dt = Math.min(0.05, Math.max(0, t - lastT));
@@ -386,6 +408,8 @@ export function buildFighter(pink = '#FF0069', { side = 'player', maxHp = 100, o
       return;
     }
     if (state === 'done') return;
+
+    if (ai.on) tickAI(t); // autonomous behaviour — runs in both motion modes
 
     if (reduced) {
       hips.position.set(0, hipsBaseY, 0);
@@ -468,6 +492,9 @@ export function buildFighter(pink = '#FF0069', { side = 'player', maxHp = 100, o
     takeDamage,
     getHp: () => hp,
     maxHp,
+    setAI,
+    toggleAI: () => setAI(!ai.on),
+    isAI: () => ai.on,
     joints: { hips, torso, armL, armR, legL, legR },
   };
 }

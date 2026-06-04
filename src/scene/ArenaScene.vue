@@ -26,6 +26,8 @@
       <button type="button" @click="onHurt">HURT</button>
       <button type="button" @click="onOut">OUT</button>
       <button type="button" class="tgt" @click="onDemo">DEMO</button>
+      <button type="button" class="tgt" @click="onAITarget">AI</button>
+      <button type="button" class="tgt" @click="onAIBoth">AI×2</button>
     </div>
   </div>
 </template>
@@ -50,6 +52,10 @@ let onVisibility, onKeydown, onControlsStart, onControlsEnd;
 // across the seam" loop reads. Not real combat: no HP / timeline / logic.
 let demo = null; // { start, events:[{t, fn, done}] } while running
 let demoPending = false;
+// Autonomous-behaviour intent per side (kept across respawns so a KO doesn't
+// stop the loop). Toggled via key A (current target) / the AI buttons.
+let aiPlayer = false;
+let aiOpponent = false;
 
 // idle-drift bookkeeping (variant B)
 let userActive = false;
@@ -96,6 +102,18 @@ function buildDemoEvents() {
   return events;
 }
 function onDemo() { if (!demo) demoPending = true; }
+// Toggle autonomous behaviour: A / AI button = current target; AI×2 = both.
+function onAITarget() {
+  if (target.value === 'opponent') { aiOpponent = !aiOpponent; opponent?.setAI(aiOpponent); }
+  else { aiPlayer = !aiPlayer; fighter?.setAI(aiPlayer); }
+}
+function onAIBoth() {
+  const next = !(aiPlayer && aiOpponent);
+  aiPlayer = next;
+  aiOpponent = next;
+  fighter?.setAI(next);
+  opponent?.setAI(next);
+}
 
 // Damage per clean hit (tunable, slight variance per blow) → ~5-6 hits to OUT.
 const rollDamage = () => 18 + Math.round(Math.random() * 6 - 3);
@@ -172,6 +190,7 @@ onMounted(() => {
     });
     fighter.group.position.set(0, arena.refs.topY, 1.05);
     fighter.setReducedMotion(reducedMotion);
+    fighter.setAI(aiPlayer); // keep AI on across respawn
     scene.add(fighter.group);
   };
   const spawnOpponent = () => {
@@ -186,6 +205,7 @@ onMounted(() => {
     });
     opponent.group.position.set(0, arena.refs.topY, -1.05);
     opponent.setReducedMotion(reducedMotion);
+    opponent.setAI(aiOpponent); // keep AI on across respawn
     scene.add(opponent.group);
   };
   spawnFighter();
@@ -281,6 +301,7 @@ onMounted(() => {
     else if (e.key === 'h') curFighter()?.hurt();
     else if (e.key === 'k') curFighter()?.eliminate();
     else if (e.key === 'g') onDemo();
+    else if (e.key === 'a') onAITarget();
   };
   window.addEventListener('keydown', onKeydown);
 
