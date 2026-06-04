@@ -7,39 +7,42 @@
 import * as THREE from 'three';
 
 /**
- * Hex-grid overlay for the platform's top face. Thin muted lines that fade
- * toward the far edge (top of canvas) plus a very faint monochrome scanline +
- * speckle micro-texture so the floor reads as a material, not a flat fill.
+ * Hex-grid overlay for the platform's top face — SEAMLESSLY TILEABLE so it can
+ * be mapped with equal world-scale UVs (regular hexagons, not squashed). Uniform
+ * alpha here; the far-edge fade is applied per-vertex by buildArena (a baked
+ * gradient can't tile). RepeatWrapping + mipmaps + max anisotropy keep it crisp.
  *
- * Mipmaps + max anisotropy keep the grid crisp on the far half in perspective.
+ * The grid is flat-top with an integer number of column-pairs (2·nx) and rows
+ * (ny) across a square canvas, so the pattern repeats with no seam.
  * @param {number} maxAniso renderer.capabilities.getMaxAnisotropy()
  */
 export function makeHexGridTexture(maxAniso = 1) {
-  const W = 1024;
-  const H = 683; // ≈ 6:4 platform footprint
+  const S = 1024;
   const canvas = document.createElement('canvas');
-  canvas.width = W;
-  canvas.height = H;
+  canvas.width = S;
+  canvas.height = S;
   const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, S, S);
 
-  ctx.clearRect(0, 0, W, H);
-
-  // --- Micro surface texture: faint scanlines + speckle (monochrome).
+  // --- Faint monochrome micro-texture (material read). Scanlines tile exactly.
   ctx.fillStyle = 'rgba(150, 165, 195, 0.022)';
-  for (let y = 0; y < H; y += 3) ctx.fillRect(0, y, W, 1);
-  for (let i = 0; i < 1400; i++) {
-    const x = Math.random() * W;
-    const y = Math.random() * H;
+  for (let y = 0; y < S; y += 4) ctx.fillRect(0, y, S, 1);
+  for (let i = 0; i < 1600; i++) {
     ctx.fillStyle = `rgba(170,185,210,${0.015 + Math.random() * 0.03})`;
-    ctx.fillRect(x, y, 1, 1);
+    ctx.fillRect(Math.random() * S, Math.random() * S, 1, 1);
   }
 
-  // --- Hex grid (flat-top), higher contrast than before but still thin.
+  // --- Flat-top hex grid that tiles exactly: 2·nx columns, ny rows fit the
+  //     canvas precisely. Steps are ~1% off perfectly-regular spacing (so the
+  //     lattice tiles), which is imperceptible.
+  const nx = 8; // → 16 columns
+  const ny = 14;
+  const hStep = S / (2 * nx); // 64
+  const vStep = S / ny; // ~73.1
+  const size = hStep / 1.5; // hex radius
   ctx.lineWidth = 1.6;
   ctx.lineJoin = 'round';
-  const size = 40;
-  const hStep = size * 1.5;
-  const vStep = size * Math.sqrt(3);
+  ctx.strokeStyle = 'rgba(160, 182, 218, 0.32)';
 
   const hexPath = (cx, cy) => {
     ctx.beginPath();
@@ -51,22 +54,19 @@ export function makeHexGridTexture(maxAniso = 1) {
       else ctx.lineTo(x, y);
     }
     ctx.closePath();
+    ctx.stroke();
   };
 
-  let col = 0;
-  for (let cx = -size; cx <= W + size; cx += hStep, col++) {
-    const yOffset = col % 2 ? vStep / 2 : 0;
-    for (let cy = -size + yOffset; cy <= H + size; cy += vStep) {
-      const depth = cy / H; // 0 far … 1 near
-      const alpha = 0.1 + 0.32 * depth; // higher contrast, fades to far edge
-      ctx.strokeStyle = `rgba(160, 182, 218, ${alpha})`;
-      hexPath(cx, cy);
-      ctx.stroke();
-    }
+  for (let col = -1; col <= 2 * nx; col++) {
+    const cx = col * hStep;
+    const off = col & 1 ? vStep / 2 : 0;
+    for (let row = -1; row <= ny; row++) hexPath(cx, row * vStep + off);
   }
 
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.RepeatWrapping;
   tex.generateMipmaps = true;
   tex.minFilter = THREE.LinearMipmapLinearFilter;
   tex.magFilter = THREE.LinearFilter;

@@ -56,19 +56,6 @@ function riftCenterline(seed, x0, x1, n, amp) {
   return pts;
 }
 
-function remapBboxUV(geo) {
-  geo.computeBoundingBox();
-  const bb = geo.boundingBox;
-  const sx = bb.max.x - bb.min.x || 1;
-  const sy = bb.max.y - bb.min.y || 1;
-  const pos = geo.attributes.position;
-  const uv = geo.attributes.uv;
-  for (let i = 0; i < pos.count; i++) {
-    uv.setXY(i, (pos.getX(i) - bb.min.x) / sx, (pos.getY(i) - bb.min.y) / sy);
-  }
-  uv.needsUpdate = true;
-}
-
 // Triangle-strip ribbon between two rails (arrays of Vector3). v = 0 on railA,
 // v = 1 on railB; u runs along the length.
 function stripGeometry(railA, railB) {
@@ -109,7 +96,7 @@ export function buildArena(maxAniso = 1, pink = '#FF0069') {
 
   // One plate: extruded torn block (inner edge = offset centreline), hex top
   // clipped to the tear, light rim.
-  const buildPlate = (plateOuterZ, innerPts, hexOpacity) => {
+  const buildPlate = (plateOuterZ, innerPts) => {
     const outline = [[-W / 2, plateOuterZ], [W / 2, plateOuterZ], ...innerPts];
     const shape = new THREE.Shape();
     shape.moveTo(outline[0][0], outline[0][1]);
@@ -126,9 +113,26 @@ export function buildArena(maxAniso = 1, pink = '#FF0069') {
     group.add(body);
 
     const hexGeo = new THREE.ShapeGeometry(shape);
-    remapBboxUV(hexGeo);
+    // Equal world-scale UVs → regular hexagons (no bbox squash). Per-vertex
+    // alpha fades the grid toward the far edge of the arena.
+    const D = 6.5; // world span of one texture tile (controls density)
+    const hpos = hexGeo.attributes.position;
+    const huv = hexGeo.attributes.uv;
+    const hcol = new Float32Array(hpos.count * 4);
+    for (let i = 0; i < hpos.count; i++) {
+      const x = hpos.getX(i);
+      const z = hpos.getY(i); // shape y = world Z
+      huv.setXY(i, x / D, z / D);
+      const t = THREE.MathUtils.clamp((z + outerZ) / (2 * outerZ), 0, 1); // 0 far … 1 near
+      hcol[i * 4] = 1;
+      hcol[i * 4 + 1] = 1;
+      hcol[i * 4 + 2] = 1;
+      hcol[i * 4 + 3] = 0.3 + 0.6 * t;
+    }
+    huv.needsUpdate = true;
+    hexGeo.setAttribute('color', new THREE.BufferAttribute(hcol, 4));
     const hexMat = new THREE.MeshBasicMaterial({
-      map: hexTex, transparent: true, depthWrite: false, opacity: hexOpacity, side: THREE.DoubleSide,
+      map: hexTex, transparent: true, depthWrite: false, side: THREE.DoubleSide, vertexColors: true,
     });
     const hex = new THREE.Mesh(hexGeo, hexMat);
     hex.rotation.x = Math.PI / 2;
@@ -144,8 +148,8 @@ export function buildArena(maxAniso = 1, pink = '#FF0069') {
     group.add(rim);
   };
 
-  buildPlate(outerZ, nearInner, 0.9); // near (player)
-  buildPlate(-outerZ, farInner, 0.72); // far (opponent)
+  buildPlate(outerZ, nearInner); // near (player)
+  buildPlate(-outerZ, farInner); // far (opponent)
 
   // --- Rift glow (single light). Additive, fog off, depthWrite off but depth
   //     TEST on, so the plates clip the glow to the slit → light from the crack.
