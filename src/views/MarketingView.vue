@@ -104,7 +104,10 @@ function onAnchorClick(e) {
 }
 
 useDocumentMeta({
-  title: 'Hexlash — Bigger Fights Incoming',
+  // Tab/share title is the bare domain on every route (incl. the landing).
+  // og:title / twitter:title derive from this; description + og:image (marketing)
+  // are intentionally left untouched.
+  title: 'hexlash.com',
   description: 'Pick your fighter, build your loadout, take the belt. A Web3 turn-based fighter on Base. Train. Fight. Rise.',
   ogImage: 'https://hexlash.com/og-image.png',
 });
