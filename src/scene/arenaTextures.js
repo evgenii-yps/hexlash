@@ -2,8 +2,8 @@
 // so the scene loads instantly on mobile. Each factory returns a
 // THREE.CanvasTexture; callers own .dispose().
 //
-// Discipline: monochrome surface texture only (the pink rift glow returns in
-// torn-rift pass 3).
+// Discipline: monochrome surface/dust textures; the single pink accent
+// (--hex-primary, passed in) lives only in the rift-glow textures.
 import * as THREE from 'three';
 
 /**
@@ -93,4 +93,71 @@ export function makeRadialTexture(coreRgba, midRgba, midStop = 0.4) {
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
   return tex;
+}
+
+// --- Rift glow textures (torn-rift pass 3). The single accent colour `pink`
+//     comes from the --hex-primary token (passed in, never hard-coded). All
+//     are tight gradients so the glow stays a narrow bright band, not a cloud.
+
+/** Hot core ribbon: near-white centre → pink shoulders → transparent (narrow).
+ *  Laid flat across the gap bottom, the bright centre reads as the molten seam. */
+export function makeCoreBandTexture(pink) {
+  return bandTexture([
+    [0.0, 'rgba(255,255,255,0)'],
+    [0.42, 'rgba(255,255,255,0)'],
+    [0.46, hexToRgba(pink, 0.6)],
+    [0.5, 'rgba(255,250,252,1)'],
+    [0.54, hexToRgba(pink, 0.6)],
+    [0.6, 'rgba(255,255,255,0)'],
+    [1.0, 'rgba(255,255,255,0)'],
+  ]);
+}
+
+/** Dense short pink halo around the core (fast falloff, no wide cloud). */
+export function makeHaloBandTexture(pink) {
+  return bandTexture([
+    [0.0, hexToRgba(pink, 0)],
+    [0.3, hexToRgba(pink, 0)],
+    [0.42, hexToRgba(pink, 0.4)],
+    [0.5, hexToRgba(pink, 0.95)],
+    [0.58, hexToRgba(pink, 0.4)],
+    [0.7, hexToRgba(pink, 0)],
+    [1.0, hexToRgba(pink, 0)],
+  ]);
+}
+
+/** Far-plate inner wall underlight: dark/transparent top → hot pink at the
+ *  bottom chip (light rising from the chasm). Drawn so the canvas bottom (which
+ *  maps to the plane's bottom via flipY) is hottest. */
+export function makeWallGlowTexture(pink) {
+  return bandTexture([
+    [0.0, hexToRgba(pink, 0)], // canvas top → plane top → dark
+    [0.5, hexToRgba(pink, 0.12)],
+    [0.8, hexToRgba(pink, 0.5)],
+    [0.95, hexToRgba(pink, 0.85)],
+    [1.0, 'rgba(255,240,247,0.95)'], // canvas bottom → plane bottom → hot
+  ]);
+}
+
+// Tiny vertical-gradient strip (uniform along its width). Shared by the rift
+// band textures above.
+function bandTexture(stops) {
+  const W = 8;
+  const H = 128;
+  const canvas = document.createElement('canvas');
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  for (const [pos, color] of stops) g.addColorStop(pos, color);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+function hexToRgba(hex, a) {
+  const n = parseInt(hex.replace('#', ''), 16);
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
 }

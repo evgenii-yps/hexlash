@@ -5,7 +5,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 .app-v2 {
-  --hex-primary: #FF066F;
+  --hex-primary: #FF0069;
   --bg-deep: #070811;
   --bg-panel: rgba(14, 16, 28, 0.85);
   --text-dim: rgba(255, 255, 255, 0.5);

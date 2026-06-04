@@ -1,13 +1,13 @@
 <!-- ArenaScene — Three.js arena, the foundation for future combat. Two slabs
-     split by a wide gap with torn jagged inner edges (torn-rift pass 2/3),
-     floating in dark void;
-     orbit-drag + zoom, default 3/4 top view. Sharp render (full DPR, mipmapped
-     hex) with switchable presence "moods" (?mood=A|B|C or keys 1/2/3) the owner
-     picks on preview. No fighters, no HUD, no combat logic (separate stage).
+     with torn jagged inner edges split by a wide gap, the rift glowing as the
+     single light (torn-rift pass 3/3), floating in dark void; orbit-drag + zoom,
+     default 3/4 top view. Sharp render (full DPR, mipmapped hex) with switchable
+     presence "moods" (?mood=A|B|C or keys 1/2/3) the owner picks on preview. No
+     fighters, no HUD, no combat logic (separate stage).
 
-     Discipline: no pink in the scene during rift passes 1–2 (the rift glow —
-     the single accent + single glow — returns in pass 3). All texture / motion
-     is monochrome. Throttled when idle/hidden, respects prefers-reduced-motion. -->
+     Discipline: one pink accent (#FF0069 from --hex-primary) + one glow (the
+     rift — pulses as a whole, no running beam); nothing else glows, no pink
+     under the plates. Throttled when idle/hidden, respects prefers-reduced-motion. -->
 <template>
   <div ref="wrap" class="arena-wrap">
     <canvas ref="canvasEl" class="arena-canvas" />
@@ -90,8 +90,10 @@ onMounted(() => {
   scene.add(new THREE.AmbientLight(0x2a3550, 0.5));
   scene.add(new THREE.HemisphereLight(0x44506e, 0x05060c, 0.4));
 
-  // --- Arena + presence.
-  arena = buildArena(renderer.capabilities.getMaxAnisotropy());
+  // --- Arena + presence. Pink comes from the --hex-primary token (the scene
+  //     inherits it via .app-v2), never hard-coded — one canonical pink.
+  const pink = getComputedStyle(el).getPropertyValue('--hex-primary').trim() || '#FF0069';
+  arena = buildArena(renderer.capabilities.getMaxAnisotropy(), pink);
   scene.add(arena.group);
   presence = createArenaPresence(scene, arena.refs);
   presence.setReducedMotion(reducedMotion);

@@ -1,22 +1,24 @@
 // Presence layers for the arena — switchable "mood" variants the owner picks
 // on preview. Base look/optimization live in ArenaScene + buildArena; this
-// module only adds the optional life.
+// module drives the rift-glow pulse + the optional extra life.
 //
-//   A "Clean platform" — static (just the lit slabs + depth). Manual orbit only.
-//   B "Living scene"    — sparse monochrome dust + faint hex-cell pulse flanking
-//                         the gap (idle camera drift handled in ArenaScene).
-//   C "Energy field"    — same ambient life as B for now; its rift-glow energy
-//                         (stronger pulse + sparks) lands in TORN-RIFT pass 3,
-//                         when the gap gets its glow.
+//   A "Clean platform" — restrained whole-rift breathing. Manual orbit only.
+//   B "Living scene"    — A's breathing + sparse monochrome dust + faint
+//                         hex-cell pulse flanking the gap (idle camera drift in
+//                         ArenaScene).
+//   C "Energy field"    — more pronounced whole-rift breathing (its accent).
 //
-// Discipline: monochrome dust + surface micro-texture only. No pink lives in
-// the scene during passes 1–2 (the rift glow returns in pass 3). Everything
-// here stops under prefers-reduced-motion.
+// The rift glow (core + halo + walls + contour + sparks, built in buildArena)
+// pulses AS ONE — no beam runs along the line. Sparks rise from the chasm.
+// Discipline: one pink (#FF0069 from --hex-primary), one glow (the rift); dust
+// is monochrome. Under prefers-reduced-motion the glow holds static at its lit
+// peak and all motion (pulse / sparks / dust / drift) stops.
 import * as THREE from 'three';
 import { makeRadialTexture } from './arenaTextures.js';
 
 export function createArenaPresence(scene, refs) {
-  const { W, gapHalf, topY } = refs;
+  const { W, gapHalf, topY, riftGlow, sparks } = refs;
+  const sparkPosAttr = sparks.points.geometry.attributes.position;
 
   // --- Dust: sparse cool-grey specks drifting in the void (B/C). One
   //     THREE.Points draw call. Monochrome, normal blend, very faint.
@@ -42,11 +44,9 @@ export function createArenaPresence(scene, refs) {
   dust.visible = false;
   scene.add(dust);
 
-  // --- Hex-cell pulse flanking the gap (B/C). Two narrow bands on the plate
-  //     tops either side of the chasm; monochrome additive, opacity pulses.
-  //     Reuses the arena hex texture (shared — NOT disposed here).
+  // --- Hex-cell pulse flanking the gap (B/C). Monochrome additive bands on the
+  //     plate tops either side of the chasm. Reuses the arena hex texture.
   const makePulseBand = (z) => {
-    const geo = new THREE.PlaneGeometry(W, 0.5);
     const mat = new THREE.MeshBasicMaterial({
       map: refs.hexTexture,
       transparent: true,
@@ -56,7 +56,7 @@ export function createArenaPresence(scene, refs) {
       color: 0x9fb0d0,
       opacity: 0,
     });
-    const mesh = new THREE.Mesh(geo, mat);
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(W, 0.5), mat);
     mesh.rotation.x = -Math.PI / 2;
     mesh.position.set(0, topY + 0.003, z);
     mesh.visible = false;
@@ -70,21 +70,43 @@ export function createArenaPresence(scene, refs) {
   let reduced = false;
 
   const applyVisibility = () => {
-    const live = variant !== 'A' && !reduced;
-    dust.visible = live;
-    pulseNear.visible = live;
-    pulseFar.visible = live;
+    const ambient = variant !== 'A' && !reduced;
+    dust.visible = ambient;
+    pulseNear.visible = ambient;
+    pulseFar.visible = ambient;
+    sparks.points.visible = !reduced; // sparks belong to the rift (all moods)
   };
 
   const setVariant = (v) => { variant = v; applyVisibility(); };
   const setReducedMotion = (b) => { reduced = b; applyVisibility(); };
 
-  const update = (t) => {
-    if (reduced || variant === 'A') return;
+  // Whole-rift breathing — slow, ~1 ↔ low. A restrained, C pronounced.
+  const breath = {
+    A: { c: 0.91, a: 0.09, w: (Math.PI * 2) / 5.0 },
+    B: { c: 0.89, a: 0.11, w: (Math.PI * 2) / 4.5 },
+    C: { c: 0.83, a: 0.17, w: (Math.PI * 2) / 3.8 },
+  };
 
+  const update = (t) => {
+    // Rift pulse — one factor for the whole glow (no running beam).
+    const b = breath[variant] || breath.A;
+    const f = reduced ? 1 : b.c + b.a * Math.sin(t * b.w);
+    for (let i = 0; i < riftGlow.length; i++) riftGlow[i].mat.opacity = riftGlow[i].base * f;
+
+    if (reduced) return; // static lit state, no sparks/dust/pulse motion
+
+    // Sparks rising out of the chasm (deterministic, wrap at the top).
+    for (let i = 0; i < sparks.count; i++) {
+      const y = sparks.yMin + ((t * sparks.sSpeed[i] + sparks.sPhase[i]) % sparks.span);
+      sparks.position[i * 3 + 1] = y;
+    }
+    sparkPosAttr.needsUpdate = true;
+
+    if (variant === 'A') return;
+
+    // Ambient life (B/C): dust drift + hex-cell pulse near the gap.
     dust.rotation.y = t * 0.012;
     dust.position.y = Math.sin(t * 0.18) * 0.12;
-
     const p = 0.04 + 0.07 * (0.5 + 0.5 * Math.sin(t * 1.1));
     pulseNear.material.opacity = p;
     pulseFar.material.opacity = p;
@@ -97,7 +119,7 @@ export function createArenaPresence(scene, refs) {
     dustGeo.dispose();
     dustTex.dispose();
     dustMat.dispose();
-    // shared hex map owned by buildArena — dispose only the materials/geos here
+    // shared hex map owned by buildArena — dispose only materials/geos here
     pulseNear.geometry.dispose();
     pulseNear.material.dispose();
     pulseFar.geometry.dispose();
