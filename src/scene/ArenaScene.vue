@@ -14,6 +14,12 @@
     <canvas ref="canvasEl" class="arena-canvas" />
     <div class="arena-vignette" />
     <div class="arena-hint">MOOD {{ variant }} · 1 / 2 / 3</div>
+    <!-- Temporary dev triggers (preview only) — mirror the keys Z / X / C. -->
+    <div class="arena-actions">
+      <button type="button" @click="onApproach">APPROACH</button>
+      <button type="button" @click="onPunch">PUNCH</button>
+      <button type="button" @click="onCombo">COMBO</button>
+    </div>
   </div>
 </template>
 
@@ -45,6 +51,11 @@ function lowPowerDevice() {
   const mem = navigator.deviceMemory || 8;
   return cores <= 4 || mem <= 4;
 }
+
+// Dev action triggers (preview) — fighter ignores these under reduced-motion.
+function onApproach() { fighter?.approach(); }
+function onPunch() { fighter?.punch(); }
+function onCombo() { fighter?.combo(); }
 
 function normalizeVariant(v) {
   const u = String(v || '').toUpperCase();
@@ -102,8 +113,9 @@ onMounted(() => {
   variant.value = normalizeVariant(new URLSearchParams(window.location.search).get('mood'));
   presence.setVariant(variant.value);
 
-  // --- Fighter: one construct on the near (player) half, facing the rift.
-  fighter = buildFighter(pink);
+  // --- Fighter: one construct on the near (player) half, facing the rift. Its
+  //     punch impact briefly flares the rift glow (same pink, no second colour).
+  fighter = buildFighter(pink, { onImpact: () => presence.triggerFlash(0.55) });
   fighter.group.position.set(0, arena.refs.topY, 1.05);
   fighter.setReducedMotion(reducedMotion);
   scene.add(fighter.group);
@@ -168,13 +180,15 @@ onMounted(() => {
   };
   document.addEventListener('visibilitychange', onVisibility);
 
-  // --- Dev variant switch on preview (1 / 2 / 3).
+  // --- Dev triggers on preview: 1/2/3 = presence moods, Z/X/C = fighter actions.
   onKeydown = (e) => {
     const map = { 1: 'A', 2: 'B', 3: 'C' };
     if (map[e.key]) {
       variant.value = map[e.key];
       presence.setVariant(variant.value);
-    }
+    } else if (e.key === 'z') fighter.approach();
+    else if (e.key === 'x') fighter.punch();
+    else if (e.key === 'c') fighter.combo();
   };
   window.addEventListener('keydown', onKeydown);
 
@@ -245,5 +259,29 @@ onBeforeUnmount(() => {
   letter-spacing: 0.12em;
   color: rgba(255, 255, 255, 0.32);
   user-select: none;
+}
+/* Temporary dev action triggers (preview only). */
+.arena-actions {
+  position: absolute;
+  right: 14px;
+  bottom: 12px;
+  display: flex;
+  gap: 6px;
+}
+.arena-actions button {
+  pointer-events: auto;
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.55);
+  background: rgba(8, 10, 18, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 4px;
+  padding: 5px 9px;
+  cursor: pointer;
+}
+.arena-actions button:hover {
+  color: #fff;
+  border-color: var(--hex-primary, #ff0069);
 }
 </style>

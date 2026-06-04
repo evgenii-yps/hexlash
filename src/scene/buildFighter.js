@@ -17,7 +17,7 @@ function pinkRgba(pink, a) {
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
 }
 
-export function buildFighter(pink = '#FF0069') {
+export function buildFighter(pink = '#FF0069', { onImpact } = {}) {
   const group = new THREE.Group();
 
   // Shared faceted "skin" — same workshop as the plates, a touch lighter so the
@@ -111,27 +111,126 @@ export function buildFighter(pink = '#FF0069') {
   shadow.position.y = 0.012;
   group.add(shadow);
 
-  // --- Idle: heavy slow breathing (hips settle + chest expand) + core pulse.
+  // --- Idle + action system. Idle = heavy breathing (hips settle + chest
+  //     expand) + quiet core pulse. Actions (approach / punch / combo) play once
+  //     on trigger over the joint pivots, then settle back into idle.
   const hipsBaseY = hips.position.y;
   const wBreath = (Math.PI * 2) / 3.8; // ~3.8s
   const wCore = (Math.PI * 2) / 2.6; // ~2.6s
+  const punchArm = armL; // camera-side arm throws the straight punch
+
   let reduced = false;
+  let clip = null;
+  let clipStart = 0;
+  let lastT = 0;
   const setReducedMotion = (b) => { reduced = b; };
 
+  const easeInOut = (u) => (u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2);
+  const easeOut = (u) => 1 - Math.pow(1 - u, 3);
+  const E = { io: easeInOut, out: easeOut };
+
+  // Keyframe value: hips z/y offsets, torso lean, punch-arm shoulder + elbow
+  // angles. Segment i→i+1 is eased by key[i+1].e.
+  const REST = { hz: 0, hy: 0, tx: 0, sx: 0, ex: 0 };
+  const lerpV = (a, b, e) => ({
+    hz: a.hz + (b.hz - a.hz) * e, hy: a.hy + (b.hy - a.hy) * e,
+    tx: a.tx + (b.tx - a.tx) * e, sx: a.sx + (b.sx - a.sx) * e,
+    ex: a.ex + (b.ex - a.ex) * e,
+  });
+  const sample = (keys, ct) => {
+    if (ct <= keys[0].t) return keys[0].v;
+    for (let i = 0; i < keys.length - 1; i++) {
+      if (ct <= keys[i + 1].t) {
+        const u = (ct - keys[i].t) / (keys[i + 1].t - keys[i].t || 1);
+        return lerpV(keys[i].v, keys[i + 1].v, E[keys[i + 1].e](u));
+      }
+    }
+    return keys[keys.length - 1].v;
+  };
+
+  // Heavy timing throughout: slow windup → fast snap → weighty return. Forward
+  // = -Z (toward the rift); the fist reaches the seam but never crosses it.
+  const PUNCH = {
+    dur: 1.3, impact: 0.6,
+    keys: [
+      { t: 0.0, v: REST, e: 'io' },
+      { t: 0.45, v: { hz: 0.02, hy: -0.02, tx: 0.12, sx: 0.15, ex: 2.0 }, e: 'io' }, // coil / chamber
+      { t: 0.6, v: { hz: -0.12, hy: -0.05, tx: -0.18, sx: 1.5, ex: 0.05 }, e: 'out' }, // snap — extend
+      { t: 0.74, v: { hz: -0.08, hy: -0.03, tx: -0.1, sx: 1.35, ex: 0.16 }, e: 'out' }, // recoil
+      { t: 1.3, v: REST, e: 'io' }, // weighty return
+    ],
+  };
+  const APPROACH = {
+    dur: 1.5, impact: -1,
+    keys: [
+      { t: 0.0, v: REST, e: 'io' },
+      { t: 0.55, v: { hz: -0.35, hy: -0.03, tx: -0.06, sx: 0, ex: 0 }, e: 'out' }, // weighty step in
+      { t: 0.9, v: { hz: -0.35, hy: 0, tx: -0.04, sx: 0, ex: 0 }, e: 'io' }, // settle forward
+      { t: 1.5, v: REST, e: 'io' }, // step back
+    ],
+  };
+  const COMBO = {
+    dur: 2.0, impact: 1.12,
+    keys: [
+      { t: 0.0, v: REST, e: 'io' },
+      { t: 0.45, v: { hz: -0.3, hy: -0.03, tx: -0.05, sx: 0, ex: 0 }, e: 'out' }, // approach
+      { t: 0.95, v: { hz: -0.28, hy: -0.04, tx: 0.08, sx: 0.15, ex: 2.0 }, e: 'io' }, // coil
+      { t: 1.12, v: { hz: -0.44, hy: -0.07, tx: -0.2, sx: 1.5, ex: 0.05 }, e: 'out' }, // snap at the seam
+      { t: 1.28, v: { hz: -0.4, hy: -0.05, tx: -0.12, sx: 1.35, ex: 0.16 }, e: 'out' }, // recoil
+      { t: 2.0, v: REST, e: 'io' }, // step back + recover
+    ],
+  };
+
+  const play = (c) => {
+    if (reduced || clip) return; // one at a time; reduced-motion = no playback
+    clip = { ...c, fired: false };
+    clipStart = lastT;
+  };
+
+  const apply = (v) => {
+    hips.position.z = v.hz;
+    hips.position.y = hipsBaseY + v.hy;
+    torso.rotation.x = v.tx;
+    punchArm.shoulder.rotation.x = v.sx;
+    punchArm.elbow.rotation.x = v.ex;
+  };
+
   const update = (t) => {
+    lastT = t;
     if (reduced) {
-      hips.position.y = hipsBaseY;
+      hips.position.set(0, hipsBaseY, 0);
+      torso.rotation.x = 0;
+      punchArm.shoulder.rotation.x = 0;
+      punchArm.elbow.rotation.x = 0;
       chest.scale.set(1, 1, 1);
       core.scale.setScalar(1);
       haloMat.opacity = 0.8;
       return;
     }
-    const s = Math.sin(t * wBreath);
-    hips.position.y = hipsBaseY + s * 0.012; // settle
-    chest.scale.set(1 + s * 0.02, 1 + s * 0.03, 1 + s * 0.02); // breathe
+
+    // Breathing + core pulse run always (independent of the action pivots).
+    const bs = Math.sin(t * wBreath);
+    chest.scale.set(1 + bs * 0.02, 1 + bs * 0.03, 1 + bs * 0.02);
     const c = 0.5 + 0.5 * Math.sin(t * wCore);
     core.scale.setScalar(1 + c * 0.22);
     haloMat.opacity = 0.55 + 0.4 * c;
+
+    if (clip) {
+      const ct = t - clipStart;
+      if (!clip.fired && clip.impact >= 0 && ct >= clip.impact) {
+        clip.fired = true;
+        if (onImpact) onImpact(); // seam glow reacts to the hit
+      }
+      if (ct < clip.dur) { apply(sample(clip.keys, ct)); return; }
+      clip = null; // ended → fall through to idle
+    }
+
+    // Idle posture.
+    hips.position.z = 0;
+    hips.position.y = hipsBaseY + bs * 0.012; // settle
+    torso.rotation.x = 0;
+    punchArm.shoulder.rotation.x = 0;
+    punchArm.elbow.rotation.x = 0;
   };
 
   const dispose = () => {
@@ -155,5 +254,11 @@ export function buildFighter(pink = '#FF0069') {
   //     the placement y in ArenaScene needs no change. ~1.84 → ~1.34 tall.
   group.scale.setScalar(0.73);
 
-  return { group, update, setReducedMotion, dispose, joints: { hips, torso, armL, armR, legL, legR } };
+  return {
+    group, update, setReducedMotion, dispose,
+    approach: () => play(APPROACH),
+    punch: () => play(PUNCH),
+    combo: () => play(COMBO),
+    joints: { hips, torso, armL, armR, legL, legR },
+  };
 }

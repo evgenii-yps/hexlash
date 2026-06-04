@@ -87,11 +87,21 @@ export function createArenaPresence(scene, refs) {
     C: { c: 0.83, a: 0.17, w: (Math.PI * 2) / 3.8 },
   };
 
+  // Transient flash of the whole rift when a fighter lands a hit at the seam
+  // (same pink, no second colour). Decays over ~0.32s; added on top of the
+  // breathing factor.
+  let lastT = 0;
+  let flashAmt = 0;
+  let flashStart = 0;
+  const triggerFlash = (a = 0.55) => { flashAmt = a; flashStart = lastT; };
+
   const update = (t) => {
+    lastT = t;
     // Rift pulse — one factor for the whole glow (no running beam).
     const b = breath[variant] || breath.A;
     const f = reduced ? 1 : b.c + b.a * Math.sin(t * b.w);
-    for (let i = 0; i < riftGlow.length; i++) riftGlow[i].mat.opacity = riftGlow[i].base * f;
+    const flash = (!reduced && flashAmt > 0) ? flashAmt * Math.max(0, 1 - (t - flashStart) / 0.32) : 0;
+    for (let i = 0; i < riftGlow.length; i++) riftGlow[i].mat.opacity = riftGlow[i].base * (f + flash);
 
     if (reduced) return; // static lit state, no sparks/dust/pulse motion
 
@@ -126,5 +136,5 @@ export function createArenaPresence(scene, refs) {
     pulseFar.material.dispose();
   };
 
-  return { setVariant, setReducedMotion, update, dispose };
+  return { setVariant, setReducedMotion, triggerFlash, update, dispose };
 }
