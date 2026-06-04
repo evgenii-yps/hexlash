@@ -274,11 +274,13 @@ export function buildFighter(
   const FAR = 3.0; // beyond this, run in
   const STRIKE = 2.0; // a strike connects only if the foe is within this radius at impact
   const TURN_RATE = 5.0; // facing turn speed (rad/s)
+  const ROAM_DUR = 1.2; // base length of a break-off run (+ jitter); arrival can end it sooner
+  const ROAM_COOLDOWN = 3.0; // base wait after a roam before another break-off is allowed (+ jitter)
 
   // Per-fighter "character" — independent rolls at build give each construct its
   // own temperament, so two fighters never move as a mirror or in lock-step:
-  // different preferred range, aggression, circling sense, decision rhythm and
-  // approach arc. Live random, rolled once per fighter.
+  // different preferred range, aggression, circling sense, decision rhythm,
+  // approach arc and break-off tendency. Live random, rolled once per fighter.
   const character = {
     range: 1.0 + Math.random() * 0.25, // preferred fighting distance — tight, just off contact
     aggression: 0.3 + Math.random() * 0.45, // press-in vs bait-out bias
@@ -286,10 +288,13 @@ export function buildFighter(
     decideMin: 0.3 + Math.random() * 0.25, // manoeuvre decision period — min
     decideJit: 0.35 + Math.random() * 0.5, // + jitter
     approachArc: 0.4 + Math.random() * 0.55, // lateral arc on the way in (rad)
+    roamRate: 0.12 + Math.random() * 0.18, // chance to break off & roam on an eligible decision
   };
 
   const loco = { active: false, type: 'walk' }; // dev WALK/RUN preview toggle
-  const nav = { mode: 'circle', until: 0, foe: null, approachAngle: 0 }; // AI manoeuvre state
+  // AI manoeuvre state. roamX/roamZ = current break-off target; roamUntil = hard
+  // time cap for the roam.
+  const nav = { mode: 'circle', until: 0, foe: null, approachAngle: 0, roamX: 0, roamZ: 0, roamUntil: 0 };
 
   // Elimination — dissolve into the fog (~1.4s); core holds and fades last.
   const BG = new THREE.Color(0x070811);
@@ -297,7 +302,7 @@ export function buildFighter(
   const DISS_DUR = 1.4;
   let state = 'alive'; // alive | dissolving | done
   let diss = 0;
-  const ai = { on: false, nextAt: 0 }; // autonomous-behaviour state (dev)
+  const ai = { on: false, nextAt: 0, roamCdUntil: 0 }; // autonomous-behaviour state (dev)
 
   const play = (c) => {
     if (reduced || clip || state !== 'alive') return; // one one-shot at a time
@@ -378,19 +383,21 @@ export function buildFighter(
     animateGait(dt, cfg);
   };
 
-  // Steer rotation.y toward the foe (shortest angle, rate-limited) — always turn
-  // to face the moving target. Forward is local -Z, so facing a world direction
-  // (dx, dz) means rotation.y = atan2(-dx, -dz).
-  const faceFoe = (dt) => {
-    const f = getFoePos && getFoePos();
-    if (!f) return;
-    const dx = f.x - group.position.x;
-    const dz = f.z - group.position.z;
-    if (dx * dx + dz * dz < 1e-6) return;
-    let diff = Math.atan2(-dx, -dz) - group.rotation.y;
+  // Steer rotation.y toward a world direction (shortest angle, rate-limited).
+  // Forward is local -Z, so facing (dirX, dirZ) means rotation.y = atan2(-dirX, -dirZ).
+  const faceDir = (dt, dirX, dirZ) => {
+    if (dirX * dirX + dirZ * dirZ < 1e-6) return;
+    let diff = Math.atan2(-dirX, -dirZ) - group.rotation.y;
     diff = Math.atan2(Math.sin(diff), Math.cos(diff)); // wrap to [-π, π]
     const max = TURN_RATE * dt;
     group.rotation.y += THREE.MathUtils.clamp(diff, -max, max);
+  };
+  // Face the foe — used in the combat phases (approach / strike / circle). In a
+  // ROAM break-off the fighter faces its heading instead (faceDir), which is the
+  // key decoupler: it stops the two from being permanently locked face-to-face.
+  const faceFoe = (dt) => {
+    const f = getFoePos && getFoePos();
+    if (f) faceDir(dt, f.x - group.position.x, f.z - group.position.z);
   };
   const faceInstant = () => {
     const f = getFoePos && getFoePos();
@@ -412,12 +419,39 @@ export function buildFighter(
     return dx * dx + dz * dz <= STRIKE * STRIKE;
   };
 
+  // Break-off (ROAM) — pick a point on the plate INDEPENDENT of the foe (any
+  // side, behind, far away), with a real distance to travel so it reads as a
+  // genuine relocation, not a step. Start a bounded run there; `delay` covers a
+  // clip that must finish first (so the time cap isn't eaten by it).
+  const pickRoamTarget = () => {
+    let rx = 0;
+    let rz = 0;
+    for (let i = 0; i < 4; i++) {
+      rx = (Math.random() * 2 - 1) * BX;
+      rz = (Math.random() * 2 - 1) * BZ;
+      if (Math.hypot(rx - group.position.x, rz - group.position.z) >= 1.6) break;
+    }
+    nav.roamX = rx;
+    nav.roamZ = rz;
+  };
+  const startRoam = (t, delay = 0) => {
+    nav.mode = 'roam';
+    pickRoamTarget();
+    nav.roamUntil = t + delay + ROAM_DUR + Math.random() * ROAM_DUR; // bounded — always returns
+    ai.roamCdUntil = t + delay + ROAM_DUR + ROAM_COOLDOWN + Math.random() * ROAM_COOLDOWN; // no spam
+  };
+
   // Manoeuvre at fighting range — character-weighted tactic re-picked on this
   // fighter's own clock (decideMin + jitter), so the two never act in lock-step:
   //   circle — orbit the foe (own circling sense, occasionally reversed)
   //   press  — step in toward contact, force a tight exchange (aggressive)
   //   bait   — ease out to draw the foe in (cautious)
+  //   roam   — break off entirely (handled in navigate; triggered here on cd)
   const maneuver = (t, dt, ux, uz, d) => {
+    if (t >= nav.until && t >= ai.roamCdUntil && Math.random() < character.roamRate) {
+      startRoam(t); // break off and run elsewhere
+      return;
+    }
     if (t >= nav.until) {
       const r = Math.random();
       const ag = character.aggression;
@@ -434,8 +468,28 @@ export function buildFighter(
   };
   const navigate = (t, dt, bs) => {
     const f = getFoePos && getFoePos();
-    if (!f) { idlePose(bs); return; } // no foe → idle
-    nav.foe = f;
+    nav.foe = f; // kept for the min-separation clamp (null-safe in moveDir)
+
+    // ROAM — break off and run to a plate point, INDEPENDENT of the foe, facing
+    // the heading (not the foe). This is the decoupler that kills the mirror/
+    // orbit lock. Ends on arrival or the time cap, then returns to the fight.
+    if (nav.mode === 'roam') {
+      const rdx = nav.roamX - group.position.x;
+      const rdz = nav.roamZ - group.position.z;
+      const rd = Math.hypot(rdx, rdz) || 1e-4;
+      if (rd < 0.4 || t >= nav.roamUntil) {
+        nav.mode = 'approach'; // arrived / timed out → re-engage from the new spot
+        nav.until = 0;
+      } else {
+        const rux = rdx / rd;
+        const ruz = rdz / rd;
+        faceDir(dt, rux, ruz); // face the heading — not the foe
+        moveDir(rux, ruz, rd > 1.4 ? RUN : WALK, dt);
+        return;
+      }
+    }
+
+    if (!f) { idlePose(bs); return; } // combat phases need a foe
     const dx = f.x - group.position.x;
     const dz = f.z - group.position.z;
     const d = Math.hypot(dx, dz) || 1e-4;
@@ -532,12 +586,20 @@ export function buildFighter(
     const atk = r < 0.45 ? PUNCH : r < 0.8 ? DOUBLE : COMBO; // punch / double primary, combo = lunge
     play(atk);
     ai.nextAt = t + atk.dur + 0.3 + Math.random() * 0.8; // pause after the clip
-    // Follow-up after the strike — character-driven. Aggressive fighters often
-    // stay in and press a flurry; cautious ones circle or bait out. Window
-    // starts as the clip ends. (Never just hang motionless in the foe's face.)
-    if (Math.random() < character.aggression * 0.6) nav.mode = 'press';
-    else { nav.mode = Math.random() < 0.5 ? 'circle' : 'bait'; if (nav.mode === 'circle' && Math.random() < 0.5) character.strafeBias *= -1; }
-    nav.until = t + atk.dur + 0.25 + Math.random() * 0.4;
+    // Follow-up after the strike (a prime moment to break off). Once off cooldown
+    // a fighter may ROAM away after the exchange; otherwise character-driven —
+    // aggressive ones press a flurry, cautious ones circle or bait out. The
+    // window starts as the clip ends. (Never just hang motionless in the foe's face.)
+    if (t >= ai.roamCdUntil && Math.random() < character.roamRate * 1.4) {
+      startRoam(t, atk.dur); // disengage after the hit (delay covers the clip)
+    } else if (Math.random() < character.aggression * 0.6) {
+      nav.mode = 'press';
+      nav.until = t + atk.dur + 0.25 + Math.random() * 0.4;
+    } else {
+      nav.mode = Math.random() < 0.5 ? 'circle' : 'bait';
+      if (nav.mode === 'circle' && Math.random() < 0.5) character.strafeBias *= -1;
+      nav.until = t + atk.dur + 0.25 + Math.random() * 0.4;
+    }
     return true;
   };
   // Under reduced motion the body holds still; resolve the key moment (the hit
@@ -553,6 +615,7 @@ export function buildFighter(
       ai.nextAt = lastT + 0.3 + Math.random() * 0.6;
       nav.until = lastT + Math.random() * character.decideJit; // desync decision phase
       nav.mode = Math.random() < 0.5 ? 'circle' : 'approach';
+      ai.roamCdUntil = lastT + 1.5 + Math.random() * 2.0; // engage first, no instant break-off
     }
   };
 
@@ -595,9 +658,11 @@ export function buildFighter(
     const cpulse = 0.5 + 0.5 * Math.sin(t * wCore);
     let coreBoost = 0;
 
-    // AI, when free (no clip): turn to face the moving foe, then decide whether
-    // to strike. A strike starts a clip that plays out below this same frame.
-    if (ai.on && !clip) { faceFoe(dt); decideAttack(t); }
+    // AI, when free (no clip) and NOT roaming: turn to face the foe, then decide
+    // whether to strike (a strike starts a clip that plays out below this same
+    // frame). During a ROAM break-off neither runs — the fighter faces its own
+    // heading (set in navigate) and won't attack until it re-engages.
+    if (ai.on && !clip && nav.mode !== 'roam') { faceFoe(dt); decideAttack(t); }
 
     if (clip) {
       const ct = t - clipStart;
