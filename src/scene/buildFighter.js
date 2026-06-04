@@ -274,8 +274,8 @@ export function buildFighter(
   const FAR = 3.0; // beyond this, run in
   const STRIKE = 2.0; // a strike connects only if the foe is within this radius at impact
   const TURN_RATE = 5.0; // facing turn speed (rad/s)
-  const ROAM_DUR = 1.2; // base length of a break-off run (+ jitter); arrival can end it sooner
-  const ROAM_COOLDOWN = 3.0; // base wait after a roam before another break-off is allowed (+ jitter)
+  const ROAM_DUR = 1.5; // base length of a break-off run (+ jitter); arrival can end it sooner
+  const ROAM_COOLDOWN = 2.6; // base wait after a roam before another break-off is allowed (+ jitter)
 
   // Per-fighter "character" — independent rolls at build give each construct its
   // own temperament, so two fighters never move as a mirror or in lock-step:
@@ -288,7 +288,7 @@ export function buildFighter(
     decideMin: 0.3 + Math.random() * 0.25, // manoeuvre decision period — min
     decideJit: 0.35 + Math.random() * 0.5, // + jitter
     approachArc: 0.4 + Math.random() * 0.55, // lateral arc on the way in (rad)
-    roamRate: 0.12 + Math.random() * 0.18, // chance to break off & roam on an eligible decision
+    roamRate: 0.18 + Math.random() * 0.22, // chance to break off & roam on an eligible decision
   };
 
   const loco = { active: false, type: 'walk' }; // dev WALK/RUN preview toggle
