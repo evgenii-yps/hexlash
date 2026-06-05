@@ -61,5 +61,14 @@ export default {
   errors: {
     pageNotFound: "Page not found",
     error404Code: "ERROR 404",
+    // 404 screen (brand voice — en-only, matches design handoff)
+    notFoundSr: "Error 404 — page not found",
+    notFoundCreedLead: "Wrong",
+    notFoundCreedAccent: "Turn.",
+    notFoundSub: "This route isn't on the fight card. No arena down this road.",
+    notFoundBack: "Back to home",
+    notFoundPlay: "Play",
+    notFoundNoteLabel: "Field Note",
+    notFoundNote: "Even champions take a wrong turn. Get back in.",
   },
 };
