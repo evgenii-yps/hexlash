@@ -22,7 +22,6 @@
       <button type="button" @click="onCombo">COMBO</button>
       <button type="button" @click="onDouble">DOUBLE</button>
       <button type="button" @click="onWalk">WALK</button>
-      <button type="button" @click="onRun">RUN</button>
       <button type="button" @click="onHurt">HURT</button>
       <button type="button" @click="onOut">OUT</button>
       <button type="button" class="tgt" @click="onDemo">DEMO</button>
@@ -90,7 +89,6 @@ function onPunch() { curFighter()?.punch(); }
 function onCombo() { curFighter()?.combo(); }
 function onDouble() { curFighter()?.double(); }
 function onWalk() { curFighter()?.walk(); }
-function onRun() { curFighter()?.run(); }
 function onHurt() { curFighter()?.hurt(); }
 function onOut() { curFighter()?.eliminate(); }
 
@@ -350,7 +348,6 @@ onMounted(() => {
     else if (e.key === 'c') curFighter()?.combo();
     else if (e.key === 'v') curFighter()?.double();
     else if (e.key === 'b') curFighter()?.walk();
-    else if (e.key === 'n') curFighter()?.run();
     else if (e.key === 'h') curFighter()?.hurt();
     else if (e.key === 'k') curFighter()?.eliminate();
     else if (e.key === 'g') onDemo();
