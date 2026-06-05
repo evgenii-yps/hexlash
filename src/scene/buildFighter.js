@@ -162,6 +162,7 @@ export function buildFighter(
   let clip = null;
   let clipStart = 0;
   let lastT = 0;
+  let dodgeRun = null; // active dodge displacement { bx, bz, wx, wz } or null
   const setReducedMotion = (b) => { reduced = b; };
 
   const easeInOut = (u) => (u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2);
@@ -253,6 +254,29 @@ export function buildFighter(
     ],
   };
 
+  // Dodge (visual only) — a sharp readable evade: the whole body slips off-line
+  // (group displacement, see DODGE_DIST) while it ducks low behind a tucked
+  // guard, holds the slip, then eases back to stance. No impact, no damage — it
+  // never gates a hit; the pose blends in/out via the pose layer like any clip.
+  const DODGE_DIST = 0.55; // how far the body slips off-line (world units)
+  const DODGE_DUR = 0.5; // total evade time (s) — fast but readable
+  const DODGE = {
+    dur: DODGE_DUR, impact: -1, dodge: true,
+    keys: [
+      { t: 0.0, v: REST, e: 'out' },
+      { t: 0.12, v: { hy: -0.1, tx: 0.05, lsx: 0.5, lex: 1.55, rsx: 0.5, rex: 1.55 }, e: 'out' }, // duck + guard, snap aside
+      { t: 0.3, v: { hy: -0.11, tx: 0.04, lsx: 0.55, lex: 1.6, rsx: 0.55, rex: 1.6 }, e: 'io' }, // hold the slip
+      { t: DODGE_DUR, v: REST, e: 'io' }, // ease back to stance
+    ],
+  };
+  // Displacement envelope over the dodge clip: quick slip out → hold → ease back.
+  // Returns to the start spot, so a dodge never shifts the fight position.
+  const dodgeEnv = (u) => {
+    if (u < 0.22) return easeOut(u / 0.22);
+    if (u < 0.42) return 1;
+    return 1 - easeInOut((u - 0.42) / 0.58);
+  };
+
   // Locomotion — two WEIGHTED movement bands (no constant glide, no run). Both
   // ramp up from rest (accel), ease to a stop (decel) and carry velocity between
   // frames (inertia). The "weight" is in how the construct sets off and plants,
@@ -316,6 +340,24 @@ export function buildFighter(
     loco.active = false; // a throw / struck pose interrupts walking
     clip = { ...c, fired: c.impacts ? c.impacts.map(() => false) : false };
     clipStart = lastT;
+    if (c.dodge) {
+      // Set up the slip: cancel carried velocity (so it doesn't fight the dodge),
+      // capture the base spot and pick a world direction — local right / left, or
+      // occasionally straight back (forward is local -Z, so back is +Z).
+      move.vx = 0; move.vz = 0;
+      const ry = group.rotation.y;
+      const r = Math.random();
+      const lx = r < 0.45 ? 1 : r < 0.9 ? -1 : 0;
+      const lz = r < 0.9 ? 0 : 1;
+      dodgeRun = {
+        bx: group.position.x,
+        bz: group.position.z,
+        wx: lx * Math.cos(ry) + lz * Math.sin(ry),
+        wz: -lx * Math.sin(ry) + lz * Math.cos(ry),
+      };
+    } else {
+      dodgeRun = null;
+    }
   };
 
   const resetLegs = () => {
@@ -624,6 +666,7 @@ export function buildFighter(
   const eliminate = () => {
     if (state !== 'alive') return;
     clip = null;
+    dodgeRun = null;
     loco.active = false;
     barTrack.visible = false; // bar leaves with the fighter
     barFill.visible = false;
@@ -751,6 +794,7 @@ export function buildFighter(
         coreBoost = N(v.core);
       } else {
         clip = null;
+        dodgeRun = null;
         idlePose(bs);
       }
     } else if (ai.on) {
@@ -769,6 +813,16 @@ export function buildFighter(
     // Cross-fade the live joints toward this frame's target pose so switching
     // idle ↔ move ↔ strike never snaps (steady modes write straight through).
     commitPose(dt);
+
+    // Dodge displacement (visual only): slip the whole body off-line on the
+    // dodge envelope and back to the start spot. Runs while a dodge clip plays;
+    // never touches HP / hit resolution — the duck-guard pose blends via the
+    // pose layer above, this just moves the group.
+    if (clip && clip.dodge && dodgeRun) {
+      const env = dodgeEnv(THREE.MathUtils.clamp((t - clipStart) / clip.dur, 0, 1));
+      group.position.x = THREE.MathUtils.clamp(dodgeRun.bx + dodgeRun.wx * DODGE_DIST * env, -BX, BX);
+      group.position.z = THREE.MathUtils.clamp(dodgeRun.bz + dodgeRun.wz * DODGE_DIST * env, -BZ, BZ);
+    }
 
     core.scale.setScalar(1 + cpulse * 0.22 + coreBoost * 0.5);
     haloMat.opacity = THREE.MathUtils.clamp((0.55 + 0.4 * cpulse + coreBoost * 0.6) * coreGain, 0.05, 1.6);
@@ -802,6 +856,7 @@ export function buildFighter(
     combo: () => play(COMBO),
     double: () => play(DOUBLE),
     hurt: () => play(HURT),
+    dodge: () => play(DODGE),
     slow: () => toggleLoco('slow'),
     fast: () => toggleLoco('fast'),
     eliminate,

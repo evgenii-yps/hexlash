@@ -21,6 +21,7 @@
       <button type="button" @click="onPunch">PUNCH</button>
       <button type="button" @click="onCombo">COMBO</button>
       <button type="button" @click="onDouble">DOUBLE</button>
+      <button type="button" @click="onDodge">DODGE</button>
       <button type="button" @click="onSlow">SLOW</button>
       <button type="button" @click="onFast">FAST</button>
       <button type="button" @click="onHurt">HURT</button>
@@ -89,6 +90,7 @@ function onApproach() { curFighter()?.approach(); }
 function onPunch() { curFighter()?.punch(); }
 function onCombo() { curFighter()?.combo(); }
 function onDouble() { curFighter()?.double(); }
+function onDodge() { curFighter()?.dodge(); }
 function onSlow() { curFighter()?.slow(); }
 function onFast() { curFighter()?.fast(); }
 function onHurt() { curFighter()?.hurt(); }
@@ -349,6 +351,7 @@ onMounted(() => {
     else if (e.key === 'x') curFighter()?.punch();
     else if (e.key === 'c') curFighter()?.combo();
     else if (e.key === 'v') curFighter()?.double();
+    else if (e.key === 'd') curFighter()?.dodge();
     else if (e.key === 'b') curFighter()?.slow();
     else if (e.key === 'n') curFighter()?.fast();
     else if (e.key === 'h') curFighter()?.hurt();
