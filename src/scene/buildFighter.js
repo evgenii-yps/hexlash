@@ -253,12 +253,23 @@ export function buildFighter(
     ],
   };
 
-  // Locomotion — a single walking gait the code translates across the plate
-  // toward a movement direction (advance / strafe / retreat). Cadence scales
-  // with speed. (Running was removed — weight/speed tuning is a later pass.)
-  const WALK = { speed: 0.9, swing: 0.45, knee: 0.7, arm: 0.4, lean: -0.05, bob: 0.03, twist: 0.05 };
-  const STRIDE_K = 7; // gait phase (rad) per world unit travelled → cadence ∝ speed
+  // Locomotion — two WEIGHTED movement bands (no constant glide, no run). Both
+  // ramp up from rest (accel), ease to a stop (decel) and carry velocity between
+  // frames (inertia). The "weight" is in how the construct sets off and plants,
+  // not in the legs:
+  //   SLOW — collected low movement: circling, holding & adjusting range.
+  //   FAST — a sharp heavy step-in: gather, drive a short burst, plant. Short
+  //          and weighty — NOT a sprint across the plate (capped by FAST_DASH).
+  // accel/decel in world units/s², speed in units/s; swing/knee/arm/lean/bob/
+  // twist shape the gait look at that band (scaled by the live speed).
+  const SLOW = { speed: 0.95, accel: 4.0, decel: 6.0, swing: 0.45, knee: 0.7, arm: 0.4, lean: -0.05, bob: 0.03, twist: 0.05 };
+  const FAST = { speed: 2.3, accel: 12.0, decel: 10.0, swing: 0.62, knee: 0.95, arm: 0.55, lean: -0.17, bob: 0.05, twist: 0.07 };
+  const FAST_DASH = 1.4; // max gap (world units) a FAST step-in commits before it plants
+  const STRIDE_K = 7; // gait phase (rad) per world unit travelled → cadence ∝ live speed
+  const ACCEL_LEAN = 0.012; // torso lean per unit of accel — weight on the start / the plant
+  const MAX_ACCEL_LEAN = 0.22; // cap so a hard start / stop doesn't overrotate
   let gaitPhase = 0;
+  let prevMag = 0; // last frame's speed magnitude — drives the accel-lean
 
   // Plate bounds (half-extents) — the fighter stays on the slab, never walks off
   // the edge. Passed in from the arena; the rift is no longer a barrier, so the
@@ -287,7 +298,7 @@ export function buildFighter(
     approachArc: 0.4 + Math.random() * 0.55, // lateral arc on the way in (rad)
   };
 
-  const loco = { active: false, type: 'walk' }; // dev WALK preview toggle
+  const loco = { active: false, type: 'slow' }; // dev SLOW/FAST preview toggle
   // AI manoeuvre state.
   const nav = { mode: 'circle', until: 0, foe: null, approachAngle: 0 };
 
@@ -337,32 +348,84 @@ export function buildFighter(
     resetLegs();
   };
 
-  // Gait animation only — legs alternate, arms counter-swing, body leans + bobs.
-  // Cadence ∝ speed. No translation here; the movers below place the group.
-  const animateGait = (dt, cfg) => {
-    gaitPhase += dt * cfg.speed * STRIDE_K;
+  // Gait + weight. Cadence and amplitude scale with the LIVE speed (mag), so a
+  // move visibly winds up as it accelerates and winds down as it brakes — never
+  // a fixed glide. `accel` (Δspeed/s) leans the torso: into the start, back on
+  // the plant — the construct's weight reads in this lean, not in the legs. No
+  // translation here; stepLocomotion places the group.
+  const animateGait = (dt, band, mag, accel) => {
+    const frac = THREE.MathUtils.clamp(mag / band.speed, 0, 1);
+    gaitPhase += dt * mag * STRIDE_K; // cadence ∝ live speed
     const p = gaitPhase;
-    legL.hip.rotation.x = cfg.swing * Math.sin(p);
-    legR.hip.rotation.x = cfg.swing * Math.sin(p + Math.PI);
-    legL.knee.rotation.x = -cfg.knee * Math.max(0, Math.sin(p + 0.8));
-    legR.knee.rotation.x = -cfg.knee * Math.max(0, Math.sin(p + Math.PI + 0.8));
-    armL.shoulder.rotation.x = cfg.arm * Math.sin(p + Math.PI);
-    armR.shoulder.rotation.x = cfg.arm * Math.sin(p);
+    legL.hip.rotation.x = band.swing * frac * Math.sin(p);
+    legR.hip.rotation.x = band.swing * frac * Math.sin(p + Math.PI);
+    legL.knee.rotation.x = -band.knee * frac * Math.max(0, Math.sin(p + 0.8));
+    legR.knee.rotation.x = -band.knee * frac * Math.max(0, Math.sin(p + Math.PI + 0.8));
+    armL.shoulder.rotation.x = band.arm * frac * Math.sin(p + Math.PI);
+    armR.shoulder.rotation.x = band.arm * frac * Math.sin(p);
     armL.elbow.rotation.x = 0.3;
     armR.elbow.rotation.x = 0.3;
-    torso.rotation.x = cfg.lean;
-    torso.rotation.y = cfg.twist * Math.sin(p);
+    const accelLean = THREE.MathUtils.clamp(accel * ACCEL_LEAN, -MAX_ACCEL_LEAN, MAX_ACCEL_LEAN);
+    torso.rotation.x = band.lean * frac - accelLean; // forward with speed; into start, back on plant
+    torso.rotation.y = band.twist * frac * Math.sin(p);
     hips.position.z = 0;
-    hips.position.y = hipsBaseY - cfg.bob * (0.5 - 0.5 * Math.cos(2 * p));
+    hips.position.y = hipsBaseY - band.bob * frac * (0.5 - 0.5 * Math.cos(2 * p));
   };
 
-  // Translate the group along a unit world-direction (vx, vz) by speed·dt (capped
-  // at maxDist), clamped to the plate and to a hard minimum separation from the
-  // foe — so two fighters stop on contact and never push through each other.
-  const moveDir = (vx, vz, cfg, dt, maxDist = Infinity) => {
-    const step = Math.min(cfg.speed * dt, maxDist);
-    let nx = THREE.MathUtils.clamp(group.position.x + vx * step, -BX, BX);
-    let nz = THREE.MathUtils.clamp(group.position.z + vz * step, -BZ, BZ);
+  // Weighted locomotion — a velocity model the AI drives via a per-frame intent
+  // (direction + band + distance-to-goal). Velocity ramps toward the band speed
+  // (accel) / toward rest (decel) and is carried between frames, so movement has
+  // a start, a stop and inertia — never a constant-speed glide.
+  const move = { vx: 0, vz: 0 }; // carried world velocity (units/s) → inertia
+  const intent = { on: false, dx: 0, dz: 0, band: SLOW, maxDist: Infinity };
+
+  // Request movement this frame: unit direction (dx, dz), a band (SLOW / FAST)
+  // and the distance left to the goal (so the integrator can brake into it).
+  const requestMove = (dx, dz, band, maxDist = Infinity) => {
+    const m = Math.hypot(dx, dz);
+    if (m < 1e-6) return;
+    intent.on = true;
+    intent.dx = dx / m;
+    intent.dz = dz / m;
+    intent.band = band;
+    intent.maxDist = maxDist;
+  };
+
+  // Integrate velocity → position once per frame (always — so a stopped move
+  // coasts to rest). Near a goal the target speed is scaled down so the fighter
+  // eases to a planted stop instead of cutting dead. The plate edge + a hard
+  // min-separation from the foe clamp the step, and velocity is re-derived from
+  // the real (clamped) move so a wall / contact sheds it cleanly (no grind, no
+  // glide-through). `animate` gates the gait look so a clip / idle pose isn't
+  // overwritten while residual velocity bleeds off.
+  const stepLocomotion = (dt, animate) => {
+    const band = intent.band;
+    nav.foe = getFoePos && getFoePos(); // live foe for the separation clamp
+    let tvx = 0;
+    let tvz = 0;
+    if (intent.on) {
+      let ts = band.speed;
+      const cm = Math.hypot(move.vx, move.vz);
+      const brakeDist = (cm * cm) / (2 * band.decel) + 0.05; // distance to bleed off at decel
+      if (intent.maxDist <= brakeDist) ts = band.speed * THREE.MathUtils.clamp(intent.maxDist / brakeDist, 0, 1);
+      tvx = intent.dx * ts;
+      tvz = intent.dz * ts;
+    }
+    // Ramp velocity toward target — accel when speeding up, decel when slowing.
+    const tMag = Math.hypot(tvx, tvz);
+    const cMag = Math.hypot(move.vx, move.vz);
+    const maxDv = (tMag >= cMag ? band.accel : band.decel) * dt;
+    const dvx = tvx - move.vx;
+    const dvz = tvz - move.vz;
+    const dm = Math.hypot(dvx, dvz);
+    if (dm <= maxDv || dm < 1e-6) { move.vx = tvx; move.vz = tvz; }
+    else { move.vx += (dvx / dm) * maxDv; move.vz += (dvz / dm) * maxDv; }
+    // Integrate + clamp to plate and min foe separation; re-derive velocity from
+    // the real move so hitting a wall / the foe sheds it (no grind).
+    const ox = group.position.x;
+    const oz = group.position.z;
+    let nx = THREE.MathUtils.clamp(ox + move.vx * dt, -BX, BX);
+    let nz = THREE.MathUtils.clamp(oz + move.vz * dt, -BZ, BZ);
     const f = nav.foe;
     if (f) {
       const ex = nx - f.x;
@@ -375,7 +438,14 @@ export function buildFighter(
     }
     group.position.x = nx;
     group.position.z = nz;
-    animateGait(dt, cfg);
+    if (dt > 1e-4) { move.vx = (nx - ox) / dt; move.vz = (nz - oz) / dt; }
+    const mag = Math.hypot(move.vx, move.vz);
+    if (animate && mag > 0.02) {
+      const accel = (mag - prevMag) / Math.max(dt, 1e-4);
+      animateGait(dt, band, mag, accel);
+    }
+    prevMag = mag;
+    intent.on = false; // consume — the next frame must re-request to keep moving
   };
 
   // Steer rotation.y toward a world direction (shortest angle, rate-limited).
@@ -428,14 +498,12 @@ export function buildFighter(
       if (Math.random() < 0.28) character.strafeBias *= -1; // reverse the orbit sometimes
       nav.until = t + character.decideMin + Math.random() * character.decideJit;
     }
-    if (nav.mode === 'press') moveDir(ux, uz, WALK, dt, Math.max(0, d - CONTACT_SOFT)); // tighten
-    else if (nav.mode === 'bait') moveDir(-ux, -uz, WALK, dt); // ease out
-    else moveDir(character.strafeBias * -uz, character.strafeBias * ux, WALK, dt); // circle
+    if (nav.mode === 'press') requestMove(ux, uz, FAST, Math.max(0, d - CONTACT_SOFT)); // sharp step-in
+    else if (nav.mode === 'bait') requestMove(-ux, -uz, SLOW); // ease out
+    else requestMove(character.strafeBias * -uz, character.strafeBias * ux, SLOW); // circle
   };
   const navigate = (t, dt, bs) => {
     const f = getFoePos && getFoePos();
-    nav.foe = f; // kept for the min-separation clamp (null-safe in moveDir)
-
     if (!f) { idlePose(bs); return; } // combat phases need a foe
     const dx = f.x - group.position.x;
     const dz = f.z - group.position.z;
@@ -455,35 +523,38 @@ export function buildFighter(
       const a = nav.approachAngle * closeFrac;
       const ca = Math.cos(a);
       const sa = Math.sin(a);
-      moveDir(ux * ca - uz * sa, ux * sa + uz * ca, WALK, dt, d - engage);
+      const gap = d - engage;
+      // Collected SLOW traverse from far; a short FAST step-in for the final
+      // close (capped by FAST_DASH so it reads as a step-in, not a sprint).
+      const band = gap <= FAST_DASH ? FAST : SLOW;
+      requestMove(ux * ca - uz * sa, ux * sa + uz * ca, band, gap);
       return;
     }
     if (d < CONTACT_SOFT) {
-      // Too tight — ease back gently within the soft buffer (full step at the
-      // hard floor, near-zero at CONTACT_SOFT) so they settle smoothly, no grind.
-      const push = THREE.MathUtils.clamp((CONTACT_SOFT - d) / (CONTACT_SOFT - CONTACT), 0, 1);
-      moveDir(-ux, -uz, WALK, dt, push * WALK.speed * dt);
+      // Too tight — ease back to the soft buffer (SLOW; the integrator brakes
+      // into it so they settle smoothly, no grind).
+      requestMove(-ux, -uz, SLOW, CONTACT_SOFT - d);
       return;
     }
     if (nav.mode === 'approach') nav.until = 0; // just arrived → pick a tactic now
     maneuver(t, dt, ux, uz, d); // fighting band
   };
 
-  // Dev WALK preview (AI off): approach the foe, then circle; march in place
-  // if there's no foe. Keeps the gait inspectable without the full fight running.
+  // Dev SLOW / FAST preview (AI off): approach the foe at the chosen band, then
+  // circle; march in place if there's no foe. Keeps each band inspectable
+  // without the full fight running.
   const devGait = (dt) => {
-    const cfg = WALK;
+    const band = loco.type === 'fast' ? FAST : SLOW;
     const f = getFoePos && getFoePos();
-    if (!f) { animateGait(dt, cfg); return; }
-    nav.foe = f;
+    if (!f) { animateGait(dt, band, band.speed, 0); return; } // march in place
     faceFoe(dt);
     const dx = f.x - group.position.x;
     const dz = f.z - group.position.z;
     const d = Math.hypot(dx, dz) || 1e-4;
     const ux = dx / d;
     const uz = dz / d;
-    if (d > character.range + RANGE_HYST) moveDir(ux, uz, cfg, dt, d - character.range); // approach
-    else moveDir(character.strafeBias * -uz, character.strafeBias * ux, cfg, dt); // circle at range
+    if (d > character.range + RANGE_HYST) requestMove(ux, uz, band, d - character.range); // approach
+    else requestMove(character.strafeBias * -uz, character.strafeBias * ux, band); // circle at range
   };
 
   const toggleLoco = (type) => {
@@ -627,12 +698,17 @@ export function buildFighter(
         idlePose(bs);
       }
     } else if (ai.on) {
-      navigate(t, dt, bs); // navigate toward / around the foe
+      navigate(t, dt, bs); // navigate toward / around the foe (sets the move intent)
     } else if (loco.active) {
-      devGait(dt); // dev WALK preview
+      devGait(dt); // dev SLOW/FAST preview (sets the move intent)
     } else {
       idlePose(bs);
     }
+
+    // Integrate weighted locomotion every frame: a clip / idle frame sets no
+    // intent, so carried velocity coasts to rest (inertia) without the gait
+    // overwriting the clip / idle pose. A locomotion frame animates the gait.
+    stepLocomotion(dt, !clip && (ai.on || loco.active));
 
     core.scale.setScalar(1 + cpulse * 0.22 + coreBoost * 0.5);
     haloMat.opacity = THREE.MathUtils.clamp((0.55 + 0.4 * cpulse + coreBoost * 0.6) * coreGain, 0.05, 1.6);
@@ -666,7 +742,8 @@ export function buildFighter(
     combo: () => play(COMBO),
     double: () => play(DOUBLE),
     hurt: () => play(HURT),
-    walk: () => toggleLoco('walk'),
+    slow: () => toggleLoco('slow'),
+    fast: () => toggleLoco('fast'),
     eliminate,
     takeDamage,
     getHp: () => hp,
