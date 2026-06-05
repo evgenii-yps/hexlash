@@ -17,11 +17,6 @@
 
     <header class="hx4-top">
       <router-link class="hx4-lock" to="/" aria-label="Hexlash home">
-        <svg class="hx4-mark" viewBox="0 0 48 48" aria-hidden="true">
-          <polygon points="24,3 41.5,13 41.5,35 24,45 6.5,35 6.5,13" fill="none" stroke="currentColor" stroke-width="2.4"/>
-          <polygon points="24,13 33,18.5 33,29.5 24,35 15,29.5 15,18.5" fill="none" stroke="currentColor" stroke-width="2.4"/>
-          <path d="M24 13 L24 24 M24 24 L33 18.5 M24 24 L15 29.5" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-        </svg>
         <span class="hx4-word">HEXLASH</span>
       </router-link>
     </header>
@@ -108,9 +103,8 @@ import {t} from '@/locales/index.js';
   .hx4-top{ position:absolute; top:7vmin; left:0; right:0; z-index:5;
     display:flex; justify-content:center; }
   .hx4-lock{ display:flex; align-items:center; gap:2.2vmin; }
-  .hx4-mark{ width:5.4vmin; height:5.4vmin; min-width:34px; min-height:34px; display:block; color:var(--bone); }
   .hx4-word{ font-family:var(--impact); font-weight:900; text-transform:uppercase;
-    font-size:4.4vmin; line-height:1; letter-spacing:.04em; }
+    font-size:7vmin; line-height:1; letter-spacing:.04em; }
 
   /* ── Centerpiece ─────────────────────────────────────────────── */
   .hx4-mid{ position:absolute; inset:0; z-index:4;
@@ -129,7 +123,7 @@ import {t} from '@/locales/index.js';
   /* The 404 — impact moment. Ghost stroke behind, solid glowing face. */
   .hx4-num{ position:relative; display:inline-block;
     font-family:var(--impact); font-weight:900; line-height:.82;
-    font-size:clamp(96px,min(24vw,26vh),240px); letter-spacing:.01em;
+    font-size:clamp(100px,min(28vw,30vh),300px); letter-spacing:.01em;
     font-variant-numeric:tabular-nums; }
   .hx4-num .ghost{ position:absolute; left:0; right:0; top:0; color:transparent;
     -webkit-text-stroke:1.6px rgba(var(--accent-rgb),.45); transform:translateY(-1.4vmin) scale(1.012);
@@ -141,7 +135,7 @@ import {t} from '@/locales/index.js';
 
   /* Creed — brand voice, second word carries the pink charge */
   .hx4-creed{ font-family:var(--impact); font-weight:800; text-transform:uppercase;
-    font-size:clamp(34px,5.6vw,76px); line-height:1; letter-spacing:.03em;
+    font-size:clamp(38px,6.6vw,92px); line-height:1; letter-spacing:.03em;
     color:var(--bone); white-space:nowrap; }
   .hx4-creed b{ color:#fff; text-shadow:0 0 1.2vmin rgba(var(--accent-rgb),.7),0 0 5vmin rgba(var(--accent-rgb),.5); }
 
@@ -205,10 +199,9 @@ import {t} from '@/locales/index.js';
   /* ── Portrait / mobile (≤430px is comfortably inside this) ──────── */
   @media (max-aspect-ratio: 1/1){
     .hx4-mid{ padding:18vmin 7vw; gap:clamp(10px,1.6vmin,20px); }
-    .hx4-num{ font-size:clamp(96px,min(42vw,26vh),300px); }
-    .hx4-creed{ font-size:clamp(34px,10vw,66px); }
-    .hx4-word{ font-size:6vmin; }
-    .hx4-mark{ width:7vmin; height:7vmin; }
+    .hx4-num{ font-size:clamp(110px,min(48vw,30vh),320px); }
+    .hx4-creed{ font-size:clamp(38px,11vw,76px); }
+    .hx4-word{ font-size:9vmin; }
     .hx4-hud i{ width:6.5vmin; height:6.5vmin; }
   }
   @media (max-width:520px){
