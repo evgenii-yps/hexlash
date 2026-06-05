@@ -268,6 +268,7 @@ export function buildFighter(
   const STRIDE_K = 7; // gait phase (rad) per world unit travelled → cadence ∝ live speed
   const ACCEL_LEAN = 0.012; // torso lean per unit of accel — weight on the start / the plant
   const MAX_ACCEL_LEAN = 0.22; // cap so a hard start / stop doesn't overrotate
+  const TRANSITION_DUR = 0.13; // pose cross-fade time on a movement / state change (s)
   let gaitPhase = 0;
   let prevMag = 0; // last frame's speed magnitude — drives the accel-lean
 
@@ -329,47 +330,102 @@ export function buildFighter(
     armR.elbow.rotation.x = 0;
   };
 
+  // --- Pose blend layer. Every pose-producer (idle / gait / clip) writes a
+  //     TARGET pose into `targetP` and tags the active `poseMode`; commitPose()
+  //     then drives the live joints toward it. On a mode change it snapshots the
+  //     pose it's leaving and cross-fades to the new one over TRANSITION_DUR — so
+  //     idle ↔ move ↔ strike never snaps. Within a steady mode the target is
+  //     written straight through, so the gait and the strikes keep their full
+  //     amplitude (no mush). Channels: hips z/y, torso x/y, each arm
+  //     shoulder/elbow, each leg hip/knee.
+  const POSE_KEYS = ['hipsZ', 'hipsY', 'torsoX', 'torsoY', 'lsx', 'lex', 'rsx', 'rex', 'lhx', 'lkx', 'rhx', 'rkx'];
+  const liveP = { hipsZ: 0, hipsY: hipsBaseY, torsoX: 0, torsoY: 0, lsx: 0, lex: 0, rsx: 0, rex: 0, lhx: 0, lkx: 0, rhx: 0, rkx: 0 };
+  const targetP = { ...liveP };
+  const blendP = { ...liveP };
+  let poseMode = 'idle';
+  let blendT = TRANSITION_DUR; // settled (no blend) at start
+
+  // Tag the active producer. A change snapshots the pose we leave + restarts the
+  // cross-fade. Gait carries its band in the tag so a SLOW↔FAST switch eases too.
+  const setMode = (m) => {
+    if (m === poseMode) return;
+    for (const k of POSE_KEYS) blendP[k] = liveP[k];
+    blendT = 0;
+    poseMode = m;
+  };
+
+  // Ease the live joints toward this frame's target; cross-fade while blendT runs,
+  // then write straight through. Writes every channel each frame.
+  const commitPose = (dt) => {
+    if (blendT < TRANSITION_DUR) {
+      blendT = Math.min(TRANSITION_DUR, blendT + dt);
+      const e = easeInOut(blendT / TRANSITION_DUR);
+      for (const k of POSE_KEYS) liveP[k] = blendP[k] + (targetP[k] - blendP[k]) * e;
+    } else {
+      for (const k of POSE_KEYS) liveP[k] = targetP[k];
+    }
+    hips.position.z = liveP.hipsZ;
+    hips.position.y = liveP.hipsY;
+    torso.rotation.x = liveP.torsoX;
+    torso.rotation.y = liveP.torsoY;
+    armL.shoulder.rotation.x = liveP.lsx;
+    armL.elbow.rotation.x = liveP.lex;
+    armR.shoulder.rotation.x = liveP.rsx;
+    armR.elbow.rotation.x = liveP.rex;
+    legL.hip.rotation.x = liveP.lhx;
+    legL.knee.rotation.x = liveP.lkx;
+    legR.hip.rotation.x = liveP.rhx;
+    legR.knee.rotation.x = liveP.rkx;
+  };
+
+  // Clip pose (one-shot strike / hurt) → target. Upper body from the keyframe;
+  // legs neutral (clips don't animate the legs).
   const apply = (v) => {
-    hips.position.z = N(v.hz);
-    hips.position.y = hipsBaseY + N(v.hy);
-    torso.rotation.x = N(v.tx);
-    torso.rotation.y = N(v.ty);
-    armL.shoulder.rotation.x = N(v.lsx);
-    armL.elbow.rotation.x = N(v.lex);
-    armR.shoulder.rotation.x = N(v.rsx);
-    armR.elbow.rotation.x = N(v.rex);
-    resetLegs(); // clips are upper-body only
+    targetP.hipsZ = N(v.hz);
+    targetP.hipsY = hipsBaseY + N(v.hy);
+    targetP.torsoX = N(v.tx);
+    targetP.torsoY = N(v.ty);
+    targetP.lsx = N(v.lsx);
+    targetP.lex = N(v.lex);
+    targetP.rsx = N(v.rsx);
+    targetP.rex = N(v.rex);
+    targetP.lhx = 0; targetP.lkx = 0; targetP.rhx = 0; targetP.rkx = 0;
+    setMode('clip');
   };
 
+  // Idle pose → target: settled stance + a faint breathing rise on the hips.
   const idlePose = (bs) => {
-    hips.position.z = 0;
-    hips.position.y = hipsBaseY + bs * 0.012; // settle
-    resetArms();
-    resetLegs();
+    targetP.hipsZ = 0;
+    targetP.hipsY = hipsBaseY + bs * 0.012;
+    targetP.torsoX = 0; targetP.torsoY = 0;
+    targetP.lsx = 0; targetP.lex = 0; targetP.rsx = 0; targetP.rex = 0;
+    targetP.lhx = 0; targetP.lkx = 0; targetP.rhx = 0; targetP.rkx = 0;
+    setMode('idle');
   };
 
-  // Gait + weight. Cadence and amplitude scale with the LIVE speed (mag), so a
-  // move visibly winds up as it accelerates and winds down as it brakes — never
-  // a fixed glide. `accel` (Δspeed/s) leans the torso: into the start, back on
-  // the plant — the construct's weight reads in this lean, not in the legs. No
-  // translation here; stepLocomotion places the group.
+  // Gait + weight → target. Cadence and amplitude scale with the LIVE speed
+  // (mag), so a move visibly winds up as it accelerates and winds down as it
+  // brakes — never a fixed glide. `accel` (Δspeed/s) leans the torso: into the
+  // start, back on the plant — the construct's weight reads in this lean, not the
+  // legs. No translation here; stepLocomotion places the group.
   const animateGait = (dt, band, mag, accel) => {
     const frac = THREE.MathUtils.clamp(mag / band.speed, 0, 1);
     gaitPhase += dt * mag * STRIDE_K; // cadence ∝ live speed
     const p = gaitPhase;
-    legL.hip.rotation.x = band.swing * frac * Math.sin(p);
-    legR.hip.rotation.x = band.swing * frac * Math.sin(p + Math.PI);
-    legL.knee.rotation.x = -band.knee * frac * Math.max(0, Math.sin(p + 0.8));
-    legR.knee.rotation.x = -band.knee * frac * Math.max(0, Math.sin(p + Math.PI + 0.8));
-    armL.shoulder.rotation.x = band.arm * frac * Math.sin(p + Math.PI);
-    armR.shoulder.rotation.x = band.arm * frac * Math.sin(p);
-    armL.elbow.rotation.x = 0.3;
-    armR.elbow.rotation.x = 0.3;
+    targetP.lhx = band.swing * frac * Math.sin(p);
+    targetP.rhx = band.swing * frac * Math.sin(p + Math.PI);
+    targetP.lkx = -band.knee * frac * Math.max(0, Math.sin(p + 0.8));
+    targetP.rkx = -band.knee * frac * Math.max(0, Math.sin(p + Math.PI + 0.8));
+    targetP.lsx = band.arm * frac * Math.sin(p + Math.PI);
+    targetP.rsx = band.arm * frac * Math.sin(p);
+    targetP.lex = 0.3;
+    targetP.rex = 0.3;
     const accelLean = THREE.MathUtils.clamp(accel * ACCEL_LEAN, -MAX_ACCEL_LEAN, MAX_ACCEL_LEAN);
-    torso.rotation.x = band.lean * frac - accelLean; // forward with speed; into start, back on plant
-    torso.rotation.y = band.twist * frac * Math.sin(p);
-    hips.position.z = 0;
-    hips.position.y = hipsBaseY - band.bob * frac * (0.5 - 0.5 * Math.cos(2 * p));
+    targetP.torsoX = band.lean * frac - accelLean; // forward with speed; into start, back on plant
+    targetP.torsoY = band.twist * frac * Math.sin(p);
+    targetP.hipsZ = 0;
+    targetP.hipsY = hipsBaseY - band.bob * frac * (0.5 - 0.5 * Math.cos(2 * p));
+    setMode(band === FAST ? 'gait-fast' : 'gait-slow');
   };
 
   // Weighted locomotion — a velocity model the AI drives via a per-frame intent
@@ -709,6 +765,10 @@ export function buildFighter(
     // intent, so carried velocity coasts to rest (inertia) without the gait
     // overwriting the clip / idle pose. A locomotion frame animates the gait.
     stepLocomotion(dt, !clip && (ai.on || loco.active));
+
+    // Cross-fade the live joints toward this frame's target pose so switching
+    // idle ↔ move ↔ strike never snaps (steady modes write straight through).
+    commitPose(dt);
 
     core.scale.setScalar(1 + cpulse * 0.22 + coreBoost * 0.5);
     haloMat.opacity = THREE.MathUtils.clamp((0.55 + 0.4 * cpulse + coreBoost * 0.6) * coreGain, 0.05, 1.6);
