@@ -19,7 +19,11 @@ function pinkRgba(pink, a) {
 
 export function buildFighter(
   pink = '#FF0069',
-  { side = 'player', maxHp = 100, onImpact, onEliminated, getFoePos = null, bounds = { x: 2.5, z: 1.5 } } = {},
+  // `pink` is the core colour (per-core hue for the player, canon pink for the
+  // opponent). `coreId` carries the whole core id alongside the colour so a later
+  // data-каркас can drive fight style from the core without changing this seam;
+  // unused by this visual pass.
+  { side = 'player', coreId = null, maxHp = 100, onImpact, onEliminated, getFoePos = null, bounds = { x: 2.5, z: 1.5 } } = {},
 ) {
   const group = new THREE.Group();
 

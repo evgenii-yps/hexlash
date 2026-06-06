@@ -60,10 +60,22 @@ const publicRoutes = [
     },
 ];
 
-// /play is now a single bare dark screen — the game is being rebuilt from
-// scratch. Profile / account / wallet screens were removed. The .app-v2 CSS
-// namespace, V2* route names and src/views-v2/ directory are preserved for the
-// rebuild. /play is public (reached after login and via "Play as Guest").
+// /play hosts the temporary pre-fight flow (Stage 1 visualization):
+//   /play         → core selection  (CoreSelectView)
+//   /play/upgrade → upgrade screen   (UpgradeView — temp shell pending the
+//                   Claude Design drill-down handoff)
+//   /play/arena   → the 3D arena     (ArenaScene via PlayStubView)
+// The player's chosen core glows its colour on the arena fighter. The .app-v2
+// CSS namespace and src/views-v2/ directory are preserved from the rebuild.
+// /play is public (reached after login and via "Play as Guest").
+//
+// requireCore guards the upgrade + arena steps: without a pick (e.g. a hard
+// refresh — pre-fight state is in-memory only) bounce back to selection.
+const requireCore = (to, from, next) => {
+    if (store.state.prefight?.selectedCoreId) next();
+    else next({ name: 'PrefightSelect' });
+};
+
 const v2Routes = [
     {
         path: '/play',
@@ -72,11 +84,23 @@ const v2Routes = [
         children: [
             {
                 path: '',
-                name: 'V2Pit',
+                name: 'PrefightSelect',
+                component: () => import('@/views-v2/CoreSelectView.vue'),
+            },
+            {
+                path: 'upgrade',
+                name: 'PrefightUpgrade',
+                beforeEnter: requireCore,
+                component: () => import('@/views-v2/UpgradeView.vue'),
+            },
+            {
+                path: 'arena',
+                name: 'V2Arena',
                 // meta.arena lets the bootstrap (src/main.js) hold the pre-load
                 // splash until the WebGL arena emits its first-frame signal,
                 // instead of hiding on first DOM paint like non-arena routes.
                 meta: { arena: true },
+                beforeEnter: requireCore,
                 component: () => import('@/views-v2/PlayStubView.vue'),
             },
         ],

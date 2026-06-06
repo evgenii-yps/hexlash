@@ -41,6 +41,8 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildArena } from './buildArena.js';
 import { buildFighter } from './buildFighter.js';
 import { createArenaPresence } from './arenaPresence.js';
+import store from '@/core/state/store.js';
+import { getCore } from '@/data/cores.js';
 
 const wrap = ref(null);
 const canvasEl = ref(null);
@@ -176,6 +178,15 @@ onMounted(() => {
   // --- Arena + presence. Pink comes from the --hex-primary token (the scene
   //     inherits it via .app-v2), never hard-coded — one canonical pink.
   const pink = getComputedStyle(el).getPropertyValue('--hex-primary').trim() || '#FF0069';
+  // Player's core (Заход 3): the chosen core glows its own hue on the player
+  // fighter. The opponent + the rift stay canon pink — one glow source + a clean
+  // friend/foe read. coreId is carried whole (not just the colour) so future
+  // core→fight-style behaviour can hook onto the same id without rewiring. The
+  // route guard normally blocks reaching the arena without a pick; canon-pink
+  // fallback keeps the scene sane otherwise.
+  const selectedCore = getCore(store.getters['prefight/selectedCoreId']);
+  const playerColor = selectedCore ? selectedCore.color : pink;
+  const playerCoreId = selectedCore ? selectedCore.id : null;
   arena = buildArena(renderer.capabilities.getMaxAnisotropy(), pink);
   scene.add(arena.group);
   presence = createArenaPresence(scene, arena.refs);
@@ -206,8 +217,9 @@ onMounted(() => {
     opponent?.setAI(false);
   };
   const spawnFighter = () => {
-    fighter = buildFighter(pink, {
+    fighter = buildFighter(playerColor, {
       side: 'player',
+      coreId: playerCoreId,
       bounds: navBounds,
       getFoePos: () => (opponent ? opponent.group.position : null),
       onImpact: () => { opponent?.takeDamage(rollDamage()); }, // hit signal is on the foe (recoil + core)
