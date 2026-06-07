@@ -138,14 +138,16 @@ import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
 import { coreSVG, shardSVG, faceHex, radial } from '@/data/upgradeGeometry.js';
-import { CRYSTALS, RESOURCE, toHandoffCoreId, getHandoffCore } from '@/data/upgradeData.js';
+import { CRYSTALS, RESOURCE, getCore } from '@/data/upgradeData.js';
 
 const store = useStore();
 const router = useRouter();
 
 // --- Core context (id comes from the selection screen via the store) ---------
-const coreId = computed(() => toHandoffCoreId(store.getters['prefight/selectedCoreId']));
-const core = computed(() => getHandoffCore(coreId.value));
+// One id contract end-to-end — the picked id (natisk / nalet / skala / zasada)
+// looks up CORES directly; no select→handoff bridge anymore.
+const coreId = computed(() => getCore(store.getters['prefight/selectedCoreId']).id);
+const core = computed(() => getCore(coreId.value));
 const coreVars = computed(() => ({ '--core': core.value.hue, '--core-sup': core.value.sup }));
 const coreGlyph = computed(() => coreSVG(coreId.value, { seed: true }));
 const faceHtml = faceHex(); // constant — same node markup for every face

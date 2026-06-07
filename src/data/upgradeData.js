@@ -5,17 +5,21 @@
 /* RESOURCE — общий пул очков ядра. Делится между всеми кристаллами. */
 export const RESOURCE = 5;
 
-/* Четыре ядра (данные экрана прокачки). id — НЕ МЕНЯТЬ (уходят в стор).
+/* Четыре ядра — ЕДИНЫЙ источник для всех трёх экранов (выбор → прокачка →
+   арена). id — НЕ МЕНЯТЬ (уходят в стор; читаются ареной как есть).
+   ix  — индекс ядра (карточка экрана выбора «ЯДРО 0N»).
+   name — русское имя (как на прокачке и арене).
+   sig — сигнатурная сила, одно слово (подпись на карточке выбора).
    hue — основной цвет ядра (в него темится весь экран через --core).
    sup — поддерживающий тон (нижний слой свечения ядра, внутренний рисунок). */
 export const CORES = [
-  { id: 'natisk', ix: '01', name: 'Натиск', hue: '#FF3344', sup: '#FF7A3D',
+  { id: 'natisk', ix: '01', name: 'Натиск', sig: 'Давление', hue: '#FF3344', sup: '#FF7A3D',
     manner: 'Прёт и давит вплотную — не отпускает дистанцию.' },
-  { id: 'nalet', ix: '02', name: 'Налётчик', hue: '#FFA526', sup: '#FFD93D',
+  { id: 'nalet', ix: '02', name: 'Налётчик', sig: 'Темп', hue: '#FFA526', sup: '#FFD93D',
     manner: 'Налетает и уходит — серия касаний, разрыв, снова.' },
-  { id: 'skala', ix: '03', name: 'Скала', hue: '#2ED6B0', sup: '#5DD6E6',
+  { id: 'skala', ix: '03', name: 'Скала', sig: 'Живучесть', hue: '#2ED6B0', sup: '#5DD6E6',
     manner: 'Терпит и перемалывает — держит удар, отдаёт позже.' },
-  { id: 'zasada', ix: '04', name: 'Засада', hue: '#9461FF', sup: '#D461FF',
+  { id: 'zasada', ix: '04', name: 'Засада', sig: 'Контратака', hue: '#9461FF', sup: '#D461FF',
     manner: 'Выжидает и наказывает — тишина, затем один удар.' },
 ];
 
@@ -51,8 +55,8 @@ export const CRYSTALS = {
   ],
 };
 
-/* Мост id экрана выбора (src/data/cores.js) → id хэндофа прокачки.
-   Отличается только Налётчик (naletchik → nalet); остальные совпадают. */
-const PREFIGHT_TO_HANDOFF = { natisk: 'natisk', naletchik: 'nalet', skala: 'skala', zasada: 'zasada' };
-export const toHandoffCoreId = (prefightId) => PREFIGHT_TO_HANDOFF[prefightId] || 'skala';
-export const getHandoffCore = (handoffId) => CORES.find((c) => c.id === handoffId) || CORES[2];
+/* Поиск ядра по id. Один контракт id (natisk / nalet / skala / zasada) на все
+   три экрана — моста-переходника больше нет. Фолбэк на Скалу (CORES[2]) держит
+   прокачку/арену осмысленными, если выбор почему-то пуст (страж маршрута это и
+   так не пускает). */
+export const getCore = (id) => CORES.find((c) => c.id === id) || CORES[2];

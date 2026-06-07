@@ -42,7 +42,7 @@ import { buildArena } from './buildArena.js';
 import { buildFighter } from './buildFighter.js';
 import { createArenaPresence } from './arenaPresence.js';
 import store from '@/core/state/store.js';
-import { getCore } from '@/data/cores.js';
+import { getCore } from '@/data/upgradeData.js';
 
 const wrap = ref(null);
 const canvasEl = ref(null);
@@ -184,8 +184,11 @@ onMounted(() => {
   // core→fight-style behaviour can hook onto the same id without rewiring. The
   // route guard normally blocks reaching the arena without a pick; canon-pink
   // fallback keeps the scene sane otherwise.
-  const selectedCore = getCore(store.getters['prefight/selectedCoreId']);
-  const playerColor = selectedCore ? selectedCore.color : pink;
+  // getCore() always resolves (falls back to Скала), so gate on the raw pick to
+  // keep the canon-pink fallback when nothing was chosen.
+  const pickedId = store.getters['prefight/selectedCoreId'];
+  const selectedCore = pickedId ? getCore(pickedId) : null;
+  const playerColor = selectedCore ? selectedCore.hue : pink;
   const playerCoreId = selectedCore ? selectedCore.id : null;
   arena = buildArena(renderer.capabilities.getMaxAnisotropy(), pink);
   scene.add(arena.group);

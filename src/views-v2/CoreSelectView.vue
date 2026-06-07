@@ -1,251 +1,561 @@
-<!-- /play — Core selection (Заход 1, Stage 1 pre-fight window).
-     Pick 1 of 4 cores → fixes the choice → goes to the upgrade screen.
+<!-- /play — Экран выбора ядра (Заход 1, шаг 1 предбоевого окна). 1:1 порт
+     хэндофа select_handoff/ по его README. Sibling экрана прокачки: тот же
+     холст 430×932, та же оболочка (статус-бар · HUD-уголки · нотч-CTA), тот же
+     coreSVG(), те же id ядер, единый источник CORES (src/data/upgradeData.js).
 
-     Neon Discipline amendment (Notion → Visual System, 06.06): cores sit side by
-     side here, so colour is muted to near-flat and at most ONE core glows — the
-     selected one. The simplified faceted-hex icon keeps the four distinguishable
-     even while muted; the chosen hue only blooms on tap. -->
+     Дисциплина (Neon Discipline · четыре ядра рядом): каждое ядро по умолчанию
+     ПЛОСКОЕ, без свечения; светится максимум ОДНО — выбранное; экран и HUD
+     темятся в --core выбранного. У каждого ядра свой ритм пульса (натиск —
+     частый, налётчик — рваный, скала — медленный вдох, засада — долгая
+     выдержка), под prefers-reduced-motion: no-preference.
+
+     Выбор → prefight.selectedCoreId (этот же id читают прокачка и арена) →
+     CTA «К ПРОКАЧКЕ» уводит на /play/upgrade. -->
 <template>
-  <div class="core-select">
-    <header class="core-select__head">
-      <h1 class="core-select__title">ВЫБЕРИ ЯДРО</h1>
-      <p class="core-select__sub">Врождённый характер бойца · 1 из 4</p>
-    </header>
+  <div class="scene" :style="coreVars" ref="sceneRef">
+    <div class="device" ref="deviceRef">
+      <div class="screen" :style="coreVars" data-screen-label="Выбор ядра">
 
-    <ul class="core-grid">
-      <li
-        v-for="core in cores"
-        :key="core.id"
-        class="core-card"
-        :class="{ 'is-selected': selectedId === core.id }"
-        :style="{ '--core-color': core.color }"
-        role="button"
-        tabindex="0"
-        :aria-pressed="selectedId === core.id"
-        @click="choose(core)"
-        @keydown.enter.prevent="choose(core)"
-        @keydown.space.prevent="choose(core)"
-      >
-        <span class="core-card__glow" aria-hidden="true" />
-        <svg class="core-card__icon" viewBox="0 0 100 100" aria-hidden="true">
-          <!-- faceted hex crystal -->
-          <polygon
-            class="ci-hex"
-            points="90,50 70,84.64 30,84.64 10,50 30,15.36 70,15.36"
-          />
-          <!-- facets -->
-          <g class="ci-facets">
-            <line x1="50" y1="50" x2="90" y2="50" />
-            <line x1="50" y1="50" x2="70" y2="84.64" />
-            <line x1="50" y1="50" x2="30" y2="84.64" />
-            <line x1="50" y1="50" x2="10" y2="50" />
-            <line x1="50" y1="50" x2="30" y2="15.36" />
-            <line x1="50" y1="50" x2="70" y2="15.36" />
-          </g>
-          <!-- inner circle + hot centre -->
-          <circle class="ci-ring" cx="50" cy="50" r="15" />
-          <circle class="ci-core" cx="50" cy="50" r="5" />
-        </svg>
-        <span class="core-card__name">{{ core.name }}</span>
-        <span class="core-card__axis">{{ core.axis }}</span>
-      </li>
-    </ul>
+        <!-- HUD-уголки (фирменная рамка) -->
+        <span class="hud tl"></span>
+        <span class="hud tr"></span>
+        <span class="hud bl"></span>
+        <span class="hud br"></span>
 
-    <p class="core-select__hint">Тап по ядру — выбор и переход к прокачке</p>
+        <!-- статус-бар -->
+        <div class="s-status">
+          <span>9:41</span>
+          <span class="sig"><b></b>ВЫБОР ЯДРА</span>
+        </div>
+
+        <!-- надзаголовок + заголовок + счётчик -->
+        <div class="s-top">
+          <div class="ttl">
+            <span class="eyebrow">ПОДГОТОВКА · ШАГ 01</span>
+            <h1>ВЫБЕРИ<br /><b>ЯДРО.</b></h1>
+          </div>
+          <div class="counter">
+            <span class="k">Выбрано</span>
+            <span class="v"><b class="picked">{{ pickedCount }}</b>/4</span>
+          </div>
+        </div>
+
+        <!-- сетка 2×2 ядер -->
+        <div class="grid">
+          <button
+            v-for="core in cores"
+            :key="core.id"
+            class="core-card"
+            :class="{ sel: selectedId === core.id }"
+            :data-core="core.id"
+            :style="{ '--c': core.hue, '--c-sup': core.sup }"
+            :aria-pressed="selectedId === core.id"
+            :aria-label="'Ядро · ' + core.name"
+            @click="select(core)"
+          >
+            <div class="halo"></div>
+            <div class="ring"></div>
+            <div class="top">
+              <span class="ix">ЯДРО {{ core.ix }}</span>
+              <span class="id">{{ core.id }}</span>
+            </div>
+            <div class="stage">
+              <div class="icon" v-html="glyphs[core.id]"></div>
+            </div>
+            <div class="nm">{{ core.name }}</div>
+            <div class="sig">{{ core.sig }}</div>
+          </button>
+        </div>
+
+        <!-- читалка-итог + нотч-CTA -->
+        <div class="s-bottom">
+          <div class="read">
+            <div class="lbl">
+              <span class="k">Ядро</span>
+              <span class="v">
+                <b class="readname">
+                  <span v-if="!selected" class="dash">— НЕ ВЫБРАНО —</span>
+                  <template v-else>{{ selected.name }}</template>
+                </b>
+              </span>
+            </div>
+            <span class="sig readsig" :class="{ on: selected }">
+              {{ selected ? selected.sig : 'ТАП ПО ЯДРУ' }}
+            </span>
+          </div>
+          <button
+            class="cta"
+            :class="{ 'is-ready': selected }"
+            :disabled="!selected"
+            @click="toUpgrade"
+          >
+            <span>К ПРОКАЧКЕ</span>
+            <span class="arr" aria-hidden="true">→</span>
+          </button>
+        </div>
+
+        <div class="wm">HEXLASH · контент — заглушки</div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
-import { CORES } from '@/data/cores.js';
+import { CORES, getCore } from '@/data/upgradeData.js';
+import { coreSVG } from '@/data/upgradeGeometry.js';
 
-const cores = CORES;
 const store = useStore();
 const router = useRouter();
 
-const selectedId = ref(null);
-let navigating = false;
+const cores = CORES;
 
-function choose(core) {
-  if (navigating) return;
-  navigating = true;
-  selectedId.value = core.id; // single glow — others stay flat
-  store.dispatch('prefight/selectCore', core.id);
-  // Brief beat so the chosen core visibly blooms before the screen changes.
-  setTimeout(() => router.push({ name: 'PrefightUpgrade' }), 280);
+// SVG ядер — те же силуэты, что на прокачке (переиспользуем coreSVG, не дублируем).
+// Чистые строки, считаются один раз; рендерятся через v-html (источник доверенный).
+const glyphs = Object.fromEntries(CORES.map((c) => [c.id, coreSVG(c.id, { seed: true })]));
+
+// --- Выбор (ровно одно ядро светится; остальные плоские) ---------------------
+const selectedId = ref(null);
+const selected = computed(() => (selectedId.value ? getCore(selectedId.value) : null));
+const pickedCount = computed(() => (selectedId.value ? 1 : 0));
+
+// Экран темится в --core выбранного; пока пусто — нейтральный серый (всё плоское).
+// Та же переменная, что читает прокачка → тинт перетекает выбор → прокачка.
+const MUTED = '#6e6a72';
+const coreVars = computed(() =>
+  selected.value
+    ? { '--core': selected.value.hue, '--core-sup': selected.value.sup }
+    : { '--core': MUTED, '--core-sup': MUTED },
+);
+
+function select(core) {
+  selectedId.value = core.id; // единственное свечение — остальные остаются плоскими
+  store.dispatch('prefight/selectCore', core.id); // id уходит в стор (читают прокачка/арена)
 }
+
+// CTA «К ПРОКАЧКЕ» — навигационный контракт: выбор уже в сторе, страж маршрута
+// (requireCore) пропускает. Короткая пауза, чтобы прочиталось нажатие.
+let navigating = false;
+function toUpgrade() {
+  if (!selected.value || navigating) return;
+  navigating = true;
+  setTimeout(() => router.push({ name: 'PrefightUpgrade' }), 160);
+}
+
+// --- Фит фиксированного холста 430×932 в вьюпорт (letterbox) ------------------
+const deviceRef = ref(null);
+function fit() {
+  const d = deviceRef.value;
+  if (!d) return;
+  const W = d.offsetWidth;
+  const H = d.offsetHeight;
+  const s = Math.min(window.innerWidth / (W + 48), window.innerHeight / (H + 48), 1.25);
+  d.style.transform = 'scale(' + s.toFixed(4) + ')';
+}
+
+onMounted(() => {
+  nextTick(fit);
+  window.addEventListener('resize', fit);
+});
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', fit);
+});
 </script>
 
+<style>
+/* Шрифты — общий ресурс: Saira Condensed (дисплей) + JetBrains Mono (телеметрия).
+   Тот же @import, что на экране прокачки — браузер дедуплицирует. */
+@import url('https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+</style>
+
 <style scoped>
-.core-select {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 30px;
-  padding: 32px 20px;
-  overflow-y: auto;
+/* ============================================================
+   HEXLASH — ЭКРАН ВЫБОРА ЯДРА · стили (порт select_handoff/styles.css)
+   Дисциплина: тёмный фон · один акцент = --core · плоские по умолчанию ·
+   светится максимум одно (выбранное) · ритмы пульса на ядро.
+   Токены вынесены из :root на .scene (корень компонента). SVG из v-html
+   таргетится через :deep().
+   ============================================================ */
+.scene * { box-sizing: border-box; margin: 0; padding: 0; }
+.scene button {
+  font: inherit; color: inherit; background: none; border: 0; cursor: pointer;
+  -webkit-appearance: none; appearance: none; -webkit-tap-highlight-color: transparent;
+}
+
+.scene {
+  /* Color (Brand Book) */
+  --bg-void: #08080a;       /* Void */
+  --bg-carbon: #0d0a0d;     /* Carbon */
+  --bg-ember: #160a11;      /* Ember (только подложка свечения) */
+  --ink-bone: #f6f4f6;      /* Bone */
+  --ink-ash: #6e6a72;       /* Ash */
+  --ink-line: rgba(255, 255, 255, .08);
+  --ink-line-2: rgba(255, 255, 255, .14);
+  --ink-3: #39363a;
+
+  --font-disp: 'Saira Condensed', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --ease: cubic-bezier(.4, .05, .1, 1);
+  --ease-out: cubic-bezier(.16, 1, .3, 1);
+
+  /* W×H холста-экрана (портрет) — фит считается в JS */
+  --scr-w: 430px;
+  --scr-h: 932px;
+
+  /* выбранное ядро (свопается :style на .scene и .screen) */
+  --core: #6e6a72;
+  --core-sup: #6e6a72;
+
+  position: fixed; inset: 0;
+  display: flex; align-items: center; justify-content: center;
   background:
-    radial-gradient(ellipse 70% 60% at 50% 40%, #0d0f1c 0%, #070811 60%, #030308 100%);
-  text-align: center;
+    radial-gradient(120% 70% at 50% 6%, color-mix(in srgb, var(--core) 7%, transparent), transparent 60%),
+    radial-gradient(120% 60% at 50% 108%, color-mix(in srgb, var(--core) 9%, transparent), transparent 64%),
+    radial-gradient(120% 80% at 50% -10%, var(--bg-ember) 0%, var(--bg-carbon) 42%, var(--bg-void) 78%);
+  color: var(--ink-bone);
+  font-family: var(--font-disp);
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  transition: background .6s var(--ease);
+}
+/* слабая дисциплинарная сетка */
+.scene::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  background-image:
+    linear-gradient(var(--ink-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--ink-line) 1px, transparent 1px);
+  background-size: 56px 56px;
+  -webkit-mask-image: radial-gradient(120% 80% at 50% 36%, #000, transparent 72%);
+  mask-image: radial-gradient(120% 80% at 50% 36%, #000, transparent 72%);
+  opacity: .35;
 }
 
-.core-select__head {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.core-select__title {
-  margin: 0;
-  font-family: var(--font-display, sans-serif);
-  font-size: clamp(26px, 5vw, 42px);
-  letter-spacing: 0.04em;
-  color: #fff;
-}
-.core-select__sub {
-  margin: 0;
-  font-family: var(--font-mono, monospace);
-  font-size: 11px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--text-dim, rgba(255, 255, 255, 0.5));
+/* устройство (минимальная рамка, масштабируется JS) */
+.device {
+  position: relative; flex: none;
+  width: var(--scr-w); height: var(--scr-h);
+  transform-origin: center center;
+  background: #000;
+  border: 1px solid var(--ink-line-2);
+  border-radius: 46px;
+  padding: 9px;
+  box-shadow:
+    0 60px 140px -40px #000,
+    0 0 0 1px rgba(0, 0, 0, .6),
+    0 0 80px -30px color-mix(in srgb, var(--core) 36%, transparent);
+  transition: box-shadow .6s var(--ease);
+  z-index: 1;
 }
 
-.core-grid {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(120px, 180px));
-  gap: 18px;
-  width: 100%;
-  max-width: 420px;
-}
-@media (min-width: 720px) {
-  .core-grid {
-    grid-template-columns: repeat(4, 160px);
-    max-width: none;
-  }
+/* экран — тёмный холст, темится в --core при выборе */
+.screen {
+  position: relative; width: 100%; height: 100%; border-radius: 38px; overflow: hidden;
+  isolation: isolate;
+  --core-dim: color-mix(in srgb, var(--core) 55%, transparent);
+  --core-faint: color-mix(in srgb, var(--core) 14%, transparent);
+  --core-ghost: color-mix(in srgb, var(--core) 7%, transparent);
+  --core-ink: color-mix(in srgb, var(--core) 62%, #fff);
+  background:
+    radial-gradient(72% 42% at 50% 30%, var(--core-faint), transparent 66%),
+    radial-gradient(120% 50% at 50% 102%, var(--core-ghost), transparent 60%),
+    radial-gradient(130% 78% at 50% 14%, var(--bg-carbon), var(--bg-void) 66%);
+  transition: background .6s var(--ease);
 }
 
+/* HUD-уголки */
+.hud {
+  position: absolute; width: 28px; height: 28px; z-index: 28; pointer-events: none;
+  border: 1.5px solid color-mix(in srgb, var(--core) 55%, var(--ink-line-2));
+  transition: border-color .6s var(--ease);
+}
+.hud.tl { top: 16px; left: 16px; border-right: 0; border-bottom: 0; }
+.hud.tr { top: 16px; right: 16px; border-left: 0; border-bottom: 0; }
+.hud.bl { bottom: 16px; left: 16px; border-right: 0; border-top: 0; }
+.hud.br { bottom: 16px; right: 16px; border-left: 0; border-top: 0; }
+
+/* статус-бар */
+.s-status {
+  position: absolute; top: 0; left: 0; right: 0; height: 52px; z-index: 30;
+  display: flex; justify-content: space-between; align-items: center; padding: 18px 30px 0;
+  font-family: var(--font-mono); font-size: 12px; font-weight: 500;
+  color: var(--ink-bone); letter-spacing: .04em;
+}
+.s-status .sig { display: flex; align-items: center; gap: 8px; color: var(--ink-ash); letter-spacing: .22em; }
+.s-status .sig b {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--core);
+  box-shadow: 0 0 8px var(--core); transition: background .4s var(--ease), box-shadow .4s var(--ease);
+}
+
+/* надзаголовок + заголовок + счётчик */
+.s-top {
+  position: absolute; top: 60px; left: 0; right: 0; z-index: 30; padding: 0 24px;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 14px;
+}
+.s-top .ttl { display: flex; flex-direction: column; gap: 10px; }
+.eyebrow {
+  display: flex; align-items: center; gap: 10px; font-family: var(--font-mono);
+  font-size: 10px; font-weight: 500; letter-spacing: .34em; color: var(--core-ink);
+  text-transform: uppercase; transition: color .4s var(--ease);
+}
+.eyebrow::before {
+  content: ""; width: 22px; height: 2px; background: var(--core);
+  box-shadow: 0 0 8px var(--core-dim); transition: background .4s, box-shadow .4s;
+}
+.s-top .ttl h1 {
+  font-family: var(--font-disp); font-weight: 900; font-size: 38px; line-height: .88;
+  letter-spacing: .005em; text-transform: uppercase; color: var(--ink-bone);
+}
+.s-top .ttl h1 b {
+  font-weight: 900; color: #fff;
+  text-shadow:
+    0 0 12px color-mix(in srgb, var(--core) 60%, transparent),
+    0 0 38px color-mix(in srgb, var(--core) 45%, transparent);
+  transition: text-shadow .4s var(--ease);
+}
+.s-top .counter { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; margin-top: 18px; }
+.s-top .counter .k {
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: .24em;
+  text-transform: uppercase; color: var(--ink-ash);
+}
+.s-top .counter .v {
+  font-family: var(--font-mono); font-size: 14px; font-weight: 600;
+  color: var(--ink-ash); letter-spacing: .06em;
+}
+.s-top .counter .v b { color: var(--core-ink); font-weight: 700; transition: color .4s var(--ease); }
+
+/* сетка 2×2 */
+.grid {
+  position: absolute; left: 0; right: 0; top: 188px; bottom: 204px;
+  padding: 0 24px; z-index: 20;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px; grid-auto-rows: 1fr;
+}
+
+/* карточка ядра (плоская по умолчанию · единственное свечение при .sel) */
 .core-card {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  padding: 22px 14px 18px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 14px;
-  background: rgba(10, 12, 22, 0.55);
-  cursor: pointer;
-  outline: none;
-  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+  position: relative; display: flex; flex-direction: column; align-items: stretch;
+  border: 1px solid var(--ink-line);
+  background: rgba(255, 255, 255, .018);
+  padding: 16px 14px 14px; cursor: pointer; overflow: hidden;
+  /* нотч fight-card — фирменный мотив */
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%);
+  transition: border-color .3s var(--ease), background .3s var(--ease), transform .15s var(--ease);
+  /* инжектится инлайн по data-core */
+  --c: #6e6a72;
+  --c-dim: color-mix(in srgb, var(--c) 55%, transparent);
+  --c-faint: color-mix(in srgb, var(--c) 12%, transparent);
+  --c-ink: color-mix(in srgb, var(--c) 62%, #fff);
 }
-.core-card:hover,
-.core-card:focus-visible {
-  transform: translateY(-3px);
-  border-color: rgba(255, 255, 255, 0.22);
-  background: rgba(14, 17, 30, 0.7);
+.core-card:active { transform: scale(.985); }
+.core-card:hover { border-color: var(--ink-line-2); }
+
+/* верхняя полоса — индекс + mono id */
+.core-card .top {
+  display: flex; justify-content: space-between; align-items: center;
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: .22em; text-transform: uppercase;
+  position: relative; z-index: 2;
+}
+.core-card .top .ix { color: color-mix(in srgb, var(--c) 50%, var(--ink-ash)); font-weight: 600; }
+.core-card .top .id { color: var(--ink-3); }
+
+/* сцена иконки с гало */
+.core-card .stage {
+  position: relative; flex: 1; display: grid; place-items: center;
+  margin: 6px 0 4px; min-height: 96px;
+}
+.core-card .halo {
+  position: absolute; inset: -8%; border-radius: 50%; z-index: 1; pointer-events: none;
+  opacity: 0; transition: opacity .35s var(--ease);
+  background:
+    radial-gradient(circle at 50% 50%,
+      color-mix(in srgb, var(--c) 56%, transparent) 0%,
+      color-mix(in srgb, var(--c) 22%, transparent) 30%,
+      transparent 62%),
+    radial-gradient(circle at 38% 66%,
+      color-mix(in srgb, var(--c) 36%, transparent) 0%, transparent 50%);
+  filter: blur(14px);
+}
+.core-card .ring {
+  position: absolute; inset: 14%; border: 1px solid var(--c-dim); border-radius: 50%;
+  z-index: 1; opacity: 0;
 }
 
-/* Muted (flat) by default — the shared-screen discipline. */
-.core-card__icon {
-  width: 76px;
-  height: 76px;
-  color: var(--core-color);
-  opacity: 0.4;
-  filter: saturate(0.6);
-  transition: opacity 0.22s ease, filter 0.22s ease, transform 0.22s ease;
+.core-card .icon { width: 96px; height: 96px; position: relative; z-index: 2; transition: transform .4s var(--ease-out); }
+.core-card .icon :deep(svg) { width: 100%; height: 100%; overflow: visible; }
+/* плоское состояние — приглушённые штрихи с намёком на цвет ядра, чтобы силуэты
+   различались, не зажигаясь */
+.core-card .icon :deep(.hex-line) {
+  stroke: color-mix(in srgb, var(--c) 28%, var(--ink-3));
+  fill: none; stroke-width: 1.6; transition: stroke .35s var(--ease);
 }
-.ci-hex {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 3;
-  stroke-linejoin: round;
+.core-card .icon :deep(.facet) {
+  stroke: color-mix(in srgb, var(--c) 18%, var(--ink-3));
+  fill: none; stroke-width: 1.1; transition: stroke .35s var(--ease);
 }
-.ci-facets line {
-  stroke: currentColor;
-  stroke-width: 1;
-  opacity: 0.4;
-}
-.ci-ring {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2.5;
-  opacity: 0.85;
-}
-.ci-core {
-  fill: currentColor;
+.core-card .icon :deep(.seed) {
+  fill: color-mix(in srgb, var(--c) 42%, var(--ink-3));
+  transition: fill .35s var(--ease);
 }
 
-/* Radial bloom behind the icon — off until selected (the single glow). */
-.core-card__glow {
-  position: absolute;
-  top: 18px;
-  left: 50%;
-  width: 130px;
-  height: 130px;
-  transform: translateX(-50%) scale(0.6);
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--core-color) 0%, transparent 65%);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.26s ease, transform 0.26s ease;
+/* имя + сигнатурная сила */
+.core-card .nm {
+  font-family: var(--font-disp); font-weight: 800; font-size: 22px;
+  letter-spacing: .02em; text-transform: uppercase; line-height: 1;
+  color: var(--ink-bone); text-align: center; margin-top: 6px;
+  transition: color .35s var(--ease);
+}
+.core-card .sig {
+  font-family: var(--font-mono); font-size: 10px; font-weight: 500;
+  letter-spacing: .22em; text-transform: uppercase; color: var(--ink-ash);
+  text-align: center; margin-top: 7px; transition: color .35s var(--ease);
+}
+.core-card .sig::before { content: "//\00a0"; color: var(--ink-3); }
+
+/* выбранное — единственное свечение экрана */
+.core-card.sel { border-color: var(--c-dim); background: var(--c-faint); }
+.core-card.sel .icon { transform: scale(1.05); }
+.core-card.sel .icon :deep(.hex-line) { stroke: var(--c); }
+.core-card.sel .icon :deep(.facet) { stroke: var(--c-dim); }
+.core-card.sel .icon :deep(.seed) { fill: var(--c); }
+.core-card.sel .nm { color: #fff; text-shadow: 0 0 12px color-mix(in srgb, var(--c) 55%, transparent); }
+.core-card.sel .sig { color: var(--c-ink); }
+.core-card.sel .top .ix { color: var(--c-ink); }
+.core-card.sel .halo { opacity: 1; }
+
+/* ============================================================
+   РИТМЫ СВЕТА — каждое ядро дышит по-своему. Активны только на .sel —
+   плоские карточки молчат. Это и отличает четвёрку за пределами цвета/имени.
+   ============================================================ */
+@media (prefers-reduced-motion: no-preference) {
+  /* Натиск — частый ровный пульс (давление без передышки) */
+  .core-card.sel[data-core="natisk"] .halo { animation: rhythm-natisk .95s ease-in-out infinite; }
+  .core-card.sel[data-core="natisk"] .ring { animation: ring-natisk .95s ease-out infinite; }
+
+  /* Налётчик — рваные всплески (налёт, отрыв, снова) */
+  .core-card.sel[data-core="nalet"] .halo { animation: rhythm-nalet 1.7s linear infinite; }
+  .core-card.sel[data-core="nalet"] .ring { animation: ring-nalet 1.7s linear infinite; }
+
+  /* Скала — медленный вдох (держит удар, отдаёт позже) */
+  .core-card.sel[data-core="skala"] .halo { animation: rhythm-skala 4.6s ease-in-out infinite; }
+  .core-card.sel[data-core="skala"] .ring { animation: ring-skala 4.6s ease-out infinite; }
+
+  /* Засада — долгая выдержка, один удар (тишина, затем расплата) */
+  .core-card.sel[data-core="zasada"] .halo { animation: rhythm-zasada 5.6s cubic-bezier(.7, 0, .2, 1) infinite; }
+  .core-card.sel[data-core="zasada"] .ring { animation: ring-zasada 5.6s cubic-bezier(.7, 0, .2, 1) infinite; }
 }
 
-.core-card__name {
-  font-family: var(--font-body, sans-serif);
-  font-weight: 700;
-  font-size: 15px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-mid, rgba(255, 255, 255, 0.75));
+@keyframes rhythm-natisk {
+  0%, 100% { opacity: .8; transform: scale(.96); }
+  50% { opacity: 1; transform: scale(1.06); }
 }
-.core-card__axis {
-  font-family: var(--font-mono, monospace);
-  font-size: 9px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--text-dim, rgba(255, 255, 255, 0.5));
+@keyframes ring-natisk {
+  0% { transform: scale(.78); opacity: .5; }
+  70%, 100% { transform: scale(1.25); opacity: 0; }
 }
-
-/* Selected — the one core that glows its colour. */
-.core-card.is-selected {
-  border-color: var(--core-color);
-  background: rgba(16, 18, 32, 0.85);
+@keyframes rhythm-nalet {
+  0% { opacity: .48; transform: scale(.96); }
+  8% { opacity: 1; transform: scale(1.07); }
+  18% { opacity: .55; transform: scale(.99); }
+  24% { opacity: .95; transform: scale(1.04); }
+  32% { opacity: .42; transform: scale(.95); }
+  100% { opacity: .42; transform: scale(.95); }
 }
-.core-card.is-selected .core-card__icon {
-  opacity: 1;
-  filter: saturate(1) drop-shadow(0 0 10px var(--core-color));
-  transform: scale(1.04);
+@keyframes ring-nalet {
+  0% { transform: scale(.74); opacity: .55; }
+  18%, 100% { transform: scale(1.25); opacity: 0; }
 }
-.core-card.is-selected .core-card__glow {
-  opacity: 0.5;
-  transform: translateX(-50%) scale(1);
+@keyframes rhythm-skala {
+  0%, 100% { opacity: .58; transform: scale(.97); }
+  50% { opacity: 1; transform: scale(1.07); }
 }
-.core-card.is-selected .core-card__name {
-  color: #fff;
+@keyframes ring-skala {
+  0% { transform: scale(.85); opacity: .4; }
+  90%, 100% { transform: scale(1.18); opacity: 0; }
 }
-
-.core-select__hint {
-  margin: 0;
-  font-family: var(--font-mono, monospace);
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-dim, rgba(255, 255, 255, 0.42));
+@keyframes rhythm-zasada {
+  0%, 68% { opacity: .34; transform: scale(.95); }
+  78% { opacity: 1; transform: scale(1.1); }
+  88% { opacity: .7; transform: scale(1.02); }
+  100% { opacity: .34; transform: scale(.95); }
+}
+@keyframes ring-zasada {
+  0%, 70% { transform: scale(.8); opacity: 0; }
+  78% { transform: scale(.9); opacity: .55; }
+  100% { transform: scale(1.3); opacity: 0; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .core-card,
-  .core-card__icon,
-  .core-card__glow {
-    transition: none;
-  }
+/* читалка-итог + нотч-CTA */
+.s-bottom {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 22; padding: 0 24px 26px;
+  display: flex; flex-direction: column; gap: 14px;
+}
+.read {
+  display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  border: 1px solid var(--ink-line);
+  background: rgba(255, 255, 255, .025);
+  padding: 13px 16px;
+}
+.read .lbl { display: flex; flex-direction: column; gap: 4px; flex: 1 1 auto; }
+.read .lbl .k {
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: .24em;
+  text-transform: uppercase; color: var(--ink-ash);
+}
+.read .lbl .v {
+  font-family: var(--font-disp); font-size: 18px; font-weight: 800;
+  text-transform: uppercase; color: var(--ink-bone); line-height: 1; letter-spacing: .02em;
+  white-space: nowrap;
+}
+.read .lbl .v b { color: var(--core-ink); font-weight: 800; transition: color .4s var(--ease); }
+.read .lbl .v .dash { color: var(--ink-3); font-weight: 500; }
+.read .sig {
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: .2em;
+  text-transform: uppercase; color: var(--ink-ash); text-align: right; line-height: 1.4;
+  flex: none;
+}
+.read .sig.on { color: var(--core-ink); }
+.read .sig::before { content: "//\00a0"; color: var(--ink-3); }
+
+/* нотч-CTA — фирменный chevron. По умолчанию ghost (ничего не выбрано);
+   .is-ready заливает его в --core. Класс переключаем отдельно от [disabled],
+   чтобы заливка/тень менялись чётко, а не через прозрачность. */
+.cta {
+  width: 100%; border: 0; cursor: not-allowed;
+  background: transparent; color: var(--ink-ash);
+  font-family: var(--font-disp); font-weight: 800; font-size: 20px; letter-spacing: .18em;
+  text-transform: uppercase; opacity: .75;
+  padding: 18px 22px; display: flex; align-items: center; justify-content: center; gap: 18px;
+  position: relative; overflow: hidden;
+  transition: filter .2s, transform .12s, opacity .2s;
+}
+.cta::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  border: 1px dashed var(--ink-line-2);
+  clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
+}
+.cta .arr { font-family: var(--font-mono); font-weight: 700; font-size: 16px; letter-spacing: .1em; position: relative; z-index: 2; }
+.cta span { position: relative; z-index: 2; }
+
+/* выбрано → залитый нотч-primary */
+.cta.is-ready {
+  cursor: pointer; opacity: 1;
+  background: var(--core); color: #0a0a0c;
+  box-shadow: 0 0 26px color-mix(in srgb, var(--core) 50%, transparent);
+  clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
+}
+.cta.is-ready::after { display: none; }
+.cta.is-ready::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .18), transparent 42%);
+}
+.cta.is-ready:hover { filter: brightness(1.08); }
+.cta.is-ready:active { transform: scale(.985); }
+
+/* водяной знак */
+.wm {
+  position: absolute; left: 0; right: 0; bottom: 6px; text-align: center; z-index: 31; pointer-events: none;
+  font-family: var(--font-mono); font-size: 8px; letter-spacing: .24em; text-transform: uppercase;
+  color: var(--ink-3); opacity: .65;
 }
 </style>
