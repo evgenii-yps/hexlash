@@ -13,20 +13,20 @@
      CTA «К ПРОКАЧКЕ» уводит на /play/upgrade. -->
 <template>
   <div class="scene" :style="coreVars">
-    <div class="screen" :style="coreVars" data-screen-label="Выбор ядра">
+    <div class="screen" :style="coreVars" data-screen-label="Core Select">
 
-        <!-- надзаголовок + заголовок + счётчик -->
+        <!-- header + title + counter -->
         <div class="s-top">
           <div class="ttl">
-            <h1>ВЫБЕРИ<br /><b>ЯДРО</b></h1>
+            <h1>CHOOSE YOUR<br /><b>CORE</b></h1>
           </div>
           <div class="counter">
-            <span class="k">Выбор</span>
-            <span class="v"><b class="picked">1</b> ИЗ 4</span>
+            <span class="k">Pick</span>
+            <span class="v"><b class="picked">1</b> OF 4</span>
           </div>
         </div>
 
-        <!-- сетка 2×2 ядер -->
+        <!-- 2×2 core grid -->
         <div class="grid">
           <button
             v-for="core in cores"
@@ -36,7 +36,7 @@
             :data-core="core.id"
             :style="{ '--c': core.hue, '--c-sup': core.sup }"
             :aria-pressed="selectedId === core.id"
-            :aria-label="'Ядро · ' + core.name"
+            :aria-label="'Core · ' + core.name"
             @click="select(core)"
           >
             <div class="halo"></div>
@@ -48,20 +48,20 @@
           </button>
         </div>
 
-        <!-- читалка-итог + нотч-CTA -->
+        <!-- reader + notched CTA -->
         <div class="s-bottom">
           <div class="read">
             <div class="lbl">
-              <span class="k">Ядро</span>
+              <span class="k">Core</span>
               <span class="v">
                 <b class="readname">
-                  <span v-if="!selected" class="dash">— НЕ ВЫБРАНО —</span>
+                  <span v-if="!selected" class="dash">— NONE SELECTED —</span>
                   <template v-else>{{ selected.name }}</template>
                 </b>
               </span>
             </div>
             <span class="sig readsig" :class="{ on: selected }">
-              {{ selected ? selected.sig : 'ТАП ПО ЯДРУ' }}
+              {{ selected ? selected.sig : 'TAP A CORE' }}
             </span>
           </div>
           <button
@@ -70,8 +70,7 @@
             :disabled="!selected"
             @click="toUpgrade"
           >
-            <span>К ПРОКАЧКЕ</span>
-            <span class="arr" aria-hidden="true">→</span>
+            <span>TO UPGRADE</span>
           </button>
         </div>
     </div>
@@ -434,7 +433,6 @@ function toUpgrade() {
   border: 1px dashed var(--ink-line-2);
   clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
 }
-.cta .arr { font-family: var(--font-mono); font-weight: 700; font-size: 16px; letter-spacing: .1em; position: relative; z-index: 2; }
 .cta span { position: relative; z-index: 2; }
 
 /* выбрано → залитый нотч-primary */

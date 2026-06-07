@@ -12,36 +12,36 @@
      «В бой» → /play/arena (the chosen core reaches the arena fighter). -->
 <template>
   <div class="scene" :style="coreVars">
-    <div class="screen" :style="coreVars" :data-level="level" data-screen-label="Прокачка">
+    <div class="screen" :style="coreVars" :data-level="level" data-screen-label="Upgrade">
 
-        <!-- назад + крошки + имя ядра -->
+        <!-- back + crumbs + core name -->
         <div class="s-top">
-          <button class="back" aria-label="Назад" @click="onBack">
+          <button class="back" aria-label="Back" @click="onBack">
             <svg viewBox="0 0 24 24"><polyline points="15 5 8 12 15 19" /></svg>
           </button>
           <div class="crumb">
-            <span :class="crumbCore">Ядро</span><span class="sep">·</span>
-            <span :class="crumbCrystal">Кристалл</span><span class="sep">·</span>
-            <span :class="crumbFace">Грань</span>
+            <span :class="crumbCore">Core</span><span class="sep">·</span>
+            <span :class="crumbCrystal">Crystal</span><span class="sep">·</span>
+            <span :class="crumbFace">Facet</span>
           </div>
           <div class="core-tag">
             <span class="nm">{{ core.name }}</span>
-            <span class="ix">ЯДРО {{ core.ix }}</span>
+            <span class="ix">CORE {{ core.ix }}</span>
           </div>
         </div>
 
-        <!-- сцена глубины -->
+        <!-- depth scene -->
         <div class="stage">
           <svg class="spokes" ref="spokesRef" preserveAspectRatio="none" :viewBox="spokes.viewBox">
             <line v-for="(ln, i) in spokes.lines" :key="i" :x1="ln.x1" :y1="ln.y1" :x2="ln.x2" :y2="ln.y2" />
           </svg>
 
-          <!-- ЯДРО — единственное свечение -->
+          <!-- CORE — the only glow -->
           <div
             class="core-node"
             role="button"
             tabindex="0"
-            aria-label="Раскрыть кристаллы ядра"
+            aria-label="Open core crystals"
             @click="onCoreClick"
             @keydown.enter.prevent="onCoreClick"
             @keydown.space.prevent="onCoreClick"
@@ -50,9 +50,9 @@
             <div class="ring" />
             <div class="glyph" v-html="coreGlyph" />
           </div>
-          <div class="core-hint">тап по ядру</div>
+          <div class="core-hint">tap the core</div>
 
-          <!-- КРИСТАЛЛЫ — по радиусу из центра -->
+          <!-- CRYSTALS — radial from centre -->
           <div class="crystals">
             <button
               v-for="(cr, i) in tree"
@@ -69,36 +69,36 @@
           </div>
         </div>
 
-        <!-- низ: общий пул очков ядра + «В БОЙ» -->
+        <!-- bottom: shared core point pool + «TO BATTLE» -->
         <div class="s-bottom">
           <div class="pool">
             <div class="lbl">
-              <span class="k">Очки ядра · общий пул</span>
-              <span class="v"><b class="pool-free">{{ freePts }}</b> / <span class="pool-total">{{ RESOURCE }}</span> свободно</span>
+              <span class="k">Core Points · Pool</span>
+              <span class="v"><b class="pool-free">{{ freePts }}</b> / <span class="pool-total">{{ RESOURCE }}</span> free</span>
             </div>
             <div class="pips">
               <span v-for="i in RESOURCE" :key="i" class="pip" :class="{ on: i <= spentTotal }" />
             </div>
           </div>
-          <button class="tobattle" @click="toBattle">В бой <span class="arr">→</span></button>
+          <button class="tobattle" @click="toBattle">To Battle <span class="arr">→</span></button>
         </div>
 
-        <!-- ПАНЕЛЬ ГРАНЕЙ -->
+        <!-- FACE PANEL -->
         <div class="facepanel">
           <div class="fp-head">
-            <div class="ttl"><small>Кристалл</small><span class="cr-name">{{ selCrystalObj ? selCrystalObj.name : '—' }}</span></div>
+            <div class="ttl"><small>Crystal</small><span class="cr-name">{{ selCrystalObj ? selCrystalObj.name : '—' }}</span></div>
           </div>
           <div class="meter">
             <div class="cell">
-              <span class="k">Зажжено · лимит кристалла</span>
+              <span class="k">Lit · Crystal Limit</span>
               <span class="limit" :class="{ max: atLimit }">{{ selLit }}<small>/{{ selLimit }}</small></span>
             </div>
             <div class="cell">
-              <span class="k">Очки ядра</span>
+              <span class="k">Core Points</span>
               <div class="pips">
                 <span v-for="i in RESOURCE" :key="i" class="pip" :class="{ on: i <= spentTotal }" />
               </div>
-              <span class="free" :class="{ none: freePts <= 0 }">{{ freePts }}<small> своб.</small></span>
+              <span class="free" :class="{ none: freePts <= 0 }">{{ freePts }}<small> free</small></span>
             </div>
           </div>
           <div class="faces">
@@ -115,12 +115,12 @@
             </div>
           </div>
           <div class="fp-foot">
-            <span class="hint">зажёг одно — погаси другое</span>
-            <span class="stub">эффекты — заглушки</span>
+            <span class="hint">light one — dim another</span>
+            <span class="stub">effects — stubs</span>
           </div>
         </div>
 
-        <div class="wm">HEXLASH · контент — заглушки</div>
+        <div class="wm">HEXLASH · CONTENT — STUBS</div>
     </div>
   </div>
 </template>
@@ -190,11 +190,11 @@ function faceClass(f) {
   };
 }
 function faceLabel(f) {
-  if (f.state === 'lit') return 'зажжена';
-  if (f.state === 'locked') return 'недоступна';
-  if (atLimit.value) return 'лимит';
-  if (spentTotal.value >= RESOURCE) return 'нет очков';
-  return 'доступна';
+  if (f.state === 'lit') return 'lit';
+  if (f.state === 'locked') return 'locked';
+  if (atLimit.value) return 'limit';
+  if (spentTotal.value >= RESOURCE) return 'no points';
+  return 'available';
 }
 
 // --- Toggle a face with the double limiter -----------------------------------
