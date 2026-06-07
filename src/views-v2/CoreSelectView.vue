@@ -1,13 +1,13 @@
-<!-- /play — Экран выбора ядра (Заход 1, шаг 1 предбоевого окна). 1:1 порт
-     хэндофа select_handoff/ по его README. Sibling экрана прокачки: тот же
-     холст 430×932, та же оболочка (статус-бар · HUD-уголки · нотч-CTA), тот же
-     coreSVG(), те же id ядер, единый источник CORES (src/data/upgradeData.js).
+<!-- /play — Экран выбора ядра (Заход 1, шаг 1 предбоевого окна). Полноэкранный,
+     sibling экрана прокачки: тот же coreSVG(), те же id ядер, единый источник
+     CORES (src/data/upgradeData.js), нотч-CTA. Декор превью (рамка-телефон,
+     статус-бар, HUD-уголки, футер) снят — это игровой экран, не мокап.
 
      Дисциплина (Neon Discipline · четыре ядра рядом): каждое ядро по умолчанию
-     ПЛОСКОЕ, без свечения; светится максимум ОДНО — выбранное; экран и HUD
-     темятся в --core выбранного. У каждого ядра свой ритм пульса (натиск —
-     частый, налётчик — рваный, скала — медленный вдох, засада — долгая
-     выдержка), под prefers-reduced-motion: no-preference.
+     ПЛОСКОЕ, без свечения; экран темится в --core выбранного. Свечение глоу —
+     на наведении (только указатель) и на выбранном (плашка + ритм пульса).
+     У каждого ядра свой ритм пульса (натиск — частый, налётчик — рваный, скала —
+     медленный вдох, засада — долгая выдержка), под prefers-reduced-motion.
 
      Выбор → prefight.selectedCoreId (этот же id читают прокачка и арена) →
      CTA «К ПРОКАЧКЕ» уводит на /play/upgrade. -->
@@ -15,17 +15,11 @@
   <div class="scene" :style="coreVars">
     <div class="screen" :style="coreVars" data-screen-label="Выбор ядра">
 
-        <!-- HUD-уголки (фирменная рамка) -->
-        <span class="hud tl"></span>
-        <span class="hud tr"></span>
-        <span class="hud bl"></span>
-        <span class="hud br"></span>
-
         <!-- надзаголовок + заголовок + счётчик -->
         <div class="s-top">
           <div class="ttl">
             <span class="eyebrow">ПОДГОТОВКА · ШАГ 01</span>
-            <h1>ВЫБЕРИ<br /><b>ЯДРО.</b></h1>
+            <h1>ВЫБЕРИ<br /><b>ЯДРО</b></h1>
           </div>
           <div class="counter">
             <span class="k">Выбор</span>
@@ -48,9 +42,6 @@
           >
             <div class="halo"></div>
             <div class="ring"></div>
-            <div class="top">
-              <span class="ix">ЯДРО {{ core.ix }}</span>
-            </div>
             <div class="stage">
               <div class="icon" v-html="glyphs[core.id]"></div>
             </div>
@@ -85,8 +76,6 @@
             <span class="arr" aria-hidden="true">→</span>
           </button>
         </div>
-
-        <div class="wm">HEXLASH · контент — заглушки</div>
     </div>
   </div>
 </template>
@@ -216,25 +205,14 @@ function toUpgrade() {
   transition: background .6s var(--ease);
 }
 
-/* HUD-уголки */
-.hud {
-  position: absolute; width: 28px; height: 28px; z-index: 28; pointer-events: none;
-  border: 1.5px solid color-mix(in srgb, var(--core) 55%, var(--ink-line-2));
-  transition: border-color .6s var(--ease);
-}
-.hud.tl { top: 16px; left: 16px; border-right: 0; border-bottom: 0; }
-.hud.tr { top: 16px; right: 16px; border-left: 0; border-bottom: 0; }
-.hud.bl { bottom: 16px; left: 16px; border-right: 0; border-top: 0; }
-.hud.br { bottom: 16px; right: 16px; border-left: 0; border-top: 0; }
-
-/* надзаголовок + заголовок + счётчик */
+/* надзаголовок + заголовок + счётчик — по центру экрана */
 .s-top {
   position: absolute; top: 60px; left: 0; right: 0; z-index: 30; padding: 0 24px;
-  display: flex; align-items: flex-start; justify-content: space-between; gap: 14px;
+  display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center;
 }
-.s-top .ttl { display: flex; flex-direction: column; gap: 10px; }
+.s-top .ttl { display: flex; flex-direction: column; align-items: center; gap: 10px; }
 .eyebrow {
-  display: flex; align-items: center; gap: 10px; font-family: var(--font-mono);
+  display: flex; align-items: center; justify-content: center; gap: 10px; font-family: var(--font-mono);
   font-size: 10px; font-weight: 500; letter-spacing: .34em; color: var(--core-ink);
   text-transform: uppercase; transition: color .4s var(--ease);
 }
@@ -253,7 +231,7 @@ function toUpgrade() {
     0 0 38px color-mix(in srgb, var(--core) 45%, transparent);
   transition: text-shadow .4s var(--ease);
 }
-.s-top .counter { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; margin-top: 18px; }
+.s-top .counter { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .s-top .counter .k {
   font-family: var(--font-mono); font-size: 9px; letter-spacing: .24em;
   text-transform: uppercase; color: var(--ink-ash);
@@ -288,15 +266,6 @@ function toUpgrade() {
 }
 .core-card:active { transform: scale(.985); }
 .core-card:hover { border-color: var(--ink-line-2); }
-
-/* верхняя полоса — индекс + mono id */
-.core-card .top {
-  display: flex; justify-content: space-between; align-items: center;
-  font-family: var(--font-mono); font-size: 10px; letter-spacing: .22em; text-transform: uppercase;
-  position: relative; z-index: 2;
-}
-.core-card .top .ix { color: color-mix(in srgb, var(--c) 50%, var(--ink-ash)); font-weight: 600; }
-.core-card .top .id { color: var(--ink-3); }
 
 /* сцена иконки с гало */
 .core-card .stage {
@@ -359,8 +328,21 @@ function toUpgrade() {
 .core-card.sel .icon :deep(.seed) { fill: var(--c); }
 .core-card.sel .nm { color: #fff; text-shadow: 0 0 12px color-mix(in srgb, var(--c) 55%, transparent); }
 .core-card.sel .sig { color: var(--c-ink); }
-.core-card.sel .top .ix { color: var(--c-ink); }
 .core-card.sel .halo { opacity: 1; }
+
+/* наведение (только указатель) — ядро светится глоу своим цветом, БЕЗ плашки-
+   заливки: зажигаем halo + штрихи иконки, но НЕ трогаем фон/рамку (это остаётся
+   признаком выбранного). На тач-устройствах media false → tap просто выбирает,
+   hover не липнет. Дисциплина: один указатель = одно наведённое свечение. */
+@media (hover: hover) and (pointer: fine) {
+  .core-card:hover .halo { opacity: 1; }
+  .core-card:hover .icon { transform: scale(1.05); }
+  .core-card:hover .icon :deep(.hex-line) { stroke: var(--c); }
+  .core-card:hover .icon :deep(.facet) { stroke: var(--c-dim); }
+  .core-card:hover .icon :deep(.seed) { fill: var(--c); }
+  .core-card:hover .nm { color: #fff; text-shadow: 0 0 12px color-mix(in srgb, var(--c) 55%, transparent); }
+  .core-card:hover .sig { color: var(--c-ink); }
+}
 
 /* ============================================================
    РИТМЫ СВЕТА — каждое ядро дышит по-своему. Активны только на .sel —
@@ -489,11 +471,4 @@ function toUpgrade() {
 }
 .cta.is-ready:hover { filter: brightness(1.08); }
 .cta.is-ready:active { transform: scale(.985); }
-
-/* водяной знак */
-.wm {
-  position: absolute; left: 0; right: 0; bottom: 6px; text-align: center; z-index: 31; pointer-events: none;
-  font-family: var(--font-mono); font-size: 8px; letter-spacing: .24em; text-transform: uppercase;
-  color: var(--ink-3); opacity: .65;
-}
 </style>
