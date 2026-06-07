@@ -1,127 +1,219 @@
-<!-- /play/upgrade — Upgrade screen (Заход 2). 1:1 port of the Claude Design
-     handoff (upgrade_handoff/) per its README contract:
-       · CORES/CRYSTALS/RESOURCE + working tree (deep copy) → prefight store
-       · hexPts/coreSVG/shardSVG/faceHex/radial → src/data/upgradeGeometry.js (as-is)
-       · setLevel/openCrystal/toggleFace/goCore/goCrystals → methods below
-       · data-level → reactive `level` (bound :data-level, CSS kept verbatim)
-       · spentTotal/freePts → computed
-     Drill-down ядро → кристалл → грань. Double limiter: shared core pool
-     (RESOURCE) + per-crystal limit. The screen tints to the chosen core's hue
-     via --core (from prefight.selectedCoreId); the only glow is the centre core.
-     The demo core-switcher is NOT ported — the core is already chosen on /play.
-     «В бой» → /play/arena (the chosen core reaches the arena fighter). -->
-<template>
-  <div class="scene" :style="coreVars">
-    <div class="screen" :style="coreVars" :data-level="level" data-screen-label="Upgrade">
+<!-- /play/upgrade — Upgrade (pre-fight step 02). 1:1 port of the Claude Design
+     handoff (upgrade_handoff/ rebuild v3) per its README. Drill-down through the
+     fighter: CORE → CRYSTAL → FACET, then ship to battle.
 
-        <!-- back + crumbs + core name -->
-        <div class="s-top">
-          <button class="back" aria-label="Back" @click="onBack">
-            <svg viewBox="0 0 24 24"><polyline points="15 5 8 12 15 19" /></svg>
-          </button>
-          <div class="crumb">
-            <span :class="crumbCore">Core</span><span class="sep">·</span>
-            <span :class="crumbCrystal">Crystal</span><span class="sep">·</span>
-            <span :class="crumbFace">Facet</span>
+     Composition: framed depth chamber (core never floats in void), ghost
+     crystals with names + lit/limit on CORE level, depth rail + chamber tag +
+     back button + action strip, BUILD READOUT band, unified notched foot
+     (pool + pips left, TO BATTLE right). One light = the core in the centre;
+     crystals/ghosts/facets are flat. §sup-discipline: outer halo uses --core
+     (low alpha), --core-sup only seasons the inner highlight — bloom never
+     drifts into a neighbour's hue.
+
+     Data — single source src/data/upgradeData.js (CORES + CRYSTALS + RESOURCE;
+     ids natisk/nalet/skala/zasada + face states lit/open/locked are contract).
+     Geometry — pure fns reused from upgradeGeometry.js (coreSVG shared with the
+     arena/select). Working face-tree lives in the prefight store (survives a
+     trip to the arena and back). Tint --core/--core-sup written on the scene
+     root from prefight.selectedCoreId — same write-site as Core Select. CTA
+     «TO BATTLE» is available at every level (Q1 = A, freedom) → /play/arena.
+     Demo core-switcher + localStorage seed are NOT ported. -->
+<template>
+  <div class="scene" :style="coreVars" :data-level="level" data-screen-label="Upgrade">
+
+    <!-- HUD corner brackets — neutral brand-pink, viewport-pinned -->
+    <span class="hud tl"></span>
+    <span class="hud tr"></span>
+    <span class="hud bl"></span>
+    <span class="hud br"></span>
+
+    <!-- top status / telemetry -->
+    <div class="s-status">
+      <div class="l">
+        <span class="sig"><b></b>UPGRADE</span>
+      </div>
+      <div class="r">
+        <span class="build">BUILD 0.4 · PRE-FIGHT</span>
+      </div>
+    </div>
+
+    <!-- centered composition column -->
+    <main class="stage">
+      <div class="col">
+
+        <!-- HEADLINE -->
+        <header class="headline">
+          <div class="ttl">
+            <span class="eyebrow">PRE-FIGHT · STEP 02</span>
+            <h1>TUNE YOUR <em>CORE.</em></h1>
           </div>
           <div class="core-tag">
-            <span class="nm">{{ core.name }}</span>
             <span class="ix">CORE {{ core.ix }}</span>
+            <span class="nm">{{ core.name }}</span>
+            <span class="sig">// {{ core.sig }}</span>
           </div>
-        </div>
+        </header>
 
-        <!-- depth scene -->
-        <div class="stage">
-          <svg class="spokes" ref="spokesRef" preserveAspectRatio="none" :viewBox="spokes.viewBox">
+        <!-- DEPTH RAIL — permanent drill-down ladder -->
+        <nav class="rail" aria-label="Upgrade depth">
+          <button
+            type="button" class="step"
+            :class="{ here: levelIdx === 0, on: levelIdx > 0 }"
+            :disabled="levelIdx < 0"
+            :aria-current="levelIdx === 0 ? 'step' : 'false'"
+            @click="onRail('core')"
+          >
+            <span class="dot"></span><span class="ix">01</span><span class="lb">CORE</span>
+          </button>
+          <span class="link" :class="{ lit: levelIdx > 0 }"></span>
+          <button
+            type="button" class="step"
+            :class="{ here: levelIdx === 1, on: levelIdx > 1 }"
+            :disabled="levelIdx < 1"
+            :aria-current="levelIdx === 1 ? 'step' : 'false'"
+            @click="onRail('crystal')"
+          >
+            <span class="dot"></span><span class="ix">02</span><span class="lb">CRYSTAL</span>
+          </button>
+          <span class="link" :class="{ lit: levelIdx > 1 }"></span>
+          <button
+            type="button" class="step"
+            :class="{ here: levelIdx === 2, on: levelIdx > 2 }"
+            :disabled="levelIdx < 2"
+            :aria-current="levelIdx === 2 ? 'step' : 'false'"
+            @click="onRail('face')"
+          >
+            <span class="dot"></span><span class="ix">03</span><span class="lb">FACET</span>
+          </button>
+        </nav>
+
+        <!-- DEPTH CHAMBER — one framed stage; level controls what's lit -->
+        <section class="depth" ref="depthRef">
+
+          <!-- CHAMBER HEAD — level tag + back button -->
+          <div class="cham-head">
+            <div class="cham-tag">
+              <span class="dot" aria-hidden="true"></span>
+              <span class="lb">{{ chamLb }}</span>
+              <span class="meta">{{ chamMeta }}</span>
+            </div>
+            <button
+              type="button" class="cham-back"
+              aria-label="Back one level"
+              :hidden="level === 'core'"
+              @click="goBack"
+            >
+              <span class="arr" aria-hidden="true">←</span>
+              <span>BACK</span>
+            </button>
+          </div>
+
+          <!-- spokes from core to each crystal (CRYSTAL level) -->
+          <svg class="spokes" preserveAspectRatio="none" aria-hidden="true" :viewBox="spokes.viewBox">
             <line v-for="(ln, i) in spokes.lines" :key="i" :x1="ln.x1" :y1="ln.y1" :x2="ln.x2" :y2="ln.y2" />
           </svg>
 
-          <!-- CORE — the only glow -->
-          <div
-            class="core-node"
-            role="button"
-            tabindex="0"
-            aria-label="Open core crystals"
-            @click="onCoreClick"
-            @keydown.enter.prevent="onCoreClick"
-            @keydown.space.prevent="onCoreClick"
-          >
-            <div class="glow" />
-            <div class="ring" />
-            <div class="glyph" v-html="coreGlyph" />
-          </div>
-          <div class="core-hint">tap the core</div>
+          <!-- THE core — single glowing object on screen -->
+          <button type="button" class="core-node" aria-label="Open crystals" @click="onCoreTap">
+            <span class="glow" aria-hidden="true"></span>
+            <span class="ring" aria-hidden="true"></span>
+            <span class="glyph" v-html="coreGlyph"></span>
+            <span class="tap-cue" aria-hidden="true">
+              <span class="tap-ring"></span>
+              <span class="tap-ring d2"></span>
+            </span>
+          </button>
 
-          <!-- CRYSTALS — radial from centre -->
+          <!-- ghost crystals — depth scaffold on CORE level (names + lit/limit) -->
+          <div class="ghosts" aria-hidden="true">
+            <span v-for="(cr, i) in tree" :key="cr.id" class="ghost" :style="ghostStyle(i)">
+              <span class="ghex">
+                <svg viewBox="0 0 100 100" aria-hidden="true"><polygon class="hl" :points="GHEX" /></svg>
+              </span>
+              <span class="gn">{{ cr.name }}</span>
+              <span class="gr"><b>{{ litCount(cr) }}</b>/{{ cr.limit }}</span>
+            </span>
+          </div>
+
+          <!-- live crystals (CRYSTAL + FACET levels) -->
           <div class="crystals">
             <button
               v-for="(cr, i) in tree"
               :key="cr.id"
+              type="button"
               class="crystal"
-              :class="{ sel: selCrystal === cr.id }"
-              :style="{ '--x': px(positions[i].x), '--y': px(positions[i].y) }"
+              :class="{ full: litCount(cr) >= cr.limit, sel: selCrystal === cr.id }"
+              :style="crystalStyle(i)"
+              :aria-label="`${cr.name} · ${litCount(cr)} of ${cr.limit} lit`"
               @click="openCrystal(cr.id)"
             >
-              <span class="shard" v-html="shardHtml(cr)" />
+              <span class="shard" v-html="shardHtml(cr)"></span>
               <span class="nm">{{ cr.name }}</span>
               <span class="ratio"><b>{{ litCount(cr) }}</b>/{{ cr.limit }}</span>
             </button>
           </div>
-        </div>
 
-        <!-- bottom: shared core point pool + «TO BATTLE» -->
-        <div class="s-bottom">
-          <div class="pool">
-            <div class="lbl">
-              <span class="k">Core Points · Pool</span>
-              <span class="v"><b class="pool-free">{{ freePts }}</b> / <span class="pool-total">{{ RESOURCE }}</span> free</span>
-            </div>
-            <div class="pips">
-              <span v-for="i in RESOURCE" :key="i" class="pip" :class="{ on: i <= spentTotal }" />
-            </div>
-          </div>
-          <button class="tobattle" @click="toBattle">To Battle <span class="arr">→</span></button>
-        </div>
-
-        <!-- FACE PANEL -->
-        <div class="facepanel">
-          <div class="fp-head">
-            <div class="ttl"><small>Crystal</small><span class="cr-name">{{ selCrystalObj ? selCrystalObj.name : '—' }}</span></div>
-          </div>
-          <div class="meter">
-            <div class="cell">
-              <span class="k">Lit · Crystal Limit</span>
-              <span class="limit" :class="{ max: atLimit }">{{ selLit }}<small>/{{ selLimit }}</small></span>
-            </div>
-            <div class="cell">
-              <span class="k">Core Points</span>
-              <div class="pips">
-                <span v-for="i in RESOURCE" :key="i" class="pip" :class="{ on: i <= spentTotal }" />
-              </div>
-              <span class="free" :class="{ none: freePts <= 0 }">{{ freePts }}<small> free</small></span>
-            </div>
-          </div>
-          <div class="faces">
+          <!-- facet grid (FACET level) — replaces crystals in place -->
+          <div class="facets" :hidden="level !== 'face'">
             <div
               v-for="f in selFaces"
               :key="f.id"
               class="face"
               :class="faceClass(f)"
+              tabindex="0"
+              role="button"
+              :aria-pressed="f.state === 'lit'"
               @click="toggleFace(f)"
+              @keydown.enter.prevent="toggleFace(f)"
+              @keydown.space.prevent="toggleFace(f)"
             >
-              <span class="fhex" v-html="faceHtml" />
+              <span class="fhex" v-html="faceHtml"></span>
               <span class="fl-nm">{{ f.name }}</span>
               <span class="fl-st">{{ faceLabel(f) }}</span>
             </div>
           </div>
-          <div class="fp-foot">
-            <span class="hint">light one — dim another</span>
-            <span class="stub">effects — stubs</span>
+
+          <!-- CHAMBER FOOT — actionable strip -->
+          <div class="cham-foot">
+            <span class="hint">{{ chamFootHint }}</span>
+            <span class="caret" aria-hidden="true">{{ chamFootCaret }}</span>
           </div>
+        </section>
+
+        <!-- BUILD READOUT — names every lit facet right now -->
+        <div class="build-readout" :class="{ full: litNames.length >= RESOURCE }">
+          <span class="k">BUILD //</span>
+          <span class="v" :class="{ empty: !litNames.length }">
+            <template v-if="!litNames.length">NO FACETS LIT — TAP IN</template>
+            <template v-else>
+              <template v-for="(n, i) in litNames" :key="i"><span v-if="i" class="sep">·</span><span class="b">{{ n }}</span></template>
+            </template>
+          </span>
+          <span class="ct">{{ litNames.length }} LIT</span>
         </div>
 
-        <div class="wm">HEXLASH · CONTENT — STUBS</div>
-    </div>
+        <!-- UNIFIED FOOT — pool + pips + bold CTA in one notched container.
+             TO BATTLE enabled at every level (Q1 = A, freedom). -->
+        <footer class="foot">
+          <div class="foot-l">
+            <div class="lbl">
+              <span class="k">CORE POINTS</span>
+              <span class="v" :class="{ depleted: spentTotal >= RESOURCE }"><b>{{ freePts }}</b>&nbsp;/&nbsp;{{ RESOURCE }}&nbsp;FREE</span>
+            </div>
+            <div class="pips" aria-hidden="true">
+              <span v-for="i in RESOURCE" :key="i" class="pip" :class="{ on: i <= spentTotal }"></span>
+            </div>
+          </div>
+          <button type="button" class="cta is-ready" aria-label="Proceed to battle" @click="toBattle">
+            <span>TO BATTLE</span>
+            <span class="arr" aria-hidden="true">→</span>
+          </button>
+        </footer>
+
+      </div>
+    </main>
+
+    <div class="wm">HEXLASH · CONTENT IS STUB</div>
   </div>
 </template>
 
@@ -129,88 +221,101 @@
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
-import { coreSVG, shardSVG, faceHex, radial } from '@/data/upgradeGeometry.js';
 import { CRYSTALS, RESOURCE, getCore } from '@/data/upgradeData.js';
+import { coreSVG, shardSVG, faceHex, hexPts, radial } from '@/data/upgradeGeometry.js';
 
 const store = useStore();
 const router = useRouter();
 
-// --- Core context (id comes from the selection screen via the store) ---------
-// One id contract end-to-end — the picked id (natisk / nalet / skala / zasada)
-// looks up CORES directly; no select→handoff bridge anymore.
+// --- Core context (picked on the previous screen, read from the store) --------
 const coreId = computed(() => getCore(store.getters['prefight/selectedCoreId']).id);
 const core = computed(() => getCore(coreId.value));
 const coreVars = computed(() => ({ '--core': core.value.hue, '--core-sup': core.value.sup }));
 const coreGlyph = computed(() => coreSVG(coreId.value, { seed: true }));
-const faceHtml = faceHex(); // constant — same node markup for every face
+const faceHtml = faceHex();               // constant node markup for every facet
+const GHEX = hexPts(50, 50, 42);          // ghost crystal hex outline
 
-// --- Working tree (deep copy of CRYSTALS for this core) lives in the store ----
+// --- Working face-tree (deep copy of CRYSTALS for this core) lives in store ----
 store.dispatch('prefight/initUpgradeTree', CRYSTALS[coreId.value]);
 const tree = computed(() => store.getters['prefight/upgradeTree'] || []);
-const positions = computed(() => radial(tree.value.length, 124));
 
-// --- Drill-down level + selected crystal -------------------------------------
+// --- Drill-down level + selected crystal --------------------------------------
 const level = ref('core'); // 'core' | 'crystal' | 'face'
+const levelIdx = computed(() => ['core', 'crystal', 'face'].indexOf(level.value));
 const selCrystal = ref(null);
 const selCrystalObj = computed(() => tree.value.find((c) => c.id === selCrystal.value) || null);
 const selFaces = computed(() => (selCrystalObj.value ? selCrystalObj.value.faces : []));
-const selLimit = computed(() => (selCrystalObj.value ? selCrystalObj.value.limit : 0));
-const selLit = computed(() => litCount(selCrystalObj.value));
-const atLimit = computed(() => selLit.value >= selLimit.value);
 
-// --- Resource (double limiter: shared pool + per-crystal limit) ---------------
+// --- Pool accounting (double-clamp: per-crystal limit + global RESOURCE) -------
 function litCount(cr) {
   return cr ? cr.faces.filter((f) => f.state === 'lit').length : 0;
 }
 const spentTotal = computed(() => tree.value.reduce((n, cr) => n + litCount(cr), 0));
 const freePts = computed(() => RESOURCE - spentTotal.value);
+const litNames = computed(() => {
+  const out = [];
+  tree.value.forEach((cr) => cr.faces.forEach((f) => { if (f.state === 'lit') out.push(f.name); }));
+  return out;
+});
+const countAllFaces = computed(() => tree.value.reduce((n, cr) => n + cr.faces.length, 0));
 
-// --- SVG helpers (per-crystal shard uid = coreId-crystalId → unique clipPath) -
+// --- SVG helpers (shard uid = coreId-crystalId → unique clipPath key) ---------
 function shardHtml(cr) {
   return shardSVG(litCount(cr) / cr.limit, coreId.value + '-' + cr.id);
 }
-const px = (n) => n.toFixed(0) + 'px';
 
-// --- Crumbs ------------------------------------------------------------------
-const crumbCore = computed(() => 'lvl-core ' + (level.value === 'core' ? 'here' : 'on'));
-const crumbCrystal = computed(
-  () => 'lvl-crystal ' + (level.value === 'crystal' ? 'here' : level.value === 'face' ? 'on' : ''),
+// --- Chamber head / foot — level-aware copy -----------------------------------
+const chamLb = computed(() =>
+  level.value === 'core' ? 'ENTRY'
+    : level.value === 'crystal' ? 'BRANCHES'
+      : (selCrystalObj.value ? selCrystalObj.value.name : '—'),
 );
-const crumbFace = computed(() => 'lvl-face ' + (level.value === 'face' ? 'here' : ''));
+const chamMeta = computed(() => {
+  if (level.value === 'core') return `// ${tree.value.length} CRYSTALS · ${countAllFaces.value} FACETS WITHIN`;
+  if (level.value === 'crystal') return '// PICK A CRYSTAL';
+  const cr = selCrystalObj.value;
+  return `// ${cr ? litCount(cr) : 0}/${cr ? cr.limit : 0} LIT`;
+});
+const chamFootHint = computed(() =>
+  level.value === 'core' ? 'TAP THE CORE TO ENTER THE TREE'
+    : level.value === 'crystal' ? 'PICK A CRYSTAL'
+      : 'LIGHT ONE — QUENCH ANOTHER · EFFECTS ARE STUBS',
+);
+const chamFootCaret = computed(() => (level.value === 'core' ? '↓' : ''));
 
-// --- Face state → class + label ----------------------------------------------
+// --- Facet grid — class + label per face --------------------------------------
 function faceClass(f) {
-  const blocked = f.state === 'open' && (atLimit.value || spentTotal.value >= RESOURCE);
+  const cr = selCrystalObj.value;
+  const atLimit = cr ? litCount(cr) >= cr.limit : false;
+  const noPts = spentTotal.value >= RESOURCE;
   return {
     lit: f.state === 'lit',
     open: f.state === 'open',
     locked: f.state === 'locked',
-    blocked,
+    blocked: f.state === 'open' && (atLimit || noPts),
     shake: shakeFaceId.value === f.id,
   };
 }
 function faceLabel(f) {
-  if (f.state === 'lit') return 'lit';
-  if (f.state === 'locked') return 'locked';
-  if (atLimit.value) return 'limit';
-  if (spentTotal.value >= RESOURCE) return 'no points';
-  return 'available';
+  if (f.state === 'lit') return 'LIT';
+  if (f.state === 'locked') return 'LOCKED';
+  const cr = selCrystalObj.value;
+  if (cr && litCount(cr) >= cr.limit) return 'LIMIT';
+  if (spentTotal.value >= RESOURCE) return 'NO PTS';
+  return 'OPEN';
 }
 
-// --- Toggle a face with the double limiter -----------------------------------
+// --- Toggle a facet — guarded by per-crystal limit + global pool; shake on no --
 const shakeFaceId = ref(null);
-function deny(faceId) {
-  // retrigger the shake even on the same face
-  shakeFaceId.value = null;
-  nextTick(() => {
-    shakeFaceId.value = faceId;
-    setTimeout(() => {
-      if (shakeFaceId.value === faceId) shakeFaceId.value = null;
-    }, 300);
-  });
-}
 function setFace(crystalId, faceId, faceState) {
   store.dispatch('prefight/setFaceState', { crystalId, faceId, faceState });
+}
+function deny(faceId) {
+  shakeFaceId.value = null; // retrigger even on the same face
+  nextTick(() => {
+    shakeFaceId.value = faceId;
+    setTimeout(() => { if (shakeFaceId.value === faceId) shakeFaceId.value = null; }, 320);
+  });
 }
 function toggleFace(f) {
   const cr = selCrystalObj.value;
@@ -221,363 +326,807 @@ function toggleFace(f) {
   setFace(cr.id, f.id, 'lit');
 }
 
-// --- Navigation --------------------------------------------------------------
-function onCoreClick() {
-  if (level.value === 'core') level.value = 'crystal';
+// --- Navigation ---------------------------------------------------------------
+function setLevel(l) { level.value = l; }
+function goCrystals() { setLevel('crystal'); }
+function openCrystal(id) { selCrystal.value = id; setLevel('face'); }
+function goCore() { selCrystal.value = null; setLevel('core'); }
+function goBack() {
+  if (level.value === 'face') goCrystals();
+  else if (level.value === 'crystal') goCore();
 }
-function openCrystal(id) {
-  selCrystal.value = id;
-  level.value = 'face';
-}
-function onBack() {
-  if (level.value === 'face') level.value = 'crystal';
-  else if (level.value === 'crystal') { selCrystal.value = null; level.value = 'core'; }
+function onCoreTap() { if (level.value === 'core') goCrystals(); }
+function onRail(step) {
+  if (step === level.value) return;
+  const order = ['core', 'crystal', 'face'];
+  if (order.indexOf(step) > levelIdx.value) return; // earlier/visited stops only
+  if (step === 'core') goCore();
+  else if (step === 'crystal') goCrystals();
 }
 function toBattle() {
   router.push({ name: 'V2Arena' });
 }
 
-// --- Spokes (ядро → кристалл) — measured centre so lines hit the crystals -----
-const spokesRef = ref(null);
-const spokes = ref({ viewBox: '0 0 386 674', lines: [] });
-function computeSpokes() {
-  const el = spokesRef.value;
-  const w = (el && el.clientWidth) || 386;
-  const h = (el && el.clientHeight) || 674;
-  const pos = positions.value;
+// --- Geometry — radial layout of ghosts/crystals measured against the chamber -
+const depthRef = ref(null);
+const FALLBACK_R = 150;
+const ghostPos = ref(radial(tree.value.length, FALLBACK_R));
+const crystalPos = ref(radial(tree.value.length, FALLBACK_R));
+const spokes = ref({ viewBox: '0 0 600 460', lines: [] });
+const px = (n) => (typeof n === 'number' ? n.toFixed(0) : '0') + 'px';
+function ghostStyle(i) {
+  const p = ghostPos.value[i];
+  return { '--x': px(p ? p.x : 0), '--y': px(p ? p.y : 0) };
+}
+function crystalStyle(i) {
+  const p = crystalPos.value[i];
+  return { '--x': px(p ? p.x : 0), '--y': px(p ? p.y : 0) };
+}
+function computeGeom() {
+  const el = depthRef.value;
+  if (!el) return;
+  const w = el.clientWidth;
+  const h = el.clientHeight;
+  const n = tree.value.length;
+  ghostPos.value = radial(n, Math.min(w * 0.36, h * 0.36, 200));
+  crystalPos.value = radial(n, Math.min(w * 0.34, h * 0.34, 200));
+  const cp = crystalPos.value;
   spokes.value = {
     viewBox: `0 0 ${w} ${h}`,
-    lines: pos.map((p) => ({
-      x1: (w / 2).toFixed(0),
-      y1: (h / 2).toFixed(0),
-      x2: (w / 2 + p.x).toFixed(0),
-      y2: (h / 2 + p.y).toFixed(0),
+    lines: cp.map((p) => ({
+      x1: (w / 2).toFixed(0), y1: (h / 2).toFixed(0),
+      x2: (w / 2 + p.x).toFixed(0), y2: (h / 2 + p.y).toFixed(0),
     })),
   };
 }
 
-// --- Spokes follow the live layout (full-viewport screen, no letterbox fit) ---
+let raf = 0;
 function onResize() {
-  computeSpokes();
+  cancelAnimationFrame(raf);
+  raf = requestAnimationFrame(computeGeom);
+}
+function onKeydown(e) {
+  if (e.key === 'Escape' && level.value !== 'core') { e.preventDefault(); goBack(); }
 }
 
 onMounted(() => {
-  nextTick(computeSpokes);
+  nextTick(computeGeom);
   window.addEventListener('resize', onResize);
+  document.addEventListener('keydown', onKeydown);
 });
 onBeforeUnmount(() => {
+  cancelAnimationFrame(raf);
   window.removeEventListener('resize', onResize);
+  document.removeEventListener('keydown', onKeydown);
 });
 </script>
 
 <style>
-/* Fonts are global resources — Saira Condensed (display) + JetBrains Mono. */
-@import url('https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+/* Fonts — shared resource: Saira Condensed (display) + JetBrains Mono (mono).
+   Same @import as Core Select — the browser dedupes. */
+@import url('https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
 </style>
 
 <style scoped>
 /* ============================================================
-   HEXLASH — ЭКРАН ПРОКАЧКИ · стили (порт upgrade_handoff/styles.css)
-   Дисциплина: тёмный фон · один акцент = --core · экран темится в --core ·
-   одно свечение = ядро в центре (кристаллы/грани плоские) · минимализм.
-   Токены вынесены из :root на .scene (корень компонента) — кастом-проперти
-   наследуются вглубь. SVG из v-html таргетится через :deep().
+   HEXLASH — UPGRADE · styles (1:1 port of upgrade_handoff/styles.css, v3).
+   Tokens on .scene (component root). SVG from v-html → :deep().
    ============================================================ */
 .scene * { box-sizing: border-box; margin: 0; padding: 0; }
 .scene button {
   font: inherit; color: inherit; background: none; border: 0; cursor: pointer;
   -webkit-appearance: none; appearance: none; -webkit-tap-highlight-color: transparent;
 }
+.scene ::selection { background: var(--lash); color: #fff; }
 
+/* ============================================================
+   SCENE — full viewport. --core top wash + --lash baseline + deep void.
+   ============================================================ */
 .scene {
-  /* ground — нейтральные, чуть холодные чёрные */
+  /* Brand Book — Color */
   --bg-void: #08080a;
-  --bg-0: #0c0c0f;
-  --bg-1: #111114;
-  --bg-2: #16161b;
-  --bg-3: #1d1d23;
-  /* ink — приглушённые офф-уайты */
-  --ink-0: #ededf1;
-  --ink-1: #9a9aa3;
-  --ink-2: #5d5d66;
-  --ink-3: #393940;
-  /* хэйрлайны */
-  --line: rgba(255, 255, 255, .07);
-  --line-2: rgba(255, 255, 255, .13);
+  --bg-carbon: #0d0a0d;
+  --bg-ember: #160a11;          /* faint pink-tinted wash */
+  --ink-bone: #f6f4f6;
+  --ink-ash: #6e6a72;
+  --ink-line: rgba(255, 255, 255, .07);
+  --ink-line-2: rgba(255, 255, 255, .13);
+  --ink-3: #36343a;
+  --ink-4: #1c1a1f;
 
-  --font-disp: 'Saira Condensed', system-ui, sans-serif;
+  /* Brand primary — neutral chrome accent (NOT a core color) */
+  --lash: #ff0069;
+  --lash-dim: rgba(255, 0, 105, .42);
+  --lash-faint: rgba(255, 0, 105, .14);
+
+  /* Type */
+  --font-disp: 'Saira Condensed', -apple-system, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* Easing */
   --ease: cubic-bezier(.4, .05, .1, 1);
   --ease-out: cubic-bezier(.16, 1, .3, 1);
 
-
-  /* контекст-ядро по умолчанию (свопается :style на .scene и .screen) */
+  /* Picked core context — defaults to Bulwark (visually quiet).
+     :style binding swaps --core / --core-sup from prefight.selectedCoreId. */
   --core: #2ED6B0;
-  --core-sup: #5DD6E6;
-
-  position: fixed; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  background:
-    radial-gradient(120% 70% at 50% 6%, color-mix(in srgb, var(--core, #2ED6B0) 7%, transparent), transparent 60%),
-    radial-gradient(120% 60% at 50% 108%, color-mix(in srgb, var(--core, #2ED6B0) 9%, transparent), transparent 64%),
-    var(--bg-void);
-  color: var(--ink-0);
-  font-family: var(--font-disp);
-  line-height: 1.4;
-  -webkit-font-smoothing: antialiased;
-  transition: background .6s var(--ease);
-  overflow: hidden;
-}
-/* тонкая дисциплина-сетка + виньетка по всей сцене */
-.scene::before {
-  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
-  background-image:
-    linear-gradient(var(--line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--line) 1px, transparent 1px);
-  background-size: 56px 56px;
-  -webkit-mask-image: radial-gradient(120% 80% at 50% 36%, #000, transparent 72%);
-  mask-image: radial-gradient(120% 80% at 50% 36%, #000, transparent 72%);
-  opacity: .4;
-}
-
-/* ---------- экран — полноэкранный холст (без рамки-телефона / letterbox),
-   темится в --core. Занимает весь вьюпорт на десктопе и мобиле. ---------- */
-.screen {
-  position: absolute; inset: 0; overflow: hidden;
-  isolation: isolate;
-  --core: #2ED6B0;
-  --core-sup: #5DD6E6;
+  --core-sup: #7AE6D0;
   --core-dim: color-mix(in srgb, var(--core) 55%, transparent);
   --core-faint: color-mix(in srgb, var(--core) 14%, transparent);
   --core-ghost: color-mix(in srgb, var(--core) 7%, transparent);
   --core-ink: color-mix(in srgb, var(--core) 62%, #fff);
+
+  position: fixed; inset: 0;
+  display: flex; flex-direction: column;
   background:
-    radial-gradient(72% 42% at 50% 30%, var(--core-faint), transparent 66%),
-    radial-gradient(120% 50% at 50% 102%, var(--core-ghost), transparent 60%),
-    radial-gradient(130% 78% at 50% 14%, #111118, #08080b 66%);
-  transition: background .6s var(--ease);
+    radial-gradient(110% 60% at 50% 0%,
+      color-mix(in srgb, var(--core) 9%, transparent), transparent 60%),
+    radial-gradient(110% 70% at 50% 100%,
+      color-mix(in srgb, var(--lash) 5%, transparent), transparent 64%),
+    radial-gradient(130% 80% at 50% 12%,
+      var(--bg-ember) 0%, var(--bg-carbon) 38%, var(--bg-void) 78%);
+  color: var(--ink-bone);
+  font-family: var(--font-disp);
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  transition: background .55s var(--ease);
+  isolation: isolate;
 }
-.screen::after {
-  content: ""; position: absolute; inset: 13px; border-radius: 0; z-index: 29; pointer-events: none;
+.scene::before {
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image:
+    linear-gradient(var(--ink-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--ink-line) 1px, transparent 1px);
+  background-size: 64px 64px;
+  -webkit-mask-image: radial-gradient(120% 90% at 50% 50%, #000, transparent 78%);
+  mask-image: radial-gradient(120% 90% at 50% 50%, #000, transparent 78%);
+  opacity: .32;
+}
+
+/* HUD corner brackets — neutral chrome, brand-pink */
+.hud { position: fixed; width: 36px; height: 36px; z-index: 40; pointer-events: none;
+  border: 1.5px solid var(--lash-dim); }
+.hud.tl { top: 22px; left: 22px; border-right: 0; border-bottom: 0; }
+.hud.tr { top: 22px; right: 22px; border-left: 0; border-bottom: 0; }
+.hud.bl { bottom: 22px; left: 22px; border-right: 0; border-top: 0; }
+.hud.br { bottom: 22px; right: 22px; border-left: 0; border-top: 0; }
+@media (max-width: 640px) {
+  .hud { width: 24px; height: 24px; }
+  .hud.tl, .hud.tr { top: 14px; }
+  .hud.bl, .hud.br { bottom: 14px; }
+  .hud.tl, .hud.bl { left: 14px; }
+  .hud.tr, .hud.br { right: 14px; }
+}
+
+/* STATUS — top mono telemetry bar */
+.s-status {
+  position: fixed; top: 24px; left: 0; right: 0; z-index: 35;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0 76px;
+  font-family: var(--font-mono); font-size: 12px; font-weight: 500;
+  color: var(--ink-bone); letter-spacing: .04em;
+  pointer-events: none;
+}
+.s-status .l, .s-status .r { display: flex; align-items: center; gap: 10px; }
+.s-status .sig { display: flex; align-items: center; gap: 8px; color: var(--ink-ash); letter-spacing: .22em; }
+.s-status .sig b { width: 6px; height: 6px; border-radius: 50%; background: var(--lash);
+  box-shadow: 0 0 8px var(--lash-dim); }
+.s-status .build { color: var(--ink-3); letter-spacing: .18em; }
+@media (max-width: 640px) {
+  .s-status { top: 16px; padding: 0 44px; font-size: 10.5px; }
+  .s-status .build { display: none; }
+}
+
+/* ============================================================
+   STAGE — centered composition column
+   ============================================================ */
+.scene .stage {
+  position: relative; z-index: 5;
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  width: 100%;
+  padding: clamp(52px, 6vh, 80px) 28px clamp(20px, 3vh, 36px);
+  gap: clamp(12px, 1.8vh, 18px);
+}
+.col {
+  width: 100%;
+  max-width: min(780px, 100%);
+  display: flex; flex-direction: column;
+  gap: clamp(12px, 1.4vh, 16px);
+}
+@media (max-width: 640px) {
+  .scene .stage { padding: 56px 18px 18px; }
+}
+
+/* ============================================================
+   HEADLINE
+   ============================================================ */
+.headline {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 16px 24px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--ink-line);
+}
+.headline .ttl { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.eyebrow { display: flex; align-items: center; gap: 12px;
+  font-family: var(--font-mono); font-size: 11px; font-weight: 500;
+  letter-spacing: .34em; text-transform: uppercase; color: var(--lash);
+  white-space: nowrap; }
+.eyebrow::before { content: ""; width: 26px; height: 2px; background: var(--lash);
+  box-shadow: 0 0 10px var(--lash-dim); }
+
+.headline h1 {
+  font-family: var(--font-disp); font-weight: 900;
+  font-size: clamp(36px, 5.6vw, 60px);
+  line-height: .88; letter-spacing: .005em;
+  text-transform: uppercase; color: var(--ink-bone);
+  text-wrap: balance;
+  white-space: nowrap;
+}
+.headline h1 em { font-style: normal; color: #fff;
+  text-shadow: 0 0 14px color-mix(in srgb, var(--core) 38%, transparent); }
+
+/* CORE TAG (right meta) — which core is in context */
+.core-tag {
+  display: flex; flex-direction: column; align-items: flex-end; gap: 3px;
+  font-family: var(--font-mono); text-align: right;
+  padding-bottom: 6px; line-height: 1;
+}
+.core-tag .ix { font-size: 10px; letter-spacing: .26em;
+  text-transform: uppercase; color: var(--ink-ash); }
+.core-tag .nm { font-family: var(--font-disp); font-weight: 800; font-size: 22px;
+  letter-spacing: .02em; text-transform: uppercase; color: var(--ink-bone);
+  text-shadow: 0 0 14px color-mix(in srgb, var(--core) 35%, transparent); }
+.core-tag .sig { font-size: 10px; letter-spacing: .24em; color: var(--core-ink);
+  text-transform: uppercase; }
+
+@media (max-width: 520px) {
+  .headline { grid-template-columns: 1fr; gap: 12px; padding-bottom: 10px; }
+  .headline h1 { font-size: clamp(34px, 10vw, 46px); white-space: normal; }
+  .core-tag { align-items: baseline; text-align: left; padding-bottom: 0;
+    flex-direction: row; gap: 10px; }
+  .core-tag .nm { font-size: 18px; }
+}
+
+/* ============================================================
+   DEPTH RAIL — permanent drill-down ladder
+   ============================================================ */
+.rail {
+  display: grid;
+  grid-template-columns: auto 1fr auto 1fr auto;
+  align-items: center;
+  gap: 0;
+  padding: 4px 4px 2px;
+}
+.rail .step {
+  display: flex; align-items: center; gap: 9px;
+  padding: 6px 4px;
+  font-family: var(--font-mono);
+  cursor: pointer;
+  color: var(--ink-3);
+  transition: color .25s var(--ease);
+}
+.rail .step .ix { font-size: 10px; letter-spacing: .22em; font-weight: 600; }
+.rail .step .lb { font-size: 11px; letter-spacing: .28em; font-weight: 600; text-transform: uppercase; }
+.rail .step .dot {
+  width: 9px; height: 9px; border: 1px solid currentColor; border-radius: 50%;
+  background: transparent;
+  transition: background .25s var(--ease), box-shadow .25s var(--ease), border-color .25s var(--ease);
+}
+.rail .step[disabled] { cursor: default; }
+.rail .step.on { color: var(--ink-ash); }
+.rail .step.on:hover { color: var(--ink-bone); }
+.rail .step.on .dot { background: var(--ink-ash); border-color: var(--ink-ash); }
+.rail .step.here { color: #fff; }
+.rail .step.here .dot {
+  background: var(--core); border-color: var(--core);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--core) 22%, transparent),
+              0 0 12px color-mix(in srgb, var(--core) 65%, transparent);
+}
+.rail .step.here .lb { color: #fff; }
+.rail .link {
+  height: 1px; background: linear-gradient(90deg, var(--ink-line), var(--ink-line-2), var(--ink-line));
+  margin: 0 6px; position: relative; overflow: hidden;
+}
+.rail .link.lit { background: linear-gradient(90deg, var(--core-dim), var(--core), var(--core-dim)); }
+
+@media (max-width: 520px) {
+  .rail .step .lb { display: none; }
+  .rail { gap: 0; padding: 4px; }
+  .rail .step { padding: 6px 6px; }
+}
+
+/* ============================================================
+   DEPTH CHAMBER — one framed stage; level controls what's lit.
+   ============================================================ */
+.depth {
+  position: relative; width: 100%;
+  height: clamp(340px, 46vh, 480px);
+  isolation: isolate;
+  border: 1px solid var(--ink-line-2);
   background:
-    linear-gradient(var(--core-dim), var(--core-dim)) left 0 top 0/16px 1px no-repeat,
-    linear-gradient(var(--core-dim), var(--core-dim)) left 0 top 0/1px 16px no-repeat,
-    linear-gradient(var(--core-dim), var(--core-dim)) right 0 top 0/16px 1px no-repeat,
-    linear-gradient(var(--core-dim), var(--core-dim)) right 0 top 0/1px 16px no-repeat,
-    linear-gradient(var(--core-dim), var(--core-dim)) left 0 bottom 0/16px 1px no-repeat,
-    linear-gradient(var(--core-dim), var(--core-dim)) left 0 bottom 0/1px 16px no-repeat,
-    linear-gradient(var(--core-dim), var(--core-dim)) right 0 bottom 0/16px 1px no-repeat,
-    linear-gradient(var(--core-dim), var(--core-dim)) right 0 bottom 0/1px 16px no-repeat;
-  opacity: .5;
+    radial-gradient(60% 50% at 50% 50%,
+      color-mix(in srgb, var(--core) 6%, transparent), transparent 70%),
+    linear-gradient(180deg,
+      rgba(255, 255, 255, .014),
+      rgba(255, 255, 255, 0) 70%);
+  /* fight-card chevron corner (Brand Book primary motif) */
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 16px),
+                    calc(100% - 16px) 100%, 0 100%);
+  overflow: hidden;
+}
+/* corner ticks — chamber feels framed in the core's hue */
+.depth::before, .depth::after {
+  content: ""; position: absolute; width: 14px; height: 14px; pointer-events: none;
+  border: 1px solid var(--core-dim); opacity: .85; z-index: 8;
+}
+.depth::before { top: 8px; left: 8px; border-right: 0; border-bottom: 0; }
+.depth::after { top: 8px; right: 8px; border-left: 0; border-bottom: 0; }
+
+/* CHAMBER HEAD — level tag + back button */
+.cham-head {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 9;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 18px 0;
+  pointer-events: none;
+}
+.cham-head > * { pointer-events: auto; }
+.cham-tag { display: flex; align-items: center; gap: 10px;
+  font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .26em;
+  text-transform: uppercase; color: var(--ink-ash); line-height: 1;
+  padding-left: 18px; }
+.cham-tag .dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--core);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--core) 70%, transparent);
+}
+.cham-tag .lb { color: #fff; font-weight: 600; letter-spacing: .3em; }
+.cham-tag .meta { color: var(--ink-3); font-weight: 500; }
+
+.cham-back[hidden] { display: none; }
+.cham-back {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 10px;
+  font-family: var(--font-mono); font-size: 10.5px; font-weight: 600;
+  letter-spacing: .24em; text-transform: uppercase;
+  color: var(--ink-ash);
+  border: 1px solid var(--ink-line-2);
+  background: rgba(0, 0, 0, .32);
+  transition: color .2s, border-color .2s, background .2s;
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px),
+                    calc(100% - 8px) 100%, 0 100%, 0 8px);
+}
+.cham-back .arr { font-family: var(--font-mono); font-weight: 700; }
+.cham-back:hover { color: #fff; border-color: var(--core-dim);
+  background: color-mix(in srgb, var(--core) 12%, #000); }
+
+/* spokes from core to each crystal — visible on CRYSTAL level */
+.spokes { position: absolute; inset: 0; z-index: 1; opacity: 0;
+  transition: opacity .5s var(--ease); }
+.scene[data-level="crystal"] .spokes { opacity: 1; }
+.spokes line {
+  stroke: var(--core-dim); stroke-width: 1;
+  stroke-dasharray: 2 5; opacity: .7;
 }
 
-/* ---------- верх: назад + крошки + имя ядра ---------- */
-.s-top {
-  position: absolute; top: 58px; left: 0; right: 0; z-index: 30; padding: 0 22px;
-  display: flex; align-items: center; gap: 14px; height: 44px;
-}
-.back {
-  width: 38px; height: 38px; flex: none; border: 1px solid var(--line); border-radius: 10px; background: rgba(255, 255, 255, .03);
-  color: var(--ink-1); display: grid; place-items: center; cursor: pointer;
-  opacity: 0; pointer-events: none; transform: translateX(-4px);
-  transition: opacity .3s, transform .3s, border-color .2s, color .2s;
-}
-.back svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.back:hover { border-color: var(--core-dim); color: var(--ink-0); }
-.screen[data-level="crystal"] .back,
-.screen[data-level="face"] .back { opacity: 1; pointer-events: auto; transform: none; }
-
-.crumb { display: flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 11px; letter-spacing: .18em; text-transform: uppercase; }
-.crumb span { color: var(--ink-3); transition: color .3s; }
-.crumb span.on { color: var(--ink-0); }
-.crumb span.here { color: var(--core-ink); }
-.crumb .sep { color: var(--ink-3) !important; }
-
-.core-tag { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; gap: 1px; text-align: right; }
-.core-tag .nm { font-size: 17px; font-weight: 700; text-transform: uppercase; letter-spacing: .01em; line-height: 1; color: var(--core-ink); }
-.core-tag .ix { font-family: var(--font-mono); font-size: 9px; letter-spacing: .22em; color: var(--ink-2); }
-
-/* ---------- сцена глубины ---------- */
-.stage { position: absolute; left: 0; right: 0; top: 108px; bottom: 150px; z-index: 10; }
-
-.spokes { position: absolute; inset: 0; z-index: 11; pointer-events: none; opacity: 0; transition: opacity .5s; }
-.screen[data-level="crystal"] .spokes { opacity: 1; }
-.spokes line { stroke: var(--core-dim); stroke-width: 1; stroke-dasharray: 2 5; opacity: .6; }
-
-/* ---------- ЯДРО — единственный светящийся объект ---------- */
+/* ---------- CORE — the only glowing thing on screen ---------- */
 .core-node {
-  position: absolute; top: 50%; left: 50%; width: 184px; height: 184px;
+  position: absolute; top: 50%; left: 50%;
+  width: 200px; height: 200px;
   transform: translate(-50%, -50%);
-  display: grid; place-items: center; color: var(--ink-1); cursor: pointer; z-index: 20;
-  transition: transform .7s var(--ease-out), filter .6s var(--ease), opacity .5s var(--ease);
+  display: grid; place-items: center;
+  cursor: pointer; z-index: 5;
+  transition: transform .65s var(--ease-out),
+             filter .5s var(--ease),
+             opacity .45s var(--ease);
   will-change: transform;
 }
-.core-node .glyph { width: 100%; height: 100%; display: grid; place-items: center; }
-.core-node :deep(svg) { width: 100%; height: 100%; overflow: visible; position: relative; z-index: 2; }
-.core-node :deep(.hex-line) { stroke: var(--core); fill: none; stroke-width: 1.6; }
-.core-node :deep(.facet) { stroke: var(--core-dim); fill: none; stroke-width: 1.1; }
-.core-node :deep(.seed) { fill: var(--core); }
+.core-node:focus-visible { outline: none; }
+.core-node:focus-visible .ring { opacity: 1; border-color: var(--core); }
+.core-node .glyph { width: 100%; height: 100%; display: grid; place-items: center; position: relative; z-index: 3; }
+.core-node :deep(svg) { width: 100%; height: 100%; overflow: visible; }
+.core-node :deep(.hex-line) {
+  stroke: color-mix(in srgb, var(--core) 22%, #fff);
+  fill: none; stroke-width: 2;
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--core) 55%, transparent));
+}
+.core-node :deep(.facet) {
+  stroke: color-mix(in srgb, var(--core) 30%, #fff);
+  fill: none; stroke-width: 1.4;
+}
+.core-node :deep(.seed) {
+  fill: #fff;
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--core) 90%, transparent));
+}
+
+/* THE glow — outer halo from --core (low alpha), inner highlight seasons with
+   --core-sup (§sup-discipline) so the bloom can't drift into a neighbour hue. */
 .core-node .glow {
-  position: absolute; inset: -58%; border-radius: 50%; z-index: 1; pointer-events: none;
+  position: absolute; inset: -32%; border-radius: 50%; z-index: 1; pointer-events: none;
   background:
     radial-gradient(circle at 50% 50%,
-      color-mix(in srgb, var(--core) 52%, transparent) 0%,
-      color-mix(in srgb, var(--core) 20%, transparent) 30%,
-      transparent 62%),
-    radial-gradient(circle at 38% 66%,
-      color-mix(in srgb, var(--core-sup) 38%, transparent) 0%, transparent 50%);
-  filter: blur(16px);
+      color-mix(in srgb, var(--core) 62%, transparent) 0%,
+      color-mix(in srgb, var(--core) 24%, transparent) 28%,
+      color-mix(in srgb, var(--core) 10%, transparent) 50%,
+      transparent 66%),
+    radial-gradient(circle at 50% 42%,
+      color-mix(in srgb, var(--core-sup) 28%, transparent) 0%,
+      transparent 38%);
+  filter: blur(22px);
+  mix-blend-mode: screen;
   animation: breathe 4.6s ease-in-out infinite;
 }
 .core-node .ring {
-  position: absolute; inset: -6%; border: 1px solid var(--core-dim); border-radius: 50%; z-index: 1;
-  opacity: 0; animation: ring 4.6s ease-out infinite;
+  position: absolute; inset: -6%; border: 1px solid var(--core-dim); border-radius: 50%;
+  z-index: 2; opacity: 0;
+  animation: ring 4.6s ease-out infinite;
 }
-@keyframes breathe { 0%, 100% { opacity: .72; transform: scale(.97); } 50% { opacity: 1; transform: scale(1.05); } }
-@keyframes ring { 0% { transform: scale(.72); opacity: .45; } 70%, 100% { transform: scale(1.3); opacity: 0; } }
+
+/* tap cue — two thin pulse rings ONLY on CORE level */
+.core-node .tap-cue {
+  position: absolute; inset: -12%; z-index: 2; pointer-events: none; opacity: 0;
+  display: grid; place-items: center;
+  transition: opacity .35s var(--ease);
+}
+.scene[data-level="core"] .core-node .tap-cue { opacity: 1; }
+.core-node .tap-ring {
+  position: absolute; inset: 0; border: 1px solid color-mix(in srgb, var(--core) 75%, transparent);
+  border-radius: 50%;
+  animation: tapring 2.2s ease-out infinite;
+}
+.core-node .tap-ring.d2 { animation-delay: 1.1s; }
+
+@keyframes breathe {
+  0%, 100% { opacity: .72; transform: scale(.97); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+@keyframes ring {
+  0% { transform: scale(.74); opacity: .45; }
+  70%, 100% { transform: scale(1.28); opacity: 0; }
+}
+@keyframes tapring {
+  0% { transform: scale(.8); opacity: .55; }
+  80%, 100% { transform: scale(1.35); opacity: 0; }
+}
 @media (prefers-reduced-motion: reduce) {
   .core-node .glow { animation: none; opacity: .85; }
-  .core-node .ring { display: none; }
+  .core-node .ring, .core-node .tap-cue { display: none; }
 }
-.core-node:hover .glyph { filter: brightness(1.08); }
 
-.core-hint {
-  position: absolute; left: 0; right: 0; bottom: 8%; text-align: center; z-index: 20;
-  font-family: var(--font-mono); font-size: 11px; letter-spacing: .26em; text-transform: uppercase;
-  color: var(--ink-2); animation: hintpulse 2.4s ease-in-out infinite; transition: opacity .4s;
+/* level positions for the core */
+.scene[data-level="core"] .core-node { transform: translate(-50%, -50%) scale(1); }
+.scene[data-level="crystal"] .core-node { transform: translate(-50%, -50%) scale(.5); cursor: default; }
+.scene[data-level="face"] .core-node {
+  transform: translate(calc(-50% + 0px), calc(-50% - 100px)) scale(.22);
+  opacity: .4; filter: blur(.4px); cursor: default;
 }
-@keyframes hintpulse { 0%, 100% { opacity: .35; } 50% { opacity: .85; } }
+.scene[data-level="crystal"] .core-node .glow { opacity: .55; }
+.scene[data-level="face"] .core-node .glow { opacity: .28; animation: none; }
+.scene[data-level="crystal"] .core-node .ring,
+.scene[data-level="face"] .core-node .ring { display: none; }
 
-.screen[data-level="core"] .core-node { transform: translate(-50%, -50%) scale(1); }
-.screen[data-level="crystal"] .core-node { transform: translate(-50%, -50%) scale(.52); }
-.screen[data-level="crystal"] .core-node .glow { opacity: .66; }
-.screen[data-level="face"] .core-node { transform: translate(-50%, -180px) scale(.3); filter: blur(1px); opacity: .32; }
-.screen[data-level="crystal"] .core-hint,
-.screen[data-level="face"] .core-hint { opacity: 0; pointer-events: none; animation: none; }
-.screen[data-level="crystal"] .core-node .ring,
-.screen[data-level="face"] .core-node .ring { display: none; }
+/* ---------- GHOST CRYSTALS — depth scaffold on CORE level ---------- */
+.ghosts { position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  transition: opacity .45s var(--ease); }
+.ghost {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%) translate(var(--x, 0), var(--y, 0));
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  text-align: center; width: 78px;
+  opacity: .78;
+}
+.ghost .ghex { width: 42px; height: 42px; display: grid; place-items: center; }
+.ghost .ghex svg { width: 100%; height: 100%; overflow: visible; }
+.ghost .ghex .hl { stroke: var(--core-dim); fill: none; stroke-width: 1; stroke-dasharray: 3 4; }
+.ghost .gn { font-family: var(--font-mono); font-size: 9px; font-weight: 600;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--ink-ash); line-height: 1; }
+.ghost .gr { font-family: var(--font-mono); font-size: 8.5px;
+  letter-spacing: .08em; color: var(--ink-3); line-height: 1; }
+.ghost .gr b { color: var(--core-ink); font-weight: 600; }
+.scene[data-level="crystal"] .ghosts,
+.scene[data-level="face"] .ghosts { opacity: 0; }
 
-/* ---------- КРИСТАЛЛЫ — по радиусу, без своего свечения ---------- */
-.crystals { position: absolute; inset: 0; z-index: 15; pointer-events: none; }
+/* ---------- CRYSTALS ---------- */
+.crystals { position: absolute; inset: 0; z-index: 4; pointer-events: none; }
 .crystal {
-  position: absolute; top: 50%; left: 50%; width: 104px;
+  position: absolute; top: 50%; left: 50%;
+  width: 96px;
   transform: translate(-50%, -50%) translate(var(--x, 0), var(--y, 0)) scale(.4);
-  opacity: 0; pointer-events: none; cursor: pointer; text-align: center;
-  transition: transform .55s var(--ease-out), opacity .4s var(--ease);
-  -webkit-tap-highlight-color: transparent;
+  opacity: 0; pointer-events: none; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  text-align: center;
+  transition: transform .55s var(--ease-out),
+             opacity .4s var(--ease),
+             filter .3s var(--ease);
 }
-.screen[data-level="crystal"] .crystal {
+.scene[data-level="crystal"] .crystal,
+.scene[data-level="face"] .crystal.sel {
   opacity: 1; pointer-events: auto;
   transform: translate(-50%, -50%) translate(var(--x, 0), var(--y, 0)) scale(1);
 }
-.screen[data-level="crystal"] .crystal:nth-child(1) { transition-delay: .04s; }
-.screen[data-level="crystal"] .crystal:nth-child(2) { transition-delay: .09s; }
-.screen[data-level="crystal"] .crystal:nth-child(3) { transition-delay: .14s; }
-.screen[data-level="crystal"] .crystal:nth-child(4) { transition-delay: .19s; }
-.crystal .shard { width: 78px; height: 78px; margin: 0 auto; position: relative; color: var(--ink-1); transition: color .3s, transform .3s var(--ease); }
-.crystal:hover .shard { color: var(--ink-0); transform: translateY(-3px); }
+.scene[data-level="crystal"] .crystal:nth-child(1) { transition-delay: .04s; }
+.scene[data-level="crystal"] .crystal:nth-child(2) { transition-delay: .09s; }
+.scene[data-level="crystal"] .crystal:nth-child(3) { transition-delay: .14s; }
+.scene[data-level="crystal"] .crystal:nth-child(4) { transition-delay: .19s; }
+.crystal .shard {
+  width: 62px; height: 62px; position: relative;
+  transition: transform .3s var(--ease);
+}
+.crystal:hover .shard { transform: translateY(-2px); }
 .crystal .shard :deep(svg) { width: 100%; height: 100%; overflow: visible; }
-.crystal .shard :deep(.fill) { fill: var(--bg-2); }
-.crystal .shard :deep(.lit) { fill: var(--core-dim); }
-.crystal .shard :deep(.hex-line) { stroke: color-mix(in srgb, var(--core) 30%, currentColor); fill: none; stroke-width: 1.4; }
-.crystal .nm { font-family: var(--font-mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-1); margin-top: 9px; }
-.crystal .ratio { font-family: var(--font-mono); font-size: 10px; color: var(--ink-2); margin-top: 3px; }
+.crystal .shard :deep(.fill) { fill: var(--bg-carbon); }
+.crystal .shard :deep(.lit) {
+  fill: color-mix(in srgb, var(--core) 55%, transparent);
+  transition: fill .25s var(--ease);
+}
+.crystal .shard :deep(.hex-line) {
+  stroke: color-mix(in srgb, var(--core) 50%, var(--ink-ash));
+  fill: none; stroke-width: 1.6;
+  transition: stroke .25s var(--ease);
+}
+.crystal:hover .shard :deep(.hex-line) { stroke: #fff; }
+.crystal .nm { font-family: var(--font-mono); font-size: 10px; font-weight: 600;
+  letter-spacing: .16em; text-transform: uppercase; color: var(--ink-bone); }
+.crystal .ratio { font-family: var(--font-mono); font-size: 10px; color: var(--ink-ash);
+  letter-spacing: .08em; }
 .crystal .ratio b { color: var(--core-ink); font-weight: 700; }
-.screen[data-level="face"] .crystal { opacity: 0; pointer-events: none; transform: translate(-50%, -50%) scale(.3); }
-.screen[data-level="face"] .crystal.sel { opacity: 1; transform: translate(-50%, -50%) translateY(-176px) scale(.8); }
-
-/* ---------- общий пул очков ядра + «В БОЙ» ---------- */
-.s-bottom {
-  position: absolute; left: 0; right: 0; bottom: 0; z-index: 22; padding: 0 22px 22px;
-  display: flex; flex-direction: column; gap: 13px; transition: opacity .4s, transform .45s var(--ease-out);
+.crystal.full .ratio b { color: #fff; }
+.crystal.full .shard::after {
+  content: ""; position: absolute; inset: -3px; border: 1px dashed var(--core-dim);
+  pointer-events: none;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
 }
-.screen[data-level="face"] .s-bottom { opacity: 0; transform: translateY(40px); pointer-events: none; }
-.pool {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  border: 1px solid var(--line); border-radius: 11px; padding: 11px 15px; background: rgba(255, 255, 255, .02);
+
+/* ============================================================
+   FACETS — appear in place of crystals on FACET level.
+   ============================================================ */
+.facets[hidden] { display: none; }
+.facets {
+  position: absolute; left: 0; right: 0;
+  top: 62px; bottom: 46px;
+  padding: 6px 18px 6px;
+  z-index: 6;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(82px, 1fr));
+  gap: 8px;
+  overflow-y: auto; scrollbar-width: thin;
+  align-content: start;
 }
-.pool .lbl { display: flex; flex-direction: column; gap: 3px; }
-.pool .lbl .k { font-family: var(--font-mono); font-size: 9px; letter-spacing: .2em; text-transform: uppercase; color: var(--ink-2); }
-.pool .lbl .v { font-family: var(--font-disp); font-size: 15px; font-weight: 600; color: var(--ink-0); text-transform: uppercase; line-height: 1; }
-.pool .lbl .v b { color: var(--core-ink); }
-.pool .pips { display: flex; gap: 6px; }
-.pool .pip { width: 16px; height: 9px; border-radius: 2px; border: 1px solid var(--line-2); background: transparent; transition: .25s; }
-.pool .pip.on { background: var(--core); border-color: var(--core); }
+.facets::-webkit-scrollbar { width: 4px; }
+.facets::-webkit-scrollbar-thumb { background: var(--ink-line-2); border-radius: 4px; }
 
-.tobattle {
-  width: 100%; border: 0; border-radius: 13px; cursor: pointer;
-  background: var(--core); color: #0a0a0c;
-  font-family: var(--font-disp); font-weight: 700; font-size: 23px; letter-spacing: .06em; text-transform: uppercase;
-  padding: 17px 20px; display: flex; align-items: center; justify-content: center; gap: 14px;
-  transition: filter .2s, transform .12s; position: relative; overflow: hidden;
-}
-.tobattle::before { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(255, 255, 255, .18), transparent 42%); }
-.tobattle .arr { font-family: var(--font-mono); font-weight: 700; font-size: 18px; position: relative; }
-.tobattle:hover { filter: brightness(1.07); }
-.tobattle:active { transform: scale(.985); }
-
-/* ---------- панель граней ---------- */
-.facepanel {
-  position: absolute; left: 0; right: 0; bottom: 0; z-index: 24;
-  background: linear-gradient(180deg, rgba(8, 8, 11, 0), #070709 20%);
-  padding: 26px 22px calc(24px + env(safe-area-inset-bottom, 0px));
-  transform: translateY(101%); transition: transform .55s var(--ease-out);
-  border-top: 1px solid var(--line); border-radius: 30px 30px 38px 38px;
-  max-height: 68%; display: flex; flex-direction: column;
-}
-.screen[data-level="face"] .facepanel { transform: translateY(0); }
-.fp-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; }
-.fp-head .ttl { font-size: 25px; font-weight: 700; text-transform: uppercase; line-height: 1; }
-.fp-head .ttl small { display: block; font-family: var(--font-mono); font-size: 9px; font-weight: 500; letter-spacing: .2em; color: var(--ink-2); margin-bottom: 3px; }
-
-.meter { display: flex; align-items: stretch; gap: 12px; margin: 16px 0 16px; }
-.meter .cell { flex: 1; border: 1px solid var(--line); border-radius: 10px; padding: 11px 13px; background: rgba(255, 255, 255, .02); display: flex; flex-direction: column; gap: 8px; }
-.meter .k { font-family: var(--font-mono); font-size: 9px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-2); }
-.meter .limit { font-family: var(--font-mono); font-weight: 700; font-size: 25px; color: var(--ink-0); line-height: 1; }
-.meter .limit small { font-size: 14px; color: var(--ink-2); font-weight: 500; }
-.meter .limit.max { color: var(--core-ink); }
-.meter .pips { display: flex; gap: 5px; align-items: center; height: 25px; }
-.meter .pip { width: 13px; height: 13px; border-radius: 3px; border: 1px solid var(--line-2); background: transparent; transition: .25s; }
-.meter .pip.on { background: var(--core); border-color: var(--core); }
-.meter .free { font-family: var(--font-mono); font-weight: 700; font-size: 25px; color: var(--ink-0); line-height: 1; }
-.meter .free.none { color: var(--core-ink); }
-.meter .free small { font-size: 11px; color: var(--ink-2); font-weight: 500; }
-
-.faces { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; overflow-y: auto; padding: 2px; scrollbar-width: thin; }
-.faces::-webkit-scrollbar { width: 4px; }
-.faces::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 4px; }
 .face {
-  position: relative; border: 1px solid var(--line); border-radius: 11px; background: var(--bg-1);
-  padding: 14px 8px 11px; display: flex; flex-direction: column; align-items: center; gap: 9px;
-  cursor: pointer; transition: border-color .25s, background .25s, transform .12s;
+  position: relative;
+  border: 1px solid var(--ink-line);
+  background: rgba(255, 255, 255, .018);
+  padding: 10px 6px 8px;
+  display: flex; flex-direction: column; align-items: center; gap: 7px;
+  cursor: pointer;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 8px),
+                    calc(100% - 8px) 100%, 0 100%);
+  transition: border-color .2s, background .2s, transform .12s;
   -webkit-tap-highlight-color: transparent;
+  opacity: 0; transform: translateY(6px);
 }
+.scene[data-level="face"] .face {
+  opacity: 1; transform: translateY(0);
+  transition: opacity .3s var(--ease-out), transform .3s var(--ease-out),
+             border-color .2s, background .2s;
+}
+.scene[data-level="face"] .face:nth-child(1) { transition-delay: .02s; }
+.scene[data-level="face"] .face:nth-child(2) { transition-delay: .05s; }
+.scene[data-level="face"] .face:nth-child(3) { transition-delay: .08s; }
+.scene[data-level="face"] .face:nth-child(4) { transition-delay: .11s; }
+.scene[data-level="face"] .face:nth-child(5) { transition-delay: .14s; }
+.scene[data-level="face"] .face:nth-child(6) { transition-delay: .17s; }
 .face:active { transform: scale(.96); }
-.face .fhex { width: 40px; height: 40px; color: var(--ink-2); }
+.face .fhex { width: 30px; height: 30px; color: var(--ink-ash); transition: color .25s var(--ease); }
 .face .fhex :deep(svg) { width: 100%; height: 100%; overflow: visible; }
 .face .fhex :deep(.ln) { stroke: currentColor; fill: none; stroke-width: 1.5; }
 .face .fhex :deep(.fl) { fill: transparent; }
-.face .fl-nm { font-family: var(--font-mono); font-size: 9px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-1); text-align: center; }
-.face .fl-st { font-family: var(--font-mono); font-size: 8px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-2); }
+.face .fl-nm { font-family: var(--font-mono); font-size: 9px; font-weight: 600;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--ink-bone); text-align: center; }
+.face .fl-st { font-family: var(--font-mono); font-size: 8px;
+  letter-spacing: .18em; text-transform: uppercase; color: var(--ink-ash); }
 
-.face.lit { border-color: var(--core-dim); background: var(--core-faint); }
+/* face states — FLAT colour, no glow (glow is the core's job) */
+.face.lit {
+  border-color: var(--core-dim);
+  background: color-mix(in srgb, var(--core) 10%, transparent);
+}
 .face.lit .fhex { color: var(--core); }
 .face.lit .fhex :deep(.fl) { fill: var(--core); }
-.face.lit .fl-nm { color: var(--ink-0); }
 .face.lit .fl-st { color: var(--core-ink); }
-.face.open:hover { border-color: var(--line-2); background: var(--bg-2); }
-.face.locked { opacity: .42; cursor: not-allowed; border-style: dashed; }
+.face.open:hover { border-color: var(--ink-line-2); background: rgba(255, 255, 255, .04); }
+.face.locked { opacity: .4; cursor: not-allowed; border-style: dashed; }
 .face.locked .fl-st { color: var(--ink-3); }
 .face.blocked { cursor: not-allowed; }
 .face.blocked .fl-st { color: var(--core-ink); }
-@keyframes deny { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
-.face.shake { animation: deny .3s; }
+@keyframes deny {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-5px); }
+  40% { transform: translateX(5px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(3px); }
+}
+.face.shake { animation: deny .32s; }
 
-.fp-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 13px; font-family: var(--font-mono); font-size: 10px; letter-spacing: .06em; color: var(--ink-2); }
-.fp-foot .stub::before { content: "// "; color: var(--ink-3); }
+/* ============================================================
+   CHAMBER FOOT — actionable strip pinned to bottom of chamber
+   ============================================================ */
+.cham-foot {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 7;
+  display: flex; align-items: center; justify-content: center; gap: 14px;
+  padding: 10px 18px;
+  font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .26em;
+  text-transform: uppercase; color: var(--core-ink);
+  border-top: 1px solid var(--ink-line);
+  background:
+    linear-gradient(180deg,
+      transparent 0%,
+      color-mix(in srgb, var(--bg-void) 70%, #000) 60%,
+      var(--bg-void) 100%);
+  pointer-events: none;
+}
+.cham-foot .hint { color: #fff; font-weight: 600; }
+.cham-foot .caret {
+  font-family: var(--font-mono); color: var(--core); font-weight: 700;
+  animation: caretpulse 1.6s ease-in-out infinite;
+}
+.scene[data-level="crystal"] .cham-foot .caret,
+.scene[data-level="face"] .cham-foot .caret { display: none; }
+@keyframes caretpulse {
+  0%, 100% { transform: translateY(0); opacity: .5; }
+  50% { transform: translateY(-3px); opacity: 1; }
+}
 
-.wm {
-  position: absolute; left: 0; right: 0; bottom: 6px; text-align: center; z-index: 31; pointer-events: none;
-  font-family: var(--font-mono); font-size: 8px; letter-spacing: .2em; text-transform: uppercase; color: var(--ink-3); opacity: .7;
+/* ============================================================
+   BUILD READOUT — one-line manifest of currently lit facets
+   ============================================================ */
+.build-readout {
+  display: grid; grid-template-columns: auto 1fr auto;
+  align-items: center; gap: 14px;
+  padding: 8px 12px;
+  border: 1px solid var(--ink-line);
+  background: rgba(255, 255, 255, .013);
+  font-family: var(--font-mono); font-size: 11px;
+  letter-spacing: .18em; text-transform: uppercase; line-height: 1.2;
+}
+.build-readout .k { color: var(--ink-ash); font-weight: 500; letter-spacing: .24em; }
+.build-readout .v { color: var(--ink-bone); font-weight: 500; letter-spacing: .16em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.build-readout .v.empty { color: var(--ink-3); }
+.build-readout .v .b { color: var(--core-ink); font-weight: 700; }
+.build-readout .v .sep { color: var(--ink-3); margin: 0 6px; }
+.build-readout .ct { color: var(--core-ink); font-weight: 700; letter-spacing: .18em;
+  font-size: 10.5px; white-space: nowrap; }
+.build-readout.full .ct { color: #fff; }
+@media (max-width: 520px) {
+  .build-readout { font-size: 10px; gap: 10px; padding: 7px 10px; }
+  .build-readout .k { display: none; }
+}
+
+/* ============================================================
+   UNIFIED FOOT — pool + pips + bold CTA in ONE container
+   ============================================================ */
+.foot {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: stretch;
+  gap: 14px;
+  padding-top: 4px;
+}
+.foot-l {
+  display: flex; flex-direction: column; justify-content: center; gap: 8px;
+  padding: 10px 14px;
+  border: 1px solid var(--ink-line);
+  background: rgba(255, 255, 255, .013);
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px),
+                    calc(100% - 12px) 100%, 0 100%);
+  min-width: 0;
+}
+.foot-l .lbl {
+  display: flex; align-items: baseline; gap: 12px;
+  font-family: var(--font-mono); font-size: 11px;
+  letter-spacing: .18em; text-transform: uppercase; line-height: 1;
+  min-width: 0;
+}
+.foot-l .lbl .k { color: var(--ink-ash); font-weight: 500; letter-spacing: .24em; }
+.foot-l .lbl .k::after { content: " //"; color: var(--ink-3); }
+.foot-l .lbl .v {
+  font-family: var(--font-disp); font-weight: 800; font-size: 18px;
+  letter-spacing: .04em; color: var(--ink-bone); line-height: 1;
+  white-space: nowrap;
+}
+.foot-l .lbl .v b { color: var(--core-ink); }
+.foot-l .lbl .v.depleted b { color: var(--lash);
+  text-shadow: 0 0 8px var(--lash-dim); }
+.foot-l .pips { display: flex; gap: 6px; }
+.foot-l .pip {
+  flex: 1; height: 8px;
+  border: 1px solid var(--ink-line-2); background: transparent;
+  transition: .2s var(--ease);
+}
+.foot-l .pip.on { background: var(--core); border-color: var(--core);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--core) 60%, transparent); }
+.foot-l .pip.over {
+  background: transparent; border-color: var(--core-dim);
+  border-style: dashed;
+}
+
+/* CTA — bold, notched, glows in --core. Always enabled (Q1 = A). */
+.cta {
+  position: relative;
+  font-family: var(--font-disp); font-weight: 800;
+  font-size: clamp(18px, 1.9vw, 22px);
+  letter-spacing: .18em; text-transform: uppercase;
+  padding: 0 32px; min-height: 60px;
+  display: flex; align-items: center; justify-content: center; gap: 22px;
+  background: var(--core); color: #0a0a0c;
+  cursor: pointer;
+  overflow: hidden;
+  clip-path: polygon(18px 0, 100% 0, 100% calc(100% - 18px),
+                    calc(100% - 18px) 100%, 0 100%, 0 18px);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--core) 75%, transparent),
+    0 0 28px color-mix(in srgb, var(--core) 45%, transparent),
+    0 14px 36px -16px color-mix(in srgb, var(--core) 60%, transparent);
+  transition: filter .2s, transform .12s, box-shadow .35s var(--ease);
+  min-width: 240px;
+}
+.cta::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .22), transparent 42%);
+}
+.cta span { position: relative; z-index: 2; white-space: nowrap; }
+.cta .arr { font-family: var(--font-mono); font-weight: 700; font-size: 18px; letter-spacing: .05em; }
+.cta:hover { filter: brightness(1.08); }
+.cta:active { transform: scale(.99); }
+.cta:focus-visible { outline: 1px solid #fff; outline-offset: 3px; }
+
+@media (max-width: 520px) {
+  .foot { grid-template-columns: 1fr; gap: 10px; }
+  .cta { min-width: 0; width: 100%; min-height: 54px; }
+}
+
+/* ============================================================
+   WATERMARK — viewport-pinned, very small
+   ============================================================ */
+.wm { position: fixed; left: 0; right: 0; bottom: 8px; z-index: 40;
+  text-align: center; pointer-events: none;
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: .28em;
+  text-transform: uppercase; color: var(--ink-3); opacity: .75; }
+@media (max-width: 640px) { .wm { font-size: 8px; } }
+
+/* ============================================================
+   DESKTOP TUNING — column gets more presence at >900px
+   ============================================================ */
+@media (min-width: 900px) and (min-height: 820px) {
+  .col { max-width: 860px; }
+  .depth { height: clamp(420px, 52vh, 520px); }
+  .core-node { width: 230px; height: 230px; }
+  .crystal { width: 108px; }
+  .crystal .shard { width: 72px; height: 72px; }
+  .ghost { width: 88px; }
+  .ghost .ghex { width: 48px; height: 48px; }
+}
+@media (min-width: 1200px) and (min-height: 920px) {
+  .col { max-width: 920px; }
+}
+
+/* short viewports: tighten the chamber so the foot stays visible */
+@media (max-height: 720px) {
+  .depth { height: 330px; }
+  .core-node { width: 160px; height: 160px; }
+  .crystal { width: 84px; }
+  .crystal .shard { width: 54px; height: 54px; }
+  .headline h1 { font-size: clamp(32px, 5vw, 46px); }
+}
+@media (max-height: 620px) {
+  .depth { height: 280px; }
+  .core-node { width: 140px; height: 140px; }
+  .ghost { width: 64px; }
+  .ghost .ghex { width: 36px; height: 36px; }
 }
 </style>

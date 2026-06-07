@@ -1,63 +1,74 @@
-/* HEXLASH — upgrade screen · CONTENT (stubs · game design owns final copy).
-   Ported 1:1 from upgrade_handoff/data.js (content block). Core/crystal/face
-   names, numbers and limits are working stubs. Core ids go into the store — DO
-   NOT CHANGE. The game is English-only; all visible copy is EN. */
+/* HEXLASH — pre-fight CONTENT + lookup (stubs · game design owns final copy).
+   SINGLE source for all three screens (select → upgrade → arena). Core ids
+   (natisk/nalet/skala/zasada) and face states (lit/open/locked) are CONTRACT —
+   do not rename. English-only. Geometry lives in upgradeGeometry.js. */
 
 /* RESOURCE — shared core point pool. Split across all crystals. */
 export const RESOURCE = 5;
 
-/* The four cores — SINGLE source for all three screens (select → upgrade →
-   arena). id — DO NOT CHANGE (goes into the store; read by the arena as-is).
-   ix  — core index (select card «CORE 0N»).
-   name — display name (EN, same on upgrade and arena).
-   sig — signature force, one word (select card subtitle).
-   hue — core's primary colour (the whole screen tints to it via --core).
-   sup — supporting tone (lower glow layer of the core, inner drawing). */
+/* The four cores — production palette (locked). id → store (read by arena as-is).
+   ix   — core index (card «CORE 0N»).
+   name — display name (EN). sig — one-word signature force.
+   hue  — primary colour (whole screen tints via --core).
+   sup  — supporting glow tone. MUST stay in the same hue family as hue
+          (README §sup-discipline) so the bloom never drifts into a neighbour. */
 export const CORES = [
-  { id: 'natisk', ix: '01', name: 'ONSLAUGHT', sig: 'PRESSURE', hue: '#FF3344', sup: '#FF7A3D',
+  { id: 'natisk', ix: '01', name: 'ONSLAUGHT', sig: 'PRESSURE', hue: '#FF3344', sup: '#FF7A88',
     manner: 'Marches in close and never lets the distance go.' },
-  { id: 'nalet', ix: '02', name: 'RAIDER', sig: 'TEMPO', hue: '#FFA526', sup: '#FFD93D',
-    manner: 'Strikes, drops, strikes again — a series of touches, then gone.' },
-  { id: 'skala', ix: '03', name: 'BULWARK', sig: 'DURABILITY', hue: '#2ED6B0', sup: '#5DD6E6',
+  { id: 'nalet', ix: '02', name: 'RAIDER', sig: 'TEMPO', hue: '#FFA526', sup: '#FFC97A',
+    manner: 'Strikes, drops, strikes again — touches and gone.' },
+  { id: 'skala', ix: '03', name: 'BULWARK', sig: 'DURABILITY', hue: '#2ED6B0', sup: '#7AE6D0',
     manner: 'Takes the hit, grinds it down, gives it back later.' },
-  { id: 'zasada', ix: '04', name: 'AMBUSH', sig: 'COUNTER', hue: '#9461FF', sup: '#D461FF',
+  { id: 'zasada', ix: '04', name: 'AMBUSH', sig: 'COUNTER', hue: '#9461FF', sup: '#BFA0FF',
     manner: 'Waits in silence, then a single, paid-in-full strike.' },
 ];
 
 /* face: { id, name, state }   state ∈ 'lit' | 'open' | 'locked'  — DO NOT rename states */
-function mkFaces(states) {
-  return states.map((s, i) => ({ id: i + 1, name: 'Facet ' + String(i + 1).padStart(2, '0'), state: s }));
+function mkFaces(names, states) {
+  return names.map((nm, i) => ({ id: i + 1, name: nm, state: states[i] }));
 }
 
-/* CRYSTALS[coreId] = [{ id, name, limit, faces:[...] }]
-   limit — crystal's own cap (how many faces it will ever let you light).
-   Double limiter: crystal limit + the core's shared RESOURCE. */
+/* CRYSTALS[coreId] = [{ id, name, limit, faces:[{ id, name, state }] }]
+   limit — per-crystal cap on how many facets can be lit.
+   Double-clamp: per-crystal `limit` + global RESOURCE pool. Content = stub. */
 export const CRYSTALS = {
   natisk: [
-    { id: 'a', name: 'Drive', limit: 3, faces: mkFaces(['lit', 'lit', 'open', 'open', 'locked']) },
-    { id: 'b', name: 'Clinch', limit: 2, faces: mkFaces(['lit', 'open', 'open', 'locked']) },
-    { id: 'c', name: 'Tempo', limit: 3, faces: mkFaces(['open', 'open', 'open', 'locked', 'locked']) },
+    { id: 'a', name: 'PUSH', limit: 3,
+      faces: mkFaces(['EDGE', 'SPIKE', 'RAM', 'CRASH', 'BREAK'], ['lit', 'lit', 'open', 'open', 'locked']) },
+    { id: 'b', name: 'LOCK', limit: 2,
+      faces: mkFaces(['GRIP', 'HOLD', 'PIN', 'SEAL'], ['lit', 'open', 'open', 'locked']) },
+    { id: 'c', name: 'TEMPO', limit: 3,
+      faces: mkFaces(['BEAT', 'DRIVE', 'SURGE', 'BURN', 'OVERRUN'], ['open', 'open', 'open', 'locked', 'locked']) },
   ],
   nalet: [
-    { id: 'a', name: 'Raid', limit: 3, faces: mkFaces(['lit', 'open', 'open', 'open', 'locked']) },
-    { id: 'b', name: 'Break', limit: 2, faces: mkFaces(['lit', 'lit', 'open', 'locked']) },
-    { id: 'c', name: 'Feint', limit: 2, faces: mkFaces(['open', 'open', 'open', 'locked']) },
-    { id: 'd', name: 'Touch', limit: 3, faces: mkFaces(['open', 'open', 'locked', 'locked']) },
+    { id: 'a', name: 'RAID', limit: 3,
+      faces: mkFaces(['DASH', 'SLASH', 'HIT', 'TAG', 'CUT'], ['lit', 'open', 'open', 'open', 'locked']) },
+    { id: 'b', name: 'BREAK', limit: 2,
+      faces: mkFaces(['SPLIT', 'SLIP', 'PEEL', 'GHOST'], ['lit', 'lit', 'open', 'locked']) },
+    { id: 'c', name: 'FAKE', limit: 2,
+      faces: mkFaces(['JAB', 'FEINT', 'BAIT', 'LURE'], ['open', 'open', 'open', 'locked']) },
+    { id: 'd', name: 'TOUCH', limit: 3,
+      faces: mkFaces(['TAP', 'MARK', 'TRACE', 'PRICK'], ['open', 'open', 'locked', 'locked']) },
   ],
   skala: [
-    { id: 'a', name: 'Crust', limit: 3, faces: mkFaces(['lit', 'lit', 'open', 'open', 'locked']) },
-    { id: 'b', name: 'Grind', limit: 2, faces: mkFaces(['lit', 'open', 'open', 'locked']) },
-    { id: 'c', name: 'Anchor', limit: 3, faces: mkFaces(['open', 'open', 'open', 'locked', 'locked']) },
+    { id: 'a', name: 'CRUST', limit: 3,
+      faces: mkFaces(['SHELL', 'PLATE', 'SLAB', 'WALL', 'BUNKER'], ['lit', 'lit', 'open', 'open', 'locked']) },
+    { id: 'b', name: 'GRIND', limit: 2,
+      faces: mkFaces(['WEAR', 'TOLL', 'DRAG', 'DRAIN'], ['lit', 'open', 'open', 'locked']) },
+    { id: 'c', name: 'ANCHOR', limit: 3,
+      faces: mkFaces(['ROOT', 'HOLD', 'SET', 'BIND', 'MOOR'], ['open', 'open', 'open', 'locked', 'locked']) },
   ],
   zasada: [
-    { id: 'a', name: 'Silence', limit: 2, faces: mkFaces(['lit', 'open', 'open', 'locked']) },
-    { id: 'b', name: 'Trap', limit: 3, faces: mkFaces(['lit', 'open', 'open', 'open', 'locked']) },
-    { id: 'c', name: 'Payback', limit: 2, faces: mkFaces(['open', 'open', 'locked']) },
+    { id: 'a', name: 'HUSH', limit: 2,
+      faces: mkFaces(['STILL', 'VEIL', 'SHADE', 'MUTE'], ['lit', 'open', 'open', 'locked']) },
+    { id: 'b', name: 'SNARE', limit: 3,
+      faces: mkFaces(['HOOK', 'WIRE', 'CATCH', 'TRIP', 'NET'], ['lit', 'open', 'open', 'open', 'locked']) },
+    { id: 'c', name: 'PAYBACK', limit: 2,
+      faces: mkFaces(['REPAY', 'TOLL', 'MARK'], ['open', 'open', 'locked']) },
   ],
 };
 
-/* Look up a core by id. One id contract (natisk / nalet / skala / zasada) across
-   all three screens — no bridge anymore. Fallback to BULWARK (CORES[2]) keeps
-   the upgrade/arena sane if the pick is somehow empty (the route guard normally
-   blocks that). */
+/* Look up a core by id. One id contract across all three screens — no bridge.
+   Fallback to BULWARK (CORES[2]) keeps upgrade/arena sane if the pick is empty
+   (the route guard normally blocks that). */
 export const getCore = (id) => CORES.find((c) => c.id === id) || CORES[2];
