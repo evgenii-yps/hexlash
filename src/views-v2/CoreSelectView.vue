@@ -1,37 +1,17 @@
-<!-- /play — Core Select (pre-fight step 01). 1:1 port of the Claude Design
-     handoff (select_handoff/, production etalon) per its README contract.
-     Fullscreen game screen (no device bezel): centered composition column,
-     weighty carbon cards with flat/hover/selected states, one glow at a time +
-     siblings dimmed via .has-sel, per-core rhythms of light.
+<!-- /play — Core Select (pre-fight step 01). Stripped/minimal variant: the
+     production handoff was ported 1:1, then the service chrome was removed per
+     owner — on screen now: headline + 4 cards (icon + name) + CTA.
 
-     Data — single source src/data/upgradeData.js (CORES: id natisk/nalet/skala/
-     zasada, our palette, EN names, sig/ix/sup/manner). Icon — coreSVG() reused
-     from upgradeGeometry.js (same silhouettes as the upgrade screen). Tint
-     --core/--core-sup written on the scene root from prefight.selectedCoreId —
-     same write-site + var names as the upgrade screen, so the hue flows
-     select → upgrade → arena. Page chrome (HUD brackets, status dot, eyebrow)
-     stays brand-pink --lash regardless of pick (neutral, not core context).
+     Kept from the handoff (untouched): card flat/hover/selected states, siblings
+     dimmed via .has-sel, per-core rhythms of light, --core tint + scene wash.
 
-     Pick → prefight.selectedCoreId; CTA «TO UPGRADE» → /play/upgrade. The
-     handoff's localStorage demo-emulation is NOT ported. -->
+     Data — single source src/data/upgradeData.js (CORES: ids natisk/nalet/skala/
+     zasada, our palette, EN names). Icon — coreSVG() reused from
+     upgradeGeometry.js. Tint --core/--core-sup written on the scene root from
+     prefight.selectedCoreId (same write-site/vars as the upgrade screen).
+     Pick → store; CTA «TO UPGRADE» → /play/upgrade. -->
 <template>
   <div class="scene" :style="coreVars" data-screen-label="Core Select">
-
-    <!-- HUD corner brackets — pinned to viewport. Neutral brand-pink. -->
-    <span class="hud tl"></span>
-    <span class="hud tr"></span>
-    <span class="hud bl"></span>
-    <span class="hud br"></span>
-
-    <!-- top status / telemetry -->
-    <div class="s-status">
-      <div class="l">
-        <span class="sig"><b></b>CORE SELECT</span>
-      </div>
-      <div class="r">
-        <span class="build">BUILD 0.4 · PRE-FIGHT</span>
-      </div>
-    </div>
 
     <!-- centered composition column -->
     <main class="stage">
@@ -40,12 +20,7 @@
         <!-- HEADLINE -->
         <header class="headline">
           <div class="ttl">
-            <span class="eyebrow">PRE-FIGHT · STEP 01</span>
             <h1>CHOOSE YOUR <em>CORE.</em></h1>
-          </div>
-          <div class="meta">
-            <span class="k">SELECTION</span>
-            <span class="v"><b class="picked">{{ selectedId ? 1 : 0 }}</b>&nbsp;/&nbsp;4</span>
           </div>
         </header>
 
@@ -66,11 +41,6 @@
             <span class="tick tl" aria-hidden="true"></span>
             <span class="tick tr" aria-hidden="true"></span>
 
-            <div class="top">
-              <span class="ix">CORE {{ core.ix }}</span>
-              <span class="id">{{ core.id }}</span>
-            </div>
-
             <div class="stage-i">
               <div class="halo" aria-hidden="true"></div>
               <div class="ring" aria-hidden="true"></div>
@@ -79,22 +49,14 @@
 
             <div class="body">
               <div class="nm">{{ core.name }}</div>
-              <div class="sig">{{ core.sig }}</div>
             </div>
 
             <span class="bar" aria-hidden="true"></span>
           </button>
         </div>
 
-        <!-- FOOT — readout (thin telemetry) + bold primary CTA -->
+        <!-- FOOT — primary CTA -->
         <footer class="foot">
-          <div class="read">
-            <div class="lbl">
-              <span class="k">CORE</span>
-              <span class="v readname" :class="{ empty: !selected }">{{ selected ? selected.name : 'NONE SELECTED' }}</span>
-            </div>
-            <span class="sig readsig" :class="{ on: selected }">{{ selected ? selected.sig : 'TAP A CORE' }}</span>
-          </div>
           <button
             class="cta"
             :class="{ 'is-ready': selected }"
@@ -109,8 +71,6 @@
 
       </div>
     </main>
-
-    <div class="wm">HEXLASH · CONTENT IS STUB</div>
   </div>
 </template>
 
@@ -164,9 +124,8 @@ function toUpgrade() {
 
 <style scoped>
 /* ============================================================
-   HEXLASH — CORE SELECT · styles (1:1 port of select_handoff/styles.css)
-   Tokens moved off :root onto .scene (component root) — custom props inherit
-   downward. SVG from v-html is targeted via :deep().
+   HEXLASH — CORE SELECT · styles (port of select_handoff/styles.css, stripped of
+   service chrome). Tokens on .scene (component root). SVG from v-html → :deep().
    ============================================================ */
 .scene * { box-sizing: border-box; margin: 0; padding: 0; }
 .scene button {
@@ -248,44 +207,6 @@ function toUpgrade() {
 }
 
 /* ============================================================
-   HUD CORNER BRACKETS — pinned to viewport. Neutral brand-pink.
-   ============================================================ */
-.hud { position: fixed; width: 36px; height: 36px; z-index: 40; pointer-events: none;
-  border: 1.5px solid var(--lash-dim); }
-.hud.tl { top: 22px; left: 22px; border-right: 0; border-bottom: 0; }
-.hud.tr { top: 22px; right: 22px; border-left: 0; border-bottom: 0; }
-.hud.bl { bottom: 22px; left: 22px; border-right: 0; border-top: 0; }
-.hud.br { bottom: 22px; right: 22px; border-left: 0; border-top: 0; }
-@media (max-width: 640px) {
-  .hud { width: 24px; height: 24px; }
-  .hud.tl, .hud.tr { top: 14px; }
-  .hud.bl, .hud.br { bottom: 14px; }
-  .hud.tl, .hud.bl { left: 14px; }
-  .hud.tr, .hud.br { right: 14px; }
-}
-
-/* ============================================================
-   STATUS — top mono telemetry bar (viewport-pinned)
-   ============================================================ */
-.s-status {
-  position: fixed; top: 24px; left: 0; right: 0; z-index: 35;
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 0 76px;
-  font-family: var(--font-mono); font-size: 12px; font-weight: 500;
-  color: var(--ink-bone); letter-spacing: .04em;
-  pointer-events: none;
-}
-.s-status .l, .s-status .r { display: flex; align-items: center; gap: 10px; }
-.s-status .sig { display: flex; align-items: center; gap: 8px; color: var(--ink-ash); letter-spacing: .22em; }
-.s-status .sig b { width: 6px; height: 6px; border-radius: 50%; background: var(--lash);
-  box-shadow: 0 0 8px var(--lash-dim); }
-.s-status .build { color: var(--ink-3); letter-spacing: .18em; }
-@media (max-width: 640px) {
-  .s-status { top: 16px; padding: 0 44px; font-size: 10.5px; }
-  .s-status .build { display: none; }
-}
-
-/* ============================================================
    STAGE — centered composition column
    ============================================================ */
 .scene .stage {
@@ -317,12 +238,6 @@ function toUpgrade() {
   border-bottom: 1px solid var(--ink-line);
 }
 .headline .ttl { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-.eyebrow { display: flex; align-items: center; gap: 12px;
-  font-family: var(--font-mono); font-size: 11px; font-weight: 500;
-  letter-spacing: .34em; text-transform: uppercase; color: var(--lash);
-  white-space: nowrap; }
-.eyebrow::before { content: ""; width: 26px; height: 2px; background: var(--lash);
-  box-shadow: 0 0 10px var(--lash-dim); }
 
 .headline h1 {
   font-family: var(--font-disp); font-weight: 900;
@@ -336,21 +251,9 @@ function toUpgrade() {
 .headline h1 em { font-style: normal; color: #fff;
   text-shadow: 0 0 14px color-mix(in srgb, var(--lash) 30%, transparent); }
 
-.headline .meta {
-  display: flex; flex-direction: column; align-items: flex-end; gap: 6px;
-  font-family: var(--font-mono); text-align: right;
-  padding-bottom: 6px;
-}
-.headline .meta .k { font-size: 10px; letter-spacing: .26em;
-  text-transform: uppercase; color: var(--ink-ash); }
-.headline .meta .v { font-size: 18px; font-weight: 600; color: var(--ink-bone);
-  letter-spacing: .06em; line-height: 1; }
-.headline .meta .v b { color: var(--core-ink); font-weight: 700; transition: color .4s var(--ease); }
-
 @media (max-width: 520px) {
   .headline { grid-template-columns: 1fr; gap: 14px; padding-bottom: 14px; }
   .headline h1 { font-size: clamp(34px, 10vw, 46px); white-space: normal; }
-  .headline .meta { align-items: flex-start; text-align: left; padding-bottom: 0; }
 }
 
 /* ============================================================
@@ -406,22 +309,6 @@ function toUpgrade() {
 .core-card .tick.tl { top: 9px; left: 9px; border-right: 0; border-bottom: 0; }
 .core-card .tick.tr { top: 9px; right: 9px; border-left: 0; border-bottom: 0; }
 
-/* TOP STRIP — index + id */
-.core-card .top {
-  display: flex; justify-content: space-between; align-items: center;
-  font-family: var(--font-mono); font-size: 10px; letter-spacing: .22em;
-  text-transform: uppercase;
-  position: relative; z-index: 3;
-}
-.core-card .top .ix {
-  display: inline-flex; align-items: center; gap: 8px;
-  color: var(--ink-ash); font-weight: 600;
-}
-.core-card .top .ix::before { content: ""; width: 4px; height: 4px; border-radius: 50%;
-  background: var(--ink-3); transition: background .3s var(--ease); }
-.core-card .top .id { color: var(--ink-3); font-weight: 500; }
-.core-card .top .id::before { content: "// "; }
-
 /* ICON STAGE — backplate gives the icon a defined zone */
 .core-card .stage-i {
   position: relative;
@@ -474,7 +361,7 @@ function toUpgrade() {
   transition: fill .35s var(--ease);
 }
 
-/* NAME + SIG */
+/* NAME */
 .core-card .body {
   display: flex; flex-direction: column; align-items: flex-start; gap: 5px;
   position: relative; z-index: 3; padding-bottom: 12px;
@@ -485,12 +372,6 @@ function toUpgrade() {
   letter-spacing: .015em; text-transform: uppercase; line-height: 1;
   color: var(--ink-bone); transition: color .35s var(--ease);
 }
-.core-card .sig {
-  font-family: var(--font-mono); font-size: 10.5px; font-weight: 500;
-  letter-spacing: .22em; text-transform: uppercase;
-  color: var(--ink-ash); transition: color .35s var(--ease);
-}
-.core-card .sig::before { content: "// "; color: var(--ink-3); }
 
 /* ACCENT BAR — anchors the card visually */
 .core-card .bar {
@@ -527,9 +408,6 @@ function toUpgrade() {
   filter: drop-shadow(0 0 6px color-mix(in srgb, var(--c) 80%, transparent)); }
 .core-card.sel .nm { color: #fff;
   text-shadow: 0 0 12px color-mix(in srgb, var(--c) 55%, transparent); }
-.core-card.sel .sig { color: var(--c-ink); }
-.core-card.sel .top .ix { color: var(--c-ink); }
-.core-card.sel .top .ix::before { background: var(--c); }
 .core-card.sel .bar { background: var(--c);
   box-shadow: 0 0 14px color-mix(in srgb, var(--c) 55%, transparent); }
 
@@ -600,37 +478,12 @@ function toUpgrade() {
 }
 
 /* ============================================================
-   FOOT — readout (thin telemetry) + primary CTA (bold, big)
+   FOOT — primary CTA (bold, big, notched)
    ============================================================ */
 .foot {
   display: flex; flex-direction: column;
   gap: 14px;
 }
-
-/* READOUT — a single mono line, no chrome, transparent */
-.read {
-  display: flex; align-items: center; justify-content: space-between;
-  gap: 18px; padding: 2px 4px 0;
-  font-family: var(--font-mono); font-size: 11.5px;
-  letter-spacing: .18em; text-transform: uppercase;
-  line-height: 1;
-}
-.read .lbl { display: flex; align-items: baseline; gap: 14px; min-width: 0; flex: 1; }
-.read .lbl .k { color: var(--ink-ash); font-weight: 500; letter-spacing: .24em; }
-.read .lbl .k::after { content: " //"; color: var(--ink-3); }
-.read .lbl .v {
-  font-family: var(--font-disp); font-weight: 800; font-size: 17px;
-  letter-spacing: .04em; color: var(--ink-bone); line-height: 1;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.read .lbl .v.empty { color: var(--ink-3); font-weight: 500; }
-.read .lbl .v.empty::before { content: "— "; }
-.read .lbl .v.empty::after { content: " —"; }
-.read .sig {
-  color: var(--ink-ash); font-weight: 500; letter-spacing: .22em;
-  text-align: right; flex: none;
-}
-.read .sig.on { color: var(--core-ink); }
 
 /* CTA — notched primary, fight-card chevron. Disabled = ghost
    (dashed thin outline, muted). Ready = filled in core hue. */
@@ -676,15 +529,6 @@ function toUpgrade() {
 }
 .cta.is-ready:hover { filter: brightness(1.08); }
 .cta.is-ready:active { transform: scale(.99); }
-
-/* ============================================================
-   WATERMARK — bottom centered, viewport-pinned
-   ============================================================ */
-.wm { position: fixed; left: 0; right: 0; bottom: 8px; z-index: 40;
-  text-align: center; pointer-events: none;
-  font-family: var(--font-mono); font-size: 9px; letter-spacing: .28em;
-  text-transform: uppercase; color: var(--ink-3); opacity: .75; }
-@media (max-width: 640px) { .wm { font-size: 8px; } }
 
 /* ============================================================
    DESKTOP TUNING — give the grid more presence at >900px
