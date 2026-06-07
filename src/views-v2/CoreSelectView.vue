@@ -18,7 +18,6 @@
         <!-- надзаголовок + заголовок + счётчик -->
         <div class="s-top">
           <div class="ttl">
-            <span class="eyebrow">ПОДГОТОВКА · ШАГ 01</span>
             <h1>ВЫБЕРИ<br /><b>ЯДРО</b></h1>
           </div>
           <div class="counter">
@@ -46,7 +45,6 @@
               <div class="icon" v-html="glyphs[core.id]"></div>
             </div>
             <div class="nm">{{ core.name }}</div>
-            <div class="sig">{{ core.sig }}</div>
           </button>
         </div>
 
@@ -211,15 +209,6 @@ function toUpgrade() {
   display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center;
 }
 .s-top .ttl { display: flex; flex-direction: column; align-items: center; gap: 10px; }
-.eyebrow {
-  display: flex; align-items: center; justify-content: center; gap: 10px; font-family: var(--font-mono);
-  font-size: 10px; font-weight: 500; letter-spacing: .34em; color: var(--core-ink);
-  text-transform: uppercase; transition: color .4s var(--ease);
-}
-.eyebrow::before {
-  content: ""; width: 22px; height: 2px; background: var(--core);
-  box-shadow: 0 0 8px var(--core-dim); transition: background .4s, box-shadow .4s;
-}
 .s-top .ttl h1 {
   font-family: var(--font-disp); font-weight: 900; font-size: 38px; line-height: .88;
   letter-spacing: .005em; text-transform: uppercase; color: var(--ink-bone);
@@ -306,19 +295,13 @@ function toUpgrade() {
   transition: fill .35s var(--ease);
 }
 
-/* имя + сигнатурная сила */
+/* имя ядра */
 .core-card .nm {
   font-family: var(--font-disp); font-weight: 800; font-size: 22px;
   letter-spacing: .02em; text-transform: uppercase; line-height: 1;
   color: var(--ink-bone); text-align: center; margin-top: 6px;
   transition: color .35s var(--ease);
 }
-.core-card .sig {
-  font-family: var(--font-mono); font-size: 10px; font-weight: 500;
-  letter-spacing: .22em; text-transform: uppercase; color: var(--ink-ash);
-  text-align: center; margin-top: 7px; transition: color .35s var(--ease);
-}
-.core-card .sig::before { content: "//\00a0"; color: var(--ink-3); }
 
 /* выбранное — единственное свечение экрана */
 .core-card.sel { border-color: var(--c-dim); background: var(--c-faint); }
@@ -327,7 +310,6 @@ function toUpgrade() {
 .core-card.sel .icon :deep(.facet) { stroke: var(--c-dim); }
 .core-card.sel .icon :deep(.seed) { fill: var(--c); }
 .core-card.sel .nm { color: #fff; text-shadow: 0 0 12px color-mix(in srgb, var(--c) 55%, transparent); }
-.core-card.sel .sig { color: var(--c-ink); }
 .core-card.sel .halo { opacity: 1; }
 
 /* наведение (только указатель) — ядро светится глоу своим цветом, БЕЗ плашки-
@@ -341,7 +323,6 @@ function toUpgrade() {
   .core-card:hover .icon :deep(.facet) { stroke: var(--c-dim); }
   .core-card:hover .icon :deep(.seed) { fill: var(--c); }
   .core-card:hover .nm { color: #fff; text-shadow: 0 0 12px color-mix(in srgb, var(--c) 55%, transparent); }
-  .core-card:hover .sig { color: var(--c-ink); }
 }
 
 /* ============================================================
@@ -435,7 +416,6 @@ function toUpgrade() {
   flex: none;
 }
 .read .sig.on { color: var(--core-ink); }
-.read .sig::before { content: "//\00a0"; color: var(--ink-3); }
 
 /* нотч-CTA — фирменный chevron. По умолчанию ghost (ничего не выбрано);
    .is-ready заливает его в --core. Класс переключаем отдельно от [disabled],
