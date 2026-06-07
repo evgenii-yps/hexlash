@@ -21,22 +21,6 @@
 <template>
   <div class="scene" :style="coreVars" :data-level="level" data-screen-label="Upgrade">
 
-    <!-- HUD corner brackets — neutral brand-pink, viewport-pinned -->
-    <span class="hud tl"></span>
-    <span class="hud tr"></span>
-    <span class="hud bl"></span>
-    <span class="hud br"></span>
-
-    <!-- top status / telemetry -->
-    <div class="s-status">
-      <div class="l">
-        <span class="sig"><b></b>UPGRADE</span>
-      </div>
-      <div class="r">
-        <span class="build">BUILD 0.4 · PRE-FIGHT</span>
-      </div>
-    </div>
-
     <!-- centered composition column -->
     <main class="stage">
       <div class="col">
@@ -44,7 +28,6 @@
         <!-- HEADLINE -->
         <header class="headline">
           <div class="ttl">
-            <span class="eyebrow">PRE-FIGHT · STEP 02</span>
             <h1>TUNE YOUR <em>CORE.</em></h1>
           </div>
           <div class="core-tag">
@@ -212,8 +195,6 @@
 
       </div>
     </main>
-
-    <div class="wm">HEXLASH · CONTENT IS STUB</div>
   </div>
 </template>
 
@@ -484,40 +465,6 @@ onBeforeUnmount(() => {
   opacity: .32;
 }
 
-/* HUD corner brackets — neutral chrome, brand-pink */
-.hud { position: fixed; width: 36px; height: 36px; z-index: 40; pointer-events: none;
-  border: 1.5px solid var(--lash-dim); }
-.hud.tl { top: 22px; left: 22px; border-right: 0; border-bottom: 0; }
-.hud.tr { top: 22px; right: 22px; border-left: 0; border-bottom: 0; }
-.hud.bl { bottom: 22px; left: 22px; border-right: 0; border-top: 0; }
-.hud.br { bottom: 22px; right: 22px; border-left: 0; border-top: 0; }
-@media (max-width: 640px) {
-  .hud { width: 24px; height: 24px; }
-  .hud.tl, .hud.tr { top: 14px; }
-  .hud.bl, .hud.br { bottom: 14px; }
-  .hud.tl, .hud.bl { left: 14px; }
-  .hud.tr, .hud.br { right: 14px; }
-}
-
-/* STATUS — top mono telemetry bar */
-.s-status {
-  position: fixed; top: 24px; left: 0; right: 0; z-index: 35;
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 0 76px;
-  font-family: var(--font-mono); font-size: 12px; font-weight: 500;
-  color: var(--ink-bone); letter-spacing: .04em;
-  pointer-events: none;
-}
-.s-status .l, .s-status .r { display: flex; align-items: center; gap: 10px; }
-.s-status .sig { display: flex; align-items: center; gap: 8px; color: var(--ink-ash); letter-spacing: .22em; }
-.s-status .sig b { width: 6px; height: 6px; border-radius: 50%; background: var(--lash);
-  box-shadow: 0 0 8px var(--lash-dim); }
-.s-status .build { color: var(--ink-3); letter-spacing: .18em; }
-@media (max-width: 640px) {
-  .s-status { top: 16px; padding: 0 44px; font-size: 10.5px; }
-  .s-status .build { display: none; }
-}
-
 /* ============================================================
    STAGE — centered composition column
    ============================================================ */
@@ -550,12 +497,6 @@ onBeforeUnmount(() => {
   border-bottom: 1px solid var(--ink-line);
 }
 .headline .ttl { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-.eyebrow { display: flex; align-items: center; gap: 12px;
-  font-family: var(--font-mono); font-size: 11px; font-weight: 500;
-  letter-spacing: .34em; text-transform: uppercase; color: var(--lash);
-  white-space: nowrap; }
-.eyebrow::before { content: ""; width: 26px; height: 2px; background: var(--lash);
-  box-shadow: 0 0 10px var(--lash-dim); }
 
 .headline h1 {
   font-family: var(--font-disp); font-weight: 900;
@@ -1089,15 +1030,6 @@ onBeforeUnmount(() => {
   .foot { grid-template-columns: 1fr; gap: 10px; }
   .cta { min-width: 0; width: 100%; min-height: 54px; }
 }
-
-/* ============================================================
-   WATERMARK — viewport-pinned, very small
-   ============================================================ */
-.wm { position: fixed; left: 0; right: 0; bottom: 8px; z-index: 40;
-  text-align: center; pointer-events: none;
-  font-family: var(--font-mono); font-size: 9px; letter-spacing: .28em;
-  text-transform: uppercase; color: var(--ink-3); opacity: .75; }
-@media (max-width: 640px) { .wm { font-size: 8px; } }
 
 /* ============================================================
    DESKTOP TUNING — column gets more presence at >900px
