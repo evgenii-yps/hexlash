@@ -12,21 +12,14 @@
      Выбор → prefight.selectedCoreId (этот же id читают прокачка и арена) →
      CTA «К ПРОКАЧКЕ» уводит на /play/upgrade. -->
 <template>
-  <div class="scene" :style="coreVars" ref="sceneRef">
-    <div class="device" ref="deviceRef">
-      <div class="screen" :style="coreVars" data-screen-label="Выбор ядра">
+  <div class="scene" :style="coreVars">
+    <div class="screen" :style="coreVars" data-screen-label="Выбор ядра">
 
         <!-- HUD-уголки (фирменная рамка) -->
         <span class="hud tl"></span>
         <span class="hud tr"></span>
         <span class="hud bl"></span>
         <span class="hud br"></span>
-
-        <!-- статус-бар -->
-        <div class="s-status">
-          <span>9:41</span>
-          <span class="sig"><b></b>ВЫБОР ЯДРА</span>
-        </div>
 
         <!-- надзаголовок + заголовок + счётчик -->
         <div class="s-top">
@@ -35,8 +28,8 @@
             <h1>ВЫБЕРИ<br /><b>ЯДРО.</b></h1>
           </div>
           <div class="counter">
-            <span class="k">Выбрано</span>
-            <span class="v"><b class="picked">{{ pickedCount }}</b>/4</span>
+            <span class="k">Выбор</span>
+            <span class="v"><b class="picked">1</b> ИЗ 4</span>
           </div>
         </div>
 
@@ -57,7 +50,6 @@
             <div class="ring"></div>
             <div class="top">
               <span class="ix">ЯДРО {{ core.ix }}</span>
-              <span class="id">{{ core.id }}</span>
             </div>
             <div class="stage">
               <div class="icon" v-html="glyphs[core.id]"></div>
@@ -95,13 +87,12 @@
         </div>
 
         <div class="wm">HEXLASH · контент — заглушки</div>
-      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue';
+import { ref, computed } from 'vue';
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
 import { CORES, getCore } from '@/data/upgradeData.js';
@@ -119,7 +110,6 @@ const glyphs = Object.fromEntries(CORES.map((c) => [c.id, coreSVG(c.id, { seed: 
 // --- Выбор (ровно одно ядро светится; остальные плоские) ---------------------
 const selectedId = ref(null);
 const selected = computed(() => (selectedId.value ? getCore(selectedId.value) : null));
-const pickedCount = computed(() => (selectedId.value ? 1 : 0));
 
 // Экран темится в --core выбранного; пока пусто — нейтральный серый (всё плоское).
 // Та же переменная, что читает прокачка → тинт перетекает выбор → прокачка.
@@ -143,25 +133,6 @@ function toUpgrade() {
   navigating = true;
   setTimeout(() => router.push({ name: 'PrefightUpgrade' }), 160);
 }
-
-// --- Фит фиксированного холста 430×932 в вьюпорт (letterbox) ------------------
-const deviceRef = ref(null);
-function fit() {
-  const d = deviceRef.value;
-  if (!d) return;
-  const W = d.offsetWidth;
-  const H = d.offsetHeight;
-  const s = Math.min(window.innerWidth / (W + 48), window.innerHeight / (H + 48), 1.25);
-  d.style.transform = 'scale(' + s.toFixed(4) + ')';
-}
-
-onMounted(() => {
-  nextTick(fit);
-  window.addEventListener('resize', fit);
-});
-onBeforeUnmount(() => {
-  window.removeEventListener('resize', fit);
-});
 </script>
 
 <style>
@@ -200,10 +171,6 @@ onBeforeUnmount(() => {
   --ease: cubic-bezier(.4, .05, .1, 1);
   --ease-out: cubic-bezier(.16, 1, .3, 1);
 
-  /* W×H холста-экрана (портрет) — фит считается в JS */
-  --scr-w: 430px;
-  --scr-h: 932px;
-
   /* выбранное ядро (свопается :style на .scene и .screen) */
   --core: #6e6a72;
   --core-sup: #6e6a72;
@@ -233,26 +200,10 @@ onBeforeUnmount(() => {
   opacity: .35;
 }
 
-/* устройство (минимальная рамка, масштабируется JS) */
-.device {
-  position: relative; flex: none;
-  width: var(--scr-w); height: var(--scr-h);
-  transform-origin: center center;
-  background: #000;
-  border: 1px solid var(--ink-line-2);
-  border-radius: 46px;
-  padding: 9px;
-  box-shadow:
-    0 60px 140px -40px #000,
-    0 0 0 1px rgba(0, 0, 0, .6),
-    0 0 80px -30px color-mix(in srgb, var(--core) 36%, transparent);
-  transition: box-shadow .6s var(--ease);
-  z-index: 1;
-}
-
-/* экран — тёмный холст, темится в --core при выборе */
+/* экран — полноэкранный холст (никакой рамки-телефона / letterbox), темится в
+   --core при выборе. Занимает весь вьюпорт на десктопе и мобиле. */
 .screen {
-  position: relative; width: 100%; height: 100%; border-radius: 38px; overflow: hidden;
+  position: absolute; inset: 0; overflow: hidden;
   isolation: isolate;
   --core-dim: color-mix(in srgb, var(--core) 55%, transparent);
   --core-faint: color-mix(in srgb, var(--core) 14%, transparent);
@@ -275,19 +226,6 @@ onBeforeUnmount(() => {
 .hud.tr { top: 16px; right: 16px; border-left: 0; border-bottom: 0; }
 .hud.bl { bottom: 16px; left: 16px; border-right: 0; border-top: 0; }
 .hud.br { bottom: 16px; right: 16px; border-left: 0; border-top: 0; }
-
-/* статус-бар */
-.s-status {
-  position: absolute; top: 0; left: 0; right: 0; height: 52px; z-index: 30;
-  display: flex; justify-content: space-between; align-items: center; padding: 18px 30px 0;
-  font-family: var(--font-mono); font-size: 12px; font-weight: 500;
-  color: var(--ink-bone); letter-spacing: .04em;
-}
-.s-status .sig { display: flex; align-items: center; gap: 8px; color: var(--ink-ash); letter-spacing: .22em; }
-.s-status .sig b {
-  width: 6px; height: 6px; border-radius: 50%; background: var(--core);
-  box-shadow: 0 0 8px var(--core); transition: background .4s var(--ease), box-shadow .4s var(--ease);
-}
 
 /* надзаголовок + заголовок + счётчик */
 .s-top {

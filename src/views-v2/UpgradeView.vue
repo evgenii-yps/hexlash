@@ -11,15 +11,8 @@
      The demo core-switcher is NOT ported — the core is already chosen on /play.
      «В бой» → /play/arena (the chosen core reaches the arena fighter). -->
 <template>
-  <div class="scene" :style="coreVars" ref="sceneRef">
-    <div class="device" ref="deviceRef">
-      <div class="screen" :style="coreVars" :data-level="level" data-screen-label="Прокачка">
-
-        <!-- статус-бар -->
-        <div class="s-status">
-          <span>9:41</span>
-          <span class="sig"><b></b>ПОДГОТОВКА К БОЮ</span>
-        </div>
+  <div class="scene" :style="coreVars">
+    <div class="screen" :style="coreVars" :data-level="level" data-screen-label="Прокачка">
 
         <!-- назад + крошки + имя ядра -->
         <div class="s-top">
@@ -128,7 +121,6 @@
         </div>
 
         <div class="wm">HEXLASH · контент — заглушки</div>
-      </div>
     </div>
   </div>
 </template>
@@ -264,24 +256,13 @@ function computeSpokes() {
   };
 }
 
-// --- Fit the fixed 430×932 canvas into the viewport (letterbox) ---------------
-const deviceRef = ref(null);
-function fit() {
-  const d = deviceRef.value;
-  if (!d) return;
-  const W = d.offsetWidth;
-  const H = d.offsetHeight;
-  const s = Math.min(window.innerWidth / (W + 48), window.innerHeight / (H + 48), 1.25);
-  d.style.transform = 'scale(' + s.toFixed(4) + ')';
-}
-
+// --- Spokes follow the live layout (full-viewport screen, no letterbox fit) ---
 function onResize() {
-  fit();
   computeSpokes();
 }
 
 onMounted(() => {
-  nextTick(() => { fit(); computeSpokes(); });
+  nextTick(computeSpokes);
   window.addEventListener('resize', onResize);
 });
 onBeforeUnmount(() => {
@@ -329,9 +310,6 @@ onBeforeUnmount(() => {
   --ease: cubic-bezier(.4, .05, .1, 1);
   --ease-out: cubic-bezier(.16, 1, .3, 1);
 
-  /* W×H холста-экрана (портрет) — фит считается в JS */
-  --scr-w: 430px;
-  --scr-h: 932px;
 
   /* контекст-ядро по умолчанию (свопается :style на .scene и .screen) */
   --core: #2ED6B0;
@@ -362,24 +340,10 @@ onBeforeUnmount(() => {
   opacity: .4;
 }
 
-/* ---------- устройство (минимальный безель) ---------- */
-.device {
-  position: relative; flex: none;
-  width: var(--scr-w); height: var(--scr-h);
-  transform-origin: center center;
-  background: #000;
-  border: 1px solid var(--line-2);
-  border-radius: 46px;
-  padding: 9px;
-  box-shadow: 0 60px 140px -40px #000, 0 0 0 1px rgba(0, 0, 0, .6),
-    0 0 80px -30px color-mix(in srgb, var(--core, #2ED6B0) 40%, transparent);
-  z-index: 1;
-  transition: box-shadow .6s var(--ease);
-}
-
-/* ---------- экран — холст, темится в --core ---------- */
+/* ---------- экран — полноэкранный холст (без рамки-телефона / letterbox),
+   темится в --core. Занимает весь вьюпорт на десктопе и мобиле. ---------- */
 .screen {
-  position: relative; width: 100%; height: 100%; border-radius: 38px; overflow: hidden;
+  position: absolute; inset: 0; overflow: hidden;
   isolation: isolate;
   --core: #2ED6B0;
   --core-sup: #5DD6E6;
@@ -394,7 +358,7 @@ onBeforeUnmount(() => {
   transition: background .6s var(--ease);
 }
 .screen::after {
-  content: ""; position: absolute; inset: 13px; border-radius: 28px; z-index: 29; pointer-events: none;
+  content: ""; position: absolute; inset: 13px; border-radius: 0; z-index: 29; pointer-events: none;
   background:
     linear-gradient(var(--core-dim), var(--core-dim)) left 0 top 0/16px 1px no-repeat,
     linear-gradient(var(--core-dim), var(--core-dim)) left 0 top 0/1px 16px no-repeat,
@@ -405,18 +369,6 @@ onBeforeUnmount(() => {
     linear-gradient(var(--core-dim), var(--core-dim)) right 0 bottom 0/16px 1px no-repeat,
     linear-gradient(var(--core-dim), var(--core-dim)) right 0 bottom 0/1px 16px no-repeat;
   opacity: .5;
-}
-
-/* ---------- статус-бар ---------- */
-.s-status {
-  position: absolute; top: 0; left: 0; right: 0; height: 52px; z-index: 30;
-  display: flex; justify-content: space-between; align-items: center; padding: 18px 30px 0;
-  font-family: var(--font-mono); font-size: 13px; font-weight: 500; color: var(--ink-0); letter-spacing: .02em;
-}
-.s-status .sig { display: flex; align-items: center; gap: 6px; color: var(--ink-1); }
-.s-status .sig b {
-  width: 5px; height: 5px; border-radius: 50%; background: var(--core); display: inline-block;
-  box-shadow: 0 0 6px var(--core-dim);
 }
 
 /* ---------- верх: назад + крошки + имя ядра ---------- */

@@ -2,7 +2,6 @@
   <div class="app-v2">
     <router-view />
     <VerifyEmailBanner />
-    <NoConnection />
   </div>
 </template>
 
@@ -12,8 +11,11 @@
 // /play now renders its child views (stub / profile stub / account / wallet)
 // directly. The .app-v2 namespace + hexlash-v24.css are kept so the account/
 // wallet HUD styling tokens (--text-*, --font-*, --hex-*) still resolve.
+//
+// NoConnection (red "No connection to server" banner) is NOT mounted here: the
+// pre-fight flow (select / upgrade / arena) does no server round-trips, so the
+// WS-disconnected banner was pure noise overlapping the screen.
 import VerifyEmailBanner from '@/components/hud/VerifyEmailBanner.vue';
-import NoConnection from '@/components/ui/NoConnection.vue';
 import '@/styles/hexlash-v24.css';
 </script>
 
