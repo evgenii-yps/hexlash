@@ -11,6 +11,7 @@
 // Returns { group, update, setReducedMotion, dispose }. Caller places group.
 import * as THREE from 'three';
 import { makeRadialTexture } from './arenaTextures.js';
+import { resolveBehavior } from '../data/behavior.js';
 
 function pinkRgba(pink, a) {
   const n = parseInt(pink.replace('#', ''), 16);
@@ -20,10 +21,12 @@ function pinkRgba(pink, a) {
 export function buildFighter(
   pink = '#FF0069',
   // `pink` is the core colour (per-core hue for the player, canon pink for the
-  // opponent). `coreId` carries the whole core id alongside the colour so a later
-  // data-каркас can drive fight style from the core without changing this seam;
-  // unused by this visual pass.
-  { side = 'player', coreId = null, maxHp = 100, onImpact, onEliminated, getFoePos = null, bounds = { x: 2.5, z: 1.5 } } = {},
+  // opponent). `coreId` is the chosen core; `behavior` is the resolved profile
+  // from the data-каркас (src/data/behavior.js) — { axes, effects, conditionals }
+  // — which drives how this fighter moves and fights (see the axis → knob seam
+  // below). If `behavior` is absent it's resolved from `coreId` (no lit facets),
+  // so any caller still gets a core-shaped fighter.
+  { side = 'player', coreId = null, behavior = null, maxHp = 100, onImpact, onEliminated, getFoePos = null, bounds = { x: 2.5, z: 1.5 } } = {},
 ) {
   const group = new THREE.Group();
 
@@ -314,17 +317,52 @@ export function buildFighter(
   const STRIKE = 2.0; // a strike connects only if the foe is within this radius at impact
   const TURN_RATE = 5.0; // facing turn speed (rad/s)
 
-  // Per-fighter "character" — independent rolls at build give each construct its
-  // own temperament, so two fighters never move as a mirror or in lock-step:
-  // different preferred range, aggression, circling sense, decision rhythm, and
-  // approach arc. Live random, rolled once per fighter.
+  // --- Behaviour profile → fighter controls. The data-каркас
+  //     (src/data/behavior.js) resolves the chosen core's start profile + lit-
+  //     facet shifts into 8 levers (0..100, 50 = neutral). THIS block is the
+  //     SINGLE seam where those levers meet the movement / AI knobs — tune the
+  //     mapping here. A small bounded jitter rides on top so two same-core
+  //     fighters never move as a mirror or in lock-step. Axis → knob:
+  //       distance   → preferred fighting range (RANGE_NEAR..RANGE_FAR)
+  //       initiative → aggression (press-in vs bait-out)
+  //       tempo      → decision period + post-strike pause + multi-hit bias
+  //       weight     → movement-band speed (×speedMul) + heavy-attack bias
+  //       stick      → press-after-strike / reluctance to disengage
+  //       resilience → incoming damage (×dmgTakenMul) + stagger/hitch (×staggerMul)
+  //       counter    → punish-after-being-hit chance
+  //       slip       → mid-manoeuvre evade (DODGE) frequency
+  //     `behavior.effects` / `.conditionals` are wired but empty this pass
+  //     (tagged tricks coded point-by-point later); axes alone drive this seam.
+  const ax = (behavior && behavior.axes) || resolveBehavior(coreId).axes;
+  const n01 = (v) => THREE.MathUtils.clamp(v, 0, 100) / 100;
+  const lerp = THREE.MathUtils.lerp;
+  const jit = (amp) => (Math.random() * 2 - 1) * amp; // ±amp bounded liveliness
+
+  const RANGE_NEAR = 1.0; // distance=0  → just off contact (in-fighter)
+  const RANGE_FAR = 2.8; //  distance=100 → spacing fighter; darts in to strike
+  const tempo01 = n01(ax.tempo);
+  const stick01 = n01(ax.stick);
+  const counter01 = n01(ax.counter);
+  const slip01 = n01(ax.slip);
+  const speedMul = lerp(1.12, 0.85, n01(ax.weight)); // light = quicker off the mark
+  const heavy01 = THREE.MathUtils.clamp(n01(ax.weight) * 0.6 + tempo01 * 0.4, 0, 1);
+  const dmgTakenMul = lerp(1.15, 0.6, n01(ax.resilience)); // glass takes more
+  const staggerMul = lerp(1.0, 0.15, n01(ax.resilience)); // tough barely hitches
+  // Scale this fighter's movement bands by weight (local objects — safe to
+  // mutate per fighter; a touch of jitter keeps two same-weight builds distinct).
+  SLOW.speed *= speedMul * (1 + jit(0.05));
+  FAST.speed *= speedMul * (1 + jit(0.05));
+
+  // Per-fighter "character" — derived from the profile (+ jitter), so the four
+  // cores read differently and no two builds are a mirror: preferred range,
+  // aggression, circling sense, decision rhythm, approach arc.
   const character = {
-    range: 1.0 + Math.random() * 0.25, // preferred fighting distance — tight, just off contact
-    aggression: 0.3 + Math.random() * 0.45, // press-in vs bait-out bias
+    range: THREE.MathUtils.clamp(lerp(RANGE_NEAR, RANGE_FAR, n01(ax.distance)) + jit(0.12), CONTACT_SOFT, FAR - 0.2),
+    aggression: THREE.MathUtils.clamp(n01(ax.initiative) + jit(0.08), 0, 1), // press-in vs bait-out
     strafeBias: Math.random() < 0.5 ? -1 : 1, // default circling sense (CW / CCW)
-    decideMin: 0.3 + Math.random() * 0.25, // manoeuvre decision period — min
-    decideJit: 0.35 + Math.random() * 0.5, // + jitter
-    approachArc: 0.4 + Math.random() * 0.55, // lateral arc on the way in (rad)
+    decideMin: Math.max(0.18, lerp(0.55, 0.22, tempo01) + jit(0.05)), // fast tempo → quick decisions
+    decideJit: Math.max(0.2, lerp(0.7, 0.3, tempo01) + jit(0.08)),
+    approachArc: 0.4 + Math.random() * 0.45, // lateral arc on the way in (rad)
   };
 
   const loco = { active: false, type: 'slow' }; // dev SLOW/FAST preview toggle
@@ -591,11 +629,20 @@ export function buildFighter(
   //   bait   — ease out to draw the foe in (cautious)
   const maneuver = (t, dt, ux, uz, d) => {
     if (t >= nav.until) {
+      // slip → elusive fighters weave aside (a DODGE) instead of a ground tactic.
+      if (!clip && slip01 > 0 && Math.random() < slip01 * 0.22) {
+        play(DODGE);
+        nav.until = t + character.decideMin + Math.random() * character.decideJit;
+        return;
+      }
       const r = Math.random();
-      const ag = character.aggression;
-      if (r < 0.42) nav.mode = 'circle';
-      else if (r < 0.42 + 0.4 * ag) nav.mode = 'press'; // aggressive → press in
-      else if (r < 0.9) nav.mode = 'bait';
+      // Press window grows with initiative + stick; bait window shrinks with
+      // stick (sticky fighters hate to disengage). The remainder circles.
+      const pressW = THREE.MathUtils.clamp(0.4 * character.aggression + 0.25 * stick01, 0, 0.5);
+      const baitW = 0.32 * (1 - stick01);
+      if (r < 0.4) nav.mode = 'circle';
+      else if (r < 0.4 + pressW) nav.mode = 'press'; // aggressive / sticky → press in
+      else if (r < 0.4 + pressW + baitW) nav.mode = 'bait';
       else nav.mode = 'circle';
       if (Math.random() < 0.28) character.strafeBias *= -1; // reverse the orbit sometimes
       nav.until = t + character.decideMin + Math.random() * character.decideJit;
@@ -685,11 +732,19 @@ export function buildFighter(
   // attacker→defender pairing live in ArenaScene (the combat resolver).
   const takeDamage = (dmg) => {
     if (state !== 'alive') return;
-    hp = Math.max(0, hp - dmg);
+    hp = Math.max(0, hp - dmg * dmgTakenMul); // resilience cuts incoming damage
     updateBar();
     if (hp <= 0) { eliminate(); return; } // → dissolve; onEliminated raised on completion
     play(HURT); // weighty recoil + core flash
-    ai.nextAt = Math.max(ai.nextAt, lastT + HURT.dur + 0.4 + Math.random() * 0.6); // rhythm hitch
+    // Rhythm hitch added on top of the recoil scales with stagger resistance —
+    // a tough fighter barely loses its tempo after eating a hit.
+    ai.nextAt = Math.max(ai.nextAt, lastT + HURT.dur + (0.4 + Math.random() * 0.6) * staggerMul);
+    // counter → chance to punish straight out of the recoil: press in + strike back fast.
+    if (Math.random() < counter01 * 0.7) {
+      nav.mode = 'press';
+      nav.until = lastT + HURT.dur + 0.3;
+      ai.nextAt = lastT + HURT.dur + 0.05;
+    }
   };
 
   // Autonomous combat (AI): strike only when the foe is within range, on a
@@ -702,15 +757,23 @@ export function buildFighter(
     if (!f) return false;
     const dx = f.x - group.position.x;
     const dz = f.z - group.position.z;
-    if (Math.hypot(dx, dz) > character.range + RANGE_HYST) return false; // only commit when engaged
+    // Commit a strike only when the foe is actually in reach: cap by STRIKE so a
+    // far-spacing fighter steps in to land it instead of whiffing from its range.
+    const reach = Math.min(character.range + RANGE_HYST, STRIKE);
+    if (Math.hypot(dx, dz) > reach) return false;
+    // weight + tempo → attack mix: light / low-tempo favour the single PUNCH;
+    // heavy / high-tempo favour DOUBLE then the committed COMBO lunge.
     const r = Math.random();
-    const atk = r < 0.45 ? PUNCH : r < 0.8 ? DOUBLE : COMBO; // punch / double primary, combo = lunge
+    const punchW = lerp(0.6, 0.25, heavy01); // light → more singles
+    const atk = r < punchW ? PUNCH : r < punchW + 0.4 ? DOUBLE : COMBO;
     play(atk);
-    ai.nextAt = t + atk.dur + 0.3 + Math.random() * 0.8; // pause after the clip
-    // Follow-up after the strike — character-driven: aggressive ones press a
-    // flurry, cautious ones circle or bait out. The window starts as the clip
-    // ends. (Never just hang motionless in the foe's face.)
-    if (Math.random() < character.aggression * 0.6) {
+    // tempo → pause after the clip: fast tempo strings strikes close together.
+    ai.nextAt = t + atk.dur + lerp(0.85, 0.18, tempo01) + Math.random() * lerp(0.9, 0.3, tempo01);
+    // Follow-up after the strike — profile-driven: aggressive / sticky ones press
+    // a flurry, the rest circle or bait out. Window starts as the clip ends.
+    // (Never just hang motionless in the foe's face.)
+    const pressFollow = THREE.MathUtils.clamp(character.aggression * 0.45 + stick01 * 0.45, 0, 0.95);
+    if (Math.random() < pressFollow) {
       nav.mode = 'press';
       nav.until = t + atk.dur + 0.25 + Math.random() * 0.4;
     } else {
@@ -725,7 +788,8 @@ export function buildFighter(
   const reducedAttack = (t) => {
     if (t < ai.nextAt) return;
     if (onImpact) onImpact();
-    ai.nextAt = t + 0.7 + Math.random() * 0.8;
+    // Cadence tracks tempo so the static fallback still reads fast vs slow cores.
+    ai.nextAt = t + lerp(1.0, 0.4, tempo01) + Math.random() * lerp(0.9, 0.4, tempo01);
   };
   const setAI = (b) => {
     ai.on = b;

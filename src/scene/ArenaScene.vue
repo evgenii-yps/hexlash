@@ -42,7 +42,8 @@ import { buildArena } from './buildArena.js';
 import { buildFighter } from './buildFighter.js';
 import { createArenaPresence } from './arenaPresence.js';
 import store from '@/core/state/store.js';
-import { getCore } from '@/data/upgradeData.js';
+import { getCore, CORES, CRYSTALS } from '@/data/upgradeData.js';
+import { resolveBehavior } from '@/data/behavior.js';
 
 const wrap = ref(null);
 const canvasEl = ref(null);
@@ -190,6 +191,25 @@ onMounted(() => {
   const selectedCore = pickedId ? getCore(pickedId) : null;
   const playerColor = selectedCore ? selectedCore.hue : pink;
   const playerCoreId = selectedCore ? selectedCore.id : null;
+
+  // --- Behaviour resolve (data-каркас). Each fighter's profile = its core start
+  //     profile + lit-facet shifts (empty shifts this pass → just the core). The
+  //     player resolves from the picked core + the working upgrade tree's lit
+  //     faces; the opponent is assigned its OWN random core (lit from that core's
+  //     CRYSTALS defaults) so it fights by a different profile, never a mirror of
+  //     the player. buildFighter maps these 8 levers onto its move / AI knobs.
+  const collectLit = (crystals) => {
+    const lit = [];
+    for (const cr of crystals || []) for (const f of cr.faces || []) if (f.state === 'lit') lit.push(f);
+    return lit;
+  };
+  // Player lit faces: the live working tree if present, else the picked core's
+  // CRYSTALS defaults (so the arena reflects the build even without a tree).
+  const playerTree = store.getters['prefight/upgradeTree'] || (playerCoreId ? CRYSTALS[playerCoreId] : null);
+  const playerBehavior = resolveBehavior(playerCoreId, collectLit(playerTree));
+  // Opponent: a random one of the four cores, lit from its own CRYSTALS defaults.
+  const opponentCoreId = CORES[Math.floor(Math.random() * CORES.length)].id;
+  const opponentBehavior = resolveBehavior(opponentCoreId, collectLit(CRYSTALS[opponentCoreId]));
   arena = buildArena(renderer.capabilities.getMaxAnisotropy(), pink);
   scene.add(arena.group);
   presence = createArenaPresence(scene, arena.refs);
@@ -223,6 +243,7 @@ onMounted(() => {
     fighter = buildFighter(playerColor, {
       side: 'player',
       coreId: playerCoreId,
+      behavior: playerBehavior,
       bounds: navBounds,
       getFoePos: () => (opponent ? opponent.group.position : null),
       onImpact: () => { opponent?.takeDamage(rollDamage()); }, // hit signal is on the foe (recoil + core)
@@ -242,6 +263,8 @@ onMounted(() => {
   const spawnOpponent = () => {
     opponent = buildFighter(pink, {
       side: 'opponent',
+      coreId: opponentCoreId,
+      behavior: opponentBehavior,
       bounds: navBounds,
       getFoePos: () => (fighter ? fighter.group.position : null),
       onImpact: () => { fighter?.takeDamage(rollDamage()); }, // hit signal is on the foe (recoil + core)

@@ -23,9 +23,22 @@ export const CORES = [
     manner: 'Waits in silence, then a single, paid-in-full strike.' },
 ];
 
-/* face: { id, name, state }   state ∈ 'lit' | 'open' | 'locked'  — DO NOT rename states */
+/* face: { id, name, state, shifts, conditionals, effects }
+   state ∈ 'lit' | 'open' | 'locked'  — DO NOT rename states.
+
+   Facet behaviour contract (data-каркас, src/data/behavior.js). Every facet
+   carries three lists — EMPTY this pass (the resolver reads them uniformly so
+   the wiring is done; numbers land in a later pass, behaviourally a no-op until
+   then):
+     shifts       — flat lever changes, each { axis, delta }: axis ∈ behaviour
+                    AXES, delta added to the 0..100 lever, result clamped.
+     conditionals — shifts that fire on a condition / accrue over a fight
+                    (template types — defined later).
+     effects      — tagged tricks (branch tips, feints) — coded point-by-point. */
 function mkFaces(names, states) {
-  return names.map((nm, i) => ({ id: i + 1, name: nm, state: states[i] }));
+  return names.map((nm, i) => ({
+    id: i + 1, name: nm, state: states[i], shifts: [], conditionals: [], effects: [],
+  }));
 }
 
 /* CRYSTALS[coreId] = [{ id, name, limit, faces:[{ id, name, state }] }]
