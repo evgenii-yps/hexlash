@@ -513,16 +513,25 @@ onBeforeUnmount(() => {
 @media (max-width: 520px) {
   .headline { grid-template-columns: 1fr; gap: 10px; padding-bottom: 10px; }
   .headline h1 { font-size: clamp(34px, 10vw, 46px); white-space: normal; }
-  /* core tag → a tidy subtitle row under the headline, left on the grid, with
-     «‹ CORE» and the core name on one baseline (name = accent). Still tappable. */
+  /* core tag → ONE cohesive chip: ‹ CORE NAME on a single baseline, tight (no
+     gap orphaning the label), hugged by a thin core-tinted border + faint fill
+     (flat, no glow). Hugs its content at the grid's left edge under «TUNE YOUR
+     CORE.»; name is the accent but stays under the headline size. Tap → /play. */
   .core-tag {
+    justify-self: start;
     flex-direction: row; align-items: baseline; justify-content: flex-start;
-    text-align: left; padding: 0; gap: 8px;
+    text-align: left; gap: 7px;
+    padding: 7px 12px;
+    background: color-mix(in srgb, var(--core) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--core) 28%, transparent);
+    transition: background .2s var(--ease), border-color .2s var(--ease);
   }
-  .core-tag .lead { align-items: baseline; gap: 5px; }
-  .core-tag .chev { font-size: 16px; }
+  .core-tag .lead { align-items: baseline; gap: 6px; }
+  .core-tag .chev { font-size: 14px; }
   .core-tag .ix { font-size: 11px; }
-  .core-tag .nm { font-size: 26px; line-height: 1; }
+  .core-tag .nm { font-size: 22px; line-height: 1; }
+  .core-tag:hover { background: color-mix(in srgb, var(--core) 14%, transparent);
+    border-color: var(--core-dim); }
 }
 
 /* ============================================================
@@ -571,7 +580,7 @@ onBeforeUnmount(() => {
 @media (max-width: 520px) {
   /* keep the words (CORE / CRYSTAL / FACET) — drop the numbers + tighten so all
      three fit; levels stay clickable with finger-comfortable hit zones. */
-  .rail { gap: 0; padding: 4px 2px; }
+  .rail { gap: 0; padding: 4px 6px; }
   .rail .step { gap: 7px; padding: 10px 4px; }
   .rail .step .ix { display: none; }
   .rail .step .lb { display: inline; font-size: 10.5px; letter-spacing: .06em; }
@@ -900,7 +909,7 @@ onBeforeUnmount(() => {
   font-size: 10.5px; white-space: nowrap; }
 .build-readout.full .ct { color: #fff; }
 @media (max-width: 520px) {
-  .build-readout { font-size: 10px; gap: 10px; padding: 7px 10px; }
+  .build-readout { font-size: 10px; gap: 10px; padding: 8px 12px; }
   .build-readout .k { display: none; }
 }
 
@@ -1014,11 +1023,12 @@ onBeforeUnmount(() => {
   /* Pull the radial ring (branch labels on CORE, crystals + spokes on CRYSTAL)
      inward off the edges — scale the three co-centred layers together so the
      spokes stay aligned to the crystals and labels/crystals clear the frame. */
-  .ghosts, .crystals, .spokes { transform: scale(.84); transform-origin: 50% 50%; }
+  .ghosts, .crystals, .spokes { transform: scale(.82); transform-origin: 50% 50%; }
   .foot { grid-template-columns: 1fr; gap: 10px; }
   .cta { min-width: 0; width: 100%; min-height: 54px; }
-  /* CORE POINTS — content sits inside the panel; pips even, not edge-jammed. */
-  .foot-l { padding: 11px 14px; gap: 9px; }
+  /* CORE POINTS — content sits inside the panel (12px gutter, matching BUILD);
+     pips even, not edge-jammed. */
+  .foot-l { padding: 11px 12px; gap: 9px; }
   .foot-l .lbl { gap: 10px; }
   .foot-l .pips { gap: 5px; }
 }
