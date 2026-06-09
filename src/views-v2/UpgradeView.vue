@@ -586,13 +586,6 @@ onBeforeUnmount(() => {
                     calc(100% - 16px) 100%, 0 100%);
   overflow: hidden;
 }
-/* corner ticks — chamber feels framed in the core's hue */
-.depth::before, .depth::after {
-  content: ""; position: absolute; width: 14px; height: 14px; pointer-events: none;
-  border: 1px solid var(--core-dim); opacity: .85; z-index: 8;
-}
-.depth::before { top: 8px; left: 8px; border-right: 0; border-bottom: 0; }
-.depth::after { top: 8px; right: 8px; border-left: 0; border-bottom: 0; }
 
 /* spokes from core to each crystal — visible on CRYSTAL level */
 .spokes { position: absolute; inset: 0; z-index: 1; opacity: 0;
@@ -946,10 +939,10 @@ onBeforeUnmount(() => {
   border-style: dashed;
 }
 
-/* CTA — FLAT fill, angular notch, always enabled (Q1 = A). No gloss/bevel and
-   NO surrounding glow: one light on screen = the core. The button carries a
-   narrow sheen that sweeps ACROSS it (like the landing PLAY button) — a
-   highlight ON the button, never a halo around it. Keeps its --core colour. */
+/* CTA — angular notch, always enabled (Q1 = A). Resting state is DARK in the
+   core's gamma; on hover (pointer devices) it fills with the core colour — a
+   flat colour shift, NOT a surrounding glow (one light on screen = the core).
+   A narrow sheen sweeps ACROSS it (PLAY-style) regardless of state. */
 .cta {
   position: relative;
   font-family: var(--font-disp); font-weight: 800;
@@ -957,29 +950,42 @@ onBeforeUnmount(() => {
   letter-spacing: .18em; text-transform: uppercase;
   padding: 0 32px; min-height: 60px;
   display: flex; align-items: center; justify-content: center; gap: 22px;
-  background: var(--core); color: #0a0a0c;
+  background: color-mix(in srgb, var(--core) 16%, #0a0a0c); /* dark, faint core gamma */
+  color: var(--ink-bone);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--core) 30%, transparent); /* crisp edge, no blur */
   cursor: pointer;
   overflow: hidden;
   clip-path: polygon(18px 0, 100% 0, 100% calc(100% - 18px),
                     calc(100% - 18px) 100%, 0 100%, 0 18px);
-  transition: filter .2s, transform .12s;
+  transition: background .25s var(--ease), color .25s var(--ease),
+              box-shadow .25s var(--ease), transform .12s;
   min-width: 240px;
 }
-/* sheen — narrow skewed light band travelling across the fill, clipped to the
+/* sheen — narrow skewed light band travelling across the button, clipped to the
    notch via overflow:hidden. Mirrors the PLAY button; not a second glow source. */
 .cta::before {
   content: ""; position: absolute; top: 0; bottom: 0; left: -60%; width: 40%;
   pointer-events: none;
-  background: linear-gradient(105deg, transparent, rgba(255, 255, 255, .5), transparent);
+  background: linear-gradient(105deg, transparent, rgba(255, 255, 255, .4), transparent);
   transform: skewX(-18deg);
   animation: cta-sheen 3.4s ease-in-out infinite;
 }
 .cta span { position: relative; z-index: 2; white-space: nowrap; }
 .cta .arr { font-family: var(--font-mono); font-weight: 700; font-size: 18px; letter-spacing: .05em; }
-.cta:hover { filter: brightness(1.08); }
+/* hover → fill in the core hue (flat shift, no glow). Pointer devices only, so
+   touch screens keep the dark resting look (mirrors Core Select's hover gate). */
+@media (hover: hover) {
+  .cta:hover {
+    background: var(--core); color: #0a0a0c;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--core) 60%, transparent);
+  }
+}
 .cta:active { transform: scale(.99); }
 @keyframes cta-sheen { 0% { left: -60%; } 45%, 100% { left: 140%; } }
-@media (prefers-reduced-motion: reduce) { .cta::before { animation: none; opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .cta { transition: none; }                /* hover snaps to its final state */
+  .cta::before { animation: none; opacity: 0; }
+}
 .cta:focus-visible { outline: 1px solid #fff; outline-offset: 3px; }
 
 @media (max-width: 520px) {
