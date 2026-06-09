@@ -1017,7 +1017,21 @@ onBeforeUnmount(() => {
 @media (max-width: 520px) {
   /* Mobile layout — tighter vertical rhythm, diagram inset off the frame,
      single-column foot with a tidy CORE POINTS panel. Wide view is untouched. */
-  .scene .stage { padding: 40px 16px 16px; } /* trim outer puff */
+  /* Scrollable screen on mobile: the base scene is position:fixed inset:0 +
+     overflow:hidden, so its bottom is pinned under iOS Safari's floating bar and
+     TO BATTLE gets clipped. Here: release the bottom anchor, size to the DYNAMIC
+     viewport (100dvh, 100vh fallback) so the floating bar is accounted for, and
+     let the screen scroll so the (in-flow, non-sticky) CTA is always reachable. */
+  .scene {
+    inset: 0 0 auto 0;        /* top/left/right pinned, bottom released */
+    height: 100vh;            /* fallback for browsers without dvh */
+    height: 100dvh;           /* dynamic — excludes the floating browser bar */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* Bottom buffer = home-indicator safe area + slack for the floating bar, so
+     the CTA fully clears the system panels when scrolled to the end. */
+  .scene .stage { padding: 40px 16px calc(28px + env(safe-area-inset-bottom)); }
   .col { gap: 10px; }                          /* pull the sections together */
   .core-node { width: 168px; height: 168px; }  /* central hex breathes in-frame */
   /* Pull the radial ring (branch labels on CORE, crystals + spokes on CRYSTAL)
