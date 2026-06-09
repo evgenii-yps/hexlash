@@ -508,6 +508,7 @@ function toUpgrade() {
 .cta .arr {
   font-family: var(--font-mono); font-weight: 700; font-size: 18px;
   letter-spacing: .05em;
+  transition: transform .3s var(--ease); /* glides on hover (PLAY-style feel) */
 }
 .cta span { position: relative; z-index: 2; }
 
@@ -532,8 +533,16 @@ function toUpgrade() {
 }
 .cta.is-ready:hover { filter: brightness(1.08); }
 .cta.is-ready:active { transform: scale(.99); }
+/* arrow glides right on hover — pointer devices only (static on touch). */
+@media (hover: hover) {
+  .cta.is-ready:hover .arr { transform: translateX(5px); }
+}
 @keyframes cta-sheen { 0% { left: -60%; } 45%, 100% { left: 140%; } }
-@media (prefers-reduced-motion: reduce) { .cta.is-ready::before { animation: none; opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .cta.is-ready::before { animation: none; opacity: 0; }
+  .cta .arr { transition: none; }                 /* no glide */
+  .cta.is-ready:hover .arr { transform: none; }    /* arrow stays put */
+}
 
 /* ============================================================
    DESKTOP TUNING — give the grid more presence at >900px

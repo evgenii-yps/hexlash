@@ -971,20 +971,25 @@ onBeforeUnmount(() => {
   animation: cta-sheen 3.4s ease-in-out infinite;
 }
 .cta span { position: relative; z-index: 2; white-space: nowrap; }
-.cta .arr { font-family: var(--font-mono); font-weight: 700; font-size: 18px; letter-spacing: .05em; }
-/* hover → fill in the core hue (flat shift, no glow). Pointer devices only, so
-   touch screens keep the dark resting look (mirrors Core Select's hover gate). */
+.cta .arr { font-family: var(--font-mono); font-weight: 700; font-size: 18px; letter-spacing: .05em;
+  transition: transform .3s var(--ease); } /* glides on hover (PLAY-style feel) */
+/* hover → fill in the core hue (flat shift, no glow) + the arrow glides right.
+   Pointer devices only, so touch screens keep the dark resting look + a static
+   arrow (mirrors Core Select's hover gate). */
 @media (hover: hover) {
   .cta:hover {
     background: var(--core); color: #0a0a0c;
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--core) 60%, transparent);
   }
+  .cta:hover .arr { transform: translateX(5px); }
 }
 .cta:active { transform: scale(.99); }
 @keyframes cta-sheen { 0% { left: -60%; } 45%, 100% { left: 140%; } }
 @media (prefers-reduced-motion: reduce) {
   .cta { transition: none; }                /* hover snaps to its final state */
   .cta::before { animation: none; opacity: 0; }
+  .cta .arr { transition: none; }           /* no glide */
+  .cta:hover .arr { transform: none; }       /* arrow stays put */
 }
 .cta:focus-visible { outline: 1px solid #fff; outline-offset: 3px; }
 
