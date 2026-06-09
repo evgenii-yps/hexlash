@@ -30,11 +30,14 @@
           <div class="ttl">
             <h1>TUNE YOUR <em>CORE.</em></h1>
           </div>
-          <div class="core-tag">
-            <span class="ix">CORE {{ core.ix }}</span>
+          <button
+            type="button" class="core-tag"
+            aria-label="Change core — back to core select"
+            @click="changeCore"
+          >
+            <span class="lead"><span class="chev" aria-hidden="true">‹</span><span class="ix">CORE</span></span>
             <span class="nm">{{ core.name }}</span>
-            <span class="sig">// {{ core.sig }}</span>
-          </div>
+          </button>
         </header>
 
         <!-- DEPTH RAIL — permanent drill-down ladder -->
@@ -72,24 +75,6 @@
 
         <!-- DEPTH CHAMBER — one framed stage; level controls what's lit -->
         <section class="depth" ref="depthRef">
-
-          <!-- CHAMBER HEAD — level tag + back button -->
-          <div class="cham-head">
-            <div class="cham-tag">
-              <span class="dot" aria-hidden="true"></span>
-              <span class="lb">{{ chamLb }}</span>
-              <span class="meta">{{ chamMeta }}</span>
-            </div>
-            <button
-              type="button" class="cham-back"
-              aria-label="Back one level"
-              :hidden="level === 'core'"
-              @click="goBack"
-            >
-              <span class="arr" aria-hidden="true">←</span>
-              <span>BACK</span>
-            </button>
-          </div>
 
           <!-- spokes from core to each crystal (CRYSTAL level) -->
           <svg class="spokes" preserveAspectRatio="none" aria-hidden="true" :viewBox="spokes.viewBox">
@@ -165,7 +150,7 @@
 
         <!-- BUILD READOUT — names every lit facet right now -->
         <div class="build-readout" :class="{ full: litNames.length >= RESOURCE }">
-          <span class="k">BUILD //</span>
+          <span class="k">BUILD</span>
           <span class="v" :class="{ empty: !litNames.length }">
             <template v-if="!litNames.length">NO FACETS LIT — TAP IN</template>
             <template v-else>
@@ -238,25 +223,13 @@ const litNames = computed(() => {
   tree.value.forEach((cr) => cr.faces.forEach((f) => { if (f.state === 'lit') out.push(f.name); }));
   return out;
 });
-const countAllFaces = computed(() => tree.value.reduce((n, cr) => n + cr.faces.length, 0));
 
 // --- SVG helpers (shard uid = coreId-crystalId → unique clipPath key) ---------
 function shardHtml(cr) {
   return shardSVG(litCount(cr) / cr.limit, coreId.value + '-' + cr.id);
 }
 
-// --- Chamber head / foot — level-aware copy -----------------------------------
-const chamLb = computed(() =>
-  level.value === 'core' ? 'ENTRY'
-    : level.value === 'crystal' ? 'BRANCHES'
-      : (selCrystalObj.value ? selCrystalObj.value.name : '—'),
-);
-const chamMeta = computed(() => {
-  if (level.value === 'core') return `// ${tree.value.length} CRYSTALS · ${countAllFaces.value} FACETS WITHIN`;
-  if (level.value === 'crystal') return '// PICK A CRYSTAL';
-  const cr = selCrystalObj.value;
-  return `// ${cr ? litCount(cr) : 0}/${cr ? cr.limit : 0} LIT`;
-});
+// --- Chamber foot — level-aware copy ------------------------------------------
 const chamFootHint = computed(() =>
   level.value === 'core' ? 'TAP THE CORE TO ENTER THE TREE'
     : level.value === 'crystal' ? 'PICK A CRYSTAL'
@@ -326,6 +299,11 @@ function onRail(step) {
 }
 function toBattle() {
   router.push({ name: 'V2Arena' });
+}
+// Core tag (top-right) is the single way back to core select — change the core
+// wholesale (the BACK button is gone; the stepper handles within-tree nav).
+function changeCore() {
+  router.push({ name: 'PrefightSelect' });
 }
 
 // --- Geometry — radial layout of ghosts/crystals measured against the chamber -
@@ -509,26 +487,35 @@ onBeforeUnmount(() => {
 .headline h1 em { font-style: normal; color: #fff;
   text-shadow: 0 0 14px color-mix(in srgb, var(--core) 38%, transparent); }
 
-/* CORE TAG (right meta) — which core is in context */
+/* CORE TAG (right meta) — which core is in context. Clickable: the single way
+   back to core select (changes the core wholesale). Chevron + hover affordance. */
 .core-tag {
-  display: flex; flex-direction: column; align-items: flex-end; gap: 3px;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 4px;
   font-family: var(--font-mono); text-align: right;
-  padding-bottom: 6px; line-height: 1;
+  padding: 4px 2px 6px 10px; line-height: 1;
+  cursor: pointer;
 }
+.core-tag .lead { display: inline-flex; align-items: center; gap: 6px; }
+.core-tag .chev { font-family: var(--font-disp); font-weight: 800; font-size: 15px;
+  line-height: 1; color: var(--ink-ash);
+  transition: transform .2s var(--ease), color .2s var(--ease); }
 .core-tag .ix { font-size: 10px; letter-spacing: .26em;
-  text-transform: uppercase; color: var(--ink-ash); }
-.core-tag .nm { font-family: var(--font-disp); font-weight: 800; font-size: 22px;
-  letter-spacing: .02em; text-transform: uppercase; color: var(--ink-bone);
-  text-shadow: 0 0 14px color-mix(in srgb, var(--core) 35%, transparent); }
-.core-tag .sig { font-size: 10px; letter-spacing: .24em; color: var(--core-ink);
-  text-transform: uppercase; }
+  text-transform: uppercase; color: var(--ink-ash); transition: color .2s var(--ease); }
+.core-tag .nm { font-family: var(--font-disp); font-weight: 800; font-size: 30px;
+  letter-spacing: .02em; text-transform: uppercase; line-height: .92; color: var(--ink-bone);
+  text-shadow: 0 0 14px color-mix(in srgb, var(--core) 35%, transparent);
+  transition: color .2s var(--ease); }
+.core-tag:hover .chev { transform: translateX(-3px); color: var(--core-ink); }
+.core-tag:hover .ix { color: var(--core-ink); }
+.core-tag:hover .nm { color: #fff; }
+.core-tag:focus-visible { outline: 1px solid var(--core-dim); outline-offset: 4px; }
 
 @media (max-width: 520px) {
   .headline { grid-template-columns: 1fr; gap: 12px; padding-bottom: 10px; }
   .headline h1 { font-size: clamp(34px, 10vw, 46px); white-space: normal; }
-  .core-tag { align-items: baseline; text-align: left; padding-bottom: 0;
+  .core-tag { align-items: baseline; text-align: left; padding: 0;
     flex-direction: row; gap: 10px; }
-  .core-tag .nm { font-size: 18px; }
+  .core-tag .nm { font-size: 24px; }
 }
 
 /* ============================================================
@@ -539,28 +526,29 @@ onBeforeUnmount(() => {
   grid-template-columns: auto 1fr auto 1fr auto;
   align-items: center;
   gap: 0;
-  padding: 4px 4px 2px;
+  padding: 6px 4px 4px;
 }
 .rail .step {
-  display: flex; align-items: center; gap: 9px;
-  padding: 6px 4px;
+  display: flex; align-items: center; gap: 11px;
+  padding: 10px 8px;                       /* finger-comfortable hit zone */
   font-family: var(--font-mono);
   cursor: pointer;
-  color: var(--ink-3);
+  color: var(--ink-3);                     /* future levels — dim, not yet reachable */
   transition: color .25s var(--ease);
 }
-.rail .step .ix { font-size: 10px; letter-spacing: .22em; font-weight: 600; }
-.rail .step .lb { font-size: 11px; letter-spacing: .28em; font-weight: 600; text-transform: uppercase; }
+.rail .step .ix { font-size: 12px; letter-spacing: .22em; font-weight: 700; }
+.rail .step .lb { font-size: 13px; letter-spacing: .26em; font-weight: 700; text-transform: uppercase; }
 .rail .step .dot {
-  width: 9px; height: 9px; border: 1px solid currentColor; border-radius: 50%;
+  width: 12px; height: 12px; border: 1.5px solid currentColor; border-radius: 50%;
   background: transparent;
   transition: background .25s var(--ease), box-shadow .25s var(--ease), border-color .25s var(--ease);
 }
 .rail .step[disabled] { cursor: default; }
-.rail .step.on { color: var(--ink-ash); }
-.rail .step.on:hover { color: var(--ink-bone); }
+.rail .step.on { color: var(--ink-bone); } /* visited — bright + clickable (step back) */
+.rail .step.on:hover { color: #fff; }
 .rail .step.on .dot { background: var(--ink-ash); border-color: var(--ink-ash); }
-.rail .step.here { color: #fff; }
+.rail .step.on:hover .dot { background: #fff; border-color: #fff; }
+.rail .step.here { color: #fff; }          /* current — pink filled dot */
 .rail .step.here .dot {
   background: var(--core); border-color: var(--core);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--core) 22%, transparent),
@@ -568,7 +556,7 @@ onBeforeUnmount(() => {
 }
 .rail .step.here .lb { color: #fff; }
 .rail .link {
-  height: 1px; background: linear-gradient(90deg, var(--ink-line), var(--ink-line-2), var(--ink-line));
+  height: 2px; background: linear-gradient(90deg, var(--ink-line), var(--ink-line-2), var(--ink-line));
   margin: 0 6px; position: relative; overflow: hidden;
 }
 .rail .link.lit { background: linear-gradient(90deg, var(--core-dim), var(--core), var(--core-dim)); }
@@ -576,7 +564,7 @@ onBeforeUnmount(() => {
 @media (max-width: 520px) {
   .rail .step .lb { display: none; }
   .rail { gap: 0; padding: 4px; }
-  .rail .step { padding: 6px 6px; }
+  .rail .step { padding: 9px 8px; }
 }
 
 /* ============================================================
@@ -605,43 +593,6 @@ onBeforeUnmount(() => {
 }
 .depth::before { top: 8px; left: 8px; border-right: 0; border-bottom: 0; }
 .depth::after { top: 8px; right: 8px; border-left: 0; border-bottom: 0; }
-
-/* CHAMBER HEAD — level tag + back button */
-.cham-head {
-  position: absolute; top: 0; left: 0; right: 0; z-index: 9;
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 14px 18px 0;
-  pointer-events: none;
-}
-.cham-head > * { pointer-events: auto; }
-.cham-tag { display: flex; align-items: center; gap: 10px;
-  font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .26em;
-  text-transform: uppercase; color: var(--ink-ash); line-height: 1;
-  padding-left: 18px; }
-.cham-tag .dot {
-  width: 7px; height: 7px; border-radius: 50%;
-  background: var(--core);
-  box-shadow: 0 0 10px color-mix(in srgb, var(--core) 70%, transparent);
-}
-.cham-tag .lb { color: #fff; font-weight: 600; letter-spacing: .3em; }
-.cham-tag .meta { color: var(--ink-3); font-weight: 500; }
-
-.cham-back[hidden] { display: none; }
-.cham-back {
-  display: flex; align-items: center; gap: 8px;
-  padding: 6px 10px;
-  font-family: var(--font-mono); font-size: 10.5px; font-weight: 600;
-  letter-spacing: .24em; text-transform: uppercase;
-  color: var(--ink-ash);
-  border: 1px solid var(--ink-line-2);
-  background: rgba(0, 0, 0, .32);
-  transition: color .2s, border-color .2s, background .2s;
-  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px),
-                    calc(100% - 8px) 100%, 0 100%, 0 8px);
-}
-.cham-back .arr { font-family: var(--font-mono); font-weight: 700; }
-.cham-back:hover { color: #fff; border-color: var(--core-dim);
-  background: color-mix(in srgb, var(--core) 12%, #000); }
 
 /* spokes from core to each crystal — visible on CRYSTAL level */
 .spokes { position: absolute; inset: 0; z-index: 1; opacity: 0;
@@ -974,7 +925,6 @@ onBeforeUnmount(() => {
   min-width: 0;
 }
 .foot-l .lbl .k { color: var(--ink-ash); font-weight: 500; letter-spacing: .24em; }
-.foot-l .lbl .k::after { content: " //"; color: var(--ink-3); }
 .foot-l .lbl .v {
   font-family: var(--font-disp); font-weight: 800; font-size: 18px;
   letter-spacing: .04em; color: var(--ink-bone); line-height: 1;
@@ -996,7 +946,10 @@ onBeforeUnmount(() => {
   border-style: dashed;
 }
 
-/* CTA — bold, notched, glows in --core. Always enabled (Q1 = A). */
+/* CTA — FLAT fill, angular notch, always enabled (Q1 = A). No gloss/bevel and
+   NO surrounding glow: one light on screen = the core. The button carries a
+   narrow sheen that sweeps ACROSS it (like the landing PLAY button) — a
+   highlight ON the button, never a halo around it. Keeps its --core colour. */
 .cta {
   position: relative;
   font-family: var(--font-disp); font-weight: 800;
@@ -1009,21 +962,24 @@ onBeforeUnmount(() => {
   overflow: hidden;
   clip-path: polygon(18px 0, 100% 0, 100% calc(100% - 18px),
                     calc(100% - 18px) 100%, 0 100%, 0 18px);
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--core) 75%, transparent),
-    0 0 28px color-mix(in srgb, var(--core) 45%, transparent),
-    0 14px 36px -16px color-mix(in srgb, var(--core) 60%, transparent);
-  transition: filter .2s, transform .12s, box-shadow .35s var(--ease);
+  transition: filter .2s, transform .12s;
   min-width: 240px;
 }
+/* sheen — narrow skewed light band travelling across the fill, clipped to the
+   notch via overflow:hidden. Mirrors the PLAY button; not a second glow source. */
 .cta::before {
-  content: ""; position: absolute; inset: 0; pointer-events: none;
-  background: linear-gradient(180deg, rgba(255, 255, 255, .22), transparent 42%);
+  content: ""; position: absolute; top: 0; bottom: 0; left: -60%; width: 40%;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent, rgba(255, 255, 255, .5), transparent);
+  transform: skewX(-18deg);
+  animation: cta-sheen 3.4s ease-in-out infinite;
 }
 .cta span { position: relative; z-index: 2; white-space: nowrap; }
 .cta .arr { font-family: var(--font-mono); font-weight: 700; font-size: 18px; letter-spacing: .05em; }
 .cta:hover { filter: brightness(1.08); }
 .cta:active { transform: scale(.99); }
+@keyframes cta-sheen { 0% { left: -60%; } 45%, 100% { left: 140%; } }
+@media (prefers-reduced-motion: reduce) { .cta::before { animation: none; opacity: 0; } }
 .cta:focus-visible { outline: 1px solid #fff; outline-offset: 3px; }
 
 @media (max-width: 520px) {

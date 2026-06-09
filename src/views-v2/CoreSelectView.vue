@@ -511,24 +511,29 @@ function toUpgrade() {
 }
 .cta span { position: relative; z-index: 2; }
 
-/* Ready — filled, notched, glowing in core hue */
+/* Ready — FLAT fill, notched, in core hue. No gloss/bevel, NO surrounding glow
+   (one light on screen = the core). A narrow sheen sweeps ACROSS the fill like
+   the landing PLAY button — a highlight ON the button, not a halo around it. */
 .cta.is-ready {
   cursor: pointer; opacity: 1; color: #0a0a0c;
   background: var(--core);
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--core) 75%, transparent),
-    0 0 28px color-mix(in srgb, var(--core) 45%, transparent),
-    0 14px 36px -16px color-mix(in srgb, var(--core) 60%, transparent);
   clip-path: polygon(18px 0, 100% 0, 100% calc(100% - 18px),
                     calc(100% - 18px) 100%, 0 100%, 0 18px);
 }
 .cta.is-ready::after { display: none; }
+/* sheen — skewed light band travelling across the fill, clipped to the notch
+   (the base .cta is overflow:hidden). Mirrors PLAY; not a second glow source. */
 .cta.is-ready::before {
-  content: ""; position: absolute; inset: 0; pointer-events: none;
-  background: linear-gradient(180deg, rgba(255, 255, 255, .22), transparent 42%);
+  content: ""; position: absolute; top: 0; bottom: 0; left: -60%; width: 40%;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent, rgba(255, 255, 255, .5), transparent);
+  transform: skewX(-18deg);
+  animation: cta-sheen 3.4s ease-in-out infinite;
 }
 .cta.is-ready:hover { filter: brightness(1.08); }
 .cta.is-ready:active { transform: scale(.99); }
+@keyframes cta-sheen { 0% { left: -60%; } 45%, 100% { left: 140%; } }
+@media (prefers-reduced-motion: reduce) { .cta.is-ready::before { animation: none; opacity: 0; } }
 
 /* ============================================================
    DESKTOP TUNING — give the grid more presence at >900px
