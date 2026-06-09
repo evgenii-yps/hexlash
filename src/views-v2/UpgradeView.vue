@@ -511,11 +511,18 @@ onBeforeUnmount(() => {
 .core-tag:focus-visible { outline: 1px solid var(--core-dim); outline-offset: 4px; }
 
 @media (max-width: 520px) {
-  .headline { grid-template-columns: 1fr; gap: 12px; padding-bottom: 10px; }
+  .headline { grid-template-columns: 1fr; gap: 10px; padding-bottom: 10px; }
   .headline h1 { font-size: clamp(34px, 10vw, 46px); white-space: normal; }
-  .core-tag { align-items: baseline; text-align: left; padding: 0;
-    flex-direction: row; gap: 10px; }
-  .core-tag .nm { font-size: 24px; }
+  /* core tag → a tidy subtitle row under the headline, left on the grid, with
+     «‹ CORE» and the core name on one baseline (name = accent). Still tappable. */
+  .core-tag {
+    flex-direction: row; align-items: baseline; justify-content: flex-start;
+    text-align: left; padding: 0; gap: 8px;
+  }
+  .core-tag .lead { align-items: baseline; gap: 5px; }
+  .core-tag .chev { font-size: 16px; }
+  .core-tag .ix { font-size: 11px; }
+  .core-tag .nm { font-size: 26px; line-height: 1; }
 }
 
 /* ============================================================
@@ -562,9 +569,14 @@ onBeforeUnmount(() => {
 .rail .link.lit { background: linear-gradient(90deg, var(--core-dim), var(--core), var(--core-dim)); }
 
 @media (max-width: 520px) {
-  .rail .step .lb { display: none; }
-  .rail { gap: 0; padding: 4px; }
-  .rail .step { padding: 9px 8px; }
+  /* keep the words (CORE / CRYSTAL / FACET) — drop the numbers + tighten so all
+     three fit; levels stay clickable with finger-comfortable hit zones. */
+  .rail { gap: 0; padding: 4px 2px; }
+  .rail .step { gap: 7px; padding: 10px 4px; }
+  .rail .step .ix { display: none; }
+  .rail .step .lb { display: inline; font-size: 10.5px; letter-spacing: .06em; }
+  .rail .step .dot { width: 10px; height: 10px; }
+  .rail .link { margin: 0 4px; }
 }
 
 /* ============================================================
@@ -994,8 +1006,21 @@ onBeforeUnmount(() => {
 .cta:focus-visible { outline: 1px solid #fff; outline-offset: 3px; }
 
 @media (max-width: 520px) {
+  /* Mobile layout — tighter vertical rhythm, diagram inset off the frame,
+     single-column foot with a tidy CORE POINTS panel. Wide view is untouched. */
+  .scene .stage { padding: 40px 16px 16px; } /* trim outer puff */
+  .col { gap: 10px; }                          /* pull the sections together */
+  .core-node { width: 168px; height: 168px; }  /* central hex breathes in-frame */
+  /* Pull the radial ring (branch labels on CORE, crystals + spokes on CRYSTAL)
+     inward off the edges — scale the three co-centred layers together so the
+     spokes stay aligned to the crystals and labels/crystals clear the frame. */
+  .ghosts, .crystals, .spokes { transform: scale(.84); transform-origin: 50% 50%; }
   .foot { grid-template-columns: 1fr; gap: 10px; }
   .cta { min-width: 0; width: 100%; min-height: 54px; }
+  /* CORE POINTS — content sits inside the panel; pips even, not edge-jammed. */
+  .foot-l { padding: 11px 14px; gap: 9px; }
+  .foot-l .lbl { gap: 10px; }
+  .foot-l .pips { gap: 5px; }
 }
 
 /* ============================================================
