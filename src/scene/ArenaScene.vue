@@ -30,6 +30,12 @@
       <button type="button" class="tgt" @click="onAITarget">AI</button>
       <button type="button" class="tgt" @click="onAIBoth">AI×2</button>
       <button type="button" class="tgt" @click="onFight">FIGHT</button>
+      <!-- Behaviour A/B dev stand: pick LEFT / RIGHT signature, run an
+           auto-cycling autonomous bout, toggle a colour-blind grey read. -->
+      <button type="button" class="tgt" @click="cycleSig('left')">L:{{ sigTag(sigLeft) }}</button>
+      <button type="button" class="tgt" @click="cycleSig('right')">R:{{ sigTag(sigRight) }}</button>
+      <button type="button" class="tgt" @click="onSigFight">SIG FIGHT</button>
+      <button type="button" class="tgt" :class="{ on: neutralColor }" @click="onNeutralColor">GRAY: {{ neutralColor ? 'ON' : 'OFF' }}</button>
     </div>
   </div>
 </template>
@@ -44,11 +50,23 @@ import { createArenaPresence } from './arenaPresence.js';
 import store from '@/core/state/store.js';
 import { getCore, CORES, CRYSTALS } from '@/data/upgradeData.js';
 import { resolveBehavior } from '@/data/behavior.js';
+import { SIG_PRESETS, SIG_ORDER, presetBehavior } from '@/data/behaviorPresets.js';
 
 const wrap = ref(null);
 const canvasEl = ref(null);
 const variant = ref('A');
 const target = ref('player'); // which fighter the dev triggers act on
+
+// --- Behaviour A/B dev stand (preview only). Pick a signature preset for the
+//     LEFT (player slot) and RIGHT (opponent slot) fighter, run an autonomous
+//     bout on the existing FIGHT pipeline, and auto-cycle (re-run at full HP) on
+//     each KO so successive bouts can be watched without reloading. NEUTRAL
+//     COLOUR greys both + kills the core glow so the read is movement-only. None
+//     of this touches the real play → upgrade → arena flow (random opponent core
+//     intact) — the presets only apply while a SIG bout is running (sigCycle).
+const sigLeft = ref('onslaught');
+const sigRight = ref('raider');
+const neutralColor = ref(false);
 
 let renderer, scene, camera, controls, arena, fighter, opponent, presence, resizeObserver, clock;
 let onVisibility, onKeydown, onControlsStart, onControlsEnd;
@@ -70,6 +88,15 @@ let aiOpponent = false;
 // onMounted (needs the scene); fightActive gates the win-and-freeze behaviour.
 let fightActive = false;
 let runFight = null;
+// SIG dev stand: sigCycle owns the auto-restart-on-KO loop (distinct from the
+// normal FIGHT win-and-freeze). runSigFight assigned in onMounted. sigRestartAt
+// is loop time the next bout fires; lastFrameT is the live loop time (so an
+// elimination handler can schedule the restart).
+let sigCycle = false;
+let sigRestartAt = 0;
+let lastFrameT = 0;
+let runSigFight = null;
+const SIG_RESTART_DELAY = 1.4; // seconds after a KO before the next bout (~ the dissolve)
 
 // idle-drift bookkeeping (variant B)
 let userActive = false;
@@ -116,16 +143,38 @@ function buildDemoEvents() {
     { t: DEMO_DUR, fn: () => setBothAI(false) }, // settle to idle
   ];
 }
-function onDemo() { if (!demo) demoPending = true; }
+function onDemo() { cancelSig(); if (!demo) demoPending = true; }
 // Toggle autonomous behaviour: A / AI button = current target; AI×2 = both.
 function onAITarget() {
+  cancelSig();
   if (target.value === 'opponent') { aiOpponent = !aiOpponent; opponent?.setAI(aiOpponent); }
   else { aiPlayer = !aiPlayer; fighter?.setAI(aiPlayer); }
 }
 function onAIBoth() {
+  cancelSig();
   setBothAI(!(aiPlayer && aiOpponent));
 }
 function onFight() { runFight?.(); }
+
+// --- SIG dev-stand controls (preview only). Cancel the auto-cycle (a normal
+//     FIGHT / AI / DEMO takes over from the A/B loop).
+function cancelSig() { sigCycle = false; sigRestartAt = 0; }
+const sigTag = (id) => SIG_PRESETS[id]?.tag || '—';
+// Step a slot through the five presets (L = player slot, R = opponent slot).
+function cycleSig(which) {
+  const slot = which === 'left' ? sigLeft : sigRight;
+  const i = SIG_ORDER.indexOf(slot.value);
+  slot.value = SIG_ORDER[(i + 1) % SIG_ORDER.length];
+}
+function onSigFight() { runSigFight?.(); }
+// NEUTRAL COLOUR toggle — grey both fighters + kill the core glow live (and
+// re-applied on every respawn via the build option). Fighters only; the rift +
+// arena are untouched.
+function onNeutralColor() {
+  neutralColor.value = !neutralColor.value;
+  fighter?.setNeutralColor(neutralColor.value);
+  opponent?.setNeutralColor(neutralColor.value);
+}
 
 // Damage per clean hit (tunable, slight variance per blow) → ~5-6 hits to OUT.
 const rollDamage = () => 18 + Math.round(Math.random() * 6 - 3);
@@ -210,6 +259,18 @@ onMounted(() => {
   // Opponent: a random one of the four cores, lit from its own CRYSTALS defaults.
   const opponentCoreId = CORES[Math.floor(Math.random() * CORES.length)].id;
   const opponentBehavior = resolveBehavior(opponentCoreId, collectLit(CRYSTALS[opponentCoreId]));
+
+  // Behaviour for a side: during a SIG dev bout the chosen signature preset
+  // (L = player, R = opponent) overrides the core-derived profile; otherwise the
+  // real core behaviour stands (so page load + the normal FIGHT button are the
+  // genuine preview, opponent random core intact).
+  const behaviorFor = (side) => {
+    if (sigCycle) {
+      const pb = presetBehavior(side === 'player' ? sigLeft.value : sigRight.value);
+      if (pb) return pb;
+    }
+    return side === 'player' ? playerBehavior : opponentBehavior;
+  };
   arena = buildArena(renderer.capabilities.getMaxAnisotropy(), pink);
   scene.add(arena.group);
   presence = createArenaPresence(scene, arena.refs);
@@ -243,15 +304,17 @@ onMounted(() => {
     fighter = buildFighter(playerColor, {
       side: 'player',
       coreId: playerCoreId,
-      behavior: playerBehavior,
+      behavior: behaviorFor('player'),
       bounds: navBounds,
+      neutralColor: neutralColor.value,
       getFoePos: () => (opponent ? opponent.group.position : null),
       onImpact: () => { opponent?.takeDamage(rollDamage()); }, // hit signal is on the foe (recoil + core)
       onEliminated: () => {
         scene.remove(fighter.group);
         fighter.dispose();
         fighter = null;
-        if (fightActive) endFight(); // opponent wins; freeze
+        if (sigCycle) { if (!sigRestartAt) sigRestartAt = lastFrameT + SIG_RESTART_DELAY; } // A/B auto-cycle
+        else if (fightActive) endFight(); // opponent wins; freeze
         else spawnFighter(); // dev respawn
       },
     });
@@ -264,15 +327,17 @@ onMounted(() => {
     opponent = buildFighter(pink, {
       side: 'opponent',
       coreId: opponentCoreId,
-      behavior: opponentBehavior,
+      behavior: behaviorFor('opponent'),
       bounds: navBounds,
+      neutralColor: neutralColor.value,
       getFoePos: () => (fighter ? fighter.group.position : null),
       onImpact: () => { fighter?.takeDamage(rollDamage()); }, // hit signal is on the foe (recoil + core)
       onEliminated: () => {
         scene.remove(opponent.group);
         opponent.dispose();
         opponent = null;
-        if (fightActive) endFight(); // player wins; freeze
+        if (sigCycle) { if (!sigRestartAt) sigRestartAt = lastFrameT + SIG_RESTART_DELAY; } // A/B auto-cycle
+        else if (fightActive) endFight(); // player wins; freeze
         else spawnOpponent(); // dev respawn
       },
     });
@@ -287,11 +352,30 @@ onMounted(() => {
   // FIGHT (key F / button): clean re-run — dispose both, respawn fresh at full
   // HP + neutral, then both fight autonomously until one is eliminated.
   runFight = () => {
+    cancelSig(); // a normal bout uses core behaviour, not the A/B presets
     if (fighter) { scene.remove(fighter.group); fighter.dispose(); fighter = null; }
     if (opponent) { scene.remove(opponent.group); opponent.dispose(); opponent = null; }
     aiPlayer = true;
     aiOpponent = true;
     fightActive = true;
+    spawnFighter();
+    spawnOpponent();
+  };
+
+  // SIG dev bout (SIG FIGHT button): same clean re-run as FIGHT but the two
+  // fighters take the chosen LEFT / RIGHT signature presets, and on each KO the
+  // bout auto-restarts (sigCycle) at full HP so successive runs can be watched
+  // back-to-back. fightActive stays off — sigCycle owns the end-handling
+  // (auto-cycle), not the win-and-freeze path.
+  runSigFight = () => {
+    demo = null; demoPending = false; // a SIG bout takes over from the demo
+    if (fighter) { scene.remove(fighter.group); fighter.dispose(); fighter = null; }
+    if (opponent) { scene.remove(opponent.group); opponent.dispose(); opponent = null; }
+    sigCycle = true;
+    fightActive = false;
+    sigRestartAt = 0;
+    aiPlayer = true;
+    aiOpponent = true;
     spawnFighter();
     spawnOpponent();
   };
@@ -323,6 +407,7 @@ onMounted(() => {
     if (time - lastFrame < interval) return;
     lastFrame = time;
     const t = clock.getElapsedTime();
+    lastFrameT = t; // live loop time — used to schedule the SIG auto-cycle restart
 
     // Idle camera drift — only variant B, only when the user isn't touching.
     if (variant.value === 'B' && !reducedMotion) {
@@ -357,6 +442,13 @@ onMounted(() => {
       const dt = t - demo.start;
       for (const e of demo.events) { if (!e.done && dt >= e.t) { e.done = true; e.fn(); } }
       if (demo.events.every((e) => e.done)) demo = null;
+    }
+
+    // SIG A/B auto-cycle — a KO scheduled a restart; fire it (full HP, fresh
+    // presets) so consecutive bouts run back-to-back without a reload.
+    if (sigCycle && sigRestartAt && t >= sigRestartAt) {
+      sigRestartAt = 0;
+      runSigFight();
     }
 
     renderer.render(scene, camera);
@@ -498,6 +590,12 @@ onBeforeUnmount(() => {
 }
 .arena-actions button.tgt {
   color: var(--hex-primary, #ff0069);
+  border-color: var(--hex-primary, #ff0069);
+}
+/* Active state for a toggle button (e.g. GRAY: ON). */
+.arena-actions button.on {
+  color: #fff;
+  background: var(--hex-primary, #ff0069);
   border-color: var(--hex-primary, #ff0069);
 }
 </style>

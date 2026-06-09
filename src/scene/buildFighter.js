@@ -26,7 +26,7 @@ export function buildFighter(
   // — which drives how this fighter moves and fights (see the axis → knob seam
   // below). If `behavior` is absent it's resolved from `coreId` (no lit facets),
   // so any caller still gets a core-shaped fighter.
-  { side = 'player', coreId = null, behavior = null, maxHp = 100, onImpact, onEliminated, getFoePos = null, bounds = { x: 2.5, z: 1.5 } } = {},
+  { side = 'player', coreId = null, behavior = null, maxHp = 100, onImpact, onEliminated, getFoePos = null, bounds = { x: 2.5, z: 1.5 }, neutralColor = false } = {},
 ) {
   const group = new THREE.Group();
 
@@ -40,6 +40,10 @@ export function buildFighter(
   const isOpp = side === 'opponent';
   group.rotation.y = isOpp ? Math.PI : 0;
   const skinColor = isOpp ? 0x141b2e : 0x1c2233; // opponent darker + cooler
+  // NEUTRAL COLOUR (dev A/B stand): a single team-less grey both sides share +
+  // the core glow killed, so two builds read by movement manner alone with no
+  // colour hint. Applied via setNeutralColor() — toggled live or set at build.
+  const SKIN_NEUTRAL = 0x23262e;
   const coreDim = isOpp ? 0.7 : 1.0; // darkens the gem, keeps the hue
   const coreGain = isOpp ? 0.55 : 1.0; // halo brightness — player's is brightest
 
@@ -122,6 +126,17 @@ export function buildFighter(
   halo.scale.set(0.34, 0.34, 0.34);
   halo.position.copy(core.position);
   torso.add(halo);
+
+  // NEUTRAL COLOUR toggle (dev only) — grey both sides identically + hide the
+  // core gem + halo (the fighter's only glow). Visibility-off survives the
+  // per-frame core/halo writes in update(); the rift + arena are untouched (this
+  // only touches the fighter). The per-frame opacity/scale writes are harmless
+  // no-ops while hidden.
+  const setNeutralColor = (b) => {
+    skin.color.setHex(b ? SKIN_NEUTRAL : skinColor);
+    core.visible = !b;
+    halo.visible = !b;
+  };
 
   // --- Contact shadow under the feet (dark, no pink). Lives on root so it
   //     stays put while the body breathes.
@@ -371,7 +386,7 @@ export function buildFighter(
 
   // Elimination — dissolve into the fog (~1.4s); core holds and fades last.
   const BG = new THREE.Color(0x070811);
-  const skinBase = skin.color.clone();
+  let skinBase = skin.color.clone(); // re-captured at eliminate() so the dissolve fades from the live (e.g. neutral-grey) skin
   const DISS_DUR = 1.4;
   let state = 'alive'; // alive | dissolving | done
   let diss = 0;
@@ -724,6 +739,7 @@ export function buildFighter(
     if (reduced) { state = 'done'; if (onEliminated) onEliminated(); return; } // no playback
     skin.transparent = true;
     coreMat.transparent = true;
+    skinBase = skin.color.clone(); // fade from the live skin (neutral grey stays grey through the dissolve)
     state = 'dissolving';
     diss = 0;
   };
@@ -917,8 +933,12 @@ export function buildFighter(
   //     the placement y in ArenaScene needs no change. ~1.84 → ~1.34 tall.
   group.scale.setScalar(0.73);
 
+  // Apply the neutral-colour option if the fighter is built into the dev A/B
+  // stand already in grey mode (kept in sync live via setNeutralColor too).
+  if (neutralColor) setNeutralColor(true);
+
   return {
-    group, update, setReducedMotion, dispose,
+    group, update, setReducedMotion, setNeutralColor, dispose,
     approach: () => play(APPROACH),
     punch: () => play(PUNCH),
     combo: () => play(COMBO),

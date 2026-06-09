@@ -6473,3 +6473,16 @@ All series artifacts: [`docs/legacy-cleanup/`](docs/legacy-cleanup/)
 
 Legacy Cleanup Series — **CLOSED ✅**. Next direction is owner's call. Parking items #7–#21 are independent — they're new series candidates or micro-tasks, no longer cleanup work.
 
+
+---
+
+## Arena — Behaviour Dev Stand (A/B signature presets)
+
+Diagnostic tooling on the 3D arena (`/play/arena` → `PlayStubView` → `ArenaScene.vue`), strictly behind the existing dev panel (`.arena-actions`, same row as TGT / APPROACH / FIGHT). Lets two **behaviour signatures** fight under identical conditions to check whether builds read by movement manner alone — without a colour hint. The real `/play → /play/upgrade → /play/arena` flow is untouched (opponent still gets a random core).
+
+**Files:**
+- `src/data/behaviorPresets.js` — **NEW** dev-only data. `SIG_PRESETS` (5 presets, explicit 8-axis values bypassing cores+facets), `SIG_ORDER`, `presetBehavior(id)` → `{ axes, effects:[], conditionals:[] }` (drops straight into `buildFighter`'s `behavior` slot). Presets: **ONSLAUGHT-SIG** (pressure), **RAIDER-SIG** (tempo/hit-and-run), **BULWARK-SIG** (survivability), **AMBUSH-SIG** (counter), **NEUTRAL** (all axes 50). Numbers picked off the axis semantics in `behavior.js`.
+- `src/scene/buildFighter.js` — added `neutralColor` build option + `setNeutralColor(b)` setter (returned). Greys both fighters to one team-less `SKIN_NEUTRAL` and hides the core gem + halo (the fighter's only glow). `skinBase` now re-captured at `eliminate()` so the dissolve fades from the live (grey) skin. **Rift + arena untouched** — fighters only.
+- `src/scene/ArenaScene.vue` — dev panel extended with `L:<tag>` / `R:<tag>` (cycle the 5 presets for player/opponent slots), `SIG FIGHT` (autonomous bout via the existing FIGHT pipeline using the chosen presets), `GRAY: ON/OFF` (NEUTRAL COLOUR toggle, live + re-applied per respawn). `sigCycle` owns an **auto-cycle**: on each KO the bout re-runs at full HP (`SIG_RESTART_DELAY` ≈ dissolve) so successive bouts watch back-to-back without reload. `behaviorFor(side)` returns the preset behaviour only while `sigCycle` is on; otherwise the core-derived profile (page load + normal FIGHT stay the genuine preview, random opponent core intact). A normal FIGHT / AI / DEMO calls `cancelSig()`.
+
+**Protected (not touched):** `buildArena.js`, `arenaTextures.js`, `arenaPresence.js`. `prefers-reduced-motion` respected via the existing `buildFighter` static-resolve path (SIG bout reuses it, like FIGHT).
