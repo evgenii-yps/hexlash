@@ -17,24 +17,14 @@
     <!-- Player combat-call HUD — shown during a bout. Tap a call → arm → tap the
          (highlighted) player fighter → apply. UI + feedback only this pass. -->
     <KlichBar v-if="combatActive" :levers="levers" :pool="klichPool" :armed-id="armedId" @arm="armLever" />
-    <!-- Temporary dev triggers (preview only) — mirror the keys Z / X / C. -->
-    <div class="arena-actions">
-      <button type="button" class="tgt" @click="toggleTarget">TGT: {{ target === 'player' ? 'P1' : 'P2' }}</button>
-      <button type="button" @click="onApproach">APPROACH</button>
-      <button type="button" @click="onPunch">PUNCH</button>
-      <button type="button" @click="onCombo">COMBO</button>
-      <button type="button" @click="onDouble">DOUBLE</button>
-      <button type="button" @click="onDodge">DODGE</button>
-      <button type="button" @click="onSlow">SLOW</button>
-      <button type="button" @click="onFast">FAST</button>
-      <button type="button" @click="onHurt">HURT</button>
-      <button type="button" @click="onOut">OUT</button>
-      <button type="button" class="tgt" @click="onDemo">DEMO</button>
-      <button type="button" class="tgt" @click="onAITarget">AI</button>
-      <button type="button" class="tgt" @click="onAIBoth">AI×2</button>
+    <!-- Always-on dev-panel show/hide toggle (small corner). The panel auto-hides
+         when a bout starts (clean player view) + returns when it ends; in the SIG
+         auto-cycle the bout never ends, so this is the only way back. -->
+    <button type="button" class="arena-panel-toggle" :class="{ on: panelVisible }" @click="panelVisible = !panelVisible" :aria-pressed="panelVisible" title="Toggle dev panel">DEV</button>
+    <!-- Dev readability stand (preview only): FIGHT + the L/R signature A/B stand
+         + GRAY. Hidden during a bout; brought back via the DEV corner toggle. -->
+    <div v-if="panelVisible" class="arena-actions">
       <button type="button" class="tgt" @click="onFight">FIGHT</button>
-      <!-- Behaviour A/B dev stand: pick LEFT / RIGHT signature, run an
-           auto-cycling autonomous bout, toggle a colour-blind grey read. -->
       <button type="button" class="tgt" @click="cycleSig('left')">L:{{ sigTag(sigLeft) }}</button>
       <button type="button" class="tgt" @click="cycleSig('right')">R:{{ sigTag(sigRight) }}</button>
       <button type="button" class="tgt" @click="onSigFight">SIG FIGHT</button>
@@ -59,7 +49,9 @@ import KlichBar from './KlichBar.vue';
 const wrap = ref(null);
 const canvasEl = ref(null);
 const variant = ref('A');
-const target = ref('player'); // which fighter the dev triggers act on
+// Dev-panel visibility — true at rest, auto-hidden during a bout, flipped by the
+// always-on DEV corner toggle (the only way back during the SIG auto-cycle).
+const panelVisible = ref(true);
 
 // --- Behaviour A/B dev stand (preview only). Pick a signature preset for the
 //     LEFT (player slot) and RIGHT (opponent slot) fighter, run an autonomous
@@ -95,14 +87,8 @@ let onVisibility, onKeydown, onControlsStart, onControlsEnd, onPointerDown, onPo
 // bootstrap splash (#hx-load) can fade out on real arena readiness.
 let firstFrameEmitted = false;
 
-// Dev demo (key G) — a readable open-arena exchange: both fighters go autonomous
-// (approach, trade blows wherever they meet, reposition), then settle back to
-// idle after a few seconds. Not a real bout (no win-freeze) — just a preview of
-// the open model. Runs on a small timed window via the loop.
-let demo = null; // { start, events:[{t, fn, done}] } while running
-let demoPending = false;
 // Autonomous-behaviour intent per side (kept across respawns so a KO doesn't
-// stop the loop). Toggled via key A (current target) / the AI buttons.
+// stop the loop). Set by the FIGHT / SIG FIGHT bouts.
 let aiPlayer = false;
 let aiOpponent = false;
 // Full self-running fight (key F / FIGHT button). runFight is assigned in
@@ -133,48 +119,6 @@ function lowPowerDevice() {
   return cores <= 4 || mem <= 4;
 }
 
-// Dev action triggers (preview) — act on the selected fighter; toggle with P /
-// the TGT button. Each fighter ignores triggers under reduced-motion.
-const curFighter = () => (target.value === 'opponent' ? opponent : fighter);
-function toggleTarget() { target.value = target.value === 'player' ? 'opponent' : 'player'; }
-function onApproach() { curFighter()?.approach(); }
-function onPunch() { curFighter()?.punch(); }
-function onCombo() { curFighter()?.combo(); }
-function onDouble() { curFighter()?.double(); }
-function onDodge() { curFighter()?.dodge(); }
-function onSlow() { curFighter()?.slow(); }
-function onFast() { curFighter()?.fast(); }
-function onHurt() { curFighter()?.hurt(); }
-function onOut() { curFighter()?.eliminate(); }
-
-// Open-arena exchange: turn both fighters autonomous so they close in and trade
-// wherever they meet (the autonomous nav + radius-strike resolves the clash —
-// the attacker's onImpact damages whoever is in reach; the defender recoils +
-// flashes its core). Settle back to idle after a short window.
-const DEMO_DUR = 8; // seconds of autonomous sparring, then idle
-function setBothAI(on) {
-  aiPlayer = on;
-  aiOpponent = on;
-  fighter?.setAI(on);
-  opponent?.setAI(on);
-}
-function buildDemoEvents() {
-  return [
-    { t: 0, fn: () => setBothAI(true) }, // approach + trade
-    { t: DEMO_DUR, fn: () => setBothAI(false) }, // settle to idle
-  ];
-}
-function onDemo() { cancelSig(); if (!demo) demoPending = true; }
-// Toggle autonomous behaviour: A / AI button = current target; AI×2 = both.
-function onAITarget() {
-  cancelSig();
-  if (target.value === 'opponent') { aiOpponent = !aiOpponent; opponent?.setAI(aiOpponent); }
-  else { aiPlayer = !aiPlayer; fighter?.setAI(aiPlayer); }
-}
-function onAIBoth() {
-  cancelSig();
-  setBothAI(!(aiPlayer && aiOpponent));
-}
 function onFight() { runFight?.(); }
 
 // --- SIG dev-stand controls (preview only). Cancel the auto-cycle (a normal
@@ -358,6 +302,7 @@ onMounted(() => {
     fighter?.setAI(false); // winner stops attacking → settles to idle
     opponent?.setAI(false);
     combatActive.value = false; // hide the klich HUD when the bout ends
+    panelVisible.value = true; // bout over → bring the dev panel back
     cancelArm();
   };
   const spawnFighter = () => {
@@ -422,6 +367,7 @@ onMounted(() => {
     spawnOpponent();
     resetKlich(); // fresh charges for the new bout
     combatActive.value = true; // show the klich HUD
+    panelVisible.value = false; // bout started → hide the dev panel (clean view)
   };
 
   // SIG dev bout (SIG FIGHT button): same clean re-run as FIGHT but the two
@@ -430,7 +376,6 @@ onMounted(() => {
   // back-to-back. fightActive stays off — sigCycle owns the end-handling
   // (auto-cycle), not the win-and-freeze path.
   runSigFight = () => {
-    demo = null; demoPending = false; // a SIG bout takes over from the demo
     if (fighter) { scene.remove(fighter.group); fighter.dispose(); fighter = null; }
     if (opponent) { scene.remove(opponent.group); opponent.dispose(); opponent = null; }
     sigCycle = true;
@@ -442,6 +387,7 @@ onMounted(() => {
     spawnOpponent();
     resetKlich(); // fresh charges for the new bout
     combatActive.value = true; // show the klich HUD
+    panelVisible.value = false; // bout started → hide the dev panel (clean view)
   };
 
   // --- Orbit controls — drag to rotate, wheel / pinch zoom; centred, no pan.
@@ -520,18 +466,6 @@ onMounted(() => {
     fighter?.update(t); // may be null after a fight ends, until next FIGHT
     opponent?.update(t);
 
-    // Dev demo exchange — fire scheduled events on loop time (paused with the
-    // loop when hidden; skipped under reduced-motion).
-    if (demoPending) {
-      demoPending = false;
-      if (!reducedMotion) demo = { start: t, events: buildDemoEvents() };
-    }
-    if (demo) {
-      const dt = t - demo.start;
-      for (const e of demo.events) { if (!e.done && dt >= e.t) { e.done = true; e.fn(); } }
-      if (demo.events.every((e) => e.done)) demo = null;
-    }
-
     // SIG A/B auto-cycle — a KO scheduled a restart; fire it (full HP, fresh
     // presets) so consecutive bouts run back-to-back without a reload.
     if (sigCycle && sigRestartAt && t >= sigRestartAt) {
@@ -558,25 +492,13 @@ onMounted(() => {
   };
   document.addEventListener('visibilitychange', onVisibility);
 
-  // --- Dev triggers on preview: 1/2/3 = presence moods, Z/X/C = fighter actions.
+  // --- Dev keys on preview: 1/2/3 = presence moods, F = FIGHT.
   onKeydown = (e) => {
     const map = { 1: 'A', 2: 'B', 3: 'C' };
     if (map[e.key]) {
       variant.value = map[e.key];
       presence.setVariant(variant.value);
-    } else if (e.key === 'p') toggleTarget();
-    else if (e.key === 'z') curFighter()?.approach();
-    else if (e.key === 'x') curFighter()?.punch();
-    else if (e.key === 'c') curFighter()?.combo();
-    else if (e.key === 'v') curFighter()?.double();
-    else if (e.key === 'd') curFighter()?.dodge();
-    else if (e.key === 'b') curFighter()?.slow();
-    else if (e.key === 'n') curFighter()?.fast();
-    else if (e.key === 'h') curFighter()?.hurt();
-    else if (e.key === 'k') curFighter()?.eliminate();
-    else if (e.key === 'g') onDemo();
-    else if (e.key === 'a') onAITarget();
-    else if (e.key === 'f') onFight();
+    } else if (e.key === 'f') onFight();
   };
   window.addEventListener('keydown', onKeydown);
 
@@ -689,5 +611,34 @@ onBeforeUnmount(() => {
   color: #fff;
   background: var(--hex-primary, #ff0069);
   border-color: var(--hex-primary, #ff0069);
+}
+/* Always-on dev-panel show/hide toggle — small, unobtrusive, top-right corner.
+   Stays visible during a bout (incl. the SIG auto-cycle) so the panel is always
+   recoverable. */
+.arena-panel-toggle {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  pointer-events: auto;
+  font-family: var(--font-mono, monospace);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.4);
+  background: rgba(8, 10, 18, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  padding: 4px 7px;
+  cursor: pointer;
+  opacity: 0.6;
+}
+.arena-panel-toggle:hover {
+  opacity: 1;
+  color: #fff;
+  border-color: var(--hex-primary, #ff0069);
+}
+.arena-panel-toggle.on {
+  color: var(--hex-primary, #ff0069);
+  border-color: var(--hex-primary, #ff0069);
+  opacity: 0.9;
 }
 </style>

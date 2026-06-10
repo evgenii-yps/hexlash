@@ -6525,3 +6525,20 @@ Fills the `applyKlich` seam: a call now lays a temporary behaviour-axis delta on
 - **Reduced motion**: the axis shift applies (fight logic); pulses/markers are static fallbacks; ВПЕРЁД/ОТХОД show via locomotion (suppressed under reduced like all movement), ДЕРЖАТЬ's resilience reads in `takeDamage` either way.
 
 Protected arena files untouched. Build green. Empty seam is now the real effect; `applyKlich(fighter, klichId)` in ArenaScene stays the generic entry point for future buffs.
+
+### Arena dev-panel cleanup + hide-during-bout toggle + MOOD diagnosis
+
+Trimmed the preview dev panel (`ArenaScene.vue`, `.arena-actions`) to the working minimum and made it auto-hide during a bout.
+
+- **Removed controls + handlers** (superseded by FIGHT/SIG — verified the bouts drive behaviour directly, not these triggers): TGT, APPROACH, PUNCH, COMBO, DOUBLE, DODGE, SLOW, FAST, HURT, OUT, DEMO, AI, AI×2. Deleted: `target` ref, `curFighter`, `toggleTarget`, `onApproach…onOut`, the whole demo machinery (`demo`/`demoPending`/`DEMO_DUR`/`setBothAI`/`buildDemoEvents`/`onDemo`/`onAITarget`/`onAIBoth` + the loop demo block), and the dead keydown branches (p/z/x/c/v/d/b/n/h/k/g/a). Kept keys: 1/2/3 (MOOD) + F (FIGHT).
+- **Kept (readability stand):** FIGHT, L:/R: (signature presets), SIG FIGHT, GRAY.
+- **Auto-hide during a bout:** `panelVisible` ref — `runFight`/`runSigFight` set it false (clean player view), `endFight` sets it true (panel returns). SIG auto-cycle never ends, so the panel stays hidden until the toggle.
+- **Always-on DEV corner toggle** (`.arena-panel-toggle`, top-right, small): flips `panelVisible` anytime, incl. mid-bout / SIG-cycle — the only way back without reload. KlichBar (not dev) is untouched.
+- Protected arena files untouched; build green; reduced-motion intact (toggle is pure DOM).
+
+**MOOD switcher diagnosis (1/2/3 → A/B/C) — NOT fixed/removed this pass, diagnosis only.** The switch **is** wired and reaches the scene: keydown updates the `variant` ref (the bottom-left "MOOD X" label) **and** calls `presence.setVariant()`, which feeds `update()` (`breath[variant]`) + `applyVisibility()` in `arenaPresence.js`. Nothing is unconnected. It reads as "does nothing" because the A/B/C deltas sit below the perceptual floor:
+  1. **B vs C nearly identical** — `applyVisibility` gates dust + hex-pulse bands on `variant !== 'A'`, so B **and** C show the *same* ambient; they differ only in rift-breathing numbers (B `c0.89/a0.11` vs C `c0.83/a0.17` — a ~0.06 opacity-factor change). Imperceptible.
+  2. **A vs B/C faint by design** — B/C add only 70 grey dust specks (opacity 0.5, size 0.05) + two monochrome pulse bands (opacity 0.04–0.11), deliberately faint per the "one glow = the rift" discipline.
+  3. **Idle drift (B only)** triggers only after 2.5 s of no interaction and is tiny (±0.045 rad) — an actively-orbiting tester never sees it.
+  4. **Reduced-motion nulls it entirely** — `applyVisibility` forces ambient off + `update()` returns a static rift (`f=1`) for all variants → A/B/C byte-identical.
+  Tell: if the bottom-left "MOOD X" label changes on 1/2/3, the keys work and it's the subtlety above; if the label doesn't change, keydown isn't reaching `window` (e.g. an unfocused preview iframe). Fix is a future call (make B/C visually distinct, or drop to 2 moods) — left in place per ТЗ.
