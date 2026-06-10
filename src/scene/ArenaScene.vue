@@ -1,8 +1,9 @@
 <!-- ArenaScene — Three.js arena, the foundation for future combat. Two slabs
      with torn jagged inner edges split by a wide gap, the rift glowing as the
      single light (torn-rift pass 3/3), floating in dark void; orbit-drag + zoom,
-     default 3/4 top view. Sharp render (full DPR, mipmapped hex) with switchable
-     presence "moods" (?mood=A|B|C or keys 1/2/3) the owner picks on preview.
+     default 3/4 top view. Sharp render (full DPR, mipmapped hex). Single
+     presence state — restrained whole-rift breathing ("clean platform"); manual
+     orbit only.
      One idle fighter-construct stands on the near (player) half; no combat, no
      HUD, no controls (separate stages).
 
@@ -13,7 +14,6 @@
   <div ref="wrap" class="arena-wrap">
     <canvas ref="canvasEl" class="arena-canvas" />
     <div class="arena-vignette" />
-    <div class="arena-hint">MOOD {{ variant }} · 1 / 2 / 3</div>
     <!-- Player combat-call HUD — shown during a bout. Tap a call → arm → tap the
          (highlighted) player fighter → apply. UI + feedback only this pass. -->
     <KlichBar v-if="combatActive" :levers="levers" :pool="klichPool" :armed-id="armedId" @arm="armLever" />
@@ -48,7 +48,6 @@ import KlichBar from './KlichBar.vue';
 
 const wrap = ref(null);
 const canvasEl = ref(null);
-const variant = ref('A');
 // Dev-panel visibility — true at rest, auto-hidden during a bout, flipped by the
 // always-on DEV corner toggle (the only way back during the SIG auto-cycle).
 const panelVisible = ref(true);
@@ -82,7 +81,7 @@ const armedId = ref(null); // currently-armed lever id (targeting), or null at r
 const combatActive = ref(false); // HUD shown during a bout
 
 let renderer, scene, camera, controls, arena, fighter, opponent, presence, resizeObserver, clock;
-let onVisibility, onKeydown, onControlsStart, onControlsEnd, onPointerDown, onPointerUp;
+let onVisibility, onKeydown, onPointerDown, onPointerUp;
 // Pre-load readiness: emit once after the first frame is rendered so the
 // bootstrap splash (#hx-load) can fade out on real arena readiness.
 let firstFrameEmitted = false;
@@ -104,14 +103,6 @@ let sigRestartAt = 0;
 let lastFrameT = 0;
 let runSigFight = null;
 const SIG_RESTART_DELAY = 1.4; // seconds after a KO before the next bout (~ the dissolve)
-
-// idle-drift bookkeeping (variant B)
-let userActive = false;
-let lastEnd = 0;
-let wasIdle = false;
-let baseAz = 0;
-let basePolar = 0;
-let driftStart = 0;
 
 function lowPowerDevice() {
   const cores = navigator.hardwareConcurrency || 8;
@@ -180,11 +171,6 @@ function applyKlich(targetFighter, klichId) {
 
 // Damage per clean hit (tunable, slight variance per blow) → ~5-6 hits to OUT.
 const rollDamage = () => 18 + Math.round(Math.random() * 6 - 3);
-
-function normalizeVariant(v) {
-  const u = String(v || '').toUpperCase();
-  return ['A', 'B', 'C'].includes(u) ? u : 'A';
-}
 
 onMounted(() => {
   const el = wrap.value;
@@ -277,8 +263,6 @@ onMounted(() => {
   scene.add(arena.group);
   presence = createArenaPresence(scene, arena.refs);
   presence.setReducedMotion(reducedMotion);
-  variant.value = normalizeVariant(new URLSearchParams(window.location.search).get('mood'));
-  presence.setVariant(variant.value);
 
   // --- Fighters: spawned on opposite sides, then free to roam the whole plate —
   //     they navigate toward each other, manoeuvre at range and turn to face the
@@ -402,11 +386,6 @@ onMounted(() => {
   controls.maxPolarAngle = 1.45; // ~83°, never dip under the slab
   controls.update();
 
-  onControlsStart = () => { userActive = true; wasIdle = false; };
-  onControlsEnd = () => { userActive = false; lastEnd = performance.now(); };
-  controls.addEventListener('start', onControlsStart);
-  controls.addEventListener('end', onControlsEnd);
-
   // --- Klich targeting pick. Only while a lever is armed: a TAP (not a drag) on
   //     the player fighter applies the armed call; a tap that misses cancels the
   //     arming (no charge spent). Tap = pointerdown→up with little movement, so
@@ -443,24 +422,6 @@ onMounted(() => {
     const t = clock.getElapsedTime();
     lastFrameT = t; // live loop time — used to schedule the SIG auto-cycle restart
 
-    // Idle camera drift — only variant B, only when the user isn't touching.
-    if (variant.value === 'B' && !reducedMotion) {
-      const idle = !userActive && performance.now() - lastEnd > 2500;
-      if (idle && !wasIdle) {
-        baseAz = controls.getAzimuthalAngle();
-        basePolar = controls.getPolarAngle();
-        driftStart = t;
-      }
-      if (idle) {
-        const d = t - driftStart;
-        controls.setAzimuthalAngle(baseAz + Math.sin(d * 0.16) * 0.045);
-        controls.setPolarAngle(
-          THREE.MathUtils.clamp(basePolar + Math.sin(d * 0.11) * 0.022, 0.25, 1.45),
-        );
-      }
-      wasIdle = idle;
-    }
-
     controls.update();
     presence.update(t);
     fighter?.update(t); // may be null after a fight ends, until next FIGHT
@@ -492,13 +453,9 @@ onMounted(() => {
   };
   document.addEventListener('visibilitychange', onVisibility);
 
-  // --- Dev keys on preview: 1/2/3 = presence moods, F = FIGHT.
+  // --- Dev key on preview: F = FIGHT.
   onKeydown = (e) => {
-    const map = { 1: 'A', 2: 'B', 3: 'C' };
-    if (map[e.key]) {
-      variant.value = map[e.key];
-      presence.setVariant(variant.value);
-    } else if (e.key === 'f') onFight();
+    if (e.key === 'f') onFight();
   };
   window.addEventListener('keydown', onKeydown);
 
@@ -521,10 +478,6 @@ onBeforeUnmount(() => {
   if (canvasEl.value) {
     if (onPointerDown) canvasEl.value.removeEventListener('pointerdown', onPointerDown);
     if (onPointerUp) canvasEl.value.removeEventListener('pointerup', onPointerUp);
-  }
-  if (controls) {
-    if (onControlsStart) controls.removeEventListener('start', onControlsStart);
-    if (onControlsEnd) controls.removeEventListener('end', onControlsEnd);
   }
   if (renderer) renderer.setAnimationLoop(null);
   if (controls) controls.dispose();
@@ -563,17 +516,6 @@ onBeforeUnmount(() => {
     transparent 55%,
     rgba(3, 3, 8, 0.55) 100%
   );
-}
-.arena-hint {
-  position: absolute;
-  left: 14px;
-  bottom: 12px;
-  pointer-events: none;
-  font-family: var(--font-mono, monospace);
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  color: rgba(255, 255, 255, 0.32);
-  user-select: none;
 }
 /* Temporary dev action triggers (preview only). */
 .arena-actions {

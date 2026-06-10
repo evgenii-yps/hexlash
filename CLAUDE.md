@@ -6542,3 +6542,11 @@ Trimmed the preview dev panel (`ArenaScene.vue`, `.arena-actions`) to the workin
   3. **Idle drift (B only)** triggers only after 2.5 s of no interaction and is tiny (±0.045 rad) — an actively-orbiting tester never sees it.
   4. **Reduced-motion nulls it entirely** — `applyVisibility` forces ambient off + `update()` returns a static rift (`f=1`) for all variants → A/B/C byte-identical.
   Tell: if the bottom-left "MOOD X" label changes on 1/2/3, the keys work and it's the subtlety above; if the label doesn't change, keydown isn't reaching `window` (e.g. an unfocused preview iframe). Fix is a future call (make B/C visually distinct, or drop to 2 moods) — left in place per ТЗ.
+
+### MOOD mechanic removed — arena is a single state
+
+Follow-up to the diagnosis above (owner decision: drop MOOD entirely, don't fix). The A/B/C switcher and the B/C modes are gone; the arena keeps one state = the former **A** ("clean platform": restrained whole-rift breathing, manual orbit, no ambient dust / pulse bands / idle drift).
+
+- **`ArenaScene.vue`:** removed the `MOOD X · 1/2/3` label, the `variant` ref, `normalizeVariant` + the `?mood=` URL parse, the `presence.setVariant` calls, the 1/2/3 keydown branches (keydown is now just **F** = FIGHT), the variant-B idle camera-drift block + its bookkeeping vars (`userActive`/`lastEnd`/`wasIdle`/`baseAz`/`basePolar`/`driftStart`) and the `controls` start/end listeners that fed it, plus the `.arena-hint` CSS.
+- **`arenaPresence.js`:** reduced to the single state — deleted dust (`THREE.Points`), the two hex-cell pulse bands (`makePulseBand`/`pulseNear`/`pulseFar`), the `variant` var, `setVariant`, and the B/C `breath` entries. `breath` is now the single A value `{ c: 0.91, a: 0.09, w: 2π/5 }`. `applyVisibility` only gates sparks on reduced-motion; `dispose` is a no-op (sparks/rift owned by buildArena). API is now `{ setReducedMotion, triggerFlash, update, dispose }` (no `setVariant`). The `makeRadialTexture` import (dust-only) was dropped.
+- **Preserved:** rift breathing (former A) + `prefers-reduced-motion` static rift. **`buildArena.js`/`arenaTextures.js` untouched.** The dev-panel cleanup + DEV corner toggle from the prior commit are unchanged.
