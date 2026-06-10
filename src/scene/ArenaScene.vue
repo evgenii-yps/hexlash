@@ -16,7 +16,7 @@
     <div class="arena-vignette" />
     <!-- Player combat-call HUD — shown during a bout. Tap a call → arm → tap the
          (highlighted) player fighter → apply. UI + feedback only this pass. -->
-    <KlichBar v-if="combatActive" :levers="levers" :pool="klichPool" :armed-id="armedId" @arm="armLever" />
+    <KlichBar v-if="combatActive" :levers="levers" :uses="klichUses" :cooldown="cooldownActive" :armed-id="armedId" @arm="armLever" />
     <!-- Always-on dev-panel show/hide toggle (small corner). The panel auto-hides
          when a bout starts (clean player view) + returns when it ends; in the SIG
          auto-cycle the bout never ends, so this is the only way back. -->
@@ -63,24 +63,28 @@ const sigLeft = ref('onslaught');
 const sigRight = ref('raider');
 const neutralColor = ref(false);
 
-// --- Klich (combat call) — the player's combat lever. UI + FEEDBACK ONLY this
-//     pass: NO behaviour effect (the axis-shift hooks the applyKlich seam in a
-//     separate ТЗ). Three calls; each has a per-bout charge counter (NOT a
-//     cooldown) that resets on a new fight. Charges are reactive so the HUD badge
-//     updates live. armedId / the arm→target→apply flow below is deliberately
-//     GENERIC (a lever id + a fighter), so future buffs reuse it without a klich
-//     hardcode. combatActive gates HUD visibility (shown during a FIGHT / SIG bout).
-const KLICH_POOL = 3; // SHARED charge pool per bout — any call spends 1
+// --- Klich (combat call) — the player's combat lever, on the shared ability
+//     model (reused by future buffs): each card has its OWN per-match uses
+//     counter (NOT a shared pool, NOT a per-card timer) shown in its corner
+//     badge; a card at 0 is spent (dimmed, dead until the match resets). Over the
+//     top sits one GLOBAL anti-spam cooldown — after ANY ability application all
+//     cards are paused (inactive, but not spent) for KLICH_COOLDOWN_MS, then
+//     re-enable if they still have uses. The arm → pick-fighter → apply flow is
+//     generic (lever id + fighter). combatActive gates HUD visibility.
+const KLICH_USES = 2; // applications PER CARD per match (tunable)
+const KLICH_COOLDOWN_MS = 6000; // global anti-spam after ANY ability use (tunable, one place)
 const levers = ref([
   { id: 'forward', label: 'ВПЕРЁД' },
   { id: 'retreat', label: 'ОТХОД' },
   { id: 'hold', label: 'ДЕРЖАТЬ' },
 ]);
-const klichPool = ref(KLICH_POOL); // remaining shared charges (reactive → HUD badge)
+const klichUses = ref({ forward: KLICH_USES, retreat: KLICH_USES, hold: KLICH_USES }); // per-card remaining (reactive → badges)
+const cooldownActive = ref(false); // global anti-spam pause active (any ability)
 const armedId = ref(null); // currently-armed lever id (targeting), or null at rest
 const combatActive = ref(false); // HUD shown during a bout
 
 let renderer, scene, camera, controls, arena, fighter, opponent, presence, resizeObserver, clock;
+let cooldownTimer = null; // global anti-spam timer handle
 let onVisibility, onKeydown, onPointerDown, onPointerUp;
 // Pre-load readiness: emit once after the first frame is rendered so the
 // bootstrap splash (#hx-load) can fade out on real arena readiness.
@@ -141,8 +145,9 @@ function onNeutralColor() {
 function ownFighters() { return fighter ? [fighter] : []; } // player side only
 function setOwnHighlight(on) { for (const f of ownFighters()) f.setHighlight(on); }
 function armLever(id) {
-  if (klichPool.value <= 0) return; // shared pool empty → all calls inert
-  if (!levers.value.some((l) => l.id === id)) return;
+  if (cooldownActive.value) return; // global anti-spam pause → nothing arms
+  const left = klichUses.value[id];
+  if (left == null || left <= 0) return; // unknown / spent card → inert
   if (armedId.value === id) { cancelArm(); return; } // re-tap the armed lever → cancel
   armedId.value = id;
   setOwnHighlight(true); // own fighters glow as selectable
@@ -153,13 +158,33 @@ function cancelArm() {
 }
 function applyToFighter(targetFighter) {
   const id = armedId.value;
-  if (!id || !targetFighter || klichPool.value <= 0) { cancelArm(); return; }
-  klichPool.value -= 1; // spend 1 from the SHARED pool (HUD badge updates reactively)
+  if (!id || !targetFighter || cooldownActive.value) { cancelArm(); return; }
+  if (klichUses.value[id] == null || klichUses.value[id] <= 0) { cancelArm(); return; }
+  klichUses.value[id] -= 1; // spend THIS card's own per-match counter (badge updates reactively)
   targetFighter.confirmPulse(); // visual confirm — bright flash on the fighter
   applyKlich(targetFighter, id); // the call's real effect (temporary axis bump)
+  startCooldown(); // global anti-spam after ANY application
   cancelArm(); // panel returns to rest
 }
-function resetKlich() { klichPool.value = KLICH_POOL; cancelArm(); }
+// --- Global anti-spam cooldown — a SHARED resource (reusable by future buffs,
+//     not klich-specific): after any ability application, lock all cards for
+//     KLICH_COOLDOWN_MS, then they re-enable (if they still have uses). Timer-
+//     driven logic, not animation — applies under reduced-motion too.
+function startCooldown() {
+  cooldownActive.value = true;
+  if (cooldownTimer) clearTimeout(cooldownTimer);
+  cooldownTimer = setTimeout(() => { cooldownActive.value = false; cooldownTimer = null; }, KLICH_COOLDOWN_MS);
+}
+function clearCooldown() {
+  if (cooldownTimer) { clearTimeout(cooldownTimer); cooldownTimer = null; }
+  cooldownActive.value = false;
+}
+// New bout → fresh per-card uses + cleared cooldown + un-armed.
+function resetKlich() {
+  klichUses.value = { forward: KLICH_USES, retreat: KLICH_USES, hold: KLICH_USES };
+  clearCooldown();
+  cancelArm();
+}
 
 // The player's call applied to one fighter — a TEMPORARY behaviour-axis bump
 // (KLICH_PROFILES; smoothly applied + reverted in buildFighter, base untouched).
@@ -472,6 +497,7 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+  if (cooldownTimer) { clearTimeout(cooldownTimer); cooldownTimer = null; }
   if (resizeObserver) resizeObserver.disconnect();
   if (onVisibility) document.removeEventListener('visibilitychange', onVisibility);
   if (onKeydown) window.removeEventListener('keydown', onKeydown);

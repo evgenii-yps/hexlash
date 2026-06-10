@@ -1,10 +1,12 @@
 <!-- KlichBar — the player's combat-call HUD: a horizontal row of lever cards at
      bottom-centre, shown during a bout. Each card = a placeholder icon + a label
-     + a corner badge showing the SHARED charge pool (all three calls draw from
-     one per-bout pool of 3 — the same number sits on each card and they dim
-     together at 0). PURELY presentational — renders the levers passed in + the
-     pool and emits `arm(id)` on tap; the arm → pick-fighter → apply loop + pool
-     bookkeeping live in ArenaScene (generic, reusable by future buffs).
+     + a corner badge showing THIS card's own remaining per-match uses. Three
+     visual states: available (bright), paused (dimmed, temporary — the global
+     anti-spam cooldown after any use), spent (darkened, dead till the match
+     resets). PURELY presentational — renders the levers + per-card uses + the
+     cooldown flag and emits `arm(id)` on tap; the uses/cooldown bookkeeping +
+     the arm → pick-fighter → apply loop live in ArenaScene (generic, reused by
+     future buffs).
 
      Style — Neon Discipline: dark flat controls, one pink accent (--hex-primary)
      on the armed card only; the three calls read by ICON + LABEL, not colour
@@ -17,12 +19,16 @@
       :key="lever.id"
       type="button"
       class="klich-card"
-      :class="{ armed: armedId === lever.id, spent: pool <= 0 }"
-      :disabled="pool <= 0"
+      :class="{
+        armed: armedId === lever.id,
+        spent: uses[lever.id] <= 0,
+        paused: cooldown && uses[lever.id] > 0,
+      }"
+      :disabled="uses[lever.id] <= 0 || cooldown"
       :aria-pressed="armedId === lever.id"
       @click="$emit('arm', lever.id)"
     >
-      <span class="klich-badge">{{ pool }}</span>
+      <span class="klich-badge">{{ uses[lever.id] }}</span>
       <span class="klich-icon" aria-hidden="true">
         <!-- forward / ВПЕРЁД — double chevron in -->
         <svg v-if="lever.id === 'forward'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -47,7 +53,8 @@
 <script setup>
 defineProps({
   levers: { type: Array, required: true }, // [{ id, label }]
-  pool: { type: Number, default: 0 }, // remaining SHARED charges (shown on each card)
+  uses: { type: Object, required: true }, // { id: remaining per-match applications }
+  cooldown: { type: Boolean, default: false }, // global anti-spam pause active
   armedId: { type: String, default: null }, // currently-armed lever id, or null
 });
 defineEmits(['arm']);
@@ -97,9 +104,18 @@ defineEmits(['arm']);
   box-shadow: 0 0 0 1px var(--hex-primary, #ff0069), 0 0 16px rgba(255, 0, 105, 0.45);
   animation: klich-pulse 1.1s ease-in-out infinite;
 }
-/* Spent — dimmed + inert (the button is also disabled). */
+/* Paused — TEMPORARY global anti-spam cooldown: moderately dimmed + a cool
+   neutral border, inert for now, returns when the cooldown ends. Brighter than
+   spent so the two read differently. */
+.klich-card.paused {
+  opacity: 0.55;
+  border-color: rgba(160, 180, 210, 0.22);
+  pointer-events: none;
+}
+/* Spent — card's per-match uses hit 0: darkened + dead until the match resets
+   (the most-dimmed state). */
 .klich-card.spent {
-  opacity: 0.32;
+  opacity: 0.28;
   pointer-events: none;
 }
 .klich-card:disabled {
@@ -118,7 +134,7 @@ defineEmits(['arm']);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
-/* Charge badge — neutral pill in the corner (the per-bout counter). */
+/* Uses badge — neutral pill in the corner (this card's remaining per-match uses). */
 .klich-badge {
   position: absolute;
   top: -7px;
