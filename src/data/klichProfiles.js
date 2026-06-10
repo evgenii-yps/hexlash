@@ -19,6 +19,9 @@ export const KLICH_PROFILES = {
   forward: { axes: { initiative: 35, distance: -30 }, dur: 2.5, attack: 0.1, release: 0.8 },
   // ОТХОД — break distance: open the gap. Short sharp burst.
   retreat: { axes: { distance: 40 }, dur: 2.5, attack: 0.1, release: 0.8 },
-  // ДЕРЖАТЬ — dig in, ride out a series: tougher + sticks on. Longer, softer.
-  hold: { axes: { resilience: 35, stick: 25 }, dur: 6.0, attack: 0.25, release: 0.4 },
+  // ДЕРЖАТЬ — dig in, ride out a series: tougher + sticks on, AND visibly hunkers
+  // into a guard — grows in close (distance−) and stops pushing (initiative−) so
+  // the call reads as a defensive POSE even when no hits are landing, not only
+  // through damage. Longer, softer envelope.
+  hold: { axes: { resilience: 35, stick: 25, distance: -20, initiative: -15 }, dur: 6.0, attack: 0.25, release: 0.4 },
 };
