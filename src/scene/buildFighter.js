@@ -339,9 +339,11 @@ export function buildFighter(
   //     mapping here. A small bounded jitter rides on top so two same-core
   //     fighters never move as a mirror or in lock-step. Axis → knob:
   //       distance   → preferred fighting range (RANGE_NEAR..RANGE_FAR)
-  //       initiative → aggression (press-in vs bait-out)
+  //       initiative → aggression → press-vs-bait tactic odds + press-after-strike
   //       tempo      → decision period + post-strike pause + multi-hit bias
-  //       weight     → movement-band speed (×speedMul) + heavy-attack bias
+  //       weight     → MOVEMENT MANNER: band speed (×speedMul, wide) + start/plant
+  //                    inertia (×accelMul) + attack style (heavy = rare heavy/combo,
+  //                    light = frequent singles, via heavy01 + a weight pause term)
   //       stick      → press-after-strike / reluctance to disengage
   //       resilience → incoming damage (×dmgTakenMul) + stagger/hitch (×staggerMul)
   //       counter    → punish-after-being-hit chance
@@ -359,14 +361,22 @@ export function buildFighter(
   const stick01 = n01(ax.stick);
   const counter01 = n01(ax.counter);
   const slip01 = n01(ax.slip);
-  const speedMul = lerp(1.12, 0.85, n01(ax.weight)); // light = quicker off the mark
-  const heavy01 = THREE.MathUtils.clamp(n01(ax.weight) * 0.6 + tempo01 * 0.4, 0, 1);
-  const dmgTakenMul = lerp(1.15, 0.6, n01(ax.resilience)); // glass takes more
+  const weight01 = n01(ax.weight);
+  // weight as MOVEMENT MANNER (not outcome): a wide speed spread so heavy reads
+  // visibly slow + light visibly quick on the grey stand (≈2.3× light-vs-heavy,
+  // was a near-flat ±13%). accelMul makes heavy gather/plant with inertia, light
+  // snap off the mark — so the weight reads in the start/stop, not only top speed.
+  const speedMul = lerp(1.4, 0.6, weight01); // light 1.4 · neutral 1.0 · heavy 0.6
+  const accelMul = lerp(1.25, 0.65, weight01); // light snappy · heavy ponderous
+  const heavy01 = THREE.MathUtils.clamp(weight01 * 0.7 + tempo01 * 0.3, 0, 1); // weight-led attack style
+  const dmgTakenMul = lerp(1.15, 0.6, n01(ax.resilience)); // glass takes more (resilience = outcome axis)
   const staggerMul = lerp(1.0, 0.15, n01(ax.resilience)); // tough barely hitches
   // Scale this fighter's movement bands by weight (local objects — safe to
   // mutate per fighter; a touch of jitter keeps two same-weight builds distinct).
   SLOW.speed *= speedMul * (1 + jit(0.05));
   FAST.speed *= speedMul * (1 + jit(0.05));
+  SLOW.accel *= accelMul; SLOW.decel *= accelMul; // weighty start / plant
+  FAST.accel *= accelMul; FAST.decel *= accelMul;
 
   // Per-fighter "character" — derived from the profile (+ jitter), so the four
   // cores read differently and no two builds are a mirror: preferred range,
@@ -651,13 +661,15 @@ export function buildFighter(
         return;
       }
       const r = Math.random();
-      // Press window grows with initiative + stick; bait window shrinks with
-      // stick (sticky fighters hate to disengage). The remainder circles.
-      const pressW = THREE.MathUtils.clamp(0.4 * character.aggression + 0.25 * stick01, 0, 0.5);
-      const baitW = 0.32 * (1 - stick01);
-      if (r < 0.4) nav.mode = 'circle';
-      else if (r < 0.4 + pressW) nav.mode = 'press'; // aggressive / sticky → press in
-      else if (r < 0.4 + pressW + baitW) nav.mode = 'bait';
+      // INITIATIVE drives press↔bait directly (no fixed circle floor): high
+      // initiative drives in (press most decisions), low initiative hangs back
+      // and draws the foe in (bait), stick nudges toward press. The remainder
+      // circles. This is what makes "lezet v draku vs vyzhidat" read.
+      const aggr = character.aggression;
+      const pressW = THREE.MathUtils.clamp(0.55 * aggr + 0.15 * stick01, 0, 0.85);
+      const baitW = THREE.MathUtils.clamp(0.5 * (1 - aggr) - 0.15 * stick01, 0, 0.6);
+      if (r < pressW) nav.mode = 'press'; // initiative high → drive in
+      else if (r < pressW + baitW) nav.mode = 'bait'; // initiative low → wait / draw in
       else nav.mode = 'circle';
       if (Math.random() < 0.28) character.strafeBias *= -1; // reverse the orbit sometimes
       nav.until = t + character.decideMin + Math.random() * character.decideJit;
@@ -777,18 +789,22 @@ export function buildFighter(
     // far-spacing fighter steps in to land it instead of whiffing from its range.
     const reach = Math.min(character.range + RANGE_HYST, STRIKE);
     if (Math.hypot(dx, dz) > reach) return false;
-    // weight + tempo → attack mix: light / low-tempo favour the single PUNCH;
-    // heavy / high-tempo favour DOUBLE then the committed COMBO lunge.
+    // ATTACK STYLE — weight-led (heavy01): light favours the single PUNCH almost
+    // every time; heavy commits the DOUBLE / COMBO. Wider than before so the
+    // light-flurry vs heavy-slam read is unmistakable on the grey stand.
     const r = Math.random();
-    const punchW = lerp(0.6, 0.25, heavy01); // light → more singles
+    const punchW = lerp(0.82, 0.12, heavy01); // light → mostly singles · heavy → mostly DOUBLE/COMBO
     const atk = r < punchW ? PUNCH : r < punchW + 0.4 ? DOUBLE : COMBO;
     play(atk);
-    // tempo → pause after the clip: fast tempo strings strikes close together.
-    ai.nextAt = t + atk.dur + lerp(0.85, 0.18, tempo01) + Math.random() * lerp(0.9, 0.3, tempo01);
+    // Cadence: tempo sets the base pause; WEIGHT rides on top so heavy lands rare,
+    // heavy blows and light strings frequent, light ones (the "rare heavy vs
+    // frequent light" read) even at equal tempo.
+    const heavyPause = lerp(-0.12, 0.4, weight01); // light shortens · heavy lengthens the gap
+    ai.nextAt = t + atk.dur + Math.max(0.06, lerp(0.85, 0.18, tempo01) + heavyPause) + Math.random() * lerp(0.9, 0.3, tempo01);
     // Follow-up after the strike — profile-driven: aggressive / sticky ones press
     // a flurry, the rest circle or bait out. Window starts as the clip ends.
-    // (Never just hang motionless in the foe's face.)
-    const pressFollow = THREE.MathUtils.clamp(character.aggression * 0.45 + stick01 * 0.45, 0, 0.95);
+    // (Never just hang motionless in the foe's face.) Initiative-led.
+    const pressFollow = THREE.MathUtils.clamp(character.aggression * 0.6 + stick01 * 0.3, 0, 0.95);
     if (Math.random() < pressFollow) {
       nav.mode = 'press';
       nav.until = t + atk.dur + 0.25 + Math.random() * 0.4;
@@ -804,8 +820,9 @@ export function buildFighter(
   const reducedAttack = (t) => {
     if (t < ai.nextAt) return;
     if (onImpact) onImpact();
-    // Cadence tracks tempo so the static fallback still reads fast vs slow cores.
-    ai.nextAt = t + lerp(1.0, 0.4, tempo01) + Math.random() * lerp(0.9, 0.4, tempo01);
+    // Cadence tracks tempo (+ a weight term) so the static fallback still reads
+    // fast-light vs slow-heavy, matching the animated path.
+    ai.nextAt = t + Math.max(0.1, lerp(1.0, 0.4, tempo01) + lerp(-0.15, 0.45, weight01)) + Math.random() * lerp(0.9, 0.4, tempo01);
   };
   const setAI = (b) => {
     ai.on = b;

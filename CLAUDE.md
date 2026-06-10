@@ -6486,3 +6486,18 @@ Diagnostic tooling on the 3D arena (`/play/arena` → `PlayStubView` → `ArenaS
 - `src/scene/ArenaScene.vue` — dev panel extended with `L:<tag>` / `R:<tag>` (cycle the 5 presets for player/opponent slots), `SIG FIGHT` (autonomous bout via the existing FIGHT pipeline using the chosen presets), `GRAY: ON/OFF` (NEUTRAL COLOUR toggle, live + re-applied per respawn). `sigCycle` owns an **auto-cycle**: on each KO the bout re-runs at full HP (`SIG_RESTART_DELAY` ≈ dissolve) so successive bouts watch back-to-back without reload. `behaviorFor(side)` returns the preset behaviour only while `sigCycle` is on; otherwise the core-derived profile (page load + normal FIGHT stay the genuine preview, random opponent core intact). A normal FIGHT / AI / DEMO calls `cancelSig()`.
 
 **Protected (not touched):** `buildArena.js`, `arenaTextures.js`, `arenaPresence.js`. `prefers-reduced-motion` respected via the existing `buildFighter` static-resolve path (SIG bout reuses it, like FIGHT).
+
+### Behaviour strength tuning (manner readability pass)
+
+Follows the axis-strength audit (instant read rested on only `distance` + `slip`; `weight` near-flat; `initiative` barely in the facet tree; ~half the facet budget on `weight`+`counter`, `counter` being situational). Owner decision: **`weight` = movement manner** (heavy slow vs light quick, eye-readable), `resilience` stays the outcome axis. Tuned by feel, eyeballed on the grey SIG stand.
+
+**`buildFighter.js` mapping (single seam):**
+- `speedMul = lerp(1.4, 0.6, weight01)` — was `lerp(1.12, 0.85)` (≈±13 %). Now ≈2.3× light-vs-heavy travel speed; neutral = 1.0.
+- `accelMul = lerp(1.25, 0.65, weight01)` — new; scales `SLOW/FAST.accel+decel` so heavy gathers/plants with inertia, light snaps off the mark (weight reads in start/stop, not only top speed).
+- `heavy01 = weight01*0.7 + tempo01*0.3` (was 0.6/0.4) → weight-led attack style; `punchW = lerp(0.82, 0.12, heavy01)` (was 0.6→0.25) → light mostly singles, heavy mostly DOUBLE/COMBO.
+- Post-strike cadence gains a weight term `heavyPause = lerp(-0.12, 0.4, weight01)` (+ parity term in `reducedAttack`) → heavy lands rare heavy blows, light flurries, even at equal tempo.
+- **Initiative**: `maneuver()` tactic roll restructured — dropped the fixed 0.4 circle floor; `pressW = clamp(0.55*aggr + 0.15*stick, 0, 0.85)`, `baitW = clamp(0.5*(1-aggr) - 0.15*stick, 0, 0.6)`, remainder circles. `pressFollow = clamp(0.6*aggr + 0.3*stick)`. High initiative now drives in most decisions; low initiative hangs back / baits.
+
+**`upgradeData.js` facet shifts (values only — tags/structure/states untouched):** moved budget off `counter` (Σ\|Δ\| 156→130) onto `initiative` (14→40), `tempo` (60→70), `distance` (60→70), `slip` (80→86); `resilience` unchanged; `weight` 144→132 (still top, now a loud axis). Branch→signature-axis binding intact (each branch keeps ≥3–5 facets on its signature axis). Edits: natisk CHASE gains initiative accents; nalet JAB stray weight→initiative; counter-branch secondaries repointed to tempo/distance/slip; zasada STING/SHADOW counter→initiative/distance.
+
+Dev stand (GRAY/SIG) on the same branch for owner re-check. Not merged — awaits explicit go.
