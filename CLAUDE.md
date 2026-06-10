@@ -6501,3 +6501,15 @@ Follows the axis-strength audit (instant read rested on only `distance` + `slip`
 **`upgradeData.js` facet shifts (values only — tags/structure/states untouched):** moved budget off `counter` (Σ\|Δ\| 156→130) onto `initiative` (14→40), `tempo` (60→70), `distance` (60→70), `slip` (80→86); `resilience` unchanged; `weight` 144→132 (still top, now a loud axis). Branch→signature-axis binding intact (each branch keeps ≥3–5 facets on its signature axis). Edits: natisk CHASE gains initiative accents; nalet JAB stray weight→initiative; counter-branch secondaries repointed to tempo/distance/slip; zasada STING/SHADOW counter→initiative/distance.
 
 Dev stand (GRAY/SIG) on the same branch for owner re-check. Not merged — awaits explicit go.
+
+### Klich (combat call) HUD — visual scaffold (UI + feedback only)
+
+Player combat lever on the arena. **No behaviour effect this pass** — only the visual loop; the axis-shift wires into the `applyKlich(fighter, klichId)` empty seam later. New file `src/scene/KlichBar.vue` (presentational HUD) + additions to `ArenaScene.vue` (state + generic flow + raycast pick) + `buildFighter.js` (`setHighlight`/`confirmPulse`).
+
+- **HUD** (`KlichBar.vue`): bottom-centre row of 3 call cards — ВПЕРЁД / ОТХОД / ДЕРЖАТЬ, each = placeholder inline-SVG icon + label + corner charge badge. Neon-Discipline: dark flat cards, one pink accent on the **armed** card only; calls read by icon+label, **not colour**. Armed pulse is CSS, dropped to a static ring under `prefers-reduced-motion`. Touch-sized (66×74). Shown only while `combatActive` (during a FIGHT / SIG bout).
+- **Charges**: per-bout counter (start 3, −1 on apply, **reset on new fight** via `resetKlich`), NOT a cooldown. 0 → card disabled/dimmed.
+- **Generic arm → pick → apply flow** (in `ArenaScene`, reusable by future buffs — not klich-hardcoded): `armLever(id)` → `armedId` + `setOwnHighlight(true)` (player fighter[s] only; opponent never). A **tap** (not drag) on the player fighter raycasts `fighter.group` → `applyToFighter` → `charge−1` + `confirmPulse()` + `applyKlich` seam + `cancelArm`. Re-tap the armed lever / tap a miss → `cancelArm` (no charge spent).
+- **Fighter highlight** (`buildFighter`): soft emissive pulse on the skin silhouette (emissive set up at build, intensity 0 at rest → **not a persistent second glow**, the rift stays the scene's glow source); `confirmPulse()` = brighter decaying flash. Cleared on `eliminate`. Reduced motion → static highlight; the confirm fade is glow-only (no body motion).
+- **Targeting pick**: canvas `pointerdown/up` tap-detector (move < 6px) added in `ArenaScene`, only active while armed, so OrbitControls drag is untouched. Listeners removed on unmount.
+
+Protected arena files untouched. Build green. Dev stand (FIGHT / SIG FIGHT) starts a bout → the klich bar appears for owner re-check.

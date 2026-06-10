@@ -54,6 +54,8 @@ export function buildFighter(
     flatShading: true,
     roughness: 0.8,
     metalness: 0.18,
+    emissive: new THREE.Color(0xff5fa0), // selection-highlight tint (intensity 0 until armed)
+    emissiveIntensity: 0,
   });
 
   // box(parent, w, h, d, x, y, z) → adds a flat-shaded skin box, returns mesh.
@@ -186,6 +188,19 @@ export function buildFighter(
   let lastT = 0;
   let dodgeRun = null; // active dodge displacement { bx, bz, wx, wz } or null
   const setReducedMotion = (b) => { reduced = b; };
+
+  // --- Selection highlight (interactive, temporary) — the "this fighter is
+  //     targetable" signal while a player lever/buff is armed, and a brighter
+  //     decaying flash on confirm. Drives the skin's emissive (set up at build,
+  //     intensity 0 when idle), so it is NOT a persistent second glow — it
+  //     vanishes the moment it's un-highlighted. update() computes the intensity
+  //     each frame (pulse under full motion, static under reduced; the confirm
+  //     flash is a glow fade only, so it's fine under reduced motion too).
+  let highlighted = false;
+  let confirmAt = -1; // confirm-flash start time (update clock); -1 = none
+  const CONFIRM_DUR = 0.5;
+  const setHighlight = (b) => { highlighted = b; };
+  const confirmPulse = () => { confirmAt = lastT; };
 
   const easeInOut = (u) => (u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2);
   const easeOut = (u) => 1 - Math.pow(1 - u, 3);
@@ -743,6 +758,7 @@ export function buildFighter(
 
   const eliminate = () => {
     if (state !== 'alive') return;
+    highlighted = false; confirmAt = -1; skin.emissiveIntensity = 0; // selection glow leaves with the fighter
     clip = null;
     dodgeRun = null;
     loco.active = false;
@@ -853,6 +869,21 @@ export function buildFighter(
     }
     if (state === 'done') return;
 
+    // Selection highlight + confirm flash — runs in every alive state (incl.
+    // reduced motion: a glow change only, no body motion). Soft pulse while
+    // highlighted (static under reduced), a brighter decaying flash on confirm.
+    // Intensity 0 when neither → no glow (it never lingers on the scene).
+    {
+      let ei = 0;
+      if (highlighted) ei = reduced ? 0.5 : 0.4 + 0.3 * (0.5 + 0.5 * Math.sin(t * 6.0));
+      if (confirmAt >= 0) {
+        const cu = (t - confirmAt) / CONFIRM_DUR;
+        if (cu >= 1) confirmAt = -1;
+        else ei = Math.max(ei, 1.2 * (1 - cu));
+      }
+      skin.emissiveIntensity = ei;
+    }
+
     // Reduced motion: hold a static pose, face the foe, and resolve strikes as
     // key moments only — no locomotion, no clip playback (reads without jitter).
     if (reduced) {
@@ -955,7 +986,7 @@ export function buildFighter(
   if (neutralColor) setNeutralColor(true);
 
   return {
-    group, update, setReducedMotion, setNeutralColor, dispose,
+    group, update, setReducedMotion, setNeutralColor, setHighlight, confirmPulse, dispose,
     approach: () => play(APPROACH),
     punch: () => play(PUNCH),
     combo: () => play(COMBO),
