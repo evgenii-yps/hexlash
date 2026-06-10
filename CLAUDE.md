@@ -6513,3 +6513,15 @@ Player combat lever on the arena. **No behaviour effect this pass** — only the
 - **Targeting pick**: canvas `pointerdown/up` tap-detector (move < 6px) added in `ArenaScene`, only active while armed, so OrbitControls drag is untouched. Listeners removed on unmount.
 
 Protected arena files untouched. Build green. Dev stand (FIGHT / SIG FIGHT) starts a bout → the klich bar appears for owner re-check.
+
+### Klich effect — temporary axis bump (first real lever effect)
+
+Fills the `applyKlich` seam: a call now lays a temporary behaviour-axis delta on the fighter that smoothly applies and reverts. New data file `src/data/klichProfiles.js` + additions to `buildFighter.js` + a shared-pool refactor in `ArenaScene.vue` / `KlichBar.vue`.
+
+- **Profiles** (`klichProfiles.js`, one place, tunable): ВПЕРЁД `initiative +35 / distance −30`, ОТХОД `distance +40` (both dur 2.5s, sharp spike), ДЕРЖАТЬ `resilience +35 / stick +25` (dur 6s, softer). Each = `{ axes, dur, attack, release }` with an attack→hold→release envelope.
+- **Temporary modifier** (`buildFighter`): base axes are NEVER mutated. `activeKlichs` holds the live envelopes; `refreshKlich(t)` (each frame, in reduced + full motion) sums them into `klichKd` (additive delta over the 4 touched axes), then re-derives the knobs those axes drive — `character.range`←distance, `character.aggression`←initiative, `stickEff`←stick (the jitter offsets are captured once so the refresh keeps liveliness stable), and resilience is read **live** in `takeDamage` (`dmgMulFor`/`stagMulFor`). When no call is active the delta is 0 → the fighter returns to base **exactly** (no drift). Stacked/repeat calls sum and auto-prune (no sticking). `fighter.applyKlich(id)` pushes an envelope; `klichActive` drives a faint "effect on" emissive marker (static under reduced).
+- **`distance` made symmetric** (`navigate`): added an "ease out to preferred range" branch (`d < engage − HYST` → move out, FAST if the gap is big) so a distance spike reads as an active retreat/space — previously nav only closed in / held the minimum, so ОТХОД on a clinched fighter wouldn't pop. This also makes baseline `distance` read both ways. *(Behaviour change beyond pure klich — flagged for owner eyeball.)*
+- **Shared charge pool**: was 3-per-card → now **one pool of 3 per bout** (`klichPool`), any call spends 1; pool 0 → all cards dim/disabled; reset on a new bout. KlichBar badge shows the shared pool on each card (they dim together at 0). Cancel-arming still spends nothing.
+- **Reduced motion**: the axis shift applies (fight logic); pulses/markers are static fallbacks; ВПЕРЁД/ОТХОД show via locomotion (suppressed under reduced like all movement), ДЕРЖАТЬ's resilience reads in `takeDamage` either way.
+
+Protected arena files untouched. Build green. Empty seam is now the real effect; `applyKlich(fighter, klichId)` in ArenaScene stays the generic entry point for future buffs.

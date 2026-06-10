@@ -16,7 +16,7 @@
     <div class="arena-hint">MOOD {{ variant }} · 1 / 2 / 3</div>
     <!-- Player combat-call HUD — shown during a bout. Tap a call → arm → tap the
          (highlighted) player fighter → apply. UI + feedback only this pass. -->
-    <KlichBar v-if="combatActive" :levers="levers" :armed-id="armedId" @arm="armLever" />
+    <KlichBar v-if="combatActive" :levers="levers" :pool="klichPool" :armed-id="armedId" @arm="armLever" />
     <!-- Temporary dev triggers (preview only) — mirror the keys Z / X / C. -->
     <div class="arena-actions">
       <button type="button" class="tgt" @click="toggleTarget">TGT: {{ target === 'player' ? 'P1' : 'P2' }}</button>
@@ -79,12 +79,13 @@ const neutralColor = ref(false);
 //     updates live. armedId / the arm→target→apply flow below is deliberately
 //     GENERIC (a lever id + a fighter), so future buffs reuse it without a klich
 //     hardcode. combatActive gates HUD visibility (shown during a FIGHT / SIG bout).
-const KLICH_CHARGES = 3; // starting charges per call, per bout
+const KLICH_POOL = 3; // SHARED charge pool per bout — any call spends 1
 const levers = ref([
-  { id: 'forward', label: 'ВПЕРЁД', charges: KLICH_CHARGES, max: KLICH_CHARGES },
-  { id: 'retreat', label: 'ОТХОД', charges: KLICH_CHARGES, max: KLICH_CHARGES },
-  { id: 'hold', label: 'ДЕРЖАТЬ', charges: KLICH_CHARGES, max: KLICH_CHARGES },
+  { id: 'forward', label: 'ВПЕРЁД' },
+  { id: 'retreat', label: 'ОТХОД' },
+  { id: 'hold', label: 'ДЕРЖАТЬ' },
 ]);
+const klichPool = ref(KLICH_POOL); // remaining shared charges (reactive → HUD badge)
 const armedId = ref(null); // currently-armed lever id (targeting), or null at rest
 const combatActive = ref(false); // HUD shown during a bout
 
@@ -205,8 +206,8 @@ function onNeutralColor() {
 function ownFighters() { return fighter ? [fighter] : []; } // player side only
 function setOwnHighlight(on) { for (const f of ownFighters()) f.setHighlight(on); }
 function armLever(id) {
-  const lever = levers.value.find((l) => l.id === id);
-  if (!lever || lever.charges <= 0) return; // spent / unknown → inert
+  if (klichPool.value <= 0) return; // shared pool empty → all calls inert
+  if (!levers.value.some((l) => l.id === id)) return;
   if (armedId.value === id) { cancelArm(); return; } // re-tap the armed lever → cancel
   armedId.value = id;
   setOwnHighlight(true); // own fighters glow as selectable
@@ -216,20 +217,21 @@ function cancelArm() {
   setOwnHighlight(false);
 }
 function applyToFighter(targetFighter) {
-  const lever = levers.value.find((l) => l.id === armedId.value);
-  if (!lever || !targetFighter || lever.charges <= 0) { cancelArm(); return; }
-  lever.charges -= 1; // per-bout counter (HUD badge updates reactively)
+  const id = armedId.value;
+  if (!id || !targetFighter || klichPool.value <= 0) { cancelArm(); return; }
+  klichPool.value -= 1; // spend 1 from the SHARED pool (HUD badge updates reactively)
   targetFighter.confirmPulse(); // visual confirm — bright flash on the fighter
-  applyKlich(targetFighter, lever.id); // EMPTY SEAM — behaviour wires here later
+  applyKlich(targetFighter, id); // the call's real effect (temporary axis bump)
   cancelArm(); // panel returns to rest
 }
-function resetKlich() { for (const l of levers.value) l.charges = l.max; cancelArm(); }
+function resetKlich() { klichPool.value = KLICH_POOL; cancelArm(); }
 
-// EMPTY SEAM — a player call applied to one fighter. NO behaviour effect yet:
-// the axis-shift / nav nudge is wired in a separate ТЗ. Signature kept generic
-// (fighter + lever id) so future buffs reuse the same arm → target → apply flow.
-function applyKlich(targetFighter, klichId) { // eslint-disable-line no-unused-vars
-  /* intentionally empty — visual-only loop for now */
+// The player's call applied to one fighter — a TEMPORARY behaviour-axis bump
+// (KLICH_PROFILES; smoothly applied + reverted in buildFighter, base untouched).
+// Signature kept generic (fighter + call id) so future buffs reuse the same
+// arm → target → apply flow.
+function applyKlich(targetFighter, klichId) {
+  targetFighter.applyKlich(klichId);
 }
 
 // Damage per clean hit (tunable, slight variance per blow) → ~5-6 hits to OUT.

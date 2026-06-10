@@ -1,9 +1,10 @@
 <!-- KlichBar — the player's combat-call HUD: a horizontal row of lever cards at
      bottom-centre, shown during a bout. Each card = a placeholder icon + a label
-     + a charge badge (per-bout counter). This component is PURELY presentational
-     — it renders the levers passed in and emits `arm(id)` on tap; the arm →
-     pick-fighter → apply loop + charge bookkeeping live in ArenaScene (generic,
-     reusable by future buffs). No behaviour effect.
+     + a corner badge showing the SHARED charge pool (all three calls draw from
+     one per-bout pool of 3 — the same number sits on each card and they dim
+     together at 0). PURELY presentational — renders the levers passed in + the
+     pool and emits `arm(id)` on tap; the arm → pick-fighter → apply loop + pool
+     bookkeeping live in ArenaScene (generic, reusable by future buffs).
 
      Style — Neon Discipline: dark flat controls, one pink accent (--hex-primary)
      on the armed card only; the three calls read by ICON + LABEL, not colour
@@ -16,12 +17,12 @@
       :key="lever.id"
       type="button"
       class="klich-card"
-      :class="{ armed: armedId === lever.id, spent: lever.charges <= 0 }"
-      :disabled="lever.charges <= 0"
+      :class="{ armed: armedId === lever.id, spent: pool <= 0 }"
+      :disabled="pool <= 0"
       :aria-pressed="armedId === lever.id"
       @click="$emit('arm', lever.id)"
     >
-      <span class="klich-badge">{{ lever.charges }}</span>
+      <span class="klich-badge">{{ pool }}</span>
       <span class="klich-icon" aria-hidden="true">
         <!-- forward / ВПЕРЁД — double chevron in -->
         <svg v-if="lever.id === 'forward'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -45,7 +46,8 @@
 
 <script setup>
 defineProps({
-  levers: { type: Array, required: true }, // [{ id, label, charges, max }]
+  levers: { type: Array, required: true }, // [{ id, label }]
+  pool: { type: Number, default: 0 }, // remaining SHARED charges (shown on each card)
   armedId: { type: String, default: null }, // currently-armed lever id, or null
 });
 defineEmits(['arm']);

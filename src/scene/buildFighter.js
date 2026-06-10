@@ -12,6 +12,7 @@
 import * as THREE from 'three';
 import { makeRadialTexture } from './arenaTextures.js';
 import { resolveBehavior } from '../data/behavior.js';
+import { KLICH_PROFILES } from '../data/klichProfiles.js';
 
 function pinkRgba(pink, a) {
   const n = parseInt(pink.replace('#', ''), 16);
@@ -360,11 +361,15 @@ export function buildFighter(
   //                    inertia (×accelMul) + attack style (heavy = rare heavy/combo,
   //                    light = frequent singles, via heavy01 + a weight pause term)
   //       stick      → press-after-strike / reluctance to disengage
-  //       resilience → incoming damage (×dmgTakenMul) + stagger/hitch (×staggerMul)
+  //       resilience → incoming damage + stagger/hitch (read LIVE in takeDamage)
   //       counter    → punish-after-being-hit chance
   //       slip       → mid-manoeuvre evade (DODGE) frequency
   //     `behavior.effects` / `.conditionals` are wired but empty this pass
   //     (tagged tricks coded point-by-point later); axes alone drive this seam.
+  //     A KLICH (combat call) lays a temporary additive delta over the base axes
+  //     (distance / initiative / resilience / stick) — see the klich block below;
+  //     the knobs those axes drive (range, aggression, stickEff, resilience) are
+  //     re-derived each frame from base + delta, so the base is never mutated.
   const ax = (behavior && behavior.axes) || resolveBehavior(coreId).axes;
   const n01 = (v) => THREE.MathUtils.clamp(v, 0, 100) / 100;
   const lerp = THREE.MathUtils.lerp;
@@ -384,8 +389,11 @@ export function buildFighter(
   const speedMul = lerp(1.4, 0.6, weight01); // light 1.4 · neutral 1.0 · heavy 0.6
   const accelMul = lerp(1.25, 0.65, weight01); // light snappy · heavy ponderous
   const heavy01 = THREE.MathUtils.clamp(weight01 * 0.7 + tempo01 * 0.3, 0, 1); // weight-led attack style
-  const dmgTakenMul = lerp(1.15, 0.6, n01(ax.resilience)); // glass takes more (resilience = outcome axis)
-  const staggerMul = lerp(1.0, 0.15, n01(ax.resilience)); // tough barely hitches
+  // resilience → incoming-damage / stagger multipliers are computed LIVE in
+  // takeDamage from the effective resilience (base + klich), so a ДЕРЖАТЬ call
+  // toughens the fighter for its duration without touching the base.
+  const dmgMulFor = (res01) => lerp(1.15, 0.6, res01); // glass takes more
+  const stagMulFor = (res01) => lerp(1.0, 0.15, res01); // tough barely hitches
   // Scale this fighter's movement bands by weight (local objects — safe to
   // mutate per fighter; a touch of jitter keeps two same-weight builds distinct).
   SLOW.speed *= speedMul * (1 + jit(0.05));
@@ -395,14 +403,71 @@ export function buildFighter(
 
   // Per-fighter "character" — derived from the profile (+ jitter), so the four
   // cores read differently and no two builds are a mirror: preferred range,
-  // aggression, circling sense, decision rhythm, approach arc.
+  // aggression, circling sense, decision rhythm, approach arc. `range` +
+  // `aggression` are re-derived each frame from the effective (base + klich)
+  // distance / initiative — the jitter offsets are captured ONCE so the per-frame
+  // refresh keeps each fighter's liveliness stable (no per-frame noise).
   const character = {
-    range: THREE.MathUtils.clamp(lerp(RANGE_NEAR, RANGE_FAR, n01(ax.distance)) + jit(0.12), CONTACT_SOFT, FAR - 0.2),
-    aggression: THREE.MathUtils.clamp(n01(ax.initiative) + jit(0.08), 0, 1), // press-in vs bait-out
+    rangeJit: jit(0.12),
+    aggrJit: jit(0.08),
+    range: 0, // set just below + refreshed each frame from effective distance
+    aggression: 0, // set just below + refreshed each frame from effective initiative
     strafeBias: Math.random() < 0.5 ? -1 : 1, // default circling sense (CW / CCW)
     decideMin: Math.max(0.18, lerp(0.55, 0.22, tempo01) + jit(0.05)), // fast tempo → quick decisions
     decideJit: Math.max(0.2, lerp(0.7, 0.3, tempo01) + jit(0.08)),
     approachArc: 0.4 + Math.random() * 0.45, // lateral arc on the way in (rad)
+  };
+  // Initial (no-klich) range + aggression from the base profile.
+  character.range = THREE.MathUtils.clamp(lerp(RANGE_NEAR, RANGE_FAR, n01(ax.distance)) + character.rangeJit, CONTACT_SOFT, FAR - 0.2);
+  character.aggression = THREE.MathUtils.clamp(n01(ax.initiative) + character.aggrJit, 0, 1);
+
+  // --- Klich (combat call) temporary axis modifier. A call pushes an attack →
+  //     hold → release envelope (from KLICH_PROFILES) onto `activeKlichs`. Each
+  //     frame refreshKlich() sums the live envelopes into `klichKd` (additive
+  //     delta over the BASE axes for the 4 axes calls touch), re-derives range /
+  //     aggression / stickEff, and flags klichActive (for the "effect on" marker);
+  //     resilience is read live in takeDamage. Base axes are NEVER mutated, so the
+  //     fighter returns to base EXACTLY when the calls expire; stacked / repeated
+  //     calls sum and auto-prune (no stick). Runs in reduced motion too (the axis
+  //     shift is fight logic, not animation).
+  const baseAx = ax;
+  const activeKlichs = []; // { ax:{axis:delta}, dur, attack, release, start }
+  const klichKd = { distance: 0, initiative: 0, resilience: 0, stick: 0 };
+  let stickEff = stick01; // live stick (base + klich), refreshed each frame
+  let klichActive = false; // any call currently in effect (visual marker)
+  // Envelope over u∈[0,1]: rise (easeOut) over [0,attack], hold, fall (easeInOut)
+  // over the last `release`. Small attack + big release = a sharp spike that fades.
+  const klichEnv = (u, attack, release) => {
+    if (u <= 0 || u >= 1) return 0;
+    if (u < attack) return easeOut(u / attack);
+    if (u > 1 - release) return 1 - easeInOut((u - (1 - release)) / release);
+    return 1;
+  };
+  const refreshKlich = (t) => {
+    klichKd.distance = 0; klichKd.initiative = 0; klichKd.resilience = 0; klichKd.stick = 0;
+    klichActive = false;
+    for (let i = activeKlichs.length - 1; i >= 0; i--) {
+      const k = activeKlichs[i];
+      const u = (t - k.start) / k.dur;
+      if (u >= 1) { activeKlichs.splice(i, 1); continue; } // expired → prune
+      const e = klichEnv(u, k.attack, k.release);
+      if (e > 0.001) klichActive = true;
+      for (const axis in k.ax) klichKd[axis] = (klichKd[axis] || 0) + k.ax[axis] * e;
+    }
+    const effDist = THREE.MathUtils.clamp(baseAx.distance + klichKd.distance, 0, 100);
+    const effInit = THREE.MathUtils.clamp(baseAx.initiative + klichKd.initiative, 0, 100);
+    stickEff = THREE.MathUtils.clamp((baseAx.stick + klichKd.stick) / 100, 0, 1);
+    character.range = THREE.MathUtils.clamp(lerp(RANGE_NEAR, RANGE_FAR, effDist / 100) + character.rangeJit, CONTACT_SOFT, FAR - 0.2);
+    character.aggression = THREE.MathUtils.clamp(effInit / 100 + character.aggrJit, 0, 1);
+  };
+  // Apply a klich by id — push its envelope onto the active list (additive, decays
+  // + auto-prunes). Stacks sanely with any already-active call. No-op if unknown /
+  // not alive. The visual confirm pulse is fired by the caller (confirmPulse()).
+  const applyKlich = (id) => {
+    if (state !== 'alive') return;
+    const p = KLICH_PROFILES[id];
+    if (!p) return;
+    activeKlichs.push({ ax: { ...p.axes }, dur: p.dur, attack: p.attack, release: p.release, start: lastT });
   };
 
   const loco = { active: false, type: 'slow' }; // dev SLOW/FAST preview toggle
@@ -681,8 +746,8 @@ export function buildFighter(
       // and draws the foe in (bait), stick nudges toward press. The remainder
       // circles. This is what makes "lezet v draku vs vyzhidat" read.
       const aggr = character.aggression;
-      const pressW = THREE.MathUtils.clamp(0.55 * aggr + 0.15 * stick01, 0, 0.85);
-      const baitW = THREE.MathUtils.clamp(0.5 * (1 - aggr) - 0.15 * stick01, 0, 0.6);
+      const pressW = THREE.MathUtils.clamp(0.55 * aggr + 0.15 * stickEff, 0, 0.85);
+      const baitW = THREE.MathUtils.clamp(0.5 * (1 - aggr) - 0.15 * stickEff, 0, 0.6);
       if (r < pressW) nav.mode = 'press'; // initiative high → drive in
       else if (r < pressW + baitW) nav.mode = 'bait'; // initiative low → wait / draw in
       else nav.mode = 'circle';
@@ -725,6 +790,16 @@ export function buildFighter(
       // Too tight — ease back to the soft buffer (SLOW; the integrator brakes
       // into it so they settle smoothly, no grind).
       requestMove(-ux, -uz, SLOW, CONTACT_SOFT - d);
+      return;
+    }
+    if (d < engage - RANGE_HYST) {
+      // Notably INSIDE preferred range — ease back out toward it (active spacing;
+      // makes `distance` read both ways, and an ОТХОД call's distance spike pop
+      // as a sharp break: FAST when the gap to give up is large, SLOW for a small
+      // adjust). The integrator brakes into `out`, so it settles at the range.
+      const out = engage - d;
+      const band = out > FAST_DASH ? FAST : SLOW;
+      requestMove(-ux, -uz, band, out);
       return;
     }
     if (nav.mode === 'approach') nav.until = 0; // just arrived → pick a tactic now
@@ -776,13 +851,16 @@ export function buildFighter(
   // attacker→defender pairing live in ArenaScene (the combat resolver).
   const takeDamage = (dmg) => {
     if (state !== 'alive') return;
-    hp = Math.max(0, hp - dmg * dmgTakenMul); // resilience cuts incoming damage
+    // Effective resilience = base + live klich delta (a ДЕРЖАТЬ call toughens for
+    // its duration); refreshKlich keeps klichKd current each frame.
+    const res01 = THREE.MathUtils.clamp((baseAx.resilience + klichKd.resilience) / 100, 0, 1);
+    hp = Math.max(0, hp - dmg * dmgMulFor(res01)); // resilience cuts incoming damage
     updateBar();
     if (hp <= 0) { eliminate(); return; } // → dissolve; onEliminated raised on completion
     play(HURT); // weighty recoil + core flash
     // Rhythm hitch added on top of the recoil scales with stagger resistance —
     // a tough fighter barely loses its tempo after eating a hit.
-    ai.nextAt = Math.max(ai.nextAt, lastT + HURT.dur + (0.4 + Math.random() * 0.6) * staggerMul);
+    ai.nextAt = Math.max(ai.nextAt, lastT + HURT.dur + (0.4 + Math.random() * 0.6) * stagMulFor(res01));
     // counter → chance to punish straight out of the recoil: press in + strike back fast.
     if (Math.random() < counter01 * 0.7) {
       nav.mode = 'press';
@@ -820,7 +898,7 @@ export function buildFighter(
     // Follow-up after the strike — profile-driven: aggressive / sticky ones press
     // a flurry, the rest circle or bait out. Window starts as the clip ends.
     // (Never just hang motionless in the foe's face.) Initiative-led.
-    const pressFollow = THREE.MathUtils.clamp(character.aggression * 0.6 + stick01 * 0.3, 0, 0.95);
+    const pressFollow = THREE.MathUtils.clamp(character.aggression * 0.6 + stickEff * 0.3, 0, 0.95);
     if (Math.random() < pressFollow) {
       nav.mode = 'press';
       nav.until = t + atk.dur + 0.25 + Math.random() * 0.4;
@@ -869,12 +947,18 @@ export function buildFighter(
     }
     if (state === 'done') return;
 
-    // Selection highlight + confirm flash — runs in every alive state (incl.
-    // reduced motion: a glow change only, no body motion). Soft pulse while
-    // highlighted (static under reduced), a brighter decaying flash on confirm.
-    // Intensity 0 when neither → no glow (it never lingers on the scene).
+    // Advance klich envelopes → live additive delta over the base axes + re-derive
+    // the affected knobs. Runs in every alive state (incl. reduced motion: the
+    // axis shift is fight logic, not animation).
+    refreshKlich(t);
+
+    // Selection highlight + confirm flash + a faint "effect active" marker — runs
+    // in every alive state (a glow change only, no body motion). Soft pulse while
+    // highlighted (static under reduced), a brighter decaying flash on confirm, a
+    // faint tint while a klich is active. Intensity 0 when none → no lingering glow.
     {
       let ei = 0;
+      if (klichActive) ei = reduced ? 0.13 : 0.1 + 0.06 * (0.5 + 0.5 * Math.sin(t * 3.0)); // effect-on marker
       if (highlighted) ei = reduced ? 0.5 : 0.4 + 0.3 * (0.5 + 0.5 * Math.sin(t * 6.0));
       if (confirmAt >= 0) {
         const cu = (t - confirmAt) / CONFIRM_DUR;
@@ -986,7 +1070,7 @@ export function buildFighter(
   if (neutralColor) setNeutralColor(true);
 
   return {
-    group, update, setReducedMotion, setNeutralColor, setHighlight, confirmPulse, dispose,
+    group, update, setReducedMotion, setNeutralColor, setHighlight, confirmPulse, applyKlich, dispose,
     approach: () => play(APPROACH),
     punch: () => play(PUNCH),
     combo: () => play(COMBO),
