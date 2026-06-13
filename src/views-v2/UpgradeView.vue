@@ -137,6 +137,11 @@
             >
               <span class="fhex" v-html="faceHtml"></span>
               <span class="fl-nm">{{ f.name }}</span>
+              <!-- Two-layer readout, single format for all 60 (hard + behaviour):
+                   percent (accent, core hue) + a short word plate beneath it.
+                   Dims with the card on locked/blocked via the face-state classes. -->
+              <span v-if="facetPercent(f) !== null" class="fl-pct">{{ facetPercent(f) }}%</span>
+              <span class="fl-tag">{{ facetPhrase(f) }}</span>
               <span class="fl-st">{{ faceLabel(f) }}</span>
             </div>
           </div>
@@ -188,6 +193,7 @@ import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
 import { CRYSTALS, RESOURCE, getCore } from '@/data/upgradeData.js';
+import { facetPercent, facetPhrase } from '@/data/facetReadout.js';
 import { coreSVG, shardSVG, faceHex, hexPts, radial } from '@/data/upgradeGeometry.js';
 
 const store = useStore();
@@ -835,6 +841,17 @@ onBeforeUnmount(() => {
   letter-spacing: .12em; text-transform: uppercase; color: var(--ink-bone); text-align: center; }
 .face .fl-st { font-family: var(--font-mono); font-size: 8px;
   letter-spacing: .18em; text-transform: uppercase; color: var(--ink-ash); }
+
+/* Two-layer readout — uniform for hard + behaviour facets. The percent is the
+   accent (core hue, §one-glow: a flat tint, no second colour); the phrase plate
+   is a quiet word line under it. lit/open/locked dimming rides on the card. */
+.face .fl-pct { font-family: var(--font-mono); font-size: 13px; font-weight: 700;
+  letter-spacing: .02em; line-height: 1; color: var(--core-ink); }
+.face .fl-tag { font-family: var(--font-mono); font-size: 8px; font-weight: 500;
+  letter-spacing: .04em; text-transform: uppercase; color: var(--ink-ash);
+  line-height: 1.15; text-align: center; }
+.face.lit .fl-pct { color: var(--core); }
+.face.lit .fl-tag { color: var(--core-ink); }
 
 /* face states — FLAT colour, no glow (glow is the core's job) */
 .face.lit {
