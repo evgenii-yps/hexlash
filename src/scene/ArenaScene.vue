@@ -44,6 +44,7 @@ import store from '@/core/state/store.js';
 import { getCore, CORES, CRYSTALS } from '@/data/upgradeData.js';
 import { resolveBehavior } from '@/data/behavior.js';
 import { SIG_PRESETS, SIG_ORDER, presetBehavior } from '@/data/behaviorPresets.js';
+import { COMBAT_BALANCE } from '@/data/combatBalance.js';
 import KlichBar from './KlichBar.vue';
 
 const wrap = ref(null);
@@ -102,6 +103,10 @@ let sigCycle = false;
 let sigRestartAt = 0;
 let lastFrameT = 0;
 let runSigFight = null;
+// Loop time the current bout started — drives the fight-length safeguard
+// (escalating damage). 0 = no bout running (multiplier stays 1). Set on every
+// FIGHT / SIG bout, so a SIG auto-cycle re-arms it per re-run.
+let fightStartT = 0;
 const SIG_RESTART_DELAY = 1.4; // seconds after a KO before the next bout (~ the dissolve)
 
 function lowPowerDevice() {
@@ -169,8 +174,18 @@ function applyKlich(targetFighter, klichId) {
   targetFighter.applyKlich(klichId);
 }
 
-// Damage per clean hit (tunable, slight variance per blow) → ~5-6 hits to OUT.
-const rollDamage = () => 18 + Math.round(Math.random() * 6 - 3);
+// Fight-length safeguard — escalating damage. The attacker hands its raw strike
+// damage (сила удара × множитель приёма × джиттер, computed in buildFighter) to
+// onImpact; this scales it by a multiplier that grows once a bout passes
+// COMBAT_BALANCE.escalateStartSec, so a stalling fight is guaranteed to finish
+// near the top of the 15–40s window (applied to BOTH sides — same clock).
+const escalationMult = () => {
+  if (!fightStartT) return 1; // no bout running → no escalation
+  const elapsed = lastFrameT - fightStartT;
+  if (elapsed <= COMBAT_BALANCE.escalateStartSec) return 1;
+  const grown = 1 + (elapsed - COMBAT_BALANCE.escalateStartSec) * COMBAT_BALANCE.escalateGrowthPerSec;
+  return Math.min(COMBAT_BALANCE.escalateMax, grown);
+};
 
 onMounted(() => {
   const el = wrap.value;
@@ -297,7 +312,7 @@ onMounted(() => {
       bounds: navBounds,
       neutralColor: neutralColor.value,
       getFoePos: () => (opponent ? opponent.group.position : null),
-      onImpact: () => { opponent?.takeDamage(rollDamage()); }, // hit signal is on the foe (recoil + core)
+      onImpact: (raw) => { opponent?.takeDamage(raw * escalationMult()); }, // attacker's strike damage × time safeguard; foe softens by its toughness
       onEliminated: () => {
         scene.remove(fighter.group);
         fighter.dispose();
@@ -320,7 +335,7 @@ onMounted(() => {
       bounds: navBounds,
       neutralColor: neutralColor.value,
       getFoePos: () => (fighter ? fighter.group.position : null),
-      onImpact: () => { fighter?.takeDamage(rollDamage()); }, // hit signal is on the foe (recoil + core)
+      onImpact: (raw) => { fighter?.takeDamage(raw * escalationMult()); }, // attacker's strike damage × time safeguard; foe softens by its toughness
       onEliminated: () => {
         scene.remove(opponent.group);
         opponent.dispose();
@@ -347,6 +362,7 @@ onMounted(() => {
     aiPlayer = true;
     aiOpponent = true;
     fightActive = true;
+    fightStartT = lastFrameT; // arm the fight-length safeguard clock
     spawnFighter();
     spawnOpponent();
     resetKlich(); // fresh charges for the new bout
@@ -365,6 +381,7 @@ onMounted(() => {
     sigCycle = true;
     fightActive = false;
     sigRestartAt = 0;
+    fightStartT = lastFrameT; // arm the fight-length safeguard clock (re-armed each auto-cycle re-run)
     aiPlayer = true;
     aiOpponent = true;
     spawnFighter();

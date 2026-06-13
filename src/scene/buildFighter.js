@@ -13,6 +13,7 @@ import * as THREE from 'three';
 import { makeRadialTexture } from './arenaTextures.js';
 import { resolveBehavior } from '../data/behavior.js';
 import { KLICH_PROFILES } from '../data/klichProfiles.js';
+import { COMBAT_BALANCE } from '../data/combatBalance.js';
 
 function pinkRgba(pink, a) {
   const n = parseInt(pink.replace('#', ''), 16);
@@ -27,7 +28,7 @@ export function buildFighter(
   // — which drives how this fighter moves and fights (see the axis → knob seam
   // below). If `behavior` is absent it's resolved from `coreId` (no lit facets),
   // so any caller still gets a core-shaped fighter.
-  { side = 'player', coreId = null, behavior = null, maxHp = 100, onImpact, onEliminated, getFoePos = null, bounds = { x: 2.5, z: 1.5 }, neutralColor = false } = {},
+  { side = 'player', coreId = null, behavior = null, maxHp = COMBAT_BALANCE.maxHp, onImpact, onEliminated, getFoePos = null, bounds = { x: 2.5, z: 1.5 }, neutralColor = false } = {},
 ) {
   const group = new THREE.Group();
 
@@ -235,7 +236,7 @@ export function buildFighter(
   // strike extends toward them. The lead punch uses the left arm (lsx/lex); the
   // cross uses the right (rsx/rex).
   const PUNCH = {
-    dur: 1.3, impact: 0.6,
+    dur: 1.3, impact: 0.6, dmgMult: COMBAT_BALANCE.moveMult.punch, // single jab — base damage
     keys: [
       { t: 0.0, v: REST, e: 'io' },
       { t: 0.45, v: { hz: 0.02, hy: -0.02, tx: 0.12, lsx: 0.15, lex: 2.0 }, e: 'io' }, // coil / chamber
@@ -254,7 +255,7 @@ export function buildFighter(
     ],
   };
   const COMBO = {
-    dur: 2.0, impact: 1.12,
+    dur: 2.0, impact: 1.12, dmgMult: COMBAT_BALANCE.moveMult.combo, // one heavy commit — the most painful single hit
     keys: [
       { t: 0.0, v: REST, e: 'io' },
       { t: 0.45, v: { hz: -0.3, hy: -0.03, tx: -0.05 }, e: 'out' }, // approach
@@ -268,7 +269,7 @@ export function buildFighter(
   // the left fully recovers. Torso twists (ty) to carry the weight arm to arm;
   // both fists work through shoulder + elbow. Two impacts (one per fist).
   const DOUBLE = {
-    dur: 1.45, impacts: [0.32, 0.58],
+    dur: 1.45, impacts: [0.32, 0.58], dmgMult: COMBAT_BALANCE.moveMult.doubleEach, // two lighter hits — each uses this mult (≈1.3 summed)
     keys: [
       { t: 0.0, v: REST, e: 'io' },
       { t: 0.16, v: { hz: -0.06, hy: -0.02, tx: 0.06, ty: -0.06, lsx: 0.2, lex: 1.9 }, e: 'io' }, // L chamber, coil
@@ -389,6 +390,27 @@ export function buildFighter(
   const speedMul = lerp(1.4, 0.6, weight01); // light 1.4 · neutral 1.0 · heavy 0.6
   const accelMul = lerp(1.25, 0.65, weight01); // light snappy · heavy ponderous
   const heavy01 = THREE.MathUtils.clamp(weight01 * 0.7 + tempo01 * 0.3, 0, 1); // weight-led attack style
+
+  // --- Fighter characteristics sheet (strikePower / toughness / mobility). The
+  //     foundation the grade system will lay percentage bonuses on (this pass:
+  //     base values from COMBAT_BALANCE, no grade boosts yet). strikePower +
+  //     toughness are NEW; `mobility` only REFLECTS the existing weight→speed
+  //     mapping above (speedMul) as a readable number — it is NOT a second
+  //     movement system (the gait still runs off speedMul/accelMul as before).
+  //     All balance numbers live in src/data/combatBalance.js (one tuning point).
+  const B = COMBAT_BALANCE;
+  const stats = {
+    strikePower: B.strikePower,
+    toughness: B.toughness,
+    mobility: Math.round(B.mobilityBase * speedMul),
+  };
+  // Outgoing strike damage for a clip: сила удара × множитель приёма × джиттер.
+  // The defender's toughness softening is applied on its side (takeDamage).
+  const strikeDamage = (c) => stats.strikePower * (c.dmgMult || 0) * (1 + jit(B.jitter));
+  // Toughness softening — PERCENT mitigation, saturating, never to zero (a weak
+  // hit still chips through). Constant per fighter this pass (stats don't change
+  // mid-bout yet); incoming damage is multiplied by (1 − toughSoft) in takeDamage.
+  const toughSoft = stats.toughness / (stats.toughness + B.toughnessK);
   // resilience → incoming-damage / stagger multipliers are computed LIVE in
   // takeDamage from the effective resilience (base + klich), so a ДЕРЖАТЬ call
   // toughens the fighter for its duration without touching the base.
@@ -854,7 +876,10 @@ export function buildFighter(
     // Effective resilience = base + live klich delta (a ДЕРЖАТЬ call toughens for
     // its duration); refreshKlich keeps klichKd current each frame.
     const res01 = THREE.MathUtils.clamp((baseAx.resilience + klichKd.resilience) / 100, 0, 1);
-    hp = Math.max(0, hp - dmg * dmgMulFor(res01)); // resilience cuts incoming damage
+    // Two distinct mitigations, both apply: resilience is the BEHAVIOUR axis
+    // (manner — unchanged this pass), toughness is the NEW defensive STAT
+    // (percent softening, never to zero — слабый удар всё равно чуть проходит).
+    hp = Math.max(0, hp - dmg * dmgMulFor(res01) * (1 - toughSoft));
     updateBar();
     if (hp <= 0) { eliminate(); return; } // → dissolve; onEliminated raised on completion
     play(HURT); // weighty recoil + core flash
@@ -913,7 +938,7 @@ export function buildFighter(
   // lands) on cadence so a fight still progresses without any jitter.
   const reducedAttack = (t) => {
     if (t < ai.nextAt) return;
-    if (onImpact) onImpact();
+    if (onImpact) onImpact(strikeDamage({ dmgMult: B.moveMult.punch })); // punch-equivalent — static fallback still scales off strikePower
     // Cadence tracks tempo (+ a weight term) so the static fallback still reads
     // fast-light vs slow-heavy, matching the animated path.
     ai.nextAt = t + Math.max(0.1, lerp(1.0, 0.4, tempo01) + lerp(-0.15, 0.45, weight01)) + Math.random() * lerp(0.9, 0.4, tempo01);
@@ -997,12 +1022,12 @@ export function buildFighter(
         for (let i = 0; i < clip.impacts.length; i++) {
           if (!clip.fired[i] && ct >= clip.impacts[i]) {
             clip.fired[i] = true;
-            if (onImpact && foeInStrike()) onImpact(); // damage only if the foe is in reach
+            if (onImpact && foeInStrike()) onImpact(strikeDamage(clip)); // damage (force × move × jitter) only if the foe is in reach
           }
         }
       } else if (!clip.fired && clip.impact >= 0 && ct >= clip.impact) {
         clip.fired = true;
-        if (onImpact && foeInStrike()) onImpact(); // damage only if the foe is in reach
+        if (onImpact && foeInStrike()) onImpact(strikeDamage(clip)); // damage (force × move × jitter) only if the foe is in reach
       }
       if (ct < clip.dur) {
         const v = sample(clip.keys, ct);
@@ -1083,6 +1108,7 @@ export function buildFighter(
     takeDamage,
     getHp: () => hp,
     maxHp,
+    stats, // боевой лист: { strikePower, toughness, mobility }
     setAI,
     toggleAI: () => setAI(!ai.on),
     isAI: () => ai.on,
