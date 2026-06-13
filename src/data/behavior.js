@@ -63,13 +63,20 @@ export function startProfile(coreId) {
    effects } from upgradeData) — the caller pulls them from prefight.upgradeTree
    (player) or the core's CRYSTALS defaults (opponent).
 
-   Returns { axes:{…8…}, effects:[…], conditionals:[…] }. No side effects — easy
-   to test and to call per fighter. This pass: shift lists are empty, so the
-   result is just the core profile (cores differ; facets are a no-op yet). */
+   `statBonuses` sums the lit facets' `statBonus { stat, pct }` (the NEW number
+   layer from the "hard" strikePower / toughness branches — see upgradeData.js)
+   into { strikePower, toughness } fractions; buildFighter multiplies the base
+   characteristics by (1 + bonus). Facets without a statBonus contribute nothing,
+   so behaviour branches don't touch the stats. Naturally capped by the RESOURCE
+   pool (можно зажечь не все грани).
+
+   Returns { axes:{…8…}, effects:[…], conditionals:[…], statBonuses:{…} }. No side
+   effects — easy to test and to call per fighter. */
 export function resolveBehavior(coreId, litFacets = []) {
   const axes = startProfile(coreId);
   const effects = [];
   const conditionals = [];
+  const statBonuses = { strikePower: 0, toughness: 0 };
   for (const f of litFacets) {
     if (!f) continue;
     for (const s of f.shifts || []) {
@@ -77,6 +84,8 @@ export function resolveBehavior(coreId, litFacets = []) {
     }
     for (const c of f.conditionals || []) conditionals.push(c);
     for (const e of f.effects || []) effects.push(e);
+    const b = f.statBonus;
+    if (b && statBonuses[b.stat] != null) statBonuses[b.stat] += b.pct || 0;
   }
-  return { axes, effects, conditionals };
+  return { axes, effects, conditionals, statBonuses };
 }

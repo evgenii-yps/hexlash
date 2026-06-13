@@ -398,10 +398,18 @@ export function buildFighter(
   //     mapping above (speedMul) as a readable number — it is NOT a second
   //     movement system (the gait still runs off speedMul/accelMul as before).
   //     All balance numbers live in src/data/combatBalance.js (one tuning point).
+  //
+  //     Grade layer: lit facets on the "hard" branches add a PERCENT to a
+  //     characteristic — resolveBehavior summed them into behavior.statBonuses
+  //     ({ strikePower, toughness } fractions). Multiply the base by (1 + bonus).
+  //     The opponent (random core, no lit facets) sums to 0 → base stats; the
+  //     player's bonuses are naturally capped by the RESOURCE pool. Mobility is
+  //     NOT graded this pass — it only reflects the weight→speed mapping.
   const B = COMBAT_BALANCE;
+  const sb = (behavior && behavior.statBonuses) || { strikePower: 0, toughness: 0 };
   const stats = {
-    strikePower: B.strikePower,
-    toughness: B.toughness,
+    strikePower: Math.round(B.strikePower * (1 + (sb.strikePower || 0))),
+    toughness: Math.round(B.toughness * (1 + (sb.toughness || 0))),
     mobility: Math.round(B.mobilityBase * speedMul),
   };
   // Outgoing strike damage for a clip: сила удара × множитель приёма × джиттер.

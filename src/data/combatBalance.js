@@ -34,6 +34,15 @@ export const COMBAT_BALANCE = {
   },
   jitter: 0.1, // ±10% per-blow variance on outgoing damage
 
+  // --- Grade (facet) bonus ramp by depth (1→5). PERCENT (fraction) added to the
+  //     facet's target characteristic on the "hard" branches — strikePower
+  //     (RAM / HUNT / STING) and toughness (BASTION / BREAKER). A new layer ON
+  //     TOP of the facet's existing behaviour shifts (those are untouched). The
+  //     vertex (depth 5) jumps. Naturally capped by the RESOURCE pool (можно
+  //     зажечь не все грани). Starting orientation, tunable.
+  //       depth 1 ≈ 4% · 2 ≈ 7% · 3 ≈ 10% · 4 ≈ 14% · 5/вершина ≈ 22%
+  gradeBonusRamp: [0.04, 0.07, 0.1, 0.14, 0.22],
+
   // --- Toughness softening: PERCENT mitigation of incoming damage, never a
   //     subtract-to-zero — a weak hit still chips through. Saturating curve
   //     soft = toughness / (toughness + K): more prochnost → more softening, with

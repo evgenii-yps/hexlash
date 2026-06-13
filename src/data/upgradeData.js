@@ -3,6 +3,8 @@
    (natisk/nalet/skala/zasada) and face states (lit/open/locked) are CONTRACT —
    do not rename. English-only. Geometry lives in upgradeGeometry.js. */
 
+import { COMBAT_BALANCE } from './combatBalance.js';
+
 /* RESOURCE — shared core point pool. Split across all crystals. */
 export const RESOURCE = 5;
 
@@ -41,19 +43,52 @@ export const CORES = [
    `limit` is its full size — the global RESOURCE pool is the real cap until
    pricing lands. Lighting many at once pins the axes (temporary, awaits pricing). */
 const s = (axis, delta) => ({ axis, delta }); // shift shorthand
-function mkBranch(id, name, faces) {
+
+/* Largest-magnitude axis shift of a facet (its dominant lever), as the
+   behaviour READOUT for the future card: { axis, delta } of the biggest |delta|
+   (first wins on a tie → deterministic). Pure read of the EXISTING shifts — no
+   new logic, no extra fight effect. null if the facet has no shifts. */
+function dominantShift(shifts) {
+  let best = null;
+  for (const sh of shifts || []) {
+    if (!sh) continue;
+    if (!best || Math.abs(sh.delta) > Math.abs(best.delta)) best = sh;
+  }
+  return best ? { axis: best.axis, delta: best.delta } : null;
+}
+
+/* mkBranch(id, name, faces, stat?) — `stat` tags a "hard" branch (strikePower /
+   toughness): each facet then carries a `statBonus { stat, pct }` — a percent to
+   that characteristic, sized by depth from COMBAT_BALANCE.gradeBonusRamp (this is
+   the NEW number layer; the facet's behaviour shifts are untouched). On the other
+   (behaviour) branches `stat` is null and each facet instead surfaces a
+   `behaviorReadout { axis, delta }` from its dominant existing shift — DATA ONLY
+   for the card, no new fight effect. Each facet ends up with exactly one readout:
+   `statBonus` (hard) or `behaviorReadout` (behaviour); the other is null. */
+function mkBranch(id, name, faces, stat = null) {
+  const ramp = COMBAT_BALANCE.gradeBonusRamp;
   return {
     id,
     name,
     limit: faces.length, // full branch openable; RESOURCE pool is the live cap
-    faces: faces.map((f, i) => ({
-      id: i + 1,
-      name: f.name,
-      state: 'open',
-      shifts: f.shifts || [],
-      conditionals: f.conditionals || [],
-      effects: f.effects || [],
-    })),
+    faces: faces.map((f, i) => {
+      const shifts = f.shifts || [];
+      // statBonus pct by depth (i=0..4 → grade 1..5); clamp the index defensively.
+      const statBonus = stat
+        ? { stat, pct: ramp[Math.min(i, ramp.length - 1)] }
+        : null;
+      return {
+        id: i + 1,
+        name: f.name,
+        state: 'open',
+        shifts,
+        conditionals: f.conditionals || [],
+        effects: f.effects || [],
+        // UI readout (data only; rendered by a later upgrade-screen pass):
+        statBonus, // hard branches: { stat, pct } — % to the characteristic
+        behaviorReadout: stat ? null : dominantShift(shifts), // behaviour branches: { axis, delta }
+      };
+    }),
   };
 }
 
@@ -69,7 +104,7 @@ export const CRYSTALS = {
       { name: 'Unshaken', shifts: [s('resilience', 12)] },
       { name: 'Close Power', shifts: [s('distance', -8), s('weight', 6)], conditionals: ['close_damage_ramp'] },
       { name: 'Breakthrough', shifts: [s('weight', 10)], effects: ['overload_strike'] },
-    ]),
+    ], 'strikePower'),
     mkBranch('b', 'CHASE', [
       { name: 'Hard Entry', shifts: [s('distance', -8), s('initiative', 4)] },
       { name: 'Run-Down', shifts: [s('stick', 8), s('initiative', 6)], conditionals: ['chase_strike'] },
@@ -106,7 +141,7 @@ export const CRYSTALS = {
       { name: 'Charged Run', shifts: [s('weight', 8)], conditionals: ['charge'] },
       { name: 'Punish Aggression', shifts: [s('counter', 6), s('initiative', 4)], conditionals: ['punish_aggression'] },
       { name: 'Lethal Entry', shifts: [s('weight', 12)], effects: ['lethal_entry'] },
-    ]),
+    ], 'strikePower'),
   ],
   skala: [
     mkBranch('a', 'BASTION', [
@@ -115,14 +150,14 @@ export const CRYSTALS = {
       { name: 'Catch Breath', shifts: [s('resilience', 6)], conditionals: ['breather_regen'] },
       { name: 'Dig In', shifts: [s('resilience', 8), s('distance', -6)], conditionals: ['dig_in'] },
       { name: 'Unbreakable', shifts: [s('resilience', 12)], effects: ['fortress'] },
-    ]),
+    ], 'toughness'),
     mkBranch('b', 'BREAKER', [
       { name: 'Block & Jab', shifts: [s('counter', 8), s('distance', -4)] },
       { name: 'Catch the Wind-up', shifts: [s('counter', 8)] },
       { name: 'Hard Meet', shifts: [s('counter', 8)] },
       { name: 'Retaliation', shifts: [s('counter', 8)], conditionals: ['retaliate_ramp'] },
       { name: 'Counter Wall', shifts: [s('counter', 8), s('weight', 6)], effects: ['counter_trap'] },
-    ]),
+    ], 'toughness'),
     mkBranch('c', 'VICE', [
       { name: 'Body Shove', shifts: [s('stick', 8), s('distance', -6)] },
       { name: 'Heavy Slam', shifts: [s('weight', 10)] },
@@ -152,7 +187,7 @@ export const CRYSTALS = {
       { name: 'Hit the Opening', shifts: [s('weight', 8), s('initiative', -6)], conditionals: ['vulnerable_strike'] },
       { name: 'Pierce', shifts: [s('weight', 8)], effects: ['pierce'] },
       { name: 'Execution', shifts: [s('weight', 14)], effects: ['execute'] },
-    ]),
+    ], 'strikePower'),
   ],
 };
 
