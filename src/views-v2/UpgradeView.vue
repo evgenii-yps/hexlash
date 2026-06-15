@@ -4,8 +4,9 @@
 
      Composition: framed depth chamber (core never floats in void), ghost
      crystals with names + lit/limit on CORE level, depth rail (chip steps) +
-     chamber tag + back button + action strip, and ONE BUILD bar below it: lit
-     facets · compact point pool (pips + remaining) · TO BATTLE. One light = core;
+     chamber tag + back button + action strip, and ONE BUILD bar below it: a
+     BUILD heading over the wrapping lit-facet list (left) · TO BATTLE (right).
+     Point pool is capped in the mechanic only — no on-screen pips. One light = core;
      crystals/ghosts/facets are flat. §sup-discipline: outer halo uses --core
      (low alpha), --core-sup only seasons the inner highlight — bloom never
      drifts into a neighbour's hue.
@@ -158,23 +159,19 @@
           </div>
         </section>
 
-        <!-- BUILD BAR — one strip: lit facets (left) · compact point pool (pips
-             + remaining) · TO BATTLE (right, its own button). Replaces the old
-             two-row BUILD + CORE POINTS. TO BATTLE enabled at every level (Q1=A). -->
+        <!-- BUILD BAR — left: BUILD label (heading) over the wrapping list of lit
+             facets · right: TO BATTLE (its own button). The point pool is capped
+             in the mechanic (RESOURCE / toggleFace), no on-screen pip indicator. -->
         <footer class="build-bar">
-          <span class="k">BUILD</span>
-          <span class="names" :class="{ empty: !litNames.length }">
-            <template v-if="!litNames.length">NO FACETS LIT — TAP IN</template>
-            <template v-else>
-              <template v-for="(n, i) in litNames" :key="i"><span v-if="i" class="sep">·</span><span class="b">{{ n }}</span></template>
-            </template>
-          </span>
-          <span class="pool" :aria-label="`${freePts} of ${RESOURCE} core points free`">
-            <span class="pips" aria-hidden="true">
-              <span v-for="i in RESOURCE" :key="i" class="pip" :class="{ on: i <= spentTotal }"></span>
+          <div class="build-info">
+            <span class="k">BUILD</span>
+            <span class="names">
+              <span v-if="!litNames.length" class="ph">NO FACETS LIT — TAP IN</span>
+              <template v-else>
+                <span v-for="(n, i) in litNames" :key="i" class="b">{{ n }}</span>
+              </template>
             </span>
-            <span class="rem" :class="{ depleted: spentTotal >= RESOURCE }" aria-hidden="true"><b>{{ freePts }}</b></span>
-          </span>
+          </div>
           <button type="button" class="cta is-ready" aria-label="Proceed to battle" @click="toBattle">
             <span>TO BATTLE</span>
             <span class="arr" aria-hidden="true">→</span>
@@ -228,7 +225,6 @@ function litCount(cr) {
   return cr ? cr.faces.filter((f) => f.state === 'lit').length : 0;
 }
 const spentTotal = computed(() => tree.value.reduce((n, cr) => n + litCount(cr), 0));
-const freePts = computed(() => RESOURCE - spentTotal.value);
 const litNames = computed(() => {
   const out = [];
   tree.value.forEach((cr) => cr.faces.forEach((f) => { if (f.state === 'lit') out.push(f.name); }));
@@ -946,12 +942,13 @@ onBeforeUnmount(() => {
 }
 
 /* ============================================================
-   BUILD BAR — ONE strip: lit facets · compact point pool · TO BATTLE.
-   (Merges the old BUILD readout + CORE POINTS foot into a single row.)
+   BUILD BAR — left: BUILD heading over the wrapping lit-facet list · right:
+   TO BATTLE. No on-screen point pool (the cap lives in the mechanic). The bar
+   grows to fit two rows of facets — names wrap, they never clip.
    ============================================================ */
 .build-bar {
   display: grid;
-  grid-template-columns: auto 1fr auto auto;  /* label · names · pool · CTA */
+  grid-template-columns: 1fr auto;  /* info · CTA */
   align-items: stretch;
   gap: 14px;
   padding: 8px 8px 8px 12px;
@@ -959,38 +956,31 @@ onBeforeUnmount(() => {
   background: rgba(255, 255, 255, .013);
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px),
                     calc(100% - 12px) 100%, 0 100%);
-  font-family: var(--font-mono); font-size: 11px;
-  letter-spacing: .18em; text-transform: uppercase; line-height: 1.2;
+  font-family: var(--font-mono); text-transform: uppercase;
 }
-.build-bar .k { align-self: center; color: var(--ink-ash); font-weight: 500; letter-spacing: .24em; }
+/* left block — BUILD label stacked ABOVE the facet list, both left-aligned. */
+.build-info {
+  display: flex; flex-direction: column; justify-content: center; gap: 6px;
+  min-width: 0;  /* lets the list wrap instead of pushing the CTA */
+}
+.build-bar .k {
+  font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+  letter-spacing: .28em; color: var(--ink-ash); line-height: 1;
+}
+/* facet list — WRAPS to a second row when wide (no ellipsis); each name stays
+   intact (nowrap), names separated by the gap. */
 .build-bar .names {
-  align-self: center; color: var(--ink-bone); font-weight: 500; letter-spacing: .16em;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px;
+  font-size: 11px; font-weight: 500; letter-spacing: .14em; line-height: 1.2;
+  min-width: 0;
 }
-.build-bar .names.empty { color: var(--ink-3); }
-.build-bar .names .b { color: var(--core-ink); font-weight: 700; }
-.build-bar .names .sep { color: var(--ink-3); margin: 0 6px; }
-/* compact pool — spent pips filled (flat, no glow), free pips empty + the
-   remaining count. Replaces the «0 / 5 FREE» block; no «FREE» word. */
-.build-bar .pool { align-self: center; display: inline-flex; align-items: center; gap: 9px; }
-.build-bar .pips { display: inline-flex; gap: 5px; }
-.build-bar .pip {
-  width: 8px; height: 8px;
-  border: 1px solid var(--ink-line-2); background: transparent;
-  transition: background .2s var(--ease), border-color .2s var(--ease);
-}
-.build-bar .pip.on { background: var(--core); border-color: var(--core); } /* flat fill — one glow = the core */
-.build-bar .rem {
-  font-family: var(--font-disp); font-weight: 800; font-size: 18px;
-  letter-spacing: .04em; line-height: 1; color: var(--ink-bone);
-}
-.build-bar .rem b { color: var(--core-ink); }
-.build-bar .rem.depleted b { color: var(--lash); } /* pool empty — chrome accent, flat */
+.build-bar .names .b { color: var(--core-ink); font-weight: 700; white-space: nowrap; }
+.build-bar .names .ph { color: var(--ink-3); }
 @media (max-width: 520px) {
-  /* stack: names on top (full width), then pool + CTA on the second row */
-  .build-bar { grid-template-columns: auto 1fr; gap: 8px 12px; padding: 8px 8px 8px 12px; }
-  .build-bar .k { display: none; }
-  .build-bar .names { grid-column: 1 / -1; font-size: 10px; }
+  /* stack: info on top (full width), CTA full-width below (see .cta mobile) */
+  .build-bar { grid-template-columns: 1fr; gap: 10px; }
+  .build-bar .k { font-size: 10px; }
+  .build-bar .names { font-size: 10px; gap: 4px 12px; }
 }
 
 /* CTA — angular notch, always enabled (Q1 = A). Resting state is DARK in the
