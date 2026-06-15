@@ -124,25 +124,32 @@
           <!-- facet grid (FACET level) — replaces crystals in place -->
           <div class="facets" :hidden="level !== 'face'">
             <div
-              v-for="f in selFaces"
-              :key="f.id"
+              v-for="row in viewFaces"
+              :key="row.f.id"
               class="face"
-              :class="faceClass(f)"
+              :class="faceClass(row.f)"
               tabindex="0"
               role="button"
-              :aria-pressed="f.state === 'lit'"
-              @click="toggleFace(f)"
-              @keydown.enter.prevent="toggleFace(f)"
-              @keydown.space.prevent="toggleFace(f)"
+              :aria-pressed="row.f.state === 'lit'"
+              @click="toggleFace(row.f)"
+              @keydown.enter.prevent="toggleFace(row.f)"
+              @keydown.space.prevent="toggleFace(row.f)"
             >
+              <!-- depth (1..5) — number, or TIP for the branch vertex (accented) -->
+              <span class="fl-dep" :class="{ tip: row.isTip }" :aria-label="`Depth ${row.depth} of 5`">{{ row.depthLabel }}</span>
               <span class="fhex" v-html="faceHtml"></span>
-              <span class="fl-nm">{{ f.name }}</span>
-              <!-- Two-layer readout, single format for all 60 (hard + behaviour):
-                   percent (accent, core hue) + a short word plate beneath it.
-                   Dims with the card on locked/blocked via the face-state classes. -->
-              <span v-if="facetPercent(f) !== null" class="fl-pct">{{ facetPercent(f) }}%</span>
-              <span class="fl-tag">{{ facetPhrase(f) }}</span>
-              <span class="fl-st">{{ faceLabel(f) }}</span>
+              <span class="fl-nm">{{ row.f.name }}</span>
+              <!-- Full readout: primary effect (signed percent + word plate),
+                   then every secondary effect quieter beneath. Same format for
+                   hard + behaviour. Dims with the card on locked/blocked. -->
+              <template v-if="row.fx.length">
+                <span class="fl-pct">{{ row.fx[0].sign }}{{ row.fx[0].pct }}%</span>
+                <span class="fl-tag">{{ row.fx[0].phrase }}</span>
+                <span v-if="row.fx.length > 1" class="fl-sub">
+                  <span v-for="(fx, k) in row.fx.slice(1)" :key="k"><b>{{ fx.sign }}{{ fx.pct }}%</b> {{ fx.phrase }}</span>
+                </span>
+              </template>
+              <span class="fl-st">{{ faceLabel(row.f) }}</span>
             </div>
           </div>
 
@@ -193,7 +200,7 @@ import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
 import { CRYSTALS, RESOURCE, getCore } from '@/data/upgradeData.js';
-import { facetPercent, facetPhrase } from '@/data/facetReadout.js';
+import { facetEffects } from '@/data/facetReadout.js';
 import { coreSVG, shardSVG, faceHex, hexPts, radial } from '@/data/upgradeGeometry.js';
 
 const store = useStore();
@@ -217,6 +224,17 @@ const levelIdx = computed(() => ['core', 'crystal', 'face'].indexOf(level.value)
 const selCrystal = ref(null);
 const selCrystalObj = computed(() => tree.value.find((c) => c.id === selCrystal.value) || null);
 const selFaces = computed(() => (selCrystalObj.value ? selCrystalObj.value.faces : []));
+// Display model for the facet grid — augments each face with its depth (facet
+// id is 1..5 = grade; the 5th is the branch tip / vertex) and its FULL ordered
+// effect list (primary first, secondaries quieter). `f` stays the live store
+// object, so toggle / class / label keep working off the same reference.
+const viewFaces = computed(() => selFaces.value.map((f) => ({
+  f,
+  depth: f.id,
+  isTip: f.id >= 5,
+  depthLabel: f.id >= 5 ? 'TIP' : String(f.id),
+  fx: facetEffects(f),
+})));
 
 // --- Pool accounting (double-clamp: per-crystal limit + global RESOURCE) -------
 function litCount(cr) {
@@ -239,7 +257,7 @@ function shardHtml(cr) {
 const chamFootHint = computed(() =>
   level.value === 'core' ? 'TAP THE CORE TO ENTER THE TREE'
     : level.value === 'crystal' ? 'PICK A CRYSTAL'
-      : 'LIGHT ONE — QUENCH ANOTHER · EFFECTS ARE STUBS',
+      : 'LIGHT ONE — QUENCH ANOTHER',
 );
 const chamFootCaret = computed(() => (level.value === 'core' ? '↓' : ''));
 
@@ -852,6 +870,30 @@ onBeforeUnmount(() => {
   line-height: 1.15; text-align: center; }
 .face.lit .fl-pct { color: var(--core); }
 .face.lit .fl-tag { color: var(--core-ink); }
+
+/* DEPTH badge — corner index 1..5 (mono, quiet). The 5th is the branch tip /
+   vertex: reads TIP in the core ink so the deepest facet flags itself. Flat, no
+   glow. */
+.face .fl-dep {
+  position: absolute; top: 6px; right: 7px;
+  font-family: var(--font-mono); font-size: 8px; font-weight: 700;
+  letter-spacing: .1em; line-height: 1; color: var(--ink-3);
+}
+.face .fl-dep.tip { color: var(--core-ink); letter-spacing: .14em; }
+.face.lit .fl-dep { color: var(--core-ink); }
+.face.lit .fl-dep.tip { color: var(--core); }
+
+/* SECONDARY effects — smaller + quieter than the primary, one per line. Same
+   ink greys (no new colour, no glow); the signed number is a touch brighter than
+   its phrase so it reads at a glance without competing with the headline. */
+.face .fl-sub { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.face .fl-sub span {
+  font-family: var(--font-mono); font-size: 7.5px; font-weight: 500;
+  letter-spacing: .03em; text-transform: uppercase; color: var(--ink-3);
+  line-height: 1.25; text-align: center;
+}
+.face .fl-sub b { color: var(--ink-ash); font-weight: 700; }
+.face.lit .fl-sub b { color: var(--core-ink); }
 
 /* face states — FLAT colour, no glow (glow is the core's job) */
 .face.lit {

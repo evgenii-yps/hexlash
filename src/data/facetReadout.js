@@ -61,3 +61,39 @@ export function facetPhrase(face) {
   }
   return '';
 }
+
+// One axis shift → a display line: signed magnitude + its directional phrase.
+// Sign uses U+2212 minus for a clean mono glyph. Reuses the phrase table.
+function axisLine(axis, delta) {
+  const t = AXIS_PHRASES[axis];
+  return {
+    sign: delta >= 0 ? '+' : '−',
+    pct: Math.round(Math.abs(delta) * AXIS_PCT_PER_DELTA),
+    phrase: t ? (delta >= 0 ? t.up : t.down) : axis,
+  };
+}
+
+// FULL ordered readout for a facet — EVERY significant effect, primary first,
+// each carrying its DIRECTION (sign + directional phrase). Display only — pure
+// read of the existing data, no mutation, no new fight effect.
+//   Hard branch  → the stat % leads (always +; it is what the branch is about),
+//                  then its axis shifts, largest |delta| first.
+//   Behaviour    → the axis shifts, dominant (largest |delta|) first — index 0
+//                  matches the old single dominant readout (stable sort keeps the
+//                  first-wins-on-a-tie order of dominantShift).
+// Each line: { sign, pct, phrase }. Render index 0 prominent, the rest quieter.
+export function facetEffects(face) {
+  if (!face) return [];
+  const out = [];
+  if (face.statBonus) {
+    const t = STAT_PHRASES[face.statBonus.stat];
+    out.push({
+      sign: face.statBonus.pct >= 0 ? '+' : '−',
+      pct: Math.round(Math.abs(face.statBonus.pct) * 100),
+      phrase: t ? (face.statBonus.pct >= 0 ? t.up : t.down) : face.statBonus.stat,
+    });
+  }
+  const shifts = (face.shifts || []).slice().sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
+  for (const sh of shifts) out.push(axisLine(sh.axis, sh.delta));
+  return out;
+}
