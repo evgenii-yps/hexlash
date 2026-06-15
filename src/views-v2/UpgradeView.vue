@@ -135,8 +135,6 @@
               @keydown.enter.prevent="toggleFace(row.f)"
               @keydown.space.prevent="toggleFace(row.f)"
             >
-              <!-- depth (1..5) — number, or TIP for the branch vertex (accented) -->
-              <span class="fl-dep" :class="{ tip: row.isTip }" :aria-label="`Depth ${row.depth} of 5`">{{ row.depthLabel }}</span>
               <span class="fhex" v-html="faceHtml"></span>
               <span class="fl-nm">{{ row.f.name }}</span>
               <!-- Full readout: primary effect (signed percent + word plate),
@@ -224,15 +222,11 @@ const levelIdx = computed(() => ['core', 'crystal', 'face'].indexOf(level.value)
 const selCrystal = ref(null);
 const selCrystalObj = computed(() => tree.value.find((c) => c.id === selCrystal.value) || null);
 const selFaces = computed(() => (selCrystalObj.value ? selCrystalObj.value.faces : []));
-// Display model for the facet grid — augments each face with its depth (facet
-// id is 1..5 = grade; the 5th is the branch tip / vertex) and its FULL ordered
+// Display model for the facet grid — augments each face with its FULL ordered
 // effect list (primary first, secondaries quieter). `f` stays the live store
 // object, so toggle / class / label keep working off the same reference.
 const viewFaces = computed(() => selFaces.value.map((f) => ({
   f,
-  depth: f.id,
-  isTip: f.id >= 5,
-  depthLabel: f.id >= 5 ? 'TIP' : String(f.id),
   fx: facetEffects(f),
 })));
 
@@ -870,18 +864,6 @@ onBeforeUnmount(() => {
   line-height: 1.15; text-align: center; }
 .face.lit .fl-pct { color: var(--core); }
 .face.lit .fl-tag { color: var(--core-ink); }
-
-/* DEPTH badge — corner index 1..5 (mono, quiet). The 5th is the branch tip /
-   vertex: reads TIP in the core ink so the deepest facet flags itself. Flat, no
-   glow. */
-.face .fl-dep {
-  position: absolute; top: 6px; right: 7px;
-  font-family: var(--font-mono); font-size: 8px; font-weight: 700;
-  letter-spacing: .1em; line-height: 1; color: var(--ink-3);
-}
-.face .fl-dep.tip { color: var(--core-ink); letter-spacing: .14em; }
-.face.lit .fl-dep { color: var(--core-ink); }
-.face.lit .fl-dep.tip { color: var(--core); }
 
 /* SECONDARY effects — smaller + quieter than the primary, one per line. Same
    ink greys (no new colour, no glow); the signed number is a touch brighter than
