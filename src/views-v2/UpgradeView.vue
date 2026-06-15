@@ -3,9 +3,9 @@
      fighter: CORE → CRYSTAL → FACET, then ship to battle.
 
      Composition: framed depth chamber (core never floats in void), ghost
-     crystals with names + lit/limit on CORE level, depth rail + chamber tag +
-     back button + action strip, BUILD READOUT band, unified notched foot
-     (pool + pips left, TO BATTLE right). One light = the core in the centre;
+     crystals with names + lit/limit on CORE level, depth rail (chip steps) +
+     chamber tag + back button + action strip, and ONE BUILD bar below it: lit
+     facets · compact point pool (pips + remaining) · TO BATTLE. One light = core;
      crystals/ghosts/facets are flat. §sup-discipline: outer halo uses --core
      (low alpha), --core-sup only seasons the inner highlight — bloom never
      drifts into a neighbour's hue.
@@ -158,30 +158,23 @@
           </div>
         </section>
 
-        <!-- BUILD READOUT — names every lit facet right now -->
-        <div class="build-readout" :class="{ full: litNames.length >= RESOURCE }">
+        <!-- BUILD BAR — one strip: lit facets (left) · compact point pool (pips
+             + remaining) · TO BATTLE (right, its own button). Replaces the old
+             two-row BUILD + CORE POINTS. TO BATTLE enabled at every level (Q1=A). -->
+        <footer class="build-bar">
           <span class="k">BUILD</span>
-          <span class="v" :class="{ empty: !litNames.length }">
+          <span class="names" :class="{ empty: !litNames.length }">
             <template v-if="!litNames.length">NO FACETS LIT — TAP IN</template>
             <template v-else>
               <template v-for="(n, i) in litNames" :key="i"><span v-if="i" class="sep">·</span><span class="b">{{ n }}</span></template>
             </template>
           </span>
-          <span class="ct">{{ litNames.length }} LIT</span>
-        </div>
-
-        <!-- UNIFIED FOOT — pool + pips + bold CTA in one notched container.
-             TO BATTLE enabled at every level (Q1 = A, freedom). -->
-        <footer class="foot">
-          <div class="foot-l">
-            <div class="lbl">
-              <span class="k">CORE POINTS</span>
-              <span class="v" :class="{ depleted: spentTotal >= RESOURCE }"><b>{{ freePts }}</b>&nbsp;/&nbsp;{{ RESOURCE }}&nbsp;FREE</span>
-            </div>
-            <div class="pips" aria-hidden="true">
+          <span class="pool" :aria-label="`${freePts} of ${RESOURCE} core points free`">
+            <span class="pips" aria-hidden="true">
               <span v-for="i in RESOURCE" :key="i" class="pip" :class="{ on: i <= spentTotal }"></span>
-            </div>
-          </div>
+            </span>
+            <span class="rem" :class="{ depleted: spentTotal >= RESOURCE }" aria-hidden="true"><b>{{ freePts }}</b></span>
+          </span>
           <button type="button" class="cta is-ready" aria-label="Proceed to battle" @click="toBattle">
             <span>TO BATTLE</span>
             <span class="arr" aria-hidden="true">→</span>
@@ -564,11 +557,17 @@ onBeforeUnmount(() => {
 }
 .rail .step {
   display: flex; align-items: center; gap: 11px;
-  padding: 10px 8px;                       /* finger-comfortable hit zone */
+  padding: 9px 12px;                       /* finger-comfortable hit zone */
   font-family: var(--font-mono);
   cursor: pointer;
   color: var(--ink-3);                     /* future levels — dim, not yet reachable */
-  transition: color .25s var(--ease);
+  /* chip look — a step reads as a button. Border stays present (transparent at
+     rest) so state colour changes never shift layout. */
+  border: 1px solid transparent; background: transparent;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 6px),
+                    calc(100% - 6px) 100%, 0 100%);
+  transition: color .25s var(--ease), background .2s var(--ease),
+              border-color .2s var(--ease), transform .15s var(--ease);
 }
 .rail .step .ix { font-size: 12px; letter-spacing: .22em; font-weight: 700; }
 .rail .step .lb { font-size: 13px; letter-spacing: .26em; font-weight: 700; text-transform: uppercase; }
@@ -577,12 +576,27 @@ onBeforeUnmount(() => {
   background: transparent;
   transition: background .25s var(--ease), box-shadow .25s var(--ease), border-color .25s var(--ease);
 }
+/* future levels stay flat text — dim, no chip, no hover affordance (can't jump
+   forward; FACET needs a picked core). Disabled cursor reinforces it. */
 .rail .step[disabled] { cursor: default; }
-.rail .step.on { color: var(--ink-bone); } /* visited — bright + clickable (step back) */
-.rail .step.on:hover { color: #fff; }
+/* visited — a raised, clickable chip that says «step back». Hover lifts it. */
+.rail .step.on {
+  color: var(--ink-bone);
+  border-color: var(--ink-line); background: rgba(255, 255, 255, .022);
+}
+.rail .step.on:hover {
+  color: #fff;
+  border-color: var(--ink-line-2); background: rgba(255, 255, 255, .055);
+  transform: translateY(-1px);
+}
 .rail .step.on .dot { background: var(--ink-ash); border-color: var(--ink-ash); }
 .rail .step.on:hover .dot { background: #fff; border-color: #fff; }
-.rail .step.here { color: #fff; }          /* current — pink filled dot */
+/* current — the bright, core-tinted active chip (core dot keeps its accent). */
+.rail .step.here {
+  color: #fff;
+  border-color: var(--core-dim);
+  background: color-mix(in srgb, var(--core) 10%, transparent);
+}
 .rail .step.here .dot {
   background: var(--core); border-color: var(--core);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--core) 22%, transparent),
@@ -717,6 +731,9 @@ onBeforeUnmount(() => {
 @media (prefers-reduced-motion: reduce) {
   .core-node .glow { animation: none; opacity: .85; }
   .core-node .ring, .core-node .tap-cue { display: none; }
+  /* rail chips keep their colour affordance but drop the hover lift (no motion) */
+  .rail .step { transition: color .25s var(--ease), background .2s var(--ease), border-color .2s var(--ease); }
+  .rail .step.on:hover { transform: none; }
 }
 
 /* level positions for the core */
@@ -929,76 +946,51 @@ onBeforeUnmount(() => {
 }
 
 /* ============================================================
-   BUILD READOUT — one-line manifest of currently lit facets
+   BUILD BAR — ONE strip: lit facets · compact point pool · TO BATTLE.
+   (Merges the old BUILD readout + CORE POINTS foot into a single row.)
    ============================================================ */
-.build-readout {
-  display: grid; grid-template-columns: auto 1fr auto;
-  align-items: center; gap: 14px;
-  padding: 8px 12px;
-  border: 1px solid var(--ink-line);
-  background: rgba(255, 255, 255, .013);
-  font-family: var(--font-mono); font-size: 11px;
-  letter-spacing: .18em; text-transform: uppercase; line-height: 1.2;
-}
-.build-readout .k { color: var(--ink-ash); font-weight: 500; letter-spacing: .24em; }
-.build-readout .v { color: var(--ink-bone); font-weight: 500; letter-spacing: .16em;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-.build-readout .v.empty { color: var(--ink-3); }
-.build-readout .v .b { color: var(--core-ink); font-weight: 700; }
-.build-readout .v .sep { color: var(--ink-3); margin: 0 6px; }
-.build-readout .ct { color: var(--core-ink); font-weight: 700; letter-spacing: .18em;
-  font-size: 10.5px; white-space: nowrap; }
-.build-readout.full .ct { color: #fff; }
-@media (max-width: 520px) {
-  .build-readout { font-size: 10px; gap: 10px; padding: 8px 12px; }
-  .build-readout .k { display: none; }
-}
-
-/* ============================================================
-   UNIFIED FOOT — pool + pips + bold CTA in ONE container
-   ============================================================ */
-.foot {
+.build-bar {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: auto 1fr auto auto;  /* label · names · pool · CTA */
   align-items: stretch;
   gap: 14px;
-  padding-top: 4px;
-}
-.foot-l {
-  display: flex; flex-direction: column; justify-content: center; gap: 8px;
-  padding: 10px 14px;
+  padding: 8px 8px 8px 12px;
   border: 1px solid var(--ink-line);
   background: rgba(255, 255, 255, .013);
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px),
                     calc(100% - 12px) 100%, 0 100%);
-  min-width: 0;
-}
-.foot-l .lbl {
-  display: flex; align-items: baseline; gap: 12px;
   font-family: var(--font-mono); font-size: 11px;
-  letter-spacing: .18em; text-transform: uppercase; line-height: 1;
-  min-width: 0;
+  letter-spacing: .18em; text-transform: uppercase; line-height: 1.2;
 }
-.foot-l .lbl .k { color: var(--ink-ash); font-weight: 500; letter-spacing: .24em; }
-.foot-l .lbl .v {
-  font-family: var(--font-disp); font-weight: 800; font-size: 18px;
-  letter-spacing: .04em; color: var(--ink-bone); line-height: 1;
-  white-space: nowrap;
+.build-bar .k { align-self: center; color: var(--ink-ash); font-weight: 500; letter-spacing: .24em; }
+.build-bar .names {
+  align-self: center; color: var(--ink-bone); font-weight: 500; letter-spacing: .16em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
 }
-.foot-l .lbl .v b { color: var(--core-ink); }
-.foot-l .lbl .v.depleted b { color: var(--lash);
-  text-shadow: 0 0 8px var(--lash-dim); }
-.foot-l .pips { display: flex; gap: 6px; }
-.foot-l .pip {
-  flex: 1; height: 8px;
+.build-bar .names.empty { color: var(--ink-3); }
+.build-bar .names .b { color: var(--core-ink); font-weight: 700; }
+.build-bar .names .sep { color: var(--ink-3); margin: 0 6px; }
+/* compact pool — spent pips filled (flat, no glow), free pips empty + the
+   remaining count. Replaces the «0 / 5 FREE» block; no «FREE» word. */
+.build-bar .pool { align-self: center; display: inline-flex; align-items: center; gap: 9px; }
+.build-bar .pips { display: inline-flex; gap: 5px; }
+.build-bar .pip {
+  width: 8px; height: 8px;
   border: 1px solid var(--ink-line-2); background: transparent;
-  transition: .2s var(--ease);
+  transition: background .2s var(--ease), border-color .2s var(--ease);
 }
-.foot-l .pip.on { background: var(--core); border-color: var(--core);
-  box-shadow: 0 0 6px color-mix(in srgb, var(--core) 60%, transparent); }
-.foot-l .pip.over {
-  background: transparent; border-color: var(--core-dim);
-  border-style: dashed;
+.build-bar .pip.on { background: var(--core); border-color: var(--core); } /* flat fill — one glow = the core */
+.build-bar .rem {
+  font-family: var(--font-disp); font-weight: 800; font-size: 18px;
+  letter-spacing: .04em; line-height: 1; color: var(--ink-bone);
+}
+.build-bar .rem b { color: var(--core-ink); }
+.build-bar .rem.depleted b { color: var(--lash); } /* pool empty — chrome accent, flat */
+@media (max-width: 520px) {
+  /* stack: names on top (full width), then pool + CTA on the second row */
+  .build-bar { grid-template-columns: auto 1fr; gap: 8px 12px; padding: 8px 8px 8px 12px; }
+  .build-bar .k { display: none; }
+  .build-bar .names { grid-column: 1 / -1; font-size: 10px; }
 }
 
 /* CTA — angular notch, always enabled (Q1 = A). Resting state is DARK in the
@@ -1079,13 +1071,8 @@ onBeforeUnmount(() => {
      inward off the edges — scale the three co-centred layers together so the
      spokes stay aligned to the crystals and labels/crystals clear the frame. */
   .ghosts, .crystals, .spokes { transform: scale(.82); transform-origin: 50% 50%; }
-  .foot { grid-template-columns: 1fr; gap: 10px; }
+  /* TO BATTLE fills its cell on the build bar's second row (see .build-bar mobile) */
   .cta { min-width: 0; width: 100%; min-height: 54px; }
-  /* CORE POINTS — content sits inside the panel (12px gutter, matching BUILD);
-     pips even, not edge-jammed. */
-  .foot-l { padding: 11px 12px; gap: 9px; }
-  .foot-l .lbl { gap: 10px; }
-  .foot-l .pips { gap: 5px; }
 }
 
 /* ============================================================
