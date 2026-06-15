@@ -269,7 +269,7 @@ export function buildFighter(
   // the left fully recovers. Torso twists (ty) to carry the weight arm to arm;
   // both fists work through shoulder + elbow. Two impacts (one per fist).
   const DOUBLE = {
-    dur: 1.45, impacts: [0.32, 0.58], dmgMult: COMBAT_BALANCE.moveMult.doubleEach, // two lighter hits — each uses this mult (≈1.3 summed)
+    dur: 1.45, impacts: [0.32, 0.58], dmgMult: COMBAT_BALANCE.moveMult.doubleEach, // two hits — each uses this mult, EACH stronger than a jab (≈2.7× a punch summed)
     keys: [
       { t: 0.0, v: REST, e: 'io' },
       { t: 0.16, v: { hz: -0.06, hy: -0.02, tx: 0.06, ty: -0.06, lsx: 0.2, lex: 1.9 }, e: 'io' }, // L chamber, coil
@@ -422,7 +422,7 @@ export function buildFighter(
   // resilience → incoming-damage / stagger multipliers are computed LIVE in
   // takeDamage from the effective resilience (base + klich), so a ДЕРЖАТЬ call
   // toughens the fighter for its duration without touching the base.
-  const dmgMulFor = (res01) => lerp(1.15, 0.6, res01); // glass takes more
+  const dmgMulFor = (res01) => lerp(1.15, 0.38, res01); // glass takes more · floor 0.38 (was 0.6) so max resilience / ДЕРЖАТЬ at peak ~halves incoming vs a neutral fighter
   const stagMulFor = (res01) => lerp(1.0, 0.15, res01); // tough barely hitches
   // Scale this fighter's movement bands by weight (local objects — safe to
   // mutate per fighter; a touch of jitter keeps two same-weight builds distinct).

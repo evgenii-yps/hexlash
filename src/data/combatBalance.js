@@ -14,25 +14,31 @@
                    (speedMul) in buildFighter; NOT a second movement system, just
                    a readable number for the sheet (mobilityBase is its scale).
 
-   Target average bout length: ~15–40s (Decisions Log 13.06). The escalating-
-   damage safeguard guarantees a drawn-out bout still finishes near the top of
-   that window (no ties — a bout always runs to an elimination). */
+   Target average bout length: ~40–50s (~16–17 landed hits, neutral vs neutral).
+   The escalating-damage safeguard only kicks in PAST escalateStartSec, so it
+   guarantees a STALLING bout still finishes (no ties — a bout always runs to an
+   elimination) without cutting a normal 40–50s bout short. */
 export const COMBAT_BALANCE = {
   // --- Scale: large numbers so the grade system's percentage bonuses read.
   maxHp: 4000, // booster HP (was 100) — крупные числа под процентные грани
-  strikePower: 250, // базовая сила удара — панч снимает заметную, не гигантскую долю
+  strikePower: 180, // базовая сила удара (был 250) — на нейтрале панч ≈3% HP, бой ~16–17 ударов
   toughness: 200, // базовая прочность — кривая смягчения масштабируется от неё
   mobilityBase: 100, // масштаб читаемого mobility = round(mobilityBase × speedMul)
 
-  // --- Per-move damage multipliers. Reads as the triad быстрый-слабый /
-  //     двойной-средний / медленный-сильный — the COMBO is the most painful but
-  //     already carries the slowest wind-up in its animation (risk / reward).
+  // --- Per-move damage multipliers. The triad быстрый-слабый / двойной-средний /
+  //     медленный-сильный — on a NEUTRAL target each move lands ≈ punch 3% /
+  //     double 8% (two hits summed) / combo 11% of max HP (the design triad
+  //     3/8/11). The COMBO is the most painful single hit but carries the slowest
+  //     wind-up in its animation (risk / reward). Per-impact ratios punch :
+  //     doubleEach : combo = 1 : 1.33 : 3.67 — double's TWO hits sum to ≈2.7× a
+  //     punch, so a jab–cross clearly beats a single jab. Jitter (below) stays
+  //     well under the gaps, so a high-rolled punch never reaches a double.
   moveMult: {
-    punch: 1.0, // single jab — base
-    doubleEach: 0.65, // jab–cross — two lighter hits, ≈1.3 in sum (чуть больше панча)
-    combo: 1.7, // one heavy commit — the most painful single hit
+    punch: 1.0, // single jab — base (~3% HP felt on neutral)
+    doubleEach: 1.33, // jab–cross — two hits, EACH stronger than a jab; ≈8% HP summed (был 0.65)
+    combo: 3.67, // one heavy commit — the most painful single hit, ~11% HP (был 1.7)
   },
-  jitter: 0.1, // ±10% per-blow variance on outgoing damage
+  jitter: 0.1, // ±10% per-blow variance on outgoing damage — proportional to each move's base, below the inter-move gaps
 
   // --- Grade (facet) bonus ramp by depth (1→5). PERCENT (fraction) added to the
   //     facet's target characteristic on the "hard" branches — strikePower
@@ -51,9 +57,9 @@ export const COMBAT_BALANCE = {
 
   // --- Fight-length safeguard: escalating damage. Past escalateStartSec the
   //     OVERALL damage multiplier on BOTH fighters ramps up (per second), so a
-  //     stalling bout is guaranteed to finish around the top of the 15–40s window.
+  //     stalling bout is guaranteed to finish past the ~40-50s target window.
   //     No hard round cap needed while this is running; no ties.
-  escalateStartSec: 30, // порог времени (с) — до него множитель = 1
+  escalateStartSec: 40, // порог времени (с) — до него множитель = 1 (нормальный бой ~40-50s укладывается, страховка только от затягивания; был 30)
   escalateGrowthPerSec: 0.18, // прирост общего множителя урона в секунду после порога
   escalateMax: 6, // потолок множителя (страховка от бесконечного роста)
 };

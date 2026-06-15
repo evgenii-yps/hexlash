@@ -22,6 +22,9 @@ export const KLICH_PROFILES = {
   // ДЕРЖАТЬ — dig in, ride out a series: tougher + sticks on, AND visibly hunkers
   // into a guard — grows in close (distance−) and stops pushing (initiative−) so
   // the call reads as a defensive POSE even when no hits are landing, not only
-  // through damage. Longer, softer envelope.
-  hold: { axes: { resilience: 35, stick: 25, distance: -20, initiative: -15 }, dur: 6.0, attack: 0.25, release: 0.4 },
+  // through damage. Longer, softer envelope. resilience +50 (was +35) pins a
+  // neutral fighter's resilience to ~100 at peak → with the dmgMulFor floor 0.38
+  // it takes ~HALF the damage of an un-called neutral fighter (пережил серию
+  // снова заметно по HP). Durations untouched.
+  hold: { axes: { resilience: 50, stick: 25, distance: -20, initiative: -15 }, dur: 6.0, attack: 0.25, release: 0.4 },
 };

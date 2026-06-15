@@ -71,7 +71,9 @@ const neutralColor = ref(false);
 //     updates live. armedId / the arm→target→apply flow below is deliberately
 //     GENERIC (a lever id + a fighter), so future buffs reuse it without a klich
 //     hardcode. combatActive gates HUD visibility (shown during a FIGHT / SIG bout).
-const KLICH_POOL = 3; // SHARED charge pool per bout — any call spends 1
+const KLICH_POOL = 3; // SHARED charge pool per bout — any call spends 1. Per-BOUT,
+// NOT a cooldown, so the longer ~40-50s bout does NOT grant extra klich uses —
+// the economy is length-independent (count deliberately unchanged this pass).
 const levers = ref([
   { id: 'forward', label: 'ВПЕРЁД' },
   { id: 'retreat', label: 'ОТХОД' },
@@ -177,8 +179,9 @@ function applyKlich(targetFighter, klichId) {
 // Fight-length safeguard — escalating damage. The attacker hands its raw strike
 // damage (сила удара × множитель приёма × джиттер, computed in buildFighter) to
 // onImpact; this scales it by a multiplier that grows once a bout passes
-// COMBAT_BALANCE.escalateStartSec, so a stalling fight is guaranteed to finish
-// near the top of the 15–40s window (applied to BOTH sides — same clock).
+// COMBAT_BALANCE.escalateStartSec, so a STALLING fight is guaranteed to finish
+// past the ~40-50s target (applied to BOTH sides — same clock); a normal bout
+// ends on its own before escalation bites.
 const escalationMult = () => {
   if (!fightStartT) return 1; // no bout running → no escalation
   const elapsed = lastFrameT - fightStartT;
