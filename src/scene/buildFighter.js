@@ -28,7 +28,7 @@ export function buildFighter(
   // — which drives how this fighter moves and fights (see the axis → knob seam
   // below). If `behavior` is absent it's resolved from `coreId` (no lit facets),
   // so any caller still gets a core-shaped fighter.
-  { side = 'player', coreId = null, behavior = null, maxHp = COMBAT_BALANCE.maxHp, onImpact, onEliminated, getFoePos = null, bounds = { x: 2.5, z: 1.5 }, neutralColor = false } = {},
+  { side = 'player', coreId = null, behavior = null, maxHp = COMBAT_BALANCE.maxHp, onImpact, onMiss, onEliminated, getFoePos = null, bounds = { x: 2.5, z: 1.5 }, neutralColor = false } = {},
 ) {
   const group = new THREE.Group();
 
@@ -411,6 +411,10 @@ export function buildFighter(
     strikePower: Math.round(B.strikePower * (1 + (sb.strikePower || 0))),
     toughness: Math.round(B.toughness * (1 + (sb.toughness || 0))),
     mobility: Math.round(B.mobilityBase * speedMul),
+    // ТОЧНОСТЬ — shared base; `sb.accuracy` is the seam a future "sharper on
+    // entry" facet hooks (no facet moves it yet → undefined → base). Drives the
+    // attacker's per-impact miss chance (missChance below).
+    accuracy: Math.round(B.accuracy * (1 + (sb.accuracy || 0))),
   };
   // Outgoing strike damage for a clip: сила удара × множитель приёма × джиттер.
   // The defender's toughness softening is applied on its side (takeDamage).
@@ -419,6 +423,16 @@ export function buildFighter(
   // hit still chips through). Constant per fighter this pass (stats don't change
   // mid-bout yet); incoming damage is multiplied by (1 − toughSoft) in takeDamage.
   const toughSoft = stats.toughness / (stats.toughness + B.toughnessK);
+  // Accuracy → per-impact MISS chance (the ATTACKER's own fault, rolled BEFORE
+  // the defender's dodge and independent of it). High accuracy → almost never
+  // misses, low → misses more; clamped [floor, cap] so a sloppy fighter still
+  // lands enough (the bout always finishes). Constant per fighter (accuracy
+  // doesn't change mid-bout); rolled per impact, so DOUBLE / COMBO rolls each hit.
+  const missChance = THREE.MathUtils.clamp(
+    B.missChanceBase + ((B.accuracyMid - stats.accuracy) / 100) * B.accuracyMissSwing,
+    B.missChanceFloor, B.missChanceCap,
+  );
+  const rollMiss = () => Math.random() < missChance;
   // resilience → incoming-damage / stagger multipliers are computed LIVE in
   // takeDamage from the effective resilience (base + klich), so a ДЕРЖАТЬ call
   // toughens the fighter for its duration without touching the base.
@@ -757,6 +771,23 @@ export function buildFighter(
     return dx * dx + dz * dz <= STRIKE * STRIKE;
   };
 
+  // Resolve ONE landed impact (called per impact of the active clip). Three
+  // distinct outcomes per impact, in order:
+  //   1. range gate — foe out of STRIKE reach → the fist never arrived (no event).
+  //   2. MISS — the ATTACKER rolls its own accuracy (rollMiss) and goes wide:
+  //      a SEPARATE branch — no onImpact, so no damage / stagger / core-flash
+  //      (the flash is tied to real contact); the strike anim still plays. Fires
+  //      onMiss — the seam a future "punish the foe's whiff" facet hooks (the
+  //      counter itself is NOT wired yet, the event is just made recognisable).
+  //   3. CONTACT — handed to the foe via onImpact; the foe then rolls its OWN
+  //      dodge (slip) in takeDamage → dodge or damage.
+  // So across the system one impact resolves: MISS → else DODGE → else HIT.
+  const resolveImpact = (c) => {
+    if (!foeInStrike()) return; // out of reach — range whiff, NOT an accuracy miss
+    if (rollMiss()) { if (onMiss) onMiss(); return; } // MISS — attacker wide, no contact
+    if (onImpact) onImpact(strikeDamage(c)); // contact → foe resolves dodge / damage
+  };
+
   // Manoeuvre at fighting range — character-weighted tactic re-picked on this
   // fighter's own clock (decideMin + jitter), so the two never act in lock-step:
   //   circle — orbit the foe (own circling sense, occasionally reversed)
@@ -958,7 +989,11 @@ export function buildFighter(
   // lands) on cadence so a fight still progresses without any jitter.
   const reducedAttack = (t) => {
     if (t < ai.nextAt) return;
-    if (onImpact) onImpact(strikeDamage({ dmgMult: B.moveMult.punch })); // punch-equivalent — static fallback still scales off strikePower
+    // Static fallback still rolls the attacker's miss first (no dodge anim under
+    // reduced motion, but the MISS / HIT split holds so accuracy reads here too;
+    // the defender's dodge still applies on contact in takeDamage).
+    if (rollMiss()) { if (onMiss) onMiss(); } // MISS — attacker wide, no contact
+    else if (onImpact) onImpact(strikeDamage({ dmgMult: B.moveMult.punch })); // punch-equivalent — static fallback still scales off strikePower
     // Cadence tracks tempo (+ a weight term) so the static fallback still reads
     // fast-light vs slow-heavy, matching the animated path.
     ai.nextAt = t + Math.max(0.1, lerp(1.0, 0.4, tempo01) + lerp(-0.15, 0.45, weight01)) + Math.random() * lerp(0.9, 0.4, tempo01);
@@ -1042,12 +1077,12 @@ export function buildFighter(
         for (let i = 0; i < clip.impacts.length; i++) {
           if (!clip.fired[i] && ct >= clip.impacts[i]) {
             clip.fired[i] = true;
-            if (onImpact && foeInStrike()) onImpact(strikeDamage(clip)); // damage (force × move × jitter) only if the foe is in reach
+            resolveImpact(clip); // range gate → attacker miss → (foe) dodge → damage
           }
         }
       } else if (!clip.fired && clip.impact >= 0 && ct >= clip.impact) {
         clip.fired = true;
-        if (onImpact && foeInStrike()) onImpact(strikeDamage(clip)); // damage (force × move × jitter) only if the foe is in reach
+        resolveImpact(clip); // range gate → attacker miss → (foe) dodge → damage
       }
       if (ct < clip.dur) {
         const v = sample(clip.keys, ct);

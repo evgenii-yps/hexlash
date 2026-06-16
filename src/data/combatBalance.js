@@ -24,6 +24,7 @@ export const COMBAT_BALANCE = {
   strikePower: 180, // базовая сила удара (был 250) — на нейтрале панч ≈3% HP, бой ~16–17 ударов
   toughness: 200, // базовая прочность — кривая смягчения масштабируется от неё
   mobilityBase: 100, // масштаб читаемого mobility = round(mobilityBase × speedMul)
+  accuracy: 50, // базовая ТОЧНОСТЬ бойца (0..100, общая база; пока грани её не двигают). Компетенция, не ось манеры — двигает шанс промаха.
 
   // --- Per-move damage multipliers. The triad быстрый-слабый / двойной-средний /
   //     медленный-сильный — on a NEUTRAL target each move lands ≈ punch 3% /
@@ -66,6 +67,21 @@ export const COMBAT_BALANCE = {
   //       slip 15 ≈ 3% · 65 ≈ 29% · 75 ≈ 36% · 100 = 55%  (at max 0.55, curve 1.5)
   dodgeChanceMax: 0.55, // потолок шанса уворота при slip=100 (бой обязан доигрываться)
   dodgeChanceCurve: 1.5, // показатель кривой (slip/100)^curve — >1 «заднегружёная»: низкий slip уворачивается почти никогда
+
+  // --- Accuracy → attacker MISS. Per-impact chance the ATTACKER's own strike
+  //     goes wide (the fist doesn't connect) — rolled BEFORE the defender's dodge
+  //     and independent of the defender. A competence, not a movement axis. At the
+  //     neutral accuracy (accuracyMid) the chance is missChanceBase; the attacker's
+  //     accuracy swings it (high → almost never, low → more often) by
+  //     accuracyMissSwing, clamped [missChanceFloor, missChanceCap] so even a
+  //     sloppy fighter still lands enough — the bout always finishes. Rolled per
+  //     impact, so a DOUBLE / COMBO rolls each hit on its own. Tunable.
+  //       acc 100 → 0% · acc 50 → 10% · acc 0 → 20%   (base 0.10, swing 0.20)
+  missChanceBase: 0.1, // базовый шанс промаха на нейтральной точности
+  accuracyMid: 50, // нейтральная точность → ровно missChanceBase
+  accuracyMissSwing: 0.2, // насколько ±точность (на полную шкалу 0..100) двигает шанс промаха
+  missChanceFloor: 0.0, // минимум (идеальная точность может не мазать вовсе)
+  missChanceCap: 0.35, // потолок — даже мазила достаточно попадает (бой обязан доигрываться)
 
   // --- Fight-length safeguard: escalating damage. Past escalateStartSec the
   //     OVERALL damage multiplier on BOTH fighters ramps up (per second), so a
