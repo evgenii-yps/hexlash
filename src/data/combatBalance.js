@@ -55,6 +55,18 @@ export const COMBAT_BALANCE = {
   //     diminishing returns. At toughness=200, K=1200 → ~14% softening.
   toughnessK: 1200,
 
+  // --- Slip → reflex dodge. Per-incoming-hit chance the defender FULLY evades a
+  //     hit (0 damage, no stagger, plays the existing DODGE animation). A pure
+  //     body reflex — fires on probability from the defender's slip axis (0..100),
+  //     no player input, no resource / cooldown (fatigue may cap it in a later
+  //     pass). Each incoming impact rolls its own check, so a DOUBLE / COMBO gives
+  //     several chances in a row. Chance = dodgeChanceMax × (slip/100)^dodgeChanceCurve:
+  //     slip 0 → ~0%, slip 100 → dodgeChanceMax. Capped BELOW 1 so a bout always
+  //     finishes even at max slip (no invulnerable fighter). Tunable.
+  //       slip 15 ≈ 3% · 65 ≈ 29% · 75 ≈ 36% · 100 = 55%  (at max 0.55, curve 1.5)
+  dodgeChanceMax: 0.55, // потолок шанса уворота при slip=100 (бой обязан доигрываться)
+  dodgeChanceCurve: 1.5, // показатель кривой (slip/100)^curve — >1 «заднегружёная»: низкий slip уворачивается почти никогда
+
   // --- Fight-length safeguard: escalating damage. Past escalateStartSec the
   //     OVERALL damage multiplier on BOTH fighters ramps up (per second), so a
   //     stalling bout is guaranteed to finish past the ~40-50s target window.

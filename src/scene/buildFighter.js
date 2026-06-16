@@ -881,6 +881,18 @@ export function buildFighter(
   // attacker→defender pairing live in ArenaScene (the combat resolver).
   const takeDamage = (dmg) => {
     if (state !== 'alive') return;
+    // Reflex dodge (slip): a per-hit chance to FULLY evade — the incoming hit
+    // deals 0 damage, doesn't stagger, and the existing DODGE animation plays
+    // (best-effort: play() no-ops if a clip is already running / reduced motion,
+    // but the hit is negated either way). A body reflex scaled from the slip axis
+    // (combatBalance.dodgeChance*), capped BELOW 1 so a bout always finishes. Each
+    // incoming impact calls takeDamage on its own, so a DOUBLE / COMBO rolls this
+    // per hit. No resource / cooldown yet — fatigue may cap it in a later pass.
+    const dodgeChance = B.dodgeChanceMax * Math.pow(slip01, B.dodgeChanceCurve);
+    if (dodgeChance > 0 && Math.random() < dodgeChance) {
+      play(DODGE); // slip the hit: no HP loss, no rhythm hitch
+      return;
+    }
     // Effective resilience = base + live klich delta (a ДЕРЖАТЬ call toughens for
     // its duration); refreshKlich keeps klichKd current each frame.
     const res01 = THREE.MathUtils.clamp((baseAx.resilience + klichKd.resilience) / 100, 0, 1);
