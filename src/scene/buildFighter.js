@@ -28,7 +28,7 @@ export function buildFighter(
   // — which drives how this fighter moves and fights (see the axis → knob seam
   // below). If `behavior` is absent it's resolved from `coreId` (no lit facets),
   // so any caller still gets a core-shaped fighter.
-  { side = 'player', coreId = null, behavior = null, maxHp = COMBAT_BALANCE.maxHp, onImpact, onMiss, onEliminated, getFoePos = null, bounds = { x: 2.5, z: 1.5 }, neutralColor = false } = {},
+  { side = 'player', coreId = null, behavior = null, maxHp = COMBAT_BALANCE.maxHp, onImpact, onMiss, onBlock, onAttackStart, onEliminated, getFoePos = null, bounds = { x: 2.5, z: 1.5 }, neutralColor = false } = {},
 ) {
   const group = new THREE.Group();
 
@@ -415,6 +415,13 @@ export function buildFighter(
     // entry" facet hooks (no facet moves it yet → undefined → base). Drives the
     // attacker's per-impact miss chance (missChance below).
     accuracy: Math.round(B.accuracy * (1 + (sb.accuracy || 0))),
+    // BLOCK — defender's block STRENGTH (fraction cut while in stance) + the
+    // attacker's block PIERCE. Shared bases; `sb.*` are the seams future facets
+    // hook (a block strengthener / ТАРАН-2 pierce) — none wired yet. Strength is
+    // multiplicative (a facet raises it); pierce is additive (base 0, so a facet
+    // can lift it off zero).
+    blockMitigation: B.blockMitigation * (1 + (sb.blockMitigation || 0)),
+    blockPenetration: B.blockPenetration + (sb.blockPenetration || 0),
   };
   // Outgoing strike damage for a clip: сила удара × множитель приёма × джиттер.
   // The defender's toughness softening is applied on its side (takeDamage).
@@ -517,6 +524,22 @@ export function buildFighter(
   const loco = { active: false, type: 'slow' }; // dev SLOW/FAST preview toggle
   // AI manoeuvre state.
   const nav = { mode: 'circle', until: 0, foe: null, approachAngle: 0 };
+
+  // --- Block stance (defensive guard) — a real body ability, independent of the
+  //     reflex that decides to raise it (below). `blocking` is the live state;
+  //     while it's true a LANDED hit is softened in takeDamage. `blockUntil` auto-
+  //     drops a reflex stance after its hold; Infinity = held until released (the
+  //     dev toggle). Entering / leaving only flips the pose producer (blockPose),
+  //     so the existing cross-fade eases the guard in / out.
+  let blocking = false;
+  let blockUntil = 0; // loop time the reflex stance ends (Infinity = manual hold)
+  const enterBlock = (holdSec = Infinity) => {
+    if (state !== 'alive') return;
+    blocking = true;
+    blockUntil = holdSec === Infinity ? Infinity : lastT + holdSec;
+  };
+  const exitBlock = () => { blocking = false; blockUntil = 0; };
+  const setBlock = (b) => { if (b) enterBlock(Infinity); else exitBlock(); }; // dev toggle — manual hold
 
   // Elimination — dissolve into the fog (~1.4s); core holds and fades last.
   const BG = new THREE.Color(0x070811);
@@ -634,6 +657,22 @@ export function buildFighter(
     targetP.lsx = 0; targetP.lex = 0; targetP.rsx = 0; targetP.rex = 0;
     targetP.lhx = 0; targetP.lkx = 0; targetP.rhx = 0; targetP.rkx = 0;
     setMode('idle');
+  };
+
+  // Block stance → target: a held guard — forearms up toward the foe, torso
+  // slightly closed, a faint breath. A light idle-level pose (NOT a new heavy
+  // clip); the pose layer cross-fades it in / out like any other mode.
+  const BLOCK_SHX = 0.55; // shoulder raise for the guard
+  const BLOCK_EHX = 1.7; // elbow bend — forearms up in front
+  const BLOCK_TORSO = 0.08; // slight close-up of the torso
+  const blockPose = (bs) => {
+    targetP.hipsZ = 0;
+    targetP.hipsY = hipsBaseY + bs * 0.008;
+    targetP.torsoX = BLOCK_TORSO; targetP.torsoY = 0;
+    targetP.lsx = BLOCK_SHX; targetP.lex = BLOCK_EHX;
+    targetP.rsx = BLOCK_SHX; targetP.rex = BLOCK_EHX;
+    targetP.lhx = 0; targetP.lkx = 0; targetP.rhx = 0; targetP.rkx = 0;
+    setMode('block');
   };
 
   // Gait + weight → target. Cadence and amplitude scale with the LIVE speed
@@ -785,7 +824,7 @@ export function buildFighter(
   const resolveImpact = (c) => {
     if (!foeInStrike()) return; // out of reach — range whiff, NOT an accuracy miss
     if (rollMiss()) { if (onMiss) onMiss(); return; } // MISS — attacker wide, no contact
-    if (onImpact) onImpact(strikeDamage(c)); // contact → foe resolves dodge / damage
+    if (onImpact) onImpact(strikeDamage(c), stats.blockPenetration); // contact → foe resolves dodge / block / damage (carry our block-pierce)
   };
 
   // Manoeuvre at fighting range — character-weighted tactic re-picked on this
@@ -910,7 +949,7 @@ export function buildFighter(
 
   // Hit resolution: lose HP, recoil (HURT), and OUT at zero. The rift flash +
   // attacker→defender pairing live in ArenaScene (the combat resolver).
-  const takeDamage = (dmg) => {
+  const takeDamage = (dmg, attackerPen = 0) => {
     if (state !== 'alive') return;
     // Reflex dodge (slip): a per-hit chance to FULLY evade — the incoming hit
     // deals 0 damage, doesn't stagger, and the existing DODGE animation plays
@@ -927,10 +966,22 @@ export function buildFighter(
     // Effective resilience = base + live klich delta (a ДЕРЖАТЬ call toughens for
     // its duration); refreshKlich keeps klichKd current each frame.
     const res01 = THREE.MathUtils.clamp((baseAx.resilience + klichKd.resilience) / 100, 0, 1);
+    // Block: a LANDED hit (got past miss + dodge) into a raised guard is SOFTENED
+    // — ~half, never to zero (stays penetrable; that's what separates it from a
+    // dodge). Cut = block STRENGTH × (1 − attacker PIERCE), clamped < 1 so it
+    // never zeroes. A successful block is a DISTINCT branch + onBlock event (the
+    // seam a future "answer after a block" facet hooks; no counter wired yet).
+    // attackerPen is plumbed from the attacker's stats (base 0 = no pierce yet).
+    let blockMul = 1;
+    if (blocking) {
+      const cut = THREE.MathUtils.clamp(stats.blockMitigation * (1 - attackerPen), 0, 0.9);
+      blockMul = 1 - cut;
+      if (onBlock) onBlock(); // recognisable successful-block event
+    }
     // Two distinct mitigations, both apply: resilience is the BEHAVIOUR axis
     // (manner — unchanged this pass), toughness is the NEW defensive STAT
     // (percent softening, never to zero — слабый удар всё равно чуть проходит).
-    hp = Math.max(0, hp - dmg * dmgMulFor(res01) * (1 - toughSoft));
+    hp = Math.max(0, hp - dmg * dmgMulFor(res01) * (1 - toughSoft) * blockMul);
     updateBar();
     if (hp <= 0) { eliminate(); return; } // → dissolve; onEliminated raised on completion
     play(HURT); // weighty recoil + core flash
@@ -943,6 +994,26 @@ export function buildFighter(
       nav.until = lastT + HURT.dur + 0.3;
       ai.nextAt = lastT + HURT.dur + 0.05;
     }
+  };
+
+  // --- TEMPORARY reflex: "decide to raise the guard" (spinal cord until the
+  //     model supplies a real «brace» intent). The DECISION lives HERE and ONLY
+  //     here — the stance (blockPose), the mitigation (takeDamage) and the onBlock
+  //     event are the real ability and must stay untouched when this is swapped
+  //     out: the model will call enterBlock() directly and retire this function.
+  //     Trigger: the foe commits an in-range attack (routed by ArenaScene from the
+  //     attacker's onAttackStart → this fighter's noteIncomingAttack). Tendency
+  //     grows from LIVE resilience + stick (so a ДЕРЖАТЬ call lifts it and it falls
+  //     on release); resilience-led so a high-stick presser isn't a turtle.
+  const noteIncomingAttack = () => {
+    if (state !== 'alive' || blocking) return; // already guarding → keep the stance
+    const resLive = THREE.MathUtils.clamp((baseAx.resilience + klichKd.resilience) / 100, 0, 1);
+    const stickLive = stickEff; // base + klich, refreshed each frame in refreshKlich
+    const tend = THREE.MathUtils.clamp(
+      B.blockTendencyBase + resLive * B.blockTendencyResWeight + stickLive * B.blockTendencyStickWeight,
+      0, B.blockTendencyMax,
+    );
+    if (Math.random() < tend) enterBlock(B.blockHoldSec); // raise the guard for this exchange
   };
 
   // Autonomous combat (AI): strike only when the foe is within range, on a
@@ -966,6 +1037,7 @@ export function buildFighter(
     const punchW = lerp(0.82, 0.12, heavy01); // light → mostly singles · heavy → mostly DOUBLE/COMBO
     const atk = r < punchW ? PUNCH : r < punchW + 0.4 ? DOUBLE : COMBO;
     play(atk);
+    if (onAttackStart) onAttackStart(); // tell the foe an in-range attack is incoming (→ its block reflex)
     // Cadence: tempo sets the base pause; WEIGHT rides on top so heavy lands rare,
     // heavy blows and light strings frequent, light ones (the "rare heavy vs
     // frequent light" read) even at equal tempo.
@@ -1032,6 +1104,11 @@ export function buildFighter(
     // axis shift is fight logic, not animation).
     refreshKlich(t);
 
+    // Reflex block stance auto-drops after its hold; a dev/manual hold (Infinity)
+    // stays until toggled off. The stance pose itself is rendered below (or static
+    // under reduced motion).
+    if (blocking && blockUntil !== Infinity && t >= blockUntil) exitBlock();
+
     // Selection highlight + confirm flash + a faint "effect active" marker — runs
     // in every alive state (a glow change only, no body motion). Soft pulse while
     // highlighted (static under reduced), a brighter decaying flash on confirm, a
@@ -1051,9 +1128,16 @@ export function buildFighter(
     // Reduced motion: hold a static pose, face the foe, and resolve strikes as
     // key moments only — no locomotion, no clip playback (reads without jitter).
     if (reduced) {
-      if (ai.on && !clip && state === 'alive') { faceInstant(); reducedAttack(t); }
+      if (ai.on && !clip && state === 'alive') { faceInstant(); if (!blocking) reducedAttack(t); }
       hips.position.set(0, hipsBaseY, 0);
-      resetArms();
+      if (blocking) {
+        // static guard (no breath / jitter): forearms up, torso slightly closed
+        torso.rotation.set(BLOCK_TORSO, 0, 0);
+        armL.shoulder.rotation.x = BLOCK_SHX; armL.elbow.rotation.x = BLOCK_EHX;
+        armR.shoulder.rotation.x = BLOCK_SHX; armR.elbow.rotation.x = BLOCK_EHX;
+      } else {
+        resetArms();
+      }
       resetLegs();
       chest.scale.set(1, 1, 1);
       core.scale.setScalar(1);
@@ -1068,8 +1152,9 @@ export function buildFighter(
     let coreBoost = 0;
 
     // AI, when free (no clip): turn to face the foe, then decide whether to
-    // strike (a strike starts a clip that plays out below this same frame).
-    if (ai.on && !clip) { faceFoe(dt); decideAttack(t); }
+    // strike (a strike starts a clip that plays out below this same frame). While
+    // in a block stance the fighter holds the guard and does NOT attack.
+    if (ai.on && !clip) { faceFoe(dt); if (!blocking) decideAttack(t); }
 
     if (clip) {
       const ct = t - clipStart;
@@ -1093,6 +1178,8 @@ export function buildFighter(
         dodgeRun = null;
         idlePose(bs);
       }
+    } else if (blocking) {
+      blockPose(bs); // hold the guard + plant (no nav / gait while blocking)
     } else if (ai.on) {
       navigate(t, dt, bs); // navigate toward / around the foe (sets the move intent)
     } else if (loco.active) {
@@ -1103,8 +1190,8 @@ export function buildFighter(
 
     // Integrate weighted locomotion every frame: a clip / idle frame sets no
     // intent, so carried velocity coasts to rest (inertia) without the gait
-    // overwriting the clip / idle pose. A locomotion frame animates the gait.
-    stepLocomotion(dt, !clip && (ai.on || loco.active));
+    // overwriting the clip / idle / block pose. A locomotion frame animates the gait.
+    stepLocomotion(dt, !clip && !blocking && (ai.on || loco.active));
 
     // Cross-fade the live joints toward this frame's target pose so switching
     // idle ↔ move ↔ strike never snaps (steady modes write straight through).
@@ -1159,6 +1246,10 @@ export function buildFighter(
     dodge: () => play(DODGE),
     slow: () => toggleLoco('slow'),
     fast: () => toggleLoco('fast'),
+    noteIncomingAttack, // foe-attack notification → block reflex (routed by ArenaScene)
+    setBlock, // dev / manual block toggle (true = hold stance, false = drop)
+    toggleBlock: () => setBlock(!blocking),
+    isBlocking: () => blocking,
     eliminate,
     takeDamage,
     getHp: () => hp,

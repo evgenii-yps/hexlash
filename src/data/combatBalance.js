@@ -83,6 +83,33 @@ export const COMBAT_BALANCE = {
   missChanceFloor: 0.0, // минимум (идеальная точность может не мазать вовсе)
   missChanceCap: 0.35, // потолок — даже мазила достаточно попадает (бой обязан доигрываться)
 
+  // --- Block stance. A held defensive POSE (not a dodge): while the defender is
+  //     in stance, a hit that ALREADY landed (not missed, not dodged) is SOFTENED
+  //     — resolved in takeDamage AFTER the dodge roll, BEFORE HP loss. Cuts ~half,
+  //     never to zero (stays penetrable — that's what separates it from a dodge).
+  //     Final cut = blockMitigation × (1 − blockPenetration of the ATTACKER). Both
+  //     are crutening seams: blockMitigation = defender's block STRENGTH (shared
+  //     base; a future facet may raise it), blockPenetration = attacker's PIERCE
+  //     (shared base 0; a future grain like ТАРАН-2 «хуже блокируется» may raise
+  //     it) — neither wired to facets yet. No resource / cooldown (fatigue later).
+  blockMitigation: 0.5, // доля урона, срезаемая стойкой (≈половина, НЕ в ноль)
+  blockPenetration: 0.0, // пробитие блока атакующим (база 0; ШОВ под будущую грань)
+
+  // --- Reflex block tendency (TEMPORARY spinal cord). Per incoming attack, the
+  //     chance the defender raises its guard for that exchange, from its LIVE
+  //     (base + ДЕРЖАТЬ) resilience + stick — dug-in cores guard often, brash ones
+  //     almost never; a ДЕРЖАТЬ call (resilience/stick ↑) naturally lifts it and it
+  //     falls again as the call expires. resilience-led so a high-stick presser
+  //     doesn't read as a turtle. Clamped to blockTendencyMax so a bout finishes.
+  //     This is the ONLY knob of the throwaway reflex — the model's «brace» intent
+  //     replaces the TRIGGER later, leaving stance / mitigation / event untouched.
+  //       skala ≈ 0.60 · natisk ≈ 0.46 · nalet/zasada ≈ 0.22   (res-led)
+  blockTendencyBase: 0.0,
+  blockTendencyResWeight: 0.55, // вклад resilience01 в тяготение к блоку
+  blockTendencyStickWeight: 0.15, // вклад stick01 (меньше — наглый прессер не «черепаха»)
+  blockTendencyMax: 0.65, // потолок частоты блока
+  blockHoldSec: 1.4, // как долго держится рефлекторная стойка на обмен (с; покрывает импакт COMBO)
+
   // --- Fight-length safeguard: escalating damage. Past escalateStartSec the
   //     OVERALL damage multiplier on BOTH fighters ramps up (per second), so a
   //     stalling bout is guaranteed to finish past the ~40-50s target window.

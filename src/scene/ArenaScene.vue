@@ -29,6 +29,7 @@
       <button type="button" class="tgt" @click="cycleSig('right')">R:{{ sigTag(sigRight) }}</button>
       <button type="button" class="tgt" @click="onSigFight">SIG FIGHT</button>
       <button type="button" class="tgt" :class="{ on: neutralColor }" @click="onNeutralColor">GRAY: {{ neutralColor ? 'ON' : 'OFF' }}</button>
+      <button type="button" class="tgt" :class="{ on: blockDev }" @click="onBlockToggle">BLOCK: {{ blockDev ? 'ON' : 'OFF' }}</button>
     </div>
   </div>
 </template>
@@ -137,6 +138,14 @@ function onNeutralColor() {
   neutralColor.value = !neutralColor.value;
   fighter?.setNeutralColor(neutralColor.value);
   opponent?.setNeutralColor(neutralColor.value);
+}
+// BLOCK dev toggle (key B / button) — manually raise / drop the player fighter's
+// block stance to inspect the guard pose + damage softening without waiting for
+// the reflex. Manual hold (Infinity) until toggled off.
+const blockDev = ref(false);
+function onBlockToggle() {
+  blockDev.value = !blockDev.value;
+  fighter?.setBlock(blockDev.value);
 }
 
 // --- Generic arm → pick-fighter → apply flow (reusable by future buffs, NOT
@@ -315,7 +324,8 @@ onMounted(() => {
       bounds: navBounds,
       neutralColor: neutralColor.value,
       getFoePos: () => (opponent ? opponent.group.position : null),
-      onImpact: (raw) => { opponent?.takeDamage(raw * escalationMult()); }, // attacker's strike damage × time safeguard; foe softens by its toughness
+      onImpact: (raw, pen) => { opponent?.takeDamage(raw * escalationMult(), pen); }, // attacker's strike damage × time safeguard; foe softens by toughness / block (pen = our block-pierce)
+      onAttackStart: () => opponent?.noteIncomingAttack?.(), // in-range attack incoming → the foe's block reflex
       onEliminated: () => {
         scene.remove(fighter.group);
         fighter.dispose();
@@ -328,6 +338,7 @@ onMounted(() => {
     fighter.group.position.set(0.45, arena.refs.topY, 1.3); // off-centre, asymmetric to the opponent
     fighter.setReducedMotion(reducedMotion);
     fighter.setAI(aiPlayer); // keep AI on across respawn
+    if (blockDev.value) fighter.setBlock(true); // keep a dev block stance across respawn
     scene.add(fighter.group);
   };
   const spawnOpponent = () => {
@@ -338,7 +349,8 @@ onMounted(() => {
       bounds: navBounds,
       neutralColor: neutralColor.value,
       getFoePos: () => (fighter ? fighter.group.position : null),
-      onImpact: (raw) => { fighter?.takeDamage(raw * escalationMult()); }, // attacker's strike damage × time safeguard; foe softens by its toughness
+      onImpact: (raw, pen) => { fighter?.takeDamage(raw * escalationMult(), pen); }, // attacker's strike damage × time safeguard; foe softens by toughness / block (pen = our block-pierce)
+      onAttackStart: () => fighter?.noteIncomingAttack?.(), // in-range attack incoming → the foe's block reflex
       onEliminated: () => {
         scene.remove(opponent.group);
         opponent.dispose();
@@ -473,9 +485,10 @@ onMounted(() => {
   };
   document.addEventListener('visibilitychange', onVisibility);
 
-  // --- Dev key on preview: F = FIGHT.
+  // --- Dev keys on preview: F = FIGHT · B = toggle player block stance.
   onKeydown = (e) => {
     if (e.key === 'f') onFight();
+    else if (e.key === 'b') onBlockToggle();
   };
   window.addEventListener('keydown', onKeydown);
 
