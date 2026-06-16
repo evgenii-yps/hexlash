@@ -31,6 +31,8 @@
       <button type="button" class="tgt" :class="{ on: neutralColor }" @click="onNeutralColor">GRAY: {{ neutralColor ? 'ON' : 'OFF' }}</button>
       <button type="button" class="tgt" :class="{ on: blockDev }" @click="onBlockToggle">BLOCK: {{ blockDev ? 'ON' : 'OFF' }}</button>
     </div>
+    <!-- Dev stamina (силы) readout for both fighters — live spend / recover. -->
+    <div v-if="panelVisible" class="arena-readout">{{ staReadout }}</div>
   </div>
 </template>
 
@@ -53,6 +55,9 @@ const canvasEl = ref(null);
 // Dev-panel visibility — true at rest, auto-hidden during a bout, flipped by the
 // always-on DEV corner toggle (the only way back during the SIG auto-cycle).
 const panelVisible = ref(true);
+// Dev readout — both fighters' stamina (силы), refreshed live (throttled) in the
+// loop so the spend / recover can be watched. Temporary, like the other dev bits.
+const staReadout = ref('STA  P —  ·  O —');
 
 // --- Behaviour A/B dev stand (preview only). Pick a signature preset for the
 //     LEFT (player slot) and RIGHT (opponent slot) fighter, run an autonomous
@@ -105,6 +110,7 @@ let runFight = null;
 let sigCycle = false;
 let sigRestartAt = 0;
 let lastFrameT = 0;
+let lastStaReadout = 0; // throttle clock for the dev stamina readout
 let runSigFight = null;
 // Loop time the current bout started — drives the fight-length safeguard
 // (escalating damage). 0 = no bout running (multiplier stays 1). Set on every
@@ -459,6 +465,13 @@ onMounted(() => {
     fighter?.update(t); // may be null after a fight ends, until next FIGHT
     opponent?.update(t);
 
+    // Dev stamina readout (throttled ~5/s) — live силы of both fighters.
+    if (panelVisible.value && t - lastStaReadout > 0.2) {
+      lastStaReadout = t;
+      const pct = (fr) => (fr ? Math.round(fr.getStamina01() * 100) : '—');
+      staReadout.value = `STA  P ${pct(fighter)}  ·  O ${pct(opponent)}`;
+    }
+
     // SIG A/B auto-cycle — a KO scheduled a restart; fire it (full HP, fresh
     // presets) so consecutive bouts run back-to-back without a reload.
     if (sigCycle && sigRestartAt && t >= sigRestartAt) {
@@ -549,6 +562,21 @@ onBeforeUnmount(() => {
     transparent 55%,
     rgba(3, 3, 8, 0.55) 100%
   );
+}
+/* Temporary dev stamina readout (preview only). */
+.arena-readout {
+  position: absolute;
+  right: 14px;
+  bottom: 44px;
+  pointer-events: none;
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.6);
+  background: rgba(8, 10, 18, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 4px;
+  padding: 4px 8px;
 }
 /* Temporary dev action triggers (preview only). */
 .arena-actions {

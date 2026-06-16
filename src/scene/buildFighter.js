@@ -423,9 +423,29 @@ export function buildFighter(
     blockMitigation: B.blockMitigation * (1 + (sb.blockMitigation || 0)),
     blockPenetration: B.blockPenetration + (sb.blockPenetration || 0),
   };
-  // Outgoing strike damage for a clip: сила удара × множитель приёма × джиттер.
-  // The defender's toughness softening is applied on its side (takeDamage).
-  const strikeDamage = (c) => stats.strikePower * (c.dmgMult || 0) * (1 + jit(B.jitter));
+  // --- Stamina (запас сил) — spent on actions, recovered at rest; low stamina
+  //     SMOOTHLY weakens + slows attacks (a curve, not a hard lockout). Starts
+  //     full. Read externally (getStamina* in the return) — the seam ТЕНЬ-3 «враг
+  //     выматывается, гоняясь» reads a foe's stamina (chasing already drains it,
+  //     see the move cost in stepLocomotion; the facet later amplifies). SEAM: a
+  //     future «копит заряд» (ОХОТА/ЖАЛО) charge stat hooks alongside this — NOT
+  //     built. SEAM: fatigue could later also cut dodge / block — left UNWIRED
+  //     (see takeDamage) so the fight isn't penalised on every axis at once. All
+  //     numbers in combatBalance.js.
+  const staminaMax = B.staminaMax;
+  let stamina = staminaMax; // start full
+  const stamina01 = () => stamina / staminaMax;
+  // Power: full → ×1, empty → floor. Cadence: full → ×1 pause, empty → ×stretchMax
+  // (реже бьёт). Both smooth over the curve; floors keep a spent fighter weak-but-
+  // active so the bout still finishes (escalation closes any drag).
+  const staminaPowerMul = () => B.staminaPowerFloor + (1 - B.staminaPowerFloor) * Math.pow(stamina01(), B.staminaPenaltyCurve);
+  const staminaCadenceMul = () => 1 + (B.staminaCadenceStretchMax - 1) * Math.pow(1 - stamina01(), B.staminaPenaltyCurve);
+  const attackStaminaCost = (atk) => (atk === COMBO ? B.staminaCostCombo : atk === DOUBLE ? B.staminaCostDouble : B.staminaCostPunch);
+
+  // Outgoing strike damage for a clip: сила удара × множитель приёма × УСТАЛОСТЬ ×
+  // джиттер (low stamina weakens the hit, evaluated at impact time). The
+  // defender's toughness / block softening is applied on its side (takeDamage).
+  const strikeDamage = (c) => stats.strikePower * (c.dmgMult || 0) * staminaPowerMul() * (1 + jit(B.jitter));
   // Toughness softening — PERCENT mitigation, saturating, never to zero (a weak
   // hit still chips through). Constant per fighter this pass (stats don't change
   // mid-bout yet); incoming damage is multiplied by (1 − toughSoft) in takeDamage.
@@ -776,6 +796,17 @@ export function buildFighter(
     intent.on = false; // consume — the next frame must re-request to keep moving
   };
 
+  // Stamina tick (called once per alive frame, after stepLocomotion so prevMag is
+  // this frame's speed). Moving DRAINS (∝ speed fraction — chasing costs sils,
+  // ТЕНЬ-3 seam); standing/collected with NO clip RECOVERS (so idle + a block
+  // stance regen; attacking / hurt / dodge clips neither). Attack costs are
+  // charged separately at strike start (decideAttack / reducedAttack).
+  const tickStamina = (dt) => {
+    if (prevMag > 0.05) stamina -= B.staminaMoveDrainPerSec * THREE.MathUtils.clamp(prevMag / FAST.speed, 0, 1) * dt;
+    else if (!clip) stamina += B.staminaRegenPerSec * dt;
+    stamina = THREE.MathUtils.clamp(stamina, 0, staminaMax);
+  };
+
   // Steer rotation.y toward a world direction (shortest angle, rate-limited).
   // Forward is local -Z, so facing (dirX, dirZ) means rotation.y = atan2(-dirX, -dirZ).
   const faceDir = (dt, dirX, dirZ) => {
@@ -951,6 +982,9 @@ export function buildFighter(
   // attacker→defender pairing live in ArenaScene (the combat resolver).
   const takeDamage = (dmg, attackerPen = 0) => {
     if (state !== 'alive') return;
+    // SEAM (NOT wired): a future fatigue pass could scale the dodge chance + the
+    // block strength below by stamina (a spent fighter slips / guards worse) —
+    // left unwired on purpose so the fight isn't penalised on every axis at once.
     // Reflex dodge (slip): a per-hit chance to FULLY evade — the incoming hit
     // deals 0 damage, doesn't stagger, and the existing DODGE animation plays
     // (best-effort: play() no-ops if a clip is already running / reduced motion,
@@ -1037,12 +1071,15 @@ export function buildFighter(
     const punchW = lerp(0.82, 0.12, heavy01); // light → mostly singles · heavy → mostly DOUBLE/COMBO
     const atk = r < punchW ? PUNCH : r < punchW + 0.4 ? DOUBLE : COMBO;
     play(atk);
+    stamina = THREE.MathUtils.clamp(stamina - attackStaminaCost(atk), 0, staminaMax); // spend силы on the strike (jab cheap, combo dear) — never gates the attack
     if (onAttackStart) onAttackStart(); // tell the foe an in-range attack is incoming (→ its block reflex)
     // Cadence: tempo sets the base pause; WEIGHT rides on top so heavy lands rare,
     // heavy blows and light strings frequent, light ones (the "rare heavy vs
-    // frequent light" read) even at equal tempo.
+    // frequent light" read) even at equal tempo. LOW STAMINA stretches the pause
+    // (×staminaCadenceMul) → a tired fighter strikes less often.
     const heavyPause = lerp(-0.12, 0.4, weight01); // light shortens · heavy lengthens the gap
-    ai.nextAt = t + atk.dur + Math.max(0.06, lerp(0.85, 0.18, tempo01) + heavyPause) + Math.random() * lerp(0.9, 0.3, tempo01);
+    const pause = (Math.max(0.06, lerp(0.85, 0.18, tempo01) + heavyPause) + Math.random() * lerp(0.9, 0.3, tempo01)) * staminaCadenceMul();
+    ai.nextAt = t + atk.dur + pause;
     // Follow-up after the strike — profile-driven: aggressive / sticky ones press
     // a flurry, the rest circle or bait out. Window starts as the clip ends.
     // (Never just hang motionless in the foe's face.) Initiative-led.
@@ -1065,10 +1102,11 @@ export function buildFighter(
     // reduced motion, but the MISS / HIT split holds so accuracy reads here too;
     // the defender's dodge still applies on contact in takeDamage).
     if (rollMiss()) { if (onMiss) onMiss(); } // MISS — attacker wide, no contact
-    else if (onImpact) onImpact(strikeDamage({ dmgMult: B.moveMult.punch })); // punch-equivalent — static fallback still scales off strikePower
-    // Cadence tracks tempo (+ a weight term) so the static fallback still reads
-    // fast-light vs slow-heavy, matching the animated path.
-    ai.nextAt = t + Math.max(0.1, lerp(1.0, 0.4, tempo01) + lerp(-0.15, 0.45, weight01)) + Math.random() * lerp(0.9, 0.4, tempo01);
+    else if (onImpact) onImpact(strikeDamage({ dmgMult: B.moveMult.punch }), stats.blockPenetration); // punch-equivalent (strikeDamage already folds in stamina power penalty)
+    stamina = THREE.MathUtils.clamp(stamina - B.staminaCostPunch, 0, staminaMax); // spend силы (punch-equivalent)
+    // Cadence tracks tempo (+ a weight term), stretched by LOW STAMINA, so the
+    // static fallback reads fast-light vs slow-heavy AND tires like the animated path.
+    ai.nextAt = t + (Math.max(0.1, lerp(1.0, 0.4, tempo01) + lerp(-0.15, 0.45, weight01)) + Math.random() * lerp(0.9, 0.4, tempo01)) * staminaCadenceMul();
   };
   const setAI = (b) => {
     ai.on = b;
@@ -1129,6 +1167,7 @@ export function buildFighter(
     // key moments only — no locomotion, no clip playback (reads without jitter).
     if (reduced) {
       if (ai.on && !clip && state === 'alive') { faceInstant(); if (!blocking) reducedAttack(t); }
+      stamina = THREE.MathUtils.clamp(stamina + B.staminaRegenPerSec * dt, 0, staminaMax); // no locomotion under reduced → recover (attack cost charged in reducedAttack)
       hips.position.set(0, hipsBaseY, 0);
       if (blocking) {
         // static guard (no breath / jitter): forearms up, torso slightly closed
@@ -1193,6 +1232,9 @@ export function buildFighter(
     // overwriting the clip / idle / block pose. A locomotion frame animates the gait.
     stepLocomotion(dt, !clip && !blocking && (ai.on || loco.active));
 
+    // Stamina: drain on movement (prevMag set just above) / recover when collected.
+    tickStamina(dt);
+
     // Cross-fade the live joints toward this frame's target pose so switching
     // idle ↔ move ↔ strike never snaps (steady modes write straight through).
     commitPose(dt);
@@ -1250,6 +1292,9 @@ export function buildFighter(
     setBlock, // dev / manual block toggle (true = hold stance, false = drop)
     toggleBlock: () => setBlock(!blocking),
     isBlocking: () => blocking,
+    getStamina: () => stamina, // запас сил (readable — ТЕНЬ-3 seam + dev readout)
+    getStaminaMax: () => staminaMax,
+    getStamina01: () => stamina01(),
     eliminate,
     takeDamage,
     getHp: () => hp,

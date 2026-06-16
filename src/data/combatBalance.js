@@ -110,6 +110,29 @@ export const COMBAT_BALANCE = {
   blockTendencyMax: 0.65, // потолок частоты блока
   blockHoldSec: 1.4, // как долго держится рефлекторная стойка на обмен (с; покрывает импакт COMBO)
 
+  // --- Stamina (запас сил). A per-fighter pool spent on actions, recovered at
+  //     rest. Low stamina SMOOTHLY weakens + slows attacks (a curve, NOT a hard
+  //     lockout — a spent fighter still acts, just sluggishly). Start full. The
+  //     pool is read externally (buildFighter.getStamina*) — the seam ТЕНЬ-3
+  //     «враг выматывается, гоняясь» (chasing already drains it via the move cost
+  //     below; that facet later amplifies). A future «копит заряд» (ОХОТА/ЖАЛО)
+  //     charge stat would hook ALONGSIDE this (not built — facet layer). Fatigue
+  //     could later also cut dodge / block (left as a seam, NOT wired, so the
+  //     fight isn't penalised on every axis at once). All numbers tunable.
+  staminaMax: 100, // полный запас
+  staminaRegenPerSec: 14, // восстановление в покое / в стойке (собран, не атакует, не идёт)
+  staminaMoveDrainPerSec: 6, // трата на перемещение (× доля от макс. скорости) — преследование выматывает
+  staminaCostPunch: 6, // джеб — дёшево
+  staminaCostDouble: 11, // двойка — дороже
+  staminaCostCombo: 16, // комбо — дороже всего (списывается на старте приёма)
+  // Low-stamina penalty (smooth, по кривой). Power: full → ×1, empty → floor.
+  // Cadence: full → ×1 пауза между атаками, empty → ×stretchMax (реже бьёт).
+  // Floors подобраны так, чтобы выдохшийся боец был слабее, но бой не вис
+  // (эскалация добивает затяг).
+  staminaPowerFloor: 0.55, // множитель к strikePower при пустом запасе
+  staminaCadenceStretchMax: 1.8, // во столько растягивается пауза между атаками при пустом
+  staminaPenaltyCurve: 1.0, // показатель кривой fatigue→штраф (1 = линейно)
+
   // --- Fight-length safeguard: escalating damage. Past escalateStartSec the
   //     OVERALL damage multiplier on BOTH fighters ramps up (per second), so a
   //     stalling bout is guaranteed to finish past the ~40-50s target window.
