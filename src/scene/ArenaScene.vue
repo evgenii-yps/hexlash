@@ -30,6 +30,7 @@
       <button type="button" class="tgt" @click="onSigFight">SIG FIGHT</button>
       <button type="button" class="tgt" :class="{ on: neutralColor }" @click="onNeutralColor">GRAY: {{ neutralColor ? 'ON' : 'OFF' }}</button>
       <button type="button" class="tgt" :class="{ on: blockDev }" @click="onBlockToggle">BLOCK: {{ blockDev ? 'ON' : 'OFF' }}</button>
+      <button type="button" class="tgt" @click="onDevFeint">FEINT</button>
     </div>
     <!-- Dev stamina (силы) readout for both fighters — live spend / recover. -->
     <div v-if="panelVisible" class="arena-readout">{{ staReadout }}</div>
@@ -153,6 +154,9 @@ function onBlockToggle() {
   blockDev.value = !blockDev.value;
   fighter?.setBlock(blockDev.value);
 }
+// FEINT dev trigger (key V / button) — throw the player fighter's feint once to
+// see the fake + check the payoff. (F is already FIGHT, so feint is on V.)
+function onDevFeint() { fighter?.feint(); }
 
 // --- Generic arm → pick-fighter → apply flow (reusable by future buffs, NOT
 //     klich-specific). Tap a lever → armed (targeting); own fighters light up;
@@ -332,6 +336,7 @@ onMounted(() => {
       getFoePos: () => (opponent ? opponent.group.position : null),
       onImpact: (raw, pen) => { opponent?.takeDamage(raw * escalationMult(), pen); }, // attacker's strike damage × time safeguard; foe softens by toughness / block (pen = our block-pierce)
       onAttackStart: () => opponent?.noteIncomingAttack?.(), // in-range attack incoming → the foe's block reflex
+      getFoeReacting: () => !!(opponent && (opponent.isBlocking?.() || opponent.isDodging?.())), // foe took the bait? (feint payoff)
       onEliminated: () => {
         scene.remove(fighter.group);
         fighter.dispose();
@@ -357,6 +362,7 @@ onMounted(() => {
       getFoePos: () => (fighter ? fighter.group.position : null),
       onImpact: (raw, pen) => { fighter?.takeDamage(raw * escalationMult(), pen); }, // attacker's strike damage × time safeguard; foe softens by toughness / block (pen = our block-pierce)
       onAttackStart: () => fighter?.noteIncomingAttack?.(), // in-range attack incoming → the foe's block reflex
+      getFoeReacting: () => !!(fighter && (fighter.isBlocking?.() || fighter.isDodging?.())), // foe took the bait? (feint payoff)
       onEliminated: () => {
         scene.remove(opponent.group);
         opponent.dispose();
@@ -498,10 +504,12 @@ onMounted(() => {
   };
   document.addEventListener('visibilitychange', onVisibility);
 
-  // --- Dev keys on preview: F = FIGHT · B = toggle player block stance.
+  // --- Dev keys on preview: F = FIGHT · B = toggle player block · V = player feint
+  //     (F is taken by FIGHT, so the feint dev key is V; button is FEINT).
   onKeydown = (e) => {
     if (e.key === 'f') onFight();
     else if (e.key === 'b') onBlockToggle();
+    else if (e.key === 'v') onDevFeint();
   };
   window.addEventListener('keydown', onKeydown);
 

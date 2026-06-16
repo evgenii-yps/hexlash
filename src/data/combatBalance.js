@@ -133,6 +133,26 @@ export const COMBAT_BALANCE = {
   staminaCadenceStretchMax: 1.8, // во столько растягивается пауза между атаками при пустом
   staminaPenaltyCurve: 1.0, // показатель кривой fatigue→штраф (1 = линейно)
 
+  // --- Feint (обманный удар). A fake: the same opening as a real strike (sends
+  //     the SAME threat signal, onAttackStart, so the foe's block/dodge reflex
+  //     fires) but no contact, no damage — it just spends a little stamina. PAYOFF:
+  //     if the foe takes the bait (blocks / dodges) inside feintBaitWindowSec, an
+  //     advantage window opens; a REAL strike thrown inside feintAdvantageWindowSec
+  //     pierces the guard (raises the attacker's existing blockPenetration to
+  //     feintPenetrationBonus for that hit) + hits a bit harder (feintDamageBonus).
+  //     No new pierce system — reuses blockPenetration. If the foe doesn't bite,
+  //     the feint just cost stamina (the honest price of the bluff). All tunable.
+  feintStaminaCost: 4, // дешевле полного удара (punch 6), но не бесплатно
+  feintBaitWindowSec: 0.6, // окно после финта — следим, среагировал ли враг
+  feintAdvantageWindowSec: 1.2, // окно преимущества после того, как враг купился
+  feintPenetrationBonus: 0.6, // пробитие блока у удара-расплаты (поднимает blockPenetration на этот удар)
+  feintDamageBonus: 0.25, // небольшой бонус урона удара-расплаты (+25%)
+  // Reflex «when to feint» (TEMPORARY spinal cord) — chance to fake instead of a
+  // real strike: base + light weight from counter (feint ≈ «ловлю на реакции»).
+  feintChanceBase: 0.12,
+  feintChanceCounterWeight: 0.25, // вклад counter01 в шанс финта
+  feintChanceMax: 0.45, // потолок частоты финта
+
   // --- Fight-length safeguard: escalating damage. Past escalateStartSec the
   //     OVERALL damage multiplier on BOTH fighters ramps up (per second), so a
   //     stalling bout is guaranteed to finish past the ~40-50s target window.

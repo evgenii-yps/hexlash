@@ -28,7 +28,7 @@ export function buildFighter(
   // — which drives how this fighter moves and fights (see the axis → knob seam
   // below). If `behavior` is absent it's resolved from `coreId` (no lit facets),
   // so any caller still gets a core-shaped fighter.
-  { side = 'player', coreId = null, behavior = null, maxHp = COMBAT_BALANCE.maxHp, onImpact, onMiss, onBlock, onAttackStart, onEliminated, getFoePos = null, bounds = { x: 2.5, z: 1.5 }, neutralColor = false } = {},
+  { side = 'player', coreId = null, behavior = null, maxHp = COMBAT_BALANCE.maxHp, onImpact, onMiss, onBlock, onAttackStart, onFeint, onEliminated, getFoePos = null, getFoeReacting = null, bounds = { x: 2.5, z: 1.5 }, neutralColor = false } = {},
 ) {
   const group = new THREE.Group();
 
@@ -243,6 +243,20 @@ export function buildFighter(
       { t: 0.6, v: { hz: -0.12, hy: -0.05, tx: -0.18, lsx: 1.5, lex: 0.05 }, e: 'out' }, // snap — extend
       { t: 0.74, v: { hz: -0.08, hy: -0.03, tx: -0.1, lsx: 1.35, lex: 0.16 }, e: 'out' }, // recoil
       { t: 1.3, v: REST, e: 'io' }, // weighty return
+    ],
+  };
+  // FEINT — a fake: the SAME opening coil/chamber as PUNCH (so the foe reads a
+  // real threat) but it BREAKS OFF instead of extending — pull the fist back, quick
+  // return to stance. No impact (impact: -1 → resolveImpact never runs), no contact,
+  // no damage. Shorter than a full punch. `feint: true` tags the clip. Plays under
+  // reduced motion like any clip (no jitter).
+  const FEINT = {
+    dur: 0.75, impact: -1, feint: true,
+    keys: [
+      { t: 0.0, v: REST, e: 'io' },
+      { t: 0.32, v: { hz: 0.02, hy: -0.02, tx: 0.12, lsx: 0.15, lex: 2.0 }, e: 'io' }, // coil / chamber — IDENTICAL read to PUNCH's threat
+      { t: 0.46, v: { hz: 0.05, hy: -0.01, tx: 0.05, lsx: 0.5, lex: 1.2 }, e: 'out' }, // break off — pull back instead of snapping out
+      { t: 0.75, v: REST, e: 'io' }, // quick return to stance
     ],
   };
   const APPROACH = {
@@ -561,6 +575,20 @@ export function buildFighter(
   const exitBlock = () => { blocking = false; blockUntil = 0; };
   const setBlock = (b) => { if (b) enterBlock(Infinity); else exitBlock(); }; // dev toggle — manual hold
 
+  // --- Feint (обманный удар) — a real ability (the FEINT clip + bait/advantage
+  //     windows + payoff), built clean; the DECISION to feint is the throwaway
+  //     reflex below (decideFeint, TEMPORARY). `feintActive` is readable (the seam
+  //     future ФИНТ-branch grains hook — recognisability only, NOT wired). The
+  //     windows: after a feint we watch feintBaitUntil for the foe to react; if it
+  //     bites, feintAdvUntil opens; a real strike launched in it sets
+  //     feintPayoffActive, which boosts that strike's block-pierce + damage in
+  //     resolveImpact. Numbers in combatBalance.js.
+  let feintActive = false; // a feint is in play (readable — ФИНТ-branch seam)
+  let feintBaitUntil = 0; // window watching for the foe's reaction (loop time)
+  let feintBaited = false; // foe took the bait
+  let feintAdvUntil = 0; // advantage window for the punisher (loop time)
+  let feintPayoffActive = false; // the current real-attack clip carries the payoff
+
   // Elimination — dissolve into the fog (~1.4s); core holds and fades last.
   const BG = new THREE.Color(0x070811);
   let skinBase = skin.color.clone(); // re-captured at eliminate() so the dissolve fades from the live (e.g. neutral-grey) skin
@@ -855,7 +883,13 @@ export function buildFighter(
   const resolveImpact = (c) => {
     if (!foeInStrike()) return; // out of reach — range whiff, NOT an accuracy miss
     if (rollMiss()) { if (onMiss) onMiss(); return; } // MISS — attacker wide, no contact
-    if (onImpact) onImpact(strikeDamage(c), stats.blockPenetration); // contact → foe resolves dodge / block / damage (carry our block-pierce)
+    if (!onImpact) return;
+    // Feint payoff: a real strike that follows a bought feint pierces the guard
+    // (raise our block-pierce to feintPenetrationBonus for this hit — REUSES the
+    // existing blockPenetration channel) and hits a bit harder (feintDamageBonus).
+    const pen = feintPayoffActive ? Math.max(stats.blockPenetration, B.feintPenetrationBonus) : stats.blockPenetration;
+    const dmg = strikeDamage(c) * (feintPayoffActive ? 1 + B.feintDamageBonus : 1);
+    onImpact(dmg, pen); // contact → foe resolves dodge / block / damage
   };
 
   // Manoeuvre at fighting range — character-weighted tactic re-picked on this
@@ -968,6 +1002,7 @@ export function buildFighter(
     clip = null;
     dodgeRun = null;
     loco.active = false;
+    feintActive = false; feintPayoffActive = false; feintBaitUntil = 0; feintAdvUntil = 0; feintBaited = false; // feint state leaves with the fighter
     barTrack.visible = false; // bar leaves with the fighter
     barFill.visible = false;
     if (reduced) { state = 'done'; if (onEliminated) onEliminated(); return; } // no playback
@@ -1050,6 +1085,40 @@ export function buildFighter(
     if (Math.random() < tend) enterBlock(B.blockHoldSec); // raise the guard for this exchange
   };
 
+  // --- Feint ABILITY (built clean — clip + threat signal + bait window). Throws
+  //     the FEINT clip, spends a little stamina, and fires the SAME onAttackStart
+  //     as a real strike so the foe's reflex (noteIncomingAttack / its own dodge)
+  //     bites on the bluff — REUSES the existing route, no new foe-side logic. Opens
+  //     the bait window; update() watches the foe + opens the advantage window if it
+  //     reacts. Used by the dev trigger and by the TEMPORARY decision below; the
+  //     future model's «deceive» intent will call THIS directly. Schedules a SHORT
+  //     follow gap so the punisher can land inside the advantage window.
+  const doFeint = (t) => {
+    if (state !== 'alive' || clip) return; // can't feint mid-clip
+    play(FEINT);
+    stamina = THREE.MathUtils.clamp(stamina - B.feintStaminaCost, 0, staminaMax); // honest price of the bluff
+    feintActive = true;
+    feintBaited = false;
+    feintAdvUntil = 0;
+    feintBaitUntil = t + B.feintBaitWindowSec; // watch for the foe's reaction
+    if (onFeint) onFeint(); // readable feint event (ФИНТ-branch seam)
+    if (onAttackStart) onAttackStart(); // SAME threat signal as a real attack → the bluff
+    // Short follow so a real punish can land inside the advantage window.
+    ai.nextAt = t + FEINT.dur + Math.max(0.05, lerp(0.3, 0.1, tempo01)) * staminaCadenceMul();
+  };
+  // --- TEMPORARY reflex: "decide to feint instead of a real strike" (spinal cord
+  //     until the model supplies a real «deceive» intent — it will replace ONLY
+  //     this, calling doFeint() directly, leaving the clip / windows / payoff
+  //     untouched). Isolated here like noteIncomingAttack. Chance = base + light
+  //     counter weight (feint ≈ «ловлю на реакции»). Never feints when a punish is
+  //     already available (an open advantage window → throw the real strike).
+  const decideFeint = (t) => {
+    if (feintAdvUntil) return false; // advantage open → don't feint, punish instead
+    const chance = THREE.MathUtils.clamp(B.feintChanceBase + counter01 * B.feintChanceCounterWeight, 0, B.feintChanceMax);
+    if (Math.random() < chance) { doFeint(t); return true; }
+    return false;
+  };
+
   // Autonomous combat (AI): strike only when the foe is within range, on a
   // cadence; the navigation above closes the gap and manoeuvres between strikes.
   // COMBO/PUNCH/DOUBLE are weighted; an incoming hit adds a rhythm hitch (in
@@ -1064,6 +1133,8 @@ export function buildFighter(
     // far-spacing fighter steps in to land it instead of whiffing from its range.
     const reach = Math.min(character.range + RANGE_HYST, STRIKE);
     if (Math.hypot(dx, dz) > reach) return false;
+    // TEMPORARY: sometimes throw a feint instead of a real strike (see decideFeint).
+    if (decideFeint(t)) return true;
     // ATTACK STYLE — weight-led (heavy01): light favours the single PUNCH almost
     // every time; heavy commits the DOUBLE / COMBO. Wider than before so the
     // light-flurry vs heavy-slam read is unmistakable on the grey stand.
@@ -1072,6 +1143,9 @@ export function buildFighter(
     const atk = r < punchW ? PUNCH : r < punchW + 0.4 ? DOUBLE : COMBO;
     play(atk);
     stamina = THREE.MathUtils.clamp(stamina - attackStaminaCost(atk), 0, staminaMax); // spend силы on the strike (jab cheap, combo dear) — never gates the attack
+    // Feint payoff: a real strike inside the advantage window punishes the bought
+    // bluff — arm + consume the window (one-shot). resolveImpact reads the flag.
+    if (feintBaited && feintAdvUntil && t < feintAdvUntil) { feintPayoffActive = true; feintAdvUntil = 0; feintBaited = false; }
     if (onAttackStart) onAttackStart(); // tell the foe an in-range attack is incoming (→ its block reflex)
     // Cadence: tempo sets the base pause; WEIGHT rides on top so heavy lands rare,
     // heavy blows and light strings frequent, light ones (the "rare heavy vs
@@ -1147,6 +1221,16 @@ export function buildFighter(
     // under reduced motion).
     if (blocking && blockUntil !== Infinity && t >= blockUntil) exitBlock();
 
+    // Feint windows: after a feint, watch if the foe bites (blocks / dodges) inside
+    // the bait window → open the advantage window; otherwise the feint just cost
+    // stamina. The advantage window lapses on its own if no punish is thrown. Runs
+    // in every alive state (the windows are fight logic, not animation).
+    if (feintBaitUntil) {
+      if (getFoeReacting && getFoeReacting()) { feintBaited = true; feintBaitUntil = 0; feintAdvUntil = t + B.feintAdvantageWindowSec; }
+      else if (t > feintBaitUntil) feintBaitUntil = 0; // bait expired — bluff wasted
+    }
+    if (feintAdvUntil && t > feintAdvUntil) { feintAdvUntil = 0; feintBaited = false; } // advantage lapsed
+
     // Selection highlight + confirm flash + a faint "effect active" marker — runs
     // in every alive state (a glow change only, no body motion). Soft pulse while
     // highlighted (static under reduced), a brighter decaying flash on confirm, a
@@ -1213,6 +1297,8 @@ export function buildFighter(
         apply(v);
         coreBoost = N(v.core);
       } else {
+        if (clip.feint) feintActive = false; // the fake finished — clear the readable flag
+        feintPayoffActive = false; // a payoff strike (or any clip) finished → consume the boost
         clip = null;
         dodgeRun = null;
         idlePose(bs);
@@ -1292,6 +1378,9 @@ export function buildFighter(
     setBlock, // dev / manual block toggle (true = hold stance, false = drop)
     toggleBlock: () => setBlock(!blocking),
     isBlocking: () => blocking,
+    isDodging: () => !!(clip && clip.dodge), // mid-dodge (read by the foe's feint bait check)
+    feint: () => doFeint(lastT), // dev / model entry — throw a feint now
+    isFeinting: () => feintActive, // readable feint state (ФИНТ-branch seam)
     getStamina: () => stamina, // запас сил (readable — ТЕНЬ-3 seam + dev readout)
     getStaminaMax: () => staminaMax,
     getStamina01: () => stamina01(),
