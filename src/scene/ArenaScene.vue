@@ -484,8 +484,8 @@ onMounted(() => {
 
     controls.update();
     presence.update(t);
-    fighter?.update(t); // may be null after a fight ends, until next FIGHT
-    opponent?.update(t);
+    fighter?.update(t, camera); // may be null after a fight ends, until next FIGHT
+    opponent?.update(t, camera);
 
     // Dev readout (throttled ~5/s) — live stamina + charge of both fighters.
     if (panelVisible.value && t - lastStaReadout > 0.2) {
