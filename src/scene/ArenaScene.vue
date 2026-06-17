@@ -31,6 +31,7 @@
       <button type="button" class="tgt" :class="{ on: neutralColor }" @click="onNeutralColor">GRAY: {{ neutralColor ? 'ON' : 'OFF' }}</button>
       <button type="button" class="tgt" :class="{ on: blockDev }" @click="onBlockToggle">BLOCK: {{ blockDev ? 'ON' : 'OFF' }}</button>
       <button type="button" class="tgt" @click="onDevFeint">FEINT</button>
+      <button type="button" class="tgt" @click="onDevStagger">STAGGER</button>
     </div>
     <!-- Dev stamina (силы) readout for both fighters — live spend / recover. -->
     <div v-if="panelVisible" class="arena-readout">{{ staReadout }}</div>
@@ -157,6 +158,9 @@ function onBlockToggle() {
 // FEINT dev trigger (key V / button) — throw the player fighter's feint once to
 // see the fake + check the payoff. (F is already FIGHT, so feint is on V.)
 function onDevFeint() { fighter?.feint(); }
+// STAGGER dev trigger (key G / button) — play the player's interrupt reaction clip
+// to see the new movement without timing an actual interrupt.
+function onDevStagger() { fighter?.stagger(); }
 
 // --- Generic arm → pick-fighter → apply flow (reusable by future buffs, NOT
 //     klich-specific). Tap a lever → armed (targeting); own fighters light up;
@@ -504,12 +508,13 @@ onMounted(() => {
   };
   document.addEventListener('visibilitychange', onVisibility);
 
-  // --- Dev keys on preview: F = FIGHT · B = toggle player block · V = player feint
-  //     (F is taken by FIGHT, so the feint dev key is V; button is FEINT).
+  // --- Dev keys on preview: F = FIGHT · B = block · V = feint · G = stagger
+  //     (F is taken by FIGHT, so feint is on V; stagger on G).
   onKeydown = (e) => {
     if (e.key === 'f') onFight();
     else if (e.key === 'b') onBlockToggle();
     else if (e.key === 'v') onDevFeint();
+    else if (e.key === 'g') onDevStagger();
   };
   window.addEventListener('keydown', onKeydown);
 

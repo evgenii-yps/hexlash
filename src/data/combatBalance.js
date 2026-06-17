@@ -153,6 +153,20 @@ export const COMBAT_BALANCE = {
   feintChanceCounterWeight: 0.25, // вклад counter01 в шанс финта
   feintChanceMax: 0.45, // потолок частоты финта
 
+  // --- Interrupt (сбив замаха). A landed hit (not missed, not dodged) on a
+  //     fighter that is in the EARLY part of its OWN attack windup срывает that
+  //     attack: cancel the clip, drop its pending impacts (a DOUBLE/COMBO остаток
+  //     отменяется), play STAGGER, and lock it (no attack / move) for
+  //     staggerDurationSec. The hit's damage still applies (+ optional
+  //     interruptDamageBonus, base 0 = off — a seam). Vulnerable window = attack
+  //     start → interruptWindowFrac of the windup, BEFORE contact — only the early
+  //     swing is catchable (any attack, incl. FEINT); a late-swing / recoil hit is
+  //     a normal exchange. Arises by TIMING (auto-bout: by chance); smart timing
+  //     is the future model's job — NO decision stub here. Tunable.
+  interruptWindowFrac: 0.5, // доля замаха (от старта), пока атака уязвима к сбиву
+  staggerDurationSec: 0.5, // на сколько запирается сбитый боец (= длина клипа STAGGER)
+  interruptDamageBonus: 0.0, // бонус урона прерывающему удару (база 0 = выкл; ШОВ)
+
   // --- Fight-length safeguard: escalating damage. Past escalateStartSec the
   //     OVERALL damage multiplier on BOTH fighters ramps up (per second), so a
   //     stalling bout is guaranteed to finish past the ~40-50s target window.

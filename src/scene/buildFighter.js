@@ -28,7 +28,7 @@ export function buildFighter(
   // — which drives how this fighter moves and fights (see the axis → knob seam
   // below). If `behavior` is absent it's resolved from `coreId` (no lit facets),
   // so any caller still gets a core-shaped fighter.
-  { side = 'player', coreId = null, behavior = null, maxHp = COMBAT_BALANCE.maxHp, onImpact, onMiss, onBlock, onAttackStart, onFeint, onEliminated, getFoePos = null, getFoeReacting = null, bounds = { x: 2.5, z: 1.5 }, neutralColor = false } = {},
+  { side = 'player', coreId = null, behavior = null, maxHp = COMBAT_BALANCE.maxHp, onImpact, onMiss, onBlock, onAttackStart, onFeint, onInterrupt, onEliminated, getFoePos = null, getFoeReacting = null, bounds = { x: 2.5, z: 1.5 }, neutralColor = false } = {},
 ) {
   const group = new THREE.Group();
 
@@ -236,7 +236,7 @@ export function buildFighter(
   // strike extends toward them. The lead punch uses the left arm (lsx/lex); the
   // cross uses the right (rsx/rex).
   const PUNCH = {
-    dur: 1.3, impact: 0.6, dmgMult: COMBAT_BALANCE.moveMult.punch, // single jab — base damage
+    dur: 1.3, impact: 0.6, windup: 0.6, dmgMult: COMBAT_BALANCE.moveMult.punch, // single jab — base damage
     keys: [
       { t: 0.0, v: REST, e: 'io' },
       { t: 0.45, v: { hz: 0.02, hy: -0.02, tx: 0.12, lsx: 0.15, lex: 2.0 }, e: 'io' }, // coil / chamber
@@ -251,7 +251,7 @@ export function buildFighter(
   // no damage. Shorter than a full punch. `feint: true` tags the clip. Plays under
   // reduced motion like any clip (no jitter).
   const FEINT = {
-    dur: 0.75, impact: -1, feint: true,
+    dur: 0.75, impact: -1, windup: 0.46, feint: true,
     keys: [
       { t: 0.0, v: REST, e: 'io' },
       { t: 0.32, v: { hz: 0.02, hy: -0.02, tx: 0.12, lsx: 0.15, lex: 2.0 }, e: 'io' }, // coil / chamber — IDENTICAL read to PUNCH's threat
@@ -269,7 +269,7 @@ export function buildFighter(
     ],
   };
   const COMBO = {
-    dur: 2.0, impact: 1.12, dmgMult: COMBAT_BALANCE.moveMult.combo, // one heavy commit — the most painful single hit
+    dur: 2.0, impact: 1.12, windup: 1.12, dmgMult: COMBAT_BALANCE.moveMult.combo, // one heavy commit — the most painful single hit
     keys: [
       { t: 0.0, v: REST, e: 'io' },
       { t: 0.45, v: { hz: -0.3, hy: -0.03, tx: -0.05 }, e: 'out' }, // approach
@@ -283,7 +283,7 @@ export function buildFighter(
   // the left fully recovers. Torso twists (ty) to carry the weight arm to arm;
   // both fists work through shoulder + elbow. Two impacts (one per fist).
   const DOUBLE = {
-    dur: 1.45, impacts: [0.32, 0.58], dmgMult: COMBAT_BALANCE.moveMult.doubleEach, // two hits — each uses this mult, EACH stronger than a jab (≈2.7× a punch summed)
+    dur: 1.45, impacts: [0.32, 0.58], windup: 0.32, dmgMult: COMBAT_BALANCE.moveMult.doubleEach, // two hits — each uses this mult, EACH stronger than a jab (≈2.7× a punch summed)
     keys: [
       { t: 0.0, v: REST, e: 'io' },
       { t: 0.16, v: { hz: -0.06, hy: -0.02, tx: 0.06, ty: -0.06, lsx: 0.2, lex: 1.9 }, e: 'io' }, // L chamber, coil
@@ -306,6 +306,24 @@ export function buildFighter(
       { t: 0.95, v: REST, e: 'io' }, // heavy return
     ],
   };
+
+  // STAGGER — interrupt reaction («сбили»): one short readable jolt — knocked off
+  // balance, thrown off-rhythm, quick recovery. No impact, no `windup` (it can't
+  // itself be interrupted). Length = staggerDurationSec so the clip covers the
+  // lock. Plays via the same pose/clip layer (smooth in/out); reduced motion shows
+  // a static jolt pose (see update()).
+  const STAGGER = (() => {
+    const d = COMBAT_BALANCE.staggerDurationSec;
+    return {
+      dur: d,
+      keys: [
+        { t: 0.0, v: REST, e: 'out' },
+        { t: d * 0.16, v: { hz: 0.16, hy: -0.04, tx: 0.16, core: 0.5 }, e: 'out' }, // jolt back + core flicker
+        { t: d * 0.5, v: { hz: 0.07, hy: -0.02, tx: 0.06, core: -0.2 }, e: 'io' }, // off-rhythm
+        { t: d, v: REST, e: 'io' }, // recover to stance
+      ],
+    };
+  })();
 
   // Dodge (visual only) — a sharp readable evade: the whole body slips off-line
   // (group displacement, see DODGE_DIST) while it ducks low behind a tucked
@@ -589,6 +607,14 @@ export function buildFighter(
   let feintAdvUntil = 0; // advantage window for the punisher (loop time)
   let feintPayoffActive = false; // the current real-attack clip carries the payoff
 
+  // --- Interrupt / stagger (сбив замаха). `windupVulnUntil` (set in play) marks
+  //     this fighter interruptible while in the EARLY part of its own attack
+  //     windup; a landed hit during it срывает the attack (staggerInterrupt).
+  //     `staggerUntil` locks the fighter (no attack / move) after a stagger.
+  //     Readable via isStaggered() (seam for future grains — recognisability only).
+  let windupVulnUntil = 0; // loop time the early-windup vuln window ends (0 = not vuln)
+  let staggerUntil = 0; // loop time the stagger lock ends
+
   // Elimination — dissolve into the fog (~1.4s); core holds and fades last.
   const BG = new THREE.Color(0x070811);
   let skinBase = skin.color.clone(); // re-captured at eliminate() so the dissolve fades from the live (e.g. neutral-grey) skin
@@ -602,6 +628,10 @@ export function buildFighter(
     loco.active = false; // a throw / struck pose interrupts walking
     clip = { ...c, fired: c.impacts ? c.impacts.map(() => false) : false };
     clipStart = lastT;
+    // Early-windup vulnerability: an attack / feint can be interrupted from its
+    // start through interruptWindowFrac of its windup (always before contact).
+    // Non-attack clips (HURT/DODGE/STAGGER/APPROACH) carry no `windup` → not vuln.
+    windupVulnUntil = c.windup ? clipStart + c.windup * B.interruptWindowFrac : 0;
     if (c.dodge) {
       // Set up the slip: cancel carried velocity (so it doesn't fight the dodge),
       // capture the base spot and pick a world direction — local right / left, or
@@ -1003,6 +1033,7 @@ export function buildFighter(
     dodgeRun = null;
     loco.active = false;
     feintActive = false; feintPayoffActive = false; feintBaitUntil = 0; feintAdvUntil = 0; feintBaited = false; // feint state leaves with the fighter
+    windupVulnUntil = 0; staggerUntil = 0; // interrupt/stagger state leaves with the fighter
     barTrack.visible = false; // bar leaves with the fighter
     barFill.visible = false;
     if (reduced) { state = 'done'; if (onEliminated) onEliminated(); return; } // no playback
@@ -1011,6 +1042,20 @@ export function buildFighter(
     skinBase = skin.color.clone(); // fade from the live skin (neutral grey stays grey through the dissolve)
     state = 'dissolving';
     diss = 0;
+  };
+
+  // Interrupt (сбив): срывает this fighter's in-progress attack — cancel the clip
+  // + drop its pending impacts (so a DOUBLE/COMBO остаток never lands), play the
+  // STAGGER reaction, and lock attack/move for staggerDurationSec. Called from
+  // takeDamage when a landed hit catches us in our early windup.
+  const staggerInterrupt = () => {
+    clip = null; dodgeRun = null; // drop the interrupted attack + its pending impacts
+    windupVulnUntil = 0;
+    feintPayoffActive = false; // an interrupted strike loses any feint payoff
+    staggerUntil = lastT + B.staggerDurationSec; // lock: no attack / move
+    ai.nextAt = Math.max(ai.nextAt, staggerUntil); // don't strike until recovered
+    nav.until = staggerUntil; // hold the current tactic through the lock
+    play(STAGGER); // reaction clip (no-op under reduced; the lock + static pose still read)
   };
 
   // Hit resolution: lose HP, recoil (HURT), and OUT at zero. The rift flash +
@@ -1032,6 +1077,11 @@ export function buildFighter(
       play(DODGE); // slip the hit: no HP loss, no rhythm hitch
       return;
     }
+    // The hit LANDED (past miss + dodge). INTERRUPT: are we caught in the EARLY
+    // windup of our OWN attack right now? If so this landed hit срывает it (handled
+    // below, after the damage applies). Only the early-swing window (windupVulnUntil)
+    // counts — a hit during our late swing / recoil is a normal exchange.
+    const interrupted = !!(clip && clip.windup && lastT < windupVulnUntil);
     // Effective resilience = base + live klich delta (a ДЕРЖАТЬ call toughens for
     // its duration); refreshKlich keeps klichKd current each frame.
     const res01 = THREE.MathUtils.clamp((baseAx.resilience + klichKd.resilience) / 100, 0, 1);
@@ -1050,9 +1100,16 @@ export function buildFighter(
     // Two distinct mitigations, both apply: resilience is the BEHAVIOUR axis
     // (manner — unchanged this pass), toughness is the NEW defensive STAT
     // (percent softening, never to zero — слабый удар всё равно чуть проходит).
-    hp = Math.max(0, hp - dmg * dmgMulFor(res01) * (1 - toughSoft) * blockMul);
+    // An interrupting hit may carry an optional bonus (interruptDamageBonus, base 0).
+    const interruptMul = interrupted ? 1 + B.interruptDamageBonus : 1;
+    hp = Math.max(0, hp - dmg * dmgMulFor(res01) * (1 - toughSoft) * blockMul * interruptMul);
     updateBar();
     if (hp <= 0) { eliminate(); return; } // → dissolve; onEliminated raised on completion
+    if (interrupted) {
+      staggerInterrupt(); // срыв: cancel our attack + pending impacts, play STAGGER, lock
+      if (onInterrupt) onInterrupt(); // recognisable interrupt event (seam; no grain wired)
+      return; // staggered instead of the normal HURT recoil
+    }
     play(HURT); // weighty recoil + core flash
     // Rhythm hitch added on top of the recoil scales with stagger resistance —
     // a tough fighter barely loses its tempo after eating a hit.
@@ -1258,6 +1315,11 @@ export function buildFighter(
         torso.rotation.set(BLOCK_TORSO, 0, 0);
         armL.shoulder.rotation.x = BLOCK_SHX; armL.elbow.rotation.x = BLOCK_EHX;
         armR.shoulder.rotation.x = BLOCK_SHX; armR.elbow.rotation.x = BLOCK_EHX;
+      } else if (lastT < staggerUntil) {
+        // static jolt — knocked off balance, off-rhythm (no tremor)
+        torso.rotation.set(0.16, 0, 0);
+        armL.shoulder.rotation.x = 0; armL.elbow.rotation.x = 0;
+        armR.shoulder.rotation.x = 0; armR.elbow.rotation.x = 0;
       } else {
         resetArms();
       }
@@ -1276,8 +1338,8 @@ export function buildFighter(
 
     // AI, when free (no clip): turn to face the foe, then decide whether to
     // strike (a strike starts a clip that plays out below this same frame). While
-    // in a block stance the fighter holds the guard and does NOT attack.
-    if (ai.on && !clip) { faceFoe(dt); if (!blocking) decideAttack(t); }
+    // in a block stance OR staggered (interrupt lock) the fighter does NOT attack.
+    if (ai.on && !clip) { faceFoe(dt); if (!blocking && lastT >= staggerUntil) decideAttack(t); }
 
     if (clip) {
       const ct = t - clipStart;
@@ -1299,12 +1361,15 @@ export function buildFighter(
       } else {
         if (clip.feint) feintActive = false; // the fake finished — clear the readable flag
         feintPayoffActive = false; // a payoff strike (or any clip) finished → consume the boost
+        windupVulnUntil = 0; // attack clip ended → no longer interruptible
         clip = null;
         dodgeRun = null;
         idlePose(bs);
       }
     } else if (blocking) {
       blockPose(bs); // hold the guard + plant (no nav / gait while blocking)
+    } else if (lastT < staggerUntil) {
+      idlePose(bs); // staggered (interrupt lock past the STAGGER clip) — plant, no nav
     } else if (ai.on) {
       navigate(t, dt, bs); // navigate toward / around the foe (sets the move intent)
     } else if (loco.active) {
@@ -1316,7 +1381,7 @@ export function buildFighter(
     // Integrate weighted locomotion every frame: a clip / idle frame sets no
     // intent, so carried velocity coasts to rest (inertia) without the gait
     // overwriting the clip / idle / block pose. A locomotion frame animates the gait.
-    stepLocomotion(dt, !clip && !blocking && (ai.on || loco.active));
+    stepLocomotion(dt, !clip && !blocking && lastT >= staggerUntil && (ai.on || loco.active));
 
     // Stamina: drain on movement (prevMag set just above) / recover when collected.
     tickStamina(dt);
@@ -1381,6 +1446,8 @@ export function buildFighter(
     isDodging: () => !!(clip && clip.dodge), // mid-dodge (read by the foe's feint bait check)
     feint: () => doFeint(lastT), // dev / model entry — throw a feint now
     isFeinting: () => feintActive, // readable feint state (ФИНТ-branch seam)
+    stagger: () => play(STAGGER), // dev — play the interrupt reaction clip
+    isStaggered: () => lastT < staggerUntil, // readable interrupt-lock state (seam)
     getStamina: () => stamina, // запас сил (readable — ТЕНЬ-3 seam + dev readout)
     getStaminaMax: () => staminaMax,
     getStamina01: () => stamina01(),
