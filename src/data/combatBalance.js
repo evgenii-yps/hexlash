@@ -187,6 +187,16 @@ export const COMBAT_BALANCE = {
   chargeReleaseFraction: 1.0, // сколько заряда тратит один удар (1 = полная разрядка «выстрелил накопленным»)
   chargeReleaseThreshold: 0.8, // (TEMPORARY decision) разряжается, когда заряд ≥ этого и враг в досягаемости
 
+  // --- Facet seam bonuses (ONSLAUGHT pass; grows as the per-core заходы land).
+  //     A facet's competence add flows facet → resolveBehavior.statBonuses →
+  //     `sb.*` in buildFighter → the LIVE mechanic. Kept HERE so the maths tunes
+  //     in one place — upgradeData.js references these by name, no inline magic.
+  //     The mechanics already exist (block pierce in takeDamage; the early-windup
+  //     interrupt window in play()); these only FEED them from a grain. Fractions.
+  ramGuardCrushPen: 0.4, // ТАРАН-2 «хуже блокируется» — blockPenetration add (block cut 0.50 → 0.30)
+  ramBreakthroughPen: 0.95, // ТАРАН-5 «пролом насквозь» — near-total pierce (raised guard ≈ moot)
+  ramUnshakenInterruptResist: 0.7, // ТАРАН-3 «почти не сбивается» — shrinks the early-windup vuln window (×0.30 of base)
+
   // --- Fight-length safeguard: escalating damage. Past escalateStartSec the
   //     OVERALL damage multiplier on BOTH fighters ramps up (per second), so a
   //     stalling bout is guaranteed to finish past the ~40-50s target window.

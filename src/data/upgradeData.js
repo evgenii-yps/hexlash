@@ -38,11 +38,17 @@ export const CORES = [
                     until the tagged mechanic is coded.
      effects      — string tags for branch-tip tricks (vertices). STORED only —
                     coded point-by-point later, approximated by shifts for now.
+     bonuses      — optional [{ stat, pct }] competence adds BEYOND the hard-branch
+                    ramp (blockPenetration, interruptResist, …). LIVE — resolveBehavior
+                    sums them into statBonuses → buildFighter `sb.*` → the real
+                    mechanic (block pierce, interrupt resistance). Surfaced on the
+                    facet as `extraBonuses`.
 
    This pass: every facet is 'open' (no lit/locked gating yet) and each branch's
    `limit` is its full size — the global RESOURCE pool is the real cap until
    pricing lands. Lighting many at once pins the axes (temporary, awaits pricing). */
-const s = (axis, delta) => ({ axis, delta }); // shift shorthand
+const s = (axis, delta) => ({ axis, delta }); // axis-shift shorthand (movement manner)
+const b = (stat, pct) => ({ stat, pct }); // competence-bonus shorthand (facet → sb.* seam)
 
 /* Largest-magnitude axis shift of a facet (its dominant lever), as the
    behaviour READOUT for the future card: { axis, delta } of the biggest |delta|
@@ -84,6 +90,9 @@ function mkBranch(id, name, faces, stat = null) {
         shifts,
         conditionals: f.conditionals || [],
         effects: f.effects || [],
+        // Competence adds beyond the hard-branch ramp — flow to statBonuses → sb.*
+        // (blockPenetration, interruptResist, …). LIVE; empty on most facets.
+        extraBonuses: f.bonuses || [],
         // UI readout (data only; rendered by a later upgrade-screen pass):
         statBonus, // hard branches: { stat, pct } — % to the characteristic
         behaviorReadout: stat ? null : dominantShift(shifts), // behaviour branches: { axis, delta }
@@ -98,25 +107,55 @@ function mkBranch(id, name, faces, stat = null) {
    here); double-clamp with the global RESOURCE pool. */
 export const CRYSTALS = {
   natisk: [
+    // RAM — a slow, heavy fighter that breaks straight THROUGH the guard. Number:
+    // strikePower (whole-branch ramp = «бьёт тяжелее») + blockPenetration (Guard
+    // Crush / Breakthrough, the REAL pierce seam) + interrupt resistance (Unshaken).
+    // Movement: weight UP = a heavier, slower gait — manner, NOT damage (that's
+    // strikePower). No counter (not RAM's home).
     mkBranch('a', 'RAM', [
-      { name: 'Heavy Hit', shifts: [s('weight', 10)] },
-      { name: 'Guard Crush', shifts: [s('weight', 8)] },
-      { name: 'Unshaken', shifts: [s('resilience', 12)] },
+      // Heavier, slower, more crushing blow: strikePower (ramp) + a weightier gait.
+      { name: 'Heavy Hit', shifts: [s('weight', 14)] },
+      // Caves a raised guard: really pierces the block (blockPenetration seam).
+      { name: 'Guard Crush', shifts: [s('weight', 8)], bonuses: [b('blockPenetration', COMBAT_BALANCE.ramGuardCrushPen)] },
+      // Can't be knocked off the swing: interrupt-resistance seam + holds steady.
+      { name: 'Unshaken', shifts: [s('resilience', 14)], bonuses: [b('interruptResist', COMBAT_BALANCE.ramUnshakenInterruptResist)] },
+      // The closer it gets, the more it breaks (close_damage_ramp — conditional,
+      // approximated by the close-in shift until the ramp mechanic is coded).
       { name: 'Close Power', shifts: [s('distance', -8), s('weight', 6)], conditionals: ['close_damage_ramp'] },
-      { name: 'Breakthrough', shifts: [s('weight', 10)], effects: ['overload_strike'] },
+      // VERTEX — straight through the guard: near-total block pierce + an overload hit.
+      { name: 'Breakthrough', shifts: [s('weight', 10)], bonuses: [b('blockPenetration', COMBAT_BALANCE.ramBreakthroughPen)], effects: ['overload_strike'] },
     ], 'strikePower'),
+    // CHASE — a fast, clingy pursuer that captures distance and won't let go.
+    // Number/movement: initiative + distance (close the gap) up front, then stick
+    // (cling, cut escape) through the tip. Stays light/quick — no weight; no counter.
     mkBranch('b', 'CHASE', [
-      { name: 'Hard Entry', shifts: [s('distance', -8), s('initiative', 4)] },
-      { name: 'Run-Down', shifts: [s('stick', 8), s('initiative', 6)], conditionals: ['chase_strike'] },
-      { name: 'Cut Off', shifts: [s('stick', 8), s('initiative', 4)] },
-      { name: 'Cling', shifts: [s('stick', 8), s('distance', -6)] },
-      { name: 'Lockdown', shifts: [s('stick', 12), s('distance', -8)], effects: ['lockdown'] },
+      // Explodes into range — a sharp entry that closes the gap.
+      { name: 'Hard Entry', shifts: [s('distance', -8), s('initiative', 6)] },
+      // Runs down a retreating foe: presses + keeps closing (chase_strike conditional).
+      { name: 'Run-Down', shifts: [s('stick', 8), s('distance', -6)], conditionals: ['chase_strike'] },
+      // Cuts off the angles / escape routes — pure cling.
+      { name: 'Cut Off', shifts: [s('stick', 10)] },
+      // Clings on, won't be shaken off, and stays glued in close.
+      { name: 'Cling', shifts: [s('stick', 10), s('distance', -6)] },
+      // VERTEX — pins the foe in close: stick to the ceiling, almost no disengage.
+      { name: 'Lockdown', shifts: [s('stick', 14), s('distance', -8)], effects: ['lockdown'] },
     ]),
+    // FRENZY — accelerating, relentless TEMPO. Number/movement: tempo across the
+    // whole branch — longer strings, shorter gaps, ramps as it lands. No weight,
+    // no counter. No Breather wants enemy-regen suppression (a CROSS-FIGHTER seam,
+    // NOT built — see report); its tempo+stick approximate the relentlessness for
+    // now. Rampage ramps with no ceiling, the escalate safeguard as the backstop.
     mkBranch('c', 'FRENZY', [
+      // Longer strings of blows.
       { name: 'Long Combo', shifts: [s('tempo', 8)] },
+      // Shorter gaps between attacks.
       { name: 'No Pause', shifts: [s('tempo', 10)] },
+      // Speeds up as it lands (hit_accel — conditional, accruing accel later).
       { name: 'Building Momentum', shifts: [s('tempo', 6)], conditionals: ['hit_accel'] },
-      { name: 'No Breather', shifts: [s('tempo', 6), s('stick', 6)] },
+      // Never lets the foe recover (no_breather — REQUIRES a cross-fighter regen-
+      // suppression seam; tagged + approximated by tempo+stick pressure for now).
+      { name: 'No Breather', shifts: [s('tempo', 6), s('stick', 6)], conditionals: ['no_breather'] },
+      // VERTEX — ramps with no ceiling.
       { name: 'Rampage', shifts: [s('tempo', 12)], effects: ['rampage'] },
     ]),
   ],

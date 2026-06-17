@@ -63,12 +63,13 @@ export function startProfile(coreId) {
    effects } from upgradeData) — the caller pulls them from prefight.upgradeTree
    (player) or the core's CRYSTALS defaults (opponent).
 
-   `statBonuses` sums the lit facets' `statBonus { stat, pct }` (the NEW number
-   layer from the "hard" strikePower / toughness branches — see upgradeData.js)
-   into { strikePower, toughness } fractions; buildFighter multiplies the base
-   characteristics by (1 + bonus). Facets without a statBonus contribute nothing,
-   so behaviour branches don't touch the stats. Naturally capped by the RESOURCE
-   pool (можно зажечь не все грани).
+   `statBonuses` sums every facet competence add into one fractions object: the
+   "hard" branch ramp (`statBonus { stat, pct }` → strikePower / toughness) PLUS
+   each facet's optional `extraBonuses [{ stat, pct }]` — the seam that feeds the
+   non-ramp `sb.*` reads in buildFighter (blockPenetration, interruptResist, …).
+   buildFighter applies each to its base (multiplicative or additive per stat).
+   Facets without bonuses contribute nothing; keys no facet touches stay 0 → base.
+   Naturally capped by the RESOURCE pool (можно зажечь не все грани).
 
    Returns { axes:{…8…}, effects:[…], conditionals:[…], statBonuses:{…} }. No side
    effects — easy to test and to call per fighter. */
@@ -76,7 +77,18 @@ export function resolveBehavior(coreId, litFacets = []) {
   const axes = startProfile(coreId);
   const effects = [];
   const conditionals = [];
-  const statBonuses = { strikePower: 0, toughness: 0 };
+  // statBonuses carries every facet competence add that buildFighter reads as a
+  // `sb.*` seam: the hard-branch ramp (strikePower / toughness) PLUS per-facet
+  // `extraBonuses` (blockPenetration, interruptResist; the charge / accuracy /
+  // block-mitigation seams stay 0 until a later заход wires a grain to them). A
+  // key no facet touches stays 0 → buildFighter falls back to the shared base.
+  const statBonuses = {
+    strikePower: 0, toughness: 0,
+    blockPenetration: 0, interruptResist: 0,
+    accuracy: 0, blockMitigation: 0,
+    chargeMax: 0, chargeGain: 0, chargePower: 0, chargePen: 0,
+  };
+  const addBonus = (st, pct) => { if (st && statBonuses[st] != null) statBonuses[st] += pct || 0; };
   for (const f of litFacets) {
     if (!f) continue;
     for (const s of f.shifts || []) {
@@ -84,8 +96,8 @@ export function resolveBehavior(coreId, litFacets = []) {
     }
     for (const c of f.conditionals || []) conditionals.push(c);
     for (const e of f.effects || []) effects.push(e);
-    const b = f.statBonus;
-    if (b && statBonuses[b.stat] != null) statBonuses[b.stat] += b.pct || 0;
+    if (f.statBonus) addBonus(f.statBonus.stat, f.statBonus.pct); // hard-branch ramp (one per facet)
+    for (const eb of f.extraBonuses || []) addBonus(eb.stat, eb.pct); // per-facet seam bonuses (0+)
   }
   return { axes, effects, conditionals, statBonuses };
 }

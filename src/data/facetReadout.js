@@ -23,6 +23,9 @@ export const AXIS_PCT_PER_DELTA = 1;
 const STAT_PHRASES = {
   strikePower: { up: 'Harder hits', down: 'Softer hits' },
   toughness: { up: 'Tougher', down: 'Frailer' },
+  // Extra competence seams (facet `extraBonuses`, beyond the hard-branch ramp).
+  blockPenetration: { up: 'Pierces guard', down: 'Less pierce' },
+  interruptResist: { up: 'Unshakable', down: 'Easily shaken' },
 };
 
 // axis → phrase by direction (behaviour branches). Short (2–3 words); meaning
@@ -91,6 +94,16 @@ export function facetEffects(face) {
       sign: face.statBonus.pct >= 0 ? '+' : '−',
       pct: Math.round(Math.abs(face.statBonus.pct) * 100),
       phrase: t ? (face.statBonus.pct >= 0 ? t.up : t.down) : face.statBonus.stat,
+    });
+  }
+  // Extra competence seams (blockPenetration / interruptResist …) — the facet's
+  // OTHER number projection, after the ramp stat, before the movement shifts.
+  for (const eb of face.extraBonuses || []) {
+    const t = STAT_PHRASES[eb.stat];
+    out.push({
+      sign: eb.pct >= 0 ? '+' : '−',
+      pct: Math.round(Math.abs(eb.pct) * 100),
+      phrase: t ? (eb.pct >= 0 ? t.up : t.down) : eb.stat,
     });
   }
   const shifts = (face.shifts || []).slice().sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));

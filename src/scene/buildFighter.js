@@ -463,6 +463,12 @@ export function buildFighter(
     chargePowerBonusMax: B.chargePowerBonusMax * (1 + (sb.chargePower || 0)),
     chargePenetrationBonusMax: B.chargePenetrationBonusMax * (1 + (sb.chargePen || 0)),
   };
+  // ТАРАН-3 «почти не сбивается» — interrupt-resistance SEAM (new this pass). The
+  // early-windup interrupt mechanic is unchanged; this only scales the LENGTH of
+  // this fighter's vulnerable window: sb.interruptResist 0 → full window (base),
+  // 1 → no window (uninterruptible). Fed by a ram facet via statBonuses; every
+  // other fighter sums 0 → base. Read in play() where the window is set.
+  const interruptVulnFrac = B.interruptWindowFrac * (1 - THREE.MathUtils.clamp(sb.interruptResist || 0, 0, 1));
   // --- Stamina (запас сил) — spent on actions, recovered at rest; low stamina
   //     SMOOTHLY weakens + slows attacks (a curve, not a hard lockout). Starts
   //     full. Read externally (getStamina* in the return) — the seam ТЕНЬ-3 «враг
@@ -648,7 +654,9 @@ export function buildFighter(
     // Early-windup vulnerability: an attack / feint can be interrupted from its
     // start through interruptWindowFrac of its windup (always before contact).
     // Non-attack clips (HURT/DODGE/STAGGER/APPROACH) carry no `windup` → not vuln.
-    windupVulnUntil = c.windup ? clipStart + c.windup * B.interruptWindowFrac : 0;
+    // interruptVulnFrac folds in this fighter's interrupt-resistance (ТАРАН-3):
+    // base window × (1 − sb.interruptResist), so a ram shrinks / closes it.
+    windupVulnUntil = c.windup ? clipStart + c.windup * interruptVulnFrac : 0;
     if (c.dodge) {
       // Set up the slip: cancel carried velocity (so it doesn't fight the dodge),
       // capture the base spot and pick a world direction — local right / left, or
