@@ -79,16 +79,17 @@ export function resolveBehavior(coreId, litFacets = []) {
   const conditionals = [];
   // statBonuses carries every facet competence add that buildFighter reads as a
   // `sb.*` seam: the hard-branch ramp (strikePower / toughness) PLUS per-facet
-  // `extraBonuses` (blockPenetration, interruptResist; the charge / accuracy /
-  // block-mitigation seams stay 0 until a later заход wires a grain to them). A
-  // key no facet touches stays 0 → buildFighter falls back to the shared base.
+  // `extraBonuses`. The common keys are pre-seeded at 0 for readability; addBonus
+  // accepts ANY key, so a NEW seam (РАЙДЕР's feintChance / feintPayoff, …) flows
+  // without re-touching this resolver. A key no facet touches → absent / 0 →
+  // buildFighter falls back to the shared base (`sb.X || 0`).
   const statBonuses = {
     strikePower: 0, toughness: 0,
     blockPenetration: 0, interruptResist: 0,
     accuracy: 0, blockMitigation: 0,
     chargeMax: 0, chargeGain: 0, chargePower: 0, chargePen: 0,
   };
-  const addBonus = (st, pct) => { if (st && statBonuses[st] != null) statBonuses[st] += pct || 0; };
+  const addBonus = (st, pct) => { if (st) statBonuses[st] = (statBonuses[st] || 0) + (pct || 0); };
   for (const f of litFacets) {
     if (!f) continue;
     for (const s of f.shifts || []) {

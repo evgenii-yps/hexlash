@@ -957,9 +957,11 @@ export function buildFighter(
     //   feint payoff — a real strike after a bought feint (feintPayoffActive)
     //   charge release — an empowered strike (chargeShot*)
     // Block-pierce = max of base / feint / charge; damage bonus = их сумма. Both
-    // stack if a strike is somehow both.
-    const pen = Math.max(stats.blockPenetration, feintPayoffActive ? B.feintPenetrationBonus : 0, chargeShotPen);
-    const dmgBonus = (feintPayoffActive ? B.feintDamageBonus : 0) + chargeShotPower;
+    // stack if a strike is somehow both. ФИНТ-2/-5 «расплата»: sb.feintPayoff
+    // (base 0) scales BOTH the pierce and the damage of the post-feint punish.
+    const fpMul = 1 + (sb.feintPayoff || 0);
+    const pen = Math.max(stats.blockPenetration, feintPayoffActive ? B.feintPenetrationBonus * fpMul : 0, chargeShotPen);
+    const dmgBonus = (feintPayoffActive ? B.feintDamageBonus * fpMul : 0) + chargeShotPower;
     onImpact(strikeDamage(c) * (1 + dmgBonus), pen); // contact → foe resolves dodge / block / damage
   };
 
@@ -1213,7 +1215,10 @@ export function buildFighter(
   //     already available (an open advantage window → throw the real strike).
   const decideFeint = (t) => {
     if (feintAdvUntil) return false; // advantage open → don't feint, punish instead
-    const chance = THREE.MathUtils.clamp(B.feintChanceBase + counter01 * B.feintChanceCounterWeight, 0, B.feintChanceMax);
+    // ФИНТ-1 «ложный заход» — feint-frequency SEAM (sb.feintChance, base 0): adds
+    // to the reflex chance, still capped by feintChanceMax. Only a feint facet
+    // raises it; everyone else → base counter-led rate.
+    const chance = THREE.MathUtils.clamp(B.feintChanceBase + counter01 * B.feintChanceCounterWeight + (sb.feintChance || 0), 0, B.feintChanceMax);
     if (Math.random() < chance) { doFeint(t); return true; }
     return false;
   };

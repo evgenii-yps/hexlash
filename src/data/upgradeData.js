@@ -160,26 +160,55 @@ export const CRYSTALS = {
     ]),
   ],
   nalet: [
+    // JAB (УКОЛ) — hit-and-run pricker: accurate first strike, big bounce out past
+    // the answer, quick in-out tempo. Number: accuracy (Pinpoint Entry — REAL miss
+    // seam) + distance (the bounce). Movement: light/quick (low weight kept, no
+    // dump up). No counter (not its home).
     mkBranch('a', 'JAB', [
-      { name: 'Quick Out', shifts: [s('slip', 10)] },
-      { name: 'Clean Entry', shifts: [s('initiative', 6)] },
-      { name: 'Far Bounce', shifts: [s('slip', 10), s('distance', 6)] },
-      { name: 'Chain Step', shifts: [s('tempo', 6)], conditionals: ['clean_chain'] },
-      { name: 'Perfect Jab', shifts: [s('slip', 10), s('tempo', 6)], effects: ['perfect_jab'] },
+      // Strike then bounce out fast — a quick in-out exchange.
+      { name: 'Quick Out', shifts: [s('distance', 8), s('tempo', 6)] },
+      // Pinpoint first strike: the entry rarely misses (accuracy seam).
+      { name: 'Pinpoint Entry', shifts: [s('initiative', 6)], bonuses: [b('accuracy', COMBAT_BALANCE.jabPinpointAccuracy)] },
+      // Bounces out beyond the foe's counter-range, elusive on the way.
+      { name: 'Far Bounce', shifts: [s('distance', 10), s('slip', 6)] },
+      // A clean trade speeds the next dart-in (clean_chain — conditional).
+      { name: 'Clean Exchange', shifts: [s('tempo', 8)], conditionals: ['clean_chain'] },
+      // VERTEX — enter-hit-exit as one motion: almost nothing to answer with.
+      { name: 'Perfect Prick', shifts: [s('initiative', 10), s('distance', 8), s('slip', 6)], effects: ['perfect_jab'] },
     ]),
+    // FEINT (ФИНТ) — a real trickster on the LIVE feint mechanic: fakes often,
+    // punishes the bite hard, and breaks its own rhythm so the foe can't read the
+    // real attack. Number: feintChance / feintPayoff seams + variable tempo. No
+    // counter, no weight (light).
     mkBranch('b', 'FEINT', [
-      { name: 'Fake-In', shifts: [s('counter', 8)], effects: ['feint'] },
-      { name: 'Punish Reaction', shifts: [s('counter', 8), s('tempo', 4)] },
-      { name: 'Broken Rhythm', shifts: [s('tempo', 6)], conditionals: ['rhythm_break'] },
-      { name: 'Cut the Wind-up', shifts: [s('counter', 8)], effects: ['interrupt'] },
-      { name: 'Feint Combo', shifts: [s('counter', 8), s('tempo', 6)], effects: ['feint_combo'] },
+      // Throws more fakes — the feint-frequency seam.
+      { name: 'Fake-In', shifts: [s('tempo', 4)], bonuses: [b('feintChance', COMBAT_BALANCE.feintFakeInChance)] },
+      // When the foe bites a feint, the punish strike bites harder (payoff seam).
+      { name: 'Punish Reaction', shifts: [s('tempo', 4)], bonuses: [b('feintPayoff', COMBAT_BALANCE.feintPunishPayoff)] },
+      // Breaks the rhythm — variable cadence, the real attack hides in the noise.
+      { name: 'Broken Rhythm', shifts: [s('tempo', 8)], conditionals: ['rhythm_break'] },
+      // Jolts the foe's swing with a fake (feint → interrupt). REQUIRES a seam —
+      // a feint lands nothing, so it can't interrupt today (tagged, see report).
+      { name: 'Feint to Interrupt', shifts: [s('tempo', 6)], conditionals: ['feint_interrupt'] },
+      // VERTEX — fake → opening → clean strike: the most reliable pierce (max payoff).
+      { name: 'Setup Combo', shifts: [s('tempo', 6)], bonuses: [b('feintPayoff', COMBAT_BALANCE.feintSetupPayoff)], effects: ['feint_combo'] },
     ]),
+    // HUNT (ОХОТА) — a patient hunter that loads a charged haymaker and reads the
+    // opening. Number: strikePower (ramp) + charge (Charged Run gain, Killing Run
+    // power — REAL charge seams) + accuracy (Read the Tell). counter ONLY on
+    // Punish Aggression. Light — no weight dump (was heavy; removed).
     mkBranch('c', 'HUNT', [
-      { name: 'Read the Tell', shifts: [s('initiative', -6), s('counter', 6)] },
-      { name: 'Strike the Open', shifts: [s('weight', 8)], conditionals: ['punish_open'] },
-      { name: 'Charged Run', shifts: [s('weight', 8)], conditionals: ['charge'] },
-      { name: 'Punish Aggression', shifts: [s('counter', 6), s('initiative', 4)], conditionals: ['punish_aggression'] },
-      { name: 'Lethal Entry', shifts: [s('weight', 12)], effects: ['lethal_entry'] },
+      // Studies the foe (waits a touch longer), then a pinpoint entry (accuracy).
+      { name: 'Read the Tell', shifts: [s('initiative', -6)], bonuses: [b('accuracy', COMBAT_BALANCE.huntReadAccuracy)] },
+      // Harder on a spent / open foe (punish_exhausted). REQUIRES a seam — needs to
+      // read the foe's stamina for the damage bonus (tagged, see report).
+      { name: 'Strike the Open', shifts: [s('initiative', 4)], conditionals: ['punish_exhausted'] },
+      // Builds the charge while spacing / circling out (charge-gain seam).
+      { name: 'Charged Run', shifts: [s('distance', 6)], bonuses: [b('chargeGain', COMBAT_BALANCE.huntChargedGain)] },
+      // The ONLY counter in RAIDER — the more the foe presses, the more it pays.
+      { name: 'Punish Aggression', shifts: [s('counter', 10)], conditionals: ['punish_aggression'] },
+      // VERTEX — one loaded, devastating run: a full charge releases at max power.
+      { name: 'Killing Run', shifts: [s('distance', 6)], bonuses: [b('chargePower', COMBAT_BALANCE.huntKillingPower)], effects: ['lethal_entry'] },
     ], 'strikePower'),
   ],
   skala: [

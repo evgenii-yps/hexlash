@@ -197,6 +197,18 @@ export const COMBAT_BALANCE = {
   ramBreakthroughPen: 0.95, // ТАРАН-5 «пролом насквозь» — near-total pierce (raised guard ≈ moot)
   ramUnshakenInterruptResist: 0.7, // ТАРАН-3 «почти не сбивается» — shrinks the early-windup vuln window (×0.30 of base)
 
+  // RAIDER (заход 2). Fed via sb.* into the LIVE miss / feint / charge mechanics.
+  //   accuracy — УКОЛ-2 / ОХОТА-1 read the opening, the first strike misses less.
+  //   feint    — ФИНТ-1 fakes more often; ФИНТ-2 / -5 make the punish bite harder.
+  //   charge   — ОХОТА-3 fills the haymaker faster; ОХОТА-5 makes its release hurt.
+  jabPinpointAccuracy: 0.35, // УКОЛ-2 «точнее на входе» — +accuracy (miss ≈10% → ≈6.5%)
+  huntReadAccuracy: 0.3, // ОХОТА-1 «дольше читает» — +accuracy, aimed entry
+  feintFakeInChance: 0.2, // ФИНТ-1 «ложный заход» — +feint frequency (into decideFeint, capped feintChanceMax)
+  feintPunishPayoff: 0.5, // ФИНТ-2 «наказывает раскрытие» — ×1.5 the feint payoff (pierce + dmg)
+  feintSetupPayoff: 1.2, // ФИНТ-5 «развод-связка» (vertex) — ×2.2 the feint payoff (guard ≈ moot on the punish)
+  huntChargedGain: 0.6, // ОХОТА-3 «копит в маневрировании» — +60% charge gain (full ≈5s vs ≈8s)
+  huntKillingPower: 0.6, // ОХОТА-5 «смертельный заход» (vertex) — +60% charge-release power
+
   // --- Fight-length safeguard: escalating damage. Past escalateStartSec the
   //     OVERALL damage multiplier on BOTH fighters ramps up (per second), so a
   //     stalling bout is guaranteed to finish past the ~40-50s target window.

@@ -26,6 +26,11 @@ const STAT_PHRASES = {
   // Extra competence seams (facet `extraBonuses`, beyond the hard-branch ramp).
   blockPenetration: { up: 'Pierces guard', down: 'Less pierce' },
   interruptResist: { up: 'Unshakable', down: 'Easily shaken' },
+  accuracy: { up: 'Sharper aim', down: 'Looser aim' },
+  feintChance: { up: 'Fakes more', down: 'Fakes less' },
+  feintPayoff: { up: 'Deadly feint', down: 'Weaker feint' },
+  chargeGain: { up: 'Charges faster', down: 'Charges slower' },
+  chargePower: { up: 'Heavier charge', down: 'Lighter charge' },
 };
 
 // axis → phrase by direction (behaviour branches). Short (2–3 words); meaning
