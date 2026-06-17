@@ -14,6 +14,7 @@ import { makeRadialTexture } from './arenaTextures.js';
 import { resolveBehavior } from '../data/behavior.js';
 import { KLICH_PROFILES } from '../data/klichProfiles.js';
 import { COMBAT_BALANCE } from '../data/combatBalance.js';
+import { createHpIndicator } from './hpIndicator.js';
 
 function pinkRgba(pink, a) {
   const n = parseInt(pink.replace('#', ''), 16);
@@ -153,128 +154,26 @@ export function buildFighter(
   shadow.position.y = 0.012;
   group.add(shadow);
 
-  // --- Overhead HP plate. A canvas-textured billboard sprite above the head:
-  //     dark track + a MATTE #FF0069 fill (the core/rift pink) that depletes with
-  //     HP, with the HP number (100→0) drawn INSIDE the bar in the Anonymous pixel
-  //     font. NO glow/emissive/bloom — the only glow on the fighter is the core;
-  //     this is matte UI. Player vs opponent differ by BRIGHTNESS, not hue (player
-  //     bright, opponent dimmed — mirrors the core brightness split). The sprite
-  //     auto-billboards (always faces the camera, stays horizontal) and update()
-  //     holds a near-constant ON-SCREEN size, so it never collapses at the far,
-  //     angled orbit camera. No pulsation → already correct under reduced motion.
-  //     ALL knobs live in HUD_PLATE — tune freely.
+  // --- Over-head HP indicator (built in scene/hpIndicator.js). Percent readout
+  //     (round(hp/maxHp*100)) + a 10-segment discrete bar + YOU/FOE tag, on a matte
+  //     billboard. Player vs enemy by BRIGHTNESS only (different fill colour, not
+  //     opacity). No glow/bloom. Redrawn ONLY when the rounded percent changes;
+  //     billboard()'d each frame for a constant on-screen size. maxHp is read from
+  //     state — the indicator works at any pool size.
   let hp = maxHp;
-  const HUD_PLATE = {
-    yOffset: 2.35, // height above the fighter origin (×group scale) — clear gap over the head, no overlap with the body
-    screenH: 0.016, // plate height as a fraction of viewport height — small (≈ head-sized, does NOT dominate the frame)
-    minWorldH: 0.09, // clamp floor (close camera) — still a readable strip
-    maxWorldH: 0.16, // clamp ceiling (far camera) — never balloons past ≈ a head
-    aspect: 3.9, // plate width : height — a touch taller so the bigger digit has air (still a strip, not a pillow)
-    color: [255, 0, 105], // #FF0069 — core/rift pink (fill)
-    oppBright: 0.6, // opponent dim factor (fill + number brightness) — приглушение ЯРКОСТЬЮ, не цветом
+  const hpUI = createHpIndicator(side);
+  group.add(hpUI.mesh);
+  let lastPct = -1;
+  let deadAt = -1; // set when HP hits 0 → plate held DEAD_HOLD_S, then hidden in update()
+  const DEAD_HOLD_S = 1.0;
+  // Redraw ONLY on a change of the rounded percent (not per frame / per raw-HP tick).
+  const updateBar = () => {
+    const pct = Math.round((Math.max(0, hp) / maxHp) * 100);
+    if (pct === lastPct) return;
+    lastPct = pct;
+    hpUI.render(pct);
   };
-  const plateBright = side === 'player' ? 1.0 : HUD_PLATE.oppBright;
-  // Rounded-rect path helper (native ctx.roundRect isn't guaranteed everywhere).
-  const plateRR = (c, x, y, w, h, r) => {
-    const rr = Math.min(r, w / 2, h / 2);
-    c.beginPath();
-    c.moveTo(x + rr, y);
-    c.arcTo(x + w, y, x + w, y + h, rr);
-    c.arcTo(x + w, y + h, x, y + h, rr);
-    c.arcTo(x, y + h, x, y, rr);
-    c.arcTo(x, y, x + w, y, rr);
-    c.closePath();
-  };
-  const PLATE_PX_H = 96; // canvas pixel height — generous source so the pixel glyph stays well-formed (resolution, not world size)
-  const PLATE_PX_W = Math.round(PLATE_PX_H * HUD_PLATE.aspect);
-  const plateCanvas = document.createElement('canvas');
-  plateCanvas.width = PLATE_PX_W;
-  plateCanvas.height = PLATE_PX_H;
-  const plateCtx = plateCanvas.getContext('2d');
-  const plateTex = new THREE.CanvasTexture(plateCanvas);
-  // Linear, no mipmaps: sharp at this small on-screen size. (Nearest would shimmer
-  // as the camera orbits/zooms; the glyph stays crisp via the high-res source +
-  // hard outline below, not blurry interpolation.)
-  plateTex.minFilter = THREE.LinearFilter;
-  plateTex.magFilter = THREE.LinearFilter;
-  const plateSprite = new THREE.Sprite(new THREE.SpriteMaterial({
-    map: plateTex, transparent: true, depthTest: false, depthWrite: false,
-  }));
-  plateSprite.position.set(0, HUD_PLATE.yOffset, 0);
-  plateSprite.renderOrder = 11; // on top of the scene so HP always reads
-  plateSprite.scale.set(HUD_PLATE.minWorldH * HUD_PLATE.aspect, HUD_PLATE.minWorldH, 1); // sane until first sizePlate
-  group.add(plateSprite);
-
-  // Redraw the plate for the current HP. Matte (flat fills, no shadow/blur). The
-  // number reads on BOTH the pink fill and the dark empty track at ANY HP level:
-  // white glyph + a dark outline (contrast on either background); dimmed for the
-  // opponent so the brightness split holds here too.
-  const drawPlate = () => {
-    const W = PLATE_PX_W, H = PLATE_PX_H, pad = 4, radius = 4; // weak rounding — disciplined strip, not a bubble
-    const innerW = W - pad * 2, innerH = H - pad * 2;
-    const frac = Math.max(0, Math.min(1, hp / maxHp));
-    const [r, g, b] = HUD_PLATE.color;
-    plateCtx.clearRect(0, 0, W, H);
-    // dark track
-    plateRR(plateCtx, pad, pad, innerW, innerH, radius);
-    plateCtx.fillStyle = `rgba(8,10,16,${0.78 * plateBright + 0.14})`;
-    plateCtx.fill();
-    // matte pink fill, clipped to the track shape, depleting from the right
-    if (frac > 0) {
-      plateCtx.save();
-      plateRR(plateCtx, pad, pad, innerW, innerH, radius);
-      plateCtx.clip();
-      plateCtx.fillStyle = `rgba(${r},${g},${b},${plateBright})`;
-      plateCtx.fillRect(pad, pad, innerW * frac, innerH);
-      plateCtx.restore();
-    }
-    // thin border for definition against the scene
-    plateRR(plateCtx, pad, pad, innerW, innerH, radius);
-    plateCtx.lineWidth = 2;
-    plateCtx.strokeStyle = `rgba(0,0,0,${0.4 * plateBright + 0.2})`;
-    plateCtx.stroke();
-    // HP number — Anonymous pixel font, FLAT white fill + a THIN crisp dark
-    // outline (NO blur), so it stays sharp on the far camera and reads on both the
-    // pink fill and the dark track at any HP. Bigger now (~0.7 of the bar height)
-    // for distance, with a little air top/bottom. save/restore keeps the text
-    // state from leaking into the next redraw.
-    plateCtx.save();
-    plateCtx.font = `${Math.round(H * 0.7)}px Anonymous, monospace`;
-    plateCtx.textAlign = 'center';
-    plateCtx.textBaseline = 'middle';
-    plateCtx.lineJoin = 'round';
-    const label = String(Math.max(0, Math.ceil(hp)));
-    plateCtx.lineWidth = Math.max(2, Math.round(H * 0.03)); // thin crisp outline (~3px) — NOT the old heavy frame
-    plateCtx.strokeStyle = `rgba(6,7,12,${0.85 * plateBright + 0.15})`;
-    plateCtx.strokeText(label, W / 2, H / 2 + 1);
-    plateCtx.fillStyle = `rgba(255,255,255,${0.96 * plateBright + 0.04})`;
-    plateCtx.fillText(label, W / 2, H / 2 + 1);
-    plateCtx.restore();
-    plateTex.needsUpdate = true;
-  };
-  drawPlate();
-  // The pixel font may load after first paint — redraw once it's ready so "100"
-  // isn't stuck on a fallback glyph (best-effort; no-op if the API is absent).
-  if (typeof document !== 'undefined' && document.fonts && document.fonts.load) {
-    document.fonts.load(`${Math.round(PLATE_PX_H * 0.7)}px Anonymous`).then(drawPlate).catch(() => {});
-  }
-  const updateBar = () => drawPlate();
-
-  // Hold a near-constant on-screen plate size (billboard is automatic for a
-  // Sprite): world height = a fixed fraction of what the viewport spans at the
-  // plate's distance, clamped so it neither collapses (far) nor balloons (close).
-  // Divide by the group's world scale so the on-screen size is independent of the
-  // fighter's overall scale-down.
-  const _plateWP = new THREE.Vector3();
-  const sizePlate = (cam) => {
-    if (!cam || !cam.isPerspectiveCamera || !plateSprite.visible) return;
-    plateSprite.getWorldPosition(_plateWP);
-    const dist = cam.position.distanceTo(_plateWP);
-    const viewH = 2 * dist * Math.tan((cam.fov * Math.PI / 180) / 2); // world height the viewport spans at dist
-    const worldH = THREE.MathUtils.clamp(viewH * HUD_PLATE.screenH, HUD_PLATE.minWorldH, HUD_PLATE.maxWorldH);
-    const local = worldH / (group.scale.x || 1); // counter the fighter group's scale-down
-    plateSprite.scale.set(local * HUD_PLATE.aspect, local, 1);
-  };
+  updateBar(); // initial draw (100)
 
   // --- Idle + action system. Idle = heavy breathing (hips settle + chest
   //     expand) + quiet core pulse. Actions (approach / punch / combo) play once
@@ -1200,8 +1099,8 @@ export function buildFighter(
     riposteUntil = 0; riposteBonus = 0; // riposte window leaves with the fighter
     windupVulnUntil = 0; staggerUntil = 0; // interrupt/stagger state leaves with the fighter
     charge = 0; chargeShotPower = 0; chargeShotPen = 0; // charge state leaves with the fighter
-    plateSprite.visible = false; // HP plate leaves with the fighter
-    if (reduced) { state = 'done'; if (onEliminated) onEliminated(); return; } // no playback
+    deadAt = lastT; // DEAD: updateBar already drew 0% — hold the plate, update() hides it after DEAD_HOLD_S
+    if (reduced) { state = 'done'; if (onEliminated) onEliminated(); return; } // no playback (plate leaves with the group)
     skin.transparent = true;
     coreMat.transparent = true;
     skinBase = skin.color.clone(); // fade from the live skin (neutral grey stays grey through the dissolve)
@@ -1459,7 +1358,8 @@ export function buildFighter(
   const update = (t, cam) => {
     const dt = Math.min(0.05, Math.max(0, t - lastT));
     lastT = t;
-    sizePlate(cam); // hold a constant on-screen HP-plate size (billboard is automatic)
+    hpUI.billboard(cam, group.scale.x); // face camera + constant on-screen size
+    if (deadAt >= 0 && hpUI.mesh.visible && t - deadAt >= DEAD_HOLD_S) hpUI.mesh.visible = false; // DEAD: held 1s, then removed
 
     // Elimination — dissolve the body into the fog; core fades last, then remove.
     if (state === 'dissolving') {
