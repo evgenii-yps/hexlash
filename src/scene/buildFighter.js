@@ -165,11 +165,11 @@ export function buildFighter(
   //     ALL knobs live in HUD_PLATE — tune freely.
   let hp = maxHp;
   const HUD_PLATE = {
-    yOffset: 2.0, // height above the fighter origin (world units) — over the head
-    screenH: 0.05, // target plate height as a fraction of the viewport height (constant on-screen size)
-    minWorldH: 0.18, // clamp: never shrink the plate below this world height (far camera — stays readable)
-    maxWorldH: 0.5, // clamp: never blow it up past this (close camera)
-    aspect: 4.0, // plate width : height
+    yOffset: 2.35, // height above the fighter origin (×group scale) — clear gap over the head, no overlap with the body
+    screenH: 0.016, // plate height as a fraction of viewport height — small (≈ head-sized, does NOT dominate the frame)
+    minWorldH: 0.09, // clamp floor (close camera) — still a readable strip
+    maxWorldH: 0.16, // clamp ceiling (far camera) — never balloons past ≈ a head
+    aspect: 4.5, // plate width : height — a thin strip, not a pillow
     color: [255, 0, 105], // #FF0069 — core/rift pink (fill)
     oppBright: 0.6, // opponent dim factor (fill + number brightness) — приглушение ЯРКОСТЬЮ, не цветом
   };
@@ -207,7 +207,7 @@ export function buildFighter(
   // white glyph + a dark outline (contrast on either background); dimmed for the
   // opponent so the brightness split holds here too.
   const drawPlate = () => {
-    const W = PLATE_PX_W, H = PLATE_PX_H, pad = 5, radius = 12;
+    const W = PLATE_PX_W, H = PLATE_PX_H, pad = 4, radius = 4; // weak rounding — disciplined strip, not a bubble
     const innerW = W - pad * 2, innerH = H - pad * 2;
     const frac = Math.max(0, Math.min(1, hp / maxHp));
     const [r, g, b] = HUD_PLATE.color;
@@ -227,27 +227,31 @@ export function buildFighter(
     }
     // thin border for definition against the scene
     plateRR(plateCtx, pad, pad, innerW, innerH, radius);
-    plateCtx.lineWidth = 2.5;
-    plateCtx.strokeStyle = `rgba(0,0,0,${0.45 * plateBright + 0.2})`;
+    plateCtx.lineWidth = 2;
+    plateCtx.strokeStyle = `rgba(0,0,0,${0.4 * plateBright + 0.2})`;
     plateCtx.stroke();
-    // HP number — Anonymous pixel font, white fill + dark outline (auto-contrast)
-    plateCtx.font = `${Math.round(H * 0.6)}px Anonymous, monospace`;
+    // HP number — Anonymous pixel font, FLAT white fill + a soft drop shadow ONLY
+    // for contrast (no heavy per-glyph outline → reads as a number, not a sticker).
+    // White reads on both the pink fill and the dark track; the shadow lifts it off
+    // the pink. save/restore so the shadow never bleeds into the next redraw.
+    plateCtx.save();
+    plateCtx.font = `${Math.round(H * 0.5)}px Anonymous, monospace`;
     plateCtx.textAlign = 'center';
     plateCtx.textBaseline = 'middle';
-    plateCtx.lineJoin = 'round';
+    plateCtx.shadowColor = `rgba(4,5,10,${0.5 * plateBright + 0.25})`;
+    plateCtx.shadowBlur = 4;
+    plateCtx.shadowOffsetY = 1.5;
     const label = String(Math.max(0, Math.ceil(hp)));
-    plateCtx.lineWidth = 6;
-    plateCtx.strokeStyle = `rgba(6,7,12,${0.8 * plateBright + 0.15})`;
-    plateCtx.strokeText(label, W / 2, H / 2 + 2);
-    plateCtx.fillStyle = `rgba(255,255,255,${0.94 * plateBright + 0.06})`;
-    plateCtx.fillText(label, W / 2, H / 2 + 2);
+    plateCtx.fillStyle = `rgba(255,255,255,${0.95 * plateBright + 0.05})`;
+    plateCtx.fillText(label, W / 2, H / 2 + 1);
+    plateCtx.restore();
     plateTex.needsUpdate = true;
   };
   drawPlate();
   // The pixel font may load after first paint — redraw once it's ready so "100"
   // isn't stuck on a fallback glyph (best-effort; no-op if the API is absent).
   if (typeof document !== 'undefined' && document.fonts && document.fonts.load) {
-    document.fonts.load(`${Math.round(PLATE_PX_H * 0.6)}px Anonymous`).then(drawPlate).catch(() => {});
+    document.fonts.load(`${Math.round(PLATE_PX_H * 0.5)}px Anonymous`).then(drawPlate).catch(() => {});
   }
   const updateBar = () => drawPlate();
 
