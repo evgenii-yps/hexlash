@@ -28,7 +28,7 @@ export function buildFighter(
   // — which drives how this fighter moves and fights (see the axis → knob seam
   // below). If `behavior` is absent it's resolved from `coreId` (no lit facets),
   // so any caller still gets a core-shaped fighter.
-  { side = 'player', coreId = null, behavior = null, maxHp = COMBAT_BALANCE.maxHp, onImpact, onMiss, onBlock, onAttackStart, onFeint, onInterrupt, onEliminated, getFoePos = null, getFoeReacting = null, bounds = { x: 2.5, z: 1.5 }, neutralColor = false } = {},
+  { side = 'player', coreId = null, behavior = null, maxHp = COMBAT_BALANCE.maxHp, onImpact, onMiss, onBlock, onAttackStart, onFeint, onInterrupt, onChargeRelease, onEliminated, getFoePos = null, getFoeReacting = null, bounds = { x: 2.5, z: 1.5 }, neutralColor = false } = {},
 ) {
   const group = new THREE.Group();
 
@@ -454,6 +454,14 @@ export function buildFighter(
     // can lift it off zero).
     blockMitigation: B.blockMitigation * (1 + (sb.blockMitigation || 0)),
     blockPenetration: B.blockPenetration + (sb.blockPenetration || 0),
+    // CHARGE — per-fighter seams under the future HUNT / STING grains (ОХОТА:
+    // «копит в маневрировании»; ЖАЛО: «дольше ждёт — сильнее», «пробивает любую
+    // защиту»). Shared bases; `sb.*` undefined → base. Capacity, accrual rate, and
+    // both release ceilings are tunable per fighter. None wired to grains yet.
+    chargeMax: B.chargeMax * (1 + (sb.chargeMax || 0)),
+    chargeGainPerSec: B.chargeGainPerSec * (1 + (sb.chargeGain || 0)),
+    chargePowerBonusMax: B.chargePowerBonusMax * (1 + (sb.chargePower || 0)),
+    chargePenetrationBonusMax: B.chargePenetrationBonusMax * (1 + (sb.chargePen || 0)),
   };
   // --- Stamina (запас сил) — spent on actions, recovered at rest; low stamina
   //     SMOOTHLY weakens + slows attacks (a curve, not a hard lockout). Starts
@@ -614,6 +622,15 @@ export function buildFighter(
   //     Readable via isStaggered() (seam for future grains — recognisability only).
   let windupVulnUntil = 0; // loop time the early-windup vuln window ends (0 = not vuln)
   let staggerUntil = 0; // loop time the stagger lock ends
+
+  // --- Charge (заряд) — built by patience, spent on one empowered strike. `charge`
+  //     0..stats.chargeMax (start empty). A released strike captures its boost into
+  //     chargeShotPower / chargeShotPen at launch (charge already spent) and
+  //     resolveImpact applies them at contact; cleared when the clip ends. Readable
+  //     via getCharge* (HUNT/STING seam).
+  let charge = 0;
+  let chargeShotPower = 0; // damage bonus carried by the current released strike
+  let chargeShotPen = 0; // block-pierce carried by the current released strike
 
   // Elimination — dissolve into the fog (~1.4s); core holds and fades last.
   const BG = new THREE.Color(0x070811);
@@ -865,6 +882,20 @@ export function buildFighter(
     stamina = THREE.MathUtils.clamp(stamina, 0, staminaMax);
   };
 
+  // Charge tick (once per alive frame). Builds only in PATIENT play — no clip
+  // (not attacking) AND the foe held at/beyond chargePatientDist (spacing, not
+  // jammed in close). While actively attacking (an attack/feint clip) it doesn't
+  // grow and can slowly drain (chargeDecayPerSec, default 0). Spent at release
+  // (decideAttack / reducedAttack). Distinct from stamina (built by waiting, not
+  // by resting).
+  const tickCharge = (dt) => {
+    const f = getFoePos && getFoePos();
+    const d = f ? Math.hypot(f.x - group.position.x, f.z - group.position.z) : -1;
+    if (f && !clip && d >= B.chargePatientDist) charge += stats.chargeGainPerSec * dt; // patient spacing → accumulate
+    else if (clip && clip.windup) charge -= B.chargeDecayPerSec * dt; // actively attacking → optional drain (seam)
+    charge = THREE.MathUtils.clamp(charge, 0, stats.chargeMax);
+  };
+
   // Steer rotation.y toward a world direction (shortest angle, rate-limited).
   // Forward is local -Z, so facing (dirX, dirZ) means rotation.y = atan2(-dirX, -dirZ).
   const faceDir = (dt, dirX, dirZ) => {
@@ -914,12 +945,14 @@ export function buildFighter(
     if (!foeInStrike()) return; // out of reach — range whiff, NOT an accuracy miss
     if (rollMiss()) { if (onMiss) onMiss(); return; } // MISS — attacker wide, no contact
     if (!onImpact) return;
-    // Feint payoff: a real strike that follows a bought feint pierces the guard
-    // (raise our block-pierce to feintPenetrationBonus for this hit — REUSES the
-    // existing blockPenetration channel) and hits a bit harder (feintDamageBonus).
-    const pen = feintPayoffActive ? Math.max(stats.blockPenetration, B.feintPenetrationBonus) : stats.blockPenetration;
-    const dmg = strikeDamage(c) * (feintPayoffActive ? 1 + B.feintDamageBonus : 1);
-    onImpact(dmg, pen); // contact → foe resolves dodge / block / damage
+    // Bonuses on this hit, both via the SAME channels (no new pierce system):
+    //   feint payoff — a real strike after a bought feint (feintPayoffActive)
+    //   charge release — an empowered strike (chargeShot*)
+    // Block-pierce = max of base / feint / charge; damage bonus = их сумма. Both
+    // stack if a strike is somehow both.
+    const pen = Math.max(stats.blockPenetration, feintPayoffActive ? B.feintPenetrationBonus : 0, chargeShotPen);
+    const dmgBonus = (feintPayoffActive ? B.feintDamageBonus : 0) + chargeShotPower;
+    onImpact(strikeDamage(c) * (1 + dmgBonus), pen); // contact → foe resolves dodge / block / damage
   };
 
   // Manoeuvre at fighting range — character-weighted tactic re-picked on this
@@ -1034,6 +1067,7 @@ export function buildFighter(
     loco.active = false;
     feintActive = false; feintPayoffActive = false; feintBaitUntil = 0; feintAdvUntil = 0; feintBaited = false; // feint state leaves with the fighter
     windupVulnUntil = 0; staggerUntil = 0; // interrupt/stagger state leaves with the fighter
+    charge = 0; chargeShotPower = 0; chargeShotPen = 0; // charge state leaves with the fighter
     barTrack.visible = false; // bar leaves with the fighter
     barFill.visible = false;
     if (reduced) { state = 'done'; if (onEliminated) onEliminated(); return; } // no playback
@@ -1051,7 +1085,7 @@ export function buildFighter(
   const staggerInterrupt = () => {
     clip = null; dodgeRun = null; // drop the interrupted attack + its pending impacts
     windupVulnUntil = 0;
-    feintPayoffActive = false; // an interrupted strike loses any feint payoff
+    feintPayoffActive = false; chargeShotPower = 0; chargeShotPen = 0; // an interrupted strike loses any feint / charge boost
     staggerUntil = lastT + B.staggerDurationSec; // lock: no attack / move
     ai.nextAt = Math.max(ai.nextAt, staggerUntil); // don't strike until recovered
     nav.until = staggerUntil; // hold the current tactic through the lock
@@ -1175,6 +1209,12 @@ export function buildFighter(
     if (Math.random() < chance) { doFeint(t); return true; }
     return false;
   };
+  // --- TEMPORARY reflex: "decide to release the charge" — fire the empowered
+  //     strike when the charge is near-full and the foe is in reach (the caller
+  //     checks reach before this). Isolated like decideFeint; the future model's
+  //     «release» intent replaces ONLY this, leaving accumulation + the empowered
+  //     strike untouched. Returns whether THIS attack should spend the charge.
+  const decideRelease = () => charge / stats.chargeMax >= B.chargeReleaseThreshold;
 
   // Autonomous combat (AI): strike only when the foe is within range, on a
   // cadence; the navigation above closes the gap and manoeuvres between strikes.
@@ -1200,6 +1240,17 @@ export function buildFighter(
     const atk = r < punchW ? PUNCH : r < punchW + 0.4 ? DOUBLE : COMBO;
     play(atk);
     stamina = THREE.MathUtils.clamp(stamina - attackStaminaCost(atk), 0, staminaMax); // spend силы on the strike (jab cheap, combo dear) — never gates the attack
+    // CHARGE release (TEMPORARY decideRelease — near-full + foe in reach): empower
+    // this strike ∝ the charge level (captured into chargeShot* for resolveImpact),
+    // then SPEND it. Normal (un-released) attacks leave the charge untouched, so it
+    // keeps building toward the one убойный.
+    if (decideRelease() && charge > 0) {
+      const c01 = charge / stats.chargeMax;
+      chargeShotPower = c01 * stats.chargePowerBonusMax;
+      chargeShotPen = c01 * stats.chargePenetrationBonusMax;
+      charge = Math.max(0, charge - stats.chargeMax * B.chargeReleaseFraction); // spend (full by default)
+      if (onChargeRelease) onChargeRelease();
+    }
     // Feint payoff: a real strike inside the advantage window punishes the bought
     // bluff — arm + consume the window (one-shot). resolveImpact reads the flag.
     if (feintBaited && feintAdvUntil && t < feintAdvUntil) { feintPayoffActive = true; feintAdvUntil = 0; feintBaited = false; }
@@ -1229,11 +1280,20 @@ export function buildFighter(
   // lands) on cadence so a fight still progresses without any jitter.
   const reducedAttack = (t) => {
     if (t < ai.nextAt) return;
+    // CHARGE release under reduced (same threshold decision): empower + spend.
+    let pen = stats.blockPenetration; let chgBonus = 0;
+    if (decideRelease() && charge > 0) {
+      const c01 = charge / stats.chargeMax;
+      chgBonus = c01 * stats.chargePowerBonusMax;
+      pen = Math.max(pen, c01 * stats.chargePenetrationBonusMax);
+      charge = Math.max(0, charge - stats.chargeMax * B.chargeReleaseFraction);
+      if (onChargeRelease) onChargeRelease();
+    }
     // Static fallback still rolls the attacker's miss first (no dodge anim under
     // reduced motion, but the MISS / HIT split holds so accuracy reads here too;
     // the defender's dodge still applies on contact in takeDamage).
     if (rollMiss()) { if (onMiss) onMiss(); } // MISS — attacker wide, no contact
-    else if (onImpact) onImpact(strikeDamage({ dmgMult: B.moveMult.punch }), stats.blockPenetration); // punch-equivalent (strikeDamage already folds in stamina power penalty)
+    else if (onImpact) onImpact(strikeDamage({ dmgMult: B.moveMult.punch }) * (1 + chgBonus), pen); // punch-equivalent (strikeDamage already folds in stamina power penalty)
     stamina = THREE.MathUtils.clamp(stamina - B.staminaCostPunch, 0, staminaMax); // spend силы (punch-equivalent)
     // Cadence tracks tempo (+ a weight term), stretched by LOW STAMINA, so the
     // static fallback reads fast-light vs slow-heavy AND tires like the animated path.
@@ -1309,6 +1369,7 @@ export function buildFighter(
     if (reduced) {
       if (ai.on && !clip && state === 'alive') { faceInstant(); if (!blocking) reducedAttack(t); }
       stamina = THREE.MathUtils.clamp(stamina + B.staminaRegenPerSec * dt, 0, staminaMax); // no locomotion under reduced → recover (attack cost charged in reducedAttack)
+      tickCharge(dt); // charge builds under reduced too (numeric)
       hips.position.set(0, hipsBaseY, 0);
       if (blocking) {
         // static guard (no breath / jitter): forearms up, torso slightly closed
@@ -1361,6 +1422,7 @@ export function buildFighter(
       } else {
         if (clip.feint) feintActive = false; // the fake finished — clear the readable flag
         feintPayoffActive = false; // a payoff strike (or any clip) finished → consume the boost
+        chargeShotPower = 0; chargeShotPen = 0; // a released strike finished → consume the charge boost
         windupVulnUntil = 0; // attack clip ended → no longer interruptible
         clip = null;
         dodgeRun = null;
@@ -1385,6 +1447,8 @@ export function buildFighter(
 
     // Stamina: drain on movement (prevMag set just above) / recover when collected.
     tickStamina(dt);
+    // Charge: build in patient spacing (no clip + foe held at distance).
+    tickCharge(dt);
 
     // Cross-fade the live joints toward this frame's target pose so switching
     // idle ↔ move ↔ strike never snaps (steady modes write straight through).
@@ -1448,6 +1512,20 @@ export function buildFighter(
     isFeinting: () => feintActive, // readable feint state (ФИНТ-branch seam)
     stagger: () => play(STAGGER), // dev — play the interrupt reaction clip
     isStaggered: () => lastT < staggerUntil, // readable interrupt-lock state (seam)
+    getCharge: () => charge, // заряд (readable — HUNT/STING seam + dev readout)
+    getChargeMax: () => stats.chargeMax,
+    getCharge01: () => charge / stats.chargeMax,
+    fillCharge: () => { charge = stats.chargeMax; }, // dev — top up to full
+    discharge: () => { // dev — throw an empowered strike now (bypasses reach/cadence to inspect)
+      if (clip || state !== 'alive' || charge <= 0) return;
+      play(PUNCH);
+      const c01 = charge / stats.chargeMax;
+      chargeShotPower = c01 * stats.chargePowerBonusMax;
+      chargeShotPen = c01 * stats.chargePenetrationBonusMax;
+      charge = Math.max(0, charge - stats.chargeMax * B.chargeReleaseFraction);
+      if (onChargeRelease) onChargeRelease();
+      if (onAttackStart) onAttackStart();
+    },
     getStamina: () => stamina, // запас сил (readable — ТЕНЬ-3 seam + dev readout)
     getStaminaMax: () => staminaMax,
     getStamina01: () => stamina01(),

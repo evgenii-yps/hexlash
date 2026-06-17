@@ -32,9 +32,10 @@
       <button type="button" class="tgt" :class="{ on: blockDev }" @click="onBlockToggle">BLOCK: {{ blockDev ? 'ON' : 'OFF' }}</button>
       <button type="button" class="tgt" @click="onDevFeint">FEINT</button>
       <button type="button" class="tgt" @click="onDevStagger">STAGGER</button>
+      <button type="button" class="tgt" @click="onDevCharge">CHARGE</button>
     </div>
-    <!-- Dev stamina (силы) readout for both fighters — live spend / recover. -->
-    <div v-if="panelVisible" class="arena-readout">{{ staReadout }}</div>
+    <!-- Dev stamina (силы) + charge (заряд) readout for both fighters — live. -->
+    <div v-if="panelVisible" class="arena-readout">{{ staReadout }}<br>{{ chgReadout }}</div>
   </div>
 </template>
 
@@ -57,9 +58,10 @@ const canvasEl = ref(null);
 // Dev-panel visibility — true at rest, auto-hidden during a bout, flipped by the
 // always-on DEV corner toggle (the only way back during the SIG auto-cycle).
 const panelVisible = ref(true);
-// Dev readout — both fighters' stamina (силы), refreshed live (throttled) in the
-// loop so the spend / recover can be watched. Temporary, like the other dev bits.
+// Dev readout — both fighters' stamina (силы) + charge (заряд), refreshed live
+// (throttled) in the loop so the spend / recover can be watched. Temporary.
 const staReadout = ref('STA  P —  ·  O —');
+const chgReadout = ref('CHG  P —  ·  O —');
 
 // --- Behaviour A/B dev stand (preview only). Pick a signature preset for the
 //     LEFT (player slot) and RIGHT (opponent slot) fighter, run an autonomous
@@ -161,6 +163,14 @@ function onDevFeint() { fighter?.feint(); }
 // STAGGER dev trigger (key G / button) — play the player's interrupt reaction clip
 // to see the new movement without timing an actual interrupt.
 function onDevStagger() { fighter?.stagger(); }
+// CHARGE dev trigger (key C / button) — first press fills the player's charge to
+// full; once full, the next press throws the empowered strike (see the readout
+// drop + the harder, guard-piercing hit).
+function onDevCharge() {
+  if (!fighter) return;
+  if (fighter.getCharge01() < 0.999) fighter.fillCharge();
+  else fighter.discharge();
+}
 
 // --- Generic arm → pick-fighter → apply flow (reusable by future buffs, NOT
 //     klich-specific). Tap a lever → armed (targeting); own fighters light up;
@@ -475,11 +485,13 @@ onMounted(() => {
     fighter?.update(t); // may be null after a fight ends, until next FIGHT
     opponent?.update(t);
 
-    // Dev stamina readout (throttled ~5/s) — live силы of both fighters.
+    // Dev readout (throttled ~5/s) — live stamina + charge of both fighters.
     if (panelVisible.value && t - lastStaReadout > 0.2) {
       lastStaReadout = t;
-      const pct = (fr) => (fr ? Math.round(fr.getStamina01() * 100) : '—');
-      staReadout.value = `STA  P ${pct(fighter)}  ·  O ${pct(opponent)}`;
+      const sta = (fr) => (fr ? Math.round(fr.getStamina01() * 100) : '—');
+      const chg = (fr) => (fr ? Math.round(fr.getCharge01() * 100) : '—');
+      staReadout.value = `STA  P ${sta(fighter)}  ·  O ${sta(opponent)}`;
+      chgReadout.value = `CHG  P ${chg(fighter)}  ·  O ${chg(opponent)}`;
     }
 
     // SIG A/B auto-cycle — a KO scheduled a restart; fire it (full HP, fresh
@@ -508,13 +520,14 @@ onMounted(() => {
   };
   document.addEventListener('visibilitychange', onVisibility);
 
-  // --- Dev keys on preview: F = FIGHT · B = block · V = feint · G = stagger
-  //     (F is taken by FIGHT, so feint is on V; stagger on G).
+  // --- Dev keys on preview: F = FIGHT · B = block · V = feint · G = stagger ·
+  //     C = charge (fill, then discharge). (F is FIGHT, so feint is on V.)
   onKeydown = (e) => {
     if (e.key === 'f') onFight();
     else if (e.key === 'b') onBlockToggle();
     else if (e.key === 'v') onDevFeint();
     else if (e.key === 'g') onDevStagger();
+    else if (e.key === 'c') onDevCharge();
   };
   window.addEventListener('keydown', onKeydown);
 

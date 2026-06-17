@@ -167,6 +167,26 @@ export const COMBAT_BALANCE = {
   staggerDurationSec: 0.5, // на сколько запирается сбитый боец (= длина клипа STAGGER)
   interruptDamageBonus: 0.0, // бонус урона прерывающему удару (база 0 = выкл; ШОВ)
 
+  // --- Charge (заряд). A resource built by PATIENCE — not attacking AND holding /
+  //     gaining distance (not jammed in close) — and spent on ONE empowered strike
+  //     that hits harder + pierces the guard more, ∝ how full it is. NOT stamina:
+  //     stamina is "can I act" (spent on everything, recovers at rest); charge is
+  //     "saved a haymaker" (built only by waiting, spent on the release). Makes the
+  //     HUNT / STING branches («терпи и копи на один убойный») honest. Starts empty.
+  //     Accumulates only while spacing (no attack clip + foe ≥ chargePatientDist);
+  //     while actively attacking it doesn't grow (optional slow drain = chargeDecay).
+  //     Release boosts ∝ charge level then spends (chargeReleaseFraction, default
+  //     full). Bonus ceilings keep a charged hit scary but NOT a one-shot at base —
+  //     owner tunes by eye. All tunable; per-fighter seams (sb.*) in buildFighter.
+  chargeMax: 100, // потолок заряда
+  chargeGainPerSec: 12, // набор в терпеливой игре (≈8s spacing до полного)
+  chargeDecayPerSec: 0.0, // слив, пока активно атакует (база 0 = выкл; ШОВ)
+  chargePatientDist: 1.6, // дистанция до врага, дальше которой набор идёт (не наседает вплотную)
+  chargePowerBonusMax: 0.6, // макс. бонус урона заряженного удара (при полном)
+  chargePenetrationBonusMax: 0.7, // макс. бонус пробития блока заряженного удара (через blockPenetration)
+  chargeReleaseFraction: 1.0, // сколько заряда тратит один удар (1 = полная разрядка «выстрелил накопленным»)
+  chargeReleaseThreshold: 0.8, // (TEMPORARY decision) разряжается, когда заряд ≥ этого и враг в досягаемости
+
   // --- Fight-length safeguard: escalating damage. Past escalateStartSec the
   //     OVERALL damage multiplier on BOTH fighters ramps up (per second), so a
   //     stalling bout is guaranteed to finish past the ~40-50s target window.
