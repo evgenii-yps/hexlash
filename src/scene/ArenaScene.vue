@@ -348,7 +348,7 @@ onMounted(() => {
       bounds: navBounds,
       neutralColor: neutralColor.value,
       getFoePos: () => (opponent ? opponent.group.position : null),
-      onImpact: (raw, pen) => { opponent?.takeDamage(raw * escalationMult(), pen); }, // attacker's strike damage × time safeguard; foe softens by toughness / block (pen = our block-pierce)
+      onImpact: (raw, pen, intr) => { opponent?.takeDamage(raw * escalationMult(), pen, intr); }, // attacker's strike damage × time safeguard; foe softens by toughness / block (pen = our block-pierce, intr = our ВОЛНОЛОМ interrupt-catch bonus)
       onAttackStart: () => opponent?.noteIncomingAttack?.(), // in-range attack incoming → the foe's block reflex
       getFoeReacting: () => !!(opponent && (opponent.isBlocking?.() || opponent.isDodging?.())), // foe took the bait? (feint payoff)
       onEliminated: () => {
@@ -374,7 +374,7 @@ onMounted(() => {
       bounds: navBounds,
       neutralColor: neutralColor.value,
       getFoePos: () => (fighter ? fighter.group.position : null),
-      onImpact: (raw, pen) => { fighter?.takeDamage(raw * escalationMult(), pen); }, // attacker's strike damage × time safeguard; foe softens by toughness / block (pen = our block-pierce)
+      onImpact: (raw, pen, intr) => { fighter?.takeDamage(raw * escalationMult(), pen, intr); }, // attacker's strike damage × time safeguard; foe softens by toughness / block (pen = our block-pierce, intr = our ВОЛНОЛОМ interrupt-catch bonus)
       onAttackStart: () => fighter?.noteIncomingAttack?.(), // in-range attack incoming → the foe's block reflex
       getFoeReacting: () => !!(fighter && (fighter.isBlocking?.() || fighter.isDodging?.())), // foe took the bait? (feint payoff)
       onEliminated: () => {

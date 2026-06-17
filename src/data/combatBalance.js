@@ -209,6 +209,25 @@ export const COMBAT_BALANCE = {
   huntChargedGain: 0.6, // ОХОТА-3 «копит в маневрировании» — +60% charge gain (full ≈5s vs ≈8s)
   huntKillingPower: 0.6, // ОХОТА-5 «смертельный заход» (vertex) — +60% charge-release power
 
+  // BULWARK (заход 3). Fed via sb.* into the LIVE toughness / block / breathing /
+  // block-counter / interrupt mechanics.
+  //   stamina regen — БАСТИОН-3 «дыхание»: recovers stamina faster при покое.
+  //   block mitigation — БАСТИОН-5 «несокрушим»: a blocked hit loses far more.
+  //   block-counter — ВОЛНОЛОМ-1/5: after a block, the next strike ripostes harder
+  //                   (activates the onBlock hook internally — see buildFighter).
+  //   interrupt bonus — ВОЛНОЛОМ-2/5: catching the foe's windup punishes harder
+  //                   (attacker-side interrupt reward, через onImpact — see report).
+  //   block pierce — ТИСКИ-2/5: a heavy press is hard to block (blockPenetration).
+  bastionBreathRegen: 0.6, // БАСТИОН-3 «восстанавливает дыхание» — +60% stamina regen в покое
+  bastionFortressMitigation: 0.6, // БАСТИОН-5 «несокрушим» — +60% block strength (cut 0.50 → ~0.80, capped 0.90)
+  breakerRiposteBonus: 0.5, // ВОЛНОЛОМ-1 «ответный тычок» — +50% dmg on the strike after a block
+  breakerInterruptBonus: 0.5, // ВОЛНОЛОМ-2 «наказывает прерванную атаку» — +50% dmg when this hit catches a windup
+  breakerTrapRiposte: 1.0, // ВОЛНОЛОМ-5 «стена-капкан» (vertex) — +100% post-block riposte dmg
+  breakerTrapInterrupt: 1.0, // ВОЛНОЛОМ-5 «стена-капкан» (vertex) — +100% interrupt-catch dmg
+  blockRiposteWindowSec: 1.5, // how long after a block the riposte bonus stays armed (covers the counter-jab)
+  viceSlamPen: 0.35, // ТИСКИ-2 «тяжёлый, трудно блокировать» — blockPenetration add (block cut 0.50 → ~0.33)
+  viceClinchPen: 0.5, // ТИСКИ-5 «захват» (vertex) — blockPenetration add (heavy grind through the guard)
+
   // --- Fight-length safeguard: escalating damage. Past escalateStartSec the
   //     OVERALL damage multiplier on BOTH fighters ramps up (per second), so a
   //     stalling bout is guaranteed to finish past the ~40-50s target window.

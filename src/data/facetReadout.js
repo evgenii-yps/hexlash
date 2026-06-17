@@ -31,6 +31,10 @@ const STAT_PHRASES = {
   feintPayoff: { up: 'Deadly feint', down: 'Weaker feint' },
   chargeGain: { up: 'Charges faster', down: 'Charges slower' },
   chargePower: { up: 'Heavier charge', down: 'Lighter charge' },
+  staminaRegen: { up: 'Recovers faster', down: 'Recovers slower' },
+  blockMitigation: { up: 'Stronger guard', down: 'Weaker guard' },
+  blockCounter: { up: 'Block riposte', down: 'Weaker riposte' },
+  interruptBonus: { up: 'Punishes swings', down: 'Softer catch' },
 };
 
 // axis → phrase by direction (behaviour branches). Short (2–3 words); meaning

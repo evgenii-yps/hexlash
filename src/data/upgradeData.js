@@ -212,26 +212,58 @@ export const CRYSTALS = {
     ], 'strikePower'),
   ],
   skala: [
+    // BASTION (БАСТИОН) — an unbreakable wall that recovers its wind. Number:
+    // toughness (whole-branch ramp) + blockMitigation (Unbreakable — REAL block
+    // strength) + stamina regen (Catch Breath — REAL breathing seam). Movement:
+    // resilience (holds steady / digs in close). No counter (not its home).
     mkBranch('a', 'BASTION', [
-      { name: 'Tough Hide', shifts: [s('resilience', 10)] },
-      { name: 'Steady', shifts: [s('resilience', 8)] },
-      { name: 'Catch Breath', shifts: [s('resilience', 6)], conditionals: ['breather_regen'] },
-      { name: 'Dig In', shifts: [s('resilience', 8), s('distance', -6)], conditionals: ['dig_in'] },
-      { name: 'Unbreakable', shifts: [s('resilience', 12)], effects: ['fortress'] },
+      // Takes the blow better — shrugs more off (toughness ramp), holds steady.
+      { name: 'Tough Hide', shifts: [s('resilience', 8)] },
+      // Rarely knocked off its rhythm by incoming hits (resilience holds the beat).
+      { name: 'Steady Guard', shifts: [s('resilience', 10)] },
+      // Catches its breath in the lulls — recovers stamina faster (regen seam).
+      { name: 'Catch Breath', shifts: [s('resilience', 6)], bonuses: [b('staminaRegen', COMBAT_BALANCE.bastionBreathRegen)] },
+      // The longer it holds ground, the harder it gets (dig_in — time-ramp of
+      // toughness; conditional, approximated by planting close until it's coded).
+      { name: 'Dig In', shifts: [s('distance', -6)], conditionals: ['dig_in'] },
+      // VERTEX — unbreakable: a held guard cuts incoming damage in spades (block).
+      { name: 'Unbreakable', shifts: [s('resilience', 8)], bonuses: [b('blockMitigation', COMBAT_BALANCE.bastionFortressMitigation)], effects: ['fortress'] },
     ], 'toughness'),
+    // BREAKER (ВОЛНОЛОМ) — a close-range block-counter wall. Number: toughness
+    // ramp + the REAL onBlock riposte (sb.blockCounter) + the interrupt-catch
+    // reward (sb.interruptBonus) + counter (its HOME). Kept in the near zone: NO
+    // slip (it stands and blocks, never weaves) — that splits it from the future
+    // КАПКАН (a far-range slip-counter). High stick/resilience (core + stick adds).
     mkBranch('b', 'BREAKER', [
-      { name: 'Block & Jab', shifts: [s('counter', 8), s('distance', -4)] },
-      { name: 'Catch the Wind-up', shifts: [s('counter', 8)] },
-      { name: 'Hard Meet', shifts: [s('counter', 8)] },
+      // After a block, the answer bites — the next strike ripostes harder (onBlock).
+      { name: 'Riposte', shifts: [s('counter', 8), s('stick', 6)], bonuses: [b('blockCounter', COMBAT_BALANCE.breakerRiposteBonus)] },
+      // Punishes a caught swing — catching the foe's windup hits harder (interrupt).
+      { name: 'Catch & Punish', shifts: [s('counter', 8)], bonuses: [b('interruptBonus', COMBAT_BALANCE.breakerInterruptBonus)] },
+      // Meets the incoming fighter harder — counter + close stick.
+      { name: 'Hard Meet', shifts: [s('counter', 10), s('stick', 6)] },
+      // The more it has eaten, the harder it answers (retaliate_ramp — damage-taken
+      // ramp of the counter; conditional, approximated by counter until coded).
       { name: 'Retaliation', shifts: [s('counter', 8)], conditionals: ['retaliate_ramp'] },
-      { name: 'Counter Wall', shifts: [s('counter', 8), s('weight', 6)], effects: ['counter_trap'] },
+      // VERTEX — sea-wall trap: a foe's flurry turns into a heavy counter (max
+      // block-riposte + interrupt-catch + counter).
+      { name: 'Sea Wall', shifts: [s('counter', 8), s('stick', 6)], bonuses: [b('blockCounter', COMBAT_BALANCE.breakerTrapRiposte), b('interruptBonus', COMBAT_BALANCE.breakerTrapInterrupt)], effects: ['counter_trap'] },
     ], 'toughness'),
+    // VICE (ТИСКИ) — locks the foe in place with mass. Number/movement: stick (hold
+    // the foe in front) + heavy weight (slow, weighty) + blockPenetration (a heavy
+    // press is hard to block). Does NOT chase — initiative stays low (core), which
+    // splits it from ТАРАН (the chasing hammer). No counter.
     mkBranch('c', 'VICE', [
+      // Shoves the foe with its body — presses in close.
       { name: 'Body Shove', shifts: [s('stick', 8), s('distance', -6)] },
-      { name: 'Heavy Slam', shifts: [s('weight', 10)] },
-      { name: 'No Way Around', shifts: [s('stick', 8)] },
+      // A heavy, slow blow that's hard to block (weight + block pierce).
+      { name: 'Heavy Slam', shifts: [s('weight', 10)], bonuses: [b('blockPenetration', COMBAT_BALANCE.viceSlamPen)] },
+      // Won't let the foe slip around it — holds it in front (stick, no chase).
+      { name: 'No Way Around', shifts: [s('stick', 10)] },
+      // Pins it: the closer it gets, the tighter the hold (pin — close-grip ramp;
+      // conditional, approximated by stick + closing in until coded).
       { name: 'Pin', shifts: [s('stick', 8), s('distance', -6)], conditionals: ['pin'] },
-      { name: 'Clinch', shifts: [s('stick', 10), s('weight', 6)], effects: ['clinch'] },
+      // VERTEX — clinch: stick to the ceiling + a heavy grinding, piercing press.
+      { name: 'Clinch', shifts: [s('stick', 14), s('weight', 8)], bonuses: [b('blockPenetration', COMBAT_BALANCE.viceClinchPen)], effects: ['clinch'] },
     ]),
   ],
   zasada: [

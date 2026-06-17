@@ -481,6 +481,10 @@ export function buildFighter(
   const staminaMax = B.staminaMax;
   let stamina = staminaMax; // start full
   const stamina01 = () => stamina / staminaMax;
+  // БАСТИОН-3 «дыхание» — per-fighter stamina-regen rate (sb.staminaRegen, base 0):
+  // a bulwark recovers its wind faster in the rest/stance lulls. «Дыхание» = stamina,
+  // NOT HP. Only a bastion facet raises it; everyone else → shared base rate.
+  const staminaRegenRate = B.staminaRegenPerSec * (1 + (sb.staminaRegen || 0));
   // Power: full → ×1, empty → floor. Cadence: full → ×1 pause, empty → ×stretchMax
   // (реже бьёт). Both smooth over the curve; floors keep a spent fighter weak-but-
   // active so the bout still finishes (escalation closes any drag).
@@ -620,6 +624,11 @@ export function buildFighter(
   let feintBaited = false; // foe took the bait
   let feintAdvUntil = 0; // advantage window for the punisher (loop time)
   let feintPayoffActive = false; // the current real-attack clip carries the payoff
+  // ВОЛНОЛОМ-1/5 «после блока — ответный тычок»: a successful block ARMS a short
+  // riposte window; the blocker's next strike inside it hits harder (sb.blockCounter).
+  // This is the real activation of the onBlock hook — self-contained in the blocker
+  // (the onBlock callback stays the recognisable-event seam, unwired in the arena).
+  let blockRiposteUntil = 0; // loop time the post-block riposte bonus is available (0 = none)
 
   // --- Interrupt / stagger (сбив замаха). `windupVulnUntil` (set in play) marks
   //     this fighter interruptible while in the EARLY part of its own attack
@@ -886,7 +895,7 @@ export function buildFighter(
   // charged separately at strike start (decideAttack / reducedAttack).
   const tickStamina = (dt) => {
     if (prevMag > 0.05) stamina -= B.staminaMoveDrainPerSec * THREE.MathUtils.clamp(prevMag / FAST.speed, 0, 1) * dt;
-    else if (!clip) stamina += B.staminaRegenPerSec * dt;
+    else if (!clip) stamina += staminaRegenRate * dt; // rest/stance → recover (БАСТИОН-3 «дыхание» seam)
     stamina = THREE.MathUtils.clamp(stamina, 0, staminaMax);
   };
 
@@ -961,8 +970,15 @@ export function buildFighter(
     // (base 0) scales BOTH the pierce and the damage of the post-feint punish.
     const fpMul = 1 + (sb.feintPayoff || 0);
     const pen = Math.max(stats.blockPenetration, feintPayoffActive ? B.feintPenetrationBonus * fpMul : 0, chargeShotPen);
-    const dmgBonus = (feintPayoffActive ? B.feintDamageBonus * fpMul : 0) + chargeShotPower;
-    onImpact(strikeDamage(c) * (1 + dmgBonus), pen); // contact → foe resolves dodge / block / damage
+    // ВОЛНОЛОМ-1/5 «ответный тычок»: a strike inside the post-block window ripostes
+    // harder (sb.blockCounter). Consumed on use — one answer per block.
+    let riposte = 0;
+    if (sb.blockCounter && blockRiposteUntil && lastT < blockRiposteUntil) { riposte = sb.blockCounter; blockRiposteUntil = 0; }
+    const dmgBonus = (feintPayoffActive ? B.feintDamageBonus * fpMul : 0) + chargeShotPower + riposte;
+    // ВОЛНОЛОМ-2/5 «наказывает прерванную атаку»: this fighter's interrupt reward
+    // (sb.interruptBonus) rides ALONG to the foe — applied there ONLY if the hit
+    // actually catches a windup (the foe owns that check). base 0 → no extra.
+    onImpact(strikeDamage(c) * (1 + dmgBonus), pen, sb.interruptBonus || 0); // contact → foe resolves dodge / block / damage
   };
 
   // Manoeuvre at fighting range — character-weighted tactic re-picked on this
@@ -1076,6 +1092,7 @@ export function buildFighter(
     dodgeRun = null;
     loco.active = false;
     feintActive = false; feintPayoffActive = false; feintBaitUntil = 0; feintAdvUntil = 0; feintBaited = false; // feint state leaves with the fighter
+    blockRiposteUntil = 0; // post-block riposte window leaves with the fighter
     windupVulnUntil = 0; staggerUntil = 0; // interrupt/stagger state leaves with the fighter
     charge = 0; chargeShotPower = 0; chargeShotPen = 0; // charge state leaves with the fighter
     barTrack.visible = false; // bar leaves with the fighter
@@ -1104,7 +1121,7 @@ export function buildFighter(
 
   // Hit resolution: lose HP, recoil (HURT), and OUT at zero. The rift flash +
   // attacker→defender pairing live in ArenaScene (the combat resolver).
-  const takeDamage = (dmg, attackerPen = 0) => {
+  const takeDamage = (dmg, attackerPen = 0, attackerInterruptBonus = 0) => {
     if (state !== 'alive') return;
     // SEAM (NOT wired): a future fatigue pass could scale the dodge chance + the
     // block strength below by stamina (a spent fighter slips / guards worse) —
@@ -1140,12 +1157,16 @@ export function buildFighter(
       const cut = THREE.MathUtils.clamp(stats.blockMitigation * (1 - attackerPen), 0, 0.9);
       blockMul = 1 - cut;
       if (onBlock) onBlock(); // recognisable successful-block event
+      // ВОЛНОЛОМ-1/5: a successful block ARMS the riposte window — the blocker's
+      // next strike inside blockRiposteWindowSec hits harder (consumed there).
+      if (sb.blockCounter) blockRiposteUntil = lastT + B.blockRiposteWindowSec;
     }
     // Two distinct mitigations, both apply: resilience is the BEHAVIOUR axis
     // (manner — unchanged this pass), toughness is the NEW defensive STAT
     // (percent softening, never to zero — слабый удар всё равно чуть проходит).
-    // An interrupting hit may carry an optional bonus (interruptDamageBonus, base 0).
-    const interruptMul = interrupted ? 1 + B.interruptDamageBonus : 1;
+    // An interrupting hit carries the global interruptDamageBonus PLUS the
+    // attacker's own seam (ВОЛНОЛОМ-2/5 sb.interruptBonus, passed via onImpact).
+    const interruptMul = interrupted ? 1 + B.interruptDamageBonus + attackerInterruptBonus : 1;
     hp = Math.max(0, hp - dmg * dmgMulFor(res01) * (1 - toughSoft) * blockMul * interruptMul);
     updateBar();
     if (hp <= 0) { eliminate(); return; } // → dissolve; onEliminated raised on completion
@@ -1381,7 +1402,7 @@ export function buildFighter(
     // key moments only — no locomotion, no clip playback (reads without jitter).
     if (reduced) {
       if (ai.on && !clip && state === 'alive') { faceInstant(); if (!blocking) reducedAttack(t); }
-      stamina = THREE.MathUtils.clamp(stamina + B.staminaRegenPerSec * dt, 0, staminaMax); // no locomotion under reduced → recover (attack cost charged in reducedAttack)
+      stamina = THREE.MathUtils.clamp(stamina + staminaRegenRate * dt, 0, staminaMax); // no locomotion under reduced → recover (attack cost charged in reducedAttack; БАСТИОН-3 seam)
       tickCharge(dt); // charge builds under reduced too (numeric)
       hips.position.set(0, hipsBaseY, 0);
       if (blocking) {
