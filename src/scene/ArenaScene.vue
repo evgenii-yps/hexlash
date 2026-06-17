@@ -350,6 +350,7 @@ onMounted(() => {
       getFoePos: () => (opponent ? opponent.group.position : null),
       onImpact: (raw, pen, intr) => { opponent?.takeDamage(raw * escalationMult(), pen, intr); }, // attacker's strike damage × time safeguard; foe softens by toughness / block (pen = our block-pierce, intr = our ВОЛНОЛОМ interrupt-catch bonus)
       onAttackStart: () => opponent?.noteIncomingAttack?.(), // in-range attack incoming → the foe's block reflex
+      onMiss: () => opponent?.noteFoeMissed?.(), // our strike went wide → the foe's КАПКАН counter window
       getFoeReacting: () => !!(opponent && (opponent.isBlocking?.() || opponent.isDodging?.())), // foe took the bait? (feint payoff)
       onEliminated: () => {
         scene.remove(fighter.group);
@@ -376,6 +377,7 @@ onMounted(() => {
       getFoePos: () => (fighter ? fighter.group.position : null),
       onImpact: (raw, pen, intr) => { fighter?.takeDamage(raw * escalationMult(), pen, intr); }, // attacker's strike damage × time safeguard; foe softens by toughness / block (pen = our block-pierce, intr = our ВОЛНОЛОМ interrupt-catch bonus)
       onAttackStart: () => fighter?.noteIncomingAttack?.(), // in-range attack incoming → the foe's block reflex
+      onMiss: () => fighter?.noteFoeMissed?.(), // our strike went wide → the foe's КАПКАН counter window
       getFoeReacting: () => !!(fighter && (fighter.isBlocking?.() || fighter.isDodging?.())), // foe took the bait? (feint payoff)
       onEliminated: () => {
         scene.remove(opponent.group);

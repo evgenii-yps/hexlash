@@ -267,26 +267,59 @@ export const CRYSTALS = {
     ]),
   ],
   zasada: [
+    // TRAP (КАПКАН) — counters from RANGE: a dodge or a foe whiff turns into a heavy
+    // answer. Number: counter (its HOME) + the REAL dodge-counter (sb.dodgeCounter)
+    // + the REAL miss-counter (sb.missCounter, activates onMiss). Anchor: high slip
+    // + high distance (punishes while slipping away) — this splits it from ВОЛНОЛОМ
+    // (slip 15, stands & blocks). Both counter, but at opposite ranges.
     mkBranch('a', 'TRAP', [
-      { name: 'Hard Counter', shifts: [s('counter', 10)] },
-      { name: 'Slip & Punish', shifts: [s('counter', 8), s('slip', 6)] },
-      { name: 'Punish Aggression', shifts: [s('counter', 10)], conditionals: ['punish_aggression'] },
-      { name: 'Punish Whiff', shifts: [s('counter', 8)], conditionals: ['punish_whiff'] },
-      { name: 'Perfect Trap', shifts: [s('counter', 10), s('slip', 4)], effects: ['perfect_trap'] },
+      // Bites back harder on the foe's attack — more punishing counter.
+      { name: 'Hard Counter', shifts: [s('counter', 8)] },
+      // Off the line, instant counter — a slipped hit arms the riposte (dodge-counter).
+      { name: 'Slip Counter', shifts: [s('slip', 6)], bonuses: [b('dodgeCounter', COMBAT_BALANCE.trapDodgeCounter)] },
+      // The harder the foe presses, the harder the answer (punish_aggression —
+      // counter-ramp by foe aggression; conditional, approximated by counter).
+      { name: 'Punish Aggression', shifts: [s('counter', 8)], conditionals: ['punish_aggression'] },
+      // Punishes a whiff — the foe's miss opens the counter window (onMiss seam).
+      { name: 'Punish Whiff', shifts: [s('distance', 6)], bonuses: [b('missCounter', COMBAT_BALANCE.trapMissCounter)] },
+      // VERTEX — perfect trap: a dodge OR a whiff is a guaranteed heavy counter.
+      { name: 'Perfect Trap', shifts: [s('counter', 8), s('slip', 4)], bonuses: [b('dodgeCounter', COMBAT_BALANCE.trapPerfectDodge), b('missCounter', COMBAT_BALANCE.trapPerfectMiss)], effects: ['perfect_trap'] },
     ]),
+    // SHADOW (ТЕНЬ) — an untouchable that wears the foe down with distance. Number/
+    // movement: high slip + distance (elusive, far). No counter (not its home).
     mkBranch('b', 'SHADOW', [
-      { name: 'Long Slip', shifts: [s('slip', 10)] },
+      // Slips further / sharper away.
+      { name: 'Long Slip', shifts: [s('slip', 10), s('distance', 6)] },
+      // Harder to reach — holds the distance more cunningly.
       { name: 'Hard to Reach', shifts: [s('slip', 8), s('distance', 6)] },
-      { name: "Run 'Em Ragged", shifts: [s('slip', 8)], conditionals: ['exhaust'] },
-      { name: 'Open Window', shifts: [s('slip', 8), s('distance', 6)], conditionals: ['evade_window'] },
-      { name: 'Phantom', shifts: [s('slip', 12)], effects: ['phantom'] },
+      // Wears the foe ragged: the distance forces a chase, and chasing already
+      // drains the foe's stamina (move-drain). EMERGENT — approximated by distance;
+      // an amplified version wants a foe-stamina-drain seam (see report).
+      { name: "Run 'Em Ragged", shifts: [s('distance', 8), s('slip', 6)], conditionals: ['exhaust'] },
+      // After a slip, the window for its OWN entry opens wider (shared dodge-counter
+      // channel — the dodge sets up the next strike).
+      { name: 'Open Window', shifts: [s('slip', 8)], bonuses: [b('dodgeCounter', COMBAT_BALANCE.shadowDodgeWindow)] },
+      // VERTEX — phantom: slips a whole series, then a clean answer (very high slip).
+      { name: 'Phantom', shifts: [s('slip', 12), s('distance', 6)], effects: ['phantom'] },
     ]),
+    // STING (ЖАЛО) — a standing charge bomb. Number: strikePower (ramp) + the REAL
+    // charge seams — power (Loaded / Execution), ceiling (Long Charge), pierce. Anchor:
+    // LOW initiative + high distance (stands far and loads its moment) — this splits
+    // it from ОХОТА (mobile, fast chargeGain). ЖАЛО waits LONGER for a BIGGER hit.
     mkBranch('c', 'STING', [
-      { name: 'Loaded Hit', shifts: [s('weight', 10)] },
-      { name: 'Longer Charge', shifts: [s('weight', 8), s('initiative', -4)], conditionals: ['charge'] },
-      { name: 'Hit the Opening', shifts: [s('weight', 8), s('initiative', -6)], conditionals: ['vulnerable_strike'] },
-      { name: 'Pierce', shifts: [s('weight', 8)], effects: ['pierce'] },
-      { name: 'Execution', shifts: [s('weight', 14)], effects: ['execute'] },
+      // The loaded blow lands heavy — more charge-release power.
+      { name: 'Loaded Hit', shifts: [s('distance', 6)], bonuses: [b('chargePower', COMBAT_BALANCE.stingLoadedPower)] },
+      // Waits longer for a bigger charge — a higher ceiling, and stands to load it
+      // (low initiative, far distance — patient spacing, not a lunge).
+      { name: 'Long Charge', shifts: [s('initiative', -6), s('distance', 6)], bonuses: [b('chargeMax', COMBAT_BALANCE.stingLongChargeMax)] },
+      // Strikes at the foe's vulnerable moment (vulnerable_strike — reads the foe's
+      // stamina for the opening; conditional, REQUIRES a foe-state seam, see report).
+      { name: 'Hit the Opening', shifts: [s('initiative', -6)], conditionals: ['vulnerable_strike'] },
+      // One charged strike pierces any guard — charge-release block pierce.
+      { name: 'Pierce', shifts: [s('distance', 6)], bonuses: [b('chargePen', COMBAT_BALANCE.stingPiercePen)] },
+      // VERTEX — execution: a full charge ends it in one run (max release power; the
+      // escalate safeguard keeps it from being a start one-shot — the bout finishes).
+      { name: 'Execution', shifts: [s('distance', 6)], bonuses: [b('chargePower', COMBAT_BALANCE.stingExecutionPower)], effects: ['execute'] },
     ], 'strikePower'),
   ],
 };

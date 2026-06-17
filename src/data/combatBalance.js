@@ -224,9 +224,26 @@ export const COMBAT_BALANCE = {
   breakerInterruptBonus: 0.5, // ВОЛНОЛОМ-2 «наказывает прерванную атаку» — +50% dmg when this hit catches a windup
   breakerTrapRiposte: 1.0, // ВОЛНОЛОМ-5 «стена-капкан» (vertex) — +100% post-block riposte dmg
   breakerTrapInterrupt: 1.0, // ВОЛНОЛОМ-5 «стена-капкан» (vertex) — +100% interrupt-catch dmg
-  blockRiposteWindowSec: 1.5, // how long after a block the riposte bonus stays armed (covers the counter-jab)
+  riposteWindowSec: 1.5, // how long a defensive win (block / dodge / foe whiff) keeps the riposte armed (covers the counter-jab)
   viceSlamPen: 0.35, // ТИСКИ-2 «тяжёлый, трудно блокировать» — blockPenetration add (block cut 0.50 → ~0.33)
   viceClinchPen: 0.5, // ТИСКИ-5 «захват» (vertex) — blockPenetration add (heavy grind through the guard)
+
+  // AMBUSH (заход 4 — финал). Fed via sb.* into the LIVE dodge / onMiss / charge
+  // mechanics. КАПКАН counters from RANGE (dodge + foe whiff), ЖАЛО is the standing
+  // charge bomb (the twin-splits from ВОЛНОЛОМ's block-counter and ОХОТА's fast fill).
+  //   dodge-counter — КАПКАН-2/5 · ТЕНЬ-4: a slipped hit arms the riposte window
+  //                   (mirror of ВОЛНОЛОМ's blockCounter — same window, dodge trigger).
+  //   miss-counter  — КАПКАН-4: the foe's whiff arms the riposte (activates onMiss).
+  //   charge        — ЖАЛО: power (Loaded / Execution), ceiling (Long Charge), pierce.
+  trapDodgeCounter: 0.5, // КАПКАН-2 «уход + контр» — +50% dmg on the strike after a dodge
+  trapMissCounter: 0.5, // КАПКАН-4 «наказывает промах» — +50% dmg after the foe whiffs
+  trapPerfectDodge: 1.0, // КАПКАН-5 «идеальный капкан» (vertex) — +100% post-dodge riposte
+  trapPerfectMiss: 1.0, // КАПКАН-5 «идеальный капкан» (vertex) — +100% post-whiff riposte
+  shadowDodgeWindow: 0.4, // ТЕНЬ-4 «окно для своего захода шире» — +40% dmg after a dodge (own opening)
+  stingLoadedPower: 0.5, // ЖАЛО-1 «накопленный удар тяжёлый» — +50% charge-release power
+  stingLongChargeMax: 0.6, // ЖАЛО-2 «дольше выжидает — сильнее» — +60% charge ceiling (loads longer, hits bigger)
+  stingPiercePen: 0.6, // ЖАЛО-4 «пробивает любую защиту» — +60% charge-release block pierce
+  stingExecutionPower: 0.8, // ЖАЛО-5 «казнь» (vertex) — +80% charge-release power (with the escalate safeguard, not a start one-shot)
 
   // --- Fight-length safeguard: escalating damage. Past escalateStartSec the
   //     OVERALL damage multiplier on BOTH fighters ramps up (per second), so a

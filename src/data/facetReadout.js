@@ -35,6 +35,10 @@ const STAT_PHRASES = {
   blockMitigation: { up: 'Stronger guard', down: 'Weaker guard' },
   blockCounter: { up: 'Block riposte', down: 'Weaker riposte' },
   interruptBonus: { up: 'Punishes swings', down: 'Softer catch' },
+  dodgeCounter: { up: 'Dodge counter', down: 'Weaker counter' },
+  missCounter: { up: 'Punishes whiffs', down: 'Softer punish' },
+  chargeMax: { up: 'Bigger charge', down: 'Smaller charge' },
+  chargePen: { up: 'Charge pierces', down: 'Less pierce' },
 };
 
 // axis → phrase by direction (behaviour branches). Short (2–3 words); meaning

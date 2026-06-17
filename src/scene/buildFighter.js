@@ -624,11 +624,14 @@ export function buildFighter(
   let feintBaited = false; // foe took the bait
   let feintAdvUntil = 0; // advantage window for the punisher (loop time)
   let feintPayoffActive = false; // the current real-attack clip carries the payoff
-  // ВОЛНОЛОМ-1/5 «после блока — ответный тычок»: a successful block ARMS a short
-  // riposte window; the blocker's next strike inside it hits harder (sb.blockCounter).
-  // This is the real activation of the onBlock hook — self-contained in the blocker
-  // (the onBlock callback stays the recognisable-event seam, unwired in the arena).
-  let blockRiposteUntil = 0; // loop time the post-block riposte bonus is available (0 = none)
+  // Riposte window — one source-agnostic answer-back. A defensive WIN arms it and
+  // stores the bonus; the fighter's next strike inside the window hits harder, then
+  // consumes it. Three triggers feed the SAME window: a block (ВОЛНОЛОМ sb.blockCounter,
+  // заход 3), a dodge (КАПКАН/ТЕНЬ sb.dodgeCounter), a foe whiff (КАПКАН sb.missCounter).
+  // The reactive activation of the dormant dodge / onMiss hooks — self-contained here.
+  let riposteUntil = 0; // loop time the riposte bonus is available (0 = none)
+  let riposteBonus = 0; // damage bonus stored when the window was armed
+  const armRiposte = (amt) => { if (amt) { riposteUntil = lastT + B.riposteWindowSec; riposteBonus = amt; } }; // arm from any trigger
 
   // --- Interrupt / stagger (сбив замаха). `windupVulnUntil` (set in play) marks
   //     this fighter interruptible while in the EARLY part of its own attack
@@ -970,10 +973,10 @@ export function buildFighter(
     // (base 0) scales BOTH the pierce and the damage of the post-feint punish.
     const fpMul = 1 + (sb.feintPayoff || 0);
     const pen = Math.max(stats.blockPenetration, feintPayoffActive ? B.feintPenetrationBonus * fpMul : 0, chargeShotPen);
-    // ВОЛНОЛОМ-1/5 «ответный тычок»: a strike inside the post-block window ripostes
-    // harder (sb.blockCounter). Consumed on use — one answer per block.
+    // Riposte: a strike inside the armed window (from a block / dodge / foe whiff)
+    // hits harder, then consumes it — one answer per defensive win.
     let riposte = 0;
-    if (sb.blockCounter && blockRiposteUntil && lastT < blockRiposteUntil) { riposte = sb.blockCounter; blockRiposteUntil = 0; }
+    if (riposteUntil && lastT < riposteUntil) { riposte = riposteBonus; riposteUntil = 0; riposteBonus = 0; }
     const dmgBonus = (feintPayoffActive ? B.feintDamageBonus * fpMul : 0) + chargeShotPower + riposte;
     // ВОЛНОЛОМ-2/5 «наказывает прерванную атаку»: this fighter's interrupt reward
     // (sb.interruptBonus) rides ALONG to the foe — applied there ONLY if the hit
@@ -1092,7 +1095,7 @@ export function buildFighter(
     dodgeRun = null;
     loco.active = false;
     feintActive = false; feintPayoffActive = false; feintBaitUntil = 0; feintAdvUntil = 0; feintBaited = false; // feint state leaves with the fighter
-    blockRiposteUntil = 0; // post-block riposte window leaves with the fighter
+    riposteUntil = 0; riposteBonus = 0; // riposte window leaves with the fighter
     windupVulnUntil = 0; staggerUntil = 0; // interrupt/stagger state leaves with the fighter
     charge = 0; chargeShotPower = 0; chargeShotPen = 0; // charge state leaves with the fighter
     barTrack.visible = false; // bar leaves with the fighter
@@ -1136,6 +1139,7 @@ export function buildFighter(
     const dodgeChance = B.dodgeChanceMax * Math.pow(slip01, B.dodgeChanceCurve);
     if (dodgeChance > 0 && Math.random() < dodgeChance) {
       play(DODGE); // slip the hit: no HP loss, no rhythm hitch
+      armRiposte(sb.dodgeCounter || 0); // КАПКАН-2/5 · ТЕНЬ-4 — a slipped hit opens the counter window
       return;
     }
     // The hit LANDED (past miss + dodge). INTERRUPT: are we caught in the EARLY
@@ -1157,9 +1161,7 @@ export function buildFighter(
       const cut = THREE.MathUtils.clamp(stats.blockMitigation * (1 - attackerPen), 0, 0.9);
       blockMul = 1 - cut;
       if (onBlock) onBlock(); // recognisable successful-block event
-      // ВОЛНОЛОМ-1/5: a successful block ARMS the riposte window — the blocker's
-      // next strike inside blockRiposteWindowSec hits harder (consumed there).
-      if (sb.blockCounter) blockRiposteUntil = lastT + B.blockRiposteWindowSec;
+      armRiposte(sb.blockCounter || 0); // ВОЛНОЛОМ-1/5 — a block opens the riposte window
     }
     // Two distinct mitigations, both apply: resilience is the BEHAVIOUR axis
     // (manner — unchanged this pass), toughness is the NEW defensive STAT
@@ -1206,6 +1208,12 @@ export function buildFighter(
     );
     if (Math.random() < tend) enterBlock(B.blockHoldSec); // raise the guard for this exchange
   };
+
+  // КАПКАН-4 «наказывает промах врага» — the foe's whiff opens this fighter's
+  // counter window (sb.missCounter). Routed by ArenaScene from the missing
+  // attacker's onMiss → this fighter's noteFoeMissed (mirror of noteIncomingAttack).
+  // The dormant onMiss hook activated reactively; only a trap facet arms a counter.
+  const noteFoeMissed = () => { if (state === 'alive') armRiposte(sb.missCounter || 0); };
 
   // --- Feint ABILITY (built clean — clip + threat signal + bait window). Throws
   //     the FEINT clip, spends a little stamina, and fires the SAME onAttackStart
@@ -1538,6 +1546,7 @@ export function buildFighter(
     slow: () => toggleLoco('slow'),
     fast: () => toggleLoco('fast'),
     noteIncomingAttack, // foe-attack notification → block reflex (routed by ArenaScene)
+    noteFoeMissed, // foe-whiff notification → КАПКАН counter window (routed by ArenaScene)
     setBlock, // dev / manual block toggle (true = hold stance, false = drop)
     toggleBlock: () => setBlock(!blocking),
     isBlocking: () => blocking,
