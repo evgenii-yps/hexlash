@@ -169,7 +169,7 @@ export function buildFighter(
     screenH: 0.016, // plate height as a fraction of viewport height — small (≈ head-sized, does NOT dominate the frame)
     minWorldH: 0.09, // clamp floor (close camera) — still a readable strip
     maxWorldH: 0.16, // clamp ceiling (far camera) — never balloons past ≈ a head
-    aspect: 4.5, // plate width : height — a thin strip, not a pillow
+    aspect: 3.9, // plate width : height — a touch taller so the bigger digit has air (still a strip, not a pillow)
     color: [255, 0, 105], // #FF0069 — core/rift pink (fill)
     oppBright: 0.6, // opponent dim factor (fill + number brightness) — приглушение ЯРКОСТЬЮ, не цветом
   };
@@ -185,14 +185,17 @@ export function buildFighter(
     c.arcTo(x, y, x + w, y, rr);
     c.closePath();
   };
-  const PLATE_PX_H = 72;
+  const PLATE_PX_H = 96; // canvas pixel height — generous source so the pixel glyph stays well-formed (resolution, not world size)
   const PLATE_PX_W = Math.round(PLATE_PX_H * HUD_PLATE.aspect);
   const plateCanvas = document.createElement('canvas');
   plateCanvas.width = PLATE_PX_W;
   plateCanvas.height = PLATE_PX_H;
   const plateCtx = plateCanvas.getContext('2d');
   const plateTex = new THREE.CanvasTexture(plateCanvas);
-  plateTex.minFilter = THREE.LinearFilter; // no mipmaps → crisp text
+  // Linear, no mipmaps: sharp at this small on-screen size. (Nearest would shimmer
+  // as the camera orbits/zooms; the glyph stays crisp via the high-res source +
+  // hard outline below, not blurry interpolation.)
+  plateTex.minFilter = THREE.LinearFilter;
   plateTex.magFilter = THREE.LinearFilter;
   const plateSprite = new THREE.Sprite(new THREE.SpriteMaterial({
     map: plateTex, transparent: true, depthTest: false, depthWrite: false,
@@ -230,19 +233,21 @@ export function buildFighter(
     plateCtx.lineWidth = 2;
     plateCtx.strokeStyle = `rgba(0,0,0,${0.4 * plateBright + 0.2})`;
     plateCtx.stroke();
-    // HP number — Anonymous pixel font, FLAT white fill + a soft drop shadow ONLY
-    // for contrast (no heavy per-glyph outline → reads as a number, not a sticker).
-    // White reads on both the pink fill and the dark track; the shadow lifts it off
-    // the pink. save/restore so the shadow never bleeds into the next redraw.
+    // HP number — Anonymous pixel font, FLAT white fill + a THIN crisp dark
+    // outline (NO blur), so it stays sharp on the far camera and reads on both the
+    // pink fill and the dark track at any HP. Bigger now (~0.7 of the bar height)
+    // for distance, with a little air top/bottom. save/restore keeps the text
+    // state from leaking into the next redraw.
     plateCtx.save();
-    plateCtx.font = `${Math.round(H * 0.5)}px Anonymous, monospace`;
+    plateCtx.font = `${Math.round(H * 0.7)}px Anonymous, monospace`;
     plateCtx.textAlign = 'center';
     plateCtx.textBaseline = 'middle';
-    plateCtx.shadowColor = `rgba(4,5,10,${0.5 * plateBright + 0.25})`;
-    plateCtx.shadowBlur = 4;
-    plateCtx.shadowOffsetY = 1.5;
+    plateCtx.lineJoin = 'round';
     const label = String(Math.max(0, Math.ceil(hp)));
-    plateCtx.fillStyle = `rgba(255,255,255,${0.95 * plateBright + 0.05})`;
+    plateCtx.lineWidth = Math.max(2, Math.round(H * 0.03)); // thin crisp outline (~3px) — NOT the old heavy frame
+    plateCtx.strokeStyle = `rgba(6,7,12,${0.85 * plateBright + 0.15})`;
+    plateCtx.strokeText(label, W / 2, H / 2 + 1);
+    plateCtx.fillStyle = `rgba(255,255,255,${0.96 * plateBright + 0.04})`;
     plateCtx.fillText(label, W / 2, H / 2 + 1);
     plateCtx.restore();
     plateTex.needsUpdate = true;
@@ -251,7 +256,7 @@ export function buildFighter(
   // The pixel font may load after first paint — redraw once it's ready so "100"
   // isn't stuck on a fallback glyph (best-effort; no-op if the API is absent).
   if (typeof document !== 'undefined' && document.fonts && document.fonts.load) {
-    document.fonts.load(`${Math.round(PLATE_PX_H * 0.5)}px Anonymous`).then(drawPlate).catch(() => {});
+    document.fonts.load(`${Math.round(PLATE_PX_H * 0.7)}px Anonymous`).then(drawPlate).catch(() => {});
   }
   const updateBar = () => drawPlate();
 
