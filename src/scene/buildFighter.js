@@ -492,10 +492,13 @@ export function buildFighter(
   const staminaCadenceMul = () => 1 + (B.staminaCadenceStretchMax - 1) * Math.pow(1 - stamina01(), B.staminaPenaltyCurve);
   const attackStaminaCost = (atk) => (atk === COMBO ? B.staminaCostCombo : atk === DOUBLE ? B.staminaCostDouble : B.staminaCostPunch);
 
-  // Outgoing strike damage for a clip: сила удара × множитель приёма × УСТАЛОСТЬ ×
-  // джиттер (low stamina weakens the hit, evaluated at impact time). The
-  // defender's toughness / block softening is applied on its side (takeDamage).
-  const strikeDamage = (c) => stats.strikePower * (c.dmgMult || 0) * staminaPowerMul() * (1 + jit(B.jitter));
+  // Outgoing strike damage as a FRACTION of the TARGET's max HP (NOT an absolute),
+  // so HP scaling never rebalances the fight: damageFracBase (neutral punch share)
+  // × this fighter's strikePower vs base (so the grade % bonuses read) × move mult
+  // × УСТАЛОСТЬ × джиттер (low stamina weakens the hit, evaluated at impact time).
+  // The defender multiplies by ITS OWN maxHp and softens by toughness / block /
+  // dodge on its side (takeDamage).
+  const strikeDamage = (c) => B.damageFracBase * (stats.strikePower / B.strikePower) * (c.dmgMult || 0) * staminaPowerMul() * (1 + jit(B.jitter));
   // Toughness softening — PERCENT mitigation, saturating, never to zero (a weak
   // hit still chips through). Constant per fighter this pass (stats don't change
   // mid-bout yet); incoming damage is multiplied by (1 − toughSoft) in takeDamage.
@@ -1169,7 +1172,12 @@ export function buildFighter(
     // An interrupting hit carries the global interruptDamageBonus PLUS the
     // attacker's own seam (ВОЛНОЛОМ-2/5 sb.interruptBonus, passed via onImpact).
     const interruptMul = interrupted ? 1 + B.interruptDamageBonus + attackerInterruptBonus : 1;
-    hp = Math.max(0, hp - dmg * dmgMulFor(res01) * (1 - toughSoft) * blockMul * interruptMul);
+    // `dmg` is a FRACTION of THIS fighter's max HP (the attacker computed it as a
+    // share, not an absolute — see strikeDamage). Multiply by maxHp here so HP
+    // scaling never rebalances: a bigger pool = proportionally bigger numbers, same
+    // hits to a kill. Then soften by resilience / toughness / block (all
+    // multiplicative ratios, independent of the HP scale).
+    hp = Math.max(0, hp - dmg * maxHp * dmgMulFor(res01) * (1 - toughSoft) * blockMul * interruptMul);
     updateBar();
     if (hp <= 0) { eliminate(); return; } // → dissolve; onEliminated raised on completion
     if (interrupted) {

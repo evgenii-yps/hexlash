@@ -14,15 +14,34 @@
                    (speedMul) in buildFighter; NOT a second movement system, just
                    a readable number for the sheet (mobilityBase is its scale).
 
-   Target average bout length: ~40–50s (~16–17 landed hits, neutral vs neutral).
-   The escalating-damage safeguard only kicks in PAST escalateStartSec, so it
-   guarantees a STALLING bout still finishes (no ties — a bout always runs to an
-   elimination) without cutting a normal 40–50s bout short. */
+   Damage model: STANDARD base HP = 100 (both fighters). Strike damage is a
+   FRACTION of the TARGET's max HP, never an absolute — so a future HP upgrade
+   (to 1000+) does NOT rebalance the fight (раздуй пул, доли держат тот же бой).
+   A clean (unmitigated) mixed series kills in ~15-18 hits; toughness / dodge /
+   block / miss lengthen the real bout to ~40-45s, and the escalating-damage
+   safeguard (past escalateStartSec ≈ 25s) guarantees a STALLING bout still
+   finishes — no ties, a bout always runs to an elimination — without cutting a
+   normal bout short. */
 export const COMBAT_BALANCE = {
-  // --- Scale: large numbers so the grade system's percentage bonuses read.
-  maxHp: 4000, // booster HP (was 100) — крупные числа под процентные грани
-  strikePower: 180, // базовая сила удара (был 250) — на нейтрале панч ≈3% HP, бой ~16–17 ударов
-  toughness: 200, // базовая прочность — кривая смягчения масштабируется от неё
+  // --- Standard base. maxHp = 100 for BOTH fighters. Strike damage is a FRACTION
+  //     of the TARGET's max HP (see damageFracBase + strikeDamage in buildFighter),
+  //     so HP scaling (a future upgrade to 1000+) does NOT rebalance the fight —
+  //     a bigger pool just means proportionally bigger numbers, same hits to kill.
+  maxHp: 100, // стандартная база HP обоих бойцов (был 4000)
+  // Readable strikePower CHARACTERISTIC (sheet number, base 100) — the grade
+  // system lays its PERCENT bonuses on top (122 = +22%) and the damage fraction
+  // scales by strikePower/100. NOT the damage amount itself (that's a fraction of
+  // the target's HP — damageFracBase below).
+  strikePower: 100, // сила удара как ЧИТАЕМАЯ характеристика (был 180-абсолют); урон = доля HP × (strikePower/100)
+  // Neutral PUNCH = this fraction of the TARGET's max HP, RAW/unmitigated (before
+  // toughness / resilience / block / dodge). doubleEach + combo scale it by
+  // moveMult, keeping the 1 : 1.33 : 3.67 per-impact triad. Calibrated so a mixed
+  // series kills in ~15-18 clean hits: at neutral AI weights (punch .47 / double
+  // .40 / combo .13) ≈ 2.0% raw per attack → ~11 attacks ≈ ~15-16 individual
+  // impacts to a clean kill. Mitigation lengthens the real bout to ~40-45s.
+  // Tunable — the single knob for "how fast HP drains".
+  damageFracBase: 0.045, // доля max HP цели за нейтральный панч (сырой, до митигации)
+  toughness: 200, // базовая прочность — кривая смягчения = РАТИО toughness/(toughness+K), не зависит от шкалы HP
   mobilityBase: 100, // масштаб читаемого mobility = round(mobilityBase × speedMul)
   accuracy: 50, // базовая ТОЧНОСТЬ бойца (0..100, общая база; пока грани её не двигают). Компетенция, не ось манеры — двигает шанс промаха.
 
@@ -249,7 +268,7 @@ export const COMBAT_BALANCE = {
   //     OVERALL damage multiplier on BOTH fighters ramps up (per second), so a
   //     stalling bout is guaranteed to finish past the ~40-50s target window.
   //     No hard round cap needed while this is running; no ties.
-  escalateStartSec: 40, // порог времени (с) — до него множитель = 1 (нормальный бой ~40-50s укладывается, страховка только от затягивания; был 30)
+  escalateStartSec: 25, // порог времени (с) — до него множитель = 1; ранний старт (был 40) подрезает хвост: нейтральный бой ~40-45s, затяг гарантированно добивается
   escalateGrowthPerSec: 0.18, // прирост общего множителя урона в секунду после порога
   escalateMax: 6, // потолок множителя (страховка от бесконечного роста)
 };
