@@ -12,6 +12,7 @@
 import * as THREE from 'three';
 import { makeRadialTexture } from './arenaTextures.js';
 import { resolveBehavior } from '../data/behavior.js';
+import { INTENTIONS, INTENTION_TICK_SEC, intentionProfile, chooseIntention } from '../data/intentions.js';
 import { KLICH_PROFILES } from '../data/klichProfiles.js';
 import { COMBAT_BALANCE } from '../data/combatBalance.js';
 import { createHpIndicator } from './hpIndicator.js';
@@ -29,7 +30,12 @@ export function buildFighter(
   // — which drives how this fighter moves and fights (see the axis → knob seam
   // below). If `behavior` is absent it's resolved from `coreId` (no lit facets),
   // so any caller still gets a core-shaped fighter.
-  { side = 'player', coreId = null, behavior = null, maxHp = COMBAT_BALANCE.maxHp, onImpact, onMiss, onBlock, onAttackStart, onFeint, onInterrupt, onChargeRelease, onEliminated, getFoePos = null, getFoeReacting = null, bounds = { x: 2.5, z: 1.5 }, neutralColor = false } = {},
+  // `brain` selects the intention-picker strategy ('spinal' = the deterministic
+  // function in data/intentions.js, the default; 'model' = the empty stub seat for
+  // a future model). `getFightContext` (optional, like getFoePos) supplies the
+  // shared fight context (escalation phase, …) to the picker — synthesised minimal
+  // if absent.
+  { side = 'player', coreId = null, behavior = null, maxHp = COMBAT_BALANCE.maxHp, onImpact, onMiss, onBlock, onAttackStart, onFeint, onInterrupt, onChargeRelease, onEliminated, getFoePos = null, getFoeReacting = null, getFightContext = null, bounds = { x: 2.5, z: 1.5 }, neutralColor = false, brain = 'spinal' } = {},
 ) {
   const group = new THREE.Group();
 
@@ -576,9 +582,14 @@ export function buildFighter(
       if (e > 0.001) klichActive = true;
       for (const axis in k.ax) klichKd[axis] = (klichKd[axis] || 0) + k.ax[axis] * e;
     }
-    const effDist = THREE.MathUtils.clamp(baseAx.distance + klichKd.distance, 0, 100);
-    const effInit = THREE.MathUtils.clamp(baseAx.initiative + klichKd.initiative, 0, 100);
-    stickEff = THREE.MathUtils.clamp((baseAx.stick + klichKd.stick) / 100, 0, 1);
+    // Effective axes = BASE + klich delta + INTENTION delta (the third additive
+    // layer — distance / initiative / stick / tempo). Composing all three here
+    // means range / aggression / stick / cadence are the single derived knobs the
+    // body reads, whichever layers are live; base axes stay untouched.
+    const effDist = THREE.MathUtils.clamp(baseAx.distance + klichKd.distance + intentionDelta.distance, 0, 100);
+    const effInit = THREE.MathUtils.clamp(baseAx.initiative + klichKd.initiative + intentionDelta.initiative, 0, 100);
+    stickEff = THREE.MathUtils.clamp((baseAx.stick + klichKd.stick + intentionDelta.stick) / 100, 0, 1);
+    effTempo01 = THREE.MathUtils.clamp((baseAx.tempo + intentionDelta.tempo) / 100, 0, 1);
     character.range = THREE.MathUtils.clamp(lerp(RANGE_NEAR, RANGE_FAR, effDist / 100) + character.rangeJit, CONTACT_SOFT, FAR - 0.2);
     character.aggression = THREE.MathUtils.clamp(effInit / 100 + character.aggrJit, 0, 1);
   };
@@ -590,6 +601,81 @@ export function buildFighter(
     const p = KLICH_PROFILES[id];
     if (!p) return;
     activeKlichs.push({ ax: { ...p.axes }, dur: p.dur, attack: p.attack, release: p.release, start: lastT });
+  };
+
+  // --- Intention layer (the "spinal cord", future-model seam). Once every
+  //     INTENTION_TICK_SEC the fighter picks ONE of 7 intentions via the single
+  //     seam chooseIntention(self, foe, memory, fight, brain); the body works in
+  //     that mode until the next pick (held between ticks). An intention is a MODE,
+  //     expressed exactly like a klich: an additive delta over the BASE axes
+  //     (distance / initiative / tempo / stick) composed in refreshKlich, PLUS
+  //     attack / guard / charge flags the existing reflexes read (decideAttack,
+  //     noteIncomingAttack, decideRelease). The body executes the mode with the
+  //     SAME sb.* mechanics and never learns WHY it was chosen — swap brain to
+  //     'model' and only chooseIntention changes. The spinal cord is deterministic
+  //     (no random), so replay is stable.
+  const intentionDelta = { distance: 0, initiative: 0, tempo: 0, stick: 0 };
+  const intentionFlags = { attack: 'free', guard: 0, charge: 'free' };
+  let intentionId = INTENTIONS.HOLD;
+  let intentionNextAt = 0; // loop time the next pick fires (INTENTION_TICK_SEC apart)
+  let effTempo01 = tempo01; // base tempo + intention delta (refreshed in refreshKlich), read by the strike cadence
+  // Short ring of OBSERVED foe events (attack / miss), newest last — the memory
+  // the picker reads. The model leans on it; the spinal cord uses it lightly.
+  const FOE_MEMORY_MAX = 8;
+  const foeMemory = [];
+  const rememberFoe = (type) => {
+    foeMemory.push({ t: lastT, type });
+    if (foeMemory.length > FOE_MEMORY_MAX) foeMemory.shift();
+  };
+  // Apply a chosen intention → its body-mode delta + flags. refreshKlich folds the
+  // delta into range / aggression / stick / tempo each frame; the flags are read
+  // by the strike / guard / charge reflexes.
+  const applyIntention = (id) => {
+    intentionId = id;
+    const p = intentionProfile(id);
+    const a = p.axes || {};
+    intentionDelta.distance = a.distance || 0;
+    intentionDelta.initiative = a.initiative || 0;
+    intentionDelta.tempo = a.tempo || 0;
+    intentionDelta.stick = a.stick || 0;
+    intentionFlags.attack = p.attack || 'free';
+    intentionFlags.guard = p.guard || 0;
+    intentionFlags.charge = p.charge || 'free';
+  };
+  applyIntention(intentionId); // start neutral (HOLD); the first tick re-picks
+  // ~1/sec pick: snapshot self / foe / memory / fight, route through the brain
+  // seam, apply the result (null → keep the current mode). Gated to ai.on by the
+  // caller. Reads BASE axes for the temperament gravity (not the eff values — that
+  // would feed the choice back on itself); the deltas it lays affect the BODY.
+  const tickIntention = (t) => {
+    if (t < intentionNextAt) return;
+    intentionNextAt = t + INTENTION_TICK_SEC;
+    const f = getFoePos && getFoePos();
+    const dist = f ? Math.hypot(f.x - group.position.x, f.z - group.position.z) : Infinity;
+    const self = {
+      ax01: {
+        distance: n01(baseAx.distance), initiative: n01(baseAx.initiative),
+        tempo: tempo01, weight: weight01, stick: stick01,
+        resilience: n01(baseAx.resilience), counter: counter01, slip: slip01,
+      },
+      hp01: hp / maxHp,
+      stamina01: stamina01(),
+      charge01: charge / stats.chargeMax,
+      blocking,
+      staggered: lastT < staggerUntil,
+      range: character.range,
+      current: intentionId,
+    };
+    const foe = {
+      has: !!f,
+      dist,
+      inStrike: dist <= STRIKE,
+      reacting: !!(getFoeReacting && getFoeReacting()),
+    };
+    const fc = getFightContext && getFightContext();
+    const fight = { t, escalation: (fc && fc.escalation) || 1, activeKlich: klichActive };
+    const picked = chooseIntention(self, foe, foeMemory, fight, brain);
+    if (picked) applyIntention(picked); // model may return null → keep the held mode (no freeze)
   };
 
   const loco = { active: false, type: 'slow' }; // dev SLOW/FAST preview toggle
@@ -1204,11 +1290,14 @@ export function buildFighter(
   //     grows from LIVE resilience + stick (so a ДЕРЖАТЬ call lifts it and it falls
   //     on release); resilience-led so a high-stick presser isn't a turtle.
   const noteIncomingAttack = () => {
+    rememberFoe('attack'); // observed foe event → the intention memory (the picker reads it)
     if (state !== 'alive' || blocking) return; // already guarding → keep the stance
     const resLive = THREE.MathUtils.clamp((baseAx.resilience + klichKd.resilience) / 100, 0, 1);
     const stickLive = stickEff; // base + klich, refreshed each frame in refreshKlich
+    // intentionFlags.guard biases the raise tendency by the current MODE (CATCH /
+    // HOLD lean high, PRESS / STRIKE low); clamped so a bout still finishes.
     const tend = THREE.MathUtils.clamp(
-      B.blockTendencyBase + resLive * B.blockTendencyResWeight + stickLive * B.blockTendencyStickWeight,
+      B.blockTendencyBase + resLive * B.blockTendencyResWeight + stickLive * B.blockTendencyStickWeight + intentionFlags.guard,
       0, B.blockTendencyMax,
     );
     if (Math.random() < tend) enterBlock(B.blockHoldSec); // raise the guard for this exchange
@@ -1218,7 +1307,7 @@ export function buildFighter(
   // counter window (sb.missCounter). Routed by ArenaScene from the missing
   // attacker's onMiss → this fighter's noteFoeMissed (mirror of noteIncomingAttack).
   // The dormant onMiss hook activated reactively; only a trap facet arms a counter.
-  const noteFoeMissed = () => { if (state === 'alive') armRiposte(sb.missCounter || 0); };
+  const noteFoeMissed = () => { rememberFoe('miss'); if (state === 'alive') armRiposte(sb.missCounter || 0); };
 
   // --- Feint ABILITY (built clean — clip + threat signal + bait window). Throws
   //     the FEINT clip, spends a little stamina, and fires the SAME onAttackStart
@@ -1261,7 +1350,13 @@ export function buildFighter(
   //     checks reach before this). Isolated like decideFeint; the future model's
   //     «release» intent replaces ONLY this, leaving accumulation + the empowered
   //     strike untouched. Returns whether THIS attack should spend the charge.
-  const decideRelease = () => charge / stats.chargeMax >= B.chargeReleaseThreshold;
+  // Intention gates the release: STING / BREATHE ('build') save the charge; STRIKE
+  // ('spend') fires what it has loaded; everything else uses the default threshold.
+  const decideRelease = () => {
+    if (intentionFlags.charge === 'build') return false;
+    if (intentionFlags.charge === 'spend') return charge > 0;
+    return charge / stats.chargeMax >= B.chargeReleaseThreshold;
+  };
 
   // Autonomous combat (AI): strike only when the foe is within range, on a
   // cadence; the navigation above closes the gap and manoeuvres between strikes.
@@ -1269,6 +1364,7 @@ export function buildFighter(
   // takeDamage). Live random — no seed. Returns true if a strike started.
   const decideAttack = (t) => {
     if (clip || t < ai.nextAt) return false;
+    if (intentionFlags.attack === 'none') return false; // this mode doesn't initiate (BREATHE / BREAK / CATCH) — it spaces / waits / guards instead
     const f = getFoePos && getFoePos();
     if (!f) return false;
     const dx = f.x - group.position.x;
@@ -1279,12 +1375,18 @@ export function buildFighter(
     if (Math.hypot(dx, dz) > reach) return false;
     // TEMPORARY: sometimes throw a feint instead of a real strike (see decideFeint).
     if (decideFeint(t)) return true;
-    // ATTACK STYLE — weight-led (heavy01): light favours the single PUNCH almost
-    // every time; heavy commits the DOUBLE / COMBO. Wider than before so the
-    // light-flurry vs heavy-slam read is unmistakable on the grey stand.
-    const r = Math.random();
-    const punchW = lerp(0.82, 0.12, heavy01); // light → mostly singles · heavy → mostly DOUBLE/COMBO
-    const atk = r < punchW ? PUNCH : r < punchW + 0.4 ? DOUBLE : COMBO;
+    // ATTACK STYLE — the intention MODE leads, weight is the fallback. STING
+    // ('light') throws quick singles; STRIKE ('heavy') commits the DOUBLE / COMBO
+    // series; PRESS / HOLD ('free') use the fighter's own weight-led mix (heavy01:
+    // light favours the single PUNCH, heavy commits the bigger moves).
+    let atk;
+    if (intentionFlags.attack === 'light') atk = PUNCH; // жалить — quick pokes
+    else if (intentionFlags.attack === 'heavy') atk = Math.random() < 0.5 ? DOUBLE : COMBO; // рубить — heavy series
+    else {
+      const r = Math.random();
+      const punchW = lerp(0.82, 0.12, heavy01); // light → mostly singles · heavy → mostly DOUBLE/COMBO
+      atk = r < punchW ? PUNCH : r < punchW + 0.4 ? DOUBLE : COMBO;
+    }
     play(atk);
     stamina = THREE.MathUtils.clamp(stamina - attackStaminaCost(atk), 0, staminaMax); // spend силы on the strike (jab cheap, combo dear) — never gates the attack
     // CHARGE release (TEMPORARY decideRelease — near-full + foe in reach): empower
@@ -1307,7 +1409,7 @@ export function buildFighter(
     // frequent light" read) even at equal tempo. LOW STAMINA stretches the pause
     // (×staminaCadenceMul) → a tired fighter strikes less often.
     const heavyPause = lerp(-0.12, 0.4, weight01); // light shortens · heavy lengthens the gap
-    const pause = (Math.max(0.06, lerp(0.85, 0.18, tempo01) + heavyPause) + Math.random() * lerp(0.9, 0.3, tempo01)) * staminaCadenceMul();
+    const pause = (Math.max(0.06, lerp(0.85, 0.18, effTempo01) + heavyPause) + Math.random() * lerp(0.9, 0.3, effTempo01)) * staminaCadenceMul(); // effTempo01 = base tempo + intention delta (STRIKE quickens, STING eases)
     ai.nextAt = t + atk.dur + pause;
     // Follow-up after the strike — profile-driven: aggressive / sticky ones press
     // a flurry, the rest circle or bait out. Window starts as the clip ends.
@@ -1327,6 +1429,7 @@ export function buildFighter(
   // lands) on cadence so a fight still progresses without any jitter.
   const reducedAttack = (t) => {
     if (t < ai.nextAt) return;
+    if (intentionFlags.attack === 'none') return; // non-initiating mode (BREATHE / BREAK / CATCH) — no strike under reduced either
     // CHARGE release under reduced (same threshold decision): empower + spend.
     let pen = stats.blockPenetration; let chgBonus = 0;
     if (decideRelease() && charge > 0) {
@@ -1344,7 +1447,7 @@ export function buildFighter(
     stamina = THREE.MathUtils.clamp(stamina - B.staminaCostPunch, 0, staminaMax); // spend силы (punch-equivalent)
     // Cadence tracks tempo (+ a weight term), stretched by LOW STAMINA, so the
     // static fallback reads fast-light vs slow-heavy AND tires like the animated path.
-    ai.nextAt = t + (Math.max(0.1, lerp(1.0, 0.4, tempo01) + lerp(-0.15, 0.45, weight01)) + Math.random() * lerp(0.9, 0.4, tempo01)) * staminaCadenceMul();
+    ai.nextAt = t + (Math.max(0.1, lerp(1.0, 0.4, effTempo01) + lerp(-0.15, 0.45, weight01)) + Math.random() * lerp(0.9, 0.4, effTempo01)) * staminaCadenceMul(); // effTempo01 folds in the intention's tempo bias
   };
   const setAI = (b) => {
     ai.on = b;
@@ -1352,6 +1455,11 @@ export function buildFighter(
       ai.nextAt = lastT + 0.3 + Math.random() * 0.6;
       nav.until = lastT + Math.random() * character.decideJit; // desync decision phase
       nav.mode = Math.random() < 0.5 ? 'circle' : 'approach';
+      applyIntention(INTENTIONS.HOLD); // start neutral; the first tick re-picks
+      // Deterministic intention desync (opponent picks half a tick out of phase)
+      // so the two never re-pick in lock-step — no random, replay stays stable.
+      intentionNextAt = lastT + (isOpp ? INTENTION_TICK_SEC * 0.5 : 0);
+      foeMemory.length = 0; // fresh bout — forget the foe's earlier events
     }
   };
 
@@ -1377,7 +1485,11 @@ export function buildFighter(
     }
     if (state === 'done') return;
 
-    // Advance klich envelopes → live additive delta over the base axes + re-derive
+    // Intention pick (~1/sec) BEFORE the axis re-derive, so a fresh mode shifts
+    // range / aggression / stick / tempo on the same frame. Gated to autonomous
+    // play (ai.on); runs in reduced motion too (it's fight logic, not animation).
+    if (ai.on) tickIntention(t);
+    // Advance klich envelopes + the intention delta → effective axes + re-derive
     // the affected knobs. Runs in every alive state (incl. reduced motion: the
     // axis shift is fight logic, not animation).
     refreshKlich(t);
@@ -1579,6 +1691,8 @@ export function buildFighter(
     getStamina: () => stamina, // запас сил (readable — ТЕНЬ-3 seam + dev readout)
     getStaminaMax: () => staminaMax,
     getStamina01: () => stamina01(),
+    getIntention: () => intentionId, // current intention id (readable — dev readout + model seam)
+    setBrain: (b) => { brain = b; }, // swap the intention-picker strategy ('spinal' | 'model')
     eliminate,
     takeDamage,
     getHp: () => hp,

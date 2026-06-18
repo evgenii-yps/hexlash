@@ -35,7 +35,7 @@
       <button type="button" class="tgt" @click="onDevCharge">CHARGE</button>
     </div>
     <!-- Dev stamina (силы) + charge (заряд) readout for both fighters — live. -->
-    <div v-if="panelVisible" class="arena-readout">{{ staReadout }}<br>{{ chgReadout }}</div>
+    <div v-if="panelVisible" class="arena-readout">{{ staReadout }}<br>{{ chgReadout }}<br>{{ intReadout }}</div>
   </div>
 </template>
 
@@ -62,6 +62,9 @@ const panelVisible = ref(true);
 // (throttled) in the loop so the spend / recover can be watched. Temporary.
 const staReadout = ref('STA  P —  ·  O —');
 const chgReadout = ref('CHG  P —  ·  O —');
+// Current intention of each fighter — so it's VISIBLE that differently-raised
+// builds lean to different intentions. Refreshed (throttled) in the loop.
+const intReadout = ref('INT  P —  ·  O —');
 
 // --- Behaviour A/B dev stand (preview only). Pick a signature preset for the
 //     LEFT (player slot) and RIGHT (opponent slot) fighter, run an autonomous
@@ -352,6 +355,7 @@ onMounted(() => {
       onAttackStart: () => opponent?.noteIncomingAttack?.(), // in-range attack incoming → the foe's block reflex
       onMiss: () => opponent?.noteFoeMissed?.(), // our strike went wide → the foe's КАПКАН counter window
       getFoeReacting: () => !!(opponent && (opponent.isBlocking?.() || opponent.isDodging?.())), // foe took the bait? (feint payoff)
+      getFightContext: () => ({ escalation: escalationMult(), elapsed: fightStartT ? lastFrameT - fightStartT : 0 }), // shared context for the intention picker (escalation phase)
       onEliminated: () => {
         scene.remove(fighter.group);
         fighter.dispose();
@@ -379,6 +383,7 @@ onMounted(() => {
       onAttackStart: () => fighter?.noteIncomingAttack?.(), // in-range attack incoming → the foe's block reflex
       onMiss: () => fighter?.noteFoeMissed?.(), // our strike went wide → the foe's КАПКАН counter window
       getFoeReacting: () => !!(fighter && (fighter.isBlocking?.() || fighter.isDodging?.())), // foe took the bait? (feint payoff)
+      getFightContext: () => ({ escalation: escalationMult(), elapsed: fightStartT ? lastFrameT - fightStartT : 0 }), // shared context for the intention picker (escalation phase)
       onEliminated: () => {
         scene.remove(opponent.group);
         opponent.dispose();
@@ -492,8 +497,10 @@ onMounted(() => {
       lastStaReadout = t;
       const sta = (fr) => (fr ? Math.round(fr.getStamina01() * 100) : '—');
       const chg = (fr) => (fr ? Math.round(fr.getCharge01() * 100) : '—');
+      const intn = (fr) => (fr && fr.getIntention ? fr.getIntention().toUpperCase() : '—');
       staReadout.value = `STA  P ${sta(fighter)}  ·  O ${sta(opponent)}`;
       chgReadout.value = `CHG  P ${chg(fighter)}  ·  O ${chg(opponent)}`;
+      intReadout.value = `INT  P ${intn(fighter)}  ·  O ${intn(opponent)}`;
     }
 
     // SIG A/B auto-cycle — a KO scheduled a restart; fire it (full HP, fresh
