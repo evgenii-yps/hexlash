@@ -30,6 +30,7 @@
       <button type="button" class="tgt" @click="onSigFight">SIG FIGHT</button>
       <button type="button" class="tgt" :class="{ on: neutralColor }" @click="onNeutralColor">GRAY: {{ neutralColor ? 'ON' : 'OFF' }}</button>
       <button type="button" class="tgt" :class="{ on: brainMode === 'model' }" @click="onBrain">BRAIN: {{ brainMode === 'model' ? 'MODEL' : 'SPINAL' }}</button>
+      <button type="button" class="tgt" :class="{ on: lockedIntention }" @click="onLockCycle">LOCK: {{ LOCK_ORDER[lockIdx].toUpperCase() }}</button>
       <button type="button" class="tgt" :class="{ on: blockDev }" @click="onBlockToggle">BLOCK: {{ blockDev ? 'ON' : 'OFF' }}</button>
       <button type="button" class="tgt" @click="onDevFeint">FEINT</button>
       <button type="button" class="tgt" @click="onDevStagger">STAGGER</button>
@@ -91,6 +92,19 @@ const onBrain = () => {
     console.warn('[arena] brain toggle failed — staying on spinal', e);
     brainMode.value = 'spinal';
   }
+};
+
+// DEV: lock BOTH fighters to one intention to inspect its body signature in
+// isolation (cycles OFF → the 7 → OFF). Re-applied across respawns in spawn*().
+const LOCK_ORDER = ['off', 'press', 'strike', 'sting', 'hold', 'catch', 'break', 'breathe'];
+const lockIdx = ref(0);
+const lockedIntention = ref(null); // null = off; else an intention id
+const onLockCycle = () => {
+  lockIdx.value = (lockIdx.value + 1) % LOCK_ORDER.length;
+  const id = LOCK_ORDER[lockIdx.value];
+  lockedIntention.value = id === 'off' ? null : id;
+  fighter?.setIntentionLock?.(lockedIntention.value);
+  opponent?.setIntentionLock?.(lockedIntention.value);
 };
 
 // --- Behaviour A/B dev stand (preview only). Pick a signature preset for the
@@ -421,6 +435,7 @@ onMounted(() => {
     fighter.group.position.set(0.45, arena.refs.topY, 1.3); // off-centre, asymmetric to the opponent
     fighter.setReducedMotion(reducedMotion);
     fighter.setAI(aiPlayer); // keep AI on across respawn
+    if (lockedIntention.value) fighter.setIntentionLock(lockedIntention.value); // keep dev intention lock across respawn
     if (blockDev.value) fighter.setBlock(true); // keep a dev block stance across respawn
     scene.add(fighter.group);
   };
@@ -454,6 +469,7 @@ onMounted(() => {
     opponent.group.position.set(-0.65, arena.refs.topY, -1.4); // off-centre, not a mirror of the player
     opponent.setReducedMotion(reducedMotion);
     opponent.setAI(aiOpponent); // keep AI on across respawn
+    if (lockedIntention.value) opponent.setIntentionLock(lockedIntention.value); // keep dev intention lock across respawn
     scene.add(opponent.group);
   };
   spawnFighter();

@@ -13,6 +13,7 @@ import * as THREE from 'three';
 import { makeRadialTexture } from './arenaTextures.js';
 import { resolveBehavior } from '../data/behavior.js';
 import { INTENTIONS, INTENTION_SET, INTENTION_TICK_SEC, intentionProfile, chooseIntention } from '../data/intentions.js';
+import { motionFor } from '../data/intentionMotion.js';
 import { KLICH_PROFILES } from '../data/klichProfiles.js';
 import { COMBAT_BALANCE } from '../data/combatBalance.js';
 import { createHpIndicator } from './hpIndicator.js';
@@ -625,6 +626,10 @@ export function buildFighter(
   let intentionId = INTENTIONS.HOLD;
   let intentionNextAt = 0; // loop time the next pick fires (INTENTION_TICK_SEC apart)
   let effTempo01 = tempo01; // base tempo + intention delta (refreshed in refreshKlich), read by the strike cadence
+  // DEV: lock the fighter to one intention to inspect its signature in isolation.
+  // When set, the picker (spinal/model + hard needs) is bypassed entirely — the
+  // body executes EXACTLY this intention. null = off (normal picking).
+  let intentionLock = null;
   // Short ring of OBSERVED foe events (attack / miss), newest last — the memory
   // the picker reads. The model leans on it; the spinal cord uses it lightly.
   const FOE_MEMORY_MAX = 8;
@@ -649,11 +654,16 @@ export function buildFighter(
     intentionFlags.charge = p.charge || 'free';
   };
   applyIntention(intentionId); // start neutral (HOLD); the first tick re-picks
+  // DEV: lock to one intention (id) or release (null). Locked → applied at once and
+  // held; tickIntention + the model brain skip while locked, so the body shows that
+  // one signature in isolation with no picker / hard-need interference.
+  const setIntentionLock = (id) => { intentionLock = id || null; if (intentionLock) applyIntention(intentionLock); };
   // ~1/sec pick: snapshot self / foe / memory / fight, route through the brain
   // seam, apply the result (null → keep the current mode). Gated to ai.on by the
   // caller. Reads BASE axes for the temperament gravity (not the eff values — that
   // would feed the choice back on itself); the deltas it lays affect the BODY.
   const tickIntention = (t) => {
+    if (intentionLock) { intentionNextAt = t + INTENTION_TICK_SEC; return; } // DEV lock → never re-pick (already applied)
     if (t < intentionNextAt) return;
     intentionNextAt = t + INTENTION_TICK_SEC;
     const f = getFoePos && getFoePos();
@@ -1058,6 +1068,26 @@ export function buildFighter(
     setMode('block');
   };
 
+  // Intention STANCE → target: the PLANTED silhouette of the active intention
+  // (lean / crouch / guard / knee bend from intentionMotion.js). Set ONLY on
+  // planted frames (navigate / maneuver call it when NOT requesting a move), so the
+  // gait cleanly overrides it while walking and there's no per-frame setMode churn.
+  // Per-intention mode name → the pose layer cross-fades (≈0.13s) on an intention
+  // change, which reads as a quick, deliberate shift (not a slow morph). Plays
+  // through the same layer as idle/block; reduced motion never reaches it.
+  const intentionStance = (bs) => {
+    const s = motionFor(intentionId).stance || {};
+    targetP.hipsZ = s.lean || 0;
+    targetP.hipsY = hipsBaseY + (s.crouch || 0) + bs * 0.008;
+    targetP.torsoX = s.torso || 0; targetP.torsoY = 0;
+    targetP.lsx = s.sh || 0; targetP.lex = s.el || 0;
+    targetP.rsx = s.sh || 0; targetP.rex = s.el || 0;
+    const kn = s.knee || 0; // coiled crouch — bend hip + knee (CATCH)
+    targetP.lhx = kn * 0.4; targetP.lkx = -kn;
+    targetP.rhx = kn * 0.4; targetP.rkx = -kn;
+    setMode('stance-' + intentionId);
+  };
+
   // Gait + weight → target. Cadence and amplitude scale with the LIVE speed
   // (mag), so a move visibly winds up as it accelerates and winds down as it
   // brakes — never a fixed glide. `accel` (Δspeed/s) leans the torso: into the
@@ -1089,6 +1119,10 @@ export function buildFighter(
   // a start, a stop and inertia — never a constant-speed glide.
   const move = { vx: 0, vz: 0 }; // carried world velocity (units/s) → inertia
   const intent = { on: false, dx: 0, dz: 0, band: SLOW, maxDist: Infinity };
+  // Per-intention band-speed scale (the active intention's MANNER: BREATHE slow,
+  // STING/BREAK fast). Set by navigate each frame, applied in stepLocomotion;
+  // reset to 1 by the dev gait so the SLOW/FAST preview is unscaled.
+  let moveScale = 1;
 
   // Request movement this frame: unit direction (dx, dz), a band (SLOW / FAST)
   // and the distance left to the goal (so the integrator can brake into it).
@@ -1115,10 +1149,11 @@ export function buildFighter(
     let tvx = 0;
     let tvz = 0;
     if (intent.on) {
-      let ts = band.speed;
+      const bspeed = band.speed * moveScale; // intention manner (slow / fast) rides on the band speed
+      let ts = bspeed;
       const cm = Math.hypot(move.vx, move.vz);
       const brakeDist = (cm * cm) / (2 * band.decel) + 0.05; // distance to bleed off at decel
-      if (intent.maxDist <= brakeDist) ts = band.speed * THREE.MathUtils.clamp(intent.maxDist / brakeDist, 0, 1);
+      if (intent.maxDist <= brakeDist) ts = bspeed * THREE.MathUtils.clamp(intent.maxDist / brakeDist, 0, 1);
       tvx = intent.dx * ts;
       tvz = intent.dz * ts;
     }
@@ -1252,36 +1287,31 @@ export function buildFighter(
     onImpact(strikeDamage(c) * (1 + dmgBonus), pen, sb.interruptBonus || 0); // contact → foe resolves dodge / block / damage
   };
 
-  // Manoeuvre at fighting range — character-weighted tactic re-picked on this
-  // fighter's own clock (decideMin + jitter), so the two never act in lock-step:
-  //   circle — orbit the foe (own circling sense, occasionally reversed)
-  //   press  — step in toward contact, force a tight exchange (aggressive)
-  //   bait   — ease out to draw the foe in (cautious)
-  const maneuver = (t, dt, ux, uz, d) => {
-    if (t >= nav.until) {
-      // slip → elusive fighters weave aside (a DODGE) instead of a ground tactic.
-      if (!clip && slip01 > 0 && Math.random() < slip01 * 0.22) {
-        play(DODGE);
-        nav.until = t + character.decideMin + Math.random() * character.decideJit;
-        return;
-      }
-      const r = Math.random();
-      // INITIATIVE drives press↔bait directly (no fixed circle floor): high
-      // initiative drives in (press most decisions), low initiative hangs back
-      // and draws the foe in (bait), stick nudges toward press. The remainder
-      // circles. This is what makes "lezet v draku vs vyzhidat" read.
-      const aggr = character.aggression;
-      const pressW = THREE.MathUtils.clamp(0.55 * aggr + 0.15 * stickEff, 0, 0.85);
-      const baitW = THREE.MathUtils.clamp(0.5 * (1 - aggr) - 0.15 * stickEff, 0, 0.6);
-      if (r < pressW) nav.mode = 'press'; // initiative high → drive in
-      else if (r < pressW + baitW) nav.mode = 'bait'; // initiative low → wait / draw in
-      else nav.mode = 'circle';
-      if (Math.random() < 0.28) character.strafeBias *= -1; // reverse the orbit sometimes
+  // Manoeuvre at fighting range — now INTENTION-led (the active intention's motion
+  // style decides the manner; character only tints speed/jitter). Each branch either
+  // requests a move (gait shows) OR plants and sets the intention stance (so the
+  // planted silhouette reads). `bs` = breathing phase for the stance.
+  //   press   — relentless step-in toward contact, never circles.
+  //   sting   — bounce OUT (the strike darts back in to poke) → jerky in/out.
+  //   plant   — HOLD digs in / body-presses (brace forward); CATCH gives a sliver
+  //             of ground if crowded (brace back); otherwise plant + stance.
+  //   strike  — hold loaded at strike range (the heavy clip + sag does the work).
+  //   retreat — at range BREAK/BREATHE settle into their stance (alert vs sunk).
+  const maneuver = (t, dt, ux, uz, d, bs) => {
+    const m = motionFor(intentionId);
+    // Slip-dodge weave only for the mobile, non-committing styles (an elusive
+    // character still flickers aside) — never while planting / committing a strike.
+    if (m.style !== 'plant' && m.style !== 'strike' && !clip && slip01 > 0 && Math.random() < slip01 * 0.18) {
+      play(DODGE);
       nav.until = t + character.decideMin + Math.random() * character.decideJit;
+      return;
     }
-    if (nav.mode === 'press') requestMove(ux, uz, FAST, Math.max(0, d - CONTACT_SOFT)); // sharp step-in
-    else if (nav.mode === 'bait') requestMove(-ux, -uz, SLOW); // ease out
-    else requestMove(character.strafeBias * -uz, character.strafeBias * ux, SLOW); // circle
+    if (m.style === 'press') { requestMove(ux, uz, FAST, Math.max(0, d - CONTACT_SOFT)); return; } // непрерывный нажим к контакту
+    if (m.style === 'sting') { requestMove(-ux, -uz, FAST); return; } // отскок ОТ врага (decideAttack дёргается внутрь на тычок)
+    // plant / strike / retreat — hold ground, show the stance.
+    if (m.brace === 'back' && d < CONTACT_SOFT + 0.2) { requestMove(-ux, -uz, SLOW, 0.25); return; } // CATCH чуть отдаёт дистанцию, если поджали
+    if (m.brace === 'forward' && d > CONTACT_SOFT + 0.15) { requestMove(ux, uz, SLOW, d - CONTACT_SOFT); return; } // HOLD напирает корпусом к контакту
+    intentionStance(bs); // planted → the intention silhouette
   };
   const navigate = (t, dt, bs) => {
     const f = getFoePos && getFoePos();
@@ -1292,49 +1322,50 @@ export function buildFighter(
     const ux = dx / d;
     const uz = dz / d;
     const engage = character.range;
+    const m = motionFor(intentionId);
+    moveScale = m.speedMul || 1; // intention MANNER: BREATHE slow, STING/BREAK fast
 
     if (d > engage + RANGE_HYST) {
-      // Close in — but not straight down the middle: arc in at a per-approach
-      // angle (sign + size from character), straightening as the gap closes.
+      // Close toward preferred range. PRESS cuts the angle (drives straight in);
+      // others arc. (BREAK/BREATHE sit at a high range, so they rarely land here.)
       if (nav.mode !== 'approach') {
         nav.mode = 'approach';
         nav.approachAngle = (Math.random() < 0.5 ? -1 : 1) * character.approachArc * (0.5 + Math.random() * 0.5);
       }
       const closeFrac = THREE.MathUtils.clamp((d - engage) / (FAR - engage), 0, 1);
-      const a = nav.approachAngle * closeFrac;
+      const a = nav.approachAngle * closeFrac * (m.style === 'press' ? 0.25 : 1); // PRESS straightens the line (cuts off the retreat)
       const ca = Math.cos(a);
       const sa = Math.sin(a);
       const gap = d - engage;
-      // Collected SLOW traverse from far; a short FAST step-in for the final
-      // close (capped by FAST_DASH so it reads as a step-in, not a sprint).
-      const band = gap <= FAST_DASH ? FAST : SLOW;
+      // PRESS chases FAST; plant intentions amble in SLOW; others step in fast on a
+      // short gap. Speed manner rides on top via moveScale.
+      const band = (m.style === 'press' || (m.style !== 'plant' && gap <= FAST_DASH)) ? FAST : SLOW;
       requestMove(ux * ca - uz * sa, ux * sa + uz * ca, band, gap);
       return;
     }
     if (d < CONTACT_SOFT) {
-      // Too tight — ease back to the soft buffer (SLOW; the integrator brakes
-      // into it so they settle smoothly, no grind).
+      // Too tight — ease back to the soft buffer (never interpenetrate).
       requestMove(-ux, -uz, SLOW, CONTACT_SOFT - d);
       return;
     }
     if (d < engage - RANGE_HYST) {
-      // Notably INSIDE preferred range — ease back out toward it (active spacing;
-      // makes `distance` read both ways, and an ОТХОД call's distance spike pop
-      // as a sharp break: FAST when the gap to give up is large, SLOW for a small
-      // adjust). The integrator brakes into `out`, so it settles at the range.
+      // Inside preferred range → give ground. BREAK/BREATHE live here; the SPEED
+      // (moveScale: BREAK sharp, BREATHE slow) + facing (faceFoe always) + the
+      // settle stance at range separate them. STING also bounces out here.
       const out = engage - d;
       const band = out > FAST_DASH ? FAST : SLOW;
       requestMove(-ux, -uz, band, out);
       return;
     }
-    if (nav.mode === 'approach') nav.until = 0; // just arrived → pick a tactic now
-    maneuver(t, dt, ux, uz, d); // fighting band
+    if (nav.mode === 'approach') nav.until = 0; // just arrived → manner now
+    maneuver(t, dt, ux, uz, d, bs); // at preferred range — intention manner + stance
   };
 
   // Dev SLOW / FAST preview (AI off): approach the foe at the chosen band, then
   // circle; march in place if there's no foe. Keeps each band inspectable
   // without the full fight running.
   const devGait = (dt) => {
+    moveScale = 1; // dev preview ignores the intention speed manner
     const band = loco.type === 'fast' ? FAST : SLOW;
     const f = getFoePos && getFoePos();
     if (!f) { animateGait(dt, band, band.speed, 0); return; } // march in place
@@ -1677,7 +1708,7 @@ export function buildFighter(
     // Model brain (hybrid): per-frame break detector wakes a Claude call on fight
     // breaks. Only under brain='model' + an injected request fn — spinal default
     // makes zero requests. Runs before the tick so a just-cached answer can apply.
-    if (ai.on && brain === 'model' && requestModelIntention) tickModelBrain(t, dt);
+    if (ai.on && brain === 'model' && requestModelIntention && !intentionLock) tickModelBrain(t, dt);
     // Intention pick (~1/sec) BEFORE the axis re-derive, so a fresh mode shifts
     // range / aggression / stick / tempo on the same frame. Gated to autonomous
     // play (ai.on); runs in reduced motion too (it's fight logic, not animation).
@@ -1885,6 +1916,7 @@ export function buildFighter(
     getStaminaMax: () => staminaMax,
     getStamina01: () => stamina01(),
     getIntention: () => intentionId, // current intention id (readable — dev readout + model seam)
+    setIntentionLock, // DEV: lock to one intention (id) or release (null) — inspect a signature in isolation
     setBrain: (b) => { brain = b; }, // swap the intention-picker strategy ('spinal' | 'model')
     getBrain: () => brain,
     getModelRead: () => (lastModelAnswer ? lastModelAnswer.read : ''), // last model "read" phrase (dev readout)

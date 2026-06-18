@@ -55,7 +55,7 @@ export const INTENTION_PROFILES = {
   [INTENTIONS.PRESS]:   { axes: { distance: -35, initiative: 30, stick: 20 },              attack: 'free',  guard: -0.10, charge: 'free' },
   [INTENTIONS.STRIKE]:  { axes: { distance: -25, initiative: 20, tempo: 15 },              attack: 'heavy', guard: -0.15, charge: 'spend' },
   [INTENTIONS.STING]:   { axes: { distance: 30, initiative: 10, tempo: -10, stick: -25 },  attack: 'light', guard: -0.05, charge: 'build' },
-  [INTENTIONS.HOLD]:    { axes: {},                                                        attack: 'free',  guard: 0.20,  charge: 'free' },
+  [INTENTIONS.HOLD]:    { axes: {},                                                        attack: 'none',  guard: 0.20,  charge: 'free' },
   [INTENTIONS.BREAK]:   { axes: { distance: 35, initiative: -25, stick: -30 },             attack: 'none',  guard: 0.10,  charge: 'free' },
   [INTENTIONS.BREATHE]: { axes: { distance: 45, initiative: -35, stick: -25 },             attack: 'none',  guard: 0.0,   charge: 'build' },
   [INTENTIONS.CATCH]:   { axes: { distance: 10, initiative: -20 },                         attack: 'none',  guard: 0.35,  charge: 'free' },
