@@ -12,7 +12,7 @@
 import * as THREE from 'three';
 import { makeRadialTexture } from './arenaTextures.js';
 import { resolveBehavior } from '../data/behavior.js';
-import { INTENTIONS, INTENTION_TICK_SEC, intentionProfile, chooseIntention } from '../data/intentions.js';
+import { INTENTIONS, INTENTION_SET, INTENTION_TICK_SEC, intentionProfile, chooseIntention } from '../data/intentions.js';
 import { KLICH_PROFILES } from '../data/klichProfiles.js';
 import { COMBAT_BALANCE } from '../data/combatBalance.js';
 import { createHpIndicator } from './hpIndicator.js';
@@ -31,11 +31,16 @@ export function buildFighter(
   // below). If `behavior` is absent it's resolved from `coreId` (no lit facets),
   // so any caller still gets a core-shaped fighter.
   // `brain` selects the intention-picker strategy ('spinal' = the deterministic
-  // function in data/intentions.js, the default; 'model' = the empty stub seat for
-  // a future model). `getFightContext` (optional, like getFoePos) supplies the
-  // shared fight context (escalation phase, …) to the picker — synthesised minimal
-  // if absent.
-  { side = 'player', coreId = null, behavior = null, maxHp = COMBAT_BALANCE.maxHp, onImpact, onMiss, onBlock, onAttackStart, onFeint, onInterrupt, onChargeRelease, onEliminated, getFoePos = null, getFoeReacting = null, getFightContext = null, bounds = { x: 2.5, z: 1.5 }, neutralColor = false, brain = 'spinal' } = {},
+  // function in data/intentions.js, the default + always-on safety net; 'model' =
+  // the hybrid that wakes a Claude call on fight BREAKS, spinal between them).
+  // `getFightContext` (optional, like getFoePos) supplies the shared fight context
+  // (escalation phase, …). `portrait` is the fighter's character in WORDS (core
+  // manner + lit-facet phrases) — sent to the model, never raw axis numbers.
+  // `requestModelIntention(payload) → Promise<{intention,read}|null>` is the
+  // injected async call to the backend (kept out of this scene module so it never
+  // imports the HTTP client / store). `getFoeStamina` / `getFoeHp01` (optional)
+  // let the break detector + word memory observe the foe's wind / health.
+  { side = 'player', coreId = null, behavior = null, maxHp = COMBAT_BALANCE.maxHp, onImpact, onMiss, onBlock, onAttackStart, onFeint, onInterrupt, onChargeRelease, onEliminated, getFoePos = null, getFoeReacting = null, getFightContext = null, getFoeStamina = null, getFoeHp01 = null, bounds = { x: 2.5, z: 1.5 }, neutralColor = false, brain = 'spinal', portrait = [], requestModelIntention = null } = {},
 ) {
   const group = new THREE.Group();
 
@@ -601,6 +606,7 @@ export function buildFighter(
     const p = KLICH_PROFILES[id];
     if (!p) return;
     activeKlichs.push({ ax: { ...p.axes }, dur: p.dur, attack: p.attack, release: p.release, start: lastT });
+    klichBreakPending = true; // a coach call is a fight break → wake the model brain (model mode only)
   };
 
   // --- Intention layer (the "spinal cord", future-model seam). Once every
@@ -665,6 +671,10 @@ export function buildFighter(
       staggered: lastT < staggerUntil,
       range: character.range,
       current: intentionId,
+      // Last valid model answer (model brain) — held until the next break replaces
+      // it, expires via MODEL_ANSWER_TTL as a backstop. null under spinal / before
+      // the first answer; chooseIntentionModel reads it (hard needs still win).
+      model: lastModelAnswer ? { intention: lastModelAnswer.intention, read: lastModelAnswer.read, fresh: (lastT - lastModelAnswer.at) < MODEL_ANSWER_TTL } : null,
     };
     const foe = {
       has: !!f,
@@ -676,6 +686,158 @@ export function buildFighter(
     const fight = { t, escalation: (fc && fc.escalation) || 1, activeKlich: klichActive };
     const picked = chooseIntention(self, foe, foeMemory, fight, brain);
     if (picked) applyIntention(picked); // model may return null → keep the held mode (no freeze)
+  };
+
+  // --- Model brain (hybrid). Under brain='model' the body wakes a Claude call on
+  //     fight BREAKS, not every tick — between breaks it lives on the spinal cord,
+  //     and the spinal HARD NEEDS fire instantly regardless of the model (see
+  //     chooseIntentionModel). A break fires an ASYNC request; while it's in flight
+  //     the fighter holds its current intention. When a valid answer lands it's
+  //     cached (lastModelAnswer) and the next tick applies it; an invalid / late /
+  //     errored answer is ignored → stay on spinal. Cooldown + per-bout ceiling are
+  //     the wallet guard. NONE of this runs under brain='spinal' (zero requests).
+  const MODEL_COOLDOWN_SEC = 3; // min gap between model wakes (anti-chatter at a threshold)
+  const MODEL_MAX_REQUESTS = 12; // hard ceiling of model calls per bout (wallet safety)
+  const MODEL_ANSWER_TTL = 10; // s — a held answer expires as a backstop if breaks stop firing
+  const HP_BREAK_FRAC = 0.30; // first dip below 30% HP → a break
+  const STAM_BREAK_FRAC = 0.30; // wind collapse below 30% → a break
+  let lastModelAnswer = null; // { intention, read, at } — read by the self snapshot
+  let modelReqSeq = 0; // bumped per request + on reset; a resolving request whose seq is stale is ignored
+  let modelPending = false; // a request is in flight (no overlap)
+  let modelCooldownUntil = 0; // loop time the next wake is allowed
+  let modelRequestsThisBout = 0; // count this bout (vs MODEL_MAX_REQUESTS)
+  // Break-edge tracking (one-shots + transients).
+  let modelBoutStarted = false; // bout-start break fired once
+  let selfHpBroke = false; let foeHpBroke = false; // HP-dip one-shots
+  let selfStamBroke = false; let foeStamBroke = false; // wind-collapse one-shots
+  let foeApproaching = null; // latched foe-manner state (true=closing, false=opening); flip → break
+  let foeCloseEMA = 0; // smoothed foe approach signal (sign-based, deadbanded)
+  let foeLastDist = null; // previous foe distance (for the manner trend)
+  let klichBreakPending = false; // a coach klich landed → break (set in applyKlich)
+
+  // Word helpers — the model gets the situation in WORDS, never raw axis numbers.
+  const hpWord = (f01) => (f01 == null ? 'unknown' : f01 > 0.66 ? 'healthy' : f01 > 0.30 ? 'hurt' : 'near death');
+  const stamWord = (s01) => (s01 == null ? 'unknown' : s01 > 0.6 ? 'fresh' : s01 > 0.3 ? 'winded' : 'spent');
+  const chargeWord = (c01) => (c01 >= 0.85 ? 'loaded' : c01 > 0.15 ? 'building' : 'none');
+  const rangeWord = (dist) => {
+    if (dist == null || !isFinite(dist)) return 'out of sight';
+    if (dist <= STRIKE * 0.7) return 'in close';
+    if (dist <= character.range + RANGE_HYST) return 'at fighting range';
+    return 'out of reach';
+  };
+  const mannerWord = () => (foeApproaching === true ? 'pressing in' : foeApproaching === false ? 'backing off' : 'holding range');
+  const phaseWord = (fc) => {
+    const esc = (fc && fc.escalation) || 1;
+    const el = (fc && fc.elapsed) || 0;
+    if (esc > 1.05) return 'dragging long (sudden death)';
+    if (el < 8) return 'opening';
+    if (el < 25) return 'mid-fight';
+    return 'endgame';
+  };
+  // Recent foe behaviour → words (the picker's memory; the model leans on it).
+  const memoryWords = (t, foeStam01) => {
+    const out = [];
+    const recent = foeMemory.filter((e) => t - e.t < 6);
+    const atk = recent.filter((e) => e.type === 'attack').length;
+    const miss = recent.filter((e) => e.type === 'miss').length;
+    if (atk >= 4) out.push('the foe has been attacking relentlessly');
+    else if (atk >= 1) out.push('the foe landed a few strikes');
+    if (miss >= 2) out.push('the foe has been missing / whiffing');
+    if (foeApproaching === true) out.push('the foe keeps pressing forward');
+    else if (foeApproaching === false) out.push('the foe keeps backing off');
+    if (foeStam01 != null && foeStam01 < 0.3) out.push('the foe looks winded');
+    return out;
+  };
+
+  // Build the WORD payload posted to the backend (no raw axes / numbers).
+  const buildModelPayload = (trigger) => {
+    const f = getFoePos && getFoePos();
+    const dist = f ? Math.hypot(f.x - group.position.x, f.z - group.position.z) : Infinity;
+    const foeStam01 = getFoeStamina ? getFoeStamina() : null;
+    const foeHp01 = getFoeHp01 ? getFoeHp01() : null;
+    const fc = getFightContext && getFightContext();
+    return {
+      portrait, // character in words (static — core manner + lit-facet phrases)
+      self: {
+        hp: hpWord(hp / maxHp),
+        stamina: stamWord(stamina01()),
+        charge: chargeWord(charge / stats.chargeMax),
+        stance: blocking ? 'guarding' : 'open',
+        current: (intentionId || '').toUpperCase(),
+      },
+      foe: {
+        range: rangeWord(dist),
+        manner: mannerWord(),
+        guard: getFoeReacting && getFoeReacting() ? 'guarding / evading' : 'open',
+        hp: hpWord(foeHp01),
+        stamina: stamWord(foeStam01),
+      },
+      memory: memoryWords(lastT, foeStam01),
+      phase: phaseWord(fc),
+      trigger,
+    };
+  };
+
+  // Fire the async model request for a break (guarded by cooldown + ceiling +
+  // no-overlap upstream). A stale / late / errored / invalid answer is ignored;
+  // a valid one is cached and applied by the next tick.
+  const fireModelRequest = (t, trigger) => {
+    modelPending = true;
+    modelRequestsThisBout += 1;
+    modelCooldownUntil = t + MODEL_COOLDOWN_SEC;
+    const seq = ++modelReqSeq;
+    let payload;
+    try { payload = buildModelPayload(trigger); } catch (e) { modelPending = false; return; }
+    Promise.resolve()
+      .then(() => requestModelIntention(payload))
+      .then((res) => {
+        modelPending = false;
+        if (seq !== modelReqSeq || state !== 'alive') return; // superseded (reset/late) or dead → drop
+        const id = res && typeof res.intention === 'string' ? res.intention.toLowerCase() : null;
+        if (id && INTENTION_SET.has(id)) lastModelAnswer = { intention: id, read: (res.read || ''), at: lastT };
+        // invalid intention → keep spinal (don't cache), no crash
+      })
+      .catch(() => { modelPending = false; }); // timeout / network / 4xx-5xx → stay on spinal
+  };
+
+  // Break detector — runs each alive frame under brain='model'. Returns the
+  // trigger word for the strongest fresh break, or null. Edge-tracks one-shots
+  // (bout start, HP dip, wind collapse) and transients (foe manner flip, klich).
+  const detectBreak = (t, dt) => {
+    // (1) bout start — one request to open.
+    if (!modelBoutStarted) { modelBoutStarted = true; return 'the bout has begun'; }
+    const f = getFoePos && getFoePos();
+    const dist = f ? Math.hypot(f.x - group.position.x, f.z - group.position.z) : Infinity;
+    // (4) foe manner flip (closing ↔ backing off) — smoothed + deadbanded so a
+    //     wobble at range doesn't burn requests.
+    if (f && foeLastDist != null && dt > 1e-4) {
+      foeCloseEMA = foeCloseEMA * 0.9 + Math.sign(foeLastDist - dist) * 0.1; // +closing / −opening
+    }
+    if (f) foeLastDist = dist;
+    let mannerFlip = null;
+    if (foeCloseEMA > 0.25 && foeApproaching !== true) { mannerFlip = foeApproaching === null ? null : 'the foe switched to pressing in'; foeApproaching = true; }
+    else if (foeCloseEMA < -0.25 && foeApproaching !== false) { mannerFlip = foeApproaching === null ? null : 'the foe switched to backing off'; foeApproaching = false; }
+    // (5) coach klich.
+    if (klichBreakPending) { klichBreakPending = false; return 'your coach called a command'; }
+    // (2) first HP dip below threshold (self or foe).
+    if (!selfHpBroke && hp / maxHp < HP_BREAK_FRAC) { selfHpBroke = true; return 'your health just dropped low'; }
+    const foeHp01 = getFoeHp01 ? getFoeHp01() : null;
+    if (!foeHpBroke && foeHp01 != null && foeHp01 < HP_BREAK_FRAC) { foeHpBroke = true; return "the foe's health just dropped low"; }
+    // (3) wind collapse below threshold (self or foe).
+    if (!selfStamBroke && stamina01() < STAM_BREAK_FRAC) { selfStamBroke = true; return 'your wind just gave out'; }
+    const foeStam01 = getFoeStamina ? getFoeStamina() : null;
+    if (!foeStamBroke && foeStam01 != null && foeStam01 < STAM_BREAK_FRAC) { foeStamBroke = true; return 'the foe just ran out of wind'; }
+    if (mannerFlip) return mannerFlip;
+    return null;
+  };
+
+  // Per-frame model tick: detect a break, and if one fires (and we're allowed),
+  // wake the model. Gated to brain='model' + an injected request fn by the caller.
+  const tickModelBrain = (t, dt) => {
+    const trigger = detectBreak(t, dt);
+    if (!trigger) return;
+    if (modelPending || t < modelCooldownUntil || modelRequestsThisBout >= MODEL_MAX_REQUESTS) return; // wallet / anti-chatter guards
+    fireModelRequest(t, trigger);
   };
 
   const loco = { active: false, type: 'slow' }; // dev SLOW/FAST preview toggle
@@ -1185,6 +1347,7 @@ export function buildFighter(
     riposteUntil = 0; riposteBonus = 0; // riposte window leaves with the fighter
     windupVulnUntil = 0; staggerUntil = 0; // interrupt/stagger state leaves with the fighter
     charge = 0; chargeShotPower = 0; chargeShotPen = 0; // charge state leaves with the fighter
+    modelReqSeq += 1; lastModelAnswer = null; // any in-flight model request resolves into a dead fighter → ignored
     deadAt = lastT; // DEAD: updateBar already drew 0% — hold the plate, update() hides it after DEAD_HOLD_S
     if (reduced) { state = 'done'; if (onEliminated) onEliminated(); return; } // no playback (plate leaves with the group)
     skin.transparent = true;
@@ -1460,6 +1623,13 @@ export function buildFighter(
       // so the two never re-pick in lock-step — no random, replay stays stable.
       intentionNextAt = lastT + (isOpp ? INTENTION_TICK_SEC * 0.5 : 0);
       foeMemory.length = 0; // fresh bout — forget the foe's earlier events
+      // Reset the model brain for the new bout: drop the held answer, clear the
+      // break edges + cooldown + count, and bump the seq so any in-flight request
+      // from the previous bout is ignored when it resolves.
+      lastModelAnswer = null; modelReqSeq += 1; modelCooldownUntil = 0; modelRequestsThisBout = 0;
+      modelBoutStarted = false; klichBreakPending = false;
+      selfHpBroke = false; foeHpBroke = false; selfStamBroke = false; foeStamBroke = false;
+      foeApproaching = null; foeCloseEMA = 0; foeLastDist = null;
     }
   };
 
@@ -1485,6 +1655,10 @@ export function buildFighter(
     }
     if (state === 'done') return;
 
+    // Model brain (hybrid): per-frame break detector wakes a Claude call on fight
+    // breaks. Only under brain='model' + an injected request fn — spinal default
+    // makes zero requests. Runs before the tick so a just-cached answer can apply.
+    if (ai.on && brain === 'model' && requestModelIntention) tickModelBrain(t, dt);
     // Intention pick (~1/sec) BEFORE the axis re-derive, so a fresh mode shifts
     // range / aggression / stick / tempo on the same frame. Gated to autonomous
     // play (ai.on); runs in reduced motion too (it's fight logic, not animation).
@@ -1693,6 +1867,9 @@ export function buildFighter(
     getStamina01: () => stamina01(),
     getIntention: () => intentionId, // current intention id (readable — dev readout + model seam)
     setBrain: (b) => { brain = b; }, // swap the intention-picker strategy ('spinal' | 'model')
+    getBrain: () => brain,
+    getModelRead: () => (lastModelAnswer ? lastModelAnswer.read : ''), // last model "read" phrase (dev readout)
+    getModelRequestCount: () => modelRequestsThisBout, // model wakes this bout (dev counter — confirm 5–10, not 80)
     eliminate,
     takeDamage,
     getHp: () => hp,

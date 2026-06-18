@@ -29,13 +29,14 @@
       <button type="button" class="tgt" @click="cycleSig('right')">R:{{ sigTag(sigRight) }}</button>
       <button type="button" class="tgt" @click="onSigFight">SIG FIGHT</button>
       <button type="button" class="tgt" :class="{ on: neutralColor }" @click="onNeutralColor">GRAY: {{ neutralColor ? 'ON' : 'OFF' }}</button>
+      <button type="button" class="tgt" :class="{ on: brainMode === 'model' }" @click="onBrain">BRAIN: {{ brainMode === 'model' ? 'MODEL' : 'SPINAL' }}</button>
       <button type="button" class="tgt" :class="{ on: blockDev }" @click="onBlockToggle">BLOCK: {{ blockDev ? 'ON' : 'OFF' }}</button>
       <button type="button" class="tgt" @click="onDevFeint">FEINT</button>
       <button type="button" class="tgt" @click="onDevStagger">STAGGER</button>
       <button type="button" class="tgt" @click="onDevCharge">CHARGE</button>
     </div>
     <!-- Dev stamina (силы) + charge (заряд) readout for both fighters — live. -->
-    <div v-if="panelVisible" class="arena-readout">{{ staReadout }}<br>{{ chgReadout }}<br>{{ intReadout }}</div>
+    <div v-if="panelVisible" class="arena-readout">{{ staReadout }}<br>{{ chgReadout }}<br>{{ intReadout }}<br>{{ mdlReadout }}</div>
   </div>
 </template>
 
@@ -49,9 +50,17 @@ import { createArenaPresence } from './arenaPresence.js';
 import store from '@/core/state/store.js';
 import { getCore, CORES, CRYSTALS } from '@/data/upgradeData.js';
 import { resolveBehavior } from '@/data/behavior.js';
+import { facetPhrase } from '@/data/facetReadout.js';
 import { SIG_PRESETS, SIG_ORDER, presetBehavior } from '@/data/behaviorPresets.js';
 import { COMBAT_BALANCE } from '@/data/combatBalance.js';
+import apiClient from '@/core/api/apiClient.js';
 import KlichBar from './KlichBar.vue';
+
+// Model-brain request (hybrid intention layer). Injected into each fighter; it
+// POSTs the WORD context to the backend on a fight break and resolves to
+// { intention, read }. The API key never touches the client — this only calls our
+// own endpoint. Rejection (timeout / error) is handled in buildFighter (→ spinal).
+const requestModelIntention = (payload) => apiClient.requestFighterIntention(payload);
 
 const wrap = ref(null);
 const canvasEl = ref(null);
@@ -65,6 +74,17 @@ const chgReadout = ref('CHG  P —  ·  O —');
 // Current intention of each fighter — so it's VISIBLE that differently-raised
 // builds lean to different intentions. Refreshed (throttled) in the loop.
 const intReadout = ref('INT  P —  ·  O —');
+// Brain strategy ('spinal' = deterministic default; 'model' = hybrid Claude wake
+// on fight breaks). Dev toggle only — prod default is spinal (OFF). The MDL readout
+// shows model wakes/bout + last read so it's visible breaks stay ~5–10, not 80.
+const brainMode = ref('spinal');
+const mdlReadout = ref('MDL  off');
+// Dev toggle: flip both fighters between spinal and model brain live.
+const onBrain = () => {
+  brainMode.value = brainMode.value === 'model' ? 'spinal' : 'model';
+  fighter?.setBrain?.(brainMode.value);
+  opponent?.setBrain?.(brainMode.value);
+};
 
 // --- Behaviour A/B dev stand (preview only). Pick a signature preset for the
 //     LEFT (player slot) and RIGHT (opponent slot) fighter, run an autonomous
@@ -313,6 +333,27 @@ onMounted(() => {
     }
     return side === 'player' ? playerBehavior : opponentBehavior;
   };
+  // Character PORTRAIT in WORDS for the model brain: the core's manner line + each
+  // lit facet's manner-phrase (facetReadout) — NO raw axis numbers. Built where the
+  // core + facet data lives; the backend just wraps it into the prompt. During a SIG
+  // dev bout (no core/facets) a coarse preset label stands in.
+  const portraitFor = (side) => {
+    if (sigCycle) {
+      const id = side === 'player' ? sigLeft.value : sigRight.value;
+      return [`${String(id).toUpperCase()} signature fighter`];
+    }
+    const coreId = side === 'player' ? playerCoreId : opponentCoreId;
+    const core = coreId ? getCore(coreId) : null;
+    const lit = side === 'player' ? collectLit(playerTree) : collectLit(CRYSTALS[opponentCoreId]);
+    const out = [];
+    if (core) out.push(`${core.name} — ${core.manner}`);
+    const seen = new Set();
+    for (const f of lit) {
+      const ph = facetPhrase(f);
+      if (ph && !seen.has(ph)) { seen.add(ph); out.push(ph); }
+    }
+    return out;
+  };
   arena = buildArena(renderer.capabilities.getMaxAnisotropy(), pink);
   scene.add(arena.group);
   presence = createArenaPresence(scene, arena.refs);
@@ -356,6 +397,11 @@ onMounted(() => {
       onMiss: () => opponent?.noteFoeMissed?.(), // our strike went wide → the foe's КАПКАН counter window
       getFoeReacting: () => !!(opponent && (opponent.isBlocking?.() || opponent.isDodging?.())), // foe took the bait? (feint payoff)
       getFightContext: () => ({ escalation: escalationMult(), elapsed: fightStartT ? lastFrameT - fightStartT : 0 }), // shared context for the intention picker (escalation phase)
+      getFoeStamina: () => (opponent ? opponent.getStamina01() : null), // foe wind (break detector + word memory)
+      getFoeHp01: () => (opponent ? opponent.getHp() / opponent.maxHp : null), // foe health (break detector)
+      brain: brainMode.value, // 'spinal' (default) | 'model' — dev toggle, prod is spinal
+      portrait: portraitFor('player'), // character in words for the model brain
+      requestModelIntention, // async backend call (model brain) — key stays server-side
       onEliminated: () => {
         scene.remove(fighter.group);
         fighter.dispose();
@@ -384,6 +430,11 @@ onMounted(() => {
       onMiss: () => fighter?.noteFoeMissed?.(), // our strike went wide → the foe's КАПКАН counter window
       getFoeReacting: () => !!(fighter && (fighter.isBlocking?.() || fighter.isDodging?.())), // foe took the bait? (feint payoff)
       getFightContext: () => ({ escalation: escalationMult(), elapsed: fightStartT ? lastFrameT - fightStartT : 0 }), // shared context for the intention picker (escalation phase)
+      getFoeStamina: () => (fighter ? fighter.getStamina01() : null), // foe wind (break detector + word memory)
+      getFoeHp01: () => (fighter ? fighter.getHp() / fighter.maxHp : null), // foe health (break detector)
+      brain: brainMode.value, // 'spinal' (default) | 'model' — dev toggle, prod is spinal
+      portrait: portraitFor('opponent'), // character in words for the model brain
+      requestModelIntention, // async backend call (model brain) — key stays server-side
       onEliminated: () => {
         scene.remove(opponent.group);
         opponent.dispose();
@@ -501,6 +552,14 @@ onMounted(() => {
       staReadout.value = `STA  P ${sta(fighter)}  ·  O ${sta(opponent)}`;
       chgReadout.value = `CHG  P ${chg(fighter)}  ·  O ${chg(opponent)}`;
       intReadout.value = `INT  P ${intn(fighter)}  ·  O ${intn(opponent)}`;
+      // Model brain: wakes-per-bout counter (confirm ~5–10, not 80) + last "read".
+      if (brainMode.value === 'model') {
+        const cnt = (fr) => (fr && fr.getModelRequestCount ? fr.getModelRequestCount() : 0);
+        const rd = (fr) => ((fr && fr.getModelRead && fr.getModelRead()) || '—').slice(0, 18);
+        mdlReadout.value = `MDL  P ${cnt(fighter)} "${rd(fighter)}"  ·  O ${cnt(opponent)} "${rd(opponent)}"`;
+      } else {
+        mdlReadout.value = 'MDL  off (spinal)';
+      }
     }
 
     // SIG A/B auto-cycle — a KO scheduled a restart; fire it (full HP, fresh

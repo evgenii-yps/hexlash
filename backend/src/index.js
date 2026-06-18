@@ -13,6 +13,7 @@ const { setupWebSocket } = require('./websocket/handler');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
 const fileRoutes = require('./routes/file');
+const aiRoutes = require('./routes/ai');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -81,6 +82,7 @@ app.get('/health', (req, res) => {
 app.use('/v1/auth', authRoutes);
 app.use('/v1/user', userRoutes);
 app.use('/v1/file', fileRoutes);
+app.use('/v1/ai', aiRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

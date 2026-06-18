@@ -29,6 +29,7 @@ export const INTENTIONS = {
   CATCH: 'catch',
 };
 export const INTENTION_IDS = Object.values(INTENTIONS);
+export const INTENTION_SET = new Set(INTENTION_IDS); // membership check for model answers
 
 // How often the brain re-picks an intention (s). The body HOLDS the current
 // intention between ticks. Lives here beside the other combat numbers so the
@@ -65,12 +66,14 @@ export const intentionProfile = (id) => INTENTION_PROFILES[id] || INTENTION_PROF
 
 /* chooseIntention — THE SEAM. The single point the body calls to pick the next
    intention. Swap nothing in the body to put a model here: brain 'model' routes to
-   the empty stub below; 'spinal' (default) routes to the deterministic function.
+   the model path below; 'spinal' (default) routes to the deterministic function.
 
    Context (full now, so the model needs no new plumbing later — the spinal cord
    uses it primitively):
      self   — own state: { ax01 (base axes 0..1), hp01, stamina01, charge01,
-              blocking, staggered, range (current preferred), current (held intent) }
+              blocking, staggered, range (current preferred), current (held intent),
+              model ({ intention, read, fresh }|null — last valid model answer, the
+              model path reads this) }
      foe    — observed foe: { has, dist, inStrike, reacting }
      memory — short ring of OBSERVED foe events [{ t, type:'attack'|'miss' }], newest last
      fight  — shared context: { t, escalation, activeKlich }
@@ -81,29 +84,48 @@ export function chooseIntention(self, foe, memory, fight, brain = 'spinal') {
   return chooseIntentionSpinal(self, foe, memory, fight);
 }
 
-/* MODEL — insertion point only. A real LLM / policy call replaces THIS body; the
-   rest of the fighter is untouched. Returns null for now → the body keeps its
-   current intention (so the seam is live and safe before the model exists). */
-export function chooseIntentionModel(/* self, foe, memory, fight */) {
-  return null;
+/* MODEL path. The actual Claude call happens elsewhere (on the body's break
+   detector, async, server-side) — its last valid answer is handed in via
+   self.model. THIS function only composes the hybrid each tick:
+     1. spinal HARD NEEDS always win, instantly — the safety net is NEVER off,
+        even in model mode (low wind → BREATHE, foe swing + counter → CATCH, …).
+     2. a fresh valid model answer → use it (held until the next break replaces it).
+     3. otherwise (no answer yet, or it went stale) → the deterministic spinal
+        score, so the body is never frozen waiting on the network.
+   self.model is the seat the real model fills; everything else is unchanged. */
+export function chooseIntentionModel(self, foe, memory, fight) {
+  const need = hardNeed(self, foe, memory, fight);
+  if (need) return need; // hard needs override any mode, no waiting on the model
+  const m = self.model;
+  if (m && m.fresh && INTENTION_SET.has(m.intention)) return m.intention; // held model pick
+  return spinalScore(self, foe, memory, fight); // between breaks / before first answer
 }
 
-/* SPINAL CORD — deterministic, no random (so replay is stable). Reads state +
-   temperament-weighted gravity and returns the strongest fit. Differently-raised
-   fighters (different cores / facets → different ax01) lean to different
-   intentions for free. */
+/* SPINAL CORD — deterministic, no random (so replay is stable): the hard needs
+   first, then the temperament-weighted score. Used directly when brain='spinal',
+   and as the safety net + fallback under brain='model'. */
 export function chooseIntentionSpinal(self, foe, memory, fight) {
-  const a = self.ax01;
-  // Recent foe pressure from the short memory (the model leans on this much more;
-  // the spinal cord reads it lightly): did the foe just commit an attack?
-  const foeThreat = memory.some((e) => e.type === 'attack' && fight.t - e.t < 1.5);
+  return hardNeed(self, foe, memory, fight) || spinalScore(self, foe, memory, fight);
+}
 
-  // --- Hard needs first — state overrides temperament. ---
+// HARD NEEDS — state overrides temperament, fires instantly (no model round-trip).
+// Returns an intention id or null. Shared by the spinal + model paths so the safety
+// net is identical in both. Deterministic.
+export function hardNeed(self, foe, memory, fight) {
+  const a = self.ax01;
+  const foeThreat = memory.some((e) => e.type === 'attack' && fight.t - e.t < 1.5);
   if (self.stamina01 < 0.22) return INTENTIONS.BREATHE; // out of wind → must recover
   if (foeThreat && a.counter > 0.55 && foe.has && foe.dist < self.range + 0.8) return INTENTIONS.CATCH; // counter-puncher waits out the swing
   if (self.charge01 >= 0.85 && foe.inStrike) return INTENTIONS.STRIKE; // haymaker loaded + foe in reach → land it
+  return null;
+}
 
-  // --- Otherwise: temperament gravity + the situation; pick the strongest. ---
+// SCORE — temperament gravity + the situation, deterministic argmax. Differently-
+// raised fighters (different cores / facets → different ax01) lean to different
+// intentions for free.
+export function spinalScore(self, foe, memory, fight) {
+  const a = self.ax01;
+  const foeThreat = memory.some((e) => e.type === 'attack' && fight.t - e.t < 1.5);
   const closeBand = foe.has && foe.dist <= self.range + 0.5;
   const far = foe.has && foe.dist > self.range + 0.7;
   const lowStam = 1 - self.stamina01;

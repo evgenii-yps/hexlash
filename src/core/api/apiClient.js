@@ -73,4 +73,13 @@ apiClient.getReferrals = function () {
     return this.get('/user/referrals', { authRequired: true });
 };
 
+// ── Arena fighter-intention (model brain) ───────────────────────────────────
+// Posts the WORD context for one fighter on a fight break; resolves to
+// { intention, read }. Short 1.5s timeout — a late answer is not worth applying
+// (the arena ignores it anyway). Any rejection (timeout / 4xx / 5xx) is caught by
+// the caller, which then keeps the deterministic spinal cord. Key stays server-side.
+apiClient.requestFighterIntention = function (payload) {
+    return this.post('/ai/fighter-intention', payload, { authRequired: true, timeout: 1500 });
+};
+
 export default apiClient;
