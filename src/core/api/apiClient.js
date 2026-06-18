@@ -75,11 +75,26 @@ apiClient.getReferrals = function () {
 
 // ── Arena fighter-intention (model brain) ───────────────────────────────────
 // Posts the WORD context for one fighter on a fight break; resolves to
-// { intention, read }. Short 1.5s timeout — a late answer is not worth applying
-// (the arena ignores it anyway). Any rejection (timeout / 4xx / 5xx) is caught by
-// the caller, which then keeps the deterministic spinal cord. Key stays server-side.
+// { intention, read }. Short 1.5s timeout — a late answer is not worth applying.
+//
+// CRITICAL: this deliberately uses BARE axios, NOT the apiClient instance. The
+// apiClient interceptors dispatch `master/logout` (→ navigate away from the arena)
+// on a missing/invalid token or any 401 — which would EJECT the player to home the
+// instant they flip BRAIN: MODEL. The model brain is a degrade-to-spinal dev path:
+// every failure (no token, 401, 503 AI-off, 4xx/5xx, timeout, CORS, network, bad
+// JSON) must REJECT quietly so the caller falls back to the spinal cord — it must
+// never change the route or crash the fight frame. The token is attached manually
+// when present; with no usable token we reject immediately (no doomed request, no
+// logout). The caller (buildFighter.fireModelRequest) always has a .catch.
 apiClient.requestFighterIntention = function (payload) {
-    return this.post('/ai/fighter-intention', payload, { authRequired: true, timeout: 1500 });
+    const token = store.getters['master/getJwtToken'];
+    if (!token || !validateJwtToken(token)) {
+        return Promise.reject(new Error('fighter-intention: no valid token (staying spinal)'));
+    }
+    return axios.post(`${__API_SERVER_URL__}/v1/ai/fighter-intention`, payload, {
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        timeout: 1500,
+    }).then((resp) => resp.data);
 };
 
 export default apiClient;

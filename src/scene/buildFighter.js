@@ -714,6 +714,15 @@ export function buildFighter(
   let foeCloseEMA = 0; // smoothed foe approach signal (sign-based, deadbanded)
   let foeLastDist = null; // previous foe distance (for the manner trend)
   let klichBreakPending = false; // a coach klich landed → break (set in applyKlich)
+  let modelWarned = false; // one-time guard so a broken endpoint logs ONCE, not per frame
+  // Any model-brain failure (sync or async) funnels here: log once, then the
+  // fighter silently stays on the spinal cord. Never rethrows — the fight frame
+  // and the route must survive any model/endpoint outcome.
+  const warnModelOnce = (e) => {
+    if (modelWarned) return;
+    modelWarned = true;
+    try { console.warn('[arena] model brain unavailable — staying on spinal cord', e); } catch (_) { /* noop */ }
+  };
 
   // Word helpers — the model gets the situation in WORDS, never raw axis numbers.
   const hpWord = (f01) => (f01 == null ? 'unknown' : f01 > 0.66 ? 'healthy' : f01 > 0.30 ? 'hurt' : 'near death');
@@ -787,7 +796,11 @@ export function buildFighter(
     modelCooldownUntil = t + MODEL_COOLDOWN_SEC;
     const seq = ++modelReqSeq;
     let payload;
-    try { payload = buildModelPayload(trigger); } catch (e) { modelPending = false; return; }
+    try { payload = buildModelPayload(trigger); } catch (e) { modelPending = false; warnModelOnce(e); return; }
+    // requestModelIntention is called INSIDE the promise chain, so even a
+    // synchronous throw from the injected fn becomes a rejection routed to .catch.
+    // Every outcome — resolve with junk, reject, throw — ends on the spinal cord;
+    // nothing here can crash the frame or change the route.
     Promise.resolve()
       .then(() => requestModelIntention(payload))
       .then((res) => {
@@ -795,9 +808,9 @@ export function buildFighter(
         if (seq !== modelReqSeq || state !== 'alive') return; // superseded (reset/late) or dead → drop
         const id = res && typeof res.intention === 'string' ? res.intention.toLowerCase() : null;
         if (id && INTENTION_SET.has(id)) lastModelAnswer = { intention: id, read: (res.read || ''), at: lastT };
-        // invalid intention → keep spinal (don't cache), no crash
+        // invalid / empty / junk answer → keep spinal (don't cache), no crash
       })
-      .catch(() => { modelPending = false; }); // timeout / network / 4xx-5xx → stay on spinal
+      .catch((e) => { modelPending = false; warnModelOnce(e); }); // timeout / 503 / 4xx-5xx / network / bad JSON → stay on spinal
   };
 
   // Break detector — runs each alive frame under brain='model'. Returns the
@@ -833,11 +846,17 @@ export function buildFighter(
 
   // Per-frame model tick: detect a break, and if one fires (and we're allowed),
   // wake the model. Gated to brain='model' + an injected request fn by the caller.
+  // Wrapped whole so a throw ANYWHERE on the model path (break detection, payload
+  // build, firing) can never crash the fight frame — it degrades to spinal.
   const tickModelBrain = (t, dt) => {
-    const trigger = detectBreak(t, dt);
-    if (!trigger) return;
-    if (modelPending || t < modelCooldownUntil || modelRequestsThisBout >= MODEL_MAX_REQUESTS) return; // wallet / anti-chatter guards
-    fireModelRequest(t, trigger);
+    try {
+      const trigger = detectBreak(t, dt);
+      if (!trigger) return;
+      if (modelPending || t < modelCooldownUntil || modelRequestsThisBout >= MODEL_MAX_REQUESTS) return; // wallet / anti-chatter guards
+      fireModelRequest(t, trigger);
+    } catch (e) {
+      warnModelOnce(e); // any model-brain error → swallow, stay on spinal, never crash the frame
+    }
   };
 
   const loco = { active: false, type: 'slow' }; // dev SLOW/FAST preview toggle

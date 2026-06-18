@@ -79,11 +79,18 @@ const intReadout = ref('INT  P —  ·  O —');
 // shows model wakes/bout + last read so it's visible breaks stay ~5–10, not 80.
 const brainMode = ref('spinal');
 const mdlReadout = ref('MDL  off');
-// Dev toggle: flip both fighters between spinal and model brain live.
+// Dev toggle: flip both fighters between spinal and model brain live. Wrapped so
+// the toggle itself can never throw + eject from the arena (the model path degrades
+// to spinal on any endpoint outcome — see apiClient.requestFighterIntention).
 const onBrain = () => {
-  brainMode.value = brainMode.value === 'model' ? 'spinal' : 'model';
-  fighter?.setBrain?.(brainMode.value);
-  opponent?.setBrain?.(brainMode.value);
+  try {
+    brainMode.value = brainMode.value === 'model' ? 'spinal' : 'model';
+    fighter?.setBrain?.(brainMode.value);
+    opponent?.setBrain?.(brainMode.value);
+  } catch (e) {
+    console.warn('[arena] brain toggle failed — staying on spinal', e);
+    brainMode.value = 'spinal';
+  }
 };
 
 // --- Behaviour A/B dev stand (preview only). Pick a signature preset for the
