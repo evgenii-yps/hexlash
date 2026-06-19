@@ -350,6 +350,30 @@ export const COMBAT_BALANCE = {
       breathe: { amp: 0.5, rate: 0.65 }, // выдохся — вяло, тяжело
     },
   },
+
+  // --- Turn-step (переступ на довороте). When the body does a REAL yaw turn-to-
+  //     face, the feet shuffle a collected pivot-step synced to the rotation — so a
+  //     doворот reads as a transfer of weight, not a mannequin spinning on a
+  //     turntable. Engagement is gated by the yaw RATE: slow face-tracking of a
+  //     drifting foe stays quiet (no twitchy feet); a deliberate re-face crosses the
+  //     threshold and steps. The step PHASE advances with the yaw TURNED (∝ amount),
+  //     exactly like the gait phase advances with distance — so a small turn nudges
+  //     one foot, a big turn lands two-three plants. Applied ONLY by the planted
+  //     producers (idle / intention stance), so it never fights the gait (walk steps)
+  //     or the clips; micro-life yields to it during a turn (its amp ×(1−engage)).
+  //     Collected + weighty, NOT a fidget. Pure maths over yaw (no new geometry);
+  //     reduced motion never reaches it. Single tuning point — crank by eye.
+  turnStep: {
+    rateThreshold: 1.2, // rad/s — below this (mere face-tracking) the feet stay quiet
+    rateFull: 4.0, // rad/s — at/above this the step is at full amplitude
+    attack: 14, // engagement fade-IN rate (per s) — quick to catch a turn
+    release: 8, // engagement fade-OUT rate (per s) — settles back into micro-life
+    strideK: 2.4, // step-phase (rad) per rad of yaw turned → cadence ∝ turn amount
+    swing: 0.32, // hip swing of the stepping legs (rad) — collected, under the gait's 0.45
+    knee: 0.46, // knee lift on the swing (rad)
+    bob: 0.018, // hip dip on each plant (world units) — weight transfer reads here
+    lead: 0.06, // torso leads slightly INTO the turn (rad) — direction cue
+  },
 };
 
 // Read-quality helpers — the perception numbers above as functions of the reader's

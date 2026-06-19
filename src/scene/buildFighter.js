@@ -382,6 +382,16 @@ export function buildFighter(
   const TRANSITION_DUR = 0.13; // pose cross-fade time on a movement / state change (s)
   let gaitPhase = 0;
   let prevMag = 0; // last frame's speed magnitude — drives the accel-lean
+  // Turn-step (переступ на довороте) — feet step a collected pivot when the body
+  // does a real yaw turn-to-face, so a doворот reads as a transfer of weight, not a
+  // mannequin spinning in place. Engagement gated by yaw RATE (slow face-tracking
+  // stays quiet); the step phase advances with yaw TURNED (∝ amount, like the gait's
+  // distance phase). Applied ONLY by the planted producers; micro-life yields to it.
+  // Numbers in combatBalance.turnStep; reduced motion never reaches the overlay.
+  let prevYaw = isOpp ? Math.PI : 0; // last frame's facing (matches the initial rotation.y) — for the yaw-rate read
+  let turnPhase = 0; // rotational step phase (advances with yaw turned)
+  let turnStepAmt = 0; // smoothed engagement 0..1 (fades the step in / out)
+  let turnDir = 1; // sign of the active turn (directional cue for the torso lead)
 
   // Plate bounds (half-extents) — the fighter stays on the slab, never walks off
   // the edge. Passed in from the arena; the rift is no longer a barrier, so the
@@ -1033,8 +1043,10 @@ export function buildFighter(
   //     catch, sluggish breathe); null → neutral. Pure maths over lastT.
   const ML = B.microLife;
   const microLife = (manner) => {
-    const amp = ML.cap * (manner ? manner.amp : 1);
-    if (amp <= 0) return; // cap 0 (or off) → столб, no overlay
+    // ×(1−turnStepAmt): during a real doворот the turn-step owns the legs; at rest
+    // (turnStepAmt→0) micro-life owns them. Clean temporal hand-off, no fight.
+    const amp = ML.cap * (manner ? manner.amp : 1) * (1 - turnStepAmt);
+    if (amp <= 0) return; // cap 0 (or off) / fully turning → столб here, no overlay
     const rate = manner ? manner.rate : 1;
     const t = lastT;
     const br = Math.sin(t * wBreath * rate); // breath phase
@@ -1057,6 +1069,42 @@ export function buildFighter(
     targetP.hipsZ += ML.swayHipZ * amp * sw;
   };
 
+  // --- Turn-step overlay (переступ на довороте). updateTurnStep advances the
+  //     signal once per alive (full-motion) frame, AFTER facing, BEFORE the pose
+  //     producers: engagement ramps with the smoothed yaw RATE (slow face-tracking
+  //     stays under the threshold → quiet feet), and the step PHASE advances with
+  //     the yaw TURNED (∝ amount, like the gait's distance phase). turnStep() is the
+  //     overlay itself — ADDED on top of a planted target (like micro-life), a
+  //     collected pivot shuffle: legs alternate a small swing+lift synced to the
+  //     turn, hips dip on each plant, torso leads slightly into the turn. Silent when
+  //     turnStepAmt≈0 (no active turn). Called ONLY from the planted producers
+  //     (idlePose / intentionStance) — never clips / gait / block — so it never
+  //     fights the gait's own steps; the gait + micro-life layers are untouched.
+  const TS = B.turnStep;
+  const updateTurnStep = (dt) => {
+    let d = group.rotation.y - prevYaw;
+    d = Math.atan2(Math.sin(d), Math.cos(d)); // shortest signed yaw change this frame
+    prevYaw = group.rotation.y;
+    const rate = dt > 1e-4 ? Math.abs(d) / dt : 0;
+    // Engagement target: 0 below the threshold (mere tracking), ramps to 1 by rateFull.
+    const tgt = THREE.MathUtils.clamp((rate - TS.rateThreshold) / (TS.rateFull - TS.rateThreshold || 1), 0, 1);
+    const k = THREE.MathUtils.clamp((tgt > turnStepAmt ? TS.attack : TS.release) * dt, 0, 1);
+    turnStepAmt += (tgt - turnStepAmt) * k; // smooth fade so the feet don't pop
+    if (turnStepAmt > 0.02) turnPhase += Math.abs(d) * TS.strideK; // phase ∝ yaw turned
+    if (Math.abs(d) > 1e-4) turnDir = Math.sign(d);
+  };
+  const turnStep = () => {
+    const a = turnStepAmt;
+    if (a <= 0.01) return; // no active turn — столб, no overlay
+    const p = turnPhase;
+    targetP.lhx += TS.swing * a * Math.sin(p); // legs alternate a collected pivot-step
+    targetP.rhx += TS.swing * a * Math.sin(p + Math.PI);
+    targetP.lkx += -TS.knee * a * Math.max(0, Math.sin(p + 0.8));
+    targetP.rkx += -TS.knee * a * Math.max(0, Math.sin(p + Math.PI + 0.8));
+    targetP.hipsY += -TS.bob * a * (0.5 - 0.5 * Math.cos(2 * p)); // weight dips on each plant
+    targetP.torsoY += TS.lead * a * turnDir; // shoulders lead into the turn (direction cue)
+  };
+
   // Idle pose → target: settled stance + a faint breathing rise on the hips.
   const idlePose = (bs) => {
     targetP.hipsZ = 0;
@@ -1065,6 +1113,7 @@ export function buildFighter(
     targetP.lsx = 0; targetP.lex = 0; targetP.rsx = 0; targetP.rex = 0;
     targetP.lhx = 0; targetP.lkx = 0; targetP.rhx = 0; targetP.rkx = 0;
     microLife(null); // сдержанная жизнь over the held idle (neutral manner)
+    turnStep(); // переступ if the body is doing a real doворот (yields micro-life)
     setMode('idle');
   };
 
@@ -1102,6 +1151,7 @@ export function buildFighter(
     targetP.lhx = kn * 0.4; targetP.lkx = -kn;
     targetP.rhx = kn * 0.4; targetP.rkx = -kn;
     microLife(ML.byIntention[intentionId]); // сдержанная жизнь scaled by the intention's manner (below the silhouette)
+    turnStep(); // переступ if the body is doing a real doворот (yields micro-life)
     setMode('stance-' + intentionId);
   };
 
@@ -1929,6 +1979,12 @@ export function buildFighter(
       faceFoe(dt);
       if (!blocking && lastT >= staggerUntil) { if (!tryReadReaction(t)) decideAttack(t); }
     }
+
+    // Advance the turn-step signal AFTER any facing this frame, BEFORE the pose
+    // producers (which read turnStepAmt / turnPhase). A static-yaw frame (clip /
+    // idle) reads rate 0 → engagement decays; a real doворот ramps it up. Tracks
+    // prevYaw every full-motion frame so the rate read stays continuous.
+    updateTurnStep(dt);
 
     if (clip) {
       const ct = t - clipStart;
