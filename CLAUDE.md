@@ -6502,29 +6502,28 @@ Follows the axis-strength audit (instant read rested on only `distance` + `slip`
 
 Dev stand (GRAY/SIG) on the same branch for owner re-check. Not merged — awaits explicit go.
 
-### Klich (combat call) HUD — visual scaffold (UI + feedback only)
+### Klich (combat call) system — REMOVED ✅ (clean razing, rebuild later on intentions)
 
-Player combat lever on the arena. **No behaviour effect this pass** — only the visual loop; the axis-shift wires into the `applyKlich(fighter, klichId)` empty seam later. New file `src/scene/KlichBar.vue` (presentational HUD) + additions to `ArenaScene.vue` (state + generic flow + raycast pick) + `buildFighter.js` (`setHighlight`/`confirmPulse`).
+The klich combat-call system (player lever ВПЕРЁД / ОТХОД / ДЕРЖАТЬ → temporary additive axis delta) was **removed in full** — data, logic, UI, wiring. To be rebuilt from scratch on the intention architecture; nothing of the old code remains (no dead files, dangling imports, unused state). The base path **axes → `character.range/aggression/stickEff/resilience` → navigation/maneuver** is intact — only the klich delta is gone, so a fighter fights exactly as before, minus the ability to issue a call.
 
-- **HUD** (`KlichBar.vue`): bottom-centre row of 3 call cards — ВПЕРЁД / ОТХОД / ДЕРЖАТЬ, each = placeholder inline-SVG icon + label + corner charge badge. Neon-Discipline: dark flat cards, one pink accent on the **armed** card only; calls read by icon+label, **not colour**. Armed pulse is CSS, dropped to a static ring under `prefers-reduced-motion`. Touch-sized (66×74). Shown only while `combatActive` (during a FIGHT / SIG bout).
-- **Charges**: per-bout counter (start 3, −1 on apply, **reset on new fight** via `resetKlich`), NOT a cooldown. 0 → card disabled/dimmed.
-- **Generic arm → pick → apply flow** (in `ArenaScene`, reusable by future buffs — not klich-hardcoded): `armLever(id)` → `armedId` + `setOwnHighlight(true)` (player fighter[s] only; opponent never). A **tap** (not drag) on the player fighter raycasts `fighter.group` → `applyToFighter` → `charge−1` + `confirmPulse()` + `applyKlich` seam + `cancelArm`. Re-tap the armed lever / tap a miss → `cancelArm` (no charge spent).
-- **Fighter highlight** (`buildFighter`): soft emissive pulse on the skin silhouette (emissive set up at build, intensity 0 at rest → **not a persistent second glow**, the rift stays the scene's glow source); `confirmPulse()` = brighter decaying flash. Cleared on `eliminate`. Reduced motion → static highlight; the confirm fade is glow-only (no body motion).
-- **Targeting pick**: canvas `pointerdown/up` tap-detector (move < 6px) added in `ArenaScene`, only active while armed, so OrbitControls drag is untouched. Listeners removed on unmount.
+**Deleted files (2):** `src/data/klichProfiles.js` (`KLICH_PROFILES`), `src/scene/KlichBar.vue` (HUD).
 
-Protected arena files untouched. Build green. Dev stand (FIGHT / SIG FIGHT) starts a bout → the klich bar appears for owner re-check.
+**`buildFighter.js` — stripped:**
+- import of `KLICH_PROFILES`.
+- klich state: `activeKlichs`, `klichKd`, `klichActive`, `klichBreakPending`; the `klichEnv` envelope helper; `applyKlich(id)`.
+- `refreshKlich(t)` **renamed → `refreshAxes()`** and reduced to base + **intention** delta only (drops all `klichKd.*` summing + the `activeKlichs` loop). The per-frame re-derive of `character.range/aggression/stickEff/effTempo01` is **preserved verbatim** (now base + intention).
+- selection-highlight machinery (the klich arming/targeting glow): `highlighted`, `confirmAt`, `CONFIRM_DUR`, `setHighlight()`, `confirmPulse()`, the skin material's `emissive`/`emissiveIntensity`, the `update()` emissive block, and the `eliminate()` reset line.
+- `takeDamage` / `noteIncomingAttack` resilience now reads `baseAx.resilience` (was `baseAx.resilience + klichKd.resilience`).
+- `tickIntention` `fight` object dropped `activeKlich`; model-brain `detectBreak` dropped the `(5) coach klich` break + the bout-reset `klichBreakPending`.
+- return object dropped `setHighlight`, `confirmPulse`, `applyKlich`.
 
-### Klich effect — temporary axis bump (first real lever effect)
+**`ArenaScene.vue` — stripped:** `KlichBar` import + `<KlichBar>` mount; `KLICH_POOL`, `levers`, `klichPool`, `armedId`, `combatActive`; the generic arm→target→apply flow (`ownFighters`, `setOwnHighlight`, `armLever`, `cancelArm`, `applyToFighter`, `resetKlich`, `applyKlich`); the `onPointerDown`/`onPointerUp` raycast tap-targeting + its listeners + unmount teardown; klich lines in `cancelSig`/`endFight`/`runFight`/`runSigFight`.
 
-Fills the `applyKlich` seam: a call now lays a temporary behaviour-axis delta on the fighter that smoothly applies and reverts. New data file `src/data/klichProfiles.js` + additions to `buildFighter.js` + a shared-pool refactor in `ArenaScene.vue` / `KlichBar.vue`.
+**`intentions.js` — stripped:** `activeKlich` removed from the `fight` context shape (docstring + JSDoc); the picker (`chooseIntention`/`hardNeed`/`spinalScore`) never read it, so no logic changed.
 
-- **Profiles** (`klichProfiles.js`, one place, tunable): ВПЕРЁД `initiative +35 / distance −30`, ОТХОД `distance +40` (both dur 2.5s, sharp spike), ДЕРЖАТЬ `resilience +35 / stick +25 / distance −20 / initiative −15` (dur 6s, softer — the distance−/initiative− add a visible "dig-in" pose: grows in close + stops pushing, so it reads even with no incoming hits). Each = `{ axes, dur, attack, release }` with an attack→hold→release envelope.
-- **Temporary modifier** (`buildFighter`): base axes are NEVER mutated. `activeKlichs` holds the live envelopes; `refreshKlich(t)` (each frame, in reduced + full motion) sums them into `klichKd` (additive delta over the 4 touched axes), then re-derives the knobs those axes drive — `character.range`←distance, `character.aggression`←initiative, `stickEff`←stick (the jitter offsets are captured once so the refresh keeps liveliness stable), and resilience is read **live** in `takeDamage` (`dmgMulFor`/`stagMulFor`). When no call is active the delta is 0 → the fighter returns to base **exactly** (no drift). Stacked/repeat calls sum and auto-prune (no sticking). `fighter.applyKlich(id)` pushes an envelope; `klichActive` drives a faint "effect on" emissive marker (static under reduced).
-- **`distance` made symmetric** (`navigate`): added an "ease out to preferred range" branch (`d < engage − HYST` → move out, FAST if the gap is big) so a distance spike reads as an active retreat/space — previously nav only closed in / held the minimum, so ОТХОД on a clinched fighter wouldn't pop. This also makes baseline `distance` read both ways. *(Behaviour change beyond pure klich — flagged for owner eyeball.)*
-- **Shared charge pool**: was 3-per-card → now **one pool of 3 per bout** (`klichPool`), any call spends 1; pool 0 → all cards dim/disabled; reset on a new bout. KlichBar badge shows the shared pool on each card (they dim together at 0). Cancel-arming still spends nothing.
-- **Reduced motion**: the axis shift applies (fight logic); pulses/markers are static fallbacks; ВПЕРЁД/ОТХОД show via locomotion (suppressed under reduced like all movement), ДЕРЖАТЬ's resilience reads in `takeDamage` either way.
+**Generic arm→target→apply pattern: DELETED (not kept).** It lived inside `ArenaScene` intertwined with klich (referenced `applyKlich`, `levers`, `klichPool`, `KlichBar`) — not a standalone zero-klich component — so per the brief it was razed with the rest. The pattern is documented in Notion for the rebuild. **Empty seams now:** there is no `applyKlich`/lever entry point left; a rebuilt call system re-introduces its own data + HUD + (if wanted) a fresh arming flow, and an intention-architecture call would lay its delta through the same `intentionDelta` / `refreshAxes` path the body already reads.
 
-Protected arena files untouched. Build green. Empty seam is now the real effect; `applyKlich(fighter, klichId)` in ArenaScene stays the generic entry point for future buffs.
+Protected arena files untouched (`buildArena.js`, `arenaTextures.js`, `arenaPresence.js`). `grep klich/клич` over `src/` is clean (only the unrelated Russian word "ВПЕРЁД" = "forward" in an intention stance comment remains). Build green. Reduced-motion path intact.
 
 ### Arena dev-panel cleanup + hide-during-bout toggle + MOOD diagnosis
 
@@ -6533,7 +6532,7 @@ Trimmed the preview dev panel (`ArenaScene.vue`, `.arena-actions`) to the workin
 - **Removed controls + handlers** (superseded by FIGHT/SIG — verified the bouts drive behaviour directly, not these triggers): TGT, APPROACH, PUNCH, COMBO, DOUBLE, DODGE, SLOW, FAST, HURT, OUT, DEMO, AI, AI×2. Deleted: `target` ref, `curFighter`, `toggleTarget`, `onApproach…onOut`, the whole demo machinery (`demo`/`demoPending`/`DEMO_DUR`/`setBothAI`/`buildDemoEvents`/`onDemo`/`onAITarget`/`onAIBoth` + the loop demo block), and the dead keydown branches (p/z/x/c/v/d/b/n/h/k/g/a). Kept keys: 1/2/3 (MOOD) + F (FIGHT).
 - **Kept (readability stand):** FIGHT, L:/R: (signature presets), SIG FIGHT, GRAY.
 - **Auto-hide during a bout:** `panelVisible` ref — `runFight`/`runSigFight` set it false (clean player view), `endFight` sets it true (panel returns). SIG auto-cycle never ends, so the panel stays hidden until the toggle.
-- **Always-on DEV corner toggle** (`.arena-panel-toggle`, top-right, small): flips `panelVisible` anytime, incl. mid-bout / SIG-cycle — the only way back without reload. KlichBar (not dev) is untouched.
+- **Always-on DEV corner toggle** (`.arena-panel-toggle`, top-right, small): flips `panelVisible` anytime, incl. mid-bout / SIG-cycle — the only way back without reload. (The bottom-centre player HUD this once sat beside — the klich bar — has since been removed; see the klich-removal record above.)
 - Protected arena files untouched; build green; reduced-motion intact (toggle is pure DOM).
 
 **MOOD switcher diagnosis (1/2/3 → A/B/C) — NOT fixed/removed this pass, diagnosis only.** The switch **is** wired and reaches the scene: keydown updates the `variant` ref (the bottom-left "MOOD X" label) **and** calls `presence.setVariant()`, which feeds `update()` (`breath[variant]`) + `applyVisibility()` in `arenaPresence.js`. Nothing is unconnected. It reads as "does nothing" because the A/B/C deltas sit below the perceptual floor:

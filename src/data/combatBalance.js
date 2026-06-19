@@ -115,10 +115,10 @@ export const COMBAT_BALANCE = {
   blockPenetration: 0.0, // пробитие блока атакующим (база 0; ШОВ под будущую грань)
 
   // --- Reflex block tendency (TEMPORARY spinal cord). Per incoming attack, the
-  //     chance the defender raises its guard for that exchange, from its LIVE
-  //     (base + ДЕРЖАТЬ) resilience + stick — dug-in cores guard often, brash ones
-  //     almost never; a ДЕРЖАТЬ call (resilience/stick ↑) naturally lifts it and it
-  //     falls again as the call expires. resilience-led so a high-stick presser
+  //     chance the defender raises its guard for that exchange, from its
+  //     resilience + stick — dug-in cores guard often, brash ones almost never;
+  //     the current intention's guard flag biases it on top (HOLD / CATCH lift it).
+  //     resilience-led so a high-stick presser
   //     doesn't read as a turtle. Clamped to blockTendencyMax so a bout finishes.
   //     This is the ONLY knob of the throwaway reflex — the model's «brace» intent
   //     replaces the TRIGGER later, leaving stance / mitigation / event untouched.

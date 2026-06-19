@@ -14,7 +14,6 @@ import { makeRadialTexture } from './arenaTextures.js';
 import { resolveBehavior } from '../data/behavior.js';
 import { INTENTIONS, INTENTION_SET, INTENTION_TICK_SEC, intentionProfile, chooseIntention } from '../data/intentions.js';
 import { motionFor } from '../data/intentionMotion.js';
-import { KLICH_PROFILES } from '../data/klichProfiles.js';
 import { COMBAT_BALANCE } from '../data/combatBalance.js';
 import { createHpIndicator } from './hpIndicator.js';
 
@@ -69,8 +68,6 @@ export function buildFighter(
     flatShading: true,
     roughness: 0.8,
     metalness: 0.18,
-    emissive: new THREE.Color(0xff5fa0), // selection-highlight tint (intensity 0 until armed)
-    emissiveIntensity: 0,
   });
 
   // box(parent, w, h, d, x, y, z) → adds a flat-shaded skin box, returns mesh.
@@ -200,19 +197,6 @@ export function buildFighter(
   let lastT = 0;
   let dodgeRun = null; // active dodge displacement { bx, bz, wx, wz } or null
   const setReducedMotion = (b) => { reduced = b; };
-
-  // --- Selection highlight (interactive, temporary) — the "this fighter is
-  //     targetable" signal while a player lever/buff is armed, and a brighter
-  //     decaying flash on confirm. Drives the skin's emissive (set up at build,
-  //     intensity 0 when idle), so it is NOT a persistent second glow — it
-  //     vanishes the moment it's un-highlighted. update() computes the intensity
-  //     each frame (pulse under full motion, static under reduced; the confirm
-  //     flash is a glow fade only, so it's fine under reduced motion too).
-  let highlighted = false;
-  let confirmAt = -1; // confirm-flash start time (update clock); -1 = none
-  const CONFIRM_DUR = 0.5;
-  const setHighlight = (b) => { highlighted = b; };
-  const confirmPulse = () => { confirmAt = lastT; };
 
   const easeInOut = (u) => (u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2);
   const easeOut = (u) => 1 - Math.pow(1 - u, 3);
@@ -409,9 +393,9 @@ export function buildFighter(
   //       slip       → mid-manoeuvre evade (DODGE) frequency
   //     `behavior.effects` / `.conditionals` are wired but empty this pass
   //     (tagged tricks coded point-by-point later); axes alone drive this seam.
-  //     A KLICH (combat call) lays a temporary additive delta over the base axes
-  //     (distance / initiative / resilience / stick) — see the klich block below;
-  //     the knobs those axes drive (range, aggression, stickEff, resilience) are
+  //     The intention layer lays a temporary additive delta over the base axes
+  //     (distance / initiative / tempo / stick) — see the intention block below;
+  //     the knobs those axes drive (range, aggression, stickEff, effTempo01) are
   //     re-derived each frame from base + delta, so the base is never mutated.
   const ax = (behavior && behavior.axes) || resolveBehavior(coreId).axes;
   const n01 = (v) => THREE.MathUtils.clamp(v, 0, 100) / 100;
@@ -523,10 +507,9 @@ export function buildFighter(
     B.missChanceFloor, B.missChanceCap,
   );
   const rollMiss = () => Math.random() < missChance;
-  // resilience → incoming-damage / stagger multipliers are computed LIVE in
-  // takeDamage from the effective resilience (base + klich), so a ДЕРЖАТЬ call
-  // toughens the fighter for its duration without touching the base.
-  const dmgMulFor = (res01) => lerp(1.15, 0.38, res01); // glass takes more · floor 0.38 (was 0.6) so max resilience / ДЕРЖАТЬ at peak ~halves incoming vs a neutral fighter
+  // resilience → incoming-damage / stagger multipliers, derived in takeDamage
+  // from the fighter's resilience axis (manner — constant this pass).
+  const dmgMulFor = (res01) => lerp(1.15, 0.38, res01); // glass takes more · floor 0.38 (was 0.6) so max resilience at peak ~halves incoming vs a neutral fighter
   const stagMulFor = (res01) => lerp(1.0, 0.15, res01); // tough barely hitches
   // Scale this fighter's movement bands by weight (local objects — safe to
   // mutate per fighter; a touch of jitter keeps two same-weight builds distinct).
@@ -538,7 +521,7 @@ export function buildFighter(
   // Per-fighter "character" — derived from the profile (+ jitter), so the four
   // cores read differently and no two builds are a mirror: preferred range,
   // aggression, circling sense, decision rhythm, approach arc. `range` +
-  // `aggression` are re-derived each frame from the effective (base + klich)
+  // `aggression` are re-derived each frame from the effective (base + intention)
   // distance / initiative — the jitter offsets are captured ONCE so the per-frame
   // refresh keeps each fighter's liveliness stable (no per-frame noise).
   const character = {
@@ -551,71 +534,37 @@ export function buildFighter(
     decideJit: Math.max(0.2, lerp(0.7, 0.3, tempo01) + jit(0.08)),
     approachArc: 0.4 + Math.random() * 0.45, // lateral arc on the way in (rad)
   };
-  // Initial (no-klich) range + aggression from the base profile.
+  // Initial range + aggression from the base profile (refreshed each frame).
   character.range = THREE.MathUtils.clamp(lerp(RANGE_NEAR, RANGE_FAR, n01(ax.distance)) + character.rangeJit, CONTACT_SOFT, FAR - 0.2);
   character.aggression = THREE.MathUtils.clamp(n01(ax.initiative) + character.aggrJit, 0, 1);
 
-  // --- Klich (combat call) temporary axis modifier. A call pushes an attack →
-  //     hold → release envelope (from KLICH_PROFILES) onto `activeKlichs`. Each
-  //     frame refreshKlich() sums the live envelopes into `klichKd` (additive
-  //     delta over the BASE axes for the 4 axes calls touch), re-derives range /
-  //     aggression / stickEff, and flags klichActive (for the "effect on" marker);
-  //     resilience is read live in takeDamage. Base axes are NEVER mutated, so the
-  //     fighter returns to base EXACTLY when the calls expire; stacked / repeated
-  //     calls sum and auto-prune (no stick). Runs in reduced motion too (the axis
-  //     shift is fight logic, not animation).
+  // --- Effective-axis layer. The fighter's BASE axes are never mutated; the
+  //     intention layer (below) lays an additive delta over them, and each frame
+  //     refreshAxes() composes base + intention delta into the knobs the body
+  //     reads — range / aggression / stickEff / effTempo01. Keeping the base
+  //     untouched means the fighter returns to its temperament EXACTLY when an
+  //     intention's delta clears. Runs in reduced motion too (the axis shift is
+  //     fight logic, not animation).
   const baseAx = ax;
-  const activeKlichs = []; // { ax:{axis:delta}, dur, attack, release, start }
-  const klichKd = { distance: 0, initiative: 0, resilience: 0, stick: 0 };
-  let stickEff = stick01; // live stick (base + klich), refreshed each frame
-  let klichActive = false; // any call currently in effect (visual marker)
-  // Envelope over u∈[0,1]: rise (easeOut) over [0,attack], hold, fall (easeInOut)
-  // over the last `release`. Small attack + big release = a sharp spike that fades.
-  const klichEnv = (u, attack, release) => {
-    if (u <= 0 || u >= 1) return 0;
-    if (u < attack) return easeOut(u / attack);
-    if (u > 1 - release) return 1 - easeInOut((u - (1 - release)) / release);
-    return 1;
-  };
-  const refreshKlich = (t) => {
-    klichKd.distance = 0; klichKd.initiative = 0; klichKd.resilience = 0; klichKd.stick = 0;
-    klichActive = false;
-    for (let i = activeKlichs.length - 1; i >= 0; i--) {
-      const k = activeKlichs[i];
-      const u = (t - k.start) / k.dur;
-      if (u >= 1) { activeKlichs.splice(i, 1); continue; } // expired → prune
-      const e = klichEnv(u, k.attack, k.release);
-      if (e > 0.001) klichActive = true;
-      for (const axis in k.ax) klichKd[axis] = (klichKd[axis] || 0) + k.ax[axis] * e;
-    }
-    // Effective axes = BASE + klich delta + INTENTION delta (the third additive
-    // layer — distance / initiative / stick / tempo). Composing all three here
-    // means range / aggression / stick / cadence are the single derived knobs the
-    // body reads, whichever layers are live; base axes stay untouched.
-    const effDist = THREE.MathUtils.clamp(baseAx.distance + klichKd.distance + intentionDelta.distance, 0, 100);
-    const effInit = THREE.MathUtils.clamp(baseAx.initiative + klichKd.initiative + intentionDelta.initiative, 0, 100);
-    stickEff = THREE.MathUtils.clamp((baseAx.stick + klichKd.stick + intentionDelta.stick) / 100, 0, 1);
+  let stickEff = stick01; // live stick (base + intention delta), refreshed each frame
+  const refreshAxes = () => {
+    // Effective axes = BASE + INTENTION delta (distance / initiative / stick /
+    // tempo). Composing here means range / aggression / stick / cadence are the
+    // single derived knobs the body reads; the base axes stay untouched.
+    const effDist = THREE.MathUtils.clamp(baseAx.distance + intentionDelta.distance, 0, 100);
+    const effInit = THREE.MathUtils.clamp(baseAx.initiative + intentionDelta.initiative, 0, 100);
+    stickEff = THREE.MathUtils.clamp((baseAx.stick + intentionDelta.stick) / 100, 0, 1);
     effTempo01 = THREE.MathUtils.clamp((baseAx.tempo + intentionDelta.tempo) / 100, 0, 1);
     character.range = THREE.MathUtils.clamp(lerp(RANGE_NEAR, RANGE_FAR, effDist / 100) + character.rangeJit, CONTACT_SOFT, FAR - 0.2);
     character.aggression = THREE.MathUtils.clamp(effInit / 100 + character.aggrJit, 0, 1);
-  };
-  // Apply a klich by id — push its envelope onto the active list (additive, decays
-  // + auto-prunes). Stacks sanely with any already-active call. No-op if unknown /
-  // not alive. The visual confirm pulse is fired by the caller (confirmPulse()).
-  const applyKlich = (id) => {
-    if (state !== 'alive') return;
-    const p = KLICH_PROFILES[id];
-    if (!p) return;
-    activeKlichs.push({ ax: { ...p.axes }, dur: p.dur, attack: p.attack, release: p.release, start: lastT });
-    klichBreakPending = true; // a coach call is a fight break → wake the model brain (model mode only)
   };
 
   // --- Intention layer (the "spinal cord", future-model seam). Once every
   //     INTENTION_TICK_SEC the fighter picks ONE of 7 intentions via the single
   //     seam chooseIntention(self, foe, memory, fight, brain); the body works in
   //     that mode until the next pick (held between ticks). An intention is a MODE,
-  //     expressed exactly like a klich: an additive delta over the BASE axes
-  //     (distance / initiative / tempo / stick) composed in refreshKlich, PLUS
+  //     expressed as an additive delta over the BASE axes (distance / initiative /
+  //     tempo / stick) composed in refreshAxes, PLUS
   //     attack / guard / charge flags the existing reflexes read (decideAttack,
   //     noteIncomingAttack, decideRelease). The body executes the mode with the
   //     SAME sb.* mechanics and never learns WHY it was chosen — swap brain to
@@ -625,7 +574,7 @@ export function buildFighter(
   const intentionFlags = { attack: 'free', guard: 0, charge: 'free' };
   let intentionId = INTENTIONS.HOLD;
   let intentionNextAt = 0; // loop time the next pick fires (INTENTION_TICK_SEC apart)
-  let effTempo01 = tempo01; // base tempo + intention delta (refreshed in refreshKlich), read by the strike cadence
+  let effTempo01 = tempo01; // base tempo + intention delta (refreshed in refreshAxes), read by the strike cadence
   // DEV: lock the fighter to one intention to inspect its signature in isolation.
   // When set, the picker (spinal/model + hard needs) is bypassed entirely — the
   // body executes EXACTLY this intention. null = off (normal picking).
@@ -638,7 +587,7 @@ export function buildFighter(
     foeMemory.push({ t: lastT, type });
     if (foeMemory.length > FOE_MEMORY_MAX) foeMemory.shift();
   };
-  // Apply a chosen intention → its body-mode delta + flags. refreshKlich folds the
+  // Apply a chosen intention → its body-mode delta + flags. refreshAxes folds the
   // delta into range / aggression / stick / tempo each frame; the flags are read
   // by the strike / guard / charge reflexes.
   const applyIntention = (id) => {
@@ -693,7 +642,7 @@ export function buildFighter(
       reacting: !!(getFoeReacting && getFoeReacting()),
     };
     const fc = getFightContext && getFightContext();
-    const fight = { t, escalation: (fc && fc.escalation) || 1, activeKlich: klichActive };
+    const fight = { t, escalation: (fc && fc.escalation) || 1 };
     const picked = chooseIntention(self, foe, foeMemory, fight, brain);
     if (picked) applyIntention(picked); // model may return null → keep the held mode (no freeze)
   };
@@ -723,7 +672,6 @@ export function buildFighter(
   let foeApproaching = null; // latched foe-manner state (true=closing, false=opening); flip → break
   let foeCloseEMA = 0; // smoothed foe approach signal (sign-based, deadbanded)
   let foeLastDist = null; // previous foe distance (for the manner trend)
-  let klichBreakPending = false; // a coach klich landed → break (set in applyKlich)
   let modelWarned = false; // one-time guard so a broken endpoint logs ONCE, not per frame
   // Any model-brain failure (sync or async) funnels here: log once, then the
   // fighter silently stays on the spinal cord. Never rethrows — the fight frame
@@ -825,7 +773,7 @@ export function buildFighter(
 
   // Break detector — runs each alive frame under brain='model'. Returns the
   // trigger word for the strongest fresh break, or null. Edge-tracks one-shots
-  // (bout start, HP dip, wind collapse) and transients (foe manner flip, klich).
+  // (bout start, HP dip, wind collapse) and transients (foe manner flip).
   const detectBreak = (t, dt) => {
     // (1) bout start — one request to open.
     if (!modelBoutStarted) { modelBoutStarted = true; return 'the bout has begun'; }
@@ -840,8 +788,6 @@ export function buildFighter(
     let mannerFlip = null;
     if (foeCloseEMA > 0.25 && foeApproaching !== true) { mannerFlip = foeApproaching === null ? null : 'the foe switched to pressing in'; foeApproaching = true; }
     else if (foeCloseEMA < -0.25 && foeApproaching !== false) { mannerFlip = foeApproaching === null ? null : 'the foe switched to backing off'; foeApproaching = false; }
-    // (5) coach klich.
-    if (klichBreakPending) { klichBreakPending = false; return 'your coach called a command'; }
     // (2) first HP dip below threshold (self or foe).
     if (!selfHpBroke && hp / maxHp < HP_BREAK_FRAC) { selfHpBroke = true; return 'your health just dropped low'; }
     const foeHp01 = getFoeHp01 ? getFoeHp01() : null;
@@ -1389,7 +1335,6 @@ export function buildFighter(
 
   const eliminate = () => {
     if (state !== 'alive') return;
-    highlighted = false; confirmAt = -1; skin.emissiveIntensity = 0; // selection glow leaves with the fighter
     clip = null;
     dodgeRun = null;
     loco.active = false;
@@ -1446,9 +1391,8 @@ export function buildFighter(
     // below, after the damage applies). Only the early-swing window (windupVulnUntil)
     // counts — a hit during our late swing / recoil is a normal exchange.
     const interrupted = !!(clip && clip.windup && lastT < windupVulnUntil);
-    // Effective resilience = base + live klich delta (a ДЕРЖАТЬ call toughens for
-    // its duration); refreshKlich keeps klichKd current each frame.
-    const res01 = THREE.MathUtils.clamp((baseAx.resilience + klichKd.resilience) / 100, 0, 1);
+    // Resilience from the fighter's base axis (manner — constant this pass).
+    const res01 = THREE.MathUtils.clamp(baseAx.resilience / 100, 0, 1);
     // Block: a LANDED hit (got past miss + dodge) into a raised guard is SOFTENED
     // — ~half, never to zero (stays penetrable; that's what separates it from a
     // dodge). Cut = block STRENGTH × (1 − attacker PIERCE), clamped < 1 so it
@@ -1500,13 +1444,13 @@ export function buildFighter(
   //     out: the model will call enterBlock() directly and retire this function.
   //     Trigger: the foe commits an in-range attack (routed by ArenaScene from the
   //     attacker's onAttackStart → this fighter's noteIncomingAttack). Tendency
-  //     grows from LIVE resilience + stick (so a ДЕРЖАТЬ call lifts it and it falls
-  //     on release); resilience-led so a high-stick presser isn't a turtle.
+  //     grows from resilience + stick (resilience-led so a high-stick presser
+  //     isn't a turtle); the current intention's guard flag biases it on top.
   const noteIncomingAttack = () => {
     rememberFoe('attack'); // observed foe event → the intention memory (the picker reads it)
     if (state !== 'alive' || blocking) return; // already guarding → keep the stance
-    const resLive = THREE.MathUtils.clamp((baseAx.resilience + klichKd.resilience) / 100, 0, 1);
-    const stickLive = stickEff; // base + klich, refreshed each frame in refreshKlich
+    const resLive = THREE.MathUtils.clamp(baseAx.resilience / 100, 0, 1);
+    const stickLive = stickEff; // base + intention delta, refreshed each frame in refreshAxes
     // intentionFlags.guard biases the raise tendency by the current MODE (CATCH /
     // HOLD lean high, PRESS / STRIKE low); clamped so a bout still finishes.
     const tend = THREE.MathUtils.clamp(
@@ -1677,7 +1621,7 @@ export function buildFighter(
       // break edges + cooldown + count, and bump the seq so any in-flight request
       // from the previous bout is ignored when it resolves.
       lastModelAnswer = null; modelReqSeq += 1; modelCooldownUntil = 0; modelRequestsThisBout = 0;
-      modelBoutStarted = false; klichBreakPending = false;
+      modelBoutStarted = false;
       selfHpBroke = false; foeHpBroke = false; selfStamBroke = false; foeStamBroke = false;
       foeApproaching = null; foeCloseEMA = 0; foeLastDist = null;
     }
@@ -1713,10 +1657,10 @@ export function buildFighter(
     // range / aggression / stick / tempo on the same frame. Gated to autonomous
     // play (ai.on); runs in reduced motion too (it's fight logic, not animation).
     if (ai.on) tickIntention(t);
-    // Advance klich envelopes + the intention delta → effective axes + re-derive
-    // the affected knobs. Runs in every alive state (incl. reduced motion: the
-    // axis shift is fight logic, not animation).
-    refreshKlich(t);
+    // Compose the intention delta → effective axes + re-derive the affected
+    // knobs. Runs in every alive state (incl. reduced motion: the axis shift is
+    // fight logic, not animation).
+    refreshAxes();
 
     // Reflex block stance auto-drops after its hold; a dev/manual hold (Infinity)
     // stays until toggled off. The stance pose itself is rendered below (or static
@@ -1732,22 +1676,6 @@ export function buildFighter(
       else if (t > feintBaitUntil) feintBaitUntil = 0; // bait expired — bluff wasted
     }
     if (feintAdvUntil && t > feintAdvUntil) { feintAdvUntil = 0; feintBaited = false; } // advantage lapsed
-
-    // Selection highlight + confirm flash + a faint "effect active" marker — runs
-    // in every alive state (a glow change only, no body motion). Soft pulse while
-    // highlighted (static under reduced), a brighter decaying flash on confirm, a
-    // faint tint while a klich is active. Intensity 0 when none → no lingering glow.
-    {
-      let ei = 0;
-      if (klichActive) ei = reduced ? 0.13 : 0.1 + 0.06 * (0.5 + 0.5 * Math.sin(t * 3.0)); // effect-on marker
-      if (highlighted) ei = reduced ? 0.5 : 0.4 + 0.3 * (0.5 + 0.5 * Math.sin(t * 6.0));
-      if (confirmAt >= 0) {
-        const cu = (t - confirmAt) / CONFIRM_DUR;
-        if (cu >= 1) confirmAt = -1;
-        else ei = Math.max(ei, 1.2 * (1 - cu));
-      }
-      skin.emissiveIntensity = ei;
-    }
 
     // Reduced motion: hold a static pose, face the foe, and resolve strikes as
     // key moments only — no locomotion, no clip playback (reads without jitter).
@@ -1879,7 +1807,7 @@ export function buildFighter(
   if (neutralColor) setNeutralColor(true);
 
   return {
-    group, update, setReducedMotion, setNeutralColor, setHighlight, confirmPulse, applyKlich, dispose,
+    group, update, setReducedMotion, setNeutralColor, dispose,
     approach: () => play(APPROACH),
     punch: () => play(PUNCH),
     combo: () => play(COMBO),

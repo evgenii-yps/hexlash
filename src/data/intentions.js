@@ -39,9 +39,9 @@ export const INTENTION_TICK_SEC = 1.0;
 /* Intention → body MODE. Each intention is a режим the body works in, expressed
    so the EXISTING knobs read it with no new mechanic:
      axes   — additive deltas over the BASE axes (distance / initiative / tempo /
-              stick). Composed alongside the klich delta in buildFighter's per-frame
-              re-derive, so the mode shifts the SAME range / aggression / stick /
-              cadence the body already drives off. Gravity for the choice is the
+              stick). Composed in buildFighter's per-frame re-derive, so the mode
+              shifts the SAME range / aggression / stick / cadence the body already
+              drives off. Gravity for the choice is the
               temperament; once chosen, the mode is a firm bias on the body.
      attack — 'none' | 'light' | 'heavy' | 'free' : the strike style this mode wants
               (none = don't initiate; light = quick singles; heavy = the DOUBLE /
@@ -76,7 +76,7 @@ export const intentionProfile = (id) => INTENTION_PROFILES[id] || INTENTION_PROF
               model path reads this) }
      foe    — observed foe: { has, dist, inStrike, reacting }
      memory — short ring of OBSERVED foe events [{ t, type:'attack'|'miss' }], newest last
-     fight  — shared context: { t, escalation, activeKlich }
+     fight  — shared context: { t, escalation }
    Returns an intention id, or null to KEEP the current one (a laggy / absent model
    never freezes the body — it just falls through to the held mode). */
 export function chooseIntention(self, foe, memory, fight, brain = 'spinal') {

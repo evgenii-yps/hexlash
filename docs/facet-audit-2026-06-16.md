@@ -206,7 +206,7 @@ By dominant fight-shift, the 12 branches collapse into **6 archetypes — and on
 
 ## 3. Defect 2 — character without number support (CONFIRMED)
 
-Engine **has**: range/positioning, aggression press/bait, tempo cadence, weight speed+attack-style, stick press-follow, resilience live mitigation+stagger, **counter = punish-after-being-HIT**, **slip = DODGE-frequency (cosmetic, no hit-block)**, strikePower/toughness stats, klich temporary axis deltas.
+Engine **has**: range/positioning, aggression press/bait, tempo cadence, weight speed+attack-style, stick press-follow, resilience live mitigation+stagger, **counter = punish-after-being-HIT**, **slip = DODGE-frequency (cosmetic, no hit-block)**, strikePower/toughness stats. *(Audit-dated list also named the klich temporary-axis-delta system — since removed; see CLAUDE.md klich-removal record.)*
 
 Engine **does NOT have**: accuracy / whiff-detection / whiff-punish · block-as-state · interrupt / wind-up cut · feint / bait-a-reaction · HP regen / "catch breath" · stamina / fatigue / "exhaust" · charge / wind-up accrual · armor / pierce · HP-threshold execute · on-landing damage ramp · opening/vulnerable detection.
 

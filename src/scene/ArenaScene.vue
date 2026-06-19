@@ -14,9 +14,6 @@
   <div ref="wrap" class="arena-wrap">
     <canvas ref="canvasEl" class="arena-canvas" />
     <div class="arena-vignette" />
-    <!-- Player combat-call HUD — shown during a bout. Tap a call → arm → tap the
-         (highlighted) player fighter → apply. UI + feedback only this pass. -->
-    <KlichBar v-if="combatActive" :levers="levers" :pool="klichPool" :armed-id="armedId" @arm="armLever" />
     <!-- Always-on dev-panel show/hide toggle (small corner). The panel auto-hides
          when a bout starts (clean player view) + returns when it ends; in the SIG
          auto-cycle the bout never ends, so this is the only way back. -->
@@ -55,7 +52,6 @@ import { facetPhrase } from '@/data/facetReadout.js';
 import { SIG_PRESETS, SIG_ORDER, presetBehavior } from '@/data/behaviorPresets.js';
 import { COMBAT_BALANCE } from '@/data/combatBalance.js';
 import apiClient from '@/core/api/apiClient.js';
-import KlichBar from './KlichBar.vue';
 
 // Model-brain request (hybrid intention layer). Injected into each fighter; it
 // POSTs the WORD context to the backend on a fight break and resolves to
@@ -118,27 +114,8 @@ const sigLeft = ref('onslaught');
 const sigRight = ref('raider');
 const neutralColor = ref(false);
 
-// --- Klich (combat call) — the player's combat lever. UI + FEEDBACK ONLY this
-//     pass: NO behaviour effect (the axis-shift hooks the applyKlich seam in a
-//     separate ТЗ). Three calls; each has a per-bout charge counter (NOT a
-//     cooldown) that resets on a new fight. Charges are reactive so the HUD badge
-//     updates live. armedId / the arm→target→apply flow below is deliberately
-//     GENERIC (a lever id + a fighter), so future buffs reuse it without a klich
-//     hardcode. combatActive gates HUD visibility (shown during a FIGHT / SIG bout).
-const KLICH_POOL = 3; // SHARED charge pool per bout — any call spends 1. Per-BOUT,
-// NOT a cooldown, so the longer ~40-50s bout does NOT grant extra klich uses —
-// the economy is length-independent (count deliberately unchanged this pass).
-const levers = ref([
-  { id: 'forward', label: 'ВПЕРЁД' },
-  { id: 'retreat', label: 'ОТХОД' },
-  { id: 'hold', label: 'ДЕРЖАТЬ' },
-]);
-const klichPool = ref(KLICH_POOL); // remaining shared charges (reactive → HUD badge)
-const armedId = ref(null); // currently-armed lever id (targeting), or null at rest
-const combatActive = ref(false); // HUD shown during a bout
-
 let renderer, scene, camera, controls, arena, fighter, opponent, presence, resizeObserver, clock;
-let onVisibility, onKeydown, onPointerDown, onPointerUp;
+let onVisibility, onKeydown;
 // Pre-load readiness: emit once after the first frame is rendered so the
 // bootstrap splash (#hx-load) can fade out on real arena readiness.
 let firstFrameEmitted = false;
@@ -176,7 +153,7 @@ function onFight() { runFight?.(); }
 
 // --- SIG dev-stand controls (preview only). Cancel the auto-cycle (a normal
 //     FIGHT / AI / DEMO takes over from the A/B loop).
-function cancelSig() { sigCycle = false; sigRestartAt = 0; combatActive.value = false; cancelArm(); }
+function cancelSig() { sigCycle = false; sigRestartAt = 0; }
 const sigTag = (id) => SIG_PRESETS[id]?.tag || '—';
 // Step a slot through the five presets (L = player slot, R = opponent slot).
 function cycleSig(which) {
@@ -214,43 +191,6 @@ function onDevCharge() {
   if (!fighter) return;
   if (fighter.getCharge01() < 0.999) fighter.fillCharge();
   else fighter.discharge();
-}
-
-// --- Generic arm → pick-fighter → apply flow (reusable by future buffs, NOT
-//     klich-specific). Tap a lever → armed (targeting); own fighters light up;
-//     tap an own fighter → apply (confirm pulse + charge −1); re-tap the lever or
-//     tap a miss → cancel (no charge spent). The opponent is never an own fighter
-//     and never highlights. The actual fighter pick (raycast on tap) is wired in
-//     onMounted; these drive the state + visual feedback.
-function ownFighters() { return fighter ? [fighter] : []; } // player side only
-function setOwnHighlight(on) { for (const f of ownFighters()) f.setHighlight(on); }
-function armLever(id) {
-  if (klichPool.value <= 0) return; // shared pool empty → all calls inert
-  if (!levers.value.some((l) => l.id === id)) return;
-  if (armedId.value === id) { cancelArm(); return; } // re-tap the armed lever → cancel
-  armedId.value = id;
-  setOwnHighlight(true); // own fighters glow as selectable
-}
-function cancelArm() {
-  armedId.value = null;
-  setOwnHighlight(false);
-}
-function applyToFighter(targetFighter) {
-  const id = armedId.value;
-  if (!id || !targetFighter || klichPool.value <= 0) { cancelArm(); return; }
-  klichPool.value -= 1; // spend 1 from the SHARED pool (HUD badge updates reactively)
-  targetFighter.confirmPulse(); // visual confirm — bright flash on the fighter
-  applyKlich(targetFighter, id); // the call's real effect (temporary axis bump)
-  cancelArm(); // panel returns to rest
-}
-function resetKlich() { klichPool.value = KLICH_POOL; cancelArm(); }
-
-// The player's call applied to one fighter — a TEMPORARY behaviour-axis bump
-// (KLICH_PROFILES; smoothly applied + reverted in buildFighter, base untouched).
-// Signature kept generic (fighter + call id) so future buffs reuse the same
-// arm → target → apply flow.
-function applyKlich(targetFighter, klichId) {
-  targetFighter.applyKlich(klichId);
 }
 
 // Fight-length safeguard — escalating damage. The attacker hands its raw strike
@@ -329,7 +269,7 @@ onMounted(() => {
   //     player resolves from the picked core + the working upgrade tree's lit
   //     faces; the opponent is assigned its OWN random core (lit from that core's
   //     CRYSTALS defaults) so it fights by a different profile, never a mirror of
-  //     the player. buildFighter maps these 8 levers onto its move / AI knobs.
+  //     the player. buildFighter maps these 8 axes onto its move / AI knobs.
   const collectLit = (crystals) => {
     const lit = [];
     for (const cr of crystals || []) for (const f of cr.faces || []) if (f.state === 'lit') lit.push(f);
@@ -401,9 +341,7 @@ onMounted(() => {
     aiOpponent = false;
     fighter?.setAI(false); // winner stops attacking → settles to idle
     opponent?.setAI(false);
-    combatActive.value = false; // hide the klich HUD when the bout ends
     panelVisible.value = true; // bout over → bring the dev panel back
-    cancelArm();
   };
   const spawnFighter = () => {
     fighter = buildFighter(playerColor, {
@@ -487,8 +425,6 @@ onMounted(() => {
     fightStartT = lastFrameT; // arm the fight-length safeguard clock
     spawnFighter();
     spawnOpponent();
-    resetKlich(); // fresh charges for the new bout
-    combatActive.value = true; // show the klich HUD
     panelVisible.value = false; // bout started → hide the dev panel (clean view)
   };
 
@@ -508,8 +444,6 @@ onMounted(() => {
     aiOpponent = true;
     spawnFighter();
     spawnOpponent();
-    resetKlich(); // fresh charges for the new bout
-    combatActive.value = true; // show the klich HUD
     panelVisible.value = false; // bout started → hide the dev panel (clean view)
   };
 
@@ -524,30 +458,6 @@ onMounted(() => {
   controls.minPolarAngle = 0.25;
   controls.maxPolarAngle = 1.45; // ~83°, never dip under the slab
   controls.update();
-
-  // --- Klich targeting pick. Only while a lever is armed: a TAP (not a drag) on
-  //     the player fighter applies the armed call; a tap that misses cancels the
-  //     arming (no charge spent). Tap = pointerdown→up with little movement, so
-  //     orbit-drag is untouched (a drag just rotates the camera). Raycast targets
-  //     ONLY fighter.group (player) — the opponent is never selectable.
-  const klichRay = new THREE.Raycaster();
-  const klichNdc = new THREE.Vector2();
-  let tapX = 0; let tapY = 0; let tapAt = 0;
-  onPointerDown = (e) => { tapX = e.clientX; tapY = e.clientY; tapAt = performance.now(); };
-  onPointerUp = (e) => {
-    if (!armedId.value) return; // not armed → orbit owns the gesture
-    const moved = Math.hypot(e.clientX - tapX, e.clientY - tapY);
-    if (moved > 6 || performance.now() - tapAt > 700) return; // drag / long-press → not a tap
-    const rect = renderer.domElement.getBoundingClientRect();
-    klichNdc.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-    klichNdc.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-    klichRay.setFromCamera(klichNdc, camera);
-    const hitPlayer = !!(fighter && klichRay.intersectObject(fighter.group, true).length);
-    if (hitPlayer) applyToFighter(fighter); // tap on player fighter → apply
-    else cancelArm(); // tap miss → cancel
-  };
-  canvasEl.value.addEventListener('pointerdown', onPointerDown);
-  canvasEl.value.addEventListener('pointerup', onPointerUp);
 
   // --- Render loop. FPS-capped (30 mobile / 60 desktop), elapsed time drives
   //     presence so skipped frames don't desync the breathing.
@@ -638,10 +548,6 @@ onBeforeUnmount(() => {
   if (resizeObserver) resizeObserver.disconnect();
   if (onVisibility) document.removeEventListener('visibilitychange', onVisibility);
   if (onKeydown) window.removeEventListener('keydown', onKeydown);
-  if (canvasEl.value) {
-    if (onPointerDown) canvasEl.value.removeEventListener('pointerdown', onPointerDown);
-    if (onPointerUp) canvasEl.value.removeEventListener('pointerup', onPointerUp);
-  }
   if (renderer) renderer.setAnimationLoop(null);
   if (controls) controls.dispose();
   if (presence) presence.dispose();
