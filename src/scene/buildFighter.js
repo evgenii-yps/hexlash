@@ -1020,6 +1020,43 @@ export function buildFighter(
     setMode('clip');
   };
 
+  // --- Micro-life overlay (сдержанная жизнь в planted-стойке). A LOW-amplitude
+  //     secondary layer ADDED on top of a held idle / intention-stance target: a
+  //     slow weight shift (loaded-leg knee softens + hip follows + torso settles
+  //     toward it), a slow fwd/back body sway, and a fuller breath (hips / torso /
+  //     shoulders). Sits BELOW the intention silhouette — amplitudes are well under
+  //     the stance deltas (combatBalance.microLife), so HOLD/CATCH/BREATHE stay
+  //     three distinct sharp reads. Called ONLY from the planted producers
+  //     (idlePose / intentionStance) — never from clips (apply) / gather / gait /
+  //     block, and never under reduced motion (that path returns before these run).
+  //     `manner` = the active intention's { amp, rate } (livelier press, quieter
+  //     catch, sluggish breathe); null → neutral. Pure maths over lastT.
+  const ML = B.microLife;
+  const microLife = (manner) => {
+    const amp = ML.cap * (manner ? manner.amp : 1);
+    if (amp <= 0) return; // cap 0 (or off) → столб, no overlay
+    const rate = manner ? manner.rate : 1;
+    const t = lastT;
+    const br = Math.sin(t * wBreath * rate); // breath phase
+    const sh = Math.sin(t * ((Math.PI * 2) / ML.shiftPeriodSec) * rate); // weight shift L↔R
+    const sw = Math.sin(t * ((Math.PI * 2) / ML.swayPeriodSec) * rate); // slow fwd/back sway
+    // Fuller breath — hips rise, torso pitches, shoulders lift on the inhale.
+    targetP.hipsY += ML.breathHipY * amp * br;
+    targetP.torsoX += ML.breathTorsoX * amp * br;
+    const inh = Math.max(0, br);
+    targetP.lsx += ML.breathShoulder * amp * inh;
+    targetP.rsx += ML.breathShoulder * amp * inh;
+    // Weight shift — the loaded leg's knee softens (anti-phase), the hip follows,
+    // and the torso settles a touch toward the weighted side. Slow → переминание.
+    targetP.lkx += -ML.kneeFlex * amp * (0.5 + 0.5 * sh);
+    targetP.rkx += -ML.kneeFlex * amp * (0.5 - 0.5 * sh);
+    targetP.lhx += ML.hipFollow * amp * sh * 0.5;
+    targetP.rhx += -ML.hipFollow * amp * sh * 0.5;
+    targetP.torsoY += ML.twist * amp * sh;
+    // Slow body sway (fwd/back) — gentle settle, never a bounce.
+    targetP.hipsZ += ML.swayHipZ * amp * sw;
+  };
+
   // Idle pose → target: settled stance + a faint breathing rise on the hips.
   const idlePose = (bs) => {
     targetP.hipsZ = 0;
@@ -1027,6 +1064,7 @@ export function buildFighter(
     targetP.torsoX = 0; targetP.torsoY = 0;
     targetP.lsx = 0; targetP.lex = 0; targetP.rsx = 0; targetP.rex = 0;
     targetP.lhx = 0; targetP.lkx = 0; targetP.rhx = 0; targetP.rkx = 0;
+    microLife(null); // сдержанная жизнь over the held idle (neutral manner)
     setMode('idle');
   };
 
@@ -1063,6 +1101,7 @@ export function buildFighter(
     const kn = s.knee || 0; // coiled crouch — bend hip + knee (CATCH)
     targetP.lhx = kn * 0.4; targetP.lkx = -kn;
     targetP.rhx = kn * 0.4; targetP.rkx = -kn;
+    microLife(ML.byIntention[intentionId]); // сдержанная жизнь scaled by the intention's manner (below the silhouette)
     setMode('stance-' + intentionId);
   };
 

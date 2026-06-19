@@ -313,6 +313,43 @@ export const COMBAT_BALANCE = {
     reactCooldownSec: 0.7, // min gap between conscious read-reactions (anti-spam)
     gatherSec: 0.16, // visible "собрался" coil beat before a контра lunge (the улов reads as a moment)
   },
+
+  // --- Micro-life in the planted stance (сдержанная жизнь между ударами). A LOW-
+  //     amplitude secondary layer ADDED on top of a held idle / intention stance in
+  //     buildFighter (idlePose / intentionStance only — never clips / gather / gait /
+  //     block, never under reduced motion): a slow weight shift (loaded-leg knee
+  //     softens + hip follows + torso settles toward it), a slow fwd/back body sway,
+  //     and a fuller breath (hips rise + torso pitch + shoulders lift on the inhale).
+  //     It sits BELOW the intention SILHOUETTE — every amplitude is well under the
+  //     stance deltas (intentionMotion.js), so HOLD / CATCH / BREATHE stay three
+  //     distinct, sharp reads and the upper-body guard/lean is untouched. Goal is
+  //     «собран и готов», NOT a boxer's bounce: slow cycles, tiny amplitudes. Pure
+  //     maths over loop time (no new geometry). Single tuning point — crank by eye.
+  //     `cap` is the global сдержанность ceiling (×the whole layer; 0 = off).
+  microLife: {
+    cap: 1.0, // global ceiling on the whole layer (×amp; 0 disables, >1 livelier)
+    breathHipY: 0.012, // extra hip rise on the breath (world units)
+    breathTorsoX: 0.015, // breath pitch of the torso (rad)
+    breathShoulder: 0.05, // shoulders lift on the inhale (rad) — chest expand reads here
+    shiftPeriodSec: 4.5, // weight-shift cycle (s) — slow переминание, NOT a bounce
+    kneeFlex: 0.06, // loaded-leg knee softening (rad, ≈3.4° peak — well under any stance knee)
+    hipFollow: 0.025, // hip pitch following the weighted leg (rad)
+    twist: 0.022, // torso settles toward the weighted leg (rad, ≈1.3°)
+    swayPeriodSec: 6.0, // slow fwd/back body-sway cycle (s)
+    swayHipZ: 0.012, // body sway amplitude (world units)
+    // Per-intention MANNER — not separate anims, one layer SCALED: amplitude + cycle
+    // rate. Livelier press, quieter catch, sluggish (slow + small) breathe. Keys =
+    // intention ids; an unknown id falls back to neutral (amp 1, rate 1).
+    byIntention: {
+      press: { amp: 1.2, rate: 1.15 }, // давит — живее, чуть напористее
+      strike: { amp: 1.0, rate: 1.0 },
+      sting: { amp: 1.15, rate: 1.2 }, // лёгкий, на носках
+      hold: { amp: 0.85, rate: 0.95 }, // упёрся — собран
+      catch: { amp: 0.65, rate: 0.8 }, // ждёт — тише, собраннее
+      break: { amp: 1.0, rate: 1.05 },
+      breathe: { amp: 0.5, rate: 0.65 }, // выдохся — вяло, тяжело
+    },
+  },
 };
 
 // Read-quality helpers — the perception numbers above as functions of the reader's
