@@ -271,4 +271,40 @@ export const COMBAT_BALANCE = {
   escalateStartSec: 25, // порог времени (с) — до него множитель = 1; ранний старт (был 40) подрезает хвост: нейтральный бой ~40-45s, затяг гарантированно добивается
   escalateGrowthPerSec: 0.18, // прирост общего множителя урона в секунду после порога
   escalateMax: 6, // потолок множителя (страховка от бесконечного роста)
+
+  // --- Reading the foe's action phase (ЧТЕНИЕ ФАЗЫ — навык бойца, не данность).
+  //     The foe exposes its action phase (windup / commit / recovery / stagger /
+  //     neutral — buildFighter.getActionPhase); the READER does NOT get it raw. It
+  //     perceives a DELAYED + occasionally WRONG copy, and quality scales with the
+  //     reader's COUNTER axis (counter01): low counter → slow, mistake-prone read;
+  //     high counter → fast, rarely wrong — but NEVER perfect. The reliability cap
+  //     is < 1.0 on purpose (missChanceHigh > 0): even a maxed ambusher misses some
+  //     reads, so attacking it is still possible and the bout never locks into an
+  //     eternal сбив. A good read FEEDS two conscious reactions in buildFighter —
+  //     сбив замаха (interrupt a read windup) and контра (punish a read opening) —
+  //     and biases the picker toward CATCH. Endpoints here, scaled by counter01 via
+  //     the helpers below (one tuning point).
+  read: {
+    delayMsLow: 460, delayMsHigh: 95, // perception latency (ms): counter01 0 → 1
+    missChanceLow: 0.6, missChanceHigh: 0.12, // miss a real transition; HIGH ≠ 0 = reliability cap < 1
+    falseChanceLow: 0.16, falseChanceHigh: 0.025, // ложное чтение — act on an opening that isn't there
+    windupReactLow: 0.18, windupReactHigh: 0.85, // chance to commit a сбив on a READ windup
+    openReactLow: 0.3, openReactHigh: 0.95, // chance to punish a READ opening (recovery / stagger)
+    catchBoost: 1.35, // CATCH (засада) — the dedicated waiter, reads + pounces hardest
+    holdBoost: 1.12, // HOLD leans into the read a little
+    reactCooldownSec: 0.7, // min gap between conscious read-reactions (anti-spam)
+    gatherSec: 0.16, // visible "собрался" coil beat before a контра lunge (the улов reads as a moment)
+  },
 };
+
+// Read-quality helpers — the perception numbers above as functions of the reader's
+// counter01 (0..1). One place, so the читать-навык curve tunes here. The miss cap
+// (<1 reliability) lives in the HIGH endpoint being non-zero.
+const _R = COMBAT_BALANCE.read;
+const _clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
+const _lerp = (a, b, t) => a + (b - a) * _clamp01(t);
+export const readDelaySec = (c) => _lerp(_R.delayMsLow, _R.delayMsHigh, c) / 1000;
+export const readMissChance = (c) => _lerp(_R.missChanceLow, _R.missChanceHigh, c);
+export const readFalseChance = (c) => _lerp(_R.falseChanceLow, _R.falseChanceHigh, c);
+export const readWindupReactChance = (c) => _lerp(_R.windupReactLow, _R.windupReactHigh, c);
+export const readOpenReactChance = (c) => _lerp(_R.openReactLow, _R.openReactHigh, c);

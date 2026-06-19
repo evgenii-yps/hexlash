@@ -74,7 +74,10 @@ export const intentionProfile = (id) => INTENTION_PROFILES[id] || INTENTION_PROF
               blocking, staggered, range (current preferred), current (held intent),
               model ({ intention, read, fresh }|null — last valid model answer, the
               model path reads this) }
-     foe    — observed foe: { has, dist, inStrike, reacting }
+     foe    — observed foe: { has, dist, inStrike, reacting, phase } — `phase` is the
+              PERCEIVED foe action phase (noised read, scaled by counter; one of
+              'windup'|'commit'|'recovery'|'stagger'|'neutral'), so the pick can
+              lean CATCH to set up a pounce on a read
      memory — short ring of OBSERVED foe events [{ t, type:'attack'|'miss' }], newest last
      fight  — shared context: { t, escalation }
    Returns an intention id, or null to KEEP the current one (a laggy / absent model
@@ -129,6 +132,12 @@ export function spinalScore(self, foe, memory, fight) {
   const closeBand = foe.has && foe.dist <= self.range + 0.5;
   const far = foe.has && foe.dist > self.range + 0.7;
   const lowStam = 1 - self.stamina01;
+  // READ → CATCH gravity: a perceived OPENING (recovery / stagger) pulls a counter-
+  // fighter into CATCH to pounce; a perceived WINDUP pulls a little (coil to сбив).
+  // Counter-scaled, so only a sharp reader re-plans around what it sees (the body's
+  // tryReadReaction does the actual strike; this just makes the pose anticipate it).
+  const readPounce = (foe.phase === 'recovery' || foe.phase === 'stagger') ? 0.35 * a.counter
+    : foe.phase === 'windup' ? 0.22 * a.counter : 0;
   const s = {
     [INTENTIONS.PRESS]:   0.50 * a.initiative + 0.30 * a.stick + 0.20 * (1 - a.distance) + (far ? 0.20 : 0),
     [INTENTIONS.STRIKE]:  0.35 * a.weight + 0.30 * a.initiative + 0.35 * self.charge01 + (foe.inStrike ? 0.25 : -0.35),
@@ -136,7 +145,7 @@ export function spinalScore(self, foe, memory, fight) {
     [INTENTIONS.HOLD]:    0.40 * a.resilience + 0.30 * a.stick + (closeBand ? 0.20 : 0),
     [INTENTIONS.BREAK]:   0.50 * a.slip + 0.20 * (1 - a.stick) + (foeThreat ? 0.20 : 0),
     [INTENTIONS.BREATHE]: 0.70 * lowStam + 0.10 * a.distance,
-    [INTENTIONS.CATCH]:   0.45 * a.counter + 0.25 * a.resilience + 0.20 * (1 - a.initiative) + (foeThreat ? 0.25 : 0),
+    [INTENTIONS.CATCH]:   0.45 * a.counter + 0.25 * a.resilience + 0.20 * (1 - a.initiative) + (foeThreat ? 0.25 : 0) + readPounce,
   };
   // Hysteresis: a small bonus to the held intention so it doesn't flip-flop every
   // tick (deterministic — no random). argmax, ties broken by INTENTION_IDS order.

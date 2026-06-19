@@ -14,7 +14,7 @@ import { makeRadialTexture } from './arenaTextures.js';
 import { resolveBehavior } from '../data/behavior.js';
 import { INTENTIONS, INTENTION_SET, INTENTION_TICK_SEC, intentionProfile, chooseIntention } from '../data/intentions.js';
 import { motionFor } from '../data/intentionMotion.js';
-import { COMBAT_BALANCE } from '../data/combatBalance.js';
+import { COMBAT_BALANCE, readDelaySec, readMissChance, readFalseChance, readWindupReactChance, readOpenReactChance } from '../data/combatBalance.js';
 import { createHpIndicator } from './hpIndicator.js';
 
 function pinkRgba(pink, a) {
@@ -40,7 +40,10 @@ export function buildFighter(
   // injected async call to the backend (kept out of this scene module so it never
   // imports the HTTP client / store). `getFoeStamina` / `getFoeHp01` (optional)
   // let the break detector + word memory observe the foe's wind / health.
-  { side = 'player', coreId = null, behavior = null, maxHp = COMBAT_BALANCE.maxHp, onImpact, onMiss, onBlock, onAttackStart, onFeint, onInterrupt, onChargeRelease, onEliminated, getFoePos = null, getFoeReacting = null, getFightContext = null, getFoeStamina = null, getFoeHp01 = null, bounds = { x: 2.5, z: 1.5 }, neutralColor = false, brain = 'spinal', portrait = [], requestModelIntention = null } = {},
+  // `getFoePhase` (optional, like getFoeReacting) → the foe's CURRENT action phase
+  // string ('windup' | 'commit' | 'recovery' | 'stagger' | 'neutral'); the reading
+  // subsystem noises it by this fighter's counter (читать-навык) before acting.
+  { side = 'player', coreId = null, behavior = null, maxHp = COMBAT_BALANCE.maxHp, onImpact, onMiss, onBlock, onAttackStart, onFeint, onInterrupt, onChargeRelease, onEliminated, getFoePos = null, getFoeReacting = null, getFightContext = null, getFoeStamina = null, getFoeHp01 = null, getFoePhase = null, bounds = { x: 2.5, z: 1.5 }, neutralColor = false, brain = 'spinal', portrait = [], requestModelIntention = null } = {},
 ) {
   const group = new THREE.Group();
 
@@ -237,6 +240,25 @@ export function buildFighter(
       { t: 0.6, v: { hz: -0.12, hy: -0.05, tx: -0.18, lsx: 1.5, lex: 0.05 }, e: 'out' }, // snap — extend
       { t: 0.74, v: { hz: -0.08, hy: -0.03, tx: -0.1, lsx: 1.35, lex: 0.16 }, e: 'out' }, // recoil
       { t: 1.3, v: REST, e: 'io' }, // weighty return
+    ],
+  };
+  // INTERCEPT — a fast straight (right arm) used ONLY by the read-driven сбив: a
+  // quick chamber → early snap (impact 0.2s, vs PUNCH's 0.6s) → quick return. The
+  // short impact is what lets a REACTIVE strike land inside the foe's early-windup
+  // vuln window (windup × interruptWindowFrac ≈ 0.3s) — a normal PUNCH is far too
+  // slow to catch it after reading. So only a SHARP reader (small perception delay,
+  // high counter) lands the сбив in time; a slow read arrives during the foe's
+  // recovery (a normal trade) — the «иногда осознанно сбивает, растёт с counter»
+  // behaviour falls out of the timing. Punch-equivalent damage; tagged windup so it
+  // is itself briefly interruptible (fair). Plays under reduced motion like any clip.
+  const INTERCEPT = {
+    dur: 0.55, impact: 0.2, windup: 0.2, dmgMult: COMBAT_BALANCE.moveMult.punch,
+    keys: [
+      { t: 0.0, v: REST, e: 'out' },
+      { t: 0.12, v: { hz: -0.04, hy: -0.02, tx: -0.06, rsx: 0.4, rex: 1.6 }, e: 'out' }, // quick chamber
+      { t: 0.2, v: { hz: -0.14, hy: -0.05, tx: -0.16, rsx: 1.5, rex: 0.05 }, e: 'out' }, // snap — fast extend (impact)
+      { t: 0.34, v: { hz: -0.06, hy: -0.02, tx: -0.08, rsx: 1.3, rex: 0.2 }, e: 'out' }, // recoil
+      { t: 0.55, v: REST, e: 'io' }, // quick return to stance
     ],
   };
   // FEINT — a fake: the SAME opening coil/chamber as PUNCH (so the foe reads a
@@ -640,6 +662,7 @@ export function buildFighter(
       dist,
       inStrike: dist <= STRIKE,
       reacting: !!(getFoeReacting && getFoeReacting()),
+      phase: perceivedPhase, // PERCEIVED foe action phase (noised read, not ground truth) — picker leans CATCH on a read
     };
     const fc = getFightContext && getFightContext();
     const fight = { t, escalation: (fc && fc.escalation) || 1 };
@@ -1034,6 +1057,24 @@ export function buildFighter(
     setMode('stance-' + intentionId);
   };
 
+  // Gather (улов) → target: a brief coiled LOAD just before a read-driven контра
+  // lunge — weight sinks back, knees bend deep, guard mid, chest loaded toward the
+  // foe. Distinct from the CATCH stance (deeper sink) so the cross-fade reads as
+  // "собрался → выпад": the pose layer eases into this over ~0.13s, holds for
+  // read.gatherSec, then the strike clip fires — a visible MOMENT, not a silent
+  // exchange. Own mode name so the layer cross-fades cleanly. Reduced motion never
+  // reaches it (the read subsystem only runs in full motion).
+  const gatherPose = (bs) => {
+    targetP.hipsZ = 0.1; // weight back — loading the spring
+    targetP.hipsY = hipsBaseY - 0.14 + bs * 0.006; // sink (coil)
+    targetP.torsoX = -0.1; targetP.torsoY = 0; // chest dips toward the foe
+    targetP.lsx = 0.5; targetP.lex = 1.5; // guard mid-high
+    targetP.rsx = 0.5; targetP.rex = 1.5;
+    targetP.lhx = 0.32; targetP.lkx = -0.8; // knees bent — coiled to spring
+    targetP.rhx = 0.32; targetP.rkx = -0.8;
+    setMode('gather');
+  };
+
   // Gait + weight → target. Cadence and amplitude scale with the LIVE speed
   // (mag), so a move visibly winds up as it accelerates and winds down as it
   // brakes — never a fixed glide. `accel` (Δspeed/s) leans the torso: into the
@@ -1341,6 +1382,7 @@ export function buildFighter(
     feintActive = false; feintPayoffActive = false; feintBaitUntil = 0; feintAdvUntil = 0; feintBaited = false; // feint state leaves with the fighter
     riposteUntil = 0; riposteBonus = 0; // riposte window leaves with the fighter
     windupVulnUntil = 0; staggerUntil = 0; // interrupt/stagger state leaves with the fighter
+    gatherUntil = 0; readPendingAt = -1; readPendingPhase = null; perceivedPhase = 'neutral'; truePhaseSeen = 'neutral'; // read/gather state leaves with the fighter
     charge = 0; chargeShotPower = 0; chargeShotPen = 0; // charge state leaves with the fighter
     modelReqSeq += 1; lastModelAnswer = null; // any in-flight model request resolves into a dead fighter → ignored
     deadAt = lastT; // DEAD: updateBar already drew 0% — hold the plate, update() hides it after DEAD_HOLD_S
@@ -1515,41 +1557,17 @@ export function buildFighter(
     return charge / stats.chargeMax >= B.chargeReleaseThreshold;
   };
 
-  // Autonomous combat (AI): strike only when the foe is within range, on a
-  // cadence; the navigation above closes the gap and manoeuvres between strikes.
-  // COMBO/PUNCH/DOUBLE are weighted; an incoming hit adds a rhythm hitch (in
-  // takeDamage). Live random — no seed. Returns true if a strike started.
-  const decideAttack = (t) => {
-    if (clip || t < ai.nextAt) return false;
-    if (intentionFlags.attack === 'none') return false; // this mode doesn't initiate (BREATHE / BREAK / CATCH) — it spaces / waits / guards instead
-    const f = getFoePos && getFoePos();
-    if (!f) return false;
-    const dx = f.x - group.position.x;
-    const dz = f.z - group.position.z;
-    // Commit a strike only when the foe is actually in reach: cap by STRIKE so a
-    // far-spacing fighter steps in to land it instead of whiffing from its range.
-    const reach = Math.min(character.range + RANGE_HYST, STRIKE);
-    if (Math.hypot(dx, dz) > reach) return false;
-    // TEMPORARY: sometimes throw a feint instead of a real strike (see decideFeint).
-    if (decideFeint(t)) return true;
-    // ATTACK STYLE — the intention MODE leads, weight is the fallback. STING
-    // ('light') throws quick singles; STRIKE ('heavy') commits the DOUBLE / COMBO
-    // series; PRESS / HOLD ('free') use the fighter's own weight-led mix (heavy01:
-    // light favours the single PUNCH, heavy commits the bigger moves).
-    let atk;
-    if (intentionFlags.attack === 'light') atk = PUNCH; // жалить — quick pokes
-    else if (intentionFlags.attack === 'heavy') atk = Math.random() < 0.5 ? DOUBLE : COMBO; // рубить — heavy series
-    else {
-      const r = Math.random();
-      const punchW = lerp(0.82, 0.12, heavy01); // light → mostly singles · heavy → mostly DOUBLE/COMBO
-      atk = r < punchW ? PUNCH : r < punchW + 0.4 ? DOUBLE : COMBO;
-    }
+  // Launch a chosen strike clip + its bookkeeping: spend stamina, (maybe) release
+  // charge, arm a feint-payoff if a bait window is open, signal the foe, set the
+  // post-strike cadence + follow-up nav. Shared by decideAttack (normal initiation)
+  // and tryReadReaction (the conscious сбив / контра — which fires even under an
+  // attack:'none' mode like CATCH, since a read punish is not normal initiation).
+  const launchStrike = (t, atk) => {
     play(atk);
     stamina = THREE.MathUtils.clamp(stamina - attackStaminaCost(atk), 0, staminaMax); // spend силы on the strike (jab cheap, combo dear) — never gates the attack
     // CHARGE release (TEMPORARY decideRelease — near-full + foe in reach): empower
     // this strike ∝ the charge level (captured into chargeShot* for resolveImpact),
-    // then SPEND it. Normal (un-released) attacks leave the charge untouched, so it
-    // keeps building toward the one убойный.
+    // then SPEND it. Normal (un-released) attacks leave the charge untouched.
     if (decideRelease() && charge > 0) {
       const c01 = charge / stats.chargeMax;
       chargeShotPower = c01 * stats.chargePowerBonusMax;
@@ -1580,6 +1598,126 @@ export function buildFighter(
       if (nav.mode === 'circle' && Math.random() < 0.5) character.strafeBias *= -1;
       nav.until = t + atk.dur + 0.25 + Math.random() * 0.4;
     }
+  };
+
+  // --- Reading the foe's action phase (ЧТЕНИЕ — навык, не данность). The foe
+  //     reports its TRUE phase via getActionPhase; this fighter does NOT act on it
+  //     raw. updateRead() keeps a PERCEIVED phase that lags by readDelaySec and
+  //     sometimes misses a transition (readMissChance) — both scaled by counter01
+  //     (low → slow/blind, high → fast/sharp, never perfect). tryReadReaction()
+  //     converts a good read into a conscious move: a perceived WINDUP in reach →
+  //     a fast сбив (the landed jab interrupts the foe's windup via takeDamage); a
+  //     perceived OPENING (recovery / stagger) in reach → a контра — a brief
+  //     visible coil (gatherPose) then a lunge. CATCH/HOLD boost the read (the
+  //     waiter pounces hardest), so CATCH converts a held wait into a strike. A
+  //     rare ложное чтение (readFalseChance) makes it lunge at nothing. All numbers
+  //     in combatBalance.read. Full motion only (reduced never reaches the AI tick).
+  let truePhaseSeen = 'neutral'; // last TRUE foe phase observed (edge-tracking)
+  let perceivedPhase = 'neutral'; // what THIS fighter currently BELIEVES the foe is doing (noised)
+  let readPendingPhase = null; // a perceived-phase update waiting out the perception delay
+  let readPendingAt = -1; // loop time the pending update lands (-1 = none)
+  let readReactUntil = 0; // cooldown — next conscious read-reaction allowed (anti-spam)
+  let gatherUntil = 0; // coil "tell" window before a контра lunge (0 = none)
+  let lastReadAction = ''; // dev readout: 'sbiv' | 'contra' | 'contra?' (phantom)
+  let lastReadActionAt = -1; // loop time of the last read-reaction (readout freshness)
+  const updateRead = (t) => {
+    const truePhase = getFoePhase ? getFoePhase() : 'neutral';
+    if (truePhase !== truePhaseSeen) {
+      truePhaseSeen = truePhase;
+      const delay = readDelaySec(counter01) * (0.75 + Math.random() * 0.5); // jittered latency
+      const missed = Math.random() < readMissChance(counter01); // failed to register this transition
+      readPendingAt = t + delay;
+      readPendingPhase = missed ? null : truePhase; // null = miss → perception stays stale (didn't see it)
+    }
+    if (readPendingAt >= 0 && t >= readPendingAt) {
+      if (readPendingPhase != null) perceivedPhase = readPendingPhase;
+      readPendingAt = -1; readPendingPhase = null;
+    }
+  };
+  // Convert a read into a conscious сбив / контра. Returns true if it committed a
+  // strike or opened a gather (caller then skips decideAttack this frame). Gated by
+  // cooldown, reach, and a counter-scaled chance (CATCH/HOLD boosted). NOT gated by
+  // intentionFlags.attack — that's the point: CATCH (attack:'none') can pounce here.
+  const tryReadReaction = (t) => {
+    if (t < readReactUntil) return false;
+    const f = getFoePos && getFoePos();
+    if (!f) return false;
+    const c = counter01;
+    const boost = intentionId === INTENTIONS.CATCH ? B.read.catchBoost : intentionId === INTENTIONS.HOLD ? B.read.holdBoost : 1;
+    let phase = perceivedPhase;
+    let phantom = false;
+    // ложное чтение — believe in an opening that isn't there (rare; worse at low counter).
+    if (phase === 'neutral' && Math.random() < readFalseChance(c) * boost) { phase = 'recovery'; phantom = true; }
+    const dist = Math.hypot(f.x - group.position.x, f.z - group.position.z);
+    if (phase === 'windup') {
+      if (dist > STRIKE) return false; // must be in reach to land inside the foe's vuln window
+      if (Math.random() > readWindupReactChance(c) * boost) return false;
+      readReactUntil = t + B.read.reactCooldownSec;
+      lastReadAction = 'sbiv'; lastReadActionAt = t;
+      launchStrike(t, INTERCEPT); // fast intercept jab → catch the windup in time (→ staggerInterrupt in the foe)
+      return true;
+    }
+    if (phase === 'recovery' || phase === 'stagger') {
+      const reach = Math.min(character.range + RANGE_HYST, STRIKE);
+      if (dist > reach) return false; // open but out of reach — let nav close in normally
+      if (Math.random() > readOpenReactChance(c) * boost) return false;
+      readReactUntil = t + B.read.reactCooldownSec;
+      gatherUntil = t + B.read.gatherSec; // visible coil → the lunge fires on expiry (in update)
+      lastReadAction = phantom ? 'contra?' : 'contra'; lastReadActionAt = t;
+      return true;
+    }
+    return false;
+  };
+
+  // This fighter's OWN current action phase, reported to a reading foe (via the
+  // foe's getFoePhase). 'windup' = early, interruptible swing (the сбив target);
+  // 'commit' = past the vuln window, about to land (don't dive in); 'recovery' =
+  // past the last impact, open; 'stagger' = interrupt-locked, wide open; 'neutral'
+  // = nothing committed. Pure read of existing state — no cost, safe in reduced
+  // motion (where no attack clips run → mostly neutral / stagger).
+  const getActionPhase = () => {
+    if (state !== 'alive') return 'neutral';
+    if (lastT < staggerUntil) return 'stagger';
+    if (clip && clip.windup) {
+      if (lastT < windupVulnUntil) return 'windup';
+      const ct = lastT - clipStart;
+      const lastImpactT = clip.impacts ? clip.impacts[clip.impacts.length - 1] : clip.impact;
+      if (typeof lastImpactT === 'number' && lastImpactT >= 0 && ct >= lastImpactT) return 'recovery';
+      return 'commit';
+    }
+    return 'neutral';
+  };
+
+  // Autonomous combat (AI): strike only when the foe is within range, on a
+  // cadence; the navigation above closes the gap and manoeuvres between strikes.
+  // COMBO/PUNCH/DOUBLE are weighted; an incoming hit adds a rhythm hitch (in
+  // takeDamage). Live random — no seed. Returns true if a strike started.
+  const decideAttack = (t) => {
+    if (clip || t < ai.nextAt) return false;
+    if (intentionFlags.attack === 'none') return false; // this mode doesn't initiate (BREATHE / BREAK / CATCH) — it spaces / waits / guards instead
+    const f = getFoePos && getFoePos();
+    if (!f) return false;
+    const dx = f.x - group.position.x;
+    const dz = f.z - group.position.z;
+    // Commit a strike only when the foe is actually in reach: cap by STRIKE so a
+    // far-spacing fighter steps in to land it instead of whiffing from its range.
+    const reach = Math.min(character.range + RANGE_HYST, STRIKE);
+    if (Math.hypot(dx, dz) > reach) return false;
+    // TEMPORARY: sometimes throw a feint instead of a real strike (see decideFeint).
+    if (decideFeint(t)) return true;
+    // ATTACK STYLE — the intention MODE leads, weight is the fallback. STING
+    // ('light') throws quick singles; STRIKE ('heavy') commits the DOUBLE / COMBO
+    // series; PRESS / HOLD ('free') use the fighter's own weight-led mix (heavy01:
+    // light favours the single PUNCH, heavy commits the bigger moves).
+    let atk;
+    if (intentionFlags.attack === 'light') atk = PUNCH; // жалить — quick pokes
+    else if (intentionFlags.attack === 'heavy') atk = Math.random() < 0.5 ? DOUBLE : COMBO; // рубить — heavy series
+    else {
+      const r = Math.random();
+      const punchW = lerp(0.82, 0.12, heavy01); // light → mostly singles · heavy → mostly DOUBLE/COMBO
+      atk = r < punchW ? PUNCH : r < punchW + 0.4 ? DOUBLE : COMBO;
+    }
+    launchStrike(t, atk);
     return true;
   };
   // Under reduced motion the body holds still; resolve the key moment (the hit
@@ -1617,6 +1755,9 @@ export function buildFighter(
       // so the two never re-pick in lock-step — no random, replay stays stable.
       intentionNextAt = lastT + (isOpp ? INTENTION_TICK_SEC * 0.5 : 0);
       foeMemory.length = 0; // fresh bout — forget the foe's earlier events
+      // Fresh bout — clear the read perception + any pending gather/cooldown.
+      perceivedPhase = 'neutral'; truePhaseSeen = 'neutral'; readPendingAt = -1; readPendingPhase = null;
+      gatherUntil = 0; readReactUntil = 0; lastReadAction = ''; lastReadActionAt = -1;
       // Reset the model brain for the new bout: drop the held answer, clear the
       // break edges + cooldown + count, and bump the seq so any in-flight request
       // from the previous bout is ignored when it resolves.
@@ -1710,10 +1851,30 @@ export function buildFighter(
     const cpulse = 0.5 + 0.5 * Math.sin(t * wCore);
     let coreBoost = 0;
 
-    // AI, when free (no clip): turn to face the foe, then decide whether to
-    // strike (a strike starts a clip that plays out below this same frame). While
-    // in a block stance OR staggered (interrupt lock) the fighter does NOT attack.
-    if (ai.on && !clip) { faceFoe(dt); if (!blocking && lastT >= staggerUntil) decideAttack(t); }
+    // Reading the foe (full motion only — reduced returns above). Advance the
+    // perceived foe phase every alive frame (even mid-clip / block, so perception
+    // keeps tracking), then resolve a pending контра coil: when the gather beat
+    // elapses, the lunge fires (a fast PUNCH into the read opening). `gathering`
+    // holds the body in the coil pose + suppresses nav / decideAttack until it lands.
+    let gathering = false;
+    if (ai.on && state === 'alive') {
+      updateRead(t);
+      if (gatherUntil > 0 && lastT >= gatherUntil) {
+        gatherUntil = 0;
+        if (!clip && !blocking && lastT >= staggerUntil) launchStrike(lastT, PUNCH); // the выпад after the coil
+      }
+      gathering = gatherUntil > 0 && lastT < gatherUntil;
+    }
+
+    // AI, when free (no clip + not gathering): turn to face the foe, then read the
+    // foe → a conscious сбив / контра (tryReadReaction); only if no read fires does
+    // it fall through to normal cadence attacking (decideAttack). A strike starts a
+    // clip that plays out below this same frame. While in a block stance OR
+    // staggered (interrupt lock) the fighter does NOT attack.
+    if (ai.on && !clip && !gathering) {
+      faceFoe(dt);
+      if (!blocking && lastT >= staggerUntil) { if (!tryReadReaction(t)) decideAttack(t); }
+    }
 
     if (clip) {
       const ct = t - clipStart;
@@ -1745,6 +1906,8 @@ export function buildFighter(
       blockPose(bs); // hold the guard + plant (no nav / gait while blocking)
     } else if (lastT < staggerUntil) {
       idlePose(bs); // staggered (interrupt lock past the STAGGER clip) — plant, no nav
+    } else if (gathering) {
+      gatherPose(bs); // coiled "собрался" tell before the контра lunge — plant, no nav
     } else if (ai.on) {
       navigate(t, dt, bs); // navigate toward / around the foe (sets the move intent)
     } else if (loco.active) {
@@ -1753,10 +1916,10 @@ export function buildFighter(
       idlePose(bs);
     }
 
-    // Integrate weighted locomotion every frame: a clip / idle frame sets no
-    // intent, so carried velocity coasts to rest (inertia) without the gait
-    // overwriting the clip / idle / block pose. A locomotion frame animates the gait.
-    stepLocomotion(dt, !clip && !blocking && lastT >= staggerUntil && (ai.on || loco.active));
+    // Integrate weighted locomotion every frame: a clip / idle / gather frame sets
+    // no intent, so carried velocity coasts to rest (inertia) without the gait
+    // overwriting the clip / idle / block / coil pose. A locomotion frame animates the gait.
+    stepLocomotion(dt, !clip && !blocking && !gathering && lastT >= staggerUntil && (ai.on || loco.active));
 
     // Stamina: drain on movement (prevMag set just above) / recover when collected.
     tickStamina(dt);
@@ -1843,6 +2006,9 @@ export function buildFighter(
     getStamina: () => stamina, // запас сил (readable — ТЕНЬ-3 seam + dev readout)
     getStaminaMax: () => staminaMax,
     getStamina01: () => stamina01(),
+    getActionPhase, // OWN action phase ('windup'|'commit'|'recovery'|'stagger'|'neutral') — a reading foe wires this into its getFoePhase
+    getReadPhase: () => perceivedPhase, // what THIS fighter currently believes the foe is doing (noised read — dev readout)
+    getReadAction: () => (lastReadActionAt >= 0 && lastT - lastReadActionAt < 1.0 ? lastReadAction : ''), // last сбив/контра, fresh ~1s (dev readout)
     getIntention: () => intentionId, // current intention id (readable — dev readout + model seam)
     setIntentionLock, // DEV: lock to one intention (id) or release (null) — inspect a signature in isolation
     setBrain: (b) => { brain = b; }, // swap the intention-picker strategy ('spinal' | 'model')

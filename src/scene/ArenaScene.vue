@@ -34,7 +34,7 @@
       <button type="button" class="tgt" @click="onDevCharge">CHARGE</button>
     </div>
     <!-- Dev stamina (силы) + charge (заряд) readout for both fighters — live. -->
-    <div v-if="panelVisible" class="arena-readout">{{ staReadout }}<br>{{ chgReadout }}<br>{{ intReadout }}<br>{{ mdlReadout }}</div>
+    <div v-if="panelVisible" class="arena-readout">{{ staReadout }}<br>{{ chgReadout }}<br>{{ intReadout }}<br>{{ rdReadout }}<br>{{ mdlReadout }}</div>
   </div>
 </template>
 
@@ -71,6 +71,10 @@ const chgReadout = ref('CHG  P —  ·  O —');
 // Current intention of each fighter — so it's VISIBLE that differently-raised
 // builds lean to different intentions. Refreshed (throttled) in the loop.
 const intReadout = ref('INT  P —  ·  O —');
+// Reading the foe: each fighter's PERCEIVED foe phase (noised by counter) + the
+// last сбив/контра it committed — so the read skill is visible in isolation (a
+// high-counter fighter shows windup/open reads + SBIV/CONTRA far more than a low one).
+const rdReadout = ref('RD   P —  ·  O —');
 // Brain strategy ('spinal' = deterministic default; 'model' = hybrid Claude wake
 // on fight breaks). Dev toggle only — prod default is spinal (OFF). The MDL readout
 // shows model wakes/bout + last read so it's visible breaks stay ~5–10, not 80.
@@ -358,6 +362,7 @@ onMounted(() => {
       getFightContext: () => ({ escalation: escalationMult(), elapsed: fightStartT ? lastFrameT - fightStartT : 0 }), // shared context for the intention picker (escalation phase)
       getFoeStamina: () => (opponent ? opponent.getStamina01() : null), // foe wind (break detector + word memory)
       getFoeHp01: () => (opponent ? opponent.getHp() / opponent.maxHp : null), // foe health (break detector)
+      getFoePhase: () => (opponent && opponent.getActionPhase ? opponent.getActionPhase() : 'neutral'), // foe action phase → the read subsystem (сбив / контра)
       brain: brainMode.value, // 'spinal' (default) | 'model' — dev toggle, prod is spinal
       portrait: portraitFor('player'), // character in words for the model brain
       requestModelIntention, // async backend call (model brain) — key stays server-side
@@ -392,6 +397,7 @@ onMounted(() => {
       getFightContext: () => ({ escalation: escalationMult(), elapsed: fightStartT ? lastFrameT - fightStartT : 0 }), // shared context for the intention picker (escalation phase)
       getFoeStamina: () => (fighter ? fighter.getStamina01() : null), // foe wind (break detector + word memory)
       getFoeHp01: () => (fighter ? fighter.getHp() / fighter.maxHp : null), // foe health (break detector)
+      getFoePhase: () => (fighter && fighter.getActionPhase ? fighter.getActionPhase() : 'neutral'), // foe action phase → the read subsystem (сбив / контра)
       brain: brainMode.value, // 'spinal' (default) | 'model' — dev toggle, prod is spinal
       portrait: portraitFor('opponent'), // character in words for the model brain
       requestModelIntention, // async backend call (model brain) — key stays server-side
@@ -482,14 +488,22 @@ onMounted(() => {
       const sta = (fr) => (fr ? Math.round(fr.getStamina01() * 100) : '—');
       const chg = (fr) => (fr ? Math.round(fr.getCharge01() * 100) : '—');
       const intn = (fr) => (fr && fr.getIntention ? fr.getIntention().toUpperCase() : '—');
+      // Read: perceived foe phase + (если свежо) the last сбив/контра, e.g. "WINDUP!SBIV".
+      const rd = (fr) => {
+        if (!fr || !fr.getReadPhase) return '—';
+        const ph = (fr.getReadPhase() || 'neutral').toUpperCase();
+        const act = fr.getReadAction ? fr.getReadAction() : '';
+        return act ? `${ph}!${act.toUpperCase()}` : ph;
+      };
       staReadout.value = `STA  P ${sta(fighter)}  ·  O ${sta(opponent)}`;
       chgReadout.value = `CHG  P ${chg(fighter)}  ·  O ${chg(opponent)}`;
       intReadout.value = `INT  P ${intn(fighter)}  ·  O ${intn(opponent)}`;
+      rdReadout.value = `RD   P ${rd(fighter)}  ·  O ${rd(opponent)}`;
       // Model brain: wakes-per-bout counter (confirm ~5–10, not 80) + last "read".
       if (brainMode.value === 'model') {
         const cnt = (fr) => (fr && fr.getModelRequestCount ? fr.getModelRequestCount() : 0);
-        const rd = (fr) => ((fr && fr.getModelRead && fr.getModelRead()) || '—').slice(0, 18);
-        mdlReadout.value = `MDL  P ${cnt(fighter)} "${rd(fighter)}"  ·  O ${cnt(opponent)} "${rd(opponent)}"`;
+        const mrd = (fr) => ((fr && fr.getModelRead && fr.getModelRead()) || '—').slice(0, 18);
+        mdlReadout.value = `MDL  P ${cnt(fighter)} "${mrd(fighter)}"  ·  O ${cnt(opponent)} "${mrd(opponent)}"`;
       } else {
         mdlReadout.value = 'MDL  off (spinal)';
       }
