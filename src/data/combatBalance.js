@@ -18,10 +18,10 @@
    FRACTION of the TARGET's max HP, never an absolute — so a future HP upgrade
    (to 1000+) does NOT rebalance the fight (раздуй пул, доли держат тот же бой).
    A clean (unmitigated) mixed series kills in ~15-18 hits; toughness / dodge /
-   block / miss lengthen the real bout to ~40-45s, and the escalating-damage
-   safeguard (past escalateStartSec ≈ 25s) guarantees a STALLING bout still
-   finishes — no ties, a bout always runs to an elimination — without cutting a
-   normal bout short. */
+   block / miss lengthen the real bout to ~40-45s, and the stalemate safeguard
+   (rising накал — escalate* below — triggered by time WITHOUT a clean exchange)
+   guarantees even a STARING-contest bout still finishes — no ties, a bout always
+   runs to an elimination — without heating up a normal, actively-trading bout. */
 export const COMBAT_BALANCE = {
   // --- Standard base. maxHp = 100 for BOTH fighters. Strike damage is a FRACTION
   //     of the TARGET's max HP (see damageFracBase + strikeDamage in buildFighter),
@@ -264,13 +264,31 @@ export const COMBAT_BALANCE = {
   stingPiercePen: 0.6, // ЖАЛО-4 «пробивает любую защиту» — +60% charge-release block pierce
   stingExecutionPower: 0.8, // ЖАЛО-5 «казнь» (vertex) — +80% charge-release power (with the escalate safeguard, not a start one-shot)
 
-  // --- Fight-length safeguard: escalating damage. Past escalateStartSec the
-  //     OVERALL damage multiplier on BOTH fighters ramps up (per second), so a
-  //     stalling bout is guaranteed to finish past the ~40-50s target window.
-  //     No hard round cap needed while this is running; no ties.
-  escalateStartSec: 25, // порог времени (с) — до него множитель = 1; ранний старт (был 40) подрезает хвост: нейтральный бой ~40-45s, затяг гарантированно добивается
-  escalateGrowthPerSec: 0.18, // прирост общего множителя урона в секунду после порога
-  escalateMax: 6, // потолок множителя (страховка от бесконечного роста)
+  // --- Stalemate safeguard: rising накал (escalation by SILENCE, NOT fight time).
+  //     The hole this closes: two patient cores (both CATCH / HOLD) могут встать в
+  //     гляделки — neither attacks, so the old time-based damage ramp had nothing to
+  //     multiply (no hits = nothing to grow). The trigger is now время БЕЗ размена:
+  //     while NEITHER fighter lands damage, накал (escalation01, 0→1) climbs after
+  //     escalateSilenceSec of quiet, reaching full over escalateRampSec. накал feeds
+  //     BOTH outputs off the ONE silence clock (накал = злее И больнее):
+  //       • aggression — the picker (intentions.js) leans to the attacking intents
+  //         (PRESS / STRIKE) and away from the passive / disengage ones (HOLD / CATCH
+  //         / BREAK / BREATHE), and the body (refreshAxes) gets a forward + aggression
+  //         pull (escalateForwardMax / escalateAggroMax) — so a staring contest is
+  //         FORCED into a clash, guaranteed once накал saturates.
+  //       • damage — the OVERALL outgoing multiplier ramps 1 → escalateMax, so the
+  //         forced clash bites (a high-накал landed combo is near-decisive).
+  //     RESET is instant: ANY landed damage (a clean exchange, by EITHER side — see
+  //     noteExchange in ArenaScene, gated on real HP loss so a pure dodge / miss does
+  //     NOT count) snaps the silence clock back to 0, so an ACTIVE bout never heats up
+  //     (frequent trades keep накал ≈ 0). Засада plays normally below the threshold —
+  //     накал only starts once the гляделка has really dragged. No ties; the bout
+  //     always resolves. Single tuning point; all tunable.
+  escalateSilenceSec: 5, // тишина (с) без размена до старта накала — до неё засада выжидает как обычно
+  escalateRampSec: 12, // за сколько секунд непрерывной тишины накал доходит до 1 (полного)
+  escalateAggroMax: 0.5, // потолок добавки к агрессии обоих на полном накале (шкала aggression 0..1)
+  escalateForwardMax: 30, // потолок тяги вперёд по дистанции на полном накале (ось distance 0..100 → ближе)
+  escalateMax: 6, // потолок множителя урона на полном накале (накал = больнее; страховка от бесконечного роста сохранена)
 
   // --- Reading the foe's action phase (ЧТЕНИЕ ФАЗЫ — навык бойца, не данность).
   //     The foe exposes its action phase (windup / commit / recovery / stagger /

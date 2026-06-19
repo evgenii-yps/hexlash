@@ -34,7 +34,7 @@
       <button type="button" class="tgt" @click="onDevCharge">CHARGE</button>
     </div>
     <!-- Dev stamina (силы) + charge (заряд) readout for both fighters — live. -->
-    <div v-if="panelVisible" class="arena-readout">{{ staReadout }}<br>{{ chgReadout }}<br>{{ intReadout }}<br>{{ rdReadout }}<br>{{ mdlReadout }}</div>
+    <div v-if="panelVisible" class="arena-readout">{{ staReadout }}<br>{{ chgReadout }}<br>{{ intReadout }}<br>{{ rdReadout }}<br>{{ mdlReadout }}<br>{{ nkReadout }}</div>
   </div>
 </template>
 
@@ -80,6 +80,10 @@ const rdReadout = ref('RD   P —  ·  O —');
 // shows model wakes/bout + last read so it's visible breaks stay ~5–10, not 80.
 const brainMode = ref('spinal');
 const mdlReadout = ref('MDL  off');
+// Stalemate накал (escalation by silence-without-exchange) — % level + the live
+// silence so the trigger / reset moment is watchable on the dev stand (toggle the
+// panel back on mid-bout to see it climb in a гляделка and snap back on a trade).
+const nkReadout = ref('NK   —');
 // Dev toggle: flip both fighters between spinal and model brain live. Wrapped so
 // the toggle itself can never throw + eject from the arena (the model path degrades
 // to spinal on any endpoint outcome — see apiClient.requestFighterIntention).
@@ -141,10 +145,15 @@ let sigRestartAt = 0;
 let lastFrameT = 0;
 let lastStaReadout = 0; // throttle clock for the dev stamina readout
 let runSigFight = null;
-// Loop time the current bout started — drives the fight-length safeguard
-// (escalating damage). 0 = no bout running (multiplier stays 1). Set on every
-// FIGHT / SIG bout, so a SIG auto-cycle re-arms it per re-run.
+// Loop time the current bout started — gates the stalemate safeguard (накал). 0 =
+// no bout running (накал stays 0). Set on every FIGHT / SIG bout, so a SIG
+// auto-cycle re-arms it per re-run.
 let fightStartT = 0;
+// Loop time of the last CLEAN exchange (real HP dealt by either side). Drives the
+// stalemate safeguard: накал rises with the SILENCE since this stamp, and any landed
+// hit (noteExchange) snaps it back to "now" → накал resets. Armed to bout start so a
+// fresh bout begins with no накал.
+let lastExchangeT = 0;
 const SIG_RESTART_DELAY = 1.4; // seconds after a KO before the next bout (~ the dissolve)
 
 function lowPowerDevice() {
@@ -197,19 +206,25 @@ function onDevCharge() {
   else fighter.discharge();
 }
 
-// Fight-length safeguard — escalating damage. The attacker hands its raw strike
-// damage (сила удара × множитель приёма × джиттер, computed in buildFighter) to
-// onImpact; this scales it by a multiplier that grows once a bout passes
-// COMBAT_BALANCE.escalateStartSec, so a STALLING fight is guaranteed to finish
-// past the ~40-50s target (applied to BOTH sides — same clock); a normal bout
-// ends on its own before escalation bites.
-const escalationMult = () => {
-  if (!fightStartT) return 1; // no bout running → no escalation
-  const elapsed = lastFrameT - fightStartT;
-  if (elapsed <= COMBAT_BALANCE.escalateStartSec) return 1;
-  const grown = 1 + (elapsed - COMBAT_BALANCE.escalateStartSec) * COMBAT_BALANCE.escalateGrowthPerSec;
-  return Math.min(COMBAT_BALANCE.escalateMax, grown);
+// Stalemate safeguard — rising накал by SILENCE (not fight time). One silence clock
+// (lastExchangeT) feeds two outputs so a гляделка of two patient cores can't last:
+//   escalation01() — накал level 0..1: climbs after escalateSilenceSec of no clean
+//     exchange, full over escalateRampSec. Fed to BOTH fighters (getFightContext →
+//     picker bias + body forward/aggression pull), so they're forced into the clash.
+//   escalationMult() — outgoing damage multiplier, derived from the SAME накал (1 →
+//     escalateMax), so the forced clash bites (накал = злее И больнее).
+// noteExchange() — any landed hit (real HP dealt, by either side) re-stamps the clock
+//   → накал snaps to 0, so an actively-trading bout never heats up.
+const escalation01 = () => {
+  if (!fightStartT) return 0; // no bout running → no накал
+  const silence = lastFrameT - lastExchangeT; // seconds since the last clean exchange
+  const over = silence - COMBAT_BALANCE.escalateSilenceSec;
+  if (over <= 0) return 0; // still within the quiet threshold (засада waits as usual)
+  return Math.min(1, over / COMBAT_BALANCE.escalateRampSec);
 };
+const escalationMult = () => 1 + escalation01() * (COMBAT_BALANCE.escalateMax - 1);
+// A clean exchange landed (real HP dealt) → reset the silence clock so накал cools.
+const noteExchange = () => { if (fightStartT) lastExchangeT = lastFrameT; };
 
 onMounted(() => {
   const el = wrap.value;
@@ -355,11 +370,11 @@ onMounted(() => {
       bounds: navBounds,
       neutralColor: neutralColor.value,
       getFoePos: () => (opponent ? opponent.group.position : null),
-      onImpact: (raw, pen, intr) => { opponent?.takeDamage(raw * escalationMult(), pen, intr); }, // attacker's strike damage × time safeguard; foe softens by toughness / block (pen = our block-pierce, intr = our ВОЛНОЛОМ interrupt-catch bonus)
+      onImpact: (raw, pen, intr) => { if (opponent?.takeDamage(raw * escalationMult(), pen, intr) > 0) noteExchange(); }, // attacker's strike damage × накал; foe softens by toughness / block (pen = our block-pierce, intr = our ВОЛНОЛОМ interrupt-catch bonus). Real HP dealt → clean exchange → накал resets
       onAttackStart: () => opponent?.noteIncomingAttack?.(), // in-range attack incoming → the foe's block reflex
       onMiss: () => opponent?.noteFoeMissed?.(), // our strike went wide → the foe's КАПКАН counter window
       getFoeReacting: () => !!(opponent && (opponent.isBlocking?.() || opponent.isDodging?.())), // foe took the bait? (feint payoff)
-      getFightContext: () => ({ escalation: escalationMult(), elapsed: fightStartT ? lastFrameT - fightStartT : 0 }), // shared context for the intention picker (escalation phase)
+      getFightContext: () => ({ escalation: escalationMult(), escalation01: escalation01(), elapsed: fightStartT ? lastFrameT - fightStartT : 0 }), // shared context for the intention picker + body накал pull
       getFoeStamina: () => (opponent ? opponent.getStamina01() : null), // foe wind (break detector + word memory)
       getFoeHp01: () => (opponent ? opponent.getHp() / opponent.maxHp : null), // foe health (break detector)
       getFoePhase: () => (opponent && opponent.getActionPhase ? opponent.getActionPhase() : 'neutral'), // foe action phase → the read subsystem (сбив / контра)
@@ -390,11 +405,11 @@ onMounted(() => {
       bounds: navBounds,
       neutralColor: neutralColor.value,
       getFoePos: () => (fighter ? fighter.group.position : null),
-      onImpact: (raw, pen, intr) => { fighter?.takeDamage(raw * escalationMult(), pen, intr); }, // attacker's strike damage × time safeguard; foe softens by toughness / block (pen = our block-pierce, intr = our ВОЛНОЛОМ interrupt-catch bonus)
+      onImpact: (raw, pen, intr) => { if (fighter?.takeDamage(raw * escalationMult(), pen, intr) > 0) noteExchange(); }, // attacker's strike damage × накал; foe softens by toughness / block (pen = our block-pierce, intr = our ВОЛНОЛОМ interrupt-catch bonus). Real HP dealt → clean exchange → накал resets
       onAttackStart: () => fighter?.noteIncomingAttack?.(), // in-range attack incoming → the foe's block reflex
       onMiss: () => fighter?.noteFoeMissed?.(), // our strike went wide → the foe's КАПКАН counter window
       getFoeReacting: () => !!(fighter && (fighter.isBlocking?.() || fighter.isDodging?.())), // foe took the bait? (feint payoff)
-      getFightContext: () => ({ escalation: escalationMult(), elapsed: fightStartT ? lastFrameT - fightStartT : 0 }), // shared context for the intention picker (escalation phase)
+      getFightContext: () => ({ escalation: escalationMult(), escalation01: escalation01(), elapsed: fightStartT ? lastFrameT - fightStartT : 0 }), // shared context for the intention picker + body накал pull
       getFoeStamina: () => (fighter ? fighter.getStamina01() : null), // foe wind (break detector + word memory)
       getFoeHp01: () => (fighter ? fighter.getHp() / fighter.maxHp : null), // foe health (break detector)
       getFoePhase: () => (fighter && fighter.getActionPhase ? fighter.getActionPhase() : 'neutral'), // foe action phase → the read subsystem (сбив / контра)
@@ -428,7 +443,8 @@ onMounted(() => {
     aiPlayer = true;
     aiOpponent = true;
     fightActive = true;
-    fightStartT = lastFrameT; // arm the fight-length safeguard clock
+    fightStartT = lastFrameT; // arm the stalemate safeguard (gate)
+    lastExchangeT = lastFrameT; // fresh bout → no накал yet (silence counts from here)
     spawnFighter();
     spawnOpponent();
     panelVisible.value = false; // bout started → hide the dev panel (clean view)
@@ -445,7 +461,8 @@ onMounted(() => {
     sigCycle = true;
     fightActive = false;
     sigRestartAt = 0;
-    fightStartT = lastFrameT; // arm the fight-length safeguard clock (re-armed each auto-cycle re-run)
+    fightStartT = lastFrameT; // arm the stalemate safeguard (re-armed each auto-cycle re-run)
+    lastExchangeT = lastFrameT; // fresh bout → no накал yet (silence counts from here)
     aiPlayer = true;
     aiOpponent = true;
     spawnFighter();
@@ -506,6 +523,14 @@ onMounted(() => {
         mdlReadout.value = `MDL  P ${cnt(fighter)} "${mrd(fighter)}"  ·  O ${cnt(opponent)} "${mrd(opponent)}"`;
       } else {
         mdlReadout.value = 'MDL  off (spinal)';
+      }
+      // Накал: % level + live silence (s) since the last clean exchange. Rises in a
+      // гляделка past escalateSilenceSec, snaps to 0 on any landed hit.
+      if (fightStartT) {
+        const sil = Math.max(0, lastFrameT - lastExchangeT);
+        nkReadout.value = `NK   ${Math.round(escalation01() * 100)}%  sil ${sil.toFixed(1)}s`;
+      } else {
+        nkReadout.value = 'NK   — (no bout)';
       }
     }
 

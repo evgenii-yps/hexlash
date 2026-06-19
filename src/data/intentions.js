@@ -36,6 +36,15 @@ export const INTENTION_SET = new Set(INTENTION_IDS); // membership check for mod
 // cadence tunes in one place. ~1/sec per the brief.
 export const INTENTION_TICK_SEC = 1.0;
 
+// накал (stalemate safeguard) → pick bias. A rising escalation01 (0..1, from time
+// WITHOUT a clean exchange — see combatBalance escalate*) bends the pick toward the
+// clash: BOOST the forward attacking intents, DAMP the passive / disengage ones, so
+// two patient cores (both CATCH / HOLD) can't stand in гляделки forever. At full
+// накал the swing (push + damp ≈ 1.2) overpowers an ambusher's CATCH lead and the
+// pick flips to PRESS / STRIKE. escalation01 = 0 → no change (засада plays normally).
+const ESC_ATTACK_PUSH = 0.7; // added to PRESS / STRIKE at full накал
+const ESC_PASSIVE_DAMP = 0.5; // subtracted from HOLD / CATCH / BREAK / BREATHE at full накал
+
 /* Intention → body MODE. Each intention is a режим the body works in, expressed
    so the EXISTING knobs read it with no new mechanic:
      axes   — additive deltas over the BASE axes (distance / initiative / tempo /
@@ -79,7 +88,10 @@ export const intentionProfile = (id) => INTENTION_PROFILES[id] || INTENTION_PROF
               'windup'|'commit'|'recovery'|'stagger'|'neutral'), so the pick can
               lean CATCH to set up a pounce on a read
      memory — short ring of OBSERVED foe events [{ t, type:'attack'|'miss' }], newest last
-     fight  — shared context: { t, escalation }
+     fight  — shared context: { t, escalation, escalation01 } — escalation01 (0..1) is
+              the stalemate накал (rises with silence-without-exchange; see combatBalance
+              escalate*); it bends the pick toward the clash so two patient cores can't
+              stalemate forever (0 in normal, actively-trading play)
    Returns an intention id, or null to KEEP the current one (a laggy / absent model
    never freezes the body — it just falls through to the held mode). */
 export function chooseIntention(self, foe, memory, fight, brain = 'spinal') {
@@ -147,6 +159,21 @@ export function spinalScore(self, foe, memory, fight) {
     [INTENTIONS.BREATHE]: 0.70 * lowStam + 0.10 * a.distance,
     [INTENTIONS.CATCH]:   0.45 * a.counter + 0.25 * a.resilience + 0.20 * (1 - a.initiative) + (foeThreat ? 0.25 : 0) + readPounce,
   };
+  // накал (stalemate safeguard): a rising escalation01 (silence-without-exchange)
+  // pushes BOTH fighters toward the clash — lift the forward attacking intents, press
+  // down the passive / disengage ones — so a гляделка can't last forever. The HARD
+  // NEEDS above still win (an exhausted fighter still BREATHEs, a counter-puncher
+  // facing a live swing still CATCHes), so this only governs the dead-air stalemate
+  // where no threat is firing. 0 escalation → untouched (normal play).
+  const esc = fight.escalation01 || 0;
+  if (esc > 0) {
+    s[INTENTIONS.PRESS] += esc * ESC_ATTACK_PUSH;
+    s[INTENTIONS.STRIKE] += esc * ESC_ATTACK_PUSH;
+    s[INTENTIONS.HOLD] -= esc * ESC_PASSIVE_DAMP;
+    s[INTENTIONS.CATCH] -= esc * ESC_PASSIVE_DAMP;
+    s[INTENTIONS.BREAK] -= esc * ESC_PASSIVE_DAMP;
+    s[INTENTIONS.BREATHE] -= esc * ESC_PASSIVE_DAMP;
+  }
   // Hysteresis: a small bonus to the held intention so it doesn't flip-flop every
   // tick (deterministic — no random). argmax, ties broken by INTENTION_IDS order.
   if (s[self.current] != null) s[self.current] += 0.08;

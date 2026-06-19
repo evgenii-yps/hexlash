@@ -570,15 +570,24 @@ export function buildFighter(
   const baseAx = ax;
   let stickEff = stick01; // live stick (base + intention delta), refreshed each frame
   const refreshAxes = () => {
+    // накал (stalemate safeguard): a GLOBAL forward + aggression pull, rising with
+    // escalation01 (0..1, time WITHOUT a clean exchange — see combatBalance escalate*),
+    // laid on top of base + intention the SAME way the temperament is. 0 in normal,
+    // actively-trading play; at full накал it drags BOTH fighters into the clash that
+    // the picker (escalation01 → PRESS / STRIKE bias) has already chosen.
+    const fc = getFightContext && getFightContext();
+    const esc01 = (fc && fc.escalation01) || 0;
+    const escFwd = B.escalateForwardMax * esc01; // distance ↓ → closer range
+    const escAggr = B.escalateAggroMax * esc01; // aggression ↑
     // Effective axes = BASE + INTENTION delta (distance / initiative / stick /
-    // tempo). Composing here means range / aggression / stick / cadence are the
-    // single derived knobs the body reads; the base axes stay untouched.
-    const effDist = THREE.MathUtils.clamp(baseAx.distance + intentionDelta.distance, 0, 100);
+    // tempo) + накал pull. Composing here means range / aggression / stick / cadence
+    // are the single derived knobs the body reads; the base axes stay untouched.
+    const effDist = THREE.MathUtils.clamp(baseAx.distance + intentionDelta.distance - escFwd, 0, 100);
     const effInit = THREE.MathUtils.clamp(baseAx.initiative + intentionDelta.initiative, 0, 100);
     stickEff = THREE.MathUtils.clamp((baseAx.stick + intentionDelta.stick) / 100, 0, 1);
     effTempo01 = THREE.MathUtils.clamp((baseAx.tempo + intentionDelta.tempo) / 100, 0, 1);
     character.range = THREE.MathUtils.clamp(lerp(RANGE_NEAR, RANGE_FAR, effDist / 100) + character.rangeJit, CONTACT_SOFT, FAR - 0.2);
-    character.aggression = THREE.MathUtils.clamp(effInit / 100 + character.aggrJit, 0, 1);
+    character.aggression = THREE.MathUtils.clamp(effInit / 100 + escAggr + character.aggrJit, 0, 1);
   };
 
   // --- Intention layer (the "spinal cord", future-model seam). Once every
@@ -665,7 +674,7 @@ export function buildFighter(
       phase: perceivedPhase, // PERCEIVED foe action phase (noised read, not ground truth) — picker leans CATCH on a read
     };
     const fc = getFightContext && getFightContext();
-    const fight = { t, escalation: (fc && fc.escalation) || 1 };
+    const fight = { t, escalation: (fc && fc.escalation) || 1, escalation01: (fc && fc.escalation01) || 0 };
     const picked = chooseIntention(self, foe, foeMemory, fight, brain);
     if (picked) applyIntention(picked); // model may return null → keep the held mode (no freeze)
   };
@@ -1410,8 +1419,11 @@ export function buildFighter(
 
   // Hit resolution: lose HP, recoil (HURT), and OUT at zero. The rift flash +
   // attacker→defender pairing live in ArenaScene (the combat resolver).
+  // Returns the HP actually LOST (>0 only when a hit landed and reduced HP) — the
+  // stalemate safeguard reads it (ArenaScene noteExchange) to detect a CLEAN exchange:
+  // a dodge / block-to-near-nothing returns 0, so pure evasion doesn't reset накал.
   const takeDamage = (dmg, attackerPen = 0, attackerInterruptBonus = 0) => {
-    if (state !== 'alive') return;
+    if (state !== 'alive') return 0;
     // SEAM (NOT wired): a future fatigue pass could scale the dodge chance + the
     // block strength below by stamina (a spent fighter slips / guards worse) —
     // left unwired on purpose so the fight isn't penalised on every axis at once.
@@ -1426,7 +1438,7 @@ export function buildFighter(
     if (dodgeChance > 0 && Math.random() < dodgeChance) {
       play(DODGE); // slip the hit: no HP loss, no rhythm hitch
       armRiposte(sb.dodgeCounter || 0); // КАПКАН-2/5 · ТЕНЬ-4 — a slipped hit opens the counter window
-      return;
+      return 0; // fully evaded → no exchange (накал keeps building on pure dodging)
     }
     // The hit LANDED (past miss + dodge). INTERRUPT: are we caught in the EARLY
     // windup of our OWN attack right now? If so this landed hit срывает it (handled
@@ -1459,13 +1471,15 @@ export function buildFighter(
     // scaling never rebalances: a bigger pool = proportionally bigger numbers, same
     // hits to a kill. Then soften by resilience / toughness / block (all
     // multiplicative ratios, independent of the HP scale).
+    const before = hp;
     hp = Math.max(0, hp - dmg * maxHp * dmgMulFor(res01) * (1 - toughSoft) * blockMul * interruptMul);
+    const lost = before - hp; // real HP dealt → a clean exchange (resets накал if > 0)
     updateBar();
-    if (hp <= 0) { eliminate(); return; } // → dissolve; onEliminated raised on completion
+    if (hp <= 0) { eliminate(); return lost; } // → dissolve; onEliminated raised on completion
     if (interrupted) {
       staggerInterrupt(); // срыв: cancel our attack + pending impacts, play STAGGER, lock
       if (onInterrupt) onInterrupt(); // recognisable interrupt event (seam; no grain wired)
-      return; // staggered instead of the normal HURT recoil
+      return lost; // staggered instead of the normal HURT recoil
     }
     play(HURT); // weighty recoil + core flash
     // Rhythm hitch added on top of the recoil scales with stagger resistance —
@@ -1477,6 +1491,7 @@ export function buildFighter(
       nav.until = lastT + HURT.dur + 0.3;
       ai.nextAt = lastT + HURT.dur + 0.05;
     }
+    return lost; // HP dealt this hit → the stalemate safeguard's clean-exchange signal
   };
 
   // --- TEMPORARY reflex: "decide to raise the guard" (spinal cord until the
