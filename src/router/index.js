@@ -121,11 +121,21 @@ const legacyV2Redirects = [
     },
 ];
 
+// Dev-only routes — reachable by direct URL, NOT linked from any in-app menu.
+// /dev/lab is the fighter "лаборатория": one fighter on a podium, orbit camera,
+// every movement / technique played through the SAME body driver used in the
+// arena/fight (buildFighter.update) with playback transport (once/loop/pause/
+// slow/frame-step). Public, no new auth (Этап 1).
+const devRoutes = [
+    {path: '/dev/lab', name: 'DevFighterLab', component: () => import('@/views/DevFighterLabView.vue')},
+];
+
 const routes = [
     ...authRoutes,
     ...publicRoutes,
     ...v2Routes,
     ...legacyV2Redirects,
+    ...devRoutes,
     {path: '/:pathMatch(.*)*', name: 'NotFound', component: () => import("/src/views/NotFoundView.vue")},
 ];
 
