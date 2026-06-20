@@ -649,9 +649,10 @@ onMounted(() => {
     fighter?.update(vTime, camera);
 
     // Loop a clip-type movement: re-call its trigger each playing frame. play()
-    // no-ops while a clip runs, so it re-fires only once the previous one ends —
-    // a seamless loop at the real clip duration, no body changes needed.
-    if (playing.value && loopOn.value && fighter) {
+    // no-ops while a clip runs, so it re-fires only once the previous one ends. Hold
+    // the loop through the post-strike ВЫДОХ (isExhaling) so the settle is visible
+    // between reps — клип → выдох → клип.
+    if (playing.value && loopOn.value && fighter && !(fighter.isExhaling && fighter.isExhaling())) {
       const m = activeMove.value;
       if (m && m.kind === 'clip') m.run(fighter);
     }

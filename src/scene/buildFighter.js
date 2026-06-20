@@ -1182,6 +1182,40 @@ export function buildFighter(
     setMode('idle');
   };
 
+  // --- Post-strike ВЫДОХ (settle). After an attack clip ends, a short DECAYING
+  //     settle eases the body back into normal stance-life instead of snapping
+  //     straight back to circling: the weight sinks + the torso/shoulders relax,
+  //     then recover. NOT a clip — a transient overlay on top of the breathing idle,
+  //     blended by the pose layer. Tinted by the move's weight; fits the ai.nextAt
+  //     pause so the rhythm doesn't stretch.
+  let exhaleUntil = 0; // loop time the settle ends (0 = none)
+  let exhaleDur = 0; // this settle's length (s)
+  let exhaleW = 0; // this settle's move weight (0 light .. 1 heavy)
+  const startExhale = (weight01) => {
+    const ex = B.exhale;
+    exhaleW = THREE.MathUtils.clamp(weight01, 0, 1);
+    exhaleDur = ex.lightDur + exhaleW * (ex.heavyDur - ex.lightDur); // heavier blow → longer settle
+    exhaleUntil = lastT + exhaleDur;
+  };
+  const exhalePose = (bs) => {
+    const ex = B.exhale;
+    // Decaying depth: full at the clip end → 0 by the settle's end (ease-out), scaled
+    // by the global strength AND the move weight (light jab shallow · heavy combo deep
+    // — heavier also lasts longer via exhaleDur).
+    const rem = THREE.MathUtils.clamp((exhaleUntil - lastT) / Math.max(exhaleDur, 1e-3), 0, 1);
+    const k = easeOut(rem) * ex.strength * (0.6 + 0.4 * exhaleW);
+    targetP.hipsZ = 0;
+    targetP.hipsY = hipsBaseY + bs * 0.012 - ex.sink * k; // weight oseдает, then recovers
+    targetP.torsoX = ex.torsoEase * k; // slight slump-back as tension leaves
+    targetP.torsoY = 0;
+    targetP.lsx = -ex.shoulderDrop * k; // shoulders sag a touch
+    targetP.rsx = -ex.shoulderDrop * k;
+    targetP.lex = 0; targetP.rex = 0;
+    targetP.lhx = 0; targetP.lkx = 0; targetP.rhx = 0; targetP.rkx = 0;
+    microLife(null); // light life-in-stance under the settle (the breath remains)
+    setMode('exhale');
+  };
+
   // Block stance → target: a held guard — forearms up toward the foe, torso
   // slightly closed, a faint breath. A light idle-level pose (NOT a new heavy
   // clip); the pose layer cross-fades it in / out like any other mode.
@@ -1654,6 +1688,7 @@ export function buildFighter(
     dodgeRun = null;
     reactRun.active = false; // knock-back step leaves with the fighter
     if (lunge) lunge.active = false; // pending step-in leaves with the fighter
+    exhaleUntil = 0; // post-strike settle leaves with the fighter
     spark.visible = false; sparkUntil = -1; // contact spark off
     loco.active = false;
     feintActive = false; feintPayoffActive = false; feintBaitUntil = 0; feintAdvUntil = 0; feintBaited = false; // feint state leaves with the fighter
@@ -2241,9 +2276,12 @@ export function buildFighter(
         feintPayoffActive = false; // a payoff strike (or any clip) finished → consume the boost
         chargeShotPower = 0; chargeShotPen = 0; // a released strike finished → consume the charge boost
         windupVulnUntil = 0; // attack clip ended → no longer interruptible
+        const wasStrike = !!clip.dmgMult; // an ATTACK clip (punch/double/combo/kick) → settle on it
+        const exW = clip.weight || 0;
         clip = null;
         dodgeRun = null;
-        idlePose(bs);
+        if (wasStrike) { startExhale(exW); exhalePose(bs); } // ВЫДОХ — settle, don't snap back
+        else idlePose(bs);
       }
     } else if (blocking) {
       blockPose(bs); // hold the guard + plant (no nav / gait while blocking)
@@ -2251,6 +2289,8 @@ export function buildFighter(
       idlePose(bs); // staggered (interrupt lock past the STAGGER clip) — plant, no nav
     } else if (gathering) {
       gatherPose(bs); // coiled "собрался" tell before the контра lunge — plant, no nav
+    } else if (lastT < exhaleUntil) {
+      exhalePose(bs); // ВЫДОХ — short settle after a strike before movement resumes (arena + lab)
     } else if (ai.on) {
       if (lunge.active) stepInForStrike(t, dt); // step in under the chosen strike, then launch it
       else navigate(t, dt, bs); // navigate toward / around the foe (sets the move intent)
@@ -2263,7 +2303,7 @@ export function buildFighter(
     // Integrate weighted locomotion every frame: a clip / idle / gather frame sets
     // no intent, so carried velocity coasts to rest (inertia) without the gait
     // overwriting the clip / idle / block / coil pose. A locomotion frame animates the gait.
-    stepLocomotion(dt, !clip && !blocking && !gathering && lastT >= staggerUntil && (ai.on || loco.active));
+    stepLocomotion(dt, !clip && !blocking && !gathering && lastT >= staggerUntil && lastT >= exhaleUntil && (ai.on || loco.active)); // no gait during the выдох — the settle owns the pose
 
     // Stamina: drain on movement (prevMag set just above) / recover when collected.
     tickStamina(dt);
@@ -2357,6 +2397,7 @@ export function buildFighter(
     isFeinting: () => feintActive, // readable feint state (ФИНТ-branch seam)
     stagger: () => play(STAGGER), // dev — play the interrupt reaction clip
     isStaggered: () => lastT < staggerUntil, // readable interrupt-lock state (seam)
+    isExhaling: () => lastT < exhaleUntil, // post-strike settle in progress (dev lab: hold the loop through the выдох)
     getCharge: () => charge, // заряд (readable — HUNT/STING seam + dev readout)
     getChargeMax: () => stats.chargeMax,
     getCharge01: () => charge / stats.chargeMax,

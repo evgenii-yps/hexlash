@@ -120,6 +120,20 @@ export const COMBAT_BALANCE = {
     turnRate: 3.2, // facing turn speed (rad/s) — a touch softer доворот, no snap
   },
 
+  // --- Post-strike ВЫДОХ (settle/recovery). After an attack clip's return phase, a
+  //     short decaying settle blends the body back into normal stance-life instead of
+  //     snapping straight back to circling — the blow oseдает, not щёлкает. NOT a new
+  //     clip: a transient pose overlay that eases out. Tinted by the move's weight
+  //     (light jab → short/shallow · heavy combo → longer/deeper). Fits inside the
+  //     existing ai.nextAt pause, so the bout rhythm doesn't stretch.
+  exhale: {
+    lightDur: 0.3, heavyDur: 0.55, // settle length (s) by move weight (0 → light, 1 → heavy)
+    sink: 0.06, // hip drop at full settle (world units) — weight oseдает then recovers
+    torsoEase: 0.07, // slight torso slump-back at full settle
+    shoulderDrop: 0.1, // shoulders sag a touch as tension leaves
+    strength: 0.8, // overall depth of the settle (0..1) — global feel knob
+  },
+
   // --- Grade (facet) bonus ramp by depth (1→5). PERCENT (fraction) added to the
   //     facet's target characteristic on the "hard" branches — strikePower
   //     (RAM / HUNT / STING) and toughness (BASTION / BREAKER). A new layer ON
