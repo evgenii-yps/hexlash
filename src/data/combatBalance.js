@@ -101,6 +101,20 @@ export const COMBAT_BALANCE = {
     frontKick: 0.7, teep: 0.6, knee: 0.9,
   },
 
+  // --- Footwork (live-bout locomotion look + at-range movement). The fighter never
+  //     freezes at range: it circles the foe + holds spacing on real stepping legs.
+  //     Manner (intentionMotion) tints it via moveScale; numbers here are the feel.
+  footwork: {
+    circleSpeed: 0.6, // tangential (circling) weight in the at-range move vector
+    rangeKeep: 0.85, // radial weight that holds preferred spacing (in/out)
+    circleSlowMul: 0.8, // gentle-amble factor on the circling speed (non-press/sting)
+    reaimMin: 1.4, reaimJit: 1.8, // seconds between circle re-aims (sense flip / vary)
+    flipChance: 0.4, // chance a re-aim flips the circling sense (CW ↔ CCW)
+    minStepFrac: 0.5, // floor on gait amplitude while MOVING → a slow step still reads (no slide)
+    kneeLift: 1.45, // extra knee-flex on the swing leg → the foot clearly lifts + plants
+    turnRate: 3.5, // facing turn speed (rad/s) — deliberate доворот, no snap
+  },
+
   // --- Grade (facet) bonus ramp by depth (1→5). PERCENT (fraction) added to the
   //     facet's target characteristic on the "hard" branches — strikePower
   //     (RAM / HUNT / STING) and toughness (BASTION / BREAKER). A new layer ON

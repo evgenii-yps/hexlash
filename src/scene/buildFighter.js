@@ -484,8 +484,8 @@ export function buildFighter(
   //          and weighty — NOT a sprint across the plate (capped by FAST_DASH).
   // accel/decel in world units/s², speed in units/s; swing/knee/arm/lean/bob/
   // twist shape the gait look at that band (scaled by the live speed).
-  const SLOW = { speed: 0.95, accel: 4.0, decel: 6.0, swing: 0.45, knee: 0.7, arm: 0.4, lean: -0.05, bob: 0.03, twist: 0.05 };
-  const FAST = { speed: 2.3, accel: 12.0, decel: 10.0, swing: 0.62, knee: 0.95, arm: 0.55, lean: -0.17, bob: 0.05, twist: 0.07 };
+  const SLOW = { speed: 0.92, accel: 3.0, decel: 4.0, swing: 0.5, knee: 0.78, arm: 0.4, lean: -0.05, bob: 0.035, twist: 0.05 };
+  const FAST = { speed: 2.0, accel: 8.0, decel: 6.5, swing: 0.66, knee: 1.0, arm: 0.55, lean: -0.16, bob: 0.055, twist: 0.07 };
   const FAST_DASH = 1.4; // max gap (world units) a FAST step-in commits before it plants
   const STRIDE_K = 7; // gait phase (rad) per world unit travelled → cadence ∝ live speed
   const ACCEL_LEAN = 0.012; // torso lean per unit of accel — weight on the start / the plant
@@ -502,11 +502,11 @@ export function buildFighter(
 
   // Navigation tuning (world units, opponent-relative).
   const RANGE_HYST = 0.25; // band around the engage distance before re-closing
-  const CONTACT = 0.85; // hard minimum — bodies never interpenetrate
-  const CONTACT_SOFT = 1.05; // soft buffer above CONTACT — ease back here (no grinding)
-  const FAR = 2.3; // far edge of the approach band — arc straightens as the gap closes (lowered: tighter neutral spacing)
+  const CONTACT = 0.74; // hard minimum — bodies never interpenetrate (closer in-fighting)
+  const CONTACT_SOFT = 0.9; // soft buffer above CONTACT — ease back here (no grinding)
+  const FAR = 1.9; // far edge of the approach band — arc straightens as the gap closes (tighter neutral spacing)
   const STRIKE = 1.7; // legacy coarse radius (per-move reach gates the actual contact now)
-  const TURN_RATE = 5.0; // facing turn speed (rad/s)
+  const TURN_RATE = 3.5; // facing turn speed (rad/s) — deliberate доворот, no snap
 
   // --- Behaviour profile → fighter controls. The data-каркас
   //     (src/data/behavior.js) resolves the chosen core's start profile + lit-
@@ -535,8 +535,8 @@ export function buildFighter(
   const lerp = THREE.MathUtils.lerp;
   const jit = (amp) => (Math.random() * 2 - 1) * amp; // ±amp bounded liveliness
 
-  const RANGE_NEAR = 0.95; // distance=0  → just off contact (in-fighter); steps IN to land
-  const RANGE_FAR = 1.85; //  distance=100 → spacing fighter (lowered from 2.8 — closer neutral, then steps in to strike)
+  const RANGE_NEAR = 0.82; // distance=0  → in-fighter, almost on contact (circles + strikes from here)
+  const RANGE_FAR = 1.45; //  distance=100 → spacing fighter (lowered again — closer neutral, steps in to strike)
   const tempo01 = n01(ax.tempo);
   const stick01 = n01(ax.stick);
   const counter01 = n01(ax.counter);
@@ -960,7 +960,7 @@ export function buildFighter(
 
   const loco = { active: false, type: 'slow' }; // dev SLOW/FAST preview toggle
   // AI manoeuvre state.
-  const nav = { mode: 'circle', until: 0, foe: null, approachAngle: 0 };
+  const nav = { mode: 'circle', until: 0, foe: null, approachAngle: 0, reaimAt: 0 };
 
   // --- Block stance (defensive guard) — a real body ability, independent of the
   //     reflex that decides to raise it (below). `blocking` is the live state;
@@ -1243,21 +1243,35 @@ export function buildFighter(
   // start, back on the plant — the construct's weight reads in this lean, not the
   // legs. No translation here; stepLocomotion places the group.
   const animateGait = (dt, band, mag, accel) => {
-    const frac = THREE.MathUtils.clamp(mag / band.speed, 0, 1);
-    gaitPhase += dt * mag * STRIDE_K; // cadence ∝ live speed
+    const fw = B.footwork;
+    const raw = THREE.MathUtils.clamp(mag / band.speed, 0, 1);
+    // Floor the amplitude while moving so even a slow circle reads as a deliberate
+    // STEP (foot off the ground), never a flat slide. The floor RAMPS in over the
+    // first bit of speed so the step eases up from rest (no amplitude pop on start).
+    const moving = THREE.MathUtils.clamp(mag / 0.3, 0, 1);
+    const frac = Math.max(raw, fw.minStepFrac * moving);
+    gaitPhase += dt * mag * STRIDE_K; // cadence ∝ live speed (faster = more frequent + wider)
     const p = gaitPhase;
-    targetP.lhx = band.swing * frac * Math.sin(p);
-    targetP.rhx = band.swing * frac * Math.sin(p + Math.PI);
-    targetP.lkx = -band.knee * frac * Math.max(0, Math.sin(p + 0.8));
-    targetP.rkx = -band.knee * frac * Math.max(0, Math.sin(p + Math.PI + 0.8));
-    targetP.lsx = band.arm * frac * Math.sin(p + Math.PI);
-    targetP.rsx = band.arm * frac * Math.sin(p);
+    const sL = Math.sin(p);
+    const sR = Math.sin(p + Math.PI);
+    // Thigh swing (hip): legs alternate fwd/back.
+    targetP.lhx = band.swing * frac * sL;
+    targetP.rhx = band.swing * frac * sR;
+    // Knee LIFT on the swing leg → the foot clearly leaves the ground at mid-swing
+    // then extends to plant (gated to each leg's forward half). kneeLift exaggerates
+    // the flex so it reads as a step, not a glide.
+    targetP.lkx = -band.knee * fw.kneeLift * frac * Math.max(0, Math.sin(p + 0.6));
+    targetP.rkx = -band.knee * fw.kneeLift * frac * Math.max(0, Math.sin(p + Math.PI + 0.6));
+    // Contralateral arm swing.
+    targetP.lsx = band.arm * frac * sR;
+    targetP.rsx = band.arm * frac * sL;
     targetP.lex = 0.3;
     targetP.rex = 0.3;
     const accelLean = THREE.MathUtils.clamp(accel * ACCEL_LEAN, -MAX_ACCEL_LEAN, MAX_ACCEL_LEAN);
-    targetP.torsoX = band.lean * frac - accelLean; // forward with speed; into start, back on plant
-    targetP.torsoY = band.twist * frac * Math.sin(p);
+    targetP.torsoX = band.lean * frac - accelLean; // forward with speed; into the start, back on the plant
+    targetP.torsoY = band.twist * frac * sL;
     targetP.hipsZ = 0;
+    // Weighty vertical bob — the body rises onto the planted leg each step.
     targetP.hipsY = hipsBaseY - band.bob * frac * (0.5 - 0.5 * Math.cos(2 * p));
     setMode(band === FAST ? 'gait-fast' : 'gait-slow');
   };
@@ -1501,21 +1515,53 @@ export function buildFighter(
   //             of ground if crowded (brace back); otherwise plant + stance.
   //   strike  — hold loaded at strike range (the heavy clip + sag does the work).
   //   retreat — at range BREAK/BREATHE settle into their stance (alert vs sunk).
+  // At preferred range the fighter does CONTINUOUS FOOTWORK — it circles the foe and
+  // holds spacing on real stepping legs, never a dead plant (so two builds keep
+  // moving, drift under angles, and never lock face-to-face). The blend of a
+  // tangential (circling) and a radial (hold-range) vector sets the move DIRECTION
+  // (requestMove normalizes); manner tints it: press bores in (тight circle, FAST),
+  // sting circles wider + springs spacing, plant/retreat amble gently. The intention
+  // CHOICE + its strike cadence are untouched — this only fills the gaps between blows.
   const maneuver = (t, dt, ux, uz, d, bs) => {
     const m = motionFor(intentionId);
+    const fw = B.footwork;
     // Slip-dodge weave only for the mobile, non-committing styles (an elusive
-    // character still flickers aside) — never while planting / committing a strike.
+    // character still flickers aside) — never while committing a strike.
     if (m.style !== 'plant' && m.style !== 'strike' && !clip && slip01 > 0 && Math.random() < slip01 * 0.18) {
       play(DODGE);
       nav.until = t + character.decideMin + Math.random() * character.decideJit;
       return;
     }
-    if (m.style === 'press') { requestMove(ux, uz, FAST, Math.max(0, d - CONTACT_SOFT)); return; } // непрерывный нажим к контакту
-    if (m.style === 'sting') { requestMove(-ux, -uz, FAST); return; } // отскок ОТ врага (decideAttack дёргается внутрь на тычок)
-    // plant / strike / retreat — hold ground, show the stance.
-    if (m.brace === 'back' && d < CONTACT_SOFT + 0.2) { requestMove(-ux, -uz, SLOW, 0.25); return; } // CATCH чуть отдаёт дистанцию, если поджали
-    if (m.brace === 'forward' && d > CONTACT_SOFT + 0.15) { requestMove(ux, uz, SLOW, d - CONTACT_SOFT); return; } // HOLD напирает корпусом к контакту
-    intentionStance(bs); // planted → the intention silhouette
+    // Re-aim the circle periodically — occasionally flip the sense (CW↔CCW) so the
+    // footwork keeps repositioning instead of tracing one perfect orbit.
+    if (t >= nav.reaimAt) {
+      nav.reaimAt = t + fw.reaimMin + Math.random() * fw.reaimJit;
+      if (Math.random() < fw.flipChance) character.strafeBias *= -1;
+    }
+    const tanx = -uz * character.strafeBias; // tangential (circling) unit ⟂ the foe line
+    const tanz = ux * character.strafeBias;
+    // PRESS — bore toward contact with only a slight lateral cut (manner: never circles).
+    if (m.style === 'press') {
+      requestMove(ux + tanx * 0.3, uz + tanz * 0.3, FAST, Math.max(0, d - CONTACT_SOFT));
+      return;
+    }
+    // STING — spring OUT to spacing AND drift laterally (a wide arc); darts back in
+    // to poke via decideAttack.
+    if (m.style === 'sting') {
+      requestMove(-ux * 0.85 + tanx * 0.65, -uz * 0.85 + tanz * 0.65, FAST);
+      return;
+    }
+    // PLANT / STRIKE / RETREAT — a gentle continuous circle that holds spacing (a
+    // light amble, never a freeze). Direction = circle + radial range-hold; the
+    // manner speed (moveScale) keeps HOLD/BREATHE slow vs BREAK sharp.
+    moveScale *= fw.circleSlowMul;
+    const radSign = THREE.MathUtils.clamp((d - character.range) / 0.4, -1, 1); // + too far → in · − too close → out
+    let braceBias = 0;
+    if (m.brace === 'back') braceBias = -0.18; // CATCH keeps a sliver back
+    else if (m.brace === 'forward') braceBias = 0.18; // HOLD presses forward
+    const vx = tanx * fw.circleSpeed + ux * (fw.rangeKeep * radSign + braceBias);
+    const vz = tanz * fw.circleSpeed + uz * (fw.rangeKeep * radSign + braceBias);
+    requestMove(vx, vz, SLOW); // direction = circle + range-hold; speed = SLOW × moveScale (manner)
   };
   const navigate = (t, dt, bs) => {
     const f = getFoePos && getFoePos();
