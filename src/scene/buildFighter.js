@@ -205,13 +205,14 @@ export function buildFighter(
   const easeOut = (u) => 1 - Math.pow(1 - u, 3);
   const E = { io: easeInOut, out: easeOut };
 
-  // Keyframe value: hips z/y offsets, torso lean (tx) + twist (ty), and each
-  // arm's shoulder + elbow angles — left (lsx/lex) and right (rsx/rex). Missing
-  // fields are 0, so a clip only lists what it uses. Segment i→i+1 is eased by
-  // key[i+1].e.
+  // Keyframe value: hips z/y offsets, torso lean (tx) + twist (ty), each arm's
+  // shoulder + elbow angles — left (lsx/lex) / right (rsx/rex) — and each leg's
+  // hip + knee angles — left (lhx/lkx) / right (rhx/rkx), used by the kick clips.
+  // Missing fields are 0, so a clip only lists what it uses (arm clips omit the
+  // legs → 0). Segment i→i+1 is eased by key[i+1].e.
   const REST = {};
   const N = (x) => x || 0;
-  const KEYS = ['hz', 'hy', 'tx', 'ty', 'lsx', 'lex', 'rsx', 'rex', 'core'];
+  const KEYS = ['hz', 'hy', 'tx', 'ty', 'lsx', 'lex', 'rsx', 'rex', 'lhx', 'lkx', 'rhx', 'rkx', 'core'];
   const lerpV = (a, b, e) => {
     const o = {};
     for (const k of KEYS) o[k] = N(a[k]) + (N(b[k]) - N(a[k])) * e;
@@ -362,6 +363,49 @@ export function buildFighter(
     if (u < 0.22) return easeOut(u / 0.22);
     if (u < 0.42) return 1;
     return 1 - easeInOut((u - 0.42) / 0.58);
+  };
+
+  // --- KICKS (straight, forward — RIGHT leg). Driven on the EXISTING hip + knee
+  //     joints only (no pelvis twist / new axes — side / spinning kicks are deferred
+  //     as expensive). Same clip mechanic + damage path as the punches (dmgMult →
+  //     resolveImpact). Sign on the right leg: rhx > 0 raises the thigh forward/up
+  //     (toward −Z, the foe); rkx < 0 flexes the knee (shin folded), rkx → 0 extends
+  //     the shin. Phases замах → контакт → возврат read in ~0.5s. These are TRIGGERS
+  //     only (f.frontKick / f.teep / f.knee) — NOT wired into the autonomous picker.
+  //
+  // FRONT KICK — chamber the knee up, snap the shin straight out, retract.
+  const FRONT_KICK = {
+    dur: 0.55, impact: 0.28, windup: 0.28, dmgMult: COMBAT_BALANCE.moveMult.frontKick,
+    keys: [
+      { t: 0.0, v: REST, e: 'io' },
+      { t: 0.16, v: { hz: 0.05, hy: -0.02, tx: 0.12, rhx: 1.0, rkx: -1.6 }, e: 'io' }, // chamber — knee up, shin folded
+      { t: 0.28, v: { hz: 0.08, hy: -0.03, tx: 0.16, rhx: 1.15, rkx: -0.1 }, e: 'out' }, // snap — shin extends forward (impact)
+      { t: 0.4, v: { hz: 0.06, hy: -0.02, tx: 0.1, rhx: 1.0, rkx: -0.5 }, e: 'out' }, // recoil — shin re-bends
+      { t: 0.55, v: REST, e: 'io' }, // leg down, weighty return
+    ],
+  };
+  // TEEP (push kick) — lower chamber, drive the sole straight forward (a shove),
+  // hold the push a beat, retract. Flatter, less snap than the front kick.
+  const TEEP = {
+    dur: 0.5, impact: 0.26, windup: 0.26, dmgMult: COMBAT_BALANCE.moveMult.teep,
+    keys: [
+      { t: 0.0, v: REST, e: 'io' },
+      { t: 0.14, v: { hz: 0.06, hy: -0.02, tx: 0.1, rhx: 0.7, rkx: -1.3 }, e: 'io' }, // chamber lower — push prep
+      { t: 0.26, v: { hz: 0.12, hy: -0.03, tx: 0.18, rhx: 0.95, rkx: -0.05 }, e: 'out' }, // thrust — drive the foot forward (impact)
+      { t: 0.34, v: { hz: 0.12, hy: -0.03, tx: 0.18, rhx: 0.98, rkx: 0.0 }, e: 'io' }, // hold the push (the shove)
+      { t: 0.5, v: REST, e: 'io' }, // retract
+    ],
+  };
+  // KNEE — drive the knee up-forward; the KNEE leads, the shin stays folded.
+  const KNEE = {
+    dur: 0.45, impact: 0.22, windup: 0.22, dmgMult: COMBAT_BALANCE.moveMult.knee,
+    keys: [
+      { t: 0.0, v: REST, e: 'io' },
+      { t: 0.12, v: { hz: 0.04, hy: -0.02, tx: 0.1, rhx: 0.5, rkx: -1.4 }, e: 'io' }, // load — slight lift, shin tucked
+      { t: 0.22, v: { hz: 0.1, hy: -0.04, tx: 0.2, rhx: 1.35, rkx: -1.7 }, e: 'out' }, // drive knee up-forward (impact)
+      { t: 0.32, v: { hz: 0.07, hy: -0.03, tx: 0.13, rhx: 1.0, rkx: -1.5 }, e: 'out' }, // recoil
+      { t: 0.45, v: REST, e: 'io' }, // leg down
+    ],
   };
 
   // Locomotion — two WEIGHTED movement bands (no constant glide, no run). Both
@@ -1005,8 +1049,10 @@ export function buildFighter(
     legR.knee.rotation.x = liveP.rkx;
   };
 
-  // Clip pose (one-shot strike / hurt) → target. Upper body from the keyframe;
-  // legs neutral (clips don't animate the legs).
+  // Clip pose (one-shot strike / hurt / kick) → target. Upper body AND legs from
+  // the keyframe — arm clips omit the leg fields (→ 0, unchanged), kick clips drive
+  // hip + knee (lhx/lkx/rhx/rkx). The next producer (idle / stance / gait) resets
+  // the legs on the cross-fade out, so a kick returns cleanly to stance.
   const apply = (v) => {
     targetP.hipsZ = N(v.hz);
     targetP.hipsY = hipsBaseY + N(v.hy);
@@ -1016,7 +1062,7 @@ export function buildFighter(
     targetP.lex = N(v.lex);
     targetP.rsx = N(v.rsx);
     targetP.rex = N(v.rex);
-    targetP.lhx = 0; targetP.lkx = 0; targetP.rhx = 0; targetP.rkx = 0;
+    targetP.lhx = N(v.lhx); targetP.lkx = N(v.lkx); targetP.rhx = N(v.rhx); targetP.rkx = N(v.rkx);
     setMode('clip');
   };
 
@@ -2029,6 +2075,9 @@ export function buildFighter(
     punch: () => play(PUNCH),
     combo: () => play(COMBO),
     double: () => play(DOUBLE),
+    frontKick: () => play(FRONT_KICK), // straight front snap kick (right leg) — trigger only
+    teep: () => play(TEEP),            // push kick / толчковый (right leg) — trigger only
+    knee: () => play(KNEE),            // knee strike up-forward (right leg) — trigger only
     hurt: () => play(HURT),
     dodge: () => play(DODGE),
     slow: () => toggleLoco('slow'),

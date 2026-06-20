@@ -57,6 +57,12 @@ export const COMBAT_BALANCE = {
     punch: 1.0, // single jab — base (~3% HP felt on neutral)
     doubleEach: 1.33, // jab–cross — two hits, EACH stronger than a jab; ≈8% HP summed (был 0.65)
     combo: 3.67, // one heavy commit — the most painful single hit, ~11% HP (был 1.7)
+    // Kicks (straight, forward — trigger-only for now, owner dotunes). Legs hit
+    // harder + reach further than the arms: front kick between double-per-hit and
+    // combo; teep is a disruptive shove (lighter); knee is a heavy close strike.
+    frontKick: 2.2, // прямой фронт-кик стопой
+    teep: 1.6, // толчковый (push) — меньше урона, больше сбива
+    knee: 2.6, // колено вблизи — тяжёлый
   },
   jitter: 0.1, // ±10% per-blow variance on outgoing damage — proportional to each move's base, below the inter-move gaps
 

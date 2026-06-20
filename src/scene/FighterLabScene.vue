@@ -168,14 +168,17 @@ const intentionMoves = INTENTION_IDS.map((id) => ({ id, label: id.toUpperCase(),
 // combo / feint lead with the left arm, double leads left; a future kick is one
 // more line ({ ... limb: 'legL' }) — the tip map (LIMB_TIP) already covers legs.
 const techniqueMoves = [
-  { id: 'punch',   label: 'PUNCH',   kind: 'clip',    run: (f) => f.punch(),  limb: 'armL' },
-  { id: 'double',  label: 'DOUBLE',  kind: 'clip',    run: (f) => f.double(), limb: 'armL' },
-  { id: 'combo',   label: 'COMBO',   kind: 'clip',    run: (f) => f.combo(),  limb: 'armL' },
-  { id: 'dodge',   label: 'DODGE',   kind: 'clip',    run: (f) => f.dodge() },
-  { id: 'feint',   label: 'FEINT',   kind: 'clip',    run: (f) => f.feint(),  limb: 'armL' },
-  { id: 'stagger', label: 'STAGGER', kind: 'clip',    run: (f) => f.stagger() },
-  { id: 'block',   label: 'BLOCK',   kind: 'toggle',  run: (f) => f.toggleBlock() },
-  { id: 'charge',  label: 'CHARGE',  kind: 'special', run: (f) => (f.getCharge01() < 0.999 ? f.fillCharge() : f.discharge()) },
+  { id: 'punch',     label: 'PUNCH',      kind: 'clip',    run: (f) => f.punch(),     limb: 'armL' },
+  { id: 'double',    label: 'DOUBLE',     kind: 'clip',    run: (f) => f.double(),    limb: 'armL' },
+  { id: 'combo',     label: 'COMBO',      kind: 'clip',    run: (f) => f.combo(),     limb: 'armL' },
+  { id: 'frontKick', label: 'ФРОНТ-КИК', kind: 'clip',    run: (f) => f.frontKick(), limb: 'legR' },
+  { id: 'teep',      label: 'ТИП',        kind: 'clip',    run: (f) => f.teep(),      limb: 'legR' },
+  { id: 'knee',      label: 'КОЛЕНО',     kind: 'clip',    run: (f) => f.knee(),      limb: 'legR' },
+  { id: 'dodge',     label: 'DODGE',      kind: 'clip',    run: (f) => f.dodge() },
+  { id: 'feint',     label: 'FEINT',      kind: 'clip',    run: (f) => f.feint(),     limb: 'armL' },
+  { id: 'stagger',   label: 'STAGGER',    kind: 'clip',    run: (f) => f.stagger() },
+  { id: 'block',     label: 'BLOCK',      kind: 'toggle',  run: (f) => f.toggleBlock() },
+  { id: 'charge',    label: 'CHARGE',     kind: 'special', run: (f) => (f.getCharge01() < 0.999 ? f.fillCharge() : f.discharge()) },
 ];
 const allMoves = [...intentionMoves, ...techniqueMoves];
 
