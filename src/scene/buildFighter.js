@@ -2061,6 +2061,18 @@ export function buildFighter(
     getStaminaMax: () => staminaMax,
     getStamina01: () => stamina01(),
     getActionPhase, // OWN action phase ('windup'|'commit'|'recovery'|'stagger'|'neutral') — a reading foe wires this into its getFoePhase
+    // READ-ONLY snapshot of the currently-playing one-shot clip (null if none) —
+    // pure read, changes nothing. The dev lab uses it for the time bar / frame
+    // counter / contact markers: { dur, elapsed (s since clip start), impacts
+    // (contact times s), windup (s), feint }. impacts is [] for clips with no
+    // contact (HURT / DODGE / STAGGER / APPROACH / FEINT).
+    getClipInfo: () => {
+      if (!clip) return null;
+      const impacts = clip.impacts
+        ? clip.impacts.slice()
+        : (typeof clip.impact === 'number' && clip.impact >= 0 ? [clip.impact] : []);
+      return { dur: clip.dur, elapsed: Math.max(0, lastT - clipStart), impacts, windup: clip.windup || 0, feint: !!clip.feint };
+    },
     getReadPhase: () => perceivedPhase, // what THIS fighter currently believes the foe is doing (noised read — dev readout)
     getReadAction: () => (lastReadActionAt >= 0 && lastT - lastReadActionAt < 1.0 ? lastReadAction : ''), // last сбив/контра, fresh ~1s (dev readout)
     getIntention: () => intentionId, // current intention id (readable — dev readout + model seam)
