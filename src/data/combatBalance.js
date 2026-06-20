@@ -105,14 +105,19 @@ export const COMBAT_BALANCE = {
   //     freezes at range: it circles the foe + holds spacing on real stepping legs.
   //     Manner (intentionMotion) tints it via moveScale; numbers here are the feel.
   footwork: {
-    circleSpeed: 0.6, // tangential (circling) weight in the at-range move vector
-    rangeKeep: 0.85, // radial weight that holds preferred spacing (in/out)
-    circleSlowMul: 0.8, // gentle-amble factor on the circling speed (non-press/sting)
-    reaimMin: 1.4, reaimJit: 1.8, // seconds between circle re-aims (sense flip / vary)
-    flipChance: 0.4, // chance a re-aim flips the circling sense (CW ↔ CCW)
+    circleSpeed: 0.5, // tangential (circling) weight in the at-range move vector — less lateral
+    rangeKeep: 0.9, // radial weight that holds preferred spacing (in/out) — firmer, drifts less
+    circleSlowMul: 0.5, // gentle-amble factor on the circling speed — calmer обход (was 0.8)
+    // Arc → settle rhythm (calmer footwork, no мельтешение): walk a line for moveMin
+    // +rand, then устой for settleMin+rand (light micro-life remains), repeat.
+    moveMin: 1.6, moveJit: 1.4, // a movement arc lasts this long (s)
+    settleMin: 0.7, settleJit: 0.9, // then a brief pause (s) — settles in the stance, not frozen
+    flipChance: 0.3, // chance a new arc flips the circling sense (CW ↔ CCW) — holds a line longer
+    strideK: 6.5, // gait cadence (phase rad per unit travelled) — a touch less frequent (was 7)
+    stepWidthMul: 1.18, // widen the stride so steps are broader/weightier, not small шажки
     minStepFrac: 0.5, // floor on gait amplitude while MOVING → a slow step still reads (no slide)
     kneeLift: 1.45, // extra knee-flex on the swing leg → the foot clearly lifts + plants
-    turnRate: 3.5, // facing turn speed (rad/s) — deliberate доворот, no snap
+    turnRate: 3.2, // facing turn speed (rad/s) — a touch softer доворот, no snap
   },
 
   // --- Grade (facet) bonus ramp by depth (1→5). PERCENT (fraction) added to the

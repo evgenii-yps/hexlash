@@ -487,7 +487,8 @@ export function buildFighter(
   const SLOW = { speed: 0.92, accel: 3.0, decel: 4.0, swing: 0.5, knee: 0.78, arm: 0.4, lean: -0.05, bob: 0.035, twist: 0.05 };
   const FAST = { speed: 2.0, accel: 8.0, decel: 6.5, swing: 0.66, knee: 1.0, arm: 0.55, lean: -0.16, bob: 0.055, twist: 0.07 };
   const FAST_DASH = 1.4; // max gap (world units) a FAST step-in commits before it plants
-  const STRIDE_K = 7; // gait phase (rad) per world unit travelled → cadence ∝ live speed
+  // gait cadence (footwork.strideK) + facing turn speed (footwork.turnRate) live in
+  // combatBalance.footwork now — single tunable source.
   const ACCEL_LEAN = 0.012; // torso lean per unit of accel — weight on the start / the plant
   const MAX_ACCEL_LEAN = 0.22; // cap so a hard start / stop doesn't overrotate
   const TRANSITION_DUR = 0.13; // pose cross-fade time on a movement / state change (s)
@@ -506,7 +507,6 @@ export function buildFighter(
   const CONTACT_SOFT = 0.9; // soft buffer above CONTACT — ease back here (no grinding)
   const FAR = 1.9; // far edge of the approach band — arc straightens as the gap closes (tighter neutral spacing)
   const STRIKE = 1.7; // legacy coarse radius (per-move reach gates the actual contact now)
-  const TURN_RATE = 3.5; // facing turn speed (rad/s) — deliberate доворот, no snap
 
   // --- Behaviour profile → fighter controls. The data-каркас
   //     (src/data/behavior.js) resolves the chosen core's start profile + lit-
@@ -960,7 +960,7 @@ export function buildFighter(
 
   const loco = { active: false, type: 'slow' }; // dev SLOW/FAST preview toggle
   // AI manoeuvre state.
-  const nav = { mode: 'circle', until: 0, foe: null, approachAngle: 0, reaimAt: 0 };
+  const nav = { mode: 'circle', until: 0, foe: null, approachAngle: 0, phase: 'settle', phaseUntil: 0 };
 
   // --- Block stance (defensive guard) — a real body ability, independent of the
   //     reflex that decides to raise it (below). `blocking` is the live state;
@@ -1250,13 +1250,15 @@ export function buildFighter(
     // first bit of speed so the step eases up from rest (no amplitude pop on start).
     const moving = THREE.MathUtils.clamp(mag / 0.3, 0, 1);
     const frac = Math.max(raw, fw.minStepFrac * moving);
-    gaitPhase += dt * mag * STRIDE_K; // cadence ∝ live speed (faster = more frequent + wider)
+    gaitPhase += dt * mag * fw.strideK; // cadence ∝ live speed (slower speed → steps land less often)
     const p = gaitPhase;
     const sL = Math.sin(p);
     const sR = Math.sin(p + Math.PI);
-    // Thigh swing (hip): legs alternate fwd/back.
-    targetP.lhx = band.swing * frac * sL;
-    targetP.rhx = band.swing * frac * sR;
+    // Thigh swing (hip): legs alternate fwd/back. stepWidthMul widens the stride a
+    // touch so each step is broader (weighty), not a small шажок.
+    const sw = band.swing * fw.stepWidthMul;
+    targetP.lhx = sw * frac * sL;
+    targetP.rhx = sw * frac * sR;
     // Knee LIFT on the swing leg → the foot clearly leaves the ground at mid-swing
     // then extends to plant (gated to each leg's forward half). kneeLift exaggerates
     // the flex so it reads as a step, not a glide.
@@ -1388,7 +1390,7 @@ export function buildFighter(
     if (dirX * dirX + dirZ * dirZ < 1e-6) return;
     let diff = Math.atan2(-dirX, -dirZ) - group.rotation.y;
     diff = Math.atan2(Math.sin(diff), Math.cos(diff)); // wrap to [-π, π]
-    const max = TURN_RATE * dt;
+    const max = B.footwork.turnRate * dt; // deliberate доворот (single source: footwork.turnRate)
     group.rotation.y += THREE.MathUtils.clamp(diff, -max, max);
   };
   // Face the foe — used in the combat phases (approach / strike / circle).
@@ -1532,12 +1534,6 @@ export function buildFighter(
       nav.until = t + character.decideMin + Math.random() * character.decideJit;
       return;
     }
-    // Re-aim the circle periodically — occasionally flip the sense (CW↔CCW) so the
-    // footwork keeps repositioning instead of tracing one perfect orbit.
-    if (t >= nav.reaimAt) {
-      nav.reaimAt = t + fw.reaimMin + Math.random() * fw.reaimJit;
-      if (Math.random() < fw.flipChance) character.strafeBias *= -1;
-    }
     const tanx = -uz * character.strafeBias; // tangential (circling) unit ⟂ the foe line
     const tanz = ux * character.strafeBias;
     // PRESS — bore toward contact with only a slight lateral cut (manner: never circles).
@@ -1551,9 +1547,24 @@ export function buildFighter(
       requestMove(-ux * 0.85 + tanx * 0.65, -uz * 0.85 + tanz * 0.65, FAST);
       return;
     }
-    // PLANT / STRIKE / RETREAT — a gentle continuous circle that holds spacing (a
-    // light amble, never a freeze). Direction = circle + radial range-hold; the
-    // manner speed (moveScale) keeps HOLD/BREATHE slow vs BREAK sharp.
+    // PLANT / STRIKE / RETREAT — calm footwork: a movement ARC then a brief SETTLE
+    // (передышка), alternating, so the fighter walks a line then устаивается a beat
+    // instead of mельтешит. Durations from footwork; a new arc occasionally flips the
+    // circling sense (so it holds one line longer). The settle isn't a freeze — the
+    // intention stance keeps its micro-life.
+    if (t >= nav.phaseUntil) {
+      if (nav.phase === 'settle') {
+        nav.phase = 'move';
+        nav.phaseUntil = t + fw.moveMin + Math.random() * fw.moveJit;
+        if (Math.random() < fw.flipChance) character.strafeBias *= -1;
+      } else {
+        nav.phase = 'settle';
+        nav.phaseUntil = t + fw.settleMin + Math.random() * fw.settleJit;
+      }
+    }
+    if (nav.phase === 'settle') { intentionStance(bs); return; } // brief устой — micro-life keeps it alive (no full freeze)
+    // Movement arc: a gentle circle that holds spacing (a light amble). Direction =
+    // circle + radial range-hold; the manner speed (moveScale) keeps HOLD/BREATHE slow.
     moveScale *= fw.circleSlowMul;
     const radSign = THREE.MathUtils.clamp((d - character.range) / 0.4, -1, 1); // + too far → in · − too close → out
     let braceBias = 0;
