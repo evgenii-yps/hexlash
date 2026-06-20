@@ -151,10 +151,12 @@ import { onMounted, onBeforeUnmount, ref, computed } from 'vue';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildFighter } from './buildFighter.js';
+import { makeRadialTexture } from './arenaTextures.js';
 import { INTENTION_IDS, intentionProfile } from '@/data/intentions.js';
 import { motionFor } from '@/data/intentionMotion.js';
 import { CORES, CRYSTALS, getCore } from '@/data/upgradeData.js';
 import { resolveBehavior } from '@/data/behavior.js';
+import { COMBAT_BALANCE } from '@/data/combatBalance.js';
 
 const PINK = '#FF0069';
 const PINK_RGB = [1, 0, 0.412]; // #FF0069 normalized — trail colour
@@ -264,9 +266,15 @@ let dummyGroup = null, dummyMat = null;
 let resizeObserver, onVisibility, onKeydown;
 let vTime = 0;            // VIRTUAL clock fed to fighter.update — the transport drives this
 let pendingStep = 0;      // virtual seconds to advance on a frame-step (while paused)
-let dummyHitT = -1;       // vTime of the last strike on the dummy → contact flash
+let dummyHitT = -1;       // vTime of the last strike on the dummy → contact flash/recoil
 let camAnim = null;       // { t, dur, fromPos, toPos, fromTarget, toTarget } camera tween (real time)
 const STEP_DT = 1 / 60;   // one frame of virtual time per STEP (the frame-counter unit)
+// Contact spark — a world-space billboarded mark at the point a strike lands on the
+// dummy (mirrors the in-fight flash), so touch + reach are visible on the manekin.
+let labSpark = null, labSparkMat = null;
+let labSparkUntil = -1;
+const labHitPoint = new THREE.Vector3();
+const FLASH_DUR = 0.18;
 
 // --- Clip-bar + auto-pause-on-contact tracking (non-reactive).
 const barEl = ref(null);  // the time-bar track element (for scrub geometry)
@@ -289,8 +297,16 @@ const _v = new THREE.Vector3(); // scratch
 // "манекен" toggle only shows/hides the visible болванка at this spot; the body
 // behaves the same whether it's visible or not (default off → clean view, but
 // PRESS still chases, STRIKE still loads, etc — exactly as in a real bout).
-const foeTarget = new THREE.Vector3(0, 0, -1.45);
+const foeTarget = new THREE.Vector3(0, 0, -1.1);
 const getFoePos = () => foeTarget;
+
+// Stand the dummy at the active technique's STRIKE REACH so the strike lands ON it
+// (not in the air); falls back to a default for intentions / non-reach moves.
+function setDummyDistanceFor(m) {
+  const r = m && m.kind === 'clip' ? COMBAT_BALANCE.strikeReach[m.id] : null;
+  foeTarget.z = -(r ? Math.max(0.6, r - 0.05) : 1.1); // slight overlap so the limb tip touches
+  if (dummyGroup) dummyGroup.position.copy(foeTarget);
+}
 
 function buildDummy() {
   const g = new THREE.Group();
@@ -333,7 +349,7 @@ function spawnFighter() {
     getFoePos,
     // Contact flash on the dummy so a strike reads "by contact" (the lab's only
     // hit hook — no HP / damage bookkeeping is needed here).
-    onImpact: () => { dummyHitT = vTime; },
+    onImpact: (raw, pen, intr, pt) => { dummyHitT = vTime; if (pt) { labHitPoint.copy(pt); labSparkUntil = vTime + FLASH_DUR; } },
   });
   fighter.setReducedMotion(false); // a MOTION-debugging tool must always animate
   fighter.group.position.set(0, 0, 0);
@@ -368,6 +384,7 @@ function fireMove(m) {
 // --- Panel handlers.
 function selectMove(m) {
   activeId.value = m.id;
+  setDummyDistanceFor(m); // put the manekin at this move's strike reach
   applyActive();
 }
 function selectCore(id) {
@@ -571,6 +588,15 @@ onMounted(() => {
   dummyGroup = buildDummy();
   scene.add(dummyGroup);
 
+  // Contact spark (world-space, billboarded) — marks where a strike lands on the dummy.
+  labSparkMat = new THREE.MeshBasicMaterial({
+    map: makeRadialTexture('rgba(255,255,255,0.95)', 'rgba(255,0,105,0)', 0.32),
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0,
+  });
+  labSpark = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.5), labSparkMat);
+  labSpark.visible = false;
+  scene.add(labSpark);
+
   // --- Motion-trail line (vertex-coloured polyline, fades head→tail). Preallocated
   //     to TRAIL_MAX points; positions / colours rewritten each frame.
   trailMat = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, depthTest: true });
@@ -635,12 +661,27 @@ onMounted(() => {
     processClipDisplay();
     sampleTrail();
 
-    // Dummy contact flash (reads a strike landing).
+    // Dummy reaction (reads a strike landing): emissive flash + scale pop + a short
+    // recoil back from the blow.
     if (dummyGroup && dummyMat) {
       const since = vTime - dummyHitT;
       const flash = dummyHitT >= 0 && since >= 0 && since < 0.25 ? 1 - since / 0.25 : 0;
       dummyMat.emissive.setRGB(flash * 0.9, flash * 0.1, flash * 0.25);
       dummyGroup.scale.setScalar(1 + flash * 0.06);
+      dummyGroup.position.z = foeTarget.z - flash * 0.12; // recoil away from the fighter
+    }
+
+    // Contact spark at the touch point (mirrors the in-fight flash).
+    if (labSpark) {
+      if (labSparkUntil > vTime) {
+        labSpark.visible = true;
+        labSpark.position.copy(labHitPoint);
+        labSpark.quaternion.copy(camera.quaternion); // billboard (spark is in world space)
+        labSparkMat.opacity = THREE.MathUtils.clamp((labSparkUntil - vTime) / FLASH_DUR, 0, 1);
+      } else if (labSpark.visible) {
+        labSpark.visible = false;
+        labSparkMat.opacity = 0;
+      }
     }
 
     renderer.render(scene, camera);
@@ -685,6 +726,10 @@ onBeforeUnmount(() => {
   if (dummyGroup) {
     dummyGroup.traverse((o) => { if (o.geometry) o.geometry.dispose(); });
     if (dummyMat) dummyMat.dispose();
+  }
+  if (labSpark) {
+    if (labSpark.geometry) labSpark.geometry.dispose();
+    if (labSparkMat) { if (labSparkMat.map) labSparkMat.map.dispose(); labSparkMat.dispose(); }
   }
   for (const m of [floor, podium]) {
     if (!m) continue;

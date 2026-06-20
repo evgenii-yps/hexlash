@@ -98,7 +98,7 @@ export function buildFighter(
   const torso = pivot(hips, 0, 0, 0);
   const chest = box(torso, 0.5, 0.46, 0.3, 0, 0.4, 0); // y 1.10..1.56
   box(torso, 0.16, 0.08, 0.16, 0, 0.66, 0); // neck
-  box(torso, 0.26, 0.24, 0.24, 0, 0.8, 0); // head
+  const head = box(torso, 0.26, 0.24, 0.24, 0, 0.8, 0); // head
 
   const arm = (side) => {
     // shoulder pivot → upper arm hangs down → elbow pivot → forearm
@@ -165,6 +165,31 @@ export function buildFighter(
   shadow.rotation.x = -Math.PI / 2;
   shadow.position.y = 0.012;
   group.add(shadow);
+
+  // --- Contact spark — a SHORT additive flash at the point a blow lands on THIS
+  //     body (shown when struck). Transient (≈0.18s, fades to nothing) so it's a hit
+  //     marker, NOT a second persistent glow. White core → transparent (pinkish edge)
+  //     so it reads on any zone. Billboarded + faded in update.
+  const sparkTex = makeRadialTexture('rgba(255,255,255,0.95)', pinkRgba(pink, 0), 0.32);
+  const sparkMat = new THREE.MeshBasicMaterial({
+    map: sparkTex, transparent: true, depthWrite: false, fog: false,
+    blending: THREE.AdditiveBlending, opacity: 0,
+  });
+  const spark = new THREE.Mesh(new THREE.PlaneGeometry(0.55, 0.55), sparkMat);
+  spark.visible = false;
+  group.add(spark);
+  let sparkUntil = -1; // loop time the spark fades out (−1 = idle)
+  const FLASH_DUR = COMBAT_BALANCE.hitFlashSec;
+  const _sparkQ = new THREE.Quaternion(); // scratch — billboard the spark vs the group's facing
+  // Show the spark at a WORLD contact point (converted into the group's local space).
+  // Skipped under reduced motion (no animation there → no spark).
+  const showHitFlash = (worldPoint) => {
+    if (reduced || !worldPoint) return;
+    group.updateWorldMatrix(true, false);
+    spark.position.copy(group.worldToLocal(worldPoint.clone()));
+    spark.visible = true;
+    sparkUntil = lastT + FLASH_DUR;
+  };
 
   // --- Over-head HP indicator (built in scene/hpIndicator.js). Percent readout
   //     (round(hp/maxHp*100)) + a 10-segment discrete bar + YOU/FOE tag, on a matte
@@ -235,6 +260,7 @@ export function buildFighter(
   // cross uses the right (rsx/rex).
   const PUNCH = {
     dur: 1.3, impact: 0.6, windup: 0.6, dmgMult: COMBAT_BALANCE.moveMult.punch, // single jab — base damage
+    reach: COMBAT_BALANCE.strikeReach.punch, limb: 'armL', weight: COMBAT_BALANCE.moveWeight.punch,
     keys: [
       { t: 0.0, v: REST, e: 'io' },
       { t: 0.45, v: { hz: 0.02, hy: -0.02, tx: 0.12, lsx: 0.15, lex: 2.0 }, e: 'io' }, // coil / chamber
@@ -287,6 +313,7 @@ export function buildFighter(
   };
   const COMBO = {
     dur: 2.0, impact: 1.12, windup: 1.12, dmgMult: COMBAT_BALANCE.moveMult.combo, // one heavy commit — the most painful single hit
+    reach: COMBAT_BALANCE.strikeReach.combo, limb: 'armL', weight: COMBAT_BALANCE.moveWeight.combo,
     keys: [
       { t: 0.0, v: REST, e: 'io' },
       { t: 0.45, v: { hz: -0.3, hy: -0.03, tx: -0.05 }, e: 'out' }, // approach
@@ -301,6 +328,8 @@ export function buildFighter(
   // both fists work through shoulder + elbow. Two impacts (one per fist).
   const DOUBLE = {
     dur: 1.45, impacts: [0.32, 0.58], windup: 0.32, dmgMult: COMBAT_BALANCE.moveMult.doubleEach, // two hits — each uses this mult, EACH stronger than a jab (≈2.7× a punch summed)
+    reach: COMBAT_BALANCE.strikeReach.double, limbs: ['armL', 'armR'], weight: COMBAT_BALANCE.moveWeight.double, // L jab then R cross — tip per impact
+
     keys: [
       { t: 0.0, v: REST, e: 'io' },
       { t: 0.16, v: { hz: -0.06, hy: -0.02, tx: 0.06, ty: -0.06, lsx: 0.2, lex: 1.9 }, e: 'io' }, // L chamber, coil
@@ -376,6 +405,7 @@ export function buildFighter(
   // FRONT KICK — chamber the knee up, snap the shin straight out, retract.
   const FRONT_KICK = {
     dur: 0.55, impact: 0.28, windup: 0.28, dmgMult: COMBAT_BALANCE.moveMult.frontKick,
+    reach: COMBAT_BALANCE.strikeReach.frontKick, limb: 'legR', weight: COMBAT_BALANCE.moveWeight.frontKick,
     keys: [
       { t: 0.0, v: REST, e: 'io' },
       { t: 0.16, v: { hz: 0.05, hy: -0.02, tx: 0.12, rhx: 1.0, rkx: -1.6 }, e: 'io' }, // chamber — knee up, shin folded
@@ -388,6 +418,7 @@ export function buildFighter(
   // hold the push a beat, retract. Flatter, less snap than the front kick.
   const TEEP = {
     dur: 0.5, impact: 0.26, windup: 0.26, dmgMult: COMBAT_BALANCE.moveMult.teep,
+    reach: COMBAT_BALANCE.strikeReach.teep, limb: 'legR', weight: COMBAT_BALANCE.moveWeight.teep,
     keys: [
       { t: 0.0, v: REST, e: 'io' },
       { t: 0.14, v: { hz: 0.06, hy: -0.02, tx: 0.1, rhx: 0.7, rkx: -1.3 }, e: 'io' }, // chamber lower — push prep
@@ -399,12 +430,48 @@ export function buildFighter(
   // KNEE — drive the knee up-forward; the KNEE leads, the shin stays folded.
   const KNEE = {
     dur: 0.45, impact: 0.22, windup: 0.22, dmgMult: COMBAT_BALANCE.moveMult.knee,
+    reach: COMBAT_BALANCE.strikeReach.knee, limb: 'legR', weight: COMBAT_BALANCE.moveWeight.knee,
     keys: [
       { t: 0.0, v: REST, e: 'io' },
       { t: 0.12, v: { hz: 0.04, hy: -0.02, tx: 0.1, rhx: 0.5, rkx: -1.4 }, e: 'io' }, // load — slight lift, shin tucked
       { t: 0.22, v: { hz: 0.1, hy: -0.04, tx: 0.2, rhx: 1.35, rkx: -1.7 }, e: 'out' }, // drive knee up-forward (impact)
       { t: 0.32, v: { hz: 0.07, hy: -0.03, tx: 0.13, rhx: 1.0, rkx: -1.5 }, e: 'out' }, // recoil
       { t: 0.45, v: REST, e: 'io' }, // leg down
+    ],
+  };
+
+  // --- BEING-HIT zone reactions (defender). SHORT recoils picked by the struck zone
+  //     — they DON'T lock the loop (no `windup`, brief; the ai.nextAt hitch in
+  //     takeDamage paces the next move). A strong hit also shoves the body back a step
+  //     (reactRun, applied in update). Light hit = the clip alone (короткий вздрог).
+  // HEAD — the head whips back (torso pitches back, hips give).
+  const REACT_HEAD = {
+    dur: 0.42, impact: -1,
+    keys: [
+      { t: 0.0, v: REST, e: 'out' },
+      { t: 0.07, v: { hz: 0.14, hy: -0.03, tx: 0.26, core: 0.7 }, e: 'out' }, // snap back
+      { t: 0.18, v: { hz: 0.1, hy: -0.02, tx: 0.14, core: 0 }, e: 'io' },
+      { t: 0.42, v: REST, e: 'io' }, // recover
+    ],
+  };
+  // BODY — осадило: the hips cave back + sink, torso folds then settles.
+  const REACT_BODY = {
+    dur: 0.45, impact: -1,
+    keys: [
+      { t: 0.0, v: REST, e: 'out' },
+      { t: 0.08, v: { hz: 0.16, hy: -0.07, tx: -0.06, core: 0.6 }, e: 'out' }, // caves in, sinks
+      { t: 0.2, v: { hz: 0.12, hy: -0.04, tx: 0.04, core: 0 }, e: 'io' },
+      { t: 0.45, v: REST, e: 'io' },
+    ],
+  };
+  // FOREARM — подбито/прикрылся: the guard is knocked up + in, little hip give.
+  const REACT_GUARD = {
+    dur: 0.5, impact: -1,
+    keys: [
+      { t: 0.0, v: REST, e: 'out' },
+      { t: 0.07, v: { hz: 0.05, tx: 0.05, lsx: 0.5, lex: 1.7, rsx: 0.5, rex: 1.7, core: 0.4 }, e: 'out' }, // guard jolts up
+      { t: 0.22, v: { hz: 0.03, tx: 0.03, lsx: 0.4, lex: 1.5, rsx: 0.4, rex: 1.5 }, e: 'io' },
+      { t: 0.5, v: REST, e: 'io' },
     ],
   };
 
@@ -437,8 +504,8 @@ export function buildFighter(
   const RANGE_HYST = 0.25; // band around the engage distance before re-closing
   const CONTACT = 0.85; // hard minimum — bodies never interpenetrate
   const CONTACT_SOFT = 1.05; // soft buffer above CONTACT — ease back here (no grinding)
-  const FAR = 3.0; // far edge of the approach band — arc straightens as the gap closes
-  const STRIKE = 2.0; // a strike connects only if the foe is within this radius at impact
+  const FAR = 2.3; // far edge of the approach band — arc straightens as the gap closes (lowered: tighter neutral spacing)
+  const STRIKE = 1.7; // legacy coarse radius (per-move reach gates the actual contact now)
   const TURN_RATE = 5.0; // facing turn speed (rad/s)
 
   // --- Behaviour profile → fighter controls. The data-каркас
@@ -468,8 +535,8 @@ export function buildFighter(
   const lerp = THREE.MathUtils.lerp;
   const jit = (amp) => (Math.random() * 2 - 1) * amp; // ±amp bounded liveliness
 
-  const RANGE_NEAR = 1.0; // distance=0  → just off contact (in-fighter)
-  const RANGE_FAR = 2.8; //  distance=100 → spacing fighter; darts in to strike
+  const RANGE_NEAR = 0.95; // distance=0  → just off contact (in-fighter); steps IN to land
+  const RANGE_FAR = 1.85; //  distance=100 → spacing fighter (lowered from 2.8 — closer neutral, then steps in to strike)
   const tempo01 = n01(ax.tempo);
   const stick01 = n01(ax.stick);
   const counter01 = n01(ax.counter);
@@ -961,6 +1028,7 @@ export function buildFighter(
   const play = (c) => {
     if (reduced || clip || state !== 'alive') return; // one one-shot at a time
     loco.active = false; // a throw / struck pose interrupts walking
+    if (lunge) lunge.active = false; // any clip (strike launched, OR hurt / stagger / dodge interrupting) ends a step-in
     clip = { ...c, fired: c.impacts ? c.impacts.map(() => false) : false };
     clipStart = lastT;
     // Early-windup vulnerability: an attack / feint can be interrupted from its
@@ -1333,6 +1401,57 @@ export function buildFighter(
     const dz = f.z - group.position.z;
     return dx * dx + dz * dz <= STRIKE * STRIKE;
   };
+  // Per-move reach gate: foe centre within `r` (world units) of this fighter — the
+  // move's own reach + slop, so a short jab whiffs at a distance a kick would land.
+  const foeWithin = (r) => {
+    const f = getFoePos && getFoePos();
+    if (!f) return false;
+    const dx = f.x - group.position.x;
+    const dz = f.z - group.position.z;
+    return dx * dx + dz * dz <= r * r;
+  };
+
+  // --- Contact geometry (GENERAL — covers arms now, legs the same way). The tip of
+  //     a striking limb in WORLD space at the contact frame, and the nearest body
+  //     ZONE of THIS fighter to a world point (head / body / forearm). The attacker
+  //     reads its own limb tip (the contact point); the defender reads which of its
+  //     own zones that point is nearest — so the flash + reaction land on the right
+  //     spot regardless of which limb threw the blow.
+  const LIMB_TIP = {
+    armL: { node: armL.elbow, off: [0, -0.34, 0] },
+    armR: { node: armR.elbow, off: [0, -0.34, 0] },
+    legL: { node: legL.knee, off: [0, -0.5, -0.05] },
+    legR: { node: legR.knee, off: [0, -0.5, -0.05] },
+  };
+  const _tipV = new THREE.Vector3();
+  const limbTipWorld = (limbId) => {
+    const e = LIMB_TIP[limbId];
+    if (!e) return null;
+    e.node.updateWorldMatrix(true, false);
+    return e.node.localToWorld(_tipV.set(e.off[0], e.off[1], e.off[2])).clone();
+  };
+  const _zoneV = new THREE.Vector3();
+  // Zone candidates: head, body (chest), and each forearm (mid-shaft — sits in front
+  // when the guard is up, so a blocked blow reads as 'forearm'). Nearest wins.
+  const ZONE_NODES = [
+    { zone: 'head', node: head, off: [0, 0, 0] },
+    { zone: 'body', node: chest, off: [0, 0, 0] },
+    { zone: 'forearm', node: armL.elbow, off: [0, -0.2, 0] },
+    { zone: 'forearm', node: armR.elbow, off: [0, -0.2, 0] },
+  ];
+  const nearestZoneTo = (worldPoint) => {
+    if (!worldPoint) return 'body';
+    let best = 'body';
+    let bestD = Infinity;
+    for (const z of ZONE_NODES) {
+      z.node.updateWorldMatrix(true, false);
+      _zoneV.set(z.off[0], z.off[1], z.off[2]);
+      z.node.localToWorld(_zoneV);
+      const d = _zoneV.distanceToSquared(worldPoint);
+      if (d < bestD) { bestD = d; best = z.zone; }
+    }
+    return best;
+  };
 
   // Resolve ONE landed impact (called per impact of the active clip). Three
   // distinct outcomes per impact, in order:
@@ -1345,8 +1464,8 @@ export function buildFighter(
   //   3. CONTACT — handed to the foe via onImpact; the foe then rolls its OWN
   //      dodge (slip) in takeDamage → dodge or damage.
   // So across the system one impact resolves: MISS → else DODGE → else HIT.
-  const resolveImpact = (c) => {
-    if (!foeInStrike()) return; // out of reach — range whiff, NOT an accuracy miss
+  const resolveImpact = (c, idx = 0) => {
+    if (!foeWithin((c.reach || STRIKE) + B.reachHitTol)) return; // out of THIS move's reach — whiff, NOT an accuracy miss
     if (rollMiss()) { if (onMiss) onMiss(); return; } // MISS — attacker wide, no contact
     if (!onImpact) return;
     // Bonuses on this hit, both via the SAME channels (no new pierce system):
@@ -1365,7 +1484,11 @@ export function buildFighter(
     // ВОЛНОЛОМ-2/5 «наказывает прерванную атаку»: this fighter's interrupt reward
     // (sb.interruptBonus) rides ALONG to the foe — applied there ONLY if the hit
     // actually catches a windup (the foe owns that check). base 0 → no extra.
-    onImpact(strikeDamage(c) * (1 + dmgBonus), pen, sb.interruptBonus || 0); // contact → foe resolves dodge / block / damage
+    // Contact point = the striking limb's tip in world space (per-impact limb for a
+    // jab–cross), + the move's weight → the foe places the spark / zone reaction.
+    const limbId = c.limbs ? (c.limbs[idx] || c.limbs[0]) : (c.limb || 'armL');
+    const contactPoint = limbTipWorld(limbId);
+    onImpact(strikeDamage(c) * (1 + dmgBonus), pen, sb.interruptBonus || 0, contactPoint, c.weight || 0); // contact → foe resolves dodge / block / damage + flash + reaction
   };
 
   // Manoeuvre at fighting range — now INTENTION-led (the active intention's motion
@@ -1472,6 +1595,9 @@ export function buildFighter(
     if (state !== 'alive') return;
     clip = null;
     dodgeRun = null;
+    reactRun.active = false; // knock-back step leaves with the fighter
+    if (lunge) lunge.active = false; // pending step-in leaves with the fighter
+    spark.visible = false; sparkUntil = -1; // contact spark off
     loco.active = false;
     feintActive = false; feintPayoffActive = false; feintBaitUntil = 0; feintAdvUntil = 0; feintBaited = false; // feint state leaves with the fighter
     riposteUntil = 0; riposteBonus = 0; // riposte window leaves with the fighter
@@ -1502,12 +1628,37 @@ export function buildFighter(
     play(STAGGER); // reaction clip (no-op under reduced; the lock + static pose still read)
   };
 
-  // Hit resolution: lose HP, recoil (HURT), and OUT at zero. The rift flash +
+  // --- Knock-back step (reactRun): a STRONG hit shoves the defender back a step
+  //     (отшат шагом) over the reaction clip — a real foot displacement (away from
+  //     the attacker), permanent (no return), so it also opens distance after the
+  //     trade. Applied in update (like the dodge displacement). Light hits skip it.
+  const reactRun = { active: false, sx: 0, sz: 0, dx: 0, dz: 0, start: 0, dur: 0.28 };
+  const beginReactStep = () => {
+    const f = getFoePos && getFoePos();
+    if (!f) return;
+    let bx = group.position.x - f.x;
+    let bz = group.position.z - f.z;
+    const m = Math.hypot(bx, bz) || 1e-4;
+    reactRun.active = true;
+    reactRun.start = lastT;
+    reactRun.sx = group.position.x; reactRun.sz = group.position.z;
+    reactRun.dx = (bx / m) * B.reactStepDist; reactRun.dz = (bz / m) * B.reactStepDist;
+  };
+  // Play the zone reaction + show the contact spark; a strong hit adds the step back.
+  const playReaction = (zone, strong, contactPoint) => {
+    const rclip = zone === 'head' ? REACT_HEAD : zone === 'forearm' ? REACT_GUARD : REACT_BODY;
+    play(rclip);
+    showHitFlash(contactPoint);
+    if (strong) beginReactStep();
+    return rclip;
+  };
+
+  // Hit resolution: lose HP, a short zone reaction, and OUT at zero. The rift flash +
   // attacker→defender pairing live in ArenaScene (the combat resolver).
   // Returns the HP actually LOST (>0 only when a hit landed and reduced HP) — the
   // stalemate safeguard reads it (ArenaScene noteExchange) to detect a CLEAN exchange:
   // a dodge / block-to-near-nothing returns 0, so pure evasion doesn't reset накал.
-  const takeDamage = (dmg, attackerPen = 0, attackerInterruptBonus = 0) => {
+  const takeDamage = (dmg, attackerPen = 0, attackerInterruptBonus = 0, contactPoint = null, weight = 0) => {
     if (state !== 'alive') return 0;
     // SEAM (NOT wired): a future fatigue pass could scale the dodge chance + the
     // block strength below by stamina (a spent fighter slips / guards worse) —
@@ -1562,14 +1713,20 @@ export function buildFighter(
     updateBar();
     if (hp <= 0) { eliminate(); return lost; } // → dissolve; onEliminated raised on completion
     if (interrupted) {
+      showHitFlash(contactPoint); // the срыв still landed on the body — mark the touch
       staggerInterrupt(); // срыв: cancel our attack + pending impacts, play STAGGER, lock
       if (onInterrupt) onInterrupt(); // recognisable interrupt event (seam; no grain wired)
-      return lost; // staggered instead of the normal HURT recoil
+      return lost; // staggered instead of the normal recoil
     }
-    play(HURT); // weighty recoil + core flash
-    // Rhythm hitch added on top of the recoil scales with stagger resistance —
-    // a tough fighter barely loses its tempo after eating a hit.
-    ai.nextAt = Math.max(ai.nextAt, lastT + HURT.dur + (0.4 + Math.random() * 0.6) * stagMulFor(res01));
+    // Zone reaction (by where the blow landed) + contact spark; a strong (heavy) hit
+    // shoves the body back a step. Short — the ai.nextAt hitch below paces the next
+    // move, the body is NOT locked out (loop never hangs).
+    const zone = nearestZoneTo(contactPoint);
+    const strong = weight >= B.reactStrongWeight;
+    const rclip = playReaction(zone, strong, contactPoint);
+    // Rhythm hitch on top of the recoil scales with stagger resistance — a tough
+    // fighter barely loses its tempo after eating a hit.
+    ai.nextAt = Math.max(ai.nextAt, lastT + rclip.dur + (0.4 + Math.random() * 0.6) * stagMulFor(res01));
     // counter → chance to punish straight out of the recoil: press in + strike back fast.
     if (Math.random() < counter01 * 0.7) {
       nav.mode = 'press';
@@ -1788,23 +1945,43 @@ export function buildFighter(
     return 'neutral';
   };
 
-  // Autonomous combat (AI): strike only when the foe is within range, on a
-  // cadence; the navigation above closes the gap and manoeuvres between strikes.
+  // --- Step-in-under-the-strike (lunge). When the fighter commits to a move but the
+  //     foe sits beyond that move's reach, it first closes with a WEIGHTED step (not a
+  //     dash) to just inside reach, THEN strikes — so the limb actually lands on the
+  //     body, not the air. After the clip, navigate gives ground back to neutral (the
+  //     foe is now inside preferred range) → the "step out after" falls out for free.
+  //     General: works for any move that carries a `reach` (arms now, kicks the same).
+  const lunge = { active: false, atk: null, until: 0 };
+  const beginLunge = (atk, t) => { lunge.active = true; lunge.atk = atk; lunge.until = t + B.lungeTimeoutSec; };
+  const stepInForStrike = (t, dt) => {
+    const f = getFoePos && getFoePos();
+    if (!f || !lunge.atk) { lunge.active = false; return; }
+    const dx = f.x - group.position.x;
+    const dz = f.z - group.position.z;
+    const d = Math.hypot(dx, dz) || 1e-4;
+    const reach = lunge.atk.reach || character.range;
+    if (d <= reach + 0.04) { const atk = lunge.atk; lunge.active = false; launchStrike(t, atk); return; } // arrived → strike
+    if (t >= lunge.until) { // timed out (foe ran) → strike if barely in, else abort to navigate
+      const atk = lunge.atk; lunge.active = false;
+      if (d <= reach + B.reachHitTol) launchStrike(t, atk);
+      else ai.nextAt = Math.max(ai.nextAt, t + 0.25); // brief pause so it re-spaces, not re-lunges every frame
+      return;
+    }
+    requestMove(dx / d, dz / d, SLOW, Math.max(0, d - (reach - B.reachOverlap))); // weighted step in to just past reach (overlap → the limb sinks into the body)
+  };
+
+  // Autonomous combat (AI): pick a move, then either strike now (in reach) or step in
+  // under it (lunge). The navigation closes to neutral spacing between strikes.
   // COMBO/PUNCH/DOUBLE are weighted; an incoming hit adds a rhythm hitch (in
-  // takeDamage). Live random — no seed. Returns true if a strike started.
+  // takeDamage). Live random — no seed. Returns true if a strike / step-in started.
   const decideAttack = (t) => {
-    if (clip || t < ai.nextAt) return false;
+    if (clip || t < ai.nextAt || lunge.active) return false;
     if (intentionFlags.attack === 'none') return false; // this mode doesn't initiate (BREATHE / BREAK / CATCH) — it spaces / waits / guards instead
     const f = getFoePos && getFoePos();
     if (!f) return false;
     const dx = f.x - group.position.x;
     const dz = f.z - group.position.z;
-    // Commit a strike only when the foe is actually in reach: cap by STRIKE so a
-    // far-spacing fighter steps in to land it instead of whiffing from its range.
-    const reach = Math.min(character.range + RANGE_HYST, STRIKE);
-    if (Math.hypot(dx, dz) > reach) return false;
-    // TEMPORARY: sometimes throw a feint instead of a real strike (see decideFeint).
-    if (decideFeint(t)) return true;
+    const d = Math.hypot(dx, dz);
     // ATTACK STYLE — the intention MODE leads, weight is the fallback. STING
     // ('light') throws quick singles; STRIKE ('heavy') commits the DOUBLE / COMBO
     // series; PRESS / HOLD ('free') use the fighter's own weight-led mix (heavy01:
@@ -1817,7 +1994,14 @@ export function buildFighter(
       const punchW = lerp(0.82, 0.12, heavy01); // light → mostly singles · heavy → mostly DOUBLE/COMBO
       atk = r < punchW ? PUNCH : r < punchW + 0.4 ? DOUBLE : COMBO;
     }
-    launchStrike(t, atk);
+    const reach = atk.reach || character.range;
+    if (d > reach + B.reachStepMax) return false; // too far even to step in → navigate closes neutral spacing first
+    if (d <= reach + B.reachHitTol) {
+      if (decideFeint(t)) return true; // TEMPORARY: sometimes a feint instead (only when in range to be read)
+      launchStrike(t, atk); // already in reach → strike now
+      return true;
+    }
+    beginLunge(atk, t); // close the gap with a weighted step, then strike
     return true;
   };
   // Under reduced motion the body holds still; resolve the key moment (the hit
@@ -1865,6 +2049,8 @@ export function buildFighter(
       modelBoutStarted = false;
       selfHpBroke = false; foeHpBroke = false; selfStamBroke = false; foeStamBroke = false;
       foeApproaching = null; foeCloseEMA = 0; foeLastDist = null;
+    } else {
+      lunge.active = false; // dropping AI cancels any pending step-in
     }
   };
 
@@ -1973,7 +2159,7 @@ export function buildFighter(
     // staggered (interrupt lock) the fighter does NOT attack.
     if (ai.on && !clip && !gathering) {
       faceFoe(dt);
-      if (!blocking && lastT >= staggerUntil) { if (!tryReadReaction(t)) decideAttack(t); }
+      if (!blocking && lastT >= staggerUntil && !lunge.active) { if (!tryReadReaction(t)) decideAttack(t); } // mid step-in: the lunge owns the decision
     }
 
     if (clip) {
@@ -1982,12 +2168,12 @@ export function buildFighter(
         for (let i = 0; i < clip.impacts.length; i++) {
           if (!clip.fired[i] && ct >= clip.impacts[i]) {
             clip.fired[i] = true;
-            resolveImpact(clip); // range gate → attacker miss → (foe) dodge → damage
+            resolveImpact(clip, i); // per-impact limb (jab then cross) → range gate → miss → (foe) dodge → damage
           }
         }
       } else if (!clip.fired && clip.impact >= 0 && ct >= clip.impact) {
         clip.fired = true;
-        resolveImpact(clip); // range gate → attacker miss → (foe) dodge → damage
+        resolveImpact(clip, 0); // range gate → attacker miss → (foe) dodge → damage
       }
       if (ct < clip.dur) {
         const v = sample(clip.keys, ct);
@@ -2009,7 +2195,8 @@ export function buildFighter(
     } else if (gathering) {
       gatherPose(bs); // coiled "собрался" tell before the контра lunge — plant, no nav
     } else if (ai.on) {
-      navigate(t, dt, bs); // navigate toward / around the foe (sets the move intent)
+      if (lunge.active) stepInForStrike(t, dt); // step in under the chosen strike, then launch it
+      else navigate(t, dt, bs); // navigate toward / around the foe (sets the move intent)
     } else if (loco.active) {
       devGait(dt); // dev SLOW/FAST preview (sets the move intent)
     } else {
@@ -2038,6 +2225,27 @@ export function buildFighter(
       const env = dodgeEnv(THREE.MathUtils.clamp((t - clipStart) / clip.dur, 0, 1));
       group.position.x = THREE.MathUtils.clamp(dodgeRun.bx + dodgeRun.wx * DODGE_DIST * env, -BX, BX);
       group.position.z = THREE.MathUtils.clamp(dodgeRun.bz + dodgeRun.wz * DODGE_DIST * env, -BZ, BZ);
+    }
+
+    // Knock-back step (strong-hit отшат) — ease the whole body back over the reaction
+    // and HOLD it (a real step, opens distance after the trade). Runs after the gait
+    // integrate so it owns the position while it lasts.
+    if (reactRun.active) {
+      const u = THREE.MathUtils.clamp((t - reactRun.start) / reactRun.dur, 0, 1);
+      const e = easeOut(u);
+      group.position.x = THREE.MathUtils.clamp(reactRun.sx + reactRun.dx * e, -BX, BX);
+      group.position.z = THREE.MathUtils.clamp(reactRun.sz + reactRun.dz * e, -BZ, BZ);
+      if (u >= 1) reactRun.active = false;
+    }
+
+    // Contact spark — fade out + face the camera while it lasts (transient hit mark).
+    if (spark.visible) {
+      if (t >= sparkUntil) { spark.visible = false; sparkMat.opacity = 0; }
+      else {
+        sparkMat.opacity = THREE.MathUtils.clamp((sparkUntil - t) / FLASH_DUR, 0, 1);
+        group.getWorldQuaternion(_sparkQ).invert();
+        spark.quaternion.copy(_sparkQ).multiply(cam.quaternion); // billboard despite the group's facing
+      }
     }
 
     core.scale.setScalar(1 + cpulse * 0.22 + coreBoost * 0.5);

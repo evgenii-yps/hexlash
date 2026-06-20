@@ -66,6 +66,41 @@ export const COMBAT_BALANCE = {
   },
   jitter: 0.1, // ±10% per-blow variance on outgoing damage — proportional to each move's base, below the inter-move gaps
 
+  // --- Per-move STRIKE REACH (world units, fighter-centre → foe). How close the
+  //     fighter steps in to land THIS move so the striking limb actually reaches the
+  //     foe's body at the contact frame (not the air). Jabs short, kicks longer, knee
+  //     in-close. Used by the step-in (decideAttack/lunge) + the contact gate
+  //     (resolveImpact). Tunable in one place; owner dotunes by eye.
+  strikeReach: {
+    punch: 1.0, // jab / cross — step in close
+    double: 1.0, // jab–cross
+    combo: 1.1, // heavy commit (lunges in on the hips)
+    frontKick: 1.45, // foot reaches furthest
+    teep: 1.5, // push kick — longest
+    knee: 0.85, // вплотную
+  },
+  // Contact: how far past a move's reach the foe can be and still be struck (slop
+  // so a touch still lands), and how much the striking limb tip overlaps the foe
+  // body so the contact reads ON the body, not short of it.
+  reachHitTol: 0.45, // foe within reach+this at the contact frame → connects
+  reachStepMax: 1.3, // gap (above reach) the fighter will close with a step-in before striking
+  reachOverlap: 0.12, // step in this much PAST reach so the limb tip sinks into the body
+  lungeTimeoutSec: 1.1, // abort a step-in if it can't reach in this long (foe ran)
+
+  // --- Being-hit reaction (defender). A SHORT zone reaction over the recoil — head
+  //     snaps back, body осаживает, guard knocked — that never locks the loop (the
+  //     existing ai.nextAt hitch already paces the next move). A STRONG hit (weight ≥
+  //     reactStrongWeight, e.g. combo) adds a visible step back (отшат шагом).
+  reactStrongWeight: 0.7, // outgoing weight at/above which the hit shoves the foe back a step
+  reactStepDist: 0.34, // how far a strong hit knocks the defender back (world units)
+  hitFlashSec: 0.18, // contact spark lifetime — quick, then gone (no second persistent glow)
+  // Outgoing "weight" per move (0..1) — drives the defender's reaction amplitude
+  // (light вздрог vs strong отшат). Heavier moves shove harder.
+  moveWeight: {
+    punch: 0.32, double: 0.5, combo: 1.0,
+    frontKick: 0.7, teep: 0.6, knee: 0.9,
+  },
+
   // --- Grade (facet) bonus ramp by depth (1→5). PERCENT (fraction) added to the
   //     facet's target characteristic on the "hard" branches — strikePower
   //     (RAM / HUNT / STING) and toughness (BASTION / BREAKER). A new layer ON

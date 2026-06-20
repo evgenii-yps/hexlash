@@ -370,7 +370,7 @@ onMounted(() => {
       bounds: navBounds,
       neutralColor: neutralColor.value,
       getFoePos: () => (opponent ? opponent.group.position : null),
-      onImpact: (raw, pen, intr) => { if (opponent?.takeDamage(raw * escalationMult(), pen, intr) > 0) noteExchange(); }, // attacker's strike damage × накал; foe softens by toughness / block (pen = our block-pierce, intr = our ВОЛНОЛОМ interrupt-catch bonus). Real HP dealt → clean exchange → накал resets
+      onImpact: (raw, pen, intr, pt, w) => { if (opponent?.takeDamage(raw * escalationMult(), pen, intr, pt, w) > 0) noteExchange(); }, // attacker's strike damage × накал; foe softens by toughness / block (pen = our block-pierce, intr = our ВОЛНОЛОМ interrupt-catch bonus, pt = contact point, w = move weight → foe flash + zone reaction). Real HP dealt → clean exchange → накал resets
       onAttackStart: () => opponent?.noteIncomingAttack?.(), // in-range attack incoming → the foe's block reflex
       onMiss: () => opponent?.noteFoeMissed?.(), // our strike went wide → the foe's КАПКАН counter window
       getFoeReacting: () => !!(opponent && (opponent.isBlocking?.() || opponent.isDodging?.())), // foe took the bait? (feint payoff)
@@ -405,7 +405,7 @@ onMounted(() => {
       bounds: navBounds,
       neutralColor: neutralColor.value,
       getFoePos: () => (fighter ? fighter.group.position : null),
-      onImpact: (raw, pen, intr) => { if (fighter?.takeDamage(raw * escalationMult(), pen, intr) > 0) noteExchange(); }, // attacker's strike damage × накал; foe softens by toughness / block (pen = our block-pierce, intr = our ВОЛНОЛОМ interrupt-catch bonus). Real HP dealt → clean exchange → накал resets
+      onImpact: (raw, pen, intr, pt, w) => { if (fighter?.takeDamage(raw * escalationMult(), pen, intr, pt, w) > 0) noteExchange(); }, // attacker's strike damage × накал; foe softens by toughness / block (pen = our block-pierce, intr = our ВОЛНОЛОМ interrupt-catch bonus, pt = contact point, w = move weight → foe flash + zone reaction). Real HP dealt → clean exchange → накал resets
       onAttackStart: () => fighter?.noteIncomingAttack?.(), // in-range attack incoming → the foe's block reflex
       onMiss: () => fighter?.noteFoeMissed?.(), // our strike went wide → the foe's КАПКАН counter window
       getFoeReacting: () => !!(fighter && (fighter.isBlocking?.() || fighter.isDodging?.())), // foe took the bait? (feint payoff)
