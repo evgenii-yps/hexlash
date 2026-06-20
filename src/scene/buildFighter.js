@@ -1103,6 +1103,11 @@ export function buildFighter(
     } else {
       for (const k of POSE_KEYS) liveP[k] = targetP[k];
     }
+    // Hips drive every child joint — a single NaN here would sink the whole body
+    // out of view. Clamp the channel to a finite value so one bad frame can't
+    // blank the fighter for the rest of the bout.
+    if (!Number.isFinite(liveP.hipsZ)) liveP.hipsZ = 0;
+    if (!Number.isFinite(liveP.hipsY)) liveP.hipsY = hipsBaseY;
     hips.position.z = liveP.hipsZ;
     hips.position.y = liveP.hipsY;
     torso.rotation.x = liveP.torsoX;
@@ -1327,7 +1332,7 @@ export function buildFighter(
   // and the distance left to the goal (so the integrator can brake into it).
   const requestMove = (dx, dz, band, maxDist = Infinity) => {
     const m = Math.hypot(dx, dz);
-    if (m < 1e-6) return;
+    if (!(m >= 1e-6)) return; // rejects 0 AND NaN/Infinity — a bad direction never reaches the integrator
     intent.on = true;
     intent.dx = dx / m;
     intent.dz = dz / m;
@@ -1614,7 +1619,7 @@ export function buildFighter(
   //     plate, roam, then re-close). Manner tints how readily it breaks. Pure
   //     navigation — the strike / intention choice / contact are untouched.
   const breakBias = (m) => {
-    const br = B.footwork.breath;
+    const br = B.breath;
     if (m.style === 'press') return br.pressBias; // давит — stays close, rarely breaks
     if (m.style === 'sting' || m.style === 'retreat' || m.brace === 'back') return br.spacerBias; // spacer / defensive — roams more
     return 1;
@@ -1622,7 +1627,7 @@ export function buildFighter(
   // Pick a roam anchor: a point at break distance from the foe, at a random angle,
   // clamped inside the plate — so the fight travels to the sides / edges / diagonals.
   const pickAnchor = (f, bias) => {
-    const br = B.footwork.breath;
+    const br = B.breath;
     const R = (br.breakDist + Math.random() * br.breakWide) * THREE.MathUtils.clamp(bias, 0.7, 1.4);
     const th = Math.random() * Math.PI * 2;
     nav.anchor.x = THREE.MathUtils.clamp(f.x + Math.cos(th) * R, -BX * br.boundMargin, BX * br.boundMargin);
@@ -1632,7 +1637,7 @@ export function buildFighter(
   // + breaks shorter/closer; spacer/defensive the reverse.
   const tickBreath = (t, m, f) => {
     if (t < nav.macroUntil) return;
-    const br = B.footwork.breath;
+    const br = B.breath;
     const bias = breakBias(m);
     if (nav.macro === 'break') {
       nav.macro = 'engage';
@@ -1648,7 +1653,7 @@ export function buildFighter(
   // BREAK movement: stride to the roam anchor (real weighted steps across the plate);
   // once there, drift wide at break distance (never re-close — engage does that).
   const navBreak = (t, dt, f, d, ux, uz) => {
-    const br = B.footwork.breath;
+    const br = B.breath;
     const ax = nav.anchor.x - group.position.x;
     const az = nav.anchor.z - group.position.z;
     const ad = Math.hypot(ax, az) || 1e-4;
@@ -2193,7 +2198,7 @@ export function buildFighter(
       // Start the distance-breathing on an ENGAGE window (close first, then it breaks
       // on its own), desynced per fighter so the two don't break in lock-step.
       nav.macro = 'engage';
-      nav.macroUntil = lastT + B.footwork.breath.engageMin * (0.6 + Math.random() * 0.8);
+      nav.macroUntil = lastT + B.breath.engageMin * (0.6 + Math.random() * 0.8);
       applyIntention(INTENTIONS.HOLD); // start neutral; the first tick re-picks
       // Deterministic intention desync (opponent picks half a tick out of phase)
       // so the two never re-pick in lock-step — no random, replay stays stable.
@@ -2217,6 +2222,23 @@ export function buildFighter(
   const update = (t, cam) => {
     const dt = Math.min(0.05, Math.max(0, t - lastT));
     lastT = t;
+
+    // --- Safety net: a single bad frame (NaN / off-slab position) must not strand
+    //     the fighter for the whole bout. If the group drifted to a non-finite or
+    //     off-plate spot, return it to a valid plate point on its own side and shed
+    //     velocity so the next frame navigates cleanly from a real position.
+    {
+      const p = group.position;
+      if (!Number.isFinite(p.x) || !Number.isFinite(p.z)) {
+        p.x = isOpp ? -0.65 : 0.45; // spawn-side fallback (matches ArenaScene spawn)
+        p.z = isOpp ? -1.4 : 1.3;
+        move.vx = 0; move.vz = 0; prevMag = 0;
+      } else if (p.x < -BX || p.x > BX || p.z < -BZ || p.z > BZ) {
+        p.x = THREE.MathUtils.clamp(p.x, -BX, BX);
+        p.z = THREE.MathUtils.clamp(p.z, -BZ, BZ);
+      }
+    }
+
     hpUI.billboard(cam, group.scale.x); // face camera + constant on-screen size
     if (deadAt >= 0 && hpUI.mesh.visible && t - deadAt >= DEAD_HOLD_S) hpUI.mesh.visible = false; // DEAD: held 1s, then removed
 
