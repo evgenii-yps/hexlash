@@ -134,6 +134,24 @@ export const COMBAT_BALANCE = {
     strength: 0.8, // overall depth of the settle (0..1) — global feel knob
   },
 
+  // --- Дыхание по дистанции (navigation macro-phase). The fight breathes: an ENGAGE
+  //     phase (close in, circle, trade — the existing short-range footwork) alternates
+  //     with a BREAK phase (disengage to a larger distance + roam to an anchor point
+  //     across the plate, then re-close). Phases switch on time with light randomness
+  //     so it's not a metronome. Manner tints willingness to break (PRESS davit, stays
+  //     close; STING / defensive roam more, farther). Navigation only — the strike /
+  //     intention choice / contact range are untouched (the close trade is unchanged).
+  breath: {
+    engageMin: 2.6, engageJit: 2.4, // engage (close trade) phase length (s)
+    breakMin: 1.8, breakJit: 1.8, // break (disengage + roam) phase length (s)
+    breakChance: 0.55, // chance an ended engage flips to a break (else stays engaged a bit more)
+    breakDist: 2.6, breakWide: 1.1, // far spacing in break: anchor R ∈ [breakDist, +breakWide] from the foe
+    anchorReach: 0.55, // within this of the roam anchor = "arrived" → drift wide there
+    pressBias: 0.45, // PRESS: breaks rarer / shorter / closer (×<1)
+    spacerBias: 1.6, // STING / defensive: breaks more / longer / farther (×>1)
+    boundMargin: 0.92, // keep roam anchors inside the plate (fraction of the nav bounds)
+  },
+
   // --- Grade (facet) bonus ramp by depth (1→5). PERCENT (fraction) added to the
   //     facet's target characteristic on the "hard" branches — strikePower
   //     (RAM / HUNT / STING) and toughness (BASTION / BREAKER). A new layer ON

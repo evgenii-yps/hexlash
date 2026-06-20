@@ -960,7 +960,7 @@ export function buildFighter(
 
   const loco = { active: false, type: 'slow' }; // dev SLOW/FAST preview toggle
   // AI manoeuvre state.
-  const nav = { mode: 'circle', until: 0, foe: null, approachAngle: 0, phase: 'settle', phaseUntil: 0 };
+  const nav = { mode: 'circle', until: 0, foe: null, approachAngle: 0, phase: 'settle', phaseUntil: 0, macro: 'engage', macroUntil: 0, anchor: { x: 0, z: 0 } };
 
   // --- Block stance (defensive guard) — a real body ability, independent of the
   //     reflex that decides to raise it (below). `blocking` is the live state;
@@ -1608,6 +1608,65 @@ export function buildFighter(
     const vz = tanz * fw.circleSpeed + uz * (fw.rangeKeep * radSign + braceBias);
     requestMove(vx, vz, SLOW); // direction = circle + range-hold; speed = SLOW × moveScale (manner)
   };
+  // --- Дыхание по дистанции (navigation MACRO-phase). On top of the close-range
+  //     footwork, the fight alternates an ENGAGE phase (fight at character.range — the
+  //     existing behaviour) with a BREAK phase (disengage to a far anchor across the
+  //     plate, roam, then re-close). Manner tints how readily it breaks. Pure
+  //     navigation — the strike / intention choice / contact are untouched.
+  const breakBias = (m) => {
+    const br = B.footwork.breath;
+    if (m.style === 'press') return br.pressBias; // давит — stays close, rarely breaks
+    if (m.style === 'sting' || m.style === 'retreat' || m.brace === 'back') return br.spacerBias; // spacer / defensive — roams more
+    return 1;
+  };
+  // Pick a roam anchor: a point at break distance from the foe, at a random angle,
+  // clamped inside the plate — so the fight travels to the sides / edges / diagonals.
+  const pickAnchor = (f, bias) => {
+    const br = B.footwork.breath;
+    const R = (br.breakDist + Math.random() * br.breakWide) * THREE.MathUtils.clamp(bias, 0.7, 1.4);
+    const th = Math.random() * Math.PI * 2;
+    nav.anchor.x = THREE.MathUtils.clamp(f.x + Math.cos(th) * R, -BX * br.boundMargin, BX * br.boundMargin);
+    nav.anchor.z = THREE.MathUtils.clamp(f.z + Math.sin(th) * R, -BZ * br.boundMargin, BZ * br.boundMargin);
+  };
+  // Flip engage ↔ break on time (light randomness). Manner bias: press engages longer
+  // + breaks shorter/closer; spacer/defensive the reverse.
+  const tickBreath = (t, m, f) => {
+    if (t < nav.macroUntil) return;
+    const br = B.footwork.breath;
+    const bias = breakBias(m);
+    if (nav.macro === 'break') {
+      nav.macro = 'engage';
+      nav.macroUntil = t + (br.engageMin + Math.random() * br.engageJit) / THREE.MathUtils.clamp(bias, 0.4, 1.6); // press engages longer
+    } else if (Math.random() < THREE.MathUtils.clamp(br.breakChance * bias, 0, 0.92)) {
+      nav.macro = 'break';
+      nav.macroUntil = t + (br.breakMin + Math.random() * br.breakJit) * THREE.MathUtils.clamp(bias, 0.4, 1.6); // spacer breaks longer
+      pickAnchor(f, bias);
+    } else {
+      nav.macroUntil = t + br.engageMin * 0.5 + Math.random() * br.engageJit; // stayed engaged — re-roll later
+    }
+  };
+  // BREAK movement: stride to the roam anchor (real weighted steps across the plate);
+  // once there, drift wide at break distance (never re-close — engage does that).
+  const navBreak = (t, dt, f, d, ux, uz) => {
+    const br = B.footwork.breath;
+    const ax = nav.anchor.x - group.position.x;
+    const az = nav.anchor.z - group.position.z;
+    const ad = Math.hypot(ax, az) || 1e-4;
+    if (ad > br.anchorReach) {
+      // Measured weighty walk across the plate (SLOW — no jog/sprint); brakes into the
+      // anchor via maxDist. A short final close may quicken (FAST) like the approach.
+      const band = ad <= FAST_DASH ? FAST : SLOW;
+      requestMove(ax / ad, az / ad, band, ad);
+      return;
+    }
+    // Arrived: gentle wide drift around the foe at break distance — push OUT only if
+    // the foe crowds in, otherwise circle. Keeps the bout spaced until engage resumes.
+    const tanx = -uz * character.strafeBias;
+    const tanz = ux * character.strafeBias;
+    const err = THREE.MathUtils.clamp((d - br.breakDist) / 0.6, -1, 0); // <0 too close → push out (never approach in break)
+    requestMove(tanx * 0.7 + ux * err, tanz * 0.7 + uz * err, SLOW);
+  };
+
   const navigate = (t, dt, bs) => {
     const f = getFoePos && getFoePos();
     if (!f) { idlePose(bs); return; } // combat phases need a foe
@@ -1619,6 +1678,11 @@ export function buildFighter(
     const engage = character.range;
     const m = motionFor(intentionId);
     moveScale = m.speedMul || 1; // intention MANNER: BREATHE slow, STING/BREAK fast
+
+    // Дыхание по дистанции: in a BREAK phase, disengage + roam the plate; otherwise
+    // (ENGAGE) fall through to the existing close-range navigation below.
+    tickBreath(t, m, f);
+    if (nav.macro === 'break') { navBreak(t, dt, f, d, ux, uz); return; }
 
     if (d > engage + RANGE_HYST) {
       // Close toward preferred range. PRESS cuts the angle (drives straight in);
@@ -2126,6 +2190,10 @@ export function buildFighter(
       ai.nextAt = lastT + 0.3 + Math.random() * 0.6;
       nav.until = lastT + Math.random() * character.decideJit; // desync decision phase
       nav.mode = Math.random() < 0.5 ? 'circle' : 'approach';
+      // Start the distance-breathing on an ENGAGE window (close first, then it breaks
+      // on its own), desynced per fighter so the two don't break in lock-step.
+      nav.macro = 'engage';
+      nav.macroUntil = lastT + B.footwork.breath.engageMin * (0.6 + Math.random() * 0.8);
       applyIntention(INTENTIONS.HOLD); // start neutral; the first tick re-picks
       // Deterministic intention desync (opponent picks half a tick out of phase)
       // so the two never re-pick in lock-step — no random, replay stays stable.
