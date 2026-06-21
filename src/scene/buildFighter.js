@@ -399,8 +399,9 @@ export function buildFighter(
   //     as expensive). Same clip mechanic + damage path as the punches (dmgMult →
   //     resolveImpact). Sign on the right leg: rhx > 0 raises the thigh forward/up
   //     (toward −Z, the foe); rkx < 0 flexes the knee (shin folded), rkx → 0 extends
-  //     the shin. Phases замах → контакт → возврат read in ~0.5s. These are TRIGGERS
-  //     only (f.frontKick / f.teep / f.knee) — NOT wired into the autonomous picker.
+  //     the shin. Phases замах → контакт → возврат read in ~0.5s. Available BOTH as
+  //     autonomous picker moves (decideAttack picks them by distance — see
+  //     COMBAT_BALANCE.kicks) and as lab TRIGGERS (f.frontKick / f.teep / f.knee).
   //
   // FRONT KICK — chamber the knee up, snap the shin straight out, retract.
   const FRONT_KICK = {
@@ -2131,10 +2132,28 @@ export function buildFighter(
     requestMove(dx / d, dz / d, SLOW, Math.max(0, d - (reach - B.reachOverlap))); // weighted step in to just past reach (overlap → the limb sinks into the body)
   };
 
+  // Legs in the picker (РАЗНООБРАЗИЕ приёмов, not a new intention). After decideAttack
+  // chooses a hand move, with a per-intention chance it is swapped for the KICK whose
+  // band fits the current gap — KNEE вплотную, FRONT KICK средне, TEEP дальше — so a
+  // kick always suits the distance (никогда колено издалека / тип вплотную). Beyond the
+  // teep band → no kick (hands stay, navigation closes). STING (light) prefers a snappy
+  // front kick to the heavy knee in close. Shares / bands live in COMBAT_BALANCE.kicks;
+  // the existing reach / lunge logic then steps in under the kick like any move.
+  const kickShareFor = (style) =>
+    style === 'light' ? B.kicks.shareLight : style === 'heavy' ? B.kicks.shareHeavy : B.kicks.shareFree;
+  const pickKick = (d, style) => {
+    const K = B.kicks;
+    if (d <= K.kneeMaxGap) return style === 'light' ? FRONT_KICK : KNEE; // вплотную: heavy knee (light → snappy front kick)
+    if (d <= K.frontKickMaxGap) return FRONT_KICK; // средне
+    if (d <= K.teepMaxGap) return TEEP; // дальше — толчковый
+    return null; // out of kicking range → keep hands
+  };
+
   // Autonomous combat (AI): pick a move, then either strike now (in reach) or step in
   // under it (lunge). The navigation closes to neutral spacing between strikes.
-  // COMBO/PUNCH/DOUBLE are weighted; an incoming hit adds a rhythm hitch (in
-  // takeDamage). Live random — no seed. Returns true if a strike / step-in started.
+  // COMBO/PUNCH/DOUBLE are weighted (legs mixed in by distance — see pickKick); an
+  // incoming hit adds a rhythm hitch (in takeDamage). Live random — no seed. Returns
+  // true if a strike / step-in started.
   const decideAttack = (t) => {
     if (clip || t < ai.nextAt || lunge.active) return false;
     if (intentionFlags.attack === 'none') return false; // this mode doesn't initiate (BREATHE / BREAK / CATCH) — it spaces / waits / guards instead
@@ -2155,6 +2174,12 @@ export function buildFighter(
       const punchW = lerp(0.82, 0.12, heavy01); // light → mostly singles · heavy → mostly DOUBLE/COMBO
       atk = r < punchW ? PUNCH : r < punchW + 0.4 ? DOUBLE : COMBO;
     }
+    // Legs in the mix — with a per-intention chance the hand pick becomes the kick that
+    // suits the current gap (knee close · front kick mid · teep far). Distance decides
+    // WHICH kick; intention tints HOW OFTEN (manner via the existing channel). Hands
+    // stay primary; kicks vary the bout without dominating. All numbers: COMBAT_BALANCE.kicks.
+    const kick = pickKick(d, intentionFlags.attack);
+    if (kick && Math.random() < kickShareFor(intentionFlags.attack)) atk = kick;
     const reach = atk.reach || character.range;
     if (d > reach + B.reachStepMax) return false; // too far even to step in → navigate closes neutral spacing first
     if (d <= reach + B.reachHitTol) {

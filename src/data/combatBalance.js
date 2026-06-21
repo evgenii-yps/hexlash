@@ -87,6 +87,28 @@ export const COMBAT_BALANCE = {
   reachOverlap: 0.12, // step in this much PAST reach so the limb tip sinks into the body
   lungeTimeoutSec: 1.1, // abort a step-in if it can't reach in this long (foe ran)
 
+  // --- Kicks in the autonomous picker (РАЗНООБРАЗИЕ приёмов по дистанции). The legs
+  //     (front kick / teep / knee) are part of the strike MIX, not a new intention:
+  //     after decideAttack picks a hand move, with a per-intention `share*` chance it
+  //     is SWAPPED for the kick whose band fits the CURRENT gap — KNEE вплотную,
+  //     FRONT KICK средне, TEEP дальше — so a kick always suits the distance (never a
+  //     knee from afar or a teep point-blank; beyond the teep band no kick is thrown,
+  //     hands stay and navigation closes). Manner rides the EXISTING intention channel
+  //     (no intentionMotion touch): STRIKE (heavy) throws the most kicks and leans into
+  //     the close knee, STING (light) fewer + a snappy front kick over a knee, PRESS /
+  //     HOLD (free) a moderate mix. Damage / reach / weight of each kick live in
+  //     moveMult / strikeReach / moveWeight above (legs hit a touch harder + reach
+  //     further than the arms). Kept a MINORITY of the offence so the hands stay
+  //     primary — tune the shares up/down by eye. The lab triggers are unaffected.
+  kicks: {
+    shareFree: 0.3, // PRESS / HOLD — chance a chosen strike becomes a kick (moderate mix)
+    shareLight: 0.26, // STING — fewer, lighter kicks (front kick / teep, no knee)
+    shareHeavy: 0.36, // STRIKE — the most kicks, leans into the heavy close knee
+    kneeMaxGap: 1.05, // gap ≤ this → KNEE (вплотную, тяжёлое колено)
+    frontKickMaxGap: 1.55, // (knee, this] → FRONT KICK (средне — джеб/двойка/фронт-кик зона)
+    teepMaxGap: 2.0, // (frontKick, this] → TEEP (дальше, толчковый) · further → no kick
+  },
+
   // --- Being-hit reaction (defender). A SHORT zone reaction over the recoil — head
   //     snaps back, body осаживает, guard knocked — that never locks the loop (the
   //     existing ai.nextAt hitch already paces the next move). A STRONG hit (weight ≥
