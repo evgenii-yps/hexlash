@@ -371,27 +371,23 @@ export function buildFighter(
     };
   })();
 
-  // Dodge (visual only) — a sharp readable evade: the whole body slips off-line
-  // (group displacement, see DODGE_DIST) while it ducks low behind a tucked
-  // guard, holds the slip, then eases back to stance. No impact, no damage — it
-  // never gates a hit; the pose blends in/out via the pose layer like any clip.
-  const DODGE_DIST = 0.55; // how far the body slips off-line (world units)
-  const DODGE_DUR = 0.5; // total evade time (s) — fast but readable
+  // Dodge — a readable evade performed as a real SIDESTEP off-line. Motion is NO
+  // longer a direct position offset: it rides the SAME locomotion pipeline as circling
+  // (velocity ramps up + brakes into a planted stop — уходит и оседает) with a real leg
+  // переступ via animateGait, and the duck-guard is an upper-body overlay on top of the
+  // gait (applyDodgeOverlay). Numbers live in COMBAT_BALANCE.dodge. No impact, no damage
+  // — the evade itself (0 HP, no stagger) is decided in takeDamage and is untouched; this
+  // only changes how the body plays the slip. The clip carries the timing (dur + flag);
+  // its `keys` are LEGACY (no longer sampled — the gait + overlay drive the pose now).
+  const DODGE_DUR = 0.5; // total slip time (s) — UNCHANGED (defence timing preserved)
   const DODGE = {
     dur: DODGE_DUR, impact: -1, dodge: true,
     keys: [
       { t: 0.0, v: REST, e: 'out' },
-      { t: 0.12, v: { hy: -0.1, tx: 0.05, lsx: 0.5, lex: 1.55, rsx: 0.5, rex: 1.55 }, e: 'out' }, // duck + guard, snap aside
-      { t: 0.3, v: { hy: -0.11, tx: 0.04, lsx: 0.55, lex: 1.6, rsx: 0.55, rex: 1.6 }, e: 'io' }, // hold the slip
-      { t: DODGE_DUR, v: REST, e: 'io' }, // ease back to stance
+      { t: 0.12, v: { hy: -0.1, tx: 0.05, lsx: 0.5, lex: 1.55, rsx: 0.5, rex: 1.55 }, e: 'out' },
+      { t: 0.3, v: { hy: -0.11, tx: 0.04, lsx: 0.55, lex: 1.6, rsx: 0.55, rex: 1.6 }, e: 'io' },
+      { t: DODGE_DUR, v: REST, e: 'io' },
     ],
-  };
-  // Displacement envelope over the dodge clip: quick slip out → hold → ease back.
-  // Returns to the start spot, so a dodge never shifts the fight position.
-  const dodgeEnv = (u) => {
-    if (u < 0.22) return easeOut(u / 0.22);
-    if (u < 0.42) return 1;
-    return 1 - easeInOut((u - 0.42) / 0.58);
   };
 
   // --- KICKS (straight, forward — RIGHT leg). Driven on the EXISTING hip + knee
@@ -543,6 +539,16 @@ export function buildFighter(
   // twist shape the gait look at that band (scaled by the live speed).
   const SLOW = { speed: 0.92, accel: 3.0, decel: 4.0, swing: 0.5, knee: 0.78, arm: 0.4, lean: -0.05, bob: 0.035, twist: 0.05 };
   const FAST = { speed: 2.0, accel: 8.0, decel: 6.5, swing: 0.66, knee: 1.0, arm: 0.55, lean: -0.16, bob: 0.055, twist: 0.07 };
+  // Dodge sidestep band — drives the slip through the SAME gait/locomotion as circling
+  // (so a dodge reads in one weighty manner with the rest of the movement). Speed/accel/
+  // decel from COMBAT_BALANCE.dodge; a wider leg swing (stepWidthMul) for a clear переступ;
+  // arm: 0 — the duck-guard overlay owns the upper body during the slip.
+  const FK_DODGE = COMBAT_BALANCE.dodge;
+  const DODGE_BAND = {
+    speed: FK_DODGE.speed, accel: FK_DODGE.accel, decel: FK_DODGE.decel,
+    swing: SLOW.swing * FK_DODGE.stepWidthMul, knee: FAST.knee, arm: 0,
+    lean: SLOW.lean, bob: FAST.bob, twist: SLOW.twist,
+  };
   const FAST_DASH = 1.4; // max gap (world units) a FAST step-in commits before it plants
   // gait cadence (footwork.strideK) + facing turn speed (footwork.turnRate) live in
   // combatBalance.footwork now — single tunable source.
@@ -1374,6 +1380,23 @@ export function buildFighter(
     setMode(band === FAST ? 'gait-fast' : 'gait-slow');
   };
 
+  // Duck-guard overlay for a slip — runs AFTER animateGait on a dodge frame, so the legs
+  // keep their переступ while the upper body tucks behind the guard and the body ducks.
+  // `g` ramps the guard in over the push-off, holds through the slip, and eases out as it
+  // settles → no snap on either end. Blends the gait arms TOWARD the guard (lerp by g) and
+  // ducks the hips on top of the gait bob. ct = seconds since the dodge clip started.
+  const DODGE_GUARD = { sx: 0.52, ex: 1.58, tx: 0.05 }; // tucked elbows (both arms), slight slip-lean
+  const applyDodgeOverlay = (ct) => {
+    const u = THREE.MathUtils.clamp(ct / DODGE_DUR, 0, 1);
+    const g = u < 0.2 ? easeOut(u / 0.2) : u < 0.7 ? 1 : 1 - easeInOut((u - 0.7) / 0.3);
+    targetP.lsx += (DODGE_GUARD.sx - targetP.lsx) * g;
+    targetP.rsx += (DODGE_GUARD.sx - targetP.rsx) * g;
+    targetP.lex += (DODGE_GUARD.ex - targetP.lex) * g;
+    targetP.rex += (DODGE_GUARD.ex - targetP.rex) * g;
+    targetP.torsoX += DODGE_GUARD.tx * g;
+    targetP.hipsY -= B.dodge.duckDepth * g; // duck on top of the gait bob
+  };
+
   // Weighted locomotion — a velocity model the AI drives via a per-frame intent
   // (direction + band + distance-to-goal). Velocity ramps toward the band speed
   // (accel) / toward rest (decel) and is carried between frames, so movement has
@@ -1453,6 +1476,18 @@ export function buildFighter(
     }
     prevMag = mag;
     intent.on = false; // consume — the next frame must re-request to keep moving
+  };
+
+  // Drive a slip as a lateral SIDESTEP through the locomotion pipeline: request a move
+  // toward the off-line target (base + dir × dist) carrying the distance LEFT, so the
+  // integrator ramps up then brakes into a planted stop (уходит и оседает) — the same
+  // accel/decel + gait переступ as circling. Position + stepping legs come from
+  // stepLocomotion; the duck-guard (applyDodgeOverlay) rides on top after the gait.
+  const dodgeStep = () => {
+    if (!dodgeRun) return;
+    const traveled = (group.position.x - dodgeRun.bx) * dodgeRun.wx + (group.position.z - dodgeRun.bz) * dodgeRun.wz;
+    const left = Math.max(0, B.dodge.dist - traveled);
+    requestMove(dodgeRun.wx, dodgeRun.wz, DODGE_BAND, left);
   };
 
   // Stamina tick (called once per alive frame, after stepLocomotion so prevMag is
@@ -2468,9 +2503,13 @@ export function buildFighter(
         resolveImpact(clip, 0); // range gate → attacker miss → (foe) dodge → damage
       }
       if (ct < clip.dur) {
-        const v = sample(clip.keys, ct);
-        apply(v);
-        coreBoost = N(v.core);
+        if (clip.dodge) {
+          dodgeStep(); // slip = a lateral sidestep through locomotion (accel/decel + переступ); the duck-guard overlay rides on top below
+        } else {
+          const v = sample(clip.keys, ct);
+          apply(v);
+          coreBoost = N(v.core);
+        }
       } else {
         if (clip.feint) feintActive = false; // the fake finished — clear the readable flag
         feintPayoffActive = false; // a payoff strike (or any clip) finished → consume the boost
@@ -2502,8 +2541,13 @@ export function buildFighter(
 
     // Integrate weighted locomotion every frame: a clip / idle / gather frame sets
     // no intent, so carried velocity coasts to rest (inertia) without the gait
-    // overwriting the clip / idle / block / coil pose. A locomotion frame animates the gait.
-    stepLocomotion(dt, !clip && !blocking && !gathering && lastT >= staggerUntil && lastT >= exhaleUntil && (ai.on || loco.active)); // no gait during the выдох — the settle owns the pose
+    // overwriting the clip / idle / block / coil pose. A locomotion frame animates the
+    // gait — INCLUDING a dodge frame (the slip is a real stepping sidestep now).
+    const dodging = !!(clip && clip.dodge && (t - clipStart) < clip.dur);
+    stepLocomotion(dt, dodging || (!clip && !blocking && !gathering && lastT >= staggerUntil && lastT >= exhaleUntil && (ai.on || loco.active))); // no gait during the выдох — the settle owns the pose
+    // Duck-guard overlay: on a dodge frame the gait just set the legs/arms; tuck the
+    // upper body behind the guard + duck on top, so the slip reads as a defensive sidestep.
+    if (dodging) applyDodgeOverlay(t - clipStart);
 
     // Stamina: drain on movement (prevMag set just above) / recover when collected.
     tickStamina(dt);
@@ -2514,15 +2558,9 @@ export function buildFighter(
     // idle ↔ move ↔ strike never snaps (steady modes write straight through).
     commitPose(dt);
 
-    // Dodge displacement (visual only): slip the whole body off-line on the
-    // dodge envelope and back to the start spot. Runs while a dodge clip plays;
-    // never touches HP / hit resolution — the duck-guard pose blends via the
-    // pose layer above, this just moves the group.
-    if (clip && clip.dodge && dodgeRun) {
-      const env = dodgeEnv(THREE.MathUtils.clamp((t - clipStart) / clip.dur, 0, 1));
-      group.position.x = THREE.MathUtils.clamp(dodgeRun.bx + dodgeRun.wx * DODGE_DIST * env, -BX, BX);
-      group.position.z = THREE.MathUtils.clamp(dodgeRun.bz + dodgeRun.wz * DODGE_DIST * env, -BZ, BZ);
-    }
+    // (Dodge motion is now handled above as a real sidestep through the locomotion
+    // pipeline — stepLocomotion places the group + steps the legs, applyDodgeOverlay
+    // ducks the guard. No direct position offset here anymore.)
 
     // Knock-back step (strong-hit отшат) — ease the whole body back over the reaction
     // and HOLD it (a real step, opens distance after the trade). Runs after the gait

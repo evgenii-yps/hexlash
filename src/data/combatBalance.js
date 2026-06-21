@@ -172,6 +172,24 @@ export const COMBAT_BALANCE = {
     turnRate: 3.2, // facing turn speed (rad/s) — a touch softer доворот, no snap
   },
 
+  // --- Dodge MOTION (visual execution of a slip — NOT the defence). When the slip
+  //     fires (the evade itself is rolled in takeDamage — dodgeChance* below — and is
+  //     untouched here), the body now performs a real SIDESTEP off-line through the
+  //     SAME locomotion pipeline as circling: velocity ramps up + brakes into a planted
+  //     stop (accel/decel — уходит и оседает, no щелчок), and the legs do a real переступ
+  //     via animateGait (no static feet under an edying body). The duck-guard rides on
+  //     top as an upper-body overlay. A quick lateral burst (speed > a normal step) so it
+  //     still clears a strike, but eased on both ends. Defence timing/window is unchanged
+  //     (instant in takeDamage). Tunable in one place; owner dotunes by eye.
+  dodge: {
+    dist: 0.5, // боковой уход — how far off-line the sidestep settles (world units)
+    speed: 2.6, // peak sidestep speed (units/s) — faster than a walk (clears the strike), below a sprint
+    accel: 14, // push-off ramp (units/s²) — quick but eased (no snap on the start)
+    decel: 11, // settle ramp — оседает into a planted stop (no щелчок on the stop)
+    stepWidthMul: 1.5, // leg-swing amplitude vs a circle step → a clear приставной шаг
+    duckDepth: 0.1, // how low the body ducks behind the guard at the slip's peak (world units)
+  },
+
   // --- Post-strike ВЫДОХ (settle/recovery). After an attack clip's return phase, a
   //     short decaying settle blends the body back into normal stance-life instead of
   //     snapping straight back to circling — the blow oseдает, not щёлкает. NOT a new
