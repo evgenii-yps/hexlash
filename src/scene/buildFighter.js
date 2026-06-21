@@ -441,6 +441,62 @@ export function buildFighter(
     ],
   };
 
+  // --- POWER HANDS (hook / uppercut / body shot — new arc / vertical / level-change
+  //     strikes on the SAME shoulder+elbow joints as the straights). Silhouettes are
+  //     deliberately distinct from a straight so each reads in ~0.5s: the HOOK keeps a
+  //     bent elbow and SWINGS on the torso twist (ty) — a horizontal arc, not an
+  //     extension; the UPPERCUT dips then DRIVES UP (hy dip→rise, torso pitches back,
+  //     bent fist leads vertically); the BODY SHOT drops the level (hy sink + a light
+  //     knee bend + deep forward fold) and stabs short into the torso. Same clip
+  //     mechanic + damage path as the punches (windup → impact → return; dmgMult →
+  //     resolveImpact; reach / limb for the contact gate + trail).
+  //
+  //  NOTE (joint limit, reported — NOT a silent new axis): the arm joints carry only
+  //  rotation.x (shoulder lsx/rsx + elbow lex/rex) — no shoulder abduction (Y/Z). A
+  //  true hook's horizontal swing is therefore faked the way DOUBLE's cross already
+  //  is: torso twist (ty, existing) carries the bent arm around. Reads as a hook in
+  //  half a second; an actual abduction axis would be a future skeleton decision.
+  //
+  // HOOK — wind the torso twist open, then SNAP it across with the rear arm bent ~90°
+  // so the forearm sweeps a horizontal arc into the head/body (elbow never extends).
+  const HOOK = {
+    dur: 0.95, impact: 0.5, windup: 0.5, dmgMult: COMBAT_BALANCE.moveMult.hook,
+    reach: COMBAT_BALANCE.strikeReach.hook, limb: 'armR', weight: COMBAT_BALANCE.moveWeight.hook,
+    keys: [
+      { t: 0.0, v: REST, e: 'io' },
+      { t: 0.34, v: { hz: -0.05, hy: -0.02, tx: 0.04, ty: 0.22, rsx: 1.0, rex: 1.5 }, e: 'io' }, // wind the twist OPEN, rear arm chambered out, elbow bent ~90°
+      { t: 0.5, v: { hz: -0.12, hy: -0.04, tx: -0.06, ty: -0.3, rsx: 1.35, rex: 1.25 }, e: 'out' }, // SNAP the twist across — forearm sweeps horizontally (impact)
+      { t: 0.64, v: { hz: -0.08, hy: -0.03, tx: -0.03, ty: -0.18, rsx: 1.2, rex: 1.3 }, e: 'out' }, // recoil — twist eases, elbow stays bent
+      { t: 0.95, v: REST, e: 'io' }, // unwind, weighty return
+    ],
+  };
+  // UPPERCUT — dip + chamber the lead fist low, then DRIVE UP: body rises, torso
+  // pitches back, the bent forearm leads the fist vertically into the chin/body.
+  const UPPERCUT = {
+    dur: 1.0, impact: 0.52, windup: 0.52, dmgMult: COMBAT_BALANCE.moveMult.uppercut,
+    reach: COMBAT_BALANCE.strikeReach.uppercut, limb: 'armL', weight: COMBAT_BALANCE.moveWeight.uppercut,
+    keys: [
+      { t: 0.0, v: REST, e: 'io' },
+      { t: 0.36, v: { hz: -0.04, hy: -0.07, tx: 0.1, lsx: 0.1, lex: 1.7 }, e: 'io' }, // dip + load low — fist chambered near the hip
+      { t: 0.52, v: { hz: -0.12, hy: 0.05, tx: -0.16, lsx: 1.05, lex: 1.3 }, e: 'out' }, // DRIVE up — body rises, torso pitches back, fist leads upward (impact)
+      { t: 0.66, v: { hz: -0.08, hy: 0.02, tx: -0.08, lsx: 0.9, lex: 1.4 }, e: 'out' }, // recoil
+      { t: 1.0, v: REST, e: 'io' }, // settle down, return
+    ],
+  };
+  // BODY SHOT — drop the LEVEL (hips sink + a light knee bend + deep forward fold) and
+  // stab a short straight into the torso. The level change is the tell (оседает по уровню).
+  const BODY_SHOT = {
+    dur: 0.85, impact: 0.42, windup: 0.42, dmgMult: COMBAT_BALANCE.moveMult.bodyShot,
+    reach: COMBAT_BALANCE.strikeReach.bodyShot, limb: 'armL', weight: COMBAT_BALANCE.moveWeight.bodyShot,
+    keys: [
+      { t: 0.0, v: REST, e: 'io' },
+      { t: 0.28, v: { hz: -0.06, hy: -0.1, tx: 0.2, lsx: 0.2, lex: 1.9, lhx: 0.24, lkx: -0.42, rhx: 0.24, rkx: -0.42 }, e: 'io' }, // drop the level — sink low, knees soften, fold forward, chamber
+      { t: 0.42, v: { hz: -0.16, hy: -0.12, tx: 0.12, lsx: 1.0, lex: 0.25, lhx: 0.28, lkx: -0.5, rhx: 0.28, rkx: -0.5 }, e: 'out' }, // short straight INTO the torso, still low (impact)
+      { t: 0.56, v: { hz: -0.1, hy: -0.1, tx: 0.14, lsx: 0.85, lex: 0.4, lhx: 0.22, lkx: -0.4, rhx: 0.22, rkx: -0.4 }, e: 'out' }, // recoil, still dipped
+      { t: 0.85, v: REST, e: 'io' }, // rise back up, return
+    ],
+  };
+
   // --- BEING-HIT zone reactions (defender). SHORT recoils picked by the struck zone
   //     — they DON'T lock the loop (no `windup`, brief; the ai.nextAt hitch in
   //     takeDamage paces the next move). A strong hit also shoves the body back a step
@@ -2149,6 +2205,26 @@ export function buildFighter(
     return null; // out of kicking range → keep hands
   };
 
+  // Power hands in the picker (РАЗНООБРАЗИЕ ударов руками, same pattern as pickKick).
+  // After the straight is chosen and the kick layer passes, with a per-intention chance
+  // the straight is swapped for the power hand that suits the close exchange — body shot
+  // / uppercut / hook вплотную, hook close-mid; beyond → no swap. STRIKE (heavy) leans
+  // hooks/uppercuts, STING (light) the snappy body shot, free an even mix. Bands / shares
+  // in COMBAT_BALANCE.hands; the existing reach / lunge logic steps in like any move.
+  const handShareFor = (style) =>
+    style === 'light' ? B.hands.shareLight : style === 'heavy' ? B.hands.shareHeavy : B.hands.shareFree;
+  const pickPowerHand = (d, style) => {
+    const H = B.hands;
+    if (d <= H.closeMaxGap) {
+      const r = Math.random(); // вплотную — all three land; manner leans the pick
+      if (style === 'heavy') return r < 0.4 ? UPPERCUT : r < 0.75 ? HOOK : BODY_SHOT; // STRIKE — power shots
+      if (style === 'light') return r < 0.5 ? BODY_SHOT : r < 0.8 ? HOOK : UPPERCUT; // STING — snappy body shot
+      return r < 0.34 ? BODY_SHOT : r < 0.67 ? UPPERCUT : HOOK; // free — even mix
+    }
+    if (d <= H.hookMaxGap) return Math.random() < 0.6 ? HOOK : UPPERCUT; // close-mid — the hook's arc reaches
+    return null; // beyond → straight stands (lunge / навигация closes)
+  };
+
   // Autonomous combat (AI): pick a move, then either strike now (in reach) or step in
   // under it (lunge). The navigation closes to neutral spacing between strikes.
   // COMBO/PUNCH/DOUBLE are weighted (legs mixed in by distance — see pickKick); an
@@ -2179,7 +2255,16 @@ export function buildFighter(
     // WHICH kick; intention tints HOW OFTEN (manner via the existing channel). Hands
     // stay primary; kicks vary the bout without dominating. All numbers: COMBAT_BALANCE.kicks.
     const kick = pickKick(d, intentionFlags.attack);
-    if (kick && Math.random() < kickShareFor(intentionFlags.attack)) atk = kick;
+    let kicked = false;
+    if (kick && Math.random() < kickShareFor(intentionFlags.attack)) { atk = kick; kicked = true; }
+    // Power hands in the mix — only if NO kick was thrown (so kick frequencies stay as
+    // shipped): a chance the straight becomes a hook / uppercut / body shot suiting the
+    // close exchange. Distance decides WHICH; intention tints HOW OFTEN. All numbers in
+    // COMBAT_BALANCE.hands. Straights stay the backbone — the variety just colours the trade.
+    if (!kicked) {
+      const power = pickPowerHand(d, intentionFlags.attack);
+      if (power && Math.random() < handShareFor(intentionFlags.attack)) atk = power;
+    }
     const reach = atk.reach || character.range;
     if (d > reach + B.reachStepMax) return false; // too far even to step in → navigate closes neutral spacing first
     if (d <= reach + B.reachHitTol) {
@@ -2495,9 +2580,12 @@ export function buildFighter(
     punch: () => play(PUNCH),
     combo: () => play(COMBO),
     double: () => play(DOUBLE),
-    frontKick: () => play(FRONT_KICK), // straight front snap kick (right leg) — trigger only
-    teep: () => play(TEEP),            // push kick / толчковый (right leg) — trigger only
-    knee: () => play(KNEE),            // knee strike up-forward (right leg) — trigger only
+    frontKick: () => play(FRONT_KICK), // straight front snap kick (right leg)
+    teep: () => play(TEEP),            // push kick / толчковый (right leg)
+    knee: () => play(KNEE),            // knee strike up-forward (right leg)
+    hook: () => play(HOOK),            // боковой по дуге (rear arm + torso twist)
+    uppercut: () => play(UPPERCUT),    // снизу вверх (lead arm, vertical drive)
+    bodyShot: () => play(BODY_SHOT),   // в корпус со сменой уровня (lead arm, low)
     hurt: () => play(HURT),
     dodge: () => play(DODGE),
     slow: () => toggleLoco('slow'),

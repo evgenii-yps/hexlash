@@ -57,6 +57,12 @@ export const COMBAT_BALANCE = {
     punch: 1.0, // single jab — base (~3% HP felt on neutral)
     doubleEach: 1.33, // jab–cross — two hits, EACH stronger than a jab; ≈8% HP summed (был 0.65)
     combo: 3.67, // one heavy commit — the most painful single hit, ~11% HP (был 1.7)
+    // Power hands (hook / uppercut / body shot — arc / vertical / level-change variety
+    // on the existing shoulder+elbow joints). Strong SINGLE blows below the combo: the
+    // hook + uppercut are power shots, the body shot a lighter wearing strike.
+    hook: 1.7, // боковой по дуге — strong arc to the head/body
+    uppercut: 1.9, // снизу вверх — the heaviest single short of the combo
+    bodyShot: 1.2, // в корпус со сменой уровня — lighter, wears the body down
     // Kicks (straight, forward — trigger-only for now, owner dotunes). Legs hit
     // harder + reach further than the arms: front kick between double-per-hit and
     // combo; teep is a disruptive shove (lighter); knee is a heavy close strike.
@@ -75,6 +81,9 @@ export const COMBAT_BALANCE = {
     punch: 1.0, // jab / cross — step in close
     double: 1.0, // jab–cross
     combo: 1.1, // heavy commit (lunges in on the hips)
+    hook: 1.05, // боковой — close-mid, the arc wraps in
+    uppercut: 0.95, // снизу вверх — inside, close
+    bodyShot: 0.9, // в корпус — closest, you're on the body
     frontKick: 1.45, // foot reaches furthest
     teep: 1.5, // push kick — longest
     knee: 0.85, // вплотную
@@ -109,6 +118,26 @@ export const COMBAT_BALANCE = {
     teepMaxGap: 2.0, // (frontKick, this] → TEEP (дальше, толчковый) · further → no kick
   },
 
+  // --- Power hands in the autonomous picker (РАЗНООБРАЗИЕ ударов руками по дистанции).
+  //     Same pattern as kicks above, for the three new hand strikes (hook / uppercut /
+  //     body shot): after decideAttack picks a straight (jab / double / combo) and the
+  //     kick layer passes, with a per-intention `share*` chance the straight is SWAPPED
+  //     for a POWER hand that suits the close exchange — body shot / uppercut вплотную,
+  //     hook close-mid; beyond the hook band no swap (the straight + lunge cover range).
+  //     Manner rides the EXISTING intention channel (no intentionMotion touch): STRIKE
+  //     (heavy) commits more hooks/uppercuts, STING (light) stays snappier (the quick
+  //     body shot, fewer overall), PRESS/HOLD (free) an even mix. Kept a MINORITY so the
+  //     straights stay the backbone of the exchange — tune the shares up/down by eye.
+  //     Rolled AFTER the kick layer, so kick frequencies are untouched. Damage / reach /
+  //     weight of each live in moveMult / strikeReach / moveWeight above.
+  hands: {
+    shareFree: 0.3, // PRESS / HOLD — chance a straight becomes a power hand (moderate)
+    shareLight: 0.22, // STING — fewer power shots (stays jabby), leans the snappy body shot
+    shareHeavy: 0.4, // STRIKE — the most power hands, leans into hook / uppercut
+    closeMaxGap: 1.0, // gap ≤ this → вплотную: body shot / uppercut / hook all land
+    hookMaxGap: 1.3, // (close, this] → close-mid: hook (its arc reaches) · further → no swap
+  },
+
   // --- Being-hit reaction (defender). A SHORT zone reaction over the recoil — head
   //     snaps back, body осаживает, guard knocked — that never locks the loop (the
   //     existing ai.nextAt hitch already paces the next move). A STRONG hit (weight ≥
@@ -120,6 +149,7 @@ export const COMBAT_BALANCE = {
   // (light вздрог vs strong отшат). Heavier moves shove harder.
   moveWeight: {
     punch: 0.32, double: 0.5, combo: 1.0,
+    hook: 0.7, uppercut: 0.8, bodyShot: 0.45,
     frontKick: 0.7, teep: 0.6, knee: 0.9,
   },
 
