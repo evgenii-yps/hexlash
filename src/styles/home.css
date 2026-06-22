@@ -29,22 +29,14 @@
 .hs-abtn, .hs-slot, .hs-statedev button, .sp-back, .sp-btn, .sp-tabs .tb,
 .hs-plate.linkable .pm { pointer-events: auto; }
 
-/* corner HUD brackets */
-.hs-bracket { position: absolute; width: 34px; height: 34px;
-  border: 1.6px solid rgba(var(--acc-rgb), 0.5); pointer-events: none; z-index: 6; }
-.hs-bracket.tl { top: 18px; left: 18px; border-right: 0; border-bottom: 0; }
-.hs-bracket.tr { top: 18px; right: 18px; border-left: 0; border-bottom: 0; }
-.hs-bracket.bl { bottom: 18px; left: 18px; border-right: 0; border-top: 0; }
-.hs-bracket.br { bottom: 18px; right: 18px; border-left: 0; border-top: 0; }
-
 /* ── top bar ── */
 .hs-top { position: absolute; top: 0; left: 0; right: 0; height: 74px; z-index: 5;
   display: flex; align-items: center; justify-content: space-between; padding: 0 48px; }
 .hs-brand { display: flex; align-items: center; gap: 14px; }
-.hs-brand svg { width: 30px; height: 30px; color: #f4f2f6; }
-.hs-brand .wm { font-weight: 900; font-size: 24px; letter-spacing: 0.02em; text-transform: uppercase; }
+/* logo (MK svg + HEXLASH wordmark) removed — only the season label remains, so
+   no leading divider on it. */
 .hs-brand .season { font-family: var(--hs-mono); font-size: 10px; letter-spacing: 0.28em; color: var(--muted);
-  border-left: 1px solid var(--line); padding-left: 14px; text-transform: uppercase; }
+  text-transform: uppercase; }
 .hs-topr { display: flex; align-items: center; gap: 14px; }
 .hs-bal { display: flex; align-items: center; gap: 9px; font-family: var(--hs-mono); font-size: 13px;
   letter-spacing: 0.08em; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.025); padding: 9px 16px; }

@@ -24,9 +24,6 @@
 
     <!-- Home / arrange chrome overlay -->
     <div v-else class="hs-overlay">
-      <div class="hs-bracket tl" /><div class="hs-bracket tr" />
-      <div class="hs-bracket bl" /><div class="hs-bracket br" />
-
       <!-- fighter nameplate — "this is MY fighter" (callsign ≠ core name) -->
       <div class="hs-plate" :class="{ linkable: !coreName }" :style="{ left: '50%', top: '300px' }">
         <div class="pn">{{ callsign }}</div>
@@ -42,12 +39,6 @@
       <template v-if="!arrange">
         <div class="hs-top">
           <div class="hs-brand">
-            <svg viewBox="0 0 48 48" aria-hidden="true">
-              <polygon points="24,3 41.5,13 41.5,35 24,45 6.5,35 6.5,13" fill="none" stroke="currentColor" stroke-width="2.4" />
-              <polygon points="24,13 33,18.5 33,29.5 24,35 15,29.5 15,18.5" fill="none" stroke="currentColor" stroke-width="2.4" />
-              <path d="M24 13 L24 24 M24 24 L33 18.5 M24 24 L15 29.5" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" />
-            </svg>
-            <span class="wm">HEXLASH</span>
             <span class="season">SEASON 0</span>
           </div>
           <div class="hs-topr">
