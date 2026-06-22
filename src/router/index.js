@@ -88,6 +88,16 @@ const v2Routes = [
                 component: () => import('@/views-v2/CoreSelectView.vue'),
             },
             {
+                // Player home ("дом игрока"): calm 3D stage (arena slab + idle
+                // fighter, no rift/opponent/HUD) under a 2D nav layer. Public like
+                // the rest of /play. NEW route only — the post-login default
+                // landing is intentionally NOT changed here (deferred to a later
+                // entry-point step after review).
+                path: 'home',
+                name: 'V2Home',
+                component: () => import('@/views-v2/HomeView.vue'),
+            },
+            {
                 path: 'upgrade',
                 name: 'PrefightUpgrade',
                 beforeEnter: requireCore,
