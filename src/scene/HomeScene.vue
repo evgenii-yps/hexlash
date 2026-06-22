@@ -19,6 +19,7 @@
 <script setup>
 import { onMounted, onBeforeUnmount, watch, ref } from 'vue';
 import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildArena } from './buildArena.js';
 import { buildFighter } from './buildFighter.js';
 import { resolveBehavior } from '@/data/behavior.js';
@@ -36,16 +37,16 @@ const props = defineProps({
 const wrap = ref(null);
 const canvasEl = ref(null);
 
-let renderer, scene, camera, arena, fighter, resizeObserver, clock;
+let renderer, scene, camera, controls, arena, fighter, resizeObserver, clock;
 let onVisibility;
 let propGroup = null;
 let gridGroup = null;
 let ghostGroup = null;
 let arenaRefs = null;
 let reduced = false;
-// Fixed camera base + look target; the sway is a small offset on top.
+// Initial 3/4 camera placement; OrbitControls derives azimuth/polar/distance
+// from this + the target (the fighter) on first update().
 const CAM_BASE = new THREE.Vector3(4.6, 5.2, 6.7);
-const CAM_LOOK = new THREE.Vector3(0, 1.05, 0.15);
 
 function lowPowerDevice() {
   const cores = navigator.hardwareConcurrency || 8;
@@ -100,7 +101,6 @@ onMounted(() => {
 
   camera = new THREE.PerspectiveCamera(42, w / h, 0.1, 100);
   camera.position.copy(CAM_BASE);
-  camera.lookAt(CAM_LOOK);
 
   // Lighting — same recipe as the arena (one warm key from top-front + cool fill).
   const key = new THREE.DirectionalLight(0xfff2e8, 2.3);
@@ -156,6 +156,35 @@ onMounted(() => {
   fighter.setReducedMotion(reduced);
   scene.add(fighter.group);
 
+  // --- Free orbit around the FIGHTER (home only — never added to the combat
+  //     scene). Mouse: drag = orbit, wheel = zoom. Touch: one-finger drag =
+  //     orbit, pinch = zoom (pan disabled). Soft damping.
+  controls = new OrbitControls(camera, renderer.domElement);
+  // Orbit pivot = the fighter's chest/core so it stays in focus while turning.
+  controls.target.set(fighter.group.position.x, arena.refs.topY + 1.1, fighter.group.position.z);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08; // soft, not snappy
+  controls.enablePan = false; // pivot stays locked on the fighter
+  controls.rotateSpeed = 0.9;
+  controls.zoomSpeed = 0.9;
+  // Zoom corridor: near enough not to clip into the fighter, far enough that the
+  // slab never gets lost in the void.
+  controls.minDistance = 3.5;
+  controls.maxDistance = 12;
+  // Vertical clamp (the safety rail): top = pleasant high 3/4 (NOT straight
+  // overhead); bottom stays comfortably above the slab so the camera can never
+  // dip under the plate / see the suppressed seam from below. With the target at
+  // chest height (~1.6) and maxPolar 1.4 (~80°), the camera y = target.y +
+  // d·cos(polar) ≥ ~1.6 + 0.17·d — always well above the slab top (0.5).
+  controls.minPolarAngle = 0.3; // ~17° from vertical
+  controls.maxPolarAngle = 1.4; // ~80° — just above horizontal, never under
+  // Horizontal: full 360° (no azimuth limit — no underside sideways).
+  // Gentle intro auto-orbit that hands control to the player on first interaction.
+  controls.autoRotate = !reduced;
+  controls.autoRotateSpeed = 0.6;
+  controls.addEventListener('start', () => { controls.autoRotate = false; });
+  controls.update();
+
   rebuildProps();
 
   // --- Render loop. FPS-capped; elapsed time drives the idle + the camera sway.
@@ -167,18 +196,7 @@ onMounted(() => {
     lastFrame = time;
     const t = clock.getElapsedTime();
 
-    // Gentle fixed-camera sway (no orbit / no manual control). Off under reduced motion.
-    if (!reduced) {
-      camera.position.set(
-        CAM_BASE.x + Math.sin(t * 0.16) * 0.22,
-        CAM_BASE.y + Math.sin(t * 0.11) * 0.10,
-        CAM_BASE.z + Math.cos(t * 0.13) * 0.16,
-      );
-    } else {
-      camera.position.copy(CAM_BASE);
-    }
-    camera.lookAt(CAM_LOOK);
-
+    controls.update(); // damping + intro auto-orbit (until first interaction)
     fighter?.update(t, camera);
     renderer.render(scene, camera);
   };
@@ -212,6 +230,7 @@ onBeforeUnmount(() => {
   if (resizeObserver) resizeObserver.disconnect();
   if (onVisibility) document.removeEventListener('visibilitychange', onVisibility);
   if (renderer) renderer.setAnimationLoop(null);
+  if (controls) controls.dispose();
   if (propGroup) { scene.remove(propGroup); disposeGroup(propGroup); }
   if (gridGroup) { scene.remove(gridGroup); disposeGroup(gridGroup); }
   if (ghostGroup) { scene.remove(ghostGroup); disposeGroup(ghostGroup); }
