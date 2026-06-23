@@ -24,17 +24,6 @@
 
     <!-- Home / arrange chrome overlay -->
     <div v-else class="hs-overlay">
-      <!-- fighter nameplate — "this is MY fighter" (callsign ≠ core name) -->
-      <div class="hs-plate" :class="{ linkable: !coreName }" :style="{ left: '50%', top: '300px' }">
-        <div class="pn">{{ callsign }}</div>
-        <div class="pm" v-if="coreName">
-          <span class="ln" /><span>NÆ-04</span><i>◆</i><span>{{ coreName }} CORE</span><span class="ln" />
-        </div>
-        <div class="pm" v-else @click="goSelectCore">
-          <span class="ln" /><span>NO CORE</span><i>◆</i><span class="core-sel">SELECT YOUR CORE</span><span class="ln" />
-        </div>
-      </div>
-
       <!-- ───────── normal home chrome ───────── -->
       <template v-if="!arrange">
         <div class="hs-top">
@@ -60,21 +49,16 @@
           </div>
         </div>
 
-        <!-- bottom dock -->
+        <!-- bottom dock — one centered row: TRAIN · SHOP · FIGHT · PROFILE · CUSTOMIZE.
+             Four uniform matte tiles flank the hero FIGHT (the one pink/glow mark). -->
         <div class="hs-dock">
-          <div class="hs-navset">
-            <div class="hs-tile" @click="onTrain">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18l5-5 4 4 7-8" /><path d="M16 9h4v4" /></svg>
-              <div><div class="tl-n">Train</div><div class="tl-s">TUNE FACETS</div></div>
-            </div>
-            <div class="hs-tile" @click="onShop">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M5 8h14l-1 12H6L5 8Z" /><path d="M9 8V6a3 3 0 0 1 6 0v2" /></svg>
-              <div><div class="tl-n">Shop</div><div class="tl-s">DECOR · MORE</div></div>
-            </div>
-            <div class="hs-tile" @click="onProfile">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></svg>
-              <div><div class="tl-n">Profile</div><div class="tl-s">WALLET · ACCT</div></div>
-            </div>
+          <div class="hs-tile" @click="onTrain">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18l5-5 4 4 7-8" /><path d="M16 9h4v4" /></svg>
+            <div><div class="tl-n">Train</div><div class="tl-s">TUNE FACETS</div></div>
+          </div>
+          <div class="hs-tile" @click="onShop">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M5 8h14l-1 12H6L5 8Z" /><path d="M9 8V6a3 3 0 0 1 6 0v2" /></svg>
+            <div><div class="tl-n">Shop</div><div class="tl-s">DECOR · MORE</div></div>
           </div>
 
           <div class="hs-fight">
@@ -82,9 +66,13 @@
             <div class="fsub">Send your fighter to the arena</div>
           </div>
 
-          <div class="hs-custom" @click="onCustomize">
+          <div class="hs-tile" @click="onProfile">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></svg>
+            <div><div class="tl-n">Profile</div><div class="tl-s">WALLET · ACCT</div></div>
+          </div>
+          <div class="hs-tile" @click="onCustomize">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 2l8.5 5v10L12 22 3.5 17V7L12 2Z" /><path d="M12 8v8M8 10l8 4M16 10l-8 4" opacity="0.6" /></svg>
-            <div><div class="cu-n">Customize<br>Space</div><div class="cu-s">ARRANGE PROPS</div></div>
+            <div><div class="tl-n">Customize</div><div class="tl-s">ARRANGE PROPS</div></div>
           </div>
         </div>
       </template>
@@ -136,14 +124,11 @@ const view = ref('home'); // 'home' | 'shop'
 const arrange = ref(false);
 
 // Player fighter from the existing pre-fight store. No core picked → default
-// fighter (canon pink) + a "select your core" path on the nameplate.
+// fighter (canon pink). Drives the 3D core hue only.
 const coreId = computed(() => store.getters['prefight/selectedCoreId'] || null);
 const core = computed(() => (coreId.value ? getCore(coreId.value) : null));
 const coreHue = computed(() => core.value?.hue || '#FF0069');
-const coreName = computed(() => core.value?.name || null); // ONSLAUGHT / RAIDER / BULWARK / AMBUSH
 
-// Callsign is a free name, deliberately NOT a core name. Placeholder for the shell.
-const callsign = 'GHOST';
 const handle = 'GHOST_0xA4'; // placeholder profile handle
 const balance = '2,480'; // placeholder $HEX balance (stub — no economy wired)
 
@@ -191,7 +176,6 @@ function onTrain() { router.push('/play/upgrade'); }
 function onShop() { view.value = 'shop'; }
 function onCustomize() { arrange.value = true; }
 function onProfile() { /* no profile screen in this shell yet — inert */ }
-function goSelectCore() { router.push('/play'); }
 
 // Arrange — both exit the mode; placement is a visual stub (nothing persists).
 function onArrangeCancel() { arrange.value = false; }

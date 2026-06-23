@@ -25,9 +25,8 @@
 
 /* the chrome overlay passes clicks through to nothing; interactive bits re-enable */
 .hs-overlay { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
-.hs-prof, .hs-tile, .hs-fight .fbtn, .hs-custom,
-.hs-abtn, .hs-slot, .sp-back, .sp-btn, .sp-tabs .tb,
-.hs-plate.linkable .pm { pointer-events: auto; }
+.hs-prof, .hs-tile, .hs-fight .fbtn,
+.hs-abtn, .hs-slot, .sp-back, .sp-btn, .sp-tabs .tb { pointer-events: auto; }
 
 /* ── top bar ── */
 .hs-top { position: absolute; top: 0; left: 0; right: 0; height: 74px; z-index: 5;
@@ -62,21 +61,10 @@
   border: 1px solid var(--line); padding: 2px 6px; }
 .hs-stub .st-s { font-family: var(--hs-mono); font-size: 10px; letter-spacing: 0.06em; color: var(--muted); line-height: 1.5; }
 
-/* ── fighter nameplate (callsign + core line; callsign ≠ core name) ── */
-.hs-plate { position: absolute; z-index: 4; transform: translateX(-50%); text-align: center; }
-.hs-plate .pn { font-weight: 800; font-size: 18px; letter-spacing: 0.06em; text-transform: uppercase;
-  text-shadow: 0 0 12px rgba(0, 0, 0, 0.8); }
-.hs-plate .pm { font-family: var(--hs-mono); font-size: 10px; letter-spacing: 0.26em; color: #b9b6bd;
-  margin-top: 4px; display: flex; align-items: center; gap: 8px; justify-content: center; }
-.hs-plate .pm i { color: var(--acc); font-style: normal; }
-.hs-plate .pm .ln { width: 18px; height: 1px; background: rgba(255, 255, 255, 0.25); }
-.hs-plate.linkable .pm { cursor: pointer; }
-.hs-plate.linkable .pm .core-sel { color: var(--acc); border-bottom: 1px solid var(--acc); }
-
-/* ── bottom dock ── */
+/* ── bottom dock — one centered row; four uniform matte tiles flank the hero FIGHT ── */
 .hs-dock { position: absolute; left: 0; right: 0; bottom: 0; height: 148px; z-index: 5;
-  display: flex; align-items: flex-end; justify-content: space-between; padding: 0 48px 30px; }
-.hs-navset { display: flex; gap: 12px; }
+  display: flex; align-items: flex-end; justify-content: center; gap: 14px; padding: 0 48px 30px; }
+/* secondary buttons — TRAIN / SHOP / PROFILE / CUSTOMIZE: one size, one matte chrome (no pink) */
 .hs-tile { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; width: 118px; height: 96px;
   padding: 14px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.022); cursor: pointer;
   transition: background 0.15s, border-color 0.15s; }
@@ -85,24 +73,15 @@
 .hs-tile .tl-n { font-weight: 700; font-size: 16px; letter-spacing: 0.05em; text-transform: uppercase; }
 .hs-tile .tl-s { font-family: var(--hs-mono); font-size: 9px; letter-spacing: 0.14em; color: var(--muted); margin-top: -6px; }
 
-/* FIGHT — the hero action (the ONE glowing button on the screen) */
-.hs-fight { display: flex; flex-direction: column; align-items: center; gap: 10px; }
-.hs-fight .fbtn { display: flex; align-items: center; gap: 20px; padding: 22px 70px; cursor: pointer;
-  background: var(--acc); color: #fff; font-weight: 900; font-size: 38px; letter-spacing: 0.14em; text-transform: uppercase;
-  clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px);
+/* FIGHT — centre of the row, a bit bigger than the tiles; the ONE pink + glowing mark */
+.hs-fight { display: flex; flex-direction: column; align-items: center; gap: 9px; }
+.hs-fight .fbtn { display: flex; align-items: center; justify-content: center; gap: 16px; height: 104px; padding: 0 44px; cursor: pointer;
+  background: var(--acc); color: #fff; font-weight: 900; font-size: 26px; letter-spacing: 0.12em; text-transform: uppercase;
+  clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
   box-shadow: 0 0 40px rgba(var(--acc-rgb), 0.45); transition: box-shadow 0.15s, transform 0.12s; border: 0; }
 .hs-fight .fbtn:hover { box-shadow: 0 0 60px rgba(var(--acc-rgb), 0.65); transform: translateY(-2px); }
-.hs-fight .fbtn .arr { font-size: 30px; }
-.hs-fight .fsub { font-family: var(--hs-mono); font-size: 11px; letter-spacing: 0.24em; color: #b9b6bd; text-transform: uppercase; }
-
-/* customize-space hook button (matte) */
-.hs-custom { display: flex; align-items: center; gap: 11px; padding: 16px 22px; height: 96px;
-  border: 1px solid rgba(var(--acc-rgb), 0.3); background: rgba(var(--acc-rgb), 0.05); cursor: pointer;
-  align-self: flex-end; transition: background 0.15s; }
-.hs-custom:hover { background: rgba(var(--acc-rgb), 0.1); }
-.hs-custom svg { width: 24px; height: 24px; color: var(--acc); }
-.hs-custom .cu-n { font-weight: 700; font-size: 16px; letter-spacing: 0.05em; text-transform: uppercase; line-height: 1.05; }
-.hs-custom .cu-s { font-family: var(--hs-mono); font-size: 9px; letter-spacing: 0.14em; color: var(--muted); }
+.hs-fight .fbtn .arr { font-size: 22px; }
+.hs-fight .fsub { font-family: var(--hs-mono); font-size: 11px; letter-spacing: 0.22em; color: #b9b6bd; text-transform: uppercase; }
 
 /* ── ARRANGE MODE ── */
 .hs-arrtop { position: absolute; top: 0; left: 0; right: 0; height: 74px; z-index: 7;

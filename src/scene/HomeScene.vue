@@ -154,6 +154,13 @@ onMounted(() => {
     fighter.group.rotation.y = Math.atan2(-dx, -dz);
   }
   fighter.setReducedMotion(reduced);
+  // SUPPRESS the over-head HP plate on the home stage — same external approach as
+  // the rift glow above (reach in after build, never touch the combat file). The
+  // HP plate is the only Sprite added DIRECTLY to the fighter group (buildFighter
+  // attaches hpUI.mesh to group; the core halo is a Sprite nested under torso, so
+  // it's untouched). Nothing in fighter.update() re-shows it, so visible=false
+  // sticks. In the arena the plate is built/shown as before.
+  fighter.group.children.forEach((o) => { if (o.isSprite) o.visible = false; });
   scene.add(fighter.group);
 
   // --- Free orbit around the FIGHTER (home only — never added to the combat
