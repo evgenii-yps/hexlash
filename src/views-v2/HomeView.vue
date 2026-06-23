@@ -38,9 +38,7 @@
       <!-- ───────── normal home chrome ───────── -->
       <template v-if="!arrange">
         <div class="hs-top">
-          <div class="hs-brand">
-            <span class="season">SEASON 0</span>
-          </div>
+          <div class="hs-brand" />
           <div class="hs-topr">
             <div class="hs-bal"><span class="dia" /><b>{{ balance }}</b>&nbsp;<i>$HEX</i></div>
             <div class="hs-prof" @click="onProfile">
@@ -48,14 +46,6 @@
               <span class="av"><span /></span>
             </div>
           </div>
-        </div>
-
-        <!-- bind-account ribbon — lead with the benefit; wallet/email is secondary fine print -->
-        <div v-if="unbound" class="hs-bind">
-          <span class="dot" />
-          <span>Save your progress — <a @click="onLinkAccount">link an account</a> so you don't lose your fighter &amp; space</span>
-          <span class="wallet-note">wallet or email</span>
-          <span class="x" @click="bindDismissed = true">✕</span>
         </div>
 
         <!-- honest SOON stubs -->
@@ -68,12 +58,6 @@
             <div class="st-h"><b>Leaderboard</b><span class="soon">SOON</span></div>
             <div class="st-s">Season 0 ranks<br>open at launch.</div>
           </div>
-        </div>
-
-        <!-- empty-state "make it yours" hook -->
-        <div v-if="homeState === 'empty'" class="hs-hook" :style="{ right: '300px', top: '372px' }">
-          <div class="hh">Your space.</div>
-          <div class="hsx">A bare floor, a fighter, a core. Drop in props and make it yours →</div>
         </div>
 
         <!-- bottom dock -->
@@ -102,12 +86,6 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 2l8.5 5v10L12 22 3.5 17V7L12 2Z" /><path d="M12 8v8M8 10l8 4M16 10l-8 4" opacity="0.6" /></svg>
             <div><div class="cu-n">Customize<br>Space</div><div class="cu-s">ARRANGE PROPS</div></div>
           </div>
-        </div>
-
-        <!-- dev-only state preview (empty/lived have no data source yet) -->
-        <div class="hs-statedev">
-          <button type="button" :class="{ on: homeState === 'empty' }" @click="homeState = 'empty'">EMPTY</button>
-          <button type="button" :class="{ on: homeState === 'lived' }" @click="homeState = 'lived'">LIVED</button>
         </div>
       </template>
 
@@ -152,12 +130,10 @@ import '@/styles/home.css';
 
 const router = useRouter();
 
-// View + state. homeState (empty/lived) has no data source yet → defaults empty,
-// flipped by the dev preview buttons. arrange / shop are entered from the dock.
+// View + state. The home renders a single fixed state (the empty floor — no
+// ownership data source yet). arrange / shop are entered from the dock.
 const view = ref('home'); // 'home' | 'shop'
-const homeState = ref('empty'); // 'empty' | 'lived'
 const arrange = ref(false);
-const bindDismissed = ref(false);
 
 // Player fighter from the existing pre-fight store. No core picked → default
 // fighter (canon pink) + a "select your core" path on the nameplate.
@@ -171,22 +147,13 @@ const callsign = 'GHOST';
 const handle = 'GHOST_0xA4'; // placeholder profile handle
 const balance = '2,480'; // placeholder $HEX balance (stub — no economy wired)
 
-// New player hasn't linked an account yet (no auth state in this shell).
-const unbound = computed(() => homeState.value === 'empty' && !bindDismissed.value);
-
-// Fixed default floor sets per state (from the design reference home_screen.jsx).
+// Fixed default floor sets (from the design reference home_screen.jsx). The home
+// always renders the `empty` set — a couple of default fixtures so the bare floor
+// reads as an inhabitable space, not a void — and the `arrange`-mode set.
 const SETS = {
   empty: [
     { kind: 'corePlinth', u: 0.27, v: 0.42 },
     { kind: 'banner', u: 0.75, v: 0.40 },
-  ],
-  lived: [
-    { kind: 'corePlinth', u: 0.23, v: 0.40 },
-    { kind: 'banner', u: 0.81, v: 0.36 },
-    { kind: 'crates', u: 0.17, v: 0.66 },
-    { kind: 'arch', u: 0.84, v: 0.64 },
-    { kind: 'plinth', u: 0.67, v: 0.50 },
-    { kind: 'dais', u: 0.50, v: 0.84 },
   ],
   arrange: [
     { kind: 'corePlinth', u: 0.24, v: 0.40 },
@@ -194,7 +161,7 @@ const SETS = {
     { kind: 'crates', u: 0.18, v: 0.66 },
   ],
 };
-const placements = computed(() => (arrange.value ? SETS.arrange : SETS[homeState.value]));
+const placements = computed(() => (arrange.value ? SETS.arrange : SETS.empty));
 
 // Arrange snap-grid + ghost (the piece being placed). Visual stub — no save.
 const ghost = computed(() => (arrange.value ? { kind: 'dais', u: 0.56, v: 0.70 } : null));
@@ -224,7 +191,6 @@ function onTrain() { router.push('/play/upgrade'); }
 function onShop() { view.value = 'shop'; }
 function onCustomize() { arrange.value = true; }
 function onProfile() { /* no profile screen in this shell yet — inert */ }
-function onLinkAccount() { /* account linking has no screen yet — stub */ }
 function goSelectCore() { router.push('/play'); }
 
 // Arrange — both exit the mode; placement is a visual stub (nothing persists).

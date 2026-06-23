@@ -25,16 +25,16 @@
 
 /* the chrome overlay passes clicks through to nothing; interactive bits re-enable */
 .hs-overlay { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
-.hs-prof, .hs-bind a, .hs-bind .x, .hs-tile, .hs-fight .fbtn, .hs-custom,
-.hs-abtn, .hs-slot, .hs-statedev button, .sp-back, .sp-btn, .sp-tabs .tb,
+.hs-prof, .hs-tile, .hs-fight .fbtn, .hs-custom,
+.hs-abtn, .hs-slot, .sp-back, .sp-btn, .sp-tabs .tb,
 .hs-plate.linkable .pm { pointer-events: auto; }
 
 /* ── top bar ── */
 .hs-top { position: absolute; top: 0; left: 0; right: 0; height: 74px; z-index: 5;
   display: flex; align-items: center; justify-content: space-between; padding: 0 48px; }
+/* .hs-brand is an empty spacer on the home (logo + SEASON 0 label removed); the
+   shop reuses it for its "SHOP" label, so the rule + .season styling stay. */
 .hs-brand { display: flex; align-items: center; gap: 14px; }
-/* logo (MK svg + HEXLASH wordmark) removed — only the season label remains, so
-   no leading divider on it. */
 .hs-brand .season { font-family: var(--hs-mono); font-size: 10px; letter-spacing: 0.28em; color: var(--muted);
   text-transform: uppercase; }
 .hs-topr { display: flex; align-items: center; gap: 14px; }
@@ -50,18 +50,6 @@
 .hs-prof .av { width: 30px; height: 30px; background: linear-gradient(135deg, #2a3140, #161b24);
   border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; }
 .hs-prof .av span { width: 9px; height: 9px; background: var(--acc); transform: rotate(45deg); }
-
-/* ── bind-account ribbon (lead with the benefit, not the crypto term) ── */
-.hs-bind { position: absolute; top: 74px; left: 50%; transform: translateX(-50%); z-index: 5;
-  display: flex; align-items: center; gap: 14px; padding: 9px 18px;
-  border: 1px solid rgba(var(--acc-rgb), 0.32); background: rgba(var(--acc-rgb), 0.06);
-  font-family: var(--hs-mono); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #e6dde2; }
-/* matte dot — NO glow */
-.hs-bind .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--acc); }
-.hs-bind a { color: #fff; font-weight: 700; text-decoration: none; border-bottom: 1px solid var(--acc);
-  padding-bottom: 1px; cursor: pointer; }
-.hs-bind .wallet-note { color: var(--muted); text-transform: none; letter-spacing: 0.06em; font-size: 10px; }
-.hs-bind .x { color: var(--muted); margin-left: 4px; cursor: pointer; font-size: 13px; }
 
 /* ── left rail stubs (honest SOON) ── */
 .hs-rail { position: absolute; left: 48px; top: 50%; transform: translateY(-50%); z-index: 5;
@@ -84,12 +72,6 @@
 .hs-plate .pm .ln { width: 18px; height: 1px; background: rgba(255, 255, 255, 0.25); }
 .hs-plate.linkable .pm { cursor: pointer; }
 .hs-plate.linkable .pm .core-sel { color: var(--acc); border-bottom: 1px solid var(--acc); }
-
-/* ── empty-state decorate hook ── */
-.hs-hook { position: absolute; z-index: 4; display: flex; flex-direction: column; gap: 6px;
-  padding: 14px 18px; border: 1px dashed rgba(var(--acc-rgb), 0.4); background: rgba(var(--acc-rgb), 0.04); max-width: 230px; }
-.hs-hook .hh { font-weight: 800; font-size: 17px; letter-spacing: 0.03em; text-transform: uppercase; }
-.hs-hook .hsx { font-family: var(--hs-mono); font-size: 11px; color: #bcb9c2; line-height: 1.5; letter-spacing: 0.04em; }
 
 /* ── bottom dock ── */
 .hs-dock { position: absolute; left: 0; right: 0; bottom: 0; height: 148px; z-index: 5;
@@ -159,12 +141,6 @@
 .hs-slot .cnt { position: absolute; bottom: 8px; right: 9px; font-family: var(--hs-mono); font-size: 9px; color: var(--muted); }
 .hs-slot.locked { opacity: 0.5; }
 .hs-slot.locked .sn { color: var(--muted); }
-
-/* tiny dev state switcher (preview only — empty/lived have no data source yet) */
-.hs-statedev { position: absolute; top: 84px; right: 18px; z-index: 7; display: flex; gap: 6px; pointer-events: none; }
-.hs-statedev button { pointer-events: auto; font-family: var(--hs-mono); font-size: 9px; letter-spacing: 0.12em;
-  color: rgba(255, 255, 255, 0.5); background: rgba(8, 10, 18, 0.5); border: 1px solid var(--line); padding: 4px 8px; cursor: pointer; }
-.hs-statedev button.on { color: #fff; border-color: var(--acc); }
 
 /* ════════════════ SHOP · DECOR (zero glow) ════════════════ */
 .sp-bg { position: absolute; inset: 0; z-index: 1;
