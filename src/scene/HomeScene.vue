@@ -43,7 +43,7 @@ let propGroup = null;
 let gridGroup = null;
 let ghostGroup = null;
 let arenaRefs = null;
-let garland = null;
+let lamps = null;
 let reduced = false;
 // Initial 3/4 camera placement; OrbitControls derives azimuth/polar/distance
 // from this + the target (the fighter) on first update().
@@ -55,138 +55,104 @@ function lowPowerDevice() {
   return cores <= 4 || mem <= 4;
 }
 
-// ───────────────────────── Overhead lamp garland ─────────────────────────
-// Atmospheric "string lights over the pit" — warm, DIM emissive dots (fake
-// glowing bulbs, NOT real lights: MeshBasic dots + faint additive halos, no
-// PointLight), strung on thin dark catenary wires high above the fighter to
-// fill the empty top of the frame. Discipline: the fighter core stays the only
-// bright/real glow; these are tiny amber accents that never light the slab and
-// are never pink. All knobs live here — tweak on preview in one place. If in
-// doubt about brightness, go DIMMER (raise bulbOpacity/haloOpacity to brighten).
-const GARLAND = {
-  seed: 7314, // fixed → identical messy layout every reload
-  strands: 3, // crisscrossing wire runs (robust across the 360° orbit)
-  bulbsPerStrand: 7, // lamps per wire, irregular spacing + heights
-  ringRadius: 5.4, // anchors scatter on a high circle of this radius (slab is ±3)
-  height: 6.4, // Y of the anchor points (fighter top ~2.5 → well above)
-  heightJitter: 0.9, // ± per-anchor vertical scatter
-  sag: 1.9, // mid-span droop depth of each wire
-  sagJitter: 0.7, // ± per-strand droop variation
-  bulbRadius: 0.07, // lamp size (small = reads as a dim dot)
-  bulbColor: 0xff9a4a, // warm amber (orange-yellow — NOT pink, NOT white)
-  bulbColorJitter: 0.1, // tiny per-bulb hue/brightness scatter
-  bulbOpacity: 0.7, // base dot opacity (dim; raise to brighten)
-  haloOpacity: 0.14, // faint warm halo around each bulb (additive)
-  haloScale: 5.0, // halo diameter as a multiple of the bulb diameter
-  wireColor: 0x06060b, // thin dark wire
-  wireOpacity: 0.55,
-  flicker: 0.1, // per-bulb opacity wobble amplitude (0 = steady)
-  flickerSpeed: 1.6,
-  sway: 0.025, // gentle whole-garland sway (radians)
-  swaySpeed: 0.45,
+// ─────────────────────── Overhead industrial dish lamps ───────────────────────
+// Workshop / gym "dish" lamps hanging from the ceiling: a dark low-poly reflector
+// (open cone) on a thin vertical rod, a warm amber bulb inside, and — the point
+// this time — a REAL warm PointLight per lamp that actually pools onto the slab +
+// fighter, so the scene sits in a lit room instead of floating in black.
+//
+// Discipline frame: the lamp light is warm, soft and DIM — a gentle amber room
+// fill. The fighter core stays the ONLY bright accent and the only cold/pink one:
+// warm even fill vs. one sharp cold pink point. The fill must never out-bright or
+// recolour the core (the core halo is additive/constant, so light can't tint it;
+// just keep light.intensity low). All knobs live in LAMPS — tune on preview in one
+// place. Default leans DIM (easier to raise than to rescue the discipline). A few
+// lamps in a calm spread over the slab — industrial lighting, NOT a garland.
+const LAMPS = {
+  ceilingY: 8.0, // Y where the rods attach up top (above the frame)
+  wire: 1.6, // base rod length (ceiling → shade); per-lamp `drop` adds to it
+  shadeRadius: 0.55, // reflector opening radius
+  shadeHeight: 0.5, // reflector depth
+  shadeColor: 0x161a24, // dark matte outer shell (arena family)
+  rodColor: 0x0c0f16, // thin hanger rod
+  rodRadius: 0.018,
+  bulbRadius: 0.12, // warm glowing element inside the shade
+  bulbColor: 0xffb368, // warm amber bulb (emissive dot, NOT pink/white)
+  bulbOpacity: 0.95,
+  light: {
+    color: 0xffb368, // warm amber — matches the bulb
+    intensity: 16, // DIM by default — raise on preview if the room is too dark
+    distance: 18, // falloff radius
+    decay: 2, // physical falloff
+  },
+  // Calm spread over the slab (±3 X, ±2 Z); `drop` staggers hang height a touch.
+  positions: [
+    { x: -1.9, z: -0.5, drop: 0.0 },
+    { x: 1.9, z: 0.5, drop: 0.7 },
+    { x: 0.1, z: -1.5, drop: 0.3 },
+    { x: -0.3, z: 1.4, drop: 1.0 },
+  ],
+  flicker: 0.05, // gentle light-intensity wobble (0 = dead steady)
+  flickerSpeed: 1.3,
 };
 
-function mulberry32(a) {
-  return function () {
-    a |= 0; a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-// Soft warm radial sprite for the bulb halo (one shared texture).
-function makeHaloTexture() {
-  const s = 64;
-  const cv = document.createElement('canvas');
-  cv.width = cv.height = s;
-  const ctx = cv.getContext('2d');
-  const g = ctx.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
-  g.addColorStop(0, 'rgba(255,255,255,1)');
-  g.addColorStop(0.35, 'rgba(255,235,200,0.5)');
-  g.addColorStop(1, 'rgba(255,220,180,0)');
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, s, s);
-  const tex = new THREE.CanvasTexture(cv);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  return tex;
-}
-
-// Build the garland → { group, tick(t)|null, dispose }. reduced ⇒ tick=null
-// (static, no flicker/sway). Cheap: shared bulb geometry + halo texture/material,
-// a handful of line/sphere/sprite objects total — fine on mobile.
-function buildGarland(opts, reduced) {
+// Build the lamps → { group, tick(t)|null, dispose }. reduced ⇒ tick=null (steady
+// light, no flicker). Cheap: shared shade/bulb geometry + materials, one PointLight
+// per lamp, no shadow maps (pure fill) — fine on mobile.
+function buildLamps(opts, reduced) {
   const group = new THREE.Group();
-  const rng = mulberry32(opts.seed);
-  const haloTex = makeHaloTexture();
-  const haloMat = new THREE.SpriteMaterial({
-    map: haloTex, color: opts.bulbColor, transparent: true, opacity: opts.haloOpacity,
-    blending: THREE.AdditiveBlending, depthWrite: false, fog: false,
+  const shadeGeo = new THREE.ConeGeometry(opts.shadeRadius, opts.shadeHeight, 16, 1, true);
+  const bulbGeo = new THREE.SphereGeometry(opts.bulbRadius, 10, 8);
+  const shadeMat = new THREE.MeshStandardMaterial({
+    color: opts.shadeColor, flatShading: true, roughness: 0.9, metalness: 0.2, side: THREE.DoubleSide,
   });
-  const bulbGeo = new THREE.SphereGeometry(opts.bulbRadius, 8, 6);
-  const wireGeos = [];
-  const wireMats = [];
-  const bulbs = []; // { mat, phase }
+  const rodMat = new THREE.MeshStandardMaterial({ color: opts.rodColor, roughness: 0.8, metalness: 0.3 });
+  const bulbMat = new THREE.MeshBasicMaterial({ color: opts.bulbColor, transparent: true, opacity: opts.bulbOpacity });
+  const rodGeos = []; // per-lamp (length varies with drop)
+  const lights = []; // { light, base, phase }
 
-  const lerp = (a, b, t) => a + (b - a) * t;
-  const onStrand = (A, B, sag, t) => new THREE.Vector3(
-    lerp(A.x, B.x, t), lerp(A.y, B.y, t) - sag * 4 * t * (1 - t), lerp(A.z, B.z, t),
-  );
+  opts.positions.forEach((pos, i) => {
+    const shadeTopY = opts.ceilingY - opts.wire - (pos.drop || 0);
 
-  for (let s = 0; s < opts.strands; s++) {
-    const aA = rng() * Math.PI * 2;
-    const aB = aA + Math.PI + (rng() - 0.5) * 1.3; // roughly opposite → crosses centre
-    const rA = opts.ringRadius * (0.85 + rng() * 0.3);
-    const rB = opts.ringRadius * (0.85 + rng() * 0.3);
-    const A = new THREE.Vector3(Math.cos(aA) * rA, opts.height + (rng() - 0.5) * 2 * opts.heightJitter, Math.sin(aA) * rA);
-    const B = new THREE.Vector3(Math.cos(aB) * rB, opts.height + (rng() - 0.5) * 2 * opts.heightJitter, Math.sin(aB) * rB);
-    const sag = opts.sag + (rng() - 0.5) * 2 * opts.sagJitter;
+    // reflector — cone apex up at shadeTopY, wide opening facing down
+    const shade = new THREE.Mesh(shadeGeo, shadeMat);
+    shade.position.set(pos.x, shadeTopY - opts.shadeHeight / 2, pos.z);
+    group.add(shade);
 
-    const SEG = 26;
-    const pts = [];
-    for (let i = 0; i <= SEG; i++) pts.push(onStrand(A, B, sag, i / SEG));
-    const wGeo = new THREE.BufferGeometry().setFromPoints(pts);
-    const wMat = new THREE.LineBasicMaterial({ color: opts.wireColor, transparent: true, opacity: opts.wireOpacity });
-    group.add(new THREE.Line(wGeo, wMat));
-    wireGeos.push(wGeo);
-    wireMats.push(wMat);
+    // hanger rod — ceiling → shade apex
+    const rodLen = opts.ceilingY - shadeTopY;
+    const rodGeo = new THREE.CylinderGeometry(opts.rodRadius, opts.rodRadius, rodLen, 6);
+    rodGeos.push(rodGeo);
+    const rod = new THREE.Mesh(rodGeo, rodMat);
+    rod.position.set(pos.x, shadeTopY + rodLen / 2, pos.z);
+    group.add(rod);
 
-    for (let b = 0; b < opts.bulbsPerStrand; b++) {
-      const t = THREE.MathUtils.clamp(
-        (b + 0.5) / opts.bulbsPerStrand + (rng() - 0.5) * (0.7 / opts.bulbsPerStrand), 0.03, 0.97,
-      );
-      const p = onStrand(A, B, sag, t);
-      p.y -= rng() * 0.18; // hang slightly off the wire (uneven)
-      const c = new THREE.Color(opts.bulbColor);
-      const j = (rng() - 0.5) * 2 * opts.bulbColorJitter;
-      c.offsetHSL(j * 0.03, 0, j * 0.5); // tiny hue + brightness scatter
-      const mat = new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: opts.bulbOpacity, depthWrite: false });
-      const m = new THREE.Mesh(bulbGeo, mat);
-      m.position.copy(p);
-      group.add(m);
-      const halo = new THREE.Sprite(haloMat);
-      halo.position.copy(p);
-      halo.scale.setScalar(opts.bulbRadius * opts.haloScale);
-      group.add(halo);
-      bulbs.push({ mat, phase: rng() * Math.PI * 2 });
-    }
-  }
+    // warm bulb inside the shade
+    const bulbY = shadeTopY - opts.shadeHeight * 0.55;
+    const bulb = new THREE.Mesh(bulbGeo, bulbMat);
+    bulb.position.set(pos.x, bulbY, pos.z);
+    group.add(bulb);
+
+    // REAL warm light — soft amber pool on the slab + fighter (no shadows = cheap)
+    const light = new THREE.PointLight(opts.light.color, opts.light.intensity, opts.light.distance, opts.light.decay);
+    light.position.set(pos.x, bulbY - 0.05, pos.z);
+    group.add(light);
+    lights.push({ light, base: opts.light.intensity, phase: i * 1.7 });
+  });
 
   const tick = reduced ? null : (t) => {
-    group.rotation.z = Math.sin(t * opts.swaySpeed) * opts.sway;
-    group.rotation.x = Math.sin(t * opts.swaySpeed * 0.7 + 1.3) * opts.sway * 0.5;
-    for (const b of bulbs) {
-      b.mat.opacity = opts.bulbOpacity * (1 - opts.flicker * 0.5 + opts.flicker * 0.5 * Math.sin(t * opts.flickerSpeed + b.phase));
+    for (const l of lights) {
+      l.light.intensity = l.base * (1 - opts.flicker * 0.5 + opts.flicker * 0.5 * Math.sin(t * opts.flickerSpeed + l.phase));
     }
   };
 
   const dispose = () => {
+    shadeGeo.dispose();
     bulbGeo.dispose();
-    haloTex.dispose();
-    haloMat.dispose();
-    wireGeos.forEach((g) => g.dispose());
-    wireMats.forEach((m) => m.dispose());
-    bulbs.forEach((b) => b.mat.dispose());
+    shadeMat.dispose();
+    rodMat.dispose();
+    bulbMat.dispose();
+    rodGeos.forEach((g) => g.dispose());
   };
 
   return { group, tick, dispose };
@@ -276,10 +242,12 @@ onMounted(() => {
   seam.position.set(0, arena.refs.topY - 0.06, 0);
   scene.add(seam);
 
-  // Overhead lamp garland — warm dim string lights filling the empty top of the
-  // frame (see GARLAND knobs up top). Atmosphere only: never lights the slab.
-  garland = buildGarland(GARLAND, reduced);
-  scene.add(garland.group);
+  // Overhead industrial dish lamps — warm DIM amber room fill that actually lights
+  // the slab + fighter (see LAMPS knobs up top), so the scene isn't floating in
+  // black. The core stays the only bright/cold accent; lower light.intensity if it
+  // ever competes.
+  lamps = buildLamps(LAMPS, reduced);
+  scene.add(lamps.group);
 
   // --- Fighter: ONE idle construct on the slab. No foe (getFoePos → null) → it
   //     idles (buildFighter idlePose path); AI is never enabled. Behaviour is
@@ -355,7 +323,7 @@ onMounted(() => {
 
     controls.update(); // damping + intro auto-orbit (until first interaction)
     fighter?.update(t, camera);
-    garland?.tick?.(t); // gentle sway + flicker (null under reduced motion)
+    lamps?.tick?.(t); // gentle light flicker (null under reduced motion)
     renderer.render(scene, camera);
   };
   renderer.setAnimationLoop(loop);
@@ -392,7 +360,7 @@ onBeforeUnmount(() => {
   if (propGroup) { scene.remove(propGroup); disposeGroup(propGroup); }
   if (gridGroup) { scene.remove(gridGroup); disposeGroup(gridGroup); }
   if (ghostGroup) { scene.remove(ghostGroup); disposeGroup(ghostGroup); }
-  if (garland) { scene.remove(garland.group); garland.dispose(); }
+  if (lamps) { scene.remove(lamps.group); lamps.dispose(); }
   if (fighter) fighter.dispose();
   if (arena) arena.dispose();
   if (renderer) renderer.dispose();
