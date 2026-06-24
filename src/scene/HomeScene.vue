@@ -69,7 +69,8 @@ function lowPowerDevice() {
 // place. Default leans DIM (easier to raise than to rescue the discipline). A few
 // lamps in a calm spread over the slab — industrial lighting, NOT a garland.
 const LAMPS = {
-  ceilingY: 8.0, // Y where the rods attach up top (above the frame)
+  ceilingY: 7.3, // Y where the rods attach up top — master drop lever (lower ⇒ whole
+  //               fixture (rod+shade+bulb+light) slides down as one unit)
   wire: 1.6, // base rod length (ceiling → shade); per-lamp `drop` adds to it
   shadeRadius: 0.55, // reflector opening radius
   shadeHeight: 0.5, // reflector depth
