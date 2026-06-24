@@ -26,16 +26,10 @@
     <div v-else class="hs-overlay">
       <!-- ───────── normal home chrome ───────── -->
       <template v-if="!arrange">
-        <div class="hs-top">
-          <div class="hs-brand" />
-          <div class="hs-topr">
-            <div class="hs-bal"><span class="dia" /><b>{{ balance }}</b>&nbsp;<i>$HEX</i></div>
-            <div class="hs-prof" @click="onProfile">
-              <span class="hand">{{ handle }}</span>
-              <span class="av"><span /></span>
-            </div>
-          </div>
-        </div>
+        <!-- top bar intentionally empty on the home: the $HEX balance plaque and
+             the personality chip were inert placeholders (no live wallet/account)
+             and are deferred to Этап 2. The .hs-top bar itself is not rendered so
+             no empty spacer remains. (The shop keeps its own .hs-top.) -->
 
         <!-- honest SOON stubs -->
         <div class="hs-rail">
@@ -129,8 +123,7 @@ const coreId = computed(() => store.getters['prefight/selectedCoreId'] || null);
 const core = computed(() => (coreId.value ? getCore(coreId.value) : null));
 const coreHue = computed(() => core.value?.hue || '#FF0069');
 
-const handle = 'GHOST_0xA4'; // placeholder profile handle
-const balance = '2,480'; // placeholder $HEX balance (stub — no economy wired)
+const balance = '2,480'; // placeholder $HEX balance (stub — no economy wired); still shown in the shop
 
 // Fixed default floor sets (from the design reference home_screen.jsx). The home
 // always renders the `empty` set — a couple of default fixtures so the bare floor
