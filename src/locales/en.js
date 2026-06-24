@@ -126,6 +126,80 @@ export default {
     socialX: "X",
     socialDiscord: "Discord",
   },
+  // SHOP (/play/home → SHOP). Three tabs: Decor (live visual buy facade) +
+  // Currency / Specials (Stage-2 stubs behind the SOON flag). en-only.
+  shop: {
+    back: "← Back to Home",
+    title: "Shop",
+    unit: "$HEX",
+    soon: "Soon",
+    owned: "Owned",
+    buy: "Buy",
+    tabDecor: "Decor",
+    tabCurrency: "Currency",
+    tabSpecials: "Specials",
+    ledeDecor:
+      "Furnish your floor. Every piece is cut from the same low-poly stock as the arena — matte, dark, no neon. It's your ground; mark it. Decor is cosmetic only — it never touches a fight.",
+    ledeCurrency:
+      "$HEX unlocks decor, fighter skins and FX. Top up below. Cosmetics never touch the fight — no stat, no edge.",
+    ledeSpecials:
+      "Limited drops and starter kits. Time-boxed value — cosmetics only, never power.",
+    // decor sub-tabs
+    subDecor: "Decor",
+    subSkins: "Fighter Skins",
+    subFx: "FX",
+    subCores: "Cores",
+    tagNew: "New",
+    decor: {
+      banner: { name: "Sentry Banner", sub: "Standard · marks your ground" },
+      corePlinth: { name: "Core Plinth", sub: "Cradles a dormant core" },
+      dais: { name: "Hex Dais", sub: "Raised tile · a stage of your own" },
+      crates: { name: "Supply Cache", sub: "Stacked blocks · honest clutter" },
+      arch: { name: "Ward Arch", sub: "Gateway · frames the entrance" },
+    },
+    // currency
+    whatIsTitle: "What is $HEX",
+    whatIsBody:
+      "$HEX is the cosmetic currency — decor, skins, FX. Cosmetics never touch the fight: no stat, no edge, no pay-to-win.",
+    bestValue: "Best Value",
+    valueSuffix: "value",
+    currency: {
+      spark: { name: "Spark" },
+      fieldKit: { name: "Field Kit" },
+      cache: { name: "Cache" },
+      vault: { name: "Vault" },
+      arsenal: { name: "Arsenal" },
+    },
+    // specials
+    hotDeal: "Hot Deal",
+    freeClaim: "Free Claim",
+    bundleLabel: "Bundle",
+    claim: "Claim",
+    specials: {
+      arenaCache: { name: "Arena Cache", contains: "2,000 $HEX + Supply Cache" },
+      dailyDrop: { name: "Daily Drop", contains: "+250 $HEX" },
+      firstBlood: { name: "First Blood Kit", contains: "2,500 $HEX + Sentry Banner" },
+    },
+    // buy confirm flow
+    confirmTitle: "Confirm Purchase",
+    lblPrice: "Price",
+    lblBalance: "Balance",
+    lblBalanceAfter: "Balance after",
+    confirm: "Confirm",
+    unlockedTitle: "Unlocked",
+    unlockedBody: "Place it from Arrange Mode.",
+    done: "Done",
+    // wallet stub
+    walletTitle: "Wallet",
+    walletHead: "Connect Wallet · Top up $HEX",
+    walletBody: "Wallet top-up and real-money purchases arrive in Stage 2.",
+    connect: "Connect",
+    walletStamp: "Stage 2 · live wallet + real money",
+    // claim stub
+    claimTitle: "Not Yet Live",
+    claimBody: "The rewards economy goes live in Stage 2.",
+    claimStamp: "Stage 2 · rewards economy",
+  },
   verify: {
     title: "Email verification",
     successMsg: "Your email has been successfully verified! Thank you for confirming. You can continue using the service as usual.",

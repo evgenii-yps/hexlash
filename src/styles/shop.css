@@ -1,0 +1,196 @@
+/* shop.css — Hexlash SHOP (/play/home → SHOP). SELF-CONTAINED: its own --tokens
+   on .shop-root, own header / brackets / balance plaque — it shares NOTHING with
+   home.css, so the home chrome is never touched. Discipline: ONE pink (#FF0069)
+   and exactly one glow per tab — Currency = ARSENAL pack, Specials = HOT DEAL;
+   every other mark is matte. Stage-2 bits (Currency / Specials / claim) are SOON
+   stubs behind one flag. Mobile-first (390×844); desktop widens to a 3-col grid.
+   No "event re-skin" accents (cyan / purple / acid) anywhere. */
+
+.shop-root {
+  --acc: var(--hex-primary, #ff0069);
+  --acc-rgb: 255, 0, 105;
+  --mono: "JetBrains Mono", ui-monospace, monospace;
+  --disp: "Saira Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif;
+  --ink: #f4f2f6;
+  --dim: #a9a5af;
+  --muted: #76727c;
+  --line: rgba(255, 255, 255, 0.09);
+  --line2: rgba(255, 255, 255, 0.18);
+  --fill: rgba(255, 255, 255, 0.022);
+  --fill2: rgba(255, 255, 255, 0.05);
+  position: absolute; inset: 0; z-index: 1; overflow: hidden;
+  display: flex; flex-direction: column;
+  font-family: var(--disp); color: var(--ink);
+  background: radial-gradient(120% 80% at 50% -10%, #120a10 0%, #0a0a10 46%, #06070b 80%);
+}
+.shop-root *, .shop-root *::before, .shop-root *::after { box-sizing: border-box; }
+
+/* corner HUD brackets */
+.shop-bracket { position: absolute; width: 24px; height: 24px; z-index: 4; pointer-events: none; }
+.shop-bracket.tl { top: 12px; left: 12px; border-top: 1px solid var(--line2); border-left: 1px solid var(--line2); }
+.shop-bracket.tr { top: 12px; right: 12px; border-top: 1px solid var(--line2); border-right: 1px solid var(--line2); }
+.shop-bracket.bl { bottom: 12px; left: 12px; border-bottom: 1px solid var(--line2); border-left: 1px solid var(--line2); }
+.shop-bracket.br { bottom: 12px; right: 12px; border-bottom: 1px solid var(--line2); border-right: 1px solid var(--line2); }
+
+/* ───────────── header ───────────── */
+.shop-head { flex: 0 0 auto; position: relative; z-index: 3; padding: 18px 20px 0; }
+.shop-topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.shop-back { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; color: #b9b6bd; text-transform: uppercase;
+  border: 1px solid var(--line); background: var(--fill2); padding: 9px 14px; cursor: pointer; transition: background 0.15s, border-color 0.15s; }
+.shop-back:hover { background: rgba(255, 255, 255, 0.09); border-color: var(--line2); }
+.shop-topr { display: flex; align-items: center; gap: 12px; }
+.shop-brand { font-family: var(--mono); font-size: 10px; letter-spacing: 0.28em; color: var(--muted); text-transform: uppercase; }
+.shop-bal { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em;
+  border: 1px solid var(--line); background: rgba(255, 255, 255, 0.025); padding: 8px 13px; }
+.shop-bal .dia { width: 8px; height: 8px; background: var(--acc); transform: rotate(45deg); } /* matte — no glow */
+.shop-bal b { color: #fff; font-weight: 500; }
+.shop-bal i { color: var(--acc); font-style: normal; }
+
+.shop-h1 { font-weight: 900; font-size: 40px; line-height: 0.9; letter-spacing: 0.01em; text-transform: uppercase; margin-top: 18px; }
+.shop-tabs { display: flex; gap: 20px; margin-top: 14px; border-bottom: 1px solid var(--line); }
+.shop-tab { font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted);
+  padding: 0 0 12px; position: relative; cursor: pointer; background: none; border: 0; }
+.shop-tab.active { color: #fff; }
+.shop-tab.active::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--acc); } /* matte underline */
+.shop-lede { font-family: var(--mono); font-size: 12px; line-height: 1.6; color: var(--dim); max-width: 70ch; margin-top: 16px; }
+
+/* ───────────── body ───────────── */
+.shop-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+  padding: 18px 20px 32px; }
+
+/* decor sub-tabs */
+.shop-subtabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.shop-subtab { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted);
+  border: 1px solid var(--line); background: var(--fill); padding: 7px 11px; display: flex; align-items: center; gap: 7px; cursor: default; }
+.shop-subtab.active { color: #fff; border-color: var(--line2); }
+.shop-subtab .soon { font-size: 8px; letter-spacing: 0.18em; color: var(--muted); border: 1px solid var(--line); padding: 1px 5px; }
+
+/* generic grid — 1 col mobile → 3 col desktop */
+.shop-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+
+/* ── decor card ── */
+.shop-card { border: 1px solid var(--line); background: var(--fill); display: flex; flex-direction: column; overflow: hidden;
+  transition: border-color 0.15s, background 0.15s; }
+.shop-card:hover { border-color: var(--line2); background: var(--fill2); }
+.shop-frame { position: relative; min-height: 150px; display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(90% 80% at 50% 60%, #12161f 0%, #0b0d13 75%); border-bottom: 1px solid var(--line); }
+.shop-card.feat .shop-frame { min-height: 200px; }
+.shop-tag { position: absolute; top: 12px; left: 12px; font-family: var(--mono); font-size: 9px; letter-spacing: 0.2em;
+  color: #b9b6bd; border: 1px solid var(--line); padding: 3px 8px; text-transform: uppercase; }
+.shop-tag.new { color: var(--acc); border-color: rgba(var(--acc-rgb), 0.4); background: rgba(var(--acc-rgb), 0.06); } /* matte tint */
+.shop-art { width: 100%; height: 100%; display: block; }
+.shop-meta { padding: 16px 18px; display: flex; flex-direction: column; gap: 6px; }
+.shop-name { font-weight: 800; font-size: 19px; letter-spacing: 0.03em; text-transform: uppercase; }
+.shop-sub { font-family: var(--mono); font-size: 10.5px; color: var(--dim); letter-spacing: 0.03em; line-height: 1.5; }
+.shop-buy { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; }
+.shop-price { display: flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 15px; letter-spacing: 0.04em; }
+.shop-price .dia { width: 8px; height: 8px; background: var(--acc); transform: rotate(45deg); } /* matte */
+.shop-price b { color: #fff; font-weight: 700; }
+.shop-price i { color: var(--acc); font-style: normal; font-size: 11px; }
+.shop-btn { font-family: var(--disp); font-weight: 700; font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 10px 18px; cursor: pointer; display: flex; align-items: center; gap: 8px; border: 0; }
+.shop-btn.buy { background: var(--acc); color: #fff; /* matte pink — NO glow in decor */
+  clip-path: polygon(9px 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%, 0 9px); }
+.shop-btn.buy:hover { filter: brightness(1.08); }
+.shop-chip-owned { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+  border: 1px solid var(--line); background: rgba(255, 255, 255, 0.03); padding: 9px 16px; }
+
+/* a soft "soon" price button shared by Currency + Specials (matte, no glow) */
+.shop-soonbtn { font-family: var(--disp); font-weight: 700; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase;
+  border: 1px solid var(--line2); background: rgba(255, 255, 255, 0.04); color: #d6d3da; padding: 10px 16px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 9px; width: 100%; transition: background 0.15s, border-color 0.15s; }
+.shop-soonbtn:hover { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.28); }
+.shop-soonbtn .soon { font-family: var(--mono); font-size: 8px; letter-spacing: 0.18em; color: var(--muted); border: 1px solid var(--line); padding: 1px 5px; }
+
+/* ── currency ── */
+.shop-whatis { border: 1px solid var(--line); background: var(--fill); padding: 16px 18px; margin-bottom: 18px; }
+.shop-whatis h3 { font-weight: 800; font-size: 14px; letter-spacing: 0.06em; text-transform: uppercase; margin: 0 0 8px; }
+.shop-whatis p { font-family: var(--mono); font-size: 11px; line-height: 1.6; color: var(--dim); margin: 0; }
+.shop-pack { position: relative; border: 1px solid var(--line); background: var(--fill); display: flex; flex-direction: column;
+  overflow: hidden; transition: border-color 0.15s, background 0.15s; }
+.shop-pack:hover { border-color: var(--line2); background: var(--fill2); }
+.shop-pack-art { position: relative; min-height: 124px; display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(90% 80% at 50% 60%, #12161f 0%, #0b0d13 75%); border-bottom: 1px solid var(--line); }
+.shop-value { position: absolute; top: 10px; right: 10px; font-family: var(--mono); font-size: 8.5px; letter-spacing: 0.16em;
+  color: #b9b6bd; border: 1px solid var(--line); background: rgba(0, 0, 0, 0.4); padding: 2px 7px; text-transform: uppercase; }
+.shop-pack-meta { padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
+.shop-pack-name { font-weight: 800; font-size: 17px; letter-spacing: 0.04em; text-transform: uppercase; }
+.shop-amount { display: flex; align-items: baseline; gap: 7px; font-family: var(--mono); }
+.shop-amount .dia { width: 7px; height: 7px; background: var(--acc); transform: rotate(45deg); align-self: center; } /* matte */
+.shop-amount b { color: #fff; font-size: 20px; font-weight: 700; }
+.shop-amount em { color: var(--acc); font-style: normal; font-size: 12px; }
+.shop-pack-price { font-family: var(--mono); font-size: 12px; color: var(--dim); letter-spacing: 0.06em; }
+/* ARSENAL — the ONE accent on the Currency tab: pink frame + soft glow + ribbon */
+.shop-pack.best { border-color: rgba(var(--acc-rgb), 0.55); box-shadow: 0 0 26px rgba(var(--acc-rgb), 0.18); }
+.shop-pack.best .shop-value { color: var(--acc); border-color: rgba(var(--acc-rgb), 0.45); background: rgba(var(--acc-rgb), 0.08); }
+.shop-ribbon { position: absolute; top: 10px; left: 10px; z-index: 2; font-family: var(--mono); font-size: 8.5px; letter-spacing: 0.18em;
+  text-transform: uppercase; color: #fff; background: var(--acc); padding: 3px 9px; }
+
+/* ── specials ── */
+.shop-special { position: relative; border: 1px solid var(--line); background: var(--fill); padding: 16px 18px;
+  display: flex; flex-direction: column; gap: 12px; }
+.shop-special-h { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.shop-kicker { font-family: var(--mono); font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted);
+  border: 1px solid var(--line); padding: 3px 8px; }
+.shop-special-name { font-weight: 800; font-size: 18px; letter-spacing: 0.04em; text-transform: uppercase; }
+.shop-contains { font-family: var(--mono); font-size: 11px; color: var(--dim); letter-spacing: 0.03em; line-height: 1.5; }
+.shop-timer { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 26px; letter-spacing: 0.06em; color: #fff; }
+.shop-pricerow { display: flex; align-items: baseline; gap: 10px; font-family: var(--mono); }
+.shop-was { color: var(--muted); text-decoration: line-through; font-size: 13px; }
+.shop-now { color: var(--acc); font-size: 18px; font-weight: 700; }
+.shop-flat { color: #fff; font-size: 16px; font-weight: 700; font-family: var(--mono); }
+/* HOT DEAL — the ONE accent on the Specials tab */
+.shop-special.hot { border-color: rgba(var(--acc-rgb), 0.55); box-shadow: 0 0 26px rgba(var(--acc-rgb), 0.16); }
+.shop-special.hot .shop-kicker { color: var(--acc); border-color: rgba(var(--acc-rgb), 0.45); background: rgba(var(--acc-rgb), 0.08); }
+
+/* ───────────── modals (bottom-sheet on mobile, centered on desktop) ───────────── */
+.shop-overlay { position: fixed; inset: 0; z-index: 80; background: rgba(4, 5, 9, 0.66); backdrop-filter: blur(3px);
+  display: flex; align-items: flex-end; justify-content: center; animation: shop-fade 0.18s ease both; }
+@keyframes shop-fade { from { opacity: 0; } to { opacity: 1; } }
+.shop-sheet { width: 100%; max-width: 520px; background: linear-gradient(180deg, #0e0f15, #0a0b10); border-top: 1px solid var(--line2);
+  padding: 22px 22px 28px; display: flex; flex-direction: column; gap: 14px; animation: shop-up 0.22s cubic-bezier(0.22, 0.61, 0.36, 1) both; }
+@keyframes shop-up { from { transform: translateY(14px); opacity: 0.6; } to { transform: translateY(0); opacity: 1; } }
+.shop-sheet-h { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.shop-sheet-title { font-weight: 800; font-size: 18px; letter-spacing: 0.05em; text-transform: uppercase; }
+.shop-x { width: 30px; height: 30px; flex: 0 0 auto; display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--line); background: none; color: var(--muted); cursor: pointer; font-size: 13px; }
+.shop-x:hover { color: var(--ink); border-color: var(--line2); }
+.shop-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-family: var(--mono); font-size: 13px;
+  padding: 11px 0; border-bottom: 1px solid var(--line); }
+.shop-row:last-of-type { border-bottom: 0; }
+.shop-row .k { color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; font-size: 10px; }
+.shop-row .v { color: #fff; }
+.shop-row .v.acc { color: var(--acc); }
+.shop-sheet-cta { margin-top: 4px; padding: 13px 18px; border: 0; cursor: pointer; background: var(--acc); color: #fff;
+  font-family: var(--disp); font-weight: 800; font-size: 15px; letter-spacing: 0.1em; text-transform: uppercase;
+  clip-path: polygon(11px 0, 100% 0, 100% calc(100% - 11px), calc(100% - 11px) 100%, 0 100%, 0 11px); }
+.shop-sheet-cta.ghost { background: rgba(255, 255, 255, 0.04); border: 1px solid var(--line2); color: #d6d3da; clip-path: none; }
+.shop-sheet-cta[disabled] { opacity: 0.5; cursor: not-allowed; }
+.shop-sheet-body { font-family: var(--mono); font-size: 12px; line-height: 1.6; color: var(--dim); }
+.shop-success-ic { width: 46px; height: 46px; border-radius: 50%; align-self: center; display: flex; align-items: center; justify-content: center;
+  background: rgba(var(--acc-rgb), 0.12); border: 1px solid rgba(var(--acc-rgb), 0.4); color: var(--acc); font-size: 22px; }
+.shop-providers { display: flex; gap: 10px; }
+.shop-provider { flex: 1; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.02); padding: 14px 10px; text-align: center;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); opacity: 0.6; }
+.shop-stamp { font-family: var(--mono); font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted);
+  border: 1px dashed var(--line2); padding: 8px 10px; text-align: center; }
+
+/* ───────────── desktop ───────────── */
+@media (min-width: 880px) {
+  .shop-head { padding: 26px 56px 0; }
+  .shop-h1 { font-size: 64px; margin-top: 22px; }
+  .shop-tabs { gap: 28px; }
+  .shop-tab { font-size: 12px; padding-bottom: 14px; }
+  .shop-body { padding: 24px 56px 44px; }
+  .shop-grid { grid-template-columns: repeat(3, 1fr); gap: 18px; align-items: start; }
+  .shop-card.feat { grid-row: span 2; } /* featured banner = taller left column */
+  .shop-frame { min-height: 170px; }
+  .shop-overlay { align-items: center; } /* center modal on desktop */
+  .shop-sheet { border: 1px solid var(--line2); animation-name: shop-pop; }
+  @keyframes shop-pop { from { transform: scale(0.97); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+}
+
+/* reduced motion — no slide/fade/pop (timer ticking is gated in JS) */
+@media (prefers-reduced-motion: reduce) {
+  .shop-overlay, .shop-sheet { animation: none; }
+}
