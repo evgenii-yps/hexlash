@@ -26,10 +26,16 @@
     <div v-else class="hs-overlay">
       <!-- ───────── normal home chrome ───────── -->
       <template v-if="!arrange">
-        <!-- top bar intentionally empty on the home: the $HEX balance plaque and
-             the personality chip were inert placeholders (no live wallet/account)
-             and are deferred to Этап 2. The .hs-top bar itself is not rendered so
-             no empty spacer remains. (The shop keeps its own .hs-top.) -->
+        <!-- cabinet entry chip (top-left) — the single door into the Player
+             Cabinet (profile / balance / referrals / quests / leaderboard /
+             settings). Styles live in cabinet.css; no shared .hs-* class touched. -->
+        <button type="button" class="cab-chip" @click="cabinetOpen = true">
+          <span class="cc-av"><span /></span>
+          <span class="cc-txt">
+            <span class="cc-hand">{{ t.cabinet.chipHandle }}</span>
+            <span class="cc-sub">{{ t.cabinet.chipOpen }}</span>
+          </span>
+        </button>
 
         <!-- honest SOON stubs -->
         <div class="hs-rail">
@@ -43,8 +49,10 @@
           </div>
         </div>
 
-        <!-- bottom dock — one centered row: TRAIN · SHOP · FIGHT · PROFILE · CUSTOMIZE.
-             Four uniform matte tiles flank the hero FIGHT (the one pink/glow mark). -->
+        <!-- bottom dock — one centered row: TRAIN · SHOP · FIGHT · CUSTOMIZE.
+             Three matte tiles flank the hero FIGHT (the one pink/glow mark); PROFILE
+             moved into the cabinet. Row centers on FIGHT — exact symmetry isn't the
+             goal with three secondaries, FIGHT stays the dominant mark. -->
         <div class="hs-dock">
           <div class="hs-tile" @click="onTrain">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18l5-5 4 4 7-8" /><path d="M16 9h4v4" /></svg>
@@ -60,10 +68,6 @@
             <div class="fsub">Send your fighter to the arena</div>
           </div>
 
-          <div class="hs-tile" @click="onProfile">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></svg>
-            <div><div class="tl-n">Profile</div><div class="tl-s">WALLET · ACCT</div></div>
-          </div>
           <div class="hs-tile" @click="onCustomize">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 2l8.5 5v10L12 22 3.5 17V7L12 2Z" /><path d="M12 8v8M8 10l8 4M16 10l-8 4" opacity="0.6" /></svg>
             <div><div class="tl-n">Customize</div><div class="tl-s">ARRANGE PROPS</div></div>
@@ -98,6 +102,18 @@
         </div>
       </template>
     </div>
+
+    <!-- Player Cabinet — sliding panel over the home (mobile drawer / desktop
+         right-pinned). Mounted in the home chrome only (not the shop, not arrange),
+         so HomeShop is untouched. Fixed-position; manages its own pointer-events. -->
+    <PlayerCabinet
+      v-if="view === 'home' && !arrange"
+      :open="cabinetOpen"
+      :balance="balance"
+      :core-name="coreName"
+      :core-sig="coreSig"
+      @close="cabinetOpen = false"
+    />
   </div>
 </template>
 
@@ -105,10 +121,13 @@
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import store from '@/core/state/store.js';
+import { t } from '@/locales/index.js';
 import { getCore } from '@/data/upgradeData.js';
 import HomeScene from '@/scene/HomeScene.vue';
 import HomeShop from '@/components/home/HomeShop.vue';
+import PlayerCabinet from '@/views-v2/PlayerCabinet.vue';
 import '@/styles/home.css';
+import '@/styles/cabinet.css';
 
 const router = useRouter();
 
@@ -116,12 +135,15 @@ const router = useRouter();
 // ownership data source yet). arrange / shop are entered from the dock.
 const view = ref('home'); // 'home' | 'shop'
 const arrange = ref(false);
+const cabinetOpen = ref(false); // Player Cabinet drawer (mobile); always-open on desktop via CSS
 
 // Player fighter from the existing pre-fight store. No core picked → default
-// fighter (canon pink). Drives the 3D core hue only.
+// fighter (canon pink). Drives the 3D core hue + the cabinet's fighter card.
 const coreId = computed(() => store.getters['prefight/selectedCoreId'] || null);
 const core = computed(() => (coreId.value ? getCore(coreId.value) : null));
 const coreHue = computed(() => core.value?.hue || '#FF0069');
+const coreName = computed(() => core.value?.name || 'ONSLAUGHT');
+const coreSig = computed(() => core.value?.sig || 'PRESSURE');
 
 const balance = '2,480'; // placeholder $HEX balance (stub — no economy wired); still shown in the shop
 
@@ -168,7 +190,6 @@ function onFight() { router.push('/play/arena'); }
 function onTrain() { router.push('/play/upgrade'); }
 function onShop() { view.value = 'shop'; }
 function onCustomize() { arrange.value = true; }
-function onProfile() { /* no profile screen in this shell yet — inert */ }
 
 // Arrange — both exit the mode; placement is a visual stub (nothing persists).
 function onArrangeCancel() { arrange.value = false; }
