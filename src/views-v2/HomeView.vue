@@ -37,18 +37,6 @@
           </span>
         </button>
 
-        <!-- honest SOON stubs -->
-        <div class="hs-rail">
-          <div class="hs-stub">
-            <div class="st-h"><b>Dailies</b><span class="soon">SOON</span></div>
-            <div class="st-s">Daily contracts<br>land here.</div>
-          </div>
-          <div class="hs-stub">
-            <div class="st-h"><b>Leaderboard</b><span class="soon">SOON</span></div>
-            <div class="st-s">Season 0 ranks<br>open at launch.</div>
-          </div>
-        </div>
-
         <!-- bottom dock — one centered row: TRAIN · SHOP · FIGHT · CUSTOMIZE.
              Three matte tiles flank the hero FIGHT (the one pink/glow mark); PROFILE
              moved into the cabinet. Row centers on FIGHT — exact symmetry isn't the

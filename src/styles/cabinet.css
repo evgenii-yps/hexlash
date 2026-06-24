@@ -251,13 +251,14 @@
 
 /* ════════════ DESKTOP — right-pinned, always open (secondary) ════════════ */
 @media (min-width: 1024px) {
-  .cab-chip { display: none; }            /* no door needed — the panel is always open */
-  .cab-scrim { display: none; }           /* no scrim — the stage stays visible */
-  .cab-x { display: none; }               /* close is disabled here — drop the dead ✕ button */
+  /* Desktop keeps the cabinet anchored RIGHT and wider, but it's a CLOSABLE
+     overlay over a dimmed home — not a pinned column. Chip opens it; ✕ and a
+     scrim tap close it; it slides like mobile, just off the right edge. The
+     scrim + ✕ stay visible (base rules); the dock is never reserved space. */
   .cab-root { left: auto; right: 0; width: 440px; max-width: none;
-    border-right: 0; border-left: 1px solid var(--cab-line); transform: none !important; }
-  /* keep the home dock clear of the pinned panel (home-only classes — shop untouched) */
-  .home-root .hs-dock { padding-right: 488px; }
+    border-right: 0; border-left: 1px solid var(--cab-line);
+    transform: translateX(100%); }        /* closed → off the right edge */
+  /* .cab-root.open (translateX(0)) has higher specificity → on-screen when open */
 }
 
 /* ════════════ reduced motion ════════════ */
