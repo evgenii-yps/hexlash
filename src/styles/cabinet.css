@@ -251,14 +251,12 @@
 
 /* ════════════ DESKTOP — right-pinned, always open (secondary) ════════════ */
 @media (min-width: 1024px) {
-  /* Desktop keeps the cabinet anchored RIGHT and wider, but it's a CLOSABLE
-     overlay over a dimmed home — not a pinned column. Chip opens it; ✕ and a
-     scrim tap close it; it slides like mobile, just off the right edge. The
-     scrim + ✕ stay visible (base rules); the dock is never reserved space. */
-  .cab-root { left: auto; right: 0; width: 440px; max-width: none;
-    border-right: 0; border-left: 1px solid var(--cab-line);
-    transform: translateX(100%); }        /* closed → off the right edge */
-  /* .cab-root.open (translateX(0)) has higher specificity → on-screen when open */
+  /* Desktop = the SAME left drawer as mobile, just wider. Closable overlay over
+     a dimmed home: the chip (top-left) opens it, ✕ / scrim close it, and it
+     slides off the LEFT edge. Only the width changes vs mobile — left anchoring,
+     the right-edge border, and the translateX(-100%) closed transform all come
+     from the base rule, so the ✕ stays at the panel's inner (right) edge. */
+  .cab-root { width: 440px; max-width: none; }
 }
 
 /* ════════════ reduced motion ════════════ */
