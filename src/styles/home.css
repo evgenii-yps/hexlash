@@ -69,6 +69,27 @@
 .hs-fight .fbtn .arr { font-size: 22px; }
 .hs-fight .fsub { font-family: var(--hs-mono); font-size: 11px; letter-spacing: 0.22em; color: #b9b6bd; text-transform: uppercase; }
 
+/* ── SHOP corner button — top-right, mirrors the cabinet chip (top-left) so the
+   two corners read as a pair. Matte chrome like the dock tiles; NOT pink, no glow
+   (FIGHT + the 3D core stay the only glow). Home-only class: HomeShop never uses
+   it and the shared .hs-top/.hs-brand/.season rules are untouched. Self-enables
+   pointer-events (the .hs-overlay parent is pointer-events:none). ── */
+.hs-shopbtn { position: absolute; top: 18px; right: 22px; z-index: 6; pointer-events: auto;
+  display: flex; align-items: center; gap: 11px; padding: 8px 14px;
+  border: 1px solid var(--line); background: rgba(255, 255, 255, 0.022); cursor: pointer;
+  color: #f4f2f6; transition: background 0.15s, border-color 0.15s; }
+.hs-shopbtn:hover { background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.2); }
+.hs-shopbtn svg { width: 22px; height: 22px; flex: 0 0 auto; color: #d6d3da; }
+.hs-shopbtn .sb-txt { display: flex; flex-direction: column; gap: 2px; line-height: 1; text-align: left; }
+.hs-shopbtn .sb-n { font-weight: 700; font-size: 15px; letter-spacing: 0.05em; text-transform: uppercase; }
+.hs-shopbtn .sb-s { font-family: var(--hs-mono); font-size: 9px; letter-spacing: 0.14em; color: var(--muted); text-transform: uppercase; }
+/* narrow screens: drop the sublabel → compact icon + SHOP so the top-right button
+   can't crowd the cabinet chip (top-left) or the 3D scene. */
+@media (max-width: 400px) {
+  .hs-shopbtn { padding: 8px 12px; gap: 8px; }
+  .hs-shopbtn .sb-s { display: none; }
+}
+
 /* ── ARRANGE MODE ── */
 .hs-arrtop { position: absolute; top: 0; left: 0; right: 0; height: 74px; z-index: 7;
   display: flex; align-items: center; justify-content: space-between; padding: 0 48px;

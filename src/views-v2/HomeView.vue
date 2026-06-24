@@ -37,18 +37,24 @@
           </span>
         </button>
 
-        <!-- bottom dock — one centered row: TRAIN · SHOP · FIGHT · CUSTOMIZE.
-             Three matte tiles flank the hero FIGHT (the one pink/glow mark); PROFILE
-             moved into the cabinet. Row centers on FIGHT — exact symmetry isn't the
-             goal with three secondaries, FIGHT stays the dominant mark. -->
+        <!-- SHOP entry (top-right) — mirrors the cabinet chip (top-left) so the
+             two corners read as a pair. Matte chrome (no pink/glow); same route as
+             the old dock tile. Styles: .hs-shopbtn in home.css (home-only). -->
+        <button type="button" class="hs-shopbtn" @click="onShop">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M5 8h14l-1 12H6L5 8Z" /><path d="M9 8V6a3 3 0 0 1 6 0v2" /></svg>
+          <span class="sb-txt">
+            <span class="sb-n">Shop</span>
+            <span class="sb-s">DECOR · MORE</span>
+          </span>
+        </button>
+
+        <!-- bottom dock — one centered row: TRAIN · FIGHT · CUSTOMIZE. Two matte
+             tiles flank the hero FIGHT (the one pink/glow mark); SHOP moved to the
+             top-right corner, PROFILE into the cabinet. FIGHT stays centred. -->
         <div class="hs-dock">
           <div class="hs-tile" @click="onTrain">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18l5-5 4 4 7-8" /><path d="M16 9h4v4" /></svg>
             <div><div class="tl-n">Train</div><div class="tl-s">TUNE FACETS</div></div>
-          </div>
-          <div class="hs-tile" @click="onShop">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M5 8h14l-1 12H6L5 8Z" /><path d="M9 8V6a3 3 0 0 1 6 0v2" /></svg>
-            <div><div class="tl-n">Shop</div><div class="tl-s">DECOR · MORE</div></div>
           </div>
 
           <div class="hs-fight">
