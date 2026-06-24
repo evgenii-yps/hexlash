@@ -199,7 +199,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { t } from '@/locales/index.js';
 import '@/styles/cabinet.css';
@@ -257,6 +257,15 @@ function applyCode() {
 
 function goPrivacy() { router.push('/privacy'); }
 
-// Re-open always lands on Profile (single-level nav); reset section when closed.
-watch(() => props.open, (o) => { if (!o) section.value = null; });
+// Re-open always lands on Profile (single-level nav). Reset the section only
+// AFTER the panel has slid out (~320ms, matching the .cab-root transform
+// transition) so the section→Profile swap isn't visible during the close; cancel
+// the pending reset if the cabinet is re-opened before it fires.
+let closeResetTimer = null;
+watch(() => props.open, (o) => {
+  if (closeResetTimer) { clearTimeout(closeResetTimer); closeResetTimer = null; }
+  if (o) return;
+  closeResetTimer = setTimeout(() => { section.value = null; closeResetTimer = null; }, 320);
+});
+onUnmounted(() => { if (closeResetTimer) clearTimeout(closeResetTimer); });
 </script>
