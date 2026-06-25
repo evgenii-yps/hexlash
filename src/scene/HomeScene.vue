@@ -21,6 +21,7 @@ import { onMounted, onBeforeUnmount, watch, ref } from 'vue';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildArena } from './buildArena.js';
+import { makeRadialTexture } from './arenaTextures.js';
 import { buildFighter } from './buildFighter.js';
 import { resolveBehavior } from '@/data/behavior.js';
 import { buildPropSet, buildSnapGrid, buildGhost, disposeGroup } from './homeProps.js';
@@ -47,6 +48,8 @@ let gridGroup = null;
 let ghostGroup = null;
 let arenaRefs = null;
 let lamps = null;
+let dust = null;       // warm drifting dust/haze in the lamp cone (one THREE.Points)
+let glow = null;       // soft warm "homely" pool on the slab under the fighter
 let reduced = false;
 // Initial 3/4 camera placement; OrbitControls derives azimuth/polar/distance
 // from this + the target (the fighter) on first update().
@@ -160,6 +163,108 @@ function buildLamps(opts, reduced) {
   };
 
   return { group, tick, dispose };
+}
+
+// ─────────────────────────── Atmosphere: dust + under-glow ───────────────────────────
+// Two cheap warm touches so the scene breathes instead of floating in vacuum. Both
+// live in the SAME warm amber family as the lamps — soft low-intensity FILL, never a
+// second accent: the fighter core stays the ONLY bright / pink mark on the screen.
+// Tune everything here on preview.
+
+// DUST — one THREE.Points of soft radial sprites drifting up through the lamp cone
+// over the slab. Position is a pure function of time (no per-frame accumulation →
+// pause/reduced-safe, alloc-free): slow upward rise that wraps, a tiny lateral sway,
+// and one gentle global opacity flicker. Density is "lived air", not falling snow.
+const DUST = {
+  count: 90,           // a single Points object — cheap, fine on mobile (no shadows)
+  xRange: 2.6,         // ±X half-extent of the drift box (over the slab)
+  zRange: 1.7,         // ±Z half-extent — kept well in front of the camera (z≈6.7)
+  yMin: 0.7,           // just above the slab …
+  yMax: 3.9,           // … up into the lamp cone (shades hang ~5.7)
+  size: 0.07,          // sprite world size (sizeAttenuation on)
+  color: 0xffb368,     // warm amber — the lamp family (matches LAMPS.bulbColor)
+  opacity: 0.2,        // very low — atmosphere, not "snow"
+  rise: 0.10,          // upward drift speed (u/s)
+  sway: 0.05,          // lateral sway amplitude (u)
+  swaySpeed: 0.25,     // sway frequency
+  flicker: 0.35,       // opacity flicker depth (fraction of opacity)
+  flickerSpeed: 0.55,
+};
+
+// GLOW — a soft warm pool on the slab under the fighter ("homely", a counterweight to
+// the cold rift). One additive radial sprite lying flat on the plate, gently FOLLOWING
+// the wandering fighter (smooth lerp, no clicks). Dim — not a bright puddle, not pink,
+// never a second bright focus competing with the core.
+const GLOW = {
+  radius: 1.9,         // pool half-size on the slab (wide + soft)
+  color: 0xffb368,     // warm amber — lamp family
+  opacity: 0.3,        // additive, low — a warm wash, not a spotlight
+  follow: 0.06,        // lerp toward the fighter per frame (soft; no snap)
+  yLift: 0.02,         // sit just above the slab top (no z-fight)
+};
+
+// Build the drifting dust → { points, tick(t)|null, dispose }. reduced ⇒ tick=null
+// (the cloud holds its initial scattered positions — a static haze, no drift).
+function buildDust(opts, reducedMotion) {
+  const n = opts.count;
+  const positions = new Float32Array(n * 3);
+  const baseX = new Float32Array(n);
+  const baseZ = new Float32Array(n);
+  const baseY = new Float32Array(n); // start offset within the column [0, yRange)
+  const phX = new Float32Array(n);
+  const phZ = new Float32Array(n);
+  const yRange = opts.yMax - opts.yMin;
+  for (let i = 0; i < n; i++) {
+    baseX[i] = (Math.random() * 2 - 1) * opts.xRange;
+    baseZ[i] = (Math.random() * 2 - 1) * opts.zRange;
+    baseY[i] = Math.random() * yRange;
+    phX[i] = Math.random() * Math.PI * 2;
+    phZ[i] = Math.random() * Math.PI * 2;
+    positions[i * 3] = baseX[i];
+    positions[i * 3 + 1] = opts.yMin + baseY[i];
+    positions[i * 3 + 2] = baseZ[i];
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  const tex = makeRadialTexture('rgba(255,210,150,0.95)', 'rgba(255,180,105,0.22)', 0.3);
+  const mat = new THREE.PointsMaterial({
+    map: tex, color: opts.color, size: opts.size, sizeAttenuation: true,
+    transparent: true, opacity: opts.opacity, depthWrite: false, blending: THREE.AdditiveBlending,
+  });
+  const points = new THREE.Points(geo, mat);
+  points.frustumCulled = false; // tiny object, particles move → skip the cull math
+
+  const tick = reducedMotion ? null : (t) => {
+    for (let i = 0; i < n; i++) {
+      positions[i * 3] = baseX[i] + opts.sway * Math.sin(opts.swaySpeed * t + phX[i]);
+      positions[i * 3 + 1] = opts.yMin + ((baseY[i] + opts.rise * t) % yRange); // slow rise, wraps
+      positions[i * 3 + 2] = baseZ[i] + opts.sway * Math.cos(opts.swaySpeed * 0.8 * t + phZ[i]);
+    }
+    geo.attributes.position.needsUpdate = true;
+    mat.opacity = opts.opacity * (1 - opts.flicker * 0.5 + opts.flicker * 0.5 * Math.sin(opts.flickerSpeed * t));
+  };
+
+  const dispose = () => { geo.dispose(); mat.dispose(); tex.dispose(); };
+  return { points, tick, dispose };
+}
+
+// Build the under-fighter glow → { mesh, follow(pos), dispose }. A flat additive
+// radial sprite on the slab; follow() eases it toward the fighter each frame.
+function buildUnderGlow(opts, topY) {
+  const tex = makeRadialTexture('rgba(255,200,140,0.9)', 'rgba(255,175,100,0.2)', 0.45);
+  const mat = new THREE.MeshBasicMaterial({
+    map: tex, color: opts.color, transparent: true, opacity: opts.opacity,
+    depthWrite: false, blending: THREE.AdditiveBlending,
+  });
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(opts.radius * 2, opts.radius * 2), mat);
+  mesh.rotation.x = -Math.PI / 2;        // lie flat on the plate
+  mesh.position.y = topY + opts.yLift;   // just above the slab top
+  const follow = (pos) => {
+    mesh.position.x += (pos.x - mesh.position.x) * opts.follow;
+    mesh.position.z += (pos.z - mesh.position.z) * opts.follow;
+  };
+  const dispose = () => { mesh.geometry.dispose(); mat.dispose(); tex.dispose(); };
+  return { mesh, follow, dispose };
 }
 
 // Rebuild the decor / grid / ghost groups from the current props. Cheap — a
@@ -349,6 +454,16 @@ onMounted(() => {
   // attaches inert (foePos stays null → the body just idles, calm).
   director.attach(fighter, camera, { reduced });
 
+  // Atmosphere — warm drifting dust in the lamp cone + a soft warm pool under the
+  // fighter (both in the lamp's amber family, low-intensity fill; the core stays the
+  // only bright/pink mark). reduced ⇒ the dust holds still (tick=null); the glow just
+  // tracks the (then-idle) fighter, no sudden motion.
+  dust = buildDust(DUST, reduced);
+  scene.add(dust.points);
+  glow = buildUnderGlow(GLOW, arena.refs.topY);
+  glow.mesh.position.set(fighter.group.position.x, arena.refs.topY + GLOW.yLift, fighter.group.position.z);
+  scene.add(glow.mesh);
+
   // --- Free orbit around the FIGHTER (home only — never added to the combat
   //     scene). Mouse: drag = orbit, wheel = zoom. Touch: one-finger drag =
   //     orbit, pinch = zoom (pan disabled). Soft damping.
@@ -397,6 +512,8 @@ onMounted(() => {
     fighter?.update(t, camera); // the body walks the lure / idles (its own footwork)
     if (!reduced) followFighter(dt); // lazy dead-zone camera follow (keeps it in frame)
     lamps?.tick?.(t); // gentle light flicker (null under reduced motion)
+    if (!reduced) dust?.tick?.(t); // warm dust drift (null/static under reduced motion)
+    glow?.follow(fighter.group.position); // ease the warm pool under the fighter
     renderer.render(scene, camera);
   };
   renderer.setAnimationLoop(loop);
@@ -435,6 +552,8 @@ onBeforeUnmount(() => {
   if (gridGroup) { scene.remove(gridGroup); disposeGroup(gridGroup); }
   if (ghostGroup) { scene.remove(ghostGroup); disposeGroup(ghostGroup); }
   if (lamps) { scene.remove(lamps.group); lamps.dispose(); }
+  if (dust) { scene.remove(dust.points); dust.dispose(); }
+  if (glow) { scene.remove(glow.mesh); glow.dispose(); }
   if (fighter) fighter.dispose();
   if (arena) arena.dispose();
   if (renderer) renderer.dispose();
