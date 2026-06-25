@@ -199,7 +199,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onUnmounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { t } from '@/locales/index.js';
 import '@/styles/cabinet.css';
@@ -265,7 +265,14 @@ let closeResetTimer = null;
 watch(() => props.open, (o) => {
   if (closeResetTimer) { clearTimeout(closeResetTimer); closeResetTimer = null; }
   if (o) return;
-  closeResetTimer = setTimeout(() => { section.value = null; closeResetTimer = null; }, 320);
+  closeResetTimer = setTimeout(() => { section.value = null; closeResetTimer = null; }, 420);
 });
-onUnmounted(() => { if (closeResetTimer) clearTimeout(closeResetTimer); });
+
+// Esc closes the cabinet (✕ / scrim-tap are the other two ways out).
+function onKeydown(e) { if (e.key === 'Escape' && props.open) onClose(); }
+onMounted(() => window.addEventListener('keydown', onKeydown));
+onUnmounted(() => {
+  window.removeEventListener('keydown', onKeydown);
+  if (closeResetTimer) clearTimeout(closeResetTimer);
+});
 </script>

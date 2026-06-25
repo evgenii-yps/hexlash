@@ -1,17 +1,19 @@
-/* cabinet.css — Hexlash "Player Cabinet": the entry chip (top-left of the home)
-   + the sliding panel that holds everything non-combat (profile, balance,
-   referrals, quests, leaderboard, settings).
+/* cabinet.css — Hexlash "Player Cabinet": the sliding panel that holds everything
+   non-combat (profile, balance, referrals, quests, leaderboard, settings). The
+   entry point is the cabinet segment of the persistent top strip (right cluster,
+   in home.css); this file styles only the panel itself.
 
-   Kept DELIBERATELY separate from home.css: HomeView + HomeShop share the home
-   chrome classes (.hs-top / .hs-brand / .season …), so nothing here touches a
-   .hs-* class — the shop is unaffected. All selectors are .cab-* scoped.
+   Kept DELIBERATELY separate from home.css — all selectors are .cab-* scoped, so
+   the home chrome / shop are unaffected.
+
+   The panel slides in from the RIGHT (the edge its strip entry sits on): 392px
+   wide, 420ms spring, closed by ✕ / scrim-tap / Esc.
 
    Brandbook discipline: ONE accent (#FF0069 via --hex-primary); everything else
    is the bone-grey palette. The ONLY glow in the cabinet is the fighter-core
    halo on the Profile card — the diamond motif everywhere else is matte. Tokens
    are declared locally (mirroring home.css) so this file is self-contained. */
 
-.cab-chip,
 .cab-root {
   --cab-acc: var(--hex-primary, #ff0069);
   --cab-acc-rgb: 255, 0, 105; /* #FF0069 — canonical pink, for rgba() tints */
@@ -25,31 +27,11 @@
   --cab-fill: rgba(255, 255, 255, 0.025);
   --cab-fill-2: rgba(255, 255, 255, 0.05);
   --cab-ok: #45c08a;
+  --cab-spring: cubic-bezier(0.22, 0.61, 0.36, 1);
   font-family: var(--cab-disp);
   box-sizing: border-box;
 }
-.cab-chip *,
 .cab-root * { box-sizing: border-box; }
-
-/* ════════════ ENTRY CHIP — top-left of the home, the single door ════════════ */
-.cab-chip {
-  position: absolute; top: 18px; left: 22px; z-index: 6;
-  display: flex; align-items: center; gap: 11px;
-  padding: 8px 14px 8px 8px; border: 1px solid var(--cab-line);
-  background: rgba(10, 10, 16, 0.55); backdrop-filter: blur(6px);
-  cursor: pointer; pointer-events: auto; color: var(--cab-ink);
-  transition: background 0.15s, border-color 0.15s;
-}
-.cab-chip:hover { background: rgba(20, 20, 28, 0.7); border-color: var(--cab-line-2); }
-/* avatar — matte diamond inset (NO glow; only the core + FIGHT glow on the home) */
-.cab-chip .cc-av { width: 32px; height: 32px; flex: 0 0 auto;
-  background: linear-gradient(135deg, #2a3140, #161b24); border: 1px solid var(--cab-line);
-  display: flex; align-items: center; justify-content: center; }
-.cab-chip .cc-av span { width: 10px; height: 10px; background: var(--cab-acc); transform: rotate(45deg); }
-.cab-chip .cc-txt { display: flex; flex-direction: column; gap: 2px; line-height: 1; text-align: left; }
-.cab-chip .cc-hand { font-family: var(--cab-mono); font-size: 12px; letter-spacing: 0.1em; color: #d6d3da; }
-.cab-chip .cc-sub { font-family: var(--cab-mono); font-size: 8.5px; letter-spacing: 0.22em; color: var(--cab-muted);
-  text-transform: uppercase; }
 
 /* ════════════ SCRIM — dims the 3D stage behind the drawer (mobile) ════════════ */
 .cab-scrim {
@@ -59,15 +41,15 @@
 }
 @keyframes cab-scrim-in { from { opacity: 0; } to { opacity: 1; } }
 
-/* ════════════ PANEL — left drawer (mobile priority) ════════════ */
+/* ════════════ PANEL — right drawer (392px, 420ms spring) ════════════ */
 .cab-root {
-  position: fixed; top: 0; left: 0; bottom: 0; z-index: 50;
-  width: 87vw; max-width: 360px;
+  position: fixed; top: 0; right: 0; bottom: 0; z-index: 50;
+  width: min(92vw, 392px);
   display: flex; flex-direction: column;
   background: linear-gradient(180deg, #0c0d13 0%, #08090e 100%);
-  border-right: 1px solid var(--cab-line);
+  border-left: 1px solid var(--cab-line);
   color: var(--cab-ink); pointer-events: auto;
-  transform: translateX(-100%); transition: transform 0.32s cubic-bezier(0.22, 0.61, 0.36, 1);
+  transform: translateX(100%); transition: transform 0.42s var(--cab-spring);
   will-change: transform;
 }
 .cab-root.open { transform: translateX(0); }
@@ -140,14 +122,18 @@
 .cab-bind .cb-d { font-family: var(--cab-mono); font-size: 11px; line-height: 1.5; color: var(--cab-dim); }
 .cab-bind .cb-cta { align-self: flex-start; margin-top: 2px; padding: 10px 18px; border: 0; cursor: pointer;
   background: var(--cab-acc); color: #fff; font-weight: 700; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase;
-  clip-path: polygon(9px 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%, 0 9px); }
+  clip-path: polygon(9px 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%, 0 9px);
+  transition: filter 0.15s, transform 0.12s var(--cab-spring); } /* matte pink — brightens, no glow */
+.cab-bind .cb-cta:hover { filter: brightness(1.08); }
+.cab-bind .cb-cta:active { transform: scale(0.97); }
 
 /* ── section rows (Profile lists the five) ── */
 .cab-rows { display: flex; flex-direction: column; gap: 9px; }
 .cab-row { display: flex; align-items: center; gap: 13px; width: 100%; text-align: left; padding: 14px 15px;
   border: 1px solid var(--cab-line); background: var(--cab-fill); cursor: pointer; color: var(--cab-ink);
-  transition: background 0.15s, border-color 0.15s; }
-.cab-row:hover { background: var(--cab-fill-2); border-color: var(--cab-line-2); }
+  transition: background 0.15s, border-color 0.15s, transform 0.22s var(--cab-spring); }
+.cab-row:hover { background: var(--cab-fill-2); border-color: var(--cab-line-2); transform: translateX(-2px); }
+.cab-row:active { transform: scale(0.99); transition-duration: 0.12s; }
 .cab-row .rw-ic { width: 22px; height: 22px; flex: 0 0 auto; color: var(--cab-dim); }
 .cab-row .rw-ic svg { width: 100%; height: 100%; }
 .cab-row .rw-t { flex: 1 1 auto; min-width: 0; }
@@ -249,19 +235,19 @@
   animation: cab-toast-in 0.2s ease both; }
 @keyframes cab-toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-/* ════════════ DESKTOP — right-pinned, always open (secondary) ════════════ */
+/* ════════════ DESKTOP ════════════ */
 @media (min-width: 1024px) {
-  /* Desktop = the SAME left drawer as mobile, just wider. Closable overlay over
-     a dimmed home: the chip (top-left) opens it, ✕ / scrim close it, and it
-     slides off the LEFT edge. Only the width changes vs mobile — left anchoring,
-     the right-edge border, and the translateX(-100%) closed transform all come
-     from the base rule, so the ✕ stays at the panel's inner (right) edge. */
-  .cab-root { width: 440px; max-width: none; }
+  /* Same RIGHT drawer as mobile, just at its full 392px (no longer viewport-capped):
+     the strip's cabinet segment opens it, ✕ / scrim / Esc close it, and it slides
+     off the RIGHT edge. Right anchoring, the left-edge border, and the
+     translateX(100%) closed transform all come from the base rule. */
+  .cab-root { width: 392px; }
 }
 
 /* ════════════ reduced motion ════════════ */
 @media (prefers-reduced-motion: reduce) {
-  .cab-root { transition: none; }
+  .cab-root, .cab-row, .cab-bind .cb-cta { transition: none; }
+  .cab-row:hover, .cab-row:active, .cab-bind .cb-cta:active { transform: none; }
   .cab-scrim, .cab-toast { animation: none; }
   .cab-core::before { animation: none; }
 }

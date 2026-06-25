@@ -19,38 +19,39 @@
       :ghost="ghost"
     />
 
-    <!-- Decor shop view replaces the chrome (its own opaque bg covers the stage) -->
-    <HomeShop v-if="view === 'shop'" :balance="balance" @back="view = 'home'" />
+    <!-- ───────── persistent top strip ─────────
+         Constant across the home AND the shop: brand-block (left) + one connected
+         cluster (right) fusing the SHOP entry + the cabinet entry. NO $HEX here
+         (balance lives in the cabinet / shop). Hidden only in arrange mode, which
+         brings its own focused top bar. Styles: .hs-strip in home.css. -->
+    <div v-if="!arrange" class="hs-strip">
+      <button type="button" class="hs-brandblock" @click="onBrand">
+        <span class="wm">HEXLASH</span><span class="season">SEASON 0</span>
+      </button>
+      <div class="hs-cluster">
+        <button type="button" class="seg hs-seg-shop" :class="{ active: view === 'shop' }" @click="onShop">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M5 8h14l-1 12H6L5 8Z" /><path d="M9 8V6a3 3 0 0 1 6 0v2" /></svg>
+          <span class="txt"><span class="n">Shop</span><span class="s">DECOR · MORE</span></span>
+        </button>
+        <button type="button" class="seg hs-seg-cab" @click="cabinetOpen = true">
+          <span class="av"><span /></span>
+          <span class="txt"><span class="hand">{{ t.cabinet.chipHandle }}</span><span class="sub">{{ t.cabinet.chipOpen }}</span></span>
+        </button>
+      </div>
+    </div>
 
-    <!-- Home / arrange chrome overlay -->
-    <div v-else class="hs-overlay">
+    <!-- surface under the strip: home chrome OR the shop, cross-faded (fade+scale) -->
+    <Transition name="hs-view" mode="out-in">
+      <!-- Decor shop view replaces the chrome (its own opaque bg covers the stage) -->
+      <HomeShop v-if="view === 'shop'" key="shop" :balance="balance" @back="view = 'home'" />
+
+      <!-- Home / arrange chrome overlay -->
+      <div v-else key="home" class="hs-overlay">
       <!-- ───────── normal home chrome ───────── -->
       <template v-if="!arrange">
-        <!-- cabinet entry chip (top-left) — the single door into the Player
-             Cabinet (profile / balance / referrals / quests / leaderboard /
-             settings). Styles live in cabinet.css; no shared .hs-* class touched. -->
-        <button type="button" class="cab-chip" @click="cabinetOpen = true">
-          <span class="cc-av"><span /></span>
-          <span class="cc-txt">
-            <span class="cc-hand">{{ t.cabinet.chipHandle }}</span>
-            <span class="cc-sub">{{ t.cabinet.chipOpen }}</span>
-          </span>
-        </button>
-
-        <!-- SHOP entry (top-right) — mirrors the cabinet chip (top-left) so the
-             two corners read as a pair. Matte chrome (no pink/glow); same route as
-             the old dock tile. Styles: .hs-shopbtn in home.css (home-only). -->
-        <button type="button" class="hs-shopbtn" @click="onShop">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M5 8h14l-1 12H6L5 8Z" /><path d="M9 8V6a3 3 0 0 1 6 0v2" /></svg>
-          <span class="sb-txt">
-            <span class="sb-n">Shop</span>
-            <span class="sb-s">DECOR · MORE</span>
-          </span>
-        </button>
-
-        <!-- bottom dock — one centered row: TRAIN · FIGHT · CUSTOMIZE. Two matte
-             tiles flank the hero FIGHT (the one pink/glow mark); SHOP moved to the
-             top-right corner, PROFILE into the cabinet. FIGHT stays centred. -->
+        <!-- bottom dock — one centered row: TRAIN · FIGHT · CUSTOMIZE. Two quiet
+             matte tiles flank the hero FIGHT (the one pink/glow mark). SHOP +
+             cabinet live in the persistent strip; FIGHT stays centred. -->
         <div class="hs-dock">
           <div class="hs-tile" @click="onTrain">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18l5-5 4 4 7-8" /><path d="M16 9h4v4" /></svg>
@@ -95,13 +96,13 @@
           </div>
         </div>
       </template>
-    </div>
+      </div>
+    </Transition>
 
-    <!-- Player Cabinet — sliding panel over the home (mobile drawer / desktop
-         right-pinned). Mounted in the home chrome only (not the shop, not arrange),
-         so HomeShop is untouched. Fixed-position; manages its own pointer-events. -->
+    <!-- Player Cabinet — sliding panel that slides in from the RIGHT (the same edge
+         the strip's cabinet entry sits on). Always mounted so it opens over the home
+         AND the shop; closed by ✕ / scrim-tap / Esc. Fixed-position, own pointer-events. -->
     <PlayerCabinet
-      v-if="view === 'home' && !arrange"
       :open="cabinetOpen"
       :balance="balance"
       :core-name="coreName"
@@ -129,7 +130,7 @@ const router = useRouter();
 // ownership data source yet). arrange / shop are entered from the dock.
 const view = ref('home'); // 'home' | 'shop'
 const arrange = ref(false);
-const cabinetOpen = ref(false); // Player Cabinet drawer (mobile); always-open on desktop via CSS
+const cabinetOpen = ref(false); // Player Cabinet drawer — slides in from the right; closable at all widths
 
 // Player fighter from the existing pre-fight store. No core picked → default
 // fighter (canon pink). Drives the 3D core hue + the cabinet's fighter card.
@@ -182,7 +183,10 @@ const trayItems = [
 //     guards bounce a core-less player to selection (the "no fighter" path).
 function onFight() { router.push('/play/arena'); }
 function onTrain() { router.push('/play/upgrade'); }
-function onShop() { view.value = 'shop'; }
+// SHOP segment toggles the surface (open shop / back to home); the brand-block is
+// the other way home. Both swap the same `view`, cross-faded by the strip wrapper.
+function onShop() { view.value = view.value === 'shop' ? 'home' : 'shop'; }
+function onBrand() { view.value = 'home'; }
 function onCustomize() { arrange.value = true; }
 
 // Arrange — both exit the mode; placement is a visual stub (nothing persists).

@@ -1,44 +1,38 @@
-<!-- HomeShop — the SHOP view (/play/home → SHOP). Three tabs:
+<!-- HomeShop — the SHOP view (/play/home → SHOP). ONE scroll page, three stacked
+     zones (no tabs); the persistent strip (HomeView) owns the nav:
        • DECOR     — live visual buy FACADE. BUY → confirm → "unlocked" → done.
                      Nothing is really spent and nothing is saved to ownership
                      (except the hardcoded OWNED Supply Cache, for the demo).
        • CURRENCY  — Stage-2 stub. $HEX top-up packs; every price is SOON and opens
-                     the wallet stub. ARSENAL is the one accent (BEST VALUE glow).
+                     the wallet stub.
        • SPECIALS  — Stage-2 stub. Hot deal (live countdown) + free claim + bundle,
                      all SOON-gated → wallet / rewards stubs.
 
-     One flag gates Stage 2: stageTwoLive=false hides nothing-real, shows SOON and
-     routes to stubs. Discipline: one pink (#FF0069), one glow per tab (Currency =
-     ARSENAL, Specials = HOT DEAL, Decor = matte BUY). Art = matte faceted low-poly
-     in the arena grey family — never glows. Styles: src/styles/shop.css (own file,
-     home.css untouched). Strings: i18n t.shop.*. -->
+     One flag gates Stage 2: stageTwoLive=false → Currency/Specials are honest SOON
+     stubs with their pink accents (ARSENAL frame, HOT DEAL, BEST VALUE) switched
+     OFF, so the whole page carries ONE live pink — the matte Decor BUY — and zero
+     glow (per the shop's glow discipline). Stage 2 flips the accents back on. Art =
+     matte faceted low-poly in the arena grey family — never glows. Cards are a fixed
+     height per zone. Styles: src/styles/shop.css. Strings: i18n t.shop.*. -->
 <template>
   <div class="shop-root" role="region" aria-label="Shop">
-    <span class="shop-bracket tl" /><span class="shop-bracket tr" />
-    <span class="shop-bracket bl" /><span class="shop-bracket br" />
+    <!-- One scroll page. The persistent strip (HomeView) sits above and owns the
+         nav, so the shop carries no top bar of its own — the three zones simply
+         stack. Padded to clear the strip. -->
+    <div class="shop-scroll">
+      <!-- intro: SHOP title + $HEX balance. Balance is allowed HERE in the shop —
+           it is kept OUT of the persistent strip (which never shows $HEX). -->
+      <header class="shop-intro">
+        <h1 class="shop-h1">{{ t.shop.title }}</h1>
+        <div class="shop-bal"><span class="dia" /><b>{{ balanceDisplay }}</b>&nbsp;<i>{{ t.shop.unit }}</i></div>
+      </header>
 
-    <!-- header -->
-    <header class="shop-head">
-      <div class="shop-topbar">
-        <button type="button" class="shop-back" @click="$emit('back')">{{ t.shop.back }}</button>
-        <div class="shop-topr">
-          <span class="shop-brand">{{ t.shop.title }}</span>
-          <div class="shop-bal"><span class="dia" /><b>{{ balanceDisplay }}</b>&nbsp;<i>{{ t.shop.unit }}</i></div>
+      <!-- ═════════ ZONE · DECOR (the live buy — matte BUY is the shop's one pink) ═════════ -->
+      <section class="shop-zone">
+        <div class="shop-zone-h">
+          <h2 class="shop-zone-t">{{ t.shop.tabDecor }}</h2>
+          <p class="shop-zone-l">{{ t.shop.ledeDecor }}</p>
         </div>
-      </div>
-      <h1 class="shop-h1">{{ activeTitle }}</h1>
-      <nav class="shop-tabs">
-        <button v-for="tb in TABS" :key="tb.id" type="button" class="shop-tab" :class="{ active: tab === tb.id }" @click="tab = tb.id">
-          {{ t.shop[tb.label] }}
-        </button>
-      </nav>
-      <p class="shop-lede">{{ lede }}</p>
-    </header>
-
-    <!-- body -->
-    <div class="shop-body">
-      <!-- ─────────── DECOR ─────────── -->
-      <template v-if="tab === 'decor'">
         <div class="shop-subtabs">
           <span class="shop-subtab active">{{ t.shop.subDecor }}</span>
           <span class="shop-subtab">{{ t.shop.subSkins }}<i class="soon">{{ t.shop.soon }}</i></span>
@@ -46,7 +40,7 @@
           <span class="shop-subtab">{{ t.shop.subCores }}<i class="soon">{{ t.shop.soon }}</i></span>
         </div>
         <div class="shop-grid">
-          <article v-for="it in DECOR" :key="it.id" class="shop-card" :class="{ feat: it.featured }">
+          <article v-for="it in DECOR" :key="it.id" class="shop-card">
             <div class="shop-frame">
               <span class="shop-tag" :class="{ new: it.tag === 'new' }">{{ it.tag === 'new' ? t.shop.tagNew : t.shop.subDecor }}</span>
               <svg class="shop-art" viewBox="0 0 88 96" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
@@ -65,18 +59,22 @@
             </div>
           </article>
         </div>
-      </template>
+      </section>
 
-      <!-- ─────────── CURRENCY (Stage-2 stub) ─────────── -->
-      <template v-else-if="tab === 'currency'">
+      <!-- ═════════ ZONE · CURRENCY (Stage-2 — honest SOON; accents gated off) ═════════ -->
+      <section class="shop-zone">
+        <div class="shop-zone-h">
+          <h2 class="shop-zone-t">{{ t.shop.tabCurrency }}</h2>
+          <p class="shop-zone-l">{{ t.shop.ledeCurrency }}</p>
+        </div>
         <div class="shop-whatis">
           <h3>{{ t.shop.whatIsTitle }}</h3>
           <p>{{ t.shop.whatIsBody }}</p>
         </div>
         <div class="shop-grid">
-          <article v-for="p in CURRENCY" :key="p.id" class="shop-pack" :class="{ best: p.best }">
+          <article v-for="p in CURRENCY" :key="p.id" class="shop-pack" :class="{ best: p.best && stageTwoLive }">
             <div class="shop-pack-art">
-              <span v-if="p.best" class="shop-ribbon">{{ t.shop.bestValue }}</span>
+              <span v-if="p.best && stageTwoLive" class="shop-ribbon">{{ t.shop.bestValue }}</span>
               <span class="shop-value">{{ p.pct }}% {{ t.shop.valueSuffix }}</span>
               <svg class="shop-art" viewBox="0 0 88 96" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
                 <ellipse cx="44" cy="82" rx="28" ry="6" fill="#000" opacity="0.4" />
@@ -92,13 +90,17 @@
             </div>
           </article>
         </div>
-      </template>
+      </section>
 
-      <!-- ─────────── SPECIALS (Stage-2 stub) ─────────── -->
-      <template v-else>
+      <!-- ═════════ ZONE · SPECIALS (Stage-2 — honest SOON; accents gated off) ═════════ -->
+      <section class="shop-zone">
+        <div class="shop-zone-h">
+          <h2 class="shop-zone-t">{{ t.shop.tabSpecials }}</h2>
+          <p class="shop-zone-l">{{ t.shop.ledeSpecials }}</p>
+        </div>
         <div class="shop-grid">
-          <!-- HOT DEAL — the one accent here -->
-          <article class="shop-special hot">
+          <!-- HOT DEAL — accent only when Stage 2 is live (else a neutral SOON stub) -->
+          <article class="shop-special" :class="{ hot: stageTwoLive }">
             <div class="shop-special-h"><span class="shop-kicker">{{ t.shop.hotDeal }}</span></div>
             <div class="shop-special-name">{{ t.shop.specials.arenaCache.name }}</div>
             <div class="shop-timer">{{ timerDisplay }}</div>
@@ -128,7 +130,7 @@
             </button>
           </article>
         </div>
-      </template>
+      </section>
     </div>
 
     <!-- ─────────── modals (bottom-sheet mobile / centered desktop) ─────────── -->
@@ -200,17 +202,10 @@ defineEmits(['back']);
 const BALANCE = 2480; // hardcoded $HEX — never actually debited on Stage 1
 const stageTwoLive = false; // master flag: false ⇒ Currency/Specials/claim are SOON stubs
 
-const tab = ref('decor'); // 'decor' | 'currency' | 'specials'
 const modal = ref(null); // null | 'buy' | 'wallet' | 'claim'
 const buyStep = ref('confirm'); // 'confirm' | 'done'
 const buyItem = ref(null);
 const ownedItems = reactive(new Set(['crates'])); // hardcoded demo ownership (Supply Cache)
-
-const TABS = [
-  { id: 'decor', label: 'tabDecor' },
-  { id: 'currency', label: 'tabCurrency' },
-  { id: 'specials', label: 'tabSpecials' },
-];
 
 // catalogs — structural data; names/copy come from i18n (t.shop.*)
 const DECOR = [
@@ -241,10 +236,6 @@ const DECOR_ART = {
 const HEX_PILE = '<polygon points="20,80 44,80 38,66 26,66" fill="#3a4453"/><polygon points="44,80 68,80 62,66 50,66" fill="#2b3446"/><polygon points="32,66 56,66 50,52 38,52" fill="#46516a"/><polygon points="38,52 50,52 44,44 44,44" fill="#3a4453"/><polygon points="28,68 36,68 32,60 28,62" fill="#252c37"/><polygon points="52,68 60,68 58,60 52,62" fill="#252c37"/>';
 
 const balanceDisplay = computed(() => BALANCE.toLocaleString());
-const activeTitle = computed(() =>
-  ({ decor: t.value.shop.tabDecor, currency: t.value.shop.tabCurrency, specials: t.value.shop.tabSpecials }[tab.value]));
-const lede = computed(() =>
-  ({ decor: t.value.shop.ledeDecor, currency: t.value.shop.ledeCurrency, specials: t.value.shop.ledeSpecials }[tab.value]));
 const buyName = computed(() => (buyItem.value ? t.value.shop.decor[buyItem.value.id].name : ''));
 const balanceAfter = computed(() => (buyItem.value ? (BALANCE - buyItem.value.price).toLocaleString() : ''));
 

@@ -19,6 +19,12 @@
   --hs-mono: "JetBrains Mono", ui-monospace, monospace;
   --muted: #76727c;
   --line: rgba(255, 255, 255, 0.09);
+  --line2: rgba(255, 255, 255, 0.18);
+  /* motion brief — one spring + three durations shared by every interactive mark */
+  --hs-spring: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --hs-fast: 0.15s;   /* colour/border state change */
+  --hs-hover: 0.22s;  /* hover lift + edge/glow (spring) */
+  --hs-press: 0.12s;  /* press squish */
   font-family: var(--hs-disp);
 }
 .home-root * { box-sizing: border-box; }
@@ -28,23 +34,59 @@
 .hs-tile, .hs-fight .fbtn,
 .hs-abtn, .hs-slot, .sp-back, .sp-btn, .sp-tabs .tb { pointer-events: auto; }
 
-/* ── top bar ── */
-.hs-top { position: absolute; top: 0; left: 0; right: 0; height: 74px; z-index: 5;
-  display: flex; align-items: center; justify-content: space-between; padding: 0 48px; }
-/* .hs-brand is an empty spacer on the home (logo + SEASON 0 label removed); the
-   shop reuses it for its "SHOP" label, so the rule + .season styling stay. */
-.hs-brand { display: flex; align-items: center; gap: 14px; }
-.hs-brand .season { font-family: var(--hs-mono); font-size: 10px; letter-spacing: 0.28em; color: var(--muted);
+/* ════════════ PERSISTENT TOP STRIP ════════════
+   One constant bar across the home AND the shop: a brand-block on the LEFT and a
+   single CONNECTED cluster on the RIGHT (not three scattered corners). The cluster
+   fuses the SHOP entry + the cabinet entry into one segmented element, anchored at
+   the right edge the cabinet slides out from. Matte chrome only — NO pink, NO glow,
+   NO $HEX balance here (balance lives in the cabinet / shop body). Sits above both
+   surfaces; its own pointer-events are none, the interactive pieces opt back in. */
+.hs-strip { position: absolute; top: 0; left: 0; right: 0; height: 74px; z-index: 8;
+  display: flex; align-items: center; justify-content: space-between; padding: 0 22px; pointer-events: none; }
+.hs-strip > * { pointer-events: auto; }
+
+/* brand-block (left) — HEXLASH wordmark + season tag; click returns to the home */
+.hs-brandblock { display: flex; align-items: baseline; gap: 12px; background: none; border: 0; cursor: pointer;
+  padding: 6px 4px; color: inherit; transition: opacity var(--hs-fast); }
+.hs-brandblock .wm { font-family: var(--hs-disp); font-weight: 900; font-size: 22px; letter-spacing: 0.16em;
+  text-transform: uppercase; color: #f4f2f6; line-height: 1; }
+.hs-brandblock .season { font-family: var(--hs-mono); font-size: 9.5px; letter-spacing: 0.28em; color: var(--muted);
   text-transform: uppercase; }
-.hs-topr { display: flex; align-items: center; gap: 14px; }
-.hs-bal { display: flex; align-items: center; gap: 9px; font-family: var(--hs-mono); font-size: 13px;
-  letter-spacing: 0.08em; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.025); padding: 9px 16px; }
-.hs-bal b { color: #fff; font-weight: 500; }
-.hs-bal i { color: var(--acc); font-style: normal; }
-/* matte diamond — NO glow (only the core + FIGHT glow). .hs-bal (and .hs-topr)
-   stay: the home no longer renders them, but the shop top bar still does. The
-   personality chip (.hs-prof) was home-only and is removed (deferred to Этап 2). */
-.hs-bal .dia { width: 8px; height: 8px; background: var(--acc); transform: rotate(45deg); }
+.hs-brandblock:hover { opacity: 0.82; }
+
+/* connected cluster (right) — SHOP segment | cabinet segment, one shared frame */
+.hs-cluster { display: flex; align-items: stretch; border: 1px solid var(--line);
+  background: rgba(10, 10, 16, 0.55); backdrop-filter: blur(6px); }
+.hs-cluster .seg { display: flex; align-items: center; gap: 11px; padding: 8px 14px; background: none; border: 0;
+  cursor: pointer; color: #f4f2f6; transition: background var(--hs-fast), transform var(--hs-press) var(--hs-spring); }
+.hs-cluster .seg + .seg { border-left: 1px solid var(--line); }
+.hs-cluster .seg:hover { background: rgba(255, 255, 255, 0.055); }
+.hs-cluster .seg.active { background: rgba(255, 255, 255, 0.08); }
+.hs-cluster .seg:active { transform: scale(0.975); }
+.hs-cluster .seg svg { width: 20px; height: 20px; flex: 0 0 auto; color: #d6d3da; }
+/* shop segment */
+.hs-seg-shop .txt { display: flex; flex-direction: column; gap: 2px; line-height: 1; text-align: left; }
+.hs-seg-shop .n { font-weight: 700; font-size: 14px; letter-spacing: 0.05em; text-transform: uppercase; }
+.hs-seg-shop .s { font-family: var(--hs-mono); font-size: 8.5px; letter-spacing: 0.14em; color: var(--muted);
+  text-transform: uppercase; }
+/* cabinet segment — matte diamond avatar (NO glow; only the core + FIGHT glow) */
+.hs-seg-cab .av { width: 30px; height: 30px; flex: 0 0 auto; background: linear-gradient(135deg, #2a3140, #161b24);
+  border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; }
+.hs-seg-cab .av span { width: 10px; height: 10px; background: var(--acc); transform: rotate(45deg); }
+.hs-seg-cab .txt { display: flex; flex-direction: column; gap: 2px; line-height: 1; text-align: left; }
+.hs-seg-cab .hand { font-family: var(--hs-mono); font-size: 12px; letter-spacing: 0.1em; color: #d6d3da; }
+.hs-seg-cab .sub { font-family: var(--hs-mono); font-size: 8.5px; letter-spacing: 0.22em; color: var(--muted);
+  text-transform: uppercase; }
+/* narrow screens: shed the sublabels so the cluster stays a compact pill */
+@media (max-width: 560px) {
+  .hs-strip { padding: 0 14px; }
+  .hs-seg-shop .s, .hs-seg-cab .sub { display: none; }
+}
+@media (max-width: 400px) {
+  .hs-brandblock .season { display: none; }
+  .hs-seg-shop .txt, .hs-seg-cab .hand { display: none; }
+  .hs-cluster .seg { padding: 8px 12px; gap: 8px; }
+}
 
 /* ── left rail stubs (honest SOON) ── */
 /* ── bottom dock — one centered row; four uniform matte tiles flank the hero FIGHT ── */
@@ -53,8 +95,10 @@
 /* secondary buttons — TRAIN / SHOP / PROFILE / CUSTOMIZE: one size, one matte chrome (no pink) */
 .hs-tile { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; width: 118px; height: 96px;
   padding: 14px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.022); cursor: pointer;
-  transition: background 0.15s, border-color 0.15s; }
-.hs-tile:hover { background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.2); }
+  transition: background var(--hs-fast), border-color var(--hs-fast), transform var(--hs-hover) var(--hs-spring); }
+/* quiet supporting buttons — a small lift, no glow (the pink/glow stays on FIGHT) */
+.hs-tile:hover { background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.2); transform: translateY(-2px); }
+.hs-tile:active { transform: translateY(0) scale(0.985); transition-duration: var(--hs-press); }
 .hs-tile svg { width: 22px; height: 22px; color: #d6d3da; }
 .hs-tile .tl-n { font-weight: 700; font-size: 16px; letter-spacing: 0.05em; text-transform: uppercase; }
 .hs-tile .tl-s { font-family: var(--hs-mono); font-size: 9px; letter-spacing: 0.14em; color: var(--muted); margin-top: -6px; }
@@ -64,31 +108,29 @@
 .hs-fight .fbtn { display: flex; align-items: center; justify-content: center; gap: 16px; height: 104px; padding: 0 44px; cursor: pointer;
   background: var(--acc); color: #fff; font-weight: 900; font-size: 26px; letter-spacing: 0.12em; text-transform: uppercase;
   clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
-  box-shadow: 0 0 40px rgba(var(--acc-rgb), 0.45); transition: box-shadow 0.15s, transform 0.12s; border: 0; }
-.hs-fight .fbtn:hover { box-shadow: 0 0 60px rgba(var(--acc-rgb), 0.65); transform: translateY(-2px); }
+  box-shadow: 0 0 32px rgba(var(--acc-rgb), 0.42); border: 0;
+  /* idle pulse at rest — the hero breathes (~3.4s, matches the 3D core halo) */
+  animation: hs-fight-pulse 3.4s ease-in-out infinite;
+  transition: box-shadow var(--hs-hover) var(--hs-spring), transform var(--hs-hover) var(--hs-spring); }
+@keyframes hs-fight-pulse {
+  0%, 100% { box-shadow: 0 0 28px rgba(var(--acc-rgb), 0.38); }
+  50%      { box-shadow: 0 0 48px rgba(var(--acc-rgb), 0.60); }
+}
+/* hover — the juiciest lift on the home: rises + brightens, glow is temporary
+   (it relaxes back to the idle pulse on leave). Pause the pulse while hovering. */
+.hs-fight .fbtn:hover { animation: none; transform: translateY(-3px); box-shadow: 0 0 64px rgba(var(--acc-rgb), 0.72); }
+/* press — squish to ~0.97, snappy */
+.hs-fight .fbtn:active { transform: translateY(-1px) scale(0.97); transition-duration: var(--hs-press); }
 .hs-fight .fbtn .arr { font-size: 22px; }
 .hs-fight .fsub { font-family: var(--hs-mono); font-size: 11px; letter-spacing: 0.22em; color: #b9b6bd; text-transform: uppercase; }
 
-/* ── SHOP corner button — top-right, mirrors the cabinet chip (top-left) so the
-   two corners read as a pair. Matte chrome like the dock tiles; NOT pink, no glow
-   (FIGHT + the 3D core stay the only glow). Home-only class: HomeShop never uses
-   it and the shared .hs-top/.hs-brand/.season rules are untouched. Self-enables
-   pointer-events (the .hs-overlay parent is pointer-events:none). ── */
-.hs-shopbtn { position: absolute; top: 18px; right: 22px; z-index: 6; pointer-events: auto;
-  display: flex; align-items: center; gap: 11px; padding: 8px 14px;
-  border: 1px solid var(--line); background: rgba(255, 255, 255, 0.022); cursor: pointer;
-  color: #f4f2f6; transition: background 0.15s, border-color 0.15s; }
-.hs-shopbtn:hover { background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.2); }
-.hs-shopbtn svg { width: 22px; height: 22px; flex: 0 0 auto; color: #d6d3da; }
-.hs-shopbtn .sb-txt { display: flex; flex-direction: column; gap: 2px; line-height: 1; text-align: left; }
-.hs-shopbtn .sb-n { font-weight: 700; font-size: 15px; letter-spacing: 0.05em; text-transform: uppercase; }
-.hs-shopbtn .sb-s { font-family: var(--hs-mono); font-size: 9px; letter-spacing: 0.14em; color: var(--muted); text-transform: uppercase; }
-/* narrow screens: drop the sublabel → compact icon + SHOP so the top-right button
-   can't crowd the cabinet chip (top-left) or the 3D scene. */
-@media (max-width: 400px) {
-  .hs-shopbtn { padding: 8px 12px; gap: 8px; }
-  .hs-shopbtn .sb-s { display: none; }
-}
+/* ── home ⇄ shop view transition — soft fade + scale, no hard cut. The persistent
+   strip lives outside this wrapper, so it stays put while the surface under it
+   cross-fades. ── */
+.hs-view-enter-active, .hs-view-leave-active {
+  transition: opacity 0.26s var(--hs-spring), transform 0.26s var(--hs-spring); }
+.hs-view-enter-from { opacity: 0; transform: scale(0.985); }
+.hs-view-leave-to { opacity: 0; transform: scale(1.008); }
 
 /* ── ARRANGE MODE ── */
 .hs-arrtop { position: absolute; top: 0; left: 0; right: 0; height: 74px; z-index: 7;
@@ -173,3 +215,13 @@
 .sp-btn.buy { background: var(--acc); color: #fff;
   clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px); }
 .sp-btn.owned { border: 1px solid var(--line); background: rgba(255, 255, 255, 0.03); color: var(--muted); }
+
+/* ════════════ reduced motion — no pulse, no lift, no view cross-fade ════════════ */
+@media (prefers-reduced-motion: reduce) {
+  .hs-fight .fbtn { animation: none; }
+  .hs-fight .fbtn, .hs-tile, .hs-cluster .seg, .hs-brandblock { transition: none; }
+  .hs-fight .fbtn:hover, .hs-fight .fbtn:active,
+  .hs-tile:hover, .hs-tile:active, .hs-cluster .seg:active { transform: none; }
+  .hs-view-enter-active, .hs-view-leave-active { transition: none; }
+  .hs-view-enter-from, .hs-view-leave-to { transform: none; }
+}
