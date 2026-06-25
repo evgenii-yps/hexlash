@@ -24,6 +24,7 @@ import { buildArena } from './buildArena.js';
 import { buildFighter } from './buildFighter.js';
 import { resolveBehavior } from '@/data/behavior.js';
 import { buildPropSet, buildSnapGrid, buildGhost, disposeGroup } from './homeProps.js';
+import { createHomeWanderDirector } from './homeWander.js';
 
 const props = defineProps({
   coreHue: { type: String, default: '#FF0069' }, // fighter core colour (per-core hue)
@@ -39,6 +40,8 @@ const canvasEl = ref(null);
 
 let renderer, scene, camera, controls, arena, fighter, resizeObserver, clock;
 let onVisibility;
+let director = null;     // home wander director (drives the existing locomotion)
+let prevWanderT = 0;     // last frame's elapsed time → per-frame dt for the director
 let propGroup = null;
 let gridGroup = null;
 let ghostGroup = null;
@@ -178,6 +181,39 @@ function rebuildProps() {
       scene.add(ghostGroup);
     }
   }
+
+  // Hand the placed decor footprints to the wander director so the fighter routes
+  // its strolls AROUND props (not through them). Grid/ghost (arrange overlays) are
+  // not obstacles. propGroup sits at the origin → child positions are world XZ.
+  if (director) {
+    const obs = [];
+    if (propGroup) propGroup.children.forEach((c) => obs.push({ x: c.position.x, z: c.position.z }));
+    director.setObstacles(obs);
+  }
+}
+
+// --- Lazy camera follow with a dead-zone. The orbit pivot (controls.target) holds
+//     still while the fighter wanders the central zone, and only lazily (heavily
+//     damped) trails when the fighter drifts past FOLLOW_DEADZONE toward the frame
+//     edge — so the fighter never leaves frame, but small steps don't shove the
+//     camera. All OrbitControls + clamps are untouched.
+const FOLLOW_DEADZONE = 0.75; // pivot holds while the fighter is within this (XZ) of it
+const FOLLOW_LERP = 1.3;      // catch-up rate past the dead-zone (1/s) — lazy, not snappy
+function followFighter(dt) {
+  if (!controls || !fighter || !arena) return;
+  const p = fighter.group.position;
+  const tx = controls.target.x;
+  const tz = controls.target.z;
+  const off = Math.hypot(p.x - tx, p.z - tz);
+  if (off <= FOLLOW_DEADZONE) return;
+  // Pull the pivot toward the fighter, but only the slack past the dead-zone, so it
+  // trails the fighter at ~FOLLOW_DEADZONE radius rather than centring on it.
+  const desiredX = p.x + (tx - p.x) * (FOLLOW_DEADZONE / off);
+  const desiredZ = p.z + (tz - p.z) * (FOLLOW_DEADZONE / off);
+  const k = 1 - Math.exp(-FOLLOW_LERP * Math.min(0.05, dt));
+  controls.target.x += (desiredX - tx) * k;
+  controls.target.z += (desiredZ - tz) * k;
+  controls.target.y = arena.refs.topY + 1.1;
 }
 
 onMounted(() => {
@@ -255,14 +291,31 @@ onMounted(() => {
   //     resolved from the picked core (or core-less default) purely so the build
   //     is core-shaped; it never fights here.
   const behavior = resolveBehavior(props.coreId, []);
-  const NAV_MARGIN = 0.5;
+
+  // Home wander director — drives the EXISTING locomotion (see homeWander.js). It
+  // feeds a moving "lure" through getFoePos so the body strolls on its real footwork,
+  // and idles with varied waiting actions between strolls. Reduced-motion ⇒ inert.
+  // The wander zone is the central slab IN FRONT of the torn seam (positive Z),
+  // inset from the edges; the fighter's own bounds-clamp is the hard safety rail.
+  director = createHomeWanderDirector({
+    zone: {
+      xMin: -(arena.refs.W / 2 - 1.3),
+      xMax: arena.refs.W / 2 - 1.3,
+      zMin: 0.64,
+      zMax: arena.refs.totalDepth / 2 - 0.45,
+    },
+  });
+
   fighter = buildFighter(props.coreHue, {
     side: 'player',
     coreId: props.coreId,
     behavior,
-    bounds: { x: arena.refs.W / 2 - NAV_MARGIN, z: arena.refs.totalDepth / 2 - NAV_MARGIN },
+    // Hard rail: the body clamps its own position to these half-extents — it can
+    // never reach the plate edge. The director keeps strolls within the (tighter)
+    // front zone above; this just backstops.
+    bounds: { x: arena.refs.W / 2 - 1.0, z: arena.refs.totalDepth / 2 - 0.4 },
     neutralColor: false,
-    getFoePos: () => null, // no opponent on the home stage → idle, never steers
+    getFoePos: () => director.foePos(), // moving lure while strolling, null while idle
   });
   fighter.group.position.set(0, arena.refs.topY, 0.35);
   // Face the core toward the camera (a flattering 3/4 front, since the camera is
@@ -281,6 +334,10 @@ onMounted(() => {
   // sticks. In the arena the plate is built/shown as before.
   fighter.group.children.forEach((o) => { if (o.isSprite) o.visible = false; });
   scene.add(fighter.group);
+
+  // Wake the wander director onto this fighter + camera. Under reduced-motion it
+  // attaches inert (foePos stays null → the body just idles, calm).
+  director.attach(fighter, camera, { reduced });
 
   // --- Free orbit around the FIGHTER (home only — never added to the combat
   //     scene). Mouse: drag = orbit, wheel = zoom. Touch: one-finger drag =
@@ -315,15 +372,20 @@ onMounted(() => {
 
   // --- Render loop. FPS-capped; elapsed time drives the idle + the camera sway.
   clock = new THREE.Clock();
+  prevWanderT = 0;
   const interval = 1000 / targetFPS;
   let lastFrame = 0;
   const loop = (time) => {
     if (time - lastFrame < interval) return;
     lastFrame = time;
     const t = clock.getElapsedTime();
+    const dt = t - prevWanderT;
+    prevWanderT = t;
 
     controls.update(); // damping + intro auto-orbit (until first interaction)
-    fighter?.update(t, camera);
+    if (!reduced) director?.update(t, dt); // pick targets + feed the lure / idle actions
+    fighter?.update(t, camera); // the body walks the lure / idles (its own footwork)
+    if (!reduced) followFighter(dt); // lazy dead-zone camera follow (keeps it in frame)
     lamps?.tick?.(t); // gentle light flicker (null under reduced motion)
     renderer.render(scene, camera);
   };
@@ -357,6 +419,7 @@ onBeforeUnmount(() => {
   if (resizeObserver) resizeObserver.disconnect();
   if (onVisibility) document.removeEventListener('visibilitychange', onVisibility);
   if (renderer) renderer.setAnimationLoop(null);
+  if (director) director.dispose();
   if (controls) controls.dispose();
   if (propGroup) { scene.remove(propGroup); disposeGroup(propGroup); }
   if (gridGroup) { scene.remove(gridGroup); disposeGroup(gridGroup); }
