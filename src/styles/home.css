@@ -48,9 +48,11 @@
 /* brand-block (left) — segment mark + HEXLASH wordmark, one transparent click
    zone (mark + word + gap) that returns to the home. Mark is the canonical
    monochrome glyph (logo-512.png via LogoMark) — no glow, no pink. */
-.hs-brandblock { display: flex; align-items: center; gap: 10px; background: none; border: 0; cursor: pointer;
+.hs-brandblock { display: flex; align-items: center; gap: 11px; background: none; border: 0; cursor: pointer;
   padding: 6px 4px; color: inherit; transition: opacity var(--hs-fast); }
-.hs-brandblock .logo-mark { width: 26px; height: 26px; display: block; flex: 0 0 auto; }
+/* mark box runs larger than the cap height: the glyph sits inside transparent
+   padding in logo-512.png, so ~40px optically matches the 22px HEXLASH caps. */
+.hs-brandblock .logo-mark { width: 40px; height: 40px; display: block; flex: 0 0 auto; }
 .hs-brandblock .wm { font-family: var(--hs-disp); font-weight: 900; font-size: 22px; letter-spacing: 0.16em;
   text-transform: uppercase; color: #f4f2f6; line-height: 1; }
 .hs-brandblock:hover { opacity: 0.82; }
