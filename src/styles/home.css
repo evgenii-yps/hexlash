@@ -48,8 +48,10 @@
 /* brand-block (left) — segment mark + HEXLASH wordmark, one transparent click
    zone (mark + word + gap) that returns to the home. Mark is the canonical
    monochrome glyph (logo-512.png via LogoMark) — no glow, no pink. */
-.hs-brandblock { display: flex; align-items: center; gap: 11px; background: none; border: 0; cursor: pointer;
-  padding: 6px 4px; color: inherit; transition: opacity var(--hs-fast); }
+/* brand + cluster share one 48px axis so the strip reads as a single level
+   row (both centred by .hs-strip align-items:center; left/right edges fixed). */
+.hs-brandblock { display: flex; align-items: center; height: 48px; gap: 11px; background: none; border: 0;
+  cursor: pointer; padding: 0 4px; color: inherit; transition: opacity var(--hs-fast); }
 /* mark box runs larger than the cap height: the glyph sits inside transparent
    padding in logo-512.png, so ~40px optically matches the 22px HEXLASH caps. */
 .hs-brandblock .logo-mark { width: 40px; height: 40px; display: block; flex: 0 0 auto; }
@@ -58,7 +60,7 @@
 .hs-brandblock:hover { opacity: 0.82; }
 
 /* connected cluster (right) — SHOP segment | cabinet segment, one shared frame */
-.hs-cluster { display: flex; align-items: stretch; border: 1px solid var(--line);
+.hs-cluster { display: flex; align-items: stretch; height: 48px; border: 1px solid var(--line);
   background: rgba(10, 10, 16, 0.55); backdrop-filter: blur(6px); }
 .hs-cluster .seg { display: flex; align-items: center; gap: 11px; padding: 8px 14px; background: none; border: 0;
   cursor: pointer; color: #f4f2f6; transition: background var(--hs-fast), transform var(--hs-press) var(--hs-spring); }
@@ -75,7 +77,9 @@
 /* cabinet segment — matte diamond avatar (NO glow; only the core + FIGHT glow) */
 .hs-seg-cab .av { width: 30px; height: 30px; flex: 0 0 auto; background: linear-gradient(135deg, #2a3140, #161b24);
   border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; }
-.hs-seg-cab .av span { width: 10px; height: 10px; background: var(--acc); transform: rotate(45deg); }
+/* matte chrome gem, not pink — the only pink on screen stays FIGHT / BUY */
+.hs-seg-cab .av span { width: 10px; height: 10px; background: linear-gradient(135deg, #aeb4c0, #6f7886);
+  transform: rotate(45deg); }
 .hs-seg-cab .txt { display: flex; flex-direction: column; gap: 2px; line-height: 1; text-align: left; }
 .hs-seg-cab .hand { font-family: var(--hs-mono); font-size: 12px; letter-spacing: 0.1em; color: #d6d3da; }
 .hs-seg-cab .sub { font-family: var(--hs-mono); font-size: 8.5px; letter-spacing: 0.22em; color: var(--muted);
