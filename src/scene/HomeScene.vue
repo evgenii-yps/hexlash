@@ -291,18 +291,28 @@ onMounted(() => {
   //     resolved from the picked core (or core-less default) purely so the build
   //     is core-shaped; it never fights here.
   const behavior = resolveBehavior(props.coreId, []);
+  // Cap the home fighter's preferred RANGE to a small, uniform value (display-only —
+  // it never fights here). `range` derives from the distance axis; a low value keeps
+  // every core close to its wander targets, so the body always WALKS to them and
+  // never swings out on a wide orbit (which would carry it onto the occluded seam).
+  if (behavior && behavior.axes) behavior.axes.distance = 18;
 
   // Home wander director — drives the EXISTING locomotion (see homeWander.js). It
   // feeds a moving "lure" through getFoePos so the body strolls on its real footwork,
   // and idles with varied waiting actions between strolls. Reduced-motion ⇒ inert.
   // The wander zone is the central slab IN FRONT of the torn seam (positive Z),
   // inset from the edges; the fighter's own bounds-clamp is the hard safety rail.
+  // The lure's zone IS the wander boundary (the body chases the lure, so it stays
+  // here). It is kept comfortably INSIDE the body's bounds below, so the body never
+  // pins on a wall while reaching the lure — pinning + a lure just past the wall is
+  // what tripped the body's contact-separation shove (the teleport). Front of the
+  // torn seam (z ≥ 0.8 > the ~0.55 seam band), inset from the edges.
   director = createHomeWanderDirector({
     zone: {
-      xMin: -(arena.refs.W / 2 - 1.3),
-      xMax: arena.refs.W / 2 - 1.3,
-      zMin: 0.64,
-      zMax: arena.refs.totalDepth / 2 - 0.45,
+      xMin: -(arena.refs.W / 2 - 1.2),
+      xMax: arena.refs.W / 2 - 1.2,
+      zMin: 0.9,
+      zMax: arena.refs.totalDepth / 2 - 0.6,
     },
   });
 
@@ -310,14 +320,14 @@ onMounted(() => {
     side: 'player',
     coreId: props.coreId,
     behavior,
-    // Hard rail: the body clamps its own position to these half-extents — it can
-    // never reach the plate edge. The director keeps strolls within the (tighter)
-    // front zone above; this just backstops.
-    bounds: { x: arena.refs.W / 2 - 1.0, z: arena.refs.totalDepth / 2 - 0.4 },
+    // Generous rail only: the body clamps its own position to these half-extents so
+    // it can never reach the plate edge. The wander zone above is well inside this,
+    // so under normal strolling the body never actually touches the rail (no snap).
+    bounds: { x: arena.refs.W / 2 - 0.35, z: arena.refs.totalDepth / 2 - 0.3 },
     neutralColor: false,
     getFoePos: () => director.foePos(), // moving lure while strolling, null while idle
   });
-  fighter.group.position.set(0, arena.refs.topY, 0.35);
+  fighter.group.position.set(0, arena.refs.topY, 1.0); // start inside the wander zone (off the seam)
   // Face the core toward the camera (a flattering 3/4 front, since the camera is
   // off-axis). Forward is local -Z; facing dir (dx,dz) ⇒ rotation.y = atan2(-dx,-dz).
   {

@@ -32,20 +32,23 @@ const CONFIG = {
   initialDelaySec: 1.2,   // calm beat before the first stroll
 
   // --- WALK ---
-  minLegDist: 2.0,        // a new destination is at least this far from the last spot
+  minLegDist: 1.8,        // a new destination is at least this far from the last spot
   //                         (long enough that the fighter visibly travels before the
   //                         lure — which leads by ~leadGap — reaches the end)
   arcMax: 0.9,            // max perpendicular bow of the path (winding, not A→B straight)
-  leadGap: 1.6,           // keep the lure this far AHEAD of the fighter. Bigger than the
-  //                         body's re-close range (range+HYST ≈ 1.4–1.7) so the body
-  //                         keeps APPROACHING = walking, instead of circling the lure.
-  //                         ↓ for more curve in the walk (at the cost of some strafe);
-  //                         ↑ for straighter, more committed strides. KEY feel knob.
+  leadGap: 1.3,           // keep the lure this far AHEAD of the fighter. Bigger than the
+  //                         body's re-close range (range+HYST) so the body keeps
+  //                         APPROACHING = walking, never circling the lure. The home
+  //                         build caps the fighter's range small (HomeScene overrides
+  //                         the distance axis), so a modest lead reliably forces a walk.
+  //                         ↓ for more curve (risks a brief strafe); ↑ for straighter
+  //                         strides. KEY feel knob.
+  safeLead: 0.95,         // HARD floor on lure↔body distance (> the body's CONTACT
+  //                         0.74) so the body's separation clamp can never shove it.
   lureStep: 0.02,         // path-param advance per lead iteration (≤ leadStepMax / frame)
   leadStepMax: 12,        // cap lead iterations per frame (no runaway jump)
   shiverAmp: 0.05,        // tiny perpendicular shiver on the lure → the line breathes
   shiverFreq: 2.3,
-  legEndGraceSec: 0.35,   // after the lure reaches the end, coast a beat then pause
   legMaxSec: 16,          // safety: never get stuck on one leg
   fastChance: 0.36,       // a leg is brisk (fast gait) this often, else a calm stroll
   midFlipChance: 0.28,    // chance the gait speed changes once mid-leg (varied pace)
@@ -53,9 +56,13 @@ const CONFIG = {
   // --- PAUSE ---
   pauseMinSec: 0.7,
   pauseMaxSec: 2.9,
-  // waiting micro-actions per pause: count weights then kind weights
+  // waiting micro-actions per pause: count weights then kind weights. Only NON-
+  // translating moves (the body holds its spot): breathing carries the core pulse,
+  // a probe jab, a shoulder feint. A translating slip/dodge is deliberately NOT in
+  // the set — in the shallow front-of-seam zone a sidestep could carry the body onto
+  // the seam, and every move must stay zone-contained.
   actionCountW: [[0, 0.26], [1, 0.46], [2, 0.28]],
-  actionKindW: [['breathe', 0.40], ['jab', 0.24], ['feint', 0.19], ['slip', 0.17]],
+  actionKindW: [['breathe', 0.50], ['jab', 0.28], ['feint', 0.22]],
   scanChance: 0.30,       // some pauses are a "turn & look around" instead of a still wait
 
   // --- camera awareness (during pauses only) ---
@@ -110,7 +117,6 @@ export function createHomeWanderDirector(opts = {}) {
   const C = { x: 0, z: 0 };
   const P1 = { x: 0, z: 0 };
   let lureT = 0;
-  let legEndAt = -1;           // wall time the coast-out ends (−1 = not yet reached end)
   let band = 'slow';
   let midFlipAt = -1;          // phaseT at which to flip the gait once (−1 = none)
 
@@ -142,27 +148,42 @@ export function createHomeWanderDirector(opts = {}) {
     return true;
   }
   function pickDestination(fromX, fromZ) {
+    // Bias the new spot to the OPPOSITE x-half (with a little overlap past centre) so
+    // the fighter actually TRAVERSES the slab on long side-to-side legs. The lead gap
+    // eats a fixed chunk of every leg, so short central legs barely move — heading to
+    // the far side each time makes the walk read as real pacing across the width.
+    const toRight = fromX < 0;
+    const lo = toRight ? Z.xMin * 0.15 : Z.xMin;
+    const hi = toRight ? Z.xMax : Z.xMax * 0.15;
     let best = null;
     let bestD = -1;
-    for (let i = 0; i < 14; i++) {
-      const x = rand(Z.xMin, Z.xMax);
+    for (let i = 0; i < 18; i++) {
+      const x = rand(lo, hi);
       const z = rand(Z.zMin, Z.zMax);
       if (!farFromObstacles(x, z)) continue;
       const d = dist2(x, z, fromX, fromZ);
       if (d >= cfg.minLegDist) return { x, z };  // good enough — take the first far spot
-      if (d > bestD) { bestD = d; best = { x, z }; } // remember the farthest as fallback
+      if (d > bestD) { bestD = d; best = { x, z }; } // else remember the farthest
     }
-    return best || { x: fromX, z: Z.zMin }; // degenerate fallback
+    return best || { x: -fromX, z: rand(Z.zMin, Z.zMax) }; // degenerate fallback → far side
   }
 
   function startWalk() {
     const p = fighter.group.position;
-    P0.x = p.x; P0.z = p.z;
+    // Start the path from the body's spot CLAMPED into the zone — if the body
+    // overshot the zone a hair on the last leg, the new bézier still lives entirely
+    // in-zone (so the lure stays in-zone and the body walks back in, never circling
+    // an out-of-zone point).
+    P0.x = THREE.MathUtils.clamp(p.x, Z.xMin, Z.xMax);
+    P0.z = THREE.MathUtils.clamp(p.z, Z.zMin, Z.zMax);
     const dest = pickDestination(p.x, p.z);
     P1.x = dest.x; P1.z = dest.z;
     // Winding control point: midpoint bowed sideways (perpendicular to the leg) by a
-    // random signed amount → a soft arc, never a straight line. Clamp into a loose
-    // zone so the bow doesn't fling the path off-plate.
+    // random signed amount → a soft arc, never a straight line. Clamped STRICTLY
+    // inside the zone: with P0/P1/C all in-zone the whole bézier stays in-zone, so
+    // the lure is always reachable and the body never pins on a wall (a pinned body
+    // with the lure just past the wall would trip the body's contact-separation
+    // shove — the teleport this fixes).
     const mx = (P0.x + P1.x) / 2;
     const mz = (P0.z + P1.z) / 2;
     let dx = P1.x - P0.x;
@@ -170,17 +191,49 @@ export function createHomeWanderDirector(opts = {}) {
     const len = Math.hypot(dx, dz) || 1e-4;
     dx /= len; dz /= len;
     const bow = rand(-cfg.arcMax, cfg.arcMax);
-    C.x = THREE.MathUtils.clamp(mx + -dz * bow, Z.xMin - 0.4, Z.xMax + 0.4);
-    C.z = THREE.MathUtils.clamp(mz + dx * bow, Z.zMin - 0.3, Z.zMax + 0.3);
+    C.x = THREE.MathUtils.clamp(mx + -dz * bow, Z.xMin, Z.xMax);
+    C.z = THREE.MathUtils.clamp(mz + dx * bow, Z.zMin, Z.zMax);
 
     lureT = 0;
-    lureValid = true;
-    legEndAt = -1;
     band = Math.random() < cfg.fastChance ? 'fast' : 'slow';
     setLoco(band);
     midFlipAt = Math.random() < cfg.midFlipChance ? rand(0.8, cfg.legMaxSec * 0.5) : -1;
+    // Place the lure a full step AHEAD of the body NOW, so the body never reads a
+    // stale / too-close lure on the first frame of the leg (that proximity is what
+    // tripped the contact shove). Only then mark it live.
+    placeLure(P0.x, P0.z);
+    lureValid = true;
     phase = 'walk';
     phaseT = 0;
+  }
+
+  // Position the lure along the bézier, kept ~leadGap AHEAD of (px,pz), shivered,
+  // and ALWAYS clamped inside the zone + held clear of the body. The body navigates
+  // toward this point with its own footwork; it is never within the body's contact
+  // range, so the body's separation clamp never shoves it (no position jump).
+  function placeLure(px, pz) {
+    let guard = 0;
+    while (lureT < 1) {
+      const b = bez(lureT);
+      if (dist2(b.x, b.z, px, pz) >= cfg.leadGap) break;
+      lureT = Math.min(1, lureT + cfg.lureStep);
+      if (++guard >= cfg.leadStepMax) break;
+    }
+    const b = bez(lureT);
+    let dx = P1.x - P0.x, dz = P1.z - P0.z;
+    const ln = Math.hypot(dx, dz) || 1e-4; dx /= ln; dz /= ln;
+    const sh = Math.sin(nowT * cfg.shiverFreq) * cfg.shiverAmp;
+    let lx = THREE.MathUtils.clamp(b.x + -dz * sh, Z.xMin, Z.xMax);
+    let lz = THREE.MathUtils.clamp(b.z + dx * sh, Z.zMin, Z.zMax);
+    // Hard guarantee: never closer than SAFE_LEAD to the body (> the body's CONTACT
+    // 0.74), so the separation clamp can never fire. Push out along body→lure, then
+    // re-clamp to the zone.
+    const dd = dist2(lx, lz, px, pz);
+    if (dd > 1e-3 && dd < cfg.safeLead) {
+      lx = THREE.MathUtils.clamp(px + (lx - px) / dd * cfg.safeLead, Z.xMin, Z.xMax);
+      lz = THREE.MathUtils.clamp(pz + (lz - pz) / dd * cfg.safeLead, Z.zMin, Z.zMax);
+    }
+    lure.set(lx, fighter.group.position.y, lz);
   }
 
   function startPause() {
@@ -207,12 +260,13 @@ export function createHomeWanderDirector(opts = {}) {
     return { x: a * P0.x + b * C.x + c * P1.x, z: a * P0.z + b * C.z + c * P1.z };
   }
 
-  // Fire a waiting micro-action through the EXISTING move API (no new motion).
+  // Fire a waiting micro-action through the EXISTING move API. Only NON-translating
+  // moves — the body holds its spot (a translating slip/dodge could carry it onto the
+  // seam in the shallow zone, so it is intentionally not offered here).
   function runAction(kind) {
     if (!fighter || clipBusy()) return;
     if (kind === 'jab' && fighter.punch) fighter.punch();
     else if (kind === 'feint' && fighter.feint) fighter.feint();
-    else if (kind === 'slip' && fighter.dodge) fighter.dodge();
     // 'breathe' → nothing: the body's own idle breath + core pulse carries it
   }
 
@@ -262,21 +316,9 @@ export function createHomeWanderDirector(opts = {}) {
 
     if (phase === 'walk') {
       const p = fighter.group.position;
-      // Keep the lure a step AHEAD of the fighter so the body keeps APPROACHING
-      // (walking) instead of dropping into a circle once it gets close.
-      let guard = 0;
-      while (lureT < 1) {
-        const pt = bez(lureT);
-        if (dist2(pt.x, pt.z, p.x, p.z) >= cfg.leadGap) break;
-        lureT = Math.min(1, lureT + cfg.lureStep);
-        if (++guard >= cfg.leadStepMax) break;
-      }
-      const pt = bez(lureT);
-      // tiny perpendicular shiver so the lead point isn't a dead-straight pull
-      let dx = P1.x - P0.x, dz = P1.z - P0.z;
-      const ln = Math.hypot(dx, dz) || 1e-4; dx /= ln; dz /= ln;
-      const sh = Math.sin(t * cfg.shiverFreq) * cfg.shiverAmp;
-      lure.set(pt.x + -dz * sh, fighter.group.position.y, pt.z + dx * sh);
+      // Lead the lure ahead of the body (in-zone, clear of the body) so the body
+      // keeps WALKING toward it on its own footwork — never a position write here.
+      placeLure(p.x, p.z);
 
       // varied pace: one mid-leg gait flip
       if (midFlipAt >= 0 && phaseT >= midFlipAt) {
@@ -285,10 +327,13 @@ export function createHomeWanderDirector(opts = {}) {
         midFlipAt = -1;
       }
 
-      // leg end: the lure reached the destination → coast a short beat, then pause
-      // (cut to idle BEFORE the body closes into a circle around the end point)
-      if (lureT >= 1 && legEndAt < 0) legEndAt = t + cfg.legEndGraceSec;
-      if ((legEndAt >= 0 && t >= legEndAt) || phaseT >= cfg.legMaxSec) startPause();
+      // Leg end → pause AS SOON AS the lure has reached the destination and the body
+      // has begun to close on it. Cutting here (while still a step away) means the
+      // body never falls into a circle around the end point — a circle would swing it
+      // out by its range, onto the seam. Always a walk, never an orbit. legMaxSec is
+      // the stuck-safety.
+      const dLure = dist2(lure.x, lure.z, p.x, p.z);
+      if ((lureT >= 1 && dLure < cfg.leadGap - 0.05) || phaseT >= cfg.legMaxSec) startPause();
       return;
     }
 
