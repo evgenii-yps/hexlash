@@ -176,14 +176,17 @@ function buildLamps(opts, reduced) {
 // pause/reduced-safe, alloc-free): slow upward rise that wraps, a tiny lateral sway,
 // and one gentle global opacity flicker. Density is "lived air", not falling snow.
 const DUST = {
-  count: 90,           // a single Points object — cheap, fine on mobile (no shadows)
+  count: 110,          // a single Points object — cheap, fine on mobile (no shadows)
   xRange: 2.6,         // ±X half-extent of the drift box (over the slab)
   zRange: 1.7,         // ±Z half-extent — kept well in front of the camera (z≈6.7)
   yMin: 0.7,           // just above the slab …
   yMax: 3.9,           // … up into the lamp cone (shades hang ~5.7)
-  size: 0.07,          // sprite world size (sizeAttenuation on)
+  // size in WORLD units (sizeAttenuation on): on-screen px ≈ size·0.5·cssHeight/dist,
+  // so the old 0.07 projected to ~3.5px (bright core ~1px) → invisible. 0.16 reads as
+  // a soft ~6–13px haze speck across the orbit distance without becoming "snow".
+  size: 0.16,
   color: 0xffb368,     // warm amber — the lamp family (matches LAMPS.bulbColor)
-  opacity: 0.2,        // very low — atmosphere, not "snow"
+  opacity: 0.4,        // additive over the dark scene needs this to register (was 0.2 → sank)
   rise: 0.10,          // upward drift speed (u/s)
   sway: 0.05,          // lateral sway amplitude (u)
   swaySpeed: 0.25,     // sway frequency
@@ -265,6 +268,25 @@ function buildUnderGlow(opts, topY) {
   };
   const dispose = () => { mesh.geometry.dispose(); mat.dispose(); tex.dispose(); };
   return { mesh, follow, dispose };
+}
+
+// Warm-amber glow colour with a SUBTLE mix of the fighter's core hue (variant A), so
+// the floor "responds" to the fighter without becoming a second bright colour. Amber
+// stays dominant (~78–87%). coreHue is the SAME string fed to buildFighter that tints
+// the 3D core — read it, never hardcode. The core-tint share is held LOW for warm-red
+// / pink hues (ONSLAUGHT) so the pool can't read as a second pink accent.
+function warmGlowColor(coreHueStr) {
+  const amber = new THREE.Color(0xffb368);
+  if (!coreHueStr) return amber;
+  const core = new THREE.Color(coreHueStr);
+  const hsl = { h: 0, s: 0, l: 0 };
+  core.getHSL(hsl);
+  const h = hsl.h;                              // 0..1
+  const dRed = Math.min(h, 1 - h);             // 0 at red (h≈0/1)
+  const dPink = Math.abs(h - 0.93);            // 0 at pink-magenta
+  const danger = Math.max(0, 1 - dRed / 0.12, 1 - dPink / 0.08); // ~1 near red/pink
+  const blend = THREE.MathUtils.lerp(0.22, 0.13, THREE.MathUtils.clamp(danger, 0, 1));
+  return amber.clone().lerp(core, blend);      // amber-dominant, subtle core tint
 }
 
 // Rebuild the decor / grid / ghost groups from the current props. Cheap — a
@@ -460,7 +482,9 @@ onMounted(() => {
   // tracks the (then-idle) fighter, no sudden motion.
   dust = buildDust(DUST, reduced);
   scene.add(dust.points);
-  glow = buildUnderGlow(GLOW, arena.refs.topY);
+  // Glow tinted with a subtle mix of THIS fighter's core hue (props.coreHue = the
+  // hue that colours the 3D core); amber stays dominant, opacity unchanged.
+  glow = buildUnderGlow({ ...GLOW, color: warmGlowColor(props.coreHue) }, arena.refs.topY);
   glow.mesh.position.set(fighter.group.position.x, arena.refs.topY + GLOW.yLift, fighter.group.position.z);
   scene.add(glow.mesh);
 
