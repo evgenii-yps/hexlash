@@ -61,6 +61,7 @@ export default {
     fight: "FIGHT",              // the hero action (the one pink + glow)
     fightSub: "SEND YOUR FIGHTER TO THE ARENA",
     editSpace: "EDIT SPACE",     // corner button → decor arrange mode
+    editSpaceSub: "ARRANGE PROPS",
   },
   cabinet: {
     // Entry chip (top-left of the home) — the single door into the cabinet.

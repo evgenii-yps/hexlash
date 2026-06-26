@@ -62,9 +62,8 @@
               <span class="f-bloom" aria-hidden="true" />
               <span class="f-plinth" aria-hidden="true" />
               <span class="f-face">
-                <span class="f-sheen" aria-hidden="true" />
                 <span class="f-label">{{ t.home.fight }}</span>
-                <span class="f-arr" aria-hidden="true">→</span>
+                <svg class="f-arr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6" /></svg>
               </span>
             </button>
             <div class="fsub">{{ t.home.fightSub }}</div>
@@ -76,9 +75,9 @@
              (.chrome: glass + hairline frame + bottom-right bevel), no pink / no
              glow (those stay on FIGHT). Own scoped class, never the shared .hs-*
              top strip; not shown in the shop or during arrange. -->
-        <button type="button" class="edit-space chrome" @click="onCustomize" :aria-label="t.home.editSpace">
+        <button type="button" class="edit-space" @click="onCustomize" :aria-label="t.home.editSpace">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z" /></svg>
-          <span>{{ t.home.editSpace }}</span>
+          <span class="txt"><span class="n">{{ t.home.editSpace }}</span><span class="s">{{ t.home.editSpaceSub }}</span></span>
         </button>
       </template>
 
