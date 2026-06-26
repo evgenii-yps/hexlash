@@ -17,8 +17,6 @@
 <template>
   <div class="shopb" role="region" aria-label="Shop">
     <div class="sb-bg" aria-hidden="true"></div>
-    <span class="sb-bk tl" aria-hidden="true"></span><span class="sb-bk tr" aria-hidden="true"></span>
-    <span class="sb-bk bl" aria-hidden="true"></span><span class="sb-bk br" aria-hidden="true"></span>
 
     <!-- head — balance ($HEX is allowed in the shop body, never in the strip) +
          SHOP title + the section tabs. Brand / cabinet / back live in the strip. -->

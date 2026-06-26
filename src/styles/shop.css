@@ -33,13 +33,6 @@
 .sb-bg { position: absolute; inset: 0; z-index: 0;
   background: radial-gradient(130% 75% at 50% -6%, #101019 0%, #0a0a11 48%, var(--void) 82%); }
 
-/* corner HUD brackets — matte, part of the chrome (top pair sits behind the strip) */
-.sb-bk { position: absolute; width: 22px; height: 22px; border: 1.5px solid rgba(255, 255, 255, 0.14); z-index: 6; pointer-events: none; }
-.sb-bk.tl { top: 12px; left: 12px; border-right: 0; border-bottom: 0; }
-.sb-bk.tr { top: 12px; right: 12px; border-left: 0; border-bottom: 0; }
-.sb-bk.bl { bottom: 12px; left: 12px; border-right: 0; border-top: 0; }
-.sb-bk.br { bottom: 12px; right: 12px; border-left: 0; border-top: 0; }
-
 /* ════════════ head (balance + title + tabs) ════════════ */
 .sb-head { position: relative; z-index: 5; }
 .sb-top { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
