@@ -49,25 +49,25 @@
       <div v-else key="home" class="hs-overlay">
       <!-- ───────── normal home chrome ───────── -->
       <template v-if="!arrange">
-        <!-- bottom dock — one centered row: TRAIN · FIGHT · CUSTOMIZE. Two quiet
-             matte tiles flank the hero FIGHT (the one pink/glow mark). SHOP +
-             cabinet live in the persistent strip; FIGHT stays centred. -->
+        <!-- bottom dock — FIGHT alone, centred: the one pink/glow mark + idle pulse.
+             TRAIN removed (no training mode yet — its route is kept for later);
+             fighter setup (core + facets) is reached via FIGHT. Decor arrange moved
+             to the EDIT SPACE corner button below. SHOP + cabinet live in the strip. -->
         <div class="hs-dock">
-          <div class="hs-tile" @click="onTrain">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18l5-5 4 4 7-8" /><path d="M16 9h4v4" /></svg>
-            <div><div class="tl-n">Train</div><div class="tl-s">TUNE FACETS</div></div>
-          </div>
-
           <div class="hs-fight">
             <button type="button" class="fbtn" @click="onFight"><span>FIGHT</span><span class="arr">→</span></button>
             <div class="fsub">Send your fighter to the arena</div>
           </div>
-
-          <div class="hs-tile" @click="onCustomize">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 2l8.5 5v10L12 22 3.5 17V7L12 2Z" /><path d="M12 8v8M8 10l8 4M16 10l-8 4" opacity="0.6" /></svg>
-            <div><div class="tl-n">Customize</div><div class="tl-s">ARRANGE PROPS</div></div>
-          </div>
         </div>
+
+        <!-- EDIT SPACE — home-only corner button → the SAME decor arrange mode the
+             old CUSTOMIZE tile opened (reuses onCustomize). Matte chrome, no pink /
+             no glow (those stay on FIGHT). Its own scoped class, never the shared
+             .hs-* top strip; not shown in the shop or during arrange. -->
+        <button type="button" class="edit-space" @click="onCustomize" aria-label="Edit space — arrange decor">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z" /></svg>
+          <span>EDIT SPACE</span>
+        </button>
       </template>
 
       <!-- ───────── arrange mode ───────── -->
@@ -204,10 +204,10 @@ const trayItems = [
   { label: 'Ward Arch', cnt: '×0', locked: true },
 ];
 
-// --- Dock / nav. FIGHT + TRAIN route to existing screens; the arena/upgrade
-//     guards bounce a core-less player to selection (the "no fighter" path).
+// --- Dock / nav. FIGHT routes to the arena; the arena guard bounces a core-less
+//     player to selection (the "no fighter" path). TRAIN was removed from the dock
+//     (no training mode yet) — its /play/upgrade route is kept in the router for later.
 function onFight() { router.push('/play/arena'); }
-function onTrain() { router.push('/play/upgrade'); }
 // SHOP segment toggles the surface (open shop / back to home); the brand-block is
 // the other way home. Both swap the same `view`, cross-faded by the strip wrapper.
 function onShop() { view.value = view.value === 'shop' ? 'home' : 'shop'; }
@@ -257,9 +257,46 @@ function onArrangePlace() { arrange.value = false; }
   font-size: 8.5px; letter-spacing: 0.18em; text-transform: uppercase;
   color: var(--muted, #76727c);
 }
+/* ───────── EDIT SPACE — decor-arrange entry (home-only corner button) ─────────
+   Replaces the old CUSTOMIZE dock tile (reuses onCustomize → arrange mode). Own
+   scoped class, NEVER the shared .hs-* strip. Matte chrome to mirror the old
+   .hs-tile look — no pink, no glow (those stay on FIGHT + the fighter core). Lives
+   inside .hs-overlay (which is pointer-events:none), so it re-enables its own
+   pointer-events. Bottom-right corner, clear of the centred FIGHT on desktop. */
+.edit-space {
+  position: absolute; right: 18px; bottom: 24px; z-index: 5;
+  pointer-events: auto;
+  display: inline-flex; align-items: center; gap: 8px;
+  height: 40px; padding: 0 16px;
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.12));
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.022);
+  color: var(--muted, #76727c); cursor: pointer;
+  font-family: var(--hs-mono, 'JetBrains Mono', ui-monospace, monospace);
+  font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+  transition: background var(--hs-fast, 0.15s) ease,
+              border-color var(--hs-fast, 0.15s) ease,
+              color var(--hs-fast, 0.15s) ease,
+              transform var(--hs-press, 0.12s) var(--hs-spring, cubic-bezier(0.22, 0.61, 0.36, 1));
+}
+.edit-space svg { width: 15px; height: 15px; flex: 0 0 auto; }
+.edit-space:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #f4f2f6;
+  transform: translateY(-2px);
+}
+.edit-space:active { transform: scale(0.985); }
+/* mobile: FIGHT is centred at the bottom — lift EDIT SPACE above the dock so the
+   two never overlap, and pin it to the right edge. */
+@media (max-width: 560px) {
+  .edit-space { right: 14px; bottom: 162px; }
+}
+
 /* reduced-motion: keep a soft opacity fade, but no movement (no rise) */
 @media (prefers-reduced-motion: reduce) {
   .ft-card, .ft-card.is-shown { transform: translate(-50%, calc(-100% - 14px)); }
   .ft-card { transition: opacity 0.2s ease; }
+  .edit-space:hover, .edit-space:active { transform: none; }
 }
 </style>
