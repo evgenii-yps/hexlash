@@ -25,6 +25,12 @@
   --hs-fast: 0.15s;   /* colour/border state change */
   --hs-hover: 0.22s;  /* hover lift + edge/glow (spring) */
   --hs-press: 0.12s;  /* press squish */
+  /* geometry — fixed hex silhouette (FIGHT plinth) + a single bottom-right bevel
+     chamfer (the matte chrome controls). Held as tokens so every control cuts the
+     same corner. */
+  --hs-hex: polygon(18px 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%, 0 18px);
+  --hs-bevel: 9px;
+  --hs-chamfer: polygon(0 0, 100% 0, 100% calc(100% - var(--hs-bevel)), calc(100% - var(--hs-bevel)) 100%, 0 100%);
   font-family: var(--hs-disp);
 }
 .home-root * { box-sizing: border-box; }
@@ -59,9 +65,16 @@
   text-transform: uppercase; color: #f4f2f6; line-height: 1; }
 .hs-brandblock:hover { opacity: 0.82; }
 
-/* connected cluster (right) — SHOP segment | cabinet segment, one shared frame */
-.hs-cluster { display: flex; align-items: stretch; height: 48px; border: 1px solid var(--line);
-  background: rgba(10, 10, 16, 0.55); backdrop-filter: blur(6px); }
+/* connected cluster (right) — SHOP segment | cabinet segment, one shared frame.
+   Matte chrome MATERIAL (shared with .edit-space below): glass wash + hairline
+   frame drawn as an INSET shadow (so it follows the bevel, unlike a border) + a
+   single bottom-right chamfer. No pink, no glow. Per-segment hover/press handle
+   the interaction; the frame itself is static. */
+.hs-cluster { display: flex; align-items: stretch; height: 48px; border: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+  -webkit-backdrop-filter: blur(7px); backdrop-filter: blur(7px);
+  box-shadow: inset 0 0 0 1px var(--line);
+  clip-path: var(--hs-chamfer); }
 .hs-cluster .seg { display: flex; align-items: center; gap: 11px; padding: 8px 14px; background: none; border: 0;
   cursor: pointer; color: #f4f2f6; transition: background var(--hs-fast), transform var(--hs-press) var(--hs-spring); }
 .hs-cluster .seg + .seg { border-left: 1px solid var(--line); }
@@ -84,6 +97,10 @@
 .hs-seg-cab .hand { font-family: var(--hs-mono); font-size: 12px; letter-spacing: 0.1em; color: #d6d3da; }
 .hs-seg-cab .sub { font-family: var(--hs-mono); font-size: 8.5px; letter-spacing: 0.22em; color: var(--muted);
   text-transform: uppercase; }
+/* chevron — the "opens" affordance on the cabinet door (matte, muted) */
+.hs-seg-cab .chev { width: 16px; height: 16px; flex: 0 0 auto; margin-left: 2px; color: var(--muted);
+  transition: transform var(--hs-fast), color var(--hs-fast); }
+.hs-seg-cab:hover .chev { color: #d6d3da; transform: translateX(2px); }
 /* narrow screens: shed the sublabels so the cluster stays a compact pill */
 @media (max-width: 560px) {
   .hs-strip { padding: 0 14px; }
@@ -109,26 +126,99 @@
 .hs-tile .tl-n { font-weight: 700; font-size: 16px; letter-spacing: 0.05em; text-transform: uppercase; }
 .hs-tile .tl-s { font-family: var(--hs-mono); font-size: 9px; letter-spacing: 0.14em; color: var(--muted); margin-top: -6px; }
 
-/* FIGHT — centre of the row, a bit bigger than the tiles; the ONE pink + glowing mark */
-.hs-fight { display: flex; flex-direction: column; align-items: center; gap: 9px; }
-.hs-fight .fbtn { display: flex; align-items: center; justify-content: center; gap: 16px; height: 104px; padding: 0 44px; cursor: pointer;
-  background: var(--acc); color: #fff; font-weight: 900; font-size: 26px; letter-spacing: 0.12em; text-transform: uppercase;
-  clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
-  box-shadow: 0 0 32px rgba(var(--acc-rgb), 0.42); border: 0;
-  /* idle pulse at rest — the hero breathes (~3.4s, matches the 3D core halo) */
-  animation: hs-fight-pulse 3.4s ease-in-out infinite;
-  transition: box-shadow var(--hs-hover) var(--hs-spring), transform var(--hs-hover) var(--hs-spring); }
-@keyframes hs-fight-pulse {
-  0%, 100% { box-shadow: 0 0 28px rgba(var(--acc-rgb), 0.38); }
-  50%      { box-shadow: 0 0 48px rgba(var(--acc-rgb), 0.60); }
-}
-/* hover — the juiciest lift on the home: rises + brightens, glow is temporary
-   (it relaxes back to the idle pulse on leave). Pause the pulse while hovering. */
-.hs-fight .fbtn:hover { animation: none; transform: translateY(-3px); box-shadow: 0 0 64px rgba(var(--acc-rgb), 0.72); }
-/* press — squish to ~0.97, snappy */
-.hs-fight .fbtn:active { transform: translateY(-1px) scale(0.97); transition-duration: var(--hs-press); }
-.hs-fight .fbtn .arr { font-size: 22px; }
+/* ════════════ FIGHT — physical hex plinth (the ONE pink + the ONE glow) ════════════
+   Three stacked layers so it reads as a slab with thickness, not a sticker:
+     f-bloom  — the only glow: a soft pink radial behind the slab (breathes on idle)
+     f-plinth — the dark cabinet, offset DOWN: the visible side/thickness of the slab
+     f-face   — the lit hex face: top→bottom gradient + top blik + bottom inner shadow,
+                carrying the label, arrow and a slow rare sheen glint.
+   Motion is heavy with no overshoot (the shared --hs-spring). */
+.hs-fight { display: flex; flex-direction: column; align-items: center; gap: 11px; }
+.hs-fight .fbtn { position: relative; display: inline-flex; align-items: center; justify-content: center;
+  width: 232px; height: 96px; padding: 0; border: 0; background: none; cursor: pointer;
+  /* idle — a slow, tiny vertical settle on the whole slab */
+  animation: hs-fight-settle 5.6s ease-in-out infinite; }
+
+/* layer 1 — bloom (the only glow on the screen) */
+.hs-fight .f-bloom { position: absolute; left: 50%; top: 58%; width: 152%; height: 156%;
+  transform: translate(-50%, -50%); z-index: 0; pointer-events: none;
+  background: radial-gradient(50% 50% at 50% 50%, rgba(var(--acc-rgb), 0.55) 0%, rgba(var(--acc-rgb), 0.22) 38%, transparent 70%);
+  filter: blur(15px);
+  animation: hs-fight-bloom 3.4s ease-in-out infinite; /* matches the 3D core halo */ }
+
+/* layer 2 — plinth (dark cabinet, sits a touch lower → the slab's thickness) */
+.hs-fight .f-plinth { position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  clip-path: var(--hs-hex); background: linear-gradient(180deg, #6d0030 0%, #38001a 100%);
+  transform: translateY(7px); transition: transform var(--hs-hover) var(--hs-spring); }
+
+/* layer 3 — face (lit hex top with a blik and an inner-shadow base) */
+.hs-fight .f-face { position: relative; z-index: 2; display: flex; align-items: center; justify-content: center; gap: 16px;
+  width: 100%; height: 100%; overflow: hidden; clip-path: var(--hs-hex);
+  background: linear-gradient(180deg, #ff2f82 0%, #f00a68 52%, #cf0056 100%);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.42), inset 0 -14px 22px rgba(74, 0, 33, 0.55);
+  transition: transform var(--hs-hover) var(--hs-spring), filter var(--hs-hover); }
+.hs-fight .f-label { font-family: var(--hs-disp); font-weight: 900; font-size: 30px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: #fff; }
+.hs-fight .f-arr { font-size: 24px; color: #fff; transition: transform var(--hs-hover) var(--hs-spring); }
+/* slow rare sheen — a skewed white sweep that glints once every ~7s then rests */
+.hs-fight .f-sheen { position: absolute; top: 0; left: 0; width: 42%; height: 100%; pointer-events: none;
+  background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+  transform: translateX(-170%) skewX(-18deg);
+  animation: hs-fight-sheen 7s ease-in-out infinite; }
+
+@keyframes hs-fight-settle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1.5px); } }
+@keyframes hs-fight-bloom {
+  0%, 100% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); }
+  50%      { opacity: 1;   transform: translate(-50%, -50%) scale(1.07); } }
+@keyframes hs-fight-sheen {
+  0%   { transform: translateX(-170%) skewX(-18deg); }
+  14%  { transform: translateX(440%)  skewX(-18deg); }
+  100% { transform: translateX(440%)  skewX(-18deg); } } /* rest off-screen — a rare glint */
+
+/* hover — face rises (more thickness shows), plinth deepens, bloom swells, arrow steps right */
+.hs-fight .fbtn:hover { animation: none; }
+.hs-fight .fbtn:hover .f-face { transform: translateY(-3px); filter: brightness(1.06); }
+.hs-fight .fbtn:hover .f-plinth { transform: translateY(11px); }
+.hs-fight .fbtn:hover .f-bloom { animation: none; opacity: 1; transform: translate(-50%, -50%) scale(1.16); }
+.hs-fight .fbtn:hover .f-arr { transform: translateX(5px); }
+/* press — the face sinks into the plinth (snappy) */
+.hs-fight .fbtn:active .f-face { transform: translateY(2px); transition-duration: var(--hs-press); }
+.hs-fight .fbtn:active .f-plinth { transform: translateY(4px); transition-duration: var(--hs-press); }
+
 .hs-fight .fsub { font-family: var(--hs-mono); font-size: 11px; letter-spacing: 0.22em; color: #b9b6bd; text-transform: uppercase; }
+
+/* ════════════ EDIT SPACE — matte chrome corner button (decor arrange entry) ════════════
+   Shares the chrome MATERIAL of the strip cluster (glass + inset hairline + the
+   same bottom-right bevel). No pink, no glow. Home-only; inside .hs-overlay
+   (pointer-events:none) so it re-enables its own. Bottom-right corner, clear of
+   the centred FIGHT; on mobile it lifts above the dock. */
+.edit-space { position: absolute; right: 18px; bottom: 24px; z-index: 5; pointer-events: auto;
+  display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; border: 0; cursor: pointer;
+  color: var(--muted); font-family: var(--hs-mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+  -webkit-backdrop-filter: blur(7px); backdrop-filter: blur(7px);
+  box-shadow: inset 0 0 0 1px var(--line); clip-path: var(--hs-chamfer);
+  transition: color var(--hs-fast), background var(--hs-fast), box-shadow var(--hs-fast),
+              transform var(--hs-hover) var(--hs-spring); }
+.edit-space svg { width: 15px; height: 15px; flex: 0 0 auto; }
+.edit-space:hover { color: #f4f2f6; background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+  box-shadow: inset 0 0 0 1px var(--line2); transform: translateY(-2px); }
+.edit-space:active { transform: translateY(0) scale(0.97); transition-duration: var(--hs-press); }
+@media (max-width: 560px) { .edit-space { right: 14px; bottom: 162px; } }
+
+/* ════════════ entrance — stagger ONCE on mount (root carries .hs-anim-in) ════════════
+   Order: brand → cluster (SHOP) → cabinet → EDIT SPACE → FIGHT (the hero, last).
+   animation-fill-mode:backwards holds each element in its hidden start state until
+   its delay, so nothing flashes at full opacity first. The root drops the class
+   after the run (≈1.7s) so toggling arrange/shop later never replays it. */
+@keyframes hs-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes hs-rise-hero { 0% { opacity: 0; transform: translateY(30px) scale(0.965); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes hs-fade { from { opacity: 0; } to { opacity: 1; } }
+.hs-anim-in .hs-brandblock { animation: hs-rise 0.55s var(--hs-spring) 0.05s backwards; }
+.hs-anim-in .hs-cluster    { animation: hs-rise 0.55s var(--hs-spring) 0.16s backwards; }
+.hs-anim-in .hs-seg-cab    { animation: hs-fade 0.4s ease 0.30s backwards; }
+.hs-anim-in .edit-space    { animation: hs-rise 0.55s var(--hs-spring) 0.36s backwards; }
+.hs-anim-in .hs-fight      { animation: hs-rise-hero 0.72s var(--hs-spring) 0.48s backwards; }
 
 /* ── home ⇄ shop view transition — soft fade + scale, no hard cut. The persistent
    strip lives outside this wrapper, so it stays put while the surface under it
@@ -222,12 +312,27 @@
   clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px); }
 .sp-btn.owned { border: 1px solid var(--line); background: rgba(255, 255, 255, 0.03); color: var(--muted); }
 
-/* ════════════ reduced motion — no pulse, no lift, no view cross-fade ════════════ */
+/* ════════════ reduced motion — final state, no animation ════════════
+   Everything sits at its resting visual: the FIGHT slab keeps its layers (bloom,
+   plinth thickness, lit face) but does not breathe, sheen, lift or press; the
+   chrome controls don't lift; the entrance is skipped (elements at full opacity);
+   the view cross-fade is cut. */
 @media (prefers-reduced-motion: reduce) {
-  .hs-fight .fbtn { animation: none; }
-  .hs-fight .fbtn, .hs-tile, .hs-cluster .seg, .hs-brandblock { transition: none; }
-  .hs-fight .fbtn:hover, .hs-fight .fbtn:active,
-  .hs-tile:hover, .hs-tile:active, .hs-cluster .seg:active { transform: none; }
+  /* idle + sheen + entrance off */
+  .hs-fight .fbtn, .hs-fight .f-bloom { animation: none; }
+  .hs-fight .f-sheen { display: none; }
+  .hs-anim-in .hs-brandblock, .hs-anim-in .hs-cluster, .hs-anim-in .hs-seg-cab,
+  .hs-anim-in .edit-space, .hs-anim-in .hs-fight { animation: none; }
+  /* transitions off on the interactive marks */
+  .hs-fight .f-face, .hs-fight .f-plinth, .hs-fight .f-arr,
+  .hs-tile, .hs-cluster .seg, .hs-brandblock, .edit-space { transition: none; }
+  /* neutralise hover/press to the resting layer positions */
+  .hs-fight .fbtn:hover .f-face, .hs-fight .fbtn:active .f-face { transform: none; filter: none; }
+  .hs-fight .fbtn:hover .f-plinth, .hs-fight .fbtn:active .f-plinth { transform: translateY(7px); }
+  .hs-fight .fbtn:hover .f-bloom { transform: translate(-50%, -50%); }
+  .hs-fight .fbtn:hover .f-arr { transform: none; }
+  .hs-tile:hover, .hs-tile:active, .hs-cluster .seg:active,
+  .edit-space:hover, .edit-space:active { transform: none; }
   .hs-view-enter-active, .hs-view-leave-active { transition: none; }
   .hs-view-enter-from, .hs-view-leave-to { transform: none; }
 }

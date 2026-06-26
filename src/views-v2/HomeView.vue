@@ -8,7 +8,7 @@
      the design reference, NOT player data. Glow discipline: the only glows are
      the 3D fighter core + the FIGHT button — every other pink mark is matte. -->
 <template>
-  <div class="home-root">
+  <div class="home-root" :class="{ 'hs-anim-in': introPlaying }">
     <!-- 3D stage (behind the chrome) -->
     <HomeScene
       :core-hue="coreHue"
@@ -25,17 +25,18 @@
          (balance lives in the cabinet / shop). Hidden only in arrange mode, which
          brings its own focused top bar. Styles: .hs-strip in home.css. -->
     <div v-if="!arrange" class="hs-strip">
-      <button type="button" class="hs-brandblock" @click="onBrand" aria-label="Hexlash — home">
-        <LogoMark /><span class="wm">HEXLASH</span>
+      <button type="button" class="hs-brandblock" @click="onBrand" :aria-label="`${t.home.brand} — home`">
+        <LogoMark /><span class="wm">{{ t.home.brand }}</span>
       </button>
       <div class="hs-cluster">
         <button type="button" class="seg hs-seg-shop" :class="{ active: view === 'shop' }" @click="onShop">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M5 8h14l-1 12H6L5 8Z" /><path d="M9 8V6a3 3 0 0 1 6 0v2" /></svg>
-          <span class="txt"><span class="n">Shop</span><span class="s">DECOR · MORE</span></span>
+          <span class="txt"><span class="n">{{ t.home.shop }}</span><span class="s">{{ t.home.shopSub }}</span></span>
         </button>
         <button type="button" class="seg hs-seg-cab" @click="cabinetOpen = true">
           <span class="av"><span /></span>
           <span class="txt"><span class="hand">{{ t.cabinet.chipHandle }}</span><span class="sub">{{ t.cabinet.chipOpen }}</span></span>
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
         </button>
       </div>
     </div>
@@ -49,24 +50,35 @@
       <div v-else key="home" class="hs-overlay">
       <!-- ───────── normal home chrome ───────── -->
       <template v-if="!arrange">
-        <!-- bottom dock — FIGHT alone, centred: the one pink/glow mark + idle pulse.
-             TRAIN removed (no training mode yet — its route is kept for later);
-             fighter setup (core + facets) is reached via FIGHT. Decor arrange moved
-             to the EDIT SPACE corner button below. SHOP + cabinet live in the strip. -->
+        <!-- bottom dock — FIGHT alone, centred: a physical plinth (the ONE pink +
+             the ONE glow on the screen). Three stacked layers: f-bloom = the soft
+             radial glow (only glow), f-plinth = the dark cabinet offset downward
+             (the slab's thickness), f-face = the lit hex face (gradient + top blik
+             + bottom inner shadow) carrying the label, arrow and a slow rare sheen.
+             TRAIN removed (route kept for later); decor arrange moved to EDIT SPACE. -->
         <div class="hs-dock">
           <div class="hs-fight">
-            <button type="button" class="fbtn" @click="onFight"><span>FIGHT</span><span class="arr">→</span></button>
-            <div class="fsub">Send your fighter to the arena</div>
+            <button type="button" class="fbtn" @click="onFight" :aria-label="t.home.fight">
+              <span class="f-bloom" aria-hidden="true" />
+              <span class="f-plinth" aria-hidden="true" />
+              <span class="f-face">
+                <span class="f-sheen" aria-hidden="true" />
+                <span class="f-label">{{ t.home.fight }}</span>
+                <span class="f-arr" aria-hidden="true">→</span>
+              </span>
+            </button>
+            <div class="fsub">{{ t.home.fightSub }}</div>
           </div>
         </div>
 
         <!-- EDIT SPACE — home-only corner button → the SAME decor arrange mode the
-             old CUSTOMIZE tile opened (reuses onCustomize). Matte chrome, no pink /
-             no glow (those stay on FIGHT). Its own scoped class, never the shared
-             .hs-* top strip; not shown in the shop or during arrange. -->
-        <button type="button" class="edit-space" @click="onCustomize" aria-label="Edit space — arrange decor">
+             old CUSTOMIZE tile opened (reuses onCustomize). Matte chrome material
+             (.chrome: glass + hairline frame + bottom-right bevel), no pink / no
+             glow (those stay on FIGHT). Own scoped class, never the shared .hs-*
+             top strip; not shown in the shop or during arrange. -->
+        <button type="button" class="edit-space chrome" @click="onCustomize" :aria-label="t.home.editSpace">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z" /></svg>
-          <span>EDIT SPACE</span>
+          <span>{{ t.home.editSpace }}</span>
         </button>
       </template>
 
@@ -136,7 +148,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import store from '@/core/state/store.js';
 import { t } from '@/locales/index.js';
@@ -156,6 +168,13 @@ const router = useRouter();
 const view = ref('home'); // 'home' | 'shop'
 const arrange = ref(false);
 const cabinetOpen = ref(false); // Player Cabinet drawer — slides in from the right; closable at all widths
+
+// Entrance — the controls stagger in ONCE on mount (brand → shop → cabinet →
+// edit → FIGHT last). Driven by a single class on the root that the CSS keys the
+// entrance animations off; we drop it after the run so toggling arrange/shop later
+// never replays it. CSS gates the keyframes behind prefers-reduced-motion.
+const introPlaying = ref(true);
+onMounted(() => { setTimeout(() => { introPlaying.value = false; }, 1700); });
 
 // Player fighter from the existing pre-fight store. No core picked → default
 // fighter (canon pink). Drives the 3D core hue + the cabinet's fighter card.
@@ -257,46 +276,13 @@ function onArrangePlace() { arrange.value = false; }
   font-size: 8.5px; letter-spacing: 0.18em; text-transform: uppercase;
   color: var(--muted, #76727c);
 }
-/* ───────── EDIT SPACE — decor-arrange entry (home-only corner button) ─────────
-   Replaces the old CUSTOMIZE dock tile (reuses onCustomize → arrange mode). Own
-   scoped class, NEVER the shared .hs-* strip. Matte chrome to mirror the old
-   .hs-tile look — no pink, no glow (those stay on FIGHT + the fighter core). Lives
-   inside .hs-overlay (which is pointer-events:none), so it re-enables its own
-   pointer-events. Bottom-right corner, clear of the centred FIGHT on desktop. */
-.edit-space {
-  position: absolute; right: 18px; bottom: 24px; z-index: 5;
-  pointer-events: auto;
-  display: inline-flex; align-items: center; gap: 8px;
-  height: 40px; padding: 0 16px;
-  border: 1px solid var(--line, rgba(255, 255, 255, 0.12));
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.022);
-  color: var(--muted, #76727c); cursor: pointer;
-  font-family: var(--hs-mono, 'JetBrains Mono', ui-monospace, monospace);
-  font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
-  transition: background var(--hs-fast, 0.15s) ease,
-              border-color var(--hs-fast, 0.15s) ease,
-              color var(--hs-fast, 0.15s) ease,
-              transform var(--hs-press, 0.12s) var(--hs-spring, cubic-bezier(0.22, 0.61, 0.36, 1));
-}
-.edit-space svg { width: 15px; height: 15px; flex: 0 0 auto; }
-.edit-space:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.2);
-  color: #f4f2f6;
-  transform: translateY(-2px);
-}
-.edit-space:active { transform: scale(0.985); }
-/* mobile: FIGHT is centred at the bottom — lift EDIT SPACE above the dock so the
-   two never overlap, and pin it to the right edge. */
-@media (max-width: 560px) {
-  .edit-space { right: 14px; bottom: 162px; }
-}
+/* EDIT SPACE chrome material + the FIGHT plinth live in home.css (the shared
+   chrome stylesheet) — EDIT SPACE shares the .chrome material with the top-strip
+   cluster, so it is defined alongside it, not scoped here. */
 
 /* reduced-motion: keep a soft opacity fade, but no movement (no rise) */
 @media (prefers-reduced-motion: reduce) {
   .ft-card, .ft-card.is-shown { transform: translate(-50%, calc(-100% - 14px)); }
   .ft-card { transition: opacity 0.2s ease; }
-  .edit-space:hover, .edit-space:active { transform: none; }
 }
 </style>

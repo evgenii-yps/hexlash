@@ -53,6 +53,15 @@ export default {
     lblCodeApplied: "Referral code applied",
     lblReferralButton: "Referral",
   },
+  // Player HOME chrome (2D controls over the 3D HomeScene). UI is en-only.
+  home: {
+    brand: "HEXLASH",            // brand wordmark (left lock-up, monochrome)
+    shop: "Shop",                // cluster — shop segment label
+    shopSub: "DECOR · MORE",     // cluster — shop segment sublabel
+    fight: "FIGHT",              // the hero action (the one pink + glow)
+    fightSub: "SEND YOUR FIGHTER TO THE ARENA",
+    editSpace: "EDIT SPACE",     // corner button → decor arrange mode
+  },
   cabinet: {
     // Entry chip (top-left of the home) — the single door into the cabinet.
     chipHandle: "GHOST_0xA4",
