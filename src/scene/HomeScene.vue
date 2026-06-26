@@ -55,6 +55,8 @@ let arenaRefs = null;
 let lamps = null;
 let dust = null;       // warm drifting dust/haze in the lamp cone (one THREE.Points)
 let glow = null;       // soft warm "homely" pool on the slab under the fighter
+let backdrop = null;   // world-anchored background dome (dark gradient + faint hex weave)
+let lampHaze = null;   // soft warm haze halos at the lamp shades (additive sprites)
 let reduced = false;
 // Initial 3/4 camera placement; OrbitControls derives azimuth/polar/distance
 // from this + the target (the fighter) on first update().
@@ -304,6 +306,151 @@ function warmGlowColor(coreHueStr) {
   return amber.clone().lerp(core, blend);      // amber-dominant, subtle core tint
 }
 
+// ───────────────────────── Background depth (dome + lamp haze) ─────────────────────────
+// The space above the slab used to read as a flat black hole. Three quiet warm/dark
+// layers give it depth WITHOUT a single drop of pink and WITHOUT a new glow source:
+//   1. a dark vertical gradient (near-black up top → a warm-dark scene tone lower),
+//   2. a barely-there hexagonal weave (our hex language — slab + logo), denser up top
+//      and dissolved toward the fighter so it never fights the figure,
+//   3. soft warm haze halos at the lamp shades so the lamps read as actually lighting
+//      the top of the frame.
+// Layers 1+2 live on ONE big background DOME (a sphere, painted into a single canvas
+// texture) so they're WORLD-anchored: the camera orbit parallaxes past them as real
+// depth (never a floating screen film, no seams / empty edges), and the hex is
+// mip-mapped so it can't moiré/shimmer when the camera moves. The dome is unlit
+// (MeshBasicMaterial, fog:false) → a controlled backdrop tone, never lit by the lamps.
+// All knobs here. Everything is static geometry → reduced-motion safe by construction.
+
+const BACKDROP = {
+  radius: 45,            // big enough to enclose the whole orbit (zoom 3.5–12), far = "background"
+  centerY: 1.6,          // equator ≈ eye level (the camera looks at ~1.6) so the gradient centres on view
+  texW: 1024,            // longitude (wraps) — kept an integer number of hex columns for a seamless seam
+  texH: 1024,            // latitude (the vertical gradient)
+  // vertical gradient stops (canvas top = world top = darkest). The shift is packed
+  // around the middle band the camera actually sees; poles are rarely in frame.
+  grad: [
+    [0.00, '#060710'],   // top pole — darkest, ≈ the fog colour (seamless with fogged foreground)
+    [0.42, '#0a0a12'],   // upper frame — near-black
+    [0.62, '#120f0c'],   // lower-mid — warm-dark transition (lamp family)
+    [1.00, '#1b150d'],   // bottom pole — dark warm
+  ],
+  // hex weave — warm dark amber, VERY faint (quieter than the mockup), faded out toward
+  // the fighter (low latitude) so the figure + identity stay clean.
+  hexCols: 60,           // hexes around the longitude (even → seamless wrap)
+  hexRGB: '255,186,120', // warm amber stroke (alpha appended per row)
+  hexMaxAlpha: 0.05,     // TOP strength — on the threshold of visibility (tune up/down on preview)
+  hexFadeStart: 0.46,    // v below this (toward the fighter) → no hex
+  hexFadeEnd: 0.62,      // v above this → full strength
+  dither: 3,             // ± per-channel noise on the gradient → no banding in the dark
+};
+
+const HAZE = {
+  color: 0xffb368,       // warm amber — the same lamp family as the bulbs / dust / under-glow
+  opacity: 0.14,         // low — a soft halo, NOT a bright accent (the core stays brightest)
+  scale: 2.6,            // sprite world size (blooms around the ~0.55 shade)
+  yOffset: 0.05,         // nudge toward the shade centre
+};
+
+// flat-top hexagon outline at (cx,cy) radius R
+function strokeHex(ctx, cx, cy, R) {
+  ctx.beginPath();
+  for (let i = 0; i < 6; i++) {
+    const a = (Math.PI / 3) * i;
+    const x = cx + R * Math.cos(a);
+    const y = cy + R * Math.sin(a);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.stroke();
+}
+
+// Paint the honeycomb across the canvas with a per-row alpha fade (strong up top,
+// gone toward the fighter). Seamless horizontally (texW = whole number of 3R periods).
+function drawHexWeave(ctx, o) {
+  const cols = o.hexCols;
+  const R = o.texW / (cols * 1.5);  // flat-top column spacing 1.5R × cols = texW
+  const vStep = Math.sqrt(3) * R;
+  ctx.lineWidth = Math.max(1, R * 0.05);
+  ctx.lineJoin = 'round';
+  for (let c = 0; c <= cols; c++) {
+    const x = c * 1.5 * R;
+    const yOff = (c % 2) * (vStep / 2);
+    for (let r = -1; r * vStep + yOff < o.texH + vStep; r++) {
+      const y = r * vStep + yOff;
+      const v = 1 - y / o.texH; // canvas top (y=0) → v=1 (world top)
+      let a = 0;
+      if (v > o.hexFadeStart) a = o.hexMaxAlpha * Math.min(1, (v - o.hexFadeStart) / (o.hexFadeEnd - o.hexFadeStart));
+      if (a <= 0.002) continue;
+      ctx.strokeStyle = `rgba(${o.hexRGB},${a.toFixed(3)})`;
+      strokeHex(ctx, x, y, R);
+    }
+  }
+}
+
+// Build the background dome → { mesh, dispose }. One sphere, one canvas texture.
+function buildBackdrop(o, maxAniso) {
+  const c = document.createElement('canvas');
+  c.width = o.texW; c.height = o.texH;
+  const ctx = c.getContext('2d');
+  const g = ctx.createLinearGradient(0, 0, 0, o.texH);
+  for (const [stop, col] of o.grad) g.addColorStop(stop, col);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, o.texW, o.texH);
+  // subtle dither to kill banding in the dark gradient
+  if (o.dither > 0) {
+    const img = ctx.getImageData(0, 0, o.texW, o.texH);
+    const d = img.data;
+    for (let i = 0; i < d.length; i += 4) {
+      const n = (Math.random() * 2 - 1) * o.dither;
+      d[i] += n; d[i + 1] += n; d[i + 2] += n;
+    }
+    ctx.putImageData(img, 0, 0);
+  }
+  drawHexWeave(ctx, o);
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.wrapS = THREE.RepeatWrapping;        // longitude wraps seamlessly
+  tex.wrapT = THREE.ClampToEdgeWrapping;
+  tex.generateMipmaps = true;
+  tex.minFilter = THREE.LinearMipmapLinearFilter; // mip-mapped → no hex moiré on movement
+  tex.magFilter = THREE.LinearFilter;
+  tex.anisotropy = Math.min(4, maxAniso || 1);
+
+  const geo = new THREE.SphereGeometry(o.radius, 48, 32);
+  const mat = new THREE.MeshBasicMaterial({
+    map: tex, side: THREE.BackSide, fog: false, depthWrite: false,
+  });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.position.set(0, o.centerY, 0);
+  mesh.renderOrder = -10; // paint first, behind everything
+  const dispose = () => { geo.dispose(); mat.dispose(); tex.dispose(); };
+  return { mesh, dispose };
+}
+
+// Build the lamp-haze halos → { group, dispose }. One additive radial sprite per lamp,
+// world-positioned AT the lamp shade so it stays anchored to the lamp under camera
+// orbit (sprites auto-billboard). Static (no tick) → reduced-motion safe. Dim warm
+// fill, not a new accent.
+function buildLampHaze(o, lampOpts) {
+  const group = new THREE.Group();
+  const tex = makeRadialTexture('rgba(255,205,150,0.9)', 'rgba(255,175,100,0.0)', 0.5);
+  const mat = new THREE.SpriteMaterial({
+    map: tex, color: o.color, transparent: true, opacity: o.opacity,
+    blending: THREE.AdditiveBlending, depthWrite: false, fog: false,
+  });
+  for (const pos of lampOpts.positions) {
+    const shadeTopY = lampOpts.ceilingY - lampOpts.wire - (pos.drop || 0);
+    const bulbY = shadeTopY - lampOpts.shadeHeight * 0.55;
+    const s = new THREE.Sprite(mat);
+    s.position.set(pos.x, bulbY + o.yOffset, pos.z);
+    s.scale.setScalar(o.scale);
+    group.add(s);
+  }
+  const dispose = () => { tex.dispose(); mat.dispose(); };
+  return { group, dispose };
+}
+
 // Rebuild the decor / grid / ghost groups from the current props. Cheap — a
 // handful of faceted meshes; called on mount + whenever the state changes.
 function rebuildProps() {
@@ -428,6 +575,15 @@ onMounted(() => {
   // ever competes.
   lamps = buildLamps(LAMPS, reduced);
   scene.add(lamps.group);
+
+  // Background depth — world-anchored dome (dark gradient + faint hex weave) so the
+  // top of the frame reads as tone + texture instead of a black hole, plus soft warm
+  // haze at the lamp shades so the lamps read as lighting the space. Both warm/dark,
+  // no pink, no new glow; static → reduced-motion safe. (See builders up top.)
+  backdrop = buildBackdrop(BACKDROP, renderer.capabilities.getMaxAnisotropy());
+  scene.add(backdrop.mesh);
+  lampHaze = buildLampHaze(HAZE, LAMPS);
+  scene.add(lampHaze.group);
 
   // --- Fighter: ONE idle construct on the slab. No foe (getFoePos → null) → it
   //     idles (buildFighter idlePose path); AI is never enabled. Behaviour is
@@ -608,6 +764,8 @@ onBeforeUnmount(() => {
   if (gridGroup) { scene.remove(gridGroup); disposeGroup(gridGroup); }
   if (ghostGroup) { scene.remove(ghostGroup); disposeGroup(ghostGroup); }
   if (lamps) { scene.remove(lamps.group); lamps.dispose(); }
+  if (backdrop) { scene.remove(backdrop.mesh); backdrop.dispose(); }
+  if (lampHaze) { scene.remove(lampHaze.group); lampHaze.dispose(); }
   if (dust) { scene.remove(dust.points); dust.dispose(); }
   if (glow) { scene.remove(glow.mesh); glow.dispose(); }
   if (fighter) fighter.dispose();
