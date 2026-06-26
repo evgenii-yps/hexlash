@@ -26,6 +26,7 @@ import { buildFighter } from './buildFighter.js';
 import { resolveBehavior } from '@/data/behavior.js';
 import { buildPropSet, buildSnapGrid, buildGhost, disposeGroup } from './homeProps.js';
 import { createHomeWanderDirector } from './homeWander.js';
+import { setHomeFighterTag, clearHomeFighterTag } from './homeFighterTag.js';
 
 const props = defineProps({
   coreHue: { type: String, default: '#FF0069' }, // fighter core colour (per-core hue)
@@ -43,6 +44,10 @@ let renderer, scene, camera, controls, arena, fighter, resizeObserver, clock;
 let onVisibility;
 let director = null;     // home wander director (drives the existing locomotion)
 let prevWanderT = 0;     // last frame's elapsed time → per-frame dt for the director
+let viewW = 0;           // canvas CSS size — for projecting the fighter head → screen px
+let viewH = 0;
+let tagNear = false;     // identity-label show flag (hysteresis, set in the loop)
+const _tagV = new THREE.Vector3(); // scratch for the world→screen projection
 let propGroup = null;
 let gridGroup = null;
 let ghostGroup = null;
@@ -54,6 +59,16 @@ let reduced = false;
 // Initial 3/4 camera placement; OrbitControls derives azimuth/polar/distance
 // from this + the target (the fighter) on first update().
 const CAM_BASE = new THREE.Vector3(4.6, 5.2, 6.7);
+
+// Identity label "by approach": project a point above the fighter's head to screen
+// px every frame, and gate the label's show flag on the camera zoom distance with a
+// hysteresis band (two thresholds) so it can't flicker on the edge. The orbit
+// corridor is 3.5..12 (default ≈ 8.9); "near" = the player has zoomed in close.
+const TAG = {
+  headY: 2.05,   // world height above the slab top for the anchor (just above the head)
+  nearOn: 5.3,   // camera distance below this → show
+  nearOff: 6.5,  // distance above this → hide (gap = hysteresis, no flicker)
+};
 
 function lowPowerDevice() {
   const cores = navigator.hardwareConcurrency || 8;
@@ -347,6 +362,7 @@ onMounted(() => {
   const el = wrap.value;
   const w = el.clientWidth || window.innerWidth;
   const h = el.clientHeight || window.innerHeight;
+  viewW = w; viewH = h; // canvas CSS size for the head→screen projection
 
   reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const coarse = window.matchMedia('(pointer: coarse)').matches;
@@ -538,6 +554,20 @@ onMounted(() => {
     lamps?.tick?.(t); // gentle light flicker (null under reduced motion)
     if (!reduced) dust?.tick?.(t); // warm dust drift (null/static under reduced motion)
     glow?.follow(fighter.group.position); // ease the warm pool under the fighter
+
+    // Identity label: project the point above the fighter's head to screen px and
+    // gate the show flag on zoom proximity (hysteresis). HomeView reads this to
+    // anchor + fade the 2D label. Works on touch too (pinch changes the distance).
+    if (fighter) {
+      const dist = camera.position.distanceTo(controls.target);
+      if (!tagNear && dist < TAG.nearOn) tagNear = true;
+      else if (tagNear && dist > TAG.nearOff) tagNear = false;
+      _tagV.set(fighter.group.position.x, arena.refs.topY + TAG.headY, fighter.group.position.z);
+      _tagV.project(camera); // → NDC
+      const inFront = _tagV.z < 1; // not behind the camera
+      setHomeFighterTag((_tagV.x * 0.5 + 0.5) * viewW, (-_tagV.y * 0.5 + 0.5) * viewH, tagNear && inFront);
+    }
+
     renderer.render(scene, camera);
   };
   renderer.setAnimationLoop(loop);
@@ -552,6 +582,7 @@ onMounted(() => {
     const cw = el.clientWidth;
     const ch = el.clientHeight;
     if (!cw || !ch) return;
+    viewW = cw; viewH = ch; // keep the projection in sync with the canvas size
     camera.aspect = cw / ch;
     camera.updateProjectionMatrix();
     renderer.setSize(cw, ch, false);
@@ -570,6 +601,7 @@ onBeforeUnmount(() => {
   if (resizeObserver) resizeObserver.disconnect();
   if (onVisibility) document.removeEventListener('visibilitychange', onVisibility);
   if (renderer) renderer.setAnimationLoop(null);
+  clearHomeFighterTag(); // hide the identity label when the stage unmounts
   if (director) director.dispose();
   if (controls) controls.dispose();
   if (propGroup) { scene.remove(propGroup); disposeGroup(propGroup); }

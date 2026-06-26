@@ -99,6 +99,29 @@
       </div>
     </Transition>
 
+    <!-- Fighter identity "by approach": a 2D label anchored over the walking fighter
+         that surfaces when the player zooms the camera IN and fades when they zoom
+         out (HomeScene projects the head position + sets the show flag with
+         hysteresis; homeFighterTag carries it). Sharp DOM (not a 3D sprite) so the
+         text stays crisp. Core identity only — the callsign is account-gated and
+         parked to Этап 2, NOT invented here. Own scoped styles, never the shared
+         .hs-* chrome. Shown on the home surface only (not shop / arrange). -->
+    <div
+      v-if="view === 'home' && !arrange"
+      class="fighter-tag"
+      :style="{ transform: `translate3d(${homeFighterTag.x}px, ${homeFighterTag.y}px, 0)` }"
+      aria-hidden="true"
+    >
+      <div class="ft-card" :class="{ 'is-shown': homeFighterTag.near }">
+        <span class="ft-marker" :style="{ background: coreHue }" />
+        <span class="ft-txt">
+          <span class="ft-name">{{ coreName }}</span>
+          <span class="ft-sig">{{ coreSig }} {{ t.cabinet.coreSuffix }}</span>
+          <!-- callsign (account-gated, parked to Этап 2) plugs in above ft-name here -->
+        </span>
+      </div>
+    </div>
+
     <!-- Player Cabinet — sliding panel that slides in from the RIGHT (the same edge
          the strip's cabinet entry sits on). Always mounted so it opens over the home
          AND the shop; closed by ✕ / scrim-tap / Esc. Fixed-position, own pointer-events. -->
@@ -122,6 +145,7 @@ import HomeScene from '@/scene/HomeScene.vue';
 import HomeShop from '@/components/home/HomeShop.vue';
 import PlayerCabinet from '@/views-v2/PlayerCabinet.vue';
 import { LogoMark } from '@/components/landing/icons.js';
+import { homeFighterTag } from '@/scene/homeFighterTag.js';
 import '@/styles/home.css';
 import '@/styles/cabinet.css';
 
@@ -197,4 +221,45 @@ function onArrangePlace() { arrange.value = false; }
 
 <style scoped>
 .home-root { position: absolute; inset: 0; overflow: hidden; }
+
+/* ───────── Fighter identity label (surfaced on camera approach) ─────────
+   Own scoped styles — NEVER the shared .hs-* chrome (those are shared with the
+   shop). A zero-size anchor positioned at the projected head point; the card sits
+   centred above it and fades in/out with the zoom "near" flag. Discipline: no glow,
+   no new pink — the only colour is the flat core marker (the fighter's core hue),
+   the text is neutral chrome / muted. Timing/easing reuse the home --hs-* tokens. */
+.fighter-tag {
+  position: absolute; left: 0; top: 0; width: 0; height: 0;
+  z-index: 6; pointer-events: none; will-change: transform;
+}
+.ft-card {
+  position: absolute; left: 0; bottom: 0;
+  /* centred above the anchor (−14px gap); +6px lower while hidden → a soft rise */
+  transform: translate(-50%, calc(-100% - 14px + 6px));
+  display: inline-flex; align-items: center; gap: 8px; white-space: nowrap;
+  padding: 6px 11px 7px;
+  background: rgba(10, 10, 16, 0.62); backdrop-filter: blur(7px);
+  border: 1px solid rgba(255, 255, 255, 0.10); border-radius: 9px;
+  opacity: 0;
+  transition: opacity 0.32s ease,
+              transform 0.32s var(--hs-spring, cubic-bezier(0.22, 0.61, 0.36, 1));
+}
+.ft-card.is-shown { opacity: 1; transform: translate(-50%, calc(-100% - 14px)); }
+/* flat core-hue marker — NO box-shadow / glow (glows stay the core + FIGHT) */
+.ft-marker { width: 8px; height: 8px; border-radius: 2px; flex: 0 0 auto; }
+.ft-txt { display: flex; flex-direction: column; line-height: 1.18; }
+.ft-name {
+  font-family: var(--hs-mono, 'JetBrains Mono', ui-monospace, monospace);
+  font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: #f4f2f6;
+}
+.ft-sig {
+  font-family: var(--hs-mono, 'JetBrains Mono', ui-monospace, monospace);
+  font-size: 8.5px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--muted, #76727c);
+}
+/* reduced-motion: keep a soft opacity fade, but no movement (no rise) */
+@media (prefers-reduced-motion: reduce) {
+  .ft-card, .ft-card.is-shown { transform: translate(-50%, calc(-100% - 14px)); }
+  .ft-card { transition: opacity 0.2s ease; }
+}
 </style>
