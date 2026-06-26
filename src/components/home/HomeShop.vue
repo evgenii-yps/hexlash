@@ -40,7 +40,8 @@
           <span class="shop-subtab">{{ t.shop.subCores }}<i class="soon">{{ t.shop.soon }}</i></span>
         </div>
         <div class="shop-grid">
-          <article v-for="it in DECOR" :key="it.id" class="shop-card">
+          <article v-for="it in DECOR" :key="it.id" class="shop-card" :class="{ featured: it.featured }"
+                   :style="{ '--c1': CORE[it.core][0], '--c2': CORE[it.core][1] }">
             <div class="shop-frame">
               <span class="shop-tag" :class="{ new: it.tag === 'new' }">{{ it.tag === 'new' ? t.shop.tagNew : t.shop.subDecor }}</span>
               <svg class="shop-art" viewBox="0 0 88 96" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
@@ -207,13 +208,25 @@ const buyStep = ref('confirm'); // 'confirm' | 'done'
 const buyItem = ref(null);
 const ownedItems = reactive(new Set(['crates'])); // hardcoded demo ownership (Supply Cache)
 
-// catalogs — structural data; names/copy come from i18n (t.shop.*)
+// Bright-direction canon cores (brandbook two-tone). "Colour = core": every decor
+// item is bound to ONE core, whose colour owns its frame / glyph / glow (the
+// product layer). Pink stays the economy layer (price, BUY, balance). Set per-card
+// as --c1/--c2 inline. NO colour outside this set.
+const CORE = {
+  onslaught: ['#FF3344', '#FF7A30'],
+  raider:    ['#FFA526', '#FFD930'],
+  bulwark:   ['#2ED6B0', '#5DD6E6'],
+  ambush:    ['#9461FF', '#D461FF'],
+};
+
+// catalogs — structural data; names/copy come from i18n (t.shop.*). `featured` is
+// the ONE hero card (the screen's single bloom); `core` paints the product accent.
 const DECOR = [
-  { id: 'banner', price: 320, featured: true },
-  { id: 'corePlinth', price: 540, tag: 'new' },
-  { id: 'dais', price: 420 },
-  { id: 'crates', price: 240 },
-  { id: 'arch', price: 760 },
+  { id: 'banner', price: 320, core: 'onslaught', featured: true },
+  { id: 'corePlinth', price: 540, core: 'ambush', tag: 'new' },
+  { id: 'dais', price: 420, core: 'bulwark' },
+  { id: 'crates', price: 240, core: 'raider' },
+  { id: 'arch', price: 760, core: 'onslaught' },
 ];
 const CURRENCY = [
   { id: 'spark', amount: '600', bonus: '', price: '$0.99', pct: 100 },
@@ -223,17 +236,25 @@ const CURRENCY = [
   { id: 'arsenal', amount: '18,000', bonus: '+4,000', price: '$19.99', pct: 130, best: true },
 ];
 
-// Matte faceted low-poly silhouettes (arena grey family, no glow). Static strings
-// → v-html is safe (no user data). viewBox 0 0 88 96, baseline ~80.
+// Matte faceted low-poly silhouettes built from the CANON MATERIALS only (SAND
+// #C9B8A0 · RUST #E86134 · TEAL #2F86A8 · CHROME #C8D1D8→#585F68 · AMBER #FFB21D) —
+// matte, no glow, never the core neon (the core colour lives on the frame, not the
+// object). Static strings → v-html is safe (no user data). viewBox 0 0 88 96.
 const DECOR_ART = {
-  banner: '<polygon points="36,72 48,72 48,18 36,18" fill="#3a4453"/><polygon points="48,18 48,72 52,68 52,22" fill="#252c37"/><polygon points="30,72 58,72 58,80 30,80" fill="#2b3446"/>',
-  corePlinth: '<polygon points="30,76 58,76 54,58 34,58" fill="#3a4453"/><polygon points="58,76 54,58 56,56 60,74" fill="#252c37"/><polygon points="44,52 50,46 44,40 38,46" fill="#1b2233" stroke="#5a6b86" stroke-width="0.6"/>',
-  dais: '<polygon points="24,74 64,74 78,64 38,64" fill="#3a4453"/><polygon points="64,74 78,64 78,69 64,79" fill="#252c37"/>',
-  crates: '<polygon points="28,78 52,78 52,56 28,56" fill="#3a4453"/><polygon points="52,78 52,56 58,52 58,74" fill="#252c37"/><polygon points="34,56 54,56 54,42 34,42" fill="#46516a"/>',
-  arch: '<polygon points="26,78 34,78 34,40 26,40" fill="#3a4453"/><polygon points="58,78 66,78 66,40 58,40" fill="#3a4453"/><polygon points="26,40 66,40 66,32 26,32" fill="#46516a"/>',
+  // Sentry Banner — chrome pole, RUST cloth
+  banner: '<polygon points="33,72 35,72 35,16 33,16" fill="#C8D1D8"/><polygon points="35,70 50,70 50,18 35,18" fill="#E86134"/><polygon points="50,18 50,70 53,66 53,22" fill="#a8431f"/><polygon points="29,72 57,72 57,80 29,80" fill="#585F68"/>',
+  // Core Plinth — chrome plinth, AMBER dormant gem
+  corePlinth: '<polygon points="30,76 58,76 54,58 34,58" fill="#C8D1D8"/><polygon points="58,76 54,58 56,56 60,74" fill="#585F68"/><polygon points="44,52 50,46 44,40 38,46" fill="#FFB21D"/><polygon points="44,52 50,46 44,46" fill="#c98a14"/>',
+  // Hex Dais — SAND top, chrome riser
+  dais: '<polygon points="24,74 64,74 78,64 38,64" fill="#C9B8A0"/><polygon points="64,74 78,64 78,69 64,79" fill="#585F68"/><polygon points="24,74 64,74 64,78 24,78" fill="#9a8a72"/>',
+  // Supply Cache — chrome crates, AMBER top crate
+  crates: '<polygon points="28,78 52,78 52,56 28,56" fill="#C8D1D8"/><polygon points="52,78 52,56 58,52 58,74" fill="#585F68"/><polygon points="34,56 54,56 54,42 34,42" fill="#FFB21D"/><polygon points="54,56 54,42 58,38 58,52" fill="#c98a14"/>',
+  // Ward Arch — chrome pillars, TEAL lintel
+  arch: '<polygon points="26,78 34,78 34,40 26,40" fill="#C8D1D8"/><polygon points="58,78 66,78 66,40 58,40" fill="#C8D1D8"/><polygon points="34,78 34,40 30,40 30,78" fill="#585F68"/><polygon points="26,40 66,40 66,32 26,32" fill="#2F86A8"/>',
 };
-// $HEX pile — matte faceted heap (NOT a glowing crystal).
-const HEX_PILE = '<polygon points="20,80 44,80 38,66 26,66" fill="#3a4453"/><polygon points="44,80 68,80 62,66 50,66" fill="#2b3446"/><polygon points="32,66 56,66 50,52 38,52" fill="#46516a"/><polygon points="38,52 50,52 44,44 44,44" fill="#3a4453"/><polygon points="28,68 36,68 32,60 28,62" fill="#252c37"/><polygon points="52,68 60,68 58,60 52,62" fill="#252c37"/>';
+// $HEX pile — matte faceted CHROME heap (the pink lives on the BEST VALUE ring /
+// $HEX glyph, never the object).
+const HEX_PILE = '<polygon points="20,80 44,80 38,66 26,66" fill="#C8D1D8"/><polygon points="44,80 68,80 62,66 50,66" fill="#9aa3ad"/><polygon points="32,66 56,66 50,52 38,52" fill="#aeb7c0"/><polygon points="38,52 50,52 44,44 44,44" fill="#C8D1D8"/><polygon points="28,68 36,68 32,60 28,62" fill="#585F68"/><polygon points="52,68 60,68 58,60 52,62" fill="#585F68"/>';
 
 const balanceDisplay = computed(() => BALANCE.toLocaleString());
 const buyName = computed(() => (buyItem.value ? t.value.shop.decor[buyItem.value.id].name : ''));

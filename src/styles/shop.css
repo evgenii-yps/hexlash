@@ -1,185 +1,241 @@
-/* shop.css — Hexlash SHOP (/play/home → SHOP). SELF-CONTAINED: its own --tokens
-   on .shop-root, own header / brackets / balance plaque — it shares NOTHING with
-   home.css, so the home chrome is never touched. Discipline: ONE pink (#FF0069)
-   and exactly one glow per tab — Currency = ARSENAL pack, Specials = HOT DEAL;
-   every other mark is matte. Stage-2 bits (Currency / Specials / claim) are SOON
-   stubs behind one flag. Mobile-first (390×844); desktop widens to a 3-col grid.
-   No "event re-skin" accents (cyan / purple / acid) anywhere. */
+/* shop.css — Hexlash SHOP (/play/home → SHOP), BRIGHT direction. The first screen
+   of the brighter Hexlash language (the rest of the game is still matte). The shop
+   BODY carries the colour; the persistent top strip (home.css) stays neutral matte
+   chrome and is never touched here.
+
+   CANON PALETTE ONLY — no colour outside this set:
+     neutrals (no glow)  VOID #08080A · PANEL #16161B · INK DIM #5D5D66 · INK #EDEDF1
+     brand (may glow)    HEXLASH PINK #FF0069 — owns chrome + economy (CTA, BUY,
+                         balance, tabs, BEST VALUE / HOT DEAL)
+     four cores (2-tone, glow only in own hue) ONSLAUGHT #FF3344→#FF7A30 ·
+                         RAIDER #FFA526→#FFD930 · BULWARK #2ED6B0→#5DD6E6 ·
+                         AMBUSH #9461FF→#D461FF — own the PRODUCT (frame/glyph/glow)
+     art materials (matte) SAND · RUST · TEAL · CHROME · AMBER (in the SVG fills)
+
+   SIX RULES: (1) one hero bloom per screen = the featured decor card; the rest are
+   restrained until hover. (2) one accent per mark; pink and a core never mix in one
+   mark; two cores never share a card. (3) colour = signal: a core colour always
+   means "bound to that core". (4) pink owns chrome+economy, cores own product.
+   (5) glow hierarchy: hero bloom → BEST VALUE/HOT ring → BUY → hover ring (≤ one
+   bloom + one ring at rest). (6) NO glow on: the top strip, SOON/gated, OWNED, body
+   text, matte art bodies.
+
+   Stage-2 (Currency/Specials) is gated by one flag: OFF ⇒ restrained SOON (no glow,
+   no rings); ON ⇒ bright per the prototype. Live zone now = DECOR. Mobile-first. */
 
 .shop-root {
-  --acc: var(--hex-primary, #ff0069);
-  --acc-rgb: 255, 0, 105;
-  --mono: "JetBrains Mono", ui-monospace, monospace;
-  --disp: "Saira Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif;
-  --ink: #f4f2f6;
-  --dim: #a9a5af;
-  --muted: #76727c;
-  --line: rgba(255, 255, 255, 0.09);
-  --line2: rgba(255, 255, 255, 0.18);
+  /* canon neutrals */
+  --void: #08080a;
+  --panel: #16161b;
+  --ink: #ededf1;
+  --ink-dim: #5d5d66;
+  /* brand pink — economy / chrome */
+  --pink: #ff0069;
+  --pink-rgb: 255, 0, 105;
+  /* readable text tiers (all INK / INK-DIM — opacity only, still canon) */
+  --txt: var(--ink);
+  --txt-2: rgba(237, 237, 241, 0.64); /* dim body */
+  --txt-3: var(--ink-dim);            /* micro mono labels */
+  /* surfaces */
+  --line: rgba(255, 255, 255, 0.08);
+  --line2: rgba(255, 255, 255, 0.16);
   --fill: rgba(255, 255, 255, 0.022);
   --fill2: rgba(255, 255, 255, 0.05);
+  /* per-card core (set inline as --c1/--c2; default = pink so the rule still holds
+     if a card forgets to bind a core) */
+  --c1: var(--pink);
+  --c2: var(--pink);
+  --mono: "JetBrains Mono", ui-monospace, monospace;
+  --disp: "Saira Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif;
   --spring: cubic-bezier(0.22, 0.61, 0.36, 1);
+
   position: absolute; inset: 0; z-index: 1; overflow: hidden;
   display: flex; flex-direction: column;
-  font-family: var(--disp); color: var(--ink);
-  background: radial-gradient(120% 80% at 50% -10%, #120a10 0%, #0a0a10 46%, #06070b 80%);
+  font-family: var(--disp); color: var(--txt);
+  /* VOID body with a faint pink economy ambient at the crown (system layer) */
+  background:
+    radial-gradient(120% 70% at 50% -8%, rgba(var(--pink-rgb), 0.07) 0%, transparent 52%),
+    radial-gradient(120% 90% at 50% 110%, #0c0c12 0%, var(--void) 70%);
 }
 .shop-root *, .shop-root *::before, .shop-root *::after { box-sizing: border-box; }
 
 /* ───────────── one scroll page ─────────────
    The persistent strip (home.css) sits above; the shop has no top bar of its own.
-   92px top padding clears the 74px strip. */
+   Top padding clears the 74px strip. */
 .shop-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch; padding: 92px 20px 40px; }
+  -webkit-overflow-scrolling: touch; padding: 92px 20px 44px; }
 
-/* intro — SHOP title + $HEX balance ($HEX is allowed in the shop, never in the strip) */
-.shop-intro { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 28px; }
-.shop-h1 { font-weight: 900; font-size: 40px; line-height: 0.9; letter-spacing: 0.01em; text-transform: uppercase; }
+/* intro — SHOP title + $HEX balance ($HEX is allowed in the shop body, never in the
+   strip). Balance is the economy → pink. */
+.shop-intro { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 26px; }
+.shop-h1 { font-weight: 900; font-size: 44px; line-height: 0.88; letter-spacing: 0.01em; text-transform: uppercase; }
 .shop-bal { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em;
-  border: 1px solid var(--line); background: rgba(255, 255, 255, 0.025); padding: 8px 13px; flex: 0 0 auto; }
-.shop-bal .dia { width: 8px; height: 8px; background: var(--acc); transform: rotate(45deg); } /* matte — no glow */
-.shop-bal b { color: #fff; font-weight: 500; }
-.shop-bal i { color: var(--acc); font-style: normal; }
+  border: 1px solid rgba(var(--pink-rgb), 0.4); background: rgba(var(--pink-rgb), 0.07); padding: 8px 13px; flex: 0 0 auto; }
+.shop-bal .dia { width: 8px; height: 8px; background: var(--pink); transform: rotate(45deg); }
+.shop-bal b { color: var(--ink); font-weight: 500; }
+.shop-bal i { color: var(--pink); font-style: normal; }
 
 /* ───────────── zones — DECOR · CURRENCY · SPECIALS stacked, no tabs ───────────── */
-.shop-zone { margin-top: 36px; }
+.shop-zone { margin-top: 38px; }
 .shop-zone-h { border-top: 1px solid var(--line); padding-top: 18px; margin-bottom: 18px; }
-.shop-zone-t { font-weight: 900; font-size: 26px; letter-spacing: 0.04em; text-transform: uppercase; }
-.shop-zone-l { font-family: var(--mono); font-size: 12px; line-height: 1.6; color: var(--dim); max-width: 70ch; margin-top: 10px; }
+.shop-zone-t { font-weight: 900; font-size: 27px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink); }
+.shop-zone-l { font-family: var(--mono); font-size: 12px; line-height: 1.6; color: var(--txt-2); max-width: 70ch; margin-top: 10px; }
 
-/* decor sub-tabs */
+/* decor sub-tabs — active = pink (chrome/nav). SOON = matte (no glow). */
 .shop-subtabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
-.shop-subtab { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted);
+.shop-subtab { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--txt-3);
   border: 1px solid var(--line); background: var(--fill); padding: 7px 11px; display: flex; align-items: center; gap: 7px; cursor: default; }
-.shop-subtab.active { color: #fff; border-color: var(--line2); }
-.shop-subtab .soon { font-size: 8px; letter-spacing: 0.18em; color: var(--muted); border: 1px solid var(--line); padding: 1px 5px; }
+.shop-subtab.active { color: var(--ink); border-color: rgba(var(--pink-rgb), 0.5); box-shadow: inset 0 -2px 0 var(--pink); }
+.shop-subtab .soon { font-size: 8px; letter-spacing: 0.18em; color: var(--txt-3); border: 1px solid var(--line); padding: 1px 5px; }
 
 /* generic grid — 1 col mobile → 3 col desktop */
 .shop-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
 
-/* ── decor card ── */
-.shop-card { height: 300px; border: 1px solid var(--line); background: var(--fill); display: flex; flex-direction: column;
-  overflow: hidden; transition: border-color 0.15s, background 0.15s, transform 0.2s var(--spring); }
-.shop-card:hover { border-color: var(--line2); background: var(--fill2); transform: translateY(-2px); }
+/* ════════════ decor card — PRODUCT wears its core (--c1/--c2), economy stays pink ════════════ */
+.shop-card { position: relative; height: 300px; border: 1px solid var(--line);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--c1) 5%, var(--panel)), var(--panel));
+  display: flex; flex-direction: column; overflow: hidden;
+  transition: border-color 0.18s, box-shadow 0.22s var(--spring), transform 0.22s var(--spring); }
+/* restrained at rest → on hover a soft CORE ring (rule 1 + 5) */
+.shop-card:hover { border-color: color-mix(in srgb, var(--c1) 55%, var(--line));
+  box-shadow: 0 0 22px color-mix(in srgb, var(--c1) 22%, transparent); transform: translateY(-3px); }
 .shop-frame { position: relative; flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center;
-  background: radial-gradient(90% 80% at 50% 60%, #12161f 0%, #0b0d13 75%); border-bottom: 1px solid var(--line); }
+  background: radial-gradient(92% 86% at 50% 58%, color-mix(in srgb, var(--c1) 14%, var(--panel)) 0%, var(--void) 78%);
+  border-bottom: 1px solid color-mix(in srgb, var(--c1) 20%, var(--line)); }
+/* tag wears the core (product signal); NEW stays product (the 2nd core tone), not pink */
 .shop-tag { position: absolute; top: 12px; left: 12px; font-family: var(--mono); font-size: 9px; letter-spacing: 0.2em;
-  color: #b9b6bd; border: 1px solid var(--line); padding: 3px 8px; text-transform: uppercase; }
-/* "NEW" badge stays neutral — BUY is the one pink in the shop */
-.shop-tag.new { color: #d6d3da; border-color: var(--line2); }
-.shop-art { width: 100%; height: 100%; display: block; }
+  color: var(--c1); border: 1px solid color-mix(in srgb, var(--c1) 42%, transparent);
+  background: color-mix(in srgb, var(--c1) 9%, transparent); padding: 3px 8px; text-transform: uppercase; }
+.shop-tag.new { color: var(--c2); border-color: color-mix(in srgb, var(--c2) 50%, transparent); }
+.shop-art { width: 100%; height: 100%; display: block; position: relative; z-index: 1; }
 .shop-meta { padding: 16px 18px; display: flex; flex-direction: column; gap: 6px; }
-.shop-name { font-weight: 800; font-size: 19px; letter-spacing: 0.03em; text-transform: uppercase; }
-.shop-sub { font-family: var(--mono); font-size: 10.5px; color: var(--dim); letter-spacing: 0.03em; line-height: 1.5; }
+.shop-name { font-weight: 800; font-size: 19px; letter-spacing: 0.03em; text-transform: uppercase; color: var(--ink); }
+.shop-sub { font-family: var(--mono); font-size: 10.5px; color: var(--txt-2); letter-spacing: 0.03em; line-height: 1.5; }
 .shop-buy { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; }
+/* price = $HEX = economy → pink */
 .shop-price { display: flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 15px; letter-spacing: 0.04em; }
-.shop-price .dia { width: 8px; height: 8px; background: var(--acc); transform: rotate(45deg); } /* matte */
-.shop-price b { color: #fff; font-weight: 700; }
-.shop-price i { color: var(--acc); font-style: normal; font-size: 11px; }
+.shop-price .dia { width: 8px; height: 8px; background: var(--pink); transform: rotate(45deg); }
+.shop-price b { color: var(--ink); font-weight: 700; }
+.shop-price i { color: var(--pink); font-style: normal; font-size: 11px; }
+/* BUY = economy CTA → pink, matte at rest (glow only on hover, below the ring tier) */
 .shop-btn { font-family: var(--disp); font-weight: 700; font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase;
-  padding: 10px 18px; cursor: pointer; display: flex; align-items: center; gap: 8px; border: 0;
-  transition: filter 0.15s, transform 0.2s var(--spring); }
-.shop-btn.buy { background: var(--acc); color: #fff; /* matte pink — NO glow in decor */
-  clip-path: polygon(9px 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%, 0 9px); }
-.shop-btn.buy:hover { filter: brightness(1.08); transform: translateY(-2px); }
+  padding: 10px 18px; cursor: pointer; display: flex; align-items: center; gap: 8px; border: 0; color: #fff; background: var(--pink);
+  clip-path: polygon(9px 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%, 0 9px);
+  transition: filter 0.15s, box-shadow 0.18s, transform 0.2s var(--spring); }
+.shop-btn.buy:hover { filter: brightness(1.06); box-shadow: 0 0 20px rgba(var(--pink-rgb), 0.5); transform: translateY(-2px); }
 .shop-btn.buy:active { transform: scale(0.97); transition-duration: 0.12s; }
-.shop-chip-owned { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
-  border: 1px solid var(--line); background: rgba(255, 255, 255, 0.03); padding: 9px 16px; }
+/* OWNED = matte, no glow (rule 6) */
+.shop-chip-owned { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--txt-3);
+  border: 1px solid var(--line); background: var(--fill); padding: 9px 16px; }
+
+/* ── HERO — the featured decor card: the screen's ONE bloom (rule 1) ── */
+.shop-card.featured { overflow: visible; border-color: color-mix(in srgb, var(--c1) 45%, var(--line)); }
+.shop-card.featured::before { content: ""; position: absolute; inset: -34% -16%; z-index: -1; pointer-events: none;
+  background: radial-gradient(58% 56% at 50% 46%, color-mix(in srgb, var(--c1) 55%, transparent) 0%, transparent 70%);
+  filter: blur(34px); }
+.shop-card.featured .shop-frame { background: radial-gradient(94% 90% at 50% 54%, color-mix(in srgb, var(--c1) 22%, var(--panel)) 0%, var(--void) 80%); }
+/* the hero already carries the bloom — don't add a hover ring on top of it (rule 5) */
+.shop-card.featured:hover { box-shadow: none; transform: translateY(-2px); }
 
 /* a soft "soon" price button shared by Currency + Specials (matte, no glow) */
 .shop-soonbtn { font-family: var(--disp); font-weight: 700; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase;
-  border: 1px solid var(--line2); background: rgba(255, 255, 255, 0.04); color: #d6d3da; padding: 10px 16px; cursor: pointer;
+  border: 1px solid var(--line2); background: var(--fill2); color: var(--ink); padding: 10px 16px; cursor: pointer;
   display: flex; align-items: center; justify-content: center; gap: 9px; width: 100%; transition: background 0.15s, border-color 0.15s; }
 .shop-soonbtn:hover { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.28); }
-.shop-soonbtn .soon { font-family: var(--mono); font-size: 8px; letter-spacing: 0.18em; color: var(--muted); border: 1px solid var(--line); padding: 1px 5px; }
+.shop-soonbtn .soon { font-family: var(--mono); font-size: 8px; letter-spacing: 0.18em; color: var(--txt-3); border: 1px solid var(--line); padding: 1px 5px; }
 
-/* ── currency ── */
-.shop-whatis { border: 1px solid var(--line); background: var(--fill); padding: 16px 18px; margin-bottom: 18px; }
-.shop-whatis h3 { font-weight: 800; font-size: 14px; letter-spacing: 0.06em; text-transform: uppercase; margin: 0 0 8px; }
-.shop-whatis p { font-family: var(--mono); font-size: 11px; line-height: 1.6; color: var(--dim); margin: 0; }
-.shop-pack { position: relative; height: 290px; border: 1px solid var(--line); background: var(--fill); display: flex; flex-direction: column;
+/* ════════════ currency — economy layer (pink owns it; cores stay out) ════════════ */
+.shop-whatis { border: 1px solid var(--line); background: var(--panel); padding: 16px 18px; margin-bottom: 18px; }
+.shop-whatis h3 { font-weight: 800; font-size: 14px; letter-spacing: 0.06em; text-transform: uppercase; margin: 0 0 8px; color: var(--ink); }
+.shop-whatis p { font-family: var(--mono); font-size: 11px; line-height: 1.6; color: var(--txt-2); margin: 0; }
+.shop-pack { position: relative; height: 290px; border: 1px solid var(--line); background: var(--panel); display: flex; flex-direction: column;
   overflow: hidden; transition: border-color 0.15s, background 0.15s, transform 0.2s var(--spring); }
-.shop-pack:hover { border-color: var(--line2); background: var(--fill2); transform: translateY(-2px); }
+.shop-pack:hover { border-color: var(--line2); background: linear-gradient(180deg, var(--fill2), var(--panel)); transform: translateY(-2px); }
 .shop-pack-art { position: relative; flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center;
-  background: radial-gradient(90% 80% at 50% 60%, #12161f 0%, #0b0d13 75%); border-bottom: 1px solid var(--line); }
+  background: radial-gradient(90% 80% at 50% 60%, #1a1a22 0%, var(--void) 78%); border-bottom: 1px solid var(--line); }
 .shop-value { position: absolute; top: 10px; right: 10px; font-family: var(--mono); font-size: 8.5px; letter-spacing: 0.16em;
-  color: #b9b6bd; border: 1px solid var(--line); background: rgba(0, 0, 0, 0.4); padding: 2px 7px; text-transform: uppercase; }
+  color: var(--txt-2); border: 1px solid var(--line); background: rgba(0, 0, 0, 0.4); padding: 2px 7px; text-transform: uppercase; }
 .shop-pack-meta { padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
-.shop-pack-name { font-weight: 800; font-size: 17px; letter-spacing: 0.04em; text-transform: uppercase; }
+.shop-pack-name { font-weight: 800; font-size: 17px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink); }
 .shop-amount { display: flex; align-items: baseline; gap: 7px; font-family: var(--mono); }
-.shop-amount .dia { width: 7px; height: 7px; background: var(--acc); transform: rotate(45deg); align-self: center; } /* matte */
-.shop-amount b { color: #fff; font-size: 20px; font-weight: 700; }
-.shop-amount em { color: var(--acc); font-style: normal; font-size: 12px; }
-.shop-pack-price { font-family: var(--mono); font-size: 12px; color: var(--dim); letter-spacing: 0.06em; }
-/* ARSENAL — the ONE accent on the Currency tab: pink frame + soft glow + ribbon */
-.shop-pack.best { border-color: rgba(var(--acc-rgb), 0.55); box-shadow: 0 0 26px rgba(var(--acc-rgb), 0.18); }
-.shop-pack.best .shop-value { color: var(--acc); border-color: rgba(var(--acc-rgb), 0.45); background: rgba(var(--acc-rgb), 0.08); }
+.shop-amount .dia { width: 7px; height: 7px; background: var(--pink); transform: rotate(45deg); align-self: center; }
+.shop-amount b { color: var(--ink); font-size: 20px; font-weight: 700; }
+.shop-amount em { color: var(--pink); font-style: normal; font-size: 12px; }
+/* ARSENAL — the ONE accent on Currency when Stage-2 is live: pink ring + ribbon
+   (rule 5 ring tier). OFF ⇒ no .best class ⇒ plain matte SOON. */
+.shop-pack.best { border-color: rgba(var(--pink-rgb), 0.55); box-shadow: 0 0 26px rgba(var(--pink-rgb), 0.18); }
+.shop-pack.best .shop-value { color: var(--pink); border-color: rgba(var(--pink-rgb), 0.45); background: rgba(var(--pink-rgb), 0.08); }
 .shop-ribbon { position: absolute; top: 10px; left: 10px; z-index: 2; font-family: var(--mono); font-size: 8.5px; letter-spacing: 0.18em;
-  text-transform: uppercase; color: #fff; background: var(--acc); padding: 3px 9px; }
+  text-transform: uppercase; color: #fff; background: var(--pink); padding: 3px 9px; }
 
-/* ── specials ── */
-.shop-special { position: relative; height: 290px; border: 1px solid var(--line); background: var(--fill); padding: 16px 18px;
+/* ════════════ specials — economy layer (pink) ════════════ */
+.shop-special { position: relative; height: 290px; border: 1px solid var(--line); background: var(--panel); padding: 16px 18px;
   display: flex; flex-direction: column; gap: 12px; }
-.shop-special .shop-soonbtn { margin-top: auto; } /* CTA pinned to the card foot — uniform height */
+.shop-special .shop-soonbtn { margin-top: auto; }
 .shop-special-h { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.shop-kicker { font-family: var(--mono); font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted);
+.shop-kicker { font-family: var(--mono); font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--txt-3);
   border: 1px solid var(--line); padding: 3px 8px; }
-.shop-special-name { font-weight: 800; font-size: 18px; letter-spacing: 0.04em; text-transform: uppercase; }
-.shop-contains { font-family: var(--mono); font-size: 11px; color: var(--dim); letter-spacing: 0.03em; line-height: 1.5; }
-.shop-timer { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 26px; letter-spacing: 0.06em; color: #fff; }
+.shop-special-name { font-weight: 800; font-size: 18px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink); }
+.shop-contains { font-family: var(--mono); font-size: 11px; color: var(--txt-2); letter-spacing: 0.03em; line-height: 1.5; }
+.shop-timer { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 26px; letter-spacing: 0.06em; color: var(--ink); }
 .shop-pricerow { display: flex; align-items: baseline; gap: 10px; font-family: var(--mono); }
-.shop-was { color: var(--muted); text-decoration: line-through; font-size: 13px; }
-.shop-now { color: var(--acc); font-size: 18px; font-weight: 700; }
-.shop-flat { color: #fff; font-size: 16px; font-weight: 700; font-family: var(--mono); }
-/* HOT DEAL — the ONE accent on the Specials tab */
-.shop-special.hot { border-color: rgba(var(--acc-rgb), 0.55); box-shadow: 0 0 26px rgba(var(--acc-rgb), 0.16); }
-.shop-special.hot .shop-kicker { color: var(--acc); border-color: rgba(var(--acc-rgb), 0.45); background: rgba(var(--acc-rgb), 0.08); }
+.shop-was { color: var(--txt-3); text-decoration: line-through; font-size: 13px; }
+.shop-now { color: var(--pink); font-size: 18px; font-weight: 700; }
+.shop-flat { color: var(--ink); font-size: 16px; font-weight: 700; font-family: var(--mono); }
+/* HOT DEAL — the ONE accent on Specials when Stage-2 is live (ring tier) */
+.shop-special.hot { border-color: rgba(var(--pink-rgb), 0.55); box-shadow: 0 0 26px rgba(var(--pink-rgb), 0.16); }
+.shop-special.hot .shop-kicker { color: var(--pink); border-color: rgba(var(--pink-rgb), 0.45); background: rgba(var(--pink-rgb), 0.08); }
 
 /* ───────────── modals (bottom-sheet on mobile, centered on desktop) ───────────── */
 .shop-overlay { position: fixed; inset: 0; z-index: 80; background: rgba(4, 5, 9, 0.66); backdrop-filter: blur(3px);
   display: flex; align-items: flex-end; justify-content: center; animation: shop-fade 0.18s ease both; }
 @keyframes shop-fade { from { opacity: 0; } to { opacity: 1; } }
-.shop-sheet { width: 100%; max-width: 520px; background: linear-gradient(180deg, #0e0f15, #0a0b10); border-top: 1px solid var(--line2);
+.shop-sheet { width: 100%; max-width: 520px; background: linear-gradient(180deg, #101016, var(--panel)); border-top: 1px solid var(--line2);
   padding: 22px 22px 28px; display: flex; flex-direction: column; gap: 14px; animation: shop-up 0.22s cubic-bezier(0.22, 0.61, 0.36, 1) both; }
 @keyframes shop-up { from { transform: translateY(14px); opacity: 0.6; } to { transform: translateY(0); opacity: 1; } }
 .shop-sheet-h { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.shop-sheet-title { font-weight: 800; font-size: 18px; letter-spacing: 0.05em; text-transform: uppercase; }
+.shop-sheet-title { font-weight: 800; font-size: 18px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink); }
 .shop-x { width: 30px; height: 30px; flex: 0 0 auto; display: flex; align-items: center; justify-content: center;
-  border: 1px solid var(--line); background: none; color: var(--muted); cursor: pointer; font-size: 13px; }
+  border: 1px solid var(--line); background: none; color: var(--txt-3); cursor: pointer; font-size: 13px; }
 .shop-x:hover { color: var(--ink); border-color: var(--line2); }
 .shop-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-family: var(--mono); font-size: 13px;
   padding: 11px 0; border-bottom: 1px solid var(--line); }
 .shop-row:last-of-type { border-bottom: 0; }
-.shop-row .k { color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; font-size: 10px; }
-.shop-row .v { color: #fff; }
-.shop-row .v.acc { color: var(--acc); }
-.shop-sheet-cta { margin-top: 4px; padding: 13px 18px; border: 0; cursor: pointer; background: var(--acc); color: #fff;
+.shop-row .k { color: var(--txt-3); letter-spacing: 0.1em; text-transform: uppercase; font-size: 10px; }
+.shop-row .v { color: var(--ink); }
+.shop-row .v.acc { color: var(--pink); }
+.shop-sheet-cta { margin-top: 4px; padding: 13px 18px; border: 0; cursor: pointer; background: var(--pink); color: #fff;
   font-family: var(--disp); font-weight: 800; font-size: 15px; letter-spacing: 0.1em; text-transform: uppercase;
   clip-path: polygon(11px 0, 100% 0, 100% calc(100% - 11px), calc(100% - 11px) 100%, 0 100%, 0 11px); }
-.shop-sheet-cta.ghost { background: rgba(255, 255, 255, 0.04); border: 1px solid var(--line2); color: #d6d3da; clip-path: none; }
+.shop-sheet-cta.ghost { background: var(--fill2); border: 1px solid var(--line2); color: var(--ink); clip-path: none; }
 .shop-sheet-cta[disabled] { opacity: 0.5; cursor: not-allowed; }
-.shop-sheet-body { font-family: var(--mono); font-size: 12px; line-height: 1.6; color: var(--dim); }
+.shop-sheet-body { font-family: var(--mono); font-size: 12px; line-height: 1.6; color: var(--txt-2); }
 .shop-success-ic { width: 46px; height: 46px; border-radius: 50%; align-self: center; display: flex; align-items: center; justify-content: center;
-  background: rgba(var(--acc-rgb), 0.12); border: 1px solid rgba(var(--acc-rgb), 0.4); color: var(--acc); font-size: 22px; }
+  background: rgba(var(--pink-rgb), 0.12); border: 1px solid rgba(var(--pink-rgb), 0.4); color: var(--pink); font-size: 22px; }
 .shop-providers { display: flex; gap: 10px; }
-.shop-provider { flex: 1; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.02); padding: 14px 10px; text-align: center;
-  font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); opacity: 0.6; }
-.shop-stamp { font-family: var(--mono); font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted);
+.shop-provider { flex: 1; border: 1px solid var(--line); background: var(--fill); padding: 14px 10px; text-align: center;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--txt-3); opacity: 0.7; }
+.shop-stamp { font-family: var(--mono); font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--txt-3);
   border: 1px dashed var(--line2); padding: 8px 10px; text-align: center; }
 
 /* ───────────── desktop ───────────── */
 @media (min-width: 880px) {
-  .shop-scroll { padding: 104px 56px 48px; } /* clears the strip + breathing room */
-  .shop-h1 { font-size: 56px; }
+  .shop-scroll { padding: 104px 56px 52px; }
+  .shop-h1 { font-size: 60px; }
   .shop-grid { grid-template-columns: repeat(3, 1fr); gap: 18px; align-items: start; }
   .shop-card { height: 340px; }
   .shop-pack, .shop-special { height: 300px; }
-  .shop-overlay { align-items: center; } /* center modal on desktop */
+  /* hero moment — the featured decor card spans the row, art beside meta */
+  .shop-card.featured { grid-column: 1 / -1; height: 300px; flex-direction: row; }
+  .shop-card.featured .shop-frame { flex: 0 0 46%; border-bottom: 0; border-right: 1px solid color-mix(in srgb, var(--c1) 20%, var(--line)); }
+  .shop-card.featured .shop-meta { flex: 1 1 auto; justify-content: center; gap: 9px; }
+  .shop-card.featured .shop-name { font-size: 26px; }
+  .shop-overlay { align-items: center; }
   .shop-sheet { border: 1px solid var(--line2); animation-name: shop-pop; }
   @keyframes shop-pop { from { transform: scale(0.97); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 }
 
-/* reduced motion — no slide/fade/pop (timer ticking is gated in JS) */
+/* reduced motion — no slide/fade/pop/lift (timer ticking is gated in JS) */
 @media (prefers-reduced-motion: reduce) {
   .shop-overlay, .shop-sheet { animation: none; }
   .shop-card, .shop-pack, .shop-btn { transition: border-color 0.15s, background 0.15s; }
