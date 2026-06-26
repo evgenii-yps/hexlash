@@ -8,9 +8,10 @@
    Adapted for our integration: the handoff toggled mobile/desktop via separate
    `.shopb-mobile` / `.shopb-desktop` class scopes; here those become a mobile-first
    base + an `@media (min-width: 880px)` block. The prototype's own top bar (brand /
-   cabinet / back) is dropped — the home strip provides it — so `.sb-head` clears the
-   74px strip with its top padding. Palette = canon (pink + void/panel/ink + the four
-   cores piped in per-card as --c/--c-sup/--c-rgb). */
+   cabinet / back) is dropped — the home strip provides it. The whole screen is ONE
+   natural scroll: nothing is pinned, and the shared home strip is dropped into the
+   page flow while the shop is open (body.home-shop-open, near the head). Palette =
+   canon (pink + void/panel/ink + the four cores piped in per-card as --c/--c-sup/--c-rgb). */
 
 .shopb {
   --pink: #ff0069; --pink-rgb: 255, 0, 105;
@@ -22,10 +23,13 @@
   --c: #9fb0c8; --c-sup: #c8d4e6; --c-rgb: 159, 176, 200;
   --disp: "Saira Condensed", -apple-system, sans-serif;
   --mono: "JetBrains Mono", ui-monospace, monospace;
-  position: absolute; inset: 0; height: 100%; overflow: hidden;
+  /* ONE natural-height document — no inner scroller, no fixed/sticky chrome, no
+     flex-split. The shop is an in-flow block inside .home-root; .home-root itself
+     becomes the single scroller (scoped to body.home-shop-open, below), so the
+     whole page — strip, balance, SHOP, tabs, creed, cards — rides one page scroll. */
+  position: relative; min-height: 100%;
   background: var(--void); color: var(--ink);
   font-family: var(--disp); -webkit-font-smoothing: antialiased;
-  display: flex; flex-direction: column;
 }
 .shopb * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -33,12 +37,11 @@
 .sb-bg { position: absolute; inset: 0; z-index: 0;
   background: radial-gradient(130% 75% at 50% -6%, #101019 0%, #0a0a11 48%, var(--void) 82%); }
 
-/* ════════════ head (balance + title + tabs) — FIXED TOP BAR ════════════
-   A non-scrolling flex item (flex:none) ABOVE the .sb-scroll list, so the panel +
-   balance + SHOP title + tabs physically can't move — only the list scrolls in its
-   own box below. No overlap with the list (so the first card is never covered and
-   there's no double padding). The home strip (home.css) sits above this. */
-.sb-head { position: relative; z-index: 6; flex: 0 0 auto; }
+/* ════════════ head (balance + title + tabs) — IN-FLOW, NOT FIXED ════════════
+   Just the first blocks of the single page flow: balance → SHOP → tabs. Nothing is
+   pinned — the head scrolls away with everything else. The persistent home strip
+   (home.css) sits in the flow directly above it (see body.home-shop-open below). */
+.sb-head { position: relative; z-index: 6; }
 .sb-top { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
 .sb-bal { display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono); letter-spacing: 0.04em;
   border: 1px solid var(--line); background: rgba(255, 255, 255, 0.025); white-space: nowrap; color: #cfccd3; }
@@ -58,11 +61,20 @@
 .sb-tab.on::after { content: ""; position: absolute; left: 14%; right: 14%; bottom: -1px; height: 2px;
   background: var(--pink); box-shadow: 0 0 12px var(--pink); }
 
-/* the one scroll container — the sticky head sits at its top, the list scrolls */
-.sb-scroll { position: relative; z-index: 2; flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; }
-.sb-scroll::-webkit-scrollbar { width: 0; }
-/* body = the scrolling content (creed + lede + grid); no scroll of its own */
+/* body = the page content (creed + lede + subtabs + grid) — part of the single
+   flow, no scroll box of its own. */
 .sb-body { position: relative; }
+
+/* ── shop-side decoupling (panel joins the flow only here) ────────────────────
+   The home strip is position:absolute inside .home-root; an absolute child stays
+   pinned to the scroll frame, so to make the WHOLE page (strip included) one
+   natural scroll we (1) turn .home-root into the scroller and (2) drop the strip
+   into normal flow. Both are gated on body.home-shop-open (set by HomeShop on
+   mount) so the home — never marked — keeps its fixed-strip-over-3D behaviour.
+   Nothing here is written into home.css; the strip rules on the home are untouched. */
+body.home-shop-open .home-root { overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
+body.home-shop-open .home-root::-webkit-scrollbar { width: 0; height: 0; }
+body.home-shop-open .hs-strip { position: static; background: #0a0a12; }
 .sb-lede { font-family: var(--mono); line-height: 1.65; color: var(--dim); }
 .sb-lede b { color: #fff; font-weight: 500; }
 
@@ -221,7 +233,7 @@
 .btn.claim.live { background: var(--pink); color: #fff; border: 0; box-shadow: 0 0 18px rgba(var(--pink-rgb), 0.4); }
 
 /* ════════════ MODALS / SHEETS ════════════ */
-.sb-scrim { position: absolute; inset: 0; z-index: 20; background: rgba(4, 4, 7, 0.74);
+.sb-scrim { position: fixed; inset: 0; z-index: 20; background: rgba(4, 4, 7, 0.74);
   display: flex; align-items: flex-end; justify-content: center; backdrop-filter: blur(3px); animation: sb-fade 0.2s ease; }
 @keyframes sb-fade { from { opacity: 0; } to { opacity: 1; } }
 .sheet { position: relative; width: 100%; background: #0c0b10; border-top: 1px solid rgba(var(--pink-rgb), 0.4);
@@ -255,8 +267,8 @@
 .wrow .wic { width: 26px; height: 26px; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; flex: none; color: var(--dim); }
 
 /* ════════════════════════════ MOBILE-FIRST BASE (390×844) ════════════════════════════ */
-/* sb-head clears the 74px persistent home strip (was 20px in the standalone proto) */
-.sb-head { padding: 84px 18px 0; }
+/* head spacing under the in-flow home strip (the strip is its own block above) */
+.sb-head { padding: 22px 18px 0; }
 .sb-top { margin-bottom: 16px; }
 .sb-bal { font-size: 12px; padding: 8px 13px; }
 .sb-h1 { font-size: 46px; }
@@ -326,7 +338,7 @@
 
 /* ════════════════════════════ DESKTOP (≥880px) ════════════════════════════ */
 @media (min-width: 880px) {
-  .sb-head { padding: 90px 56px 0; }
+  .sb-head { padding: 30px 56px 0; }
   .sb-top { height: 34px; margin-bottom: 24px; }
   .sb-bal { font-size: 13px; padding: 10px 17px; }
   .sb-h1 { font-size: 72px; text-align: center; }

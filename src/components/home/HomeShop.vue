@@ -9,6 +9,11 @@
      BEST VALUE / HOT). The persistent home strip (HomeView/home.css) is the app
      chrome and is NOT duplicated here — this body sits under it.
 
+     Scroll: the shop is ONE natural-height document — no inner scroller, nothing
+     pinned. On mount it adds `home-shop-open` to <body> so shop.css makes the
+     shared home strip part of the page flow (it scrolls with everything); the home
+     itself is never marked, so its fixed-strip-over-3D behaviour is untouched.
+
      Stage-2 (Currency/Specials live wallet/real money/rewards) is gated by one
      flag: stageTwoLive=false ⇒ honest SOON (no glow/rings); ON ⇒ fully bright.
      BUY is a Stage-1 facade: confirm → unlocked, nothing is spent or saved (except
@@ -18,9 +23,9 @@
   <div class="shopb" role="region" aria-label="Shop">
     <div class="sb-bg" aria-hidden="true"></div>
 
-    <!-- head — a fixed top bar (flex:none, OUTSIDE the scroller) → it never moves.
-         Balance ($HEX allowed in the shop body, never the strip) + SHOP title +
-         tabs. Brand / cabinet / back live in the strip. -->
+    <!-- head — the first blocks of the single page flow (NOT pinned): balance
+         ($HEX allowed in the shop body, never the strip) + SHOP title + tabs.
+         Brand / cabinet / back live in the strip (which scrolls with the page). -->
     <div class="sb-head">
       <div class="sb-top">
         <div class="sb-bal"><span class="hx-dia"></span><b>{{ balanceDisplay }}</b>&nbsp;<i>{{ t.shop.unit }}</i></div>
@@ -31,8 +36,7 @@
       </div>
     </div>
 
-    <!-- the list scroller — ONLY this scrolls, under the fixed head -->
-    <div class="sb-scroll">
+    <!-- body — part of the single page flow (no inner scroller) -->
     <div class="sb-body">
       <span class="sb-creed"><span class="dot"></span>{{ t.shop.creed }}</span>
       <div class="sb-lede">{{ t.shop['lede' + cap(tab)] }}</div>
@@ -139,7 +143,6 @@
         </div>
       </template>
     </div>
-    </div><!-- /.sb-scroll -->
 
     <!-- ─────────── modals ─────────── -->
     <div v-if="modal" class="sb-scrim" @click.self="closeModal">
@@ -406,9 +409,16 @@ const timerDisplay = computed(() => {
 });
 let timerId = null;
 onMounted(() => {
+  // Single-scroll decoupling: mark the document so shop.css turns .home-root into
+  // the one page scroller and drops the shared home strip into the flow. The home
+  // is never marked, so its fixed-strip-over-3D behaviour stays untouched.
+  document.body.classList.add('home-shop-open');
   if (!stageTwoLive) return; // static until the economy is live
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   timerId = setInterval(() => { remaining.value = remaining.value <= 0 ? LOOP : remaining.value - 1; }, 1000);
 });
-onBeforeUnmount(() => { if (timerId) clearInterval(timerId); });
+onBeforeUnmount(() => {
+  document.body.classList.remove('home-shop-open');
+  if (timerId) clearInterval(timerId);
+});
 </script>
