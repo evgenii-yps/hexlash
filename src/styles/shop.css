@@ -33,8 +33,12 @@
 .sb-bg { position: absolute; inset: 0; z-index: 0;
   background: radial-gradient(130% 75% at 50% -6%, #101019 0%, #0a0a11 48%, var(--void) 82%); }
 
-/* ════════════ head (balance + title + tabs) ════════════ */
-.sb-head { position: relative; z-index: 5; }
+/* ════════════ head (balance + title + tabs) — STICKY ════════════
+   Lives inside .sb-scroll and sticks to its top, so the panel + balance + SHOP
+   title + tabs stay put while the list scrolls under it. Frosted opaque backdrop
+   so cards vanish cleanly behind it. The home strip (home.css) sits above this. */
+.sb-head { position: sticky; top: 0; z-index: 10;
+  background: rgba(8, 8, 10, 0.82); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
 .sb-top { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
 .sb-bal { display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono); letter-spacing: 0.04em;
   border: 1px solid var(--line); background: rgba(255, 255, 255, 0.025); white-space: nowrap; color: #cfccd3; }
@@ -54,9 +58,11 @@
 .sb-tab.on::after { content: ""; position: absolute; left: 14%; right: 14%; bottom: -1px; height: 2px;
   background: var(--pink); box-shadow: 0 0 12px var(--pink); }
 
-/* scroll body */
-.sb-body { position: relative; z-index: 2; flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; }
-.sb-body::-webkit-scrollbar { width: 0; }
+/* the one scroll container — the sticky head sits at its top, the list scrolls */
+.sb-scroll { position: relative; z-index: 2; flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; }
+.sb-scroll::-webkit-scrollbar { width: 0; }
+/* body = the scrolling content (creed + lede + grid); no scroll of its own */
+.sb-body { position: relative; }
 .sb-lede { font-family: var(--mono); line-height: 1.65; color: var(--dim); }
 .sb-lede b { color: #fff; font-weight: 500; }
 

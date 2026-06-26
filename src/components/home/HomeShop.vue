@@ -18,6 +18,8 @@
   <div class="shopb" role="region" aria-label="Shop">
     <div class="sb-bg" aria-hidden="true"></div>
 
+    <!-- one scroll container: the head sticks to its top, only the list scrolls -->
+    <div class="sb-scroll">
     <!-- head — balance ($HEX is allowed in the shop body, never in the strip) +
          SHOP title + the section tabs. Brand / cabinet / back live in the strip. -->
     <div class="sb-head">
@@ -137,6 +139,7 @@
         </div>
       </template>
     </div>
+    </div><!-- /.sb-scroll -->
 
     <!-- ─────────── modals ─────────── -->
     <div v-if="modal" class="sb-scrim" @click.self="closeModal">
