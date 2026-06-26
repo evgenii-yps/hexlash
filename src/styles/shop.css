@@ -22,7 +22,7 @@
   --c: #9fb0c8; --c-sup: #c8d4e6; --c-rgb: 159, 176, 200;
   --disp: "Saira Condensed", -apple-system, sans-serif;
   --mono: "JetBrains Mono", ui-monospace, monospace;
-  position: absolute; inset: 0; overflow: hidden;
+  position: absolute; inset: 0; height: 100%; overflow: hidden;
   background: var(--void); color: var(--ink);
   font-family: var(--disp); -webkit-font-smoothing: antialiased;
   display: flex; flex-direction: column;
@@ -33,12 +33,12 @@
 .sb-bg { position: absolute; inset: 0; z-index: 0;
   background: radial-gradient(130% 75% at 50% -6%, #101019 0%, #0a0a11 48%, var(--void) 82%); }
 
-/* ════════════ head (balance + title + tabs) — STICKY ════════════
-   Lives inside .sb-scroll and sticks to its top, so the panel + balance + SHOP
-   title + tabs stay put while the list scrolls under it. Frosted opaque backdrop
-   so cards vanish cleanly behind it. The home strip (home.css) sits above this. */
-.sb-head { position: sticky; top: 0; z-index: 10;
-  background: rgba(8, 8, 10, 0.82); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+/* ════════════ head (balance + title + tabs) — FIXED TOP BAR ════════════
+   A non-scrolling flex item (flex:none) ABOVE the .sb-scroll list, so the panel +
+   balance + SHOP title + tabs physically can't move — only the list scrolls in its
+   own box below. No overlap with the list (so the first card is never covered and
+   there's no double padding). The home strip (home.css) sits above this. */
+.sb-head { position: relative; z-index: 6; flex: 0 0 auto; }
 .sb-top { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
 .sb-bal { display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono); letter-spacing: 0.04em;
   border: 1px solid var(--line); background: rgba(255, 255, 255, 0.025); white-space: nowrap; color: #cfccd3; }

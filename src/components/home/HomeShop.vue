@@ -18,10 +18,9 @@
   <div class="shopb" role="region" aria-label="Shop">
     <div class="sb-bg" aria-hidden="true"></div>
 
-    <!-- one scroll container: the head sticks to its top, only the list scrolls -->
-    <div class="sb-scroll">
-    <!-- head — balance ($HEX is allowed in the shop body, never in the strip) +
-         SHOP title + the section tabs. Brand / cabinet / back live in the strip. -->
+    <!-- head — a fixed top bar (flex:none, OUTSIDE the scroller) → it never moves.
+         Balance ($HEX allowed in the shop body, never the strip) + SHOP title +
+         tabs. Brand / cabinet / back live in the strip. -->
     <div class="sb-head">
       <div class="sb-top">
         <div class="sb-bal"><span class="hx-dia"></span><b>{{ balanceDisplay }}</b>&nbsp;<i>{{ t.shop.unit }}</i></div>
@@ -32,7 +31,8 @@
       </div>
     </div>
 
-    <!-- scroll body -->
+    <!-- the list scroller — ONLY this scrolls, under the fixed head -->
+    <div class="sb-scroll">
     <div class="sb-body">
       <span class="sb-creed"><span class="dot"></span>{{ t.shop.creed }}</span>
       <div class="sb-lede">{{ t.shop['lede' + cap(tab)] }}</div>
