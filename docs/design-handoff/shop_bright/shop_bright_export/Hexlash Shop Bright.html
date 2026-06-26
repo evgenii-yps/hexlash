@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>hexlash — shop · bright</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="shop_bright.css" />
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;background:#08080a;}
+</style>
+</head>
+<body>
+
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="home_stage.jsx"></script>
+<script type="text/babel" src="shop_art.jsx"></script>
+<script type="text/babel" src="shop_bright_art.jsx"></script>
+<script type="text/babel" src="shop_bright_palette.jsx"></script>
+<script type="text/babel" src="shop_bright_app.jsx"></script>
+
+<script type="text/babel" data-presets="react">
+const SHOPB_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "startTab": "decor",
+  "funded": true,
+  "ladder": true,
+  "stageTwoLive": true
+}/*EDITMODE-END*/;
+
+function App() {
+  const [t, setTweak] = useTweaks(SHOPB_DEFAULTS);
+  const itx = { funded: t.funded, ladder: t.ladder, stageTwoLive: t.stageTwoLive, startTab: t.startTab };
+
+  return (
+    <React.Fragment>
+      <DesignCanvas>
+        <DCSection
+          id="palette"
+          title="Bright Palette — proposed canon"
+          subtitle="The brand-book half of the brief: the expanded set (hex · role · where · glow), the four cores as the merchandising spine, trainer materials, the rules of the bright direction, and a reference→Hexlash ledger.">
+          <DCArtboard id="board" label="PALETTE & RULES — drops straight into the brand book" width={1440} height={2600}>
+            <PaletteBoard />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection
+          id="interactive"
+          title="Hexlash · Shop — Bright (interactive)"
+          subtitle="Live miniapp (390×844). Tap DECOR · CURRENCY · SPECIALS. DECOR is the working shelf — BUY a core-tuned piece → confirm → unlocked. Currency & Specials prices honestly open the Stage-2 wallet/rewards stub. Drive state from the Tweaks panel (toggle Stage 2 to see live vs SOON).">
+          <DCArtboard id="phone" label="LIVE · tap tabs · BUY a tuned decor piece · Stage-2 prices open the wallet" width={390} height={844}>
+            <ShopBrightInteractive tweaks={itx} />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection
+          id="decor"
+          title="DECOR — the live shelf (390×844)"
+          subtitle="The avant-garde zone. One hero tuning blooms at rest (Onslaught); the rest carry their core as frame + glyph and light on hover. Colour = which core a cosmetic is tuned to — the Hexlash translation of rarity colour. Cosmetic only, worn with pride.">
+          <DCArtboard id="d-shelf" label="01 · DECOR shelf — hero bloom + core-tuned cards" width={390} height={844}>
+            <ShopBright layout="mobile" tab="decor" balance={2480} stageTwoLive />
+          </DCArtboard>
+          <DCArtboard id="d-buy" label="02 · BUY CONFIRM — live purchase of a tuned piece" width={390} height={844}>
+            <ShopBright layout="mobile" tab="decor" balance={2480} stageTwoLive
+              modal={{ type: 'buy', item: { kind: 'banner', core: 'onslaught', name: 'SENTRY BANNER', price: 480 }, stage: 'confirm' }} />
+          </DCArtboard>
+          <DCArtboard id="d-done" label="03 · UNLOCKED — success state" width={390} height={844}>
+            <ShopBright layout="mobile" tab="decor" balance={2480} stageTwoLive
+              modal={{ type: 'buy', item: { kind: 'banner', core: 'onslaught', name: 'SENTRY BANNER', price: 480 }, stage: 'done' }} />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection
+          id="currency"
+          title="CURRENCY — value ladder · live vs SOON"
+          subtitle="The $HEX economy rides brand pink, not a core. Five ascending tiers, one BEST VALUE pack carrying the single pink bloom. Stage-2 flag ON: prices live, BEST VALUE glows. OFF: calm, honest SOON, the bloom comes off.">
+          <DCArtboard id="c-live" label="01 · CURRENCY — Stage 2 LIVE (prices active, BEST VALUE blooms)" width={390} height={844}>
+            <ShopBright layout="mobile" tab="currency" balance={2480} stageTwoLive />
+          </DCArtboard>
+          <DCArtboard id="c-soon" label="02 · CURRENCY — SOON (calm, no glow, honest gate)" width={390} height={844}>
+            <ShopBright layout="mobile" tab="currency" balance={2480} stageTwoLive={false} />
+          </DCArtboard>
+          <DCArtboard id="c-wallet" label="03 · WALLET STUB — where a SOON price leads" width={390} height={844}>
+            <ShopBright layout="mobile" tab="currency" balance={2480} stageTwoLive={false} modal={{ type: 'wallet' }} />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection
+          id="specials"
+          title="SPECIALS — events · live vs SOON"
+          subtitle="Hot deal (timer + pink bloom), free daily drop, and a starter bundle that features one core-tuned piece (one core accent, on its frame only). LIVE: timers run, claim is pink. SOON: restrained, gated.">
+          <DCArtboard id="s-live" label="01 · SPECIALS — Stage 2 LIVE (timer runs, claim active)" width={390} height={844}>
+            <ShopBright layout="mobile" tab="specials" balance={2480} stageTwoLive />
+          </DCArtboard>
+          <DCArtboard id="s-soon" label="02 · SPECIALS — SOON (calm, honest gate)" width={390} height={844}>
+            <ShopBright layout="mobile" tab="specials" balance={2480} stageTwoLive={false} />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection
+          id="desktop"
+          title="Desktop — 1440×900 (secondary, wider grid)"
+          subtitle="Same vocabulary, wider grid. The hero tuning spans 2×2; cores fan out across the shelf. Mobile leads; desktop follows.">
+          <DCArtboard id="dd-decor" label="DECOR — desktop (hero spans 2×2)" width={1440} height={900}>
+            <ShopBright layout="desktop" tab="decor" balance={2480} stageTwoLive />
+          </DCArtboard>
+          <DCArtboard id="dd-currency" label="CURRENCY — desktop" width={1440} height={900}>
+            <ShopBright layout="desktop" tab="currency" balance={2480} stageTwoLive />
+          </DCArtboard>
+          <DCArtboard id="dd-specials" label="SPECIALS — desktop" width={1440} height={900}>
+            <ShopBright layout="desktop" tab="specials" balance={2480} stageTwoLive />
+          </DCArtboard>
+        </DCSection>
+      </DesignCanvas>
+
+      <TweaksPanel title="Tweaks">
+        <TweakSection label="Interactive phone" />
+        <TweakRadio label="Active tab" value={t.startTab}
+          options={['decor', 'currency', 'specials']}
+          onChange={v => setTweak('startTab', v)} />
+        <TweakToggle label="Stage 2 live" value={t.stageTwoLive}
+          onChange={v => setTweak('stageTwoLive', v)} />
+        <TweakToggle label="Funded balance" value={t.funded}
+          onChange={v => setTweak('funded', v)} />
+        <TweakToggle label="Value-ladder badges" value={t.ladder}
+          onChange={v => setTweak('ladder', v)} />
+      </TweaksPanel>
+    </React.Fragment>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

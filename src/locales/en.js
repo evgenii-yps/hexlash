@@ -139,43 +139,55 @@ export default {
   // SHOP (/play/home → SHOP). Three tabs: Decor (live visual buy facade) +
   // Currency / Specials (Stage-2 stubs behind the SOON flag). en-only.
   shop: {
-    back: "← Back to Home",
     title: "Shop",
     unit: "$HEX",
     soon: "Soon",
-    owned: "Owned",
     buy: "Buy",
+    owned: "Owned",
+    creed: "Cosmetic Only · No Pay-to-Win",
+    // section tabs
     tabDecor: "Decor",
     tabCurrency: "Currency",
     tabSpecials: "Specials",
     ledeDecor:
-      "Furnish your floor. Every piece is cut from the same low-poly stock as the arena — matte, dark, no neon. It's your ground; mark it. Decor is cosmetic only — it never touches a fight.",
+      "Furnish your floor. Each piece is cut from the same low-poly stock as the arena — but now it carries the light of the core it’s tuned to. Colour tells you which core; it never buys you an edge.",
     ledeCurrency:
-      "$HEX unlocks decor, fighter skins and FX. Top up below. Cosmetics never touch the fight — no stat, no edge.",
+      "Top up $HEX. Bigger packs carry more free $HEX and a better rate — the value ladder rewards going large.",
     ledeSpecials:
-      "Limited drops and starter kits. Time-boxed value — cosmetics only, never power.",
+      "Rotating deals, a free daily drop and a starter bundle. Timers and rewards run on the Stage-2 economy.",
     // decor sub-tabs
     subDecor: "Decor",
     subSkins: "Fighter Skins",
     subFx: "FX",
     subCores: "Cores",
+    // decor card tags
     tagNew: "New",
+    tagOwned: "Owned",
+    tagFeatured: "Featured",
+    neutral: "Neutral",
+    featuredTuning: "Featured Tuning",
+    tuningWord: "tuning",   // "{Core} tuning"
     decor: {
-      banner: { name: "Sentry Banner", sub: "Standard · marks your ground" },
-      corePlinth: { name: "Core Plinth", sub: "Cradles a dormant core" },
-      dais: { name: "Hex Dais", sub: "Raised tile · a stage of your own" },
-      crates: { name: "Supply Cache", sub: "Stacked blocks · honest clutter" },
-      arch: { name: "Ward Arch", sub: "Gateway · frames the entrance" },
+      banner: { name: "Sentry Banner", sub: "Onslaught tuning · marks your ground" },
+      dais: { name: "Hex Dais", sub: "Bulwark tuning · a stage of your own" },
+      corePlinth: { name: "Core Plinth", sub: "Raider tuning · cradles a dormant core" },
+      arch: { name: "Ward Arch", sub: "Ambush tuning · frames the entrance" },
+      crates: { name: "Supply Cache", sub: "Neutral stock · honest clutter" },
+      plinth: { name: "Step Plinth", sub: "Neutral base · pairs with anything" },
     },
     // currency
-    whatIsTitle: "What is $HEX",
-    whatIsBody:
-      "$HEX is the cosmetic currency — decor, skins, FX. Cosmetics never touch the fight: no stat, no edge, no pay-to-win.",
+    curWhatIs: "What is $HEX",
+    curWhatIsBody: "The arena's currency. Stack it, then spend it on decor and cosmetics.",
+    curRule: "Cosmetics never touch the fight.",
+    curRuleBody: "$HEX buys how your floor looks — never an edge in the cage.",
     bestValue: "Best Value",
-    valueSuffix: "value",
+    valueWord: "Value",
+    bonusFree: "free",        // "+{n} free"
+    bonusIncluded: "included",
+    baseRate: "base rate",
     currency: {
       spark: { name: "Spark" },
-      fieldKit: { name: "Field Kit" },
+      kit: { name: "Field Kit" },
       cache: { name: "Cache" },
       vault: { name: "Vault" },
       arsenal: { name: "Arsenal" },
@@ -183,31 +195,43 @@ export default {
     // specials
     hotDeal: "Hot Deal",
     freeClaim: "Free Claim",
-    bundleLabel: "Bundle",
+    bundle: "Bundle",
     claim: "Claim",
     specials: {
-      arenaCache: { name: "Arena Cache", contains: "2,000 $HEX + Supply Cache" },
-      dailyDrop: { name: "Daily Drop", contains: "+250 $HEX" },
-      firstBlood: { name: "First Blood Kit", contains: "2,500 $HEX + Sentry Banner" },
+      hot: { name: "Arena Cache", sub: "Hot deal · resets every 24h", l1: "2,000 $HEX", l2: "Supply Cache — decor" },
+      daily: { name: "Daily Drop", sub: "Claim once every 24h", reward: "+250 $HEX", note: "Free login reward. Stacks a streak." },
+      starter: { name: "First Blood Kit", sub: "Starter bundle · best first buy", l1: "2,500 $HEX", l2: "Ward Arch — Ambush decor" },
     },
-    // buy confirm flow
-    confirmTitle: "Confirm Purchase",
+    // buy modal
+    confirmEye: "Confirm Purchase",
+    cosmeticLine: "Cosmetic only — it never touches the fight.",
+    neutralPiece: "Neutral piece",
     lblPrice: "Price",
     lblBalance: "Balance",
     lblBalanceAfter: "Balance after",
+    cancel: "Cancel",
     confirm: "Confirm",
     unlockedTitle: "Unlocked",
-    unlockedBody: "Place it from Arrange Mode.",
+    unlockedYours: "is yours. Place it from",  // "{name} is yours. Place it from ARRANGE MODE on your floor."
+    arrangeMode: "Arrange Mode",
+    unlockedTail: "on your floor.",
+    newBalance: "New balance",
     done: "Done",
-    // wallet stub
-    walletTitle: "Wallet",
-    walletHead: "Connect Wallet · Top up $HEX",
-    walletBody: "Wallet top-up and real-money purchases arrive in Stage 2.",
+    // wallet modal
+    walletEye: "Connect Wallet",
+    walletTitle: "Top Up $HEX",
+    walletBody: "Real-money top-ups need a connected wallet on Base. This goes live in Stage 2 — wiring shown for layout only.",
+    provBase: "Base Wallet",
+    provMeta: "MetaMask",
+    provOther: "Other wallets",
+    close: "Close",
     connect: "Connect",
     walletStamp: "Stage 2 · live wallet + real money",
-    // claim stub
+    // claim modal
+    claimEye: "Daily Drop",
     claimTitle: "Not Yet Live",
-    claimBody: "The rewards economy goes live in Stage 2.",
+    claimBody: "Daily rewards turn on with the Stage-2 economy. Win fights and log in daily to build a streak — then claim here.",
+    gotIt: "Got It",
     claimStamp: "Stage 2 · rewards economy",
   },
   verify: {
