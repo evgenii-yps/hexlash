@@ -16,6 +16,9 @@
 .shopb {
   --pink: #ff0069; --pink-rgb: 255, 0, 105;
   --void: #08080a; --panel: #16161b; --ink: #ededf1; --ink-dim: #5d5d66;
+  /* the one flat shop background — the dark blue that used to sit only in the top
+     band of the .sb-bg radial, now the single even tone across the whole page */
+  --shop-bg: #101019;
   --dim: #a9a5af; --muted: #76727c;
   --line: rgba(255, 255, 255, 0.09); --line2: rgba(255, 255, 255, 0.05);
   --card: rgba(255, 255, 255, 0.022);
@@ -28,14 +31,13 @@
      becomes the single scroller (scoped to body.home-shop-open, below), so the
      whole page — strip, balance, SHOP, tabs, creed, cards — rides one page scroll. */
   position: relative; min-height: 100%;
-  background: var(--void); color: var(--ink);
+  background: var(--shop-bg); color: var(--ink);
   font-family: var(--disp); -webkit-font-smoothing: antialiased;
 }
 .shopb * { box-sizing: border-box; margin: 0; padding: 0; }
 
 /* near-black tactical ground; a faint cool wash, no colour yet */
-.sb-bg { position: absolute; inset: 0; z-index: 0;
-  background: radial-gradient(130% 75% at 50% -6%, #101019 0%, #0a0a11 48%, var(--void) 82%); }
+.sb-bg { position: absolute; inset: 0; z-index: 0; background: var(--shop-bg); }
 
 /* ════════════ head (balance + title + tabs) — IN-FLOW, NOT FIXED ════════════
    Just the first blocks of the single page flow: balance → SHOP → tabs. Nothing is
@@ -73,16 +75,19 @@
    so the home — never marked — keeps its fixed-strip-over-3D behaviour. Nothing
    here is written into home.css; the strip rules on the home are untouched.
 
-   Opaque-cover the live home 3D scene (HomeScene), which the shop now sits over:
-   - .home-root gets a solid --void fill so any overscroll/gap shows void, not 3D;
+   Opaque-cover the live home 3D scene (HomeScene), which the shop now sits over,
+   with the SAME flat --shop-bg (#101019) used by the body — one even tone, no seams:
+   - .home-root gets a solid --shop-bg fill so any overscroll/gap shows that blue, not 3D;
    - the strip is position:relative (NOT static) so, being after HomeScene in the
      DOM, it PAINTS OVER the absolute scene — a static strip would sit under it and
-     the scene would show through the top band. With a --void background the strip
-     blocks the scene across its full height; the shop body's own opaque --void /
-     .sb-bg covers the rest, so the scene is hidden top-to-bottom at every scroll. */
-body.home-shop-open .home-root { overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; background: #08080a; }
+     the scene would show through the top band. Its --shop-bg background blocks the
+     scene across its full height; the shop body's own opaque --shop-bg / .sb-bg
+     covers the rest, so the scene is hidden top-to-bottom at every scroll.
+   (.home-root / .hs-strip live outside .shopb, so --shop-bg isn't in scope here —
+    the literal #101019 below IS --shop-bg; keep them in sync.) */
+body.home-shop-open .home-root { overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; background: #101019; }
 body.home-shop-open .home-root::-webkit-scrollbar { width: 0; height: 0; }
-body.home-shop-open .hs-strip { position: relative; background: #08080a; }
+body.home-shop-open .hs-strip { position: relative; background: #101019; }
 .sb-lede { font-family: var(--mono); line-height: 1.65; color: var(--dim); }
 .sb-lede b { color: #fff; font-weight: 500; }
 
