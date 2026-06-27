@@ -69,12 +69,20 @@
    The home strip is position:absolute inside .home-root; an absolute child stays
    pinned to the scroll frame, so to make the WHOLE page (strip included) one
    natural scroll we (1) turn .home-root into the scroller and (2) drop the strip
-   into normal flow. Both are gated on body.home-shop-open (set by HomeShop on
-   mount) so the home — never marked — keeps its fixed-strip-over-3D behaviour.
-   Nothing here is written into home.css; the strip rules on the home are untouched. */
-body.home-shop-open .home-root { overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
+   into the flow. Both are gated on body.home-shop-open (set by HomeShop on mount)
+   so the home — never marked — keeps its fixed-strip-over-3D behaviour. Nothing
+   here is written into home.css; the strip rules on the home are untouched.
+
+   Opaque-cover the live home 3D scene (HomeScene), which the shop now sits over:
+   - .home-root gets a solid --void fill so any overscroll/gap shows void, not 3D;
+   - the strip is position:relative (NOT static) so, being after HomeScene in the
+     DOM, it PAINTS OVER the absolute scene — a static strip would sit under it and
+     the scene would show through the top band. With a --void background the strip
+     blocks the scene across its full height; the shop body's own opaque --void /
+     .sb-bg covers the rest, so the scene is hidden top-to-bottom at every scroll. */
+body.home-shop-open .home-root { overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; background: #08080a; }
 body.home-shop-open .home-root::-webkit-scrollbar { width: 0; height: 0; }
-body.home-shop-open .hs-strip { position: static; background: #0a0a12; }
+body.home-shop-open .hs-strip { position: relative; background: #08080a; }
 .sb-lede { font-family: var(--mono); line-height: 1.65; color: var(--dim); }
 .sb-lede b { color: #fff; font-weight: 500; }
 
