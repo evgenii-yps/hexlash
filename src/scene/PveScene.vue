@@ -59,7 +59,10 @@ const LEGEND_HUE = '#FFB21D';
 
 // ─────────────────────────── Lamp room-fill (home recipe, own copy) ───────────────────────────
 const LAMPS = {
-  ceilingY: 7.3, wire: 1.6, shadeRadius: 0.55, shadeHeight: 0.5,
+  ceilingY: 7.3, wire: 1.6, hangLift: 1.2, shadeRadius: 0.55, shadeHeight: 0.5,
+  // hangLift raises the shades/bulbs/light by this much (and shortens the visible rod
+  // from below) so the fixtures sit above the fighters / out of frame. Light PARAMS
+  // (colour/intensity/distance/decay) are unchanged — only the hang height moves.
   shadeColor: 0x161a24, rodColor: 0x0c0f16, rodRadius: 0.018,
   bulbRadius: 0.12, bulbColor: 0xffb368, bulbOpacity: 0.95,
   light: { color: 0xffb368, intensity: 16, distance: 18, decay: 2 },
@@ -81,11 +84,11 @@ function buildLamps(opts, reduced) {
   const rodGeos = [];
   const lights = [];
   opts.positions.forEach((pos, i) => {
-    const shadeTopY = opts.ceilingY - opts.wire - (pos.drop || 0);
+    const shadeTopY = opts.ceilingY - opts.wire - (pos.drop || 0) + (opts.hangLift || 0);
     const shade = new THREE.Mesh(shadeGeo, shadeMat);
     shade.position.set(pos.x, shadeTopY - opts.shadeHeight / 2, pos.z);
     group.add(shade);
-    const rodLen = opts.ceilingY - shadeTopY;
+    const rodLen = Math.max(0.05, opts.ceilingY - shadeTopY); // shorter visible rod as the shade rises
     const rodGeo = new THREE.CylinderGeometry(opts.rodRadius, opts.rodRadius, rodLen, 6);
     rodGeos.push(rodGeo);
     const rod = new THREE.Mesh(rodGeo, rodMat);
@@ -383,12 +386,15 @@ onMounted(() => {
   legend.group.children.forEach((o) => { if (o.isSprite) o.visible = false; }); // no HP plate
   scene.add(legend.group);
   legendPresence = createLegendPresence({
-    baseX: 0, baseZ: 0, baseY: topY + LEGEND.height,
+    baseX: 0, baseZ: 0, floorY: topY,
     driftSpeed: LEGEND.driftSpeed, driftRadius: LEGEND.driftRadius,
-    bobAmplitude: LEGEND.bobAmplitude, hazeDensity: LEGEND.hazeDensity, reduced,
+    bobAmplitude: LEGEND.bobAmplitude, hazeDensity: LEGEND.hazeDensity,
+    ORBIT: { highAboveTop: LEGEND.height }, // feet height at the high/centre phase = LEGEND.height
+    reduced,
   });
   legend.group.position.copy(legendPresence.position);
   scene.add(legendPresence.group);
+  scene.add(legendPresence.trail); // world-space descent smoke wisps
 
   // --- Orbit around the PLATE CENTRE (stable pivot — never follows anyone). ---
   controls = new OrbitControls(camera, renderer.domElement);
@@ -430,7 +436,7 @@ onMounted(() => {
     // Legend: idle body, ride the drift, and slowly face the camera (presiding).
     legend?.update(t, camera);
     if (legendPresence) {
-      legendPresence.tick(t);
+      legendPresence.tick(t, dt);
       legend.group.position.copy(legendPresence.position);
       if (!reduced) {
         _camDir.set(camera.position.x - legend.group.position.x, 0, camera.position.z - legend.group.position.z);
@@ -475,7 +481,7 @@ onBeforeUnmount(() => {
     if (r.fighter) r.fighter.dispose();
   }
   roster.length = 0;
-  if (legendPresence) { scene.remove(legendPresence.group); legendPresence.dispose(); }
+  if (legendPresence) { scene.remove(legendPresence.group); scene.remove(legendPresence.trail); legendPresence.dispose(); }
   if (legend) legend.dispose();
   if (lamps) { scene.remove(lamps.group); lamps.dispose(); }
   if (backdrop) { scene.remove(backdrop.mesh); backdrop.dispose(); }
