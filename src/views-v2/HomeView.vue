@@ -222,10 +222,10 @@ const trayItems = [
   { label: 'Ward Arch', cnt: '×0', locked: true },
 ];
 
-// --- Dock / nav. FIGHT routes to the arena; the arena guard bounces a core-less
-//     player to selection (the "no fighter" path). TRAIN was removed from the dock
-//     (no training mode yet) — its /play/upgrade route is kept in the router for later.
-function onFight() { router.push('/play/arena'); }
+// --- Dock / nav. FIGHT opens the Mode Select fork (/play/mode); from there PVE →
+//     /play/training (stub) and PVP → /play (core select). TRAIN was removed from
+//     the dock (no training mode yet) — its /play/upgrade route is kept for later.
+function onFight() { router.push('/play/mode'); }
 // SHOP segment toggles the surface (open shop / back to home); the brand-block is
 // the other way home. Both swap the same `view`, cross-faded by the strip wrapper.
 function onShop() { view.value = view.value === 'shop' ? 'home' : 'shop'; }

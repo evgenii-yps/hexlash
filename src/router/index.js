@@ -98,6 +98,22 @@ const v2Routes = [
                 component: () => import('@/views-v2/HomeView.vue'),
             },
             {
+                // Mode Select — the PVE / PVP fork. FIGHT on the home opens this;
+                // PVE → /play/training (stub), PVP → /play (core select). A normal
+                // pre-fight screen (no meta.arena, no requireCore — it's the place
+                // a core-less player chooses, so it must be reachable without one).
+                path: 'mode',
+                name: 'V2ModeSelect',
+                component: () => import('@/views-v2/ModeSelectView.vue'),
+            },
+            {
+                // Temporary PVE landing stub — keeps the PVE door from dead-ending.
+                // The real training space lands in a later ТЗ.
+                path: 'training',
+                name: 'V2Training',
+                component: () => import('@/views-v2/TrainingStubView.vue'),
+            },
+            {
                 path: 'upgrade',
                 name: 'PrefightUpgrade',
                 beforeEnter: requireCore,
