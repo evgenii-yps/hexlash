@@ -285,8 +285,8 @@ function onBackToProviders() { screen.value = 'provider'; }
 
 // ── Guest mode ──────────────────────────────────────────────────────────────
 // Guest archetype/PvE machinery removed in the game-cleanup reset. The
-// "Play as Guest" button now just enters the /play stub (no session created).
-function onGuestStart() { router.push('/play'); }
+// "Play as Guest" button enters the player home (no session created).
+function onGuestStart() { router.push('/play/home'); }
 
 // ── Referral ─────────────────────────────────────────────────────────────────
 function onReferralOpen() { referralOpen.value = true; }
