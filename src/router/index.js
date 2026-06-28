@@ -107,11 +107,12 @@ const v2Routes = [
                 component: () => import('@/views-v2/ModeSelectView.vue'),
             },
             {
-                // Temporary PVE landing stub — keeps the PVE door from dead-ending.
-                // The real PVE space lands in a later ТЗ.
+                // PVE space — a standalone 3D scene (PveScene): the club roster walks
+                // the plate, the trainer-legend floats above. Visual only. A normal
+                // pre-fight screen (no meta.arena, no requireCore).
                 path: 'pve',
                 name: 'V2Pve',
-                component: () => import('@/views-v2/PveStubView.vue'),
+                component: () => import('@/views-v2/PveView.vue'),
             },
             {
                 // Back-compat: old /play/training links → /play/pve.
