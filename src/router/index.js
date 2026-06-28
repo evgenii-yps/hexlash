@@ -90,9 +90,9 @@ const v2Routes = [
             {
                 // Player home ("дом игрока"): calm 3D stage (arena slab + idle
                 // fighter, no rift/opponent/HUD) under a 2D nav layer. Public like
-                // the rest of /play. NEW route only — the post-login default
-                // landing is intentionally NOT changed here (deferred to a later
-                // entry-point step after review).
+                // the rest of /play. This is the post-login / post-registration
+                // landing (master/login + master/register push here directly; the
+                // '/' authed-redirect guard is left untouched for direct visits).
                 path: 'home',
                 name: 'V2Home',
                 component: () => import('@/views-v2/HomeView.vue'),

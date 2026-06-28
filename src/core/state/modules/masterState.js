@@ -77,7 +77,10 @@ const actions = {
         try {
             await masterService.login(credentials);
 
-            await router.push('/');
+            // Post-login landing → the player home (/play/home), not the marketing
+            // root. Pushing straight here bypasses the '/' authed-redirect guard,
+            // which is left untouched for users who open the landing directly.
+            await router.push('/play/home');
 
         } catch (error) {
             commit('setLoginState', {isAuthenticated: false, authError: error.message});
@@ -102,7 +105,8 @@ const actions = {
             // skipRedirect: true to opt out of auto-redirect; default behavior
             // (no-email signup) preserved.
             if (!credentials.skipRedirect) {
-                await router.push('/');
+                // Post-registration landing → the player home (/play/home).
+                await router.push('/play/home');
             }
 
         } catch (error) {

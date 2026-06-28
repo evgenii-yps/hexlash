@@ -337,7 +337,7 @@ async function onEmailSubmit(payload) {
 // ── Forgot password (Email Auth Phase 5 flow — unchanged) ────────────────────
 function onForgotClick() { screen.value = 'forgot'; serverError.value = ''; }
 function onBackFromForgot() { screen.value = 'email'; serverError.value = ''; }
-function onSignupSuccessContinue() { router.push('/play'); }
+function onSignupSuccessContinue() { router.push('/play/home'); }
 
 async function onForgotSubmit(payload) {
   loading.value = true;
