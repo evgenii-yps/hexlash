@@ -1,5 +1,5 @@
 <!-- ModeSelectView — the PVE / PVP fork (/play/mode). Sits between the home FIGHT
-     button and the existing flows: PVE → /play/training (stub), PVP → /play (core
+     button and the existing flows: PVE → /play/pve (stub), PVP → /play (core
      select). Ported from the Claude Design handoff (docs/design-handoff/mode_select)
      onto the real shell: the shared persistent .hs-strip (home.css) is reused
      verbatim (brand LogoMark 40px + HEXLASH + SHOP + cabinet chip), not a bare
@@ -49,21 +49,18 @@
           <span class="door-bloom" aria-hidden="true"></span>
           <span class="door-eyebrow">TRAINING</span>
           <span class="door-emblem" aria-hidden="true">
-            <svg viewBox="0 0 120 120" fill="none">
-              <!-- slab -->
-              <polygon class="em-slab" points="34,92 86,92 98,104 22,104" />
-              <polygon class="em-slab-top" points="40,86 80,86 86,92 34,92" />
-              <!-- roster marks on the slab -->
-              <g class="em-roster">
-                <rect x="46" y="96" width="3" height="6" /><rect x="54" y="96" width="3" height="6" />
-                <rect x="62" y="96" width="3" height="6" /><rect x="70" y="96" width="3" height="6" />
-              </g>
-              <!-- floating legend (crest + figure) -->
-              <g class="legend">
-                <ellipse class="em-shadow" cx="60" cy="84" rx="16" ry="3.2" />
-                <polygon class="em-legend" points="60,30 74,44 60,74 46,44" />
-                <polygon class="em-legend-in" points="60,40 67,47 60,64 53,47" />
-                <circle class="em-spark" cx="60" cy="26" r="2.4" />
+            <!-- 1:1 from the handoff: brand hex shell + a legend (.lift) floating
+                 over the stage slab with two roster marks -->
+            <svg viewBox="0 0 64 64">
+              <polygon class="hx" points="32,5 55,18.5 55,45.5 32,59 9,45.5 9,18.5" />
+              <polygon class="hx d" points="32,13 47,21.5 47,42.5 32,51 17,42.5 17,21.5" />
+              <!-- stage slab + two roster marks -->
+              <polyline class="fc d" points="20,46 32,50 44,46" />
+              <polygon class="fc d" points="26,46 28,42 30,46" />
+              <polygon class="fc d" points="34,46 36,42 38,46" />
+              <g class="lift">
+                <polygon class="fc" points="32,21 38,28 32,35 26,28" />
+                <polygon class="sd" points="32,17.5 35,21 32,24.5 29,21" />
               </g>
             </svg>
           </span>
@@ -78,13 +75,15 @@
           <span class="door-bloom" aria-hidden="true"></span>
           <span class="door-eyebrow">ARENA</span>
           <span class="door-emblem" aria-hidden="true">
-            <svg viewBox="0 0 120 120" fill="none">
-              <g class="rift">
-                <polygon class="em-rift" points="58,18 66,40 56,52 68,66 54,80 64,102 60,102 50,80 62,66 50,52 60,40 54,18" />
-                <polyline class="em-rift-spur" points="66,40 80,46" />
-                <polyline class="em-rift-spur" points="50,52 36,60" />
-                <polyline class="em-rift-spur" points="64,66 78,74" />
-              </g>
+            <!-- 1:1 from the handoff: brand hex shell + a charged rift (.rift) with
+                 two colliding chevrons and a centre seed dot -->
+            <svg viewBox="0 0 64 64">
+              <polygon class="hx" points="32,5 55,18.5 55,45.5 32,59 9,45.5 9,18.5" />
+              <polygon class="hx d" points="32,13 47,21.5 47,42.5 32,51 17,42.5 17,21.5" />
+              <polyline class="rift fc" points="32,13 27,27 34,32 28,44 32,51" />
+              <polyline class="fc d" points="19,28 24,32 19,36" />
+              <polyline class="fc d" points="45,28 40,32 45,36" />
+              <circle class="sd" cx="32" cy="32" r="2.4" />
             </svg>
           </span>
           <span class="door-title">PVP</span>
@@ -132,7 +131,7 @@ function goHome() { router.push('/play/home'); }
 
 // Our navigation contract (NOT the prototype's localStorage stub): arm the door
 // for a beat (commit feedback), then route. PVE → training stub, PVP → core select.
-function pickPve() { if (armed.value) return; armed.value = 'pve'; setTimeout(() => router.push('/play/training'), 190); }
+function pickPve() { if (armed.value) return; armed.value = 'pve'; setTimeout(() => router.push('/play/pve'), 190); }
 function pickPvp() { if (armed.value) return; armed.value = 'pvp'; setTimeout(() => router.push('/play'), 190); }
 </script>
 
@@ -143,6 +142,7 @@ function pickPvp() { if (armed.value) return; armed.value = 'pvp'; setTimeout(()
 .mode-root {
   --void: #08080a; --panel: #16161b; --ink: #ededf1; --ink-dim: #5d5d66;
   --lash: #ff0069; --amber: #ffb21d; --accent-rest: #2a2a31;
+  --ease: cubic-bezier(0.4, 0.05, 0.1, 1); /* emblem ignite easing (handoff) */
   --line: rgba(255, 255, 255, 0.09);
   /* strip tokens (mirror .home-root) */
   --line2: rgba(255, 255, 255, 0.16);
@@ -208,8 +208,8 @@ function pickPvp() { if (armed.value) return; armed.value = 'pvp'; setTimeout(()
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%);
   transition: border-color 0.2s, transform 0.12s, background 0.2s;
 }
-.door.is-pve { --accent: #ffb21d; }
-.door.is-pvp { --accent: #ff0069; }
+.door.is-pve { --accent: #ffb21d; --ac-rgb: 255, 178, 29; }
+.door.is-pvp { --accent: #ff0069; --ac-rgb: 255, 0, 105; }
 
 .door:hover { border-color: rgba(255, 255, 255, 0.18); transform: translateY(-2px); }
 .door:active { transform: scale(0.992); }
@@ -233,20 +233,25 @@ function pickPvp() { if (armed.value) return; armed.value = 'pvp'; setTimeout(()
 .door-emblem {
   flex: 1 1 auto; align-self: stretch; min-height: 0;
   display: flex; align-items: center; justify-content: center;
-  color: #44444d; /* matte at rest */ transition: color 0.25s;
 }
-.door:hover .door-emblem, .door.is-armed .door-emblem { color: var(--accent); }
-.door-emblem svg { width: clamp(96px, 26cqi, 168px); height: auto; }
+.door-emblem svg { width: clamp(96px, 26cqi, 168px); height: auto; overflow: visible; display: block; }
 
-.em-slab { fill: #26262d; }
-.em-slab-top { fill: #2f2f37; }
-.em-roster rect { fill: currentColor; opacity: 0.85; }
-.em-shadow { fill: #000; opacity: 0.35; }
-.em-legend { fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linejoin: round; }
-.em-legend-in { fill: currentColor; opacity: 0.85; }
-.em-spark { fill: currentColor; }
-.em-rift { fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linejoin: round; }
-.em-rift-spur { stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; opacity: 0.8; }
+/* emblem strokes — muted (accent-tinted) at rest, ignite toward white when the
+   door is lit (hover/armed). Ported 1:1 from the handoff: .hx hex shell, .fc
+   fight-card strokes, .sd seed fill, .d dim variant. */
+.door-emblem .hx { fill: none; stroke: color-mix(in srgb, rgb(var(--ac-rgb)) 32%, var(--ink-dim)); stroke-width: 1.7;
+  transition: stroke 0.35s var(--ease), stroke-width 0.35s var(--ease); }
+.door-emblem .hx.d { opacity: 0.45; stroke-width: 1.2; }
+.door-emblem .fc { fill: none; stroke: color-mix(in srgb, rgb(var(--ac-rgb)) 26%, var(--ink-dim)); stroke-width: 1.5;
+  stroke-linecap: round; stroke-linejoin: round; transition: stroke 0.35s var(--ease); }
+.door-emblem .fc.d { opacity: 0.5; }
+.door-emblem .sd { fill: color-mix(in srgb, rgb(var(--ac-rgb)) 48%, var(--ink-dim)); transition: fill 0.35s var(--ease); }
+.door-emblem .lift { transform-box: fill-box; transform-origin: center; }
+
+.door:hover .door-emblem .hx, .door.is-armed .door-emblem .hx { stroke: color-mix(in srgb, rgb(var(--ac-rgb)) 24%, #fff); stroke-width: 2; }
+.door:hover .door-emblem .hx.d, .door.is-armed .door-emblem .hx.d { stroke-width: 1.4; }
+.door:hover .door-emblem .fc, .door.is-armed .door-emblem .fc { stroke: color-mix(in srgb, rgb(var(--ac-rgb)) 40%, #fff); }
+.door:hover .door-emblem .sd, .door.is-armed .door-emblem .sd { fill: #fff; filter: drop-shadow(0 0 5px rgba(var(--ac-rgb), 0.85)); }
 
 .door-title {
   font-weight: 900; text-transform: uppercase; letter-spacing: 0.01em; line-height: 0.9;
@@ -267,13 +272,14 @@ function pickPvp() { if (armed.value) return; armed.value = 'pvp'; setTimeout(()
 }
 .door:hover .door-accent, .door.is-armed .door-accent { background: var(--accent); }
 
-/* ── signature idle motion (calm; matte at rest) ── */
+/* ── signature motion — only when the door is lit (hover/armed); at rest the
+   screen is calm (1:1 from the handoff) ── */
 @media (prefers-reduced-motion: no-preference) {
-  .is-pve .legend { animation: mode-float 2.6s ease-in-out infinite; transform-origin: center; }
-  .is-pvp .rift { animation: mode-riftPulse 1.6s ease-in-out infinite; transform-origin: 60px 60px; }
+  .door:hover .door-emblem .lift, .door.is-armed .door-emblem .lift { animation: mode-float 2.6s ease-in-out infinite; }
+  .door:hover .door-emblem .rift, .door.is-armed .door-emblem .rift { animation: mode-riftPulse 1.6s ease-in-out infinite; }
 }
-@keyframes mode-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
-@keyframes mode-riftPulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+@keyframes mode-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2.4px); } }
+@keyframes mode-riftPulse { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
 
 /* ≤560px — tighter working zone, doors stack tall. (Media query, not @container:
    .mode-stage is itself the query container, so it can't be styled by its own

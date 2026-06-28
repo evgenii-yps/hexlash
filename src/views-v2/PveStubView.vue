@@ -1,7 +1,7 @@
-<!-- TrainingStubView — temporary placeholder for the PVE space (/play/training).
-     The Mode Select PVE door lands here so navigation never dead-ends; the real
-     training space lands in a later ТЗ. On-discipline: VOID ground, one calm line
-     in INK DIM, a mono ‹ Back to the mode fork. No accent, no bloom. -->
+<!-- PveStubView — temporary placeholder for the PVE space (/play/pve). The Mode
+     Select PVE door lands here so navigation never dead-ends; the real PVE space
+     lands in a later ТЗ. On-discipline: VOID ground, one calm line in INK DIM, a
+     mono ‹ Back to the mode fork. No accent, no bloom. -->
 <template>
   <div class="train-stub">
     <button type="button" class="ts-back" @click="onBack">← Back</button>

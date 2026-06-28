@@ -223,7 +223,7 @@ const trayItems = [
 ];
 
 // --- Dock / nav. FIGHT opens the Mode Select fork (/play/mode); from there PVE →
-//     /play/training (stub) and PVP → /play (core select). TRAIN was removed from
+//     /play/pve (stub) and PVP → /play (core select). TRAIN was removed from
 //     the dock (no training mode yet) — its /play/upgrade route is kept for later.
 function onFight() { router.push('/play/mode'); }
 // SHOP segment toggles the surface (open shop / back to home); the brand-block is

@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<!-- present on the built-in pannable canvas: desktop · mobile · spec frames -->
+<meta name="design_doc_mode" content="canvas" />
+<title>Hexlash — Mode Select</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+/* ============================================================
+   HEXLASH — MODE SELECT
+   The fork after FIGHT: PVE (TRAINING) ⟂ PVP (ARENA).
+   Sibling of Core Select — same void, same HUD frame, same type.
+   Discipline:
+     · bg is neutral dark only — never flood a panel with colour
+     · one accent per panel: PVE = amber, PVP = pink (never both)
+     · max ONE soft bloom per panel, preferably on hover; calm at rest
+     · top chrome bar is matte, shared with home — no glow
+   ============================================================ */
+:root{
+  --void:#08080A;   --panel:#16161B;
+  --ink:#EDEDF1;    --ink-dim:#5D5D66;
+  --amber:#FFB21D;  --pink:#FF0069;
+  --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.16); --line3:#2a2a31;
+  --disp:'Saira Condensed',-apple-system,system-ui,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+  --ease:cubic-bezier(.4,.05,.1,1);
+  --spring:cubic-bezier(.34,1.4,.5,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+body{font-family:var(--disp);color:var(--ink);-webkit-font-smoothing:antialiased;}
+
+/* ── canvas frames ─────────────────────────────────────────── */
+.cap{position:absolute;font-family:var(--mono);font-size:13px;letter-spacing:.22em;
+  text-transform:uppercase;color:#8b8790;display:flex;align-items:center;gap:10px;}
+.cap b{color:#cfccd3;font-weight:500;}
+.cap .dot{width:6px;height:6px;background:var(--pink);transform:rotate(45deg);}
+.frame{position:absolute;overflow:hidden;border:1px solid var(--line2);
+  box-shadow:0 40px 120px -40px rgba(0,0,0,.8);}
+
+/* ============================================================
+   SCENE — fullscreen game surface (container for its own layout)
+   ============================================================ */
+.scene{position:relative;width:100%;height:100%;overflow:hidden;
+  container-type:inline-size;
+  background:var(--void);color:var(--ink);user-select:none;
+  /* one soft top ember halo + faint core-neutral void */
+  background-image:
+    radial-gradient(95% 52% at 50% -6%, rgba(255,0,105,.10), transparent 58%),
+    radial-gradient(130% 80% at 50% 8%, #140a10 0%, #0c0a0d 40%, var(--void) 80%);
+}
+/* faint discipline grid, edge-masked */
+.scene::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),
+    linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:58px 58px;opacity:.28;
+  -webkit-mask-image:radial-gradient(120% 92% at 50% 46%,#000,transparent 78%);
+          mask-image:radial-gradient(120% 92% at 50% 46%,#000,transparent 78%);}
+
+/* HUD corner brackets — neutral brand pink, dim, no glow */
+.hud{position:absolute;width:30px;height:30px;z-index:30;pointer-events:none;
+  border:1.5px solid rgba(255,0,105,.4);}
+.hud.tl{top:84px;left:22px;border-right:0;border-bottom:0}
+.hud.tr{top:84px;right:22px;border-left:0;border-bottom:0}
+.hud.bl{bottom:22px;left:22px;border-right:0;border-top:0}
+.hud.br{bottom:22px;right:22px;border-left:0;border-top:0}
+
+/* ════════════════ SHARED TOP CHROME BAR (matte) ════════════════ */
+.top{position:absolute;top:0;left:0;right:0;height:64px;z-index:20;
+  display:flex;align-items:center;justify-content:space-between;padding:0 26px;
+  background:linear-gradient(180deg,rgba(8,8,10,.94),rgba(8,8,10,.5) 62%,transparent);}
+.top::after{content:"";position:absolute;left:26px;right:26px;bottom:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--line) 12%,var(--line) 88%,transparent);}
+.brand{display:flex;align-items:center;gap:12px}
+.brand .mk{width:26px;height:26px;color:var(--ink)}
+.brand .mk svg{width:100%;height:100%;display:block}
+.brand .lw{font-weight:900;font-size:21px;letter-spacing:.03em;text-transform:uppercase}
+.brand .seg{font-family:var(--mono);font-size:9.5px;letter-spacing:.26em;color:var(--ink-dim);
+  border-left:1px solid var(--line);padding-left:12px;text-transform:uppercase}
+.brand .seg b{color:#bdbac2;font-weight:500}
+.util{display:flex;align-items:stretch;height:40px;border:1px solid var(--line);
+  background:rgba(255,255,255,.022);backdrop-filter:blur(8px)}
+.util>*{display:flex;align-items:center}
+.util .div{width:1px;background:var(--line)}
+.bal{gap:8px;padding:0 14px;font-family:var(--mono);font-size:12px;letter-spacing:.05em}
+.bal .dia{width:6px;height:6px;background:#bdbac2;transform:rotate(45deg)}
+.bal b{color:#fff;font-weight:500} .bal i{color:var(--ink-dim);font-style:normal;font-size:10.5px}
+.shop{gap:9px;padding:0 16px;font-family:var(--mono);font-size:11.5px;letter-spacing:.16em;
+  text-transform:uppercase;color:#cfccd3;transition:color .2s,background .2s}
+.shop svg{width:15px;height:15px}
+.shop:hover{color:#fff;background:rgba(255,255,255,.05)}
+.cab{gap:10px;padding:0 9px 0 15px;transition:background .2s}
+.cab:hover{background:rgba(255,255,255,.05)}
+.cab .hand{font-family:var(--mono);font-size:11px;letter-spacing:.07em;color:#dcd9e0}
+.cab .av{width:28px;height:28px;background:linear-gradient(135deg,#2a3140,#161b24);
+  border:1px solid var(--line2);display:flex;align-items:center;justify-content:center}
+.cab .av span{width:8px;height:8px;background:#8b909c;transform:rotate(45deg)}
+
+/* ════════════════ WORK AREA ════════════════ */
+.work{position:absolute;inset:0;z-index:6;display:flex;flex-direction:column;
+  padding:84px 40px 38px;}
+@container (max-width:560px){.work{padding:78px 18px 30px}}
+
+/* back to home — unobtrusive, top-left, no second CTA */
+.crumb{align-self:flex-start;display:inline-flex;align-items:center;gap:9px;
+  font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--ink-dim);padding:7px 12px 7px 4px;margin-bottom:14px;
+  transition:color .18s,transform .2s var(--spring)}
+.crumb svg{width:15px;height:15px}
+.crumb:hover{color:var(--ink)} .crumb:hover svg{transform:translateX(-3px)}
+
+/* headline + divider */
+.head{display:grid;grid-template-columns:1fr auto;align-items:end;gap:14px 24px;
+  padding-bottom:16px;border-bottom:1px solid var(--line);margin-bottom:clamp(18px,3cqi,30px)}
+.head .eye{display:flex;align-items:center;gap:11px;font-family:var(--mono);font-size:11px;
+  font-weight:500;letter-spacing:.34em;text-transform:uppercase;color:var(--pink);white-space:nowrap}
+.head .eye::before{content:"";width:24px;height:2px;background:var(--pink)}
+.head h1{font-weight:900;font-size:clamp(34px,6cqi,62px);line-height:.88;letter-spacing:.005em;
+  text-transform:uppercase;margin-top:11px;text-wrap:balance}
+.head h1 em{font-style:normal;color:#fff;text-shadow:0 0 16px rgba(255,0,105,.28)}
+.head .meta{display:flex;flex-direction:column;align-items:flex-end;gap:5px;
+  font-family:var(--mono);text-align:right;padding-bottom:5px}
+.head .meta .k{font-size:10px;letter-spacing:.26em;text-transform:uppercase;color:var(--ink-dim)}
+.head .meta .v{font-size:17px;font-weight:600;letter-spacing:.06em;color:var(--ink)}
+@container (max-width:560px){
+  .head{grid-template-columns:1fr;gap:12px}
+  .head .meta{align-items:flex-start;text-align:left;padding-bottom:0}
+}
+
+/* ════════════════ THE TWO DOORS ════════════════ */
+.panels{flex:1;min-height:0;display:grid;grid-template-columns:1fr;grid-auto-rows:1fr;gap:16px}
+@container (min-width:760px){.panels{grid-template-columns:1fr 1fr;grid-auto-rows:auto}}
+
+.panel{--ac-rgb:255,178,29;
+  position:relative;display:flex;flex-direction:column;text-align:left;overflow:hidden;
+  border:1px solid var(--line);background:
+    linear-gradient(180deg,rgba(255,255,255,.022),rgba(255,255,255,.006)),var(--panel);
+  padding:clamp(18px,2.4cqi,26px) clamp(20px,2.6cqi,30px);
+  /* fight-card chevron */
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 18px),calc(100% - 18px) 100%,0 100%);
+  transition:transform .22s var(--spring),border-color .3s var(--ease),background .3s var(--ease);}
+.panel:hover{transform:translateY(-5px);border-color:rgba(var(--ac-rgb),.5);
+  background:linear-gradient(180deg,rgba(var(--ac-rgb),.05),rgba(var(--ac-rgb),.012)),var(--panel)}
+.panel:focus-visible{outline:2px solid rgba(var(--ac-rgb),.85);outline-offset:3px}
+.panel:active{transform:translateY(-1px) scale(.992)}
+.panel.armed{border-color:rgba(var(--ac-rgb),.6);
+  background:linear-gradient(180deg,rgba(var(--ac-rgb),.07),rgba(var(--ac-rgb),.015)),var(--panel)}
+
+/* corner ticks */
+.panel .tick{position:absolute;width:11px;height:11px;border:1px solid var(--line3);
+  pointer-events:none;transition:border-color .3s var(--ease)}
+.panel .tick.tl{top:11px;left:11px;border-right:0;border-bottom:0}
+.panel .tick.tr{top:11px;right:11px;border-left:0;border-bottom:0}
+.panel:hover .tick,.panel.armed .tick{border-color:rgba(var(--ac-rgb),.6)}
+
+/* top strip: eyebrow + index */
+.p-top{display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);
+  font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;z-index:3}
+.p-eye{display:inline-flex;align-items:center;gap:8px;color:rgba(var(--ac-rgb),.95);font-weight:600}
+.p-eye::before{content:"";width:5px;height:5px;background:rgb(var(--ac-rgb));transform:rotate(45deg)}
+.p-ix{color:var(--ink-dim);font-weight:500}
+.p-ix::before{content:"// "}
+
+/* emblem stage */
+.p-stage{position:relative;flex:1;display:grid;place-items:center;min-height:120px;margin:6px 0}
+.p-halo{position:absolute;width:64%;aspect-ratio:1;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,rgba(var(--ac-rgb),.4) 0%,rgba(var(--ac-rgb),.12) 38%,transparent 64%);
+  filter:blur(20px);opacity:0;transition:opacity .4s var(--ease);mix-blend-mode:screen}
+.panel:hover .p-halo,.panel.armed .p-halo{opacity:.9}
+.em{position:relative;z-index:2;width:clamp(118px,42%,210px);aspect-ratio:1}
+.em svg{width:100%;height:100%;overflow:visible;display:block}
+
+/* emblem strokes — muted at rest, ignite when lit */
+.em .hx{fill:none;stroke:color-mix(in srgb,rgb(var(--ac-rgb)) 32%,var(--ink-dim));stroke-width:1.7;
+  transition:stroke .35s var(--ease),stroke-width .35s var(--ease)}
+.em .hx.d{opacity:.45;stroke-width:1.2}
+.em .fc{fill:none;stroke:color-mix(in srgb,rgb(var(--ac-rgb)) 26%,var(--ink-dim));stroke-width:1.5;
+  stroke-linecap:round;stroke-linejoin:round;transition:stroke .35s var(--ease)}
+.em .fc.d{opacity:.5}
+.em .sd{fill:color-mix(in srgb,rgb(var(--ac-rgb)) 48%,var(--ink-dim));transition:fill .35s var(--ease)}
+.em .lift{transform-box:fill-box;transform-origin:center}
+.panel:hover .em .hx,.panel.armed .em .hx{stroke:color-mix(in srgb,rgb(var(--ac-rgb)) 24%,#fff);stroke-width:2}
+.panel:hover .em .hx.d,.panel.armed .em .hx.d{stroke-width:1.4}
+.panel:hover .em .fc,.panel.armed .em .fc{stroke:color-mix(in srgb,rgb(var(--ac-rgb)) 40%,#fff)}
+.panel:hover .em .sd,.panel.armed .em .sd{fill:#fff;
+  filter:drop-shadow(0 0 5px rgba(var(--ac-rgb),.85))}
+@media (prefers-reduced-motion:no-preference){
+  .panel:hover .em .lift,.panel.armed .em .lift{animation:float 2.6s ease-in-out infinite}
+  .panel:hover .em .rift,.panel.armed .em .rift{animation:riftPulse 1.6s ease-in-out infinite}
+}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-2.4px)}}
+@keyframes riftPulse{0%,100%{opacity:.7}50%{opacity:1}}
+
+/* body */
+.p-body{z-index:3}
+.p-title{font-weight:900;font-size:clamp(40px,7cqi,72px);line-height:.84;letter-spacing:.01em;
+  text-transform:uppercase;transition:text-shadow .35s var(--ease)}
+.panel:hover .p-title,.panel.armed .p-title{text-shadow:0 0 22px rgba(var(--ac-rgb),.4)}
+.p-sub{font-family:var(--disp);font-weight:500;font-size:clamp(15px,1.9cqi,19px);
+  letter-spacing:.01em;color:#b6b2bc;margin-top:6px}
+
+/* foot: telemetry note + enter affordance */
+.p-foot{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:14px;
+  padding-top:13px;border-top:1px solid var(--line);font-family:var(--mono);font-size:10.5px;
+  letter-spacing:.16em;text-transform:uppercase;z-index:3}
+.p-note{color:var(--ink-dim)}
+.p-note b{color:rgba(var(--ac-rgb),.95);font-weight:500}
+.p-enter{display:inline-flex;align-items:center;gap:8px;color:#9b97a1;font-weight:500;
+  transition:color .25s var(--ease)}
+.p-enter i{font-style:normal;transition:transform .25s var(--spring)}
+.panel:hover .p-enter,.panel.armed .p-enter{color:rgb(var(--ac-rgb))}
+.panel:hover .p-enter i{transform:translateX(5px)}
+
+/* accent bar — anchors the door */
+.p-bar{position:absolute;left:0;bottom:0;width:100%;height:3px;background:var(--line3);
+  transform-origin:left;transition:background .35s var(--ease),box-shadow .35s var(--ease)}
+.panel:hover .p-bar,.panel.armed .p-bar{background:rgb(var(--ac-rgb));
+  box-shadow:0 0 16px rgba(var(--ac-rgb),.6)}
+
+/* watermark */
+.wm{position:absolute;left:0;right:0;bottom:8px;z-index:25;text-align:center;pointer-events:none;
+  font-family:var(--mono);font-size:9px;letter-spacing:.28em;text-transform:uppercase;color:#37353c}
+
+/* ════════════════ SPEC CARD ════════════════ */
+.spec{position:relative;width:100%;height:100%;overflow:auto;background:var(--void);
+  padding:40px 38px;color:var(--ink)}
+.spec::-webkit-scrollbar{width:0}
+.spec .sk{font-family:var(--mono);font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--pink)}
+.spec h2{font-weight:900;font-size:42px;text-transform:uppercase;line-height:.9;margin:10px 0 4px}
+.spec .lead{font-family:var(--mono);font-size:12px;line-height:1.7;color:#a9a5af;max-width:46ch;margin-bottom:30px}
+.spec .grp{margin-top:30px;padding-top:22px;border-top:1px solid var(--line)}
+.spec .grp-h{font-family:var(--mono);font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--ink-dim);margin-bottom:16px}
+.sw-row{display:flex;flex-direction:column;gap:9px}
+.sw{display:flex;align-items:center;gap:14px}
+.sw .chip{width:42px;height:42px;flex:none;border:1px solid var(--line)}
+.sw .nm{font-weight:700;font-size:15px;text-transform:uppercase;letter-spacing:.03em}
+.sw .hx{font-family:var(--mono);font-size:11px;color:var(--ink-dim);letter-spacing:.06em}
+.sw .role{margin-left:auto;font-family:var(--mono);font-size:9px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--ink-dim);border:1px solid var(--line);padding:3px 8px}
+.ty{display:flex;flex-direction:column;gap:14px}
+.ty .row{display:flex;align-items:baseline;justify-content:space-between;gap:14px;
+  padding-bottom:13px;border-bottom:1px dashed var(--line)}
+.ty .row:last-child{border-bottom:0;padding-bottom:0}
+.ty .big{font-weight:800;font-size:30px;text-transform:uppercase;letter-spacing:.01em}
+.ty .mn{font-family:var(--mono);font-size:22px;font-weight:500;letter-spacing:.03em}
+.ty .use{font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-dim);text-align:right;flex:none}
+.disc{list-style:none;display:flex;flex-direction:column;gap:12px}
+.disc li{font-family:var(--mono);font-size:11.5px;line-height:1.55;color:#a9a5af;padding-left:18px;position:relative;letter-spacing:.01em}
+.disc li::before{content:"▸";position:absolute;left:0;color:var(--pink);opacity:.8}
+.disc li b{color:#d8d4da;font-weight:500}
+.disc li .am{color:var(--amber)} .disc li .pk{color:var(--pink)}
+</style>
+</head>
+<body>
+
+<!-- ░░░ DESKTOP ░░░ -->
+<div class="cap" style="left:60px;top:34px"><span class="dot"></span>MODE SELECT — <b>DESKTOP</b> · 1440×864</div>
+<div class="frame" style="left:60px;top:62px;width:1440px;height:864px">
+  <div class="scene" id="desktop" data-screen-label="Mode Select — Desktop"></div>
+</div>
+
+<!-- ░░░ MOBILE ░░░ -->
+<div class="cap" style="left:1556px;top:34px"><span class="dot"></span>MODE SELECT — <b>MOBILE</b> · 430×864</div>
+<div class="frame" style="left:1556px;top:62px;width:430px;height:864px">
+  <div class="scene" id="mobile" data-screen-label="Mode Select — Mobile"></div>
+</div>
+
+<!-- ░░░ SPEC ░░░ -->
+<div class="cap" style="left:2046px;top:34px"><span class="dot"></span>PALETTE &amp; <b>DISCIPLINE</b></div>
+<div class="frame" style="left:2046px;top:62px;width:600px;height:864px">
+  <div class="spec" data-screen-label="Palette & Spec">
+    <div class="sk">Hexlash · Stage 1</div>
+    <h2>Mode Select</h2>
+    <p class="lead">The fork after FIGHT. Two doors, one accent each. Reads as a born sibling of Core Select — same void, same HUD frame, same type. EN-only.</p>
+
+    <div class="grp">
+      <div class="grp-h">Neutrals</div>
+      <div class="sw-row">
+        <div class="sw"><span class="chip" style="background:#08080A"></span><span class="nm">Void</span><span class="hx">#08080A</span><span class="role">BG</span></div>
+        <div class="sw"><span class="chip" style="background:#16161B"></span><span class="nm">Panel</span><span class="hx">#16161B</span><span class="role">Surface</span></div>
+        <div class="sw"><span class="chip" style="background:#EDEDF1"></span><span class="nm">Ink</span><span class="hx">#EDEDF1</span><span class="role">Text</span></div>
+        <div class="sw"><span class="chip" style="background:#5D5D66"></span><span class="nm">Ink Dim</span><span class="hx">#5D5D66</span><span class="role">Meta</span></div>
+      </div>
+    </div>
+
+    <div class="grp">
+      <div class="grp-h">Accents — one per door</div>
+      <div class="sw-row">
+        <div class="sw"><span class="chip" style="background:#FFB21D;box-shadow:0 0 16px rgba(255,178,29,.5)"></span><span class="nm">Amber</span><span class="hx">#FFB21D</span><span class="role">PVE</span></div>
+        <div class="sw"><span class="chip" style="background:#FF0069;box-shadow:0 0 16px rgba(255,0,105,.5)"></span><span class="nm">Hexlash Pink</span><span class="hx">#FF0069</span><span class="role">PVP</span></div>
+      </div>
+    </div>
+
+    <div class="grp">
+      <div class="grp-h">Type</div>
+      <div class="ty">
+        <div class="row"><span class="big">PVE · PVP</span><span class="use">Saira Condensed<br/>display</span></div>
+        <div class="row"><span class="mn">TRAINING.&nbsp;ARENA.</span><span class="use">JetBrains Mono<br/>telemetry</span></div>
+      </div>
+    </div>
+
+    <div class="grp">
+      <div class="grp-h">Discipline</div>
+      <ul class="disc">
+        <li>Background stays <b>neutral dark</b> — never flood a panel with saturated colour.</li>
+        <li>One accent per door: <span class="am">PVE = amber</span>, <span class="pk">PVP = pink</span>. Never both, never mixed.</li>
+        <li>Accent lives on <b>rim · glyph · eyebrow · hover bloom</b> — not a solid fill.</li>
+        <li>Max <b>one soft bloom</b> per panel, on hover. At rest the screen is calm.</li>
+        <li>Top chrome bar is matte — no glow, shared with home.</li>
+        <li>Whole panel is one click target. No second CTA.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   Brand mark + screen markup. One template, mounted into both
+   the desktop and mobile frames; container queries do the rest.
+   ============================================================ */
+const MK = `<svg viewBox="0 0 48 48" aria-hidden="true">
+  <polygon points="24,3 41.5,13 41.5,35 24,45 6.5,35 6.5,13" fill="none" stroke="currentColor" stroke-width="2.6"/>
+  <polygon points="24,13 33,18.5 33,29.5 24,35 15,29.5 15,18.5" fill="none" stroke="currentColor" stroke-width="2.6"/>
+  <path d="M24 13 L24 24 M24 24 L33 18.5 M24 24 L15 29.5" stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+</svg>`;
+
+const ICN = {
+  shop:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M5 8h14l-1 11H6L5 8Z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg>`,
+  back:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12H5M11 6l-6 6 6 6"/></svg>`,
+};
+
+/* faceted hex emblems (0..64 box). Shell shared with the brand mark. */
+function emblem(kind){
+  const shell = `
+    <polygon class="hx" points="32,5 55,18.5 55,45.5 32,59 9,45.5 9,18.5"/>
+    <polygon class="hx d" points="32,13 47,21.5 47,42.5 32,51 17,42.5 17,21.5"/>`;
+  if(kind==='pve'){
+    // a legend floating over the stage slab (warm amber)
+    return `<svg viewBox="0 0 64 64">${shell}
+      <!-- stage slab + two roster marks -->
+      <polyline class="fc d" points="20,46 32,50 44,46"/>
+      <polygon class="fc d" points="26,46 28,42 30,46"/>
+      <polygon class="fc d" points="34,46 36,42 38,46"/>
+      <!-- floating legend -->
+      <g class="lift">
+        <polygon class="fc" points="32,21 38,28 32,35 26,28"/>
+        <polygon class="sd" points="32,17.5 35,21 32,24.5 29,21"/>
+      </g></svg>`;
+  }
+  // a charged arena rift + colliding chevrons (pink)
+  return `<svg viewBox="0 0 64 64">${shell}
+    <polyline class="rift fc" points="32,13 27,27 34,32 28,44 32,51"/>
+    <polyline class="fc d" points="19,28 24,32 19,36"/>
+    <polyline class="fc d" points="45,28 40,32 45,36"/>
+    <circle class="sd" cx="32" cy="32" r="2.4"/></svg>`;
+}
+
+function panel(kind){
+  const A = kind==='pve'
+    ? {rgb:'255,178,29', eye:'TRAINING', ix:'MODE 01', title:'PVE',
+       sub:'Your legend raises the club.', note:'Passive · <b>watch or walk away</b>'}
+    : {rgb:'255,0,105', eye:'ARENA', ix:'MODE 02', title:'PVP',
+       sub:'Pick a core. Step in.', note:'Core select · <b>arena</b>'};
+  return `<button class="panel" data-mode="${kind}" style="--ac-rgb:${A.rgb}" aria-label="${A.title} — ${A.sub}">
+    <div class="p-top"><span class="p-eye">${A.eye}</span></div>
+    <div class="p-stage"><div class="p-halo"></div><div class="em">${emblem(kind)}</div></div>
+    <div class="p-body"><div class="p-title">${A.title}</div><div class="p-sub">${A.sub}</div></div>
+    <div class="p-foot"><span class="p-note">${A.note}</span><span class="p-enter">ENTER <i>→</i></span></div>
+    <span class="p-bar"></span>
+  </button>`;
+}
+
+const SCREEN = `
+  <div class="top">
+    <div class="brand"><span class="mk">${MK}</span><span class="lw">HEXLASH</span><span class="seg">SEASON <b>0</b></span></div>
+  </div>
+
+  <div class="work">
+    <button class="crumb">${ICN.back}<span>Back</span></button>
+    <div class="head">
+      <div><h1>Choose your <em>mode.</em></h1></div>
+    </div>
+    <div class="panels">${panel('pve')}${panel('pvp')}</div>
+  </div>
+
+  <div class="wm">HEXLASH · MODE SELECT · CONTENT IS STUB</div>`;
+
+document.getElementById('desktop').innerHTML = SCREEN;
+document.getElementById('mobile').innerHTML  = SCREEN;
+
+/* ----- interaction -----
+   Navigation contract (on port):
+     PVE → router.push('/play/training')
+     PVP → router.push('/play/core-select')   (../select_handoff/Hexlash Core Select.html)
+   Stubbed here as an armed state + route readout so the handoff
+   canvas stays put. */
+document.addEventListener('click', e=>{
+  const p = e.target.closest('.panel');
+  if(p){
+    const scene = p.closest('.scene');
+    scene.querySelectorAll('.panel').forEach(x=>x.classList.remove('armed'));
+    p.classList.add('armed');
+    const mode = p.dataset.mode;
+    const route = mode==='pve' ? 'TRAINING' : 'CORE SELECT';
+    p.querySelector('.p-note').innerHTML = `Routing <b>→ ${route}</b>`;
+    try{ localStorage.setItem('hex.prefight.mode', mode); }catch(_){}
+    return;
+  }
+  if(e.target.closest('.crumb')){ /* router.push('/home') */ }
+});
+</script>
+</body>
+</html>
