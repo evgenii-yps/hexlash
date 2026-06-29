@@ -9,8 +9,9 @@
   <div class="pve-root">
     <PveScene />
 
-    <!-- shared chrome (brand removed on PVE): shop → home, cabinet → the player drawer -->
+    <!-- shared chrome (brand removed on PVE): ← BACK left, SHOP + cabinet right -->
     <div class="hs-strip">
+      <button type="button" class="pve-back" @click="goMode">← Back</button>
       <div class="hs-cluster">
         <button type="button" class="seg hs-seg-shop" @click="goHome">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M5 8h14l-1 12H6L5 8Z" /><path d="M9 8V6a3 3 0 0 1 6 0v2" /></svg>
@@ -23,8 +24,6 @@
         </button>
       </div>
     </div>
-
-    <button type="button" class="pve-back" @click="goMode">← Back</button>
 
     <PlayerCabinet
       :open="cabinetOpen"
@@ -84,17 +83,15 @@ function goMode() { router.push('/play/mode'); }
    edge here (scoped to PVE — home.css stays shared/untouched). */
 .hs-cluster { margin-left: auto; }
 
-/* ‹ Back — mono, top-left under the strip (matches Mode Select), no second CTA */
+/* ‹ Back — mono, LEFT element inside the strip, on the same horizontal axis as the
+   SHOP + cabinet cluster. .hs-strip is a flex row (justify-content:space-between);
+   BACK is the left child, the cluster the right (pinned via margin-left:auto). No
+   absolute positioning — it flows + centres on the strip axis. */
 .pve-back {
-  position: absolute; top: 84px; left: 22px; z-index: 9;
   font-family: var(--hs-mono); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
   color: var(--ink-dim); background: none; border: 0; cursor: pointer; padding: 6px 4px;
   transition: color 0.15s;
 }
 .pve-back:hover { color: var(--ink); }
 .pve-back:focus-visible { outline: 2px solid var(--bone); outline-offset: 3px; color: var(--ink); }
-
-@media (max-width: 560px) {
-  .pve-back { top: 70px; left: 16px; }
-}
 </style>

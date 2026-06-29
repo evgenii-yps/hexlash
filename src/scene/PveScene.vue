@@ -2,7 +2,7 @@
      (the home is live on prod — this never reuses it by a flag and never touches it):
      the SAME arena slab with the combat rift SUPPRESSED from outside (rift-glow
      opacity 0, sparks off, presence never created, the bright slab outline Lines
-     hidden), the SAME warm dim lamp room-fill + drifting dust, and an OrbitControls
+     hidden), the SAME warm dim lamp room-fill (no haze halos, no dust on PVE), and an OrbitControls
      rig — but here the plate holds a ROSTER of club fighters (buildFighter ×N), each
      living and walking on its own footwork (pveWander), and above the plate centre a
      trainer-LEGEND floats in a warm amber cloud, continuously drifting (legendPresence).
@@ -110,42 +110,9 @@ function buildLamps(opts, reduced) {
   return { group, tick, dispose };
 }
 
-// ─────────────────────────── Ambient dust (home recipe, own copy) ───────────────────────────
-const DUST = {
-  count: 110, xRange: 2.6, zRange: 1.7, yMin: 0.7, yMax: 3.9, size: 0.16,
-  color: 0xffb368, opacity: 0.36, rise: 0.10, sway: 0.05, swaySpeed: 0.25, flicker: 0.35, flickerSpeed: 0.55,
-};
-function buildDust(opts, reducedMotion) {
-  const n = opts.count;
-  const positions = new Float32Array(n * 3);
-  const baseX = new Float32Array(n), baseZ = new Float32Array(n), baseY = new Float32Array(n);
-  const phX = new Float32Array(n), phZ = new Float32Array(n);
-  const yRange = opts.yMax - opts.yMin;
-  for (let i = 0; i < n; i++) {
-    baseX[i] = (Math.random() * 2 - 1) * opts.xRange;
-    baseZ[i] = (Math.random() * 2 - 1) * opts.zRange;
-    baseY[i] = Math.random() * yRange;
-    phX[i] = Math.random() * Math.PI * 2; phZ[i] = Math.random() * Math.PI * 2;
-    positions[i * 3] = baseX[i]; positions[i * 3 + 1] = opts.yMin + baseY[i]; positions[i * 3 + 2] = baseZ[i];
-  }
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  const tex = makeRadialTexture('rgba(255,210,150,0.95)', 'rgba(255,180,105,0.22)', 0.3);
-  const mat = new THREE.PointsMaterial({ map: tex, color: opts.color, size: opts.size, sizeAttenuation: true, transparent: true, opacity: opts.opacity, depthWrite: false, blending: THREE.AdditiveBlending });
-  const points = new THREE.Points(geo, mat);
-  points.frustumCulled = false;
-  const tick = reducedMotion ? null : (t) => {
-    for (let i = 0; i < n; i++) {
-      positions[i * 3] = baseX[i] + opts.sway * Math.sin(opts.swaySpeed * t + phX[i]);
-      positions[i * 3 + 1] = opts.yMin + ((baseY[i] + opts.rise * t) % yRange);
-      positions[i * 3 + 2] = baseZ[i] + opts.sway * Math.cos(opts.swaySpeed * 0.8 * t + phZ[i]);
-    }
-    geo.attributes.position.needsUpdate = true;
-    mat.opacity = opts.opacity * (1 - opts.flicker * 0.5 + opts.flicker * 0.5 * Math.sin(opts.flickerSpeed * t));
-  };
-  const dispose = () => { geo.dispose(); mat.dispose(); tex.dispose(); };
-  return { points, tick, dispose };
-}
+// ─────────────────────────── Ambient dust — REMOVED on PVE ───────────────────────────
+// The drifting amber dust (home recipe) was dropped from this scene per design — no
+// floating particles on the PVE stage. (HomeScene keeps its own dust untouched.)
 
 // ── Per-fighter under-glow (home GLOW recipe, own copy) — tinted to THE fighter's
 //    COLD core hue (NOT amber), so every member stands in a faint pool of its own
@@ -165,13 +132,12 @@ function buildUnderGlow(colorHex, topY) {
   return { mesh, follow, dispose };
 }
 
-// ─────────────────────────── Background depth dome + lamp haze (home recipe, own copy) ───────────────────────────
+// ─────────────────────────── Background depth dome (home recipe, own copy) ───────────────────────────
 const BACKDROP = {
   radius: 45, centerY: 1.6, texW: 1024, texH: 1024,
   grad: [[0.0, '#060710'], [0.42, '#0a0a12'], [0.62, '#120f0c'], [1.0, '#1b150d']],
   hexCols: 60, hexRGB: '255,186,120', hexMaxAlpha: 0, hexFadeStart: 0.46, hexFadeEnd: 0.62, dither: 0, // hex weave + grain OFF — flat dark gradient (mirrors home fix 222aac4)
 };
-const HAZE = { color: 0xffb368, opacity: 0.14, scale: 2.6, yOffset: 0.05 };
 function strokeHex(ctx, cx, cy, R) {
   ctx.beginPath();
   for (let i = 0; i < 6; i++) { const a = (Math.PI / 3) * i, x = cx + R * Math.cos(a), y = cy + R * Math.sin(a); if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }
@@ -215,20 +181,9 @@ function buildBackdrop(o, maxAniso) {
   const dispose = () => { geo.dispose(); mat.dispose(); tex.dispose(); };
   return { mesh, dispose };
 }
-function buildLampHaze(o, lampOpts) {
-  const group = new THREE.Group();
-  const tex = makeRadialTexture('rgba(255,205,150,0.9)', 'rgba(255,175,100,0.0)', 0.5);
-  const mat = new THREE.SpriteMaterial({ map: tex, color: o.color, transparent: true, opacity: o.opacity, blending: THREE.AdditiveBlending, depthWrite: false, fog: false });
-  for (const pos of lampOpts.positions) {
-    const shadeTopY = lampOpts.ceilingY - lampOpts.wire - (pos.drop || 0);
-    const bulbY = shadeTopY - lampOpts.shadeHeight * 0.55;
-    const s = new THREE.Sprite(mat);
-    s.position.set(pos.x, bulbY + o.yOffset, pos.z); s.scale.setScalar(o.scale);
-    group.add(s);
-  }
-  const dispose = () => { tex.dispose(); mat.dispose(); };
-  return { group, dispose };
-}
+// Lamp-haze halos REMOVED on PVE: the floating additive amber sprites that hung
+// around each shade are gone — the lamps now read as lit from inside the dish (the
+// visible bulb + the PointLight), with no blurry orange blobs in the air.
 
 // ── roster placement: rejection-sample N spots inset on the plate, OFF the central
 //    seam band, each ≥ rosterMinSeparation apart. Falls back to a relaxed fill. ──
@@ -267,7 +222,7 @@ let onVisibility;
 let director = null;
 let prevT = 0;
 let reduced = false;
-let lamps = null, dust = null, backdrop = null, lampHaze = null;
+let lamps = null, backdrop = null;
 let legend = null, legendPresence = null;
 const roster = []; // [{ fighter, glow }]
 
@@ -326,12 +281,10 @@ onMounted(() => {
   seam.position.set(0, topY - 0.06, 0);
   scene.add(seam);
 
-  // Atmosphere / depth — warm dim lamp room-fill + drifting dust + a background dome
-  // + soft lamp haze (all warm/dark FILL, no pink, no new accent).
+  // Atmosphere / depth — warm dim lamp room-fill + a background dome (warm/dark FILL,
+  // no pink, no new accent). PVE drops the home's lamp-haze halos and drifting dust.
   lamps = buildLamps(LAMPS, reduced); scene.add(lamps.group);
   backdrop = buildBackdrop(BACKDROP, renderer.capabilities.getMaxAnisotropy()); scene.add(backdrop.mesh);
-  lampHaze = buildLampHaze(HAZE, LAMPS); scene.add(lampHaze.group);
-  dust = buildDust(DUST, reduced); scene.add(dust.points);
 
   // --- Roster: CLUB_ROSTER_COUNT fighters, each its own core colour (cycled), spread
   //     on the plate off the seam. Each idles + walks via the pveWander director. ---
@@ -453,7 +406,6 @@ onMounted(() => {
     }
 
     lamps?.tick?.(t);
-    if (!reduced) dust?.tick?.(t);
 
     renderer.render(scene, camera);
 
@@ -498,8 +450,6 @@ onBeforeUnmount(() => {
   if (legend) legend.dispose();
   if (lamps) { scene.remove(lamps.group); lamps.dispose(); }
   if (backdrop) { scene.remove(backdrop.mesh); backdrop.dispose(); }
-  if (lampHaze) { scene.remove(lampHaze.group); lampHaze.dispose(); }
-  if (dust) { scene.remove(dust.points); dust.dispose(); }
   if (arena) arena.dispose();
   if (renderer) renderer.dispose();
 });
