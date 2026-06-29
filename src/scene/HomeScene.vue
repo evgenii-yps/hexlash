@@ -343,10 +343,10 @@ const BACKDROP = {
   // the fighter (low latitude) so the figure + identity stay clean.
   hexCols: 60,           // hexes around the longitude (even → seamless wrap)
   hexRGB: '255,186,120', // warm amber stroke (alpha appended per row)
-  hexMaxAlpha: 0.05,     // TOP strength — on the threshold of visibility (tune up/down on preview)
+  hexMaxAlpha: 0,        // hex weave OFF — flat dark backdrop, no speckled pattern
   hexFadeStart: 0.46,    // v below this (toward the fighter) → no hex
   hexFadeEnd: 0.62,      // v above this → full strength
-  dither: 3,             // ± per-channel noise on the gradient → no banding in the dark
+  dither: 0,             // grain OFF — smooth dark gradient, no per-pixel speckle
 };
 
 const HAZE = {
