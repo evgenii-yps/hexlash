@@ -2,19 +2,10 @@
    These legacy variables are kept for backward compatibility only.
    Will be removed after full migration to the unified design system. */
 :root {
-    --main-bg-color: #090909;
-    --dark: #090909;
-    --gray1: #3F3F3F66;
-    --gray2: #808080;
-    --gray3: #A0A0A0;
     --white: #FFFFFF;
     --pink: #FF066F;
-    --pinkDark: #a50344;
-    --black-opacity: #0000005c;
-    --black-opacity-80: #090909CC;
     --scrollbar-bg: #000000dd;
     --scrollbar-thin: #3F3F3F;
-
 
     --primary-color: var(--pink);
 }
