@@ -2,6 +2,7 @@
   <div class="app-v2">
     <router-view />
     <VerifyEmailBanner />
+    <SceneTransitionOverlay />
   </div>
 </template>
 
@@ -16,6 +17,7 @@
 // pre-fight flow (select / upgrade / arena) does no server round-trips, so the
 // WS-disconnected banner was pure noise overlapping the screen.
 import VerifyEmailBanner from '@/components/hud/VerifyEmailBanner.vue';
+import SceneTransitionOverlay from '@/views-v2/SceneTransitionOverlay.vue';
 import '@/styles/hexlash-v24.css';
 </script>
 

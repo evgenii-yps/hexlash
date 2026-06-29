@@ -1,5 +1,6 @@
 import {createRouter, createWebHistory} from "vue-router";
 import store from "@/core/state/store.js";
+import {beginFade, beginFightCard, end as endSceneTransition, transitionState} from "@/services/sceneTransition.js";
 
 
 export const authRoutes = [
@@ -95,6 +96,10 @@ const v2Routes = [
                 // '/' authed-redirect guard is left untouched for direct visits).
                 path: 'home',
                 name: 'V2Home',
+                // meta.scene3d lets the bootstrap (src/main.js) hold the page-load
+                // splash until HomeScene emits its first-frame signal, and lets the
+                // SPA transition cover (beforeEach below) lift on real readiness.
+                meta: { scene3d: true },
                 component: () => import('@/views-v2/HomeView.vue'),
             },
             {
@@ -112,6 +117,8 @@ const v2Routes = [
                 // pre-fight screen (no meta.arena, no requireCore).
                 path: 'pve',
                 name: 'V2Pve',
+                // meta.scene3d — see /play/home note.
+                meta: { scene3d: true },
                 component: () => import('@/views-v2/PveView.vue'),
             },
             {
@@ -179,6 +186,26 @@ const router = createRouter({
 // No protected routes remain after the game-cleanup reset — /play is public.
 // (The auth/account engine stays in the backend + Vuex; it just has no
 // in-app screen entry point until the rebuild.) No navigation guard needed.
+
+// SPA scene-transition cover. Only on IN-APP navigation (window.__hexBootstrapped
+// is set by src/main.js once the page-load splash has finished) — the very first
+// navigation is covered by the page-load splash instead, so we skip it here.
+//   → arena  : full "Fight Card", lifts on the arena's first frame
+//   → home/pve: light fade, lifts on that scene's first frame
+//   → a 2D route while a cover is up (e.g. requireCore bouncing an arena entry
+//     back to core-select): drop the cover so it never hangs.
+router.beforeEach((to, from, next) => {
+    if (window.__hexBootstrapped) {
+        if (to.meta?.arena) {
+            beginFightCard();
+        } else if (to.meta?.scene3d) {
+            beginFade(to.name === 'V2Pve' ? 'hexlash:pve-ready' : 'hexlash:home-ready');
+        } else if (transitionState.mode !== 'none') {
+            endSceneTransition();
+        }
+    }
+    next();
+});
 
 
 export default router;

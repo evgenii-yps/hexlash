@@ -41,6 +41,11 @@ const wrap = ref(null);
 const canvasEl = ref(null);
 
 let renderer, scene, camera, controls, arena, fighter, resizeObserver, clock;
+// Pre-load readiness: emit once after the first frame is rendered so the
+// bootstrap splash (page-load) and the SPA transition cover can lift on real
+// home-scene readiness. Per-mount (script-setup local) so it re-fires on every
+// fresh mount, not just the first of the session.
+let firstFrameEmitted = false;
 let onVisibility;
 let director = null;     // home wander director (drives the existing locomotion)
 let prevWanderT = 0;     // last frame's elapsed time → per-frame dt for the director
@@ -725,6 +730,14 @@ onMounted(() => {
     }
 
     renderer.render(scene, camera);
+
+    // First frame is on screen — signal readiness once (latch + event) so the
+    // pre-load splash / SPA transition cover lift on real home-scene readiness.
+    if (!firstFrameEmitted) {
+      firstFrameEmitted = true;
+      window.__hexHomeReady = true;
+      window.dispatchEvent(new Event('hexlash:home-ready'));
+    }
   };
   renderer.setAnimationLoop(loop);
 

@@ -258,6 +258,11 @@ const wrap = ref(null);
 const canvasEl = ref(null);
 
 let renderer, scene, camera, controls, arena, resizeObserver, clock;
+// Pre-load readiness: emit once after the first frame is rendered so the
+// bootstrap splash (page-load) and the SPA transition cover can lift on real
+// pve-scene readiness. Per-mount (script-setup local) so it re-fires on every
+// fresh mount, not just the first of the session.
+let firstFrameEmitted = false;
 let onVisibility;
 let director = null;
 let prevT = 0;
@@ -451,6 +456,14 @@ onMounted(() => {
     if (!reduced) dust?.tick?.(t);
 
     renderer.render(scene, camera);
+
+    // First frame is on screen — signal readiness once (latch + event) so the
+    // pre-load splash / SPA transition cover lift on real pve-scene readiness.
+    if (!firstFrameEmitted) {
+      firstFrameEmitted = true;
+      window.__hexPveReady = true;
+      window.dispatchEvent(new Event('hexlash:pve-ready'));
+    }
   };
   renderer.setAnimationLoop(loop);
 

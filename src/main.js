@@ -112,6 +112,9 @@ function splashSet(p) { if (splash) splash.set(p); }
 function splashFinish() {
     if (splashDone) return;
     splashDone = true;
+    // From here on, in-app navigation is covered by the SPA scene-transition
+    // overlay (router beforeEach), not this one-shot page-load splash.
+    window.__hexBootstrapped = true;
     if (splash) splash.done();
 }
 
@@ -137,12 +140,23 @@ initializeApp().then(() => {
     splashSet(64); // Milestone 3 — app mounted.
 
     router.isReady().then(() => {
-        // Milestone 4 — scene build + first frame (only the /play arena route
-        // renders WebGL; meta.arena marks it). On the arena route we hold an
-        // honest stall near 90 and only finish on the real first-frame signal;
-        // other routes hide once the route has painted.
-        const arenaBound = !!router.currentRoute.value.meta?.arena;
-        if (arenaBound) {
+        // Milestone 4 — scene build + first frame. Heavy 3D routes signal real
+        // readiness: the arena (meta.arena) and the home/pve stages
+        // (meta.scene3d). On any of them we hold an honest stall near 90 and
+        // finish only on the scene's first-frame signal; other (2D) routes hide
+        // once the route has painted.
+        const route = router.currentRoute.value;
+        const meta = route.meta || {};
+        // Map the current 3D route to its readiness event + window latch flag.
+        let readyEvent = null, readyLatch = null;
+        if (meta.arena) {
+            readyEvent = 'hexlash:arena-ready'; readyLatch = '__hexArenaReady';
+        } else if (meta.scene3d) {
+            if (route.name === 'V2Pve') { readyEvent = 'hexlash:pve-ready'; readyLatch = '__hexPveReady'; }
+            else { readyEvent = 'hexlash:home-ready'; readyLatch = '__hexHomeReady'; }
+        }
+
+        if (readyEvent) {
             splashSet(80);
             let trickle = 80;
             const trickleTimer = setInterval(() => {
@@ -150,11 +164,11 @@ initializeApp().then(() => {
                 splashSet(trickle);
                 if (trickle >= 92) clearInterval(trickleTimer);
             }, 220);
-            const onArenaReady = () => { clearInterval(trickleTimer); splashSet(100); splashFinish(); };
+            const onReady = () => { clearInterval(trickleTimer); splashSet(100); splashFinish(); };
             // Latch guards the (rare) race where the first frame renders before
             // this listener attaches.
-            if (window.__hexArenaReady) onArenaReady();
-            else window.addEventListener('hexlash:arena-ready', onArenaReady, { once: true });
+            if (window[readyLatch]) onReady();
+            else window.addEventListener(readyEvent, onReady, { once: true });
             // Safety net — never hang the splash if the scene fails to signal.
             setTimeout(() => { clearInterval(trickleTimer); splashFinish(); }, 12000);
         } else {
