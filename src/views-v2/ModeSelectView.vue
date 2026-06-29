@@ -1,9 +1,9 @@
 <!-- ModeSelectView — the PVE / PVP fork (/play/mode). Sits between the home FIGHT
      button and the existing flows: PVE → /play/pve (stub), PVP → /play (core
      select). Ported from the Claude Design handoff (docs/design-handoff/mode_select)
-     onto the real shell: the shared persistent .hs-strip (home.css) is reused
-     verbatim (brand LogoMark 40px + HEXLASH + SHOP + cabinet chip), not a bare
-     prototype bar; no SEASON 0.
+     onto the real shell. No top strip on this screen — Mode Select carries no
+     brand / SHOP / cabinet chrome, only the ← BACK control (→ /play/home); the
+     cabinet stays reachable from /play/home. No SEASON 0.
 
      Discipline: one accent per door (PVE amber #FFB21D / PVP pink #FF0069, never
      together, never a core colour); the scene's pink glow lives only on the PVP
@@ -15,25 +15,6 @@
   <div class="mode-root">
     <div class="mode-bg-ember" aria-hidden="true"></div>
     <div class="mode-bg-grid" aria-hidden="true"></div>
-
-    <!-- real shared chrome: brand → home, shop → home (the shop toggle lives on
-         /play/home), cabinet → the player drawer mounted below -->
-    <div class="hs-strip">
-      <button type="button" class="hs-brandblock" @click="goHome" :aria-label="`${t.home.brand} — home`">
-        <LogoMark /><span class="wm">{{ t.home.brand }}</span>
-      </button>
-      <div class="hs-cluster">
-        <button type="button" class="seg hs-seg-shop" @click="goHome">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M5 8h14l-1 12H6L5 8Z" /><path d="M9 8V6a3 3 0 0 1 6 0v2" /></svg>
-          <span class="txt"><span class="n">{{ t.home.shop }}</span><span class="s">{{ t.home.shopSub }}</span></span>
-        </button>
-        <button type="button" class="seg hs-seg-cab" @click="cabinetOpen = true">
-          <span class="av"><span /></span>
-          <span class="txt"><span class="hand">{{ t.cabinet.chipHandle }}</span><span class="sub">{{ t.cabinet.chipOpen }}</span></span>
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
-        </button>
-      </div>
-    </div>
 
     <main class="mode-stage">
       <button type="button" class="mode-back" @click="goHome">← Back</button>
@@ -93,39 +74,16 @@
         </button>
       </div>
     </main>
-
-    <PlayerCabinet
-      :open="cabinetOpen"
-      :balance="balance"
-      :core-name="coreName"
-      :core-sig="coreSig"
-      @close="cabinetOpen = false"
-    />
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import store from '@/core/state/store.js';
-import { t } from '@/locales/index.js';
-import { getCore } from '@/data/upgradeData.js';
-import PlayerCabinet from '@/views-v2/PlayerCabinet.vue';
-import { LogoMark } from '@/components/landing/icons.js';
-import '@/styles/home.css';     // the shared .hs-strip chrome
-import '@/styles/cabinet.css';  // the PlayerCabinet drawer
 
 const router = useRouter();
 
-const cabinetOpen = ref(false);
 const armed = ref(null); // 'pve' | 'pvp' — brief committed state before navigating
-
-// Cabinet card data (mirrors HomeView): default fighter until a core is picked.
-const coreId = computed(() => store.getters['prefight/selectedCoreId'] || null);
-const core = computed(() => (coreId.value ? getCore(coreId.value) : null));
-const coreName = computed(() => core.value?.name || 'ONSLAUGHT');
-const coreSig = computed(() => core.value?.sig || 'PRESSURE');
-const balance = '2,480';
 
 function goHome() { router.push('/play/home'); }
 
@@ -136,17 +94,13 @@ function pickPvp() { if (armed.value) return; armed.value = 'pvp'; setTimeout(()
 </script>
 
 <style scoped>
-/* Tokens the reused .hs-strip needs (it is coded against .home-root) — same values,
-   provided here so the real strip is portable to this route without editing home.css.
-   Plus this screen's own palette. */
+/* This screen's own palette + display / mono font stacks and the focus-ring bone. */
 .mode-root {
   --void: #08080a; --panel: #16161b; --ink: #ededf1; --ink-dim: #5d5d66;
   --lash: #ff0069; --amber: #ffb21d; --accent-rest: #2a2a31;
   --ease: cubic-bezier(0.4, 0.05, 0.1, 1); /* emblem ignite easing (handoff) */
   --line: rgba(255, 255, 255, 0.09);
-  /* strip tokens (mirror .home-root) */
-  --line2: rgba(255, 255, 255, 0.16);
-  --bone: #f6f4f6; --ash: #6e6a72;
+  --bone: #f6f4f6;
   --hs-disp: "Saira Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif;
   --hs-mono: "JetBrains Mono", ui-monospace, monospace;
 
@@ -167,12 +121,12 @@ function pickPvp() { if (armed.value) return; armed.value = 'pvp'; setTimeout(()
   -webkit-mask: radial-gradient(120% 92% at 50% 28%, #000 38%, transparent 80%);
           mask: radial-gradient(120% 92% at 50% 28%, #000 38%, transparent 80%); }
 
-/* ── working zone (sits below the 74px strip) ── */
+/* ── working zone (no top strip on this screen — only ← BACK) ── */
 .mode-stage {
   position: absolute; inset: 0; z-index: 1;
   container-type: inline-size;
   display: flex; flex-direction: column;
-  padding: 96px 28px 36px;
+  padding: 32px 28px 36px;
 }
 .mode-back {
   align-self: flex-start; margin-bottom: 14px;
@@ -285,6 +239,6 @@ function pickPvp() { if (armed.value) return; armed.value = 'pvp'; setTimeout(()
    .mode-stage is itself the query container, so it can't be styled by its own
    container query — only its descendants can.) */
 @media (max-width: 560px) {
-  .mode-stage { padding: 78px 18px 30px; }
+  .mode-stage { padding: 24px 18px 30px; }
 }
 </style>
