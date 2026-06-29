@@ -1,18 +1,16 @@
 <!-- PveView — the /play/pve route: the standalone PVE 3D space (PveScene) under a
-     thin 2D layer. The persistent shared .hs-strip (home.css) is reused exactly as on
-     Mode Select (brand LogoMark 40px + HEXLASH + SHOP + cabinet chip, matte, no
-     SEASON 0). Top-left ‹ Back (mono) → /play/mode. NO FIGHT button, no training
-     logic, no panels — this is visual only. Strip tokens are mirrored on the root so
-     the shared strip is portable here without editing home.css. -->
+     thin 2D layer. The shared .hs-strip (home.css) is reused, but WITHOUT the brand
+     block — PVE shows only SHOP + cabinet chip (matte, no SEASON 0); with the brand
+     gone the lone cluster is pinned right via a scoped margin (home.css untouched).
+     Top-left ‹ Back (mono) → /play/mode. NO FIGHT button, no training logic, no
+     panels — this is visual only. Strip tokens are mirrored on the root so the shared
+     strip is portable here without editing home.css. -->
 <template>
   <div class="pve-root">
     <PveScene />
 
-    <!-- real shared chrome: brand → home, shop → home, cabinet → the player drawer -->
+    <!-- shared chrome (brand removed on PVE): shop → home, cabinet → the player drawer -->
     <div class="hs-strip">
-      <button type="button" class="hs-brandblock" @click="goHome" :aria-label="`${t.home.brand} — home`">
-        <LogoMark /><span class="wm">{{ t.home.brand }}</span>
-      </button>
       <div class="hs-cluster">
         <button type="button" class="seg hs-seg-shop" @click="goHome">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M5 8h14l-1 12H6L5 8Z" /><path d="M9 8V6a3 3 0 0 1 6 0v2" /></svg>
@@ -46,7 +44,6 @@ import { t } from '@/locales/index.js';
 import { getCore } from '@/data/upgradeData.js';
 import PveScene from '@/scene/PveScene.vue';
 import PlayerCabinet from '@/views-v2/PlayerCabinet.vue';
-import { LogoMark } from '@/components/landing/icons.js';
 import '@/styles/home.css';     // the shared .hs-strip chrome
 import '@/styles/cabinet.css';  // the PlayerCabinet drawer
 
@@ -81,6 +78,11 @@ function goMode() { router.push('/play/mode'); }
   background: #08080a; color: var(--ink);
   font-family: var(--hs-disp);
 }
+
+/* brand removed on PVE → the strip's only child is the SHOP + cabinet cluster.
+   .hs-strip is justify-content:space-between; anchor the lone cluster to the right
+   edge here (scoped to PVE — home.css stays shared/untouched). */
+.hs-cluster { margin-left: auto; }
 
 /* ‹ Back — mono, top-left under the strip (matches Mode Select), no second CTA */
 .pve-back {

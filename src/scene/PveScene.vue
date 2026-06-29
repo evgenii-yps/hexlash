@@ -169,7 +169,7 @@ function buildUnderGlow(colorHex, topY) {
 const BACKDROP = {
   radius: 45, centerY: 1.6, texW: 1024, texH: 1024,
   grad: [[0.0, '#060710'], [0.42, '#0a0a12'], [0.62, '#120f0c'], [1.0, '#1b150d']],
-  hexCols: 60, hexRGB: '255,186,120', hexMaxAlpha: 0.05, hexFadeStart: 0.46, hexFadeEnd: 0.62, dither: 3,
+  hexCols: 60, hexRGB: '255,186,120', hexMaxAlpha: 0, hexFadeStart: 0.46, hexFadeEnd: 0.62, dither: 0, // hex weave + grain OFF — flat dark gradient (mirrors home fix 222aac4)
 };
 const HAZE = { color: 0xffb368, opacity: 0.14, scale: 2.6, yOffset: 0.05 };
 function strokeHex(ctx, cx, cy, R) {
