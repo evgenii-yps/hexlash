@@ -3,6 +3,7 @@
     <router-view />
     <VerifyEmailBanner />
     <SceneTransitionOverlay />
+    <RotateHint />
   </div>
 </template>
 
@@ -18,6 +19,7 @@
 // WS-disconnected banner was pure noise overlapping the screen.
 import VerifyEmailBanner from '@/components/hud/VerifyEmailBanner.vue';
 import SceneTransitionOverlay from '@/views-v2/SceneTransitionOverlay.vue';
+import RotateHint from '@/views-v2/RotateHint.vue';
 import '@/styles/hexlash-v24.css';
 </script>
 

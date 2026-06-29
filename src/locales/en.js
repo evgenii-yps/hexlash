@@ -10,6 +10,10 @@ export default {
     btnCreate: "Create",
     btnNext: "Next",
   },
+  rotateHint: {
+    label: "Rotate your device for the best view",
+    dismiss: "Tap to continue",
+  },
   profile: {
     // Only the web3 wallet strings remain — consumed by the (orphaned but
     // preserved) ConnectWallet / BuyTokens components. Account-screen strings
