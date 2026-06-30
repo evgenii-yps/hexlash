@@ -10,10 +10,10 @@
   /* === COLORS === */
 
   /* Primary — brand pink */
-  --hex-primary: #FF066F;
+  --hex-primary: #FF0069;
   --hex-primary-light: #FF3D8E;
   --hex-primary-dark: #A50344;
-  --hex-primary-glow: rgba(255, 6, 111, 0.5);
+  --hex-primary-glow: rgba(255, 0, 105, 0.5);
 
   /* Background — near-black surfaces */
   --hex-bg-deep: #050507;
@@ -92,10 +92,10 @@
   --hex-branch-speed-glow: rgba(0, 229, 255, 0.5);
 
   /* Power — neon pink (= brand) */
-  --hex-branch-power: #FF066F;
+  --hex-branch-power: #FF0069;
   --hex-branch-power-dark: #A50344;
   --hex-branch-power-light: #FF66A3;
-  --hex-branch-power-glow: rgba(255, 6, 111, 0.5);
+  --hex-branch-power-glow: rgba(255, 0, 105, 0.5);
 
   /* Technique — royal purple */
   --hex-branch-technique: #A855F7;
@@ -135,7 +135,7 @@
 
   /* --- MODE COLORS (3) --- */
   --hex-mode-pve: #00E5FF;
-  --hex-mode-pvp: #FF066F;
+  --hex-mode-pvp: #FF0069;
   --hex-mode-club: #00FF88;
 
 
@@ -335,7 +335,7 @@
 .hex-card-selected {
   border-color: var(--hex-primary);
   box-shadow: var(--hex-glow-sm);
-  background: rgba(255, 6, 111, 0.1);
+  background: rgba(255, 0, 105, 0.1);
 }
 
 /* Locked card */

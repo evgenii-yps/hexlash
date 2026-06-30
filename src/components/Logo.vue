@@ -23,13 +23,14 @@ const goToHome = () => {
 }
 
 .logo-text {
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: 'Saira Condensed', -apple-system, sans-serif;
   font-size: 1.6em;
-  color: var(--hex-primary);
-  letter-spacing: 3px;
+  font-weight: 900;
+  text-transform: uppercase;
+  color: var(--hex-text-primary);
+  letter-spacing: 0.04em;
   margin: 16px auto 0 16px;
   cursor: pointer;
-  text-shadow: 0 0 8px var(--hex-primary-glow);
   user-select: none;
 }
 </style>

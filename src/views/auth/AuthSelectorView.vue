@@ -1,13 +1,13 @@
 <template>
   <!-- Hexlash auth screen — single screen, login + signup together (no tabs).
        Ported from hexlash_auth_handoff/auth_screen.jsx. One pink accent
-       (#FF066F, prod canon) reserved for field focus + the ready Submit.
+       (#FF0069, prod canon) reserved for field focus + the ready Submit.
        Provider buttons stay neutral. Email keeps the working password login
        (magic-link / Privy = Этап 2 — see report). -->
   <div class="hx-stage">
     <!-- Same background as the landing (pattern + mouse-reaction + ambient glow).
-         Accent = #FF066F (255,6,111) to keep the auth screen internally consistent. -->
-    <LandingBackground :accent="[255, 6, 111]" />
+         Accent = #FF0069 (255,0,105) to keep the auth screen internally consistent. -->
+    <LandingBackground :accent="[255, 0, 105]" />
 
     <!-- Global exit → landing. Always present, independent of the in-card
          step "‹ Back" (.hx-back) which only navigates stages within the card. -->
@@ -359,7 +359,7 @@ async function onForgotSubmit(payload) {
 
 <style scoped>
 /* Tokens from the design handoff (auth_screen.jsx). Accent recoloured to the
-   prod canon #FF066F (rgb 255,6,111). Scoped to this component — no --hex-*. */
+   prod canon #FF0069 (rgb 255,0,105). Scoped to this component — no --hex-*. */
 .hx-stage {
   position: relative;
   min-height: 100vh;
@@ -367,8 +367,8 @@ async function onForgotSubmit(payload) {
   overflow: hidden;
   font-family: var(--mono);
   color: var(--white);
-  --accent: #ff066f;
-  --accent-rgb: 255, 6, 111;
+  --accent: #ff0069;
+  --accent-rgb: 255, 0, 105;
   --bg: #08080a;
   --white: #f6f4f6;
   --muted: #6e6a72;

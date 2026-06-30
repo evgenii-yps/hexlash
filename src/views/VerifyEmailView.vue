@@ -102,7 +102,7 @@ onBeforeMount(verifyEmail);
 }
 
 h1 {
-  font-family: 'Anonymous', 'Courier New', Consolas, monospace;
+  font-family: 'Saira Condensed', -apple-system, sans-serif;
   font-size: 3rem;
   margin-bottom: 1rem;
   color: var(--hex-text-primary);

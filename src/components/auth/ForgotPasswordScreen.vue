@@ -250,7 +250,7 @@ defineExpose({
   text-transform: uppercase;
   cursor: pointer;
   transition: filter 0.15s ease, transform 0.08s ease, opacity 0.15s ease, box-shadow 0.15s ease;
-  box-shadow: 0 4px 12px rgba(255, 6, 111, 0.25);
+  box-shadow: 0 4px 12px rgba(255, 0, 105, 0.25);
   display: inline-flex;
   align-items: center;
   justify-content: center;

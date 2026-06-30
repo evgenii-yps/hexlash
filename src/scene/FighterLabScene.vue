@@ -749,7 +749,7 @@ onBeforeUnmount(() => {
   position: fixed;
   inset: 0;
   background: radial-gradient(ellipse 70% 60% at 50% 45%, #11141d 0%, #0a0c12 60%, #050608 100%);
-  font-family: var(--font-mono, monospace);
+  font-family: var(--font-mono, 'JetBrains Mono', ui-monospace, monospace);
   color: #fff;
 }
 .lab-canvas { display: block; width: 100%; height: 100%; }
@@ -784,7 +784,7 @@ onBeforeUnmount(() => {
 /* Shared button (panel + transport + views). */
 .lab-btn {
   pointer-events: auto;
-  font-family: var(--font-mono, monospace);
+  font-family: var(--font-mono, 'JetBrains Mono', ui-monospace, monospace);
   font-size: 10px;
   letter-spacing: 0.08em;
   color: rgba(255, 255, 255, 0.6);

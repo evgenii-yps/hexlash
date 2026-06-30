@@ -3,7 +3,7 @@
        + ambient pink glow (breathe) + vignette + optional scanlines/grain.
        Extracted from MarketingView's inline .bg-fixed so the auth screen reuses
        the exact same look + behaviour. Accent is a prop (landing 255,0,105;
-       auth 255,6,111 = #FF066F) — drives both the canvas and the glow. -->
+       auth 255,0,105 = #FF0069) — drives both the canvas and the glow. -->
   <div class="lp-bg" :style="bgVars" aria-hidden="true">
     <div class="lp-bg__base"></div>
     <HexGrid :accent="accent" :intensity="intensity" :shape="shape" />

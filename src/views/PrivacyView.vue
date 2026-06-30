@@ -2620,6 +2620,12 @@ Based on the applicable laws of your country or state of residence in the US you
 .privacy-container {
   margin-top: 10vh;
   padding: 5px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Sole heading (the 26px "PRIVACY POLICY" title) → canon display face. */
+.privacy-container span[style*="26px"] {
+  font-family: 'Saira Condensed', -apple-system, sans-serif;
 }
 
 div {
@@ -2643,7 +2649,7 @@ ul > li > ul > li > ul {
 }
 
 ol li {
-  font-family: Arial;
+  font-family: inherit;
 }
 
 </style>

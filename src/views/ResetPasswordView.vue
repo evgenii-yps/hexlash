@@ -217,6 +217,7 @@ function onRequestNew() {
   min-height: 100dvh;
   background: var(--hex-bg-dark);
   color: var(--hex-text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -231,8 +232,8 @@ function onRequestNew() {
   height: clamp(400px, 60vw, 900px);
   background: radial-gradient(
     circle at center,
-    rgba(255, 6, 111, 0.12) 0%,
-    rgba(255, 6, 111, 0.04) 35%,
+    rgba(255, 0, 105, 0.12) 0%,
+    rgba(255, 0, 105, 0.04) 35%,
     transparent 70%
   );
   pointer-events: none;
@@ -305,7 +306,7 @@ function onRequestNew() {
 .reset-card__title {
   margin: 0 0 20px;
   text-align: center;
-  font-family: inherit;
+  font-family: 'Saira Condensed', -apple-system, sans-serif;
   font-size: 18px;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -399,7 +400,7 @@ function onRequestNew() {
   text-transform: uppercase;
   cursor: pointer;
   transition: filter 0.15s ease, transform 0.08s ease, opacity 0.15s ease, box-shadow 0.15s ease;
-  box-shadow: 0 4px 12px rgba(255, 6, 111, 0.25);
+  box-shadow: 0 4px 12px rgba(255, 0, 105, 0.25);
   display: inline-flex;
   align-items: center;
   justify-content: center;
