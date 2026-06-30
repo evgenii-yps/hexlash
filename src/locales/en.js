@@ -15,9 +15,12 @@ export default {
     dismiss: "Tap to continue",
   },
   profile: {
-    // Only the web3 wallet strings remain — consumed by the (orphaned but
-    // preserved) ConnectWallet / BuyTokens components. Account-screen strings
-    // were removed with the account UI.
+    // Web3 wallet strings. Their UI consumers (ConnectWallet / BuyTokens) were
+    // deleted (sub-wave 1.5); only `checkLimits` is still referenced — via the
+    // preserved contract subsystem (contractState.js, t('profile.wallet.checkLimits')).
+    // The remaining keys are orphaned and flagged for a follow-up i18n cleanup
+    // (kept for now because this section is reached by dynamic t('profile.wallet.*')
+    // string paths).
     wallet: {
       lblTopUpBalance: "Top Up Balance",
       lblBuyFCTokens: "Buy HXL tokens",
@@ -25,9 +28,7 @@ export default {
       lblAmount: "Amount",
       lblYouWillGet: "You will get",
       lblFCTokens: "HXL tokens",
-      lblConnectWallet: "Connect Wallet",
       lblReconnectWallet: "Reconnect",
-      msgConnectWalletTooltip: "Connect your wallet to buy or withdraw Hexlash tokens",
       lblGameBalance: "GAME BALANCE",
       lblWithdrawToWallet: "Withdraw to wallet",
       lblConnecting: "Connecting...",
@@ -62,11 +63,10 @@ export default {
     brand: "HEXLASH",            // brand wordmark (left lock-up, monochrome)
     shop: "Shop",                // cluster — shop segment label
     back: "Back",                // same chip while the shop is open (← arrow)
-    shopSub: "DECOR · MORE",     // (legacy) chip is single-label now; sub unused
+    shopSub: "DECOR · MORE",     // shop-chip sublabel — still used by the PveView strip
     fight: "FIGHT",              // the hero action (the one pink + glow)
     fightSub: "SEND YOUR FIGHTER TO THE ARENA",
-    editSpace: "EDIT SPACE",     // corner button → decor arrange mode
-    editSpaceSub: "ARRANGE PROPS",
+    editSpace: "EDIT SPACE",     // corner button → decor arrange mode (single-label chip)
   },
   cabinet: {
     // Entry chip (top-left of the home) — the single door into the cabinet.
