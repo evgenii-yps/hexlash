@@ -16,7 +16,6 @@
   --hex-primary-glow: rgba(255, 0, 105, 0.5);
 
   /* Background — near-black surfaces */
-  --hex-bg-deep: #050507;
   --hex-bg-dark: #090909;
   --hex-bg-medium: #111111;
   --hex-bg-light: #1A1A1A;
@@ -28,198 +27,69 @@
   --hex-text-muted: rgba(255, 255, 255, 0.35);
 
   /* Status */
-  --hex-success: #00FF88;
   --hex-danger: #FF3333;
-  --hex-warning: #FFB800;
 
   /* Borders — white-based for theme flexibility */
   --hex-border-color: rgba(255, 255, 255, 0.08);
   --hex-border-default: rgba(255, 255, 255, 0.08);
   --hex-border-active: rgba(255, 255, 255, 0.15);
   --hex-border-strong: rgba(255, 255, 255, 0.25);
-  --hex-border-hi: #4A4A50;
-
-  /* --- ARCHETYPES (6) --- */
-
-  /* Predator — blood red, aggression */
-  --hex-arch-predator: #FF2D2D;
-  --hex-arch-predator-dark: #CC1A1A;
-  --hex-arch-predator-light: #FF6B6B;
-  --hex-arch-predator-bg: #330808;
-  --hex-arch-predator-glow: rgba(255, 45, 45, 0.5);
-
-  /* Sentinel — steel blue, defense */
-  --hex-arch-sentinel: #4DA6FF;
-  --hex-arch-sentinel-dark: #2B7ACC;
-  --hex-arch-sentinel-light: #8CC8FF;
-  --hex-arch-sentinel-bg: #081833;
-  --hex-arch-sentinel-glow: rgba(77, 166, 255, 0.5);
-
-  /* Ghost — phantom violet, evasion */
-  --hex-arch-ghost: #B44DFF;
-  --hex-arch-ghost-dark: #8A2BE2;
-  --hex-arch-ghost-light: #D199FF;
-  --hex-arch-ghost-bg: #1A0833;
-  --hex-arch-ghost-glow: rgba(180, 77, 255, 0.5);
-
-  /* Analyst — matrix green, data */
-  --hex-arch-analyst: #00FF88;
-  --hex-arch-analyst-dark: #00CC6A;
-  --hex-arch-analyst-light: #66FFBB;
-  --hex-arch-analyst-bg: #083320;
-  --hex-arch-analyst-glow: rgba(0, 255, 136, 0.5);
-
-  /* Maverick — electric amber, chaos */
-  --hex-arch-maverick: #FFB800;
-  --hex-arch-maverick-dark: #CC9200;
-  --hex-arch-maverick-light: #FFD466;
-  --hex-arch-maverick-bg: #332508;
-  --hex-arch-maverick-glow: rgba(255, 184, 0, 0.5);
-
-  /* Juggernaut — molten orange, unstoppable */
-  --hex-arch-juggernaut: #FF6B1A;
-  --hex-arch-juggernaut-dark: #CC5514;
-  --hex-arch-juggernaut-light: #FF9F66;
-  --hex-arch-juggernaut-bg: #331508;
-  --hex-arch-juggernaut-glow: rgba(255, 107, 26, 0.5);
-
-  /* --- BRANCHES (3) --- */
-
-  /* Speed — electric cyan */
-  --hex-branch-speed: #00E5FF;
-  --hex-branch-speed-dark: #008B99;
-  --hex-branch-speed-light: #66F0FF;
-  --hex-branch-speed-glow: rgba(0, 229, 255, 0.5);
-
-  /* Power — neon pink (= brand) */
-  --hex-branch-power: #FF0069;
-  --hex-branch-power-dark: #A50344;
-  --hex-branch-power-light: #FF66A3;
-  --hex-branch-power-glow: rgba(255, 0, 105, 0.5);
-
-  /* Technique — royal purple */
-  --hex-branch-technique: #A855F7;
-  --hex-branch-technique-dark: #7C3AED;
-  --hex-branch-technique-light: #C084FC;
-  --hex-branch-technique-glow: rgba(168, 85, 247, 0.5);
-
-  /* --- COMBAT ACTIONS (3) --- */
-  --hex-action-attack: #FF2D2D;
-  --hex-action-defense: #4DA6FF;
-  --hex-action-position: #A855F7;
 
   /* --- DICE EFFECTS (6) --- */
-  --hex-dice-heal: #00FF88;
   --hex-dice-adrenaline: #FF9100;
   --hex-dice-shield: #4DA6FF;
   --hex-dice-blind: #E040FB;
-  --hex-dice-rage: #FF1744;
-  --hex-dice-crit: #FFD600;
 
   /* --- GAME STATUS --- */
   --hex-victory: #00FF88;
-  --hex-victory-bg: #1A3320;
   --hex-defeat: #FF4444;
-  --hex-defeat-bg: #331010;
   --hex-draw: #FFB800;
-  --hex-draw-bg: #332B08;
-  --hex-info: #4DA6FF;
-  --hex-info-bg: #081833;
-
-  /* --- RANK COLORS --- */
-  --hex-rank-bronze: #CD7F32;
-  --hex-rank-silver: #C0C0C0;
-  --hex-rank-gold: #FFD700;
-  --hex-rank-platinum: #00CED1;
-  --hex-rank-diamond: #00BFFF;
-
-  /* --- MODE COLORS (3) --- */
-  --hex-mode-pve: #00E5FF;
-  --hex-mode-pvp: #FF0069;
-  --hex-mode-club: #00FF88;
-
 
   /* === SIZES === */
 
   /* Spacing */
-  --hex-spacing-xs: 4px;
   --hex-spacing-sm: 8px;
   --hex-spacing-md: 16px;
   --hex-spacing-lg: 24px;
   --hex-spacing-xl: 32px;
-  --hex-spacing-xxl: 48px;
 
   /* Border radius */
   --hex-radius-sm: 4px;
   --hex-radius-md: 8px;
   --hex-radius-lg: 12px;
   --hex-radius-xl: 16px;
-  --hex-radius-round: 50%;
 
   /* Border width */
   --hex-border-width: 2px;
-
 
   /* === FONTS === */
 
   /* Font families */
   --hex-font-display: 'Impact', 'Anton', 'Bebas Neue', sans-serif;
   --hex-font-body: 'Inter', 'Roboto', 'SF Pro', -apple-system, sans-serif;
-  --hex-font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
   /* Font sizes */
-  --hex-font-size-xs: 10px;
   --hex-font-size-sm: 12px;
   --hex-font-size-md: 14px;
   --hex-font-size-lg: 16px;
-  --hex-font-size-xl: 20px;
   --hex-font-size-xxl: 24px;
-  --hex-font-size-giant: 32px;
-  --hex-font-size-huge: 48px;
-
-  /* Line height */
-  --hex-line-height: 1.5;
-
 
   /* === SHADOWS & EFFECTS === */
 
   /* Glow */
   --hex-glow-sm: 0 0 10px var(--hex-primary-glow);
   --hex-glow-md: 0 0 20px var(--hex-primary-glow);
-  --hex-glow-lg: 0 0 30px var(--hex-primary-glow), 0 0 60px var(--hex-primary-glow);
 
   /* Card shadows */
-  --hex-shadow-card: 0 4px 20px rgba(0, 0, 0, 0.5);
-  --hex-shadow-elevated: 0 8px 32px rgba(0, 0, 0, 0.7);
   --hex-shadow-modal: 0 0 40px var(--hex-primary-glow), 0 20px 60px rgba(0, 0, 0, 0.8);
 
   /* Blur */
   --hex-blur-sm: blur(5px);
   --hex-blur-md: blur(10px);
-  --hex-blur-lg: blur(20px);
-
-
-  /* === BELT SYSTEM === */
-
-  --hex-belt-white: #F5F5F5;
-  --hex-belt-yellow: #FBBF24;
-  --hex-belt-orange: #FB923C;
-  --hex-belt-green: #22C55E;
-  --hex-belt-blue: #60A5FA;
-  --hex-belt-purple: #A855F7;
-  --hex-belt-brown: #8B4513;
-  --hex-belt-red: #DC2626;
-  --hex-belt-black: #0A0A0A;
-  --hex-belt-hexmaster: var(--hex-primary);
-  --hex-belt-stripe: #FFFFFF;
-  --hex-belt-outline: rgba(255, 255, 255, 0.25);
-
 
   /* === ANIMATIONS === */
 
   --hex-transition-fast: 0.15s ease;
-  --hex-transition-normal: 0.25s ease;
-  --hex-transition-slow: 0.4s ease;
 }
 
 /* --------------------------------------------
