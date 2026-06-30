@@ -61,7 +61,8 @@ export default {
   home: {
     brand: "HEXLASH",            // brand wordmark (left lock-up, monochrome)
     shop: "Shop",                // cluster — shop segment label
-    shopSub: "DECOR · MORE",     // cluster — shop segment sublabel
+    back: "Back",                // same chip while the shop is open (← arrow)
+    shopSub: "DECOR · MORE",     // (legacy) chip is single-label now; sub unused
     fight: "FIGHT",              // the hero action (the one pink + glow)
     fightSub: "SEND YOUR FIGHTER TO THE ARENA",
     editSpace: "EDIT SPACE",     // corner button → decor arrange mode

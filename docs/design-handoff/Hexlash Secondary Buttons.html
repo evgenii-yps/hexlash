@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hexlash — Secondary Buttons (matte chrome family)</title>
+<!--
+  DESIGN HANDOFF — reference / source of truth for the secondary-button family.
+
+  ⚠️ STACK NOTE (corrects the original README): the live app is **Vue 3**, not React.
+  The buttons live in the top panel `.hs-strip` styled by `src/styles/home.css` and
+  are shared by the home (`src/views-v2/HomeView.vue`) and the shop
+  (`src/components/home/HomeShop.vue`). There is NO shell.css / shell_chrome.jsx /
+  `.sh-top` — ignore those. This prototype uses the real `.hs-strip` family classes.
+
+  FAMILY: SHOP · cabinet · EDIT SPACE · back — one matte-chrome material.
+  PALETTE: strictly canon. Pink #FF0069 is RESERVED for FIGHT / the economy and is
+  NEVER used here. The glow is COLD WHITE / CHROME (rgb 216,227,234 rim · 200,209,216
+  bloom), never pink.
+  FONTS: Saira Condensed (labels) + JetBrains Mono (meta). Anonymous is retired.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    /* canon */
+    --void: #08080a;
+    --panel: #16161b;
+    --ink: #ededf1;
+    --ink-dim: #5d5d66;
+    --disp: "Saira Condensed", "Arial Narrow", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, monospace;
+    /* chrome family tokens */
+    --chrome-ink: #c8d1d8;
+    --chrome-line: rgba(200, 209, 216, 0.16);   /* rest frame */
+    --line: rgba(255, 255, 255, 0.09);          /* disabled / dividers */
+    --rim: rgba(216, 227, 234, 0.45);           /* hover rim */
+    --rim-hot: rgba(216, 227, 234, 0.8);        /* active rim */
+    --bloom: rgba(200, 209, 216, 0.22);         /* hover bloom */
+    --bloom-hot: rgba(200, 209, 216, 0.3);      /* active bloom */
+    --glass: rgba(22, 22, 27, 0.55);
+    --glass-hover: rgba(28, 30, 37, 0.72);
+    --ease: cubic-bezier(0.55, 0, 0.12, 1);
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    min-height: 100vh; background: radial-gradient(120% 90% at 50% -10%, #15101a 0%, #0a0a10 50%, var(--void) 85%);
+    color: var(--ink); font-family: var(--mono); display: flex; flex-direction: column; gap: 34px;
+    align-items: center; justify-content: center; padding: 56px 24px;
+  }
+  h1 { font-family: var(--disp); font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; font-size: 22px; }
+  .note { font-size: 11px; letter-spacing: 0.16em; color: var(--ink-dim); text-transform: uppercase; }
+  .row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; justify-content: center; }
+  .cap { font-size: 10px; letter-spacing: 0.2em; color: var(--ink-dim); text-transform: uppercase; width: 100%; text-align: center; }
+
+  /* ── shared matte chrome material ─────────────────────────────────────────── */
+  .chrome {
+    position: relative; display: inline-flex; align-items: center; gap: 10px;
+    height: 44px; padding: 0 18px;
+    border: 1px solid var(--chrome-line); border-radius: 0;          /* rectangle, no corners/chamfer */
+    background: var(--glass);
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);  /* fallback: opaque rgba(20,20,26,.9), drop blur */
+    color: var(--chrome-ink); cursor: pointer; overflow: hidden; white-space: nowrap;
+    font: inherit;
+    transition: border-color 0.22s var(--ease), background 0.22s var(--ease),
+                box-shadow 0.22s var(--ease), color 0.22s var(--ease), transform 0.22s var(--ease);
+  }
+  .chrome.lg { height: 48px; }                                       /* spacious */
+  .chrome.icon { width: 44px; height: 44px; padding: 0; justify-content: center; }  /* icon-only */
+  .chrome > svg { width: 17px; height: 17px; flex: 0 0 auto; color: currentColor; }
+  .chrome .n { font-family: var(--disp); font-weight: 700; font-size: 14px; letter-spacing: 0.14em; text-transform: uppercase; line-height: 1; }
+  .chrome::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(105deg, transparent 34%, rgba(216, 227, 234, 0.18) 50%, transparent 66%);
+    transform: translateX(-130%); opacity: 0;
+  }
+  .chrome:hover {
+    border-color: var(--rim); background: var(--glass-hover); color: #fff;
+    box-shadow: 0 0 0 1px var(--rim), 0 0 18px 2px var(--bloom);
+    transform: translateY(-1px);
+  }
+  .chrome:hover::after { animation: sheen 0.6s var(--ease) 1; }
+  .chrome:active {
+    color: #fff; box-shadow: 0 0 0 1px var(--rim-hot), 0 0 14px 1px var(--bloom-hot);
+    transform: scale(0.985); transition-duration: 0.1s;
+  }
+  .chrome:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--void), 0 0 0 4px rgba(216, 227, 234, 0.7); }
+  .chrome:disabled { border-color: var(--line); background: rgba(22, 22, 27, 0.4); color: var(--ink-dim); box-shadow: none; transform: none; cursor: not-allowed; }
+  @keyframes sheen { 0% { transform: translateX(-130%); opacity: 0; } 16% { opacity: 1; } 100% { transform: translateX(130%); opacity: 0; } }
+
+  /* cabinet — a single 28×28 chrome diamond avatar (no nick/role/chevron) */
+  .seg-cab { padding: 0 16px 0 11px; }
+  .seg-cab .av {
+    width: 28px; height: 28px; transform: rotate(45deg);
+    background: linear-gradient(150deg, #c8d1d8, #585f68); border: 1px solid var(--chrome-line);
+    transition: filter 0.22s var(--ease), border-color 0.22s var(--ease);
+  }
+  .seg-cab:hover .av { filter: brightness(1.12); border-color: var(--rim); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .chrome { transition: border-color 0.15s, background 0.15s, box-shadow 0.15s, color 0.15s; }
+    .chrome:hover, .chrome:active { transform: none; }
+    .chrome::after { display: none; }
+  }
+</style>
+</head>
+<body>
+  <h1>Secondary buttons — matte chrome</h1>
+  <p class="note">canon palette · cold-white glow · never pink (pink = FIGHT)</p>
+
+  <div class="row">
+    <span class="cap">the family (rest → hover → active · keyboard focus · disabled)</span>
+
+    <!-- SHOP — bag glyph + label -->
+    <button class="chrome seg-shop" aria-label="Shop">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1 11H6L5 8Z" /><path d="M9 8V6.5a3 3 0 0 1 6 0V8" /></svg>
+      <span class="n">Shop</span>
+    </button>
+
+    <!-- back — arrow glyph + label (the SHOP chip's shop-open state) -->
+    <button class="chrome seg-back" aria-label="Back">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6" /></svg>
+      <span class="n">Back</span>
+    </button>
+
+    <!-- EDIT SPACE — pencil glyph + label -->
+    <button class="chrome seg-edit" aria-label="Edit space">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L18.5 9.5a2.12 2.12 0 0 0-3-3L5 17v3z" /><path d="M13.5 6.5l3 3" /></svg>
+      <span class="n">Edit space</span>
+    </button>
+
+    <!-- cabinet — chrome diamond avatar only, no text -->
+    <button class="chrome seg-cab" aria-label="Open cabinet">
+      <span class="av" aria-hidden="true"></span>
+    </button>
+  </div>
+
+  <div class="row">
+    <span class="cap">sizes — 44 standard · 48 spacious · 44×44 icon-only (mobile cabinet) · disabled</span>
+    <button class="chrome"><span class="n">44 standard</span></button>
+    <button class="chrome lg"><span class="n">48 spacious</span></button>
+    <button class="chrome icon seg-cab" aria-label="Open cabinet"><span class="av" aria-hidden="true"></span></button>
+    <button class="chrome" disabled><span class="n">Disabled</span></button>
+  </div>
+</body>
+</html>

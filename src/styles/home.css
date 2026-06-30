@@ -22,6 +22,19 @@
   --ash: #6e6a72;    /* dim mono sublabels (DECOR · MORE / OPEN CABINET / ARRANGE PROPS) */
   --line: rgba(255, 255, 255, 0.09);
   --line2: rgba(255, 255, 255, 0.16); /* hairline-strong — matte chrome frame */
+  /* secondary-button chrome family (SHOP · back · cabinet · EDIT SPACE) — a single
+     matte chrome material with a COLD WHITE glow on hover/press. Never pink (pink =
+     FIGHT / economy only). Reference: docs/design-handoff/Hexlash Secondary Buttons.html */
+  --hs-chrome-ink: #c8d1d8;                       /* glyph + label, rest */
+  --hs-chrome-ink-dim: #5d5d66;                   /* disabled ink */
+  --hs-chrome-line: rgba(200, 209, 216, 0.16);    /* rest frame */
+  --hs-chrome-rim: rgba(216, 227, 234, 0.45);     /* hover rim */
+  --hs-chrome-rim-hot: rgba(216, 227, 234, 0.8);  /* active rim */
+  --hs-chrome-bloom: rgba(200, 209, 216, 0.22);   /* hover bloom */
+  --hs-chrome-bloom-hot: rgba(200, 209, 216, 0.3);/* active bloom */
+  --hs-chrome-glass: rgba(22, 22, 27, 0.55);      /* rest glass fill (with blur) */
+  --hs-chrome-glass-hover: rgba(28, 30, 37, 0.72);/* hover fill */
+  --hs-chrome-void: #08080a;                      /* focus ring inner gap */
   /* motion brief — spring (legacy marks) + the prototype's two weighted curves */
   --hs-spring: cubic-bezier(0.22, 0.61, 0.36, 1);
   --ease-settle: cubic-bezier(0.2, 0.8, 0.2, 1);  /* arrivals — soft, no overshoot */
@@ -70,42 +83,81 @@
   text-transform: uppercase; color: var(--bone); line-height: 1; }
 .hs-brandblock:hover { opacity: 0.82; }
 
-/* right group — two SEPARATE matte-chrome chips (SHOP · cabinet), each carrying
-   the shared chrome MATERIAL (defined once via .hs-chrome). The container is just
-   a transparent flex row with a gap. No pink, no glow. */
+/* right group — the SHOP/back chip + the cabinet chip, each carrying the shared
+   matte-chrome MATERIAL (.hs-chrome). Transparent flex row with a gap. */
 .hs-cluster { display: flex; align-items: center; gap: 10px; }
 
-/* ── shared matte chrome material (SHOP chip · cabinet chip · EDIT SPACE) ──
-   border + glass fill + a single bottom-right bevel; weighted hover/press. */
-.hs-cluster .seg, .edit-space { border: 1px solid var(--line2); background: rgba(12, 13, 18, 0.6);
-  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); cursor: pointer;
-  clip-path: var(--hs-chamfer);
-  transition: border-color 0.3s var(--ease-weight), background 0.3s var(--ease-weight), transform 0.3s var(--ease-weight); }
-.hs-cluster .seg:hover, .edit-space:hover { border-color: rgba(246, 244, 246, 0.42); background: rgba(20, 21, 28, 0.72); transform: translateY(-2px); }
-.hs-cluster .seg:active, .edit-space:active { transform: scale(0.97); transition-duration: 0.1s; }
+/* ── shared matte chrome material (SHOP · back · cabinet · EDIT SPACE) ──────────
+   Rectangle (radius 0, no HUD corners, no chamfer). Matte glass at rest; on hover/
+   press a COLD WHITE chrome ring + bloom (never pink) with a one-shot sheen.
+   Glass = rgba(22,22,27,.55) over backdrop-filter blur(8px). NOTE: blur is already
+   shipping on these exact strip chips today; the documented backdrop drift was the
+   SHOP BODY (shop.css), not this fixed overlay — so blur is retained here. If it
+   ever drifts, the safe fallback is an opaque fill (e.g. rgba(20,20,26,.9)) and
+   dropping the two backdrop-filter lines. */
+.hs-chrome {
+  position: relative;
+  display: inline-flex; align-items: center; gap: 10px;
+  height: 44px; padding: 0 18px;
+  border: 1px solid var(--hs-chrome-line); border-radius: 0;
+  background: var(--hs-chrome-glass);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  color: var(--hs-chrome-ink);
+  cursor: pointer; overflow: hidden; white-space: nowrap;
+  transition: border-color var(--hs-hover) var(--ease-weight),
+              background var(--hs-hover) var(--ease-weight),
+              box-shadow var(--hs-hover) var(--ease-weight),
+              color var(--hs-hover) var(--ease-weight),
+              transform var(--hs-hover) var(--ease-weight);
+}
+.hs-chrome > svg { width: 17px; height: 17px; flex: 0 0 auto; color: currentColor; }
+.hs-chrome .n { font-family: var(--hs-disp); font-weight: 700; font-size: 14px;
+  letter-spacing: 0.14em; text-transform: uppercase; color: currentColor; line-height: 1; }
+/* one-shot sheen sweep — a single chrome glint on hover-in */
+.hs-chrome::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(105deg, transparent 34%, rgba(216, 227, 234, 0.18) 50%, transparent 66%);
+  transform: translateX(-130%); opacity: 0;
+}
+.hs-chrome:hover {
+  border-color: var(--hs-chrome-rim); background: var(--hs-chrome-glass-hover); color: #fff;
+  box-shadow: 0 0 0 1px var(--hs-chrome-rim), 0 0 18px 2px var(--hs-chrome-bloom);
+  transform: translateY(-1px);
+}
+.hs-chrome:hover::after { animation: hs-sheen 0.6s var(--ease-weight) 1; }
+.hs-chrome:active {
+  color: #fff;
+  box-shadow: 0 0 0 1px var(--hs-chrome-rim-hot), 0 0 14px 1px var(--hs-chrome-bloom-hot);
+  transform: scale(0.985); transition-duration: var(--hs-press);
+}
+.hs-chrome:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--hs-chrome-void), 0 0 0 4px rgba(216, 227, 234, 0.7);
+}
+.hs-chrome:disabled {
+  border-color: var(--line); background: rgba(22, 22, 27, 0.4); color: var(--hs-chrome-ink-dim);
+  box-shadow: none; transform: none; cursor: not-allowed;
+}
+@keyframes hs-sheen {
+  0% { transform: translateX(-130%); opacity: 0; }
+  16% { opacity: 1; }
+  100% { transform: translateX(130%); opacity: 0; }
+}
 
-.hs-cluster .seg { display: flex; align-items: center; gap: 12px; }
-.hs-cluster .seg.active { border-color: rgba(246, 244, 246, 0.42); background: rgba(20, 21, 28, 0.72); }
+/* SHOP / back chip — glyph (17px) + single Saira label. (Same element toggles to
+   the BACK arrow + label while the shop is open — see HomeView.) */
+.hs-seg-shop { padding: 0 18px; }
 
-/* SHOP chip */
-.hs-seg-shop { padding: 9px 18px 10px 14px; color: var(--bone); }
-.hs-seg-shop > svg { width: 19px; height: 19px; flex: 0 0 auto; color: #d6d3da; }
-.hs-seg-shop .txt { display: flex; flex-direction: column; gap: 2px; line-height: 1; text-align: left; }
-.hs-seg-shop .n { font-family: var(--hs-disp); font-weight: 700; font-size: 15px; letter-spacing: 0.07em; text-transform: uppercase; }
-.hs-seg-shop .s { font-family: var(--hs-mono); font-size: 9px; letter-spacing: 0.18em; color: var(--ash); text-transform: uppercase; }
-
-/* cabinet chip — neutral chrome diamond avatar (NO glow; only core + FIGHT glow) */
-.hs-seg-cab { padding: 7px 16px 8px 7px; }
-.hs-seg-cab .av { width: 34px; height: 34px; flex: 0 0 auto; background: linear-gradient(150deg, #2a3140, #13171f);
-  border: 1px solid var(--line2); display: flex; align-items: center; justify-content: center; }
-.hs-seg-cab .av span { width: 10px; height: 10px; background: #9b97a2; transform: rotate(45deg); }
-.hs-seg-cab .txt { display: flex; flex-direction: column; gap: 2px; line-height: 1; text-align: left; }
-.hs-seg-cab .hand { font-family: var(--hs-mono); font-size: 11px; letter-spacing: 0.1em; color: #e0dde3; }
-.hs-seg-cab .sub { font-family: var(--hs-mono); font-size: 9px; letter-spacing: 0.2em; color: var(--ash); text-transform: uppercase; }
-/* chevron — the "opens" affordance (small, dim) */
-.hs-seg-cab .chev { width: 9px; height: 9px; flex: 0 0 auto; margin-left: 2px; color: #8d8992;
-  transition: transform var(--hs-fast), color var(--hs-fast); }
-.hs-seg-cab:hover .chev { color: #b9b6bd; transform: translateX(2px); }
+/* cabinet chip — a single 28×28 chrome diamond as the avatar (no handle/role text,
+   no chevron). Neutral chrome, never pink/glow (that stays on FIGHT + the core). */
+.hs-seg-cab { padding: 0 16px 0 11px; justify-content: center; }
+.hs-seg-cab .av {
+  width: 28px; height: 28px; flex: 0 0 auto; transform: rotate(45deg);
+  background: linear-gradient(150deg, #c8d1d8, #585f68);
+  border: 1px solid var(--hs-chrome-line);
+  transition: filter var(--hs-hover) var(--ease-weight), border-color var(--hs-hover) var(--ease-weight);
+}
+.hs-seg-cab:hover .av { filter: brightness(1.12); border-color: var(--hs-chrome-rim); }
 /* (mobile lives in one consolidated block at the end of the file, so it overrides
    every base rule above it.) */
 
@@ -177,13 +229,10 @@
    same bottom-right bevel). No pink, no glow. Home-only; inside .hs-overlay
    (pointer-events:none) so it re-enables its own. Bottom-right corner, clear of
    the centred FIGHT; on mobile it lifts above the dock. */
-.edit-space { position: absolute; right: 46px; bottom: 46px; z-index: 5; pointer-events: auto;
-  display: inline-flex; align-items: center; gap: 12px; padding: 12px 20px 13px 16px; }
-.edit-space > svg { width: 18px; height: 18px; flex: 0 0 auto; color: #d6d3da; }
-.edit-space .txt { display: flex; flex-direction: column; gap: 2px; line-height: 1; text-align: left; }
-.edit-space .n { font-family: var(--hs-disp); font-weight: 700; font-size: 15px; letter-spacing: 0.07em;
-  text-transform: uppercase; color: var(--bone); }
-.edit-space .s { font-family: var(--hs-mono); font-size: 9px; letter-spacing: 0.2em; color: var(--ash); text-transform: uppercase; }
+/* EDIT SPACE — home-only corner button; material comes from .hs-chrome, this rule
+   only places it (absolute, bottom-right) and re-enables its clicks over the
+   pointer-events:none overlay. Pencil glyph + single label, no sub. */
+.edit-space { position: absolute; right: 46px; bottom: 46px; z-index: 5; pointer-events: auto; }
 
 /* ════════════ idle + entrance keyframes (assignments gated by no-preference) ════════════ */
 /* idle */
@@ -322,13 +371,18 @@
      the slab keeps its layers (bloom, plinth thickness, lit face) but does not
      breathe/glint/lift; the chrome chips don't lift; the view cross-fade is cut. */
   .hs-fight .f-face, .hs-fight .f-plinth, .hs-fight .f-arr,
-  .hs-cluster .seg, .hs-brandblock, .edit-space { transition: none; }
+  .hs-brandblock { transition: none; }
+  /* chrome family: keep the colour/shadow state change (final state visible),
+     drop the lift/press transforms and the sheen sweep */
+  .hs-chrome { transition: border-color var(--hs-fast), background var(--hs-fast),
+               box-shadow var(--hs-fast), color var(--hs-fast); }
+  .hs-chrome::after { display: none; }
   .hs-fight .fbtn:hover .f-face, .hs-fight .fbtn:active .f-face { transform: none; filter: none; }
   .hs-fight .fbtn:hover .f-plinth, .hs-fight .fbtn:active .f-plinth { transform: translateY(6px); }
   .hs-fight .fbtn:hover .f-bloom, .hs-fight .fbtn:active .f-bloom { transform: translate(-50%, -50%); opacity: 0.6; }
   .hs-fight .fbtn:hover .f-arr { transform: none; }
-  .hs-cluster .seg:hover, .hs-cluster .seg:active,
-  .edit-space:hover, .edit-space:active { transform: none; }
+  .hs-chrome:hover, .hs-chrome:active { transform: none; }
+  .hs-chrome:hover::after { animation: none; }
   .hs-view-enter-active, .hs-view-leave-active { transition: none; }
   .hs-view-enter-from, .hs-view-leave-to { transform: none; }
 }
@@ -345,11 +399,11 @@
   .hs-brandblock { height: auto; gap: 9px; }
   .hs-brandblock .logo-mark { width: 32px; height: 32px; }
   .hs-brandblock .wm { font-size: 18px; }
-  /* SHOP → icon-only 42px square */
-  .hs-seg-shop { width: 42px; height: 42px; padding: 0; justify-content: center; }
-  .hs-seg-shop .txt { display: none; }
-  /* cabinet → avatar + handle only */
-  .hs-seg-cab .sub, .hs-seg-cab .chev { display: none; }
+  /* SHOP/back → icon-only 44×44 square (label hidden, glyph centred) */
+  .hs-seg-shop { width: 44px; height: 44px; padding: 0; justify-content: center; }
+  .hs-seg-shop .n { display: none; }
+  /* cabinet → 44×44 icon-only (the chrome diamond) */
+  .hs-seg-cab { width: 44px; height: 44px; padding: 0; }
   /* FIGHT — full-width slab, lower, smaller word */
   .hs-dock { height: 150px; padding-bottom: 34px; }
   .hs-fight { width: min(340px, 86%); }

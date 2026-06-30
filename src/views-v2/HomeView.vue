@@ -29,14 +29,17 @@
         <LogoMark /><span class="wm">{{ t.home.brand }}</span>
       </button>
       <div class="hs-cluster">
-        <button type="button" class="seg hs-seg-shop" :class="{ active: view === 'shop' }" @click="onShop">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M5 8h14l-1 12H6L5 8Z" /><path d="M9 8V6a3 3 0 0 1 6 0v2" /></svg>
-          <span class="txt"><span class="n">{{ t.home.shop }}</span><span class="s">{{ t.home.shopSub }}</span></span>
+        <!-- SHOP on home; the SAME chip becomes BACK (arrow) while the shop is open
+             (onShop toggles view). One matte-chrome family member — glyph + label. -->
+        <button type="button" class="hs-chrome hs-seg-shop" @click="onShop"
+                :aria-label="view === 'shop' ? t.home.back : t.home.shop">
+          <svg v-if="view === 'shop'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6" /></svg>
+          <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1 11H6L5 8Z" /><path d="M9 8V6.5a3 3 0 0 1 6 0V8" /></svg>
+          <span class="n">{{ view === 'shop' ? t.home.back : t.home.shop }}</span>
         </button>
-        <button type="button" class="seg hs-seg-cab" @click="cabinetOpen = true">
-          <span class="av"><span /></span>
-          <span class="txt"><span class="hand">{{ t.cabinet.chipHandle }}</span><span class="sub">{{ t.cabinet.chipOpen }}</span></span>
-          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
+        <!-- cabinet — chrome diamond avatar only (no handle/role text, no chevron) -->
+        <button type="button" class="hs-chrome hs-seg-cab" @click="cabinetOpen = true" :aria-label="t.cabinet.chipOpen">
+          <span class="av" aria-hidden="true"></span>
         </button>
       </div>
     </div>
@@ -75,9 +78,9 @@
              (.chrome: glass + hairline frame + bottom-right bevel), no pink / no
              glow (those stay on FIGHT). Own scoped class, never the shared .hs-*
              top strip; not shown in the shop or during arrange. -->
-        <button type="button" class="edit-space" @click="onCustomize" :aria-label="t.home.editSpace">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z" /></svg>
-          <span class="txt"><span class="n">{{ t.home.editSpace }}</span><span class="s">{{ t.home.editSpaceSub }}</span></span>
+        <button type="button" class="hs-chrome edit-space" @click="onCustomize" :aria-label="t.home.editSpace">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L18.5 9.5a2.12 2.12 0 0 0-3-3L5 17v3z" /><path d="M13.5 6.5l3 3" /></svg>
+          <span class="n">{{ t.home.editSpace }}</span>
         </button>
       </template>
 
