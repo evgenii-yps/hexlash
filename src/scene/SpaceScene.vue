@@ -62,15 +62,19 @@ const LEADER = {
 };
 // Camera — free orbit like PVE/Home, but pulled back + a touch higher so the whole
 // field reads. (CAM_BASE distance + zoom corridor here.)
+// RTS observer camera: the tilt is FIXED (no rotation, no looking under the field);
+// LMB-drag / one-finger swipe PANS the field, wheel / pinch DOLLIES within a corridor,
+// and the pan target is clamped to the field bounds so it never drifts into the void.
 const CAM = {
-  base: new THREE.Vector3(12.5, 15.5, 21.5), // ≈ dist 29
   fov: 44,
-  minDistance: 10,
-  maxDistance: 44,
-  minPolarAngle: 0.24,
-  maxPolarAngle: 1.36,   // never dip under the field
-  targetLift: 1.0,       // orbit pivot above the field centre
-  autoRotateSpeed: 0.42,
+  tiltDeg: 58,       // fixed camera tilt from vertical (polar angle) — over-the-shoulder overview
+  headingDeg: 30,    // fixed azimuth (which side the observer sits) — never changes (rotation off)
+  dist: 34,          // initial dolly distance (inside the zoom corridor) — starts near "whole field"
+  zoomMin: 12,       // dolly-in limit — close enough to read individual fighters
+  zoomMax: 46,       // dolly-out limit — whole field in view
+  targetLift: 1.0,   // pan-plane height above the field top (target.y is held here)
+  panMargin: 3,      // target may pan this far past the field half-extent (small overshoot)
+  damping: 0.08,
 };
 // Locked core palette (task snapshot): ONSLAUGHT / RAIDER / BULWARK / AMBUSH. These
 // live on the BODIES as core light/rim (buildFighter) — never a second accent glow.
@@ -253,6 +257,7 @@ let director = null;
 let prevT = 0;
 let reduced = false;
 let lamps = null, backdrop = null, field = null, leaderMarker = null;
+let panTargetY = 0; // held pan-plane height for the RTS camera target
 const roster = []; // [{ fighter }]
 
 function lowPowerDevice() {
@@ -281,7 +286,8 @@ onMounted(() => {
   scene.fog = new THREE.FogExp2(0x070811, 0.019); // lighter than PVE → the big field reads, edges fade
 
   camera = new THREE.PerspectiveCamera(CAM.fov, w / h, 0.1, 200);
-  camera.position.copy(CAM.base);
+  // camera.position is set with the controls below, at a FIXED RTS offset from the
+  // pan target (fixed tilt + heading + initial distance).
 
   // Lighting — same recipe as the arena/home (one warm key + cool fill).
   const key = new THREE.DirectionalLight(0xfff2e8, 2.2);
@@ -365,21 +371,50 @@ onMounted(() => {
 
   // --- Orbit around the FIELD CENTRE (stable pivot — never follows anyone). Pulled
   //     back + a touch higher so the whole field reads. ---
+  // --- RTS observer camera: pan the field (no rotation), dolly within a corridor,
+  //     tilt locked. The camera sits at a FIXED spherical offset from the target
+  //     (fixed tilt + heading); panning slides the target across the ground plane,
+  //     dolly moves along the view ray so the tilt is preserved automatically. ---
+  const camPhi = THREE.MathUtils.degToRad(CAM.tiltDeg);   // polar angle from +Y (the fixed tilt)
+  const camTheta = THREE.MathUtils.degToRad(CAM.headingDeg);
+  panTargetY = topY + CAM.targetLift;
+
   controls = new OrbitControls(camera, renderer.domElement);
-  controls.target.set(0, topY + CAM.targetLift, 0);
+  controls.target.set(0, panTargetY, 0);
+  // place the camera at the fixed overview offset (heading/tilt/initial distance)
+  const camOffset = new THREE.Vector3().setFromSphericalCoords(CAM.dist, camPhi, camTheta);
+  camera.position.copy(controls.target).add(camOffset);
+
   controls.enableDamping = true;
-  controls.dampingFactor = 0.08;
-  controls.enablePan = false;
-  controls.rotateSpeed = 0.9;
+  controls.dampingFactor = CAM.damping;
+  controls.enableRotate = false;                 // no orbit around the point
+  controls.enablePan = true;                     // drag pans the field instead
+  controls.screenSpacePanning = false;           // pan along the ground plane (not the screen plane)
   controls.zoomSpeed = 0.9;
-  controls.minDistance = CAM.minDistance;
-  controls.maxDistance = CAM.maxDistance;
-  controls.minPolarAngle = CAM.minPolarAngle;
-  controls.maxPolarAngle = CAM.maxPolarAngle;
-  controls.autoRotate = !reduced;
-  controls.autoRotateSpeed = CAM.autoRotateSpeed;
-  controls.addEventListener('start', () => { controls.autoRotate = false; });
+  controls.panSpeed = 0.9;
+  controls.minDistance = CAM.zoomMin;
+  controls.maxDistance = CAM.zoomMax;
+  // lock the tilt as insurance — even though rotation is off, pin polar min=max so the
+  // angle can never be nudged (no looking under the field).
+  controls.minPolarAngle = camPhi;
+  controls.maxPolarAngle = camPhi;
+  // LMB / one-finger = PAN; wheel / middle / two-finger = DOLLY (pinch also pans).
+  controls.mouseButtons = { LEFT: THREE.MOUSE.PAN, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN };
+  controls.touches = { ONE: THREE.TOUCH.PAN, TWO: THREE.TOUCH.DOLLY_PAN };
   controls.update();
+
+  // Pan clamp — OrbitControls has no built-in pan bounds, so pin the target into a
+  // rectangle sized by the field (half-extent + margin). We shift the CAMERA by the
+  // same correction so the fixed offset (tilt + distance) is preserved, and hold
+  // target.y on the pan plane. Called each frame after controls.update().
+  const panBound = FIELD.size / 2 + CAM.panMargin;
+  const clampPan = () => {
+    const tx = THREE.MathUtils.clamp(controls.target.x, -panBound, panBound);
+    const tz = THREE.MathUtils.clamp(controls.target.z, -panBound, panBound);
+    if (tx !== controls.target.x) { camera.position.x += tx - controls.target.x; controls.target.x = tx; }
+    if (tz !== controls.target.z) { camera.position.z += tz - controls.target.z; controls.target.z = tz; }
+    if (controls.target.y !== panTargetY) { camera.position.y += panTargetY - controls.target.y; controls.target.y = panTargetY; }
+  };
 
   // --- Render loop. FPS-capped; elapsed time drives wander + idle + beacon. ---
   clock = new THREE.Clock();
@@ -394,6 +429,7 @@ onMounted(() => {
     prevT = t;
 
     controls.update();
+    clampPan(); // keep the pan target inside the field (OrbitControls has no pan bounds)
     if (!reduced) director?.update(t, dt);
     for (const r of roster) r.fighter.update(t, camera);
 
