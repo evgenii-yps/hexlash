@@ -112,6 +112,17 @@ const v2Routes = [
                 component: () => import('@/views-v2/ModeSelectView.vue'),
             },
             {
+                // Ground Select — the ARENA / SPACE fork. The Mode Select PVP door
+                // opens this; ARENA → /play (core select), SPACE is locked (SOON,
+                // no-op). A normal 2D pre-fight screen (no meta.scene3d / meta.arena
+                // — no 3D scene, so it stays off the sceneTransition layer; no
+                // requireCore — ARENA is the way TO core select, must be reachable
+                // without a core).
+                path: 'ground',
+                name: 'V2GroundSelect',
+                component: () => import('@/views-v2/GroundSelectView.vue'),
+            },
+            {
                 // PVE space — a standalone 3D scene (PveScene): the club roster walks
                 // the plate, the trainer-legend floats above. Visual only. A normal
                 // pre-fight screen (no meta.arena, no requireCore).

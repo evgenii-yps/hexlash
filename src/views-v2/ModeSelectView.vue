@@ -1,6 +1,7 @@
 <!-- ModeSelectView — the PVE / PVP fork (/play/mode). Sits between the home FIGHT
-     button and the existing flows: PVE → /play/pve (stub), PVP → /play (core
-     select). Ported from the Claude Design handoff (docs/design-handoff/mode_select)
+     button and the existing flows: PVE → /play/pve (stub), PVP → /play/ground
+     (Ground Select: ARENA → core select / SPACE locked). Ported from the Claude
+     Design handoff (docs/design-handoff/mode_select)
      onto the real shell. No top strip on this screen — Mode Select carries no
      brand / SHOP / cabinet chrome, only the ← BACK control (→ /play/home); the
      cabinet stays reachable from /play/home. No SEASON 0.
@@ -90,7 +91,7 @@ function goHome() { router.push('/play/home'); }
 // Our navigation contract (NOT the prototype's localStorage stub): arm the door
 // for a beat (commit feedback), then route. PVE → training stub, PVP → core select.
 function pickPve() { if (armed.value) return; armed.value = 'pve'; setTimeout(() => router.push('/play/pve'), 190); }
-function pickPvp() { if (armed.value) return; armed.value = 'pvp'; setTimeout(() => router.push('/play'), 190); }
+function pickPvp() { if (armed.value) return; armed.value = 'pvp'; setTimeout(() => router.push('/play/ground'), 190); }
 </script>
 
 <style scoped>
