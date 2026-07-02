@@ -60,21 +60,25 @@ const LEADER = {
   pulse: 0.16,          // gentle opacity breathing (reduced-motion → off)
   pulseSpeed: 1.3,
 };
-// Camera — free orbit like PVE/Home, but pulled back + a touch higher so the whole
-// field reads. (CAM_BASE distance + zoom corridor here.)
-// RTS observer camera: the tilt is FIXED (no rotation, no looking under the field);
-// LMB-drag / one-finger swipe PANS the field, wheel / pinch DOLLIES within a corridor,
-// and the pan target is clamped to the field bounds so it never drifts into the void.
+// Camera — free orbit around the field (rotate / dolly / pan) with a soft AUTO-RETURN
+// to a fixed HOME framing after the input goes idle. HOME = the initial view: the
+// spherical offset (tiltDeg / headingDeg / dist) from the field-centre target. Polar
+// clamps keep it from flipping over the top or dipping under the field; the pan is
+// still clamped to the field bounds (clampPan).
 const CAM = {
   fov: 44,
-  tiltDeg: 58,       // fixed camera tilt from vertical (polar angle) — over-the-shoulder overview
-  headingDeg: 30,    // fixed azimuth (which side the observer sits) — never changes (rotation off)
-  dist: 34,          // initial dolly distance (inside the zoom corridor) — starts near "whole field"
-  zoomMin: 12,       // dolly-in limit — close enough to read individual fighters
-  zoomMax: 46,       // dolly-out limit — whole field in view
-  targetLift: 1.0,   // pan-plane height above the field top (target.y is held here)
-  panMargin: 3,      // target may pan this far past the field half-extent (small overshoot)
-  damping: 0.08,
+  tiltDeg: 58,        // HOME tilt from vertical (the resting overview angle)
+  headingDeg: 30,     // HOME azimuth (which side the camera rests)
+  dist: 34,           // HOME dolly distance (inside the zoom corridor)
+  zoomMin: 12,        // dolly-in limit — close enough to read individual fighters
+  zoomMax: 46,        // dolly-out limit — whole field in view
+  targetLift: 1.0,    // pan-plane height above the field top (target.y is held here)
+  panMargin: 3,       // target may pan this far past the field half-extent (small overshoot)
+  damping: 0.08,      // orbit damping (smooth manual motion)
+  polarMin: 0.18,     // ~10° from vertical — top clamp (no flipping over the top)
+  polarMax: 1.48,     // ~85° — bottom clamp (never look under the field)
+  returnDelay: 2.0,   // idle seconds after input ends before the camera drifts home
+  returnLerp: 0.05,   // per-frame ease toward home — soft ~1–1.5s glide, no snap
 };
 // Locked core palette (task snapshot): ONSLAUGHT / RAIDER / BULWARK / AMBUSH. These
 // live on the BODIES as core light/rim (buildFighter) — never a second accent glow.
@@ -313,39 +317,55 @@ onMounted(() => {
     scene.add(leaderMarker.group);
   }
 
-  // --- Orbit around the FIELD CENTRE (stable pivot — never follows anyone). Pulled
-  //     back + a touch higher so the whole field reads. ---
-  // --- RTS observer camera: pan the field (no rotation), dolly within a corridor,
-  //     tilt locked. The camera sits at a FIXED spherical offset from the target
-  //     (fixed tilt + heading); panning slides the target across the ground plane,
-  //     dolly moves along the view ray so the tilt is preserved automatically. ---
-  const camPhi = THREE.MathUtils.degToRad(CAM.tiltDeg);   // polar angle from +Y (the fixed tilt)
+  // --- Free orbit around the field (rotate / dolly / pan) with a soft AUTO-RETURN to
+  //     a fixed HOME framing after the input goes idle. The camera sits at the HOME
+  //     spherical offset (tilt + heading + dist) from the field-centre target; the
+  //     user may orbit/zoom/pan freely, then it eases back home; any new input
+  //     cancels the return so it never fights the user's hands. ---
+  const camPhi = THREE.MathUtils.degToRad(CAM.tiltDeg);   // HOME polar angle from +Y
   const camTheta = THREE.MathUtils.degToRad(CAM.headingDeg);
   panTargetY = groundY + CAM.targetLift;
 
   controls = new OrbitControls(camera, renderer.domElement);
   controls.target.set(0, panTargetY, 0);
-  // place the camera at the fixed overview offset (heading/tilt/initial distance)
+  // place the camera at the fixed HOME offset (heading / tilt / initial distance)
   const camOffset = new THREE.Vector3().setFromSphericalCoords(CAM.dist, camPhi, camTheta);
   camera.position.copy(controls.target).add(camOffset);
 
   controls.enableDamping = true;
   controls.dampingFactor = CAM.damping;
-  controls.enableRotate = false;                 // no orbit around the point
-  controls.enablePan = true;                     // drag pans the field instead
-  controls.screenSpacePanning = false;           // pan along the ground plane (not the screen plane)
+  controls.enableRotate = true;                  // free orbit restored
+  controls.enablePan = true;                     // pan kept (RMB / two-finger), still field-clamped
+  controls.screenSpacePanning = false;           // pan along the ground plane (works with clampPan)
   controls.zoomSpeed = 0.9;
   controls.panSpeed = 0.9;
+  controls.rotateSpeed = 0.9;
   controls.minDistance = CAM.zoomMin;
   controls.maxDistance = CAM.zoomMax;
-  // lock the tilt as insurance — even though rotation is off, pin polar min=max so the
-  // angle can never be nudged (no looking under the field).
-  controls.minPolarAngle = camPhi;
-  controls.maxPolarAngle = camPhi;
-  // LMB / one-finger = PAN; wheel / middle / two-finger = DOLLY (pinch also pans).
-  controls.mouseButtons = { LEFT: THREE.MOUSE.PAN, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN };
-  controls.touches = { ONE: THREE.TOUCH.PAN, TWO: THREE.TOUCH.DOLLY_PAN };
+  // safe polar clamps — can't flip over the top or dip under the field
+  controls.minPolarAngle = CAM.polarMin;
+  controls.maxPolarAngle = CAM.polarMax;
+  // familiar Home/PVE input: LMB / one-finger = ROTATE, wheel / middle = DOLLY,
+  // RMB / two-finger = PAN (pinch = DOLLY_PAN).
+  controls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN };
+  controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
   controls.update();
+
+  // HOME framing (the resting view = exactly the initial one) — fixed, never recomputed.
+  const homeTarget = controls.target.clone();
+  const homeOffset = camera.position.clone().sub(controls.target);
+  const homeCamPos = homeTarget.clone().add(homeOffset); // resting camera position (for the settle test)
+
+  // Auto-return state. On input 'start' → interacting (cancel any return); on 'end' →
+  // stamp the idle time. After CAM.returnDelay idle the loop eases target + camera home.
+  let userInteracting = false;
+  let returning = false;
+  let idleSince = null;   // clock time (s) the input went idle; null while interacting / done
+  let nowT = 0;           // latest loop time — read by the input handlers below
+  controls.addEventListener('start', () => { userInteracting = true; returning = false; idleSince = null; });
+  controls.addEventListener('end', () => { userInteracting = false; idleSince = nowT; });
+  const _homeDesired = new THREE.Vector3();
+  const RETURN_EPS = 0.01;
 
   // Pan clamp — OrbitControls has no built-in pan bounds, so pin the target into a
   // rectangle sized by the field (half-extent + margin). We shift the CAMERA by the
@@ -371,6 +391,23 @@ onMounted(() => {
     const t = clock.getElapsedTime();
     const dt = t - prevT;
     prevT = t;
+    nowT = t;
+
+    // Auto-return: after the input has been idle for CAM.returnDelay, ease the target
+    // + camera back to HOME. Runs BEFORE controls.update()/clampPan. Any new input
+    // sets userInteracting (via 'start') and cancels it immediately.
+    if (!userInteracting) {
+      if (!returning && idleSince !== null && (t - idleSince) >= CAM.returnDelay) returning = true;
+      if (returning) {
+        const k = reduced ? 1 : CAM.returnLerp; // reduced-motion → snap home (no glide)
+        controls.target.lerp(homeTarget, k);
+        _homeDesired.copy(controls.target).add(homeOffset);
+        camera.position.lerp(_homeDesired, k);
+        // settle only when BOTH are home — a rotate-only move leaves the target home
+        // while the camera still needs to glide, so the camera check is what gates it.
+        if (controls.target.distanceTo(homeTarget) < RETURN_EPS && camera.position.distanceTo(homeCamPos) < RETURN_EPS) { returning = false; idleSince = null; }
+      }
+    }
 
     controls.update();
     clampPan(); // keep the pan target inside the field (OrbitControls has no pan bounds)
