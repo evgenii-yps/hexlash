@@ -123,6 +123,16 @@ const v2Routes = [
                 component: () => import('@/views-v2/GroundSelectView.vue'),
             },
             {
+                // Space — a standalone 3D preview scene (SpaceScene): a big hex field,
+                // a roster wandering it, one glowing leader. Reached from the Ground
+                // Select SPACE door. Visual only (no combat/match). A heavy 3D route →
+                // meta.scene3d so the load layer covers it; no requireCore (preview).
+                path: 'space',
+                name: 'V2Space',
+                meta: { scene3d: true },
+                component: () => import('@/views-v2/SpaceView.vue'),
+            },
+            {
                 // PVE space — a standalone 3D scene (PveScene): the club roster walks
                 // the plate, the trainer-legend floats above. Visual only. A normal
                 // pre-fight screen (no meta.arena, no requireCore).
@@ -210,7 +220,11 @@ router.beforeEach((to, from, next) => {
         if (to.meta?.arena) {
             beginFightCard();
         } else if (to.meta?.scene3d) {
-            beginFade(to.name === 'V2Pve' ? 'hexlash:pve-ready' : 'hexlash:home-ready');
+            beginFade(
+                to.name === 'V2Pve' ? 'hexlash:pve-ready'
+                : to.name === 'V2Space' ? 'hexlash:space-ready'
+                : 'hexlash:home-ready',
+            );
         } else if (transitionState.mode !== 'none') {
             endSceneTransition();
         }

@@ -153,6 +153,7 @@ initializeApp().then(() => {
             readyEvent = 'hexlash:arena-ready'; readyLatch = '__hexArenaReady';
         } else if (meta.scene3d) {
             if (route.name === 'V2Pve') { readyEvent = 'hexlash:pve-ready'; readyLatch = '__hexPveReady'; }
+            else if (route.name === 'V2Space') { readyEvent = 'hexlash:space-ready'; readyLatch = '__hexSpaceReady'; }
             else { readyEvent = 'hexlash:home-ready'; readyLatch = '__hexHomeReady'; }
         }
 

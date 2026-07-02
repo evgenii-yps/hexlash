@@ -68,6 +68,14 @@ export default {
     fightSub: "SEND YOUR FIGHTER TO THE ARENA",
     editSpace: "EDIT SPACE",     // corner button → decor arrange mode (single-label chip)
   },
+  // Space — the /play/space 3D preview (Ground Select → SPACE door) + the door's
+  // now-active affordance. UI is en-only.
+  space: {
+    // matte "mode coming soon" note over the preview scene (SOON mark lives with it)
+    previewNote: "Space — a big field, everyone for themselves. Mode coming soon. This is a preview of how it will look.",
+    // Ground Select SPACE door — the ENTER-slot affordance (was LOCKED)
+    doorEnter: "Enter →",
+  },
   cabinet: {
     // Entry chip (top-left of the home) — the single door into the cabinet.
     chipHandle: "GHOST_0xA4",

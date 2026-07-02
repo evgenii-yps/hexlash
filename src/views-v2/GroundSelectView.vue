@@ -1,6 +1,7 @@
 <!-- GroundSelectView — the ARENA / SPACE ground fork (/play/ground). Sits between
      the Mode Select PVP door and Core Select: after PVP the player chooses WHERE
-     to fight — ARENA (live → /play, Core Select) or SPACE (locked, SOON). A normal
+     to fight — ARENA (live → /play, Core Select) or SPACE (→ /play/space, the
+     preview hall; unlocked — its SOON mark moved into the scene). A normal
      2D pre-fight screen (no meta.scene3d / meta.arena — no 3D scene, so it never
      touches the sceneTransition layer). Younger sibling of ModeSelectView, one
      level deeper — same void, same fight-card doors, same type.
@@ -84,15 +85,14 @@
           <span class="door-bar" aria-hidden="true"></span>
         </button>
 
-        <!-- ───────── SPACE — locked teaser, matte chrome, never glows ───────── -->
+        <!-- ───────── SPACE — now a live preview door, still matte chrome (never pink,
+             never glows on THIS screen — the leader glow lives inside /play/space) ───────── -->
         <button
           type="button"
           class="door is-space"
-          aria-disabled="true"
-          aria-label="Space — big field, last club standing. Coming soon."
+          aria-label="Space — big field, last club standing. Preview."
           @click="pickSpace"
         >
-          <span class="door-badge">SOON</span>
           <span class="door-tick tl" aria-hidden="true"></span>
           <span class="door-tick tr" aria-hidden="true"></span>
 
@@ -129,8 +129,8 @@
           </div>
 
           <div class="door-foot">
-            <span class="door-note">Many clubs · <b>locked</b></span>
-            <span class="door-enter is-locked">LOCKED</span>
+            <span class="door-note">Many clubs · <b>preview</b></span>
+            <span class="door-enter">{{ t.space.doorEnter }}</span>
           </div>
 
           <span class="door-bar" aria-hidden="true"></span>
@@ -143,6 +143,7 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { t } from '@/locales/index.js';
 
 const router = useRouter();
 
@@ -156,8 +157,9 @@ function goBack() { router.push('/play/mode'); }
 // (the reference's hex.prefight.ground stub is dead — real navigation replaces it).
 function pickArena() { if (armed.value) return; armed.value = 'arena'; setTimeout(() => router.push('/play'), 190); }
 
-// SPACE is locked (SOON) — click is a deliberate no-op stub.
-function pickSpace() { /* locked */ }
+// SPACE now opens the preview hall (/play/space). It stays matte chrome on THIS
+// screen — no pink, no glow here (the leader glow lives inside the scene).
+function pickSpace() { router.push('/play/space'); }
 </script>
 
 <style scoped>
@@ -313,11 +315,11 @@ function pickSpace() { /* locked */ }
 .is-arena:hover .g-sd, .is-arena.is-armed .g-sd { fill: #fff; filter: drop-shadow(0 0 5px color-mix(in srgb, var(--hex-primary) 85%, transparent)); }
 
 /* ═══════════ SPACE — matte chrome, locked, never glows, never pink ═══════════ */
-.is-space { cursor: not-allowed; background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.008)), var(--panel-space); }
-.is-space > * { pointer-events: none; } /* click lands on the button surface — a no-op */
+/* SPACE is now a live preview door (cursor pointer) but stays MATTE CHROME on this
+   screen — no pink, no bloom, no rise. Its ENTER slot is active chrome. */
+.is-space { cursor: pointer; background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.008)), var(--panel-space); }
 .is-space .door-title, .is-space .door-sub { opacity: 0.72; }
 .is-space .door-note b { color: var(--locked); }
-.is-space .door-enter.is-locked { color: var(--locked-2); }
 .is-space:focus-visible { outline: 2px solid var(--chrome); outline-offset: -2px; }
 /* the ONLY hover response: a hairline chrome lift — no colour, no bloom, no rise */
 .is-space:hover { border-color: var(--chrome); }
@@ -331,17 +333,8 @@ function pickSpace() { /* locked */ }
 .is-space .g-club.s { fill: rgba(255, 255, 255, 0.18); }
 .is-space:hover .g-field { stroke: rgba(255, 255, 255, 0.4); }
 .is-space:hover .g-club { fill: rgba(255, 255, 255, 0.5); }
-
-/* SOON badge — matte-chrome corner tab, top-right */
-.door-badge {
-  position: absolute; top: 0; right: 0; z-index: 5; pointer-events: none;
-  display: inline-flex; align-items: center; gap: 7px;
-  font-family: var(--hs-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.28em; text-transform: uppercase;
-  color: var(--chrome-txt); padding: 8px 14px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.03));
-  border-left: 1px solid var(--line2); border-bottom: 1px solid var(--line2); backdrop-filter: blur(6px);
-}
-.door-badge::before { content: ""; width: 6px; height: 6px; background: var(--locked); transform: rotate(45deg); }
+/* (the SOON corner badge was removed with the door's unlock — the SOON mark now
+   lives inside /play/space, on the honest "mode coming soon" note.) */
 
 /* ── signature motion — only when ARENA is lit; at rest the screen is calm ── */
 @media (prefers-reduced-motion: no-preference) {
