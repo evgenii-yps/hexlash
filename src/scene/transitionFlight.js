@@ -312,6 +312,7 @@ export function createTransitionFlight(deps) {
   const _lastLook = new THREE.Vector3(); // the flight's live look point (see currentLook)
   let haveLastLook = false;
   let slow = 0;              // consecutive stalled frames
+  let stalled = false;       // …and whether they actually cut a flight short (dev readout)
   let flights = 0;           // how many this session (2nd+ runs shortened)
   const _look = new THREE.Vector3();
   const _p = new THREE.Vector3();
@@ -507,6 +508,7 @@ export function createTransitionFlight(deps) {
     haze.group.visible = true;
     el = 0;
     slow = 0;
+    stalled = false;
     active = true;
     settling = 0;
     settleFrom = null;
@@ -575,7 +577,7 @@ export function createTransitionFlight(deps) {
     // where the plates are still waking up) ride it out.
     if (el > o.graceSec) {
       slow = dtRaw > o.lowFpsDt ? slow + 1 : 0;
-      if (slow >= o.lowFpsFrames) { skip(); return true; }
+      if (slow >= o.lowFpsFrames) { stalled = true; skip(); return true; }
     }
 
     // ── orientation change mid-flight ──
@@ -635,6 +637,8 @@ export function createTransitionFlight(deps) {
     /** Reset the session counter (used when the scene remounts). */
     resetSession() { flights = 0; },
     get active() { return active; },
+    /** Did the low-FPS watchdog ride the last flight out early? (dev readout) */
+    get stalled() { return stalled; },
     get direction() { return dir; },
     get progress() { return dur > 0 ? clamp01(el / dur) : 1; },
   };

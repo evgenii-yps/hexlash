@@ -30,6 +30,9 @@ import { setHomeFighterTag, clearHomeFighterTag } from './homeFighterTag.js';
 import { buildModePlates, MODE_PLATES } from './modePlates.js';
 import { createTransitionFlight, FLIGHT } from './transitionFlight.js';
 import { setModePlateTag, setModePlateHover, clearModePlateTags } from './modePlateTags.js';
+import {
+  PERF_ON, perfFrame, perfFlightStart, perfFlightEnd, setPerfCap, setPlateCost, countTriangles,
+} from './perfProbe.js';
 
 const props = defineProps({
   coreHue: { type: String, default: '#FF0069' }, // fighter core colour (per-core hue)
@@ -712,6 +715,7 @@ function onFlightArrive(where) {
     if (canvasEl.value) canvasEl.value.style.cursor = '';
   }
   controls.update();
+  if (PERF_ON) perfFlightEnd(flight?.stalled);
   emit('arrived', where);
 }
 
@@ -739,6 +743,7 @@ function goStage(next, animated) {
     return;
   }
   flight.setLookHint(controls.target);
+  if (PERF_ON) perfFlightStart();
   flight.play(want === 'select' ? 'mode' : 'home', { onArrive: () => onFlightArrive(want) });
 }
 
@@ -932,6 +937,10 @@ onMounted(() => {
   //     transition time: a fourth heavy stage assembled the moment FIGHT is pressed
   //     would stall the exact beat the flight is supposed to be cinema. They cost a
   //     handful of meshes and start hidden — nothing loads when the camera flies.
+  // Timed only under ?perf=1 — the whole "keep them in the home scene vs. build
+  // them lazily on FIGHT" decision hangs on this number, so it is worth being able
+  // to read it off a real phone (see perfProbe.js). Off, it costs nothing at all.
+  const platesT0 = PERF_ON ? performance.now() : 0;
   modePlates = buildModePlates({
     maxAniso: renderer.capabilities.getMaxAnisotropy(),
     homeW: arena.refs.W,
@@ -939,9 +948,15 @@ onMounted(() => {
     homeHeight: 1,
     reduced,
   });
+  const platesMs = PERF_ON ? performance.now() - platesT0 : 0;
   modePlates.group.position.set(0, FLIGHT.modeY, -FLIGHT.modeZ);
   modePlates.layout(w / h);
   scene.add(modePlates.group);
+  if (PERF_ON) {
+    const tris = countTriangles(modePlates.group);
+    setPlateCost(platesMs, tris.drawn, tris.hidden);
+    setPerfCap(targetFPS); // the loop is FPS-capped; the readout prints it for context
+  }
 
   // --- The flight director. Owns the camera path, the fog envelope, the haze the
   //     camera passes through and the HEXLASH sign standing in the corridor.
@@ -1004,6 +1019,7 @@ onMounted(() => {
     // Plates only respond (hover light / emblem life) once the camera has landed —
     // and they cost nothing at all while the home is on screen, where they are hidden.
     if (modePlates?.group.visible) modePlates.update(t, dt, stage === 'select' && !flying);
+    if (PERF_ON) perfFrame(dt, flying); // dev readout only — see perfProbe.js
 
     // Identity label: project the point above the fighter's head to screen px and
     // gate the show flag on zoom proximity (hysteresis). HomeView reads this to

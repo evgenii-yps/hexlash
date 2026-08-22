@@ -177,6 +177,24 @@
          dim instead (the camera is simply placed on the other framing). -->
     <div class="stage-dim" :class="{ 'is-on': dim }" aria-hidden="true"></div>
 
+    <!-- ───────── dev performance readout ─────────
+         Off unless the address carries ?perf=1, so it is a preview tool and not a
+         feature: with the parameter absent nothing here renders and nothing is
+         sampled in the frame loop (see perfProbe.js). Matte mono, muted ink, no
+         glow and no pink — it must never read as part of the game. -->
+    <div v-if="PERF_ON" class="perf-hud" aria-hidden="true">
+      <div>FPS {{ perfState.fps }}<span class="pd">/{{ perfState.cap }}</span></div>
+      <div>
+        FLIGHT MIN {{ perfState.minFps || '—' }}
+        <span class="pd">· STALL {{ perfState.stalled ? 'YES' : '—' }}</span>
+      </div>
+      <div>
+        PLATES {{ perfState.plateBuildMs }}MS
+        <span class="pd">· {{ perfState.plateTris }} TRI (+{{ perfState.plateHiddenTris }} HIT)</span>
+      </div>
+      <div class="pd">FLIGHTS {{ perfState.flights }}</div>
+    </div>
+
     <!-- Player Cabinet — sliding panel that slides in from the RIGHT (the same edge
          the strip's cabinet entry sits on). Always mounted so it opens over the home
          AND the shop; closed by ✕ / scrim-tap / Esc. Fixed-position, own pointer-events. -->
@@ -202,6 +220,7 @@ import PlayerCabinet from '@/views-v2/PlayerCabinet.vue';
 import { LogoMark } from '@/components/landing/icons.js';
 import { homeFighterTag } from '@/scene/homeFighterTag.js';
 import { modePlateTags } from '@/scene/modePlateTags.js';
+import { PERF_ON, perfState } from '@/scene/perfProbe.js';
 import '@/styles/home.css';
 import '@/styles/cabinet.css';
 
@@ -252,7 +271,9 @@ function onArrived(where) {
   flying.value = false;
   dim.value = false;
   const want = where === 'select' ? MODE_PATH : HOME_PATH;
-  if (route.path !== want) router.push(want);
+  // Carry the query across: the hop is one scene, so anything the address is
+  // holding (?perf=1 on a preview build) has to survive it and survive a refresh.
+  if (route.path !== want) router.push({ path: want, query: route.query });
 }
 
 // FIGHT no longer navigates — it flies. A second press while the camera is moving
@@ -462,6 +483,19 @@ function onArrangePlace() { arrange.value = false; }
   transition: opacity 0.13s linear;
 }
 .stage-dim.is-on { opacity: 1; }
+
+/* Dev performance readout (?perf=1). Deliberately plain: mono, muted, no panel,
+   no glow, no pink — a preview instrument sitting on top of the game, never a
+   part of it. Top-right so it clears ← BACK and the FIGHT plinth. */
+.perf-hud {
+  position: absolute; right: 12px; top: 84px; z-index: 20;
+  pointer-events: none; user-select: none;
+  font-family: var(--hs-mono, ui-monospace, monospace);
+  font-size: 10px; line-height: 1.65; letter-spacing: 0.08em;
+  text-transform: uppercase; text-align: right;
+  color: #5d5d66;
+}
+.perf-hud .pd { opacity: 0.62; }
 
 /* EDIT SPACE chrome material + the FIGHT plinth live in home.css (the shared
    chrome stylesheet) — EDIT SPACE shares the .chrome material with the top-strip
