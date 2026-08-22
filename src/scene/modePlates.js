@@ -207,12 +207,13 @@ function buildPveEmblem(o, topY) {
   group.add(halo);
 
   const baseY = form.position.y;
-  const tick = (t, lit) => {
+  const tick = (t, lit, presence) => {
     form.rotation.y = t * o.pve.spin;
     form.position.y = baseY + Math.sin(t * o.pve.bobSpeed) * o.pve.bob;
     halo.position.y = form.position.y;
-    mat.emissiveIntensity = THREE.MathUtils.lerp(o.pve.restEmissive, o.pve.litEmissive, lit);
-    haloMat.opacity = o.pve.haloOpacity * lit;
+    mat.color.copy(amber).multiplyScalar(0.42 * presence);
+    mat.emissiveIntensity = THREE.MathUtils.lerp(o.pve.restEmissive, o.pve.litEmissive, lit) * presence;
+    haloMat.opacity = o.pve.haloOpacity * lit * presence;
   };
   const still = () => { // reduced motion: hold the pose, keep the lit response
     form.rotation.y = 0;
@@ -274,9 +275,10 @@ function buildPvpScar(o, halfW, halfD, topY) {
   });
   addRibbon(o.pvp.coreWidth, topY + 0.01, coreMat);
 
-  const tick = (_t, lit) => {
-    haloMat.opacity = o.pvp.haloOpacity * lit;
-    coreMat.opacity = o.pvp.coreOpacity * lit;
+  const tick = (_t, lit, presence) => {
+    grooveMat.opacity = 0.9 * presence;
+    haloMat.opacity = o.pvp.haloOpacity * lit * presence;
+    coreMat.opacity = o.pvp.coreOpacity * lit * presence;
   };
   const dispose = () => {
     group.children.forEach((m) => m.geometry?.dispose());
@@ -298,7 +300,7 @@ function buildPvpScar(o, halfW, halfD, topY) {
  *   reduced    — prefers-reduced-motion (emblems hold still, lit response kept)
  *
  * @returns {{ group, layout, bounds, setHover, hovered, update, captionAnchor,
- *             pickables, setVisible, dispose }}
+ *             pickables, dispose }}
  *   layout(aspect)     — side-by-side (landscape) vs stacked-in-depth (portrait)
  *   bounds()           — { spanX, spanZ, topY, emblemTop } of the CURRENT layout
  *   setHover(id|null)  — light exactly one plate; the other sinks to dimLevel
@@ -389,8 +391,16 @@ export function buildModePlates(opts) {
   }
 
   const _c = new THREE.Color();
-  function update(t, dt, active) {
+  /**
+   * @param active   the camera has landed at the mode stage (plates may respond)
+   * @param presence 0 … 1 — how far down the corridor the camera is standing. From
+   *   the home end the plates sink to a suggestion in the haze rather than being
+   *   switched off: turning them off would tear a hole in the world the moment the
+   *   player orbits at the home and looks this way.
+   */
+  function update(t, dt, active, presence = 1) {
     const k = 1 - Math.exp(-o.litLerp * Math.min(0.05, dt));
+    const pres = THREE.MathUtils.clamp(presence, 0, 1);
     for (const id of ['pve', 'pvp']) {
       const p = plates[id];
       // Targets: the hovered plate lights; with ANY plate hovered the other sinks.
@@ -400,17 +410,17 @@ export function buildModePlates(opts) {
       p.level += (levelTarget - p.level) * k;
 
       // Level rides the matte materials (body / hex / rim) so the unlit plate
-      // recedes; `lit` rides ONLY the accent, so a dim plate never glows.
-      _c.copy(p.baseBody).multiplyScalar(p.level);
+      // recedes; `lit` rides ONLY the accent, so a dim plate never glows. Presence
+      // rides everything — it is the whole plate stepping back into the distance.
+      const m = p.level * pres;
+      _c.copy(p.baseBody).multiplyScalar(m);
       p.slab.bodyMat.color.copy(_c);
-      p.slab.hexMat.opacity = p.baseHex * p.level;
-      p.slab.rimMat.opacity = p.baseRim * p.level;
+      p.slab.hexMat.opacity = p.baseHex * m;
+      p.slab.rimMat.opacity = p.baseRim * m;
       if (opts.reduced) p.emblem.still();
-      p.emblem.tick(opts.reduced ? 0 : t, p.lit * (active ? 1 : 0));
+      p.emblem.tick(opts.reduced ? 0 : t, p.lit * (active ? 1 : 0), pres);
     }
   }
-
-  function setVisible(v) { group.visible = !!v; }
 
   function dispose() {
     for (const id of ['pve', 'pvp']) {
@@ -424,10 +434,9 @@ export function buildModePlates(opts) {
   }
 
   layout(1.6);
-  group.visible = false; // the home never sees them — the flight turns them on
 
   return {
-    group, layout, bounds, setHover, update, captionAnchor, pickables, setVisible, dispose,
+    group, layout, bounds, setHover, update, captionAnchor, pickables, dispose,
     get hovered() { return hovered; },
   };
 }

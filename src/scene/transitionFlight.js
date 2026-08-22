@@ -50,17 +50,31 @@ export const FLIGHT = {
   approachLift: 1.8,   // how far above the final pose the approach point sits
 
   // ── time ──
-  duration: 2.5,       // seconds, forward flight (owner band 2.2–2.8)
-  reverseFactor: 0.5,  // ← BACK runs the same road at half the length (1.1–1.4s)
-  repeatFactor: 0.6,   // 2nd+ flight of the session is shortened (and skips the sign)
+  duration: 3.7,       // seconds, forward flight (owner band 3.4–4.0)
+  reverseFactor: 0.5,  // ← BACK runs the same road at half the length
   settle: 0.15,        // a tap mid-flight rides this out to the end pose (no teleport)
+
+  // Shortening repeats was tried and PULLED: it dropped the sign from the second
+  // flight onward, which reads as the sign breaking rather than as restraint. The
+  // machinery is kept behind this flag in case a final duration brings it back —
+  // when on it shortens by `repeatFactor` AND drops the title beat, as before.
+  // Against staleness we have the tap-to-skip, which is always there.
+  shortenRepeats: false,
+  repeatFactor: 0.6,
+
+  // The camera's start is held in SECONDS, not as a share of the duration: a longer
+  // flight must not push the opening back with it. FIGHT has to answer at once —
+  // any delay there reads as lag, not as cinema. Everything past the start scales
+  // with the duration, so a slower flight puts its extra time where it belongs: the
+  // middle of the move and the decel into the arrival.
+  camStartSec: 0.18,
+  easeTail: 3.0,       // how long the decel into the arrival runs (higher = longer)
 
   // Phase marks, as fractions of `duration`. They OVERLAP on purpose: the move must
   // not read as a sequence of discrete steps.
-  camStart: 0.08,      // camera starts moving (the UI fade covers the first beat)
   fogPeakAt: 0.5,      // where the haze is thickest
   fogPower: 1.5,       // shape of the rise/fall (higher = later, sharper peak)
-  signIn: 0.44, signHold: 0.56, signOut: 0.68, // sign fade in → hold → out
+  signIn: 0.42, signHold: 0.58, // the title beat swells in over this stretch
   // The 2D chrome's own fade is NOT timed here — it rides a CSS transition on the
   // `.is-away` class in HomeView, so the browser owns it and it cannot drift out of
   // step with a stalled frame. Change its length there.
@@ -82,26 +96,29 @@ export const FLIGHT = {
   hazeY: 3.6,          // height the corridor of puffs is centred on
   hazeSpread: 7,       // ±X / ±Y jitter around the corridor line
   hazeOpacity: 0.16,   // per-puff peak — 2–3 overlap ⇒ ~a third of frame at most
+  hazeRest: 0.6,       // …and what is left of it when nothing is flying. The haze
+  //                      belongs to the corridor, not to the transition: turn round
+  //                      at the plates and it has to still be hanging there.
   hazeDrift: 0.35,     // slow lateral drift while the flight runs (u/s)
 
   // ── HEXLASH sign ──
-  // The sign stands in the corridor, but WHERE is derived from the path rather than
-  // pinned to a world coordinate: the camera covers most of the corridor during the
-  // sign's own beat, so a fixed spot is either passed before it has faded in or flown
-  // through before it has faded out. Placing it ahead of the camera at the hold —
-  // square to the way it is looking — is what makes it read at all, at any variant,
-  // from any orbit the player left the home on.
-  signClear: 2.5,      // how far short of the sign the camera still is when it fades out
-  signMinAhead: 8,     // …but never closer than this (it would fill the lens)
-  signEndClear: 4,     // …and never within this of the arrival pose (it would sit on the plates)
-  signLift: 0.35,      // nudge up in frame, so an overshoot passes UNDER it
-  signWidth: 4.2,      // world width at the default aspect — NOT the whole frame
-  signFrameFrac: 0.44, // …and never more than this share of the frame width
+  // A FIXED landmark standing in the corridor, not a title card that follows the
+  // camera. It is placed once, at scene init, and never moves again: the player can
+  // turn round at the plates and find it still standing there with the home behind
+  // it, which is the whole reason it is an object and not a caption.
+  //
+  // The camera passes well ABOVE it on the way out (the arc humps over the corridor),
+  // so it can never be flown through and never needs to blink out to get out of the
+  // way — it simply swings past and is left behind.
+  signAt: 0.55,        // where along the corridor it stands (0 = home, 1 = the plates)
+  signY: 3.4,          // height — clear of the camera's arc, above the plate plane
+  signWidth: 3.6,      // real world width. It is an object: ONE size, no rescaling.
   signDepth: 0.17,     // real thickness — the bevels are what catch the light
   signFace: 0x9aa2ad,  // matte cold grey. NO emissive. NO pink. Brand rule.
-  signOpacity: 0.95,
+  signOpacity: 0.95,   // at the top of the title beat
+  signRest: 0.82,      // …and once it is just a landmark you can turn round and see
 
-  // ── final MODE framing + the orbit corridor it hands over to ──
+  // ── final MODE framing + the orbit it hands over to ──
   // The framing is computed from the plate pair's bounds so it survives an
   // orientation change (portrait re-lays the pair in depth — see MODE_PLATES).
   fit: {
@@ -112,14 +129,33 @@ export const FLIGHT = {
     maxDist: 30,
     pitchDeg: 17,        // camera elevation above the plate plane
     targetLift: 1.0,     // pivot height over the plate tops
-    // The resting orbit at the mode stage: a short leash, never under the plates,
-    // never far enough to lose them.
-    yawDeg: 22,
-    pitchSpanDeg: 8,
-    zoomMin: 0.9,
-    zoomMax: 1.15,
-    returnDelay: 3.0,    // idle seconds before the camera drifts back to the default framing
+    // The orbit at the mode stage is FREE all the way round — the plates stand in a
+    // world, not on a backdrop, and the player is meant to be able to turn and find
+    // the corridor, the sign and the home still behind them. Only the two limits
+    // that protect the illusion are kept: you cannot drop under the plates and see
+    // their underside, and you cannot back out far enough to reach the sky.
+    pitchSpanDeg: 13,    // ± around the default elevation …
+    pitchFloorDeg: 4,    // … and never flatter than this above the plate plane
+    zoomMin: 0.7,
+    zoomMax: 1.6,
+    zoomMaxAbs: 20,      // hard ceiling in world units — keeps the dome out of reach
+    returnDelay: 5.0,    // idle seconds before the camera drifts back to the default
+    //                      framing. Longer than the old 3s: with a full circle to
+    //                      look round, three seconds pulls the camera back while the
+    //                      player is still looking at something.
     returnLerp: 0.06,    // per-frame ease of that drift (any input cancels it)
+  },
+
+  // ── presence: which end of the corridor the camera is standing at ──
+  // 0 = at the home, 1 = at the plates. The two ends of the world dim each other out
+  // with it, so each stage stays calm without anything being switched off — turning
+  // a whole object off would tear a hole in the world the moment the player orbits
+  // and looks that way. `hint` is the floor: the far end never vanishes, it just
+  // sinks into the haze until it is a suggestion rather than a thing to read.
+  presence: {
+    nearMix: 0.36,     // corridor mix at or below this ⇒ fully "at the home"
+    farMix: 0.72,      // …and at or above this ⇒ fully "at the plates"
+    hint: 0.07,        // what is left of the far end when seen from the near end
   },
 
   // ── health ──
@@ -150,6 +186,36 @@ const GLYPHS = {
 const SIGN_WORD = 'HEXLASH';
 const SIGN_TRACK = 0.085; // letter-spacing, in em
 
+// Strip the cap that faces AWAY from the reader, leaving an open shell: readable
+// face + walls + bevels. This is what makes the back-to-back pair work.
+//
+// Depth alone cannot do it. Each half is a closed solid, so it also carries an
+// inward cap with the letters the wrong way round — and because the mirrored word's
+// letters do not sit exactly on top of the right ones (the glyphs are different
+// widths), that cap pokes out past its neighbour wherever they disagree and draws
+// there, no matter what the depth buffer says. With the cap gone there is simply
+// nothing to leak: from the wrong side each half is hollow, and hollow is culled.
+//
+// ExtrudeGeometry is non-indexed, so this is a straight walk over the triangles.
+function dropBackCap(geo, THREE_) {
+  const pos = geo.attributes.position.array;
+  const keep = [];
+  for (let i = 0; i < pos.length; i += 9) {
+    const ux = pos[i + 3] - pos[i]; const uy = pos[i + 4] - pos[i + 1]; const uz = pos[i + 5] - pos[i + 2];
+    const vx = pos[i + 6] - pos[i]; const vy = pos[i + 7] - pos[i + 1]; const vz = pos[i + 8] - pos[i + 2];
+    const nx = uy * vz - uz * vy;
+    const ny = uz * vx - ux * vz;
+    const nz = ux * vy - uy * vx;
+    const len = Math.hypot(nx, ny, nz) || 1;
+    if (nz / len > -0.9) for (let k = 0; k < 9; k++) keep.push(pos[i + k]); // keep all but the flat back cap
+  }
+  const out = new THREE_.BufferGeometry();
+  out.setAttribute('position', new THREE_.Float32BufferAttribute(keep, 3));
+  out.computeVertexNormals();
+  geo.dispose();
+  return out;
+}
+
 function glyphShape(g) {
   const shape = new THREE.Shape();
   shape.moveTo(g.out[0][0], g.out[0][1]);
@@ -166,7 +232,20 @@ function glyphShape(g) {
 }
 
 // Build the sign → { group, mat, emWidth, dispose }. Authored around its own centre
-// so the caller can place + scale it as one object. MATTE — no emissive, no glow.
+// so the caller can place it as one object. MATTE — no emissive, no glow.
+//
+// READS FROM BOTH SIDES. The sign stands between the home and the plates, so the
+// player meets its front on the way out and its back when they turn round at the
+// plates — and the back of an extruded word is a mirror image. Turning it to face
+// the camera would fix that and destroy the point of it: the moment it swivels it
+// stops being a thing in the world and becomes a sticker on the lens.
+//
+// So it is built as two half-depth copies of the word back to back, the second
+// turned 180° about Y. That rotation mirrors the letters AND reverses their order,
+// which is exactly what un-mirrors them for a viewer on the far side. The halves
+// occupy z ∈ [0, d/2] and z ∈ [-d/2, 0] — adjacent, never coincident, so nothing
+// double-blends while the sign fades; together they read as one solid slab whose
+// side walls run the full depth.
 function buildSign(o) {
   const group = new THREE.Group();
   const shapes = [];
@@ -187,20 +266,32 @@ function buildSign(o) {
     metalness: 0.28,
     transparent: true,
     opacity: 0,
-    depthWrite: false, // fades in/out over the corridor — no depth artefacts
+    // The sign WRITES DEPTH, unlike the rest of the fading pieces here, and it has
+    // to: it is a closed solid, so each half also carries an inward-facing cap with
+    // the letters on it the wrong way round. Without depth those caps blend straight
+    // through the correct face and the word reads mirrored from both sides. Writing
+    // depth lets the near face win, which is simply what a solid object does.
+    depthWrite: true,
     fog: false,        // opacity is the only thing that drives it (see header)
   });
 
+  const half = o.signDepth / 2;
   const geos = [];
+  const front = new THREE.Group(); // reads from the home side (+Z)
+  const back = new THREE.Group();  // reads from the plates side (-Z)
+  back.rotation.y = Math.PI;
   for (const s of shapes) {
-    const geo = new THREE.ExtrudeGeometry(s.shape, {
-      depth: o.signDepth, bevelEnabled: true,
+    let geo = new THREE.ExtrudeGeometry(s.shape, {
+      depth: half, bevelEnabled: true,
       bevelThickness: 0.014, bevelSize: 0.014, bevelSegments: 1, curveSegments: 1,
     });
-    geo.translate(s.x - emWidth / 2, -0.5, -o.signDepth / 2); // centre the word on its own origin
+    geo = dropBackCap(geo, THREE); // open shell — see the helper
+    geo.translate(s.x - emWidth / 2, -0.5, 0); // centre the word on its own origin
     geos.push(geo);
-    group.add(new THREE.Mesh(geo, mat));
+    front.add(new THREE.Mesh(geo, mat));
+    back.add(new THREE.Mesh(geo, mat)); // same geometry, mirrored by the group's turn
   }
+  group.add(front, back);
 
   group.visible = false;
   const dispose = () => { geos.forEach((g) => g.dispose()); mat.dispose(); };
@@ -222,7 +313,7 @@ function buildHaze(o) {
   const puffs = [];
   for (let i = 0; i < o.hazeCount; i++) {
     const f = (i + 0.5) / o.hazeCount;                 // 0 (near home) … 1 (near plates)
-    const z = THREE.MathUtils.lerp(3.5, -o.modeZ + 9, f);
+    const z = THREE.MathUtils.lerp(3.5, -o.modeZ + 3.5, f);
     const s = new THREE.Sprite(mat);
     const jx = (Math.random() * 2 - 1) * o.hazeSpread;
     const jy = o.hazeY + (Math.random() * 2 - 1) * o.hazeSpread * 0.45;
@@ -251,10 +342,12 @@ function buildHaze(o) {
 // ─────────────────────────── Easing ───────────────────────────
 const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
 // Slow off the mark, builds, then a LONG decel into the arrival — the tail is what
-// makes the camera feel like it has weight rather than snapping to a mark.
-function easeFlight(u) {
+// makes the camera feel like it has weight rather than snapping to a mark. FLIGHT.
+// easeTail sets how long that decel runs, which is where a slower flight is meant to
+// spend most of its extra time.
+function easeFlight(u, tail) {
   const x = clamp01(u);
-  return x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2.6) / 2;
+  return x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, tail) / 2;
 }
 // Rise → hold → fall envelope over [a, b] with the peak at `peak`.
 function envelope(u, peak, power) {
@@ -285,8 +378,13 @@ export function createTransitionFlight(deps) {
   const { scene, camera, poseFor } = deps;
   const reduced = !!deps.reduced;
 
+  // The sign is a FIXED landmark: placed once here and never moved again, so the
+  // player can turn round at the plates and find it exactly where they flew past it.
   const sign = buildSign(o);
-  scene.add(sign.group); // placed per flight — see placeSign()
+  sign.group.scale.setScalar(o.signWidth / sign.emWidth);
+  sign.group.position.set(0, o.signY, -o.modeZ * o.signAt);
+  sign.group.rotation.set(0, 0, 0); // front toward the home, back toward the plates
+  scene.add(sign.group);
 
   const haze = buildHaze(o);
   scene.add(haze.group);
@@ -301,7 +399,9 @@ export function createTransitionFlight(deps) {
   let dir = 'toMode';        // 'toMode' | 'toHome'
   let el = 0;                // elapsed seconds
   let dur = o.duration;
-  let withSign = true;
+  let withTitle = true;      // does THIS flight carry the title beat?
+  let camStartFrac = 0.05;   // FLIGHT.camStartSec expressed against the live duration
+  let presence = 0;          // 0 at the home … 1 at the plates (fed by the scene)
   let posCurve = null;
   let lookCurve = null;
   let reverse = false;       // traverse the curve backwards (the way home)
@@ -345,13 +445,11 @@ export function createTransitionFlight(deps) {
     // hanging along the top edge of a mostly empty frame.
     const midY = THREE.MathUtils.lerp(p1.y, to.position.y, 0.5) + o.midLift;
     const p2 = new THREE.Vector3(THREE.MathUtils.lerp(p1.x, to.position.x, 0.6), midY, midZ);
-    // Mid-corridor look point: already aimed down the corridor, not yet locked on the
-    // plates — this is the stretch the sign stands in.
-    const l2 = new THREE.Vector3(
-      THREE.MathUtils.lerp(from.target.x, to.target.x, 0.5),
-      THREE.MathUtils.lerp(from.target.y, to.target.y, 0.5) + 2.8,
-      THREE.MathUtils.lerp(from.target.z, to.target.z, 0.55),
-    );
+    // Mid-corridor look point: the sign itself. It stands on the corridor axis, so
+    // aiming the middle of the look path at it composes the title beat on it for
+    // free — and the camera's own arc humps well above it, so it passes over, not
+    // through.
+    const l2 = sign.group.position.clone();
 
     const back = _p.copy(to.position).sub(to.target);
     back.y = 0;
@@ -375,53 +473,6 @@ export function createTransitionFlight(deps) {
     lookCurve.updateArcLengths();
   }
 
-  // Stand the sign in the corridor for its beat: dead ahead of where the camera will
-  // be looking at the hold, and scaled so it fills its share of THIS frame (a portrait
-  // phone gets a smaller sign, not a clipped one).
-  //
-  // How far ahead is COMPUTED, not tuned: the camera covers real ground during the
-  // sign's own beat, so a hand-picked distance is either flown through before the
-  // fade-out finishes, or pushed out past the plates where they occlude it. Taking the
-  // distance the camera actually travels between the hold and the fade-out, plus a
-  // clearance — and clamping it short of the arrival pose — makes it land right at any
-  // duration, easing or path variant the owner tries.
-  const _signAt = new THREE.Vector3();
-  const _signOutAt = new THREE.Vector3();
-  const _signDir = new THREE.Vector3();
-  function placeSign() {
-    if (!withSign || !posCurve) { sign.group.visible = false; return; }
-    const param = (mark) => {
-      const e = easeFlight((mark - o.camStart) / (1 - o.camStart));
-      return reverse ? 1 - e : e;
-    };
-    _signAt.copy(posCurve.getPointAt(param(o.signHold)));
-    _signOutAt.copy(posCurve.getPointAt(param(o.signOut)));
-    _signDir.copy(lookCurve.getPointAt(param(o.signHold))).sub(_signAt);
-    if (_signDir.lengthSq() < 1e-6) _signDir.set(0, 0, -1);
-    _signDir.normalize();
-
-    const travelled = _signAt.distanceTo(_signOutAt);
-    const toEnd = endPose ? _signAt.distanceTo(endPose.position) : travelled + o.signClear + o.signEndClear;
-    const ahead = THREE.MathUtils.clamp(
-      travelled + o.signClear,
-      o.signMinAhead,
-      Math.max(o.signMinAhead, toEnd - o.signEndClear),
-    );
-
-    sign.group.position.copy(_signAt).addScaledVector(_signDir, ahead);
-    sign.group.position.y += o.signLift;
-
-    const d = Math.max(0.5, ahead);
-    const frameW = 2 * d * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect;
-    const w = Math.min(o.signWidth, frameW * o.signFrameFrac);
-    sign.group.scale.setScalar(w / sign.emWidth);
-    // Upright and square-on to the camera — a sign standing in a room, never a
-    // billboard tilting to follow the lens.
-    sign.group.rotation.set(0, Math.atan2(_signAt.x - sign.group.position.x, _signAt.z - sign.group.position.z), 0);
-    sign.group.visible = true;
-    sign.mat.opacity = 0;
-  }
-
   function applyFog(env) {
     if (!scene.fog) return;
     scene.fog.density = THREE.MathUtils.lerp(fogBaseDensity, o.fogPeak, env);
@@ -435,11 +486,12 @@ export function createTransitionFlight(deps) {
     scene.fog.color.copy(fogBaseColor);
   }
 
-  function hideProps() {
-    sign.group.visible = false;
-    sign.mat.opacity = 0;
-    haze.group.visible = false;
-    haze.set(0, 0);
+  // Nothing here belongs to the transition alone any more: the sign stands where it
+  // stands and the haze hangs where it hangs. Both simply answer to presence when no
+  // flight is running — see update().
+  function restProps(t) {
+    haze.group.visible = true;
+    haze.set(o.hazeOpacity > 0 ? o.hazeRest * presence : 0, t || 0);
   }
 
   function finish() {
@@ -447,7 +499,7 @@ export function createTransitionFlight(deps) {
     settling = 0;
     settleFrom = null;
     haveLastLook = false; // next flight starts from the orbit pivot again
-    hideProps();
+    restProps();
     restFog();
     const cb = onArrive;
     onArrive = null;
@@ -466,8 +518,7 @@ export function createTransitionFlight(deps) {
   /**
    * Fly. `where` is the destination ('mode' | 'home').
    * opts.onArrive(dir) fires once the camera is on the final pose.
-   * The 2nd+ flight of a session is shortened and drops the sign — the player is
-   * going to see this transition hundreds of times.
+   * Every outbound flight carries the title beat — see FLIGHT.shortenRepeats.
    */
   function play(where, opts = {}) {
     onArrive = opts.onArrive || null;
@@ -476,7 +527,7 @@ export function createTransitionFlight(deps) {
     if (reduced) {
       // Reduced motion: no flight at all. The caller covers the swap with a short
       // dim; we just place the camera and report arrival on the next update.
-      hideProps();
+      restProps();
       restFog();
       snapTo(where);
       active = true;
@@ -486,10 +537,15 @@ export function createTransitionFlight(deps) {
       return;
     }
 
-    const repeat = flights > 0;
+    const short = o.shortenRepeats && flights > 0; // off by default — see the config
     flights += 1;
-    withSign = dir === 'toMode' && !repeat; // the way back never carries the sign
-    dur = o.duration * (dir === 'toHome' ? o.reverseFactor : 1) * (repeat ? o.repeatFactor : 1);
+    // The title beat rides EVERY outbound flight. The way back never carries it: the
+    // sign is still there, but as the landmark it is, not as a card being played.
+    withTitle = dir === 'toMode' && !short;
+    dur = o.duration * (dir === 'toHome' ? o.reverseFactor : 1) * (short ? o.repeatFactor : 1);
+    // Hold the opening in real seconds against THIS flight's length, so a slower
+    // flight starts just as promptly and spends its extra time further in.
+    camStartFrac = Math.min(0.35, o.camStartSec / Math.max(dur, 0.01));
 
     const here = { position: camera.position.clone(), target: currentLook() };
     if (dir === 'toMode') {
@@ -504,7 +560,6 @@ export function createTransitionFlight(deps) {
       buildPath(endPose, here);
     }
 
-    placeSign();
     haze.group.visible = true;
     el = 0;
     slow = 0;
@@ -535,15 +590,36 @@ export function createTransitionFlight(deps) {
     settling = 0.0001; // >0 marks "settling"; the update advances it
   }
 
+  // The sign's opacity, in ONE place. It is a landmark first: `presence` (0 at the
+  // home, 1 at the plates) is what keeps it out of the home's sky and lets the player
+  // find it when they turn round at the plates. The title beat only ever ADDS to that
+  // — it swells over the landmark on the way out and then leaves it standing.
+  function applySignOpacity(titleK) {
+    const rest = o.signRest * presence;
+    const op = Math.max(rest, o.signOpacity * titleK);
+    sign.mat.opacity = op;
+    sign.group.visible = op > 0.004;
+  }
+
   /**
-   * Advance the flight. Call once per frame from the scene loop.
+   * Advance the flight. Call once per frame from the scene loop — including while
+   * NOTHING is flying, because the sign and the haze belong to the world, not to the
+   * transition, and still have to answer to where the camera is standing.
    * @param dtRaw seconds since the previous frame (clamped inside — a backgrounded
    *              tab must resume, not jump over the move)
    * @param t     scene elapsed time (drives the haze drift)
+   * @param mix   0 at the home … 1 at the plates
    * @returns true while the director owns the camera
    */
-  function update(dtRaw, t) {
-    if (!active) return false;
+  function update(dtRaw, t, mix) {
+    presence = clamp01(mix ?? presence);
+    if (!active) {
+      // Standing still: the sign is a landmark and the haze is weather. Both are
+      // simply where the camera is standing.
+      applySignOpacity(0);
+      restProps(t);
+      return false;
+    }
 
     // Reduced motion / zero-length run: the caller covers the swap with a dim.
     if (dur === 0) { finish(); return false; }
@@ -562,7 +638,7 @@ export function createTransitionFlight(deps) {
       const fade = 1 - s;
       applyFog(envelope(clamp01(el / dur), o.fogPeakAt, o.fogPower) * fade);
       haze.set(envelope(clamp01(el / dur), o.fogPeakAt, o.fogPower) * fade, t);
-      if (withSign) sign.mat.opacity *= fade;
+      applySignOpacity(withTitle ? ramp(clamp01(el / dur), o.signIn, o.signHold) * fade : 0);
       if (k >= 1) finish();
       return true;
     }
@@ -592,11 +668,11 @@ export function createTransitionFlight(deps) {
       endPose = live;
       dur = remain;
       el = 0;
-      if (withSign) placeSign();
+      camStartFrac = Math.min(0.35, o.camStartSec / Math.max(dur, 0.01));
       return true;
     }
 
-    const e = easeFlight((u - o.camStart) / (1 - o.camStart));
+    const e = easeFlight((u - camStartFrac) / (1 - camStartFrac), o.easeTail);
     const param = reverse ? 1 - e : e;
     camera.position.copy(posCurve.getPointAt(param));
     _lastLook.copy(lookCurve.getPointAt(param));
@@ -607,12 +683,7 @@ export function createTransitionFlight(deps) {
     applyFog(env);
     haze.set(env, t);
 
-    if (withSign) {
-      const inK = ramp(u, o.signIn, o.signHold);
-      const outK = 1 - ramp(u, o.signHold, o.signOut);
-      sign.mat.opacity = o.signOpacity * inK * outK;
-      if (sign.mat.opacity <= 0.002 && u > o.signOut) sign.group.visible = false;
-    }
+    applySignOpacity(withTitle ? ramp(u, o.signIn, o.signHold) : 0);
 
     if (u >= 1) {
       const dest = endPose || live;
