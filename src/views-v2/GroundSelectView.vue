@@ -3,7 +3,7 @@
      to fight — ARENA (live → /play, Core Select) or SPACE (→ /play/space, the
      preview hall; unlocked — its SOON mark moved into the scene). A normal
      2D pre-fight screen (no meta.scene3d / meta.arena — no 3D scene, so it never
-     touches the sceneTransition layer). Younger sibling of ModeSelectView, one
+     touches the sceneTransition layer). Younger sibling of the mode-select stage, one
      level deeper — same void, same fight-card doors, same type.
 
      Recreated 1:1 from the design handoff

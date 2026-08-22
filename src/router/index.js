@@ -77,6 +77,15 @@ const requireCore = (to, from, next) => {
     else next({ name: 'PrefightSelect' });
 };
 
+// ONE component behind both home-stage paths (see the /play/mode record below).
+// It has to be the same async wrapper OBJECT for Vue to reuse the instance, so it is
+// declared once here rather than inlined twice.
+const HomeStageView = () => import('@/views-v2/HomeView.vue');
+
+// The two paths that are two framings of ONE live scene. AppV2 keys them together;
+// the transition cover skips hops between them (see beforeEach).
+export const HOME_STAGE_PATHS = ['/play/home', '/play/mode'];
+
 const v2Routes = [
     {
         path: '/play',
@@ -100,16 +109,23 @@ const v2Routes = [
                 // splash until HomeScene emits its first-frame signal, and lets the
                 // SPA transition cover (beforeEach below) lift on real readiness.
                 meta: { scene3d: true },
-                component: () => import('@/views-v2/HomeView.vue'),
+                component: HomeStageView,
             },
             {
-                // Mode Select — the PVE / PVP fork. FIGHT on the home opens this;
-                // PVE → /play/pve (stub), PVP → /play (core select). A normal
-                // pre-fight screen (no meta.arena, no requireCore — it's the place
-                // a core-less player chooses, so it must be reachable without one).
+                // Mode select — the PVE / PVP fork. NOT a screen any more: it is a
+                // place in the SAME 3D world as the home, a long way across the void,
+                // and FIGHT flies the camera out to it. So this route renders the very
+                // same component as /play/home; AppV2 keys the two paths together so
+                // Vue REUSES the instance instead of remounting it, which is what
+                // keeps the WebGL scene alive across the hop (a remount would tear it
+                // down under the camera). HomeView reads route.path to know which
+                // framing it belongs on. The URL is kept so bookmarks, a refresh and
+                // the browser's back button all work — a direct load simply lands on
+                // the mode framing with no flight.
                 path: 'mode',
                 name: 'V2ModeSelect',
-                component: () => import('@/views-v2/ModeSelectView.vue'),
+                meta: { scene3d: true },
+                component: HomeStageView,
             },
             {
                 // Ground Select — the ARENA / SPACE fork. The Mode Select PVP door
@@ -215,8 +231,13 @@ const router = createRouter({
 //   → home/pve: light fade, lifts on that scene's first frame
 //   → a 2D route while a cover is up (e.g. requireCore bouncing an arena entry
 //     back to core-select): drop the cover so it never hangs.
+// The home ⇄ mode-select pair is deliberately EXCLUDED from the cover: those two
+// paths share one route record and one live 3D scene, and the hop between them is a
+// camera flight, not a load. Dimming it would hide the very thing it is for.
+const isHomeStageHop = (to, from) => HOME_STAGE_PATHS.includes(to.path) && HOME_STAGE_PATHS.includes(from.path);
+
 router.beforeEach((to, from, next) => {
-    if (window.__hexBootstrapped) {
+    if (window.__hexBootstrapped && !isHomeStageHop(to, from)) {
         if (to.meta?.arena) {
             beginFightCard();
         } else if (to.meta?.scene3d) {
