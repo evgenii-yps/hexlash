@@ -7,26 +7,29 @@
 // What it owns (built once, at scene init — never at transition time, so the flight
 // can never stall on an asset):
 //   · the camera path (two variants — see CONFIG.variant),
-//   · the fog envelope (scene.fog density + colour),
-//   · the drifting haze billboards the camera passes THROUGH,
+//   · the fog envelope (scene.fog distance falloff + colour),
 //   · the 3D HEXLASH sign.
 //
-// FOG DISCIPLINE — the fog is atmosphere, not a curtain. It never covers the screen
-// (peak coverage lands around a quarter to a third), it is never a flat CSS film over
-// the canvas (that would delaminate the picture and defeat the whole point), and it
-// is never true volumetrics (way too dear for a phone). Two cheap real-3D layers do
-// it: the scene's own exponential fog for honest depth, plus a handful of big soft
-// billboards at staggered depths so the camera gets parallax as it passes between
-// them.
+// FOG DISCIPLINE — the fog is atmosphere, not a curtain, and it is ONE layer: the
+// scene's own linear distance falloff and nothing else. It is never a flat CSS film
+// over the canvas (that would delaminate the picture), never true volumetrics (way
+// too dear for a phone), and — since this pass — never soft billboards either.
+//
+// Billboards were the third thing tried here and they are gone for good. A billboard
+// is a flat picture turned to face the camera: seen head-on it reads as a DISC with
+// an edge, its radial gradient reads as a bright core with a halo ringed round it,
+// and it slides against the world as the camera moves. That is a sticker on the lens,
+// which is precisely what the falloff was rebuilt to stop being. Honest depth with no
+// volumetric fakery beats fakery with visible seams, so if the corridor ever needs
+// more life it gets it from the DENSITY (see fogBreath), never from added geometry.
 //
 // SIGN DISCIPLINE — the HEXLASH sign is real extruded geometry standing in the world,
 // NOT DOM text, not a sprite. It is MATTE, monochrome, and has no emissive and no
-// pink: the sense of it glowing comes from lit haze around it catching on its bevels.
-// This is the brand rule and it does not get rewritten here.
+// pink: what shape it has comes from the light catching its bevels. This is the brand
+// rule and it does not get rewritten here.
 //
 // Exports: FLIGHT (the tuning block), createTransitionFlight.
 import * as THREE from 'three';
-import { makeRadialTexture } from './arenaTextures.js';
 
 // ─────────────────────────────── Tuning ───────────────────────────────
 export const FLIGHT = {
@@ -72,7 +75,7 @@ export const FLIGHT = {
 
   // Phase marks, as fractions of `duration`. They OVERLAP on purpose: the move must
   // not read as a sequence of discrete steps.
-  fogPeakAt: 0.5,      // where the haze is thickest
+  fogPeakAt: 0.5,      // where the atmosphere is thickest
   fogPower: 1.5,       // shape of the rise/fall (higher = later, sharper peak)
   signIn: 0.42, signHold: 0.58, // the title beat swells in over this stretch
   // The 2D chrome's own fade is NOT timed here — it rides a CSS transition on the
@@ -99,14 +102,24 @@ export const FLIGHT = {
   fogNearHome: 14,     // at the home: nothing inside this is fogged at all
   fogFarHome: 26,      // …and the plates (modeZ = 30) sit PAST it ⇒ they are the sky
   fogNearMode: 16,     // at the plates: the plates and the sign stay clean
-  fogFarMode: 62,      // …and the home (≈38 out) keeps ~half its contrast ⇒ silhouette
+  // …and the home. This one is set by the answer to "what is the player allowed to
+  // KNOW is over there", not by taste. At 62 the home kept about half its contrast
+  // and every part of it was nameable from the plates — the lamps, the fighter, the
+  // hex grid, the rim of the slab. It has to read as "something is there and I can't
+  // tell what", so the curve is pulled in to just INSIDE the home's own distance
+  // (the camera parks ≈38.6 out, the slab spans ≈36–41): the back of it is the sky
+  // outright and the front keeps a tenth of itself, which leaves mass without detail.
+  // Measured from the parked pose, whole-home contribution: 67 levels at 62, 11 here.
+  // Do not push this below ~36 — that is where the mass goes too, and a hole in the
+  // world reads worse than a legible home.
+  fogFarMode: 39,
   fogNearFlight: 9,    // mid-flight the curve tightens — that IS the atmosphere beat
-  fogFarFlight: 34,    // …and opens again on arrival, on the same envelope as the haze
+  fogFarFlight: 34,    // …and opens again on arrival, on the same envelope
   // Keep the fog DARK. The backdrop dome is unlit (fog:false), so a pale fog would
   // make distant objects brighter than the sky behind them — depth read backwards,
   // and the plates would hang in the air like cut-outs. The fog's job is to sink
-  // distance into the dark; the visible dust is the haze billboards' job, and they
-  // carry the smoke tone. Raise this only if the owner wants a paler night.
+  // distance into the dark, and the smoke tone is the only colour it is allowed to
+  // lean on while doing it. Raise this only if the owner wants a paler night.
   fogTint: 0.1,        // how far the fog colour leans to the smoke tone at peak
   smoke: 0x96a1b0,     // cold dust-grey — never white, never warm
   // The colour the falloff CONVERGES ON, and the one number here that is not free:
@@ -119,17 +132,16 @@ export const FLIGHT = {
   // gradient is ever retuned, this follows it.
   fogRest: 0x0f0e11,
 
-  // ── haze billboards ──
-  hazeCount: 9,        // big soft puffs staggered down the corridor
-  hazeScale: [9, 17],  // world size range
-  hazeY: 3.6,          // height the corridor of puffs is centred on
-  hazeSpread: 7,       // ±X / ±Y jitter around the corridor line
-  hazeOpacity: 0.16,   // per-puff peak — 2–3 overlap ⇒ ~a third of frame at most
-  hazeRest: 0.6,       // …and what is left of it when nothing is flying. The haze
-  //                      belongs to the corridor, not to the transition: turn round
-  //                      at the plates and it has to still be hanging there.
-  hazeDrift: 0.35,     // slow lateral drift while the flight runs (u/s)
-
+  // ── the breath ──
+  // Removing the billboards left the corridor perfectly still, and perfectly still
+  // air is a picture rather than a place. Life comes back as DENSITY, not as things:
+  // how far you can see wanders very slowly and very slightly. It must sit on the
+  // edge of noticing — if a player can watch this happen it is too strong, and it is
+  // the fastest way to end up with a "breathing" screen that reads as a bug.
+  // It scales the (far - near) SPAN, so `near` is untouched and the near field stays
+  // provably fixed, exactly as the linear curve promises.
+  fogBreath: 0.035,    // ± fraction of the span
+  fogBreathW: 0.13,    // rad/s ⇒ ~48 s a cycle
 
   // ── HEXLASH sign ──
   // A FIXED landmark standing in the corridor, not a title card that follows the
@@ -181,7 +193,7 @@ export const FLIGHT = {
   // with it, so each stage stays calm without anything being switched off — turning
   // a whole object off would tear a hole in the world the moment the player orbits
   // and looks that way. `hint` is the floor: the far end never vanishes, it just
-  // sinks into the haze until it is a suggestion rather than a thing to read.
+  // sinks into the distance until it is a suggestion rather than a thing to read.
   presence: {
     // The two ends are NOT symmetric, are not measured the same way, and are not
     // meant to be. Each end answers to its OWN distance, not to a shared "which half
@@ -189,8 +201,8 @@ export const FLIGHT = {
     // to deserve their colour back, only which end is nearer, and those are different
     // questions once the camera is out over the void between them.
     //
-    // Far end (the plates, the sign, the haze) — driven by distance to the plate pair.
-    farOn: 34,         // at or beyond this the far end is only a hint in the haze
+    // Far end (the plates and the sign) — driven by distance to the plate pair.
+    farOn: 34,         // at or beyond this the far end is only a hint in the dark
     farFull: 14,       // …and at or inside it the plates are fully themselves
     // The plates are small and must not be readable from the home at all. The floor
     // is never zero: switching them off would tear a hole in the world the moment the
@@ -350,47 +362,6 @@ function buildSign(o) {
   return { group, mat, emWidth, dispose };
 }
 
-// ─────────────────────────── Haze billboards ───────────────────────────
-// Big soft puffs staggered down the corridor between home and the plates. The
-// camera passes BETWEEN them, which is where the parallax (and the sense of volume)
-// comes from — not from the sprite orientation. Alpha-blended, never additive: this
-// is dust, not light. Invisible at rest; the flight drives their opacity.
-function buildHaze(o) {
-  const group = new THREE.Group();
-  const tex = makeRadialTexture('rgba(170,181,198,0.85)', 'rgba(140,151,170,0.16)', 0.42);
-  const mat = new THREE.SpriteMaterial({
-    map: tex, color: o.smoke, transparent: true, opacity: 0,
-    depthWrite: false, fog: false,
-  });
-  const puffs = [];
-  for (let i = 0; i < o.hazeCount; i++) {
-    const f = (i + 0.5) / o.hazeCount;                 // 0 (near home) … 1 (near plates)
-    const z = THREE.MathUtils.lerp(3.5, -o.modeZ + 3.5, f);
-    const s = new THREE.Sprite(mat);
-    const jx = (Math.random() * 2 - 1) * o.hazeSpread;
-    const jy = o.hazeY + (Math.random() * 2 - 1) * o.hazeSpread * 0.45;
-    s.position.set(jx, jy, z);
-    s.scale.setScalar(THREE.MathUtils.lerp(o.hazeScale[0], o.hazeScale[1], Math.random()));
-    // Per-puff weight so the field is uneven (an even veil reads as a filter).
-    puffs.push({ s, baseX: jx, w: 0.65 + Math.random() * 0.35, ph: Math.random() * Math.PI * 2 });
-    group.add(s);
-  }
-  group.visible = false;
-
-  // `env` is the flight's 0…1 fog envelope. One shared material carries the fade;
-  // the unevenness comes from the puffs' own scale/placement and their slow drift,
-  // which is what stops the field reading as a flat filter over the lens.
-  const set = (env, t) => {
-    mat.opacity = o.hazeOpacity * env;
-    if (env <= 0.001) return;
-    for (const p of puffs) {
-      p.s.position.x = p.baseX + Math.sin(t * o.hazeDrift + p.ph) * 1.2 * p.w;
-    }
-  };
-  const dispose = () => { mat.dispose(); tex.dispose(); };
-  return { group, set, dispose };
-}
-
 // ─────────────────────────── Easing ───────────────────────────
 const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
 // Slow off the mark, builds, then a LONG decel into the arrival — the tail is what
@@ -438,10 +409,6 @@ export function createTransitionFlight(deps) {
   sign.group.rotation.set(0, 0, 0); // front toward the home, back toward the plates
   scene.add(sign.group);
 
-  const haze = buildHaze(o);
-  scene.add(haze.group);
-
-
   // Remember the scene's own resting fog colour so the flight always hands it back
   // exactly. The DISTANCE of the curve is not remembered — it is derived from
   // presence every frame (see applyFog), because where the falloff should start
@@ -466,6 +433,9 @@ export function createTransitionFlight(deps) {
   let settleFrom = null;
   const _lastLook = new THREE.Vector3(); // the flight's live look point (see currentLook)
   let haveLastLook = false;
+  let lastT = 0;             // last scene time seen — keeps the breath continuous
+  //                            across the calls that have no clock to hand (play,
+  //                            finish, dispose), so it never jumps on a hand-back.
   let slow = 0;              // consecutive stalled frames
   let stalled = false;       // …and whether they actually cut a flight short (dev readout)
   let flights = 0;           // how many this session (2nd+ runs shortened)
@@ -535,34 +505,33 @@ export function createTransitionFlight(deps) {
   //   · `env`      — the flight's 0…1 atmosphere envelope, which tightens the curve
   //     mid-corridor and lets it back out on arrival.
   // scene.fog is a THREE.Fog (linear). See the fog block in FLIGHT for why.
-  function applyFog(env) {
+  function applyFog(env, t) {
     if (!scene.fog) return;
+    if (t !== undefined) lastT = t; else t = lastT;
     const restNear = THREE.MathUtils.lerp(o.fogNearHome, o.fogNearMode, presence);
     const restFar = THREE.MathUtils.lerp(o.fogFarHome, o.fogFarMode, presence);
-    scene.fog.near = THREE.MathUtils.lerp(restNear, o.fogNearFlight, env);
-    scene.fog.far = THREE.MathUtils.lerp(restFar, o.fogFarFlight, env);
+    const near = THREE.MathUtils.lerp(restNear, o.fogNearFlight, env);
+    const far = THREE.MathUtils.lerp(restFar, o.fogFarFlight, env);
+    // …and the breath. This is the ONLY thing allowed to move in the corridor now
+    // that the billboards are gone: the air is alive because how far you can see
+    // wanders a little, not because there is anything hanging in it to look at.
+    // Off under reduced motion, with the rest of the scene's idle life.
+    const b = reduced ? 1 : 1 + Math.sin(t * o.fogBreathW) * o.fogBreath;
+    scene.fog.near = near;
+    scene.fog.far = near + (far - near) * b;
     _fogC.copy(fogBaseColor).lerp(smoke, o.fogTint * env);
     scene.fog.color.copy(_fogC);
   }
 
   // Resting fog is the same function with the flight envelope at zero — there is no
   // separate "off" state to drift out of step with the live one.
-  function restFog() { applyFog(0); }
-
-  // Nothing here belongs to the transition alone any more: the sign stands where it
-  // stands and the haze hangs where it hangs. Both simply answer to presence when no
-  // flight is running — see update().
-  function restProps(t) {
-    haze.group.visible = true;
-    haze.set(o.hazeOpacity > 0 ? o.hazeRest * presence : 0, t || 0);
-  }
+  function restFog(t) { applyFog(0, t); }
 
   function finish() {
     active = false;
     settling = 0;
     settleFrom = null;
     haveLastLook = false; // next flight starts from the orbit pivot again
-    restProps();
     restFog();
     const cb = onArrive;
     onArrive = null;
@@ -590,7 +559,6 @@ export function createTransitionFlight(deps) {
     if (reduced) {
       // Reduced motion: no flight at all. The caller covers the swap with a short
       // dim; we just place the camera and report arrival on the next update.
-      restProps();
       restFog();
       snapTo(where);
       active = true;
@@ -623,7 +591,6 @@ export function createTransitionFlight(deps) {
       buildPath(endPose, here);
     }
 
-    haze.group.visible = true;
     el = 0;
     slow = 0;
     stalled = false;
@@ -666,22 +633,21 @@ export function createTransitionFlight(deps) {
 
   /**
    * Advance the flight. Call once per frame from the scene loop — including while
-   * NOTHING is flying, because the sign and the haze belong to the world, not to the
-   * transition, and still have to answer to where the camera is standing.
+   * NOTHING is flying, because the sign and the falloff belong to the world, not to
+   * the transition, and still have to answer to where the camera is standing.
    * @param dtRaw seconds since the previous frame (clamped inside — a backgrounded
    *              tab must resume, not jump over the move)
-   * @param t     scene elapsed time (drives the haze drift)
+   * @param t     scene elapsed time (drives the density breath)
    * @param mix   0 at the home … 1 at the plates
    * @returns true while the director owns the camera
    */
   function update(dtRaw, t, mix) {
     presence = clamp01(mix ?? presence);
     if (!active) {
-      // Standing still: the sign is a landmark and the haze is weather. Both are
-      // simply where the camera is standing.
+      // Standing still: the sign is a landmark and the falloff is the weather. Both
+      // are simply where the camera is standing.
       applySignOpacity(0);
-      restProps(t);
-      restFog(); // the falloff follows the camera down the corridor, flight or no flight
+      restFog(t); // the falloff follows the camera down the corridor, flight or no flight
       return false;
     }
 
@@ -700,8 +666,7 @@ export function createTransitionFlight(deps) {
       _lastLook.lerpVectors(settleFrom.target, dest.target, s);
       camera.lookAt(_lastLook);
       const fade = 1 - s;
-      applyFog(envelope(clamp01(el / dur), o.fogPeakAt, o.fogPower) * fade);
-      haze.set(envelope(clamp01(el / dur), o.fogPeakAt, o.fogPower) * fade, t);
+      applyFog(envelope(clamp01(el / dur), o.fogPeakAt, o.fogPower) * fade, t);
       applySignOpacity(withTitle ? ramp(clamp01(el / dur), o.signIn, o.signHold) * fade : 0);
       if (k >= 1) finish();
       return true;
@@ -744,8 +709,7 @@ export function createTransitionFlight(deps) {
     camera.lookAt(_lastLook);
 
     const env = envelope(u, o.fogPeakAt, o.fogPower);
-    applyFog(env);
-    haze.set(env, t);
+    applyFog(env, t);
 
     applySignOpacity(withTitle ? ramp(u, o.signIn, o.signHold) : 0);
 
@@ -762,9 +726,7 @@ export function createTransitionFlight(deps) {
   function dispose() {
     restFog();
     scene.remove(sign.group);
-    scene.remove(haze.group);
     sign.dispose();
-    haze.dispose();
   }
 
   return {
