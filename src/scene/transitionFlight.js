@@ -79,9 +79,29 @@ export const FLIGHT = {
   // `.is-away` class in HomeView, so the browser owns it and it cannot drift out of
   // step with a stalled frame. Change its length there.
 
-  // ── fog ──
-  fogBase: 0.03,       // the home scene's own resting density (matched at init)
-  fogPeak: 0.052,      // peak density mid-flight — depth, NOT a whiteout
+  // ── fog: a DISTANCE FALLOFF, not a curtain ──
+  // The curve is LINEAR (near → far), not exponential, and that is the whole trick.
+  // The job is asymmetric: leave the picture in front of the player exactly as it
+  // was, and still bury the far end so the plates and the sign are not readable from
+  // the home. An exponential curve cannot do both — it bites from the first unit, so
+  // the only density that buries something 30 units out also murks the fighter at 5.
+  // A linear curve has a `near` below which NOTHING is fogged at all (that is the
+  // "3–5 units unchanged" half) and a `far` at which everything has BECOME the sky
+  // (that is the "sinks into the background" half). Past `far` a fogged object is
+  // the fog colour and nothing else, whatever its material — which is why dimming
+  // the plate materials alone never hid them: fog is added after the material, so a
+  // near-black plate still drew as a DARKER-than-sky cut-out.
+  //
+  // The curve is also asymmetric BY END, blended on the same presence the plates
+  // ride. Standing at the home the far end has to vanish; standing at the plates the
+  // home has to survive as a distant silhouette — that is the point of being able to
+  // turn round. One curve cannot serve both, so there are two and they cross-fade.
+  fogNearHome: 14,     // at the home: nothing inside this is fogged at all
+  fogFarHome: 26,      // …and the plates (modeZ = 30) sit PAST it ⇒ they are the sky
+  fogNearMode: 16,     // at the plates: the plates and the sign stay clean
+  fogFarMode: 62,      // …and the home (≈38 out) keeps ~half its contrast ⇒ silhouette
+  fogNearFlight: 9,    // mid-flight the curve tightens — that IS the atmosphere beat
+  fogFarFlight: 34,    // …and opens again on arrival, on the same envelope as the haze
   // Keep the fog DARK. The backdrop dome is unlit (fog:false), so a pale fog would
   // make distant objects brighter than the sky behind them — depth read backwards,
   // and the plates would hang in the air like cut-outs. The fog's job is to sink
@@ -89,6 +109,15 @@ export const FLIGHT = {
   // carry the smoke tone. Raise this only if the owner wants a paler night.
   fogTint: 0.1,        // how far the fog colour leans to the smoke tone at peak
   smoke: 0x96a1b0,     // cold dust-grey — never white, never warm
+  // The colour the falloff CONVERGES ON, and the one number here that is not free:
+  // it has to be the sky the far end is supposed to disappear into. Past `far` a
+  // fogged object is this colour and nothing else, so if it differs from the backdrop
+  // behind it the object does not vanish — it turns into a flat patch of the wrong
+  // hue, which is exactly how the plates stayed legible from the home even while
+  // their materials were dimmed to nearly black. Matched by eye to the backdrop's
+  // horizon band (BACKDROP.grad around v≈0.5, where the far end sits); if that
+  // gradient is ever retuned, this follows it.
+  fogRest: 0x0f0e11,
 
   // ── haze billboards ──
   hazeCount: 9,        // big soft puffs staggered down the corridor
@@ -100,6 +129,7 @@ export const FLIGHT = {
   //                      belongs to the corridor, not to the transition: turn round
   //                      at the plates and it has to still be hanging there.
   hazeDrift: 0.35,     // slow lateral drift while the flight runs (u/s)
+
 
   // ── HEXLASH sign ──
   // A FIXED landmark standing in the corridor, not a title card that follows the
@@ -153,9 +183,27 @@ export const FLIGHT = {
   // and looks that way. `hint` is the floor: the far end never vanishes, it just
   // sinks into the haze until it is a suggestion rather than a thing to read.
   presence: {
-    nearMix: 0.36,     // corridor mix at or below this ⇒ fully "at the home"
-    farMix: 0.72,      // …and at or above this ⇒ fully "at the plates"
-    hint: 0.07,        // what is left of the far end when seen from the near end
+    // The two ends are NOT symmetric, are not measured the same way, and are not
+    // meant to be. Each end answers to its OWN distance, not to a shared "which half
+    // of the corridor am I in" mix: a mix cannot say when the plates are close enough
+    // to deserve their colour back, only which end is nearer, and those are different
+    // questions once the camera is out over the void between them.
+    //
+    // Far end (the plates, the sign, the haze) — driven by distance to the plate pair.
+    farOn: 34,         // at or beyond this the far end is only a hint in the haze
+    farFull: 14,       // …and at or inside it the plates are fully themselves
+    // The plates are small and must not be readable from the home at all. The floor
+    // is never zero: switching them off would tear a hole in the world the moment the
+    // player orbits at the home and looks this way. The thing that actually HIDES
+    // them is the distance falloff (see the fog block) — this only keeps them dark.
+    hintFar: 0.05,
+    // Home end (the home's own glows) — driven by distance to the home. The home is
+    // large and is the player's landmark, so its GEOMETRY is never dimmed: it stays a
+    // legible silhouette from the far end. Only its glows go out, so the one pink on
+    // screen is always the one the stage in front of the player is entitled to.
+    homeOff: 30,       // at or beyond this the home's glows are fully out
+    homeOn: 15,        // …and at or inside it they are fully lit
+    hintHomeGlow: 0,   // raise if the home should keep a spark of its own from afar
   },
 
   // ── health ──
@@ -272,7 +320,11 @@ function buildSign(o) {
     // through the correct face and the word reads mirrored from both sides. Writing
     // depth lets the near face win, which is simply what a solid object does.
     depthWrite: true,
-    fog: false,        // opacity is the only thing that drives it (see header)
+    // FOGGED. It used to be exempt so opacity alone drove it, and that is exactly
+    // why it was still legible from the home: a light grey object 30 units away with
+    // nothing dimming it but a small alpha. Distance is supposed to be what hides it,
+    // so distance gets to. The cost at the title beat (~13 units) is a few per cent.
+    fog: true,
   });
 
   const half = o.signDepth / 2;
@@ -389,9 +441,12 @@ export function createTransitionFlight(deps) {
   const haze = buildHaze(o);
   scene.add(haze.group);
 
-  // Remember the scene's own resting fog so the flight always hands it back exactly.
-  const fogBaseDensity = scene.fog?.density ?? o.fogBase;
-  const fogBaseColor = scene.fog ? scene.fog.color.clone() : new THREE.Color(0x070811);
+
+  // Remember the scene's own resting fog colour so the flight always hands it back
+  // exactly. The DISTANCE of the curve is not remembered — it is derived from
+  // presence every frame (see applyFog), because where the falloff should start
+  // depends on which end of the corridor the camera is standing at.
+  const fogBaseColor = new THREE.Color(o.fogRest);
   const smoke = new THREE.Color(o.smoke);
   const _fogC = new THREE.Color();
 
@@ -473,18 +528,26 @@ export function createTransitionFlight(deps) {
     lookCurve.updateArcLengths();
   }
 
+  // The falloff has two inputs, and they are independent on purpose:
+  //   · `presence` — WHERE the camera is standing, which picks the resting curve
+  //     (home curve ⇔ mode curve). This runs whether or not a flight is playing, so
+  //     an orbiting player gets the right curve for the end they are at.
+  //   · `env`      — the flight's 0…1 atmosphere envelope, which tightens the curve
+  //     mid-corridor and lets it back out on arrival.
+  // scene.fog is a THREE.Fog (linear). See the fog block in FLIGHT for why.
   function applyFog(env) {
     if (!scene.fog) return;
-    scene.fog.density = THREE.MathUtils.lerp(fogBaseDensity, o.fogPeak, env);
+    const restNear = THREE.MathUtils.lerp(o.fogNearHome, o.fogNearMode, presence);
+    const restFar = THREE.MathUtils.lerp(o.fogFarHome, o.fogFarMode, presence);
+    scene.fog.near = THREE.MathUtils.lerp(restNear, o.fogNearFlight, env);
+    scene.fog.far = THREE.MathUtils.lerp(restFar, o.fogFarFlight, env);
     _fogC.copy(fogBaseColor).lerp(smoke, o.fogTint * env);
     scene.fog.color.copy(_fogC);
   }
 
-  function restFog() {
-    if (!scene.fog) return;
-    scene.fog.density = fogBaseDensity;
-    scene.fog.color.copy(fogBaseColor);
-  }
+  // Resting fog is the same function with the flight envelope at zero — there is no
+  // separate "off" state to drift out of step with the live one.
+  function restFog() { applyFog(0); }
 
   // Nothing here belongs to the transition alone any more: the sign stands where it
   // stands and the haze hangs where it hangs. Both simply answer to presence when no
@@ -618,6 +681,7 @@ export function createTransitionFlight(deps) {
       // simply where the camera is standing.
       applySignOpacity(0);
       restProps(t);
+      restFog(); // the falloff follows the camera down the corridor, flight or no flight
       return false;
     }
 

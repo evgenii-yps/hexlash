@@ -3,8 +3,10 @@
 // reactive record the scene WRITES every frame and the view READS, so the labels
 // stay sharp DOM text anchored over real 3D plates without a per-frame Vue event.
 //
-// x/y are canvas CSS pixels of the caption anchor (a point above / below the plate,
-// per MODE_PLATES.captionAbove); `visible` is false while the anchor is behind the
+// x/y are canvas CSS pixels of the caption anchor — the top-centre of the caption
+// block, derived from the plate's projected SILHOUETTE rather than from a fixed point
+// in the world, so the label clears whichever edge is nearest the camera at any angle
+// (see modePlates.captionScreen). `visible` is false while the plate is behind the
 // camera or the mode stage is not on screen. `hovered` is the lit plate id (or null)
 // so the captions can follow the ONE-glow rule the 3D plates enforce.
 import { reactive } from 'vue';

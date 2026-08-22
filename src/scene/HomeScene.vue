@@ -566,7 +566,6 @@ let homeReturnPose = null;
 let coarsePointer = false;
 const _ray = new THREE.Raycaster();
 const _ptr = new THREE.Vector2();
-const _plateV = new THREE.Vector3();
 const _modeDesired = new THREE.Vector3();
 const _modeOffset = new THREE.Vector3();
 let downX = 0; let downY = 0;
@@ -680,19 +679,32 @@ function modeIdleReturn(t) {
 // would show as a hole in the world the moment they looked the wrong way.
 const _homeCentre = new THREE.Vector3(0, 1.2, 0);
 const _modeCentre = new THREE.Vector3(0, 1.2, -FLIGHT.modeZ);
-function corridorPresence() {
-  const p = FLIGHT.presence;
-  const dHome = camera.position.distanceTo(_homeCentre);
-  const dMode = camera.position.distanceTo(_modeCentre);
-  const mix = dHome / Math.max(dHome + dMode, 1e-4);
-  const x = THREE.MathUtils.clamp((mix - p.nearMix) / Math.max(p.farMix - p.nearMix, 1e-4), 0, 1);
+// Each end is measured against its OWN distance rather than a shared corridor mix.
+// A mix only says which end is nearer; it cannot say when the plates are close enough
+// to earn their colour back, and out in the middle of the void those are different
+// questions. Two curves, two pairs of knobs — see FLIGHT.presence.
+const band = (d, off, on) => {
+  const x = THREE.MathUtils.clamp((off - d) / Math.max(off - on, 1e-4), 0, 1);
   return x * x * (3 - 2 * x); // smoothstep — no step as the camera crosses over
-}
+};
 // The far end keeps a floor: seen from the home the plates and the sign sink to a
-// suggestion in the haze rather than to nothing. The home's own glows do NOT get a
-// floor — at the far end they are out, full stop, so the home reads as a silhouette
-// and the only pink on the screen stays the one the stage is entitled to.
-const farPresence = (k) => FLIGHT.presence.hint + (1 - FLIGHT.presence.hint) * k;
+// suggestion in the haze rather than to nothing — a hard cut would show as a hole in
+// the world the moment the player orbits. What actually HIDES them is the distance
+// falloff in transitionFlight (scene.fog), which past its `far` replaces them with
+// the sky outright; this only keeps them dark on the way there.
+function farPresence() {
+  const p = FLIGHT.presence;
+  const k = band(camera.position.distanceTo(_modeCentre), p.farOn, p.farFull);
+  return p.hintFar + (1 - p.hintFar) * k;
+}
+// …and the mirror for the home's own glows: they go OUT as the camera leaves, with no
+// floor, so the home reads as an unlit silhouette from the far end and the only pink
+// on the screen stays the one the stage in front of the player is entitled to.
+function homeGlowGate() {
+  const p = FLIGHT.presence;
+  const k = band(camera.position.distanceTo(_homeCentre), p.homeOff, p.homeOn);
+  return p.hintHomeGlow + (1 - p.hintHomeGlow) * k;
+}
 
 // The home's glows, gated from OUTSIDE the pieces that own them — the same approach
 // the combat rift already gets on this stage. Once the camera is out over the void
@@ -850,7 +862,10 @@ onMounted(() => {
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 
   scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x070811, 0.03);
+  // LINEAR fog, not FogExp2 — the near/far are driven every frame by the flight
+  // director (see FLIGHT's fog block and applyFog); these are just the home-end
+  // resting values so the very first frame is already correct.
+  scene.fog = new THREE.Fog(FLIGHT.fogRest, FLIGHT.fogNearHome, FLIGHT.fogFarHome);
 
   camera = new THREE.PerspectiveCamera(42, w / h, 0.1, 100);
   camera.position.copy(CAM_BASE);
@@ -1099,9 +1114,8 @@ onMounted(() => {
     // the dust keeps drifting under us as we pull away — that is the whole point of
     // both stages living in one world.
     // Which end of the corridor are we standing at? Everything that belongs to one
-    // end fades with it — see corridorPresence.
-    const k = corridorPresence();
-    const presence = farPresence(k); // plates / sign / haze
+    // end fades with it — see farPresence / homeGlowGate.
+    const presence = farPresence(); // plates / sign / haze
     const flying = flight ? flight.update(dt, t, presence) : false;
     if (!flying) {
       if (stage === 'select') modeIdleReturn(t); // soft drift back to the default framing
@@ -1117,7 +1131,7 @@ onMounted(() => {
     // and they cost nothing at all while the home is on screen, where they are hidden.
     modePlates?.update(t, dt, stage === 'select' && !flying, presence);
     // AFTER fighter.update() / dust.tick(), both of which rewrite what this gates.
-    applyHomeGlowGate(1 - k);
+    applyHomeGlowGate(homeGlowGate());
     if (PERF_ON) perfFrame(dt, flying); // dev readout only — see perfProbe.js
 
     // Identity label: project the point above the fighter's head to screen px and
@@ -1135,17 +1149,19 @@ onMounted(() => {
       setHomeFighterTag(0, 0, false); // the identity label belongs to the home stage only
     }
 
-    // Mode-plate captions: same trick as the identity label — project the caption
-    // anchor to canvas px so the 2D text stays sharp over real 3D plates.
+    // Mode-plate captions: 2D text over real 3D plates, same trick as the identity
+    // label — except the anchor is not a point in the world. It is derived from the
+    // plate's projected SILHOUETTE, so the caption stands clear of whichever edge is
+    // nearest the camera at this instant (see modePlates.captionScreen).
     if (modePlates && stage === 'select' && !flying) {
-      for (const id of ['pve', 'pvp']) {
-        _plateV.copy(modePlates.captionAnchor(id)).project(camera);
-        setModePlateTag(
-          id,
-          (_plateV.x * 0.5 + 0.5) * viewW,
-          (-_plateV.y * 0.5 + 0.5) * viewH,
-          _plateV.z < 1,
-        );
+      if (MODE_PLATES.captionAnchor === 'screen') {
+        const slots = modePlates.captionSlots(camera, viewW, viewH);
+        for (const id of ['pve', 'pvp']) setModePlateTag(id, slots[id].x, slots[id].y, slots[id].visible);
+      } else {
+        for (const id of ['pve', 'pvp']) {
+          const a = modePlates.captionScreen(id, camera, viewW, viewH);
+          setModePlateTag(id, a.x, a.y, a.visible);
+        }
       }
     }
 

@@ -81,12 +81,32 @@ export const MODE_PLATES = {
   // tap enters. Owner flag: pick by feel on a real phone.
   touchTwoStep: false,
 
-  // Caption anchor — where modePlateTags projects the 2D label to.
-  captionAbove: false, // false → caption sits BELOW the plate (owner flag)
-  captionLift: 1.6,    // world height of the anchor above the emblem (when above)
-  captionDrop: 0.85,   // world depth toward the camera side, at plate-base height
-                       // (when below) — far enough that the caption clears the
-                       // plate's own front face instead of printing onto it
+  // ── Caption anchoring ──
+  // 'plate'  — the caption hangs off the plate's own SILHOUETTE, recomputed every
+  //            frame from wherever the camera is standing: it sits under the lowest
+  //            point of the shape the player can actually see, so it can never climb
+  //            onto the plate however far round they orbit. This is the default.
+  // 'screen' — the captions are pinned to fixed slots on the screen and stay there
+  //            while the plates move behind them. The slots themselves are fixed;
+  //            which plate gets which is decided by the pair's current order on
+  //            screen (left→right, or top→bottom in portrait) so a label can never
+  //            end up naming the wrong plate. For the owner to compare against 'plate'.
+  //
+  // A world-space anchor (what this used to be) cannot do the job: any fixed offset
+  // is an offset in some FIXED direction, and the moment the camera swings past that
+  // direction the "in front of the plate" point is behind it, and the caption prints
+  // over the plate top.
+  captionAnchor: 'plate',
+  captionGap: 14,      // px between the bottom of the plate's silhouette and the
+                       // caption — a SCREEN distance, so it does not shrink with zoom
+  captionFloor: 30,    // …but never further down than this many px from the bottom of
+                       // the canvas. Only bites when the plate itself is running off
+                       // the frame, where the choice is between a caption sitting low
+                       // over a plate that is half gone and no caption at all.
+  captionSlots: {      // 'screen' mode, as fractions of the viewport
+    landscape: [[0.26, 0.84], [0.74, 0.84]], // [left slot, right slot]
+    portrait: [[0.5, 0.30], [0.5, 0.80]],    // [upper slot, lower slot]
+  },
 };
 
 // ─────────────────────────────── Small builders ───────────────────────────────
@@ -299,12 +319,13 @@ function buildPvpScar(o, halfW, halfD, topY) {
  *   homeHeight — the home slab thickness
  *   reduced    — prefers-reduced-motion (emblems hold still, lit response kept)
  *
- * @returns {{ group, layout, bounds, setHover, hovered, update, captionAnchor,
- *             pickables, dispose }}
+ * @returns {{ group, layout, bounds, setHover, hovered, update, captionScreen,
+ *             captionSlots, pickables, dispose }}
  *   layout(aspect)     — side-by-side (landscape) vs stacked-in-depth (portrait)
  *   bounds()           — { spanX, spanZ, topY, emblemTop } of the CURRENT layout
  *   setHover(id|null)  — light exactly one plate; the other sinks to dimLevel
- *   captionAnchor(id)  — world Vector3 the 2D caption is projected from
+ *   captionScreen(id, camera, w, h) — CSS-pixel anchor under the plate's silhouette
+ *   captionSlots(camera, w, h)      — the same, pinned to fixed screen slots
  *   pickables          — meshes to raycast against (whole plate = one hit box)
  */
 export function buildModePlates(opts) {
@@ -377,17 +398,80 @@ export function buildModePlates(opts) {
     hovered = (id === 'pve' || id === 'pvp') ? id : null;
   }
 
-  // World point the 2D caption hangs off. Below the plate (toward the camera side,
-  // +Z) by default; MODE_PLATES.captionAbove flips it over the emblem.
-  const _anchor = new THREE.Vector3();
-  function captionAnchor(id) {
-    const p = plates[id];
-    if (!p) return _anchor.set(0, 0, 0);
-    _anchor.copy(p.root.position);
-    if (o.captionAbove) _anchor.y += height + o.pve.hover + o.pve.radius + o.captionLift;
-    else _anchor.z += halfD + o.captionDrop; // stays at plate-base height → reads as ground
+  // ── Caption placement ──
+  // Screen-space, not world-space, and recomputed every frame. The caption has to
+  // stand clear of the plate's NEAR edge and under its silhouette from any angle,
+  // which is a question about the projected shape, not about a point in the world —
+  // so it is answered where the projection happens.
+  //
+  // The eight corners of the plate body are projected and the LOWEST one on screen
+  // is taken: that is the bottom of the shape the player is looking at, whatever they
+  // are looking at it from. The caption hangs a fixed number of PIXELS below it, so
+  // it keeps the same visual gap at every zoom, and the gap grows by itself as the
+  // plate turns edge-on and its silhouette reaches further down the screen.
+  //
+  // The horizontal anchor follows the plate's CENTRE rather than the lowest corner,
+  // so the caption does not hop sideways as the orbit hands the "lowest" role from
+  // one corner to the next; only its height tracks the silhouette.
+  const _v = new THREE.Vector3();
+  // Local corners of the plate body (the emblem floats ABOVE, so it never sets the
+  // bottom of the silhouette and is left out).
+  const plateCorners = [];
+  for (const sx of [-1, 1]) for (const sy of [0, 1]) for (const sz of [-1, 1]) {
+    plateCorners.push(new THREE.Vector3(sx * halfW, sy * height, sz * halfD));
+  }
 
-    return group.localToWorld(_anchor);
+  const _out = { x: 0, y: 0, visible: false };
+  /**
+   * @param id      'pve' | 'pvp'
+   * @param camera  the live camera — the silhouette is only meaningful against one
+   * @param viewW/H CSS pixels of the canvas
+   * @returns {{x, y, visible}} top-centre of the caption block, in CSS pixels
+   */
+  function captionScreen(id, camera, viewW, viewH) {
+    const p = plates[id];
+    _out.visible = false;
+    if (!p) return _out;
+
+    // Plate centre → the caption's horizontal anchor, and the front/behind test.
+    _v.set(0, height * 0.5, 0);
+    p.root.localToWorld(_v); // root sits under `group`, so this is already world space
+    _v.project(camera);
+    if (_v.z >= 1) return _out;      // behind the camera: nothing to label
+    const cx = (_v.x * 0.5 + 0.5) * viewW;
+
+    // Lowest projected corner = the bottom of the visible silhouette.
+    let low = -Infinity;
+    for (const c of plateCorners) {
+      _v.copy(c);
+      p.root.localToWorld(_v);
+      _v.project(camera);
+      if (_v.z >= 1) continue;       // that corner is behind us; the others still say enough
+      const sy = (-_v.y * 0.5 + 0.5) * viewH;
+      if (sy > low) low = sy;
+    }
+    if (low === -Infinity) return _out;
+
+    _out.x = cx;
+    _out.y = Math.min(low + o.captionGap, viewH - o.captionFloor);
+    _out.visible = true;
+    return _out;
+  }
+
+  // 'screen' mode: fixed slots, handed out by which plate is currently further left
+  // (landscape) or further up (portrait) so a label never ends up on the wrong plate.
+  const _slotA = new THREE.Vector3(); const _slotB = new THREE.Vector3();
+  function captionSlots(camera, viewW, viewH) {
+    const proj = (p, v) => { v.set(0, height * 0.5, 0); p.root.localToWorld(v); v.project(camera); return v; };
+    proj(plates.pve, _slotA); proj(plates.pvp, _slotB);
+    const slots = portrait ? o.captionSlots.portrait : o.captionSlots.landscape;
+    // Portrait slots run top→bottom on screen, and projected y runs the other way,
+    // so the plate with the HIGHER projected y is the one in the first (upper) slot.
+    const pveFirst = portrait ? _slotA.y > _slotB.y : _slotA.x < _slotB.x;
+    const put = (v, slot) => ({ x: slot[0] * viewW, y: slot[1] * viewH, visible: v.z < 1 });
+    return pveFirst
+      ? { pve: put(_slotA, slots[0]), pvp: put(_slotB, slots[1]) }
+      : { pve: put(_slotA, slots[1]), pvp: put(_slotB, slots[0]) };
   }
 
   const _c = new THREE.Color();
@@ -436,7 +520,7 @@ export function buildModePlates(opts) {
   layout(1.6);
 
   return {
-    group, layout, bounds, setHover, update, captionAnchor, pickables, dispose,
+    group, layout, bounds, setHover, update, captionScreen, captionSlots, pickables, dispose,
     get hovered() { return hovered; },
   };
 }
