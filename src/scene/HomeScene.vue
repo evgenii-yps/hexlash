@@ -27,6 +27,12 @@ import { resolveBehavior } from '@/data/behavior.js';
 import { buildPropSet, buildSnapGrid, buildGhost, disposeGroup } from './homeProps.js';
 import { createHomeWanderDirector } from './homeWander.js';
 import { setHomeFighterTag, clearHomeFighterTag } from './homeFighterTag.js';
+import { buildModePlates, MODE_PLATES } from './modePlates.js';
+import { createTransitionFlight, FLIGHT } from './transitionFlight.js';
+import { setModePlateTag, setModePlateHover, clearModePlateTags } from './modePlateTags.js';
+import {
+  PERF_ON, perfFrame, perfFlightStart, perfFlightEnd, setPerfCap, setPlateCost, countTriangles,
+} from './perfProbe.js';
 
 const props = defineProps({
   coreHue: { type: String, default: '#FF0069' }, // fighter core colour (per-core hue)
@@ -35,7 +41,16 @@ const props = defineProps({
   arrange: { type: Boolean, default: false }, // arrange mode → show snap-grid + ghost
   gridCells: { type: Array, default: () => [] }, // [{ u, v, active }]
   ghost: { type: Object, default: null }, // { kind, u, v } | null
+  // Which stage of the ONE world the camera is on. The view flips this; the scene
+  // FLIES between them (see transitionFlight.js) — except on the very first mount,
+  // where a direct /play/mode load must land on the mode framing with no flight.
+  stage: { type: String, default: 'home' }, // 'home' | 'select'
 });
+
+// arrived('home'|'select') — the camera is on the final framing and the 2D chrome
+//   for that stage may come back.
+// pick('pve'|'pvp')        — a mode plate was chosen.
+const emit = defineEmits(['arrived', 'pick']);
 
 const wrap = ref(null);
 const canvasEl = ref(null);
@@ -62,6 +77,12 @@ let dust = null;       // warm drifting dust/haze in the lamp cone (one THREE.Po
 let glow = null;       // soft warm "homely" pool on the slab under the fighter
 let backdrop = null;   // world-anchored background dome (dark gradient + faint hex weave)
 let lampHaze = null;   // soft warm haze halos at the lamp shades (additive sprites)
+let modePlates = null; // the PVE / PVP plates, far down -Z in the SAME world
+let flight = null;     // the home ↔ mode camera flight director
+let stage = 'home';    // the stage the camera is actually ON (props.stage is the wish)
+let modeIdleSince = null; // clock time the mode-stage orbit went idle (auto-return)
+let modeReturning = false;
+let modeHomePose = null;  // the default mode framing, for the idle auto-return
 let reduced = false;
 // Initial 3/4 camera placement; OrbitControls derives azimuth/polar/distance
 // from this + the target (the fighter) on first update().
@@ -75,6 +96,17 @@ const TAG = {
   headY: 2.05,   // world height above the slab top for the anchor (just above the head)
   nearOn: 5.3,   // camera distance below this → show
   nearOff: 6.5,  // distance above this → hide (gap = hysteresis, no flicker)
+};
+
+// Counter fill for the far end of the corridor — see where it is added below.
+// Deliberately dim and cold: it exists so nothing reads as a black cut-out when the
+// player turns round at the plates, NOT to light a second stage.
+const FAR_FILL = {
+  color: 0x9fb0cc,
+  intensity: 0.75,
+  x: -4,
+  y: 9,
+  zOffset: -10, // sits beyond the plates, shining back up the corridor
 };
 
 function lowPowerDevice() {
@@ -184,7 +216,9 @@ function buildLamps(opts, reduced) {
     rodGeos.forEach((g) => g.dispose());
   };
 
-  return { group, tick, dispose };
+  // bulbMat is handed back so the far-distance glow gate can put the bulbs out
+  // once the camera has left the home (see applyHomeGlowGate).
+  return { group, tick, bulbMat, dispose };
 }
 
 // ─────────────────────────── Atmosphere: dust + under-glow ───────────────────────────
@@ -327,7 +361,14 @@ function warmGlowColor(coreHueStr) {
 // All knobs here. Everything is static geometry → reduced-motion safe by construction.
 
 const BACKDROP = {
-  radius: 45,            // big enough to enclose the whole orbit (zoom 3.5–12), far = "background"
+  // The dome has to enclose BOTH ends of the world now, not just the home: with a
+  // full circle to orbit at the plates, every azimuth has to land on sky rather than
+  // on the edge of the geometry. So it is centred on the middle of the corridor
+  // (see centerZ below) and grown to clear the furthest the camera can get at either
+  // end. It is a smooth vertical gradient with no texture detail, so moving and
+  // enlarging it costs nothing visually — there is no pattern to stretch or seam.
+  radius: 58,            // clears the home orbit and the mode orbit's outer limit
+  centerZ: null,         // null ⇒ the corridor midpoint, filled in at build time
   centerY: 1.6,          // equator ≈ eye level (the camera looks at ~1.6) so the gradient centres on view
   texW: 1024,            // longitude (wraps) — kept an integer number of hex columns for a seamless seam
   texH: 1024,            // latitude (the vertical gradient)
@@ -427,7 +468,7 @@ function buildBackdrop(o, maxAniso) {
     map: tex, side: THREE.BackSide, fog: false, depthWrite: false,
   });
   const mesh = new THREE.Mesh(geo, mat);
-  mesh.position.set(0, o.centerY, 0);
+  mesh.position.set(0, o.centerY, o.centerZ ?? 0);
   mesh.renderOrder = -10; // paint first, behind everything
   const dispose = () => { geo.dispose(); mat.dispose(); tex.dispose(); };
   return { mesh, dispose };
@@ -510,6 +551,293 @@ function followFighter(dt) {
   controls.target.y = arena.refs.topY + 1.1;
 }
 
+// ─────────────────────── The MODE stage: framing, orbit, picking ───────────────────────
+// Home and the two mode plates are ONE world (see modePlates.js / transitionFlight.js).
+// Everything below is the bookkeeping that lets a single camera + a single
+// OrbitControls serve both stages: how the mode framing is computed (it has to
+// survive an orientation change), how the orbit corridor is swapped, and how the
+// plates are hovered / picked.
+
+const HOME_ORBIT = { minDist: 3.5, maxDist: 12, polarMin: 0.3, polarMax: 1.4 };
+
+// The home pose the player left when they pressed FIGHT — the way back lands
+// exactly there rather than on some canonical framing.
+let homeReturnPose = null;
+let coarsePointer = false;
+const _ray = new THREE.Raycaster();
+const _ptr = new THREE.Vector2();
+const _modeDesired = new THREE.Vector3();
+const _modeOffset = new THREE.Vector3();
+let downX = 0; let downY = 0;
+let touchArmed = null; // MODE_PLATES.touchTwoStep: the plate lit by the first tap
+
+// The default mode framing. Derived from the plate pair's own bounds, so a portrait
+// device (where the pair re-lays itself in depth) gets a framing that still fills the
+// screen instead of a thin strip. Returns FRESH vectors — the flight director keeps
+// one as its cached destination and compares against a live one to notice a rotation.
+function modeFraming() {
+  const f = FLIGHT.fit;
+  const b = modePlates
+    ? modePlates.bounds()
+    : { spanX: 10, spanZ: 3, topY: 0.6, emblemTop: 2 };
+  const tanV = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+  const spanX = b.spanX + f.marginX;
+  const spanY = b.spanZ * f.depthToScreen + b.emblemTop + f.marginY;
+  const dist = THREE.MathUtils.clamp(
+    Math.max(spanY / 2 / tanV, spanX / 2 / (camera.aspect * tanV)),
+    f.minDist, f.maxDist,
+  );
+  const pitch = THREE.MathUtils.degToRad(f.pitchDeg);
+  const target = new THREE.Vector3(0, FLIGHT.modeY + b.topY + f.targetLift, -FLIGHT.modeZ);
+  const position = new THREE.Vector3(
+    target.x,
+    target.y + dist * Math.sin(pitch),
+    target.z + dist * Math.cos(pitch),
+  );
+  return { position, target };
+}
+
+function homeFraming() {
+  if (homeReturnPose) {
+    return { position: homeReturnPose.position.clone(), target: homeReturnPose.target.clone() };
+  }
+  const target = new THREE.Vector3(
+    fighter ? fighter.group.position.x : 0,
+    (arenaRefs ? arenaRefs.topY : 0.5) + 1.1,
+    fighter ? fighter.group.position.z : 1,
+  );
+  return { position: CAM_BASE.clone(), target };
+}
+
+function poseFor(where) { return where === 'mode' ? modeFraming() : homeFraming(); }
+
+// Hand the orbit back to the player at the home stage: pivot on the fighter, the
+// original wide corridor, no azimuth limit.
+function applyHomeOrbit() {
+  const pose = homeFraming();
+  controls.target.copy(pose.target);
+  controls.minDistance = HOME_ORBIT.minDist;
+  controls.maxDistance = HOME_ORBIT.maxDist;
+  controls.minPolarAngle = HOME_ORBIT.polarMin;
+  controls.maxPolarAngle = HOME_ORBIT.polarMax;
+  controls.minAzimuthAngle = -Infinity;
+  controls.maxAzimuthAngle = Infinity;
+  controls.autoRotate = false; // the intro auto-orbit is a first-visit thing only
+}
+
+// …and at the mode stage: a FULL circle around the pair. The plates stand in the
+// same world as the home, so the player has to be able to turn round and find the
+// corridor, the sign and the home still there behind them — a fenced-in arc would
+// have given the game away as a backdrop with two props on it.
+//
+// Only the two limits that protect the illusion survive: the pitch floor keeps the
+// camera above the plate plane (no looking at their underside), and the absolute
+// distance ceiling keeps it well inside the backdrop dome (no reaching the sky).
+function applyModeOrbit() {
+  const f = FLIGHT.fit;
+  const pose = modeFraming();
+  modeHomePose = { position: pose.position.clone(), target: pose.target.clone() };
+  _modeOffset.copy(pose.position).sub(pose.target);
+  const base = _modeOffset.length();
+  controls.target.copy(pose.target);
+  controls.minDistance = base * f.zoomMin;
+  controls.maxDistance = Math.min(base * f.zoomMax, f.zoomMaxAbs);
+  const basePolar = Math.PI / 2 - THREE.MathUtils.degToRad(f.pitchDeg);
+  const span = THREE.MathUtils.degToRad(f.pitchSpanDeg);
+  const floor = THREE.MathUtils.degToRad(f.pitchFloorDeg);
+  controls.minPolarAngle = Math.max(0.05, basePolar - span);
+  controls.maxPolarAngle = Math.min(Math.PI / 2 - floor, basePolar + span);
+  controls.minAzimuthAngle = -Infinity; // all the way round
+  controls.maxAzimuthAngle = Infinity;
+  controls.autoRotate = false;
+}
+
+// Idle auto-return at the mode stage: after FLIGHT.fit.returnDelay of no input the
+// camera drifts back to the default framing. Any input cancels it (the orbit
+// start/end listeners below own the idle stamp).
+function modeIdleReturn(t) {
+  const f = FLIGHT.fit;
+  if (!modeHomePose || modeIdleSince === null) return;
+  if (!modeReturning && (t - modeIdleSince) >= f.returnDelay) modeReturning = true;
+  if (!modeReturning) return;
+  const k = reduced ? 1 : f.returnLerp;
+  controls.target.lerp(modeHomePose.target, k);
+  _modeDesired.copy(controls.target).add(_modeOffset);
+  camera.position.lerp(_modeDesired, k);
+  if (controls.target.distanceTo(modeHomePose.target) < 0.01
+    && camera.position.distanceTo(modeHomePose.position) < 0.01) {
+    modeReturning = false;
+    modeIdleSince = null;
+  }
+}
+
+// ─── presence: which end of the ONE world the camera is standing at ───
+// 0 at the home, 1 at the plates. Everything that belongs to one end dims out with
+// it: the plates and the sign sink to a hint in the haze while the player is at
+// home, and the home's own glows go out once the camera has left it. Nothing is
+// switched OFF — the player can orbit either stage a full circle, and a hard cut
+// would show as a hole in the world the moment they looked the wrong way.
+const _homeCentre = new THREE.Vector3(0, 1.2, 0);
+const _modeCentre = new THREE.Vector3(0, 1.2, -FLIGHT.modeZ);
+// Each end is measured against its OWN distance rather than a shared corridor mix.
+// A mix only says which end is nearer; it cannot say when the plates are close enough
+// to earn their colour back, and out in the middle of the void those are different
+// questions. Two curves, two pairs of knobs — see FLIGHT.presence.
+const band = (d, off, on) => {
+  const x = THREE.MathUtils.clamp((off - d) / Math.max(off - on, 1e-4), 0, 1);
+  return x * x * (3 - 2 * x); // smoothstep — no step as the camera crosses over
+};
+// The far end keeps a floor: seen from the home the plates and the sign sink to a
+// suggestion in the haze rather than to nothing — a hard cut would show as a hole in
+// the world the moment the player orbits. What actually HIDES them is the distance
+// falloff in transitionFlight (scene.fog), which past its `far` replaces them with
+// the sky outright; this only keeps them dark on the way there.
+function farPresence() {
+  const p = FLIGHT.presence;
+  const k = band(camera.position.distanceTo(_modeCentre), p.farOn, p.farFull);
+  return p.hintFar + (1 - p.hintFar) * k;
+}
+// …and the mirror for the home's own glows: they go OUT as the camera leaves, with no
+// floor, so the home reads as an unlit silhouette from the far end and the only pink
+// on the screen stays the one the stage in front of the player is entitled to.
+function homeGlowGate() {
+  const p = FLIGHT.presence;
+  const k = band(camera.position.distanceTo(_homeCentre), p.homeOff, p.homeOn);
+  return p.hintHomeGlow + (1 - p.hintHomeGlow) * k;
+}
+
+// The home's glows, gated from OUTSIDE the pieces that own them — the same approach
+// the combat rift already gets on this stage. Once the camera is out over the void
+// the home has to read as a silhouette: still lit, still lived in, still walking
+// about, but with no glow of its own in frame. Only the one pink on the screen —
+// FIGHT at the home, the hovered plate at the far end — ever survives.
+//
+// The fighter's core halo is rewritten by buildFighter.update() every frame, so the
+// gate is applied AFTER it in the loop; the rest are ours and hold their value.
+let homeGlowSprites = [];   // additive sprites inside the fighter (its core halo)
+let homeGlowBases = null;   // resting opacities of the pieces we own
+function collectHomeGlow() {
+  homeGlowSprites = [];
+  fighter.group.traverse((o) => {
+    if (o.isSprite && o.material && o.material.blending === THREE.AdditiveBlending) {
+      homeGlowSprites.push(o.material);
+    }
+  });
+  homeGlowBases = {
+    haze: lampHaze ? HAZE.opacity : 0,
+    dust: DUST.opacity,
+    glow: GLOW.opacity,
+    bulb: LAMPS.bulbOpacity,
+  };
+}
+function applyHomeGlowGate(k) {
+  if (!homeGlowBases) return;
+  for (const m of homeGlowSprites) m.opacity *= k; // after fighter.update() — see above
+  if (lampHaze) lampHaze.group.children.forEach((sp) => { sp.material.opacity = homeGlowBases.haze * k; });
+  if (dust) dust.points.material.opacity *= k;     // dust.tick rewrites it each frame
+  if (glow) glow.mesh.material.opacity = homeGlowBases.glow * k;
+  if (lamps?.bulbMat) lamps.bulbMat.opacity = homeGlowBases.bulb * k;
+}
+
+// Raycast the pointer against the plates' invisible hit boxes (one per plate, so the
+// whole plate — emblem included — is a single affordance).
+function pickPlate(clientX, clientY) {
+  if (!modePlates || !canvasEl.value) return null;
+  const r = canvasEl.value.getBoundingClientRect();
+  if (!r.width || !r.height) return null;
+  _ptr.x = ((clientX - r.left) / r.width) * 2 - 1;
+  _ptr.y = -((clientY - r.top) / r.height) * 2 + 1;
+  _ray.setFromCamera(_ptr, camera);
+  const hit = _ray.intersectObjects(modePlates.pickables, false)[0];
+  return hit ? hit.object.userData.modePlate : null;
+}
+
+function setHover(id) {
+  if (!modePlates) return;
+  modePlates.setHover(id);
+  setModePlateHover(id);
+  if (canvasEl.value) canvasEl.value.style.cursor = id ? 'pointer' : '';
+}
+
+const modeSelectable = () => stage === 'select' && flight && !flight.active;
+
+function onPointerMove(e) {
+  if (coarsePointer || !modeSelectable()) return;
+  setHover(pickPlate(e.clientX, e.clientY));
+}
+
+function onPointerDown(e) {
+  downX = e.clientX; downY = e.clientY;
+  // A tap ANYWHERE mid-flight rides the camera out to the end pose (see skip()).
+  if (flight && flight.active) flight.skip();
+}
+
+function onPointerUp(e) {
+  if (!modeSelectable()) return;
+  if (Math.hypot(e.clientX - downX, e.clientY - downY) > 5) return; // that was an orbit drag
+  const id = pickPlate(e.clientX, e.clientY);
+  if (!id) { if (coarsePointer) { touchArmed = null; setHover(null); } return; }
+  if (coarsePointer && MODE_PLATES.touchTwoStep && touchArmed !== id) {
+    touchArmed = id; // first tap lights it, second one enters
+    setHover(id);
+    return;
+  }
+  setHover(id); // hold the plate lit through the exit
+  touchArmed = null;
+  emit('pick', id);
+}
+
+function onKeyDown() {
+  if (flight && flight.active) flight.skip();
+}
+
+// The camera has landed. Hand the orbit back, wake the stage's own chrome.
+function onFlightArrive(where) {
+  if (!controls) return;
+  controls.enabled = true;
+  if (where === 'select') {
+    applyModeOrbit();
+    modeIdleSince = clock ? clock.getElapsedTime() : 0;
+    modeReturning = false;
+  } else {
+    applyHomeOrbit();
+    modePlates?.setHover(null);
+    clearModePlateTags();
+    touchArmed = null;
+    if (canvasEl.value) canvasEl.value.style.cursor = '';
+  }
+  controls.update();
+  if (PERF_ON) perfFlightEnd(flight?.stalled);
+  emit('arrived', where);
+}
+
+// Move to a stage. `animated` false = land on it with no flight (a direct
+// /play/mode load, or reduced motion, where the caller covers the swap with a dim).
+function goStage(next, animated) {
+  if (!flight || !controls) return;
+  const want = next === 'select' ? 'select' : 'home';
+  if (want === stage && !flight.active) return;
+  if (want === 'select') {
+    homeReturnPose = { position: camera.position.clone(), target: controls.target.clone() };
+    modePlates.layout(camera.aspect);
+  }
+  stage = want;
+  controls.enabled = false;
+  setHover(null);
+  clearModePlateTags();
+  touchArmed = null;
+  modeIdleSince = null;
+  modeReturning = false;
+  if (!animated) {
+    flight.snapTo(want === 'select' ? 'mode' : 'home');
+    onFlightArrive(want);
+    return;
+  }
+  flight.setLookHint(controls.target);
+  if (PERF_ON) perfFlightStart();
+  flight.play(want === 'select' ? 'mode' : 'home', { onArrive: () => onFlightArrive(want) });
+}
+
 onMounted(() => {
   const el = wrap.value;
   const w = el.clientWidth || window.innerWidth;
@@ -518,6 +846,7 @@ onMounted(() => {
 
   reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const coarse = window.matchMedia('(pointer: coarse)').matches;
+  coarsePointer = coarse;
   const targetFPS = coarse ? 30 : 60;
 
   renderer = new THREE.WebGLRenderer({
@@ -533,7 +862,10 @@ onMounted(() => {
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 
   scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x070811, 0.03);
+  // LINEAR fog, not FogExp2 — the near/far are driven every frame by the flight
+  // director (see FLIGHT's fog block and applyFog); these are just the home-end
+  // resting values so the very first frame is already correct.
+  scene.fog = new THREE.Fog(FLIGHT.fogRest, FLIGHT.fogNearHome, FLIGHT.fogFarHome);
 
   camera = new THREE.PerspectiveCamera(42, w / h, 0.1, 100);
   camera.position.copy(CAM_BASE);
@@ -544,6 +876,15 @@ onMounted(() => {
   scene.add(key);
   scene.add(new THREE.AmbientLight(0x2a3550, 0.5));
   scene.add(new THREE.HemisphereLight(0x44506e, 0x05060c, 0.4));
+  // COUNTER FILL, from the far end of the corridor. The key sits over the home and
+  // faces down the +Z side of everything, which was fine while that was the only
+  // side anyone ever saw. Now the player can orbit the plates a full circle and look
+  // back up the corridor — and from there the sign's far face, the plates' near
+  // walls and the home's back were all unlit black. This is a dim cold counter-light,
+  // not an accent: it puts a readable matte grey on those faces and nothing more.
+  const counter = new THREE.DirectionalLight(FAR_FILL.color, FAR_FILL.intensity);
+  counter.position.set(FAR_FILL.x, FAR_FILL.y, -FLIGHT.modeZ + FAR_FILL.zOffset);
+  scene.add(counter);
 
   const pink = getComputedStyle(el).getPropertyValue('--hex-primary').trim() || '#FF0069';
 
@@ -585,7 +926,10 @@ onMounted(() => {
   // top of the frame reads as tone + texture instead of a black hole, plus soft warm
   // haze at the lamp shades so the lamps read as lighting the space. Both warm/dark,
   // no pink, no new glow; static → reduced-motion safe. (See builders up top.)
-  backdrop = buildBackdrop(BACKDROP, renderer.capabilities.getMaxAnisotropy());
+  backdrop = buildBackdrop(
+    { ...BACKDROP, centerZ: -FLIGHT.modeZ / 2 }, // straddle the whole corridor
+    renderer.capabilities.getMaxAnisotropy(),
+  );
   scene.add(backdrop.mesh);
   lampHaze = buildLampHaze(HAZE, LAMPS);
   scene.add(lampHaze.group);
@@ -665,6 +1009,9 @@ onMounted(() => {
   glow.mesh.position.set(fighter.group.position.x, arena.refs.topY + GLOW.yLift, fighter.group.position.z);
   scene.add(glow.mesh);
 
+  // Everything the far-distance glow gate touches now exists — cache it once.
+  collectHomeGlow();
+
   // --- Free orbit around the FIGHTER (home only — never added to the combat
   //     scene). Mouse: drag = orbit, wheel = zoom. Touch: one-finger drag =
   //     orbit, pinch = zoom (pan disabled). Soft damping.
@@ -694,6 +1041,60 @@ onMounted(() => {
   controls.addEventListener('start', () => { controls.autoRotate = false; });
   controls.update();
 
+  // --- The MODE stage. Two smaller plates standing a long way down -Z in the SAME
+  //     world (see modePlates.js). They are built HERE, at scene init, and never at
+  //     transition time: a fourth heavy stage assembled the moment FIGHT is pressed
+  //     would stall the exact beat the flight is supposed to be cinema. They cost a
+  //     handful of meshes and start hidden — nothing loads when the camera flies.
+  // Timed only under ?perf=1 — the whole "keep them in the home scene vs. build
+  // them lazily on FIGHT" decision hangs on this number, so it is worth being able
+  // to read it off a real phone (see perfProbe.js). Off, it costs nothing at all.
+  const platesT0 = PERF_ON ? performance.now() : 0;
+  modePlates = buildModePlates({
+    maxAniso: renderer.capabilities.getMaxAnisotropy(),
+    homeW: arena.refs.W,
+    homeDepth: arena.refs.totalDepth,
+    homeHeight: 1,
+    reduced,
+  });
+  const platesMs = PERF_ON ? performance.now() - platesT0 : 0;
+  modePlates.group.position.set(0, FLIGHT.modeY, -FLIGHT.modeZ);
+  modePlates.layout(w / h);
+  scene.add(modePlates.group);
+  if (PERF_ON) {
+    const tris = countTriangles(modePlates.group);
+    setPlateCost(platesMs, tris.drawn, tris.hidden);
+    setPerfCap(targetFPS); // the loop is FPS-capped; the readout prints it for context
+  }
+
+  // --- The flight director. Owns the camera path, the fog envelope, the haze the
+  //     camera passes through and the HEXLASH sign standing in the corridor.
+  flight = createTransitionFlight({ scene, camera, poseFor, reduced });
+  flight.setLookHint(controls.target);
+
+  // Orbit start/end also stamps the mode stage's idle clock (the auto-return).
+  controls.addEventListener('start', () => { modeIdleSince = null; modeReturning = false; });
+  controls.addEventListener('end', () => { modeIdleSince = clock ? clock.getElapsedTime() : 0; });
+
+  // Pointer: hover / pick the plates at the mode stage, and skip a running flight.
+  const cv = canvasEl.value;
+  cv.addEventListener('pointermove', onPointerMove);
+  cv.addEventListener('pointerdown', onPointerDown);
+  cv.addEventListener('pointerup', onPointerUp);
+  window.addEventListener('keydown', onKeyDown);
+
+  // Direct load of /play/mode: land on the mode framing with NO flight (the page-load
+  // splash already covered the assembly). Any later change of `stage` flies.
+  if (props.stage === 'select') {
+    stage = 'select';
+    flight.snapTo('mode');
+    applyModeOrbit();
+    modeIdleSince = 0;
+    controls.autoRotate = false;
+    controls.update();
+  }
+  emit('arrived', stage);
+
   rebuildProps();
 
   // --- Render loop. FPS-capped; elapsed time drives the idle + the camera sway.
@@ -708,18 +1109,35 @@ onMounted(() => {
     const dt = t - prevWanderT;
     prevWanderT = t;
 
-    controls.update(); // damping + intro auto-orbit (until first interaction)
+    // The flight owns the camera while it runs, so the orbit is parked. The HOME
+    // itself never pauses: the fighter keeps walking, the lamps keep flickering and
+    // the dust keeps drifting under us as we pull away — that is the whole point of
+    // both stages living in one world.
+    // Which end of the corridor are we standing at? Everything that belongs to one
+    // end fades with it — see farPresence / homeGlowGate.
+    const presence = farPresence(); // plates / sign / haze
+    const flying = flight ? flight.update(dt, t, presence) : false;
+    if (!flying) {
+      if (stage === 'select') modeIdleReturn(t); // soft drift back to the default framing
+      controls.update(); // damping + intro auto-orbit (until first interaction)
+    }
     if (!reduced) director?.update(t, dt); // pick targets + feed the lure / idle actions
     fighter?.update(t, camera); // the body walks the lure / idles (its own footwork)
-    if (!reduced) followFighter(dt); // lazy dead-zone camera follow (keeps it in frame)
+    if (!reduced && stage === 'home' && !flying) followFighter(dt); // lazy dead-zone follow
     lamps?.tick?.(t); // gentle light flicker (null under reduced motion)
     if (!reduced) dust?.tick?.(t); // warm dust drift (null/static under reduced motion)
     glow?.follow(fighter.group.position); // ease the warm pool under the fighter
+    // Plates only respond (hover light / emblem life) once the camera has landed —
+    // and they cost nothing at all while the home is on screen, where they are hidden.
+    modePlates?.update(t, dt, stage === 'select' && !flying, presence);
+    // AFTER fighter.update() / dust.tick(), both of which rewrite what this gates.
+    applyHomeGlowGate(homeGlowGate());
+    if (PERF_ON) perfFrame(dt, flying); // dev readout only — see perfProbe.js
 
     // Identity label: project the point above the fighter's head to screen px and
     // gate the show flag on zoom proximity (hysteresis). HomeView reads this to
     // anchor + fade the 2D label. Works on touch too (pinch changes the distance).
-    if (fighter) {
+    if (fighter && stage === 'home' && !flying) {
       const dist = camera.position.distanceTo(controls.target);
       if (!tagNear && dist < TAG.nearOn) tagNear = true;
       else if (tagNear && dist > TAG.nearOff) tagNear = false;
@@ -727,6 +1145,24 @@ onMounted(() => {
       _tagV.project(camera); // → NDC
       const inFront = _tagV.z < 1; // not behind the camera
       setHomeFighterTag((_tagV.x * 0.5 + 0.5) * viewW, (-_tagV.y * 0.5 + 0.5) * viewH, tagNear && inFront);
+    } else if (fighter) {
+      setHomeFighterTag(0, 0, false); // the identity label belongs to the home stage only
+    }
+
+    // Mode-plate captions: 2D text over real 3D plates, same trick as the identity
+    // label — except the anchor is not a point in the world. It is derived from the
+    // plate's projected SILHOUETTE, so the caption stands clear of whichever edge is
+    // nearest the camera at this instant (see modePlates.captionScreen).
+    if (modePlates && stage === 'select' && !flying) {
+      if (MODE_PLATES.captionAnchor === 'screen') {
+        const slots = modePlates.captionSlots(camera, viewW, viewH);
+        for (const id of ['pve', 'pvp']) setModePlateTag(id, slots[id].x, slots[id].y, slots[id].visible);
+      } else {
+        for (const id of ['pve', 'pvp']) {
+          const a = modePlates.captionScreen(id, camera, viewW, viewH);
+          setModePlateTag(id, a.x, a.y, a.visible);
+        }
+      }
     }
 
     renderer.render(scene, camera);
@@ -755,9 +1191,23 @@ onMounted(() => {
     camera.aspect = cw / ch;
     camera.updateProjectionMatrix();
     renderer.setSize(cw, ch, false);
+    // An orientation change re-lays the plate pair (side-by-side ↔ stacked in depth)
+    // and re-frames it. Mid-flight the director re-aims itself (it watches poseFor),
+    // so only the standing case is handled here.
+    modePlates?.layout(camera.aspect);
+    if (stage === 'select' && flight && !flight.active) {
+      flight.snapTo('mode');
+      applyModeOrbit();
+      controls.update();
+    }
   });
   resizeObserver.observe(el);
 });
+
+// The view flips `stage`; the scene FLIES between the home and the mode plates.
+// Under reduced motion the flight director places the camera instead of moving it
+// (the caller covers that swap with a short dim — see HomeView).
+watch(() => props.stage, (next) => goStage(next, true));
 
 // State changes (empty ↔ lived ↔ arrange, ghost moves) → rebuild decor.
 watch(
@@ -770,7 +1220,14 @@ onBeforeUnmount(() => {
   if (resizeObserver) resizeObserver.disconnect();
   if (onVisibility) document.removeEventListener('visibilitychange', onVisibility);
   if (renderer) renderer.setAnimationLoop(null);
+  window.removeEventListener('keydown', onKeyDown);
+  if (canvasEl.value) {
+    canvasEl.value.removeEventListener('pointermove', onPointerMove);
+    canvasEl.value.removeEventListener('pointerdown', onPointerDown);
+    canvasEl.value.removeEventListener('pointerup', onPointerUp);
+  }
   clearHomeFighterTag(); // hide the identity label when the stage unmounts
+  clearModePlateTags();
   if (director) director.dispose();
   if (controls) controls.dispose();
   if (propGroup) { scene.remove(propGroup); disposeGroup(propGroup); }
@@ -779,6 +1236,8 @@ onBeforeUnmount(() => {
   if (lamps) { scene.remove(lamps.group); lamps.dispose(); }
   if (backdrop) { scene.remove(backdrop.mesh); backdrop.dispose(); }
   if (lampHaze) { scene.remove(lampHaze.group); lampHaze.dispose(); }
+  if (flight) flight.dispose(); // also hands the scene fog back to its resting value
+  if (modePlates) { scene.remove(modePlates.group); modePlates.dispose(); }
   if (dust) { scene.remove(dust.points); dust.dispose(); }
   if (glow) { scene.remove(glow.mesh); glow.dispose(); }
   if (fighter) fighter.dispose();

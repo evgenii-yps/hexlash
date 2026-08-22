@@ -68,6 +68,16 @@ export default {
     fightSub: "SEND YOUR FIGHTER TO THE ARENA",
     editSpace: "EDIT SPACE",     // corner button → decor arrange mode (single-label chip)
   },
+  // Mode stage — the PVE / PVP fork. Not a screen any more: the home FIGHT button
+  // flies the camera out to two plates standing in the same world, and these are
+  // the captions anchored over them (+ the one control that stage carries).
+  mode: {
+    back: "← Back",
+    pveName: "PVE",
+    pveDesc: "Train against the legend",
+    pvpName: "PVP",
+    pvpDesc: "Fight another trainer",
+  },
   // Space — the /play/space 3D preview (Ground Select → SPACE door) + the door's
   // now-active affordance. UI is en-only.
   space: {

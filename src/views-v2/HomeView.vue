@@ -8,7 +8,7 @@
      the design reference, NOT player data. Glow discipline: the only glows are
      the 3D fighter core + the FIGHT button — every other pink mark is matte. -->
 <template>
-  <div class="home-root" :class="{ 'hs-anim-in': introPlaying }">
+  <div class="home-root" :class="{ 'hs-anim-in': introPlaying, 'is-away': stage !== 'home' }">
     <!-- 3D stage (behind the chrome) -->
     <HomeScene
       :core-hue="coreHue"
@@ -17,6 +17,9 @@
       :arrange="arrange"
       :grid-cells="gridCells"
       :ghost="ghost"
+      :stage="stage"
+      @arrived="onArrived"
+      @pick="onPickMode"
     />
 
     <!-- ───────── persistent top strip ─────────
@@ -51,7 +54,10 @@
 
       <!-- Home / arrange chrome overlay -->
       <div v-else key="home" class="hs-overlay">
-      <!-- ───────── normal home chrome ───────── -->
+      <!-- ───────── normal home chrome ─────────
+           Kept MOUNTED at the mode stage and hidden by the `.is-away` class instead
+           of being v-if'd away, so it can actually fade over the first beat of the
+           flight rather than popping out of existence the moment FIGHT is pressed. -->
       <template v-if="!arrange">
         <!-- bottom dock — FIGHT alone, centred: a physical plinth (the ONE pink +
              the ONE glow on the screen). Three stacked layers: f-bloom = the soft
@@ -136,6 +142,59 @@
       </div>
     </div>
 
+    <!-- ───────── mode-stage chrome ─────────
+         The PVE / PVP fork is no longer a screen — it is a place in the same world,
+         so its chrome is only what the place needs: ← BACK, and one caption per
+         plate anchored over the real 3D slab (projected by HomeScene into
+         modePlateTags, same trick as the fighter identity label). No top strip here
+         — no brand, no SHOP, no cabinet: the cabinet stays reachable from home.
+         Discipline: BACK is matte chrome, and the captions carry NO glow of their
+         own — the one lit thing on this stage is the hovered plate, in 3D. -->
+    <template v-if="stage === 'select'">
+      <button
+        v-show="!flying"
+        type="button"
+        class="hs-chrome mode-back"
+        @click="onModeBack"
+      >{{ t.mode.back }}</button>
+
+      <div
+        v-for="door in MODE_DOORS"
+        :key="door.id"
+        class="mode-cap"
+        :class="{ 'is-lit': modePlateTags.hovered === door.id }"
+        :style="{ transform: `translate3d(${modePlateTags[door.id].x}px, ${modePlateTags[door.id].y}px, 0)` }"
+        aria-hidden="true"
+      >
+        <div class="mc-card" :class="{ 'is-shown': !flying && modePlateTags[door.id].visible }">
+          <span class="mc-name">{{ door.name }}</span>
+          <span class="mc-desc">{{ door.desc }}</span>
+        </div>
+      </div>
+    </template>
+
+    <!-- Reduced motion: there is no flight, so the stage swap is covered by a short
+         dim instead (the camera is simply placed on the other framing). -->
+    <div class="stage-dim" :class="{ 'is-on': dim }" aria-hidden="true"></div>
+
+    <!-- ───────── dev performance readout ─────────
+         Off unless the address carries ?perf=1, so it is a preview tool and not a
+         feature: with the parameter absent nothing here renders and nothing is
+         sampled in the frame loop (see perfProbe.js). Matte mono, muted ink, no
+         glow and no pink — it must never read as part of the game. -->
+    <div v-if="PERF_ON" class="perf-hud" aria-hidden="true">
+      <div>FPS {{ perfState.fps }}<span class="pd">/{{ perfState.cap }}</span></div>
+      <div>
+        FLIGHT MIN {{ perfState.minFps || '—' }}
+        <span class="pd">· STALL {{ perfState.stalled ? 'YES' : '—' }}</span>
+      </div>
+      <div>
+        PLATES {{ perfState.plateBuildMs }}MS
+        <span class="pd">· {{ perfState.plateTris }} TRI (+{{ perfState.plateHiddenTris }} HIT)</span>
+      </div>
+      <div class="pd">FLIGHTS {{ perfState.flights }}</div>
+    </div>
+
     <!-- Player Cabinet — sliding panel that slides in from the RIGHT (the same edge
          the strip's cabinet entry sits on). Always mounted so it opens over the home
          AND the shop; closed by ✕ / scrim-tap / Esc. Fixed-position, own pointer-events. -->
@@ -150,8 +209,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, computed, onMounted, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import store from '@/core/state/store.js';
 import { t } from '@/locales/index.js';
 import { getCore } from '@/data/upgradeData.js';
@@ -160,10 +219,74 @@ import HomeShop from '@/components/home/HomeShop.vue';
 import PlayerCabinet from '@/views-v2/PlayerCabinet.vue';
 import { LogoMark } from '@/components/landing/icons.js';
 import { homeFighterTag } from '@/scene/homeFighterTag.js';
+import { modePlateTags } from '@/scene/modePlateTags.js';
+import { PERF_ON, perfState } from '@/scene/perfProbe.js';
 import '@/styles/home.css';
 import '@/styles/cabinet.css';
 
 const router = useRouter();
+const route = useRoute();
+
+// ───────── stage: home ⇄ mode select, ONE world, ONE scene ─────────
+// /play/home and /play/mode are the same route record (an alias — see the router),
+// so this component is NOT remounted between them and the 3D scene survives the
+// hop. `stage` is what the camera should be looking at; HomeScene flies there and
+// calls back with `arrived`, and only THEN does the URL change — the flight is the
+// navigation, the route is the bookmark.
+const MODE_PATH = '/play/mode';
+const HOME_PATH = '/play/home';
+const routeStage = computed(() => (route.path === MODE_PATH ? 'select' : 'home'));
+const stage = ref(routeStage.value);
+const flying = ref(false);
+const dim = ref(false);
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const MODE_DOORS = [
+  { id: 'pve', name: t.value.mode.pveName, desc: t.value.mode.pveDesc, to: '/play/pve' },
+  { id: 'pvp', name: t.value.mode.pvpName, desc: t.value.mode.pvpDesc, to: '/play/ground' },
+];
+
+// Browser back / forward (and any other push at these two paths) moves the camera:
+// the route is a wish, `stage` is what the scene acts on.
+watch(routeStage, (v) => { if (v !== stage.value) goStage(v); });
+
+// Under reduced motion HomeScene places the camera instead of flying it, so cover
+// the swap with a short dim rather than letting the world jump.
+async function goStage(next) {
+  if (next === stage.value) return;
+  if (!reducedMotion) {
+    flying.value = true;
+    stage.value = next;
+    return;
+  }
+  dim.value = true;
+  await new Promise((r) => setTimeout(r, 130));
+  flying.value = true;
+  stage.value = next;
+}
+
+// The camera has landed. NOW the URL catches up — pushing earlier would swap the
+// route record mid-flight and tear the scene down under the camera.
+function onArrived(where) {
+  flying.value = false;
+  dim.value = false;
+  const want = where === 'select' ? MODE_PATH : HOME_PATH;
+  // Carry the query across: the hop is one scene, so anything the address is
+  // holding (?perf=1 on a preview build) has to survive it and survive a refresh.
+  if (route.path !== want) router.push({ path: want, query: route.query });
+}
+
+// FIGHT no longer navigates — it flies. A second press while the camera is moving
+// is ignored (the flight is already on its way).
+function onFightMode() { if (!flying.value && stage.value === 'home') goStage('select'); }
+function onModeBack() { if (!flying.value) goStage('home'); }
+
+// A plate was chosen in 3D. These ARE screen changes (a different scene each way),
+// so they navigate normally and the transition cover handles them.
+function onPickMode(id) {
+  const door = MODE_DOORS.find((d) => d.id === id);
+  if (door) router.push(door.to);
+}
 
 // View + state. The home renders a single fixed state (the empty floor — no
 // ownership data source yet). arrange / shop are entered from the dock.
@@ -225,10 +348,11 @@ const trayItems = [
   { label: 'Ward Arch', cnt: '×0', locked: true },
 ];
 
-// --- Dock / nav. FIGHT opens the Mode Select fork (/play/mode); from there PVE →
-//     /play/pve (stub) and PVP → /play (core select). TRAIN was removed from
-//     the dock (no training mode yet) — its /play/upgrade route is kept for later.
-function onFight() { router.push('/play/mode'); }
+// --- Dock / nav. FIGHT flies the camera out to the mode plates (see goStage /
+//     onFightMode above); from there PVE → /play/pve and PVP → /play/ground.
+//     TRAIN was removed from the dock (no training mode yet) — its /play/upgrade
+//     route is kept for later.
+function onFight() { onFightMode(); }
 // SHOP segment toggles the surface (open shop / back to home); the brand-block is
 // the other way home. Both swap the same `view`, cross-faded by the strip wrapper.
 function onShop() { view.value = view.value === 'shop' ? 'home' : 'shop'; }
@@ -278,6 +402,101 @@ function onArrangePlace() { arrange.value = false; }
   font-size: 8.5px; letter-spacing: 0.18em; text-transform: uppercase;
   color: var(--muted, #76727c);
 }
+/* ───────── the two stages of the one world ─────────
+   Pressing FIGHT does not open a screen, it flies the camera away — so the home's
+   own 2D chrome has to be gone by the time the camera has really left. It fades on
+   the class, over the first quarter-second of the flight, and comes back the same
+   way on the way home. `.is-away` covers both the flight and the mode stage. */
+.home-root .hs-strip,
+.home-root .hs-dock,
+.home-root .edit-space,
+.home-root .fighter-tag {
+  visibility: visible;
+  transition: opacity 0.25s var(--ease-weight, ease), visibility 0s linear 0s;
+}
+/* `visibility`, not just opacity: the strip's own children carry pointer-events:auto
+   (home.css), so a merely transparent strip still swallows clicks meant for the mode
+   stage's ← BACK underneath it. Visibility flips only after the fade has finished on
+   the way out, and immediately on the way back in. */
+.home-root.is-away .hs-strip,
+.home-root.is-away .hs-dock,
+.home-root.is-away .edit-space,
+.home-root.is-away .fighter-tag {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.25s var(--ease-weight, ease), visibility 0s linear 0.25s;
+}
+
+/* ← BACK on the mode stage. Matte chrome, no pink, no glow — the one lit thing on
+   this stage is the hovered plate, and it is lit in 3D. */
+.mode-back {
+  position: absolute; left: 28px; top: 26px; z-index: 10;
+  pointer-events: auto;
+  font-family: var(--hs-mono, ui-monospace, monospace);
+  font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase;
+  height: 40px; padding: 0 16px;
+}
+
+/* Plate captions — a zero-size anchor at the projected point, card centred on it.
+   Sharp DOM text over real 3D plates (same approach as the fighter identity label).
+   The lit plate's caption brightens; it never gains a glow of its own. */
+.mode-cap {
+  position: absolute; left: 0; top: 0; width: 0; height: 0;
+  z-index: 9; pointer-events: none; will-change: transform;
+}
+.mc-card {
+  position: absolute; left: 0; top: 0;
+  transform: translate(-50%, 6px);
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  white-space: nowrap; text-align: center;
+  opacity: 0;
+  transition: opacity 0.32s var(--ease-weight, ease), transform 0.32s var(--ease-weight, ease);
+}
+.mc-card.is-shown { opacity: 1; transform: translate(-50%, 0); }
+.mc-name {
+  font-family: var(--hs-disp, "Saira Condensed", sans-serif);
+  font-weight: 900; font-size: 30px; line-height: 0.9;
+  letter-spacing: 0.02em; text-transform: uppercase;
+  color: #ededf1;
+}
+.mc-desc {
+  font-family: var(--hs-mono, ui-monospace, monospace);
+  font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: #5d5d66;
+  transition: color 0.25s var(--ease-weight, ease);
+}
+.mode-cap.is-lit .mc-desc { color: #9a9aa6; }
+
+@media (max-width: 560px) {
+  .mode-back { left: 18px; top: 18px; }
+  .mc-name { font-size: 24px; }
+  .mc-desc { font-size: 10px; letter-spacing: 0.14em; }
+}
+
+/* Reduced motion only: the camera is placed, not flown, so a short dim covers the
+   swap. Zero cost (and invisible) when the flight is doing its job. */
+.stage-dim {
+  position: absolute; inset: 0; z-index: 9;
+  background: #05060b;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.13s linear;
+}
+.stage-dim.is-on { opacity: 1; }
+
+/* Dev performance readout (?perf=1). Deliberately plain: mono, muted, no panel,
+   no glow, no pink — a preview instrument sitting on top of the game, never a
+   part of it. Top-right so it clears ← BACK and the FIGHT plinth. */
+.perf-hud {
+  position: absolute; right: 12px; top: 84px; z-index: 20;
+  pointer-events: none; user-select: none;
+  font-family: var(--hs-mono, ui-monospace, monospace);
+  font-size: 10px; line-height: 1.65; letter-spacing: 0.08em;
+  text-transform: uppercase; text-align: right;
+  color: #5d5d66;
+}
+.perf-hud .pd { opacity: 0.62; }
+
 /* EDIT SPACE chrome material + the FIGHT plinth live in home.css (the shared
    chrome stylesheet) — EDIT SPACE shares the .chrome material with the top-strip
    cluster, so it is defined alongside it, not scoped here. */
