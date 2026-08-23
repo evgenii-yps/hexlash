@@ -128,9 +128,16 @@ AMBER  #FFB21D   /* тёплый ламповый / контактный све�
 
 **`src/styles/hexlash-ui.css`** — `:root` выпотрошен с 135 до ~21 работающего токена (30.06.2026). Осталось только то, что реально кем-то читается. Ничего сюда не добавлять.
 
-**`src/styles/v24/tokens.css`** — старый слой под `.app-v2`:
-- содержит устаревшие шрифты Archivo Black + Space Grotesk (канон — Saira Condensed + JetBrains Mono);
+**`src/styles/v24/tokens.css`** — старый слой под `.app-v2`. ⚠️ **Легаси, но ЖИВОЙ:** грузится на всех `/play/*` по цепочке `AppV2.vue` → `hexlash-v24.css` → `v24/tokens.css`.
+
+- Импортирует с Google Fonts **Archivo Black + Space Grotesk** (канон — Saira Condensed + JetBrains Mono).
+- Ставит `font-family: var(--font-body)` **на сам `.app-v2`** → Space Grotesk сейчас базовый наследуемый шрифт игрового шелла. Всё, что не задало шрифт явно, рендерится им.
 - `--bg-deep: #070811`, `--bg-panel: rgba(14,16,28,.85)` — старые фоны.
+- Токены `--font-display` / `--font-body` за пределами этого файла **не используются никем**.
+
+Живые потребители класса `.app-v2`: `AppV2.vue`, `ArenaScene.vue`, `FighterLabScene.vue`, `GroundSelectView.vue`, `router/index.js`, `assets/main.css`, `v24/effects.css`, `v24/verify.css`. Поэтому слой нельзя просто удалить.
+
+**Правило:** новое **всегда** задаёт шрифт явно (`--hs-disp` / `--hs-mono`, в магазине `--disp` / `--mono`), не полагаясь на наследование. Слой не расширять. Приведение к канону — отдельная задача с проверкой всех `/play/*`.
 
 ⚠️ **Ловушка:** `--hex-primary` = `#FF0069` определён внутри `.app-v2`. Компонент, вынесенный из `.app-v2` через `<Teleport>`, потеряет правильный розовый. Кабинет игрока именно поэтому НЕ телепортируется.
 
