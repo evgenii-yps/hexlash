@@ -1,5 +1,15 @@
 # HEXLASH — Project Memory
 
+> ## ⚠️ ЭТОТ ФАЙЛ УСТАРЕЛ
+>
+> Ниже описана архитектура **до сброса 01.06.2026** (Club-Mode, 6 архетипов, пояса, кубики и коуч, 11 локалей). Игровая часть с тех пор пересобрана с нуля.
+>
+> **Актуальные правила работы — в `.claude/skills/`.** Начинать с `.claude/skills/hexlash-core/SKILL.md`; карта — `.claude/skills/README.md`.
+>
+> Иерархия источников правды: живой код в `main` → Notion (Snapshot / Decisions Log / Visual System) → `docs/design-handoff/` → `.claude/skills/` → этот файл.
+>
+> Файл оставлен как историческая справка по бэкенду и инфраструктуре, которые с 01.06 не трогались. Привести в соответствие — отдельная задача.
+
 Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegram WebApp compatible.
 
 > **Club-Mode v1 removed 25.05.2026** (Pack 3.2): v1 `/arena/*` screens + client-side PvE engine deleted. The Club-Mode product model is retained; new implementation comes on Этапы 1/2 (backend-driven). Foundation kept: Prisma `Agent`/`Captain`/`Belt`, `agent` Vuex module, backend services, `/ai/morning-report` + `/ai/build-description`.
