@@ -68,14 +68,20 @@ export default {
     fightSub: "SEND YOUR FIGHTER TO THE ARENA",
     editSpace: "EDIT SPACE",     // corner button → decor arrange mode (single-label chip)
   },
-  // Mode stage — the PVE / PVP fork. Not a screen any more: the home FIGHT button
-  // flies the camera out to two plates standing in the same world, and these are
-  // the captions anchored over them (+ the one control that stage carries).
+  // Mode stage — the ARENA / FORGE fork. Not a screen any more: the home FIGHT
+  // button flies the camera out to two plates standing in the same world, and these
+  // are the captions anchored over them (+ the one control that stage carries).
+  //
+  // The keys keep their old pve/pvp names because the plate ids are wired through
+  // the scene, the tags module and the router; the WORDS PVE and PVP are gone from
+  // the product and must not come back into any string the player can read.
+  //   pve → FORGE  (the hexarch trains the roster)   → /play/pve
+  //   pvp → ARENA  (fight another trainer)           → /play/ground
   mode: {
     back: "← Back",
-    pveName: "PVE",
-    pveDesc: "Train against the legend",
-    pvpName: "PVP",
+    pveName: "FORGE",
+    pveDesc: "The hexarch trains your roster",
+    pvpName: "ARENA",
     pvpDesc: "Fight another trainer",
   },
   // Space — the /play/space 3D preview (Ground Select → SPACE door) + the door's

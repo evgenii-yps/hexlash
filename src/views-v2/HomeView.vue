@@ -143,7 +143,7 @@
     </div>
 
     <!-- ───────── mode-stage chrome ─────────
-         The PVE / PVP fork is no longer a screen — it is a place in the same world,
+         The ARENA / FORGE fork is no longer a screen — it is a place in the same world,
          so its chrome is only what the place needs: ← BACK, and one caption per
          plate anchored over the real 3D slab (projected by HomeScene into
          modePlateTags, same trick as the fighter identity label). No top strip here
@@ -241,9 +241,12 @@ const flying = ref(false);
 const dim = ref(false);
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+// The two islands at the mode stage. The ids stay 'pve' / 'pvp' — they are the
+// contract with the 3D plates (modePlates), the caption tags (modePlateTags) and the
+// scene's picking — but what the player reads is FORGE and ARENA (see en.js `mode`).
 const MODE_DOORS = [
-  { id: 'pve', name: t.value.mode.pveName, desc: t.value.mode.pveDesc, to: '/play/pve' },
-  { id: 'pvp', name: t.value.mode.pvpName, desc: t.value.mode.pvpDesc, to: '/play/ground' },
+  { id: 'pve', name: t.value.mode.pveName, desc: t.value.mode.pveDesc, to: '/play/pve' },    // FORGE
+  { id: 'pvp', name: t.value.mode.pvpName, desc: t.value.mode.pvpDesc, to: '/play/ground' }, // ARENA
 ];
 
 // Browser back / forward (and any other push at these two paths) moves the camera:
@@ -349,7 +352,7 @@ const trayItems = [
 ];
 
 // --- Dock / nav. FIGHT flies the camera out to the mode plates (see goStage /
-//     onFightMode above); from there PVE → /play/pve and PVP → /play/ground.
+//     onFightMode above); from there FORGE → /play/pve and ARENA → /play/ground.
 //     TRAIN was removed from the dock (no training mode yet) — its /play/upgrade
 //     route is kept for later.
 function onFight() { onFightMode(); }

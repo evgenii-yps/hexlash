@@ -8,16 +8,33 @@
 // fourth scene built at transition time would stall the exact moment the flight is
 // supposed to be cinema. So the plates are built INTO the home scene at init and
 // are deliberately cheap:
-//   · NO buildFighter() anywhere near them,
-//   · the PVE emblem is a plain faceted floating form (not a fighter, not the
-//     legend from legendPresence.js),
-//   · the PVP emblem is a ragged scar lying on the plate top — two thin ribbons,
+//   · NO buildFighter() anywhere near them — every figure here is a simplified
+//     silhouette sharing ONE merged buffer,
+//   · the FORGE emblem (plate id 'pve') is the hexarch on a floating pedestal with a
+//     ring of five small students under him — the legendPresence.js pedestal recipe
+//     without its orbit, haze cloud or descent smoke,
+//   · the ARENA emblem (plate id 'pvp') is a pair of faceted gloves floating over a
+//     ragged rift torn across the plate top,
 //   · geometry/материал per plate is a handful of meshes, no shadows, no post.
 //
+// NAMING — the plate ids stay 'pve' / 'pvp' because they are wired through
+// modePlateTags, HomeView's MODE_DOORS and HomeScene's picking; the NAMES the player
+// sees are ARENA ('pvp') and FORGE ('pve'), and the words PVE/PVP appear nowhere on
+// screen. Renaming the ids is a separate, wider change.
+//
 // GLOW DISCIPLINE — at rest BOTH plates are matte: nothing glows on the mode
-// stage. On hover/focus exactly ONE plate lights, in its own accent (PVE amber
-// #FFB21D / PVP pink #FF0069), and the other sinks to `dimLevel`. Two lit plates
-// at once is a bug, not a state — `setHover` can only ever light one.
+// stage. On hover/focus exactly ONE plate lights, in its own accent (FORGE amber
+// #FFB21D / ARENA pink #FF0069), and the other sinks to `dimLevel`. Two lit plates
+// at once is a bug, not a state — `setHover` can only ever light one. Each island
+// lights exactly ONE thing: the hexarch's core on FORGE, the rift on ARENA. The
+// colours never cross: no amber on the ARENA plate, no pink on the FORGE plate.
+//
+// FOG — the plates stand 30 units down -Z and the home end of the corridor buries
+// them past the fog's `far` (see transitionFlight). Fog is applied AFTER the
+// material, so anything with `fog: false` ignores it and would show through the haze
+// as a bright cut-out however dark its material is. Every unfogged material here is
+// additive AND multiplied by `lit`, which is zero unless the camera has landed at
+// this stage and the plate is hovered — that is what keeps them invisible from home.
 //
 // Materials come from the same shop as the arena slab (body 0x14182a, flat-shaded,
 // the shared hex-grid top texture) so the plates read as siblings of the home, at
@@ -46,27 +63,57 @@ export const MODE_PLATES = {
   hexTile: 5.0,        // world span of one hex-grid tile on the plate top
 
   // Accents. Never both lit — see setHover.
-  amber: '#FFB21D',    // PVE
-  pink: '#FF0069',     // PVP
+  amber: '#FFB21D',    // FORGE (plate id 'pve')
+  pink: '#FF0069',     // ARENA (plate id 'pvp')
 
   dimLevel: 0.55,      // the UNLIT plate's brightness while the other is lit
   litLerp: 6.5,        // 1/s easing of the lit/dim levels (soft, no snap)
 
-  // PVE emblem — a lone faceted form floating over the plate.
-  pve: {
-    radius: 0.46,
-    hover: 1.15,       // height above the plate top
-    bob: 0.09,         // vertical bob amplitude
-    bobSpeed: 0.9,
-    spin: 0.16,        // idle rotation (rad/s)
-    restEmissive: 0.1, // matte at rest — a dull amber form, no halo
-    litEmissive: 1.5,
-    halo: 1.9,         // additive halo sprite size when lit (0 opacity at rest)
-    haloOpacity: 0.5,
+  // ── FORGE emblem (plate id 'pve') — the hexarch teaching his roster ──
+  // A figure on a floating faceted pedestal with an amber core, and a ring of five
+  // small dark figures standing on the plate below, facing up at him. The ring
+  // figures are simplified silhouettes, NOT buildFighter constructs: five jointed
+  // fighters on a plate that exists only to be flown past is a phone-killer, and the
+  // read the island needs ("he is above them, they are looking at him") is a
+  // silhouette read, not an animation read.
+  forge: {
+    hover: 1.15,        // the hexarch's FEET above the plate top
+    hexScale: 0.84,     // hexarch height (the shared figure geometry is 1 unit tall)
+    ringScale: 0.66,    // ring figure height
+    ringCount: 5,
+    ringRadius: 0.78,   // ring radius on the plate top — wide enough that the ring
+                        // is not hiding under the pedestal from a shallow camera
+    ringTilt: 0.35,     // rotate the whole ring off the plate axis so it reads as a
+                        // gathered group, not as a drawing
+    bob: 0.05,          // hexarch vertical drift amplitude
+    bobPeriod: 6.0,     // seconds per cycle (slow — this is a door, not a scene)
+
+    // Tones. The students are the homeProps prop tone EXACTLY, and for the reason
+    // homeProps gives for picking it: a touch lighter than the plate, so a standing
+    // figure reads as a figure and not as a stain on the hex grid. Their faces are
+    // vertical and the key light is overhead, so anything darker than the plate
+    // disappears into it — dark here means "does not glow", not "invisible".
+    body: 0x2b3446,     // ring figures: matte, in the homeProps prop family
+    hexBody: 0x4a5a78,  // the hexarch stands clear of both his students and the plate
+    core: 0.1,          // amber core emissive at rest (matte — nothing glows at rest)
+    coreLit: 1.7,       // …and while the plate is lit. This is the island's ONE glow.
+    coreR: 0.085,       // core crystal radius, in figure-height units
+
+    // the pedestal, the legendPresence recipe cut down to what a door needs (no
+    // orbit, no haze, no smoke — those belong to the PVE scene, not to a doorway)
+    pedR: 0.34,
+    pedThick: 0.11,
+    pedGap: 0.03,
+    pedEdge: 0.22,      // amber facet-edge opacity (fogged — see the fog note below)
+    pedGlow: 0.5,       // amber contact-glow disc on the pedestal top (LIT only)
   },
 
-  // PVP emblem — a ragged scar torn across the plate top. Dark groove at rest.
-  pvp: {
+  // ── ARENA emblem (plate id 'pvp') — gloves floating over a torn rift ──
+  // The rift is the island's ONE glow. The gloves are matte and never light up on
+  // their own: their underside carries the rift's pink as BAKED VERTEX COLOUR, which
+  // is bounce light off the plate, not a lamp — and, unlike an additive sprite, it is
+  // fogged like any other surface, so it cannot poke out of the haze from the home end.
+  arena: {
     // jagged centreline in plate-local XZ (normalised to the plate half-extents)
     path: [[-0.86, -0.30], [-0.42, 0.12], [-0.06, -0.16], [0.28, 0.22], [0.62, -0.08], [0.9, 0.26]],
     grooveWidth: 0.13, // matte dark groove — always visible, reads as a tear
@@ -74,6 +121,20 @@ export const MODE_PLATES = {
     coreWidth: 0.1,    // narrow additive core (lit only)
     haloOpacity: 0.55,
     coreOpacity: 0.85,
+
+    gloveR: 0.32,       // mitt radius
+    gloveGap: 0.37,     // ±X of each glove from the pair centre — a guard, so the
+                        // two hands sit close without touching
+    gloveHover: 1.05,   // pair centre above the plate top (chest height of a figure
+                        // the size of the ones standing on the FORGE plate)
+    gloveBob: 0.045,    // vertical drift — barely there, and no spin (ТЗ)
+    gloveBobPeriod: 5.2,// seconds per cycle (owner band 4–6)
+    gloveTop: 0x262f42, // top faces: the matte prop family, unchanged
+    gloveUnder: 0x8e1a4a, // underside: the same tone with the rift's pink mixed in
+    gloveLitBoost: 0.22, // how much the pair warms while the rift under it blazes.
+                        // It lifts the whole hand, not only the underside — a brighter
+                        // plate throws more bounce — so keep it small: at this value
+                        // the dark tops do not visibly move and the pink does.
   },
 
   // Touch has no hover, so the plate has to be lit some other way. false → a single
@@ -199,64 +260,232 @@ function buildSlab(halfW, halfD, height, hexTex, o) {
   return { group, bodyMat, hexMat, rimMat, topY: height / 2, dispose };
 }
 
-// PVE emblem — ONE lone faceted form floating over the plate. Deliberately not a
-// fighter and not the legend: an octahedron in the arena material family, amber,
-// matte at rest, with an additive halo that only exists while the plate is lit.
-function buildPveEmblem(o, topY) {
-  const group = new THREE.Group();
-  const amber = new THREE.Color(o.amber);
-  const geo = new THREE.OctahedronGeometry(o.pve.radius, 0);
-  const mat = new THREE.MeshStandardMaterial({
-    color: amber.clone().multiplyScalar(0.42), // dull metal at rest, not a lamp
-    emissive: amber, emissiveIntensity: o.pve.restEmissive,
-    flatShading: true, roughness: 0.5, metalness: 0.35,
+// ─────────────────────────── Shared figure geometry ───────────────────────────
+// Merge a handful of transformed boxes into ONE non-indexed geometry. three ships
+// BufferGeometryUtils for this, but it lives in examples/ — and these plates already
+// carry their own stripGeometry rather than reach into the protected arena builder,
+// so they carry this too. Twenty lines is cheaper than a dependency.
+function mergeBoxes(parts) {
+  const geos = parts.map(({ w, h, d, x, y, z, ry = 0 }) => {
+    const src = new THREE.BoxGeometry(w, h, d);
+    src.applyMatrix4(new THREE.Matrix4().makeRotationY(ry).setPosition(x, y, z));
+    const g = src.toNonIndexed();
+    src.dispose();
+    return g;
   });
-  const form = new THREE.Mesh(geo, mat);
-  form.position.y = topY + o.pve.hover;
-  form.scale.set(1, 1.35, 1); // stretched — reads as a standing shard, not a ball
-  group.add(form);
-
-  const haloTex = makeRadialTexture('rgba(255,206,120,0.95)', 'rgba(255,178,29,0.18)', 0.36);
-  const haloMat = new THREE.SpriteMaterial({
-    map: haloTex, color: amber, transparent: true, opacity: 0,
-    blending: THREE.AdditiveBlending, depthWrite: false, fog: false,
-  });
-  const halo = new THREE.Sprite(haloMat);
-  halo.position.copy(form.position);
-  halo.scale.setScalar(o.pve.halo);
-  group.add(halo);
-
-  const baseY = form.position.y;
-  const tick = (t, lit, presence) => {
-    form.rotation.y = t * o.pve.spin;
-    form.position.y = baseY + Math.sin(t * o.pve.bobSpeed) * o.pve.bob;
-    halo.position.y = form.position.y;
-    mat.color.copy(amber).multiplyScalar(0.42 * presence);
-    mat.emissiveIntensity = THREE.MathUtils.lerp(o.pve.restEmissive, o.pve.litEmissive, lit) * presence;
-    haloMat.opacity = o.pve.haloOpacity * lit * presence;
-  };
-  const still = () => { // reduced motion: hold the pose, keep the lit response
-    form.rotation.y = 0;
-    form.position.y = baseY;
-    halo.position.y = baseY;
-  };
-  const dispose = () => { geo.dispose(); mat.dispose(); haloMat.dispose(); haloTex.dispose(); };
-  return { group, tick, still, mat, haloMat, dispose };
+  let n = 0;
+  for (const g of geos) n += g.attributes.position.count;
+  const pos = new Float32Array(n * 3);
+  const nor = new Float32Array(n * 3);
+  let at = 0;
+  for (const g of geos) {
+    pos.set(g.attributes.position.array, at * 3);
+    nor.set(g.attributes.normal.array, at * 3);
+    at += g.attributes.position.count;
+    g.dispose();
+  }
+  const out = new THREE.BufferGeometry();
+  out.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  out.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
+  return out;
 }
 
-// PVP emblem — a ragged scar torn across the plate top. Three ribbons over one
-// jagged centreline: a MATTE dark groove that is always there (so at rest the
-// plate reads as scarred, not as an unlit lamp), plus an additive halo + hot core
-// that exist only while the plate is lit.
-function buildPvpScar(o, halfW, halfD, topY) {
+// One standing FIGURE as a single merged buffer: a faceted silhouette in the
+// homeProps family (legs / hips / torso / arms / shoulders / head), authored with the
+// feet at local y = 0, ONE unit tall, facing +Z. Every figure on the FORGE plate —
+// the five students and the hexarch — is this same buffer at a different scale, so
+// six figures cost six draw calls and one geometry.
+//
+// Deliberately NOT buildFighter: that construct carries joints, an animation driver
+// and an HP plate, and it would be assembled at home-scene init just to stand still
+// on a plate 30 units away. The silhouette is the whole job here.
+function figureGeometry() {
+  return mergeBoxes([
+    { w: 0.11, h: 0.44, d: 0.13, x: -0.09, y: 0.22, z: 0 },   // left leg
+    { w: 0.11, h: 0.44, d: 0.13, x: 0.09, y: 0.22, z: 0 },    // right leg
+    { w: 0.30, h: 0.10, d: 0.17, x: 0, y: 0.49, z: 0 },       // hips
+    { w: 0.34, h: 0.28, d: 0.19, x: 0, y: 0.68, z: 0 },       // torso
+    { w: 0.08, h: 0.30, d: 0.10, x: -0.24, y: 0.68, z: 0 },   // left arm
+    { w: 0.08, h: 0.30, d: 0.10, x: 0.24, y: 0.68, z: 0 },    // right arm
+    { w: 0.46, h: 0.09, d: 0.18, x: 0, y: 0.865, z: 0 },      // shoulders
+    { w: 0.15, h: 0.15, d: 0.15, x: 0, y: 0.99, z: 0 },       // head
+  ]);
+}
+const FIGURE_H = 1.065; // head top of figureGeometry(), for framing maths
+
+// ─────────────────────────── FORGE emblem ───────────────────────────
+// The hexarch on his floating pedestal with a ring of students underneath. The
+// pedestal is the legendPresence.js recipe cut down to a doorway's needs — hex slab,
+// amber facet edges, amber contact disc — WITHOUT the orbit, the haze cloud and the
+// descent smoke, which belong to the PVE scene proper. legendPresence itself is not
+// imported: it builds a moving island for a live stage and would drag ~130 particles
+// per plate into a scene that only has to read from a passing camera.
+//
+// GLOW: the hexarch's amber core is the island's only lit thing, and only while the
+// plate is lit. The contact disc is additive + fog:false, so it MUST ride `lit` (it
+// is zero at rest); everything else here is fogged like any other surface.
+function buildForgeEmblem(o, topY) {
+  const f = o.forge;
   const group = new THREE.Group();
-  const pts = o.pvp.path.map(([u, v]) => new THREE.Vector3(u * halfW, 0, v * halfD));
+  const amber = new THREE.Color(o.amber);
+  const owned = []; // geometries this emblem must dispose (shared ones counted once)
+
+  const figGeo = figureGeometry();
+  owned.push(figGeo);
+
+  // — the ring of students, on the plate top, faces turned in toward the centre —
+  const ringMat = new THREE.MeshStandardMaterial({
+    color: f.body, flatShading: true, roughness: 0.88, metalness: 0.1,
+  });
+  // deterministic wobble: a ring drawn on a compass reads as a diagram, not a group
+  const rJit = [0.06, -0.05, 0.03, -0.08, 0.04];
+  const aJit = [0.10, -0.13, 0.06, 0.12, -0.08];
+  for (let i = 0; i < f.ringCount; i++) {
+    const a = (i / f.ringCount) * Math.PI * 2 + f.ringTilt;
+    const r = f.ringRadius * (1 + (rJit[i % rJit.length] || 0));
+    const x = Math.cos(a) * r;
+    const z = Math.sin(a) * r;
+    const m = new THREE.Mesh(figGeo, ringMat);
+    m.position.set(x, topY, z);
+    m.scale.setScalar(f.ringScale);
+    // figureGeometry faces +Z; turn that toward the ring centre
+    m.rotation.y = Math.atan2(-x, -z) + (aJit[i % aJit.length] || 0);
+    group.add(m);
+  }
+
+  // — the pedestal (feet anchor at y = 0 of this sub-group) —
+  const rise = new THREE.Group();
+  rise.position.set(0, topY + f.hover, 0);
+  group.add(rise);
+
+  const pedGeo = new THREE.CylinderGeometry(f.pedR, f.pedR * 0.88, f.pedThick, 6, 1);
+  const pedMat = new THREE.MeshStandardMaterial({
+    color: 0x1b2433, flatShading: true, roughness: 0.92, metalness: 0.12,
+  });
+  const pedestal = new THREE.Mesh(pedGeo, pedMat);
+  pedestal.position.y = -(f.pedGap + f.pedThick / 2);
+  rise.add(pedestal);
+  owned.push(pedGeo);
+
+  // faceted amber edges — FOGGED (no fog:false here). An unfogged line at 30 units
+  // draws at full strength through the haze and the island would show as a wire cage
+  // from the home end; the fog is applied after the material, so dimming alone would
+  // not have hidden it (see the fog note in transitionFlight).
+  const pedEdgeGeo = new THREE.EdgesGeometry(pedGeo);
+  const pedEdgeMat = new THREE.LineBasicMaterial({
+    color: amber, transparent: true, opacity: f.pedEdge, depthWrite: false,
+  });
+  const pedLines = new THREE.LineSegments(pedEdgeGeo, pedEdgeMat);
+  pedLines.position.copy(pedestal.position);
+  rise.add(pedLines);
+  owned.push(pedEdgeGeo);
+
+  // amber contact disc lying on the pedestal top — additive, so LIT-only
+  const discTex = makeRadialTexture('rgba(255,205,140,0.95)', 'rgba(255,178,90,0.0)', 0.5);
+  const discMat = new THREE.MeshBasicMaterial({
+    map: discTex, color: amber, transparent: true, opacity: 0,
+    blending: THREE.AdditiveBlending, depthWrite: false, fog: false,
+  });
+  const discGeo = new THREE.PlaneGeometry(f.pedR * 2.3, f.pedR * 2.3);
+  const disc = new THREE.Mesh(discGeo, discMat);
+  disc.rotation.x = -Math.PI / 2;
+  disc.position.y = -f.pedGap + 0.008;
+  rise.add(disc);
+  owned.push(discGeo);
+
+  // — the hexarch himself, standing on the pedestal —
+  const hexMat = new THREE.MeshStandardMaterial({
+    color: f.hexBody, flatShading: true, roughness: 0.8, metalness: 0.16,
+  });
+  const hexarch = new THREE.Mesh(figGeo, hexMat);
+  hexarch.scale.setScalar(f.hexScale);
+  rise.add(hexarch);
+
+  // his amber core, at chest height on the torso front
+  const coreGeo = new THREE.OctahedronGeometry(f.coreR * f.hexScale, 0);
+  const coreMat = new THREE.MeshStandardMaterial({
+    color: amber.clone().multiplyScalar(0.45),
+    emissive: amber, emissiveIntensity: f.core,
+    flatShading: true, roughness: 0.45, metalness: 0.3,
+  });
+  const core = new THREE.Mesh(coreGeo, coreMat);
+  core.position.set(0, 0.7 * f.hexScale, 0.12 * f.hexScale);
+  rise.add(core);
+  owned.push(coreGeo);
+
+  const baseY = rise.position.y;
+  const bobW = (Math.PI * 2) / f.bobPeriod;
+  const tick = (t, lit, presence) => {
+    rise.position.y = baseY + Math.sin(t * bobW) * f.bob;
+    ringMat.color.setHex(f.body).multiplyScalar(presence);
+    hexMat.color.setHex(f.hexBody).multiplyScalar(presence);
+    pedMat.color.setHex(0x1b2433).multiplyScalar(presence);
+    pedEdgeMat.opacity = f.pedEdge * presence;
+    coreMat.color.copy(amber).multiplyScalar(0.45 * presence);
+    coreMat.emissiveIntensity = THREE.MathUtils.lerp(f.core, f.coreLit, lit) * presence;
+    discMat.opacity = f.pedGlow * lit * presence;
+  };
+  const still = () => { rise.position.y = baseY; };
+  const dispose = () => {
+    owned.forEach((g) => g.dispose());
+    ringMat.dispose(); hexMat.dispose(); pedMat.dispose();
+    pedEdgeMat.dispose(); discMat.dispose(); discTex.dispose(); coreMat.dispose();
+  };
+  return { group, tick, still, dispose };
+}
+
+// ─────────────────────────── ARENA emblem ───────────────────────────
+// A pair of boxing gloves floating over the ragged rift that is torn across the
+// plate top. The rift is unchanged from the old fork screen: three ribbons over one
+// jagged centreline — a MATTE dark groove that is always there (so at rest the plate
+// reads as scarred, not as an unlit lamp) plus an additive halo + hot core that exist
+// only while the plate is lit.
+//
+// THE GLOVES are the only object in the game that comes from the real world, so they
+// are built the way every other prop here is built and NOT the way a boxing glove is
+// usually built: faceted, low-poly, matte, no leather, no lacing, no seams. A mitt, a
+// thumb and a hex cuff, three shared buffers between the two hands.
+//
+// They do not glow. The pink on their undersides is BAKED VERTEX COLOUR (see
+// tintFromBelow) — the rift's light bouncing off the plate onto the shape above it.
+// A vertex-coloured MeshStandardMaterial is fogged like any other surface, which is
+// exactly what an additive halo would not have been.
+function tintFromBelow(geo, topHex, underHex) {
+  geo.computeBoundingBox();
+  const bb = geo.boundingBox;
+  const span = Math.max(1e-4, bb.max.y - bb.min.y);
+  const pos = geo.attributes.position;
+  const top = new THREE.Color(topHex);
+  const under = new THREE.Color(underHex);
+  const col = new Float32Array(pos.count * 3);
+  const c = new THREE.Color();
+  for (let i = 0; i < pos.count; i++) {
+    // 0 at the lowest vertex, 1 at the highest. The curve is deliberately STEEP at
+    // the bottom (pow < 1): a straight lerp — and, worse, a squared one — carries the
+    // pink halfway up the hand and the glove reads as a pink object lit from nowhere.
+    // At 0.45 the top three quarters are the matte prop tone and the pink stays a
+    // rim of bounce along the underside, which is what light off the plate does.
+    const s = (pos.getY(i) - bb.min.y) / span;
+    c.copy(under).lerp(top, Math.pow(s, 0.45));
+    col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b;
+  }
+  geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  return geo;
+}
+
+function buildArenaEmblem(o, halfW, halfD, topY) {
+  const a = o.arena;
+  const group = new THREE.Group();
+  const owned = [];
+
+  // ── the rift ──
+  const pts = a.path.map(([u, v]) => new THREE.Vector3(u * halfW, 0, v * halfD));
   // Resample the jag through a curve so the ribbon has enough segments to read.
   const curve = new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.4);
   const centre = curve.getPoints(48);
 
   const rails = (halfWidth) => {
-    const a = []; const b = [];
+    const ra = []; const rb = [];
     for (let i = 0; i < centre.length; i++) {
       const p = centre[i];
       const q = centre[Math.min(i + 1, centre.length - 1)];
@@ -264,48 +493,118 @@ function buildPvpScar(o, halfW, halfD, topY) {
       const dx = q.x - r.x; const dz = q.z - r.z;
       const len = Math.hypot(dx, dz) || 1;
       const nx = -dz / len; const nz = dx / len; // XZ normal
-      a.push(new THREE.Vector3(p.x - nx * halfWidth, 0, p.z - nz * halfWidth));
-      b.push(new THREE.Vector3(p.x + nx * halfWidth, 0, p.z + nz * halfWidth));
+      ra.push(new THREE.Vector3(p.x - nx * halfWidth, 0, p.z - nz * halfWidth));
+      rb.push(new THREE.Vector3(p.x + nx * halfWidth, 0, p.z + nz * halfWidth));
     }
-    return [a, b];
+    return [ra, rb];
   };
-
   const addRibbon = (halfWidth, y, mat) => {
-    const [a, b] = rails(halfWidth);
-    const mesh = new THREE.Mesh(stripGeometry(a, b), mat);
+    const [ra, rb] = rails(halfWidth);
+    const geo = stripGeometry(ra, rb);
+    const mesh = new THREE.Mesh(geo, mat);
     mesh.position.y = y;
     group.add(mesh);
+    owned.push(geo);
     return mesh;
   };
 
   const grooveMat = new THREE.MeshBasicMaterial({ color: 0x090c14, transparent: true, opacity: 0.9, depthWrite: false });
-  addRibbon(o.pvp.grooveWidth, topY + 0.004, grooveMat);
+  addRibbon(a.grooveWidth, topY + 0.004, grooveMat);
 
   const haloTex = makeHaloBandTexture(o.pink);
   const haloMat = new THREE.MeshBasicMaterial({
     map: haloTex, transparent: true, opacity: 0, blending: THREE.AdditiveBlending,
     depthWrite: false, fog: false, side: THREE.DoubleSide,
   });
-  addRibbon(o.pvp.haloWidth, topY + 0.007, haloMat);
+  addRibbon(a.haloWidth, topY + 0.007, haloMat);
 
   const coreTex = makeCoreBandTexture(o.pink);
   const coreMat = new THREE.MeshBasicMaterial({
     map: coreTex, transparent: true, opacity: 0, blending: THREE.AdditiveBlending,
     depthWrite: false, fog: false, side: THREE.DoubleSide,
   });
-  addRibbon(o.pvp.coreWidth, topY + 0.01, coreMat);
+  addRibbon(a.coreWidth, topY + 0.01, coreMat);
 
-  const tick = (_t, lit, presence) => {
+  // ── the gloves ──
+  const R = a.gloveR;
+  // Low segment counts on purpose: 5×4 is a faceted mass, not a ball, and it reads
+  // as a mitt at the distance the camera parks at.
+  const mittGeo = tintFromBelow(new THREE.SphereGeometry(R, 5, 4), a.gloveTop, a.gloveUnder);
+  mittGeo.scale(1.0, 0.92, 1.12);
+  const thumbGeo = tintFromBelow(new THREE.SphereGeometry(R * 0.44, 4, 3), a.gloveTop, a.gloveUnder);
+  // NB: rotate the cuff BEFORE tinting. tintFromBelow bakes the gradient along the
+  // geometry's own Y, so a cuff tinted upright and then turned on its side would
+  // carry its pink round to the back of the hand instead of underneath it.
+  const cuffSrc = new THREE.CylinderGeometry(R * 0.6, R * 0.7, R * 0.9, 6);
+  cuffSrc.rotateX(Math.PI / 2);
+  const cuffGeo = tintFromBelow(cuffSrc, a.gloveTop, a.gloveUnder);
+  owned.push(mittGeo, thumbGeo, cuffGeo);
+
+  const gloveMat = new THREE.MeshStandardMaterial({
+    color: 0xffffff, vertexColors: true, flatShading: true, roughness: 0.85, metalness: 0.1,
+  });
+
+  // One hand. `side` mirrors the thumb; the caller tilts and lifts each one
+  // differently so the pair never reads as a mirrored icon.
+  const makeGlove = (side) => {
+    const g = new THREE.Group();
+    const mitt = new THREE.Mesh(mittGeo, gloveMat);
+    g.add(mitt);
+    const thumb = new THREE.Mesh(thumbGeo, gloveMat);
+    // Pushed well out of the mitt on purpose: buried at 0.7R the thumb is a bump and
+    // the hand reads as a ball. The notch between mitt and thumb is the one line that
+    // says "glove" at the distance the camera parks at.
+    thumb.position.set(side * R * 0.88, -R * 0.2, R * 0.4);
+    g.add(thumb);
+    const cuff = new THREE.Mesh(cuffGeo, gloveMat);
+    cuff.position.set(0, -R * 0.1, -R * 0.92);
+    g.add(cuff);
+    return g;
+  };
+
+  const pair = new THREE.Group();
+  pair.position.set(0, topY + a.gloveHover, 0);
+  group.add(pair);
+
+  // Held like a guard: turned in toward each other, and NOT symmetric — one hand
+  // sits a touch higher and a touch further round than the other.
+  const left = makeGlove(-1);
+  left.position.set(-a.gloveGap, 0.03, 0.05);
+  left.rotation.set(0.1, 0.34, 0.13);
+  pair.add(left);
+
+  const right = makeGlove(1);
+  right.position.set(a.gloveGap, -0.05, -0.04);
+  right.rotation.set(-0.06, -0.46, -0.09);
+  pair.add(right);
+
+  const baseY = pair.position.y;
+  const leftY = left.position.y;
+  const rightY = right.position.y;
+  const bobW = (Math.PI * 2) / a.gloveBobPeriod;
+  const tick = (t, lit, presence) => {
     grooveMat.opacity = 0.9 * presence;
-    haloMat.opacity = o.pvp.haloOpacity * lit * presence;
-    coreMat.opacity = o.pvp.coreOpacity * lit * presence;
+    haloMat.opacity = a.haloOpacity * lit * presence;
+    coreMat.opacity = a.coreOpacity * lit * presence;
+    // No spin (ТЗ) — only a long, shallow vertical drift, out of phase per hand.
+    left.position.y = leftY + Math.sin(t * bobW) * a.gloveBob;
+    right.position.y = rightY + Math.sin(t * bobW + 1.9) * a.gloveBob * 0.85;
+    // Presence dims the pair with the rest of the island; `lit` only warms the
+    // underside a little, because the rift under them is burning brighter — the
+    // gloves themselves never become a light source.
+    gloveMat.color.setScalar(presence * (1 + a.gloveLitBoost * lit));
+  };
+  const still = () => {
+    pair.position.y = baseY;
+    left.position.y = leftY;
+    right.position.y = rightY;
   };
   const dispose = () => {
-    group.children.forEach((m) => m.geometry?.dispose());
+    owned.forEach((g) => g.dispose());
     grooveMat.dispose(); haloMat.dispose(); coreMat.dispose();
-    haloTex.dispose(); coreTex.dispose();
+    haloTex.dispose(); coreTex.dispose(); gloveMat.dispose();
   };
-  return { group, tick, still: () => {}, dispose };
+  return { group, tick, still, dispose };
 }
 
 // ─────────────────────────────── The pair ───────────────────────────────
@@ -336,22 +635,32 @@ export function buildModePlates(opts) {
   const halfD = (opts.homeDepth * scale) / 2;
   const height = (opts.homeHeight ?? 1) * scale;
   const hexTex = makeHexGridTexture(opts.maxAniso || 1);
+  // How much air the tallest emblem needs above the plate top — drives BOTH the
+  // shared hit box and the camera framing (bounds().emblemTop), so a taller hexarch
+  // pulls the camera back by itself instead of being cropped.
+  const emblemAir = Math.max(
+    o.forge.hover + o.forge.hexScale * FIGURE_H,
+    o.arena.gloveHover + o.arena.gloveR * 1.3,
+  ) + 0.5;
 
   const make = (id) => {
     const root = new THREE.Group();
     const slab = buildSlab(halfW, halfD, height, hexTex, o);
     root.add(slab.group);
     const emblem = id === 'pve'
-      ? buildPveEmblem(o, slab.topY)
-      : buildPvpScar(o, halfW, halfD, slab.topY);
+      ? buildForgeEmblem(o, slab.topY)                  // FORGE — hexarch + ring
+      : buildArenaEmblem(o, halfW, halfD, slab.topY);   // ARENA — rift + gloves
     root.add(emblem.group);
     group.add(root);
 
     // One invisible hit box per plate — a single cheap raycast target that also
     // covers the air the emblem floats in, so the whole plate is one affordance.
-    const pickGeo = new THREE.BoxGeometry(halfW * 2, height + o.pve.hover + 0.8, halfD * 2);
+    // `emblemAir` is the taller of the two islands, so both plates keep the same
+    // affordance and a hover cannot depend on which emblem happens to stand there.
+    const pickH = height + emblemAir;
+    const pickGeo = new THREE.BoxGeometry(halfW * 2, pickH, halfD * 2);
     const pick = new THREE.Mesh(pickGeo, new THREE.MeshBasicMaterial({ visible: false }));
-    pick.position.y = (height + o.pve.hover + 0.8) / 2;
+    pick.position.y = pickH / 2;
     pick.userData.modePlate = id;
     root.add(pick);
 
@@ -390,7 +699,7 @@ export function buildModePlates(opts) {
       spanX: portrait ? halfW * 2 : o.spreadX * 2 + halfW * 2,
       spanZ: portrait ? o.spreadZ * 2 + halfD * 2 : halfD * 2,
       topY: height,
-      emblemTop: height + o.pve.hover + o.pve.radius * 1.4,
+      emblemTop: height + emblemAir,
     };
   }
 
