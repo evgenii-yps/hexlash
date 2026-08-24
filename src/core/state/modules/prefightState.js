@@ -75,6 +75,18 @@ function restore() {
 
 const restored = restore();
 
+// Re-read the save on demand. The module-load restore above already covers the
+// normal boot, but ANY consumer that must not depend on when this module
+// happened to be evaluated (the route guard, above all) can call this and be
+// certain it is looking at the truth. Cheap: the save layer keeps the parsed
+// snapshot in memory, so this is a couple of property reads.
+export function restoreIfEmpty(s) {
+    if (s.selectedCoreId) return;
+    const r = restore();
+    s.selectedCoreId = r.selectedCoreId;
+    s.upgradeTree = r.upgradeTree;
+}
+
 const state = {
     selectedCoreId: restored.selectedCoreId,
     // Working copy of the active core's crystals/faces ([{ id, name, limit,
@@ -102,6 +114,10 @@ const mutations = {
     SET_UPGRADE_TREE(s, tree) {
         s.upgradeTree = tree;
         persist(s);
+    },
+    // Used by the route guard before it decides whether to let the player in.
+    RESTORE_IF_EMPTY(s) {
+        restoreIfEmpty(s);
     },
     SET_FACE_STATE(s, {crystalId, faceId, faceState}) {
         if (!s.upgradeTree) return;

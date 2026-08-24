@@ -73,6 +73,12 @@ const publicRoutes = [
 // requireCore guards the upgrade + arena steps: without a pick (e.g. a hard
 // refresh — pre-fight state is in-memory only) bounce back to selection.
 const requireCore = (to, from, next) => {
+    // Ask the save layer here rather than trusting that the store module was
+    // evaluated first. This guard is the ONE place that decides whether a
+    // refresh keeps the player where they are, so it must not depend on module
+    // /chunk evaluation order — in-memory snapshot, no I/O cost when already
+    // restored. Still bounces when the tab genuinely has nothing saved.
+    store.commit('prefight/RESTORE_IF_EMPTY');
     if (store.state.prefight?.selectedCoreId) next();
     else next({ name: 'PrefightSelect' });
 };

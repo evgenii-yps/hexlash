@@ -31,8 +31,11 @@
 const KEY = 'hexlash_progress';
 const VERSION = 1;
 
-let cache = null;        // in-memory mirror of the snapshot (avoids re-parsing)
-let loaded = false;      // cache is authoritative once true
+// No in-memory cache of the snapshot ON PURPOSE. A cache would have to be kept
+// in sync with the store, and the one caller that matters most — the route
+// guard, which decides whether a refresh keeps the player where they are —
+// would then be reading a stale copy instead of the truth. The payload is ~60
+// bytes and the storage is synchronous, so re-reading costs nothing measurable.
 let available = true;    // flips false the first time storage refuses us
 let noticed = false;     // the "saving is off" notice is printed once, not per write
 
@@ -54,21 +57,17 @@ function noteUnavailable(reason) {
 }
 
 function load() {
-  if (loaded) return cache;
-  loaded = true;
-  cache = {};
-
   const s = storage();
-  if (!s) { noteUnavailable('no session storage'); return cache; }
+  if (!s) { noteUnavailable('no session storage'); return {}; }
 
   let raw = null;
   try {
     raw = s.getItem(KEY);
   } catch (e) {
     noteUnavailable(e && e.name ? e.name : 'read blocked');
-    return cache;
+    return {};
   }
-  if (!raw) return cache;
+  if (!raw) return {};
 
   let parsed = null;
   try {
@@ -78,22 +77,20 @@ function load() {
   }
 
   // Corrupt, not an object, or written by an older/newer build → start clean.
-  const usable = parsed && typeof parsed === 'object' && parsed.v === VERSION;
-  if (!usable) {
+  if (!parsed || typeof parsed !== 'object' || parsed.v !== VERSION) {
     try { s.removeItem(KEY); } catch (_) { /* nothing to do — we start clean anyway */ }
-    return cache;
+    return {};
   }
 
-  cache = parsed;
-  return cache;
+  return parsed;
 }
 
-function flush() {
+function flush(snapshot) {
   if (!available) return;
   const s = storage();
   if (!s) { noteUnavailable('no session storage'); return; }
   try {
-    s.setItem(KEY, JSON.stringify({ ...cache, v: VERSION }));
+    s.setItem(KEY, JSON.stringify({ ...snapshot, v: VERSION }));
   } catch (e) {
     // Quota exceeded / write blocked. Keep playing, stop pretending we save.
     noteUnavailable(e && e.name ? e.name : 'write blocked');
@@ -102,8 +99,7 @@ function flush() {
 
 /** Read one named section of the snapshot. Returns null when absent/unusable. */
 export function readSection(name) {
-  const snap = load();
-  const section = snap[name];
+  const section = load()[name];
   return section && typeof section === 'object' ? section : null;
 }
 
@@ -113,16 +109,14 @@ export function readSection(name) {
  * facet) — never inside a render or fight loop, so there is nothing to debounce.
  */
 export function writeSection(name, data) {
-  load();
-  if (data === null || data === undefined) delete cache[name];
-  else cache[name] = data;
-  flush();
+  const snapshot = load();
+  if (data === null || data === undefined) delete snapshot[name];
+  else snapshot[name] = data;
+  flush(snapshot);
 }
 
 /** Forget everything (used when progress is deliberately reset). */
 export function clearProgress() {
-  cache = {};
-  loaded = true;
   const s = storage();
   if (!s) return;
   try { s.removeItem(KEY); } catch (_) { /* already effectively cleared */ }
@@ -130,6 +124,6 @@ export function clearProgress() {
 
 /** False when the browser refuses to store — lets a screen stay honest about it. */
 export function isProgressSaved() {
-  load();
+  load();          // touching storage is what tells us whether it works at all
   return available;
 }
