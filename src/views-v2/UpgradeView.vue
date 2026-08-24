@@ -178,6 +178,11 @@
           </button>
         </footer>
 
+        <!-- GUEST NOTE — one calm line, no glow, no pink: a guest's build lives
+             only as long as this tab. Hidden once the player has an account,
+             because then nothing about it is temporary. -->
+        <p v-if="isGuest" class="guest-note">{{ t.upgrade.guestNote }}</p>
+
       </div>
     </main>
   </div>
@@ -188,11 +193,17 @@ import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
 import { CRYSTALS, RESOURCE, getCore } from '@/data/upgradeData.js';
+import { t } from '@/locales/index.js';
 import { facetEffects } from '@/data/facetReadout.js';
 import { coreSVG, shardSVG, faceHex, hexPts, radial } from '@/data/upgradeGeometry.js';
 
 const store = useStore();
 const router = useRouter();
+
+// --- Guest vs account ---------------------------------------------------------
+// A guest's progress is per-tab by design (see src/services/playerProgress.js),
+// so the screen says so out loud. A signed-in player never sees the line.
+const isGuest = computed(() => !store.getters['master/getLoginState']?.isAuthenticated);
 
 // --- Core context (picked on the previous screen, read from the store) --------
 const coreId = computed(() => getCore(store.getters['prefight/selectedCoreId']).id);
@@ -1063,6 +1074,19 @@ onBeforeUnmount(() => {
   .ghosts, .crystals, .spokes { transform: scale(.82); transform-origin: 50% 50%; }
   /* TO BATTLE fills its cell on the build bar's second row (see .build-bar mobile) */
   .cta { min-width: 0; width: 100%; min-height: 54px; }
+}
+
+/* ============================================================
+   GUEST NOTE — honesty line under the build bar. Muted mono, no accent, no
+   glow: it is information, not a call to action, and the screen already spends
+   its single light on the core.
+   ============================================================ */
+.guest-note {
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: .06em; line-height: 1.35;
+  color: var(--ink-ash);
+  text-align: left;
+  text-wrap: balance;
 }
 
 /* ============================================================

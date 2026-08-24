@@ -91,7 +91,9 @@ const cores = CORES;
 const glyphs = Object.fromEntries(CORES.map((c) => [c.id, coreSVG(c.id, { seed: true })]));
 
 // --- Selection (exactly one card lit; siblings dim via .has-sel) --------------
-const selectedId = ref(null);
+// Seeded from the store so a refresh shows the core the player already picked
+// (the pick itself survives a refresh — see prefightState / playerProgress).
+const selectedId = ref(store.getters['prefight/selectedCoreId']);
 const selected = computed(() => (selectedId.value ? getCore(selectedId.value) : null));
 
 // Scene tint — same --core/--core-sup write-site + var names as the upgrade
