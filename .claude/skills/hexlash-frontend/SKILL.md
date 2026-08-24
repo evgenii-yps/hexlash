@@ -27,7 +27,6 @@ src/
     PlayerCabinet.vue          — выезжающая панель кабинета
     CoreSelectView.vue         — выбор ядра
     UpgradeView.vue            — прокачка (drill-down ядро → кристалл → грань)
-    GroundSelectView.vue       — выбор поля боя
     PveView.vue                — PVE-пространство
     SpaceView.vue              — превью пространства
     SceneTransitionOverlay.vue — оверлей перехода между сценами
@@ -75,7 +74,7 @@ docs/design-handoff/           — эталоны экранов (см. hexlash-
 | `/play/home` | дом игрока | `scene3d` |
 | `/play/mode` | Mode Select | — |
 | `/play/pve` | PVE-пространство | `scene3d` |
-| `/play/ground` | Ground Select | — |
+| `/play/ground` | *(удалён 24.08.2026)* → редирект на `/play/mode` | — |
 | `/play/space` | превью пространства | `scene3d` |
 | `/play` | выбор ядра | — |
 | `/play/upgrade` | прокачка | — |
@@ -86,9 +85,13 @@ docs/design-handoff/           — эталоны экранов (см. hexlash-
 Поток игрока:
 ```
 логин → /play/home → FIGHT → /play/mode
-   ├─ PVE  → /play/pve
-   └─ PVP  → /play/ground → ARENA → /play → /play/upgrade → /play/arena
-                          └─ SPACE → /play/space
+   ├─ FORGE → /play/pve
+   └─ ARENA → /play → /play/upgrade → /play/arena
+
+/play/space — превью пространства, живо, но НИ ОДНА ссылка в игре туда не ведёт:
+только прямой адрес. Ground Select (`/play/ground`) удалён 24.08.2026 — дверь ARENA
+больше не переспрашивает, где драться. Путь оставлен редиректом на `/play/mode`
+ради открытых вкладок и закладок.
 ```
 
 **`meta.scene3d` и `meta.arena`** — по ним `main.js` и `router.beforeEach` решают, какой оверлей загрузки показать. Новая 3D-сцена **обязана** получить свой флаг и свой сигнал готовности.
@@ -152,7 +155,7 @@ docs/design-handoff/           — эталоны экранов (см. hexlash-
 Спроектированные экраны шрифт задают сами и выглядят правильно; ловит только текст без явного шрифта.
 
 → **Новое всегда задаёт шрифт явно** (`--hs-disp` / `--hs-mono`, в магазине `--disp` / `--mono`). Токены `--font-display` / `--font-body` не использовать.
-→ Приведение слоя к канону — **отдельная задача**, не попутная правка: у `.app-v2` есть живые потребители (`ArenaScene`, `FighterLabScene`, `GroundSelectView`, роутер, `main.css`), удалением файла не решается.
+→ Приведение слоя к канону — **отдельная задача**, не попутная правка: у `.app-v2` есть живые потребители (`ArenaScene`, `FighterLabScene`, роутер, `main.css`), удалением файла не решается.
 
 ### CSS-бандл грузится блокирующе
 

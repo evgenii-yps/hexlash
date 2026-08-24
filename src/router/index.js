@@ -128,20 +128,25 @@ const v2Routes = [
                 component: HomeStageView,
             },
             {
-                // Ground Select — the ARENA / SPACE fork. The Mode Select PVP door
-                // opens this; ARENA → /play (core select), SPACE is locked (SOON,
-                // no-op). A normal 2D pre-fight screen (no meta.scene3d / meta.arena
-                // — no 3D scene, so it stays off the sceneTransition layer; no
-                // requireCore — ARENA is the way TO core select, must be reachable
-                // without a core).
+                // Ground Select — REMOVED 24.08.2026. It sat between the mode stage
+                // and core select and asked "ARENA or SPACE", which is the question
+                // the door the player had just pressed was already called ARENA to
+                // answer. Space is a seasonal event now, not a ground, so the fork
+                // had nothing left to fork. The ARENA door goes straight to /play.
+                //
+                // The path stays as a REDIRECT, not a deletion: someone may have this
+                // address open in a tab or saved as a bookmark, and a dead route drops
+                // them on the 404 page. Sending them to the mode stage puts them back
+                // in the flow one step above where they were.
                 path: 'ground',
-                name: 'V2GroundSelect',
-                component: () => import('@/views-v2/GroundSelectView.vue'),
+                redirect: '/play/mode',
             },
             {
                 // Space — a standalone 3D preview scene (SpaceScene): a big hex field,
-                // a roster wandering it, one glowing leader. Reached from the Ground
-                // Select SPACE door. Visual only (no combat/match). A heavy 3D route →
+                // a roster wandering it, one glowing leader. Visual only (no combat /
+                // match). Since Ground Select went, NOTHING in the app links here: it
+                // is reachable by direct URL only, on purpose — the scene is finished
+                // work and is kept, the door into it is not. A heavy 3D route →
                 // meta.scene3d so the load layer covers it; no requireCore (preview).
                 path: 'space',
                 name: 'V2Space',

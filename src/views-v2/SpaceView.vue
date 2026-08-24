@@ -1,18 +1,23 @@
 <!-- SpaceView — the /play/space route: the standalone Space 3D preview (SpaceScene)
-     under a thin 2D layer. Reached from the Ground Select SPACE door. Same shell as
-     PveView: the shared .hs-strip (home.css) WITHOUT the brand block — only SHOP +
-     cabinet chip (matte); top-left ‹ Back (matte chrome) → /play/ground. NO FIGHT,
-     no match — visual only. A matte "mode coming soon" note sits over the scene (the
-     SOON mark, moved off the Ground Select door, lives here) — honest, no second
-     glow. Strip + note tokens are mirrored on the root so the shared chrome resolves
-     here without editing home.css. -->
+     under a thin 2D layer. Since Ground Select was removed (24.08.2026) nothing in
+     the app links here — it is a direct-URL route, kept because the scene is finished
+     work even though space stopped being a ground. Same shell as PveView: the shared
+     .hs-strip (home.css) WITHOUT the brand block — only SHOP + cabinet chip (matte);
+     top-left ‹ Back (matte chrome) → /play/mode. NO FIGHT, no match — visual only.
+     A matte "mode coming soon" note sits over the scene — honest, no second glow.
+     Strip + note tokens are mirrored on the root so the shared chrome resolves here
+     without editing home.css.
+
+     The Back target matters more here than it looks: this route has no referrer any
+     more, so whoever lands on it arrived cold. Sending them anywhere that no longer
+     exists would leave the only exit from the scene pointing at a 404. -->
 <template>
   <div class="space-root">
     <SpaceScene />
 
     <!-- shared chrome (brand removed): ← BACK left, SHOP + cabinet right -->
     <div class="hs-strip">
-      <button type="button" class="hs-chrome space-back" @click="goGround" :aria-label="t.home.back">
+      <button type="button" class="hs-chrome space-back" @click="goMode" :aria-label="t.home.back">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6" /></svg>
         <span class="n">{{ t.home.back }}</span>
       </button>
@@ -28,7 +33,7 @@
     </div>
 
     <!-- honest "mode coming soon" note — matte chrome, no second glow; the SOON mark
-         moved here off the Ground Select door -->
+         the honest SOON mark for the mode -->
     <div class="space-note" role="note">
       <span class="space-note-soon">SOON</span>
       <p class="space-note-text">{{ t.space.previewNote }}</p>
@@ -66,7 +71,8 @@ const coreSig = computed(() => core.value?.sig || 'PRESSURE');
 const balance = '2,480';
 
 function goHome() { router.push('/play/home'); }
-function goGround() { router.push('/play/ground'); }
+// Ground Select is gone — the way back out of the preview is the mode stage.
+function goMode() { router.push('/play/mode'); }
 </script>
 
 <style scoped>
@@ -106,7 +112,7 @@ function goGround() { router.push('/play/ground'); }
 .hs-cluster { margin-left: auto; }
 
 /* honest "mode coming soon" note — bottom-centre, matte chrome, no glow, no pink.
-   Same family as Mode Select / Ground Select (mono label + INK-DIM copy on glass). */
+   Same family as the mode-stage captions (mono label + INK-DIM copy on glass). */
 .space-note {
   position: absolute; left: 50%; bottom: clamp(20px, 5vh, 40px); transform: translateX(-50%);
   z-index: 6; max-width: min(90vw, 460px);

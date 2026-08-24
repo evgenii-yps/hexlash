@@ -76,7 +76,7 @@ export default {
   // the scene, the tags module and the router; the WORDS PVE and PVP are gone from
   // the product and must not come back into any string the player can read.
   //   pve → FORGE  (the hexarch trains the roster)   → /play/pve
-  //   pvp → ARENA  (fight another trainer)           → /play/ground
+  //   pvp → ARENA  (fight another trainer)           → /play
   mode: {
     back: "← Back",
     pveName: "FORGE",
@@ -84,13 +84,12 @@ export default {
     pvpName: "ARENA",
     pvpDesc: "Fight another trainer",
   },
-  // Space — the /play/space 3D preview (Ground Select → SPACE door) + the door's
-  // now-active affordance. UI is en-only.
+  // Space — the /play/space 3D preview. Direct-URL only since Ground Select was
+  // removed (24.08.2026); `doorEnter` went with that screen's SPACE door, its only
+  // consumer. UI is en-only.
   space: {
     // matte "mode coming soon" note over the preview scene (SOON mark lives with it)
     previewNote: "Space — a big field, everyone for themselves. Mode coming soon. This is a preview of how it will look.",
-    // Ground Select SPACE door — the ENTER-slot affordance (was LOCKED)
-    doorEnter: "Enter →",
   },
   cabinet: {
     // Entry chip (top-left of the home) — the single door into the cabinet.

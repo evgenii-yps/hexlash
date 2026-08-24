@@ -74,7 +74,7 @@
 
 ## Двери «fight-card»
 
-**Где:** `ModeSelectView.vue`, `GroundSelectView.vue`.
+**Где:** экран режимов (`HomeView.vue` + плиты `modePlates.js`). *(`ModeSelectView.vue` и `GroundSelectView.vue` удалены — двери-карточки живут теперь как 3D-острова.)*
 
 - Поверхность PANEL `#16161B`, срез угла `--hs-chamfer`.
 - В покое спокойны; свечение на hover и `armed`, максимум один bloom на дверь.
@@ -83,7 +83,7 @@
 - Заголовок экрана: `Choose your mode.` / `Choose your ground.` — ключевое слово в INK `#EDEDF1`.
 - Фон: VOID + верхний ember `radial-gradient(95% 52% at 50% -6%, rgba(255,0,105,.10), …)`.
 
-Эталоны: `docs/design-handoff/mode_select/`, `docs/design-handoff/ground_select/`.
+Эталон: `docs/design-handoff/mode_select/`. *(`ground_select/` помечен OBSOLETE — экран удалён 24.08.2026.)*
 
 ---
 

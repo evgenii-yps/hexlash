@@ -246,7 +246,7 @@ const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matc
 // scene's picking — but what the player reads is FORGE and ARENA (see en.js `mode`).
 const MODE_DOORS = [
   { id: 'pve', name: t.value.mode.pveName, desc: t.value.mode.pveDesc, to: '/play/pve' },    // FORGE
-  { id: 'pvp', name: t.value.mode.pvpName, desc: t.value.mode.pvpDesc, to: '/play/ground' }, // ARENA
+  { id: 'pvp', name: t.value.mode.pvpName, desc: t.value.mode.pvpDesc, to: '/play' },        // ARENA
 ];
 
 // Browser back / forward (and any other push at these two paths) moves the camera:
@@ -352,7 +352,11 @@ const trayItems = [
 ];
 
 // --- Dock / nav. FIGHT flies the camera out to the mode plates (see goStage /
-//     onFightMode above); from there FORGE → /play/pve and ARENA → /play/ground.
+//     onFightMode above); from there FORGE → /play/pve and ARENA → /play (core
+//     select). ARENA used to stop at a Ground Select screen that asked ARENA or
+//     SPACE; a door labelled ARENA that opens onto the same question again is a
+//     door that does not answer, so the screen is gone and the door goes straight
+//     to the fight (24.08.2026 — space is a seasonal event now, not a ground).
 //     TRAIN was removed from the dock (no training mode yet) — its /play/upgrade
 //     route is kept for later.
 function onFight() { onFightMode(); }

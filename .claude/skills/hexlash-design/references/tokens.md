@@ -97,7 +97,7 @@ AMBER  #FFB21D   /* тёплый ламповый / контактный све�
 ```
 
 - `--hs-hex` — гекс-плита FIGHT.
-- `--hs-chamfer` — срез угла «fight-card»: двери Mode Select / Ground Select, модальные листы.
+- `--hs-chamfer` — срез угла «fight-card»: двери экрана режимов, модальные листы.
 
 ## 8. Движение
 
@@ -135,7 +135,7 @@ AMBER  #FFB21D   /* тёплый ламповый / контактный све�
 - `--bg-deep: #070811`, `--bg-panel: rgba(14,16,28,.85)` — старые фоны.
 - Токены `--font-display` / `--font-body` за пределами этого файла **не используются никем**.
 
-Живые потребители класса `.app-v2`: `AppV2.vue`, `ArenaScene.vue`, `FighterLabScene.vue`, `GroundSelectView.vue`, `router/index.js`, `assets/main.css`, `v24/effects.css`, `v24/verify.css`. Поэтому слой нельзя просто удалить.
+Живые потребители класса `.app-v2`: `AppV2.vue`, `ArenaScene.vue`, `FighterLabScene.vue`, `router/index.js`, `assets/main.css`, `v24/effects.css`, `v24/verify.css`. Поэтому слой нельзя просто удалить.
 
 **Правило:** новое **всегда** задаёт шрифт явно (`--hs-disp` / `--hs-mono`, в магазине `--disp` / `--mono`), не полагаясь на наследование. Слой не расширять. Приведение к канону — отдельная задача с проверкой всех `/play/*`.
 

@@ -55,7 +55,7 @@ description: Поведение интерфейса Hexlash — кнопки, �
 
 ### Двери — крупный выбор («fight-card»)
 
-Mode Select (PVE / PVP), Ground Select (ARENA / SPACE).
+Экран режимов — острова ARENA / FORGE.
 
 - Поверхность PANEL `#16161B` + срез угла `--hs-chamfer`.
 - В покое спокойны. Свечение — на ховере и в состоянии `armed`, **максимум один bloom на дверь**.
