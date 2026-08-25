@@ -62,16 +62,17 @@ const publicRoutes = [
 ];
 
 // /play hosts the temporary pre-fight flow (Stage 1 visualization):
-//   /play         → core selection  (CoreSelectView)
-//   /play/upgrade → upgrade screen   (UpgradeView — temp shell pending the
-//                   Claude Design drill-down handoff)
-//   /play/arena   → the 3D arena     (ArenaScene via PlayStubView)
-// The player's chosen core glows its colour on the arena fighter. The .app-v2
-// CSS namespace and src/views-v2/ directory are preserved from the rebuild.
-// /play is public (reached after login and via "Play as Guest").
+//   /play       → core selection (CoreSelectView) → straight to the arena
+//   /play/arena → the 3D arena    (ArenaScene via PlayStubView)
+// There is no upgrade STEP any more: upgrading moved into the FORGE hall
+// (/play/pve), where each fighter has their own tree, so the pre-fight screen
+// that edited one shared tree was retired (25.08.2026) and its old address
+// redirects there. The player's chosen core still glows its colour on the arena
+// fighter. The .app-v2 CSS namespace and src/views-v2/ directory are preserved
+// from the rebuild. /play is public (reached after login and via "Play as Guest").
 //
-// requireCore guards the upgrade + arena steps: without a pick (e.g. a hard
-// refresh — pre-fight state is in-memory only) bounce back to selection.
+// requireCore guards the arena: without a pick (e.g. a hard refresh straight
+// onto /play/arena) bounce back to selection.
 const requireCore = (to, from, next) => {
     // Ask the save layer here rather than trusting that the store module was
     // evaluated first. This guard is the ONE place that decides whether a
@@ -175,10 +176,10 @@ const v2Routes = [
                 redirect: { name: 'V2Pve' },
             },
             {
+                // The pre-fight upgrade screen was retired (25.08.2026) — upgrading
+                // lives in the FORGE hall now, per fighter. Old links land there.
                 path: 'upgrade',
-                name: 'PrefightUpgrade',
-                beforeEnter: requireCore,
-                component: () => import('@/views-v2/UpgradeView.vue'),
+                redirect: { name: 'V2Pve' },
             },
             {
                 path: 'arena',

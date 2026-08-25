@@ -11,7 +11,7 @@
 //
 // WHY synchronous storage and not IndexedDB: the restore has to be finished
 // BEFORE the router's `requireCore` guard runs, otherwise a refresh on
-// /play/upgrade or /play/arena bounces the player back to core select while the
+// /play/arena bounces the player back to core select while the
 // (async) read is still in flight. sessionStorage answers instantly.
 //
 // SHAPE — one snapshot, split into named sections. Today only `prefight` exists

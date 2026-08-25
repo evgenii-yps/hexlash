@@ -1,9 +1,17 @@
-// Pre-fight state — the core the player picked on /play plus the upgrade
-// screen's working face-tree (deep copy of CRYSTALS). Read by the upgrade
-// screen and by the arena when it builds the fighter.
+// Pre-fight state — the core the player picked on /play plus a working face-tree
+// (deep copy of CRYSTALS). Read by the arena when it builds the fighter.
+//
+// The screen that EDITED that tree (/play/upgrade) was retired on 25.08.2026 —
+// upgrading moved into the FORGE hall, where each fighter has their own tree and
+// their own pool (see rosterState). Everything here stays: a player who already
+// lit facets keeps them on the arena fighter, and the writers below (initUpgradeTree
+// / setFaceState) are left in place on purpose — they are exactly what the fight
+// path will need when it gets its own upgrade step back. Right now nothing calls
+// them, so a fresh player simply fights the untouched tree (ArenaScene falls back
+// to CRYSTALS[core]).
 //
 // PERSISTED (guest level, 24.08.2026). It used to live in tab memory only, so a
-// refresh on /play/upgrade or /play/arena dropped the pick and the route guard
+// refresh on /play/arena dropped the pick and the route guard
 // bounced the player back to core select — losing every lit facet. Now the pick
 // and the lit facets are written to per-tab storage on every change and restored
 // synchronously below, at module load: that is BEFORE the router's requireCore

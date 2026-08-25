@@ -9,7 +9,9 @@
      zasada, our palette, EN names). Icon — coreSVG() reused from
      upgradeGeometry.js. Tint --core/--core-sup written on the scene root from
      prefight.selectedCoreId (same write-site/vars as the upgrade screen).
-     Pick → store; CTA «TO UPGRADE» → /play/upgrade. -->
+     Pick → store; CTA «TO ARENA» → /play/arena. It used to stop at an upgrade
+     screen in between; that screen was retired (25.08.2026) when upgrading moved
+     into the FORGE hall, where each fighter has their own tree. -->
 <template>
   <div class="scene" :style="coreVars" data-screen-label="Core Select">
 
@@ -61,10 +63,10 @@
             class="cta"
             :class="{ 'is-ready': selected }"
             :disabled="!selected"
-            aria-label="Proceed to upgrade"
-            @click="toUpgrade"
+            aria-label="Proceed to the arena"
+            @click="toArena"
           >
-            <span>TO UPGRADE</span>
+            <span>TO ARENA</span>
             <span class="arr" aria-hidden="true">→</span>
           </button>
         </footer>
@@ -105,22 +107,21 @@ const coreVars = computed(() =>
 
 function select(core) {
   selectedId.value = core.id; // single glow — siblings dim via .has-sel
-  store.dispatch('prefight/selectCore', core.id); // id → store (read by upgrade/arena)
+  store.dispatch('prefight/selectCore', core.id); // id → store (read by the arena)
 }
 
-// CTA «TO UPGRADE» — navigation contract: pick is already in the store, the
+// CTA «TO ARENA» — navigation contract: pick is already in the store, the
 // route guard (requireCore) lets it through. Brief beat so the press reads.
 let navigating = false;
-function toUpgrade() {
+function toArena() {
   if (!selected.value || navigating) return;
   navigating = true;
-  setTimeout(() => router.push({ name: 'PrefightUpgrade' }), 180);
+  setTimeout(() => router.push({ name: 'V2Arena' }), 180);
 }
 </script>
 
 <style>
-/* Fonts — shared resource: Saira Condensed (display) + JetBrains Mono (mono).
-   Same @import as the upgrade screen — the browser dedupes. */
+/* Fonts — shared resource: Saira Condensed (display) + JetBrains Mono (mono). */
 @import url('https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
 </style>
 

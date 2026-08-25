@@ -91,14 +91,6 @@ export default {
     // matte "mode coming soon" note over the preview scene (SOON mark lives with it)
     previewNote: "Space — a big field, everyone for themselves. Mode coming soon. This is a preview of how it will look.",
   },
-  // Upgrade screen (/play/upgrade). Only the guest notice is keyed so far —
-  // the rest of that screen is a 1:1 design port that still carries its copy
-  // inline; keying it is a separate pass, not this one.
-  upgrade: {
-    // Honesty line under the build bar: a guest's work is tab-lived, by design.
-    // Hidden for a signed-in player (nothing temporary about their progress).
-    guestNote: "Playing as a guest — your build is kept while this tab stays open. Create an account to keep it for good.",
-  },
   // FORGE hall (/play/pve) — the roster on the platform + the picked fighter's card
   // and tree. The tree strings came with the mechanic from the retired pre-fight
   // upgrade screen (which carried its copy inline); they are keyed here.

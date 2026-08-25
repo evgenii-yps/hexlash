@@ -357,8 +357,9 @@ const trayItems = [
 //     SPACE; a door labelled ARENA that opens onto the same question again is a
 //     door that does not answer, so the screen is gone and the door goes straight
 //     to the fight (24.08.2026 — space is a seasonal event now, not a ground).
-//     TRAIN was removed from the dock (no training mode yet) — its /play/upgrade
-//     route is kept for later.
+//     TRAIN was removed from the dock (no training mode yet); the /play/upgrade
+//     screen it used to open is gone too (25.08.2026 — upgrading lives in FORGE,
+//     per fighter), and that address now redirects there.
 function onFight() { onFightMode(); }
 // SHOP segment toggles the surface (open shop / back to home); the brand-block is
 // the other way home. Both swap the same `view`, cross-faded by the strip wrapper.
