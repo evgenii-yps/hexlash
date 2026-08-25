@@ -63,6 +63,74 @@
 .sb-tab.on::after { content: ""; position: absolute; left: 14%; right: 14%; bottom: -1px; height: 2px;
   background: var(--pink); box-shadow: 0 0 12px var(--pink); }
 
+/* ════════════════════════ DEV console (temporary) ════════════════════════
+   The owner's panel for handing out and removing fighters until the game says
+   where fighters come from. It is styled AGAINST the shop on purpose: flat grey,
+   mono, hairlines, no cards, no bloom, no entrance motion, no pink. If it ever
+   starts looking like merchandise, something has gone wrong.
+   Colour of a fighter's own core is allowed on its chip (canon: core colour in
+   its own context) — as a flat label, never as light. Delete this whole block
+   together with the tab. */
+.sb-tab.dev.on::after { background: var(--muted); box-shadow: none; }   /* not the brand marker */
+
+.dv { font-family: var(--mono); color: var(--dim); padding: 4px 0 28px; }
+.dv-warn {
+  font-size: 11px; letter-spacing: 0.04em; color: var(--muted);
+  border: 1px solid var(--line); border-left: 3px solid var(--ink-dim);
+  padding: 10px 12px; margin-bottom: 16px; background: rgba(255, 255, 255, 0.015);
+}
+.dv-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.dv-count { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.dv-count b { color: var(--ink); font-variant-numeric: tabular-nums; }
+
+/* give-a-fighter row */
+.dv-give { border: 1px solid var(--line); padding: 12px; margin-bottom: 20px; }
+.dv-lbl { display: block; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 8px; }
+.dv-cores { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.dv-core {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px;
+  font: inherit; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--muted); background: none; border: 1px solid var(--line); cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.dv-core:hover { color: var(--dim); border-color: var(--line2); }
+.dv-core.on { color: var(--ink); border-color: rgba(255, 255, 255, 0.28); }
+.dv-core:focus-visible { outline: 2px solid var(--dim); outline-offset: 2px; }
+.dv-swatch { width: 8px; height: 8px; background: var(--dvc, var(--muted)); }  /* flat chip, no glow */
+
+.dv-btn {
+  width: 100%; min-height: 44px; font: inherit; font-size: 12px; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--ink); background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.22); cursor: pointer; transition: background 0.15s;
+}
+.dv-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.09); }
+.dv-btn:active:not(:disabled) { background: rgba(255, 255, 255, 0.04); }
+.dv-btn:focus-visible { outline: 2px solid var(--dim); outline-offset: 2px; }
+.dv-btn:disabled { color: var(--ink-dim); border-color: var(--line); cursor: not-allowed; }
+.dv-reason { margin-top: 8px; font-size: 10.5px; letter-spacing: 0.04em; color: var(--muted); }
+
+/* roster list */
+.dv-list { list-style: none; border-top: 1px solid var(--line); }
+.dv-row {
+  display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 4px 0;
+  border-bottom: 1px solid var(--line);
+}
+.dv-sign { flex: 1; font-size: 13px; letter-spacing: 0.08em; color: var(--ink); }
+.dv-core-tag {
+  font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--dvc); border: 1px solid var(--dvc); padding: 4px 8px;
+  opacity: 0.85;                       /* flat label — colour, deliberately no bloom */
+}
+.dv-del {
+  min-height: 44px; padding: 0 10px; font: inherit; font-size: 10px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--muted); background: none;
+  border: 1px solid var(--line); cursor: pointer; transition: color 0.15s, border-color 0.15s;
+}
+.dv-del:hover { color: var(--ink); border-color: rgba(255, 255, 255, 0.28); }
+.dv-del:focus-visible { outline: 2px solid var(--dim); outline-offset: 2px; }
+.dv-empty { font-size: 11px; letter-spacing: 0.04em; color: var(--muted); padding: 14px 0; }
+
 /* body = the page content (creed + lede + subtabs + grid) — part of the single
    flow, no scroll box of its own. */
 .sb-body { position: relative; }

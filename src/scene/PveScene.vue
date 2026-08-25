@@ -29,10 +29,15 @@ import { buildFighter } from './buildFighter.js';
 import { resolveBehavior } from '@/data/behavior.js';
 import { createPveWanderDirector } from './pveWander.js';
 import { createLegendPresence } from './legendPresence.js';
+import store from '@/core/state/store.js';
 
 // ───────────────────────────── CONFIG (tune on preview) ─────────────────────────────
 const CONFIG = {
-  rosterCount: 5,            // CLUB_ROSTER_COUNT — fighters on the plate
+  // NO rosterCount knob any more: the plate holds the player's ACTUAL roster, so
+  // the number of bodies is however many fighters they own (store module
+  // `roster`, capped at 8). An empty roster means an empty plate — the legend
+  // still floats above it. That is honest: no fighters, nobody to train.
+
   rosterSpreadRadius: 1.6,   // ideal placement radius from the plate centre
   rosterMinSeparation: 1.2,  // min XZ distance between any two members on placement
   seamGuard: 0.78,           // keep members this far off the central rift seam (|z|)
@@ -187,12 +192,12 @@ function buildBackdrop(o, maxAniso) {
 
 // ── roster placement: rejection-sample N spots inset on the plate, OFF the central
 //    seam band, each ≥ rosterMinSeparation apart. Falls back to a relaxed fill. ──
-function placeRoster(W, totalDepth) {
+function placeRoster(W, totalDepth, count) {
   const halfX = W / 2 - 0.85;
   const halfZ = totalDepth / 2 - 0.5;
   const pts = [];
   let tries = 0;
-  while (pts.length < CONFIG.rosterCount && tries < 600) {
+  while (pts.length < count && tries < 600) {
     tries++;
     const x = (Math.random() * 2 - 1) * halfX;
     const z = (Math.random() * 2 - 1) * halfZ;
@@ -201,7 +206,7 @@ function placeRoster(W, totalDepth) {
     pts.push({ x, z });
   }
   // relaxed top-up if the strict pass came up short (rare)
-  while (pts.length < CONFIG.rosterCount) {
+  while (pts.length < count) {
     const side = pts.length % 2 === 0 ? 1 : -1;
     pts.push({ x: (Math.random() * 2 - 1) * halfX, z: side * (CONFIG.seamGuard + Math.random() * (halfZ - CONFIG.seamGuard)) });
   }
@@ -286,12 +291,18 @@ onMounted(() => {
   lamps = buildLamps(LAMPS, reduced); scene.add(lamps.group);
   backdrop = buildBackdrop(BACKDROP, renderer.capabilities.getMaxAnisotropy()); scene.add(backdrop.mesh);
 
-  // --- Roster: CLUB_ROSTER_COUNT fighters, each its own core colour (cycled), spread
-  //     on the plate off the seam. Each idles + walks via the pveWander director. ---
-  const { pts, halfX, halfZ } = placeRoster(arena.refs.W, arena.refs.totalDepth);
+  // --- Roster: the player's OWN fighters, one body each, spread on the plate off
+  //     the seam. Each idles + walks via the pveWander director. The record only
+  //     carries a core id; the hue comes from this scene's palette (deliberately
+  //     its own — RAIDER is brightened for this dark room), so the look of the
+  //     hall is unchanged. Names are NOT shown: that is the FORGE hall's work.
+  //     Read once at build time, which is enough — the roster is edited in the
+  //     shop, on another route, so coming here always rebuilds the scene. ---
+  const members = store.getters['roster/fighters'] || [];
+  const { pts, halfX, halfZ } = placeRoster(arena.refs.W, arena.refs.totalDepth, members.length);
   const agents = []; // { fighter, zone } for the director
   pts.forEach((p, i) => {
-    const core = CORE_PALETTE[i % CORE_PALETTE.length];
+    const core = CORE_PALETTE.find((c) => c.id === members[i].core) || CORE_PALETTE[0];
     const behavior = resolveBehavior(core.id, []);
     if (behavior && behavior.axes) behavior.axes.distance = 18; // keep range small → always WALKS to the lure
 

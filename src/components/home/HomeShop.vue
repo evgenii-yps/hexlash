@@ -27,18 +27,18 @@
          ($HEX allowed in the shop body, never the strip) + SHOP title + tabs.
          Brand / cabinet / back live in the strip (which scrolls with the page). -->
     <div class="sb-head">
-      <div class="sb-top">
+      <div v-if="tab !== 'dev'" class="sb-top">
         <div class="sb-bal"><span class="hx-dia"></span><b>{{ balanceDisplay }}</b>&nbsp;<i>{{ t.shop.unit }}</i></div>
       </div>
       <h1 class="sb-h1">{{ t.shop.title }}</h1>
       <div class="sb-tabs">
-        <button v-for="tb in TABS" :key="tb" type="button" class="sb-tab" :class="{ on: tab === tb }" @click="tab = tb">{{ t.shop['tab' + cap(tb)] }}</button>
+        <button v-for="tb in TABS" :key="tb" type="button" class="sb-tab" :class="{ on: tab === tb, dev: tb === 'dev' }" @click="tab = tb">{{ t.shop['tab' + cap(tb)] }}</button>
       </div>
     </div>
 
     <!-- body — part of the single page flow (no inner scroller) -->
     <div class="sb-body">
-      <span class="sb-creed"><span class="dot"></span>{{ t.shop.creed }}</span>
+      <span v-if="tab !== 'dev'" class="sb-creed"><span class="dot"></span>{{ t.shop.creed }}</span>
       <div class="sb-lede">{{ t.shop['lede' + cap(tab)] }}</div>
 
       <!-- ═════════ DECOR ═════════ -->
@@ -106,7 +106,7 @@
       </template>
 
       <!-- ═════════ SPECIALS ═════════ -->
-      <template v-else>
+      <template v-else-if="tab === 'specials'">
         <div class="grid specials">
           <div v-for="(sp, i) in SPECIALS" :key="sp.id" class="scard sb-anim" :class="[sp.kind, { live: stageTwoLive }]"
                :style="{ ...coreVars(sp.core), animationDelay: (0.05 + i * 0.06) + 's' }">
@@ -140,6 +140,51 @@
               </div>
             </div>
           </div>
+        </div>
+      </template>
+
+      <!-- ═════════ DEV (owner console, temporary) ═════════
+           Deliberately unlike the rest of the shop: flat, grey, mono, no cards,
+           no glow, no motion, no pink. It must never read as a game feature, and
+           it must be obvious that it is meant to be torn out. Removing it is
+           devTabLive = false plus one entry in TABS. -->
+      <template v-else-if="tab === 'dev'">
+        <div class="dv">
+          <p class="dv-warn">{{ t.shop.dev.warn }}</p>
+
+          <div class="dv-bar">
+            <span class="dv-count">{{ t.shop.dev.rosterLabel }} <b>{{ rosterCount }}</b> / {{ rosterMax }}</span>
+          </div>
+
+          <div class="dv-give">
+            <span class="dv-lbl">{{ t.shop.dev.coreLabel }}</span>
+            <div class="dv-cores">
+              <button
+                type="button" class="dv-core" :class="{ on: giveCore === 'random' }"
+                @click="giveCore = 'random'"
+              >{{ t.shop.dev.random }}</button>
+              <button
+                v-for="c in ROSTER_CORES" :key="c.id"
+                type="button" class="dv-core" :class="{ on: giveCore === c.id }"
+                :style="{ '--dvc': c.hue }"
+                @click="giveCore = c.id"
+              ><span class="dv-swatch" aria-hidden="true"></span>{{ c.name }}</button>
+            </div>
+            <button
+              type="button" class="dv-btn" :disabled="rosterFull"
+              @click="onRecruit"
+            >{{ t.shop.dev.recruit }}</button>
+            <p v-if="rosterFull" class="dv-reason">{{ t.shop.dev.full }}</p>
+          </div>
+
+          <ul v-if="roster.length" class="dv-list">
+            <li v-for="f in roster" :key="f.id" class="dv-row">
+              <span class="dv-sign">{{ f.callsign }}</span>
+              <span class="dv-core-tag" :style="{ '--dvc': coreHue(f.core) }">{{ coreName(f.core) }}</span>
+              <button type="button" class="dv-del" @click="onDismiss(f.id)">{{ t.shop.dev.remove }}</button>
+            </li>
+          </ul>
+          <p v-else class="dv-empty">{{ t.shop.dev.empty }}</p>
         </div>
       </template>
     </div>
@@ -205,7 +250,9 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue';
+import { useStore } from 'vuex';
 import { t } from '@/locales/index.js';
+import { CORES as ROSTER_CORES } from '@/data/upgradeData.js';
 import '@/styles/shop.css';
 
 defineProps({ balance: { type: String, default: '2,480' } });
@@ -214,7 +261,9 @@ defineEmits(['back']);
 const BALANCE = 2480;           // hardcoded $HEX — never actually debited on Stage 1
 const stageTwoLive = false;     // master flag: false ⇒ Currency/Specials/claim are SOON stubs
 
-const TABS = ['decor', 'currency', 'specials'];
+// DEV console — owner tool, temporary. One flag + one TABS entry to remove it.
+const devTabLive = true;
+const TABS = devTabLive ? ['decor', 'currency', 'specials', 'dev'] : ['decor', 'currency', 'specials'];
 const tab = ref('decor');
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -421,4 +470,20 @@ onBeforeUnmount(() => {
   document.body.classList.remove('home-shop-open');
   if (timerId) clearInterval(timerId);
 });
+// ── DEV console — roster wiring ──────────────────────────────────────────────
+// Reads/writes the roster store directly; the canonical core ids come from
+// upgradeData (the same vocabulary the fight understands), and the flat colour
+// chips take their hue from there too — colour of its own core is allowed, glow
+// is not (see shop.css .dv-core-tag).
+const store = useStore();
+const roster = computed(() => store.getters['roster/fighters']);
+const rosterCount = computed(() => store.getters['roster/count']);
+const rosterMax = computed(() => store.getters['roster/max']);
+const rosterFull = computed(() => store.getters['roster/isFull']);
+const giveCore = ref('random');
+const coreOf = (id) => ROSTER_CORES.find((c) => c.id === id) || null;
+const coreName = (id) => (coreOf(id) ? coreOf(id).name : id);
+const coreHue = (id) => (coreOf(id) ? coreOf(id).hue : '#5D5D66');
+function onRecruit() { store.dispatch('roster/recruit', giveCore.value); }
+function onDismiss(id) { store.dispatch('roster/dismiss', id); }
 </script>

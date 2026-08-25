@@ -185,6 +185,19 @@ export default {
     tabDecor: "Decor",
     tabCurrency: "Currency",
     tabSpecials: "Specials",
+    // DEV console — owner tool, temporary. Goes out with the tab.
+    tabDev: "Dev",
+    ledeDev: "Owner controls. Nothing on this tab is part of the game.",
+    dev: {
+      warn: "Temporary tool — it will be removed once the game says where fighters come from.",
+      rosterLabel: "Roster",
+      coreLabel: "Core",
+      random: "Random",
+      recruit: "Give fighter",
+      full: "Roster is full — remove one to make room.",
+      empty: "No fighters yet.",
+      remove: "Remove",
+    },
     ledeDecor:
       "Furnish your floor. Each piece is cut from the same low-poly stock as the arena — but now it carries the light of the core it’s tuned to. Colour tells you which core; it never buys you an edge.",
     ledeCurrency:
