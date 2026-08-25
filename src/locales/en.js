@@ -189,7 +189,7 @@ export default {
     tabDev: "Dev",
     ledeDev: "Owner controls. Nothing on this tab is part of the game.",
     dev: {
-      warn: "Temporary tool — it will be removed once the game says where fighters come from.",
+      warn: "Temporary tool — it will be removed once the game says where fighters come from. The roster lives in this browser tab only: open the game in a second tab and that tab starts empty.",
       rosterLabel: "Roster",
       coreLabel: "Core",
       random: "Random",
