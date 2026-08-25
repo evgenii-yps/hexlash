@@ -1,17 +1,25 @@
-<!-- PveScene — the PVE "club" 3D stage. A self-contained sibling of HomeScene.vue
-     (the home is live on prod — this never reuses it by a flag and never touches it):
-     the SAME arena slab with the combat rift SUPPRESSED from outside (rift-glow
-     opacity 0, sparks off, presence never created, the bright slab outline Lines
-     hidden), the SAME warm dim lamp room-fill (no haze halos, no dust on PVE), and an OrbitControls
-     rig — but here the plate holds a ROSTER of club fighters (buildFighter ×N), each
-     living and walking on its own footwork (pveWander), and above the plate centre a
-     trainer-LEGEND floats in a warm amber cloud, continuously drifting (legendPresence).
+<!-- PveScene — the FORGE hall, the 3D stage of the club. A self-contained sibling of
+     HomeScene.vue (the home is live on prod — this never reuses it by a flag and never
+     touches it): the SAME arena slab with the combat rift SUPPRESSED from outside
+     (rift-glow opacity 0, sparks off, presence never created, the bright slab outline
+     Lines hidden), the SAME warm dim lamp room-fill (no haze halos, no dust on PVE) —
+     but here the plate holds the player's ROSTER (buildFighter xN), standing STILL and
+     FACING the player in a deterministic formation (an arc up to five, two staggered
+     rows beyond), and above the plate centre a trainer-LEGEND floats in a warm amber
+     cloud, continuously drifting (legendPresence).
 
-     Discipline: dark room; each roster body glows ITS core colour (cold/varied);
-     the legend's warm amber cloud is the ONE warm anchor; NO pink anywhere (the FIGHT
-     pink lives on the home, never here); no HP plates; no FIGHT. All tuning knobs are
-     in the CONFIG / LEGEND blocks at the top. Respects prefers-reduced-motion + tab
-     pause. buildArena / buildFighter are only INSTANCED, never edited. -->
+     The camera is frontal and FIXED (no orbit): an overview frame for the hall, and a
+     closer work frame it glides to when a fighter is picked — the picked one steps to
+     the left and stays lit, the rest sink into shadow. Roster cores are MATTE at rest;
+     hover lights exactly one. All of that is driven from OUTSIDE: brightness is written
+     onto the core gem / halo reached through joints.torso AFTER fighter.update(), and
+     bodies are dimmed through their own per-instance skin material — buildFighter and
+     buildArena are only INSTANCED, never edited.
+
+     Discipline: dark room; the legend's warm amber cloud is the ONE glow; roster cores
+     are light, not a second accent; NO pink anywhere (the FIGHT pink lives on the home,
+     never here); no HP plates; no FIGHT. All tuning knobs are in the CONFIG / CAM / WORK
+     / CORE_LIGHT / LEGEND blocks at the top. Respects prefers-reduced-motion + tab pause. -->
 <template>
   <div ref="wrap" class="pve-scene-wrap">
     <canvas ref="canvasEl" class="pve-scene-canvas" />
@@ -22,27 +30,46 @@
 <script setup>
 import { onMounted, onBeforeUnmount, ref } from 'vue';
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildArena } from './buildArena.js';
 import { makeRadialTexture } from './arenaTextures.js';
 import { buildFighter } from './buildFighter.js';
 import { resolveBehavior } from '@/data/behavior.js';
-import { createPveWanderDirector } from './pveWander.js';
 import { createLegendPresence } from './legendPresence.js';
 import store from '@/core/state/store.js';
 
 // ───────────────────────────── CONFIG (tune on preview) ─────────────────────────────
 const CONFIG = {
-  // NO rosterCount knob any more: the plate holds the player's ACTUAL roster, so
-  // the number of bodies is however many fighters they own (store module
-  // `roster`, capped at 8). An empty roster means an empty plate — the legend
-  // still floats above it. That is honest: no fighters, nobody to train.
-
-  rosterSpreadRadius: 1.6,   // ideal placement radius from the plate centre
-  rosterMinSeparation: 1.2,  // min XZ distance between any two members on placement
-  seamGuard: 0.78,           // keep members this far off the central rift seam (|z|)
-  agentZoneHalfX: 0.72,      // personal wander rect half-extent X around a member's spawn
-  agentZoneHalfZ: 0.3,       // personal wander rect half-extent Z (shallow → stays its side)
+  // The plate holds the player's ACTUAL roster (store module `roster`, cap 8), so
+  // the number of bodies is data, not a knob. Placement is DETERMINISTIC — the
+  // n-th fighter always stands in the n-th spot, so a fighter keeps his place
+  // between visits.
+  rowBow: 0.55,          // how much the arc ends come forward (0 = straight line)
+  rowSpread: 1.15,       // gap between neighbours along the arc
+  backRowLift: 2.35,     // how far BACK (−Z) the second row stands when there are 6–8
+                         // (kept clear of the slab's central slit, which the bodies must not straddle)
+  backRowScale: 0.86,    // and how much smaller it reads (perspective help, not a trick)
+  stagger: 0.5,          // sideways offset of the back row → front gaps line up with it
+};
+// The hall's camera. Frontal and FIXED: no orbit, no auto-rotate — this is a
+// workplace, not a viewing platform (owner's call, 24.08). Two framings only.
+const CAM = {
+  overview: { pos: [0, 3.15, 9.6], look: [0, 1.5, 0] },   // the whole row, head-on
+  work:     { pos: [1.5, 2.5, 6.4], look: [1.1, 1.35, 0] }, // closer, shifted so the
+                                                            // picked fighter sits LEFT
+  moveSec: 0.55,         // how long the framing change takes (ТЗ: about half a second)
+};
+// Where a picked fighter stands while you work on him, and how the rest sink.
+const WORK = {
+  spot: [-1.35, 0, 1.5], // left of centre and a step toward the player
+  moveSec: 0.5,
+  dimSkin: 0.72,         // how far the others' bodies fade toward the room (0..1)
+  dimGlow: 0.25,         // …and their floor pools
+};
+// Core brightness. At rest every core is MATTE — eight lit cores in four colours
+// is a Christmas tree. Only the hovered (overview) or picked (work) core lights.
+const CORE_LIGHT = {
+  rest: 0.14,            // multiplier on the gem colour / halo at rest
+  lerp: 7.0,             // 1/s easing toward the target (same shape as the mode plates)
 };
 // The legend trainer floating over the plate centre.
 const LEGEND = {
@@ -190,46 +217,140 @@ function buildBackdrop(o, maxAniso) {
 // around each shade are gone — the lamps now read as lit from inside the dish (the
 // visible bulb + the PointLight), with no blurry orange blobs in the air.
 
-// ── roster placement: rejection-sample N spots inset on the plate, OFF the central
-//    seam band, each ≥ rosterMinSeparation apart. Falls back to a relaxed fill. ──
-function placeRoster(W, totalDepth, count) {
-  const halfX = W / 2 - 0.85;
-  const halfZ = totalDepth / 2 - 0.5;
-  const pts = [];
-  let tries = 0;
-  while (pts.length < count && tries < 600) {
-    tries++;
-    const x = (Math.random() * 2 - 1) * halfX;
-    const z = (Math.random() * 2 - 1) * halfZ;
-    if (Math.abs(z) < CONFIG.seamGuard) continue;
-    if (pts.some((p) => Math.hypot(p.x - x, p.z - z) < CONFIG.rosterMinSeparation)) continue;
-    pts.push({ x, z });
+// ── roster layout — DETERMINISTIC, so a fighter keeps his place between visits.
+//    ≤5: one shallow arc, ends a step closer to the player.
+//    6–8: two rows, the back one lifted, smaller and offset by half a gap so the
+//    back bodies land in the FRONT row's gaps instead of behind its shoulders. ──
+function layoutRoster(count) {
+  if (count <= 0) return [];
+
+  // One row: `t` runs −1…+1 across it, x spreads by it, and z bows by t² so the
+  // ENDS stand a touch closer to the player (+Z is toward the camera) — the row
+  // reads as a shallow arc facing you, not as a straight parade line.
+  const row = (n, offsetX, z0, scale) => {
+    const spots = [];
+    for (let i = 0; i < n; i++) {
+      const t = n === 1 ? 0 : (i / (n - 1)) * 2 - 1;
+      spots.push({
+        x: (t * CONFIG.rowSpread * (n - 1)) / 2 + offsetX,
+        z: z0 + CONFIG.rowBow * t * t,
+        scale,
+      });
+    }
+    return spots;
+  };
+
+  if (count <= 5) return row(count, 0, 1.0, 1);
+
+  // 6–8: split front/back, back row further away, smaller, and offset by half a
+  // gap so its bodies show through the front row's gaps.
+  const front = Math.ceil(count / 2);
+  return [
+    ...row(front, 0, 1.0, 1),
+    ...row(count - front, CONFIG.stagger, 1.0 - CONFIG.backRowLift, CONFIG.backRowScale),
+  ];
+}
+
+// ── Reaching INTO a fighter from outside (the sanctioned pattern — the combat
+//    file itself is never edited). buildFighter exposes its joints, and the core
+//    gem + halo hang on the torso, so they can be found and driven from here.
+//
+//    One condition, and it is the whole trick: the fighter's own update() writes
+//    the halo's opacity every frame, so these brightnesses must be applied AFTER
+//    fighter.update() in the same frame. The gem's COLOUR and the body material
+//    are not touched per frame (only by the dev grey toggle and the death
+//    dissolve, neither of which happens in this hall), so those hold on their own.
+function coreParts(fighter) {
+  const torso = fighter.joints && fighter.joints.torso;
+  if (!torso) return null;
+  let gem = null, halo = null;
+  for (const o of torso.children) {
+    if (!halo && o.isSprite) halo = o;
+    else if (!gem && o.isMesh && o.geometry && o.geometry.type === 'OctahedronGeometry') gem = o;
   }
-  // relaxed top-up if the strict pass came up short (rare)
-  while (pts.length < count) {
-    const side = pts.length % 2 === 0 ? 1 : -1;
-    pts.push({ x: (Math.random() * 2 - 1) * halfX, z: side * (CONFIG.seamGuard + Math.random() * (halfZ - CONFIG.seamGuard)) });
+  if (!gem && !halo) return null;
+  return { gem, halo, gemBase: gem ? gem.material.color.clone() : null };
+}
+
+// The body material: one MeshStandardMaterial per fighter (buildFighter makes it
+// per call), shared by all of THAT body's boxes — exactly the handle needed to
+// sink one fighter into the dark without touching the others.
+function skinOf(fighter) {
+  let mat = null;
+  fighter.group.traverse((o) => {
+    if (!mat && o.isMesh && o.material && o.material.isMeshStandardMaterial) mat = o.material;
+  });
+  return mat ? { mat, base: mat.color.clone() } : null;
+}
+
+// Set (or ease toward) one of the two framings. `snap` places the camera at once
+// — used on build and whenever motion is reduced.
+function applyCamera(frame, snap) {
+  camPosTo.set(frame.pos[0], frame.pos[1], frame.pos[2]);
+  camLookTo.set(frame.look[0], frame.look[1], frame.look[2]);
+  if (snap) {
+    camPos.copy(camPosTo); camLook.copy(camLookTo);
+    if (camera) { camera.position.copy(camPos); camera.lookAt(camLook); }
   }
-  return { pts, halfX, halfZ };
+}
+
+// Rest → lit for one body's core, and normal → sunk into the dark for its skin.
+// Called every frame AFTER fighter.update() (see coreParts).
+const _lightC = new THREE.Color();
+function applyFighterLight(r) {
+  const glow = CORE_LIGHT.rest + (1 - CORE_LIGHT.rest) * r.lit;
+  if (r.parts) {
+    if (r.parts.gem && r.parts.gemBase) {
+      r.parts.gem.material.color.copy(r.parts.gemBase).multiplyScalar(glow);
+    }
+    if (r.parts.halo) r.parts.halo.material.opacity *= glow;
+  }
+  if (r.skin) {
+    r.skin.mat.color.copy(r.skin.base).lerp(_lightC.setHex(0x0b0d14), WORK.dimSkin * r.dim);
+  }
+  if (r.glow && r.glow.mesh && r.glow.mesh.material) {
+    const m = r.glow.mesh.material;
+    if (m.userData.baseOpacity === undefined) m.userData.baseOpacity = m.opacity;
+    m.opacity = m.userData.baseOpacity * (1 - (1 - WORK.dimGlow) * r.dim) * (0.55 + 0.45 * r.lit);
+  }
+}
+
+const _target = new THREE.Vector3();
+
+// Point a body at (x, z). The model faces −Z at rotation 0 (see buildFighter).
+function faceTowards(group, x, z) {
+  group.rotation.y = Math.atan2(-(x - group.position.x), -(z - group.position.z));
 }
 
 // ─────────────────────────────────── scene plumbing ───────────────────────────────────
+// hover  — a body is under the pointer (or was just tapped): { id, callsign, x, y }, or null
+// pick   — this fighter was chosen
+// exit   — a tap landed on empty space while a fighter was picked
+const emit = defineEmits(['hover', 'pick', 'exit']);
+
 const wrap = ref(null);
 const canvasEl = ref(null);
 
-let renderer, scene, camera, controls, arena, resizeObserver, clock;
+let renderer, scene, camera, arena, resizeObserver, clock;
 // Pre-load readiness: emit once after the first frame is rendered so the
 // bootstrap splash (page-load) and the SPA transition cover can lift on real
 // pve-scene readiness. Per-mount (script-setup local) so it re-fires on every
 // fresh mount, not just the first of the session.
 let firstFrameEmitted = false;
 let onVisibility;
-let director = null;
+let onPointerMove = null, onPointerDown = null, onPointerUp = null;
+let hoveredId = null;        // whose core is lit in the overview
+let selectedId = null;       // whose card + tree are open (null = overview)
+const camPos = new THREE.Vector3();      // where the camera IS
+const camLook = new THREE.Vector3();     // and what it looks at
+const camPosTo = new THREE.Vector3();    // where it is going
+const camLookTo = new THREE.Vector3();
 let prevT = 0;
 let reduced = false;
 let lamps = null, backdrop = null;
 let legend = null, legendPresence = null;
-const roster = []; // [{ fighter, glow }]
+// [{ id, callsign, fighter, glow, home, scale, parts, skin, lit, dim }]
+const roster = [];
 
 const CAM_BASE = new THREE.Vector3(5.4, 6.1, 8.4);
 
@@ -291,60 +412,58 @@ onMounted(() => {
   lamps = buildLamps(LAMPS, reduced); scene.add(lamps.group);
   backdrop = buildBackdrop(BACKDROP, renderer.capabilities.getMaxAnisotropy()); scene.add(backdrop.mesh);
 
-  // --- Roster: the player's OWN fighters, one body each, spread on the plate off
-  //     the seam. Each idles + walks via the pveWander director. The record only
-  //     carries a core id; the hue comes from this scene's palette (deliberately
-  //     its own — RAIDER is brightened for this dark room), so the look of the
-  //     hall is unchanged. Names are NOT shown: that is the FORGE hall's work.
-  //     Read once at build time, which is enough — the roster is edited in the
-  //     shop, on another route, so coming here always rebuilds the scene. ---
+  // --- Roster: the player's OWN fighters, one body each, standing in a row and
+  //     FACING THE PLAYER. They do not walk: this is a hall, not a yard, so the
+  //     wander director is gone and the bodies just live on the spot (breath,
+  //     weight shifts — what buildFighter already does on its own).
+  //     The record carries only a core id; the hue comes from this scene's own
+  //     palette (RAIDER brightened for this dark room), so the hall's look is
+  //     unchanged. Read once at build time — the roster is edited in the shop,
+  //     on another route, so arriving here always rebuilds the scene. ---
   const members = store.getters['roster/fighters'] || [];
-  const { pts, halfX, halfZ } = placeRoster(arena.refs.W, arena.refs.totalDepth, members.length);
-  const agents = []; // { fighter, zone } for the director
-  pts.forEach((p, i) => {
-    const core = CORE_PALETTE.find((c) => c.id === members[i].core) || CORE_PALETTE[0];
+  const spots = layoutRoster(members.length);
+  spots.forEach((p, i) => {
+    const m = members[i];
+    const core = CORE_PALETTE.find((c) => c.id === m.core) || CORE_PALETTE[0];
     const behavior = resolveBehavior(core.id, []);
-    if (behavior && behavior.axes) behavior.axes.distance = 18; // keep range small → always WALKS to the lure
 
-    // personal wander rect — clamped to this member's side of the seam (never crosses)
-    const sideMin = p.z > 0 ? CONFIG.seamGuard : -halfZ;
-    const sideMax = p.z > 0 ? halfZ : -CONFIG.seamGuard;
-    const zone = {
-      xMin: THREE.MathUtils.clamp(p.x - CONFIG.agentZoneHalfX, -halfX, halfX),
-      xMax: THREE.MathUtils.clamp(p.x + CONFIG.agentZoneHalfX, -halfX, halfX),
-      zMin: THREE.MathUtils.clamp(p.z - CONFIG.agentZoneHalfZ, sideMin, sideMax),
-      zMax: THREE.MathUtils.clamp(p.z + CONFIG.agentZoneHalfZ, sideMin, sideMax),
-    };
-
-    const idx = i; // capture for the per-agent getFoePos closure
     const fighter = buildFighter(core.hue, {
       side: 'player',
       coreId: core.id,
       behavior,
       bounds: { x: arena.refs.W / 2 - 0.35, z: arena.refs.totalDepth / 2 - 0.3 },
       neutralColor: false,
-      getFoePos: () => director.foePos(idx), // moving lure while strolling, null while idle
+      getFoePos: () => null,           // nobody to walk toward: they stand
     });
     fighter.group.position.set(p.x, topY, p.z);
-    fighter.group.rotation.y = Math.atan2(p.x, p.z); // face the plate centre initially
+    fighter.group.scale.setScalar(p.scale);
     fighter.setReducedMotion(reduced);
-    // SUPPRESS the over-head HP plate (the only Sprite added DIRECTLY to the group),
-    // same external approach as the home — there are no HP plates on this scene.
+    // SUPPRESS the over-head HP plate (the only Sprite added DIRECTLY to the
+    // group) — same external approach as the home.
     fighter.group.children.forEach((o) => { if (o.isSprite) o.visible = false; });
     scene.add(fighter.group);
 
-    // a faint pool of THIS member's own (cold) core colour under its feet
     const glow = buildUnderGlow(core.hue, topY);
     glow.mesh.position.set(p.x, topY + GLOW.yLift, p.z);
     scene.add(glow.mesh);
 
-    roster.push({ fighter, glow });
-    agents.push({ fighter, zone });
+    roster.push({
+      id: m.id,
+      callsign: m.callsign,
+      fighter,
+      glow,
+      home: new THREE.Vector3(p.x, topY, p.z),
+      scale: p.scale,
+      parts: coreParts(fighter),       // gem + halo, for the rest/lit brightness
+      skin: skinOf(fighter),           // this body's own material (per-instance)
+      lit: 0,                          // eased 0…1 core brightness
+      dim: 0,                          // eased 0…1 "sunk into the dark"
+    });
   });
-
-  // Roster wander — drives the EXISTING locomotion per member (see pveWander.js).
-  director = createPveWanderDirector();
-  director.attach(agents, camera, { reduced });
+  // Everyone faces the player. Aim at the overview camera spot rather than
+  // straight ahead, so the arc ends turn slightly inward and the row reads as
+  // gathered rather than as a firing line.
+  for (const r of roster) faceTowards(r.fighter.group, CAM.overview.pos[0], CAM.overview.pos[2]);
 
   // --- Legend: a buildFighter body with the amber core, idle only (NEVER added to
   //     the wander), floating LEGEND.height over the plate centre, drifting forever
@@ -365,22 +484,69 @@ onMounted(() => {
   scene.add(legendPresence.group);
   scene.add(legendPresence.trail); // world-space descent smoke wisps
 
-  // --- Orbit around the PLATE CENTRE (stable pivot — never follows anyone). ---
-  controls = new OrbitControls(camera, renderer.domElement);
-  controls.target.set(0, topY + 1.6, 0); // plate centre, lifted between roster + legend
-  controls.enableDamping = true;
-  controls.dampingFactor = 0.08;
-  controls.enablePan = false;
-  controls.rotateSpeed = 0.9;
-  controls.zoomSpeed = 0.9;
-  controls.minDistance = 3.5;
-  controls.maxDistance = 12;
-  controls.minPolarAngle = 0.3;
-  controls.maxPolarAngle = 1.4;
-  controls.autoRotate = !reduced;
-  controls.autoRotateSpeed = 0.5;
-  controls.addEventListener('start', () => { controls.autoRotate = false; });
-  controls.update();
+  // --- Camera: FIXED and frontal. No orbit, no auto-rotate (owner's call): the
+  //     hall is a workplace. Two framings — the whole row, and closer-in with the
+  //     picked fighter on the left — eased toward, never cut to. ---
+  applyCamera(CAM.overview, true);
+
+  // --- Pointer: hover lights ONE core and names it; a tap picks that fighter.
+  //     Same shape as the mode islands (one hovered at a time, eased `lit`), but
+  //     the light lives on the fighter, so it is driven in the loop below. ---
+  const _ray = new THREE.Raycaster();
+  const _ptr = new THREE.Vector2();
+  let downAt = null;
+
+  function pickAt(clientX, clientY) {
+    const rect = renderer.domElement.getBoundingClientRect();
+    _ptr.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+    _ptr.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+    _ray.setFromCamera(_ptr, camera);
+    const hit = _ray.intersectObjects(roster.map((r) => r.fighter.group), true)[0];
+    if (!hit) return null;
+    let o = hit.object;
+    while (o && !roster.some((r) => r.fighter.group === o)) o = o.parent;
+    return o ? roster.find((r) => r.fighter.group === o) : null;
+  }
+
+  // Screen position of a body's head — where its callsign hangs.
+  const _v = new THREE.Vector3();
+  function tagPos(entry) {
+    const rect = renderer.domElement.getBoundingClientRect();
+    _v.copy(entry.fighter.group.position);
+    _v.y += 2.0 * entry.scale;
+    _v.project(camera);
+    return { x: rect.left + (_v.x * 0.5 + 0.5) * rect.width, y: rect.top + (-_v.y * 0.5 + 0.5) * rect.height };
+  }
+
+  function emitHover(entry) {
+    hoveredId = entry ? entry.id : null;
+    if (!entry) { emit('hover', null); return; }
+    const p = tagPos(entry);
+    emit('hover', { id: entry.id, callsign: entry.callsign, x: p.x, y: p.y });
+  }
+
+  onPointerMove = (e) => {
+    if (selectedId || e.pointerType === 'touch') return;   // no hover while working / on touch
+    emitHover(pickAt(e.clientX, e.clientY));
+  };
+  onPointerDown = (e) => { downAt = { x: e.clientX, y: e.clientY, entry: pickAt(e.clientX, e.clientY) }; };
+  onPointerUp = (e) => {
+    const d = downAt; downAt = null;
+    if (!d) return;
+    if (Math.hypot(e.clientX - d.x, e.clientY - d.y) > 6) return;   // a drag, not a tap
+    if (d.entry) {
+      // Touch has no hover, so light the core for a beat BEFORE the framing
+      // changes — the finger has to see what it hit.
+      emitHover(d.entry);
+      emit('pick', d.entry.id);
+    } else if (selectedId) {
+      emit('exit');                                                  // tap on empty space
+    }
+  };
+  const canvas = renderer.domElement;
+  canvas.addEventListener('pointermove', onPointerMove);
+  canvas.addEventListener('pointerdown', onPointerDown);
+  canvas.addEventListener('pointerup', onPointerUp);
 
   // --- Render loop. FPS-capped; elapsed time drives wander + idle + drift. ---
   clock = new THREE.Clock();
@@ -389,17 +555,42 @@ onMounted(() => {
   let lastFrame = 0;
   const _camDir = new THREE.Vector3();
   const loop = (time) => {
-    if (time - lastFrame < interval) return;
+    // While a fighter's card and tree are open, the hall is a backdrop: one body
+    // idling behind two opaque panels. Half the frames are plenty there, and the
+    // panels are what actually costs on a phone.
+    const iv = selectedId ? Math.max(interval, 1000 / 30) : interval;
+    if (time - lastFrame < iv) return;
     lastFrame = time;
     const t = clock.getElapsedTime();
     const dt = t - prevT;
     prevT = t;
 
-    controls.update();
-    if (!reduced) director?.update(t, dt);
+    // Camera eases toward the current framing (snap when motion is reduced).
+    const camK = reduced ? 1 : 1 - Math.exp(-(1 / (CAM.moveSec * 0.36)) * Math.min(0.05, dt));
+    camPos.lerp(camPosTo, camK);
+    camLook.lerp(camLookTo, camK);
+    camera.position.copy(camPos);
+    camera.lookAt(camLook);
+
+    const bodyK = reduced ? 1 : 1 - Math.exp(-(1 / (WORK.moveSec * 0.36)) * Math.min(0.05, dt));
+    const glowK = reduced ? 1 : 1 - Math.exp(-CORE_LIGHT.lerp * Math.min(0.05, dt));
+
     for (const r of roster) {
+      // Where this body belongs right now: its place in the row, or the work spot.
+      const picked = r.id === selectedId;
+      _target.copy(r.home);
+      if (picked) _target.set(WORK.spot[0], r.home.y, WORK.spot[2]);
+      r.fighter.group.position.lerp(_target, bodyK);
+
       r.fighter.update(t, camera);
       r.glow.follow(r.fighter.group.position);
+
+      // …and only NOW the brightnesses, because update() rewrites the halo.
+      const litTarget = selectedId ? (picked ? 1 : 0) : (r.id === hoveredId ? 1 : 0);
+      const dimTarget = selectedId && !picked ? 1 : 0;
+      r.lit += (litTarget - r.lit) * glowK;
+      r.dim += (dimTarget - r.dim) * bodyK;
+      applyFighterLight(r);
     }
 
     // Legend: idle body, ride the drift, and slowly face the camera (presiding).
@@ -446,12 +637,36 @@ onMounted(() => {
   resizeObserver.observe(el);
 });
 
+// ── What the hall drives from outside ──────────────────────────────────────
+// select(id) — frame in on this fighter (unknown id → back to the overview, which
+//              is what happens if he was deleted in another tab while open).
+// exitWork()  — back to the row.
+function select(id) {
+  const entry = roster.find((r) => r.id === id);
+  if (!entry) { exitWork(); return; }
+  selectedId = id;
+  hoveredId = null;
+  applyCamera(CAM.work, reduced);
+  faceTowards(entry.fighter.group, CAM.work.pos[0], CAM.work.pos[2]);
+}
+function exitWork() {
+  const prev = roster.find((r) => r.id === selectedId);
+  selectedId = null;
+  applyCamera(CAM.overview, reduced);
+  if (prev) faceTowards(prev.fighter.group, CAM.overview.pos[0], CAM.overview.pos[2]);
+}
+defineExpose({ select, exitWork });
+
 onBeforeUnmount(() => {
   if (resizeObserver) resizeObserver.disconnect();
   if (onVisibility) document.removeEventListener('visibilitychange', onVisibility);
   if (renderer) renderer.setAnimationLoop(null);
-  if (director) director.dispose();
-  if (controls) controls.dispose();
+  if (renderer) {
+    const c = renderer.domElement;
+    if (onPointerMove) c.removeEventListener('pointermove', onPointerMove);
+    if (onPointerDown) c.removeEventListener('pointerdown', onPointerDown);
+    if (onPointerUp) c.removeEventListener('pointerup', onPointerUp);
+  }
   for (const r of roster) {
     if (r.glow) { scene.remove(r.glow.mesh); r.glow.dispose(); }
     if (r.fighter) r.fighter.dispose();

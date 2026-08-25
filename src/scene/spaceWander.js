@@ -1,5 +1,5 @@
 // spaceWander.js — the "big-field wander director" for the Space preview stage.
-// Same sanctioned external pattern as pveWander.js / homeWander.js (which it must
+// Same sanctioned external pattern as homeWander.js (which it must
 // NOT touch), but tuned for a LARGER roster (12–16) roaming a much bigger hex
 // field: every fighter strolls on its OWN real footwork, pauses with small waiting
 // actions, and they keep well clear of one another — all by DRIVING the EXISTING

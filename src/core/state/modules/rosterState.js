@@ -12,7 +12,8 @@
 // Only the four settled fields go to storage — see snapshotOf. Anything the save
 // carries that this build does not know about is ignored on restore rather than
 // crashing, so a roster written by a future version cannot break an older one.
-import { CORES } from '@/data/upgradeData.js';
+import { CORES, RESOURCE } from '@/data/upgradeData.js';
+import { buildTree, litIdsOf, countLit } from '@/data/upgradeTree.js';
 import { pickCallsign } from '@/data/callsigns.js';
 import { readSection, writeSection } from '@/services/playerProgress.js';
 
@@ -33,7 +34,7 @@ function makeFighter(callsign, core) {
         callsign,
         core,                 // canonical core id ('natisk' | 'nalet' | 'skala' | 'zasada')
         createdAt: Date.now(),
-        upgrade: null,        // ← per-fighter progression lands here
+        upgrade: null,        // working upgrade tree, built on demand (see ensureTree)
         record: null,         // ← fights / wins land here
     };
 }
@@ -45,13 +46,18 @@ function newId() {
     return 'f' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 }
 
-// --- save shape: { fighters: [{ id, callsign, core, createdAt }] } ------------
+// --- save shape: { fighters: [{ id, callsign, core, createdAt, lit? }] } ------
+// `lit` is the small form of the upgrade tree ({ crystalId: [faceId] }) and is
+// written only once something is lit — an untouched fighter costs nothing.
 function snapshotOf(s) {
     if (!s.fighters.length) return null;   // empty roster → drop the section entirely
     return {
-        fighters: s.fighters.map((f) => ({
-            id: f.id, callsign: f.callsign, core: f.core, createdAt: f.createdAt,
-        })),
+        fighters: s.fighters.map((f) => {
+            const row = { id: f.id, callsign: f.callsign, core: f.core, createdAt: f.createdAt };
+            const lit = litIdsOf(f.upgrade);
+            if (Object.keys(lit).length) row.lit = lit;
+            return row;
+        }),
     };
 }
 
@@ -75,12 +81,16 @@ function restore() {
         if (!CORE_IDS.includes(f.core)) continue;
         if (seen.has(f.id)) continue;
         seen.add(f.id);
+        // A tree is rebuilt only when the save says something was lit; the caps
+        // are re-applied inside buildTree. Junk in `lit` costs this fighter its
+        // progression and nobody else's (a broken record is not repaired).
+        const lit = f.lit && typeof f.lit === 'object' ? f.lit : null;
         out.push({
             id: f.id,
             callsign: f.callsign,
             core: f.core,
             createdAt: typeof f.createdAt === 'number' ? f.createdAt : 0,
-            upgrade: null,
+            upgrade: lit ? buildTree(f.core, lit) : null,
             record: null,
         });
     }
@@ -97,12 +107,34 @@ const getters = {
     count: (s) => s.fighters.length,
     isFull: (s) => s.fighters.length >= ROSTER_MAX,
     max: () => ROSTER_MAX,
+    byId: (s) => (id) => s.fighters.find((f) => f.id === id) || null,
+    // Points spent / available FOR ONE FIGHTER — the pool is per fighter, not
+    // shared across the roster (owner's call, 24.08).
+    spentOf: (s) => (id) => {
+        const f = s.fighters.find((x) => x.id === id);
+        return f ? countLit(f.upgrade) : 0;
+    },
+    resource: () => RESOURCE,
 };
 
 const mutations = {
     ADD(s, fighter) {
         if (s.fighters.length >= ROSTER_MAX) return;
         s.fighters.push(fighter);
+        persist(s);
+    },
+    SET_TREE(s, { id, tree }) {
+        const f = s.fighters.find((x) => x.id === id);
+        if (!f) return;
+        f.upgrade = tree;
+        persist(s);
+    },
+    SET_FACE(s, { id, crystalId, faceId, faceState }) {
+        const f = s.fighters.find((x) => x.id === id);
+        const cr = f && f.upgrade && f.upgrade.find((c) => c.id === crystalId);
+        const face = cr && cr.faces.find((x) => x.id === faceId);
+        if (!face) return;
+        face.state = faceState;
         persist(s);
     },
     REMOVE(s, id) {
@@ -130,6 +162,34 @@ const actions = {
     },
     dismiss({ commit }, id) {
         commit('REMOVE', id);
+    },
+    /** Make sure this fighter has a working tree (built from ITS core). No-op if present. */
+    ensureTree({ state: s, commit }, id) {
+        const f = s.fighters.find((x) => x.id === id);
+        if (!f || f.upgrade) return;
+        commit('SET_TREE', { id, tree: buildTree(f.core, null) });
+    },
+    /**
+     * Light or quench one facet, with the same two guards the upgrade screen
+     * used: the crystal's own limit and the fighter's point pool. Returns true
+     * when something changed, false when the move was refused (the caller
+     * shakes the facet).
+     */
+    toggleFacet({ state: s, commit }, { id, crystalId, faceId }) {
+        const f = s.fighters.find((x) => x.id === id);
+        if (!f || !f.upgrade) return false;
+        const cr = f.upgrade.find((c) => c.id === crystalId);
+        const face = cr && cr.faces.find((x) => x.id === faceId);
+        if (!face || face.state === 'locked') return false;
+
+        if (face.state === 'lit') {                       // give the point back
+            commit('SET_FACE', { id, crystalId, faceId, faceState: 'open' });
+            return true;
+        }
+        const litHere = cr.faces.filter((x) => x.state === 'lit').length;
+        if (litHere >= cr.limit || countLit(f.upgrade) >= RESOURCE) return false;
+        commit('SET_FACE', { id, crystalId, faceId, faceState: 'lit' });
+        return true;
     },
 };
 

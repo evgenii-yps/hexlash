@@ -99,6 +99,31 @@ export default {
     // Hidden for a signed-in player (nothing temporary about their progress).
     guestNote: "Playing as a guest — your build is kept while this tab stays open. Create an account to keep it for good.",
   },
+  // FORGE hall (/play/pve) — the roster on the platform + the picked fighter's card
+  // and tree. The tree strings came with the mechanic from the retired pre-fight
+  // upgrade screen (which carried its copy inline); they are keyed here.
+  forge: {
+    empty: "No fighters yet — give one in Shop → Dev.",
+    close: "Back to the roster",
+    fights: "Fights",
+    noFights: "none yet",
+    guestNote: "Playing as a guest — this work is kept while the tab stays open. Create an account to keep it for good.",
+    // tree
+    openCrystals: "Open the crystals",
+    stepCore: "Core",
+    stepCrystal: "Crystal",
+    stepFacet: "Facet",
+    hintCore: "Tap the core to enter the tree",
+    hintCrystal: "Pick a crystal",
+    hintFacet: "Light one — quench another",
+    stLit: "Lit",
+    stOpen: "Open",
+    stLocked: "Locked",
+    stLimit: "Limit",
+    stNoPts: "No pts",
+    build: "Build",
+    buildEmpty: "No facets lit — tap in",
+  },
   cabinet: {
     // Entry chip (top-left of the home) — the single door into the cabinet.
     chipHandle: "GHOST_0xA4",
