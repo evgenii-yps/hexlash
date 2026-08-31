@@ -20,7 +20,10 @@
         <!-- the single pink bloom: static rotation arc-arrow around the phone -->
         <svg class="rh-arc" viewBox="0 0 320 320" fill="none" aria-hidden="true">
           <path d="M 78 104 A 92 92 0 0 1 242 104" stroke="#FF0069" stroke-width="5" stroke-linecap="round" />
-          <polyline points="224,86 244,104 226,122" stroke="#FF0069" stroke-width="5"
+          <!-- arrowhead sits ON the arc's tangent at its end point (242,104), so the
+               legs sweep back off the curve instead of running along it and crossing
+               it. Same stroke-width as the arc — it stays a line, not a blot. -->
+          <polyline points="250,79 242,104 217,96" stroke="#FF0069" stroke-width="5"
                     stroke-linecap="round" stroke-linejoin="round" />
         </svg>
         <!-- matte-chrome phone outline — rotates; one indicator detail (camera). -->
@@ -127,7 +130,10 @@ onUnmounted(() => {
   inset: 0;
   width: 100%;
   height: 100%;
-  filter: drop-shadow(0 0 6px rgba(var(--accent-rgb), 0.8)) drop-shadow(0 0 16px rgba(var(--accent-rgb), 0.5));
+  /* ONE shadow, not two stacked: a second drop-shadow blurs the FIRST one's halo
+     as well as the shape, compounding the bloom far past the line. Blur is kept at
+     the line's own thickness so the halo edge never runs wider than the stroke. */
+  filter: drop-shadow(0 0 4px rgba(var(--accent-rgb), 0.45));
 }
 
 /* matte-chrome phone — hairline frame + glass fill, NO glow */
