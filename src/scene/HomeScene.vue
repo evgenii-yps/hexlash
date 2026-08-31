@@ -56,6 +56,7 @@ const wrap = ref(null);
 const canvasEl = ref(null);
 
 let renderer, scene, camera, controls, arena, fighter, resizeObserver, clock;
+let resizePending = 0;  // coalescing frame for the resize observer (see onMounted)
 // Pre-load readiness: emit once after the first frame is rendered so the
 // bootstrap splash (page-load) and the SPA transition cover can lift on real
 // home-scene readiness. Per-mount (script-setup local) so it re-fires on every
@@ -575,26 +576,116 @@ let touchArmed = null; // MODE_PLATES.touchTwoStep: the plate lit by the first t
 // device (where the pair re-lays itself in depth) gets a framing that still fills the
 // screen instead of a thin strip. Returns FRESH vectors — the flight director keeps
 // one as its cached destination and compares against a live one to notice a rotation.
+//
+// The span math below is only the OPENING GUESS. It cannot be the answer on its own
+// for two reasons, both of which showed up as real faults on a phone:
+//   · it aims the pivot at the plate TOPS, and everything the player is looking at
+//     (the plates, and the captions hanging under them) is BELOW that — so the whole
+//     composition sat in the lower third with an empty upper half;
+//   · it models depth-read-as-screen-height with one hand-tuned constant
+//     (`depthToScreen`), which cannot be right for both the stacked (portrait) and
+//     the side-by-side (landscape) layout at once, so the fit was loose in one and
+//     too tight in the other — on a short landscape screen the captions ran off the
+//     bottom edge.
+// So: take the guess, then MEASURE where the pair actually lands on screen with a
+// scratch camera, and correct. Two or three passes converge — it is a near-linear
+// relation, and this runs on layout/resize, never per frame.
+const _fitCam = new THREE.PerspectiveCamera();
+const _fitV = new THREE.Vector3();
+const _fitCorners = [];
+
 function modeFraming() {
   const f = FLIGHT.fit;
   const b = modePlates
     ? modePlates.bounds()
     : { spanX: 10, spanZ: 3, topY: 0.6, emblemTop: 2 };
   const tanV = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
-  const spanX = b.spanX + f.marginX;
-  const spanY = b.spanZ * f.depthToScreen + b.emblemTop + f.marginY;
-  const dist = THREE.MathUtils.clamp(
-    Math.max(spanY / 2 / tanV, spanX / 2 / (camera.aspect * tanV)),
+  const pitch = THREE.MathUtils.degToRad(f.pitchDeg);
+
+  // Opening guess — the original span math, unchanged.
+  let dist = THREE.MathUtils.clamp(
+    Math.max(
+      (b.spanZ * f.depthToScreen + b.emblemTop + f.marginY) / 2 / tanV,
+      (b.spanX + f.marginX) / 2 / (camera.aspect * tanV),
+    ),
     f.minDist, f.maxDist,
   );
-  const pitch = THREE.MathUtils.degToRad(f.pitchDeg);
-  const target = new THREE.Vector3(0, FLIGHT.modeY + b.topY + f.targetLift, -FLIGHT.modeZ);
-  const position = new THREE.Vector3(
-    target.x,
-    target.y + dist * Math.sin(pitch),
-    target.z + dist * Math.cos(pitch),
-  );
-  return { position, target };
+  let lift = b.topY + f.targetLift;
+
+  const mk = () => {
+    const target = new THREE.Vector3(0, FLIGHT.modeY + lift, -FLIGHT.modeZ);
+    const position = new THREE.Vector3(
+      target.x,
+      target.y + dist * Math.sin(pitch),
+      target.z + dist * Math.cos(pitch),
+    );
+    return { position, target };
+  };
+
+  // No canvas size yet (first frame): the guess is all we have.
+  if (!viewW || !viewH) return mk();
+
+  // The pair's own bounding box, in the plate group's space. `bounds()` already
+  // reports it (spanX / spanZ / emblemTop), so no new reach into modePlates.
+  _fitCorners.length = 0;
+  for (const sx of [-b.spanX / 2, b.spanX / 2]) {
+    for (const sy of [0, b.emblemTop]) {
+      for (const sz of [-b.spanZ / 2, b.spanZ / 2]) _fitCorners.push([sx, sy, sz]);
+    }
+  }
+
+  // Room the captions need under the composition. They are DOM cards hanging a fixed
+  // number of pixels below the plate silhouette (see modePlates.captionScreen), so
+  // they are reserved in pixels here too — that is the unit they actually live in.
+  const capPx = f.captionPx;
+  const edge = f.edgePx;
+
+  // Distance and pivot are solved together, so each pass shifts the other's answer
+  // slightly. Five passes settle it to well under a pixel; the last one only
+  // re-centres, so the fit that ships is measured against the distance that ships.
+  for (let pass = 0; pass < 5; pass++) {
+    const last = pass === 4;
+    const pose = mk();
+    _fitCam.fov = camera.fov; _fitCam.aspect = camera.aspect;
+    _fitCam.near = camera.near; _fitCam.far = camera.far;
+    _fitCam.position.copy(pose.position);
+    _fitCam.up.copy(camera.up);
+    _fitCam.lookAt(pose.target);
+    _fitCam.updateProjectionMatrix();
+    _fitCam.updateMatrixWorld(true);
+
+    let top = Infinity; let bottom = -Infinity;
+    let left = Infinity; let right = -Infinity;
+    for (const [cx, cy, cz] of _fitCorners) {
+      _fitV.set(cx, FLIGHT.modeY + cy, -FLIGHT.modeZ + cz).project(_fitCam);
+      const px = (_fitV.x * 0.5 + 0.5) * viewW;
+      const py = (-_fitV.y * 0.5 + 0.5) * viewH;
+      if (py < top) top = py;
+      if (py > bottom) bottom = py;
+      if (px < left) left = px;
+      if (px > right) right = px;
+    }
+    if (!Number.isFinite(top) || !Number.isFinite(left)) break;
+
+    // The block the player has to see: the pair, plus the caption band under it.
+    bottom += capPx;
+
+    // Fit — grow OR shrink, so a short screen stops clipping and a tall one stops
+    // leaving half the frame empty.
+    const needH = (bottom - top) + edge * 2;
+    const needW = (right - left) + edge * 2;
+    const scale = last ? 1 : Math.max(needH / viewH, needW / viewW);
+    const wanted = THREE.MathUtils.clamp(dist * scale, f.minDist, f.maxDist);
+
+    // Centre — aim the pivot at the middle of that block instead of at the plate
+    // tops. A world-Y step reads on screen shortened by the camera's own pitch.
+    const offPx = (top + bottom) / 2 - viewH / 2;
+    const worldPerPx = (2 * dist * tanV) / viewH;
+    lift -= offPx * worldPerPx / Math.max(0.2, Math.cos(pitch));
+    dist = wanted;
+  }
+
+  return mk();
 }
 
 function homeFraming() {
@@ -1183,7 +1274,13 @@ onMounted(() => {
   };
   document.addEventListener('visibilitychange', onVisibility);
 
-  resizeObserver = new ResizeObserver(() => {
+  // Coalesced to one animation frame. A mobile browser bar sliding in and out during
+  // a scroll fires the observer many times a second, and the re-frame below moves the
+  // camera — run per notification it reads as the composition shivering, and it does
+  // the fit work over and over for one settled size. One frame is also the soonest
+  // the new size can be shown, so nothing is lost by waiting for it.
+  const applyResize = () => {
+    resizePending = 0;
     const cw = el.clientWidth;
     const ch = el.clientHeight;
     if (!cw || !ch) return;
@@ -1200,6 +1297,10 @@ onMounted(() => {
       applyModeOrbit();
       controls.update();
     }
+  };
+  resizeObserver = new ResizeObserver(() => {
+    if (resizePending) return;
+    resizePending = requestAnimationFrame(applyResize);
   });
   resizeObserver.observe(el);
 });
@@ -1218,6 +1319,7 @@ watch(
 
 onBeforeUnmount(() => {
   if (resizeObserver) resizeObserver.disconnect();
+  if (resizePending) { cancelAnimationFrame(resizePending); resizePending = 0; }
   if (onVisibility) document.removeEventListener('visibilitychange', onVisibility);
   if (renderer) renderer.setAnimationLoop(null);
   window.removeEventListener('keydown', onKeyDown);
