@@ -170,7 +170,12 @@ export const FLIGHT = {
     minDist: 8,
     maxDist: 30,
     pitchDeg: 17,        // camera elevation above the plate plane
-    targetLift: 1.0,     // pivot height over the plate tops
+    targetLift: 1.0,     // pivot height over the plate tops — the OPENING guess only;
+                         // modeFraming then measures and re-centres (see there)
+    // Room kept for the caption cards hanging under the pair, and the breathing space
+    // around the whole block. Pixels, because that is what the captions live in.
+    captionPx: 62,       // caption card height + its gap under the plate silhouette
+    edgePx: 18,          // clearance from the frame edge on every side
     // The orbit at the mode stage is FREE all the way round — the plates stand in a
     // world, not on a backdrop, and the player is meant to be able to turn and find
     // the corridor, the sign and the home still behind them. Only the two limits

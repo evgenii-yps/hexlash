@@ -160,10 +160,13 @@ export const MODE_PLATES = {
   captionAnchor: 'plate',
   captionGap: 14,      // px between the bottom of the plate's silhouette and the
                        // caption — a SCREEN distance, so it does not shrink with zoom
-  captionFloor: 30,    // …but never further down than this many px from the bottom of
+  captionFloor: 58,    // …but never further down than this many px from the bottom of
                        // the canvas. Only bites when the plate itself is running off
                        // the frame, where the choice is between a caption sitting low
                        // over a plate that is half gone and no caption at all.
+                       // It clamps the caption's TOP, so it has to clear the card's
+                       // OWN height (~45px) too — at the old 30 the guard fired and
+                       // the card still hung off the bottom edge.
   captionSlots: {      // 'screen' mode, as fractions of the viewport
     landscape: [[0.26, 0.84], [0.74, 0.84]], // [left slot, right slot]
     portrait: [[0.5, 0.30], [0.5, 0.80]],    // [upper slot, lower slot]
