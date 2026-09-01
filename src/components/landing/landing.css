@@ -55,7 +55,10 @@
   display: flex; align-items: center; justify-content: flex-start;
   width: min(1180px, 92vw); margin: 0 auto; padding: 0; }
 .lp .nav-logo { flex: 0 0 auto; display: flex; align-items: center; }
+/* 140px (92px ≤680px) — both sit in the FULL drawing's band. Painted through
+   `color` so the mark inherits rather than carrying a fill of its own. */
 .lp .logo-mark { width: var(--lp-nav-logo-size); height: var(--lp-nav-logo-size); display: block;
+  color: #F6F4F6;
   transition: transform .4s cubic-bezier(.2, .8, .2, 1); }
 .lp .nav-logo:hover .logo-mark { transform: scale(1.06); }
 .lp .nav-links { display: flex; gap: clamp(28px, 3.6vw, 56px); margin-left: auto; }
@@ -278,7 +281,9 @@
 .lp .footer-top, .lp .footer-social, .lp .footer-bottom { width: min(1180px, 92vw); margin-left: auto; margin-right: auto; }
 .lp .footer-top { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
 .lp .footer-brand { display: flex; align-items: center; gap: 14px; color: #fff; }
-.lp .footer-brand .logo-mark { width: 44px; height: 44px; }
+/* 44px → COMPACT drawing. The mark is #F6F4F6, not the #fff the rest of this row
+   inherits — the brand mark carries its own value. */
+.lp .footer-brand .logo-mark { width: 44px; height: 44px; color: #F6F4F6; }
 .lp .footer-word { font-weight: 800; font-size: 24px; letter-spacing: .16em; }
 .lp .footer-tag { font-family: var(--mono); font-size: 12px; letter-spacing: .34em; color: var(--accent); }
 .lp .footer-social { display: flex; gap: 24px; justify-content: center; margin-top: clamp(34px, 5vh, 50px); margin-bottom: clamp(34px, 5vh, 50px); }

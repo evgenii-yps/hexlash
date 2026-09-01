@@ -70,15 +70,17 @@
 
 /* brand-block (left) — segment mark + HEXLASH wordmark, one transparent click
    zone (mark + word + gap) that returns to the home. Mark is the canonical
-   monochrome glyph (logo-512.png via LogoMark) — no glow, no pink. */
+   monochrome glyph (inline vector via HexlashMark) — no glow, no pink. */
 /* brand + cluster share one 48px axis so the strip reads as a single level
    row (both centred by .hs-strip align-items:center; left/right edges fixed). */
 .hs-brandblock { display: flex; align-items: center; height: 48px; gap: 11px; background: none; border: 0;
   cursor: pointer; padding: 0 4px; color: inherit; transition: opacity var(--hs-fast); }
-/* mark + wordmark: HEXLASH Saira 900 / 23px / .04em. The mark is the padded raster
-   logo-512.png, so 40px (not the prototype's tight-SVG 30px) reaches optical parity
-   with the 23px caps. */
-.hs-brandblock .logo-mark { width: 40px; height: 40px; display: block; flex: 0 0 auto; }
+/* mark + wordmark: HEXLASH Saira 900 / 23px / .04em. The mark is an inline vector
+   (components/brand/hexlashMark.js) in a 40px box, which puts it in the COMPACT
+   drawing — if this box ever crosses 48px or 24px the drawing has to change with it.
+   Painted through `color`, not a fill, so it inherits like the word beside it. */
+.hs-brandblock .logo-mark { width: 40px; height: 40px; display: block; flex: 0 0 auto;
+  color: var(--bone); }
 .hs-brandblock .wm { font-family: var(--hs-disp); font-weight: 900; font-size: 23px; letter-spacing: 0.04em;
   text-transform: uppercase; color: var(--bone); line-height: 1; }
 .hs-brandblock:hover { opacity: 0.82; }

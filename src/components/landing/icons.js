@@ -2,24 +2,12 @@
 // (hexlash_latest/icons.jsx). Functional components via Vue's h() render
 // function — no template compiler, production-safe, tree-shakeable.
 import { h } from 'vue';
-import logoUrl from '@/assets/images/logo-512.png';
-
 const svg = (attrs, children) =>
   h('svg', { 'aria-hidden': 'true', ...attrs }, children);
 
-// Canonical Hexlash brand mark — the segmented hex with a solid centre hex,
-// monochrome white on transparent (same asset as #app-loading). Rendered as an
-// <img> of logo-512.png (no SVG version exists); the previous outline-hex +
-// play-triangle inline SVG was a design-reference stand-in, not the real mark.
-export const LogoMark = () =>
-  h('img', {
-    src: logoUrl,
-    class: 'logo-mark',
-    alt: '',
-    'aria-hidden': 'true',
-    width: 48,
-    height: 48,
-  });
+// The brand mark moved out to components/brand/hexlashMark.js when it became a
+// real vector in three size-specific drawings — it is used game-wide, not just on
+// the landing, and it no longer belongs in this landing-local icon set.
 
 export const DiscordIcon = () =>
   svg(

@@ -5,12 +5,7 @@
 
     <header class="reset-layout__header">
       <router-link to="/" class="reset-layout__logo-link" aria-label="Hexlash home">
-        <img
-          :src="logoSrc"
-          alt="Hexlash"
-          class="reset-layout__logo"
-          draggable="false"
-        />
+        <HexlashMark :size="180" class="reset-layout__logo" />
       </router-link>
     </header>
 
@@ -107,7 +102,7 @@ import { ref, reactive, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useStore } from 'vuex';
 import { InfoMessageModel } from '@/core/models/internal/infoMessageModel.js';
-import logoSrc from '@/assets/images/logo-512.png';
+import { HexlashMark } from '@/components/brand/hexlashMark.js';
 
 const route = useRoute();
 const router = useRouter();
@@ -257,8 +252,10 @@ function onRequestNew() {
 .reset-layout__logo-link:hover { opacity: 0.85; }
 
 .reset-layout__logo {
+  /* 120–180px → FULL drawing (see components/brand/hexlashMark.js). */
   width: clamp(120px, 18vw, 180px);
   height: auto;
+  color: #F6F4F6;
   user-select: none;
 }
 

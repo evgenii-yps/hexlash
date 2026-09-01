@@ -17,6 +17,7 @@
 
     <header class="hx4-top">
       <router-link class="hx4-lock" to="/" aria-label="Hexlash home">
+        <HexlashMark :size="96" class="hx4-mark" />
         <span class="hx4-word">HEXLASH</span>
       </router-link>
     </header>
@@ -56,6 +57,7 @@
 
 <script setup>
 import {t} from '@/locales/index.js';
+import {HexlashMark} from '@/components/brand/hexlashMark.js';
 </script>
 
 <!--
@@ -100,11 +102,18 @@ import {t} from '@/locales/index.js';
   .hx4-hud i.br{ bottom:4vmin; right:4vmin; border-right-width:1.6px; border-bottom-width:1.6px; }
 
   /* Top lockup: mark + wordmark — same monochrome lockup as the loading screen */
-  .hx4-top{ position:absolute; top:7vmin; left:0; right:0; z-index:5;
+  .hx4-top{ position:absolute; top:5vmin; left:0; right:0; z-index:5;
     display:flex; justify-content:center; }
-  .hx4-lock{ display:flex; align-items:center; gap:2.2vmin; }
+  /* Vertical lock-up — mark above, word below. Ratios measured off
+     docs/design-handoff/hexlash_mark/assets/hexlash-lockup-vertical.svg (word cap
+     = 35.3% of the mark's ink, gap = 68.8% of it), driven by the single --word
+     knob so the pair scales together. Same construction as the loading screen. */
+  .hx4-lock{ --word:5vmin;
+    display:flex; flex-direction:column; align-items:center; }
+  .hx4-mark{ width:calc(var(--word) * 2.29); height:calc(var(--word) * 2.29);
+    display:block; margin-bottom:calc(var(--word) * 1.18); color:var(--bone); }
   .hx4-word{ font-family:var(--impact); font-weight:900; text-transform:uppercase;
-    font-size:7vmin; line-height:1; letter-spacing:.04em; }
+    font-size:var(--word); line-height:1; letter-spacing:.04em; }
 
   /* ── Centerpiece ─────────────────────────────────────────────── */
   .hx4-mid{ position:absolute; inset:0; z-index:4;
@@ -201,7 +210,7 @@ import {t} from '@/locales/index.js';
     .hx4-mid{ padding:18vmin 7vw; gap:clamp(10px,1.6vmin,20px); }
     .hx4-num{ font-size:clamp(110px,min(48vw,30vh),320px); }
     .hx4-creed{ font-size:clamp(38px,11vw,76px); }
-    .hx4-word{ font-size:9vmin; }
+    .hx4-lock{ --word:7vmin; }
     .hx4-hud i{ width:6.5vmin; height:6.5vmin; }
   }
   @media (max-width:520px){

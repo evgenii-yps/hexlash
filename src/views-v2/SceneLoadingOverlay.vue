@@ -17,7 +17,10 @@
       <div class="hxo-hud"><i class="tl" /><i class="tr" /><i class="bl" /><i class="br" /></div>
 
       <header class="hxo-top">
-        <div class="hxo-lock"><span class="hxo-word">HEXLASH</span></div>
+        <div class="hxo-lock">
+          <HexlashMark :size="96" class="hxo-mark" />
+          <span class="hxo-word">HEXLASH</span>
+        </div>
       </header>
 
       <div class="hxo-mid">
@@ -40,6 +43,7 @@
 <script setup>
 import { computed, ref, watch, onBeforeUnmount } from 'vue';
 import { loadingState } from '@/services/sceneLoading.js';
+import { HexlashMark } from '@/components/brand/hexlashMark.js';
 
 // The splash owns the first load; this owns every hop after it. Rendering only
 // our own surface is what keeps them from ever stacking.
@@ -112,12 +116,20 @@ onBeforeUnmount(stopTips);
 .hxo-hud i.bl { bottom: 4vmin; left: 4vmin; border-left-width: 1.6px; border-bottom-width: 1.6px; }
 .hxo-hud i.br { bottom: 4vmin; right: 4vmin; border-right-width: 1.6px; border-bottom-width: 1.6px; }
 
-/* Top lockup: wordmark */
-.hxo-top { position: absolute; top: 8vmin; left: 0; right: 0;
+/* Top lockup: mark above word — the vertical lock-up from
+   docs/design-handoff/hexlash_mark/assets/hexlash-lockup-vertical.svg. The word's
+   cap height is 35.3% of the mark's ink height and the gap is 68.8% of it, both
+   measured off that file; expressed against --word so the pair scales as one unit.
+   These numbers MUST match #hx-load in index.html — the two are the same screen,
+   and drift between them shows the moment one hands over to the other. */
+.hxo-top { position: absolute; top: 5vmin; left: 0; right: 0;
   display: flex; flex-direction: column; align-items: center; gap: 2vmin; }
-.hxo-lock { display: flex; align-items: center; gap: 2.4vmin; }
+.hxo-lock { --word: 6vmin;
+  display: flex; flex-direction: column; align-items: center; }
+.hxo-mark { width: calc(var(--word) * 2.29); height: calc(var(--word) * 2.29);
+  display: block; margin-bottom: calc(var(--word) * 1.18); color: var(--bone); }
 .hxo-word { font-family: var(--impact); font-weight: 900; text-transform: uppercase;
-  font-size: 8vmin; letter-spacing: .02em; }
+  font-size: var(--word); line-height: 1; letter-spacing: .02em; }
 
 /* Centerpiece: hero percent + creed */
 .hxo-mid { position: absolute; inset: 0; display: flex; flex-direction: column;
@@ -152,7 +164,7 @@ onBeforeUnmount(stopTips);
   .hxo-num { font-size: 30vmin; }
   .hxo-bar { width: 70vmin; }
   .hxo-hud i { width: 6vmin; height: 6vmin; }
-  .hxo-word { font-size: 10vmin; }
+  .hxo-lock { --word: 8vmin; }
   .hxo-creed { font-size: 8vmin; }
   .hxo-tag { font-size: 3vmin; }
   .hxo-line { font-size: 3.2vmin; }

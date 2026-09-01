@@ -2,7 +2,7 @@
   <footer class="footer">
     <div class="footer-top">
       <a class="footer-brand" href="#top">
-        <LogoMark />
+        <HexlashMark :size="44" />
         <span class="footer-word">HEXLASH</span>
       </a>
       <span class="footer-tag">NEVER GIVE UP</span>
@@ -23,13 +23,13 @@
 
 <script setup>
 import {
-  LogoMark,
   DiscordIcon,
   XIcon,
   TelegramIcon,
   YoutubeIcon,
   InstagramIcon,
 } from './icons.js';
+import { HexlashMark } from '@/components/brand/hexlashMark.js';
 
 // Order matches the reference (sections.jsx): Telegram, X, YouTube, Discord, Instagram.
 const socials = [

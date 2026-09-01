@@ -29,7 +29,7 @@
          brings its own focused top bar. Styles: .hs-strip in home.css. -->
     <div v-if="!arrange" class="hs-strip">
       <button type="button" class="hs-brandblock" @click="onBrand" :aria-label="`${t.home.brand} — home`">
-        <LogoMark /><span class="wm">{{ t.home.brand }}</span>
+        <HexlashMark :size="40" /><span class="wm">{{ t.home.brand }}</span>
       </button>
       <div class="hs-cluster">
         <!-- SHOP on home; the SAME chip becomes BACK (arrow) while the shop is open
@@ -217,7 +217,7 @@ import { getCore } from '@/data/upgradeData.js';
 import HomeScene from '@/scene/HomeScene.vue';
 import HomeShop from '@/components/home/HomeShop.vue';
 import PlayerCabinet from '@/views-v2/PlayerCabinet.vue';
-import { LogoMark } from '@/components/landing/icons.js';
+import { HexlashMark } from '@/components/brand/hexlashMark.js';
 import { homeFighterTag } from '@/scene/homeFighterTag.js';
 import { modePlateTags } from '@/scene/modePlateTags.js';
 import { PERF_ON, perfState } from '@/scene/perfProbe.js';

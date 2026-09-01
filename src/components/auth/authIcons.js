@@ -2,8 +2,8 @@
 // design handoff (hexlash_auth_handoff/auth_parts.jsx). Functional components via
 // Vue's h() render function — no template compiler, production-safe. currentColor
 // throughout so the parent controls tone. Sizes accepted via `s` prop (default
-// per-icon), chevron direction via `dir`. The brand mark is NOT here — the screen
-// reuses the canonical logo-512.png asset (same mark as nav / loading screen).
+// per-icon), chevron direction via `dir`. The brand mark is NOT here — it lives in
+// components/brand/hexlashMark.js, which every surface shares.
 import { h } from 'vue';
 
 const base = { viewBox: '0 0 24 24', fill: 'none', 'aria-hidden': 'true' };

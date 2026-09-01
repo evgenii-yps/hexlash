@@ -15,10 +15,14 @@
         gtag('config', 'G-8KGXD1H3Y8');
     </script>
     <meta charset="UTF-8">
+    <!-- Tab icon. Each size gets the drawing made for it (16 = the micro drawing on
+         a 16x16 pixel grid, 32 = compact, SVG = compact for high-dpi contexts) —
+         see docs/design-handoff/hexlash_mark. Rebuild: node scripts/sync-brand-icons.mjs -->
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="icon" href="/favicon.ico" sizes="16x16 32x32">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="manifest" href="/manifest.json">
     <meta name="viewport"
           content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
@@ -109,11 +113,24 @@
         .hxl-hud i.br { bottom: 4vmin; right: 4vmin; border-right-width: 1.6px; border-bottom-width: 1.6px; }
 
         /* Top lockup: mark + wordmark */
-        .hxl-top { position: absolute; top: 8vmin; left: 0; right: 0;
+        .hxl-top { position: absolute; top: 5vmin; left: 0; right: 0;
             display: flex; flex-direction: column; align-items: center; gap: 2vmin; }
-        .hxl-lock { display: flex; align-items: center; gap: 2.4vmin; }
+        /* Vertical lock-up — mark above, word below. Proportions measured off
+           docs/design-handoff/hexlash_mark/assets/hexlash-lockup-vertical.svg:
+           the word's cap height is 35.3% of the mark's ink height, so the mark's
+           box is 2.29x the word's font size; the gap is 68.8% of that ink height.
+           Both are expressed against --word so the pair scales as one unit. */
+        /* --word is the ONE knob: the mark and the gap are both derived from it,
+           so the pair always scales as a unit and the handoff ratios hold. It is
+           6vmin rather than the 8vmin the word had on its own — a two-element
+           lock-up is taller than a one-element one, and at 8vmin it ran into the
+           percentage (and its 5vmin glow) in landscape. */
+        .hxl-lock { --word: 6vmin;
+            display: flex; flex-direction: column; align-items: center; }
+        .hxl-mark { width: calc(var(--word) * 2.29); height: calc(var(--word) * 2.29);
+            display: block; margin-bottom: calc(var(--word) * 1.18); }
         .hxl-word { font-family: var(--impact); font-weight: 900; text-transform: uppercase;
-            font-size: 8vmin; letter-spacing: .02em; }
+            font-size: var(--word); line-height: 1; letter-spacing: .02em; }
 
         /* Centerpiece: hero percent + creed */
         .hxl-mid { position: absolute; inset: 0; display: flex; flex-direction: column;
@@ -144,7 +161,7 @@
             .hxl-num { font-size: 30vmin; }
             .hxl-bar { width: 70vmin; }
             .hxl-hud i { width: 6vmin; height: 6vmin; }
-            .hxl-word { font-size: 10vmin; }
+            .hxl-lock { --word: 8vmin; }
             .hxl-creed { font-size: 8vmin; }
             .hxl-tag { font-size: 3vmin; }
             .hxl-line { font-size: 3.2vmin; }
@@ -168,6 +185,10 @@
 
     <header class="hxl-top">
         <div class="hxl-lock">
+            <!-- Brand mark, FULL drawing (>=64px). Inline because this screen paints
+                 before the bundle and the stylesheet exist; the colour is the literal
+                 #F6F4F6 for the same reason — no token has loaded yet. -->
+            <svg class="hxl-mark" viewBox="0 0 64 64" fill="#F6F4F6" aria-hidden="true" focusable="false"><path d="M32 4 L56 18 L56 46 L32 60 L8 46 L8 18ZM11.6 20.07 L11.6 43.93 L32 55.84 L52.4 43.93 L52.4 20.07 L32 8.16ZM27.87 13.07 L36.13 13.07 L38.27 17.87 L36.13 22.67 L27.87 22.67 L25.73 17.87ZM26.93 25.33 L37.07 25.33 L39.20 30.13 L36.80 40.53 L27.20 40.53 L24.80 30.13ZM24.80 24.00 L19.73 31.20 L15.87 30.13 L21.60 19.20ZM19.73 31.20 L20.53 37.07 L14.93 36.27 L15.87 30.13ZM42.40 19.2 L48.13 30.13 L44.27 31.2 L39.20 24ZM48.13 30.13 L49.07 36.27 L43.47 37.07 L44.27 31.2ZM31.20 38.40 L29.60 44.80 L24.53 44.80 L26.13 38.40ZM29.6 44.8 L28.4 49.2 L24.2 49.2 L24.53 44.8ZM37.87 38.4 L39.47 44.8 L34.40 44.8 L32.80 38.4ZM39.47 44.8 L39.80 49.2 L35.60 49.2 L34.40 44.8Z"/></svg>
             <span class="hxl-word">HEXLASH</span>
         </div>
     </header>

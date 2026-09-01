@@ -17,6 +17,13 @@
 
     <div class="hx-wrap">
       <div class="hx-col">
+        <!-- Brand lock-up above the card — the arrangement AuthLayoutView's header
+             comment already reserves ("logo-above-card"), finally carrying a mark. -->
+        <router-link to="/" class="hx-lock" aria-label="Hexlash home">
+          <HexlashMark :size="64" class="hx-mark" />
+          <span class="hx-word">HEXLASH</span>
+        </router-link>
+
         <div class="hx-card" :class="{ 'has-back': showBack }">
           <button v-if="showBack" type="button" class="hx-back" @click="onBack">
             <IconChevron :s="13" dir="left" /> Back
@@ -199,6 +206,7 @@ import {
   IconMail, IconChevron, IconTicket, IconUser, IconLock, IconAlert,
 } from '@/components/auth/authIcons.js';
 import { t } from '@/locales/index.js';
+import { HexlashMark } from '@/components/brand/hexlashMark.js';
 
 const route = useRoute();
 const router = useRouter();
@@ -418,6 +426,19 @@ async function onForgotSubmit(payload) {
 }
 
 .hx-col { display: flex; flex-direction: column; align-items: stretch; width: 372px; max-width: 100%; }
+
+/* Vertical lock-up above the card. Ratios measured off
+   docs/design-handoff/hexlash_mark/assets/hexlash-lockup-vertical.svg — word cap
+   = 35.3% of the mark's ink height, gap = 68.8% of it — driven by one --word knob.
+   28px word puts the mark at 64px, i.e. squarely in the FULL drawing's band. */
+.hx-lock { --word: 28px;
+  display: flex; flex-direction: column; align-items: center;
+  margin-bottom: 26px; text-decoration: none; }
+.hx-mark { width: calc(var(--word) * 2.29); height: calc(var(--word) * 2.29);
+  display: block; margin-bottom: calc(var(--word) * 1.18); color: #F6F4F6; }
+.hx-word { font-family: "Saira Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif;
+  font-weight: 700; text-transform: uppercase; font-size: var(--word);
+  line-height: 1; letter-spacing: .30em; text-indent: .30em; color: #F6F4F6; }
 
 .hx-card {
   background: var(--card);
