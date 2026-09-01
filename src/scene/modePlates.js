@@ -119,14 +119,28 @@ export const MODE_PLATES = {
     grooveWidth: 0.13, // matte dark groove — always visible, reads as a tear
     haloWidth: 0.3,    // wide additive halo (lit only)
     coreWidth: 0.1,    // narrow additive core (lit only)
-    haloOpacity: 0.55,
-    coreOpacity: 0.85,
+    // Lit vs AT REST. The rift used to be `opacity * lit`, i.e. flat zero unless the
+    // pointer was over the plate — and a phone has no pointer, so on a phone it was
+    // never lit at all and the island's one glow simply did not exist. FORGE never
+    // had that hole (its amber core rests at `core` and rises to `coreLit`), which is
+    // the whole reason one door explained itself and the other did not.
+    haloRest: 0.22, haloOpacity: 0.55,
+    coreRest: 0.46, coreOpacity: 0.85,
 
-    gloveR: 0.32,       // mitt radius
-    gloveGap: 0.37,     // ±X of each glove from the pair centre — a guard, so the
+    gloveR: 0.35,       // fist radius
+    gloveGap: 0.36,     // ±X of each glove from the pair centre — a guard, so the
                         // two hands sit close without touching
-    gloveHover: 1.05,   // pair centre above the plate top (chest height of a figure
-                        // the size of the ones standing on the FORGE plate)
+    gloveHover: 0.86,   // pair centre above the plate top (chest height of a figure
+                        // the size of the ones standing on the FORGE plate). Trimmed
+                        // from 1.05 to pay for the cuff now hanging below the fist,
+                        // for a bigger hand, and for the quarter-turn that puts the
+                        // glove in profile — all three make the pair taller. The
+                        // composition must NOT grow upwards (that would push the
+                        // arrival camera back and re-open the framing question), so
+                        // every bit of it is taken off the hover: measured, the pair's
+                        // highest point is 1.369 over the plate against 1.374 before.
+                        // The hands end up nearer the rift, which is also where the
+                        // light on their undersides is supposed to be coming from.
     gloveBob: 0.045,    // vertical drift — barely there, and no spin (ТЗ)
     gloveBobPeriod: 5.2,// seconds per cycle (owner band 4–6)
     gloveTop: 0x262f42, // top faces: the matte prop family, unchanged
@@ -529,38 +543,63 @@ function buildArenaEmblem(o, halfW, halfD, topY) {
   addRibbon(a.coreWidth, topY + 0.01, coreMat);
 
   // ── the gloves ──
+  // Built STANDING UP: cuff at the bottom, fist at the top, thumb out to the side.
+  // The old pair lay on its side with the cuff tucked in behind the mitt, so of the
+  // three shapes that say "boxing glove" — round fist, split thumb, tapering cuff —
+  // the silhouette carried only the first, and a lone faceted ball is a stone. Stood
+  // up, the read also survives the free orbit at this stage: turning the camera round
+  // changes which side of the fist you see, never whether there is a cuff under it.
   const R = a.gloveR;
-  // Low segment counts on purpose: 5×4 is a faceted mass, not a ball, and it reads
-  // as a mitt at the distance the camera parks at.
-  const mittGeo = tintFromBelow(new THREE.SphereGeometry(R, 5, 4), a.gloveTop, a.gloveUnder);
-  mittGeo.scale(1.0, 0.92, 1.12);
-  const thumbGeo = tintFromBelow(new THREE.SphereGeometry(R * 0.44, 4, 3), a.gloveTop, a.gloveUnder);
-  // NB: rotate the cuff BEFORE tinting. tintFromBelow bakes the gradient along the
-  // geometry's own Y, so a cuff tinted upright and then turned on its side would
-  // carry its pink round to the back of the hand instead of underneath it.
-  const cuffSrc = new THREE.CylinderGeometry(R * 0.6, R * 0.7, R * 0.9, 6);
-  cuffSrc.rotateX(Math.PI / 2);
-  const cuffGeo = tintFromBelow(cuffSrc, a.gloveTop, a.gloveUnder);
-  owned.push(mittGeo, thumbGeo, cuffGeo);
+
+  // The fist. A low-segment sphere pushed into a fist: narrowed at the wrist end,
+  // carried forward and full at the knuckles. Faceted on purpose — 8x6 is a handful
+  // of planes, not a ball.
+  const fistGeo = new THREE.SphereGeometry(R, 8, 6);
+  {
+    const pos = fistGeo.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i); const y = pos.getY(i); const z = pos.getZ(i);
+      const u = (y + R) / (2 * R);                        // 0 at the wrist, 1 at the top
+      const taper = 0.62 + 0.38 * Math.min(1, u * 1.15);  // the wrist end draws in
+      const knuckle = z > 0 ? 1 + 0.30 * u : 1 - 0.12 * u; // full at the knuckles, flat behind
+      pos.setXYZ(i, x * taper * 0.90, y * 0.98, z * taper * knuckle * 1.04);
+    }
+    pos.needsUpdate = true;
+  }
+  tintFromBelow(fistGeo, a.gloveTop, a.gloveUnder);
+
+  // The thumb — its own lobe, stretched along its length so it reads as a thumb and
+  // not as a wart. Tinted on its own axis: it is tilted when it is placed, but only
+  // far enough to point up and out, so its pink rim stays underneath.
+  const thumbGeo = new THREE.SphereGeometry(R * 0.40, 5, 4);
+  thumbGeo.scale(0.95, 1.30, 1.0);
+  tintFromBelow(thumbGeo, a.gloveTop, a.gloveUnder);
+
+  // The cuff. Stands upright under the fist, so — unlike the old one — it needs no
+  // pre-rotation before tinting and its pink rim lands where the rift is.
+  const cuffGeo = new THREE.CylinderGeometry(R * 0.72, R * 0.60, R * 0.80, 8);
+  tintFromBelow(cuffGeo, a.gloveTop, a.gloveUnder);
+  owned.push(fistGeo, thumbGeo, cuffGeo);
 
   const gloveMat = new THREE.MeshStandardMaterial({
     color: 0xffffff, vertexColors: true, flatShading: true, roughness: 0.85, metalness: 0.1,
   });
 
-  // One hand. `side` mirrors the thumb; the caller tilts and lifts each one
-  // differently so the pair never reads as a mirrored icon.
+  // One hand. `side` mirrors the thumb; the caller turns and lifts each one
+  // differently so the pair never reads as one icon printed twice.
   const makeGlove = (side) => {
     const g = new THREE.Group();
-    const mitt = new THREE.Mesh(mittGeo, gloveMat);
-    g.add(mitt);
+    g.add(new THREE.Mesh(fistGeo, gloveMat));
+    // Pushed clear of the fist on purpose: buried, the thumb is a bump and the hand
+    // is a ball again. The notch between the two is the one line that says "glove"
+    // at the distance the camera parks at.
     const thumb = new THREE.Mesh(thumbGeo, gloveMat);
-    // Pushed well out of the mitt on purpose: buried at 0.7R the thumb is a bump and
-    // the hand reads as a ball. The notch between mitt and thumb is the one line that
-    // says "glove" at the distance the camera parks at.
-    thumb.position.set(side * R * 0.88, -R * 0.2, R * 0.4);
+    thumb.position.set(side * R * 0.62, R * 0.10, R * 0.34);
+    thumb.rotation.set(-0.16, 0, side * -1.02);
     g.add(thumb);
     const cuff = new THREE.Mesh(cuffGeo, gloveMat);
-    cuff.position.set(0, -R * 0.1, -R * 0.92);
+    cuff.position.set(0, -R * 0.80, -R * 0.05);
+    cuff.rotation.set(0.14, 0, side * 0.06);
     g.add(cuff);
     return g;
   };
@@ -569,16 +608,22 @@ function buildArenaEmblem(o, halfW, halfD, topY) {
   pair.position.set(0, topY + a.gloveHover, 0);
   group.add(pair);
 
-  // Held like a guard: turned in toward each other, and NOT symmetric — one hand
-  // sits a touch higher and a touch further round than the other.
+  // Held like a guard, and turned about a quarter-turn so the camera gets the glove
+  // in PROFILE. This is the whole reason the pair reads: head-on, a fist on a cuff
+  // is a lump on a stalk from any distance, while from the side the outline runs
+  // cuff → wrist → fist and there is nothing else it can be. The tilt puts each
+  // fist up and INWARD and each cuff down and OUTWARD, so the two hands meet the way
+  // a fighter's do, and it drops the thumb on the OUTER side of each fist, where it
+  // breaks the round outline against empty background instead of hiding in the gap
+  // between the hands.
   const left = makeGlove(-1);
-  left.position.set(-a.gloveGap, 0.03, 0.05);
-  left.rotation.set(0.1, 0.34, 0.13);
+  left.position.set(-a.gloveGap, 0.05, 0.05);
+  left.rotation.set(-0.10, 0.40, -0.78);
   pair.add(left);
 
   const right = makeGlove(1);
-  right.position.set(a.gloveGap, -0.05, -0.04);
-  right.rotation.set(-0.06, -0.46, -0.09);
+  right.position.set(a.gloveGap, -0.04, -0.03);
+  right.rotation.set(-0.16, -0.46, 0.82);
   pair.add(right);
 
   const baseY = pair.position.y;
@@ -587,8 +632,10 @@ function buildArenaEmblem(o, halfW, halfD, topY) {
   const bobW = (Math.PI * 2) / a.gloveBobPeriod;
   const tick = (t, lit, presence) => {
     grooveMat.opacity = 0.9 * presence;
-    haloMat.opacity = a.haloOpacity * lit * presence;
-    coreMat.opacity = a.coreOpacity * lit * presence;
+    // Rest → lit, never zero. `presence` still takes it away at the home end, so a
+    // rift that burns at rest cannot poke out of the corridor haze.
+    haloMat.opacity = THREE.MathUtils.lerp(a.haloRest, a.haloOpacity, lit) * presence;
+    coreMat.opacity = THREE.MathUtils.lerp(a.coreRest, a.coreOpacity, lit) * presence;
     // No spin (ТЗ) — only a long, shallow vertical drift, out of phase per hand.
     left.position.y = leftY + Math.sin(t * bobW) * a.gloveBob;
     right.position.y = rightY + Math.sin(t * bobW + 1.9) * a.gloveBob * 0.85;
