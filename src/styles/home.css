@@ -387,6 +387,33 @@
   .hs-view-enter-from, .hs-view-leave-to { transform: none; }
 }
 
+/* ════════════════ PHONE ON ITS SIDE — the FIGHT plate stands down ════════════════
+   The plate is drawn at ONE fixed size (a 364x80 slab, 108px with its sublabel),
+   and the only rule that shrinks it keys on WIDTH (max-width: 560px). A phone on
+   its side is 667-844px WIDE — outside that rule — so it was handed the full
+   desktop plate on a screen 320-390px tall: measured, 34% of the screen at
+   667x320, sitting square over the fighter. The home is where you look at your
+   fighter; he was behind the button.
+   So: a rule that keys on HEIGHT. The plate keeps all three layers, its pulse,
+   its single pink and its single glow — it is just built to the height it has,
+   and the dock stands it further down so the room above it is the fighter's.
+   Home-only selectors (.hs-dock / .hs-fight / .edit-space live in this file and
+   HomeView alone) — the shared top strip is not touched, so the shop, the FORGE
+   hall and the space cannot move.
+   Bounded by max-height so a tablet or a desktop keeps the full-size plate. */
+@media (orientation: landscape) and (max-height: 560px) {
+  .hs-dock { height: auto; padding: 0 24px 20px; }
+  .hs-fight { gap: 7px; }
+  .hs-fight .f-face { padding: 11px clamp(34px, 6vw, 56px); gap: 14px; }
+  .hs-fight .f-label { font-size: clamp(22px, 7vh, 30px); }
+  .hs-fight .f-arr { width: 20px; height: 20px; }
+  .hs-fight .f-bloom { filter: blur(11px); }
+  .hs-fight .fsub { font-size: 9.5px; letter-spacing: 0.2em; }
+  /* EDIT SPACE sat over the plate's sublabel at this height — pull it into the
+     corner so the line under the plate stays readable. */
+  .edit-space { right: 18px; bottom: 16px; }
+}
+
 /* ════════════════ MOBILE — consolidated (last in file → overrides base) ════════════════
    Per the prototype, recomputed for the smaller controls: a 60px strip, a brand
    mark at optical parity (32px vs the 18px word), the SHOP chip collapses to a
