@@ -52,6 +52,7 @@ import { facetPhrase } from '@/data/facetReadout.js';
 import { SIG_PRESETS, SIG_ORDER, presetBehavior } from '@/data/behaviorPresets.js';
 import { COMBAT_BALANCE } from '@/data/combatBalance.js';
 import apiClient from '@/core/api/apiClient.js';
+import { beginSceneLoad } from '@/services/sceneLoading.js';
 
 // Model-brain request (hybrid intention layer). Injected into each fighter; it
 // POSTs the WORD context to the backend on a fight break and resolves to
@@ -126,7 +127,9 @@ let renderer, scene, camera, controls, arena, fighter, opponent, presence, resiz
 let onVisibility, onKeydown;
 // Pre-load readiness: emit once after the first frame is rendered so the
 // bootstrap splash (#hx-load) can fade out on real arena readiness.
-let firstFrameEmitted = false;
+// Loading-screen handle — see services/sceneLoading.js. The arena lifts the screen
+// on its declared stages plus three settled frames, not on the first frame drawn.
+let load = null;
 
 // Autonomous-behaviour intent per side (kept across respawns so a KO doesn't
 // stop the loop). Set by the FIGHT / SIG FIGHT bouts.
@@ -227,6 +230,9 @@ const escalationMult = () => 1 + escalation01() * (COMBAT_BALANCE.escalateMax - 
 const noteExchange = () => { if (fightStartT) lastExchangeT = lastFrameT; };
 
 onMounted(() => {
+  // Build stages, in the order they happen below.
+  load = beginSceneLoad(['renderer', 'arena', 'fighters', 'controls']);
+
   const el = wrap.value;
   const w = el.clientWidth || window.innerWidth;
   const h = el.clientHeight || window.innerHeight;
@@ -334,10 +340,12 @@ onMounted(() => {
     }
     return out;
   };
+  load.stage('renderer');
   arena = buildArena(renderer.capabilities.getMaxAnisotropy(), pink);
   scene.add(arena.group);
   presence = createArenaPresence(scene, arena.refs);
   presence.setReducedMotion(reducedMotion);
+  load.stage('arena');
 
   // --- Fighters: spawned on opposite sides, then free to roam the whole plate —
   //     they navigate toward each other, manoeuvre at range and turn to face the
@@ -430,6 +438,7 @@ onMounted(() => {
     opponent.setAI(aiOpponent); // keep AI on across respawn
     if (lockedIntention.value) opponent.setIntentionLock(lockedIntention.value); // keep dev intention lock across respawn
     scene.add(opponent.group);
+    load.stage('fighters');
   };
   spawnFighter();
   spawnOpponent();
@@ -481,6 +490,8 @@ onMounted(() => {
   controls.minPolarAngle = 0.25;
   controls.maxPolarAngle = 1.45; // ~83°, never dip under the slab
   controls.update();
+
+  load.stage('controls');
 
   // --- Render loop. FPS-capped (30 mobile / 60 desktop), elapsed time drives
   //     presence so skipped frames don't desync the breathing.
@@ -543,13 +554,9 @@ onMounted(() => {
 
     renderer.render(scene, camera);
 
-    // First frame is on screen — signal pre-load readiness once (latch + event
-    // so the bootstrap catches it regardless of listener-attach timing).
-    if (!firstFrameEmitted) {
-      firstFrameEmitted = true;
-      window.__hexArenaReady = true;
-      window.dispatchEvent(new CustomEvent('hexlash:arena-ready'));
-    }
+    // One settled frame toward readiness — counted only once every stage above is
+    // in, and reset by any re-fit (see the resize observer).
+    load.frame();
   };
   renderer.setAnimationLoop(loop);
 
@@ -579,11 +586,15 @@ onMounted(() => {
     camera.aspect = cw / ch;
     camera.updateProjectionMatrix();
     renderer.setSize(cw, ch, false);
+    // We just moved the picture under ourselves — start the settled-frame count
+    // again, or the screen could lift on a frame that is about to change.
+    load?.unsettle();
   });
   resizeObserver.observe(el);
 });
 
 onBeforeUnmount(() => {
+  load?.dispose();   // left mid-load → drop the screen and the wait with us
   if (resizeObserver) resizeObserver.disconnect();
   if (onVisibility) document.removeEventListener('visibilitychange', onVisibility);
   if (onKeydown) window.removeEventListener('keydown', onKeydown);

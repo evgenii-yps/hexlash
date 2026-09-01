@@ -30,6 +30,7 @@ import { setHomeFighterTag, clearHomeFighterTag } from './homeFighterTag.js';
 import { buildModePlates, MODE_PLATES } from './modePlates.js';
 import { createTransitionFlight, FLIGHT } from './transitionFlight.js';
 import { setModePlateTag, setModePlateHover, clearModePlateTags } from './modePlateTags.js';
+import { beginSceneLoad } from '@/services/sceneLoading.js';
 import {
   PERF_ON, perfFrame, perfFlightStart, perfFlightEnd, setPerfCap, setPlateCost, countTriangles,
 } from './perfProbe.js';
@@ -61,7 +62,10 @@ let resizePending = 0;  // coalescing frame for the resize observer (see onMount
 // bootstrap splash (page-load) and the SPA transition cover can lift on real
 // home-scene readiness. Per-mount (script-setup local) so it re-fires on every
 // fresh mount, not just the first of the session.
-let firstFrameEmitted = false;
+// Loading-screen handle. The screen lifts on THIS scene's declared stages plus
+// three settled frames — never on the first frame, which is submitted before the
+// browser has composited it and before the resize observer has re-fitted us.
+let load = null;
 let onVisibility;
 let director = null;     // home wander director (drives the existing locomotion)
 let prevWanderT = 0;     // last frame's elapsed time → per-frame dt for the director
@@ -930,6 +934,11 @@ function goStage(next, animated) {
 }
 
 onMounted(() => {
+  // Build stages, in the order they actually happen below. The loading screen
+  // fills against these, so adding a step here without marking it makes the bar
+  // stall — which is the honest outcome, not a bug to paper over.
+  load = beginSceneLoad(['renderer', 'slab', 'atmosphere', 'fighter', 'stages']);
+
   const el = wrap.value;
   const w = el.clientWidth || window.innerWidth;
   const h = el.clientHeight || window.innerHeight;
@@ -977,6 +986,8 @@ onMounted(() => {
   counter.position.set(FAR_FILL.x, FAR_FILL.y, -FLIGHT.modeZ + FAR_FILL.zOffset);
   scene.add(counter);
 
+  load.stage('renderer');
+
   const pink = getComputedStyle(el).getPropertyValue('--hex-primary').trim() || '#FF0069';
 
   // --- Slab: reuse buildArena UNMODIFIED, then SUPPRESS the combat rift. The
@@ -1005,6 +1016,7 @@ onMounted(() => {
   seam.rotation.x = -Math.PI / 2;
   seam.position.set(0, arena.refs.topY - 0.06, 0);
   scene.add(seam);
+  load.stage('slab');
 
   // Overhead industrial dish lamps — warm DIM amber room fill that actually lights
   // the slab + fighter (see LAMPS knobs up top), so the scene isn't floating in
@@ -1024,6 +1036,7 @@ onMounted(() => {
   scene.add(backdrop.mesh);
   lampHaze = buildLampHaze(HAZE, LAMPS);
   scene.add(lampHaze.group);
+  load.stage('atmosphere');
 
   // --- Fighter: ONE idle construct on the slab. No foe (getFoePos → null) → it
   //     idles (buildFighter idlePose path); AI is never enabled. Behaviour is
@@ -1102,6 +1115,7 @@ onMounted(() => {
 
   // Everything the far-distance glow gate touches now exists — cache it once.
   collectHomeGlow();
+  load.stage('fighter');
 
   // --- Free orbit around the FIGHTER (home only — never added to the combat
   //     scene). Mouse: drag = orbit, wheel = zoom. Touch: one-finger drag =
@@ -1162,6 +1176,7 @@ onMounted(() => {
   //     camera passes through and the HEXLASH sign standing in the corridor.
   flight = createTransitionFlight({ scene, camera, poseFor, reduced });
   flight.setLookHint(controls.target);
+  load.stage('stages');
 
   // Orbit start/end also stamps the mode stage's idle clock (the auto-return).
   controls.addEventListener('start', () => { modeIdleSince = null; modeReturning = false; });
@@ -1258,13 +1273,10 @@ onMounted(() => {
 
     renderer.render(scene, camera);
 
-    // First frame is on screen — signal readiness once (latch + event) so the
-    // pre-load splash / SPA transition cover lift on real home-scene readiness.
-    if (!firstFrameEmitted) {
-      firstFrameEmitted = true;
-      window.__hexHomeReady = true;
-      window.dispatchEvent(new Event('hexlash:home-ready'));
-    }
+    // One settled frame toward readiness. It only counts once every stage above
+    // is in, and any re-fit (see applyResize) starts the count over — so the
+    // screen lifts on a scene that is standing still, not on one still landing.
+    load.frame();
   };
   renderer.setAnimationLoop(loop);
 
@@ -1292,6 +1304,9 @@ onMounted(() => {
     // and re-frames it. Mid-flight the director re-aims itself (it watches poseFor),
     // so only the standing case is handled here.
     modePlates?.layout(camera.aspect);
+    // We just moved the picture under ourselves — the settled-frame count has to
+    // start again, or the screen could lift on a frame that is about to change.
+    load?.unsettle();
     if (stage === 'select' && flight && !flight.active) {
       flight.snapTo('mode');
       applyModeOrbit();
@@ -1318,6 +1333,7 @@ watch(
 );
 
 onBeforeUnmount(() => {
+  load?.dispose();   // left mid-load → drop the screen and the wait with us
   if (resizeObserver) resizeObserver.disconnect();
   if (resizePending) { cancelAnimationFrame(resizePending); resizePending = 0; }
   if (onVisibility) document.removeEventListener('visibilitychange', onVisibility);

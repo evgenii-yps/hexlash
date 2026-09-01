@@ -9,7 +9,7 @@
       <component :is="Component" :key="stageKey(route)" />
     </router-view>
     <VerifyEmailBanner />
-    <SceneTransitionOverlay />
+    <SceneLoadingOverlay />
     <RotateHint />
   </div>
 </template>
@@ -25,7 +25,7 @@
 // pre-fight flow (select / upgrade / arena) does no server round-trips, so the
 // WS-disconnected banner was pure noise overlapping the screen.
 import VerifyEmailBanner from '@/components/hud/VerifyEmailBanner.vue';
-import SceneTransitionOverlay from '@/views-v2/SceneTransitionOverlay.vue';
+import SceneLoadingOverlay from '@/views-v2/SceneLoadingOverlay.vue';
 import RotateHint from '@/views-v2/RotateHint.vue';
 import { HOME_STAGE_PATHS } from '@/router/index.js';
 import '@/styles/hexlash-v24.css';

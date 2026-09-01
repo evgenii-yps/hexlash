@@ -36,6 +36,7 @@ import { buildFighter } from './buildFighter.js';
 import { resolveBehavior } from '@/data/behavior.js';
 import { createLegendPresence } from './legendPresence.js';
 import store from '@/core/state/store.js';
+import { beginSceneLoad } from '@/services/sceneLoading.js';
 
 // ───────────────────────────── CONFIG (tune on preview) ─────────────────────────────
 const CONFIG = {
@@ -508,7 +509,9 @@ let resizePending = 0;      // coalescing frame for the resize observer
 // bootstrap splash (page-load) and the SPA transition cover can lift on real
 // pve-scene readiness. Per-mount (script-setup local) so it re-fires on every
 // fresh mount, not just the first of the session.
-let firstFrameEmitted = false;
+// Loading-screen handle — see services/sceneLoading.js. The hall lifts the screen
+// on its declared stages plus three settled frames, not on the first frame drawn.
+let load = null;
 let onVisibility;
 let onPointerMove = null, onPointerDown = null, onPointerUp = null;
 let hoveredId = null;        // whose core is lit in the overview
@@ -533,6 +536,9 @@ function lowPowerDevice() {
 }
 
 onMounted(() => {
+  // Build stages, in the order they happen below.
+  load = beginSceneLoad(['renderer', 'slab', 'atmosphere', 'roster', 'legend']);
+
   const el = wrap.value;
   const w = el.clientWidth || window.innerWidth;
   const h = el.clientHeight || window.innerHeight;
@@ -562,6 +568,8 @@ onMounted(() => {
   scene.add(new THREE.AmbientLight(0x2a3550, 0.5));
   scene.add(new THREE.HemisphereLight(0x44506e, 0x05060c, 0.4));
 
+  load.stage('renderer');
+
   const pink = getComputedStyle(el).getPropertyValue('--hex-primary').trim() || '#FF0069';
 
   // --- Slab: instance buildArena UNMODIFIED, then suppress the combat rift exactly
@@ -579,11 +587,13 @@ onMounted(() => {
   seam.rotation.x = -Math.PI / 2;
   seam.position.set(0, topY - 0.06, 0);
   scene.add(seam);
+  load.stage('slab');
 
   // Atmosphere / depth — warm dim lamp room-fill + a background dome (warm/dark FILL,
   // no pink, no new accent). PVE drops the home's lamp-haze halos and drifting dust.
   lamps = buildLamps(LAMPS, reduced); scene.add(lamps.group);
   backdrop = buildBackdrop(BACKDROP, renderer.capabilities.getMaxAnisotropy()); scene.add(backdrop.mesh);
+  load.stage('atmosphere');
 
   // --- Roster: the player's OWN fighters, one body each, standing in a row and
   //     FACING THE PLAYER. They do not walk: this is a hall, not a yard, so the
@@ -637,6 +647,7 @@ onMounted(() => {
   // straight ahead, so the arc ends turn slightly inward and the row reads as
   // gathered rather than as a firing line.
   for (const r of roster) faceTowards(r.fighter.group, CAM.dir[0], CAM.dir[2]);
+  load.stage('roster');
 
   // --- Legend: a buildFighter body with the amber core, idle only (NEVER added to
   //     the wander), floating LEGEND.height over the plate centre, drifting forever
@@ -656,6 +667,7 @@ onMounted(() => {
   legend.group.position.copy(legendPresence.position);
   scene.add(legendPresence.group);
   scene.add(legendPresence.trail); // world-space descent smoke wisps
+  load.stage('legend');
 
   // --- Camera: FIXED and frontal. No orbit, no auto-rotate (owner's call): the
   //     hall is a workplace. Two framings — the whole row, and closer-in with the
@@ -785,13 +797,9 @@ onMounted(() => {
 
     renderer.render(scene, camera);
 
-    // First frame is on screen — signal readiness once (latch + event) so the
-    // pre-load splash / SPA transition cover lift on real pve-scene readiness.
-    if (!firstFrameEmitted) {
-      firstFrameEmitted = true;
-      window.__hexPveReady = true;
-      window.dispatchEvent(new Event('hexlash:pve-ready'));
-    }
+    // One settled frame toward readiness — counted only once every stage above is
+    // in, and reset by any re-fit (see applyResize).
+    load.frame();
   };
   renderer.setAnimationLoop(loop);
 
@@ -813,6 +821,8 @@ onMounted(() => {
     // Portrait and landscape are different compositions, and a rotation swaps
     // one for the other. Snap rather than ease: this is a new screen, not a move.
     applyCamera(frameFor(!!selectedId), true);
+    // A new composition under ourselves — start the settled-frame count again.
+    load?.unsettle();
   };
   resizeObserver = new ResizeObserver(() => {
     if (resizePending) return;
@@ -843,6 +853,7 @@ function exitWork() {
 defineExpose({ select, exitWork });
 
 onBeforeUnmount(() => {
+  load?.dispose();   // left mid-load → drop the screen and the wait with us
   if (resizeObserver) resizeObserver.disconnect();
   if (resizePending) { cancelAnimationFrame(resizePending); resizePending = 0; }
   if (onVisibility) document.removeEventListener('visibilitychange', onVisibility);

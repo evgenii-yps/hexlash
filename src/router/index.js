@@ -1,6 +1,6 @@
 import {createRouter, createWebHistory} from "vue-router";
 import store from "@/core/state/store.js";
-import {beginFade, beginFightCard, end as endSceneTransition, transitionState} from "@/services/sceneTransition.js";
+import {cancelLoading, loadingState, openLoading} from "@/services/sceneLoading.js";
 
 
 export const authRoutes = [
@@ -236,30 +236,30 @@ const router = createRouter({
 // (The auth/account engine stays in the backend + Vuex; it just has no
 // in-app screen entry point until the rebuild.) No navigation guard needed.
 
-// SPA scene-transition cover. Only on IN-APP navigation (window.__hexBootstrapped
-// is set by src/main.js once the page-load splash has finished) — the very first
-// navigation is covered by the page-load splash instead, so we skip it here.
-//   → arena  : full "Fight Card", lifts on the arena's first frame
-//   → home/pve: light fade, lifts on that scene's first frame
-//   → a 2D route while a cover is up (e.g. requireCore bouncing an arena entry
-//     back to core-select): drop the cover so it never hangs.
-// The home ⇄ mode-select pair is deliberately EXCLUDED from the cover: those two
-// paths share one route record and one live 3D scene, and the hop between them is a
-// camera flight, not a load. Dimming it would hide the very thing it is for.
+// The loading screen, on in-app navigation. Only here — the very FIRST navigation
+// is covered by the page-load splash instead (window.__hexBootstrapped is set by
+// src/main.js once that splash has taken over), so we skip it and the player never
+// sees two covers hand off.
+//
+// ONE screen for every heavy 3D entry — arena, home, mode stage, forge, space.
+// There used to be two (a light translucent dim for home/pve, the full card for
+// the arena); the dim carried no progress and no explanation, so a slow hop just
+// looked like the game had gone dark. It is gone.
+//
+// Leaving a 3D route for a 2D one while the screen is still up (a guard bouncing
+// an arena entry back to core-select) cancels it, so it can never hang.
+//
+// The home ⇄ mode-select pair is deliberately EXCLUDED: those two paths share one
+// route record and one live 3D scene, and the hop between them is a camera flight,
+// not a load. Covering it would hide the very thing it exists to show.
 const isHomeStageHop = (to, from) => HOME_STAGE_PATHS.includes(to.path) && HOME_STAGE_PATHS.includes(from.path);
 
 router.beforeEach((to, from, next) => {
     if (window.__hexBootstrapped && !isHomeStageHop(to, from)) {
-        if (to.meta?.arena) {
-            beginFightCard();
-        } else if (to.meta?.scene3d) {
-            beginFade(
-                to.name === 'V2Pve' ? 'hexlash:pve-ready'
-                : to.name === 'V2Space' ? 'hexlash:space-ready'
-                : 'hexlash:home-ready',
-            );
-        } else if (transitionState.mode !== 'none') {
-            endSceneTransition();
+        if (to.meta?.arena || to.meta?.scene3d) {
+            openLoading(to.name);
+        } else if (loadingState.active) {
+            cancelLoading();
         }
     }
     next();

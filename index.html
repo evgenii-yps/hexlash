@@ -94,7 +94,9 @@
             -webkit-font-smoothing: antialiased;
             user-select: none;
             background: radial-gradient(130% 80% at 50% 120%, #1a0010 0%, #0b060a 46%, var(--void) 82%);
-            transition: opacity .6s ease;
+            /* Leave — must match LOADING.FADE_OUT_MS in src/services/sceneLoading.js,
+               so the first-load surface and the in-app one lift identically. */
+            transition: opacity .2s ease;
         }
         #hx-load.hxl-out { opacity: 0; pointer-events: none; }
         #hx-load * { box-sizing: border-box; margin: 0; }
@@ -182,10 +184,15 @@
 </div>
 
 <script>
-/* Hexlash pre-load controller — vanilla, dependency-free.
-   Public API (driven by the real loader in src/main.js):
-     HexlashLoader.set(pct)   // pct 0..100 — call on bootstrap milestones
-     HexlashLoader.done()     // force 100% + fade out + remove from DOM */
+/* Hexlash pre-load controller — vanilla, dependency-free. The FIRST-LOAD surface
+   of the one loading screen; its twin is SceneLoadingOverlay.vue, and both render
+   the same state (src/services/sceneLoading.js).
+   Public API (driven from src/main.js):
+     HexlashLoader.set(pct)   // 0..100 — bootstrap milestones, then the scene's
+                              //          real build stages via the controller
+     HexlashLoader.done()     // 100% + fade out + remove from DOM
+     HexlashLoader.handoff()  // remove NOW, no fade — the in-app overlay is taking
+                              //          over this same picture */
 (function () {
   var el = document.getElementById('hx-load');
   if (!el) return;
@@ -230,12 +237,21 @@
       if (p >= 100) complete(); else restoreLoading();
       return p;
     },
+    /* Lift. No hold of its own any more: the loading controller
+       (src/services/sceneLoading.js) owns the minimum show time, for BOTH
+       surfaces, so holding again here would double it. */
     done: function () {
       this.set(100);
-      setTimeout(function () {
-        el.classList.add('hxl-out');
-        setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 650);
-      }, 550);
+      el.classList.add('hxl-out');
+      stopTips();
+      setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 240);
+    },
+    /* Hand over to the in-app overlay (SceneLoadingOverlay). Same picture, so a
+       crossfade between the two would just read as a flicker — this one goes in
+       the same tick the other one comes up. */
+    handoff: function () {
+      stopTips();
+      if (el.parentNode) el.parentNode.removeChild(el);
     }
   };
 

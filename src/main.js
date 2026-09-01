@@ -2,11 +2,12 @@ import './assets/colors.css'
 import './assets/main.css'
 import './styles/hexlash-ui.css'
 
-import {createApp} from 'vue'
+import {createApp, watch} from 'vue'
 import {createVuetify} from 'vuetify'
 import * as directives from 'vuetify/directives'
 import router from '@/router/index.js'
 import store from "@/core/state/store.js";
+import {loadingState, noteSceneError, openLoading} from "@/services/sceneLoading.js";
 import {
     VAlert,
     VBtn,
@@ -98,22 +99,23 @@ const vuetify = createVuetify({
     },
 });
 
-// --- Pre-load splash wiring ---------------------------------------------------
-// The pre-load screen (#hx-load in index.html) exposes window.HexlashLoader:
-//   .set(pct)  — 0..100, driven from real bootstrap milestones
-//   .done()    — force 100% + fade out + self-remove
-// The arena is procedural (no GLTF / heavy assets), so there's almost nothing to
-// fetch — "real progress" tracks bootstrap phases, and done() only fires on a
-// genuine ready signal: the arena's first rendered frame when we land on /play,
-// or the first paint of whatever route loaded otherwise.
+// --- Page-load splash wiring ------------------------------------------------
+// #hx-load in index.html is the loading screen's FIRST-LOAD half: it has to paint
+// before this bundle exists, so it cannot be the Vue component. It exposes
+// window.HexlashLoader (.set / .done / .handoff) and renders the SAME state as
+// SceneLoadingOverlay — one screen, two surfaces (see services/sceneLoading.js).
+//
+// Progress here is NOT a timer. Bootstrap milestones carry it to the point the
+// route is known; from there the loading controller carries it on the scene's own
+// declared build stages, and the splash just mirrors that number.
 const splash = window.HexlashLoader || null;
 let splashDone = false;
 function splashSet(p) { if (splash) splash.set(p); }
 function splashFinish() {
     if (splashDone) return;
     splashDone = true;
-    // From here on, in-app navigation is covered by the SPA scene-transition
-    // overlay (router beforeEach), not this one-shot page-load splash.
+    // From here on, in-app navigation is covered by SceneLoadingOverlay (router
+    // beforeEach), not this one-shot page-load splash.
     window.__hexBootstrapped = true;
     if (splash) splash.done();
 }
@@ -136,43 +138,37 @@ initializeApp().then(() => {
         .use(WagmiPlugin, { config: wagmiConfig })
         .use(VueQueryPlugin, {});
 
+    // A scene that throws in onMounted will never signal readiness. Let the player
+    // out now rather than after the full safety wait — the error itself is logged
+    // here, so nothing is swallowed.
+    app.config.errorHandler = (err, instance, info) => {
+        console.error(`[hexlash] component error (${info}):`, err);
+        noteSceneError(info);
+    };
+
     app.mount('#app');
     splashSet(64); // Milestone 3 — app mounted.
 
     router.isReady().then(() => {
-        // Milestone 4 — scene build + first frame. Heavy 3D routes signal real
-        // readiness: the arena (meta.arena) and the home/pve stages
-        // (meta.scene3d). On any of them we hold an honest stall near 90 and
-        // finish only on the scene's first-frame signal; other (2D) routes hide
-        // once the route has painted.
+        // Milestone 4 — scene build. This callback runs BEFORE the route
+        // component's onMounted, so opening the load session here guarantees the
+        // scene finds it and can bind its stages to it.
         const route = router.currentRoute.value;
         const meta = route.meta || {};
-        // Map the current 3D route to its readiness event + window latch flag.
-        let readyEvent = null, readyLatch = null;
-        if (meta.arena) {
-            readyEvent = 'hexlash:arena-ready'; readyLatch = '__hexArenaReady';
-        } else if (meta.scene3d) {
-            if (route.name === 'V2Pve') { readyEvent = 'hexlash:pve-ready'; readyLatch = '__hexPveReady'; }
-            else if (route.name === 'V2Space') { readyEvent = 'hexlash:space-ready'; readyLatch = '__hexSpaceReady'; }
-            else { readyEvent = 'hexlash:home-ready'; readyLatch = '__hexHomeReady'; }
-        }
 
-        if (readyEvent) {
-            splashSet(80);
-            let trickle = 80;
-            const trickleTimer = setInterval(() => {
-                trickle = Math.min(92, trickle + 1.5);
-                splashSet(trickle);
-                if (trickle >= 92) clearInterval(trickleTimer);
-            }, 220);
-            const onReady = () => { clearInterval(trickleTimer); splashSet(100); splashFinish(); };
-            // Latch guards the (rare) race where the first frame renders before
-            // this listener attaches.
-            if (window[readyLatch]) onReady();
-            else window.addEventListener(readyEvent, onReady, { once: true });
-            // Safety net — never hang the splash if the scene fails to signal.
-            setTimeout(() => { clearInterval(trickleTimer); splashFinish(); }, 12000);
+        if (meta.arena || meta.scene3d) {
+            // The splash IS the surface for this load: no second cover is raised,
+            // so the first entry is one continuous screen from HTML to first frame.
+            // 64 is not a guess: the bundle is parsed, the store is initialised and
+            // the app is mounted. Handing that floor over is what keeps the ONE
+            // number the player watches from restarting under itself.
+            openLoading(route.name, { surface: 'splash', from: 64 });
+            // Mirror the controller's honest number onto the splash, and lift only
+            // when the controller says the scene is genuinely standing still.
+            watch(() => loadingState.progress, (p) => splashSet(p), { immediate: true });
+            watch(() => loadingState.active, (active) => { if (!active) splashFinish(); });
         } else {
+            // A 2D route — nothing heavy to wait for; hide once it has painted.
             splashSet(92);
             requestAnimationFrame(() => requestAnimationFrame(() => splashFinish()));
         }

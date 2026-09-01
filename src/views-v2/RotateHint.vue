@@ -1,6 +1,6 @@
 <!-- RotateHint — "turn your phone" recommendation overlay for the game shell.
-     Touch devices in portrait, AFTER load/transition has finished (sceneTransition
-     mode === 'none'), get a full-screen scrim with a large rotate animation: a
+     Touch devices in portrait, AFTER the loading screen has lifted (sceneLoading
+     is idle), get a full-screen scrim with a large rotate animation: a
      matte-chrome phone outline (.edit-space / SHOP-chip family — hairline frame,
      glass fill, NO glow) that rotates portrait↔landscape, wrapped by the ONE pink
      bloom on screen — the rotation arc-arrow (#FF0069, soft glow). The phone has
@@ -41,17 +41,17 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { t } from '@/locales/index.js';
-import { transitionState } from '@/services/sceneTransition.js';
+import { loadingState } from '@/services/sceneLoading.js';
 
 const coarse = ref(false);    // touch device (pointer: coarse)
 const portrait = ref(false);  // (orientation: portrait)
 const dismissed = ref(false); // in-memory only — repeats, not a one-shot tutorial
 
 // Show only on a touch device held vertically, once load/transition has settled,
-// and not after a tap-dismiss. Reactive on sceneTransition.mode + the matchMedia
+// and not after a tap-dismiss. Reactive on loadingState.active + the matchMedia
 // refs below.
 const visible = computed(() =>
-  coarse.value && portrait.value && transitionState.mode === 'none' && !dismissed.value
+  coarse.value && portrait.value && !loadingState.active && !dismissed.value
 );
 
 function onDismiss() { dismissed.value = true; }

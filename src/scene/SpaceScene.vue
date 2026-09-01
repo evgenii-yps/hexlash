@@ -28,6 +28,7 @@ import { makeRadialTexture, makeHexGridTexture } from './arenaTextures.js';
 import { buildFighter } from './buildFighter.js';
 import { resolveBehavior } from '@/data/behavior.js';
 import { createSpaceWanderDirector } from './spaceWander.js';
+import { beginSceneLoad } from '@/services/sceneLoading.js';
 
 // ───────────────────────────── CONFIG (tune on preview) ─────────────────────────────
 // The big hex field — a large flat arena that reads as "огромная арена", not a bigger
@@ -213,7 +214,9 @@ let renderer, scene, camera, controls, resizeObserver, clock;
 // Pre-load readiness: emit once after the first frame renders so the bootstrap
 // splash + the SPA transition cover lift on real space-scene readiness. Per-mount
 // (script-setup local) so it re-fires on every fresh mount.
-let firstFrameEmitted = false;
+// Loading-screen handle — see services/sceneLoading.js. The field lifts the screen
+// on its declared stages plus three settled frames, not on the first frame drawn.
+let load = null;
 let onVisibility;
 let director = null;
 let prevT = 0;
@@ -229,6 +232,9 @@ function lowPowerDevice() {
 }
 
 onMounted(() => {
+  // Build stages, in the order they happen below.
+  load = beginSceneLoad(['renderer', 'field', 'roster', 'beacon']);
+
   const el = wrap.value;
   const w = el.clientWidth || window.innerWidth;
   const h = el.clientHeight || window.innerHeight;
@@ -258,6 +264,7 @@ onMounted(() => {
   scene.add(key);
   scene.add(new THREE.AmbientLight(LIGHT.amb.color, LIGHT.amb.intensity));
   scene.add(new THREE.HemisphereLight(LIGHT.hemi.sky, LIGHT.hemi.ground, LIGHT.hemi.intensity));
+  load.stage('renderer');
 
   const pink = getComputedStyle(el).getPropertyValue('--hex-primary').trim() || '#FF0069';
 
@@ -266,6 +273,7 @@ onMounted(() => {
   const groundY = FIELD.y;
   field = buildHexField(groundY, renderer.capabilities.getMaxAnisotropy()); scene.add(field.group);
   backdrop = buildBackdrop(BACKDROP); scene.add(backdrop.mesh);
+  load.stage('field');
 
   // --- Roster: 14 fighters, core colour cycled, spread across the whole field.
   //     Each idles + walks via the spaceWander director on a BIG personal zone. ---
@@ -308,6 +316,8 @@ onMounted(() => {
   // Roster wander — drives the EXISTING locomotion per member (see spaceWander.js).
   director = createSpaceWanderDirector();
   director.attach(agents, camera, { reduced });
+
+  load.stage('roster');
 
   // --- Leader beacon: mark member LEADER.index with the scene's single pink glow. ---
   const leader = roster[LEADER.index]?.fighter || null;
@@ -380,6 +390,8 @@ onMounted(() => {
     if (controls.target.y !== panTargetY) { camera.position.y += panTargetY - controls.target.y; controls.target.y = panTargetY; }
   };
 
+  load.stage('beacon');
+
   // --- Render loop. FPS-capped; elapsed time drives wander + idle + beacon. ---
   clock = new THREE.Clock();
   prevT = 0;
@@ -422,13 +434,9 @@ onMounted(() => {
 
     renderer.render(scene, camera);
 
-    // First frame is on screen — signal readiness once (latch + event) so the
-    // pre-load splash / SPA transition cover lift on real space-scene readiness.
-    if (!firstFrameEmitted) {
-      firstFrameEmitted = true;
-      window.__hexSpaceReady = true;
-      window.dispatchEvent(new Event('hexlash:space-ready'));
-    }
+    // One settled frame toward readiness — counted only once every stage above is
+    // in, and reset by any re-fit (see the resize observer).
+    load.frame();
   };
   renderer.setAnimationLoop(loop);
 
@@ -444,11 +452,15 @@ onMounted(() => {
     camera.aspect = cw / ch;
     camera.updateProjectionMatrix();
     renderer.setSize(cw, ch, false);
+    // We just moved the picture under ourselves — start the settled-frame count
+    // again, or the screen could lift on a frame that is about to change.
+    load?.unsettle();
   });
   resizeObserver.observe(el);
 });
 
 onBeforeUnmount(() => {
+  load?.dispose();   // left mid-load → drop the screen and the wait with us
   if (resizeObserver) resizeObserver.disconnect();
   if (onVisibility) document.removeEventListener('visibilitychange', onVisibility);
   if (renderer) renderer.setAnimationLoop(null);
