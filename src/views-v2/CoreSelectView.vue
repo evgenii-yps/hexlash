@@ -422,6 +422,52 @@ function toArena() {
    RHYTHMS OF LIGHT — each picked core breathes with character.
    Active only on .sel — flat cards are silent.
    ============================================================ */
+/* ============================================================
+   PHONE ON ITS SIDE — four cores in one row
+   ------------------------------------------------------------
+   The grid is two columns at every width, and the card carries a
+   `min-height: clamp(184px, 25vh, 230px)`. On a short screen the clamp's
+   FLOOR wins — 184px, whatever the viewport is — so two rows of cards plus
+   the headline could not fit a 320px-tall window: two cores were off the
+   bottom and the TO ARENA button with them. Choosing a core is a comparison,
+   and you cannot compare what you have to scroll to.
+   Sideways there is width to spare and no height, so the row runs across
+   instead of stacking, and everything inside the card is sized off the
+   viewport HEIGHT rather than off a fixed pixel floor.
+   Bounded by max-height so a tablet or a desktop — landscape but tall — keeps
+   the 2x2 it is designed for. Portrait never sees any of this.
+   ============================================================ */
+@media (orientation: landscape) and (max-height: 560px) {
+  .scene .stage { padding: 34px 16px 12px; gap: 8px; }
+  .col { max-width: min(1040px, 100%); gap: 8px; }
+
+  .headline { padding-bottom: 6px; gap: 8px 18px; }
+  .headline h1 { font-size: clamp(20px, 3.2vw, 30px); white-space: nowrap; }
+
+  .grid { grid-template-columns: repeat(4, 1fr); gap: 10px; }
+
+  .core-card { min-height: 0; padding: 10px 11px 0;
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 11px), calc(100% - 11px) 100%, 0 100%); }
+  .core-card .tick { width: 8px; height: 8px; top: 7px; }
+  .core-card .tick.tl { left: 7px; }
+  .core-card .tick.tr { right: 7px; }
+
+  .core-card .stage-i { min-height: 0; margin: 3px 0 5px; }
+  .core-card .stage-i::before { width: 82px; height: 72px; }
+  .core-card .icon { width: clamp(44px, 17vh, 78px); height: clamp(44px, 17vh, 78px); }
+  .core-card .ring { width: clamp(60px, 23vh, 104px); height: clamp(60px, 23vh, 104px); }
+
+  .core-card .body { padding-bottom: 9px; gap: 3px; }
+  .core-card .nm { font-size: clamp(13px, 1.9vw, 18px); }
+  .core-card .bar { right: 11px; }
+
+  .foot { gap: 8px; }
+  .cta { padding: 10px 18px; font-size: clamp(14px, 1.8vw, 19px); gap: 14px; }
+  .cta::after { clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px),
+                                   calc(100% - 12px) 100%, 0 100%, 0 12px); }
+  .cta .arr { font-size: 15px; }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   /* Onslaught — fast, steady pulse (pressure that never lets up) */
   .core-card.sel[data-core="natisk"] .halo { animation: rhythm-onslaught .95s ease-in-out infinite; }
