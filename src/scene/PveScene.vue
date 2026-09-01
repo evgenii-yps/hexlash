@@ -49,14 +49,49 @@ const CONFIG = {
                          // (kept clear of the slab's central slit, which the bodies must not straddle)
   backRowScale: 0.86,    // and how much smaller it reads (perspective help, not a trick)
   stagger: 0.5,          // sideways offset of the back row → front gaps line up with it
+  // Upright screens. The formation RULE does not change (arc to five, two rows
+  // for six to eight) — only how tightly it is packed. A phone held upright is
+  // about a third as wide as it is tall in view terms, so a row laid out for a
+  // landscape frame can only be fitted by backing the camera off until the hall
+  // is a diorama at the bottom of the screen. Drawing the row in and deepening
+  // its bow instead spends the space the phone HAS — depth — rather than the
+  // space it does not have, and gives the dense block the screen wants.
+  portraitSquash: 0.78,  // × the sideways spread and the back row's offset
+  portraitBow: 1.7,      // × the arc's forward bow, so the ends separate by depth
+  portraitStep: 0.5,     // …and the whole row stands this much nearer the player.
+                         // Upright, the trainer's pedestal hangs straight over the
+                         // middle of the row: with the camera in close enough to
+                         // read faces, a lone fighter standing under it had his
+                         // head cut by the disc. A step forward clears it.
 };
 // The hall's camera. Frontal and FIXED: no orbit, no auto-rotate — this is a
 // workplace, not a viewing platform (owner's call, 24.08). Two framings only.
 const CAM = {
-  overview: { pos: [0, 3.15, 9.6], look: [0, 1.5, 0] },   // the whole row, head-on
-  work:     { pos: [1.5, 2.5, 6.4], look: [1.1, 1.35, 0] }, // closer, shifted so the
-                                                            // picked fighter sits LEFT
+  // The two framings are no longer fixed points. They were, and one fixed pose
+  // cannot serve a screen that changes shape AND a hall that holds anywhere from
+  // nobody to eight: on a phone held upright the row ran off both edges while a
+  // third of the frame above and below it stood empty, and with an empty roster
+  // the trainer hung in the top third over a hole. So these are the DIRECTION the
+  // camera looks from (kept exactly as it was — frontal, a few degrees down) and
+  // the distance it starts guessing at; where it actually ends up is measured
+  // against what is on the plate. See frameFor().
+  dir: [0, 1.65, 9.6],   // camera offset from its look point (its length = the guess)
   moveSec: 0.55,         // how long the framing change takes (ТЗ: about half a second)
+
+  // The slice of the screen the composition has to land in, as fractions of the
+  // canvas. OVERVIEW owns nearly the whole frame — the hall is the only thing on
+  // screen, so there is no reason for it to sit in a corner of it. WORK keeps
+  // clear of the panels: in portrait they take the bottom of the screen, in
+  // landscape the right of it, and the fighter being worked on must not end up
+  // behind them.
+  rect: {
+    overviewPortrait:  { x0: 0.05, x1: 0.95, y0: 0.11, y1: 0.70 },
+    overviewLandscape: { x0: 0.05, x1: 0.95, y0: 0.15, y1: 0.95 },
+    workPortrait:      { x0: 0.08, x1: 0.92, y0: 0.17, y1: 0.56 },
+    workLandscape:     { x0: 0.04, x1: 0.58, y0: 0.13, y1: 0.93 },
+  },
+  minDist: 4.5,
+  maxDist: 22,
 };
 // Where a picked fighter stands while you work on him, and how the rest sink.
 const WORK = {
@@ -221,8 +256,11 @@ function buildBackdrop(o, maxAniso) {
 //    ≤5: one shallow arc, ends a step closer to the player.
 //    6–8: two rows, the back one lifted, smaller and offset by half a gap so the
 //    back bodies land in the FRONT row's gaps instead of behind its shoulders. ──
-function layoutRoster(count) {
+function layoutRoster(count, portrait) {
   if (count <= 0) return [];
+  const squash = portrait ? CONFIG.portraitSquash : 1;
+  const bow = CONFIG.rowBow * (portrait ? CONFIG.portraitBow : 1);
+  const step = portrait ? CONFIG.portraitStep : 0;
 
   // One row: `t` runs −1…+1 across it, x spreads by it, and z bows by t² so the
   // ENDS stand a touch closer to the player (+Z is toward the camera) — the row
@@ -232,22 +270,22 @@ function layoutRoster(count) {
     for (let i = 0; i < n; i++) {
       const t = n === 1 ? 0 : (i / (n - 1)) * 2 - 1;
       spots.push({
-        x: (t * CONFIG.rowSpread * (n - 1)) / 2 + offsetX,
-        z: z0 + CONFIG.rowBow * t * t,
+        x: (t * CONFIG.rowSpread * squash * (n - 1)) / 2 + offsetX,
+        z: z0 + bow * t * t,
         scale,
       });
     }
     return spots;
   };
 
-  if (count <= 5) return row(count, 0, 1.0, 1);
+  if (count <= 5) return row(count, 0, 1.0 + step, 1);
 
   // 6–8: split front/back, back row further away, smaller, and offset by half a
   // gap so its bodies show through the front row's gaps.
   const front = Math.ceil(count / 2);
   return [
-    ...row(front, 0, 1.0, 1),
-    ...row(count - front, CONFIG.stagger, 1.0 - CONFIG.backRowLift, CONFIG.backRowScale),
+    ...row(front, 0, 1.0 + step, 1),
+    ...row(count - front, CONFIG.stagger * squash, 1.0 + step - CONFIG.backRowLift, CONFIG.backRowScale),
   ];
 }
 
@@ -281,6 +319,138 @@ function skinOf(fighter) {
     if (!mat && o.isMesh && o.material && o.material.isMeshStandardMaterial) mat = o.material;
   });
   return mat ? { mat, base: mat.color.clone() } : null;
+}
+
+// ── Framing: measured, not guessed ─────────────────────────────────────────
+// The hall has to sit in a given slice of the screen (CAM.rect) whatever shape
+// the screen is and whoever is standing on the plate. Rather than model that —
+// the camera looks down a few degrees, the bodies stand at different depths and
+// scales, and the row's width depends on how many there are — build a pose, look
+// at where it actually puts things, and correct. Three or four passes settle it.
+// This runs on build, on resize and when the framing changes; never per frame.
+const _fitCam = new THREE.PerspectiveCamera();
+const _fitV = new THREE.Vector3();
+const _fitDir = new THREE.Vector3();
+
+// The corners the framing has to keep on screen, in world space.
+function framePoints(working) {
+  const pts = [];
+  const topY = arena ? arena.refs.topY : 0;
+  // Their STANDING spots, not where they happen to be this frame: a body is
+  // always easing somewhere (idle sway, walking back from the work spot, the row
+  // re-packing after a rotation) and a framing measured off live positions would
+  // breathe along with them.
+  const body = (x, z, s) => {
+    pts.push([x - 0.62 * s, topY, z], [x + 0.62 * s, topY + 2.25 * s, z]);
+  };
+  if (working) {
+    const r = roster.find((x) => x.id === selectedId);
+    const sc = r ? r.scale : 1;
+    // Him, plus a margin of air — and all of it at HIS depth. A patch of floor
+    // spanning a few units of depth was tried and pulled the framing right back:
+    // at this camera's shallow angle, depth reads as a lot of screen height, so
+    // the floor drove the fit and the fighter it was supposed to frame came out
+    // small with the rest of the row still filling the shot.
+    body(WORK.spot[0], WORK.spot[2], sc);
+    pts.push(
+      [WORK.spot[0] - 0.95 * sc, topY - 0.35, WORK.spot[2]],
+      [WORK.spot[0] + 0.95 * sc, topY + 2.75 * sc, WORK.spot[2]],
+    );
+    return pts;
+  }
+  for (const r of roster) body(r.home.x, r.home.z, r.scale);
+  // The trainer is the hall — he is in frame whether or not anyone else is,
+  // and his drift is included so the fit does not breathe with him.
+  const feet = topY + LEGEND.height;
+  pts.push(
+    [-LEGEND.driftRadius - 0.85, feet - 0.55, 0],   // his pedestal / cloud
+    [LEGEND.driftRadius + 0.85, feet + 2.35, 0],    // …up over his head
+  );
+  // Nobody on the plate: keep enough of the empty stage in frame that the room
+  // still reads as a place with nobody in it, not as a crop.
+  if (!roster.length) {
+    for (const x of [-2.1, 2.1]) for (const z of [-0.9, 1.9]) pts.push([x, topY, z]);
+  }
+  return pts;
+}
+
+// Build the pose for a framing. Returns { pos, look } in the shape applyCamera wants.
+function frameFor(working) {
+  const portrait = viewH >= viewW;
+  const r = working
+    ? (portrait ? CAM.rect.workPortrait : CAM.rect.workLandscape)
+    : (portrait ? CAM.rect.overviewPortrait : CAM.rect.overviewLandscape);
+  _fitDir.set(CAM.dir[0], CAM.dir[1], CAM.dir[2]);
+  let dist = _fitDir.length();
+  _fitDir.normalize();
+
+  const pts = framePoints(working);
+  const look = new THREE.Vector3(0, (arena ? arena.refs.topY : 0) + 1.5, 0);
+  const pose = () => ({
+    look: [look.x, look.y, look.z],
+    pos: [look.x + _fitDir.x * dist, look.y + _fitDir.y * dist, look.z + _fitDir.z * dist],
+  });
+  if (!pts.length || !viewW || !viewH || !camera) return pose();
+
+  const tanV = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+  const tx = (r.x0 + r.x1) / 2 * viewW; const ty = (r.y0 + r.y1) / 2 * viewH;
+  const tw = (r.x1 - r.x0) * viewW; const th = (r.y1 - r.y0) * viewH;
+
+  for (let pass = 0; pass < 4; pass++) {
+    const p = pose();
+    _fitCam.fov = camera.fov; _fitCam.aspect = camera.aspect;
+    _fitCam.near = camera.near; _fitCam.far = camera.far;
+    _fitCam.position.set(p.pos[0], p.pos[1], p.pos[2]);
+    _fitCam.up.copy(camera.up);
+    _fitCam.lookAt(look);
+    _fitCam.updateProjectionMatrix();
+    _fitCam.updateMatrixWorld(true);
+
+    let left = Infinity; let right = -Infinity; let top = Infinity; let bottom = -Infinity;
+    for (const [x, y, z] of pts) {
+      _fitV.set(x, y, z).project(_fitCam);
+      const px = (_fitV.x * 0.5 + 0.5) * viewW;
+      const py = (-_fitV.y * 0.5 + 0.5) * viewH;
+      if (px < left) left = px; if (px > right) right = px;
+      if (py < top) top = py; if (py > bottom) bottom = py;
+    }
+    if (!Number.isFinite(left) || !Number.isFinite(top)) break;
+
+    // Fit — grows AND shrinks, so a tall narrow screen stops cropping the row and
+    // a wide one stops leaving half the frame empty.
+    if (pass < 3) {
+      dist = THREE.MathUtils.clamp(dist * Math.max((right - left) / tw, (bottom - top) / th),
+        CAM.minDist, CAM.maxDist);
+    }
+    // Centre on the target rect. Moving the look point translates the camera with
+    // it (the offset is fixed), so this is a straight pan — no tilt is introduced
+    // and the hall stays frontal.
+    const perPx = (2 * dist * tanV) / viewH;
+    look.x += ((left + right) / 2 - tx) * perPx;
+    look.y -= ((top + bottom) / 2 - ty) * perPx;
+  }
+  return pose();
+}
+
+// Re-pack the formation for the screen's new shape. Only the STANDING SPOTS move
+// — the same fighters, the same rule, the same order, so a fighter keeps his place
+// in the row across a rotation. The render loop already eases every body toward
+// its `home`, so writing the new homes is the whole job: the row re-forms itself
+// instead of teleporting, and a fighter who is out at the work spot is left where
+// he is and finds the new spot when he walks back.
+let laidOutPortrait = null;
+function relayout() {
+  if (!roster.length || !arena) return;
+  const portrait = viewH >= viewW;
+  if (portrait === laidOutPortrait) return;
+  laidOutPortrait = portrait;
+  const topY = arena.refs.topY;
+  const spots = layoutRoster(roster.length, portrait);
+  roster.forEach((r, i) => {
+    const p = spots[i];
+    if (!p) return;
+    r.home.set(p.x, topY, p.z);
+  });
 }
 
 // Set (or ease toward) one of the two framings. `snap` places the camera at once
@@ -332,6 +502,8 @@ const wrap = ref(null);
 const canvasEl = ref(null);
 
 let renderer, scene, camera, arena, resizeObserver, clock;
+let viewW = 0, viewH = 0;   // canvas CSS size — the framing is measured in these
+let resizePending = 0;      // coalescing frame for the resize observer
 // Pre-load readiness: emit once after the first frame is rendered so the
 // bootstrap splash (page-load) and the SPA transition cover can lift on real
 // pve-scene readiness. Per-mount (script-setup local) so it re-fires on every
@@ -379,6 +551,7 @@ onMounted(() => {
   scene = new THREE.Scene();
   scene.fog = new THREE.FogExp2(0x070811, 0.03);
 
+  viewW = w; viewH = h;   // the framing is measured in canvas pixels — have them before the first fit
   camera = new THREE.PerspectiveCamera(42, w / h, 0.1, 100);
   camera.position.copy(CAM_BASE);
 
@@ -421,7 +594,7 @@ onMounted(() => {
   //     unchanged. Read once at build time — the roster is edited in the shop,
   //     on another route, so arriving here always rebuilds the scene. ---
   const members = store.getters['roster/fighters'] || [];
-  const spots = layoutRoster(members.length);
+  const spots = layoutRoster(members.length, viewH >= viewW);
   spots.forEach((p, i) => {
     const m = members[i];
     const core = CORE_PALETTE.find((c) => c.id === m.core) || CORE_PALETTE[0];
@@ -463,7 +636,7 @@ onMounted(() => {
   // Everyone faces the player. Aim at the overview camera spot rather than
   // straight ahead, so the arc ends turn slightly inward and the row reads as
   // gathered rather than as a firing line.
-  for (const r of roster) faceTowards(r.fighter.group, CAM.overview.pos[0], CAM.overview.pos[2]);
+  for (const r of roster) faceTowards(r.fighter.group, CAM.dir[0], CAM.dir[2]);
 
   // --- Legend: a buildFighter body with the amber core, idle only (NEVER added to
   //     the wander), floating LEGEND.height over the plate centre, drifting forever
@@ -487,7 +660,8 @@ onMounted(() => {
   // --- Camera: FIXED and frontal. No orbit, no auto-rotate (owner's call): the
   //     hall is a workplace. Two framings — the whole row, and closer-in with the
   //     picked fighter on the left — eased toward, never cut to. ---
-  applyCamera(CAM.overview, true);
+  laidOutPortrait = viewH >= viewW;
+  applyCamera(frameFor(false), true);
 
   // --- Pointer: hover lights ONE core and names it; a tap picks that fighter.
   //     Same shape as the mode islands (one hovered at a time, eased `lit`), but
@@ -627,12 +801,22 @@ onMounted(() => {
   };
   document.addEventListener('visibilitychange', onVisibility);
 
-  resizeObserver = new ResizeObserver(() => {
+  const applyResize = () => {
+    resizePending = 0;
     const cw = el.clientWidth, ch = el.clientHeight;
     if (!cw || !ch) return;
+    viewW = cw; viewH = ch;
     camera.aspect = cw / ch;
     camera.updateProjectionMatrix();
     renderer.setSize(cw, ch, false);
+    relayout();   // the formation packs differently upright — before the fit reads it
+    // Portrait and landscape are different compositions, and a rotation swaps
+    // one for the other. Snap rather than ease: this is a new screen, not a move.
+    applyCamera(frameFor(!!selectedId), true);
+  };
+  resizeObserver = new ResizeObserver(() => {
+    if (resizePending) return;
+    resizePending = requestAnimationFrame(applyResize);
   });
   resizeObserver.observe(el);
 });
@@ -646,19 +830,21 @@ function select(id) {
   if (!entry) { exitWork(); return; }
   selectedId = id;
   hoveredId = null;
-  applyCamera(CAM.work, reduced);
-  faceTowards(entry.fighter.group, CAM.work.pos[0], CAM.work.pos[2]);
+  const f = frameFor(true);
+  applyCamera(f, reduced);
+  faceTowards(entry.fighter.group, f.pos[0], f.pos[2]);
 }
 function exitWork() {
   const prev = roster.find((r) => r.id === selectedId);
   selectedId = null;
-  applyCamera(CAM.overview, reduced);
-  if (prev) faceTowards(prev.fighter.group, CAM.overview.pos[0], CAM.overview.pos[2]);
+  applyCamera(frameFor(false), reduced);
+  if (prev) faceTowards(prev.fighter.group, CAM.dir[0], CAM.dir[2]);
 }
 defineExpose({ select, exitWork });
 
 onBeforeUnmount(() => {
   if (resizeObserver) resizeObserver.disconnect();
+  if (resizePending) { cancelAnimationFrame(resizePending); resizePending = 0; }
   if (onVisibility) document.removeEventListener('visibilitychange', onVisibility);
   if (renderer) renderer.setAnimationLoop(null);
   if (renderer) {
