@@ -19,7 +19,7 @@
 .auth-layout {
   min-height: 100vh;
   min-height: 100dvh;
-  background: #08080a;
+  background: var(--void);
 }
 
 .auth-fade-enter-active,

@@ -227,8 +227,8 @@ function onRequestNew() {
   height: clamp(400px, 60vw, 900px);
   background: radial-gradient(
     circle at center,
-    rgba(255, 0, 105, 0.12) 0%,
-    rgba(255, 0, 105, 0.04) 35%,
+    color-mix(in srgb, var(--pink) 12%, transparent) 0%,
+    color-mix(in srgb, var(--pink) 4%, transparent) 35%,
     transparent 70%
   );
   pointer-events: none;
@@ -255,7 +255,7 @@ function onRequestNew() {
   /* 120–180px → FULL drawing (see components/brand/hexlashMark.js). */
   width: clamp(120px, 18vw, 180px);
   height: auto;
-  color: #F6F4F6;
+  color: var(--ink);
   user-select: none;
 }
 
@@ -360,7 +360,7 @@ function onRequestNew() {
 
 .reset-card__input--error {
   border-color: var(--danger);
-  box-shadow: 0 0 0 3px rgba(255, 51, 51, 0.20);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 20%, transparent);
 }
 
 .reset-card__input:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -375,8 +375,8 @@ function onRequestNew() {
 
 .reset-card__alert {
   padding: 10px 12px;
-  background: rgba(255, 51, 51, 0.10);
-  border: 1px solid rgba(255, 51, 51, 0.35);
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent);
   border-radius: 4px;
   color: var(--danger);
   font-size: 12px;
@@ -387,7 +387,7 @@ function onRequestNew() {
   padding: 14px;
   min-height: 48px;
   background: var(--pink);
-  color: #fff;
+  color: var(--ink);
   border: none;
   border-radius: 4px;
   font-family: inherit;
@@ -397,7 +397,7 @@ function onRequestNew() {
   text-transform: uppercase;
   cursor: pointer;
   transition: filter 0.15s ease, transform 0.08s ease, opacity 0.15s ease, box-shadow 0.15s ease;
-  box-shadow: 0 4px 12px rgba(255, 0, 105, 0.25);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--pink) 25%, transparent);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -413,9 +413,9 @@ function onRequestNew() {
 .reset-card__submit-spinner {
   width: 14px;
   height: 14px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: #fff;
-  border-radius: 50%;
+  border: 2px solid var(--line-strong);
+  border-top-color: var(--ink);
+  border-radius: var(--r-round);
   animation: reset-spin 0.6s linear infinite;
 }
 

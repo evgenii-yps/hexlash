@@ -96,13 +96,13 @@
 }
 .hs-chrome:hover {
   border-color: var(--chrome-rim); background: var(--chrome-glass-hot); color: var(--ink);
-  box-shadow: 0 0 0 1px var(--chrome-rim), 0 0 18px 2px var(--chrome-bloom);
+  box-shadow: var(--glow-touch);
   transform: translateY(-1px);
 }
 .hs-chrome:hover::after { animation: hs-sheen var(--d-panel) var(--e-weight) 1; }
 .hs-chrome:active {
   color: var(--ink);
-  box-shadow: 0 0 0 1px var(--chrome-rim-hot), 0 0 14px 1px var(--chrome-bloom-hot);
+  box-shadow: var(--glow-hold);
   transform: scale(0.985); transition-duration: var(--d-press);
 }
 .hs-chrome:focus-visible {

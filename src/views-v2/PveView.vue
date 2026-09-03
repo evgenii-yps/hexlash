@@ -164,37 +164,14 @@ function goMode() { router.push('/play/mode'); }
 </script>
 
 <style scoped>
-/* Tokens the reused .hs-strip needs (coded against .home-root) — same values, given
-   here so the real strip is portable to this route without editing home.css. */
+/* Раньше здесь лежала КОПИЯ палитры home.css: полоса .hs-strip была написана
+   под локальные имена .home-root, и чтобы она работала на этом маршруте, имена
+   приходилось повторять. Теперь .hs-chrome читает глобальные токены напрямую,
+   и копия не нужна — осталась только геометрия экрана. */
 .pve-root {
-  --line: rgba(255, 255, 255, 0.09);
-  --line2: rgba(255, 255, 255, 0.16);
-  --bone: #f6f4f6;
-  --ash: #6e6a72;
-  --ink: #ededf1;
-  --ink-dim: #5d5d66;
-  --hs-disp: "Saira Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif;
-  --hs-mono: "JetBrains Mono", ui-monospace, monospace;
-  /* secondary-button chrome family tokens + motion — mirrored from .home-root so the
-     shared .hs-chrome material (home.css) resolves on this route (home.css untouched). */
-  --hs-chrome-ink: #c8d1d8;
-  --hs-chrome-ink-dim: #5d5d66;
-  --hs-chrome-line: rgba(200, 209, 216, 0.16);
-  --hs-chrome-rim: rgba(216, 227, 234, 0.45);
-  --hs-chrome-rim-hot: rgba(216, 227, 234, 0.8);
-  --hs-chrome-bloom: rgba(200, 209, 216, 0.22);
-  --hs-chrome-bloom-hot: rgba(200, 209, 216, 0.3);
-  --hs-chrome-glass: rgba(22, 22, 27, 0.55);
-  --hs-chrome-glass-hover: rgba(28, 30, 37, 0.72);
-  --hs-chrome-void: #08080a;
-  --ease-weight: cubic-bezier(0.55, 0, 0.12, 1);
-  --hs-hover: 0.22s;
-  --hs-press: 0.12s;
-  --hs-fast: 0.15s;
-
   position: absolute; inset: 0; overflow: hidden;
-  background: #08080a; color: var(--ink);
-  font-family: var(--hs-disp);
+  background: var(--void); color: var(--ink);
+  font-family: var(--font-display);
 }
 
 /* brand removed on PVE → the strip carries BACK (left) + the SHOP/cabinet cluster

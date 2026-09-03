@@ -136,7 +136,7 @@ function toArena() {
   font: inherit; color: inherit; background: none; border: 0; cursor: pointer;
   -webkit-appearance: none; appearance: none; -webkit-tap-highlight-color: transparent;
 }
-.scene ::selection { background: var(--lash); color: #fff; }
+.scene ::selection { background: var(--pink); color: var(--ink); }
 
 /* ============================================================
    SCENE — fullscreen, faint pink-tinted void (neutral chrome).
@@ -144,20 +144,20 @@ function toArena() {
    ============================================================ */
 .scene {
   /* Brand Book — Color */
-  --bg-void: #08080a;
-  --bg-carbon: #0d0a0d;
-  --bg-ember: #160a11;        /* faint pink-tinted wash */
-  --ink-bone: #f6f4f6;
-  --ink-ash: #6e6a72;
-  --ink-line: rgba(255, 255, 255, .07);
-  --ink-line-2: rgba(255, 255, 255, .13);
-  --ink-3: #36343a;
-  --ink-4: #1c1a1f;
+  --void: var(--void);
+  --carbon: var(--carbon);
+  --carbon: var(--carbon);        /* faint pink-tinted wash */
+  --ink: var(--ink);
+  --ink-dim: var(--ink-dim);
+  --line: var(--line);
+  --line-strong: var(--line-strong);
+  --ink-off: var(--ink-off);
+  --carbon: var(--carbon);
 
   /* Brand primary — neutral chrome accent (NOT a core color) */
-  --lash: #ff0069;
-  --lash-dim: rgba(255, 0, 105, .42);
-  --lash-faint: rgba(255, 0, 105, .14);
+  --pink: var(--pink);
+  --pink-dim: color-mix(in srgb, var(--pink) 42%, transparent);
+  --pink-faint: color-mix(in srgb, var(--pink) 14%, transparent);
 
   /* Type */
   --font-disp: 'Saira Condensed', -apple-system, system-ui, sans-serif;
@@ -169,12 +169,12 @@ function toArena() {
 
   /* Picked core (resolved once a card is selected via :style binding).
      Defaults to brand-pink — pre-select chrome reads as neutral. */
-  --core: #ff0069;
-  --core-sup: #ff4f8a;
-  --core-dim: color-mix(in srgb, var(--core) 55%, transparent);
+  --core: var(--pink);
+  --core-sup: color-mix(in srgb, var(--pink) 70%, var(--ink));
+  --core-sup: color-mix(in srgb, var(--core) 55%, transparent);
   --core-faint: color-mix(in srgb, var(--core) 14%, transparent);
   --core-ghost: color-mix(in srgb, var(--core) 7%, transparent);
-  --core-ink: color-mix(in srgb, var(--core) 62%, #fff);
+  --core-ink: color-mix(in srgb, var(--core) 62%, var(--ink));
 
   position: fixed; inset: 0;
   display: flex; flex-direction: column;
@@ -186,10 +186,10 @@ function toArena() {
     radial-gradient(110% 60% at 50% 0%,
       color-mix(in srgb, var(--core) 6%, transparent), transparent 60%),
     radial-gradient(110% 70% at 50% 100%,
-      color-mix(in srgb, var(--lash) 5%, transparent), transparent 64%),
+      color-mix(in srgb, var(--pink) 5%, transparent), transparent 64%),
     radial-gradient(130% 80% at 50% 12%,
-      var(--bg-ember) 0%, var(--bg-carbon) 38%, var(--bg-void) 78%);
-  color: var(--ink-bone);
+      var(--carbon) 0%, var(--carbon) 38%, var(--void) 78%);
+  color: var(--ink);
   font-family: var(--font-disp);
   line-height: 1.4;
   -webkit-font-smoothing: antialiased;
@@ -202,11 +202,11 @@ function toArena() {
 .scene::before {
   content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
   background-image:
-    linear-gradient(var(--ink-line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--ink-line) 1px, transparent 1px);
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
   background-size: 64px 64px;
-  -webkit-mask-image: radial-gradient(120% 90% at 50% 50%, #000, transparent 78%);
-  mask-image: radial-gradient(120% 90% at 50% 50%, #000, transparent 78%);
+  -webkit-mask-image: radial-gradient(120% 90% at 50% 50%, var(--void), transparent 78%);
+  mask-image: radial-gradient(120% 90% at 50% 50%, var(--void), transparent 78%);
   opacity: .32;
 }
 
@@ -239,7 +239,7 @@ function toArena() {
   align-items: end;
   gap: 16px 24px;
   padding-bottom: 14px;
-  border-bottom: 1px solid var(--ink-line);
+  border-bottom: 1px solid var(--line);
 }
 .headline .ttl { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 
@@ -248,12 +248,12 @@ function toArena() {
   /* fluid scale: ~36px mobile → ~64px desktop */
   font-size: clamp(36px, 5.6vw, 64px);
   line-height: .88; letter-spacing: .005em;
-  text-transform: uppercase; color: var(--ink-bone);
+  text-transform: uppercase; color: var(--ink);
   text-wrap: balance;
   white-space: nowrap;          /* prevent stray YOUR/CORE break */
 }
-.headline h1 em { font-style: normal; color: #fff;
-  text-shadow: 0 0 14px color-mix(in srgb, var(--lash) 30%, transparent); }
+.headline h1 em { font-style: normal; color: var(--ink);
+  text-shadow: 0 0 14px color-mix(in srgb, var(--pink) 30%, transparent); }
 
 @media (max-width: 520px) {
   .headline { grid-template-columns: 1fr; gap: 14px; padding-bottom: 14px; }
@@ -276,11 +276,11 @@ function toArena() {
    CORE CARD — weighty container, three distinguishable states
    ============================================================ */
 .core-card {
-  --c: #6e6a72;
-  --c-dim: color-mix(in srgb, var(--c) 55%, transparent);
+  --c: var(--ink-dim);
+  --c-sup: color-mix(in srgb, var(--c) 55%, transparent);
   --c-faint: color-mix(in srgb, var(--c) 12%, transparent);
   --c-ghost: color-mix(in srgb, var(--c) 6%, transparent);
-  --c-ink: color-mix(in srgb, var(--c) 62%, #fff);
+  --c-ink: color-mix(in srgb, var(--c) 62%, var(--ink));
 
   position: relative; display: flex; flex-direction: column; align-items: stretch;
   text-align: left;
@@ -289,10 +289,10 @@ function toArena() {
                     calc(100% - 16px) 100%, 0 100%);
   background:
     linear-gradient(180deg,
-      rgba(255, 255, 255, .025) 0%,
-      rgba(255, 255, 255, .012) 100%),
-    var(--bg-carbon);
-  border: 1px solid var(--ink-line);
+      var(--fill-1) 0%,
+      var(--fill-1) 100%),
+    var(--carbon);
+  border: 1px solid var(--line);
   padding: 16px 18px 0;
   min-height: clamp(184px, 25vh, 230px);
   cursor: pointer; overflow: hidden;
@@ -302,14 +302,14 @@ function toArena() {
     opacity .35s var(--ease),
     transform .15s var(--ease);
 }
-.core-card:hover { border-color: var(--ink-line-2); background:
-  linear-gradient(180deg, rgba(255, 255, 255, .045), rgba(255, 255, 255, .018)), var(--bg-carbon); }
+.core-card:hover { border-color: var(--line-strong); background:
+  linear-gradient(180deg, var(--fill-2), var(--fill-1)), var(--carbon); }
 .core-card:active { transform: scale(.985); }
-.core-card:focus-visible { outline: 1px solid var(--c-dim); outline-offset: 3px; }
+.core-card:focus-visible { outline: 1px solid var(--c-sup); outline-offset: 3px; }
 
 /* corner ticks — subtle "tap target" hints */
 .core-card .tick { position: absolute; width: 10px; height: 10px; pointer-events: none;
-  border: 1px solid var(--ink-3); transition: border-color .3s var(--ease); }
+  border: 1px solid var(--ink-off); transition: border-color .3s var(--ease); }
 .core-card .tick.tl { top: 9px; left: 9px; border-right: 0; border-bottom: 0; }
 .core-card .tick.tr { top: 9px; right: 9px; border-left: 0; border-bottom: 0; }
 
@@ -330,7 +330,7 @@ function toArena() {
   opacity: .7; transition: opacity .35s var(--ease);
 }
 .core-card .halo {
-  position: absolute; inset: -12%; border-radius: 50%; z-index: 1; pointer-events: none;
+  position: absolute; inset: -12%; border-radius: var(--r-round); z-index: 1; pointer-events: none;
   opacity: 0; transition: opacity .35s var(--ease);
   background:
     radial-gradient(circle at 50% 50%,
@@ -343,8 +343,8 @@ function toArena() {
   mix-blend-mode: screen;
 }
 .core-card .ring {
-  position: absolute; width: 128px; height: 128px; border: 1px solid var(--c-dim);
-  border-radius: 50%; z-index: 1; opacity: 0;
+  position: absolute; width: 128px; height: 128px; border: 1px solid var(--c-sup);
+  border-radius: var(--r-round); z-index: 1; opacity: 0;
 }
 .core-card .icon { width: 96px; height: 96px; position: relative; z-index: 2;
   transition: transform .4s var(--ease-out); }
@@ -353,15 +353,15 @@ function toArena() {
 /* FLAT-state strokes — muted, with a hint of hue so silhouettes
    stay distinguishable without lighting up */
 .core-card .icon :deep(.hex-line) {
-  stroke: color-mix(in srgb, var(--c) 30%, var(--ink-3));
+  stroke: color-mix(in srgb, var(--c) 30%, var(--ink-off));
   fill: none; stroke-width: 1.6; transition: stroke .35s var(--ease);
 }
 .core-card .icon :deep(.facet) {
-  stroke: color-mix(in srgb, var(--c) 20%, var(--ink-3));
+  stroke: color-mix(in srgb, var(--c) 20%, var(--ink-off));
   fill: none; stroke-width: 1.1; transition: stroke .35s var(--ease);
 }
 .core-card .icon :deep(.seed) {
-  fill: color-mix(in srgb, var(--c) 46%, var(--ink-3));
+  fill: color-mix(in srgb, var(--c) 46%, var(--ink-off));
   transition: fill .35s var(--ease);
 }
 
@@ -374,43 +374,43 @@ function toArena() {
   font-family: var(--font-disp); font-weight: 800;
   font-size: clamp(20px, 2.4vw, 26px);
   letter-spacing: .015em; text-transform: uppercase; line-height: 1;
-  color: var(--ink-bone); transition: color .35s var(--ease);
+  color: var(--ink); transition: color .35s var(--ease);
 }
 
 /* ACCENT BAR — anchors the card visually */
 .core-card .bar {
   position: absolute; left: 0; right: 18px; bottom: 0; height: 3px;
-  background: var(--ink-3);
+  background: var(--ink-off);
   transform-origin: left center;
   transition: background .35s var(--ease), transform .35s var(--ease);
 }
 
 /* ---------- SELECTED ---------- */
 .core-card.sel {
-  border-color: var(--c-dim);
+  border-color: var(--c-sup);
   background:
     linear-gradient(180deg,
       color-mix(in srgb, var(--c) 8%, transparent) 0%,
       color-mix(in srgb, var(--c) 2%, transparent) 100%),
-    var(--bg-carbon);
+    var(--carbon);
 }
-.core-card.sel .tick.tl, .core-card.sel .tick.tr { border-color: var(--c-dim); }
+.core-card.sel .tick.tl, .core-card.sel .tick.tr { border-color: var(--c-sup); }
 .core-card.sel .stage-i::before { opacity: 1; }
 .core-card.sel .halo { opacity: .9; }
 .core-card.sel .icon { transform: scale(1.06); }
 /* selected strokes lift to near-white tinted with hue — stays crisp
    on top of the halo bloom instead of dissolving into it */
 .core-card.sel .icon :deep(.hex-line) {
-  stroke: color-mix(in srgb, var(--c) 18%, #fff);
+  stroke: color-mix(in srgb, var(--c) 18%, var(--ink));
   stroke-width: 1.9;
 }
 .core-card.sel .icon :deep(.facet) {
-  stroke: color-mix(in srgb, var(--c) 30%, #fff);
+  stroke: color-mix(in srgb, var(--c) 30%, var(--ink));
   stroke-width: 1.4;
 }
-.core-card.sel .icon :deep(.seed) { fill: #fff;
+.core-card.sel .icon :deep(.seed) { fill: var(--ink);
   filter: drop-shadow(0 0 6px color-mix(in srgb, var(--c) 80%, transparent)); }
-.core-card.sel .nm { color: #fff;
+.core-card.sel .nm { color: var(--ink);
   text-shadow: 0 0 12px color-mix(in srgb, var(--c) 55%, transparent); }
 .core-card.sel .bar { background: var(--c);
   box-shadow: 0 0 14px color-mix(in srgb, var(--c) 55%, transparent); }
@@ -544,14 +544,14 @@ function toArena() {
   letter-spacing: .18em; text-transform: uppercase;
   padding: 18px 26px;
   display: flex; align-items: center; justify-content: center; gap: 22px;
-  background: transparent; color: var(--ink-ash);
+  background: transparent; color: var(--ink-dim);
   cursor: not-allowed; opacity: .82;
   overflow: hidden;
   transition: filter .2s, transform .12s, opacity .2s, color .2s;
 }
 .cta::after {
   content: ""; position: absolute; inset: 0; pointer-events: none;
-  border: 1px dashed var(--ink-line-2);
+  border: 1px dashed var(--line-strong);
   clip-path: polygon(18px 0, 100% 0, 100% calc(100% - 18px),
                     calc(100% - 18px) 100%, 0 100%, 0 18px);
 }
@@ -566,7 +566,7 @@ function toArena() {
    (one light on screen = the core). A narrow sheen sweeps ACROSS the fill like
    the landing PLAY button — a highlight ON the button, not a halo around it. */
 .cta.is-ready {
-  cursor: pointer; opacity: 1; color: #0a0a0c;
+  cursor: pointer; opacity: 1; color: var(--void);
   background: var(--core);
   clip-path: polygon(18px 0, 100% 0, 100% calc(100% - 18px),
                     calc(100% - 18px) 100%, 0 100%, 0 18px);
@@ -577,7 +577,7 @@ function toArena() {
 .cta.is-ready::before {
   content: ""; position: absolute; top: 0; bottom: 0; left: -60%; width: 40%;
   pointer-events: none;
-  background: linear-gradient(105deg, transparent, rgba(255, 255, 255, .5), transparent);
+  background: linear-gradient(105deg, transparent, var(--line-strong), transparent);
   transform: skewX(-18deg);
   animation: cta-sheen 3.4s ease-in-out infinite;
 }

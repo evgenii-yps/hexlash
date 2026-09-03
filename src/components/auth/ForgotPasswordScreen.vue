@@ -219,7 +219,7 @@ defineExpose({
 
 .forgot-screen__input--error {
   border-color: var(--danger);
-  box-shadow: 0 0 0 3px rgba(255, 51, 51, 0.20);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 20%, transparent);
 }
 
 .forgot-screen__input:disabled {
@@ -240,7 +240,7 @@ defineExpose({
   padding: 14px;
   min-height: 48px;
   background: var(--pink);
-  color: #fff;
+  color: var(--ink);
   border: none;
   border-radius: 4px;
   font-family: inherit;
@@ -250,7 +250,7 @@ defineExpose({
   text-transform: uppercase;
   cursor: pointer;
   transition: filter 0.15s ease, transform 0.08s ease, opacity 0.15s ease, box-shadow 0.15s ease;
-  box-shadow: 0 4px 12px rgba(255, 0, 105, 0.25);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--pink) 25%, transparent);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -283,9 +283,9 @@ defineExpose({
 .forgot-screen__submit-spinner {
   width: 14px;
   height: 14px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: #fff;
-  border-radius: 50%;
+  border: 2px solid var(--line-strong);
+  border-top-color: var(--ink);
+  border-radius: var(--r-round);
   animation: forgot-spin 0.6s linear infinite;
 }
 

@@ -51,7 +51,7 @@ const btnClose = () => {
 <style scoped>
 .btn-close {
   cursor: pointer;
-  border-radius: 50%;
+  border-radius: var(--r-round);
   color: var(--ink) !important;
   margin: 8px;
   width: 44px;

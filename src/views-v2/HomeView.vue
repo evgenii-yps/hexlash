@@ -391,8 +391,8 @@ function onArrangePlace() { arrange.value = false; }
   transform: translate(-50%, calc(-100% - 14px + 6px));
   display: inline-flex; align-items: center; gap: 8px; white-space: nowrap;
   padding: 6px 11px 7px;
-  background: rgba(10, 10, 16, 0.62); backdrop-filter: blur(7px);
-  border: 1px solid rgba(255, 255, 255, 0.10); border-radius: 9px;
+  background: color-mix(in srgb, var(--void) 62%, transparent); backdrop-filter: blur(7px);
+  border: 1px solid var(--line); border-radius: 9px;
   opacity: 0;
   transition: opacity 0.32s ease,
               transform 0.32s var(--hs-spring, cubic-bezier(0.22, 0.61, 0.36, 1));
@@ -403,12 +403,12 @@ function onArrangePlace() { arrange.value = false; }
 .ft-txt { display: flex; flex-direction: column; line-height: 1.18; }
 .ft-name {
   font-family: var(--hs-mono, 'JetBrains Mono', ui-monospace, monospace);
-  font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: #f4f2f6;
+  font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink);
 }
 .ft-sig {
   font-family: var(--hs-mono, 'JetBrains Mono', ui-monospace, monospace);
   font-size: 8.5px; letter-spacing: 0.18em; text-transform: uppercase;
-  color: var(--muted, #76727c);
+  color: var(--ink-dim, var(--ink-dim));
 }
 /* ───────── the two stages of the one world ─────────
    Pressing FIGHT does not open a screen, it flies the camera away — so the home's
@@ -466,15 +466,15 @@ function onArrangePlace() { arrange.value = false; }
   font-family: var(--hs-disp, "Saira Condensed", sans-serif);
   font-weight: 900; font-size: 30px; line-height: 0.9;
   letter-spacing: 0.02em; text-transform: uppercase;
-  color: #ededf1;
+  color: var(--ink);
 }
 .mc-desc {
   font-family: var(--hs-mono, ui-monospace, monospace);
   font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
-  color: #5d5d66;
+  color: var(--ink-off);
   transition: color 0.25s var(--ease-weight, ease);
 }
-.mode-cap.is-lit .mc-desc { color: #9a9aa6; }
+.mode-cap.is-lit .mc-desc { color: var(--ink-dim); }
 
 @media (max-width: 560px) {
   .mode-back { left: 18px; top: 18px; }
@@ -486,7 +486,7 @@ function onArrangePlace() { arrange.value = false; }
    swap. Zero cost (and invisible) when the flight is doing its job. */
 .stage-dim {
   position: absolute; inset: 0; z-index: 9;
-  background: #05060b;
+  background: var(--void);
   opacity: 0; pointer-events: none;
   transition: opacity 0.13s linear;
 }
@@ -501,7 +501,7 @@ function onArrangePlace() { arrange.value = false; }
   font-family: var(--hs-mono, ui-monospace, monospace);
   font-size: 10px; line-height: 1.65; letter-spacing: 0.08em;
   text-transform: uppercase; text-align: right;
-  color: #5d5d66;
+  color: var(--ink-off);
 }
 .perf-hud .pd { opacity: 0.62; }
 

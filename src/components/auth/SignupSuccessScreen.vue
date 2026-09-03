@@ -116,7 +116,7 @@ async function onResend() {
   padding: 14px;
   min-height: 48px;
   background: var(--pink);
-  color: #fff;
+  color: var(--ink);
   border: none;
   border-radius: 4px;
   font-family: inherit;
@@ -126,7 +126,7 @@ async function onResend() {
   text-transform: uppercase;
   cursor: pointer;
   transition: filter 0.15s ease, transform 0.08s ease, box-shadow 0.15s ease;
-  box-shadow: 0 4px 12px rgba(255, 0, 105, 0.25);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--pink) 25%, transparent);
   outline: none;
 }
 
@@ -172,7 +172,7 @@ async function onResend() {
   text-align: center;
   font-size: 12px;
   color: var(--ink-dim);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--fill-2);
   border-radius: 4px;
 }
 </style>

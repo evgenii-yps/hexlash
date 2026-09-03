@@ -31,7 +31,8 @@ import { reactive } from 'vue';
 // ── The three numbers the player feels. All of them, in one place. ─────────
 export const LOADING = {
   MIN_SHOW_MS: 600,    // floor on how long the screen is up (kills the flash)
-  FADE_OUT_MS: 200,    // opacity leave — both surfaces, same duration
+  FADE_OUT_MS: 220,    // opacity leave — both surfaces. РАВНО --d-hover в токенах
+                       // (src/styles/tokens.css) и .2s→.22s в #hx-load в index.html.
   SAFETY_MS: 15000,    // hard release; logs which stage never finished
 };
 

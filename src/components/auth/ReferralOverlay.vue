@@ -85,7 +85,7 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   padding: 16px;
-  background: rgba(0, 0, 0, 0.45);
+  background: color-mix(in srgb, var(--void) 45%, transparent);
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
   animation: referral-fade-in 0.18s ease;
@@ -187,7 +187,7 @@ onBeforeUnmount(() => {
   padding: 14px;
   min-height: 48px;
   background: var(--pink);
-  color: #fff;
+  color: var(--ink);
   border: none;
   border-radius: 4px;
   font-family: inherit;
@@ -197,7 +197,7 @@ onBeforeUnmount(() => {
   text-transform: uppercase;
   cursor: pointer;
   transition: filter 0.15s ease, transform 0.08s ease, opacity 0.15s ease;
-  box-shadow: 0 4px 12px rgba(255, 0, 105, 0.25);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--pink) 25%, transparent);
   outline: none;
 }
 

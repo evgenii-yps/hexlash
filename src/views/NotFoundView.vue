@@ -68,34 +68,34 @@ import {HexlashMark} from '@/components/brand/hexlashMark.js';
 -->
 <style>
   #hx-404{
-    --accent:#ff0069; --accent-rgb:255,0,105;
-    --void:#08080a; --carbon:#0d0a0d; --bone:#f6f4f6; --ash:#6e6a72;
+    --pink:var(--pink); --pink-rgb:255,0,105;
+    --void:var(--void); --carbon:var(--carbon); --ink:var(--ink); --ink-dim:var(--ink-dim);
     /* IMPACT degrades to a condensed system face; TELE to a system mono.
        Both legible the instant the screen paints — zero webfont dependency. */
-    --impact:"Saira Condensed","Arial Narrow","Roboto Condensed",system-ui,sans-serif;
-    --tele:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --font-display:"Saira Condensed","Arial Narrow","Roboto Condensed",system-ui,sans-serif;
+    --font-mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
 
     position:fixed; inset:0; z-index:2147483000; overflow:hidden;
-    color:var(--bone); font-family:var(--tele);
+    color:var(--ink); font-family:var(--font-mono);
     -webkit-font-smoothing:antialiased; user-select:none;
     /* Solid base + ONE radial ember wash. No images, no video, no filters. */
-    background:radial-gradient(130% 80% at 50% 120%, #1a0010 0%, #0b060a 46%, var(--void) 82%);
+    background:radial-gradient(130% 80% at 50% 120%, var(--carbon) 0%, var(--void) 46%, var(--void) 82%);
   }
   #hx-404 *{ box-sizing:border-box; margin:0; }
   #hx-404 a{ color:inherit; text-decoration:none; }
-  #hx-404 ::selection{ background:var(--accent); color:#fff; }
+  #hx-404 ::selection{ background:var(--pink); color:var(--ink); }
 
   /* Breathing accent glow behind the impact moment */
   .hx4-glow{ position:absolute; left:50%; top:48%; transform:translate(-50%,-50%);
     width:min(70vw,860px); height:min(70vw,860px); pointer-events:none; z-index:0;
-    background:radial-gradient(circle, rgba(var(--accent-rgb),.16) 0%, rgba(var(--accent-rgb),.045) 42%, transparent 68%);
+    background:radial-gradient(circle, rgba(var(--pink-rgb),.16) 0%, rgba(var(--pink-rgb),.045) 42%, transparent 68%);
     animation:hx4Breathe 6s ease-in-out infinite; }
   @keyframes hx4Breathe{ 0%,100%{ opacity:.55; transform:translate(-50%,-50%) scale(.92); }
     50%{ opacity:.9; transform:translate(-50%,-50%) scale(1.06); } }
 
   /* HUD corner brackets — brandbook furniture */
   .hx4-hud i{ position:absolute; width:5vmin; height:5vmin; min-width:30px; min-height:30px;
-    border:0 solid rgba(var(--accent-rgb),.55); z-index:5; }
+    border:0 solid rgba(var(--pink-rgb),.55); z-index:5; }
   .hx4-hud i.tl{ top:4vmin; left:4vmin; border-left-width:1.6px; border-top-width:1.6px; }
   .hx4-hud i.tr{ top:4vmin; right:4vmin; border-right-width:1.6px; border-top-width:1.6px; }
   .hx4-hud i.bl{ bottom:4vmin; left:4vmin; border-left-width:1.6px; border-bottom-width:1.6px; }
@@ -111,8 +111,8 @@ import {HexlashMark} from '@/components/brand/hexlashMark.js';
   .hx4-lock{ --word:5vmin;
     display:flex; flex-direction:column; align-items:center; }
   .hx4-mark{ width:calc(var(--word) * 2.29); height:calc(var(--word) * 2.29);
-    display:block; margin-bottom:calc(var(--word) * 1.18); color:var(--bone); }
-  .hx4-word{ font-family:var(--impact); font-weight:900; text-transform:uppercase;
+    display:block; margin-bottom:calc(var(--word) * 1.18); color:var(--ink); }
+  .hx4-word{ font-family:var(--font-display); font-weight:900; text-transform:uppercase;
     font-size:var(--word); line-height:1; letter-spacing:.04em; }
 
   /* ── Centerpiece ─────────────────────────────────────────────── */
@@ -122,77 +122,78 @@ import {HexlashMark} from '@/components/brand/hexlashMark.js';
 
   /* Telemetry tag — blinking live dot */
   .hx4-tag{ display:inline-flex; align-items:center; gap:1.4vmin;
-    border:1px solid rgba(var(--accent-rgb),.34); background:rgba(var(--accent-rgb),.05);
+    border:1px solid rgba(var(--pink-rgb),.34); background:rgba(var(--pink-rgb),.05);
     padding:.85vmin 2vmin; font-size:clamp(10px,1.35vmin,13px); letter-spacing:.34em;
-    text-transform:uppercase; color:#d8d4da; }
-  .hx4-tag i{ width:8px; height:8px; border-radius:50%; background:var(--accent);
-    box-shadow:0 0 8px var(--accent); animation:hx4Blink 1.6s steps(1) infinite; }
+    text-transform:uppercase; color:var(--ink-soft); }
+  .hx4-tag i{ width:8px; height:8px; border-radius: var(--r-round); background:var(--pink);
+    box-shadow:0 0 8px var(--pink); animation:hx4Blink 1.6s steps(1) infinite; }
   @keyframes hx4Blink{ 50%{ opacity:.22; } }
 
-  /* The 404 — impact moment. Ghost stroke behind, solid glowing face. */
+  /* The 404 — impact moment. Ghost stroke behind, solid face in front.
+     Свечение снято: единственное свечение в Hexlash — разлом арены. */
   .hx4-num{ position:relative; display:inline-block;
-    font-family:var(--impact); font-weight:900; line-height:.82;
+    font-family:var(--font-display); font-weight:900; line-height:.82;
     font-size:clamp(100px,min(28vw,30vh),300px); letter-spacing:.01em;
     font-variant-numeric:tabular-nums; }
   .hx4-num .ghost{ position:absolute; left:0; right:0; top:0; color:transparent;
-    -webkit-text-stroke:1.6px rgba(var(--accent-rgb),.45); transform:translateY(-1.4vmin) scale(1.012);
+    -webkit-text-stroke:1.6px rgba(var(--pink-rgb),.45); transform:translateY(-1.4vmin) scale(1.012);
     opacity:.6; }
-  .hx4-num .solid{ position:relative; color:#fff;
-    text-shadow:0 0 4vmin rgba(var(--accent-rgb),.4),0 0 9vmin rgba(var(--accent-rgb),.22);
+  .hx4-num .solid{ position:relative; color:var(--ink);
     animation:hx4Flick 3.2s steps(1) infinite; }
   @keyframes hx4Flick{ 0%,40%,100%{ opacity:1; } 42%{ opacity:.55; } 43%{ opacity:1; } 78%{ opacity:1; } 79%{ opacity:.45; } 80%{ opacity:1; } 88%{ opacity:.7; } 89%{ opacity:1; } }
 
   /* Creed — brand voice, second word carries the pink charge */
-  .hx4-creed{ font-family:var(--impact); font-weight:800; text-transform:uppercase;
+  .hx4-creed{ font-family:var(--font-display); font-weight:800; text-transform:uppercase;
     font-size:clamp(38px,6.6vw,92px); line-height:1; letter-spacing:.03em;
-    color:var(--bone); white-space:nowrap; }
-  .hx4-creed b{ color:#fff; text-shadow:0 0 1.2vmin rgba(var(--accent-rgb),.7),0 0 5vmin rgba(var(--accent-rgb),.5); }
+    color:var(--ink); white-space:nowrap; }
+  /* Второе слово несёт розовый заряд цветом, а не свечением. */
+  .hx4-creed b{ color:var(--pink); }
 
   /* Supporting line */
-  .hx4-sub{ font-family:var(--tele); font-weight:500; text-transform:uppercase;
-    font-size:clamp(12px,1.7vmin,16px); letter-spacing:.26em; color:#8d8992;
+  .hx4-sub{ font-family:var(--font-mono); font-weight:500; text-transform:uppercase;
+    font-size:clamp(12px,1.7vmin,16px); letter-spacing:.26em; color:var(--ink-dim);
     margin-top:.6vmin; max-width:46ch; }
 
   /* CTA row */
   .hx4-cta{ display:flex; gap:18px; margin-top:2.4vmin; flex-wrap:wrap; align-items:center; justify-content:center; }
 
   .hx4-btn{ position:relative; display:inline-flex; align-items:center; gap:13px;
-    padding:17px 38px; font-weight:700; font-size:16px; letter-spacing:.22em; color:#fff;
+    padding:17px 38px; font-weight:700; font-size:16px; letter-spacing:.22em; color:var(--ink);
     text-transform:uppercase; isolation:isolate; overflow:hidden; cursor:pointer;
     clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px); }
-  .hx4-btn-bg{ position:absolute; inset:0; z-index:-1; background:var(--accent);
-    box-shadow:0 0 26px rgba(var(--accent-rgb),.6),0 0 64px rgba(var(--accent-rgb),.35);
-    transition:box-shadow .3s, filter .3s; }
+  .hx4-btn-bg{ position:absolute; inset:0; z-index:-1; background:var(--pink);
+    transition:filter var(--d-hover) var(--e-weight); }
   .hx4-btn-bg::after{ content:""; position:absolute; top:0; left:-60%; width:40%; height:100%;
-    background:linear-gradient(105deg,transparent,rgba(255,255,255,.55),transparent);
+    background:linear-gradient(105deg,transparent,var(--line-strong),transparent);
     transform:skewX(-18deg); animation:hx4Shimmer 3.4s ease-in-out infinite; }
   @keyframes hx4Shimmer{ 0%{ left:-60%; } 45%,100%{ left:140%; } }
-  .hx4-btn-arrow{ display:flex; transform:translateX(-2px); opacity:.85; transition:transform .3s, opacity .3s; }
-  .hx4-btn:hover .hx4-btn-bg{ filter:brightness(1.08); box-shadow:0 0 38px rgba(var(--accent-rgb),.85),0 0 90px rgba(var(--accent-rgb),.5); }
+  .hx4-btn-arrow{ display:flex; transform:translateX(-2px); opacity:.85;
+    transition:transform var(--d-hover) var(--e-weight), opacity var(--d-hover) var(--e-weight); }
+  .hx4-btn:hover .hx4-btn-bg{ filter:brightness(1.08); }
   .hx4-btn:hover .hx4-btn-arrow{ transform:translateX(4px); opacity:1; }
-  .hx4-btn:active{ transform:translateY(1px); }
+  .hx4-btn:active{ transform:translateY(1px); transition-duration:var(--d-press); }
 
   /* Ghost / secondary — corner ticks reveal on hover */
   .hx4-ghost{ position:relative; display:inline-flex; align-items:center; gap:11px;
-    padding:16px 28px; font-family:var(--tele); font-weight:500; font-size:13.5px;
-    letter-spacing:.2em; text-transform:uppercase; color:#d4d1d8;
-    border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.02);
+    padding:16px 28px; font-family:var(--font-mono); font-weight:500; font-size:13.5px;
+    letter-spacing:.2em; text-transform:uppercase; color:var(--ink-soft);
+    border:1px solid var(--line-strong); background:var(--fill-1);
     transition:color .3s, border-color .3s, background .3s; cursor:pointer; }
   .hx4-ghost svg{ width:18px; height:18px; }
   .hx4-ghost::before,.hx4-ghost::after{ content:""; position:absolute; width:9px; height:9px;
-    border-color:var(--accent); opacity:0; transition:opacity .3s; }
+    border-color:var(--pink); opacity:0; transition:opacity .3s; }
   .hx4-ghost::before{ top:-1px; left:-1px; border-top:2px solid; border-left:2px solid; }
   .hx4-ghost::after{ bottom:-1px; right:-1px; border-bottom:2px solid; border-right:2px solid; }
-  .hx4-ghost:hover{ color:#fff; border-color:rgba(var(--accent-rgb),.4); background:rgba(var(--accent-rgb),.06); }
+  .hx4-ghost:hover{ color:var(--ink); border-color:rgba(var(--pink-rgb),.4); background:rgba(var(--pink-rgb),.06); }
   .hx4-ghost:hover::before,.hx4-ghost:hover::after{ opacity:1; }
 
   /* Footer field-note — brandbook microtext */
   .hx4-foot{ position:absolute; left:0; right:0; bottom:6vmin; z-index:5;
     display:flex; justify-content:center; padding:0 6vw; }
   .hx4-note{ display:inline-flex; align-items:center; gap:2vmin; max-width:92vw; }
-  .hx4-note .lbl{ flex:none; font-size:clamp(9px,1.3vmin,12px); letter-spacing:.2em; color:var(--accent);
-    border:1px solid rgba(var(--accent-rgb),.4); padding:.7vmin 1.5vmin; text-transform:uppercase; }
-  .hx4-note .txt{ font-size:clamp(10px,1.45vmin,13px); letter-spacing:.16em; color:#9c98a2; text-transform:uppercase; }
+  .hx4-note .lbl{ flex:none; font-size:clamp(9px,1.3vmin,12px); letter-spacing:.2em; color:var(--pink);
+    border:1px solid rgba(var(--pink-rgb),.4); padding:.7vmin 1.5vmin; text-transform:uppercase; }
+  .hx4-note .txt{ font-size:clamp(10px,1.45vmin,13px); letter-spacing:.16em; color:var(--ink-dim); text-transform:uppercase; }
 
   /* Visually-hidden accessible heading */
   .hx4-sr{ position:absolute; width:1px; height:1px; padding:0; overflow:hidden;

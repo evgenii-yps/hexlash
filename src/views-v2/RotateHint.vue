@@ -80,13 +80,13 @@ onUnmounted(() => {
 
 <style scoped>
 .rotate-hint {
-  --accent: #ff0069;
-  --accent-rgb: 255, 0, 105;
-  --void: #08080a;
-  --bone: #f6f4f6;
-  --line2: rgba(255, 255, 255, 0.16); /* hairline-strong — matte chrome frame */
+  --pink: var(--pink);
+  --pink-rgb: 255, 0, 105;
+  --void: var(--void);
+  --ink: var(--ink);
+  --line-strong: var(--line-strong); /* hairline-strong — matte chrome frame */
   --ease-weight: cubic-bezier(0.55, 0, 0.12, 1);
-  --impact: "Saira Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif;
+  --font-display: "Saira Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif;
 
   position: fixed;
   inset: 0;
@@ -96,15 +96,16 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(8, 8, 10, 0.92);
-  color: var(--bone);
+  background: color-mix(in srgb, var(--void) 92%, transparent);
+  color: var(--ink);
   user-select: none;
   cursor: pointer;
   pointer-events: auto;
   /* very faint diagonal guides — pure decor, no glow */
   background-image:
-    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.02) 0 1px, transparent 1px 46px),
-    radial-gradient(130% 80% at 50% 120%, rgba(26, 0, 16, 0.55) 0%, transparent 60%);
+    repeating-linear-gradient(45deg, var(--fill-1) 0 1px, transparent 1px 46px),
+    radial-gradient(130% 80% at 50% 120%,
+      color-mix(in srgb, var(--pink) 12%, var(--void)) 0%, transparent 60%);
 }
 .rotate-hint * { box-sizing: border-box; margin: 0; }
 
@@ -133,7 +134,7 @@ onUnmounted(() => {
   /* ONE shadow, not two stacked: a second drop-shadow blurs the FIRST one's halo
      as well as the shape, compounding the bloom far past the line. Blur is kept at
      the line's own thickness so the halo edge never runs wider than the stroke. */
-  filter: drop-shadow(0 0 4px rgba(var(--accent-rgb), 0.45));
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--pink) 45%, transparent));
 }
 
 /* matte-chrome phone — hairline frame + glass fill, NO glow */
@@ -141,9 +142,9 @@ onUnmounted(() => {
   position: relative;
   width: 34%;
   height: 62%;
-  border: 2px solid var(--line2);
+  border: 2px solid var(--line-strong);
   border-radius: 20px;
-  background: rgba(12, 13, 18, 0.6);
+  background: color-mix(in srgb, var(--carbon) 60%, transparent);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   transform-origin: center;
@@ -157,7 +158,7 @@ onUnmounted(() => {
   width: 22%;
   height: 5px;
   border-radius: 3px;
-  background: var(--line2);
+  background: var(--line-strong);
 }
 
 @keyframes rh-rotate {
@@ -167,7 +168,7 @@ onUnmounted(() => {
 }
 
 .rh-label {
-  font-family: var(--impact);
+  font-family: var(--font-display);
   font-weight: 700;
   text-transform: uppercase;
   font-size: clamp(16px, 4.4vmin, 26px);
@@ -179,7 +180,7 @@ onUnmounted(() => {
   font-size: clamp(11px, 2.6vmin, 14px);
   letter-spacing: .14em;
   text-transform: uppercase;
-  color: #9b97a2;
+  color: var(--ink-dim);
 }
 
 @media (prefers-reduced-motion: reduce) {

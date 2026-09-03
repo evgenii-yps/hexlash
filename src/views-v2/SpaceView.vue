@@ -76,35 +76,12 @@ function goMode() { router.push('/play/mode'); }
 </script>
 
 <style scoped>
-/* Tokens the reused .hs-strip needs (coded against .home-root) — same values, given
-   here so the real strip is portable to this route without editing home.css. */
+/* Копия палитры home.css отсюда удалена — см. тот же комментарий в PveView:
+   .hs-chrome теперь читает глобальные токены, повторять их незачем. */
 .space-root {
-  --line: rgba(255, 255, 255, 0.09);
-  --line2: rgba(255, 255, 255, 0.16);
-  --bone: #f6f4f6;
-  --ash: #6e6a72;
-  --ink: #ededf1;
-  --ink-dim: #5d5d66;
-  --hs-disp: "Saira Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif;
-  --hs-mono: "JetBrains Mono", ui-monospace, monospace;
-  --hs-chrome-ink: #c8d1d8;
-  --hs-chrome-ink-dim: #5d5d66;
-  --hs-chrome-line: rgba(200, 209, 216, 0.16);
-  --hs-chrome-rim: rgba(216, 227, 234, 0.45);
-  --hs-chrome-rim-hot: rgba(216, 227, 234, 0.8);
-  --hs-chrome-bloom: rgba(200, 209, 216, 0.22);
-  --hs-chrome-bloom-hot: rgba(200, 209, 216, 0.3);
-  --hs-chrome-glass: rgba(22, 22, 27, 0.55);
-  --hs-chrome-glass-hover: rgba(28, 30, 37, 0.72);
-  --hs-chrome-void: #08080a;
-  --ease-weight: cubic-bezier(0.55, 0, 0.12, 1);
-  --hs-hover: 0.22s;
-  --hs-press: 0.12s;
-  --hs-fast: 0.15s;
-
   position: absolute; inset: 0; overflow: hidden;
-  background: #08080a; color: var(--ink);
-  font-family: var(--hs-disp);
+  background: var(--void); color: var(--ink);
+  font-family: var(--font-display);
 }
 
 /* brand removed → pin the SHOP/cabinet cluster to the right (scoped to Space —
@@ -118,19 +95,19 @@ function goMode() { router.push('/play/mode'); }
   z-index: 6; max-width: min(90vw, 460px);
   display: flex; align-items: center; gap: 14px;
   padding: 12px 18px;
-  background: rgba(20, 20, 25, 0.62); border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--panel) 62%, transparent); border: 1px solid var(--line);
   backdrop-filter: blur(8px);
   pointer-events: none;
 }
 .space-note-soon {
   flex: 0 0 auto;
-  font-family: var(--hs-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.28em; text-transform: uppercase;
-  color: #cfccd3; padding: 5px 10px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.03));
-  border: 1px solid var(--line2);
+  font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.28em; text-transform: uppercase;
+  color: var(--ink-soft); padding: 5px 10px;
+  background: linear-gradient(180deg, var(--line), var(--fill-1));
+  border: 1px solid var(--line-strong);
 }
 .space-note-text {
-  margin: 0; font-family: var(--hs-mono); font-size: 11.5px; line-height: 1.5; letter-spacing: 0.04em;
+  margin: 0; font-family: var(--font-mono); font-size: 11.5px; line-height: 1.5; letter-spacing: 0.04em;
   color: var(--ink-dim); text-transform: uppercase;
 }
 @media (max-width: 560px) {

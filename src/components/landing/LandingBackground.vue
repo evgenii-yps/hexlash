@@ -47,12 +47,12 @@ const bgVars = computed(() => ({ '--lp-bg-accent': props.accent.join(', ') }));
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
-  --lp-bg-base: #08080a;
+  --lp-bg-base: var(--void);
 }
 .lp-bg__base {
   position: absolute;
   inset: 0;
-  background: radial-gradient(140% 90% at 50% 30%, #160a11 0%, #0b070a 46%, var(--lp-bg-base) 80%);
+  background: radial-gradient(140% 90% at 50% 30%, var(--carbon) 0%, var(--carbon) 46%, var(--lp-bg-base) 80%);
 }
 .lp-bg__glow {
   position: absolute;
@@ -72,14 +72,14 @@ const bgVars = computed(() => ({ '--lp-bg-accent': props.accent.join(', ') }));
 .lp-bg__vignette {
   position: absolute;
   inset: 0;
-  background: radial-gradient(120% 90% at 50% 50%, transparent 50%, rgba(0, 0, 0, .55) 100%);
-  box-shadow: inset 0 0 220px 60px rgba(0, 0, 0, .7);
+  background: radial-gradient(120% 90% at 50% 50%, transparent 50%, color-mix(in srgb, var(--void) 55%, transparent) 100%);
+  box-shadow: inset 0 0 220px 60px color-mix(in srgb, var(--void) 70%, transparent);
 }
 .lp-bg__scanlines {
   position: absolute;
   inset: 0;
   opacity: .5;
-  background: repeating-linear-gradient(to bottom, rgba(255, 255, 255, .018) 0 1px, transparent 1px 3px);
+  background: repeating-linear-gradient(to bottom, var(--fill-1) 0 1px, transparent 1px 3px);
   mix-blend-mode: overlay;
 }
 .lp-bg__grain {

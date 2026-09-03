@@ -89,28 +89,28 @@ onBeforeUnmount(stopTips);
 /* Self-contained literals (the same ones #hx-load inlines) so the look is
    guaranteed even before --hex-* tokens or the brand faces resolve. */
 .hx-loading {
-  --accent: #ff0069;
-  --accent-rgb: 255, 0, 105;
-  --void: #08080a;
-  --bone: #f6f4f6;
-  --impact: "Saira Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif;
-  --tele: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --pink: var(--pink);
+  --pink-rgb: 255, 0, 105;
+  --void: var(--void);
+  --ink: var(--ink);
+  --font-display: "Saira Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
   position: fixed;
   inset: 0;
-  z-index: 2147483000;
+  z-index: var(--z-load);
   overflow: hidden;
-  color: var(--bone);
-  font-family: var(--tele);
+  color: var(--ink);
+  font-family: var(--font-mono);
   -webkit-font-smoothing: antialiased;
   user-select: none;
   pointer-events: auto; /* block input under the cover while it is up */
-  background: radial-gradient(130% 80% at 50% 120%, #1a0010 0%, #0b060a 46%, var(--void) 82%);
+  background: radial-gradient(130% 80% at 50% 120%, var(--carbon) 0%, var(--void) 46%, var(--void) 82%);
 }
 .hx-loading * { box-sizing: border-box; margin: 0; }
 
 /* HUD corner brackets */
-.hxo-hud i { position: absolute; width: 5vmin; height: 5vmin; border: 0 solid rgba(var(--accent-rgb), .55); }
+.hxo-hud i { position: absolute; width: 5vmin; height: 5vmin; border: 0 solid rgba(var(--pink-rgb), .55); }
 .hxo-hud i.tl { top: 4vmin; left: 4vmin; border-left-width: 1.6px; border-top-width: 1.6px; }
 .hxo-hud i.tr { top: 4vmin; right: 4vmin; border-right-width: 1.6px; border-top-width: 1.6px; }
 .hxo-hud i.bl { bottom: 4vmin; left: 4vmin; border-left-width: 1.6px; border-bottom-width: 1.6px; }
@@ -127,36 +127,38 @@ onBeforeUnmount(stopTips);
 .hxo-lock { --word: 6vmin;
   display: flex; flex-direction: column; align-items: center; }
 .hxo-mark { width: calc(var(--word) * 2.29); height: calc(var(--word) * 2.29);
-  display: block; margin-bottom: calc(var(--word) * 1.18); color: var(--bone); }
-.hxo-word { font-family: var(--impact); font-weight: 900; text-transform: uppercase;
+  display: block; margin-bottom: calc(var(--word) * 1.18); color: var(--ink); }
+.hxo-word { font-family: var(--font-display); font-weight: 900; text-transform: uppercase;
   font-size: var(--word); line-height: 1; letter-spacing: .02em; }
 
 /* Centerpiece: hero percent + creed */
 .hxo-mid { position: absolute; inset: 0; display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: 1vmin; }
-.hxo-num { font-family: var(--impact); font-weight: 900; line-height: .84;
-  font-size: 38vmin; letter-spacing: -.01em; color: #fff;
-  text-shadow: 0 0 5vmin rgba(var(--accent-rgb), .35); font-variant-numeric: tabular-nums; }
-.hxo-num sup { font-size: .26em; color: var(--accent); vertical-align: .9em; margin-left: .06em;
-  text-shadow: 0 0 2vmin rgba(var(--accent-rgb), .8); }
-.hxo-creed { font-family: var(--impact); font-weight: 800; text-transform: uppercase;
-  font-size: 6.4vmin; letter-spacing: .04em; color: var(--bone); white-space: nowrap; }
-.hxo-creed :deep(b) { color: #fff; text-shadow: 0 0 1vmin rgba(var(--accent-rgb), .7), 0 0 4vmin rgba(var(--accent-rgb), .6); }
+.hxo-num { font-family: var(--font-display); font-weight: 900; line-height: .84;
+  font-size: 38vmin; letter-spacing: -.01em; color: var(--ink);
+  font-variant-numeric: tabular-nums; }
+.hxo-num sup { font-size: .26em; color: var(--pink); vertical-align: .9em; margin-left: .06em; }
+.hxo-creed { font-family: var(--font-display); font-weight: 800; text-transform: uppercase;
+  font-size: 6.4vmin; letter-spacing: .04em; color: var(--ink); white-space: nowrap; }
+/* Свечения на экране загрузки нет (Документ Б, экран 8): единственное
+   свечение в Hexlash — разлом арены. Раньше здесь светились четыре вещи —
+   процент, знак процента, слово в девизе и полоса. Розовый остался цветом. */
+.hxo-creed :deep(b) { color: var(--ink); }
 
 /* Footer: progress bar + field note */
 .hxo-foot { position: absolute; left: 0; right: 0; bottom: 8.5vmin;
   display: flex; flex-direction: column; align-items: center; gap: 3vmin; padding: 0 6vmin; }
-.hxo-bar { position: relative; width: 54vmin; max-width: 560px; height: 3px; background: rgba(255, 255, 255, .10);
+.hxo-bar { position: relative; width: 54vmin; max-width: 560px; height: 3px; background: var(--line);
   clip-path: polygon(2vmin 0, 100% 0, calc(100% - 2vmin) 100%, 0 100%); }
-.hxo-fill { position: absolute; inset: 0; background: var(--accent);
-  box-shadow: 0 0 9px rgba(var(--accent-rgb), .9); transition: width .35s ease; }
+.hxo-fill { position: absolute; inset: 0; background: var(--pink);
+  transition: width var(--d-panel) var(--e-settle); }
 .hxo-tip { display: flex; align-items: center; gap: 2.4vmin; max-width: 90vw; text-align: center; }
-.hxo-tag { flex: none; font-size: 2.3vmin; letter-spacing: .2em; color: var(--accent);
-  border: 1px solid rgba(var(--accent-rgb), .4); padding: .8vmin 1.6vmin; text-transform: uppercase; }
-.hxo-line { font-size: 2.6vmin; letter-spacing: .12em; color: #bdb9c2; text-transform: uppercase; }
+.hxo-tag { flex: none; font-size: 2.3vmin; letter-spacing: .2em; color: var(--pink);
+  border: 1px solid rgba(var(--pink-rgb), .4); padding: .8vmin 1.6vmin; text-transform: uppercase; }
+.hxo-line { font-size: 2.6vmin; letter-spacing: .12em; color: var(--ink-soft); text-transform: uppercase; }
 
 /* Leave — opacity only. Must match LOADING.FADE_OUT_MS in sceneLoading.js. */
-.hxo-enter-active, .hxo-leave-active { transition: opacity .2s ease; }
+.hxo-enter-active, .hxo-leave-active { transition: opacity var(--d-hover) var(--e-settle); }
 .hxo-enter-from, .hxo-leave-to { opacity: 0; }
 
 /* Portrait / mobile — mirrors the page-load splash breakpoint. */

@@ -257,8 +257,8 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
    page furniture around them (background, headline, bottom action bar) is gone.
    Tokens are the hall's (forge.css) — nothing new is invented here. */
 .ftree {
-  --core-dim: color-mix(in srgb, var(--core) 55%, transparent);
-  --core-ink: color-mix(in srgb, var(--core) 62%, #fff);
+  --core-sup: color-mix(in srgb, var(--core) 55%, transparent);
+  --core-ink: color-mix(in srgb, var(--core) 62%, var(--ink));
   display: flex; flex-direction: column; min-height: 0; height: 100%;
   font-family: var(--fg-mono);
 }
@@ -292,12 +292,12 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
   border: 1px solid var(--fg-line);
   background:
     radial-gradient(60% 50% at 50% 50%, color-mix(in srgb, var(--core) 6%, transparent), transparent 70%),
-    linear-gradient(180deg, rgba(255,255,255,.014), rgba(255,255,255,0) 70%);
+    linear-gradient(180deg, var(--fill-1), transparent 70%);
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%);
 }
 .ft-spokes { position: absolute; inset: 0; z-index: 1; opacity: 0; transition: opacity .5s var(--fg-ease); }
 .ftree[data-level="crystal"] .ft-spokes { opacity: 1; }
-.ft-spokes line { stroke: var(--core-dim); stroke-width: 1; stroke-dasharray: 2 5; opacity: .7; }
+.ft-spokes line { stroke: var(--core-sup); stroke-width: 1; stroke-dasharray: 2 5; opacity: .7; }
 
 /* the core — the panel's ONE glow */
 .ft-core {
@@ -307,12 +307,12 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
 }
 .ft-core .glyph { width: 100%; height: 100%; display: grid; place-items: center; position: relative; z-index: 3; }
 .ft-core :deep(svg) { width: 100%; height: 100%; overflow: visible; }
-.ft-core :deep(.hex-line) { stroke: color-mix(in srgb, var(--core) 22%, #fff); fill: none; stroke-width: 2;
+.ft-core :deep(.hex-line) { stroke: color-mix(in srgb, var(--core) 22%, var(--ink)); fill: none; stroke-width: 2;
   filter: drop-shadow(0 0 6px color-mix(in srgb, var(--core) 55%, transparent)); }
-.ft-core :deep(.facet) { stroke: color-mix(in srgb, var(--core) 30%, #fff); fill: none; stroke-width: 1.4; }
-.ft-core :deep(.seed) { fill: #fff; filter: drop-shadow(0 0 8px color-mix(in srgb, var(--core) 90%, transparent)); }
+.ft-core :deep(.facet) { stroke: color-mix(in srgb, var(--core) 30%, var(--ink)); fill: none; stroke-width: 1.4; }
+.ft-core :deep(.seed) { fill: var(--ink); filter: drop-shadow(0 0 8px color-mix(in srgb, var(--core) 90%, transparent)); }
 .ft-core .glow {
-  position: absolute; inset: -30%; border-radius: 50%; z-index: 1; pointer-events: none;
+  position: absolute; inset: -30%; border-radius: var(--r-round); z-index: 1; pointer-events: none;
   background:
     radial-gradient(circle at 50% 50%,
       color-mix(in srgb, var(--core) 62%, transparent) 0%,
@@ -326,7 +326,7 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
   filter: blur(18px);
   animation: ftBreathe 4.6s ease-in-out infinite;
 }
-.ft-core:focus-visible { outline: 1px solid var(--core-dim); outline-offset: 4px; }
+.ft-core:focus-visible { outline: 1px solid var(--core-sup); outline-offset: 4px; }
 @keyframes ftBreathe { 0%,100% { opacity:.72; transform: scale(.97); } 50% { opacity:1; transform: scale(1.05); } }
 .ftree[data-level="crystal"] .ft-core { transform: translate(-50%, -50%) scale(.5); cursor: default; }
 .ftree[data-level="face"] .ft-core { transform: translate(-50%, calc(-50% - 74px)) scale(.2); opacity: .4; cursor: default; }
@@ -341,7 +341,7 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
   width: 66px; opacity: .78; }
 .ft-ghost .ghex { width: 34px; height: 34px; }
 .ft-ghost .ghex svg { width: 100%; height: 100%; overflow: visible; }
-.ft-ghost .ghex .hl { stroke: var(--core-dim); fill: none; stroke-width: 1; stroke-dasharray: 3 4; }
+.ft-ghost .ghex .hl { stroke: var(--core-sup); fill: none; stroke-width: 1; stroke-dasharray: 3 4; }
 .ft-ghost .gn { font-size: 8.5px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase;
   color: var(--fg-ash); line-height: 1; }
 .ft-ghost .gr { font-size: 8px; letter-spacing: .08em; color: var(--fg-ink-3); line-height: 1; }
@@ -365,12 +365,12 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
 .ft-crystal .shard :deep(.lit) { fill: color-mix(in srgb, var(--core) 55%, transparent); transition: fill .25s var(--fg-ease); }
 .ft-crystal .shard :deep(.hex-line) { stroke: color-mix(in srgb, var(--core) 50%, var(--fg-ash));
   fill: none; stroke-width: 1.6; transition: stroke .25s var(--fg-ease); }
-.ft-crystal:hover .shard :deep(.hex-line) { stroke: #fff; }
-.ft-crystal:focus-visible { outline: 1px solid var(--core-dim); outline-offset: 3px; }
+.ft-crystal:hover .shard :deep(.hex-line) { stroke: var(--ink); }
+.ft-crystal:focus-visible { outline: 1px solid var(--core-sup); outline-offset: 3px; }
 .ft-crystal .nm { font-size: 9.5px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--fg-bone); }
 .ft-crystal .ratio { font-size: 9.5px; color: var(--fg-ash); letter-spacing: .08em; }
 .ft-crystal .ratio b { color: var(--core-ink); font-weight: 700; }
-.ft-crystal.full .ratio b { color: #fff; }
+.ft-crystal.full .ratio b { color: var(--ink); }
 
 /* facets */
 .ft-facets[hidden] { display: none; }
@@ -379,14 +379,14 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
   overflow-y: auto; scrollbar-width: thin; align-content: start; }
 .ft-facets::-webkit-scrollbar { width: 4px; }
 .ft-facets::-webkit-scrollbar-thumb { background: var(--fg-line-2); border-radius: 4px; }
-.ft-face { position: relative; border: 1px solid var(--fg-line); background: rgba(255,255,255,.018);
+.ft-face { position: relative; border: 1px solid var(--fg-line); background: var(--fill-1);
   padding: 9px 5px 7px; display: flex; flex-direction: column; align-items: center; gap: 6px;
   cursor: pointer; min-height: 44px;
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
   transition: border-color .2s, background .2s, transform .12s;
   -webkit-tap-highlight-color: transparent; }
 .ft-face:active { transform: scale(.96); }
-.ft-face:focus-visible { outline: 1px solid var(--core-dim); outline-offset: 2px; }
+.ft-face:focus-visible { outline: 1px solid var(--core-sup); outline-offset: 2px; }
 .ft-face .fhex { width: 26px; height: 26px; color: var(--fg-ash); transition: color .25s var(--fg-ease); }
 .ft-face .fhex :deep(svg) { width: 100%; height: 100%; overflow: visible; }
 .ft-face .fhex :deep(.ln) { stroke: currentColor; fill: none; stroke-width: 1.5; }
@@ -397,12 +397,12 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
 .ft-face .fl-tag { font-size: 7.5px; letter-spacing: .04em; text-transform: uppercase; color: var(--fg-ash);
   line-height: 1.15; text-align: center; }
 .ft-face .fl-st { font-size: 7.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--fg-ash); }
-.ft-face.lit { border-color: var(--core-dim); background: color-mix(in srgb, var(--core) 10%, transparent); }
+.ft-face.lit { border-color: var(--core-sup); background: color-mix(in srgb, var(--core) 10%, transparent); }
 .ft-face.lit .fhex { color: var(--core); }
 .ft-face.lit .fhex :deep(.fl) { fill: var(--core); }
 .ft-face.lit .fl-pct, .ft-face.lit .fl-tag, .ft-face.lit .fl-st { color: var(--core-ink); }
 .ft-face.lit .fl-pct { color: var(--core); }
-.ft-face.open:hover { border-color: var(--fg-line-2); background: rgba(255,255,255,.04); }
+.ft-face.open:hover { border-color: var(--fg-line-2); background: var(--fill-2); }
 .ft-face.locked { opacity: .4; cursor: not-allowed; border-style: dashed; }
 .ft-face.blocked { cursor: not-allowed; }
 @keyframes ftDeny { 0%,100% { transform: translateX(0);} 20% { transform: translateX(-5px);} 40% { transform: translateX(5px);} 60% { transform: translateX(-3px);} 80% { transform: translateX(3px);} }
@@ -413,7 +413,9 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
   display: flex; align-items: center; justify-content: center; padding: 8px 12px;
   font-size: 9.5px; letter-spacing: .22em; text-transform: uppercase; color: var(--fg-ash);
   border-top: 1px solid var(--fg-line);
-  background: linear-gradient(180deg, transparent 0%, rgba(8,8,10,.82) 60%, rgba(8,8,10,.96) 100%);
+  background: linear-gradient(180deg, transparent 0%,
+    color-mix(in srgb, var(--void) 82%, transparent) 60%,
+    color-mix(in srgb, var(--void) 96%, transparent) 100%);
   pointer-events: none; }
 
 /* build strip */

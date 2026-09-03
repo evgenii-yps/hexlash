@@ -123,7 +123,7 @@
               <div v-if="sp.kind === 'free'" class="sc-set" style="flex-direction: row; align-items: center; gap: 14px">
                 <div class="sc-free-art"><svg viewBox="0 0 32 32" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="13" width="22" height="14" /><path d="M3 13h26v4H3z" fill="rgba(255,255,255,0.04)" /><path d="M16 9v18M16 9c-3-4-7-1-4 2 M16 9c3-4 7-1 4 2" /></svg></div>
                 <div style="display: flex; flex-direction: column; gap: 5px">
-                  <div class="sc-line" style="color: #fff; font-weight: 700">{{ t.shop.specials[sp.id].reward }}</div>
+                  <div class="sc-line" style="color: var(--ink); font-weight: 700">{{ t.shop.specials[sp.id].reward }}</div>
                   <div class="sc-note">{{ t.shop.specials[sp.id].note }}</div>
                 </div>
               </div>
@@ -254,6 +254,7 @@ import { useStore } from 'vuex';
 import { t } from '@/locales/index.js';
 import { CORES as ROSTER_CORES } from '@/data/upgradeData.js';
 import '@/styles/shop.css';
+import { CORE_HUE, coreSup } from '@/data/sceneTokens.js';
 
 defineProps({ balance: { type: String, default: '2,480' } });
 defineEmits(['back']);
@@ -272,16 +273,20 @@ const buyStep = ref('confirm'); // 'confirm' | 'done'
 const buyItem = ref(null);
 const ownedItems = reactive(new Set(['crates'])); // hardcoded demo ownership (Supply Cache)
 
-// ── the four cores (canon two-tone) — colour = which core a piece is tuned to ──
+// ── четыре ядра: цвет = к какому ядру подогнан предмет ──────────────────────
+// У каждого ядра РОВНО ОДИН цвет (Документ А 2.3). Вторые тона здесь были
+// объявлены отдельными значениями и расходились с деревом прокачки во всех
+// четырёх случаях — они удалены, второй тон выводится осветлением по общему
+// правилу (coreSup из src/data/sceneTokens.js).
 const CORES = {
-  onslaught: { name: 'ONSLAUGHT', main: '#FF3344', sup: '#FF7A30', rgb: '255,51,68',  glyph: 'onslaught' },
-  raider:    { name: 'RAIDER',    main: '#FFA526', sup: '#FFD930', rgb: '255,165,38', glyph: 'raider' },
-  bulwark:   { name: 'BULWARK',   main: '#2ED6B0', sup: '#5DD6E6', rgb: '46,214,176', glyph: 'bulwark' },
-  ambush:    { name: 'AMBUSH',    main: '#9461FF', sup: '#D461FF', rgb: '148,97,255', glyph: 'ambush' },
+  onslaught: { name: 'ONSLAUGHT', main: CORE_HUE.natisk, rgb: '255,51,68',  glyph: 'onslaught' },
+  raider:    { name: 'RAIDER',    main: CORE_HUE.nalet,  rgb: '255,165,38', glyph: 'raider' },
+  bulwark:   { name: 'BULWARK',   main: CORE_HUE.skala,  rgb: '46,214,176', glyph: 'bulwark' },
+  ambush:    { name: 'AMBUSH',    main: CORE_HUE.zasada, rgb: '148,97,255', glyph: 'ambush' },
 };
 function coreVars(core) {
   const c = CORES[core];
-  return c ? { '--c': c.main, '--c-sup': c.sup, '--c-rgb': c.rgb } : {};
+  return c ? { '--c': c.main, '--c-sup': coreSup(c.main), '--c-rgb': c.rgb } : {};
 }
 function coreGlyphInner(core) {
   switch (CORES[core] && CORES[core].glyph) {
@@ -316,7 +321,7 @@ const SPECIALS = [
 ];
 
 // ── matte arena material (mirrors MAT in home_stage) + prop builders ──
-const MAT = { top: '#525d6f', lit: '#3a4453', side: '#252c37', dark: '#171c25', rim: 'rgba(190,205,226,0.42)', edge: 'rgba(228,236,248,0.5)' };
+const MAT = { top: 'var(--chrome-lo)', lit: 'var(--chrome-lo)', side: 'var(--panel)', dark: 'var(--panel)', rim: 'rgba(190,205,226,0.42)', edge: 'rgba(228,236,248,0.5)' };
 const fmtN = (n) => Math.round(n * 10) / 10;
 function box(hw, dep, h, opts = {}) {
   const m = opts.mat || MAT;
@@ -359,7 +364,7 @@ const PROPS = {
       <polygon points="0,-26 22,0 0,26" fill="${MAT.side}"/>
       <polygon points="0,-26 -22,0 0,0 22,0" fill="${MAT.top}" opacity="0.9"/>
       <polyline points="-22,0 0,-26 22,0" fill="none" stroke="${MAT.rim}" stroke-width="1" opacity="0.55"/>
-      <circle cx="0" cy="0" r="3.4" fill="#3a4250"/>
+      <circle cx="0" cy="0" r="3.4" fill="var(--chrome-lo)"/>
     </g>`,
 };
 function drawObject(kind) { return PROPS[kind] ? PROPS[kind]() : ''; }
@@ -368,8 +373,8 @@ function drawObject(kind) { return PROPS[kind] ? PROPS[kind]() : ''; }
 function glowPropSVG(kind, core, lvl, scale) {
   const c = CORES[core];
   const id = `${kind}-${core || 'n'}`;
-  const main = c ? c.main : '#9fb0c8';
-  const sup = c ? c.sup : '#c8d4e6';
+  const main = c ? c.main : 'var(--chrome-hi)';
+  const sup = c ? c.sup : 'var(--chrome-hi)';
   const bloomO = c ? (lvl === 'hero' ? 0.55 : 0.26) : 0.1;
   const ringO = c ? (lvl === 'hero' ? 0.9 : 0.5) : 0.22;
   const motY = (kind === 'banner' || kind === 'arch') ? 70 : 150;
@@ -389,7 +394,7 @@ function glowPropSVG(kind, core, lvl, scale) {
         <filter id="gp-soft-${id}" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="6"/></filter>
       </defs>
       <ellipse class="gp-bloom" cx="130" cy="118" rx="120" ry="96" fill="url(#gp-bloom-${id})"/>
-      <polygon points="60,182 130,148 200,182 130,216" fill="none" stroke="#fff" stroke-opacity="0.07" stroke-width="1"/>
+      <polygon points="60,182 130,148 200,182 130,216" fill="none" stroke="var(--ink)" stroke-opacity="0.07" stroke-width="1"/>
       <ellipse class="gp-ring" cx="130" cy="184" rx="${64 * scale}" ry="${15 * scale}" fill="url(#gp-ring-${id})" filter="url(#gp-soft-${id})"/>
       <g transform="translate(130,184) scale(${scale})">${drawObject(kind)}</g>
       ${c ? `<circle class="gp-mote" cx="130" cy="${motY}" r="3.4" fill="${sup}"/>` : ''}
@@ -425,7 +430,7 @@ function hexPileSVG(tier) {
   return `
     <svg viewBox="0 0 260 200" preserveAspectRatio="xMidYMax meet" class="hx-prev">
       <defs><radialGradient id="hxdrop-${tier}" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#000" stop-opacity="0.55"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient></defs>
-      <polygon points="64,182 130,150 196,182 130,214" fill="none" stroke="#fff" stroke-opacity="0.07" stroke-width="1"/>
+      <polygon points="64,182 130,150 196,182 130,214" fill="none" stroke="var(--ink)" stroke-opacity="0.07" stroke-width="1"/>
       <ellipse cx="130" cy="184" rx="${48 + tier * 8}" ry="${13 + tier}" fill="url(#hxdrop-${tier})"/>
       <g>${body}</g>
     </svg>`;

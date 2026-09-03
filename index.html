@@ -100,7 +100,9 @@
             background: radial-gradient(130% 80% at 50% 120%, #1a0010 0%, #0b060a 46%, var(--void) 82%);
             /* Leave — must match LOADING.FADE_OUT_MS in src/services/sceneLoading.js,
                so the first-load surface and the in-app one lift identically. */
-            transition: opacity .2s ease;
+            /* = --d-hover / --e-settle в токенах. Здесь литералами: этот
+               экран красится до бандла, tokens.css ещё не загружен. */
+            transition: opacity .22s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
         #hx-load.hxl-out { opacity: 0; pointer-events: none; }
         #hx-load * { box-sizing: border-box; margin: 0; }

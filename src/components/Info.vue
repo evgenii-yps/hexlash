@@ -52,7 +52,7 @@ const btnClose = () => {
 .btn-close {
   cursor: pointer;
   background-color: var(--pink);
-  border-radius: 50%;
+  border-radius: var(--r-round);
   color: var(--ink) !important;
   margin: 8px;
   width: 44px;
