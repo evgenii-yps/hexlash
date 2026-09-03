@@ -82,7 +82,7 @@ async function onResend() {
   font-size: 18px;
   font-weight: 600;
   letter-spacing: 0.04em;
-  color: var(--hex-text-primary);
+  color: var(--ink);
 }
 
 .signup-success__hint {
@@ -90,7 +90,7 @@ async function onResend() {
   text-align: center;
   font-size: 14px;
   line-height: 1.5;
-  color: var(--hex-text-secondary);
+  color: var(--ink-dim);
 }
 
 .signup-success__email {
@@ -99,7 +99,7 @@ async function onResend() {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 13px;
   letter-spacing: 0.04em;
-  color: var(--hex-primary);
+  color: var(--pink);
   word-break: break-all;
 }
 
@@ -108,14 +108,14 @@ async function onResend() {
   text-align: center;
   font-size: 13px;
   line-height: 1.5;
-  color: var(--hex-text-muted);
+  color: var(--ink-off);
 }
 
 .signup-success__submit {
   margin: 0 0 12px;
   padding: 14px;
   min-height: 48px;
-  background: var(--hex-primary);
+  background: var(--pink);
   color: #fff;
   border: none;
   border-radius: 4px;
@@ -132,14 +132,14 @@ async function onResend() {
 
 .signup-success__submit:hover { filter: brightness(1.08); }
 .signup-success__submit:active { transform: translateY(1px); }
-.signup-success__submit:focus-visible { box-shadow: 0 0 0 5px var(--hex-primary-glow); }
+.signup-success__submit:focus-visible { box-shadow: 0 0 0 5px color-mix(in srgb, var(--pink) 50%, transparent); }
 
 .signup-success__resend {
   padding: 10px 14px;
   min-height: 44px;
   background: transparent;
-  color: var(--hex-text-secondary);
-  border: 1px solid var(--hex-border-default);
+  color: var(--ink-dim);
+  border: 1px solid var(--line);
   border-radius: 4px;
   font-family: inherit;
   font-size: 13px;
@@ -152,13 +152,13 @@ async function onResend() {
 }
 
 .signup-success__resend:hover:not(:disabled) {
-  border-color: var(--hex-primary);
-  color: var(--hex-primary);
+  border-color: var(--pink);
+  color: var(--pink);
 }
 
 .signup-success__resend:focus-visible {
-  border-color: var(--hex-primary);
-  box-shadow: 0 0 0 3px var(--hex-primary-glow);
+  border-color: var(--pink);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--pink) 50%, transparent);
 }
 
 .signup-success__resend:disabled {
@@ -171,7 +171,7 @@ async function onResend() {
   padding: 8px 12px;
   text-align: center;
   font-size: 12px;
-  color: var(--hex-text-secondary);
+  color: var(--ink-dim);
   background: rgba(255, 255, 255, 0.04);
   border-radius: 4px;
 }

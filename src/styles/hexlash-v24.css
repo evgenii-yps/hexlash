@@ -1,7 +1,0 @@
-/* v2 Migration — entry point для дизайн-системы v24.
-   Импортируется ТОЛЬКО в src/AppV2.vue, не в main.js.
-   Стили scoped под .app-v2 — не утекают в старый визуал. */
-
-@import './v24/tokens.css';
-@import './v24/effects.css';
-@import './v24/verify.css';

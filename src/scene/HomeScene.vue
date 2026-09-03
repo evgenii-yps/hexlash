@@ -988,7 +988,7 @@ onMounted(() => {
 
   load.stage('renderer');
 
-  const pink = getComputedStyle(el).getPropertyValue('--hex-primary').trim() || '#FF0069';
+  const pink = getComputedStyle(el).getPropertyValue('--pink').trim() || '#FF0069';
 
   // --- Slab: reuse buildArena UNMODIFIED, then SUPPRESS the combat rift. The
   //     rift glow + sparks live on refs; zeroing the glow materials' opacity and

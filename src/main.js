@@ -85,11 +85,11 @@ const vuetify = createVuetify({
     },
     defaults: {
         VBtn: {
-            color: 'var(--hex-primary)',
+            color: 'var(--pink)',
             variant: 'elevated',
         },
         VBtnDark: {
-            color: 'var(--hex-bg-card)',
+            color: 'var(--panel)',
             variant: 'elevated',
         },
         VCard: {

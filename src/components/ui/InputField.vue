@@ -33,7 +33,7 @@ const props = defineProps({
   modelValue: String,
   labelColor: {
     type: String,
-    default: 'var(--hex-text-secondary)'
+    default: 'var(--ink-dim)'
   },
   labelSize: {
     type: String,
@@ -41,15 +41,15 @@ const props = defineProps({
   },
   inputBgColor: {
     type: String,
-    default: 'var(--hex-text-primary)'
+    default: 'var(--ink)'
   },
   inputBorderColor: {
     type: String,
-    default: 'var(--hex-border-default)'
+    default: 'var(--line)'
   },
   inputTextColor: {
     type: String,
-    default: 'var(--hex-bg-dark)'
+    default: 'var(--void)'
   },
   borderRadius: {
     type: String,
@@ -61,7 +61,7 @@ const props = defineProps({
   },
   focusBorderColor: {
     type: String,
-    default: 'var(--hex-border-active)'
+    default: 'var(--line-strong)'
   },
   marginBottom: {
     type: String,
@@ -140,14 +140,14 @@ const wrapperStyles = computed(() => ({
 .input-element {
   border: none;
   outline: none; /* Убираем синюю рамку */
-  caret-color: var(--hex-text-primary);
+  caret-color: var(--ink);
   padding: 0 0.8rem;
   border-radius: 0;
   box-sizing: border-box;
 }
 
 .input-element:focus {
-  border-color: var(--hex-border-active);
+  border-color: var(--line-strong);
 }
 
 .slot-container {
@@ -166,8 +166,8 @@ textarea:-webkit-autofill:focus,
 select:-webkit-autofill,
 select:-webkit-autofill:hover,
 select:-webkit-autofill:focus {
-  -webkit-text-fill-color: var(--hex-text-primary);
-  -webkit-box-shadow: 0 0 0 1000px var(--hex-bg-card) inset;
+  -webkit-text-fill-color: var(--ink);
+  -webkit-box-shadow: 0 0 0 1000px var(--panel) inset;
   transition: background-color 5000s ease-in-out 0s;
 }
 </style>

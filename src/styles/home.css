@@ -1,7 +1,7 @@
 /* home.css — Hexlash player-home chrome (2D layer over the 3D HomeScene).
    Adapted from the design handoff (docs/design-handoff/hexlash_home/home.css):
    project tokens + fonts (Saira Condensed display, JetBrains Mono telemetry,
-   one pink = --hex-primary), and GLOW DISCIPLINE — the reference put box-shadow
+   one pink = --pink), and GLOW DISCIPLINE — the reference put box-shadow
    glows on many pink marks; per spec only the 3D fighter core + the FIGHT button
    may glow, so every other pink mark here is MATTE (no box-shadow). Shop = zero glow.
 
@@ -12,48 +12,21 @@
   position: absolute;
   inset: 0;
   overflow: hidden;
-  color: #f4f2f6;
-  --acc: var(--hex-primary, #ff0069);
-  --acc-rgb: 255, 0, 105; /* #FF0069 — canonical pink, for rgba() tints */
-  --hs-disp: "Saira Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif;
-  --hs-mono: "JetBrains Mono", ui-monospace, monospace;
-  --muted: #76727c;
-  --bone: #f6f4f6;   /* near-white display ink (brand mark, chrome hover frame) */
-  --ash: #6e6a72;    /* dim mono sublabels (DECOR · MORE / OPEN CABINET / ARRANGE PROPS) */
-  --line: rgba(255, 255, 255, 0.09);
-  --line2: rgba(255, 255, 255, 0.16); /* hairline-strong — matte chrome frame */
-  /* secondary-button chrome family (SHOP · back · cabinet · EDIT SPACE) — a single
-     matte chrome material with a COLD WHITE glow on hover/press. Never pink (pink =
-     FIGHT / economy only). Reference: docs/design-handoff/Hexlash Secondary Buttons.html */
-  --hs-chrome-ink: #c8d1d8;                       /* glyph + label, rest */
-  --hs-chrome-ink-dim: #5d5d66;                   /* disabled ink */
-  --hs-chrome-line: rgba(200, 209, 216, 0.16);    /* rest frame */
-  --hs-chrome-rim: rgba(216, 227, 234, 0.45);     /* hover rim */
-  --hs-chrome-rim-hot: rgba(216, 227, 234, 0.8);  /* active rim */
-  --hs-chrome-bloom: rgba(200, 209, 216, 0.22);   /* hover bloom */
-  --hs-chrome-bloom-hot: rgba(200, 209, 216, 0.3);/* active bloom */
-  --hs-chrome-glass: rgba(22, 22, 27, 0.55);      /* rest glass fill (with blur) */
-  --hs-chrome-glass-hover: rgba(28, 30, 37, 0.72);/* hover fill */
-  --hs-chrome-void: #08080a;                      /* focus ring inner gap */
-  /* motion brief — spring (legacy marks) + the prototype's two weighted curves */
-  --hs-spring: cubic-bezier(0.22, 0.61, 0.36, 1);
-  --ease-settle: cubic-bezier(0.2, 0.8, 0.2, 1);  /* arrivals — soft, no overshoot */
-  --ease-weight: cubic-bezier(0.55, 0, 0.12, 1);  /* heavy slab/chrome motion */
-  --hs-fast: 0.15s;   /* colour/border state change */
-  --hs-hover: 0.22s;  /* hover lift + edge/glow (spring) */
-  --hs-press: 0.12s;  /* press squish */
-  /* geometry — fixed hex silhouette (FIGHT plinth: face + cabinet share --clip) +
-     a single bottom-right bevel chamfer (the matte chrome controls, 9px). */
+  color: var(--ink);
+  /* Геометрия плиты FIGHT и фаска матового хрома — это ФОРМА компонента
+     (Документ А 4.1 / 4.2), а не значение палитры: они вычисляются, а не
+     дублируют токен, поэтому остаются локальными. Всё остальное — из
+     src/styles/tokens.css. */
   --hs-hex: polygon(24px 0, calc(100% - 24px) 0, 100% 50%, calc(100% - 24px) 100%, 24px 100%, 0 50%);
-  --padx: 76px;       /* FIGHT face horizontal padding — clears the hex points */
+  --padx: 76px;       /* горизонтальный отступ лица FIGHT — расчищает точки гекса */
   --hs-bevel: 9px;
   --hs-chamfer: polygon(0 0, 100% 0, 100% calc(100% - var(--hs-bevel)), calc(100% - var(--hs-bevel)) 100%, 0 100%);
-  font-family: var(--hs-disp);
+  font-family: var(--font-display);
 }
 .home-root * { box-sizing: border-box; }
 
 /* the chrome overlay passes clicks through to nothing; interactive bits re-enable */
-.hs-overlay { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+.hs-overlay { position: absolute; inset: 0; z-index: var(--z-ui); pointer-events: none; }
 .hs-tile, .hs-fight .fbtn,
 .hs-abtn, .hs-slot, .sp-back, .sp-btn, .sp-tabs .tb { pointer-events: auto; }
 
@@ -64,7 +37,7 @@
    the right edge the cabinet slides out from. Matte chrome only — NO pink, NO glow,
    NO $HEX balance here (balance lives in the cabinet / shop body). Sits above both
    surfaces; its own pointer-events are none, the interactive pieces opt back in. */
-.hs-strip { position: absolute; top: 0; left: 0; right: 0; height: 74px; z-index: 8;
+.hs-strip { position: absolute; top: 0; left: 0; right: 0; height: 74px; z-index: var(--z-topbar);
   display: flex; align-items: center; justify-content: space-between; padding: 0 22px; pointer-events: none; }
 .hs-strip > * { pointer-events: auto; }
 
@@ -74,15 +47,15 @@
 /* brand + cluster share one 48px axis so the strip reads as a single level
    row (both centred by .hs-strip align-items:center; left/right edges fixed). */
 .hs-brandblock { display: flex; align-items: center; height: 48px; gap: 11px; background: none; border: 0;
-  cursor: pointer; padding: 0 4px; color: inherit; transition: opacity var(--hs-fast); }
+  cursor: pointer; padding: 0 4px; color: inherit; transition: opacity var(--d-fast); }
 /* mark + wordmark: HEXLASH Saira 900 / 23px / .04em. The mark is an inline vector
    (components/brand/hexlashMark.js) in a 40px box, which puts it in the COMPACT
    drawing — if this box ever crosses 48px or 24px the drawing has to change with it.
    Painted through `color`, not a fill, so it inherits like the word beside it. */
 .hs-brandblock .logo-mark { width: 40px; height: 40px; display: block; flex: 0 0 auto;
-  color: var(--bone); }
-.hs-brandblock .wm { font-family: var(--hs-disp); font-weight: 900; font-size: 23px; letter-spacing: 0.04em;
-  text-transform: uppercase; color: var(--bone); line-height: 1; }
+  color: var(--ink); }
+.hs-brandblock .wm { font-family: var(--font-display); font-weight: 900; font-size: 23px; letter-spacing: 0.04em;
+  text-transform: uppercase; color: var(--ink); line-height: 1; }
 .hs-brandblock:hover { opacity: 0.82; }
 
 /* right group — the SHOP/back chip + the cabinet chip, each carrying the shared
@@ -101,43 +74,43 @@
   position: relative;
   display: inline-flex; align-items: center; gap: 10px;
   height: 44px; padding: 0 18px;
-  border: 1px solid var(--hs-chrome-line); border-radius: 0;
-  background: var(--hs-chrome-glass);
+  border: 1px solid var(--chrome-line); border-radius: 0;
+  background: var(--chrome-glass);
   -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
-  color: var(--hs-chrome-ink);
+  color: var(--chrome-ink);
   cursor: pointer; overflow: hidden; white-space: nowrap;
-  transition: border-color var(--hs-hover) var(--ease-weight),
-              background var(--hs-hover) var(--ease-weight),
-              box-shadow var(--hs-hover) var(--ease-weight),
-              color var(--hs-hover) var(--ease-weight),
-              transform var(--hs-hover) var(--ease-weight);
+  transition: border-color var(--d-hover) var(--e-weight),
+              background var(--d-hover) var(--e-weight),
+              box-shadow var(--d-hover) var(--e-weight),
+              color var(--d-hover) var(--e-weight),
+              transform var(--d-hover) var(--e-weight);
 }
 .hs-chrome > svg { width: 17px; height: 17px; flex: 0 0 auto; color: currentColor; }
-.hs-chrome .n { font-family: var(--hs-disp); font-weight: 700; font-size: 14px;
+.hs-chrome .n { font-family: var(--font-display); font-weight: 700; font-size: 14px;
   letter-spacing: 0.14em; text-transform: uppercase; color: currentColor; line-height: 1; }
 /* one-shot sheen sweep — a single chrome glint on hover-in */
 .hs-chrome::after {
   content: ""; position: absolute; inset: 0; pointer-events: none;
-  background: linear-gradient(105deg, transparent 34%, rgba(216, 227, 234, 0.18) 50%, transparent 66%);
+  background: linear-gradient(105deg, transparent 34%, color-mix(in srgb, var(--chrome-rim) 40%, transparent) 50%, transparent 66%);
   transform: translateX(-130%); opacity: 0;
 }
 .hs-chrome:hover {
-  border-color: var(--hs-chrome-rim); background: var(--hs-chrome-glass-hover); color: #fff;
-  box-shadow: 0 0 0 1px var(--hs-chrome-rim), 0 0 18px 2px var(--hs-chrome-bloom);
+  border-color: var(--chrome-rim); background: var(--chrome-glass-hot); color: var(--ink);
+  box-shadow: 0 0 0 1px var(--chrome-rim), 0 0 18px 2px var(--chrome-bloom);
   transform: translateY(-1px);
 }
-.hs-chrome:hover::after { animation: hs-sheen 0.6s var(--ease-weight) 1; }
+.hs-chrome:hover::after { animation: hs-sheen var(--d-panel) var(--e-weight) 1; }
 .hs-chrome:active {
-  color: #fff;
-  box-shadow: 0 0 0 1px var(--hs-chrome-rim-hot), 0 0 14px 1px var(--hs-chrome-bloom-hot);
-  transform: scale(0.985); transition-duration: var(--hs-press);
+  color: var(--ink);
+  box-shadow: 0 0 0 1px var(--chrome-rim-hot), 0 0 14px 1px var(--chrome-bloom-hot);
+  transform: scale(0.985); transition-duration: var(--d-press);
 }
 .hs-chrome:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--hs-chrome-void), 0 0 0 4px rgba(216, 227, 234, 0.7);
+  box-shadow: 0 0 0 2px var(--void), 0 0 0 4px var(--chrome-rim-hot);
 }
 .hs-chrome:disabled {
-  border-color: var(--line); background: rgba(22, 22, 27, 0.4); color: var(--hs-chrome-ink-dim);
+  border-color: var(--line); background: color-mix(in srgb, var(--chrome-glass) 72%, transparent); color: var(--chrome-ink-off);
   box-shadow: none; transform: none; cursor: not-allowed;
 }
 @keyframes hs-sheen {
@@ -155,28 +128,28 @@
 .hs-seg-cab { padding: 0 16px 0 11px; justify-content: center; }
 .hs-seg-cab .av {
   width: 28px; height: 28px; flex: 0 0 auto; transform: rotate(45deg);
-  background: linear-gradient(150deg, #c8d1d8, #585f68);
-  border: 1px solid var(--hs-chrome-line);
-  transition: filter var(--hs-hover) var(--ease-weight), border-color var(--hs-hover) var(--ease-weight);
+  background: linear-gradient(150deg, var(--chrome-hi), var(--chrome-lo));
+  border: 1px solid var(--chrome-line);
+  transition: filter var(--d-hover) var(--e-weight), border-color var(--d-hover) var(--e-weight);
 }
-.hs-seg-cab:hover .av { filter: brightness(1.12); border-color: var(--hs-chrome-rim); }
+.hs-seg-cab:hover .av { filter: brightness(1.12); border-color: var(--chrome-rim); }
 /* (mobile lives in one consolidated block at the end of the file, so it overrides
    every base rule above it.) */
 
 /* ── left rail stubs (honest SOON) ── */
 /* ── bottom dock — one centered row; four uniform matte tiles flank the hero FIGHT ── */
-.hs-dock { position: absolute; left: 0; right: 0; bottom: 0; height: 180px; z-index: 5;
+.hs-dock { position: absolute; left: 0; right: 0; bottom: 0; height: 180px; z-index: var(--z-ui);
   display: flex; align-items: flex-end; justify-content: center; gap: 14px; padding: 0 48px 60px; }
 /* secondary buttons — TRAIN / SHOP / PROFILE / CUSTOMIZE: one size, one matte chrome (no pink) */
 .hs-tile { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; width: 118px; height: 96px;
-  padding: 14px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.022); cursor: pointer;
-  transition: background var(--hs-fast), border-color var(--hs-fast), transform var(--hs-hover) var(--hs-spring); }
+  padding: 14px; border: 1px solid var(--line); background: var(--fill-1); cursor: pointer;
+  transition: background var(--d-fast), border-color var(--d-fast), transform var(--d-hover) var(--e-spring); }
 /* quiet supporting buttons — a small lift, no glow (the pink/glow stays on FIGHT) */
-.hs-tile:hover { background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.2); transform: translateY(-2px); }
-.hs-tile:active { transform: translateY(0) scale(0.985); transition-duration: var(--hs-press); }
-.hs-tile svg { width: 22px; height: 22px; color: #d6d3da; }
+.hs-tile:hover { background: var(--fill-2); border-color: var(--line-strong); transform: translateY(-2px); }
+.hs-tile:active { transform: translateY(0) scale(0.985); transition-duration: var(--d-press); }
+.hs-tile svg { width: 22px; height: 22px; color: var(--ink-soft); }
 .hs-tile .tl-n { font-weight: 700; font-size: 16px; letter-spacing: 0.05em; text-transform: uppercase; }
-.hs-tile .tl-s { font-family: var(--hs-mono); font-size: 9px; letter-spacing: 0.14em; color: var(--muted); margin-top: -6px; }
+.hs-tile .tl-s { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.14em; color: var(--ink-dim); margin-top: -6px; }
 
 /* ════════════ FIGHT — physical hex plinth (the ONE pink + the ONE glow) ════════════
    Three stacked layers so it reads as a slab with thickness, not a sticker:
@@ -184,34 +157,39 @@
      f-plinth — the dark cabinet, offset DOWN: the visible side/thickness of the slab
      f-face   — the lit hex face: top→bottom gradient + top blik + bottom inner shadow,
                 carrying the label, arrow and a slow rare sheen glint.
-   Motion is heavy with no overshoot (the shared --hs-spring). */
+   Motion is heavy with no overshoot (the shared --e-spring). */
 .hs-fight { display: flex; flex-direction: column; align-items: center; gap: 15px; }
 .hs-fight .fbtn { position: relative; display: inline-flex; align-items: center; justify-content: center;
   padding: 0; border: 0; background: none; cursor: pointer; }
 
 /* layer 1 — bloom (the only glow on the screen) */
 .hs-fight .f-bloom { position: absolute; left: 50%; top: 48%; width: 150%; height: 230%;
-  transform: translate(-50%, -50%); z-index: 0; pointer-events: none; opacity: 0.6;
-  background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(255, 0, 105, 0.5), rgba(255, 0, 105, 0.12) 45%, transparent 70%);
+  transform: translate(-50%, -50%); z-index: var(--z-scene); pointer-events: none; opacity: 0.6;
+  background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(var(--pink-rgb), 0.5), rgba(var(--pink-rgb), 0.12) 45%, transparent 70%);
   filter: blur(14px); }
 
 /* layer 2 — plinth (dark cabinet, sits a touch lower → the slab's thickness) */
-.hs-fight .f-plinth { position: absolute; inset: 0; z-index: 1; pointer-events: none;
-  clip-path: var(--hs-hex); background: linear-gradient(180deg, #7a0033 0%, #4a0020 55%, #2c0013 100%);
-  transform: translateY(6px); transition: transform 0.42s var(--ease-weight); }
+.hs-fight .f-plinth { position: absolute; inset: 0; z-index: var(--z-ui); pointer-events: none;
+  clip-path: var(--hs-hex); background: linear-gradient(180deg, var(--pink-deep) 0%,
+    color-mix(in srgb, var(--pink-deep) 60%, var(--void)) 55%,
+    color-mix(in srgb, var(--pink-deep) 35%, var(--void)) 100%);
+  transform: translateY(6px); transition: transform var(--d-panel) var(--e-weight); }
 
 /* layer 3 — face (lit hex top with a blik and an inner-shadow base) */
-.hs-fight .f-face { position: relative; z-index: 2; display: flex; align-items: center; justify-content: center; gap: 22px;
-  padding: 20px var(--padx); overflow: hidden; clip-path: var(--hs-hex); color: #fff;
-  background: linear-gradient(180deg, #ff2d82 0%, #ff0069 42%, #e4005f 100%);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.35), inset 0 -5px 14px rgba(120, 0, 40, 0.5);
-  transition: transform 0.42s var(--ease-weight), filter 0.42s var(--ease-weight); }
-.hs-fight .f-label { font-family: var(--hs-disp); font-weight: 900; font-size: 40px; letter-spacing: 0.13em;
-  line-height: 1; text-transform: uppercase; color: #fff; text-shadow: 0 1px 0 rgba(120, 0, 40, 0.5); }
-.hs-fight .f-arr { width: 28px; height: 28px; flex: 0 0 auto; color: #fff; transition: transform 0.42s var(--ease-weight); }
+.hs-fight .f-face { position: relative; z-index: var(--z-ui); display: flex; align-items: center; justify-content: center; gap: 22px;
+  padding: 20px var(--padx); overflow: hidden; clip-path: var(--hs-hex); color: var(--ink);
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--pink) 82%, var(--ink)) 0%, var(--pink) 42%,
+    color-mix(in srgb, var(--pink) 89%, var(--void)) 100%);
+  box-shadow: inset 0 2px 0 color-mix(in srgb, var(--ink) 35%, transparent),
+    inset 0 -5px 14px color-mix(in srgb, var(--pink-deep) 50%, transparent);
+  transition: transform var(--d-panel) var(--e-weight), filter var(--d-panel) var(--e-weight); }
+.hs-fight .f-label { font-family: var(--font-display); font-weight: 900; font-size: 40px; letter-spacing: 0.13em;
+  line-height: 1; text-transform: uppercase; color: var(--ink); text-shadow: 0 1px 0 color-mix(in srgb, var(--pink-deep) 50%, transparent); }
+.hs-fight .f-arr { width: 28px; height: 28px; flex: 0 0 auto; color: var(--ink); transition: transform var(--d-panel) var(--e-weight); }
 /* slow rare sheen — a skewed white glint that crosses then rests off-frame (::after) */
 .hs-fight .f-face::after { content: ""; position: absolute; inset: 0; pointer-events: none;
-  background: linear-gradient(105deg, transparent 42%, rgba(255, 255, 255, 0.55) 50%, transparent 58%);
+  background: linear-gradient(105deg, transparent 42%, var(--line-strong) 50%, transparent 58%);
   background-size: 260% 100%; background-position: 185% 0; }
 
 /* hover — face rises (more thickness shows), plinth deepens, bloom swells, arrow steps right */
@@ -220,11 +198,11 @@
 .hs-fight .fbtn:hover .f-bloom { animation: none; opacity: 1; transform: translate(-50%, -50%) scale(1.16); }
 .hs-fight .fbtn:hover .f-arr { transform: translateX(6px); }
 /* press — the face sinks into the plinth (snappy) */
-.hs-fight .fbtn:active .f-face { transform: translateY(4px) scale(0.992); filter: brightness(0.97); transition-duration: 0.11s; }
-.hs-fight .fbtn:active .f-plinth { transform: translateY(2px); transition-duration: 0.11s; }
+.hs-fight .fbtn:active .f-face { transform: translateY(4px) scale(0.992); filter: brightness(0.97); transition-duration: var(--d-press); }
+.hs-fight .fbtn:active .f-plinth { transform: translateY(2px); transition-duration: var(--d-press); }
 .hs-fight .fbtn:active .f-bloom { opacity: 0.7; transform: translate(-50%, -50%) scale(0.92); }
 
-.hs-fight .fsub { font-family: var(--hs-mono); font-size: 11px; letter-spacing: 0.26em; color: #c4c0cb; text-transform: uppercase; }
+.hs-fight .fsub { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.26em; color: var(--ink-soft); text-transform: uppercase; }
 
 /* ════════════ EDIT SPACE — matte chrome corner button (decor arrange entry) ════════════
    Shares the chrome MATERIAL of the strip cluster (glass + inset hairline + the
@@ -234,7 +212,7 @@
 /* EDIT SPACE — home-only corner button; material comes from .hs-chrome, this rule
    only places it (absolute, bottom-right) and re-enables its clicks over the
    pointer-events:none overlay. Pencil glyph + single label, no sub. */
-.edit-space { position: absolute; right: 46px; bottom: 46px; z-index: 5; pointer-events: auto; }
+.edit-space { position: absolute; right: 46px; bottom: 46px; z-index: var(--z-ui); pointer-events: auto; }
 
 /* ════════════ idle + entrance keyframes (assignments gated by no-preference) ════════════ */
 /* idle */
@@ -262,106 +240,60 @@
   /* idle: the slab settles, the bloom breathes, the face glints rarely */
   .hs-fight .fbtn { animation: fSettle 5.4s ease-in-out infinite; }
   .hs-fight .f-bloom { animation: fGlow 3.6s ease-in-out infinite; }
-  .hs-fight .f-face::after { animation: fSheen 6.4s var(--ease-settle) infinite; }
+  .hs-fight .f-face::after { animation: fSheen 6.4s var(--e-settle) infinite; }
   /* entrance: brand → SHOP → cabinet → EDIT SPACE → FIGHT (last) */
-  .hs-anim-in .hs-brandblock { animation: rise 0.8s var(--ease-settle) 0.05s both; }
-  .hs-anim-in .hs-seg-shop   { animation: rise 0.8s var(--ease-settle) 0.14s both; }
-  .hs-anim-in .hs-seg-cab    { animation: rise 0.8s var(--ease-settle) 0.21s both; }
-  .hs-anim-in .edit-space    { animation: rise 0.8s var(--ease-settle) 0.38s both; }
-  .hs-anim-in .hs-fight      { animation: riseHero 1s var(--ease-settle) 0.52s both; }
+  .hs-anim-in .hs-brandblock { animation: rise 0.8s var(--e-settle) 0.05s both; }
+  .hs-anim-in .hs-seg-shop   { animation: rise 0.8s var(--e-settle) 0.14s both; }
+  .hs-anim-in .hs-seg-cab    { animation: rise 0.8s var(--e-settle) 0.21s both; }
+  .hs-anim-in .edit-space    { animation: rise 0.8s var(--e-settle) 0.38s both; }
+  .hs-anim-in .hs-fight      { animation: riseHero 1s var(--e-settle) 0.52s both; }
 }
 
 /* ── home ⇄ shop view transition — soft fade + scale, no hard cut. The persistent
    strip lives outside this wrapper, so it stays put while the surface under it
    cross-fades. ── */
 .hs-view-enter-active, .hs-view-leave-active {
-  transition: opacity 0.26s var(--hs-spring), transform 0.26s var(--hs-spring); }
+  transition: opacity var(--d-hover) var(--e-spring), transform var(--d-hover) var(--e-spring); }
 .hs-view-enter-from { opacity: 0; transform: scale(0.985); }
 .hs-view-leave-to { opacity: 0; transform: scale(1.008); }
 
 /* ── ARRANGE MODE ── */
-.hs-arrtop { position: absolute; top: 0; left: 0; right: 0; height: 74px; z-index: 7;
+.hs-arrtop { position: absolute; top: 0; left: 0; right: 0; height: 74px; z-index: var(--z-ui);
   display: flex; align-items: center; justify-content: space-between; padding: 0 48px;
-  background: linear-gradient(180deg, rgba(6, 7, 11, 0.96), rgba(6, 7, 11, 0)); }
+  background: linear-gradient(180deg, color-mix(in srgb, var(--void) 96%, transparent), transparent); }
 .hs-arrtit { display: flex; align-items: center; gap: 14px; }
-.hs-arrtit .at-k { display: flex; align-items: center; gap: 9px; font-family: var(--hs-mono); font-size: 11px;
-  letter-spacing: 0.28em; color: var(--acc); text-transform: uppercase; }
+.hs-arrtit .at-k { display: flex; align-items: center; gap: 9px; font-family: var(--font-mono); font-size: 11px;
+  letter-spacing: 0.28em; color: var(--pink); text-transform: uppercase; }
 /* matte dot — NO glow */
-.hs-arrtit .at-k .dot { width: 7px; height: 7px; background: var(--acc); }
+.hs-arrtit .at-k .dot { width: 7px; height: 7px; background: var(--pink); }
 .hs-arrtit .at-n { font-weight: 800; font-size: 22px; letter-spacing: 0.04em; text-transform: uppercase;
   border-left: 1px solid var(--line); padding-left: 14px; }
-.hs-arrtit .at-n b { color: var(--acc); }
+.hs-arrtit .at-n b { color: var(--pink); }
 .hs-arract { display: flex; gap: 10px; }
 .hs-abtn { display: flex; align-items: center; gap: 10px; padding: 13px 24px; cursor: pointer; font-weight: 700;
-  font-size: 15px; letter-spacing: 0.08em; text-transform: uppercase; transition: background 0.15s; border: 0; }
-.hs-abtn.cancel { border: 1px solid var(--line); background: rgba(255, 255, 255, 0.03); color: #d6d3da; }
-.hs-abtn.cancel:hover { background: rgba(255, 255, 255, 0.07); }
+  font-size: 15px; letter-spacing: 0.08em; text-transform: uppercase; transition: background var(--d-fast); border: 0; }
+.hs-abtn.cancel { border: 1px solid var(--line); background: var(--fill-1); color: var(--ink-soft); }
+.hs-abtn.cancel:hover { background: var(--line); }
 /* place — matte (only FIGHT glows) */
-.hs-abtn.place { background: var(--acc); color: #fff;
+.hs-abtn.place { background: var(--pink); color: var(--ink);
   clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px); }
 
 /* arrange object tray */
-.hs-tray { position: absolute; left: 0; right: 0; bottom: 0; z-index: 7; padding: 18px 48px 26px; pointer-events: auto;
-  background: linear-gradient(0deg, rgba(6, 7, 11, 0.97), rgba(6, 7, 11, 0.8) 60%, rgba(6, 7, 11, 0)); }
+.hs-tray { position: absolute; left: 0; right: 0; bottom: 0; z-index: var(--z-ui); padding: 18px 48px 26px; pointer-events: auto;
+  background: linear-gradient(0deg, color-mix(in srgb, var(--void) 97%, transparent), color-mix(in srgb, var(--void) 80%, transparent) 60%, transparent); }
 .hs-tray-h { display: flex; align-items: baseline; gap: 14px; margin-bottom: 14px; }
 .hs-tray-h .th { font-weight: 700; font-size: 15px; letter-spacing: 0.06em; text-transform: uppercase; }
-.hs-tray-h .ts { font-family: var(--hs-mono); font-size: 10px; letter-spacing: 0.16em; color: var(--muted); text-transform: uppercase; }
+.hs-tray-h .ts { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.16em; color: var(--ink-dim); text-transform: uppercase; }
 .hs-tray-row { display: flex; gap: 14px; }
-.hs-slot { position: relative; width: 118px; height: 90px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.022);
-  display: flex; align-items: flex-end; justify-content: center; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
-.hs-slot:hover { border-color: rgba(255, 255, 255, 0.22); background: rgba(255, 255, 255, 0.045); }
-.hs-slot.active { border-color: var(--acc); background: rgba(var(--acc-rgb), 0.07); box-shadow: inset 0 0 0 1px rgba(var(--acc-rgb), 0.5); }
-.hs-slot .sn { position: absolute; top: 9px; left: 10px; font-family: var(--hs-mono); font-size: 9px; letter-spacing: 0.1em;
-  color: #b9b6bd; text-transform: uppercase; }
-.hs-slot .cnt { position: absolute; bottom: 8px; right: 9px; font-family: var(--hs-mono); font-size: 9px; color: var(--muted); }
+.hs-slot { position: relative; width: 118px; height: 90px; border: 1px solid var(--line); background: var(--fill-1);
+  display: flex; align-items: flex-end; justify-content: center; cursor: pointer; transition: border-color var(--d-fast), background var(--d-fast); }
+.hs-slot:hover { border-color: var(--line-strong); background: var(--fill-2); }
+.hs-slot.active { border-color: var(--pink); background: rgba(var(--pink-rgb), 0.07); box-shadow: inset 0 0 0 1px rgba(var(--pink-rgb), 0.5); }
+.hs-slot .sn { position: absolute; top: 9px; left: 10px; font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.1em;
+  color: var(--ink-soft); text-transform: uppercase; }
+.hs-slot .cnt { position: absolute; bottom: 8px; right: 9px; font-family: var(--font-mono); font-size: 9px; color: var(--ink-dim); }
 .hs-slot.locked { opacity: 0.5; }
-.hs-slot.locked .sn { color: var(--muted); }
-
-/* ════════════════ SHOP · DECOR (zero glow) ════════════════ */
-.sp-bg { position: absolute; inset: 0; z-index: 1;
-  background: radial-gradient(120% 80% at 50% -10%, #120a10 0%, #0a0a10 46%, #06070b 80%); }
-.sp-back { font-family: var(--hs-mono); font-size: 11px; letter-spacing: 0.16em; color: #b9b6bd;
-  border: 1px solid var(--line); background: rgba(255, 255, 255, 0.025); padding: 9px 16px; cursor: pointer; transition: background 0.15s; }
-.sp-back:hover { background: rgba(255, 255, 255, 0.06); }
-.sp-wrap { position: absolute; inset: 0; z-index: 2; padding: 108px 64px 56px; display: flex; flex-direction: column; }
-.sp-head { margin-bottom: 30px; }
-.sp-h1 { font-weight: 900; font-size: 72px; line-height: 0.86; letter-spacing: 0.01em; text-transform: uppercase; }
-.sp-tabs { display: flex; gap: 24px; margin-top: 18px; border-bottom: 1px solid var(--line); }
-.sp-tabs .tb { font-family: var(--hs-mono); font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase;
-  color: var(--muted); padding: 0 0 14px; position: relative; cursor: pointer; display: flex; align-items: center; gap: 8px; }
-.sp-tabs .tb.active { color: #fff; }
-/* matte underline — NO glow in the shop */
-.sp-tabs .tb.active::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--acc); }
-.sp-tabs .tb i { font-style: normal; font-size: 8.5px; letter-spacing: 0.2em; color: var(--muted); border: 1px solid var(--line); padding: 2px 5px; }
-.sp-lede { font-family: var(--hs-mono); font-size: 13px; line-height: 1.7; color: #a9a5af; max-width: 66ch; margin-top: 20px; }
-.sp-grid { flex: 1; display: grid; grid-template-columns: 1.25fr 1fr 1fr; gap: 18px; min-height: 0; }
-.sp-col { display: flex; flex-direction: column; gap: 18px; min-height: 0; }
-.sp-card { border: 1px solid var(--line); background: rgba(255, 255, 255, 0.022); display: flex; flex-direction: column;
-  overflow: hidden; transition: border-color 0.15s, background 0.15s; }
-.sp-card:hover { border-color: rgba(255, 255, 255, 0.18); background: rgba(255, 255, 255, 0.035); }
-.sp-frame { position: relative; flex: 1; min-height: 120px; display: flex; align-items: center; justify-content: center;
-  background: radial-gradient(90% 80% at 50% 60%, #12161f 0%, #0b0d13 75%); border-bottom: 1px solid var(--line); }
-.sp-tag { position: absolute; top: 14px; left: 14px; font-family: var(--hs-mono); font-size: 9px; letter-spacing: 0.2em;
-  color: #b9b6bd; border: 1px solid var(--line); padding: 3px 8px; text-transform: uppercase; }
-.sp-card.feat .sp-tag { color: var(--acc); border-color: rgba(var(--acc-rgb), 0.4); background: rgba(var(--acc-rgb), 0.06); }
-.sp-prev { width: 100%; height: 100%; display: block; }
-.sp-card.feat .sp-prev { max-height: 380px; }
-.sp-meta { padding: 20px 22px; display: flex; flex-direction: column; gap: 7px; }
-.sp-name { font-weight: 800; font-size: 22px; letter-spacing: 0.03em; text-transform: uppercase; }
-.sp-card.feat .sp-name { font-size: 30px; }
-.sp-sub { font-family: var(--hs-mono); font-size: 11px; color: #a9a5af; letter-spacing: 0.04em; line-height: 1.5; }
-.sp-buy { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; }
-.sp-price { display: flex; align-items: center; gap: 8px; font-family: var(--hs-mono); font-size: 16px; letter-spacing: 0.04em; }
-/* matte diamond — NO glow */
-.sp-price .dia { width: 8px; height: 8px; background: var(--acc); transform: rotate(45deg); }
-.sp-price b { color: #fff; font-weight: 700; }
-.sp-price i { color: var(--acc); font-style: normal; font-size: 12px; }
-.sp-btn { font-weight: 700; font-size: 14px; letter-spacing: 0.1em; text-transform: uppercase; padding: 11px 22px; cursor: pointer;
-  display: flex; align-items: center; gap: 9px; border: 0; }
-/* matte BUY — NO glow in the shop */
-.sp-btn.buy { background: var(--acc); color: #fff;
-  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px); }
-.sp-btn.owned { border: 1px solid var(--line); background: rgba(255, 255, 255, 0.03); color: var(--muted); }
+.hs-slot.locked .sn { color: var(--ink-dim); }
 
 /* ════════════ reduced motion — final state, no animation ════════════
    Everything sits at its resting visual: the FIGHT slab keeps its layers (bloom,
@@ -376,8 +308,8 @@
   .hs-brandblock { transition: none; }
   /* chrome family: keep the colour/shadow state change (final state visible),
      drop the lift/press transforms and the sheen sweep */
-  .hs-chrome { transition: border-color var(--hs-fast), background var(--hs-fast),
-               box-shadow var(--hs-fast), color var(--hs-fast); }
+  .hs-chrome { transition: border-color var(--d-fast), background var(--d-fast),
+               box-shadow var(--d-fast), color var(--d-fast); }
   .hs-chrome::after { display: none; }
   .hs-fight .fbtn:hover .f-face, .hs-fight .fbtn:active .f-face { transform: none; filter: none; }
   .hs-fight .fbtn:hover .f-plinth, .hs-fight .fbtn:active .f-plinth { transform: translateY(6px); }

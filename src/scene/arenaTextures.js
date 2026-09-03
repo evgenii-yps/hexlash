@@ -3,7 +3,7 @@
 // THREE.CanvasTexture; callers own .dispose().
 //
 // Discipline: monochrome surface/dust textures; the single pink accent
-// (--hex-primary, passed in) lives only in the rift-glow textures.
+// (--pink, passed in) lives only in the rift-glow textures.
 import * as THREE from 'three';
 
 /**
@@ -96,7 +96,7 @@ export function makeRadialTexture(coreRgba, midRgba, midStop = 0.4) {
 }
 
 // --- Rift glow textures (torn-rift pass 3). The single accent colour `pink`
-//     comes from the --hex-primary token (passed in, never hard-coded). All
+//     comes from the --pink token (passed in, never hard-coded). All
 //     are tight gradients so the glow stays a narrow bright band, not a cloud.
 
 /** Hot core ribbon: near-white centre → pink shoulders → transparent (narrow).

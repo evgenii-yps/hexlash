@@ -51,9 +51,9 @@ const btnClose = () => {
 <style scoped>
 .btn-close {
   cursor: pointer;
-  background-color: var(--hex-primary);
+  background-color: var(--pink);
   border-radius: 50%;
-  color: var(--hex-text-primary) !important;
+  color: var(--ink) !important;
   margin: 8px;
   width: 44px;
   height: 44px;
@@ -69,7 +69,7 @@ const btnClose = () => {
 }
 
 .snackbar :deep(.v-snackbar__wrapper) {
-  background-color: var(--hex-bg-dark);
-  border: 1px solid var(--hex-border-active);
+  background-color: var(--void);
+  border: 1px solid var(--line-strong);
 }
 </style>

@@ -7,7 +7,7 @@
      One idle fighter-construct stands on the near (player) half; no combat, no
      HUD, no controls (separate stages).
 
-     Discipline: one pink accent (#FF0069 from --hex-primary) + one glow (the
+     Discipline: one pink accent (#FF0069 from --pink) + one glow (the
      rift — pulses as a whole, no running beam); nothing else glows, no pink
      under the plates. Throttled when idle/hidden, respects prefers-reduced-motion. -->
 <template>
@@ -273,9 +273,9 @@ onMounted(() => {
   scene.add(new THREE.AmbientLight(0x2a3550, 0.5));
   scene.add(new THREE.HemisphereLight(0x44506e, 0x05060c, 0.4));
 
-  // --- Arena + presence. Pink comes from the --hex-primary token (the scene
+  // --- Arena + presence. Pink comes from the --pink token (the scene
   //     inherits it via .app-v2), never hard-coded — one canonical pink.
-  const pink = getComputedStyle(el).getPropertyValue('--hex-primary').trim() || '#FF0069';
+  const pink = getComputedStyle(el).getPropertyValue('--pink').trim() || '#FF0069';
   // Player's core (Заход 3): the chosen core glows its own hue on the player
   // fighter. The opponent + the rift stay canon pink — one glow source + a clean
   // friend/foe read. coreId is carried whole (not just the colour) so future
@@ -676,17 +676,17 @@ onBeforeUnmount(() => {
 }
 .arena-actions button:hover {
   color: #fff;
-  border-color: var(--hex-primary, #ff0069);
+  border-color: var(--pink, #ff0069);
 }
 .arena-actions button.tgt {
-  color: var(--hex-primary, #ff0069);
-  border-color: var(--hex-primary, #ff0069);
+  color: var(--pink, #ff0069);
+  border-color: var(--pink, #ff0069);
 }
 /* Active state for a toggle button (e.g. GRAY: ON). */
 .arena-actions button.on {
   color: #fff;
-  background: var(--hex-primary, #ff0069);
-  border-color: var(--hex-primary, #ff0069);
+  background: var(--pink, #ff0069);
+  border-color: var(--pink, #ff0069);
 }
 /* Always-on dev-panel show/hide toggle — small, unobtrusive, top-right corner.
    Stays visible during a bout (incl. the SIG auto-cycle) so the panel is always
@@ -710,11 +710,11 @@ onBeforeUnmount(() => {
 .arena-panel-toggle:hover {
   opacity: 1;
   color: #fff;
-  border-color: var(--hex-primary, #ff0069);
+  border-color: var(--pink, #ff0069);
 }
 .arena-panel-toggle.on {
-  color: var(--hex-primary, #ff0069);
-  border-color: var(--hex-primary, #ff0069);
+  color: var(--pink, #ff0069);
+  border-color: var(--pink, #ff0069);
   opacity: 0.9;
 }
 </style>

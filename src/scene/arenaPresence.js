@@ -6,7 +6,7 @@
 //
 // The rift glow (core + halo + walls + contour + sparks, built in buildArena)
 // pulses AS ONE — no beam runs along the line. Sparks rise from the chasm.
-// Discipline: one pink (#FF0069 from --hex-primary), one glow (the rift). Under
+// Discipline: one pink (#FF0069 from --pink), one glow (the rift). Under
 // prefers-reduced-motion the glow holds static at its lit peak and all motion
 // (pulse / sparks) stops.
 

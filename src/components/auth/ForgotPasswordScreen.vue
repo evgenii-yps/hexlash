@@ -124,7 +124,7 @@ defineExpose({
   padding: 12px 14px;
   background: transparent;
   border: none;
-  color: var(--hex-text-muted);
+  color: var(--ink-off);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 11px;
   font-weight: 500;
@@ -136,12 +136,12 @@ defineExpose({
 }
 
 .forgot-screen__back:hover:not(:disabled) {
-  color: var(--hex-text-primary);
+  color: var(--ink);
 }
 
 .forgot-screen__back:focus-visible {
-  color: var(--hex-primary);
-  box-shadow: 0 0 0 2px var(--hex-primary-glow);
+  color: var(--pink);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--pink) 50%, transparent);
   border-radius: 2px;
 }
 
@@ -157,7 +157,7 @@ defineExpose({
   font-size: 18px;
   font-weight: 600;
   letter-spacing: 0.04em;
-  color: var(--hex-text-primary);
+  color: var(--ink);
 }
 
 .forgot-screen__hint {
@@ -167,7 +167,7 @@ defineExpose({
   font-size: 11px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--hex-text-secondary);
+  color: var(--ink-dim);
   line-height: 1.5;
 }
 
@@ -175,7 +175,7 @@ defineExpose({
   margin: 0 0 24px;
   text-align: center;
   font-size: 13px;
-  color: var(--hex-text-muted);
+  color: var(--ink-off);
   line-height: 1.5;
 }
 
@@ -196,16 +196,16 @@ defineExpose({
   font-size: 10px;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: var(--hex-text-muted);
+  color: var(--ink-off);
 }
 
 .forgot-screen__input {
   width: 100%;
   padding: 12px 14px;
-  background: var(--hex-bg-light);
-  border: 1px solid var(--hex-border-default);
+  background: var(--panel);
+  border: 1px solid var(--line);
   border-radius: 4px;
-  color: var(--hex-text-primary);
+  color: var(--ink);
   font-family: inherit;
   font-size: 13px;
   outline: none;
@@ -213,12 +213,12 @@ defineExpose({
 }
 
 .forgot-screen__input:focus {
-  border-color: var(--hex-primary);
-  box-shadow: 0 0 0 3px var(--hex-primary-glow);
+  border-color: var(--pink);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--pink) 50%, transparent);
 }
 
 .forgot-screen__input--error {
-  border-color: var(--hex-danger);
+  border-color: var(--danger);
   box-shadow: 0 0 0 3px rgba(255, 51, 51, 0.20);
 }
 
@@ -232,14 +232,14 @@ defineExpose({
   font-size: 10px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--hex-danger);
+  color: var(--danger);
 }
 
 .forgot-screen__submit {
   margin-top: 8px;
   padding: 14px;
   min-height: 48px;
-  background: var(--hex-primary);
+  background: var(--pink);
   color: #fff;
   border: none;
   border-radius: 4px;
@@ -266,12 +266,12 @@ defineExpose({
 }
 
 .forgot-screen__submit:focus-visible {
-  box-shadow: 0 0 0 5px var(--hex-primary-glow);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--pink) 50%, transparent);
 }
 
 .forgot-screen__submit:disabled {
-  background: var(--hex-bg-light);
-  color: var(--hex-text-muted);
+  background: var(--panel);
+  color: var(--ink-off);
   box-shadow: none;
   cursor: not-allowed;
 }
@@ -304,8 +304,8 @@ defineExpose({
   padding: 12px 24px;
   min-height: 44px;
   background: transparent;
-  color: var(--hex-text-primary);
-  border: 1px solid var(--hex-border-strong);
+  color: var(--ink);
+  border: 1px solid var(--line-strong);
   border-radius: 4px;
   font-family: inherit;
   font-size: 13px;
@@ -318,12 +318,12 @@ defineExpose({
 }
 
 .forgot-screen__back-btn:hover {
-  border-color: var(--hex-primary);
-  color: var(--hex-primary);
+  border-color: var(--pink);
+  color: var(--pink);
 }
 
 .forgot-screen__back-btn:focus-visible {
-  border-color: var(--hex-primary);
-  box-shadow: 0 0 0 3px var(--hex-primary-glow);
+  border-color: var(--pink);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--pink) 50%, transparent);
 }
 </style>

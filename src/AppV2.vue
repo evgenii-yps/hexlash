@@ -15,11 +15,11 @@
 </template>
 
 <script setup>
-// Game-cleanup reset: the 3D CanvasLayer, ChallengeNotification and
-// GlobalOverlays (grain/scanlines/vignette) were removed with the game.
-// /play now renders its child views (stub / profile stub / account / wallet)
-// directly. The .app-v2 namespace + hexlash-v24.css are kept so the account/
-// wallet HUD styling tokens (--text-*, --font-*, --hex-*) still resolve.
+// .app-v2 — пространство имён игровой оболочки. Раньше вместе с ним грузился
+// hexlash-v24.css: свой набор переменных плюс блокирующая загрузка Archivo Black
+// и Space Grotesk, которыми никто не пользовался. Набор и оба шрифта удалены
+// (ТЗ-01 §7): значения приходят из src/styles/tokens.css, шрифтов в Hexlash два.
+// Осталась только плашка «подтвердите почту» — она висит поверх всех экранов.
 //
 // NoConnection (red "No connection to server" banner) is NOT mounted here: the
 // pre-fight flow (select / upgrade / arena) does no server round-trips, so the
@@ -28,7 +28,7 @@ import VerifyEmailBanner from '@/components/hud/VerifyEmailBanner.vue';
 import SceneLoadingOverlay from '@/views-v2/SceneLoadingOverlay.vue';
 import RotateHint from '@/views-v2/RotateHint.vue';
 import { HOME_STAGE_PATHS } from '@/router/index.js';
-import '@/styles/hexlash-v24.css';
+import '@/styles/verify.css';
 
 // undefined ⇒ no key ⇒ the default behaviour for every route but the home stage.
 const stageKey = (route) => (HOME_STAGE_PATHS.includes(route.path) ? 'home-stage' : undefined);
@@ -39,5 +39,11 @@ const stageKey = (route) => (HOME_STAGE_PATHS.includes(route.path) ? 'home-stage
   position: fixed;
   inset: 0;
   overflow: hidden;
+  /* Базовый шрифт оболочки. Раньше сюда наследовался Space Grotesk — он удалён
+     вместе со всем набором v24 (ТЗ-01 §7). Заголовки и кнопки набираются
+     display'ем, поэтому база — он; телеметрия переключается на mono явно. */
+  font-family: var(--font-display);
+  background: var(--void);
+  color: var(--ink);
 }
 </style>

@@ -13,7 +13,7 @@
 //   • halo ribbon — short pink halo hugging the centreline
 //   • near-ridge highlight — thin SOFT low-contrast strip (no white marker)
 //   • sparks rising out of the slit
-// All pulse as one (driven in arenaPresence). Pink is --hex-primary (passed in).
+// All pulse as one (driven in arenaPresence). Pink is --pink (passed in).
 //
 // Returns { group, dispose, refs }. refs.riftGlow / refs.sparks feed the pulse.
 import * as THREE from 'three';

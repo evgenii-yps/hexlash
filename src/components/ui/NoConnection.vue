@@ -53,8 +53,8 @@ onUnmounted(() => {
   left: 50%;
   width: 100%;
   transform: translateX(-50%);
-  background-color: color-mix(in srgb, var(--hex-danger) 62%, transparent);
-  color: var(--hex-text-primary);
+  background-color: color-mix(in srgb, var(--danger) 62%, transparent);
+  color: var(--ink);
   padding: 10px 20px;
   text-align: center;
   font-family: Arial, sans-serif;
@@ -67,7 +67,7 @@ onUnmounted(() => {
 }
 
 .color-pink {
-  color: var(--hex-text-primary) !important;
+  color: var(--ink) !important;
 }
 
 .fade-enter-active, .fade-leave-active {

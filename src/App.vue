@@ -114,13 +114,13 @@ const headerStyle = computed(() => {
   if (scrollTop.value <= 50) {
     const blackStop = scrollTop.value; // Плавно изменяем точку остановки черного цвета от 0 до 50%
     return {
-      background: `linear-gradient(to bottom, var(--hex-bg-dark) ${blackStop}%, transparent ${blackStop * 2}%)`,
+      background: `linear-gradient(to bottom, var(--void) ${blackStop}%, transparent ${blackStop * 2}%)`,
       transition: 'background 0.3s ease',
     };
   }
   // Если скролл больше 50px, фиксируем черный цвет на 50%
   return {
-    background: 'linear-gradient(to bottom, var(--hex-bg-dark) 50%, transparent 100%)',
+    background: 'linear-gradient(to bottom, var(--void) 50%, transparent 100%)',
     transition: 'background 0.3s ease',
   };
 });

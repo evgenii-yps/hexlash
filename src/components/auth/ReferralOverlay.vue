@@ -101,8 +101,8 @@ onBeforeUnmount(() => {
   width: 100%;
   max-width: 380px;
   padding: 28px 24px 24px;
-  background: var(--hex-bg-card);
-  border: 1px solid var(--hex-border-default);
+  background: var(--panel);
+  border: 1px solid var(--line);
   border-radius: 8px;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -119,7 +119,7 @@ onBeforeUnmount(() => {
   justify-content: center;
   background: transparent;
   border: none;
-  color: var(--hex-text-muted);
+  color: var(--ink-off);
   font-size: 24px;
   line-height: 1;
   cursor: pointer;
@@ -128,12 +128,12 @@ onBeforeUnmount(() => {
 }
 
 .referral-overlay__close:hover {
-  color: var(--hex-text-primary);
+  color: var(--ink);
 }
 
 .referral-overlay__close:focus-visible {
-  color: var(--hex-primary);
-  box-shadow: 0 0 0 2px var(--hex-primary-glow);
+  color: var(--pink);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--pink) 50%, transparent);
   border-radius: 4px;
 }
 
@@ -143,14 +143,14 @@ onBeforeUnmount(() => {
   font-size: 16px;
   font-weight: 600;
   letter-spacing: 0.06em;
-  color: var(--hex-text-primary);
+  color: var(--ink);
   text-align: center;
 }
 
 .referral-overlay__hint {
   margin: 0 0 20px;
   font-size: 12px;
-  color: var(--hex-text-secondary);
+  color: var(--ink-dim);
   text-align: center;
   line-height: 1.5;
 }
@@ -159,10 +159,10 @@ onBeforeUnmount(() => {
   width: 100%;
   padding: 14px;
   margin-bottom: 16px;
-  background: var(--hex-bg-light);
-  border: 1px solid var(--hex-border-default);
+  background: var(--panel);
+  border: 1px solid var(--line);
   border-radius: 4px;
-  color: var(--hex-text-primary);
+  color: var(--ink);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 14px;
   letter-spacing: 0.2em;
@@ -173,20 +173,20 @@ onBeforeUnmount(() => {
 }
 
 .referral-overlay__input::placeholder {
-  color: var(--hex-text-muted);
+  color: var(--ink-off);
   letter-spacing: 0.15em;
 }
 
 .referral-overlay__input:focus {
-  border-color: var(--hex-primary);
-  box-shadow: 0 0 0 3px var(--hex-primary-glow);
+  border-color: var(--pink);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--pink) 50%, transparent);
 }
 
 .referral-overlay__apply {
   width: 100%;
   padding: 14px;
   min-height: 48px;
-  background: var(--hex-primary);
+  background: var(--pink);
   color: #fff;
   border: none;
   border-radius: 4px;
@@ -210,12 +210,12 @@ onBeforeUnmount(() => {
 }
 
 .referral-overlay__apply:focus-visible {
-  box-shadow: 0 0 0 5px var(--hex-primary-glow);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--pink) 50%, transparent);
 }
 
 .referral-overlay__apply:disabled {
-  background: var(--hex-bg-light);
-  color: var(--hex-text-muted);
+  background: var(--panel);
+  color: var(--ink-off);
   box-shadow: none;
   cursor: not-allowed;
 }

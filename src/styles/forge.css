@@ -11,22 +11,13 @@
    fighter's own core, piped in as --core / --core-sup. No pink in the hall. */
 
 .forge-root {
-  --fg-void: #08080a;
-  --fg-carbon: #0d0a0d;
-  --fg-bone: #f6f4f6;
-  --fg-ash: #6e6a72;
-  --fg-ink-3: #36343a;
-  --fg-line: rgba(255, 255, 255, .08);
-  --fg-line-2: rgba(255, 255, 255, .14);
-  /* opaque on purpose: a blurred backdrop over a dark hall costs real frames
-     on a phone and looks the same. */
-  --fg-panel: #0a0a0d;
-  --fg-disp: "Saira Condensed", -apple-system, system-ui, sans-serif;
-  --fg-mono: "JetBrains Mono", ui-monospace, monospace;
-  --fg-ease: cubic-bezier(.4, .05, .1, 1);
-  --fg-ease-out: cubic-bezier(.16, 1, .3, 1);
-  --core: #2ED6B0;                 /* replaced per picked fighter */
-  --core-sup: #7AE6D0;
+  /* Единственное, что живёт локально, — СЛОТ ядра выбранного бойца: он
+     подставляется на лету и вычисляется, а не дублирует токен. Второй тон
+     выводится осветлением по общему правилу (Документ А 2.3). Панели зала
+     берут --carbon: непрозрачная подложка вместо размытия — размытие над
+     тёмным залом стоит реальных кадров на телефоне и выглядит так же. */
+  --core: var(--core-skala);                 /* заменяется на цвет выбранного бойца */
+  --core-sup: color-mix(in srgb, var(--core) var(--core-sup-mix), var(--ink));
 }
 
 /* ── hovered fighter's callsign — follows the body on screen ─────────────── */
@@ -34,13 +25,13 @@
 @media (orientation: portrait) and (max-height: 700px) { :root { --fg-band: 42vh; } }
 
 .fg-tag {
-  position: fixed; z-index: 40; pointer-events: none;
+  position: fixed; z-index: var(--z-modal); pointer-events: none;
   transform: translate(-50%, 0);
-  font-family: var(--fg-mono); font-size: 11px; letter-spacing: .22em;
-  text-transform: uppercase; color: var(--fg-bone);
-  padding: 5px 9px; border: 1px solid var(--fg-line-2);
-  background: rgba(8, 8, 10, .72);
-  opacity: 0; transition: opacity .18s var(--fg-ease);
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: .22em;
+  text-transform: uppercase; color: var(--ink);
+  padding: 5px 9px; border: 1px solid var(--line-strong);
+  background: color-mix(in srgb, var(--void) 72%, transparent);
+  opacity: 0; transition: opacity var(--d-fast) var(--e-weight);
 }
 .fg-tag.is-on { opacity: 1; }
 
@@ -50,9 +41,9 @@
    as "you have no fighters yet". It sits in the composition now, just under the
    empty plate the trainer is standing over, at a size you are meant to read. */
 .fg-empty {
-  position: fixed; left: 50%; top: 62%; transform: translate(-50%, -50%); z-index: 30;
-  font-family: var(--fg-mono); font-size: 13px; line-height: 1.5; letter-spacing: .06em;
-  color: var(--fg-ash); text-align: center; pointer-events: none;
+  position: fixed; left: 50%; top: 62%; transform: translate(-50%, -50%); z-index: var(--z-panel);
+  font-family: var(--font-mono); font-size: 13px; line-height: 1.5; letter-spacing: .06em;
+  color: var(--ink-dim); text-align: center; pointer-events: none;
   padding: 0 20px; max-width: min(28rem, 88vw); text-wrap: balance;
 }
 @media (orientation: landscape) and (max-height: 520px) {
@@ -63,48 +54,48 @@
 /* fighter card — bottom-left, deliberately NOT full height: the fighter it
    describes stands above it and must stay visible. */
 .fg-card {
-  position: fixed; left: 14px; bottom: 14px; z-index: 35;
+  position: fixed; left: 14px; bottom: 14px; z-index: var(--z-panel);
   width: min(32vw, 340px); max-height: 46vh; overflow: auto;
   padding: 14px 16px 16px;
-  border: 1px solid var(--fg-line); border-left: 2px solid var(--core);
-  background: var(--fg-panel);
-  font-family: var(--fg-mono);
+  border: 1px solid var(--line); border-left: 2px solid var(--core);
+  background: var(--carbon);
+  font-family: var(--font-mono);
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%);
 }
-.fg-card .cs { font-family: var(--fg-disp); font-weight: 800; font-size: 30px; line-height: .95;
-  letter-spacing: .02em; text-transform: uppercase; color: var(--fg-bone); }
+.fg-card .cs { font-family: var(--font-display); font-weight: 800; font-size: 30px; line-height: .95;
+  letter-spacing: .02em; text-transform: uppercase; color: var(--ink); }
 .fg-card .core { display: inline-flex; align-items: center; gap: 7px; margin-top: 8px;
   font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--core); }
 .fg-card .core .sw { width: 8px; height: 8px; background: var(--core); }  /* flat chip, no glow */
-.fg-card .rows { margin-top: 14px; border-top: 1px solid var(--fg-line); padding-top: 10px;
+.fg-card .rows { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 10px;
   display: flex; flex-direction: column; gap: 7px; }
 .fg-card .row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
-  font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--fg-ash); }
-.fg-card .row b { color: var(--fg-bone); font-weight: 700; font-variant-numeric: tabular-nums; }
-.fg-card .none { font-size: 10px; letter-spacing: .06em; color: var(--fg-ink-3); text-transform: none; }
+  font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-dim); }
+.fg-card .row b { color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; }
+.fg-card .none { font-size: 10px; letter-spacing: .06em; color: var(--ink-off); text-transform: none; }
 .fg-card .close {
   position: absolute; top: 6px; right: 6px; width: 44px; height: 44px;
   display: grid; place-items: center; font: inherit; font-size: 16px; line-height: 1;
-  color: var(--fg-ash); background: none; border: 0; cursor: pointer; transition: color .15s;
+  color: var(--ink-dim); background: none; border: 0; cursor: pointer; transition: color var(--d-fast);
 }
-.fg-card .close:hover { color: var(--fg-bone); }
-.fg-card .close:focus-visible { outline: 1px solid var(--fg-ash); outline-offset: -4px; }
+.fg-card .close:hover { color: var(--ink); }
+.fg-card .close:focus-visible { outline: 1px solid var(--ink-dim); outline-offset: -4px; }
 
 /* tree panel — the right side of the screen */
 .fg-tree {
-  position: fixed; top: 0; right: 0; bottom: 0; z-index: 34;
+  position: fixed; top: 0; right: 0; bottom: 0; z-index: var(--z-panel);
   width: min(60vw, 720px); padding: 14px 16px 16px;
-  border-left: 1px solid var(--fg-line);
-  background: var(--fg-panel);
+  border-left: 1px solid var(--line);
+  background: var(--carbon);
   display: flex; flex-direction: column;
 }
 /* the guest honesty line moved here with the tree (it used to sit under the
    pre-fight upgrade screen's build bar, and that screen is gone) */
-.fg-guest { margin-top: 10px; font-family: var(--fg-mono); font-size: 9.5px; line-height: 1.35;
-  letter-spacing: .05em; color: var(--fg-ash); }
+.fg-guest { margin-top: 10px; font-family: var(--font-mono); font-size: 9.5px; line-height: 1.35;
+  letter-spacing: .05em; color: var(--ink-dim); }
 
 /* enter / leave — the panels arrive with the camera, not before it */
-.fg-fade-enter-active, .fg-fade-leave-active { transition: opacity .28s var(--fg-ease), transform .28s var(--fg-ease-out); }
+.fg-fade-enter-active, .fg-fade-leave-active { transition: opacity var(--d-hover) var(--e-weight), transform var(--d-hover) var(--e-settle); }
 .fg-fade-enter-from, .fg-fade-leave-to { opacity: 0; }
 .fg-card.fg-fade-enter-from, .fg-card.fg-fade-leave-to { transform: translateY(10px); }
 .fg-tree.fg-fade-enter-from, .fg-tree.fg-fade-leave-to { transform: translateX(18px); }
@@ -128,7 +119,7 @@
   .fg-card .close { position: static; margin-left: auto; }
   .fg-tree {
     top: auto; left: 8px; right: 8px; bottom: 8px; width: auto; height: var(--fg-band);
-    border: 1px solid var(--fg-line);
+    border: 1px solid var(--line);
   }
   .fg-card.fg-fade-enter-from, .fg-card.fg-fade-leave-to { transform: translateY(10px); }
   .fg-tree.fg-fade-enter-from, .fg-tree.fg-fade-leave-to { transform: translateY(14px); }

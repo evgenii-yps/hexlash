@@ -570,7 +570,7 @@ onMounted(() => {
 
   load.stage('renderer');
 
-  const pink = getComputedStyle(el).getPropertyValue('--hex-primary').trim() || '#FF0069';
+  const pink = getComputedStyle(el).getPropertyValue('--pink').trim() || '#FF0069';
 
   // --- Slab: instance buildArena UNMODIFIED, then suppress the combat rift exactly
   //     as the home does (external only): zero the rift-glow opacities, hide the

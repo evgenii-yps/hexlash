@@ -122,7 +122,8 @@ function toArena() {
 
 <style>
 /* Fonts — shared resource: Saira Condensed (display) + JetBrains Mono (mono). */
-@import url('https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+/* Шрифты грузит index.html одним неблокирующим запросом — дублировать
+   их @import'ом внутри компонента значит блокировать отрисовку (ТЗ-01 §7). */
 </style>
 
 <style scoped>

@@ -105,22 +105,22 @@ h1 {
   font-family: 'Saira Condensed', -apple-system, sans-serif;
   font-size: 3rem;
   margin-bottom: 1rem;
-  color: var(--hex-text-primary);
+  color: var(--ink);
 }
 
 .error{
-  color: var(--hex-primary-dark);
+  color: var(--pink-deep);
   margin: 0 20px;
 }
 
 .success{
-  color: var(--hex-text-primary);
+  color: var(--ink);
   margin: 0 20px;
 }
 
 
 .loader {
-  color: var(--hex-primary);
+  color: var(--pink);
   margin: 0 auto;
 }
 </style>

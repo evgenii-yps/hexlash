@@ -6,7 +6,7 @@
      plate, no lamp fixtures; a soft diffuse fill lights it evenly),
      a ROSTER of 14 club fighters roams the whole field on their own footwork
      (spaceWander), and ONE of them is marked as the LEADER by the scene's single
-     glow — a pink beacon (--hex-primary).
+     glow — a pink beacon (--pink).
 
      Discipline: calm dark room; each body glows ITS core colour as intrinsic
      light/rim (buildFighter); the LEADER's pink beacon is the ONE glow / the ONE
@@ -49,7 +49,7 @@ const CONFIG = {
   minSeparation: 2.6,   // min XZ distance between any two members on placement
   zoneHalf: 6.6,        // personal wander-rect half-extent — BIG + overlapping → range wide
 };
-// The LEADER beacon — the scene's single glow, pink (--hex-primary). Marks member 0.
+// The LEADER beacon — the scene's single glow, pink (--pink). Marks member 0.
 const LEADER = {
   index: 0,             // deterministic — no leader swap in a preview
   discRadius: 2.0,      // pink pool under the leader's feet
@@ -266,7 +266,7 @@ onMounted(() => {
   scene.add(new THREE.HemisphereLight(LIGHT.hemi.sky, LIGHT.hemi.ground, LIGHT.hemi.intensity));
   load.stage('renderer');
 
-  const pink = getComputedStyle(el).getPropertyValue('--hex-primary').trim() || '#FF0069';
+  const pink = getComputedStyle(el).getPropertyValue('--pink').trim() || '#FF0069';
 
   // --- The floor is ONE uniform hex field from edge to edge — no central arena plate,
   //     no seam. The fighters + leader stand on it; its surface height is FIELD.y. ---
