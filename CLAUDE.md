@@ -67,11 +67,14 @@ Full-stack Web3 fighting game. Vue 3 SPA + Express backend + PostgreSQL. Telegra
     beltDisplay.js         — Belt display helpers (BELT_THRESHOLDS, getBeltDisplay, getNextThreshold, getBeltProgressPercent)
     fightStylePreview.js   — Template-based fight style description (DEAD CODE — not imported)
   styles/
-    hexlash-ui.css         — Design system: CSS variables, component classes, animations
+    tokens.css             — ЕДИНСТВЕННЫЙ набор визуальных значений (грузится первым в main.js)
+    home.css / shop.css / cabinet.css / forge.css / verify.css — оформление экранов (значения — из tokens.css)
+    (hexlash-ui.css и v24/ удалены 03.09.2026 — параллельные наборы значений)
+  data/
+    sceneTokens.js         — значения объёмного слоя: материалы, свет, туман, камера
   assets/
     main.css               — Global styles
-    colors.css             — CSS variables
-    fonts/                 — Anonymous, AnonymousBalance
+    (colors.css удалён 03.09.2026 — легаси-набор; fonts/ удалены, шрифты грузятся из index.html)
     images/                — Backgrounds, icons, achievements (40+ files)
     models/                — GLTF 3D models (punching bag, scene)
     sound/                 — punch_air.mp3, punch_hit.mp3, rain.mp3
@@ -250,81 +253,27 @@ unlockRequirements:  { 3: {taps:300, exp:150}, 4: {taps:250, exp:120}, 5: {taps:
 
 ---
 
-## Design System — "Neon Discipline"
+## Визуальный слой — вынесен отсюда (03.09.2026)
 
-**Status:** v1.0 — Visual System established.
-**Full visual guide:** Hexlash_Visual_System.pdf v1.0 (file not in repo — source of truth is hexlash-design/SKILL.md)
-**Operational reference:** /skills/hexlash-design/SKILL.md
-**Key rules:** 1) one pink accent per screen, 2) pixel-font (Anonymous) only for titles/impact moments (exception: splash screens use two pixel-font blocks — HEXLASH + NEVER GIVE UP), 3) archetype colors only in fighter icons/active context, 4) backgrounds = atmosphere (stylized underground), UI = function.
+Здесь были две секции: «Design System — Neon Discipline» и «CSS Design System
+(legacy → migrating to --hex-*)». Обе описывали мир, которого больше нет:
+`--hex-*` переменные в `hexlash-ui.css`, пиксельный шрифт Anonymous, набор
+`v24/`, легаси `colors.css`, шесть параллельных наборов значений и перелом
+раскладки на 1024px. Всё перечисленное удалено Дизайн-системой v1.0.
 
-### UI Components (`/src/components/ui/`)
+**Единственный источник визуальных значений теперь:**
 
-| Component | File | Purpose |
-|-----------|------|---------|
-| `PixelIcon` | *Deleted* | Removed in Pack 1 cleanup (canvas pixel-icon system was never adopted by the app). |
-| `HexButton` | `HexButton.vue` | 5 variants: primary, secondary, ghost, danger, archetype. 3 sizes (sm/md/lg). Props: loading (CSS spinner), block, disabled, archetypeColor. (`icon`/PixelIcon prop removed in Pack 1 cleanup.) |
-| `HexCard` | `HexCard.vue` | 5 variants: default, elevated, archetype (left border), active (tinted bg), result (top border victory/defeat/draw). Slots: header, footer. Padding: none/sm/md/lg. |
-| `HexProgress` | `HexProgress.vue` | Progress bar. 3 variants: hp (auto green/yellow/red by %), branch (speed/power/technique colors), generic. 3 sizes. Props: label, showValue, showPercent. |
-| `HexBadge` | `HexBadge.vue` | Pill badge. 5 variants: archetype, branch, status (victory/defeat/draw/info), counter (circle/pill auto), custom. Props: icon (PixelIcon), pulse animation. |
-| `BeltBadge` | `BeltBadge.vue` | SVG belt badge for 33 grades + Hexmaster. Line-style: rect body, buckle, stripes. 3 sizes: sm (16×6), md (40×14), lg (120×40). Props: grade (0-32), isHexmaster, size. |
-| `UserCaptainBadge` | `UserCaptainBadge.vue` | Composite badge: BeltBadge + optional captain name. Sizes xs/sm/md. Shows "—" when no captain. |
+| Файл | Что в нём |
+|---|---|
+| `src/styles/tokens.css` | плоский слой: цвет, шрифт, кегль, отступ, рамка, скругление, тень, длительность, кривая, слой, перелом |
+| `src/data/sceneTokens.js` | объём: материалы, свет, туман, камера, свечение ядра |
 
-### Pixel Icons — *Removed (Pack 1 cleanup)*
+Правила пользования — одна инструкция: `.claude/skills/hexlash-design/SKILL.md`.
+Раньше их было три (`hexlash-design`, `hexlash-ui`, `hexlash-motion`).
 
-The canvas-based pixel-icon system (`PixelIcon.vue` + `/src/data/pixelIcons.js`, 45 icons) was never adopted by the app (the `icon` prop on HexButton was never used) and was deleted in the Pack 1 dead-code cleanup.
-
-### CSS Variables (`/src/styles/hexlash-ui.css`)
-
-All components use `--hex-*` variables exclusively. Legacy `--pink`, `--dark`, `--gray*` in `colors.css` only referenced by PrivacyView (auto-generated legal HTML).
-
-Key variable groups: `--hex-primary`, `--hex-bg-{dark,medium,light}`, `--hex-text-{primary,secondary,muted}`, `--hex-border-{default,active,strong}`, `--hex-arch-{name}` (6 archetypes × 5 variants each), `--hex-branch-{name}`, `--hex-dice-{effect}`, `--hex-mode-{type}`, `--hex-victory/defeat/draw` + `-bg`.
-
-### Archetype color → CSS var usage pattern
-
-For components that accept archetype colors dynamically (HexButton archetype, HexCard active/archetype), pass the CSS var string as prop:
-```vue
-<HexButton variant="archetype" archetype-color="var(--hex-arch-predator)">Attack</HexButton>
-<HexCard variant="active" archetype-color="var(--hex-arch-sentinel)">...</HexCard>
-```
-Internally uses `--_arch-color` CSS custom property for scoped styling.
-
-### Test/demo files
-- `test-icons.html` — all 45 pixel icons rendered at 48px, grouped by category
-- `src/test-components.html` — HexButton, HexCard, HexProgress, HexBadge demos
-
----
-
-## CSS Design System (legacy → migrating to --hex-*)
-
-> **Visual System v1.0** — operational reference in /skills/hexlash-design/SKILL.md (Hexlash_Visual_System.pdf not in repo). Key rules: one pink accent per screen, pixel-font only for titles/impact, archetype colors only in fighter icons/active context, backgrounds = atmosphere (stylized underground), UI = function.
-
-> **Active system:** `/src/styles/hexlash-ui.css` with `--hex-*` variables. ALL components use exclusively `--hex-*` vars (Phase 5.1 complete).
-> **Legacy:** `/src/assets/colors.css` — only referenced by PrivacyView.vue (auto-generated legal HTML with inline styles). Do NOT use legacy vars in new code.
-
-**Colors** (`/src/assets/colors.css`):
-```css
---pink: #FF066F          /* primary accent - neon pink */
---pinkDark: #a50344
---dark: #090909
---gray1: #3F3F3F66       /* semi-transparent */
---gray2: #808080
---gray3: #A0A0A0
---white: #FFFFFF
---black-opacity: #0000005c
---black-opacity-80: #090909CC
---primary-color: var(--pink)
-```
-
-**Fonts:**
-- `Anonymous` — special UI elements, titles
-- `AnonymousBalance` — numeric values (taps, XP, balance)
-- System sans-serif (`-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, ...`) — compact arena buttons (Mode, Friends)
-
-**Design language:** Dark theme, neon pink accents, semi-transparent backgrounds, thin gray borders.
-
-**Scrollable View Pattern:** `.background` in `main.css` is `position: fixed; overflow: hidden; height: 100vh` — it does NOT scroll. Every view must have its own scrollable inner container with: `position: relative; z-index: 10; overflow-y: auto; height: 100vh` (+ `@supports (height: 100dvh)`), `-webkit-overflow-scrolling: auto; overscroll-behavior-y: none`. BottomMenu is `position: fixed; ~72-96px` tall — views need sufficient `padding-bottom` (arena-views use 120px) or spacer elements (Profile/Training use `.scroll-gap`). Technical debt: two scroll placement patterns exist — PreparationView applies scroll on outer `.arena-container` (like Profile/Training), while FightClubView/AgentDetailView/CreateAgentView apply scroll directly on their content container. Two BottomMenu compensation patterns (padding-bottom vs `.scroll-gap`) also coexist. Unification is a future task.
-
-**Desktop Scaling (first desktop optimization):** `@media (min-width: 1024px)` in `main.css` sets `html { font-size: 18px }` (mobile default 16px). View containers expand to `max-width: 1024px` on desktop via scoped media queries in each view. Updated: FightClub, AgentDetail, CreateAgent, Preparation, DeckBuilder, Friends, Spectate, Ratings. Excluded: CardFightView, MatchmakingView (specialized combat layout — keep narrow). Already 1024px: Profile, Training, Clan, MoveTree. Technical debt: ~2519 px-based values vs ~245 rem — converting key design tokens to rem for proportional scaling is a separate task. No existing desktop breakpoints existed before this change.
+Отчёт о переходе — `docs/design-system/DS-V1_REPORT.md`.
+Разбор расхождений документов с кодом — `docs/design-system/DS-V1_PREFLIGHT_GAPS.md`.
+Опись значений «как было» — `docs/design-system/VISUAL_VALUES_AUDIT_2026-09-03.md`.
 
 ---
 

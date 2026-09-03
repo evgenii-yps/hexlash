@@ -76,7 +76,7 @@ description: Боевая система Hexlash — автономный бое
 ## 4. Ядра и прокачка
 
 **Четыре ядра (locked, английские имена):** ONSLAUGHT · RAIDER · BULWARK · AMBUSH.
-Цвета — `../hexlash-design/references/tokens.md`.
+Цвета ядер — `CORE_HUE` в `src/data/sceneTokens.js`.
 
 Drill-down: **ядро → кристалл (ветка) → грань**. «Камера глубины», степпер CORE/CRYSTAL/FACET (он же навигация назад), карточка грани, нижняя полоса BUILD, CTA «TO BATTLE» доступна на всех уровнях.
 

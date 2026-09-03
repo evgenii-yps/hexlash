@@ -83,7 +83,7 @@
 - Заголовок экрана: `Choose your mode.` / `Choose your ground.` — ключевое слово в INK `#EDEDF1`.
 - Фон: VOID + верхний ember `radial-gradient(95% 52% at 50% -6%, rgba(255,0,105,.10), …)`.
 
-Эталон: `docs/design-handoff/mode_select/`. *(`ground_select/` помечен OBSOLETE — экран удалён 24.08.2026.)*
+Эталон: `docs/design-handoff/_archive/mode_select/`. *(`ground_select/` помечен OBSOLETE — экран удалён 24.08.2026.)*
 
 ---
 
@@ -105,7 +105,7 @@
 BUY — заглушка: confirm → Unlocked, баланс не списывается, владение не сохраняется.
 
 Скролл — цельный (см. `../SKILL.md`, §10).
-Эталон: `docs/design-handoff/shop_bright/`.
+Эталон: `docs/design-handoff/_archive/shop_bright/`.
 
 ---
 

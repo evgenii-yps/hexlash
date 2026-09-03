@@ -1,5 +1,5 @@
 <!-- HomeShop — the SHOP view (/play/home → SHOP), BRIGHT direction. Ported 1:1
-     from the design handoff (docs/design-handoff/shop_bright/): three tabs DECOR ·
+     from the design handoff (docs/design-handoff/_archive/shop_bright/): three tabs DECOR ·
      CURRENCY · SPECIALS, presence cards, a hero card carrying the screen's one
      bloom, core-glyph eyebrows, glowing props, entrance motion, modals.
 
