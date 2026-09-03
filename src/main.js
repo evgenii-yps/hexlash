@@ -1,6 +1,8 @@
-import './assets/colors.css'
+// Токены — единственный источник числовых значений интерфейса.
+// Подключаются ПЕРВЫМИ: остальные стили читают из них через var().
+// Свод — docs/design-system/A-SISTEMA.md, файл — src/styles/tokens.css.
+import './styles/tokens.css'
 import './assets/main.css'
-import './styles/hexlash-ui.css'
 
 import {createApp, watch} from 'vue'
 import {createVuetify} from 'vuetify'
