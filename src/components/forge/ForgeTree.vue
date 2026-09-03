@@ -378,7 +378,7 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
   display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: var(--sp-2);
   overflow-y: auto; scrollbar-width: thin; align-content: start; }
 .ft-facets::-webkit-scrollbar { width: 4px; }
-.ft-facets::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 4px; }
+.ft-facets::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: var(--r-none); }
 .ft-face { position: relative; border: 1px solid var(--line); background: var(--fill-1);
   padding: var(--sp-2) var(--sp-1) var(--sp-2); display: flex; flex-direction: column; align-items: center; gap: var(--sp-2);
   cursor: pointer; min-height: 44px;

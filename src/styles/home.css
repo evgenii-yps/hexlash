@@ -74,7 +74,7 @@
   position: relative;
   display: inline-flex; align-items: center; gap: var(--sp-3);
   height: 44px; padding: 0 var(--sp-4);
-  border: 1px solid var(--chrome-line); border-radius: 0;
+  border: 1px solid var(--chrome-line); border-radius: var(--r-none);
   background: var(--chrome-glass);
   -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
   color: var(--chrome-ink);

@@ -75,7 +75,7 @@ import {HexlashMark} from '@/components/brand/hexlashMark.js';
     --font-display:"Saira Condensed","Arial Narrow","Roboto Condensed",system-ui,sans-serif;
     --font-mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
 
-    position:fixed; inset:0; z-index:2147483000; overflow:hidden;
+    position:fixed; inset:0; z-index:var(--z-load); overflow:hidden;
     color:var(--ink); font-family:var(--font-mono);
     -webkit-font-smoothing:antialiased; user-select:none;
     /* Solid base + ONE radial ember wash. No images, no video, no filters. */

@@ -415,14 +415,14 @@ function onArrangePlace() { arrange.value = false; }
   display: inline-flex; align-items: center; gap: var(--sp-2); white-space: nowrap;
   padding: var(--sp-2) var(--sp-3) var(--sp-2);
   background: color-mix(in srgb, var(--void) 62%, transparent); backdrop-filter: blur(7px);
-  border: 1px solid var(--line); border-radius: 9px;
+  border: 1px solid var(--line); border-radius: var(--r-none);
   opacity: 0;
   transition: opacity var(--d-hover) var(--e-settle),
-              transform var(--d-hover) var(--e-spring));
+              transform var(--d-hover) var(--e-spring);
 }
 .ft-card.is-shown { opacity: 1; transform: translate(-50%, calc(-100% - 14px)); }
 /* flat core-hue marker — NO box-shadow / glow (glows stay the core + FIGHT) */
-.ft-marker { width: 8px; height: 8px; border-radius: 2px; flex: 0 0 auto; }
+.ft-marker { width: 8px; height: 8px; border-radius: var(--r-none); flex: 0 0 auto; }
 .ft-txt { display: flex; flex-direction: column; line-height: 1.18; }
 .ft-name {
   font-family: var(--font-mono);
@@ -431,7 +431,7 @@ function onArrangePlace() { arrange.value = false; }
 .ft-sig {
   font-family: var(--font-mono);
   font-size: var(--t-micro); letter-spacing: 0.18em; text-transform: uppercase;
-  color: var(--ink-dim, var(--ink-dim));
+  color: var(--ink-dim);
 }
 /* ───────── the two stages of the one world ─────────
    Pressing FIGHT does not open a screen, it flies the camera away — so the home's

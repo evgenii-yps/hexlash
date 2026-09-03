@@ -138,6 +138,8 @@ onUnmounted(() => {
   width: 34%;
   height: 62%;
   border: 2px solid var(--line-strong);
+  /* Это РИСУНОК телефона, а не поверхность интерфейса: со скруглением 0 он
+     перестаёт читаться как телефон. Форма изображения, не скругление UI. */
   border-radius: 20px;
   background: color-mix(in srgb, var(--carbon) 60%, transparent);
   -webkit-backdrop-filter: blur(8px);

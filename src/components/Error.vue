@@ -61,7 +61,7 @@ const btnClose = () => {
 
 .snackbar {
   bottom: 15vh;
-  z-index: 10000 !important;
+  z-index: var(--z-load) !important;
 }
 
 :deep(.v-snackbar__content) {

@@ -200,7 +200,7 @@ onBeforeUnmount(() => {
   width: 100vw;
   height: 70px;
   position: fixed;
-  z-index: 100;
+  z-index: var(--z-topbar);
 }
 
 

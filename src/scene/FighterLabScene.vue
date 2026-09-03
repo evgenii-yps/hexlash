@@ -750,7 +750,7 @@ onBeforeUnmount(() => {
   inset: 0;
   background: radial-gradient(ellipse 70% 60% at 50% 45%, #11141d 0%, #0a0c12 60%, #050608 100%);
   font-family: var(--font-mono, 'JetBrains Mono', ui-monospace, monospace);
-  color: #fff;
+  color: var(--ink);
 }
 .lab-canvas { display: block; width: 100%; height: 100%; }
 
@@ -771,7 +771,7 @@ onBeforeUnmount(() => {
 .lab-title {
   font-size: 12px;
   letter-spacing: 0.18em;
-  color: #ff0069;
+  color: var(--pink);
 }
 .lab-group { display: flex; flex-direction: column; gap: 6px; }
 .lab-label {
@@ -794,8 +794,8 @@ onBeforeUnmount(() => {
   padding: 5px 9px;
   cursor: pointer;
 }
-.lab-btn:hover { color: #fff; border-color: #ff0069; }
-.lab-btn.on { color: #fff; background: #ff0069; border-color: #ff0069; }
+.lab-btn:hover { color: var(--ink); border-color: var(--pink); }
+.lab-btn.on { color: var(--ink); background: var(--pink); border-color: var(--pink); }
 .lab-btn.wide { min-width: 86px; }
 
 /* Camera snaps (top-right). */
@@ -871,7 +871,7 @@ onBeforeUnmount(() => {
   letter-spacing: 0.08em;
   color: rgba(255, 255, 255, 0.7);
 }
-.ltb-feint { color: #ff0069; }
+.ltb-feint { color: var(--pink); }
 .ltb-track {
   position: relative;
   height: 14px;
@@ -895,7 +895,7 @@ onBeforeUnmount(() => {
   bottom: -1px;
   width: 2px;
   margin-left: -1px;
-  background: #ff0069;
+  background: var(--pink);
   box-shadow: 0 0 4px rgba(255, 6, 105, 0.8);
 }
 .ltb-head {
@@ -904,7 +904,7 @@ onBeforeUnmount(() => {
   bottom: -3px;
   width: 3px;
   margin-left: -1.5px;
-  background: #fff;
+  background: var(--ink);
   box-shadow: 0 0 5px rgba(255, 255, 255, 0.85);
   pointer-events: none;
 }
