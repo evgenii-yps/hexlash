@@ -23,12 +23,14 @@
 <script setup>
 import { onMounted, onBeforeUnmount, ref } from 'vue';
 import * as THREE from 'three';
+import { buildBackdrop } from './hallBackdrop.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { makeRadialTexture, makeHexGridTexture } from './arenaTextures.js';
 import { buildFighter } from './buildFighter.js';
 import { resolveBehavior } from '@/data/behavior.js';
 import { createSpaceWanderDirector } from './spaceWander.js';
 import { beginSceneLoad } from '@/services/sceneLoading.js';
+import { CORE_HUE, FOG_COLOR, FOG, FOV, CAMERA, LEADER_HUE } from '@/data/sceneTokens.js';
 
 // ───────────────────────────── CONFIG (tune on preview) ─────────────────────────────
 // The big hex field — a large flat arena that reads as "огромная арена", not a bigger
@@ -84,10 +86,10 @@ const CAM = {
 // Locked core palette (task snapshot): ONSLAUGHT / RAIDER / BULWARK / AMBUSH. These
 // live on the BODIES as core light/rim (buildFighter) — never a second accent glow.
 const CORE_PALETTE = [
-  { id: 'natisk', hue: '#FF3344' }, // ONSLAUGHT
-  { id: 'nalet', hue: '#FFA526' },  // RAIDER
-  { id: 'skala', hue: '#2ED6B0' },  // BULWARK
-  { id: 'zasada', hue: '#9461FF' }, // AMBUSH
+  { id: 'natisk', hue: CORE_HUE.natisk }, // ONSLAUGHT
+  { id: 'nalet',  hue: CORE_HUE.nalet  }, // RAIDER
+  { id: 'skala',  hue: CORE_HUE.skala  }, // BULWARK
+  { id: 'zasada', hue: CORE_HUE.zasada }, // AMBUSH
 ];
 
 // ─────────────────────────── Lighting — soft diffuse fill (no lamp fixtures) ───────────────────────────
@@ -123,28 +125,6 @@ function buildHexField(groundY, maxAniso) {
 
   const dispose = () => { baseMat.dispose(); base.geometry.dispose(); lineMat.dispose(); lines.geometry.dispose(); hexTex.dispose(); };
   return { group, dispose };
-}
-
-// ─────────────────────────── Background depth dome (PVE recipe, own copy) ───────────────────────────
-// Flat dark gradient (hex weave + grain OFF), sized to surround the whole field.
-const BACKDROP = {
-  radius: 72, centerY: 6, texW: 1024, texH: 1024,
-  grad: [[0.0, '#060710'], [0.42, '#0a0a12'], [0.62, '#120f0c'], [1.0, '#1b150d']],
-};
-function buildBackdrop(o) {
-  const c = document.createElement('canvas'); c.width = o.texW; c.height = o.texH;
-  const ctx = c.getContext('2d');
-  const g = ctx.createLinearGradient(0, 0, 0, o.texH);
-  for (const [stop, col] of o.grad) g.addColorStop(stop, col);
-  ctx.fillStyle = g; ctx.fillRect(0, 0, o.texW, o.texH);
-  const tex = new THREE.CanvasTexture(c);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  const geo = new THREE.SphereGeometry(o.radius, 48, 32);
-  const mat = new THREE.MeshBasicMaterial({ map: tex, side: THREE.BackSide, fog: false, depthWrite: false });
-  const mesh = new THREE.Mesh(geo, mat);
-  mesh.position.set(0, o.centerY, 0); mesh.renderOrder = -10;
-  const dispose = () => { geo.dispose(); mat.dispose(); tex.dispose(); };
-  return { mesh, dispose };
 }
 
 // ─────────────────────────── Leader beacon — the scene's SINGLE glow (pink) ───────────────────────────
@@ -251,9 +231,9 @@ onMounted(() => {
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 
   scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x070811, 0.019); // lighter than PVE → the big field reads, edges fade
+  scene.fog = new THREE.FogExp2(FOG_COLOR, FOG.space.density); // легче — большое поле должно читаться
 
-  camera = new THREE.PerspectiveCamera(CAM.fov, w / h, 0.1, 200);
+  camera = new THREE.PerspectiveCamera(FOV.space, w / h, CAMERA.near, CAMERA.far.space);
   // camera.position is set with the controls below, at a FIXED RTS offset from the
   // pan target (fixed tilt + heading + initial distance).
 
@@ -266,13 +246,14 @@ onMounted(() => {
   scene.add(new THREE.HemisphereLight(LIGHT.hemi.sky, LIGHT.hemi.ground, LIGHT.hemi.intensity));
   load.stage('renderer');
 
-  const pink = getComputedStyle(el).getPropertyValue('--pink').trim() || '#FF0069';
+  const pink = getComputedStyle(el).getPropertyValue('--pink').trim() || LEADER_HUE;
 
   // --- The floor is ONE uniform hex field from edge to edge — no central arena plate,
   //     no seam. The fighters + leader stand on it; its surface height is FIELD.y. ---
   const groundY = FIELD.y;
   field = buildHexField(groundY, renderer.capabilities.getMaxAnisotropy()); scene.add(field.group);
-  backdrop = buildBackdrop(BACKDROP); scene.add(backdrop.mesh);
+  backdrop = buildBackdrop({ radius: 72, centerY: 6 }, renderer.capabilities.getMaxAnisotropy());
+  scene.add(backdrop.mesh);
   load.stage('field');
 
   // --- Roster: 14 fighters, core colour cycled, spread across the whole field.
@@ -479,13 +460,13 @@ onBeforeUnmount(() => {
 .space-scene-wrap {
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse 70% 60% at 50% 44%, #0d0f1c 0%, #07080f 55%, #030308 100%);
+  background: var(--scene-backdrop);
 }
 .space-scene-canvas { display: block; width: 100%; height: 100%; }
 .space-scene-vignette {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(ellipse 80% 80% at 50% 50%, transparent 54%, rgba(3, 3, 8, 0.6) 100%);
+  background: var(--scene-vignette);
 }
 </style>

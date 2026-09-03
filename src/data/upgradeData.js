@@ -8,21 +8,31 @@ import { COMBAT_BALANCE } from './combatBalance.js';
 /* RESOURCE — shared core point pool. Split across all crystals. */
 export const RESOURCE = 5;
 
-/* The four cores — production palette (locked). id → store (read by arena as-is).
-   ix   — core index (card «CORE 0N»).
-   name — display name (EN). sig — one-word signature force.
-   hue  — primary colour (whole screen tints via --core).
-   sup  — supporting glow tone. MUST stay in the same hue family as hue
-          (README §sup-discipline) so the bloom never drifts into a neighbour. */
+/* Четыре ядра — производственная палитра. id → store (арена читает как есть).
+   ix   — номер ядра (карточка «CORE 0N»).
+   name — отображаемое имя (EN). sig — сила ядра одним словом.
+   hue  — ЕДИНСТВЕННЫЙ цвет ядра (весь экран тонируется через --core).
+
+   Второго тона в палитре нет (Документ А 2.3). Раньше `sup` объявлялся
+   отдельным значением у каждого ядра — и все четыре расходились с магазином.
+   Теперь пара выводится осветлением по ОДНОМУ правилу на все ядра:
+   геттер `sup` ниже зовёт coreSup() из src/data/sceneTokens.js. */
+import { coreSup } from './sceneTokens.js';
+
+const core = (id, ix, name, sig, hue, manner) => ({
+  id, ix, name, sig, hue, manner,
+  get sup() { return coreSup(hue); },
+});
+
 export const CORES = [
-  { id: 'natisk', ix: '01', name: 'ONSLAUGHT', sig: 'PRESSURE', hue: '#FF3344', sup: '#FF7A88',
-    manner: 'Marches in close and never lets the distance go.' },
-  { id: 'nalet', ix: '02', name: 'RAIDER', sig: 'TEMPO', hue: '#FFA526', sup: '#FFC97A',
-    manner: 'Strikes, drops, strikes again — touches and gone.' },
-  { id: 'skala', ix: '03', name: 'BULWARK', sig: 'DURABILITY', hue: '#2ED6B0', sup: '#7AE6D0',
-    manner: 'Takes the hit, grinds it down, gives it back later.' },
-  { id: 'zasada', ix: '04', name: 'AMBUSH', sig: 'COUNTER', hue: '#9461FF', sup: '#BFA0FF',
-    manner: 'Waits in silence, then a single, paid-in-full strike.' },
+  core('natisk', '01', 'ONSLAUGHT', 'PRESSURE', '#FF3344',
+    'Marches in close and never lets the distance go.'),
+  core('nalet', '02', 'RAIDER', 'TEMPO', '#FFA526',
+    'Strikes, drops, strikes again — touches and gone.'),
+  core('skala', '03', 'BULWARK', 'DURABILITY', '#2ED6B0',
+    'Takes the hit, grinds it down, gives it back later.'),
+  core('zasada', '04', 'AMBUSH', 'COUNTER', '#9461FF',
+    'Waits in silence, then a single, paid-in-full strike.'),
 ];
 
 /* face: { id, name, state, shifts, conditionals, effects }

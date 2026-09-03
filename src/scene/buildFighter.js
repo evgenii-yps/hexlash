@@ -16,6 +16,10 @@ import { INTENTIONS, INTENTION_SET, INTENTION_TICK_SEC, intentionProfile, choose
 import { motionFor } from '../data/intentionMotion.js';
 import { COMBAT_BALANCE, readDelaySec, readMissChance, readFalseChance, readWindupReactChance, readOpenReactChance } from '../data/combatBalance.js';
 import { createHpIndicator } from './hpIndicator.js';
+// Материал тела и яркости ядра — из общего файла токенов сцены (ТЗ-01 §9).
+// Раньше это были литералы прямо здесь, из-за чего материал бойца и материал
+// плиты арены разошлись по числам, хотя по правилу это ОДИН материал.
+import { MATERIALS, CORE_GLOW, FOG_COLOR } from '../data/sceneTokens.js';
 
 function pinkRgba(pink, a) {
   const n = parseInt(pink.replace('#', ''), 16);
@@ -56,21 +60,30 @@ export function buildFighter(
   // frame flicker before steering takes over.
   const isOpp = side === 'opponent';
   group.rotation.y = isOpp ? Math.PI : 0;
-  const skinColor = isOpp ? 0x141b2e : 0x1c2233; // opponent darker + cooler
+
+  // ⚠️ СВОЙ И ЧУЖОЙ РАЗЛИЧАЮТСЯ ТОЛЬКО ЯРКОСТЬЮ ЯДРА (Документ А 3.4).
+  // Раньше у соперника была своя шкура 0x141b2e — темнее и холоднее. Это
+  // второй признак поверх ядра, и правило его запрещает: тело у обоих одно.
+  //
+  // ЕСЛИ НА ПРЕВЬЮ БОЙЦЫ ПЕРЕСТАЛИ РАЗЛИЧАТЬСЯ — вернуть можно одной строкой:
+  //     const skinColor = isOpp ? 0x141b2e : MATERIALS.fighter.color;
+  // и записать расхождение в Документ А, а не оставлять молча.
+  const skinColor = MATERIALS.fighter.color;
+
   // NEUTRAL COLOUR (dev A/B stand): a single team-less grey both sides share +
   // the core glow killed, so two builds read by movement manner alone with no
   // colour hint. Applied via setNeutralColor() — toggled live or set at build.
   const SKIN_NEUTRAL = 0x23262e;
-  const coreDim = isOpp ? 0.7 : 1.0; // darkens the gem, keeps the hue
-  const coreGain = isOpp ? 0.55 : 1.0; // halo brightness — player's is brightest
+  const coreDim = isOpp ? CORE_GLOW.foe.gem : CORE_GLOW.self.gem;    // яркость кристалла
+  const coreGain = isOpp ? CORE_GLOW.foe.halo / CORE_GLOW.self.halo : 1.0; // яркость ореола
 
-  // Shared faceted "skin" — same workshop as the plates, a touch lighter so the
-  // construct reads against them.
+  // Шкура бойца И плита арены — ОДИН материал (Документ А 3.1): боец и земля
+  // под ним сделаны из одного вещества, это опознавательная черта мира.
   const skin = new THREE.MeshStandardMaterial({
     color: skinColor,
-    flatShading: true,
-    roughness: 0.8,
-    metalness: 0.18,
+    flatShading: MATERIALS.fighter.flatShading,
+    roughness: MATERIALS.fighter.roughness,
+    metalness: MATERIALS.fighter.metalness,
   });
 
   // box(parent, w, h, d, x, y, z) → adds a flat-shaded skin box, returns mesh.
@@ -1081,7 +1094,10 @@ export function buildFighter(
   let chargeShotPen = 0; // block-pierce carried by the current released strike
 
   // Elimination — dissolve into the fog (~1.4s); core holds and fades last.
-  const BG = new THREE.Color(0x070811);
+  // Цвет, В КОТОРЫЙ растворяется тело, обязан быть цветом тумана — иначе на
+  // последних кадрах видно, как силуэт уходит не в тот чёрный. Раньше здесь
+  // стоял свой литерал 0x070811, отличный от тумана.
+  const BG = new THREE.Color(FOG_COLOR);
   let skinBase = skin.color.clone(); // re-captured at eliminate() so the dissolve fades from the live (e.g. neutral-grey) skin
   const DISS_DUR = 1.4;
   let state = 'alive'; // alive | dissolving | done

@@ -19,6 +19,9 @@
 <script setup>
 import { onMounted, onBeforeUnmount, watch, ref } from 'vue';
 import * as THREE from 'three';
+// Купол и лампы зала — общие для всех залов (раньше были скопированы сюда).
+import { buildBackdrop } from './hallBackdrop.js';
+import { LAMPS, buildLamps } from './hallLamps.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildArena } from './buildArena.js';
 import { makeRadialTexture } from './arenaTextures.js';
@@ -31,6 +34,7 @@ import { buildModePlates, MODE_PLATES } from './modePlates.js';
 import { createTransitionFlight, FLIGHT } from './transitionFlight.js';
 import { setModePlateTag, setModePlateHover, clearModePlateTags } from './modePlateTags.js';
 import { beginSceneLoad } from '@/services/sceneLoading.js';
+import { LIGHTING, FOV, CAMERA } from '@/data/sceneTokens.js';;
 import {
   PERF_ON, perfFrame, perfFlightStart, perfFlightEnd, setPerfCap, setPlateCost, countTriangles,
 } from './perfProbe.js';
@@ -120,112 +124,6 @@ function lowPowerDevice() {
   return cores <= 4 || mem <= 4;
 }
 
-// ─────────────────────── Overhead industrial dish lamps ───────────────────────
-// Workshop / gym "dish" lamps hanging from the ceiling: a dark low-poly reflector
-// (open cone) on a thin vertical rod, a warm amber bulb inside, and — the point
-// this time — a REAL warm PointLight per lamp that actually pools onto the slab +
-// fighter, so the scene sits in a lit room instead of floating in black.
-//
-// Discipline frame: the lamp light is warm, soft and DIM — a gentle amber room
-// fill. The fighter core stays the ONLY bright accent and the only cold/pink one:
-// warm even fill vs. one sharp cold pink point. The fill must never out-bright or
-// recolour the core (the core halo is additive/constant, so light can't tint it;
-// just keep light.intensity low). All knobs live in LAMPS — tune on preview in one
-// place. Default leans DIM (easier to raise than to rescue the discipline). A few
-// lamps in a calm spread over the slab — industrial lighting, NOT a garland.
-const LAMPS = {
-  ceilingY: 7.3, // Y where the rods attach up top — master drop lever (lower ⇒ whole
-  //               fixture (rod+shade+bulb+light) slides down as one unit)
-  wire: 1.6, // base rod length (ceiling → shade); per-lamp `drop` adds to it
-  shadeRadius: 0.55, // reflector opening radius
-  shadeHeight: 0.5, // reflector depth
-  shadeColor: 0x161a24, // dark matte outer shell (arena family)
-  rodColor: 0x0c0f16, // thin hanger rod
-  rodRadius: 0.018,
-  bulbRadius: 0.12, // warm glowing element inside the shade
-  bulbColor: 0xffb368, // warm amber bulb (emissive dot, NOT pink/white)
-  bulbOpacity: 0.95,
-  light: {
-    color: 0xffb368, // warm amber — matches the bulb
-    intensity: 16, // DIM by default — raise on preview if the room is too dark
-    distance: 18, // falloff radius
-    decay: 2, // physical falloff
-  },
-  // Calm spread over the slab (±3 X, ±2 Z); `drop` staggers hang height a touch.
-  positions: [
-    { x: -1.9, z: -0.5, drop: 0.0 },
-    { x: 1.9, z: 0.5, drop: 0.7 },
-    { x: 0.1, z: -1.5, drop: 0.3 },
-    { x: -0.3, z: 1.4, drop: 1.0 },
-  ],
-  flicker: 0.05, // gentle light-intensity wobble (0 = dead steady)
-  flickerSpeed: 1.3,
-};
-
-// Build the lamps → { group, tick(t)|null, dispose }. reduced ⇒ tick=null (steady
-// light, no flicker). Cheap: shared shade/bulb geometry + materials, one PointLight
-// per lamp, no shadow maps (pure fill) — fine on mobile.
-function buildLamps(opts, reduced) {
-  const group = new THREE.Group();
-  const shadeGeo = new THREE.ConeGeometry(opts.shadeRadius, opts.shadeHeight, 16, 1, true);
-  const bulbGeo = new THREE.SphereGeometry(opts.bulbRadius, 10, 8);
-  const shadeMat = new THREE.MeshStandardMaterial({
-    color: opts.shadeColor, flatShading: true, roughness: 0.9, metalness: 0.2, side: THREE.DoubleSide,
-  });
-  const rodMat = new THREE.MeshStandardMaterial({ color: opts.rodColor, roughness: 0.8, metalness: 0.3 });
-  const bulbMat = new THREE.MeshBasicMaterial({ color: opts.bulbColor, transparent: true, opacity: opts.bulbOpacity });
-  const rodGeos = []; // per-lamp (length varies with drop)
-  const lights = []; // { light, base, phase }
-
-  opts.positions.forEach((pos, i) => {
-    const shadeTopY = opts.ceilingY - opts.wire - (pos.drop || 0);
-
-    // reflector — cone apex up at shadeTopY, wide opening facing down
-    const shade = new THREE.Mesh(shadeGeo, shadeMat);
-    shade.position.set(pos.x, shadeTopY - opts.shadeHeight / 2, pos.z);
-    group.add(shade);
-
-    // hanger rod — ceiling → shade apex
-    const rodLen = opts.ceilingY - shadeTopY;
-    const rodGeo = new THREE.CylinderGeometry(opts.rodRadius, opts.rodRadius, rodLen, 6);
-    rodGeos.push(rodGeo);
-    const rod = new THREE.Mesh(rodGeo, rodMat);
-    rod.position.set(pos.x, shadeTopY + rodLen / 2, pos.z);
-    group.add(rod);
-
-    // warm bulb inside the shade
-    const bulbY = shadeTopY - opts.shadeHeight * 0.55;
-    const bulb = new THREE.Mesh(bulbGeo, bulbMat);
-    bulb.position.set(pos.x, bulbY, pos.z);
-    group.add(bulb);
-
-    // REAL warm light — soft amber pool on the slab + fighter (no shadows = cheap)
-    const light = new THREE.PointLight(opts.light.color, opts.light.intensity, opts.light.distance, opts.light.decay);
-    light.position.set(pos.x, bulbY - 0.05, pos.z);
-    group.add(light);
-    lights.push({ light, base: opts.light.intensity, phase: i * 1.7 });
-  });
-
-  const tick = reduced ? null : (t) => {
-    for (const l of lights) {
-      l.light.intensity = l.base * (1 - opts.flicker * 0.5 + opts.flicker * 0.5 * Math.sin(t * opts.flickerSpeed + l.phase));
-    }
-  };
-
-  const dispose = () => {
-    shadeGeo.dispose();
-    bulbGeo.dispose();
-    shadeMat.dispose();
-    rodMat.dispose();
-    bulbMat.dispose();
-    rodGeos.forEach((g) => g.dispose());
-  };
-
-  // bulbMat is handed back so the far-distance glow gate can put the bulbs out
-  // once the camera has left the home (see applyHomeGlowGate).
-  return { group, tick, bulbMat, dispose };
-}
-
 // ─────────────────────────── Atmosphere: dust + under-glow ───────────────────────────
 // Two cheap warm touches so the scene breathes instead of floating in vacuum. Both
 // live in the SAME warm amber family as the lamps — soft low-intensity FILL, never a
@@ -246,7 +144,7 @@ const DUST = {
   // so the old 0.07 projected to ~3.5px (bright core ~1px) → invisible. 0.16 reads as
   // a soft ~6–13px haze speck across the orbit distance without becoming "snow".
   size: 0.16,
-  color: 0xffb368,     // warm amber — the lamp family (matches LAMPS.bulbColor)
+  color: 0xffb368,     // warm amber — the lamp family (= LAMPS.bulbColor, hallLamps.js)
   opacity: 0.4,        // additive over the dark scene needs this to register (was 0.2 → sank)
   rise: 0.10,          // upward drift speed (u/s)
   sway: 0.05,          // lateral sway amplitude (u)
@@ -350,134 +248,12 @@ function warmGlowColor(coreHueStr) {
   return amber.clone().lerp(core, blend);      // amber-dominant, subtle core tint
 }
 
-// ───────────────────────── Background depth (dome + lamp haze) ─────────────────────────
-// The space above the slab used to read as a flat black hole. Three quiet warm/dark
-// layers give it depth WITHOUT a single drop of pink and WITHOUT a new glow source:
-//   1. a dark vertical gradient (near-black up top → a warm-dark scene tone lower),
-//   2. a barely-there hexagonal weave (our hex language — slab + logo), denser up top
-//      and dissolved toward the fighter so it never fights the figure,
-//   3. soft warm haze halos at the lamp shades so the lamps read as actually lighting
-//      the top of the frame.
-// Layers 1+2 live on ONE big background DOME (a sphere, painted into a single canvas
-// texture) so they're WORLD-anchored: the camera orbit parallaxes past them as real
-// depth (never a floating screen film, no seams / empty edges), and the hex is
-// mip-mapped so it can't moiré/shimmer when the camera moves. The dome is unlit
-// (MeshBasicMaterial, fog:false) → a controlled backdrop tone, never lit by the lamps.
-// All knobs here. Everything is static geometry → reduced-motion safe by construction.
-
-const BACKDROP = {
-  // The dome has to enclose BOTH ends of the world now, not just the home: with a
-  // full circle to orbit at the plates, every azimuth has to land on sky rather than
-  // on the edge of the geometry. So it is centred on the middle of the corridor
-  // (see centerZ below) and grown to clear the furthest the camera can get at either
-  // end. It is a smooth vertical gradient with no texture detail, so moving and
-  // enlarging it costs nothing visually — there is no pattern to stretch or seam.
-  radius: 58,            // clears the home orbit and the mode orbit's outer limit
-  centerZ: null,         // null ⇒ the corridor midpoint, filled in at build time
-  centerY: 1.6,          // equator ≈ eye level (the camera looks at ~1.6) so the gradient centres on view
-  texW: 1024,            // longitude (wraps) — kept an integer number of hex columns for a seamless seam
-  texH: 1024,            // latitude (the vertical gradient)
-  // vertical gradient stops (canvas top = world top = darkest). The shift is packed
-  // around the middle band the camera actually sees; poles are rarely in frame.
-  grad: [
-    [0.00, '#060710'],   // top pole — darkest, ≈ the fog colour (seamless with fogged foreground)
-    [0.42, '#0a0a12'],   // upper frame — near-black
-    [0.62, '#120f0c'],   // lower-mid — warm-dark transition (lamp family)
-    [1.00, '#1b150d'],   // bottom pole — dark warm
-  ],
-  // hex weave — warm dark amber, VERY faint (quieter than the mockup), faded out toward
-  // the fighter (low latitude) so the figure + identity stay clean.
-  hexCols: 60,           // hexes around the longitude (even → seamless wrap)
-  hexRGB: '255,186,120', // warm amber stroke (alpha appended per row)
-  hexMaxAlpha: 0,        // hex weave OFF — flat dark backdrop, no speckled pattern
-  hexFadeStart: 0.46,    // v below this (toward the fighter) → no hex
-  hexFadeEnd: 0.62,      // v above this → full strength
-  dither: 0,             // grain OFF — smooth dark gradient, no per-pixel speckle
-};
-
 const HAZE = {
   color: 0xffb368,       // warm amber — the same lamp family as the bulbs / dust / under-glow
   opacity: 0.14,         // low — a soft halo, NOT a bright accent (the core stays brightest)
   scale: 2.6,            // sprite world size (blooms around the ~0.55 shade)
   yOffset: 0.05,         // nudge toward the shade centre
 };
-
-// flat-top hexagon outline at (cx,cy) radius R
-function strokeHex(ctx, cx, cy, R) {
-  ctx.beginPath();
-  for (let i = 0; i < 6; i++) {
-    const a = (Math.PI / 3) * i;
-    const x = cx + R * Math.cos(a);
-    const y = cy + R * Math.sin(a);
-    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-  }
-  ctx.closePath();
-  ctx.stroke();
-}
-
-// Paint the honeycomb across the canvas with a per-row alpha fade (strong up top,
-// gone toward the fighter). Seamless horizontally (texW = whole number of 3R periods).
-function drawHexWeave(ctx, o) {
-  const cols = o.hexCols;
-  const R = o.texW / (cols * 1.5);  // flat-top column spacing 1.5R × cols = texW
-  const vStep = Math.sqrt(3) * R;
-  ctx.lineWidth = Math.max(1, R * 0.05);
-  ctx.lineJoin = 'round';
-  for (let c = 0; c <= cols; c++) {
-    const x = c * 1.5 * R;
-    const yOff = (c % 2) * (vStep / 2);
-    for (let r = -1; r * vStep + yOff < o.texH + vStep; r++) {
-      const y = r * vStep + yOff;
-      const v = 1 - y / o.texH; // canvas top (y=0) → v=1 (world top)
-      let a = 0;
-      if (v > o.hexFadeStart) a = o.hexMaxAlpha * Math.min(1, (v - o.hexFadeStart) / (o.hexFadeEnd - o.hexFadeStart));
-      if (a <= 0.002) continue;
-      ctx.strokeStyle = `rgba(${o.hexRGB},${a.toFixed(3)})`;
-      strokeHex(ctx, x, y, R);
-    }
-  }
-}
-
-// Build the background dome → { mesh, dispose }. One sphere, one canvas texture.
-function buildBackdrop(o, maxAniso) {
-  const c = document.createElement('canvas');
-  c.width = o.texW; c.height = o.texH;
-  const ctx = c.getContext('2d');
-  const g = ctx.createLinearGradient(0, 0, 0, o.texH);
-  for (const [stop, col] of o.grad) g.addColorStop(stop, col);
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, o.texW, o.texH);
-  // subtle dither to kill banding in the dark gradient
-  if (o.dither > 0) {
-    const img = ctx.getImageData(0, 0, o.texW, o.texH);
-    const d = img.data;
-    for (let i = 0; i < d.length; i += 4) {
-      const n = (Math.random() * 2 - 1) * o.dither;
-      d[i] += n; d[i + 1] += n; d[i + 2] += n;
-    }
-    ctx.putImageData(img, 0, 0);
-  }
-  drawHexWeave(ctx, o);
-
-  const tex = new THREE.CanvasTexture(c);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  tex.wrapS = THREE.RepeatWrapping;        // longitude wraps seamlessly
-  tex.wrapT = THREE.ClampToEdgeWrapping;
-  tex.generateMipmaps = true;
-  tex.minFilter = THREE.LinearMipmapLinearFilter; // mip-mapped → no hex moiré on movement
-  tex.magFilter = THREE.LinearFilter;
-  tex.anisotropy = Math.min(4, maxAniso || 1);
-
-  const geo = new THREE.SphereGeometry(o.radius, 48, 32);
-  const mat = new THREE.MeshBasicMaterial({
-    map: tex, side: THREE.BackSide, fog: false, depthWrite: false,
-  });
-  const mesh = new THREE.Mesh(geo, mat);
-  mesh.position.set(0, o.centerY, o.centerZ ?? 0);
-  mesh.renderOrder = -10; // paint first, behind everything
-  const dispose = () => { geo.dispose(); mat.dispose(); tex.dispose(); };
-  return { mesh, dispose };
-}
 
 // Build the lamp-haze halos → { group, dispose }. One additive radial sprite per lamp,
 // world-positioned AT the lamp shade so it stays anchored to the lamp under camera
@@ -967,15 +743,15 @@ onMounted(() => {
   // resting values so the very first frame is already correct.
   scene.fog = new THREE.Fog(FLIGHT.fogRest, FLIGHT.fogNearHome, FLIGHT.fogFarHome);
 
-  camera = new THREE.PerspectiveCamera(42, w / h, 0.1, 100);
+  camera = new THREE.PerspectiveCamera(FOV.home, w / h, CAMERA.near, CAMERA.far.home);
   camera.position.copy(CAM_BASE);
 
   // Lighting — same recipe as the arena (one warm key from top-front + cool fill).
-  const key = new THREE.DirectionalLight(0xfff2e8, 2.3);
-  key.position.set(4, 10, 6);
+  const key = new THREE.DirectionalLight(LIGHTING.key.color, LIGHTING.key.intensity);
+  key.position.set(...LIGHTING.key.position);
   scene.add(key);
-  scene.add(new THREE.AmbientLight(0x2a3550, 0.5));
-  scene.add(new THREE.HemisphereLight(0x44506e, 0x05060c, 0.4));
+  scene.add(new THREE.AmbientLight(LIGHTING.amb.color, LIGHTING.amb.intensity));
+  scene.add(new THREE.HemisphereLight(LIGHTING.hemi.sky, LIGHTING.hemi.ground, LIGHTING.hemi.intensity));
   // COUNTER FILL, from the far end of the corridor. The key sits over the home and
   // faces down the +Z side of everything, which was fine while that was the only
   // side anyone ever saw. Now the player can orbit the plates a full circle and look
@@ -1019,18 +795,22 @@ onMounted(() => {
   load.stage('slab');
 
   // Overhead industrial dish lamps — warm DIM amber room fill that actually lights
-  // the slab + fighter (see LAMPS knobs up top), so the scene isn't floating in
+  // the slab + fighter (see LAMPS in hallLamps.js), so the scene isn't floating in
   // black. The core stays the only bright/cold accent; lower light.intensity if it
   // ever competes.
   lamps = buildLamps(LAMPS, reduced);
   scene.add(lamps.group);
 
-  // Background depth — world-anchored dome (dark gradient + faint hex weave) so the
-  // top of the frame reads as tone + texture instead of a black hole, plus soft warm
-  // haze at the lamp shades so the lamps read as lighting the space. Both warm/dark,
-  // no pink, no new glow; static → reduced-motion safe. (See builders up top.)
+  // Background depth — world-anchored dome so the top of the frame reads as tone
+  // instead of a black hole, plus soft warm haze at the lamp shades. Warm/dark,
+  // no pink, no new glow; static → reduced-motion safe.
+  //
+  // Купол обязан накрывать ОБА конца мира, а не только дом: с полным кругом
+  // орбиты у плит любой азимут должен упираться в небо, а не в край геометрии.
+  // Отсюда центр на середине коридора и радиус с запасом. Градиент гладкий, без
+  // рисунка, поэтому увеличивать и двигать его ничего не стоит визуально.
   backdrop = buildBackdrop(
-    { ...BACKDROP, centerZ: -FLIGHT.modeZ / 2 }, // straddle the whole corridor
+    { radius: 58, centerY: 1.6, centerZ: -FLIGHT.modeZ / 2 },
     renderer.capabilities.getMaxAnisotropy(),
   );
   scene.add(backdrop.mesh);
@@ -1368,12 +1148,7 @@ onBeforeUnmount(() => {
 .home-scene-wrap {
   position: absolute;
   inset: 0;
-  background: radial-gradient(
-    ellipse 70% 60% at 50% 44%,
-    #0d0f1c 0%,
-    #07080f 55%,
-    #030308 100%
-  );
+  background: var(--scene-backdrop);
 }
 .home-scene-canvas {
   display: block;
@@ -1384,10 +1159,6 @@ onBeforeUnmount(() => {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(
-    ellipse 78% 78% at 50% 50%,
-    transparent 56%,
-    rgba(3, 3, 8, 0.55) 100%
-  );
+  background: var(--scene-vignette);
 }
 </style>

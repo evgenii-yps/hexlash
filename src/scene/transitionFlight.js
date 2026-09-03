@@ -30,6 +30,7 @@
 //
 // Exports: FLIGHT (the tuning block), createTransitionFlight.
 import * as THREE from 'three';
+import { FOG_COLOR } from '../data/sceneTokens.js';
 
 // ─────────────────────────────── Tuning ───────────────────────────────
 export const FLIGHT = {
@@ -130,7 +131,10 @@ export const FLIGHT = {
   // their materials were dimmed to nearly black. Matched by eye to the backdrop's
   // horizon band (BACKDROP.grad around v≈0.5, where the far end sits); if that
   // gradient is ever retuned, this follows it.
-  fogRest: 0x0f0e11,
+  // Тон тумана — общий для всех залов (FOG_COLOR = --void = дальний край купола).
+  // Раньше дом стоял в своём чёрном 0x0F0E11, на семь пунктов светлее остальных:
+  // передний план уходил в один чёрный, а купол за ним — в другой.
+  fogRest: FOG_COLOR,
 
   // ── the breath ──
   // Removing the billboards left the corridor perfectly still, and perfectly still

@@ -53,6 +53,7 @@ import { SIG_PRESETS, SIG_ORDER, presetBehavior } from '@/data/behaviorPresets.j
 import { COMBAT_BALANCE } from '@/data/combatBalance.js';
 import apiClient from '@/core/api/apiClient.js';
 import { beginSceneLoad } from '@/services/sceneLoading.js';
+import { LIGHTING, FOG_COLOR, FOG, FOV, CAMERA } from '@/data/sceneTokens.js';;
 
 // Model-brain request (hybrid intention layer). Injected into each fighter; it
 // POSTs the WORD context to the backend on a fight break and resolves to
@@ -259,19 +260,19 @@ onMounted(() => {
   scene = new THREE.Scene();
   // Atmospheric haze — far edge of the slab dissolves into the void (depth +
   // hides far-half aliasing). Additive glows opt out via material.fog = false.
-  scene.fog = new THREE.FogExp2(0x070811, 0.03);
+  scene.fog = new THREE.FogExp2(FOG_COLOR, FOG.arena.density);
 
   // --- Camera: perspective, 3/4 view from above (~56° tilt from vertical).
-  camera = new THREE.PerspectiveCamera(42, w / h, 0.1, 100);
+  camera = new THREE.PerspectiveCamera(FOV.arena, w / h, CAMERA.near, CAMERA.far.arena);
   camera.position.set(5.5, 6.2, 7.5);
 
   // --- Lighting: one key directional from top-front (bright top, dark sides,
   //     sharp face boundaries via flat shading) + low cool fill.
-  const key = new THREE.DirectionalLight(0xfff2e8, 2.3);
-  key.position.set(4, 10, 6);
+  const key = new THREE.DirectionalLight(LIGHTING.key.color, LIGHTING.key.intensity);
+  key.position.set(...LIGHTING.key.position);
   scene.add(key);
-  scene.add(new THREE.AmbientLight(0x2a3550, 0.5));
-  scene.add(new THREE.HemisphereLight(0x44506e, 0x05060c, 0.4));
+  scene.add(new THREE.AmbientLight(LIGHTING.amb.color, LIGHTING.amb.intensity));
+  scene.add(new THREE.HemisphereLight(LIGHTING.hemi.sky, LIGHTING.hemi.ground, LIGHTING.hemi.intensity));
 
   // --- Arena + presence. Pink comes from the --pink token (the scene
   //     inherits it via .app-v2), never hard-coded — one canonical pink.
@@ -612,13 +613,7 @@ onBeforeUnmount(() => {
 .arena-wrap {
   position: fixed;
   inset: 0;
-  /* Near-black void with a faint radial lift toward the slab. */
-  background: radial-gradient(
-    ellipse 70% 60% at 50% 42%,
-    #0d0f1c 0%,
-    #070811 55%,
-    #030308 100%
-  );
+  background: var(--scene-backdrop);
 }
 .arena-canvas {
   display: block;
@@ -630,11 +625,7 @@ onBeforeUnmount(() => {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(
-    ellipse 75% 75% at 50% 48%,
-    transparent 55%,
-    rgba(3, 3, 8, 0.55) 100%
-  );
+  background: var(--scene-vignette);
 }
 /* Temporary dev stamina readout (preview only). */
 .arena-readout {
@@ -676,17 +667,17 @@ onBeforeUnmount(() => {
 }
 .arena-actions button:hover {
   color: #fff;
-  border-color: var(--pink, #ff0069);
+  border-color: var(--pink);
 }
 .arena-actions button.tgt {
-  color: var(--pink, #ff0069);
-  border-color: var(--pink, #ff0069);
+  color: var(--pink);
+  border-color: var(--pink);
 }
 /* Active state for a toggle button (e.g. GRAY: ON). */
 .arena-actions button.on {
   color: #fff;
-  background: var(--pink, #ff0069);
-  border-color: var(--pink, #ff0069);
+  background: var(--pink);
+  border-color: var(--pink);
 }
 /* Always-on dev-panel show/hide toggle — small, unobtrusive, top-right corner.
    Stays visible during a bout (incl. the SIG auto-cycle) so the panel is always
@@ -710,11 +701,11 @@ onBeforeUnmount(() => {
 .arena-panel-toggle:hover {
   opacity: 1;
   color: #fff;
-  border-color: var(--pink, #ff0069);
+  border-color: var(--pink);
 }
 .arena-panel-toggle.on {
-  color: var(--pink, #ff0069);
-  border-color: var(--pink, #ff0069);
+  color: var(--pink);
+  border-color: var(--pink);
   opacity: 0.9;
 }
 </style>

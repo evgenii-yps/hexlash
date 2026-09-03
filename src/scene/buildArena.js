@@ -24,6 +24,8 @@ import {
   makeHaloBandTexture,
   makeWallGlowTexture,
 } from './arenaTextures.js';
+// Материал плиты — тот же объект, что и материал бойца (Документ А 3.1).
+import { MATERIALS } from '../data/sceneTokens.js';
 
 export const PLATFORM = { width: 6, height: 1, outerZ: 2.0, slitHalf: 0.12, amp: 0.42 };
 
@@ -104,8 +106,11 @@ export function buildArena(maxAniso = 1, pink = '#FF0069') {
     shape.closePath();
 
     const bodyGeo = new THREE.ExtrudeGeometry(shape, { depth: H, bevelEnabled: false, steps: 1 });
+    // Плита и боец сделаны из ОДНОГО материала (Документ А 3.1): числа берутся
+    // из одного места, а не повторяются здесь литералами. `side` — единственное,
+    // что здесь своё: у плиты видно и низ, у бойца — нет.
     const bodyMat = new THREE.MeshStandardMaterial({
-      color: 0x14182a, flatShading: true, roughness: 0.82, metalness: 0.14, side: THREE.DoubleSide,
+      ...MATERIALS.slab, side: THREE.DoubleSide,
     });
     const body = new THREE.Mesh(bodyGeo, bodyMat);
     body.rotation.x = Math.PI / 2;

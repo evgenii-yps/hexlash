@@ -30,6 +30,8 @@
 <script setup>
 import { onMounted, onBeforeUnmount, ref } from 'vue';
 import * as THREE from 'three';
+import { buildBackdrop } from './hallBackdrop.js';
+import { LAMPS as HALL_LAMPS, buildLamps } from './hallLamps.js';
 import { buildArena } from './buildArena.js';
 import { makeRadialTexture } from './arenaTextures.js';
 import { buildFighter } from './buildFighter.js';
@@ -37,6 +39,7 @@ import { resolveBehavior } from '@/data/behavior.js';
 import { createLegendPresence } from './legendPresence.js';
 import store from '@/core/state/store.js';
 import { beginSceneLoad } from '@/services/sceneLoading.js';
+import { CORE_HUE, AMBER, LIGHTING, FOG_COLOR, FOG, FOV, CAMERA } from '@/data/sceneTokens.js';;
 
 // ───────────────────────────── CONFIG (tune on preview) ─────────────────────────────
 const CONFIG = {
@@ -115,68 +118,17 @@ const LEGEND = {
   bobAmplitude: 0.18,  // vertical bob
   hazeDensity: 90,     // warm cloud particle count
 };
-// Locked core palette (RAIDER = the bright tone #FFD930). The legend is amber #FFB21D —
-// the single warm anchor, distinct from these cold/varied roster cores.
+// Палитра ядер — из общих токенов. RAIDER здесь раньше горел #FFD930: это
+// ВТОРОЙ тон, а не основной, и в зале боец светился не тем цветом, что в
+// магазине. Отменено (Документ А 2.3): читаемость под янтарными лампами
+// вытягивается силой свечения, а не подменой цвета.
 const CORE_PALETTE = [
-  { id: 'natisk', hue: '#FF3344' }, // ONSLAUGHT
-  { id: 'nalet', hue: '#FFD930' },  // RAIDER (bright)
-  { id: 'skala', hue: '#2ED6B0' },  // BULWARK
-  { id: 'zasada', hue: '#9461FF' }, // AMBUSH
+  { id: 'natisk', hue: CORE_HUE.natisk },
+  { id: 'nalet',  hue: CORE_HUE.nalet  },
+  { id: 'skala',  hue: CORE_HUE.skala  },
+  { id: 'zasada', hue: CORE_HUE.zasada },
 ];
-const LEGEND_HUE = '#FFB21D';
-
-// ─────────────────────────── Lamp room-fill (home recipe, own copy) ───────────────────────────
-const LAMPS = {
-  ceilingY: 7.3, wire: 1.6, hangLift: 1.2, shadeRadius: 0.55, shadeHeight: 0.5,
-  // hangLift raises the shades/bulbs/light by this much (and shortens the visible rod
-  // from below) so the fixtures sit above the fighters / out of frame. Light PARAMS
-  // (colour/intensity/distance/decay) are unchanged — only the hang height moves.
-  shadeColor: 0x161a24, rodColor: 0x0c0f16, rodRadius: 0.018,
-  bulbRadius: 0.12, bulbColor: 0xffb368, bulbOpacity: 0.95,
-  light: { color: 0xffb368, intensity: 16, distance: 18, decay: 2 },
-  positions: [
-    { x: -1.9, z: -0.5, drop: 0.0 },
-    { x: 1.9, z: 0.5, drop: 0.7 },
-    { x: 0.1, z: -1.5, drop: 0.3 },
-    { x: -0.3, z: 1.4, drop: 1.0 },
-  ],
-  flicker: 0.05, flickerSpeed: 1.3,
-};
-function buildLamps(opts, reduced) {
-  const group = new THREE.Group();
-  const shadeGeo = new THREE.ConeGeometry(opts.shadeRadius, opts.shadeHeight, 16, 1, true);
-  const bulbGeo = new THREE.SphereGeometry(opts.bulbRadius, 10, 8);
-  const shadeMat = new THREE.MeshStandardMaterial({ color: opts.shadeColor, flatShading: true, roughness: 0.9, metalness: 0.2, side: THREE.DoubleSide });
-  const rodMat = new THREE.MeshStandardMaterial({ color: opts.rodColor, roughness: 0.8, metalness: 0.3 });
-  const bulbMat = new THREE.MeshBasicMaterial({ color: opts.bulbColor, transparent: true, opacity: opts.bulbOpacity });
-  const rodGeos = [];
-  const lights = [];
-  opts.positions.forEach((pos, i) => {
-    const shadeTopY = opts.ceilingY - opts.wire - (pos.drop || 0) + (opts.hangLift || 0);
-    const shade = new THREE.Mesh(shadeGeo, shadeMat);
-    shade.position.set(pos.x, shadeTopY - opts.shadeHeight / 2, pos.z);
-    group.add(shade);
-    const rodLen = Math.max(0.05, opts.ceilingY - shadeTopY); // shorter visible rod as the shade rises
-    const rodGeo = new THREE.CylinderGeometry(opts.rodRadius, opts.rodRadius, rodLen, 6);
-    rodGeos.push(rodGeo);
-    const rod = new THREE.Mesh(rodGeo, rodMat);
-    rod.position.set(pos.x, shadeTopY + rodLen / 2, pos.z);
-    group.add(rod);
-    const bulbY = shadeTopY - opts.shadeHeight * 0.55;
-    const bulb = new THREE.Mesh(bulbGeo, bulbMat);
-    bulb.position.set(pos.x, bulbY, pos.z);
-    group.add(bulb);
-    const light = new THREE.PointLight(opts.light.color, opts.light.intensity, opts.light.distance, opts.light.decay);
-    light.position.set(pos.x, bulbY - 0.05, pos.z);
-    group.add(light);
-    lights.push({ light, base: opts.light.intensity, phase: i * 1.7 });
-  });
-  const tick = reduced ? null : (t) => {
-    for (const l of lights) l.light.intensity = l.base * (1 - opts.flicker * 0.5 + opts.flicker * 0.5 * Math.sin(t * opts.flickerSpeed + l.phase));
-  };
-  const dispose = () => { shadeGeo.dispose(); bulbGeo.dispose(); shadeMat.dispose(); rodMat.dispose(); bulbMat.dispose(); rodGeos.forEach((g) => g.dispose()); };
-  return { group, tick, dispose };
-}
+const LEGEND_HUE = AMBER;   // янтарь HEXARCH — единственный тёплый якорь зала
 
 // ─────────────────────────── Ambient dust — REMOVED on PVE ───────────────────────────
 // The drifting amber dust (home recipe) was dropped from this scene per design — no
@@ -198,56 +150,6 @@ function buildUnderGlow(colorHex, topY) {
   };
   const dispose = () => { mesh.geometry.dispose(); mat.dispose(); tex.dispose(); };
   return { mesh, follow, dispose };
-}
-
-// ─────────────────────────── Background depth dome (home recipe, own copy) ───────────────────────────
-const BACKDROP = {
-  radius: 45, centerY: 1.6, texW: 1024, texH: 1024,
-  grad: [[0.0, '#060710'], [0.42, '#0a0a12'], [0.62, '#120f0c'], [1.0, '#1b150d']],
-  hexCols: 60, hexRGB: '255,186,120', hexMaxAlpha: 0, hexFadeStart: 0.46, hexFadeEnd: 0.62, dither: 0, // hex weave + grain OFF — flat dark gradient (mirrors home fix 222aac4)
-};
-function strokeHex(ctx, cx, cy, R) {
-  ctx.beginPath();
-  for (let i = 0; i < 6; i++) { const a = (Math.PI / 3) * i, x = cx + R * Math.cos(a), y = cy + R * Math.sin(a); if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }
-  ctx.closePath(); ctx.stroke();
-}
-function drawHexWeave(ctx, o) {
-  const cols = o.hexCols, R = o.texW / (cols * 1.5), vStep = Math.sqrt(3) * R;
-  ctx.lineWidth = Math.max(1, R * 0.05); ctx.lineJoin = 'round';
-  for (let c = 0; c <= cols; c++) {
-    const x = c * 1.5 * R, yOff = (c % 2) * (vStep / 2);
-    for (let r = -1; r * vStep + yOff < o.texH + vStep; r++) {
-      const y = r * vStep + yOff, v = 1 - y / o.texH;
-      let a = 0;
-      if (v > o.hexFadeStart) a = o.hexMaxAlpha * Math.min(1, (v - o.hexFadeStart) / (o.hexFadeEnd - o.hexFadeStart));
-      if (a <= 0.002) continue;
-      ctx.strokeStyle = `rgba(${o.hexRGB},${a.toFixed(3)})`;
-      strokeHex(ctx, x, y, R);
-    }
-  }
-}
-function buildBackdrop(o, maxAniso) {
-  const c = document.createElement('canvas'); c.width = o.texW; c.height = o.texH;
-  const ctx = c.getContext('2d');
-  const g = ctx.createLinearGradient(0, 0, 0, o.texH);
-  for (const [stop, col] of o.grad) g.addColorStop(stop, col);
-  ctx.fillStyle = g; ctx.fillRect(0, 0, o.texW, o.texH);
-  if (o.dither > 0) {
-    const img = ctx.getImageData(0, 0, o.texW, o.texH), d = img.data;
-    for (let i = 0; i < d.length; i += 4) { const nz = (Math.random() * 2 - 1) * o.dither; d[i] += nz; d[i + 1] += nz; d[i + 2] += nz; }
-    ctx.putImageData(img, 0, 0);
-  }
-  drawHexWeave(ctx, o);
-  const tex = new THREE.CanvasTexture(c);
-  tex.colorSpace = THREE.SRGBColorSpace; tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.ClampToEdgeWrapping;
-  tex.generateMipmaps = true; tex.minFilter = THREE.LinearMipmapLinearFilter; tex.magFilter = THREE.LinearFilter;
-  tex.anisotropy = Math.min(4, maxAniso || 1);
-  const geo = new THREE.SphereGeometry(o.radius, 48, 32);
-  const mat = new THREE.MeshBasicMaterial({ map: tex, side: THREE.BackSide, fog: false, depthWrite: false });
-  const mesh = new THREE.Mesh(geo, mat);
-  mesh.position.set(0, o.centerY, 0); mesh.renderOrder = -10;
-  const dispose = () => { geo.dispose(); mat.dispose(); tex.dispose(); };
-  return { mesh, dispose };
 }
 // Lamp-haze halos REMOVED on PVE: the floating additive amber sprites that hung
 // around each shade are gone — the lamps now read as lit from inside the dish (the
@@ -555,18 +457,18 @@ onMounted(() => {
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 
   scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x070811, 0.03);
+  scene.fog = new THREE.FogExp2(FOG_COLOR, FOG.arena.density);
 
   viewW = w; viewH = h;   // the framing is measured in canvas pixels — have them before the first fit
-  camera = new THREE.PerspectiveCamera(42, w / h, 0.1, 100);
+  camera = new THREE.PerspectiveCamera(FOV.forge, w / h, CAMERA.near, CAMERA.far.forge);
   camera.position.copy(CAM_BASE);
 
   // Lighting — same recipe as the arena/home (one warm key + cool fill).
-  const key = new THREE.DirectionalLight(0xfff2e8, 2.3);
-  key.position.set(4, 10, 6);
+  const key = new THREE.DirectionalLight(LIGHTING.key.color, LIGHTING.key.intensity);
+  key.position.set(...LIGHTING.key.position);
   scene.add(key);
-  scene.add(new THREE.AmbientLight(0x2a3550, 0.5));
-  scene.add(new THREE.HemisphereLight(0x44506e, 0x05060c, 0.4));
+  scene.add(new THREE.AmbientLight(LIGHTING.amb.color, LIGHTING.amb.intensity));
+  scene.add(new THREE.HemisphereLight(LIGHTING.hemi.sky, LIGHTING.hemi.ground, LIGHTING.hemi.intensity));
 
   load.stage('renderer');
 
@@ -591,8 +493,11 @@ onMounted(() => {
 
   // Atmosphere / depth — warm dim lamp room-fill + a background dome (warm/dark FILL,
   // no pink, no new accent). PVE drops the home's lamp-haze halos and drifting dust.
-  lamps = buildLamps(LAMPS, reduced); scene.add(lamps.group);
-  backdrop = buildBackdrop(BACKDROP, renderer.capabilities.getMaxAnisotropy()); scene.add(backdrop.mesh);
+  // hangLift поднимает плафоны над бойцами / из кадра. Параметры самого света
+  // (цвет, яркость, дальность, затухание) те же, что в остальных залах.
+  lamps = buildLamps({ ...HALL_LAMPS, hangLift: 1.2 }, reduced); scene.add(lamps.group);
+  backdrop = buildBackdrop({ radius: 45, centerY: 1.6 }, renderer.capabilities.getMaxAnisotropy());
+  scene.add(backdrop.mesh);
   load.stage('atmosphere');
 
   // --- Roster: the player's OWN fighters, one body each, standing in a row and
@@ -882,13 +787,13 @@ onBeforeUnmount(() => {
 .pve-scene-wrap {
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse 70% 60% at 50% 44%, #0d0f1c 0%, #07080f 55%, #030308 100%);
+  background: var(--scene-backdrop);
 }
 .pve-scene-canvas { display: block; width: 100%; height: 100%; }
 .pve-scene-vignette {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(ellipse 78% 78% at 50% 50%, transparent 56%, rgba(3, 3, 8, 0.55) 100%);
+  background: var(--scene-vignette);
 }
 </style>
