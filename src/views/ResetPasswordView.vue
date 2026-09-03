@@ -295,7 +295,7 @@ function onRequestNew() {
 .reset-corner--bl { bottom: -1px; left: -1px; border-bottom: 1px solid; border-left: 1px solid; }
 .reset-corner--br { bottom: -1px; right: -1px; border-bottom: 1px solid; border-right: 1px solid; }
 
-@media (max-width: 480px) {
+@media (max-width: 560px) {
   .reset-card { padding: 22px 18px 18px; border-radius: 6px; }
   .reset-corner { display: none; }
 }

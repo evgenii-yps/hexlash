@@ -568,7 +568,7 @@ async function onForgotSubmit(payload) {
 .hx-soc:hover { color: var(--pink); border-color: rgba(var(--pink-rgb), .4); }
 
 /* mobile */
-@media (max-width: 680px) {
+@media (max-width: 560px) {
   .hx-exit { top: 14px; left: 16px; }
   .hx-wrap { padding: 60px 18px 104px; }
   .hx-card { padding: 28px 22px 24px; }

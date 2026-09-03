@@ -260,7 +260,7 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
   --core-sup: color-mix(in srgb, var(--core) 55%, transparent);
   --core-ink: color-mix(in srgb, var(--core) 62%, var(--ink));
   display: flex; flex-direction: column; min-height: 0; height: 100%;
-  font-family: var(--fg-mono);
+  font-family: var(--font-mono);
 }
 .ftree * { box-sizing: border-box; margin: 0; padding: 0; }
 .ftree button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer;
@@ -268,19 +268,19 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
 
 /* ── head: breadcrumb + this fighter's pool ───────────────────────────────── */
 .ft-head { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3);
-  padding-bottom: var(--sp-2); border-bottom: 1px solid var(--fg-line); }
+  padding-bottom: var(--sp-2); border-bottom: 1px solid var(--line); }
 .ft-rail { display: flex; align-items: center; gap: var(--sp-1); }
 .ft-step { display: inline-flex; align-items: center; gap: var(--sp-2); min-height: 44px; padding: 0 var(--sp-2);
-  font-size: var(--t-micro); letter-spacing: .18em; text-transform: uppercase; color: var(--fg-ink-3);
+  font-size: var(--t-micro); letter-spacing: .18em; text-transform: uppercase; color: var(--ink-off);
   transition: color .2s; }
 .ft-step .dot { width: 5px; height: 5px; border: 1px solid currentColor; transform: rotate(45deg); }
 .ft-step[disabled] { cursor: default; }
-.ft-step.on { color: var(--fg-ash); }
-.ft-step.on:hover { color: var(--fg-bone); }
-.ft-step.here { color: var(--fg-bone); }
+.ft-step.on { color: var(--ink-off); }
+.ft-step.on:hover { color: var(--ink); }
+.ft-step.here { color: var(--ink); }
 .ft-step.here .dot { background: var(--core); border-color: var(--core); }
-.ft-step:focus-visible { outline: 1px solid var(--fg-ash); outline-offset: 2px; }
-.ft-pool { font-size: var(--t-xs); letter-spacing: .14em; color: var(--fg-ash); font-variant-numeric: tabular-nums; }
+.ft-step:focus-visible { outline: 1px solid var(--ink-off); outline-offset: 2px; }
+.ft-pool { font-size: var(--t-xs); letter-spacing: .14em; color: var(--ink-off); font-variant-numeric: tabular-nums; }
 .ft-pool b { color: var(--core-ink); font-weight: 700; }
 
 /* ── chamber ──────────────────────────────────────────────────────────────── */
@@ -289,13 +289,13 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
      stretching it to a tall panel leaves the crystals swimming in a void. */
   position: relative; flex: 0 1 auto; height: clamp(300px, 46vh, 460px); margin-top: var(--sp-2);
   isolation: isolate; overflow: hidden;
-  border: 1px solid var(--fg-line);
+  border: 1px solid var(--line);
   background:
     radial-gradient(60% 50% at 50% 50%, color-mix(in srgb, var(--core) 6%, transparent), transparent 70%),
     linear-gradient(180deg, var(--fill-1), transparent 70%);
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%);
 }
-.ft-spokes { position: absolute; inset: 0; z-index: 1; opacity: 0; transition: opacity .5s var(--fg-ease); }
+.ft-spokes { position: absolute; inset: 0; z-index: 1; opacity: 0; transition: opacity .5s var(--e-weight); }
 .ftree[data-level="crystal"] .ft-spokes { opacity: 1; }
 .ft-spokes line { stroke: var(--core-sup); stroke-width: 1; stroke-dasharray: 2 5; opacity: .7; }
 
@@ -303,7 +303,7 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
 .ft-core {
   position: absolute; top: 50%; left: 50%; width: 140px; height: 140px;
   transform: translate(-50%, -50%); display: grid; place-items: center; z-index: 5;
-  transition: transform .65s var(--fg-ease-out), opacity .45s var(--fg-ease);
+  transition: transform .65s var(--e-settle), opacity .45s var(--e-weight);
 }
 .ft-core .glyph { width: 100%; height: 100%; display: grid; place-items: center; position: relative; z-index: 3; }
 .ft-core :deep(svg) { width: 100%; height: 100%; overflow: visible; }
@@ -334,7 +334,7 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
 .ftree[data-level="face"] .ft-core .glow { opacity: .28; animation: none; }
 
 /* ghosts — depth scaffold on CORE level */
-.ft-ghosts { position: absolute; inset: 0; z-index: 2; pointer-events: none; transition: opacity .45s var(--fg-ease); }
+.ft-ghosts { position: absolute; inset: 0; z-index: 2; pointer-events: none; transition: opacity .45s var(--e-weight); }
 .ft-ghost { position: absolute; top: 50%; left: 50%;
   transform: translate(-50%, -50%) translate(var(--x, 0), var(--y, 0));
   display: flex; flex-direction: column; align-items: center; gap: var(--sp-1); text-align: center;
@@ -343,8 +343,8 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
 .ft-ghost .ghex svg { width: 100%; height: 100%; overflow: visible; }
 .ft-ghost .ghex .hl { stroke: var(--core-sup); fill: none; stroke-width: 1; stroke-dasharray: 3 4; }
 .ft-ghost .gn { font-size: var(--t-micro); font-weight: 600; letter-spacing: .14em; text-transform: uppercase;
-  color: var(--fg-ash); line-height: 1; }
-.ft-ghost .gr { font-size: var(--t-micro); letter-spacing: .08em; color: var(--fg-ink-3); line-height: 1; }
+  color: var(--ink-off); line-height: 1; }
+.ft-ghost .gr { font-size: var(--t-micro); letter-spacing: .08em; color: var(--ink-off); line-height: 1; }
 .ft-ghost .gr b { color: var(--core-ink); font-weight: 600; }
 .ftree[data-level="crystal"] .ft-ghosts, .ftree[data-level="face"] .ft-ghosts { opacity: 0; }
 
@@ -354,21 +354,21 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
   transform: translate(-50%, -50%) translate(var(--x, 0), var(--y, 0)) scale(.4);
   opacity: 0; pointer-events: none;
   display: flex; flex-direction: column; align-items: center; gap: var(--sp-1); text-align: center;
-  transition: transform .55s var(--fg-ease-out), opacity .4s var(--fg-ease); }
+  transition: transform .55s var(--e-settle), opacity .4s var(--e-weight); }
 .ftree[data-level="crystal"] .ft-crystal, .ftree[data-level="face"] .ft-crystal.sel {
   opacity: 1; pointer-events: auto;
   transform: translate(-50%, -50%) translate(var(--x, 0), var(--y, 0)) scale(1); }
-.ft-crystal .shard { width: 54px; height: 54px; position: relative; transition: transform .3s var(--fg-ease); }
+.ft-crystal .shard { width: 54px; height: 54px; position: relative; transition: transform .3s var(--e-weight); }
 .ft-crystal:hover .shard { transform: translateY(-2px); }
 .ft-crystal .shard :deep(svg) { width: 100%; height: 100%; overflow: visible; }
-.ft-crystal .shard :deep(.fill) { fill: var(--fg-carbon); }
-.ft-crystal .shard :deep(.lit) { fill: color-mix(in srgb, var(--core) 55%, transparent); transition: fill .25s var(--fg-ease); }
-.ft-crystal .shard :deep(.hex-line) { stroke: color-mix(in srgb, var(--core) 50%, var(--fg-ash));
-  fill: none; stroke-width: 1.6; transition: stroke .25s var(--fg-ease); }
+.ft-crystal .shard :deep(.fill) { fill: var(--carbon); }
+.ft-crystal .shard :deep(.lit) { fill: color-mix(in srgb, var(--core) 55%, transparent); transition: fill .25s var(--e-weight); }
+.ft-crystal .shard :deep(.hex-line) { stroke: color-mix(in srgb, var(--core) 50%, var(--ink-off));
+  fill: none; stroke-width: 1.6; transition: stroke .25s var(--e-weight); }
 .ft-crystal:hover .shard :deep(.hex-line) { stroke: var(--ink); }
 .ft-crystal:focus-visible { outline: 1px solid var(--core-sup); outline-offset: 3px; }
-.ft-crystal .nm { font-size: var(--t-micro); font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--fg-bone); }
-.ft-crystal .ratio { font-size: var(--t-micro); color: var(--fg-ash); letter-spacing: .08em; }
+.ft-crystal .nm { font-size: var(--t-micro); font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--ink); }
+.ft-crystal .ratio { font-size: var(--t-micro); color: var(--ink-off); letter-spacing: .08em; }
 .ft-crystal .ratio b { color: var(--core-ink); font-weight: 700; }
 .ft-crystal.full .ratio b { color: var(--ink); }
 
@@ -378,8 +378,8 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
   display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: var(--sp-2);
   overflow-y: auto; scrollbar-width: thin; align-content: start; }
 .ft-facets::-webkit-scrollbar { width: 4px; }
-.ft-facets::-webkit-scrollbar-thumb { background: var(--fg-line-2); border-radius: 4px; }
-.ft-face { position: relative; border: 1px solid var(--fg-line); background: var(--fill-1);
+.ft-facets::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 4px; }
+.ft-face { position: relative; border: 1px solid var(--line); background: var(--fill-1);
   padding: var(--sp-2) var(--sp-1) var(--sp-2); display: flex; flex-direction: column; align-items: center; gap: var(--sp-2);
   cursor: pointer; min-height: 44px;
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
@@ -387,22 +387,22 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
   -webkit-tap-highlight-color: transparent; }
 .ft-face:active { transform: scale(.96); }
 .ft-face:focus-visible { outline: 1px solid var(--core-sup); outline-offset: 2px; }
-.ft-face .fhex { width: 26px; height: 26px; color: var(--fg-ash); transition: color .25s var(--fg-ease); }
+.ft-face .fhex { width: 26px; height: 26px; color: var(--ink-off); transition: color .25s var(--e-weight); }
 .ft-face .fhex :deep(svg) { width: 100%; height: 100%; overflow: visible; }
 .ft-face .fhex :deep(.ln) { stroke: currentColor; fill: none; stroke-width: 1.5; }
 .ft-face .fhex :deep(.fl) { fill: transparent; }
 .ft-face .fl-nm { font-size: var(--t-micro); font-weight: 600; letter-spacing: .12em; text-transform: uppercase;
-  color: var(--fg-bone); text-align: center; }
+  color: var(--ink); text-align: center; }
 .ft-face .fl-pct { font-size: var(--t-sm); font-weight: 700; line-height: 1; color: var(--core-ink); }
-.ft-face .fl-tag { font-size: var(--t-micro); letter-spacing: .04em; text-transform: uppercase; color: var(--fg-ash);
+.ft-face .fl-tag { font-size: var(--t-micro); letter-spacing: .04em; text-transform: uppercase; color: var(--ink-off);
   line-height: 1.15; text-align: center; }
-.ft-face .fl-st { font-size: var(--t-micro); letter-spacing: .18em; text-transform: uppercase; color: var(--fg-ash); }
+.ft-face .fl-st { font-size: var(--t-micro); letter-spacing: .18em; text-transform: uppercase; color: var(--ink-off); }
 .ft-face.lit { border-color: var(--core-sup); background: color-mix(in srgb, var(--core) 10%, transparent); }
 .ft-face.lit .fhex { color: var(--core); }
 .ft-face.lit .fhex :deep(.fl) { fill: var(--core); }
 .ft-face.lit .fl-pct, .ft-face.lit .fl-tag, .ft-face.lit .fl-st { color: var(--core-ink); }
 .ft-face.lit .fl-pct { color: var(--core); }
-.ft-face.open:hover { border-color: var(--fg-line-2); background: var(--fill-2); }
+.ft-face.open:hover { border-color: var(--line-strong); background: var(--fill-2); }
 .ft-face.locked { opacity: .4; cursor: not-allowed; border-style: dashed; }
 .ft-face.blocked { cursor: not-allowed; }
 @keyframes ftDeny { 0%,100% { transform: translateX(0);} 20% { transform: translateX(-5px);} 40% { transform: translateX(5px);} 60% { transform: translateX(-3px);} 80% { transform: translateX(3px);} }
@@ -411,8 +411,8 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
 /* foot hint */
 .ft-foot { position: absolute; left: 0; right: 0; bottom: 0; z-index: 7;
   display: flex; align-items: center; justify-content: center; padding: var(--sp-2) var(--sp-3);
-  font-size: var(--t-micro); letter-spacing: .22em; text-transform: uppercase; color: var(--fg-ash);
-  border-top: 1px solid var(--fg-line);
+  font-size: var(--t-micro); letter-spacing: .22em; text-transform: uppercase; color: var(--ink-off);
+  border-top: 1px solid var(--line);
   background: linear-gradient(180deg, transparent 0%,
     color-mix(in srgb, var(--void) 82%, transparent) 60%,
     color-mix(in srgb, var(--void) 96%, transparent) 100%);
@@ -420,18 +420,18 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
 
 /* build strip */
 .ft-build { display: flex; align-items: baseline; gap: var(--sp-3); padding-top: var(--sp-3); margin-top: var(--sp-2);
-  border-top: 1px solid var(--fg-line); font-size: var(--t-micro); text-transform: uppercase; }
-.ft-build .k { letter-spacing: .24em; color: var(--fg-ash); flex: none; }
+  border-top: 1px solid var(--line); font-size: var(--t-micro); text-transform: uppercase; }
+.ft-build .k { letter-spacing: .24em; color: var(--ink-off); flex: none; }
 .ft-build .names { display: flex; flex-wrap: wrap; gap: var(--sp-1) var(--sp-3); letter-spacing: .1em; }
 .ft-build .names .b { color: var(--core-ink); font-weight: 700; white-space: nowrap; }
-.ft-build .names .ph { color: var(--fg-ink-3); }
+.ft-build .names .ph { color: var(--ink-off); }
 
 @media (prefers-reduced-motion: reduce) {
   .ft-core, .ft-crystal, .ft-spokes, .ft-ghosts { transition: none; }
   .ft-core .glow { animation: none; opacity: .85; }
   .ft-face.shake { animation: none; }
 }
-@media (max-width: 820px) {
+@media (max-width: 879px) {
   .ft-core { width: 108px; height: 108px; }
   .ft-facets { grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); top: 48px; }
   .ft-step .lb { display: none; }

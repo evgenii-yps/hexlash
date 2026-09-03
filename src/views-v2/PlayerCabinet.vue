@@ -44,8 +44,8 @@
           <div class="cf-k">{{ t.cabinet.fighterLabel }}</div>
           <div class="cab-core">
             <svg viewBox="0 0 64 64" fill="none">
-              <path d="M32 4 L56 18 V46 L32 60 L8 46 V18 Z" stroke="var(--cab-acc)" stroke-width="2" fill="rgba(255,0,105,0.08)" />
-              <path d="M32 20 L44 32 L32 44 L20 32 Z" fill="var(--cab-acc)" />
+              <path d="M32 4 L56 18 V46 L32 60 L8 46 V18 Z" stroke="var(--pink)" stroke-width="2" fill="rgba(255,0,105,0.08)" />
+              <path d="M32 20 L44 32 L32 44 L20 32 Z" fill="var(--pink)" />
             </svg>
           </div>
           <div class="cf-name">{{ t.cabinet.fighterName }}</div>

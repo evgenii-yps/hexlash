@@ -79,20 +79,15 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* Подсказка «поверни телефон» — целиком одна кнопка «закрыть». Отклика на
+   касание у неё намеренно нет: она исчезает от нажатия, а сжимать полноэкранную
+   поверхность перед исчезновением — шум. Это единственное исключение из 5.3. */
 .rotate-hint {
-  --pink: var(--pink);
-  --pink-rgb: 255, 0, 105;
-  --void: var(--void);
-  --ink: var(--ink);
-  --line-strong: var(--line-strong); /* hairline-strong — matte chrome frame */
-  --ease-weight: cubic-bezier(0.55, 0, 0.12, 1);
-  --font-display: "Saira Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif;
-
   position: fixed;
   inset: 0;
-  /* below the load/transition overlay (2147483000) — but they never coexist
-     since this waits for mode === 'none'. Above scene + nav. */
-  z-index: 2147482000;
+  /* Ниже экрана загрузки, но они никогда не видны вместе: подсказка ждёт, пока
+     загрузка не снимется (mode === 'none'). Выше сцены и интерфейса. */
+  z-index: var(--z-load);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -148,7 +143,7 @@ onUnmounted(() => {
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   transform-origin: center;
-  animation: rh-rotate 1.8s var(--ease-weight) infinite;
+  animation: rh-rotate 1.8s var(--e-weight) infinite;
 }
 .rh-cam {
   position: absolute;

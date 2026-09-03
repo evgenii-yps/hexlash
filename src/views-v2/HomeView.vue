@@ -50,7 +50,7 @@
     <!-- surface under the strip: home chrome OR the shop, cross-faded (fade+scale) -->
     <Transition name="hs-view" mode="out-in">
       <!-- Decor shop view replaces the chrome (its own opaque bg covers the stage) -->
-      <HomeShop v-if="view === 'shop'" key="shop" :balance="balance" @back="view = 'home'" />
+      <HomeShop v-if="view === 'shop'" key="shop" :balance="balance" @back="setView('home')" />
 
       <!-- Home / arrange chrome overlay -->
       <div v-else key="home" class="hs-overlay">
@@ -276,7 +276,10 @@ function onArrived(where) {
   const want = where === 'select' ? MODE_PATH : HOME_PATH;
   // Carry the query across: the hop is one scene, so anything the address is
   // holding (?perf=1 on a preview build) has to survive it and survive a refresh.
-  if (route.path !== want) router.push({ path: want, query: route.query });
+  // Кроме ?view=shop — магазин принадлежит дому, на экране выбора режима его нет.
+  const carry = { ...route.query };
+  delete carry.view;
+  if (route.path !== want) router.push({ path: want, query: carry });
 }
 
 // FIGHT no longer navigates — it flies. A second press while the camera is moving
@@ -293,7 +296,13 @@ function onPickMode(id) {
 
 // View + state. The home renders a single fixed state (the empty floor — no
 // ownership data source yet). arrange / shop are entered from the dock.
-const view = ref('home'); // 'home' | 'shop'
+//
+// Магазин — это состояние ДОМА, а не отдельный маршрут: он рисуется поверх той
+// же сцены. Но попасть в него надо уметь снаружи — из зала FORGE, где в полосе
+// стоит та же кнопка SHOP. Поэтому состояние отражается в адресе как ?view=shop:
+// внешняя ссылка ведёт куда обещает, обновление страницы возвращает туда же,
+// а «назад» в браузере работает.
+const view = ref(route.query.view === 'shop' ? 'shop' : 'home'); // 'home' | 'shop'
 const arrange = ref(false);
 const cabinetOpen = ref(false); // Player Cabinet drawer — slides in from the right; closable at all widths
 
@@ -363,8 +372,22 @@ const trayItems = [
 function onFight() { onFightMode(); }
 // SHOP segment toggles the surface (open shop / back to home); the brand-block is
 // the other way home. Both swap the same `view`, cross-faded by the strip wrapper.
-function onShop() { view.value = view.value === 'shop' ? 'home' : 'shop'; }
-function onBrand() { view.value = 'home'; }
+function onShop() { setView(view.value === 'shop' ? 'home' : 'shop'); }
+function onBrand() { setView('home'); }
+
+// Смена состояния всегда идёт через адрес: ?view=shop появляется при входе и
+// исчезает при выходе (пустой параметр в адресе — мусор). replace, а не push:
+// открытие магазина не должно копиться в истории кнопкой «назад».
+function setView(next) {
+  view.value = next;
+  const query = { ...route.query };
+  if (next === 'shop') query.view = 'shop'; else delete query.view;
+  router.replace({ path: route.path, query });
+}
+
+// Адрес — источник правды: переход извне (из FORGE) и «назад» в браузере
+// меняют только его, состояние подтягивается следом.
+watch(() => route.query.view, (v) => { view.value = v === 'shop' ? 'shop' : 'home'; });
 function onCustomize() { arrange.value = true; }
 
 // Arrange — both exit the mode; placement is a visual stub (nothing persists).
@@ -394,19 +417,19 @@ function onArrangePlace() { arrange.value = false; }
   background: color-mix(in srgb, var(--void) 62%, transparent); backdrop-filter: blur(7px);
   border: 1px solid var(--line); border-radius: 9px;
   opacity: 0;
-  transition: opacity 0.32s ease,
-              transform 0.32s var(--hs-spring, cubic-bezier(0.22, 0.61, 0.36, 1));
+  transition: opacity var(--d-hover) var(--e-settle),
+              transform var(--d-hover) var(--e-spring));
 }
 .ft-card.is-shown { opacity: 1; transform: translate(-50%, calc(-100% - 14px)); }
 /* flat core-hue marker — NO box-shadow / glow (glows stay the core + FIGHT) */
 .ft-marker { width: 8px; height: 8px; border-radius: 2px; flex: 0 0 auto; }
 .ft-txt { display: flex; flex-direction: column; line-height: 1.18; }
 .ft-name {
-  font-family: var(--hs-mono, 'JetBrains Mono', ui-monospace, monospace);
+  font-family: var(--font-mono);
   font-size: var(--t-sm); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink);
 }
 .ft-sig {
-  font-family: var(--hs-mono, 'JetBrains Mono', ui-monospace, monospace);
+  font-family: var(--font-mono);
   font-size: var(--t-micro); letter-spacing: 0.18em; text-transform: uppercase;
   color: var(--ink-dim, var(--ink-dim));
 }
@@ -420,7 +443,7 @@ function onArrangePlace() { arrange.value = false; }
 .home-root .edit-space,
 .home-root .fighter-tag {
   visibility: visible;
-  transition: opacity 0.25s var(--ease-weight, ease), visibility 0s linear 0s;
+  transition: opacity var(--d-hover) var(--e-weight), visibility 0s linear 0s;
 }
 /* `visibility`, not just opacity: the strip's own children carry pointer-events:auto
    (home.css), so a merely transparent strip still swallows clicks meant for the mode
@@ -433,7 +456,7 @@ function onArrangePlace() { arrange.value = false; }
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transition: opacity 0.25s var(--ease-weight, ease), visibility 0s linear 0.25s;
+  transition: opacity var(--d-hover) var(--e-weight), visibility 0s linear var(--d-hover);
 }
 
 /* ← BACK on the mode stage. Matte chrome, no pink, no glow — the one lit thing on
@@ -441,7 +464,7 @@ function onArrangePlace() { arrange.value = false; }
 .mode-back {
   position: absolute; left: 28px; top: 26px; z-index: 10;
   pointer-events: auto;
-  font-family: var(--hs-mono, ui-monospace, monospace);
+  font-family: var(--font-mono);
   font-size: var(--t-sm); letter-spacing: 0.16em; text-transform: uppercase;
   height: 40px; padding: 0 var(--sp-4);
 }
@@ -459,20 +482,20 @@ function onArrangePlace() { arrange.value = false; }
   display: flex; flex-direction: column; align-items: center; gap: var(--sp-1);
   white-space: nowrap; text-align: center;
   opacity: 0;
-  transition: opacity 0.32s var(--ease-weight, ease), transform 0.32s var(--ease-weight, ease);
+  transition: opacity var(--d-hover) var(--e-weight), transform var(--d-hover) var(--e-weight);
 }
 .mc-card.is-shown { opacity: 1; transform: translate(-50%, 0); }
 .mc-name {
-  font-family: var(--hs-disp, "Saira Condensed", sans-serif);
+  font-family: var(--font-display);
   font-weight: 900; font-size: var(--t-xl); line-height: 0.9;
   letter-spacing: 0.02em; text-transform: uppercase;
   color: var(--ink);
 }
 .mc-desc {
-  font-family: var(--hs-mono, ui-monospace, monospace);
+  font-family: var(--font-mono);
   font-size: var(--t-xs); letter-spacing: 0.18em; text-transform: uppercase;
   color: var(--ink-off);
-  transition: color 0.25s var(--ease-weight, ease);
+  transition: color var(--d-hover) var(--e-weight);
 }
 .mode-cap.is-lit .mc-desc { color: var(--ink-dim); }
 
@@ -488,7 +511,7 @@ function onArrangePlace() { arrange.value = false; }
   position: absolute; inset: 0; z-index: 9;
   background: var(--void);
   opacity: 0; pointer-events: none;
-  transition: opacity 0.13s linear;
+  transition: opacity var(--d-press) linear;
 }
 .stage-dim.is-on { opacity: 1; }
 
@@ -498,7 +521,7 @@ function onArrangePlace() { arrange.value = false; }
 .perf-hud {
   position: absolute; right: 12px; top: 84px; z-index: 20;
   pointer-events: none; user-select: none;
-  font-family: var(--hs-mono, ui-monospace, monospace);
+  font-family: var(--font-mono);
   font-size: var(--t-micro); line-height: 1.65; letter-spacing: 0.08em;
   text-transform: uppercase; text-align: right;
   color: var(--ink-off);
@@ -512,6 +535,6 @@ function onArrangePlace() { arrange.value = false; }
 /* reduced-motion: keep a soft opacity fade, but no movement (no rise) */
 @media (prefers-reduced-motion: reduce) {
   .ft-card, .ft-card.is-shown { transform: translate(-50%, calc(-100% - 14px)); }
-  .ft-card { transition: opacity 0.2s ease; }
+  .ft-card { transition: opacity var(--d-hover) var(--e-settle); }
 }
 </style>

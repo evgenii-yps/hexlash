@@ -214,7 +214,7 @@ import {HexlashMark} from '@/components/brand/hexlashMark.js';
     .hx4-lock{ --word:7vmin; }
     .hx4-hud i{ width:6.5vmin; height:6.5vmin; }
   }
-  @media (max-width:520px){
+  @media (max-width: 560px){
     .hx4-cta{ flex-direction:column; width:100%; max-width:340px; }
     .hx4-btn, .hx4-ghost{ width:100%; justify-content:center; }
     .hx4-note{ flex-direction:column; gap:1.4vmin; text-align:center; }
