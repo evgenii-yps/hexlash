@@ -120,7 +120,7 @@
             <div class="sc-body">
               <div class="sc-name">{{ t.shop.specials[sp.id].name }}</div>
               <!-- free claim -->
-              <div v-if="sp.kind === 'free'" class="sc-set" style="flex-direction: row; align-items: center; gap: 14px">
+              <div v-if="sp.kind === 'free'" class="sc-set" style="flex-direction: row; align-items: center; gap: var(--sp-4)">
                 <div class="sc-free-art"><svg viewBox="0 0 32 32" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="13" width="22" height="14" /><path d="M3 13h26v4H3z" fill="rgba(255,255,255,0.04)" /><path d="M16 9v18M16 9c-3-4-7-1-4 2 M16 9c3-4 7-1 4 2" /></svg></div>
                 <div style="display: flex; flex-direction: column; gap: 5px">
                   <div class="sc-line" style="color: var(--ink); font-weight: 700">{{ t.shop.specials[sp.id].reward }}</div>

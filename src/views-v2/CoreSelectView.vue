@@ -227,7 +227,7 @@ function toArena() {
   gap: clamp(14px, 2vh, 22px);
 }
 @media (max-width: 640px) {
-  .scene .stage { padding: 60px 18px 22px; }
+  .scene .stage { padding: var(--sp-7) var(--sp-4) var(--sp-5); }
 }
 
 /* ============================================================
@@ -237,11 +237,11 @@ function toArena() {
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: end;
-  gap: 16px 24px;
-  padding-bottom: 14px;
+  gap: var(--sp-4) var(--sp-5);
+  padding-bottom: var(--sp-4);
   border-bottom: 1px solid var(--line);
 }
-.headline .ttl { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.headline .ttl { display: flex; flex-direction: column; gap: var(--sp-3); min-width: 0; }
 
 .headline h1 {
   font-family: var(--font-disp); font-weight: 900;
@@ -256,7 +256,7 @@ function toArena() {
   text-shadow: 0 0 14px color-mix(in srgb, var(--pink) 30%, transparent); }
 
 @media (max-width: 520px) {
-  .headline { grid-template-columns: 1fr; gap: 14px; padding-bottom: 14px; }
+  .headline { grid-template-columns: 1fr; gap: var(--sp-4); padding-bottom: var(--sp-4); }
   .headline h1 { font-size: clamp(34px, 10vw, 46px); white-space: normal; }
 }
 
@@ -266,10 +266,10 @@ function toArena() {
 .grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px;
+  gap: var(--sp-4);
 }
 @media (min-width: 641px) {
-  .grid { gap: 18px; }
+  .grid { gap: var(--sp-4); }
 }
 
 /* ============================================================
@@ -293,7 +293,7 @@ function toArena() {
       var(--fill-1) 100%),
     var(--carbon);
   border: 1px solid var(--line);
-  padding: 16px 18px 0;
+  padding: var(--sp-4) var(--sp-4) 0;
   min-height: clamp(184px, 25vh, 230px);
   cursor: pointer; overflow: hidden;
   transition:
@@ -317,7 +317,7 @@ function toArena() {
 .core-card .stage-i {
   position: relative;
   flex: 1; display: grid; place-items: center;
-  margin: 6px 0 8px;
+  margin: var(--sp-2) 0 var(--sp-2);
   min-height: 96px;
 }
 /* subtle backplate hex behind icon, almost invisible by default */
@@ -367,8 +367,8 @@ function toArena() {
 
 /* NAME */
 .core-card .body {
-  display: flex; flex-direction: column; align-items: flex-start; gap: 5px;
-  position: relative; z-index: 3; padding-bottom: 12px;
+  display: flex; flex-direction: column; align-items: flex-start; gap: var(--sp-1);
+  position: relative; z-index: 3; padding-bottom: var(--sp-3);
 }
 .core-card .nm {
   font-family: var(--font-disp); font-weight: 800;
@@ -439,34 +439,34 @@ function toArena() {
    the 2x2 it is designed for. Portrait never sees any of this.
    ============================================================ */
 @media (orientation: landscape) and (max-height: 560px) {
-  .scene .stage { padding: 34px 16px 12px; gap: 8px; }
-  .col { max-width: min(1040px, 100%); gap: 8px; }
+  .scene .stage { padding: var(--sp-6) var(--sp-4) var(--sp-3); gap: var(--sp-2); }
+  .col { max-width: min(1040px, 100%); gap: var(--sp-2); }
 
-  .headline { padding-bottom: 6px; gap: 8px 18px; }
+  .headline { padding-bottom: var(--sp-2); gap: var(--sp-2) var(--sp-4); }
   .headline h1 { font-size: clamp(20px, 3.2vw, 30px); white-space: nowrap; }
 
-  .grid { grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .grid { grid-template-columns: repeat(4, 1fr); gap: var(--sp-3); }
 
-  .core-card { min-height: 0; padding: 10px 11px 0;
+  .core-card { min-height: 0; padding: var(--sp-3) var(--sp-3) 0;
     clip-path: polygon(0 0, 100% 0, 100% calc(100% - 11px), calc(100% - 11px) 100%, 0 100%); }
   .core-card .tick { width: 8px; height: 8px; top: 7px; }
   .core-card .tick.tl { left: 7px; }
   .core-card .tick.tr { right: 7px; }
 
-  .core-card .stage-i { min-height: 0; margin: 3px 0 5px; }
+  .core-card .stage-i { min-height: 0; margin: var(--sp-1) 0 var(--sp-1); }
   .core-card .stage-i::before { width: 82px; height: 72px; }
   .core-card .icon { width: clamp(44px, 17vh, 78px); height: clamp(44px, 17vh, 78px); }
   .core-card .ring { width: clamp(60px, 23vh, 104px); height: clamp(60px, 23vh, 104px); }
 
-  .core-card .body { padding-bottom: 9px; gap: 3px; }
+  .core-card .body { padding-bottom: var(--sp-2); gap: var(--sp-1); }
   .core-card .nm { font-size: clamp(13px, 1.9vw, 18px); }
   .core-card .bar { right: 11px; }
 
-  .foot { gap: 8px; }
-  .cta { padding: 10px 18px; font-size: clamp(14px, 1.8vw, 19px); gap: 14px; }
+  .foot { gap: var(--sp-2); }
+  .cta { padding: var(--sp-3) var(--sp-4); font-size: clamp(14px, 1.8vw, 19px); gap: var(--sp-4); }
   .cta::after { clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px),
                                    calc(100% - 12px) 100%, 0 100%, 0 12px); }
-  .cta .arr { font-size: 15px; }
+  .cta .arr { font-size: var(--t-md); }
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -532,7 +532,7 @@ function toArena() {
    ============================================================ */
 .foot {
   display: flex; flex-direction: column;
-  gap: 14px;
+  gap: var(--sp-4);
 }
 
 /* CTA — notched primary, fight-card chevron. Disabled = ghost
@@ -542,8 +542,8 @@ function toArena() {
   font-family: var(--font-disp); font-weight: 800;
   font-size: clamp(19px, 2vw, 23px);
   letter-spacing: .18em; text-transform: uppercase;
-  padding: 18px 26px;
-  display: flex; align-items: center; justify-content: center; gap: 22px;
+  padding: var(--sp-4) var(--sp-5);
+  display: flex; align-items: center; justify-content: center; gap: var(--sp-5);
   background: transparent; color: var(--ink-dim);
   cursor: not-allowed; opacity: .82;
   overflow: hidden;
@@ -556,7 +556,7 @@ function toArena() {
                     calc(100% - 18px) 100%, 0 100%, 0 18px);
 }
 .cta .arr {
-  font-family: var(--font-mono); font-weight: 700; font-size: 18px;
+  font-family: var(--font-mono); font-weight: 700; font-size: var(--t-lg);
   letter-spacing: .05em;
   transition: transform .3s var(--ease); /* glides on hover (PLAY-style feel) */
 }
@@ -599,7 +599,7 @@ function toArena() {
    ============================================================ */
 @media (min-width: 900px) and (min-height: 820px) {
   .col { max-width: 840px; }
-  .core-card { min-height: 218px; padding: 20px 22px 0; }
+  .core-card { min-height: 218px; padding: var(--sp-5) var(--sp-5) 0; }
   .core-card .icon { width: 108px; height: 108px; }
   .core-card .stage-i { min-height: 114px; }
   .core-card .stage-i::before { width: 132px; height: 118px; }
@@ -611,10 +611,10 @@ function toArena() {
 
 /* Short viewports: collapse to ultra-tight */
 @media (max-height: 720px) {
-  .core-card { min-height: 168px; padding: 14px 16px 0; }
+  .core-card { min-height: 168px; padding: var(--sp-4) var(--sp-4) 0; }
   .core-card .icon { width: 84px; height: 84px; }
-  .core-card .stage-i { min-height: 86px; margin: 4px 0 6px; }
-  .core-card .body { padding-bottom: 10px; }
+  .core-card .stage-i { min-height: 86px; margin: var(--sp-1) 0 var(--sp-2); }
+  .core-card .body { padding-bottom: var(--sp-3); }
   .headline h1 { font-size: clamp(32px, 5vw, 52px); }
 }
 </style>

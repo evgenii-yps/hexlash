@@ -25,7 +25,7 @@
     <ul>
       <li style="line-height:1.5;"><span style="color:rgb(89,89,89);font-size:15px;"><span
       >Visit our website<span ></span> at&nbsp;</span></span>
-        <span class="question"><a style="color:var(--primary-color);font-size:15px;" href="https://hexlash.com"
+        <span class="question"><a style="color:var(--pink);font-size:15px;" href="https://hexlash.com"
                                   target="_blank">https://hexlash.com</a></span>
 
         <span
@@ -59,13 +59,13 @@
         </div>
         <div style="line-height:1.5;">&nbsp;</div>
         <div style="line-height:1.5;"><span style="font-size:15px;"><i><span><strong>This summary provides key points from our Privacy Notice, but you can find out more details about any of these topics by clicking the link following each key point or by using our&nbsp;</strong></span></i></span><a
-            href="#toc"><span style="color:var(--primary-color);font-size:15px;"><i><span
+            href="#toc"><span style="color:var(--pink);font-size:15px;"><i><span
         ><strong>table of contents</strong></span></i></span></a><span
             style="font-size:15px;"><i><span><strong>&nbsp;below to find the section you are looking for.</strong></span></i></span>
         </div>
         <div style="line-height:1.5;">&nbsp;</div>
         <div style="line-height:1.5;"><span style="font-size:15px;"><span><strong>What personal information do we process?</strong> When you visit, use, or navigate our Services, we may process personal information depending on how you interact with us and the Services, the choices you make, and the products and features you use. Learn more about&nbsp;</span></span><a
-            href="#personalinfo"><span style="color:var(--primary-color);font-size:15px;"><span
+            href="#personalinfo"><span style="color:var(--pink);font-size:15px;"><span
         >personal information you disclose to us</span></span></a><span
         >.</span></div>
         <div style="line-height:1.5;">&nbsp;</div>
@@ -81,7 +81,7 @@
         <div style="line-height:1.5;">&nbsp;</div>
         <div style="line-height:1.5;"><span
             style="font-size:15px;"><span><strong>How do we process your information?</strong> We process your information to provide, improve, and administer our Services, communicate with you, for security and fraud prevention, and to comply with law. We may also process your information for other purposes with your consent. We process your information only when we have a valid legal reason to do so. Learn more about&nbsp;</span></span><a
-            href="#infouse"><span style="color:var(--primary-color);font-size:15px;"><span
+            href="#infouse"><span style="color:var(--pink);font-size:15px;"><span
         >how we process your information</span></span></a><span
         >.</span></div>
         <div style="line-height:1.5;">&nbsp;</div>
@@ -89,7 +89,7 @@
             style="font-size:15px;"><span><strong>In what situations and with which <span
             ></span>types of <span class="statement-end-if-in-editor"></span>parties do we share personal information?</strong> We may share information in specific situations and with specific <span
             ></span>categories of <span class="statement-end-if-in-editor"></span>third parties. Learn more about&nbsp;</span></span><a
-            href="#whoshare"><span style="color:var(--primary-color);font-size:15px;"><span
+            href="#whoshare"><span style="color:var(--pink);font-size:15px;"><span
         >when and with whom we share your personal information</span></span></a><span
             style="font-size:15px;"><span>.<span
             ></span></span></span></div>
@@ -98,7 +98,7 @@
             style="font-size:15px;"><span><strong>How do we keep your information safe?</strong> We have adequate <span
             ></span>organizational<span class="statement-end-if-in-editor"></span> and technical processes and procedures in place to protect your personal information. However, no electronic transmission over the internet or information storage technology can be guaranteed to be 100% secure, so we cannot promise or guarantee that hackers, cybercriminals, or other <span
             ></span>unauthorized<span class="statement-end-if-in-editor"></span> third parties will not be able to defeat our security and improperly collect, access, steal, or modify your information. Learn more about&nbsp;</span></span><a
-            href="#infosafe"><span style="color:var(--primary-color);font-size:15px;"><span
+            href="#infosafe"><span style="color:var(--pink);font-size:15px;"><span
         >how we keep your information safe</span></span></a><span
         >.</span><span style="font-size:15px;"><span>
           <span class="statement-end-if-in-editor"></span>
@@ -106,7 +106,7 @@
         <div style="line-height:1.5;">&nbsp;</div>
         <div style="line-height:1.5;"><span style="font-size:15px;"><span><strong>What are your rights?</strong> Depending on where you are located geographically, the applicable privacy law may mean you have certain rights regarding your personal information. Learn more about&nbsp;</span></span><a
             href="#privacyrights"><span
-            style="color:var(--primary-color);font-size:15px;"><span
+            style="color:var(--pink);font-size:15px;"><span
         >your privacy rights</span></span></a><span
         >.</span></div>
         <div style="line-height:1.5;">&nbsp;</div>
@@ -117,31 +117,31 @@
       </span></span></div>
         <div style="line-height:1.5;">&nbsp;</div>
         <div style="line-height:1.5;"><span style="font-size:15px;"><span>Want to learn more about what we do with any information we collect?&nbsp;</span></span><a
-            href="#toc"><span style="color:var(--primary-color);font-size:15px;"><span
+            href="#toc"><span style="color:var(--pink);font-size:15px;"><span
         >Review the Privacy Notice in full</span></span></a><span
             style="font-size:15px;"><span>.</span></span></div>
         <div style="line-height:1.5;">&nbsp;</div>
         <div style="line-height:1.5;">&nbsp;</div>
-        <div style="line-height:1.5;" id="toc"><span style="color:var(--white);font-size:15px;"><span
+        <div style="line-height:1.5;" id="toc"><span style="color:var(--ink);font-size:15px;"><span
         ><strong>TABLE OF CONTENTS</strong></span></span></div>
         <div style="line-height:1.5;">&nbsp;</div>
         <div style="line-height:1.5;"><a href="#infocollect"><span
-            style="color:var(--primary-color);font-size:15px;">1. WHAT INFORMATION DO WE COLLECT?</span></a></div>
+            style="color:var(--pink);font-size:15px;">1. WHAT INFORMATION DO WE COLLECT?</span></a></div>
         <div style="line-height:1.5;"><a href="#infouse"><span
-            style="color:var(--primary-color);font-size:15px;">2. HOW DO WE PROCESS YOUR INFORMATION?<span
+            style="color:var(--pink);font-size:15px;">2. HOW DO WE PROCESS YOUR INFORMATION?<span
             ></span></span></a></div>
         <div style="line-height:1.5;"><a href="#legalbases"><span
-            style="color:var(--primary-color);font-size:15px;">3. WHAT LEGAL BASES DO WE RELY ON TO PROCESS YOUR PERSONAL INFORMATION?<span
+            style="color:var(--pink);font-size:15px;">3. WHAT LEGAL BASES DO WE RELY ON TO PROCESS YOUR PERSONAL INFORMATION?<span
             class="statement-end-if-in-editor"></span></span></a></div>
         <div style="line-height:1.5;"><a href="#whoshare"><span
-            style="color:var(--primary-color);font-size:15px;">4. WHEN AND WITH WHOM DO WE SHARE YOUR PERSONAL INFORMATION?</span></a><span
+            style="color:var(--pink);font-size:15px;">4. WHEN AND WITH WHOM DO WE SHARE YOUR PERSONAL INFORMATION?</span></a><span
             style="font-size:15px;"><span>
           <span ></span>
       </span></span><span style="color:rgb(89,89,89);font-size:15px;"><span>
           <span ></span>
       </span></span></div>
         <div style="line-height:1.5;"><a href="#cookies"><span
-            style="color:var(--primary-color);font-size:15px;">5. DO WE USE COOKIES AND OTHER TRACKING TECHNOLOGIES?</span></a><span
+            style="color:var(--pink);font-size:15px;">5. DO WE USE COOKIES AND OTHER TRACKING TECHNOLOGIES?</span></a><span
             style="color:rgb(89,89,89);font-size:15px;"><span>
           <span class="statement-end-if-in-editor"></span>
       </span></span><span style="font-size:15px;">
@@ -153,48 +153,48 @@
           <span ></span>
       </span></span></div>
         <div style="line-height:1.5;"><a href="#inforetain"><span
-            style="color:var(--primary-color);font-size:15px;">6. HOW LONG DO WE KEEP YOUR INFORMATION?</span></a><span
+            style="color:var(--pink);font-size:15px;">6. HOW LONG DO WE KEEP YOUR INFORMATION?</span></a><span
             style="color:rgb(89,89,89);font-size:15px;"><span>
           <span ></span>
       </span></span></div>
         <div style="line-height:1.5;"><a href="#infosafe"><span
-            style="color:var(--primary-color);font-size:15px;">7. HOW DO WE KEEP YOUR INFORMATION SAFE?</span></a><span
+            style="color:var(--pink);font-size:15px;">7. HOW DO WE KEEP YOUR INFORMATION SAFE?</span></a><span
             style="color:rgb(89,89,89);font-size:15px;"><span>
           <span class="statement-end-if-in-editor"></span>
           <span ></span>
       </span></span></div>
         <div style="line-height:1.5;"><a href="#infominors"><span
-            style="color:var(--primary-color);font-size:15px;">8. DO WE COLLECT INFORMATION FROM MINORS?</span></a><span
+            style="color:var(--pink);font-size:15px;">8. DO WE COLLECT INFORMATION FROM MINORS?</span></a><span
             style="color:rgb(89,89,89);font-size:15px;"><span>
           <span class="statement-end-if-in-editor"></span>
       </span></span></div>
         <div style="line-height:1.5;"><a href="#privacyrights"><span
-            style="color:var(--primary-color);font-size:15px;">9. WHAT ARE YOUR PRIVACY RIGHTS?</span></a></div>
+            style="color:var(--pink);font-size:15px;">9. WHAT ARE YOUR PRIVACY RIGHTS?</span></a></div>
         <div style="line-height:1.5;"><a href="#DNT"><span
-            style="color:var(--primary-color);font-size:15px;">10. CONTROLS FOR DO-NOT-TRACK FEATURES<span
+            style="color:var(--pink);font-size:15px;">10. CONTROLS FOR DO-NOT-TRACK FEATURES<span
             ></span></span></a></div>
         <div style="line-height:1.5;"><a href="#uslaws"><span
-            style="color:var(--primary-color);font-size:15px;">11. DO UNITED STATES RESIDENTS HAVE SPECIFIC PRIVACY RIGHTS?</span></a><span
+            style="color:var(--pink);font-size:15px;">11. DO UNITED STATES RESIDENTS HAVE SPECIFIC PRIVACY RIGHTS?</span></a><span
             style="font-size:15px;"><span></span></span></div>
         <div style="line-height:1.5;"><span style="font-size:15px;"></span>
         
         </div>
         <div style="line-height:1.5;"><a href="#policyupdates"><span
-            style="color:var(--primary-color);font-size:15px;">12. DO WE MAKE UPDATES TO THIS NOTICE?</span></a></div>
+            style="color:var(--pink);font-size:15px;">12. DO WE MAKE UPDATES TO THIS NOTICE?</span></a></div>
         <div style="line-height:1.5;"><a href="#contact"><span
-            style="color:var(--primary-color);font-size:15px;">13. HOW CAN YOU CONTACT US ABOUT THIS NOTICE?</span></a>
+            style="color:var(--pink);font-size:15px;">13. HOW CAN YOU CONTACT US ABOUT THIS NOTICE?</span></a>
         </div>
         <div style="line-height:1.5;"><a href="#request"><span
-            style="color:var(--primary-color);">14. HOW CAN YOU REVIEW, UPDATE, OR DELETE THE DATA WE COLLECT FROM YOU?</span></a>
+            style="color:var(--pink);">14. HOW CAN YOU REVIEW, UPDATE, OR DELETE THE DATA WE COLLECT FROM YOU?</span></a>
         </div>
         <div style="line-height:1.5;">&nbsp;</div>
         <div style="line-height:1.5;">&nbsp;</div>
-        <div style="line-height:1.5;" id="infocollect"><span style="color:var(--white);font-size:15px;"><span
+        <div style="line-height:1.5;" id="infocollect"><span style="color:var(--ink);font-size:15px;"><span
             id="control"
             data-custom-class="heading_1"><strong>1. WHAT INFORMATION DO WE COLLECT?</strong></span></span>
         </div>
         <div style="line-height:1.5;">&nbsp;</div>
-        <div style="line-height:1.5;" id="personalinfo"><span style="color:var(--white);font-size:15px;"><span
+        <div style="line-height:1.5;" id="personalinfo"><span style="color:var(--ink);font-size:15px;"><span
             data-custom-class="heading_2"><strong>Personal information you disclose to us</strong></span></span></div>
         <div>
           <div>&nbsp;</div>
@@ -279,7 +279,7 @@
         >
           <span ></span>
       </span></span></div>
-        <div style="line-height:1.5;"><span style="color:var(--white);font-size:15px;"><span
+        <div style="line-height:1.5;"><span style="color:var(--ink);font-size:15px;"><span
             data-custom-class="heading_2"><strong>Information automatically collected</strong></span></span></div>
         <div>
           <div>&nbsp;</div>
@@ -339,7 +339,7 @@
           </span></span>
           </div>
           <div style="line-height:1.5;">&nbsp;</div>
-          <div style="line-height:1.5;" id="infouse"><span style="color:var(--white);font-size:15px;"><span id="control"
+          <div style="line-height:1.5;" id="infouse"><span style="color:var(--ink);font-size:15px;"><span id="control"
                          data-custom-class="heading_1"><strong>2. HOW DO WE PROCESS YOUR INFORMATION?</strong></span></span>
           </div>
           <div>
@@ -498,7 +498,7 @@
                                                         ></span>,<span
                                                         class="statement-end-if-in-editor"></span> consent) to use your personal information for a specific purpose. You can withdraw your consent at any time. Learn more about&nbsp;</span></span><a
                                                         href="#withdrawconsent"><span
-                                                        style="color:var(--primary-color);font-size:15px;"><span
+                                                        style="color:var(--pink);font-size:15px;"><span
                                                     >withdrawing your consent</span></span></a><span
                                                     >.</span></li>
                                                   </ul>
@@ -617,7 +617,7 @@
                                                                 ></span>,<span
                                                                 class="statement-end-if-in-editor"></span> implied consent). You can&nbsp;</span></span><a
                                                                 href="#withdrawconsent"><span
-                                                                style="color:var(--primary-color);font-size:15px;"><span
+                                                                style="color:var(--pink);font-size:15px;"><span
                                                             >withdraw your consent</span></span></a><span
                                                                 style="font-size:15px;"><span
                                                             >&nbsp;at any time.</span></span>
@@ -758,7 +758,7 @@
                                                             ></span></span></div>
                                                             <div style="line-height:1.5;">&nbsp;</div>
                                                             <div style="line-height:1.5;" id="whoshare"><span
-                                                                style="color:var(--white);font-size:15px;"><span
+                                                                style="color:var(--ink);font-size:15px;"><span
                                                                 id="control" data-custom-class="heading_1"><strong>4. WHEN AND WITH WHOM DO WE SHARE YOUR PERSONAL INFORMATION?</strong></span></span>
                                                             </div>
                                                             <div style="line-height:1.5;">&nbsp;</div>
@@ -885,7 +885,7 @@
                                                                       </div>
                                                                       <div style="line-height:1.5;">&nbsp;</div>
                                                                       <div style="line-height:1.5;" id="cookies"><span
-                                                                          style="color:var(--white);font-size:15px;"><span
+                                                                          style="color:var(--ink);font-size:15px;"><span
                                                                           id="control"
                                                                           data-custom-class="heading_1"><strong>5. DO WE USE COOKIES AND OTHER TRACKING TECHNOLOGIES?</strong></span></span>
                                                                       </div>
@@ -915,7 +915,7 @@
                                                                           ></span>"<span
                                                                           class="statement-end-if-in-editor"></span></span></span><a
                                                                           href="#uslaws"><span
-                                                                          style="color:var(--primary-color);font-size:15px;"><span
+                                                                          style="color:var(--pink);font-size:15px;"><span
                                                                       >DO UNITED STATES RESIDENTS HAVE SPECIFIC PRIVACY RIGHTS?</span></span></a><span
                                                                           style="font-size:15px;"><span
                                                                       >
@@ -948,9 +948,9 @@
                                                                           target="_blank" rel="noopener noreferrer"
                                                                           href="https://tools.google.com/dlpage/gaoptout"
                                                                       ><span
-                                                                          style="color:var(--primary-color);font-size:15px;"><span
+                                                                          style="color:var(--pink);font-size:15px;"><span
                                                                       >https://tools.google.com/dlpage/gaoptout</span></span></a><span
-                                                                          style="color:var(--primary-color);font-size:15px;"><span
+                                                                          style="color:var(--pink);font-size:15px;"><span
                                                                       >.</span></span><span
                                                                           style="font-size:15px;"><span
                                                                       >
@@ -960,7 +960,7 @@
                                                                           target="_blank" rel="noopener noreferrer"
                                                                           href="https://policies.google.com/privacy"
                                                                       ><span
-                                                                          style="color:var(--primary-color);font-size:15px;"><span
+                                                                          style="color:var(--pink);font-size:15px;"><span
                                                                       >Google Privacy &amp; Terms page</span></span></a><span
                                                                           style="font-size:15px;"><span
                                                                       >.</span></span><span
@@ -984,7 +984,7 @@
                                                                       <div style="line-height:1.5;">&nbsp;</div>
                                                                       <div style="line-height:1.5;" id="inforetain">
   <span
-      style="color:var(--white);font-size:15px;"><span
+      style="color:var(--ink);font-size:15px;"><span
       id="control"
       data-custom-class="heading_1"><strong>6. HOW LONG DO WE KEEP YOUR INFORMATION?</strong></span></span>
                                                                       </div>
@@ -1018,7 +1018,7 @@
                                                                       </div>
                                                                       <div style="line-height:1.5;">&nbsp;</div>
                                                                       <div style="line-height:1.5;" id="infosafe"><span
-                                                                          style="color:var(--white);font-size:15px;"><span
+                                                                          style="color:var(--ink);font-size:15px;"><span
                                                                           id="control"
                                                                           data-custom-class="heading_1"><strong>7. HOW DO WE KEEP YOUR INFORMATION SAFE?</strong></span></span>
                                                                       </div>
@@ -1045,7 +1045,7 @@
                                                                       <div style="line-height:1.5;">&nbsp;</div>
                                                                       <div style="line-height:1.5;" id="infominors">
   <span
-      style="color:var(--white);font-size:15px;"><span
+      style="color:var(--ink);font-size:15px;"><span
       id="control"
       data-custom-class="heading_1"><strong>8. DO WE COLLECT INFORMATION FROM MINORS?</strong></span></span>
                                                                       </div>
@@ -1078,7 +1078,7 @@
                                                                       <div style="line-height:1.5;">&nbsp;</div>
                                                                       <div style="line-height:1.5;" id="privacyrights">
   <span
-      style="color:var(--white);font-size:15px;"><span
+      style="color:var(--ink);font-size:15px;"><span
       id="control"
       data-custom-class="heading_1"><strong>9. WHAT ARE YOUR PRIVACY RIGHTS?</strong></span></span>
                                                                       </div>
@@ -1108,7 +1108,7 @@
                                                                           ></span>"<span
                                                                           class="statement-end-if-in-editor"></span></span></span><a
                                                                           href="#contact"><span
-                                                                          style="color:var(--primary-color);font-size:15px;"><span
+                                                                          style="color:var(--pink);font-size:15px;"><span
                                                                       >HOW CAN YOU CONTACT US ABOUT THIS NOTICE?</span></span></a><span
                                                                           style="color:rgb(89,89,89);font-size:15px;"><span
                                                                       >
@@ -1132,14 +1132,14 @@
                                                                           target="_blank" rel="noopener noreferrer"
                                                                           href="https://ec.europa.eu/justice/data-protection/bodies/authorities/index_en.htm"
                                                                       ><span
-                                                                          style="color:var(--primary-color);font-size:15px;"><span
+                                                                          style="color:var(--pink);font-size:15px;"><span
                                                                       >Member State data protection authority</span></span></a><span
                                                                           style="color:rgb(89,89,89);font-size:15px;"><span
                                                                       > or&nbsp;</span></span><a
                                                                           target="_blank" rel="noopener noreferrer"
                                                                           href="https://ico.org.uk/make-a-complaint/data-protection-complaints/data-protection-complaints/"
                                                                       ><span
-                                                                          style="color:var(--primary-color);font-size:15px;"><span
+                                                                          style="color:var(--pink);font-size:15px;"><span
                                                                       >UK data protection authority</span></span></a><span
                                                                           style="color:rgb(89,89,89);font-size:15px;"><span
                                                                       >.</span></span>
@@ -1151,7 +1151,7 @@
                                                                           target="_blank" rel="noopener noreferrer"
                                                                           href="https://www.edoeb.admin.ch/edoeb/en/home.html"
                                                                       ><span
-                                                                          style="color:var(--primary-color);font-size:15px;"><span
+                                                                          style="color:var(--pink);font-size:15px;"><span
                                                                       >Federal Data Protection and Information Commissioner</span></span></a><span
                                                                           style="color:rgb(89,89,89);font-size:15px;"><span
                                                                       >.</span></span>
@@ -1166,7 +1166,7 @@
                                                                           ></span>"<span
                                                                           class="statement-end-if-in-editor"></span></span></span><a
                                                                           href="#contact"><span
-                                                                          style="color:var(--primary-color);font-size:15px;"><span
+                                                                          style="color:var(--pink);font-size:15px;"><span
                                                                       >HOW CAN YOU CONTACT US ABOUT THIS NOTICE?</span></span></a><span
                                                                           style="color:rgb(89,89,89);font-size:15px;"><span
                                                                       >
@@ -1258,7 +1258,7 @@
                                                                       </div>
                                                                       <div style="line-height:1.5;">&nbsp;</div>
                                                                       <div style="line-height:1.5;" id="DNT"><span
-                                                                          style="color:var(--white);font-size:15px;"><span
+                                                                          style="color:var(--ink);font-size:15px;"><span
                                                                           id="control"
                                                                           data-custom-class="heading_1"><strong>10. CONTROLS FOR DO-NOT-TRACK FEATURES</strong></span></span>
                                                                       </div>
@@ -1291,7 +1291,7 @@
                                                                       </div>
                                                                       <div style="line-height:1.5;">&nbsp;</div>
                                                                       <div style="line-height:1.5;" id="uslaws"><span
-                                                                          style="color:var(--white);font-size:15px;"><span
+                                                                          style="color:var(--ink);font-size:15px;"><span
                                                                           id="control"
                                                                           data-custom-class="heading_1"><strong>11. DO UNITED STATES RESIDENTS HAVE SPECIFIC PRIVACY RIGHTS?</strong></span></span>
                                                                       </div>
@@ -1728,7 +1728,7 @@ We may also collect other personal information outside of these categories throu
                                                                             class="statement-end-if-in-editor"></span></span></span><a
                                                                             href="#infocollect"
                                                                         ><span
-                                                                            style="color:var(--primary-color);font-size:15px;"><span
+                                                                            style="color:var(--pink);font-size:15px;"><span
                                                                         >WHAT INFORMATION DO WE COLLECT?</span></span></a><span
                                                                             style="font-size:15px;"><span
                                                                         >
@@ -1750,7 +1750,7 @@ We may also collect other personal information outside of these categories throu
                                                                             class="statement-end-if-in-editor"></span></span></span><a
                                                                             href="#infouse"
                                                                         ><span
-                                                                            style="color:var(--primary-color);font-size:15px;">HOW DO WE PROCESS YOUR INFORMATION?</span></a><span
+                                                                            style="color:var(--pink);font-size:15px;">HOW DO WE PROCESS YOUR INFORMATION?</span></a><span
                                                                             style="font-size:15px;"><span
                                                                         >
             <span
@@ -1782,7 +1782,7 @@ We may also collect other personal information outside of these categories throu
                                                                             class="statement-end-if-in-editor"></span></span></span><a
                                                                             href="#whoshare"
                                                                         ><span
-                                                                            style="color:var(--primary-color);font-size:15px;">WHEN AND WITH WHOM DO WE SHARE YOUR PERSONAL INFORMATION?</span></a><span
+                                                                            style="color:var(--pink);font-size:15px;">WHEN AND WITH WHOM DO WE SHARE YOUR PERSONAL INFORMATION?</span></a><span
                                                                             style="color:rgb(89,89,89);font-size:15px;"><span
                                                                         >
             <span
@@ -1920,7 +1920,7 @@ We may also collect other personal information outside of these categories throu
           class="statement-end-if-in-editor"></span></span></span><a
          href="#whoshare"
      ><span
-         style="color:var(--primary-color);font-size:15px;"><span
+         style="color:var(--pink);font-size:15px;"><span
      >WHEN AND WITH WHOM DO WE SHARE YOUR PERSONAL INFORMATION?</span></span></a><span
          style="color:rgb(89,89,89);font-size:15px;"><span
      >
@@ -1929,7 +1929,7 @@ We may also collect other personal information outside of these categories throu
          class="statement-end-if-in-editor"></span>
             </span><span
      ></span></span><span
-         style="color:var(--white);font-size:15px;"><span
+         style="color:var(--ink);font-size:15px;"><span
      >
   <span
       ></span>
@@ -2004,11 +2004,11 @@ We may also collect other personal information outside of these categories throu
 <span
     class="forloop-component"></span>
           </span></span><span
-               style="color:var(--white);"><span
+               style="color:var(--ink);"><span
            ></span></span><span
            ></span><span
                style="font-size:15px;"></span><span
-               style="color:var(--white);"><span
+               style="color:var(--ink);"><span
            ></span></span><span
            ></span>
            </div>
@@ -2062,7 +2062,7 @@ We may also collect other personal information outside of these categories throu
               ></span>
       </span><span
            ></span><span
-               style="color:var(--white);font-size:15px;"><span
+               style="color:var(--ink);font-size:15px;"><span
            >
 <span
     class="statement-end-if-in-editor"></span>
@@ -2395,7 +2395,7 @@ We may also collect other personal information outside of these categories throu
                 class="statement-end-if-in-editor"></span></span></span><a
                href="#contact"
            ><span
-               style="color:var(--primary-color);font-size:15px;"><span
+               style="color:var(--pink);font-size:15px;"><span
            >HOW CAN YOU CONTACT US ABOUT THIS NOTICE?</span></span></a><span
                style="font-size:15px;"><span
            >
@@ -2417,7 +2417,7 @@ We may also collect other personal information outside of these categories throu
                style="line-height:1.5;"
                id="policyupdates">
             <span
-                style="color:var(--white);font-size:15px;"><span
+                style="color:var(--ink);font-size:15px;"><span
                 id="control"
                 data-custom-class="heading_1"><strong>12. DO WE MAKE UPDATES TO THIS NOTICE?</strong></span></span>
            </div>
@@ -2450,7 +2450,7 @@ We may also collect other personal information outside of these categories throu
            <div
                style="line-height:1.5;"
                id="contact"><span
-               style="color:var(--white);font-size:15px;"><span
+               style="color:var(--ink);font-size:15px;"><span
                id="control"
                data-custom-class="heading_1"><strong>13. HOW CAN YOU CONTACT US ABOUT THIS NOTICE?</strong></span></span>
            </div>
@@ -2544,7 +2544,7 @@ We may also collect other personal information outside of these categories throu
            <div
                style="line-height:1.5;"
                id="request"><span
-               style="color:var(--white);font-size:15px;"><span
+               style="color:var(--ink);font-size:15px;"><span
                id="control"
                data-custom-class="heading_1"><strong>14. HOW CAN YOU REVIEW, UPDATE, OR DELETE THE DATA WE COLLECT FROM YOU?</strong></span></span>
            </div>

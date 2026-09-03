@@ -27,9 +27,9 @@
 .fg-tag {
   position: fixed; z-index: var(--z-modal); pointer-events: none;
   transform: translate(-50%, 0);
-  font-family: var(--font-mono); font-size: 11px; letter-spacing: .22em;
+  font-family: var(--font-mono); font-size: var(--t-xs); letter-spacing: .22em;
   text-transform: uppercase; color: var(--ink);
-  padding: 5px 9px; border: 1px solid var(--line-strong);
+  padding: var(--sp-1) var(--sp-2); border: 1px solid var(--line-strong);
   background: color-mix(in srgb, var(--void) 72%, transparent);
   opacity: 0; transition: opacity var(--d-fast) var(--e-weight);
 }
@@ -42,12 +42,12 @@
    empty plate the trainer is standing over, at a size you are meant to read. */
 .fg-empty {
   position: fixed; left: 50%; top: 62%; transform: translate(-50%, -50%); z-index: var(--z-panel);
-  font-family: var(--font-mono); font-size: 13px; line-height: 1.5; letter-spacing: .06em;
+  font-family: var(--font-mono); font-size: var(--t-base); line-height: 1.5; letter-spacing: .06em;
   color: var(--ink-dim); text-align: center; pointer-events: none;
-  padding: 0 20px; max-width: min(28rem, 88vw); text-wrap: balance;
+  padding: 0 var(--sp-5); max-width: min(28rem, 88vw); text-wrap: balance;
 }
 @media (orientation: landscape) and (max-height: 520px) {
-  .fg-empty { top: 66%; font-size: 12px; }
+  .fg-empty { top: 66%; font-size: var(--t-sm); }
 }
 
 /* ── work state ──────────────────────────────────────────────────────────── */
@@ -56,26 +56,26 @@
 .fg-card {
   position: fixed; left: 14px; bottom: 14px; z-index: var(--z-panel);
   width: min(32vw, 340px); max-height: 46vh; overflow: auto;
-  padding: 14px 16px 16px;
+  padding: var(--sp-4) var(--sp-4) var(--sp-4);
   border: 1px solid var(--line); border-left: 2px solid var(--core);
   background: var(--carbon);
   font-family: var(--font-mono);
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%);
 }
-.fg-card .cs { font-family: var(--font-display); font-weight: 800; font-size: 30px; line-height: .95;
+.fg-card .cs { font-family: var(--font-display); font-weight: 800; font-size: var(--t-xl); line-height: .95;
   letter-spacing: .02em; text-transform: uppercase; color: var(--ink); }
-.fg-card .core { display: inline-flex; align-items: center; gap: 7px; margin-top: 8px;
-  font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--core); }
+.fg-card .core { display: inline-flex; align-items: center; gap: var(--sp-2); margin-top: var(--sp-2);
+  font-size: var(--t-micro); letter-spacing: .18em; text-transform: uppercase; color: var(--core); }
 .fg-card .core .sw { width: 8px; height: 8px; background: var(--core); }  /* flat chip, no glow */
-.fg-card .rows { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 10px;
-  display: flex; flex-direction: column; gap: 7px; }
-.fg-card .row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
-  font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-dim); }
+.fg-card .rows { margin-top: var(--sp-4); border-top: 1px solid var(--line); padding-top: var(--sp-3);
+  display: flex; flex-direction: column; gap: var(--sp-2); }
+.fg-card .row { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-3);
+  font-size: var(--t-micro); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-dim); }
 .fg-card .row b { color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; }
-.fg-card .none { font-size: 10px; letter-spacing: .06em; color: var(--ink-off); text-transform: none; }
+.fg-card .none { font-size: var(--t-micro); letter-spacing: .06em; color: var(--ink-off); text-transform: none; }
 .fg-card .close {
   position: absolute; top: 6px; right: 6px; width: 44px; height: 44px;
-  display: grid; place-items: center; font: inherit; font-size: 16px; line-height: 1;
+  display: grid; place-items: center; font: inherit; font-size: var(--t-lg); line-height: 1;
   color: var(--ink-dim); background: none; border: 0; cursor: pointer; transition: color var(--d-fast);
 }
 .fg-card .close:hover { color: var(--ink); }
@@ -84,14 +84,14 @@
 /* tree panel — the right side of the screen */
 .fg-tree {
   position: fixed; top: 0; right: 0; bottom: 0; z-index: var(--z-panel);
-  width: min(60vw, 720px); padding: 14px 16px 16px;
+  width: min(60vw, 720px); padding: var(--sp-4) var(--sp-4) var(--sp-4);
   border-left: 1px solid var(--line);
   background: var(--carbon);
   display: flex; flex-direction: column;
 }
 /* the guest honesty line moved here with the tree (it used to sit under the
    pre-fight upgrade screen's build bar, and that screen is gone) */
-.fg-guest { margin-top: 10px; font-family: var(--font-mono); font-size: 9.5px; line-height: 1.35;
+.fg-guest { margin-top: var(--sp-3); font-family: var(--font-mono); font-size: var(--t-micro); line-height: 1.35;
   letter-spacing: .05em; color: var(--ink-dim); }
 
 /* enter / leave — the panels arrive with the camera, not before it */
@@ -111,11 +111,11 @@
   .fg-card {
     left: 8px; right: 8px; width: auto; max-height: none;
     top: auto; bottom: calc(var(--fg-band) + 6px);
-    padding: 10px 12px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding: var(--sp-3) var(--sp-3); display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap;
   }
-  .fg-card .cs { font-size: 20px; }
+  .fg-card .cs { font-size: var(--t-lg); }
   .fg-card .core { margin-top: 0; }
-  .fg-card .rows { margin-top: 0; border-top: 0; padding-top: 0; flex-direction: row; gap: 14px; }
+  .fg-card .rows { margin-top: 0; border-top: 0; padding-top: 0; flex-direction: row; gap: var(--sp-4); }
   .fg-card .close { position: static; margin-left: auto; }
   .fg-tree {
     top: auto; left: 8px; right: 8px; bottom: 8px; width: auto; height: var(--fg-band);
@@ -129,8 +129,8 @@
    a 375px-tall screen would leave the tree a letterbox — but gives the tree more
    of the width, because there is not much of it. */
 @media (orientation: landscape) and (max-width: 900px) {
-  .fg-card { width: min(38vw, 260px); max-height: 52vh; padding: 10px 12px; }
-  .fg-card .cs { font-size: 20px; }
-  .fg-card .rows { margin-top: 8px; padding-top: 8px; }
-  .fg-tree { width: min(46vw, 420px); padding: 10px 12px 12px; }
+  .fg-card { width: min(38vw, 260px); max-height: 52vh; padding: var(--sp-3) var(--sp-3); }
+  .fg-card .cs { font-size: var(--t-lg); }
+  .fg-card .rows { margin-top: var(--sp-2); padding-top: var(--sp-2); }
+  .fg-tree { width: min(46vw, 420px); padding: var(--sp-3) var(--sp-3) var(--sp-3); }
 }

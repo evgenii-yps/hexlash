@@ -389,8 +389,8 @@ function onArrangePlace() { arrange.value = false; }
   position: absolute; left: 0; bottom: 0;
   /* centred above the anchor (−14px gap); +6px lower while hidden → a soft rise */
   transform: translate(-50%, calc(-100% - 14px + 6px));
-  display: inline-flex; align-items: center; gap: 8px; white-space: nowrap;
-  padding: 6px 11px 7px;
+  display: inline-flex; align-items: center; gap: var(--sp-2); white-space: nowrap;
+  padding: var(--sp-2) var(--sp-3) var(--sp-2);
   background: color-mix(in srgb, var(--void) 62%, transparent); backdrop-filter: blur(7px);
   border: 1px solid var(--line); border-radius: 9px;
   opacity: 0;
@@ -403,11 +403,11 @@ function onArrangePlace() { arrange.value = false; }
 .ft-txt { display: flex; flex-direction: column; line-height: 1.18; }
 .ft-name {
   font-family: var(--hs-mono, 'JetBrains Mono', ui-monospace, monospace);
-  font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink);
+  font-size: var(--t-sm); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink);
 }
 .ft-sig {
   font-family: var(--hs-mono, 'JetBrains Mono', ui-monospace, monospace);
-  font-size: 8.5px; letter-spacing: 0.18em; text-transform: uppercase;
+  font-size: var(--t-micro); letter-spacing: 0.18em; text-transform: uppercase;
   color: var(--ink-dim, var(--ink-dim));
 }
 /* ───────── the two stages of the one world ─────────
@@ -442,8 +442,8 @@ function onArrangePlace() { arrange.value = false; }
   position: absolute; left: 28px; top: 26px; z-index: 10;
   pointer-events: auto;
   font-family: var(--hs-mono, ui-monospace, monospace);
-  font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase;
-  height: 40px; padding: 0 16px;
+  font-size: var(--t-sm); letter-spacing: 0.16em; text-transform: uppercase;
+  height: 40px; padding: 0 var(--sp-4);
 }
 
 /* Plate captions — a zero-size anchor at the projected point, card centred on it.
@@ -456,7 +456,7 @@ function onArrangePlace() { arrange.value = false; }
 .mc-card {
   position: absolute; left: 0; top: 0;
   transform: translate(-50%, 6px);
-  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  display: flex; flex-direction: column; align-items: center; gap: var(--sp-1);
   white-space: nowrap; text-align: center;
   opacity: 0;
   transition: opacity 0.32s var(--ease-weight, ease), transform 0.32s var(--ease-weight, ease);
@@ -464,13 +464,13 @@ function onArrangePlace() { arrange.value = false; }
 .mc-card.is-shown { opacity: 1; transform: translate(-50%, 0); }
 .mc-name {
   font-family: var(--hs-disp, "Saira Condensed", sans-serif);
-  font-weight: 900; font-size: 30px; line-height: 0.9;
+  font-weight: 900; font-size: var(--t-xl); line-height: 0.9;
   letter-spacing: 0.02em; text-transform: uppercase;
   color: var(--ink);
 }
 .mc-desc {
   font-family: var(--hs-mono, ui-monospace, monospace);
-  font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+  font-size: var(--t-xs); letter-spacing: 0.18em; text-transform: uppercase;
   color: var(--ink-off);
   transition: color 0.25s var(--ease-weight, ease);
 }
@@ -478,8 +478,8 @@ function onArrangePlace() { arrange.value = false; }
 
 @media (max-width: 560px) {
   .mode-back { left: 18px; top: 18px; }
-  .mc-name { font-size: 24px; }
-  .mc-desc { font-size: 10px; letter-spacing: 0.14em; }
+  .mc-name { font-size: var(--t-xl); }
+  .mc-desc { font-size: var(--t-micro); letter-spacing: 0.14em; }
 }
 
 /* Reduced motion only: the camera is placed, not flown, so a short dim covers the
@@ -499,7 +499,7 @@ function onArrangePlace() { arrange.value = false; }
   position: absolute; right: 12px; top: 84px; z-index: 20;
   pointer-events: none; user-select: none;
   font-family: var(--hs-mono, ui-monospace, monospace);
-  font-size: 10px; line-height: 1.65; letter-spacing: 0.08em;
+  font-size: var(--t-micro); line-height: 1.65; letter-spacing: 0.08em;
   text-transform: uppercase; text-align: right;
   color: var(--ink-off);
 }

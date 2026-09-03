@@ -93,25 +93,25 @@ function goMode() { router.push('/play/mode'); }
 .space-note {
   position: absolute; left: 50%; bottom: clamp(20px, 5vh, 40px); transform: translateX(-50%);
   z-index: 6; max-width: min(90vw, 460px);
-  display: flex; align-items: center; gap: 14px;
-  padding: 12px 18px;
+  display: flex; align-items: center; gap: var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
   background: color-mix(in srgb, var(--panel) 62%, transparent); border: 1px solid var(--line);
   backdrop-filter: blur(8px);
   pointer-events: none;
 }
 .space-note-soon {
   flex: 0 0 auto;
-  font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.28em; text-transform: uppercase;
-  color: var(--ink-soft); padding: 5px 10px;
+  font-family: var(--font-mono); font-size: var(--t-micro); font-weight: 700; letter-spacing: 0.28em; text-transform: uppercase;
+  color: var(--ink-soft); padding: var(--sp-1) var(--sp-3);
   background: linear-gradient(180deg, var(--line), var(--fill-1));
   border: 1px solid var(--line-strong);
 }
 .space-note-text {
-  margin: 0; font-family: var(--font-mono); font-size: 11.5px; line-height: 1.5; letter-spacing: 0.04em;
+  margin: 0; font-family: var(--font-mono); font-size: var(--t-xs); line-height: 1.5; letter-spacing: 0.04em;
   color: var(--ink-dim); text-transform: uppercase;
 }
 @media (max-width: 560px) {
-  .space-note { flex-direction: column; align-items: flex-start; gap: 8px; padding: 10px 14px; }
-  .space-note-text { font-size: 10.5px; letter-spacing: 0.02em; }
+  .space-note { flex-direction: column; align-items: flex-start; gap: var(--sp-2); padding: var(--sp-3) var(--sp-4); }
+  .space-note-text { font-size: var(--t-micro); letter-spacing: 0.02em; }
 }
 </style>
