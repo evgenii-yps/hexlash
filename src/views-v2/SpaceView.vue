@@ -96,7 +96,7 @@ function goMode() { router.push('/play/mode'); }
   display: flex; align-items: center; gap: var(--sp-4);
   padding: var(--sp-3) var(--sp-4);
   background: color-mix(in srgb, var(--panel) 62%, transparent); border: 1px solid var(--line);
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(var(--blur-glass));
   pointer-events: none;
 }
 .space-note-soon {

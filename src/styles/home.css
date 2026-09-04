@@ -65,7 +65,7 @@
 /* ── shared matte chrome material (SHOP · back · cabinet · EDIT SPACE) ──────────
    Rectangle (radius 0, no HUD corners, no chamfer). Matte glass at rest; on hover/
    press a COLD WHITE chrome ring + bloom (never pink) with a one-shot sheen.
-   Glass = rgba(22,22,27,.55) over backdrop-filter blur(8px). NOTE: blur is already
+   Glass = rgba(22,22,27,.55) over backdrop-filter blur(var(--blur-glass)). NOTE: blur is already
    shipping on these exact strip chips today; the documented backdrop drift was the
    SHOP BODY (shop.css), not this fixed overlay — so blur is retained here. If it
    ever drifts, the safe fallback is an opaque fill (e.g. rgba(20,20,26,.9)) and
@@ -76,7 +76,7 @@
   height: 44px; padding: 0 var(--sp-4);
   border: 1px solid var(--chrome-line); border-radius: var(--r-none);
   background: var(--chrome-glass);
-  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(var(--blur-glass)); backdrop-filter: blur(var(--blur-glass));
   color: var(--chrome-ink);
   cursor: pointer; overflow: hidden; white-space: nowrap;
   transition: border-color var(--d-hover) var(--e-weight),
@@ -85,9 +85,9 @@
               color var(--d-hover) var(--e-weight),
               transform var(--d-hover) var(--e-weight);
 }
-.hs-chrome > svg { width: 17px; height: 17px; flex: 0 0 auto; color: currentColor; }
+.hs-chrome > svg { width: var(--icon-sm); height: var(--icon-sm); flex: 0 0 auto; color: currentColor; }
 .hs-chrome .n { font-family: var(--font-display); font-weight: 700; font-size: var(--t-md);
-  letter-spacing: 0.14em; text-transform: uppercase; color: currentColor; line-height: 1; }
+  letter-spacing: var(--ls-title); text-transform: uppercase; color: currentColor; line-height: 1; }
 /* one-shot sheen sweep — a single chrome glint on hover-in */
 .hs-chrome::after {
   content: ""; position: absolute; inset: 0; pointer-events: none;
@@ -127,7 +127,7 @@
    no chevron). Neutral chrome, never pink/glow (that stays on FIGHT + the core). */
 .hs-seg-cab { padding: 0 var(--sp-4) 0 var(--sp-3); justify-content: center; }
 .hs-seg-cab .av {
-  width: 28px; height: 28px; flex: 0 0 auto; transform: rotate(45deg);
+  width: var(--icon-lg); height: var(--icon-lg); flex: 0 0 auto; transform: rotate(45deg);
   background: linear-gradient(150deg, var(--chrome-hi), var(--chrome-lo));
   border: 1px solid var(--chrome-line);
   transition: filter var(--d-hover) var(--e-weight), border-color var(--d-hover) var(--e-weight);
@@ -147,9 +147,9 @@
 /* quiet supporting buttons — a small lift, no glow (the pink/glow stays on FIGHT) */
 .hs-tile:hover { background: var(--fill-2); border-color: var(--line-strong); transform: translateY(-2px); }
 .hs-tile:active { transform: translateY(0) scale(0.985); transition-duration: var(--d-press); }
-.hs-tile svg { width: 22px; height: 22px; color: var(--ink-soft); }
+.hs-tile svg { width: var(--icon-md); height: var(--icon-md); color: var(--ink-soft); }
 .hs-tile .tl-n { font-weight: 700; font-size: var(--t-lg); letter-spacing: 0.05em; text-transform: uppercase; }
-.hs-tile .tl-s { font-family: var(--font-mono); font-size: var(--t-micro); letter-spacing: 0.14em; color: var(--ink-dim); margin-top: -var(--sp-2); }
+.hs-tile .tl-s { font-family: var(--font-mono); font-size: var(--t-micro); letter-spacing: var(--ls-title); color: var(--ink-dim); margin-top: -var(--sp-2); }
 
 /* ════════════ FIGHT — physical hex plinth (the ONE pink + the ONE glow) ════════════
    Three stacked layers so it reads as a slab with thickness, not a sticker:
@@ -186,7 +186,7 @@
   transition: transform var(--d-panel) var(--e-weight), filter var(--d-panel) var(--e-weight); }
 .hs-fight .f-label { font-family: var(--font-display); font-weight: 900; font-size: var(--t-2xl); letter-spacing: 0.13em;
   line-height: 1; text-transform: uppercase; color: var(--ink); text-shadow: 0 1px 0 color-mix(in srgb, var(--pink-deep) 50%, transparent); }
-.hs-fight .f-arr { width: 28px; height: 28px; flex: 0 0 auto; color: var(--ink); transition: transform var(--d-panel) var(--e-weight); }
+.hs-fight .f-arr { width: var(--icon-lg); height: var(--icon-lg); flex: 0 0 auto; color: var(--ink); transition: transform var(--d-panel) var(--e-weight); }
 /* slow rare sheen — a skewed white glint that crosses then rests off-frame (::after) */
 .hs-fight .f-face::after { content: ""; position: absolute; inset: 0; pointer-events: none;
   background: linear-gradient(105deg, transparent 42%, var(--line-strong) 50%, transparent 58%);
@@ -229,7 +229,7 @@
   from { opacity: 0; transform: translateY(20px); filter: blur(6px); }
   to   { opacity: 1; transform: translateY(0);    filter: blur(0); } }
 @keyframes riseHero {
-  from { opacity: 0; transform: translateY(30px); filter: blur(8px); }
+  from { opacity: 0; transform: translateY(30px); filter: blur(var(--blur-glass)); }
   60%  { opacity: 1; filter: blur(0); }
   to   { opacity: 1; transform: translateY(0); filter: blur(0); } }
 
@@ -286,7 +286,7 @@
   background: linear-gradient(0deg, color-mix(in srgb, var(--void) 97%, transparent), color-mix(in srgb, var(--void) 80%, transparent) 60%, transparent); }
 .hs-tray-h { display: flex; align-items: baseline; gap: var(--sp-4); margin-bottom: var(--sp-4); }
 .hs-tray-h .th { font-weight: 700; font-size: var(--t-md); letter-spacing: 0.06em; text-transform: uppercase; }
-.hs-tray-h .ts { font-family: var(--font-mono); font-size: var(--t-micro); letter-spacing: 0.16em; color: var(--ink-dim); text-transform: uppercase; }
+.hs-tray-h .ts { font-family: var(--font-mono); font-size: var(--t-micro); letter-spacing: var(--ls-meta); color: var(--ink-dim); text-transform: uppercase; }
 .hs-tray-row { display: flex; gap: var(--sp-4); }
 .hs-slot { position: relative; width: 118px; height: 90px; border: 1px solid var(--line); background: var(--fill-1);
   display: flex; align-items: flex-end; justify-content: center; cursor: pointer; transition: border-color var(--d-fast), background var(--d-fast); }

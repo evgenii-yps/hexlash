@@ -50,7 +50,7 @@
 
 /* tab switcher — pink underline (system layer) */
 .sb-tabs { display: flex; border-bottom: 1px solid var(--line); }
-.sb-tab { flex: 1; font-family: var(--font-mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-dim);
+.sb-tab { flex: 1; font-family: var(--font-mono); letter-spacing: var(--ls-meta); text-transform: uppercase; color: var(--ink-dim);
   background: none; border: 0; cursor: pointer; position: relative; text-align: center; transition: color var(--d-fast);
   display: flex; align-items: center; justify-content: center; gap: var(--sp-2); }
 .sb-tab:hover { color: var(--ink-soft); }
@@ -75,12 +75,12 @@
   padding: var(--sp-3) var(--sp-3); margin-bottom: var(--sp-4); background: var(--fill-1);
 }
 .dv-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--sp-3); }
-.dv-count { font-size: var(--t-xs); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-dim); }
+.dv-count { font-size: var(--t-xs); letter-spacing: var(--ls-title); text-transform: uppercase; color: var(--ink-dim); }
 .dv-count b { color: var(--ink); font-variant-numeric: tabular-nums; }
 
 /* give-a-fighter row */
 .dv-give { border: 1px solid var(--line); padding: var(--sp-3); margin-bottom: var(--sp-5); }
-.dv-lbl { display: block; font-size: var(--t-micro); letter-spacing: 0.16em; text-transform: uppercase;
+.dv-lbl { display: block; font-size: var(--t-micro); letter-spacing: var(--ls-meta); text-transform: uppercase;
   color: var(--ink-dim); margin-bottom: var(--sp-2); }
 .dv-cores { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-bottom: var(--sp-3); }
 .dv-core {
@@ -95,7 +95,7 @@
 .dv-swatch { width: 8px; height: 8px; background: var(--dvc, var(--ink-dim)); }  /* flat chip, no glow */
 
 .dv-btn {
-  width: 100%; min-height: 44px; font: inherit; font-size: var(--t-sm); letter-spacing: 0.16em;
+  width: 100%; min-height: 44px; font: inherit; font-size: var(--t-sm); letter-spacing: var(--ls-meta);
   text-transform: uppercase; color: var(--ink); background: var(--fill-2);
   border: 1px solid var(--line-strong); cursor: pointer; transition: background var(--d-fast);
 }
@@ -169,7 +169,7 @@ body.home-shop-open .hs-strip { position: relative; background: var(--shop-bg); 
 /* ════════════ DECOR — presence cards ════════════ */
 .sub-tabs { display: flex; gap: var(--sp-2); overflow-x: auto; padding-bottom: var(--sp-1); }
 .sub-tabs::-webkit-scrollbar { height: 0; }
-.sub-tab { font-family: var(--font-mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-dim);
+.sub-tab { font-family: var(--font-mono); letter-spacing: var(--ls-meta); text-transform: uppercase; color: var(--ink-dim);
   border: 1px solid var(--line); white-space: nowrap; display: inline-flex; align-items: center; gap: var(--sp-2); flex: none; }
 .sub-tab.on { color: var(--ink); border-color: rgba(var(--pink-rgb), 0.4); background: rgba(var(--pink-rgb), 0.06); }
 .sub-tab i { font-style: normal; letter-spacing: 0.18em; color: var(--ink-dim); border: 1px solid var(--line); padding: 1px var(--sp-1); }
@@ -262,7 +262,7 @@ body.home-shop-open .hs-strip { position: relative; background: var(--shop-bg); 
 .cc-amt i { font-family: var(--font-mono); font-style: normal; color: var(--pink); letter-spacing: 0.06em; }
 .cc-bonus { font-family: var(--font-mono); color: var(--ink-soft); letter-spacing: 0.04em; }
 .cc-bonus em { font-style: normal; color: var(--pink); }
-.cval { display: inline-flex; align-items: center; gap: var(--sp-2); font-family: var(--font-mono); letter-spacing: 0.14em;
+.cval { display: inline-flex; align-items: center; gap: var(--sp-2); font-family: var(--font-mono); letter-spacing: var(--ls-title);
   text-transform: uppercase; color: var(--ink-soft); border: 1px solid var(--line); padding: var(--sp-1) var(--sp-2); align-self: flex-start; }
 .cval b { color: var(--ink); font-weight: 700; }
 /* BEST VALUE — the single pink bloom on the currency screen (live only) */

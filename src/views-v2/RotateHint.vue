@@ -142,8 +142,8 @@ onUnmounted(() => {
      перестаёт читаться как телефон. Форма изображения, не скругление UI. */
   border-radius: 20px;
   background: color-mix(in srgb, var(--carbon) 60%, transparent);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(var(--blur-glass));
+  backdrop-filter: blur(var(--blur-glass));
   transform-origin: center;
   /* Темп жеста — токен --d-hint (Правка 1.2 §2, группа 3): подсказка
      показывает действие, и скорость показа тоже часть смысла. */

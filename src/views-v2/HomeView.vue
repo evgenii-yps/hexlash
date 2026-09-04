@@ -465,7 +465,7 @@ function onArrangePlace() { arrange.value = false; }
   position: absolute; left: 28px; top: 26px; z-index: 10;
   pointer-events: auto;
   font-family: var(--font-mono);
-  font-size: var(--t-sm); letter-spacing: 0.16em; text-transform: uppercase;
+  font-size: var(--t-sm); letter-spacing: var(--ls-meta); text-transform: uppercase;
   height: 40px; padding: 0 var(--sp-4);
 }
 
@@ -502,7 +502,7 @@ function onArrangePlace() { arrange.value = false; }
 @media (max-width: 560px) {
   .mode-back { left: 18px; top: 18px; }
   .mc-name { font-size: var(--t-xl); }
-  .mc-desc { font-size: var(--t-micro); letter-spacing: 0.14em; }
+  .mc-desc { font-size: var(--t-micro); letter-spacing: var(--ls-title); }
 }
 
 /* Reduced motion only: the camera is placed, not flown, so a short dim covers the
