@@ -239,14 +239,14 @@
 @media (prefers-reduced-motion: no-preference) {
   /* idle: the slab settles, the bloom breathes, the face glints rarely */
   .hs-fight .fbtn { animation: fSettle 5.4s ease-in-out infinite; }
-  .hs-fight .f-bloom { animation: fGlow 3.6s ease-in-out infinite; }
+  .hs-fight .f-bloom { animation: fGlow var(--d-loop) ease-in-out infinite; }
   .hs-fight .f-face::after { animation: fSheen 6.4s var(--e-settle) infinite; }
   /* entrance: brand → SHOP → cabinet → EDIT SPACE → FIGHT (last) */
-  .hs-anim-in .hs-brandblock { animation: rise 0.8s var(--e-settle) 0.05s both; }
-  .hs-anim-in .hs-seg-shop   { animation: rise 0.8s var(--e-settle) 0.14s both; }
-  .hs-anim-in .hs-seg-cab    { animation: rise 0.8s var(--e-settle) 0.21s both; }
-  .hs-anim-in .edit-space    { animation: rise 0.8s var(--e-settle) 0.38s both; }
-  .hs-anim-in .hs-fight      { animation: riseHero 1s var(--e-settle) 0.52s both; }
+  .hs-anim-in .hs-brandblock { animation: rise var(--d-enter) var(--e-settle) 0.05s both; }
+  .hs-anim-in .hs-seg-shop   { animation: rise var(--d-enter) var(--e-settle) 0.14s both; }
+  .hs-anim-in .hs-seg-cab    { animation: rise var(--d-enter) var(--e-settle) 0.21s both; }
+  .hs-anim-in .edit-space    { animation: rise var(--d-enter) var(--e-settle) 0.38s both; }
+  .hs-anim-in .hs-fight      { animation: riseHero var(--d-enter) var(--e-settle) 0.52s both; }
 }
 
 /* ── home ⇄ shop view transition — soft fade + scale, no hard cut. The persistent
@@ -375,10 +375,10 @@
   .hs-fight { width: min(340px, 86%); }
   .hs-fight .fbtn { width: 100%; }
   .hs-fight .f-face { width: 100%; padding: var(--sp-4) var(--sp-6); }
-  /* Отдельного размера слова FIGHT на узком экране больше нет: 40 и 32 пикселя
-     были одной ступенью шкалы, а не двумя. Плита здесь 340px минус 68px полей —
-     слово в Saira Condensed 900/40px с трекингом занимает около 116px, помещается
-     с запасом. */
+  /* Правка 1.1 §2: на узком экране слово FIGHT — t-3xl (32px). Ступень
+     появилась специально под этот случай; до неё 40 и 32 схлопывались в одно,
+     и плита на телефоне становилась крупнее, чем была. */
+  .hs-fight .f-label { font-size: var(--t-3xl); }
   /* EDIT SPACE — clear of the dock */
   .edit-space { right: 16px; bottom: 200px; }
 }

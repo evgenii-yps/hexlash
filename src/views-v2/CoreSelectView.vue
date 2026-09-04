@@ -226,7 +226,7 @@ function toArena() {
   display: flex; flex-direction: column;
   gap: clamp(14px, 2vh, 22px);
 }
-@media (max-width: 879px) {
+@media (max-width: 1023px) {
   .scene .stage { padding: var(--sp-7) var(--sp-4) var(--sp-5); }
 }
 
@@ -268,7 +268,7 @@ function toArena() {
   grid-template-columns: 1fr 1fr;
   gap: var(--sp-4);
 }
-@media (min-width: 880px) {
+@media (min-width: 1024px) {
   .grid { gap: var(--sp-4); }
 }
 
@@ -597,14 +597,14 @@ function toArena() {
 /* ============================================================
    DESKTOP TUNING — give the grid more presence at >900px
    ============================================================ */
-@media (min-width: 880px) and (min-height: 820px) {
+@media (min-width: 1024px) and (min-height: 820px) {
   .col { max-width: 840px; }
   .core-card { min-height: 218px; padding: var(--sp-5) var(--sp-5) 0; }
   .core-card .icon { width: 108px; height: 108px; }
   .core-card .stage-i { min-height: 114px; }
   .core-card .stage-i::before { width: 132px; height: 118px; }
 }
-@media (min-width: 880px) and (min-height: 920px) {
+@media (min-width: 1024px) and (min-height: 920px) {
   .col { max-width: 900px; }
   .core-card { min-height: 240px; }
 }

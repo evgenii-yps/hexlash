@@ -9,10 +9,10 @@
    The panel slides in from the RIGHT (the edge its strip entry sits on): 392px
    wide, 420ms spring, closed by ✕ / scrim-tap / Esc.
 
-   Brandbook discipline: ONE accent (var(--pink) via --pink); everything else
-   is the bone-grey palette. The ONLY glow in the cabinet is the fighter-core
-   halo on the Profile card — the diamond motif everywhere else is matte. Tokens
-   are declared locally (mirroring home.css) so this file is self-contained. */
+   Дисциплина: один акцент (--pink), остальное — костяно-серая палитра.
+   Свечения в кабинете НЕТ НИ В ОДНОМ состоянии (Правка 1.1 §8) — раньше здесь
+   пульсировал розовый ореол за знаком ядра. Ромбовидный мотив матовый везде.
+   Значения приходят из src/styles/tokens.css; локально живёт только форма. */
 
 .cab-root {
   font-family: var(--font-display);
@@ -23,7 +23,10 @@
 /* ════════════ SCRIM — dims the 3D stage behind the drawer (mobile) ════════════ */
 .cab-scrim {
   position: fixed; inset: 0; z-index: var(--z-modal); pointer-events: auto;
-  background: color-mix(in srgb, var(--void) 60%, transparent); backdrop-filter: blur(2px);
+  /* Правка 1.1 §8: затемнение — void с прозрачностью, не размытие.
+     backdrop-filter: blur(2px) снят: на телефоне он стоит реальных кадров,
+     а на два пикселя его всё равно не видно. */
+  background: color-mix(in srgb, var(--void) 60%, transparent);
   animation: cab-scrim-in var(--d-hover) ease both;
 }
 @keyframes cab-scrim-in { from { opacity: 0; } to { opacity: 1; } }
@@ -69,19 +72,20 @@
 .cab-id .ci-sub { font-family: var(--font-mono); font-size: var(--t-micro); letter-spacing: 0.2em; color: var(--ink-dim);
   text-transform: uppercase; margin-top: var(--sp-1); }
 
-/* ── YOUR FIGHTER card — the core halo is the cabinet's dominant glow ── */
+/* ── YOUR FIGHTER card — знак ядра на матовой подложке, без свечения ── */
 .cab-fighter { border: 1px solid var(--line); background: var(--fill-1); padding: var(--sp-4) var(--sp-4);
   display: flex; flex-direction: column; align-items: center; gap: var(--sp-1); }
 .cab-fighter .cf-k { font-family: var(--font-mono); font-size: var(--t-micro); letter-spacing: 0.28em; color: var(--ink-dim);
   text-transform: uppercase; align-self: flex-start; }
 .cab-core { position: relative; width: 96px; height: 96px; margin: var(--sp-2) 0 var(--sp-2); display: flex; align-items: center; justify-content: center; }
-/* the ONE glow — pink halo behind the core glyph */
+/* Правка 1.1 §8: кабинет не несёт геройского свечения НИ В ОДНОМ состоянии.
+   Здесь стоял розовый пульсирующий ореол за знаком ядра, подписанный «the ONE
+   glow» — но геройское свечение кабинету не принадлежит. Осталась матовая
+   подложка того же диаметра: форма на месте, свечение снято. */
 .cab-core::before { content: ""; position: absolute; inset: -10px; border-radius: var(--r-round);
-  background: radial-gradient(circle, rgba(var(--pink-rgb), 0.55) 0%, rgba(var(--pink-rgb), 0.18) 42%, transparent 70%);
-  animation: cab-core-pulse 3.4s ease-in-out infinite; }
-@keyframes cab-core-pulse { 0%, 100% { opacity: 0.7; transform: scale(0.96); } 50% { opacity: 1; transform: scale(1.04); } }
+  background: radial-gradient(circle, var(--fill-2) 0%, var(--fill-1) 52%, transparent 72%); }
 .cab-core svg { position: relative; width: 56px; height: 56px; }
-.cab-fighter .cf-name { font-weight: 900; font-size: var(--t-xl); letter-spacing: 0.05em; text-transform: uppercase; line-height: 1; }
+.cab-fighter .cf-name { font-weight: 900; font-size: var(--t-3xl); letter-spacing: 0.05em; text-transform: uppercase; line-height: 1; }
 .cab-fighter .cf-type { display: flex; align-items: center; gap: var(--sp-2); margin-top: var(--sp-1);
   font-family: var(--font-mono); font-size: var(--t-micro); letter-spacing: 0.16em; color: var(--ink-soft); text-transform: uppercase; }
 .cab-fighter .cf-type .dia { width: 6px; height: 6px; background: var(--ink-dim); transform: rotate(45deg); } /* matte, subordinate */
@@ -223,7 +227,7 @@
 @keyframes cab-toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
 /* ════════════ DESKTOP ════════════ */
-@media (min-width: 880px) {
+@media (min-width: 1024px) {
   /* Same RIGHT drawer as mobile, just at its full 392px (no longer viewport-capped):
      the strip's cabinet segment opens it, ✕ / scrim / Esc close it, and it slides
      off the RIGHT edge. Right anchoring, the left-edge border, and the

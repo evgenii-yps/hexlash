@@ -161,8 +161,13 @@ import {HexlashMark} from '@/components/brand/hexlashMark.js';
     padding:17px 38px; font-weight:700; font-size:16px; letter-spacing:.22em; color:var(--ink);
     text-transform:uppercase; isolation:isolate; overflow:hidden; cursor:pointer;
     clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px); }
+  /* Правка 1.1 §5: кнопка возврата несёт glow-hero. Экран без свечения в
+     проекте ровно один — загрузка; 404 к нему не относится (Документ Б, экран
+     9). Свечение снято только с цифр, знака процента и слова в девизе — там
+     его быть не должно, оно там и не заявлено. */
   .hx4-btn-bg{ position:absolute; inset:0; z-index:-1; background:var(--pink);
-    transition:filter var(--d-hover) var(--e-weight); }
+    box-shadow:var(--glow-hero);
+    transition:filter var(--d-hover) var(--e-weight), box-shadow var(--d-hover) var(--e-weight); }
   .hx4-btn-bg::after{ content:""; position:absolute; top:0; left:-60%; width:40%; height:100%;
     background:linear-gradient(105deg,transparent,var(--line-strong),transparent);
     transform:skewX(-18deg); animation:hx4Shimmer 3.4s ease-in-out infinite; }

@@ -487,7 +487,7 @@ function onArrangePlace() { arrange.value = false; }
 .mc-card.is-shown { opacity: 1; transform: translate(-50%, 0); }
 .mc-name {
   font-family: var(--font-display);
-  font-weight: 900; font-size: var(--t-xl); line-height: 0.9;
+  font-weight: 900; font-size: var(--t-3xl); line-height: 0.9;
   letter-spacing: 0.02em; text-transform: uppercase;
   color: var(--ink);
 }

@@ -7,7 +7,7 @@
 
    Adapted for our integration: the handoff toggled mobile/desktop via separate
    `.shopb-mobile` / `.shopb-desktop` class scopes; here those become a mobile-first
-   base + an `@media (min-width: 880px)` block. The prototype's own top bar (brand /
+   base + an `@media (min-width: 1024px)` block. The prototype's own top bar (brand /
    cabinet / back) is dropped — the home strip provides it. The whole screen is ONE
    natural scroll: nothing is pinned, and the shared home strip is dropped into the
    page flow while the shop is open (body.home-shop-open, near the head). Palette =
@@ -163,7 +163,7 @@ body.home-shop-open .hs-strip { position: relative; background: var(--shop-bg); 
 @keyframes sb-rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
 @keyframes sb-pulse { 0%, 100% { opacity: 0.85; transform: scale(1); } 50% { opacity: 1; transform: scale(1.04); } }
 @media (prefers-reduced-motion: no-preference) {
-  .sb-anim { opacity: 0; animation: sb-rise 0.6s var(--e-settle) forwards; }
+  .sb-anim { opacity: 0; animation: sb-rise var(--d-enter) var(--e-settle) forwards; }
 }
 
 /* ════════════ DECOR — presence cards ════════════ */
@@ -235,8 +235,8 @@ body.home-shop-open .hs-strip { position: relative; background: var(--shop-bg); 
   box-shadow: 0 0 0 1px rgba(var(--c-rgb), 0.22), 0 18px 60px color-mix(in srgb, var(--void) 55%, transparent), 0 0 60px rgba(var(--c-rgb), 0.16); }
 .dcard.hero .dframe { background: radial-gradient(100% 92% at 50% 40%, var(--panel) 0%, var(--void) 80%); }
 @media (prefers-reduced-motion: no-preference) {
-  .dcard.hero .gp-bloom { animation: sb-pulse 3.4s ease-in-out infinite; }
-  .dcard.hero .gp-mote { animation: sb-pulse 3.4s ease-in-out infinite; }
+  .dcard.hero .gp-bloom { animation: sb-pulse var(--d-loop) ease-in-out infinite; }
+  .dcard.hero .gp-mote { animation: sb-pulse var(--d-loop) ease-in-out infinite; }
 }
 .dcard.hero .hero-eye { font-family: var(--font-mono); letter-spacing: 0.22em; text-transform: uppercase; color: var(--c); }
 
@@ -366,7 +366,7 @@ body.home-shop-open .hs-strip { position: relative; background: var(--shop-bg); 
 .dcard.hero .dmeta { padding: var(--sp-4) var(--sp-4) var(--sp-5); }
 .hero-eye { font-size: var(--t-micro); margin-bottom: var(--sp-1); }
 .dname { font-size: var(--t-xl); }
-.dcard.hero .dname { font-size: var(--t-xl); }
+.dcard.hero .dname { font-size: var(--t-3xl); }
 .dsub { font-size: var(--t-micro); }
 .dcore { font-size: var(--t-micro); }
 .dtag { font-size: var(--t-micro); }
@@ -378,7 +378,7 @@ body.home-shop-open .hs-strip { position: relative; background: var(--shop-bg); 
 .cc-top { gap: var(--sp-2); padding: var(--sp-4) var(--sp-4) 0; }
 .cc-frame { width: 118px; height: 104px; }
 .cc-body { padding: var(--sp-1) var(--sp-1) 0; gap: var(--sp-2); }
-.cc-amt b { font-size: var(--t-xl); }
+.cc-amt b { font-size: var(--t-3xl); }
 .cc-amt i { font-size: var(--t-sm); }
 .cc-bonus { font-size: var(--t-xs); }
 .cval { font-size: var(--t-micro); }
@@ -403,7 +403,7 @@ body.home-shop-open .hs-strip { position: relative; background: var(--shop-bg); 
 
 .sheet { padding: var(--sp-5) var(--sp-5) var(--sp-5); }
 .sh-eye { font-size: var(--t-micro); margin-bottom: var(--sp-3); }
-.sh-title { font-size: var(--t-xl); margin-bottom: var(--sp-2); }
+.sh-title { font-size: var(--t-3xl); margin-bottom: var(--sp-2); }
 .sh-sub { font-size: var(--t-xs); margin-bottom: var(--sp-5); }
 .sh-rows { margin-bottom: var(--sp-5); }
 .sh-r { padding: var(--sp-3) var(--sp-4); font-size: var(--t-base); }
@@ -414,7 +414,7 @@ body.home-shop-open .hs-strip { position: relative; background: var(--shop-bg); 
 .wprov { margin-bottom: var(--sp-4); }
 
 /* ════════════════════════════ DESKTOP (≥880px) ════════════════════════════ */
-@media (min-width: 880px) {
+@media (min-width: 1024px) {
   .sb-head { padding: var(--sp-6) var(--sp-7) 0; }
   .sb-top { height: 34px; margin-bottom: var(--sp-5); }
   .sb-bal { font-size: var(--t-base); padding: var(--sp-3) var(--sp-4); }
@@ -452,7 +452,8 @@ body.home-shop-open .hs-strip { position: relative; background: var(--shop-bg); 
   .ccard .cc-top { padding: 0; }
   .cc-frame { width: 100%; height: 170px; border: 0; border-bottom: 1px solid var(--line); }
   .cc-body { padding: var(--sp-5) var(--sp-5); gap: var(--sp-3); }
-  .cc-amt b { font-size: var(--t-2xl); }
+  /* 34px и 30px базового правила — одна ступень t-3xl; своего размера
+     на широком экране у суммы больше нет. */
   .cc-amt i { font-size: var(--t-base); }
   .cc-bonus { font-size: var(--t-sm); }
   .cval { font-size: var(--t-micro); }
@@ -471,7 +472,7 @@ body.home-shop-open .hs-strip { position: relative; background: var(--shop-bg); 
   .sc-kind { font-size: var(--t-xs); }
   .timer { font-size: var(--t-base); }
   .sc-body { padding: var(--sp-5); gap: var(--sp-4); }
-  .sc-name { font-size: var(--t-xl); }
+  .sc-name { font-size: var(--t-3xl); }
   .sc-line { font-size: var(--t-sm); }
   .sc-note { font-size: var(--t-xs); }
   .scard .btn { padding: var(--sp-3) var(--sp-5); font-size: var(--t-base); }
@@ -480,7 +481,9 @@ body.home-shop-open .hs-strip { position: relative; background: var(--shop-bg); 
   .sb-scrim { align-items: center; }
   .sheet { width: 440px; border: 1px solid rgba(var(--pink-rgb), 0.4); padding: var(--sp-6) var(--sp-6) var(--sp-6); }
   .sh-eye { font-size: var(--t-xs); margin-bottom: var(--sp-4); }
-  .sh-title { font-size: var(--t-2xl); margin-bottom: var(--sp-3); }
+  /* 36px и 30px базового правила — одна ступень t-3xl; на широком экране
+     у заголовка остаётся только свой отступ. */
+  .sh-title { margin-bottom: var(--sp-3); }
   .sh-sub { font-size: var(--t-sm); margin-bottom: var(--sp-5); }
   .sh-rows { margin-bottom: var(--sp-5); }
   .sh-r { padding: var(--sp-4) var(--sp-4); font-size: var(--t-md); }

@@ -431,7 +431,7 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
   .ft-core .glow { animation: none; opacity: .85; }
   .ft-face.shake { animation: none; }
 }
-@media (max-width: 879px) {
+@media (max-width: 1023px) {
   .ft-core { width: 108px; height: 108px; }
   .ft-facets { grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); top: 48px; }
   .ft-step .lb { display: none; }
