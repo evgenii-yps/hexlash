@@ -27,7 +27,7 @@
 .fg-tag {
   position: fixed; z-index: var(--z-modal); pointer-events: none;
   transform: translate(-50%, 0);
-  font-family: var(--font-mono); font-size: var(--t-xs); letter-spacing: .22em;
+  font-family: var(--font-mono); font-size: var(--t-xs); letter-spacing: var(--ls-wide);
   text-transform: uppercase; color: var(--ink);
   padding: var(--sp-1) var(--sp-2); border: 1px solid var(--line-strong);
   background: color-mix(in srgb, var(--void) 72%, transparent);
@@ -42,7 +42,7 @@
    empty plate the trainer is standing over, at a size you are meant to read. */
 .fg-empty {
   position: fixed; left: 50%; top: 62%; transform: translate(-50%, -50%); z-index: var(--z-panel);
-  font-family: var(--font-mono); font-size: var(--t-base); line-height: 1.5; letter-spacing: .06em;
+  font-family: var(--font-mono); font-size: var(--t-base); line-height: 1.5; letter-spacing: var(--ls-tight);
   color: var(--ink-dim); text-align: center; pointer-events: none;
   padding: 0 var(--sp-5); max-width: min(28rem, 88vw); text-wrap: balance;
 }
@@ -63,16 +63,16 @@
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%);
 }
 .fg-card .cs { font-family: var(--font-display); font-weight: 800; font-size: var(--t-3xl); line-height: .95;
-  letter-spacing: .02em; text-transform: uppercase; color: var(--ink); }
+  letter-spacing: var(--ls-tight); text-transform: uppercase; color: var(--ink); }
 .fg-card .core { display: inline-flex; align-items: center; gap: var(--sp-2); margin-top: var(--sp-2);
-  font-size: var(--t-micro); letter-spacing: .18em; text-transform: uppercase; color: var(--core); }
+  font-size: var(--t-micro); letter-spacing: var(--ls-meta); text-transform: uppercase; color: var(--core); }
 .fg-card .core .sw { width: 8px; height: 8px; background: var(--core); }  /* flat chip, no glow */
 .fg-card .rows { margin-top: var(--sp-4); border-top: 1px solid var(--line); padding-top: var(--sp-3);
   display: flex; flex-direction: column; gap: var(--sp-2); }
 .fg-card .row { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-3);
-  font-size: var(--t-micro); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-dim); }
+  font-size: var(--t-micro); letter-spacing: var(--ls-title); text-transform: uppercase; color: var(--ink-dim); }
 .fg-card .row b { color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; }
-.fg-card .none { font-size: var(--t-micro); letter-spacing: .06em; color: var(--ink-off); text-transform: none; }
+.fg-card .none { font-size: var(--t-micro); letter-spacing: var(--ls-tight); color: var(--ink-off); text-transform: none; }
 .fg-card .close {
   position: absolute; top: 6px; right: 6px; width: 44px; height: 44px;
   display: grid; place-items: center; font: inherit; font-size: var(--t-lg); line-height: 1;
@@ -92,7 +92,7 @@
 /* the guest honesty line moved here with the tree (it used to sit under the
    pre-fight upgrade screen's build bar, and that screen is gone) */
 .fg-guest { margin-top: var(--sp-3); font-family: var(--font-mono); font-size: var(--t-micro); line-height: 1.35;
-  letter-spacing: .05em; color: var(--ink-dim); }
+  letter-spacing: var(--ls-tight); color: var(--ink-dim); }
 
 /* enter / leave — the panels arrive with the camera, not before it */
 .fg-fade-enter-active, .fg-fade-leave-active { transition: opacity var(--d-hover) var(--e-weight), transform var(--d-hover) var(--e-settle); }

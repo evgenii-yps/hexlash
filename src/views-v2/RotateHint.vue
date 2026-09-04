@@ -171,13 +171,13 @@ onUnmounted(() => {
   font-weight: 700;
   text-transform: uppercase;
   font-size: clamp(16px, 4.4vmin, 26px);
-  letter-spacing: .06em;
+  letter-spacing: var(--ls-tight);
   text-align: center;
   max-width: 86vw;
 }
 .rh-dismiss {
   font-size: clamp(11px, 2.6vmin, 14px);
-  letter-spacing: .14em;
+  letter-spacing: var(--ls-title);
   text-transform: uppercase;
   color: var(--ink-dim);
 }

@@ -185,7 +185,7 @@ onBeforeUnmount(() => {
 .referral-overlay__apply {
   width: 100%;
   padding: 14px;
-  min-height: 48px;
+  min-height: var(--h-btn-md);
   background: var(--pink);
   color: var(--ink);
   border: none;

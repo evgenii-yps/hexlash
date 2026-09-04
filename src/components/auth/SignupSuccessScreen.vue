@@ -114,7 +114,7 @@ async function onResend() {
 .signup-success__submit {
   margin: 0 0 12px;
   padding: 14px;
-  min-height: 48px;
+  min-height: var(--h-btn-md);
   background: var(--pink);
   color: var(--ink);
   border: none;

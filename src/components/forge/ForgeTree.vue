@@ -271,7 +271,7 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
   padding-bottom: var(--sp-2); border-bottom: 1px solid var(--line); }
 .ft-rail { display: flex; align-items: center; gap: var(--sp-1); }
 .ft-step { display: inline-flex; align-items: center; gap: var(--sp-2); min-height: 44px; padding: 0 var(--sp-2);
-  font-size: var(--t-micro); letter-spacing: .18em; text-transform: uppercase; color: var(--ink-off);
+  font-size: var(--t-micro); letter-spacing: var(--ls-meta); text-transform: uppercase; color: var(--ink-off);
   transition: color .2s; }
 .ft-step .dot { width: 5px; height: 5px; border: 1px solid currentColor; transform: rotate(45deg); }
 .ft-step[disabled] { cursor: default; }
@@ -280,7 +280,7 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
 .ft-step.here { color: var(--ink); }
 .ft-step.here .dot { background: var(--core); border-color: var(--core); }
 .ft-step:focus-visible { outline: 1px solid var(--ink-off); outline-offset: 2px; }
-.ft-pool { font-size: var(--t-xs); letter-spacing: .14em; color: var(--ink-off); font-variant-numeric: tabular-nums; }
+.ft-pool { font-size: var(--t-xs); letter-spacing: var(--ls-title); color: var(--ink-off); font-variant-numeric: tabular-nums; }
 .ft-pool b { color: var(--core-ink); font-weight: 700; }
 
 /* ── chamber ──────────────────────────────────────────────────────────────── */
@@ -344,9 +344,9 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
 .ft-ghost .ghex { width: 34px; height: 34px; }
 .ft-ghost .ghex svg { width: 100%; height: 100%; overflow: visible; }
 .ft-ghost .ghex .hl { stroke: var(--core-sup); fill: none; stroke-width: 1; stroke-dasharray: 3 4; }
-.ft-ghost .gn { font-size: var(--t-micro); font-weight: 600; letter-spacing: .14em; text-transform: uppercase;
+.ft-ghost .gn { font-size: var(--t-micro); font-weight: 600; letter-spacing: var(--ls-title); text-transform: uppercase;
   color: var(--ink-off); line-height: 1; }
-.ft-ghost .gr { font-size: var(--t-micro); letter-spacing: .08em; color: var(--ink-off); line-height: 1; }
+.ft-ghost .gr { font-size: var(--t-micro); letter-spacing: var(--ls-title); color: var(--ink-off); line-height: 1; }
 .ft-ghost .gr b { color: var(--core-ink); font-weight: 600; }
 .ftree[data-level="crystal"] .ft-ghosts, .ftree[data-level="face"] .ft-ghosts { opacity: 0; }
 
@@ -369,8 +369,8 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
   fill: none; stroke-width: 1.6; transition: stroke .25s var(--e-weight); }
 .ft-crystal:hover .shard :deep(.hex-line) { stroke: var(--ink); }
 .ft-crystal:focus-visible { outline: 1px solid var(--core-sup); outline-offset: 3px; }
-.ft-crystal .nm { font-size: var(--t-micro); font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--ink); }
-.ft-crystal .ratio { font-size: var(--t-micro); color: var(--ink-off); letter-spacing: .08em; }
+.ft-crystal .nm { font-size: var(--t-micro); font-weight: 600; letter-spacing: var(--ls-meta); text-transform: uppercase; color: var(--ink); }
+.ft-crystal .ratio { font-size: var(--t-micro); color: var(--ink-off); letter-spacing: var(--ls-title); }
 .ft-crystal .ratio b { color: var(--core-ink); font-weight: 700; }
 .ft-crystal.full .ratio b { color: var(--ink); }
 
@@ -393,12 +393,12 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
 .ft-face .fhex :deep(svg) { width: 100%; height: 100%; overflow: visible; }
 .ft-face .fhex :deep(.ln) { stroke: currentColor; fill: none; stroke-width: 1.5; }
 .ft-face .fhex :deep(.fl) { fill: transparent; }
-.ft-face .fl-nm { font-size: var(--t-micro); font-weight: 600; letter-spacing: .12em; text-transform: uppercase;
+.ft-face .fl-nm { font-size: var(--t-micro); font-weight: 600; letter-spacing: var(--ls-title); text-transform: uppercase;
   color: var(--ink); text-align: center; }
 .ft-face .fl-pct { font-size: var(--t-sm); font-weight: 700; line-height: 1; color: var(--core-ink); }
-.ft-face .fl-tag { font-size: var(--t-micro); letter-spacing: .04em; text-transform: uppercase; color: var(--ink-off);
+.ft-face .fl-tag { font-size: var(--t-micro); letter-spacing: var(--ls-tight); text-transform: uppercase; color: var(--ink-off);
   line-height: 1.15; text-align: center; }
-.ft-face .fl-st { font-size: var(--t-micro); letter-spacing: .18em; text-transform: uppercase; color: var(--ink-off); }
+.ft-face .fl-st { font-size: var(--t-micro); letter-spacing: var(--ls-meta); text-transform: uppercase; color: var(--ink-off); }
 .ft-face.lit { border-color: var(--core-sup); background: color-mix(in srgb, var(--core) 10%, transparent); }
 .ft-face.lit .fhex { color: var(--core); }
 .ft-face.lit .fhex :deep(.fl) { fill: var(--core); }
@@ -413,7 +413,7 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
 /* foot hint */
 .ft-foot { position: absolute; left: 0; right: 0; bottom: 0; z-index: 7;
   display: flex; align-items: center; justify-content: center; padding: var(--sp-2) var(--sp-3);
-  font-size: var(--t-micro); letter-spacing: .22em; text-transform: uppercase; color: var(--ink-off);
+  font-size: var(--t-micro); letter-spacing: var(--ls-wide); text-transform: uppercase; color: var(--ink-off);
   border-top: 1px solid var(--line);
   background: linear-gradient(180deg, transparent 0%,
     color-mix(in srgb, var(--void) 82%, transparent) 60%,
@@ -423,8 +423,8 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
 /* build strip */
 .ft-build { display: flex; align-items: baseline; gap: var(--sp-3); padding-top: var(--sp-3); margin-top: var(--sp-2);
   border-top: 1px solid var(--line); font-size: var(--t-micro); text-transform: uppercase; }
-.ft-build .k { letter-spacing: .24em; color: var(--ink-off); flex: none; }
-.ft-build .names { display: flex; flex-wrap: wrap; gap: var(--sp-1) var(--sp-3); letter-spacing: .1em; }
+.ft-build .k { letter-spacing: var(--ls-wide); color: var(--ink-off); flex: none; }
+.ft-build .names { display: flex; flex-wrap: wrap; gap: var(--sp-1) var(--sp-3); letter-spacing: var(--ls-title); }
 .ft-build .names .b { color: var(--core-ink); font-weight: 700; white-space: nowrap; }
 .ft-build .names .ph { color: var(--ink-off); }
 

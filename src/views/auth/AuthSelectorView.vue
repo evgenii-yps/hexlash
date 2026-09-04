@@ -503,7 +503,7 @@ async function onForgotSubmit(payload) {
 .hx-forgot:disabled { opacity: .5; cursor: not-allowed; }
 
 .hx-submit-full {
-  margin-top: 3px; height: 48px; border: 0; border-radius: 9px; cursor: pointer;
+  margin-top: 3px; height: var(--h-btn-md); border: 0; border-radius: 9px; cursor: pointer;
   font-family: var(--font-mono); font-weight: 700; font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
   background: var(--fill-2); color: var(--ink-dim);
   display: inline-flex; align-items: center; justify-content: center;

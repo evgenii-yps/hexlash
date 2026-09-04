@@ -46,6 +46,9 @@
    monochrome glyph (inline vector via HexlashMark) — no glow, no pink. */
 /* brand + cluster share one 48px axis so the strip reads as a single level
    row (both centred by .hs-strip align-items:center; left/right edges fixed). */
+/* 48px здесь — не «высота поля ввода» (--h-btn-md), а ОСЬ полосы: бренд слева и
+   кластер кнопок справа стоят на одной высоте, чтобы строка читалась ровной.
+   Совпадение числа со ступенью случайно, назначение разное. */
 .hs-brandblock { display: flex; align-items: center; height: 48px; gap: var(--sp-3); background: none; border: 0;
   cursor: pointer; padding: 0 var(--sp-1); color: inherit; transition: opacity var(--d-fast); }
 /* mark + wordmark: HEXLASH Saira 900 / 23px / .04em. The mark is an inline vector
@@ -54,7 +57,7 @@
    Painted through `color`, not a fill, so it inherits like the word beside it. */
 .hs-brandblock .logo-mark { width: 40px; height: 40px; display: block; flex: 0 0 auto;
   color: var(--ink); }
-.hs-brandblock .wm { font-family: var(--font-display); font-weight: 900; font-size: var(--t-xl); letter-spacing: 0.04em;
+.hs-brandblock .wm { font-family: var(--font-display); font-weight: 900; font-size: var(--t-xl); letter-spacing: var(--ls-tight);
   text-transform: uppercase; color: var(--ink); line-height: 1; }
 .hs-brandblock:hover { opacity: 0.82; }
 
@@ -148,7 +151,7 @@
 .hs-tile:hover { background: var(--fill-2); border-color: var(--line-strong); transform: translateY(-2px); }
 .hs-tile:active { transform: translateY(0) scale(0.985); transition-duration: var(--d-press); }
 .hs-tile svg { width: var(--icon-md); height: var(--icon-md); color: var(--ink-soft); }
-.hs-tile .tl-n { font-weight: 700; font-size: var(--t-lg); letter-spacing: 0.05em; text-transform: uppercase; }
+.hs-tile .tl-n { font-weight: 700; font-size: var(--t-lg); letter-spacing: var(--ls-tight); text-transform: uppercase; }
 .hs-tile .tl-s { font-family: var(--font-mono); font-size: var(--t-micro); letter-spacing: var(--ls-title); color: var(--ink-dim); margin-top: -var(--sp-2); }
 
 /* ════════════ FIGHT — physical hex plinth (the ONE pink + the ONE glow) ════════════
@@ -164,7 +167,7 @@
 
 /* layer 1 — bloom (the only glow on the screen) */
 .hs-fight .f-bloom { position: absolute; left: 50%; top: 48%; width: 150%; height: 230%;
-  transform: translate(-50%, -50%); z-index: var(--z-scene); pointer-events: none; opacity: 0.6;
+  transform: translate(-50%, -50%); z-index: var(--z-scene); pointer-events: none; opacity: var(--o-dim);
   background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(var(--pink-rgb), 0.5), rgba(var(--pink-rgb), 0.12) 45%, transparent 70%);
   filter: blur(14px); }
 
@@ -184,7 +187,7 @@
   box-shadow: inset 0 2px 0 color-mix(in srgb, var(--ink) 35%, transparent),
     inset 0 -5px 14px color-mix(in srgb, var(--pink-deep) 50%, transparent);
   transition: transform var(--d-panel) var(--e-weight), filter var(--d-panel) var(--e-weight); }
-.hs-fight .f-label { font-family: var(--font-display); font-weight: 900; font-size: var(--t-2xl); letter-spacing: 0.13em;
+.hs-fight .f-label { font-family: var(--font-display); font-weight: 900; font-size: var(--t-2xl); letter-spacing: var(--ls-title);
   line-height: 1; text-transform: uppercase; color: var(--ink); text-shadow: 0 1px 0 color-mix(in srgb, var(--pink-deep) 50%, transparent); }
 .hs-fight .f-arr { width: var(--icon-lg); height: var(--icon-lg); flex: 0 0 auto; color: var(--ink); transition: transform var(--d-panel) var(--e-weight); }
 /* slow rare sheen — a skewed white glint that crosses then rests off-frame (::after) */
@@ -202,7 +205,7 @@
 .hs-fight .fbtn:active .f-plinth { transform: translateY(2px); transition-duration: var(--d-press); }
 .hs-fight .fbtn:active .f-bloom { opacity: 0.7; transform: translate(-50%, -50%) scale(0.92); }
 
-.hs-fight .fsub { font-family: var(--font-mono); font-size: var(--t-xs); letter-spacing: 0.26em; color: var(--ink-soft); text-transform: uppercase; }
+.hs-fight .fsub { font-family: var(--font-mono); font-size: var(--t-xs); letter-spacing: var(--ls-wide); color: var(--ink-soft); text-transform: uppercase; }
 
 /* ════════════ EDIT SPACE — matte chrome corner button (decor arrange entry) ════════════
    Shares the chrome MATERIAL of the strip cluster (glass + inset hairline + the
@@ -217,7 +220,7 @@
 /* ════════════ idle + entrance keyframes (assignments gated by no-preference) ════════════ */
 /* idle */
 @keyframes fGlow {
-  0%, 100% { opacity: 0.6;  transform: translate(-50%, -50%) scale(1); }
+  0%, 100% { opacity: var(--o-dim);  transform: translate(-50%, -50%) scale(1); }
   50%      { opacity: 0.92; transform: translate(-50%, -50%) scale(1.07); } }
 @keyframes fSheen {
   0%   { background-position: 185% 0; }
@@ -266,15 +269,15 @@
   background: linear-gradient(180deg, color-mix(in srgb, var(--void) 96%, transparent), transparent); }
 .hs-arrtit { display: flex; align-items: center; gap: var(--sp-4); }
 .hs-arrtit .at-k { display: flex; align-items: center; gap: var(--sp-2); font-family: var(--font-mono); font-size: var(--t-xs);
-  letter-spacing: 0.28em; color: var(--pink); text-transform: uppercase; }
+  letter-spacing: var(--ls-wide); color: var(--pink); text-transform: uppercase; }
 /* matte dot — NO glow */
 .hs-arrtit .at-k .dot { width: 7px; height: 7px; background: var(--pink); }
-.hs-arrtit .at-n { font-weight: 800; font-size: var(--t-xl); letter-spacing: 0.04em; text-transform: uppercase;
+.hs-arrtit .at-n { font-weight: 800; font-size: var(--t-xl); letter-spacing: var(--ls-tight); text-transform: uppercase;
   border-left: 1px solid var(--line); padding-left: var(--sp-4); }
 .hs-arrtit .at-n b { color: var(--pink); }
 .hs-arract { display: flex; gap: var(--sp-3); }
 .hs-abtn { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-3) var(--sp-5); cursor: pointer; font-weight: 700;
-  font-size: var(--t-md); letter-spacing: 0.08em; text-transform: uppercase; transition: background var(--d-fast); border: 0; }
+  font-size: var(--t-md); letter-spacing: var(--ls-title); text-transform: uppercase; transition: background var(--d-fast); border: 0; }
 .hs-abtn.cancel { border: 1px solid var(--line); background: var(--fill-1); color: var(--ink-soft); }
 .hs-abtn.cancel:hover { background: var(--line); }
 /* place — matte (only FIGHT glows) */
@@ -285,14 +288,14 @@
 .hs-tray { position: absolute; left: 0; right: 0; bottom: 0; z-index: var(--z-ui); padding: var(--sp-4) var(--sp-7) var(--sp-5); pointer-events: auto;
   background: linear-gradient(0deg, color-mix(in srgb, var(--void) 97%, transparent), color-mix(in srgb, var(--void) 80%, transparent) 60%, transparent); }
 .hs-tray-h { display: flex; align-items: baseline; gap: var(--sp-4); margin-bottom: var(--sp-4); }
-.hs-tray-h .th { font-weight: 700; font-size: var(--t-md); letter-spacing: 0.06em; text-transform: uppercase; }
+.hs-tray-h .th { font-weight: 700; font-size: var(--t-md); letter-spacing: var(--ls-tight); text-transform: uppercase; }
 .hs-tray-h .ts { font-family: var(--font-mono); font-size: var(--t-micro); letter-spacing: var(--ls-meta); color: var(--ink-dim); text-transform: uppercase; }
 .hs-tray-row { display: flex; gap: var(--sp-4); }
 .hs-slot { position: relative; width: 118px; height: 90px; border: 1px solid var(--line); background: var(--fill-1);
   display: flex; align-items: flex-end; justify-content: center; cursor: pointer; transition: border-color var(--d-fast), background var(--d-fast); }
 .hs-slot:hover { border-color: var(--line-strong); background: var(--fill-2); }
 .hs-slot.active { border-color: var(--pink); background: rgba(var(--pink-rgb), 0.07); box-shadow: inset 0 0 0 1px rgba(var(--pink-rgb), 0.5); }
-.hs-slot .sn { position: absolute; top: 9px; left: 10px; font-family: var(--font-mono); font-size: var(--t-micro); letter-spacing: 0.1em;
+.hs-slot .sn { position: absolute; top: 9px; left: 10px; font-family: var(--font-mono); font-size: var(--t-micro); letter-spacing: var(--ls-title);
   color: var(--ink-soft); text-transform: uppercase; }
 .hs-slot .cnt { position: absolute; bottom: 8px; right: 9px; font-family: var(--font-mono); font-size: var(--t-micro); color: var(--ink-dim); }
 .hs-slot.locked { opacity: 0.5; }
@@ -316,7 +319,7 @@
   .hs-chrome::after { display: none; }
   .hs-fight .fbtn:hover .f-face, .hs-fight .fbtn:active .f-face { transform: none; filter: none; }
   .hs-fight .fbtn:hover .f-plinth, .hs-fight .fbtn:active .f-plinth { transform: translateY(6px); }
-  .hs-fight .fbtn:hover .f-bloom, .hs-fight .fbtn:active .f-bloom { transform: translate(-50%, -50%); opacity: 0.6; }
+  .hs-fight .fbtn:hover .f-bloom, .hs-fight .fbtn:active .f-bloom { transform: translate(-50%, -50%); opacity: var(--o-dim); }
   .hs-fight .fbtn:hover .f-arr { transform: none; }
   .hs-chrome:hover, .hs-chrome:active { transform: none; }
   .hs-chrome:hover::after { animation: none; }
@@ -350,7 +353,7 @@
   .hs-fight .f-label { font-size: var(--t-xl); }
   .hs-fight .f-arr { width: 20px; height: 20px; }
   .hs-fight .f-bloom { filter: blur(11px); }
-  .hs-fight .fsub { font-size: var(--t-micro); letter-spacing: 0.2em; }
+  .hs-fight .fsub { font-size: var(--t-micro); letter-spacing: var(--ls-meta); }
   /* EDIT SPACE sat over the plate's sublabel at this height — pull it into the
      corner so the line under the plate stays readable. */
   .edit-space { right: 18px; bottom: 16px; }

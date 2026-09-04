@@ -17,21 +17,26 @@ export const RESOURCE = 5;
    отдельным значением у каждого ядра — и все четыре расходились с магазином.
    Теперь пара выводится осветлением по ОДНОМУ правилу на все ядра:
    геттер `sup` ниже зовёт coreSup() из src/data/sceneTokens.js. */
-import { coreSup } from './sceneTokens.js';
+import { coreSup, coreHue } from './sceneTokens.js';
 
-const core = (id, ix, name, sig, hue, manner) => ({
-  id, ix, name, sig, hue, manner,
-  get sup() { return coreSup(hue); },
+// hue и sup — ГЕТТЕРЫ, а не значения. Цвет ядра объявлен один раз в
+// src/styles/tokens.css (Правка 1.3 §1); здесь были его четвёртые копии
+// литералами. Ленивость обязательна: этот файл подтягивается через хранилище
+// на самом старте, когда стили могут быть ещё не применены.
+const core = (id, ix, name, sig, manner) => ({
+  id, ix, name, sig, manner,
+  get hue() { return coreHue(id); },
+  get sup() { return coreSup(coreHue(id)); },
 });
 
 export const CORES = [
-  core('natisk', '01', 'ONSLAUGHT', 'PRESSURE', '#FF3344',
+  core('natisk', '01', 'ONSLAUGHT', 'PRESSURE',
     'Marches in close and never lets the distance go.'),
-  core('nalet', '02', 'RAIDER', 'TEMPO', '#FFA526',
+  core('nalet', '02', 'RAIDER', 'TEMPO',
     'Strikes, drops, strikes again — touches and gone.'),
-  core('skala', '03', 'BULWARK', 'DURABILITY', '#2ED6B0',
+  core('skala', '03', 'BULWARK', 'DURABILITY',
     'Takes the hit, grinds it down, gives it back later.'),
-  core('zasada', '04', 'AMBUSH', 'COUNTER', '#9461FF',
+  core('zasada', '04', 'AMBUSH', 'COUNTER',
     'Waits in silence, then a single, paid-in-full strike.'),
 ];
 

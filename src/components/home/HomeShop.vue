@@ -254,7 +254,7 @@ import { useStore } from 'vuex';
 import { t } from '@/locales/index.js';
 import { CORES as ROSTER_CORES } from '@/data/upgradeData.js';
 import '@/styles/shop.css';
-import { CORE_HUE, coreSup } from '@/data/sceneTokens.js';
+import { CORE_HUE, coreSup, coreRgb } from '@/data/sceneTokens.js';
 
 defineProps({ balance: { type: String, default: '2,480' } });
 defineEmits(['back']);
@@ -279,14 +279,16 @@ const ownedItems = reactive(new Set(['crates'])); // hardcoded demo ownership (S
 // четырёх случаях — они удалены, второй тон выводится осветлением по общему
 // правилу (coreSup из src/data/sceneTokens.js).
 const CORES = {
-  onslaught: { name: 'ONSLAUGHT', main: CORE_HUE.natisk, rgb: '255,51,68',  glyph: 'onslaught' },
-  raider:    { name: 'RAIDER',    main: CORE_HUE.nalet,  rgb: '255,165,38', glyph: 'raider' },
-  bulwark:   { name: 'BULWARK',   main: CORE_HUE.skala,  rgb: '46,214,176', glyph: 'bulwark' },
-  ambush:    { name: 'AMBUSH',    main: CORE_HUE.zasada, rgb: '148,97,255', glyph: 'ambush' },
+  // rgb-копии цвета убраны: это было пятое объявление тех же четырёх цветов,
+  // просто в другой записи. Выводится из основного (Правка 1.3 §1).
+  onslaught: { name: 'ONSLAUGHT', get main() { return CORE_HUE.natisk; }, glyph: 'onslaught' },
+  raider:    { name: 'RAIDER',    get main() { return CORE_HUE.nalet;  }, glyph: 'raider' },
+  bulwark:   { name: 'BULWARK',   get main() { return CORE_HUE.skala;  }, glyph: 'bulwark' },
+  ambush:    { name: 'AMBUSH',    get main() { return CORE_HUE.zasada; }, glyph: 'ambush' },
 };
 function coreVars(core) {
   const c = CORES[core];
-  return c ? { '--c': c.main, '--c-sup': coreSup(c.main), '--c-rgb': c.rgb } : {};
+  return c ? { '--c': c.main, '--c-sup': coreSup(c.main), '--c-rgb': coreRgb(c.main) } : {};
 }
 function coreGlyphInner(core) {
   switch (CORES[core] && CORES[core].glyph) {
@@ -488,7 +490,7 @@ const rosterFull = computed(() => store.getters['roster/isFull']);
 const giveCore = ref('random');
 const coreOf = (id) => ROSTER_CORES.find((c) => c.id === id) || null;
 const coreName = (id) => (coreOf(id) ? coreOf(id).name : id);
-const coreHue = (id) => (coreOf(id) ? coreOf(id).hue : '#5D5D66');
+const coreHue = (id) => (coreOf(id) ? coreOf(id).hue : 'var(--ink-off)');
 function onRecruit() { store.dispatch('roster/recruit', giveCore.value); }
 function onDismiss(id) { store.dispatch('roster/dismiss', id); }
 </script>

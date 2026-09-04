@@ -107,7 +107,7 @@ import {HexlashMark} from '@/components/brand/hexlashMark.js';
   .hx4-mark{ width:calc(var(--word) * 2.29); height:calc(var(--word) * 2.29);
     display:block; margin-bottom:calc(var(--word) * 1.18); color:var(--ink); }
   .hx4-word{ font-family:var(--font-display); font-weight:900; text-transform:uppercase;
-    font-size:var(--word); line-height:1; letter-spacing:.04em; }
+    font-size:var(--word); line-height:1; letter-spacing: var(--ls-tight); }
 
   /* ── Centerpiece ─────────────────────────────────────────────── */
   .hx4-mid{ position:absolute; inset:0; z-index:4;
@@ -117,7 +117,7 @@ import {HexlashMark} from '@/components/brand/hexlashMark.js';
   /* Telemetry tag — blinking live dot */
   .hx4-tag{ display:inline-flex; align-items:center; gap:1.4vmin;
     border:1px solid rgba(var(--pink-rgb),.34); background:rgba(var(--pink-rgb),.05);
-    padding:.85vmin 2vmin; font-size:clamp(10px,1.35vmin,13px); letter-spacing:.34em;
+    padding:.85vmin 2vmin; font-size:clamp(10px,1.35vmin,13px); letter-spacing: var(--ls-wide);
     text-transform:uppercase; color:var(--ink-soft); }
   .hx4-tag i{ width:8px; height:8px; border-radius: var(--r-round); background:var(--pink); }
 
@@ -125,7 +125,7 @@ import {HexlashMark} from '@/components/brand/hexlashMark.js';
      Свечение снято: единственное свечение в Hexlash — разлом арены. */
   .hx4-num{ position:relative; display:inline-block;
     font-family:var(--font-display); font-weight:900; line-height:.82;
-    font-size:clamp(100px,min(28vw,30vh),300px); letter-spacing:.01em;
+    font-size:clamp(100px,min(28vw,30vh),300px); letter-spacing: var(--ls-tight);
     font-variant-numeric:tabular-nums; }
   .hx4-num .ghost{ position:absolute; left:0; right:0; top:0; color:transparent;
     -webkit-text-stroke:1.6px rgba(var(--pink-rgb),.45); transform:translateY(-1.4vmin) scale(1.012);
@@ -134,21 +134,21 @@ import {HexlashMark} from '@/components/brand/hexlashMark.js';
 
   /* Creed — brand voice, second word carries the pink charge */
   .hx4-creed{ font-family:var(--font-display); font-weight:800; text-transform:uppercase;
-    font-size:clamp(38px,6.6vw,92px); line-height:1; letter-spacing:.03em;
+    font-size:clamp(38px,6.6vw,92px); line-height:1; letter-spacing: var(--ls-tight);
     color:var(--ink); white-space:nowrap; }
   /* Второе слово несёт розовый заряд цветом, а не свечением. */
   .hx4-creed b{ color:var(--pink); }
 
   /* Supporting line */
   .hx4-sub{ font-family:var(--font-mono); font-weight:500; text-transform:uppercase;
-    font-size:clamp(12px,1.7vmin,16px); letter-spacing:.26em; color:var(--ink-dim);
+    font-size:clamp(12px,1.7vmin,16px); letter-spacing: var(--ls-wide); color:var(--ink-dim);
     margin-top:.6vmin; max-width:46ch; }
 
   /* CTA row */
   .hx4-cta{ display:flex; gap:18px; margin-top:2.4vmin; flex-wrap:wrap; align-items:center; justify-content:center; }
 
   .hx4-btn{ position:relative; display:inline-flex; align-items:center; gap:13px;
-    padding:17px 38px; font-weight:700; font-size:16px; letter-spacing:.22em; color:var(--ink);
+    padding:17px 38px; font-weight:700; font-size:16px; letter-spacing: var(--ls-wide); color:var(--ink);
     text-transform:uppercase; isolation:isolate; overflow:hidden; cursor:pointer;
     clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px); }
   /* Правка 1.1 §5: кнопка возврата несёт glow-hero. Экран без свечения в
@@ -175,7 +175,7 @@ import {HexlashMark} from '@/components/brand/hexlashMark.js';
   /* Ghost / secondary — corner ticks reveal on hover */
   .hx4-ghost{ position:relative; display:inline-flex; align-items:center; gap:11px;
     padding:16px 28px; font-family:var(--font-mono); font-weight:500; font-size:13.5px;
-    letter-spacing:.2em; text-transform:uppercase; color:var(--ink-soft);
+    letter-spacing: var(--ls-meta); text-transform:uppercase; color:var(--ink-soft);
     border:1px solid var(--line-strong); background:var(--fill-1);
     transition:color .3s, border-color .3s, background .3s; cursor:pointer; }
   .hx4-ghost svg{ width:18px; height:18px; }
@@ -190,9 +190,9 @@ import {HexlashMark} from '@/components/brand/hexlashMark.js';
   .hx4-foot{ position:absolute; left:0; right:0; bottom:6vmin; z-index:5;
     display:flex; justify-content:center; padding:0 6vw; }
   .hx4-note{ display:inline-flex; align-items:center; gap:2vmin; max-width:92vw; }
-  .hx4-note .lbl{ flex:none; font-size:clamp(9px,1.3vmin,12px); letter-spacing:.2em; color:var(--pink);
+  .hx4-note .lbl{ flex:none; font-size:clamp(9px,1.3vmin,12px); letter-spacing: var(--ls-meta); color:var(--pink);
     border:1px solid rgba(var(--pink-rgb),.4); padding:.7vmin 1.5vmin; text-transform:uppercase; }
-  .hx4-note .txt{ font-size:clamp(10px,1.45vmin,13px); letter-spacing:.16em; color:var(--ink-dim); text-transform:uppercase; }
+  .hx4-note .txt{ font-size:clamp(10px,1.45vmin,13px); letter-spacing: var(--ls-meta); color:var(--ink-dim); text-transform:uppercase; }
 
   /* Visually-hidden accessible heading */
   .hx4-sr{ position:absolute; width:1px; height:1px; padding:0; overflow:hidden;

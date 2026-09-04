@@ -232,7 +232,7 @@ function toArena() {
   font-family: var(--font-display); font-weight: 900;
   /* fluid scale: ~36px mobile → ~64px desktop */
   font-size: clamp(36px, 5.6vw, 64px);
-  line-height: .88; letter-spacing: .005em;
+  line-height: .88; letter-spacing: var(--ls-tight);
   text-transform: uppercase; color: var(--ink);
   text-wrap: balance;
   white-space: nowrap;          /* prevent stray YOUR/CORE break */
@@ -358,7 +358,7 @@ function toArena() {
 .core-card .nm {
   font-family: var(--font-display); font-weight: 800;
   font-size: clamp(20px, 2.4vw, 26px);
-  letter-spacing: .015em; text-transform: uppercase; line-height: 1;
+  letter-spacing: var(--ls-tight); text-transform: uppercase; line-height: 1;
   color: var(--ink); transition: color .35s var(--e-weight);
 }
 
@@ -373,6 +373,11 @@ function toArena() {
 /* ---------- SELECTED ---------- */
 .core-card.sel {
   border-color: var(--c-sup);
+  /* Свечение выбора — тот же токен, что у метки BEST VALUE (Правка 1.3 §3).
+     Он собран на currentColor, поэтому цвет задаётся здесь: у имени ядра
+     ниже свой color, так что на текст это не влияет. */
+  color: var(--c);
+  box-shadow: var(--glow-select);
   background:
     linear-gradient(180deg,
       color-mix(in srgb, var(--c) 8%, transparent) 0%,
@@ -535,7 +540,7 @@ function toArena() {
   position: relative; width: 100%;
   font-family: var(--font-display); font-weight: 800;
   font-size: clamp(19px, 2vw, 23px);
-  letter-spacing: .18em; text-transform: uppercase;
+  letter-spacing: var(--ls-meta); text-transform: uppercase;
   padding: var(--sp-4) var(--sp-5);
   display: flex; align-items: center; justify-content: center; gap: var(--sp-5);
   background: transparent; color: var(--ink-dim);
@@ -551,7 +556,7 @@ function toArena() {
 }
 .cta .arr {
   font-family: var(--font-mono); font-weight: 700; font-size: var(--t-lg);
-  letter-spacing: .05em;
+  letter-spacing: var(--ls-tight);
   transition: transform .3s var(--e-weight); /* glides on hover (PLAY-style feel) */
 }
 .cta span { position: relative; z-index: 2; }

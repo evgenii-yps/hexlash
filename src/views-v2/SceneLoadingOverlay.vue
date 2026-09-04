@@ -125,7 +125,7 @@ onBeforeUnmount(stopTips);
 .hxo-mark { width: calc(var(--word) * 2.29); height: calc(var(--word) * 2.29);
   display: block; margin-bottom: calc(var(--word) * 1.18); color: var(--ink); }
 .hxo-word { font-family: var(--font-display); font-weight: 900; text-transform: uppercase;
-  font-size: var(--word); line-height: 1; letter-spacing: .02em; }
+  font-size: var(--word); line-height: 1; letter-spacing: var(--ls-tight); }
 
 /* Centerpiece: hero percent + creed */
 .hxo-mid { position: absolute; inset: 0; display: flex; flex-direction: column;
@@ -135,7 +135,7 @@ onBeforeUnmount(stopTips);
   font-variant-numeric: tabular-nums; }
 .hxo-num sup { font-size: .26em; color: var(--pink); vertical-align: .9em; margin-left: .06em; }
 .hxo-creed { font-family: var(--font-display); font-weight: 800; text-transform: uppercase;
-  font-size: 6.4vmin; letter-spacing: .04em; color: var(--ink); white-space: nowrap; }
+  font-size: 6.4vmin; letter-spacing: var(--ls-tight); color: var(--ink); white-space: nowrap; }
 /* Свечения на экране загрузки нет (Документ Б, экран 8): единственное
    свечение в Hexlash — разлом арены. Раньше здесь светились четыре вещи —
    процент, знак процента, слово в девизе и полоса. Розовый остался цветом. */
@@ -149,9 +149,9 @@ onBeforeUnmount(stopTips);
 .hxo-fill { position: absolute; inset: 0; background: var(--pink);
   transition: width var(--d-panel) var(--e-settle); }
 .hxo-tip { display: flex; align-items: center; gap: 2.4vmin; max-width: 90vw; text-align: center; }
-.hxo-tag { flex: none; font-size: 2.3vmin; letter-spacing: .2em; color: var(--pink);
+.hxo-tag { flex: none; font-size: 2.3vmin; letter-spacing: var(--ls-meta); color: var(--pink);
   border: 1px solid rgba(var(--pink-rgb), .4); padding: .8vmin 1.6vmin; text-transform: uppercase; }
-.hxo-line { font-size: 2.6vmin; letter-spacing: .12em; color: var(--ink-soft); text-transform: uppercase; }
+.hxo-line { font-size: 2.6vmin; letter-spacing: var(--ls-title); color: var(--ink-soft); text-transform: uppercase; }
 
 /* Leave — opacity only. Must match LOADING.FADE_OUT_MS in sceneLoading.js. */
 .hxo-enter-active, .hxo-leave-active { transition: opacity var(--d-hover) var(--e-settle); }

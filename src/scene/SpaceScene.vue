@@ -30,7 +30,7 @@ import { buildFighter } from './buildFighter.js';
 import { resolveBehavior } from '@/data/behavior.js';
 import { createSpaceWanderDirector } from './spaceWander.js';
 import { beginSceneLoad } from '@/services/sceneLoading.js';
-import { CORE_HUE, FOG_COLOR, FOG, FOV, CAMERA, LEADER_HUE } from '@/data/sceneTokens.js';
+import { CORE_HUE, FOG_COLOR, FOG, FOV, CAMERA, leaderHue } from '@/data/sceneTokens.js';
 
 // ───────────────────────────── CONFIG (tune on preview) ─────────────────────────────
 // The big hex field — a large flat arena that reads as "огромная арена", not a bigger
@@ -246,7 +246,10 @@ onMounted(() => {
   scene.add(new THREE.HemisphereLight(LIGHT.hemi.sky, LIGHT.hemi.ground, LIGHT.hemi.intensity));
   load.stage('renderer');
 
-  const pink = getComputedStyle(el).getPropertyValue('--pink').trim() || LEADER_HUE;
+  // Розовый читается из токенов одним путём — через leaderHue(). Раньше здесь
+  // стояло собственное чтение с запасным значением, а запасное значение и есть
+  // второе объявление (Правка 1.3 §1).
+  const pink = leaderHue();
 
   // --- The floor is ONE uniform hex field from edge to edge — no central arena plate,
   //     no seam. The fighters + leader stand on it; its surface height is FIELD.y. ---

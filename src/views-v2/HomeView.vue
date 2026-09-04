@@ -426,11 +426,11 @@ function onArrangePlace() { arrange.value = false; }
 .ft-txt { display: flex; flex-direction: column; line-height: 1.18; }
 .ft-name {
   font-family: var(--font-mono);
-  font-size: var(--t-sm); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink);
+  font-size: var(--t-sm); letter-spacing: var(--ls-title); text-transform: uppercase; color: var(--ink);
 }
 .ft-sig {
   font-family: var(--font-mono);
-  font-size: var(--t-micro); letter-spacing: 0.18em; text-transform: uppercase;
+  font-size: var(--t-micro); letter-spacing: var(--ls-meta); text-transform: uppercase;
   color: var(--ink-dim);
 }
 /* ───────── the two stages of the one world ─────────
@@ -488,12 +488,12 @@ function onArrangePlace() { arrange.value = false; }
 .mc-name {
   font-family: var(--font-display);
   font-weight: 900; font-size: var(--t-3xl); line-height: 0.9;
-  letter-spacing: 0.02em; text-transform: uppercase;
+  letter-spacing: var(--ls-tight); text-transform: uppercase;
   color: var(--ink);
 }
 .mc-desc {
   font-family: var(--font-mono);
-  font-size: var(--t-xs); letter-spacing: 0.18em; text-transform: uppercase;
+  font-size: var(--t-xs); letter-spacing: var(--ls-meta); text-transform: uppercase;
   color: var(--ink-off);
   transition: color var(--d-hover) var(--e-weight);
 }
@@ -522,7 +522,7 @@ function onArrangePlace() { arrange.value = false; }
   position: absolute; right: 12px; top: 84px; z-index: 20;
   pointer-events: none; user-select: none;
   font-family: var(--font-mono);
-  font-size: var(--t-micro); line-height: 1.65; letter-spacing: 0.08em;
+  font-size: var(--t-micro); line-height: 1.65; letter-spacing: var(--ls-title);
   text-transform: uppercase; text-align: right;
   color: var(--ink-off);
 }

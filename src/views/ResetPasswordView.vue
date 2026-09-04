@@ -385,7 +385,7 @@ function onRequestNew() {
 .reset-card__submit {
   margin-top: 8px;
   padding: 14px;
-  min-height: 48px;
+  min-height: var(--h-btn-md);
   background: var(--pink);
   color: var(--ink);
   border: none;

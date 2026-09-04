@@ -101,17 +101,17 @@ function goMode() { router.push('/play/mode'); }
 }
 .space-note-soon {
   flex: 0 0 auto;
-  font-family: var(--font-mono); font-size: var(--t-micro); font-weight: 700; letter-spacing: 0.28em; text-transform: uppercase;
+  font-family: var(--font-mono); font-size: var(--t-micro); font-weight: 700; letter-spacing: var(--ls-wide); text-transform: uppercase;
   color: var(--ink-soft); padding: var(--sp-1) var(--sp-3);
   background: linear-gradient(180deg, var(--line), var(--fill-1));
   border: 1px solid var(--line-strong);
 }
 .space-note-text {
-  margin: 0; font-family: var(--font-mono); font-size: var(--t-xs); line-height: 1.5; letter-spacing: 0.04em;
+  margin: 0; font-family: var(--font-mono); font-size: var(--t-xs); line-height: 1.5; letter-spacing: var(--ls-tight);
   color: var(--ink-dim); text-transform: uppercase;
 }
 @media (max-width: 560px) {
   .space-note { flex-direction: column; align-items: flex-start; gap: var(--sp-2); padding: var(--sp-3) var(--sp-4); }
-  .space-note-text { font-size: var(--t-micro); letter-spacing: 0.02em; }
+  .space-note-text { font-size: var(--t-micro); letter-spacing: var(--ls-tight); }
 }
 </style>
