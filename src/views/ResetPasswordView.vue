@@ -89,7 +89,7 @@
             :disabled="loading || !canSubmit"
           >
             <span v-if="!loading">Reset password</span>
-            <span v-else class="reset-card__submit-spinner" aria-label="Loading"></span>
+            <span v-else class="hx-spinner" aria-label="Loading"></span>
           </button>
         </form>
       </div>
@@ -410,16 +410,7 @@ function onRequestNew() {
 .reset-card__submit:disabled { background: var(--panel); color: var(--ink-off); box-shadow: none; cursor: not-allowed; }
 .reset-card__submit--loading { cursor: progress; }
 
-.reset-card__submit-spinner {
-  width: 14px;
-  height: 14px;
-  border: 2px solid var(--line-strong);
-  border-top-color: var(--ink);
-  border-radius: var(--r-round);
-  animation: reset-spin 0.6s linear infinite;
-}
-
-@keyframes reset-spin { to { transform: rotate(360deg); } }
+/* Индикатор ожидания — общий .hx-spinner из tokens.css (Правка 1.2 §2). */
 
 .reset-card__btn-secondary {
   padding: 12px 24px;

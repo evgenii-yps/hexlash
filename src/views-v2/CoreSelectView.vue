@@ -143,35 +143,20 @@ function toArena() {
    Tints subtly toward the picked core via --core-ghost.
    ============================================================ */
 .scene {
-  /* Brand Book — Color */
-  --void: var(--void);
-  --carbon: var(--carbon);
-  --carbon: var(--carbon);        /* faint pink-tinted wash */
-  --ink: var(--ink);
-  --ink-dim: var(--ink-dim);
-  --line: var(--line);
-  --line-strong: var(--line-strong);
-  --ink-off: var(--ink-off);
-  --carbon: var(--carbon);
+  /* Локальный набор этого экрана убран: он был копией палитры под своими
+     именами (--bg-void, --ink-bone, --lash…), а пакетный перевод оставил от
+     него самоссылки вида `--void: var(--void)` — их можно просто удалить,
+     значения приходят из src/styles/tokens.css.
 
-  /* Brand primary — neutral chrome accent (NOT a core color) */
-  --pink: var(--pink);
-  --pink-dim: color-mix(in srgb, var(--pink) 42%, transparent);
-  --pink-faint: color-mix(in srgb, var(--pink) 14%, transparent);
+     ⚠️ Там же вскрылась настоящая поломка: --core-dim (прозрачность 55%)
+     при переименовании превратился в --core-sup и ЗАТЁР одноимённую
+     переменную со вторым тоном ядра. Обе оказались без потребителей — второй
+     тон на этом экране читается из --c-sup, который ставится на каждую
+     карточку из скрипта. Мёртвые объявления сняты.
 
-  /* Type */
-  --font-disp: 'Saira Condensed', -apple-system, system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
-
-  /* Easing */
-  --ease: cubic-bezier(.4, .05, .1, 1);
-  --ease-out: cubic-bezier(.16, 1, .3, 1);
-
-  /* Picked core (resolved once a card is selected via :style binding).
-     Defaults to brand-pink — pre-select chrome reads as neutral. */
+     Локально остаются только слоты выбранного ядра — они вычисляются от
+     --core, который приходит из :style, а не дублируют токен. */
   --core: var(--pink);
-  --core-sup: color-mix(in srgb, var(--pink) 70%, var(--ink));
-  --core-sup: color-mix(in srgb, var(--core) 55%, transparent);
   --core-faint: color-mix(in srgb, var(--core) 14%, transparent);
   --core-ghost: color-mix(in srgb, var(--core) 7%, transparent);
   --core-ink: color-mix(in srgb, var(--core) 62%, var(--ink));
@@ -190,11 +175,11 @@ function toArena() {
     radial-gradient(130% 80% at 50% 12%,
       var(--carbon) 0%, var(--carbon) 38%, var(--void) 78%);
   color: var(--ink);
-  font-family: var(--font-disp);
+  font-family: var(--font-display);
   line-height: 1.4;
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
-  transition: background .55s var(--ease);
+  transition: background .55s var(--e-weight);
   isolation: isolate;
 }
 
@@ -244,7 +229,7 @@ function toArena() {
 .headline .ttl { display: flex; flex-direction: column; gap: var(--sp-3); min-width: 0; }
 
 .headline h1 {
-  font-family: var(--font-disp); font-weight: 900;
+  font-family: var(--font-display); font-weight: 900;
   /* fluid scale: ~36px mobile → ~64px desktop */
   font-size: clamp(36px, 5.6vw, 64px);
   line-height: .88; letter-spacing: .005em;
@@ -297,10 +282,10 @@ function toArena() {
   min-height: clamp(184px, 25vh, 230px);
   cursor: pointer; overflow: hidden;
   transition:
-    background .35s var(--ease),
-    border-color .3s var(--ease),
-    opacity .35s var(--ease),
-    transform .15s var(--ease);
+    background .35s var(--e-weight),
+    border-color .3s var(--e-weight),
+    opacity .35s var(--e-weight),
+    transform .15s var(--e-weight);
 }
 .core-card:hover { border-color: var(--line-strong); background:
   linear-gradient(180deg, var(--fill-2), var(--fill-1)), var(--carbon); }
@@ -309,7 +294,7 @@ function toArena() {
 
 /* corner ticks — subtle "tap target" hints */
 .core-card .tick { position: absolute; width: 10px; height: 10px; pointer-events: none;
-  border: 1px solid var(--ink-off); transition: border-color .3s var(--ease); }
+  border: 1px solid var(--ink-off); transition: border-color .3s var(--e-weight); }
 .core-card .tick.tl { top: 9px; left: 9px; border-right: 0; border-bottom: 0; }
 .core-card .tick.tr { top: 9px; right: 9px; border-left: 0; border-bottom: 0; }
 
@@ -327,11 +312,11 @@ function toArena() {
   background:
     radial-gradient(60% 60% at 50% 50%,
       color-mix(in srgb, var(--c) 8%, transparent), transparent 70%);
-  opacity: .7; transition: opacity .35s var(--ease);
+  opacity: .7; transition: opacity .35s var(--e-weight);
 }
 .core-card .halo {
   position: absolute; inset: -12%; border-radius: var(--r-round); z-index: 1; pointer-events: none;
-  opacity: 0; transition: opacity .35s var(--ease);
+  opacity: 0; transition: opacity .35s var(--e-weight);
   background:
     radial-gradient(circle at 50% 50%,
       color-mix(in srgb, var(--c) 48%, transparent) 0%,
@@ -347,22 +332,22 @@ function toArena() {
   border-radius: var(--r-round); z-index: 1; opacity: 0;
 }
 .core-card .icon { width: 96px; height: 96px; position: relative; z-index: 2;
-  transition: transform .4s var(--ease-out); }
+  transition: transform .4s var(--e-settle); }
 .core-card .icon :deep(svg) { width: 100%; height: 100%; overflow: visible; }
 
 /* FLAT-state strokes — muted, with a hint of hue so silhouettes
    stay distinguishable without lighting up */
 .core-card .icon :deep(.hex-line) {
   stroke: color-mix(in srgb, var(--c) 30%, var(--ink-off));
-  fill: none; stroke-width: 1.6; transition: stroke .35s var(--ease);
+  fill: none; stroke-width: 1.6; transition: stroke .35s var(--e-weight);
 }
 .core-card .icon :deep(.facet) {
   stroke: color-mix(in srgb, var(--c) 20%, var(--ink-off));
-  fill: none; stroke-width: 1.1; transition: stroke .35s var(--ease);
+  fill: none; stroke-width: 1.1; transition: stroke .35s var(--e-weight);
 }
 .core-card .icon :deep(.seed) {
   fill: color-mix(in srgb, var(--c) 46%, var(--ink-off));
-  transition: fill .35s var(--ease);
+  transition: fill .35s var(--e-weight);
 }
 
 /* NAME */
@@ -371,10 +356,10 @@ function toArena() {
   position: relative; z-index: 3; padding-bottom: var(--sp-3);
 }
 .core-card .nm {
-  font-family: var(--font-disp); font-weight: 800;
+  font-family: var(--font-display); font-weight: 800;
   font-size: clamp(20px, 2.4vw, 26px);
   letter-spacing: .015em; text-transform: uppercase; line-height: 1;
-  color: var(--ink); transition: color .35s var(--ease);
+  color: var(--ink); transition: color .35s var(--e-weight);
 }
 
 /* ACCENT BAR — anchors the card visually */
@@ -382,7 +367,7 @@ function toArena() {
   position: absolute; left: 0; right: 18px; bottom: 0; height: 3px;
   background: var(--ink-off);
   transform-origin: left center;
-  transition: background .35s var(--ease), transform .35s var(--ease);
+  transition: background .35s var(--e-weight), transform .35s var(--e-weight);
 }
 
 /* ---------- SELECTED ---------- */
@@ -470,21 +455,30 @@ function toArena() {
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  /* Onslaught — fast, steady pulse (pressure that never lets up) */
-  .core-card.sel[data-core="natisk"] .halo { animation: rhythm-onslaught .95s ease-in-out infinite; }
-  .core-card.sel[data-core="natisk"] .ring { animation: ring-onslaught .95s ease-out infinite; }
+  /* Темп ядра — это его характер, а не оформление (принцип П9, Правка 1.2).
+     Числа приходят из токенов: соответствие темпа ядру задаётся в tokens.css
+     и больше нигде.
 
-  /* Raider — ragged bursts (strike, drop, strike) */
-  .core-card.sel[data-core="nalet"] .halo { animation: rhythm-raider 1.7s linear infinite; }
-  .core-card.sel[data-core="nalet"] .ring { animation: ring-raider 1.7s linear infinite; }
+     ⚠️ Скала и засада стояли НАОБОРОТ: скала шла 4.6с, засада 5.6с, то есть
+     самым неподвижным ядром оказывалась засада, а не стойкость. Исправлено
+     по таблице Правки 1.2 §2. Порядок теперь по возрастанию — натиск, налёт,
+     засада, скала: от рваного к неподвижному. */
 
-  /* Bulwark — slow inhale (takes the hit, returns it later) */
-  .core-card.sel[data-core="skala"] .halo { animation: rhythm-bulwark 4.6s ease-in-out infinite; }
-  .core-card.sel[data-core="skala"] .ring { animation: ring-bulwark 4.6s ease-out infinite; }
+  /* Натиск — частый ровный пульс, давление не отпускает */
+  .core-card.sel[data-core="natisk"] .halo { animation: rhythm-onslaught var(--d-pulse-natisk) ease-in-out infinite; }
+  .core-card.sel[data-core="natisk"] .ring { animation: ring-onslaught var(--d-pulse-natisk) ease-out infinite; }
 
-  /* Ambush — long hold, single strike (silence, then payback) */
-  .core-card.sel[data-core="zasada"] .halo { animation: rhythm-ambush 5.6s cubic-bezier(.7, 0, .2, 1) infinite; }
-  .core-card.sel[data-core="zasada"] .ring { animation: ring-ambush 5.6s cubic-bezier(.7, 0, .2, 1) infinite; }
+  /* Налёт — рваные всплески: удар, отход, удар */
+  .core-card.sel[data-core="nalet"] .halo { animation: rhythm-raider var(--d-pulse-nalet) linear infinite; }
+  .core-card.sel[data-core="nalet"] .ring { animation: ring-raider var(--d-pulse-nalet) linear infinite; }
+
+  /* Засада — долгая тишина, один удар */
+  .core-card.sel[data-core="zasada"] .halo { animation: rhythm-ambush var(--d-pulse-zasada) cubic-bezier(.7, 0, .2, 1) infinite; }
+  .core-card.sel[data-core="zasada"] .ring { animation: ring-ambush var(--d-pulse-zasada) cubic-bezier(.7, 0, .2, 1) infinite; }
+
+  /* Скала — медленный вдох, самое неподвижное из четырёх */
+  .core-card.sel[data-core="skala"] .halo { animation: rhythm-bulwark var(--d-pulse-skala) ease-in-out infinite; }
+  .core-card.sel[data-core="skala"] .ring { animation: ring-bulwark var(--d-pulse-skala) ease-out infinite; }
 }
 
 @keyframes rhythm-onslaught {
@@ -539,7 +533,7 @@ function toArena() {
    (dashed thin outline, muted). Ready = filled in core hue. */
 .cta {
   position: relative; width: 100%;
-  font-family: var(--font-disp); font-weight: 800;
+  font-family: var(--font-display); font-weight: 800;
   font-size: clamp(19px, 2vw, 23px);
   letter-spacing: .18em; text-transform: uppercase;
   padding: var(--sp-4) var(--sp-5);
@@ -558,7 +552,7 @@ function toArena() {
 .cta .arr {
   font-family: var(--font-mono); font-weight: 700; font-size: var(--t-lg);
   letter-spacing: .05em;
-  transition: transform .3s var(--ease); /* glides on hover (PLAY-style feel) */
+  transition: transform .3s var(--e-weight); /* glides on hover (PLAY-style feel) */
 }
 .cta span { position: relative; z-index: 2; }
 
@@ -572,24 +566,17 @@ function toArena() {
                     calc(100% - 18px) 100%, 0 100%, 0 18px);
 }
 .cta.is-ready::after { display: none; }
-/* sheen — skewed light band travelling across the fill, clipped to the notch
-   (the base .cta is overflow:hidden). Mirrors PLAY; not a second glow source. */
-.cta.is-ready::before {
-  content: ""; position: absolute; top: 0; bottom: 0; left: -60%; width: 40%;
-  pointer-events: none;
-  background: linear-gradient(105deg, transparent, var(--line-strong), transparent);
-  transform: skewX(-18deg);
-  animation: cta-sheen 3.4s ease-in-out infinite;
-}
+/* Пробегающий блик по кнопке снят (Правка 1.2 §2): он не попадал ни в одну из
+   трёх групп петель — не пульсация геройского свечения, не ритм ядра, не
+   служебная. На этом экране уже идут четыре ритма ядер, и блик поверх них был
+   движением без смысла. Кнопку выделяет заливка цветом выбранного ядра. */
 .cta.is-ready:hover { filter: brightness(1.08); }
 .cta.is-ready:active { transform: scale(.99); }
 /* arrow glides right on hover — pointer devices only (static on touch). */
 @media (hover: hover) {
   .cta.is-ready:hover .arr { transform: translateX(5px); }
 }
-@keyframes cta-sheen { 0% { left: -60%; } 45%, 100% { left: 140%; } }
 @media (prefers-reduced-motion: reduce) {
-  .cta.is-ready::before { animation: none; opacity: 0; }
   .cta .arr { transition: none; }                 /* no glide */
   .cta.is-ready:hover .arr { transform: none; }    /* arrow stays put */
 }

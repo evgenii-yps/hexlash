@@ -86,15 +86,11 @@ onBeforeUnmount(stopTips);
 </script>
 
 <style scoped>
-/* Self-contained literals (the same ones #hx-load inlines) so the look is
-   guaranteed even before --hex-* tokens or the brand faces resolve. */
+/* Копия значений отсюда убрана. Она стояла на случай, «если токены ещё не
+   разрешились», но tokens.css грузится ПЕРВЫМ в main.js — к моменту, когда
+   этот оверлей монтируется, они уже есть. Литералы нужны только в
+   index.html (#hx-load), который красится до бандла. */
 .hx-loading {
-  --pink: var(--pink);
-  --pink-rgb: 255, 0, 105;
-  --void: var(--void);
-  --ink: var(--ink);
-  --font-display: "Saira Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
   position: fixed;
   inset: 0;

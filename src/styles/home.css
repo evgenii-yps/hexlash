@@ -238,6 +238,9 @@
    it after the run) so toggling arrange/shop later never replays the entrance. */
 @media (prefers-reduced-motion: no-preference) {
   /* idle: the slab settles, the bloom breathes, the face glints rarely */
+  /* Оседание плиты и её блик — АТМОСФЕРА, а не сигнал (Правка 1.2 §3):
+     движение по ощущению, не по смыслу. В токены не выносится и под --d-loop
+     не подпадает — тот про пульсацию свечения. Свои числа здесь законны. */
   .hs-fight .fbtn { animation: fSettle 5.4s ease-in-out infinite; }
   .hs-fight .f-bloom { animation: fGlow var(--d-loop) ease-in-out infinite; }
   .hs-fight .f-face::after { animation: fSheen 6.4s var(--e-settle) infinite; }

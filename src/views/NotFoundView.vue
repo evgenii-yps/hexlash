@@ -68,12 +68,8 @@ import {HexlashMark} from '@/components/brand/hexlashMark.js';
 -->
 <style>
   #hx-404{
-    --pink:var(--pink); --pink-rgb:255,0,105;
-    --void:var(--void); --carbon:var(--carbon); --ink:var(--ink); --ink-dim:var(--ink-dim);
-    /* IMPACT degrades to a condensed system face; TELE to a system mono.
-       Both legible the instant the screen paints — zero webfont dependency. */
-    --font-display:"Saira Condensed","Arial Narrow","Roboto Condensed",system-ui,sans-serif;
-    --font-mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    /* Локальная копия палитры и шрифтов убрана — всё приходит из tokens.css,
+       включая запасные начертания. */
 
     position:fixed; inset:0; z-index:var(--z-load); overflow:hidden;
     color:var(--ink); font-family:var(--font-mono);
@@ -89,9 +85,7 @@ import {HexlashMark} from '@/components/brand/hexlashMark.js';
   .hx4-glow{ position:absolute; left:50%; top:48%; transform:translate(-50%,-50%);
     width:min(70vw,860px); height:min(70vw,860px); pointer-events:none; z-index:0;
     background:radial-gradient(circle, rgba(var(--pink-rgb),.16) 0%, rgba(var(--pink-rgb),.045) 42%, transparent 68%);
-    animation:hx4Breathe 6s ease-in-out infinite; }
-  @keyframes hx4Breathe{ 0%,100%{ opacity:.55; transform:translate(-50%,-50%) scale(.92); }
-    50%{ opacity:.9; transform:translate(-50%,-50%) scale(1.06); } }
+    opacity:.72; }
 
   /* HUD corner brackets — brandbook furniture */
   .hx4-hud i{ position:absolute; width:5vmin; height:5vmin; min-width:30px; min-height:30px;
@@ -125,9 +119,7 @@ import {HexlashMark} from '@/components/brand/hexlashMark.js';
     border:1px solid rgba(var(--pink-rgb),.34); background:rgba(var(--pink-rgb),.05);
     padding:.85vmin 2vmin; font-size:clamp(10px,1.35vmin,13px); letter-spacing:.34em;
     text-transform:uppercase; color:var(--ink-soft); }
-  .hx4-tag i{ width:8px; height:8px; border-radius: var(--r-round); background:var(--pink);
-    box-shadow:0 0 8px var(--pink); animation:hx4Blink 1.6s steps(1) infinite; }
-  @keyframes hx4Blink{ 50%{ opacity:.22; } }
+  .hx4-tag i{ width:8px; height:8px; border-radius: var(--r-round); background:var(--pink); }
 
   /* The 404 — impact moment. Ghost stroke behind, solid face in front.
      Свечение снято: единственное свечение в Hexlash — разлом арены. */
@@ -138,9 +130,7 @@ import {HexlashMark} from '@/components/brand/hexlashMark.js';
   .hx4-num .ghost{ position:absolute; left:0; right:0; top:0; color:transparent;
     -webkit-text-stroke:1.6px rgba(var(--pink-rgb),.45); transform:translateY(-1.4vmin) scale(1.012);
     opacity:.6; }
-  .hx4-num .solid{ position:relative; color:var(--ink);
-    animation:hx4Flick 3.2s steps(1) infinite; }
-  @keyframes hx4Flick{ 0%,40%,100%{ opacity:1; } 42%{ opacity:.55; } 43%{ opacity:1; } 78%{ opacity:1; } 79%{ opacity:.45; } 80%{ opacity:1; } 88%{ opacity:.7; } 89%{ opacity:1; } }
+  .hx4-num .solid{ position:relative; color:var(--ink); }
 
   /* Creed — brand voice, second word carries the pink charge */
   .hx4-creed{ font-family:var(--font-display); font-weight:800; text-transform:uppercase;
@@ -165,13 +155,17 @@ import {HexlashMark} from '@/components/brand/hexlashMark.js';
      проекте ровно один — загрузка; 404 к нему не относится (Документ Б, экран
      9). Свечение снято только с цифр, знака процента и слова в девизе — там
      его быть не должно, оно там и не заявлено. */
+  /* Единственная петля на этом экране — пульсация кнопки возврата (Правка 1.2
+     §3). 404 тупиковый: его единственная задача — вернуть игрока, поэтому всё
+     остальное движение здесь было шумом и снято. Ушли: дыхание свечения за
+     цифрами, мигание точки в метке, мерцание самих цифр и пробегающий блик по
+     кнопке. Осталась одна пульсация, и она указывает на выход. */
   .hx4-btn-bg{ position:absolute; inset:0; z-index:-1; background:var(--pink);
     box-shadow:var(--glow-hero);
+    animation:hx4Pulse var(--d-loop) ease-in-out infinite;
     transition:filter var(--d-hover) var(--e-weight), box-shadow var(--d-hover) var(--e-weight); }
-  .hx4-btn-bg::after{ content:""; position:absolute; top:0; left:-60%; width:40%; height:100%;
-    background:linear-gradient(105deg,transparent,var(--line-strong),transparent);
-    transform:skewX(-18deg); animation:hx4Shimmer 3.4s ease-in-out infinite; }
-  @keyframes hx4Shimmer{ 0%{ left:-60%; } 45%,100%{ left:140%; } }
+  @keyframes hx4Pulse{ 0%,100%{ box-shadow:var(--glow-hero); }
+    50%{ box-shadow:0 0 26px rgba(var(--pink-rgb),.75), 0 0 56px rgba(var(--pink-rgb),.5); } }
   .hx4-btn-arrow{ display:flex; transform:translateX(-2px); opacity:.85;
     transition:transform var(--d-hover) var(--e-weight), opacity var(--d-hover) var(--e-weight); }
   .hx4-btn:hover .hx4-btn-bg{ filter:brightness(1.08); }

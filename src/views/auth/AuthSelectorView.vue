@@ -133,7 +133,7 @@
               :disabled="loading"
             >
               <span v-if="!loading">{{ mode === 'login' ? 'Sign In' : 'Sign Up' }}</span>
-              <span v-else class="hx-spin" aria-label="Loading"></span>
+              <span v-else class="hx-spinner" aria-label="Loading"></span>
             </button>
 
             <div class="hx-fine">
@@ -375,21 +375,13 @@ async function onForgotSubmit(payload) {
   overflow: hidden;
   font-family: var(--font-mono);
   color: var(--ink);
-  --pink: var(--pink);
-  --pink-rgb: 255, 0, 105;
-  --bg: var(--void);
-  --ink: var(--ink);
-  --ink-dim: var(--ink-dim);
-  --ink-off: var(--ink-off);
-  --line: var(--line);
-  --line-strong: var(--line-strong);
-  --fill-1: var(--fill-1);
-  --fill-1: var(--fill-1);
-  --danger: var(--danger);
-  --font-display: "Saira Condensed", -apple-system, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  /* Локальная копия палитры убрана — значения приходят из tokens.css.
+     Здесь были: своя пара шрифтов с другими запасными, свой --pink-rgb и
+     алиас --bg, а карточка и поле ввода имели два почти одинаковых фона
+     (.022 и .030), которые после сведения к --fill-1 продублировали
+     объявление. Разница в две единицы яркости на почти чёрном не читалась. */
   /* Plain base; LandingBackground (fixed, z-index 0) paints the real backdrop. */
-  background: var(--bg);
+  background: var(--void);
 }
 
 /* Global exit → landing (top-left, calm/monochrome, never pink). */
@@ -520,11 +512,7 @@ async function onForgotSubmit(payload) {
 .hx-submit-full.is-ready { background: var(--pink); color: var(--ink); box-shadow: 0 0 22px -3px rgba(var(--pink-rgb), .6); }
 .hx-submit-full.is-ready:hover:not(:disabled) { filter: brightness(1.08); }
 .hx-submit-full:disabled { cursor: not-allowed; opacity: .75; }
-.hx-spin {
-  width: 14px; height: 14px; border: 2px solid var(--line-strong); border-top-color: var(--ink);
-  border-radius: var(--r-round); animation: hx-spin .6s linear infinite;
-}
-@keyframes hx-spin { to { transform: rotate(360deg); } }
+/* Индикатор ожидания — общий .hx-spinner из tokens.css (Правка 1.2 §2). */
 
 .hx-fine {
   margin-top: 14px; font-family: var(--font-mono); font-size: 10.5px; line-height: 1.7;

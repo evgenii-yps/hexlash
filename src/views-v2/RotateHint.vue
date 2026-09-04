@@ -145,7 +145,9 @@ onUnmounted(() => {
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   transform-origin: center;
-  animation: rh-rotate 1.8s var(--e-weight) infinite;
+  /* Темп жеста — токен --d-hint (Правка 1.2 §2, группа 3): подсказка
+     показывает действие, и скорость показа тоже часть смысла. */
+  animation: rh-rotate var(--d-hint) var(--e-weight) infinite;
 }
 .rh-cam {
   position: absolute;

@@ -324,6 +324,8 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
      across 60% of the viewport is recomposited every frame; on a dark backdrop
      it looks the same without it. */
   filter: blur(18px);
+  /* Дыхание ядра дерева — атмосфера (Правка 1.2 §3), не ритм ядра: оно не
+     сообщает характер, а просто оживляет экран. В токены не выносится. */
   animation: ftBreathe 4.6s ease-in-out infinite;
 }
 .ft-core:focus-visible { outline: 1px solid var(--core-sup); outline-offset: 4px; }
