@@ -46,12 +46,27 @@
 .lp .nav { position: relative; z-index: var(--z-modal); height: var(--nav-h);
   display: flex; align-items: center; justify-content: flex-start;
   width: min(1180px, 92vw); margin: 0 auto; padding: 0; }
-.lp .nav-logo { flex: 0 0 auto; display: flex; align-items: center; }
-/* 140px (92px ≤680px) — both are well over 48px, so both take the FULL drawing.
-   The mark carries its own colours; nothing to inherit. */
-.lp .logo-mark { width: var(--lp-nav-logo-size); height: var(--lp-nav-logo-size); display: block;
+/* Вертикальная связка «знак над словом». Пропорции сняты с эталона
+   docs/design-handoff/hexlash_mark/brand/lockup-vertical.png: знак = --word × 2.29,
+   зазор = --word × 1.18, слово = --word. В сумме ровно 4.47 × --word — поэтому
+   --word выводим делением на 4.47, и связка занимает по вертикали РОВНО ту же
+   величину, что раньше занимал один знак. --lp-nav-logo-size остаётся единственной
+   ручкой, включая её переопределение в 92px на ≤680px; --nav-h не трогается.
+   Слово HEXLASH — живой текст, картинкой не поставляется: правило эталона. */
+.lp .nav-logo { flex: 0 0 auto; --word: calc(var(--lp-nav-logo-size) / 4.47);
+  display: flex; flex-direction: column; align-items: center;
   transition: transform var(--d-panel) var(--e-settle); }
-.lp .nav-logo:hover .logo-mark { transform: scale(1.06); }
+.lp .logo-mark { display: block; }
+/* Бокс знака: 71.7px на десктопе, 47.1px на ≤680px. Селектор длиннее базового
+   .lp .logo-mark, поэтому знак в подвале (44px) остаётся при своём. */
+.lp .nav-logo .logo-mark { width: calc(var(--word) * 2.29); height: calc(var(--word) * 2.29);
+  margin-bottom: calc(var(--word) * 1.18); }
+/* text-indent гасит хвостовой межбуквенный зазор, иначе слово уезжает влево. */
+.lp .nav-word { font-family: var(--font-display); font-weight: 700; text-transform: uppercase;
+  font-size: var(--word); line-height: 1; letter-spacing: .30em; text-indent: .30em;
+  color: var(--ink); white-space: nowrap; }
+/* Наведение — на связку целиком: масштабировать половину пары нельзя. */
+.lp .nav-logo:hover { transform: scale(1.06); }
 .lp .nav-links { display: flex; gap: clamp(28px, 3.6vw, 56px); margin-left: auto; }
 .lp .nav-links a { font-family: var(--font-mono); font-weight: 500; font-size: var(--lp-nav-link-size); letter-spacing: .22em;
   color: var(--ink-soft); position: relative; padding: 6px 2px; }
@@ -295,6 +310,14 @@
 }
 @media (max-width: 680px) {
   .lp { --lp-nav-logo-size: 92px; }
+  /* Телефон: только знак, без слова. Связка шириной 157px не оставляет места
+     меню — замерено: на 360px бюджет строки 332px, из них связка съедает 157.6,
+     GAMEPLAY/$HEX/ROADMAP сжимаются со 157.6 до 101.4 и текст наезжает на иконки.
+     Ширина строки здесь и в блоке ≤430 расписана под знак 92px. Знак возвращается
+     в полный бокс --lp-nav-logo-size, то есть ровно как было до связки. */
+  .lp .nav-word { display: none; }
+  .lp .nav-logo .logo-mark { width: var(--lp-nav-logo-size); height: var(--lp-nav-logo-size);
+    margin-bottom: 0; }
   /* Left cluster: logo at the left edge, links + social grouped right after it
      with small fixed margins. Reset the desktop content-container width back to
      a full-width bar with edge padding; the fixed .nav-links margin-left below
