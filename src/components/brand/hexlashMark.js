@@ -18,8 +18,22 @@
 //
 //     >= 48px  full  |  < 48px  micro
 //
-// (The retired mark had THREE drawings and switched at 64/24. That is gone — this
-// pack ships two, and there is nothing below micro.)
+// (An earlier arrangement used more than one threshold. That is gone — this pack
+// ships two drawings, one threshold, and there is nothing below micro. Never put
+// the mark in a box under 32px; the tab icon is the only exception and the browser
+// picks that size, not us.)
+//
+// ONE SOURCE FILE. Both drawings come from the same geometry — the small one is the
+// full one with shards THINNED OUT, not a second figure drawn by hand. Adding sizes
+// means re-exporting from that source, then laying every size side by side on the
+// real dark ground and checking by eye: that the small files carry the simplified
+// figure, and that the shape is the same in all of them. File names show neither.
+//
+// ⚠️ KNOWN DEFECT, do not "fix" here: the micro ladder currently holds TWO shapes.
+// 32/64 fuse the pink shard into the white one; 96/128/192 keep it separate. They
+// sit in one srcset, so a 40px box (top strip) and a 44px box (landing footer) show
+// a DIFFERENT mark on a 1x screen than on a 3x one. The cure is re-exporting the
+// pictures from one source — this file stays as it is. See the handoff README.
 //
 // RASTER, FOR NOW. The mark is supplied as pictures; there is no vector version and
 // no geometry yet. It will be redrawn as vector and swapped again — see the handoff
