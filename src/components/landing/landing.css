@@ -269,15 +269,17 @@
 .lp .sec-hex { text-align: center; }
 .lp .hex-word { position: relative; display: inline-block; font-weight: 900; font-size: clamp(86px, 19vw, 290px); line-height: .9; color: var(--ink);
   letter-spacing: -.01em; text-shadow: 0 0 16px rgba(var(--pink-rgb), .5), 0 0 60px rgba(var(--pink-rgb), .45), 0 0 120px rgba(var(--pink-rgb), .28); }
+/* ⚠️ Слой ПУСТОЙ и на экране ничего не рисует: background-clip: text обрезает
+   фон по буквам, а букв внутри span нет. Единственный оставшийся в проекте
+   такой слой — второй стоял в заголовке первого экрана и снят 05.09.2026.
+   Разбор — в комментарии у разметки в LandingToken.vue. */
 .lp .hex-word .sheen { position: absolute; inset: 0; overflow: hidden; pointer-events: none;
   background: linear-gradient(105deg, transparent 40%, var(--line-strong) 50%, transparent 60%);
   -webkit-background-clip: text; background-clip: text; color: transparent; mix-blend-mode: overlay;
   background-size: 280% 100%; background-position: 180% 0; animation: lpk-sheen 5.5s ease-in-out 1s infinite; }
 /* Кадры переехали сюда из заголовка первого экрана вместе с последним
-   потребителем: в заголовке слоя .sheen больше нет. ⚠️ Он и там, и здесь —
-   ПУСТОЙ пролёт: у span нет текста, а стиль обрезает фон по буквам, поэтому
-   обрезать не по чему и на экране он не рисует ничего. Порт из прототипа
-   один в один; в задании его нет, поэтому оставлен как есть. */
+   потребителем: в заголовке слоя .sheen больше нет. Крутятся вхолостую —
+   см. пометку у правила выше. */
 @keyframes lpk-sheen { 0% { background-position: 180% 0; } 55%, 100% { background-position: -120% 0; } }
 .lp .hex-status { font-weight: 800; letter-spacing: .5em; font-size: clamp(16px, 2.4vw, 30px); color: var(--pink);
   text-shadow: 0 0 20px rgba(var(--pink-rgb), .6); margin-top: 6px; }
