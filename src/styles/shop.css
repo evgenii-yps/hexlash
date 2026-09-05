@@ -303,8 +303,10 @@ body.home-shop-open .hs-strip { position: relative; background: var(--shop-bg); 
 .sc-line .hx-dia { width: 7px; height: 7px; }
 .sc-line .cdia { width: 7px; height: 7px; background: var(--c); transform: rotate(45deg); flex: none; box-shadow: 0 0 7px rgba(var(--c-rgb), 0.7); }
 .sc-note { font-family: var(--font-mono); color: var(--ink-dim); letter-spacing: var(--ls-tight); line-height: 1.5; }
-/* the hot deal carries the one pink bloom on the specials screen (live only) */
-.scard.hot.live { border-color: rgba(var(--pink-rgb), 0.5); box-shadow: 0 0 0 1px rgba(var(--pink-rgb), 0.2), 0 0 34px rgba(var(--pink-rgb), 0.16); }
+/* HOT DEAL помечен розовой рамкой — розовый владеет экономикой. Свечения на нём
+   НЕТ: правило 4.9 разрешает --glow-select только метке BEST VALUE. Рукописный
+   блум, стоявший здесь, снят без замены. Не возвращать. */
+.scard.hot.live { border-color: rgba(var(--pink-rgb), 0.5); }
 /* the bundle features a core piece — one core accent, on its frame only */
 .scard.bundle { border-color: rgba(var(--c-rgb), 0.3); }
 .scard.bundle.live { box-shadow: 0 0 26px rgba(var(--c-rgb), 0.12); }
