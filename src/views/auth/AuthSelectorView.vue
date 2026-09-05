@@ -420,14 +420,14 @@ async function onForgotSubmit(payload) {
 .hx-col { display: flex; flex-direction: column; align-items: stretch; width: 372px; max-width: 100%; }
 
 /* Vertical lock-up above the card. Ratios measured off
-   docs/design-handoff/hexlash_mark/assets/hexlash-lockup-vertical.svg — word cap
+   docs/design-handoff/hexlash_mark/brand/lockup-vertical.png — word cap
    = 35.3% of the mark's ink height, gap = 68.8% of it — driven by one --word knob.
-   28px word puts the mark at 64px, i.e. squarely in the FULL drawing's band. */
+   28px word puts the mark at 64px, i.e. over 48 and in the FULL drawing. */
 .hx-lock { --word: 28px;
   display: flex; flex-direction: column; align-items: center;
   margin-bottom: 26px; text-decoration: none; }
 .hx-mark { width: calc(var(--word) * 2.29); height: calc(var(--word) * 2.29);
-  display: block; margin-bottom: calc(var(--word) * 1.18); color: var(--ink); }
+  display: block; margin-bottom: calc(var(--word) * 1.18); }
 .hx-word { font-family: "Saira Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif;
   font-weight: 700; text-transform: uppercase; font-size: var(--word);
   line-height: 1; letter-spacing: .30em; text-indent: .30em; color: var(--ink); }

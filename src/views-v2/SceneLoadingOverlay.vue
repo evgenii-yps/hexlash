@@ -18,7 +18,7 @@
 
       <header class="hxo-top">
         <div class="hxo-lock">
-          <HexlashMark :size="96" class="hxo-mark" />
+          <HexlashMark :size="96" sizes="19vmin" class="hxo-mark" />
           <span class="hxo-word">HEXLASH</span>
         </div>
       </header>
@@ -113,17 +113,19 @@ onBeforeUnmount(stopTips);
 .hxo-hud i.br { bottom: 4vmin; right: 4vmin; border-right-width: 1.6px; border-bottom-width: 1.6px; }
 
 /* Top lockup: mark above word — the vertical lock-up from
-   docs/design-handoff/hexlash_mark/assets/hexlash-lockup-vertical.svg. The word's
-   cap height is 35.3% of the mark's ink height and the gap is 68.8% of it, both
-   measured off that file; expressed against --word so the pair scales as one unit.
+   docs/design-handoff/hexlash_mark/brand/lockup-vertical.png. The word's cap height
+   is 35.3% of the mark's ink height and the gap is 68.8% of it, both measured off
+   that file; expressed against --word so the pair scales as one unit.
    These numbers MUST match #hx-load in index.html — the two are the same screen,
-   and drift between them shows the moment one hands over to the other. */
+   and drift between them shows the moment one hands over to the other. That
+   includes the mark's `sizes`: both say 19vmin, which is the widest this box gets
+   (--word 8vmin portrait, mark 2.29x that). */
 .hxo-top { position: absolute; top: 5vmin; left: 0; right: 0;
   display: flex; flex-direction: column; align-items: center; gap: 2vmin; }
 .hxo-lock { --word: 6vmin;
   display: flex; flex-direction: column; align-items: center; }
 .hxo-mark { width: calc(var(--word) * 2.29); height: calc(var(--word) * 2.29);
-  display: block; margin-bottom: calc(var(--word) * 1.18); color: var(--ink); }
+  display: block; margin-bottom: calc(var(--word) * 1.18); }
 .hxo-word { font-family: var(--font-display); font-weight: 900; text-transform: uppercase;
   font-size: var(--word); line-height: 1; letter-spacing: var(--ls-tight); }
 

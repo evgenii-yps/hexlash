@@ -17,7 +17,7 @@
 
     <header class="hx4-top">
       <router-link class="hx4-lock" to="/" aria-label="Hexlash home">
-        <HexlashMark :size="96" class="hx4-mark" />
+        <HexlashMark :size="96" sizes="17vmin" class="hx4-mark" />
         <span class="hx4-word">HEXLASH</span>
       </router-link>
     </header>
@@ -95,17 +95,19 @@ import {HexlashMark} from '@/components/brand/hexlashMark.js';
   .hx4-hud i.bl{ bottom:4vmin; left:4vmin; border-left-width:1.6px; border-bottom-width:1.6px; }
   .hx4-hud i.br{ bottom:4vmin; right:4vmin; border-right-width:1.6px; border-bottom-width:1.6px; }
 
-  /* Top lockup: mark + wordmark — same monochrome lockup as the loading screen */
+  /* Top lockup: mark + wordmark — the same lockup as the loading screen */
   .hx4-top{ position:absolute; top:5vmin; left:0; right:0; z-index:5;
     display:flex; justify-content:center; }
   /* Vertical lock-up — mark above, word below. Ratios measured off
-     docs/design-handoff/hexlash_mark/assets/hexlash-lockup-vertical.svg (word cap
+     docs/design-handoff/hexlash_mark/brand/lockup-vertical.png (word cap
      = 35.3% of the mark's ink, gap = 68.8% of it), driven by the single --word
-     knob so the pair scales together. Same construction as the loading screen. */
+     knob so the pair scales together. Same construction as the loading screen.
+     --word is 5vmin (7vmin portrait) and the mark is 2.29x that → up to ~16vmin,
+     which is why the component is handed sizes="17vmin". */
   .hx4-lock{ --word:5vmin;
     display:flex; flex-direction:column; align-items:center; }
   .hx4-mark{ width:calc(var(--word) * 2.29); height:calc(var(--word) * 2.29);
-    display:block; margin-bottom:calc(var(--word) * 1.18); color:var(--ink); }
+    display:block; margin-bottom:calc(var(--word) * 1.18); }
   .hx4-word{ font-family:var(--font-display); font-weight:900; text-transform:uppercase;
     font-size:var(--word); line-height:1; letter-spacing: var(--ls-tight); }
 

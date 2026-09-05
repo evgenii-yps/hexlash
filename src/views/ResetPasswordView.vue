@@ -252,10 +252,9 @@ function onRequestNew() {
 .reset-layout__logo-link:hover { opacity: 0.85; }
 
 .reset-layout__logo {
-  /* 120–180px → FULL drawing (see components/brand/hexlashMark.js). */
+  /* 120–180px — over 48, so the FULL drawing (components/brand/hexlashMark.js). */
   width: clamp(120px, 18vw, 180px);
   height: auto;
-  color: var(--ink);
   user-select: none;
 }
 

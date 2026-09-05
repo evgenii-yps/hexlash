@@ -41,9 +41,9 @@
   display: flex; align-items: center; justify-content: space-between; padding: 0 var(--sp-5); pointer-events: none; }
 .hs-strip > * { pointer-events: auto; }
 
-/* brand-block (left) — segment mark + HEXLASH wordmark, one transparent click
-   zone (mark + word + gap) that returns to the home. Mark is the canonical
-   monochrome glyph (inline vector via HexlashMark) — no glow, no pink. */
+/* brand-block (left) — brand mark + HEXLASH wordmark, one transparent click
+   zone (mark + word + gap) that returns to the home. The mark is the brand's own
+   picture (via HexlashMark): white plus the single pink slash, no glow. */
 /* brand + cluster share one 48px axis so the strip reads as a single level
    row (both centred by .hs-strip align-items:center; left/right edges fixed). */
 /* 48px здесь — не «высота поля ввода» (--h-btn-md), а ОСЬ полосы: бренд слева и
@@ -51,12 +51,12 @@
    Совпадение числа со ступенью случайно, назначение разное. */
 .hs-brandblock { display: flex; align-items: center; height: 48px; gap: var(--sp-3); background: none; border: 0;
   cursor: pointer; padding: 0 var(--sp-1); color: inherit; transition: opacity var(--d-fast); }
-/* mark + wordmark: HEXLASH Saira 900 / 23px / .04em. The mark is an inline vector
-   (components/brand/hexlashMark.js) in a 40px box, which puts it in the COMPACT
-   drawing — if this box ever crosses 48px or 24px the drawing has to change with it.
-   Painted through `color`, not a fill, so it inherits like the word beside it. */
-.hs-brandblock .logo-mark { width: 40px; height: 40px; display: block; flex: 0 0 auto;
-  color: var(--ink); }
+/* mark + wordmark: HEXLASH Saira 900 / 23px / .04em. The mark comes from
+   components/brand/hexlashMark.js in a 40px box (32px on the phone) — under 48px,
+   so it is the SIMPLIFIED drawing. ⚠️ If this box ever reaches 48px the drawing
+   changes with it. The mark carries its own colours, so `color` does nothing here
+   — only the word beside it is painted. */
+.hs-brandblock .logo-mark { width: 40px; height: 40px; display: block; flex: 0 0 auto; }
 .hs-brandblock .wm { font-family: var(--font-display); font-weight: 900; font-size: var(--t-xl); letter-spacing: var(--ls-tight);
   text-transform: uppercase; color: var(--ink); line-height: 1; }
 .hs-brandblock:hover { opacity: 0.82; }

@@ -15,15 +15,25 @@
         gtag('config', 'G-8KGXD1H3Y8');
     </script>
     <meta charset="UTF-8">
-    <!-- Tab icon. Each size gets the drawing made for it (16 = the micro drawing on
-         a 16x16 pixel grid, 32 = compact, SVG = compact for high-dpi contexts) —
-         see docs/design-handoff/hexlash_mark. Rebuild: node scripts/sync-brand-icons.mjs -->
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <!-- Tab icon. Each size gets the drawing made for it (16 = the simplified
+         drawing, 32 and up = the full one) on the #08080A tile — a transparent mark
+         is nearly white and vanishes on light browser chrome. There is no
+         favicon.svg: this pack ships no vector, and hand-authoring one here would be
+         a second copy of the mark, which is what once split the tab icon from the
+         game's logo. See docs/design-handoff/hexlash_mark.
+         Rebuild: node scripts/sync-brand-icons.mjs -->
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
-    <link rel="icon" href="/favicon.ico" sizes="16x16 32x32">
+    <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="manifest" href="/manifest.json">
+
+    <!-- The splash mark is a picture now (the mark is two-colour, so it can no
+         longer be an inline monochrome path). Preloaded because this is the one
+         screen that must be whole on first paint. -->
+    <link rel="preload" as="image" href="/brand/mark-full-256.png"
+          imagesrcset="/brand/mark-full-128.png 128w, /brand/mark-full-256.png 256w, /brand/mark-full-512.png 512w"
+          imagesizes="19vmin">
     <meta name="viewport"
           content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -120,7 +130,7 @@
         .hxl-top { position: absolute; top: 5vmin; left: 0; right: 0;
             display: flex; flex-direction: column; align-items: center; gap: 2vmin; }
         /* Vertical lock-up — mark above, word below. Proportions measured off
-           docs/design-handoff/hexlash_mark/assets/hexlash-lockup-vertical.svg:
+           docs/design-handoff/hexlash_mark/brand/lockup-vertical.png:
            the word's cap height is 35.3% of the mark's ink height, so the mark's
            box is 2.29x the word's font size; the gap is 68.8% of that ink height.
            Both are expressed against --word so the pair scales as one unit. */
@@ -189,10 +199,18 @@
 
     <header class="hxl-top">
         <div class="hxl-lock">
-            <!-- Brand mark, FULL drawing (>=64px). Inline because this screen paints
-                 before the bundle and the stylesheet exist; the colour is the literal
-                 #F6F4F6 for the same reason — no token has loaded yet. -->
-            <svg class="hxl-mark" viewBox="0 0 64 64" fill="#F6F4F6" aria-hidden="true" focusable="false"><path d="M32 4 L56 18 L56 46 L32 60 L8 46 L8 18ZM11.6 20.07 L11.6 43.93 L32 55.84 L52.4 43.93 L52.4 20.07 L32 8.16ZM27.87 13.07 L36.13 13.07 L38.27 17.87 L36.13 22.67 L27.87 22.67 L25.73 17.87ZM26.93 25.33 L37.07 25.33 L39.20 30.13 L36.80 40.53 L27.20 40.53 L24.80 30.13ZM24.80 24.00 L19.73 31.20 L15.87 30.13 L21.60 19.20ZM19.73 31.20 L20.53 37.07 L14.93 36.27 L15.87 30.13ZM42.40 19.2 L48.13 30.13 L44.27 31.2 L39.20 24ZM48.13 30.13 L49.07 36.27 L43.47 37.07 L44.27 31.2ZM31.20 38.40 L29.60 44.80 L24.53 44.80 L26.13 38.40ZM29.6 44.8 L28.4 49.2 L24.2 49.2 L24.53 44.8ZM37.87 38.4 L39.47 44.8 L34.40 44.8 L32.80 38.4ZM39.47 44.8 L39.80 49.2 L35.60 49.2 L34.40 44.8Z"/></svg>
+            <!-- Brand mark, FULL drawing (box >= 48px). A picture, not an inline
+                 path: the mark is two-colour (white + the single pink slash), so it
+                 cannot be a monochrome glyph any more, and there is no vector in the
+                 pack. Same files the app uses (src/components/brand/hexlashMark.js) —
+                 one source, no second copy here. Preloaded in <head>.
+                 --word is 6vmin (8vmin portrait) and the mark is 2.29x that, so the
+                 widest this box gets is ~18.3vmin; `sizes` is rounded up to 19vmin so
+                 the browser never picks a file too small for a dense screen. -->
+            <img class="hxl-mark" alt="" aria-hidden="true" draggable="false"
+                 src="/brand/mark-full-256.png"
+                 srcset="/brand/mark-full-128.png 128w, /brand/mark-full-256.png 256w, /brand/mark-full-512.png 512w"
+                 sizes="19vmin">
             <span class="hxl-word">HEXLASH</span>
         </div>
     </header>
