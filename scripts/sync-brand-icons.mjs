@@ -27,6 +27,9 @@ const MARKS = [
   'mark-full-512.png',
   'mark-full-256.png',
   'mark-full-128.png',
+  'mark-micro-192.png',
+  'mark-micro-128.png',
+  'mark-micro-96.png',
   'mark-micro-64.png',
   'mark-micro-32.png',
 ];

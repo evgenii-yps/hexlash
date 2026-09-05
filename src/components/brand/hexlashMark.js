@@ -27,6 +27,11 @@
 // for the screen's pixel density; a picture served 1:1 against its box is mush on a
 // phone.
 //
+// Both drawings reach 3x on every box the app uses. The micro list once stopped at
+// 64px, which left the 40px top strip and the 44px landing footer soft on a
+// triple-density phone (they need 120-132 device pixels); 96/128/192 closed that on
+// 05.09.2026. Adding a size is adding it to the list below — nothing else.
+//
 // PAINTED BY THE FILE, NOT BY `color`. The retired mark was monochrome
 // `fill="currentColor"` and inherited its colour. This one is two-colour — white
 // #F6F4F6 plus the single pink #FF0069 slash — so it carries its own colours and
@@ -48,7 +53,9 @@ export const MARK_SOURCES = {
   },
   micro: {
     src: `${BASE}/mark-micro-64.png`,
-    srcset: `${BASE}/mark-micro-32.png 32w, ${BASE}/mark-micro-64.png 64w`,
+    srcset: `${BASE}/mark-micro-32.png 32w, ${BASE}/mark-micro-64.png 64w, `
+      + `${BASE}/mark-micro-96.png 96w, ${BASE}/mark-micro-128.png 128w, `
+      + `${BASE}/mark-micro-192.png 192w`,
   },
 };
 
