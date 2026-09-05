@@ -45,19 +45,26 @@
    на дом. Слова здесь нет сознательно: в панели бренд несёт один знак, а
    доступное имя кнопки держит aria-label. Знак — собственная картинка бренда
    (через HexlashMark): белый плюс единственный розовый росчерк, без свечения. */
-/* brand + cluster share one 48px axis so the strip reads as a single level
-   row (both centred by .hs-strip align-items:center; left/right edges fixed). */
-/* 48px здесь — не «высота поля ввода» (--h-btn-md), а ОСЬ полосы: бренд слева и
-   кластер кнопок справа стоят на одной высоте, чтобы строка читалась ровной.
-   Совпадение числа со ступенью случайно, назначение разное. */
-.hs-brandblock { display: flex; align-items: center; height: 48px; gap: var(--sp-3); background: none; border: 0;
+/* ⚠️ Прежнее решение — «бренд и кластер стоят на одной оси 48, чтобы строка
+   читалась ровной» — ОТМЕНЕНО владельцем 05.09.2026 по снимкам: без слова знак
+   читался мелким. Бренд теперь 56, чипы справа остаются 44, и строка намеренно
+   не ровная: знак крупнее хрома, потому что он бренд, а они управление.
+   56 — подобранный максимум, а не round number. Замер на собранной странице:
+   полоса накладная и с жёсткой высотой (74 / 60), поэтому от размера знака она
+   не растёт ни при каком числе; предел задаёт телефон — при 60 росчерки
+   упираются в кромку полосы, при 56 остаётся по 2 точки коробки и знак ещё
+   дышит. Горизонтального упора нет: до кластера остаётся 168 точек на 360.
+   Одно число на обе ширины сознательно: один бренд разного веса на двух
+   экранах — это дрейф, на котором проект уже обжигался. */
+.hs-brandblock { --brand-mark: 56px;
+  display: flex; align-items: center; height: var(--brand-mark); gap: var(--sp-3); background: none; border: 0;
   cursor: pointer; padding: 0 var(--sp-1); color: inherit; transition: opacity var(--d-fast); }
-/* Знак приходит из components/brand/hexlashMark.js в боксе 48px (и на телефоне
-   тоже 48) — от порога и выше, то есть ПОЛНАЯ отрисовка. ⚠️ Опустить этот бокс
-   ниже 48 — значит вернуть схему. Знак несёт свои цвета в файле, поэтому `color`
-   на нём ничего не делает. 48 совпадает с высотой .hs-brandblock: знак занимает
-   ось полосы целиком, полоса от этого не растёт (она накладная, 74px / 60px). */
-.hs-brandblock .logo-mark { width: 48px; height: 48px; display: block; flex: 0 0 auto; }
+/* Знак приходит из components/brand/hexlashMark.js. Размер и высота зоны клика
+   ведутся от ОДНОЙ переменной --brand-mark выше — чтобы картинка и кликабельная
+   область не разъехались. ⚠️ Опустить её ниже 48 — значит вернуть упрощённую
+   схему вместо знака. Знак несёт свои цвета в файле, поэтому `color` на нём
+   ничего не делает. */
+.hs-brandblock .logo-mark { width: var(--brand-mark); height: var(--brand-mark); display: block; flex: 0 0 auto; }
 .hs-brandblock:hover { opacity: 0.82; }
 
 /* right group — the SHOP/back chip + the cabinet chip, each carrying the shared
@@ -360,18 +367,17 @@
 
 /* ════════════════ MOBILE — consolidated (last in file → overrides base) ════════════════
    Per the prototype, recomputed for the smaller controls: a 60px strip, a brand
-   mark at 48px (слова рядом нет, оптическая пара отпала — размер держит порог
-   полной отрисовки), the SHOP chip collapses to a 42px icon-only square,
+   mark at 56px (слова рядом нет, оптическая пара отпала; 56 — подобранный
+   максимум, влезающий в полосу 60), the SHOP chip collapses to a 42px icon-only square,
    the cabinet chip keeps avatar + handle (drops OPEN
    CABINET + chevron), and FIGHT is a full-width slab lower down with a 32px word.
    EDIT SPACE lifts above the dock. Nothing overlaps the brand. */
 @media (max-width: 560px) {
   /* top strip */
   .hs-strip { height: 60px; padding: 0 var(--sp-4); }
-  .hs-brandblock { height: auto; gap: var(--sp-2); }
-  /* 48px и на телефоне: ниже порога знак схлопнулся бы в схему. Внутри полосы
-     60px это оставляет по 6px сверху и снизу — ничего не подрезается. */
-  .hs-brandblock .logo-mark { width: 48px; height: 48px; }
+  /* Размер знака НЕ переопределяем: --brand-mark одна на обе ширины, и высота
+     блока идёт от неё же. Внутри полосы 60px знак 56 оставляет по 2 точки. */
+  .hs-brandblock { gap: var(--sp-2); }
   /* SHOP/back → icon-only 44×44 square (label hidden, glyph centred) */
   .hs-seg-shop { width: 44px; height: 44px; padding: 0; justify-content: center; }
   .hs-seg-shop .n { display: none; }

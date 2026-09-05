@@ -22,7 +22,7 @@
              сознательно: на этом экране бренд несёт один знак. Доступное имя
              ссылки держит aria-label — знак декоративный (alt="", aria-hidden). -->
         <router-link to="/" class="hx-lock" aria-label="Hexlash home">
-          <HexlashMark :size="64" class="hx-mark" />
+          <HexlashMark :size="88" class="hx-mark" />
         </router-link>
 
         <div class="hx-card" :class="{ 'has-back': showBack }">
@@ -420,10 +420,11 @@ async function onForgotSubmit(payload) {
 
 .hx-col { display: flex; flex-direction: column; align-items: stretch; width: 372px; max-width: 100%; }
 
-/* Знак над карточкой — без слова. Бокс 64px: выше порога 48, значит ПОЛНАЯ
-   отрисовка. Отступ до карточки держит сам .hx-lock; собственного нижнего
-   отступа у знака нет — прежние 33px были зазором до слова. */
-.hx-lock { --mark: 64px;
+/* Знак над карточкой — без слова. Бокс 88px: выше порога 48, значит ПОЛНАЯ
+   отрисовка. 88 вместо прежних 64 — решение владельца по снимкам: без слова
+   блок терял вес. Отступ до карточки держит сам .hx-lock (26px); собственного
+   нижнего отступа у знака нет — прежние 33px были зазором до слова. */
+.hx-lock { --mark: 88px;
   display: flex; flex-direction: column; align-items: center;
   margin-bottom: 26px; text-decoration: none; }
 .hx-mark { width: var(--mark); height: var(--mark); display: block; }

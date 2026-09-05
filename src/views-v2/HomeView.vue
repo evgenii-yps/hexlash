@@ -29,7 +29,7 @@
          brings its own focused top bar. Styles: .hs-strip in home.css. -->
     <div v-if="!arrange" class="hs-strip">
       <button type="button" class="hs-brandblock" @click="onBrand" :aria-label="`${t.home.brand} — home`">
-        <HexlashMark :size="48" />
+        <HexlashMark :size="56" />
       </button>
       <div class="hs-cluster">
         <!-- SHOP on home; the SAME chip becomes BACK (arrow) while the shop is open
