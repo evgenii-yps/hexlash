@@ -95,6 +95,11 @@
 .lp .btn-play-bg::after { content: ""; position: absolute; top: 0; left: -60%; width: 40%; height: 100%;
   background: linear-gradient(105deg, transparent, var(--line-strong), transparent); transform: skewX(-18deg); animation: lpk-shimmer 3.4s ease-in-out infinite; }
 @keyframes lpk-shimmer { 0% { left: -60%; } 45%, 100% { left: 140%; } }
+/* Подпись кнопки. position/z-index — обязательны: .btn-play-bg лежит абсолютно
+   поверх потока, и без подъёма в слой интерфейса розовая заливка закрашивает текст.
+   Начертание — как у соседней .btn-ghost (JOIN DISCORD), решение владельца 05.09.2026. */
+.lp .btn-play-label { position: relative; z-index: var(--z-ui);
+  font-family: var(--font-mono); font-weight: 500; font-size: 14px; letter-spacing: .18em; }
 .lp .btn-play-arrow { display: flex; transform: translateX(-2px); opacity: .85; transition: transform var(--d-hover), opacity var(--d-hover); }
 .lp .btn-play:hover .btn-play-bg { filter: brightness(1.08); box-shadow: 0 0 38px rgba(var(--pink-rgb), .85), 0 0 90px rgba(var(--pink-rgb), .5); }
 .lp .btn-play:hover .btn-play-arrow { transform: translateX(4px); opacity: 1; }
