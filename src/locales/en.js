@@ -14,6 +14,16 @@ export default {
     label: "Rotate your device for the best view",
     dismiss: "Tap to continue",
   },
+  // Лендинг (/). Первый раздел строк витрины: до этой правки весь её текст был
+  // зашит в разметку. Остальные секции лендинга сюда ещё не перенесены.
+  // Внутренние слова (HOUSE, HEXARCH, ASCENSION, TEMPER, DOCTRINE) во внешний
+  // текст не идут — правило проекта.
+  landing: {
+    hero: {
+      lead: "TRAIN THE AI UNTIL IT BECOMES THE TRAINER.",
+      leadSub: "Fighters that think, remember, and eventually take command.",
+    },
+  },
   profile: {
     // Web3 wallet strings. Their UI consumers (ConnectWallet / BuyTokens) were
     // deleted (sub-wave 1.5); only `checkLimits` is still referenced — via the

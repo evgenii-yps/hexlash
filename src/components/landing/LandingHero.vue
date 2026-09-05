@@ -1,13 +1,18 @@
 <template>
   <section class="hero" id="top">
+    <!-- Заголовок — само имя бренда, одной строкой, живым текстом.
+         .glow — копия слова, которая несёт ТОЛЬКО ореол (буквы у неё
+         прозрачные). Мерцает она, а буквы стоят неподвижно: гаснет свет
+         вывески, а не сама вывеска. Для читалок экрана копия скрыта. -->
     <h1 class="headline">
-      <span class="line reveal" data-d="3">{{ line1 }}</span>
-      <span class="line accent flicker reveal" data-d="4">
-        {{ line2 }}<span class="sheen"></span>
+      <span class="line reveal" data-d="3">
+        <span class="word">HEXLASH</span>
+        <span class="glow" aria-hidden="true">HEXLASH</span>
       </span>
     </h1>
 
-    <p class="sub reveal" data-d="5">TRAIN<i>.</i> FIGHT<i>.</i> RISE<i>.</i></p>
+    <p class="lead reveal" data-d="5">{{ t.landing.hero.lead }}</p>
+    <p class="lead-sub reveal" data-d="5">{{ t.landing.hero.leadSub }}</p>
 
     <div class="cta-row reveal" data-d="6">
       <a class="btn-play" href="#play" @click.prevent="$emit('play')">
@@ -27,9 +32,6 @@
 
 <script setup>
 import { DiscordIcon, ArrowIcon } from './icons.js';
-defineProps({
-  line1: { type: String, default: '' },
-  line2: { type: String, default: '' },
-});
+import { t } from '@/locales/index.js';
 defineEmits(['play']);
 </script>

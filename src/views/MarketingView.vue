@@ -13,11 +13,7 @@
       <LandingNav />
 
       <main class="page">
-        <LandingHero
-          :line1="config.line1"
-          :line2="config.line2"
-          @play="onPlay"
-        />
+        <LandingHero @play="onPlay" />
         <LandingCode />
         <LandingGameplay />
         <LandingToken />
@@ -53,8 +49,6 @@ const config = {
   accent: '#ff0069',
   intensity: 8,
   shape: 'shard',
-  line1: 'BIGGER FIGHTS',
-  line2: 'INCOMING',
   grain: true,
   scanlines: true,
 };
