@@ -305,11 +305,19 @@
 .lp .footer { position: relative; z-index: var(--z-topbar); border-top: 1px solid var(--line); padding: clamp(52px, 7vh, 84px) 0 40px; background: color-mix(in srgb, var(--void) 40%, transparent); }
 .lp .footer-top, .lp .footer-social, .lp .footer-bottom { width: min(1180px, 92vw); margin-left: auto; margin-right: auto; }
 .lp .footer-top { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
-.lp .footer-brand { display: flex; align-items: center; gap: 14px; color: var(--ink); }
-/* 44px — under 48, so the SIMPLIFIED drawing. ⚠️ Raising this box to 48 changes
-   the drawing with it. `color` on the row paints the word, not the mark. */
-.lp .footer-brand .logo-mark { width: 44px; height: 44px; }
-.lp .footer-word { font-weight: 800; font-size: 24px; letter-spacing: .16em; }
+/* Связка ведётся от --mark, как в шапке (.lp .nav-logo) — эталон реализации из
+   docs/design-handoff/hexlash_mark/README.md. Пропорции знак 44 / слово 24 /
+   зазор 14 пересчитываются от фактического бокса. */
+.lp .footer-brand { --mark: 48px;
+  display: flex; align-items: center; gap: calc(var(--mark) * 14 / 44); color: var(--ink); }
+/* 48px — от порога и выше, то есть ПОЛНАЯ отрисовка (была 44 = упрощённая).
+   ⚠️ Опустить этот бокс ниже 48 — значит вернуть схему. `color` на строке
+   красит слово, а не знак: знак несёт свои цвета в файле. */
+.lp .footer-brand .logo-mark { width: var(--mark); height: var(--mark); }
+/* Кегль — пропорция связки, пересчитан. Насыщенность 800 и разрядка .16em
+   расходятся с каноном (900 / --ls-title) и НЕ трогаются: это отдельный
+   открытый хвост по типографике подвала. */
+.lp .footer-word { font-weight: 800; font-size: calc(var(--mark) * 24 / 44); letter-spacing: .16em; }
 .lp .footer-tag { font-family: var(--font-mono); font-size: 12px; letter-spacing: .34em; color: var(--pink); }
 .lp .footer-social { display: flex; gap: 24px; justify-content: center; margin-top: clamp(34px, 5vh, 50px); margin-bottom: clamp(34px, 5vh, 50px); }
 .lp .footer-social a { color: var(--ink-dim); display: flex; transition: color var(--d-hover), transform var(--d-hover), filter var(--d-hover); }

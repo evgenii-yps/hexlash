@@ -17,11 +17,12 @@
 
     <div class="hx-wrap">
       <div class="hx-col">
-        <!-- Brand lock-up above the card — the arrangement AuthLayoutView's header
-             comment already reserves ("logo-above-card"), finally carrying a mark. -->
+        <!-- Brand mark above the card — the arrangement AuthLayoutView's header
+             comment already reserves ("logo-above-card"). Слова здесь нет
+             сознательно: на этом экране бренд несёт один знак. Доступное имя
+             ссылки держит aria-label — знак декоративный (alt="", aria-hidden). -->
         <router-link to="/" class="hx-lock" aria-label="Hexlash home">
           <HexlashMark :size="64" class="hx-mark" />
-          <span class="hx-word">HEXLASH</span>
         </router-link>
 
         <div class="hx-card" :class="{ 'has-back': showBack }">
@@ -419,18 +420,13 @@ async function onForgotSubmit(payload) {
 
 .hx-col { display: flex; flex-direction: column; align-items: stretch; width: 372px; max-width: 100%; }
 
-/* Vertical lock-up above the card. Ratios measured off
-   docs/design-handoff/hexlash_mark/brand/lockup-vertical.png — word cap
-   = 35.3% of the mark's ink height, gap = 68.8% of it — driven by one --word knob.
-   28px word puts the mark at 64px, i.e. over 48 and in the FULL drawing. */
-.hx-lock { --word: 28px;
+/* Знак над карточкой — без слова. Бокс 64px: выше порога 48, значит ПОЛНАЯ
+   отрисовка. Отступ до карточки держит сам .hx-lock; собственного нижнего
+   отступа у знака нет — прежние 33px были зазором до слова. */
+.hx-lock { --mark: 64px;
   display: flex; flex-direction: column; align-items: center;
   margin-bottom: 26px; text-decoration: none; }
-.hx-mark { width: calc(var(--word) * 2.29); height: calc(var(--word) * 2.29);
-  display: block; margin-bottom: calc(var(--word) * 1.18); }
-.hx-word { font-family: "Saira Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif;
-  font-weight: 700; text-transform: uppercase; font-size: var(--word);
-  line-height: 1; letter-spacing: .30em; text-indent: .30em; color: var(--ink); }
+.hx-mark { width: var(--mark); height: var(--mark); display: block; }
 
 .hx-card {
   background: var(--fill-1);

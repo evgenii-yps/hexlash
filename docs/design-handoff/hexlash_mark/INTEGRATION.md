@@ -37,11 +37,11 @@ src/components/brand/hexlashMark.js   ← ЕДИНСТВЕННОЕ место, �
 
 | Поверхность | Файл | Бокс | Отрисовка |
 |---|---|---|---|
-| Верхняя панель игры | `views-v2/HomeView.vue` + `styles/home.css` | 40px · 32px ≤560px | упрощённая |
+| Верхняя панель игры | `views-v2/HomeView.vue` + `styles/home.css` | 48px · 48px ≤560px | полная |
 | Экран загрузки (внутри игры) | `views-v2/SceneLoadingOverlay.vue` | 13.7vmin · 18.3vmin портрет | полная |
 | Экран загрузки (первый вход) | `index.html`, блок `#hx-load` | то же | полная |
 | Лендинг, шапка | `components/landing/LandingNav.vue` | 140px · 92px ≤680px | полная |
-| Лендинг, подвал | `components/landing/LandingFooter.vue` | 44px | упрощённая |
+| Лендинг, подвал | `components/landing/LandingFooter.vue` | 48px | полная |
 | Вход / регистрация | `views/auth/AuthSelectorView.vue` | 64px | полная |
 | Сброс пароля | `views/ResetPasswordView.vue` | 120–180px | полная |
 | 404 | `views/NotFoundView.vue` | 11.5vmin · 16vmin портрет | полная |

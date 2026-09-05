@@ -2,7 +2,7 @@
   <footer class="footer">
     <div class="footer-top">
       <a class="footer-brand" href="#top">
-        <HexlashMark :size="44" />
+        <HexlashMark :size="48" />
         <span class="footer-word">HEXLASH</span>
       </a>
       <span class="footer-tag">NEVER GIVE UP</span>
