@@ -1,88 +1,86 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-<!-- ═══════════════════════════════════════════════════════════════════════
-     HEXLASH · INVESTOR DECK · КАРКАС (шаг 1 из 2)
-     ═══════════════════════════════════════════════════════════════════════
+<!-- =========================================================================
+     HEXLASH · ПРЕЗЕНТАЦИЯ ДЛЯ ИНВЕСТОРОВ · /deckinvestors
+     =========================================================================
 
-     ЧТО ЭТО. Отдельная самостоятельная страница по адресу /deckinvestors.
-     НЕ экран приложения: приложение Vue тут не запускается, роутер игры про
-     этот адрес не знает, бандл не грузится. Решение от 03.09.2026 — сайт
-     игры сложная сборка, вживление деки внутрь означало бы взаимный риск:
-     правка деки задевает игру, правка игры задевает деку.
+     ЧТО ЭТО. Отдельная самостоятельная страница, НЕ экран приложения:
+     приложение Vue тут не запускается, роутер игры про адрес не знает, бандл
+     не грузится. Решение 03.09.2026 — вживление презентации внутрь сложной
+     сборки означало бы взаимный риск.
 
      ГДЕ ЛЕЖИТ. public/deckinvestors/index.html. Каталог public/ Vite копирует
-     в сборку как есть, без обработки, поэтому файл не проходит ни через
-     бандлер, ни через обфускатор.
+     в сборку как есть, без обработки: файл не проходит ни через бандлер, ни
+     через обфускатор.
 
      ⚠️ АДРЕС ДЕРЖИТСЯ ДВУМЯ ВЕЩАМИ, И ОБЕ ЛЕГКО СНЕСТИ НЕЧАЯННО:
-       1. этим файлом (папка + index.html внутри — форма «папка со своим
-          index.html» выбрана намеренно: её одинаково понимают и Vercel,
-          и nginx из nginx.prod.conf);
-       2. исключением в vercel.json — там стоит перехват ВСЕХ адресов
-          `/(.*)` → `/index.html` для одностраничного приложения, и без
-          исключения он съел бы эту страницу. Комментариев в vercel.json
-          быть не может (это строгий JSON), поэтому объяснение живёт здесь.
-     Убрать любую из двух — адрес отдаст приложение или его 404.
+       1. этим файлом (папка со своим index.html — форму одинаково понимают
+          и Vercel, и nginx из nginx.prod.conf);
+       2. исключением в vercel.json: там перехват ВСЕХ адресов
+          /(.*) -> /index.html для одностраничного приложения, и без
+          исключения он съел бы страницу. Комментариев в vercel.json быть не
+          может (строгий JSON), поэтому объяснение живёт здесь.
 
-     ЗАКРЫТА ОТ ПОИСКА. Мета-запрет ниже + заголовок ответа X-Robots-Tag в
+     ОТКУДА ВЗЯЛАСЬ. Выгрузка Claude Design (17 разделов). Выгрузка приходит
+     как самораспаковывающийся файл: 211 КБ React плюс рантайм собирают её в
+     браузере при каждом открытии. Здесь она РАСПАКОВАНА ЗАРАНЕЕ и уложена
+     готовой разметкой. Это разом закрыло три беды исходника:
+       · светлую вспышку перед сборкой (у выгрузки фон #faf9f5 до старта);
+       · пустую страницу без JavaScript;
+       · шестиугольники, заданные как sc-camel-view-box вместо viewBox —
+         починить их умел только тот самый рантайм.
+     Собственного сценария у страницы 6 КБ, и без него она читается целиком.
+
+     ЗНАЧЕНИЯ ВПИСАНЫ ЧИСЛАМИ — как на экране загрузки (#hx-load в index.html)
+     и по той же причине: страница живёт вне сборки, tokens.css сюда не
+     приезжает. Источник правды прежний — src/styles/tokens.css.
+
+     ЗНАК — те же файлы public/brand/*, что у остальных поверхностей, а не
+     отдельная копия картинки. Разметка написана руками: hexlashMark.js это
+     Vue-модуль и сюда не грузится (ровно так же поступает экран загрузки).
+     Бокс 48 точек — порог, то есть ПОЛНАЯ отрисовка.
+     ⚠️ Опустить бокс ниже 48 — показать другой рисунок знака.
+
+     ЗАКРЫТА ОТ ПОИСКА мета-запретом ниже плюс заголовком X-Robots-Tag в
      vercel.json. В robots.txt путь НЕ упоминается намеренно: строки запрета
-     в том файле публичны и работают как указатель. Ссылок на страницу нет
-     ниоткуда — ни из меню, ни из подвала, ни из карты сайта.
-
-     ЗНАЧЕНИЯ ВПИСАНЫ ЛИТЕРАЛАМИ — так же и по той же причине, что на экране
-     загрузки (#hx-load в index.html): страница живёт вне сборки, tokens.css
-     сюда не приезжает, а var() без объявления не работает. Каждое число ниже
-     скопировано из src/styles/tokens.css и там же — источник правды. Меняется
-     цвет или шрифт — меняется в токенах, потом здесь.
-
-     ЗНАК — те же файлы, что у всех остальных поверхностей (public/brand/*),
-     а не отдельная копия картинки. Разметка написана руками, потому что
-     src/components/brand/hexlashMark.js это Vue-модуль и на эту страницу он
-     не грузится — ровно так же поступает экран загрузки. Бокс знака 128
-     точек на большом экране и 59 на телефоне: и то и другое ВЫШЕ порога
-     48 точек, значит везде идёт ПОЛНАЯ отрисовка.
-     ⚠️ Опустить бокс ниже 48 — значит показать другой рисунок знака.
-
-     ЧЕГО ЗДЕСЬ НЕТ И НЕ ДОЛЖНО ПОЯВИТЬСЯ БЕЗ ОТДЕЛЬНОГО РЕШЕНИЯ:
-       · содержимого деки — это шаг 2, отдельное ТЗ;
-       · свечения, пульсации и любого движения — страница матовая;
-       · внутренних слов проекта (HOUSE, HEXARCH, ASCENSION, TEMPER,
-         DOCTRINE) — на эту страницу они не идут ни в каком виде.
-     ═══════════════════════════════════════════════════════════════════ -->
+     там публичны и работают как указатель. Ссылок на страницу нет ниоткуда.
+     ========================================================================= -->
 
 <meta name="robots" content="noindex, nofollow">
 
 <title>HEXLASH</title>
-<meta name="description" content="Bigger fights. Fighters that think.">
+<meta name="description" content="Train the AI until it becomes the trainer.">
 
-<!-- Превью ссылки. Страница закрыта от поиска, но ссылку отправляют руками в
-     мессенджерах — это разные вещи и они не противоречат друг другу.
-     Картинка — та же, что у сайта: 1200x630 из брендового пакета. -->
+<!-- Превью ссылки. Запрет индексации ему не мешает: первое закрывает от
+     поиска, второе работает при отправке адреса руками. Строка описания —
+     та же, что на первом экране лендинга: превью и лендинг обязаны говорить
+     одно и то же. -->
 <meta property="og:title" content="HEXLASH">
-<meta property="og:description" content="Bigger fights. Fighters that think.">
+<meta property="og:description" content="Train the AI until it becomes the trainer.">
 <meta property="og:image" content="https://hexlash.com/og-image.png">
 <meta property="og:url" content="https://hexlash.com/deckinvestors">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="HEXLASH">
-<meta name="twitter:description" content="Bigger fights. Fighters that think.">
+<meta name="twitter:description" content="Train the AI until it becomes the trainer.">
 <meta name="twitter:image" content="https://hexlash.com/og-image.png">
 
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
 <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
 
-<!-- Знак — первое, что должно быть целым. -->
 <link rel="preload" as="image" href="/brand/mark-full-256.png"
       imagesrcset="/brand/mark-full-128.png 128w, /brand/mark-full-256.png 256w, /brand/mark-full-512.png 512w"
-      imagesizes="130px">
+      imagesizes="48px">
 
-<!-- Шрифты проекта, тем же неблокирующим способом, что в index.html: сначала
-     красимся запасными начертаниями, фирменные подменяются, когда приедут. -->
+<!-- Шрифты проекта, тем же неблокирующим способом, что в index.html. Выгрузка
+     несла их зашитыми внутрь (433 КБ) — вынуты, чтобы страница и приложение
+     брали начертания из одного места. Кириллицу Google отдаёт своим
+     подмножеством по этой же ссылке. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preload" as="style"
@@ -94,132 +92,933 @@
 </noscript>
 
 <style>
-  /* Значения — копия из src/styles/tokens.css, см. шапку файла. */
-  :root {
-    --void:     #08080A;   /* фон всех экранов */
-    --carbon:   #0D0A0D;   /* тёмная подложка */
-    --ink:      #F6F4F6;   /* основной текст; чисто-белого в проекте нет */
-    --ink-dim:  #A9A5AF;   /* читаемые подписи, мета */
-    --font-display: "Saira Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif;
-    --font-mono:    "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-    --ls-tight: 0.04em;
-    --ls-meta:  0.16em;
-  }
+*{box-sizing:border-box}
+html,body{scroll-behavior:smooth}
+body{margin:0;background:#08080A;color:#F6F4F6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:#FF0069;text-decoration:none}
+a:hover{color:#FFB21D}
+::selection{background:#FF0069;color:#F6F4F6}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+@keyframes hxW{from{opacity:0;transform:translate3d(0,28px,0)}to{opacity:1;transform:none}}
+@keyframes hxL{from{opacity:0;filter:blur(7px);transform:scale(1.006)}to{opacity:1;filter:blur(0);transform:none}}
+@keyframes hxF{from{opacity:0}to{opacity:1}}
+[data-r][data-s="p"]{opacity:0}
+[data-m="w"] [data-r][data-s="i"]{animation:hxW .42s cubic-bezier(.55,0,.12,1) both}
+[data-m="l"] [data-r][data-s="i"]{animation:hxL .34s cubic-bezier(.2,.8,.2,1) both}
 
-  body {
-    min-height: 100vh;
-    min-height: 100dvh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    color: var(--ink);
-    font-family: var(--font-mono);
-    -webkit-font-smoothing: antialiased;
-    /* Тот же сдержанный тёмный подмаз, что на 404 и на экране загрузки.
-       Это не свечение: обе точки градиента — тёмные (carbon → void). */
-    background: var(--void) radial-gradient(130% 80% at 50% 120%, var(--carbon) 0%, var(--void) 46%, var(--void) 82%);
-    padding: 40px 24px calc(28px + env(safe-area-inset-bottom, 0px));
-    /* Телефон приоритетнее: горизонтальной прокрутки не бывает никогда. */
-    overflow-x: hidden;
-  }
+@keyframes hxWord{from{opacity:0;transform:translate3d(0,.22em,0)}to{opacity:1;transform:none}}
+@keyframes hxLast{0%{opacity:0;transform:translate3d(0,.22em,0);text-shadow:none}55%{opacity:1;text-shadow:0 0 90px rgba(255,0,105,.95)}100%{opacity:1;transform:none;text-shadow:0 0 60px rgba(255,0,105,.42)}}
+[data-w]{display:inline-block;animation:hxWord .36s cubic-bezier(.55,0,.12,1) both}
+[data-w="last"]{animation:hxLast .58s cubic-bezier(.55,0,.12,1) both}
 
-  .dk {
-    flex: 1 1 auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 32px;
-    width: 100%;
-    max-width: 720px;
-  }
+@keyframes hxCell{from{background:rgba(255,255,255,.02);color:#5D5D66}to{background:#16161B;color:#F6F4F6}}
+[data-c][data-s="p"]{background:rgba(255,255,255,.02);color:#5D5D66}
+[data-c][data-s="i"]{animation:hxCell .5s cubic-bezier(.2,.8,.2,1) both}
 
-  /* Вертикальная связка — знак сверху, слово снизу. Пропорции сняты с
-     docs/design-handoff/hexlash_mark/brand/lockup-vertical.png: кегль слова
-     = 35.3% от чернил знака, зазор = 68.8% от них. Обе величины выведены от
-     ОДНОЙ ручки --word, поэтому пара масштабируется целиком. Та же
-     конструкция, что на экране загрузки и на 404. */
-  .dk-lock {
-    /* Нижняя граница 26 подобрана так, чтобы бокс знака (2.29 x --word)
-       на телефоне 360 точек оставался ВЫШЕ порога 48 — иначе сменится
-       рисунок знака. 26 x 2.29 = 59.5. */
-    --word: clamp(26px, 7vmin, 56px);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  .dk-mark {
-    display: block;
-    width: calc(var(--word) * 2.29);
-    height: calc(var(--word) * 2.29);
-    margin-bottom: calc(var(--word) * 1.18);
-  }
-  /* Слово — живой текст, картинкой не ставится. Правило без исключений. */
-  .dk-word {
-    font-family: var(--font-display);
-    font-weight: 900;
-    text-transform: uppercase;
-    font-size: var(--word);
-    line-height: 1;
-    letter-spacing: var(--ls-tight);
-  }
+@keyframes hxChip{0%,100%{border-color:rgba(255,255,255,.09);color:#A9A5AF;background:#16161B}34%,58%{border-color:rgba(255,0,105,.65);color:#F6F4F6;background:#1A1016}}
+[data-chip][data-s="i"]{animation:hxChip .42s cubic-bezier(.2,.8,.2,1) both}
+@keyframes hxPick{from{border-color:rgba(255,255,255,.09);color:#A9A5AF;box-shadow:none}to{border-color:rgba(255,0,105,.8);color:#F6F4F6;box-shadow:0 0 26px rgba(255,0,105,.26)}}
+[data-pick][data-s="i"]{animation:hxPick .45s 1.12s cubic-bezier(.2,.8,.2,1) both}
 
-  .dk-sub {
-    font-family: var(--font-mono);
-    font-weight: 500;
-    text-transform: uppercase;
-    /* Чем мельче текст, тем шире разрядка. */
-    font-size: clamp(10px, 2.9vmin, 13px);
-    letter-spacing: var(--ls-meta);
-    line-height: 1.6;
-    color: var(--ink-dim);
-    text-align: center;
-    /* Перенос разрешён намеренно: если начертание окажется шире расчёта,
-       строка сложится на две, а не вылезет за поле. */
-    max-width: 100%;
-  }
+@keyframes hxStep{from{opacity:0;transform:translate3d(0,70px,0)}to{opacity:1;transform:none}}
+[data-step][data-s="p"]{opacity:0}
+[data-step][data-s="i"]{animation:hxStep .46s cubic-bezier(.55,0,.12,1) both}
+@keyframes hxGlow1{0%{box-shadow:none}40%{box-shadow:0 0 80px rgba(255,0,105,.5)}100%{box-shadow:0 0 26px rgba(255,0,105,.13)}}
+@keyframes hxGlow2{0%{box-shadow:none}40%{box-shadow:0 0 90px rgba(255,178,29,.42)}100%{box-shadow:0 0 30px rgba(255,178,29,.15)}}
+@keyframes hxGlow3{0%{box-shadow:none}100%{box-shadow:0 0 120px rgba(255,178,29,.34),0 0 36px rgba(255,178,29,.2)}}
+[data-glow="1"][data-s="i"]{animation:hxGlow1 .9s .5s cubic-bezier(.2,.8,.2,1) both}
+[data-glow="2"][data-s="i"]{animation:hxGlow2 .9s .95s cubic-bezier(.2,.8,.2,1) both}
+[data-glow="3"][data-s="i"]{animation:hxGlow3 .8s 1.45s cubic-bezier(.2,.8,.2,1) both}
+@keyframes hxTravel{from{left:0}to{left:100%}}
+[data-travel][data-s="p"]{left:0}
+[data-travel][data-s="i"]{animation:hxTravel 1.5s .75s cubic-bezier(.55,0,.12,1) both}
 
-  .dk-foot {
-    flex: 0 0 auto;
-    padding-top: 32px;
-    font-family: var(--font-mono);
-    font-weight: 400;
-    font-size: 11px;
-    letter-spacing: 0.1em;
-    /* --ink-dim, а не --ink-off: по описанию в токенах ink-off — «выключенное,
-       SOON», а адрес сайта это живая подпись. Плюс ink-off на этом фоне даёт
-       контраст 3.1:1 — ниже порога читаемости для мелкого текста. Иерархия
-       держится кеглем и разрядкой, а не приглушением до нечитаемого. */
-    color: var(--ink-dim);
-    text-align: center;
-  }
+@keyframes hxBar{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+[data-bar][data-s="p"]{transform:scaleY(0)}
+[data-bar][data-s="i"]{animation:hxBar .62s cubic-bezier(.55,0,.12,1) both}
+@keyframes hxLine{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+[data-line][data-s="p"]{transform:scaleX(0)}
+[data-line][data-s="i"]{animation:hxLine .85s cubic-bezier(.2,.8,.2,1) both}
+@keyframes hxDot{from{background:#16161B;box-shadow:none}to{background:#FF0069;box-shadow:0 0 18px rgba(255,0,105,.5)}}
+[data-dot][data-s="p"]{background:#16161B}
+[data-dot][data-s="i"]{animation:hxDot .4s cubic-bezier(.2,.8,.2,1) both}
+@keyframes hxDotA{from{background:#16161B;box-shadow:none}to{background:#FFB21D;box-shadow:0 0 18px rgba(255,178,29,.45)}}
+[data-dot="a"][data-s="i"]{animation:hxDotA .4s cubic-bezier(.2,.8,.2,1) both}
 
-  /* Движения на странице нет вовсе — ни петель, ни появлений, ни отклика на
-     касание (нажимать нечего). Гасить при «уменьшить движение» нечего. */
+@media (max-width:820px){#hx-nav{display:none}}
+@media (max-width:760px){
+  [data-m] [data-r][data-s="i"]{animation:hxF .24s linear both}
+  [data-r]{animation-delay:0s!important}
+  [data-step][data-s="i"]{animation:hxF .24s linear both;animation-delay:0s!important}
+  [data-travel][data-s="i"]{animation-duration:1.1s;animation-delay:.2s}
+  [data-glow="1"][data-s="i"],[data-glow="2"][data-s="i"],[data-glow="3"][data-s="i"]{animation-delay:.1s}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  [data-r],[data-step],[data-bar],[data-line],[data-travel]{opacity:1!important;transform:none!important}
+  [data-c],[data-c][data-s="p"]{color:#F6F4F6!important;background:#16161B!important}
+  [data-dot],[data-dot][data-s="p"]{background:#FF0069!important}
+  [data-dot="a"]{background:#FFB21D!important}
+  [data-travel]{left:100%!important}
+}
+
+/* ── Наши добавки к листу презентации ─────────────────────────────────────
+   Значения — те же, что в src/styles/tokens.css; вписаны числами по той же
+   причине, что и весь остальной лист этой страницы: она живёт вне сборки. */
+.dk-fight { margin-top: clamp(30px, 3.6vw, 52px); background: #16161B; border: 1px solid rgba(255,255,255,.09); }
+.dk-fight-bar { height: 44px; padding: 0 18px; display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; border-bottom: 1px solid rgba(255,255,255,.09);
+  font-family: "JetBrains Mono", monospace; font-size: 11px; letter-spacing: .16em; color: #5D5D66; }
+.dk-state { color: #A9A5AF; }
+.dk-state.is-live { color: #FF0069; }
+.dk-state.is-err  { color: #FF3333; }
+.dk-fight-body { padding: clamp(18px, 2vw, 28px); }
+
+/* Окно арены. Соотношение только «шире, чем выше» — см. комментарий в теле. */
+.dk-stage { position: relative; width: 100%; aspect-ratio: 16 / 9; min-height: 190px;
+  background: #0D0A0D; border: 1px solid rgba(255,255,255,.06); overflow: hidden; }
+.dk-stage iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; z-index: 1;
+  /* Палец, ведущий по окну, обязан листать страницу, а не крутить камеру
+     арены. Замерено: без этой строки страница на телефоне не прокручивается. */
+  pointer-events: none; }
+
+/* Поверх окна арены: иначе кнопка «ЕЩЁ РАЗ» после боя оказывается ПОД ним —
+   оба слоя позиционированы, и окно, добавленное позже, перекрывает панель. */
+.dk-rest { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; text-align: center; gap: 18px;
+  padding: clamp(16px, 2vw, 26px); }
+.dk-rest-kicker { font-family: "JetBrains Mono", monospace; font-size: 12px; letter-spacing: .18em; color: #5D5D66; }
+.dk-rest-title { font-weight: 700; font-size: clamp(19px, 2.6vw, 40px); line-height: 1.05;
+  text-transform: uppercase; max-width: 560px; text-wrap: balance; }
+.dk-rest-note { font-family: "JetBrains Mono", monospace; font-size: 12px; line-height: 1.5;
+  letter-spacing: .04em; color: #A9A5AF; max-width: 420px; }
+
+/* Единственная розовая кнопка на странице-деке помимо ссылок — главное действие. */
+.dk-run { height: 48px; min-height: 44px; padding: 0 40px; background: #16161B;
+  border: 1px solid rgba(255,0,105,.55); color: #F6F4F6; font-family: "JetBrains Mono", monospace;
+  font-size: 13px; letter-spacing: .18em; white-space: nowrap; box-shadow: 0 0 46px rgba(255,0,105,.28);
+  transition: border-color 150ms, box-shadow 220ms, transform 120ms; }
+.dk-run:hover { border-color: rgba(255,0,105,.9); box-shadow: 0 0 56px rgba(255,0,105,.4); }
+.dk-run:active { transform: scale(.97); }
+.dk-run:focus-visible { outline: 2px solid #FF0069; outline-offset: 3px; }
+.dk-run[disabled] { opacity: .6; box-shadow: none; }
+/* Повтор и «попробовать снова» — вторичные: рамка холодная, без розового. */
+.dk-run.dk-run--ghost { border-color: rgba(255,255,255,.16); box-shadow: none; }
+.dk-run.dk-run--ghost:hover { border-color: rgba(216,227,234,.45); box-shadow: 0 0 18px 2px rgba(200,209,216,.22); }
+
+@media (max-width: 700px) { .dk-stage { aspect-ratio: 16 / 10; } .dk-run { padding: 0 24px; letter-spacing: .12em; } }
+@media (prefers-reduced-motion: reduce) { .dk-run { transition: none; } .dk-run:active { transform: none; } }
+
+/* ⚠️ Починка дефекта самой выгрузки, а не наша прихоть. В листе презентации
+   есть правило «@media (max-width:820px) { #hx-nav { display:none } }», но
+   выгрузка ставит этому же элементу встроенный стиль display:flex — а он
+   всегда сильнее правила из листа. Меню на телефоне не пряталось и уезжало
+   за край экрана (проверено на исходном файле до всякой нашей правки).
+   Единственный способ перебить встроенный стиль — !important. */
+@media (max-width: 820px) { #hx-nav { display: none !important; } }
+
+/* Якорные переходы из меню: шапка закреплена сверху, и без этого отступа
+   заголовок раздела уезжает под неё. Число — высота шапки плюс воздух. */
+:where(section[id], div[id="top"], [id]) { scroll-margin-top: 92px; }
 </style>
+
+<!-- Без JavaScript страница обязана читаться целиком: проявление на прокрутке
+     украшение, а не условие. Здесь всё, что сценарий проявил бы, показывается
+     сразу. -->
+<noscript><style>
+  [data-r], [data-step], [data-bar], [data-line], [data-travel] { opacity: 1 !important; transform: none !important; }
+  [data-c], [data-c][data-s="p"] { color: #F6F4F6 !important; background: #16161B !important; }
+  [data-dot], [data-dot][data-s="p"] { background: #FF0069 !important; }
+  #hx-prog { display: none; }
+  .dk-run { display: none; }
+</style></noscript>
 </head>
 <body>
-
-<main class="dk">
-  <div class="dk-lock">
-    <!-- Знак, ПОЛНАЯ отрисовка. Картинка, а не путь в разметке: знак
-         двухцветный (белый + единственный розовый росчерк), вектора в
-         проекте нет. Файлы те же, что у приложения — см. шапку. -->
-    <img class="dk-mark" alt="" aria-hidden="true" draggable="false"
-         src="/brand/mark-full-256.png"
-         srcset="/brand/mark-full-128.png 128w, /brand/mark-full-256.png 256w, /brand/mark-full-512.png 512w"
-         sizes="130px">
-    <h1 class="dk-word">HEXLASH</h1>
+<div data-dc-tpl="5" id="hx-root" data-m="w" style="font-family: &quot;Saira Condensed&quot;, &quot;Arial Narrow&quot;, sans-serif; background: rgb(8, 8, 10); min-height: 100vh;"><div data-dc-tpl="6" style="position: fixed; top: 0px; left: 0px; right: 0px; z-index: 20; background: rgba(8, 8, 10, 0.86); backdrop-filter: blur(8px); border-bottom: 1px solid rgba(255, 255, 255, 0.09);">
+  <div data-dc-tpl="7" style="height: 2px; background: rgba(255, 255, 255, 0.06);"><div data-dc-tpl="8" id="hx-prog" style="height: 100%; width: 0%; background: rgb(255, 0, 105);"></div></div>
+  <div data-dc-tpl="9" style="height: 76px; max-width: 1360px; margin: 0px auto; padding: 0px clamp(16px, 4vw, 48px); display: flex; align-items: center; justify-content: space-between; gap: 24px;">
+    <a data-dc-tpl="10" href="#top" style="display: flex; align-items: center; gap: 12px; color: rgb(246, 244, 246);">
+      <img class="dk-mark" alt="" aria-hidden="true" draggable="false" width="48" height="48" src="/brand/mark-full-256.png" srcset="/brand/mark-full-128.png 128w, /brand/mark-full-256.png 256w, /brand/mark-full-512.png 512w" sizes="48px" style="width:48px;height:48px;display:block;flex:0 0 auto">
+      <span data-dc-tpl="13" style="font-weight: 700; font-size: 17px; letter-spacing: 0.14em;">HEXLASH</span>
+    </a>
+    <div data-dc-tpl="14" id="hx-nav" style="display: flex; align-items: center; gap: clamp(14px, 2vw, 28px); font-family: &quot;JetBrains Mono&quot;, monospace; font-size: 11px; letter-spacing: 0.16em; color: rgb(169, 165, 175);">
+      <a data-dc-tpl="15" href="#problem" style="color: rgb(169, 165, 175);">ПРОБЛЕМА</a>
+      <a data-dc-tpl="16" href="#ladder" style="color: rgb(169, 165, 175);">ЛЕСТНИЦА</a>
+      <a data-dc-tpl="17" href="#boi" style="color: rgb(169, 165, 175);">БОЙ</a>
+      <a data-dc-tpl="18" href="#econ" style="color: rgb(169, 165, 175);">ЭКОНОМИКА</a>
+      <a data-dc-tpl="19" href="#round" style="color: rgb(169, 165, 175);">РАУНД</a>
+    </div>
+  </div></div><section data-dc-tpl="20" id="top" style="padding-top: 76px; min-height: 100vh; display: flex; flex-direction: column; justify-content: center;">
+  <div data-dc-tpl="21" style="max-width: 1360px; width: 100%; margin: 0px auto; padding: clamp(56px, 8vw, 96px) clamp(20px, 5vw, 64px);">
+    <div data-dc-tpl="22" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(11px, 1vw, 13px); letter-spacing: 0.18em; color: rgb(93, 93, 102);">PRE-SEED · $250K SAFE · CAP $2.5M · BASE</div>
+    <div data-dc-tpl="23" style="margin-top: clamp(24px, 4vw, 54px); font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.3vw, 20px); color: rgb(169, 165, 175);">Бойцы думают языковой моделью. Игрок их воспитывает.</div>
+    <h1 data-dc-tpl="24" style="margin: clamp(18px, 2.4vw, 34px) 0px 0px; font-weight: 700; font-size: clamp(38px, 7.6vw, 124px); line-height: 0.96; letter-spacing: 0.005em; text-transform: uppercase; color: rgb(246, 244, 246); text-wrap: balance;">
+      <span data-dc-tpl="25" data-w="" style="animation-delay: 0s;">Ты</span> <span data-dc-tpl="26" data-w="" style="animation-delay: 0.05s;">тренируешь</span> <span data-dc-tpl="27" data-w="" style="animation-delay: 0.1s;">ИИ,</span><br data-dc-tpl="28">
+      <span data-dc-tpl="29" data-w="" style="animation-delay: 0.19s;">пока</span> <span data-dc-tpl="30" data-w="" style="animation-delay: 0.23s;">он</span> <span data-dc-tpl="31" data-w="" style="animation-delay: 0.27s;">не</span> <span data-dc-tpl="32" data-w="" style="animation-delay: 0.31s;">станет</span>
+      <span data-dc-tpl="33" data-w="last" style="color: rgb(255, 0, 105);">тренером.</span>
+    </h1>
+    <div data-dc-tpl="34" style="margin-top: clamp(22px, 3vw, 40px); font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.2vw, 19px); color: rgb(246, 244, 246); opacity: 0.8;">Выручка в USDC с первого дня. Токен — вне игрового цикла.</div>
+    <div data-dc-tpl="35" style="margin-top: clamp(26px, 3.4vw, 44px); display: flex; flex-wrap: wrap; gap: 12px;">
+      <a data-dc-tpl="36" href="#boi" style="height: 48px; display: inline-flex; align-items: center; white-space: nowrap; padding: 0px 26px; background: rgba(22, 22, 27, 0.55); border: 1px solid rgba(200, 209, 216, 0.16); color: rgb(200, 209, 216); font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(11px, 1vw, 13px); letter-spacing: 0.16em;">СМОТРЕТЬ ЖИВОЙ БОЙ</a>
+      <a data-dc-tpl="37" href="#round" style="height: 48px; display: inline-flex; align-items: center; white-space: nowrap; padding: 0px 26px; background: rgba(22, 22, 27, 0.55); border: 1px solid rgba(200, 209, 216, 0.16); color: rgb(200, 209, 216); font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(11px, 1vw, 13px); letter-spacing: 0.16em;">УСЛОВИЯ РАУНДА</a>
+    </div>
   </div>
+  <div data-dc-tpl="38" style="max-width: 1360px; width: 100%; margin: 0px auto; padding: 0px clamp(20px, 5vw, 64px) clamp(28px, 4vw, 52px); display: flex; justify-content: space-between; gap: 20px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(10px, 0.9vw, 13px); letter-spacing: 0.14em; color: rgb(93, 93, 102);">
+    <span data-dc-tpl="39">hexlash.com · сентябрь 2026</span>
+    <span data-dc-tpl="40">CONFIDENTIAL</span>
+  </div></section><section data-dc-tpl="41" id="problem" style="border-top: 1px solid rgba(255, 255, 255, 0.09);">
+  <div data-dc-tpl="42" style="max-width: 1360px; margin: 0px auto; padding: clamp(64px, 8vw, 124px) clamp(20px, 5vw, 64px);">
+    <div data-dc-tpl="43" data-r="" data-s="p" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: 12px; letter-spacing: 0.18em; color: rgb(93, 93, 102);">01 · ПРОБЛЕМА</div>
+    <h2 data-dc-tpl="44" data-r="" data-s="p" style="margin: 16px 0px 0px; font-weight: 700; font-size: clamp(30px, 4.6vw, 68px); line-height: 1; text-transform: uppercase; color: rgb(246, 244, 246); text-wrap: balance; animation-delay: 0.05s;">Почему умерли 3 из 4 GameFi-игр</h2>
+    <p data-dc-tpl="45" data-r="" data-s="p" style="margin: 18px 0px 0px; max-width: 880px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.05vw, 17px); line-height: 1.55; color: rgb(169, 165, 175); text-wrap: pretty; animation-delay: 0.1s;">Анатомия play-to-earn: три конструктивных дефекта, а не рыночный цикл.</p>
 
-  <p class="dk-sub">Investor overview &mdash; September 2026</p>
-</main>
+    <div data-dc-tpl="46" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: clamp(16px, 2vw, 28px); margin-top: clamp(34px, 4vw, 56px); align-items: start;">
+      <div data-dc-tpl="47" data-r="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(26px, 2.6vw, 40px); box-shadow: rgba(255, 0, 105, 0.14) 0px 0px 90px;">
+        <div data-dc-tpl="48" data-count="n75" data-s="p" style="font-weight: 700; font-size: clamp(84px, 11vw, 168px); line-height: 0.86; color: rgb(255, 0, 105); text-shadow: rgba(255, 0, 105, 0.45) 0px 0px 70px;"><span class="sc-interp">0%</span></div>
+        <div data-dc-tpl="49" style="margin-top: 18px; font-weight: 600; font-size: clamp(20px, 1.9vw, 30px); line-height: 1.15; color: rgb(246, 244, 246);">web3-игр, запущенных с 2018, закрылись</div>
+        <div data-dc-tpl="50" style="margin-top: 18px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: 12px; letter-spacing: 0.14em; color: rgb(93, 93, 102);">COINGECKO, 2023</div>
+      </div>
+      <div data-dc-tpl="51" style="display: flex; flex-direction: column; gap: clamp(12px, 1.4vw, 18px);">
+        <div data-dc-tpl="52" data-r="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(20px, 2vw, 30px); animation-delay: 0.06s;">
+          <div data-dc-tpl="53" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: 12px; letter-spacing: 0.16em; color: rgb(93, 93, 102);">01</div>
+          <div data-dc-tpl="54" style="margin-top: 8px; font-weight: 700; font-size: clamp(22px, 2.2vw, 34px); line-height: 1.05; text-transform: uppercase;">Токен = единственный retention</div>
+          <div data-dc-tpl="55" style="margin-top: 12px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1vw, 16px); line-height: 1.5; color: rgb(169, 165, 175); text-wrap: pretty;">Игрок приходит за доходностью. Доходность падает — игрок уходит. Игра как таковая не удерживает.</div>
+        </div>
+        <div data-dc-tpl="56" data-r="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(20px, 2vw, 30px); animation-delay: 0.12s;">
+          <div data-dc-tpl="57" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: 12px; letter-spacing: 0.16em; color: rgb(93, 93, 102);">02</div>
+          <div data-dc-tpl="58" style="margin-top: 8px; font-weight: 700; font-size: clamp(22px, 2.2vw, 34px); line-height: 1.05; text-transform: uppercase;">Эмиссия больше спроса</div>
+          <div data-dc-tpl="59" style="margin-top: 12px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1vw, 16px); line-height: 1.5; color: rgb(169, 165, 175); text-wrap: pretty;">Награды печатаются быстрее, чем появляются причины покупать токен. Единственный сток — вход новых игроков.</div>
+        </div>
+        <div data-dc-tpl="60" data-r="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(20px, 2vw, 30px); animation-delay: 0.18s;">
+          <div data-dc-tpl="61" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: 12px; letter-spacing: 0.16em; color: rgb(93, 93, 102);">03</div>
+          <div data-dc-tpl="62" style="margin-top: 8px; font-weight: 700; font-size: clamp(22px, 2.2vw, 34px); line-height: 1.05; text-transform: uppercase;">Игра никому не нужна</div>
+          <div data-dc-tpl="63" style="margin-top: 12px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1vw, 16px); line-height: 1.5; color: rgb(169, 165, 175); text-wrap: pretty;">Убери выплаты — ноль DAU. Продукт был финансовой схемой с игровым интерфейсом.</div>
+        </div>
+      </div>
+    </div>
+    <div data-dc-tpl="64" data-r="" data-s="p" style="margin-top: clamp(26px, 3vw, 40px); font-weight: 600; font-size: clamp(19px, 2.1vw, 32px); line-height: 1.2; color: rgb(246, 244, 246); text-wrap: pretty;">Ни один из трёх дефектов не лечится маркетингом или сменой блокчейна. Только другой моделью дохода.</div>
+  </div></section><section data-dc-tpl="65" id="model" style="border-top: 1px solid rgba(255, 255, 255, 0.09);">
+  <div data-dc-tpl="66" style="max-width: 1360px; margin: 0px auto; padding: clamp(64px, 8vw, 124px) clamp(20px, 5vw, 64px);">
+    <div data-dc-tpl="67" data-r="" data-s="p" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: 12px; letter-spacing: 0.18em; color: rgb(93, 93, 102);">02 · МОДЕЛЬ</div>
+    <h2 data-dc-tpl="68" data-r="" data-s="p" style="margin: 16px 0px 0px; font-weight: 700; font-size: clamp(30px, 4.6vw, 68px); line-height: 1; text-transform: uppercase; text-wrap: balance; animation-delay: 0.05s;">Платят за интеллект, а не за фарм</h2>
+    <p data-dc-tpl="69" data-r="" data-s="p" style="margin: 18px 0px 0px; max-width: 880px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.05vw, 17px); line-height: 1.55; color: rgb(169, 165, 175); text-wrap: pretty; animation-delay: 0.1s;">Hexlash — ИИ-сервис с игровой оболочкой. Разворот play-to-earn на 180°.</p>
 
-<!-- Адрес сайта — обычный текст, а не ссылка: ссылка потребовала бы шести
-     состояний и отклика на касание, а страница намеренно ничего не делает. -->
-<footer class="dk-foot">&copy; 2026 &middot; hexlash.com</footer>
+    <div data-dc-tpl="70" style="margin-top: clamp(32px, 4vw, 56px); overflow-x: auto;">
+    <div data-dc-tpl="71" style="min-width: 600px; display: grid; grid-template-columns: minmax(140px, 1.1fr) 1fr 1fr; gap: 1px; background: rgba(255, 255, 255, 0.09); border: 1px solid rgba(255, 255, 255, 0.09);">
+      <div data-dc-tpl="72" style="background: rgb(8, 8, 10); padding: 16px 20px;"></div>
+      <div data-dc-tpl="73" style="background: rgb(8, 8, 10); padding: 16px 20px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(11px, 1vw, 14px); letter-spacing: 0.16em; color: rgb(93, 93, 102);">PLAY-TO-EARN</div>
+      <div data-dc-tpl="74" style="background: rgb(8, 8, 10); padding: 16px 20px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(11px, 1vw, 14px); letter-spacing: 0.16em; color: rgb(255, 0, 105);">HEXLASH</div>
 
+      <div data-dc-tpl="75" style="background: rgb(13, 10, 13); padding: clamp(16px, 1.8vw, 24px) 20px; font-weight: 600; font-size: clamp(15px, 1.5vw, 24px); color: rgb(246, 244, 246);">За что платит игрок</div>
+      <div data-dc-tpl="76" style="background: rgb(13, 10, 13); padding: clamp(16px, 1.8vw, 24px) 20px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 16px); line-height: 1.4; color: rgb(93, 93, 102);">За право фармить токен</div>
+      <div data-dc-tpl="77" data-c="" data-s="p" style="padding: clamp(16px, 1.8vw, 24px) 20px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 16px); line-height: 1.4; animation-delay: 0s;">За думающий мозг бойца, слоты, косметику</div>
+
+      <div data-dc-tpl="78" style="background: rgb(8, 8, 10); padding: clamp(16px, 1.8vw, 24px) 20px; font-weight: 600; font-size: clamp(15px, 1.5vw, 24px); color: rgb(246, 244, 246);">Валюта дохода студии</div>
+      <div data-dc-tpl="79" style="background: rgb(8, 8, 10); padding: clamp(16px, 1.8vw, 24px) 20px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 16px); line-height: 1.4; color: rgb(93, 93, 102);">Собственный токен</div>
+      <div data-dc-tpl="80" data-c="" data-s="p" style="padding: clamp(16px, 1.8vw, 24px) 20px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 16px); line-height: 1.4; animation-delay: 0.09s;">USDC</div>
+
+      <div data-dc-tpl="81" style="background: rgb(13, 10, 13); padding: clamp(16px, 1.8vw, 24px) 20px; font-weight: 600; font-size: clamp(15px, 1.5vw, 24px); color: rgb(246, 244, 246);">Что удерживает</div>
+      <div data-dc-tpl="82" style="background: rgb(13, 10, 13); padding: clamp(16px, 1.8vw, 24px) 20px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 16px); line-height: 1.4; color: rgb(93, 93, 102);">Курс токена</div>
+      <div data-dc-tpl="83" data-c="" data-s="p" style="padding: clamp(16px, 1.8vw, 24px) 20px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 16px); line-height: 1.4; animation-delay: 0.18s;">Дом, бойцы, характер, наставник</div>
+
+      <div data-dc-tpl="84" style="background: rgb(8, 8, 10); padding: clamp(16px, 1.8vw, 24px) 20px; font-weight: 600; font-size: clamp(15px, 1.5vw, 24px); color: rgb(246, 244, 246);">Если токен падает</div>
+      <div data-dc-tpl="85" style="background: rgb(8, 8, 10); padding: clamp(16px, 1.8vw, 24px) 20px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 16px); line-height: 1.4; color: rgb(93, 93, 102);">Игра умирает</div>
+      <div data-dc-tpl="86" data-c="" data-s="p" style="padding: clamp(16px, 1.8vw, 24px) 20px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 16px); line-height: 1.4; animation-delay: 0.27s;">Игра работает как работала</div>
+
+      <div data-dc-tpl="87" style="background: rgb(13, 10, 13); padding: clamp(16px, 1.8vw, 24px) 20px; font-weight: 600; font-size: clamp(15px, 1.5vw, 24px); color: rgb(246, 244, 246);">Бесплатный игрок</div>
+      <div data-dc-tpl="88" style="background: rgb(13, 10, 13); padding: clamp(16px, 1.8vw, 24px) 20px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 16px); line-height: 1.4; color: rgb(93, 93, 102);">Убыток — ему платят</div>
+      <div data-dc-tpl="89" data-c="" data-s="p" style="padding: clamp(16px, 1.8vw, 24px) 20px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 16px); line-height: 1.4; animation-delay: 0.36s;">Контент, стоит нам ~$0</div>
+    </div>
+    </div>
+    <p data-dc-tpl="90" data-r="" data-s="p" style="margin: 26px 0px 0px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 16px); line-height: 1.55; color: rgb(93, 93, 102); text-wrap: pretty;">Токен планируется — но после product-market fit, как утилити и слой владения, а не как источник дохода.</p>
+  </div></section><section data-dc-tpl="91" id="ladder" style="border-top: 1px solid rgba(255, 255, 255, 0.09); background: rgb(13, 10, 13);">
+  <div data-dc-tpl="92" style="max-width: 1360px; margin: 0px auto; padding: clamp(72px, 9vw, 148px) clamp(20px, 5vw, 64px);">
+    <div data-dc-tpl="93" data-r="" data-s="p" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: 12px; letter-spacing: 0.18em; color: rgb(93, 93, 102);">03 · ЯДРО ПИТЧА</div>
+    <h2 data-dc-tpl="94" data-r="" data-s="p" style="margin: 16px 0px 0px; font-weight: 700; font-size: clamp(32px, 5.4vw, 84px); line-height: 0.98; text-transform: uppercase; text-wrap: balance; animation-delay: 0.05s;">Лестница делегирования</h2>
+    <p data-dc-tpl="95" data-r="" data-s="p" style="margin: 18px 0px 0px; max-width: 880px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.05vw, 17px); line-height: 1.55; color: rgb(169, 165, 175); text-wrap: pretty; animation-delay: 0.1s;">Игрок постепенно отдаёт управление ИИ, который сам вырастил.</p>
+
+    <div data-dc-tpl="96" style="margin-top: clamp(40px, 5vw, 72px); display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: clamp(16px, 2vw, 30px); align-items: end;">
+      <div data-dc-tpl="97" data-step="" data-glow="1" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(24px, 2.4vw, 38px); min-height: clamp(220px, 24vw, 320px); display: flex; flex-direction: column; animation-delay: 0s;">
+        <div data-dc-tpl="98" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: 12px; letter-spacing: 0.16em; color: rgb(93, 93, 102);">СТУПЕНЬ 1</div>
+        <div data-dc-tpl="99" style="margin-top: 10px; font-weight: 700; font-size: clamp(30px, 3.2vw, 50px); line-height: 1; text-transform: uppercase; color: rgb(255, 0, 105);">Ты ведёшь</div>
+        <div data-dc-tpl="100" style="margin-top: auto; padding-top: 22px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1vw, 16px); line-height: 1.5; color: rgb(169, 165, 175); text-wrap: pretty;">Выбираешь бойца, отправляешь в бой. Боец дерётся сам своим характером — ты подсказываешь и бросаешь козыри. Бой 30–60 секунд.</div>
+      </div>
+      <div data-dc-tpl="101" data-step="" data-glow="2" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(24px, 2.4vw, 38px); min-height: clamp(260px, 30vw, 420px); display: flex; flex-direction: column; animation-delay: 0.09s;">
+        <div data-dc-tpl="102" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: 12px; letter-spacing: 0.16em; color: rgb(93, 93, 102);">СТУПЕНЬ 2</div>
+        <div data-dc-tpl="103" style="margin-top: 10px; font-weight: 700; font-size: clamp(30px, 3.2vw, 50px); line-height: 1; text-transform: uppercase; color: rgb(255, 178, 29);">Он учит</div>
+        <div data-dc-tpl="104" style="margin-top: auto; padding-top: 22px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1vw, 16px); line-height: 1.5; color: rgb(169, 165, 175); text-wrap: pretty;">Первый боец, доросший до потолка, перестаёт драться. Он становится наставником и воспитывает остальной ростер, пока ты офлайн. Боёв нет — значит, для нас это почти бесплатно.</div>
+      </div>
+      <div data-dc-tpl="105" data-step="" data-glow="3" data-s="p" style="background: rgb(27, 23, 16); border: 1px solid rgba(255, 178, 29, 0.18); padding: clamp(24px, 2.4vw, 38px); min-height: clamp(300px, 36vw, 520px); display: flex; flex-direction: column; animation-delay: 0.18s;">
+        <div data-dc-tpl="106" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: 12px; letter-spacing: 0.16em; color: rgb(138, 122, 85);">СТУПЕНЬ 3</div>
+        <div data-dc-tpl="107" style="margin-top: 10px; font-weight: 700; font-size: clamp(30px, 3.2vw, 50px); line-height: 1; text-transform: uppercase; color: rgb(255, 178, 29); text-shadow: rgba(255, 178, 29, 0.55) 0px 0px 60px;">Он ведёт</div>
+        <div data-dc-tpl="108" style="margin-top: auto; padding-top: 22px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1vw, 16px); line-height: 1.5; color: rgb(246, 244, 246); opacity: 0.9; text-wrap: pretty;">Тот же бой на той же арене, но ведёт его наставник. Ты задаёшь установку до боя — и можешь забрать руль обратно в любой момент.</div>
+      </div>
+    </div>
+
+    <div data-dc-tpl="109" style="margin-top: clamp(28px, 3vw, 44px);">
+      <div data-dc-tpl="110" style="position: relative; height: 2px; background: rgba(255, 255, 255, 0.09);">
+        <div data-dc-tpl="111" data-travel="" data-s="p" style="position: absolute; top: -5px; left: 0px; width: 12px; height: 12px; background: rgb(255, 0, 105); transform: translateX(-6px); box-shadow: rgba(255, 0, 105, 0.55) 0px 0px 22px;"></div>
+      </div>
+      <div data-dc-tpl="112" style="margin-top: 12px; display: flex; justify-content: space-between; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: 11px; letter-spacing: 0.18em; color: rgb(93, 93, 102);">
+        <span data-dc-tpl="113">УПРАВЛЕНИЕ · ТЫ</span>
+        <span data-dc-tpl="114" style="color: rgb(255, 178, 29);">ИИ</span>
+      </div>
+    </div>
+
+    <div data-dc-tpl="115" data-r="" data-s="p" style="margin-top: clamp(32px, 4vw, 56px); font-weight: 700; font-size: clamp(24px, 3.4vw, 52px); line-height: 1.02; text-transform: uppercase; text-wrap: balance;">Награда за игру — не предмет. Право не участвовать.</div>
+  </div></section><section data-dc-tpl="116" id="boi" style="border-top: 1px solid rgba(255, 255, 255, 0.09);">
+  <div data-dc-tpl="117" style="max-width: 1360px; margin: 0px auto; padding: clamp(64px, 8vw, 124px) clamp(20px, 5vw, 64px);">
+    <div data-dc-tpl="118" data-r="" data-s="p" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: 12px; letter-spacing: 0.18em; color: rgb(93, 93, 102);">04 · ЖИВОЙ БОЙ</div>
+    <h2 data-dc-tpl="119" data-r="" data-s="p" style="margin: 16px 0px 0px; font-weight: 700; font-size: clamp(30px, 4.6vw, 68px); line-height: 1; text-transform: uppercase; text-wrap: balance; animation-delay: 0.05s;">Боец дерётся сам</h2>
+    <p data-dc-tpl="120" data-r="" data-s="p" style="margin: 18px 0px 0px; max-width: 880px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.05vw, 17px); line-height: 1.55; color: rgb(169, 165, 175); text-wrap: pretty; animation-delay: 0.1s;">Модель выбирает намерение на переломах боя, тело исполняет его рефлексом. 5–10 вызовов за бой.</p>
+
+    <div data-r="" data-s="p" class="dk-fight" id="dk-fight">
+        <div class="dk-fight-bar">
+          <span>АРЕНА · ЖИВОЙ БОЙ</span>
+          <span class="dk-state" id="dk-state">ПОКОЙ</span>
+        </div>
+        <div class="dk-fight-body">
+          <!-- Окно ВСЕГДА шире, чем выше: в вертикальном окне внутри арены
+               вылезает подсказка «поверни телефон» (она смотрит на пропорции
+               своего окна, а не устройства). Менять соотношение — только на
+               ещё более широкое. -->
+          <div class="dk-stage" id="dk-stage">
+            <div class="dk-rest" id="dk-rest">
+              <div class="dk-rest-kicker">ОКНО В ПОКОЕ</div>
+              <div class="dk-rest-title">Шесть раундов. Два думающих бойца.</div>
+              <button type="button" class="dk-run" id="dk-run">ЗАПУСТИТЬ БОЙ</button>
+              <noscript class="dk-rest-note">Живой бой открывается по нажатию — для этого нужен JavaScript. Остальные разделы читаются как обычно.</noscript>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p data-dc-tpl="174" data-r="" data-s="p" style="margin: 18px 0px 0px; max-width: 1000px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); line-height: 1.55; color: rgb(93, 93, 102); text-wrap: pretty;">Окно воспроизводит бой из прода: модель выбирает намерение, тело исполняет его рефлексом. Ростер, характер бойца, восхождение в наставника и режим командования — сентябрь 2026.</p>
+  </div></section><section data-dc-tpl="175" id="brain" style="border-top: 1px solid rgba(255, 255, 255, 0.09);">
+  <div data-dc-tpl="176" style="max-width: 1360px; margin: 0px auto; padding: clamp(64px, 8vw, 124px) clamp(20px, 5vw, 64px);">
+    <div data-dc-tpl="177" data-r="" data-s="p" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: 12px; letter-spacing: 0.18em; color: rgb(93, 93, 102);">05 · УСТРОЙСТВО</div>
+    <h2 data-dc-tpl="178" data-r="" data-s="p" style="margin: 16px 0px 0px; font-weight: 700; font-size: clamp(30px, 4.6vw, 68px); line-height: 1; text-transform: uppercase; animation-delay: 0.05s;">У бойца два мозга</h2>
+    <p data-dc-tpl="179" data-r="" data-s="p" style="margin: 18px 0px 0px; max-width: 880px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.05vw, 17px); line-height: 1.55; color: rgb(169, 165, 175); text-wrap: pretty; animation-delay: 0.1s;">Дешёвые рефлексы всё время, языковая модель — на переломах боя.</p>
+
+    <div data-dc-tpl="180" style="margin-top: clamp(30px, 3.6vw, 52px); display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: clamp(16px, 2vw, 28px);">
+      <div data-dc-tpl="181" data-r="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(24px, 2.4vw, 38px);">
+        <div data-dc-tpl="182" style="font-weight: 700; font-size: clamp(26px, 2.8vw, 42px); line-height: 1; text-transform: uppercase; color: rgb(93, 93, 102);">Спинной мозг</div>
+        <div data-dc-tpl="183" style="margin-top: 16px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1vw, 16px); line-height: 1.5; color: rgb(93, 93, 102); text-wrap: pretty;">Детерминированные рефлексы. Работает всегда, стоит $0. Бесплатный боец живёт только на нём — и это видно.</div>
+      </div>
+      <div data-dc-tpl="184" data-r="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(24px, 2.4vw, 38px); box-shadow: rgba(255, 0, 105, 0.16) 0px 0px 90px; animation-delay: 0.08s;">
+        <div data-dc-tpl="185" style="font-weight: 700; font-size: clamp(26px, 2.8vw, 42px); line-height: 1; text-transform: uppercase; color: rgb(255, 0, 105); text-shadow: rgba(255, 0, 105, 0.45) 0px 0px 50px;">Модель</div>
+        <div data-dc-tpl="186" style="margin-top: 16px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1vw, 16px); line-height: 1.5; color: rgb(246, 244, 246); opacity: 0.9; text-wrap: pretty;">Claude выбирает намерение бойца в переломные моменты: старт, просадка здоровья, кончается выносливость, противник сменил манеру. 5–10 вызовов за бой.</div>
+      </div>
+    </div>
+
+    <div data-dc-tpl="187" style="margin-top: clamp(24px, 2.6vw, 36px); display: flex; flex-wrap: wrap; gap: 10px;">
+      <span data-dc-tpl="188" data-chip="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: 12px 20px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); letter-spacing: 0.16em; color: rgb(169, 165, 175); animation-delay: 0s;">ДАВИТЬ</span>
+      <span data-dc-tpl="189" data-chip="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: 12px 20px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); letter-spacing: 0.16em; color: rgb(169, 165, 175); animation-delay: 0.13s;">РУБИТЬ</span>
+      <span data-dc-tpl="190" data-chip="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: 12px 20px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); letter-spacing: 0.16em; color: rgb(169, 165, 175); animation-delay: 0.26s;">ЖАЛИТЬ</span>
+      <span data-dc-tpl="191" data-chip="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: 12px 20px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); letter-spacing: 0.16em; color: rgb(169, 165, 175); animation-delay: 0.39s;">ДЕРЖАТЬ</span>
+      <span data-dc-tpl="192" data-chip="" data-pick="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: 12px 20px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); letter-spacing: 0.16em; color: rgb(169, 165, 175); animation-delay: 0.52s;">РАЗОРВАТЬ</span>
+      <span data-dc-tpl="193" data-chip="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: 12px 20px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); letter-spacing: 0.16em; color: rgb(169, 165, 175); animation-delay: 0.65s;">ДЫШАТЬ</span>
+      <span data-dc-tpl="194" data-chip="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: 12px 20px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); letter-spacing: 0.16em; color: rgb(169, 165, 175); animation-delay: 0.78s;">ЛОВИТЬ</span>
+    </div>
+    <p data-dc-tpl="195" data-r="" data-s="p" style="margin: 14px 0px 0px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); line-height: 1.5; color: rgb(93, 93, 102); text-wrap: pretty;">Тело исполняет намерение рефлексом. У каждого своя поза и манера — намерение опознаётся глазом за полсекунды.</p>
+
+    <div data-dc-tpl="196" style="margin-top: clamp(22px, 2.4vw, 34px); display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: clamp(10px, 1.2vw, 18px);">
+      <div data-dc-tpl="197" data-r="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: 16px 22px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.1vw, 18px); letter-spacing: 0.14em; color: rgb(255, 51, 68);">ONSLAUGHT</div>
+      <div data-dc-tpl="198" data-r="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: 16px 22px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.1vw, 18px); letter-spacing: 0.14em; color: rgb(255, 165, 38); animation-delay: 0.06s;">RAIDER</div>
+      <div data-dc-tpl="199" data-r="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: 16px 22px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.1vw, 18px); letter-spacing: 0.14em; color: rgb(46, 214, 176); animation-delay: 0.12s;">BULWARK</div>
+      <div data-dc-tpl="200" data-r="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: 16px 22px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.1vw, 18px); letter-spacing: 0.14em; color: rgb(148, 97, 255); animation-delay: 0.18s;">AMBUSH</div>
+    </div>
+
+    <div data-dc-tpl="201" data-r="" data-s="p" style="margin-top: clamp(24px, 2.6vw, 36px); font-weight: 600; font-size: clamp(17px, 1.9vw, 28px); line-height: 1.3; color: rgb(246, 244, 246); max-width: 1150px; text-wrap: pretty;">Прокачка идёт по дереву ядро → кристалл → грань. Каждая грань — одна величина в двух проекциях: <span data-dc-tpl="202" style="color: rgb(255, 0, 105);">число</span> уходит в арифметику боя, <span data-dc-tpl="203" style="color: rgb(255, 0, 105);">характер</span> уходит словами в промпт модели. Прокачка бойца буквально и есть воспитание ИИ.</div>
+    <p data-dc-tpl="204" data-r="" data-s="p" style="margin: 12px 0px 0px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); color: rgb(93, 93, 102);">Любой сбой модели — молчаливый откат на рефлексы. Бой не останавливается никогда.</p>
+  </div></section><section data-dc-tpl="205" id="built" style="border-top: 1px solid rgba(255, 255, 255, 0.09);">
+  <div data-dc-tpl="206" style="max-width: 1360px; margin: 0px auto; padding: clamp(64px, 8vw, 124px) clamp(20px, 5vw, 64px);">
+    <div data-dc-tpl="207" data-r="" data-s="p" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: 12px; letter-spacing: 0.18em; color: rgb(93, 93, 102);">06 · СТАТУС</div>
+    <h2 data-dc-tpl="208" data-r="" data-s="p" style="margin: 16px 0px 0px; font-weight: 700; font-size: clamp(30px, 4.6vw, 68px); line-height: 1; text-transform: uppercase; animation-delay: 0.05s;">Что уже построено</h2>
+    <p data-dc-tpl="209" data-r="" data-s="p" style="margin: 18px 0px 0px; max-width: 980px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.05vw, 17px); line-height: 1.55; color: rgb(169, 165, 175); text-wrap: pretty; animation-delay: 0.1s;">Без внешнего капитала. Тяга пока в продукте, не в метриках — публичный запуск и первые цифры это цель раунда.</p>
+
+    <div data-dc-tpl="210" style="margin-top: clamp(30px, 3.6vw, 52px); display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: clamp(14px, 1.8vw, 26px); align-items: start;">
+      <div data-dc-tpl="211" data-r="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(22px, 2.2vw, 32px); box-shadow: rgba(255, 0, 105, 0.14) 0px 0px 90px; animation-duration: 0.32s;">
+        <div data-dc-tpl="212" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); letter-spacing: 0.16em; color: rgb(255, 0, 105); text-shadow: rgba(255, 0, 105, 0.5) 0px 0px 40px;">В ПРОДЕ</div>
+        <div data-dc-tpl="213" style="margin-top: 20px; display: flex; flex-direction: column; gap: 12px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); line-height: 1.45; color: rgb(246, 244, 246);">
+          <div data-dc-tpl="214">Автономный бой: боец думает моделью и дерётся сам</div>
+          <div data-dc-tpl="215">Гибридный мозг: рефлексы + Claude на переломах, откат при сбое</div>
+          <div data-dc-tpl="216">Читаемое тело: 7 намерений с позами, удары руками и ногами, контакт до тела, настоящий переступ</div>
+          <div data-dc-tpl="217">Четыре ядра и дерево прокачки ядро → кристалл → грань</div>
+          <div data-dc-tpl="218">3D-мир: дом игрока, два входа — арена и зал, кинематографический пролёт камеры</div>
+          <div data-dc-tpl="219">Магазин косметики, кабинет игрока, сохранение прогресса</div>
+        </div>
+      </div>
+      <div data-dc-tpl="220" data-r="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(22px, 2.2vw, 32px); animation-duration: 0.46s; animation-delay: 0.09s;">
+        <div data-dc-tpl="221" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); letter-spacing: 0.16em; color: rgb(246, 244, 246);">СЕНТЯБРЬ 2026</div>
+        <div data-dc-tpl="222" style="margin-top: 20px; display: flex; flex-direction: column; gap: 12px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); line-height: 1.45; color: rgb(169, 165, 175);">
+          <div data-dc-tpl="223">Ростер: бойцы становятся сущностями с именами и историей боёв</div>
+          <div data-dc-tpl="224">Характер, который копится между боями</div>
+          <div data-dc-tpl="225">Восхождение бойца в наставника</div>
+          <div data-dc-tpl="226">Режим командования на арене</div>
+        </div>
+      </div>
+      <div data-dc-tpl="227" data-r="" data-s="p" style="background: rgb(13, 10, 13); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(22px, 2.2vw, 32px); animation-duration: 0.62s; animation-delay: 0.18s;">
+        <div data-dc-tpl="228" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); letter-spacing: 0.16em; color: rgb(93, 93, 102);">ЭТАП 2</div>
+        <div data-dc-tpl="229" style="margin-top: 20px; display: flex; flex-direction: column; gap: 12px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); line-height: 1.45; color: rgb(93, 93, 102);">
+          <div data-dc-tpl="230">Постоянные аккаунты, кошелёк</div>
+          <div data-dc-tpl="231">Бойцы и грани как ERC-1155 на Base</div>
+          <div data-dc-tpl="232">Микроплатежи за бои</div>
+        </div>
+      </div>
+    </div>
+
+    <div data-dc-tpl="233" style="margin-top: clamp(20px, 2.2vw, 32px); display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: clamp(14px, 1.8vw, 26px); align-items: start;">
+      <p data-dc-tpl="234" data-r="" data-s="p" style="margin: 0px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); line-height: 1.55; color: rgb(93, 93, 102); text-wrap: pretty;">Стек: Vue 3 · Node · Three.js · Claude API · PostgreSQL. Прод — hexlash.com, деплой автоматический.</p>
+      <div data-dc-tpl="235" data-r="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(18px, 1.8vw, 26px);">
+        <div data-dc-tpl="236" style="font-weight: 700; font-size: clamp(19px, 1.9vw, 28px); text-transform: uppercase;">Партнёрство OWB Studio</div>
+        <div data-dc-tpl="237" style="margin-top: 8px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); line-height: 1.45; color: rgb(169, 165, 175);">Кросс-игровая интеграция с Clash of Coins. Спецификация и дизайн-бриф готовы, реализация Q4 2026.</div>
+      </div>
+    </div>
+  </div></section><section data-dc-tpl="238" id="pay" style="border-top: 1px solid rgba(255, 255, 255, 0.09);">
+  <div data-dc-tpl="239" style="max-width: 1360px; margin: 0px auto; padding: clamp(64px, 8vw, 124px) clamp(20px, 5vw, 64px);">
+    <div data-dc-tpl="240" data-r="" data-s="p" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: 12px; letter-spacing: 0.18em; color: rgb(93, 93, 102);">07 · СПРОС</div>
+    <h2 data-dc-tpl="241" data-r="" data-s="p" style="margin: 16px 0px 0px; font-weight: 700; font-size: clamp(30px, 4.6vw, 68px); line-height: 1; text-transform: uppercase; animation-delay: 0.05s;">Почему игрок платит</h2>
+    <p data-dc-tpl="242" data-r="" data-s="p" style="margin: 18px 0px 0px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.05vw, 17px); line-height: 1.55; color: rgb(169, 165, 175); animation-delay: 0.1s;">Три мотива. Ни один из них — «заработать».</p>
+
+    <div data-dc-tpl="243" style="margin-top: clamp(30px, 3.6vw, 52px); display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: clamp(14px, 1.8vw, 26px);">
+      <div data-dc-tpl="244" data-r="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(24px, 2.4vw, 36px); display: flex; flex-direction: column; min-height: clamp(240px, 24vw, 340px); box-shadow: rgba(255, 0, 105, 0.14) 0px 0px 90px;">
+        <div data-dc-tpl="245" style="font-weight: 700; font-size: clamp(44px, 5vw, 76px); line-height: 0.9; color: rgb(255, 0, 105); text-shadow: rgba(255, 0, 105, 0.45) 0px 0px 60px;">$0.05</div>
+        <div data-dc-tpl="246" style="margin-top: 12px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); letter-spacing: 0.16em; color: rgb(246, 244, 246);">ЗА БОЙ · СИЛА</div>
+        <div data-dc-tpl="247" style="margin-top: auto; padding-top: 22px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); line-height: 1.5; color: rgb(169, 165, 175); text-wrap: pretty;">Бесплатный боец идёт на рефлексах. Платный думает моделью, реагирует на подсказку, адаптируется к противнику. Разница видна в первом же бою против платящего.</div>
+      </div>
+      <div data-dc-tpl="248" data-r="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(24px, 2.4vw, 36px); display: flex; flex-direction: column; min-height: clamp(240px, 24vw, 340px); animation-delay: 0.08s;">
+        <div data-dc-tpl="249" style="font-weight: 700; font-size: clamp(44px, 5vw, 76px); line-height: 0.9; color: rgb(246, 244, 246);">$1+</div>
+        <div data-dc-tpl="250" style="margin-top: 12px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); letter-spacing: 0.16em; color: rgb(246, 244, 246);">ИДЕНТИЧНОСТЬ</div>
+        <div data-dc-tpl="251" style="margin-top: auto; padding-top: 22px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); line-height: 1.5; color: rgb(169, 165, 175); text-wrap: pretty;">Свой дом с названием, косметика, наставники в галерее. То, за что платят в любой F2P-игре — и что нельзя отфармить.</div>
+      </div>
+      <div data-dc-tpl="252" data-r="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(24px, 2.4vw, 36px); display: flex; flex-direction: column; min-height: clamp(240px, 24vw, 340px); animation-delay: 0.16s;">
+        <div data-dc-tpl="253" style="font-weight: 700; font-size: clamp(30px, 3.2vw, 50px); line-height: 1; color: rgb(246, 244, 246);">Слоты<br data-dc-tpl="254">и пассы</div>
+        <div data-dc-tpl="255" style="margin-top: 12px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); letter-spacing: 0.16em; color: rgb(246, 244, 246);">ВРЕМЯ</div>
+        <div data-dc-tpl="256" style="margin-top: auto; padding-top: 22px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); line-height: 1.5; color: rgb(169, 165, 175); text-wrap: pretty;">Второй и третий боец, ускоренное воспитание, глубокий разбор боя. Платишь за то, чтобы дом рос, пока ты спишь.</div>
+      </div>
+    </div>
+    <div data-dc-tpl="257" data-r="" data-s="p" style="margin-top: clamp(26px, 3vw, 40px); font-weight: 600; font-size: clamp(18px, 2vw, 30px); line-height: 1.25; color: rgb(246, 244, 246); text-wrap: pretty;">Платёж встроен в петлю игры. Без думающего мозга боец дерётся тупо — это не надстройка вроде «аналитики после боя».</div>
+    <p data-dc-tpl="258" data-r="" data-s="p" style="margin: 12px 0px 0px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); color: rgb(93, 93, 102);">Косметика никогда не влияет на бой. Pay-to-win исключён как принцип.</p>
+  </div></section><section data-dc-tpl="259" id="stay" style="border-top: 1px solid rgba(255, 255, 255, 0.09);">
+  <div data-dc-tpl="260" style="max-width: 1360px; margin: 0px auto; padding: clamp(64px, 8vw, 124px) clamp(20px, 5vw, 64px);">
+    <div data-dc-tpl="261" data-r="" data-s="p" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: 12px; letter-spacing: 0.18em; color: rgb(93, 93, 102);">08 · УДЕРЖАНИЕ</div>
+    <h2 data-dc-tpl="262" data-r="" data-s="p" style="margin: 16px 0px 0px; font-weight: 700; font-size: clamp(30px, 4.6vw, 68px); line-height: 1; text-transform: uppercase; animation-delay: 0.05s;">Почему игрок остаётся</h2>
+    <p data-dc-tpl="263" data-r="" data-s="p" style="margin: 18px 0px 0px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.05vw, 17px); line-height: 1.55; color: rgb(169, 165, 175); animation-delay: 0.1s;">Четыре петли удержания. Заложены в архитектуру, часть уже в коде.</p>
+
+    <div data-dc-tpl="264" style="margin-top: clamp(30px, 3.6vw, 52px); display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: clamp(14px, 1.8vw, 26px);">
+      <div data-dc-tpl="265" data-r="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(24px, 2.4vw, 36px); display: flex; flex-direction: column; min-height: clamp(200px, 18vw, 250px); box-shadow: rgba(255, 0, 105, 0.14) 0px 0px 90px;">
+        <div data-dc-tpl="266" style="font-weight: 700; font-size: clamp(24px, 2.6vw, 42px); line-height: 1; text-transform: uppercase; color: rgb(255, 0, 105); text-shadow: rgba(255, 0, 105, 0.4) 0px 0px 50px;">Честный sunk cost</div>
+        <div data-dc-tpl="267" style="margin-top: auto; padding-top: 20px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); line-height: 1.5; color: rgb(169, 165, 175); text-wrap: pretty;">Боец доходит до потолка, перестаёт драться и остаётся в доме наставником. Месяцы вложений нельзя слить в стакан — они живут в доме.</div>
+      </div>
+      <div data-dc-tpl="268" data-r="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(24px, 2.4vw, 36px); display: flex; flex-direction: column; min-height: clamp(200px, 18vw, 250px); animation-delay: 0.07s;">
+        <div data-dc-tpl="269" style="font-weight: 700; font-size: clamp(24px, 2.6vw, 42px); line-height: 1; text-transform: uppercase;">Характер копится</div>
+        <div data-dc-tpl="270" style="margin-top: auto; padding-top: 20px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); line-height: 1.5; color: rgb(169, 165, 175); text-wrap: pretty;">Боец меняется от побед, поражений и тренировок. Через месяц у тебя не «прокачанный юнит», а конкретный боец с конкретным нравом. Второго такого нет ни у кого.</div>
+      </div>
+      <div data-dc-tpl="271" data-r="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(24px, 2.4vw, 36px); display: flex; flex-direction: column; min-height: clamp(200px, 18vw, 250px); animation-delay: 0.14s;">
+        <div data-dc-tpl="272" style="font-weight: 700; font-size: clamp(24px, 2.6vw, 42px); line-height: 1; text-transform: uppercase;">Утренний отчёт</div>
+        <div data-dc-tpl="273" style="margin-top: auto; padding-top: 20px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); line-height: 1.5; color: rgb(169, 165, 175); text-wrap: pretty;">Пока ты спал, наставник вёл твой ростер. Вот что случилось и что стоит поменять. Ежедневная привычка — как проверить почту.</div>
+      </div>
+      <div data-dc-tpl="274" data-r="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(24px, 2.4vw, 36px); display: flex; flex-direction: column; min-height: clamp(200px, 18vw, 250px); animation-delay: 0.2s;">
+        <div data-dc-tpl="275" style="font-weight: 700; font-size: clamp(24px, 2.6vw, 42px); line-height: 1; text-transform: uppercase;">Живая мета</div>
+        <div data-dc-tpl="276" style="margin-top: auto; padding-top: 20px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); line-height: 1.5; color: rgb(169, 165, 175); text-wrap: pretty;">Условия меняются. Стратегия «выучил и ушёл» не работает — дом надо вести.</div>
+      </div>
+    </div>
+  </div></section><section data-dc-tpl="277" id="free" style="border-top: 1px solid rgba(255, 255, 255, 0.09);">
+  <div data-dc-tpl="278" style="max-width: 1360px; margin: 0px auto; padding: clamp(64px, 8vw, 124px) clamp(20px, 5vw, 64px);">
+    <div data-dc-tpl="279" data-r="" data-s="p" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: 12px; letter-spacing: 0.18em; color: rgb(93, 93, 102);">09 · БЕСПЛАТНЫЙ ПОТОК</div>
+    <h2 data-dc-tpl="280" data-r="" data-s="p" style="margin: 16px 0px 0px; font-weight: 700; font-size: clamp(30px, 4.6vw, 68px); line-height: 1; text-transform: uppercase; text-wrap: balance; animation-delay: 0.05s;">Бесплатный игрок стоит нам ~$0</h2>
+    <p data-dc-tpl="281" data-r="" data-s="p" style="margin: 18px 0px 0px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.05vw, 17px); line-height: 1.55; color: rgb(169, 165, 175); animation-delay: 0.1s;">Он не делает вызовов модели. При этом он нужен платящему.</p>
+
+    <div data-dc-tpl="282" style="margin-top: clamp(30px, 3.6vw, 52px); display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: clamp(12px, 1.6vw, 22px);">
+      <div data-dc-tpl="283" data-r="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(20px, 2vw, 30px); display: flex; flex-direction: column; min-height: clamp(200px, 18vw, 260px);">
+        <div data-dc-tpl="284" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: 12px; letter-spacing: 0.16em; color: rgb(93, 93, 102);">1</div>
+        <div data-dc-tpl="285" style="margin-top: 8px; font-weight: 700; font-size: clamp(24px, 2.4vw, 38px); line-height: 1; text-transform: uppercase;">Соперник</div>
+        <div data-dc-tpl="286" style="margin-top: auto; padding-top: 18px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); line-height: 1.5; color: rgb(169, 165, 175); text-wrap: pretty;">Заполняет лестницу, делает прогресс осмысленным.</div>
+      </div>
+      <div data-dc-tpl="287" data-r="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(20px, 2vw, 30px); display: flex; flex-direction: column; min-height: clamp(200px, 18vw, 260px); box-shadow: rgba(255, 0, 105, 0.14) 0px 0px 90px; animation-delay: 0.07s;">
+        <div data-dc-tpl="288" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: 12px; letter-spacing: 0.16em; color: rgb(93, 93, 102);">2</div>
+        <div data-dc-tpl="289" style="margin-top: 8px; font-weight: 700; font-size: clamp(24px, 2.4vw, 38px); line-height: 1; text-transform: uppercase; color: rgb(255, 0, 105); text-shadow: rgba(255, 0, 105, 0.4) 0px 0px 50px;">Воронка</div>
+        <div data-dc-tpl="290" style="margin-top: auto; padding-top: 18px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); line-height: 1.5; color: rgb(169, 165, 175); text-wrap: pretty;">Его боец на рефлексах проигрывает думающему → апгрейд за $0.05.</div>
+      </div>
+      <div data-dc-tpl="291" data-r="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(20px, 2vw, 30px); display: flex; flex-direction: column; min-height: clamp(200px, 18vw, 260px); animation-delay: 0.14s;">
+        <div data-dc-tpl="292" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: 12px; letter-spacing: 0.16em; color: rgb(93, 93, 102);">3</div>
+        <div data-dc-tpl="293" style="margin-top: 8px; font-weight: 700; font-size: clamp(24px, 2.4vw, 38px); line-height: 1; text-transform: uppercase;">Ликвидность</div>
+        <div data-dc-tpl="294" style="margin-top: auto; padding-top: 18px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); line-height: 1.5; color: rgb(169, 165, 175); text-wrap: pretty;">Покупает и продаёт бойцов, комиссия рынка наша <span data-dc-tpl="295" style="color: rgb(93, 93, 102);">(планируется, Этап 2)</span>.</div>
+      </div>
+      <div data-dc-tpl="296" data-r="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(20px, 2vw, 30px); display: flex; flex-direction: column; min-height: clamp(200px, 18vw, 260px); animation-delay: 0.21s;">
+        <div data-dc-tpl="297" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: 12px; letter-spacing: 0.16em; color: rgb(93, 93, 102);">4</div>
+        <div data-dc-tpl="298" style="margin-top: 8px; font-weight: 700; font-size: clamp(24px, 2.4vw, 38px); line-height: 1; text-transform: uppercase;">Плотность</div>
+        <div data-dc-tpl="299" style="margin-top: auto; padding-top: 18px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); line-height: 1.5; color: rgb(169, 165, 175); text-wrap: pretty;">Без него мир пустой.</div>
+      </div>
+    </div>
+
+    <div data-dc-tpl="300" data-r="" data-s="p" style="margin-top: clamp(20px, 2.2vw, 32px); background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(22px, 2.2vw, 34px);">
+      <div data-dc-tpl="301" style="font-weight: 700; font-size: clamp(22px, 2.2vw, 34px); line-height: 1; text-transform: uppercase;">B2B-слой поверх потока</div>
+      <div data-dc-tpl="302" style="margin-top: 12px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 16px); line-height: 1.5; color: rgb(169, 165, 175); text-wrap: pretty;">Спонсорские арены и брендированные скины от проектов экосистемы Base. Прецедент — кросс-игровая интеграция с Clash of Coins (OWB Studio).</div>
+    </div>
+  </div></section><section data-dc-tpl="303" id="econ" style="border-top: 1px solid rgba(255, 255, 255, 0.09); background: rgb(13, 10, 13);">
+  <div data-dc-tpl="304" style="max-width: 1360px; margin: 0px auto; padding: clamp(64px, 8vw, 124px) clamp(20px, 5vw, 64px);">
+    <div data-dc-tpl="305" data-r="" data-s="p" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: 12px; letter-spacing: 0.18em; color: rgb(93, 93, 102);">10 · ЮНИТ-ЭКОНОМИКА</div>
+    <h2 data-dc-tpl="306" data-r="" data-s="p" style="margin: 16px 0px 0px; font-weight: 700; font-size: clamp(30px, 4.6vw, 68px); line-height: 1; text-transform: uppercase; text-wrap: balance; animation-delay: 0.05s;">Юнит-экономика одного боя</h2>
+    <p data-dc-tpl="307" data-r="" data-s="p" style="margin: 18px 0px 0px; max-width: 980px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.05vw, 17px); line-height: 1.55; color: rgb(169, 165, 175); text-wrap: pretty; animation-delay: 0.1s;">Допущения: 6 раундов, два думающих бойца, Claude Haiku, кэширование промпта. Газ на Base меньше $0.001 — вне расчёта.</p>
+
+    <div data-dc-tpl="308" style="margin-top: clamp(34px, 4vw, 60px); display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: clamp(22px, 3vw, 48px); align-items: end;">
+      <div data-dc-tpl="309" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: clamp(14px, 2vw, 30px); align-items: end; height: clamp(240px, 26vw, 360px);">
+        <div data-dc-tpl="310" style="display: flex; flex-direction: column; justify-content: flex-end; height: 100%;">
+          <div data-dc-tpl="311" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.3vw, 20px); color: rgb(169, 165, 175);">$0.029</div>
+          <div data-dc-tpl="312" data-bar="" data-s="p" style="margin-top: 10px; height: 58%; background: rgb(42, 42, 49); transform-origin: center bottom; animation-delay: 0s;"></div>
+          <div data-dc-tpl="313" style="margin-top: 12px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(10px, 0.9vw, 13px); letter-spacing: 0.1em; line-height: 1.4; color: rgb(93, 93, 102);">БЕЗ КЭША</div>
+        </div>
+        <div data-dc-tpl="314" style="display: flex; flex-direction: column; justify-content: flex-end; height: 100%;">
+          <div data-dc-tpl="315" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.3vw, 20px); color: rgb(169, 165, 175);">$0.016</div>
+          <div data-dc-tpl="316" data-bar="" data-s="p" style="margin-top: 10px; height: 32%; background: rgb(58, 58, 67); transform-origin: center bottom; animation-delay: 0.1s;"></div>
+          <div data-dc-tpl="317" style="margin-top: 12px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(10px, 0.9vw, 13px); letter-spacing: 0.1em; line-height: 1.4; color: rgb(93, 93, 102);">С КЭШЕМ</div>
+        </div>
+        <div data-dc-tpl="318" style="display: flex; flex-direction: column; justify-content: flex-end; height: 100%;">
+          <div data-dc-tpl="319" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.3vw, 20px); color: rgb(246, 244, 246);">$0.05</div>
+          <div data-dc-tpl="320" data-bar="" data-s="p" style="margin-top: 10px; height: 100%; background: rgb(255, 0, 105); transform-origin: center bottom; box-shadow: rgba(255, 0, 105, 0.4) 0px 0px 70px; animation-delay: 0.26s; animation-duration: 0.75s;"></div>
+          <div data-dc-tpl="321" style="margin-top: 12px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(10px, 0.9vw, 13px); letter-spacing: 0.1em; line-height: 1.4; color: rgb(246, 244, 246);">ЦЕНА БОЯ</div>
+        </div>
+      </div>
+      <div data-dc-tpl="322" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: clamp(14px, 1.8vw, 24px);">
+        <div data-dc-tpl="323" data-r="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(20px, 2vw, 30px);">
+          <div data-dc-tpl="324" style="font-weight: 700; font-size: clamp(44px, 5vw, 80px); line-height: 0.9; color: rgb(246, 244, 246);">68%</div>
+          <div data-dc-tpl="325" style="margin-top: 12px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); line-height: 1.4; color: rgb(93, 93, 102);">валовая маржа на бой с кэшированием (42% без)</div>
+        </div>
+        <div data-dc-tpl="326" data-r="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(20px, 2vw, 30px); animation-delay: 0.08s;">
+          <div data-dc-tpl="327" style="font-weight: 700; font-size: clamp(44px, 5vw, 80px); line-height: 0.9; color: rgb(246, 244, 246);">~$0</div>
+          <div data-dc-tpl="328" style="margin-top: 12px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); line-height: 1.4; color: rgb(93, 93, 102);">себестоимость бесплатного боя</div>
+        </div>
+      </div>
+    </div>
+
+    <div data-dc-tpl="329" data-r="" data-s="p" style="margin-top: clamp(30px, 3.4vw, 48px); font-weight: 600; font-size: clamp(18px, 2vw, 29px); line-height: 1.25; color: rgb(246, 244, 246); text-wrap: pretty;">Два правила встроены в продукт: думающий мозг — только платный, промпт характера кэшируется. Без них юнит отрицательный на каждом пользователе.</div>
+    <p data-dc-tpl="330" data-r="" data-s="p" style="margin: 12px 0px 0px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); line-height: 1.5; color: rgb(93, 93, 102); text-wrap: pretty;">Расход на модель измерен на живых вызовах в проде. Цена боя и платёжный рельс — плановые, включаются на Этапе 2.</p>
+  </div></section><section data-dc-tpl="331" id="scenarios" style="border-top: 1px solid rgba(255, 255, 255, 0.09);">
+  <div data-dc-tpl="332" style="max-width: 1360px; margin: 0px auto; padding: clamp(64px, 8vw, 124px) clamp(20px, 5vw, 64px);">
+    <div data-dc-tpl="333" data-r="" data-s="p" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: 12px; letter-spacing: 0.18em; color: rgb(93, 93, 102);">11 · МАСШТАБ</div>
+    <h2 data-dc-tpl="334" data-r="" data-s="p" style="margin: 16px 0px 0px; font-weight: 700; font-size: clamp(30px, 4.6vw, 68px); line-height: 1; text-transform: uppercase; animation-delay: 0.05s;">Три сценария масштаба</h2>
+    <p data-dc-tpl="335" data-r="" data-s="p" style="margin: 18px 0px 0px; max-width: 1000px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.05vw, 17px); line-height: 1.55; color: rgb(169, 165, 175); text-wrap: pretty; animation-delay: 0.1s;">Честная картина: модель покрывает API и инфраструктуру примерно с 2 000 DAU, команду — заметно позже. Раунд — путь к seed, не к прибыли.</p>
+
+    <div data-dc-tpl="336" style="margin-top: clamp(32px, 4vw, 56px); overflow-x: auto;">
+    <div data-dc-tpl="337" style="min-width: 680px; display: grid; grid-template-columns: minmax(120px, 1.2fr) 1fr 1fr 1fr; gap: 1px; background: rgba(255, 255, 255, 0.09); border: 1px solid rgba(255, 255, 255, 0.09);">
+      <div data-dc-tpl="338" style="background: rgb(8, 8, 10); padding: 14px 18px;"></div>
+      <div data-dc-tpl="339" style="background: rgb(8, 8, 10); padding: 14px 18px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(10px, 0.95vw, 14px); letter-spacing: 0.16em; color: rgb(93, 93, 102);">ВЫЖИВАНИЕ</div>
+      <div data-dc-tpl="340" style="background: rgb(8, 8, 10); padding: 14px 18px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(10px, 0.95vw, 14px); letter-spacing: 0.16em; color: rgb(246, 244, 246);">РОСТ</div>
+      <div data-dc-tpl="341" style="background: rgb(8, 8, 10); padding: 14px 18px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(10px, 0.95vw, 14px); letter-spacing: 0.16em; color: rgb(255, 0, 105);">АПСАЙД</div>
+
+      <div data-dc-tpl="342" style="background: rgb(13, 10, 13); padding: clamp(14px, 1.6vw, 22px) 18px; font-weight: 600; font-size: clamp(14px, 1.4vw, 22px);">DAU</div>
+      <div data-dc-tpl="343" style="background: rgb(13, 10, 13); padding: clamp(14px, 1.6vw, 22px) 18px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.2vw, 20px); color: rgb(93, 93, 102);">1 000</div>
+      <div data-dc-tpl="344" style="background: rgb(13, 10, 13); padding: clamp(14px, 1.6vw, 22px) 18px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.2vw, 20px); color: rgb(246, 244, 246);">10 000</div>
+      <div data-dc-tpl="345" data-c="" data-s="p" style="padding: clamp(14px, 1.6vw, 22px) 18px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.2vw, 20px); animation-delay: 0s;">50 000</div>
+
+      <div data-dc-tpl="346" style="background: rgb(8, 8, 10); padding: clamp(14px, 1.6vw, 22px) 18px; font-weight: 600; font-size: clamp(14px, 1.4vw, 22px);">Платящих (3–5%)</div>
+      <div data-dc-tpl="347" style="background: rgb(8, 8, 10); padding: clamp(14px, 1.6vw, 22px) 18px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.2vw, 20px); color: rgb(93, 93, 102);">30</div>
+      <div data-dc-tpl="348" style="background: rgb(8, 8, 10); padding: clamp(14px, 1.6vw, 22px) 18px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.2vw, 20px); color: rgb(246, 244, 246);">400</div>
+      <div data-dc-tpl="349" data-c="" data-s="p" style="padding: clamp(14px, 1.6vw, 22px) 18px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.2vw, 20px); animation-delay: 0.08s;">2 500</div>
+
+      <div data-dc-tpl="350" style="background: rgb(13, 10, 13); padding: clamp(14px, 1.6vw, 22px) 18px; font-weight: 600; font-size: clamp(14px, 1.4vw, 22px);">Выручка в месяц</div>
+      <div data-dc-tpl="351" style="background: rgb(13, 10, 13); padding: clamp(14px, 1.6vw, 22px) 18px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.2vw, 20px); color: rgb(93, 93, 102);">$225</div>
+      <div data-dc-tpl="352" style="background: rgb(13, 10, 13); padding: clamp(14px, 1.6vw, 22px) 18px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.2vw, 20px); color: rgb(246, 244, 246);">$3 000</div>
+      <div data-dc-tpl="353" data-c="" data-s="p" style="padding: clamp(14px, 1.6vw, 22px) 18px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.2vw, 20px); color: rgb(255, 0, 105); animation-delay: 0.16s;">$18 750</div>
+
+      <div data-dc-tpl="354" style="background: rgb(8, 8, 10); padding: clamp(14px, 1.6vw, 22px) 18px; font-weight: 600; font-size: clamp(14px, 1.4vw, 22px);">Валовая маржа</div>
+      <div data-dc-tpl="355" style="background: rgb(8, 8, 10); padding: clamp(14px, 1.6vw, 22px) 18px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.2vw, 20px); color: rgb(93, 93, 102);">—</div>
+      <div data-dc-tpl="356" style="background: rgb(8, 8, 10); padding: clamp(14px, 1.6vw, 22px) 18px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.2vw, 20px); color: rgb(246, 244, 246);">57%</div>
+      <div data-dc-tpl="357" data-c="" data-s="p" style="padding: clamp(14px, 1.6vw, 22px) 18px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.2vw, 20px); animation-delay: 0.24s;">73%</div>
+
+      <div data-dc-tpl="358" style="background: rgb(13, 10, 13); padding: clamp(14px, 1.6vw, 22px) 18px; font-weight: 600; font-size: clamp(14px, 1.4vw, 22px);">Run-rate в год</div>
+      <div data-dc-tpl="359" style="background: rgb(13, 10, 13); padding: clamp(14px, 1.6vw, 22px) 18px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.2vw, 20px); color: rgb(93, 93, 102);">$2.7K</div>
+      <div data-dc-tpl="360" style="background: rgb(13, 10, 13); padding: clamp(14px, 1.6vw, 22px) 18px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.2vw, 20px); color: rgb(246, 244, 246);">$36K</div>
+      <div data-dc-tpl="361" data-c="" data-s="p" style="padding: clamp(14px, 1.6vw, 22px) 18px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.2vw, 20px); animation-delay: 0.32s;">$225K</div>
+    </div>
+    </div>
+    <p data-dc-tpl="362" data-r="" data-s="p" style="margin: 24px 0px 0px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); line-height: 1.5; color: rgb(93, 93, 102); text-wrap: pretty;">Ориентиры индустрии: F2P — 2–5% платящих, ARPPU около $7.5. Полная модель с открытыми допущениями — в приложении.</p>
+  </div></section><section data-dc-tpl="363" id="scale" style="border-top: 1px solid rgba(255, 255, 255, 0.09);">
+  <div data-dc-tpl="364" style="max-width: 1360px; margin: 0px auto; padding: clamp(64px, 8vw, 124px) clamp(20px, 5vw, 64px);">
+    <div data-dc-tpl="365" data-r="" data-s="p" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: 12px; letter-spacing: 0.18em; color: rgb(93, 93, 102);">12 · СЛОИ ДОХОДА</div>
+    <h2 data-dc-tpl="366" data-r="" data-s="p" style="margin: 16px 0px 0px; font-weight: 700; font-size: clamp(30px, 4.6vw, 68px); line-height: 1; text-transform: uppercase; animation-delay: 0.05s;">Где масштаб</h2>
+    <p data-dc-tpl="367" data-r="" data-s="p" style="margin: 18px 0px 0px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.05vw, 17px); line-height: 1.55; color: rgb(169, 165, 175); animation-delay: 0.1s;">ARPPU $7.5 — базовый ориентир одного бойца. Пять слоёв дохода сверх него.</p>
+
+    <div data-dc-tpl="368" style="margin-top: clamp(30px, 3.6vw, 52px); display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: clamp(14px, 1.8vw, 24px);">
+      <div data-dc-tpl="369" data-r="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(22px, 2.2vw, 32px); display: flex; flex-direction: column; min-height: clamp(210px, 19vw, 270px); box-shadow: rgba(255, 0, 105, 0.14) 0px 0px 90px;">
+        <div data-dc-tpl="370" style="font-weight: 700; font-size: clamp(22px, 2.4vw, 38px); line-height: 1; text-transform: uppercase; color: rgb(255, 0, 105); text-shadow: rgba(255, 0, 105, 0.4) 0px 0px 50px;">Дом, а не один боец</div>
+        <div data-dc-tpl="371" style="margin-top: auto; padding-top: 18px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); line-height: 1.5; color: rgb(169, 165, 175); text-wrap: pretty;">У игрока несколько бойцов, у каждого свой думающий мозг. ARPPU растёт с глубиной, а не с ценой.</div>
+      </div>
+      <div data-dc-tpl="372" data-r="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(22px, 2.2vw, 32px); display: flex; flex-direction: column; min-height: clamp(210px, 19vw, 270px); animation-delay: 0.06s;">
+        <div data-dc-tpl="373" style="font-weight: 700; font-size: clamp(22px, 2.4vw, 38px); line-height: 1; text-transform: uppercase;">Рынок бойцов</div>
+        <div data-dc-tpl="374" style="margin-top: 8px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: 11px; letter-spacing: 0.16em; color: rgb(93, 93, 102);">ЭТАП 2</div>
+        <div data-dc-tpl="375" style="margin-top: auto; padding-top: 18px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); line-height: 1.5; color: rgb(169, 165, 175); text-wrap: pretty;">Бойцы и грани становятся ERC-1155 и торгуются. Комиссия с каждой сделки растёт вместе с плотностью мира.</div>
+      </div>
+      <div data-dc-tpl="376" data-r="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(22px, 2.2vw, 32px); display: flex; flex-direction: column; min-height: clamp(210px, 19vw, 270px); animation-delay: 0.12s;">
+        <div data-dc-tpl="377" style="font-weight: 700; font-size: clamp(22px, 2.4vw, 38px); line-height: 1; text-transform: uppercase;">B2B: спонсорские арены</div>
+        <div data-dc-tpl="378" style="margin-top: auto; padding-top: 18px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); line-height: 1.5; color: rgb(169, 165, 175); text-wrap: pretty;">Проекты экосистемы Base платят за брендированные арены и скины. Прецедент — Clash of Coins.</div>
+      </div>
+      <div data-dc-tpl="379" data-r="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(22px, 2.2vw, 32px); display: flex; flex-direction: column; min-height: clamp(190px, 17vw, 240px); animation-delay: 0.18s;">
+        <div data-dc-tpl="380" style="font-weight: 700; font-size: clamp(22px, 2.4vw, 38px); line-height: 1; text-transform: uppercase;">Токен как слой владения</div>
+        <div data-dc-tpl="381" style="margin-top: 8px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: 11px; letter-spacing: 0.16em; color: rgb(93, 93, 102);">ПОСЛЕ PMF</div>
+        <div data-dc-tpl="382" style="margin-top: auto; padding-top: 18px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); line-height: 1.5; color: rgb(169, 165, 175); text-wrap: pretty;">Стейк под дом, турниры, ретроактив. Спрос идёт из выручки в USDC, а не из эмиссии.</div>
+      </div>
+      <div data-dc-tpl="383" data-r="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(22px, 2.2vw, 32px); display: flex; flex-direction: column; min-height: clamp(190px, 17vw, 240px); animation-delay: 0.24s;">
+        <div data-dc-tpl="384" style="font-weight: 700; font-size: clamp(22px, 2.4vw, 38px); line-height: 1; text-transform: uppercase;">Маржа растёт со временем</div>
+        <div data-dc-tpl="385" style="margin-top: auto; padding-top: 18px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); line-height: 1.5; color: rgb(169, 165, 175); text-wrap: pretty;">Инференс дешевеет, цена боя — нет. 68% сегодня, выше по мере удешевления моделей.</div>
+      </div>
+    </div>
+  </div></section><section data-dc-tpl="386" id="risk" style="border-top: 1px solid rgba(255, 255, 255, 0.09);">
+  <div data-dc-tpl="387" style="max-width: 1360px; margin: 0px auto; padding: clamp(64px, 8vw, 124px) clamp(20px, 5vw, 64px);">
+    <div data-dc-tpl="388" data-r="" data-s="p" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: 12px; letter-spacing: 0.18em; color: rgb(93, 93, 102);">13 · РИСК</div>
+    <h2 data-dc-tpl="389" data-r="" data-s="p" style="margin: 16px 0px 0px; font-weight: 700; font-size: clamp(30px, 4.6vw, 68px); line-height: 1; text-transform: uppercase; max-width: 1200px; text-wrap: balance; animation-delay: 0.05s;">Почему сценарий «75%» к нам не применим</h2>
+
+    <div data-dc-tpl="390" style="margin-top: clamp(30px, 3.6vw, 52px); display: flex; flex-direction: column; gap: clamp(12px, 1.4vw, 18px);">
+      <div data-dc-tpl="391" data-r="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(20px, 2vw, 28px) clamp(22px, 2.4vw, 36px); display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: clamp(14px, 2vw, 36px); align-items: center; box-shadow: rgba(255, 0, 105, 0.12) 0px 0px 90px;">
+        <div data-dc-tpl="392" style="font-weight: 700; font-size: clamp(22px, 2.4vw, 40px); line-height: 1; text-transform: uppercase; color: rgb(255, 0, 105); text-shadow: rgba(255, 0, 105, 0.4) 0px 0px 50px;">USDC с первого дня</div>
+        <div data-dc-tpl="393" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1.05vw, 17px); line-height: 1.45; color: rgb(169, 165, 175); text-wrap: pretty;">Микроплатежи за бои и косметику. Выручка не зависит от курса чего-либо.</div>
+      </div>
+      <div data-dc-tpl="394" data-r="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(20px, 2vw, 28px) clamp(22px, 2.4vw, 36px); display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: clamp(14px, 2vw, 36px); align-items: center; animation-delay: 0.06s;">
+        <div data-dc-tpl="395" style="font-weight: 700; font-size: clamp(22px, 2.4vw, 40px); line-height: 1; text-transform: uppercase;">Токен вне игрового цикла</div>
+        <div data-dc-tpl="396" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1.05vw, 17px); line-height: 1.45; color: rgb(169, 165, 175); text-wrap: pretty;">Игра работает без него. Его падение — не смерть продукта.</div>
+      </div>
+      <div data-dc-tpl="397" data-r="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(20px, 2vw, 28px) clamp(22px, 2.4vw, 36px); display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: clamp(14px, 2vw, 36px); align-items: center; animation-delay: 0.12s;">
+        <div data-dc-tpl="398" style="font-weight: 700; font-size: clamp(22px, 2.4vw, 40px); line-height: 1; text-transform: uppercase;">Бесплатный игрок стоит $0</div>
+        <div data-dc-tpl="399" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1.05vw, 17px); line-height: 1.45; color: rgb(169, 165, 175); text-wrap: pretty;">У него нет вызовов модели. Рост DAU не растит убыток.</div>
+      </div>
+      <div data-dc-tpl="400" data-r="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(20px, 2vw, 28px) clamp(22px, 2.4vw, 36px); display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: clamp(14px, 2vw, 36px); align-items: center; animation-delay: 0.18s;">
+        <div data-dc-tpl="401" style="font-weight: 700; font-size: clamp(22px, 2.4vw, 40px); line-height: 1; text-transform: uppercase;">Никому не обещаем доход</div>
+        <div data-dc-tpl="402" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1.05vw, 17px); line-height: 1.45; color: rgb(169, 165, 175); text-wrap: pretty;">Приходят играть, а не зарабатывать. Уходят не при просадке.</div>
+      </div>
+      <div data-dc-tpl="403" data-r="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(20px, 2vw, 28px) clamp(22px, 2.4vw, 36px); display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: clamp(14px, 2vw, 36px); align-items: center; animation-delay: 0.24s;">
+        <div data-dc-tpl="404" style="font-weight: 700; font-size: clamp(22px, 2.4vw, 40px); line-height: 1; text-transform: uppercase;">Burn $16K в месяц</div>
+        <div data-dc-tpl="405" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1.05vw, 17px); line-height: 1.45; color: rgb(169, 165, 175); text-wrap: pretty;">Три со-основателя, без офиса и без маркетингового сжигания.</div>
+      </div>
+    </div>
+  </div></section><section data-dc-tpl="406" id="token" style="border-top: 1px solid rgba(255, 255, 255, 0.09);">
+  <div data-dc-tpl="407" style="max-width: 1360px; margin: 0px auto; padding: clamp(64px, 8vw, 124px) clamp(20px, 5vw, 64px);">
+    <div data-dc-tpl="408" data-r="" data-s="p" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: 12px; letter-spacing: 0.18em; color: rgb(93, 93, 102);">14 · ТОКЕН</div>
+    <h2 data-dc-tpl="409" data-r="" data-s="p" style="margin: 16px 0px 0px; font-weight: 700; font-size: clamp(30px, 4.6vw, 68px); line-height: 1; text-transform: uppercase; text-wrap: balance; animation-delay: 0.05s;">Токен: после seed и без наёмников</h2>
+    <p data-dc-tpl="410" data-r="" data-s="p" style="margin: 18px 0px 0px; max-width: 980px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.05vw, 17px); line-height: 1.55; color: rgb(169, 165, 175); text-wrap: pretty; animation-delay: 0.1s;">Аэрдроп-фермеры сливают в стакан, если дамп выгоднее игры. Меняем дизайн, а не аудиторию.</p>
+
+    <div data-dc-tpl="411" style="margin-top: clamp(30px, 3.6vw, 52px); display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: clamp(14px, 1.8vw, 24px);">
+      <div data-dc-tpl="412" data-r="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(22px, 2.2vw, 34px); display: flex; flex-direction: column; min-height: clamp(190px, 17vw, 230px); box-shadow: rgba(255, 0, 105, 0.12) 0px 0px 90px;">
+        <div data-dc-tpl="413" style="font-weight: 700; font-size: clamp(22px, 2.4vw, 38px); line-height: 1; text-transform: uppercase; color: rgb(255, 0, 105); text-shadow: rgba(255, 0, 105, 0.4) 0px 0px 50px;">Нет аэрдропа за активность</div>
+        <div data-dc-tpl="414" style="margin-top: auto; padding-top: 18px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); line-height: 1.5; color: rgb(169, 165, 175); text-wrap: pretty;">Только ретроактив, взвешенный по потраченному USDC и возрасту бойца. Фармить = платить нам.</div>
+      </div>
+      <div data-dc-tpl="415" data-r="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(22px, 2.2vw, 34px); display: flex; flex-direction: column; min-height: clamp(190px, 17vw, 230px); animation-delay: 0.06s;">
+        <div data-dc-tpl="416" style="font-weight: 700; font-size: clamp(22px, 2.4vw, 38px); line-height: 1; text-transform: uppercase;">Токен зарабатывается на восхождении</div>
+        <div data-dc-tpl="417" style="margin-top: auto; padding-top: 18px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); line-height: 1.5; color: rgb(169, 165, 175); text-wrap: pretty;">Накопленное бойцом конвертируется только когда он уходит в наставники. Через месяцы, а не через неделю.</div>
+      </div>
+      <div data-dc-tpl="418" data-r="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(22px, 2.2vw, 34px); display: flex; flex-direction: column; min-height: clamp(190px, 17vw, 230px); animation-delay: 0.12s;">
+        <div data-dc-tpl="419" style="font-weight: 700; font-size: clamp(22px, 2.4vw, 38px); line-height: 1; text-transform: uppercase;">Утилити требует держать</div>
+        <div data-dc-tpl="420" style="margin-top: auto; padding-top: 18px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); line-height: 1.5; color: rgb(169, 165, 175); text-wrap: pretty;">Дом, старшие уровни, турниры под стейк. В момент дампа теряешь статус, в который вложил месяцы.</div>
+      </div>
+      <div data-dc-tpl="421" data-r="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(22px, 2.2vw, 34px); display: flex; flex-direction: column; min-height: clamp(190px, 17vw, 230px); animation-delay: 0.18s;">
+        <div data-dc-tpl="422" style="font-weight: 700; font-size: clamp(22px, 2.4vw, 38px); line-height: 1; text-transform: uppercase;">Продал бойца — потерял ретро</div>
+        <div data-dc-tpl="423" style="margin-top: auto; padding-top: 18px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); line-height: 1.5; color: rgb(169, 165, 175); text-wrap: pretty;">Ретроактив привязан к бойцу в твоём доме, а не к кошельку. Мультиаккаунт стоит денег и времени.</div>
+      </div>
+    </div>
+    <p data-dc-tpl="424" data-r="" data-s="p" style="margin: 24px 0px 0px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); line-height: 1.55; color: rgb(93, 93, 102); text-wrap: pretty;">Параметры: эмиссия 1B · 10–15% в обращении на старте · клифф 12 месяцев, вестинг 36 · buyback-and-burn из выручки в USDC. Название и запуск — на этапе seed.</p>
+  </div></section><section data-dc-tpl="425" id="roadmap" style="border-top: 1px solid rgba(255, 255, 255, 0.09); background: rgb(13, 10, 13);">
+  <div data-dc-tpl="426" style="max-width: 1360px; margin: 0px auto; padding: clamp(64px, 8vw, 124px) clamp(20px, 5vw, 64px);">
+    <div data-dc-tpl="427" data-r="" data-s="p" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: 12px; letter-spacing: 0.18em; color: rgb(93, 93, 102);">15 · ВРЕМЯ</div>
+    <h2 data-dc-tpl="428" data-r="" data-s="p" style="margin: 16px 0px 0px; font-weight: 700; font-size: clamp(30px, 4.6vw, 68px); line-height: 1; text-transform: uppercase; animation-delay: 0.05s;">Роадмап</h2>
+    <p data-dc-tpl="429" data-r="" data-s="p" style="margin: 18px 0px 0px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.05vw, 17px); line-height: 1.55; color: rgb(169, 165, 175); animation-delay: 0.1s;">Ориентир по времени. Токен — только после закрытия seed.</p>
+
+    <div data-dc-tpl="430" style="margin-top: clamp(34px, 4vw, 60px);">
+      <div data-dc-tpl="431" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: clamp(12px, 1.5vw, 20px);">
+        <div data-dc-tpl="432" style="display: flex; flex-direction: column;">
+          <div data-dc-tpl="433" style="position: relative; height: 12px;">
+            <div data-dc-tpl="434" style="position: absolute; left: 0px; right: 0px; top: 5px; height: 2px; background: rgba(255, 255, 255, 0.06);"></div>
+            <div data-dc-tpl="435" data-line="" data-s="p" style="position: absolute; left: 0px; right: 0px; top: 5px; height: 2px; background: rgba(255, 0, 105, 0.35); transform-origin: left center; animation-delay: 0.05s;"></div>
+            <div data-dc-tpl="436" data-dot="" data-s="p" style="position: absolute; left: 0px; top: 0px; width: 12px; height: 12px; background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.12); animation-delay: 0.1s;"></div>
+          </div>
+          <div data-dc-tpl="437" data-r="" data-s="p" style="margin-top: 20px; background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(20px, 2vw, 28px); display: flex; flex-direction: column; flex: 1 1 0%; min-height: clamp(230px, 22vw, 300px); box-shadow: rgba(255, 0, 105, 0.14) 0px 0px 90px;">
+            <div data-dc-tpl="438" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1.05vw, 16px); letter-spacing: 0.12em; color: rgb(255, 0, 105); text-shadow: rgba(255, 0, 105, 0.5) 0px 0px 40px;">СЕНТЯБРЬ 2026</div>
+            <div data-dc-tpl="439" style="margin-top: 6px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: 11px; letter-spacing: 0.14em; color: rgb(93, 93, 102);">ИДЁТ СЕЙЧАС</div>
+            <div data-dc-tpl="440" style="margin-top: 20px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); line-height: 1.5; color: rgb(169, 165, 175); text-wrap: pretty;">Ростер · характер бойца · восхождение · режим командования</div>
+            <div data-dc-tpl="441" style="margin-top: auto; padding-top: 20px; font-weight: 700; font-size: clamp(18px, 1.8vw, 28px); line-height: 1.05; text-transform: uppercase;">Играбельная петля целиком</div>
+          </div>
+        </div>
+        <div data-dc-tpl="442" style="display: flex; flex-direction: column;">
+          <div data-dc-tpl="443" style="position: relative; height: 12px;">
+            <div data-dc-tpl="444" style="position: absolute; left: 0px; right: 0px; top: 5px; height: 2px; background: rgba(255, 255, 255, 0.06);"></div>
+            <div data-dc-tpl="445" data-line="" data-s="p" style="position: absolute; left: 0px; right: 0px; top: 5px; height: 2px; background: rgba(255, 0, 105, 0.35); transform-origin: left center; animation-delay: 0.23s;"></div>
+            <div data-dc-tpl="446" data-dot="" data-s="p" style="position: absolute; left: 0px; top: 0px; width: 12px; height: 12px; background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.12); animation-delay: 0.28s;"></div>
+          </div>
+          <div data-dc-tpl="447" data-r="" data-s="p" style="margin-top: 20px; background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(20px, 2vw, 28px); display: flex; flex-direction: column; flex: 1 1 0%; min-height: clamp(230px, 22vw, 300px); animation-delay: 0.06s;">
+            <div data-dc-tpl="448" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1.05vw, 16px); letter-spacing: 0.12em; color: rgb(246, 244, 246);">Q4 2026</div>
+            <div data-dc-tpl="449" style="margin-top: 26px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); line-height: 1.5; color: rgb(169, 165, 175); text-wrap: pretty;">Закрытие pre-seed · постоянные аккаунты · кошелёк · микроплатежи · Base mini-app · второй разработчик · Siege Week с Clash of Coins</div>
+            <div data-dc-tpl="450" style="margin-top: auto; padding-top: 20px; font-weight: 700; font-size: clamp(18px, 1.8vw, 28px); line-height: 1.05; text-transform: uppercase;">1 000 DAU</div>
+          </div>
+        </div>
+        <div data-dc-tpl="451" style="display: flex; flex-direction: column;">
+          <div data-dc-tpl="452" style="position: relative; height: 12px;">
+            <div data-dc-tpl="453" style="position: absolute; left: 0px; right: 0px; top: 5px; height: 2px; background: rgba(255, 255, 255, 0.06);"></div>
+            <div data-dc-tpl="454" data-line="" data-s="p" style="position: absolute; left: 0px; right: 0px; top: 5px; height: 2px; background: rgba(255, 0, 105, 0.35); transform-origin: left center; animation-delay: 0.41s;"></div>
+            <div data-dc-tpl="455" data-dot="" data-s="p" style="position: absolute; left: 0px; top: 0px; width: 12px; height: 12px; background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.12); animation-delay: 0.46s;"></div>
+          </div>
+          <div data-dc-tpl="456" data-r="" data-s="p" style="margin-top: 20px; background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(20px, 2vw, 28px); display: flex; flex-direction: column; flex: 1 1 0%; min-height: clamp(230px, 22vw, 300px); animation-delay: 0.12s;">
+            <div data-dc-tpl="457" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1.05vw, 16px); letter-spacing: 0.12em; color: rgb(246, 244, 246);">Q1 2027</div>
+            <div data-dc-tpl="458" style="margin-top: 26px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); line-height: 1.5; color: rgb(169, 165, 175); text-wrap: pretty;">Бойцы как ERC-1155 · рынок бойцов v1 · дома с названиями · сезоны</div>
+            <div data-dc-tpl="459" style="margin-top: auto; padding-top: 20px; font-weight: 700; font-size: clamp(18px, 1.8vw, 28px); line-height: 1.05; text-transform: uppercase;">3–5K DAU · 150+ платящих</div>
+          </div>
+        </div>
+        <div data-dc-tpl="460" style="display: flex; flex-direction: column;">
+          <div data-dc-tpl="461" style="position: relative; height: 12px;">
+            <div data-dc-tpl="462" style="position: absolute; left: 0px; right: 0px; top: 5px; height: 2px; background: rgba(255, 255, 255, 0.06);"></div>
+            <div data-dc-tpl="463" data-line="" data-s="p" style="position: absolute; left: 0px; right: 0px; top: 5px; height: 2px; background: rgba(255, 0, 105, 0.35); transform-origin: left center; animation-delay: 0.59s;"></div>
+            <div data-dc-tpl="464" data-dot="" data-s="p" style="position: absolute; left: 0px; top: 0px; width: 12px; height: 12px; background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.12); animation-delay: 0.64s;"></div>
+          </div>
+          <div data-dc-tpl="465" data-r="" data-s="p" style="margin-top: 20px; background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(20px, 2vw, 28px); display: flex; flex-direction: column; flex: 1 1 0%; min-height: clamp(230px, 22vw, 300px); animation-delay: 0.18s;">
+            <div data-dc-tpl="466" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1.05vw, 16px); letter-spacing: 0.12em; color: rgb(246, 244, 246);">Q2 2027</div>
+            <div data-dc-tpl="467" style="margin-top: 26px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); line-height: 1.5; color: rgb(169, 165, 175); text-wrap: pretty;">Турниры с призами в USDC · спонсорские арены · points-программа</div>
+            <div data-dc-tpl="468" style="margin-top: auto; padding-top: 20px; font-weight: 700; font-size: clamp(18px, 1.8vw, 28px); line-height: 1.05; text-transform: uppercase;">10K DAU → выход в seed</div>
+          </div>
+        </div>
+        <div data-dc-tpl="469" style="display: flex; flex-direction: column;">
+          <div data-dc-tpl="470" style="position: relative; height: 12px;">
+            <div data-dc-tpl="471" style="position: absolute; left: 0px; right: 0px; top: 5px; height: 2px; background: rgba(255, 255, 255, 0.06);"></div>
+            <div data-dc-tpl="472" data-line="" data-s="p" style="position: absolute; left: 0px; right: 0px; top: 5px; height: 2px; background: rgba(255, 178, 29, 0.3); transform-origin: left center; animation-delay: 0.77s;"></div>
+            <div data-dc-tpl="473" data-dot="a" data-s="p" style="position: absolute; left: 0px; top: 0px; width: 12px; height: 12px; background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.12); animation-delay: 0.82s;"></div>
+          </div>
+          <div data-dc-tpl="474" data-r="" data-s="p" style="margin-top: 20px; background: rgb(13, 10, 13); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(20px, 2vw, 28px); display: flex; flex-direction: column; flex: 1 1 0%; min-height: clamp(230px, 22vw, 300px); animation-delay: 0.24s;">
+            <div data-dc-tpl="475" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1.05vw, 16px); letter-spacing: 0.12em; color: rgb(93, 93, 102);">Q3–Q4 2027</div>
+            <div data-dc-tpl="476" style="margin-top: 26px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); line-height: 1.5; color: rgb(93, 93, 102); text-wrap: pretty;">Seed закрыт · TGE с ретроактивом · маркет-мейкер</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div data-dc-tpl="477" data-r="" data-s="p" style="margin-top: clamp(30px, 3.4vw, 48px); font-weight: 600; font-size: clamp(18px, 2vw, 30px); line-height: 1.25; color: rgb(246, 244, 246); text-wrap: pretty;">Милстоун раунда: 10K DAU, 400+ платящих, работающие микроплатежи — заявка на seed $6–10M через 12–18 месяцев.</div>
+  </div></section><section data-dc-tpl="478" id="round" style="border-top: 1px solid rgba(255, 255, 255, 0.09);">
+  <div data-dc-tpl="479" style="max-width: 1360px; margin: 0px auto; padding: clamp(64px, 8vw, 124px) clamp(20px, 5vw, 64px);">
+    <div data-dc-tpl="480" data-r="" data-s="p" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: 12px; letter-spacing: 0.18em; color: rgb(93, 93, 102);">16 · РАУНД</div>
+    <h2 data-dc-tpl="481" data-r="" data-s="p" style="margin: 16px 0px 0px; font-weight: 700; font-size: clamp(30px, 4.6vw, 68px); line-height: 1; text-transform: uppercase; animation-delay: 0.05s;">Раунд</h2>
+    <p data-dc-tpl="482" data-r="" data-s="p" style="margin: 18px 0px 0px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.05vw, 17px); line-height: 1.55; color: rgb(169, 165, 175); animation-delay: 0.1s;">Pre-seed · SAFE · ангелы, фонды и комьюнити. Доля — по итогу раунда.</p>
+
+    <div data-dc-tpl="483" style="margin-top: clamp(30px, 3.6vw, 52px); display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: clamp(14px, 1.8vw, 24px);">
+      <div data-dc-tpl="484" data-r="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(22px, 2.2vw, 32px); box-shadow: rgba(255, 0, 105, 0.14) 0px 0px 90px;">
+        <div data-dc-tpl="485" data-count="nAmt" data-s="p" style="font-weight: 700; font-size: clamp(48px, 5.6vw, 88px); line-height: 0.9; color: rgb(255, 0, 105); text-shadow: rgba(255, 0, 105, 0.45) 0px 0px 60px;"><span class="sc-interp">$0K</span></div>
+        <div data-dc-tpl="486" style="margin-top: 12px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); color: rgb(93, 93, 102);">размер раунда (диапазон $200–300K)</div>
+      </div>
+      <div data-dc-tpl="487" data-r="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(22px, 2.2vw, 32px); animation-delay: 0.07s;">
+        <div data-dc-tpl="488" data-count="nCap" data-s="p" style="font-weight: 700; font-size: clamp(48px, 5.6vw, 88px); line-height: 0.9; color: rgb(246, 244, 246);"><span class="sc-interp">$0.0M</span></div>
+        <div data-dc-tpl="489" style="margin-top: 12px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); color: rgb(93, 93, 102);">cap, post-money</div>
+      </div>
+      <div data-dc-tpl="490" data-r="" data-s="p" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(22px, 2.2vw, 32px); animation-delay: 0.14s;">
+        <div data-dc-tpl="491" data-count="nRun" data-s="p" style="font-weight: 700; font-size: clamp(48px, 5.6vw, 88px); line-height: 0.9; color: rgb(246, 244, 246);"><span class="sc-interp">0 мес</span></div>
+        <div data-dc-tpl="492" style="margin-top: 12px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); color: rgb(93, 93, 102);">runway при росте DAU 25% в месяц (15 без выручки)</div>
+      </div>
+    </div>
+
+    <div data-dc-tpl="493" style="margin-top: clamp(24px, 2.8vw, 40px); display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: clamp(20px, 3vw, 44px); align-items: start;">
+      <div data-dc-tpl="494" data-r="" data-s="p">
+        <div data-dc-tpl="495" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); letter-spacing: 0.16em; color: rgb(246, 244, 246);">USE OF FUNDS</div>
+        <div data-dc-tpl="496" style="margin-top: 18px; display: flex; flex-direction: column; gap: 10px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1.05vw, 17px); line-height: 1.4; color: rgb(169, 165, 175);">
+          <div data-dc-tpl="497">Второй разработчик</div>
+          <div data-dc-tpl="498">Claude API и инфраструктура</div>
+          <div data-dc-tpl="499">On-chain: аудит и интеграция</div>
+          <div data-dc-tpl="500">Base mini-app, ивенты</div>
+          <div data-dc-tpl="501">Комьюнити: Discord и X</div>
+        </div>
+      </div>
+      <div data-dc-tpl="502" data-r="" data-s="p" style="animation-delay: 0.08s;">
+        <div data-dc-tpl="503" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); letter-spacing: 0.16em; color: rgb(246, 244, 246);">ЧТО ПОЛУЧАЕТ ИНВЕСТОР</div>
+        <div data-dc-tpl="504" style="margin-top: 18px; overflow-x: auto;">
+        <div data-dc-tpl="505" style="min-width: 460px; display: grid; grid-template-columns: 1.3fr 1fr 1fr 1fr; gap: 1px; background: rgba(255, 255, 255, 0.09); border: 1px solid rgba(255, 255, 255, 0.09);">
+          <div data-dc-tpl="506" style="background: rgb(8, 8, 10); padding: 12px 14px;"></div>
+          <div data-dc-tpl="507" style="background: rgb(8, 8, 10); padding: 12px 14px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(10px, 0.95vw, 14px); color: rgb(93, 93, 102);">Seed $6M</div>
+          <div data-dc-tpl="508" style="background: rgb(8, 8, 10); padding: 12px 14px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(10px, 0.95vw, 14px); color: rgb(93, 93, 102);">Seed $10M</div>
+          <div data-dc-tpl="509" style="background: rgb(8, 8, 10); padding: 12px 14px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(10px, 0.95vw, 14px); color: rgb(93, 93, 102);">Seed $15M</div>
+          <div data-dc-tpl="510" style="background: rgb(22, 22, 27); padding: 14px; font-weight: 600; font-size: clamp(13px, 1.15vw, 19px);">Equity, на бумаге*</div>
+          <div data-dc-tpl="511" style="background: rgb(22, 22, 27); padding: 14px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.15vw, 19px);">1.9x</div>
+          <div data-dc-tpl="512" style="background: rgb(22, 22, 27); padding: 14px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.15vw, 19px);">3.2x</div>
+          <div data-dc-tpl="513" style="background: rgb(22, 22, 27); padding: 14px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.15vw, 19px);">4.8x</div>
+          <div data-dc-tpl="514" style="background: rgb(13, 10, 13); padding: 14px; font-weight: 600; font-size: clamp(13px, 1.15vw, 19px);">+ token warrant**</div>
+          <div data-dc-tpl="515" style="background: rgb(13, 10, 13); padding: 14px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.15vw, 19px); color: rgb(93, 93, 102);">+0.3x</div>
+          <div data-dc-tpl="516" style="background: rgb(13, 10, 13); padding: 14px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.15vw, 19px); color: rgb(93, 93, 102);">+0.9x</div>
+          <div data-dc-tpl="517" style="background: rgb(13, 10, 13); padding: 14px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.15vw, 19px); color: rgb(93, 93, 102);">+1.8x</div>
+        </div>
+        </div>
+        <div data-dc-tpl="518" style="margin-top: 14px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(11px, 0.95vw, 14px); line-height: 1.45; color: rgb(93, 93, 102); text-wrap: pretty;">* после 20% разводнения на seed. ** pro-rata доля эмиссии, FDV $5M / $15M / $30M, с вестингом. Бинарный исход, как любой pre-seed.</div>
+      </div>
+    </div>
+  </div></section><section data-dc-tpl="519" id="team" style="border-top: 1px solid rgba(255, 255, 255, 0.09);">
+  <div data-dc-tpl="520" style="max-width: 1360px; margin: 0px auto; padding: clamp(64px, 8vw, 124px) clamp(20px, 5vw, 64px);">
+    <div data-dc-tpl="521" style="font-family: &quot;JetBrains Mono&quot;, monospace; font-size: 12px; letter-spacing: 0.18em; color: rgb(93, 93, 102);">17 · КОМАНДА</div>
+    <h2 data-dc-tpl="522" style="margin: 16px 0px 0px; font-weight: 700; font-size: clamp(30px, 4.6vw, 68px); line-height: 1; text-transform: uppercase;">Команда</h2>
+    <p data-dc-tpl="523" style="margin: 18px 0px 0px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(13px, 1.05vw, 17px); line-height: 1.55; color: rgb(169, 165, 175);">Три со-основателя. Второй разработчик — из раунда.</p>
+
+    <div data-dc-tpl="524" style="margin-top: clamp(30px, 3.6vw, 52px); display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: clamp(14px, 1.8vw, 24px);">
+      <div data-dc-tpl="525" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(24px, 2.4vw, 34px); display: flex; flex-direction: column; min-height: clamp(280px, 26vw, 380px);">
+        <svg data-dc-tpl="526" width="70" height="78" viewBox="0 0 86 96" fill="none"><path data-dc-tpl="527" d="M43 3 81 25v46L43 93 5 71V25Z" stroke="#5D5D66" stroke-width="3"></path></svg>
+        <div data-dc-tpl="528" style="margin-top: 22px; font-weight: 700; font-size: clamp(24px, 2.4vw, 38px); line-height: 1; text-transform: uppercase;">Юрий Варваров</div>
+        <div data-dc-tpl="529" style="margin-top: 8px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(11px, 1vw, 15px); letter-spacing: 0.12em; color: rgb(255, 0, 105);">CEO · СО-ОСНОВАТЕЛЬ</div>
+        <div data-dc-tpl="530" style="margin-top: auto; padding-top: 20px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); line-height: 1.5; color: rgb(169, 165, 175); text-wrap: pretty;">8 лет в управлении инвестициями. Чемпион мира по ушу. Архитектура продукта и ИИ.</div>
+      </div>
+      <div data-dc-tpl="531" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(24px, 2.4vw, 34px); display: flex; flex-direction: column; min-height: clamp(280px, 26vw, 380px);">
+        <svg data-dc-tpl="532" width="70" height="78" viewBox="0 0 86 96" fill="none"><path data-dc-tpl="533" d="M43 3 81 25v46L43 93 5 71V25Z" stroke="#5D5D66" stroke-width="3"></path></svg>
+        <div data-dc-tpl="534" style="margin-top: 22px; font-weight: 700; font-size: clamp(24px, 2.4vw, 38px); line-height: 1; text-transform: uppercase;">Евгений Бобров</div>
+        <div data-dc-tpl="535" style="margin-top: 8px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(11px, 1vw, 15px); letter-spacing: 0.12em; color: rgb(93, 93, 102);">СО-ОСНОВАТЕЛЬ</div>
+        <div data-dc-tpl="536" style="margin-top: auto; padding-top: 20px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); line-height: 1.5; color: rgb(169, 165, 175); text-wrap: pretty;">Разработка ядра, операции, партнёрства.</div>
+      </div>
+      <div data-dc-tpl="537" style="background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(24px, 2.4vw, 34px); display: flex; flex-direction: column; min-height: clamp(280px, 26vw, 380px);">
+        <svg data-dc-tpl="538" width="70" height="78" viewBox="0 0 86 96" fill="none"><path data-dc-tpl="539" d="M43 3 81 25v46L43 93 5 71V25Z" stroke="#5D5D66" stroke-width="3"></path></svg>
+        <div data-dc-tpl="540" style="margin-top: 22px; font-weight: 700; font-size: clamp(24px, 2.4vw, 38px); line-height: 1; text-transform: uppercase;">Иван Король</div>
+        <div data-dc-tpl="541" style="margin-top: 8px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(11px, 1vw, 15px); letter-spacing: 0.12em; color: rgb(93, 93, 102);">CTO · СО-ОСНОВАТЕЛЬ</div>
+        <div data-dc-tpl="542" style="margin-top: auto; padding-top: 20px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 15px); line-height: 1.45; color: rgb(169, 165, 175); text-wrap: pretty;">CTO и со-основатель AR Spatially (команда 14). Solidity / HUFF / EVM: MEV-система до ~1% транзакций Ethereum. Бэкенд, AI/ML в проде.</div>
+      </div>
+    </div>
+
+    <div data-dc-tpl="543" style="margin-top: clamp(20px, 2.2vw, 30px); background: rgb(22, 22, 27); border: 1px solid rgba(255, 255, 255, 0.09); padding: clamp(22px, 2.2vw, 34px);">
+      <div data-dc-tpl="544" style="font-weight: 700; font-size: clamp(20px, 2vw, 32px); text-transform: uppercase;">Партнёры и экосистема</div>
+      <div data-dc-tpl="545" style="margin-top: 10px; font-family: &quot;JetBrains Mono&quot;, monospace; font-size: clamp(12px, 1vw, 16px); line-height: 1.5; color: rgb(169, 165, 175); text-wrap: pretty;">OWB Studio / Clash of Coins (Ник Самарин) — кросс-игровая интеграция. Base: Coinbase Smart Wallet, mini-app, микроплатежи. Юрлицо для SAFE — регистрируется до закрытия раунда.</div>
+    </div>
+  </div></section><footer data-dc-tpl="546" style="border-top: 1px solid rgba(255, 255, 255, 0.09);">
+  <div data-dc-tpl="547" style="max-width: 1360px; margin: 0px auto; padding: clamp(40px, 5vw, 72px) clamp(20px, 5vw, 64px); display: flex; flex-wrap: wrap; gap: 24px; align-items: center; justify-content: space-between;">
+    <div data-dc-tpl="548" style="display: flex; align-items: center; gap: 14px;">
+      <img class="dk-mark" alt="" aria-hidden="true" draggable="false" width="48" height="48" src="/brand/mark-full-256.png" srcset="/brand/mark-full-128.png 128w, /brand/mark-full-256.png 256w, /brand/mark-full-512.png 512w" sizes="48px" style="width:48px;height:48px;display:block;flex:0 0 auto">
+      <span data-dc-tpl="551" style="font-weight: 700; font-size: 19px; letter-spacing: 0.14em;">HEXLASH</span>
+    </div>
+    <div data-dc-tpl="552" style="display: flex; flex-wrap: wrap; gap: clamp(16px, 2vw, 32px); font-family: &quot;JetBrains Mono&quot;, monospace; font-size: 12px; letter-spacing: 0.14em; color: rgb(93, 93, 102);">
+      <a data-dc-tpl="553" href="https://hexlash.com" style="color: rgb(169, 165, 175);">hexlash.com</a>
+      <span data-dc-tpl="554">PRE-SEED · BASE · CONFIDENTIAL</span>
+      <span data-dc-tpl="555">СЕНТЯБРЬ 2026</span>
+    </div>
+  </div></footer></div>
+
+<script>
+/* Страница-дека — весь её собственный сценарий. Три вещи и больше ничего:
+   проявление разделов на прокрутке, полоска прогресса чтения и окно с ареной.
+   React и рантайм Claude Design из страницы вынуты: она собрана заранее и
+   открывается готовой. Без этого сценария страница ПОЛНОСТЬЮ читается —
+   см. <noscript> в шапке. */
+(function () {
+  'use strict';
+
+  /* 1. Проявление на прокрутке. Лист презентации ждёт data-s="i" — сценарий
+        только переставляет признак; сами движения описаны в стилях, и при
+        системной настройке «уменьшить движение» они там же и гасятся. */
+  var marked = document.querySelectorAll('[data-s="p"]');
+  if (window.IntersectionObserver) {
+    var io = new IntersectionObserver(function (entries) {
+      for (var i = 0; i < entries.length; i++) {
+        if (!entries[i].isIntersecting) continue;
+        entries[i].target.setAttribute('data-s', 'i');
+        io.unobserve(entries[i].target);
+      }
+    }, { threshold: 0.12, rootMargin: '0px 0px -6% 0px' });
+    for (var i = 0; i < marked.length; i++) io.observe(marked[i]);
+  } else {
+    for (var j = 0; j < marked.length; j++) marked[j].setAttribute('data-s', 'i');
+  }
+
+  /* 2. Полоска прочитанного под шапкой. */
+  var prog = document.getElementById('hx-prog');
+  if (prog) {
+    var tick = function () {
+      var h = document.documentElement.scrollHeight - window.innerHeight;
+      prog.style.width = (h > 0 ? Math.min(100, (window.scrollY / h) * 100) : 0) + '%';
+    };
+    addEventListener('scroll', tick, { passive: true });
+    addEventListener('resize', tick);
+    tick();
+  }
+
+  /* 3. Окно с ареной.
+        Арена — отдельный жилец: своё окно по своему адресу, приложение внутрь
+        страницы не втягивается. Не грузится, пока не нажали кнопку: сцена
+        тяжёлая, автозагрузка подвесила бы вкладку.
+        ⚠️ Признак ?showcase=1 управляет ТОЛЬКО подачей арены — что видно и что
+        запускается. Он НИКОГДА не включает думающий мозг модели и ничего
+        платного: адресную строку подделает кто угодно. Полное правило —
+        рядом с самим признаком в src/scene/ArenaScene.vue. */
+  var ARENA = '/play/arena?showcase=1';
+  var GIVE_UP_MS = 30000;
+
+  var stage = document.getElementById('dk-stage');
+  var rest  = document.getElementById('dk-rest');
+  var state = document.getElementById('dk-state');
+  if (!stage || !rest || !state) return;
+
+  var frame = null, timer = null;
+
+  var setState = function (text, kind) {
+    state.textContent = text;
+    state.className = 'dk-state' + (kind ? ' is-' + kind : '');
+  };
+
+  var panel = function (kicker, title, note, btnLabel, ghost, onClick) {
+    rest.innerHTML = '';
+    rest.hidden = false;
+    var add = function (cls, text) {
+      if (!text) return;
+      var el = document.createElement('div');
+      el.className = cls; el.textContent = text; rest.appendChild(el);
+    };
+    add('dk-rest-kicker', kicker);
+    add('dk-rest-title', title);
+    add('dk-rest-note', note);
+    if (!btnLabel) return;
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'dk-run' + (ghost ? ' dk-run--ghost' : '');
+    b.textContent = btnLabel;
+    b.addEventListener('click', onClick);
+    rest.appendChild(b);
+  };
+
+  var drop = function () {
+    if (timer) { clearTimeout(timer); timer = null; }
+    if (frame) { frame.remove(); frame = null; }
+  };
+
+  var fail = function () {
+    drop();
+    setState('ОШИБКА', 'err');
+    panel('ОКНО НЕ ОТКРЫЛОСЬ', 'Арена не поднялась.',
+      'Бой живёт на той же площадке, что и сама игра. Если она сейчас недоступна, страница от этого не ломается — остальные разделы читаются как обычно.',
+      'ПОПРОБОВАТЬ СНОВА', true, start);
+  };
+
+  var ended = function () {
+    setState('БОЙ ЗАВЕРШЁН');
+    panel('', '', '', 'ЕЩЁ РАЗ', true, start);
+    rest.style.background = 'rgba(8,8,10,.72)';
+  };
+
+  function start() {
+    drop();
+    rest.style.background = '';
+    setState('ЗАГРУЗКА');
+    panel('', '', '', '', false, null);
+    rest.hidden = true;
+
+    frame = document.createElement('iframe');
+    frame.title = 'Живой бой на арене Hexlash';
+    frame.setAttribute('tabindex', '-1');
+    frame.setAttribute('scrolling', 'no');
+    /* Уникальный хвост — чтобы «ЕЩЁ РАЗ» действительно перезагружал окно,
+       а не показывал уже доигранный бой из кеша. */
+    frame.src = ARENA + '&r=' + Date.now();
+    frame.addEventListener('error', fail);
+    stage.appendChild(frame);
+
+    timer = setTimeout(fail, GIVE_UP_MS);
+  }
+
+  /* Арена сообщает о себе сама: 'ready' — экран загрузки ушёл и бой пошёл,
+     'end' — бой доигран и застыл в конечном состоянии. */
+  addEventListener('message', function (e) {
+    if (e.origin !== location.origin) return;
+    var d = e.data;
+    if (!d || d.source !== 'hexlash-arena') return;
+    if (d.phase === 'ready') { if (timer) { clearTimeout(timer); timer = null; } setState('БОЙ', 'live'); }
+    else if (d.phase === 'end') ended();
+  });
+
+  document.getElementById('dk-run').addEventListener('click', start);
+})();
+</script>
 </body>
 </html>

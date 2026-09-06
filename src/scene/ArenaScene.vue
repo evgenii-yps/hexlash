@@ -17,7 +17,7 @@
     <!-- Always-on dev-panel show/hide toggle (small corner). The panel auto-hides
          when a bout starts (clean player view) + returns when it ends; in the SIG
          auto-cycle the bout never ends, so this is the only way back. -->
-    <button type="button" class="arena-panel-toggle" :class="{ on: panelVisible }" @click="panelVisible = !panelVisible" :aria-pressed="panelVisible" title="Toggle dev panel">DEV</button>
+    <button v-if="!showcase" type="button" class="arena-panel-toggle" :class="{ on: panelVisible }" @click="panelVisible = !panelVisible" :aria-pressed="panelVisible" title="Toggle dev panel">DEV</button>
     <!-- Dev readability stand (preview only): FIGHT + the L/R signature A/B stand
          + GRAY. Hidden during a bout; brought back via the DEV corner toggle. -->
     <div v-if="panelVisible" class="arena-actions">
@@ -52,7 +52,7 @@ import { facetPhrase } from '@/data/facetReadout.js';
 import { SIG_PRESETS, SIG_ORDER, presetBehavior } from '@/data/behaviorPresets.js';
 import { COMBAT_BALANCE } from '@/data/combatBalance.js';
 import apiClient from '@/core/api/apiClient.js';
-import { beginSceneLoad } from '@/services/sceneLoading.js';
+import { beginSceneLoad, loadingState } from '@/services/sceneLoading.js';
 import { LIGHTING, FOG_COLOR, FOG, FOV, CAMERA } from '@/data/sceneTokens.js';;
 
 // Model-brain request (hybrid intention layer). Injected into each fighter; it
@@ -63,9 +63,37 @@ const requestModelIntention = (payload) => apiClient.requestFighterIntention(pay
 
 const wrap = ref(null);
 const canvasEl = ref(null);
+
+// ─── РЕЖИМ ПОКАЗА (?showcase=1) ─────────────────────────────────────────────
+// Одна арена, одна подача для страницы-деки: оба бойца назначены (ONSLAUGHT
+// против AMBUSH), служебная панель и кнопка DEV НЕ создаются, бой стартует сам
+// и доигрывается до конца. Без признака арена ведёт себя ровно как раньше.
+//
+// ⚠️ ПРАВИЛО, КОТОРОЕ НЕЛЬЗЯ НАРУШАТЬ (решение владельца 06.09.2026).
+// Этот признак управляет ТОЛЬКО ПОДАЧЕЙ — что видно и что запускается.
+// Он НИКОГДА не управляет включением думающего мозга модели, ограничителем
+// расходов и вообще ничем, что стоит денег: признак приходит из адресной
+// строки, значит его подставит кто угодно и нажжёт вызовов на наши деньги.
+// Включение модели делается ОДНОРАЗОВЫМ ПРОПУСКОМ С СЕРВЕРА, отдельной
+// задачей. Если следующая сессия захочет привязать сюда модель — нельзя.
+const showcase = (() => {
+  try { return new URLSearchParams(window.location.search).get('showcase') === '1'; }
+  catch (_) { return false; }
+})();
+
+// Сообщение наверх (окно на странице-деке): готово / бой кончился. Родитель у
+// нас всегда свой (страница /deckinvestors на том же домене), поэтому адрес
+// получателя задан явно, а не '*'. Вне окна parent === window — безвредно.
+const postShowcase = (phase) => {
+  if (!showcase) return;
+  try { window.parent.postMessage({ source: 'hexlash-arena', phase }, window.location.origin); }
+  catch (_) { /* окно закрыто или чужой домен — молча пропускаем */ }
+};
+
 // Dev-panel visibility — true at rest, auto-hidden during a bout, flipped by the
 // always-on DEV corner toggle (the only way back during the SIG auto-cycle).
-const panelVisible = ref(true);
+// В режиме показа остаётся false навсегда → панель и телеметрия не создаются.
+const panelVisible = ref(!showcase);
 // Dev readout — both fighters' stamina (силы) + charge (заряд), refreshed live
 // (throttled) in the loop so the spend / recover can be watched. Temporary.
 const staReadout = ref('STA  P —  ·  O —');
@@ -140,6 +168,9 @@ let aiOpponent = false;
 // onMounted (needs the scene); fightActive gates the win-and-freeze behaviour.
 let fightActive = false;
 let runFight = null;
+// Режим показа: бой запускается один раз за загрузку окна. Повтор делает
+// страница-дека, перезагружая окно, — своей кнопки повтора у арены нет.
+let showcaseStarted = false;
 // SIG dev stand: sigCycle owns the auto-restart-on-KO loop (distinct from the
 // normal FIGHT win-and-freeze). runSigFight assigned in onMounted. sigRestartAt
 // is loop time the next bout fires; lastFrameT is the live loop time (so an
@@ -285,7 +316,9 @@ onMounted(() => {
   // fallback keeps the scene sane otherwise.
   // getCore() always resolves (falls back to Скала), so gate on the raw pick to
   // keep the canon-pink fallback when nothing was chosen.
-  const pickedId = store.getters['prefight/selectedCoreId'];
+  // Режим показа: ядро игрока задано жёстко (ONSLAUGHT) — так написано на
+  // странице-деке, и заходить туда через выбор ядра инвестор не будет.
+  const pickedId = showcase ? 'natisk' : store.getters['prefight/selectedCoreId'];
   const selectedCore = pickedId ? getCore(pickedId) : null;
   const playerColor = selectedCore ? selectedCore.hue : pink;
   const playerCoreId = selectedCore ? selectedCore.id : null;
@@ -306,7 +339,7 @@ onMounted(() => {
   const playerTree = store.getters['prefight/upgradeTree'] || (playerCoreId ? CRYSTALS[playerCoreId] : null);
   const playerBehavior = resolveBehavior(playerCoreId, collectLit(playerTree));
   // Opponent: a random one of the four cores, lit from its own CRYSTALS defaults.
-  const opponentCoreId = CORES[Math.floor(Math.random() * CORES.length)].id;
+  const opponentCoreId = showcase ? 'zasada' : CORES[Math.floor(Math.random() * CORES.length)].id;
   const opponentBehavior = resolveBehavior(opponentCoreId, collectLit(CRYSTALS[opponentCoreId]));
 
   // Behaviour for a side: during a SIG dev bout the chosen signature preset
@@ -369,7 +402,8 @@ onMounted(() => {
     aiOpponent = false;
     fighter?.setAI(false); // winner stops attacking → settles to idle
     opponent?.setAI(false);
-    panelVisible.value = true; // bout over → bring the dev panel back
+    if (!showcase) panelVisible.value = true; // bout over → bring the dev panel back
+    postShowcase('end'); // окно на деке покажет «ЕЩЁ РАЗ»
   };
   const spawnFighter = () => {
     fighter = buildFighter(playerColor, {
@@ -558,6 +592,14 @@ onMounted(() => {
     // One settled frame toward readiness — counted only once every stage above is
     // in, and reset by any re-fit (see the resize observer).
     load.frame();
+
+    // Режим показа: бой стартует сам — но только ПОСЛЕ того, как экран загрузки
+    // ушёл, иначе первые секунды боя пройдут под ним и зритель их не увидит.
+    if (showcase && !showcaseStarted && !loadingState.active) {
+      showcaseStarted = true;
+      postShowcase('ready');
+      runFight();
+    }
   };
   renderer.setAnimationLoop(loop);
 

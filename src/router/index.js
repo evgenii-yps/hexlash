@@ -74,6 +74,14 @@ const publicRoutes = [
 // requireCore guards the arena: without a pick (e.g. a hard refresh straight
 // onto /play/arena) bounce back to selection.
 const requireCore = (to, from, next) => {
+    // Режим показа (?showcase=1) — вход на арену со страницы-деки. Выбора ядра
+    // там нет и быть не может: инвестор открывает окно, а не проходит поток.
+    // Оба бойца в этом режиме назначены жёстко внутри самой сцены.
+    // ⚠️ Признак управляет ТОЛЬКО подачей. Он НИКОГДА не включает думающий мозг
+    // модели и ничего платного — его подставит кто угодно из адресной строки.
+    // Полное правило — рядом с самим признаком в src/scene/ArenaScene.vue.
+    if (to.query.showcase === '1') return next();
+
     // Ask the save layer here rather than trusting that the store module was
     // evaluated first. This guard is the ONE place that decides whether a
     // refresh keeps the player where they are, so it must not depend on module
