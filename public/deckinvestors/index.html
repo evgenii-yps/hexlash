@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     HEXLASH · INVESTOR DECK · КАРКАС (шаг 1 из 2)
+     ═══════════════════════════════════════════════════════════════════════
+
+     ЧТО ЭТО. Отдельная самостоятельная страница по адресу /deckinvestors.
+     НЕ экран приложения: приложение Vue тут не запускается, роутер игры про
+     этот адрес не знает, бандл не грузится. Решение от 03.09.2026 — сайт
+     игры сложная сборка, вживление деки внутрь означало бы взаимный риск:
+     правка деки задевает игру, правка игры задевает деку.
+
+     ГДЕ ЛЕЖИТ. public/deckinvestors/index.html. Каталог public/ Vite копирует
+     в сборку как есть, без обработки, поэтому файл не проходит ни через
+     бандлер, ни через обфускатор.
+
+     ⚠️ АДРЕС ДЕРЖИТСЯ ДВУМЯ ВЕЩАМИ, И ОБЕ ЛЕГКО СНЕСТИ НЕЧАЯННО:
+       1. этим файлом (папка + index.html внутри — форма «папка со своим
+          index.html» выбрана намеренно: её одинаково понимают и Vercel,
+          и nginx из nginx.prod.conf);
+       2. исключением в vercel.json — там стоит перехват ВСЕХ адресов
+          `/(.*)` → `/index.html` для одностраничного приложения, и без
+          исключения он съел бы эту страницу. Комментариев в vercel.json
+          быть не может (это строгий JSON), поэтому объяснение живёт здесь.
+     Убрать любую из двух — адрес отдаст приложение или его 404.
+
+     ЗАКРЫТА ОТ ПОИСКА. Мета-запрет ниже + заголовок ответа X-Robots-Tag в
+     vercel.json. В robots.txt путь НЕ упоминается намеренно: строки запрета
+     в том файле публичны и работают как указатель. Ссылок на страницу нет
+     ниоткуда — ни из меню, ни из подвала, ни из карты сайта.
+
+     ЗНАЧЕНИЯ ВПИСАНЫ ЛИТЕРАЛАМИ — так же и по той же причине, что на экране
+     загрузки (#hx-load в index.html): страница живёт вне сборки, tokens.css
+     сюда не приезжает, а var() без объявления не работает. Каждое число ниже
+     скопировано из src/styles/tokens.css и там же — источник правды. Меняется
+     цвет или шрифт — меняется в токенах, потом здесь.
+
+     ЗНАК — те же файлы, что у всех остальных поверхностей (public/brand/*),
+     а не отдельная копия картинки. Разметка написана руками, потому что
+     src/components/brand/hexlashMark.js это Vue-модуль и на эту страницу он
+     не грузится — ровно так же поступает экран загрузки. Бокс знака 128
+     точек на большом экране и 59 на телефоне: и то и другое ВЫШЕ порога
+     48 точек, значит везде идёт ПОЛНАЯ отрисовка.
+     ⚠️ Опустить бокс ниже 48 — значит показать другой рисунок знака.
+
+     ЧЕГО ЗДЕСЬ НЕТ И НЕ ДОЛЖНО ПОЯВИТЬСЯ БЕЗ ОТДЕЛЬНОГО РЕШЕНИЯ:
+       · содержимого деки — это шаг 2, отдельное ТЗ;
+       · свечения, пульсации и любого движения — страница матовая;
+       · внутренних слов проекта (HOUSE, HEXARCH, ASCENSION, TEMPER,
+         DOCTRINE) — на эту страницу они не идут ни в каком виде.
+     ═══════════════════════════════════════════════════════════════════ -->
+
+<meta name="robots" content="noindex, nofollow">
+
+<title>HEXLASH</title>
+<meta name="description" content="Train the AI until it becomes the trainer.">
+
+<!-- Превью ссылки. Страница закрыта от поиска, но ссылку отправляют руками в
+     мессенджерах — это разные вещи и они не противоречат друг другу.
+     Картинка — та же, что у сайта: 1200x630 из брендового пакета. -->
+<meta property="og:title" content="HEXLASH">
+<meta property="og:description" content="Train the AI until it becomes the trainer.">
+<meta property="og:image" content="https://hexlash.com/og-image.png">
+<meta property="og:url" content="https://hexlash.com/deckinvestors">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="HEXLASH">
+<meta name="twitter:description" content="Train the AI until it becomes the trainer.">
+<meta name="twitter:image" content="https://hexlash.com/og-image.png">
+
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
+<link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
+
+<!-- Знак — первое, что должно быть целым. -->
+<link rel="preload" as="image" href="/brand/mark-full-256.png"
+      imagesrcset="/brand/mark-full-128.png 128w, /brand/mark-full-256.png 256w, /brand/mark-full-512.png 512w"
+      imagesizes="130px">
+
+<!-- Шрифты проекта, тем же неблокирующим способом, что в index.html: сначала
+     красимся запасными начертаниями, фирменные подменяются, когда приедут. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style"
+      href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap"
+      onload="this.onload=null;this.rel='stylesheet'">
+<noscript>
+  <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap">
+</noscript>
+
+<style>
+  /* Значения — копия из src/styles/tokens.css, см. шапку файла. */
+  :root {
+    --void:     #08080A;   /* фон всех экранов */
+    --carbon:   #0D0A0D;   /* тёмная подложка */
+    --ink:      #F6F4F6;   /* основной текст; чисто-белого в проекте нет */
+    --ink-dim:  #A9A5AF;   /* читаемые подписи, мета */
+    --font-display: "Saira Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif;
+    --font-mono:    "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --ls-tight: 0.04em;
+    --ls-meta:  0.16em;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: var(--ink);
+    font-family: var(--font-mono);
+    -webkit-font-smoothing: antialiased;
+    /* Тот же сдержанный тёмный подмаз, что на 404 и на экране загрузки.
+       Это не свечение: обе точки градиента — тёмные (carbon → void). */
+    background: var(--void) radial-gradient(130% 80% at 50% 120%, var(--carbon) 0%, var(--void) 46%, var(--void) 82%);
+    padding: 40px 24px calc(28px + env(safe-area-inset-bottom, 0px));
+    /* Телефон приоритетнее: горизонтальной прокрутки не бывает никогда. */
+    overflow-x: hidden;
+  }
+
+  .dk {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+    width: 100%;
+    max-width: 720px;
+  }
+
+  /* Вертикальная связка — знак сверху, слово снизу. Пропорции сняты с
+     docs/design-handoff/hexlash_mark/brand/lockup-vertical.png: кегль слова
+     = 35.3% от чернил знака, зазор = 68.8% от них. Обе величины выведены от
+     ОДНОЙ ручки --word, поэтому пара масштабируется целиком. Та же
+     конструкция, что на экране загрузки и на 404. */
+  .dk-lock {
+    /* Нижняя граница 26 подобрана так, чтобы бокс знака (2.29 x --word)
+       на телефоне 360 точек оставался ВЫШЕ порога 48 — иначе сменится
+       рисунок знака. 26 x 2.29 = 59.5. */
+    --word: clamp(26px, 7vmin, 56px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .dk-mark {
+    display: block;
+    width: calc(var(--word) * 2.29);
+    height: calc(var(--word) * 2.29);
+    margin-bottom: calc(var(--word) * 1.18);
+  }
+  /* Слово — живой текст, картинкой не ставится. Правило без исключений. */
+  .dk-word {
+    font-family: var(--font-display);
+    font-weight: 900;
+    text-transform: uppercase;
+    font-size: var(--word);
+    line-height: 1;
+    letter-spacing: var(--ls-tight);
+  }
+
+  .dk-sub {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    text-transform: uppercase;
+    /* Чем мельче текст, тем шире разрядка. */
+    font-size: clamp(10px, 2.9vmin, 13px);
+    letter-spacing: var(--ls-meta);
+    line-height: 1.6;
+    color: var(--ink-dim);
+    text-align: center;
+    /* Перенос разрешён намеренно: если начертание окажется шире расчёта,
+       строка сложится на две, а не вылезет за поле. */
+    max-width: 100%;
+  }
+
+  .dk-foot {
+    flex: 0 0 auto;
+    padding-top: 32px;
+    font-family: var(--font-mono);
+    font-weight: 400;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    /* --ink-dim, а не --ink-off: по описанию в токенах ink-off — «выключенное,
+       SOON», а адрес сайта это живая подпись. Плюс ink-off на этом фоне даёт
+       контраст 3.1:1 — ниже порога читаемости для мелкого текста. Иерархия
+       держится кеглем и разрядкой, а не приглушением до нечитаемого. */
+    color: var(--ink-dim);
+    text-align: center;
+  }
+
+  /* Движения на странице нет вовсе — ни петель, ни появлений, ни отклика на
+     касание (нажимать нечего). Гасить при «уменьшить движение» нечего. */
+</style>
+</head>
+<body>
+
+<main class="dk">
+  <div class="dk-lock">
+    <!-- Знак, ПОЛНАЯ отрисовка. Картинка, а не путь в разметке: знак
+         двухцветный (белый + единственный розовый росчерк), вектора в
+         проекте нет. Файлы те же, что у приложения — см. шапку. -->
+    <img class="dk-mark" alt="" aria-hidden="true" draggable="false"
+         src="/brand/mark-full-256.png"
+         srcset="/brand/mark-full-128.png 128w, /brand/mark-full-256.png 256w, /brand/mark-full-512.png 512w"
+         sizes="130px">
+    <h1 class="dk-word">HEXLASH</h1>
+  </div>
+
+  <p class="dk-sub">Investor overview &mdash; September 2026</p>
+</main>
+
+<!-- Адрес сайта — обычный текст, а не ссылка: ссылка потребовала бы шести
+     состояний и отклика на касание, а страница намеренно ничего не делает. -->
+<footer class="dk-foot">&copy; 2026 &middot; hexlash.com</footer>
+
+</body>
+</html>

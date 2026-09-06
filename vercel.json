@@ -1,5 +1,17 @@
 {
+  "headers": [
+    {
+      "source": "/deckinvestors",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    },
+    {
+      "source": "/deckinvestors/",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    }
+  ],
   "rewrites": [
+    { "source": "/deckinvestors", "destination": "/deckinvestors/index.html" },
+    { "source": "/deckinvestors/", "destination": "/deckinvestors/index.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
