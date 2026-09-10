@@ -89,8 +89,13 @@ a:hover{color:#F6F4F6}
     repeating-linear-gradient(-45deg,rgba(255,0,105,.05) 0 1px,transparent 1px 88px),
     repeating-linear-gradient(45deg,rgba(255,0,105,.028) 0 1px,transparent 1px 264px),
     repeating-linear-gradient(-45deg,rgba(255,0,105,.028) 0 1px,transparent 1px 264px);
-  -webkit-mask-image:radial-gradient(115% 80% at 50% 34%,#000 0%,rgba(0,0,0,.55) 52%,transparent 88%);
-  mask-image:radial-gradient(115% 80% at 50% 34%,#000 0%,rgba(0,0,0,.55) 52%,transparent 88%);
+  /* Маска гасит решётку к краям, чтобы она не читалась ровным ковром.
+     ⚠️ Внутри экрана она НЕ доходит до нуля — иначе узор умирает у нижней
+     кромки, а там как раз стоит подвал, и страница выглядит обрезанной.
+     Прозрачной маска становится за пределами экрана (118%), внутри разброс
+     примерно от половины до полной силы. */
+  -webkit-mask-image:radial-gradient(125% 105% at 50% 36%,#000 0%,rgba(0,0,0,.62) 58%,rgba(0,0,0,.3) 92%,transparent 118%);
+  mask-image:radial-gradient(125% 105% at 50% 36%,#000 0%,rgba(0,0,0,.62) 58%,rgba(0,0,0,.3) 92%,transparent 118%);
 }
 
 /* --- Б. Надзаголовки разделов --------------------------------------------
@@ -258,6 +263,60 @@ html.dk-anim [data-dk-in].dk-in>*{
 html.dk-anim [data-dk-in].dk-in>:nth-child(2){transition-delay:60ms}
 html.dk-anim [data-dk-in].dk-in>:nth-child(3){transition-delay:120ms}
 html.dk-anim [data-dk-in].dk-in>:nth-child(n+4){transition-delay:180ms}
+
+/* --- И. Подвал -----------------------------------------------------------
+   Собран по рисунку подвала лендинга: `.lp .footer*` в
+   src/components/landing/landing.css. Оттуда взяты компоновка и числа —
+   ширина рядов, отступы между ними, разрядка кредо, перелом на узком экране.
+   Пересобран состав: Privacy и копирайт лендинга не переносятся, вместо
+   копирайта стоит уже существовавшая строка CONFIDENTIAL.
+
+   Числа двух источников не смешаны: пропорции связки (48 / 24 / 14) взяты у
+   подвала лендинга целиком и формулой; начертание слова взято по канону
+   (Saira Condensed 900, разрядка --ls-title 0.14em). Подвал лендинга ставит
+   800 и 0.16em и сам помечает это открытым хвостом по типографике — здесь
+   повторять его расхождение незачем.
+
+   Знак 48 — это порог, то есть ПОЛНАЯ отрисовка.
+   ⚠️ Опустить бокс ниже 48 — показать другой рисунок знака. На узком экране
+   ряд складывается, но знак не ужимается: место уступает слово, а не размер. */
+/* Вертикальный ритм взят у подвала лендинга (отступы рядов, зазоры, перелом).
+   А вот горизонтальная сетка — своя, страницы: max-width 1180 плюс поле 16,
+   как у всех 17 разделов. У лендинга сетка задана иначе (min(1180px, 92vw)), и
+   перенос её сюда сдвигал бы подвал на полтора десятка точек относительно
+   разделов над ним — заметно с одного взгляда. Это и есть «числа двух
+   источников не смешивать»: композиция от лендинга, сетка от своей страницы. */
+.dk-footer{
+  max-width:1180px;margin:0 auto;
+  padding:clamp(52px,7vh,84px) 16px 40px;
+  border-top:1px solid rgba(255,255,255,.09);
+}
+.dk-footer-top{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+/* Связка ведётся от --mark: меняется размер знака — связка масштабируется
+   целиком. Знаменатель 44 — исторический бокс, от которого сняты отношения
+   (см. docs/design-handoff/hexlash_mark/README.md); он и стоит в формуле у
+   подвала лендинга, поэтому перенесён как есть, а не пересчитан в точки. */
+.dk-footer-brand{--mark:48px;display:flex;align-items:center;gap:calc(var(--mark) * 14 / 44);color:#F6F4F6}
+/* Слово — живой текст, картинкой не подключается никогда. */
+.dk-footer-word{font-family:'Saira Condensed',sans-serif;font-weight:900;
+  font-size:calc(var(--mark) * 24 / 44);letter-spacing:.14em;text-transform:uppercase;line-height:1}
+/* Кредо. Розовое — это единственное место подвала, где розовый уместен:
+   якорь бренда, а не элемент интерфейса. */
+.dk-footer-tag{font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.34em;
+  text-transform:uppercase;color:#FF0069}
+.dk-footer-social{display:flex;gap:24px;justify-content:center;
+  margin:clamp(34px,5vh,50px) 0}
+.dk-social{display:flex;align-items:center;justify-content:center;
+  min-width:44px;min-height:44px;color:#5D5D66}
+/* Заглушка не притворяется кнопкой: тон выключенного, курсор обычный,
+   ни ореола, ни отклика на касание. Отклик появится вместе с адресом. */
+.dk-social.is-soon{cursor:default}
+.dk-footer-bottom{display:flex;align-items:center;justify-content:center;
+  gap:16px;flex-wrap:wrap;padding-top:26px;border-top:1px solid rgba(255,255,255,.09)}
+@media (max-width:680px){
+  .dk-footer-top{flex-direction:column;align-items:center;text-align:center}
+  .dk-footer-tag{letter-spacing:.24em}
+}
 
 /* --- Узкий экран ----------------------------------------------------------
    Решётка крупнее: на 360 точках мелкая сетка превращается в грязь.
@@ -1562,10 +1621,53 @@ html.dk-anim [data-dk-in].dk-in>:nth-child(n+4){transition-delay:180ms}
 </div>
 </main>
 
-<footer style="padding:48px 16px;max-width:1180px;margin:0 auto;border-top:1px solid rgba(255,255,255,0.09);display:flex;flex-wrap:wrap;align-items:center;gap:16px 24px">
-  <img class="dk-mark" alt="" aria-hidden="true" draggable="false" width="48" height="48" src="/brand/mark-full-256.png" srcset="/brand/mark-full-128.png 128w, /brand/mark-full-256.png 256w, /brand/mark-full-512.png 512w" sizes="48px" style="width:48px;height:48px;min-width:48px;min-height:48px;flex:0 0 auto;display:block">
-  <p data-layer="ru" class="off" style="font:400 11px/1.6 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:0">hexlash.com · сентябрь 2026 · CONFIDENTIAL</p>
-  <p data-layer="en" lang="en" style="font:400 11px/1.6 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:0">hexlash.com · September 2026 · CONFIDENTIAL</p>
+<!-- Подвал собран по рисунку подвала лендинга (src/components/landing/
+     LandingFooter.vue + .lp .footer* в landing.css): три ряда — связка и кредо,
+     иконки, служебная строка. Состав пересобран под конфиденциальный документ:
+     ссылка Privacy и копирайт лендинга сюда НЕ переносятся, вместо копирайта
+     стоит уже существовавшая строка CONFIDENTIAL — её текст не тронут.
+     Пять соцсетей лендинга сведены к двум: X и Discord (решение владельца).
+
+     ⚠️ ДОЛГ, ЗАФИКСИРОВАН И НЕ ЧИНИТСЯ ЗДЕСЬ: связка «знак + слово» живёт в
+     проекте пятью отдельными копиями вместо одной общей детали, и это шестая.
+     Сводить их в одну — отдельная работа после демо. Здесь важно только не
+     завести седьмой набор чисел: пара 48 / 24 / 14 взята у подвала лендинга
+     целиком, формулой, а не пересчитанными вручную точками. -->
+<footer class="dk-footer" data-dk-in>
+  <div class="dk-footer-top">
+    <div class="dk-footer-brand">
+      <img class="dk-mark" alt="" aria-hidden="true" draggable="false" width="48" height="48" src="/brand/mark-full-256.png" srcset="/brand/mark-full-128.png 128w, /brand/mark-full-256.png 256w, /brand/mark-full-512.png 512w" sizes="48px" style="width:48px;height:48px;min-width:48px;min-height:48px;flex:0 0 auto;display:block">
+      <span class="dk-footer-word">HEXLASH</span>
+    </div>
+    <!-- Кредо остаётся английским в обоих языковых слоях: это имя собственное,
+         а не текст страницы. Поэтому data-layer на нём нет. -->
+    <span class="dk-footer-tag">NEVER GIVE UP</span>
+  </div>
+
+  <!-- Иконки — ЧЕСТНАЯ ЗАГЛУШКА (решение владельца 10.09.2026). Настоящих
+       адресов X и Discord в проекте нет ни одного: на лендинге стоят «#x» и
+       «#discord», и с ними «открыть в новой вкладке» даёт пустую вкладку с той
+       же страницей. Перед инвестором это читается поломкой, поэтому иконки
+       здесь не притворяются рабочими: не ссылки, не кликаются, матовые, тон
+       выключенного, отклика на касание нет.
+       ⚠️ КАК ВКЛЮЧИТЬ, КОГДА АДРЕСА ПОЯВЯТСЯ: заменить span на
+       <a href="АДРЕС" target="_blank" rel="noopener" aria-label="X">, снять
+       « — soon» из подписи и снять класс .is-soon. Правка на две строки.
+       Рисунок иконок — тот же, что на лендинге (src/components/landing/icons.js),
+       перенесён разметкой: ни файла, ни запроса. -->
+  <div class="dk-footer-social">
+    <span class="dk-social is-soon" role="img" aria-label="X — soon">
+      <svg viewBox="0 0 24 24" width="19" height="19" fill="currentColor" aria-hidden="true"><path d="M18.9 2H22l-7.5 8.6L23.3 22h-6.8l-5.3-7-6.1 7H2l8-9.2L1 2h7l4.8 6.4L18.9 2Zm-1.2 18h1.9L7.4 4H5.4l12.3 16Z"/></svg>
+    </span>
+    <span class="dk-social is-soon" role="img" aria-label="Discord — soon">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M20.3 4.5A19 19 0 0 0 15.6 3l-.3.5a14 14 0 0 1 4.2 2 12.6 12.6 0 0 0-15 0 14 14 0 0 1 4.2-2L8.4 3a19 19 0 0 0-4.7 1.5C1 9 .3 13.3.6 17.6A19 19 0 0 0 6.4 20l.7-1.2a12 12 0 0 1-1.9-.9l.5-.4a9 9 0 0 0 7.6 0l.5.4a12 12 0 0 1-1.9.9l.7 1.2a19 19 0 0 0 5.8-2.4c.4-5-.7-9.3-3-13.1ZM8.5 15c-.9 0-1.7-.8-1.7-1.9s.8-1.9 1.7-1.9 1.7.9 1.7 1.9-.8 1.9-1.7 1.9Zm7 0c-.9 0-1.7-.8-1.7-1.9s.8-1.9 1.7-1.9 1.7.9 1.7 1.9-.8 1.9-1.7 1.9Z"/></svg>
+    </span>
+  </div>
+
+  <div class="dk-footer-bottom">
+    <p data-layer="ru" class="off" style="font:400 11px/1.6 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:0">hexlash.com · сентябрь 2026 · CONFIDENTIAL</p>
+    <p data-layer="en" lang="en" style="font:400 11px/1.6 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:0">hexlash.com · September 2026 · CONFIDENTIAL</p>
+  </div>
 </footer>
 </div>
 <script>
