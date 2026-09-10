@@ -33,6 +33,250 @@ a:hover{color:#F6F4F6}
 @keyframes dkBusy{from{transform:translateX(0)}to{transform:translateX(186%)}}
 @media (prefers-reduced-motion: reduce){.dk-busy{width:0;animation:none}}
 .fight[disabled]{opacity:.45;cursor:default;box-shadow:none;transform:none}
+
+/* ===========================================================================
+   СЛОЙ ОФОРМЛЕНИЯ И ДВИЖЕНИЯ (10.09.2026)
+   ===========================================================================
+
+   ЗАЧЕМ. Дека была верна по содержанию, но визуально пуста — простыня текста
+   без атмосферы. Здесь на неё перенесён визуальный язык лендинга: ромбы фоном,
+   розовые надзаголовки, уголки-скобки на пустых местах, рамки карточек,
+   призрачное эхо и ореол первого экрана, появление блоков при прокрутке.
+
+   ⚠️ ЭТО ДОБАВЛЯЕМЫЙ СЛОЙ, А НЕ ПЕРЕСБОРКА. Тексты 17 разделов, их структура
+   и порядок не тронуты ни одной строкой. Разметке добавлены только классы.
+
+   ⚠️ ИНЛАЙН-СТИЛИ СИЛЬНЕЕ КЛАССОВ. Выгрузка дизайнера несёт всё оформление
+   в style="..." прямо на узлах. Поэтому каждое правило ниже задаёт только то,
+   чего в инлайне НЕТ (position, isolation, псевдоэлементы), либо получает
+   свойство целиком, когда инлайн у узла снят вместе с классом (надзаголовки).
+   !important в этом слое не применяется нигде — он бы спрятал такие стычки.
+
+   ⚠️ СЛОИ И ПОРЯДОК РИСОВАНИЯ. Позиционированный слой с z-index:0 рисуется
+   ПОВЕРХ обычного содержимого в потоке — так на прод уезжали кнопки лендинга
+   с пропавшими подписями. Поэтому фоновые слои здесь идут z-index:-1, а их
+   владелец получает isolation:isolate: он становится корнем своего слоя, его
+   собственный фон красится первым, слой -1 — вторым, текст — последним.
+
+   ЗНАЧЕНИЯ ВПИСАНЫ ЧИСЛАМИ по той же причине, что и всё выше по файлу:
+   страница живёт вне сборки, tokens.css сюда не приезжает. Источник правды
+   прежний — src/styles/tokens.css (--pink #FF0069, --ink #F6F4F6,
+   --ink-dim #A9A5AF, --ink-off #5D5D66, --void #08080A, --carbon #0D0A0D,
+   --line rgba(255,255,255,.09), --e-settle cubic-bezier(.2,.8,.2,1)).
+
+   ДВИЖЕНИЕ ГАСИТСЯ ЦЕЛИКОМ: общее правило выше по файлу снимает transition и
+   animation при системной «уменьшить движение». Всё, что должно при этом ещё
+   и исчезнуть (пыль), снято отдельным блоком в конце.
+   ========================================================================= */
+
+/* --- A. Ромбы фоном -------------------------------------------------------
+   Тонкие линейные ромбы под 45°, двух размеров, уходящие за края экрана.
+   Рисуются пересечением двух решёток ±45° — это стили, не картинка и не файл:
+   ни одного сетевого запроса. Слой неподвижен: параллакса и вращения нет.
+   Маска гасит решётку к краям, чтобы она не читалась ровным ковром.
+   pointer-events:none — палец, ведущий по фону, листает страницу. */
+.dk-page{position:relative;isolation:isolate}
+.dk-page::before{
+  content:"";position:fixed;top:0;left:0;right:0;z-index:-1;pointer-events:none;
+  /* Высота — 100lvh, а не inset:0. На телефоне при прокрутке прячется и
+     показывается адресная строка, от этого «живая» высота экрана меняется, и
+     закреплённый слой дёргается вместе с ней. 100lvh эту строку игнорирует.
+     100vh — запасной вариант для браузеров постарше. Так же сделан фон
+     лендинга (LandingBackground.vue). */
+  height:100vh;height:100lvh;
+  background-image:
+    repeating-linear-gradient(45deg,rgba(255,0,105,.05) 0 1px,transparent 1px 88px),
+    repeating-linear-gradient(-45deg,rgba(255,0,105,.05) 0 1px,transparent 1px 88px),
+    repeating-linear-gradient(45deg,rgba(255,0,105,.028) 0 1px,transparent 1px 264px),
+    repeating-linear-gradient(-45deg,rgba(255,0,105,.028) 0 1px,transparent 1px 264px);
+  -webkit-mask-image:radial-gradient(115% 80% at 50% 34%,#000 0%,rgba(0,0,0,.55) 52%,transparent 88%);
+  mask-image:radial-gradient(115% 80% at 50% 34%,#000 0%,rgba(0,0,0,.55) 52%,transparent 88%);
+}
+
+/* --- Б. Надзаголовки разделов --------------------------------------------
+   Номер и название раздела уже стояли в разметке — они и есть надзаголовок.
+   Новых слов на странице не появилось: класс лишь красит существующие и
+   дорисовывает чёрточки слева и справа, как «— THE CODE —» на лендинге.
+   Инлайн-стиль у этих узлов снят целиком, поэтому шрифт и трекинг заданы
+   здесь — теми же значениями, что были в выгрузке. */
+.dk-eyebrow{display:flex;align-items:center;gap:12px;
+  font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;
+  text-transform:uppercase;color:#FF0069}
+.dk-eyebrow::before,.dk-eyebrow::after{content:"";flex:0 0 auto;width:34px;height:1px}
+.dk-eyebrow::before{background:linear-gradient(90deg,transparent,#FF0069)}
+.dk-eyebrow::after{background:linear-gradient(90deg,#FF0069,transparent)}
+/* Номер тише названия — иерархия внутри одного акцента, а не второй цвет. */
+.dk-eyebrow-n{opacity:.62}
+@media (max-width:400px){.dk-eyebrow{gap:8px}.dk-eyebrow::before,.dk-eyebrow::after{width:18px}}
+
+/* --- В. Уголки-скобки -----------------------------------------------------
+   Только на окне арены, четырёх местах под кадры и трёх под портреты — как на
+   окне GAMEPLAY на лендинге. На всех блоках подряд они превращаются в шум.
+   Побочная польза: пустые места перестают читаться как дыры и начинают
+   читаться как слоты.
+   Четыре уголка нарисованы восемью слоями заливки одного псевдоэлемента —
+   так не нужны четыре лишних узла в разметке. */
+.dk-corners{position:relative}
+.dk-corners::after{
+  content:"";position:absolute;inset:-1px;pointer-events:none;z-index:2;
+  --c:rgba(255,0,105,.5);--l:18px;
+  background:
+    linear-gradient(var(--c),var(--c)) 0 0/var(--l) 1px no-repeat,
+    linear-gradient(var(--c),var(--c)) 0 0/1px var(--l) no-repeat,
+    linear-gradient(var(--c),var(--c)) 100% 0/var(--l) 1px no-repeat,
+    linear-gradient(var(--c),var(--c)) 100% 0/1px var(--l) no-repeat,
+    linear-gradient(var(--c),var(--c)) 0 100%/var(--l) 1px no-repeat,
+    linear-gradient(var(--c),var(--c)) 0 100%/1px var(--l) no-repeat,
+    linear-gradient(var(--c),var(--c)) 100% 100%/var(--l) 1px no-repeat,
+    linear-gradient(var(--c),var(--c)) 100% 100%/1px var(--l) no-repeat;
+}
+/* Окно арены идёт во всю ширину экрана, поля вокруг него нет. Вынос уголков
+   наружу дал бы лишнюю точку прокрутки вбок на 320 — замерено. Только здесь
+   они лежат по внутреннему краю. */
+[data-arena].dk-corners::after{inset:0}
+@media (max-width:400px){.dk-corners::after{--l:12px}}
+
+/* --- Г. Рамки блоков-карточек ---------------------------------------------
+   По образцу карточек TRAIN / FIGHT / RISE на лендинге: волосяная рамка плюс
+   едва заметная заливка градиентом от одного угла.
+   Рамка достаётся только тем карточкам, у которых её не было (ячейки таблицы
+   сравнения): у остальных она уже стоит в инлайне и инлайн сильнее — значения
+   там свои, ярче на выделенных, и эта иерархия сохраняется.
+   Заливка живёт отдельным слоем -1, поэтому не спорит с инлайновым фоном.
+   Внутренние отступы и содержимое карточек не тронуты, сетки не переверстаны. */
+.dk-card{position:relative;isolation:isolate;border:1px solid rgba(255,255,255,.09)}
+.dk-card::before{
+  content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:linear-gradient(135deg,rgba(255,255,255,.05) 0%,rgba(255,255,255,.014) 44%,transparent 74%);
+}
+
+/* --- Д + З. Первый экран: эхо заголовка и ореол ---------------------------
+   Три слоя одной строки. Буквы стоят неподвижно и не меняют цвет; эхо и ореол
+   лежат ЗА ними отдельными копиями, скрытыми от читалок экрана.
+   ⚠️ Буквы обязаны быть подняты в свой слой (position + z-index). Без этого
+   позиционированный ореол закрашивает белый текст розовым — проверено на
+   лендинге глазами.
+   Копии выключены из выделения: без этого выделение заголовка мышью копировало
+   бы строку трижды. Для читалок экрана они закрыты aria-hidden — проверено:
+   дерево доступности отдаёт заголовок один раз.
+   Копии позиционированы left:0;right:0 по той же ширине, что и строка, значит
+   переносятся ровно так же: масштаб 1.02 применяется ПОСЛЕ вёрстки и разрывов
+   строк не меняет. Поэтому за границы экрана эхо не вылезает ни на одной
+   ширине, и гасить его отдельно не пришлось. */
+.heroline{position:relative}
+.dk-h1-solid{position:relative;z-index:1}
+.dk-h1-ghost,.dk-h1-glow{position:absolute;left:0;right:0;top:0;z-index:0;
+  color:transparent;pointer-events:none;-webkit-user-select:none;user-select:none}
+.dk-h1-ghost{-webkit-text-stroke:.8px rgba(255,0,105,.3);opacity:.45;
+  transform:translateY(-.2em) scale(1.025);transform-origin:left top}
+.dk-h1-glow{text-shadow:0 0 .12em rgba(255,0,105,.5),0 0 .5em rgba(255,0,105,.5),0 0 1.05em rgba(255,0,105,.4)}
+/* Сбой вывески — тот же, что у заголовка лендинга. Гаснет ОРЕОЛ, а не буквы.
+   Кадры 0% и 100% совпадают: при выключенных анимациях слой замирает в покое,
+   то есть ореол остаётся, а мерцания нет. */
+@keyframes dkGlowFlick{
+  0%,3.84%{opacity:1}
+  3.85%{opacity:.4}
+  4.62%{opacity:1}
+  5.23%{opacity:.55}
+  5.85%{opacity:1}
+  42.29%{opacity:1}
+  42.3%{opacity:.45}
+  43.07%{opacity:1}
+  43.68%{opacity:.62}
+  44.3%{opacity:1}
+  100%{opacity:1}
+}
+@media (prefers-reduced-motion:no-preference){
+  .dk-h1-glow{animation:dkGlowFlick 13s steps(1) infinite}
+}
+
+/* --- Е. Пыль на первом экране --------------------------------------------
+   Двенадцать точек, шестью на слой, чистыми стилями: одна точка телом
+   псевдоэлемента, остальные — его тенями. Ни холста, ни библиотеки.
+   Два слоя дрейфуют в разные стороны с разным периодом, иначе двенадцать
+   точек ходят строем.
+   На узких экранах пыли нет вовсе: в разделе 04 работает живая арена, и
+   лишняя нагрузка на телефоне недопустима. */
+.dk-hero{position:relative;isolation:isolate}
+.dk-hero::before,.dk-hero::after{
+  content:"";position:absolute;left:0;top:0;width:2px;height:2px;border-radius:50%;
+  z-index:-1;pointer-events:none;background:rgba(255,0,105,.5);
+}
+.dk-hero::before{
+  box-shadow:
+    11vw 21vh 0 0 rgba(255,0,105,.42),
+    29vw 58vh 0 0 rgba(255,0,105,.3),
+    47vw 12vh 0 0 rgba(255,0,105,.38),
+    63vw 44vh 0 0 rgba(255,0,105,.26),
+    81vw 27vh 0 0 rgba(255,0,105,.34);
+  animation:dkDustA 38s linear infinite;
+}
+.dk-hero::after{
+  background:rgba(255,0,105,.34);
+  box-shadow:
+    21vw 39vh 0 0 rgba(255,0,105,.3),
+    38vw 68vh 0 0 rgba(255,0,105,.24),
+    56vw 24vh 0 0 rgba(255,0,105,.34),
+    72vw 61vh 0 0 rgba(255,0,105,.22),
+    91vw 49vh 0 0 rgba(255,0,105,.28);
+  animation:dkDustB 53s linear infinite;
+}
+/* Кадры 0% и 100% совпадают — при выключенных анимациях слой стоит в покое. */
+@keyframes dkDustA{
+  0%{transform:translate3d(0,0,0)}
+  50%{transform:translate3d(14px,-22px,0)}
+  100%{transform:translate3d(0,0,0)}
+}
+@keyframes dkDustB{
+  0%{transform:translate3d(0,0,0)}
+  50%{transform:translate3d(-18px,16px,0)}
+  100%{transform:translate3d(0,0,0)}
+}
+
+/* --- Ж. Появление блоков при прокрутке ------------------------------------
+   Блок входит в кадр — его содержимое поднимается снизу и проявляется, по
+   очереди сверху вниз: надзаголовок, заголовок, проза, карточки.
+   Срабатывает один раз; назад при обратной прокрутке не отыгрывается.
+
+   ⚠️ СКРЫТОЕ СОСТОЯНИЕ ЗАДАЁТ ТОЛЬКО СЦЕНАРИЙ. Признак .dk-anim вешается на
+   корень страницы из скрипта. Не отработал скрипт, отключён JavaScript или
+   включена системная «уменьшить движение» — признака нет, и вся страница
+   видна целиком сразу. Скрытых блоков в разметке не существует.
+
+   Ступень 60 мс, потолок задержки 180 мс, ход 320 мс. Сумма ровно 500 мс:
+   даже самый нижний элемент длинного раздела полностью открыт не позже этого
+   срока — замерено на разделе 10 (восемь детей). Движение нигде не заставляет
+   ждать текст.
+
+   Прокрутка не перехватывается: ни «магнитных» разделов, ни перехвата колеса.
+   Цифры не анимируются — заглушки [XXX K] и любые числа читаются сразу. */
+html.dk-anim [data-dk-in]>*{opacity:0;transform:translateY(16px)}
+html.dk-anim [data-dk-in].dk-in>*{
+  opacity:1;transform:none;
+  transition:opacity 320ms cubic-bezier(.2,.8,.2,1),transform 320ms cubic-bezier(.2,.8,.2,1);
+}
+html.dk-anim [data-dk-in].dk-in>:nth-child(2){transition-delay:60ms}
+html.dk-anim [data-dk-in].dk-in>:nth-child(3){transition-delay:120ms}
+html.dk-anim [data-dk-in].dk-in>:nth-child(n+4){transition-delay:180ms}
+
+/* --- Узкий экран ----------------------------------------------------------
+   Решётка крупнее: на 360 точках мелкая сетка превращается в грязь.
+   Пыль снята целиком — см. блок Е. */
+@media (max-width:680px){
+  .dk-page::before{
+    background-image:
+      repeating-linear-gradient(45deg,rgba(255,0,105,.07) 0 1px,transparent 1px 118px),
+      repeating-linear-gradient(-45deg,rgba(255,0,105,.07) 0 1px,transparent 1px 118px);
+  }
+  .dk-hero::before,.dk-hero::after{display:none}
+}
+
+/* --- «Уменьшить движение» -------------------------------------------------
+   Общее правило выше по файлу уже снимает все переходы и анимации. Здесь
+   убрано то, что должно не замереть, а исчезнуть. */
+@media (prefers-reduced-motion:reduce){
+  .dk-hero::before,.dk-hero::after{display:none}
+}
 </style>
 
 <!-- =========================================================================
@@ -131,7 +375,7 @@ a:hover{color:#F6F4F6}
 
 </head>
 <body>
-<div style="background:#08080A;min-height:100vh">
+<div class="dk-page" style="background:#08080A;min-height:100vh">
 <div style="position:fixed;top:0;left:0;right:0;height:2px;background:rgba(255,255,255,0.09);z-index:20"><div data-progress="1" style="height:2px;background:#FF0069;transform:scaleX(0);transform-origin:left"></div></div>
 
 <header style="display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;padding:16px;max-width:1180px;margin:0 auto;border-bottom:1px solid rgba(255,255,255,0.09)">
@@ -160,14 +404,14 @@ a:hover{color:#F6F4F6}
 </header>
 
 <main>
-<section data-screen-label="Первый экран" style="padding:48px 16px;max-width:1180px;margin:0 auto;min-height:min(74vh,860px);display:flex;flex-direction:column;justify-content:center;gap:32px">
-  <h1 style="font:900 clamp(32px,9vw,72px)/0.94 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:0;max-width:24ch;text-wrap:balance"><span data-layer="en" class="heroline" lang="en">Train the AI until it becomes the trainer.</span><span data-layer="ru" class="heroline off" lang="ru">Ты тренируешь ИИ, пока он не станет тренером.</span></h1>
+<section data-dk-in class="dk-hero" data-screen-label="Первый экран" style="padding:48px 16px;max-width:1180px;margin:0 auto;min-height:min(74vh,860px);display:flex;flex-direction:column;justify-content:center;gap:32px">
+  <h1 style="font:900 clamp(32px,9vw,72px)/0.94 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:0;max-width:24ch;text-wrap:balance"><span data-layer="en" class="heroline" lang="en"><span class="dk-h1-solid">Train the AI until it becomes the trainer.</span><span class="dk-h1-ghost" aria-hidden="true">Train the AI until it becomes the trainer.</span><span class="dk-h1-glow" aria-hidden="true">Train the AI until it becomes the trainer.</span></span><span data-layer="ru" class="heroline off" lang="ru"><span class="dk-h1-solid">Ты тренируешь ИИ, пока он не станет тренером.</span><span class="dk-h1-ghost" aria-hidden="true">Ты тренируешь ИИ, пока он не станет тренером.</span><span class="dk-h1-glow" aria-hidden="true">Ты тренируешь ИИ, пока он не станет тренером.</span></span></h1>
   <div data-anim="rule" style="height:1px;background:rgba(255,255,255,0.16);transform-origin:left"></div>
 </section>
 <div data-layer="ru" class="off">
 
-<section id="s01" data-screen-label="01 ПРОБЛЕМА" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div style="display:flex;align-items:center;gap:8px;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF"><span style="color:#5D5D66">01</span><span style="color:#5D5D66">·</span><span>ПРОБЛЕМА</span></div>
+<section data-dk-in id="s01" data-screen-label="01 ПРОБЛЕМА" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div class="dk-eyebrow"><span class="dk-eyebrow-n">01</span><span class="dk-eyebrow-n" aria-hidden="true">·</span><span>ПРОБЛЕМА</span></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Почему умерли 3 из 4 GameFi-игр</h2>
   <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Анатомия play-to-earn: три конструктивных дефекта, а не рыночный цикл.</p>
   <div data-anim="frame" style="margin-top:32px;padding:32px 0;border-top:1px solid rgba(255,255,255,0.16);border-bottom:1px solid rgba(255,255,255,0.16);display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));align-items:end">
@@ -197,52 +441,52 @@ a:hover{color:#F6F4F6}
   <p style="font:700 24px/1.3 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:32px 0 0;padding-top:24px;border-top:1px solid rgba(255,255,255,0.16);max-width:44ch;text-wrap:pretty">Ни один из трёх дефектов не лечится маркетингом или сменой блокчейна. Только другой моделью дохода.</p>
 </section>
 
-<section id="s02" data-screen-label="02 МОДЕЛЬ" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div style="display:flex;align-items:center;gap:8px;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF"><span style="color:#5D5D66">02</span><span style="color:#5D5D66">·</span><span>МОДЕЛЬ</span></div>
+<section data-dk-in id="s02" data-screen-label="02 МОДЕЛЬ" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div class="dk-eyebrow"><span class="dk-eyebrow-n">02</span><span class="dk-eyebrow-n" aria-hidden="true">·</span><span>МОДЕЛЬ</span></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Платят за интеллект, а не за фарм</h2>
   <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Hexlash — ИИ-сервис с игровой оболочкой. Разворот play-to-earn на 180°.</p>
   <div style="margin-top:32px;display:grid;gap:1px;background:rgba(255,255,255,0.09)">
     <div style="background:#08080A;padding:16px 0 8px">
       <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;margin:0">За что платит игрок</p>
       <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:12px">
-        <div style="padding:12px 16px;background:rgba(255,255,255,0.025)"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">PLAY-TO-EARN</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:8px 0 0">За право фармить токен</p></div>
-        <div data-anim="row" data-anim-i="0" style="padding:12px 16px;background:rgba(255,255,255,0.05);border-left:2px solid #FF0069"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#A9A5AF;margin:0">HEXLASH</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:8px 0 0">За думающий мозг бойца, слоты, косметику</p></div>
+        <div class="dk-card" style="padding:12px 16px;background:rgba(255,255,255,0.025)"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">PLAY-TO-EARN</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:8px 0 0">За право фармить токен</p></div>
+        <div data-anim="row" data-anim-i="0" class="dk-card" style="padding:12px 16px;background:rgba(255,255,255,0.05);border-left:2px solid #FF0069"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#A9A5AF;margin:0">HEXLASH</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:8px 0 0">За думающий мозг бойца, слоты, косметику</p></div>
       </div>
     </div>
     <div style="background:#08080A;padding:16px 0 8px">
       <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;margin:0">Валюта дохода студии</p>
       <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:12px">
-        <div style="padding:12px 16px;background:rgba(255,255,255,0.025)"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">PLAY-TO-EARN</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:8px 0 0">Собственный токен</p></div>
-        <div data-anim="row" data-anim-i="1" style="padding:12px 16px;background:rgba(255,255,255,0.05);border-left:2px solid #FF0069"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#A9A5AF;margin:0">HEXLASH</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:8px 0 0">USDC</p></div>
+        <div class="dk-card" style="padding:12px 16px;background:rgba(255,255,255,0.025)"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">PLAY-TO-EARN</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:8px 0 0">Собственный токен</p></div>
+        <div data-anim="row" data-anim-i="1" class="dk-card" style="padding:12px 16px;background:rgba(255,255,255,0.05);border-left:2px solid #FF0069"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#A9A5AF;margin:0">HEXLASH</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:8px 0 0">USDC</p></div>
       </div>
     </div>
     <div style="background:#08080A;padding:16px 0 8px">
       <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;margin:0">Что удерживает</p>
       <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:12px">
-        <div style="padding:12px 16px;background:rgba(255,255,255,0.025)"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">PLAY-TO-EARN</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:8px 0 0">Курс токена</p></div>
-        <div data-anim="row" data-anim-i="2" style="padding:12px 16px;background:rgba(255,255,255,0.05);border-left:2px solid #FF0069"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#A9A5AF;margin:0">HEXLASH</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:8px 0 0">Дом, бойцы, характер, наставник</p></div>
+        <div class="dk-card" style="padding:12px 16px;background:rgba(255,255,255,0.025)"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">PLAY-TO-EARN</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:8px 0 0">Курс токена</p></div>
+        <div data-anim="row" data-anim-i="2" class="dk-card" style="padding:12px 16px;background:rgba(255,255,255,0.05);border-left:2px solid #FF0069"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#A9A5AF;margin:0">HEXLASH</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:8px 0 0">Дом, бойцы, характер, наставник</p></div>
       </div>
     </div>
     <div style="background:#08080A;padding:16px 0 8px">
       <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;margin:0">Если токен падает</p>
       <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:12px">
-        <div style="padding:12px 16px;background:rgba(255,255,255,0.025)"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">PLAY-TO-EARN</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:8px 0 0">Игра умирает</p></div>
-        <div data-anim="row" data-anim-i="3" style="padding:12px 16px;background:rgba(255,255,255,0.05);border-left:2px solid #FF0069"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#A9A5AF;margin:0">HEXLASH</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:8px 0 0">Игра работает как работала</p></div>
+        <div class="dk-card" style="padding:12px 16px;background:rgba(255,255,255,0.025)"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">PLAY-TO-EARN</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:8px 0 0">Игра умирает</p></div>
+        <div data-anim="row" data-anim-i="3" class="dk-card" style="padding:12px 16px;background:rgba(255,255,255,0.05);border-left:2px solid #FF0069"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#A9A5AF;margin:0">HEXLASH</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:8px 0 0">Игра работает как работала</p></div>
       </div>
     </div>
     <div style="background:#08080A;padding:16px 0 8px">
       <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;margin:0">Бесплатный игрок</p>
       <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:12px">
-        <div style="padding:12px 16px;background:rgba(255,255,255,0.025)"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">PLAY-TO-EARN</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:8px 0 0">Убыток — ему платят</p></div>
-        <div data-anim="row" data-anim-i="4" style="padding:12px 16px;background:rgba(255,255,255,0.05);border-left:2px solid #FF0069"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#A9A5AF;margin:0">HEXLASH</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:8px 0 0">Контент, стоит нам ~$0</p></div>
+        <div class="dk-card" style="padding:12px 16px;background:rgba(255,255,255,0.025)"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">PLAY-TO-EARN</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:8px 0 0">Убыток — ему платят</p></div>
+        <div data-anim="row" data-anim-i="4" class="dk-card" style="padding:12px 16px;background:rgba(255,255,255,0.05);border-left:2px solid #FF0069"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#A9A5AF;margin:0">HEXLASH</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:8px 0 0">Контент, стоит нам ~$0</p></div>
       </div>
     </div>
   </div>
   <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:24px 0 0;max-width:70ch;text-wrap:pretty">Токен планируется — но после product-market fit, как утилити и слой владения, а не как источник дохода.</p>
 </section>
 
-<section id="s03" data-screen-label="03 ЯДРО ПИТЧА" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div style="display:flex;align-items:center;gap:8px;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF"><span style="color:#5D5D66">03</span><span style="color:#5D5D66">·</span><span>ЯДРО ПИТЧА</span></div>
+<section data-dk-in id="s03" data-screen-label="03 ЯДРО ПИТЧА" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div class="dk-eyebrow"><span class="dk-eyebrow-n">03</span><span class="dk-eyebrow-n" aria-hidden="true">·</span><span>ЯДРО ПИТЧА</span></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Лестница делегирования</h2>
   <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Игрок постепенно отдаёт управление ИИ, который сам вырастил.</p>
   <div style="margin-top:32px;display:flex;flex-direction:column-reverse;gap:12px">
@@ -270,14 +514,14 @@ a:hover{color:#F6F4F6}
   </div>
   <p style="font:900 clamp(24px,5vw,40px)/1.06 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:48px 0 0;max-width:26ch;text-wrap:balance">Награда за игру — не предмет. Право не участвовать.</p>
   <figure data-frame="1" style="margin:32px 0 0">
-    <div style="aspect-ratio:16/9;background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);display:grid;place-items:center;background-image:repeating-linear-gradient(135deg,rgba(255,255,255,0.025) 0 1px,transparent 1px 10px)"><span style="font:500 11px/1.6 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;text-align:center;padding:16px">[КАДР: дом игрока, вид от камеры]</span></div>
+    <div class="dk-corners" style="aspect-ratio:16/9;background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);display:grid;place-items:center;background-image:repeating-linear-gradient(135deg,rgba(255,255,255,0.025) 0 1px,transparent 1px 10px)"><span style="font:500 11px/1.6 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;text-align:center;padding:16px">[КАДР: дом игрока, вид от камеры]</span></div>
     <figcaption style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin-top:8px">место под кадр · отбирает владелец</figcaption>
   </figure>
 </section>
 
-<section id="s04" data-screen-label="04 ЖИВОЙ БОЙ" style="padding:48px 0;max-width:100%;margin:0 auto">
+<section data-dk-in id="s04" data-screen-label="04 ЖИВОЙ БОЙ" style="padding:48px 0;max-width:100%;margin:0 auto">
   <div style="padding:0 16px;max-width:1180px;margin:0 auto">
-    <div style="display:flex;align-items:center;gap:8px;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF"><span style="color:#5D5D66">04</span><span style="color:#5D5D66">·</span><span>ЖИВОЙ БОЙ</span></div>
+    <div class="dk-eyebrow"><span class="dk-eyebrow-n">04</span><span class="dk-eyebrow-n" aria-hidden="true">·</span><span>ЖИВОЙ БОЙ</span></div>
     <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Боец дерётся сам</h2>
     <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Модель выбирает намерение на переломах боя, тело исполняет его рефлексом. 5–10 вызовов за бой.</p>
     <div style="display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;margin-top:32px">
@@ -287,7 +531,7 @@ a:hover{color:#F6F4F6}
   </div>
   <div style="width:100%;margin-top:12px">
     <div style="max-width:1180px;margin:0 auto">
-      <div data-arena="1" style="aspect-ratio:16/10;background:#0D0A0D;border-top:1px solid rgba(255,255,255,0.09);border-bottom:1px solid rgba(255,255,255,0.09);display:grid;place-items:center;position:relative;background-image:repeating-linear-gradient(135deg,rgba(255,255,255,0.025) 0 1px,transparent 1px 12px)">
+      <div data-arena="1" class="dk-corners" style="aspect-ratio:16/10;background:#0D0A0D;border-top:1px solid rgba(255,255,255,0.09);border-bottom:1px solid rgba(255,255,255,0.09);display:grid;place-items:center;position:relative;background-image:repeating-linear-gradient(135deg,rgba(255,255,255,0.025) 0 1px,transparent 1px 12px)">
         <span data-arena-rest="1" style="font:500 12px/1.6 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;text-align:center;padding:24px;position:relative;z-index:1">ЖИВАЯ АРЕНА ИЗ ИГРЫ · НАЖМИТЕ «ЗАПУСТИТЬ БОЙ»</span>
         <div data-arena-load="1" class="off" style="width:min(320px,70%);position:relative;z-index:1">
           <div style="height:2px;background:rgba(255,255,255,0.09)"><div data-arena-bar="1" class="dk-busy" style="height:2px;background:#FF0069;transform-origin:left"></div></div>
@@ -306,12 +550,12 @@ a:hover{color:#F6F4F6}
   </div>
 </section>
 
-<section id="s05" data-screen-label="05 УСТРОЙСТВО" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div style="display:flex;align-items:center;gap:8px;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF"><span style="color:#5D5D66">05</span><span style="color:#5D5D66">·</span><span>УСТРОЙСТВО</span></div>
+<section data-dk-in id="s05" data-screen-label="05 УСТРОЙСТВО" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div class="dk-eyebrow"><span class="dk-eyebrow-n">05</span><span class="dk-eyebrow-n" aria-hidden="true">·</span><span>УСТРОЙСТВО</span></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">У бойца два мозга</h2>
   <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Дешёвые рефлексы всё время, языковая модель — на переломах боя.</p>
   <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:32px;align-items:start">
-    <div style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
+    <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
       <p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:0">СЛОЙ 1 · ВСЕГДА</p>
       <h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#A9A5AF;margin:12px 0 0">Спинной мозг</h3>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;text-wrap:pretty">Детерминированные рефлексы. Работает всегда, стоит <span style="color:#FF0069">$0</span>. Бесплатный боец живёт только на нём — и это видно.</p>
@@ -343,17 +587,17 @@ a:hover{color:#F6F4F6}
   <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:24px 0 0;max-width:70ch;text-wrap:pretty">Прокачка идёт по дереву ядро → кристалл → грань. Каждая грань — одна величина в двух проекциях: число уходит в арифметику боя, характер уходит словами в промпт модели. Прокачка бойца буквально и есть воспитание ИИ.</p>
   <p style="font:700 24px/1.3 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:32px 0 0;padding-top:24px;border-top:1px solid rgba(255,255,255,0.16);max-width:44ch;text-wrap:pretty">Любой сбой модели — молчаливый откат на рефлексы. Бой не останавливается никогда.</p>
   <figure data-frame="1" style="margin:32px 0 0">
-    <div style="aspect-ratio:16/9;background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);display:grid;place-items:center;background-image:repeating-linear-gradient(135deg,rgba(255,255,255,0.025) 0 1px,transparent 1px 10px)"><span style="font:500 11px/1.6 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;text-align:center;padding:16px">[КАДР: боец на арене, вид от камеры боя]</span></div>
+    <div class="dk-corners" style="aspect-ratio:16/9;background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);display:grid;place-items:center;background-image:repeating-linear-gradient(135deg,rgba(255,255,255,0.025) 0 1px,transparent 1px 10px)"><span style="font:500 11px/1.6 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;text-align:center;padding:16px">[КАДР: боец на арене, вид от камеры боя]</span></div>
     <figcaption style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin-top:8px">место под кадр · отбирает владелец</figcaption>
   </figure>
 </section>
 
-<section id="s06" data-screen-label="06 СТАТУС" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div style="display:flex;align-items:center;gap:8px;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF"><span style="color:#5D5D66">06</span><span style="color:#5D5D66">·</span><span>СТАТУС</span></div>
+<section data-dk-in id="s06" data-screen-label="06 СТАТУС" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div class="dk-eyebrow"><span class="dk-eyebrow-n">06</span><span class="dk-eyebrow-n" aria-hidden="true">·</span><span>СТАТУС</span></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Что уже построено</h2>
   <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Без внешнего капитала. Тяга пока в продукте, не в метриках — публичный запуск и первые цифры это цель раунда.</p>
   <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px;align-items:start">
-    <div style="background:#16161B;border:1px solid rgba(255,255,255,0.16);padding:24px">
+    <div class="dk-card" style="background:#16161B;border:1px solid rgba(255,255,255,0.16);padding:24px">
       <p style="font:700 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#F6F4F6;margin:0">В ПРОДЕ</p>
       <ul style="list-style:none;margin:16px 0 0;padding:0;display:grid;gap:12px">
         <li style="font:400 13px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Автономный бой: боец думает моделью и дерётся сам</li>
@@ -364,7 +608,7 @@ a:hover{color:#F6F4F6}
         <li style="font:400 13px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Магазин косметики, кабинет игрока, сохранение прогресса</li>
       </ul>
     </div>
-    <div style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
+    <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
       <p style="font:700 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF;margin:0">СЕНТЯБРЬ 2026</p>
       <ul style="list-style:none;margin:16px 0 0;padding:0;display:grid;gap:12px">
         <li style="font:400 13px/1.55 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">Ростер: бойцы становятся сущностями с именами и историей боёв</li>
@@ -388,13 +632,13 @@ a:hover{color:#F6F4F6}
     <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:8px 0 0;max-width:70ch;text-wrap:pretty">Кросс-игровая интеграция с Clash of Coins. Спецификация и дизайн-бриф готовы, реализация Q4 2026.</p>
   </div>
   <figure data-frame="1" style="margin:32px 0 0">
-    <div style="aspect-ratio:16/9;background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);display:grid;place-items:center;background-image:repeating-linear-gradient(135deg,rgba(255,255,255,0.025) 0 1px,transparent 1px 10px)"><span style="font:500 11px/1.6 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;text-align:center;padding:16px">[КАДР: два входа — арена и зал]</span></div>
+    <div class="dk-corners" style="aspect-ratio:16/9;background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);display:grid;place-items:center;background-image:repeating-linear-gradient(135deg,rgba(255,255,255,0.025) 0 1px,transparent 1px 10px)"><span style="font:500 11px/1.6 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;text-align:center;padding:16px">[КАДР: два входа — арена и зал]</span></div>
     <figcaption style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin-top:8px">место под кадр · отбирает владелец</figcaption>
   </figure>
 </section>
 
-<section id="s07" data-screen-label="07 СПРОС" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div style="display:flex;align-items:center;gap:8px;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF"><span style="color:#5D5D66">07</span><span style="color:#5D5D66">·</span><span>СПРОС</span></div>
+<section data-dk-in id="s07" data-screen-label="07 СПРОС" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div class="dk-eyebrow"><span class="dk-eyebrow-n">07</span><span class="dk-eyebrow-n" aria-hidden="true">·</span><span>СПРОС</span></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Почему игрок платит</h2>
   <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Три мотива. Ни один из них — «заработать».</p>
   <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px;align-items:start">
@@ -417,13 +661,13 @@ a:hover{color:#F6F4F6}
   <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:24px 0 0;max-width:70ch;text-wrap:pretty">Платёж встроен в петлю игры. Без думающего мозга боец дерётся тупо — это не надстройка вроде «аналитики после боя».</p>
   <p style="font:700 24px/1.3 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:32px 0 0;padding-top:24px;border-top:1px solid rgba(255,255,255,0.16);max-width:44ch;text-wrap:pretty">Косметика никогда не влияет на бой. Pay-to-win исключён как принцип.</p>
   <figure data-frame="1" style="margin:32px 0 0">
-    <div style="aspect-ratio:16/9;background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);display:grid;place-items:center;background-image:repeating-linear-gradient(135deg,rgba(255,255,255,0.025) 0 1px,transparent 1px 10px)"><span style="font:500 11px/1.6 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;text-align:center;padding:16px">[КАДР: магазин косметики в проде]</span></div>
+    <div class="dk-corners" style="aspect-ratio:16/9;background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);display:grid;place-items:center;background-image:repeating-linear-gradient(135deg,rgba(255,255,255,0.025) 0 1px,transparent 1px 10px)"><span style="font:500 11px/1.6 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;text-align:center;padding:16px">[КАДР: магазин косметики в проде]</span></div>
     <figcaption style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin-top:8px">место под кадр · отбирает владелец</figcaption>
   </figure>
 </section>
 
-<section id="s08" data-screen-label="08 УДЕРЖАНИЕ" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div style="display:flex;align-items:center;gap:8px;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF"><span style="color:#5D5D66">08</span><span style="color:#5D5D66">·</span><span>УДЕРЖАНИЕ</span></div>
+<section data-dk-in id="s08" data-screen-label="08 УДЕРЖАНИЕ" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div class="dk-eyebrow"><span class="dk-eyebrow-n">08</span><span class="dk-eyebrow-n" aria-hidden="true">·</span><span>УДЕРЖАНИЕ</span></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Почему игрок остаётся</h2>
   <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Четыре петли удержания. Заложены в архитектуру, часть уже в коде.</p>
   <div style="display:grid;gap:1px;background:rgba(255,255,255,0.09);grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:32px">
@@ -450,8 +694,8 @@ a:hover{color:#F6F4F6}
   </div>
 </section>
 
-<section id="s09" data-screen-label="09 БЕСПЛАТНЫЙ ПОТОК" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div style="display:flex;align-items:center;gap:8px;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF"><span style="color:#5D5D66">09</span><span style="color:#5D5D66">·</span><span>БЕСПЛАТНЫЙ ПОТОК</span></div>
+<section data-dk-in id="s09" data-screen-label="09 БЕСПЛАТНЫЙ ПОТОК" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div class="dk-eyebrow"><span class="dk-eyebrow-n">09</span><span class="dk-eyebrow-n" aria-hidden="true">·</span><span>БЕСПЛАТНЫЙ ПОТОК</span></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Бесплатный игрок стоит нам ~$0</h2>
   <div data-anim="frame" style="margin-top:32px;padding:32px 0;border-top:1px solid rgba(255,255,255,0.16);border-bottom:1px solid rgba(255,255,255,0.16);display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));align-items:end">
     <div style="font:900 clamp(40px,16vw,72px)/0.86 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#FF0069">~$0</div>
@@ -485,20 +729,20 @@ a:hover{color:#F6F4F6}
   </div>
 </section>
 
-<section id="s10" data-screen-label="10 ЮНИТ-ЭКОНОМИКА" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div style="display:flex;align-items:center;gap:8px;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF"><span style="color:#5D5D66">10</span><span style="color:#5D5D66">·</span><span>ЮНИТ-ЭКОНОМИКА</span></div>
+<section data-dk-in id="s10" data-screen-label="10 ЮНИТ-ЭКОНОМИКА" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div class="dk-eyebrow"><span class="dk-eyebrow-n">10</span><span class="dk-eyebrow-n" aria-hidden="true">·</span><span>ЮНИТ-ЭКОНОМИКА</span></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Юнит-экономика одного боя</h2>
   <p style="font:400 12px/1.7 'JetBrains Mono',monospace;color:#5D5D66;margin:16px 0 0;max-width:78ch;text-wrap:pretty">Допущения: 6 раундов, два думающих бойца, Claude Haiku, кэширование промпта. Газ на Base меньше $0.001 — вне расчёта.</p>
   <div style="margin-top:32px;display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));align-items:stretch">
-    <div style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
+    <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
       <p style="font:900 32px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:0">$0.029</p>
       <p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:12px 0 0">БЕЗ КЭША</p>
     </div>
-    <div style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
+    <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
       <p style="font:900 32px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:0">$0.016</p>
       <p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:12px 0 0">С КЭШЕМ</p>
     </div>
-    <div style="background:#16161B;border:1px solid rgba(255,255,255,0.16);padding:24px">
+    <div class="dk-card" style="background:#16161B;border:1px solid rgba(255,255,255,0.16);padding:24px">
       <p style="font:900 32px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#FF0069;margin:0">$0.05</p>
       <p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#A9A5AF;margin:12px 0 0">ЦЕНА БОЯ</p>
     </div>
@@ -518,13 +762,13 @@ a:hover{color:#F6F4F6}
   <p style="font:400 12px/1.7 'JetBrains Mono',monospace;color:#5D5D66;margin:24px 0 0;max-width:78ch;text-wrap:pretty">Расход на модель измерен на живых вызовах в проде. Цена боя и платёжный рельс — плановые, включаются на Этапе 2.</p>
 </section>
 
-<section id="s11" data-screen-label="11 МАСШТАБ" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div style="display:flex;align-items:center;gap:8px;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF"><span style="color:#5D5D66">11</span><span style="color:#5D5D66">·</span><span>МАСШТАБ</span></div>
+<section data-dk-in id="s11" data-screen-label="11 МАСШТАБ" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div class="dk-eyebrow"><span class="dk-eyebrow-n">11</span><span class="dk-eyebrow-n" aria-hidden="true">·</span><span>МАСШТАБ</span></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Три сценария масштаба</h2>
   <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Честная картина: модель покрывает API и инфраструктуру примерно с 2 000 DAU, команду — заметно позже.</p>
   <p style="font:700 24px/1.3 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:16px 0 0;max-width:40ch;text-wrap:pretty">Раунд — путь к seed, не к прибыли.</p>
   <div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px;align-items:start">
-    <div style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
+    <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
       <p style="font:700 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF;margin:0">ВЫЖИВАНИЕ</p>
       <dl style="margin:16px 0 0;display:grid;gap:12px">
         <div style="display:flex;justify-content:space-between;gap:12px;border-top:1px solid rgba(255,255,255,0.09);padding-top:12px"><dt style="font:400 11px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;margin:0">DAU</dt><dd style="font:500 14px/1.2 'JetBrains Mono',monospace;color:#F6F4F6;margin:0">1 000</dd></div>
@@ -534,7 +778,7 @@ a:hover{color:#F6F4F6}
         <div style="display:flex;justify-content:space-between;gap:12px;border-top:1px solid rgba(255,255,255,0.09);padding-top:12px"><dt style="font:400 11px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;margin:0">Run-rate в год</dt><dd style="font:500 14px/1.2 'JetBrains Mono',monospace;color:#FF0069;margin:0">$2.7K</dd></div>
       </dl>
     </div>
-    <div style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
+    <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
       <p style="font:700 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF;margin:0">РОСТ</p>
       <dl style="margin:16px 0 0;display:grid;gap:12px">
         <div style="display:flex;justify-content:space-between;gap:12px;border-top:1px solid rgba(255,255,255,0.09);padding-top:12px"><dt style="font:400 11px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;margin:0">DAU</dt><dd style="font:500 14px/1.2 'JetBrains Mono',monospace;color:#F6F4F6;margin:0">10 000</dd></div>
@@ -544,7 +788,7 @@ a:hover{color:#F6F4F6}
         <div style="display:flex;justify-content:space-between;gap:12px;border-top:1px solid rgba(255,255,255,0.09);padding-top:12px"><dt style="font:400 11px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;margin:0">Run-rate в год</dt><dd style="font:500 14px/1.2 'JetBrains Mono',monospace;color:#FF0069;margin:0">$36K</dd></div>
       </dl>
     </div>
-    <div style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
+    <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
       <p style="font:700 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF;margin:0">АПСАЙД</p>
       <dl style="margin:16px 0 0;display:grid;gap:12px">
         <div style="display:flex;justify-content:space-between;gap:12px;border-top:1px solid rgba(255,255,255,0.09);padding-top:12px"><dt style="font:400 11px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;margin:0">DAU</dt><dd style="font:500 14px/1.2 'JetBrains Mono',monospace;color:#F6F4F6;margin:0">50 000</dd></div>
@@ -558,8 +802,8 @@ a:hover{color:#F6F4F6}
   <p style="font:400 12px/1.7 'JetBrains Mono',monospace;color:#5D5D66;margin:24px 0 0;max-width:78ch;text-wrap:pretty">Ориентиры индустрии: F2P — 2–5% платящих, ARPPU около $7.5. Полная модель с открытыми допущениями — в приложении.</p>
 </section>
 
-<section id="s12" data-screen-label="12 СЛОИ ДОХОДА" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div style="display:flex;align-items:center;gap:8px;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF"><span style="color:#5D5D66">12</span><span style="color:#5D5D66">·</span><span>СЛОИ ДОХОДА</span></div>
+<section data-dk-in id="s12" data-screen-label="12 СЛОИ ДОХОДА" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div class="dk-eyebrow"><span class="dk-eyebrow-n">12</span><span class="dk-eyebrow-n" aria-hidden="true">·</span><span>СЛОИ ДОХОДА</span></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Где масштаб</h2>
   <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">ARPPU <span style="color:#FF0069">$7.5</span> — базовый ориентир одного бойца. Пять слоёв дохода сверх него.</p>
   <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:32px;align-items:start">
@@ -568,22 +812,22 @@ a:hover{color:#F6F4F6}
       <h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:0">Дом, а не один боец.</h3>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:0;max-width:70ch;text-wrap:pretty">У игрока несколько бойцов, у каждого свой думающий мозг. ARPPU растёт с глубиной, а не с ценой.</p>
     </div>
-    <div style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
+    <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
       <div style="display:flex;justify-content:space-between;gap:12px"><p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#5D5D66;margin:0">02</p><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">ЭТАП 2</p></div>
       <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Рынок бойцов</h3>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:8px 0 0;text-wrap:pretty">Бойцы и грани становятся ERC-1155 и торгуются. Комиссия с каждой сделки растёт вместе с плотностью мира.</p>
     </div>
-    <div style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
+    <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
       <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#5D5D66;margin:0">03</p>
       <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">B2B: спонсорские арены.</h3>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:8px 0 0;text-wrap:pretty">Проекты экосистемы Base платят за брендированные арены и скины. Прецедент — Clash of Coins.</p>
     </div>
-    <div style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
+    <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
       <div style="display:flex;justify-content:space-between;gap:12px"><p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#5D5D66;margin:0">04</p><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">ПОСЛЕ PMF</p></div>
       <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Токен как слой владения</h3>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:8px 0 0;text-wrap:pretty">Стейк под дом, турниры, ретроактив. Спрос идёт из выручки в USDC, а не из эмиссии.</p>
     </div>
-    <div style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
+    <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
       <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#5D5D66;margin:0">05</p>
       <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Маржа растёт со временем.</h3>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:8px 0 0;text-wrap:pretty">Инференс дешевеет, цена боя — нет. 68% сегодня, выше по мере удешевления моделей.</p>
@@ -591,8 +835,8 @@ a:hover{color:#F6F4F6}
   </div>
 </section>
 
-<section id="s13" data-screen-label="13 РИСК" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div style="display:flex;align-items:center;gap:8px;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF"><span style="color:#5D5D66">13</span><span style="color:#5D5D66">·</span><span>РИСК</span></div>
+<section data-dk-in id="s13" data-screen-label="13 РИСК" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div class="dk-eyebrow"><span class="dk-eyebrow-n">13</span><span class="dk-eyebrow-n" aria-hidden="true">·</span><span>РИСК</span></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;max-width:24ch;text-wrap:pretty">Почему сценарий «75%» к нам не применим</h2>
   <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px;align-items:start">
     <div style="border-top:1px solid rgba(255,255,255,0.16);padding-top:16px">
@@ -624,8 +868,8 @@ a:hover{color:#F6F4F6}
   </div>
 </section>
 
-<section id="s14" data-screen-label="14 ТОКЕН" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div style="display:flex;align-items:center;gap:8px;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF"><span style="color:#5D5D66">14</span><span style="color:#5D5D66">·</span><span>ТОКЕН</span></div>
+<section data-dk-in id="s14" data-screen-label="14 ТОКЕН" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div class="dk-eyebrow"><span class="dk-eyebrow-n">14</span><span class="dk-eyebrow-n" aria-hidden="true">·</span><span>ТОКЕН</span></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Токен: после seed и без наёмников</h2>
   <div style="margin-top:32px;display:grid;gap:0">
     <div style="border-top:1px solid rgba(255,255,255,0.09);padding:24px 0;display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr))">
@@ -648,8 +892,8 @@ a:hover{color:#F6F4F6}
   <p style="font:400 12px/1.8 'JetBrains Mono',monospace;letter-spacing:.04em;color:#5D5D66;margin:24px 0 0;max-width:82ch;text-wrap:pretty">Параметры: эмиссия 1B · 10–15% в обращении на старте · клифф 12 месяцев, вестинг 36 · buyback-and-burn из выручки в USDC. Название и запуск — на этапе seed.</p>
 </section>
 
-<section id="s15" data-screen-label="15 ВРЕМЯ" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div style="display:flex;align-items:center;gap:8px;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF"><span style="color:#5D5D66">15</span><span style="color:#5D5D66">·</span><span>ВРЕМЯ</span></div>
+<section data-dk-in id="s15" data-screen-label="15 ВРЕМЯ" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div class="dk-eyebrow"><span class="dk-eyebrow-n">15</span><span class="dk-eyebrow-n" aria-hidden="true">·</span><span>ВРЕМЯ</span></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Роадмап</h2>
   <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Ориентир по времени. Токен — только после закрытия seed.</p>
   <div style="margin-top:32px;display:grid;gap:0">
@@ -681,8 +925,8 @@ a:hover{color:#F6F4F6}
   <p style="font:700 24px/1.3 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:24px 0 0;max-width:52ch;text-wrap:pretty">Милстоун раунда: 10K DAU, 400+ платящих, работающие микроплатежи — заявка на seed $6–10M через 12–18 месяцев.</p>
 </section>
 
-<section id="s16" data-screen-label="16 РАУНД" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-  <div style="display:flex;align-items:center;gap:8px;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF"><span style="color:#5D5D66">16</span><span style="color:#5D5D66">·</span><span>РАУНД</span></div>
+<section data-dk-in id="s16" data-screen-label="16 РАУНД" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+  <div class="dk-eyebrow"><span class="dk-eyebrow-n">16</span><span class="dk-eyebrow-n" aria-hidden="true">·</span><span>РАУНД</span></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Раунд</h2>
   <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Pre-seed · SAFE · ангелы, фонды и комьюнити. Доля — по итогу раунда.</p>
   <div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px;align-items:start">
@@ -730,24 +974,24 @@ a:hover{color:#F6F4F6}
   <p style="font:400 12px/1.7 'JetBrains Mono',monospace;color:#A9A5AF;margin:24px 0 0;max-width:78ch;text-wrap:pretty">* после 20% разводнения на seed. ** pro-rata доля эмиссии, FDV $5M / $15M / $30M, с вестингом. Бинарный исход, как любой pre-seed.</p>
 </section>
 
-<section id="s17" data-screen-label="17 КОМАНДА" style="padding:48px 16px 32px;max-width:1180px;margin:0 auto">
-  <div style="display:flex;align-items:center;gap:8px;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF"><span style="color:#5D5D66">17</span><span style="color:#5D5D66">·</span><span>КОМАНДА</span></div>
+<section data-dk-in id="s17" data-screen-label="17 КОМАНДА" style="padding:48px 16px 32px;max-width:1180px;margin:0 auto">
+  <div class="dk-eyebrow"><span class="dk-eyebrow-n">17</span><span class="dk-eyebrow-n" aria-hidden="true">·</span><span>КОМАНДА</span></div>
   <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Команда</h2>
   <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px;align-items:start">
     <div>
-      <div style="aspect-ratio:4/5;background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);display:grid;place-items:center"><span style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66">[ПОРТРЕТ]</span></div>
+      <div class="dk-corners" style="aspect-ratio:4/5;background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);display:grid;place-items:center"><span style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66">[ПОРТРЕТ]</span></div>
       <h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:16px 0 0">Юрий Варваров</h3>
       <p style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#A9A5AF;margin:8px 0 0">CEO · СО-ОСНОВАТЕЛЬ</p>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;text-wrap:pretty">8 лет в управлении инвестициями. Чемпион мира по ушу. Архитектура продукта и ИИ.</p>
     </div>
     <div>
-      <div style="aspect-ratio:4/5;background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);display:grid;place-items:center"><span style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66">[ПОРТРЕТ]</span></div>
+      <div class="dk-corners" style="aspect-ratio:4/5;background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);display:grid;place-items:center"><span style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66">[ПОРТРЕТ]</span></div>
       <h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:16px 0 0">Евгений Бобров</h3>
       <p style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#A9A5AF;margin:8px 0 0">СО-ОСНОВАТЕЛЬ</p>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;text-wrap:pretty">Разработка ядра, операции, партнёрства.</p>
     </div>
     <div>
-      <div style="aspect-ratio:4/5;background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);display:grid;place-items:center"><span style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66">[ПОРТРЕТ]</span></div>
+      <div class="dk-corners" style="aspect-ratio:4/5;background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);display:grid;place-items:center"><span style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66">[ПОРТРЕТ]</span></div>
       <h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:16px 0 0">Иван Король</h3>
       <p style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#A9A5AF;margin:8px 0 0">CTO · СО-ОСНОВАТЕЛЬ</p>
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;text-wrap:pretty">CTO и со-основатель AR Spatially (команда 14). Solidity / HUFF / EVM: MEV-система до ~1% транзакций Ethereum. Бэкенд, AI/ML в проде.</p>
@@ -761,8 +1005,8 @@ a:hover{color:#F6F4F6}
 </div>
 
 <div data-layer="en" lang="en">
-  <section id="e01" data-screen-label="01 PROBLEM" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-    <div style="display:flex;align-items:center;gap:8px;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF"><span style="color:#5D5D66">01</span><span style="color:#5D5D66">·</span><span>PROBLEM</span></div>
+  <section data-dk-in id="e01" data-screen-label="01 PROBLEM" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+    <div class="dk-eyebrow"><span class="dk-eyebrow-n">01</span><span class="dk-eyebrow-n" aria-hidden="true">·</span><span>PROBLEM</span></div>
     <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Why 3 out of 4 GameFi games died</h2>
     <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">The anatomy of play-to-earn: three structural defects, not a market cycle.</p>
     <div data-anim="frame" style="margin-top:32px;padding:32px 0;border-top:1px solid rgba(255,255,255,0.16);border-bottom:1px solid rgba(255,255,255,0.16);display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));align-items:end">
@@ -791,51 +1035,51 @@ a:hover{color:#F6F4F6}
     </div>
     <p style="font:700 24px/1.3 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:32px 0 0;padding-top:24px;border-top:1px solid rgba(255,255,255,0.16);max-width:44ch;text-wrap:pretty">None of the three is cured by marketing or by switching chains. Only by a different revenue model.</p>
   </section>
-  <section id="e02" data-screen-label="02 MODEL" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-    <div style="display:flex;align-items:center;gap:8px;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF"><span style="color:#5D5D66">02</span><span style="color:#5D5D66">·</span><span>MODEL</span></div>
+  <section data-dk-in id="e02" data-screen-label="02 MODEL" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+    <div class="dk-eyebrow"><span class="dk-eyebrow-n">02</span><span class="dk-eyebrow-n" aria-hidden="true">·</span><span>MODEL</span></div>
     <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">They pay for intelligence, not for farming</h2>
     <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Hexlash is an AI service in a game shell. Play-to-earn turned 180°.</p>
     <div style="margin-top:32px;display:grid;gap:1px;background:rgba(255,255,255,0.09)">
       <div style="background:#08080A;padding:16px 0 8px">
         <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;margin:0">What the player pays for</p>
         <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:12px">
-          <div style="padding:12px 16px;background:rgba(255,255,255,0.025)"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">PLAY-TO-EARN</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:8px 0 0">The right to farm a token</p></div>
-          <div data-anim="row" data-anim-i="0" style="padding:12px 16px;background:rgba(255,255,255,0.05);border-left:2px solid #FF0069"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#A9A5AF;margin:0">HEXLASH</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:8px 0 0">A fighter that thinks, slots, cosmetics</p></div>
+          <div class="dk-card" style="padding:12px 16px;background:rgba(255,255,255,0.025)"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">PLAY-TO-EARN</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:8px 0 0">The right to farm a token</p></div>
+          <div data-anim="row" data-anim-i="0" class="dk-card" style="padding:12px 16px;background:rgba(255,255,255,0.05);border-left:2px solid #FF0069"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#A9A5AF;margin:0">HEXLASH</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:8px 0 0">A fighter that thinks, slots, cosmetics</p></div>
         </div>
       </div>
       <div style="background:#08080A;padding:16px 0 8px">
         <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;margin:0">The studio's revenue currency</p>
         <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:12px">
-          <div style="padding:12px 16px;background:rgba(255,255,255,0.025)"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">PLAY-TO-EARN</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:8px 0 0">Its own token</p></div>
-          <div data-anim="row" data-anim-i="1" style="padding:12px 16px;background:rgba(255,255,255,0.05);border-left:2px solid #FF0069"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#A9A5AF;margin:0">HEXLASH</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:8px 0 0">USDC</p></div>
+          <div class="dk-card" style="padding:12px 16px;background:rgba(255,255,255,0.025)"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">PLAY-TO-EARN</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:8px 0 0">Its own token</p></div>
+          <div data-anim="row" data-anim-i="1" class="dk-card" style="padding:12px 16px;background:rgba(255,255,255,0.05);border-left:2px solid #FF0069"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#A9A5AF;margin:0">HEXLASH</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:8px 0 0">USDC</p></div>
         </div>
       </div>
       <div style="background:#08080A;padding:16px 0 8px">
         <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;margin:0">What retains</p>
         <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:12px">
-          <div style="padding:12px 16px;background:rgba(255,255,255,0.025)"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">PLAY-TO-EARN</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:8px 0 0">The token price</p></div>
-          <div data-anim="row" data-anim-i="2" style="padding:12px 16px;background:rgba(255,255,255,0.05);border-left:2px solid #FF0069"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#A9A5AF;margin:0">HEXLASH</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:8px 0 0">The house, the fighters, their character, the mentor</p></div>
+          <div class="dk-card" style="padding:12px 16px;background:rgba(255,255,255,0.025)"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">PLAY-TO-EARN</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:8px 0 0">The token price</p></div>
+          <div data-anim="row" data-anim-i="2" class="dk-card" style="padding:12px 16px;background:rgba(255,255,255,0.05);border-left:2px solid #FF0069"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#A9A5AF;margin:0">HEXLASH</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:8px 0 0">The house, the fighters, their character, the mentor</p></div>
         </div>
       </div>
       <div style="background:#08080A;padding:16px 0 8px">
         <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;margin:0">If the token falls</p>
         <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:12px">
-          <div style="padding:12px 16px;background:rgba(255,255,255,0.025)"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">PLAY-TO-EARN</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:8px 0 0">The game dies</p></div>
-          <div data-anim="row" data-anim-i="3" style="padding:12px 16px;background:rgba(255,255,255,0.05);border-left:2px solid #FF0069"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#A9A5AF;margin:0">HEXLASH</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:8px 0 0">The game runs exactly as it did</p></div>
+          <div class="dk-card" style="padding:12px 16px;background:rgba(255,255,255,0.025)"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">PLAY-TO-EARN</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:8px 0 0">The game dies</p></div>
+          <div data-anim="row" data-anim-i="3" class="dk-card" style="padding:12px 16px;background:rgba(255,255,255,0.05);border-left:2px solid #FF0069"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#A9A5AF;margin:0">HEXLASH</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:8px 0 0">The game runs exactly as it did</p></div>
         </div>
       </div>
       <div style="background:#08080A;padding:16px 0 8px">
         <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;margin:0">The free player</p>
         <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:12px">
-          <div style="padding:12px 16px;background:rgba(255,255,255,0.025)"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">PLAY-TO-EARN</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:8px 0 0">A loss — he gets paid</p></div>
-          <div data-anim="row" data-anim-i="4" style="padding:12px 16px;background:rgba(255,255,255,0.05);border-left:2px solid #FF0069"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#A9A5AF;margin:0">HEXLASH</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:8px 0 0">Content, costs us ~$0</p></div>
+          <div class="dk-card" style="padding:12px 16px;background:rgba(255,255,255,0.025)"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">PLAY-TO-EARN</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:8px 0 0">A loss — he gets paid</p></div>
+          <div data-anim="row" data-anim-i="4" class="dk-card" style="padding:12px 16px;background:rgba(255,255,255,0.05);border-left:2px solid #FF0069"><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#A9A5AF;margin:0">HEXLASH</p><p style="font:400 14px/1.5 'JetBrains Mono',monospace;color:#F6F4F6;margin:8px 0 0">Content, costs us ~$0</p></div>
         </div>
       </div>
     </div>
     <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:24px 0 0;max-width:70ch;text-wrap:pretty">A token is planned — but after product-market fit, as utility and a layer of ownership, not as a source of revenue.</p>
   </section>
-  <section id="e03" data-screen-label="03 CORE PITCH" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-    <div style="display:flex;align-items:center;gap:8px;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF"><span style="color:#5D5D66">03</span><span style="color:#5D5D66">·</span><span>CORE PITCH</span></div>
+  <section data-dk-in id="e03" data-screen-label="03 CORE PITCH" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+    <div class="dk-eyebrow"><span class="dk-eyebrow-n">03</span><span class="dk-eyebrow-n" aria-hidden="true">·</span><span>CORE PITCH</span></div>
     <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">The delegation ladder</h2>
     <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">The player hands control, step by step, to an AI he raised himself.</p>
     <div style="margin-top:32px;display:flex;flex-direction:column-reverse;gap:12px">
@@ -863,24 +1107,24 @@ a:hover{color:#F6F4F6}
     </div>
     <p style="font:900 clamp(24px,5vw,40px)/1.06 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:48px 0 0;max-width:26ch;text-wrap:balance">The reward for playing is not an item. It is the right to sit out.</p>
     <figure data-frame="1" style="margin:32px 0 0">
-      <div style="aspect-ratio:16/9;background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);display:grid;place-items:center;background-image:repeating-linear-gradient(135deg,rgba(255,255,255,0.025) 0 1px,transparent 1px 10px)"><span style="font:500 11px/1.6 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;text-align:center;padding:16px">[SHOT: the player's house, camera view]</span></div>
+      <div class="dk-corners" style="aspect-ratio:16/9;background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);display:grid;place-items:center;background-image:repeating-linear-gradient(135deg,rgba(255,255,255,0.025) 0 1px,transparent 1px 10px)"><span style="font:500 11px/1.6 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;text-align:center;padding:16px">[SHOT: the player's house, camera view]</span></div>
       <figcaption style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin-top:8px">reserved for a game shot · owner selects</figcaption>
     </figure>
   </section>
-  <section id="e04" style="padding:32px 0;max-width:100%;margin:0 auto">
-    <div style="padding:0 16px;max-width:1180px;margin:0 auto"><div style="display:flex;align-items:center;gap:8px;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF"><span style="color:#5D5D66">04</span><span style="color:#5D5D66">·</span><span>FIGHT</span></div><h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">The fighter fights on his own</h2><p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">The model picks an intent at the turning points of a fight; the body executes it as a reflex. 5–10 calls per fight.</p><div style="display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;margin-top:32px"><p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF;margin:0">ARENA · LIVE FIGHT · <span data-arena-state="1">IDLE</span></p><p style="font:400 13px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:0">Six rounds. Two thinking fighters.</p></div></div>
-    <div style="width:100%;margin-top:16px"><div style="max-width:1180px;margin:0 auto"><div data-arena="1" style="aspect-ratio:16/10;background:#0D0A0D;border-top:1px solid rgba(255,255,255,0.09);border-bottom:1px solid rgba(255,255,255,0.09);display:grid;place-items:center;position:relative;background-image:repeating-linear-gradient(135deg,rgba(255,255,255,0.025) 0 1px,transparent 1px 12px)"><span data-arena-rest="1" style="font:500 12px/1.6 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;text-align:center;padding:24px;position:relative;z-index:1">LIVE ARENA FROM THE GAME · PRESS “START THE FIGHT”</span><div data-arena-load="1" class="off" style="width:min(320px,70%);position:relative;z-index:1"><div style="height:2px;background:rgba(255,255,255,0.09)"><div data-arena-bar="1" class="dk-busy" style="height:2px;background:#FF0069;transform-origin:left"></div></div><p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF;margin:12px 0 0">LOADING SCENE</p></div><div data-arena-note="1" class="off" style="padding:24px;max-width:60ch;position:relative;z-index:1"><p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF;margin:0">ERROR STATE · ARENA NOT RESPONDING</p><p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#5D5D66;margin:12px 0 0;text-wrap:pretty">The fight runs on the same servers as the game itself. If they are down right now, the page still works — every other section reads as usual.</p></div></div></div></div>
+  <section data-dk-in id="e04" style="padding:32px 0;max-width:100%;margin:0 auto">
+    <div style="padding:0 16px;max-width:1180px;margin:0 auto"><div class="dk-eyebrow"><span class="dk-eyebrow-n">04</span><span class="dk-eyebrow-n" aria-hidden="true">·</span><span>FIGHT</span></div><h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">The fighter fights on his own</h2><p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">The model picks an intent at the turning points of a fight; the body executes it as a reflex. 5–10 calls per fight.</p><div style="display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;margin-top:32px"><p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF;margin:0">ARENA · LIVE FIGHT · <span data-arena-state="1">IDLE</span></p><p style="font:400 13px/1.5 'JetBrains Mono',monospace;color:#5D5D66;margin:0">Six rounds. Two thinking fighters.</p></div></div>
+    <div style="width:100%;margin-top:16px"><div style="max-width:1180px;margin:0 auto"><div data-arena="1" class="dk-corners" style="aspect-ratio:16/10;background:#0D0A0D;border-top:1px solid rgba(255,255,255,0.09);border-bottom:1px solid rgba(255,255,255,0.09);display:grid;place-items:center;position:relative;background-image:repeating-linear-gradient(135deg,rgba(255,255,255,0.025) 0 1px,transparent 1px 12px)"><span data-arena-rest="1" style="font:500 12px/1.6 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;text-align:center;padding:24px;position:relative;z-index:1">LIVE ARENA FROM THE GAME · PRESS “START THE FIGHT”</span><div data-arena-load="1" class="off" style="width:min(320px,70%);position:relative;z-index:1"><div style="height:2px;background:rgba(255,255,255,0.09)"><div data-arena-bar="1" class="dk-busy" style="height:2px;background:#FF0069;transform-origin:left"></div></div><p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF;margin:12px 0 0">LOADING SCENE</p></div><div data-arena-note="1" class="off" style="padding:24px;max-width:60ch;position:relative;z-index:1"><p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF;margin:0">ERROR STATE · ARENA NOT RESPONDING</p><p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#5D5D66;margin:12px 0 0;text-wrap:pretty">The fight runs on the same servers as the game itself. If they are down right now, the page still works — every other section reads as usual.</p></div></div></div></div>
     <div style="padding:0 16px;max-width:1180px;margin:24px auto 0">
       <button type="button" data-fight="1" class="fight"><span style="position:relative;z-index:1">START THE FIGHT</span></button>
       <p style="font:400 13px/1.7 'JetBrains Mono',monospace;color:#A9A5AF;margin:24px 0 0;max-width:78ch;padding-top:24px;border-top:1px solid rgba(255,255,255,0.09);text-wrap:pretty">The live fight opens on tap — that needs JavaScript. Every other section reads as usual. The window runs the fight from production: the model picks an intent, the body executes it as a reflex. Roster, fighter character, ascension into a mentor and command mode — September 2026.</p>
     </div>
   </section>
-  <section id="e05" data-screen-label="05 ARCHITECTURE" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-    <div style="display:flex;align-items:center;gap:8px;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF"><span style="color:#5D5D66">05</span><span style="color:#5D5D66">·</span><span>ARCHITECTURE</span></div>
+  <section data-dk-in id="e05" data-screen-label="05 ARCHITECTURE" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+    <div class="dk-eyebrow"><span class="dk-eyebrow-n">05</span><span class="dk-eyebrow-n" aria-hidden="true">·</span><span>ARCHITECTURE</span></div>
     <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">The fighter has two brains</h2>
     <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Cheap reflexes all the time, a language model at the turning points.</p>
     <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:32px;align-items:start">
-      <div style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
+      <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
         <p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:0">LAYER 1 · ALWAYS ON</p>
         <h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#A9A5AF;margin:12px 0 0">The spinal cord</h3>
         <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;text-wrap:pretty">Deterministic reflexes. Always on, costs <span style="color:#FF0069">$0</span>. A free fighter runs on this alone — and it shows.</p>
@@ -912,16 +1156,16 @@ a:hover{color:#F6F4F6}
     <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:24px 0 0;max-width:70ch;text-wrap:pretty">Progression runs a tree: core → crystal → facet. Every facet is one value in two projections: the number goes into the arithmetic of the fight, the character goes in words into the model's prompt. Levelling a fighter is, literally, raising an AI.</p>
     <p style="font:700 24px/1.3 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:32px 0 0;padding-top:24px;border-top:1px solid rgba(255,255,255,0.16);max-width:44ch;text-wrap:pretty">Any model failure falls back to reflexes silently. The fight never stops.</p>
     <figure data-frame="1" style="margin:32px 0 0">
-      <div style="aspect-ratio:16/9;background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);display:grid;place-items:center;background-image:repeating-linear-gradient(135deg,rgba(255,255,255,0.025) 0 1px,transparent 1px 10px)"><span style="font:500 11px/1.6 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;text-align:center;padding:16px">[SHOT: a fighter in the arena, fight camera]</span></div>
+      <div class="dk-corners" style="aspect-ratio:16/9;background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);display:grid;place-items:center;background-image:repeating-linear-gradient(135deg,rgba(255,255,255,0.025) 0 1px,transparent 1px 10px)"><span style="font:500 11px/1.6 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;text-align:center;padding:16px">[SHOT: a fighter in the arena, fight camera]</span></div>
       <figcaption style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin-top:8px">reserved for a game shot · owner selects</figcaption>
     </figure>
   </section>
-  <section id="e06" data-screen-label="06 STATUS" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-    <div style="display:flex;align-items:center;gap:8px;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF"><span style="color:#5D5D66">06</span><span style="color:#5D5D66">·</span><span>STATUS</span></div>
+  <section data-dk-in id="e06" data-screen-label="06 STATUS" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+    <div class="dk-eyebrow"><span class="dk-eyebrow-n">06</span><span class="dk-eyebrow-n" aria-hidden="true">·</span><span>STATUS</span></div>
     <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">What is already built</h2>
     <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Built without outside capital. Traction is in the product, not yet in the metrics — a public launch and the first numbers are what this round is for.</p>
     <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px;align-items:start">
-      <div style="background:#16161B;border:1px solid rgba(255,255,255,0.16);padding:24px">
+      <div class="dk-card" style="background:#16161B;border:1px solid rgba(255,255,255,0.16);padding:24px">
         <p style="font:700 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#F6F4F6;margin:0">IN PRODUCTION</p>
         <ul style="list-style:none;margin:16px 0 0;padding:0;display:grid;gap:12px">
           <li style="font:400 13px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Autonomous fighting: the fighter thinks with the model and fights on his own</li>
@@ -932,7 +1176,7 @@ a:hover{color:#F6F4F6}
           <li style="font:400 13px/1.55 'JetBrains Mono',monospace;color:#F6F4F6;text-wrap:pretty">Cosmetics shop, player cabinet, progress saving</li>
         </ul>
       </div>
-      <div style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
+      <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
         <p style="font:700 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF;margin:0">SEPTEMBER 2026</p>
         <ul style="list-style:none;margin:16px 0 0;padding:0;display:grid;gap:12px">
           <li style="font:400 13px/1.55 'JetBrains Mono',monospace;color:#A9A5AF;text-wrap:pretty">Roster: fighters become entities with names and a fight history</li>
@@ -956,12 +1200,12 @@ a:hover{color:#F6F4F6}
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:8px 0 0;max-width:70ch;text-wrap:pretty">Cross-game integration with Clash of Coins. Spec and design brief are done, implementation Q4 2026.</p>
     </div>
     <figure data-frame="1" style="margin:32px 0 0">
-      <div style="aspect-ratio:16/9;background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);display:grid;place-items:center;background-image:repeating-linear-gradient(135deg,rgba(255,255,255,0.025) 0 1px,transparent 1px 10px)"><span style="font:500 11px/1.6 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;text-align:center;padding:16px">[SHOT: two doors — arena and hall]</span></div>
+      <div class="dk-corners" style="aspect-ratio:16/9;background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);display:grid;place-items:center;background-image:repeating-linear-gradient(135deg,rgba(255,255,255,0.025) 0 1px,transparent 1px 10px)"><span style="font:500 11px/1.6 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;text-align:center;padding:16px">[SHOT: two doors — arena and hall]</span></div>
       <figcaption style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin-top:8px">reserved for a game shot · owner selects</figcaption>
     </figure>
   </section>
-  <section id="e07" data-screen-label="07 DEMAND" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-    <div style="display:flex;align-items:center;gap:8px;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF"><span style="color:#5D5D66">07</span><span style="color:#5D5D66">·</span><span>DEMAND</span></div>
+  <section data-dk-in id="e07" data-screen-label="07 DEMAND" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+    <div class="dk-eyebrow"><span class="dk-eyebrow-n">07</span><span class="dk-eyebrow-n" aria-hidden="true">·</span><span>DEMAND</span></div>
     <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Why a player pays</h2>
     <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Three motives. Not one of them is “to earn.”</p>
     <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px;align-items:start">
@@ -984,12 +1228,12 @@ a:hover{color:#F6F4F6}
     <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:24px 0 0;max-width:70ch;text-wrap:pretty">Payment sits inside the game loop. Without the thinking brain the fighter fights stupidly — this is not a bolt-on like “post-match analytics.”</p>
     <p style="font:700 24px/1.3 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:32px 0 0;padding-top:24px;border-top:1px solid rgba(255,255,255,0.16);max-width:44ch;text-wrap:pretty">Cosmetics never affect a fight. Pay-to-win is excluded on principle.</p>
     <figure data-frame="1" style="margin:32px 0 0">
-      <div style="aspect-ratio:16/9;background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);display:grid;place-items:center;background-image:repeating-linear-gradient(135deg,rgba(255,255,255,0.025) 0 1px,transparent 1px 10px)"><span style="font:500 11px/1.6 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;text-align:center;padding:16px">[SHOT: the cosmetics shop in production]</span></div>
+      <div class="dk-corners" style="aspect-ratio:16/9;background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);display:grid;place-items:center;background-image:repeating-linear-gradient(135deg,rgba(255,255,255,0.025) 0 1px,transparent 1px 10px)"><span style="font:500 11px/1.6 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;text-align:center;padding:16px">[SHOT: the cosmetics shop in production]</span></div>
       <figcaption style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin-top:8px">reserved for a game shot · owner selects</figcaption>
     </figure>
   </section>
-  <section id="e08" data-screen-label="08 RETENTION" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-    <div style="display:flex;align-items:center;gap:8px;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF"><span style="color:#5D5D66">08</span><span style="color:#5D5D66">·</span><span>RETENTION</span></div>
+  <section data-dk-in id="e08" data-screen-label="08 RETENTION" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+    <div class="dk-eyebrow"><span class="dk-eyebrow-n">08</span><span class="dk-eyebrow-n" aria-hidden="true">·</span><span>RETENTION</span></div>
     <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Why a player stays</h2>
     <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Four retention loops. Built into the architecture, part of it already in code.</p>
     <div style="display:grid;gap:1px;background:rgba(255,255,255,0.09);grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:32px">
@@ -1015,8 +1259,8 @@ a:hover{color:#F6F4F6}
       </div>
     </div>
   </section>
-  <section id="e09" data-screen-label="09 FREE FLOW" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-    <div style="display:flex;align-items:center;gap:8px;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF"><span style="color:#5D5D66">09</span><span style="color:#5D5D66">·</span><span>FREE FLOW</span></div>
+  <section data-dk-in id="e09" data-screen-label="09 FREE FLOW" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+    <div class="dk-eyebrow"><span class="dk-eyebrow-n">09</span><span class="dk-eyebrow-n" aria-hidden="true">·</span><span>FREE FLOW</span></div>
     <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">A free player costs us ~$0</h2>
     <div data-anim="frame" style="margin-top:32px;padding:32px 0;border-top:1px solid rgba(255,255,255,0.16);border-bottom:1px solid rgba(255,255,255,0.16);display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));align-items:end">
       <div style="font:900 clamp(40px,16vw,72px)/0.86 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#FF0069">~$0</div>
@@ -1049,20 +1293,20 @@ a:hover{color:#F6F4F6}
       <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:8px 0 0;max-width:70ch;text-wrap:pretty">Sponsored arenas and branded skins from Base ecosystem projects. Precedent — the cross-game integration with Clash of Coins (OWB Studio).</p>
     </div>
   </section>
-  <section id="e10" data-screen-label="10 UNIT ECONOMICS" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-    <div style="display:flex;align-items:center;gap:8px;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF"><span style="color:#5D5D66">10</span><span style="color:#5D5D66">·</span><span>UNIT ECONOMICS</span></div>
+  <section data-dk-in id="e10" data-screen-label="10 UNIT ECONOMICS" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+    <div class="dk-eyebrow"><span class="dk-eyebrow-n">10</span><span class="dk-eyebrow-n" aria-hidden="true">·</span><span>UNIT ECONOMICS</span></div>
     <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">The unit economics of a single fight</h2>
     <p style="font:400 12px/1.7 'JetBrains Mono',monospace;color:#5D5D66;margin:16px 0 0;max-width:78ch;text-wrap:pretty">Assumptions: 6 rounds, two thinking fighters, Claude Haiku, prompt caching. Gas on Base is under $0.001 — outside the calculation.</p>
     <div style="margin-top:32px;display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));align-items:stretch">
-      <div style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
+      <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
         <p style="font:900 32px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:0">$0.029</p>
         <p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:12px 0 0">WITHOUT CACHE</p>
       </div>
-      <div style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
+      <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
         <p style="font:900 32px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:0">$0.016</p>
         <p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66;margin:12px 0 0">WITH CACHE</p>
       </div>
-      <div style="background:#16161B;border:1px solid rgba(255,255,255,0.16);padding:24px">
+      <div class="dk-card" style="background:#16161B;border:1px solid rgba(255,255,255,0.16);padding:24px">
         <p style="font:900 32px/1 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#FF0069;margin:0">$0.05</p>
         <p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#A9A5AF;margin:12px 0 0">PRICE PER FIGHT</p>
       </div>
@@ -1081,13 +1325,13 @@ a:hover{color:#F6F4F6}
     <p style="font:700 24px/1.3 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:32px 0 0;max-width:52ch;text-wrap:pretty">Two rules are built into the product: the thinking brain is paid only, and the character prompt is cached. Without them the unit is negative on every user.</p>
     <p style="font:400 12px/1.7 'JetBrains Mono',monospace;color:#5D5D66;margin:24px 0 0;max-width:78ch;text-wrap:pretty">Model spend is measured on live calls in production. The price per fight and the payment rail are planned; they switch on at Stage 2.</p>
   </section>
-  <section id="e11" data-screen-label="11 SCALE" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-    <div style="display:flex;align-items:center;gap:8px;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF"><span style="color:#5D5D66">11</span><span style="color:#5D5D66">·</span><span>SCALE</span></div>
+  <section data-dk-in id="e11" data-screen-label="11 SCALE" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+    <div class="dk-eyebrow"><span class="dk-eyebrow-n">11</span><span class="dk-eyebrow-n" aria-hidden="true">·</span><span>SCALE</span></div>
     <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Three scale scenarios</h2>
     <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">The honest picture: the model covers API and infrastructure from roughly 2,000 DAU, the team considerably later.</p>
     <p style="font:700 24px/1.3 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:16px 0 0;max-width:40ch;text-wrap:pretty">This round is the path to seed, not to profit.</p>
     <div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px;align-items:start">
-      <div style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
+      <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
         <p style="font:700 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF;margin:0">SURVIVAL</p>
         <dl style="margin:16px 0 0;display:grid;gap:12px">
           <div style="display:flex;justify-content:space-between;gap:12px;border-top:1px solid rgba(255,255,255,0.09);padding-top:12px"><dt style="font:400 11px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;margin:0">DAU</dt><dd style="font:500 14px/1.2 'JetBrains Mono',monospace;color:#F6F4F6;margin:0">1,000</dd></div>
@@ -1097,7 +1341,7 @@ a:hover{color:#F6F4F6}
           <div style="display:flex;justify-content:space-between;gap:12px;border-top:1px solid rgba(255,255,255,0.09);padding-top:12px"><dt style="font:400 11px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;margin:0">Annual run-rate</dt><dd style="font:500 14px/1.2 'JetBrains Mono',monospace;color:#FF0069;margin:0">$2.7K</dd></div>
         </dl>
       </div>
-      <div style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
+      <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
         <p style="font:700 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF;margin:0">GROWTH</p>
         <dl style="margin:16px 0 0;display:grid;gap:12px">
           <div style="display:flex;justify-content:space-between;gap:12px;border-top:1px solid rgba(255,255,255,0.09);padding-top:12px"><dt style="font:400 11px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;margin:0">DAU</dt><dd style="font:500 14px/1.2 'JetBrains Mono',monospace;color:#F6F4F6;margin:0">10,000</dd></div>
@@ -1107,7 +1351,7 @@ a:hover{color:#F6F4F6}
           <div style="display:flex;justify-content:space-between;gap:12px;border-top:1px solid rgba(255,255,255,0.09);padding-top:12px"><dt style="font:400 11px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;margin:0">Annual run-rate</dt><dd style="font:500 14px/1.2 'JetBrains Mono',monospace;color:#FF0069;margin:0">$36K</dd></div>
         </dl>
       </div>
-      <div style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
+      <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
         <p style="font:700 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF;margin:0">UPSIDE</p>
         <dl style="margin:16px 0 0;display:grid;gap:12px">
           <div style="display:flex;justify-content:space-between;gap:12px;border-top:1px solid rgba(255,255,255,0.09);padding-top:12px"><dt style="font:400 11px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#5D5D66;margin:0">DAU</dt><dd style="font:500 14px/1.2 'JetBrains Mono',monospace;color:#F6F4F6;margin:0">50,000</dd></div>
@@ -1120,8 +1364,8 @@ a:hover{color:#F6F4F6}
     </div>
     <p style="font:400 12px/1.7 'JetBrains Mono',monospace;color:#5D5D66;margin:24px 0 0;max-width:78ch;text-wrap:pretty">Industry benchmarks: F2P runs 2–5% payers, ARPPU around $7.5. The full model with open assumptions is in the appendix.</p>
   </section>
-  <section id="e12" data-screen-label="12 REVENUE LAYERS" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-    <div style="display:flex;align-items:center;gap:8px;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF"><span style="color:#5D5D66">12</span><span style="color:#5D5D66">·</span><span>REVENUE LAYERS</span></div>
+  <section data-dk-in id="e12" data-screen-label="12 REVENUE LAYERS" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+    <div class="dk-eyebrow"><span class="dk-eyebrow-n">12</span><span class="dk-eyebrow-n" aria-hidden="true">·</span><span>REVENUE LAYERS</span></div>
     <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Where the scale is</h2>
     <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">ARPPU <span style="color:#FF0069">$7.5</span> is the baseline for one fighter. Five layers of revenue on top of it.</p>
     <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr));margin-top:32px;align-items:start">
@@ -1130,30 +1374,30 @@ a:hover{color:#F6F4F6}
         <h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:0">A house, not one fighter.</h3>
         <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:0;max-width:70ch;text-wrap:pretty">A player keeps several fighters, each with his own thinking brain. ARPPU grows with depth, not with price.</p>
       </div>
-      <div style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
+      <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
         <div style="display:flex;justify-content:space-between;gap:12px"><p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#5D5D66;margin:0">02</p><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">STAGE 2</p></div>
         <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">A fighter market</h3>
         <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:8px 0 0;text-wrap:pretty">Fighters and facets become ERC-1155 and trade. The fee on every deal grows with the density of the world.</p>
       </div>
-      <div style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
+      <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
         <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#5D5D66;margin:0">03</p>
         <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">B2B: sponsored arenas.</h3>
         <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:8px 0 0;text-wrap:pretty">Base ecosystem projects pay for branded arenas and skins. Precedent — Clash of Coins.</p>
       </div>
-      <div style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
+      <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
         <div style="display:flex;justify-content:space-between;gap:12px"><p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#5D5D66;margin:0">04</p><p style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;color:#5D5D66;margin:0">AFTER PMF</p></div>
         <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">The token as a layer of ownership</h3>
         <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:8px 0 0;text-wrap:pretty">Staking behind a house, tournaments, retroactive rewards. Demand comes out of USDC revenue, not out of emission.</p>
       </div>
-      <div style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
+      <div class="dk-card" style="background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);padding:24px">
         <p style="font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#5D5D66;margin:0">05</p>
         <h3 style="font:800 18px/1.15 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0">Margin grows over time.</h3>
         <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:8px 0 0;text-wrap:pretty">Inference gets cheaper; the price of a fight does not. 68% today, higher as models get cheaper.</p>
       </div>
     </div>
   </section>
-  <section id="e13" data-screen-label="13 RISK" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-    <div style="display:flex;align-items:center;gap:8px;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF"><span style="color:#5D5D66">13</span><span style="color:#5D5D66">·</span><span>RISK</span></div>
+  <section data-dk-in id="e13" data-screen-label="13 RISK" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+    <div class="dk-eyebrow"><span class="dk-eyebrow-n">13</span><span class="dk-eyebrow-n" aria-hidden="true">·</span><span>RISK</span></div>
     <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;max-width:24ch;text-wrap:pretty">Why the “75%” scenario does not apply to us</h2>
     <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px;align-items:start">
       <div style="border-top:1px solid rgba(255,255,255,0.16);padding-top:16px">
@@ -1184,8 +1428,8 @@ a:hover{color:#F6F4F6}
       </div>
     </div>
   </section>
-  <section id="e14" data-screen-label="14 TOKEN" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-    <div style="display:flex;align-items:center;gap:8px;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF"><span style="color:#5D5D66">14</span><span style="color:#5D5D66">·</span><span>TOKEN</span></div>
+  <section data-dk-in id="e14" data-screen-label="14 TOKEN" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+    <div class="dk-eyebrow"><span class="dk-eyebrow-n">14</span><span class="dk-eyebrow-n" aria-hidden="true">·</span><span>TOKEN</span></div>
     <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">The token: after seed, and without mercenaries</h2>
     <div style="margin-top:32px;display:grid;gap:0">
       <div style="border-top:1px solid rgba(255,255,255,0.09);padding:24px 0;display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(280px,46%)),1fr))">
@@ -1207,8 +1451,8 @@ a:hover{color:#F6F4F6}
     </div>
     <p style="font:400 12px/1.8 'JetBrains Mono',monospace;letter-spacing:.04em;color:#5D5D66;margin:24px 0 0;max-width:82ch;text-wrap:pretty">Parameters: 1B supply · 10–15% circulating at launch · 12-month cliff, 36-month vesting · buyback-and-burn out of USDC revenue. Name and launch at the seed stage.</p>
   </section>
-  <section id="e15" data-screen-label="15 TIME" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-    <div style="display:flex;align-items:center;gap:8px;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF"><span style="color:#5D5D66">15</span><span style="color:#5D5D66">·</span><span>TIME</span></div>
+  <section data-dk-in id="e15" data-screen-label="15 TIME" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+    <div class="dk-eyebrow"><span class="dk-eyebrow-n">15</span><span class="dk-eyebrow-n" aria-hidden="true">·</span><span>TIME</span></div>
     <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Roadmap</h2>
     <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">A guide to timing. The token only after seed closes.</p>
     <div style="margin-top:32px;display:grid;gap:0">
@@ -1239,8 +1483,8 @@ a:hover{color:#F6F4F6}
     <div data-anim="rule" style="height:1px;background:rgba(255,255,255,0.16);transform-origin:left;margin-top:24px"></div>
     <p style="font:700 24px/1.3 'Saira Condensed',sans-serif;letter-spacing:.04em;color:#F6F4F6;margin:24px 0 0;max-width:52ch;text-wrap:pretty">Round milestone: 10K DAU, 400+ payers, working micropayments — the case for a $6–10M seed in 12–18 months.</p>
   </section>
-  <section id="e16" data-screen-label="16 ROUND" style="padding:48px 16px;max-width:1180px;margin:0 auto">
-    <div style="display:flex;align-items:center;gap:8px;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF"><span style="color:#5D5D66">16</span><span style="color:#5D5D66">·</span><span>ROUND</span></div>
+  <section data-dk-in id="e16" data-screen-label="16 ROUND" style="padding:48px 16px;max-width:1180px;margin:0 auto">
+    <div class="dk-eyebrow"><span class="dk-eyebrow-n">16</span><span class="dk-eyebrow-n" aria-hidden="true">·</span><span>ROUND</span></div>
     <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Round</h2>
     <p style="font:400 14px/1.6 'JetBrains Mono',monospace;color:#A9A5AF;margin:16px 0 0;max-width:70ch;text-wrap:pretty">Pre-seed · SAFE · angels, funds and community. Ownership set at the close of the round.</p>
     <div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px;align-items:start">
@@ -1287,24 +1531,24 @@ a:hover{color:#F6F4F6}
     </div>
     <p style="font:400 12px/1.7 'JetBrains Mono',monospace;color:#A9A5AF;margin:24px 0 0;max-width:78ch;text-wrap:pretty">* after 20% dilution at seed. ** pro-rata share of supply, FDV $5M / $15M / $30M, with vesting. A binary outcome, like any pre-seed.</p>
   </section>
-  <section id="e17" data-screen-label="17 TEAM" style="padding:48px 16px 32px;max-width:1180px;margin:0 auto">
-    <div style="display:flex;align-items:center;gap:8px;font:500 12px/1 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#A9A5AF"><span style="color:#5D5D66">17</span><span style="color:#5D5D66">·</span><span>TEAM</span></div>
+  <section data-dk-in id="e17" data-screen-label="17 TEAM" style="padding:48px 16px 32px;max-width:1180px;margin:0 auto">
+    <div class="dk-eyebrow"><span class="dk-eyebrow-n">17</span><span class="dk-eyebrow-n" aria-hidden="true">·</span><span>TEAM</span></div>
     <h2 style="font:800 clamp(24px,5vw,40px)/1.04 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:12px 0 0;text-wrap:pretty">Team</h2>
     <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(260px,30%)),1fr));margin-top:32px;align-items:start">
       <div>
-        <div style="aspect-ratio:4/5;background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);display:grid;place-items:center"><span style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66">[PORTRAIT]</span></div>
+        <div class="dk-corners" style="aspect-ratio:4/5;background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);display:grid;place-items:center"><span style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66">[PORTRAIT]</span></div>
         <h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:16px 0 0">Yuri Varvarov</h3>
         <p style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#A9A5AF;margin:8px 0 0">CEO · CO-FOUNDER</p>
         <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;text-wrap:pretty">8 years in investment management. Wushu world champion. Product and AI architecture.</p>
       </div>
       <div>
-        <div style="aspect-ratio:4/5;background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);display:grid;place-items:center"><span style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66">[PORTRAIT]</span></div>
+        <div class="dk-corners" style="aspect-ratio:4/5;background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);display:grid;place-items:center"><span style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66">[PORTRAIT]</span></div>
         <h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:16px 0 0">Evgeny Bobrov</h3>
         <p style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#A9A5AF;margin:8px 0 0">CO-FOUNDER</p>
         <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;text-wrap:pretty">Core development, operations, partnerships.</p>
       </div>
       <div>
-        <div style="aspect-ratio:4/5;background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);display:grid;place-items:center"><span style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66">[PORTRAIT]</span></div>
+        <div class="dk-corners" style="aspect-ratio:4/5;background:#0D0A0D;border:1px solid rgba(255,255,255,0.09);display:grid;place-items:center"><span style="font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#5D5D66">[PORTRAIT]</span></div>
         <h3 style="font:800 24px/1.1 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:16px 0 0">Ivan Korol</h3>
         <p style="font:500 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.28em;text-transform:uppercase;color:#A9A5AF;margin:8px 0 0">CTO · CO-FOUNDER</p>
         <p style="font:400 13px/1.65 'JetBrains Mono',monospace;color:#A9A5AF;margin:12px 0 0;text-wrap:pretty">CTO and co-founder of AR Spatially (team of 14). Solidity / HUFF / EVM: an MEV system touching up to ~1% of Ethereum transactions. Backend, AI/ML in production.</p>
@@ -1359,6 +1603,10 @@ a:hover{color:#F6F4F6}
     }
     lang = l;
     stopArena();
+    /* Слой, который до этого стоял скрытым, наблюдатель не видел — открыть
+       вручную то, что уже в кадре. Проверка на функцию нужна потому, что
+       первый вызов setLang случается раньше, чем заводится свод. */
+    if (typeof sweep === 'function') sweep();
   }
   [].forEach.call(document.querySelectorAll('[data-lang-btn]'), function (btn) {
     btn.addEventListener('click', function (e) { e.preventDefault(); setLang(btn.getAttribute('data-lang-btn'), true); });
@@ -1424,6 +1672,51 @@ a:hover{color:#F6F4F6}
       es.forEach(function (e) { if (e.isIntersecting) { apply(e.target); io.unobserve(e.target); } });
     }, { threshold: 0.15, rootMargin: '0px 0px -8% 0px' });
     nodes.forEach(function (el) { io.observe(el); });
+  }
+
+  /* --- Появление блоков при прокрутке -------------------------------------
+     Блок входит в кадр — его содержимое поднимается снизу и проявляется, по
+     очереди сверху вниз. Один раз; назад при обратной прокрутке не отыгрывается.
+
+     ⚠️ СКРЫТОЕ СОСТОЯНИЕ ЗАВОДИТСЯ ЗДЕСЬ И ТОЛЬКО ЗДЕСЬ. Признак .dk-anim на
+     корне страницы — единственное, под чем правила прячут блоки. Не отработал
+     скрипт, отключён JavaScript, нет наблюдателя или включена системная
+     «уменьшить движение» — признака нет, и вся страница видна целиком сразу.
+     Скрытых блоков в разметке не существует, поэтому сломаться нечему.
+
+     Наблюдатель здесь свой, а не общий с блоком выше: у того порог 0.15, и
+     раздел выше экрана телефона мог бы его никогда не набрать. Здесь порог
+     нулевой — считается сам факт появления края блока.
+
+     Прокрутка не перехватывается: обработчика на каждый кадр нет, «магнитных»
+     разделов нет, колесо и жесты не трогаются. */
+  var blocks = [].slice.call(document.querySelectorAll('[data-dk-in]'));
+  var sweep = function () {};
+
+  if (blocks.length && window.IntersectionObserver && !reduce) {
+    document.documentElement.classList.add('dk-anim');
+
+    var reveal = function (el) { el.classList.add('dk-in'); };
+    var bio = new IntersectionObserver(function (es) {
+      es.forEach(function (e) {
+        if (e.isIntersecting) { reveal(e.target); bio.unobserve(e.target); }
+      });
+    }, { threshold: 0, rootMargin: '0px 0px -12% 0px' });
+    blocks.forEach(function (el) { bio.observe(el); });
+
+    /* Свод. Смена языка показывает слой, который до этого стоял скрытым
+       (display:none), — наблюдатель по такому слою молчал. Поэтому сразу после
+       переключения всё, что уже оказалось в кадре, открывается вручную, а
+       остальное дальше ведёт наблюдатель. */
+    sweep = function () {
+      blocks.forEach(function (el) {
+        if (el.classList.contains('dk-in')) return;
+        if (!el.offsetParent && el.offsetHeight === 0) return;
+        var r = el.getBoundingClientRect();
+        if (r.top < window.innerHeight && r.bottom > 0) { reveal(el); bio.unobserve(el); }
+      });
+    };
+    sweep();
   }
 
   /* --- Окно с ареной ------------------------------------------------------
