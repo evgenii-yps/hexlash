@@ -84,18 +84,28 @@ a:hover{color:#F6F4F6}
      100vh — запасной вариант для браузеров постарше. Так же сделан фон
      лендинга (LandingBackground.vue). */
   height:100vh;height:100lvh;
+  /* ⚠️ ЗАМЕТНОСТЬ РЕШЁТКИ РЕГУЛИРУЕТСЯ ЗДЕСЬ — четыре числа прозрачности:
+     .07 мелкая сетка, .04 крупная (и .1 на телефоне, в блоке «Узкий экран»
+     ниже). Было .05 / .028 / .07. Замер на изолированном слое: заметность
+     решётки по всему экрану выросла в 1.6 раза.
+     ⚠️ ПОТОЛОК ЗАДАЁТ ТЕКСТ, А НЕ ВКУС: если решётка начинает читаться поверх
+     цифр в таблице масштаба (раздел 10) или мешать прозе — вернуть на шаг. */
   background-image:
-    repeating-linear-gradient(45deg,rgba(255,0,105,.05) 0 1px,transparent 1px 88px),
-    repeating-linear-gradient(-45deg,rgba(255,0,105,.05) 0 1px,transparent 1px 88px),
-    repeating-linear-gradient(45deg,rgba(255,0,105,.028) 0 1px,transparent 1px 264px),
-    repeating-linear-gradient(-45deg,rgba(255,0,105,.028) 0 1px,transparent 1px 264px);
+    repeating-linear-gradient(45deg,rgba(255,0,105,.07) 0 1px,transparent 1px 88px),
+    repeating-linear-gradient(-45deg,rgba(255,0,105,.07) 0 1px,transparent 1px 88px),
+    repeating-linear-gradient(45deg,rgba(255,0,105,.04) 0 1px,transparent 1px 264px),
+    repeating-linear-gradient(-45deg,rgba(255,0,105,.04) 0 1px,transparent 1px 264px);
   /* Маска гасит решётку к краям, чтобы она не читалась ровным ковром.
-     ⚠️ Внутри экрана она НЕ доходит до нуля — иначе узор умирает у нижней
-     кромки, а там как раз стоит подвал, и страница выглядит обрезанной.
-     Прозрачной маска становится за пределами экрана (118%), внутри разброс
-     примерно от половины до полной силы. */
-  -webkit-mask-image:radial-gradient(125% 105% at 50% 36%,#000 0%,rgba(0,0,0,.62) 58%,rgba(0,0,0,.3) 92%,transparent 118%);
-  mask-image:radial-gradient(125% 105% at 50% 36%,#000 0%,rgba(0,0,0,.62) 58%,rgba(0,0,0,.3) 92%,transparent 118%);
+     ⚠️ ЦЕНТР МАСКИ — РОВНО В ЦЕНТРЕ ЭКРАНА, а не выше него. Прежний центр
+     50% 36% давал перекос по вертикали: верх экрана держал ~0.78 силы, низ —
+     ~0.59. Подвал стоит внизу, и именно поэтому он читался тёмной дырой, хотя
+     слой честно доходил до него. Теперь центр 1.0, верх и низ по ~0.85, бока
+     ~0.87, углы ~0.78: модуляция от центра к краям сохранена, ковром решётка
+     не читается, но низ экрана больше не гаснет сильнее верха.
+     Замер на изолированном слое (содержимое скрыто, 1280×860): нижняя полоса
+     экрана была на 25% слабее верхней, стала слабее на 4%. */
+  -webkit-mask-image:radial-gradient(115% 100% at 50% 50%,#000 0%,rgba(0,0,0,.82) 60%,rgba(0,0,0,.58) 100%);
+  mask-image:radial-gradient(115% 100% at 50% 50%,#000 0%,rgba(0,0,0,.82) 60%,rgba(0,0,0,.58) 100%);
 }
 
 /* --- Б. Надзаголовки разделов --------------------------------------------
@@ -173,7 +183,7 @@ a:hover{color:#F6F4F6}
 .dk-h1-ghost,.dk-h1-glow{position:absolute;left:0;right:0;top:0;z-index:0;
   color:transparent;pointer-events:none;-webkit-user-select:none;user-select:none}
 .dk-h1-ghost{-webkit-text-stroke:.8px rgba(255,0,105,.3);opacity:.45;
-  transform:translateY(-.2em) scale(1.025);transform-origin:left top}
+  transform:translateY(-.2em) scale(1.025);transform-origin:center top}
 .dk-h1-glow{text-shadow:0 0 .12em rgba(255,0,105,.5),0 0 .5em rgba(255,0,105,.5),0 0 1.05em rgba(255,0,105,.4)}
 /* Сбой вывески — тот же, что у заголовка лендинга. Гаснет ОРЕОЛ, а не буквы.
    Кадры 0% и 100% совпадают: при выключенных анимациях слой замирает в покое,
@@ -195,48 +205,71 @@ a:hover{color:#F6F4F6}
   .dk-h1-glow{animation:dkGlowFlick 13s steps(1) infinite}
 }
 
-/* --- Е. Пыль на первом экране --------------------------------------------
-   Двенадцать точек, шестью на слой, чистыми стилями: одна точка телом
-   псевдоэлемента, остальные — его тенями. Ни холста, ни библиотеки.
-   Два слоя дрейфуют в разные стороны с разным периодом, иначе двенадцать
-   точек ходят строем.
-   На узких экранах пыли нет вовсе: в разделе 04 работает живая арена, и
-   лишняя нагрузка на телефоне недопустима. */
-.dk-hero{position:relative;isolation:isolate}
-.dk-hero::before,.dk-hero::after{
-  content:"";position:absolute;left:0;top:0;width:2px;height:2px;border-radius:50%;
-  z-index:-1;pointer-events:none;background:rgba(255,0,105,.5);
+/* --- Е. Пыль ---------------------------------------------------------------
+   Точки чистыми стилями: тело псевдоэлемента прозрачно, каждая точка — его
+   тень. Ни холста, ни библиотеки, ни одного сетевого запроса.
+
+   ⚠️ СЛОЙ ЗАКРЕПЛЁН И ЖИВЁТ НА ВСЕЙ СТРАНИЦЕ, а не на первом экране. Раньше
+   он висел на .dk-hero: пыль уезжала вместе с первым экраном, и на остальных
+   шестнадцати разделах её не было вовсе. Хозяин слоя теперь <main>, а не
+   .dk-page: у .dk-page ::before уже занят решёткой, а двенадцать точек в одном
+   псевдоэлементе ходили бы строем. Два слоя дрейфуют в разные стороны с разным
+   периодом — поэтому строя нет.
+
+   ⚠️ ГЛУБИНА. z-index:-1 внутри слоя .dk-page (у неё isolation:isolate): фон
+   .dk-page красится первым, решётка второй, пыль третьей, текст последним.
+   Ни одна точка не попадает поверх букв. pointer-events:none — палец, ведущий
+   по пыли, листает страницу.
+
+   ⚠️ ТЕМП. Прежний дрейф был 14-22 точки за 38-53 секунды — это меньше
+   полуточки в секунду, глазом такое не читается, и пыль выглядела висящей.
+   Ход увеличен, период сокращён: движение видно, если смотреть, и не мешает,
+   если читаешь.
+
+   Плотность по ширине экрана: широкий — двенадцать точек, телефон — шесть
+   (блок «Узкий экран» ниже). На телефоне слабее железо, и в разделе 04
+   работает живая арена. */
+.dk-dust::before,.dk-dust::after{
+  content:"";position:fixed;left:0;top:0;width:2px;height:2px;border-radius:50%;
+  z-index:-1;pointer-events:none;background:transparent;
 }
-.dk-hero::before{
+.dk-dust::before{
   box-shadow:
-    11vw 21vh 0 0 rgba(255,0,105,.42),
-    29vw 58vh 0 0 rgba(255,0,105,.3),
-    47vw 12vh 0 0 rgba(255,0,105,.38),
-    63vw 44vh 0 0 rgba(255,0,105,.26),
-    81vw 27vh 0 0 rgba(255,0,105,.34);
-  animation:dkDustA 38s linear infinite;
+     7vw 14vh 0 0 rgba(255,0,105,.5),
+    23vw 61vh 0 0 rgba(255,0,105,.42),
+    41vw 29vh 0 0 rgba(255,0,105,.3),
+    58vw 77vh 0 0 rgba(255,0,105,.38),
+    74vw 18vh 0 0 rgba(255,0,105,.26),
+    89vw 52vh 0 0 rgba(255,0,105,.34);
+  animation:dkDustA 24s linear infinite;
 }
-.dk-hero::after{
-  background:rgba(255,0,105,.34);
+.dk-dust::after{
   box-shadow:
-    21vw 39vh 0 0 rgba(255,0,105,.3),
-    38vw 68vh 0 0 rgba(255,0,105,.24),
-    56vw 24vh 0 0 rgba(255,0,105,.34),
-    72vw 61vh 0 0 rgba(255,0,105,.22),
-    91vw 49vh 0 0 rgba(255,0,105,.28);
-  animation:dkDustB 53s linear infinite;
+    14vw 38vh 0 0 rgba(255,0,105,.34),
+    31vw 84vh 0 0 rgba(255,0,105,.3),
+    49vw  9vh 0 0 rgba(255,0,105,.24),
+    66vw 45vh 0 0 rgba(255,0,105,.34),
+    81vw 68vh 0 0 rgba(255,0,105,.22),
+    95vw 26vh 0 0 rgba(255,0,105,.28);
+  animation:dkDustB 31s linear infinite;
 }
 /* Кадры 0% и 100% совпадают — при выключенных анимациях слой стоит в покое. */
 @keyframes dkDustA{
   0%{transform:translate3d(0,0,0)}
-  50%{transform:translate3d(14px,-22px,0)}
+  50%{transform:translate3d(36px,-48px,0)}
   100%{transform:translate3d(0,0,0)}
 }
 @keyframes dkDustB{
   0%{transform:translate3d(0,0,0)}
-  50%{transform:translate3d(-18px,16px,0)}
+  50%{transform:translate3d(-44px,34px,0)}
   100%{transform:translate3d(0,0,0)}
 }
+/* Пока в окне раздела 04 идёт настоящий бой, пыль замирает: раздел 04 —
+   единственное живое доказательство на всей странице, и кадры арены важнее
+   частиц. Признак .dk-fight вешает на корень тот же сценарий, что уже слушает
+   сигналы окна ('ready' — бой пошёл, 'end' — бой доигран). Новых сигналов не
+   заведено, файлы арены не тронуты. */
+html.dk-fight .dk-dust::before,html.dk-fight .dk-dust::after{animation-play-state:paused}
 
 /* --- Ж. Появление блоков при прокрутке ------------------------------------
    Блок входит в кадр — его содержимое поднимается снизу и проявляется, по
@@ -306,13 +339,21 @@ html.dk-anim [data-dk-in].dk-in>:nth-child(n+4){transition-delay:180ms}
   text-transform:uppercase;color:#FF0069}
 .dk-footer-social{display:flex;gap:24px;justify-content:center;
   margin:clamp(34px,5vh,50px) 0}
+/* Тон покоя — как на лендинге (--ink-dim). Был --ink-off: подвал от этого
+   читался обрубком, а не финалом. Размеры иконок (19 и 22) и зазор 24 у
+   лендинга и здесь уже совпадали и не тронуты. Заглушкой иконки остаются:
+   тон покоя — не обещание нажатия, обещание дают курсор, ореол и отклик. */
 .dk-social{display:flex;align-items:center;justify-content:center;
-  min-width:44px;min-height:44px;color:#5D5D66}
-/* Заглушка не притворяется кнопкой: тон выключенного, курсор обычный,
-   ни ореола, ни отклика на касание. Отклик появится вместе с адресом. */
+  min-width:44px;min-height:44px;color:#A9A5AF}
+/* Заглушка не притворяется кнопкой: курсор обычный, ни ореола, ни отклика
+   на касание. Отклик появится вместе с адресом. */
 .dk-social.is-soon{cursor:default}
+/* Внутренняя линия ТОНЬШЕ по тону, чем верхняя граница подвала: на лендинге
+   .footer-bottom стоит на --fill-2 (.05), а сам подвал отбит --line (.09).
+   Здесь были обе .09, и внутренняя читалась тяжелее эталона. Толщина 1px и
+   отбивка 26px совпадали с лендингом и не тронуты. */
 .dk-footer-bottom{display:flex;align-items:center;justify-content:center;
-  gap:16px;flex-wrap:wrap;padding-top:26px;border-top:1px solid rgba(255,255,255,.09)}
+  gap:16px;flex-wrap:wrap;padding-top:26px;border-top:1px solid rgba(255,255,255,.05)}
 @media (max-width:680px){
   .dk-footer-top{flex-direction:column;align-items:center;text-align:center}
   .dk-footer-tag{letter-spacing:.24em}
@@ -320,21 +361,36 @@ html.dk-anim [data-dk-in].dk-in>:nth-child(n+4){transition-delay:180ms}
 
 /* --- Узкий экран ----------------------------------------------------------
    Решётка крупнее: на 360 точках мелкая сетка превращается в грязь.
-   Пыль снята целиком — см. блок Е. */
+   Пыль не снимается, а редеет: шесть точек вместо двенадцати (решение
+   владельца 10.09.2026, отменяет прежнее «только широкий экран»). Причина
+   потолка — слабее железо и живая арена в разделе 04. */
 @media (max-width:680px){
   .dk-page::before{
     background-image:
-      repeating-linear-gradient(45deg,rgba(255,0,105,.07) 0 1px,transparent 1px 118px),
-      repeating-linear-gradient(-45deg,rgba(255,0,105,.07) 0 1px,transparent 1px 118px);
+      repeating-linear-gradient(45deg,rgba(255,0,105,.1) 0 1px,transparent 1px 118px),
+      repeating-linear-gradient(-45deg,rgba(255,0,105,.1) 0 1px,transparent 1px 118px);
   }
-  .dk-hero::before,.dk-hero::after{display:none}
+  .dk-dust::before{
+    box-shadow:
+      12vw 22vh 0 0 rgba(255,0,105,.5),
+      46vw 58vh 0 0 rgba(255,0,105,.34),
+      82vw 34vh 0 0 rgba(255,0,105,.4);
+  }
+  .dk-dust::after{
+    box-shadow:
+      28vw 71vh 0 0 rgba(255,0,105,.3),
+      63vw 15vh 0 0 rgba(255,0,105,.26),
+      91vw 49vh 0 0 rgba(255,0,105,.32);
+  }
 }
 
 /* --- «Уменьшить движение» -------------------------------------------------
    Общее правило выше по файлу уже снимает все переходы и анимации. Здесь
    убрано то, что должно не замереть, а исчезнуть. */
 @media (prefers-reduced-motion:reduce){
-  .dk-hero::before,.dk-hero::after{display:none}
+  /* Пыль именно НЕ РИСУЕТСЯ, а не замирает: неподвижная пыль — ровно тот
+     дефект, ради которого этот слой переписан. */
+  .dk-dust::before,.dk-dust::after{display:none}
 }
 </style>
 
@@ -462,10 +518,9 @@ html.dk-anim [data-dk-in].dk-in>:nth-child(n+4){transition-delay:180ms}
   </nav>
 </header>
 
-<main>
-<section data-dk-in class="dk-hero" data-screen-label="Первый экран" style="padding:48px 16px;max-width:1180px;margin:0 auto;min-height:min(74vh,860px);display:flex;flex-direction:column;justify-content:center;gap:32px">
-  <h1 style="font:900 clamp(32px,9vw,72px)/0.94 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:0;max-width:24ch;text-wrap:balance"><span data-layer="en" class="heroline" lang="en"><span class="dk-h1-solid">Train the AI until it becomes the trainer.</span><span class="dk-h1-ghost" aria-hidden="true">Train the AI until it becomes the trainer.</span><span class="dk-h1-glow" aria-hidden="true">Train the AI until it becomes the trainer.</span></span><span data-layer="ru" class="heroline off" lang="ru"><span class="dk-h1-solid">Ты тренируешь ИИ, пока он не станет тренером.</span><span class="dk-h1-ghost" aria-hidden="true">Ты тренируешь ИИ, пока он не станет тренером.</span><span class="dk-h1-glow" aria-hidden="true">Ты тренируешь ИИ, пока он не станет тренером.</span></span></h1>
-  <div data-anim="rule" style="height:1px;background:rgba(255,255,255,0.16);transform-origin:left"></div>
+<main class="dk-dust">
+<section data-dk-in data-screen-label="Первый экран" style="padding:48px 16px;max-width:1180px;margin:0 auto;min-height:min(74vh,860px);display:flex;flex-direction:column;justify-content:center;gap:32px">
+  <h1 style="font:900 clamp(32px,9vw,108px)/0.94 'Saira Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#F6F4F6;margin:0 auto;max-width:24ch;text-wrap:balance;text-align:center"><span data-layer="en" class="heroline" lang="en"><span class="dk-h1-solid">Train the AI until it becomes the trainer.</span><span class="dk-h1-ghost" aria-hidden="true">Train the AI until it becomes the trainer.</span><span class="dk-h1-glow" aria-hidden="true">Train the AI until it becomes the trainer.</span></span><span data-layer="ru" class="heroline off" lang="ru"><span class="dk-h1-solid">Ты тренируешь ИИ, пока он не станет тренером.</span><span class="dk-h1-ghost" aria-hidden="true">Ты тренируешь ИИ, пока он не станет тренером.</span><span class="dk-h1-glow" aria-hidden="true">Ты тренируешь ИИ, пока он не станет тренером.</span></span></h1>
 </section>
 <div data-layer="ru" class="off">
 
@@ -1648,8 +1703,9 @@ html.dk-anim [data-dk-in].dk-in>:nth-child(n+4){transition-delay:180ms}
        адресов X и Discord в проекте нет ни одного: на лендинге стоят «#x» и
        «#discord», и с ними «открыть в новой вкладке» даёт пустую вкладку с той
        же страницей. Перед инвестором это читается поломкой, поэтому иконки
-       здесь не притворяются рабочими: не ссылки, не кликаются, матовые, тон
-       выключенного, отклика на касание нет.
+       здесь не притворяются рабочими: не ссылки, не кликаются, матовые,
+       отклика на касание нет. Тон покоя при этом взят у подвала лендинга —
+       он не обещание нажатия, обещание дают курсор, ореол и отклик.
        ⚠️ КАК ВКЛЮЧИТЬ, КОГДА АДРЕСА ПОЯВЯТСЯ: заменить span на
        <a href="АДРЕС" target="_blank" rel="noopener" aria-label="X">, снять
        « — soon» из подписи и снять класс .is-soon. Правка на две строки.
@@ -1873,7 +1929,16 @@ html.dk-anim [data-dk-in].dk-in>:nth-child(n+4){transition-delay:180ms}
     if (p.note) p.note.classList.toggle('off', which !== 'note');
   }
 
+  /* Признак боя на корне страницы. Его читает только слой пыли: пока идёт
+     настоящий бой, дрейф приостановлен (см. html.dk-fight в стилях). Ставится
+     по сигналу самой арены, снимается везде, где бой перестал идти: окно
+     снято, окно не ответило, бой доигран. */
+  function fight(on) {
+    document.documentElement.classList.toggle('dk-fight', !!on);
+  }
+
   function drop() {
+    fight(false);
     if (!live) return;
     if (live.timer) clearTimeout(live.timer);
     if (live.frame) live.frame.remove();
@@ -1942,9 +2007,11 @@ html.dk-anim [data-dk-in].dk-in>:nth-child(n+4){transition-delay:180ms}
       if (live.timer) { clearTimeout(live.timer); live.timer = null; }
       show(p, 'none');
       if (p.state) p.state.textContent = word(live.scope, 'live');
+      fight(true);
     } else if (d.phase === 'end') {
       if (p.state) p.state.textContent = word(live.scope, 'done');
       if (p.btn) p.btn.disabled = false;
+      fight(false);
     }
   });
 
