@@ -162,13 +162,28 @@
         </div>
 
         <template v-if="isPrimaryStage">
+          <!-- ВРЕМЕННАЯ МЕРА 11.09.2026 — вход в гостя поднят в геройскую плиту.
+               Основание: Decisions Log 11.09.2026. Вход в аккаунт чинится
+               отдельной задачей; пока он не работает, гость подсвечен как
+               главный путь, а тихая ссылка .hx-guest снята с экрана.
+               Снимается ЦЕЛИКОМ вместе с починкой входа: вернуть сюда блок
+               .hx-guest (его правила в стилях сохранены нетронутыми) и удалить
+               помеченный блок «ВРЕМЕННАЯ МЕРА» ниже.
+               ⚠️ Прогресс гостя живёт в памяти вкладки и умирает вместе с ней —
+               подсвечивая гостя, мы отправляем этим путём всех. До демо это
+               осознанный размен, дальше — дыра.
+               На шаге «email» плита уходит в матовый хром: геройское свечение
+               там принадлежит кнопке подтверждения (Документ Б §7). -->
+          <button
+            type="button"
+            class="hx-guest-plate"
+            :class="{ 'is-matte': screen === 'email' }"
+            @click="onGuestStart"
+          >Play as Guest</button>
+
           <button type="button" class="hx-referral" @click="onReferralOpen">
             <span class="hx-ic"><IconTicket :s="15" /></span> I have a referral code
           </button>
-
-          <div class="hx-guest">
-            <button type="button" @click="onGuestStart">Play as Guest</button>
-          </div>
         </template>
       </div>
     </div>
@@ -526,6 +541,110 @@ async function onForgotSubmit(payload) {
 }
 .hx-referral:hover { border-color: rgba(var(--pink-rgb), .4); color: var(--ink); }
 .hx-referral .hx-ic { color: var(--ink-dim); display: flex; }
+
+/* ═══════ ВРЕМЕННАЯ МЕРА 11.09.2026 — геройская плита «Play as Guest» ═══════
+   Основание: Decisions Log 11.09.2026. Снимается ЦЕЛИКОМ вместе с починкой
+   входа в аккаунт — удалить весь блок до отметки «конец временной меры» и
+   вернуть в шаблон тихую ссылку .hx-guest (её правила ниже не тронуты).
+
+   ⚠️ Заливка и подпись НАМЕРЕННО не разнесены по слоям (Документ А §5.9):
+   фон лежит на самой кнопке, подпись — обычный текст в потоке. Отдельный
+   позиционированный слой заливки — ровно тот механизм, которым на проде
+   молча пропали подписи PLAY и SUBSCRIBE на лендинге. */
+.hx-guest-plate {
+  width: 100%;
+  height: var(--h-btn-md);
+  margin-top: var(--sp-4);
+  border: 0;
+  border-radius: var(--r-none);
+  background: var(--pink);
+  color: var(--void);
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: var(--t-md);
+  letter-spacing: var(--ls-title);
+  text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: var(--glow-hero);
+  animation: hxGuestPulse var(--d-loop) ease-in-out infinite;
+  transition: box-shadow var(--d-hover) var(--e-spring),
+              transform var(--d-hover) var(--e-spring),
+              filter var(--d-hover) var(--e-spring);
+}
+
+/* Петля: кадры 0% и 100% одинаковы — при «уменьшить движение» плита встаёт
+   в ПОКОЙ, а не в середину пульсации (Документ А §2.15). */
+@keyframes hxGuestPulse {
+  0%, 100% { box-shadow: var(--glow-hero); }
+  50%      { box-shadow: 0 0 26px rgba(var(--pink-rgb), .75),
+                         0 0 56px rgba(var(--pink-rgb), .5); }
+}
+
+/* наведение — необязательная надстройка (на телефоне его нет) */
+.hx-guest-plate:hover { transform: translateY(-1px); filter: brightness(1.06); }
+
+/* нажатие — ОБЯЗАТЕЛЬНО, 120 мс: у телефона наведения нет, и без отклика
+   нажатие выглядит как промах (Документ А §4.0, §5.3). Ореол короче +
+   лёгкое вдавливание. Петля глушится, иначе перебьёт короткий ореол. */
+.hx-guest-plate:active {
+  animation: none;
+  transform: translateY(1px) scale(0.99);
+  box-shadow: 0 0 10px rgba(var(--pink-rgb), .45);
+  filter: brightness(0.97);
+  transition-duration: var(--d-press);
+}
+
+/* фокус с клавиатуры — обвод с внутренним зазором. НЕ розовый: розовый обвод
+   на розовой плите не читается, поэтому взята форма семьи .ft-* (outline +
+   offset) с нейтральным --ink, который читается на тёмном фоне вокруг. */
+.hx-guest-plate:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+
+/* выключено — свечение снимается ПОЛНОСТЬЮ: гейтнутое светиться не может */
+.hx-guest-plate:disabled {
+  animation: none; box-shadow: none; cursor: not-allowed;
+  background: var(--fill-2); color: var(--ink-off);
+  transform: none; filter: none;
+}
+
+/* Шаг «email»: в карточке появляется кнопка подтверждения, и геройское
+   свечение на экране принадлежит ей (Документ Б §7). Плита уходит в матовый
+   хром, сохраняя высоту и подпись — одно свечение в покое на экран. */
+.hx-guest-plate.is-matte {
+  animation: none; box-shadow: none;
+  background: var(--chrome-glass); color: var(--ink-soft);
+  border: 1px solid var(--chrome-line);
+}
+.hx-guest-plate.is-matte:hover { filter: none; transform: none; box-shadow: var(--glow-hover); }
+.hx-guest-plate.is-matte:active { box-shadow: var(--glow-hold); filter: none; }
+
+/* Реферальная кнопка переехала ПОД плиту. Своё оформление сохраняет целиком —
+   меняется только верхний отступ, и правило уйдёт вместе с блоком. */
+.hx-guest-plate + .hx-referral { margin-top: var(--sp-3); }
+
+@media (prefers-reduced-motion: reduce) {
+  /* Глобальное правило в tokens.css гасит петлю и переходы, но его
+     `button:active { transform: none }` (вес 0,1,1) слабее моего
+     `.hx-guest-plate:active` (0,2,0) — поэтому трансформации снимаются здесь
+     явно. Отклик на касание при этом ОСТАЁТСЯ: сжатие меняется на
+     приглушение, как и во всём проекте. */
+  .hx-guest-plate:hover,
+  .hx-guest-plate:active { transform: none; }
+  .hx-guest-plate:active { opacity: 0.7; }
+}
+
+/* §5.3 — плита прибавила экрану ~23px высоты. Экран входа в горизонтальной
+   ориентации телефона прокручивался и ДО этой правки (замерено парой рендеров:
+   без правки 754px при окне 390px, с правкой 777px) — но лишние 23px всё равно
+   возвращаются, и возвращаются ВОЗДУХОМ, а не высотой плиты и не кеглем
+   подписи. Нижний отступ полотна на низком экране — чистый запас под подвал
+   (54px), после срезки остаётся 80px. Правило уйдёт вместе с блоком. */
+@media (max-height: 620px) {
+  .hx-wrap { padding-bottom: 80px; }
+  .hx-guest-plate { margin-top: var(--sp-3); }
+}
+/* ═══════════════════ конец временной меры 11.09.2026 ═══════════════════════ */
 
 .hx-guest { margin-top: 18px; text-align: center; }
 .hx-guest button {
