@@ -18,9 +18,11 @@ import { pickCallsign } from '@/data/callsigns.js';
 import { readSection, writeSection } from '@/services/playerProgress.js';
 
 // ───────────────────────────── CONFIG ─────────────────────────────
-// Cap. Eight is what will still stand in a readable row on the FORGE platform;
-// past that the hall turns into a crowd. Raise only together with that layout.
-export const ROSTER_MAX = 8;
+// Cap. Ten is what the FORGE hall is laid out for: one arc, one personal zone per
+// fighter, none of them touching (see ARC / ZONE in PveScene.vue). It was eight
+// while the hall packed them into two rows; raising it came WITH that new layout,
+// which is the only way this number is ever allowed to move.
+export const ROSTER_MAX = 10;
 
 const SECTION = 'roster';
 const CORE_IDS = CORES.map((c) => c.id);

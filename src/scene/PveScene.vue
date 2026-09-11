@@ -33,86 +33,133 @@ import * as THREE from 'three';
 import { buildBackdrop } from './hallBackdrop.js';
 import { LAMPS as HALL_LAMPS, buildLamps } from './hallLamps.js';
 import { buildArena } from './buildArena.js';
-import { makeRadialTexture } from './arenaTextures.js';
+import { makeRadialTexture, makeHexGridTexture } from './arenaTextures.js';
 import { buildFighter } from './buildFighter.js';
 import { resolveBehavior } from '@/data/behavior.js';
 import { createLegendPresence } from './legendPresence.js';
+import { createForgeWanderDirector } from './forgeWander.js';
 import store from '@/core/state/store.js';
 import { beginSceneLoad } from '@/services/sceneLoading.js';
 import { CORE_HUE, AMBER, LIGHTING, FOG_COLOR, FOG, FOV, CAMERA } from '@/data/sceneTokens.js';;
 
 // ───────────────────────────── CONFIG (tune on preview) ─────────────────────────────
-const CONFIG = {
-  // The plate holds the player's ACTUAL roster (store module `roster`, cap 8), so
-  // the number of bodies is data, not a knob. Placement is DETERMINISTIC — the
-  // n-th fighter always stands in the n-th spot, so a fighter keeps his place
-  // between visits.
-  rowBow: 0.55,          // how much the arc ends come forward (0 = straight line)
-  rowSpread: 1.15,       // gap between neighbours along the arc
-  backRowLift: 2.35,     // how far BACK (−Z) the second row stands when there are 6–8
-                         // (kept clear of the slab's central slit, which the bodies must not straddle)
-  backRowScale: 0.86,    // and how much smaller it reads (perspective help, not a trick)
-  stagger: 0.5,          // sideways offset of the back row → front gaps line up with it
-  // Upright screens. The formation RULE does not change (arc to five, two rows
-  // for six to eight) — only how tightly it is packed. A phone held upright is
-  // about a third as wide as it is tall in view terms, so a row laid out for a
-  // landscape frame can only be fitted by backing the camera off until the hall
-  // is a diorama at the bottom of the screen. Drawing the row in and deepening
-  // its bow instead spends the space the phone HAS — depth — rather than the
-  // space it does not have, and gives the dense block the screen wants.
-  portraitSquash: 0.78,  // × the sideways spread and the back row's offset
-  portraitBow: 1.7,      // × the arc's forward bow, so the ends separate by depth
-  portraitStep: 0.5,     // …and the whole row stands this much nearer the player.
-                         // Upright, the trainer's pedestal hangs straight over the
-                         // middle of the row: with the camera in close enough to
-                         // read faces, a lone fighter standing under it had his
-                         // head cut by the disc. A step forward clears it.
+// THE HALL FLOOR. The combat slab is 6×4 units (PLATFORM, buildArena — a protected
+// file, never edited). Ten fighters that must not overlap need ~18 units of room,
+// so the roster cannot live on the slab: it stands on a FLOOR laid around it, flush
+// with the slab top, exactly as the Space stage does for its fourteen. The slab
+// stays where it is and reads as the patch of ground under the trainer.
+const FLOOR = {
+  size: 44,            // side of the hall floor plane (units) — its edge has to die in
+                       // fog well before it is reached, or the hall grows a horizon
+  repeat: 13,          // hex-lattice tiling across it (same family as the slab)
+  baseColor: 0x0d1120, // dark blue-grey (arena family)
+  lineOpacity: 0.34,   // lattice line strength — quieter than the slab's own
 };
+
+// THE ARC. Every fighter owns a spot on ONE arc that faces the player: its centre
+// stands FURTHEST from the camera and its ends come FORWARD, so nobody is behind
+// anybody. Spots are DETERMINISTIC — the n-th fighter is always n-th — so a fighter
+// keeps his place between visits and across a rotation.
+//
+// The two numbers that matter and why:
+//   `step` is measured ALONG the arc, not across the screen, so the gap between
+//   neighbours is the same at the ends as in the middle. It has to clear a body
+//   (0.73 wide, measured — see BODY) plus both their zones plus air — see ZONE.
+//   `radius` is how gently the arc bows. It cannot be tightened much: the tighter
+//   the bow, the more of the step goes into DEPTH instead of sideways, and two
+//   fighters separated only by depth are exactly the "one behind the other" the
+//   composition must not have.
+const ARC = {
+  // 1.4 is not a taste: a body MEASURES 0.73 wide (Box3 on a built fighter), the
+  // zones add 2 × ZONE.halfX, and what is left over is the air between two
+  // silhouettes at their worst case — about 0.35, a third of a body. Tightening
+  // this is what makes the arc overlap; widening it is what pushes the camera so
+  // far back the hall goes dark.
+  step: 1.4,           // spacing between neighbours, measured along the arc
+  radius: 16,          // bow radius — bigger = flatter arc
+  centreZ: -2.0,       // where the middle of the arc stands (−Z is away from the camera)
+  maxCount: 10,        // the hall is built for this many; ROSTER_MAX matches it
+};
+
+// A fighter's PERSONAL ZONE — the patch he strolls on. Deliberately narrow across
+// the arc and deep along the view: depth costs almost no screen width, so he can
+// walk a real distance without ever closing on a neighbour. Worst case, two
+// neighbours at their facing zone edges still stand ARC.step − 2·halfX apart,
+// which is wider than a body — that is the no-overlap guarantee, and it is
+// geometric, not a hope.
+const ZONE = {
+  halfX: 0.15,         // half-width across the arc
+  halfZ: 0.70,         // half-depth along the view
+};
+// What a body actually MEASURES (Box3 on a built fighter), not a guess: the
+// framing used to pad this to 1.24 × 2.25 and the camera backed off half the hall
+// to keep the padding on screen. A little headroom is kept for the idle bob and
+// for arms that swing while walking.
+const BODY = { halfW: 0.40, height: 1.95 };
+
+// THE MARK — the spot the picked fighter walks out to, in front of the whole arc
+// and on its centre line. Kept clear of every zone by construction.
+const MARK = {
+  // Far enough forward that the man on it clears the row on SCREEN, not just in the
+  // world: the camera looks down, so the extra depth is what lifts the row clear of
+  // his head. At 2.2 he still covered the fighter standing behind him (measured:
+  // a third of that body, with three in the hall).
+  ahead: 3.9,          // how far in FRONT of the arc's foremost spot the mark sits
+};
+
 // The hall's camera. Frontal and FIXED: no orbit, no auto-rotate — this is a
 // workplace, not a viewing platform (owner's call, 24.08). Two framings only.
 const CAM = {
-  // The two framings are no longer fixed points. They were, and one fixed pose
-  // cannot serve a screen that changes shape AND a hall that holds anywhere from
-  // nobody to eight: on a phone held upright the row ran off both edges while a
-  // third of the frame above and below it stood empty, and with an empty roster
-  // the trainer hung in the top third over a hole. So these are the DIRECTION the
-  // camera looks from (kept exactly as it was — frontal, a few degrees down) and
-  // the distance it starts guessing at; where it actually ends up is measured
-  // against what is on the plate. See frameFor().
-  dir: [0, 1.65, 9.6],   // camera offset from its look point (its length = the guess)
+  // Not fixed points: the DIRECTION the camera looks from, and a starting guess at
+  // the distance. Where it ends up is measured against what is actually on the
+  // floor — see frameFor().
+  // The angle is load-bearing, not taste. Seen from almost level (the old 1.65 : 9.6,
+  // about ten degrees down) the hall has no depth to spend: the fighter out on the
+  // mark and the fighter standing two units behind him land on the same band of
+  // screen, and one covers the other. Looking further down turns depth into screen
+  // height, which is what separates the mark from the row — and what lets the row
+  // itself read as an arc rather than a line.
+  dir: [0, 3.5, 9.0],    // camera offset from its look point (its length = the guess)
   moveSec: 0.55,         // how long the framing change takes (ТЗ: about half a second)
 
   // The slice of the screen the composition has to land in, as fractions of the
-  // canvas. OVERVIEW owns nearly the whole frame — the hall is the only thing on
-  // screen, so there is no reason for it to sit in a corner of it. WORK keeps
-  // clear of the panels: in portrait they take the bottom of the screen, in
-  // landscape the right of it, and the fighter being worked on must not end up
-  // behind them.
+  // canvas. OVERVIEW owns nearly the whole frame. WORK keeps clear of the panels:
+  // upright they take the bottom of the screen, sideways the right of it, and the
+  // fighter being worked on must not end up behind them.
   rect: {
-    overviewPortrait:  { x0: 0.05, x1: 0.95, y0: 0.11, y1: 0.70 },
-    overviewLandscape: { x0: 0.05, x1: 0.95, y0: 0.15, y1: 0.95 },
-    workPortrait:      { x0: 0.08, x1: 0.92, y0: 0.17, y1: 0.56 },
-    workLandscape:     { x0: 0.04, x1: 0.58, y0: 0.13, y1: 0.93 },
+    overviewPortrait:  { x0: 0.05, x1: 0.95, y0: 0.12, y1: 0.84 },
+    overviewLandscape: { x0: 0.05, x1: 0.95, y0: 0.14, y1: 0.90 },
+    // WORK has to dodge TWO panels, not one. The tree takes the right of a wide
+    // screen (the bottom of a tall one), and the fighter's card sits in the bottom
+    // corner on top of that — so the clear ground is the band ABOVE the card and
+    // BESIDE the tree. Framing into the whole left half put his legs behind the
+    // card; these rectangles are that band.
+    workPortrait:      { x0: 0.10, x1: 0.90, y0: 0.06, y1: 0.46 },
+    workLandscape:     { x0: 0.06, x1: 0.52, y0: 0.08, y1: 0.68 },
   },
   minDist: 4.5,
-  maxDist: 22,
+  maxDist: 90,           // ten on one arc is wide — the fit must be allowed to back off
 };
-// Where a picked fighter stands while you work on him, and how the rest sink.
+// How the rest of the hall sinks while one fighter's card and tree are open.
 const WORK = {
-  spot: [-1.35, 0, 1.5], // left of centre and a step toward the player
-  moveSec: 0.5,
   dimSkin: 0.72,         // how far the others' bodies fade toward the room (0..1)
   dimGlow: 0.25,         // …and their floor pools
 };
-// Core brightness. At rest every core is MATTE — eight lit cores in four colours
-// is a Christmas tree. Only the hovered (overview) or picked (work) core lights.
+// Core brightness. Exactly ONE core burns in this hall — the picked fighter's.
+// Everyone else's is OUT: `rest` is low enough to read as a dark facet in the
+// chest, not as a lamp, which is what "все горят" looked like at 0.14.
 const CORE_LIGHT = {
-  rest: 0.14,            // multiplier on the gem colour / halo at rest
-  lerp: 7.0,             // 1/s easing toward the target (same shape as the mode plates)
+  rest: 0.05,            // multiplier on the gem colour / halo for everyone but the pick
+  lerp: 7.0,             // 1/s easing toward the target — the light moves, never snaps
 };
-// The legend trainer floating over the plate centre.
+// The legend trainer floating over the plate centre. Lifted clear of the arc: his
+// feet must hang well above the tallest head, or he reads as standing among them.
 const LEGEND = {
-  height: 2.55,        // plate-top → legend feet (it floats this high above the roster)
+  height: 4.7,         // plate-top → legend feet. Heads reach 1.77, but height alone
+                       // is not the test: seen from a camera that looks DOWN, depth
+                       // also reads as screen height, so he has to clear the row on
+                       // SCREEN, not just in the world. At 4.7 his pedestal sits a
+                       // clear body's width above the tallest head in the arc.
   driftSpeed: 0.5,     // Lissajous glide rate (never static)
   driftRadius: 0.7,    // horizontal glide half-extent
   bobAmplitude: 0.18,  // vertical bob
@@ -155,41 +202,92 @@ function buildUnderGlow(colorHex, topY) {
 // around each shade are gone — the lamps now read as lit from inside the dish (the
 // visible bulb + the PointLight), with no blurry orange blobs in the air.
 
-// ── roster layout — DETERMINISTIC, so a fighter keeps his place between visits.
-//    ≤5: one shallow arc, ends a step closer to the player.
-//    6–8: two rows, the back one lifted, smaller and offset by half a gap so the
-//    back bodies land in the FRONT row's gaps instead of behind its shoulders. ──
-function layoutRoster(count, portrait) {
-  if (count <= 0) return [];
-  const squash = portrait ? CONFIG.portraitSquash : 1;
-  const bow = CONFIG.rowBow * (portrait ? CONFIG.portraitBow : 1);
-  const step = portrait ? CONFIG.portraitStep : 0;
+// ── The hall floor. Own copy of the hex-field recipe (the Space stage does the
+//    same thing for the same reason): a dark base plane plus a lattice, laid flush
+//    with the slab top so the two read as one continuous ground. Its own texture
+//    instance — makeHexGridTexture carries `repeat` on the texture itself, so the
+//    slab's copy must never be shared or cloned into this one. ──
+function buildHallFloor(groundY, maxAniso) {
+  const group = new THREE.Group();
+  const baseMat = new THREE.MeshStandardMaterial({ color: FLOOR.baseColor, roughness: 0.95, metalness: 0.1 });
+  const base = new THREE.Mesh(new THREE.PlaneGeometry(FLOOR.size, FLOOR.size), baseMat);
+  base.rotation.x = -Math.PI / 2;
+  base.position.y = groundY - 0.05;
+  group.add(base);
 
-  // One row: `t` runs −1…+1 across it, x spreads by it, and z bows by t² so the
-  // ENDS stand a touch closer to the player (+Z is toward the camera) — the row
-  // reads as a shallow arc facing you, not as a straight parade line.
-  const row = (n, offsetX, z0, scale) => {
-    const spots = [];
-    for (let i = 0; i < n; i++) {
-      const t = n === 1 ? 0 : (i / (n - 1)) * 2 - 1;
-      spots.push({
-        x: (t * CONFIG.rowSpread * squash * (n - 1)) / 2 + offsetX,
-        z: z0 + bow * t * t,
-        scale,
-      });
-    }
-    return spots;
+  const hexTex = makeHexGridTexture(maxAniso);
+  hexTex.repeat.set(FLOOR.repeat, FLOOR.repeat);
+  const lineMat = new THREE.MeshBasicMaterial({ map: hexTex, transparent: true, opacity: FLOOR.lineOpacity, depthWrite: false });
+  const lines = new THREE.Mesh(new THREE.PlaneGeometry(FLOOR.size, FLOOR.size), lineMat);
+  lines.rotation.x = -Math.PI / 2;
+  lines.position.y = groundY - 0.03;
+  group.add(lines);
+
+  const dispose = () => {
+    baseMat.dispose(); base.geometry.dispose();
+    lineMat.dispose(); lines.geometry.dispose(); hexTex.dispose();
   };
+  return { group, dispose };
+}
 
-  if (count <= 5) return row(count, 0, 1.0 + step, 1);
+// ── Roster layout — ONE arc, DETERMINISTIC, so a fighter keeps his place between
+//    visits and across a rotation.
+//
+//    Fighters are spaced by ARC.step ALONG the arc, which is then wrapped onto a
+//    circle of ARC.radius whose near side faces the player: the middle spot sits
+//    furthest away, the ends come forward. That is the shape the hall wants, and
+//    it is also what makes the composition legible — because every spot differs
+//    from its neighbour ACROSS the screen and not only in depth, no fighter ever
+//    stands behind another.
+//
+//    Fewer fighters do not leave holes at the ends: the arc is always centred, so
+//    a short roster simply closes toward the middle.
+function layoutRoster(count) {
+  if (count <= 0) return [];
+  if (count === 1) return [{ x: 0, z: ARC.centreZ }];
+  const R = ARC.radius;
+  const half = (ARC.step * (count - 1)) / 2 / R;   // half the arc, in radians
+  const spots = [];
+  for (let i = 0; i < count; i++) {
+    const a = -half + (2 * half * i) / (count - 1);
+    spots.push({ x: R * Math.sin(a), z: ARC.centreZ + R * (1 - Math.cos(a)) });
+  }
+  return spots;
+}
 
-  // 6–8: split front/back, back row further away, smaller, and offset by half a
-  // gap so its bodies show through the front row's gaps.
-  const front = Math.ceil(count / 2);
-  return [
-    ...row(front, 0, 1.0 + step, 1),
-    ...row(count - front, CONFIG.stagger * squash, 1.0 + step - CONFIG.backRowLift, CONFIG.backRowScale),
-  ];
+// The personal zone around a spot — what the wander director is allowed to walk
+// him inside. Axis-aligned because that is what the director takes; narrow across
+// the arc, deep along the view (see ZONE).
+function zoneFor(spot) {
+  return {
+    xMin: spot.x - ZONE.halfX, xMax: spot.x + ZONE.halfX,
+    zMin: spot.z - ZONE.halfZ, zMax: spot.z + ZONE.halfZ,
+  };
+}
+
+// Where the picked fighter stands: in FRONT of the arc's foremost spot, clear of
+// every zone, and — this is the part that is easy to get wrong — in the GAP between
+// the two middle spots rather than dead on the centre line. With an odd roster the
+// centre line has a fighter standing on it, and the man out on the mark then covers
+// him. Half a step across puts the mark exactly as far from its nearest neighbour
+// as the arc's own neighbours are from each other. With an even roster the centre
+// line IS the gap, so the mark stays dead centre.
+function markFor(count) {
+  const spots = layoutRoster(count);
+  let frontZ = ARC.centreZ;
+  for (const s of spots) if (s.z > frontZ) frontZ = s.z;
+  const offCentre = count >= 3 && count % 2 === 1 ? -ARC.step / 2 : 0;
+  return { x: offCentre, z: frontZ + MARK.ahead };
+}
+
+// The rectangle an ERRAND may route through — the whole walkable hall. Errands
+// leave the personal zone by definition, so they are clamped to this instead.
+function hallBounds(count) {
+  const m = markFor(count);
+  const spots = layoutRoster(count);
+  let ex = 1;
+  for (const s of spots) ex = Math.max(ex, Math.abs(s.x));
+  return { xMin: -ex - 1.5, xMax: ex + 1.5, zMin: ARC.centreZ - 1.5, zMax: m.z + 1.5 };
 }
 
 // ── Reaching INTO a fighter from outside (the sanctioned pattern — the combat
@@ -236,43 +334,48 @@ const _fitV = new THREE.Vector3();
 const _fitDir = new THREE.Vector3();
 
 // The corners the framing has to keep on screen, in world space.
+//
+// Measured against the STANDING SPOTS and the MARK, never against where the bodies
+// happen to be this frame: everyone is always easing somewhere (a stroll inside a
+// zone, a walk out to the mark or back), and a framing measured off live positions
+// would breathe along with them. The zone half-extents are added on, so a body that
+// wanders to the edge of its patch is still inside the frame.
 function framePoints(working) {
   const pts = [];
   const topY = arena ? arena.refs.topY : 0;
-  // Their STANDING spots, not where they happen to be this frame: a body is
-  // always easing somewhere (idle sway, walking back from the work spot, the row
-  // re-packing after a rotation) and a framing measured off live positions would
-  // breathe along with them.
-  const body = (x, z, s) => {
-    pts.push([x - 0.62 * s, topY, z], [x + 0.62 * s, topY + 2.25 * s, z]);
+  const body = (x, z, padX, padZ) => {
+    pts.push([x - BODY.halfW - padX, topY, z + padZ], [x + BODY.halfW + padX, topY + BODY.height, z - padZ]);
   };
+
   if (working) {
-    const r = roster.find((x) => x.id === selectedId);
-    const sc = r ? r.scale : 1;
-    // Him, plus a margin of air — and all of it at HIS depth. A patch of floor
-    // spanning a few units of depth was tried and pulled the framing right back:
-    // at this camera's shallow angle, depth reads as a lot of screen height, so
-    // the floor drove the fit and the fighter it was supposed to frame came out
-    // small with the rest of the row still filling the shot.
-    body(WORK.spot[0], WORK.spot[2], sc);
-    pts.push(
-      [WORK.spot[0] - 0.95 * sc, topY - 0.35, WORK.spot[2]],
-      [WORK.spot[0] + 0.95 * sc, topY + 2.75 * sc, WORK.spot[2]],
-    );
+    // Him on the mark, plus a margin of air — and all of it at HIS depth. A patch
+    // of floor spanning several units of depth was tried and pulled the framing
+    // right back: at this camera's shallow angle depth reads as a lot of screen
+    // height, so the floor drove the fit and the fighter it was meant to frame came
+    // out small.
+    const m = mark;
+    body(m.x, m.z, 0.30, 0);
+    pts.push([m.x - 0.80, topY - 0.30, m.z], [m.x + 0.80, topY + BODY.height + 0.45, m.z]);
     return pts;
   }
-  for (const r of roster) body(r.home.x, r.home.z, r.scale);
-  // The trainer is the hall — he is in frame whether or not anyone else is,
-  // and his drift is included so the fit does not breathe with him.
+
+  // The whole arc — every spot with its zone around it — and the mark, which is
+  // part of the composition whether or not anybody is standing on it.
+  for (const r of roster) body(r.home.x, r.home.z, ZONE.halfX, ZONE.halfZ);
+  body(mark.x, mark.z, 0.2, 0.2);
+
+  // The trainer is the hall: he is in frame whether or not anyone else is, and his
+  // drift is included so the fit does not breathe with him.
   const feet = topY + LEGEND.height;
   pts.push(
-    [-LEGEND.driftRadius - 0.85, feet - 0.55, 0],   // his pedestal / cloud
-    [LEGEND.driftRadius + 0.85, feet + 2.35, 0],    // …up over his head
+    [-LEGEND.driftRadius - 0.85, feet - 0.55, 0],
+    [LEGEND.driftRadius + 0.85, feet + 2.35, 0],
   );
-  // Nobody on the plate: keep enough of the empty stage in frame that the room
-  // still reads as a place with nobody in it, not as a crop.
+
+  // Nobody on the floor: keep enough of the empty hall in frame that the room still
+  // reads as a place with nobody in it, not as a crop.
   if (!roster.length) {
-    for (const x of [-2.1, 2.1]) for (const z of [-0.9, 1.9]) pts.push([x, topY, z]);
+    for (const x of [-2.6, 2.6]) for (const z of [ARC.centreZ, mark.z]) pts.push([x, topY, z]);
   }
   return pts;
 }
@@ -299,7 +402,7 @@ function frameFor(working) {
   const tx = (r.x0 + r.x1) / 2 * viewW; const ty = (r.y0 + r.y1) / 2 * viewH;
   const tw = (r.x1 - r.x0) * viewW; const th = (r.y1 - r.y0) * viewH;
 
-  for (let pass = 0; pass < 4; pass++) {
+  for (let pass = 0; pass < 5; pass++) {
     const p = pose();
     _fitCam.fov = camera.fov; _fitCam.aspect = camera.aspect;
     _fitCam.near = camera.near; _fitCam.far = camera.far;
@@ -321,7 +424,7 @@ function frameFor(working) {
 
     // Fit — grows AND shrinks, so a tall narrow screen stops cropping the row and
     // a wide one stops leaving half the frame empty.
-    if (pass < 3) {
+    if (pass < 4) {
       dist = THREE.MathUtils.clamp(dist * Math.max((right - left) / tw, (bottom - top) / th),
         CAM.minDist, CAM.maxDist);
     }
@@ -335,26 +438,11 @@ function frameFor(working) {
   return pose();
 }
 
-// Re-pack the formation for the screen's new shape. Only the STANDING SPOTS move
-// — the same fighters, the same rule, the same order, so a fighter keeps his place
-// in the row across a rotation. The render loop already eases every body toward
-// its `home`, so writing the new homes is the whole job: the row re-forms itself
-// instead of teleporting, and a fighter who is out at the work spot is left where
-// he is and finds the new spot when he walks back.
-let laidOutPortrait = null;
-function relayout() {
-  if (!roster.length || !arena) return;
-  const portrait = viewH >= viewW;
-  if (portrait === laidOutPortrait) return;
-  laidOutPortrait = portrait;
-  const topY = arena.refs.topY;
-  const spots = layoutRoster(roster.length, portrait);
-  roster.forEach((r, i) => {
-    const p = spots[i];
-    if (!p) return;
-    r.home.set(p.x, topY, p.z);
-  });
-}
+// The arc does not depend on the screen's shape: bowing it harder to save width
+// would put fighters behind one another, which is the one thing the composition
+// may not do. So a rotation moves nobody — only the camera re-fits. (There used to
+// be a relayout() here that re-packed the row for portrait; it is gone with the
+// two-row formation it served.)
 
 // Set (or ease toward) one of the two framings. `snap` places the camera at once
 // — used on build and whenever motion is reduced.
@@ -384,15 +472,24 @@ function applyFighterLight(r) {
   if (r.glow && r.glow.mesh && r.glow.mesh.material) {
     const m = r.glow.mesh.material;
     if (m.userData.baseOpacity === undefined) m.userData.baseOpacity = m.opacity;
-    m.opacity = m.userData.baseOpacity * (1 - (1 - WORK.dimGlow) * r.dim) * (0.55 + 0.45 * r.lit);
+    m.opacity = m.userData.baseOpacity * (1 - (1 - WORK.dimGlow) * r.dim) * (0.16 + 0.84 * r.lit);
   }
 }
-
-const _target = new THREE.Vector3();
 
 // Point a body at (x, z). The model faces −Z at rotation 0 (see buildFighter).
 function faceTowards(group, x, z) {
   group.rotation.y = Math.atan2(-(x - group.position.x), -(z - group.position.z));
+}
+
+// Ease a standing body around to face (x, z). While a fighter is WALKING the
+// locomotion owns his rotation and this is not called — turning him then would
+// fight his own footwork.
+function turnTowards(group, x, z, k) {
+  const want = Math.atan2(-(x - group.position.x), -(z - group.position.z));
+  let d = (want - group.rotation.y) % (Math.PI * 2);
+  if (d > Math.PI) d -= Math.PI * 2;
+  if (d < -Math.PI) d += Math.PI * 2;
+  group.rotation.y += d * k;
 }
 
 // ─────────────────────────────────── scene plumbing ───────────────────────────────────
@@ -416,8 +513,21 @@ let resizePending = 0;      // coalescing frame for the resize observer
 let load = null;
 let onVisibility;
 let onPointerMove = null, onPointerDown = null, onPointerUp = null;
-let hoveredId = null;        // whose core is lit in the overview
-let selectedId = null;       // whose card + tree are open (null = overview)
+let hoveredId = null;        // whose core the pointer is over (overview only)
+// WHO IS CURRENT vs WHO IS BEING WORKED ON — two different things, deliberately:
+//   currentId — the fighter standing on the MARK, and the ONE core alight in the
+//               hall. Always set while the roster is not empty, including on
+//               arrival, so the player never meets a room of eight lit chests.
+//   workingId — whose card and tree are open. That, and only that, changes the
+//               framing and sinks the rest of the hall into the dark. Keeping them
+//               apart is what lets the hall have a lit pick without the panels
+//               springing open by themselves.
+let currentId = null;
+let workingId = null;
+let director = null;         // the wander / errand director (forgeWander.js)
+let floor = null;            // the hall floor laid around the slab
+let mark = { x: 0, z: 0 };   // where the current fighter stands
+let hall = { xMin: -1, xMax: 1, zMin: -1, zMax: 1 };  // what an errand may route through
 const camPos = new THREE.Vector3();      // where the camera IS
 const camLook = new THREE.Vector3();     // and what it looks at
 const camPosTo = new THREE.Vector3();    // where it is going
@@ -429,7 +539,6 @@ let legend = null, legendPresence = null;
 // [{ id, callsign, fighter, glow, home, scale, parts, skin, lit, dim }]
 const roster = [];
 
-const CAM_BASE = new THREE.Vector3(5.4, 6.1, 8.4);
 
 function lowPowerDevice() {
   const cores = navigator.hardwareConcurrency || 8;
@@ -461,7 +570,6 @@ onMounted(() => {
 
   viewW = w; viewH = h;   // the framing is measured in canvas pixels — have them before the first fit
   camera = new THREE.PerspectiveCamera(FOV.forge, w / h, CAMERA.near, CAMERA.far.forge);
-  camera.position.copy(CAM_BASE);
 
   // Lighting — same recipe as the arena/home (one warm key + cool fill).
   const key = new THREE.DirectionalLight(LIGHTING.key.color, LIGHTING.key.intensity);
@@ -489,42 +597,77 @@ onMounted(() => {
   seam.rotation.x = -Math.PI / 2;
   seam.position.set(0, topY - 0.06, 0);
   scene.add(seam);
+
+  // The hall FLOOR, laid around the slab and flush with its top. Without it the
+  // roster would have nothing to stand on: ten fighters need ~18 units of room and
+  // the slab is 6 across, so the arc reaches well past its edges.
+  floor = buildHallFloor(topY, renderer.capabilities.getMaxAnisotropy());
+  scene.add(floor.group);
   load.stage('slab');
 
   // Atmosphere / depth — warm dim lamp room-fill + a background dome (warm/dark FILL,
   // no pink, no new accent). PVE drops the home's lamp-haze halos and drifting dust.
   // hangLift поднимает плафоны над бойцами / из кадра. Параметры самого света
   // (цвет, яркость, дальность, затухание) те же, что в остальных залах.
-  lamps = buildLamps({ ...HALL_LAMPS, hangLift: 1.2 }, reduced); scene.add(lamps.group);
+  // The SAME four lamps as every other hall — spread wider, not multiplied. Their
+  // stock positions (±1.9 X) hang over the slab, which was the whole hall when the
+  // roster stood on it; the arc now reaches ±6, and four lamps bunched in the
+  // middle left its ends in the dark. Spreading them is a position override from
+  // outside — the shared lamp file is untouched and the count is unchanged, so the
+  // phone pays for four PointLights exactly as before.
+  lamps = buildLamps({
+    ...HALL_LAMPS,
+    hangLift: 1.2,
+    // …and reaching further. Still FOUR PointLights — the count, the colour and the
+    // no-shadow rule are untouched, so the phone's bill is the same. What changed is
+    // the room: a lamp tuned to carry across a 6-unit slab does not reach the ends of
+    // a 13-unit arc, and the fighters out there were left as black cut-outs.
+    light: { ...HALL_LAMPS.light, intensity: 30, distance: 26 },
+    // Two over the ends of the arc, two over the mark. The mark is the one place
+    // in this hall that MUST read — it is where the fighter you are working on
+    // stands — and with all four bunched over the arc he was a dark shape on a
+    // dark floor as soon as the panels came up and the camera moved in.
+    positions: [
+      { x: -4.7, z: -1.5, drop: 0.0 },
+      { x: 4.7, z: -1.5, drop: 0.7 },
+      { x: -1.7, z: 2.5, drop: 0.3 },
+      { x: 1.9, z: 2.5, drop: 1.0 },
+    ],
+  }, reduced); scene.add(lamps.group);
   backdrop = buildBackdrop({ radius: 45, centerY: 1.6 }, renderer.capabilities.getMaxAnisotropy());
   scene.add(backdrop.mesh);
   load.stage('atmosphere');
 
-  // --- Roster: the player's OWN fighters, one body each, standing in a row and
-  //     FACING THE PLAYER. They do not walk: this is a hall, not a yard, so the
-  //     wander director is gone and the bodies just live on the spot (breath,
-  //     weight shifts — what buildFighter already does on its own).
+  // --- Roster: the player's OWN fighters, one body each, on their own spot on the
+  //     arc. They LIVE here: each owns a personal zone and strolls inside it on his
+  //     own footwork, driven from outside by the wander director (forgeWander.js) —
+  //     the combat file is only instanced, never edited, and nothing in this hall
+  //     moves a body by writing its position.
   //     The record carries only a core id; the hue comes from this scene's own
-  //     palette (RAIDER brightened for this dark room), so the hall's look is
-  //     unchanged. Read once at build time — the roster is edited in the shop,
-  //     on another route, so arriving here always rebuilds the scene. ---
-  const members = store.getters['roster/fighters'] || [];
-  const spots = layoutRoster(members.length, viewH >= viewW);
+  //     palette. Read once at build time — the roster is edited in the shop, on
+  //     another route, so arriving here always rebuilds the scene. ---
+  const members = (store.getters['roster/fighters'] || []).slice(0, ARC.maxCount);
+  const spots = layoutRoster(members.length);
+  mark = markFor(members.length);
+  hall = hallBounds(members.length);
+  director = createForgeWanderDirector();
+
   spots.forEach((p, i) => {
     const m = members[i];
     const core = CORE_PALETTE.find((c) => c.id === m.core) || CORE_PALETTE[0];
     const behavior = resolveBehavior(core.id, []);
 
+    const idx = i;   // captured for this body's own getFoePos
     const fighter = buildFighter(core.hue, {
       side: 'player',
       coreId: core.id,
       behavior,
-      bounds: { x: arena.refs.W / 2 - 0.35, z: arena.refs.totalDepth / 2 - 0.3 },
+      // The walkable hall, not the slab: the arc reaches past the slab's edges.
+      bounds: { x: Math.abs(hall.xMin) + 2, z: Math.max(Math.abs(hall.zMin), Math.abs(hall.zMax)) + 2 },
       neutralColor: false,
-      getFoePos: () => null,           // nobody to walk toward: they stand
+      getFoePos: () => (director ? director.foePos(idx) : null),
     });
     fighter.group.position.set(p.x, topY, p.z);
-    fighter.group.scale.setScalar(p.scale);
     fighter.setReducedMotion(reduced);
     // SUPPRESS the over-head HP plate (the only Sprite added DIRECTLY to the
     // group) — same external approach as the home.
@@ -540,23 +683,41 @@ onMounted(() => {
       callsign: m.callsign,
       fighter,
       glow,
-      home: new THREE.Vector3(p.x, topY, p.z),
-      scale: p.scale,
+      home: new THREE.Vector3(p.x, topY, p.z),   // the middle of his zone
+      zone: zoneFor(p),
       parts: coreParts(fighter),       // gem + halo, for the rest/lit brightness
       skin: skinOf(fighter),           // this body's own material (per-instance)
       lit: 0,                          // eased 0…1 core brightness
       dim: 0,                          // eased 0…1 "sunk into the dark"
     });
   });
-  // Everyone faces the player. Aim at the overview camera spot rather than
-  // straight ahead, so the arc ends turn slightly inward and the row reads as
+
+  // Everyone faces the player to start with. Aim at the overview camera spot rather
+  // than straight ahead, so the arc ends turn slightly inward and the row reads as
   // gathered rather than as a firing line.
   for (const r of roster) faceTowards(r.fighter.group, CAM.dir[0], CAM.dir[2]);
+
+  director.attach(roster.map((r) => ({ fighter: r.fighter, zone: r.zone })), { reduced });
+
+  // The hall always has a current fighter: the first of the roster stands ON the
+  // mark from the moment the room opens (ТЗ — one fighter is on the mark and picked;
+  // a refresh restores him there at once, with no walk-up). His card is NOT opened
+  // by this: that is `workingId`, and it stays null until the player taps.
+  if (roster.length) {
+    currentId = roster[0].id;
+    roster[0].fighter.group.position.set(mark.x, topY, mark.z);
+    roster[0].lit = 1;
+    if (director) director.halt(0);
+    faceTowards(roster[0].fighter.group, CAM.dir[0], CAM.dir[2]);
+  }
   load.stage('roster');
 
   // --- Legend: a buildFighter body with the amber core, idle only (NEVER added to
   //     the wander), floating LEGEND.height over the plate centre, drifting forever
-  //     inside its warm cloud (legendPresence). ---
+  //     inside its warm cloud (legendPresence).
+  //     He hangs HIGH — feet well above the tallest head — and over the open floor
+  //     between the arc and the mark, so he presides over the hall instead of
+  //     standing behind the row's shoulders, and his cloud crosses nobody's zone. ---
   const legendBehavior = resolveBehavior(null, []);
   legend = buildFighter(LEGEND_HUE, { side: 'player', coreId: null, behavior: legendBehavior, bounds: { x: 1, z: 1 }, neutralColor: false, getFoePos: () => null });
   legend.setReducedMotion(reduced);
@@ -577,7 +738,6 @@ onMounted(() => {
   // --- Camera: FIXED and frontal. No orbit, no auto-rotate (owner's call): the
   //     hall is a workplace. Two framings — the whole row, and closer-in with the
   //     picked fighter on the left — eased toward, never cut to. ---
-  laidOutPortrait = viewH >= viewW;
   applyCamera(frameFor(false), true);
 
   // --- Pointer: hover lights ONE core and names it; a tap picks that fighter.
@@ -604,7 +764,7 @@ onMounted(() => {
   function tagPos(entry) {
     const rect = renderer.domElement.getBoundingClientRect();
     _v.copy(entry.fighter.group.position);
-    _v.y += 2.0 * entry.scale;
+    _v.y += 2.0;
     _v.project(camera);
     return { x: rect.left + (_v.x * 0.5 + 0.5) * rect.width, y: rect.top + (-_v.y * 0.5 + 0.5) * rect.height };
   }
@@ -617,7 +777,7 @@ onMounted(() => {
   }
 
   onPointerMove = (e) => {
-    if (selectedId || e.pointerType === 'touch') return;   // no hover while working / on touch
+    if (workingId || e.pointerType === 'touch') return;   // no hover while working / on touch
     emitHover(pickAt(e.clientX, e.clientY));
   };
   onPointerDown = (e) => { downAt = { x: e.clientX, y: e.clientY, entry: pickAt(e.clientX, e.clientY) }; };
@@ -630,7 +790,7 @@ onMounted(() => {
       // changes — the finger has to see what it hit.
       emitHover(d.entry);
       emit('pick', d.entry.id);
-    } else if (selectedId) {
+    } else if (workingId) {
       emit('exit');                                                  // tap on empty space
     }
   };
@@ -649,7 +809,7 @@ onMounted(() => {
     // While a fighter's card and tree are open, the hall is a backdrop: one body
     // idling behind two opaque panels. Half the frames are plenty there, and the
     // panels are what actually costs on a phone.
-    const iv = selectedId ? Math.max(interval, 1000 / 30) : interval;
+    const iv = workingId ? Math.max(interval, 1000 / 30) : interval;
     if (time - lastFrame < iv) return;
     lastFrame = time;
     const t = clock.getElapsedTime();
@@ -663,24 +823,34 @@ onMounted(() => {
     camera.position.copy(camPos);
     camera.lookAt(camLook);
 
-    const bodyK = reduced ? 1 : 1 - Math.exp(-(1 / (WORK.moveSec * 0.36)) * Math.min(0.05, dt));
+    const dimK = reduced ? 1 : 1 - Math.exp(-4.0 * Math.min(0.05, dt));
     const glowK = reduced ? 1 : 1 - Math.exp(-CORE_LIGHT.lerp * Math.min(0.05, dt));
+    const turnK = reduced ? 1 : 1 - Math.exp(-2.2 * Math.min(0.05, dt));
 
-    for (const r of roster) {
-      // Where this body belongs right now: its place in the row, or the work spot.
-      const picked = r.id === selectedId;
-      _target.copy(r.home);
-      if (picked) _target.set(WORK.spot[0], r.home.y, WORK.spot[2]);
-      r.fighter.group.position.lerp(_target, bodyK);
+    // Strolls and errands: the director only moves each body's LURE — the walking
+    // itself is the fighter's own locomotion, one frame later, inside update().
+    director?.update(t, dt);
+
+    for (let i = 0; i < roster.length; i++) {
+      const r = roster[i];
+      const isCurrent = r.id === currentId;
 
       r.fighter.update(t, camera);
       r.glow.follow(r.fighter.group.position);
 
+      // A body that is walking steers itself; one that is standing is turned to
+      // face the player — on the mark, and between strolls in his own zone.
+      if (!director || director.isStill(i)) {
+        turnTowards(r.fighter.group, camPos.x, camPos.z, turnK);
+      }
+
       // …and only NOW the brightnesses, because update() rewrites the halo.
-      const litTarget = selectedId ? (picked ? 1 : 0) : (r.id === hoveredId ? 1 : 0);
-      const dimTarget = selectedId && !picked ? 1 : 0;
+      // ONE core burns: the current fighter's. Hover only previews, and only while
+      // no card is open.
+      const litTarget = isCurrent ? 1 : (!workingId && r.id === hoveredId ? 0.55 : 0);
+      const dimTarget = workingId && r.id !== workingId ? 1 : 0;
       r.lit += (litTarget - r.lit) * glowK;
-      r.dim += (dimTarget - r.dim) * bodyK;
+      r.dim += (dimTarget - r.dim) * dimK;
       applyFighterLight(r);
     }
 
@@ -722,10 +892,10 @@ onMounted(() => {
     camera.aspect = cw / ch;
     camera.updateProjectionMatrix();
     renderer.setSize(cw, ch, false);
-    relayout();   // the formation packs differently upright — before the fit reads it
-    // Portrait and landscape are different compositions, and a rotation swaps
-    // one for the other. Snap rather than ease: this is a new screen, not a move.
-    applyCamera(frameFor(!!selectedId), true);
+    // The arc itself does not change with the screen's shape (see above), so a
+    // rotation moves nobody — only the framing is rebuilt. Snap rather than ease:
+    // this is a new screen, not a move.
+    applyCamera(frameFor(!!workingId), true);
     // A new composition under ourselves — start the settled-frame count again.
     load?.unsettle();
   };
@@ -737,24 +907,50 @@ onMounted(() => {
 });
 
 // ── What the hall drives from outside ──────────────────────────────────────
-// select(id) — frame in on this fighter (unknown id → back to the overview, which
-//              is what happens if he was deleted in another tab while open).
-// exitWork()  — back to the row.
+// select(id) — make this fighter the current one: he WALKS out to the mark, whoever
+//              was there WALKS back to his own zone, and the light moves to him at
+//              once (the moment he sets off, not when he arrives). Also opens the
+//              working framing, since the panels come up with it.
+//              Unknown id → back to the overview, which is what happens if he was
+//              deleted in another tab while his card was open.
+// exitWork()  — close the panels. The current fighter STAYS on the mark and stays
+//               lit: he is still the one the player picked.
+
+// Send a fighter out to the mark, and whoever is standing there back home. Both
+// leave at the same moment — neither waits for the other. Called with the roster
+// INDEX, because that is what the director knows bodies by.
+function makeCurrent(idx) {
+  const entry = roster[idx];
+  if (!entry || entry.id === currentId) return;   // already his: never restart the walk
+  const prevIdx = roster.findIndex((r) => r.id === currentId);
+
+  currentId = entry.id;    // the light moves NOW — the hall answers the tap at once
+
+  if (reduced) {
+    // Motion is reduced: no walking. Place them, do not slide them.
+    const topY = arena ? arena.refs.topY : 0;
+    if (prevIdx >= 0) roster[prevIdx].fighter.group.position.set(roster[prevIdx].home.x, topY, roster[prevIdx].home.z);
+    entry.fighter.group.position.set(mark.x, topY, mark.z);
+    return;
+  }
+  if (prevIdx >= 0) director?.sendHome(prevIdx);
+  director?.sendTo(idx, mark.x, mark.z);
+}
+
 function select(id) {
-  const entry = roster.find((r) => r.id === id);
-  if (!entry) { exitWork(); return; }
-  selectedId = id;
+  const idx = roster.findIndex((r) => r.id === id);
+  if (idx < 0) { exitWork(); return; }
+  makeCurrent(idx);
+  workingId = id;
   hoveredId = null;
-  const f = frameFor(true);
-  applyCamera(f, reduced);
-  faceTowards(entry.fighter.group, f.pos[0], f.pos[2]);
+  applyCamera(frameFor(true), reduced);
 }
+
 function exitWork() {
-  const prev = roster.find((r) => r.id === selectedId);
-  selectedId = null;
+  workingId = null;
   applyCamera(frameFor(false), reduced);
-  if (prev) faceTowards(prev.fighter.group, CAM.dir[0], CAM.dir[2]);
 }
+
 defineExpose({ select, exitWork });
 
 onBeforeUnmount(() => {
@@ -769,6 +965,7 @@ onBeforeUnmount(() => {
     if (onPointerDown) c.removeEventListener('pointerdown', onPointerDown);
     if (onPointerUp) c.removeEventListener('pointerup', onPointerUp);
   }
+  if (director) { director.dispose(); director = null; }
   for (const r of roster) {
     if (r.glow) { scene.remove(r.glow.mesh); r.glow.dispose(); }
     if (r.fighter) r.fighter.dispose();
@@ -778,6 +975,7 @@ onBeforeUnmount(() => {
   if (legend) legend.dispose();
   if (lamps) { scene.remove(lamps.group); lamps.dispose(); }
   if (backdrop) { scene.remove(backdrop.mesh); backdrop.dispose(); }
+  if (floor) { scene.remove(floor.group); floor.dispose(); floor = null; }
   if (arena) arena.dispose();
   if (renderer) renderer.dispose();
 });
