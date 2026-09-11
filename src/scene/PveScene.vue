@@ -14,7 +14,7 @@
      hover lights exactly one. All of that is driven from OUTSIDE: brightness is written
      onto the core gem / halo reached through joints.torso AFTER fighter.update(), and
      bodies are dimmed through their own per-instance skin material — buildFighter and
-     buildArena are only INSTANCED, never edited.
+     buildFighter is only INSTANCED, never edited.
 
      Discipline: dark room; the legend's warm amber cloud is the ONE glow; roster cores
      are light, not a second accent; NO pink anywhere (the FIGHT pink lives on the home,
@@ -32,8 +32,8 @@ import { onMounted, onBeforeUnmount, ref } from 'vue';
 import * as THREE from 'three';
 import { buildBackdrop } from './hallBackdrop.js';
 import { LAMPS as HALL_LAMPS, buildLamps } from './hallLamps.js';
-import { buildArena } from './buildArena.js';
-import { makeRadialTexture, makeHexGridTexture } from './arenaTextures.js';
+import { buildForgeSlab } from './forgeSlab.js';
+import { makeRadialTexture } from './arenaTextures.js';
 import { buildFighter } from './buildFighter.js';
 import { resolveBehavior } from '@/data/behavior.js';
 import { createLegendPresence } from './legendPresence.js';
@@ -43,17 +43,36 @@ import { beginSceneLoad } from '@/services/sceneLoading.js';
 import { CORE_HUE, AMBER, LIGHTING, FOG_COLOR, FOG, FOV, CAMERA } from '@/data/sceneTokens.js';;
 
 // ───────────────────────────── CONFIG (tune on preview) ─────────────────────────────
-// THE HALL FLOOR. The combat slab is 6×4 units (PLATFORM, buildArena — a protected
-// file, never edited). Ten fighters that must not overlap need ~18 units of room,
-// so the roster cannot live on the slab: it stands on a FLOOR laid around it, flush
-// with the slab top, exactly as the Space stage does for its fourteen. The slab
-// stays where it is and reads as the patch of ground under the trainer.
-const FLOOR = {
-  size: 44,            // side of the hall floor plane (units) — its edge has to die in
-                       // fog well before it is reached, or the hall grows a horizon
-  repeat: 13,          // hex-lattice tiling across it (same family as the slab)
-  baseColor: 0x0d1120, // dark blue-grey (arena family)
-  lineOpacity: 0.34,   // lattice line strength — quieter than the slab's own
+// THE PLATE. The hall has ONE ground and it is a plate — the same torn, hex-topped
+// plate the rest of the world is made of, built here at the size this hall needs
+// (see forgeSlab.js for why it is a copy and not the combat plate itself).
+//
+// It comes in three STEPS, because a plate sized for ten under a roster of two is
+// a parade ground with two people on it. The step is decided ONCE, when the hall
+// opens — never while the player is standing on it.
+//
+// The sizes are NOT typed here. They are worked out from what has to fit: the arc
+// of zones for the biggest roster the step must hold, the mark in front of it, and
+// a clear margin all round (see slabFor). All that is typed is the shape of the
+// plate and how much bare ground to leave at its edge.
+const SLAB = {
+  steps: [4, 7, 10],   // a roster up to 4 / up to 7 / up to 10 gets the 1st / 2nd / 3rd plate
+  // width : depth. ONE shape for every step, so the plate never turns from oblong
+  // to square and back as the roster changes — and 1.5 is the combat plate's own
+  // 6 : 4, so the hall is the same plate the rest of the world is made of.
+  //
+  // It is also, measured, the best this can be. What has to fit grows almost
+  // entirely SIDEWAYS as the roster grows (the arc widens from 4 units to 12) while
+  // its depth barely moves (6 to 7, most of it zone depth and the walk out to the
+  // mark). Holding one shape therefore always buys some bare plate: squarer than
+  // this and the big plate turns into a field with a row across the middle;
+  // flatter, and the three steps come out nearly the same size and stop being
+  // steps at all. At 1.5 the plate grows 63% from the small step to the large one
+  // and never carries more than ~38% of ground it does not need.
+  aspect: 1.5,
+  edge: 0.8,           // bare ground between the outermost thing on the plate and its
+                       // rim — more than a fighter's stride, so nobody stands on the brink
+  height: 1.0,         // plate thickness; the walkable top ends up at half of this
 };
 
 // THE ARC. Every fighter owns a spot on ONE arc that faces the player: its centre
@@ -77,8 +96,9 @@ const ARC = {
   // far back the hall goes dark.
   step: 1.4,           // spacing between neighbours, measured along the arc
   radius: 16,          // bow radius — bigger = flatter arc
-  centreZ: -2.0,       // where the middle of the arc stands (−Z is away from the camera)
   maxCount: 10,        // the hall is built for this many; ROSTER_MAX matches it
+  // Where the middle of the arc stands is NOT typed: it is placed so the arc and
+  // the mark together sit centred on their plate (see composeFor).
 };
 
 // A fighter's PERSONAL ZONE — the patch he strolls on. Deliberately narrow across
@@ -97,14 +117,32 @@ const ZONE = {
 // for arms that swing while walking.
 const BODY = { halfW: 0.40, height: 1.95 };
 
+// THE FOUR LAMPS' REACH, quoted for the SMALLEST plate. Four lamps is the rule (no
+// new light sources), so the bigger steps are lit by making these same four carry
+// further — see lampReach(): intensity rises with the square of the plate's growth,
+// the cutoff radius with the growth itself, which is exactly what a 1/r² falloff
+// costs to hold the floor at one brightness across all three plates.
+const LAMP_REACH = {
+  intensity: 30,       // at the small plate; scaled by k² on the bigger ones
+  distance: 26,        // cutoff radius at the small plate; scaled by k
+  hangLift: 1.2,       // lift the shades up out of the frame, above the heads
+};
+
 // THE MARK — the spot the picked fighter walks out to, in front of the whole arc
 // and on its centre line. Kept clear of every zone by construction.
 const MARK = {
-  // Far enough forward that the man on it clears the row on SCREEN, not just in the
-  // world: the camera looks down, so the extra depth is what lifts the row clear of
-  // his head. At 2.2 he still covered the fighter standing behind him (measured:
-  // a third of that body, with three in the hall).
-  ahead: 3.9,          // how far in FRONT of the arc's foremost spot the mark sits
+  // Far enough forward that the man on it clears the row ON SCREEN, not just in the
+  // world: the camera looks down, so depth is what lifts the row clear of his head.
+  // But no further — every unit here is also a unit of bare ground between the row
+  // and the mark, and a plate deep enough to hold it.
+  //
+  // This started at 3.9, which left a gap you could park in. The floor was found by
+  // hiding every body but one, photographing it alone, and comparing that silhouette
+  // with what is actually visible of it in the full scene: at 2.6 every body still
+  // showed 100% of itself at every roster size and screen shape. 2.9 is that floor
+  // plus room for the fact that the bodies WANDER — they are not standing where the
+  // measurement caught them.
+  ahead: 2.9,          // how far in FRONT of the arc's foremost spot the mark sits
 };
 
 // The hall's camera. Frontal and FIXED: no orbit, no auto-rotate — this is a
@@ -202,67 +240,127 @@ function buildUnderGlow(colorHex, topY) {
 // around each shade are gone — the lamps now read as lit from inside the dish (the
 // visible bulb + the PointLight), with no blurry orange blobs in the air.
 
-// ── The hall floor. Own copy of the hex-field recipe (the Space stage does the
-//    same thing for the same reason): a dark base plane plus a lattice, laid flush
-//    with the slab top so the two read as one continuous ground. Its own texture
-//    instance — makeHexGridTexture carries `repeat` on the texture itself, so the
-//    slab's copy must never be shared or cloned into this one. ──
-function buildHallFloor(groundY, maxAniso) {
-  const group = new THREE.Group();
-  const baseMat = new THREE.MeshStandardMaterial({ color: FLOOR.baseColor, roughness: 0.95, metalness: 0.1 });
-  const base = new THREE.Mesh(new THREE.PlaneGeometry(FLOOR.size, FLOOR.size), baseMat);
-  base.rotation.x = -Math.PI / 2;
-  base.position.y = groundY - 0.05;
-  group.add(base);
+// ── How big the arc is, for a given number of fighters ──────────────────────
+// Fighters are spaced by ARC.step ALONG the arc, which is then wrapped onto a
+// circle of ARC.radius whose near side faces the player: the middle spot sits
+// furthest away, the ends come forward. That is the shape the hall wants, and it
+// is also what makes the composition legible — because every spot differs from its
+// neighbour ACROSS the screen and not only in depth, no fighter stands behind
+// another.
+const halfAngle = (n) => (n <= 1 ? 0 : (ARC.step * (n - 1)) / 2 / ARC.radius);
+const arcHalfWidth = (n) => ARC.radius * Math.sin(halfAngle(n));      // how far the ends reach sideways
+const arcBow = (n) => ARC.radius * (1 - Math.cos(halfAngle(n)));      // how far forward they come
 
-  const hexTex = makeHexGridTexture(maxAniso);
-  hexTex.repeat.set(FLOOR.repeat, FLOOR.repeat);
-  const lineMat = new THREE.MeshBasicMaterial({ map: hexTex, transparent: true, opacity: FLOOR.lineOpacity, depthWrite: false });
-  const lines = new THREE.Mesh(new THREE.PlaneGeometry(FLOOR.size, FLOOR.size), lineMat);
-  lines.rotation.x = -Math.PI / 2;
-  lines.position.y = groundY - 0.03;
-  group.add(lines);
+// ── The plate, worked out rather than typed ─────────────────────────────────
+// For the biggest roster a step must hold, measure what has to sit on the plate:
+// the back of the deepest zone, the front of the mark, the outermost body, and
+// SLAB.edge of bare ground all round. Then take the smallest plate OF THE FIXED
+// SHAPE that contains it — so every step is the same plate, only bigger.
+function slabFor(maxCount) {
+  const backRel = -(ZONE.halfZ + BODY.halfW);                       // deepest point, from the arc's centre
+  const frontRel = arcBow(maxCount) + MARK.ahead + BODY.halfW;      // the mark's front edge
+  const needHalfW = arcHalfWidth(maxCount) + ZONE.halfX + BODY.halfW + SLAB.edge;
+  const needHalfD = (frontRel - backRel) / 2 + SLAB.edge;
+  // One shape, scaled until both fit: a unit plate is SLAB.aspect wide by 1 deep.
+  const scale = Math.max((2 * needHalfW) / SLAB.aspect, 2 * needHalfD);
+  return { width: SLAB.aspect * scale, depth: scale };
+}
 
-  const dispose = () => {
-    baseMat.dispose(); base.geometry.dispose();
-    lineMat.dispose(); lines.geometry.dispose(); hexTex.dispose();
-  };
-  return { group, dispose };
+// Which step a roster falls into, and the biggest roster that step must hold.
+function stepFor(count) {
+  const n = Math.max(0, count);
+  for (let i = 0; i < SLAB.steps.length; i++) if (n <= SLAB.steps[i]) return i;
+  return SLAB.steps.length - 1;
+}
+
+// Everything the hall's geometry needs, derived together so it cannot disagree
+// with itself: which plate, how big, where the arc stands on it, where the mark is.
+//
+// The arc is placed so that the composition — its deepest zone through to the front
+// of the mark — sits CENTRED on the plate. That is what puts an equal margin of
+// bare ground behind the row and in front of the mark, and it is computed for the
+// step's MAXIMUM roster so the row does not slide about as fighters are added.
+function composeFor(count) {
+  const step = stepFor(count);
+  const maxCount = SLAB.steps[step];
+  const slab = slabFor(maxCount);
+  const backRel = -(ZONE.halfZ + BODY.halfW);
+  const frontRel = arcBow(maxCount) + MARK.ahead + BODY.halfW;
+  const arcZ = -(frontRel + backRel) / 2;
+  return { step, maxCount, slab, arcZ };
 }
 
 // ── Roster layout — ONE arc, DETERMINISTIC, so a fighter keeps his place between
-//    visits and across a rotation.
-//
-//    Fighters are spaced by ARC.step ALONG the arc, which is then wrapped onto a
-//    circle of ARC.radius whose near side faces the player: the middle spot sits
-//    furthest away, the ends come forward. That is the shape the hall wants, and
-//    it is also what makes the composition legible — because every spot differs
-//    from its neighbour ACROSS the screen and not only in depth, no fighter ever
-//    stands behind another.
-//
-//    Fewer fighters do not leave holes at the ends: the arc is always centred, so
-//    a short roster simply closes toward the middle.
-function layoutRoster(count) {
+//    visits and across a rotation. Fewer fighters do not leave holes at the ends:
+//    the arc is always centred, so a short roster closes toward the middle.
+function layoutRoster(count, arcZ) {
   if (count <= 0) return [];
-  if (count === 1) return [{ x: 0, z: ARC.centreZ }];
+  if (count === 1) return [{ x: 0, z: arcZ }];
   const R = ARC.radius;
-  const half = (ARC.step * (count - 1)) / 2 / R;   // half the arc, in radians
+  const half = halfAngle(count);
   const spots = [];
   for (let i = 0; i < count; i++) {
     const a = -half + (2 * half * i) / (count - 1);
-    spots.push({ x: R * Math.sin(a), z: ARC.centreZ + R * (1 - Math.cos(a)) });
+    spots.push({ x: R * Math.sin(a), z: arcZ + R * (1 - Math.cos(a)) });
   }
   return spots;
 }
 
-// The personal zone around a spot — what the wander director is allowed to walk
-// him inside. Axis-aligned because that is what the director takes; narrow across
-// the arc, deep along the view (see ZONE).
+// The personal zone around a spot — what the wander director may walk him inside.
+// Axis-aligned because that is what the director takes; narrow across the arc, deep
+// along the view (see ZONE).
 function zoneFor(spot) {
   return {
     xMin: spot.x - ZONE.halfX, xMax: spot.x + ZONE.halfX,
     zMin: spot.z - ZONE.halfZ, zMax: spot.z + ZONE.halfZ,
   };
+}
+
+// Where the four lamps hang. Two out over the ends of the arc, two over the mark,
+// their spread taken from the plate rather than typed — a table written for one
+// plate leaves the ends of a bigger one in the dark. Still FOUR: the count, the
+// colour and the no-shadow rule are untouched, so the phone's bill does not move.
+function lampPositions() {
+  const endX = arcHalfWidth(compose ? compose.maxCount : ARC.maxCount) * 0.80;
+  const arcRowZ = (compose ? compose.arcZ : 0) - 0.4;
+  const markZ = mark ? mark.z : 2;
+  return [
+    { x: -endX, z: arcRowZ, drop: 0.0 },
+    { x: endX, z: arcRowZ, drop: 0.7 },
+    { x: -ARC.step * 1.2, z: markZ, drop: 0.3 },
+    { x: ARC.step * 1.35, z: markZ, drop: 1.0 },
+  ];
+}
+
+// Build (or rebuild) the hall's four lamps over the CURRENT plate. The same four
+// lamps as every other hall — spread, not multiplied: the count, the colour and the
+// no-shadow rule are untouched, so the phone's bill does not move. What changed is
+// the room — a lamp tuned to carry across a 6-unit plate does not reach the ends of
+// a 13-unit arc, and the fighters out there came out as black cut-outs.
+//
+// REACH FOLLOWS THE PLATE. Four lamps is the rule, so a bigger room cannot be paid
+// for with more of them — it is paid for by each of the four carrying further. A
+// point light falls off as the square of the distance, so when the plate grows by k
+// the lamp has to reach k further and burn k² brighter just to hold the SAME lit
+// level on the floor. Without this the large step came out visibly darker than the
+// small one (measured: plate luminance 24 → 17, peak 36 → 18) and the far bodies
+// read as black cut-outs on a phone held upright.
+function lampReach() {
+  const base = slabFor(SLAB.steps[0]).width;     // the smallest plate — the level we hold
+  const k = Math.max(1, (compose ? compose.slab.width : base) / base);
+  return { intensity: LAMP_REACH.intensity * k * k, distance: LAMP_REACH.distance * k };
+}
+
+function buildHallLamps() {
+  if (lamps) { scene.remove(lamps.group); lamps.dispose(); }
+  const reach = lampReach();
+  lamps = buildLamps({
+    ...HALL_LAMPS,
+    hangLift: LAMP_REACH.hangLift,
+    light: { ...HALL_LAMPS.light, intensity: reach.intensity, distance: reach.distance },
+    positions: lampPositions(),
+  }, reduced);
+  scene.add(lamps.group);
 }
 
 // Where the picked fighter stands: in FRONT of the arc's foremost spot, clear of
@@ -272,22 +370,12 @@ function zoneFor(spot) {
 // him. Half a step across puts the mark exactly as far from its nearest neighbour
 // as the arc's own neighbours are from each other. With an even roster the centre
 // line IS the gap, so the mark stays dead centre.
-function markFor(count) {
-  const spots = layoutRoster(count);
-  let frontZ = ARC.centreZ;
-  for (const s of spots) if (s.z > frontZ) frontZ = s.z;
+function markFor(count, arcZ) {
+  const spots = layoutRoster(count, arcZ);
+  let frontZ = arcZ;
+  for (const sp of spots) if (sp.z > frontZ) frontZ = sp.z;
   const offCentre = count >= 3 && count % 2 === 1 ? -ARC.step / 2 : 0;
   return { x: offCentre, z: frontZ + MARK.ahead };
-}
-
-// The rectangle an ERRAND may route through — the whole walkable hall. Errands
-// leave the personal zone by definition, so they are clamped to this instead.
-function hallBounds(count) {
-  const m = markFor(count);
-  const spots = layoutRoster(count);
-  let ex = 1;
-  for (const s of spots) ex = Math.max(ex, Math.abs(s.x));
-  return { xMin: -ex - 1.5, xMax: ex + 1.5, zMin: ARC.centreZ - 1.5, zMax: m.z + 1.5 };
 }
 
 // ── Reaching INTO a fighter from outside (the sanctioned pattern — the combat
@@ -342,7 +430,7 @@ const _fitDir = new THREE.Vector3();
 // wanders to the edge of its patch is still inside the frame.
 function framePoints(working) {
   const pts = [];
-  const topY = arena ? arena.refs.topY : 0;
+  const topY = slab ? slab.refs.topY : 0;
   const body = (x, z, padX, padZ) => {
     pts.push([x - BODY.halfW - padX, topY, z + padZ], [x + BODY.halfW + padX, topY + BODY.height, z - padZ]);
   };
@@ -364,6 +452,15 @@ function framePoints(working) {
   for (const r of roster) body(r.home.x, r.home.z, ZONE.halfX, ZONE.halfZ);
   body(mark.x, mark.z, 0.2, 0.2);
 
+  // The plate itself is part of the composition now that it is the hall's only
+  // ground: its far corners and its near rim have to be on screen, or the floor
+  // runs off the bottom of the picture and the hall loses its edges.
+  if (compose) {
+    const hw = compose.slab.width / 2;
+    const hd = compose.slab.depth / 2;
+    for (const x of [-hw, hw]) for (const z of [-hd, hd]) pts.push([x, topY, z]);
+  }
+
   // The trainer is the hall: he is in frame whether or not anyone else is, and his
   // drift is included so the fit does not breathe with him.
   const feet = topY + LEGEND.height;
@@ -375,7 +472,7 @@ function framePoints(working) {
   // Nobody on the floor: keep enough of the empty hall in frame that the room still
   // reads as a place with nobody in it, not as a crop.
   if (!roster.length) {
-    for (const x of [-2.6, 2.6]) for (const z of [ARC.centreZ, mark.z]) pts.push([x, topY, z]);
+    for (const x of [-2.6, 2.6]) for (const z of [compose ? compose.arcZ : 0, mark.z]) pts.push([x, topY, z]);
   }
   return pts;
 }
@@ -391,7 +488,7 @@ function frameFor(working) {
   _fitDir.normalize();
 
   const pts = framePoints(working);
-  const look = new THREE.Vector3(0, (arena ? arena.refs.topY : 0) + 1.5, 0);
+  const look = new THREE.Vector3(0, (slab ? slab.refs.topY : 0) + 1.5, 0);
   const pose = () => ({
     look: [look.x, look.y, look.z],
     pos: [look.x + _fitDir.x * dist, look.y + _fitDir.y * dist, look.z + _fitDir.z * dist],
@@ -501,7 +598,7 @@ const emit = defineEmits(['hover', 'pick', 'exit']);
 const wrap = ref(null);
 const canvasEl = ref(null);
 
-let renderer, scene, camera, arena, resizeObserver, clock;
+let renderer, scene, camera, slab, resizeObserver, clock;
 let viewW = 0, viewH = 0;   // canvas CSS size — the framing is measured in these
 let resizePending = 0;      // coalescing frame for the resize observer
 // Pre-load readiness: emit once after the first frame is rendered so the
@@ -525,9 +622,9 @@ let hoveredId = null;        // whose core the pointer is over (overview only)
 let currentId = null;
 let workingId = null;
 let director = null;         // the wander / errand director (forgeWander.js)
-let floor = null;            // the hall floor laid around the slab
 let mark = { x: 0, z: 0 };   // where the current fighter stands
-let hall = { xMin: -1, xMax: 1, zMin: -1, zMax: 1 };  // what an errand may route through
+let compose = null;          // which plate step, how big, where the arc stands on it
+let rosterCount = 0;         // read once, at the moment the hall opens
 const camPos = new THREE.Vector3();      // where the camera IS
 const camLook = new THREE.Vector3();     // and what it looks at
 const camPosTo = new THREE.Vector3();    // where it is going
@@ -535,7 +632,7 @@ const camLookTo = new THREE.Vector3();
 let prevT = 0;
 let reduced = false;
 let lamps = null, backdrop = null;
-let legend = null, legendPresence = null;
+let legend = null, legendPresence = null, legendParts = null;
 // [{ id, callsign, fighter, glow, home, scale, parts, skin, lit, dim }]
 const roster = [];
 
@@ -580,29 +677,28 @@ onMounted(() => {
 
   load.stage('renderer');
 
-  const pink = getComputedStyle(el).getPropertyValue('--pink').trim() || '#FF0069';
+  // The roster is read ONCE, here, at the moment the hall opens — and everything
+  // downstream (which plate, how big, where the arc stands) follows from this one
+  // number. Nothing re-reads it while the player is inside: the roster is edited in
+  // the shop, on another route, so arriving here always rebuilds the hall. That is
+  // also what makes "the plate never shrinks under you" true by construction.
+  const members = (store.getters['roster/fighters'] || []).slice(0, ARC.maxCount);
+  rosterCount = members.length;
 
-  // --- Slab: instance buildArena UNMODIFIED, then suppress the combat rift exactly
-  //     as the home does (external only): zero the rift-glow opacities, hide the
-  //     sparks, never build arenaPresence, and hide the bright slab-outline Lines. ---
-  arena = buildArena(renderer.capabilities.getMaxAnisotropy(), pink);
-  arena.refs.riftGlow.forEach((r) => { r.mat.opacity = 0; });
-  arena.refs.sparks.points.visible = false;
-  arena.group.traverse((o) => { if (o.isLine) o.visible = false; });
-  scene.add(arena.group);
-  const topY = arena.refs.topY;
-
-  // Dark seam-filler over the torn slit so the slab reads as one calm platform.
-  const seam = new THREE.Mesh(new THREE.PlaneGeometry(arena.refs.W + 0.2, 1.3), new THREE.MeshBasicMaterial({ color: 0x0c1018 }));
-  seam.rotation.x = -Math.PI / 2;
-  seam.position.set(0, topY - 0.06, 0);
-  scene.add(seam);
-
-  // The hall FLOOR, laid around the slab and flush with its top. Without it the
-  // roster would have nothing to stand on: ten fighters need ~18 units of room and
-  // the slab is 6 across, so the arc reaches well past its edges.
-  floor = buildHallFloor(topY, renderer.capabilities.getMaxAnisotropy());
-  scene.add(floor.group);
+  // --- The plate. ONE ground: the hall's own plate, built at the size this roster
+  //     needs (forgeSlab.js). The combat plate is not used here — it cannot be
+  //     given a size without opening a protected file — and there is no second
+  //     floor around it any more: everything in the hall stands on this. ---
+  compose = composeFor(rosterCount);
+  mark = markFor(rosterCount, compose.arcZ);   // the lamps need it, and they hang before the bodies stand
+  slab = buildForgeSlab({
+    width: compose.slab.width,
+    depth: compose.slab.depth,
+    height: SLAB.height,
+    maxAniso: renderer.capabilities.getMaxAnisotropy(),
+  });
+  scene.add(slab.group);
+  const topY = slab.refs.topY;
   load.stage('slab');
 
   // Atmosphere / depth — warm dim lamp room-fill + a background dome (warm/dark FILL,
@@ -615,25 +711,7 @@ onMounted(() => {
   // middle left its ends in the dark. Spreading them is a position override from
   // outside — the shared lamp file is untouched and the count is unchanged, so the
   // phone pays for four PointLights exactly as before.
-  lamps = buildLamps({
-    ...HALL_LAMPS,
-    hangLift: 1.2,
-    // …and reaching further. Still FOUR PointLights — the count, the colour and the
-    // no-shadow rule are untouched, so the phone's bill is the same. What changed is
-    // the room: a lamp tuned to carry across a 6-unit slab does not reach the ends of
-    // a 13-unit arc, and the fighters out there were left as black cut-outs.
-    light: { ...HALL_LAMPS.light, intensity: 30, distance: 26 },
-    // Two over the ends of the arc, two over the mark. The mark is the one place
-    // in this hall that MUST read — it is where the fighter you are working on
-    // stands — and with all four bunched over the arc he was a dark shape on a
-    // dark floor as soon as the panels came up and the camera moved in.
-    positions: [
-      { x: -4.7, z: -1.5, drop: 0.0 },
-      { x: 4.7, z: -1.5, drop: 0.7 },
-      { x: -1.7, z: 2.5, drop: 0.3 },
-      { x: 1.9, z: 2.5, drop: 1.0 },
-    ],
-  }, reduced); scene.add(lamps.group);
+  buildHallLamps();
   backdrop = buildBackdrop({ radius: 45, centerY: 1.6 }, renderer.capabilities.getMaxAnisotropy());
   scene.add(backdrop.mesh);
   load.stage('atmosphere');
@@ -646,10 +724,7 @@ onMounted(() => {
   //     The record carries only a core id; the hue comes from this scene's own
   //     palette. Read once at build time — the roster is edited in the shop, on
   //     another route, so arriving here always rebuilds the scene. ---
-  const members = (store.getters['roster/fighters'] || []).slice(0, ARC.maxCount);
-  const spots = layoutRoster(members.length);
-  mark = markFor(members.length);
-  hall = hallBounds(members.length);
+  const spots = layoutRoster(members.length, compose.arcZ);
   director = createForgeWanderDirector();
 
   spots.forEach((p, i) => {
@@ -662,8 +737,8 @@ onMounted(() => {
       side: 'player',
       coreId: core.id,
       behavior,
-      // The walkable hall, not the slab: the arc reaches past the slab's edges.
-      bounds: { x: Math.abs(hall.xMin) + 2, z: Math.max(Math.abs(hall.zMin), Math.abs(hall.zMax)) + 2 },
+      // The plate is the world here — a body may not be walked off its edge.
+      bounds: { x: compose.slab.width / 2, z: compose.slab.depth / 2 },
       neutralColor: false,
       getFoePos: () => (director ? director.foePos(idx) : null),
     });
@@ -727,9 +802,15 @@ onMounted(() => {
     baseX: 0, baseZ: 0, floorY: topY,
     driftSpeed: LEGEND.driftSpeed, driftRadius: LEGEND.driftRadius,
     bobAmplitude: LEGEND.bobAmplitude, hazeDensity: LEGEND.hazeDensity,
+    hazeOpacity: LEGEND.hazeOpacity,
+    PEDESTAL: { glow: LEGEND.pedestalGlow },
+    SMOKE: { opacity: LEGEND.smokeOpacity },
     ORBIT: { highAboveTop: LEGEND.height }, // feet height at the high/centre phase = LEGEND.height
     reduced,
   });
+  // …and his own core, held under the pick's. Same handle the roster cores use,
+  // applied after his update() for the same reason: update() rewrites the halo.
+  legendParts = coreParts(legend);
   legend.group.position.copy(legendPresence.position);
   scene.add(legendPresence.group);
   scene.add(legendPresence.trail); // world-space descent smoke wisps
@@ -856,6 +937,12 @@ onMounted(() => {
 
     // Legend: idle body, ride the drift, and slowly face the camera (presiding).
     legend?.update(t, camera);
+    if (legendParts) {
+      if (legendParts.gem && legendParts.gemBase) {
+        legendParts.gem.material.color.copy(legendParts.gemBase).multiplyScalar(LEGEND.coreLevel);
+      }
+      if (legendParts.halo) legendParts.halo.material.opacity *= LEGEND.coreLevel;
+    }
     if (legendPresence) {
       legendPresence.tick(t, dt);
       legend.group.position.copy(legendPresence.position);
@@ -928,7 +1015,7 @@ function makeCurrent(idx) {
 
   if (reduced) {
     // Motion is reduced: no walking. Place them, do not slide them.
-    const topY = arena ? arena.refs.topY : 0;
+    const topY = slab ? slab.refs.topY : 0;
     if (prevIdx >= 0) roster[prevIdx].fighter.group.position.set(roster[prevIdx].home.x, topY, roster[prevIdx].home.z);
     entry.fighter.group.position.set(mark.x, topY, mark.z);
     return;
@@ -951,7 +1038,61 @@ function exitWork() {
   applyCamera(frameFor(false), reduced);
 }
 
-defineExpose({ select, exitWork });
+// growTo(count) — take the hall up to the plate a bigger roster needs, WITHOUT
+// leaving and coming back.
+//
+// Two rules live here, both from the brief. The plate only ever GROWS inside one
+// visit: a roster that got smaller keeps the bigger plate until the player next
+// opens the hall, so the ground never shrinks under his feet. And the change is a
+// MOVE, not a cut — the plate is swapped, everyone walks to their new place on
+// their own legs (the director is handed their new zones; the man on the mark is
+// sent to the new mark), and the camera EASES onto the new frame instead of
+// jumping to it. Under reduced motion it places instead, like every other move.
+//
+// Nothing calls this today: the roster is edited in the shop, on another route, so
+// in practice the step is settled once when the hall opens. It exists because the
+// hall is the screen where owning more fighters will eventually show, and because
+// growing had to be a move rather than a cut whenever it does happen.
+function growTo(count) {
+  if (!compose || !slab || !scene) return false;
+  const next = composeFor(count);
+  if (next.step <= compose.step) return false;   // same plate, or a smaller one — never shrink here
+  compose = next;
+
+  scene.remove(slab.group);
+  slab.dispose();
+  slab = buildForgeSlab({
+    width: compose.slab.width,
+    depth: compose.slab.depth,
+    height: SLAB.height,
+    maxAniso: renderer.capabilities.getMaxAnisotropy(),
+  });
+  scene.add(slab.group);
+
+  // New places on the new plate. Writing the homes is the whole job: the director
+  // walks each body to its new zone, so the row re-forms on foot.
+  const topY = slab.refs.topY;
+  const spots = layoutRoster(roster.length, compose.arcZ);
+  mark = markFor(roster.length, compose.arcZ);
+  roster.forEach((r, i) => {
+    const sp = spots[i];
+    if (!sp) return;
+    r.home.set(sp.x, topY, sp.z);
+    r.zone = zoneFor(sp);
+    director?.setZone(i, r.zone);
+  });
+  const cur = roster.findIndex((r) => r.id === currentId);
+  if (cur >= 0) {
+    if (reduced) roster[cur].fighter.group.position.set(mark.x, topY, mark.z);
+    else director?.sendTo(cur, mark.x, mark.z);
+  }
+
+  buildHallLamps();                        // the lamps go with the plate
+  applyCamera(frameFor(!!workingId), reduced);   // …and the camera moves, never cuts
+  return true;
+}
+
+defineExpose({ select, exitWork, growTo });
 
 onBeforeUnmount(() => {
   load?.dispose();   // left mid-load → drop the screen and the wait with us
@@ -975,8 +1116,7 @@ onBeforeUnmount(() => {
   if (legend) legend.dispose();
   if (lamps) { scene.remove(lamps.group); lamps.dispose(); }
   if (backdrop) { scene.remove(backdrop.mesh); backdrop.dispose(); }
-  if (floor) { scene.remove(floor.group); floor.dispose(); floor = null; }
-  if (arena) arena.dispose();
+  if (slab) { scene.remove(slab.group); slab.dispose(); slab = null; }
   if (renderer) renderer.dispose();
 });
 </script>
