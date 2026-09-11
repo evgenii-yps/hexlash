@@ -1,15 +1,18 @@
 <!-- PveView — the FORGE hall (/play/pve): the 3D hall (PveScene) under its 2D layer.
 
-     Two states, one screen. OVERVIEW: the roster stands facing the player, and the
-     only thing on top of the scene is the hovered fighter's callsign. WORK: one
-     fighter is picked — his card sits bottom-left (the body itself stays visible
-     above it, lit, while the rest sink into the dark) and HIS upgrade tree takes
-     the right side. The tree is the one that used to live on the pre-fight upgrade
-     screen; each fighter has his own, stored inside his roster record.
+     ONE panel, always there (ForgePanel): who is selected, his tree, what he is
+     built out of, the whole roster as a list, and the way OUT of the hall. It
+     replaces what used to float over the scene — a card in one corner and the
+     tree pinned to the other edge — and it adds the thing the room was missing
+     entirely: you can leave for the arena from here.
 
      The scene owns the 3D (camera framings, hover light, who stands where); this
-     view owns the panels and the decision of who is selected — including the case
-     where that fighter is deleted from another tab while his card is open.
+     view owns the panel and the decision of who is selected — including the case
+     where that fighter is deleted from another tab while he is open.
+
+     LEAVING FOR THE ARENA. The arena's own guard asks `prefight/selectedCoreId`,
+     not the roster, so FIGHT hands it the picked fighter's core before it goes.
+     Until that wiring is a real "send THIS fighter", the core is what carries.
 
      Chrome: the shared .hs-strip (home.css) without the brand block — BACK left,
      SHOP + cabinet right. Its tokens are mirrored on the root so the strip is
@@ -21,33 +24,30 @@
     <!-- hovered fighter's callsign — matte, no glow, follows the body -->
     <div class="fg-tag" :class="{ 'is-on': !!tag }" :style="tagStyle">{{ tag?.callsign }}</div>
 
-    <!-- nothing to work with yet — say so, in the service tone -->
-    <p v-if="!fighters.length" class="fg-empty">{{ t.forge.empty }}</p>
-
-    <!-- WORK: the picked fighter's card (left) and his tree (right) -->
-    <Transition name="fg-fade">
-      <aside v-if="picked" class="fg-card">
-        <button type="button" class="close" :aria-label="t.forge.close" @click="exitWork">✕</button>
-        <div class="cs">{{ picked.callsign }}</div>
-        <div class="core"><span class="sw" aria-hidden="true"></span>{{ pickedCore.name }}</div>
-        <div class="rows">
-          <div class="row"><span>{{ t.forge.fights }}</span><span class="none">{{ t.forge.noFights }}</span></div>
-        </div>
-      </aside>
-    </Transition>
-
-    <Transition name="fg-fade">
-      <section v-if="picked" class="fg-tree">
-        <ForgeTree
-          ref="treeRef"
-          :core-id="picked.core"
-          :tree="picked.upgrade || []"
-          :spent="spent"
-          :resource="resource"
-          @toggle="onToggle"
-        />
-        <p v-if="isGuest" class="fg-guest">{{ t.forge.guestNote }}</p>
-      </section>
+    <!-- THE PANEL — always there, in every layout. It used to be two things
+         floating over the hall (a card in one corner, the tree pinned to the
+         other edge) and it had no way out of the room at all. -->
+    <Transition name="fp-fade" appear>
+      <ForgePanel
+        ref="panelRef"
+        :fighters="fighters"
+        :picked-id="pickedId"
+        :picked="picked"
+        :spent="spent"
+        :resource="resource"
+        :roster-max="rosterMax"
+        :is-guest="isGuest"
+        :can-fight="canFight"
+        :status="status"
+        :tree-status="treeStatus"
+        :load-step="loadStep"
+        :retrying="retrying"
+        @pick="onPick"
+        @toggle="onToggle"
+        @fight="onFight"
+        @new-fighter="onNewFighter"
+        @retry="onRetry"
+      />
     </Transition>
 
     <!-- shared chrome (brand removed on PVE): ← BACK left, SHOP + cabinet right -->
@@ -88,7 +88,7 @@ import { t } from '@/locales/index.js';
 import { getCore } from '@/data/upgradeData.js';
 import PveScene from '@/scene/PveScene.vue';
 import PlayerCabinet from '@/views-v2/PlayerCabinet.vue';
-import ForgeTree from '@/components/forge/ForgeTree.vue';
+import ForgePanel from '@/components/forge/ForgePanel.vue';
 import '@/styles/home.css';     // the shared .hs-strip chrome
 import '@/styles/cabinet.css';  // the PlayerCabinet drawer
 import '@/styles/forge.css';    // the hall's own layer
@@ -96,15 +96,19 @@ import '@/styles/forge.css';    // the hall's own layer
 const router = useRouter();
 const cabinetOpen = ref(false);
 const sceneRef = ref(null);
-const treeRef = ref(null);
+const panelRef = ref(null);
 
 // ── the roster, and who is being worked on ────────────────────────────────
 const fighters = computed(() => store.getters['roster/fighters']);
 const pickedId = ref(null);
 const picked = computed(() => fighters.value.find((f) => f.id === pickedId.value) || null);
-const pickedCore = computed(() => (picked.value ? getCore(picked.value.core) : getCore(null)));
+// No stand-in core when nobody is picked: getCore falls back to one of the four,
+// and a stand-in colour is a second declaration of a colour that is declared
+// once, in tokens.css. With nobody picked the hall simply carries no tint.
+const pickedCore = computed(() => (picked.value ? getCore(picked.value.core) : null));
 const spent = computed(() => (picked.value ? store.getters['roster/spentOf'](picked.value.id) : 0));
 const resource = computed(() => store.getters['roster/resource']);
+const rosterMax = computed(() => store.getters['roster/max']);
 // The hall is tinted by the picked fighter's own core (and by nothing at rest).
 const coreVars = computed(() => (picked.value
   ? { '--core': pickedCore.value.hue, '--core-sup': pickedCore.value.sup }
@@ -120,11 +124,36 @@ const tagStyle = computed(() => (tag.value ? { left: tag.value.x + 'px', top: (t
 function onHover(payload) { tag.value = payload; }
 
 // ── picking ────────────────────────────────────────────────────────────────
+// Picking now comes from two places — a tap on a body in the hall, and a tap on
+// a row in the panel's list. Both land here, so the two never disagree.
 function onPick(id) {
   pickedId.value = id;
-  store.dispatch('roster/ensureTree', id);      // his tree, built from HIS core
   tag.value = null;
+  buildTreeFor(id);
   sceneRef.value?.select(id);
+}
+
+// Building his tree is the one step that can fail, so it is the one step with a
+// status. Today it is synchronous and always succeeds; the status exists because
+// the panel has to be able to SAY it failed, and because the moment the roster
+// stops being a per-tab save this is where the wait will appear.
+function buildTreeFor(id) {
+  treeStatus.value = 'ready';
+  try {
+    store.dispatch('roster/ensureTree', id);
+    const f = fighters.value.find((x) => x.id === id);
+    if (!f || !f.upgrade) throw new Error('tree missing after build');
+  } catch (_) {
+    treeStatus.value = 'error';
+  }
+}
+
+// RETRY — one in flight at a time: a second tap while the first is still working
+// does nothing (there is nothing to race today, and there will be).
+function onRetry() {
+  if (retrying.value || !pickedId.value) return;
+  retrying.value = true;
+  try { buildTreeFor(pickedId.value); } finally { retrying.value = false; }
 }
 function exitWork() {
   pickedId.value = null;
@@ -136,7 +165,40 @@ function onToggle({ crystalId, faceId }) {
   store.dispatch('roster/toggleFacet', { id: picked.value.id, crystalId, faceId });
 }
 
-// Deleted from somewhere else (the DEV console in another tab) while his card is
+// ── what the panel is allowed to say ──────────────────────────────────────
+// Three statuses, two seams. `status` is what the HEAD knows about the picked
+// fighter; `treeStatus` is what the TREE knows, separately, so a tree that fails
+// leaves the rest of the panel working (the hall asks for exactly that).
+//
+// ⚠️ Today neither can be anything but 'ready' by itself: the roster restores
+// from the tab's own storage and the tree is built in the same tick, so there is
+// nothing to wait for and nothing that can be half-done. The states are wired
+// through, not faked — the day the roster comes off a server, this is the seam
+// that carries the wait and the failure.
+const status = ref('ready');
+const treeStatus = ref('ready');
+const loadStep = ref(null);      // { n, total } for the honest loading line
+const retrying = ref(false);
+
+// ── leaving for the arena ─────────────────────────────────────────────────
+// The arena guard (requireCore in the router) asks `prefight/selectedCoreId`.
+// Without a picked fighter there is nothing to hand it, and that — not a grey
+// rectangle — is what the button's reason line says.
+const canFight = computed(() => status.value === 'ready' && !!picked.value);
+function onFight() {
+  if (!canFight.value) return;
+  store.dispatch('prefight/selectCore', picked.value.core);
+  router.push('/play/arena');
+}
+
+// The roster is empty and the player is standing in an empty hall: give them the
+// one move that opens it. Same call the DEV console makes.
+function onNewFighter() {
+  const f = store.dispatch('roster/recruit', null);
+  Promise.resolve(f).then((made) => { if (made && made.id) onPick(made.id); });
+}
+
+// Deleted from somewhere else (the DEV console in another tab) while he is
 // open → fall back to the overview instead of showing a card for nobody.
 watch(fighters, (list) => {
   if (pickedId.value && !list.some((f) => f.id === pickedId.value)) exitWork();
@@ -146,7 +208,7 @@ watch(fighters, (list) => {
 function onKeydown(e) {
   if (e.key !== 'Escape' || !pickedId.value) return;
   e.preventDefault();
-  if (treeRef.value?.stepBack()) return;
+  if (panelRef.value?.stepBack()) return;
   exitWork();
 }
 onMounted(() => document.addEventListener('keydown', onKeydown));

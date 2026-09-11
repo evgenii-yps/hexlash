@@ -18,6 +18,11 @@
      тёмным залом стоит реальных кадров на телефоне и выглядит так же. */
   --core: var(--core-skala);                 /* заменяется на цвет выбранного бойца */
   --core-sup: color-mix(in srgb, var(--core) var(--core-sup-mix), var(--ink));
+
+  /* Форма плиты FIGHT — это ГЕОМЕТРИЯ компонента (Документ А 4.1), а не
+     значение палитры: она вычисляется от собственной высоты и потому живёт
+     здесь, как та же форма живёт в home.css. Скруглений нет, срезаны углы. */
+  --fp-hex: polygon(14px 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 14px 100%, 0 50%);
 }
 
 /* ── hovered fighter's callsign — follows the body on screen ─────────────── */
@@ -35,102 +40,326 @@
 }
 .fg-tag.is-on { opacity: 1; }
 
-/* ── empty roster — an honest state, not a footnote ───────────────────────
-   It used to be one small line pinned to the bottom of the window, a long way
-   under an empty platform, which reads as a load that did not finish rather than
-   as "you have no fighters yet". It sits in the composition now, just under the
-   empty plate the trainer is standing over, at a size you are meant to read. */
-.fg-empty {
-  position: fixed; left: 50%; top: 62%; transform: translate(-50%, -50%); z-index: var(--z-panel);
-  font-family: var(--font-mono); font-size: var(--t-base); line-height: 1.5; letter-spacing: var(--ls-tight);
-  color: var(--ink-dim); text-align: center; pointer-events: none;
-  padding: 0 var(--sp-5); max-width: min(28rem, 88vw); text-wrap: balance;
-}
-@media (orientation: landscape) and (max-height: 520px) {
-  .fg-empty { top: 66%; font-size: var(--t-sm); }
-}
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE PANEL — everything the player reads and touches, in one column beside
+   the 3D hall. It replaces two things that used to float over the scene: the
+   fighter card in the bottom-left corner and the tree pinned to the right edge.
 
-/* ── work state ──────────────────────────────────────────────────────────── */
-/* fighter card — bottom-left, deliberately NOT full height: the fighter it
-   describes stands above it and must stay visible. */
-.fg-card {
-  position: fixed; left: 14px; bottom: 14px; z-index: var(--z-panel);
-  width: min(32vw, 340px); max-height: 46vh; overflow: auto;
-  padding: var(--sp-4) var(--sp-4) var(--sp-4);
-  border: 1px solid var(--line); border-left: 2px solid var(--core);
-  background: var(--carbon);
-  font-family: var(--font-mono);
-  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%);
-}
-.fg-card .cs { font-family: var(--font-display); font-weight: 800; font-size: var(--t-3xl); line-height: .95;
-  letter-spacing: var(--ls-tight); text-transform: uppercase; color: var(--ink); }
-.fg-card .core { display: inline-flex; align-items: center; gap: var(--sp-2); margin-top: var(--sp-2);
-  font-size: var(--t-micro); letter-spacing: var(--ls-meta); text-transform: uppercase; color: var(--core); }
-.fg-card .core .sw { width: 8px; height: 8px; background: var(--core); }  /* flat chip, no glow */
-.fg-card .rows { margin-top: var(--sp-4); border-top: 1px solid var(--line); padding-top: var(--sp-3);
-  display: flex; flex-direction: column; gap: var(--sp-2); }
-.fg-card .row { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-3);
-  font-size: var(--t-micro); letter-spacing: var(--ls-title); text-transform: uppercase; color: var(--ink-dim); }
-.fg-card .row b { color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; }
-.fg-card .none { font-size: var(--t-micro); letter-spacing: var(--ls-tight); color: var(--ink-off); text-transform: none; }
-.fg-card .close {
-  position: absolute; top: 6px; right: 6px; width: 44px; height: 44px;
-  display: grid; place-items: center; font: inherit; font-size: var(--t-lg); line-height: 1;
-  color: var(--ink-dim); background: none; border: 0; cursor: pointer; transition: color var(--d-fast);
-}
-.fg-card .close:hover { color: var(--ink); }
-.fg-card .close:focus-visible { outline: 1px solid var(--ink-dim); outline-offset: -4px; }
+   THREE LAYOUTS, picked by ORIENTATION and WIDTH — never by device type:
+     · from 1024px  → a fixed-width column down the right edge
+     · phone, sideways → the same column, narrower
+     · phone, upright  → a band along the BOTTOM, full width
 
-/* tree panel — the right side of the screen */
-.fg-tree {
+   WHAT SCROLLS. Head and foot are pinned; only the middle (tree, style, roster)
+   moves. The way out of the hall is never below the fold.
+
+   WHAT GLOWS. Two things. The FIGHT plate carries --glow-hero, the core sign in
+   the head carries --glow-select. Nothing else in this file lights up.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── the column ──────────────────────────────────────────────────────────── */
+.fp {
   position: fixed; top: 0; right: 0; bottom: 0; z-index: var(--z-panel);
-  width: min(60vw, 720px); padding: var(--sp-4) var(--sp-4) var(--sp-4);
-  border-left: 1px solid var(--line);
-  background: var(--carbon);
+  width: 380px;
   display: flex; flex-direction: column;
+  border-left: 1px solid var(--line);
+  background: var(--panel);
+  font-family: var(--font-mono);
+  color: var(--ink);
 }
-/* the guest honesty line moved here with the tree (it used to sit under the
-   pre-fight upgrade screen's build bar, and that screen is gone) */
-.fg-guest { margin-top: var(--sp-3); font-family: var(--font-mono); font-size: var(--t-micro); line-height: 1.35;
-  letter-spacing: var(--ls-tight); color: var(--ink-dim); }
+.fp * { box-sizing: border-box; }
 
-/* enter / leave — the panels arrive with the camera, not before it */
-.fg-fade-enter-active, .fg-fade-leave-active { transition: opacity var(--d-hover) var(--e-weight), transform var(--d-hover) var(--e-settle); }
-.fg-fade-enter-from, .fg-fade-leave-to { opacity: 0; }
-.fg-card.fg-fade-enter-from, .fg-card.fg-fade-leave-to { transform: translateY(10px); }
-.fg-tree.fg-fade-enter-from, .fg-tree.fg-fade-leave-to { transform: translateX(18px); }
+/* ── 1 · head ────────────────────────────────────────────────────────────── */
+.fp-head {
+  flex: none; padding: var(--sp-4);
+  border-bottom: 1px solid var(--line);
+}
+.fp-kicker {
+  font-size: var(--t-micro); letter-spacing: var(--ls-wide);
+  text-transform: uppercase; color: var(--ink-off);
+}
+.fp-name {
+  margin-top: var(--sp-2);
+  font-family: var(--font-display); font-weight: 800; font-size: var(--t-xl);
+  line-height: 1; letter-spacing: var(--ls-tight); text-transform: uppercase;
+  color: var(--ink);
+  /* a very long callsign is cut, not wrapped: it must not push the fights row */
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* the four states the head can be in instead of a name */
+.fp-name--state { color: var(--ink-dim); }
+.fp-sub {
+  margin-top: var(--sp-1);
+  font-size: var(--t-micro); letter-spacing: var(--ls-title);
+  text-transform: uppercase; color: var(--ink-off);
+}
+.fp-core {
+  display: flex; align-items: center; gap: var(--sp-2); margin-top: var(--sp-2);
+  font-size: var(--t-xs); letter-spacing: var(--ls-meta);
+  text-transform: uppercase; color: var(--core);
+}
+/* the core SIGN — glow #2 of 2. --glow-select is written against currentColor,
+   so the colour of the sign is what the ring is made of. */
+.fp-sign {
+  width: 8px; height: 8px; flex: none;
+  background: var(--core); color: var(--core);
+  box-shadow: var(--glow-select);
+}
+.fp-fights {
+  display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-3);
+  margin-top: var(--sp-3);
+  font-size: var(--t-micro); letter-spacing: var(--ls-title); text-transform: uppercase;
+}
+.fp-fights .k { color: var(--ink-off); }
+.fp-fights .v { color: var(--ink-dim); font-variant-numeric: tabular-nums; }
 
-/* ── upright: the hall keeps the top of the screen, the work keeps the bottom ──
-      The card collapses to a strip and the tree sits under it, both inside the
-      bottom band. The band is what the camera framing reserves too (see
-      CAM.rect.workPortrait in PveScene) — the two numbers are meant to agree, so
-      the fighter being worked on is never behind his own tree. Before this the
-      tree started 118px down and ran to the floor, covering the hall it belongs
-      to. The tree is the thing you touch, so it keeps the full width. */
-@media (orientation: portrait) {
-  .fg-card {
-    left: 8px; right: 8px; width: auto; max-height: none;
-    top: auto; bottom: calc(var(--fg-band) + 6px);
-    padding: var(--sp-3) var(--sp-3); display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap;
-  }
-  .fg-card .cs { font-size: var(--t-lg); }
-  .fg-card .core { margin-top: 0; }
-  .fg-card .rows { margin-top: 0; border-top: 0; padding-top: 0; flex-direction: row; gap: var(--sp-4); }
-  .fg-card .close { position: static; margin-left: auto; }
-  .fg-tree {
-    top: auto; left: 8px; right: 8px; bottom: 8px; width: auto; height: var(--fg-band);
-    border: 1px solid var(--line);
-  }
-  .fg-card.fg-fade-enter-from, .fg-card.fg-fade-leave-to { transform: translateY(10px); }
-  .fg-tree.fg-fade-enter-from, .fg-tree.fg-fade-leave-to { transform: translateY(14px); }
+/* ── the scrolling middle ────────────────────────────────────────────────── */
+.fp-scroll {
+  flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+  padding: var(--sp-4); display: flex; flex-direction: column; gap: var(--sp-5);
 }
 
-/* Narrow LANDSCAPE (a phone on its side) keeps the side layout — a bottom band on
-   a 375px-tall screen would leave the tree a letterbox — but gives the tree more
-   of the width, because there is not much of it. */
+/* small block heading, shared by STYLE and ROSTER */
+.fp-label {
+  display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-3);
+  font-size: var(--t-micro); letter-spacing: var(--ls-wide);
+  text-transform: uppercase; color: var(--ink-off);
+}
+.fp-label .c { letter-spacing: var(--ls-title); color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+
+/* ── 2 · tree ────────────────────────────────────────────────────────────── */
+.fp-tree { display: flex; flex-direction: column; min-width: 0; }
+/* The tree was written for a wider box. In the panel the depth rail and the
+   spend counter share one narrow line, so the counter is kept off the wrap. */
+.fp .fp-tree .ft-pool { white-space: nowrap; flex: none; }
+/* …and its chamber was written for two thirds of a screen. It gets the height
+   the hall freed up, but not all of it: the roster underneath has to show as a
+   LIST at rest, not as one row and the top of a second. */
+/* 250px is not a taste: the tree lays its crystals on a radius of 31% of the
+   chamber, and below that the ring falls inside the core and the labels land on
+   top of it. Where the panel is shorter than that, the tree is a thing you
+   scroll to — which is why the short layouts below put the roster first. */
+.fp .fp-tree .ft-depth { height: clamp(250px, 30vh, 320px); }
+/* The tree drops its switcher's WORDS below 1024px of VIEWPORT — a rule written
+   when it was two thirds of a wide screen. In the panel the width that matters
+   is the panel's, not the window's, and the three words fit in it at every size,
+   so they stay: three unlabelled diamonds are not a switcher. */
+.fp .fp-tree .ft-step .lb { display: inline; }
+.fp .fp-tree .ft-step { padding: 0 var(--sp-2); }
+
+/* The one line under the tree: what to do with an empty one, or that there is
+   nothing left to put in a full one. While the first is showing, the tree's own
+   step hint is hidden — two hints stacked under one drawing is noise, and this
+   is the one the player needs first. */
+.fp-hint {
+  margin-top: var(--sp-2);
+  font-size: var(--t-micro); letter-spacing: var(--ls-title);
+  text-transform: uppercase; color: var(--ink-off); text-align: center;
+}
+.fp .fp-tree.is-fresh .ft-foot { display: none; }
+
+/* a block that has nothing to show, and says why. Used by the tree's four
+   silent states and by the empty roster. */
+.fp-note {
+  display: flex; flex-direction: column; align-items: center; gap: var(--sp-2);
+  padding: var(--sp-5) var(--sp-4); text-align: center;
+  border: 1px solid var(--line); background: var(--carbon);
+}
+.fp-note .t {
+  font-size: var(--t-xs); letter-spacing: var(--ls-title);
+  text-transform: uppercase; color: var(--ink-dim);
+}
+.fp-note.is-error .t { color: var(--danger); }
+.fp-note .b {
+  font-size: var(--t-micro); line-height: 1.5; letter-spacing: var(--ls-tight);
+  color: var(--ink-off); text-transform: uppercase; max-width: 24rem;
+}
+/* the waiting indicator — it keeps turning even under "reduce motion": a stopped
+   one reads as a frozen game (Документ А 2.15). */
+.fp-note .sp {
+  width: var(--icon-md); height: var(--icon-md); border-radius: var(--r-round);
+  border: 2px solid var(--line-strong); border-top-color: var(--ink-dim);
+  animation: fpSpin var(--d-spin) linear infinite;
+}
+@keyframes fpSpin { to { transform: rotate(360deg); } }
+
+/* RETRY / NEW FIGHTER — a quiet button, no glow: the hero glow is spoken for */
+.fp-retry {
+  margin-top: var(--sp-2); min-height: var(--h-btn-sm); padding: 0 var(--sp-4);
+  font: inherit; font-size: var(--t-xs); letter-spacing: var(--ls-title);
+  text-transform: uppercase; color: var(--ink);
+  border: 1px solid var(--line-strong); background: var(--fill-1);
+  border-radius: var(--r-none); cursor: pointer;
+  transition: background var(--d-fast), border-color var(--d-fast), transform var(--d-press);
+}
+.fp-retry:hover { background: var(--fill-2); border-color: var(--chrome-rim); }
+.fp-retry:active { transform: translateY(1px); transition-duration: var(--d-press); }
+.fp-retry:disabled { color: var(--ink-off); border-color: var(--line); cursor: default; }
+.fp-retry:focus-visible { outline: 1px solid var(--ink-dim); outline-offset: 2px; }
+
+/* ── 3 · style ───────────────────────────────────────────────────────────── */
+.fp-style-v {
+  display: flex; flex-wrap: wrap; gap: var(--sp-1) var(--sp-3); margin-top: var(--sp-2);
+  font-size: var(--t-xs); letter-spacing: var(--ls-title); text-transform: uppercase;
+}
+.fp-style-v .b { color: var(--ink); font-weight: 700; white-space: nowrap; }
+.fp-style-v .ph { color: var(--ink-off); }
+
+/* ── 4 · roster ──────────────────────────────────────────────────────────── */
+.fp-list { list-style: none; margin: var(--sp-2) 0 0; padding: 0;
+  display: flex; flex-direction: column; gap: var(--sp-1); }
+.fp-row {
+  width: 100%; min-height: var(--h-btn-sm);       /* 44px — a finger target */
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  font: inherit; font-size: var(--t-xs); letter-spacing: var(--ls-title);
+  text-transform: uppercase; color: var(--ink-dim);
+  border: 1px solid transparent; border-left: 2px solid transparent;
+  background: var(--fill-1); border-radius: var(--r-none); cursor: pointer;
+  transition: background var(--d-fast), color var(--d-fast), border-color var(--d-fast);
+}
+.fp-row .sw { width: 6px; height: 6px; flex: none; background: var(--core); }
+.fp-row .nm { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
+.fp-row .ft { flex: none; color: var(--ink-off); font-variant-numeric: tabular-nums; letter-spacing: var(--ls-tight); text-transform: none; }
+.fp-row:hover { background: var(--fill-2); color: var(--ink); }
+.fp-row:active { transform: translateY(1px); transition-duration: var(--d-press); }
+.fp-row:focus-visible { outline: 1px solid var(--ink-dim); outline-offset: -2px; }
+/* the selected one — marked by its own core down the left edge, no glow */
+.fp-row.on { color: var(--ink); background: var(--fill-2); border-left-color: var(--core); }
+
+/* ── 5 · the way out ─────────────────────────────────────────────────────── */
+.fp-foot {
+  flex: none; padding: var(--sp-4);
+  border-top: 1px solid var(--line);
+  display: flex; flex-direction: column; gap: var(--sp-2);
+}
+
+/* FIGHT — a hex plate by the house rule: a dark plinth with a lit face over it,
+   the face sinking into the plinth on press. Glow #1 of 2: --glow-hero, pulsing
+   on the one loop tempo the system has.
+
+   NOT built the way the home's plate is: that one puts its glow on a separate
+   blurred layer, and a continuously animated blur over a live 3D canvas costs
+   real frames on a phone. Here the glow is a box-shadow — same look, no
+   compositing layer, no filter. */
+.fp-fight {
+  position: relative; width: 100%; height: var(--h-btn-md);
+  display: block; padding: 0; border: 0; background: none;
+  /* a button does not inherit type by itself — without this it sits at the
+     browser's own 13.33px, which is not on the scale */
+  font: inherit;
+  border-radius: var(--r-none); cursor: pointer;
+}
+.fp-fight .plinth {
+  position: absolute; inset: 0; z-index: var(--z-scene); pointer-events: none;
+  clip-path: var(--fp-hex);
+  background: linear-gradient(180deg, var(--pink-deep) 0%,
+    color-mix(in srgb, var(--pink-deep) 55%, var(--void)) 100%);
+  transform: translateY(5px);
+  transition: transform var(--d-hover) var(--e-weight);
+}
+/* the face carries the fill AND the label in flow — they are deliberately not
+   split across layers (Документ А §5.9: that is how live labels have gone
+   missing before). */
+.fp-fight .face {
+  position: relative; z-index: var(--z-ui);
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; height: 100%;
+  clip-path: var(--fp-hex);
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--pink) 82%, var(--ink)) 0%, var(--pink) 42%,
+    color-mix(in srgb, var(--pink) 89%, var(--void)) 100%);
+  font-family: var(--font-display); font-weight: 900; font-size: var(--t-lg);
+  letter-spacing: var(--ls-title); text-transform: uppercase; line-height: 1;
+  color: var(--ink);
+  transition: transform var(--d-hover) var(--e-weight), filter var(--d-hover) var(--e-weight);
+}
+/* the hero glow, on the plate itself */
+.fp-fight:not(:disabled) { box-shadow: var(--glow-hero); animation: fpHero var(--d-loop) ease-in-out infinite; }
+/* 0% and 100% are the same frame, so under "reduce motion" the plate rests at
+   the quiet end instead of freezing mid-pulse. */
+@keyframes fpHero {
+  0%, 100% { box-shadow: var(--glow-hero); }
+  50%      { box-shadow: 0 0 26px rgba(var(--pink-rgb), .75),
+                         0 0 56px rgba(var(--pink-rgb), .5); }
+}
+.fp-fight:not(:disabled):hover .face { transform: translateY(-3px); filter: brightness(1.05); }
+.fp-fight:not(:disabled):hover .plinth { transform: translateY(8px); }
+/* press — 120ms, and the loop is muted so it cannot fight the short response */
+.fp-fight:not(:disabled):active {
+  animation: none; box-shadow: 0 0 10px rgba(var(--pink-rgb), .45);
+  transition-duration: var(--d-press);
+}
+.fp-fight:not(:disabled):active .face {
+  transform: translateY(4px) scale(0.994); filter: brightness(0.97);
+  transition-duration: var(--d-press);
+}
+.fp-fight:not(:disabled):active .plinth { transform: translateY(2px); transition-duration: var(--d-press); }
+.fp-fight:focus-visible { outline: 1px solid var(--ink); outline-offset: 3px; }
+
+/* unavailable — the glow is taken away and the reason is printed underneath */
+.fp-fight:disabled { cursor: default; box-shadow: none; animation: none; }
+.fp-fight:disabled .plinth { background: var(--fill-1); transform: translateY(3px); }
+.fp-fight:disabled .face { background: var(--carbon); color: var(--ink-off); border: 1px solid var(--line); }
+.fp-why {
+  font-size: var(--t-micro); letter-spacing: var(--ls-title);
+  text-transform: uppercase; color: var(--ink-off); text-align: center;
+}
+
+/* ── 6 · guest ───────────────────────────────────────────────────────────── */
+.fp-guest {
+  font-size: var(--t-micro); line-height: 1.3; letter-spacing: var(--ls-tight);
+  color: var(--ink-off); text-transform: uppercase; text-align: center;
+  text-wrap: balance;
+}
+
+/* ── enter / leave — the panel arrives with the camera, not before it ────── */
+.fp-fade-enter-active, .fp-fade-leave-active {
+  transition: opacity var(--d-hover) var(--e-weight), transform var(--d-hover) var(--e-settle);
+}
+.fp-fade-enter-from, .fp-fade-leave-to { opacity: 0; transform: translateX(18px); }
+
+/* ── phone, sideways: the same column, narrower ──────────────────────────── */
 @media (orientation: landscape) and (max-width: 1023px) {
-  .fg-card { width: min(38vw, 260px); max-height: 52vh; padding: var(--sp-3) var(--sp-3); }
-  .fg-card .cs { font-size: var(--t-lg); }
-  .fg-card .rows { margin-top: var(--sp-2); padding-top: var(--sp-2); }
-  .fg-tree { width: min(46vw, 420px); padding: var(--sp-3) var(--sp-3) var(--sp-3); }
+  .fp { width: min(46vw, 300px); }
+  .fp-head, .fp-scroll, .fp-foot { padding: var(--sp-3); }
+  .fp-scroll { gap: var(--sp-4); }
+  .fp-name { font-size: var(--t-lg); }
+}
+
+/* ── SHORT panel (a phone either way up): the list comes first ─────────────
+      There is not enough height for both the tree and the list above the fold,
+      and the list is the one that has to be there — it is how you change who
+      you are working on. The tree keeps its place in the reading order on a
+      wide screen; here it is what you scroll to. */
+@media (orientation: portrait), (orientation: landscape) and (max-width: 1023px) {
+  .fp-roster { order: 1; }
+  .fp-style  { order: 2; }
+  .fp-tree   { order: 3; }
+}
+
+/* ── phone, upright: a band along the BOTTOM ─────────────────────────────
+      The head and the way out stay put; the tree and the roster share what is
+      left and scroll. The band's height is what the camera framing reserves
+      too (see CAM.rect in PveScene) — the two numbers are meant to agree. */
+@media (orientation: portrait) {
+  .fp {
+    top: auto; left: 0; right: 0; bottom: 0; width: auto;
+    height: var(--fg-band);
+    border-left: 0; border-top: 1px solid var(--line);
+  }
+  .fp-head, .fp-scroll, .fp-foot { padding: var(--sp-3); }
+  .fp-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: var(--sp-2) var(--sp-3); }
+  .fp-kicker { width: 100%; }
+  .fp-name { margin-top: 0; font-size: var(--t-lg); max-width: 55%; }
+  .fp-core { margin-top: 0; }
+  .fp-fights { margin-top: 0; margin-left: auto; gap: var(--sp-2); }
+  .fp-scroll { gap: var(--sp-4); }
+  .fp-fade-enter-from, .fp-fade-leave-to { transform: translateY(14px); }
+}
+
+/* ── reduce motion: the hero loop does not start; the waiting indicator does
+      keep turning (a stopped one reads as a frozen game). ─────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .fp-fight:not(:disabled) { animation: none; }
 }

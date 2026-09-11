@@ -105,11 +105,7 @@ export default {
   // and tree. The tree strings came with the mechanic from the retired pre-fight
   // upgrade screen (which carried its copy inline); they are keyed here.
   forge: {
-    empty: "No fighters yet — give one in Shop → Dev.",
-    close: "Back to the roster",
-    fights: "Fights",
     noFights: "none yet",
-    guestNote: "Playing as a guest — this work is kept while the tab stays open. Create an account to keep it for good.",
     // tree
     openCrystals: "Open the crystals",
     stepCore: "Core",
@@ -123,8 +119,39 @@ export default {
     stLocked: "Locked",
     stLimit: "Limit",
     stNoPts: "No pts",
-    build: "Build",
-    buildEmpty: "No facets lit — tap in",
+    buildEmpty: "NOTHING LIT YET",
+
+    // ── the hall's PANEL (the block beside the 3D hall) ──────────────────
+    // Каждая подпись — заглавными, как в макете панели. Внутренний словарь
+    // (HEXARCH и прочее) сюда не попадает: игрок его не видит.
+    selected: "SELECTED",
+    fightsLabel: "FIGHTS",
+    // шапка — по одному состоянию на строку
+    headNoPick: "NO FIGHTER",
+    headNoPickSub: "PICK ONE FROM THE ROSTER",
+    headEmpty: "NO FIGHTERS",
+    headLoading: "LOADING FIGHTER",
+    headError: "FIGHTER DATA DID NOT LOAD",
+    // дерево — состояния
+    treeHint: "PICK A CRYSTAL TO LIGHT A FACET",
+    treeSpent: "RESOURCE SPENT · NOTHING LEFT TO LIGHT",
+    treeNoFighter: "NO TREE WITHOUT A FIGHTER",
+    treeLoading: "READING FIGHTER · {n} OF {total}",
+    treeErrorTitle: "TREE DID NOT LOAD",
+    treeErrorBody: "SOMETHING WENT WRONG. THE FIGHTER IS FINE.",
+    retry: "RETRY",
+    // строка характера
+    styleLabel: "STYLE",
+    // список ростера
+    rosterLabel: "ROSTER",
+    rosterEmptyTitle: "YOUR ROSTER IS EMPTY",
+    rosterEmptyBody: "A FIGHTER IS BORN WITH A CORE. TAKE ONE AND THE HALL OPENS.",
+    newFighter: "NEW FIGHTER",
+    // кнопка боя
+    fight: "FIGHT",
+    fightBlocked: "ARENA UNREACHABLE · CANNOT ENTER",
+    // строка гостя
+    guestLine: "GUEST · WORK IS KEPT WHILE THIS TAB IS OPEN",
   },
   cabinet: {
     // Entry chip (top-left of the home) — the single door into the cabinet.

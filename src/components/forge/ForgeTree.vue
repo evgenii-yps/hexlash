@@ -41,9 +41,13 @@
         <line v-for="(ln, i) in spokes.lines" :key="i" :x1="ln.x1" :y1="ln.y1" :x2="ln.x2" :y2="ln.y2" />
       </svg>
 
-      <!-- the core — the panel's one glowing thing -->
+      <!-- the core — a MATTE line drawing in the fighter's core colour.
+           It used to carry a blurred, endlessly breathing halo. Two reasons it
+           is gone: the panel is allowed exactly two glowing things and both are
+           spoken for (the FIGHT plate and the core sign in the head), and a
+           continuously animated blur over a live 3D canvas is recomposited every
+           frame — on a weak phone it starved the hall's own output. -->
       <button type="button" class="ft-core" :aria-label="t.forge.openCrystals" @click="onCoreTap">
-        <span class="glow" aria-hidden="true"></span>
         <span class="glyph" v-html="coreGlyph"></span>
       </button>
 
@@ -95,14 +99,9 @@
       <div class="ft-foot"><span class="hint">{{ footHint }}</span></div>
     </section>
 
-    <!-- what this fighter is built out of -->
-    <footer class="ft-build">
-      <span class="k">{{ t.forge.build }}</span>
-      <span class="names">
-        <span v-if="!litNames.length" class="ph">{{ t.forge.buildEmpty }}</span>
-        <template v-else><span v-for="(n, i) in litNames" :key="i" class="b">{{ n }}</span></template>
-      </span>
-    </footer>
+    <!-- The "what he is built out of" strip used to be a footer here. It is a
+         block of the PANEL now (STYLE), so it sits beside the tree rather than
+         inside it — same data, same source, one level up. -->
   </div>
 </template>
 
@@ -145,11 +144,6 @@ const viewFaces = computed(() => (selCrystalObj.value ? selCrystalObj.value.face
 watch(() => props.coreId, () => { level.value = 'core'; selCrystal.value = null; });
 
 function litCount(cr) { return cr ? cr.faces.filter((f) => f.state === 'lit').length : 0; }
-const litNames = computed(() => {
-  const out = [];
-  props.tree.forEach((cr) => cr.faces.forEach((f) => { if (f.state === 'lit') out.push(f.name); }));
-  return out;
-});
 function shardHtml(cr) { return shardSVG(litCount(cr) / cr.limit, props.coreId + '-' + cr.id); }
 
 const footHint = computed(() =>
@@ -270,7 +264,13 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
 .ft-head { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3);
   padding-bottom: var(--sp-2); border-bottom: 1px solid var(--line); }
 .ft-rail { display: flex; align-items: center; gap: var(--sp-1); }
-.ft-step { display: inline-flex; align-items: center; gap: var(--sp-2); min-height: 44px; padding: 0 var(--sp-2);
+/* `.ftree button { font: inherit }` above carries an element selector, so it beat
+   a plain `.ft-step` rule and the shorthand reset the size back to inherited —
+   the switcher has been rendering at 18px, not the 10px it asks for. It never
+   showed while the tree had two thirds of a wide screen; in the panel the rail
+   ran off the edge and took the counter with it. One ancestor puts the declared
+   size back in charge. */
+.ftree .ft-step { display: inline-flex; align-items: center; gap: var(--sp-2); min-height: 44px; padding: 0 var(--sp-2);
   font-size: var(--t-micro); letter-spacing: var(--ls-meta); text-transform: uppercase; color: var(--ink-off);
   transition: color .2s; }
 .ft-step .dot { width: 5px; height: 5px; border: 1px solid currentColor; transform: rotate(45deg); }
@@ -295,11 +295,15 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
     linear-gradient(180deg, var(--fill-1), transparent 70%);
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%);
 }
-.ft-spokes { position: absolute; inset: 0; z-index: 1; opacity: 0; transition: opacity .5s var(--e-weight); }
+/* The dashed rails are decoration (aria-hidden), but the SVG covers the whole
+   chamber, so without this it swallows taps meant for the crystals underneath. */
+.ft-spokes { position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  opacity: 0; transition: opacity .5s var(--e-weight); }
 .ftree[data-level="crystal"] .ft-spokes { opacity: 1; }
 .ft-spokes line { stroke: var(--core-sup); stroke-width: 1; stroke-dasharray: 2 5; opacity: .7; }
 
-/* the core — the panel's ONE glow */
+/* the core — MATTE. No halo, no drop-shadow, no loop: the panel's two glows are
+   the FIGHT plate and the core sign in the head, and nothing else may light up. */
 .ft-core {
   position: absolute; top: 50%; left: 50%; width: 140px; height: 140px;
   transform: translate(-50%, -50%); display: grid; place-items: center; z-index: 5;
@@ -307,33 +311,14 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
 }
 .ft-core .glyph { width: 100%; height: 100%; display: grid; place-items: center; position: relative; z-index: 3; }
 .ft-core :deep(svg) { width: 100%; height: 100%; overflow: visible; }
-.ft-core :deep(.hex-line) { stroke: color-mix(in srgb, var(--core) 22%, var(--ink)); fill: none; stroke-width: 2;
-  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--core) 55%, transparent)); }
-.ft-core :deep(.facet) { stroke: color-mix(in srgb, var(--core) 30%, var(--ink)); fill: none; stroke-width: 1.4; }
-.ft-core :deep(.seed) { fill: var(--ink); filter: drop-shadow(0 0 8px color-mix(in srgb, var(--core) 90%, transparent)); }
-.ft-core .glow {
-  position: absolute; inset: -30%; border-radius: var(--r-round); z-index: 1; pointer-events: none;
-  background:
-    radial-gradient(circle at 50% 50%,
-      color-mix(in srgb, var(--core) 62%, transparent) 0%,
-      color-mix(in srgb, var(--core) 24%, transparent) 28%,
-      color-mix(in srgb, var(--core) 10%, transparent) 50%, transparent 66%),
-    radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--core-sup) 28%, transparent) 0%, transparent 38%);
-  /* No mix-blend-mode here (the upgrade screen could afford it — it had no live
-     canvas under it). Over a running 3D hall, screen-blending a blurred layer
-     across 60% of the viewport is recomposited every frame; on a dark backdrop
-     it looks the same without it. */
-  filter: blur(18px);
-  /* Дыхание ядра дерева — атмосфера (Правка 1.2 §3), не ритм ядра: оно не
-     сообщает характер, а просто оживляет экран. В токены не выносится. */
-  animation: ftBreathe 4.6s ease-in-out infinite;
-}
+/* Lines carry the core colour by being BRIGHTER, not by glowing: the mix moved
+   toward --ink so the drawing still reads once the halo is gone. */
+.ft-core :deep(.hex-line) { stroke: color-mix(in srgb, var(--core) 46%, var(--ink)); fill: none; stroke-width: 2; }
+.ft-core :deep(.facet) { stroke: color-mix(in srgb, var(--core) 52%, var(--ink)); fill: none; stroke-width: 1.4; }
+.ft-core :deep(.seed) { fill: var(--ink); }
 .ft-core:focus-visible { outline: 1px solid var(--core-sup); outline-offset: 4px; }
-@keyframes ftBreathe { 0%,100% { opacity:.72; transform: scale(.97); } 50% { opacity:1; transform: scale(1.05); } }
 .ftree[data-level="crystal"] .ft-core { transform: translate(-50%, -50%) scale(.5); cursor: default; }
 .ftree[data-level="face"] .ft-core { transform: translate(-50%, calc(-50% - 74px)) scale(.2); opacity: .4; cursor: default; }
-.ftree[data-level="crystal"] .ft-core .glow { opacity: .55; }
-.ftree[data-level="face"] .ft-core .glow { opacity: .28; animation: none; }
 
 /* ghosts — depth scaffold on CORE level */
 .ft-ghosts { position: absolute; inset: 0; z-index: 2; pointer-events: none; transition: opacity .45s var(--e-weight); }
@@ -420,17 +405,9 @@ watch(() => props.tree.length, () => nextTick(computeGeom));
     color-mix(in srgb, var(--void) 96%, transparent) 100%);
   pointer-events: none; }
 
-/* build strip */
-.ft-build { display: flex; align-items: baseline; gap: var(--sp-3); padding-top: var(--sp-3); margin-top: var(--sp-2);
-  border-top: 1px solid var(--line); font-size: var(--t-micro); text-transform: uppercase; }
-.ft-build .k { letter-spacing: var(--ls-wide); color: var(--ink-off); flex: none; }
-.ft-build .names { display: flex; flex-wrap: wrap; gap: var(--sp-1) var(--sp-3); letter-spacing: var(--ls-title); }
-.ft-build .names .b { color: var(--core-ink); font-weight: 700; white-space: nowrap; }
-.ft-build .names .ph { color: var(--ink-off); }
 
 @media (prefers-reduced-motion: reduce) {
   .ft-core, .ft-crystal, .ft-spokes, .ft-ghosts { transition: none; }
-  .ft-core .glow { animation: none; opacity: .85; }
   .ft-face.shake { animation: none; }
 }
 @media (max-width: 1023px) {
