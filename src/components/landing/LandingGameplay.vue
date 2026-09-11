@@ -6,6 +6,24 @@
         <span>FIRST LOOK</span>
       </div>
       <h2 class="big-title" data-reveal data-d="1">GAMEPLAY</h2>
+
+      <!-- Лор идёт ОКНОМ внутри этого блока, а не отдельной страницей, и пункта
+           в меню шапки под него нет (решение владельца 11.09.2026).
+           Метка — та же деталь .eyebrow, что у FIRST LOOK, второго набора чисел
+           не заводим; по левому краю она встаёт своим модификатором.
+           Выравнивание влево — решение владельца 11.09.2026; соседи в этом
+           блоке центрированы, и это осознанное расхождение, а не недоделка. -->
+      <div class="eyebrow world-eyebrow" data-reveal data-d="1">
+        <span class="eyebrow-line"></span>
+        <span>THE WORLD</span>
+      </div>
+      <p class="world-lead" data-reveal data-d="2">A world that solved war by putting it in a frame. Every dispute — land, contracts, old grudges — is settled by a single fight. Nobody sends armies anymore. They send fighters they made, and those fighters learned to think.</p>
+      <div class="world-cta-row" data-reveal data-d="2">
+        <button type="button" class="btn-ghost world-cta" @click="worldOpen = true">
+          <span>ENTER THE WORLD</span>
+        </button>
+      </div>
+
       <div class="player" data-reveal data-d="2">
         <span class="player-hex-bg"></span>
         <span class="player-scan"></span>
@@ -20,9 +38,15 @@
       </div>
       <p class="player-cap" data-reveal data-d="3">First match recordings drop with the next release.</p>
     </div>
+
+    <LandingWorldModal :open="worldOpen" @close="worldOpen = false" />
   </section>
 </template>
 
 <script setup>
+import { ref } from 'vue';
 import { PlayIcon } from './icons.js';
+import LandingWorldModal from './LandingWorldModal.vue';
+
+const worldOpen = ref(false);
 </script>
