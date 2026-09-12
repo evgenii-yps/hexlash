@@ -150,10 +150,18 @@ export function buildForgeSlab({ width, depth, height = 1, maxAniso = 1 }) {
   group.add(seam);
 
   // Dark contact shadow under the plates — seats them, no glow.
+  //
+  // ⚠️ Туман на ней ВКЛЮЧЁН (12.09.2026). Пятно на треть шире плиты и на
+  // четверть глубже, лежит под ней и в обзорном кадре выходит за её край. С
+  // `fog: false` оно не растворялось ВООБЩЕ — и чем сильнее туман уводил в
+  // черноту саму плиту, тем отчётливее вокруг неё оставался жёсткий тёмный
+  // прямоугольник. То есть выключенный туман здесь работал прямо против того,
+  // ради чего туман поднимали. Пятно должно уходить вдаль вместе с плитой,
+  // под которой лежит.
   const shadowTex = makeRadialTexture('rgba(0,0,0,0.55)', 'rgba(0,0,0,0.28)', 0.45);
   const shadowGeo = new THREE.PlaneGeometry(W * 1.3, depth * 1.25);
   const shadowMat = new THREE.MeshBasicMaterial({
-    map: shadowTex, transparent: true, depthWrite: false, fog: false, opacity: 0.7,
+    map: shadowTex, transparent: true, depthWrite: false, opacity: 0.7,
   });
   const shadow = new THREE.Mesh(shadowGeo, shadowMat);
   shadow.rotation.x = -Math.PI / 2;
