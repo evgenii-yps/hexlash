@@ -29,6 +29,17 @@
 :root { --fg-band: 40vh; }
 @media (orientation: portrait) and (max-height: 700px) { :root { --fg-band: 42vh; } }
 
+/* Ширина панели бойца — ОДНО объявление на две стороны. Её знает не только
+   сама панель: полоса зала (BACK + SHOP + кабинет) обязана заканчиваться там,
+   где панель начинается, иначе панель ложится поверх её правого кластера и
+   кнопки перестают нажиматься — так и было до 12.09.2026. Число здесь по той
+   же причине, по какой рядом лежит --fg-band: им пользуются двое, и они
+   обязаны совпадать. Лёжа панель стоит справа, стоя — полосой снизу, поэтому
+   в вертикали ширины у неё нет и полосе ничего уступать не нужно. */
+:root { --fp-w: 380px; }
+@media (orientation: landscape) and (max-width: 1023px) { :root { --fp-w: min(46vw, 300px); } }
+@media (orientation: portrait) { :root { --fp-w: 0px; } }
+
 .fg-tag {
   position: fixed; z-index: var(--z-modal); pointer-events: none;
   transform: translate(-50%, 0);
@@ -60,7 +71,7 @@
 /* ── the column ──────────────────────────────────────────────────────────── */
 .fp {
   position: fixed; top: 0; right: 0; bottom: 0; z-index: var(--z-panel);
-  width: 380px;
+  width: var(--fp-w);
   display: flex; flex-direction: column;
   border-left: 1px solid var(--line);
   background: var(--panel);
@@ -320,7 +331,7 @@
 
 /* ── phone, sideways: the same column, narrower ──────────────────────────── */
 @media (orientation: landscape) and (max-width: 1023px) {
-  .fp { width: min(46vw, 300px); }
+  /* ширина — из --fp-w выше, одним объявлением на панель и на полосу */
   .fp-head, .fp-scroll, .fp-foot { padding: var(--sp-3); }
   .fp-scroll { gap: var(--sp-4); }
   .fp-name { font-size: var(--t-lg); }
@@ -343,7 +354,7 @@
       too (see CAM.rect in PveScene) — the two numbers are meant to agree. */
 @media (orientation: portrait) {
   .fp {
-    top: auto; left: 0; right: 0; bottom: 0; width: auto;
+    top: auto; left: 0; right: 0; bottom: 0; width: auto;   /* --fp-w здесь 0 — полосе уступать нечего */
     height: var(--fg-band);
     border-left: 0; border-top: 1px solid var(--line);
   }

@@ -58,7 +58,7 @@
         <span class="n">{{ t.home.back }}</span>
       </button>
       <div class="hs-cluster">
-        <!-- SHOP — bag glyph + single label; keeps its current target (→ /play/home) -->
+        <!-- SHOP — bag glyph + single label; ведёт в магазин (→ /play/home?view=shop) -->
         <button type="button" class="hs-chrome hs-seg-shop" @click="goShop" :aria-label="t.home.shop">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1 11H6L5 8Z" /><path d="M9 8V6.5a3 3 0 0 1 6 0V8" /></svg>
           <span class="n">{{ t.home.shop }}</span>
@@ -268,4 +268,13 @@ function goMode() { router.push('/play/mode'); }
    edge here (scoped to PVE — home.css stays shared/untouched). BACK + SHOP + cabinet
    are all .hs-chrome family members (see template), so they need no styling here. */
 .hs-cluster { margin-left: auto; }
+
+/* ⚠️ Полоса обязана заканчиваться там, где начинается панель бойца. Лёжа панель
+   стоит справа во всю высоту и на слое --z-panel (30), то есть ВЫШЕ полосы
+   (--z-topbar, 20) — и до 12.09.2026 она просто ложилась поверх правого
+   кластера: SHOP и чип кабинета были на экране видны, но не нажимались, потому
+   что клик забирала панель. Ширина берётся из --fp-w (forge.css) — там же, где
+   её берёт сама панель, поэтому разъехаться они не могут. Стоя панель уходит
+   полосой вниз и --fp-w = 0. */
+.pve-root .hs-strip { right: var(--fp-w); }
 </style>

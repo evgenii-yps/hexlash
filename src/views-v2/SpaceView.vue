@@ -22,7 +22,7 @@
         <span class="n">{{ t.home.back }}</span>
       </button>
       <div class="hs-cluster">
-        <button type="button" class="hs-chrome hs-seg-shop" @click="goHome" :aria-label="t.home.shop">
+        <button type="button" class="hs-chrome hs-seg-shop" @click="goShop" :aria-label="t.home.shop">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1 11H6L5 8Z" /><path d="M9 8V6.5a3 3 0 0 1 6 0V8" /></svg>
           <span class="n">{{ t.home.shop }}</span>
         </button>
@@ -70,7 +70,10 @@ const coreName = computed(() => core.value?.name || 'ONSLAUGHT');
 const coreSig = computed(() => core.value?.sig || 'PRESSURE');
 const balance = '2,480';
 
-function goHome() { router.push('/play/home'); }
+// Кнопка SHOP вела на /play/home — то есть просто домой, мимо магазина, хотя
+// подписана «SHOP». Тот же баг, что был в зале FORGE. Магазин живёт состоянием
+// дома, поэтому ведём туда адресом (см. setView в HomeView).
+function goShop() { router.push({ path: '/play/home', query: { view: 'shop' } }); }
 // Ground Select is gone — the way back out of the preview is the mode stage.
 function goMode() { router.push('/play/mode'); }
 </script>

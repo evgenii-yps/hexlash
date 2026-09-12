@@ -144,19 +144,40 @@
 
     <!-- ───────── mode-stage chrome ─────────
          The ARENA / FORGE fork is no longer a screen — it is a place in the same world,
-         so its chrome is only what the place needs: ← BACK, and one caption per
-         plate anchored over the real 3D slab (projected by HomeScene into
-         modePlateTags, same trick as the fighter identity label). No top strip here
-         — no brand, no SHOP, no cabinet: the cabinet stays reachable from home.
-         Discipline: BACK is matte chrome, and the captions carry NO glow of their
-         own — the one lit thing on this stage is the hovered plate, in 3D. -->
+         so its chrome is what the place needs: ← BACK, the SHOP + cabinet cluster, and
+         one caption per plate anchored over the real 3D slab (projected by HomeScene
+         into modePlateTags, same trick as the fighter identity label).
+
+         ⚠️ 12.09.2026 — РАЗВОРОТ РЕШЕНИЯ ОТ 29.06.2026. Тогда полосу сняли с этого
+         экрана целиком, вместе со смонтированным в ней кабинетом, и здесь стояла
+         подпись «no top strip here — no brand, no SHOP, no cabinet: the cabinet stays
+         reachable from home». Владелец 12.09 решил обратно: магазин и кабинет должны
+         открываться с ЛЮБОГО игрового экрана, иначе за ними приходится выходить.
+         Бренд-знак НЕ возвращается — его сняли отдельным решением, речь только о двух
+         управляющих кнопках.
+
+         Полоса — та же .hs-strip, что на доме и в зале FORGE, поэтому BACK и кластер
+         стоят на одной оси сами собой. Своё имя .mode-strip нужно ровно затем, чтобы
+         правило .is-away (оно гасит ДОМАШНЮЮ полосу на время пролёта и на этом
+         экране) её не погасило.
+         Discipline: всё матовый хром, captions без собственного свечения — единственное
+         светящееся здесь это подсвеченная плита, и она светится в 3D. -->
     <template v-if="stage === 'select'">
-      <button
-        v-show="!flying"
-        type="button"
-        class="hs-chrome mode-back"
-        @click="onModeBack"
-      >{{ t.mode.back }}</button>
+      <div v-show="!flying" class="hs-strip mode-strip">
+        <button type="button" class="hs-chrome mode-back" @click="onModeBack">{{ t.mode.back }}</button>
+        <div class="hs-cluster">
+          <!-- SHOP — магазин принадлежит дому, поэтому ведём туда адресом: камера
+               улетает домой, магазин накрывает пролёт собой (см. onModeShop). -->
+          <button type="button" class="hs-chrome hs-seg-shop" @click="onModeShop" :aria-label="t.home.shop">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1 11H6L5 8Z" /><path d="M9 8V6.5a3 3 0 0 1 6 0V8" /></svg>
+            <span class="n">{{ t.home.shop }}</span>
+          </button>
+          <!-- кабинет — тот же PlayerCabinet, он смонтирован в этом же компоненте -->
+          <button type="button" class="hs-chrome hs-seg-cab" @click="cabinetOpen = true" :aria-label="t.cabinet.chipOpen">
+            <span class="av" aria-hidden="true"></span>
+          </button>
+        </div>
+      </div>
 
       <div
         v-for="door in MODE_DOORS"
@@ -286,6 +307,16 @@ function onArrived(where) {
 // is ignored (the flight is already on its way).
 function onFightMode() { if (!flying.value && stage.value === 'home') goStage('select'); }
 function onModeBack() { if (!flying.value) goStage('home'); }
+// SHOP с экрана выбора режима. Магазин — состояние дома, поэтому это тот же
+// адрес, каким в него входят из зала FORGE. Порядок важен: адрес меняется
+// сразу, из-за чего (а) routeStage уводит камеру домой и (б) watch на
+// ?view=shop открывает магазин, и он накрывает пролёт собой. Когда камера
+// сядет, onArrived увидит, что путь УЖЕ домашний, и второй раз толкать не
+// станет — а значит и не срежет ?view, как он это делает при обычной посадке.
+function onModeShop() {
+  if (flying.value) return;
+  router.push({ path: HOME_PATH, query: { ...route.query, view: 'shop' } });
+}
 
 // A plate was chosen in 3D. These ARE screen changes (a different scene each way),
 // so they navigate normally and the transition cover handles them.
@@ -438,7 +469,7 @@ function onArrangePlace() { arrange.value = false; }
    own 2D chrome has to be gone by the time the camera has really left. It fades on
    the class, over the first quarter-second of the flight, and comes back the same
    way on the way home. `.is-away` covers both the flight and the mode stage. */
-.home-root .hs-strip,
+.home-root .hs-strip:not(.mode-strip),
 .home-root .hs-dock,
 .home-root .edit-space,
 .home-root .fighter-tag {
@@ -449,7 +480,10 @@ function onArrangePlace() { arrange.value = false; }
    (home.css), so a merely transparent strip still swallows clicks meant for the mode
    stage's ← BACK underneath it. Visibility flips only after the fade has finished on
    the way out, and immediately on the way back in. */
-.home-root.is-away .hs-strip,
+/* :not(.mode-strip) — экран выбора режима носит СВОЮ полосу (BACK + SHOP +
+   кабинет, решение 12.09). Она живёт только на этом экране, и гасить её тем же
+   правилом, что домашнюю, нельзя. */
+.home-root.is-away .hs-strip:not(.mode-strip),
 .home-root.is-away .hs-dock,
 .home-root.is-away .edit-space,
 .home-root.is-away .fighter-tag {
@@ -461,13 +495,19 @@ function onArrangePlace() { arrange.value = false; }
 
 /* ← BACK on the mode stage. Matte chrome, no pink, no glow — the one lit thing on
    this stage is the hovered plate, and it is lit in 3D. */
+/* BACK — теперь ЛЕВЫЙ элемент полосы, а не отдельная кнопка в углу: полоса
+   сама ставит его на одну ось с кластером справа (решение 12.09). Поэтому
+   своего position/left/top у него больше нет — их задавала прежняя жизнь вне
+   полосы, и оставленные, они бы выбили его из строки. */
 .mode-back {
-  position: absolute; left: 28px; top: 26px; z-index: 10;
-  pointer-events: auto;
   font-family: var(--font-mono);
   font-size: var(--t-sm); letter-spacing: var(--ls-meta); text-transform: uppercase;
   height: 40px; padding: 0 var(--sp-4);
 }
+/* Кластер держится правого края: .hs-strip разносит детей по краям, и когда
+   слева ровно один элемент, этого достаточно — но margin-left:auto делает
+   правило не зависящим от того, сколько детей слева. Так же сделано в зале. */
+.mode-strip .hs-cluster { margin-left: auto; }
 
 /* Plate captions — a zero-size anchor at the projected point, card centred on it.
    Sharp DOM text over real 3D plates (same approach as the fighter identity label).
@@ -500,7 +540,7 @@ function onArrangePlace() { arrange.value = false; }
 .mode-cap.is-lit .mc-desc { color: var(--ink-dim); }
 
 @media (max-width: 560px) {
-  .mode-back { left: 18px; top: 18px; }
+  /* .mode-back больше не позиционируется сам — отступы держит полоса. */
   .mc-name { font-size: var(--t-xl); }
   .mc-desc { font-size: var(--t-micro); letter-spacing: var(--ls-title); }
 }

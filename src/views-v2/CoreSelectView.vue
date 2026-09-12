@@ -73,6 +73,35 @@
 
       </div>
     </main>
+
+    <!-- ───────── общая полоса зала ─────────
+         Магазин и кабинет должны открываться с ЛЮБОГО игрового экрана (решение
+         владельца 12.09.2026) — иначе за ними приходится сначала выходить
+         отсюда. Тот же .hs-strip, что на доме, экране режимов и в зале FORGE.
+         Бренд-знак сюда НЕ добавляется, речь только о двух кнопках. BACK здесь
+         нет: на этом экране его не было и раньше, полоса несёт один правый
+         кластер. -->
+    <div class="hs-strip">
+      <div class="hs-cluster">
+        <!-- SHOP — магазин живёт состоянием дома, поэтому ведём туда адресом -->
+        <button type="button" class="hs-chrome hs-seg-shop" @click="goShop" :aria-label="t.home.shop">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1 11H6L5 8Z" /><path d="M9 8V6.5a3 3 0 0 1 6 0V8" /></svg>
+          <span class="n">{{ t.home.shop }}</span>
+        </button>
+        <!-- кабинет — хром-ромб, без ника и без шеврона (как везде) -->
+        <button type="button" class="hs-chrome hs-seg-cab" @click="cabinetOpen = true" :aria-label="t.cabinet.chipOpen">
+          <span class="av" aria-hidden="true"></span>
+        </button>
+      </div>
+    </div>
+
+    <PlayerCabinet
+      :open="cabinetOpen"
+      :balance="balance"
+      :core-name="coreName"
+      :core-sig="coreSig"
+      @close="cabinetOpen = false"
+    />
   </div>
 </template>
 
@@ -82,9 +111,15 @@ import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
 import { CORES, getCore } from '@/data/upgradeData.js';
 import { coreSVG } from '@/data/upgradeGeometry.js';
+import { t } from '@/locales/index.js';
+import PlayerCabinet from '@/views-v2/PlayerCabinet.vue';
+import '@/styles/home.css';     // общая полоса .hs-strip
+import '@/styles/cabinet.css';  // выдвижная панель кабинета
 
 const store = useStore();
 const router = useRouter();
+
+const cabinetOpen = ref(false);
 
 const cores = CORES;
 
@@ -110,6 +145,14 @@ function select(core) {
   store.dispatch('prefight/selectCore', core.id); // id → store (read by the arena)
 }
 
+// Карточка кабинета — как в зале FORGE и на доме: значения по умолчанию, пока
+// ядро не выбрано.
+const coreName = computed(() => selected.value?.name || 'ONSLAUGHT');
+const coreSig = computed(() => selected.value?.sig || 'PRESSURE');
+const balance = '2,480';
+// Магазин живёт состоянием дома, поэтому ведём туда адресом (см. setView в HomeView).
+function goShop() { router.push({ path: '/play/home', query: { view: 'shop' } }); }
+
 // CTA «TO ARENA» — navigation contract: pick is already in the store, the
 // route guard (requireCore) lets it through. Brief beat so the press reads.
 let navigating = false;
@@ -131,12 +174,24 @@ function toArena() {
    HEXLASH — CORE SELECT · styles (port of select_handoff/styles.css, stripped of
    service chrome). Tokens on .scene (component root). SVG from v-html → :deep().
    ============================================================ */
-.scene * { box-sizing: border-box; margin: 0; padding: 0; }
-.scene button {
+/* ⚠️ Сброс держится на .stage, а НЕ на .scene. Он пришёл с перенесённым
+   макетом выбора ядра, и вся эта разметка живёт внутри .stage. Пока он стоял на
+   .scene, он дотягивался и до общей полосы зала, которую сюда добавили 12.09:
+   у полосы обнулялись её собственные отступы, а у кнопок снимались рамка и
+   стекло — кластер упирался в край экрана, а кнопки переставали выглядеть
+   кнопками. Переписывать их значения здесь нельзя (хром одевается из home.css
+   одним объявлением на все экраны), поэтому сброс просто сужен до той
+   разметки, которой он принадлежит. */
+.stage * { box-sizing: border-box; margin: 0; padding: 0; }
+.stage button {
   font: inherit; color: inherit; background: none; border: 0; cursor: pointer;
   -webkit-appearance: none; appearance: none; -webkit-tap-highlight-color: transparent;
 }
 .scene ::selection { background: var(--pink); color: var(--ink); }
+
+/* .hs-strip разносит детей по краям, а слева здесь никого нет — без этого
+   кластер уезжает влево. Так же сделано в зале FORGE и в пространстве. */
+.hs-cluster { margin-left: auto; }
 
 /* ============================================================
    SCENE — fullscreen, faint pink-tinted void (neutral chrome).
