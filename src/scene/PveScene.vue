@@ -165,14 +165,16 @@ const CAM = {
   // upright they take the bottom of the screen, sideways the right of it, and the
   // fighter being worked on must not end up behind them.
   rect: {
-    overviewPortrait:  { x0: 0.05, x1: 0.95, y0: 0.12, y1: 0.84 },
+    // UPRIGHT there is ONE rectangle, because there is one pose: the panel owns
+    // the bottom of the screen (--fg-band), so the man gets the band above it,
+    // and he gets nearly all of it — he is the only thing in the room.
+    portrait:          { x0: 0.08, x1: 0.92, y0: 0.05, y1: 0.52 },
     overviewLandscape: { x0: 0.05, x1: 0.95, y0: 0.14, y1: 0.90 },
     // WORK has to dodge TWO panels, not one. The tree takes the right of a wide
     // screen (the bottom of a tall one), and the fighter's card sits in the bottom
     // corner on top of that — so the clear ground is the band ABOVE the card and
     // BESIDE the tree. Framing into the whole left half put his legs behind the
     // card; these rectangles are that band.
-    workPortrait:      { x0: 0.10, x1: 0.90, y0: 0.06, y1: 0.46 },
     workLandscape:     { x0: 0.06, x1: 0.52, y0: 0.08, y1: 0.68 },
   },
   minDist: 4.5,
@@ -435,7 +437,8 @@ function framePoints(working) {
     pts.push([x - BODY.halfW - padX, topY, z + padZ], [x + BODY.halfW + padX, topY + BODY.height, z - padZ]);
   };
 
-  if (working) {
+  // Upright: the man on the mark IS the composition — see frameFor.
+  if (working || portrait) {
     // Him on the mark, plus a margin of air — and all of it at HIS depth. A patch
     // of floor spanning several units of depth was tried and pulled the framing
     // right back: at this camera's shallow angle depth reads as a lot of screen
@@ -479,10 +482,12 @@ function framePoints(working) {
 
 // Build the pose for a framing. Returns { pos, look } in the shape applyCamera wants.
 function frameFor(working) {
-  const portrait = viewH >= viewW;
-  const r = working
-    ? (portrait ? CAM.rect.workPortrait : CAM.rect.workLandscape)
-    : (portrait ? CAM.rect.overviewPortrait : CAM.rect.overviewLandscape);
+  // UPRIGHT there is one pose and no other. The overview existed to show the
+  // whole arc; upright the arc is not in the room, so there is nothing for it to
+  // show and a second pose would only be a way of standing further back.
+  const one = portrait || working;
+  const r = portrait ? CAM.rect.portrait
+    : (one ? CAM.rect.workLandscape : CAM.rect.overviewLandscape);
   _fitDir.set(CAM.dir[0], CAM.dir[1], CAM.dir[2]);
   let dist = _fitDir.length();
   _fitDir.normalize();
@@ -599,6 +604,9 @@ const wrap = ref(null);
 const canvasEl = ref(null);
 
 let renderer, scene, camera, slab, resizeObserver, clock;
+// Which shape of room we are in. Set from the canvas, never from the device: a
+// wide phone lying down is a wide screen, and that is all this has to know.
+let portrait = false;
 let viewW = 0, viewH = 0;   // canvas CSS size — the framing is measured in these
 let resizePending = 0;      // coalescing frame for the resize observer
 // Pre-load readiness: emit once after the first frame is rendered so the
@@ -734,64 +742,29 @@ onMounted(() => {
   const spots = layoutRoster(members.length, compose.arcZ);
   director = createForgeWanderDirector();
 
+  // The roster's RECORDS are made now; the BODIES are made when a screen that has
+  // to show them asks for one (see ensureBody). Sideways that is everybody, at
+  // once. Upright it is the picked fighter and nobody else — the hall shows one
+  // man large there, and a body that is never in the picture is never built.
   spots.forEach((p, i) => {
     const m = members[i];
-    const core = CORE_PALETTE.find((c) => c.id === m.core) || CORE_PALETTE[0];
-    const behavior = resolveBehavior(core.id, []);
-
-    const idx = i;   // captured for this body's own getFoePos
-    const fighter = buildFighter(core.hue, {
-      side: 'player',
-      coreId: core.id,
-      behavior,
-      // The plate is the world here — a body may not be walked off its edge.
-      bounds: { x: compose.slab.width / 2, z: compose.slab.depth / 2 },
-      neutralColor: false,
-      getFoePos: () => (director ? director.foePos(idx) : null),
-    });
-    fighter.group.position.set(p.x, topY, p.z);
-    fighter.setReducedMotion(reduced);
-    // SUPPRESS the over-head HP plate (the only Sprite added DIRECTLY to the
-    // group) — same external approach as the home.
-    fighter.group.children.forEach((o) => { if (o.isSprite) o.visible = false; });
-    scene.add(fighter.group);
-
-    const glow = buildUnderGlow(core.hue, topY);
-    glow.mesh.position.set(p.x, topY + GLOW.yLift, p.z);
-    scene.add(glow.mesh);
-
     roster.push({
       id: m.id,
       callsign: m.callsign,
-      fighter,
-      glow,
+      core: CORE_PALETTE.find((c) => c.id === m.core) || CORE_PALETTE[0],
+      fighter: null,                   // ← built on demand
+      glow: null,
       home: new THREE.Vector3(p.x, topY, p.z),   // the middle of his zone
       zone: zoneFor(p),
-      parts: coreParts(fighter),       // gem + halo, for the rest/lit brightness
-      skin: skinOf(fighter),           // this body's own material (per-instance)
+      parts: null,
+      skin: null,
       lit: 0,                          // eased 0…1 core brightness
       dim: 0,                          // eased 0…1 "sunk into the dark"
     });
   });
 
-  // Everyone faces the player to start with. Aim at the overview camera spot rather
-  // than straight ahead, so the arc ends turn slightly inward and the row reads as
-  // gathered rather than as a firing line.
-  for (const r of roster) faceTowards(r.fighter.group, CAM.dir[0], CAM.dir[2]);
-
-  director.attach(roster.map((r) => ({ fighter: r.fighter, zone: r.zone })), { reduced });
-
-  // The hall always has a current fighter: the first of the roster stands ON the
-  // mark from the moment the room opens (ТЗ — one fighter is on the mark and picked;
-  // a refresh restores him there at once, with no walk-up). His card is NOT opened
-  // by this: that is `workingId`, and it stays null until the player taps.
-  if (roster.length) {
-    currentId = roster[0].id;
-    roster[0].fighter.group.position.set(mark.x, topY, mark.z);
-    roster[0].lit = 1;
-    if (director) director.halt(0);
-    faceTowards(roster[0].fighter.group, CAM.dir[0], CAM.dir[2]);
-  }
+  portrait = viewH >= viewW;
+  applyPresence(true);                 // build + place whoever this screen needs
   load.stage('roster');
 
   // --- Legend: a buildFighter body with the amber core, idle only (NEVER added to
@@ -840,16 +813,19 @@ onMounted(() => {
     _ptr.x = ((clientX - rect.left) / rect.width) * 2 - 1;
     _ptr.y = -((clientY - rect.top) / rect.height) * 2 + 1;
     _ray.setFromCamera(_ptr, camera);
-    const hit = _ray.intersectObjects(roster.map((r) => r.fighter.group), true)[0];
+    // Only bodies that are actually in the room can be hit — upright that is one.
+    const live = roster.filter((r) => r.fighter && r.fighter.group.parent);
+    const hit = _ray.intersectObjects(live.map((r) => r.fighter.group), true)[0];
     if (!hit) return null;
     let o = hit.object;
-    while (o && !roster.some((r) => r.fighter.group === o)) o = o.parent;
-    return o ? roster.find((r) => r.fighter.group === o) : null;
+    while (o && !live.some((r) => r.fighter.group === o)) o = o.parent;
+    return o ? live.find((r) => r.fighter.group === o) : null;
   }
 
   // Screen position of a body's head — where its callsign hangs.
   const _v = new THREE.Vector3();
   function tagPos(entry) {
+    if (!entry.fighter) return null;
     const rect = renderer.domElement.getBoundingClientRect();
     _v.copy(entry.fighter.group.position);
     _v.y += 2.0;
@@ -917,10 +893,15 @@ onMounted(() => {
 
     // Strolls and errands: the director only moves each body's LURE — the walking
     // itself is the fighter's own locomotion, one frame later, inside update().
-    director?.update(t, dt);
+    // Upright there is one man and he is standing on the mark: nobody strolls,
+    // so the director is not run at all.
+    if (!portrait) director?.update(t, dt);
 
     for (let i = 0; i < roster.length; i++) {
       const r = roster[i];
+      // Not in the picture → not updated. Upright that is everyone but the
+      // picked fighter, and they have no body to update in the first place.
+      if (!r.fighter || !r.fighter.group.parent) continue;
       const isCurrent = r.id === currentId;
 
       r.fighter.update(t, camera);
@@ -928,7 +909,7 @@ onMounted(() => {
 
       // A body that is walking steers itself; one that is standing is turned to
       // face the player — on the mark, and between strolls in his own zone.
-      if (!director || director.isStill(i)) {
+      if (portrait || !director || director.isStill(i)) {
         turnTowards(r.fighter.group, camPos.x, camPos.z, turnK);
       }
 
@@ -986,6 +967,17 @@ onMounted(() => {
     camera.aspect = cw / ch;
     camera.updateProjectionMatrix();
     renderer.setSize(cw, ch, false);
+
+    // A turn of the phone changes WHO is in the room — one man upright, the whole
+    // arc sideways. It happens inside the living scene: the hall is not rebuilt,
+    // the loading screen is not shown, the address does not change, and the
+    // picked fighter stays picked. The plate is not touched: its size was settled
+    // when the hall opened and turning the phone is not a reason to recount the
+    // ground. Bodies that a sideways screen needs and has never had are built
+    // here, once; after that a turn only adds and removes them from the scene.
+    const wasPortrait = portrait;
+    portrait = ch >= cw;
+    if (wasPortrait !== portrait) applyPresence(true);
     // The arc itself does not change with the screen's shape (see above), so a
     // rotation moves nobody — only the framing is rebuilt. Snap rather than ease:
     // this is a new screen, not a move.
@@ -1010,6 +1002,110 @@ onMounted(() => {
 // exitWork()  — close the panels. The current fighter STAYS on the mark and stays
 //               lit: he is still the one the player picked.
 
+// ── Who exists, and who is in the picture ─────────────────────────────────
+// SIDEWAYS the hall is the arc: every fighter has a body, a zone and a stroll.
+// UPRIGHT it is one man large: the arc of ten needs about fourteen units of
+// width and a phone held upright has no such width at any bend — the camera
+// would back off until the haze ate the room. So upright the hall shows the
+// PICKED fighter and nobody else, and "nobody else" is meant literally: the
+// other bodies are not built, not in the scene and not updated. Nothing is
+// hidden behind transparency, because nothing is there.
+//
+// The plate does NOT follow. Its size is settled once, when the hall opens, from
+// how many fighters the roster holds — turning the phone is not a reason to
+// recount the ground, and ground that resizes under your feet reads as a fault
+// rather than as growth.
+
+/** Give this roster entry a real body, once. No-op if he already has one. */
+function ensureBody(i) {
+  const r = roster[i];
+  if (!r || r.fighter) return;
+  const fighter = buildFighter(r.core.hue, {
+    side: 'player',
+    coreId: r.core.id,
+    behavior: resolveBehavior(r.core.id, []),
+    // The plate is the world here — a body may not be walked off its edge.
+    bounds: { x: compose.slab.width / 2, z: compose.slab.depth / 2 },
+    neutralColor: false,
+    getFoePos: () => (director ? director.foePos(i) : null),
+  });
+  fighter.group.position.copy(r.home);
+  fighter.setReducedMotion(reduced);
+  // SUPPRESS the over-head HP plate (the only Sprite added DIRECTLY to the
+  // group) — same external approach as the home.
+  fighter.group.children.forEach((o) => { if (o.isSprite) o.visible = false; });
+  faceTowards(fighter.group, CAM.dir[0], CAM.dir[2]);
+
+  r.fighter = fighter;
+  r.glow = buildUnderGlow(r.core.hue, slab.refs.topY);
+  r.glow.mesh.position.set(r.home.x, slab.refs.topY + GLOW.yLift, r.home.z);
+  r.parts = coreParts(fighter);        // gem + halo, for the rest/lit brightness
+  r.skin = skinOf(fighter);            // this body's own material (per-instance)
+}
+
+/** Is this entry supposed to be in the picture on the current screen? */
+function wanted(r) { return portrait ? r.id === currentId : true; }
+
+/**
+ * Put the scene's contents in step with the screen and the selection.
+ * `place` also stands the picked fighter on the mark and the rest in their zones
+ * — used on build and whenever the shape of the room changes under us.
+ */
+function applyPresence(place) {
+  const topY = slab ? slab.refs.topY : 0;
+  if (!roster.length) return;
+  if (!currentId) currentId = roster[0].id;
+
+  for (let i = 0; i < roster.length; i++) {
+    const r = roster[i];
+    if (wanted(r)) {
+      ensureBody(i);
+      if (!r.fighter.group.parent) { scene.add(r.fighter.group); scene.add(r.glow.mesh); }
+      if (place) {
+        const onMark = r.id === currentId;
+        r.fighter.group.position.set(onMark ? mark.x : r.home.x, topY, onMark ? mark.z : r.home.z);
+        r.glow.mesh.position.set(r.fighter.group.position.x, topY + GLOW.yLift, r.fighter.group.position.z);
+        faceTowards(r.fighter.group, CAM.dir[0], CAM.dir[2]);
+        r.lit = onMark ? 1 : 0;
+      }
+    } else if (r.fighter && r.fighter.group.parent) {
+      // Out of the picture: out of the scene. Not rendered, not walked, not lit.
+      scene.remove(r.fighter.group);
+      scene.remove(r.glow.mesh);
+    }
+  }
+
+  // The director only ever knows about bodies that exist. Upright there is one
+  // man and he is standing on the mark, so there is nothing to stroll and the
+  // director is left idle (see the loop).
+  const built = roster.filter((r) => r.fighter);
+  if (built.length === roster.length) {
+    director.attach(roster.map((r) => ({ fighter: r.fighter, zone: r.zone })), { reduced });
+    const cur = roster.findIndex((r) => r.id === currentId);
+    if (cur >= 0) director.halt(cur);
+  }
+}
+
+// ── The upright swap ──────────────────────────────────────────────────────
+// Sideways, changing who is picked is a walk: one man leaves the mark, another
+// walks out to it. Upright neither is possible — there is one body in the room
+// and the one replacing him is not in it — so he is simply put in the other's
+// place: build if he has never had a body, stand him on the mark, take the old
+// one out of the room.
+function swapOnMark(prevIdx, idx) {
+  const topY = slab ? slab.refs.topY : 0;
+  ensureBody(idx);
+  const to = roster[idx];
+  to.fighter.group.position.set(mark.x, topY, mark.z);
+  to.glow.mesh.position.set(mark.x, topY + GLOW.yLift, mark.z);
+  faceTowards(to.fighter.group, CAM.dir[0], CAM.dir[2]);
+  if (!to.fighter.group.parent) { scene.add(to.fighter.group); scene.add(to.glow.mesh); }
+  if (prevIdx >= 0 && roster[prevIdx].fighter) {
+    scene.remove(roster[prevIdx].fighter.group);
+    scene.remove(roster[prevIdx].glow.mesh);
+  }
+}
+
 // Send a fighter out to the mark, and whoever is standing there back home. Both
 // leave at the same moment — neither waits for the other. Called with the roster
 // INDEX, because that is what the director knows bodies by.
@@ -1019,6 +1115,13 @@ function makeCurrent(idx) {
   const prevIdx = roster.findIndex((r) => r.id === currentId);
 
   currentId = entry.id;    // the light moves NOW — the hall answers the tap at once
+
+  if (portrait) {
+    // Upright nobody walks: there is one man in the room, and the one taking his
+    // place is not in it yet — there is nowhere to walk FROM.
+    swapOnMark(prevIdx, idx);
+    return;
+  }
 
   if (reduced) {
     // Motion is reduced: no walking. Place them, do not slide them.
@@ -1090,7 +1193,7 @@ function growTo(count) {
   });
   const cur = roster.findIndex((r) => r.id === currentId);
   if (cur >= 0) {
-    if (reduced) roster[cur].fighter.group.position.set(mark.x, topY, mark.z);
+    if (reduced && roster[cur].fighter) roster[cur].fighter.group.position.set(mark.x, topY, mark.z);
     else director?.sendTo(cur, mark.x, mark.z);
   }
 
