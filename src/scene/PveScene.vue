@@ -663,7 +663,14 @@ onMounted(() => {
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 
   scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(FOG_COLOR, FOG.arena.density);
+  // The hall's OWN fog, not the arena's. It was reading FOG.arena — a borrowed
+  // knob, and the borrowing was silent because the two numbers happen to be
+  // equal today (both 0.03), so nothing looked wrong. It matters anyway: the
+  // hall is the one room whose camera has to retreat as the plate grows, and
+  // the day its haze needs its own number, turning it must not touch the fight.
+  // Tone comes from FOG_COLOR (= --void, the same ground the backdrop is
+  // painted on) so distance dissolves objects instead of lighting them.
+  scene.fog = new THREE.FogExp2(FOG_COLOR, FOG.forge.density);
 
   viewW = w; viewH = h;   // the framing is measured in canvas pixels — have them before the first fit
   camera = new THREE.PerspectiveCamera(FOV.forge, w / h, CAMERA.near, CAMERA.far.forge);
