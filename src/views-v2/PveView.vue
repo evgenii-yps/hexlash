@@ -211,6 +211,29 @@ function onKeydown(e) {
   if (panelRef.value?.stepBack()) return;
   exitWork();
 }
+// ── the hall opens with somebody already picked ───────────────────────────
+// Walking in used to give a dark room with nothing lit: both of the screen's
+// glows belong to a selection, and there was no selection, so the first thing
+// the player saw said nothing about where to press. The first fighter of the
+// roster — first in the same order the panel lists them — is picked for him.
+//
+// Only when there is NO selection. A choice already made in this visit wins; so
+// would one that survived a reload, if anything survived a reload (see below).
+// This is a selection and nothing else: no resource is spent, no facet is lit,
+// nothing is written that picking by hand would not write.
+//
+// ⚠️ Today it always fires. `pickedId` is plain component state and this route
+// has no keep-alive, so leaving the hall and coming back — or reloading — starts
+// it at null every time. Nothing about the selection is saved, and this work is
+// explicitly not allowed to start saving it.
+function autoPick() {
+  if (pickedId.value) return;              // a choice already exists — leave it alone
+  const first = fighters.value[0];
+  if (!first) return;                      // empty roster: the panel says so, the hall stays empty
+  onPick(first.id);
+}
+onMounted(autoPick);
+
 onMounted(() => document.addEventListener('keydown', onKeydown));
 onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown));
 
