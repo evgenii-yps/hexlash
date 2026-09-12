@@ -129,8 +129,9 @@ export const FLIGHT = {
   // behind it the object does not vanish — it turns into a flat patch of the wrong
   // hue, which is exactly how the plates stayed legible from the home even while
   // their materials were dimmed to nearly black. Matched by eye to the backdrop's
-  // horizon band (BACKDROP.grad around v≈0.5, where the far end sits); if that
-  // gradient is ever retuned, this follows it.
+  // colour. С 12.09.2026 у купола нет градиента вовсе — он весь --void, тот же
+  // цвет, что и FOG_COLOR, так что совпадение уже не «подобрано глазом», а
+  // выполняется по построению.
   // Тон тумана — общий для всех залов (FOG_COLOR = --void = дальний край купола).
   // Раньше дом стоял в своём чёрном 0x0F0E11, на семь пунктов светлее остальных:
   // передний план уходил в один чёрный, а купол за ним — в другой.

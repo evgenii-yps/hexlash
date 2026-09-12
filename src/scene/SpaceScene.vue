@@ -255,7 +255,7 @@ onMounted(() => {
   //     no seam. The fighters + leader stand on it; its surface height is FIELD.y. ---
   const groundY = FIELD.y;
   field = buildHexField(groundY, renderer.capabilities.getMaxAnisotropy()); scene.add(field.group);
-  backdrop = buildBackdrop({ radius: 72, centerY: 6 }, renderer.capabilities.getMaxAnisotropy());
+  backdrop = buildBackdrop({ radius: 72, centerY: 6 });
   scene.add(backdrop.mesh);
   load.stage('field');
 

@@ -732,7 +732,7 @@ onMounted(() => {
   // outside — the shared lamp file is untouched and the count is unchanged, so the
   // phone pays for four PointLights exactly as before.
   buildHallLamps();
-  backdrop = buildBackdrop({ radius: 45, centerY: 1.6 }, renderer.capabilities.getMaxAnisotropy());
+  backdrop = buildBackdrop({ radius: 45, centerY: 1.6 });
   scene.add(backdrop.mesh);
   load.stage('atmosphere');
 

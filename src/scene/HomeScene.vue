@@ -808,11 +808,9 @@ onMounted(() => {
   // Купол обязан накрывать ОБА конца мира, а не только дом: с полным кругом
   // орбиты у плит любой азимут должен упираться в небо, а не в край геометрии.
   // Отсюда центр на середине коридора и радиус с запасом. Градиент гладкий, без
-  // рисунка, поэтому увеличивать и двигать его ничего не стоит визуально.
-  backdrop = buildBackdrop(
-    { radius: 58, centerY: 1.6, centerZ: -FLIGHT.modeZ / 2 },
-    renderer.capabilities.getMaxAnisotropy(),
-  );
+  // рисунка (с 12.09 это просто один цвет --void), поэтому увеличивать и
+  // двигать его ничего не стоит визуально.
+  backdrop = buildBackdrop({ radius: 58, centerY: 1.6, centerZ: -FLIGHT.modeZ / 2 });
   scene.add(backdrop.mesh);
   lampHaze = buildLampHaze(HAZE, LAMPS);
   scene.add(lampHaze.group);
