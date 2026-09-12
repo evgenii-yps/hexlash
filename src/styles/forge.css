@@ -220,7 +220,6 @@
 }
 .fp-row .sw { width: 6px; height: 6px; flex: none; background: var(--core); }
 .fp-row .nm { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
-.fp-row .ft { flex: none; color: var(--ink-off); font-variant-numeric: tabular-nums; letter-spacing: var(--ls-tight); text-transform: none; }
 .fp-row:hover { background: var(--fill-2); color: var(--ink); }
 .fp-row:active { transform: translateY(1px); transition-duration: var(--d-press); }
 .fp-row:focus-visible { outline: 1px solid var(--ink-dim); outline-offset: -2px; }

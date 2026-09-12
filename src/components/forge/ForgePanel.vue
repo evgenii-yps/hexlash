@@ -99,7 +99,13 @@
         </p>
       </section>
 
-      <!-- ── 4 · roster ─────────────────────────────────────────────────── -->
+      <!-- ── 4 · roster ───────────────────────────────────────────────────
+           A row carries only what tells one fighter from another: his core and
+           his name. It used to carry the fight count too, but there is no fight
+           count in the game yet — nothing writes one — so all ten rows said the
+           same "none yet", which is noise exactly where a choice is being made.
+           The head keeps showing it: there it is one line, and the place the
+           number will take should stay visible. -->
       <section class="fp-roster">
         <p class="fp-label">
           {{ t.forge.rosterLabel }}
@@ -117,7 +123,6 @@
             >
               <span class="sw" aria-hidden="true"></span>
               <span class="nm">{{ f.callsign }}</span>
-              <span class="ft">{{ fightsOf(f) }}</span>
             </button>
           </li>
         </ul>
