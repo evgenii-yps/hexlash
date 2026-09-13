@@ -199,33 +199,49 @@ export const FLIGHT = {
   //
   // NOT A BILLBOARD. The one thing this must never become is a flat picture turned
   // to face the camera: seen head-on that reads as a disc with an edge and it slides
-  // against the world when the camera moves. It is a VOLUME — a flattened ball of
-  // many small soft grains, each at a real world position, so the parallax is honest
-  // from every angle the orbit can reach and there is no single edge to catch.
+  // against the world when the camera moves. It is a VOLUME — a bank of many small
+  // soft grains, each at a real world position, so the parallax is honest from every
+  // angle the orbit can reach and there is no single edge to catch.
   //
   // NOT A LIGHT. It is darker than nothing else in the corridor is: a cold grey a
   // shade above the sky, never warm, and its colour is driven off the scene's own
-  // ambient + hemisphere (see cloudLitRef) so that killing the lights kills it too.
+  // ambient + hemisphere (see litReference) so that killing the lights kills it too.
   // Points are unlit by nature and would otherwise survive a lights-off check, which
   // would make the check worthless.
-  cloudCount: 2900,     // grains at full quality …
-  cloudCountLow: 950,   // …and once the frame watchdog has seen this device stall.
+  //
+  // A BANK, NOT A BALL. It was first authored as a squashed ellipsoid with the grains
+  // packed toward its middle, and on a phone that read as one smear of dirt between
+  // two letters in the centre of the word with nothing under either end — the word
+  // still hanging in the void, just with a stain on it. A bank has to run the whole
+  // length of what it is holding up, so the grains now sit at even density from end
+  // to end and the shape only gives way in the last fifth, where it dissolves rather
+  // than stops. Everything below is in EM — the sign's own units, cap height 1 — so
+  // the bank keeps its proportions whatever size or distance the sign is set to.
+  cloudCount: 2000,    // grains at full quality …
+  cloudCountLow: 720,  // …and once the frame watchdog has seen this device stall.
   //                      Never zero: a word with no footing reads as a fault.
-  cloudGrain: 0.26,    // world diameter of one grain — big enough to have no edge
-  cloudSink: 0.34,     // how much of the CAP HEIGHT the bank swallows (bottom third)
-  cloudSpread: 0.62,   // horizontal half-extent, as a share of the sign's width …
-  cloudDepth: 0.20,    // …and in depth. Enough volume to parallax, never a slab.
-  cloudRise: 0.62,     // vertical half-extent, as a share of the cap height
-  cloudPack: 0.85,     // <1 pulls the grains toward the core, so the bank has no
-  //                      edge anywhere — it simply runs out
-  cloudLid: 0.62,      // the half above the core is squeezed by this: the letters
-  //                      have to come out of the bank, not be buried by it
+  cloudGrain: 0.40,    // grain diameter, in cap heights. Big enough that the grains
+  //                      merge into haze instead of reading as grit on the letters
+  cloudSpread: 0.78,   // half-width, as a share of the word's WIDTH ⇒ the bank runs
+  //                      1.56 × the word and carries on past both ends
+  cloudFlank: 0.28,    // the outer share of that half-width over which it dissolves
+  cloudCore: -0.40,    // where the densest line sits, in cap heights from the middle
+  //                      of the letters (their baseline is -0.5) — half way up the
+  //                      third that is meant to be swallowed
+  cloudUp: 0.56,       // how far the haze reaches ABOVE the core before it is gone.
+  //                      Core -0.40 + 0.56 lands on +0.16 — two thirds up the
+  //                      letters, which is exactly where it has to have run out. The
+  //                      third line is at -0.167, and the bank is still near full
+  //                      density there, so the bottom third is the part that sinks
+  //                      and the middle third carries the fade
+  cloudDown: 0.50,     // …and below it. Longer, and it fades out rather than ending:
+  //                      there is no floor under the sign for a bank to rest on
+  cloudDepth: 0.55,    // half-depth. The letters are 0.16 deep, so the bank stands
+  //                      both in front of them and behind — the feet are wrapped,
+  //                      not curtained
   cloudTint: 0x1e1e24, // the densest the bank is ever allowed to be (owner, 13.09)
-  cloudAlpha: 0.18,    // one grain's share — the mass comes from overlap, not from
+  cloudAlpha: 0.26,    // one grain's share — the mass comes from overlap, not from
   //                      any single grain being visible on its own
-  // (the reference the lighting is weighed against is DERIVED from the hall's own
-  //  ambient + hemisphere tokens — see litReference(). A number typed here would be
-  //  a second declaration of the lighting and would drift away from it.)
   cloudTurn: 0.010,    // rad/s — a whole turn takes ten minutes. Rigid, so it cannot
   //                      open a seam; off under reduced motion.
 
@@ -510,43 +526,59 @@ function grainTexture(THREE_) {
 // `capHeight` is the sign's cap height in world units, `width` its world width, and
 // the bank is authored around the sign group's own origin so it can be parented to
 // it and inherit its placement for free.
-function buildSignCloud(o, capHeight, width) {
+function buildSignCloud(o, emWidth) {
   const group = new THREE.Group();
   const tex = grainTexture(THREE);
 
-  const rx = width * o.cloudSpread;
-  const ry = capHeight * o.cloudRise;
-  const rz = width * o.cloudDepth;
-  // The letters sit centred on the sign origin, so their baseline is -capHeight/2.
-  // The bank's CORE sits at the middle of the band it is meant to swallow — half way
-  // up the bottom third — so the densest haze is exactly where the letters enter it.
-  const centreY = -capHeight / 2 + capHeight * o.cloudSink * 0.5;
+  // Everything here is in EM: cap height 1, the word `emWidth` wide, letters centred
+  // on the origin so their baseline is -0.5. The group is parented to the sign, so
+  // the sign's own scale carries all of it into the world at the right size.
+  const rx = emWidth * o.cloudSpread;   // half-width of the bank
+  const rz = o.cloudDepth;              // half-depth
+  const flank = Math.max(1e-3, o.cloudFlank);
+
+  // Ends DISSOLVE, they do not stop: over the last `cloudFlank` of the half-width the
+  // bank both thins out (fewer grains survive the roll below) and shrinks in section,
+  // so there is no line anywhere for the eye to find.
+  const endEnvelope = (ax) => {
+    const t = clamp01((1 - ax) / flank);
+    return t * t * (3 - 2 * t);
+  };
+
+  // Bounded stand-in for a normal: three uniforms, so the tails cannot throw a grain
+  // out on its own where it would read as a speck rather than as haze.
+  const bell = (rnd) => (rnd() + rnd() + rnd() - 1.5) / 1.5;
 
   const rnd = mulberry32(0x48584c); // 'HXL'
   const pos = new Float32Array(o.cloudCount * 3);
   for (let i = 0; i < o.cloudCount; i++) {
-    // A direction on the unit sphere, then a radius pulled toward the middle. The
-    // bank has to be DENSEST where the letters enter it and thin out in every
-    // direction from there — including downward. There is no floor under the sign
-    // and nothing for a bank to rest on, so a hard bottom would read as a shelf.
-    const th = rnd() * Math.PI * 2;
-    const ph = Math.acos(rnd() * 2 - 1);
-    const sinPh = Math.sin(ph);
-    let sy = Math.cos(ph);
-    const r = Math.pow(rnd(), o.cloudPack); // <1 packs the grains toward the core
-    // Bottom-heavy: the half above the core is squeezed so the top dissolves early
-    // (the letters must come out of it, not be buried), the half below is let run.
-    if (sy > 0) sy *= o.cloudLid;
-    pos[i * 3] = sinPh * Math.cos(th) * r * rx;
-    pos[i * 3 + 1] = centreY + sy * r * ry;
-    pos[i * 3 + 2] = sinPh * Math.sin(th) * r * rz;
+    // Along the word: EVEN density end to end. This is the whole difference between
+    // a bank and the ball this used to be — a ball is densest in the middle and has
+    // nothing at the ends, which is exactly how the word came to be standing on one
+    // smear of haze in the centre with both ends hanging in the void.
+    let x; let env;
+    do {
+      x = rnd() * 2 - 1;
+      env = endEnvelope(Math.abs(x));
+    } while (rnd() > env);            // thins the flanks, leaves the body untouched
+    const section = 0.58 + 0.42 * env; // …and narrows their section with them
+
+    // Up and down are NOT symmetric. Above the core the haze has to be gone by the
+    // time it reaches the top third of the letters — that third must read clean.
+    // Below it there is no floor to rest on, so it runs longer and simply fades.
+    const u = bell(rnd);
+    const y = o.cloudCore + (u >= 0 ? u * o.cloudUp : u * o.cloudDown) * section;
+
+    pos[i * 3] = x * rx;
+    pos[i * 3 + 1] = y;
+    pos[i * 3 + 2] = bell(rnd) * rz * section;
   }
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   geo.setDrawRange(0, o.cloudCount);
 
   const mat = new THREE.PointsMaterial({
-    size: o.cloudGrain, // in world units — corrected for the camera by setGrainScale
+    size: o.cloudGrain, // in cap heights — resolved against camera + scale below
     sizeAttenuation: true,
     map: tex,
     color: 0x000000,      // set every frame from the scene's own light — see setLit
@@ -576,15 +608,19 @@ function buildSignCloud(o, capHeight, width) {
     /** Drop to the cheap layout once the device has shown it cannot keep up. */
     setCount(n) { geo.setDrawRange(0, Math.min(n, o.cloudCount)); },
     /**
-     * `PointsMaterial.size` is NOT a world size, whatever it looks like. Three sizes
-     * a point as size · height / (2 · distance) and leaves the field of view out of
-     * it, so at this camera a grain came out at 0.38 of the width it was asked for —
-     * quarter of the area — and the bank read as grit sprinkled over the letters
-     * instead of haze they stand in. Put the missing term back and cloudGrain means
-     * what it says: a diameter, in the same world units as everything else here.
+     * Grain size, resolved.
+     *
+     * Two corrections, both needed. `PointsMaterial.size` is NOT a world size: three
+     * sizes a point as size · height / (2 · distance) and leaves the field of view
+     * out of it, so at this camera a grain came out at 0.38 of what it was asked for
+     * — quarter of the area — and the bank read as grit sprinkled over the letters.
+     * And the size is NOT scaled by the object's matrix either, so a grain authored
+     * in the sign's units has to be carried into the world by hand; without that the
+     * grains would stay put while the sign changed size, and the bank would lose its
+     * proportions the moment the word was moved or resized.
      */
-    setGrainScale(fovDeg) {
-      mat.size = o.cloudGrain / Math.tan(THREE.MathUtils.degToRad(fovDeg) / 2);
+    setGrainScale(fovDeg, worldPerEm) {
+      mat.size = o.cloudGrain * worldPerEm / Math.tan(THREE.MathUtils.degToRad(fovDeg) / 2);
     },
     /**
      * The bank is LIT, not self-coloured. Points carry no lighting of their own, so
@@ -668,8 +704,8 @@ export function createTransitionFlight(deps) {
   // fogged by exactly the same numbers and can never drift away from the letters it
   // is supposed to be swallowing. Authored in the sign's own em units (cap height 1,
   // the word `emWidth` wide) because that is the space the sign group is in.
-  const cloud = buildSignCloud(o, 1, sign.emWidth);
-  cloud.setGrainScale(camera.fov);
+  const cloud = buildSignCloud(o, sign.emWidth);
+  cloud.setGrainScale(camera.fov, signScale);
   sign.group.add(cloud.group);
 
   // The bank is lit by the hall, not by itself. The lights themselves are added at
@@ -940,7 +976,7 @@ export function createTransitionFlight(deps) {
   let lastFov = camera.fov;
   function spinCloud(t) {
     relight();
-    if (camera.fov !== lastFov) { lastFov = camera.fov; cloud.setGrainScale(camera.fov); }
+    if (camera.fov !== lastFov) { lastFov = camera.fov; cloud.setGrainScale(camera.fov, signScale); }
     if (reduced || t === undefined) return;
     cloud.group.rotation.y = t * o.cloudTurn;
   }
