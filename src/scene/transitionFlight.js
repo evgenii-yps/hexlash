@@ -217,27 +217,42 @@ export const FLIGHT = {
   // complaint this whole run started from, so the centre of the frame is bought at the
   // price of the thing that was wrong in the first place.
   //
+  // ⚠️ …and −9 was tried and MEASURED BACK OUT for the same reason, one step earlier
+  // on the same curve. It passed every layout — that was the point of it — but at 26.0
+  // units it sits exactly where the home's fog runs out, and the light it lost could
+  // not be bought back. Both positions taken to the same peak against the FIGHT
+  // button (81 %), each with its own glow, start frame:
+  //
+  //                             peak   mean   p90      at 1920: mean
+  //   x=−6,  w=7.0, glow 3.30    200     94    170              101
+  //   x=−9,  w=8.2, glow 7.6     199     76    156               82
+  //
+  // Same peak, and eighteen per cent less word under it: the glow can drive the
+  // brightest pixel up the ceiling but cannot drag the body of the letters with it
+  // through that much air. So −6 stands, and the two layouts −9 was bought for —
+  // 568×320 and portrait — are served by the no-clipped-word rule instead.
+  //
   // ⚠️ The corridor DISTANCE (signAt, z) is untouched. This is sideways only: the word
   // does not come closer, and is not allowed to. Sideways costs light all the same —
   // see signGlow, where the bill is itemised.
-  signX: -9,           // across the corridor — out from under the corner chrome
+  signX: -6,           // across the corridor — out from under the corner chrome
   // HEIGHT. Back where v4 left it, and now for a different reason: with the sign out
   // from under the buttons, the chrome no longer has an opinion about its height at
   // all. What is left is the frame's own top edge, and 0.6 keeps thirty-odd pixels of
   // it. The 12.09 answer of −0.35 was the height the buttons forced when the word was
   // still under them; nothing forces it now.
   signY: 0.6,          // height — clear of the frame's top edge, chrome not involved
-  // Real world width, at full size. 8.2, up from the 5.4 it held on the axis, and the
+  // Real world width, at full size. 7.0, up from the 5.4 it held on the axis, and the
   // increase is the PRICE OF THE SIDEWAYS MOVE, not a change of mind about size: a
   // word pushed off the view axis is seen more obliquely, and is further away, so the
   // same object reads narrower. Each step of the move had to be paid for:
   //   x = 0,  w = 5.4 → 18.0 % of the reference frame
   //   x = −6, w = 5.4 → 13.7 %     … w = 7.0 → 17.4 %
-  //   x = −9, w = 5.4 → 12.4 %     … w = 8.2 → 17.7 %
+  //   x = −9, w = 5.4 → 12.4 %     … w = 8.2 → 17.7 %   (measured back out — see signX)
   //
   // ⚠️ "At full size": the word is no longer one fixed size in every layout — see the
   // fit rule, which is what carries this size onto the screens it will not fit.
-  signWidth: 8.2,
+  signWidth: 7.0,
   signDepth: 0.17,     // real thickness — the bevels are what catch the light
 
   // ── the fit rule ──
