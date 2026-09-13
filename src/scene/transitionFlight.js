@@ -212,10 +212,20 @@ export const FLIGHT = {
   signSideBand: 1.6,   // world units either side of the sign's own plane over which
   //                      the two halves hand over — see applySignOpacity
   signOpacity: 1.0,    // at the top of the title beat
-  signRest: 0.94,      // …and the rest of the time. A FLOOR, not a fade: the sign is
+  signRest: 1.0,       // …and the rest of the time. A FLOOR, not a fade: the sign is
   //                      a landmark standing in the world and it is meant to be
   //                      findable from BOTH ends of the corridor, so nothing dims it
   //                      but the distance falloff every other object answers to.
+  //                      ⚠️ 13.09.2026 this floor reached the top, so the title
+  //                      beat's opacity swell is now FLAT — signIn / signHold /
+  //                      signOpacity still shape it, they just have nothing left to
+  //                      shape. That is the right way round for this object: a lit
+  //                      solid sign that the corridor shows through is not a sign,
+  //                      and the six per cent it used to let through was both a
+  //                      light leak and a colour one (whatever passed behind the
+  //                      word — a lamp cone, the fighter's core — bled into it).
+  //                      The light it gives back is taken off signGlow below, so the
+  //                      word reads the same and burns less hard underneath.
 
   // ── how bright the sign burns ──
   // WHAT the sign is made of is in sceneTokens (MATERIALS.sign): a cold white
@@ -225,11 +235,28 @@ export const FLIGHT = {
   //
   // The ceiling is not taste: FIGHT is the anchor of the home screen and the word is
   // a landmark behind it, so the word's peak has to sit a clear margin below FIGHT's
-  // (the owner's band: at least a third). Measured on a phone-sized frame, home,
-  // landscape: FIGHT peaks at ≈246 and the word at ≈150 — 39 % under, inside the band
-  // with room to spare, and still well clear of the ≈8 the empty sky sits at.
-  // Raising this is a framing change, not a polish knob: check FIGHT again after.
-  signGlow: 1.0,       // multiplies MATERIALS.sign.emissiveIntensity
+  // (the owner's band: at least a third). FIGHT peaks at ≈246, so the word may not
+  // pass ≈164, and this number is what holds it there.
+  //
+  // ⚠️ THE WORD IS AT ITS CEILING. It cannot be made brighter in the start frame.
+  // The reason it looked nearly black there was never the material: at the start
+  // frame the sign stands 22.7 units out and the home's falloff runs 14 → 26, so
+  // 67 % of its light has been replaced by sky before it reaches the camera. That
+  // is the whole difference between this frame and any closer view of it, it was
+  // confirmed by measuring the falloff at the sign's own distance, and the fog is
+  // out of bounds by instruction. What DID fix the reading was making the word
+  // bigger, lifting it and taking it out of the haze — mean brightness in the start
+  // frame went 78.5 → 108 on those three changes alone, all under the same ceiling.
+  //
+  // Peak and mean move together here (checked: shifting brightness between the
+  // emissive and the hall response, and flattening roughness and metalness, changes
+  // both by the same factor — the word has no dark faces left to recover). So the
+  // cap on the peak is a cap on how bright the word can read, full stop. Raising it
+  // means raising the ceiling, which is the owner's call, not a polish knob.
+  signGlow: 0.80,      // multiplies MATERIALS.sign.emissiveIntensity. With the sign
+  //                      now fully opaque this lands the start-frame peak at 159
+  //                      against FIGHT's 246 — 35 % under, inside the band with
+  //                      margin for the run-to-run spread.
 
   // ── the contact stutters ──
   // The word flickers like a sign with a bad contact, and it flickers with EXACTLY
