@@ -166,7 +166,7 @@ export const FLIGHT = {
   // from the home, which must keep working). So the sign has walked up the corridor
   // to where the home's own air still lets it through, and grown to hold its size in
   // frame from further away at the other end.
-  signAt: 0.30,        // where along the corridor it stands (0 = home, 1 = the plates)
+  signAt: 0.50,        // where along the corridor it stands (0 = home, 1 = the plates)
   // HEIGHT is set by the home frame, and there is only one direction it can go. The
   // home camera looks DOWN at the slab (it sits at 5.2 and aims at 1.6), so anything
   // standing up in the corridor rides the top edge of that frame — at 3.4 the word
@@ -177,8 +177,8 @@ export const FLIGHT = {
   // home's off-centre camera — at 2.2 the word ran underneath them and off the right
   // edge. 1.7 sits the whole word below that chrome, still ≈4.5 under the flight's
   // arc, and still above the home's own silhouette when the player turns round.
-  signY: 1.7,          // height — clear of the camera's arc, above the plate plane
-  signWidth: 5.0,      // real world width. It is an object: ONE size, no rescaling.
+  signY: 0.2,          // height — clear of the camera's arc, above the plate plane
+  signWidth: 3.6,      // real world width. It is an object: ONE size, no rescaling.
   signDepth: 0.17,     // real thickness — the bevels are what catch the light
   // Цвета здесь нет намеренно: настроечный блок сцены держит движение и
   // размеры, а краску — src/data/sceneTokens.js (MATERIALS.sign = --ink).
@@ -217,8 +217,8 @@ export const FLIGHT = {
   // to end and the shape only gives way in the last fifth, where it dissolves rather
   // than stops. Everything below is in EM — the sign's own units, cap height 1 — so
   // the bank keeps its proportions whatever size or distance the sign is set to.
-  cloudCount: 2000,    // grains at full quality …
-  cloudCountLow: 720,  // …and once the frame watchdog has seen this device stall.
+  cloudCount: 2400,    // grains at full quality …
+  cloudCountLow: 880,  // …and once the frame watchdog has seen this device stall.
   //                      Never zero: a word with no footing reads as a fault.
   cloudGrain: 0.40,    // grain diameter, in cap heights. Big enough that the grains
   //                      merge into haze instead of reading as grit on the letters
@@ -240,8 +240,11 @@ export const FLIGHT = {
   //                      both in front of them and behind — the feet are wrapped,
   //                      not curtained
   cloudTint: 0x1e1e24, // the densest the bank is ever allowed to be (owner, 13.09)
-  cloudAlpha: 0.26,    // one grain's share — the mass comes from overlap, not from
-  //                      any single grain being visible on its own
+  cloudAlpha: 0.34,    // one grain's share — the mass comes from overlap, not from
+  //                      any single grain being visible on its own. Overlap can only
+  //                      ever converge ON the tint, never past it, so the ceiling
+  //                      above is structural: raising this makes the bank reach its
+  //                      cap sooner, it cannot make it brighter than the cap.
   cloudTurn: 0.010,    // rad/s — a whole turn takes ten minutes. Rigid, so it cannot
   //                      open a seam; off under reduced motion.
 
