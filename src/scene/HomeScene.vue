@@ -92,6 +92,7 @@ let stage = 'home';    // the stage the camera is actually ON (props.stage is th
 let modeIdleSince = null; // clock time the mode-stage orbit went idle (auto-return)
 let modeReturning = false;
 let modeHomePose = null;  // the default mode framing, for the idle auto-return
+let lastFitPanel = null;  // last measured top chrome — see signFitPanel
 let reduced = false;
 // Initial 3/4 camera placement; OrbitControls derives azimuth/polar/distance
 // from this + the target (the fighter) on first update().
@@ -481,6 +482,78 @@ function homeFraming() {
 }
 
 function poseFor(where) { return where === 'mode' ? modeFraming() : homeFraming(); }
+
+// ── the HEXLASH sign's fit rule: what the scene owes it ───────────────────────
+// The rule itself lives in transitionFlight.js; what it cannot know from in there
+// is the viewport, the chrome over the corridor, and which pose to judge by. All
+// three are gathered here and handed over — at build, and on every resize.
+
+/**
+ * The pose the fit is measured at: the home start framing, fixed.
+ *
+ * Deliberately NOT poseFor('home'), which aims at the fighter — the fighter wanders,
+ * and a fit measured through him would have the word resizing itself all day. This is
+ * the framing the screen opens on, and the one the sign is checked against.
+ */
+function signFitPose() {
+  return {
+    position: CAM_BASE,
+    target: new THREE.Vector3(0, (arenaRefs ? arenaRefs.topY : 0.5) + 1.1, 0),
+  };
+}
+
+/**
+ * The top chrome's box, in CANVAS coordinates.
+ *
+ * Measured off the live elements rather than copied out of home.css as a number: the
+ * panel is CSS and the word is geometry, the only thing the two share is the screen,
+ * and a number copied across goes stale the first time the chrome is restyled.
+ *
+ * The BUTTONS, not the strip around them. A strip is full-bleed and a cluster has air
+ * in it, and air cannot collide with anything — measuring either would have the word
+ * ducking a panel that is not over it. Filtered to the top band, because the same
+ * class dresses a full-height dock down the side that sits behind the slab and is not
+ * what "заходит под верхнюю панель" is about.
+ *
+ * And the LAYOUT box, not getBoundingClientRect. The chrome slides in on entry and
+ * fades away for the flight, so its drawn rect is twenty pixels off its settled place
+ * for the first second of the session — long enough for the fit to be computed
+ * against it and never corrected, which is precisely what happened on the first pass
+ * here. The layout box is the same from the first frame and does not answer to
+ * transforms, and where the chrome LIVES is what the word has to keep clear of.
+ */
+function layoutBox(el) {
+  let x = 0;
+  let y = 0;
+  for (let n = el; n; n = n.offsetParent) { x += n.offsetLeft; y += n.offsetTop; }
+  return { x, y, w: el.offsetWidth, h: el.offsetHeight };
+}
+
+function signFitPanel() {
+  const cv = canvasEl.value;
+  if (!cv) return lastFitPanel;
+  const c = layoutBox(cv);
+  const spans = [];
+  let bottom = 0;
+  for (const el of document.querySelectorAll('.hs-strip .hs-chrome')) {
+    const b = layoutBox(el);
+    if (b.w < 4 || b.h < 4) continue;                      // hidden / not laid out yet
+    if (b.y + b.h - c.y > c.h * 0.35) continue;            // the side dock, not the top bar
+    spans.push([b.x - c.x, b.x + b.w - c.x]);
+    bottom = Math.max(bottom, b.y + b.h - c.y);
+  }
+  // Arrange mode takes the strip out of the tree altogether. A resize in there would
+  // otherwise find no panel, conclude there was nothing to duck, and hand back a
+  // full-size word that nothing would correct on the way out. The chrome is coming
+  // back to where it was, so the last place it lived is the honest answer.
+  if (spans.length) lastFitPanel = { bottom, spans };
+  return lastFitPanel;
+}
+
+function refitSign() {
+  if (!flight || !viewW || !viewH) return null;
+  return flight.fitSign({ width: viewW, height: viewH }, signFitPanel(), signFitPose());
+}
 
 // Hand the orbit back to the player at the home stage: pivot on the fighter, the
 // original wide corridor, no azimuth limit.
@@ -954,6 +1027,7 @@ onMounted(() => {
   //     camera passes through and the HEXLASH sign standing in the corridor.
   flight = createTransitionFlight({ scene, camera, poseFor, reduced });
   flight.setLookHint(controls.target);
+  refitSign();
   load.stage('stages');
 
   // Orbit start/end also stamps the mode stage's idle clock (the auto-return).
@@ -1082,6 +1156,9 @@ onMounted(() => {
     // and re-frames it. Mid-flight the director re-aims itself (it watches poseFor),
     // so only the standing case is handled here.
     modePlates?.layout(camera.aspect);
+    // The word in the corridor is sized by what the frame and the chrome leave it, so
+    // a new viewport is exactly when it gets re-fitted — and the only time it does.
+    refitSign();
     // We just moved the picture under ourselves — the settled-frame count has to
     // start again, or the screen could lift on a frame that is about to change.
     load?.unsettle();
