@@ -308,12 +308,31 @@ export const FLIGHT = {
   // Peak and mean move together here (checked: shifting brightness between the
   // emissive and the hall response, and flattening roughness and metalness, changes
   // both by the same factor — the word has no dark faces left to recover). So the
-  // cap on the peak is a cap on how bright the word can read, full stop. Raising it
-  // means raising the ceiling, which is the owner's call, not a polish knob.
-  signGlow: 0.80,      // multiplies MATERIALS.sign.emissiveIntensity. With the sign
-  //                      now fully opaque this lands the start-frame peak at 159
-  //                      against FIGHT's 246 — 35 % under, inside the band with
-  //                      margin for the run-to-run spread.
+  // cap on the peak is a cap on how bright the word can read, full stop.
+  //
+  // ⚠️ 13.09.2026 — the ceiling was raised by the owner from "a third under FIGHT" to
+  // "no more than 85 % of it", and this knob went 0.80 → 3.30 to use it. The jump is
+  // bigger than the ceiling change alone, because the sideways move (signX) cost the
+  // word half its light on the way: at x = 0 it stood 22.7 units out and the home's
+  // falloff runs 14 → 26, leaving 27 % of its light; at x = −6 it stands 24.4 out and
+  // keeps 13 %. Measured at 844×390, start frame:
+  //
+  //                          peak    mean
+  //   x=0,  w=5.4, glow 0.80  163     112     ← before the move
+  //   x=−6, w=7.0, glow 0.80  111      55     ← the move, unchanged light
+  //   x=−6, w=7.0, glow 3.30  200      93     ← here
+  //
+  // So most of this is buying back what the move spent, and even at the new ceiling
+  // the word's MEAN is still under what it was on the axis. Fog and distance were out
+  // of bounds by instruction, which leaves the word's own light as the only lever.
+  //
+  // The level is set by the ceiling and nothing else: 3.30 lands the start-frame peak
+  // at 81 % of the FIGHT button on the phone reference and 79 % on the owner's 1920,
+  // against a ceiling of 85 %. The four points either side, same frame:
+  //   2.00 → 66 % · 2.60 → 74 % · 3.00 → 78 % · 3.50 → 83 % · 4.00 → 88 % ✗
+  // The run-to-run spread on the peak is about ±3 percentage points (dust crossing
+  // the letters), which is what the four points of margin are for.
+  signGlow: 3.30,      // multiplies MATERIALS.sign.emissiveIntensity
 
   // ── the contact stutters ──
   // The word flickers like a sign with a bad contact, and it flickers with EXACTLY
