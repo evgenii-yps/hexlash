@@ -1362,15 +1362,20 @@ export function createTransitionFlight(deps) {
     // hanging along the top edge of a mostly empty frame.
     const midY = THREE.MathUtils.lerp(p1.y, to.position.y, 0.5) + o.midLift;
     const p2 = new THREE.Vector3(THREE.MathUtils.lerp(p1.x, to.position.x, 0.6), midY, midZ);
-    // Mid-corridor look point: the sign itself, wherever it stands. Aiming the middle
-    // of the look path at it composes the title beat on it for free, and the camera's
-    // own arc humps well above it, so it passes over, not through.
+    // Mid-corridor look point: a point on the CORRIDOR'S AXIS at the sign's depth —
+    // deliberately not the sign itself.
     //
-    // ⚠️ Since 13.09.2026 the sign is OFF the corridor axis (signX), so this point is
-    // off it too and the beat pans further sideways than it used to. That is the beat
-    // following the word, which is what it is for; the arc above is unchanged, and so
-    // is the duration — the curve changes shape, not length in time.
-    const l2 = sign.group.position.clone();
+    // It used to be the sign, which was free while the sign stood on the axis and
+    // became expensive the moment it did not: aiming the middle of a two-second look
+    // path nine units off to one side and back took the peak turn rate from 53 to
+    // 89 °/s. That is the beat whipping to keep a landmark centred, and it would have
+    // to be re-tuned every time the landmark moved again.
+    //
+    // Aimed at the axis, the flight and the sign's position are no longer each other's
+    // business. The beat frames the corridor it is flying down; the sign stands beside
+    // it and is read in passing, which is what a sign in a corridor is for. The arc
+    // still humps above, so the camera passes over rather than through.
+    const l2 = new THREE.Vector3(0, o.signY, -o.modeZ * o.signAt);
 
     const back = _p.copy(to.position).sub(to.target);
     back.y = 0;
