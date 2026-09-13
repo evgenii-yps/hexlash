@@ -190,6 +190,25 @@ export const FLIGHT = {
   //    −9    −8.28    7.11      20.8
   //
   // 0.3333 · 30 = 10. A third of the way down the corridor rather than half.
+  //
+  // ⚠️ AND IT IS ALSO WHAT FIXED THE MODE SCREEN, which was asked for as a separate
+  // job and turned out not to need one. At half the corridor the sign stood level
+  // with the plates and read as standing ON them — the word over FORGE, across the
+  // mentor. Brought back to a third it is far behind them again, and passes above
+  // their silhouettes instead of through them.
+  //
+  // Measured, not eyeballed, and on silhouettes rather than boxes: three frames per
+  // pose — everything / sign hidden / sign and plates hidden — so the word's own
+  // pixels and the stage's own pixels are both exact, and a button is not mistaken
+  // for a plate. Per column, the word's lowest pixel against the stage's topmost.
+  // Over the whole camera envelope the player can reach there (azimuth × polar 60-86°
+  // × zoom 5.6-12.8, 900 poses), the worst overlap anywhere is 8 px deep across 2
+  // columns — 0.4 % of the word — at full zoom-in with the camera almost level, where
+  // the word hangs in the gap between the two plates and grazes FORGE's top edge.
+  // At the default framing the word never shares a column with the stage at all.
+  //
+  // So no height change was made. The brief's remedy was "raise it", and raising it
+  // would have had to be paid for at home, where the chrome is overhead.
   signAt: 0.3333,      // where along the corridor it stands (0 = home, 1 = the plates)
   // WHERE ACROSS the corridor it stands — and this is the one that was wrong for a
   // week. The sign sat on the corridor's own axis, x = 0, which sounds like the only
