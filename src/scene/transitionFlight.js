@@ -194,18 +194,28 @@ export const FLIGHT = {
   // be chosen for the worst phone. What the height IS still chosen for is 844×390,
   // the one layout that has promised not to shrink — see signY.
   //
-  // ⚠️ 13.09.2026: asked to be raised again, and it CANNOT BE — not by any amount
-  // that shows. At 844×390 the top of the letters lands exactly on the 20 px guard
-  // at this height, so every step up is a step the fit rule takes straight back out
-  // as a shrink. And it takes it out from underneath: the word is scaled about its
-  // feet, so a raised-then-shrunk word has its cap on the very same guard line as an
-  // unraised one, and is smaller. Raising is not a trade here, it is a loss:
-  //   y=0.60 → full size, cap on the guard
-  //   y=0.67 → shrunk 5.8 %, cap on the same guard, word 6 % smaller
-  // The height is therefore back where v4 left it, deliberately. What the guard is
+  // ⚠️ 13.09.2026 — this went DOWN, not up, and the measurement is why.
+  //
+  // Asked to be raised. It cannot be raised; it had to come down about a unit. Two
+  // findings underneath that, both of them measured:
+  //
+  // 1. Every earlier reading of this clearance was taken at a framing the player
+  //    never gets. The harness aimed the camera at the middle of the slab; the home
+  //    camera aims at the FIGHTER, who starts a unit further forward. One unit of
+  //    pivot tips the view by 2.3° and lifts everything twenty-odd screen pixels —
+  //    so the "22 px of air" this height was chosen for was a fiction. At the framing
+  //    the screen actually opens on, the word at this size runs UP BEHIND the chrome:
+  //      y=0.60, full size → cap at 55 px, the panel's lower edge at 59. Four pixels
+  //      of the word are behind the buttons, and the guard is 24 px short.
+  // 2. Once that is measured honestly, the height that clears the 20 px guard at full
+  //    size on 844×390 is −0.35, and the gap either side of it is a pixel per
+  //    0.04 units: y=−0.30 → −1.0 px, y=−0.35 → +0.2 px, y=−0.40 → +1.5 px.
+  //
+  // So "as high as the fit rule allows" resolves to −0.35, and the answer to "raise
+  // it" is that the room it would need is not there and never was. What the guard is
   // measured against also changed: the letters' true cap, bevel included (capY, read
   // off the built geometry), not the em box it stands in.
-  signY: 0.60,         // height — the top of the 20 px guard at 844×390, full size
+  signY: -0.35,        // height — the top of the 20 px guard at 844×390, full size
   // Real world width, at full size. Read as a share of frame width it is 17.2 % at
   // 844×390 (the phone-landscape reference the owner sizes against, band 16–18 %),
   // and more on squarer screens — 23 % at 1440×900 — because a narrower horizontal
@@ -1006,12 +1016,14 @@ export function createTransitionFlight(deps) {
   // makes that ratio slightly off — the point is at a different depth once it moves
   // — so it is iterated, and it converges in two passes.
   //
-  // It is measured at ONE pose, handed in by the scene: the home start framing,
-  // aimed at the slab centre and NOT at the fighter, because the fighter wanders
-  // and a fit that answered to it would make the word breathe all day. And it is
-  // recomputed only on a viewport change, so it is never a thing that happens while
-  // the player is looking.
-  const _fitCam = new THREE.PerspectiveCamera();
+  // It is measured against a SET of poses, handed in by the scene, and the word is
+  // sized so that it fits at every one of them. One pose would not do: the home
+  // camera trails the wandering fighter within a dead-zone, so the word slides across
+  // the frame all day — measured at the middle of that drift it would duck under the
+  // chrome at the ends of it. The set is the corners of the drift, so the answer holds
+  // wherever the fighter has got to. And it is still computed only on a viewport
+  // change: the word does not resize as the camera drifts, it is sized for the worst
+  // of the drift once and left alone.
   const _fitV = new THREE.Vector3();
 
   /**
@@ -1037,11 +1049,11 @@ export function createTransitionFlight(deps) {
     sign.group.updateMatrixWorld(true);
   }
 
-  /** A point of the sign's own space → screen px under the fit camera. */
-  function fitToScreen(x, y, z, vw, vh) {
+  /** A point of the sign's own space → screen px under a given fit camera. */
+  function fitToScreen(cam, x, y, z, vw, vh) {
     _fitV.set(x, y, z);
     sign.group.localToWorld(_fitV);
-    _fitV.project(_fitCam);
+    _fitV.project(cam);
     return { x: (_fitV.x * 0.5 + 0.5) * vw, y: (-_fitV.y * 0.5 + 0.5) * vh };
   }
 
@@ -1059,13 +1071,13 @@ export function createTransitionFlight(deps) {
    *              air between them, and the air cannot collide with anything
    * @returns screen y, or null when no part of the cap passes under any of them
    */
-  function capTopOver(spans, vw, vh) {
+  function capTopOver(cam, spans, vw, vh) {
     const hw = sign.emWidth / 2;
     const hz = o.signDepth / 2;
     let top = null;
     for (const z of [hz, -hz]) {     // front and back cap edges — either can be higher
-      const a = fitToScreen(-hw, sign.capY, z, vw, vh);
-      const b = fitToScreen(hw, sign.capY, z, vw, vh);
+      const a = fitToScreen(cam, -hw, sign.capY, z, vw, vh);
+      const b = fitToScreen(cam, hw, sign.capY, z, vw, vh);
       const lo = Math.min(a.x, b.x);
       const hi = Math.max(a.x, b.x);
       const span = b.x - a.x;
@@ -1084,12 +1096,12 @@ export function createTransitionFlight(deps) {
   }
 
   /** Screen box of the letters — all eight corners, since the word is turned. */
-  function letterBox(vw, vh) {
+  function letterBox(cam, vw, vh) {
     const hw = sign.emWidth / 2;
     const hz = o.signDepth / 2;
     let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
     for (const sx of [-hw, hw]) for (const sy of [-0.5, sign.capY]) for (const sz of [-hz, hz]) {
-      const p = fitToScreen(sx, sy, sz, vw, vh);
+      const p = fitToScreen(cam, sx, sy, sz, vw, vh);
       if (p.x < x0) x0 = p.x;
       if (p.x > x1) x1 = p.x;
       if (p.y < y0) y0 = p.y;
@@ -1107,19 +1119,14 @@ export function createTransitionFlight(deps) {
    * it shrinks toward is off the frame too. The rule declines to grind such a word
    * down to a dot chasing a frame it was never in; that case is reported, not fudged.
    */
-  function edgeShrink(b, P, vw, vh) {
-    let k = 1;
-    const pull = (have, want, pivot) => {
-      const d = have - pivot;
-      if (Math.abs(d) < 1e-6) return;
-      const r = (want - pivot) / d;
-      if (r > 0 && r < k) k = r;
-    };
-    if (b.x0 < 0 && b.x0 < P.x && P.x > 0) pull(b.x0, 0, P.x);
-    if (b.x1 > vw && b.x1 > P.x && P.x < vw) pull(b.x1, vw, P.x);
-    if (b.y0 < 0 && b.y0 < P.y && P.y > 0) pull(b.y0, 0, P.y);
-    if (b.y1 > vh && b.y1 > P.y && P.y < vh) pull(b.y1, vh, P.y);
-    return k;
+  function edgeOk(b, P, vw, vh) {
+    // Shrinking pulls the word toward the pivot, so it can only fetch a word back
+    // into frame if the pivot is IN the frame. Where it is not — portrait, where the
+    // word's own middle is off the right edge — shrinking pushes the visible part off
+    // instead of pulling the rest on, and the honest answer is that size is not the
+    // problem. Left alone and reported.
+    if (P.x < 0 || P.x > vw || P.y < 0 || P.y > vh) return true;
+    return b.x0 >= 0 && b.x1 <= vw && b.y0 >= 0 && b.y1 <= vh;
   }
 
   /**
@@ -1128,25 +1135,26 @@ export function createTransitionFlight(deps) {
    * @param view  { width, height } of the canvas, CSS px
    * @param panel { bottom, spans } of the top chrome IN CANVAS COORDINATES, or null
    *              when there is no panel over the word (then only the frame binds)
-   * @param pose  { position, target } the fit is measured at — a FIXED pose, please
+   * @param poses [{ position, target }, …] every framing the word has to survive —
+   *              FIXED ones, please, not whatever the camera is doing this frame
    * @returns a small report — the scale it settled on and why (the scene stashes it
    *          for the dev readout; nothing in the render path reads it)
    */
-  function fitSign(view, panel, pose) {
+  function fitSign(view, panel, poses) {
     const vw = view && view.width;
     const vh = view && view.height;
     const full = o.signWidth / sign.emWidth;
-    if (!vw || !vh || !pose) return { scale: signScale, of: signScale / full, why: 'no view' };
+    const list = Array.isArray(poses) ? poses : (poses ? [poses] : []);
+    if (!vw || !vh || !list.length) return { scale: signScale, of: signScale / full, why: 'no view' };
 
-    _fitCam.fov = camera.fov;
-    _fitCam.near = camera.near;
-    _fitCam.far = camera.far;
-    _fitCam.aspect = vw / vh;
-    _fitCam.up.copy(camera.up);
-    _fitCam.position.copy(pose.position);
-    _fitCam.lookAt(pose.target);
-    _fitCam.updateMatrixWorld(true);
-    _fitCam.updateProjectionMatrix();
+    const cams = list.map((p) => {
+      const c = new THREE.PerspectiveCamera(camera.fov, vw / vh, camera.near, camera.far);
+      c.up.copy(camera.up);
+      c.position.copy(p.position);
+      c.lookAt(p.target);
+      c.updateMatrixWorld(true);
+      return c;
+    });
 
     const need = panel && panel.spans && panel.spans.length
       ? panel.bottom + o.signFitGapPx
@@ -1164,16 +1172,12 @@ export function createTransitionFlight(deps) {
      */
     function fits(v) {
       applyFitScale(v);
-      if (need !== null) {
-        const top = capTopOver(panel.spans, vw, vh);
-        if (top !== null && top < need) return false;
-      }
-      const b = letterBox(vw, vh);
-      // Cut by an edge — and only where the word is PARTLY inside the frame. A word
-      // entirely off the frame is not cut, it is elsewhere, and shrinking will not
-      // fetch it back because the point it shrinks toward is off the frame too.
-      if (b.x1 > 0 && b.x0 < vw && b.y1 > 0 && b.y0 < vh) {
-        if (b.x0 < 0 || b.x1 > vw || b.y0 < 0 || b.y1 > vh) return false;
+      for (const c of cams) {
+        if (need !== null) {
+          const top = capTopOver(c, panel.spans, vw, vh);
+          if (top !== null && top < need) return false;
+        }
+        if (!edgeOk(letterBox(c, vw, vh), fitToScreen(c, 0, -0.5, 0, vw, vh), vw, vh)) return false;
       }
       return true;
     }
@@ -1210,8 +1214,8 @@ export function createTransitionFlight(deps) {
       of: s / full,
       why,
       need,
-      capTop: need !== null ? capTopOver(panel.spans, vw, vh) : null,
-      box: letterBox(vw, vh),
+      capTop: need !== null ? capTopOver(cams[0], panel.spans, vw, vh) : null,
+      box: letterBox(cams[0], vw, vh),
       view: `${vw}x${vh}`,
     };
   }

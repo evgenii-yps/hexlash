@@ -489,17 +489,27 @@ function poseFor(where) { return where === 'mode' ? modeFraming() : homeFraming(
 // three are gathered here and handed over — at build, and on every resize.
 
 /**
- * The pose the fit is measured at: the home start framing, fixed.
+ * The framing the fit is measured at: the one the screen OPENS on.
  *
- * Deliberately NOT poseFor('home'), which aims at the fighter — the fighter wanders,
- * and a fit measured through him would have the word resizing itself all day. This is
- * the framing the screen opens on, and the one the sign is checked against.
+ * CAM_BASE aimed where the pivot is set at build — the fighter's starting spot on the
+ * seam, (0, slab + 1.1, 1.0). Not poseFor('home'), which is wherever the camera has
+ * drifted to this frame: the word must not resize itself all day.
+ *
+ * ⚠️ And not the drift envelope either, which was tried and measured and does not
+ * work. This camera does not hold still: the pivot trails the wandering fighter by up
+ * to a unit either way (followFighter), it auto-orbits until the player first touches
+ * it (controls.autoRotate), and after that the player owns it outright. A unit of
+ * pivot at this distance swings the word some sixty screen pixels — against a word
+ * forty-six pixels tall and a guard of twenty. Sizing for the worst corner of that
+ * drift left the word at five per cent of the frame on every layout, which is not a
+ * word. So the guard is held at the frame the screen opens on, and the drift is what
+ * it always was: the word rides up and down under the chrome as the camera moves.
+ * A camera the player can spin cannot be promised a clearance at every angle by any
+ * size at all — what it can be promised is the frame it opens on.
  */
-function signFitPose() {
-  return {
-    position: CAM_BASE,
-    target: new THREE.Vector3(0, (arenaRefs ? arenaRefs.topY : 0.5) + 1.1, 0),
-  };
+function signFitPoses() {
+  const y = (arenaRefs ? arenaRefs.topY : 0.5) + 1.1;
+  return [{ position: CAM_BASE, target: new THREE.Vector3(0, y, 1.0) }];
 }
 
 /**
@@ -552,7 +562,7 @@ function signFitPanel() {
 
 function refitSign() {
   if (!flight || !viewW || !viewH) return null;
-  return flight.fitSign({ width: viewW, height: viewH }, signFitPanel(), signFitPose());
+  return flight.fitSign({ width: viewW, height: viewH }, signFitPanel(), signFitPoses());
 }
 
 // Hand the orbit back to the player at the home stage: pivot on the fighter, the
