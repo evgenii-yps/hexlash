@@ -170,18 +170,42 @@ export const FLIGHT = {
   // to where the home's own air still lets it through, and grown to hold its size in
   // frame from further away at the other end.
   signAt: 0.50,        // where along the corridor it stands (0 = home, 1 = the plates)
-  // HEIGHT is set by the home frame, and there is only one direction it can go. The
-  // home camera looks DOWN at the slab (it sits at 5.2 and aims at 1.6), so anything
-  // standing up in the corridor rides the top edge of that frame — at 3.4 the word
-  // was cut in half by it. Moving the sign further out does not help: the look axis
-  // keeps descending with distance, so the angle up to the sign barely changes. It
-  // has to come down. And it has to come down FAR enough to clear the top-right
-  // chrome (SHOP and the cabinet), which is where the corridor axis lands from the
-  // home's off-centre camera — at 2.2 the word ran underneath them and off the right
-  // edge. 1.7 sits the whole word below that chrome, still ≈4.5 under the flight's
-  // arc, and still above the home's own silhouette when the player turns round.
-  signY: 0.2,          // height — clear of the camera's arc, above the plate plane
-  signWidth: 3.6,      // real world width. It is an object: ONE size, no rescaling.
+  // HEIGHT and SIZE are ONE decision, not two, and the thing that decides them is
+  // the top-right chrome (SHOP + the cabinet). The home camera looks DOWN at the slab
+  // (it sits at 5.2 and aims at 1.6), so the corridor rides the TOP of that frame and
+  // lands under exactly that chrome — the camera is off-centre in +X, so the corridor
+  // axis leaves frame centre to the right. Raising the sign walks it up into the
+  // chrome; enlarging it does the same from the other side. There is one budget and
+  // both spend it.
+  //
+  // Measured (letter pixels against the chrome's bottom edge, start frame, word at
+  // this size). Clearance in screen px:
+  //
+  //                     y=0.2   y=0.6   y=0.9   y=1.2
+  //   568×320             8       0      -15     —      ← oldest phone, landscape
+  //   667×375            19      10        3     —
+  //   740×360            —       10        3     -13
+  //   844×390            32      22       14       6
+  //   932×430            —       31       22      13
+  //   1440×900           —      128      110      92
+  //
+  // So the lift is capped by the smallest landscape phone, not by taste. 0.6 keeps
+  // ten screen pixels clear on every current phone and hands the word a real lift:
+  // it now hangs about four fifths of its own cap height above the corridor plane
+  // instead of sitting on it. ⚠️ On 568×320 the gap closes to zero — that layout is
+  // the one place this size and this height cannot both be had, and it is the fork
+  // to take back to the owner rather than shave either number on a hunch.
+  //
+  // ⚠️ Do not raise either number without re-running that table. The two move
+  // together and the chrome does not.
+  signY: 0.6,          // height — clear of the chrome, clear of the camera's arc
+  // Real world width. It is an object: ONE size, no rescaling. Read as a share of
+  // frame width it is 17.2 % at 844×390 (the phone-landscape reference the owner
+  // sizes against, band 16–18 %), and more on squarer screens — 23 % at 1440×900 —
+  // because a narrower horizontal field makes the same object a bigger share of it.
+  // The corridor DISTANCE is deliberately untouched: the word grows, it does not
+  // come closer. Closer is what it was pulled back from this morning.
+  signWidth: 5.4,
   signDepth: 0.17,     // real thickness — the bevels are what catch the light
   // Цвета здесь нет намеренно: настроечный блок сцены держит движение и
   // размеры, а краску — src/data/sceneTokens.js (MATERIALS.sign = --ink).
