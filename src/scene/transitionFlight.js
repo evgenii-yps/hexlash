@@ -157,14 +157,38 @@ export const FLIGHT = {
   // The camera passes well ABOVE it on the way out (the arc humps over the corridor),
   // so it can never be flown through and never needs to blink out to get out of the
   // way — it simply swings past and is left behind.
-  signAt: 0.55,        // where along the corridor it stands (0 = home, 1 = the plates)
-  signY: 3.4,          // height — clear of the camera's arc, above the plate plane
-  signWidth: 3.6,      // real world width. It is an object: ONE size, no rescaling.
+  // WHERE it stands is now set by READABILITY FROM THE HOME, not by the middle of
+  // the corridor. The home's own falloff runs 14 → 27, so at the old 0.55 (≈23.7
+  // units out) three quarters of the word had already been replaced by the sky: even
+  // pure white came out at about a fifth of its brightness — a grey smudge, whatever
+  // colour it was painted. Nothing but DISTANCE fixes that, and buying it by
+  // thinning the fog is not on the table (it is the same curve that hides the plates
+  // from the home, which must keep working). So the sign has walked up the corridor
+  // to where the home's own air still lets it through, and grown to hold its size in
+  // frame from further away at the other end.
+  signAt: 0.30,        // where along the corridor it stands (0 = home, 1 = the plates)
+  // HEIGHT is set by the home frame, and there is only one direction it can go. The
+  // home camera looks DOWN at the slab (it sits at 5.2 and aims at 1.6), so anything
+  // standing up in the corridor rides the top edge of that frame — at 3.4 the word
+  // was cut in half by it. Moving the sign further out does not help: the look axis
+  // keeps descending with distance, so the angle up to the sign barely changes. It
+  // has to come down. And it has to come down FAR enough to clear the top-right
+  // chrome (SHOP and the cabinet), which is where the corridor axis lands from the
+  // home's off-centre camera — at 2.2 the word ran underneath them and off the right
+  // edge. 1.7 sits the whole word below that chrome, still ≈4.5 under the flight's
+  // arc, and still above the home's own silhouette when the player turns round.
+  signY: 1.7,          // height — clear of the camera's arc, above the plate plane
+  signWidth: 5.0,      // real world width. It is an object: ONE size, no rescaling.
   signDepth: 0.17,     // real thickness — the bevels are what catch the light
   // Цвета здесь нет намеренно: настроечный блок сцены держит движение и
   // размеры, а краску — src/data/sceneTokens.js (MATERIALS.sign = --ink).
-  signOpacity: 0.95,   // at the top of the title beat
-  signRest: 0.82,      // …and once it is just a landmark you can turn round and see
+  signSideBand: 1.6,   // world units either side of the sign's own plane over which
+  //                      the two halves hand over — see applySignOpacity
+  signOpacity: 1.0,    // at the top of the title beat
+  signRest: 0.94,      // …and the rest of the time. A FLOOR, not a fade: the sign is
+  //                      a landmark standing in the world and it is meant to be
+  //                      findable from BOTH ends of the corridor, so nothing dims it
+  //                      but the distance falloff every other object answers to.
 
   // ── the sign's own cloud ──
   // The word does not hang in clean black: its bottom third is sunk in a low bank of
@@ -184,10 +208,10 @@ export const FLIGHT = {
   // ambient + hemisphere (see cloudLitRef) so that killing the lights kills it too.
   // Points are unlit by nature and would otherwise survive a lights-off check, which
   // would make the check worthless.
-  cloudCount: 900,     // grains at full quality …
-  cloudCountLow: 300,   // …and once the frame watchdog has seen this device stall.
+  cloudCount: 2900,     // grains at full quality …
+  cloudCountLow: 950,   // …and once the frame watchdog has seen this device stall.
   //                      Never zero: a word with no footing reads as a fault.
-  cloudGrain: 0.30,    // world diameter of one grain — big enough to have no edge
+  cloudGrain: 0.26,    // world diameter of one grain — big enough to have no edge
   cloudSink: 0.34,     // how much of the CAP HEIGHT the bank swallows (bottom third)
   cloudSpread: 0.62,   // horizontal half-extent, as a share of the sign's width …
   cloudDepth: 0.20,    // …and in depth. Enough volume to parallax, never a slab.
@@ -197,7 +221,7 @@ export const FLIGHT = {
   cloudLid: 0.62,      // the half above the core is squeezed by this: the letters
   //                      have to come out of the bank, not be buried by it
   cloudTint: 0x1e1e24, // the densest the bank is ever allowed to be (owner, 13.09)
-  cloudAlpha: 0.40,    // one grain's share — the mass comes from overlap, not from
+  cloudAlpha: 0.18,    // one grain's share — the mass comes from overlap, not from
   //                      any single grain being visible on its own
   // (the reference the lighting is weighed against is DERIVED from the hall's own
   //  ambient + hemisphere tokens — see litReference(). A number typed here would be
@@ -356,6 +380,15 @@ function glyphShape(g) {
 // occupy z ∈ [0, d/2] and z ∈ [-d/2, 0] — adjacent, never coincident, so nothing
 // double-blends while the sign fades; together they read as one solid slab whose
 // side walls run the full depth.
+//
+// The catch, and why each half carries its OWN material: HEXLASH is not a palindrome.
+// Reversed it is HSALXEH, whose letters fall in different places, so the two halves
+// do not share a silhouette and the far one is visible THROUGH the near one's gaps —
+// as pale strokes inside and between the letters, the mirrored X sitting across the
+// LA being the clearest of them. Depth cannot hide it: there is simply nothing in
+// front of those pixels to hide it behind. What does hide it is only ever drawing
+// the half that is facing the reader, so the far one is faded out by the side fade
+// in applySignOpacity.
 function buildSign(o) {
   const group = new THREE.Group();
   const shapes = [];
@@ -369,7 +402,7 @@ function buildSign(o) {
   }
   const emWidth = x - SIGN_TRACK;
 
-  const mat = new THREE.MeshStandardMaterial({
+  const makeMat = () => new THREE.MeshStandardMaterial({
     // MATTE, and the brand white — never a mid grey. Emissive is left at black and
     // blending at normal on purpose: the word must not light itself. Kill every
     // light in the scene and it goes black, which is the test for that.
@@ -388,6 +421,11 @@ function buildSign(o) {
     // so distance gets to. The cost at the title beat (~13 units) is a few per cent.
     fog: true,
   });
+  // ONE MATERIAL PER HALF, not one shared between them. The two halves have to be
+  // able to fade independently — see the side fade in applySignOpacity, which is
+  // what stops the far half showing through the near one's gaps.
+  const matFront = makeMat();
+  const matBack = makeMat();
 
   const half = o.signDepth / 2;
   const geos = [];
@@ -402,14 +440,18 @@ function buildSign(o) {
     geo = dropBackCap(geo, THREE); // open shell — see the helper
     geo.translate(s.x - emWidth / 2, -0.5, 0); // centre the word on its own origin
     geos.push(geo);
-    front.add(new THREE.Mesh(geo, mat));
-    back.add(new THREE.Mesh(geo, mat)); // same geometry, mirrored by the group's turn
+    front.add(new THREE.Mesh(geo, matFront));
+    back.add(new THREE.Mesh(geo, matBack)); // same geometry, mirrored by the group's turn
   }
   group.add(front, back);
 
   group.visible = false;
-  const dispose = () => { geos.forEach((g) => g.dispose()); mat.dispose(); };
-  return { group, mat, emWidth, dispose };
+  const dispose = () => {
+    geos.forEach((g) => g.dispose());
+    matFront.dispose();
+    matBack.dispose();
+  };
+  return { group, matFront, matBack, emWidth, dispose };
 }
 
 // ─────────────────────── The cloud the sign stands in ───────────────────────
@@ -504,7 +546,7 @@ function buildSignCloud(o, capHeight, width) {
   geo.setDrawRange(0, o.cloudCount);
 
   const mat = new THREE.PointsMaterial({
-    size: o.cloudGrain,
+    size: o.cloudGrain, // in world units — corrected for the camera by setGrainScale
     sizeAttenuation: true,
     map: tex,
     color: 0x000000,      // set every frame from the scene's own light — see setLit
@@ -533,6 +575,17 @@ function buildSignCloud(o, capHeight, width) {
     mat,
     /** Drop to the cheap layout once the device has shown it cannot keep up. */
     setCount(n) { geo.setDrawRange(0, Math.min(n, o.cloudCount)); },
+    /**
+     * `PointsMaterial.size` is NOT a world size, whatever it looks like. Three sizes
+     * a point as size · height / (2 · distance) and leaves the field of view out of
+     * it, so at this camera a grain came out at 0.38 of the width it was asked for —
+     * quarter of the area — and the bank read as grit sprinkled over the letters
+     * instead of haze they stand in. Put the missing term back and cloudGrain means
+     * what it says: a diameter, in the same world units as everything else here.
+     */
+    setGrainScale(fovDeg) {
+      mat.size = o.cloudGrain / Math.tan(THREE.MathUtils.degToRad(fovDeg) / 2);
+    },
     /**
      * The bank is LIT, not self-coloured. Points carry no lighting of their own, so
      * the ambient + hemisphere the hall actually has is folded into the colour here.
@@ -616,18 +669,23 @@ export function createTransitionFlight(deps) {
   // is supposed to be swallowing. Authored in the sign's own em units (cap height 1,
   // the word `emWidth` wide) because that is the space the sign group is in.
   const cloud = buildSignCloud(o, 1, sign.emWidth);
+  cloud.setGrainScale(camera.fov);
   sign.group.add(cloud.group);
 
-  // The bank is lit by the hall, not by itself: gather whatever ambient and
-  // hemisphere light the scene carries and hand the total to the cloud. Read once
-  // here — lights are added at scene build and do not come and go — and re-read on
-  // demand so a lights-off check is honest.
+  // The bank is lit by the hall, not by itself. The lights themselves are added at
+  // scene build and do not come and go, so the LIST is gathered once; their totals
+  // are re-read every frame, which costs a loop over three objects and buys the one
+  // thing that matters here — turn the hall's lights down and the bank goes with
+  // them. A colour read once at build would survive a lights-off check and make the
+  // check worthless, which is exactly what it did on the first pass.
+  const skyLights = [];
+  scene.traverse((n) => { if (n.isAmbientLight || n.isHemisphereLight) skyLights.push(n); });
   function relight() {
     let lit = 0;
-    scene.traverse((n) => {
-      if (n.isAmbientLight) lit += n.intensity * lum(n.color);
-      else if (n.isHemisphereLight) lit += n.intensity * lum(n.color);
-    });
+    for (const n of skyLights) {
+      if (!n.visible) continue;
+      lit += n.intensity * lum(n.isHemisphereLight ? n.color : n.color);
+    }
     cloud.setLit(clamp01(lit / litReference()));
   }
   relight();
@@ -843,14 +901,30 @@ export function createTransitionFlight(deps) {
     settling = 0.0001; // >0 marks "settling"; the update advances it
   }
 
-  // The sign's opacity, in ONE place. It is a landmark first: `presence` (0 at the
-  // home, 1 at the plates) is what keeps it out of the home's sky and lets the player
-  // find it when they turn round at the plates. The title beat only ever ADDS to that
-  // — it swells over the landmark on the way out and then leaves it standing.
+  // The sign's opacity, in ONE place. It is a landmark, and a landmark you can only
+  // see from one end of the corridor is not one: the word reads from the home AND
+  // from the plates, and what makes it far away is the distance falloff, the same
+  // one every other object in the corridor answers to. It used to be multiplied by
+  // `presence` as well, which drove it to nothing at the home — belt and braces on a
+  // decision that has since been reversed. The title beat only ever ADDS: it swells
+  // over the landmark on the way out and then leaves it standing.
   function applySignOpacity(titleK) {
-    const rest = o.signRest * presence;
+    const rest = o.signRest;
     const op = Math.max(rest, o.signOpacity * titleK);
-    sign.mat.opacity = op;
+    // WHICH HALF the reader is looking at. The sign faces +Z, so the side is simply
+    // which side of its own plane the camera is standing on. Only the facing half is
+    // drawn; the other one is faded out, because it is not a mirror of the near one
+    // (HEXLASH reversed is HSALXEH) and would otherwise show through the gaps.
+    // The changeover is a band, not a switch, because it happens with the sign very
+    // nearly edge-on and there must be nothing to catch. It is reached in the flight
+    // (the camera passes directly over the sign) and, at the home, only from the far
+    // corner of the orbit — fully zoomed out and near horizontal, where the camera
+    // can just get past z ≈ -9. At the plates it is out of reach entirely: that orbit
+    // comes no nearer than z ≈ -21.6.
+    const side = clamp01((camera.position.z - sign.group.position.z) / o.signSideBand * 0.5 + 0.5);
+    const k = side * side * (3 - 2 * side);
+    sign.matFront.opacity = op * k;
+    sign.matBack.opacity = op * (1 - k);
     // The bank shares the sign's fate exactly: they arrive together and leave
     // together, because a bank with no word in it is weather and a word with no bank
     // under it is a caption. `sign.group.visible` covers the cloud too — it is a
@@ -863,7 +937,10 @@ export function createTransitionFlight(deps) {
   // cannot open a seam or make a grain pop across the letters. Ten minutes a turn:
   // it is meant to be a place rather than a picture, not something a player can
   // watch happen. Off under reduced motion, with the rest of the scene's idle life.
+  let lastFov = camera.fov;
   function spinCloud(t) {
+    relight();
+    if (camera.fov !== lastFov) { lastFov = camera.fov; cloud.setGrainScale(camera.fov); }
     if (reduced || t === undefined) return;
     cloud.group.rotation.y = t * o.cloudTurn;
   }
